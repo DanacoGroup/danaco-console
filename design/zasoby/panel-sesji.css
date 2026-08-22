@@ -1,0 +1,144 @@
+/* PANEL SESJI I PROJEKTÓW
+   Zawartość panelu bocznego: płaski wykaz sesji, drzewo projektów, stopka
+   z akcją zbiorczą właściwą karcie. Obudowa panelu i wiersz wykazu należą do
+   `rama.css`. Mechanizm: `panel-sesji.js`.
+   Wykaz sesji jest płaski: porządek niesie sortowanie (`data-sesje-sort`),
+   zakres — zawężenie (`data-sesje-widok`). Grupowanie należy do projektu,
+   czyli do drzewa na drugiej karcie panelu. */
+/* Nagłówek karty panelu: stan zakresu po lewej, porządek po prawej. Porządek
+   należy do karty, nie do paska panelu — każda karta ma własne wymiary. */
+.dn-panel-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+}
+.dn-panel-glowa > .sta-menu { margin-left: auto; }
+.dn-panel-glowa > .sta-menu ~ .sta-menu { margin-left: 0; }
+/* Menu nagłówka karty stoi przy prawej krawędzi panelu — wyrównuje się prawą
+   stroną, inaczej wchodzi na okno obok. Zapas arkuszowy dla widoków bez
+   `menu.js`; z nim położenie liczy komponent. */
+.dn-panel-glowa .sta-menu-tresc { left: auto; right: 0; }
+
+/* Karta panelu jest kolumną: nagłówek i stopka stoją, wykaz przewija się.
+   Warunek `:not([hidden])` jest konieczny — `display` zadeklarowany przez autora
+   wygrywa z `[hidden]` z arkusza przeglądarki i karta odłożona zostałaby
+   widoczna. */
+.dn-obszar-panel--boczny .dn-obszar-tresc:not([hidden]) { display: flex; flex-direction: column; min-height: 0; }
+
+.dn-panel-wykaz {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--dn-od-2);
+}
+.dn-panel-galaz .dn-panel-wykaz { flex: none; overflow: visible; }
+
+/* Nagłówek zakresu w drzewie projektów. Wykaz sesji jest płaski — porządek
+   niesie sortowanie, nie nagłówki. */
+.dn-panel-grupa {
+  padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.dn-panel-poz > .dn-stan-znacznik { margin-right: var(--dn-od-1); }
+
+/* Środowisko przy wierszu — wymiar sortowania widoczny bez nagłówków grup.
+   Wykaz zostaje jednowierszowy: nazwa skraca się wielokropkiem, środowisko
+   stoi przy prawej krawędzi i ustępuje miejsca menu wiersza. */
+.dn-panel-srod {
+  flex: none;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  transition: opacity var(--dn-czas-1) var(--dn-ease);
+}
+.dn-obszar-pozycja:hover .dn-panel-srod,
+.dn-obszar-pozycja:focus-within .dn-panel-srod { opacity: 0; }
+
+/* Zawężenie wykazu. Wiersz odłożony zostaje w znaczniku — wraca bez
+   przebudowy wykazu. Odkłada się cała obudowa wiersza wraz z jego menu, więc
+   warunek stoi na obudowie, nie na wierszu. */
+.dn-panel-wykaz[data-sesje-widok='czynne']     > .sta-menu:has(> .dn-panel-poz[data-stan='zakonczone']),
+.dn-panel-wykaz[data-sesje-widok='reakcja']    > .sta-menu:not(:has(> .dn-panel-poz[data-stan='reakcja'])),
+.dn-panel-wykaz[data-sesje-widok='blad']       > .sta-menu:not(:has(> .dn-panel-poz[data-stan='blad'])),
+.dn-panel-wykaz[data-sesje-widok='zakonczone'] > .sta-menu:not(:has(> .dn-panel-poz[data-stan='zakonczone'])) { display: none; }
+
+/* ── Drzewo projektów ───────────────────────────────────────────────────────
+   Gałąź rozwija się i zwija na każdym poziomie; sesje projektu są liśćmi.
+   Znak rozwinięcia obraca się — kierunek grotu niesie stan gałęzi. */
+.dn-panel-drzewo { display: flex; flex-direction: column; }
+
+.dn-panel-galaz > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+  border-left: var(--dn-wym-wstega) solid transparent;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-panel-galaz > summary::-webkit-details-marker { display: none; }
+.dn-panel-galaz > summary:hover { background: var(--dn-hover); }
+.dn-panel-galaz > summary:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-panel-galaz-grot {
+  flex: none;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  color: var(--dn-tekst-3);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-panel-galaz[open] > summary > .dn-panel-galaz-grot { transform: rotate(90deg); }
+.dn-panel-galaz-nazwa { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dn-panel-galaz-licznik { flex: none; }
+
+/* Wcięcie liścia rysuje przynależność do gałęzi; kreska prowadząca zastępuje
+   drugi poziom wcięcia, bo panel ma 224 px szerokości. */
+.dn-panel-galaz > .dn-panel-wykaz {
+  margin-left: var(--dn-od-4);
+  padding-bottom: 0;
+  border-left: 1px solid var(--dn-obrys);
+}
+.dn-panel-galaz > .dn-panel-wykaz > .dn-obszar-pozycja { padding-left: var(--dn-od-2); }
+
+/* ── Stopka panelu: akcja zbiorcza właściwa karcie ──────────────────────────
+   Sesje niosą „Usuń wszystkie sesje", projekty „Usuń wszystkie projekty" —
+   akcja stoi w tym samym miejscu, ale dotyczy tylko widocznego zakresu. */
+.dn-panel-stopka {
+  margin-top: auto;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+}
+.dn-panel-stopka > .dn-btn { width: 100%; justify-content: center; }
+
+/* ── Zwinięcie i przypięcie panelu ──────────────────────────────────────────
+   Panel jest dostępny niezależnie od modułu w oknie centralnym. Zwinięcie
+   ręczne idzie z pasa narzędzi, automatyczne z ustawienia; przypięcie blokuje
+   zwijanie automatyczne. */
+.dn-panel-stan {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-obszar-sterowanie > [data-panel-przypnij][aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}

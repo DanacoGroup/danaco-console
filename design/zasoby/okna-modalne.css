@@ -1,0 +1,172 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNA NAKŁADKOWE (dialog jako okno)
+   ----------------------------------------------------------------------------
+   Nakładka `<dialog class="dn-modal">` przestaje być pudełkiem przyklejonym
+   do środka ekranu, a staje się oknem: da się je przesunąć, rozciągnąć,
+   zwinąć do nagłówka i rozłożyć na cały obszar przeglądarki. Powód jest
+   roboczy — nakładka często zasłania dane, do których operator musi zajrzeć
+   w trakcie jej wypełniania.
+
+   Ten arkusz wnosi wyłącznie warstwę okienną. Wygląd samego modala
+   (powierzchnia, obrys, nagłówek, stopka) pozostaje w css/komponenty.css;
+   tutaj nie powielamy go, tylko nadpisujemy to, co wynika z geometrii.
+
+   Zachowanie dokłada okna-modalne.js — on ustawia atrybuty
+   data-okno-stan / data-okno-* oraz wstrzykuje uchwyty i przyciski.
+
+   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
+   ============================================================================ */
+
+/* ══ 1 · GEOMETRIA OKNA ═══════════════════════════════════════════════════ */
+
+/* Skrypt oznacza obsłużone dialogi; dopóki tego nie zrobi, obowiązuje
+   dotychczasowe centrowanie z komponenty.css — brak skryptu nie psuje widoku. */
+.dn-modal[data-okno='1'] {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;              /* uchwyty krawędzi wystają poza obrys */
+  min-width: 420px;
+  min-height: 260px;
+  max-width: 100vw;
+  max-height: 100dvh;
+}
+
+/* Dopóki okno stoi na środku, zostawiamy margin:auto. Pierwsze przeciągnięcie
+   przełącza na pozycjonowanie bezwzględne — inaczej okno skoczyłoby o połowę
+   różnicy między marginesem automatycznym a wyliczonym lewym brzegiem. */
+.dn-modal[data-okno-pozycja='wolna'] {
+  position: fixed;
+  margin: 0;
+  inset: auto;
+}
+
+.dn-modal[data-okno='1'] .dn-modal-cialo { flex: 1 1 auto; min-height: 0; }
+.dn-modal[data-okno='1'] .dn-modal-stopka { flex: none; }
+
+/* ══ 2 · NAGŁÓWEK JAKO UCHWYT ═════════════════════════════════════════════ */
+
+.dn-modal[data-okno='1'] .dn-modal-naglowek {
+  flex: none;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;             /* gest przeciągania zamiast przewijania */
+}
+.dn-modal[data-okno-chwyt='1'] .dn-modal-naglowek { cursor: grabbing; }
+
+/* Nagłówek bierze fokus, bo obsługa klawiaturą przesuwa i skaluje okno
+   strzałkami; pierścień musi być widoczny w obu motywach. */
+.dn-modal[data-okno='1'] .dn-modal-naglowek:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
+}
+
+/* ══ 3 · PRZYCISKI STEROWANIA ═════════════════════════════════════════════ */
+
+.dn-modal-btn {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-ikonowy);
+  height: var(--dn-wym-ikonowy);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+  transition: background var(--dn-czas-1) var(--dn-ease),
+              color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-modal-btn svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-modal-btn:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-modal-btn:active { background: var(--dn-wcisniecie); }
+.dn-modal-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-modal-btn[aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+}
+
+/* Grupa sterowania odsuwa się do prawej krawędzi nagłówka. Zamknięcie ma
+   w komponenty.css własne margin-left:auto — przy dwóch elementach z auto
+   wolna przestrzeń rozdzieliłaby się na oba, więc je zerujemy. */
+.dn-modal-naglowek .dn-modal-btn--min { margin-left: auto; }
+.dn-modal-naglowek .dn-modal-btn ~ .dn-modal-zamknij { margin-left: var(--dn-od-0); }
+
+/* ══ 4 · UCHWYTY ZMIANY ROZMIARU ══════════════════════════════════════════ */
+
+/* Pas chwytny jest szerszy niż obrys (8 px), żeby trafiał w niego również
+   kursor prowadzony gładzikiem. Uchwyty leżą na zewnątrz obrysu. */
+.dn-modal-uchwyt {
+  position: absolute;
+  z-index: var(--dn-z-przybornik);
+  touch-action: none;
+}
+.dn-modal[data-okno-stan='zminimalizowane'] .dn-modal-uchwyt,
+.dn-modal[data-okno-stan='zmaksymalizowane'] .dn-modal-uchwyt { display: none; }
+
+.dn-modal-uchwyt--n,
+.dn-modal-uchwyt--s { left: var(--dn-od-3); right: var(--dn-od-3); height: var(--dn-od-2); cursor: ns-resize; }
+.dn-modal-uchwyt--e,
+.dn-modal-uchwyt--w { top: var(--dn-od-3); bottom: var(--dn-od-3); width: var(--dn-od-2); cursor: ew-resize; }
+.dn-modal-uchwyt--n { top: calc(var(--dn-od-1) * -1); }
+.dn-modal-uchwyt--s { bottom: calc(var(--dn-od-1) * -1); }
+.dn-modal-uchwyt--w { left: calc(var(--dn-od-1) * -1); }
+.dn-modal-uchwyt--e { right: calc(var(--dn-od-1) * -1); }
+
+.dn-modal-uchwyt--ne,
+.dn-modal-uchwyt--nw,
+.dn-modal-uchwyt--se,
+.dn-modal-uchwyt--sw { width: var(--dn-od-4); height: var(--dn-od-4); }
+.dn-modal-uchwyt--nw { top: calc(var(--dn-od-2) * -1); left: calc(var(--dn-od-2) * -1); cursor: nwse-resize; }
+.dn-modal-uchwyt--se { bottom: calc(var(--dn-od-2) * -1); right: calc(var(--dn-od-2) * -1); cursor: nwse-resize; }
+.dn-modal-uchwyt--ne { top: calc(var(--dn-od-2) * -1); right: calc(var(--dn-od-2) * -1); cursor: nesw-resize; }
+.dn-modal-uchwyt--sw { bottom: calc(var(--dn-od-2) * -1); left: calc(var(--dn-od-2) * -1); cursor: nesw-resize; }
+
+/* ══ 5 · STANY OKNA ═══════════════════════════════════════════════════════ */
+
+/* Zwinięcie do nagłówka: ciało i stopka znikają, a nie tylko chowają się pod
+   przycięciem — inaczej pola formularza zostałyby w kolejności fokusu. */
+.dn-modal[data-okno-stan='zminimalizowane'] {
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  box-shadow: var(--dn-cien-3);
+}
+.dn-modal[data-okno-stan='zminimalizowane'] .dn-modal-cialo,
+.dn-modal[data-okno-stan='zminimalizowane'] .dn-modal-stopka { display: none; }
+.dn-modal[data-okno-stan='zminimalizowane'] .dn-modal-naglowek {
+  border-bottom-color: transparent;
+  padding: var(--dn-od-2) var(--dn-od-3);
+}
+.dn-modal[data-okno-stan='zminimalizowane'] .dn-modal-tytul {
+  font-size: var(--dn-fs-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dn-modal[data-okno-stan='zmaksymalizowane'] { border-radius: var(--dn-r-md); }
+
+/* Okno przy krawędziach ekranu bez cienia wtapia się w tło — utrzymujemy
+   najgłębszy cień systemu tylko dla stanu normalnego. */
+.dn-modal[data-okno-stan='normalny'] { box-shadow: var(--dn-cien-lg); }
+
+/* ══ 6 · RUCH ═════════════════════════════════════════════════════════════ */
+
+/* Geometria okna nie jest animowana. Animowanie szerokości i wysokości zmusza
+   treść do przeliczania układu w każdej klatce — przy oknie o kilku kolumnach
+   widać, jak zawartość „przelewa się" przy otwarciu, maksymalizacji i powrocie.
+   Okno ma po prostu stanąć tam, gdzie ma stać. Ruch wejścia niesie sama
+   nakładka (opacity i skala), co nie przelicza układu. */
+.dn-modal[data-okno='1'] { transition: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-modal[data-okno='1'] { transition: none; }
+  .dn-modal[data-okno='1'][open] { animation: none; }
+  .dn-modal-btn { transition: none; }
+}

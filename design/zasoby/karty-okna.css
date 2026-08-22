@@ -1,0 +1,304 @@
+/* ============================================================================
+   DANACO CONSOLE — PASMO KART OKNA ROBOCZEGO
+   ----------------------------------------------------------------------------
+   Kompetencja: pasmo kart (`.dn-karty-pasmo`, `.dn-karty-sesji`), anatomia
+   karty, karta przypięta, karta grupy oraz sterowanie pasma. Jedyny właściciel
+   wyglądu kart — `rama.css` odpowiada za obudowę okna, nie za karty.
+
+   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `stany.css`.
+   Mechanizm: `karty-okna.js` (menu powłok, grot, „+", ustawienia widoku).
+
+   Podział ról kontrolek pasma jest wiążący:
+     powłoki (ikona + licznik) — okna robocze bieżącej sesji
+     grot                      — przełączanie otwartych kart
+     „+"                       — otwarcie modułu jako nowa karta i nowa grupa
+     narzędzia (prawa strona)  — maksymalizacja okna, ustawienia widoku
+
+   Geometria pochodzi ze zatwierdzonego wzorca pasa kart i jest zapisana raz,
+   w jednym bloku zmiennych komponentu. Reguły niżej wyłącznie się do niej
+   odwołują.
+   ============================================================================ */
+
+.dn-karty-pasmo,
+.dn-karty-sesji {
+  --kart-przeswit: 2px;                                             /* prześwit nad kartą */
+  --kart-pasmo-wys: calc(var(--dn-wym-pas-kart) + var(--dn-od-1));  /* 40 px */
+  --kart-karta-wys: calc(var(--kart-pasmo-wys) - var(--kart-przeswit));
+  --kart-karta-szer: 199px;                                         /* rozstaw ze wzorca */
+  --kart-karta-szer-min: 96px;
+  --kart-karta-szer-przypieta: calc(var(--dn-wym-ikonowy) + var(--dn-od-2));
+  --kart-pad-lewy: 10px;
+  --kart-pad-prawy: 6px;
+  --kart-sterowanie: 30px;                                          /* grot, „+", narzędzia */
+  --kart-zamkniecie: 26px;
+  --kart-ikona-sterowania: 20px;
+  --kart-przegroda-wys: 20px;
+  --kart-odstep-sterowania: 9px;
+
+  display: flex;
+  align-items: flex-end;
+  flex: none;
+  gap: 0;
+  height: var(--kart-pasmo-wys);
+  min-height: var(--kart-pasmo-wys);
+  padding: var(--kart-przeswit) var(--dn-od-2) 0;
+  overflow: visible;
+  /* Pasmo nosi barwę tacy, karta bieżąca barwę wnętrza okna: dwie barwy na
+     styku, nie trzy. */
+  background: var(--dn-panel);
+}
+
+/* Gęstość widoku z menu ustawień pasma. */
+.dn-karty-pasmo[data-gestosc='swobodna'] { --kart-karta-szer: 240px; }
+.dn-karty-pasmo[data-gestosc='ciasna']   { --kart-karta-szer: 150px; }
+
+/* ── Karta ──────────────────────────────────────────────────────────────── */
+
+.dn-karta-widoku,
+.dn-karta-sesji {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: var(--dn-od-2);
+  width: var(--kart-karta-szer);
+  min-width: var(--kart-karta-szer-min);
+  height: var(--kart-karta-wys);
+  margin: 0;
+  padding: 0 var(--kart-pad-prawy) 0 var(--kart-pad-lewy);
+  border: 0;
+  border-radius: var(--dn-r-md) var(--dn-r-md) 0 0;
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 0;
+  transition: background-color var(--dn-czas-1) var(--dn-ease),
+              color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-karta-widoku:hover,
+.dn-karta-sesji:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-karta-widoku:focus-visible,
+.dn-karta-sesji:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Przegroda na styku kart odłożonych. */
+.dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
+.dn-karta-sesji:not([aria-selected='true']) + .dn-karta-sesji:not([aria-selected='true'])::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: var(--kart-przegroda-wys);
+  background: var(--dn-obrys);
+  pointer-events: none;
+}
+
+/* Karta bieżąca: płyta w barwie wnętrza okna, zrośnięta z treścią. */
+.dn-karta-widoku[aria-selected='true'],
+.dn-karta-sesji[aria-selected='true'] {
+  background: var(--dn-wstazka);
+  color: var(--dn-tekst);
+  z-index: 2;
+}
+
+/* Ikona karty ma jeden rozmiar niezależnie od tego, czy znacznik niesie klasę
+   ikony, czy sam element `svg`. */
+.dn-karta-widoku > svg,
+.dn-karta-sesji > svg,
+.dn-karta-widoku-ikona,
+.dn-karta-sesji-ikona {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  flex: none;
+}
+.dn-karta-widoku-nazwa,
+.dn-karta-sesji > span:not(.pt-tetno) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+/* Nazwa karty jest edytowalna przez Operatora; pole wpisu zajmuje miejsce
+   etykiety, bez zmiany szerokości karty. */
+.dn-karta-widoku-nazwa[contenteditable='true'] {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: 1px;
+  border-radius: var(--dn-r-xs);
+  cursor: text;
+}
+
+.dn-karta-widoku-zamknij,
+.dn-karta-sesji-zamknij {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: var(--kart-zamkniecie);
+  height: var(--kart-zamkniecie);
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: currentColor;
+  opacity: .9;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), opacity var(--dn-czas-1) var(--dn-ease);
+}
+.dn-karta-widoku-zamknij svg,
+.dn-karta-sesji-zamknij svg {
+  width: var(--kart-ikona-sterowania);
+  height: var(--kart-ikona-sterowania);
+}
+.dn-karta-widoku-zamknij:hover,
+.dn-karta-sesji-zamknij:hover { background: var(--dn-hover); opacity: 1; }
+
+/* ── Karta przypięta: Centrum dowodzenia ────────────────────────────────────
+   Jedna w każdym oknie roboczym, pierwsza z lewej, bez zamknięcia, węższa —
+   sama ikona. Nie da się jej nadpisać ani zamknąć. */
+.dn-karta-widoku--przypieta {
+  width: var(--kart-karta-szer-przypieta);
+  min-width: var(--kart-karta-szer-przypieta);
+  justify-content: center;
+  padding: 0;
+}
+.dn-karta-widoku--przypieta .dn-karta-widoku-nazwa { display: none; }
+
+/* ── Karta grupy: zadanie z oknami pomocniczymi ─────────────────────────────
+   Licznik podaje liczbę okien w grupie i niesie ich stan zbiorczy; grot
+   rozwija wykaz okien pomocniczych. */
+.dn-karta-widoku--grupa { padding-right: var(--dn-od-1); }
+.dn-karta-widoku-licznik {
+  flex: none;
+  min-width: var(--dn-wym-ikona-sm);
+  padding: 0 var(--dn-od-1);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  text-align: center;
+}
+.dn-karta-widoku-grot {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: var(--dn-wym-ikona-lg);
+  height: var(--dn-wym-ikona-lg);
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.dn-karta-widoku-grot:hover { background: var(--dn-hover); }
+.dn-karta-widoku-grot svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* Karta grupy niesie stan w liczniku, więc nie powtarza go kropką: dwa
+   znaczniki stanu na jednej karcie zabierają miejsce nazwie zadania. */
+.dn-karta-widoku--grupa > .dn-stan-znacznik { display: none; }
+
+/* Grupowanie wyłączone w ustawieniach widoku: pasmo staje się płaską listą. */
+.dn-karty-pasmo[data-grupowanie='nie'] .dn-karta-widoku-licznik,
+.dn-karty-pasmo[data-grupowanie='nie'] .dn-karta-widoku-grot { display: none; }
+
+/* Karta przenoszona między grupami. */
+.dn-karta-widoku[draggable='true']:active { cursor: grabbing; }
+.dn-karta-widoku[data-przenoszona='tak'] { opacity: var(--dn-przygasz-rodzenstwa); }
+.dn-karty-pasmo[data-cel-upuszczenia='tak'] { box-shadow: inset 0 -2px 0 0 var(--dn-sygnal-500); }
+
+/* ── Sterowanie pasma ───────────────────────────────────────────────────────
+   Wszystkie kontrolki pasma mają wspólną bryłę; różnią się tylko zawartością
+   i tym, co otwierają. */
+.dn-karty-powloki,
+.dn-karty-wykaz,
+.dn-karty-dodaj,
+.dn-karty-narzedzia > button {
+  display: inline-grid;
+  grid-auto-flow: column;
+  place-content: center;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  align-self: center;
+  height: var(--kart-sterowanie);
+  min-width: var(--kart-sterowanie);
+  padding: 0 var(--dn-od-1);
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-karty-powloki:hover,
+.dn-karty-wykaz:hover,
+.dn-karty-dodaj:hover,
+.dn-karty-narzedzia > button:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+.dn-karty-powloki svg,
+.dn-karty-wykaz svg,
+.dn-karty-dodaj svg,
+.dn-karty-narzedzia > button svg {
+  width: var(--kart-ikona-sterowania);
+  height: var(--kart-ikona-sterowania);
+}
+
+/* Opakowanie menu jest elementem pasma — wyrównanie i margines dolny muszą
+   trafić w nie, nie w sam przycisk. */
+.dn-karty-pasmo > .sta-menu,
+.dn-karty-sesji > .sta-menu { display: flex; flex: none; align-self: center; }
+.dn-karty-pasmo > *:not(.dn-karta-widoku):not(.dn-karta-sesji),
+.dn-karty-sesji > *:not(.dn-karta-widoku):not(.dn-karta-sesji) { align-self: center; }
+/* Margines dolny nosi element pasma: opakowanie menu albo sama kontrolka.
+   Podwójny margines (opakowanie + przycisk) zsuwał kontrolkę o 1 px poniżej
+   środka pasma. */
+.dn-karty-pasmo > .sta-menu,
+.dn-karty-sesji > .sta-menu,
+.dn-karty-pasmo > .dn-karty-dodaj,
+.dn-karty-pasmo > .dn-karty-wykaz,
+.dn-karty-narzedzia,
+.dn-karty-sesji > .dn-btn-ikona { margin-bottom: var(--kart-przeswit); }
+
+.dn-karty-odstep { flex: 1 1 auto; }
+.dn-karty-narzedzia { display: flex; align-items: center; gap: var(--dn-od-1); flex: none; }
+
+/* Kreska rozdzielająca kontrolkę od sąsiedniego bloku pasma. */
+.dn-karty-pasmo > .dn-karty-dodaj,
+.dn-karty-sesji > .dn-btn-ikona,
+.dn-karty-narzedzia {
+  position: relative;
+  margin-left: calc(var(--kart-odstep-sterowania) * 2);
+}
+.dn-karty-pasmo > .dn-karty-dodaj::after,
+.dn-karty-sesji > .dn-btn-ikona::after,
+.dn-karty-narzedzia::after {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--kart-odstep-sterowania));
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: var(--kart-przegroda-wys);
+  background: var(--dn-obrys);
+  pointer-events: none;
+}
+
+/* ── Pasmo panelu bocznego: dwie karty zakresu ──────────────────────────────
+   Dzielą szerokość po równo, bez ikon — panel jest za wąski na ikonę i nazwę. */
+.dn-obszar-panel--boczny .dn-karty-pasmo { padding-left: var(--dn-od-1); padding-right: var(--dn-od-1); }
+.dn-obszar-panel--boczny .dn-karta-widoku {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  gap: var(--dn-od-2);
+  padding: 0 var(--dn-od-2);
+  justify-content: center;
+}
+.dn-obszar-panel--boczny .dn-karta-widoku-nazwa { flex: 0 1 auto; text-align: center; }
+.dn-obszar-panel--boczny .dn-karta-widoku > svg,
+.dn-obszar-panel--boczny .dn-karta-widoku-ikona { display: none; }

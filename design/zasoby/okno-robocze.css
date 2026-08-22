@@ -1,0 +1,17 @@
+/* OKNO ROBOCZE — MAKSYMALIZACJA
+   Ukrywa obudowę pracy (belka, szyna, panel boczny); pasmo kart zostaje, bo bez
+   niego nie ma przełączania kart ani odczytu stanów. Stan: `[data-okno-max]`
+   na `.sta-powloka`, pamięć per `[data-okno]`. Mechanizm: `okno-robocze.js`. */
+[data-okno-max='tak'] .dn-belka,
+[data-okno-max='tak'] .dn-szyna-nawigacji,
+[data-okno-max='tak'] .dn-obszar-panel--boczny { display: none; }
+
+[data-okno-max='tak'] .dn-obszar { padding: 0; }
+[data-okno-max='tak'] .dn-obszar-panel--glowny { border-radius: 0; }
+
+/* Wyjście z maksymalizacji ma być widoczne bez szukania: przycisk pasma
+   zmienia stan wciśnięcia, a nie tylko ikonę. */
+[data-okno-max='tak'] [data-okno-max-przelacz] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}

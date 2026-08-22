@@ -1,0 +1,345 @@
+/* ============================================================================
+   DANACO CONSOLE — WARSTWA PROTOTYPU · v2.0
+   ----------------------------------------------------------------------------
+   Wspólny szkielet klikalnych prototypów okien. Nie zastępuje komponenty.css —
+   dokłada wyłącznie układ powłoki, kontener okna operacyjnego i drobne wzorce
+   swoiste dla prototypów (pasek prototypu, panel „O tym opracowaniu").
+
+   ZASADA: wyłącznie żetony var(--dn-*). Zero wartości wprost.
+   ============================================================================ */
+
+/* ── 1 · POWŁOKA OKNA APLIKACJI ─────────────────────────────────────────── */
+
+html, body { height: 100%; }
+body.pt-pelny-ekran { overflow: hidden; }
+
+.pt-powloka {
+  display: grid;
+  grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) minmax(0, 1fr);
+  height: 100dvh;
+  background: var(--dn-tlo);
+}
+.pt-powloka--bez-kart { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr); }
+.pt-powloka--jednolita { grid-template-rows: minmax(0, 1fr); }
+
+.pt-cialo {
+  display: grid;
+  grid-template-columns: var(--dn-wym-boczna) minmax(0, 1fr);
+  min-height: 0;
+}
+.pt-cialo--zwinieta { grid-template-columns: var(--dn-wym-kontrolka) minmax(0, 1fr); }
+.pt-cialo--bez-bocznej { grid-template-columns: minmax(0, 1fr); }
+
+.pt-obszar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0; min-height: 0;
+  overflow: hidden;
+}
+/* obszar roboczy z pasem komunikacji (Chat Window) */
+.pt-obszar--z-komunikacja {
+  grid-template-rows: minmax(0, 1fr) minmax(var(--dn-wym-pas-komunikacji), 46%);
+}
+.pt-obszar--komunikacja-zwinieta {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+/* ── 2 · OKNO OPERACYJNE (kontener) ─────────────────────────────────────── */
+
+/* Okno prototypu ma nagłówek, dowolną liczbę pasów pomocniczych i treść.
+   Układ kolumnowy przyjmuje każdą liczbę pasów; treść bierze resztę wysokości. */
+.pt-okno {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: var(--dn-od-3) var(--dn-od-3) 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.pt-okno--dol { margin-bottom: var(--dn-od-3); }
+.pt-okno--plaskie { margin: 0; border: 0; border-radius: 0; }
+
+.pt-okno-naglowek {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.pt-okno-tytul {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst);
+}
+.pt-okno-tytul svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
+.pt-okno-podtytul { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.pt-okno-narzedzia { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+.pt-okno-tresc { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.pt-okno > :not(.pt-okno-tresc) { flex: none; }
+.pt-okno-tresc--gniazdo { padding: var(--dn-od-3); }
+
+/* ── 3 · PODZIAŁ NA PANELE ──────────────────────────────────────────────── */
+
+.pt-panele { display: grid; min-height: 0; gap: 1px; background: var(--dn-obrys-subtelny); }
+.pt-panele--2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pt-panele--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pt-panele--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pt-panele--boczny-lewy { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); }
+.pt-panele--boczny-prawy { grid-template-columns: minmax(0, 1fr) minmax(200px, 300px); }
+.pt-panele--trojpodzial { grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(200px, 300px); }
+.pt-panele--pion { grid-template-columns: none; grid-auto-rows: minmax(0, 1fr); }
+
+.pt-panel {
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0; min-height: 0;
+  background: var(--dn-powierzchnia);
+}
+.pt-panel-naglowek {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+.pt-panel-naglowek .pt-panel-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); text-transform: none; letter-spacing: normal; }
+.pt-panel-tresc { min-height: 0; overflow: auto; padding: var(--dn-od-3); }
+.pt-panel-tresc--bez-marginesu { padding: 0; }
+
+/* ── 4 · PASEK PROTOTYPU (metadane opracowania) ─────────────────────────── */
+
+.pt-pasek-prototypu {
+  position: fixed; inset-inline: 0; bottom: 0;
+  z-index: var(--dn-z-powiadomienie);
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-1) var(--dn-od-3);
+  background: var(--dn-rama);
+  border-top: 1px solid var(--dn-rama-obrys);
+  color: var(--dn-rama-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  transform: translateY(100%);
+  transition: transform var(--dn-czas-3) var(--dn-ease);
+}
+.pt-pasek-prototypu[data-widoczny='tak'] { transform: translateY(0); }
+.pt-pasek-prototypu b { color: var(--dn-rama-tekst); font-weight: var(--dn-fw-polgruba); }
+.pt-pasek-prototypu .pt-pasek-prawa { margin-left: auto; display: inline-flex; gap: var(--dn-od-2); align-items: center; }
+
+.pt-uchwyt-prototypu {
+  /* Nad paskiem stanu — nie zasłania jego prawej strony. */
+  position: fixed; right: var(--dn-od-3); bottom: calc(var(--dn-wym-stan) + var(--dn-od-2));
+  z-index: calc(var(--dn-z-powiadomienie) + 1);
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-kontrolka); padding-inline: var(--dn-od-3);
+  border: 1px solid var(--dn-rama-obrys); border-radius: var(--dn-r-pill);
+  background: var(--dn-rama); color: var(--dn-rama-tekst);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  cursor: pointer; box-shadow: var(--dn-cien-3);
+  transition: background var(--dn-czas-1) var(--dn-ease);
+}
+.pt-uchwyt-prototypu:hover { background: var(--dn-szary-800); }
+.pt-uchwyt-prototypu svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* ── 5 · PANEL „O TYM OPRACOWANIU" ─────────────────────────────────────── */
+
+.pt-o-opracowaniu {
+  margin: var(--dn-od-4) auto;
+  max-width: var(--dn-tresc-max);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.pt-o-opracowaniu > summary {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  cursor: pointer;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst);
+  list-style: none;
+}
+.pt-o-opracowaniu > summary::-webkit-details-marker { display: none; }
+.pt-o-opracowaniu > summary::before {
+  content: ''; width: var(--dn-wym-kropka); height: var(--dn-wym-kropka);
+  border-radius: var(--dn-r-pill); background: var(--dn-kropka); flex: none;
+}
+.pt-o-opracowaniu-tresc { padding: 0 var(--dn-od-4) var(--dn-od-4); line-height: var(--dn-lh-luzny); }
+.pt-o-opracowaniu-tresc h4 {
+  margin: var(--dn-od-4) 0 var(--dn-od-2);
+  font-size: var(--dn-fs-xs); text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki); color: var(--dn-tekst);
+}
+.pt-o-opracowaniu-tresc ul { margin: 0; padding-left: var(--dn-od-5); }
+.pt-o-opracowaniu-tresc li { margin-bottom: var(--dn-od-1); }
+.pt-o-opracowaniu-tresc code {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  padding: 1px var(--dn-od-1); border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst);
+}
+
+/* ── 6 · WZORCE POMOCNICZE ──────────────────────────────────────────────── */
+
+/* etykieta wersalikowa sekcji */
+.pt-etykieta {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+/* dane techniczne krojem mono */
+.pt-mono {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst-2);
+}
+/* listy pozycji */
+.pt-lista { display: flex; flex-direction: column; }
+.pt-pozycja {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+  padding: var(--dn-od-1) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  cursor: pointer;
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst);
+  background: none; border-inline: 0; border-top: 0; width: 100%;
+  text-align: left;
+  transition: background var(--dn-czas-1) var(--dn-ease);
+}
+.pt-pozycja:hover { background: var(--dn-hover); }
+.pt-pozycja[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+.pt-pozycja svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-2); }
+.pt-pozycja-tytul { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-pozycja-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); flex: none; }
+
+/* siatka kart */
+.pt-siatka { display: grid; gap: var(--dn-od-3); }
+.pt-siatka--2 { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.pt-siatka--3 { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.pt-siatka--4 { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+
+/* pole treści dokumentowej */
+.pt-dokument { padding: var(--dn-od-6) var(--dn-od-8); max-width: 76ch; }
+.pt-dokument h2 { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); margin-bottom: var(--dn-od-3); color: var(--dn-tekst); }
+.pt-dokument h3 { font-size: var(--dn-fs-lg); margin: var(--dn-od-5) 0 var(--dn-od-2); color: var(--dn-tekst); }
+.pt-dokument p { margin-bottom: var(--dn-od-3); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); font-size: var(--dn-fs-md); }
+.pt-dokument mark { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); border-bottom: 1px solid var(--dn-sygnal-obrys); }
+
+/* konsola / terminal */
+.pt-konsola {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  background: var(--dn-szary-1000);
+  color: var(--dn-szary-150);
+  padding: var(--dn-od-3);
+  min-height: 0; overflow: auto;
+  white-space: pre-wrap;
+}
+.pt-konsola .pt-znak-zachety { color: var(--dn-sygnal-300); }
+.pt-konsola .pt-wynik-ok { color: var(--dn-zielen-400); }
+.pt-konsola .pt-wynik-blad { color: var(--dn-czerwien-400); }
+.pt-konsola .pt-wynik-uwaga { color: var(--dn-bursztyn-400); }
+.pt-konsola .pt-komentarz { color: var(--dn-szary-500); }
+
+/* edytor kodu */
+.pt-edytor { display: grid; grid-template-columns: auto minmax(0, 1fr); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); min-height: 0; overflow: auto; }
+.pt-edytor-numery { padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-2) var(--dn-od-3); text-align: right; color: var(--dn-tekst-3); background: var(--dn-powierzchnia-2); user-select: none; font-variant-numeric: tabular-nums; }
+.pt-edytor-kod { padding: var(--dn-od-2) var(--dn-od-3); white-space: pre; color: var(--dn-tekst); }
+.pt-skl-slowo { color: var(--dn-sygnal); }
+.pt-skl-tekst { color: var(--dn-zielen-400); }
+.pt-skl-komentarz { color: var(--dn-tekst-3); font-style: italic; }
+.pt-skl-liczba { color: var(--dn-bursztyn-400); }
+.pt-skl-funkcja { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pt-wiersz-dodany { background: var(--dn-sukces-tlo); }
+.pt-wiersz-usuniety { background: var(--dn-blad-tlo); }
+
+/* pasek narzędzi wewnątrz panelu */
+.pt-przybornik-lokalny {
+  display: flex; align-items: center; gap: var(--dn-od-1);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia);
+  flex-wrap: wrap;
+}
+.pt-rozdzielacz { width: 1px; height: var(--dn-od-5); background: var(--dn-obrys); margin-inline: var(--dn-od-1); flex: none; }
+
+/* okruszki nawigacji */
+.pt-okruszki { display: flex; align-items: center; gap: var(--dn-od-1); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); flex-wrap: wrap; }
+.pt-okruszki svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
+.pt-okruszki [aria-current='page'] { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+/* Okruszki na pasku atramentowym czerpią barwy z rodziny ramy, nie z treści. */
+.dn-pasek .pt-okruszki { color: var(--dn-rama-tekst-2); }
+.dn-pasek .pt-okruszki svg { color: var(--dn-rama-tekst-2); }
+.dn-pasek .pt-okruszki [aria-current='page'] { color: var(--dn-rama-tekst); }
+
+/* wskaźnik pracy w tle — tętno */
+.pt-tetno {
+  display: inline-block; flex: none;
+  width: var(--dn-wym-kropka); height: var(--dn-wym-kropka);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  animation: pt-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@keyframes pt-tetno {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--dn-fokus-cien); }
+  50%      { opacity: .55; box-shadow: 0 0 0 4px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pt-tetno { animation: none; box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
+}
+
+/* wejście widoku */
+.pt-wejscie { animation: pt-wejscie var(--dn-czas-3) var(--dn-ease) both; }
+@keyframes pt-wejscie {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ukrycie widoków przełączanych */
+[data-widok]:not([data-widok-aktywny='tak']) { display: none; }
+
+/* ── 7 · RESPONSYWNOŚĆ POWŁOKI ──────────────────────────────────────────── */
+
+@media (max-width: 960px) {
+  .pt-cialo { grid-template-columns: var(--dn-wym-kontrolka) minmax(0, 1fr); }
+  .pt-cialo .dn-boczna-pozycja span,
+  .pt-cialo .dn-boczna-naglowek { display: none; }
+  .pt-panele--trojpodzial { grid-template-columns: minmax(0, 1fr) minmax(200px, 280px); }
+  .pt-panele--trojpodzial > .pt-panel:first-child { display: none; }
+}
+@media (max-width: 640px) {
+  .pt-cialo { grid-template-columns: minmax(0, 1fr); }
+  .pt-cialo > .dn-boczna { display: none; }
+  .pt-panele--2, .pt-panele--3, .pt-panele--4,
+  .pt-panele--boczny-lewy, .pt-panele--boczny-prawy { grid-template-columns: minmax(0, 1fr); }
+  .pt-panele > .pt-panel:not(:first-child) { display: none; }
+  .pt-dokument { padding: var(--dn-od-4); }
+}
+
+/* ── 8 · DRUK ───────────────────────────────────────────────────────────── */
+
+@media print {
+  .pt-pasek-prototypu, .pt-uchwyt-prototypu, .dn-pasek { display: none !important; }
+  .pt-powloka { height: auto; display: block; }
+  .pt-okno { break-inside: avoid; }
+}

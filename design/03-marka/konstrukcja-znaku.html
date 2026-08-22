@@ -1,0 +1,2449 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Konstrukcja znaku</title>
+<meta name="description" content="Dokumentacja konstrukcyjna znaku Danaco Console: moduł X, rysunki techniczne sygnetu i lockupów, pole ochronne, wielkości minimalne, skalowanie, wyrównanie optyczne, kontrasty, katalog naruszeń, reprodukcja.">
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   KONSTRUKCJA ZNAKU — warstwa własna dokumentu.  Prefiks .kn-*
+   ZASADA BEZWZGLĘDNA: wyłącznie var(--dn-*). Zero wartości szesnastkowych.
+   ========================================================================== */
+
+/* --- 1. Pasek górny ------------------------------------------------------ */
+.kn-pasek { position: sticky; top: 0; z-index: var(--dn-z-pasek); }
+.kn-pasek-godlo { width: 28px; height: 28px; flex: none; }
+.kn-pasek-godlo .kn-g-grot { fill: var(--dn-rama-tekst); }
+.kn-pasek-godlo .kn-g-kropka { fill: var(--dn-sygnal-400); }
+.kn-pasek-tytul {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-rama-tekst-2); padding-left: var(--dn-od-3);
+  margin-left: var(--dn-od-3); border-left: 1px solid var(--dn-rama-obrys);
+  white-space: nowrap;
+}
+.kn-pasek-wersja { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-rama-tekst-2); }
+@media (max-width: 780px) { .kn-pasek-tytul, .kn-pasek-wersja { display: none; } }
+.kn-ik { width: 16px; height: 16px; flex: none; }
+.dn-btn .kn-ik { margin-right: var(--dn-od-1); }
+.dn-btn-ikona .kn-ik { margin: 0; }
+
+/* --- 2. Układ ------------------------------------------------------------ */
+.kn-uklad {
+  display: grid; grid-template-columns: 254px minmax(0, 1fr);
+  gap: var(--dn-od-8); max-width: 1620px; margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-6) var(--dn-od-16);
+}
+@media (max-width: 1120px) {
+  .kn-uklad { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-4); }
+  .kn-nawigacja { position: static; max-height: none; }
+}
+.kn-nawigacja {
+  position: sticky; top: calc(var(--dn-wym-pasek) + var(--dn-od-6));
+  align-self: start; max-height: calc(100dvh - var(--dn-wym-pasek) - var(--dn-od-12));
+  overflow-y: auto; padding-right: var(--dn-od-2);
+}
+.kn-nawigacja-tytul {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3); margin-bottom: var(--dn-od-2);
+}
+.kn-spis { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1px; }
+.kn-spis-poz {
+  display: flex; align-items: baseline; gap: var(--dn-od-2);
+  padding: 5px var(--dn-od-3); border-left: 2px solid var(--dn-obrys);
+  border-radius: 0 var(--dn-r-sm) var(--dn-r-sm) 0;
+  color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); text-decoration: none;
+  transition: background-color var(--dn-czas-1) var(--dn-ease),
+              color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.kn-spis-poz:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.kn-spis-poz:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.kn-spis-numer {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums; flex: none; min-width: 16px;
+}
+.kn-spis-poz[aria-current='true'] {
+  border-left-color: var(--dn-sygnal); background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal); font-weight: var(--dn-fw-polgruba);
+}
+.kn-spis-poz[aria-current='true'] .kn-spis-numer { color: var(--dn-sygnal); }
+.kn-nawigacja-stopka {
+  margin-top: var(--dn-od-4); padding-top: var(--dn-od-3); border-top: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); line-height: var(--dn-lh-bazowy);
+}
+
+/* --- 3. Nagłówek dokumentu ---------------------------------------------- */
+.kn-metryka { margin-bottom: var(--dn-od-12); }
+.kn-metryka-znak {
+  display: flex; align-items: center; gap: var(--dn-od-8); flex-wrap: wrap;
+  padding: var(--dn-od-8) var(--dn-od-6); border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl); background: var(--dn-powierzchnia); margin-bottom: var(--dn-od-5);
+}
+.kn-metryka-znak > svg { width: 240px; height: auto; }
+.kn-metryka-tytul { font-size: var(--dn-fs-display); margin-bottom: var(--dn-od-2); line-height: var(--dn-lh-ciasny); }
+.kn-metryka-podtytul { color: var(--dn-tekst-2); font-size: var(--dn-fs-lg); }
+.kn-metryka-tabela { width: 100%; }
+.kn-metryka-tabela th { width: 220px; }
+
+/* --- 4. Rozdziały -------------------------------------------------------- */
+.kn-rozdzial { margin-bottom: var(--dn-od-16); scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-6)); }
+.kn-rozdzial-naglowek { display: flex; align-items: baseline; gap: var(--dn-od-3); margin-bottom: var(--dn-od-2); }
+.kn-rozdzial-numer {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-sygnal);
+  font-variant-numeric: tabular-nums; letter-spacing: var(--dn-ls-mono-wersaliki);
+}
+.kn-rozdzial h2 { font-size: var(--dn-fs-2xl); margin: 0; }
+.kn-lid { color: var(--dn-tekst-2); max-width: 76ch; margin-bottom: var(--dn-od-6); line-height: var(--dn-lh-luzny); }
+.kn-podtytul {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+}
+.kn-podtytul:first-child { margin-top: 0; }
+
+/* --- 5. Panele ----------------------------------------------------------- */
+.kn-panel {
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia); overflow: hidden;
+}
+.kn-panel-pasek {
+  display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap;
+  padding: var(--dn-od-2) var(--dn-od-4); border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2); min-height: 40px;
+}
+.kn-panel-tytul {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-2);
+}
+.kn-panel-cialo { padding: var(--dn-od-4); }
+.kn-panel-stopka {
+  padding: var(--dn-od-2) var(--dn-od-4); border-top: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+}
+.kn-warstwy { display: flex; align-items: center; gap: var(--dn-od-1); flex-wrap: wrap; margin-left: auto; }
+.kn-warstwa-etykieta {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px var(--dn-od-2);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-xs); font-family: var(--dn-ff-mono); color: var(--dn-tekst-2);
+  cursor: pointer; user-select: none; background: var(--dn-powierzchnia);
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.kn-warstwa-etykieta:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.kn-warstwa-etykieta:has(input:checked) {
+  border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal);
+}
+.kn-warstwa-etykieta:has(input:focus-visible) { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.kn-warstwa-etykieta input { width: 12px; height: 12px; margin: 0; accent-color: var(--dn-sygnal-500); }
+
+/* --- 6. Rysunek techniczny ---------------------------------------------- */
+.kn-rysunek { display: block; width: 100%; height: auto; background: var(--dn-powierzchnia); }
+.kn-rysunek text { font-family: var(--dn-ff-mono); fill: var(--dn-tekst-2); }
+.kn-siatka-drobna { stroke: var(--dn-obrys-subtelny); stroke-width: .35; fill: none; }
+.kn-siatka-gruba  { stroke: var(--dn-obrys); stroke-width: .55; fill: none; }
+.kn-kadr { stroke: var(--dn-obrys-mocny); stroke-width: .7; fill: none; }
+.kn-os { stroke: var(--dn-sygnal); stroke-width: .5; stroke-dasharray: 3 2.4; fill: none; }
+.kn-bazowa { stroke: var(--dn-tekst); stroke-width: .7; stroke-dasharray: 5 2.6; fill: none; }
+.kn-wym { stroke: var(--dn-tekst-2); stroke-width: .45; fill: none; }
+.kn-wym-syg { stroke: var(--dn-sygnal); stroke-width: .5; fill: none; }
+.kn-wynos { stroke: var(--dn-obrys-mocny); stroke-width: .35; stroke-dasharray: 1.6 1.6; fill: none; }
+.kn-atrament { fill: var(--dn-szary-900); }
+[data-theme='dark'] .kn-atrament { fill: var(--dn-szary-50); }
+.kn-kropka-f { fill: var(--dn-sygnal-500); }
+[data-theme='dark'] .kn-kropka-f { fill: var(--dn-sygnal-400); }
+.kn-obrys-znak { fill: none; stroke: var(--dn-tekst); stroke-width: .4; }
+.kn-pole-min { fill: var(--dn-sygnal-tlo); stroke: var(--dn-sygnal); stroke-width: .5; stroke-dasharray: 3 2; }
+.kn-pole-eksp { fill: var(--dn-sygnal-tlo); stroke: var(--dn-sygnal-obrys); stroke-width: .5; stroke-dasharray: 4 3; opacity: .55; }
+.kn-etykieta { font-size: 3.2px; fill: var(--dn-tekst-2); }
+.kn-etykieta-syg { font-size: 3.2px; fill: var(--dn-sygnal); font-weight: 600; }
+.kn-etykieta-mocna { font-size: 3.4px; fill: var(--dn-tekst); font-weight: 600; }
+.kn-punkt { fill: var(--dn-powierzchnia); stroke: var(--dn-tekst); stroke-width: .5; }
+[data-w-siatka='0'] .w-siatka,
+[data-w-osie='0'] .w-osie,
+[data-w-wymiary='0'] .w-wymiary,
+[data-w-pole='0'] .w-pole,
+[data-w-znak='0'] .w-znak { display: none; }
+
+/* --- 7. Siatki treści ---------------------------------------------------- */
+.kn-siatka-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dn-od-4); }
+.kn-siatka-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dn-od-4); }
+.kn-siatka-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dn-od-4); }
+@media (max-width: 1100px) { .kn-siatka-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px)  { .kn-siatka-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 700px)  { .kn-siatka-2, .kn-siatka-3, .kn-siatka-4 { grid-template-columns: minmax(0, 1fr); } }
+.kn-dwie-kolumny { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: var(--dn-od-6); align-items: start; }
+@media (max-width: 1000px) { .kn-dwie-kolumny { grid-template-columns: minmax(0, 1fr); } }
+
+/* --- 8. Tabele ----------------------------------------------------------- */
+.kn-tabela-obudowa { overflow-x: auto; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); }
+.kn-tabela-obudowa .dn-tabela { margin: 0; }
+.kn-liczba { font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.kn-x { color: var(--dn-sygnal); font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; }
+
+/* --- 9. Notki ------------------------------------------------------------ */
+.kn-notka {
+  display: flex; gap: var(--dn-od-3); padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-informacja-obrys); background: var(--dn-informacja-tlo);
+  border-radius: var(--dn-r-md); color: var(--dn-tekst); font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy); margin: var(--dn-od-4) 0;
+}
+.kn-notka > svg { width: 18px; height: 18px; flex: none; color: var(--dn-informacja-tekst); margin-top: 1px; }
+.kn-notka--ostrzezenie { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
+.kn-notka--ostrzezenie > svg { color: var(--dn-ostrzezenie-tekst); }
+.kn-notka--blad { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); }
+.kn-notka--blad > svg { color: var(--dn-blad-tekst); }
+.kn-notka--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
+.kn-notka--sukces > svg { color: var(--dn-sukces-tekst); }
+.kn-znacznik {
+  display: inline-block; padding: 1px 6px; border-radius: var(--dn-r-xs);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
+  letter-spacing: .06em; border: 1px solid var(--dn-obrys); color: var(--dn-tekst-2);
+  background: var(--dn-powierzchnia-2); vertical-align: 1px;
+}
+.kn-znacznik--zamkniete { border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); background: var(--dn-blad-tlo); }
+.kn-znacznik--regula { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); background: var(--dn-sygnal-tlo); }
+.kn-znacznik--zalecenie { border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); background: var(--dn-sukces-tlo); }
+
+/* --- 10. Sterowniki interaktywne ---------------------------------------- */
+.kn-sterownik {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr) 92px; align-items: center;
+  gap: var(--dn-od-3); padding: var(--dn-od-2) 0;
+}
+@media (max-width: 640px) { .kn-sterownik { grid-template-columns: minmax(0, 1fr); } }
+.kn-sterownik-etykieta { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.kn-sterownik-wartosc {
+  font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst); text-align: right; font-size: var(--dn-fs-md);
+}
+.kn-scena {
+  display: flex; align-items: center; justify-content: center; min-height: 220px;
+  background: var(--dn-powierzchnia-2); border-radius: var(--dn-r-md);
+  padding: var(--dn-od-6); position: relative; overflow: hidden;
+}
+.kn-scena--ciemna { background: var(--dn-szary-950); }
+.kn-scena--linie {
+  background-image: linear-gradient(var(--dn-obrys-subtelny) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--dn-obrys-subtelny) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+.kn-miara {
+  position: absolute; bottom: var(--dn-od-2); right: var(--dn-od-3);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);
+}
+.kn-wynik {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3); border-radius: var(--dn-r-sm); background: var(--dn-powierzchnia-2);
+}
+.kn-wynik + .kn-wynik { margin-top: var(--dn-od-1); }
+.kn-wynik-nazwa { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.kn-wynik-liczba { font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; font-weight: var(--dn-fw-polgruba); }
+.kn-wynik--glowny { background: var(--dn-sygnal-tlo); }
+.kn-wynik--glowny .kn-wynik-liczba { color: var(--dn-sygnal); font-size: var(--dn-fs-lg); }
+
+/* --- 11. Katalog naruszeń ------------------------------------------------ */
+.kn-naruszenia { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--dn-od-4); }
+@media (max-width: 1280px) { .kn-naruszenia { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 980px)  { .kn-naruszenia { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px)  { .kn-naruszenia { grid-template-columns: minmax(0, 1fr); } }
+.kn-naruszenie {
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia); overflow: hidden; display: flex; flex-direction: column;
+}
+.kn-naruszenie-scena {
+  position: relative; height: 148px; display: flex; align-items: center; justify-content: center;
+  background: var(--dn-powierzchnia-2); overflow: hidden;
+}
+.kn-naruszenie-scena::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top right, transparent calc(50% - 1px),
+              var(--dn-blad-tekst) calc(50% - 1px), var(--dn-blad-tekst) calc(50% + 1px), transparent calc(50% + 1px));
+  opacity: .55;
+}
+.kn-naruszenie-tresc { padding: var(--dn-od-3) var(--dn-od-4) var(--dn-od-4); display: flex; flex-direction: column; gap: var(--dn-od-2); flex: 1; }
+.kn-naruszenie-numer {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-blad-tekst);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+}
+.kn-naruszenie-tytul { font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-md); }
+.kn-naruszenie-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+.kn-naruszenie-opis b { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.kn-znak-poglad { width: 78px; height: 78px; }
+.kn-znak-poglad .kn-g-grot { fill: var(--dn-szary-900); }
+.kn-znak-poglad .kn-g-kropka { fill: var(--dn-sygnal-500); }
+[data-theme='dark'] .kn-znak-poglad .kn-g-grot { fill: var(--dn-szary-50); }
+[data-theme='dark'] .kn-znak-poglad .kn-g-kropka { fill: var(--dn-sygnal-400); }
+
+/* --- 12. Tabela kontrastów ---------------------------------------------- */
+.kn-probka {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 56px; height: 34px; border-radius: var(--dn-r-sm); border: 1px solid var(--dn-obrys);
+}
+.kn-probka svg { width: 28px; height: 28px; }
+.kn-ocena { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba); }
+.kn-ocena--tak { color: var(--dn-sukces-tekst); }
+.kn-ocena--nie { color: var(--dn-blad-tekst); }
+
+/* --- 13. Drabina wielkości ---------------------------------------------- */
+.kn-drabina { display: flex; align-items: flex-end; gap: var(--dn-od-5); flex-wrap: wrap; }
+.kn-drabina-poz { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-2); }
+.kn-drabina-etykieta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+.kn-drabina-poz[data-ponizej='1'] .kn-drabina-etykieta { color: var(--dn-ostrzezenie-tekst); }
+.kn-drabina-poz[data-ponizej='1'] svg { opacity: .35; }
+
+/* --- 14. Lista kontrolna ------------------------------------------------- */
+.kn-kontrola { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.kn-kontrola li { display: flex; align-items: flex-start; gap: var(--dn-od-3); padding: var(--dn-od-2) var(--dn-od-3); border-radius: var(--dn-r-sm); }
+.kn-kontrola li:hover { background: var(--dn-hover); }
+.kn-kontrola label { display: flex; align-items: flex-start; gap: var(--dn-od-3); cursor: pointer; font-size: var(--dn-fs-base); line-height: var(--dn-lh-bazowy); }
+.kn-kontrola input { margin-top: 2px; flex: none; }
+.kn-kontrola input:checked + span { color: var(--dn-tekst-3); text-decoration: line-through; }
+.kn-postep-kontroli { display: flex; align-items: center; gap: var(--dn-od-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
+
+/* --- 15. Kod i kopiowanie ------------------------------------------------ */
+.kn-kod {
+  display: block; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+  background: var(--dn-powierzchnia-2); border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm); padding: var(--dn-od-3); overflow-x: auto;
+  color: var(--dn-tekst); line-height: 1.7; white-space: pre;
+}
+.kn-kod-blok { position: relative; }
+.kn-kod-blok .dn-btn-ikona { position: absolute; top: 6px; right: 6px; }
+.kn-schemat {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); line-height: 1.55;
+  white-space: pre; overflow-x: auto; color: var(--dn-tekst-2);
+  background: var(--dn-powierzchnia-2); border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm); padding: var(--dn-od-4); margin: var(--dn-od-4) 0;
+}
+.kn-galeria-plikow { display: flex; flex-wrap: wrap; gap: var(--dn-od-2); }
+.kn-plik {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2); padding: 5px var(--dn-od-3);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm); background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2);
+  cursor: pointer; transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.kn-plik:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.kn-plik:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+
+/* --- 16. Pasek górny — makieta ------------------------------------------ */
+.kn-makieta-pasek {
+  display: flex; align-items: center; gap: var(--dn-od-3); height: var(--dn-wym-pasek);
+  padding: 0 var(--dn-od-3); background: var(--dn-rama); border-radius: var(--dn-r-md);
+  position: relative; overflow: hidden;
+}
+.kn-makieta-pasek::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(to bottom, var(--dn-rama-obrys) 0 1px, transparent 1px 4px);
+  opacity: .5;
+}
+.kn-makieta-logo { display: flex; align-items: center; gap: var(--dn-od-3); }
+.kn-makieta-logo svg { width: 28px; height: 28px; }
+.kn-makieta-logo .kn-g-grot { fill: var(--dn-rama-tekst); }
+.kn-makieta-logo .kn-g-kropka { fill: var(--dn-sygnal-400); }
+.kn-makieta-nazwa { font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-gruba); color: var(--dn-rama-tekst); font-size: var(--dn-fs-md); letter-spacing: var(--dn-ls-naglowek); }
+.kn-makieta-podnazwa { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: var(--dn-ls-mono-wersaliki); color: var(--dn-rama-tekst-2); }
+.kn-stopka-dok {
+  margin-top: var(--dn-od-12); padding-top: var(--dn-od-4); border-top: 1px solid var(--dn-obrys);
+  color: var(--dn-tekst-3); font-size: var(--dn-fs-sm); display: flex; justify-content: space-between; gap: var(--dn-od-4); flex-wrap: wrap;
+}
+.kn-toast-kopia {
+  position: fixed; left: 50%; bottom: var(--dn-od-6); transform: translateX(-50%) translateY(8px);
+  background: var(--dn-rama); color: var(--dn-rama-tekst); padding: var(--dn-od-2) var(--dn-od-4);
+  border-radius: var(--dn-r-pill); font-size: var(--dn-fs-sm); box-shadow: var(--dn-cien-3);
+  opacity: 0; pointer-events: none; z-index: var(--dn-z-powiadomienie);
+  transition: opacity var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+}
+.kn-toast-kopia[data-widoczny='1'] { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ PASEK GÓRNY ══════════════════════ -->
+<header class="dn-pasek kn-pasek">
+  <a class="dn-pasek-godlo" href="#tresc" aria-label="Danaco Console — przejdź do treści">
+    <svg class="kn-pasek-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+      <path class="kn-g-grot" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+      <path class="kn-g-grot" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+      <circle class="kn-g-kropka" cx="83" cy="63.5" r="6.5"/>
+    </svg>
+  </a>
+  <span class="dn-pasek-logotyp">DANACO <small>CONSOLE</small></span>
+  <span class="kn-pasek-tytul">Konstrukcja znaku</span>
+  <div class="dn-pasek-prawa">
+    <span class="kn-pasek-wersja">v2.0</span>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona
+            aria-label="Przełącz motyw jasny i ciemny" title="Przełącz motyw">
+      <svg class="kn-ik ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg class="kn-ik ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="kn-uklad">
+<!-- ══════════════════════ NAWIGACJA ══════════════════════ -->
+<nav class="kn-nawigacja" aria-label="Spis treści opracowania">
+  <p class="kn-nawigacja-tytul">Spis treści</p>
+  <ul class="kn-spis" id="kn-spis">
+    <li><a class="kn-spis-poz" href="#r01"><span class="kn-spis-numer">01</span> Moduł konstrukcyjny X</a></li>
+    <li><a class="kn-spis-poz" href="#r02"><span class="kn-spis-numer">02</span> Rysunek sygnetu</a></li>
+    <li><a class="kn-spis-poz" href="#r03"><span class="kn-spis-numer">03</span> Kąt i grubość ramienia</a></li>
+    <li><a class="kn-spis-poz" href="#r04"><span class="kn-spis-numer">04</span> Kropka i linia bazowa</a></li>
+    <li><a class="kn-spis-poz" href="#r05"><span class="kn-spis-numer">05</span> Wariant uproszczony</a></li>
+    <li><a class="kn-spis-poz" href="#r06"><span class="kn-spis-numer">06</span> Lockup poziomy</a></li>
+    <li><a class="kn-spis-poz" href="#r07"><span class="kn-spis-numer">07</span> Lockup pionowy</a></li>
+    <li><a class="kn-spis-poz" href="#r08"><span class="kn-spis-numer">08</span> Pole ochronne</a></li>
+    <li><a class="kn-spis-poz" href="#r09"><span class="kn-spis-numer">09</span> Wielkości minimalne</a></li>
+    <li><a class="kn-spis-poz" href="#r10"><span class="kn-spis-numer">10</span> Skalowanie</a></li>
+    <li><a class="kn-spis-poz" href="#r11"><span class="kn-spis-numer">11</span> Wyrównanie optyczne</a></li>
+    <li><a class="kn-spis-poz" href="#r12"><span class="kn-spis-numer">12</span> Znak w interfejsie</a></li>
+    <li><a class="kn-spis-poz" href="#r13"><span class="kn-spis-numer">13</span> Barwy i kontrasty</a></li>
+    <li><a class="kn-spis-poz" href="#r14"><span class="kn-spis-numer">14</span> Katalog naruszeń</a></li>
+    <li><a class="kn-spis-poz" href="#r15"><span class="kn-spis-numer">15</span> Reprodukcja</a></li>
+    <li><a class="kn-spis-poz" href="#r16"><span class="kn-spis-numer">16</span> Lista kontrolna</a></li>
+    <li><a class="kn-spis-poz" href="#r17"><span class="kn-spis-numer">17</span> Rysunki i pliki</a></li>
+  </ul>
+  <div class="kn-nawigacja-stopka">
+    <p><strong>Geometria zamknięta.</strong> Wszystkie liczby odczytane z plików
+    <code class="dn-kod--wiersz">zasoby/marka/logo/*.svg</code>.</p>
+    <p style="margin-top:8px">Wersja tekstowa: <code class="dn-kod--wiersz">konstrukcja-znaku.md</code></p>
+  </div>
+</nav>
+
+<!-- ══════════════════════ TREŚĆ ══════════════════════ -->
+<main id="tresc">
+
+<div class="kn-metryka">
+  <div class="kn-metryka-znak">
+    <svg viewBox="0 0 225 96" role="img" aria-label="Danaco Console — lockup poziomy">
+      <g class="kn-g-lockup">
+        <path class="kn-atrament" transform="translate(0,16) scale(0.6667)" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+        <path class="kn-atrament" transform="translate(0,16) scale(0.6667)" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+        <circle class="kn-kropka-f" cx="55.33" cy="58.33" r="4.33"/>
+      </g>
+      <text class="kn-atrament" x="76" y="51" font-family="'Space Grotesk','IBM Plex Sans',sans-serif" font-size="34" font-weight="700" letter-spacing="-0.3">DANACO</text>
+      <text class="kn-atrament" x="76" y="67" font-family="'IBM Plex Mono',monospace" font-size="11.5" font-weight="500" letter-spacing="4.1">CONSOLE</text>
+      <circle class="kn-kropka-f" cx="158" cy="63" r="3.4"/>
+    </svg>
+    <div>
+      <h1 class="kn-metryka-tytul">Konstrukcja znaku</h1>
+      <p class="kn-metryka-podtytul">Rysunki techniczne i zasady stosowania</p>
+    </div>
+  </div>
+  <div class="kn-tabela-obudowa">
+    <table class="dn-tabela kn-metryka-tabela">
+      <tbody>
+        <tr><th scope="row">Produkt</th><td>Danaco Console — AI Operating Environment</td></tr>
+        <tr><th scope="row">Producent</th><td>Danaco Holding Group Sp. z o.o. · twórca: Dariusz Naharnowicz</td></tr>
+        <tr><th scope="row">Wersja · status</th><td>v2.0 · deweloperski · <strong>geometria zamknięta</strong></td></tr>
+        <tr><th scope="row">Data</th><td>2026-08-14</td></tr>
+        <tr><th scope="row">Odbiorcy</th><td>projektant wizualny · wdrożeniowiec front-end · dostawca materiałów firmowych · drukarnia · zakład grawerski i hafciarski</td></tr>
+        <tr><th scope="row">Źródła wiążące</th><td>kontrakt systemu projektowego · kierunek systemu projektowego · pliki <code class="dn-kod--wiersz">zasoby/marka/logo/*.svg</code> · <code class="dn-kod--wiersz">zetony.css</code> · <code class="dn-kod--wiersz">kontrasty.json</code></td></tr>
+        <tr><th scope="row">Rysunki źródłowe</th><td><code class="dn-kod--wiersz">03-marka/konstrukcja/rys-01…14.svg</code> + <code class="dn-kod--wiersz">konstrukcja/png/*.png</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ─────────── 01 · MODUŁ X ─────────── -->
+<section class="kn-rozdzial" id="r01" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">01</span><h2>Moduł konstrukcyjny X</h2></div>
+  <p class="kn-lid">Modułem znaku jest <strong>wysokość grotu</strong>. W kadrze sygnetu
+  96 × 96 j. wynosi <strong>44 j.</strong> Wszystkie pozostałe wymiary są z niego wyprowadzone.
+  Moduł jest przywiązany do <em>farby</em>, nie do kadru pliku — dzięki temu da się go zmierzyć
+  na wydruku, na tabliczce i na zdjęciu szyldu, bez dostępu do pliku źródłowego.
+  <span class="kn-znacznik kn-znacznik--zamkniete">ZAMKNIĘTE</span></p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek">
+        <span class="kn-panel-tytul">Suwak modułu X</span>
+        <span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto">wszystkie wymiary przeliczane na żywo</span>
+      </div>
+      <div class="kn-panel-cialo">
+        <div class="kn-scena kn-scena--linie" style="min-height:260px">
+          <svg id="kn-x-podglad" viewBox="0 0 96 96" width="200" height="200" role="img" aria-label="Sygnet w skali zależnej od modułu X">
+            <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+            <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+            <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+          </svg>
+          <span class="kn-miara" id="kn-x-miara">X = 44 j.</span>
+        </div>
+        <div class="kn-sterownik" style="margin-top:12px">
+          <label class="kn-sterownik-etykieta" for="kn-suwak-x">Moduł X (jednostki)</label>
+          <input class="dn-suwak" type="range" id="kn-suwak-x" min="16" max="160" step="1" value="44"
+                 aria-describedby="kn-x-opis">
+          <output class="kn-sterownik-wartosc" id="kn-x-wartosc" for="kn-suwak-x">44 j.</output>
+        </div>
+        <p class="dn-pole-opis" id="kn-x-opis">Suwak zmienia moduł X. Kształt znaku pozostaje ten sam —
+        zmieniają się wyłącznie wartości bezwzględne w tabeli obok. Wartość zatwierdzona to <strong>44 j.</strong></p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="dn-btn dn-btn--sm" type="button" data-x="44">44 — sygnet</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-x="60">60 — uproszczony</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-x="29.333">29,33 — lockup poziomy</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Wymiary wyprowadzone</span>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" style="margin-left:auto" data-kopiuj-tabela="kn-tabela-x">
+          <svg class="kn-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          Kopiuj tabelę
+        </button>
+      </div>
+      <div class="kn-tabela-obudowa" style="border:0;border-radius:0">
+        <table class="dn-tabela" id="kn-tabela-x">
+          <thead><tr><th scope="col">Wielkość</th><th scope="col" class="kn-liczba">Jednostki</th><th scope="col" class="kn-liczba">W module X</th></tr></thead>
+          <tbody>
+            <tr><td><strong>X — wysokość grotu</strong></td><td class="kn-liczba" data-wsp="1">44,000</td><td class="kn-liczba kn-x">1,000 X</td></tr>
+            <tr><td>szerokość grotu</td><td class="kn-liczba" data-wsp="0.727273">32,000</td><td class="kn-liczba kn-x">0,727 X</td></tr>
+            <tr><td>grubość ramienia — poziomo</td><td class="kn-liczba" data-wsp="0.272727">12,000</td><td class="kn-liczba kn-x">0,273 X</td></tr>
+            <tr><td><strong>grubość ramienia — prostopadle</strong></td><td class="kn-liczba" data-wsp="0.201802">8,879</td><td class="kn-liczba kn-x">0,202 X</td></tr>
+            <tr><td>długość osi ramienia</td><td class="kn-liczba" data-wsp="0.675730">29,732</td><td class="kn-liczba kn-x">0,676 X</td></tr>
+            <tr><td>rozstaw grotów</td><td class="kn-liczba" data-wsp="0.636364">28,000</td><td class="kn-liczba kn-x">0,636 X</td></tr>
+            <tr><td>prześwit między grotami</td><td class="kn-liczba" data-wsp="0.363636">16,000</td><td class="kn-liczba kn-x">0,364 X</td></tr>
+            <tr><td>średnica kropki</td><td class="kn-liczba" data-wsp="0.295455">13,000</td><td class="kn-liczba kn-x">0,295 X</td></tr>
+            <tr><td>prześwit grot → kropka</td><td class="kn-liczba" data-wsp="0.102273">4,500</td><td class="kn-liczba kn-x">0,102 X</td></tr>
+            <tr><td>zejście kropki poniżej osi</td><td class="kn-liczba" data-wsp="0.352273">15,500</td><td class="kn-liczba kn-x">0,352 X</td></tr>
+            <tr><td>szerokość pola farby</td><td class="kn-liczba" data-wsp="1.761364">77,500</td><td class="kn-liczba kn-x">1,761 X</td></tr>
+            <tr><td><strong>pole ochronne minimalne</strong></td><td class="kn-liczba" data-wsp="0.5">22,000</td><td class="kn-liczba kn-x">0,500 X</td></tr>
+            <tr><td>pole ochronne ekspozycyjne</td><td class="kn-liczba" data-wsp="1">44,000</td><td class="kn-liczba kn-x">1,000 X</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-notka">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <div><strong>Czego z X nie wolno wyprowadzać.</strong> X opisuje znak, nie interfejs.
+    Przestrzeń interfejsu opiera się na własnej jednostce <strong>4 px</strong> (<code class="dn-kod--wiersz">--dn-od-1</code>).
+    W pasku 48 px godło ma <strong>28 px</strong> (7 × 4 px), a nie „0,64 X".</div>
+  </div>
+</section>
+
+<!-- ─────────── 02 · RYSUNEK SYGNETU ─────────── -->
+<section class="kn-rozdzial" id="r02" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">02</span><h2>Rysunek konstrukcyjny sygnetu</h2></div>
+  <p class="kn-lid">Kadr <strong>96 × 96 j.</strong>, podziałka pomocnicza 4 j., podziałka główna 12 j.
+  Kadr jest czterokrotnością siatki ikon interfejsu (24 × 24) i dwudziestoczterokrotnością jednostki
+  przestrzeni (4 px) — znak, ikonografia i układ leżą na tej samej siatce.
+  Włącz i wyłącz warstwy przyciskami w pasku panelu.</p>
+
+  <div class="kn-panel" data-rysunek data-w-siatka="1" data-w-osie="1" data-w-wymiary="1" data-w-pole="0" data-w-znak="1">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Rysunek 01–02 · sygnet</span>
+      <div class="kn-warstwy" role="group" aria-label="Warstwy rysunku">
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="siatka" checked> siatka</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="osie" checked> osie</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="wymiary" checked> wymiary</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="pole"> pole ochronne</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="znak" checked> sam znak</label>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" data-tylko-znak>Tylko znak</button>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" data-wszystkie-warstwy>Wszystko</button>
+      </div>
+    </div>
+    <div class="kn-panel-cialo">
+      <svg class="kn-rysunek" viewBox="-58 -58 212 212" role="img"
+           aria-label="Rysunek konstrukcyjny sygnetu: siatka 96 na 96, osie, linie wymiarowe, pole ochronne">
+        <defs>
+          <pattern id="kn-p4" width="4" height="4" patternUnits="userSpaceOnUse"><path class="kn-siatka-drobna" d="M4 0V4M0 4H4"/></pattern>
+          <pattern id="kn-p12" width="12" height="12" patternUnits="userSpaceOnUse"><path class="kn-siatka-gruba" d="M12 0V12M0 12H12"/></pattern>
+          <marker id="kn-sa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" style="fill:var(--dn-tekst-2)"/></marker>
+          <marker id="kn-sb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" style="fill:var(--dn-sygnal)"/></marker>
+        </defs>
+
+        <g class="w-pole">
+          <rect class="kn-pole-eksp" x="-44" y="-44" width="184" height="184"/>
+          <rect class="kn-pole-min" x="-22" y="-22" width="140" height="140" fill="none"/>
+          <text class="kn-etykieta-syg" x="-44" y="-47">pole ekspozycyjne 1X = 44 j. (zalecane)</text>
+          <text class="kn-etykieta-syg" x="-21" y="-24">pole minimalne ½X = 22 j. (obowiązkowe)</text>
+        </g>
+
+        <g class="w-siatka">
+          <rect x="0" y="0" width="96" height="96" fill="url(#kn-p4)"/>
+          <rect x="0" y="0" width="96" height="96" fill="url(#kn-p12)"/>
+          <rect class="kn-kadr" x="0" y="0" width="96" height="96"/>
+          <text class="kn-etykieta" x="0" y="-3">kadr 96 × 96 j.</text>
+        </g>
+
+        <g class="w-osie">
+          <path class="kn-os" d="M-30 48H126"/>
+          <path class="kn-os" d="M48 -30V126"/>
+          <path class="kn-bazowa" d="M-34 70H130"/>
+          <path class="kn-wynos" d="M-34 26H130"/>
+          <text class="kn-etykieta-syg" x="128" y="47">oś pozioma y = 48</text>
+          <text class="kn-etykieta-mocna" x="132" y="71.4">LINIA BAZOWA y = 70</text>
+          <text class="kn-etykieta" x="132" y="27.4">linia górna y = 26</text>
+          <text class="kn-etykieta-syg" x="48" y="-33" text-anchor="middle">oś pionowa x = 48</text>
+        </g>
+
+        <g class="w-znak">
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+        </g>
+
+        <g class="w-wymiary">
+          <path class="kn-wym-syg" d="M-8 26V70" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <path class="kn-wynos" d="M12 26H-12M12 70H-12"/>
+          <text class="kn-etykieta-syg" x="-11" y="46" text-anchor="end">X = 44</text>
+          <text class="kn-etykieta-syg" x="-11" y="51" text-anchor="end">1,000 X</text>
+
+          <path class="kn-wym-syg" d="M12 -12H89.5" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <path class="kn-wynos" d="M12 26V-14M89.5 57V-14"/>
+          <text class="kn-etykieta-syg" x="50" y="-15" text-anchor="middle">pole farby 77,5 = 1,761 X</text>
+
+          <path class="kn-wym" d="M12 16H40" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="26" y="14" text-anchor="middle">rozstaw 28 = 0,636 X</text>
+          <path class="kn-wym" d="M24 22H40" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="32" y="20.5" text-anchor="middle">prześwit 16 = 0,364 X</text>
+
+          <path class="kn-wym" d="M12 74H24" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="18" y="78" text-anchor="middle">12</text>
+          <path class="kn-wym" d="M12 84H44" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <path class="kn-wynos" d="M44 48V86M12 70V86"/>
+          <text class="kn-etykieta" x="28" y="88.5" text-anchor="middle">szerokość grotu 32 = 0,727 X</text>
+
+          <path class="kn-wym-syg" d="M76.5 84H89.5" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <path class="kn-wynos" d="M76.5 63.5V86M89.5 63.5V86"/>
+          <text class="kn-etykieta-syg" x="83" y="92" text-anchor="middle">kropka 13</text>
+          <text class="kn-etykieta-syg" x="83" y="96.5" text-anchor="middle">0,295 X</text>
+
+          <path class="kn-wym-syg" d="M72 34H76.5" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <path class="kn-wynos" d="M72 48V32M76.5 57V32"/>
+          <text class="kn-etykieta-syg" x="88" y="33" text-anchor="middle">4,5 = 0,102 X</text>
+
+          <path class="kn-wym-syg" d="M104 48V63.5" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <path class="kn-wynos" d="M83 63.5H106M72 48H106"/>
+          <text class="kn-etykieta-syg" x="108" y="57">15,5 = 0,352 X</text>
+
+          <g class="kn-punkt-grupa">
+            <circle class="kn-punkt" cx="12" cy="26" r="1.5"/><text class="kn-etykieta-mocna" x="8.4" y="24">A</text>
+            <circle class="kn-punkt" cx="24" cy="26" r="1.5"/><text class="kn-etykieta-mocna" x="25" y="24">B</text>
+            <circle class="kn-punkt" cx="44" cy="48" r="1.5"/><text class="kn-etykieta-mocna" x="45.5" y="45">C</text>
+            <circle class="kn-punkt" cx="24" cy="70" r="1.5"/><text class="kn-etykieta-mocna" x="25" y="76">D</text>
+            <circle class="kn-punkt" cx="12" cy="70" r="1.5"/><text class="kn-etykieta-mocna" x="8.4" y="76">E</text>
+            <circle class="kn-punkt" cx="32" cy="48" r="1.5"/><text class="kn-etykieta-mocna" x="30" y="45" text-anchor="end">F</text>
+            <circle class="kn-punkt" cx="83" cy="63.5" r="1.5"/><text class="kn-etykieta-syg" x="83" y="61">S</text>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="kn-panel-stopka">Rysunek źródłowy: <code class="dn-kod--wiersz">konstrukcja/rys-01-siatka-bazowa.svg</code> ·
+      <code class="dn-kod--wiersz">konstrukcja/rys-02-wymiarowanie.svg</code></div>
+  </div>
+
+  <div class="kn-siatka-2" style="margin-top:16px">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Ścieżki źródłowe</span>
+        <button class="dn-btn-ikona" type="button" style="margin-left:auto" data-kopiuj="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z&#10;M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z&#10;cx=83 cy=63.5 r=6.5" aria-label="Kopiuj ścieżki znaku">
+          <svg class="kn-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        </button>
+      </div>
+      <div class="kn-panel-cialo">
+        <code class="kn-kod">grot 1   M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z
+grot 2   M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z
+kropka   cx="83" cy="63.5" r="6.5"</code>
+        <p class="dn-pole-opis" style="margin-top:8px">Ścieżki zamknięte, wyłącznie odcinki proste,
+        zero krzywych i zero zaokrągleń narożników. Kropka jest <strong>okręgiem</strong>, nie ścieżką —
+        pozostaje idealnie okrągła po każdej transformacji i po konwersji na krzywe w programach DTP.</p>
+      </div>
+    </div>
+
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Punkty konstrukcyjne</span></div>
+      <div class="kn-tabela-obudowa" style="border:0;border-radius:0">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Punkt</th><th scope="col" class="kn-liczba">Grot 1</th><th scope="col" class="kn-liczba">Grot 2 (+28)</th><th scope="col">Rola</th></tr></thead>
+          <tbody>
+            <tr><td><strong>A</strong></td><td class="kn-liczba">12 · 26</td><td class="kn-liczba">40 · 26</td><td>narożnik górny lewy</td></tr>
+            <tr><td><strong>B</strong></td><td class="kn-liczba">24 · 26</td><td class="kn-liczba">52 · 26</td><td>początek ramienia górnego</td></tr>
+            <tr><td><strong>C</strong></td><td class="kn-liczba">44 · 48</td><td class="kn-liczba">72 · 48</td><td><strong>ostrze zewnętrzne</strong></td></tr>
+            <tr><td><strong>D</strong></td><td class="kn-liczba">24 · 70</td><td class="kn-liczba">52 · 70</td><td>koniec ramienia dolnego</td></tr>
+            <tr><td><strong>E</strong></td><td class="kn-liczba">12 · 70</td><td class="kn-liczba">40 · 70</td><td>narożnik dolny lewy</td></tr>
+            <tr><td><strong>F</strong></td><td class="kn-liczba">32 · 48</td><td class="kn-liczba">60 · 48</td><td><strong>wierzchołek wewnętrzny</strong></td></tr>
+            <tr><td><strong>S</strong></td><td class="kn-liczba" colspan="2">83 · 63,5 · r 6,5</td><td>kropka sygnału</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kn-panel-stopka">Grot 2 to <strong>czysta translacja</strong> grotu 1 o +28 j. w osi x —
+        zero skalowania, zero obrotu, zero korekt.</div>
+    </div>
+  </div>
+
+  <div class="kn-notka kn-notka--sukces">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <div><strong>Kontrola rekonstrukcji.</strong> 1) Dolne krawędzie obu grotów <em>i</em> kropki leżą na <code class="dn-kod--wiersz">y = 70</code>.
+    2) Prześwit 16 j. jest stały na każdej wysokości. 3) Ostrza <code class="dn-kod--wiersz">C</code> i <code class="dn-kod--wiersz">C′</code> leżą dokładnie na osi poziomej.
+    4) Odległość od ostrza <code class="dn-kod--wiersz">C′</code> (72) do krawędzi kropki (76,5) wynosi 4,5 j.</div>
+  </div>
+</section>
+
+<!-- ─────────── 03 · KĄT I RAMIĘ ─────────── -->
+<section class="kn-rozdzial" id="r03" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">03</span><h2>Kąt rozwarcia i rzeczywista grubość ramienia</h2></div>
+  <p class="kn-lid">Kąt rozwarcia grotu wynosi <strong>95,45°</strong> — jest rozwarty o 5,45° względem kąta prostego.
+  To nie jest subtelność proporcji, tylko nośnik znaczenia: kąt ostry czyta się jako strzałka nawigacji,
+  kąt prosty jako narożnik ramki. <span class="kn-znacznik kn-znacznik--zamkniete">ZAMKNIĘTE</span></p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Rysunek 03 · grot powiększony</span></div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="2 14 112 68" role="img" aria-label="Grot w powiększeniu z kątem rozwarcia i grubością ramienia">
+          <defs>
+            <marker id="kn-sc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 1L9 5L0 9z" style="fill:var(--dn-blad-tekst)"/></marker>
+          </defs>
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z" opacity=".12"/>
+          <path class="kn-obrys-znak" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-os" d="M18 26L44 48L18 70"/>
+          <path class="kn-wynos" d="M10 48H48"/>
+          <path d="M37.27 40.60A10 10 0 0 0 37.27 55.40" fill="none" style="stroke:var(--dn-sygnal);stroke-width:.6"/>
+          <text class="kn-etykieta-syg" x="46" y="42" font-size="4.4">95,45°</text>
+          <text class="kn-etykieta-syg" x="46" y="47">kąt rozwarcia grotu</text>
+          <path d="M22.09 37.10L28.66 31.13" fill="none" style="stroke:var(--dn-blad-tekst);stroke-width:.8"/>
+          <circle cx="22.09" cy="37.10" r="1" style="fill:var(--dn-blad-tekst)"/>
+          <circle cx="28.66" cy="31.13" r="1" style="fill:var(--dn-blad-tekst)"/>
+          <path class="kn-wynos" d="M28.66 31.13L46 24" style="stroke:var(--dn-blad-tekst)"/>
+          <text x="47" y="23" font-size="3.4" style="fill:var(--dn-blad-tekst);font-weight:600;font-family:var(--dn-ff-mono)">8,879 j. = 0,202 X</text>
+          <text x="47" y="28" font-size="3.1" style="fill:var(--dn-blad-tekst);font-family:var(--dn-ff-mono)">grubość prostopadła do osi</text>
+          <path class="kn-wym" d="M12 33.5H24" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="18" y="32" text-anchor="middle">12 j. poziomo</text>
+          <circle class="kn-punkt" cx="44" cy="48" r="1.4"/>
+          <text class="kn-etykieta-mocna" x="46" y="53">C (44 · 48)</text>
+          <circle class="kn-punkt" cx="32" cy="48" r="1.4"/>
+          <text class="kn-etykieta" x="30" y="52" text-anchor="end">F (32 · 48)</text>
+        </svg>
+      </div>
+      <div class="kn-panel-stopka">Rysunek źródłowy: <code class="dn-kod--wiersz">konstrukcja/rys-03-katy-ramienia.svg</code></div>
+    </div>
+
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Wyprowadzenie</span></div>
+        <div class="kn-panel-cialo">
+          <code class="kn-kod">wektor ramienia        (Δx, Δy) = (20, 22)
+długość osi ramienia   L = √(20² + 22²) = 29,7321
+współczynnik rzutu     22 / 29,7321 = 0,73993
+grubość prostopadła    12 × 0,73993 = 8,8793 j.
+                       = 0,2018 X</code>
+        </div>
+      </div>
+      <div class="kn-notka kn-notka--ostrzezenie" style="margin-top:16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div><strong>Progi technologiczne liczy się od 8,879 j., nie od 12 j.</strong>
+        Farba, wiązka lasera i piksel „widzą" kreskę prostopadle do jej osi. Liczenie od grubości
+        poziomej zawyża rzeczywistą kreskę o <strong>35 %</strong> i prowadzi do zamówień, w których
+        znak teoretycznie mieści się w progu, a w praktyce zalewa się przy pierwszym wydruku.
+        <span class="kn-znacznik kn-znacznik--regula">REGUŁA</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="kn-podtytul">Jak zmienia się znaczenie wraz z kątem</p>
+  <div class="kn-tabela-obudowa">
+    <table class="dn-tabela">
+      <thead><tr><th scope="col">Kąt</th><th scope="col">Jak się czyta</th><th scope="col">Ocena</th></tr></thead>
+      <tbody>
+        <tr><td class="kn-liczba">poniżej 90°</td><td>strzałka nawigacji — „idź dalej", „następny"</td><td><span class="kn-ocena kn-ocena--nie">obcy znak</span></td></tr>
+        <tr><td class="kn-liczba">dokładnie 90°</td><td>narożnik ramki — element techniczny</td><td><span class="kn-ocena kn-ocena--nie">obcy znak</span></td></tr>
+        <tr aria-selected="true"><td class="kn-liczba"><strong>95,45°</strong></td><td><strong>grot promptu w ruchu — gest przekazania</strong></td><td><span class="kn-ocena kn-ocena--tak">poprawny</span></td></tr>
+        <tr><td class="kn-liczba">powyżej 110°</td><td>daszek, akcent — traci kierunek</td><td><span class="kn-ocena kn-ocena--nie">obcy znak</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ─────────── 04 · KROPKA I LINIA BAZOWA ─────────── -->
+<section class="kn-rozdzial" id="r04" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">04</span><h2>Kropka sygnału i linia bazowa</h2></div>
+  <p class="kn-lid">Znak czyta się <strong>»».</strong> — jak zapis, nie jak schemat. W zapisie kropka stoi
+  na linii pisma, dlatego dolna krawędź kropki (<code class="dn-kod--wiersz">y = 70</code>) jest wspólna z dolnymi
+  krawędziami obu grotów. Środek kropki leży <strong>15,5 j. poniżej osi grotów</strong>.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Porównanie położeń kropki</span>
+        <div class="kn-warstwy">
+          <button class="dn-btn dn-btn--sm" type="button" data-kropka="bazowa" aria-pressed="true">na linii bazowej</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-kropka="os" aria-pressed="false">na osi grotów</button>
+        </div>
+      </div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-6 12 118 78" role="img" aria-label="Sygnet z kropką na linii bazowej lub na osi grotów">
+          <path class="kn-bazowa" d="M-4 70H112"/>
+          <path class="kn-os" d="M-4 48H112"/>
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" id="kn-kropka-ruchoma" cx="83" cy="63.5" r="6.5" style="transition:cy var(--dn-czas-3) var(--dn-ease)"/>
+          <text class="kn-etykieta-mocna" x="96" y="71.4">y = 70</text>
+          <text class="kn-etykieta-syg" x="96" y="47">y = 48</text>
+        </svg>
+        <p class="dn-pole-opis" id="kn-kropka-opis" role="status" style="margin-top:8px">
+          <strong>Na linii bazowej.</strong> Znak czyta się jako zdanie: dwa człony i zamknięcie.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Udział kropki w polu farby</span></div>
+        <div class="kn-panel-cialo">
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">grot 1 + grot 2</span><span class="kn-wynik-liczba">1 056,00 j² · 88,8 %</span></div>
+          <div class="kn-wynik kn-wynik--glowny"><span class="kn-wynik-nazwa">kropka sygnału</span><span class="kn-wynik-liczba">132,73 j² · 11,2 %</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">razem pole farby</span><span class="kn-wynik-liczba">1 188,73 j² · 100 %</span></div>
+          <p class="dn-pole-opis" style="margin-top:10px">Kropka zajmuje jedenaście procent pola farby,
+          a niesie <strong>jedyną barwę w całym systemie</strong>. Celowa asymetria: barwa jest
+          zarezerwowana dla znaczenia, więc dostaje najmniejszą powierzchnię i największą uwagę.</p>
+        </div>
+      </div>
+      <div class="kn-notka kn-notka--blad" style="margin-top:16px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <div><strong>Kropka w godle nigdy nie pulsuje.</strong> Tętno (<code class="dn-kod--wiersz">--dn-czas-tetno</code> 2,4 s)
+        znaczy „tu biegnie praca". Pulsujące godło twierdziłoby, że pracuje marka — i odbierałoby tętnu
+        wartość informacyjną tam, gdzie ono coś znaczy. Jedyny wyjątek: rdzeń Always On Display,
+        gdzie sygnet jest komponentem wskaźnika, nie elementem tożsamości.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 05 · WARIANT UPROSZCZONY ─────────── -->
+<section class="kn-rozdzial" id="r05" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">05</span><h2>Wariant uproszczony</h2></div>
+  <p class="kn-lid">Wariant uproszczony <strong>nie jest wycinkiem wariantu pełnego</strong>. Jest narysowany osobno:
+  ma większy moduł X w tym samym kadrze, grubszą kreskę i kąt ostrzejszy o 3,51°. Proporcje wewnętrzne
+  wyrażone w module X różnią się o mniej niż 2,5 % — to ten sam alfabet form.</p>
+
+  <div class="kn-siatka-2">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Sygnet pełny · X = 44 j.</span>
+        <span class="dn-plakietka dn-plakietka--informacja" style="margin-left:auto">od 24 px w górę</span></div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-8 -8 112 112" role="img" aria-label="Sygnet pełny na siatce">
+          <rect x="0" y="0" width="96" height="96" fill="url(#kn-p12)"/>
+          <rect class="kn-kadr" x="0" y="0" width="96" height="96"/>
+          <rect class="kn-wym-syg" x="12" y="26" width="77.5" height="44" fill="none" stroke-dasharray="3 2"/>
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+          <text class="kn-etykieta-syg" x="50.75" y="24" text-anchor="middle">pole farby 77,5 × 44 · 1,761 : 1</text>
+        </svg>
+      </div>
+    </div>
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Sygnet uproszczony · X = 60 j.</span>
+        <span class="dn-plakietka dn-plakietka--ostrzezenie" style="margin-left:auto">16 – 24 px</span></div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-8 -8 112 112" role="img" aria-label="Sygnet uproszczony na siatce">
+          <rect x="0" y="0" width="96" height="96" fill="url(#kn-p12)"/>
+          <rect class="kn-kadr" x="0" y="0" width="96" height="96"/>
+          <rect class="kn-wym-syg" x="18" y="18" width="70" height="60" fill="none" stroke-dasharray="3 2"/>
+          <path class="kn-atrament" d="M18 18H35L64 48L35 78H18L45 48Z"/>
+          <circle class="kn-kropka-f" cx="79" cy="69" r="9"/>
+          <text class="kn-etykieta-syg" x="53" y="15" text-anchor="middle">pole farby 70 × 60 · 1,167 : 1</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-tabela-obudowa" style="margin-top:16px">
+    <table class="dn-tabela">
+      <thead><tr><th scope="col">Parametr</th><th scope="col" class="kn-liczba">Pełny</th><th scope="col" class="kn-liczba">Uproszczony</th><th scope="col" class="kn-liczba">Różnica w module X</th></tr></thead>
+      <tbody>
+        <tr><td>moduł X (wysokość grotu)</td><td class="kn-liczba">44,000 j.</td><td class="kn-liczba">60,000 j.</td><td class="kn-liczba">—</td></tr>
+        <tr><td>grubość ramienia prostopadle</td><td class="kn-liczba">8,879 j. · 0,2018 X</td><td class="kn-liczba">12,223 j. · 0,2037 X</td><td class="kn-liczba kn-x">+0,9 %</td></tr>
+        <tr><td>średnica kropki</td><td class="kn-liczba">13,0 j. · 0,2955 X</td><td class="kn-liczba">18,0 j. · 0,3000 X</td><td class="kn-liczba kn-x">+1,5 %</td></tr>
+        <tr><td>prześwit grot → kropka</td><td class="kn-liczba">4,5 j. · 0,1023 X</td><td class="kn-liczba">6,0 j. · 0,1000 X</td><td class="kn-liczba kn-x">−2,2 %</td></tr>
+        <tr><td><strong>kąt rozwarcia</strong></td><td class="kn-liczba"><strong>95,45°</strong></td><td class="kn-liczba"><strong>91,94°</strong></td><td class="kn-liczba" style="color:var(--dn-blad-tekst)">−3,51°</td></tr>
+        <tr><td>kreska przy renderowaniu 16 px</td><td class="kn-liczba">1,48 px <span class="kn-ocena kn-ocena--nie">✗</span></td><td class="kn-liczba">2,04 px <span class="kn-ocena kn-ocena--tak">✓</span></td><td class="kn-liczba">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="kn-notka kn-notka--blad">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <div>Nie wolno generować wariantu uproszczonego przez wycięcie grotu z <code class="dn-kod--wiersz">sygnet.svg</code>.
+    Obowiązuje plik <code class="dn-kod--wiersz">sygnet-uproszczony.svg</code>.
+    <span class="kn-znacznik kn-znacznik--regula">REGUŁA</span></div>
+  </div>
+</section>
+
+<!-- ─────────── 06 · LOCKUP POZIOMY ─────────── -->
+<section class="kn-rozdzial" id="r06" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">06</span><h2>Konstrukcja lockupu poziomego</h2></div>
+  <p class="kn-lid">Kadr <strong>225 × 96 j.</strong> Sygnet występuje w skali <strong>0,6667</strong>,
+  więc moduł wynosi <strong>X = 29,333 j.</strong> Odstęp między sygnetem a logotypem to
+  <strong>½ wysokości wersalika DANACO</strong> — reguła odporna na przeskalowanie sygnetu.</p>
+
+  <div class="kn-panel" data-rysunek data-w-siatka="1" data-w-osie="1" data-w-wymiary="1" data-w-pole="0" data-w-znak="1">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Rysunek 06 · lockup poziomy</span>
+      <div class="kn-warstwy" role="group" aria-label="Warstwy rysunku lockupu poziomego">
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="siatka" checked> siatka</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="osie" checked> osie</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="wymiary" checked> wymiary</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="pole"> pole ochronne</label>
+        <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="znak" checked> sam znak</label>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" data-tylko-znak>Tylko znak</button>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" data-wszystkie-warstwy>Wszystko</button>
+      </div>
+    </div>
+    <div class="kn-panel-cialo">
+      <svg class="kn-rysunek" viewBox="-42 -46 310 190" role="img"
+           aria-label="Rysunek konstrukcyjny lockupu poziomego: sygnet, DANACO, CONSOLE, linie bazowe, odstępy">
+        <g class="w-pole">
+          <rect class="kn-pole-eksp" x="-29.33" y="-29.33" width="283.66" height="154.66"/>
+          <rect class="kn-pole-min" x="-14.67" y="-14.67" width="254.34" height="125.34" fill="none"/>
+          <text class="kn-etykieta-syg" x="-29.33" y="-32">pole ekspozycyjne 1X = 29,33 j.</text>
+        </g>
+        <g class="w-siatka">
+          <rect x="0" y="0" width="225" height="96" fill="url(#kn-p12)"/>
+          <rect class="kn-kadr" x="0" y="0" width="225" height="96"/>
+          <text class="kn-etykieta" x="0" y="-3">kadr 225 × 96 j.</text>
+        </g>
+        <g class="w-znak">
+          <path class="kn-atrament" transform="translate(0,16) scale(0.6667)" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" transform="translate(0,16) scale(0.6667)" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="55.33" cy="58.33" r="4.33"/>
+          <text class="kn-atrament" x="76" y="51" font-family="'Space Grotesk','IBM Plex Sans',sans-serif" font-size="34" font-weight="700" letter-spacing="-0.3">DANACO</text>
+          <text class="kn-atrament" x="76" y="67" font-family="'IBM Plex Mono',monospace" font-size="12.5" font-weight="500" letter-spacing="3.75">CONSOLE</text>
+          <circle class="kn-kropka-f" cx="158" cy="63" r="3.4"/>
+        </g>
+        <g class="w-osie">
+          <path class="kn-os" d="M-8 48H74"/>
+          <path class="kn-bazowa" d="M-8 51H244" style="stroke:var(--dn-ostrzezenie-tekst)"/>
+          <path class="kn-bazowa" d="M-8 67H244" style="stroke:var(--dn-sukces-tekst)"/>
+          <text class="kn-etykieta-syg" x="4" y="45">oś grotów y = 48</text>
+          <text class="kn-etykieta" x="246" y="52" style="fill:var(--dn-ostrzezenie-tekst)">linia bazowa DANACO y = 51</text>
+          <text class="kn-etykieta" x="246" y="68" style="fill:var(--dn-sukces-tekst)">linia bazowa CONSOLE y = 67</text>
+        </g>
+        <g class="w-wymiary">
+          <rect class="kn-wym-syg" x="8" y="33.25" width="51.75" height="29.5" fill="none" stroke-dasharray="3 2"/>
+          <rect x="77.5" y="27.2" width="132.4" height="23.8" fill="none" stroke-dasharray="3 2" style="stroke:var(--dn-ostrzezenie-tekst);stroke-width:.5"/>
+          <rect x="76.6" y="58.28" width="73.5" height="8.72" fill="none" stroke-dasharray="3 2" style="stroke:var(--dn-sukces-tekst);stroke-width:.5"/>
+          <path class="kn-wym-syg" d="M-4 33.25V62.75" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <text class="kn-etykieta-syg" x="-6" y="49" text-anchor="end">X = 29,33</text>
+          <path class="kn-wym" d="M64 106H76" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <path class="kn-wynos" d="M64 63V108M76 51V108"/>
+          <text class="kn-etykieta" x="70" y="113" text-anchor="middle">12 j. = 0,409 X = ½ wersalika DANACO</text>
+          <path class="kn-wym" d="M232 51V67" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="234" y="61">16 j. interlinia</text>
+          <path class="kn-wym" d="M216 27.2V51" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="218" y="40">23,8</text>
+          <circle cx="158" cy="63" r="7" fill="none" stroke-dasharray="2 2" style="stroke:var(--dn-sygnal);stroke-width:.5"/>
+          <path class="kn-wynos" d="M163 68L176 86"/>
+          <text class="kn-etykieta-syg" x="177" y="88">kropka na osi wersalika CONSOLE</text>
+        </g>
+      </svg>
+    </div>
+    <div class="kn-panel-stopka">Obwiednia farby: x 8,0 … 209,9 j. · y 26,6 … 67,3 j. — kadr 225 × 96 zawiera margines techniczny.</div>
+  </div>
+
+  <div class="kn-siatka-2" style="margin-top:16px">
+    <div class="kn-tabela-obudowa">
+      <table class="dn-tabela">
+        <caption class="dn-sr-only">Relacja sygnet – logotyp w lockupie poziomym</caption>
+        <thead><tr><th scope="col">Pomiar</th><th scope="col" class="kn-liczba">Wartość</th><th scope="col">Wyrażony inaczej</th></tr></thead>
+        <tbody>
+          <tr><td><strong>odstęp kadr sygnetu → blok tekstu</strong></td><td class="kn-liczba"><strong>12,000 j.</strong></td><td>0,409 X · <strong>½ wersalika DANACO</strong></td></tr>
+          <tr><td>odstęp obwiednia farby → farba DANACO</td><td class="kn-liczba">17,750 j.</td><td>0,605 X</td></tr>
+          <tr><td>wysokość wersalika DANACO</td><td class="kn-liczba">23,800 j.</td><td>0,811 X</td></tr>
+          <tr><td>wysokość wersalika CONSOLE</td><td class="kn-liczba">8,725 j.</td><td>0,297 X</td></tr>
+          <tr><td><strong>interlinia (51 → 67)</strong></td><td class="kn-liczba"><strong>16,000 j.</strong></td><td>0,672 wersalika DANACO</td></tr>
+          <tr><td>szerokość wyrazu DANACO</td><td class="kn-liczba">132,375 j.</td><td>4,513 X</td></tr>
+          <tr><td>odstęp CONSOLE → kropka</td><td class="kn-liczba">4,375 j.</td><td>½ wersalika CONSOLE</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Wyrównanie pionowe</span></div>
+        <div class="kn-panel-cialo">
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">oś grotów sygnetu</span><span class="kn-wynik-liczba">y = 48,00</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">górna krawędź wersalika DANACO</span><span class="kn-wynik-liczba">y = 27,20</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">linia bazowa CONSOLE</span><span class="kn-wynik-liczba">y = 67,00</span></div>
+          <div class="kn-wynik kn-wynik--glowny"><span class="kn-wynik-nazwa">optyczna oś bloku</span><span class="kn-wynik-liczba">y = 47,10</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">odchyłka sygnetu</span><span class="kn-wynik-liczba">+0,90 j. (0,03 X)</span></div>
+          <p class="dn-pole-opis" style="margin-top:10px">Odchyłka jest <strong>celowa</strong>. Blok tekstu ma masę
+          skupioną w górnym wierszu (23,8 j. wobec 8,7 j.), więc jego środek optyczny leży wyżej niż
+          geometryczny. Sygnet przesunięty o 0,9 j. w dół równoważy tę asymetrię.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 07 · LOCKUP PIONOWY ─────────── -->
+<section class="kn-rozdzial" id="r07" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">07</span><h2>Konstrukcja lockupu pionowego</h2></div>
+  <p class="kn-lid">Kadr <strong>159 × 172 j.</strong> Sygnet występuje w skali <strong>1 : 1</strong>, więc X = 44 j.
+  W tym układzie działają <strong>trzy różne sposoby centrowania</strong> — i właśnie one są najczęściej psute
+  przy odtwarzaniu układu.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel" data-rysunek data-w-siatka="1" data-w-osie="1" data-w-wymiary="1" data-w-pole="0" data-w-znak="1">
+      <div class="kn-panel-pasek">
+        <span class="kn-panel-tytul">Rysunek 07 · lockup pionowy</span>
+        <div class="kn-warstwy" role="group" aria-label="Warstwy rysunku lockupu pionowego">
+          <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="siatka" checked> siatka</label>
+          <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="osie" checked> osie</label>
+          <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="wymiary" checked> wymiary</label>
+          <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="pole"> pole</label>
+          <label class="kn-warstwa-etykieta"><input type="checkbox" data-warstwa="znak" checked> znak</label>
+        </div>
+      </div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-58 -58 275 288" role="img"
+             aria-label="Rysunek konstrukcyjny lockupu pionowego z osią symetrii i odstępami">
+          <g class="w-pole">
+            <rect class="kn-pole-eksp" x="-44" y="-44" width="247" height="260"/>
+            <rect class="kn-pole-min" x="-22" y="-22" width="203" height="216" fill="none"/>
+          </g>
+          <g class="w-siatka">
+            <rect x="0" y="0" width="159" height="172" fill="url(#kn-p12)"/>
+            <rect class="kn-kadr" x="0" y="0" width="159" height="172"/>
+            <text class="kn-etykieta" x="0" y="-3">kadr 159 × 172 j.</text>
+          </g>
+          <g class="w-znak">
+            <g transform="translate(31.7,0)">
+              <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+              <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+              <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+            </g>
+            <text class="kn-atrament" x="12" y="136" font-family="'Space Grotesk','IBM Plex Sans',sans-serif" font-size="34" font-weight="700" letter-spacing="-0.3">DANACO</text>
+            <text class="kn-atrament" x="42.2" y="154" font-family="'IBM Plex Mono',monospace" font-size="12.5" font-weight="500" letter-spacing="3.75">CONSOLE</text>
+            <circle class="kn-kropka-f" cx="124.2" cy="150" r="3.4"/>
+          </g>
+          <g class="w-osie">
+            <path class="kn-os" d="M79.5 -34V206"/>
+            <text class="kn-etykieta-syg" x="79.5" y="-37" text-anchor="middle">oś symetrii x = 79,5</text>
+            <path class="kn-bazowa" d="M8 136H188" style="stroke:var(--dn-ostrzezenie-tekst)"/>
+            <path class="kn-bazowa" d="M38 154H188" style="stroke:var(--dn-sukces-tekst)"/>
+          </g>
+          <g class="w-wymiary">
+            <rect class="kn-wym-syg" x="31.7" y="0" width="96" height="96" fill="none" stroke-dasharray="3 2"/>
+            <text class="kn-etykieta-syg" x="31.7" y="-8">kadr sygnetu 96 × 96</text>
+            <rect x="13.5" y="112.2" width="132.4" height="23.8" fill="none" stroke-dasharray="3 2" style="stroke:var(--dn-ostrzezenie-tekst);stroke-width:.5"/>
+            <rect x="42.88" y="145.28" width="73.37" height="8.72" fill="none" stroke-dasharray="3 2" style="stroke:var(--dn-sukces-tekst);stroke-width:.5"/>
+            <path class="kn-wym-syg" d="M-6 26V70" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+            <text class="kn-etykieta-syg" x="-8" y="49" text-anchor="end">X = 44</text>
+            <path class="kn-wym" d="M-16 70V112.2" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+            <path class="kn-wynos" d="M43.6 70H-18M13.5 112.2H-18"/>
+            <text class="kn-etykieta" x="-20" y="92" text-anchor="end">42,2 ≈ 1X</text>
+            <path class="kn-wym" d="M190 136V154" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+            <text class="kn-etykieta" x="192" y="146">18 j.</text>
+            <path class="kn-wym" d="M13.5 186H145.9" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+            <text class="kn-etykieta" x="79.5" y="192" text-anchor="middle">DANACO 132,4 j. — szerokość odniesienia</text>
+            <circle cx="124.2" cy="150" r="7" fill="none" stroke-dasharray="2 2" style="stroke:var(--dn-sygnal);stroke-width:.5"/>
+            <text class="kn-etykieta-syg" x="134" y="166">kropka zwisa poza blok</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Trzy osie centrowania</span></div>
+        <div class="kn-tabela-obudowa" style="border:0;border-radius:0">
+          <table class="dn-tabela">
+            <thead><tr><th scope="col">Element</th><th scope="col">Centrowanie</th><th scope="col" class="kn-liczba">Środek</th></tr></thead>
+            <tbody>
+              <tr><td><strong>sygnet</strong></td><td>przez <strong>kadr 96 × 96</strong></td><td class="kn-liczba">79,70</td></tr>
+              <tr><td><strong>DANACO</strong></td><td>przez obwiednię farby</td><td class="kn-liczba">79,69</td></tr>
+              <tr><td><strong>CONSOLE</strong></td><td>przez farbę <strong>bez kropki</strong></td><td class="kn-liczba">79,56</td></tr>
+              <tr><td>kropka po CONSOLE</td><td>zwisa poza blok</td><td class="kn-liczba">—</td></tr>
+              <tr><td colspan="2">oś kadru</td><td class="kn-liczba"><strong>79,50</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="kn-notka">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <div>Centrowanie sygnetu obwiednią farby przesunęłoby go o <strong>2,75 j.</strong> w lewo.
+        Włączenie kropki do centrowania <code class="dn-kod--wiersz">CONSOLE</code> przesunęłoby wyraz o <strong>5,7 j.</strong> w lewo
+        względem <code class="dn-kod--wiersz">DANACO</code> — drugi wiersz wyraźnie „uciekłby", mimo że matematycznie byłby wyśrodkowany.
+        <span class="kn-znacznik kn-znacznik--regula">REGUŁA</span></div>
+      </div>
+      <div class="kn-schemat">sygnet — kadr        96,000 j.   72,5 % DANACO
+sygnet — farba       77,625 j.   58,6 %
+DANACO              132,375 j.  100 %  ← odniesienie
+CONSOLE              73,375 j.   55,4 %
+CONSOLE + kropka     84,750 j.   64,0 %</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 08 · POLE OCHRONNE ─────────── -->
+<section class="kn-rozdzial" id="r08" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">08</span><h2>Pole ochronne</h2></div>
+  <p class="kn-lid">Obowiązują <strong>dwa poziomy</strong>. <strong>½X</strong> to minimum bezwzględne —
+  obowiązuje przy każdym wystąpieniu znaku. <strong>1X</strong> to pole ekspozycyjne — zalecane wszędzie tam,
+  gdzie znak stoi samodzielnie: strona tytułowa, okładka, plansza, znak na tle obcym, oznaczenie na przedmiocie.
+  Pole liczy się <strong>od kadru</strong>, nie od obwiedni farby.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Kalkulator pola ochronnego</span></div>
+      <div class="kn-panel-cialo">
+        <div class="dn-pole" style="margin-bottom:12px">
+          <label class="dn-pole-etykieta" for="kn-pole-konfiguracja">Konfiguracja znaku</label>
+          <select class="dn-pole-kontrolka dn-wybor" id="kn-pole-konfiguracja">
+            <option value="0.2291666667" data-kadr="96 × 96" data-x="44">Sygnet pełny · kadr 96 × 96 · X = 44</option>
+            <option value="0.3125" data-kadr="96 × 96" data-x="60">Sygnet uproszczony · kadr 96 × 96 · X = 60</option>
+            <option value="0.1527777778" data-kadr="225 × 96" data-x="29,333">Lockup poziomy · kadr 225 × 96 · X = 29,33</option>
+            <option value="0.1279069767" data-kadr="159 × 172" data-x="44">Lockup pionowy · kadr 159 × 172 · X = 44</option>
+            <option value="0.2125" data-kadr="149 × 56" data-x="23,8">Logotyp samodzielny · kadr 149 × 56 · wersalik 23,8</option>
+          </select>
+          <p class="dn-pole-opis">Współczynnik dobierany automatycznie: ½X przeliczone na wysokość kadru.</p>
+        </div>
+        <div class="dn-pole">
+          <label class="dn-pole-etykieta" for="kn-pole-wysokosc">Wysokość kadru znaku (px)</label>
+          <input class="dn-pole-kontrolka" type="number" id="kn-pole-wysokosc" value="96" min="8" max="1024" step="1" inputmode="numeric">
+        </div>
+        <div class="kn-sterownik">
+          <label class="kn-sterownik-etykieta" for="kn-pole-suwak">Suwak wysokości</label>
+          <input class="dn-suwak" type="range" id="kn-pole-suwak" min="16" max="512" step="4" value="96">
+          <output class="kn-sterownik-wartosc" for="kn-pole-suwak" id="kn-pole-suwak-wartosc">96 px</output>
+        </div>
+        <div style="margin-top:14px">
+          <div class="kn-wynik kn-wynik--glowny"><span class="kn-wynik-nazwa">pole minimalne ½X — obowiązkowe</span><span class="kn-wynik-liczba" id="kn-wynik-min">22 px</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">pole ekspozycyjne 1X — zalecane</span><span class="kn-wynik-liczba" id="kn-wynik-eksp">44 px</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">½X zaokrąglone do siatki 4 px</span><span class="kn-wynik-liczba" id="kn-wynik-siatka">24 px</span></div>
+          <div class="kn-wynik"><span class="kn-wynik-nazwa">kadr z polem ½X</span><span class="kn-wynik-liczba" id="kn-wynik-kadr">140 × 140 px</span></div>
+        </div>
+        <p class="dn-pole-opis" style="margin-top:10px" role="status" id="kn-pole-komunikat">
+          Wynik zaokrąglany w górę do pełnego piksela; w interfejsie dodatkowo do wielokrotności 4 px.</p>
+      </div>
+    </div>
+
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Podgląd pola</span>
+        <span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto">skala poglądowa</span></div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-52 -52 200 200" role="img" aria-label="Sygnet z zaznaczonym polem minimalnym i ekspozycyjnym">
+          <rect class="kn-pole-eksp" x="-44" y="-44" width="184" height="184"/>
+          <rect class="kn-pole-min" x="-22" y="-22" width="140" height="140" fill="none"/>
+          <rect class="kn-kadr" x="0" y="0" width="96" height="96"/>
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+          <path class="kn-wym-syg" d="M70 -22V0" marker-start="url(#kn-sb)" marker-end="url(#kn-sb)"/>
+          <text class="kn-etykieta-syg" x="73" y="-9">½X = 22</text>
+          <path class="kn-wym" d="M70 -44V-22" marker-start="url(#kn-sa)" marker-end="url(#kn-sa)"/>
+          <text class="kn-etykieta" x="73" y="-31">+ ½X</text>
+          <text class="kn-etykieta-syg" x="-44" y="-46">pole ekspozycyjne 1X = 184 × 184</text>
+          <text class="kn-etykieta-syg" x="-21" y="-24.5">pole minimalne ½X = 140 × 140</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="kn-tabela-obudowa" style="margin-top:16px">
+    <table class="dn-tabela">
+      <caption class="dn-sr-only">Pole ochronne dla wszystkich konfiguracji</caption>
+      <thead><tr><th scope="col">Konfiguracja</th><th scope="col" class="kn-liczba">Kadr</th><th scope="col" class="kn-liczba">X</th><th scope="col" class="kn-liczba">½X</th><th scope="col" class="kn-liczba">Kadr z ½X</th><th scope="col" class="kn-liczba">Kadr z 1X</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Sygnet pełny</strong></td><td class="kn-liczba">96 × 96</td><td class="kn-liczba">44,000</td><td class="kn-liczba kn-x">22,00</td><td class="kn-liczba">140 × 140</td><td class="kn-liczba">184 × 184</td></tr>
+        <tr><td>Sygnet uproszczony</td><td class="kn-liczba">96 × 96</td><td class="kn-liczba">60,000</td><td class="kn-liczba kn-x">30,00</td><td class="kn-liczba">156 × 156</td><td class="kn-liczba">216 × 216</td></tr>
+        <tr><td><strong>Lockup poziomy</strong></td><td class="kn-liczba">225 × 96</td><td class="kn-liczba">29,333</td><td class="kn-liczba kn-x">14,67</td><td class="kn-liczba">254,3 × 125,3</td><td class="kn-liczba">283,7 × 154,7</td></tr>
+        <tr><td><strong>Lockup pionowy</strong></td><td class="kn-liczba">159 × 172</td><td class="kn-liczba">44,000</td><td class="kn-liczba kn-x">22,00</td><td class="kn-liczba">203 × 216</td><td class="kn-liczba">247 × 260</td></tr>
+        <tr><td>Logotyp samodzielny</td><td class="kn-liczba">149 × 56</td><td class="kn-liczba">23,80 *</td><td class="kn-liczba kn-x">11,90</td><td class="kn-liczba">172,8 × 79,8</td><td class="kn-liczba">196,6 × 103,6</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="dn-pole-opis">* W logotypie samodzielnym nie ma grotu — modułem zastępczym jest wysokość wersalika <code class="dn-kod--wiersz">DANACO</code>.</p>
+
+  <div class="kn-siatka-2" style="margin-top:16px">
+    <div class="kn-notka kn-notka--blad" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      <div><strong>W polu ochronnym nie wolno umieszczać:</strong> tekstu (również podpisów, dat, numerów),
+      innych znaków graficznych i logotypów partnerów, plakietek certyfikatów, kodów QR, linii, ramek
+      i separatorów, krawędzi nośnika, krawędzi zdjęcia albo bloku barwnego, elementów interfejsu
+      (przycisków, pól, ikon, plakietek), granicy dwóch barw tła.</div>
+    </div>
+    <div class="kn-notka kn-notka--sukces" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <div><strong>W polu ochronnym wolno:</strong> jednolita powierzchnia tła, na której znak stoi;
+      bardzo delikatna faktura papieru lub materiału (bez rozpoznawalnego wzoru); ten sam kolor tła
+      w innej powierzchni, jeżeli granica powierzchni leży <em>poza</em> polem.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 09 · WIELKOŚCI MINIMALNE ─────────── -->
+<section class="kn-rozdzial" id="r09" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">09</span><h2>Wielkości minimalne i próg wariantu</h2></div>
+  <p class="kn-lid">Próg przełączenia wariantu to <strong>24 px</strong>, dolna granica całego systemu to
+  <strong>16 px</strong>. Progi nie są umowne: wynikają z dwóch progów renderowania — <strong>kreska ≥ 2 px</strong>
+  i <strong>kropka ≥ 3 px średnicy</strong>. Poniżej tych wartości wygładzanie krawędzi zamienia element w szarą plamę.</p>
+
+  <div class="kn-panel">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Suwak skali 8 – 512 px</span>
+      <span class="dn-plakietka" id="kn-skala-wariant" style="margin-left:auto">wariant pełny</span>
+    </div>
+    <div class="kn-panel-cialo">
+      <div class="kn-scena kn-scena--linie" style="min-height:300px">
+        <svg id="kn-skala-znak" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Sygnet w wybranej skali">
+          <g id="kn-skala-pelny">
+            <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+            <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+            <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+          </g>
+          <g id="kn-skala-uproszczony" style="display:none">
+            <path class="kn-atrament" d="M18 18H35L64 48L35 78H18L45 48Z"/>
+            <circle class="kn-kropka-f" cx="79" cy="69" r="9"/>
+          </g>
+        </svg>
+        <span class="kn-miara" id="kn-skala-miara">96 px · kreska 8,88 px · kropka 13,00 px</span>
+      </div>
+      <div class="kn-sterownik" style="margin-top:12px">
+        <label class="kn-sterownik-etykieta" for="kn-suwak-skala">Wielkość renderowania</label>
+        <input class="dn-suwak" type="range" id="kn-suwak-skala" min="8" max="512" step="1" value="96"
+               aria-describedby="kn-skala-komunikat">
+        <output class="kn-sterownik-wartosc" for="kn-suwak-skala" id="kn-skala-wartosc">96 px</output>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="16">16</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="24">24 — próg</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="28">28 — pasek</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="48">48</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="96">96 — AOD</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-skala="512">512 — ikona</button>
+      </div>
+    </div>
+    <div class="kn-panel-stopka" id="kn-skala-komunikat" role="status">
+      Wariant pełny · powyżej progu 24 px · kreska i kropka spełniają progi renderowania.
+    </div>
+  </div>
+
+  <p class="kn-podtytul">Drabina wielkości — renderowanie 1 : 1</p>
+  <div class="kn-panel"><div class="kn-panel-cialo">
+    <div class="kn-drabina" id="kn-drabina"></div>
+  </div>
+  <div class="kn-panel-stopka">Pozycje przygaszone leżą poniżej progu 24 px — w tym zakresie obowiązuje wariant uproszczony.</div>
+  </div>
+
+  <div class="kn-tabela-obudowa" style="margin-top:16px">
+    <table class="dn-tabela">
+      <caption class="dn-sr-only">Wielkości minimalne według nośnika</caption>
+      <thead><tr>
+        <th scope="col">Konfiguracja</th><th scope="col" class="kn-liczba">Min. ekran</th>
+        <th scope="col" class="kn-liczba">Druk offset / cyfra</th><th scope="col" class="kn-liczba">Sitodruk, flexo</th>
+        <th scope="col" class="kn-liczba">Grawer, haft, tłoczenie</th><th scope="col">Uwagi</th>
+      </tr></thead>
+      <tbody>
+        <tr><td><strong>Lockup poziomy</strong></td><td class="kn-liczba">120 px</td><td class="kn-liczba">28 mm</td><td class="kn-liczba">36 mm</td><td class="kn-liczba">40 mm</td><td>poniżej — użyj sygnetu, nie zmniejszaj</td></tr>
+        <tr><td><strong>Lockup pionowy</strong></td><td class="kn-liczba">120 px</td><td class="kn-liczba">28 mm</td><td class="kn-liczba">36 mm</td><td class="kn-liczba">40 mm</td><td>wysokość rośnie proporcjonalnie</td></tr>
+        <tr><td>Logotyp samodzielny</td><td class="kn-liczba">90 px</td><td class="kn-liczba">20 mm</td><td class="kn-liczba">26 mm</td><td class="kn-liczba">30 mm</td><td>wyłącznie jako podpis</td></tr>
+        <tr aria-selected="true"><td><strong>Sygnet pełny</strong></td><td class="kn-liczba"><strong>24 px</strong></td><td class="kn-liczba"><strong>9 mm</strong></td><td class="kn-liczba">12 mm</td><td class="kn-liczba">15 mm</td><td><strong>próg przełączenia wariantu</strong></td></tr>
+        <tr><td>Sygnet uproszczony</td><td class="kn-liczba"><strong>16 px</strong></td><td class="kn-liczba">6 mm</td><td class="kn-liczba">8 mm</td><td class="kn-liczba">10 mm</td><td>dolna granica systemu</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="kn-schemat">lockup poziomy  →  lockup pionowy  →  logotyp  →  sygnet pełny  →  sygnet uproszczony
+   ≥ 120 px           ≥ 120 px         ≥ 90 px      ≥ 24 px           ≥ 16 px
+   ≥ 28 mm            ≥ 28 mm          ≥ 20 mm      ≥ 9 mm            ≥ 6 mm</div>
+  <p class="dn-pole-opis">Poniżej wielkości minimalnej <strong>nie zmniejsza się znaku</strong> —
+  zmienia się konfigurację na prostszą. <span class="kn-znacznik kn-znacznik--regula">REGUŁA</span></p>
+</section>
+
+<!-- ─────────── 10 · SKALOWANIE ─────────── -->
+<section class="kn-rozdzial" id="r10" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">10</span><h2>Skalowanie</h2></div>
+  <p class="kn-lid">Znak skaluje się <strong>wyłącznie proporcjonalnie</strong> — ten sam współczynnik w obu osiach.
+  Rozciągnięcie o 10 % zamienia grot promptu w kąt prosty; to nie jest subtelna zmiana proporcji, tylko zmiana pojęcia.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Rozciągnięcie a kąt rozwarcia</span></div>
+      <div class="kn-panel-cialo">
+        <div class="kn-scena" style="min-height:180px">
+          <svg id="kn-rozciag-znak" viewBox="0 0 96 96" width="160" height="160" role="img" aria-label="Sygnet z podglądem rozciągnięcia poziomego">
+            <g id="kn-rozciag-g">
+              <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+              <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+              <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+            </g>
+          </svg>
+          <span class="kn-miara" id="kn-rozciag-miara">skala 1,00 · kąt 95,45°</span>
+        </div>
+        <div class="kn-sterownik" style="margin-top:12px">
+          <label class="kn-sterownik-etykieta" for="kn-suwak-rozciag">Rozciągnięcie poziome</label>
+          <input class="dn-suwak" type="range" id="kn-suwak-rozciag" min="70" max="150" step="1" value="100">
+          <output class="kn-sterownik-wartosc" for="kn-suwak-rozciag" id="kn-rozciag-wartosc">1,00</output>
+        </div>
+        <p class="dn-pole-opis" role="status" id="kn-rozciag-opis">Wartość poprawna: <strong>1,00</strong>.
+        Każda inna jest naruszeniem — pokazana wyłącznie po to, żeby było widać skalę problemu.</p>
+      </div>
+    </div>
+
+    <div class="kn-tabela-obudowa">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col" class="kn-liczba">Rozciągnięcie</th><th scope="col" class="kn-liczba">Efektywne Δx</th><th scope="col" class="kn-liczba">Kąt</th><th scope="col">Jak się czyta</th></tr></thead>
+        <tbody>
+          <tr><td class="kn-liczba">0,80</td><td class="kn-liczba">16,0</td><td class="kn-liczba">107,9°</td><td>daszek — traci kierunek</td></tr>
+          <tr><td class="kn-liczba">0,90</td><td class="kn-liczba">18,0</td><td class="kn-liczba">101,4°</td><td>wyraźnie miększy</td></tr>
+          <tr aria-selected="true"><td class="kn-liczba"><strong>1,00</strong></td><td class="kn-liczba"><strong>20,0</strong></td><td class="kn-liczba"><strong>95,45°</strong></td><td><strong>poprawny</strong></td></tr>
+          <tr><td class="kn-liczba">1,10</td><td class="kn-liczba">22,0</td><td class="kn-liczba">90,0°</td><td>narożnik ramki</td></tr>
+          <tr><td class="kn-liczba">1,20</td><td class="kn-liczba">24,0</td><td class="kn-liczba">85,0°</td><td>strzałka nawigacji</td></tr>
+          <tr><td class="kn-liczba">1,50</td><td class="kn-liczba">30,0</td><td class="kn-liczba">72,5°</td><td>ostrze — obcy znak</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="kn-podtytul">Obrys emblematów środowisk — 1,75 nie skaluje się liniowo</p>
+  <div class="kn-siatka-2">
+    <div class="kn-tabela-obudowa">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col" class="kn-liczba">Renderowanie</th><th scope="col" class="kn-liczba">Obrys w siatce</th><th scope="col" class="kn-liczba">Kreska</th><th scope="col">Postępowanie</th></tr></thead>
+        <tbody>
+          <tr><td class="kn-liczba">14 px</td><td class="kn-liczba">1,75</td><td class="kn-liczba">1,02 px</td><td>dolna granica emblematu</td></tr>
+          <tr><td class="kn-liczba">16 px</td><td class="kn-liczba">1,75</td><td class="kn-liczba">1,17 px</td><td>listy, pozycje nawigacji</td></tr>
+          <tr><td class="kn-liczba">20 px</td><td class="kn-liczba">1,75</td><td class="kn-liczba">1,46 px</td><td>nagłówki paneli</td></tr>
+          <tr aria-selected="true"><td class="kn-liczba"><strong>24 px</strong></td><td class="kn-liczba"><strong>1,75</strong></td><td class="kn-liczba"><strong>1,75 px</strong></td><td><strong>renderowanie 1 : 1</strong></td></tr>
+          <tr><td class="kn-liczba">40 px</td><td class="kn-liczba">1,75</td><td class="kn-liczba">2,92 px</td><td>ekspozycja na karcie środowiska</td></tr>
+          <tr><td class="kn-liczba">64 – 96 px</td><td class="kn-liczba">1,50</td><td class="kn-liczba">4,00 – 6,00 px</td><td>obniż obrys — inaczej zgrubieje optycznie</td></tr>
+          <tr><td class="kn-liczba">powyżej 96 px</td><td class="kn-liczba">1,25</td><td class="kn-liczba">≥ 5,21 px</td><td>ekspozycja plakatowa</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Cztery emblematy · siatka 24 × 24 · obrys 1,75</span></div>
+        <div class="kn-panel-cialo">
+          <div class="kn-siatka-4" style="gap:12px;text-align:center">
+            <div>
+              <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Emblemat TalkIn"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" class="kn-kropka-f" stroke="none"/></svg>
+              <p class="dn-dane" style="font-size:var(--dn-fs-xs)">TalkIn</p>
+            </div>
+            <div>
+              <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Emblemat WorkSpace"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" class="kn-kropka-f" stroke="none"/></svg>
+              <p class="dn-dane" style="font-size:var(--dn-fs-xs)">WorkSpace</p>
+            </div>
+            <div>
+              <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Emblemat CodeStudio"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9.2l3.1 2.8L7 14.8"/><path d="M12.6 15.4h4"/><circle cx="18.4" cy="9.9" r="1.5" class="kn-kropka-f" stroke="none"/></svg>
+              <p class="dn-dane" style="font-size:var(--dn-fs-xs)">CodeStudio</p>
+            </div>
+            <div>
+              <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Emblemat MultitaskingAI"><circle cx="12" cy="12" r="2.6" class="kn-kropka-f" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
+              <p class="dn-dane" style="font-size:var(--dn-fs-xs)">MultitaskingAI</p>
+            </div>
+          </div>
+        </div>
+        <div class="kn-panel-stopka">Każdy emblemat zawiera <strong>dokładnie jedną</strong> wypełnioną kropkę sygnału.</div>
+      </div>
+      <div class="kn-notka kn-notka--ostrzezenie">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <div>Nie wolno używać <code class="dn-kod--wiersz">vector-effect="non-scaling-stroke"</code>.
+        Ten atrybut trzyma grubość kreski w pikselach ekranu niezależnie od skali — emblemat 96 px
+        z kreską 1,75 px wygląda jak rysunek techniczny, nie jak znak.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 11 · WYRÓWNANIE OPTYCZNE ─────────── -->
+<section class="kn-rozdzial" id="r11" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">11</span><h2>Wyrównanie optyczne</h2></div>
+  <p class="kn-lid">Znak ma <strong>trzy różne środki</strong>. Kadr 96 × 96 nie jest neutralnym pudełkiem —
+  jest zapisanym rozstrzygnięciem konfliktu między środkiem masy a środkiem prostokąta farby.
+  Dlatego znak wyrównuje się w kontenerze <strong>zawsze przez kadr</strong>.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Trzy środki kadru</span>
+        <div class="kn-warstwy">
+          <button class="dn-btn dn-btn--sm" type="button" data-srodek="kadr" aria-pressed="true">kadr</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-srodek="farba" aria-pressed="false">prostokąt farby</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-srodek="masa" aria-pressed="false">środek masy</button>
+        </div>
+      </div>
+      <div class="kn-panel-cialo">
+        <svg class="kn-rysunek" viewBox="-14 -18 124 132" role="img" aria-label="Sygnet z zaznaczonymi trzema środkami kadru">
+          <rect x="0" y="0" width="96" height="96" fill="url(#kn-p12)"/>
+          <rect class="kn-kadr" x="0" y="0" width="96" height="96"/>
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+          <path id="kn-srodek-linia" d="M48 -8V104" fill="none"
+                style="stroke:var(--dn-sygnal);stroke-width:.8;transition:d var(--dn-czas-3) var(--dn-ease)"/>
+          <text id="kn-srodek-etykieta" class="kn-etykieta-syg" x="48" y="-10" text-anchor="middle">środek kadru x = 48,000</text>
+          <path class="kn-wynos" d="M46.578 -4V100"/>
+          <path class="kn-wynos" d="M50.75 -4V100"/>
+          <text class="kn-etykieta" x="46.578" y="108" text-anchor="middle">46,58</text>
+          <text class="kn-etykieta" x="50.75" y="112" text-anchor="middle">50,75</text>
+        </svg>
+        <p class="dn-pole-opis" role="status" id="kn-srodek-opis" style="margin-top:8px">
+          <strong>Środek kadru x = 48,000.</strong> Leży w 34 % drogi od środka masy do środka prostokąta farby —
+          bliżej masy. To jest zapisany kompromis.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="kn-schemat">masa 46,578          kadr 48,000          prostokąt farby 50,750
+     │                    │                        │
+─────●────────────────────●────────────────────────●─────►  x
+     └──── 1,422 ─────────┴────────── 2,750 ───────┘
+               34 %                     66 %</div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Wyrównanie sygnetu do tekstu — wzór</span></div>
+        <div class="kn-panel-cialo">
+          <code class="kn-kod">oś grotów sygnetu           = B − C / 2
+górna krawędź kadru sygnetu = B − C / 2 − H / 2
+
+B = linia bazowa tekstu   C = wysokość wersalika
+H = wysokość kadru sygnetu</code>
+          <p class="dn-pole-opis" style="margin-top:10px">Przykład — pasek górny: godło 28 px,
+          <code class="dn-kod--wiersz">DANACO</code> 13 px Plex Sans (wersalik ≈ 9,3 px), linia bazowa 30 px od góry paska:
+          oś grotów = 30 − 4,65 = <strong>25,35 px</strong>; górna krawędź kadru = 25,35 − 14 = 11,35 px →
+          zaokrąglone do siatki 4 px: <strong>10 px</strong>.</p>
+        </div>
+      </div>
+      <div class="kn-notka kn-notka--blad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        <div>Kadrowanie znaku po obwiedni farby jest <strong>naruszeniem</strong> (14.13), a nie optymalizacją:
+        znika korekta optyczna zapisana w marginesach, a proporcja zmienia się z 1 : 1 na 1,761 : 1.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 12 · ZNAK W INTERFEJSIE ─────────── -->
+<section class="kn-rozdzial" id="r12" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">12</span><h2>Znak na siatce interfejsu</h2></div>
+  <p class="kn-lid">W interfejsie znak przyjmuje <strong>wyłącznie wielokrotności 4 px</strong>. Wartości pośrednie
+  łamią siatkę przestrzeni i powodują renderowanie na półpikselu. Pasek górny jest atramentowy w obu motywach,
+  więc godło stoi na nim <strong>zawsze w wariancie na ciemnym tle</strong> — także w motywie jasnym.</p>
+
+  <div class="kn-dwie-kolumny">
+    <div>
+      <div class="kn-panel">
+        <div class="kn-panel-pasek"><span class="kn-panel-tytul">Pasek górny — 48 px</span></div>
+        <div class="kn-panel-cialo">
+          <div class="kn-makieta-pasek">
+            <div class="kn-makieta-logo">
+              <svg viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+                <path class="kn-g-grot" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+                <path class="kn-g-grot" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+                <circle class="kn-g-kropka" cx="83" cy="63.5" r="6.5"/>
+              </svg>
+              <span class="kn-makieta-nazwa">DANACO <span class="kn-makieta-podnazwa">CONSOLE</span></span>
+            </div>
+          </div>
+          <div class="kn-siatka-2" style="margin-top:12px">
+            <div class="kn-wynik"><span class="kn-wynik-nazwa">wysokość paska</span><span class="kn-wynik-liczba">48 px</span></div>
+            <div class="kn-wynik kn-wynik--glowny"><span class="kn-wynik-nazwa">godło (kadr)</span><span class="kn-wynik-liczba">28 px</span></div>
+            <div class="kn-wynik"><span class="kn-wynik-nazwa">margines góra i dół</span><span class="kn-wynik-liczba">10 px</span></div>
+            <div class="kn-wynik"><span class="kn-wynik-nazwa">odstęp od krawędzi</span><span class="kn-wynik-liczba">12 px</span></div>
+          </div>
+          <p class="dn-pole-opis" style="margin-top:10px">Pole pionowe wynosi 10 px, a wymagane ½X to 6,4 px —
+          jest <strong>większe</strong> niż minimum. Godło 36 px w pasku 48 px daje 6 px pola przy wymaganym
+          8,25 px i jest <strong>zakazane</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="kn-tabela-obudowa">
+      <table class="dn-tabela">
+        <caption class="dn-sr-only">Wielkość znaku w oknach platformy</caption>
+        <thead><tr><th scope="col">Okno / element</th><th scope="col">Konfiguracja</th><th scope="col" class="kn-liczba">Wielkość</th></tr></thead>
+        <tbody>
+          <tr><td>pasek górny — wszystkie powłoki</td><td>sygnet pełny + logotyp</td><td class="kn-liczba"><strong>28 px</strong></td></tr>
+          <tr><td>medalion nadawcy — Chat Window</td><td>sygnet pełny</td><td class="kn-liczba">28 px</td></tr>
+          <tr><td>karta środowiska</td><td>emblemat środowiska</td><td class="kn-liczba">24 / 40 px</td></tr>
+          <tr><td>kafel komponentu własnego</td><td>ikona z zestawu</td><td class="kn-liczba">24 px</td></tr>
+          <tr><td><strong>Okno startowe</strong></td><td>lockup pionowy</td><td class="kn-liczba"><strong>160 px</strong></td></tr>
+          <tr><td>Okno rejestracji i logowania</td><td>lockup pionowy</td><td class="kn-liczba">140 px</td></tr>
+          <tr><td>Always On Display — rdzeń</td><td>sygnet pełny</td><td class="kn-liczba">96 px</td></tr>
+          <tr><td>Okno Konfiguracji — nagłówek</td><td>logotyp samodzielny</td><td class="kn-liczba">90 px</td></tr>
+          <tr><td>favicon</td><td>sygnet uproszczony</td><td class="kn-liczba">16 / 32 / 48 px</td></tr>
+          <tr><td>ikona aplikacji</td><td>sygnet pełny w kaflu</td><td class="kn-liczba">512 / 1024 px</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 13 · BARWY I KONTRASTY ─────────── -->
+<section class="kn-rozdzial" id="r13" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">13</span><h2>Barwy znaku i dozwolone pary tło / znak</h2></div>
+  <p class="kn-lid">Kontrast liczony jest <strong>w przeglądarce</strong>, wzorem WCAG 2.1 dla luminancji względnej.
+  Dla znaku graficznego obowiązuje próg <strong>3 : 1</strong> (kryterium 1.4.11 — kontrast elementów nietekstowych).
+  Trudnym elementem jest zawsze <strong>kropka</strong>, nie groty.</p>
+
+  <div class="kn-panel">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Pomiar kontrastu — tło i wariant znaku</span>
+      <div class="kn-warstwy">
+        <label class="kn-warstwa-etykieta" style="cursor:default">
+          tylko pary spełniające próg
+          <input type="checkbox" id="kn-filtr-kontrast">
+        </label>
+      </div>
+    </div>
+    <div class="kn-tabela-obudowa" style="border:0;border-radius:0">
+      <table class="dn-tabela" id="kn-tabela-kontrast">
+        <caption class="dn-sr-only">Kontrast grotów i kropki wobec dopuszczalnych teł</caption>
+        <thead><tr>
+          <th scope="col">Tło</th><th scope="col">Żeton</th><th scope="col">Wariant znaku</th>
+          <th scope="col">Podgląd</th>
+          <th scope="col" class="kn-liczba">Groty</th><th scope="col">Ocena</th>
+          <th scope="col" class="kn-liczba">Kropka</th><th scope="col">Ocena</th>
+        </tr></thead>
+        <tbody id="kn-kontrast-body"></tbody>
+      </table>
+    </div>
+    <div class="kn-panel-stopka" id="kn-kontrast-podsumowanie" role="status">Obliczanie…</div>
+  </div>
+
+  <div class="kn-siatka-2" style="margin-top:16px">
+    <div class="kn-notka kn-notka--blad" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      <div><strong>Znaku w wariancie pełnym nie umieszcza się na żadnym tle z rodziny sygnału.</strong>
+      Kropka sygnału musi być odróżnialna — na tle sygnałowym nie jest. Na <code class="dn-kod--wiersz">--dn-sygnal-500</code>
+      obowiązuje wariant <strong>mono</strong>. <span class="kn-znacznik kn-znacznik--regula">REGUŁA</span></div>
+    </div>
+    <div class="kn-notka" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      <div><strong>Granice.</strong> Na jasnym tle najciemniejszym dopuszczalnym podłożem dla wariantu
+      z kolorową kropką jest <code class="dn-kod--wiersz">szary-200</code>; na ciemnym — najjaśniejszym jest
+      <code class="dn-kod--wiersz">szary-750</code>. Poza tymi granicami obowiązuje wariant mono.</div>
+    </div>
+  </div>
+
+  <p class="kn-podtytul">Wartości dosłowne wariantów</p>
+  <div class="kn-tabela-obudowa">
+    <table class="dn-tabela">
+      <thead><tr><th scope="col">Plik</th><th scope="col">Groty</th><th scope="col">Żeton</th><th scope="col">Kropka</th><th scope="col">Żeton</th></tr></thead>
+      <tbody>
+        <tr><td><code class="dn-kod--wiersz">sygnet.svg</code></td><td class="dn-dane">#181818</td><td><code class="dn-kod--wiersz">--dn-szary-900</code></td><td class="dn-dane">#3B6FE0</td><td><code class="dn-kod--wiersz">--dn-sygnal-500</code></td></tr>
+        <tr><td><code class="dn-kod--wiersz">sygnet-na-ciemnym.svg</code></td><td class="dn-dane">#F4F4F4</td><td><code class="dn-kod--wiersz">--dn-szary-50</code></td><td class="dn-dane">#5C8CEC</td><td><code class="dn-kod--wiersz">--dn-sygnal-400</code></td></tr>
+        <tr><td><code class="dn-kod--wiersz">sygnet-mono-czarny.svg</code></td><td class="dn-dane">#181818</td><td><code class="dn-kod--wiersz">--dn-szary-900</code></td><td class="dn-dane">#181818</td><td><code class="dn-kod--wiersz">--dn-szary-900</code></td></tr>
+        <tr><td><code class="dn-kod--wiersz">sygnet-mono-bialy.svg</code></td><td class="dn-dane">#F4F4F4</td><td><code class="dn-kod--wiersz">--dn-szary-50</code></td><td class="dn-dane">#F4F4F4</td><td><code class="dn-kod--wiersz">--dn-szary-50</code></td></tr>
+        <tr><td><code class="dn-kod--wiersz">ikona-aplikacji.svg</code></td><td class="dn-dane">#F4F4F4 na kaflu #131313</td><td><code class="dn-kod--wiersz">--dn-rama</code></td><td class="dn-dane">#5C8CEC</td><td><code class="dn-kod--wiersz">--dn-sygnal-400</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="kn-notka">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <div>Atrament znaku na ciemnym tle to <strong>#F4F4F4</strong> (<code class="dn-kod--wiersz">szary-50</code>),
+    a nie <code class="dn-kod--wiersz">szary-100</code> — żeton tekstu w motywie ciemnym. Znak jest o jeden stopień
+    jaśniejszy od tekstu, bo ma stać <em>przed</em> treścią. Wyjątek: pasek górny, gdzie godło przyjmuje
+    <code class="dn-kod--wiersz">--dn-rama-tekst</code>, żeby zrównać się z logotypem w ramie.
+    <span class="kn-znacznik kn-znacznik--zamkniete">ZAMKNIĘTE</span></div>
+  </div>
+</section>
+
+<!-- ─────────── 14 · KATALOG NARUSZEŃ ─────────── -->
+<section class="kn-rozdzial" id="r14" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">14</span><h2>Katalog błędnych użyć</h2></div>
+  <p class="kn-lid">Dwadzieścia dwa przypadki, każdy pokazany <strong>na żywo</strong> — deformacja jest realną
+  transformacją CSS zastosowaną do poprawnego znaku, nie rysunkiem deformacji. Każdy przypadek opisany
+  dwoma zdaniami: <em>co zrobiono źle</em> i <em>dlaczego to szkodzi</em>.</p>
+
+  <div class="kn-panel" style="margin-bottom:16px">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Filtr kategorii</span>
+      <div class="kn-warstwy" role="group" aria-label="Filtr kategorii naruszeń">
+        <button class="dn-btn dn-btn--sm dn-btn--wybrany" type="button" data-kat="wszystkie" aria-pressed="true">wszystkie</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-kat="geometria" aria-pressed="false">geometria</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-kat="uklad" aria-pressed="false">układ</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-kat="barwa" aria-pressed="false">barwa i tło</button>
+        <button class="dn-btn dn-btn--sm" type="button" data-kat="kontekst" aria-pressed="false">kontekst</button>
+      </div>
+    </div>
+    <div class="kn-panel-stopka" id="kn-naruszenia-licznik" role="status">22 z 22 przypadków</div>
+  </div>
+
+  <div class="kn-naruszenia" id="kn-naruszenia"></div>
+</section>
+
+<!-- ─────────── 15 · REPRODUKCJA ─────────── -->
+<section class="kn-rozdzial" id="r15" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">15</span><h2>Reprodukcja</h2></div>
+  <p class="kn-lid">Cztery warianty reprodukcyjne pokrywają wszystkie techniki: pełny, mono atrament,
+  na ciemnym tle i kontur do grawerowania. W technikach wycinania kropka jest <strong>elementem
+  niepołączonym</strong> i musi być planowana jako osobny detal.</p>
+
+  <div class="kn-siatka-4">
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Pełny</span></div>
+      <div class="kn-scena" style="min-height:150px">
+        <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Wariant pełny">
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>
+        </svg>
+      </div>
+      <div class="kn-panel-stopka">druk pełnokolorowy · ekran</div>
+    </div>
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Mono atrament</span></div>
+      <div class="kn-scena" style="min-height:150px">
+        <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Wariant mono atrament">
+          <path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-atrament" cx="83" cy="63.5" r="6.5"/>
+        </svg>
+      </div>
+      <div class="kn-panel-stopka">jeden kolor farby · stempel · sitodruk</div>
+    </div>
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Na ciemnym</span></div>
+      <div class="kn-scena kn-scena--ciemna" style="min-height:150px">
+        <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Wariant na ciemnym tle">
+          <path style="fill:var(--dn-szary-50)" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path style="fill:var(--dn-szary-50)" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle style="fill:var(--dn-sygnal-400)" cx="83" cy="63.5" r="6.5"/>
+        </svg>
+      </div>
+      <div class="kn-panel-stopka">pasek kokpitu · ikona aplikacji</div>
+    </div>
+    <div class="kn-panel">
+      <div class="kn-panel-pasek"><span class="kn-panel-tytul">Kontur / grawer</span></div>
+      <div class="kn-scena" style="min-height:150px">
+        <svg width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Wariant konturowy do grawerowania">
+          <path class="kn-obrys-znak" style="stroke-width:2" d="M12 26H24L44 48L24 70H12L32 48Z"/>
+          <path class="kn-obrys-znak" style="stroke-width:2" d="M40 26H52L72 48L52 70H40L60 48Z"/>
+          <circle class="kn-obrys-znak" style="stroke-width:2" cx="83" cy="63.5" r="6.5"/>
+        </svg>
+      </div>
+      <div class="kn-panel-stopka">grawer · tłoczenie · odlew</div>
+    </div>
+  </div>
+
+  <div class="kn-tabela-obudowa" style="margin-top:16px">
+    <table class="dn-tabela">
+      <caption class="dn-sr-only">Minimalne wielkości według techniki reprodukcji</caption>
+      <thead><tr><th scope="col">Technika</th><th scope="col" class="kn-liczba">Sygnet pełny</th><th scope="col" class="kn-liczba">Sygnet uproszczony</th><th scope="col" class="kn-liczba">Lockup</th><th scope="col">Uwaga konstrukcyjna</th></tr></thead>
+      <tbody>
+        <tr><td>druk offsetowy / cyfrowy</td><td class="kn-liczba">9 mm</td><td class="kn-liczba">6 mm</td><td class="kn-liczba">28 mm</td><td>kreska ≥ 0,8 mm · element okrągły ≥ 1,2 mm</td></tr>
+        <tr><td>sitodruk, flexo, opakowanie</td><td class="kn-liczba">12 mm</td><td class="kn-liczba">8 mm</td><td class="kn-liczba">36 mm</td><td>rozlew farby zamyka prześwity</td></tr>
+        <tr><td>stempel</td><td class="kn-liczba">—</td><td class="kn-liczba">10 mm</td><td class="kn-liczba">—</td><td>wyłącznie wariant uproszczony</td></tr>
+        <tr><td>grawer laserowy i mechaniczny</td><td class="kn-liczba">15 mm</td><td class="kn-liczba">10 mm</td><td class="kn-liczba">40 mm</td><td>wariant konturowy · rowek ≥ 0,3 mm</td></tr>
+        <tr><td>tłoczenie</td><td class="kn-liczba">15 mm</td><td class="kn-liczba">10 mm</td><td class="kn-liczba">40 mm</td><td>skos 45° zgodny z nachyleniem ramienia</td></tr>
+        <tr><td>haft</td><td class="kn-liczba">—</td><td class="kn-liczba">40 mm</td><td class="kn-liczba">—</td><td>ścieg satynowy · stabilizator wycinany</td></tr>
+        <tr><td>odlew</td><td class="kn-liczba">25 mm</td><td class="kn-liczba">18 mm</td><td class="kn-liczba">—</td><td>kropka jako osobny detal</td></tr>
+        <tr><td>wycinanie laserowe, ploter</td><td class="kn-liczba">30 mm</td><td class="kn-liczba">20 mm</td><td class="kn-liczba">—</td><td><strong>kropka wypada</strong> — osobny element aplikacji</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="kn-siatka-2" style="margin-top:16px">
+    <div class="kn-notka kn-notka--ostrzezenie" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <div><strong>Numer Pantone: do ustalenia z drukarnią na wydruku kontrolnym.</strong>
+      Dopasowanie <code class="dn-kod--wiersz">#3B6FE0</code> różni się dla papieru powlekanego (C), niepowlekanego (U)
+      i matowego (M) — to trzy różne numery. Procedura: przekaż SVG i wartość sRGB, poproś o trzy wydruki
+      próbne na docelowym nośniku, wybierz na świetle D50, zapisz numer w dokumentacji.
+      Do tego czasu materiały spotowe zamawia się z podaniem sRGB i profilu ICC.</div>
+    </div>
+    <div class="kn-notka kn-notka--blad" style="margin:0">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      <div><strong>Znak jednokolorowy — sprawdź kropkę po CONSOLE.</strong> W plikach
+      <code class="dn-kod--wiersz">logo-poziomy-mono-*.svg</code> kropka po wyrazie <code class="dn-kod--wiersz">CONSOLE</code>
+      pozostaje w barwie sygnałowej i wymaga ręcznego przestawienia na kolor znaku. To jedyne miejsce
+      w komplecie plików wymagające ingerencji przed przekazaniem do warsztatu.
+      <strong>Kropki nie usuwamy</strong> — zmienia się jej barwa, nie jej istnienie.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 16 · LISTA KONTROLNA ─────────── -->
+<section class="kn-rozdzial" id="r16" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">16</span><h2>Lista kontrolna poprawnego użycia znaku</h2></div>
+  <p class="kn-lid">Do przejścia <strong>przed</strong> oddaniem każdego materiału ze znakiem. Lista jest
+  interaktywna — zaznaczenia nie są nigdzie zapisywane, służą wyłącznie do przejścia procedury w jednym posiedzeniu.</p>
+
+  <div class="kn-panel">
+    <div class="kn-panel-pasek">
+      <span class="kn-panel-tytul">Kontrola przed oddaniem</span>
+      <div class="kn-postep-kontroli" style="margin-left:auto">
+        <span class="dn-kropka" id="kn-kontrola-kropka" aria-hidden="true"></span>
+        <span id="kn-kontrola-licznik">0 / 25</span>
+        <button class="dn-btn dn-btn--sm dn-btn--zarys" type="button" id="kn-kontrola-reset">Wyczyść</button>
+      </div>
+    </div>
+    <div class="kn-panel-cialo">
+      <div class="kn-siatka-2">
+        <div>
+          <p class="kn-podtytul" style="margin-top:0">Geometria</p>
+          <ul class="kn-kontrola" data-lista>
+            <li><label><input class="dn-check" type="checkbox"><span>znak pochodzi z pliku źródłowego — nie odrysowany, nie złożony z kroju pisma</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>skalowanie proporcjonalne — ten sam współczynnik w obu osiach</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>brak obrotu, pochylenia i odbicia</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>ostrza <code class="dn-kod--wiersz">C</code> i <code class="dn-kod--wiersz">C′</code> leżą na osi poziomej — kąt 95,45°</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>prześwit między grotami stały na całej wysokości</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>kropka stoi na linii bazowej grotów</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>kropka jest okręgiem, nie elipsą</span></label></li>
+          </ul>
+          <p class="kn-podtytul">Konfiguracja i wielkość</p>
+          <ul class="kn-kontrola" data-lista>
+            <li><label><input class="dn-check" type="checkbox"><span>konfiguracja właściwa dla nośnika</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>wielkość nie mniejsza od minimalnej dla tej techniki</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>poniżej 24 px użyto wariantu uproszczonego</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>w interfejsie wielkość jest wielokrotnością 4 px</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>lockup nie został rozbity na sygnet i logotyp umieszczone osobno</span></label></li>
+          </ul>
+          <p class="kn-podtytul">Pole ochronne</p>
+          <ul class="kn-kontrola" data-lista>
+            <li><label><input class="dn-check" type="checkbox"><span>pole ≥ ½X ze wszystkich stron, liczone <strong>od kadru</strong></span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>pole ekspozycyjne 1X przy samodzielnym wystąpieniu znaku</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>w polu nie ma tekstu, linii, ramek, innych znaków ani krawędzi nośnika</span></label></li>
+          </ul>
+        </div>
+        <div>
+          <p class="kn-podtytul" style="margin-top:0">Barwa i kontrast</p>
+          <ul class="kn-kontrola" data-lista>
+            <li><label><input class="dn-check" type="checkbox"><span>wariant dobrany do <strong>tła</strong>, nie do ustawienia motywu</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>kontrast grotów wobec tła ≥ 3 : 1</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span><strong>kontrast kropki wobec tła ≥ 3 : 1</strong></span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>znak nie stoi na tle z rodziny sygnału w wariancie pełnym</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>w wariancie mono kropka jest obecna i ma barwę znaku</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>w kodzie użyto żetonów <code class="dn-kod--wiersz">--dn-*</code>, nie wartości szesnastkowych</span></label></li>
+          </ul>
+          <p class="kn-podtytul">Kontekst i pliki</p>
+          <ul class="kn-kontrola" data-lista>
+            <li><label><input class="dn-check" type="checkbox"><span>znak bez cienia, obrysu i podkładu półprzezroczystego</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>kropka w godle nie jest animowana</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span>w jednym kadrze jedno oznaczenie — godło <em>albo</em> emblemat środowiska</span></label></li>
+            <li><label><input class="dn-check" type="checkbox"><span><code class="dn-kod--wiersz">role="img"</code> i <code class="dn-kod--wiersz">aria-label="Danaco Console"</code> przy wstawieniu inline</span></label></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 17 · RYSUNKI I PLIKI ─────────── -->
+<section class="kn-rozdzial" id="r17" tabindex="-1">
+  <div class="kn-rozdzial-naglowek"><span class="kn-rozdzial-numer">17</span><h2>Rysunki i pliki</h2></div>
+  <p class="kn-lid">Czternaście rysunków konstrukcyjnych w SVG (do powiększania i pomiaru) oraz ich rasteryzacje
+  PNG o szerokości 1600 px (do dokumentów, które nie przyjmują SVG). Kliknięcie kopiuje ścieżkę do schowka.</p>
+
+  <div class="kn-tabela-obudowa">
+    <table class="dn-tabela">
+      <caption class="dn-sr-only">Wykaz rysunków konstrukcyjnych</caption>
+      <thead><tr><th scope="col" class="kn-liczba">Nr</th><th scope="col">Plik</th><th scope="col">Zawartość</th></tr></thead>
+      <tbody id="kn-wykaz-rysunkow"></tbody>
+    </table>
+  </div>
+
+  <p class="kn-podtytul">Pliki znaku — kopiuj ścieżkę kliknięciem</p>
+  <div class="kn-galeria-plikow" id="kn-galeria-plikow"></div>
+
+  <p class="kn-podtytul">Szybka tablica liczb</p>
+  <div class="kn-kod-blok">
+    <code class="kn-kod" id="kn-tablica-liczb">MODUŁ            X = 44 j. = wysokość grotu
+PROPORCJE        kreska 0,2018 X · kropka 0,2955 X · prześwit 0,3636 X
+KĄT              95,45°   [ZAMKNIĘTE]
+LINIA BAZOWA     y = 70 — wspólna dla grotów i kropki
+POLE OCHRONNE    minimum ½X · ekspozycja 1X · liczone od KADRU
+PRÓG WARIANTU    24 px  ·  dolna granica systemu 16 px
+MIN. DRUK        sygnet 9 mm · lockup 28 mm · grawer 15 mm · haft 40 mm
+KONTRAST         groty ≥ 3:1 · KROPKA ≥ 3:1 (to jest ten trudny)
+BARWY            #181818 / #3B6FE0   ·   #F4F4F4 / #5C8CEC</code>
+    <button class="dn-btn-ikona" type="button" data-kopiuj-z="kn-tablica-liczb" aria-label="Kopiuj tablicę liczb">
+      <svg class="kn-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+    </button>
+  </div>
+</section>
+
+<!-- ─────────── O TYM OPRACOWANIU ─────────── -->
+<details class="kn-panel" style="margin-top:48px">
+  <summary style="padding:14px 16px;cursor:pointer;font-family:var(--dn-ff-mono);font-size:var(--dn-fs-sm);letter-spacing:var(--dn-ls-mono-wersaliki);text-transform:uppercase;color:var(--dn-tekst-2)">
+    O tym opracowaniu
+  </summary>
+  <div class="kn-panel-cialo" style="border-top:1px solid var(--dn-obrys)">
+    <p class="kn-podtytul" style="margin-top:0">Co przedstawia</p>
+    <p>Dokumentację konstrukcyjną znaku <strong>Danaco Console</strong>: moduł konstrukcyjny X i wyprowadzone
+    z niego wymiary, rysunki techniczne sygnetu i obu lockupów, pole ochronne w dwóch poziomach, wielkości
+    minimalne z uzasadnieniem liczbowym, zasady skalowania, wyrównanie optyczne, osadzenie znaku na siatce
+    interfejsu, barwy z pomiarem kontrastu, katalog dwudziestu naruszeń oraz zasady reprodukcji.</p>
+
+    <p class="kn-podtytul">Źródła</p>
+    <ul>
+      <li>kontrakt systemu projektowego — znak marki i element sygnaturowy</li>
+      <li>kierunek systemu projektowego — kropka sygnału i znak marki</li>
+      <li><code class="dn-kod--wiersz">zasoby/marka/logo/*.svg</code> — <strong>geometria odczytana co do współrzędnej</strong>;
+        obwiednie farby zmierzone przez rasteryzację plików</li>
+      <li><code class="dn-kod--wiersz">zasoby/zetony/zetony.css</code> · <code class="dn-kod--wiersz">kontrasty.json</code> — żetony i pomiary</li>
+      <li><code class="dn-kod--wiersz">03-marka/ksiega-znaku.md</code> — warstwa narracyjna; ten dokument jest jej uzupełnieniem technicznym</li>
+    </ul>
+
+    <p class="kn-podtytul">Jakie interakcje są odwzorowane</p>
+    <ul>
+      <li>przełącznik motywu w pasku górnym — oba motywy równoprawne, pasek pozostaje atramentowy;</li>
+      <li>warstwy rysunków konstrukcyjnych: siatka · osie · wymiary · pole ochronne · sam znak;</li>
+      <li>suwak modułu X przeliczający wszystkie wymiary na żywo;</li>
+      <li>suwak skali 8–512 px z automatycznym przełączeniem wariantu i ostrzeżeniem poniżej minimum;</li>
+      <li>kalkulator pola ochronnego dla pięciu konfiguracji;</li>
+      <li>suwak rozciągnięcia poziomego pokazujący, jak zmienia się kąt rozwarcia;</li>
+      <li>tabela kontrastów liczona w przeglądarce wzorem WCAG 2.1;</li>
+      <li>galeria dwudziestu naruszeń z filtrem kategorii — deformacje są realnymi transformacjami CSS;</li>
+      <li>interaktywna lista kontrolna z licznikiem;</li>
+      <li>kopiowanie ścieżek i tabel do schowka.</li>
+    </ul>
+
+    <p class="kn-podtytul">Decyzje projektowe podjęte w tym opracowaniu</p>
+    <ol>
+      <li><strong>Dwa poziomy pola ochronnego (½X i 1X).</strong> Wartość wiążąca pozostaje ½X — zgodnie
+      z Księgą Znaku. Pole 1X wprowadzono jako <em>zalecenie ekspozycyjne</em>, bo jedna wartość nie obsługuje
+      obu skrajności: w pasku 48 px pole 1X jest fizycznie niewykonalne, a na okładce pole ½X wygląda na przycięcie.</li>
+      <li><strong>Progi technologiczne liczone od grubości prostopadłej 8,879 j.</strong>, nie od grubości
+      poziomej 12 j. Liczenie od 12 j. zawyża kreskę o 35 %.</li>
+      <li><strong>Wyrównanie w kontenerze przez kadr, nie przez obwiednię farby.</strong> Kadr 96 × 96
+      zawiera zapisaną korektę optyczną — środek kadru leży w 34 % drogi od środka masy do środka prostokąta farby.</li>
+      <li><strong>Wariant uproszczony traktowany jako osobny rysunek</strong>, nie jako wycinek pełnego:
+      inny kąt (91,94°), inny moduł (60 j.), inne wartości bezwzględne.</li>
+      <li><strong>Brak numeru Pantone.</strong> Podano procedurę ustalenia zamiast liczby, której nie da się
+      dotrzymać na wszystkich nośnikach.</li>
+    </ol>
+
+    <p class="kn-podtytul">Zgodność</p>
+    <ul>
+      <li>zero wartości szesnastkowych w CSS — wyłącznie żetony <code class="dn-kod--wiersz">--dn-*</code>;
+        wartości <code class="dn-kod--wiersz">#181818</code> i <code class="dn-kod--wiersz">#3B6FE0</code> występują wyłącznie
+        jako <em>cytat z pliku znaku</em> w treści tabel;</li>
+      <li>zero czystej czerni, zero atrybutu blokującego kontrolki, zero emoji jako ikon;</li>
+      <li>wszystkie ikony i znaki wklejone <strong>inline</strong> jako <code class="dn-kod--wiersz">&lt;svg&gt;</code> —
+        działają z <code class="dn-kod--wiersz">file://</code> i reagują na <code class="dn-kod--wiersz">currentColor</code>;</li>
+      <li>nawigacja klawiaturą, widoczny pierścień fokusu, <code class="dn-kod--wiersz">role</code> i <code class="dn-kod--wiersz">aria-*</code>
+        na kontrolkach, komunikaty stanu w <code class="dn-kod--wiersz">role="status"</code>;</li>
+      <li><code class="dn-kod--wiersz">prefers-reduced-motion</code> obsłużone globalnie w żetonach.</li>
+    </ul>
+  </div>
+</details>
+
+<footer class="kn-stopka-dok">
+  <span>Danaco Console — AI Operating Environment · v2.0 · Konstrukcja znaku</span>
+  <span>© 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz</span>
+</footer>
+
+</main>
+</div>
+
+<div class="kn-toast-kopia" id="kn-toast" role="status" aria-live="polite"></div>
+
+<script src="../zasoby/wspolne.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── narzędzia ───────────────────────────────────────────────────────── */
+  var przecinek = function (n, d) {
+    if (d === undefined) d = 3;
+    return n.toFixed(d).replace('.', ',');
+  };
+  var toast = document.getElementById('kn-toast');
+  var toastCzas = null;
+  function pokazToast(tekst) {
+    toast.textContent = tekst;
+    toast.dataset.widoczny = '1';
+    clearTimeout(toastCzas);
+    toastCzas = setTimeout(function () { toast.dataset.widoczny = '0'; }, 1800);
+  }
+  function doSchowka(tekst, opis) {
+    var ok = function () { pokazToast((opis || 'Skopiowano') + ' do schowka'); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(tekst).then(ok, function () { zapas(tekst, ok); });
+    } else { zapas(tekst, ok); }
+  }
+  function zapas(tekst, ok) {
+    var p = document.createElement('textarea');
+    p.value = tekst; p.setAttribute('readonly', '');
+    p.style.position = 'fixed'; p.style.opacity = '0';
+    document.body.appendChild(p); p.select();
+    try { document.execCommand('copy'); ok(); }
+    catch (e) { pokazToast('Kopiowanie niedostępne — zaznacz tekst ręcznie'); }
+    document.body.removeChild(p);
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-kopiuj]');
+    if (b) { doSchowka(b.getAttribute('data-kopiuj'), 'Ścieżki znaku'); return; }
+    var c = e.target.closest('[data-kopiuj-z]');
+    if (c) {
+      var el = document.getElementById(c.getAttribute('data-kopiuj-z'));
+      if (el) doSchowka(el.textContent, 'Tablica liczb');
+      return;
+    }
+    var t = e.target.closest('[data-kopiuj-tabela]');
+    if (t) {
+      var tab = document.getElementById(t.getAttribute('data-kopiuj-tabela'));
+      if (!tab) return;
+      var linie = [];
+      tab.querySelectorAll('tr').forEach(function (tr) {
+        var kom = [];
+        tr.querySelectorAll('th,td').forEach(function (td) { kom.push(td.textContent.trim()); });
+        linie.push(kom.join('\t'));
+      });
+      doSchowka(linie.join('\n'), 'Tabela wymiarów');
+    }
+  });
+
+  /* ── 1. warstwy rysunków ─────────────────────────────────────────────── */
+  document.querySelectorAll('[data-rysunek]').forEach(function (panel) {
+    panel.querySelectorAll('input[data-warstwa]').forEach(function (pole) {
+      pole.addEventListener('change', function () {
+        panel.dataset['w' + pole.dataset.warstwa.charAt(0).toUpperCase() + pole.dataset.warstwa.slice(1)] =
+          pole.checked ? '1' : '0';
+        panel.setAttribute('data-w-' + pole.dataset.warstwa, pole.checked ? '1' : '0');
+      });
+    });
+    var tylko = panel.querySelector('[data-tylko-znak]');
+    var wszystko = panel.querySelector('[data-wszystkie-warstwy]');
+    function ustaw(stan) {
+      panel.querySelectorAll('input[data-warstwa]').forEach(function (pole) {
+        var w = pole.dataset.warstwa;
+        pole.checked = (stan === 'wszystko') ? true : (w === 'znak');
+        panel.setAttribute('data-w-' + w, pole.checked ? '1' : '0');
+      });
+    }
+    if (tylko) tylko.addEventListener('click', function () { ustaw('znak'); });
+    if (wszystko) wszystko.addEventListener('click', function () { ustaw('wszystko'); });
+  });
+
+  /* ── 2. suwak modułu X ───────────────────────────────────────────────── */
+  var suwakX = document.getElementById('kn-suwak-x');
+  var wartoscX = document.getElementById('kn-x-wartosc');
+  var miaraX = document.getElementById('kn-x-miara');
+  var podgladX = document.getElementById('kn-x-podglad');
+  var komorkiX = document.querySelectorAll('#kn-tabela-x td[data-wsp]');
+  function odswiezX(x) {
+    wartoscX.textContent = przecinek(x, x % 1 ? 2 : 0) + ' j.';
+    miaraX.textContent = 'X = ' + przecinek(x, x % 1 ? 2 : 0) + ' j.';
+    var bok = Math.max(90, Math.min(260, 130 + x * 1.5));
+    podgladX.setAttribute('width', bok);
+    podgladX.setAttribute('height', bok);
+    komorkiX.forEach(function (td) {
+      td.textContent = przecinek(parseFloat(td.dataset.wsp) * x, 3);
+    });
+  }
+  if (suwakX) {
+    suwakX.addEventListener('input', function () { odswiezX(parseFloat(this.value)); });
+    document.querySelectorAll('[data-x]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = parseFloat(this.dataset.x);
+        suwakX.value = v; odswiezX(v);
+      });
+    });
+    odswiezX(44);
+  }
+
+  /* ── 3. położenie kropki ─────────────────────────────────────────────── */
+  var kropkaRuch = document.getElementById('kn-kropka-ruchoma');
+  var kropkaOpis = document.getElementById('kn-kropka-opis');
+  document.querySelectorAll('[data-kropka]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-kropka]').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      this.setAttribute('aria-pressed', 'true');
+      var naOsi = this.dataset.kropka === 'os';
+      kropkaRuch.setAttribute('cy', naOsi ? 48 : 63.5);
+      kropkaOpis.innerHTML = naOsi
+        ? '<strong>Na osi grotów — naruszenie.</strong> Znak przestaje być zdaniem i staje się schematem blokowym z trzema równorzędnymi elementami. Ginie hierarchia „dwa człony + zamknięcie”.'
+        : '<strong>Na linii bazowej.</strong> Znak czyta się jako zdanie: dwa człony i zamknięcie.';
+    });
+  });
+
+  /* ── 4. suwak skali 8–512 px ─────────────────────────────────────────── */
+  var suwakSkala = document.getElementById('kn-suwak-skala');
+  var znakSkala = document.getElementById('kn-skala-znak');
+  var gPelny = document.getElementById('kn-skala-pelny');
+  var gUpr = document.getElementById('kn-skala-uproszczony');
+  var wartoscSkala = document.getElementById('kn-skala-wartosc');
+  var miaraSkala = document.getElementById('kn-skala-miara');
+  var plakietkaSkala = document.getElementById('kn-skala-wariant');
+  var komunikatSkala = document.getElementById('kn-skala-komunikat');
+  function odswiezSkale(px) {
+    znakSkala.setAttribute('width', px);
+    znakSkala.setAttribute('height', px);
+    var upr = px < 24;
+    gPelny.style.display = upr ? 'none' : '';
+    gUpr.style.display = upr ? '' : 'none';
+    var X = px * (upr ? 60 : 44) / 96;
+    var kreska = X * (upr ? 0.203715 : 0.201802);
+    var kropka = X * (upr ? 0.30 : 0.295455);
+    wartoscSkala.textContent = px + ' px';
+    miaraSkala.textContent = px + ' px · kreska ' + przecinek(kreska, 2) + ' px · kropka ' + przecinek(kropka, 2) + ' px';
+    plakietkaSkala.textContent = upr ? 'wariant uproszczony' : 'wariant pełny';
+    plakietkaSkala.className = 'dn-plakietka ' + (upr ? 'dn-plakietka--ostrzezenie' : 'dn-plakietka--sygnal');
+    if (px < 16) {
+      komunikatSkala.innerHTML = '<strong>Poniżej dolnej granicy systemu.</strong> Przy ' + px +
+        ' px kreska ma ' + przecinek(kreska, 2) + ' px, a kropka ' + przecinek(kropka, 2) +
+        ' px — oba poniżej progów renderowania (2 px i 3 px). Znak nie występuje w tej wielkości.';
+      komunikatSkala.style.color = 'var(--dn-blad-tekst)';
+    } else if (upr) {
+      komunikatSkala.innerHTML = '<strong>Wariant uproszczony.</strong> Poniżej progu 24 px wariant pełny traci ' +
+        'kreskę — uproszczony odzyskuje oba progi: kreska ' + przecinek(kreska, 2) + ' px, kropka ' +
+        przecinek(kropka, 2) + ' px.';
+      komunikatSkala.style.color = 'var(--dn-ostrzezenie-tekst)';
+    } else {
+      komunikatSkala.innerHTML = '<strong>Wariant pełny.</strong> Kreska ' + przecinek(kreska, 2) +
+        ' px i kropka ' + przecinek(kropka, 2) + ' px spełniają progi renderowania (≥ 2 px i ≥ 3 px).';
+      komunikatSkala.style.color = '';
+    }
+  }
+  if (suwakSkala) {
+    suwakSkala.addEventListener('input', function () { odswiezSkale(parseInt(this.value, 10)); });
+    document.querySelectorAll('[data-skala]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        suwakSkala.value = this.dataset.skala;
+        odswiezSkale(parseInt(this.dataset.skala, 10));
+      });
+    });
+    odswiezSkale(96);
+  }
+
+  /* ── 5. drabina wielkości ────────────────────────────────────────────── */
+  var drabina = document.getElementById('kn-drabina');
+  if (drabina) {
+    [12, 16, 20, 24, 32, 48, 64, 96, 128].forEach(function (px) {
+      var upr = px < 24;
+      var poz = document.createElement('div');
+      poz.className = 'kn-drabina-poz';
+      poz.dataset.ponizej = px < 16 ? '1' : '0';
+      poz.innerHTML =
+        '<svg width="' + px + '" height="' + px + '" viewBox="0 0 96 96" role="img" aria-label="Sygnet ' + px + ' px">' +
+        (upr
+          ? '<path class="kn-atrament" d="M18 18H35L64 48L35 78H18L45 48Z"/><circle class="kn-kropka-f" cx="79" cy="69" r="9"/>'
+          : '<path class="kn-atrament" d="M12 26H24L44 48L24 70H12L32 48Z"/><path class="kn-atrament" d="M40 26H52L72 48L52 70H40L60 48Z"/><circle class="kn-kropka-f" cx="83" cy="63.5" r="6.5"/>') +
+        '</svg><span class="kn-drabina-etykieta">' + px + ' px' + (upr ? ' upr.' : '') + '</span>';
+      drabina.appendChild(poz);
+    });
+  }
+
+  /* ── 6. rozciągnięcie a kąt ──────────────────────────────────────────── */
+  var suwakR = document.getElementById('kn-suwak-rozciag');
+  var grupaR = document.getElementById('kn-rozciag-g');
+  var wartoscR = document.getElementById('kn-rozciag-wartosc');
+  var miaraR = document.getElementById('kn-rozciag-miara');
+  var opisR = document.getElementById('kn-rozciag-opis');
+  if (suwakR) {
+    suwakR.addEventListener('input', function () {
+      var k = parseInt(this.value, 10) / 100;
+      grupaR.setAttribute('transform', 'translate(' + (48 - 48 * k) + ',0) scale(' + k + ',1)');
+      var kat = 2 * Math.atan(22 / (20 * k)) * 180 / Math.PI;
+      wartoscR.textContent = przecinek(k, 2);
+      miaraR.textContent = 'skala ' + przecinek(k, 2) + ' · kąt ' + przecinek(kat, 2) + '°';
+      if (Math.abs(k - 1) < 0.005) {
+        opisR.innerHTML = 'Wartość poprawna: <strong>1,00</strong> · kąt <strong>95,45°</strong>.';
+        opisR.style.color = 'var(--dn-sukces-tekst)';
+      } else {
+        opisR.innerHTML = '<strong>Naruszenie.</strong> Kąt rozwarcia wynosi ' + przecinek(kat, 2) +
+          '° zamiast 95,45° — znak zmienia znaczenie, a kropka przestaje być okręgiem.';
+        opisR.style.color = 'var(--dn-blad-tekst)';
+      }
+    });
+  }
+
+  /* ── 7. trzy środki ──────────────────────────────────────────────────── */
+  var linieSrodkow = { kadr: 48, farba: 50.75, masa: 46.578 };
+  var opisySrodkow = {
+    kadr: '<strong>Środek kadru x = 48,000.</strong> Leży w 34 % drogi od środka masy do środka prostokąta farby — bliżej masy. To jest zapisany kompromis i jedyna oś, po której wolno wyrównywać znak.',
+    farba: '<strong>Środek prostokąta farby x = 50,750.</strong> Wyrównanie tutaj zsuwa groty — 88,8 % masy znaku — w lewo. Znak czyta się jako „zsunięty w lewo z kropką doklejoną z prawej”.',
+    masa: '<strong>Środek masy farby x = 46,578.</strong> Wyrównanie tutaj dosuwa kropkę do prawej krawędzi na 4,08 j. — kropka wygląda na przycinaną.'
+  };
+  var liniaSr = document.getElementById('kn-srodek-linia');
+  var etykSr = document.getElementById('kn-srodek-etykieta');
+  var opisSr = document.getElementById('kn-srodek-opis');
+  document.querySelectorAll('[data-srodek]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('[data-srodek]').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      this.setAttribute('aria-pressed', 'true');
+      var k = this.dataset.srodek, v = linieSrodkow[k];
+      liniaSr.setAttribute('d', 'M' + v + ' -8V104');
+      etykSr.setAttribute('x', v);
+      etykSr.textContent = { kadr: 'środek kadru x = 48,000', farba: 'prostokąt farby x = 50,750', masa: 'środek masy x = 46,578' }[k];
+      opisSr.innerHTML = opisySrodkow[k];
+    });
+  });
+
+  /* ── 8. kalkulator pola ochronnego ───────────────────────────────────── */
+  var polKonf = document.getElementById('kn-pole-konfiguracja');
+  var polWys = document.getElementById('kn-pole-wysokosc');
+  var polSuw = document.getElementById('kn-pole-suwak');
+  var polSuwW = document.getElementById('kn-pole-suwak-wartosc');
+  var wynMin = document.getElementById('kn-wynik-min');
+  var wynEks = document.getElementById('kn-wynik-eksp');
+  var wynSia = document.getElementById('kn-wynik-siatka');
+  var wynKad = document.getElementById('kn-wynik-kadr');
+  var polKom = document.getElementById('kn-pole-komunikat');
+  var proporcje = { 0: [1, 1], 1: [1, 1], 2: [225 / 96, 1], 3: [159 / 172, 1], 4: [149 / 56, 1] };
+  function liczPole() {
+    var wsp = parseFloat(polKonf.value);
+    var h = Math.max(8, Math.min(1024, parseInt(polWys.value, 10) || 96));
+    var idx = polKonf.selectedIndex;
+    var minP = Math.ceil(h * wsp - 1e-6);
+    var eksP = Math.ceil(h * wsp * 2 - 1e-6);
+    var siat = Math.ceil((h * wsp - 1e-6) / 4) * 4;
+    var szer = h * proporcje[idx][0];
+    wynMin.textContent = minP + ' px';
+    wynEks.textContent = eksP + ' px';
+    wynSia.textContent = siat + ' px';
+    wynKad.textContent = Math.round(szer + 2 * minP) + ' × ' + Math.round(h + 2 * minP) + ' px';
+    var opcja = polKonf.options[idx];
+    polKom.innerHTML = 'Kadr <strong>' + opcja.dataset.kadr + '</strong> · X = <strong>' + opcja.dataset.x +
+      '</strong> · pole liczone <strong>od kadru</strong>, nie od obwiedni farby. ' +
+      'Wynik zaokrąglony w górę do pełnego piksela; w interfejsie użyj wartości z siatki 4 px.';
+  }
+  if (polKonf) {
+    polKonf.addEventListener('change', liczPole);
+    polWys.addEventListener('input', function () { polSuw.value = Math.max(16, Math.min(512, this.value || 96)); polSuwW.textContent = polSuw.value + ' px'; liczPole(); });
+    polSuw.addEventListener('input', function () { polWys.value = this.value; polSuwW.textContent = this.value + ' px'; liczPole(); });
+    liczPole();
+  }
+
+  /* ── 9. tabela kontrastów (pomiar w przeglądarce) ────────────────────── */
+  function lum(hex) {
+    var r = parseInt(hex.substr(1, 2), 16) / 255,
+        g = parseInt(hex.substr(3, 2), 16) / 255,
+        b = parseInt(hex.substr(5, 2), 16) / 255;
+    var f = function (c) { return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  }
+  function kontrast(a, b) {
+    var l1 = lum(a), l2 = lum(b);
+    if (l1 < l2) { var t = l1; l1 = l2; l2 = t; }
+    return (l1 + 0.05) / (l2 + 0.05);
+  }
+  var ATR_J = '#181818', ATR_C = '#F4F4F4', KR_J = '#3B6FE0', KR_C = '#5C8CEC';
+  var tla = [
+    ['#F4F4F4', '--dn-tlo (jasny)', 'jasny'], ['#FFFFFF', '--dn-powierzchnia (jasny)', 'jasny'],
+    ['#FAFAFA', '--dn-panel (jasny)', 'jasny'], ['#ECECEC', '--dn-powierzchnia-2 (jasny)', 'jasny'],
+    ['#E3E3E3', '--dn-obrys (jasny)', 'jasny'], ['#D7D7D7', '--dn-szary-200', 'jasny'],
+    ['#C0C0C0', '--dn-szary-300', 'jasny'], ['#9E9E9E', '--dn-szary-400', 'jasny'],
+    ['#EDF3FE', '--dn-sygnal-100', 'jasny'],
+    ['#0A0A0A', '--dn-szary-1000', 'ciemny'], ['#0F0F0F', '--dn-tlo (ciemny)', 'ciemny'],
+    ['#131313', '--dn-rama', 'ciemny'], ['#181818', '--dn-powierzchnia (ciemny)', 'ciemny'],
+    ['#212121', '--dn-panel (ciemny)', 'ciemny'], ['#2A2A2A', '--dn-szary-800', 'ciemny'],
+    ['#3A3A3A', '--dn-szary-750', 'ciemny'], ['#4A4A4A', '--dn-szary-700', 'ciemny'],
+    ['#616161', '--dn-szary-600', 'ciemny'], ['#7C7C7C', '--dn-szary-500', 'ciemny'],
+    ['#3B6FE0', '--dn-sygnal-500', 'sygnal'], ['#173A8C', '--dn-sygnal-800', 'sygnal']
+  ];
+  var ciaol = document.getElementById('kn-kontrast-body');
+  var podsum = document.getElementById('kn-kontrast-podsumowanie');
+  function probka(tlo, atr, kr) {
+    return '<span class="kn-probka" style="background:' + tlo + '">' +
+      '<svg viewBox="0 0 96 96" role="img" aria-label="Podgląd znaku na tle ' + tlo + '">' +
+      '<path fill="' + atr + '" d="M12 26H24L44 48L24 70H12L32 48Z"/>' +
+      '<path fill="' + atr + '" d="M40 26H52L72 48L52 70H40L60 48Z"/>' +
+      '<circle fill="' + kr + '" cx="83" cy="63.5" r="6.5"/></svg></span>';
+  }
+  function budujKontrasty() {
+    var html = '', ok = 0;
+    tla.forEach(function (t) {
+      var jasne = t[2] === 'jasny';
+      var syg = t[2] === 'sygnal';
+      var atr = jasne ? ATR_J : ATR_C;
+      var kr = jasne ? KR_J : KR_C;
+      var nazwaW = jasne ? 'pełny na jasnym' : 'pełny na ciemnym';
+      if (syg) { atr = t[0] === '#3B6FE0' ? ATR_J : ATR_C; kr = atr; nazwaW = 'mono (kropka = znak)'; }
+      var kg = kontrast(atr, t[0]);
+      var kk = kontrast(kr, t[0]);
+      var okG = kg >= 3, okK = kk >= 3;
+      if (okG && okK) ok++;
+      html += '<tr data-ok="' + (okG && okK ? '1' : '0') + '">' +
+        '<td class="dn-dane">' + t[0] + '</td>' +
+        '<td><code class="dn-kod--wiersz">' + t[1] + '</code></td>' +
+        '<td>' + nazwaW + '</td>' +
+        '<td>' + probka(t[0], atr, kr) + '</td>' +
+        '<td class="kn-liczba">' + przecinek(kg, 2) + ' : 1</td>' +
+        '<td><span class="kn-ocena ' + (okG ? 'kn-ocena--tak">✓ spełnia' : 'kn-ocena--nie">✗ za mało') + '</span></td>' +
+        '<td class="kn-liczba">' + przecinek(kk, 2) + ' : 1</td>' +
+        '<td><span class="kn-ocena ' + (okK ? 'kn-ocena--tak">✓ spełnia' : 'kn-ocena--nie">✗ za mało') + '</span></td>' +
+        '</tr>';
+    });
+    ciaol.innerHTML = html;
+    podsum.innerHTML = 'Zmierzono <strong>' + tla.length + '</strong> par · próg 3 : 1 dla elementu nietekstowego (WCAG 2.1 · 1.4.11) · ' +
+      'spełnia <strong>' + ok + '</strong> · nie spełnia <strong>' + (tla.length - ok) + '</strong>. ' +
+      'Pomiar wykonywany w przeglądarce ze wzoru luminancji względnej.';
+  }
+  if (ciaol) {
+    budujKontrasty();
+    document.getElementById('kn-filtr-kontrast').addEventListener('change', function () {
+      var tylkoOk = this.checked;
+      ciaol.querySelectorAll('tr').forEach(function (tr) {
+        tr.style.display = (tylkoOk && tr.dataset.ok === '0') ? 'none' : '';
+      });
+    });
+  }
+
+  /* ── 10. katalog naruszeń — żywe przykłady ───────────────────────────── */
+  var G1 = 'M12 26H24L44 48L24 70H12L32 48Z';
+  var G2 = 'M40 26H52L72 48L52 70H40L60 48Z';
+  function ZNAK(o) {
+    o = o || {};
+    var vb = o.vb || '0 0 96 96';
+    var trzeci = o.trzeci ? '<path class="kn-g-grot" d="M68 26H80L100 48L80 70H68L88 48Z"/>' : '';
+    var stylK = (o.stylKropki || '') +
+      (o.anim ? 'animation:dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;' : '');
+    var kropka = o.bezKropki ? '' :
+      '<circle class="' + (o.klasaKropki === undefined ? 'kn-g-kropka' : o.klasaKropki) + '"' +
+      (stylK ? ' style="' + stylK + '"' : '') +
+      ' cx="' + (o.cx === undefined ? 83 : o.cx) +
+      '" cy="' + (o.cy === undefined ? 63.5 : o.cy) + '" r="6.5"/>';
+    return '<svg class="kn-znak-poglad" style="' + (o.styl || '') + '" viewBox="' + vb +
+      '" role="img" aria-label="Przykład błędnego użycia znaku">' +
+      '<path class="kn-g-grot" d="' + G1 + '"/><path class="kn-g-grot" d="' + G2 + '"/>' +
+      trzeci + kropka + '</svg>';
+  }
+  function MINI_LOCKUP(przesunSygnet, odstep) {
+    return '<div style="display:flex;align-items:center;gap:' + odstep + 'px">' +
+      ZNAK({ styl: 'width:52px;height:52px;transform:translateY(' + przesunSygnet + 'px)' }) +
+      '<div style="display:flex;flex-direction:column;line-height:1">' +
+      '<span style="font-family:var(--dn-ff-naglowek);font-weight:700;font-size:19px;color:var(--dn-tekst)">DANACO</span>' +
+      '<span style="font-family:var(--dn-ff-mono);font-size:7px;letter-spacing:.14em;color:var(--dn-tekst)">CONSOLE</span>' +
+      '</div></div>';
+  }
+
+  var NARUSZENIA = [
+    { nr: '01', kat: 'geometria', tytul: 'Rozciągnięcie w poziomie',
+      zle: 'Znak przeskalowano <b>scale(1.35, 1)</b>, żeby wypełnił szerszy kontener.',
+      szkoda: 'Kąt rozwarcia spada z 95,45° do 78,5° — grot promptu zamienia się w strzałkę nawigacji. Znak przestaje znaczyć „przekazanie”, zaczyna znaczyć „dalej”.',
+      pod: ZNAK({ styl: 'transform:scaleX(1.35)' }) },
+    { nr: '02', kat: 'geometria', tytul: 'Ściśnięcie w pionie',
+      zle: 'Znak przeskalowano <b>scale(1, 0.7)</b>, żeby zmieścić się w niskim pasku.',
+      szkoda: 'Kropka przestaje być okręgiem i staje się elipsą — a kropka jest jedynym elementem sygnaturowym systemu. Zdeformowana kropka podważa spójność wszystkich jej wystąpień w interfejsie.',
+      pod: ZNAK({ styl: 'transform:scaleY(0.7)' }) },
+    { nr: '03', kat: 'geometria', tytul: 'Obrót',
+      zle: 'Znak obrócono o <b>45°</b>, żeby wpisać go w narożnik.',
+      szkoda: 'Znak ma kierunek czytania — od koordynatora do wykonawcy, od lewej do prawej. Obrót usuwa kierunek i zamienia znak w ornament.',
+      pod: ZNAK({ styl: 'transform:rotate(45deg)' }) },
+    { nr: '04', kat: 'geometria', tytul: 'Odbicie lustrzane',
+      zle: 'Znak odbito poziomo (<b>scale(-1, 1)</b>), żeby „patrzył w stronę treści”.',
+      szkoda: 'Groty wskazują wstecz, a kropka ląduje przed nimi. Znak czyta się <b>.««</b> — „praca cofnięta przed zleceniem”. Znaczenie jest odwrotne do zamierzonego.',
+      pod: ZNAK({ styl: 'transform:scaleX(-1)' }) },
+    { nr: '05', kat: 'uklad', tytul: 'Sygnet na linii bazowej DANACO',
+      zle: 'W lockupie poziomym sygnet postawiono dolną krawędzią na linii bazowej <b>DANACO</b>.',
+      szkoda: 'Sygnet podskakuje o 11,7 j. w górę i traci związek z drugim wierszem. Lockup rozpada się na dwa niezależne obiekty stojące obok siebie.',
+      pod: MINI_LOCKUP(-11, 10) },
+    { nr: '06', kat: 'uklad', tytul: 'Wyrównanie do środka geometrycznego bloku',
+      zle: 'Oś grotów ustawiono na środku obwiedni tekstu (46,94) zamiast na <b>48</b>.',
+      szkoda: 'Różnica jest mała, ale znosi celową korektę optyczną: blok tekstu ma masę skupioną w górnym wierszu, więc sygnet wyrównany geometrycznie wygląda na zawieszony za wysoko.',
+      pod: MINI_LOCKUP(-4, 10) },
+    { nr: '07', kat: 'uklad', tytul: 'Centrowanie obwiednią farby',
+      zle: 'W lockupie pionowym sygnet wyśrodkowano po <b>obwiedni farby</b> zamiast po kadrze 96 × 96.',
+      szkoda: 'Sygnet przesuwa się o 2,75 j. w lewo względem DANACO. Cały układ czyta się jako przechylony, mimo że każdy element z osobna jest wyśrodkowany.',
+      pod: '<div style="display:flex;flex-direction:column;align-items:center;gap:4px">' +
+           ZNAK({ styl: 'width:50px;height:50px;transform:translateX(-12px)' }) +
+           '<span style="font-family:var(--dn-ff-naglowek);font-weight:700;font-size:19px;color:var(--dn-tekst)">DANACO</span></div>' },
+    { nr: '08', kat: 'uklad', tytul: 'Powiększony odstęp sygnet ↔ logotyp',
+      zle: 'Odstęp powiększono do <b>24 j.</b>, „żeby oddychało”.',
+      szkoda: 'Przy odstępie równym wysokości wersalika sygnet i logotyp przestają być jednym znakiem — czytają się jako godło <i>i</i> nazwa, czyli dwa oznaczenia. Reguła ½ wersalika trzyma je w jednej frazie.',
+      pod: MINI_LOCKUP(0, 34) },
+    { nr: '09', kat: 'geometria', tytul: 'Kropka wyśrodkowana na osi grotów',
+      zle: 'Kropkę przesunięto z <b>y = 63,5</b> na <b>y = 48</b>, „bo tak jest równiej”.',
+      szkoda: 'Znak przestaje być zdaniem »». i staje się schematem blokowym z trzema równorzędnymi elementami. Ginie hierarchia „dwa człony + zamknięcie”.',
+      pod: ZNAK({ cy: 48 }) },
+    { nr: '10', kat: 'barwa', tytul: 'Kropka w innej barwie',
+      zle: 'Kropkę pokolorowano na <b>zielono</b>, żeby oznaczyć „stan poprawny”.',
+      szkoda: 'Kropka sygnału jest jedyną barwą marki i znaczy dokładnie jedno: „tu biegnie praca”. Barwy stanów należą do komponentów interfejsu — kolorowa kropka w godle zamienia tożsamość we wskaźnik stanu.',
+      pod: ZNAK({ stylKropki: 'fill:var(--dn-sukces-tekst);' }) },
+    { nr: '11', kat: 'geometria', tytul: 'Kropka usunięta',
+      zle: 'Z sygnetu usunięto kropkę, zostawiając same groty, „bo w mono i tak jest czarna”.',
+      szkoda: 'Bez kropki znak czyta się »» — otwarty cudzysłów albo znak przewijania. Znika cała treść: praca, która ruszyła. W wariancie mono kropka <b>pozostaje</b>, tylko przyjmuje barwę znaku.',
+      pod: ZNAK({ bezKropki: true }) },
+    { nr: '12', kat: 'geometria', tytul: 'Trzeci grot',
+      zle: 'Dodano trzeci grot, „żeby znak był bogatszy”.',
+      szkoda: 'Dwa groty to relacja koordynator → wykonawca, zapisana w architekturze platformy. Trzy groty to ciąg bez końca — i kolizja ze zwyczajowym znaczeniem »»» jako „przewiń do końca”.',
+      pod: ZNAK({ vb: '0 0 124 96', trzeci: true, cx: 111 }) },
+    { nr: '13', kat: 'uklad', tytul: 'Kadrowanie po obwiedni farby',
+      zle: 'Kadr przycięto do <b>12…89,5 × 26…70</b>, „żeby nie było pustego miejsca”.',
+      szkoda: 'Znika korekta optyczna zapisana w marginesach, a proporcja zmienia się z 1 : 1 na 1,761 : 1. Wszystkie kontenery kwadratowe — medalion, favicon, kafel — zaczynają deformować znak.',
+      pod: '<svg class="kn-znak-poglad" viewBox="12 26 77.5 44" preserveAspectRatio="none" role="img" aria-label="Znak przycięty do obwiedni farby"><path class="kn-g-grot" d="' + G1 + '"/><path class="kn-g-grot" d="' + G2 + '"/><circle class="kn-g-kropka" cx="83" cy="63.5" r="6.5"/></svg>' },
+    { nr: '14', kat: 'uklad', tytul: 'Znak wpisany w koło',
+      zle: 'Sygnet wpisano w okrągły awatar bez przeliczenia wielkości.',
+      szkoda: 'Kwadratowy kadr wpisany w koło traci narożniki — a w prawym dolnym narożniku leży kropka. Kropka zostaje przycięta albo wypada poza okrąg.',
+      pod: '<div style="width:78px;height:78px;border-radius:50%;overflow:hidden;background:var(--dn-powierzchnia);display:flex;align-items:center;justify-content:center">' +
+           ZNAK({ styl: 'width:78px;height:78px' }) + '</div>' },
+    { nr: '15', kat: 'kontekst', tytul: 'Ramka wokół znaku',
+      zle: 'Znak obwiedziono cienką ramką, żeby „oddzielić go od tła”.',
+      szkoda: 'Ramka wchodzi w pole ochronne ½X i konkuruje z grotami o tę samą uwagę — bo grot jest zbudowany z prostych kresek. Jeżeli znak nie odcina się od tła, rozwiązaniem jest podkład kryjący, nie ramka.',
+      pod: '<div style="border:2px solid var(--dn-tekst-2);padding:4px;display:inline-flex">' + ZNAK({ styl: 'width:66px;height:66px' }) + '</div>' },
+    { nr: '16', kat: 'kontekst', tytul: 'Godło i emblemat w jednym kadrze',
+      zle: 'Na karcie środowiska umieszczono jednocześnie godło marki i emblemat <b>TalkIn</b>.',
+      szkoda: 'Dwa oznaczenia w jednym kadrze znoszą hierarchię Środowisko → Moduł → Okno. Karta ma mówić „to jest TalkIn”, a nie „to jest Danaco, a w środku TalkIn” — pierwsze zdanie padło już w pasku.',
+      pod: '<div style="display:flex;align-items:center;gap:12px">' + ZNAK({ styl: 'width:48px;height:48px' }) +
+           '<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" class="kn-kropka-f" stroke="none"/></svg></div>' },
+    { nr: '17', kat: 'barwa', tytul: 'Wariant pełny na tle sygnałowym',
+      zle: 'Godło z kolorową kropką postawiono na przycisku wypełnionym <b>--dn-sygnal-500</b>.',
+      szkoda: 'Kropka jest w tej samej barwie co tło — kontrast 1,00 : 1. Kropka znika, znak czyta się »» i traci znaczenie. Na tle sygnałowym obowiązuje wariant mono.',
+      pod: '<div style="background:var(--dn-sygnal-500);padding:10px;border-radius:var(--dn-r-md);display:inline-flex">' +
+           '<svg class="kn-znak-poglad" style="width:60px;height:60px" viewBox="0 0 96 96" role="img" aria-label="Znak na tle sygnałowym"><path style="fill:var(--dn-szary-50)" d="' + G1 + '"/><path style="fill:var(--dn-szary-50)" d="' + G2 + '"/><circle style="fill:var(--dn-sygnal-500)" cx="83" cy="63.5" r="6.5"/></svg></div>' },
+    { nr: '18', kat: 'barwa', tytul: 'Tło o zbyt niskim kontraście',
+      zle: 'Wariant pełny na tle <b>--dn-szary-300</b>.',
+      szkoda: 'Groty mają 9,76 : 1 — dobrze. Kropka ma <b>2,55 : 1</b>, poniżej progu 3 : 1 wymaganego dla elementów nietekstowych (WCAG 1.4.11). Znak jest niedostępny dla osób ze słabym widzeniem kontrastu.',
+      pod: '<div style="background:var(--dn-szary-300);padding:10px;border-radius:var(--dn-r-md);display:inline-flex">' +
+           '<svg class="kn-znak-poglad" style="width:60px;height:60px" viewBox="0 0 96 96" role="img" aria-label="Znak na tle o niskim kontraście"><path style="fill:var(--dn-szary-900)" d="' + G1 + '"/><path style="fill:var(--dn-szary-900)" d="' + G2 + '"/><circle style="fill:var(--dn-sygnal-500)" cx="83" cy="63.5" r="6.5"/></svg></div>' },
+    { nr: '19', kat: 'kontekst', tytul: 'Cień pod znakiem',
+      zle: 'Pod godło podłożono cień <b>--dn-cien-2</b>, „żeby odskoczyło od tła”.',
+      szkoda: 'Cień jest w systemie zarezerwowany dla warstw — modala, dymka, toastu — i niesie informację „to jest wyżej”. Znak nie jest warstwą. Dodatkowo cień rozmywa krawędzie grotów przy małych wielkościach.',
+      pod: ZNAK({ styl: 'filter:drop-shadow(0 6px 10px rgba(10,10,10,.55))' }) },
+    { nr: '20', kat: 'kontekst', tytul: 'Wariant pełny poniżej 24 px',
+      zle: 'Favicon 16 px wygenerowano z pliku <b>sygnet.svg</b> zamiast <b>sygnet-uproszczony.svg</b>.',
+      szkoda: 'Ramię ma 1,48 px, kropka 2,17 px — oba poniżej progu renderowania. Znak zamienia się w szarą plamę bez rozpoznawalnego kształtu, a wygładzanie zamyka prześwit 2,67 px.',
+      pod: '<div style="display:flex;align-items:center;gap:14px">' + ZNAK({ styl: 'width:16px;height:16px' }) +
+           '<span style="font-family:var(--dn-ff-mono);font-size:var(--dn-fs-xs);color:var(--dn-tekst-2)">16 px<br>wariant pełny</span></div>' },
+    { nr: '21', kat: 'kontekst', tytul: 'Tętno kropki w godle',
+      zle: 'Kropce w godle w pasku górnym dodano animację tętna.',
+      szkoda: 'Tętno znaczy „tu biegnie praca”. Pulsujące godło twierdzi, że pracuje marka — i odbiera tętnu wartość informacyjną tam, gdzie ono coś znaczy: na karcie sesji i przy wpisie rozmowy.',
+      pod: ZNAK({ anim: true }) },
+    { nr: '22', kat: 'geometria', tytul: 'Rekonstrukcja z kroju pisma',
+      zle: 'Znak złożono ze znaków <b>»</b> i <b>.</b> w Space Grotesk, bo „tak samo wygląda”.',
+      szkoda: 'Cudzysłów francuski w każdym kroju ma inny kąt, inną grubość, inny prześwit i inne położenie względem linii bazowej. Znak przestaje być powtarzalny — a powtarzalność jest jedyną funkcją znaku.',
+      pod: '<span style="font-family:var(--dn-ff-naglowek);font-weight:700;font-size:52px;color:var(--dn-tekst);letter-spacing:-.02em">»».</span>' }
+  ];
+
+  var pojemnikN = document.getElementById('kn-naruszenia');
+  var licznikN = document.getElementById('kn-naruszenia-licznik');
+  if (pojemnikN) {
+    NARUSZENIA.forEach(function (n) {
+      var el = document.createElement('article');
+      el.className = 'kn-naruszenie';
+      el.dataset.kat = n.kat;
+      el.innerHTML =
+        '<div class="kn-naruszenie-scena">' + n.pod + '</div>' +
+        '<div class="kn-naruszenie-tresc">' +
+          '<span class="kn-naruszenie-numer">NARUSZENIE ' + n.nr + ' · ' + n.kat + '</span>' +
+          '<h3 class="kn-naruszenie-tytul">' + n.tytul + '</h3>' +
+          '<p class="kn-naruszenie-opis"><b>Co zrobiono źle.</b> ' + n.zle + '</p>' +
+          '<p class="kn-naruszenie-opis"><b>Dlaczego to szkodzi.</b> ' + n.szkoda + '</p>' +
+        '</div>';
+      pojemnikN.appendChild(el);
+    });
+    licznikN.textContent = NARUSZENIA.length + ' z ' + NARUSZENIA.length + ' przypadków';
+    document.querySelectorAll('[data-kat]').forEach(function (b) {
+      if (b.tagName !== 'BUTTON') return;
+      b.addEventListener('click', function () {
+        document.querySelectorAll('button[data-kat]').forEach(function (x) {
+          x.setAttribute('aria-pressed', 'false'); x.classList.remove('dn-btn--wybrany');
+        });
+        this.setAttribute('aria-pressed', 'true'); this.classList.add('dn-btn--wybrany');
+        var k = this.dataset.kat, widoczne = 0;
+        pojemnikN.querySelectorAll('.kn-naruszenie').forEach(function (a) {
+          var ok = (k === 'wszystkie' || a.dataset.kat === k);
+          a.style.display = ok ? '' : 'none';
+          if (ok) widoczne++;
+        });
+        licznikN.textContent = widoczne + ' z ' + NARUSZENIA.length + ' przypadków';
+      });
+    });
+  }
+
+  /* ── 11. lista kontrolna ─────────────────────────────────────────────── */
+  var polaK = document.querySelectorAll('.kn-kontrola input[type="checkbox"]');
+  var licznikK = document.getElementById('kn-kontrola-licznik');
+  var kropkaK = document.getElementById('kn-kontrola-kropka');
+  function odswiezKontrole() {
+    var z = 0;
+    polaK.forEach(function (p) { if (p.checked) z++; });
+    licznikK.textContent = z + ' / ' + polaK.length;
+    kropkaK.className = 'dn-kropka' + (z === polaK.length ? ' dn-kropka--sukces' : (z ? ' dn-kropka--ostrzezenie' : ' dn-kropka--neutralna'));
+  }
+  polaK.forEach(function (p) { p.addEventListener('change', odswiezKontrole); });
+  var resetK = document.getElementById('kn-kontrola-reset');
+  if (resetK) resetK.addEventListener('click', function () {
+    polaK.forEach(function (p) { p.checked = false; });
+    odswiezKontrole(); pokazToast('Lista kontrolna wyczyszczona');
+  });
+  odswiezKontrole();
+
+  /* ── 12. wykaz rysunków i plików ─────────────────────────────────────── */
+  var RYSUNKI = [
+    ['01', 'rys-01-siatka-bazowa.svg', 'siatka 4 / 12 j., osie, linia bazowa, punkty A–F i A′–F′, kropka S'],
+    ['02', 'rys-02-wymiarowanie.svg', 'linie wymiarowe, wszystkie wymiary w j. i w module X'],
+    ['03', 'rys-03-katy-ramienia.svg', 'kąt 95,45°, grubość pozioma 12 j., grubość prostopadła 8,879 j.'],
+    ['04', 'rys-04-kropka-linia-bazowa.svg', 'kropka, linia bazowa, trzy środki kadru, udział w polu farby'],
+    ['05', 'rys-05-wariant-uproszczony.svg', 'porównanie wariantów, tabela parametrów'],
+    ['06', 'rys-06-lockup-poziomy.svg', 'konstrukcja lockupu poziomego, linie bazowe, odstępy'],
+    ['07', 'rys-07-lockup-pionowy.svg', 'konstrukcja lockupu pionowego, oś symetrii, trzy osie centrowania'],
+    ['08', 'rys-08-pole-ochronne-sygnet.svg', 'pole ½X i 1X dla sygnetu'],
+    ['09', 'rys-09-pole-ochronne-lockup-poziomy.svg', 'pole ½X i 1X dla lockupu poziomego'],
+    ['10', 'rys-10-pole-ochronne-lockup-pionowy.svg', 'pole ½X i 1X dla lockupu pionowego'],
+    ['11', 'rys-11-drabina-wielkosci.svg', 'drabina 12–128 px, próg 24 px, progi renderowania'],
+    ['12', 'rys-12-znak-w-interfejsie.svg', 'pasek 48 px, karta środowiska, okno startowe, tabela wielkości'],
+    ['13', 'rys-13-emblemat-siatka.svg', 'cztery emblematy na siatce 24 × 24, obrys 1,75 a skala'],
+    ['14', 'rys-14-warianty-reprodukcyjne.svg', 'pełny, mono, na ciemnym, kontur do grawerowania']
+  ];
+  var wykaz = document.getElementById('kn-wykaz-rysunkow');
+  if (wykaz) {
+    RYSUNKI.forEach(function (r) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td class="kn-liczba">' + r[0] + '</td>' +
+        '<td><code class="dn-kod--wiersz">konstrukcja/' + r[1] + '</code></td>' +
+        '<td>' + r[2] + '</td>';
+      tr.style.cursor = 'pointer';
+      tr.title = 'Kliknij, aby skopiować ścieżkę';
+      tr.addEventListener('click', function () { doSchowka('03-marka/konstrukcja/' + r[1], 'Ścieżka rysunku'); });
+      wykaz.appendChild(tr);
+    });
+  }
+  var PLIKI = [
+    'sygnet.svg', 'sygnet-na-ciemnym.svg', 'sygnet-mono-czarny.svg', 'sygnet-mono-bialy.svg',
+    'sygnet-uproszczony.svg', 'sygnet-uproszczony-na-ciemnym.svg',
+    'logo-poziomy.svg', 'logo-poziomy-na-ciemnym.svg', 'logo-poziomy-mono-czarny.svg', 'logo-poziomy-mono-bialy.svg',
+    'logo-pionowy.svg', 'logo-pionowy-na-ciemnym.svg', 'logotyp.svg', 'logotyp-na-ciemnym.svg',
+    'png/sygnet-512.png', 'png/logo-poziomy@2x.png', 'png/logo-pionowy@2x.png', 'png/logotyp@2x.png'
+  ];
+  var galeria = document.getElementById('kn-galeria-plikow');
+  if (galeria) {
+    PLIKI.forEach(function (p) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'kn-plik'; b.textContent = p;
+      b.addEventListener('click', function () { doSchowka('zasoby/marka/logo/' + p, 'Ścieżka pliku'); });
+      galeria.appendChild(b);
+    });
+  }
+
+  /* ── 13. podświetlanie spisu treści ──────────────────────────────────── */
+  var pozycje = Array.prototype.slice.call(document.querySelectorAll('#kn-spis .kn-spis-poz'));
+  var sekcje = pozycje.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  function zaznacz(id) {
+    pozycje.forEach(function (a) {
+      a.setAttribute('aria-current', a.getAttribute('href') === '#' + id ? 'true' : 'false');
+    });
+  }
+  if ('IntersectionObserver' in window && sekcje.length) {
+    var obs = new IntersectionObserver(function (wpisy) {
+      var widoczne = wpisy.filter(function (w) { return w.isIntersecting; })
+                          .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (widoczne.length) zaznacz(widoczne[0].target.id);
+    }, { rootMargin: '-56px 0px -70% 0px', threshold: 0 });
+    sekcje.forEach(function (s) { obs.observe(s); });
+  }
+  pozycje.forEach(function (a) {
+    a.addEventListener('click', function () { zaznacz(this.getAttribute('href').slice(1)); });
+  });
+  zaznacz('r01');
+})();
+</script>
+</body>
+</html>

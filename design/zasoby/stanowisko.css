@@ -1,0 +1,427 @@
+/* ============================================================================
+   DANACO CONSOLE — WARSTWA STANOWISKA (układ wielookienny) · v2.1
+   ----------------------------------------------------------------------------
+   NAPRAWA DWÓCH WAD KRYTYCZNYCH:
+   1. Pełne wykorzystanie szerokości ekranu — zero centrowanego max-width na
+      powłoce; treść wypełnia viewport, gęstość rozłożona, nie skupiona w środku.
+   2. Układ KOLUMNOWY zamiast góra/dół — okna czatu w pionie (portret), obok
+      siebie; okna robocze/pomocnicze po prawej. Koniec „jednego okna nad drugim".
+
+   Zasada: czat leci w pionie (treść płynie pionowo), więc czat trzymamy w
+   maksymalnym pionie i mnożymy w poziomie. Okna robocze dostawiamy z prawej.
+
+   Wyłącznie żetony var(--dn-*).
+   ============================================================================ */
+
+/* ── 0 · ZABEZPIECZENIA ─────────────────────────────────────────────────── */
+/* atrybut hidden musi ukrywać okno mimo display:grid na .sta-okno */
+.sta-okno[hidden] { display: none !important; }
+/* ikony w pasku i polu wyszukiwania nigdy nie rosną */
+.dn-pasek-szukaj svg, .dn-szukaj svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+
+/* ── 1 · POWŁOKA PEŁNOEKRANOWA (bez max-width, bez centrowania) ─────────── */
+
+.sta-powloka {
+  display: grid;
+  grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) minmax(0, 1fr);
+  height: 100dvh;
+  width: 100%;
+  background: var(--dn-tlo);
+  overflow: hidden;
+}
+
+/* Wariant bez wiersza pasa kart: pasmo kart nosi wtedy okno, nie powłoka
+   (tak stoi Centrum dowodzenia). Wariant klasą, nie nadpisaniem z pliku okna —
+   deweloper podłącza ten arkusz i ma oba układy powłoki. */
+.sta-powloka--bez-pasma { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr); }
+.sta-cialo {
+  display: grid;
+  grid-template-columns: var(--dn-wym-boczna) minmax(0, 1fr);
+  min-height: 0;
+}
+.sta-cialo[data-boczna="zwinieta"] { grid-template-columns: var(--dn-wym-pasek) minmax(0, 1fr); }
+
+/* ── 2 · STANOWISKO = strefa czatów (pion) + strefa robocza (prawa) ─────── */
+
+.sta-obszar {
+  display: grid;
+  grid-template-columns: minmax(0, var(--sta-udzial-czaty, 1fr)) minmax(0, var(--sta-udzial-robocza, 1fr));
+  gap: var(--dn-od-2);
+  min-width: 0; min-height: 0;
+  padding: var(--dn-od-2);
+}
+/* gdy brak okien roboczych — czaty biorą całość */
+.sta-obszar[data-robocza="ukryta"] { grid-template-columns: minmax(0, 1fr); }
+.sta-obszar[data-robocza="ukryta"] .sta-robocza { display: none; }
+/* gdy brak czatów (np. okno platformowe) — robocza bierze całość */
+.sta-obszar[data-czaty="ukryte"] { grid-template-columns: minmax(0, 1fr); }
+.sta-obszar[data-czaty="ukryte"] .sta-czaty { display: none; }
+
+/* rozdzielacz proporcji (przeciąganie) */
+.sta-obszar { position: relative; }
+
+/* ── 3 · STREFA CZATÓW — siatka pionowych okien komunikacji ─────────────── */
+/* domyślnie 1 kolumna; 2 czaty → 2 kolumny; 3–4 → 2×2 (dwa na górze, dwa na dole) */
+
+.sta-czaty {
+  display: grid;
+  gap: var(--dn-od-2);
+  min-width: 0; min-height: 0;
+  grid-template-columns: repeat(var(--sta-czaty-kolumny, 1), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+}
+.sta-czaty[data-liczba="1"] { --sta-czaty-kolumny: 1; }
+.sta-czaty[data-liczba="2"] { --sta-czaty-kolumny: 2; }
+.sta-czaty[data-liczba="3"] { --sta-czaty-kolumny: 2; }
+.sta-czaty[data-liczba="4"] { --sta-czaty-kolumny: 2; }
+
+/* ── 4 · STREFA ROBOCZA — okna pomocnicze (pion lub siatka) ─────────────── */
+
+.sta-robocza {
+  display: grid;
+  gap: var(--dn-od-2);
+  min-width: 0; min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+}
+.sta-robocza[data-liczba="2"] { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.sta-robocza[data-liczba="3"] { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+.sta-robocza[data-uklad="siatka"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ── 5 · OKNO (uniwersalny kontener — czat i robocze mają tę samą ramę) ─── */
+
+/* Okno ma belkę, dowolną liczbę pasów pomocniczych i jedną strefę treści.
+   Układ kolumnowy przyjmuje każdą liczbę pasów; treść bierze resztę wysokości. */
+.sta-okno {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; min-height: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+  transition: border-color var(--dn-czas-1) var(--dn-ease);
+}
+.sta-okno[data-aktywne="tak"] { border-color: var(--dn-sygnal-obrys); }
+.sta-okno[data-stan="pracuje"] { box-shadow: inset 0 var(--dn-wym-wstega) 0 var(--dn-kropka); }
+
+/* pasek tytułu okna — zwarty (koniec „kolubryn") */
+.sta-okno-belka {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: 28px; padding: 0 var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.sta-okno-tytul {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1);
+  min-width: 0;
+  font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst);
+}
+.sta-okno-tytul svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-tekst-2); }
+.sta-okno-tytul b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sta-okno-znacznik { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.sta-okno-akcje { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; }
+
+/* przycisk sterujący okna (dok, dziel, konfiguracja, zamknij) — 24 px */
+.sta-okno-akcje .dn-btn-ikona { width: 24px; height: 24px; }
+.sta-okno-tresc { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.sta-okno > :not(.sta-okno-tresc) { flex: none; }
+
+/* ── 6 · OKNO KOMUNIKACJI — prawdziwe, pełne (rdzeń niemal każdego modułu) ─ */
+
+/* wiersze: belka · nagłówek · kontekst · historia(1fr) · monitor · dół
+   (panel konfiguracji jest position:absolute — poza siatką) */
+.sta-kom { display: grid; grid-template-rows: auto auto auto minmax(0,1fr) auto auto; min-height: 0; }
+/* okna czatu bez pasa kontekstu/monitora (3,4) — historia i tak bierze 1fr */
+
+/* 6a. nagłówek: nazwa · model · kanał · effort · rola · stan + menu własne */
+.sta-kom-naglowek {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+  overflow-x: auto; scrollbar-width: none;
+}
+.sta-kom-naglowek::-webkit-scrollbar { display: none; }
+.sta-kom-pole { display: flex; flex-direction: column; gap: 0; white-space: nowrap; }
+.sta-kom-pole span { font-family: var(--dn-ff-mono); font-size: 10px; letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase; color: var(--dn-tekst-3); }
+.sta-kom-pole b { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.sta-kom-pole b.dane { font-family: var(--dn-ff-mono); }
+.sta-kom-stan { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-1); white-space: nowrap; }
+
+/* 6b. pas kontekstu — czynne źródła (pliki, projekt, ekspert) */
+.sta-kom-kontekst {
+  display: flex; align-items: center; gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  overflow-x: auto; scrollbar-width: none;
+}
+.sta-kom-kontekst::-webkit-scrollbar { display: none; }
+.sta-zrodlo {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1); flex: none;
+  height: 20px; padding: 0 var(--dn-od-1) 0 var(--dn-od-2);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+  font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); background: var(--dn-powierzchnia);
+}
+.sta-zrodlo svg { width: 12px; height: 12px; }
+.sta-zrodlo .odepnij { display: inline-grid; place-content: center; width: 14px; height: 14px;
+  border-radius: var(--dn-r-pill); color: var(--dn-tekst-3); }
+.sta-zrodlo .odepnij:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+/* 6c. historia — w pionie, pełna wysokość, minimalny scroll */
+.sta-kom-historia {
+  display: flex; flex-direction: column; gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  min-height: 0; overflow-y: auto;
+}
+
+/* 6d. monitor wykonania (zwijany) */
+.sta-kom-monitor {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2);
+  display: flex; align-items: center; gap: var(--dn-od-2);
+}
+.sta-kom-monitor[hidden] { display: none; }
+
+/* 6e. dół — prompt + kompaktowy przybornik */
+.sta-kom-dol { padding: var(--dn-od-2); border-top: 1px solid var(--dn-obrys-subtelny); background: var(--dn-panel); }
+
+/* prompt kompaktowy (koniec „kolubryny") */
+.sta-prompt {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.sta-prompt:focus-within { border-color: var(--dn-fokus); box-shadow: var(--dn-cien-sygnal); }
+.sta-prompt-grot { align-self: start; padding-top: 6px; font-family: var(--dn-ff-mono);
+  font-weight: var(--dn-fw-polgruba); color: var(--dn-kropka); user-select: none; }
+.sta-prompt-obszar {
+  min-height: 28px; max-height: 140px; padding: 4px 0;
+  border: none; background: transparent; color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-base); line-height: var(--dn-lh-bazowy); resize: none;
+}
+.sta-prompt-obszar:focus { outline: none; }
+.sta-prompt-wyslij { align-self: end; }
+
+/* KOMPAKTOWY PRZYBORNIK — dziesiątki funkcji w jednym wierszu ikon + popovery */
+.sta-belka-narzedzi {
+  display: flex; align-items: center; gap: 2px; margin-top: var(--dn-od-1);
+  overflow-x: auto; scrollbar-width: none;
+}
+.sta-belka-narzedzi::-webkit-scrollbar { display: none; }
+.sta-nrz { position: relative; flex: none; }
+.sta-nrz-przycisk {
+  display: inline-grid; place-content: center; width: 26px; height: 26px;
+  border: 1px solid transparent; border-radius: var(--dn-r-sm);
+  background: none; color: var(--dn-tekst-2); cursor: pointer;
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.sta-nrz-przycisk:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.sta-nrz-przycisk svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.sta-nrz-przycisk[aria-pressed="true"] { background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
+.sta-nrz-przycisk[aria-expanded="true"] { background: var(--dn-wcisniecie); color: var(--dn-tekst); }
+.sta-nrz-rozdzielacz { width: 1px; height: 16px; background: var(--dn-obrys); margin: 0 var(--dn-od-1); flex: none; }
+.sta-nrz-licznik {
+  position: absolute; top: -2px; right: -2px; min-width: 13px; height: 13px; padding: 0 3px;
+  display: grid; place-content: center; border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-wypelnienie); color: var(--dn-szary-0);
+  font-family: var(--dn-ff-mono); font-size: 9px; font-weight: var(--dn-fw-polgruba);
+}
+
+/* popover przybornika (rozwijane menu ustawień/konfiguracji) */
+.sta-popover {
+  position: absolute; bottom: calc(100% + 6px); left: 0; z-index: var(--dn-z-tooltip);
+  width: 280px; max-height: 60vh; overflow: auto;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia); box-shadow: var(--dn-cien-3);
+}
+.sta-popover[hidden] { display: none; }
+.sta-popover[data-kotwica="prawo"] { left: auto; right: 0; }
+.sta-popover-tytul { font-size: var(--dn-fs-xs); text-transform: uppercase; letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-2); margin-bottom: var(--dn-od-2); }
+.sta-popover-wiersz { display: flex; align-items: center; justify-content: space-between; gap: var(--dn-od-2);
+  padding: var(--dn-od-1) 0; }
+.sta-popover-wiersz + .sta-popover-wiersz { border-top: 1px solid var(--dn-obrys-subtelny); }
+.sta-popover-etykieta { font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
+.sta-popover-etykieta small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+/* ── 7 · KONFIGURACJA PER OKNO (miniatura okna Konfiguracji jako panel) ──── */
+/* każde okno ma WŁASNY, osobny komplet ustawień — źródło: okna/konfiguracja.md */
+.sta-konfig {
+  position: absolute; top: 30px; right: var(--dn-od-2); z-index: var(--dn-z-modal);
+  width: 320px; max-height: calc(100% - 40px); overflow: auto;
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia); box-shadow: var(--dn-cien-lg);
+}
+.sta-konfig[hidden] { display: none; }
+.sta-konfig-belka { display: flex; align-items: center; gap: var(--dn-od-2); padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny); background: var(--dn-panel); position: sticky; top: 0; }
+.sta-konfig-belka b { font-size: var(--dn-fs-sm); }
+.sta-konfig-sekcja { padding: var(--dn-od-2); border-bottom: 1px solid var(--dn-obrys-subtelny); }
+.sta-konfig-sekcja > summary { cursor: pointer; font-size: var(--dn-fs-xs); text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki); color: var(--dn-tekst-2); list-style: none; display: flex;
+  align-items: center; gap: var(--dn-od-1); }
+.sta-konfig-sekcja > summary::-webkit-details-marker { display: none; }
+.sta-konfig-sekcja > summary::before { content: '▸'; font-size: 10px; color: var(--dn-tekst-3); }
+.sta-konfig-sekcja[open] > summary::before { content: '▾'; }
+.sta-konfig-pole { display: grid; gap: 3px; margin-top: var(--dn-od-2); }
+.sta-konfig-pole label { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+
+/* ── 8 · WPIS ROZMOWY — czytelny, bez mikro-drobnicy ────────────────────── */
+
+.sta-wpis { display: grid; grid-template-columns: auto minmax(0,1fr); gap: var(--dn-od-2); }
+.sta-wpis-medalion { width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm); flex: none;
+  display: grid; place-content: center; border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst-2); }
+.sta-wpis-medalion svg { width: 14px; height: 14px; }
+.sta-wpis--czlowiek .sta-wpis-medalion { background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+.sta-wpis--inteligencja .sta-wpis-medalion { background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
+.sta-wpis-tozsamosc { display: flex; align-items: center; gap: var(--dn-od-1); margin-bottom: 2px; }
+.sta-wpis-nadawca { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.sta-wpis-godzina { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-3); margin-left: auto; }
+.sta-wpis-tresc { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst); }
+.sta-wpis-tresc mark { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); border-bottom: 1px solid var(--dn-sygnal-obrys); }
+.sta-wpis--system .sta-wpis-tresc { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+
+/* ── 9 · PULPIT UKŁADU — przełącznik konfiguracji stanowiska ─────────────── */
+
+.sta-pulpit {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1);
+  padding: 2px; border: 1px solid var(--dn-rama-obrys); border-radius: var(--dn-r-sm);
+  background: rgba(255,255,255,0.04);
+}
+.sta-pulpit button {
+  display: inline-grid; place-content: center; width: 26px; height: 24px;
+  border: none; border-radius: var(--dn-r-xs); background: none; color: var(--dn-rama-tekst-2); cursor: pointer;
+}
+.sta-pulpit button:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+.sta-pulpit button[aria-pressed="true"] { background: var(--dn-sygnal-wypelnienie); color: var(--dn-szary-0); }
+.sta-pulpit button svg { width: 15px; height: 15px; }
+
+/* ── 10 · RESPONSYWNOŚĆ — dopiero przy realnym zwężeniu ──────────────────── */
+
+@media (max-width: 1280px) {
+  .sta-czaty[data-liczba="2"] { --sta-czaty-kolumny: 1; }
+  .sta-czaty[data-liczba="3"], .sta-czaty[data-liczba="4"] { --sta-czaty-kolumny: 2; }
+}
+@media (max-width: 1024px) {
+  .sta-obszar { grid-template-columns: minmax(0,1fr) !important; grid-auto-rows: minmax(0,1fr); }
+  .sta-robocza { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 720px) {
+  .sta-cialo { grid-template-columns: minmax(0,1fr); }
+  .sta-cialo > .dn-boczna { display: none; }
+  .sta-czaty { --sta-czaty-kolumny: 1 !important; }
+}
+
+/* ── 11 · OGRANICZONY RUCH ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .sta-okno, .sta-nrz-przycisk, .sta-prompt { transition: none; }
+}
+
+/* ============================================================================
+   v2.1 · OBSZAR POLECENIA (chipy planszy 1–21) + TRYBY + HAMBURGER + PANELE
+   ============================================================================ */
+
+/* — tryby Talk / Work / Code na ramie — */
+.sta-tryby { display:inline-flex; gap:2px; padding:2px; border:1px solid var(--dn-rama-obrys);
+  border-radius:var(--dn-r-sm); background:rgba(255,255,255,.04); }
+.sta-tryby button { height:24px; padding:0 var(--dn-od-3); border:none; border-radius:var(--dn-r-xs);
+  background:none; color:var(--dn-rama-tekst-2); font-family:var(--dn-ff-naglowek);
+  font-size:var(--dn-fs-sm); font-weight:var(--dn-fw-srednia); cursor:pointer; }
+.sta-tryby button:hover { background:var(--dn-rama-hover); color:var(--dn-rama-tekst); }
+.sta-tryby button[aria-pressed="true"] { background:var(--dn-sygnal-wypelnienie); color:var(--dn-szary-0); }
+
+/* — hamburger / menu podręczne na ramie — */
+/* Menu rozwijane należą do biblioteki komponentów — patrz komponenty.css. */
+.sta-menu-etyk { padding:var(--dn-od-1) var(--dn-od-2); font-size:10px; text-transform:uppercase;
+  letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+
+/* — obszar polecenia: pasek kontekstu (23) — */
+.sta-kontekst-akcji { display:flex; align-items:center; gap:var(--dn-od-1); flex-wrap:wrap;
+  padding:var(--dn-od-1) 0; }
+.sta-chip { display:inline-flex; align-items:center; gap:var(--dn-od-1); height:24px; padding:0 var(--dn-od-2);
+  border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia-2);
+  font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); cursor:pointer; white-space:nowrap; }
+.sta-chip:hover { border-color:var(--dn-obrys-mocny); color:var(--dn-tekst); }
+.sta-chip svg { width:12px; height:12px; }
+.sta-chip--diff { margin-left:auto; font-family:var(--dn-ff-mono); }
+.sta-chip .plus { color:var(--dn-sukces-tekst); } .sta-chip .minus { color:var(--dn-blad-tekst); }
+
+/* — obszar polecenia: wiersz sterowania (5,6,7,8,9,23) — */
+.sta-sterowanie { display:flex; align-items:center; gap:var(--dn-od-1); margin-top:var(--dn-od-1); flex-wrap:wrap; }
+.sta-sterowanie .rozciag { flex:1; }
+.sta-chip--tryb { border-color:var(--dn-sygnal-obrys); color:var(--dn-sygnal); background:var(--dn-sygnal-tlo); }
+.sta-chip--model { font-family:var(--dn-ff-mono); }
+.sta-chip--glowny { display:inline-flex; align-items:center; gap:var(--dn-od-1);
+  height:28px; padding:0 var(--dn-od-3); border:none; background:var(--dn-atrament);
+  color:var(--dn-atrament-tekst); font-family:var(--dn-ff-bazowa); font-size:var(--dn-fs-sm);
+  font-weight:var(--dn-fw-polgruba); border-radius:var(--dn-r-sm); }
+.sta-chip--glowny svg { width:var(--dn-wym-ikona-sm); height:var(--dn-wym-ikona-sm); flex:none; }
+.sta-chip--glowny:hover { background:var(--dn-atrament-hover); }
+
+/* — suwak wysiłku (7) w popoverze — */
+.sta-suwak-opis { display:flex; justify-content:space-between; font-size:10px; color:var(--dn-tekst-3);
+  font-family:var(--dn-ff-mono); text-transform:uppercase; letter-spacing:var(--dn-ls-mono-wersaliki); margin-top:2px; }
+input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelnienie); }
+
+/* — panel dokowany: menu „⋮" widoczności paneli (3) — */
+.sta-panele-siatka { display:grid; gap:var(--dn-od-2); min-width:0; min-height:0; }
+
+/* — mikrofon nagrywanie — */
+.sta-rec { width:26px; height:26px; display:inline-grid; place-content:center; border:1px solid var(--dn-obrys);
+  border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia-2); color:var(--dn-blad-tekst); cursor:pointer; }
+.sta-rec svg { width:12px; height:12px; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RUCH STANOWISKA — belka narzędzi okna, żetony polecenia, pulpit ramy
+   --------------------------------------------------------------------------
+   Rozstrzygnięcie Właściciela 2026-08-21: reakcja na wskazanie i naciśnięcie
+   ma być widoczna w każdym oknie pakietu, nie tylko w Centrum dowodzenia.
+   Skala ikon w belce narzędzi zostaje nietknięta (reguła rozdz. 0: ikony
+   w pasku i polu wyszukiwania nie rosną) — nośnikiem reakcji jest tło, barwa,
+   podniesienie o 1 px i ustąpienie pod naciśnięciem.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.sta-nrz-przycisk {
+  transition:
+    background var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.sta-nrz-przycisk:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.sta-nrz-przycisk:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+
+.sta-chip {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.sta-chip:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.sta-chip:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.sta-chip--glowny:hover { box-shadow: var(--dn-cien-2); }
+
+.sta-pulpit button {
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease);
+}
+.sta-pulpit button:active { transform: scale(var(--dn-skala-nacisk)); }
+
+/* Wysłanie polecenia — jedyny przycisk stanowiska z poświatą sygnału: to on
+   uruchamia pracę. */
+.sta-prompt-wyslij { transition: background-color var(--dn-czas-1) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
+.sta-prompt-wyslij:hover { box-shadow: var(--dn-poswiata-sygnal); }
+.sta-prompt-wyslij:active { transform: scale(var(--dn-skala-nacisk)); }
+
+/* Okno stanowiska pod wskazaniem — sam obrys, bez ruchu: okna są układem,
+   a układ się nie przesuwa (zakaz animowania własności układu). */
+.sta-okno { transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease); }

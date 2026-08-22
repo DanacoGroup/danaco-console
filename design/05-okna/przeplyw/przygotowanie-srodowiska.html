@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Przygotowanie środowiska pracy</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/rama.css">
+<link rel="stylesheet" href="../../zasoby/okna-modalne.css">
+<link rel="stylesheet" href="../../zasoby/wejscie.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     OKNO PRZYGOTOWANIA ŚRODOWISKA — style lokalne (prefiks .pg-*)
+     Okno korzysta ze wspólnej budowy okien wejściowych (zasoby/wejscie.css):
+     ta sama szerokość, ta sama wysokość i ta sama kolumna tożsamości co okno
+     startowe oraz okno rejestracji i logowania. Lokalnie opisana jest wyłącznie
+     bryła przestrzenna warstw platformy — jedyny ruch ciągły widoku.
+     Wyłącznie żetony var(--dn-*). Oba motywy.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── Bryła przestrzenna warstw w kolumnie tożsamości ────────────────────── */
+  .pg-bryla-pole { display: grid; place-items: center; flex: 1 1 auto; min-height: 300px; perspective: 1000px; }
+  .pg-bryla {
+    position: relative; width: 208px; height: 208px;
+    transform-style: preserve-3d;
+    transform: rotateX(58deg) rotateZ(0deg);
+    animation: pg-obrot 24s linear infinite;
+  }
+  @keyframes pg-obrot {
+    from { transform: rotateX(58deg) rotateZ(0deg); }
+    to   { transform: rotateX(58deg) rotateZ(360deg); }
+  }
+  .pg-warstwa {
+    position: absolute; inset: 0;
+    display: grid; place-content: center;
+    border: 1px solid var(--dn-rama-obrys);
+    border-radius: var(--dn-r-lg);
+    background: var(--dn-rama-grafit);
+    box-shadow: var(--dn-cien-2);
+  }
+  .pg-warstwa--1 { transform: translateZ(-84px); opacity: .5; }
+  .pg-warstwa--2 { transform: translateZ(-28px); opacity: .68; }
+  .pg-warstwa--3 { transform: translateZ(28px);  opacity: .84; }
+  .pg-warstwa--4 { transform: translateZ(84px);  background: var(--dn-szary-800); box-shadow: var(--dn-cien-3); }
+  .pg-warstwa-siatka {
+    position: absolute; inset: var(--dn-od-3);
+    border-radius: var(--dn-r-md);
+    background:
+      repeating-linear-gradient(0deg,  var(--dn-rama-obrys) 0 1px, transparent 1px 22px),
+      repeating-linear-gradient(90deg, var(--dn-rama-obrys) 0 1px, transparent 1px 22px);
+    opacity: .7;
+  }
+  .pg-znak { width: 88px; height: 88px; color: var(--dn-rama-tekst); }
+  .pg-znak .kropka { fill: var(--dn-sygnal-500); }
+  .pg-warstwa-etykieta {
+    position: absolute; left: var(--dn-od-3); bottom: var(--dn-od-2);
+    font-family: var(--dn-ff-mono); font-size: 10px;
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-rama-tekst-2);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pg-bryla { animation: none; transform: rotateX(58deg) rotateZ(28deg); }
+  }
+
+  /* ── Pasek postępu w kolumnie stanu ─────────────────────────────────────── */
+  .pg-postep { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+  .pg-postep-wiersz { display: flex; justify-content: space-between; font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+  .pg-postep-wiersz b { font-family: var(--dn-ff-mono); color: var(--dn-tekst); }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PRZEPŁYW GŁÓWNY · ETAP 3"
+      data-prototyp-okno="Przygotowanie środowiska pracy — widok przejściowy po zalogowaniu"
+      data-prototyp-zrodlo="docs/interfejs-uzytkownika/przeplyw-okien.md rozdz. 3.3"
+      data-belka-tytul="Przygotowanie środowiska pracy — Danaco Console">
+
+<div class="pt-powloka pt-powloka--jednolita" id="dn-powloka-montaz"></div>
+
+<template id="dn-tresc-okna">
+  <main class="pt-cialo pt-cialo--bez-bocznej">
+    <div class="pt-obszar">
+
+      <section class="pt-okno pt-okno--plaskie" aria-label="Okno przygotowania środowiska pracy">
+        <header class="pt-okno-naglowek">
+          <h1 class="pt-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg>Przygotowanie środowiska pracy</h1>
+          <span class="pt-mono">etap 3 przepływu · między uwierzytelnieniem a stroną główną</span>
+        </header>
+
+        <div class="pt-okno-tresc">
+          <div class="we-scena">
+            <div class="we-okno">
+
+              <!-- ── KOLUMNA TOŻSAMOŚCI — bryła warstw platformy ──────────── -->
+              <div class="we-marka">
+                <div>
+                  <svg class="we-marka-godlo" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+                  <h2 class="we-marka-nazwa">Danaco Console</h2>
+                  <p class="we-marka-motto">AI Operating Environment</p>
+                </div>
+
+                <div class="pg-bryla-pole" role="img"
+                     aria-label="Bryła przestrzenna czterech warstw platformy: rdzeń, środowiska pracy, moduły, stanowisko">
+                  <div class="pg-bryla">
+            <div class="pg-warstwa pg-warstwa--1">
+              <span class="pg-warstwa-siatka" aria-hidden="true"></span>
+              <span class="pg-warstwa-etykieta">rdzeń platformy</span>
+            </div>
+            <div class="pg-warstwa pg-warstwa--2">
+              <span class="pg-warstwa-siatka" aria-hidden="true"></span>
+              <span class="pg-warstwa-etykieta">środowiska pracy</span>
+            </div>
+            <div class="pg-warstwa pg-warstwa--3">
+              <span class="pg-warstwa-siatka" aria-hidden="true"></span>
+              <span class="pg-warstwa-etykieta">moduły</span>
+            </div>
+            <div class="pg-warstwa pg-warstwa--4">
+              <span class="pg-warstwa-siatka" aria-hidden="true"></span>
+              <svg class="pg-znak" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+              <span class="pg-warstwa-etykieta">stanowisko</span>
+            </div>
+                  </div>
+                </div>
+
+                <p class="we-marka-stopka">Odtwarzanie trwa po stronie serwera.<br>Zamknięcie okna nie przerywa przywracania.</p>
+              </div>
+
+              <!-- ── KOLUMNA STANU PRZYGOTOWANIA ─────────────────────────── -->
+              <div class="we-panel">
+                <div class="we-glowa">
+                  <p class="we-nadtytul">Uruchomienie</p>
+                  <h2 class="we-tytul">Przygotowanie środowiska pracy</h2>
+                  <p class="we-lid">Platforma odtwarza stan pracy z ostatniego zamknięcia: karty sesji,
+                     kontekst projektów i kanały modeli.</p>
+                </div>
+
+                <ol class="we-kroki">
+                  <li class="we-krok" data-stan="gotowy"><span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span>Uwierzytelnienie</span><span class="we-krok-meta">token wydany urządzeniu</span></li>
+                  <li class="we-krok" data-stan="gotowy"><span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span>Profil Operatora i uprawnienia</span><span class="we-krok-meta">18 pozycji</span></li>
+                  <li class="we-krok" data-stan="pracuje"><span class="we-krok-znak" aria-hidden="true"><span class="pt-tetno" aria-hidden="true"></span></span><span>Przywracanie sesji z poprzedniej pracy</span><span class="we-krok-meta">3 z 7 kart</span></li>
+                  <li class="we-krok" data-stan="czeka"><span class="we-krok-znak" aria-hidden="true">4</span><span>Kanały modeli i konektory</span><span class="we-krok-meta">oczekuje</span></li>
+                  <li class="we-krok" data-stan="czeka"><span class="we-krok-znak" aria-hidden="true">5</span><span>Magistrala kontekstu i pamięć projektów</span><span class="we-krok-meta">oczekuje</span></li>
+                </ol>
+
+                <div class="pg-postep">
+                  <div class="pg-postep-wiersz"><span>Przywracanie sesji</span><b>62%</b></div>
+                  <div class="dn-postep">
+                    <span class="dn-postep-tor" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
+                          aria-label="Postęp przygotowania środowiska">
+                      <span class="dn-postep-wartosc" style="width: 62%"></span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="we-stopka">
+                  <span>Kolejny krok: strona główna platformy.</span>
+                  <span class="we-akcje">
+                    <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Pomiń przywracanie sesji</button>
+                    <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Przerwij i wyloguj</button>
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</template>
+
+<script src="../../zasoby/powloka.js"></script>
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/okna-modalne.js"></script>
+<script src="../../zasoby/rama.js"></script>
+
+</body>
+</html>

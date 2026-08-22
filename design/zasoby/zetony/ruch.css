@@ -1,0 +1,107 @@
+/* ŻETONY RUCHU
+   Czasy, krzywa, wartości uwydatnienia, klatki kluczowe i zachowanie przy
+   `prefers-reduced-motion`. Wpinany przez `zetony.css`.
+   Granice: jedna krzywa `--dn-ease` (wyjątek: `linear` obrotu wskaźnika),
+   górny czas 220 ms, jeden ruch ciągły na widok, animowane wyłącznie
+   `transform`, `opacity`, `box-shadow` i barwy. Animacje wejścia z
+   `animation-fill-mode: backwards` — `both` pozostawia animację czynną,
+   a taki element jest kontekstem nakładania i blokiem odniesienia dla
+   potomków `position: fixed`. */
+:root {
+  --dn-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --dn-czas-1: 0.1s;      /* mikroreakcja kontrolki */
+  --dn-czas-2: 0.16s;     /* przejście barwy, przełączenie motywu */
+  --dn-czas-3: 0.22s;     /* wejście i wyjście warstwy */
+  --dn-czas-uwyd: 0.2s;   /* podniesienie, poświata, wstęga */
+  --dn-czas-tetno: 2.4s;  /* jedyny ruch ciągły */
+
+  --dn-krok-kaskady: 40ms;
+
+  --dn-podniesienie-sm: -1px;   /* pozycja listy, żeton */
+  --dn-podniesienie-md: -2px;   /* kafel */
+  --dn-podniesienie-lg: -3px;   /* karta środowiska */
+  --dn-skala-nacisk: 0.985;
+  --dn-skala-ikony: 1.08;
+  --dn-skala-godla: 1.06;
+  --dn-przygasz-rodzenstwa: 0.72;
+}
+
+/* Cień uniesienia i poświaty zależą od motywu: na papierze roboczym cień jest
+   krótki i szary, na czerni długi i głęboki. */
+:root {
+  --dn-cien-uniesienie: 0 14px 30px -14px rgba(10, 10, 10, 0.26), 0 2px 6px rgba(10, 10, 10, 0.06);
+  --dn-poswiata-sygnal: 0 0 0 1px var(--dn-sygnal-obrys), 0 12px 26px -14px rgba(59, 111, 224, 0.55);
+  --dn-poswiata-szyna: 0 0 0 1px rgba(59, 111, 224, 0.40), 0 6px 16px -8px rgba(59, 111, 224, 0.55);
+  --dn-blysk: rgba(10, 10, 10, 0.12);
+}
+:root[data-theme='dark'] {
+  --dn-cien-uniesienie: 0 16px 34px -16px rgba(0, 0, 0, 0.78), 0 2px 6px rgba(0, 0, 0, 0.45);
+  --dn-poswiata-sygnal: 0 0 0 1px var(--dn-sygnal-obrys), 0 14px 30px -14px rgba(59, 111, 224, 0.65);
+  --dn-poswiata-szyna: 0 0 0 1px rgba(59, 111, 224, 0.55), 0 8px 20px -8px rgba(59, 111, 224, 0.70);
+  --dn-blysk: rgba(255, 255, 255, 0.16);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --dn-cien-uniesienie: 0 14px 30px -14px rgba(10, 10, 10, 0.26), 0 2px 6px rgba(10, 10, 10, 0.06);
+    --dn-poswiata-sygnal: 0 0 0 1px var(--dn-sygnal-obrys), 0 12px 26px -14px rgba(59, 111, 224, 0.55);
+    --dn-poswiata-szyna: 0 0 0 1px rgba(59, 111, 224, 0.40), 0 6px 16px -8px rgba(59, 111, 224, 0.55);
+    --dn-blysk: rgba(10, 10, 10, 0.12);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --dn-cien-uniesienie: 0 16px 34px -16px rgba(0, 0, 0, 0.78), 0 2px 6px rgba(0, 0, 0, 0.45);
+    --dn-poswiata-sygnal: 0 0 0 1px var(--dn-sygnal-obrys), 0 14px 30px -14px rgba(59, 111, 224, 0.65);
+    --dn-poswiata-szyna: 0 0 0 1px rgba(59, 111, 224, 0.55), 0 8px 20px -8px rgba(59, 111, 224, 0.70);
+    --dn-blysk: rgba(255, 255, 255, 0.16);
+  }
+}
+
+/* Klatki kluczowe wspólne dla pakietu. Wariant `dn-pojawienie` obsługuje
+   pojemniki z potomkami ustawianymi względem okna (`position: fixed`) — klatka
+   `transform` czyniłaby z pojemnika blok odniesienia. */
+@keyframes dn-wejscie {
+  from { opacity: 0; transform: translateY(var(--dn-od-2)) scale(0.98); }
+}
+@keyframes dn-wejscie-strefa {
+  from { opacity: 0; transform: translateY(var(--dn-od-3)); }
+}
+@keyframes dn-pojawienie {
+  from { opacity: 0; }
+}
+@keyframes dn-wysuniecie-ikony {
+  from { transform: translateY(calc(-1 * var(--dn-od-2))); }
+}
+@keyframes dn-tetno {
+  0%, 100% { box-shadow: 0 0 0 0 var(--dn-fokus-cien); }
+  40%      { box-shadow: 0 0 0 5px transparent; }
+}
+@keyframes dn-obrot {
+  to { transform: rotate(360deg); }
+}
+
+/* Ograniczony ruch: czasy gasną żetonem, informację przejmuje kształt.
+   Reguła `*` jest siatką bezpieczeństwa dla czasów spoza skali. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dn-czas-1: 0.01ms;
+    --dn-czas-2: 0.01ms;
+    --dn-czas-3: 0.01ms;
+    --dn-czas-uwyd: 0.01ms;
+    --dn-czas-tetno: 0.01ms;
+    --dn-krok-kaskady: 0ms;
+    --dn-podniesienie-sm: 0px;
+    --dn-podniesienie-md: 0px;
+    --dn-podniesienie-lg: 0px;
+    --dn-skala-nacisk: 1;
+    --dn-skala-ikony: 1;
+    --dn-skala-godla: 1;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

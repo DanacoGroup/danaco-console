@@ -1,0 +1,217 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNA WEJŚCIOWE
+   ----------------------------------------------------------------------------
+   Wspólna budowa okien poprzedzających pracę: okno startowe (łączenie),
+   okno rejestracji i logowania, okno przygotowania środowiska.
+
+   Wszystkie trzy dzielą się na dwie kolumny: kolumnę tożsamości (atrament,
+   po lewej) i kolumnę stanu albo formularza (powierzchnia, po prawej).
+   Dzięki temu kolejne ekrany uruchomienia czytają się jako jeden produkt,
+   nie jako ekran powitalny, formularz i kolejny ekran powitalny.
+
+   Szerokość docelowa okna 1040 px — okno wejściowe niesie wagę produktu,
+   nie wagę okienka dialogowego.
+
+   Wyłącznie żetony var(--dn-*). Oba motywy.
+   ============================================================================ */
+
+/* ── 1 · SCENA I OKNO ───────────────────────────────────────────────────── */
+
+.we-scena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: var(--dn-od-8) var(--dn-od-6);
+  background: var(--dn-tlo);
+}
+
+/* Okno wejściowe trzyma jedną szerokość i jedną wysokość we wszystkich
+   wariantach stanu — wariant z komunikatem nie może zmieniać rozmiaru okna
+   w trakcie uruchomienia. */
+.we-okno {
+  width: min(1040px, 100%);
+  min-height: 696px;
+  flex: none;
+  display: grid;
+  grid-template-columns: 384px minmax(0, 1fr);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  overflow: hidden;
+}
+
+/* ── 2 · KOLUMNA TOŻSAMOŚCI ─────────────────────────────────────────────── */
+
+.we-marka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-6);
+  padding: var(--dn-od-8) var(--dn-od-6);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  /* W motywie ciemnym obie kolumny mają zbliżoną jasność — kreska rozdziela
+     je niezależnie od motywu. */
+  border-right: 1px solid var(--dn-rama-obrys);
+}
+.we-marka-godlo { width: 44px; height: 44px; color: var(--dn-rama-tekst); }
+/* Kropka godła pulsuje jednym, ciągłym tętnem — jedyny ruch kolumny tożsamości.
+   Tętno 2,4 s jest wspólnym pulsem sygnału w całej platformie; tu ożywia okno
+   wejściowe, w którym poza tym nic się nie porusza. */
+.we-marka-godlo .kropka {
+  fill: var(--dn-sygnal-500);
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: we-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@keyframes we-tetno {
+  0%, 100% { opacity: 1; }
+  45%      { opacity: 0.35; }
+}
+@media (prefers-reduced-motion: reduce) { .we-marka-godlo .kropka { animation: none; } }
+.we-marka-nazwa {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-2xl);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+.we-marka-motto {
+  margin: var(--dn-od-2) 0 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+}
+.we-marka-lista { display: flex; flex-direction: column; gap: var(--dn-od-3); margin: 0; padding: 0; list-style: none; }
+.we-marka-poz { display: flex; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-rama-tekst-2); }
+.we-marka-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-rama-tekst); }
+.we-marka-poz b { display: block; color: var(--dn-rama-tekst); font-weight: var(--dn-fw-srednia); }
+.we-marka-stopka {
+  margin-top: auto;
+  padding-top: var(--dn-od-5);
+  border-top: 1px solid var(--dn-rama-obrys);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-rama-tekst-2);
+}
+
+/* ── 3 · KOLUMNA STANU ALBO FORMULARZA ──────────────────────────────────── */
+
+/* Okno wejściowe ma jedną wysokość niezależnie od wariantu stanu: wariant
+   z komunikatem i wariant bez komunikatu nie mogą zmieniać rozmiaru okna
+   w trakcie uruchomienia. Stopka opada na dół wolnego miejsca. */
+.we-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-5);
+  padding: var(--dn-od-8) var(--dn-od-6);
+}
+.we-glowa { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.we-nadtytul {
+  margin: 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.we-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-xl);
+  letter-spacing: var(--dn-ls-naglowek);
+  color: var(--dn-tekst);
+}
+.we-lid { margin: 0; max-width: 62ch; font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-3); }
+
+/* ── 4 · TOR KROKÓW URUCHOMIENIA ────────────────────────────────────────── */
+
+.we-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
+.we-krok {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.we-krok-znak {
+  display: grid;
+  place-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  font-family: var(--dn-ff-mono);
+  font-size: 11px;
+  color: var(--dn-tekst-3);
+}
+.we-krok-znak svg { width: 12px; height: 12px; }
+.we-krok-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.we-krok[data-stan='gotowy'] { color: var(--dn-tekst-2); }
+.we-krok[data-stan='gotowy'] .we-krok-znak { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
+.we-krok[data-stan='pracuje'] { border-color: var(--dn-obrys-subtelny); background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
+.we-krok[data-stan='pracuje'] .we-krok-znak { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+.we-krok[data-stan='blad'] { color: var(--dn-tekst-2); }
+.we-krok[data-stan='blad'] .we-krok-znak { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); color: var(--dn-blad-tekst); }
+
+/* ── 5 · KOMUNIKAT W KOLUMNIE STANU ─────────────────────────────────────── */
+
+.we-alarm {
+  display: flex;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-left-width: 2px;
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+.we-alarm svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-3); }
+.we-alarm b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.we-alarm--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
+.we-alarm--sukces svg, .we-alarm--sukces b { color: var(--dn-sukces-tekst); }
+.we-alarm--ostrzezenie { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
+.we-alarm--ostrzezenie svg, .we-alarm--ostrzezenie b { color: var(--dn-ostrzezenie-tekst); }
+.we-alarm--informacja { border-color: var(--dn-informacja-obrys); background: var(--dn-informacja-tlo); }
+.we-alarm--informacja svg, .we-alarm--informacja b { color: var(--dn-informacja-tekst); }
+
+/* ── 6 · DZIAŁANIA I STOPKA KOLUMNY ─────────────────────────────────────── */
+
+.we-akcje { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
+.we-akcje .dn-btn { white-space: nowrap; }
+.we-akcje .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.we-stopka {
+  display: flex;
+  margin-top: auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-3);
+  flex-wrap: wrap;
+  padding-top: var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* ── 7 · PROGI ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1000px) {
+  .we-okno { grid-template-columns: minmax(0, 1fr); }
+  .we-marka { display: none; }
+}
+@media (max-width: 640px) {
+  .we-panel { padding: var(--dn-od-5) var(--dn-od-4); }
+  .we-scena { padding: var(--dn-od-5) var(--dn-od-4); }
+}

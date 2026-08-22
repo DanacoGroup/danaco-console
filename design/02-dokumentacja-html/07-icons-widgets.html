@@ -1,0 +1,2898 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Ikonografia i widżety</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   Style lokalne strony dokumentacyjnej — wyłącznie var(--dn-*)
+   ========================================================================== */
+
+/* --- Układ strony: pasek + [spis treści | treść] ------------------------- */
+.dok-uklad {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--dn-od-8);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-5) var(--dn-od-16);
+}
+@media (max-width: 1080px) {
+  .dok-uklad { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-5); }
+  .dok-spis { position: static !important; max-height: none !important; }
+}
+
+/* --- Boczny spis treści --------------------------------------------------- */
+.dok-spis {
+  position: sticky;
+  top: calc(var(--dn-wym-pasek) + var(--dn-od-4));
+  align-self: start;
+  max-height: calc(100dvh - var(--dn-wym-pasek) - var(--dn-od-8));
+  overflow-y: auto;
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.dok-spis-tytul { margin-bottom: var(--dn-od-2); padding: 0 var(--dn-od-2); }
+.dok-spis ol { list-style: none; margin: 0; padding: 0; }
+.dok-spis a {
+  position: relative;
+  display: block;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  text-decoration: none;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dok-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); text-decoration: none; }
+.dok-spis a[aria-current='true'] { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
+.dok-spis a[aria-current='true']::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  translate: 0 -50%;
+  width: var(--dn-wym-wstega);
+  height: 14px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+}
+.dok-spis-grupa {
+  margin: var(--dn-od-3) 0 var(--dn-od-1);
+  padding: 0 var(--dn-od-2);
+}
+
+/* --- Sekcje --------------------------------------------------------------- */
+.dok-sekcja { scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-5)); margin-bottom: var(--dn-od-12); }
+.dok-sekcja > h2 {
+  margin-bottom: var(--dn-od-2);
+  padding-bottom: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-2xl);
+}
+.dok-sekcja > h3 { margin: var(--dn-od-6) 0 var(--dn-od-3); font-size: var(--dn-fs-lg); }
+.dok-sekcja p { max-width: 78ch; margin-bottom: var(--dn-od-3); color: var(--dn-tekst-2); }
+.dok-sekcja p strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.dok-lid { font-size: var(--dn-fs-md); }
+
+/* --- Bloki pomocnicze ----------------------------------------------------- */
+.dok-blok {
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  margin-bottom: var(--dn-od-4);
+}
+.dok-blok--wglebienie { background: var(--dn-powierzchnia-2); }
+.dok-blok-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--dn-od-3);
+}
+.dok-blok-naglowek > .dn-etykieta-mono { margin-right: auto; }
+
+.dok-siatka-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--dn-od-4); }
+.dok-siatka-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--dn-od-3); }
+.dok-rzad { display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap; }
+.dok-kolumna { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+
+/* --- Tabele dokumentacyjne ------------------------------------------------ */
+.dok-tabela-owijka { overflow-x: auto; margin-bottom: var(--dn-od-4); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); }
+.dok-tabela-owijka .dn-tabela th:first-child, .dok-tabela-owijka .dn-tabela td:first-child { padding-left: var(--dn-od-4); }
+.dok-tabela-owijka .dn-tabela tr:last-child td { border-bottom: none; }
+
+/* --- Diagram ASCII -------------------------------------------------------- */
+.dok-ascii {
+  display: block;
+  overflow-x: auto;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: 1.55;
+  white-space: pre;
+  margin-bottom: var(--dn-od-4);
+}
+
+/* --- Galeria ikon --------------------------------------------------------- */
+.gal-sterowanie {
+  position: sticky;
+  top: var(--dn-wym-pasek);
+  z-index: var(--dn-z-przybornik);
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  flex-wrap: wrap;
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  margin-bottom: var(--dn-od-4);
+}
+.gal-sterowanie .dn-szukaj { flex: 1 1 260px; }
+.gal-grupy { display: flex; gap: var(--dn-od-1); flex-wrap: wrap; }
+.gal-segment {
+  display: inline-flex;
+  gap: 0;
+  padding: 2px;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+}
+.gal-segment button {
+  min-width: 38px;
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  padding: 0 var(--dn-od-2);
+  border: none;
+  border-radius: var(--dn-r-xs);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.gal-segment button:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.gal-segment button[aria-pressed='true'] { background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+
+.gal-siatka {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--dn-od-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.gal-kafel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--dn-od-2);
+  min-height: 104px;
+  padding: var(--dn-od-3) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.gal-kafel:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); transform: translateY(-1px); }
+.gal-kafel:active { transform: translateY(0); }
+.gal-kafel[aria-pressed='true'] { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+.gal-kafel-plotno {
+  display: grid;
+  place-content: center;
+  width: 100%;
+  height: 32px;
+  flex: none;
+}
+.gal-kafel-nazwa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.gal-kafel-grupa {
+  font-family: var(--dn-ff-bazowa);
+  font-size: 10px;
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.gal-licznik { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); white-space: nowrap; }
+
+/* --- Podgląd wybranej ikony na dwóch tłach -------------------------------- */
+.podglad { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--dn-od-3); }
+.podglad-plytka {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-5) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+}
+.podglad-plytka .dn-etykieta-mono { color: var(--dn-tekst-3); }
+
+/* Motyw jasny wymuszony lokalnie — wyłącznie prymitywy skali (bez wartości wprost) */
+.motyw-jasny {
+  --dn-tlo: var(--dn-szary-50);
+  --dn-powierzchnia: var(--dn-szary-0);
+  --dn-powierzchnia-2: var(--dn-szary-100);
+  --dn-panel: var(--dn-szary-25);
+  --dn-obrys: var(--dn-szary-150);
+  --dn-obrys-subtelny: var(--dn-szary-100);
+  --dn-obrys-mocny: var(--dn-szary-300);
+  --dn-tekst: var(--dn-szary-900);
+  --dn-tekst-2: var(--dn-szary-600);
+  --dn-tekst-3: var(--dn-szary-500);
+  --dn-kropka: var(--dn-sygnal-500);
+  --dn-sygnal: var(--dn-sygnal-600);
+  --dn-sygnal-tlo: var(--dn-sygnal-100);
+  --dn-sygnal-obrys: var(--dn-sygnal-200);
+  --dn-sygnal-wypelnienie: var(--dn-sygnal-600);
+  --dn-atrament: var(--dn-szary-900);
+  --dn-atrament-tekst: var(--dn-szary-0);
+}
+/* Motyw ciemny wymuszony lokalnie */
+.motyw-ciemny {
+  --dn-tlo: var(--dn-szary-950);
+  --dn-powierzchnia: var(--dn-szary-900);
+  --dn-powierzchnia-2: var(--dn-szary-925);
+  --dn-panel: var(--dn-szary-850);
+  --dn-obrys: var(--dn-szary-800);
+  --dn-obrys-subtelny: var(--dn-szary-850);
+  --dn-obrys-mocny: var(--dn-szary-750);
+  --dn-tekst: var(--dn-szary-100);
+  --dn-tekst-2: var(--dn-szary-400);
+  --dn-tekst-3: var(--dn-szary-500);
+  --dn-kropka: var(--dn-sygnal-400);
+  --dn-sygnal: var(--dn-sygnal-300);
+  --dn-sygnal-tlo: var(--dn-sygnal-800);
+  --dn-sygnal-obrys: var(--dn-sygnal-700);
+  --dn-sygnal-wypelnienie: var(--dn-sygnal-500);
+  --dn-atrament: var(--dn-szary-100);
+  --dn-atrament-tekst: var(--dn-szary-950);
+}
+
+/* --- Porównanie grubości obrysu ------------------------------------------ */
+.obrys-prob { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--dn-od-3); }
+.obrys-plytka {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-4) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.obrys-plytka--wybrana { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+.obrys-rzad { display: flex; align-items: flex-end; gap: var(--dn-od-3); justify-content: center; min-height: 40px; }
+
+/* --- Emblematy środowisk -------------------------------------------------- */
+.embl-siatka { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--dn-od-4); }
+.embl-karta { padding: var(--dn-od-4); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-xl); background: var(--dn-powierzchnia); }
+.embl-godlo { width: 56px; height: 56px; margin-bottom: var(--dn-od-3); color: var(--dn-tekst); }
+.embl-godlo svg { width: 100%; height: 100%; }
+.embl-nazwa { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek); }
+.embl-motto { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); margin-bottom: var(--dn-od-3); }
+.embl-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.embl-kropka-on { color: var(--dn-kropka); }
+
+/* --- Skala rozmiarów wobec tekstu ---------------------------------------- */
+.skala-wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  min-height: var(--dn-wym-wiersz);
+  padding: 0 var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.skala-wiersz:last-child { border-bottom: none; }
+.skala-etykieta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); min-width: 96px; }
+
+/* --- Demonstracje widżetów ------------------------------------------------ */
+.wdz {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+  margin-bottom: var(--dn-od-5);
+}
+.wdz-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.wdz-id {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  color: var(--dn-sygnal);
+}
+.wdz-tytul { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); }
+.wdz-klasa { margin-left: auto; }
+.wdz-scena {
+  padding: var(--dn-od-5) var(--dn-od-4);
+  background: var(--dn-tlo);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.wdz-opis { padding: var(--dn-od-3) var(--dn-od-4); }
+.wdz-opis dl { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: var(--dn-od-1) var(--dn-od-3); margin: 0; }
+.wdz-opis dt {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  padding-top: 2px;
+}
+.wdz-opis dd { margin: 0; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.wdz-opis dd code { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst); }
+@media (max-width: 620px) { .wdz-opis dl { grid-template-columns: minmax(0, 1fr); } }
+
+/* Makieta powłoki dla widżetów pasa kart / promptu */
+.mk-powloka { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); background: var(--dn-powierzchnia); overflow: hidden; }
+.mk-obszar { padding: var(--dn-od-4); background: var(--dn-powierzchnia); min-height: 88px; }
+
+/* Kropka wielkości powiększonej na potrzeby demonstracji */
+.kropka-lupa { width: 10px; height: 10px; }
+
+/* Kod w wierszu — nadpisanie odstępu dla list */
+.dok-lista { margin: 0 0 var(--dn-od-4) var(--dn-od-5); color: var(--dn-tekst-2); font-size: var(--dn-fs-base); }
+.dok-lista li { margin-bottom: var(--dn-od-1); }
+.dok-lista strong { color: var(--dn-tekst); }
+
+/* Panel „O tym opracowaniu" */
+.dok-o-opracowaniu {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  padding: var(--dn-od-4);
+}
+.dok-o-opracowaniu > summary {
+  cursor: pointer;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  list-style: none;
+}
+.dok-o-opracowaniu > summary::-webkit-details-marker { display: none; }
+.dok-o-opracowaniu > summary::before { content: '▸ '; color: var(--dn-kropka); }
+.dok-o-opracowaniu[open] > summary::before { content: '▾ '; }
+.dok-o-opracowaniu > div { margin-top: var(--dn-od-3); }
+
+/* Stopka */
+.dok-stopka {
+  margin-top: var(--dn-od-10);
+  padding-top: var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  text-align: center;
+}
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<!-- ======================================================================
+     PASEK GÓRNY — rama kokpitu, atramentowy w obu motywach
+     ====================================================================== -->
+<header class="dn-pasek" style="position:sticky;top:0;z-index:var(--dn-z-pasek)">
+  <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console — indeks opracowań">
+    <svg width="26" height="26" viewBox="0 0 96 96" aria-hidden="true">
+      <path fill="currentColor" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+      <path fill="currentColor" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+      <circle cx="83" cy="63.5" r="6.5" style="fill:var(--dn-sygnal-400)"/>
+    </svg>
+    <span class="dn-pasek-logotyp">DANACO<small>Console</small></span>
+  </a>
+  <span class="dn-separator--pionowy dn-separator" style="background:var(--dn-rama-obrys)"></span>
+  <span style="font-size:var(--dn-fs-sm);color:var(--dn-rama-tekst-2)">Ikonografia i widżety</span>
+
+  <div class="dn-pasek-prawa">
+    <button type="button" class="dn-btn-ikona dn-btn-ikona--na-ramie" id="btn-gestosc"
+            aria-pressed="false" aria-label="Przełącz gęstość: zwarta / przestronna"
+            title="Gęstość: zwarta ⇄ przestronna">
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/>
+      </svg>
+    </button>
+    <button type="button" class="dn-btn-ikona dn-btn-ikona--na-ramie" data-przelacz-motyw data-motyw-ikona
+            aria-label="Przełącz motyw jasny / ciemny" title="Przełącz motyw">
+      <svg class="ik-slonce" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" />
+        <path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" />
+        <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+      </svg>
+      <svg class="ik-ksiezyc" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div class="dok-uklad">
+
+<!-- ======================================================================
+     SPIS TREŚCI
+     ====================================================================== -->
+<nav class="dok-spis" aria-label="Spis treści opracowania">
+  <p class="dn-etykieta-mono dok-spis-tytul">Spis treści</p>
+  <p class="dn-etykieta-wersalikowa dok-spis-grupa">Część I — Ikonografia</p>
+  <ol id="spis-lista">
+    <li><a href="#s-zasady">1 · Zasady zestawu</a></li>
+    <li><a href="#s-pochodzenie">2 · Pochodzenie zestawu</a></li>
+    <li><a href="#s-nazewnictwo">3 · Nazewnictwo</a></li>
+    <li><a href="#s-katalog">4 · Katalog ikon — galeria</a></li>
+    <li><a href="#s-grupy">5 · Grupy semantyczne</a></li>
+    <li><a href="#s-emblematy">6 · Emblematy środowisk</a></li>
+    <li><a href="#s-uzycie">7 · Zasady użycia</a></li>
+    <li><a href="#s-dostepnosc">8 · Dostępność ikon</a></li>
+    <li><a href="#s-dodanie">9 · Jak dodać ikonę</a></li>
+  </ol>
+  <p class="dn-etykieta-wersalikowa dok-spis-grupa">Część II — Widżety</p>
+  <ol>
+    <li><a href="#s-definicja">10 · Definicja widżetu</a></li>
+    <li><a href="#s-katalog-w">11 · Katalog widżetów</a></li>
+    <li><a href="#s-widzety">12 · Widżety na żywo</a></li>
+    <li><a href="#s-decyzje">13 · Decyzje projektowe</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ======================================================================
+     WSTĘP
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-wstep" tabindex="-1">
+  <h1 style="font-size:var(--dn-fs-3xl);margin-bottom:var(--dn-od-2)">Ikonografia i widżety</h1>
+  <p class="dok-lid">Zestaw <strong>82 ikon</strong> i katalog <strong>13 widżetów</strong> Danaco Console.
+     Ikona jest przyrządem odczytu, nie ozdobą: jedna siatka, jedna grubość kreski, jedna barwa
+     dziedziczona z kontekstu. Widżet to złożony, samodzielny zestaw komponentów
+     <code class="dn-kod dn-kod--wiersz">.dn-*</code>, który prezentuje stan systemu.</p>
+
+  <div class="dok-siatka-3">
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <p class="dn-etykieta-mono">Ikon w zestawie</p>
+      <p class="dn-dane" style="font-size:var(--dn-fs-3xl);color:var(--dn-tekst);margin:0">82</p>
+      <p style="font-size:var(--dn-fs-sm);margin:0">78 Lucide (ISC) + 4 emblematy własne</p>
+    </div>
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <p class="dn-etykieta-mono">Siatka i obrys</p>
+      <p class="dn-dane" style="font-size:var(--dn-fs-3xl);color:var(--dn-tekst);margin:0">24 · 1,75</p>
+      <p style="font-size:var(--dn-fs-sm);margin:0">renderowanie 14 · 16 · 20 · 24 px</p>
+    </div>
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <p class="dn-etykieta-mono">Widżetów w katalogu</p>
+      <p class="dn-dane" style="font-size:var(--dn-fs-3xl);color:var(--dn-tekst);margin:0">13</p>
+      <p style="font-size:var(--dn-fs-sm);margin:0">3 z ruchem ciągłym (tętno 2,4 s)</p>
+    </div>
+  </div>
+
+  <div class="dok-blok">
+    <div class="dok-blok-naglowek">
+      <span class="dn-etykieta-mono">Jak używać tej strony</span>
+    </div>
+    <ul class="dok-lista">
+      <li><strong>Klik w ikonę</strong> — kopiuje nazwę pliku do schowka i wybiera ją do podglądu na dwóch tłach.</li>
+      <li><strong>Dwuklik w ikonę</strong> — kopiuje gotowy kod <code class="dn-kod dn-kod--wiersz">&lt;svg&gt;</code> do wklejenia.</li>
+      <li><strong>Wyszukiwarka</strong> — szuka po nazwie, źródle Lucide i opisie zastosowania.</li>
+      <li><strong>Przełącznik rozmiaru</strong> — zmienia całą siatkę na żywo (14 / 16 / 20 / 24 px).</li>
+      <li><strong>Przełącznik motywu</strong> i <strong>gęstości</strong> — w pasku górnym, oba działają na całą stronę.</li>
+      <li><strong>Widżety</strong> — każdy ma przycisk uruchamiający przejście stanów albo animację.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ======================================================================
+     1 · ZASADY ZESTAWU
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-zasady" tabindex="-1">
+  <h2>1 · Zasady zestawu</h2>
+  <p>Sześć niezmienników wiąże wszystkie 82 pozycje. Zmiana któregokolwiek z nich jest zmianą zestawu,
+     nie jednej ikony.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <caption class="dn-sr-only">Sześć niezmienników zestawu ikon</caption>
+      <thead><tr><th>Niezmiennik</th><th>Wartość</th><th>Dlaczego tak</th></tr></thead>
+      <tbody>
+        <tr><td>Siatka</td><td class="dn-dane">24 × 24</td><td class="dn-dane">jedna siatka źródłowa — kreska nie łamie się przy skalowaniu</td></tr>
+        <tr><td>Obrys</td><td class="dn-dane">1,75</td><td class="dn-dane">cieniej niż domyślne 2 px Lucide; nie znika przy 14 px jak 1,5</td></tr>
+        <tr><td>Wypełnienie</td><td class="dn-dane">none</td><td class="dn-dane">zestaw konturowy; wyjątek: kropka sygnału w emblematach</td></tr>
+        <tr><td>Barwa</td><td class="dn-dane">currentColor</td><td class="dn-dane">ikona nigdy nie deklaruje własnej barwy — dziedziczy z rodzica</td></tr>
+        <tr><td>Zakończenia i łączenia</td><td class="dn-dane">round</td><td class="dn-dane">zaokrąglenia utrzymują czytelność narożników w małych stopniach</td></tr>
+        <tr><td>Renderowanie</td><td class="dn-dane">14 · 16 · 20 · 24</td><td class="dn-dane">cztery stopnie z żetonów <code>--dn-wym-ikona-*</code>; poza nimi nie renderujemy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Dlaczego 1,75 — porównanie na żywo</h3>
+  <p>Trzy grubości obrysu na tej samej geometrii. Przełącz, aby zobaczyć różnicę w każdym z czterech
+     stopni renderowania. <strong>1,5</strong> gubi kreskę przy 14 px, <strong>2,0</strong> zagęszcza
+     wnętrze kształtu i zbliża ikonę do piktogramu.</p>
+
+  <div class="dok-blok">
+    <div class="dok-blok-naglowek">
+      <span class="dn-etykieta-mono">Porównanie grubości</span>
+      <div class="gal-segment" role="group" aria-label="Ikona do porównania grubości obrysu">
+        <button type="button" data-obrys-ikona="ustawienia" aria-pressed="true">ustawienia</button>
+        <button type="button" data-obrys-ikona="badanie" aria-pressed="false">badanie</button>
+        <button type="button" data-obrys-ikona="cpu" aria-pressed="false">cpu</button>
+        <button type="button" data-obrys-ikona="srodowisko-multitaskingai" aria-pressed="false">emblemat</button>
+      </div>
+    </div>
+    <div class="obrys-prob" id="obrys-prob"></div>
+    <p style="margin:var(--dn-od-3) 0 0;font-size:var(--dn-fs-sm)">
+      Każda płytka pokazuje tę samą ikonę w 14, 16, 20 i 24 px. Środkowa —
+      <strong>obrys 1,75</strong> — jest wartością obowiązującą.</p>
+  </div>
+
+  <h3>Anatomia pliku źródłowego</h3>
+  <pre class="dok-ascii">&lt;svg aria-hidden="true"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24" height="24" viewBox="0 0 24 24"
+  fill="none" stroke="currentColor"
+  stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"&gt;
+  &lt;path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /&gt;
+  &lt;path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /&gt;
+&lt;/svg&gt;                                              plik: zasoby/ikony/svg/dom.svg</pre>
+  <p><code class="dn-kod dn-kod--wiersz">aria-hidden="true"</code> jest wartością źródłową: ikona domyślnie
+     nie mówi. Odsłonięcie jej dla technologii wspomagających jest decyzją miejsca użycia, nie pliku —
+     patrz <a href="#s-dostepnosc">rozdz. 8</a>.</p>
+
+  <h3>Cztery stopnie renderowania — kiedy który</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Stopień</th><th>Żeton</th><th>Gdzie stosowany</th><th>Podgląd</th></tr></thead>
+      <tbody>
+        <tr><td class="dn-dane">14 px</td><td class="dn-dane">--dn-wym-ikona-sm</td><td>medalion wpisu komunikacji, drobne metadane</td><td><span data-ikona="dokument" data-ikona-rozmiar="14"></span></td></tr>
+        <tr><td class="dn-dane">16 px</td><td class="dn-dane">--dn-wym-ikona</td><td><strong>wartość domyślna</strong> — przyciski, boczna nawigacja, toast</td><td><span data-ikona="dokument" data-ikona-rozmiar="16"></span></td></tr>
+        <tr><td class="dn-dane">20 px</td><td class="dn-dane">--dn-wym-ikona-lg</td><td>nagłówki paneli, kafel komponentu własnego</td><td><span data-ikona="dokument" data-ikona-rozmiar="20"></span></td></tr>
+        <tr><td class="dn-dane">24 px</td><td class="dn-dane">--dn-wym-ikona-xl</td><td>pusty stan, karty ról, nagłówki sekcji</td><td><span data-ikona="dokument" data-ikona-rozmiar="24"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Udokumentowany wyjątek.</strong> Dwa komponenty schodzą do 12 px:
+     <code class="dn-kod dn-kod--wiersz">.dn-plakietka &gt; svg</code> i
+     <code class="dn-kod dn-kod--wiersz">.dn-krok-znak &gt; svg</code>. To ikony wewnątrz elementów
+     wielkości 16–20 px, gdzie 14 px rozsadziłoby pojemnik. Wyjątek dwóch komponentów, nie piąty stopień skali.</p>
+</section>
+
+<!-- ======================================================================
+     2 · POCHODZENIE
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-pochodzenie" tabindex="-1">
+  <h2>2 · Pochodzenie zestawu</h2>
+  <p>Dwa źródła, jedna kreska. Zasada nadrzędna:
+     <strong>ikon nie rysuje się ręcznie, jeżeli istnieją w bibliotece</strong> — dorysowuje się wyłącznie
+     brakujące pojęcia domenowe.</p>
+
+  <div class="dok-siatka-2">
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek">
+        <span class="dn-etykieta-mono">Lucide (ISC)</span>
+        <span class="dn-plakietka dn-plakietka--informacja"><span data-ikona="info" data-ikona-rozmiar="12"></span>78 pozycji</span>
+      </div>
+      <p style="font-size:var(--dn-fs-sm)">Przejęte bez zmian geometrii. Zmieniony wyłącznie
+         <code class="dn-kod dn-kod--wiersz">stroke-width</code> z 2 na 1,75.</p>
+      <div class="dok-rzad" id="prob-lucide"></div>
+    </div>
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek">
+        <span class="dn-etykieta-mono">Emblematy własne</span>
+        <span class="dn-plakietka dn-plakietka--sygnal"><span data-ikona="gwiazdka" data-ikona-rozmiar="12"></span>4 pozycje</span>
+      </div>
+      <p style="font-size:var(--dn-fs-sm)">Narysowane na siatce 24×24 tą samą kreską 1,75.
+         Każdy zawiera <strong>dokładnie jedną</strong> wypełnioną kropkę sygnału.</p>
+      <div class="dok-rzad embl-kropka-on" id="prob-wlasne"></div>
+    </div>
+  </div>
+
+  <h3>Trzy role zespołu — rysować czy znaleźć?</h3>
+  <p>Role <strong>Coordinator</strong>, <strong>Executor</strong> i <strong>Validator</strong> są pojęciami
+     wyłącznie domenowymi. Mimo to nie zostały narysowane od zera — biblioteka miała kształt niosący
+     to znaczenie. Rysowanie zaczęło się dopiero tam, gdzie żaden kształt Lucide nie mógł zastąpić
+     tożsamości środowiska.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Pojęcie domenowe</th><th>Ikona</th><th>Rozstrzygnięcie</th><th>Źródło</th></tr></thead>
+      <tbody>
+        <tr><td>Coordinator — plan i delegacja</td><td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span data-ikona="wezly" data-ikona-rozmiar="20"></span><code class="dn-dane">wezly</code></span></td><td>znaleziono odpowiednik — węzły połączone trasą</td><td class="dn-dane">lucide:waypoints</td></tr>
+        <tr><td>Executor — realizacja zlecenia</td><td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span data-ikona="wykonawca" data-ikona-rozmiar="20"></span><code class="dn-dane">wykonawca</code></span></td><td>znaleziono odpowiednik</td><td class="dn-dane">lucide:circle-play</td></tr>
+        <tr><td>Validator — weryfikacja kroku</td><td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span data-ikona="walidator" data-ikona-rozmiar="20"></span><code class="dn-dane">walidator</code></span></td><td>znaleziono odpowiednik</td><td class="dn-dane">lucide:badge-check</td></tr>
+        <tr><td>Tożsamość środowiska (×4)</td><td><span class="dok-rzad embl-kropka-on" style="gap:var(--dn-od-2)"><span data-ikona="srodowisko-talkin" data-ikona-rozmiar="20"></span><code class="dn-dane">srodowisko-*</code></span></td><td><strong>narysowane</strong> — brak kształtu w bibliotece</td><td class="dn-dane">wlasna</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Co robimy z geometrią Lucide</h3>
+  <div class="dok-siatka-2">
+    <div class="dok-blok" style="border-left:2px solid var(--dn-sukces-tekst)">
+      <div class="dok-blok-naglowek">
+        <span data-ikona="ptaszek-kolo" data-ikona-rozmiar="16" style="color:var(--dn-sukces-tekst)"></span>
+        <span class="dn-etykieta-mono">Wolno</span>
+      </div>
+      <ul class="dok-lista">
+        <li>zmienić <code class="dn-kod dn-kod--wiersz">stroke-width</code> na 1,75</li>
+        <li>ustawić <code class="dn-kod dn-kod--wiersz">stroke="currentColor"</code></li>
+        <li>dodać <code class="dn-kod dn-kod--wiersz">aria-hidden="true"</code></li>
+        <li>zapisać plik pod nazwą polską</li>
+        <li>renderować w 14 / 16 / 20 / 24 px</li>
+      </ul>
+    </div>
+    <div class="dok-blok" style="border-left:2px solid var(--dn-blad-tekst)">
+      <div class="dok-blok-naglowek">
+        <span data-ikona="blad" data-ikona-rozmiar="16" style="color:var(--dn-blad-tekst)"></span>
+        <span class="dn-etykieta-mono">Nie wolno</span>
+      </div>
+      <ul class="dok-lista">
+        <li>zmienić <code class="dn-kod dn-kod--wiersz">viewBox</code></li>
+        <li>dorysować element do kształtu bibliotecznego</li>
+        <li>skalować przez <code class="dn-kod dn-kod--wiersz">transform: scale()</code></li>
+        <li>wypełnić kontur (poza emblematami)</li>
+        <li>obracać ikonę dla wariantu kierunkowego</li>
+      </ul>
+    </div>
+  </div>
+  <p>Ostatni punkt jest istotny: zestaw zawiera <code class="dn-kod dn-kod--wiersz">grot-dol</code>,
+     <code class="dn-kod dn-kod--wiersz">grot-gora</code> i <code class="dn-kod dn-kod--wiersz">grot-prawo</code>
+     jako <strong>trzy odrębne pliki</strong>, a nie jeden obracany. Obrót przez CSS łamie
+     <code class="dn-kod dn-kod--wiersz">stroke-linejoin</code> na narożnikach i wprowadza niejednoznaczność w kodzie.</p>
+  <div class="dok-rzad" id="prob-groty"></div>
+</section>
+
+<!-- ======================================================================
+     3 · NAZEWNICTWO
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-nazewnictwo" tabindex="-1">
+  <h2>3 · Nazewnictwo</h2>
+  <p>Nazwy ikon są <strong>polskie i opisowe</strong>. Nazwa opisuje rzecz albo czynność — nie bibliotekę
+     pochodzenia i nie moduł, w którym ikona akurat wystąpiła.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Zasada</th><th>Zgodnie</th><th>Niezgodnie</th></tr></thead>
+      <tbody>
+        <tr><td>polski, małe litery, bez diakrytyków</td><td class="dn-dane">ostrzezenie · klodka · wezly</td><td class="dn-dane">ostrzeżenie · warning · alertTriangle</td></tr>
+        <tr><td>człony rozdzielone łącznikiem</td><td class="dn-dane">grot-dol · link-zewnetrzny</td><td class="dn-dane">grotDol · link_zewnetrzny</td></tr>
+        <tr><td>rzeczownik dla obiektu, tryb rozkazujący dla czynności</td><td class="dn-dane">dokument · folder · uruchom · wyslij</td><td class="dn-dane">plikDokumentu · wysylanie</td></tr>
+        <tr><td>opis kształtu i pojęcia, nie miejsca użycia</td><td class="dn-dane">dzwonek</td><td class="dn-dane">ikona-paska-gornego</td></tr>
+        <tr><td>prefiks <code>srodowisko-</code> wyłącznie dla 4 emblematów</td><td class="dn-dane">srodowisko-talkin</td><td class="dn-dane">talkin · emblemat-1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Nazwa pliku = nazwa w manifeście</h3>
+  <pre class="dok-ascii">manifest.json  →  "nazwa": "grot-prawo"
+katalog svg/   →  grot-prawo.svg
+odwołanie      →  zasoby/ikony/svg/grot-prawo.svg
+
+Bez mapowania pośredniego, bez tablicy aliasów, bez nazw kodowych.
+Zmiana nazwy = zmiana pliku + wpisu w manifeście + wszystkich odwołań, jednocześnie.</pre>
+
+  <h3>Trzy pary wymagające czujności</h3>
+  <div class="dok-siatka-3">
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-2)">
+        <span data-ikona="agent" data-ikona-rozmiar="24"></span>
+        <code class="dn-dane">agent</code>
+        <span style="color:var(--dn-tekst-3)">vs</span>
+        <span data-ikona="agenci" data-ikona-rozmiar="24"></span>
+        <code class="dn-dane">agenci</code>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:0"><strong>agent</strong> = jedna jednostka inteligencji.
+         <strong>agenci</strong> = zespół, moduł Agents, role.</p>
+    </div>
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-2)">
+        <span data-ikona="blad" data-ikona-rozmiar="24" style="color:var(--dn-blad-tekst)"></span>
+        <code class="dn-dane">blad</code>
+        <span style="color:var(--dn-tekst-3)">vs</span>
+        <span data-ikona="ostrzezenie" data-ikona-rozmiar="24" style="color:var(--dn-ostrzezenie-tekst)"></span>
+        <code class="dn-dane">ostrzezenie</code>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:0"><strong>blad</strong> = niepowodzenie operacji.
+         <strong>ostrzezenie</strong> = skutki wymagające uwagi; operacja mogła się powieść.</p>
+    </div>
+    <div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-2)">
+        <span data-ikona="ptaszek" data-ikona-rozmiar="24"></span>
+        <code class="dn-dane">ptaszek</code>
+        <span style="color:var(--dn-tekst-3)">vs</span>
+        <span data-ikona="ptaszek-kolo" data-ikona-rozmiar="24" style="color:var(--dn-sukces-tekst)"></span>
+        <code class="dn-dane">ptaszek-kolo</code>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:0"><strong>ptaszek</strong> = zaznaczenie w polu wyboru.
+         <strong>ptaszek-kolo</strong> = stan „proces zakończony poprawnie".</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     4 · KATALOG IKON — GALERIA
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-katalog" tabindex="-1">
+  <h2>4 · Katalog ikon — galeria</h2>
+  <p>Wszystkie 82 pozycje manifestu. <strong>Klik</strong> kopiuje nazwę pliku i wybiera ikonę do podglądu
+     na dwóch tłach. <strong>Dwuklik</strong> kopiuje gotowy kod <code class="dn-kod dn-kod--wiersz">&lt;svg&gt;</code>
+     z aktualnym rozmiarem i obrysem.</p>
+
+  <div class="gal-sterowanie" role="search">
+    <label class="dn-szukaj">
+      <span class="dn-sr-only">Szukaj ikony po nazwie, źródle Lucide lub zastosowaniu</span>
+      <span data-ikona="szukaj" data-ikona-rozmiar="16"></span>
+      <input type="search" class="dn-pole-kontrolka" id="gal-szukaj"
+             placeholder="szukaj: nazwa · lucide:slug · zastosowanie…" autocomplete="off">
+    </label>
+
+    <div class="gal-grupy" role="group" aria-label="Filtr grupy semantycznej" id="gal-grupy">
+      <button type="button" class="dn-btn dn-btn--sm dn-btn--wybrany" data-grupa="" aria-pressed="true">wszystkie</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="nawigacja" aria-pressed="false">nawigacja</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="dzialanie" aria-pressed="false">działanie</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="stan" aria-pressed="false">stan</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="obiekt" aria-pressed="false">obiekt</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="modul" aria-pressed="false">moduł</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="srodowisko" aria-pressed="false">środowisko</button>
+      <button type="button" class="dn-btn dn-btn--sm" data-grupa="rola" aria-pressed="false">rola</button>
+    </div>
+
+    <div class="gal-segment" role="group" aria-label="Rozmiar renderowania siatki" id="gal-rozmiar">
+      <button type="button" data-rozmiar="14" aria-pressed="false">14</button>
+      <button type="button" data-rozmiar="16" aria-pressed="false">16</button>
+      <button type="button" data-rozmiar="20" aria-pressed="false">20</button>
+      <button type="button" data-rozmiar="24" aria-pressed="true">24</button>
+    </div>
+
+    <span class="gal-licznik" id="gal-licznik" role="status" aria-live="polite">82 / 82</span>
+  </div>
+
+  <ul class="gal-siatka" id="gal-siatka" aria-label="Siatka ikon zestawu"></ul>
+
+  <div class="dn-pusty-stan" id="gal-pusto" hidden>
+    <span data-ikona="szukaj" data-ikona-rozmiar="24"></span>
+    <p class="dn-pusty-stan-tytul">Brak ikony dla tego zapytania</p>
+    <p class="dn-pusty-stan-opis">Zestaw jest zamknięty i liczy 82 pozycje. Wyczyść filtr albo poszukaj
+       po zastosowaniu — np. „kolejka", „środowisko", „motyw".</p>
+    <button type="button" class="dn-btn dn-btn--zarys dn-btn--sm" id="gal-wyczysc">Wyczyść filtry</button>
+  </div>
+
+  <h3>Podgląd wybranej ikony na obu tłach</h3>
+  <p>Ta sama ikona, ta sama kreska — dwa motywy równoprawne. Kropka sygnału w emblematach dziedziczy
+     <code class="dn-kod dn-kod--wiersz">currentColor</code>, więc zmienia się razem z otoczeniem.</p>
+
+  <div class="dok-blok">
+    <div class="dok-blok-naglowek">
+      <span class="dn-etykieta-mono">Wybrana ikona</span>
+      <code class="dn-dane" id="podglad-nazwa" style="color:var(--dn-tekst)">dom</code>
+      <span class="dn-plakietka" id="podglad-grupa">nawigacja</span>
+      <span class="dn-plakietka dn-plakietka--informacja dn-dane" id="podglad-zrodlo">lucide:house</span>
+      <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="podglad-kopiuj-svg">
+        <span data-ikona="kopiuj" data-ikona-rozmiar="16"></span>Kopiuj kod SVG
+      </button>
+    </div>
+    <p style="font-size:var(--dn-fs-sm)" id="podglad-opis">Centrum dowodzenia — powrót do strony głównej</p>
+    <div class="podglad">
+      <div class="podglad-plytka motyw-jasny">
+        <p class="dn-etykieta-mono">Motyw jasny</p>
+        <div class="dok-rzad" id="podglad-jasny" style="justify-content:center;min-height:34px"></div>
+        <p class="dn-etykieta-mono" style="font-size:10px">--dn-tekst na --dn-tlo</p>
+      </div>
+      <div class="podglad-plytka motyw-ciemny">
+        <p class="dn-etykieta-mono">Motyw ciemny</p>
+        <div class="dok-rzad" id="podglad-ciemny" style="justify-content:center;min-height:34px"></div>
+        <p class="dn-etykieta-mono" style="font-size:10px">--dn-tekst na --dn-tlo</p>
+      </div>
+      <div class="podglad-plytka" style="background:var(--dn-rama);color:var(--dn-rama-tekst);border-color:var(--dn-rama-obrys)">
+        <p class="dn-etykieta-mono" style="color:var(--dn-rama-tekst-2)">Rama kokpitu</p>
+        <div class="dok-rzad" id="podglad-rama" style="justify-content:center;min-height:34px"></div>
+        <p class="dn-etykieta-mono" style="font-size:10px;color:var(--dn-rama-tekst-2)">--dn-rama-tekst na --dn-rama</p>
+      </div>
+      <div class="podglad-plytka" style="background:var(--dn-sygnal-wypelnienie);border-color:var(--dn-sygnal-wypelnienie);color:var(--dn-szary-0)">
+        <p class="dn-etykieta-mono" style="color:var(--dn-szary-0)">Wypełnienie sygnału</p>
+        <div class="dok-rzad" id="podglad-sygnal" style="justify-content:center;min-height:34px"></div>
+        <p class="dn-etykieta-mono" style="font-size:10px;color:var(--dn-szary-0)">--dn-szary-0 na --dn-sygnal-wypelnienie</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     5 · GRUPY SEMANTYCZNE
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-grupy" tabindex="-1">
+  <h2>5 · Grupy semantyczne</h2>
+  <p>Grupy <strong>nie występują w manifeście</strong> — są warstwą porządkującą wprowadzoną w tym
+     opracowaniu (decyzja projektowa opracowania). Służą do dwóch rzeczy: filtrowania galerii i rozstrzygania,
+     czy nowa ikona ma prawo powstać.</p>
+
+  <pre class="dok-ascii">                      ZESTAW 82 IKON
+                             │
+   ┌───────────┬─────────────┼─────────────┬───────────┐
+   ▼           ▼             ▼             ▼           ▼
+NAWIGACJA  DZIAŁANIE       STAN         OBIEKT      MODUŁ
+   14         18            11            15          15
+                             │
+                   ┌─────────┴─────────┐
+                   ▼                   ▼
+              ŚRODOWISKO             ROLA
+                   4                   5</pre>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Grupa</th><th>Liczba</th><th>Odpowiada na pytanie</th><th>Reguła</th></tr></thead>
+      <tbody>
+        <tr><td><strong>nawigacja</strong></td><td class="dn-dane">14</td><td>dokąd się przemieszczam?</td><td class="dn-dane">nigdy nie niesie barwy stanu</td></tr>
+        <tr><td><strong>działanie</strong></td><td class="dn-dane">18</td><td>co zrobię?</td><td class="dn-dane">zawsze wewnątrz elementu klikalnego</td></tr>
+        <tr><td><strong>stan</strong></td><td class="dn-dane">11</td><td>co się dzieje / co się stało?</td><td class="dn-dane">obowiązkowo z etykietą — stan nigdy samym kolorem</td></tr>
+        <tr><td><strong>obiekt</strong></td><td class="dn-dane">15</td><td>czym to jest?</td><td class="dn-dane">neutralna; nie sygnalizuje stanu obiektu</td></tr>
+        <tr><td><strong>moduł</strong></td><td class="dn-dane">15</td><td>w którym module jestem?</td><td class="dn-dane">jedna ikona = jeden moduł; przypisanie stałe</td></tr>
+        <tr><td><strong>środowisko</strong></td><td class="dn-dane">4</td><td>w jakim trybie pracuję?</td><td class="dn-dane">wyłącznie emblemat; nie ikona przycisku</td></tr>
+        <tr><td><strong>rola</strong></td><td class="dn-dane">5</td><td>kto to robi?</td><td class="dn-dane">zawsze z plakietką roli albo etykietą nadawcy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Skład grup — pełne przypisanie</h3>
+  <p>Kliknij nagłówek grupy, aby przefiltrować galerię wyżej.</p>
+  <div id="grupy-panele"></div>
+
+  <h3>Grupa „moduł" wobec piętnastu modułów platformy</h3>
+  <p>Platforma ma piętnaście modułów; grupa „moduł" liczy piętnaście ikon — ale
+     <strong>zbiory nie pokrywają się jeden do jednego</strong>. Trzy moduły mają ikonę spoza grupy,
+     a grupa mieści trzy pozycje niebędące modułami. To nie jest niespójność: grupa opisuje
+     <strong>rejestr znaczeniowy ikony</strong>, a nie przypisanie do modułu.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Moduł</th><th>Ikona</th><th>Grupa ikony</th><th>Uwaga</th></tr></thead>
+      <tbody id="moduly-wiersze"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================================================================
+     6 · EMBLEMATY ŚRODOWISK
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-emblematy" tabindex="-1">
+  <h2>6 · Cztery emblematy środowisk</h2>
+  <p>Cztery emblematy są jedynymi ikonami rysowanymi od zera. Wiąże je zasada, której nie łamie żaden
+     z nich: <strong>każdy zawiera dokładnie jedną wypełnioną kropkę sygnału</strong> — nie zero, nie dwie.
+     Kropka ma w pliku <code class="dn-kod dn-kod--wiersz">currentColor</code>, nie wpisany błękit; barwa
+     sygnałowa nadawana jest w miejscu użycia.</p>
+
+  <div class="dok-rzad" style="margin-bottom:var(--dn-od-4)">
+    <button type="button" class="dn-btn dn-btn--zarys dn-btn--sm" id="embl-kropka-przel" aria-pressed="false">
+      <span data-ikona="oko" data-ikona-rozmiar="16"></span>Wyróżnij kropkę sygnału
+    </button>
+    <span class="dn-plakietka dn-plakietka--sygnal">
+      <span data-ikona="info" data-ikona-rozmiar="12"></span>4 emblematy · 4 kropki
+    </span>
+  </div>
+
+  <div class="embl-siatka" id="embl-siatka"></div>
+
+  <h3>Diagram porównawczy — gdzie leży kropka</h3>
+  <pre class="dok-ascii">  TalkIn              WorkSpace           CodeStudio          MultitaskingAI
+ ┌──────────┐        ┌────┐ ┌────┐       ┌────────────┐        ○   ─  ─  ─
+ │ ──────── │        │    │ │    │       │ ❯          │         \        /
+ │ ───── ●  │        └────┘ └────┘       │      ●     │          ●  ← węzeł
+ └─┐  ┌─────┘        ┌────┐ ┌────┐       │   ────     │         /        \
+   └──┘              │    │ │ ●  │       └────────────┘        ○   ─  ─  ○
+                     └────┘ └────┘
+  kropka domyka      kropka w ostatnim    kropka na linii     kropka = środek
+  niedokończoną      kwadracie planu      znaku zachęty       delegacji
+  myśl</pre>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Emblemat</th><th>Konstrukcja</th><th>Kropka</th><th>Co opowiada</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span class="embl-kropka-on" data-ikona="srodowisko-talkin" data-ikona-rozmiar="24"></span><strong>TalkIn</strong></span></td>
+          <td>dymek rozmowy z ogonkiem, wewnątrz dwie linie: pełna i skrócona</td>
+          <td class="dn-dane">cx 16,2 · cy 10,8 · r 1,5</td>
+          <td>domyka drugą, krótszą linię — myśl jest w toku, nie dopowiedziana</td>
+        </tr>
+        <tr>
+          <td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span class="embl-kropka-on" data-ikona="srodowisko-workspace" data-ikona-rozmiar="24"></span><strong>WorkSpace</strong></span></td>
+          <td>cztery zaokrąglone kwadraty 7,2 × 7,2 w układzie 2 × 2</td>
+          <td class="dn-dane">cx 16,9 · cy 16,9 · r 1,6</td>
+          <td>ostatnie zadanie planu jest w realizacji</td>
+        </tr>
+        <tr>
+          <td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span class="embl-kropka-on" data-ikona="srodowisko-codestudio" data-ikona-rozmiar="24"></span><strong>CodeStudio</strong></span></td>
+          <td>rama okna 18 × 16, wewnątrz znak zachęty „❯" i linia polecenia</td>
+          <td class="dn-dane">cx 18,4 · cy 9,9 · r 1,5</td>
+          <td>polecenie przyjęte, kompilacja biegnie</td>
+        </tr>
+        <tr>
+          <td><span class="dok-rzad" style="gap:var(--dn-od-2)"><span class="embl-kropka-on" data-ikona="srodowisko-multitaskingai" data-ikona-rozmiar="24"></span><strong>MultitaskingAI</strong></span></td>
+          <td>trzy okręgi konturowe na obwodzie, połączone z węzłem środkowym</td>
+          <td class="dn-dane">cx 12 · cy 12 · r 2,6</td>
+          <td>Coordinator, przez którego przechodzi cała praca — największa kropka w zestawie</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Emblemat a znak marki — rozgraniczenie</h3>
+  <div class="dok-siatka-2">
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek">
+        <svg width="32" height="32" viewBox="0 0 96 96" aria-hidden="true" style="color:var(--dn-tekst)">
+          <path fill="currentColor" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+          <path fill="currentColor" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+          <circle cx="83" cy="63.5" r="6.5" style="fill:var(--dn-kropka)"/>
+        </svg>
+        <span class="dn-etykieta-mono">Sygnet „Delegacja"</span>
+      </div>
+      <ul class="dok-lista">
+        <li>znaczy <strong>markę</strong> Danaco Console</li>
+        <li>podwójny grot <code class="dn-kod dn-kod--wiersz">»»</code> + kropka na linii bazowej</li>
+        <li>siatka <strong>96 × 96</strong>, plik <code class="dn-kod dn-kod--wiersz">zasoby/marka/logo/sygnet.svg</code></li>
+        <li>barwa kropki <strong>wpisana wprost</strong> — błękit sygnałowy</li>
+        <li>wariant uproszczony (jeden grot) poniżej 24 px</li>
+      </ul>
+    </div>
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek">
+        <span class="embl-kropka-on" data-ikona="srodowisko-codestudio" data-ikona-rozmiar="24"></span>
+        <span class="dn-etykieta-mono">Emblemat środowiska</span>
+      </div>
+      <ul class="dok-lista">
+        <li>znaczy <strong>tryb pracy</strong> Operatora</li>
+        <li>metafora czynności środowiska</li>
+        <li>siatka <strong>24 × 24</strong>, plik <code class="dn-kod dn-kod--wiersz">zasoby/ikony/svg/srodowisko-*.svg</code></li>
+        <li>barwa kropki <strong>dziedziczona</strong> — <code class="dn-kod dn-kod--wiersz">currentColor</code></li>
+        <li>brak wariantu uproszczonego — nie schodzi poniżej 24 px</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     7 · ZASADY UŻYCIA
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-uzycie" tabindex="-1">
+  <h2>7 · Zasady użycia</h2>
+
+  <h3>Rozmiar ikony względem tekstu</h3>
+  <p>Zasada kciuka: ikona jest o jeden do trzech pikseli <strong>większa</strong> od stopnia tekstu,
+     przy którym stoi. Nigdy mniejsza — optycznie zapada się poniżej linii pisma.</p>
+
+  <div class="dok-blok" style="padding:0">
+    <div class="skala-wiersz"><span class="skala-etykieta">xs · 11 px</span><span data-ikona="dokument" data-ikona-rozmiar="14"></span><span style="font-size:var(--dn-fs-xs)">Etykieta wersalikowa, nagłówek kolumny</span><span class="dn-plakietka dn-dane" style="margin-left:auto">ikona 14</span></div>
+    <div class="skala-wiersz"><span class="skala-etykieta">sm · 12 px</span><span data-ikona="dokument" data-ikona-rozmiar="14"></span><span style="font-size:var(--dn-fs-sm)">Metadane, tekst pomocniczy, wpis komunikacji</span><span class="dn-plakietka dn-dane" style="margin-left:auto">ikona 14</span></div>
+    <div class="skala-wiersz"><span class="skala-etykieta">base · 13 px</span><span data-ikona="dokument" data-ikona-rozmiar="16"></span><span style="font-size:var(--dn-fs-base)">Tekst interfejsu — wartość domyślna kokpitu</span><span class="dn-plakietka dn-plakietka--sygnal dn-dane" style="margin-left:auto">ikona 16</span></div>
+    <div class="skala-wiersz"><span class="skala-etykieta">md · 14 px</span><span data-ikona="dokument" data-ikona-rozmiar="16"></span><span style="font-size:var(--dn-fs-md)">Treść wpisów rozmowy</span><span class="dn-plakietka dn-dane" style="margin-left:auto">ikona 16</span></div>
+    <div class="skala-wiersz"><span class="skala-etykieta">lg · 16 px</span><span data-ikona="dokument" data-ikona-rozmiar="20"></span><span style="font-size:var(--dn-fs-lg)">Nagłówek panelu</span><span class="dn-plakietka dn-dane" style="margin-left:auto">ikona 20</span></div>
+    <div class="skala-wiersz"><span class="skala-etykieta">xl · 20 px</span><span data-ikona="dokument" data-ikona-rozmiar="24"></span><span style="font-size:var(--dn-fs-xl)">Nagłówek okna i modala</span><span class="dn-plakietka dn-dane" style="margin-left:auto">ikona 24</span></div>
+  </div>
+
+  <h3>Odstęp od etykiety</h3>
+  <p>Odstęp jest <strong>zawsze z żetonu</strong> i zawsze realizowany przez <code class="dn-kod dn-kod--wiersz">gap</code>,
+     nie przez <code class="dn-kod dn-kod--wiersz">margin</code> na samej ikonie. Ikona nie nosi własnych
+     marginesów — nosi je pojemnik.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Kontekst</th><th>Odstęp</th><th>Żeton</th><th>Na żywo</th></tr></thead>
+      <tbody>
+        <tr><td>Ikona w przycisku</td><td class="dn-dane">8 px</td><td class="dn-dane">--dn-od-2</td><td><button type="button" class="dn-btn dn-btn--sm"><span data-ikona="uruchom" data-ikona-rozmiar="16"></span>Uruchom przebieg</button></td></tr>
+        <tr><td>Ikona w plakietce</td><td class="dn-dane">4 px</td><td class="dn-dane">--dn-od-1</td><td><span class="dn-plakietka dn-plakietka--sukces"><span data-ikona="ptaszek-kolo" data-ikona-rozmiar="12"></span>sukces</span></td></tr>
+        <tr><td>Ikona w pozycji bocznej nawigacji</td><td class="dn-dane">12 px</td><td class="dn-dane">--dn-od-3</td><td><span class="dn-boczna-pozycja" style="display:inline-flex"><span data-ikona="dokument" data-ikona-rozmiar="16"></span>Studio</span></td></tr>
+        <tr><td>Ikona w toaście</td><td class="dn-dane">12 px</td><td class="dn-dane">--dn-od-3</td><td class="dn-dane">.dn-toast</td></tr>
+        <tr><td>Ikona w polu wyszukiwania</td><td class="dn-dane">32 px wcięcia</td><td class="dn-dane">--dn-od-8</td><td class="dn-dane">.dn-szukaj</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Ikona sama vs. ikona z etykietą</h3>
+  <pre class="dok-ascii">  IKONA + ETYKIETA                     IKONA SAMA
+  ────────────────                     ──────────
+  ✔ akcja rzadka lub nieodwracalna     ✔ akcja powszechnie rozpoznawalna
+  ✔ pozycja nawigacji                    (zamknij ✕ · nowa karta + · wyślij ➤)
+  ✔ plakietka stanu                    ✔ pasek narzędzi o wysokiej gęstości
+  ✔ przycisk główny widoku             ✔ powtarzalny wiersz tabeli
+  ✔ pozycja Strefy 3                   ✔ przycisk ikonowy paska górnego
+                                       ── wymóg bezwzględny: aria-label
+                                          + dymek .dn-tooltip</pre>
+
+  <div class="dok-siatka-2">
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek"><span class="dn-etykieta-mono">Z etykietą — akcja nieodwracalna</span></div>
+      <div class="dok-rzad">
+        <button type="button" class="dn-btn dn-btn--niebezpieczny dn-btn--sm">
+          <span data-ikona="kosz" data-ikona-rozmiar="16"></span>Usuń źródło z Sources Manager
+        </button>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:var(--dn-od-3) 0 0">Ikona <code class="dn-kod dn-kod--wiersz">kosz</code>
+         nigdy nie stoi sama. Czynność nieodwracalna wymaga słowa.</p>
+    </div>
+    <div class="dok-blok">
+      <div class="dok-blok-naglowek"><span class="dn-etykieta-mono">Sama — z etykietą dostępną i dymkiem</span></div>
+      <div class="dok-rzad">
+        <span class="dn-tooltip">
+          <button type="button" class="dn-btn-ikona" aria-label="Zamknij kartę sesji Studio">
+            <span data-ikona="zamknij" data-ikona-rozmiar="16"></span>
+          </button>
+          <span class="dn-tooltip-tresc" role="tooltip">Zamknij kartę sesji Studio</span>
+        </span>
+        <span class="dn-tooltip">
+          <button type="button" class="dn-btn-ikona" aria-label="Nowa karta sesji">
+            <span data-ikona="plus" data-ikona-rozmiar="16"></span>
+          </button>
+          <span class="dn-tooltip-tresc" role="tooltip">Nowa karta sesji</span>
+        </span>
+        <span class="dn-tooltip">
+          <button type="button" class="dn-btn-ikona" aria-label="Wyślij polecenie">
+            <span data-ikona="wyslij" data-ikona-rozmiar="16"></span>
+          </button>
+          <span class="dn-tooltip-tresc" role="tooltip">Wyślij polecenie (Enter)</span>
+        </span>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:var(--dn-od-3) 0 0">Najedź kursorem albo przejdź klawiszem
+         <span class="dn-kbd">Tab</span> — dymek pojawia się także przy fokusie.</p>
+    </div>
+  </div>
+
+  <h3>Zakaz: ikona jako jedyny nośnik znaczenia stanu</h3>
+  <p>Zasadę „stan nigdy samym kolorem" czytamy w obie strony. Kolor sam nie wystarczy — ale
+     <strong>ikona sama też nie wystarczy</strong>, gdy komunikuje stan. Użytkownik nie ma słownika ikon
+     przed oczami, a różnica między <code class="dn-kod dn-kod--wiersz">ptaszek-kolo</code> a
+     <code class="dn-kod dn-kod--wiersz">walidator</code> przy 14 px jest subtelna.</p>
+
+  <div class="dok-siatka-2">
+    <div class="dok-blok" style="border-left:2px solid var(--dn-blad-tekst)">
+      <div class="dok-blok-naglowek">
+        <span data-ikona="blad" data-ikona-rozmiar="16" style="color:var(--dn-blad-tekst)"></span>
+        <span class="dn-etykieta-mono">Niepoprawnie</span>
+      </div>
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-3)">
+        <span class="dn-kropka dn-kropka--sukces kropka-lupa"></span>
+        <span style="font-size:var(--dn-fs-sm)">sama kropka w komórce tabeli</span>
+      </div>
+      <div class="dok-rzad">
+        <span data-ikona="ptaszek-kolo" data-ikona-rozmiar="16" style="color:var(--dn-sukces-tekst)"></span>
+        <span style="font-size:var(--dn-fs-sm)">sama ikona jako całe oznaczenie kroku</span>
+      </div>
+    </div>
+    <div class="dok-blok" style="border-left:2px solid var(--dn-sukces-tekst)">
+      <div class="dok-blok-naglowek">
+        <span data-ikona="ptaszek-kolo" data-ikona-rozmiar="16" style="color:var(--dn-sukces-tekst)"></span>
+        <span class="dn-etykieta-mono">Poprawnie</span>
+      </div>
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-3)">
+        <span class="dn-plakietka dn-plakietka--sukces"><span data-ikona="ptaszek-kolo" data-ikona-rozmiar="12"></span>sukces</span>
+        <span class="dn-plakietka dn-plakietka--ostrzezenie"><span data-ikona="ostrzezenie" data-ikona-rozmiar="12"></span>błędy · obieg 2/3</span>
+        <span class="dn-plakietka dn-plakietka--blad"><span data-ikona="blad" data-ikona-rozmiar="12"></span>wstrzymana</span>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin:0">Ikona <strong>plus</strong> etykieta. Kolor jest trzecim,
+         najsłabszym nośnikiem.</p>
+    </div>
+  </div>
+  <p><strong>Wyjątek pozorny:</strong> kropka sygnału na karcie sesji. Nie komunikuje wyniku (sukces/błąd),
+     lecz fakt „coś biegnie" — a to samo niesie już animacja tętna i tytuł karty. Kropka jest wzmocnieniem,
+     nie jedynym nośnikiem.</p>
+
+  <h3>Czego nie robimy z ikoną</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Zakaz</th><th>Zamiast tego</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Emoji jako ikona</strong></td><td>wyłącznie SVG z <code class="dn-dane">zasoby/ikony/svg/</code></td></tr>
+        <tr><td>Ikona spoza zestawu wklejona doraźnie</td><td>procedura z rozdz. 9</td></tr>
+        <tr><td>Wpisanie barwy w atrybut <code class="dn-dane">stroke</code></td><td><code class="dn-dane">currentColor</code> + <code class="dn-dane">color</code> na rodzicu</td></tr>
+        <tr><td>Skalowanie przez <code class="dn-dane">transform: scale()</code></td><td><code class="dn-dane">width</code>/<code class="dn-dane">height</code> z żetonu wymiaru</td></tr>
+        <tr><td>Obrót w celu uzyskania wariantu kierunkowego</td><td>osobny plik: <code class="dn-dane">grot-dol</code>, <code class="dn-dane">grot-gora</code>, <code class="dn-dane">grot-prawo</code></td></tr>
+        <tr><td>Ikona jako <code class="dn-dane">background-image</code></td><td>element <code class="dn-dane">&lt;svg&gt;</code> inline — inaczej <code class="dn-dane">currentColor</code> przestaje działać</td></tr>
+        <tr><td>Dwie ikony obok siebie bez tekstu</td><td>jedna ikona + etykieta</td></tr>
+        <tr><td>Ikona wewnątrz ikony</td><td>jeden symbol na jedno pojęcie</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================================================================
+     8 · DOSTĘPNOŚĆ
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-dostepnosc" tabindex="-1">
+  <h2>8 · Dostępność ikon</h2>
+  <p>Wybór trybu rozstrzyga jedno pytanie: <strong>czy usunięcie ikony odbiera informację?</strong></p>
+
+  <pre class="dok-ascii"> ┌─────────────────────────────────────────────────────────┐
+ │  Czy obok ikony jest tekst niosący to samo znaczenie?     │
+ └───────────────┬───────────────────────┬─────────────────┘
+            TAK  ▼                       ▼  NIE
+   ┌────────────────────────┐  ┌──────────────────────────────┐
+   │ &lt;svg aria-hidden="true"&gt;│  │ Czy ikona jest w przycisku?   │
+   │  ikona dekoracyjna      │  └────┬──────────────────┬──────┘
+   └────────────────────────┘   TAK  ▼                  ▼  NIE
+                    ┌────────────────────────┐  ┌────────────────────┐
+                    │ aria-label NA PRZYCISKU │  │ role="img"          │
+                    │ svg zostaje aria-hidden │  │ + aria-label na svg │
+                    └────────────────────────┘  └────────────────────┘</pre>
+
+  <h3>Trzy wzorce zapisu</h3>
+  <div class="dok-blok">
+    <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">1 · Ikona dekoracyjna — obok jest etykieta</p>
+    <pre class="dok-ascii" style="margin-bottom:var(--dn-od-4)">&lt;button class="dn-btn dn-btn--atrament"&gt;
+  &lt;svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+       stroke-linejoin="round"&gt;&lt;path d="M5 12h14"/&gt;&lt;path d="M12 5v14"/&gt;&lt;/svg&gt;
+  Nowa karta sesji
+&lt;/button&gt;</pre>
+    <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">2 · Przycisk ikonowy — etykieta na przycisku, ikona milczy</p>
+    <pre class="dok-ascii" style="margin-bottom:var(--dn-od-4)">&lt;button class="dn-btn-ikona" aria-label="Zamknij kartę sesji Studio"&gt;
+  &lt;svg aria-hidden="true" width="16" height="16" …&gt;&lt;path d="M18 6 6 18"/&gt;&lt;path d="m6 6 12 12"/&gt;&lt;/svg&gt;
+&lt;/button&gt;</pre>
+    <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">3 · Ikona znacząca poza kontrolką — np. emblemat w nagłówku powłoki</p>
+    <pre class="dok-ascii" style="margin-bottom:0">&lt;svg role="img" aria-label="Środowisko CodeStudio" width="24" height="24"
+     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+     stroke-linecap="round" stroke-linejoin="round"&gt;…&lt;/svg&gt;</pre>
+  </div>
+
+  <h3>Przycisk ikonowy — komplet wymagań</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Wymaganie</th><th>Realizacja</th><th>Na żywo</th></tr></thead>
+      <tbody>
+        <tr><td>Nazwa dostępna</td><td><code class="dn-dane">aria-label</code> na <code class="dn-dane">&lt;button&gt;</code>, nie na <code class="dn-dane">&lt;svg&gt;</code></td><td><button type="button" class="dn-btn-ikona" aria-label="Odśwież dane monitora"><span data-ikona="odswiez" data-ikona-rozmiar="16"></span></button></td></tr>
+        <tr><td>Cel dotykowy</td><td>32 px; przy <code class="dn-dane">pointer: coarse</code> żeton podnosi do <strong>40 px</strong></td><td class="dn-dane">--dn-wym-ikonowy</td></tr>
+        <tr><td>Fokus widoczny</td><td>pierścień 2 px + odsunięcie 2 px</td><td class="dn-dane">Tab → widoczny</td></tr>
+        <tr><td>Stan wciśnięty</td><td><code class="dn-dane">aria-pressed="true"</code> → tło sygnału</td><td><button type="button" class="dn-btn-ikona" aria-pressed="true" aria-label="Filtr włączony"><span data-ikona="filtr" data-ikona-rozmiar="16"></span></button></td></tr>
+        <tr><td>Stan zajęty</td><td><code class="dn-dane">aria-busy="true"</code>; przycisk <strong>pozostaje klikalny</strong></td><td><button type="button" class="dn-btn dn-btn--sm" aria-busy="true">Uruchamiam przebieg</button></td></tr>
+        <tr><td>Objaśnienie</td><td><code class="dn-dane">.dn-tooltip</code> przy każdej ikonie bez etykiety</td><td class="dn-dane">patrz rozdz. 7</td></tr>
+        <tr><td>Zakaz</td><td><strong><code class="dn-dane">disabled</code> nie występuje</strong> — zamiast blokady komunikat po naciśnięciu</td><td><button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="demo-zero-blokad">Wyślij (pole puste)</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Kontrast ikony</h3>
+  <p>Ikona jest kreską, nie tekstem — obowiązuje ją próg <strong>3:1</strong> (WCAG 2.1, kryterium 1.4.11
+     „Non-text Contrast").</p>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Barwa ikony</th><th>Na tle</th><th>Ocena</th><th>Próbka</th></tr></thead>
+      <tbody>
+        <tr><td class="dn-dane">--dn-tekst</td><td class="dn-dane">--dn-powierzchnia</td><td>z dużym zapasem — 16,1:1 jasny / 15,0:1 ciemny</td><td><span data-ikona="tarcza" data-ikona-rozmiar="20" style="color:var(--dn-tekst)"></span></td></tr>
+        <tr><td class="dn-dane">--dn-tekst-2</td><td class="dn-dane">--dn-powierzchnia</td><td>z zapasem — 6,4:1 jasny / 6,8:1 ciemny</td><td><span data-ikona="tarcza" data-ikona-rozmiar="20" style="color:var(--dn-tekst-2)"></span></td></tr>
+        <tr><td class="dn-dane">--dn-tekst-3</td><td class="dn-dane">--dn-tlo</td><td><strong>wyłącznie ikony dekoracyjne</strong> — nigdy nośnik jedynej informacji</td><td><span data-ikona="tarcza" data-ikona-rozmiar="20" style="color:var(--dn-tekst-3)"></span></td></tr>
+        <tr><td class="dn-dane">--dn-rama-tekst-2</td><td class="dn-dane">--dn-rama</td><td>pasek górny w spoczynku; na hover przechodzi na <code class="dn-dane">--dn-rama-tekst</code></td><td><span style="display:inline-flex;padding:var(--dn-od-1) var(--dn-od-2);border-radius:var(--dn-r-sm);background:var(--dn-rama)"><span data-ikona="tarcza" data-ikona-rozmiar="20" style="color:var(--dn-rama-tekst-2)"></span></span></td></tr>
+        <tr><td class="dn-dane">barwy stanu</td><td class="dn-dane">--dn-*-tlo</td><td>pary zmierzone w <code class="dn-dane">zasoby/zetony/kontrasty.json</code></td><td><span data-ikona="tarcza" data-ikona-rozmiar="20" style="color:var(--dn-sukces-tekst)"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Nawigacja klawiaturą</h3>
+  <ul class="dok-lista">
+    <li><span class="dn-kbd">Tab</span> — przejście do kolejnego przycisku ikonowego; kolejność DOM = kolejność wzrokowa.</li>
+    <li><span class="dn-kbd">Enter</span> / <span class="dn-kbd">Spacja</span> — uruchomienie akcji przycisku ikonowego.</li>
+    <li><span class="dn-kbd">Esc</span> — zamknięcie dymka, menu, modala otwartego ikoną.</li>
+    <li><strong>Sama ikona nigdy nie jest w kolejności fokusu.</strong> Fokusowalny jest przycisk, nie symbol.</li>
+  </ul>
+</section>
+
+<!-- ======================================================================
+     9 · JAK DODAĆ IKONĘ
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-dodanie" tabindex="-1">
+  <h2>9 · Jak dodać ikonę</h2>
+  <p>Zestaw jest <strong>zamknięty</strong>. Rozszerza się go wyłącznie tą procedurą.</p>
+
+  <pre class="dok-ascii"> 1. UZASADNIENIE      ─►  Czy pojęcie ma pokrycie w dokumentacji produktu?
+        │                 NIE → koniec. Zestaw jest zamknięty.
+        ▼
+ 2. GRUPA             ─►  Do której z 7 grup semantycznych należy?
+        │                 Brak grupy → pojęcie nie jest ikonograficzne.
+        ▼
+ 3. KOLIZJA           ─►  Czy któraś z 82 pozycji już to znaczy?
+        │                 TAK → użyj istniejącej.
+        ▼
+ 4. LUCIDE            ─►  Czy Lucide ma ten kształt?
+        │                 TAK → pobierz, ustaw stroke-width 1.75.
+        │                 NIE → rysuj na siatce 24×24 tą samą kreską.
+        ▼
+ 5. NAZWA             ─►  Polska, opisowa, małe litery, łącznik.
+        ▼
+ 6. PLIK + MANIFEST   ─►  svg/&lt;nazwa&gt;.svg  +  wpis {nazwa, zrodlo, zastosowanie}
+        │                 + inkrementacja "liczba-ikon".
+        ▼
+ 7. WALIDACJA         ─►  Lista sprawdzeń — wszystkie pozycje na TAK.</pre>
+
+  <h3>Lista sprawdzeń nowej ikony</h3>
+  <p>Zaznacz pozycje, aby prześledzić komplet. Licznik pokazuje postęp — to demonstracja komponentu
+     <code class="dn-kod dn-kod--wiersz">.dn-check</code>, nie zapisywany formularz.</p>
+
+  <div class="dok-blok">
+    <div class="dok-blok-naglowek">
+      <span class="dn-etykieta-mono">Walidacja pliku i manifestu</span>
+      <div class="dn-postep" style="flex:1 1 220px">
+        <div class="dn-postep-tor" role="progressbar" aria-valuemin="0" aria-valuemax="14" aria-valuenow="0"
+             aria-labelledby="walid-etykieta" id="walid-tor">
+          <div class="dn-postep-wartosc" style="width:0%"></div>
+        </div>
+        <span class="dn-postep-etykieta" id="walid-etykieta">0 / 14 sprawdzeń</span>
+      </div>
+      <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="walid-zeruj">
+        <span data-ikona="odswiez" data-ikona-rozmiar="16"></span>Wyzeruj
+      </button>
+    </div>
+    <div id="walid-lista" class="dok-kolumna" style="gap:var(--dn-od-1)"></div>
+  </div>
+
+  <h3>Wzór wpisu w manifeście</h3>
+  <pre class="dok-ascii">{
+  "nazwa": "&lt;polska-nazwa-opisowa&gt;",
+  "zrodlo": "lucide:&lt;slug-biblioteczny&gt;",
+  "zastosowanie": "&lt;zdanie po polsku: do czego służy, w którym module/oknie&gt;"
+}</pre>
+  <p>Pozycję wstawiamy <strong>w miejscu wynikającym z grupy semantycznej</strong>, nie na koniec tablicy.
+     Manifest jest uporządkowany tematycznie (nawigacja → działanie → stan → obiekt → moduł → środowisko),
+     a nie alfabetycznie — kolejność jest częścią jego czytelności.</p>
+
+  <h3>Usunięcie ikony z zestawu</h3>
+  <ol class="dok-lista">
+    <li>Sprawdź, czy nazwa nie występuje w żadnym prototypie <code class="dn-kod dn-kod--wiersz">05-okna/</code> ani w opracowaniach <code class="dn-kod dn-kod--wiersz">02-dokumentacja-html/</code>.</li>
+    <li>Usuń plik <code class="dn-kod dn-kod--wiersz">svg/&lt;nazwa&gt;.svg</code>.</li>
+    <li>Usuń wpis z tablicy <code class="dn-kod dn-kod--wiersz">ikony</code>.</li>
+    <li>Zmniejsz <code class="dn-kod dn-kod--wiersz">liczba-ikon</code>.</li>
+    <li>Zaktualizuj listę nazw w kontrakt systemu projektowego i katalog w opracowaniu MD.</li>
+  </ol>
+</section>
+
+<!-- ======================================================================
+     10 · DEFINICJA WIDŻETU
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-definicja" tabindex="-1">
+  <h2>10 · Definicja widżetu w Danaco Console</h2>
+  <div class="dok-blok" style="border-left:2px solid var(--dn-sygnal-wypelnienie)">
+    <p style="font-size:var(--dn-fs-md);color:var(--dn-tekst);margin:0">
+      <strong>Widżet</strong> to złożony, samodzielny zestaw komponentów
+      <code class="dn-kod dn-kod--wiersz">.dn-*</code>, który prezentuje <strong>stan systemu</strong> —
+      nie samą treść — i jest gotowy do osadzenia w oknie jako całość, bez dodatkowej kompozycji.</p>
+  </div>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Człon definicji</th><th>Znaczenie</th><th>Kontrprzykład</th></tr></thead>
+      <tbody>
+        <tr><td><strong>złożony</strong></td><td>powstaje z co najmniej dwóch komponentów albo z komponentu + żywych danych</td><td><code class="dn-dane">.dn-btn</code> sam nie jest widżetem</td></tr>
+        <tr><td><strong>samodzielny</strong></td><td>można go wstawić w dowolne okno bez wiedzy o otoczeniu</td><td>nagłówek okna operacyjnego — zależy od okna</td></tr>
+        <tr><td><strong>prezentuje stan systemu</strong></td><td>odczytujemy z niego, co robi platforma</td><td><code class="dn-dane">.dn-tabela</code> z listą źródeł prezentuje dane, nie stan</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Miejsce widżetu w warstwach systemu</h3>
+  <pre class="dok-ascii">  1 · PRYMITYWY          --dn-szary-500, --dn-sygnal-500
+        ▼
+  2 · ŻETONY SEMANTYCZNE --dn-tekst, --dn-kropka, --dn-czas-tetno
+        ▼
+  3 · KOMPONENTY .dn-*   .dn-btn · .dn-kropka · .dn-plakietka · .dn-postep
+        ▼
+  4 · WIDŻETY            ◄── TA WARSTWA (13 pozycji)
+        ▼
+  5 · OKNO OPERACYJNE    Studio Editor · Workflow Builder · Chat Window
+        ▼
+  6 · MODUŁ              Studio · Automations · Agents …
+        ▼
+  7 · ŚRODOWISKO         TalkIn · WorkSpace · CodeStudio · MultitaskingAI</pre>
+  <p>Widżet sięga <strong>wyłącznie po warstwę 3</strong> (komponenty) i po żetony semantyczne.
+     Nigdy po prymitywy, nigdy po inne widżety.</p>
+
+  <h3>Widżet a komponent — pięć różnic</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Kryterium</th><th>Komponent <code class="dn-dane">.dn-*</code></th><th>Widżet</th></tr></thead>
+      <tbody>
+        <tr><td>Definicja</td><td>klasa CSS w <code class="dn-dane">komponenty.css</code></td><td>zestaw klas + reguła kompozycji</td></tr>
+        <tr><td>Zawartość</td><td>struktura, brak danych</td><td>struktura <strong>plus</strong> dane operacyjne</td></tr>
+        <tr><td>Stan</td><td>stany interakcji (hover, fokus, wybrany)</td><td>stany <strong>systemu</strong> (pracuje, poprawny, błędy, wstrzymany)</td></tr>
+        <tr><td>Ruch</td><td>brak, poza mikroprzejściem</td><td>może nieść <strong>jeden ruch znaczący</strong> (tętno)</td></tr>
+        <tr><td>Nazwa</td><td>angielska klasa <code class="dn-dane">.dn-*</code></td><td>polska nazwa opisowa</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================================================================
+     11 · KATALOG WIDŻETÓW
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-katalog-w" tabindex="-1">
+  <h2>11 · Katalog widżetów</h2>
+  <p>Trzynaście pozycji. Każda ma pokrycie w <code class="dn-kod dn-kod--wiersz">komponenty.css</code>
+     albo w inwentarzu okien — katalog dokumentuje, nie projektuje.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>#</th><th>Widżet</th><th>Klasa wiodąca</th><th>Grupa</th><th>Ruch</th><th>Gdzie występuje</th></tr></thead>
+      <tbody>
+        <tr><td class="dn-dane">Karta środowiska</td><td><a href="#w1">Karta środowiska</a></td><td class="dn-dane">.dn-karta-srodowiska</td><td>wejście</td><td>wstęga na hover</td><td>Strona główna — Strefa 1 (×4)</td></tr>
+        <tr><td class="dn-dane">Kafel komponentu własnego</td><td><a href="#w2">Kafel komponentu własnego</a></td><td class="dn-dane">.dn-kafel</td><td>wejście</td><td>brak</td><td>Strona główna — Strefa 2 (×4)</td></tr>
+        <tr><td class="dn-dane">Karta sesji</td><td><a href="#w3">Karta sesji z kropką tętna</a></td><td class="dn-dane">.dn-karta-sesji</td><td>stan</td><td><strong>tętno 2,4 s</strong></td><td>pas kart sesji — 4 powłoki</td></tr>
+        <tr><td class="dn-dane">Wskaźnik postępu kolejki</td><td><a href="#w4">Wskaźnik postępu kolejki</a></td><td class="dn-dane">.dn-postep</td><td>stan</td><td>przejście 0,22 s</td><td>Execution Monitor · Queue Manager</td></tr>
+        <tr><td class="dn-dane">Krok kolejki</td><td><a href="#w5">Krok kolejki</a></td><td class="dn-dane">.dn-krok</td><td>stan</td><td>brak</td><td>Queue Manager · Workflow Builder</td></tr>
+        <tr><td class="dn-dane">Monitor procesu</td><td><a href="#w6">Monitor procesu</a></td><td class="dn-dane">.dn-tabela + .dn-plakietka</td><td>stan</td><td>zmiana plakietek</td><td>Panel orkiestracji, sekcja Monitor procesu</td></tr>
+        <tr><td class="dn-dane">Rdzeń Always On Display</td><td><a href="#w7">Rdzeń Always On Display</a></td><td class="dn-dane">.dn-aod</td><td>tożsamość</td><td><strong>tętno pierścienia</strong></td><td>warstwa AOD (z-index 1200)</td></tr>
+        <tr><td class="dn-dane">Plakietka roli</td><td><a href="#w8">Plakietka roli</a></td><td class="dn-dane">.dn-plakietka--rola</td><td>tożsamość</td><td>brak</td><td>okna ról MultitaskingAI · Chat Window</td></tr>
+        <tr><td class="dn-dane">Wpis komunikacji</td><td><a href="#w9">Wpis komunikacji</a></td><td class="dn-dane">.dn-wpis</td><td>komunikacja</td><td>tętno w <code>--pracuje</code></td><td>Chat Window — 15 modułów</td></tr>
+        <tr><td class="dn-dane">Pasek promptu</td><td><a href="#w10">Pasek promptu</a></td><td class="dn-dane">.dn-prompt</td><td>komunikacja</td><td>pierścień fokusu</td><td>Chat Window — 15 modułów</td></tr>
+        <tr><td class="dn-dane">Pusty stan</td><td><a href="#w11">Pusty stan</a></td><td class="dn-dane">.dn-pusty-stan</td><td>stan</td><td>brak</td><td>nowa karta sesji · panele przed konfiguracją</td></tr>
+        <tr><td class="dn-dane">Toast</td><td><a href="#w12">Toast</a></td><td class="dn-dane">.dn-toast</td><td>powiadomienie</td><td>wejście 0,22 s</td><td>warstwa powiadomień (z-index 1000)</td></tr>
+        <tr><td class="dn-dane">Przybornik okna</td><td><a href="#w13">Przybornik okna</a></td><td class="dn-dane">.dn-przybornik</td><td>działanie</td><td>mikroprzejścia</td><td>pasek promptu · nagłówki okien</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Rozkład widżetów na okna</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Okno / powłoka</th><th>Widżety obecne</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Strona główna — Centrum dowodzenia</strong></td><td class="dn-dane">Karta środowiska (×4) · Kafel komponentu własnego (×4) · Rdzeń Always On Display · Toast</td></tr>
+        <tr><td><strong>Powłoka TalkIn / WorkSpace / CodeStudio</strong></td><td class="dn-dane">Karta sesji · Rdzeń Always On Display · Wpis komunikacji · Pasek promptu · Pusty stan · Toast · Przybornik okna</td></tr>
+        <tr><td><strong>Powłoka MultitaskingAI</strong></td><td class="dn-dane">Karta sesji · Wskaźnik postępu kolejki · Krok kolejki · Monitor procesu · Rdzeń Always On Display · Plakietka roli · Wpis komunikacji · Pasek promptu · Toast · Przybornik okna</td></tr>
+        <tr><td><strong>Chat Window</strong> (wspólne, 15 modułów)</td><td class="dn-dane">Wpis komunikacji · Pasek promptu · Pusty stan · Przybornik okna</td></tr>
+        <tr><td><strong>Execution Monitor / Queue Manager</strong> (Automations)</td><td class="dn-dane">Wskaźnik postępu kolejki · Krok kolejki · Monitor procesu · Pusty stan · Toast</td></tr>
+        <tr><td><strong>Okno Konfiguracji</strong></td><td class="dn-dane">Toast · Przybornik okna</td></tr>
+        <tr><td><strong>Always On Display</strong></td><td class="dn-dane">Rdzeń Always On Display · Monitor procesu w trybie nadzoru</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================================================================
+     12 · WIDŻETY NA ŻYWO
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-widzety" tabindex="-1">
+  <h2>12 · Widżety na żywo</h2>
+  <p>Trzynaście kart. Każda ma scenę z działającym widżetem, opis anatomii i skład z klas
+     <code class="dn-kod dn-kod--wiersz">.dn-*</code>. Treści przykładowe pochodzą z domeny produktu.</p>
+
+  <!-- Karta środowiska ---------------------------------------------------------------- -->
+  <article class="wdz" id="w1">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Karta środowiska</span>
+      <h3 class="wdz-tytul" style="margin:0">Karta środowiska</h3>
+      <code class="dn-dane wdz-klasa">.dn-karta-srodowiska</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="dok-siatka-2" id="w1-scena"></div>
+      <p style="font-size:var(--dn-fs-sm);color:var(--dn-tekst-3);margin:var(--dn-od-3) 0 0">
+        Najedź kursorem albo przejdź klawiszem <span class="dn-kbd">Tab</span> — pojawia się wstęga 2 px.
+        Karta wybrana (<code class="dn-kod dn-kod--wiersz">aria-current="true"</code>) trzyma wstęgę na stałe.</p>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>emblemat środowiska · nazwa własna · motto · zdanie opisowe · liczba modułów</dd>
+        <dt>Stany</dt><dd>spoczynek (bez wstęgi) · najechanie (wstęga <code>--dn-kropka</code>, cień 2, <code>translateY(-2px)</code>) · <code>aria-current="true"</code> — środowisko z otwartymi kartami sesji · fokus</dd>
+        <dt>Zachowanie</dt><dd>klik zamyka stronę główną i otwiera powłokę środowiska; przy powrocie odtwarza wszystkie karty sesji tego środowiska</dd>
+        <dt>Gdzie</dt><dd>Strona główna — <strong>Strefa 1</strong>, dokładnie cztery wystąpienia</dd>
+        <dt>Skład</dt><dd><code>.dn-karta-srodowiska</code> › <code>-godlo</code> · <code>-tytul</code> · <code>-motto</code> · <code>-opis</code> + <code>&lt;svg&gt;</code> emblematu 40 px</dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Kafel komponentu własnego ---------------------------------------------------------------- -->
+  <article class="wdz" id="w2">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Kafel komponentu własnego</span>
+      <h3 class="wdz-tytul" style="margin:0">Kafel komponentu własnego</h3>
+      <code class="dn-dane wdz-klasa">.dn-kafel</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="dok-siatka-2" id="w2-scena"></div>
+      <p style="font-size:var(--dn-fs-sm);color:var(--dn-tekst-3);margin:var(--dn-od-3) 0 0">
+        Kafel niesie <strong>krój bazowy</strong>, nie nagłówkowy, i nie ma wstęgi. Różnica wagi wobec Karta środowiska
+        buduje hierarchię stref strony głównej.</p>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>ikona komponentu · nazwa komponentu własnego · etykieta działania („zbuduj" vs „wejdź")</dd>
+        <dt>Stany</dt><dd>spoczynek · najechanie (obrys mocny, tło powierzchni) · fokus</dd>
+        <dt>Zachowanie</dt><dd>klik otwiera <strong>okno budowy komponentu</strong> albo modal kreatora — nie przestrzeń roboczą środowiska</dd>
+        <dt>Gdzie</dt><dd>Strona główna — <strong>Strefa 2</strong>, dokładnie cztery wystąpienia</dd>
+        <dt>Skład</dt><dd><code>.dn-kafel</code> › <code>-ikona</code> · <code>-etykieta</code> · <code>-opis</code></dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Karta sesji ---------------------------------------------------------------- -->
+  <article class="wdz" id="w3">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Karta sesji</span>
+      <h3 class="wdz-tytul" style="margin:0">Karta sesji z kropką tętna</h3>
+      <code class="dn-dane wdz-klasa">.dn-karta-sesji + .dn-kropka--tetno</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="mk-powloka">
+        <div class="dn-karty-sesji" id="w3-pas" role="tablist" aria-label="Karty sesji powłoki TalkIn"></div>
+        <div class="mk-obszar" id="w3-obszar"></div>
+      </div>
+      <div class="dok-rzad" style="margin-top:var(--dn-od-3)">
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w3-praca" aria-pressed="true">
+          <span data-ikona="aktywnosc" data-ikona-rozmiar="16"></span>Praca w tle: włączona
+        </button>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w3-nowa">
+          <span data-ikona="plus" data-ikona-rozmiar="16"></span>Nowa karta sesji
+        </button>
+        <span class="dn-plakietka dn-plakietka--informacja">
+          <span data-ikona="info" data-ikona-rozmiar="12"></span>tętno 2,4 s — jedyny ruch ciągły
+        </span>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>tytuł karty (nazwa modułu; w MultitaskingAI — <strong>nazwa procesu orkiestracji</strong>) · wskaźnik pracy w tle · kontrolka zamknięcia</dd>
+        <dt>Stany</dt><dd>aktywna (<code>aria-selected="true"</code> — tło powierzchni, obrys, wstęga sygnału) · w tle · najechanie · z pracą w tle (kropka tętni) · fokus</dd>
+        <dt>Zachowanie</dt><dd>klik poza <code>✕</code> przełącza obszar roboczy na układ, historię i kontekst tej karty; <code>✕</code> zamyka widok — proces sesji trwa po stronie serwera</dd>
+        <dt>Ruch</dt><dd><strong>tętno kropki 2,4 s.</strong> Przy <code>prefers-reduced-motion</code> żeton skraca animację, a kropka otrzymuje <strong>pierścień statyczny</strong> 2 px</dd>
+        <dt>Gdzie</dt><dd>pas kart sesji (<code>--dn-wym-pas-kart</code> = 36 px) we wszystkich czterech powłokach</dd>
+        <dt>Skład</dt><dd><code>.dn-karty-sesji</code> › <code>.dn-karta-sesji</code> + <code>.dn-kropka--tetno</code> + <code>.dn-btn-ikona</code> (<code>zamknij</code>, <code>plus</code>)</dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Wskaźnik postępu kolejki + Krok kolejki ------------------------------------------------------------ -->
+  <article class="wdz" id="w4">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Wskaźnik postępu kolejki · Krok kolejki</span>
+      <h3 class="wdz-tytul" style="margin:0">Wskaźnik postępu kolejki i krok kolejki</h3>
+      <code class="dn-dane wdz-klasa">.dn-postep · .dn-krok</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="dok-blok" style="margin-bottom:var(--dn-od-4)">
+        <div class="dok-blok-naglowek">
+          <span class="dn-etykieta-mono">Execution Monitor — przebieg #129 (przykładowy)</span>
+          <span class="dn-plakietka" id="kol-plakietka">
+            <span data-ikona="zegar" data-ikona-rozmiar="12"></span>oczekuje
+          </span>
+        </div>
+        <div class="dn-postep">
+          <div class="dn-postep-tor" role="progressbar" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0"
+               aria-labelledby="kol-etykieta" id="kol-tor">
+            <div class="dn-postep-wartosc" id="kol-wartosc" style="width:0%"></div>
+          </div>
+          <span class="dn-postep-etykieta" id="kol-etykieta">0 / 11 kroków</span>
+        </div>
+      </div>
+
+      <span id="w5" style="display:block;scroll-margin-top:calc(var(--dn-wym-pasek) + var(--dn-od-6))"></span>
+      <div class="dn-kolejka" id="w5-kolejka"></div>
+
+      <div class="dok-rzad" style="margin-top:var(--dn-od-4)">
+        <button type="button" class="dn-btn dn-btn--sygnal dn-btn--sm" id="kol-start">
+          <span data-ikona="uruchom" data-ikona-rozmiar="16"></span>Uruchom przebieg
+        </button>
+        <button type="button" class="dn-btn dn-btn--zarys dn-btn--sm" id="kol-pauza">
+          <span data-ikona="wstrzymaj" data-ikona-rozmiar="16"></span>Wstrzymaj
+        </button>
+        <button type="button" class="dn-btn dn-btn--zarys dn-btn--sm" id="kol-reset">
+          <span data-ikona="odswiez" data-ikona-rozmiar="16"></span>Wyzeruj
+        </button>
+        <button type="button" class="dn-btn dn-btn--niebezpieczny dn-btn--sm" id="kol-awaria">
+          <span data-ikona="ostrzezenie" data-ikona-rozmiar="16"></span>Wymuś zdarzenie nieoczekiwane
+        </button>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Wskaźnik postępu kolejki — dane</dt><dd>liczba kroków zakończonych · liczba kroków ogółem · wartość jako szerokość wypełnienia</dd>
+        <dt>Wskaźnik postępu kolejki — dostępność</dt><dd><code>role="progressbar"</code> + <code>aria-valuenow/min/max</code> na torze; etykieta powiązana <code>aria-labelledby</code>. <strong>Etykieta jest obowiązkowa</strong> — pasek sam nie komunikuje stanu</dd>
+        <dt>Krok kolejki — stany</dt><dd>oczekuje (numer porządkowy) · <code>--pracuje</code> (<code>aktywnosc</code>) · <code>--poprawny</code> (<code>ptaszek-kolo</code>) · <code>--bledy</code> (<code>ostrzezenie</code> + licznik obiegów) · <code>--wstrzymany</code> (<code>blad</code>, kolejka staje)</dd>
+        <dt>Krok kolejki — zasada</dt><dd>trzy wyjścia weryfikacji: <strong>poprawny</strong> → zieleń · <strong>błędy + licznik obiegów</strong> → bursztyn, kolejka biegnie dalej · <strong>zdarzenie nieoczekiwane</strong> → czerwień + wstrzymanie kolejki</dd>
+        <dt>Gdzie</dt><dd>Execution Monitor · Queue Manager · Workflow Builder · Coordinator Chat · Build Output</dd>
+        <dt>Skład</dt><dd><code>.dn-postep</code> › <code>-tor</code> › <code>-wartosc</code> + <code>-etykieta</code> · <code>.dn-kolejka</code> › <code>.dn-krok</code> + <code>-znak</code> + <code>-meta</code></dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Monitor procesu ---------------------------------------------------------------- -->
+  <article class="wdz" id="w6">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Monitor procesu</span>
+      <h3 class="wdz-tytul" style="margin:0">Monitor procesu</h3>
+      <code class="dn-dane wdz-klasa">.dn-tabela + .dn-plakietka</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="dok-tabela-owijka" style="margin-bottom:var(--dn-od-3)">
+        <table class="dn-tabela">
+          <caption class="dn-sr-only">Monitor procesu — panel orkiestracji MultitaskingAI (dane przykładowe)</caption>
+          <thead><tr><th>Przebieg</th><th>Rola</th><th>Status</th><th>Czas</th></tr></thead>
+          <tbody id="w6-wiersze"></tbody>
+        </table>
+      </div>
+      <div class="dok-rzad">
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w6-krok">
+          <span data-ikona="odswiez" data-ikona-rozmiar="16"></span>Następny odczyt telemetrii
+        </button>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w6-auto" aria-pressed="false">
+          <span data-ikona="aktywnosc" data-ikona-rozmiar="16"></span>Odczyt ciągły
+        </button>
+        <span class="gal-licznik" id="w6-info" role="status" aria-live="polite">odczyt 1</span>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>identyfikator przebiegu (mono, <code>tabular-nums</code>) · nazwa roli · plakietka stanu · znacznik czasu</dd>
+        <dt>Stany</dt><dd>wiersz w spoczynku · najechanie · wybrany (<code>aria-selected="true"</code>) · tabela pusta (Pusty stan w miejsce ciała)</dd>
+        <dt>Zachowanie</dt><dd>aktualizacja na żywo kanałem WebSocket — zmienia się plakietka i czas, wiersz <strong>nie przeskakuje</strong>. Nagłówek <code>th</code> przyklejony (<code>--dn-z-przybornik</code>)</dd>
+        <dt>Ruch</dt><dd>brak własnego. Tętno należy do Karta sesji i Rdzeń Always On Display — monitor jest tabelą odczytu, nie źródłem ruchu</dd>
+        <dt>Gdzie</dt><dd>Panel orkiestracji, sekcja <strong>Monitor procesu</strong> · Execution Monitor · Process Monitor · Actions Monitor · tryb nadzoru Always On Display</dd>
+        <dt>Skład</dt><dd><code>.dn-tabela</code> + <code>.dn-plakietka--sukces / --informacja / --ostrzezenie / --blad</code> + <code>.dn-kropka</code> + <code>.dn-dane</code></dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Rdzeń Always On Display ---------------------------------------------------------------- -->
+  <article class="wdz" id="w7">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Rdzeń Always On Display</span>
+      <h3 class="wdz-tytul" style="margin:0">Rdzeń Always On Display</h3>
+      <code class="dn-dane wdz-klasa">.dn-aod</code>
+    </header>
+    <div class="wdz-scena">
+      <div style="position:relative;min-height:120px;border:1px dashed var(--dn-obrys-mocny);border-radius:var(--dn-r-md);padding:var(--dn-od-3)">
+        <p class="dn-etykieta-mono" style="margin:0">Obszar roboczy dowolnego okna — AOD pływa ponad nim</p>
+        <div class="dn-aod" id="w7-aod" style="position:absolute;right:var(--dn-od-3);bottom:var(--dn-od-3);z-index:auto">
+          <div class="dn-aod-rdzen" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 96 96" aria-hidden="true">
+              <path fill="currentColor" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+              <path fill="currentColor" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+              <circle cx="83" cy="63.5" r="6.5" fill="currentColor"/>
+            </svg>
+          </div>
+          <p class="dn-aod-tresc" id="w7-tresc" role="status" aria-live="polite">
+            <strong>Coordinator</strong> kończy plan etapów — przebieg #129, 3 z 11 kroków</p>
+        </div>
+      </div>
+      <div class="dok-rzad" style="margin-top:var(--dn-od-3)">
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w7-nastepny">
+          <span data-ikona="strzalka-prawo" data-ikona-rozmiar="16"></span>Następny komunikat
+        </button>
+        <span class="dn-plakietka dn-plakietka--sygnal">
+          <span data-ikona="dzwonek" data-ikona-rozmiar="12"></span>warstwa 1200 — nad modalem, pod Command Center
+        </span>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>rdzeń awatara (gradient sygnałowy — jedno z trzech dozwolonych zastosowań gradientu) · jedno zdanie o stanie systemu · opcjonalnie identyfikator przebiegu</dd>
+        <dt>Stany</dt><dd>spoczynek (rdzeń + tętno pierścienia) · aktywny (rozwinięta powierzchnia interakcji) · tryb nadzoru MultitaskingAI (plakietka roli) · <code>prefers-reduced-motion</code> — pierścień statyczny</dd>
+        <dt>Zachowanie</dt><dd>pływa <strong>ponad całą powłoką</strong> (<code>position: fixed</code>, <code>--dn-z-aod</code> = 1200). Nie tworzy przestrzeni roboczej i nie przeładowuje widoku</dd>
+        <dt>Ruch</dt><dd><strong>tętno pierścienia 2,4 s</strong> — drugie i ostatnie miejsce ruchu ciągłego w systemie</dd>
+        <dt>Gdzie</dt><dd>warstwa AOD — obecna jednocześnie we wszystkich środowiskach, modułach i oknach</dd>
+        <dt>Skład</dt><dd><code>.dn-aod</code> › <code>.dn-aod-rdzen</code> (<code>::after</code> = pierścień tętna) + <code>.dn-aod-tresc</code></dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Plakietka roli ---------------------------------------------------------------- -->
+  <article class="wdz" id="w8">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Plakietka roli</span>
+      <h3 class="wdz-tytul" style="margin:0">Plakietka roli</h3>
+      <code class="dn-dane wdz-klasa">.dn-plakietka--rola</code>
+    </header>
+    <div class="wdz-scena">
+      <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">Role zespołu MultitaskingAI</p>
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-4)">
+        <span class="dn-plakietka dn-plakietka--rola dn-plakietka--sygnal">Coordinator</span>
+        <span class="dn-plakietka dn-plakietka--rola dn-plakietka--sygnal">Executor 1</span>
+        <span class="dn-plakietka dn-plakietka--rola dn-plakietka--sygnal">Executor 2</span>
+        <span class="dn-plakietka dn-plakietka--rola dn-plakietka--sygnal">Executor 3 / Validator</span>
+        <span class="dn-plakietka dn-plakietka--rola">Subagent Network</span>
+      </div>
+      <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">Wcielenia Results Analyzer — różnicuje plakietka, nie ikona</p>
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-4)">
+        <span class="dn-plakietka dn-plakietka--rola">Validator</span>
+        <span class="dn-plakietka dn-plakietka--rola">Reviewer</span>
+        <span class="dn-plakietka dn-plakietka--rola">Security Auditor</span>
+        <span class="dn-plakietka dn-plakietka--rola">Architect</span>
+        <span class="dn-plakietka dn-plakietka--rola">Product Owner</span>
+        <span class="dn-plakietka dn-plakietka--rola">QA Lead</span>
+        <span class="dn-plakietka dn-plakietka--rola">Arbitrator</span>
+      </div>
+      <p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">Kształt jako znaczenie — porównanie</p>
+      <div class="dok-rzad">
+        <span class="dn-plakietka dn-plakietka--rola dn-plakietka--sygnal">Coordinator</span>
+        <span style="color:var(--dn-tekst-3);font-size:var(--dn-fs-sm)">promień 3 px — maszynowa</span>
+        <span class="dn-separator--pionowy dn-separator"></span>
+        <span class="dn-plakietka dn-plakietka--sukces"><span data-ikona="ptaszek-kolo" data-ikona-rozmiar="12"></span>sukces</span>
+        <span style="color:var(--dn-tekst-3);font-size:var(--dn-fs-sm)">promień pill — organiczna</span>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>nazwa roli albo nazwa narzędzia — <strong>dokładnie jak w dokumentacji</strong>, bez tłumaczenia</dd>
+        <dt>Stany</dt><dd>bez stanów interakcji — plakietka nie jest klikalna. Wariant semantyczny nadaje kontekst: <code>--sygnal</code> dla ról inteligencji, neutralny dla klasy <code>tool</code></dd>
+        <dt>Zachowanie</dt><dd>statyczna; towarzyszy nazwie nadawcy w <code>.dn-wpis-tozsamosc</code> albo tytułowi karty roli. <strong>Nie zastępuje ikony roli</strong> — stoi obok niej</dd>
+        <dt>Kształt</dt><dd>promień <code>--dn-r-xs</code> zamiast <code>--dn-r-pill</code>: plakietka roli jest <strong>maszynowa</strong>, plakietka stanu — <strong>organiczna</strong>. Różnica pozwala je rozróżnić bez czytania</dd>
+        <dt>Gdzie</dt><dd>Coordinator Chat · Executor Chat (1, 2) · Results Analyzer · karty ról w sekcji Role · Chat Window przy wpisach klasy <code>tool</code></dd>
+        <dt>Skład</dt><dd><code>.dn-plakietka .dn-plakietka--rola</code> (+ opcjonalnie <code>--sygnal</code>)</dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Wpis komunikacji + Pasek promptu + Przybornik okna ------------------------------------------------------ -->
+  <article class="wdz" id="w9">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Wpis komunikacji · Pasek promptu · Przybornik okna</span>
+      <h3 class="wdz-tytul" style="margin:0">Chat Window — wpis komunikacji, pasek promptu, przybornik</h3>
+      <code class="dn-dane wdz-klasa">.dn-wpis · .dn-prompt · .dn-przybornik</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="mk-powloka">
+        <div style="padding:var(--dn-od-4);display:flex;flex-direction:column;gap:var(--dn-od-3)" id="w9-historia"></div>
+        <div style="padding:var(--dn-od-3);border-top:1px solid var(--dn-obrys)">
+          <span id="w10" style="display:block;scroll-margin-top:calc(var(--dn-wym-pasek) + var(--dn-od-6))"></span>
+      <div class="dn-prompt">
+            <span class="dn-prompt-grot" aria-hidden="true">❯</span>
+            <textarea class="dn-prompt-obszar" id="w10-pole" rows="2"
+                      placeholder="napisz polecenie…" aria-label="Pole poleceń Chat Window"></textarea>
+            <button type="button" class="dn-btn-ikona" id="w10-wyslij" aria-label="Wyślij polecenie">
+              <span data-ikona="wyslij" data-ikona-rozmiar="16"></span>
+            </button>
+          </div>
+          <div class="dn-przybornik" style="margin-top:var(--dn-od-2)" id="w13-przybornik"></div>
+        </div>
+      </div>
+      <div class="dok-rzad" style="margin-top:var(--dn-od-3)">
+        <span class="dn-etykieta-mono">Przybornik modułu</span>
+        <div class="gal-segment" role="group" aria-label="Wybór modułu dla przybornika">
+          <button type="button" data-przybornik="Studio" aria-pressed="true">Studio</button>
+          <button type="button" data-przybornik="Terminal" aria-pressed="false">Terminal</button>
+          <button type="button" data-przybornik="Automations" aria-pressed="false">Automations</button>
+          <button type="button" data-przybornik="Research" aria-pressed="false">Research</button>
+        </div>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" id="w9-pracuje" aria-pressed="true">
+          <span data-ikona="aktywnosc" data-ikona-rozmiar="16"></span>Coordinator pracuje
+        </button>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Wpis komunikacji — klasy</dt><dd>trzy klasy semantyczne: <code>--czlowiek</code> (atrament) · <code>--inteligencja</code> (sygnał) · <code>--system</code> (neutralna). <strong>Nie dziewięć barw dla dziewięciu nadawców</strong> — rozróżnienie niesie komplet: ikona + etykieta + klasa krawędzi</dd>
+        <dt>Wpis komunikacji — mapowanie</dt><dd><code>user → --czlowiek</code> · <code>assistant → --inteligencja</code> · <code>system → --system</code> · <code>tool → --system</code> (z plakietką roli = nazwa narzędzia)</dd>
+        <dt>Wpis komunikacji — stany</dt><dd>spoczynek · <code>--pracuje</code> (kropka tętna przy etykiecie nadawcy) · najechanie (ujawnia kontrolkę <code>odpowiedz</code>) · strumień na żywo</dd>
+        <dt>Pasek promptu — sygnatura</dt><dd>grot <code>❯</code> w barwie <code>--dn-kropka</code> jest wizualnym echem podwójnego grotu <code>»»</code> z sygnetu marki — znak „tu wchodzi zlecenie"</dd>
+        <dt>Pasek promptu — zero blokad</dt><dd><strong>przycisk wysyłki jest zawsze klikalny</strong>: przy pustym polu klik pokazuje krótkie ostrzeżenie zamiast blokady (zasada zero blokad). Pole pozostaje edytowalne także podczas generowania odpowiedzi</dd>
+        <dt>Przybornik okna — dobór</dt><dd>wyłącznie ikony z grup <strong>działanie</strong> i <strong>nawigacja</strong>. Ikona stanu w przyborniku byłaby myląca — przybornik oferuje czynności, nie raportuje</dd>
+        <dt>Gdzie</dt><dd><strong>Chat Window</strong> — okno wspólne wszystkich piętnastu modułów, we wszystkich czterech środowiskach</dd>
+        <dt>Skład</dt><dd><code>.dn-wpis</code> › <code>-medalion</code> · <code>-tozsamosc</code> › <code>-nadawca</code> + <code>.dn-plakietka--rola</code> + <code>-godzina</code> · <code>-tresc</code> — <code>.dn-prompt</code> › <code>-grot</code> + <code>-obszar</code> + <code>.dn-btn-ikona</code> — <code>.dn-przybornik</code> › <code>.dn-btn-ikona</code> × n</dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Pusty stan --------------------------------------------------------------- -->
+  <article class="wdz" id="w11">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Pusty stan</span>
+      <h3 class="wdz-tytul" style="margin:0">Pusty stan</h3>
+      <code class="dn-dane wdz-klasa">.dn-pusty-stan</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="mk-powloka" id="w11-scena"></div>
+      <div class="dok-rzad" style="margin-top:var(--dn-od-3)">
+        <span class="dn-etykieta-mono">Miejsce wystąpienia</span>
+        <div class="gal-segment" role="group" aria-label="Wybór pustego stanu">
+          <button type="button" data-pusty="0" aria-pressed="true">nowa karta</button>
+          <button type="button" data-pusty="1" aria-pressed="false">Queue Manager</button>
+          <button type="button" data-pusty="2" aria-pressed="false">Findings Panel</button>
+          <button type="button" data-pusty="3" aria-pressed="false">Chat Window</button>
+        </div>
+      </div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>ikona kontekstowa · tytuł stanu · zdanie wyjaśniające · opcjonalna akcja wyjścia ze stanu</dd>
+        <dt>Stany</dt><dd>pusty stan <strong>sam jest stanem</strong> innego elementu — nie ma stanów własnych poza stanami osadzonego przycisku</dd>
+        <dt>Zachowanie</dt><dd>zastępuje treść panelu, tabeli albo obszaru roboczego; znika, gdy pojawi się pierwsza pozycja. <strong>Komunikuje stan oczekiwany, nie błąd ładowania</strong></dd>
+        <dt>Dobór ikony</dt><dd>ikona wskazuje <strong>czego brakuje</strong>, nie „pustkę": <code>karta-okna</code> w nowej karcie · <code>automatyzacja</code> w Queue Manager · <code>badanie</code> w Findings Panel · <code>rozmowa</code> w Chat Window</dd>
+        <dt>Gdzie</dt><dd>nowa karta sesji · Sources Manager · Findings Panel · Queue Manager · Library Explorer · Assets Panel · Errors Panel · historia Chat Window przed pierwszym poleceniem</dd>
+        <dt>Skład</dt><dd><code>.dn-pusty-stan</code> › <code>&lt;svg&gt;</code> 28 px + <code>-tytul</code> + <code>-opis</code> (+ <code>.dn-btn--zarys</code>)</dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Toast --------------------------------------------------------------- -->
+  <article class="wdz" id="w12">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Toast</span>
+      <h3 class="wdz-tytul" style="margin:0">Toast</h3>
+      <code class="dn-dane wdz-klasa">.dn-toast</code>
+    </header>
+    <div class="wdz-scena">
+      <p style="font-size:var(--dn-fs-sm);margin-bottom:var(--dn-od-3)">
+        Kliknij wariant — toast pojawi się w prawym dolnym rogu okna, w warstwie powiadomień.
+        Poniżej podgląd statyczny wszystkich czterech wariantów.</p>
+      <div class="dok-rzad" style="margin-bottom:var(--dn-od-4)">
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" data-toast="sukces">
+          <span data-ikona="ptaszek-kolo" data-ikona-rozmiar="16"></span>sukces
+        </button>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" data-toast="informacja">
+          <span data-ikona="info" data-ikona-rozmiar="16"></span>informacja
+        </button>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" data-toast="ostrzezenie">
+          <span data-ikona="ostrzezenie" data-ikona-rozmiar="16"></span>ostrzeżenie
+        </button>
+        <button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" data-toast="blad">
+          <span data-ikona="blad" data-ikona-rozmiar="16"></span>błąd
+        </button>
+      </div>
+      <div class="dok-kolumna" id="w12-podglad" style="max-width:440px"></div>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>ikona stanu · tytuł (co się stało) · treść uzupełniająca (kontekst) · kontrolka zamknięcia</dd>
+        <dt>Warianty</dt><dd><code>--sukces</code> (<code>ptaszek-kolo</code>) · <code>--ostrzezenie</code> (<code>ostrzezenie</code>) · <code>--blad</code> (<code>blad</code>) · <code>--informacja</code> (<code>info</code>)</dd>
+        <dt>Stany</dt><dd>pojawienie się (<code>dn-wejscie</code> 0,22 s: <code>opacity</code> + <code>translateY</code> + <code>scale 0.98</code>) · widoczny · znikanie (automatyczne albo ręczne)</dd>
+        <dt>Zachowanie</dt><dd>nie przerywa pracy i nie wymaga reakcji; stos pionowy w <code>.dn-toasty</code>. Potwierdza czynność, <strong>która już się dokonała</strong> — nie pyta o zgodę</dd>
+        <dt>Dostępność</dt><dd>pojemnik z <code>role="status"</code> i <code>aria-live="polite"</code>; wariant <code>--blad</code> z <code>aria-live="assertive"</code></dd>
+        <dt>Gdzie</dt><dd>warstwa powiadomień (<code>--dn-z-powiadomienie</code> = 1000) — globalnie, ponad każdym oknem</dd>
+        <dt>Skład</dt><dd><code>.dn-toasty</code> › <code>.dn-toast</code> (+ wariant) › <code>&lt;svg&gt;</code> 16 px + <code>-tytul</code> + <code>-tresc</code> + <code>.dn-btn-ikona</code></dd>
+      </dl>
+    </div>
+  </article>
+
+  <!-- Przybornik okna — karta opisowa (scena wspólna z Wpis komunikacji/Pasek promptu) ------------------------ -->
+  <article class="wdz" id="w13">
+    <header class="wdz-naglowek">
+      <span class="wdz-id">Przybornik okna</span>
+      <h3 class="wdz-tytul" style="margin:0">Przybornik okna — zestawy per moduł</h3>
+      <code class="dn-dane wdz-klasa">.dn-przybornik</code>
+    </header>
+    <div class="wdz-scena">
+      <div class="dok-kolumna" id="w13-zestawy"></div>
+      <p style="font-size:var(--dn-fs-sm);color:var(--dn-tekst-3);margin:var(--dn-od-3) 0 0">
+        Zestawy przykładowe, złożone wyłącznie z ikon istniejących w zestawie. Źródło jawnie zostawia
+        formę fazie wykonawczej — zestawy ilustrują <strong>regułę doboru</strong>, nie kontrakt.</p>
+    </div>
+    <div class="wdz-opis">
+      <dl>
+        <dt>Dane</dt><dd>zestaw akcji kontekstowych okna albo paska promptu — zmienny per moduł</dd>
+        <dt>Stany</dt><dd>każdy element przejmuje stany własnego komponentu: <code>.dn-btn-ikona</code> (spoczynek · najechanie · <code>aria-pressed</code> · fokus · <code>aria-busy</code>), <code>.dn-wybor</code> (rozwinięcie)</dd>
+        <dt>Zachowanie</dt><dd>zawija się (<code>flex-wrap</code>) przy zwężeniu okna, nie przewija poziomo. Kolejność od najczęstszej akcji po najrzadszą. Zestaw jest <strong>stały w obrębie modułu</strong> — Operator uczy się go raz</dd>
+        <dt>Gdzie</dt><dd>pod paskiem promptu w Chat Window · nagłówki okien operacyjnych · listwa Strefy 3 (wariant lekki)</dd>
+        <dt>Skład</dt><dd><code>.dn-przybornik</code> › <code>.dn-btn-ikona</code> × n (+ <code>.dn-separator--pionowy</code> + <code>.dn-wybor</code> + <code>.dn-tooltip</code>)</dd>
+      </dl>
+    </div>
+  </article>
+</section>
+
+<!-- ======================================================================
+     13 · DECYZJE PROJEKTOWE
+     ====================================================================== -->
+<section class="dok-sekcja" id="s-decyzje" tabindex="-1">
+  <h2>13 · Decyzje projektowe</h2>
+  <p>Rozstrzygnięcia podjęte <strong>ponad źródła</strong> — tam, gdzie dokumentacja nie rozstrzygała formy.
+     Każde odnotowane jawnie.</p>
+
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>#</th><th>Zagadnienie</th><th>Stan źródeł</th><th>Rozstrzygnięcie</th><th>Uzasadnienie</th></tr></thead>
+      <tbody>
+        <tr><td class="dn-dane">2</td><td><strong>Grupy semantyczne ikon</strong></td><td>manifest nie zawiera pola grupy; kontrakt systemu projektowego podaje płaską listę 82 nazw</td><td>siedem grup z pełnym przypisaniem wszystkich 82 pozycji</td><td>podział wyprowadzono z pola <code class="dn-dane">zastosowanie</code>; grupa jest warstwą dokumentacyjną, <strong>nie trafia do manifestu</strong></td></tr>
+        <tr><td class="dn-dane">3</td><td>Liczba pozycji Lucide vs własnych</td><td>manifest podaje regułę, nie podaje liczb</td><td><strong>78 / 4</strong> — policzone po polu <code class="dn-dane">zrodlo</code></td><td>liczba wyprowadzalna jednoznacznie; ułatwia audyt licencyjny</td></tr>
+        <tr><td class="dn-dane">4</td><td>Dwa wyjątki 12 px</td><td><code class="dn-dane">komponenty.css</code> renderuje plakietkę i znak kroku w 12 px, poza skalą manifestu</td><td>udokumentowany <strong>wyjątek dwóch komponentów</strong>, nie piąty stopień skali</td><td>14 px rozsadza pojemnik 16–20 px; odnotowanie zamyka lukę zamiast ją ukrywać</td></tr>
+        <tr><td class="dn-dane">5</td><td><strong>Zakaz „ikona jako jedyny nośnik stanu"</strong></td><td>kontrakt systemu projektowego: „stan nigdy samym kolorem — zawsze ikona albo etykieta"</td><td>zaostrzono: przy stanie ikona sama <strong>też</strong> nie wystarcza — wymagana etykieta słowna</td><td>różnica między <code class="dn-dane">ptaszek-kolo</code> a <code class="dn-dane">walidator</code> przy 14 px jest nieczytelna; wyjątek (kropka karty sesji) opisany</td></tr>
+        <tr><td class="dn-dane">6</td><td>Przypisanie ikon do 15 modułów</td><td>trzy moduły nie mają ikony z grupy „moduł"</td><td>Studio → <code class="dn-dane">dokument</code>, Browser → <code class="dn-dane">karta-okna</code>, Developer → <code class="dn-dane">kod</code></td><td>manifest wprost przypisuje te ikony do tych modułów; nie tworzymy nowych — zestaw jest zamknięty</td></tr>
+        <tr><td class="dn-dane">7</td><td><strong>Definicja widżetu</strong></td><td>źródła używają pojęcia „wzorzec złożony", nie definiują „widżetu"</td><td>definicja trójczłonowa jako <strong>warstwa 4</strong> między komponentami a oknem</td><td>trójczłon pozwala jednoznacznie odrzucić kandydatów i zgadza się z warstwowaniem katalogu komponentów</td></tr>
+        <tr><td class="dn-dane">8</td><td>Zamknięcie katalogu na 13 pozycjach</td><td>zadanie wymienia trzynaście widżetów</td><td>każdą pozycję zweryfikowano wobec <code class="dn-dane">komponenty.css</code>; nie dodano żadnej ponad listę</td><td>katalog bez pokrycia w kodzie byłby projektowaniem, nie dokumentowaniem</td></tr>
+        <tr><td class="dn-dane">9</td><td>Kształt plakietki roli jako nośnik znaczenia</td><td>CSS nadaje <code class="dn-dane">--dn-r-xs</code> zamiast <code class="dn-dane">--dn-r-pill</code>, nie wyjaśnia dlaczego</td><td>odczytano jako celowe rozróżnienie: rola maszynowa, stan organiczny</td><td>różnica jest w kodzie; nadanie jej znaczenia czyni ją powtarzalną</td></tr>
+        <tr><td class="dn-dane">10</td><td><strong>Dwa miejsca ruchu ciągłego</strong></td><td>CSS animuje <code class="dn-dane">dn-tetno</code> w trzech selektorach</td><td>trzy nośniki tętna: Karta sesji, Wpis komunikacji, Rdzeń Always On Display; pozostałe widżety mają ruch zerowy albo mikroprzejście</td><td><code class="dn-dane">INTENSYWNOSC_RUCHU = 3/10</code> wymaga policzalności; lista zamknięta zapobiega rozlaniu animacji</td></tr>
+        <tr><td class="dn-dane">11</td><td>Dostępność wskaźnika postępu</td><td>CSS nie deklaruje ról ARIA dla <code class="dn-dane">.dn-postep</code></td><td><code class="dn-dane">role="progressbar"</code> + <code class="dn-dane">aria-valuenow/min/max</code> + obowiązkowa etykieta</td><td>pasek bez roli i etykiety nie przekazuje wartości technologii wspomagającej</td></tr>
+        <tr><td class="dn-dane">12</td><td>Dostępność stosu powiadomień</td><td>CSS nie deklaruje roli dla <code class="dn-dane">.dn-toasty</code></td><td><code class="dn-dane">role="status"</code> + <code class="dn-dane">aria-live</code>; wariant błędu <code class="dn-dane">assertive</code></td><td>toast pojawia się bez akcji użytkownika; bez obszaru żywego jest niesłyszalny</td></tr>
+        <tr><td class="dn-dane">13</td><td>Zestaw ikon przybornika per moduł</td><td>źródła: „zależny od modułu — forma poza zakresem"</td><td>cztery zestawy przykładowe z ikon istniejących, oznaczone jako przykładowe</td><td>ilustrują regułę doboru, nie ustanawiają kontraktu — źródło zostawia formę fazie wykonawczej</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Czego świadomie nie rozstrzygnięto</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Zagadnienie</th><th>Powód pozostawienia otwartym</th></tr></thead>
+      <tbody>
+        <tr><td>Forma rozwiniętej powierzchni Always On Display (dymek / panel boczny / pełne okno)</td><td>źródło jawnie odsyła do fazy wykonawczej</td></tr>
+        <tr><td>Zachowanie pasa kart sesji przy przepełnieniu (przewijanie vs zwężanie)</td><td>źródło jawnie odsyła do fazy wykonawczej</td></tr>
+        <tr><td>Czas ekspozycji toastu przed samoczynnym zniknięciem</td><td>brak wartości w żetonach i w dokumentacji; wpisanie liczby byłoby wymyśleniem</td></tr>
+        <tr><td>Ikony dla wcieleń Results Analyzer poza <code class="dn-dane">walidator</code></td><td>zestaw jest zamknięty; sześć pozostałych wcieleń różnicuje <strong>plakietka roli</strong>, nie ikona</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Podsumowanie liczbowe</h3>
+  <div class="dok-tabela-owijka">
+    <table class="dn-tabela">
+      <thead><tr><th>Wielkość</th><th>Wartość</th></tr></thead>
+      <tbody>
+        <tr><td>Ikon w zestawie</td><td class="dn-dane"><strong>82</strong></td></tr>
+        <tr><td>— z Lucide (ISC)</td><td class="dn-dane">78</td></tr>
+        <tr><td>— emblematów własnych</td><td class="dn-dane">4</td></tr>
+        <tr><td>Grup semantycznych</td><td class="dn-dane">7</td></tr>
+        <tr><td>Stopni renderowania</td><td class="dn-dane">4 (14 · 16 · 20 · 24 px)</td></tr>
+        <tr><td>Udokumentowanych wyjątków rozmiaru</td><td class="dn-dane">2 (plakietka, znak kroku — 12 px)</td></tr>
+        <tr><td>Widżetów w katalogu</td><td class="dn-dane"><strong>13</strong></td></tr>
+        <tr><td>— z ruchem ciągłym (tętno)</td><td class="dn-dane">3 (Karta sesji, Rdzeń Always On Display, Wpis komunikacji)</td></tr>
+        <tr><td>— bez ruchu własnego</td><td class="dn-dane">6 (Kafel komponentu własnego, Krok kolejki, Monitor procesu, Plakietka roli, Pusty stan, Przybornik okna)</td></tr>
+        <tr><td>Klas <code class="dn-dane">.dn-*</code> wykorzystanych w widżetach</td><td class="dn-dane">34</td></tr>
+        <tr><td>Decyzji projektowych ponad źródła</td><td class="dn-dane">12</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ======================================================================
+     O TYM OPRACOWANIU
+     ====================================================================== -->
+<details class="dok-o-opracowaniu">
+  <summary>O tym opracowaniu</summary>
+  <div>
+    <h3 style="font-size:var(--dn-fs-base);margin-bottom:var(--dn-od-2)">Co zawiera</h3>
+    <ul class="dok-lista">
+      <li><strong>Część I — Ikonografia:</strong> sześć niezmienników zestawu, pochodzenie (78 Lucide + 4 emblematy własne), konwencja nazewnicza, <strong>pełna galeria 82 ikon</strong> z wyszukiwarką i filtrem grup, siedem grup semantycznych, konstrukcja czterech emblematów środowisk, zasady użycia, dostępność, procedura dodania ikony.</li>
+      <li><strong>Część II — Widżety:</strong> definicja widżetu jako warstwy 4 systemu, katalog trzynastu pozycji, karta każdego widżetu (anatomia · dane · stany · zachowanie · gdzie występuje · skład z klas <code class="dn-kod dn-kod--wiersz">.dn-*</code>), dwanaście decyzji projektowych.</li>
+    </ul>
+
+    <h3 style="font-size:var(--dn-fs-base);margin-bottom:var(--dn-od-2)">Źródła w dokumentacji</h3>
+    <div class="dok-tabela-owijka">
+      <table class="dn-tabela">
+        <thead><tr><th>Plik</th><th>Co z niego pochodzi</th></tr></thead>
+        <tbody>
+          <tr><td class="dn-dane">kontrakt systemu projektowego</td><td>zasady nadrzędne, komplet 82 nazw ikon, biblioteka klas <code class="dn-dane">.dn-*</code>, inwentarz okien, zasada zero blokad</td></tr>
+          <tr><td class="dn-dane">zasoby/ikony/manifest.json</td><td>nazwa, źródło Lucide i zastosowanie każdej z 82 ikon; zasady siatki, obrysu i renderowania</td></tr>
+          <tr><td class="dn-dane">zasoby/ikony/svg/*.svg</td><td><strong>realna zawartość 82 plików</strong> — wklejona inline na tej stronie, bez przerysowania</td></tr>
+          <tr><td class="dn-dane">zasoby/css/komponenty.css</td><td>klasy widżetów, stany, animacja <code class="dn-dane">dn-tetno</code>, wymiary elementów</td></tr>
+          <tr><td class="dn-dane">zasoby/zetony/zetony.css</td><td>żetony wymiarów ikon, czasy ruchu, barwy semantyczne, gęstość przestronna</td></tr>
+          <tr><td class="dn-dane">kierunek systemu projektowego</td><td>kontrakt kierunku, trzy pokrętła, zasada „nie rysuj ręcznie jeśli istnieje w bibliotece", kropka sygnału</td></tr>
+          <tr><td class="dn-dane">design/05-ikony/ikony.html</td><td>wzorzec galerii zestawu (siatka, podgląd stopni renderowania)</td></tr>
+          <tr><td class="dn-dane">inwentarz komponentów</td><td>taksonomia komponentów, warstwy systemu, wzorce złożone, rozbieżności odnotowane</td></tr>
+          <tr><td class="dn-dane">inwentarz okien platformy</td><td>anatomia powłok, karty sesji, Chat Window, panel orkiestracji, monitor procesu, role zespołu</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:var(--dn-fs-base);margin-bottom:var(--dn-od-2)">Jakie interakcje odwzorowano</h3>
+    <ul class="dok-lista">
+      <li><strong>Przełącznik motywu</strong> — pasek górny, oba motywy równoprawne; pasek pozostaje atramentowy w obu.</li>
+      <li><strong>Przełącznik gęstości</strong> — <code class="dn-kod dn-kod--wiersz">data-gestosc="przestronna"</code> zmienia stopień bazowy, wysokości kontrolek i rytm odstępów.</li>
+      <li><strong>Spis treści</strong> — podświetlenie aktywnej sekcji przy przewijaniu (IntersectionObserver).</li>
+      <li><strong>Galeria ikon</strong> — wyszukiwarka po nazwie, źródle i zastosowaniu; filtr siedmiu grup; przełącznik rozmiaru renderowania zmieniający całą siatkę na żywo.</li>
+      <li><strong>Kopiowanie</strong> — klik kopiuje nazwę pliku, dwuklik kopiuje kod <code class="dn-kod dn-kod--wiersz">&lt;svg&gt;</code>; <code class="dn-kod dn-kod--wiersz">navigator.clipboard</code> z zapasem przez <code class="dn-kod dn-kod--wiersz">document.execCommand</code>.</li>
+      <li><strong>Porównanie grubości obrysu</strong> — 1,5 / 1,75 / 2,0 na czterech stopniach renderowania, z wyborem ikony badanej.</li>
+      <li><strong>Podgląd na czterech podłożach</strong> — motyw jasny, ciemny, rama kokpitu, wypełnienie sygnału.</li>
+      <li><strong>Tętno kropki</strong> — karta sesji (Karta sesji), wpis pracujący (Wpis komunikacji), pierścień rdzenia AOD (Rdzeń Always On Display); trzy i tylko trzy nośniki ruchu ciągłego.</li>
+      <li><strong>Przebieg kolejki</strong> — animowany postęp 0 → 11 kroków z przejściami stanów kroku (pracuje → poprawny → błędy → wstrzymany).</li>
+      <li><strong>Monitor procesu</strong> — kolejne odczyty telemetrii zmieniające plakietki stanu bez przeskoku wierszy; tryb odczytu ciągłego.</li>
+      <li><strong>Toasty</strong> — cztery warianty w warstwie powiadomień, z obszarem żywym i kontrolką zamknięcia.</li>
+      <li><strong>Zero blokad</strong> — przycisk wysyłki przy pustym polu pokazuje ostrzeżenie zamiast blokady; nigdzie nie użyto <code class="dn-kod dn-kod--wiersz">disabled</code>.</li>
+      <li><strong>Dostępność</strong> — fokus widoczny na każdej kontrolce, <code class="dn-kod dn-kod--wiersz">aria-*</code> na przyciskach ikonowych, nawigacja klawiaturą, <code class="dn-kod dn-kod--wiersz">lang="pl"</code>, respektowanie <code class="dn-kod dn-kod--wiersz">prefers-reduced-motion</code> przez żetony.</li>
+    </ul>
+
+    <h3 style="font-size:var(--dn-fs-base);margin-bottom:var(--dn-od-2)">Czego nie zawiera</h3>
+    <p style="margin-bottom:0">Definicji żetonów · pełnej biblioteki komponentów prostych · księgi znaku
+       i logotypu · makiet okien operacyjnych · licencji Lucide w brzmieniu pełnym. Zestaw ikon jest
+       <strong>zamknięty</strong> — rozszerza się go wyłącznie procedurą z rozdz. 9.</p>
+  </div>
+</details>
+
+<p class="dok-stopka">
+  Danaco Console — AI Operating Environment · v2.0<br>
+  © 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz
+</p>
+
+</main>
+</div>
+
+<!-- Warstwa powiadomień -->
+<div class="dn-toasty" id="toasty" role="status" aria-live="polite"></div>
+
+<script src="../zasoby/wspolne.js"></script>
+<script>
+/* ==========================================================================
+   DANE ZESTAWU — 82 pozycje manifestu.
+   Zawartość pola `s` to REALNA treść plików zasoby/ikony/svg/*.svg
+   (wnętrze elementu <svg>, bez zmian geometrii). Pole `g` = grupa semantyczna
+   wprowadzona w tym opracowaniu (decyzja projektowa opracowania) — nie występuje w manifeście.
+   ========================================================================== */
+const IKONY = [
+{n:'dom',z:'lucide:house',g:'nawigacja',o:'Centrum dowodzenia — powrót do strony głównej',m:'Pasek górny (rama, 4 powłoki) · Strona główna',s:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />'},
+{n:'menu',z:'lucide:menu',g:'nawigacja',o:'Rozwinięcie nawigacji bocznej, menu podręczne',m:'Powłoki TalkIn · WorkSpace · CodeStudio · MultitaskingAI',s:'<path d="M4 5h16" /><path d="M4 12h16" /><path d="M4 19h16" />'},
+{n:'strzalka-lewo',z:'lucide:arrow-left',g:'nawigacja',o:'Cofnięcie, powrót',m:'Okno rejestracji i logowania · Browser Window',s:'<path d="m12 19-7-7 7-7" /><path d="M19 12H5" />'},
+{n:'strzalka-prawo',z:'lucide:arrow-right',g:'nawigacja',o:'Przejście dalej, wejście w pozycję',m:'Browser Window · Panel orkiestracji, sekcja Kolejki',s:'<path d="M5 12h14" /><path d="m12 5 7 7-7 7" />'},
+{n:'grot-dol',z:'lucide:chevron-down',g:'nawigacja',o:'Rozwinięcie sekcji, lista rozwijana',m:'Okno Konfiguracji (13 zakresów) · pola .dn-wybor',s:'<path d="m6 9 6 6 6-6" />'},
+{n:'grot-gora',z:'lucide:chevron-up',g:'nawigacja',o:'Zwinięcie sekcji',m:'Okno Konfiguracji · Subagent Network',s:'<path d="m18 15-6-6-6 6" />'},
+{n:'grot-prawo',z:'lucide:chevron-right',g:'nawigacja',o:'Wejście w głąb, okruszki nawigacji',m:'Library Explorer · Project Tree · Sources Manager',s:'<path d="m9 18 6-6-6-6" />'},
+{n:'wiecej',z:'lucide:ellipsis',g:'nawigacja',o:'Menu dodatkowych czynności pozycji',m:'Nagłówek każdego okna operacyjnego (menu ⋯)',s:'<circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />'},
+{n:'link-zewnetrzny',z:'lucide:external-link',g:'nawigacja',o:'Odesłanie poza bieżący widok',m:'Panel orkiestracji, sekcja Orkiestracja · Sources Panel',s:'<path d="M15 3h6v6" /><path d="M10 14 21 3" /><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />'},
+{n:'szukaj',z:'lucide:search',g:'nawigacja',o:'Wyszukiwanie — pasek górny, Command Center',m:'Pasek górny (.dn-pasek-szukaj) · Command Center',s:'<path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />'},
+{n:'filtr',z:'lucide:funnel',g:'nawigacja',o:'Zawężenie wykazu, panel warunków',m:'Panel orkiestracji, sekcja Kolejki · Queue Manager · Logs Viewer',s:'<path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z" />'},
+{n:'zamknij',z:'lucide:x',g:'nawigacja',o:'Zamknięcie karty, modala, powiadomienia',m:'Pas kart sesji (✕) · .dn-modal · .dn-toast',s:'<path d="M18 6 6 18" /><path d="m6 6 12 12" />'},
+{n:'karta-okna',z:'lucide:app-window',g:'nawigacja',o:'Okno, karta przeglądarki, moduł Browser',m:'Moduł Browser — Browser Window, Sources Panel',s:'<rect x="2" y="4" width="20" height="16" rx="2" /><path d="M10 4v4" /><path d="M2 8h20" /><path d="M6 4v4" />'},
+{n:'plus',z:'lucide:plus',g:'dzialanie',o:'Utworzenie bytu: sesja, okno, kanał',m:'Pas kart sesji (+) · Agent Builder · Tags & Collections',s:'<path d="M5 12h14" /><path d="M12 5v14" />'},
+{n:'olowek',z:'lucide:pencil',g:'dzialanie',o:'Zmiana nazwy, edycja',m:'Sources Manager · Library Explorer · Assets Panel',s:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" />'},
+{n:'kosz',z:'lucide:trash-2',g:'dzialanie',o:'Usunięcie pozycji (z potwierdzeniem)',m:'Sources Manager · Library Explorer · Agent Manager',s:'<path d="M10 11v6" /><path d="M14 11v6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />'},
+{n:'pobierz',z:'lucide:download',g:'dzialanie',o:'Pobranie pliku, eksport wyniku',m:'Export Panel · Report Builder · Build Output',s:'<path d="M12 15V3" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="m7 10 5 5 5-5" />'},
+{n:'wgraj',z:'lucide:upload',g:'dzialanie',o:'Wgranie pliku, import',m:'Library Explorer · Assets Panel · Sources Manager',s:'<path d="M12 3v12" /><path d="m17 8-5-5-5 5" /><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />'},
+{n:'wyslij',z:'lucide:send-horizontal',g:'dzialanie',o:'Wysłanie komunikatu w oknie komunikacji',m:'Chat Window — pasek promptu, wszystkie 15 modułów',s:'<path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z" /><path d="M6 12h16" />'},
+{n:'odswiez',z:'lucide:refresh-cw',g:'dzialanie',o:'Ponowienie próby, odświeżenie danych',m:'Okno startowe (błąd połączenia) · Queue Manager (retry)',s:'<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" />'},
+{n:'odpowiedz',z:'lucide:reply',g:'dzialanie',o:'Odpowiedź, cytowanie wpisu',m:'Chat Window — kontrolka przy wpisie historii',s:'<path d="M20 18v-2a4 4 0 0 0-4-4H4" /><path d="m9 17-5-5 5-5" />'},
+{n:'uruchom',z:'lucide:play',g:'dzialanie',o:'Uruchomienie procesu, zadania, automatyzacji',m:'Execution Monitor · Workflow Builder · Process Monitor',s:'<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />'},
+{n:'zatrzymaj',z:'lucide:square',g:'dzialanie',o:'Zatrzymanie procesu',m:'Execution Monitor · Process Monitor · Coordinator Chat',s:'<rect width="18" height="18" x="3" y="3" rx="2" />'},
+{n:'wstrzymaj',z:'lucide:pause',g:'dzialanie',o:'Wstrzymanie kolejki, pauza',m:'Queue Manager · Coordinator Chat (pauza)',s:'<rect x="14" y="3" width="5" height="18" rx="1" /><rect x="5" y="3" width="5" height="18" rx="1" />'},
+{n:'spinacz',z:'lucide:paperclip',g:'dzialanie',o:'Załącznik komunikatu',m:'Chat Window — przybornik paska promptu',s:'<path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />'},
+{n:'ustawienia',z:'lucide:settings',g:'dzialanie',o:'Konfiguracja — okna, kanału, środowiska',m:'Pasek górny · Strefa 3 · Okno Konfiguracji',s:'<path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /><circle cx="12" cy="12" r="3" />'},
+{n:'oko',z:'lucide:eye',g:'dzialanie',o:'Podgląd, odsłonięcie wartości ukrytej',m:'Panel orkiestracji, sekcja Monitor procesu · Preview Window',s:'<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /><circle cx="12" cy="12" r="3" />'},
+{n:'gwiazdka',z:'lucide:star',g:'dzialanie',o:'Wyróżnienie pozycji, presety zespołów',m:'Panel orkiestracji, sekcja Zespoły · Library Explorer',s:'<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />'},
+{n:'kopiuj',z:'lucide:copy',g:'dzialanie',o:'Kopiowanie treści, identyfikatora',m:'Output Console · Logs Viewer · Chat Window',s:'<rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />'},
+{n:'ptaszek',z:'lucide:check',g:'stan',o:'Potwierdzenie wykonania, zaznaczenie',m:'.dn-check · Skills Manager · Permissions Center',s:'<path d="M20 6 9 17l-5-5" />'},
+{n:'ptaszek-kolo',z:'lucide:circle-check',g:'stan',o:'Powodzenie — proces zakończony poprawnie',m:'.dn-krok--poprawny · .dn-toast--sukces · Monitor procesu',s:'<circle cx="12" cy="12" r="10" /><path d="m9 12 2 2 4-4" />'},
+{n:'blad',z:'lucide:circle-x',g:'stan',o:'Błąd — niepowodzenie operacji',m:'.dn-toast--blad · Errors Panel · Diagnostics Center',s:'<circle cx="12" cy="12" r="10" /><path d="m15 9-6 6" /><path d="m9 9 6 6" />'},
+{n:'ostrzezenie',z:'lucide:triangle-alert',g:'stan',o:'Ostrzeżenie — skutki wymagające uwagi',m:'Okno startowe · .dn-krok--bledy · .dn-toast--ostrzezenie',s:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /><path d="M12 9v4" /><path d="M12 17h.01" />'},
+{n:'info',z:'lucide:info',g:'stan',o:'Wyjaśnienie, podpowiedź kontekstowa',m:'Objaśnienie [?] przy każdej pozycji Okna Konfiguracji',s:'<circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" />'},
+{n:'klodka',z:'lucide:lock',g:'stan',o:'Treść chroniona, dane dostępowe',m:'Okno rejestracji i logowania · Okno Ustawień',s:'<rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />'},
+{n:'tarcza',z:'lucide:shield',g:'stan',o:'Uprawnienia, zakres dostępu, izolacja',m:'Permissions Center · Okno punktów izolacji · Panel prowenancji',s:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />'},
+{n:'zegar',z:'lucide:clock',g:'stan',o:'Oczekiwanie, znacznik czasu',m:'Panel orkiestracji, sekcja Harmonogram i automatyki · Scheduler',s:'<circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />'},
+{n:'historia',z:'lucide:history',g:'stan',o:'Historia sesji, wersje',m:'Session Repository · Versioning Panel · Okno Konfiguracji',s:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /><path d="M12 7v5l4 2" />'},
+{n:'dzwonek',z:'lucide:bell',g:'stan',o:'Powiadomienia',m:'Pasek górny · Strefa 3 (Always On Display) · Okno Ustawień',s:'<path d="M10.268 21a2 2 0 0 0 3.464 0" /><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />'},
+{n:'aktywnosc',z:'lucide:activity',g:'stan',o:'Praca w tle, telemetria procesu',m:'Monitor procesu · Actions Monitor · Execution Monitor',s:'<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />'},
+{n:'dokument',z:'lucide:file-text',g:'obiekt',o:'Dokument, opracowanie — moduł Studio',m:'Moduł Studio — Studio Editor, Session Repository',s:'<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" />'},
+{n:'plik',z:'lucide:file',g:'obiekt',o:'Plik o nieokreślonym rodzaju',m:'File Preview · Project Tree · Library Explorer',s:'<path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" />'},
+{n:'folder',z:'lucide:folder',g:'obiekt',o:'Katalog roboczy, grupa zasobów',m:'Project Tree · Library Explorer · Tags & Collections',s:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />'},
+{n:'archiwum',z:'lucide:archive',g:'obiekt',o:'Zasoby odłożone, Session Repository',m:'Session Repository (Studio) · Library Explorer',s:'<rect width="20" height="5" x="2" y="3" rx="1" /><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8" /><path d="M10 12h4" />'},
+{n:'obraz',z:'lucide:image',g:'obiekt',o:'Załącznik graficzny, moduł Design (zasoby)',m:'Moduł Design — Assets Panel · Chat Window (załącznik)',s:'<rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />'},
+{n:'kod',z:'lucide:code-xml',g:'obiekt',o:'Fragment kodu, moduł Developer',m:'Moduł Developer — Code Editor · .dn-kod w Chat Window',s:'<path d="m18 16 4-4-4-4" /><path d="m6 8-4 4 4 4" /><path d="m14.5 4-5 16" />'},
+{n:'koperta',z:'lucide:mail',g:'obiekt',o:'Wiadomość, korespondencja',m:'Okno rejestracji i logowania · Odzyskiwanie konta',s:'<path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" /><rect x="2" y="4" width="20" height="16" rx="2" />'},
+{n:'kalendarz',z:'lucide:calendar',g:'obiekt',o:'Harmonogram, automatyzacja cykliczna',m:'Scheduler (Automations) · Panel orkiestracji, sekcja Harmonogram',s:'<path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" />'},
+{n:'tabela-danych',z:'lucide:table',g:'obiekt',o:'Zestawienie, dane tabelaryczne',m:'Queue Manager · Orchestrator · Monitor procesu',s:'<path d="M12 3v18" /><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M3 15h18" />'},
+{n:'biblioteka',z:'lucide:library-big',g:'modul',o:'Moduł Library — repozytorium wiedzy',m:'Moduł Library — Library Explorer, Project Library',s:'<rect width="8" height="18" x="3" y="3" rx="1" /><path d="M7 3v18" /><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z" />'},
+{n:'baza',z:'lucide:database',g:'obiekt',o:'Trwałość, magazyn danych',m:'Context Memory · Okno Konfiguracji (Pamięć)',s:'<ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5V19A9 3 0 0 0 21 19V5" /><path d="M3 12A9 3 0 0 0 21 12" />'},
+{n:'wykres',z:'lucide:chart-line',g:'modul',o:'Metryki, moduł Research (wyniki)',m:'Moduł Research — Findings Panel, Report Builder',s:'<path d="M3 3v16a2 2 0 0 0 2 2h16" /><path d="m19 9-5 5-4-4-3 3" />'},
+{n:'terminal',z:'lucide:square-terminal',g:'modul',o:'Moduł Terminal — powłoki wykonawcze',m:'Moduł Terminal — Terminal Tabs, Output Console',s:'<path d="m7 11 2-2-2-2" /><path d="M11 13h4" /><rect width="18" height="18" x="3" y="3" rx="2" ry="2" />'},
+{n:'galaz',z:'lucide:git-branch',g:'obiekt',o:'Repozytorium, moduł Developer',m:'Git Panel (Developer) · Project Tree',s:'<path d="M15 6a9 9 0 0 0-9 9V3" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" />'},
+{n:'agent',z:'lucide:bot',g:'rola',o:'Agent — jednostka inteligencji',m:'Agent Builder · .dn-wpis--inteligencja · karty ról',s:'<path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" />'},
+{n:'agenci',z:'lucide:users',g:'modul',o:'Zespół, moduł Agents / role',m:'Moduł Agents · Panel orkiestracji, sekcja Role · Agent Manager',s:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><path d="M16 3.128a4 4 0 0 1 0 7.744" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><circle cx="9" cy="7" r="4" />'},
+{n:'uzytkownik',z:'lucide:user',g:'rola',o:'Operator, konto, tożsamość',m:'Pasek górny (profil) · .dn-wpis--czlowiek · Okno Ustawień',s:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />'},
+{n:'siec',z:'lucide:network',g:'modul',o:'Orkiestracja, topologia — MultitaskingAI',m:'Powłoka MultitaskingAI · Orchestrator · Subagent Network',s:'<rect x="16" y="16" width="6" height="6" rx="1" /><rect x="2" y="16" width="6" height="6" rx="1" /><rect x="9" y="2" width="6" height="6" rx="1" /><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" /><path d="M12 12V8" />'},
+{n:'wezly',z:'lucide:waypoints',g:'rola',o:'Koordynator — plan i delegacja',m:'Coordinator · Coordinator Chat',s:'<path d="m10.586 5.414-5.172 5.172" /><path d="m18.586 13.414-5.172 5.172" /><path d="M6 12h12" /><circle cx="12" cy="20" r="2" /><circle cx="12" cy="4" r="2" /><circle cx="20" cy="12" r="2" /><circle cx="4" cy="12" r="2" />'},
+{n:'wykonawca',z:'lucide:circle-play',g:'rola',o:'Wykonawca — realizacja zlecenia',m:'Executor 1 · Executor 2 · Executor Chat',s:'<path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z" /><circle cx="12" cy="12" r="10" />'},
+{n:'walidator',z:'lucide:badge-check',g:'rola',o:'Walidator — weryfikacja kroku',m:'Executor 3 / Validator · Results Analyzer',s:'<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path d="m9 12 2 2 4-4" />'},
+{n:'warstwy',z:'lucide:layers',g:'modul',o:'Moduł Workspace — przestrzeń projektowa',m:'Moduł Workspace — Project Dashboard, Context Memory',s:'<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" />'},
+{n:'automatyzacja',z:'lucide:workflow',g:'modul',o:'Moduł Automations — procesy i kolejki',m:'Moduł Automations — Workflow Builder, Queue Manager',s:'<rect width="8" height="8" x="3" y="3" rx="2" /><path d="M7 11v4a2 2 0 0 0 2 2h4" /><rect width="8" height="8" x="13" y="13" rx="2" />'},
+{n:'debata',z:'lucide:messages-square',g:'modul',o:'Moduł Roundtable — debata modeli',m:'Moduł Roundtable — Model Panels, Debate Panel',s:'<path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" />'},
+{n:'tlumacz',z:'lucide:languages',g:'modul',o:'Moduł Translate',m:'Moduł Translate — Translation Panels, Glossary Manager',s:'<path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" />'},
+{n:'badanie',z:'lucide:telescope',g:'modul',o:'Moduł Research — analizy i raporty',m:'Moduł Research — Research Workspace, Sources Manager',s:'<path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44" /><path d="m13.56 11.747 4.332-.924" /><path d="m16 21-3.105-6.21" /><path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z" /><path d="m6.158 8.633 1.114 4.456" /><path d="m8 21 3.105-6.21" /><circle cx="12" cy="13" r="2" />'},
+{n:'aplikacje',z:'lucide:layout-grid',g:'modul',o:'Moduł Apps — budowa produktów',m:'Moduł Apps — Product Builder, Architecture Designer',s:'<rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />'},
+{n:'paleta',z:'lucide:palette',g:'modul',o:'Moduł Design — materiały wizualne',m:'Moduł Design — Design Board, Prompt Builder',s:'<path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4a1.75 1.75 0 0 1-1.4 2.8z" /><circle cx="13.5" cy="6.5" r=".5" fill="currentColor" /><circle cx="17.5" cy="10.5" r=".5" fill="currentColor" /><circle cx="6.5" cy="12.5" r=".5" fill="currentColor" /><circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />'},
+{n:'rozmowa',z:'lucide:message-square',g:'modul',o:'Okno komunikacji — pas komunikacji',m:'Chat Window — wspólne dla wszystkich 15 modułów',s:'<path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" />'},
+{n:'mikrofon',z:'lucide:mic',g:'modul',o:'Moduł Assistant — interfejs głosowy',m:'Moduł Assistant — Voice Console, Activity Feed',s:'<path d="M12 19v3" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><rect x="9" y="2" width="6" height="13" rx="3" />'},
+{n:'diagnostyka',z:'lucide:stethoscope',g:'modul',o:'Moduł Diagnostics — analiza problemów',m:'Moduł Diagnostics — Diagnostics Center, Recommendations Panel',s:'<path d="M11 2v2" /><path d="M5 2v2" /><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" /><path d="M8 15a6 6 0 0 0 12 0v-3" /><circle cx="20" cy="10" r="2" />'},
+{n:'monitor',z:'lucide:monitor',g:'obiekt',o:'Stanowisko, środowisko wykonania',m:'Okno Ustawień (urządzenia i parowanie) · Process Monitor',s:'<rect width="20" height="14" x="2" y="3" rx="2" /><line x1="8" x2="16" y1="21" y2="21" /><line x1="12" x2="12" y1="17" y2="21" />'},
+{n:'telefon',z:'lucide:smartphone',g:'obiekt',o:'Widok mobilny — pozycja „Mobile"',m:'Strefa 3 (Mobile) · pasek górny · Okno Ustawień',s:'<rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" />'},
+{n:'cpu',z:'lucide:cpu',g:'obiekt',o:'Zasoby wykonawcze, serwer rdzenia',m:'Process Monitor · Diagnostics Center · Deployment Panel',s:'<path d="M12 20v2" /><path d="M12 2v2" /><path d="M17 20v2" /><path d="M17 2v2" /><path d="M2 12h2" /><path d="M2 17h2" /><path d="M2 7h2" /><path d="M20 12h2" /><path d="M20 17h2" /><path d="M20 7h2" /><path d="M7 20v2" /><path d="M7 2v2" /><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="8" y="8" width="8" height="8" rx="1" />'},
+{n:'polecenie',z:'lucide:command',g:'nawigacja',o:'Command Center — paleta poleceń',m:'Command Center (warstwa 1300)',s:'<path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />'},
+{n:'slonce',z:'lucide:sun',g:'dzialanie',o:'Przełącznik motywu — jasny',m:'Pasek górny (data-przelacz-motyw) · Okno Ustawień',s:'<circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />'},
+{n:'ksiezyc',z:'lucide:moon',g:'dzialanie',o:'Przełącznik motywu — ciemny',m:'Pasek górny (data-przelacz-motyw) · Okno Ustawień',s:'<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" />'},
+{n:'globus',z:'lucide:globe',g:'obiekt',o:'Sieć, źródło zewnętrzne, danaco-web',m:'Browser Window · Sources Manager · Connectors Manager',s:'<circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /><path d="M2 12h20" />'},
+{n:'srodowisko-talkin',z:'wlasna',g:'srodowisko',o:'Środowisko TalkIn — Myśl. Analizuj. Rozumiej.',m:'Karta środowiska (Strefa 1) · nagłówek powłoki TalkIn',s:'<path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" fill="currentColor" stroke="none"/>'},
+{n:'srodowisko-workspace',z:'wlasna',g:'srodowisko',o:'Środowisko WorkSpace — Planuj. Organizuj. Realizuj.',m:'Karta środowiska (Strefa 1) · nagłówek powłoki WorkSpace',s:'<rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" fill="currentColor" stroke="none"/>'},
+{n:'srodowisko-codestudio',z:'wlasna',g:'srodowisko',o:'Środowisko CodeStudio — Projektuj. Buduj. Rozwijaj.',m:'Karta środowiska (Strefa 1) · nagłówek powłoki CodeStudio',s:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9.2l3.1 2.8L7 14.8"/><path d="M12.6 15.4h4"/><circle cx="18.4" cy="9.9" r="1.5" fill="currentColor" stroke="none"/>'},
+{n:'srodowisko-multitaskingai',z:'wlasna',g:'srodowisko',o:'Środowisko MultitaskingAI — Deleguj. Koordynuj. Nadzoruj.',m:'Karta środowiska (Strefa 1) · nagłówek powłoki MultitaskingAI',s:'<circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/>'}
+];
+
+/* ==========================================================================
+   NARZĘDZIA WSPÓLNE
+   ========================================================================== */
+const $  = (s, k) => (k || document).querySelector(s);
+const $$ = (s, k) => Array.from((k || document).querySelectorAll(s));
+const MAPA = Object.fromEntries(IKONY.map(i => [i.n, i]));
+const NAZWY_GRUP = {
+  nawigacja: 'nawigacja', dzialanie: 'działanie', stan: 'stan',
+  obiekt: 'obiekt', modul: 'moduł', srodowisko: 'środowisko', rola: 'rola'
+};
+
+/** Buduje kod <svg> ikony z realnej zawartości pliku źródłowego. */
+function ikonaSVG(nazwa, rozmiar, obrys, znaczaca) {
+  const i = MAPA[nazwa];
+  if (!i) return '';
+  const r = rozmiar || 16;
+  const w = obrys || '1.75';
+  const dost = znaczaca ? 'role="img" aria-label="' + i.o + '"' : 'aria-hidden="true"';
+  return '<svg ' + dost + ' xmlns="http://www.w3.org/2000/svg" width="' + r + '" height="' + r +
+         '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + w +
+         '" stroke-linecap="round" stroke-linejoin="round">' + i.s + '</svg>';
+}
+
+/** Wypełnia wszystkie znaczniki [data-ikona] realnym kodem SVG. */
+function osadzIkony(korzen) {
+  $$('[data-ikona]', korzen || document).forEach(el => {
+    if (el.dataset.osadzona === '1') return;
+    el.innerHTML = ikonaSVG(el.dataset.ikona, parseInt(el.dataset.ikonaRozmiar || '16', 10));
+    el.style.display = 'inline-flex';
+    el.dataset.osadzona = '1';
+  });
+}
+
+/** Kopiowanie do schowka: navigator.clipboard z zapasem dla file://. */
+function doSchowka(tekst) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(tekst).then(() => true).catch(() => zapasSchowka(tekst));
+  }
+  return Promise.resolve(zapasSchowka(tekst));
+}
+function zapasSchowka(tekst) {
+  try {
+    const p = document.createElement('textarea');
+    p.value = tekst;
+    p.setAttribute('readonly', '');
+    p.style.position = 'fixed';
+    p.style.top = '-1000px';
+    document.body.appendChild(p);
+    p.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(p);
+    return ok;
+  } catch (e) { return false; }
+}
+
+/* --- Powiadomienia (Toast) -------------------------------------------------- */
+const IKONA_TOASTU = { sukces: 'ptaszek-kolo', ostrzezenie: 'ostrzezenie', blad: 'blad', informacja: 'info' };
+function toast(wariant, tytul, tresc) {
+  const stos = $('#toasty');
+  const t = document.createElement('div');
+  t.className = 'dn-toast dn-toast--' + wariant;
+  if (wariant === 'blad') t.setAttribute('aria-live', 'assertive');
+  t.innerHTML =
+    ikonaSVG(IKONA_TOASTU[wariant], 16) +
+    '<div><p class="dn-toast-tytul">' + tytul + '</p>' +
+    (tresc ? '<p class="dn-toast-tresc">' + tresc + '</p>' : '') + '</div>' +
+    '<button type="button" class="dn-btn-ikona" aria-label="Zamknij powiadomienie">' +
+    ikonaSVG('zamknij', 16) + '</button>';
+  t.querySelector('button').addEventListener('click', () => t.remove());
+  stos.appendChild(t);
+  setTimeout(() => { if (t.isConnected) t.remove(); }, 4600);
+}
+
+/* ==========================================================================
+   PRZEŁĄCZNIK GĘSTOŚCI
+   ========================================================================== */
+(function gestosc() {
+  const b = $('#btn-gestosc');
+  b.addEventListener('click', () => {
+    const teraz = document.documentElement.getAttribute('data-gestosc') === 'przestronna';
+    if (teraz) { document.documentElement.removeAttribute('data-gestosc'); b.setAttribute('aria-pressed', 'false'); }
+    else { document.documentElement.setAttribute('data-gestosc', 'przestronna'); b.setAttribute('aria-pressed', 'true'); }
+    toast('informacja', 'Gęstość: ' + (teraz ? 'zwarta' : 'przestronna'),
+          teraz ? 'Kontrolka 32 px · wiersz 36 px · stopień bazowy 13 px'
+                : 'Kontrolka 40 px · wiersz 44 px · stopień bazowy 14 px');
+  });
+})();
+
+/* ==========================================================================
+   SPIS TREŚCI — podświetlanie aktywnej sekcji
+   ========================================================================== */
+(function spis() {
+  const odnosniki = $$('.dok-spis a');
+  const mapa = new Map();
+  odnosniki.forEach(a => {
+    const cel = document.getElementById(a.getAttribute('href').slice(1));
+    if (cel) mapa.set(cel, a);
+  });
+  const obs = new IntersectionObserver(wpisy => {
+    wpisy.forEach(w => {
+      if (!w.isIntersecting) return;
+      odnosniki.forEach(a => a.removeAttribute('aria-current'));
+      const a = mapa.get(w.target);
+      if (a) a.setAttribute('aria-current', 'true');
+    });
+  }, { rootMargin: '-72px 0px -68% 0px', threshold: 0 });
+  mapa.forEach((a, cel) => obs.observe(cel));
+})();
+
+/* ==========================================================================
+   GALERIA IKON — wyszukiwarka, filtr grup, rozmiar, kopiowanie
+   ========================================================================== */
+const stanGal = { fraza: '', grupa: '', rozmiar: 24, wybrana: 'dom' };
+
+function rysujGalerie() {
+  const siatka = $('#gal-siatka');
+  const f = stanGal.fraza.trim().toLowerCase();
+  const widoczne = IKONY.filter(i => {
+    if (stanGal.grupa && i.g !== stanGal.grupa) return false;
+    if (!f) return true;
+    return (i.n + ' ' + i.z + ' ' + i.o + ' ' + i.m + ' ' + NAZWY_GRUP[i.g]).toLowerCase().includes(f);
+  });
+  siatka.innerHTML = widoczne.map(i =>
+    '<li><button type="button" class="gal-kafel" data-nazwa="' + i.n + '"' +
+    (i.n === stanGal.wybrana ? ' aria-pressed="true"' : ' aria-pressed="false"') +
+    ' title="' + i.o + '">' +
+    '<span class="gal-kafel-plotno">' + ikonaSVG(i.n, stanGal.rozmiar) + '</span>' +
+    '<span class="gal-kafel-nazwa">' + i.n + '</span>' +
+    '<span class="gal-kafel-grupa">' + NAZWY_GRUP[i.g] + '</span>' +
+    '</button></li>').join('');
+  $('#gal-licznik').textContent = widoczne.length + ' / 82';
+  $('#gal-pusto').hidden = widoczne.length > 0;
+  siatka.hidden = widoczne.length === 0;
+}
+
+function wybierzIkone(nazwa) {
+  const i = MAPA[nazwa];
+  if (!i) return;
+  stanGal.wybrana = nazwa;
+  $('#podglad-nazwa').textContent = i.n;
+  $('#podglad-grupa').textContent = NAZWY_GRUP[i.g];
+  $('#podglad-zrodlo').textContent = i.z;
+  $('#podglad-opis').textContent = i.o + ' — ' + i.m;
+  ['#podglad-jasny', '#podglad-ciemny', '#podglad-rama', '#podglad-sygnal'].forEach(sel => {
+    $(sel).innerHTML = [14, 16, 20, 24].map(r => ikonaSVG(nazwa, r)).join('');
+  });
+  $$('.gal-kafel').forEach(k => k.setAttribute('aria-pressed', String(k.dataset.nazwa === nazwa)));
+}
+
+(function galeria() {
+  $('#gal-szukaj').addEventListener('input', e => { stanGal.fraza = e.target.value; rysujGalerie(); });
+
+  $('#gal-grupy').addEventListener('click', e => {
+    const b = e.target.closest('button[data-grupa]');
+    if (!b) return;
+    stanGal.grupa = b.dataset.grupa;
+    $$('#gal-grupy button').forEach(x => {
+      const akt = x === b;
+      x.setAttribute('aria-pressed', String(akt));
+      x.classList.toggle('dn-btn--wybrany', akt);
+    });
+    rysujGalerie();
+  });
+
+  $('#gal-rozmiar').addEventListener('click', e => {
+    const b = e.target.closest('button[data-rozmiar]');
+    if (!b) return;
+    stanGal.rozmiar = parseInt(b.dataset.rozmiar, 10);
+    $$('#gal-rozmiar button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    rysujGalerie();
+  });
+
+  let ostatnieKlikniecie = 0;
+  $('#gal-siatka').addEventListener('click', e => {
+    const k = e.target.closest('.gal-kafel');
+    if (!k) return;
+    const nazwa = k.dataset.nazwa;
+    wybierzIkone(nazwa);
+    const teraz = Date.now();
+    if (teraz - ostatnieKlikniecie < 380) { ostatnieKlikniecie = 0; return; }
+    ostatnieKlikniecie = teraz;
+    setTimeout(() => {
+      if (ostatnieKlikniecie === 0) return;
+      doSchowka(nazwa + '.svg').then(ok => {
+        if (ok) toast('sukces', 'Skopiowano nazwę pliku', nazwa + '.svg');
+        else toast('ostrzezenie', 'Schowek niedostępny', 'Nazwa pliku: ' + nazwa + '.svg');
+      });
+    }, 400);
+  });
+
+  $('#gal-siatka').addEventListener('dblclick', e => {
+    const k = e.target.closest('.gal-kafel');
+    if (!k) return;
+    ostatnieKlikniecie = 0;
+    const kod = ikonaSVG(k.dataset.nazwa, stanGal.rozmiar);
+    doSchowka(kod).then(ok => {
+      if (ok) toast('sukces', 'Skopiowano kod SVG', k.dataset.nazwa + ' · ' + stanGal.rozmiar + ' px · obrys 1,75');
+      else toast('ostrzezenie', 'Schowek niedostępny', 'Skopiuj kod ręcznie z pliku źródłowego');
+    });
+  });
+
+  $('#gal-siatka').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const k = e.target.closest('.gal-kafel');
+    if (k) wybierzIkone(k.dataset.nazwa);
+  });
+
+  $('#gal-wyczysc').addEventListener('click', () => {
+    stanGal.fraza = ''; stanGal.grupa = '';
+    $('#gal-szukaj').value = '';
+    $$('#gal-grupy button').forEach(x => {
+      const akt = x.dataset.grupa === '';
+      x.setAttribute('aria-pressed', String(akt));
+      x.classList.toggle('dn-btn--wybrany', akt);
+    });
+    rysujGalerie();
+    $('#gal-szukaj').focus();
+  });
+
+  $('#podglad-kopiuj-svg').addEventListener('click', () => {
+    const kod = ikonaSVG(stanGal.wybrana, stanGal.rozmiar);
+    doSchowka(kod).then(ok => toast(ok ? 'sukces' : 'ostrzezenie',
+      ok ? 'Skopiowano kod SVG' : 'Schowek niedostępny', stanGal.wybrana));
+  });
+})();
+
+/* ==========================================================================
+   PORÓWNANIE GRUBOŚCI OBRYSU
+   ========================================================================== */
+(function obrysy() {
+  const pojemnik = $('#obrys-prob');
+  let ikona = 'ustawienia';
+  function rysuj() {
+    pojemnik.innerHTML = ['1.5', '1.75', '2'].map(w =>
+      '<div class="obrys-plytka' + (w === '1.75' ? ' obrys-plytka--wybrana' : '') + '">' +
+      '<div class="obrys-rzad">' + [14, 16, 20, 24].map(r => ikonaSVG(ikona, r, w)).join('') + '</div>' +
+      '<p class="dn-etykieta-mono" style="margin:0">obrys ' + w.replace('.', ',') + '</p>' +
+      '<p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin:0;text-align:center">' +
+      (w === '1.5' ? 'gubi kreskę przy 14 px' : w === '1.75' ? 'wartość obowiązująca' : 'zagęszcza wnętrze kształtu') +
+      '</p></div>').join('');
+  }
+  $$('button[data-obrys-ikona]').forEach(b => b.addEventListener('click', () => {
+    ikona = b.dataset.obrysIkona;
+    $$('button[data-obrys-ikona]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    rysuj();
+  }));
+  rysuj();
+})();
+
+/* ==========================================================================
+   PRÓBKI: Lucide / własne / groty
+   ========================================================================== */
+(function probki() {
+  $('#prob-lucide').innerHTML =
+    ['dom', 'szukaj', 'ustawienia', 'terminal', 'baza', 'tarcza', 'wykres', 'globus']
+      .map(n => ikonaSVG(n, 24)).join('');
+  $('#prob-wlasne').innerHTML =
+    ['srodowisko-talkin', 'srodowisko-workspace', 'srodowisko-codestudio', 'srodowisko-multitaskingai']
+      .map(n => ikonaSVG(n, 28)).join('');
+  $('#prob-groty').innerHTML =
+    ['grot-gora', 'grot-prawo', 'grot-dol', 'strzalka-lewo', 'strzalka-prawo']
+      .map(n => '<span style="display:inline-flex;flex-direction:column;align-items:center;gap:var(--dn-od-1)">' +
+        ikonaSVG(n, 24) + '<code class="dn-dane" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">' +
+        n + '</code></span>').join('');
+})();
+
+/* ==========================================================================
+   GRUPY SEMANTYCZNE — panele składu + tabela modułów
+   ========================================================================== */
+(function grupy() {
+  const kolejnosc = ['nawigacja', 'dzialanie', 'stan', 'obiekt', 'modul', 'srodowisko', 'rola'];
+  $('#grupy-panele').innerHTML = kolejnosc.map(g => {
+    const lista = IKONY.filter(i => i.g === g);
+    return '<div class="dok-blok">' +
+      '<div class="dok-blok-naglowek">' +
+      '<button type="button" class="dn-btn dn-btn--sm dn-btn--zarys" data-skocz-grupa="' + g + '">' +
+      NAZWY_GRUP[g] + '</button>' +
+      '<span class="dn-plakietka dn-dane">' + lista.length + ' pozycji</span>' +
+      '</div>' +
+      '<div class="dok-rzad" style="gap:var(--dn-od-4)">' +
+      lista.map(i => '<span style="display:inline-flex;flex-direction:column;align-items:center;gap:var(--dn-od-1);min-width:64px">' +
+        ikonaSVG(i.n, 20) + '<code class="dn-dane" style="font-size:10px;color:var(--dn-tekst-3)">' + i.n + '</code></span>').join('') +
+      '</div></div>';
+  }).join('');
+
+  $('#grupy-panele').addEventListener('click', e => {
+    const b = e.target.closest('button[data-skocz-grupa]');
+    if (!b) return;
+    const g = b.dataset.skoczGrupa;
+    stanGal.grupa = g;
+    $$('#gal-grupy button').forEach(x => {
+      const akt = x.dataset.grupa === g;
+      x.setAttribute('aria-pressed', String(akt));
+      x.classList.toggle('dn-btn--wybrany', akt);
+    });
+    rysujGalerie();
+    document.getElementById('s-katalog').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  const MODULY = [
+    ['Studio', 'dokument', 'moduł nazwany po rodzaju treści, którą obrabia'],
+    ['Research', 'badanie', 'dodatkowo wykres dla wyników (Findings Panel, Report Builder)'],
+    ['Library', 'biblioteka', '—'],
+    ['Translate', 'tlumacz', '—'],
+    ['Browser', 'karta-okna', 'ikona z grupy nawigacja'],
+    ['Assistant', 'mikrofon', '—'],
+    ['Roundtable', 'debata', '—'],
+    ['Workspace', 'warstwy', '—'],
+    ['Automations', 'automatyzacja', 'jedyny moduł bez okna w bocznej nawigacji'],
+    ['Design', 'paleta', '—'],
+    ['Apps', 'aplikacje', '—'],
+    ['Terminal', 'terminal', '—'],
+    ['Developer', 'kod', 'ikona z grupy obiekt; dodatkowo galaz dla Git Panel'],
+    ['Diagnostics', 'diagnostyka', '—'],
+    ['Agents', 'agenci', '—']
+  ];
+  $('#moduly-wiersze').innerHTML = MODULY.map(([mod, ik, uw]) =>
+    '<tr><td><strong>' + mod + '</strong></td>' +
+    '<td><span style="display:inline-flex;align-items:center;gap:var(--dn-od-2)">' +
+    ikonaSVG(ik, 20) + '<code class="dn-dane">' + ik + '</code></span></td>' +
+    '<td class="dn-dane">' + NAZWY_GRUP[MAPA[ik].g] + '</td>' +
+    '<td style="font-size:var(--dn-fs-sm)">' + uw + '</td></tr>').join('');
+})();
+
+/* ==========================================================================
+   EMBLEMATY ŚRODOWISK
+   ========================================================================== */
+const SRODOWISKA = [
+  { ik: 'srodowisko-talkin', nazwa: 'TalkIn', motto: 'Myśl. Analizuj. Rozumiej.',
+    opis: 'Środowisko wiedzy, komunikacji i pracy z treścią. Dziewięć modułów w bocznej nawigacji.',
+    kropka: 'domyka drugą, krótszą linię — myśl jest w toku, nie dopowiedziana', moduly: '9' },
+  { ik: 'srodowisko-workspace', nazwa: 'WorkSpace', motto: 'Planuj. Organizuj. Realizuj.',
+    opis: 'Środowisko produktywności, organizacji i realizacji projektów. Dziewięć modułów.',
+    kropka: 'ostatnie zadanie planu jest w realizacji', moduly: '9' },
+  { ik: 'srodowisko-codestudio', nazwa: 'CodeStudio', motto: 'Projektuj. Buduj. Rozwijaj.',
+    opis: 'Środowisko programistyczne. Osiem modułów w bocznej nawigacji.',
+    kropka: 'polecenie przyjęte, kompilacja biegnie', moduly: '8' },
+  { ik: 'srodowisko-multitaskingai', nazwa: 'MultitaskingAI', motto: 'Deleguj. Koordynuj. Nadzoruj.',
+    opis: 'Środowisko orkiestracji zespołu. Panel orkiestracji — sześć sekcji zamiast modułów.',
+    kropka: 'Coordinator, przez którego przechodzi cała praca — największa kropka w zestawie', moduly: '6 sekcji' }
+];
+
+(function emblematy() {
+  $('#embl-siatka').innerHTML = SRODOWISKA.map(s =>
+    '<article class="embl-karta">' +
+    '<div class="embl-godlo embl-kropka-on">' + ikonaSVG(s.ik, 56, null, true) + '</div>' +
+    '<p class="embl-nazwa">' + s.nazwa + '</p>' +
+    '<p class="embl-motto">' + s.motto + '</p>' +
+    '<p class="embl-opis">' + s.opis + '</p>' +
+    '<div class="dok-rzad" style="margin-top:var(--dn-od-3)">' +
+    '<span class="dn-plakietka dn-dane">' + s.moduly + '</span>' +
+    '<code class="dn-dane" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">' + s.ik + '.svg</code>' +
+    '</div>' +
+    '<p style="font-size:var(--dn-fs-sm);color:var(--dn-tekst-3);margin:var(--dn-od-3) 0 0">' +
+    '<strong style="color:var(--dn-kropka)">Kropka:</strong> ' + s.kropka + '</p>' +
+    '</article>').join('');
+
+  const b = $('#embl-kropka-przel');
+  b.addEventListener('click', () => {
+    const wl = b.getAttribute('aria-pressed') === 'true';
+    b.setAttribute('aria-pressed', String(!wl));
+    $$('#embl-siatka .embl-godlo').forEach(g => {
+      g.style.color = wl ? '' : 'var(--dn-kropka)';
+    });
+    b.lastChild.textContent = wl ? 'Wyróżnij kropkę sygnału' : 'Przywróć barwę dziedziczoną';
+  });
+})();
+
+/* ==========================================================================
+   LISTA SPRAWDZEŃ NOWEJ IKONY
+   ========================================================================== */
+const SPRAWDZENIA = [
+  'viewBox = dokładnie "0 0 24 24"',
+  'width / height = 24 / 24 w pliku źródłowym',
+  'fill = none na <svg>; currentColor tylko na kropce z stroke="none"',
+  'stroke = currentColor — żadnej wartości szesnastkowej w pliku',
+  'stroke-width = 1.75',
+  'stroke-linecap / stroke-linejoin = round / round',
+  'aria-hidden = "true" w pliku źródłowym',
+  'nazwa pliku: polska, małe litery, bez diakrytyków, łącznik jako separator',
+  'wpis w manifeście: nazwa = nazwa pliku; zrodlo = lucide:<slug> albo wlasna',
+  'liczba-ikon równa długości tablicy ikony i liczbie plików w svg/',
+  'ikona rozpoznawalna przy 14 px w obu motywach',
+  'kontrast ≥ 3:1 wobec tła, na którym będzie stała',
+  'żadna z pozostałych pozycji nie znaczy tego samego',
+  'emblemat własny: dokładnie jedna wypełniona kropka sygnału'
+];
+
+(function walidacja() {
+  const lista = $('#walid-lista');
+  lista.innerHTML = SPRAWDZENIA.map((t, idx) =>
+    '<label class="dn-wybor" style="align-items:flex-start;min-height:auto;padding:var(--dn-od-1) 0">' +
+    '<input type="checkbox" class="dn-check" data-walid style="margin-top:2px">' +
+    '<span style="font-size:var(--dn-fs-sm)"><span class="dn-dane" style="color:var(--dn-tekst-3)">' +
+    String(idx + 1).padStart(2, '0') + '</span> ' + t.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span></label>').join('');
+
+  function odswiez() {
+    const wszystkie = $$('[data-walid]');
+    const zazn = wszystkie.filter(c => c.checked).length;
+    $('#walid-etykieta').textContent = zazn + ' / ' + wszystkie.length + ' sprawdzeń';
+    const tor = $('#walid-tor');
+    tor.setAttribute('aria-valuenow', String(zazn));
+    tor.querySelector('.dn-postep-wartosc').style.width = (zazn / wszystkie.length * 100) + '%';
+    if (zazn === wszystkie.length) toast('sukces', 'Komplet sprawdzeń', 'Ikonę można dopisać do manifestu');
+  }
+  lista.addEventListener('change', odswiez);
+  $('#walid-zeruj').addEventListener('click', () => {
+    $$('[data-walid]').forEach(c => { c.checked = false; });
+    odswiez();
+  });
+})();
+
+/* ==========================================================================
+   KARTA ŚRODOWISKA
+   ========================================================================== */
+(function w1() {
+  $('#w1-scena').innerHTML = SRODOWISKA.slice(0, 2).map((s, idx) =>
+    '<button type="button" class="dn-karta-srodowiska" data-srod="' + s.nazwa + '"' +
+    (idx === 0 ? ' aria-current="true"' : '') + '>' +
+    '<div class="dn-karta-srodowiska-godlo embl-kropka-on">' + ikonaSVG(s.ik, 40) + '</div>' +
+    '<p class="dn-karta-srodowiska-tytul">' + s.nazwa + '</p>' +
+    '<p class="dn-karta-srodowiska-motto">' + s.motto + '</p>' +
+    '<p class="dn-karta-srodowiska-opis">' + s.opis + '</p>' +
+    '</button>').join('');
+
+  $('#w1-scena').addEventListener('click', e => {
+    const k = e.target.closest('.dn-karta-srodowiska');
+    if (!k) return;
+    $$('#w1-scena .dn-karta-srodowiska').forEach(x => x.removeAttribute('aria-current'));
+    k.setAttribute('aria-current', 'true');
+    toast('informacja', 'Wejście do środowiska ' + k.dataset.srod,
+          'Powłoka zastępuje stronę główną; karty sesji odtwarzane są ze stanu serwera');
+  });
+})();
+
+/* ==========================================================================
+   KAFEL KOMPONENTU WŁASNEGO
+   ========================================================================== */
+const KAFLE = [
+  { ik: 'automatyzacja', nazwa: 'Automations', dz: 'zbuduj automatykę', okno: 'Workflow Builder' },
+  { ik: 'agenci', nazwa: 'Agents', dz: 'zbuduj agenta', okno: 'Agent Builder' },
+  { ik: 'warstwy', nazwa: 'Workspace', dz: 'otwórz projekt', okno: 'Project Dashboard' },
+  { ik: 'mikrofon', nazwa: 'Assistant', dz: 'skonfiguruj profil', okno: 'Voice Console' }
+];
+
+(function w2() {
+  $('#w2-scena').innerHTML = KAFLE.map(k =>
+    '<button type="button" class="dn-kafel" data-okno="' + k.okno + '" data-nazwa="' + k.nazwa + '">' +
+    '<span class="dn-kafel-ikona">' + ikonaSVG(k.ik, 20) + '</span>' +
+    '<span><span class="dn-kafel-etykieta" style="display:block">' + k.nazwa + '</span>' +
+    '<span class="dn-kafel-opis">' + k.dz + '</span></span>' +
+    '</button>').join('');
+
+  $('#w2-scena').addEventListener('click', e => {
+    const k = e.target.closest('.dn-kafel');
+    if (!k) return;
+    toast('informacja', 'Otwarcie okna budowy: ' + k.dataset.okno,
+          'Kafel strefy 2 otwiera okno budowy komponentu, nie przestrzeń roboczą środowiska');
+  });
+})();
+
+/* ==========================================================================
+   KARTA SESJI Z KROPKĄ TĘTNA
+   ========================================================================== */
+(function w3() {
+  const karty = [
+    { tytul: 'Studio', praca: true, opis: 'Studio Editor · Tools Panel · Diff/Grep Panel · Session Repository · Preview Window' },
+    { tytul: 'Research', praca: false, opis: 'Research Workspace · Sources Manager · Findings Panel · Report Builder · Export Panel' }
+  ];
+  let aktywna = 0;
+  let pracaWlaczona = true;
+  let licznikNowych = 0;
+
+  function rysuj() {
+    $('#w3-pas').innerHTML = karty.map((k, i) =>
+      '<button type="button" class="dn-karta-sesji" role="tab" data-i="' + i + '"' +
+      ' aria-selected="' + (i === aktywna) + '">' +
+      (k.praca && pracaWlaczona ? '<span class="dn-kropka dn-kropka--tetno"></span>' : '') +
+      '<span>' + k.tytul + '</span>' +
+      '<span class="dn-btn-ikona" data-zamknij="' + i + '" role="button" tabindex="0"' +
+      ' aria-label="Zamknij kartę sesji ' + k.tytul + '" style="width:20px;height:20px">' +
+      ikonaSVG('zamknij', 14) + '</span></button>').join('') +
+      '<button type="button" class="dn-btn-ikona" id="w3-plus" aria-label="Nowa karta sesji"' +
+      ' style="align-self:center">' + ikonaSVG('plus', 16) + '</button>';
+
+    const k = karty[aktywna];
+    $('#w3-obszar').innerHTML = k
+      ? '<p class="dn-etykieta-mono" style="margin-bottom:var(--dn-od-2)">Obszar roboczy — moduł ' + k.tytul + '</p>' +
+        '<p style="font-size:var(--dn-fs-sm);color:var(--dn-tekst-2);margin:0">' + k.opis + '</p>' +
+        (k.praca && pracaWlaczona
+          ? '<p style="font-size:var(--dn-fs-sm);color:var(--dn-sygnal);margin:var(--dn-od-2) 0 0;display:flex;align-items:center;gap:var(--dn-od-2)">' +
+            ikonaSVG('aktywnosc', 14) + 'Proces w tle — kropka tętni w karcie</p>'
+          : '')
+      : '<div class="dn-pusty-stan" style="padding:var(--dn-od-5)">' + ikonaSVG('karta-okna', 28) +
+        '<p class="dn-pusty-stan-tytul">Brak otwartych kart sesji</p>' +
+        '<p class="dn-pusty-stan-opis">Użyj kontrolki „+", aby otworzyć nową przestrzeń roboczą.</p></div>';
+  }
+
+  $('#w3-pas').addEventListener('click', e => {
+    const z = e.target.closest('[data-zamknij]');
+    if (z) {
+      e.stopPropagation();
+      karty.splice(parseInt(z.dataset.zamknij, 10), 1);
+      if (aktywna >= karty.length) aktywna = karty.length - 1;
+      rysuj();
+      toast('informacja', 'Karta zamknięta w widoku', 'Proces sesji trwa po stronie serwera');
+      return;
+    }
+    if (e.target.closest('#w3-plus')) {
+      licznikNowych += 1;
+      karty.push({ tytul: 'Nowa karta ' + licznikNowych, praca: false, opis: 'Wybierz moduł z bocznej nawigacji, aby rozpocząć pracę.' });
+      aktywna = karty.length - 1;
+      rysuj();
+      return;
+    }
+    const k = e.target.closest('.dn-karta-sesji');
+    if (k) { aktywna = parseInt(k.dataset.i, 10); rysuj(); }
+  });
+
+  $('#w3-praca').addEventListener('click', () => {
+    pracaWlaczona = !pracaWlaczona;
+    const b = $('#w3-praca');
+    b.setAttribute('aria-pressed', String(pracaWlaczona));
+    b.lastChild.textContent = 'Praca w tle: ' + (pracaWlaczona ? 'włączona' : 'wyłączona');
+    rysuj();
+  });
+
+  $('#w3-nowa').addEventListener('click', () => {
+    licznikNowych += 1;
+    karty.push({ tytul: 'Nowa karta ' + licznikNowych, praca: false, opis: 'Wybierz moduł z bocznej nawigacji, aby rozpocząć pracę.' });
+    aktywna = karty.length - 1;
+    rysuj();
+  });
+
+  rysuj();
+})();
+
+/* ==========================================================================
+   Wskaźnik postępu kolejki + Krok kolejki · POSTĘP KOLEJKI I KROKI (przebieg #129 — dane przykładowe)
+   ========================================================================== */
+const KROKI = [
+  { t: 'Analiza repozytorium — pobranie drzewa plików', rola: 'Executor 1' },
+  { t: 'Budowa promptu wykonawczego dla Executor 1', rola: 'Coordinator' },
+  { t: 'Wykonanie kroków 1–6 z kolejki lokalnej', rola: 'Executor 1' },
+  { t: 'Przekazanie wyników cząstkowych', rola: 'Executor 1' },
+  { t: 'Drugi tor pracy — zestawienie źródeł', rola: 'Executor 2' },
+  { t: 'Scalenie wyników obu torów', rola: 'Coordinator' },
+  { t: 'Walidacja wyniku scalenia', rola: 'Executor 3 / Validator' },
+  { t: 'Rozstrzygnięcie niezgodności', rola: 'Executor 3 / Validator' },
+  { t: 'Ponowne wykonanie kroku 5 po korekcie', rola: 'Executor 2' },
+  { t: 'Zapis do Session Repository', rola: 'Coordinator' },
+  { t: 'Zamknięcie przebiegu — enqueue kolejnego', rola: 'Coordinator' }
+];
+const ZNAK_KROKU = { pracuje: 'aktywnosc', poprawny: 'ptaszek-kolo', bledy: 'ostrzezenie', wstrzymany: 'blad' };
+
+(function kolejka() {
+  let poz = 0, stany = KROKI.map(() => ''), timer = null, awaria = false;
+
+  function rysujKroki() {
+    $('#w5-kolejka').innerHTML = KROKI.map((k, i) => {
+      const st = stany[i];
+      const kl = st ? ' dn-krok--' + st : '';
+      const znak = st ? ikonaSVG(ZNAK_KROKU[st], 12) : String(i + 1).padStart(2, '0');
+      let meta = '—';
+      if (st === 'poprawny') meta = '00:' + String(8 + i).padStart(2, '0');
+      else if (st === 'pracuje') meta = 'w toku';
+      else if (st === 'bledy') meta = 'obieg 2/3';
+      else if (st === 'wstrzymany') meta = 'kolejka stoi';
+      return '<div class="dn-krok' + kl + '">' +
+        '<span class="dn-krok-znak">' + znak + '</span>' +
+        '<span>' + k.t + '</span>' +
+        '<span class="dn-krok-meta"><span class="dn-plakietka dn-plakietka--rola">' + k.rola + '</span>' + meta + '</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  function rysujPostep() {
+    const zrobione = stany.filter(s => s === 'poprawny' || s === 'bledy').length;
+    const tor = $('#kol-tor');
+    tor.setAttribute('aria-valuenow', String(zrobione));
+    $('#kol-wartosc').style.width = (zrobione / KROKI.length * 100) + '%';
+    $('#kol-etykieta').textContent = awaria
+      ? 'kolejka wstrzymana · ' + zrobione + ' / ' + KROKI.length
+      : zrobione + ' / ' + KROKI.length + ' kroków';
+
+    const p = $('#kol-plakietka');
+    if (awaria) { p.className = 'dn-plakietka dn-plakietka--blad'; p.innerHTML = ikonaSVG('blad', 12) + 'wstrzymana'; }
+    else if (zrobione === KROKI.length) { p.className = 'dn-plakietka dn-plakietka--sukces'; p.innerHTML = ikonaSVG('ptaszek-kolo', 12) + 'zakończony'; }
+    else if (timer) { p.className = 'dn-plakietka dn-plakietka--informacja'; p.innerHTML = ikonaSVG('aktywnosc', 12) + 'w toku'; }
+    else if (zrobione > 0) { p.className = 'dn-plakietka dn-plakietka--ostrzezenie'; p.innerHTML = ikonaSVG('wstrzymaj', 12) + 'pauza'; }
+    else { p.className = 'dn-plakietka'; p.innerHTML = ikonaSVG('zegar', 12) + 'oczekuje'; }
+  }
+
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+  function tik() {
+    if (poz >= KROKI.length) {
+      stop(); rysujKroki(); rysujPostep();
+      toast('sukces', 'Przebieg #129 zakończony', '11 z 11 kroków · Coordinator zamknął pętlę');
+      return;
+    }
+    if (poz > 0) stany[poz - 1] = (poz - 1 === 6) ? 'bledy' : 'poprawny';
+    stany[poz] = 'pracuje';
+    poz += 1;
+    rysujKroki(); rysujPostep();
+  }
+
+  $('#kol-start').addEventListener('click', () => {
+    if (timer) return;
+    awaria = false;
+    if (poz >= KROKI.length) { poz = 0; stany = KROKI.map(() => ''); }
+    toast('informacja', 'Przebieg #129 uruchomiony', 'Coordinator przejął plan etapów');
+    tik();
+    timer = setInterval(tik, 900);
+    rysujPostep();
+  });
+
+  $('#kol-pauza').addEventListener('click', () => {
+    if (!timer) { toast('ostrzezenie', 'Przebieg nie jest uruchomiony', 'Naciśnij „Uruchom przebieg", aby rozpocząć'); return; }
+    stop(); rysujPostep();
+    toast('ostrzezenie', 'Kolejka wstrzymana', 'Wstrzymanie jest informacyjne — wznowienie bez utraty stanu');
+  });
+
+  $('#kol-reset').addEventListener('click', () => {
+    stop(); poz = 0; awaria = false; stany = KROKI.map(() => '');
+    rysujKroki(); rysujPostep();
+  });
+
+  $('#kol-awaria').addEventListener('click', () => {
+    stop(); awaria = true;
+    const i = Math.max(0, poz - 1);
+    stany[i] = 'wstrzymany';
+    rysujKroki(); rysujPostep();
+    toast('blad', 'Kolejka wstrzymana', 'Krok ' + (i + 1) + ' zgłosił zdarzenie nieoczekiwane — Results Analyzer oczekuje decyzji');
+  });
+
+  rysujKroki(); rysujPostep();
+})();
+
+/* ==========================================================================
+   Monitor procesu · MONITOR PROCESU (dane przykładowe)
+   ========================================================================== */
+const ODCZYTY = [
+  [['#128','Executor 1','sukces','sukces','ptaszek-kolo','12:04'],
+   ['#129','Coordinator','informacja','w toku','aktywnosc','12:05'],
+   ['#130','Executor 2','','oczekuje','zegar','—']],
+  [['#128','Executor 1','sukces','sukces','ptaszek-kolo','12:04'],
+   ['#129','Coordinator','sukces','sukces','ptaszek-kolo','12:06'],
+   ['#130','Executor 2','informacja','w toku','aktywnosc','12:06'],
+   ['#131','Executor 3 / Validator','','oczekuje','zegar','—']],
+  [['#128','Executor 1','sukces','sukces','ptaszek-kolo','12:04'],
+   ['#129','Coordinator','sukces','sukces','ptaszek-kolo','12:06'],
+   ['#130','Executor 2','sukces','sukces','ptaszek-kolo','12:07'],
+   ['#131','Executor 3 / Validator','ostrzezenie','błędy · obieg 2/3','ostrzezenie','12:07']],
+  [['#128','Executor 1','sukces','sukces','ptaszek-kolo','12:04'],
+   ['#129','Coordinator','sukces','sukces','ptaszek-kolo','12:06'],
+   ['#130','Executor 2','sukces','sukces','ptaszek-kolo','12:07'],
+   ['#131','Executor 3 / Validator','sukces','sukces','ptaszek-kolo','12:09'],
+   ['#132','Coordinator','informacja','w toku','aktywnosc','12:09']]
+];
+
+(function monitor() {
+  let idx = 0, auto = null;
+  function rysuj() {
+    $('#w6-wiersze').innerHTML = ODCZYTY[idx].map(w => {
+      const wariant = w[2] ? ' dn-plakietka--' + w[2] : '';
+      const ikona = MAPA[w[4]] ? w[4] : 'zegar';
+      return '<tr><td class="dn-dane">' + w[0] + '</td>' +
+        '<td>' + w[1] + '</td>' +
+        '<td><span class="dn-plakietka' + wariant + '">' + ikonaSVG(ikona, 12) + w[3] + '</span></td>' +
+        '<td class="dn-dane">' + w[5] + '</td></tr>';
+    }).join('');
+    $('#w6-info').textContent = 'odczyt ' + (idx + 1) + ' / ' + ODCZYTY.length;
+  }
+  $('#w6-krok').addEventListener('click', () => { idx = (idx + 1) % ODCZYTY.length; rysuj(); });
+  $('#w6-auto').addEventListener('click', () => {
+    const b = $('#w6-auto');
+    if (auto) { clearInterval(auto); auto = null; b.setAttribute('aria-pressed', 'false'); }
+    else { auto = setInterval(() => { idx = (idx + 1) % ODCZYTY.length; rysuj(); }, 1800); b.setAttribute('aria-pressed', 'true'); }
+  });
+  rysuj();
+})();
+
+/* ==========================================================================
+   RDZEŃ ALWAYS ON DISPLAY
+   ========================================================================== */
+const KOMUNIKATY_AOD = [
+  '<strong>Coordinator</strong> kończy plan etapów — przebieg #129, 3 z 11 kroków',
+  '<strong>Execution Monitor</strong>: automatyka zakończona, 11 z 11 kroków',
+  '<strong>Executor 3 / Validator</strong> zgłosił 2 niezgodności — obieg 2 z 3',
+  '<strong>Queue Manager</strong>: kolejka lokalna Executor 2 — 4 zadania oczekują'
+];
+(function aod() {
+  let i = 0;
+  $('#w7-nastepny').addEventListener('click', () => {
+    i = (i + 1) % KOMUNIKATY_AOD.length;
+    const t = $('#w7-tresc');
+    t.style.opacity = '0';
+    setTimeout(() => { t.innerHTML = KOMUNIKATY_AOD[i]; t.style.opacity = '1'; }, 120);
+  });
+  $('#w7-tresc').style.transition = 'opacity var(--dn-czas-2) var(--dn-ease)';
+})();
+
+/* ==========================================================================
+   Wpis komunikacji + Pasek promptu + Przybornik okna · CHAT WINDOW
+   ========================================================================== */
+const WPISY = [
+  { kl: 'czlowiek', ik: 'uzytkownik', nadawca: 'Operator', rola: '', godz: '12:04',
+    tresc: 'Przygotuj zestawienie źródeł dla przebiegu #129.' },
+  { kl: 'inteligencja', ik: 'wezly', nadawca: 'Coordinator', rola: 'Coordinator', godz: '12:05', pracuje: true,
+    tresc: 'Dzielę zadanie na 11 kroków. Executor 1 przejmuje kroki 1–6, Executor 2 — kroki 7–11.' },
+  { kl: 'system', ik: 'aktywnosc', nadawca: 'Execution Monitor', rola: 'Execution Monitor', godz: '12:05',
+    tresc: 'Przebieg #129 uruchomiony · 3 z 11 kroków' }
+];
+
+(function chat() {
+  let pracuje = true;
+  function rysujHistorie() {
+    $('#w9-historia').innerHTML = WPISY.map(w =>
+      '<article class="dn-wpis dn-wpis--' + w.kl + (w.pracuje && pracuje ? ' dn-wpis--pracuje' : '') + '">' +
+      '<span class="dn-wpis-medalion">' + ikonaSVG(w.ik, 14) + '</span>' +
+      '<div class="dn-wpis-tozsamosc">' +
+      '<span class="dn-wpis-nadawca">' + w.nadawca + '</span>' +
+      (w.rola ? '<span class="dn-plakietka dn-plakietka--rola' +
+        (w.kl === 'inteligencja' ? ' dn-plakietka--sygnal' : '') + '">' + w.rola + '</span>' : '') +
+      '<span class="dn-wpis-godzina">' + w.godz + '</span></div>' +
+      '<p class="dn-wpis-tresc">' + w.tresc + '</p>' +
+      '</article>').join('');
+  }
+  $('#w9-pracuje').addEventListener('click', () => {
+    pracuje = !pracuje;
+    const b = $('#w9-pracuje');
+    b.setAttribute('aria-pressed', String(pracuje));
+    b.lastChild.textContent = pracuje ? 'Coordinator pracuje' : 'Coordinator w spoczynku';
+    rysujHistorie();
+  });
+
+  $('#w10-wyslij').addEventListener('click', () => {
+    const pole = $('#w10-pole');
+    const tresc = pole.value.trim();
+    if (!tresc) {
+      toast('ostrzezenie', 'Pole poleceń jest puste', 'Zero blokad: przycisk pozostaje klikalny, komunikat pojawia się po naciśnięciu');
+      pole.focus();
+      return;
+    }
+    WPISY.push({ kl: 'czlowiek', ik: 'uzytkownik', nadawca: 'Operator', rola: '', godz: '12:12', tresc: tresc });
+    pole.value = '';
+    rysujHistorie();
+    toast('sukces', 'Polecenie wysłane', 'Wpis dopisany do historii Chat Window');
+  });
+
+  $('#w10-pole').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#w10-wyslij').click(); }
+  });
+
+  rysujHistorie();
+})();
+
+/* --- Przybornik okna · Przybornik: zestawy per moduł --------------------------------- */
+const PRZYBORNIKI = {
+  Studio:      ['spinacz', 'dokument', 'historia', 'ustawienia', 'wiecej'],
+  Terminal:    ['spinacz', 'uruchom', 'zatrzymaj', 'kopiuj', 'wiecej'],
+  Automations: ['spinacz', 'uruchom', 'wstrzymaj', 'odswiez', 'kalendarz', 'wiecej'],
+  Research:    ['spinacz', 'globus', 'badanie', 'pobierz', 'wiecej']
+};
+
+(function przybornik() {
+  function rysuj(modul) {
+    $('#w13-przybornik').innerHTML = PRZYBORNIKI[modul].map(n =>
+      '<span class="dn-tooltip"><button type="button" class="dn-btn-ikona" aria-label="' + MAPA[n].o + '">' +
+      ikonaSVG(n, 16) + '</button><span class="dn-tooltip-tresc" role="tooltip">' + n + ' — ' + MAPA[n].o +
+      '</span></span>').join('') +
+      '<span class="dn-separator--pionowy dn-separator"></span>' +
+      '<span class="dn-plakietka dn-plakietka--informacja">' + ikonaSVG('agent', 12) + 'model: kanał domyślny</span>';
+  }
+  $$('button[data-przybornik]').forEach(b => b.addEventListener('click', () => {
+    $$('button[data-przybornik]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    rysuj(b.dataset.przybornik);
+  }));
+  rysuj('Studio');
+
+  $('#w13-zestawy').innerHTML = Object.keys(PRZYBORNIKI).map(m =>
+    '<div class="dok-blok dok-blok--wglebienie" style="margin-bottom:0">' +
+    '<div class="dok-blok-naglowek" style="margin-bottom:var(--dn-od-2)">' +
+    '<span class="dn-etykieta-mono">Moduł ' + m + '</span>' +
+    '<span class="dn-plakietka dn-dane">' + PRZYBORNIKI[m].length + ' ikon</span></div>' +
+    '<div class="dn-przybornik">' + PRZYBORNIKI[m].map(n =>
+      '<span class="dn-tooltip"><button type="button" class="dn-btn-ikona" aria-label="' + MAPA[n].o + '">' +
+      ikonaSVG(n, 16) + '</button><span class="dn-tooltip-tresc" role="tooltip">' + n + '</span></span>').join('') +
+    '</div></div>').join('');
+})();
+
+/* ==========================================================================
+   PUSTY STAN
+   ========================================================================== */
+const PUSTE = [
+  { ik: 'karta-okna', tytul: 'Nowa karta sesji', opis: 'Wybierz moduł z bocznej nawigacji, aby rozpocząć pracę.', akcja: 'Otwórz Studio' },
+  { ik: 'automatyzacja', tytul: 'Brak zdefiniowanych kolejek', opis: 'Utwórz kolejkę albo wczytaj zapisany zespół z sekcji Zespoły.', akcja: 'Utwórz kolejkę' },
+  { ik: 'badanie', tytul: 'Brak ustaleń', opis: 'Ustalenia cząstkowe pojawią się po pierwszym przebiegu Research Workspace.', akcja: '' },
+  { ik: 'rozmowa', tytul: 'Historia rozmowy jest pusta', opis: 'Wpisz pierwsze polecenie w pasku promptu poniżej.', akcja: '' }
+];
+
+(function pusty() {
+  function rysuj(i) {
+    const p = PUSTE[i];
+    $('#w11-scena').innerHTML =
+      '<div class="dn-pusty-stan">' + ikonaSVG(p.ik, 28) +
+      '<p class="dn-pusty-stan-tytul">' + p.tytul + '</p>' +
+      '<p class="dn-pusty-stan-opis">' + p.opis + '</p>' +
+      (p.akcja ? '<button type="button" class="dn-btn dn-btn--zarys dn-btn--sm">' + p.akcja + '</button>' : '') +
+      '</div>';
+  }
+  $$('button[data-pusty]').forEach(b => b.addEventListener('click', () => {
+    $$('button[data-pusty]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    rysuj(parseInt(b.dataset.pusty, 10));
+  }));
+  rysuj(0);
+})();
+
+/* ==========================================================================
+   Toast · TOASTY — wyzwalacze i podgląd statyczny
+   ========================================================================== */
+const TRESCI_TOASTU = {
+  sukces:      ['Profil izolacji zapisany', 'Zakres: karta sesji · warstwa: sesji'],
+  informacja:  ['Przebieg #129 uruchomiony', 'Coordinator przejął plan etapów'],
+  ostrzezenie: ['Agent zapisany niekompletnie', 'Brak przypisanego modelu bazowego — uzupełnij w Model Configuration'],
+  blad:        ['Kolejka wstrzymana', 'Krok 7 zgłosił zdarzenie nieoczekiwane — Results Analyzer oczekuje decyzji']
+};
+
+(function toasty() {
+  $$('button[data-toast]').forEach(b => b.addEventListener('click', () => {
+    const w = b.dataset.toast;
+    toast(w, TRESCI_TOASTU[w][0], TRESCI_TOASTU[w][1]);
+  }));
+
+  $('#w12-podglad').innerHTML = Object.keys(TRESCI_TOASTU).map(w =>
+    '<div class="dn-toast dn-toast--' + w + '" style="position:static;animation:none">' +
+    ikonaSVG(IKONA_TOASTU[w], 16) +
+    '<div><p class="dn-toast-tytul">' + TRESCI_TOASTU[w][0] + '</p>' +
+    '<p class="dn-toast-tresc">' + TRESCI_TOASTU[w][1] + '</p></div>' +
+    '<span class="dn-btn-ikona" aria-hidden="true">' + ikonaSVG('zamknij', 16) + '</span></div>').join('');
+})();
+
+/* ==========================================================================
+   ZERO BLOKAD — demonstracja w rozdz. 8
+   ========================================================================== */
+$('#demo-zero-blokad').addEventListener('click', () => {
+  toast('ostrzezenie', 'Pole poleceń jest puste',
+        'Zasada zero blokad: przycisk nie jest blokowany. Komunikat pojawia się po naciśnięciu, nie zamiast niego.');
+});
+
+/* ==========================================================================
+   INICJALIZACJA
+   ========================================================================== */
+osadzIkony();
+rysujGalerie();
+wybierzIkone('dom');
+osadzIkony();
+</script>
+</body>
+</html>

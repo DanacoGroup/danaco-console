@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Okno startowe (ładowania)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/rama.css">
+<link rel="stylesheet" href="../../zasoby/okna-modalne.css">
+<link rel="stylesheet" href="../../zasoby/wejscie.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     STYLE LOKALNE — OKNO STARTOWE (ŁADOWANIA)
+     Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── pasek wyboru wariantu (rusztowanie prototypu, nie należy do okna) ──── */
+  .pt-wybor-wariantu {
+    display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border-bottom: 1px solid var(--dn-obrys);
+    background: var(--dn-powierzchnia-2);
+  }
+  .pt-wybor-wariantu .pt-etykieta { margin-right: var(--dn-od-1); }
+
+  /* ── okno jednolite: brak paska nawigacji, brak paneli bocznych ─────────── */
+  .pt-okno-startowe {
+    display: grid;
+    place-items: center;
+    min-height: 0;
+    padding: var(--dn-od-10) var(--dn-od-8);
+    background: var(--dn-tlo);
+    text-align: center;
+  }
+  .pt-startowe-rdzen {
+    display: flex; flex-direction: column; align-items: center;
+    gap: var(--dn-od-6);
+    /* Okno startowe jest pierwszym widokiem produktu i zajmuje szerokość
+       widoku, nie szerokość akapitu. Miara treści rośnie wraz z nią. */
+    width: 100%;
+    max-width: 76ch;
+  }
+
+  /* ── godło marki — sygnet „Delegacja" w dużej skali ─────────────────────── */
+  .pt-godlo { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-3); }
+  .pt-godlo-sygnet {
+    width: 132px; height: 132px;
+    color: var(--dn-tekst);
+  }
+  .pt-godlo-kropka { fill: var(--dn-kropka); }
+  .pt-godlo-aura {
+    fill: none;
+    stroke: var(--dn-kropka);
+    stroke-width: 2;
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pt-godlo-aura var(--dn-czas-tetno) var(--dn-ease) infinite;
+  }
+  @keyframes pt-godlo-aura {
+    0%   { transform: scale(1);   opacity: .85; }
+    60%  { transform: scale(2.1); opacity: 0; }
+    100% { transform: scale(2.1); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pt-godlo-aura { animation: none; opacity: .5; transform: scale(1.45); }
+  }
+  .pt-godlo-nazwa {
+    font-family: var(--dn-ff-naglowek);
+    font-size: var(--dn-fs-3xl);
+    font-weight: var(--dn-fw-gruba);
+    letter-spacing: var(--dn-ls-naglowek);
+    color: var(--dn-tekst);
+    line-height: var(--dn-lh-ciasny);
+  }
+  .pt-godlo-nazwa small {
+    display: block;
+    margin-top: var(--dn-od-1);
+    font-family: var(--dn-ff-mono);
+    font-size: var(--dn-fs-xs);
+    font-weight: var(--dn-fw-srednia);
+    letter-spacing: var(--dn-ls-mono-wersaliki);
+    text-transform: uppercase;
+    color: var(--dn-tekst-3);
+  }
+
+  /* ── wskaźnik stanu (spinner + komunikat) ───────────────────────────────── */
+  .pt-stan-laczenia {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: var(--dn-od-3);
+    min-height: var(--dn-wym-kontrolka);
+    font-size: var(--dn-fs-md);
+    color: var(--dn-tekst-2);
+  }
+  .pt-stan-laczenia .dn-spinner { width: 16px; height: 16px; }
+
+  /* ── komunikat (alert liniowy) — nazewnictwo źródłowe .dn-alert ─────────── */
+  /* Komunikat mierzy tyle, ile jego treść — nie rozciąga się na szerokość
+     kolumny, bo pusty pas po prawej czyta się jako brak treści. */
+  .dn-alert {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--dn-od-3);
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    text-align: left;
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys);
+    border-left: 2px solid var(--dn-obrys-mocny);
+    border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia);
+    text-align: left;
+    font-size: var(--dn-fs-base);
+    color: var(--dn-tekst-2);
+  }
+  .dn-alert > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); margin-top: 1px; flex: none; }
+  .dn-alert-tytul { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); font-size: var(--dn-fs-base); }
+  .dn-alert-tresc { margin-top: var(--dn-od-1); line-height: var(--dn-lh-bazowy); }
+  .dn-alert--info {
+    background: var(--dn-informacja-tlo);
+    border-color: var(--dn-informacja-obrys);
+    border-left-color: var(--dn-informacja-tekst);
+  }
+  .dn-alert--info > svg { color: var(--dn-informacja-tekst); }
+  .dn-alert--ostrzezenie {
+    background: var(--dn-ostrzezenie-tlo);
+    border-color: var(--dn-ostrzezenie-obrys);
+    border-left-color: var(--dn-ostrzezenie-tekst);
+  }
+  .dn-alert--ostrzezenie > svg { color: var(--dn-ostrzezenie-tekst); }
+  .dn-alert--blad {
+    background: var(--dn-blad-tlo);
+    border-color: var(--dn-blad-obrys);
+    border-left-color: var(--dn-blad-tekst);
+  }
+  .dn-alert--blad > svg { color: var(--dn-blad-tekst); }
+  .dn-alert--sukces {
+    background: var(--dn-sukces-tlo);
+    border-color: var(--dn-sukces-obrys);
+    border-left-color: var(--dn-sukces-tekst);
+  }
+  .dn-alert--sukces > svg { color: var(--dn-sukces-tekst); }
+
+  /* ── panel techniczny: uzgodnienie protokołu ────────────────────────────── */
+  .pt-log {
+    min-height: 0;
+    max-height: 100%;
+    overflow: auto;
+  }
+  .pt-log-wiersz {
+    display: block;
+    padding: 1px 0;
+    opacity: 1;
+    transition: opacity var(--dn-czas-2) var(--dn-ease);
+  }
+  .pt-log-wiersz[data-ukryty='tak'] { opacity: 0; }
+  .pt-log-klucz {
+    display: inline-block;
+    min-width: 21ch;
+    color: var(--dn-szary-500);
+  }
+  .pt-log-czas { color: var(--dn-szary-600); margin-right: var(--dn-od-2); }
+
+  .pt-pas-postepu {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-3);
+    border-top: 1px solid var(--dn-obrys-subtelny);
+    background: var(--dn-powierzchnia);
+  }
+  .pt-pas-postepu-glowa {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    font-family: var(--dn-ff-mono);
+    font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki);
+    text-transform: uppercase;
+    color: var(--dn-tekst-2);
+  }
+  .pt-pas-postepu-glowa [data-postep-licznik] { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  /* ── zestawienie faz cyklu połączenia ───────────────────────────────────── */
+  .pt-fazy { display: flex; flex-direction: column; }
+  .pt-faza {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--dn-od-3);
+    min-height: var(--dn-wym-wiersz);
+    padding: 0 var(--dn-od-3);
+    border-bottom: 1px solid var(--dn-obrys-subtelny);
+    font-size: var(--dn-fs-base);
+    color: var(--dn-tekst-2);
+  }
+  .pt-faza-znak {
+    display: grid; place-content: center;
+    width: 20px; height: 20px;
+    border: 1px solid var(--dn-obrys-mocny);
+    border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia);
+    color: var(--dn-tekst-3);
+    font-family: var(--dn-ff-mono);
+    font-size: var(--dn-fs-xs);
+  }
+  .pt-faza-znak > svg { width: 12px; height: 12px; }
+  .pt-faza[data-stan-fazy='pracuje'] { color: var(--dn-tekst); }
+  .pt-faza[data-stan-fazy='pracuje'] .pt-faza-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); background: var(--dn-sygnal-tlo); }
+  .pt-faza[data-stan-fazy='gotowa'] .pt-faza-znak { border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); background: var(--dn-sukces-tlo); }
+  .pt-faza[data-stan-fazy='blad'] .pt-faza-znak { border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); background: var(--dn-blad-tlo); }
+  .pt-faza-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  /* ── nota pod oknem ─────────────────────────────────────────────────────── */
+  .pt-nota {
+    max-width: 60ch;
+    font-size: var(--dn-fs-sm);
+    color: var(--dn-tekst-3);
+    line-height: var(--dn-lh-bazowy);
+  }
+  .pt-przerwanie { margin-top: var(--dn-od-2); }
+
+  /* ── układ dwudzielny prototypu ─────────────────────────────────────────── */
+  /* Okno startowe, okno rejestracji i logowania oraz okno przygotowania
+     środowiska mają tę samą szerokość i wysokość. Panel uzgodnienia protokołu
+     leży więc pod oknem, a nie obok niego — kolumna obok zwężałaby okno
+     i psuła zgodność trzech okien wejściowych. */
+  .pt-panele--startowe { grid-template-columns: minmax(0, 1fr); }
+  .pt-panele--startowe .pt-log { max-height: 240px; }
+</style>
+</head>
+
+<body data-prototyp="PROTOTYP KLIKALNY"
+      data-prototyp-okno="Okno startowe (ładowania) — Etap 1 przepływu głównego"
+      data-prototyp-zrodlo="docs/interfejs-uzytkownika/przeplyw-okien.md · rozdz. 3.1"
+      data-belka-tytul="Przepływ główny › Etap 1 › Okno startowe">
+
+<div class="pt-powloka pt-powloka--bez-kart" id="dn-powloka-montaz"></div>
+
+<template id="dn-tresc-okna">
+  <div class="pt-cialo pt-cialo--bez-bocznej">
+    <div class="pt-obszar">
+
+      <section class="pt-okno pt-okno--dol" aria-label="Okno startowe — prototyp wariantów stanu">
+
+        <!-- ══ PASEK WYBORU WARIANTU STANU ═════════════════════════════════ -->
+        <header class="pt-okno-naglowek">
+          <h1 class="pt-okno-tytul">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+            Okno startowe (ładowania)
+          </h1>
+          <span class="pt-mono">connection.hello → connection.hello.ack</span>
+          <div class="pt-okno-narzedzia">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                    data-kopiuj="connection.hello · connection.hello.ack">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Kopiuj nazwy komunikatów
+            </button>
+            <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" id="btn-odtworz">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+              <span data-etykieta-odtworz>Odtwórz przebieg</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="pt-okno-tresc" style="overflow: auto;">
+          <div class="pt-panele pt-panele--startowe">
+
+            <!-- ══ LEWY PANEL: WŁAŚCIWE OKNO STARTOWE ════════════════════ -->
+            <div class="pt-panel">
+              <div class="pt-wybor-wariantu" role="group" aria-label="Wybór wariantu stanu okna startowego">
+                <span class="pt-etykieta">Wariant stanu</span>
+                <div class="dn-zakladki" role="tablist" aria-label="Warianty stanu okna startowego" style="border-bottom: 0;">
+                  <button class="dn-zakladka" type="button" role="tab" aria-selected="true"
+                          data-przelacz="laczenie" data-grupa="wariant">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                    Łączenie
+                  </button>
+                  <button class="dn-zakladka" type="button" role="tab" aria-selected="false"
+                          data-przelacz="token" data-grupa="wariant">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                    Powrót z ważnym tokenem
+                  </button>
+                  <button class="dn-zakladka" type="button" role="tab" aria-selected="false"
+                          data-przelacz="blad" data-grupa="wariant">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    Błąd połączenia
+                  </button>
+                </div>
+              </div>
+
+              <div class="we-scena" role="region" aria-label="Okno startowe">
+              <div class="we-okno">
+              <aside class="we-marka">
+                <div>
+                  <svg class="we-marka-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+                  <h2 class="we-marka-nazwa">Danaco Console</h2>
+                  <p class="we-marka-motto">AI Operating Environment</p>
+                </div>
+                <ul class="we-marka-lista"><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/></svg><span><b>Cztery środowiska pracy</b>Rozmowa i wiedza, projekty, wytwarzanie oprogramowania oraz praca zespołu modeli.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg><span><b>Praca wraca w tym samym stanie</b>Zamknięcie aplikacji nie przerywa zadań — wracają wraz z kartami i kontekstem.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Jedno konto na wszystkie urządzenia</b>Ten sam dostęp na komputerze, tablecie i telefonie.</span></li></ul>
+                <div class="we-marka-stopka">
+                  Danaco Holding Group Sp. z o.o.<br>
+                  wydanie 2.0<br>
+                  support@danaco-core.pl
+                </div>
+              </aside>
+              <div class="we-panel" data-widok="laczenie" data-grupa-widoku="wariant" data-widok-aktywny="tak">
+                <div class="we-glowa">
+                  <p class="we-nadtytul">Uruchomienie</p>
+                  <h2 class="we-tytul">Nawiązywanie połączenia</h2>
+                  <p class="we-lid">Platforma loguje się do serwera Danaco. Poczekaj.</p>
+                </div>
+                <ol class="we-kroki">
+                    <li class="we-krok" data-stan="gotowy">
+                      <span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                      <span>Połączenie z serwerem</span><span class="we-krok-meta">nawiązane</span>
+                    </li>
+                    <li class="we-krok" data-stan="pracuje">
+                      <span class="we-krok-znak" aria-hidden="true"><span class="pt-tetno" aria-hidden="true"></span></span>
+                      <span>Uzgodnienie wersji</span><span class="we-krok-meta">w toku</span>
+                    </li>
+                    <li class="we-krok" data-stan="oczekuje">
+                      <span class="we-krok-znak" aria-hidden="true">3</span>
+                      <span>Rozpoznanie urządzenia</span><span class="we-krok-meta">—</span>
+                    </li>
+                    <li class="we-krok" data-stan="oczekuje">
+                      <span class="we-krok-znak" aria-hidden="true">4</span>
+                      <span>Przygotowanie okna</span><span class="we-krok-meta">—</span>
+                    </li>
+                </ol>
+                <div class="we-stopka">
+                  <span>Kolejny krok: okno rejestracji i logowania.</span>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                          data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                          data-komunikat-tytul="Zamknięcie aplikacji"
+                          data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
+                </div>
+              </div>
+              <div class="we-panel" data-widok="token" data-grupa-widoku="wariant" data-widok-aktywny="nie">
+                <div class="we-glowa">
+                  <p class="we-nadtytul">Uruchomienie</p>
+                  <h2 class="we-tytul">Przywracanie sesji</h2>
+                  <p class="we-lid">Platforma przywraca Twoje aktywne sesje na koncie.</p>
+                </div>
+                <ol class="we-kroki">
+                    <li class="we-krok" data-stan="gotowy">
+                      <span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                      <span>Połączenie z serwerem</span><span class="we-krok-meta">nawiązane</span>
+                    </li>
+                    <li class="we-krok" data-stan="gotowy">
+                      <span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                      <span>Uzgodnienie wersji</span><span class="we-krok-meta">zgodna</span>
+                    </li>
+                    <li class="we-krok" data-stan="gotowy">
+                      <span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
+                      <span>Rozpoznanie urządzenia</span><span class="we-krok-meta">zaufane</span>
+                    </li>
+                    <li class="we-krok" data-stan="pracuje">
+                      <span class="we-krok-znak" aria-hidden="true"><span class="pt-tetno" aria-hidden="true"></span></span>
+                      <span>Przygotowanie okna</span><span class="we-krok-meta">w toku</span>
+                    </li>
+                </ol>
+                <div class="we-alarm we-alarm--sukces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Rozpoznano zaufane urządzenie</b>Uruchomienie bez logowania.</span></div>
+                <div class="we-stopka">
+                  <span>Kolejny krok: przygotowanie środowiska pracy.</span>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                          data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                          data-komunikat-tytul="Zamknięcie aplikacji"
+                          data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
+                </div>
+              </div>
+              <div class="we-panel" data-widok="blad" data-grupa-widoku="wariant" data-widok-aktywny="nie">
+                <div class="we-glowa">
+                  <p class="we-nadtytul">Uruchomienie</p>
+                  <h2 class="we-tytul">Błąd połączenia</h2>
+                  <p class="we-lid">Sprawdź połączenie sieciowe i spróbuj ponownie.</p>
+                </div>
+                <ol class="we-kroki">
+                    <li class="we-krok" data-stan="blad">
+                      <span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></span>
+                      <span>Połączenie z serwerem</span><span class="we-krok-meta">nieudane</span>
+                    </li>
+                    <li class="we-krok" data-stan="oczekuje">
+                      <span class="we-krok-znak" aria-hidden="true">2</span>
+                      <span>Uzgodnienie wersji</span><span class="we-krok-meta">—</span>
+                    </li>
+                    <li class="we-krok" data-stan="oczekuje">
+                      <span class="we-krok-znak" aria-hidden="true">3</span>
+                      <span>Rozpoznanie urządzenia</span><span class="we-krok-meta">—</span>
+                    </li>
+                    <li class="we-krok" data-stan="oczekuje">
+                      <span class="we-krok-znak" aria-hidden="true">4</span>
+                      <span>Przygotowanie okna</span><span class="we-krok-meta">—</span>
+                    </li>
+                </ol>
+                <div class="we-alarm we-alarm--ostrzezenie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Serwer nie odpowiada</b>Ponowna próba za 15 sekund.</span></div>
+                <div class="we-akcje">
+                  <button class="dn-btn dn-btn--zarys" type="button" id="btn-ponow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 4v5h-5"/></svg>Spróbuj ponownie</button>
+                  <button class="dn-btn dn-btn--duch" type="button">Ustawienia połączenia</button>
+                </div>
+                <div class="we-stopka">
+                  <span>Praca zapamiętana na serwerze pozostaje nienaruszona.</span>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                          data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                          data-komunikat-tytul="Zamknięcie aplikacji"
+                          data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
+                </div>
+              </div>
+              </div>
+            </div>
+            </div>
+
+            <!-- ══ PRAWY PANEL: TECHNICZNA ŚCIEŻKA UZGODNIENIA PROTOKOŁU ══ -->
+            <div class="pt-panel">
+              <div class="pt-panel-naglowek">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>
+                Uzgodnienie protokołu
+                <span class="pt-panel-akcje">
+                  <span class="dn-plakietka" id="plakietka-stanu">
+                    <span class="pt-tetno" aria-hidden="true"></span>
+                    kanał WebSocket
+                  </span>
+                </span>
+              </div>
+
+              <div style="display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0;">
+
+                <!-- FAZY CYKLU ŻYCIA POŁĄCZENIA -->
+                <div class="pt-fazy" aria-label="Fazy cyklu życia połączenia">
+                  <div class="pt-faza" data-faza="kanal" data-stan-fazy="pracuje">
+                    <span class="pt-faza-znak" aria-hidden="true">1</span>
+                    <span>Nawiązanie kanału WebSocket</span>
+                    <span class="pt-faza-meta" data-meta-fazy>w toku</span>
+                  </div>
+                  <div class="pt-faza" data-faza="uzgodnienie" data-stan-fazy="oczekuje">
+                    <span class="pt-faza-znak" aria-hidden="true">2</span>
+                    <span>Uzgodnienie protokołu — <span class="pt-mono">connection.hello</span></span>
+                    <span class="pt-faza-meta" data-meta-fazy>oczekuje</span>
+                  </div>
+                  <div class="pt-faza" data-faza="uwierzytelnienie" data-stan-fazy="oczekuje">
+                    <span class="pt-faza-znak" aria-hidden="true">3</span>
+                    <span>Uwierzytelnienie — wynik z <span class="pt-mono">.ack</span></span>
+                    <span class="pt-faza-meta" data-meta-fazy>oczekuje</span>
+                  </div>
+                  <div class="pt-faza" data-faza="powiazanie" data-stan-fazy="oczekuje">
+                    <span class="pt-faza-znak" aria-hidden="true">4</span>
+                    <span>Powiązanie — przejście do kolejnego etapu</span>
+                    <span class="pt-faza-meta" data-meta-fazy>oczekuje</span>
+                  </div>
+                </div>
+
+                <!-- LOG UZGODNIENIA -->
+                <div class="pt-konsola pt-log" id="log-uzgodnienia" role="log" aria-live="polite"
+                     aria-label="Log uzgodnienia protokołu — wartości przykładowe"></div>
+
+                <!-- POSTĘP -->
+                <div class="pt-pas-postepu">
+                  <div class="pt-pas-postepu-glowa">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>Postęp uzgodnienia</span>
+                    <span data-postep-licznik>0%</span>
+                  </div>
+                  <div class="dn-postep" id="postep-uzgodnienia" data-postep-do="100" data-postep-czas="2200">
+                    <div class="dn-postep-tor">
+                      <div class="dn-postep-wartosc" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                  <p class="pt-nota" style="margin: 0;">
+                    Wartości w logu są przykładowe — ilustrują strukturę komunikatów
+                    <span class="pt-mono">connection.hello</span> i
+                    <span class="pt-mono">connection.hello.ack</span> opisaną w dokumentacji przepływu.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</template>
+
+<!-- ══ PANEL „O TYM OPRACOWANIU" ═══════════════════════════════════════════ -->
+<details class="pt-o-opracowaniu">
+  <summary>O tym opracowaniu</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Co przedstawia</h4>
+    <p>
+      Etap 1 przepływu głównego Danaco Console — <b>okno startowe (ładowania)</b>.
+      Okno jednolite: bez paska nawigacji, bez paneli bocznych, jeden komunikat stanu.
+      Prototyp pokazuje wszystkie trzy warianty stanu opisane w dokumentacji
+      (Łączenie · Powrót z ważnym tokenem · Błąd połączenia) jako przełączalne widoki
+      oraz żywą symulację cyklu uzgodnienia protokołu
+      <code>connection.hello</code> → <code>connection.hello.ack</code>.
+    </p>
+    <p>
+      Pasek górny w tym pliku jest <b>rusztowaniem prototypu</b> (nośnikiem przełącznika motywu
+      i ścieżki nawigacji) — w rzeczywistym oknie startowym nie występuje, co oznaczono
+      plakietką na samym pasku.
+    </p>
+
+    <h4>Źródło w dokumentacji</h4>
+    <ul>
+      <li><code>docs/interfejs-uzytkownika/przeplyw-okien.md</code> — rozdz. 3.1 „Etap 1 — Okno startowe”:
+          warunek wejścia, przebieg (powłoka Tauri, kanał WebSocket, <code>connection.hello</code>
+          z wersją protokołu, identyfikatorem urządzenia i tokenem; <code>connection.hello.ack</code>
+          z wersją serwera, fazą wdrożenia i wynikiem uwierzytelnienia), stan okna, wynik.</li>
+      <li><code>docs/interfejs-uzytkownika/przeplyw-okien.md</code> — rozdz. 3.1, tabela
+          „Warianty stanu okna startowego” (trzy warianty) oraz tabela
+          „Elementy interfejsu — Okno startowe” (godło marki, wskaźnik ładowania <code>.dn-spinner</code>,
+          komunikat błędu połączenia z ikoną <code>ostrzezenie.svg</code>, kontrolka
+          „Spróbuj ponownie” <code>.dn-btn--zarys</code>).</li>
+      <li><code>docs/interfejs-uzytkownika/przeplyw-okien.md</code> — rozdz. 3.1, makieta tekstowa
+          („godło marki, wyśrodkowane” · „wskaźnik stanu (spinner)” · „Bez paska nawigacji,
+          bez bocznych paneli — okno jednolite, jeden komunikat stanu”).</li>
+      <li><code>inwentarz okien platformy</code> — sekcja 2 („Okno startowe (ładowania)”):
+          charakterystyka 2.1, makieta 2.2, warianty stanu 2.3, elementy 2.4.</li>
+      <li>kontrakt systemu projektowego (sygnet „Delegacja”, kropka sygnału, tętno 2,4 s),
+          rozdz. 7.1 (inwentarz okien przepływu), rozdz. 8 (zasada zero blokad),
+          rozdz. 11 (standard techniczny prototypów).</li>
+    </ul>
+
+    <h4>Odwzorowane interakcje</h4>
+    <ul>
+      <li>Przełączanie trzech wariantów stanu okna (zakładki z obsługą klawiatury: strzałki, Home, End).</li>
+      <li>„Odtwórz przebieg” — sekwencja <code>connection.hello</code> → <code>connection.hello.ack</code>:
+          log wypełniany wiersz po wierszu, animowany postęp z licznikiem procentowym,
+          czterostopniowa kolejka faz cyklu życia połączenia (kanał → uzgodnienie →
+          uwierzytelnienie → powiązanie), przejście do wariantu docelowego wybranego zakładką.</li>
+      <li>Kontrolka „Spróbuj ponownie” — ponawia przebieg od nawiązania kanału WebSocket
+          i doprowadza go do wariantu „Łączenie”.</li>
+      <li>Tętno kropki sygnału w godle (2,4 s) — jedyny ruch ciągły widoku; przy
+          <code>prefers-reduced-motion</code> zastąpione statycznym pierścieniem.</li>
+      <li>Kopiowanie nazw komunikatów protokołu do schowka (<code>data-kopiuj</code>).</li>
+      <li>Zero blokad: „Przerwij (zamknij okno)” wyświetla komunikat zamiast wyłączać kontrolkę;
+          żaden element nie jest wyłączony atrybutem wyłączającym kontrolkę.</li>
+      <li>Przełącznik motywu na pasku górnym — oba motywy równoprawne, pasek pozostaje atramentowy.</li>
+    </ul>
+
+    <h4>Decyzje projektowe ponad źródła</h4>
+    <ul>
+      <li><b>Pasek górny prototypu.</b> Dokumentacja stwierdza, że okno startowe nie ma paska
+          nawigacji. kontrakt systemu projektowego wymaga jednak przełącznika motywu na pasku górnym każdego
+          prototypu. Rozstrzygnięcie: pasek jest obecny jako rusztowanie prototypu i jawnie
+          oznaczony plakietką „pasek prototypu — okno startowe go nie ma”.</li>
+      <li><b>Panel „Uzgodnienie protokołu”.</b> Dokumentacja opisuje przebieg techniczny etapu 1
+          słownie, bez makiety panelu. Panel dołożono jako warstwę demonstracyjną prototypu
+          (log krojem mono, kolejka faz, postęp) — nie jest elementem okna startowego widzianego
+          przez Operatora, lecz uczytelnia mechanizm opisany w rozdz. 3.1.</li>
+      <li><b>Wartości w logu.</b> Dokumentacja wymienia pola komunikatów (wersja protokołu,
+          identyfikator urządzenia, token, wersja serwera, faza wdrożenia, wynik uwierzytelnienia),
+          nie podaje ich wartości. Wartości w prototypie są przykładowe i oznaczone jako takie
+          w nocie pod paskiem postępu, zgodnie z zasadą redakcyjną kontrakt systemu projektowego.</li>
+      <li><b>Nazwa produktu.</b> Dokumentacja funkcjonalna v1.0 posługuje się nazwą „Danaco Console”;
+          zgodnie z kontraktem systemu projektowego w opracowaniach wizualnych produkt nazywamy
+          <b>Danaco Console</b> i taka nazwa występuje w godle okna.</li>
+      <li><b>Kontrolka „Przerwij (zamknij okno)”.</b> Dokumentacja wskazuje przerwanie jako jedyną
+          możliwą interakcję Operatora w tym oknie; forma kontrolki nie jest w źródle rozstrzygnięta —
+          zastosowano przycisk trzeciorzędny <code>.dn-btn--duch</code> z komunikatem zamiast blokady.</li>
+      <li><b>Godło.</b> Zamiast pliku <code>logo-danaco.svg</code> z dokumentacji v1.0 zastosowano
+          zatwierdzony sygnet „Delegacja” z pakietu wizualnego v2.0 (<code>zasoby/marka/logo/sygnet.svg</code>),
+          wklejony inline w dużej skali, z animowaną kropką sygnału.</li>
+    </ul>
+  </div>
+</details>
+
+<script src="../../zasoby/powloka.js"></script>
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/okna-modalne.js"></script>
+<script src="../../zasoby/rama.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   ZACHOWANIE SWOISTE TEMU OKNU — symulacja cyklu uzgodnienia protokołu
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var log       = document.getElementById('log-uzgodnienia');
+  var postep    = document.getElementById('postep-uzgodnienia');
+  var pasek     = postep.querySelector('.dn-postep-wartosc');
+  var licznik   = document.querySelector('[data-postep-licznik]');
+  var btnOdtworz = document.getElementById('btn-odtworz');
+  var etykietaOdtworz = document.querySelector('[data-etykieta-odtworz]');
+  var plakietka = document.getElementById('plakietka-stanu');
+  var fazy      = Array.prototype.slice.call(document.querySelectorAll('.pt-faza'));
+
+  /* ── treść komunikatów protokołu — wartości PRZYKŁADOWE ─────────────────── */
+
+  /* kolejność pól zgodna z rozdz. 3.1: wersja protokołu · identyfikator urządzenia · token */
+  var HELLO = [
+    { typ: 'zachęta', tekst: '» connection.hello' },
+    { typ: 'para', klucz: 'wersja protokołu',    wartosc: 'dnp/1.0' },
+    { typ: 'para', klucz: 'identyfikator urz.',  wartosc: 'urzadzenie-operatora-01' }
+  ];
+
+  var HELLO_OGON = [
+    { typ: 'para', klucz: 'klient',              wartosc: 'Danaco Console 2.0 · powłoka Tauri' },
+    { typ: 'para', klucz: 'kanał',               wartosc: 'WebSocket · adres z pakietu klienckiego' }
+  ];
+
+  var PRZEBIEGI = {
+    laczenie: {
+      etykieta: 'Łączenie',
+      hello: [
+        { typ: 'para', klucz: 'token dostępu', wartosc: 'brak — pierwsze połączenie tego urządzenia' }
+      ],
+      ack: [
+        { typ: 'zachęta', tekst: '« connection.hello.ack' },
+        { typ: 'para', klucz: 'wersja serwera',      wartosc: 'Danaco Console 2.0' },
+        { typ: 'para', klucz: 'faza wdrożenia',      wartosc: 'budowa' },
+        { typ: 'para', klucz: 'uwierzytelnienie',    wartosc: 'brak ważnego tokenu' },
+        { typ: 'ok',   tekst: '  kanał otwarty — przejście do etapu 2: okno rejestracji i logowania' }
+      ],
+      stanFaz: ['gotowa', 'gotowa', 'gotowa', 'pracuje'],
+      metaFaz: ['otwarty', 'dnp/1.0', 'brak tokenu', 'etap 2'],
+      plakietka: 'kanał otwarty',
+      klasaPlakietki: 'dn-plakietka dn-plakietka--sygnal',
+      tetno: true
+    },
+    token: {
+      etykieta: 'Powrót z ważnym tokenem',
+      hello: [
+        { typ: 'para', klucz: 'token dostępu', wartosc: 'obecny — token urządzenia' }
+      ],
+      ack: [
+        { typ: 'zachęta', tekst: '« connection.hello.ack' },
+        { typ: 'para', klucz: 'wersja serwera',      wartosc: 'Danaco Console 2.0' },
+        { typ: 'para', klucz: 'faza wdrożenia',      wartosc: 'produkcyjna' },
+        { typ: 'para', klucz: 'uwierzytelnienie',    wartosc: 'token ważny — urządzenie rozpoznane' },
+        { typ: 'para', klucz: 'zapamiętana karta',   wartosc: 'brak' },
+        { typ: 'ok',   tekst: '  krok rejestracji i logowania pominięty — przejście do etapu 3: Centrum dowodzenia' }
+      ],
+      stanFaz: ['gotowa', 'gotowa', 'gotowa', 'gotowa'],
+      metaFaz: ['otwarty', 'dnp/1.0', 'token ważny', 'etap 3'],
+      plakietka: 'urządzenie rozpoznane',
+      klasaPlakietki: 'dn-plakietka dn-plakietka--sukces',
+      tetno: false
+    },
+    blad: {
+      etykieta: 'Błąd połączenia',
+      hello: [
+        { typ: 'para', klucz: 'token dostępu', wartosc: 'obecny — token urządzenia' }
+      ],
+      ack: [
+        { typ: 'blad',  tekst: '× brak odpowiedzi na connection.hello' },
+        { typ: 'para',  klucz: 'stan kanału',      wartosc: 'zamknięty' },
+        { typ: 'para',  klucz: 'przyczyna',        wartosc: 'serwer nieosiągalny / adres nieprawidłowy / przerwanie sieci' },
+        { typ: 'uwaga', tekst: '  oczekiwanie na ponowienie — automatyczne albo kontrolką „Spróbuj ponownie”' }
+      ],
+      stanFaz: ['blad', 'oczekuje', 'oczekuje', 'oczekuje'],
+      metaFaz: ['zamknięty', 'przerwane', 'brak', 'brak'],
+      plakietka: 'brak połączenia',
+      klasaPlakietki: 'dn-plakietka dn-plakietka--blad',
+      tetno: false
+    }
+  };
+
+  /* ── budowanie wierszy logu ─────────────────────────────────────────────── */
+
+  function wierszLogu(poz, ukryty) {
+    var w = document.createElement('span');
+    w.className = 'pt-log-wiersz';
+    if (ukryty) w.setAttribute('data-ukryty', 'tak');
+
+    if (poz.typ === 'para') {
+      var k = document.createElement('span');
+      k.className = 'pt-log-klucz';
+      k.textContent = '  ' + poz.klucz;
+      var v = document.createElement('span');
+      v.textContent = poz.wartosc;
+      w.appendChild(k);
+      w.appendChild(v);
+      return w;
+    }
+
+    var t = document.createElement('span');
+    if (poz.typ === 'zachęta')    t.className = 'pt-znak-zachety';
+    else if (poz.typ === 'ok')    t.className = 'pt-wynik-ok';
+    else if (poz.typ === 'blad')  t.className = 'pt-wynik-blad';
+    else if (poz.typ === 'uwaga') t.className = 'pt-wynik-uwaga';
+    else                          t.className = 'pt-komentarz';
+    t.textContent = poz.tekst;
+    w.appendChild(t);
+    return w;
+  }
+
+  function zlozPrzebieg(nazwa) {
+    var p = PRZEBIEGI[nazwa] || PRZEBIEGI.laczenie;
+    return HELLO.concat(p.hello).concat(HELLO_OGON).concat(p.ack);
+  }
+
+  function ustawFazy(nazwa) {
+    var p = PRZEBIEGI[nazwa] || PRZEBIEGI.laczenie;
+    fazy.forEach(function (f, i) {
+      f.setAttribute('data-stan-fazy', p.stanFaz[i]);
+      var meta = f.querySelector('[data-meta-fazy]');
+      if (meta) meta.textContent = p.metaFaz[i];
+      var znak = f.querySelector('.pt-faza-znak');
+      if (!znak) return;
+      if (p.stanFaz[i] === 'gotowa') {
+        znak.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+      } else if (p.stanFaz[i] === 'blad') {
+        znak.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+      } else {
+        znak.textContent = String(i + 1);
+      }
+    });
+  }
+
+  function ustawPlakietke(nazwa) {
+    var p = PRZEBIEGI[nazwa] || PRZEBIEGI.laczenie;
+    plakietka.className = p.klasaPlakietki;
+    plakietka.innerHTML = '';
+    if (p.tetno) {
+      var k = document.createElement('span');
+      k.className = 'pt-tetno';
+      k.setAttribute('aria-hidden', 'true');
+      plakietka.appendChild(k);
+    } else {
+      var ik = document.createElement('span');
+      ik.setAttribute('aria-hidden', 'true');
+      ik.innerHTML = p.klasaPlakietki.indexOf('blad') !== -1
+        ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+        : '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
+      plakietka.appendChild(ik.firstChild);
+    }
+    plakietka.appendChild(document.createTextNode(' ' + p.plakietka));
+  }
+
+  function narysujLog(nazwa, ukryte) {
+    log.innerHTML = '';
+    zlozPrzebieg(nazwa).forEach(function (poz) {
+      log.appendChild(wierszLogu(poz, ukryte));
+    });
+  }
+
+  function ustawPostep(wartosc) {
+    pasek.style.width = wartosc + '%';
+    if (licznik) licznik.textContent = Math.round(wartosc) + '%';
+  }
+
+  /* ── stan spoczynkowy: pełny log wybranego wariantu ─────────────────────── */
+
+  var biezacyWariant = 'laczenie';
+  var odtwarzanie = null;
+
+  function pokazWariant(nazwa) {
+    biezacyWariant = nazwa;
+    if (odtwarzanie) return;      /* w trakcie odtwarzania log buduje sekwencja */
+    narysujLog(nazwa, false);
+    ustawFazy(nazwa);
+    ustawPlakietke(nazwa);
+    ustawPostep(nazwa === 'blad' ? 35 : 100);
+  }
+
+  document.addEventListener('click', function (e) {
+    var p = e.target.closest('[data-przelacz][data-grupa="wariant"]');
+    if (!p) return;
+    pokazWariant(p.getAttribute('data-przelacz'));
+  });
+
+  /* ── odtworzenie przebiegu ──────────────────────────────────────────────── */
+
+  function zatrzymajOdtwarzanie() {
+    if (!odtwarzanie) return;
+    odtwarzanie.forEach(function (id) { clearTimeout(id); });
+    odtwarzanie = null;
+  }
+
+  function odtworz(nazwaDocelowa) {
+    zatrzymajOdtwarzanie();
+    odtwarzanie = [];
+
+    var ograniczonyRuch = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var krokCzas = ograniczonyRuch ? 40 : 150;
+
+    /* faza wyjściowa — wszystko oczekuje */
+    narysujLog(nazwaDocelowa, true);
+    ustawPostep(0);
+    fazy.forEach(function (f, i) {
+      f.setAttribute('data-stan-fazy', i === 0 ? 'pracuje' : 'oczekuje');
+      var meta = f.querySelector('[data-meta-fazy]');
+      if (meta) meta.textContent = i === 0 ? 'w toku' : 'oczekuje';
+      var znak = f.querySelector('.pt-faza-znak');
+      if (znak) znak.textContent = String(i + 1);
+    });
+    plakietka.className = 'dn-plakietka dn-plakietka--sygnal';
+    plakietka.innerHTML = '<span class="pt-tetno" aria-hidden="true"></span>';
+    plakietka.appendChild(document.createTextNode(' uzgadnianie…'));
+
+    if (etykietaOdtworz) etykietaOdtworz.textContent = 'Odtwarzam…';
+    btnOdtworz.setAttribute('aria-busy', 'true');
+
+    /* odsłanianie wierszy logu */
+    var wiersze = Array.prototype.slice.call(log.querySelectorAll('.pt-log-wiersz'));
+    wiersze.forEach(function (w, i) {
+      odtwarzanie.push(setTimeout(function () {
+        w.removeAttribute('data-ukryty');
+        ustawPostep(Math.min(100, ((i + 1) / wiersze.length) * 100));
+        log.scrollTop = log.scrollHeight;
+      }, krokCzas * (i + 1)));
+    });
+
+    /* progresja faz cyklu życia połączenia */
+    var czasCalosci = krokCzas * (wiersze.length + 1);
+    [0, 1, 2, 3].forEach(function (i) {
+      odtwarzanie.push(setTimeout(function () {
+        ustawFazy(nazwaDocelowa);
+        /* fazy dalsze niż i pozostają w stanie oczekiwania do swojej kolejki */
+        fazy.forEach(function (f, j) {
+          if (j > i) {
+            f.setAttribute('data-stan-fazy', 'oczekuje');
+            var meta = f.querySelector('[data-meta-fazy]');
+            if (meta) meta.textContent = 'oczekuje';
+            var znak = f.querySelector('.pt-faza-znak');
+            if (znak) znak.textContent = String(j + 1);
+          }
+        });
+      }, (czasCalosci / 4) * (i + 1)));
+    });
+
+    /* domknięcie: przejście do wariantu docelowego */
+    odtwarzanie.push(setTimeout(function () {
+      odtwarzanie = null;
+      if (etykietaOdtworz) etykietaOdtworz.textContent = 'Odtwórz przebieg';
+      btnOdtworz.removeAttribute('aria-busy');
+      if (window.dnPrzelaczWidok) window.dnPrzelaczWidok(nazwaDocelowa, 'wariant');
+      pokazWariant(nazwaDocelowa);
+
+      if (nazwaDocelowa === 'blad') {
+        window.dnToast('Błąd połączenia',
+          'Sprawdź połączenie sieciowe i spróbuj ponownie.', 'ostrzezenie');
+      } else if (nazwaDocelowa === 'token') {
+        window.dnToast('Rozpoznano zaufane urządzenie',
+          'Uruchomienie bez logowania.', 'sukces');
+      } else {
+        window.dnToast('Połączono z serwerem',
+          'Za chwilę otworzy się okno logowania.', 'informacja');
+      }
+    }, czasCalosci + 200));
+  }
+
+  btnOdtworz.addEventListener('click', function () {
+    var aktywna = document.querySelector('[data-przelacz][data-grupa="wariant"][aria-selected="true"]');
+    odtworz(aktywna ? aktywna.getAttribute('data-przelacz') : 'laczenie');
+  });
+
+  /* „Spróbuj ponownie” — ponawia etap 1 od nawiązania kanału WebSocket */
+  var btnPonow = document.getElementById('btn-ponow');
+  if (btnPonow) {
+    btnPonow.addEventListener('click', function () {
+      window.dnToast('Ponawianie połączenia',
+        'Etap 1 uruchomiony od nawiązania kanału WebSocket.', 'informacja');
+      if (window.dnPrzelaczWidok) window.dnPrzelaczWidok('laczenie', 'wariant');
+      odtworz('laczenie');
+    });
+  }
+
+  /* ── stan początkowy ────────────────────────────────────────────────────── */
+  narysujLog('laczenie', false);
+  ustawFazy('laczenie');
+  ustawPlakietke('laczenie');
+
+})();
+</script>
+
+</body>
+</html>

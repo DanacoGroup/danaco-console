@@ -1,0 +1,47 @@
+# Jednolite końce linii w repozytorium — LF wszędzie.
+# Bez tego Git zamienia LF na CRLF przy każdym zapisie na Windows,
+# co przy falach subagentów daje fałszywe różnice w każdym pliku.
+
+* text=auto eol=lf
+
+# Pliki wyłącznie windowsowe zachowują CRLF.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Pliki binarne — bez konwersji.
+*.png  binary
+*.jpg  binary
+*.ico  binary
+*.pdf  binary
+*.exe  binary
+*.dll  binary
+*.db   binary
+
+# ------------------------------------------------------------------------
+# CZEGO TA REGUŁA NIE ZŁAPIE — i dlaczego wolno było wnieść CRLF wbrew niej.
+#
+# `text=auto eol=lf` działa na DWÓCH przejściach i tylko jedno z nich pilnuje
+# wykonawcy. Przy zapisie do indeksu Git sam ścina CRLF do LF, więc plik
+# zapisany narzędziem windowsowym (PowerShell `Set-Content`/`Out-File` domyślnie
+# daje CRLF) trafia do historii poprawny. W drzewie roboczym zostaje po nim
+# CRLF, którego `git status` ani `git diff` NIE POKAŻĄ — po normalizacji plik
+# jest co do bajta równy blobowi z indeksu. Reguła nie została złamana; ona
+# po prostu naprawia skutek po cichu i nie zgłasza przyczyny.
+#
+# Skutek jest realny mimo czystego `git status`: narzędzia czytające drzewo,
+# a nie indeks (kompilator, linter, sonda licząca linie, edytor pokazujący
+# ^M) widzą inny plik niż repozytorium. Audyt 2026-08-13 zastał tak dwanaście
+# plików przy zerowej różnicy w `git diff`.
+#
+# Wykrycie (jedyne, które to widzi — kolumna w/ to drzewo robocze):
+#   git ls-files --eol | grep 'w/crlf'
+# Naprawa pliku, bez zmiany treści:
+#   tr -d '\r' < PLIK > PLIK.lf && mv PLIK.lf PLIK
+# Sprawdzenie, że naprawa niczego nie zmieniła poza końcami linii:
+#   git show :PLIK | md5sum   # ma się zgadzać z md5sum naprawionego pliku
+#
+# `core.autocrlf=true` z systemowego gitconfig NIE jest tu przyczyną: atrybut
+# `eol=lf` ma nad nim pierwszeństwo przy pobraniu, więc checkout daje LF.
+# Przyczyną jest zapis narzędziem, które o .gitattributes nie wie.
+# ------------------------------------------------------------------------

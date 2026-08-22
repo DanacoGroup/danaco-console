@@ -1,0 +1,472 @@
+/* ============================================================================
+   DANACO CONSOLE — CENTRUM DOWODZENIA: ZŁOŻENIE OKNA
+   ----------------------------------------------------------------------------
+   Kompetencja: układ karty Centrum dowodzenia — nagłówek, wiersz pierwszego
+   wejścia, wykaz pracy w tle, przebieg sesji, trzy strefy wyboru, panel
+   samouczka. Wygląd komponentów pochodzi z arkuszy kompetencyjnych; tutaj
+   stoi wyłącznie ich złożenie w tym oknie.
+
+   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `css/komponenty.css`,
+   `stany.css`, `rama.css`, `karty-okna.css`, `panel-sesji.css`,
+   `pasek-okna.css`, `izolacja.css`, `okno-robocze.css`.
+   Mechanizm: `okna/centrum-dowodzenia.js`.
+
+   Punkty łamania mierzą szerokość płótna (`@container plotno`), nie szerokość
+   ekranu: panel samouczka zwęża okno główne o 320 px.
+   ============================================================================ */
+
+:root { --cd-maks-tresc: 100%; }
+
+/* ── Płótno i rytm treści ─────────────────────────────────────────────────── */
+
+.cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
+
+/* Płótno karty. Warunek `:not([hidden])` jest konieczny: `display`
+   zadeklarowany przez autora wygrywa z `[hidden]` z arkusza przeglądarki,
+   a wtedy karta odłożona zostawałaby na ekranie razem z kartą bieżącą. */
+.cd-tresc:not([hidden]) {
+  container-type: inline-size;
+  container-name: plotno;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-10);
+  width: 100%;
+  max-width: min(var(--cd-maks-tresc), 100%);
+  margin: 0 auto;
+  padding: var(--dn-od-2) var(--dn-od-6) var(--dn-od-16);
+}
+
+/* Wejście stref w kolejności ważności. `backwards`, nie `both`: animacja
+   wypełniająca w przód pozostaje czynna i czyni ze strefy kontekst nakładania,
+   co przycina panele rozwijane w jej wnętrzu. */
+.cd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
+.cd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(n + 6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
+
+/* ── Nagłówek okna ────────────────────────────────────────────────────────── */
+
+.cd-naglowek {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--dn-od-4);
+  flex-wrap: wrap;
+}
+.cd-nadtytul {
+  margin: 0 0 var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.cd-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-display);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+.cd-podtytul {
+  margin: var(--dn-od-2) 0 0;
+  max-width: 78ch;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
+/* Lockup poziomy z zasobów marki; 280 px wobec minimum 120 px z księgi znaku. */
+.cd-marka-lockup { width: 280px; height: auto; flex: none; color: var(--dn-tekst); }
+
+/* ── Wiersz pierwszego wejścia ────────────────────────────────────────────── */
+
+.cd-start {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-500);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-start[hidden] { display: none; }
+.cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
+.cd-start-tresc { flex: 1 1 auto; margin: 0; }
+.cd-start-tresc b { color: var(--dn-tekst); }
+
+/* ── Strefy wyboru ────────────────────────────────────────────────────────── */
+
+.cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
+.cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
+.cd-sekcja-tytul { font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.cd-sekcja-meta {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-sekcja-opis { max-width: 74ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
+
+/* Waga strefy zapisana atrybutem `data-waga`; nośnikiem jest kreska sygnałowa
+   przed tytułem, w trzech stopniach krycia. */
+.cd-sekcja-tytul::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-right: var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-500);
+  vertical-align: -1px;
+}
+.cd-strefa[data-waga='2'] .cd-sekcja-tytul::before { opacity: 0.62; }
+.cd-strefa[data-waga='3'] .cd-sekcja-tytul::before { opacity: 0.38; }
+
+/* ── Strefa 1 · karty środowisk ───────────────────────────────────────────── */
+
+.cd-siatka-srodowisk { display: grid; gap: var(--dn-od-4); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* Karta jest kolumną: wiersz meta z przyciskiem wejścia stoi przy dolnej
+   krawędzi, więc cztery przyciski w rzędzie leżą na jednej wysokości. */
+.cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; }
+.cd-karta-akcent > .cd-karta-meta { margin-top: auto; }
+.cd-karta-godlo svg { width: 100%; height: 100%; }
+.cd-karta-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-4);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-karta-meta .cd-wejdz { margin-left: auto; }
+/* Menu operacji środowiska; wyzwalacz `wiecej` (⋯) — zestaw ikon nie ma kebaba
+   pionowego. */
+.cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
+.cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
+.dn-karta-srodowiska:hover .cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst); }
+
+/* ── Strefa 2 · komponenty własne ─────────────────────────────────────────── */
+
+.cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cd-kafel { display: flex; flex-direction: column; align-items: flex-start; gap: var(--dn-od-3); }
+.cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+.cd-kafel-etykieta-akcji { margin-top: auto; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+
+/* Kafel jest przyciskiem, więc wyzwalacz wykazu zapisanych stoi obok niego,
+   nie w jego wnętrzu. */
+.cd-kafel-blok { position: relative; display: flex; }
+.cd-kafel-blok:hover, .cd-kafel-blok:focus-within { z-index: 3; }
+.cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
+.cd-kafel-menu { position: absolute; top: var(--dn-od-2); right: var(--dn-od-2); z-index: 2; }
+.cd-kafel-menu > .dn-btn-ikona {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  width: auto;
+  padding: 0 var(--dn-od-1);
+  color: var(--dn-tekst-3);
+}
+.cd-kafel-blok:hover .cd-kafel-menu > .dn-btn-ikona { color: var(--dn-tekst); }
+.cd-kafel-licznik { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); }
+
+/* ── Strefa 3 · listwa ustawień ───────────────────────────────────────────── */
+
+.cd-listwa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+/* Znak pozycji listwy i kafla — jeden wymiar dla obu miejsc. */
+.cd-ik { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+.cd-listwa-poz {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  background: transparent;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.cd-listwa-poz:hover { background: var(--dn-panel); border-color: var(--dn-obrys); transform: translateY(var(--dn-podniesienie-sm)); }
+.cd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.cd-listwa-poz:focus-visible { outline: none; box-shadow: var(--dn-cien-sygnal); }
+.cd-listwa-poz[aria-pressed='true'] { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
+.cd-listwa-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
+.cd-listwa-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); color: var(--dn-sygnal); }
+.cd-listwa-sep { width: 1px; align-self: stretch; margin: var(--dn-od-1); background: var(--dn-obrys-subtelny); }
+.cd-listwa-stan { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.cd-listwa-menu { position: relative; margin-left: var(--dn-od-1); }
+.cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
+.cd-listwa:hover .cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst); }
+
+/* ── Zawartość zależna od sytuacji karty ─────────────────────────────────
+   Karta Centrum dowodzenia stoi w każdym oknie roboczym, także w oknie świeżo
+   otwartym, gdzie nie ma jeszcze sesji. Bloki opisujące pracę pojawiają się
+   więc warunkowo, wg stanu karty zapisanego na płótnie treści:
+     data-stan-karty="nowa"        — karta bez sesji: nagłówek, pierwsze
+                                     wejście i trzy strefy wyboru
+     data-stan-karty="praca"       — w tle biegną sesje: dochodzi wykaz pracy
+     data-stan-karty="wznowiona"   — powrót do sesji: dochodzi jej przebieg
+   Stan nadaje mechanizm okna; arkusz tylko odsłania właściwe bloki. */
+.cd-tresc > .cd-sesje,
+.cd-tresc > .cd-przebieg { display: none; }
+.cd-tresc[data-stan-karty~='praca'] > .cd-sesje,
+.cd-tresc[data-stan-karty~='wznowiona'] > .cd-przebieg { display: flex; }
+
+/* ── Wykaz pracy w tle ────────────────────────────────────────────────────── */
+
+.cd-sesje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.cd-sesje-glowa { display: flex; align-items: center; gap: var(--dn-od-3); }
+.cd-sesje-glowa > .dn-btn { margin-left: auto; }
+.cd-sesje-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.cd-sesje-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+/* Jedna kolumna to stan wyjściowy: nazwa sesji nie ustępuje metryce. */
+.cd-sesje-lista { display: grid; gap: var(--dn-od-1); grid-template-columns: minmax(0, 1fr); }
+
+.cd-sesja {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-sm);
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.cd-sesja:hover { border-color: var(--dn-sygnal-obrys); background: var(--dn-panel); transform: translateX(2px); }
+.cd-sesja-znak { display: grid; place-content: center; flex: none; color: var(--dn-ostrzezenie-tekst); }
+.cd-sesja-nazwa { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Miejsce pracy sesji: środowisko i moduł. Bez tego wiersz mówi, że coś biegnie,
+   ale nie mówi, gdzie wejść. */
+.cd-sesja-gdzie {
+  flex: none;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  white-space: nowrap;
+}
+.cd-sesja-meta { margin-left: auto; flex: none; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.cd-sesja-akcja { margin-left: var(--dn-od-2); flex: none; }
+.cd-sesja--decyzja { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
+.cd-sesja--decyzja .cd-sesja-nazwa,
+.cd-sesja--decyzja .cd-sesja-gdzie,
+.cd-sesja--decyzja .cd-sesja-meta { color: var(--dn-ostrzezenie-tekst); }
+.cd-sesja--decyzja .cd-sesja-meta { margin-left: auto; }
+
+/* ── Przebieg sesji, do której Operator wraca ─────────────────────────────── */
+
+.cd-przebieg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.cd-przebieg-wykaz { display: flex; flex-direction: column; gap: var(--dn-od-2); margin: 0; padding: 0; list-style: none; }
+.cd-przebieg-poz {
+  display: grid;
+  grid-template-columns: 10ch minmax(0, 1fr);
+  gap: var(--dn-od-3);
+  align-items: baseline;
+  padding-left: var(--dn-od-3);
+  border-left: var(--dn-wym-wstega) solid var(--dn-obrys);
+  font-size: var(--dn-fs-sm);
+}
+.cd-przebieg-poz[data-stan='reakcja'] { border-left-color: var(--dn-ostrzezenie-tekst); }
+.cd-przebieg-poz[data-stan='praca'] { border-left-color: var(--dn-sygnal-500); }
+.cd-przebieg-czas { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.cd-przebieg-tresc { color: var(--dn-tekst-2); }
+.cd-przebieg-stopka { display: flex; flex-wrap: wrap; gap: var(--dn-od-1); }
+
+/* ── Archiwum środowisk ───────────────────────────────────────────────────── */
+
+.cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
+.cd-archiwum > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.cd-archiwum > summary::-webkit-details-marker { display: none; }
+.cd-archiwum > summary:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.cd-archiwum[open] > summary { border-bottom: 1px solid var(--dn-obrys-subtelny); }
+.cd-archiwum-tresc {
+  padding: var(--dn-od-3) var(--dn-od-4);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards;
+}
+
+/* ── Panel samouczka ──────────────────────────────────────────────────────── */
+
+.cd-nauka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-nauka-wstep { margin: 0; color: var(--dn-tekst-2); }
+.cd-nauka-kroki { display: flex; flex-direction: column; gap: var(--dn-od-3); margin: 0; padding: 0; list-style: none; }
+.cd-nauka-kroki > li {
+  display: grid;
+  grid-template-columns: var(--dn-wym-awatar-sm) minmax(0, 1fr);
+  gap: var(--dn-od-1) var(--dn-od-3);
+  align-items: start;
+}
+.cd-nauka-kroki > li > b { color: var(--dn-tekst); }
+.cd-nauka-kroki > li > span:last-child { grid-column: 2; color: var(--dn-tekst-2); }
+.cd-nauka-numer {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-sygnal-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.cd-nauka-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+.cd-nauka-nota > svg { flex: none; color: var(--dn-tekst-3); }
+
+/* ── Zasłona treści modułu ────────────────────────────────────────────────── */
+
+.cd-zaslona { display: grid; place-content: center; padding: var(--dn-od-16) var(--dn-od-6); }
+.cd-zaslona[hidden] { display: none; }
+.cd-zaslona-tresc {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  max-width: 64ch;
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+
+/* Liczba kolumn stref 1 i 2 wynika z miejsca na płótnie; przy otwartym panelu
+   samouczka płótno jest o 320 px węższe, więc progi przesuwają się o tę samą
+   wartość. Karta środowiska nie schodzi poniżej ~260 px — niżej tytuł
+   środowiska łamie się w połowie wyrazu.
+   Liczba powtórzeń w `repeat()` musi być literałem: `var()` w tym miejscu jest
+   nieprawidłowe i deklaracja przepada. */
+@media (max-width: 1500px) {
+  .cd-siatka-srodowisk, .cd-siatka-kafli { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 1180px) {
+  .cd-siatka-srodowisk, .cd-siatka-kafli { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .cd-siatka-srodowisk, .cd-siatka-kafli { grid-template-columns: minmax(0, 1fr); }
+}
+
+body:has(#panel-samouczek:not([hidden])) .cd-siatka-srodowisk,
+body:has(#panel-samouczek:not([hidden])) .cd-siatka-kafli { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1500px) {
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-srodowisk,
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-kafli { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1180px) {
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-srodowisk,
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-kafli { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Wykaz pracy w tle dzieli się na dwie kolumny, gdy płótno ma na nie miejsce. */
+@container plotno (min-width: 1080px) {
+  .cd-sesje-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .cd-tresc { padding: var(--dn-od-5) var(--dn-od-3) var(--dn-od-10); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-tresc > *,
+  .cd-archiwum-tresc { animation: none; }
+}
+
+/* ── PŁÓTNO KARTY MODUŁOWEJ ────────────────────────────────────────────────
+   Karta modułu wskazuje własne płótno: wybranie karty zdejmuje pulpit Centrum.
+   Prototyp niesie tu nagłówek warsztatu i odnośnik do prototypu modułu —
+   układ warsztatu należy do tamtego okna, nie do Centrum dowodzenia. */
+.cd-tresc--modul { gap: var(--dn-od-3); }
+
+.cd-modul-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.cd-modul-nazwa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst);
+}
+.cd-modul-sesja {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-modul-opis { max-width: 68ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
+.cd-modul-odnosnik { display: flex; align-items: center; gap: var(--dn-od-2); }

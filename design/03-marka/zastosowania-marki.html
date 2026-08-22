@@ -1,0 +1,1831 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — zastosowania marki na nośnikach</title>
+<meta name="description" content="Galeria zastosowań marki Danaco Console: obraz Open Graph, baner LinkedIn, tapety, tła slajdów, karta tytułowa, sygnatura poczty, papier firmowy, wizytówka, ekran powitalny, awatar, szablon slajdów, znak wodny. Podglądy z siatką konstrukcyjną, powiększeniem i kopiowaniem kodu.">
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   ZASTOSOWANIA MARKI — warstwa własna dokumentu.
+   Prefiks .zn-* = „zastosowania nośnikowe". Klasy .dn-* z biblioteki systemu.
+   ZASADA BEZWZGLĘDNA: wyłącznie var(--dn-*). Zero wartości szesnastkowych.
+   ========================================================================== */
+
+/* --- 1. Szkielet strony -------------------------------------------------- */
+.zn-pasek { position: sticky; top: 0; z-index: var(--dn-z-pasek); }
+.zn-pasek-godlo { width: 26px; height: 26px; flex: none; display: block; }
+.zn-pasek-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  padding-left: var(--dn-od-3);
+  margin-left: var(--dn-od-3);
+  border-left: 1px solid var(--dn-rama-obrys);
+  white-space: nowrap;
+}
+@media (max-width: 860px) { .zn-pasek-tytul { display: none; } }
+
+.zn-uklad {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--dn-od-8);
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-6) var(--dn-od-16);
+}
+@media (max-width: 1120px) { .zn-uklad { grid-template-columns: 1fr; gap: var(--dn-od-4); } }
+
+/* --- 2. Boczny spis treści ---------------------------------------------- */
+.zn-spis {
+  position: sticky;
+  top: calc(var(--dn-wym-pasek) + var(--dn-od-4));
+  align-self: start;
+  max-height: calc(100vh - var(--dn-wym-pasek) - var(--dn-od-8));
+  overflow: auto;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+@media (max-width: 1120px) { .zn-spis { position: static; max-height: none; } }
+.zn-spis-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin: 0 0 var(--dn-od-3);
+}
+.zn-spis ol { list-style: none; margin: 0; padding: 0; counter-reset: zn-spis; }
+.zn-spis li { counter-increment: zn-spis; }
+.zn-spis a {
+  display: flex;
+  gap: var(--dn-od-2);
+  align-items: baseline;
+  padding: var(--dn-od-2) var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  text-decoration: none;
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+  border-left: 2px solid transparent;
+}
+.zn-spis a::before {
+  content: counter(zn-spis, decimal-leading-zero);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+.zn-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.zn-spis a:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.zn-spis a[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  border-left-color: var(--dn-sygnal-wypelnienie);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+/* --- 3. Sekcje ----------------------------------------------------------- */
+.zn-tresc { min-width: 0; }
+.zn-sekcja { scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-4)); margin-bottom: var(--dn-od-16); }
+.zn-sekcja-naglowek { margin-bottom: var(--dn-od-5); }
+.zn-nadtytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin: 0 0 var(--dn-od-2);
+}
+.zn-sekcja h2 {
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-gruba);
+  font-size: var(--dn-fs-2xl);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  margin: 0 0 var(--dn-od-3);
+  color: var(--dn-tekst);
+}
+.zn-sekcja h3 {
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-lg);
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+  color: var(--dn-tekst);
+}
+.zn-lead { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 76ch; margin: 0 0 var(--dn-od-4); }
+.zn-tresc p { line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 82ch; }
+
+/* --- 4. Karta nośnika ---------------------------------------------------- */
+.zn-siatka-nosnikow { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: var(--dn-od-6); }
+@media (max-width: 720px) { .zn-siatka-nosnikow { grid-template-columns: 1fr; } }
+
+.zn-nosnik {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.zn-nosnik-scena {
+  position: relative;
+  background: var(--dn-powierzchnia-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  display: grid;
+  place-items: center;
+  padding: var(--dn-od-4);
+  min-height: 160px;
+}
+.zn-podglad { position: relative; display: block; max-width: 100%; line-height: 0; box-shadow: var(--dn-cien-2); }
+.zn-podglad img { display: block; max-width: 100%; height: auto; }
+.zn-podglad--kolo img { border-radius: var(--dn-r-pill); }
+
+/* nakładka siatki konstrukcyjnej */
+.zn-podglad::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+  background-image:
+    linear-gradient(to right, var(--dn-sygnal-wypelnienie) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--dn-sygnal-wypelnienie) 1px, transparent 1px);
+  /* moduł liczony ze skryptu z atrybutu data-modul i wymiarów nośnika */
+  background-size: var(--zn-modul-x, 6.25%) var(--zn-modul-y, 11.111%);
+}
+.zn-podglad[data-siatka='tak']::after { opacity: .34; }
+.zn-podglad[data-siatka='tak'] { outline: 1px dashed var(--dn-sygnal-wypelnienie); outline-offset: -1px; }
+
+.zn-nosnik-korpus { padding: var(--dn-od-4); display: flex; flex-direction: column; gap: var(--dn-od-3); flex: 1 1 auto; }
+.zn-nosnik-tytul { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3); flex-wrap: wrap; }
+.zn-nosnik-tytul h3 { margin: 0; font-size: var(--dn-fs-lg); }
+.zn-wymiary {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.zn-nosnik-opis { font-size: var(--dn-fs-base); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2); margin: 0; }
+.zn-meta { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--dn-od-1) var(--dn-od-3); margin: 0; font-size: var(--dn-fs-sm); }
+.zn-meta dt { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--dn-tekst-3); }
+.zn-meta dd { margin: 0; color: var(--dn-tekst-2); }
+.zn-nosnik-akcje { display: flex; gap: var(--dn-od-2); flex-wrap: wrap; margin-top: auto; padding-top: var(--dn-od-1); }
+
+/* --- 5. Blok reguł „wolno / nie wolno" ---------------------------------- */
+.zn-reguly { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--dn-od-4); margin: var(--dn-od-4) 0; }
+.zn-regula { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); padding: var(--dn-od-4); background: var(--dn-panel); }
+.zn-regula h4 { margin: 0 0 var(--dn-od-2); font-size: var(--dn-fs-base); font-family: var(--dn-ff-bazowa); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); display: flex; align-items: center; gap: var(--dn-od-2); }
+.zn-regula ul { margin: 0; padding-left: var(--dn-od-5); font-size: var(--dn-fs-base); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2); }
+.zn-regula li + li { margin-top: var(--dn-od-1); }
+.zn-regula--tak { border-left: 2px solid var(--dn-sukces-tekst); }
+.zn-regula--nie { border-left: 2px solid var(--dn-blad-tekst); }
+.zn-ikona { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+
+/* --- 6. Tabele ----------------------------------------------------------- */
+.zn-tabela-otoczka { overflow-x: auto; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); margin: var(--dn-od-4) 0; }
+table.zn-tabela { width: 100%; border-collapse: collapse; font-size: var(--dn-fs-base); }
+table.zn-tabela th, table.zn-tabela td { padding: var(--dn-od-2) var(--dn-od-3); text-align: left; border-bottom: 1px solid var(--dn-obrys-subtelny); vertical-align: top; }
+table.zn-tabela thead th {
+  position: sticky; top: 0; z-index: var(--dn-z-przybornik);
+  background: var(--dn-panel);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: .08em; text-transform: uppercase; color: var(--dn-tekst-3);
+  font-weight: var(--dn-fw-srednia);
+}
+table.zn-tabela tbody tr:hover { background: var(--dn-hover); }
+table.zn-tabela td.zn-liczba { font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; color: var(--dn-tekst); }
+table.zn-tabela tbody tr:last-child td { border-bottom: 0; }
+
+/* --- 7. Kod i kopiowanie ------------------------------------------------- */
+.zn-kod {
+  position: relative;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  padding: var(--dn-od-3);
+  overflow: auto;
+  max-height: 320px;
+  margin: var(--dn-od-3) 0;
+}
+.zn-kod pre { margin: 0; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); line-height: 1.55; color: var(--dn-tekst-2); white-space: pre; }
+.zn-kod-pasek { display: flex; align-items: center; justify-content: space-between; gap: var(--dn-od-3); margin-top: var(--dn-od-3); }
+.zn-kod-etykieta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3); }
+
+/* --- 8. Nośniki żywe ----------------------------------------------------- */
+.zn-scena-zywa {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia-2);
+  padding: var(--dn-od-6);
+  display: grid;
+  place-items: center;
+  overflow: auto;
+}
+.zn-scena-zywa--jasna { background: var(--dn-szary-200); }
+.zn-scena-zywa--ciemna { background: var(--dn-szary-1000); }
+
+/* sygnatura poczty — podgląd żywy (barwy własne nośnika, nie motywu strony) */
+.zn-sygnatura-ramka { width: 100%; max-width: 560px; }
+
+/* papier firmowy — arkusz w skali */
+.zn-arkusz-skala { width: 100%; display: grid; place-items: center; }
+.zn-arkusz {
+  width: 210mm; height: 297mm;
+  transform-origin: top center;
+  background: var(--dn-szary-0);
+  color: var(--dn-szary-900);
+  padding: 20mm;
+  display: flex; flex-direction: column;
+  box-shadow: var(--dn-cien-3);
+  font-family: var(--dn-ff-bazowa);
+}
+.zn-arkusz-naglowek { height: 32mm; flex: none; display: flex; align-items: flex-start; justify-content: space-between; gap: 10mm; border-bottom: .25mm solid var(--dn-szary-150); padding-bottom: 6mm; }
+.zn-arkusz-znak { width: 45mm; height: auto; display: block; }
+.zn-arkusz-meta { text-align: right; font-family: var(--dn-ff-mono); font-size: 7pt; line-height: 1.5; letter-spacing: .12em; text-transform: uppercase; color: var(--dn-szary-500); }
+.zn-arkusz-tresc { flex: 1 1 auto; padding-top: 12mm; max-width: 150mm; font-size: 10.5pt; line-height: 1.55; color: var(--dn-szary-900); }
+.zn-arkusz-tresc h4 { font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-gruba); font-size: 16pt; margin: 0 0 6mm; letter-spacing: -.01em; }
+.zn-arkusz-nadtytul { font-family: var(--dn-ff-mono); font-size: 7.5pt; letter-spacing: .16em; text-transform: uppercase; color: var(--dn-szary-500); margin: 0 0 3mm; }
+.zn-arkusz-pole { border: .25mm dashed var(--dn-szary-150); border-radius: 2mm; padding: 6mm; color: var(--dn-szary-600); font-size: 9.5pt; }
+.zn-arkusz-stopka { height: 18mm; flex: none; border-top: .25mm solid var(--dn-szary-150); padding-top: 4mm; display: flex; align-items: flex-start; justify-content: space-between; gap: 8mm; font-family: var(--dn-ff-mono); font-size: 7pt; line-height: 1.6; letter-spacing: .06em; color: var(--dn-szary-500); }
+.zn-arkusz-stopka strong { font-weight: var(--dn-fw-srednia); color: var(--dn-szary-600); }
+.zn-arkusz[data-siatka='tak'] { outline: .25mm dashed var(--dn-sygnal-wypelnienie); outline-offset: -20mm; }
+
+/* slajdy — podgląd żywy */
+.zn-slajd {
+  position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden;
+  /* --u = 1/1920 szerokości slajdu; wartość w px ustawia skrypt (ResizeObserver),
+     dzięki czemu układ jest dokładny niezależnie od kontekstu procentów */
+  --u: 0.5px;
+  background: var(--dn-szary-950); color: var(--dn-szary-100);
+  box-shadow: var(--dn-cien-3);
+}
+.zn-slajd[data-wariant='jasny'] { background: var(--dn-szary-50); color: var(--dn-szary-900); }
+.zn-slajd::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .04;
+  background-image:
+    linear-gradient(to right, currentColor 1px, transparent 1px),
+    linear-gradient(to bottom, currentColor 1px, transparent 1px);
+  background-size: calc(60 * var(--u)) calc(60 * var(--u));
+}
+.zn-slajd[data-siatka='tak']::after { content: ''; position: absolute; inset: calc(120 * var(--u)); border: 1px dashed var(--dn-sygnal-wypelnienie); pointer-events: none; }
+.zn-slajd-plansza { position: absolute; inset: 0; padding: calc(120 * var(--u)); display: none; flex-direction: column; }
+.zn-slajd[data-uklad='tytulowy'] .zn-slajd-plansza--tytulowy { display: flex; justify-content: center; }
+.zn-slajd[data-uklad='tresciowy'] .zn-slajd-plansza--tresciowy { display: flex; }
+.zn-slajd-znak-pionowy { width: calc(340 * var(--u)); height: auto; display: block; }
+.zn-slajd-znak-kompakt { width: calc(150 * var(--u)); height: auto; display: block; }
+.zn-slajd-regula { width: calc(340 * var(--u)); height: 1px; background: currentColor; opacity: .22; margin: calc(56 * var(--u)) 0 calc(34 * var(--u)); }
+.zn-slajd-deskryptor { font-family: var(--dn-ff-mono); font-size: calc(18 * var(--u)); letter-spacing: .14em; text-transform: uppercase; opacity: .62; }
+.zn-slajd-tytul { position: absolute; left: calc(660 * var(--u)); right: calc(120 * var(--u)); top: calc(340 * var(--u)); font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-gruba); font-size: calc(84 * var(--u)); line-height: 1.15; letter-spacing: -.01em; }
+.zn-slajd-podtytul { position: absolute; left: calc(660 * var(--u)); right: calc(120 * var(--u)); top: calc(560 * var(--u)); font-family: var(--dn-ff-mono); font-size: calc(22 * var(--u)); letter-spacing: .08em; opacity: .7; }
+.zn-slajd-stopka-tyt { position: absolute; left: calc(120 * var(--u)); bottom: calc(64 * var(--u)); font-family: var(--dn-ff-mono); font-size: calc(15 * var(--u)); opacity: .55; }
+.zn-slajd-nadtytul { font-family: var(--dn-ff-mono); font-size: calc(16 * var(--u)); letter-spacing: .16em; text-transform: uppercase; opacity: .55; margin-bottom: calc(14 * var(--u)); }
+/* barwa nagłówka slajdu pochodzi ze slajdu, nie z motywu strony */
+.zn-slajd-h { font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-gruba); font-size: calc(52 * var(--u)); line-height: 1.2; letter-spacing: -.01em; margin: 0 0 calc(18 * var(--u)); color: inherit; }
+.zn-slajd-linia { height: 1px; background: currentColor; opacity: .18; margin-bottom: calc(40 * var(--u)); }
+.zn-slajd-kolumny { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(48 * var(--u)); }
+.zn-slajd-etykieta { display: flex; align-items: center; gap: calc(12 * var(--u)); font-family: var(--dn-ff-mono); font-size: calc(15 * var(--u)); letter-spacing: .14em; text-transform: uppercase; opacity: .6; margin-bottom: calc(14 * var(--u)); }
+.zn-slajd-kropka { width: calc(12 * var(--u)); height: calc(12 * var(--u)); border-radius: var(--dn-r-pill); background: var(--dn-sygnal-400); flex: none; }
+.zn-slajd[data-wariant='jasny'] .zn-slajd-kropka { background: var(--dn-sygnal-500); }
+.zn-slajd-blok { font-size: calc(24 * var(--u)); line-height: 1.5; }
+.zn-slajd-stopka { position: absolute; left: calc(120 * var(--u)); right: calc(120 * var(--u)); bottom: calc(48 * var(--u)); display: flex; align-items: flex-end; justify-content: space-between; gap: calc(32 * var(--u)); }
+.zn-slajd-stopka-tekst { font-family: var(--dn-ff-mono); font-size: calc(14 * var(--u)); letter-spacing: .16em; text-transform: uppercase; opacity: .5; }
+
+/* przełączanie wariantu barwnego znaku — wybór pliku, nie przebarwienie */
+.zn-jasny, .zn-ciemny { display: none; }
+[data-wariant='jasny'] .zn-jasny { display: block; }
+[data-wariant='ciemny'] .zn-ciemny { display: block; }
+
+/* --- 9. Modal powiększenia ---------------------------------------------- */
+dialog.zn-modal {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  padding: 0;
+  max-width: min(96vw, 1600px);
+  width: min(96vw, 1600px);
+  max-height: 92vh;
+}
+dialog.zn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }
+.zn-modal-naglowek { display: flex; align-items: center; justify-content: space-between; gap: var(--dn-od-4); padding: var(--dn-od-3) var(--dn-od-4); border-bottom: 1px solid var(--dn-obrys); }
+.zn-modal-tytul { margin: 0; font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-lg); }
+.zn-modal-cialo { padding: var(--dn-od-4); background: var(--dn-powierzchnia-2); display: grid; place-items: center; overflow: auto; max-height: calc(92vh - 132px); }
+.zn-modal-cialo img { max-width: 100%; height: auto; display: block; box-shadow: var(--dn-cien-2); }
+.zn-modal-stopka { padding: var(--dn-od-3) var(--dn-od-4); border-top: 1px solid var(--dn-obrys); display: flex; align-items: center; justify-content: space-between; gap: var(--dn-od-3); flex-wrap: wrap; }
+.zn-modal-sciezka { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); word-break: break-all; }
+
+/* --- 10. Drobiazgi ------------------------------------------------------- */
+.zn-pasek-narzedzi { display: flex; gap: var(--dn-od-2); flex-wrap: wrap; align-items: center; margin-bottom: var(--dn-od-4); }
+.zn-znacznik {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px var(--dn-od-2); border-radius: var(--dn-r-xs);
+  border: 1px solid var(--dn-obrys); color: var(--dn-tekst-3);
+}
+.zn-kropka-sygnal { width: var(--dn-wym-kropka); height: var(--dn-wym-kropka); border-radius: var(--dn-r-pill); background: var(--dn-kropka); display: inline-block; flex: none; }
+.zn-info { border-left: 2px solid var(--dn-sygnal-wypelnienie); background: var(--dn-sygnal-tlo); padding: var(--dn-od-3) var(--dn-od-4); border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0; margin: var(--dn-od-4) 0; }
+.zn-info p { margin: 0; color: var(--dn-tekst); font-size: var(--dn-fs-base); }
+.zn-schemat {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); line-height: 1.5;
+  color: var(--dn-tekst-2); background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  padding: var(--dn-od-4); overflow-x: auto; margin: var(--dn-od-4) 0; white-space: pre;
+}
+details.zn-o-opracowaniu { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-panel); padding: var(--dn-od-4); margin-top: var(--dn-od-12); }
+details.zn-o-opracowaniu > summary { cursor: pointer; font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-lg); color: var(--dn-tekst); }
+details.zn-o-opracowaniu > summary:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+details.zn-o-opracowaniu[open] > summary { margin-bottom: var(--dn-od-3); }
+.zn-stopka { margin-top: var(--dn-od-12); padding-top: var(--dn-od-4); border-top: 1px solid var(--dn-obrys); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: .06em; color: var(--dn-tekst-3); }
+.zn-tresc a { color: var(--dn-sygnal); }
+.zn-czytnik { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ PASEK GÓRNY (rama kokpitu) ═══════════════════ -->
+<header class="dn-pasek zn-pasek">
+  <div class="dn-pasek-godlo">
+    <svg class="zn-pasek-godlo" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><path fill="#ECECEC" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#ECECEC" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#5C8CEC"/></g></svg>
+    <span class="dn-pasek-logotyp">Danaco&nbsp;Console</span>
+  </div>
+  <span class="zn-pasek-tytul">Zastosowania marki · nośniki · v2.0</span>
+  <div class="dn-pasek-prawa">
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw
+            data-motyw-ikona aria-label="Przełącz motyw jasny i ciemny" title="Przełącz motyw">
+      <svg class="ik-slonce zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="ik-ksiezyc zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="zn-uklad">
+
+  <!-- ═══════════════════ BOCZNY SPIS TREŚCI ═══════════════════ -->
+  <nav class="zn-spis" aria-label="Spis treści opracowania">
+    <p class="zn-spis-tytul">Spis treści</p>
+    <ol>
+      <li><a href="#zasady">Zasady wspólne</a></li>
+      <li><a href="#dobor">Dobór wariantu znaku</a></li>
+      <li><a href="#galeria">Galeria nośników</a></li>
+      <li><a href="#sygnatura">Sygnatura poczty</a></li>
+      <li><a href="#papier">Papier firmowy A4</a></li>
+      <li><a href="#slajdy">Szablon slajdów</a></li>
+      <li><a href="#znak-wodny">Znak wodny</a></li>
+      <li><a href="#pole-ochronne">Pole ochronne</a></li>
+      <li><a href="#zrodlo">Materiał źródłowy</a></li>
+      <li><a href="#inwentarz">Inwentarz plików</a></li>
+    </ol>
+  </nav>
+
+  <main class="zn-tresc">
+
+    <!-- ─────────────── 1. ZASADY WSPÓLNE ─────────────── -->
+    <section class="zn-sekcja" id="zasady" aria-labelledby="zasady-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">01 · Fundament</p>
+        <h2 id="zasady-h">Zasady wspólne wszystkich nośników</h2>
+        <p class="zn-lead">
+          Nośnik nie jest kampanią. Każdy napis pochodzi z dokumentacji produktu,
+          a kropka sygnału jest jedynym elementem barwnym kadru — wszystko
+          pozostałe mieści się w skali neutralnej.
+        </p>
+      </div>
+
+      <div class="zn-info">
+        <p><strong>Jeden akcent [NIENEGOCJOWALNE].</strong> Tło, typografia, reguły,
+        siatka i ramki są w skali szarości bez wyjątku. Barwa sygnału występuje
+        wyłącznie jako kropka znaku. Podział wykonuje reguła 1&nbsp;px w barwie obrysu.</p>
+      </div>
+
+      <div class="zn-schemat">TŁO ─────────────────────── skala szarości (bez wyjątku)
+TYPOGRAFIA ──────────────── skala szarości (bez wyjątku)
+REGUŁY, SIATKA, RAMKI ───── skala szarości (bez wyjątku)
+KROPKA SYGNAŁU ──────────── #3B6FE0 / #5C8CEC   ← jedyny akcent</div>
+
+      <h3>Barwy nośników</h3>
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Barwy nośników w obu motywach wraz z żetonem systemu</caption>
+          <thead><tr><th scope="col">Rola</th><th scope="col">Nośnik ciemny</th><th scope="col">Nośnik jasny</th><th scope="col">Żeton</th></tr></thead>
+          <tbody>
+            <tr><td>Tło nośnika</td><td class="zn-liczba">#0F0F0F</td><td class="zn-liczba">#F4F4F4</td><td><code>--dn-tlo</code></td></tr>
+            <tr><td>Pole medalionu</td><td class="zn-liczba">#131313</td><td class="zn-liczba">#131313</td><td><code>--dn-rama</code></td></tr>
+            <tr><td>Farba znaku, tekst główny</td><td class="zn-liczba">#ECECEC</td><td class="zn-liczba">#181818</td><td><code>--dn-tekst</code></td></tr>
+            <tr><td>Tekst pomocniczy</td><td class="zn-liczba">#9E9E9E</td><td class="zn-liczba">#616161</td><td><code>--dn-tekst-2</code></td></tr>
+            <tr><td>Metadane, deskryptor</td><td class="zn-liczba">#7C7C7C</td><td class="zn-liczba">#7C7C7C</td><td><code>--dn-tekst-3</code></td></tr>
+            <tr><td>Reguła, obrys</td><td class="zn-liczba">#2A2A2A</td><td class="zn-liczba">#E3E3E3</td><td><code>--dn-obrys</code></td></tr>
+            <tr><td><span class="zn-kropka-sygnal"></span> Kropka sygnału</td><td class="zn-liczba">#5C8CEC</td><td class="zn-liczba">#3B6FE0</td><td><code>--dn-kropka</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Moduł siatki nośnika</h3>
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Moduł siatki i margines każdego nośnika</caption>
+          <thead><tr><th scope="col">Nośnik</th><th scope="col">Kadr</th><th scope="col">Moduł</th><th scope="col">Kolumn × wierszy</th><th scope="col">Margines</th></tr></thead>
+          <tbody>
+            <tr><td>Open Graph</td><td class="zn-liczba">1200 × 630</td><td class="zn-liczba">48</td><td class="zn-liczba">25 × 13,1</td><td class="zn-liczba">80</td></tr>
+            <tr><td>Baner LinkedIn</td><td class="zn-liczba">1584 × 396</td><td class="zn-liczba">44</td><td class="zn-liczba">36 × 9</td><td class="zn-liczba">120</td></tr>
+            <tr><td>Tapeta</td><td class="zn-liczba">2560 × 1440</td><td class="zn-liczba">80</td><td class="zn-liczba">32 × 18</td><td class="zn-liczba">—</td></tr>
+            <tr><td>Tapeta</td><td class="zn-liczba">3840 × 2160</td><td class="zn-liczba">120</td><td class="zn-liczba">32 × 18</td><td class="zn-liczba">—</td></tr>
+            <tr><td>Tło slajdu</td><td class="zn-liczba">1920 × 1080</td><td class="zn-liczba">60</td><td class="zn-liczba">32 × 18</td><td class="zn-liczba">120</td></tr>
+            <tr><td>Karta tytułowa</td><td class="zn-liczba">1600 × 900</td><td class="zn-liczba">50</td><td class="zn-liczba">32 × 18</td><td class="zn-liczba">100</td></tr>
+            <tr><td>Ekran powitalny</td><td class="zn-liczba">1280 × 800</td><td class="zn-liczba">40</td><td class="zn-liczba">32 × 20</td><td class="zn-liczba">—</td></tr>
+            <tr><td>Papier firmowy</td><td class="zn-liczba">210 × 297 mm</td><td class="zn-liczba">5 mm</td><td class="zn-liczba">42 × 59,4</td><td class="zn-liczba">20 mm</td></tr>
+            <tr><td>Wizytówka</td><td class="zn-liczba">90 × 50 mm</td><td class="zn-liczba">2,5 mm</td><td class="zn-liczba">36 × 20</td><td class="zn-liczba">7 mm</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="zn-reguly">
+        <div class="zn-regula zn-regula--tak">
+          <h4><svg class="zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Wolno</h4>
+          <ul>
+            <li>zmienić zdanie ekspozycyjne na inne <strong>z dokumentacji produktu</strong>,</li>
+            <li>wytworzyć rozdzielczości pochodne z tego samego pliku SVG,</li>
+            <li>użyć wariantu jasnego nośnika tam, gdzie odbiorca ma wymuszony motyw jasny,</li>
+            <li>uzupełnić pola <code>[Imię i nazwisko]</code> i <code>[stanowisko]</code>.</li>
+          </ul>
+        </div>
+        <div class="zn-regula zn-regula--nie">
+          <h4><svg class="zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> Nie wolno</h4>
+          <ul>
+            <li>dodawać drugiego akcentu barwnego obok kropki sygnału,</li>
+            <li>kłaść znak na zdjęciu, gradiencie ani bloku barwnym,</li>
+            <li>zmieniać krzywych sygnetu, obracać go ani rozciągać,</li>
+            <li>wpisywać zmyślonych nazwisk, metryk, klientów i adresów.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── 2. DOBÓR WARIANTU ─────────────── -->
+    <section class="zn-sekcja" id="dobor" aria-labelledby="dobor-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">02 · Decyzja</p>
+        <h2 id="dobor-h">Dobór wariantu znaku do nośnika</h2>
+        <p class="zn-lead">
+          Konfiguracje A–H są zamknięte (księga znaku, rozdz. 7). Nośnik nie
+          tworzy własnego układu — wybiera jeden z gotowych.
+        </p>
+      </div>
+
+      <div class="zn-schemat">NOŚNIK
+  │
+  ├─ Czy nazwa „Danaco Console" pada obok znaku tekstem?
+  │     TAK  → A  sygnet
+  │     NIE ↓
+  │
+  ├─ Jakie proporcje ma pole na znak?
+  │     szerokie i niskie (pasek, stopka)     → E  lockup kompaktowy
+  │     szerokie z miejscem na dwie linie     → C  lockup poziomy
+  │     kwadratowe albo wysokie               → D  lockup pionowy
+  │     kwadratowe i małe (≤ 96 px)           → A  sygnet
+  │     kwadratowe i bardzo małe (&lt; 24 px)    → A′ sygnet uproszczony
+  │
+  ├─ Czy odbiorca styka się z marką po raz pierwszy?
+  │     TAK  → dodaj deskryptor „AI Operating Environment" (F)
+  │
+  ├─ Czy znak jest treścią, czy fakturą?
+  │     treścią  → wariant podstawowy / na ciemnym, pełne krycie
+  │     fakturą  → H  znak wodny, krycie 8 % (jasne) / 10 % (ciemne)
+  │
+  └─ Jaka technologia?
+        ekran RGB            → wariant podstawowy / na ciemnym
+        druk pełnokolorowy   → wariant podstawowy / na ciemnym
+        druk jednokolorowy   → mono czarny / mono biały
+        poczta elektroniczna → PNG 2× w data URI</div>
+
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Mapa nośnik do konfiguracji znaku</caption>
+          <thead><tr><th scope="col">Nośnik</th><th scope="col">Konfiguracja</th><th scope="col">Wariant barwny</th><th scope="col">Wielkość znaku</th></tr></thead>
+          <tbody>
+            <tr><td>Obraz Open Graph</td><td><strong>C</strong> lockup poziomy</td><td>na ciemnym / podstawowy</td><td class="zn-liczba">131 px</td></tr>
+            <tr><td>Baner LinkedIn</td><td><strong>A</strong> sygnet + napis</td><td>na ciemnym / podstawowy</td><td class="zn-liczba">132 px</td></tr>
+            <tr><td>Tapeta</td><td><strong>H</strong> znak wodny</td><td>mono z żywą kropką</td><td class="zn-liczba">550 px</td></tr>
+            <tr><td>Slajd tytułowy</td><td><strong>D</strong> lockup pionowy</td><td>na ciemnym / podstawowy</td><td class="zn-liczba">340 px</td></tr>
+            <tr><td>Slajd treściowy</td><td><strong>E</strong> lockup kompaktowy</td><td>na ciemnym / podstawowy</td><td class="zn-liczba">150 px</td></tr>
+            <tr><td>Karta tytułowa</td><td><strong>C</strong> lockup poziomy</td><td>na ciemnym / podstawowy</td><td class="zn-liczba">182 px</td></tr>
+            <tr><td>Sygnatura poczty</td><td><strong>E</strong> lockup kompaktowy</td><td>podstawowy / na ciemnym</td><td class="zn-liczba">168 px</td></tr>
+            <tr><td>Papier firmowy — arkusz 1</td><td><strong>C</strong> lockup poziomy</td><td>podstawowy</td><td class="zn-liczba">45 mm</td></tr>
+            <tr><td>Papier firmowy — arkusz kolejny</td><td><strong>E</strong> lockup kompaktowy</td><td>podstawowy</td><td class="zn-liczba">26 mm</td></tr>
+            <tr><td>Wizytówka awers</td><td><strong>E</strong> lockup kompaktowy</td><td>na ciemnym</td><td class="zn-liczba">28 mm</td></tr>
+            <tr><td>Wizytówka rewers</td><td><strong>A</strong> sygnet</td><td>podstawowy</td><td class="zn-liczba">11 mm</td></tr>
+            <tr><td>Ekran powitalny</td><td><strong>D</strong> lockup pionowy</td><td>na ciemnym</td><td class="zn-liczba">180 px</td></tr>
+            <tr><td>Awatar kwadrat / koło</td><td><strong>A</strong> sygnet w medalionie</td><td>na ciemnym</td><td class="zn-liczba">208 / 176 px</td></tr>
+            <tr><td>Awatar ≤ 48 px</td><td><strong>A′</strong> sygnet uproszczony</td><td>na ciemnym</td><td class="zn-liczba">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ─────────────── 3. GALERIA NOŚNIKÓW ─────────────── -->
+    <section class="zn-sekcja" id="galeria" aria-labelledby="galeria-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">03 · Galeria</p>
+        <h2 id="galeria-h">Galeria nośników</h2>
+        <p class="zn-lead">
+          Każdy nośnik w podglądzie z etykietą wymiarów. Przycisk
+          <em>siatka</em> nakłada podziałkę konstrukcyjną, przycisk
+          <em>powiększ</em> otwiera nośnik w pełnej skali.
+          Przełącznik motywu podmienia warianty barwne tam, gdzie istnieją.
+        </p>
+      </div>
+
+      <div class="zn-pasek-narzedzi">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-siatka-wszystkie" aria-pressed="false">
+          Siatka konstrukcyjna na wszystkich
+        </button>
+        <span class="zn-znacznik">30 plików SVG</span>
+        <span class="zn-znacznik">32 pliki PNG</span>
+        <span class="zn-znacznik">4 nośniki HTML</span>
+      </div>
+
+      <div class="zn-siatka-nosnikow">
+
+        <!-- 3.1 Open Graph -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="48">
+              <img alt="Obraz Open Graph 1200 × 630 — lockup poziomy, zdanie ekspozycyjne i lista czterech środowisk"
+                   src="zastosowania/png/obraz-og-1200x630.png"
+                   data-plik-ciemny="zastosowania/png/obraz-og-1200x630.png"
+                   data-plik-jasny="zastosowania/png/obraz-og-1200x630-jasny.png"
+                   width="1200" height="630" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Obraz Open Graph</h3>
+              <span class="zn-wymiary">1200 × 630 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Miniatura karty odnośnika w serwisach i komunikatorach. Pierwszy, często jedyny kontakt odbiorcy z marką.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>C lockup poziomy · 131 px szer.</dd>
+              <dt>Moduł</dt><dd>48 px · margines 80 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 9,1 px · zapas 8,8 ×</dd>
+              <dt>Zakaz</dt><dd>zdjęcie w tle, drugi akcent, tekst dłuższy niż dwa wiersze</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/obraz-og-1200x630.png" data-tytul="Obraz Open Graph 1200 × 630">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.2 Baner LinkedIn -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="44">
+              <img alt="Baner LinkedIn 1584 × 396 — sygnet, napis DANACO CONSOLE, deskryptor i blok producenta"
+                   src="zastosowania/png/baner-linkedin-1584x396.png"
+                   data-plik-ciemny="zastosowania/png/baner-linkedin-1584x396.png"
+                   data-plik-jasny="zastosowania/png/baner-linkedin-1584x396-jasny.png"
+                   width="1584" height="396" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Baner LinkedIn</h3>
+              <span class="zn-wymiary">1584 × 396 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Tło profilu i strony firmowej. Kadr 4 : 1 oglądany w skali 30–60 %; awatar profilu osobowego zasłania lewe ≈ 440 px.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>A sygnet 132 px + napis składany</dd>
+              <dt>Moduł</dt><dd>44 px · margines 120 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 30,2 px · zapas 4,0 ×</dd>
+              <dt>Zakaz</dt><dd>treść w dolnych 90 px, pas barwny przy krawędzi</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/baner-linkedin-1584x396.png" data-tytul="Baner LinkedIn 1584 × 396">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.3 Tapeta 2560 -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="80">
+              <img alt="Tapeta 2560 × 1440 — znak zdegradowany do znaku wodnego, kropka sygnału jako jedyny akcent"
+                   src="zastosowania/png/tapeta-2560x1440.png"
+                   data-plik-ciemny="zastosowania/png/tapeta-2560x1440.png"
+                   data-plik-jasny="zastosowania/png/tapeta-2560x1440-jasna.png"
+                   width="2560" height="1440" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Tapeta pulpitu</h3>
+              <span class="zn-wymiary">2560 × 1440 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Tło stanowiska pracy Operatora. Groty schodzą do krycia 7 %, kropka sygnału zostaje przy 90 % — pulpit pokazuje jeden punkt, w którym biegnie praca.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>H znak wodny · farba 21,5 % szerokości</dd>
+              <dt>Moduł</dt><dd>80 px · kompozycja x 50 % · y 46 %</dd>
+              <dt>Pole ochronne</dt><dd>nie obowiązuje (znak pod treścią)</dd>
+              <dt>Zakaz</dt><dd>krycie grotów &gt; 10 %, powielanie znaku w rastrze</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/tapeta-2560x1440.png" data-tytul="Tapeta 2560 × 1440">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.4 Tapeta 3840 -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="120">
+              <img alt="Tapeta 3840 × 2160 — ta sama kompozycja względna co przy 2560 px"
+                   src="zastosowania/png/tapeta-3840x2160.png"
+                   data-plik-ciemny="zastosowania/png/tapeta-3840x2160.png"
+                   data-plik-jasny="zastosowania/png/tapeta-3840x2160-jasna.png"
+                   width="3840" height="2160" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Tapeta pulpitu 4K</h3>
+              <span class="zn-wymiary">3840 × 2160 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Kompozycja względna identyczna z wersją 2560 — moduł siatki rośnie proporcjonalnie (32 × 18 komórek w obu).</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>H znak wodny · farba 826 px</dd>
+              <dt>Moduł</dt><dd>120 px</dd>
+              <dt>Strefa ikon</dt><dd>lewa kolumna 360 px wolna od farby</dd>
+              <dt>Zakaz</dt><dd>krycie kropki &lt; 80 % (ginie jedyny akcent)</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/tapeta-3840x2160.png" data-tytul="Tapeta 3840 × 2160">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.5 Tło slajdu tytułowe -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="60">
+              <img alt="Tło slajdu tytułowego 1920 × 1080 — lockup pionowy po lewej, prawe dwie trzecie puste pod tytuł"
+                   src="zastosowania/png/tlo-slajdu-tytulowy-1920x1080.png"
+                   data-plik-ciemny="zastosowania/png/tlo-slajdu-tytulowy-1920x1080.png"
+                   data-plik-jasny="zastosowania/png/tlo-slajdu-tytulowy-1920x1080-jasny.png"
+                   width="1920" height="1080" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Tło slajdu — tytułowe</h3>
+              <span class="zn-wymiary">1920 × 1080 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Podkład slajdu otwierającego. Lockup pionowy 340 px odpowiada zaleceniu księgi (60 mm na slajdzie); prawe dwie trzecie kadru pozostają puste.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>D lockup pionowy · 340 px szer.</dd>
+              <dt>Moduł</dt><dd>60 px · margines 120 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 47,0 px · zapas 2,6 ×</dd>
+              <dt>Zakaz</dt><dd>treść slajdu w polu znaku</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/tlo-slajdu-tytulowy-1920x1080.png" data-tytul="Tło slajdu tytułowego 1920 × 1080">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.6 Tło slajdu treściowe -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="60">
+              <img alt="Tło slajdu treściowego 1920 × 1080 — reguła tytułu na 216 px, znak kompaktowy w prawym dolnym rogu"
+                   src="zastosowania/png/tlo-slajdu-tresciowy-1920x1080.png"
+                   data-plik-ciemny="zastosowania/png/tlo-slajdu-tresciowy-1920x1080.png"
+                   data-plik-jasny="zastosowania/png/tlo-slajdu-tresciowy-1920x1080-jasny.png"
+                   width="1920" height="1080" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Tło slajdu — treściowe</h3>
+              <span class="zn-wymiary">1920 × 1080 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Podkład slajdu roboczego. Reguła tytułu na y = 216 px, znak kompaktowy 150 px w prawym dolnym rogu, poza polem treści.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>E lockup kompaktowy · 150 px szer.</dd>
+              <dt>Moduł</dt><dd>60 px · margines 120 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 9,9 px · zapas 12,1 ×</dd>
+              <dt>Zakaz</dt><dd>znak w obu rogach jednocześnie</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/tlo-slajdu-tresciowy-1920x1080.png" data-tytul="Tło slajdu treściowego 1920 × 1080">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.7 Karta tytułowa -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="50">
+              <img alt="Karta tytułowa dokumentacji 1600 × 900 — lockup poziomy, tytuł, deskryptor i czterokolumnowa metryka wydania"
+                   src="zastosowania/png/karta-tytulowa-dokumentacji-1600x900.png"
+                   data-plik-ciemny="zastosowania/png/karta-tytulowa-dokumentacji-1600x900.png"
+                   data-plik-jasny="zastosowania/png/karta-tytulowa-dokumentacji-1600x900-jasna.png"
+                   width="1600" height="900" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Karta tytułowa dokumentacji</h3>
+              <span class="zn-wymiary">1600 × 900 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Pierwsza strona dokumentu i miniatura w indeksie. Niesie metrykę wydania: wersja, status, data, producent — wartości wyłącznie z metryki produktu.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>C lockup poziomy · 182 px szer.</dd>
+              <dt>Moduł</dt><dd>50 px · margines 100 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 12,6 px · zapas 7,9 ×</dd>
+              <dt>Zakaz</dt><dd>metryka spoza dokumentacji, dwa znaki na karcie</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/karta-tytulowa-dokumentacji-1600x900.png" data-tytul="Karta tytułowa dokumentacji 1600 × 900">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.8 Wizytówka awers -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="2.5">
+              <img alt="Wizytówka — awers 90 × 50 mm, atrament, lockup kompaktowy 28 mm i deskryptor"
+                   src="zastosowania/png/wizytowka-awers-90x50.png"
+                   width="1063" height="591" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Wizytówka — awers</h3>
+              <span class="zn-wymiary">90 × 50 mm</span>
+            </div>
+            <p class="zn-nosnik-opis">Strona atramentowa (<code>#131313</code>). Lockup kompaktowy 28 mm — powyżej minimum druku 22 mm. Wersja ze spadem 96 × 56 mm z paserami w osobnym pliku.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>E lockup kompaktowy · 28 mm szer.</dd>
+              <dt>Spad</dt><dd>3 mm · margines wewnętrzny 7 mm</dd>
+              <dt>Pole ochronne</dt><dd>½X = 1,9 mm · zapas 3,7 ×</dd>
+              <dt>Zakaz</dt><dd>lakier wybiórczy na kropce, znak w polu spadu</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/wizytowka-awers-90x50-spady.png" data-tytul="Wizytówka — awers ze spadem 96 × 56 mm">Powiększ (spady)</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.9 Wizytówka rewers -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="2.5">
+              <img alt="Wizytówka — rewers 90 × 50 mm, papier jasny, blok kontaktowy i sygnet 11 mm"
+                   src="zastosowania/png/wizytowka-rewers-90x50.png"
+                   width="1063" height="591" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Wizytówka — rewers</h3>
+              <span class="zn-wymiary">90 × 50 mm</span>
+            </div>
+            <p class="zn-nosnik-opis">Strona papierowa. Pola użytkownika zapisane jako <code>[Imię i nazwisko]</code> i <code>[stanowisko]</code> — nigdy jako osoby przykładowe.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>A sygnet · 11 mm (minimum druku 9 mm)</dd>
+              <dt>Gramatura</dt><dd>300–350 g/m² · soft touch matowy</dd>
+              <dt>Barwy</dt><dd>4 + 4 CMYK albo 1 + 1 mono</dd>
+              <dt>Zakaz</dt><dd>tekst bliżej niż 5 mm od krawędzi netto</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/wizytowka-rewers-90x50-spady.png" data-tytul="Wizytówka — rewers ze spadem 96 × 56 mm">Powiększ (spady)</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.10 Ekran powitalny -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="40">
+              <img alt="Ekran powitalny aplikacji 1280 × 800 — lockup pionowy, tor postępu i etykieta stanu ŁĄCZENIE"
+                   src="zastosowania/png/ekran-powitalny-1280x800.png"
+                   width="1280" height="800" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Ekran powitalny aplikacji</h3>
+              <span class="zn-wymiary">1280 × 800 · 2560 × 1600 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Okno startowe w stanie <strong>Łączenie</strong>. Tor postępu jest w bieli o kryciu 55 %, nie w sygnale — kropka znaku pozostaje jedynym akcentem kadru.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>D lockup pionowy · 180 px szer.</dd>
+              <dt>Tor postępu</dt><dd>220 × 2 px · biel 10 % / 55 %</dd>
+              <dt>Pole ochronne</dt><dd>½X = 24,9 px · odstęp 130 px</dd>
+              <dt>Zakaz</dt><dd>tor w barwie sygnału, animacja znaku, hasło powitalne</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/ekran-powitalny-2560x1600.png" data-tytul="Ekran powitalny 2560 × 1600">Powiększ (2×)</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.11 Awatar kwadrat -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad" data-siatka="nie" data-modul="25" style="width:220px">
+              <img alt="Awatar kwadratowy 400 × 400 — sygnet w polu medalionu"
+                   src="zastosowania/png/awatar-400x400-kwadrat.png" width="400" height="400" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Awatar — kwadrat</h3>
+              <span class="zn-wymiary">400 × 400 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Ikona profilu i medalion systemu. Farba 52 % boku, wyśrodkowana <strong>osią optyczną</strong> x = 50,75 j., nie środkiem kadru.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>A sygnet · farba 208 px</dd>
+              <dt>Pole medalionu</dt><dd><code>#131313</code> — zawsze, w obu motywach</dd>
+              <dt>Pole ochronne</dt><dd>½X = 59 px · margines 96 px</dd>
+              <dt>Poniżej 48 px</dt><dd>obowiązuje wariant uproszczony A′</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/awatar-400x400-kwadrat.png" data-tytul="Awatar kwadratowy 400 × 400">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3.12 Awatar koło -->
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena">
+            <div class="zn-podglad zn-podglad--kolo" data-siatka="nie" data-modul="25" style="width:220px">
+              <img alt="Awatar okrągły 400 × 400 — sygnet w kole medalionu"
+                   src="zastosowania/png/awatar-400x400-kolo.png"
+                   data-plik-ciemny="zastosowania/png/awatar-400x400-kolo.png"
+                   data-plik-jasny="zastosowania/png/awatar-400x400-kolo-jasny.png"
+                   width="400" height="400" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul">
+              <h3>Awatar — koło</h3>
+              <span class="zn-wymiary">400 × 400 px</span>
+            </div>
+            <p class="zn-nosnik-opis">Maska okrągła odcina narożniki, więc farba schodzi do 44 % średnicy — znak potrzebuje większego luzu bocznego niż w kwadracie.</p>
+            <dl class="zn-meta">
+              <dt>Znak</dt><dd>A sygnet · farba 176 px</dd>
+              <dt>Pole ochronne</dt><dd>½X = 50 px · margines 112 px</dd>
+              <dt>Wariant jasny</dt><dd>koło <code>#F4F4F4</code> dla serwisów o ciemnym tle</dd>
+              <dt>Zakaz</dt><dd>obramowanie, poświata, cień pod znakiem</dd>
+            </dl>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/awatar-400x400-kolo.png" data-tytul="Awatar okrągły 400 × 400">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ─────────────── 4. SYGNATURA POCZTY ─────────────── -->
+    <section class="zn-sekcja" id="sygnatura" aria-labelledby="sygnatura-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">04 · Nośnik żywy</p>
+        <h2 id="sygnatura-h">Sygnatura poczty elektronicznej</h2>
+        <p class="zn-lead">
+          Poniżej stoi <strong>działający kod</strong> sygnatury — dokładnie ten,
+          który trafia do ustawień klienta poczty. Przycisk „Kopiuj kod" kopiuje
+          znaczniki wraz z osadzonym znakiem, bez odnośników zewnętrznych.
+        </p>
+      </div>
+
+      <div class="zn-info">
+        <p><strong>Dlaczego tabela i style w atrybutach.</strong> Outlook dla Windows
+        renderuje wiadomości silnikiem Worda: nie liczy <code>flex</code> ani
+        <code>grid</code>. Gmail usuwa <code>&lt;style&gt;</code> z nagłówka. Znak
+        jako SVG bywa blokowany, a plik zewnętrzny wymaga zgody odbiorcy — stąd
+        PNG 2× w <code>data:</code> URI.</p>
+      </div>
+
+      <div class="zn-pasek-narzedzi">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-sygnatura-wariant="jasna" aria-pressed="true">Wersja jasna</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-sygnatura-wariant="ciemna" aria-pressed="false">Wersja ciemna</button>
+      </div>
+
+      <div class="zn-scena-zywa zn-scena-zywa--jasna" id="zn-scena-sygnatury">
+        <div class="zn-sygnatura-ramka" id="zn-sygnatura-jasna">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;max-width:520px;background:#FFFFFF;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;">
+  <tr>
+    <td style="padding:16px 20px 12px 20px;">
+      <img src="data:image/png;base64,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lTX3Pyp0U2nR0XT0RVLKwiLrYInFtjhf2oysQh1ocwaWLd3vpOYygonCMPwogDuLtJvBQ1EUZfo7iaLoOti3RW6bql4ThqH1Red8j/z5cd8D0Hp0Ibinox2o7/vniciP9RRNx3HOb3eKZmzcy2DZljeJABeue9v3rXGZg9CPAPx2GIbWoTsANONviY8JacuxtTI2NvYo7PskrWu+Ee4I13VbzknPIW37jnpK8n5LaZ1vV1dXao5sFEVXiMjHirZtsc0Ycylm95nKoh7H8UUiYovXFlVX1avyv1uRtyP9oW6HcdwPdKwDDYJgDWZjLbmmaO7atWupp2h+q0h7L6JincNs4Tac0k/C4g7TIvIxVf3ZKIruaHVwi9lB7cSF67b1QQEcMTk52bFtPqrV6jYASfsS5VapVE6GfXvfhfu/52X9fqpqq1lajTAMr8DsC8MiMdiF7X3ScZwz8q5NMD4+vi8Mw00icjXa3BOpaaeqnl3kxfSWm1/yFSguAiRpf7QHtGHOfeSmYyc70oEu9RTNudzSZZuiqZk/5wtcOJ1e9HepTGJ2R8VrjTEvCcPwilqt9lTGummJ1e2+WEvrMDo5jG8A+EYnTtRioeOH2jl32n7xyDhLK4qiO0ul0okAPoRiN40HHcfZWKvVLmtORChCwzC8SURe1tz6p8hN5SkAV5ZKpVfUarV/KXgd2HLL8H1T+8dfCsV6FX2rqv42HHnllpuH12/9i+N3Ah2YyrkcUzSXOrf0gPM5CPOuZSOCxJkYi8EY8ykRKfyk7TjO3ubc5fEwDHeh2Oo1DuwxQm03jOK67h2NRiPxHMaYA15auK77L3EcX5p0vIikdpCO47zTGPPSnJeYtBLSQwAKXUMrExMT1UqlsskYY1uxqgsZhtPNFz7XDA8Pv296enqDqp6jqutExMfsdsBz5/8hZqdEPi4iI3Ec//PY2FjLGT5ZhWG4E8DmVatW3VCv19cDOFtVzwJQweziI3Nhmn0AJkXkP1X1YREZCcNwC7LvgZaqmc/9QPPfAdqaDdHb23tUuVweQfZZRjOO41zYxpOgBEFwW55ZRgBu7PQso7M277xcoXflqPLcsz0/6t9+w+pODEuIlk1vb+9Rk5OT+5E9trko+vv7jzz66KPrndzSuojCQ/iDZIrmRxZjimZpr/lbALsyXwdwCztP+knQnDCx7LPsxsfH9y135wkU70ALDaOjKDropmgmGbnzuCk4zmXIFuj+9vT+8vsX4zqIaHkV6UAPpimaHYmDJNly06qHDfRXkbI0lkC+VG+UXvPYbZWiAXUi+jGWOwbanIecZ5bRp6MoSpxmlsXAwMAZjuN8HtmmFQLAf0xPT5+fdRGEdp1y7ZNHr9hf+j0RvQCzM1amBNhmBJ/Y+mfD9y7FNRAREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREaX7L3kZKprnnQy1AAAAAElFTkSuQmCC" width="168" height="72" alt="Danaco Console" style="display:block;border:0;outline:none;text-decoration:none;width:168px;height:auto;">
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 4px 20px;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:15px;line-height:20px;font-weight:600;color:#181818;">
+      [Imię i nazwisko]
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 12px 20px;font-family:'IBM Plex Mono','Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:1.4px;text-transform:uppercase;color:#7C7C7C;">
+      [stanowisko]
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 0 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background:#E3E3E3;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:12px 20px 0 20px;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:13px;line-height:19px;color:#616161;">
+      Danaco Holding Group Sp. z o.o.<br>
+      <a href="mailto:support@danaco-group.pl" style="color:#2457C9;text-decoration:none;">support@danaco-group.pl</a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:10px 20px 18px 20px;font-family:'IBM Plex Mono','Courier New',monospace;font-size:10px;line-height:15px;letter-spacing:1.6px;text-transform:uppercase;color:#7C7C7C;">
+      Danaco Console &middot; AI Operating Environment
+    </td>
+  </tr>
+</table>
+        </div>
+        <div class="zn-sygnatura-ramka" id="zn-sygnatura-ciemna" hidden>
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;max-width:520px;background:#131313;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;">
+  <tr>
+    <td style="padding:16px 20px 12px 20px;">
+      <img src="data:image/png;base64,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ERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERFRvv8DiBwxJVHF77oAAAAASUVORK5CYII=" width="168" height="72" alt="Danaco Console" style="display:block;border:0;outline:none;text-decoration:none;width:168px;height:auto;">
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 4px 20px;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:15px;line-height:20px;font-weight:600;color:#ECECEC;">
+      [Imię i nazwisko]
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 12px 20px;font-family:'IBM Plex Mono','Courier New',monospace;font-size:11px;line-height:16px;letter-spacing:1.4px;text-transform:uppercase;color:#7C7C7C;">
+      [stanowisko]
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:0 20px 0 20px;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;">
+        <tr><td height="1" style="height:1px;line-height:1px;font-size:0;background:#2A2A2A;">&nbsp;</td></tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:12px 20px 0 20px;font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif;font-size:13px;line-height:19px;color:#9E9E9E;">
+      Danaco Holding Group Sp. z o.o.<br>
+      <a href="mailto:support@danaco-group.pl" style="color:#8FB2F5;text-decoration:none;">support@danaco-group.pl</a>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:10px 20px 18px 20px;font-family:'IBM Plex Mono','Courier New',monospace;font-size:10px;line-height:15px;letter-spacing:1.6px;text-transform:uppercase;color:#7C7C7C;">
+      Danaco Console &middot; AI Operating Environment
+    </td>
+  </tr>
+</table>
+        </div>
+      </div>
+
+      <div class="zn-kod-pasek">
+        <span class="zn-kod-etykieta">Kod gotowy do wklejenia · tabela + style w atrybutach + znak w data URI</span>
+        <span>
+          <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-kopiuj-element="zn-sygnatura-jasna" data-kopiuj-etykieta="Kod sygnatury jasnej">Kopiuj kod (jasna)</button>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj-element="zn-sygnatura-ciemna" data-kopiuj-etykieta="Kod sygnatury ciemnej">Kopiuj kod (ciemna)</button>
+        </span>
+      </div>
+
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Rozstrzygnięcia techniczne sygnatury poczty</caption>
+          <thead><tr><th scope="col">Zagadnienie</th><th scope="col">Rozstrzygnięcie</th><th scope="col">Powód</th></tr></thead>
+          <tbody>
+            <tr><td>Układ</td><td>tabela <code>role="presentation"</code></td><td>silnik Word nie liczy flex ani grid</td></tr>
+            <tr><td>Style</td><td>wyłącznie atrybut <code>style</code></td><td>Gmail usuwa <code>&lt;style&gt;</code> z nagłówka</td></tr>
+            <tr><td>Znak</td><td>PNG 2× w <code>data:</code> URI</td><td>SVG blokowany, plik zewnętrzny wymaga zgody</td></tr>
+            <tr><td>Reguła</td><td>komórka <code>height="1"</code>, <code>font-size: 0</code></td><td>Outlook wymusza minimalną wysokość wiersza</td></tr>
+            <tr><td>Odnośnik</td><td><code>mailto:</code> z jawnym <code>color</code></td><td>klienty nadpisują barwę odnośników</td></tr>
+            <tr><td>Wersja ciemna</td><td>osobny plik, tło <code>#131313</code></td><td>automatyczna inwersja psuje kontrast znaku</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><a href="zastosowania/html/sygnatura-poczty-jasna.html">Otwórz plik sygnatury jasnej</a> ·
+         <a href="zastosowania/html/sygnatura-poczty-ciemna.html">Otwórz plik sygnatury ciemnej</a></p>
+    </section>
+
+    <!-- ─────────────── 5. PAPIER FIRMOWY ─────────────── -->
+    <section class="zn-sekcja" id="papier" aria-labelledby="papier-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">05 · Nośnik żywy</p>
+        <h2 id="papier-h">Papier firmowy A4</h2>
+        <p class="zn-lead">
+          Arkusz 210 × 297 mm w rzeczywistych milimetrach, przeskalowany do
+          szerokości okna. Marginesy 20 mm, nagłówek 32 mm, stopka 18 mm,
+          pole treści maksymalnie 150 mm.
+        </p>
+      </div>
+
+      <div class="zn-pasek-narzedzi">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-arkusz-siatka" aria-pressed="false">Podziałka marginesów</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-arkusz-mniej">Pomniejsz</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-arkusz-wiecej">Powiększ</button>
+        <span class="zn-znacznik" id="zn-arkusz-skala-etykieta">skala 45 %</span>
+      </div>
+
+      <div class="zn-scena-zywa zn-scena-zywa--jasna">
+        <div class="zn-arkusz-skala" id="zn-arkusz-otoczka">
+          <article class="zn-arkusz" id="zn-arkusz" data-siatka="nie" aria-label="Podgląd papieru firmowego A4">
+            <header class="zn-arkusz-naglowek">
+              <svg class="zn-arkusz-znak" viewBox="0 0 225 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,16.0000) scale(0.666667)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#3B6FE0"/></g><g transform="translate(76.0000,17.0000) scale(1.000000)"><path fill="#181818" d="M1.564 34.0V30.056H4.692V14.143999999999998H1.564V10.2H11.356000000000002Q16.150000000000002 10.2 18.649 12.630999999999998Q21.148000000000003 15.061999999999998 21.148000000000003 19.855999999999998V24.344Q21.148000000000003 29.137999999999998 18.649 31.569Q16.150000000000002 34.0 11.356000000000002 34.0ZM9.180000000000001 29.92H11.424000000000001Q14.144000000000002 29.92 15.402000000000001 28.492Q16.66 27.064 16.66 24.479999999999997V19.72Q16.66 17.102 15.402000000000001 15.690999999999999Q14.144000000000002 14.279999999999998 11.424000000000001 14.279999999999998H9.180000000000001Z M23.664 34.0 29.92 10.2H37.74L43.99600000000001 34.0H39.372L38.080000000000005 28.764H29.580000000000005L28.288000000000004 34.0ZM30.634000000000004 24.616H37.026L34.136 13.021999999999998H33.524Z M47.260000000000005 34.0V10.2H55.794000000000004L60.52000000000001 30.94H61.132000000000005V10.2H65.552V34.0H57.01800000000001L52.29200000000001 13.259999999999998H51.68000000000001V34.0Z M68.816 34.0 75.072 10.2H82.89200000000001L89.14800000000001 34.0H84.524L83.23200000000001 28.764H74.73200000000001L73.44000000000001 34.0ZM75.786 24.616H82.17800000000001L79.28800000000001 13.021999999999998H78.67600000000002Z M101.456 34.476Q97.036 34.476 94.452 32.010999999999996Q91.86800000000001 29.546 91.86800000000001 24.956V19.244Q91.86800000000001 14.654 94.452 12.188999999999998Q97.036 9.723999999999997 101.456 9.723999999999997Q105.84200000000001 9.723999999999997 108.239 12.120999999999997Q110.63600000000001 14.517999999999997 110.63600000000001 18.7V18.903999999999996H106.21600000000001V18.564Q106.21600000000001 16.456 105.043 15.095999999999998Q103.87 13.735999999999997 101.456 13.735999999999997Q99.07600000000001 13.735999999999997 97.71600000000001 15.197999999999999Q96.35600000000001 16.66 96.35600000000001 19.176V25.024Q96.35600000000001 27.506 97.71600000000001 28.985Q99.07600000000001 30.464 101.456 30.464Q103.87 30.464 105.043 29.087Q106.21600000000001 27.71 106.21600000000001 25.636V25.024H110.63600000000001V25.5Q110.63600000000001 29.682 108.239 32.079Q105.84200000000001 34.476 101.456 34.476Z M123.96400000000001 34.476Q119.47600000000001 34.476 116.82400000000001 32.010999999999996Q114.17200000000001 29.546 114.17200000000001 24.956V19.244Q114.17200000000001 14.654 116.82400000000001 12.188999999999998Q119.47600000000001 9.723999999999997 123.96400000000001 9.723999999999997Q128.452 9.723999999999997 131.10399999999998 12.188999999999998Q133.756 14.654 133.756 19.244V24.956Q133.756 29.546 131.10399999999998 32.010999999999996Q128.452 34.476 123.96400000000001 34.476ZM123.96400000000001 30.464Q126.48 30.464 127.874 29.002Q129.268 27.54 129.268 25.092V19.107999999999997Q129.268 16.66 127.874 15.197999999999999Q126.48 13.735999999999997 123.96400000000001 13.735999999999997Q121.48200000000001 13.735999999999997 120.07100000000001 15.197999999999999Q118.66000000000001 16.66 118.66000000000001 19.107999999999997V25.092Q118.66000000000001 27.54 120.07100000000001 29.002Q121.48200000000001 30.464 123.96400000000001 30.464Z"/><path fill="#181818" d="M4.0 50.15Q2.3375 50.15 1.53125 48.974999999999994Q0.7250000000000001 47.8 0.7250000000000001 45.6375Q0.7250000000000001 43.475 1.53125 42.3Q2.3375 41.125 4.0 41.125Q4.6375 41.125 5.10625 41.29375Q5.575 41.4625 5.9125 41.756249999999994Q6.25 42.05 6.48125 42.443749999999994Q6.7125 42.8375 6.862500000000001 43.2875L5.6000000000000005 43.7125Q5.5 43.4125 5.375 43.150000000000006Q5.25 42.8875 5.0625 42.7Q4.875 42.5125 4.61875 42.400000000000006Q4.3625 42.2875 3.9875000000000003 42.2875Q3.0625 42.2875 2.6375 42.993750000000006Q2.2125 43.7 2.2125 44.9V46.375Q2.2125 47.575 2.6375 48.28125Q3.0625 48.9875 3.9875000000000003 48.9875Q4.3625 48.9875 4.61875 48.875Q4.875 48.7625 5.0625 48.575Q5.25 48.3875 5.375 48.125Q5.5 47.8625 5.6000000000000005 47.5625L6.862500000000001 47.9875Q6.7125 48.4375 6.48125 48.83125Q6.25 49.225 5.9125 49.51875Q5.575 49.8125 5.10625 49.98125Q4.6375 50.15 4.0 50.15Z M15.0 50.15Q14.175 50.15 13.568750000000001 49.84375Q12.9625 49.5375 12.568750000000001 48.962500000000006Q12.175 48.3875 11.9875 47.55Q11.8 46.7125 11.8 45.6375Q11.8 44.575 11.9875 43.73125Q12.175 42.8875 12.568750000000001 42.3125Q12.9625 41.7375 13.568750000000001 41.43125Q14.175 41.125 15.0 41.125Q15.825 41.125 16.43125 41.43125Q17.0375 41.7375 17.43125 42.3125Q17.825 42.8875 18.0125 43.73125Q18.2 44.575 18.2 45.6375Q18.2 46.7125 18.0125 47.55Q17.825 48.3875 17.43125 48.962500000000006Q17.0375 49.5375 16.43125 49.84375Q15.825 50.15 15.0 50.15ZM15.0 48.9875Q15.9375 48.9875 16.325 48.28125Q16.7125 47.575 16.7125 46.3625V44.9Q16.7125 43.7 16.325 42.993750000000006Q15.9375 42.2875 15.0 42.2875Q14.0625 42.2875 13.675 42.993750000000006Q13.2875 43.7 13.2875 44.9V46.375Q13.2875 47.575 13.675 48.28125Q14.0625 48.9875 15.0 48.9875Z M24.7375 43.2875H24.625V50.0H23.4V41.275H25.2L27.7625 47.9875H27.875V41.275H29.1V50.0H27.3Z M37.425 50.15Q36.2875 50.15 35.5125 49.75Q34.7375 49.35 34.2375 48.6875L35.1375 47.825Q35.6375 48.425 36.2 48.70625Q36.7625 48.9875 37.475 48.9875Q38.3 48.9875 38.74375 48.6125Q39.1875 48.2375 39.1875 47.5375Q39.1875 46.975 38.8625 46.66875Q38.5375 46.3625 37.75 46.225L36.8 46.075Q36.175 45.975 35.75 45.743750000000006Q35.325 45.5125 35.0625 45.19375Q34.8 44.875 34.68125 44.48125Q34.5625 44.0875 34.5625 43.65Q34.5625 42.4125 35.3625 41.76875Q36.1625 41.125 37.5625 41.125Q38.6 41.125 39.33125 41.45625Q40.0625 41.7875 40.5125 42.3875L39.6375 43.2625Q39.275 42.825 38.78125 42.556250000000006Q38.2875 42.2875 37.5625 42.2875Q36.7875 42.2875 36.38125 42.618750000000006Q35.975 42.95 35.975 43.5875Q35.975 44.125 36.29375 44.43125Q36.6125 44.7375 37.425 44.875L38.35 45.0375Q39.525 45.25 40.0625 45.89375Q40.6 46.5375 40.6 47.4625Q40.6 48.0625 40.39375 48.5625Q40.1875 49.0625 39.78125 49.4125Q39.375 49.7625 38.78125 49.95625Q38.1875 50.15 37.425 50.15Z M48.75 50.15Q47.925 50.15 47.318749999999994 49.84375Q46.7125 49.5375 46.318749999999994 48.962500000000006Q45.925 48.3875 45.7375 47.55Q45.55 46.7125 45.55 45.6375Q45.55 44.575 45.7375 43.73125Q45.925 42.8875 46.318749999999994 42.3125Q46.7125 41.7375 47.318749999999994 41.43125Q47.925 41.125 48.75 41.125Q49.575 41.125 50.181250000000006 41.43125Q50.7875 41.7375 51.181250000000006 42.3125Q51.575 42.8875 51.7625 43.73125Q51.95 44.575 51.95 45.6375Q51.95 46.7125 51.7625 47.55Q51.575 48.3875 51.181250000000006 48.962500000000006Q50.7875 49.5375 50.181250000000006 49.84375Q49.575 50.15 48.75 50.15ZM48.75 48.9875Q49.6875 48.9875 50.075 48.28125Q50.4625 47.575 50.4625 46.3625V44.9Q50.4625 43.7 50.075 42.993750000000006Q49.6875 42.2875 48.75 42.2875Q47.8125 42.2875 47.425 42.993750000000006Q47.0375 43.7 47.0375 44.9V46.375Q47.0375 47.575 47.425 48.28125Q47.8125 48.9875 48.75 48.9875Z M57.6 50.0V41.275H59.0V48.825H62.975V50.0Z M68.575 50.0V41.275H74.0375V42.45H69.975V44.9875H73.8875V46.1625H69.975V48.825H74.0375V50.0Z"/><circle cx="82.0" cy="46.0" r="3.4" fill="#3B6FE0"/></g></g></svg>
+              <div class="zn-arkusz-meta">
+                AI Operating Environment<br>
+                Danaco Holding Group Sp. z o.o.
+              </div>
+            </header>
+            <div class="zn-arkusz-tresc">
+              <p class="zn-arkusz-nadtytul">Miejscowość, data</p>
+              <h4>Tytuł pisma</h4>
+              <div class="zn-arkusz-pole">
+                Pole treści pisma. Blok tekstowy nie przekracza 150 mm szerokości —
+                przy stopniu 10,5 pt daje to wiersz 80–90 znaków, wartość czytelną
+                w druku. Interlinia 1,55. Akapit oddziela odstęp 4 mm, nie wcięcie.
+              </div>
+            </div>
+            <footer class="zn-arkusz-stopka">
+              <div>
+                <strong>Danaco Holding Group Sp. z o.o.</strong><br>
+                support@danaco-group.pl
+              </div>
+              <div style="text-align:right">
+                Danaco Console · AI Operating Environment<br>
+                Strona 01
+              </div>
+            </footer>
+          </article>
+        </div>
+      </div>
+
+      <div class="zn-kod-pasek">
+        <span class="zn-kod-etykieta">Reguły druku — do wklejenia w arkuszu stylów dokumentu</span>
+        <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-kopiuj-kod="zn-kod-druk" data-kopiuj-etykieta="Reguły druku A4">Kopiuj kod</button>
+      </div>
+      <div class="zn-kod"><pre id="zn-kod-druk">@page { size: A4 portrait; margin: 0; }
+
+.arkusz {
+  width: 210mm; height: 297mm; padding: 20mm;
+  display: flex; flex-direction: column;
+  background: #FFFFFF; color: #181818;
+  break-after: page;
+}
+.arkusz-naglowek { height: 32mm; border-bottom: .25mm solid #E3E3E3; padding-bottom: 6mm; }
+.arkusz-znak     { width: 45mm; height: auto; display: block; }
+.arkusz-tresc    { flex: 1 1 auto; padding-top: 12mm; max-width: 150mm;
+                   font-size: 10.5pt; line-height: 1.55; }
+.arkusz-stopka   { height: 18mm; border-top: .25mm solid #E3E3E3; padding-top: 4mm;
+                   font-family: 'IBM Plex Mono', monospace; font-size: 7pt;
+                   letter-spacing: .06em; color: #7C7C7C; }
+.arkusz-strona::after { content: counter(page, decimal-leading-zero); }
+
+@media print {
+  body { background: #FFFFFF; }
+  .arkusz { box-shadow: none; }
+}</pre></div>
+
+      <p><a href="zastosowania/html/papier-firmowy-a4.html">Otwórz pełny plik papieru firmowego (dwa arkusze, druk do PDF)</a></p>
+    </section>
+
+    <!-- ─────────────── 6. SZABLON SLAJDÓW ─────────────── -->
+    <section class="zn-sekcja" id="slajdy" aria-labelledby="slajdy-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">06 · Nośnik żywy</p>
+        <h2 id="slajdy-h">Szablon slajdów prezentacji</h2>
+        <p class="zn-lead">
+          Dwa układy — tytułowy i treściowy — jako żywe, przełączalne podglądy.
+          Wszystkie miary w jednostce <code>--u</code> = 1/1920 szerokości slajdu,
+          więc szablon skaluje się bez utraty proporcji.
+        </p>
+      </div>
+
+      <div class="zn-pasek-narzedzi">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-slajd-uklad="tytulowy" aria-pressed="true">Slajd tytułowy</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-slajd-uklad="tresciowy" aria-pressed="false">Slajd treściowy</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-slajd-wariant" aria-pressed="false">Wariant jasny</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-slajd-siatka" aria-pressed="false">Siatka konstrukcyjna</button>
+      </div>
+
+      <div class="zn-slajd" id="zn-slajd" data-uklad="tytulowy" data-wariant="ciemny" data-siatka="nie"
+           role="figure" aria-label="Podgląd szablonu slajdu prezentacji">
+        <div class="zn-slajd-plansza zn-slajd-plansza--tytulowy">
+          <svg class="zn-slajd-znak-pionowy zn-jasny" viewBox="0 0 159 172" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(31.7000,0.0000) scale(1.000000)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#3B6FE0"/></g><path fill="#181818" d="M13.564 136.0V132.056H16.692V116.144H13.564V112.2H23.356Q28.150000000000002 112.2 30.649 114.631Q33.148 117.062 33.148 121.856V126.344Q33.148 131.138 30.649 133.56900000000002Q28.150000000000002 136.0 23.356 136.0ZM21.18 131.92H23.424Q26.144000000000002 131.92 27.402 130.492Q28.66 129.064 28.66 126.48V121.72Q28.66 119.102 27.402 117.691Q26.144000000000002 116.28 23.424 116.28H21.18Z M35.66400000000001 136.0 41.92000000000001 112.2H49.74000000000001L55.99600000000001 136.0H51.37200000000001L50.080000000000005 130.764H41.580000000000005L40.28800000000001 136.0ZM42.63400000000001 126.616H49.02600000000001L46.13600000000001 115.02199999999999H45.52400000000001Z M59.260000000000005 136.0V112.2H67.79400000000001L72.52000000000001 132.94H73.132V112.2H77.552V136.0H69.018L64.292 115.25999999999999H63.68000000000001V136.0Z M80.816 136.0 87.072 112.2H94.89200000000001L101.14800000000001 136.0H96.524L95.23200000000001 130.764H86.73200000000001L85.44000000000001 136.0ZM87.786 126.616H94.17800000000001L91.28800000000001 115.02199999999999H90.67600000000002Z M113.456 136.476Q109.036 136.476 106.452 134.011Q103.86800000000001 131.546 103.86800000000001 126.956V121.244Q103.86800000000001 116.654 106.452 114.189Q109.036 111.72399999999999 113.456 111.72399999999999Q117.84200000000001 111.72399999999999 120.239 114.121Q122.63600000000001 116.518 122.63600000000001 120.7V120.904H118.21600000000001V120.564Q118.21600000000001 118.456 117.043 117.096Q115.87 115.73599999999999 113.456 115.73599999999999Q111.07600000000001 115.73599999999999 109.71600000000001 117.198Q108.35600000000001 118.66 108.35600000000001 121.176V127.024Q108.35600000000001 129.506 109.71600000000001 130.985Q111.07600000000001 132.464 113.456 132.464Q115.87 132.464 117.043 131.087Q118.21600000000001 129.71 118.21600000000001 127.636V127.024H122.63600000000001V127.5Q122.63600000000001 131.682 120.239 134.079Q117.84200000000001 136.476 113.456 136.476Z M135.964 136.476Q131.476 136.476 128.824 134.011Q126.17200000000001 131.546 126.17200000000001 126.956V121.244Q126.17200000000001 116.654 128.824 114.189Q131.476 111.72399999999999 135.964 111.72399999999999Q140.452 111.72399999999999 143.10399999999998 114.189Q145.756 116.654 145.756 121.244V126.956Q145.756 131.546 143.10399999999998 134.011Q140.452 136.476 135.964 136.476ZM135.964 132.464Q138.48000000000002 132.464 139.87400000000002 131.002Q141.268 129.54 141.268 127.092V121.108Q141.268 118.66 139.87400000000002 117.198Q138.48000000000002 115.73599999999999 135.964 115.73599999999999Q133.482 115.73599999999999 132.071 117.198Q130.66 118.66 130.66 121.108V127.092Q130.66 129.54 132.071 131.002Q133.482 132.464 135.964 132.464Z"/><path fill="#181818" d="M46.2 154.15Q44.5375 154.15 43.73125 152.97500000000002Q42.925000000000004 151.8 42.925000000000004 149.6375Q42.925000000000004 147.475 43.73125 146.3Q44.5375 145.125 46.2 145.125Q46.837500000000006 145.125 47.306250000000006 145.29375Q47.775000000000006 145.4625 48.112500000000004 145.75625000000002Q48.45 146.05 48.681250000000006 146.44375000000002Q48.9125 146.8375 49.0625 147.2875L47.800000000000004 147.7125Q47.7 147.4125 47.575 147.14999999999998Q47.45 146.8875 47.2625 146.7Q47.075 146.5125 46.81875 146.39999999999998Q46.5625 146.2875 46.1875 146.2875Q45.2625 146.2875 44.837500000000006 146.99374999999998Q44.4125 147.7 44.4125 148.9V150.375Q44.4125 151.575 44.837500000000006 152.28125Q45.2625 152.9875 46.1875 152.9875Q46.5625 152.9875 46.81875 152.875Q47.075 152.7625 47.2625 152.575Q47.45 152.3875 47.575 152.125Q47.7 151.8625 47.800000000000004 151.5625L49.0625 151.9875Q48.9125 152.4375 48.681250000000006 152.83125Q48.45 153.225 48.112500000000004 153.51875Q47.775000000000006 153.8125 47.306250000000006 153.98125Q46.837500000000006 154.15 46.2 154.15Z M57.2 154.15Q56.375 154.15 55.76875 153.84375Q55.1625 153.5375 54.76875 152.96249999999998Q54.375 152.3875 54.1875 151.55Q54.0 150.7125 54.0 149.6375Q54.0 148.575 54.1875 147.73125Q54.375 146.8875 54.76875 146.3125Q55.1625 145.7375 55.76875 145.43125Q56.375 145.125 57.2 145.125Q58.025000000000006 145.125 58.63125000000001 145.43125Q59.237500000000004 145.7375 59.63125000000001 146.3125Q60.025000000000006 146.8875 60.212500000000006 147.73125Q60.400000000000006 148.575 60.400000000000006 149.6375Q60.400000000000006 150.7125 60.212500000000006 151.55Q60.025000000000006 152.3875 59.63125000000001 152.96249999999998Q59.237500000000004 153.5375 58.63125000000001 153.84375Q58.025000000000006 154.15 57.2 154.15ZM57.2 152.9875Q58.1375 152.9875 58.525000000000006 152.28125Q58.9125 151.575 58.9125 150.3625V148.9Q58.9125 147.7 58.525000000000006 146.99374999999998Q58.1375 146.2875 57.2 146.2875Q56.2625 146.2875 55.875 146.99374999999998Q55.487500000000004 147.7 55.487500000000004 148.9V150.375Q55.487500000000004 151.575 55.875 152.28125Q56.2625 152.9875 57.2 152.9875Z M66.9375 147.2875H66.825V154.0H65.60000000000001V145.275H67.4L69.9625 151.9875H70.075V145.275H71.3V154.0H69.5Z M79.625 154.15Q78.4875 154.15 77.7125 153.75Q76.9375 153.35 76.4375 152.6875L77.3375 151.825Q77.8375 152.425 78.4 152.70625Q78.9625 152.9875 79.675 152.9875Q80.5 152.9875 80.94375 152.6125Q81.3875 152.2375 81.3875 151.5375Q81.3875 150.975 81.0625 150.66875Q80.7375 150.3625 79.95 150.225L79.0 150.075Q78.375 149.975 77.95 149.74374999999998Q77.525 149.5125 77.2625 149.19375Q77.0 148.875 76.88125 148.48125Q76.7625 148.0875 76.7625 147.65Q76.7625 146.4125 77.5625 145.76875Q78.3625 145.125 79.7625 145.125Q80.8 145.125 81.53125 145.45625Q82.2625 145.7875 82.7125 146.3875L81.8375 147.2625Q81.47500000000001 146.825 80.98125 146.55624999999998Q80.4875 146.2875 79.7625 146.2875Q78.9875 146.2875 78.58125 146.61874999999998Q78.175 146.95 78.175 147.5875Q78.175 148.125 78.49375 148.43125Q78.8125 148.7375 79.625 148.875L80.55 149.0375Q81.72500000000001 149.25 82.2625 149.89375Q82.8 150.5375 82.8 151.4625Q82.8 152.0625 82.59375 152.5625Q82.3875 153.0625 81.98125 153.4125Q81.575 153.7625 80.98125 153.95625Q80.3875 154.15 79.625 154.15Z M90.95 154.15Q90.125 154.15 89.51875000000001 153.84375Q88.91250000000001 153.5375 88.51875000000001 152.96249999999998Q88.125 152.3875 87.9375 151.55Q87.75 150.7125 87.75 149.6375Q87.75 148.575 87.9375 147.73125Q88.125 146.8875 88.51875000000001 146.3125Q88.91250000000001 145.7375 89.51875000000001 145.43125Q90.125 145.125 90.95 145.125Q91.775 145.125 92.38125 145.43125Q92.9875 145.7375 93.38125 146.3125Q93.775 146.8875 93.9625 147.73125Q94.15 148.575 94.15 149.6375Q94.15 150.7125 93.9625 151.55Q93.775 152.3875 93.38125 152.96249999999998Q92.9875 153.5375 92.38125 153.84375Q91.775 154.15 90.95 154.15ZM90.95 152.9875Q91.8875 152.9875 92.275 152.28125Q92.66250000000001 151.575 92.66250000000001 150.3625V148.9Q92.66250000000001 147.7 92.275 146.99374999999998Q91.8875 146.2875 90.95 146.2875Q90.0125 146.2875 89.625 146.99374999999998Q89.2375 147.7 89.2375 148.9V150.375Q89.2375 151.575 89.625 152.28125Q90.0125 152.9875 90.95 152.9875Z M99.8 154.0V145.275H101.2V152.825H105.175V154.0Z M110.775 154.0V145.275H116.2375V146.45H112.175V148.9875H116.0875V150.1625H112.175V152.825H116.2375V154.0Z"/><circle cx="124.2" cy="150" r="3.4" fill="#3B6FE0"/></g></svg><svg class="zn-slajd-znak-pionowy zn-ciemny" viewBox="0 0 159 172" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(31.7000,0.0000) scale(1.000000)"><path fill="#ECECEC" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#ECECEC" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#5C8CEC"/></g><path fill="#ECECEC" d="M13.564 136.0V132.056H16.692V116.144H13.564V112.2H23.356Q28.150000000000002 112.2 30.649 114.631Q33.148 117.062 33.148 121.856V126.344Q33.148 131.138 30.649 133.56900000000002Q28.150000000000002 136.0 23.356 136.0ZM21.18 131.92H23.424Q26.144000000000002 131.92 27.402 130.492Q28.66 129.064 28.66 126.48V121.72Q28.66 119.102 27.402 117.691Q26.144000000000002 116.28 23.424 116.28H21.18Z M35.66400000000001 136.0 41.92000000000001 112.2H49.74000000000001L55.99600000000001 136.0H51.37200000000001L50.080000000000005 130.764H41.580000000000005L40.28800000000001 136.0ZM42.63400000000001 126.616H49.02600000000001L46.13600000000001 115.02199999999999H45.52400000000001Z M59.260000000000005 136.0V112.2H67.79400000000001L72.52000000000001 132.94H73.132V112.2H77.552V136.0H69.018L64.292 115.25999999999999H63.68000000000001V136.0Z M80.816 136.0 87.072 112.2H94.89200000000001L101.14800000000001 136.0H96.524L95.23200000000001 130.764H86.73200000000001L85.44000000000001 136.0ZM87.786 126.616H94.17800000000001L91.28800000000001 115.02199999999999H90.67600000000002Z M113.456 136.476Q109.036 136.476 106.452 134.011Q103.86800000000001 131.546 103.86800000000001 126.956V121.244Q103.86800000000001 116.654 106.452 114.189Q109.036 111.72399999999999 113.456 111.72399999999999Q117.84200000000001 111.72399999999999 120.239 114.121Q122.63600000000001 116.518 122.63600000000001 120.7V120.904H118.21600000000001V120.564Q118.21600000000001 118.456 117.043 117.096Q115.87 115.73599999999999 113.456 115.73599999999999Q111.07600000000001 115.73599999999999 109.71600000000001 117.198Q108.35600000000001 118.66 108.35600000000001 121.176V127.024Q108.35600000000001 129.506 109.71600000000001 130.985Q111.07600000000001 132.464 113.456 132.464Q115.87 132.464 117.043 131.087Q118.21600000000001 129.71 118.21600000000001 127.636V127.024H122.63600000000001V127.5Q122.63600000000001 131.682 120.239 134.079Q117.84200000000001 136.476 113.456 136.476Z M135.964 136.476Q131.476 136.476 128.824 134.011Q126.17200000000001 131.546 126.17200000000001 126.956V121.244Q126.17200000000001 116.654 128.824 114.189Q131.476 111.72399999999999 135.964 111.72399999999999Q140.452 111.72399999999999 143.10399999999998 114.189Q145.756 116.654 145.756 121.244V126.956Q145.756 131.546 143.10399999999998 134.011Q140.452 136.476 135.964 136.476ZM135.964 132.464Q138.48000000000002 132.464 139.87400000000002 131.002Q141.268 129.54 141.268 127.092V121.108Q141.268 118.66 139.87400000000002 117.198Q138.48000000000002 115.73599999999999 135.964 115.73599999999999Q133.482 115.73599999999999 132.071 117.198Q130.66 118.66 130.66 121.108V127.092Q130.66 129.54 132.071 131.002Q133.482 132.464 135.964 132.464Z"/><path fill="#ECECEC" d="M46.2 154.15Q44.5375 154.15 43.73125 152.97500000000002Q42.925000000000004 151.8 42.925000000000004 149.6375Q42.925000000000004 147.475 43.73125 146.3Q44.5375 145.125 46.2 145.125Q46.837500000000006 145.125 47.306250000000006 145.29375Q47.775000000000006 145.4625 48.112500000000004 145.75625000000002Q48.45 146.05 48.681250000000006 146.44375000000002Q48.9125 146.8375 49.0625 147.2875L47.800000000000004 147.7125Q47.7 147.4125 47.575 147.14999999999998Q47.45 146.8875 47.2625 146.7Q47.075 146.5125 46.81875 146.39999999999998Q46.5625 146.2875 46.1875 146.2875Q45.2625 146.2875 44.837500000000006 146.99374999999998Q44.4125 147.7 44.4125 148.9V150.375Q44.4125 151.575 44.837500000000006 152.28125Q45.2625 152.9875 46.1875 152.9875Q46.5625 152.9875 46.81875 152.875Q47.075 152.7625 47.2625 152.575Q47.45 152.3875 47.575 152.125Q47.7 151.8625 47.800000000000004 151.5625L49.0625 151.9875Q48.9125 152.4375 48.681250000000006 152.83125Q48.45 153.225 48.112500000000004 153.51875Q47.775000000000006 153.8125 47.306250000000006 153.98125Q46.837500000000006 154.15 46.2 154.15Z M57.2 154.15Q56.375 154.15 55.76875 153.84375Q55.1625 153.5375 54.76875 152.96249999999998Q54.375 152.3875 54.1875 151.55Q54.0 150.7125 54.0 149.6375Q54.0 148.575 54.1875 147.73125Q54.375 146.8875 54.76875 146.3125Q55.1625 145.7375 55.76875 145.43125Q56.375 145.125 57.2 145.125Q58.025000000000006 145.125 58.63125000000001 145.43125Q59.237500000000004 145.7375 59.63125000000001 146.3125Q60.025000000000006 146.8875 60.212500000000006 147.73125Q60.400000000000006 148.575 60.400000000000006 149.6375Q60.400000000000006 150.7125 60.212500000000006 151.55Q60.025000000000006 152.3875 59.63125000000001 152.96249999999998Q59.237500000000004 153.5375 58.63125000000001 153.84375Q58.025000000000006 154.15 57.2 154.15ZM57.2 152.9875Q58.1375 152.9875 58.525000000000006 152.28125Q58.9125 151.575 58.9125 150.3625V148.9Q58.9125 147.7 58.525000000000006 146.99374999999998Q58.1375 146.2875 57.2 146.2875Q56.2625 146.2875 55.875 146.99374999999998Q55.487500000000004 147.7 55.487500000000004 148.9V150.375Q55.487500000000004 151.575 55.875 152.28125Q56.2625 152.9875 57.2 152.9875Z M66.9375 147.2875H66.825V154.0H65.60000000000001V145.275H67.4L69.9625 151.9875H70.075V145.275H71.3V154.0H69.5Z M79.625 154.15Q78.4875 154.15 77.7125 153.75Q76.9375 153.35 76.4375 152.6875L77.3375 151.825Q77.8375 152.425 78.4 152.70625Q78.9625 152.9875 79.675 152.9875Q80.5 152.9875 80.94375 152.6125Q81.3875 152.2375 81.3875 151.5375Q81.3875 150.975 81.0625 150.66875Q80.7375 150.3625 79.95 150.225L79.0 150.075Q78.375 149.975 77.95 149.74374999999998Q77.525 149.5125 77.2625 149.19375Q77.0 148.875 76.88125 148.48125Q76.7625 148.0875 76.7625 147.65Q76.7625 146.4125 77.5625 145.76875Q78.3625 145.125 79.7625 145.125Q80.8 145.125 81.53125 145.45625Q82.2625 145.7875 82.7125 146.3875L81.8375 147.2625Q81.47500000000001 146.825 80.98125 146.55624999999998Q80.4875 146.2875 79.7625 146.2875Q78.9875 146.2875 78.58125 146.61874999999998Q78.175 146.95 78.175 147.5875Q78.175 148.125 78.49375 148.43125Q78.8125 148.7375 79.625 148.875L80.55 149.0375Q81.72500000000001 149.25 82.2625 149.89375Q82.8 150.5375 82.8 151.4625Q82.8 152.0625 82.59375 152.5625Q82.3875 153.0625 81.98125 153.4125Q81.575 153.7625 80.98125 153.95625Q80.3875 154.15 79.625 154.15Z M90.95 154.15Q90.125 154.15 89.51875000000001 153.84375Q88.91250000000001 153.5375 88.51875000000001 152.96249999999998Q88.125 152.3875 87.9375 151.55Q87.75 150.7125 87.75 149.6375Q87.75 148.575 87.9375 147.73125Q88.125 146.8875 88.51875000000001 146.3125Q88.91250000000001 145.7375 89.51875000000001 145.43125Q90.125 145.125 90.95 145.125Q91.775 145.125 92.38125 145.43125Q92.9875 145.7375 93.38125 146.3125Q93.775 146.8875 93.9625 147.73125Q94.15 148.575 94.15 149.6375Q94.15 150.7125 93.9625 151.55Q93.775 152.3875 93.38125 152.96249999999998Q92.9875 153.5375 92.38125 153.84375Q91.775 154.15 90.95 154.15ZM90.95 152.9875Q91.8875 152.9875 92.275 152.28125Q92.66250000000001 151.575 92.66250000000001 150.3625V148.9Q92.66250000000001 147.7 92.275 146.99374999999998Q91.8875 146.2875 90.95 146.2875Q90.0125 146.2875 89.625 146.99374999999998Q89.2375 147.7 89.2375 148.9V150.375Q89.2375 151.575 89.625 152.28125Q90.0125 152.9875 90.95 152.9875Z M99.8 154.0V145.275H101.2V152.825H105.175V154.0Z M110.775 154.0V145.275H116.2375V146.45H112.175V148.9875H116.0875V150.1625H112.175V152.825H116.2375V154.0Z"/><circle cx="124.2" cy="150" r="3.4" fill="#5C8CEC"/></g></svg>
+          <div class="zn-slajd-regula"></div>
+          <div class="zn-slajd-deskryptor">AI Operating Environment</div>
+        </div>
+        <div class="zn-slajd-tytul" data-tylko="tytulowy">Tytuł prezentacji</div>
+        <div class="zn-slajd-podtytul" data-tylko="tytulowy">Środowisko · Moduł · Okno operacyjne</div>
+        <div class="zn-slajd-stopka-tyt" data-tylko="tytulowy">Danaco Holding Group Sp. z o.o. · v2.0</div>
+
+        <div class="zn-slajd-plansza zn-slajd-plansza--tresciowy">
+          <div class="zn-slajd-nadtytul">Architektura platformy</div>
+          <h3 class="zn-slajd-h">Trójstopniowa hierarchia</h3>
+          <div class="zn-slajd-linia"></div>
+          <div class="zn-slajd-kolumny">
+            <div>
+              <div class="zn-slajd-etykieta"><span class="zn-slajd-kropka"></span>Środowisko</div>
+              <div class="zn-slajd-blok">TalkIn · WorkSpace · CodeStudio · MultitaskingAI</div>
+            </div>
+            <div>
+              <div class="zn-slajd-etykieta"><span class="zn-slajd-kropka"></span>Moduł</div>
+              <div class="zn-slajd-blok">Piętnaście modułów w bocznej nawigacji środowiska</div>
+            </div>
+            <div>
+              <div class="zn-slajd-etykieta"><span class="zn-slajd-kropka"></span>Okno operacyjne</div>
+              <div class="zn-slajd-blok">Chat Window i okna właściwe modułowi</div>
+            </div>
+          </div>
+          <div class="zn-slajd-stopka">
+            <span class="zn-slajd-stopka-tekst">Danaco Console</span>
+            <svg class="zn-slajd-znak-kompakt zn-jasny" viewBox="0 0 221.86 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,16.0000) scale(0.666667)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#3B6FE0"/></g><path fill="#181818" d="M77.564 59.0V55.056H80.69200000000001V39.144H77.564V35.2H87.356Q92.15 35.2 94.649 37.631Q97.148 40.062 97.148 44.855999999999995V49.344Q97.148 54.138 94.649 56.569Q92.15 59.0 87.356 59.0ZM85.18 54.92H87.424Q90.144 54.92 91.402 53.492000000000004Q92.66 52.064 92.66 49.48V44.72Q92.66 42.102000000000004 91.402 40.691Q90.144 39.28 87.424 39.28H85.18Z M99.664 59.0 105.92 35.2H113.74000000000001L119.99600000000001 59.0H115.37200000000001L114.08000000000001 53.763999999999996H105.58000000000001L104.28800000000001 59.0ZM106.63400000000001 49.616H113.02600000000001L110.13600000000001 38.022H109.524Z M123.26 59.0V35.2H131.794L136.52 55.94H137.132V35.2H141.55200000000002V59.0H133.018L128.292 38.26H127.68V59.0Z M144.816 59.0 151.072 35.2H158.892L165.14800000000002 59.0H160.524L159.232 53.763999999999996H150.732L149.44 59.0ZM151.786 49.616H158.178L155.288 38.022H154.67600000000002Z M177.45600000000002 59.476Q173.036 59.476 170.452 57.010999999999996Q167.868 54.546 167.868 49.956V44.244Q167.868 39.653999999999996 170.452 37.18899999999999Q173.036 34.724 177.45600000000002 34.724Q181.842 34.724 184.239 37.120999999999995Q186.636 39.518 186.636 43.7V43.903999999999996H182.216V43.564Q182.216 41.456 181.043 40.096000000000004Q179.87 38.736 177.45600000000002 38.736Q175.07600000000002 38.736 173.716 40.19799999999999Q172.356 41.66 172.356 44.176V50.024Q172.356 52.506 173.716 53.985Q175.07600000000002 55.464 177.45600000000002 55.464Q179.87 55.464 181.043 54.087Q182.216 52.71 182.216 50.635999999999996V50.024H186.636V50.5Q186.636 54.682 184.239 57.079Q181.842 59.476 177.45600000000002 59.476Z M199.964 59.476Q195.476 59.476 192.824 57.010999999999996Q190.172 54.546 190.172 49.956V44.244Q190.172 39.653999999999996 192.824 37.18899999999999Q195.476 34.724 199.964 34.724Q204.452 34.724 207.10399999999998 37.18899999999999Q209.756 39.653999999999996 209.756 44.244V49.956Q209.756 54.546 207.10399999999998 57.010999999999996Q204.452 59.476 199.964 59.476ZM199.964 55.464Q202.48000000000002 55.464 203.87400000000002 54.001999999999995Q205.268 52.54 205.268 50.092V44.108Q205.268 41.66 203.87400000000002 40.19799999999999Q202.48000000000002 38.736 199.964 38.736Q197.482 38.736 196.071 40.19799999999999Q194.66 41.66 194.66 44.108V50.092Q194.66 52.54 196.071 54.001999999999995Q197.482 55.464 199.964 55.464Z"/><circle cx="218.46" cy="55.00" r="3.4" fill="#3B6FE0"/></g></svg><svg class="zn-slajd-znak-kompakt zn-ciemny" viewBox="0 0 221.86 96" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Danaco Console"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,16.0000) scale(0.666667)"><path fill="#ECECEC" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#ECECEC" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#5C8CEC"/></g><path fill="#ECECEC" d="M77.564 59.0V55.056H80.69200000000001V39.144H77.564V35.2H87.356Q92.15 35.2 94.649 37.631Q97.148 40.062 97.148 44.855999999999995V49.344Q97.148 54.138 94.649 56.569Q92.15 59.0 87.356 59.0ZM85.18 54.92H87.424Q90.144 54.92 91.402 53.492000000000004Q92.66 52.064 92.66 49.48V44.72Q92.66 42.102000000000004 91.402 40.691Q90.144 39.28 87.424 39.28H85.18Z M99.664 59.0 105.92 35.2H113.74000000000001L119.99600000000001 59.0H115.37200000000001L114.08000000000001 53.763999999999996H105.58000000000001L104.28800000000001 59.0ZM106.63400000000001 49.616H113.02600000000001L110.13600000000001 38.022H109.524Z M123.26 59.0V35.2H131.794L136.52 55.94H137.132V35.2H141.55200000000002V59.0H133.018L128.292 38.26H127.68V59.0Z M144.816 59.0 151.072 35.2H158.892L165.14800000000002 59.0H160.524L159.232 53.763999999999996H150.732L149.44 59.0ZM151.786 49.616H158.178L155.288 38.022H154.67600000000002Z M177.45600000000002 59.476Q173.036 59.476 170.452 57.010999999999996Q167.868 54.546 167.868 49.956V44.244Q167.868 39.653999999999996 170.452 37.18899999999999Q173.036 34.724 177.45600000000002 34.724Q181.842 34.724 184.239 37.120999999999995Q186.636 39.518 186.636 43.7V43.903999999999996H182.216V43.564Q182.216 41.456 181.043 40.096000000000004Q179.87 38.736 177.45600000000002 38.736Q175.07600000000002 38.736 173.716 40.19799999999999Q172.356 41.66 172.356 44.176V50.024Q172.356 52.506 173.716 53.985Q175.07600000000002 55.464 177.45600000000002 55.464Q179.87 55.464 181.043 54.087Q182.216 52.71 182.216 50.635999999999996V50.024H186.636V50.5Q186.636 54.682 184.239 57.079Q181.842 59.476 177.45600000000002 59.476Z M199.964 59.476Q195.476 59.476 192.824 57.010999999999996Q190.172 54.546 190.172 49.956V44.244Q190.172 39.653999999999996 192.824 37.18899999999999Q195.476 34.724 199.964 34.724Q204.452 34.724 207.10399999999998 37.18899999999999Q209.756 39.653999999999996 209.756 44.244V49.956Q209.756 54.546 207.10399999999998 57.010999999999996Q204.452 59.476 199.964 59.476ZM199.964 55.464Q202.48000000000002 55.464 203.87400000000002 54.001999999999995Q205.268 52.54 205.268 50.092V44.108Q205.268 41.66 203.87400000000002 40.19799999999999Q202.48000000000002 38.736 199.964 38.736Q197.482 38.736 196.071 40.19799999999999Q194.66 41.66 194.66 44.108V50.092Q194.66 52.54 196.071 54.001999999999995Q197.482 55.464 199.964 55.464Z"/><circle cx="218.46" cy="55.00" r="3.4" fill="#5C8CEC"/></g></svg>
+          </div>
+        </div>
+      </div>
+
+      <p><a href="zastosowania/html/szablon-slajdow.html">Otwórz pełny szablon slajdów (druk do PDF w orientacji poziomej)</a></p>
+    </section>
+
+    <!-- ─────────────── 7. ZNAK WODNY ─────────────── -->
+    <section class="zn-sekcja" id="znak-wodny" aria-labelledby="znak-wodny-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">07 · Podkład</p>
+        <h2 id="znak-wodny-h">Znak wodny do dokumentów</h2>
+        <p class="zn-lead">
+          Znak wodny nie jest znakiem marki w użyciu — jest fakturą
+          identyfikującą pochodzenie arkusza. Leży <strong>pod</strong> treścią,
+          więc pole ochronne go nie obowiązuje.
+        </p>
+      </div>
+
+      <div class="zn-info">
+        <p><strong>Mono bez wyjątku.</strong> W znaku wodnym kropka przyjmuje barwę
+        grotów. To jedyne — obok wariantów mono — miejsce, gdzie kropka traci barwę
+        sygnału. Powód: kolorowy punkt pod literą czyta się jako błąd druku,
+        nie jako akcent.</p>
+      </div>
+
+      <div class="zn-siatka-nosnikow">
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena" style="background:var(--dn-szary-50)">
+            <div class="zn-podglad" data-siatka="nie" data-modul="12" style="width:200px">
+              <img alt="Znak wodny sygnetu na tle jasnym, krycie 8 procent" src="zastosowania/png/znak-wodny-sygnet-na-jasnym.png" width="512" height="512" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul"><h3>Sygnet na jasnym</h3><span class="zn-wymiary">96 × 96 · 8 %</span></div>
+            <p class="zn-nosnik-opis">Podkład arkusza jasnego. Atrament przy 8 % czyta się z tą samą siłą, co biel przy 10 % — percepcja krycia nie jest symetryczna.</p>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/znak-wodny-sygnet-na-jasnym.png" data-tytul="Znak wodny — sygnet na jasnym, krycie 8 %">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena" style="background:var(--dn-szary-950)">
+            <div class="zn-podglad" data-siatka="nie" data-modul="12" style="width:200px">
+              <img alt="Znak wodny sygnetu na tle ciemnym, krycie 10 procent" src="zastosowania/png/znak-wodny-sygnet-na-ciemnym.png" width="512" height="512" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul"><h3>Sygnet na ciemnym</h3><span class="zn-wymiary">96 × 96 · 10 %</span></div>
+            <p class="zn-nosnik-opis">Podkład arkusza ciemnego i podkład slajdu. Krycie wyższe o dwa punkty, żeby wyrównać percepcję.</p>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/znak-wodny-sygnet-na-ciemnym.png" data-tytul="Znak wodny — sygnet na ciemnym, krycie 10 %">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena" style="background:var(--dn-szary-50)">
+            <div class="zn-podglad" data-siatka="nie" data-modul="12" style="width:280px">
+              <img alt="Znak wodny lockupu poziomego na tle jasnym, krycie 8 procent" src="zastosowania/png/znak-wodny-lockup-na-jasnym.png" width="900" height="384" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul"><h3>Lockup na jasnym</h3><span class="zn-wymiary">225 × 96 · 8 %</span></div>
+            <p class="zn-nosnik-opis">Strona tytułowa i duży format. Obrót wyłącznie o 0° — znak wodny nie jest obracany.</p>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/znak-wodny-lockup-na-jasnym.png" data-tytul="Znak wodny — lockup na jasnym, krycie 8 %">Powiększ</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="zn-nosnik">
+          <div class="zn-nosnik-scena" style="background:var(--dn-szary-50)">
+            <div class="zn-podglad" data-siatka="nie" data-modul="12" style="width:200px">
+              <img alt="Kafel powtarzalny znaku wodnego 240 × 240, krycie 6 procent" src="zastosowania/png/znak-wodny-kafel-na-jasnym.png" width="480" height="480" loading="lazy">
+            </div>
+          </div>
+          <div class="zn-nosnik-korpus">
+            <div class="zn-nosnik-tytul"><h3>Kafel powtarzalny</h3><span class="zn-wymiary">240 × 240 · 6 %</span></div>
+            <p class="zn-nosnik-opis">Deseń tła dokumentu. Krycie niższe o dwa punkty, bo powtórzenie sumuje wrażenie gęstości.</p>
+            <div class="zn-nosnik-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-siatka-przelacz aria-pressed="false">Siatka</button>
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-powieksz="zastosowania/png/znak-wodny-kafel-na-jasnym.png" data-tytul="Znak wodny — kafel powtarzalny 240 × 240, krycie 6 %">Powiększ</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="zn-kod-pasek">
+        <span class="zn-kod-etykieta">Źródło SVG znaku wodnego — krycie na grupie, nie na poszczególnych ścieżkach</span>
+        <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-kopiuj-kod="zn-kod-wodny" data-kopiuj-etykieta="Źródło znaku wodnego">Kopiuj kod</button>
+      </div>
+      <div class="zn-kod"><pre id="zn-kod-wodny">&lt;svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"
+     role="img" aria-label="Danaco Console — znak wodny"&gt;
+  &lt;g fill="#181818" fill-opacity="0.08"&gt;
+    &lt;path d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/&gt;
+    &lt;path d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/&gt;
+    &lt;circle cx="83" cy="63.5" r="6.5"/&gt;
+  &lt;/g&gt;
+&lt;/svg&gt;</pre></div>
+    </section>
+
+    <!-- ─────────────── 8. POLE OCHRONNE ─────────────── -->
+    <section class="zn-sekcja" id="pole-ochronne" aria-labelledby="pole-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">08 · Miara</p>
+        <h2 id="pole-h">Pole ochronne na nośniku</h2>
+        <p class="zn-lead">
+          Definicja modułu bez zmian: <strong>X = wysokość grotu</strong>,
+          pole ochronne = <strong>½X</strong>. Na nośniku dochodzi druga reguła,
+          mocniejsza: <strong>margines nośnika ≥ pole ochronne znaku</strong>.
+        </p>
+      </div>
+
+      <div class="zn-schemat">┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+╎                     ↕ ½X                        ╎
+╎     ┌───────────────────────────────────┐       ╎
+╎ ½X  │                                   │  ½X   ╎
+╎ ↔   │    ▛▚ ▛▚  ●   D A N A C O         │   ↔   ╎
+╎     │              C O N S O L E ●      │       ╎
+╎     └───────────────────────────────────┘       ╎
+╎                     ↕ ½X                        ╎
+└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+  X = wysokość grotu · pole ochronne ≥ ½X ze wszystkich stron</div>
+
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Pole ochronne zmierzone dla każdego nośnika</caption>
+          <thead><tr>
+            <th scope="col">Nośnik</th><th scope="col">Konfiguracja</th>
+            <th scope="col">Szer. farby</th><th scope="col">X</th><th scope="col">½X</th>
+            <th scope="col">Margines</th><th scope="col">Zapas</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Open Graph</td><td>C poziomy 0,62</td><td class="zn-liczba">131,1 px</td><td class="zn-liczba">18,2</td><td class="zn-liczba">9,1</td><td class="zn-liczba">80 px</td><td class="zn-liczba">8,8 ×</td></tr>
+            <tr><td>Baner LinkedIn</td><td>A sygnet 132 px</td><td class="zn-liczba">106,6 px</td><td class="zn-liczba">60,5</td><td class="zn-liczba">30,2</td><td class="zn-liczba">120 px</td><td class="zn-liczba">4,0 ×</td></tr>
+            <tr><td>Karta tytułowa</td><td>C poziomy 0,86</td><td class="zn-liczba">181,9 px</td><td class="zn-liczba">25,2</td><td class="zn-liczba">12,6</td><td class="zn-liczba">100 px</td><td class="zn-liczba">7,9 ×</td></tr>
+            <tr><td>Slajd tytułowy</td><td>D pionowy 340 px</td><td class="zn-liczba">340,0 px</td><td class="zn-liczba">94,1</td><td class="zn-liczba">47,0</td><td class="zn-liczba">120 px</td><td class="zn-liczba">2,6 ×</td></tr>
+            <tr><td>Slajd treściowy</td><td>E kompakt 150 px</td><td class="zn-liczba">150,0 px</td><td class="zn-liczba">19,8</td><td class="zn-liczba">9,9</td><td class="zn-liczba">120 px</td><td class="zn-liczba">12,1 ×</td></tr>
+            <tr><td>Papier firmowy</td><td>C poziomy 45 mm</td><td class="zn-liczba">45,0 mm</td><td class="zn-liczba">6,2</td><td class="zn-liczba">3,1</td><td class="zn-liczba">20 mm</td><td class="zn-liczba">6,5 ×</td></tr>
+            <tr><td>Wizytówka awers</td><td>E kompakt 28 mm</td><td class="zn-liczba">28,0 mm</td><td class="zn-liczba">3,7</td><td class="zn-liczba">1,9</td><td class="zn-liczba">7 mm</td><td class="zn-liczba">3,7 ×</td></tr>
+            <tr><td>Awatar kwadrat</td><td>A sygnet 208 px</td><td class="zn-liczba">208,0 px</td><td class="zn-liczba">118,1</td><td class="zn-liczba">59,0</td><td class="zn-liczba">96 px</td><td class="zn-liczba">1,6 ×</td></tr>
+            <tr><td>Awatar koło</td><td>A sygnet 176 px</td><td class="zn-liczba">176,0 px</td><td class="zn-liczba">99,9</td><td class="zn-liczba">50,0</td><td class="zn-liczba">112 px</td><td class="zn-liczba">2,2 ×</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Awatar kwadratowy jest <strong>najciaśniejszym nośnikiem katalogu</strong>
+      (zapas 1,6 ×) — świadomie, bo bywa oglądany w skali 24 px i znak musi
+      wypełnić kadr. Znak wodny jest jedynym nośnikiem, którego pole ochronne
+      nie obowiązuje.</p>
+    </section>
+
+    <!-- ─────────────── 9. MATERIAŁ ŹRÓDŁOWY ─────────────── -->
+    <section class="zn-sekcja" id="zrodlo" aria-labelledby="zrodlo-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">09 · Ciągłość</p>
+        <h2 id="zrodlo-h">Materiał źródłowy — pakiet 08-grafika</h2>
+        <p class="zn-lead">
+          Cztery pliki z pierwszego podejścia do nośników. Opracowanie zachowuje
+          ich język i naprawia trzy rzeczy: rozdzielczości, dyscyplinę jednego
+          akcentu oraz źródło danych kontaktowych.
+        </p>
+      </div>
+
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Ocena plików źródłowych i ich następcy</caption>
+          <thead><tr><th scope="col">Plik źródłowy</th><th scope="col">Wymiary</th><th scope="col">Ocena</th><th scope="col">Następca</th></tr></thead>
+          <tbody>
+            <tr><td><code>og-image.png</code></td><td class="zn-liczba">1200 × 630</td><td>kompozycja i typografia zgodne z kierunkiem — do przeniesienia bez zmian</td><td><code>obraz-og-1200x630</code></td></tr>
+            <tr><td><code>banner-linkedin.png</code></td><td class="zn-liczba">3168 × 792</td><td>to <strong>2 × 1584 × 396</strong>, czyli wariant podwójnej gęstości; zawiera pas barwny przy dolnej krawędzi (drugi akcent) i adres serwisu spoza metryki produktu</td><td><code>baner-linkedin-1584x396</code></td></tr>
+            <tr><td><code>tapeta-2560.png</code></td><td class="zn-liczba">2560 × 1440</td><td>znak w pełnym kryciu — czyta się jako znak, nie jako podkład pulpitu</td><td><code>tapeta-2560x1440</code></td></tr>
+            <tr><td><code>tlo-slajdu.png</code></td><td class="zn-liczba">1920 × 1080</td><td>poprawne tło treściowe; brak wersji tytułowej i wariantów jasnych</td><td><code>tlo-slajdu-*-1920x1080</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="zn-reguly">
+        <div class="zn-regula zn-regula--tak">
+          <h4><svg class="zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Zachowane</h4>
+          <ul>
+            <li>tło <code>#0F0F0F</code> i siatka o bardzo niskim kryciu,</li>
+            <li>para krojów Space Grotesk + IBM Plex Mono,</li>
+            <li>zdanie „Zarządzaj cyfrową organizacją." z kropką sygnału zamiast kropki interpunkcyjnej,</li>
+            <li>brak zdjęć, gradientów i bloków barwnych.</li>
+          </ul>
+        </div>
+        <div class="zn-regula zn-regula--nie">
+          <h4><svg class="zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> Poprawione</h4>
+          <ul>
+            <li>usunięty pas barwny przy dolnej krawędzi banera (drugi akcent),</li>
+            <li>adres serwisu zastąpiony danymi z metryki produktu,</li>
+            <li>tapeta: groty do 7 % krycia — podkład, nie znak,</li>
+            <li>kadr projektowy banera sprowadzony do 1584 × 396 (2× to rasteryzacja).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────────── 10. INWENTARZ ─────────────── -->
+    <section class="zn-sekcja" id="inwentarz" aria-labelledby="inwentarz-h">
+      <div class="zn-sekcja-naglowek">
+        <p class="zn-nadtytul">10 · Pliki</p>
+        <h2 id="inwentarz-h">Inwentarz plików</h2>
+        <p class="zn-lead">
+          SVG jest źródłem, PNG wynikiem generatora — nigdy odwrotnie.
+          Każda zmiana nośnika przechodzi przez generator, a nie przez ręczną
+          edycję pliku wynikowego.
+        </p>
+      </div>
+
+      <div class="zn-schemat">03-marka/
+├── zastosowania-marki.md          ← opracowanie tekstowe
+├── zastosowania-marki.html        ← ta galeria
+└── zastosowania/
+    ├── generator-zastosowan.py    ← wytwarza wszystkie SVG i PNG
+    ├── generator-sygnatury.py     ← wytwarza sygnatury poczty
+    ├── svg/        (30 plików — źródła)
+    ├── png/        (32 pliki — rastry)
+    ├── html/       (4 pliki — nośniki żywe)
+    └── fragmenty/  (14 plików — znak inline do HTML)</div>
+
+      <h3>Reguła nazewnicza</h3>
+      <div class="zn-schemat">&lt;nośnik&gt;-&lt;wymiary&gt;[-&lt;wariant&gt;].&lt;rozszerzenie&gt;
+
+obraz-og-1200x630.png              ← nośnik + kadr
+obraz-og-1200x630-jasny.png        ← + wariant barwny
+wizytowka-awers-90x50-spady.svg    ← nośnik + strona + kadr + wersja
+znak-wodny-lockup-na-ciemnym.svg   ← nośnik + konfiguracja + tło</div>
+
+      <h3>Odtworzenie kompletu</h3>
+      <div class="zn-kod-pasek">
+        <span class="zn-kod-etykieta">Generator jest deterministyczny — dwa uruchomienia dają identyczne pliki</span>
+        <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-kopiuj-kod="zn-kod-generator" data-kopiuj-etykieta="Polecenia odtworzenia">Kopiuj kod</button>
+      </div>
+      <div class="zn-kod"><pre id="zn-kod-generator">cd 03-marka/zastosowania
+python3 generator-zastosowan.py   # 30 SVG + 30 PNG
+python3 generator-sygnatury.py    # 2 HTML + 2 PNG znaku</pre></div>
+
+      <div class="zn-tabela-otoczka">
+        <table class="zn-tabela">
+          <caption class="zn-czytnik">Nośniki HTML i ich rola</caption>
+          <thead><tr><th scope="col">Plik</th><th scope="col">Rola</th></tr></thead>
+          <tbody>
+            <tr><td><a href="zastosowania/html/sygnatura-poczty-jasna.html"><code>html/sygnatura-poczty-jasna.html</code></a></td><td>gotowa do wklejenia sygnatura, tło białe</td></tr>
+            <tr><td><a href="zastosowania/html/sygnatura-poczty-ciemna.html"><code>html/sygnatura-poczty-ciemna.html</code></a></td><td>jw., tło <code>#131313</code></td></tr>
+            <tr><td><a href="zastosowania/html/papier-firmowy-a4.html"><code>html/papier-firmowy-a4.html</code></a></td><td>dwa arkusze A4 z regułami <code>@media print</code></td></tr>
+            <tr><td><a href="zastosowania/html/szablon-slajdow.html"><code>html/szablon-slajdow.html</code></a></td><td>slajd tytułowy i treściowy, przełączalne</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Opracowanie tekstowe: <a href="zastosowania-marki.md"><code>zastosowania-marki.md</code></a> ·
+      Podstawa konstrukcyjna: <a href="ksiega-znaku.html">księga znaku</a> ·
+      Godła pochodne: <a href="emblematy-i-ikony.html">emblematy i ikony</a>.</p>
+    </section>
+
+    <!-- ─────────────── O TYM OPRACOWANIU ─────────────── -->
+    <details class="zn-o-opracowaniu">
+      <summary>O tym opracowaniu</summary>
+      <h3>Co przedstawia</h3>
+      <p>Galerię <strong>dwunastu nośników marki Danaco Console</strong>: obraz
+      Open Graph, baner LinkedIn, tapety w dwóch rozdzielczościach, tła slajdu
+      w dwóch układach, kartę tytułową dokumentacji, sygnaturę poczty
+      elektronicznej, papier firmowy A4, wizytówkę, ekran powitalny aplikacji,
+      awatar w dwóch kadrowaniach, szablon slajdów prezentacji i znak wodny.</p>
+
+      <h3>Źródło w dokumentacji</h3>
+      <ul>
+        <li>kontrakt systemu projektowego — metryka produktu, żetony, zasady redakcyjne, standard HTML,</li>
+        <li>kierunek systemu projektowego 3.4 i 3.5 — kropka sygnału i znak marki,</li>
+        <li><code>03-marka/ksiega-znaku.md</code> 5–8 — pole ochronne, wielkości minimalne, konfiguracje A–H, kolorystyka,</li>
+        <li><code>zasoby/marka/logo/*.svg</code> — zatwierdzona geometria sygnetu i logotypu,</li>
+        <li><code>design/opracowania/design/08-grafika/</code> — cztery pliki materiału źródłowego (rozdz. 9).</li>
+      </ul>
+
+      <h3>Jakie interakcje są odwzorowane</h3>
+      <ul>
+        <li>przełącznik motywu w pasku górnym — podmienia warianty barwne podglądów tam, gdzie istnieją oba (obraz OG, baner, tapety, tła slajdu, karta tytułowa, awatar w kole),</li>
+        <li>przycisk <em>Siatka</em> na każdym nośniku — nakłada podziałkę konstrukcyjną o module właściwym nośnikowi,</li>
+        <li>przycisk <em>Siatka konstrukcyjna na wszystkich</em> — włącza podziałkę na całej galerii,</li>
+        <li>przycisk <em>Powiększ</em> — otwiera nośnik w modalu <code>&lt;dialog&gt;</code> ze ścieżką pliku,</li>
+        <li>sygnatura poczty — <strong>żywy, działający kod</strong> w dwóch wariantach, z kopiowaniem znaczników do schowka,</li>
+        <li>papier firmowy — arkusz w rzeczywistych milimetrach ze skalowaniem podglądu i podziałką marginesów,</li>
+        <li>szablon slajdów — przełączanie układu (tytułowy / treściowy), wariantu barwnego i siatki,</li>
+        <li>boczny spis treści — podświetlanie rozdziału widocznego na ekranie.</li>
+      </ul>
+
+      <h3>Ograniczenia świadome</h3>
+      <ul>
+        <li>Podglądy nośników rastrowych są plikami PNG — nie da się ich przełączać przez CSS, więc przełącznik motywu <strong>podmienia plik</strong>, zgodnie z regułą „godło zachowuje barwy własne" (nie przebarwiamy znaku, wybieramy wariant).</li>
+        <li>Nośniki bez wariantu jasnego (wizytówka, ekran powitalny, awatar kwadratowy) nie zmieniają się przy przełączeniu motywu — to nie usterka, tylko brak wariantu w katalogu.</li>
+        <li>Kopiowanie do schowka używa <code>navigator.clipboard</code>, a przy jego braku — zapasowej ścieżki przez zaznaczenie zakresu, co działa również z <code>file://</code>.</li>
+      </ul>
+
+      <h3>Kontrola jakości</h3>
+      <ul>
+        <li>zero wartości szesnastkowych w regułach CSS tego dokumentu — wyłącznie <code>var(--dn-*)</code>,</li>
+        <li>zero <code>#000000</code>, zero <code>disabled</code>, zero emoji jako ikon,</li>
+        <li>zero Lorem ipsum i zmyślonych nazwisk — pola użytkownika w nawiasach kwadratowych,</li>
+        <li>oba motywy równoprawne, pasek górny atramentowy w obu,</li>
+        <li>nawigacja klawiaturą, <code>aria-pressed</code> na przełącznikach, pierścień fokusu na każdej kontrolce.</li>
+      </ul>
+    </details>
+
+    <p class="zn-stopka">
+      Danaco Console — AI Operating Environment · v2.0<br>
+      © 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz
+    </p>
+
+  </main>
+</div>
+
+<!-- ═══════════════════ MODAL POWIĘKSZENIA ═══════════════════ -->
+<dialog class="zn-modal" id="zn-modal" aria-labelledby="zn-modal-tytul">
+  <div class="zn-modal-naglowek">
+    <h2 class="zn-modal-tytul" id="zn-modal-tytul">Podgląd nośnika</h2>
+    <button class="dn-btn-ikona" type="button" id="zn-modal-zamknij" aria-label="Zamknij podgląd">
+      <svg class="zn-ikona" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="zn-modal-cialo">
+    <img id="zn-modal-obraz" alt="">
+  </div>
+  <div class="zn-modal-stopka">
+    <span class="zn-modal-sciezka" id="zn-modal-sciezka"></span>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="zn-modal-siatka" aria-pressed="false">Siatka konstrukcyjna</button>
+  </div>
+</dialog>
+
+<!-- komunikat kopiowania — obszar na żywo dla czytnika ekranu -->
+<div class="dn-toasty" id="zn-toasty" role="status" aria-live="polite"></div>
+
+<script src="../zasoby/wspolne.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ─── 1. Podmiana wariantu barwnego podglądów przy zmianie motywu ─── */
+  function synchronizujMotyw() {
+    var ciemny = document.documentElement.dataset.theme !== 'light';
+    document.querySelectorAll('img[data-plik-jasny]').forEach(function (obraz) {
+      var docelowy = ciemny ? obraz.dataset.plikCiemny : obraz.dataset.plikJasny;
+      if (docelowy && obraz.getAttribute('src') !== docelowy) obraz.setAttribute('src', docelowy);
+    });
+    var scena = document.getElementById('zn-scena-sygnatury');
+    if (scena) {
+      var jasna = document.getElementById('zn-sygnatura-jasna');
+      var ciemna = document.getElementById('zn-sygnatura-ciemna');
+      var recznie = scena.dataset.reczne === 'tak';
+      if (!recznie) { pokazSygnature(ciemny ? 'ciemna' : 'jasna'); }
+      void jasna; void ciemna;
+    }
+  }
+  new MutationObserver(synchronizujMotyw).observe(document.documentElement,
+    { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ─── 2. Siatka konstrukcyjna na podglądzie ─── */
+  function ustawSiatke(podglad, wlaczona) {
+    podglad.dataset.siatka = wlaczona ? 'tak' : 'nie';
+  }
+  document.querySelectorAll('[data-siatka-przelacz]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      var karta = przycisk.closest('.zn-nosnik');
+      var podglad = karta && karta.querySelector('.zn-podglad');
+      if (!podglad) return;
+      var wlaczona = podglad.dataset.siatka !== 'tak';
+      ustawSiatke(podglad, wlaczona);
+      przycisk.setAttribute('aria-pressed', String(wlaczona));
+    });
+  });
+
+  var przyciskWszystkie = document.getElementById('zn-siatka-wszystkie');
+  if (przyciskWszystkie) {
+    przyciskWszystkie.addEventListener('click', function () {
+      var wlaczona = przyciskWszystkie.getAttribute('aria-pressed') !== 'true';
+      przyciskWszystkie.setAttribute('aria-pressed', String(wlaczona));
+      document.querySelectorAll('.zn-podglad').forEach(function (p) { ustawSiatke(p, wlaczona); });
+      document.querySelectorAll('[data-siatka-przelacz]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(wlaczona));
+      });
+    });
+  }
+
+  /* ─── 3. Modal powiększenia ─── */
+  var modal = document.getElementById('zn-modal');
+  var modalObraz = document.getElementById('zn-modal-obraz');
+  var modalTytul = document.getElementById('zn-modal-tytul');
+  var modalSciezka = document.getElementById('zn-modal-sciezka');
+  var modalSiatka = document.getElementById('zn-modal-siatka');
+  var ostatniPrzycisk = null;
+
+  document.querySelectorAll('[data-powieksz]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      ostatniPrzycisk = przycisk;
+      var sciezka = przycisk.dataset.powieksz;
+      modalObraz.setAttribute('src', sciezka);
+      modalObraz.setAttribute('alt', przycisk.dataset.tytul || 'Podgląd nośnika');
+      modalTytul.textContent = przycisk.dataset.tytul || 'Podgląd nośnika';
+      modalSciezka.textContent = sciezka;
+      modalSiatka.setAttribute('aria-pressed', 'false');
+      modalObraz.style.outline = '';
+      if (modal.showModal) { modal.showModal(); } else { modal.setAttribute('open', ''); }
+    });
+  });
+
+  modalSiatka.addEventListener('click', function () {
+    var wlaczona = modalSiatka.getAttribute('aria-pressed') !== 'true';
+    modalSiatka.setAttribute('aria-pressed', String(wlaczona));
+    modalObraz.style.outline = wlaczona ? '1px dashed currentColor' : '';
+    modalObraz.style.outlineOffset = wlaczona ? '-1px' : '';
+    modalObraz.style.filter = wlaczona ? 'contrast(1.08)' : '';
+  });
+
+  document.getElementById('zn-modal-zamknij').addEventListener('click', function () {
+    if (modal.close) { modal.close(); } else { modal.removeAttribute('open'); }
+  });
+  modal.addEventListener('close', function () {
+    if (ostatniPrzycisk) ostatniPrzycisk.focus();
+  });
+  modal.addEventListener('click', function (zdarzenie) {
+    if (zdarzenie.target === modal && modal.close) modal.close();
+  });
+
+  /* ─── 4. Kopiowanie do schowka ─── */
+  function komunikat(tresc, sukces) {
+    var pojemnik = document.getElementById('zn-toasty');
+    var toast = document.createElement('div');
+    toast.className = 'dn-toast ' + (sukces ? 'dn-toast--sukces' : 'dn-toast--blad');
+    var ikona = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    ikona.setAttribute('viewBox', '0 0 24 24');
+    ikona.setAttribute('fill', 'none');
+    ikona.setAttribute('stroke', 'currentColor');
+    ikona.setAttribute('stroke-width', '1.75');
+    ikona.setAttribute('stroke-linecap', 'round');
+    ikona.setAttribute('stroke-linejoin', 'round');
+    ikona.setAttribute('aria-hidden', 'true');
+    var sciezka = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    sciezka.setAttribute('d', sukces ? 'M20 6 9 17l-5-5' : 'M18 6 6 18M6 6l12 12');
+    ikona.appendChild(sciezka);
+    var blok = document.createElement('div');
+    var tytul = document.createElement('div');
+    tytul.className = 'dn-toast-tytul';
+    tytul.textContent = sukces ? 'Skopiowano' : 'Nie udało się skopiować';
+    var opis = document.createElement('div');
+    opis.className = 'dn-toast-tresc';
+    opis.textContent = tresc;
+    blok.appendChild(tytul); blok.appendChild(opis);
+    toast.appendChild(ikona); toast.appendChild(blok);
+    pojemnik.appendChild(toast);
+    setTimeout(function () { toast.remove(); }, 2600);
+  }
+
+  function doSchowka(tekst, etykieta) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(tekst).then(
+        function () { komunikat(etykieta, true); },
+        function () { zapasowoDoSchowka(tekst, etykieta); });
+    } else {
+      zapasowoDoSchowka(tekst, etykieta);
+    }
+  }
+
+  function zapasowoDoSchowka(tekst, etykieta) {
+    var pole = document.createElement('textarea');
+    pole.value = tekst;
+    pole.setAttribute('readonly', '');
+    pole.style.position = 'fixed';
+    pole.style.top = '-1000px';
+    document.body.appendChild(pole);
+    pole.select();
+    var udane = false;
+    try { udane = document.execCommand('copy'); } catch (blad) { udane = false; }
+    pole.remove();
+    komunikat(etykieta, udane);
+  }
+
+  document.querySelectorAll('[data-kopiuj-kod]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      var zrodlo = document.getElementById(przycisk.dataset.kopiujKod);
+      if (zrodlo) doSchowka(zrodlo.textContent, przycisk.dataset.kopiujEtykieta || 'Kod');
+    });
+  });
+
+  document.querySelectorAll('[data-kopiuj-element]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      var zrodlo = document.getElementById(przycisk.dataset.kopiujElement);
+      if (!zrodlo) return;
+      var tabela = zrodlo.querySelector('table');
+      doSchowka((tabela || zrodlo).outerHTML, przycisk.dataset.kopiujEtykieta || 'Kod');
+    });
+  });
+
+  /* ─── 5. Sygnatura poczty — przełączanie wariantu ─── */
+  function pokazSygnature(wariant) {
+    var jasna = document.getElementById('zn-sygnatura-jasna');
+    var ciemna = document.getElementById('zn-sygnatura-ciemna');
+    var scena = document.getElementById('zn-scena-sygnatury');
+    if (!jasna || !ciemna) return;
+    jasna.hidden = wariant !== 'jasna';
+    ciemna.hidden = wariant !== 'ciemna';
+    scena.classList.toggle('zn-scena-zywa--jasna', wariant === 'jasna');
+    scena.classList.toggle('zn-scena-zywa--ciemna', wariant === 'ciemna');
+    document.querySelectorAll('[data-sygnatura-wariant]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.sygnaturaWariant === wariant));
+    });
+  }
+  document.querySelectorAll('[data-sygnatura-wariant]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      document.getElementById('zn-scena-sygnatury').dataset.reczne = 'tak';
+      pokazSygnature(przycisk.dataset.sygnaturaWariant);
+    });
+  });
+
+  /* ─── 6. Papier firmowy — skala podglądu i podziałka ─── */
+  var arkusz = document.getElementById('zn-arkusz');
+  var otoczka = document.getElementById('zn-arkusz-otoczka');
+  var etykietaSkali = document.getElementById('zn-arkusz-skala-etykieta');
+  var skalaArkusza = 0.45;
+
+  function odswiezSkale() {
+    if (!arkusz || !otoczka) return;
+    arkusz.style.transform = 'scale(' + skalaArkusza + ')';
+    otoczka.style.height = (arkusz.offsetHeight * skalaArkusza) + 'px';
+    etykietaSkali.textContent = 'skala ' + Math.round(skalaArkusza * 100) + ' %';
+  }
+  var mniej = document.getElementById('zn-arkusz-mniej');
+  var wiecej = document.getElementById('zn-arkusz-wiecej');
+  if (mniej) mniej.addEventListener('click', function () {
+    skalaArkusza = Math.max(0.25, Math.round((skalaArkusza - 0.1) * 100) / 100); odswiezSkale();
+  });
+  if (wiecej) wiecej.addEventListener('click', function () {
+    skalaArkusza = Math.min(1.0, Math.round((skalaArkusza + 0.1) * 100) / 100); odswiezSkale();
+  });
+  var arkuszSiatka = document.getElementById('zn-arkusz-siatka');
+  if (arkuszSiatka) arkuszSiatka.addEventListener('click', function () {
+    var wlaczona = arkuszSiatka.getAttribute('aria-pressed') !== 'true';
+    arkuszSiatka.setAttribute('aria-pressed', String(wlaczona));
+    arkusz.dataset.siatka = wlaczona ? 'tak' : 'nie';
+  });
+  window.addEventListener('resize', odswiezSkale);
+
+  /* ─── 7. Szablon slajdów ─── */
+  var slajd = document.getElementById('zn-slajd');
+  document.querySelectorAll('[data-slajd-uklad]').forEach(function (przycisk) {
+    przycisk.addEventListener('click', function () {
+      var uklad = przycisk.dataset.slajdUklad;
+      slajd.dataset.uklad = uklad;
+      document.querySelectorAll('[data-slajd-uklad]').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.slajdUklad === uklad));
+      });
+      slajd.querySelectorAll('[data-tylko]').forEach(function (el) {
+        el.style.display = el.dataset.tylko === uklad ? '' : 'none';
+      });
+    });
+  });
+  var slajdWariant = document.getElementById('zn-slajd-wariant');
+  slajdWariant.addEventListener('click', function () {
+    var jasny = slajdWariant.getAttribute('aria-pressed') !== 'true';
+    slajdWariant.setAttribute('aria-pressed', String(jasny));
+    slajd.dataset.wariant = jasny ? 'jasny' : 'ciemny';
+    slajdWariant.textContent = jasny ? 'Wariant ciemny' : 'Wariant jasny';
+  });
+  var slajdSiatka = document.getElementById('zn-slajd-siatka');
+  slajdSiatka.addEventListener('click', function () {
+    var wlaczona = slajdSiatka.getAttribute('aria-pressed') !== 'true';
+    slajdSiatka.setAttribute('aria-pressed', String(wlaczona));
+    slajd.dataset.siatka = wlaczona ? 'tak' : 'nie';
+  });
+
+  /* ─── 8. Boczny spis treści — podświetlanie rozdziału ─── */
+  var odnosniki = Array.prototype.slice.call(document.querySelectorAll('.zn-spis a'));
+  var sekcje = odnosniki.map(function (a) {
+    return document.querySelector(a.getAttribute('href'));
+  }).filter(Boolean);
+
+  function oznacz(sekcja) {
+    odnosniki.forEach(function (a) {
+      var czy = a.getAttribute('href') === '#' + sekcja.id;
+      if (czy) { a.setAttribute('aria-current', 'true'); }
+      else { a.removeAttribute('aria-current'); }
+    });
+  }
+
+  if ('IntersectionObserver' in window && sekcje.length) {
+    var obserwator = new IntersectionObserver(function (wpisy) {
+      var widoczne = wpisy.filter(function (w) { return w.isIntersecting; })
+        .sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      if (widoczne.length) oznacz(widoczne[0].target);
+    }, { rootMargin: '-72px 0px -62% 0px', threshold: 0 });
+    sekcje.forEach(function (s) { obserwator.observe(s); });
+    oznacz(sekcje[0]);
+  }
+
+  /* ─── 8b. Moduł siatki konstrukcyjnej i jednostka slajdu ─── */
+  function odswiezModuly() {
+    document.querySelectorAll('.zn-podglad[data-modul]').forEach(function (podglad) {
+      var obraz = podglad.querySelector('img');
+      if (!obraz) return;
+      var szer = Number(obraz.getAttribute('width')) || obraz.naturalWidth || 0;
+      var wys = Number(obraz.getAttribute('height')) || obraz.naturalHeight || 0;
+      var modul = parseFloat(podglad.dataset.modul);
+      if (!szer || !wys || !modul) return;
+      podglad.style.setProperty('--zn-modul-x', (modul / szer * 100) + '%');
+      podglad.style.setProperty('--zn-modul-y', (modul / wys * 100) + '%');
+    });
+  }
+
+  function odswiezJednostkeSlajdu() {
+    if (!slajd) return;
+    var szerokosc = slajd.clientWidth || slajd.getBoundingClientRect().width;
+    if (szerokosc) slajd.style.setProperty('--u', (szerokosc / 1920) + 'px');
+  }
+  if ('ResizeObserver' in window && slajd) {
+    new ResizeObserver(odswiezJednostkeSlajdu).observe(slajd);
+  }
+  window.addEventListener('resize', odswiezJednostkeSlajdu);
+
+  /* ─── 9. Uruchomienie ─── */
+  slajd.querySelectorAll('[data-tylko]').forEach(function (el) {
+    el.style.display = el.dataset.tylko === slajd.dataset.uklad ? '' : 'none';
+  });
+  odswiezModuly();
+  odswiezJednostkeSlajdu();
+  odswiezSkale();
+  synchronizujMotyw();
+  document.getElementById('zn-scena-sygnatury').dataset.reczne = 'nie';
+  pokazSygnature(document.documentElement.dataset.theme === 'light' ? 'jasna' : 'ciemna');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+# Opracowania (`docs/`) i warstwa wizualna (`design/`) SĄ w repozytorium od
+# 18.08.2026 — rozstrzygnięcie Właściciela. Powód: obie dostawy są źródłem prawdy
+# dla wszystkich wykonawców (patrz CLAUDE.md), a istniały wyłącznie na jednej
+# maszynie, bez kopii i bez historii zmian. Przed wciągnięciem przeszły
+# sprawdzenie na dane dostępowe — nie znaleziono żadnych; jedyny adres w treści
+# to `adres@przyklad.pl`. Gdyby kiedykolwiek miały ponieść klucz albo hasło,
+# droga jest jedna: wyjąć sekret do `.env`, nie wyjmować katalogu z repozytorium.
+
+# Próby techniczne — wyrzucane po zamknięciu etapu.
+/spike/
+
+# Sekrety — wyłącznie .env.example jest wersjonowany.
+.env
+.env.local
+*.key
+*.pem
+oauth-token
+.credentials.json
+
+# Wyjście budowania
+/budowa/client/dist/
+/budowa/server/danaco-console
+/budowa/server/danaco-console.exe
+/budowa/desktop/target/
+/budowa/desktop/src-tauri/target/
+
+# Baza danych — stan lokalny, nie źródło
+*.db
+*.db-shm
+*.db-wal
+
+# Zależności
+node_modules/
+
+# Narzędzia systemowe
+.DS_Store
+Thumbs.db
+*.log
+
+# Pomocnik Pythona (transkrypcja) — bajtkod odtwarza sie przy kazdym uruchomieniu
+__pycache__/
+*.pyc
+
+# Wyjście generatora witryny — składane poleceniem, nie trzymane w drzewie.
+budowa/witryna/dist/
+
+# Wydania — pliki wykonywalne produktu, nie zrodlo. Git sluzy do przywracania kodu.
+budowa/wydania/
+
+# Rdzen zlozony do uruchomienia powloki — wytwor budowania, sklada go `go build`.
+budowa/danaco-console
+budowa/danaco-console.exe
+
+# Katalogi robocze pomiarow i wpiec — powstaja przy pracy, nie sa zrodlem.
+budowa/.przejazd/
+budowa/.dowod-odmowy/
+budowa/.wpiecia/
+budowa/.ksiega/
+
+# (Rozstrzygnięte: `design/` jest w repozytorium — patrz wpis o opracowaniach wyżej.)
+
+# Kopia dokumentacji produktu skladana przy budowie instalki — zrodlem sa pliki
+# *.md w korzeniu repozytorium, nie ta kopia.
+budowa/desktop/src-tauri/zasoby/dokumentacja/
+
+# Kopie zapasowe kontraktu z zamknietych tur — zrodlem jest budowa/shared/contract.json.
+budowa/shared/contract.json.*
+
+# Proby techniczne w drzewie budowy — wyrzucane po zamknieciu etapu.
+budowa/spike/
+
+# Katalog roboczy agenta (worktree) — nie jest zrodlem.
+design/.claude/
+budowa/sesje/

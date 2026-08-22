@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Okno rejestracji i logowania</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/rama.css">
+<link rel="stylesheet" href="../../zasoby/okna-modalne.css">
+<link rel="stylesheet" href="../../zasoby/wejscie.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     OKNO REJESTRACJI I LOGOWANIA — style lokalne (prefiks .au-*)
+     Okno dwukolumnowe: kolumna tożsamości (atrament) i kolumna formularza
+     (powierzchnia). Szerokość docelowa 1040 px — okno jest pierwszym widokiem
+     produktu i nosi jego wagę, nie wagę okienka dialogowego.
+     Wyłącznie żetony var(--dn-*). Oba motywy.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* Ikony w przełączniku stanów i w zakładkach okna trzymają rozmiar żetonu. */
+  .pt-przybornik-lokalny .dn-zakladka svg,
+  .we-panel .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+  /* Zakładki „Zaloguj się / Zarejestruj się" — pigułki nad formularzem. */
+  .we-panel .dn-zakladki {
+    align-self: flex-start;
+    gap: var(--dn-od-1);
+    padding: 3px;
+    border: 1px solid var(--dn-obrys);
+    border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia-2);
+  }
+  .we-panel .dn-zakladka {
+    border: 0; border-radius: var(--dn-r-pill);
+    padding: 0 var(--dn-od-4);
+    min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+    color: var(--dn-tekst-3);
+  }
+  .we-panel .dn-zakladka::after { content: none; }
+  /* Stan wybrany niesie PODŚWIETLENIE, nie wypełnienie: pigułka w pełnym
+     błękicie czytała się jak przycisk działania, a to kontrolka wyboru między
+     dwiema równorzędnymi drogami — wskazuje, gdzie stoisz, a nie co wykonasz.
+     Wypełnienie sygnałowe zostaje zarezerwowane dla przycisku „Zaloguj się”
+     pod formularzem, który jest właściwym działaniem tego okna. */
+  .we-panel .dn-zakladka[aria-selected='true'] {
+    background: var(--dn-sygnal-tlo);
+    border: 1px solid var(--dn-sygnal-obrys);
+    color: var(--dn-sygnal);
+    font-weight: var(--dn-fw-polgruba);
+  }
+  .we-panel .dn-zakladka[aria-selected='true']:hover {
+    background: var(--dn-sygnal-wypelnienie);
+    color: var(--dn-tekst-inv);
+  }
+
+
+
+
+
+
+  .we-marka-godlo .kropka { fill: var(--dn-sygnal-500); }
+
+
+
+
+
+  /* ── Kolumna formularza ─────────────────────────────────────────────────── */
+
+
+
+
+
+  .au-pola { display: flex; flex-direction: column; gap: var(--dn-od-4); }
+  .au-para { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dn-od-4); }
+
+  /* pole hasła z odsłonięciem */
+  .au-haslo { position: relative; display: flex; }
+  .au-haslo > .dn-pole-kontrolka { width: 100%; padding-right: var(--dn-wym-kontrolka); }
+  .au-haslo-oko {
+    position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+    display: grid; place-content: center;
+    width: calc(var(--dn-wym-kontrolka) - 4px); height: calc(var(--dn-wym-kontrolka) - 4px);
+    border: 0; border-radius: var(--dn-r-sm); background: transparent;
+    color: var(--dn-tekst-3); cursor: pointer;
+    transition: color var(--dn-czas-1) var(--dn-ease), background-color var(--dn-czas-1) var(--dn-ease);
+  }
+  .au-haslo-oko:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+  .au-haslo-oko svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+  .au-haslo-oko .ik-zakryte { display: none; }
+  .au-haslo-oko[aria-pressed='true'] .ik-odkryte { display: none; }
+  .au-haslo-oko[aria-pressed='true'] .ik-zakryte { display: block; }
+
+  /* wskaźnik siły hasła */
+  .au-sila { display: flex; flex-direction: column; gap: var(--dn-od-2); margin-top: var(--dn-od-3); }
+  .au-sila-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+  .au-sila-odc { height: 3px; border-radius: var(--dn-r-pill); background: var(--dn-obrys); }
+  .au-sila[data-stopien='1'] .au-sila-odc:nth-child(-n+1),
+  .au-sila[data-stopien='2'] .au-sila-odc:nth-child(-n+2) { background: var(--dn-ostrzezenie-tekst); }
+  .au-sila[data-stopien='3'] .au-sila-odc:nth-child(-n+3),
+  .au-sila[data-stopien='4'] .au-sila-odc { background: var(--dn-sukces-tekst); }
+  .au-sila-opis { font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .au-sila-warunki { display: flex; flex-wrap: wrap; gap: var(--dn-od-1) var(--dn-od-3); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .au-sila-warunek { display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+  .au-sila-warunek svg { width: 12px; height: 12px; }
+  .au-sila-warunek[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
+
+  /* Głowa panelu: tytuł, tor kroków odzyskiwania i zdanie wprowadzające.
+     Reset zeruje marginesy nagłówkom i akapitom, więc odstęp musi wnieść
+     kontener — inaczej trzy różne treści zlewają się w jeden blok. */
+  .au-glowa { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+  .au-tytul {
+    font-family: var(--dn-ff-naglowek);
+    font-weight: var(--dn-fw-polgruba);
+    font-size: var(--dn-fs-xl);
+    letter-spacing: var(--dn-ls-naglowek);
+    line-height: var(--dn-lh-ciasny);
+    color: var(--dn-tekst);
+  }
+  .au-lid {
+    max-width: 62ch;
+    font-size: var(--dn-fs-sm);
+    line-height: var(--dn-lh-luzny);
+    color: var(--dn-tekst-3);
+  }
+  /* Tor kroków stoi między tytułem a zdaniem wprowadzającym — dostaje własne
+     powietrze z obu stron, bo jest wskazaniem miejsca w procesie, nie tekstem. */
+  .au-glowa .au-kroki { padding: var(--dn-od-1) 0; }
+
+  /* wiersz opcji sesji */
+  .au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+  .au-opcja { display: flex; align-items: flex-start; gap: var(--dn-od-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); cursor: pointer; }
+  .au-opcja small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  .au-wiersz { display: flex; align-items: center; justify-content: space-between; gap: var(--dn-od-3); flex-wrap: wrap; }
+
+
+  /* Działania formularza układają się w kolumnę — przycisk główny na pełną
+     szerokość, odsyłacz pod nim. */
+  .au-akcje { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+  .au-akcje .dn-btn { justify-content: center; }
+  .au-link { font-size: var(--dn-fs-sm); }
+  /* Stopka panelu: przycisk i odnośnik obok siebie, nigdy stykające się —
+     dwa różne wywołania muszą być rozdzielone odstępem, nie samą krawędzią. */
+  /* Łącznik „lub" — rozdziela dwie równorzędne drogi wyjścia ze stopki.
+     Bez niego odsyłacz i przycisk czytają się jako jedno zdanie. */
+  .au-lacznik { color: var(--dn-tekst-3); font-size: var(--dn-fs-sm); }
+  .au-stopka {
+    display: flex;
+    align-items: center;
+    gap: var(--dn-od-2);
+    flex-wrap: wrap;
+    font-size: var(--dn-fs-sm);
+    color: var(--dn-tekst-3);
+  }
+  .au-rozdzielacz { display: flex; align-items: center; gap: var(--dn-od-3); color: var(--dn-tekst-3); font-size: var(--dn-fs-xs); }
+  .au-rozdzielacz::before, .au-rozdzielacz::after { content: ''; flex: 1; height: 1px; background: var(--dn-obrys-subtelny); }
+
+  .au-metody { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dn-od-2); }
+  .au-metoda {
+    display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1);
+    padding: var(--dn-od-3) var(--dn-od-2);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-panel); color: var(--dn-tekst-2);
+    font-size: var(--dn-fs-xs); text-align: center; cursor: pointer;
+    transition: border-color var(--dn-czas-1) var(--dn-ease), background-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease);
+  }
+  .au-metoda:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); transform: translateY(-1px); }
+  .au-metoda svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-3); }
+  .au-metoda[data-aktywna='nie'] { color: var(--dn-tekst-3); }
+  .au-metoda-stan { font-family: var(--dn-ff-mono); font-size: 10px; color: var(--dn-tekst-3); }
+
+
+
+  /* ── Kod potwierdzający ─────────────────────────────────────────────────── */
+  .au-kod { display: flex; gap: var(--dn-od-2); }
+  .au-kod-pole {
+    width: 52px; height: 60px; flex: none;
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-2xl); text-align: center;
+    transition: border-color var(--dn-czas-1) var(--dn-ease), box-shadow var(--dn-czas-1) var(--dn-ease);
+  }
+  .au-kod-pole:focus { outline: none; border-color: var(--dn-fokus); box-shadow: var(--dn-cien-sygnal); }
+  .au-kod-adres { font-family: var(--dn-ff-mono); color: var(--dn-tekst); }
+  .au-kod-stopka { display: flex; align-items: center; gap: var(--dn-od-4); flex-wrap: wrap; font-size: var(--dn-fs-sm); }
+  .au-odliczanie { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+  .au-odliczanie b { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+
+  /* ── Kroki odzyskiwania ─────────────────────────────────────────────────── */
+  .au-kroki { display: flex; align-items: center; gap: var(--dn-od-2); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .au-krok { display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+  .au-krok-nr {
+    display: grid; place-content: center; width: 20px; height: 20px;
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
+    font-family: var(--dn-ff-mono); font-size: 11px;
+  }
+  .au-krok[data-biezacy='tak'] { color: var(--dn-tekst); }
+  .au-krok[data-biezacy='tak'] .au-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+  .au-krok-strzalka { color: var(--dn-tekst-3); }
+
+  /* ── Komunikat błędu w oknie ────────────────────────────────────────────── */
+  .au-alarm {
+    display: flex; gap: var(--dn-od-3); padding: var(--dn-od-3);
+    border: 1px solid var(--dn-blad-obrys); border-left-width: 2px;
+    border-radius: var(--dn-r-md); background: var(--dn-blad-tlo);
+    font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2);
+  }
+  .au-alarm svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-blad-tekst); }
+  .au-alarm b { color: var(--dn-blad-tekst); }
+  .au-alarm--informacja { border-color: var(--dn-informacja-obrys); background: var(--dn-informacja-tlo); }
+  .au-alarm--informacja svg, .au-alarm--informacja b { color: var(--dn-informacja-tekst); }
+  .au-alarm--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
+  .au-alarm--sukces svg, .au-alarm--sukces b { color: var(--dn-sukces-tekst); }
+
+  /* ── Progi ──────────────────────────────────────────────────────────────── */
+  @media (max-width: 1000px) {
+    .we-okno { grid-template-columns: minmax(0, 1fr); }
+    .we-marka { display: none; }
+  }
+  @media (max-width: 640px) {
+    .we-panel { padding: var(--dn-od-5) var(--dn-od-4); }
+    .au-para, .au-metody { grid-template-columns: minmax(0, 1fr); }
+    .au-kod-pole { width: 40px; height: 48px; font-size: var(--dn-fs-lg); }
+  }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PRZEPŁYW GŁÓWNY · ETAP 2"
+      data-prototyp-okno="Okno rejestracji i logowania — sześć stanów"
+      data-prototyp-zrodlo="docs/interfejs-uzytkownika/przeplyw-okien.md rozdz. 3.2">
+
+<div class="pt-powloka pt-powloka--jednolita" id="dn-powloka-montaz"></div>
+
+<template id="dn-tresc-okna">
+  <main class="pt-cialo pt-cialo--bez-bocznej">
+    <div class="pt-obszar">
+
+      <section class="pt-okno pt-okno--plaskie" aria-label="Okno rejestracji i logowania">
+        <header class="pt-okno-naglowek">
+          <h1 class="pt-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Okno rejestracji i logowania</h1>
+          <span class="pt-mono">etap 2 przepływu · rejestracja · potwierdzenie · logowanie · odzyskiwanie</span>
+        </header>
+
+        <div class="pt-przybornik-lokalny">
+          <span class="pt-etykieta">Stan okna</span>
+          <div class="dn-zakladki" role="tablist" aria-label="Stany okna rejestracji i logowania" style="flex-wrap:wrap; border-bottom:0"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="logowanie" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>1 · Logowanie</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="logowanie-blad" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>2 · Logowanie — dane niezgodne</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="rejestracja" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>3 · Rejestracja</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="kod" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>4 · Kod potwierdzający</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="odzyskiwanie-1" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>5 · Odzyskiwanie — adres</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="odzyskiwanie-2" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>6 · Odzyskiwanie — nowe hasło</button></div>
+        </div>
+
+        <div class="pt-okno-tresc">
+          <div class="we-scena">
+            <div class="we-okno">
+      <aside class="we-marka">
+        <div>
+          <svg class="we-marka-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+          <h1 class="we-marka-nazwa">Danaco Console</h1>
+          <p class="we-marka-motto">Platforma AI Workspace OS</p>
+        </div>
+        <ul class="we-marka-lista"><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/></svg><span><b>Cztery środowiska pracy</b>Osobna przestrzeń robocza dla każdego rodzaju pracy: TalkIn, WorkSpace, CodeStudio, MultitaskingAI.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg><span><b>Wiele modeli nad jednym zleceniem</b>Koordynator rozdziela zlecenie między wykonawców; przebieg śledzisz w Execution Loop Window.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Izolacja kontekstu pod kontrolą</b>Punkty izolacji kontekstu ustala Operator, nie sztywna reguła systemu.</span></li></ul>
+        <div class="we-marka-stopka">
+          Danaco Holding Group Sp. z o.o.<br>
+          wydanie 2.0<br>
+          support@danaco-core.pl
+        </div>
+      </aside>
+      <div class="we-panel" data-widok="logowanie" data-grupa-widoku="stan" data-widok-aktywny="tak">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Zaloguj się</h2>
+          <p class="au-lid">Podaj dane konta Operatora.</p>
+        </div>
+        <div class="au-pola">
+          <label class="dn-pole"><span class="dn-pole-etykieta">Login albo adres e-mail</span><input class="dn-pole-kontrolka" type="text" id=log-login autocomplete="username"></label>
+          <div class="dn-pole"><label class="dn-pole-etykieta" for="log-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="log-haslo" autocomplete="current-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="log-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
+        </div>
+        <div class="au-opcje">
+          <label class="au-opcja"><input class="dn-check" type="checkbox" checked><span>Zapisz urządzenie do zaufanych<small>Pomija dodatkowe potwierdzanie tożsamości na tym urządzeniu.</small></span></label>
+          <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Nie wylogowuj mnie<small>Sesja pozostanie otwarta do czasu wylogowania.</small></span></label>
+        </div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button">Zaloguj się</button>
+          <a class="au-link" href="#" data-przelacz="odzyskiwanie-1" data-grupa="stan">Nie pamiętam hasła</a>
+        </div>
+        <div class="au-rozdzielacz">albo inną metodą</div>
+        <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
+        <div class="au-stopka">
+          <span>Nie masz konta? <a class="au-link" href="#" data-przelacz="rejestracja" data-grupa="stan">Utwórz konto Operatora</a></span>
+          <span class="au-lacznik">lub</span>
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Kontynuuj bez konta</button>
+        </div>
+      </div>
+      <div class="we-panel" data-widok="logowanie-blad" data-grupa-widoku="stan" data-widok-aktywny="nie">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Zaloguj się</h2>
+        </div>
+        <div class="au-alarm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Nie rozpoznano danych logowania.</b> Sprawdź login i hasło — pozostały dwie próby, po nich logowanie zostanie wstrzymane na godzinę.</span></div>
+        <div class="au-pola">
+          <label class="dn-pole"><span class="dn-pole-etykieta">Login albo adres e-mail</span><input class="dn-pole-kontrolka" type="text" id=blad-login autocomplete="username"></label>
+          <div class="dn-pole"><label class="dn-pole-etykieta" for="blad-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="blad-haslo" autocomplete="current-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="blad-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span><span class="dn-pole-opis">Sprawdź, czy nie jest włączony Caps Lock.</span></div>
+        </div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button">Zaloguj się ponownie</button>
+          <a class="au-link" href="#" data-przelacz="odzyskiwanie-1" data-grupa="stan">Nie pamiętam hasła</a>
+        </div>
+        <div class="au-rozdzielacz">albo inną metodą</div>
+        <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
+        <div class="au-stopka">
+          <span>Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp przywraca wówczas odzyskiwanie konta adresem e-mail.</span>
+        </div>
+      </div>
+      <div class="we-panel" data-widok="rejestracja" data-grupa-widoku="stan" data-widok-aktywny="nie">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Utwórz konto Operatora</h2>
+          <p class="au-lid">Podaj adres e-mail, z którego stale korzystasz. Posłuży do potwierdzenia konta i odzyskania dostępu.</p>
+        </div>
+        <div class="au-pola">
+          <div class="au-para">
+            <label class="dn-pole"><span class="dn-pole-etykieta">Login</span><input class="dn-pole-kontrolka" type="text" id=rej-login autocomplete="username"></label>
+            <label class="dn-pole"><span class="dn-pole-etykieta">Adres e-mail</span><input class="dn-pole-kontrolka" type="email" id=rej-email autocomplete="email"></label>
+          </div>
+          <div class="au-para">
+            <div>
+              <div class="dn-pole"><label class="dn-pole-etykieta" for="rej-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="rej-haslo" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="rej-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
+              <div class="au-sila" data-stopien="0">
+                <div class="au-sila-tor"><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span></div>
+                <span class="au-sila-opis" data-sila-opis>Siła hasła zostanie oceniona podczas wpisywania</span>
+                <div class="au-sila-warunki">
+                  <span class="au-sila-warunek" data-warunek="dlugosc" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>co najmniej 12 znaków</span>
+                  <span class="au-sila-warunek" data-warunek="wielkosc" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>wielka i mała litera</span>
+                  <span class="au-sila-warunek" data-warunek="cyfra" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>cyfra</span>
+                  <span class="au-sila-warunek" data-warunek="znak" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>znak specjalny</span>
+                </div>
+              </div>
+            </div>
+            <div class="dn-pole"><label class="dn-pole-etykieta" for="rej-haslo-2">Powtórz hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="rej-haslo-2" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="rej-haslo-2"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
+          </div>
+        </div>
+        <div class="au-opcje">
+          <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Akceptuję warunki licencji i zasady przetwarzania danych<small>Otworzą się bez utraty wprowadzonych danych.</small></span></label>
+          <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Chcę otrzymywać powiadomienia o nowych wydaniach<small>Zgodę wycofasz w każdej chwili w ustawieniach konta.</small></span></label>
+        </div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button" data-przelacz="kod" data-grupa="stan">Utwórz konto</button>
+        </div>
+        <div class="au-stopka">
+          <span>Masz już konto? <a class="au-link" href="#" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</a></span>
+          <span class="au-lacznik">lub</span>
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Kontynuuj bez konta</button>
+        </div>
+      </div>
+      <div class="we-panel" data-widok="kod" data-grupa-widoku="stan" data-widok-aktywny="nie">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Potwierdź adres e-mail</h2>
+          <p class="au-lid">Kod potwierdzający wysłano na adres <span class="au-kod-adres">login@przykład.pl</span> — ważny przez 1 godzinę.</p>
+        </div>
+        <div class="au-kod" role="group" aria-label="Kod potwierdzający — sześć znaków"><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 1 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 2 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 3 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 4 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 5 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 6 z sześciu" data-kod></div>
+        <div class="au-kod-stopka">
+          <span class="au-odliczanie">Kod traci ważność za <b>59:12</b></span>
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Wklej kod ze schowka</button>
+        </div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button">Potwierdź konto</button>
+        </div>
+        <div class="au-alarm au-alarm--informacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span><b>Nie ma wiadomości?</b> Sprawdź folder wiadomości niechcianych. Kod wysyłamy z adresu noreply@danaco-core.pl — dociera zwykle w ciągu minuty. Jeśli nie dotarł, wyślij go ponownie.</span></div>
+        <div class="au-stopka">
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wyślij kod ponownie</button>
+          <a class="au-link" href="#" data-przelacz="rejestracja" data-grupa="stan">Zmień adres e-mail</a>
+        </div>
+      </div>
+      <div class="we-panel" data-widok="odzyskiwanie-1" data-grupa-widoku="stan" data-widok-aktywny="nie">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Odzyskaj dostęp do konta</h2>
+          <div class="au-kroki"><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">1</span>Adres e-mail</span><span class="au-krok-strzalka">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
+          <p class="au-lid">Podaj adres e-mail konta. Wyślemy na niego potwierdzenie do zmiany hasła.</p>
+        </div>
+        <div class="au-pola">
+          <label class="dn-pole"><span class="dn-pole-etykieta">Adres e-mail</span><input class="dn-pole-kontrolka" type="email" id=odz-email autocomplete="email"></label>
+        </div>
+        <div class="au-alarm au-alarm--informacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Zmiana hasła kończy wszystkie sesje.</b> Na pozostałych urządzeniach trzeba zalogować się ponownie.</span></div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button" data-przelacz="odzyskiwanie-2" data-grupa="stan">Wyślij potwierdzenie</button>
+        </div>
+        <div class="au-stopka">
+          <a class="au-link" href="#" data-przelacz="logowanie" data-grupa="stan">Wróć do logowania</a>
+        </div>
+      </div>
+      <div class="we-panel" data-widok="odzyskiwanie-2" data-grupa-widoku="stan" data-widok-aktywny="nie">
+        <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
+
+        <div class="au-glowa">
+          <h2 class="au-tytul">Ustaw nowe hasło</h2>
+          <div class="au-kroki"><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">1</span>Adres e-mail</span><span class="au-krok-strzalka">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka">→</span><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
+          <p class="au-lid">Nowe hasło zacznie obowiązywać po zapisaniu.</p>
+        </div>
+        <div class="au-pola">
+          <div class="au-para">
+            <div class="dn-pole"><label class="dn-pole-etykieta" for="odz-haslo">Nowe hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="odz-haslo" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="odz-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
+            <div class="dn-pole"><label class="dn-pole-etykieta" for="odz-haslo-2">Powtórz nowe hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="odz-haslo-2" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="odz-haslo-2"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
+          </div>
+        </div>
+        <div class="au-opcje">
+          <label class="au-opcja"><input class="dn-check" type="checkbox" checked><span>Wyloguj mnie ze wszystkich urządzeń<small>Zamyka sesje na pozostałych urządzeniach.</small></span></label>
+        </div>
+        <div class="au-akcje">
+          <button class="dn-btn dn-btn--sygnal" type="button" data-przelacz="logowanie" data-grupa="stan">Potwierdź nowe hasło</button>
+        </div>
+        <div class="au-stopka">
+          <a class="au-link" href="#" data-przelacz="logowanie" data-grupa="stan">Wróć do logowania</a>
+        </div>
+      </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</template>
+
+<script src="../../zasoby/powloka.js"></script>
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/okna-modalne.js"></script>
+<script src="../../zasoby/rama.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = document;
+  function all(s) { return Array.prototype.slice.call(D.querySelectorAll(s)); }
+
+  /* Odsłonięcie hasła — kontrolka zmienia typ pola i własną etykietę. */
+  all('[data-odsloniecie]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pole = D.getElementById(b.getAttribute('data-odsloniecie'));
+      if (!pole) return;
+      var odkryte = pole.type === 'text';
+      pole.type = odkryte ? 'password' : 'text';
+      b.setAttribute('aria-pressed', odkryte ? 'false' : 'true');
+      b.setAttribute('aria-label', odkryte ? 'Pokaż hasło' : 'Ukryj hasło');
+    });
+  });
+
+  /* Ocena siły hasła — cztery warunki, cztery stopnie. */
+  var haslo = D.getElementById('rej-haslo');
+  if (haslo) {
+    var blok = haslo.closest('.dn-pole').parentNode.querySelector('.au-sila');
+    var opis = blok.querySelector('[data-sila-opis]');
+    var OPISY = ['Siła hasła zostanie oceniona podczas wpisywania', 'Hasło słabe — spełnia jeden warunek',
+                 'Hasło dostateczne — spełnia dwa warunki', 'Hasło dobre — spełnia trzy warunki',
+                 'Hasło mocne — spełnia wszystkie cztery warunki'];
+    haslo.addEventListener('input', function () {
+      var v = haslo.value;
+      var w = {
+        dlugosc: v.length >= 12,
+        wielkosc: /[a-ząćęłńóśźż]/.test(v) && /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(v),
+        cyfra: /[0-9]/.test(v),
+        znak: /[^0-9A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(v)
+      };
+      var stopien = 0;
+      Object.keys(w).forEach(function (k) {
+        var el = blok.querySelector('[data-warunek="' + k + '"]');
+        if (el) el.setAttribute('data-spelniony', w[k] ? 'tak' : 'nie');
+        if (w[k]) stopien += 1;
+      });
+      blok.setAttribute('data-stopien', String(stopien));
+      opis.textContent = OPISY[stopien];
+    });
+  }
+
+  /* Kod potwierdzający — przejście między polami i wklejenie całości. */
+  var pola = all('[data-kod]');
+  pola.forEach(function (p, i) {
+    p.addEventListener('input', function () {
+      p.value = p.value.replace(/[^0-9A-Za-z]/g, '').slice(0, 1).toUpperCase();
+      if (p.value && pola[i + 1]) pola[i + 1].focus();
+    });
+    p.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !p.value && pola[i - 1]) pola[i - 1].focus();
+    });
+    p.addEventListener('paste', function (e) {
+      e.preventDefault();
+      var t = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9A-Za-z]/g, '');
+      pola.forEach(function (q, j) { q.value = (t[j] || '').toUpperCase(); });
+      (pola[Math.min(t.length, pola.length - 1)] || p).focus();
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

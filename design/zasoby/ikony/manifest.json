@@ -1,0 +1,787 @@
+{
+  "produkt": "Danaco Console",
+  "warstwa": "zestaw ikon",
+  "wersja": "v2.0",
+  "data": "2026-08-20",
+  "zasady": {
+    "siatka": "24x24",
+    "obrys": "1.75",
+    "wypelnienie": "none",
+    "barwa": "currentColor",
+    "zakonczenia": "round",
+    "laczenia": "round",
+    "renderowanie": [
+      14,
+      16,
+      20,
+      24
+    ]
+  },
+  "zrodlo": {
+    "biblioteka": "Lucide (ISC), obrys ujednolicony do 1.75",
+    "wlasne": "emblematy środowisk — siatka i kreska zestawu, jedna wypełniona kropka sygnału"
+  },
+  "ikony": [
+    {
+      "nazwa": "dom",
+      "zrodlo": "lucide:house",
+      "zastosowanie": "Centrum dowodzenia — powrót do strony głównej"
+    },
+    {
+      "nazwa": "menu",
+      "zrodlo": "lucide:menu",
+      "zastosowanie": "Rozwinięcie nawigacji bocznej, menu podręczne"
+    },
+    {
+      "nazwa": "strzalka-lewo",
+      "zrodlo": "lucide:arrow-left",
+      "zastosowanie": "Cofnięcie, powrót"
+    },
+    {
+      "nazwa": "strzalka-prawo",
+      "zrodlo": "lucide:arrow-right",
+      "zastosowanie": "Przejście dalej, wejście w pozycję"
+    },
+    {
+      "nazwa": "grot-dol",
+      "zrodlo": "lucide:chevron-down",
+      "zastosowanie": "Rozwinięcie sekcji, lista rozwijana"
+    },
+    {
+      "nazwa": "grot-gora",
+      "zrodlo": "lucide:chevron-up",
+      "zastosowanie": "Zwinięcie sekcji"
+    },
+    {
+      "nazwa": "grot-prawo",
+      "zrodlo": "lucide:chevron-right",
+      "zastosowanie": "Wejście w głąb, okruszki nawigacji"
+    },
+    {
+      "nazwa": "grot-lewo",
+      "zrodlo": "lucide:chevron-left",
+      "zastosowanie": "Wyjście z gałęzi, cofnięcie w okruszkach nawigacji"
+    },
+    {
+      "nazwa": "kompas",
+      "zrodlo": "lucide:compass",
+      "zastosowanie": "Przejście do innego środowiska lub przedsionka — menu Przejdź"
+    },
+    {
+      "nazwa": "panel-boczny",
+      "zrodlo": "lucide:panel-left",
+      "zastosowanie": "Zwinięcie i rozwinięcie szyny sesji oraz panelu bocznego"
+    },
+    {
+      "nazwa": "kolumny",
+      "zrodlo": "lucide:columns-2",
+      "zastosowanie": "Podział obszaru roboczego na dwie kolumny"
+    },
+    {
+      "nazwa": "pulpit",
+      "zrodlo": "lucide:layout-dashboard",
+      "zastosowanie": "Pulpit projektu — zestawienie kafli Project Dashboard"
+    },
+    {
+      "nazwa": "wiecej",
+      "zrodlo": "lucide:ellipsis",
+      "zastosowanie": "Menu dodatkowych czynności pozycji"
+    },
+    {
+      "nazwa": "link-zewnetrzny",
+      "zrodlo": "lucide:external-link",
+      "zastosowanie": "Odesłanie poza bieżący widok"
+    },
+    {
+      "nazwa": "ogniwo",
+      "zrodlo": "lucide:link",
+      "zastosowanie": "Powiązanie wewnętrzne — źródło, referencja"
+    },
+    {
+      "nazwa": "znacznik",
+      "zrodlo": "lucide:tag",
+      "zastosowanie": "Znacznik i zbiór — Tags & Collections"
+    },
+    {
+      "nazwa": "paczka",
+      "zrodlo": "lucide:package",
+      "zastosowanie": "Artefakt, wydanie produktu"
+    },
+    {
+      "nazwa": "karta-platnicza",
+      "zrodlo": "lucide:credit-card",
+      "zastosowanie": "Plan i rozliczenia konta"
+    },
+    {
+      "nazwa": "klucz-dostepu",
+      "zrodlo": "lucide:key-round",
+      "zastosowanie": "Klucz dostępu, token konta"
+    },
+    {
+      "nazwa": "wtyczka",
+      "zrodlo": "lucide:plug",
+      "zastosowanie": "Wtyczka, konektor, serwer narzędziowy"
+    },
+    {
+      "nazwa": "ukladanka",
+      "zrodlo": "lucide:puzzle",
+      "zastosowanie": "Rozszerzenia platformy"
+    },
+    {
+      "nazwa": "szukaj",
+      "zrodlo": "lucide:search",
+      "zastosowanie": "Wyszukiwanie — pasek górny, Command Center"
+    },
+    {
+      "nazwa": "powieksz",
+      "zrodlo": "lucide:zoom-in",
+      "zastosowanie": "Powiększenie widoku"
+    },
+    {
+      "nazwa": "pomniejsz",
+      "zrodlo": "lucide:zoom-out",
+      "zastosowanie": "Pomniejszenie widoku"
+    },
+    {
+      "nazwa": "filtr",
+      "zrodlo": "lucide:funnel",
+      "zastosowanie": "Zawężenie wykazu, panel warunków"
+    },
+    {
+      "nazwa": "zamknij",
+      "zrodlo": "lucide:x",
+      "zastosowanie": "Zamknięcie karty, modala, powiadomienia"
+    },
+    {
+      "nazwa": "karta-okna",
+      "zrodlo": "lucide:app-window",
+      "zastosowanie": "Okno, karta przeglądarki, moduł Browser"
+    },
+    {
+      "nazwa": "grupa-kart",
+      "zrodlo": "lucide:group",
+      "zastosowanie": "Grupa kart sesji — kilka kart pod jedną nazwą"
+    },
+    {
+      "nazwa": "okno-plywajace",
+      "zrodlo": "lucide:picture-in-picture-2",
+      "zastosowanie": "Always On Display — awatar pływający ponad powłoką, podgląd pracy bez otwierania okna"
+    },
+    {
+      "nazwa": "plus",
+      "zrodlo": "lucide:plus",
+      "zastosowanie": "Utworzenie bytu: sesja, okno, kanał"
+    },
+    {
+      "nazwa": "minus",
+      "zrodlo": "lucide:minus",
+      "zastosowanie": "Minimalizacja okna, odjęcie pozycji z wykazu"
+    },
+    {
+      "nazwa": "rozszerz",
+      "zrodlo": "lucide:copy odbity w poziomie",
+      "zastosowanie": "Maksymalizacja okna — kontrolka belki tytułowej; kwadrat wierzchni po lewej, zgodnie z układem belek tytułowych wskazanym przez Właściciela"
+    },
+    {
+      "nazwa": "pelny-ekran",
+      "zrodlo": "lucide:fullscreen",
+      "zastosowanie": "Tryb pełnego ekranu — ekran monitora w narożnikach kadru"
+    },
+    {
+      "nazwa": "zwez",
+      "zrodlo": "lucide:minimize-2",
+      "zastosowanie": "Przywrócenie okna z pełnej powierzchni do rozmiaru zwykłego"
+    },
+    {
+      "nazwa": "olowek",
+      "zrodlo": "lucide:pencil",
+      "zastosowanie": "Zmiana nazwy, edycja"
+    },
+    {
+      "nazwa": "kosz",
+      "zrodlo": "lucide:trash-2",
+      "zastosowanie": "Usunięcie pozycji (z potwierdzeniem)"
+    },
+    {
+      "nazwa": "pobierz",
+      "zrodlo": "lucide:download",
+      "zastosowanie": "Pobranie pliku, eksport wyniku"
+    },
+    {
+      "nazwa": "wgraj",
+      "zrodlo": "lucide:upload",
+      "zastosowanie": "Wgranie pliku, import"
+    },
+    {
+      "nazwa": "wyslij",
+      "zrodlo": "lucide:send-horizontal",
+      "zastosowanie": "Wysłanie komunikatu w oknie komunikacji"
+    },
+    {
+      "nazwa": "odswiez",
+      "zrodlo": "lucide:refresh-cw",
+      "zastosowanie": "Ponowienie próby, odświeżenie danych"
+    },
+    {
+      "nazwa": "odpowiedz",
+      "zrodlo": "lucide:reply",
+      "zastosowanie": "Odpowiedź, cytowanie wpisu"
+    },
+    {
+      "nazwa": "uruchom",
+      "zrodlo": "lucide:play",
+      "zastosowanie": "Uruchomienie procesu, zadania, automatyzacji"
+    },
+    {
+      "nazwa": "zatrzymaj",
+      "zrodlo": "lucide:square",
+      "zastosowanie": "Zatrzymanie procesu"
+    },
+    {
+      "nazwa": "wstrzymaj",
+      "zrodlo": "lucide:pause",
+      "zastosowanie": "Wstrzymanie kolejki, pauza"
+    },
+    {
+      "nazwa": "spinacz",
+      "zrodlo": "lucide:paperclip",
+      "zastosowanie": "Załącznik komunikatu"
+    },
+    {
+      "nazwa": "ustawienia",
+      "zrodlo": "lucide:settings",
+      "zastosowanie": "Konfiguracja — okna, kanału, środowiska"
+    },
+    {
+      "nazwa": "oko",
+      "zrodlo": "lucide:eye",
+      "zastosowanie": "Podgląd, odsłonięcie wartości ukrytej"
+    },
+    {
+      "nazwa": "skupienie",
+      "zrodlo": "lucide:target",
+      "zastosowanie": "Tryb skupienia — praca nad jedną rzeczą"
+    },
+    {
+      "nazwa": "gwiazdka",
+      "zrodlo": "lucide:star",
+      "zastosowanie": "Wyróżnienie pozycji, presety zespołów"
+    },
+    {
+      "nazwa": "kopiuj",
+      "zrodlo": "lucide:copy",
+      "zastosowanie": "Kopiowanie treści, identyfikatora"
+    },
+    {
+      "nazwa": "wytnij",
+      "zrodlo": "lucide:scissors",
+      "zastosowanie": "Wycięcie zaznaczenia do schowka"
+    },
+    {
+      "nazwa": "wklej",
+      "zrodlo": "lucide:clipboard-paste",
+      "zastosowanie": "Wklejenie zawartości schowka"
+    },
+    {
+      "nazwa": "cofnij",
+      "zrodlo": "lucide:undo-2",
+      "zastosowanie": "Cofnięcie ostatniej czynności"
+    },
+    {
+      "nazwa": "ponow",
+      "zrodlo": "lucide:redo-2",
+      "zastosowanie": "Ponowienie cofniętej czynności"
+    },
+    {
+      "nazwa": "zapisz",
+      "zrodlo": "lucide:save",
+      "zastosowanie": "Zapis sesji, pliku, opracowania"
+    },
+    {
+      "nazwa": "wyloguj",
+      "zrodlo": "lucide:log-out",
+      "zastosowanie": "Wyjście z konta, zakończenie pracy aplikacji"
+    },
+    {
+      "nazwa": "aparat",
+      "zrodlo": "lucide:camera",
+      "zastosowanie": "Zrzut ekranu okna lub obszaru"
+    },
+    {
+      "nazwa": "zrzut",
+      "zrodlo": "własna — narożniki kadru + lucide:scissors (0,6; kreska niezmienna przy skalowaniu)",
+      "zastosowanie": "Zrzut ekranu — narożniki kadru z nożyczkami"
+    },
+    {
+      "nazwa": "kadr",
+      "zrodlo": "lucide:crop",
+      "zastosowanie": "Zrzut zaznaczonego obszaru, przycięcie kadru"
+    },
+    {
+      "nazwa": "klucz-nastawczy",
+      "zrodlo": "lucide:wrench",
+      "zastosowanie": "Narzędzia obsługi aplikacji, naprawa"
+    },
+    {
+      "nazwa": "suwaki",
+      "zrodlo": "lucide:sliders-horizontal",
+      "zastosowanie": "Dostosowanie paska i gęstości widoku"
+    },
+    {
+      "nazwa": "pinezka",
+      "zrodlo": "lucide:pin",
+      "zastosowanie": "Przypięcie wniosku, źródła, karty sesji"
+    },
+    {
+      "nazwa": "rozmowa-nowa",
+      "zrodlo": "lucide:message-square-plus",
+      "zastosowanie": "Otwarcie nowej sesji rozmowy"
+    },
+    {
+      "nazwa": "udostepnij",
+      "zrodlo": "lucide:share-2",
+      "zastosowanie": "Udostępnienie wyniku poza bieżącą sesję"
+    },
+    {
+      "nazwa": "flaga",
+      "zrodlo": "lucide:flag",
+      "zastosowanie": "Oznaczenie pozycji do przeglądu"
+    },
+    {
+      "nazwa": "sortowanie",
+      "zrodlo": "lucide:arrow-up-down",
+      "zastosowanie": "Zmiana porządku wykazu"
+    },
+    {
+      "nazwa": "uchwyt",
+      "zrodlo": "lucide:grip-vertical",
+      "zastosowanie": "Uchwyt przenoszenia panelu i pozycji wykazu"
+    },
+    {
+      "nazwa": "uzytkownik-nowy",
+      "zrodlo": "lucide:user-plus",
+      "zastosowanie": "Dodanie osoby do zespołu"
+    },
+    {
+      "nazwa": "ptaszek",
+      "zrodlo": "lucide:check",
+      "zastosowanie": "Potwierdzenie wykonania, zaznaczenie"
+    },
+    {
+      "nazwa": "ptaszek-kolo",
+      "zrodlo": "lucide:circle-check",
+      "zastosowanie": "Powodzenie — proces zakończony poprawnie"
+    },
+    {
+      "nazwa": "blad",
+      "zrodlo": "lucide:circle-x",
+      "zastosowanie": "Błąd — niepowodzenie operacji"
+    },
+    {
+      "nazwa": "minus-kolo",
+      "zrodlo": "lucide:circle-minus",
+      "zastosowanie": "Stan zajętości — dostępność wstrzymana"
+    },
+    {
+      "nazwa": "ostrzezenie",
+      "zrodlo": "lucide:triangle-alert",
+      "zastosowanie": "Ostrzeżenie — skutki wymagające uwagi"
+    },
+    {
+      "nazwa": "info",
+      "zrodlo": "lucide:info",
+      "zastosowanie": "Wyjaśnienie, podpowiedź kontekstowa"
+    },
+    {
+      "nazwa": "klodka",
+      "zrodlo": "lucide:lock",
+      "zastosowanie": "Treść chroniona, dane dostępowe"
+    },
+    {
+      "nazwa": "klodka-otwarta",
+      "zrodlo": "lucide:lock-open",
+      "zastosowanie": "Dostęp otwarty, zgoda udzielona"
+    },
+    {
+      "nazwa": "tarcza",
+      "zrodlo": "lucide:shield",
+      "zastosowanie": "Uprawnienia, zakres dostępu, izolacja"
+    },
+    {
+      "nazwa": "tarcza-dzielona",
+      "zrodlo": "lucide:shield-half",
+      "zastosowanie": "Izolacja kontekstu — rozdzielenie zakresów pracy"
+    },
+    {
+      "nazwa": "zegar",
+      "zrodlo": "lucide:clock",
+      "zastosowanie": "Oczekiwanie, znacznik czasu"
+    },
+    {
+      "nazwa": "licznik",
+      "zrodlo": "lucide:timer",
+      "zastosowanie": "Odliczanie — ponowne wydanie kodu, limit czasu"
+    },
+    {
+      "nazwa": "blyskawica",
+      "zrodlo": "lucide:zap",
+      "zastosowanie": "Wyzwolenie zdarzeniem — reguły wyzwalania automatyki"
+    },
+    {
+      "nazwa": "iskra",
+      "zrodlo": "lucide:sparkles",
+      "zastosowanie": "Wyróżnienie, wynik wytworzony przez model"
+    },
+    {
+      "nazwa": "historia",
+      "zrodlo": "lucide:history",
+      "zastosowanie": "Historia sesji, wersje"
+    },
+    {
+      "nazwa": "dzwonek",
+      "zrodlo": "lucide:bell",
+      "zastosowanie": "Powiadomienia"
+    },
+    {
+      "nazwa": "dzwonek-wyciszony",
+      "zrodlo": "lucide:bell-off",
+      "zastosowanie": "Powiadomienia wyciszone"
+    },
+    {
+      "nazwa": "oko-przekreslone",
+      "zrodlo": "lucide:eye-off",
+      "zastosowanie": "Wartość ukryta, podgląd wyłączony"
+    },
+    {
+      "nazwa": "mikrofon-wyciszony",
+      "zrodlo": "lucide:mic-off",
+      "zastosowanie": "Nasłuch głosowy wyłączony"
+    },
+    {
+      "nazwa": "monitor-wylaczony",
+      "zrodlo": "lucide:monitor-off",
+      "zastosowanie": "Stanowisko nieczynne, podgląd odłączony"
+    },
+    {
+      "nazwa": "aktywnosc",
+      "zrodlo": "lucide:activity",
+      "zastosowanie": "Praca w tle, telemetria procesu"
+    },
+    {
+      "nazwa": "dokument",
+      "zrodlo": "lucide:file-text",
+      "zastosowanie": "Dokument, opracowanie — moduł Studio"
+    },
+    {
+      "nazwa": "schowek",
+      "zrodlo": "lucide:clipboard-check",
+      "zastosowanie": "Schowek aplikacji — wykaz odłożonych pozycji"
+    },
+    {
+      "nazwa": "plik",
+      "zrodlo": "lucide:file",
+      "zastosowanie": "Plik o nieokreślonym rodzaju"
+    },
+    {
+      "nazwa": "plik-kodu",
+      "zrodlo": "lucide:file-code",
+      "zastosowanie": "Plik źródłowy w drzewie projektu"
+    },
+    {
+      "nazwa": "folder",
+      "zrodlo": "lucide:folder",
+      "zastosowanie": "Katalog roboczy, grupa zasobów"
+    },
+    {
+      "nazwa": "drzewo-katalogow",
+      "zrodlo": "lucide:folder-tree",
+      "zastosowanie": "Drzewo katalogów projektu"
+    },
+    {
+      "nazwa": "archiwum",
+      "zrodlo": "lucide:archive",
+      "zastosowanie": "Zasoby odłożone, Session Repository"
+    },
+    {
+      "nazwa": "obraz",
+      "zrodlo": "lucide:image",
+      "zastosowanie": "Załącznik graficzny, moduł Design (zasoby)"
+    },
+    {
+      "nazwa": "kod",
+      "zrodlo": "lucide:code-xml",
+      "zastosowanie": "Fragment kodu, moduł Developer"
+    },
+    {
+      "nazwa": "koperta",
+      "zrodlo": "lucide:mail",
+      "zastosowanie": "Wiadomość, korespondencja"
+    },
+    {
+      "nazwa": "kalendarz",
+      "zrodlo": "lucide:calendar",
+      "zastosowanie": "Harmonogram, automatyzacja cykliczna"
+    },
+    {
+      "nazwa": "tabela-danych",
+      "zrodlo": "lucide:table",
+      "zastosowanie": "Zestawienie, dane tabelaryczne"
+    },
+    {
+      "nazwa": "lista-zadan",
+      "zrodlo": "lucide:list-checks",
+      "zastosowanie": "Wykaz zadań, plan zlecenia"
+    },
+    {
+      "nazwa": "klawiatura",
+      "zrodlo": "lucide:keyboard",
+      "zastosowanie": "Skróty klawiszowe"
+    },
+    {
+      "nazwa": "biblioteka",
+      "zrodlo": "lucide:library-big",
+      "zastosowanie": "Moduł Library — repozytorium wiedzy"
+    },
+    {
+      "nazwa": "ksiazka",
+      "zrodlo": "lucide:book-open",
+      "zastosowanie": "Instrukcja użytkowania, słownik pojęć"
+    },
+    {
+      "nazwa": "probowka",
+      "zrodlo": "lucide:flask-conical",
+      "zastosowanie": "Funkcje doświadczalne"
+    },
+    {
+      "nazwa": "zarowka",
+      "zrodlo": "lucide:lightbulb",
+      "zastosowanie": "Zalecenie, podpowiedź do przeglądu"
+    },
+    {
+      "nazwa": "cytat",
+      "zrodlo": "lucide:quote",
+      "zastosowanie": "Cytat w redakcji treści"
+    },
+    {
+      "nazwa": "baza",
+      "zrodlo": "lucide:database",
+      "zastosowanie": "Trwałość, magazyn danych"
+    },
+    {
+      "nazwa": "wykres",
+      "zrodlo": "lucide:chart-line",
+      "zastosowanie": "Metryki, moduł Research (wyniki)"
+    },
+    {
+      "nazwa": "wykres-slupkowy",
+      "zrodlo": "lucide:chart-column",
+      "zastosowanie": "Zestawienie wartości w słupkach"
+    },
+    {
+      "nazwa": "wykres-kolowy",
+      "zrodlo": "lucide:chart-pie",
+      "zastosowanie": "Udział procentowy"
+    },
+    {
+      "nazwa": "terminal",
+      "zrodlo": "lucide:square-terminal",
+      "zastosowanie": "Moduł Terminal — powłoki wykonawcze"
+    },
+    {
+      "nazwa": "galaz",
+      "zrodlo": "lucide:git-branch",
+      "zastosowanie": "Repozytorium, moduł Developer"
+    },
+    {
+      "nazwa": "rozwidlenie",
+      "zrodlo": "lucide:git-fork",
+      "zastosowanie": "Rozwidlenie gałęzi repozytorium"
+    },
+    {
+      "nazwa": "scalenie",
+      "zrodlo": "lucide:git-merge",
+      "zastosowanie": "Scalenie gałęzi"
+    },
+    {
+      "nazwa": "rewizja",
+      "zrodlo": "lucide:git-commit-horizontal",
+      "zastosowanie": "Rewizja w historii repozytorium"
+    },
+    {
+      "nazwa": "agent",
+      "zrodlo": "lucide:bot",
+      "zastosowanie": "Agent — jednostka inteligencji"
+    },
+    {
+      "nazwa": "agenci",
+      "zrodlo": "lucide:users",
+      "zastosowanie": "Zespół, moduł Agents / role"
+    },
+    {
+      "nazwa": "uzytkownik",
+      "zrodlo": "lucide:user",
+      "zastosowanie": "Operator, konto, tożsamość"
+    },
+    {
+      "nazwa": "konto",
+      "zrodlo": "lucide:circle-user",
+      "zastosowanie": "Konto Operatora — profil, status obecności, wylogowanie; odróżnia konto od osoby w treści"
+    },
+    {
+      "nazwa": "siec",
+      "zrodlo": "lucide:network",
+      "zastosowanie": "Orkiestracja, topologia — MultitaskingAI"
+    },
+    {
+      "nazwa": "wezly",
+      "zrodlo": "lucide:waypoints",
+      "zastosowanie": "Koordynator — plan i delegacja"
+    },
+    {
+      "nazwa": "wykonawca",
+      "zrodlo": "lucide:circle-play",
+      "zastosowanie": "Wykonawca — realizacja zlecenia"
+    },
+    {
+      "nazwa": "walidator",
+      "zrodlo": "lucide:badge-check",
+      "zastosowanie": "Walidator — weryfikacja kroku"
+    },
+    {
+      "nazwa": "warstwy",
+      "zrodlo": "lucide:layers",
+      "zastosowanie": "Moduł Workspace — przestrzeń projektowa"
+    },
+    {
+      "nazwa": "automatyzacja",
+      "zrodlo": "lucide:workflow",
+      "zastosowanie": "Moduł Automations — procesy i kolejki"
+    },
+    {
+      "nazwa": "debata",
+      "zrodlo": "lucide:messages-square",
+      "zastosowanie": "Moduł Roundtable — debata modeli"
+    },
+    {
+      "nazwa": "tlumacz",
+      "zrodlo": "lucide:languages",
+      "zastosowanie": "Moduł Translate"
+    },
+    {
+      "nazwa": "wielkosc-liter",
+      "zrodlo": "lucide:case-sensitive",
+      "zastosowanie": "Rozróżnianie wielkości liter w wyszukiwaniu"
+    },
+    {
+      "nazwa": "badanie",
+      "zrodlo": "lucide:telescope",
+      "zastosowanie": "Moduł Research — analizy i raporty"
+    },
+    {
+      "nazwa": "aplikacje",
+      "zrodlo": "lucide:layout-grid",
+      "zastosowanie": "Moduł Apps — budowa produktów"
+    },
+    {
+      "nazwa": "paleta",
+      "zrodlo": "lucide:palette",
+      "zastosowanie": "Moduł Design — materiały wizualne"
+    },
+    {
+      "nazwa": "rozmowa",
+      "zrodlo": "lucide:message-square",
+      "zastosowanie": "Okno komunikacji — pas komunikacji"
+    },
+    {
+      "nazwa": "mikrofon",
+      "zrodlo": "lucide:mic",
+      "zastosowanie": "Moduł Assistant — interfejs głosowy"
+    },
+    {
+      "nazwa": "glosnik",
+      "zrodlo": "lucide:volume-2",
+      "zastosowanie": "Odtwarzanie dźwięku, głośność"
+    },
+    {
+      "nazwa": "diagnostyka",
+      "zrodlo": "lucide:stethoscope",
+      "zastosowanie": "Moduł Diagnostics — analiza problemów"
+    },
+    {
+      "nazwa": "monitor",
+      "zrodlo": "lucide:monitor",
+      "zastosowanie": "Stanowisko, środowisko wykonania"
+    },
+    {
+      "nazwa": "telefon",
+      "zrodlo": "lucide:smartphone",
+      "zastosowanie": "Widok mobilny — pozycja „Mobile\""
+    },
+    {
+      "nazwa": "tablet",
+      "zrodlo": "lucide:tablet",
+      "zastosowanie": "Widok tabletu w podglądzie responsywnym"
+    },
+    {
+      "nazwa": "drukarka",
+      "zrodlo": "lucide:printer",
+      "zastosowanie": "Wydruk opracowania"
+    },
+    {
+      "nazwa": "cpu",
+      "zrodlo": "lucide:cpu",
+      "zastosowanie": "Zasoby wykonawcze, serwer rdzenia"
+    },
+    {
+      "nazwa": "serwer",
+      "zrodlo": "lucide:server",
+      "zastosowanie": "Host rdzenia, serwer wykonawczy"
+    },
+    {
+      "nazwa": "chmura",
+      "zrodlo": "lucide:cloud",
+      "zastosowanie": "Host zdalny, zasób poza stanowiskiem"
+    },
+    {
+      "nazwa": "polecenie",
+      "zrodlo": "lucide:command",
+      "zastosowanie": "Command Center — paleta poleceń"
+    },
+    {
+      "nazwa": "slonce",
+      "zrodlo": "lucide:sun",
+      "zastosowanie": "Przełącznik motywu — jasny"
+    },
+    {
+      "nazwa": "ksiezyc",
+      "zrodlo": "lucide:moon",
+      "zastosowanie": "Przełącznik motywu — ciemny"
+    },
+    {
+      "nazwa": "globus",
+      "zrodlo": "lucide:globe",
+      "zastosowanie": "Sieć, źródło zewnętrzne, danaco-web"
+    },
+    {
+      "nazwa": "srodowisko-talkin",
+      "zrodlo": "wlasna",
+      "zastosowanie": "Środowisko TalkIn — Myśl. Analizuj. Rozumiej."
+    },
+    {
+      "nazwa": "srodowisko-workspace",
+      "zrodlo": "wlasna",
+      "zastosowanie": "Środowisko WorkSpace — Planuj. Organizuj. Realizuj."
+    },
+    {
+      "nazwa": "srodowisko-codestudio",
+      "zrodlo": "wlasna",
+      "zastosowanie": "Środowisko CodeStudio — Projektuj. Buduj. Rozwijaj."
+    },
+    {
+      "nazwa": "srodowisko-multitaskingai",
+      "zrodlo": "wlasna",
+      "zastosowanie": "Środowisko MultitaskingAI — Deleguj. Koordynuj. Nadzoruj."
+    }
+  ],
+  "liczba-ikon": 152
+}

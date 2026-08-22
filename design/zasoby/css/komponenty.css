@@ -1,0 +1,1736 @@
+/* ============================================================================
+   DANACO CONSOLE — BIBLIOTEKA KOMPONENTÓW · v2.0
+   ----------------------------------------------------------------------------
+   Wyłącznie żetony semantyczne z 03-zetony/zetony.css. Zero wartości zaszytych.
+   Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie ·
+   fokus · wybrany · ładowanie · błąd. Zasada zero blokad: żaden wariant nie odbiera
+   klikalności — niegotowość komunikuje się opisem albo komunikatem.
+   Stan nigdy samym kolorem — komponent stanu niesie ikonę albo etykietę.
+   ============================================================================ */
+
+/* Panel menu rozwijanego jest osobnym komponentem: bryła, szerokość i
+   przewijanie w `menu.css`. Wpięty tutaj, bo każdy widok korzystający
+   z biblioteki komponentów korzysta z menu. */
+@import url('../menu.css');
+
+/* ==========================================================================
+   PRZYCISK
+   ========================================================================== */
+.dn-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-srednia);
+  line-height: var(--dn-lh-ciasny);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    border-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-btn:hover { background: var(--dn-hover); }
+.dn-btn:active { transform: translateY(1px); }
+/* Ikona w przycisku z napisem: wymiar niesie przycisk, nie znacznik. Bez tej
+   reguły wstawiony `svg` bierze wymiar z pojemnika i rośnie do jego wysokości. */
+/* Przycisk ikonowy: wymiar znaku należy do przycisku. Bez tej reguły `svg`
+   bez klasy rozciąga się do wysokości pojemnika, a reguły miejsc (pas narzędzi,
+   pasmo kart, panel) łapią tylko wybrane zagnieżdżenia. */
+.dn-btn-ikona > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-btn-ikona--sm > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+.dn-btn > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-btn--sm > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+.dn-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Wybrany trwale — sygnał wskazuje (obrys + tło, zmiana kształtu przez obrys) */
+.dn-btn[aria-pressed='true'],
+.dn-btn.dn-btn--wybrany {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+}
+
+/* Ładowanie — wskaźnik obok treści; przycisk pozostaje klikalny (zero blokad) */
+.dn-btn[aria-busy='true'] { cursor: progress; }
+.dn-btn[aria-busy='true']::after {
+  content: '';
+  width: var(--dn-wym-spinner);
+  height: var(--dn-wym-spinner);
+  flex: none;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: var(--dn-r-pill);
+  opacity: 0.7;
+  animation: dn-obrot 0.8s linear infinite;
+}
+
+/* Błąd — obrys + barwa; treść przycisku niesie ikonę albo etykietę błędu */
+.dn-btn[aria-invalid='true'] {
+  border-color: var(--dn-blad-obrys);
+  color: var(--dn-blad-tekst);
+}
+
+/* GŁÓWNY — inwersja atramentu: czerń na jasnym, biel na ciemnym */
+.dn-btn--atrament {
+  background: var(--dn-atrament);
+  border-color: var(--dn-atrament);
+  color: var(--dn-atrament-tekst);
+}
+.dn-btn--atrament:hover {
+  background: var(--dn-atrament-hover);
+  border-color: var(--dn-atrament-hover);
+}
+
+/* SYGNAŁOWY — wyłącznie działanie systemowe „uruchom / zatwierdź plan";
+   jeden na widok. Nie zastępuje atramentu jako domyślnego głównego. */
+.dn-btn--sygnal {
+  background: var(--dn-sygnal-wypelnienie);
+  border-color: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-szary-0);
+}
+.dn-btn--sygnal:hover {
+  background: var(--dn-sygnal-wypelnienie-hover);
+  border-color: var(--dn-sygnal-wypelnienie-hover);
+}
+
+/* ZARYS — akcje drugorzędne równorzędne */
+.dn-btn--zarys { background: transparent; }
+
+/* DUCH — akcje trzeciorzędne, paski narzędzi */
+.dn-btn--duch {
+  background: transparent;
+  border-color: transparent;
+  color: var(--dn-tekst-2);
+}
+.dn-btn--duch:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+/* NIEBEZPIECZNY — czynności nieodwracalne; sygnalizuje wagę, nie blokuje */
+.dn-btn--niebezpieczny {
+  background: transparent;
+  border-color: var(--dn-blad-obrys);
+  color: var(--dn-blad-tekst);
+}
+.dn-btn--niebezpieczny:hover { background: var(--dn-blad-tlo); }
+
+/* Rozmiary — pochodne kontrolki, bez wartości spoza skali */
+.dn-btn--sm {
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
+  padding: 0 var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+}
+.dn-btn--lg {
+  min-height: calc(var(--dn-wym-kontrolka) + var(--dn-od-2));
+  padding: 0 var(--dn-od-5);
+  font-size: var(--dn-fs-md);
+}
+
+/* Przycisk ikonowy */
+.dn-btn-ikona {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-ikonowy);
+  height: var(--dn-wym-ikonowy);
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-btn-ikona:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-btn-ikona:active { transform: translateY(1px); }
+.dn-btn-ikona[aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
+.dn-btn-ikona:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Wariant na ramie (pasek górny — zawsze atramentowy) */
+.dn-btn-ikona--na-ramie { color: var(--dn-rama-tekst-2); }
+.dn-btn-ikona--na-ramie:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+.dn-btn-ikona--na-ramie[aria-pressed='true'] {
+  background: var(--dn-rama-hover);
+  color: var(--dn-sygnal-300, #8FB2F5);
+}
+
+/* ==========================================================================
+   POLE FORMULARZA
+   ========================================================================== */
+.dn-pole { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+
+.dn-pole-etykieta {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst-2);
+}
+
+.dn-pole-kontrolka {
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-base);
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease);
+}
+textarea.dn-pole-kontrolka {
+  min-height: calc(var(--dn-wym-kontrolka) * 2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  resize: vertical;
+}
+.dn-pole-kontrolka::placeholder { color: var(--dn-tekst-3); }
+.dn-pole-kontrolka:hover { border-color: var(--dn-tekst-3); }
+.dn-pole-kontrolka:focus {
+  outline: none;
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+.dn-pole-kontrolka[aria-invalid='true'] { border-color: var(--dn-blad-tekst); }
+.dn-pole-kontrolka[readonly] {
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+}
+
+.dn-pole-opis {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+/* ── Klasy formularzowe używane w oknach nakładkowych i w Ustawieniach ──────
+   Były w markupie prototypów bez deklaracji; opis stawia je w jednym miejscu. */
+.dn-pole-etyk {
+  display: block;
+  margin-bottom: var(--dn-od-1);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-pole-grupa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: var(--dn-od-3) 0;
+}
+/* Komórka tabeli z ikoną przed nazwą — ikona jest elementem blokowym, więc
+   bez tego opakowania nazwa spadała do drugiego wiersza. */
+.dn-tabela-ikona-tekst {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.dn-check-etyk {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
+.dn-pole-blad {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-blad-tekst);
+}
+
+/* Pole wyszukiwania z ikoną */
+.dn-szukaj { position: relative; display: flex; align-items: center; }
+.dn-szukaj > svg {
+  position: absolute;
+  left: var(--dn-od-3);
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  color: var(--dn-tekst-3);
+  pointer-events: none;
+}
+.dn-szukaj > .dn-pole-kontrolka { width: 100%; padding-left: var(--dn-od-8); }
+/* Pole wpisane bezpośrednio, bez klasy kontrolki, dziedziczy jej wygląd —
+   inaczej ikona wyszukiwania nachodzi na tekst zastępczy. */
+.dn-szukaj > input {
+  width: 100%;
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3) 0 var(--dn-od-8);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease);
+}
+
+/* Wybór rozwijany */
+select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
+
+/* ==========================================================================
+   WYBÓR: POLE WYBORU · PRZEŁĄCZNIK · RADIO
+   ========================================================================== */
+.dn-wybor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  cursor: pointer;
+  font-size: var(--dn-fs-base);
+}
+
+.dn-check {
+  appearance: none;
+  width: var(--dn-wym-check);
+  height: var(--dn-wym-check);
+  flex: none;
+  margin: 0;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-check::before {
+  content: '';
+  width: 10px; height: 10px;
+  transform: scale(0);
+  transition: transform var(--dn-czas-1) var(--dn-ease);
+  clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 18%, 84% 4%, 38% 68%);
+  background: var(--dn-atrament-tekst);
+}
+.dn-check:checked { background: var(--dn-atrament); border-color: var(--dn-atrament); }
+.dn-check:checked::before { transform: scale(1); }
+
+.dn-radio { border-radius: var(--dn-r-pill); }
+.dn-radio::before { clip-path: none; border-radius: var(--dn-r-pill); width: 8px; height: 8px; }
+
+/* Przełącznik — tor + suwak; wybrany = sygnał (wskazanie stanu, nie akcja) */
+.dn-przelacznik {
+  appearance: none;
+  width: var(--dn-wym-przelacznik-szer);
+  height: var(--dn-wym-przelacznik-wys);
+  flex: none;
+  margin: 0;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  position: relative;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-przelacznik::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  translate: 0 -50%;
+  width: calc(var(--dn-wym-przelacznik-wys) - 6px);
+  height: calc(var(--dn-wym-przelacznik-wys) - 6px);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-tekst-2);
+  transition: left var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-przelacznik:checked,
+/* Przełącznik bywa w prototypach przyciskiem z role="switch" — bez tej reguły
+   stan włączony nie był widoczny w żadnym oknie. */
+.dn-przelacznik[aria-checked='true'],
+.dn-przelacznik[aria-pressed='true'] {
+  background: var(--dn-sygnal-wypelnienie);
+  border-color: var(--dn-sygnal-wypelnienie);
+}
+.dn-przelacznik:checked::before,
+.dn-przelacznik[aria-checked='true']::before,
+.dn-przelacznik[aria-pressed='true']::before {
+  left: calc(100% - var(--dn-wym-przelacznik-wys) + 4px);
+  background: var(--dn-szary-0);
+}
+
+/* Suwak — nakład rozumowania (szybciej ↔ mądrzej) */
+.dn-suwak {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--dn-r-pill);
+  background: linear-gradient(to right, var(--dn-sygnal-wypelnienie) var(--dn-suwak-pozycja, 50%), var(--dn-powierzchnia-2) var(--dn-suwak-pozycja, 50%));
+  outline-offset: var(--dn-od-1);
+  cursor: pointer;
+}
+.dn-suwak::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+}
+.dn-suwak::-moz-range-thumb {
+  width: 12px; height: 12px;
+  border: 2px solid var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+}
+
+/* ==========================================================================
+   KROPKA SYGNAŁU — element sygnaturowy (praca w tle; rozstrzygnięcie projektowe)
+   ========================================================================== */
+.dn-kropka {
+  display: inline-block;
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  flex: none;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+}
+/* Tętno — jedyny ruch ciągły interfejsu (2,4 s) */
+.dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
+/* Przy ograniczonym ruchu tętno zamiera — kropkę wzmacnia pierścień statyczny */
+@media (prefers-reduced-motion: reduce) {
+  .dn-kropka--tetno { box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
+}
+/* Warianty stanu (zawsze obok etykiety albo ikony — nigdy same) */
+.dn-kropka--sukces { background: var(--dn-sukces-tekst); }
+.dn-kropka--ostrzezenie { background: var(--dn-ostrzezenie-tekst); }
+.dn-kropka--blad { background: var(--dn-blad-tekst); }
+.dn-kropka--neutralna { background: var(--dn-tekst-3); }
+
+/* ==========================================================================
+   PLAKIETKA — stany i role
+   ========================================================================== */
+.dn-plakietka {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  padding: 1px var(--dn-od-2) 2px;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  line-height: var(--dn-lh-bazowy);
+  white-space: nowrap;
+}
+.dn-plakietka > svg { width: 12px; height: 12px; }
+.dn-plakietka--sukces { background: var(--dn-sukces-tlo); border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); }
+.dn-plakietka--ostrzezenie { background: var(--dn-ostrzezenie-tlo); border-color: var(--dn-ostrzezenie-obrys); color: var(--dn-ostrzezenie-tekst); }
+.dn-plakietka--blad { background: var(--dn-blad-tlo); border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); }
+.dn-plakietka--informacja { background: var(--dn-informacja-tlo); border-color: var(--dn-informacja-obrys); color: var(--dn-informacja-tekst); }
+.dn-plakietka--sygnal { background: var(--dn-sygnal-tlo); border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+
+/* Plakietka roli okna — mono wersaliki (koordynator / wykonawca / walidator) */
+.dn-plakietka--rola {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  border-radius: var(--dn-r-xs);
+}
+
+/* ==========================================================================
+   KARTA
+   ========================================================================== */
+.dn-karta {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+}
+.dn-karta-cialo { padding: var(--dn-odstep-panel) var(--dn-od-4); }
+.dn-karta-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-karta-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+}
+
+/* Karta interaktywna */
+.dn-karta--klikalna {
+  cursor: pointer;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta--klikalna:hover {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-2);
+  transform: translateY(-1px);
+}
+.dn-karta--klikalna:active { transform: translateY(0); }
+.dn-karta--wybrana { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+
+/* KARTA ŚRODOWISKA (Centrum dowodzenia, strefa 1) — wejście do środowiska.
+   Spoczynek bez sygnału; najechanie/aktywność: wstęga górna 2 px. */
+.dn-karta-srodowiska {
+  position: relative;
+  overflow: hidden;
+  padding: var(--dn-od-6);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  /* Wypełnienie o stopień jaśniejsze od powierzchni: w motywie ciemnym karta na
+     tacy panelu (--dn-wstazka) była za głucha. Nadal ciemniejsza od panelu,
+     więc hierarchia „taca → karta" zostaje (rozstrzygnięcie Właściciela). */
+  background: var(--dn-panel);
+  cursor: pointer;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--dn-wym-wstega);
+  background: var(--dn-kropka);
+  opacity: 0;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska[aria-current='true'] {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-2);
+  transform: translateY(-2px);
+}
+.dn-karta-srodowiska:hover::before,
+.dn-karta-srodowiska[aria-current='true']::before { opacity: 1; }
+.dn-karta-srodowiska-godlo {
+  /* Wielkość wiążąca: księga znaku rozdz. 15.1 — „Strona główna, karty
+     środowisk: emblemat środowiska 24 px". Odpowiada żetonowi --dn-wym-ikona-xl
+     i utrzymuje hierarchię wobec ikony kafla strefy 2. */
+  /* Element liniowy nie przyjmuje szerokości — bez tej deklaracji godło
+     rozciągało się na całą kartę. */
+  display: grid;
+  place-content: center;
+  /* 48 px — rozstrzygnięcie Właściciela z 2026-08-20. Emblemat jest elementem
+     marki, nie ikoną interfejsu, więc nie podlega skali 14/16/20/24; pozostaje
+     większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
+     Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
+  width: 48px; height: 48px;
+  margin-bottom: var(--dn-od-4);
+  color: var(--dn-tekst);
+}
+.dn-karta-srodowiska-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-3xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+.dn-karta-srodowiska-motto {
+  margin-top: var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.dn-karta-srodowiska-opis {
+  margin-top: var(--dn-od-3);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst-2);
+  max-width: 44ch;
+}
+
+/* KAFEL KOMPONENTU WŁASNEGO (Centrum dowodzenia, strefa 2) — budowanie, krój bazowy */
+.dn-kafel {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-kafel:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); }
+.dn-kafel-ikona {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  flex: none;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+}
+.dn-kafel-etykieta { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.dn-kafel-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+
+/* ==========================================================================
+   TABELA — zwarta, robocza
+   ========================================================================== */
+.dn-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--dn-fs-base);
+}
+.dn-tabela th {
+  position: sticky;
+  top: 0;
+  z-index: var(--dn-z-przybornik);
+  padding: 0 var(--dn-od-3);
+  height: calc(var(--dn-wym-wiersz) - var(--dn-od-1));
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+  text-align: left;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  white-space: nowrap;
+}
+.dn-tabela td {
+  height: var(--dn-wym-wiersz);
+  padding: 0 var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  vertical-align: middle;
+}
+.dn-tabela tbody tr { transition: background-color var(--dn-czas-1) var(--dn-ease); }
+.dn-tabela tbody tr:hover { background: var(--dn-hover); }
+.dn-tabela tbody tr[aria-selected='true'] { background: var(--dn-sygnal-tlo); }
+.dn-tabela td.dn-dane { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+
+/* ==========================================================================
+   ZAKŁADKI · KARTY SESJI
+   ========================================================================== */
+.dn-zakladki {
+  display: flex;
+  gap: var(--dn-od-1);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.dn-zakladka {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3);
+  border: none;
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-srednia);
+  cursor: pointer;
+  transition: color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-zakladka:hover { color: var(--dn-tekst); background: var(--dn-hover); }
+.dn-zakladka[aria-selected='true'] { color: var(--dn-tekst); }
+.dn-zakladka[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--dn-kropka);
+}
+
+/* ── Wariant pigułkowy ──────────────────────────────────────────────────────
+   Przełącznik dwóch równorzędnych stanów (np. logowanie albo rejestracja).
+   Nie ma dolnej kreski zakładek: wybór niesie wypełniona pigułka. Stan wybrany
+   dostaje barwę sygnałową i kontrę — sam kształt bez koloru czytałby się jako
+   pole nieaktywne, a to jest kontrolka wyboru, nie etykieta. */
+.dn-zakladki--pigulki {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+}
+.dn-zakladki--pigulki .dn-zakladka {
+  border-radius: var(--dn-r-pill);
+  padding: 0 var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+}
+.dn-zakladki--pigulki .dn-zakladka::after { content: none; }
+.dn-zakladki--pigulki .dn-zakladka:hover { background: var(--dn-hover); }
+.dn-zakladki--pigulki .dn-zakladka[aria-selected='true'] {
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-zakladki--pigulki .dn-zakladka[aria-selected='true']:hover {
+  background: var(--dn-sygnal-wypelnienie);
+}
+.dn-zakladki--pigulki .dn-zakladka:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Pas kart sesji powłoki środowiska — mechanika zakładek + wskaźnik pracy w tle */
+.dn-karty-sesji {
+  display: flex;
+  align-items: stretch;
+  gap: var(--dn-od-1);
+  height: var(--dn-wym-pas-kart);
+  padding: 0 var(--dn-od-2);
+  background: var(--dn-powierzchnia-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dn-karta-sesji {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-1);
+  padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-sesji:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-karta-sesji[aria-selected='true'] {
+  background: var(--dn-powierzchnia);
+  border-color: var(--dn-obrys);
+  color: var(--dn-tekst);
+}
+/* wstęga aktywnej karty — sygnał */
+.dn-karta-sesji[aria-selected='true']::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px auto -1px;
+  height: var(--dn-wym-wstega);
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  background: var(--dn-kropka);
+}
+
+/* ==========================================================================
+   RAMA KOKPITU — pasek górny (zawsze atramentowy) + listwa ustawień
+   ========================================================================== */
+.dn-pasek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  height: var(--dn-wym-pasek);
+  padding: 0 var(--dn-od-3);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  border-bottom: 1px solid var(--dn-rama-obrys);
+}
+.dn-pasek-godlo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-rama-tekst);
+  text-decoration: none;
+}
+.dn-pasek-godlo:hover { color: var(--dn-rama-tekst); text-decoration: none; }
+.dn-pasek-logotyp {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-gruba);
+  letter-spacing: 0.02em;
+}
+.dn-pasek-logotyp small {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  color: var(--dn-rama-tekst-2);
+  text-transform: uppercase;
+  margin-left: var(--dn-od-1);
+}
+.dn-pasek-szukaj {
+  flex: 1;
+  max-width: 420px;
+  min-height: 30px;
+  padding: 0 var(--dn-od-3);
+  border: 1px solid var(--dn-rama-obrys);
+  border-radius: var(--dn-r-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dn-rama-tekst);
+  font-size: var(--dn-fs-sm);
+}
+.dn-pasek-szukaj::placeholder { color: var(--dn-rama-tekst-2); }
+.dn-pasek-szukaj:focus {
+  outline: none;
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+/* Wariant opakowany — <label class="dn-pasek-szukaj"> z ikoną i polem w środku.
+   Ramka i tło należą do opakowania; pole wewnątrz jest przezroczyste. */
+label.dn-pasek-szukaj {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+label.dn-pasek-szukaj > input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+label.dn-pasek-szukaj:focus-within {
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+
+.dn-pasek-prawa { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
+
+/* Listwa ustawień (Centrum dowodzenia, strefa 3) — najniższa masa */
+.dn-listwa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia-2);
+}
+.dn-listwa-pozycja {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
+  padding: 0 var(--dn-od-3);
+  border: none;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-listwa-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+
+/* ==========================================================================
+   BOCZNA NAWIGACJA MODUŁÓW
+   ========================================================================== */
+.dn-boczna {
+  width: var(--dn-wym-boczna);
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3) var(--dn-od-2);
+  background: var(--dn-panel);
+  border-right: 1px solid var(--dn-obrys);
+  overflow-y: auto;
+}
+.dn-boczna-naglowek {
+  padding: var(--dn-od-2) var(--dn-od-3);
+}
+.dn-boczna-pozycja {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3);
+  border: none;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-srednia);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-boczna-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-boczna-pozycja[aria-current='page'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+}
+/* znacznik aktywności — krótka kreska sygnału zamiast pełnej wstęgi */
+.dn-boczna-pozycja[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: var(--dn-wym-wstega);
+  height: 16px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+}
+.dn-boczna-pozycja > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+
+/* ==========================================================================
+   WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie projektowe)
+   --------------------------------------------------------------------------
+   Zasada: wspólne tło powierzchni; rozróżnienie niesie ZAWSZE komplet:
+   ikona w medalionie + etykieta nadawcy + klasa semantyczna krawędzi.
+   Trzy klasy semantyczne (nie dziewięć barw):
+     --czlowiek      atrament   (użytkownik)
+     --inteligencja  sygnał     (model · agent · Coordinator · Executor · Validator)
+     --system        neutralna  (Automation · Always On Display · wynik narzędzia)
+   Rola w obrębie klasy różnicuje się ikoną i plakietką roli, nie kolorem.
+   ========================================================================== */
+.dn-wpis {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--dn-wym-awatar-sm) 1fr;
+  gap: var(--dn-od-2) var(--dn-od-3);
+  max-width: 860px;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-left: 2px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.dn-wpis-medalion {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+}
+.dn-wpis-medalion > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+.dn-wpis-tozsamosc {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+.dn-wpis-nadawca {
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+.dn-wpis-godzina {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-wpis-tresc {
+  grid-column: 2;
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-luzny);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* klasa: człowiek — atrament */
+.dn-wpis--czlowiek { border-left-color: var(--dn-atrament); }
+.dn-wpis--czlowiek .dn-wpis-medalion {
+  background: var(--dn-atrament);
+  border-color: var(--dn-atrament);
+  color: var(--dn-atrament-tekst);
+}
+/* klasa: inteligencja — sygnał */
+.dn-wpis--inteligencja { border-left-color: var(--dn-sygnal-wypelnienie); }
+.dn-wpis--inteligencja .dn-wpis-medalion {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+}
+/* klasa: system — neutralna, tło wycofane */
+.dn-wpis--system { background: transparent; border-left-color: var(--dn-obrys-mocny); }
+
+/* wpis pracujący — kropka tętna przy nadawcy */
+.dn-wpis--pracuje .dn-wpis-nadawca::after {
+  content: '';
+  display: inline-block;
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  margin-left: var(--dn-od-1);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+  vertical-align: 1px;
+}
+
+/* ==========================================================================
+   MONITOR WYKONANIA · KOLEJKA KROKÓW
+   ========================================================================== */
+.dn-postep {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+.dn-postep-tor {
+  flex: 1;
+  height: 4px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+.dn-postep-wartosc {
+  height: 100%;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-wypelnienie);
+  transition: width var(--dn-czas-3) var(--dn-ease);
+}
+.dn-postep-etykieta {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  white-space: nowrap;
+}
+
+/* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
+   poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
+   nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */
+.dn-kolejka { display: flex; flex-direction: column; }
+.dn-krok {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: var(--dn-od-3);
+  min-height: var(--dn-wym-wiersz);
+  padding: 0 var(--dn-od-3);
+  border-left: 2px solid var(--dn-obrys);
+  font-size: var(--dn-fs-base);
+}
+.dn-krok-znak {
+  display: grid;
+  place-content: center;
+  width: 20px; height: 20px;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.dn-krok-znak > svg { width: 12px; height: 12px; }
+.dn-krok-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-krok--pracuje { border-left-color: var(--dn-sygnal-wypelnienie); }
+.dn-krok--pracuje .dn-krok-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+.dn-krok--poprawny { border-left-color: var(--dn-sukces-obrys); }
+.dn-krok--poprawny .dn-krok-znak {
+  background: var(--dn-sukces-tlo);
+  border-color: var(--dn-sukces-obrys);
+  color: var(--dn-sukces-tekst);
+}
+.dn-krok--bledy { border-left-color: var(--dn-ostrzezenie-obrys); }
+.dn-krok--bledy .dn-krok-znak {
+  background: var(--dn-ostrzezenie-tlo);
+  border-color: var(--dn-ostrzezenie-obrys);
+  color: var(--dn-ostrzezenie-tekst);
+}
+.dn-krok--wstrzymany { border-left-color: var(--dn-blad-obrys); }
+.dn-krok--wstrzymany .dn-krok-znak {
+  background: var(--dn-blad-tlo);
+  border-color: var(--dn-blad-obrys);
+  color: var(--dn-blad-tekst);
+}
+
+/* ==========================================================================
+   MODAL (dialog) · NAKŁADKA
+   ========================================================================== */
+.dn-modal {
+  /* Reset zeruje marginesy wszystkim elementom — dialog modalny musi odzyskać
+     margin:auto, inaczej okno staje przy lewej górnej krawędzi ekranu. */
+  margin: auto;
+  width: min(var(--dn-wym-modal), calc(100vw - var(--dn-od-8)));
+  max-height: min(80dvh, 720px);
+  padding: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  box-shadow: var(--dn-cien-lg);
+}
+.dn-modal--szeroki { width: min(1080px, calc(100vw - var(--dn-od-8))); max-height: min(86dvh, 780px); }
+.dn-modal-zamknij { margin-left: auto; }
+.dn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }
+.dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
+.dn-modal-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-4) var(--dn-od-5);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-modal-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+}
+.dn-modal-cialo { padding: var(--dn-od-5); overflow-y: auto; }
+/* Akapit wprowadzający w oknie nakładkowym — jedno zdanie o tym, co okno robi. */
+.dn-modal-lid {
+  margin: 0 0 var(--dn-od-4);
+  max-width: 72ch;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.dn-modal-stopka {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-4) var(--dn-od-5);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  border-radius: 0 0 var(--dn-r-lg) var(--dn-r-lg);
+}
+
+/* ==========================================================================
+   POWIADOMIENIE (toast)
+   ========================================================================== */
+.dn-toasty {
+  position: fixed;
+  inset: auto var(--dn-od-4) var(--dn-od-4) auto;
+  z-index: var(--dn-z-powiadomienie);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+.dn-toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--dn-od-3);
+  min-width: var(--dn-wym-toast-min);
+  max-width: var(--dn-wym-toast-max);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-3);
+  animation: dn-wejscie var(--dn-czas-3) var(--dn-ease);
+}
+.dn-toast > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); margin-top: 1px; }
+.dn-toast-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.dn-toast-tresc { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.dn-toast--sukces { border-left: 2px solid var(--dn-sukces-tekst); }
+.dn-toast--sukces > svg { color: var(--dn-sukces-tekst); }
+.dn-toast--ostrzezenie { border-left: 2px solid var(--dn-ostrzezenie-tekst); }
+.dn-toast--ostrzezenie > svg { color: var(--dn-ostrzezenie-tekst); }
+.dn-toast--blad { border-left: 2px solid var(--dn-blad-tekst); }
+.dn-toast--blad > svg { color: var(--dn-blad-tekst); }
+.dn-toast--informacja { border-left: 2px solid var(--dn-informacja-tekst); }
+.dn-toast--informacja > svg { color: var(--dn-informacja-tekst); }
+
+/* ==========================================================================
+   DYMEK OBJAŚNIENIA (tooltip)
+   ========================================================================== */
+.dn-tooltip { position: relative; display: inline-flex; }
+.dn-tooltip-tresc {
+  position: absolute;
+  bottom: calc(100% + var(--dn-od-2));
+  left: 50%;
+  z-index: var(--dn-z-tooltip);
+  max-width: 260px;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  box-shadow: var(--dn-cien-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, var(--dn-od-1));
+  transition:
+    opacity var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease),
+    visibility var(--dn-czas-2) var(--dn-ease);
+  pointer-events: none;
+}
+.dn-tooltip:hover .dn-tooltip-tresc,
+.dn-tooltip:focus-within .dn-tooltip-tresc {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* ==========================================================================
+   AWATAR · SPINNER · PUSTY STAN
+   ========================================================================== */
+.dn-awatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-awatar);
+  height: var(--dn-wym-awatar);
+  flex: none;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-grad-atrament);
+  color: var(--dn-szary-100);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  overflow: hidden;
+}
+.dn-awatar--sm { width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm); font-size: var(--dn-fs-xs); }
+.dn-awatar--lg { width: var(--dn-wym-awatar-lg); height: var(--dn-wym-awatar-lg); font-size: var(--dn-fs-md); }
+.dn-awatar--kwadrat { border-radius: var(--dn-r-sm); }
+/* jednostka inteligencji (agent/model) — rdzeń sygnałowy */
+.dn-awatar--inteligencja { background: var(--dn-grad-sygnal); color: var(--dn-szary-0); }
+.dn-awatar-stan {
+  position: absolute;
+  right: -1px; bottom: -1px;
+  width: 8px; height: 8px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sukces-tekst);
+  box-shadow: 0 0 0 2px var(--dn-powierzchnia);
+}
+
+.dn-spinner {
+  display: inline-block;
+  width: var(--dn-wym-spinner);
+  height: var(--dn-wym-spinner);
+  flex: none;
+  border: 2px solid var(--dn-obrys-mocny);
+  border-top-color: var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  animation: dn-obrot 0.8s linear infinite;
+}
+.dn-pusty-stan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-10) var(--dn-od-5);
+  text-align: center;
+  color: var(--dn-tekst-3);
+}
+.dn-pusty-stan > svg { width: 28px; height: 28px; }
+.dn-pusty-stan-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst-2);
+}
+.dn-pusty-stan-opis { max-width: 40ch; font-size: var(--dn-fs-sm); }
+
+/* ==========================================================================
+   POLE WPISYWANIA PROMPTU — grot ❯ jako sygnatura wejścia
+   ========================================================================== */
+.dn-prompt {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.dn-prompt:focus-within {
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+.dn-prompt-grot {
+  align-self: start;
+  padding: var(--dn-od-2) 0 0 var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-kropka);
+  user-select: none;
+}
+.dn-prompt-obszar {
+  min-height: 40px;
+  max-height: 160px;
+  padding: var(--dn-od-2) 0;
+  border: none;
+  background: transparent;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-bazowy);
+  resize: none;
+}
+.dn-prompt-obszar:focus { outline: none; }
+.dn-prompt-obszar::placeholder { color: var(--dn-tekst-3); }
+
+/* Przybornik promptu — załączniki, biblioteka, agent, model… */
+.dn-przybornik {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex-wrap: wrap;
+}
+
+/* ==========================================================================
+   ALWAYS ON DISPLAY — pływający awatar
+   ========================================================================== */
+.dn-aod {
+  /* Awatar unosi się nad paskiem stanu i nad uchwytem prototypu — żaden pas
+     ramy nie może zniknąć pod warstwą pływającą. */
+  position: fixed;
+  right: var(--dn-od-5);
+  bottom: calc(var(--dn-wym-stan) + var(--dn-wym-kontrolka) + var(--dn-od-4));
+  z-index: var(--dn-z-aod);
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-4) var(--dn-od-2) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-3);
+}
+.dn-aod-rdzen {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-grad-sygnal);
+  color: var(--dn-szary-0);
+}
+.dn-aod-rdzen::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid var(--dn-sygnal-obrys);
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+.dn-aod-tresc { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); max-width: 36ch; }
+.dn-aod-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+/* ==========================================================================
+   MENU ROZWIJANE — pasek narzędzi, belki okien, kontrolki kontekstowe
+   ========================================================================== */
+/* Bryła i położenie panelu menu: `menu.css` + `menu.js`. Tutaj zostaje
+   anatomia wnętrza: wiersz, nagłówek, separator, skrót, znacznik. */
+.sta-menu-poz { display:flex; align-items:center; gap:var(--dn-od-2); width:100%; padding:var(--dn-od-1) var(--dn-od-2);
+  border:none; background:none; border-radius:var(--dn-r-sm); color:var(--dn-tekst); font-size:var(--dn-fs-sm);
+  text-align:left; cursor:pointer;
+  /* Wiersz menu jest nazwą, więc nie łamie się nigdy: przy ciasnym panelu
+     skraca się wartość obok, nie etykieta. */
+  white-space:nowrap; }
+.sta-menu-poz:hover { background:var(--dn-hover); }
+.sta-menu-poz .skrot { order:2; margin-left:auto; min-width:0; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+/* Znacznik włączonej opcji stoi po PRAWEJ — tam, gdzie w menu systemowych
+   oznacza się stan włączony. Ikony wszystkich wierszy zaczynają się od lewej,
+   bez rezerwowanej kolumny z przodu (rozstrzygnięcie Właściciela 2026-08-20).
+   Kolejność w wierszu: ikona · etykieta · skrót · znacznik. */
+.sta-menu-poz .ptaszek {
+  order: 3;
+  flex: none;
+  width: var(--dn-wym-ikona-sm);
+  text-align: right;
+  color: var(--dn-sygnal);
+}
+/* Wiersz bez skrótu: znacznik sam dosuwa się do prawej krawędzi. */
+.sta-menu-poz:not(:has(.skrot)) .ptaszek { margin-left: auto; }
+/* Wyłączona opcja zachowuje miejsce znacznika, żeby prawa kolumna nie drgała. */
+.sta-menu-poz[aria-checked="false"] .ptaszek { visibility:hidden; }
+/* Rozmiar ikony wstawianej poza komponentem, który sam ją wymiaruje. Trzy
+   stopnie skali ikon systemu; poza tymi klasami ikona bierze rozmiar z reguły
+   swojego komponentu. */
+.dn-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+.dn-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.dn-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; }
+
+/* Wiersz menu z czynnością dodatkową: pozycja i jej zamknięcie stoją obok
+   siebie jako rodzeństwo — przycisk w przycisku jest niepoprawnym dokumentem. */
+.sta-menu-wiersz { display: flex; align-items: center; gap: var(--dn-od-1); }
+.sta-menu-wiersz > .sta-menu-poz { flex: 1 1 auto; min-width: 0; }
+.sta-menu-wiersz > .dn-btn-ikona { flex: none; opacity: 0; transition: opacity var(--dn-czas-1) var(--dn-ease); }
+.sta-menu-wiersz:hover > .dn-btn-ikona,
+.sta-menu-wiersz:focus-within > .dn-btn-ikona { opacity: 1; }
+
+.sta-menu-sep { height:1px; background:var(--dn-obrys-subtelny); margin:var(--dn-od-1) 0; }
+
+/* ── Menu aplikacji z podmenu rozwijanym w bok ─────────────────────────────
+   Menu aplikacji nie jest jednym długim blokiem od góry do dołu ekranu: górna
+   lista jest wąska (same tytuły sekcji), a szczegóły wysuwają się w prawo jako
+   podmenu. Mechanika stoi na :hover i :focus-within — bez skryptu, żeby nie
+   ingerować w prototyp.js. */
+#menu-aplikacji { min-width:220px; }
+.sta-podmenu { position:relative; }
+.sta-podmenu-wyzw { justify-content:flex-start; }
+.sta-podmenu-grot { margin-left:auto; color:var(--dn-tekst-3); font-size:var(--dn-fs-md); }
+.sta-podmenu-tresc {
+  position:absolute; top:calc(-1 * var(--dn-od-1)); left:100%; z-index:1;
+  min-width:260px; margin-left:var(--dn-od-1);
+  padding:var(--dn-od-1); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md);
+  background:var(--dn-powierzchnia); box-shadow:var(--dn-cien-3);
+  opacity:0; visibility:hidden; transform:translateX(-4px);
+  transition:opacity var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease), visibility var(--dn-czas-1);
+}
+.sta-podmenu:hover > .sta-podmenu-tresc,
+.sta-podmenu:focus-within > .sta-podmenu-tresc {
+  opacity:1; visibility:visible; transform:translateX(0);
+}
+.sta-podmenu:hover > .sta-podmenu-wyzw,
+.sta-podmenu:focus-within > .sta-podmenu-wyzw { background:var(--dn-hover); }
+.sta-podmenu:hover > .sta-podmenu-wyzw .sta-podmenu-grot,
+.sta-podmenu:focus-within > .sta-podmenu-wyzw .sta-podmenu-grot { color:var(--dn-tekst); }
+/* Podmenu przy prawej krawędzi okna otwiera się w lewo. */
+.sta-podmenu-tresc--w-lewo { left:auto; right:100%; margin-left:0; margin-right:var(--dn-od-1); transform:translateX(4px); }
+.sta-podmenu--w-lewo:hover > .sta-podmenu-tresc--w-lewo,
+.sta-podmenu--w-lewo:focus-within > .sta-podmenu-tresc--w-lewo { transform:translateX(0); }
+@media (prefers-reduced-motion: reduce) { .sta-podmenu-tresc { transition:none; } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KOMPONENTY BRAKUJĄCE W ARKUSZU
+
+   Poniższe klasy były używane w prototypach, lecz nie miały deklaracji —
+   elementy renderowały się bez żadnego stylu. Nazwy zachowane, ponieważ
+   należą do istniejących rodzin (.dn-modal, .dn-kropka, .dn-btn-ikona,
+   .dn-karta-sesji, .dn-dost-barwa, .sta-chip, .sta-wpis). Wyłącznie żetony.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Tło okna nakładkowego budowanego bez znacznika dialog. */
+.dn-modal-tlo {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dn-z-nakladka);
+  display: grid;
+  place-items: center;
+  padding: var(--dn-od-4);
+  background: var(--dn-nakladka);
+}
+.dn-modal-tlo[hidden] { display: none; }
+
+/* Nazwa barwy przy próbce w widoku dostępności. */
+.dn-dost-barwa-nazwa { white-space: nowrap; }
+
+/* Kropka w barwie sygnałowej — rodzina miała sukces, błąd, ostrzeżenie
+   i barwę neutralną, brakowało odpowiednika dla barwy wiodącej. */
+.dn-kropka--sygnal { background: var(--dn-sygnal-500); }
+
+/* Drobniejszy przycisk ikonowy — wymiar wyprowadzony z żetonu podstawowego,
+   żeby nadążał za jego przesterowaniem w innych zakresach. */
+.dn-btn-ikona--sm {
+  width: calc(var(--dn-wym-ikonowy) - var(--dn-od-1));
+  height: calc(var(--dn-wym-ikonowy) - var(--dn-od-1));
+}
+.dn-btn-ikona--sm svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* Zamknięcie karty sesji — znak wewnątrz karty, nie osobny przycisk. */
+.dn-karta-sesji-zamknij {
+  display: inline-grid;
+  place-content: center;
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  border-radius: var(--dn-r-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-karta-sesji-zamknij svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+.dn-karta-sesji:hover .dn-karta-sesji-zamknij { color: var(--dn-tekst-2); }
+
+/* Adnotacja w toku treści — krótka uwaga przy wpisie albo pozycji listy. */
+.dn-alert {
+  display: block;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.dn-alert--info {
+  border-color: var(--dn-informacja-obrys);
+  background: var(--dn-informacja-tlo);
+  color: var(--dn-informacja-tekst);
+}
+.dn-alert--ostrzezenie {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+/* Rząd znaczników pod wpisem rozmowy. */
+.sta-chip-rzad { display: flex; flex-wrap: wrap; gap: var(--dn-od-1); }
+
+/* Czynności przypisane do wpisu rozmowy. */
+.sta-wpis-akcje { display: flex; gap: var(--dn-od-1); margin-top: var(--dn-od-2); }
+
+/* ============================================================================
+   WARSTWA RUCHU, AKCJI I UWYDATNIENIA
+   ----------------------------------------------------------------------------
+   Reakcja na wskazanie, naciśnięcie i wybór dla komponentów biblioteki.
+   Granice: jedna krzywa `--dn-ease`, czasy z żetonów, animowane wyłącznie
+   `transform`, `opacity`, `box-shadow` i barwy, jedno tętno na widok,
+   `prefers-reduced-motion` gasi ruch żetonem — informację przejmuje kształt.
+   ============================================================================ */
+
+:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli, .dn-karty-sesji, .dn-przybornik) > * {
+  transition: opacity var(--dn-czas-uwyd) var(--dn-ease);
+}
+:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli):hover > *:not(:hover) {
+  opacity: var(--dn-przygasz-rodzenstwa);
+}
+
+.dn-karta-srodowiska {
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta-srodowiska::before {
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--dn-sygnal-wypelnienie);
+  opacity: 1;
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+
+.dn-karta-srodowiska::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 0% 0%, var(--dn-sygnal-tlo) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska:focus-visible,
+.dn-karta-srodowiska[aria-current='true'] {
+  border-color: var(--dn-sygnal);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-lg));
+}
+.dn-karta-srodowiska:hover::before,
+.dn-karta-srodowiska:focus-visible::before,
+.dn-karta-srodowiska[aria-current='true']::before { transform: scaleX(1); }
+.dn-karta-srodowiska:hover::after,
+.dn-karta-srodowiska[aria-current='true']::after { opacity: 1; }
+.dn-karta-srodowiska:active {
+  transform: translateY(0) scale(var(--dn-skala-nacisk));
+  box-shadow: var(--dn-cien-1);
+}
+.dn-karta-srodowiska:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-karta-srodowiska-godlo {
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover .dn-karta-srodowiska-godlo {
+  transform: scale(var(--dn-skala-godla));
+  color: var(--dn-sygnal);
+}
+
+.dn-karta-srodowiska:hover .dn-btn {
+  border-color: var(--dn-sygnal-wypelnienie);
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+  box-shadow: var(--dn-poswiata-sygnal);
+}
+
+.dn-karta--klikalna {
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta--klikalna:hover {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-md));
+}
+.dn-karta--klikalna:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+
+.dn-kafel {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+
+.dn-kafel::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--dn-wym-wstega);
+  background: var(--dn-sygnal-wypelnienie);
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel:hover, .dn-kafel:focus-visible {
+  border-color: var(--dn-sygnal-obrys);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-md));
+}
+.dn-kafel:hover::before, .dn-kafel:focus-visible::before { transform: scaleY(1); }
+.dn-kafel:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.dn-kafel-ikona {
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel:hover .dn-kafel-ikona {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  transform: scale(var(--dn-skala-ikony));
+}
+
+.dn-btn {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-btn:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.dn-btn:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); box-shadow: none; }
+.dn-btn--sygnal:hover { box-shadow: var(--dn-poswiata-sygnal); }
+.dn-btn--atrament:hover, .dn-btn--niebezpieczny:hover { box-shadow: var(--dn-cien-2); }
+.dn-btn[disabled], .dn-btn[aria-disabled='true'] { transform: none; box-shadow: none; }
+
+.dn-btn-ikona {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+
+.dn-btn-ikona > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease); }
+.dn-btn-ikona:not(.dn-btn-ikona--na-ramie):hover > svg { transform: scale(var(--dn-skala-ikony)); }
+.dn-btn-ikona--na-ramie:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.dn-btn-ikona:active { transform: scale(var(--dn-skala-nacisk)); }
+
+.dn-boczna-pozycja::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: var(--dn-wym-wstega);
+  height: 16px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  transform: scaleY(0);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-boczna-pozycja:hover::before { transform: scaleY(0.6); }
+.dn-boczna-pozycja[aria-current='page']::before { transform: scaleY(1); }
+
+.sta-menu-poz {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease);
+}
+
+.sta-menu-poz > svg,
+.sta-menu-poz > .dn-menu-poz-ikona { transition: transform var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease); }
+.sta-menu-poz:hover > svg,
+.sta-menu-poz:hover > .dn-menu-poz-ikona { transform: translateX(2px); color: var(--dn-sygnal); }
+
+.dn-tabela tbody tr { transition: background-color var(--dn-czas-1) var(--dn-ease); }
+
+.dn-zakladka::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: var(--dn-wym-wstega);
+  background: var(--dn-kropka);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-zakladka:hover::after { transform: scaleX(0.4); }
+.dn-zakladka[aria-selected='true']::after { transform: scaleX(1); }
+
+.dn-check, .dn-radio, .dn-przelacznik { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease); }
+.dn-check:active, .dn-radio:active, .dn-przelacznik:active { transform: scale(var(--dn-skala-nacisk)); }
+.dn-check:checked, .dn-radio:checked { box-shadow: var(--dn-cien-sygnal); }
+.dn-pole-kontrolka:focus, .dn-pole-kontrolka:focus-visible { box-shadow: var(--dn-cien-sygnal); }
+
+.dn-wejscie-kaskada > * {
+  animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) both;
+}
+.dn-wejscie-kaskada > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(n + 7) { animation-delay: calc(6 * var(--dn-krok-kaskady)); }
+
+@media (prefers-reduced-motion: reduce) {
+  
+  .dn-karta-srodowiska:hover::before,
+  .dn-karta-srodowiska[aria-current='true']::before,
+  .dn-kafel:hover::before,
+  .dn-zakladka[aria-selected='true']::after,
+  .dn-boczna-pozycja[aria-current='page']::before { transition: none; }
+  .dn-wejscie-kaskada > * { animation: none; }
+}
+
+.dn-karta-srodowiska { overflow: visible; }
+.dn-karta-srodowiska::before { border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0; }
+.dn-karta-srodowiska::after { border-radius: inherit; }
+
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska:focus-within,
+.dn-karta-srodowiska:has(.sta-menu-tresc[data-otwarte='tak']) { z-index: 3; }

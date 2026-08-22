@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Instalator</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/wejscie.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     STYLE LOKALNE — Instalator aplikacji.
+
+     Okno instalatora ma stałą wysokość i pokazuje JEDEN krok naraz. Wcześniej
+     wszystkie kroki i cała lista składników stały pod sobą w jednej kolumnie,
+     przez co okno rosło na kilka ekranów — instalator przestawał przypominać
+     okno dialogowe, a stawał się długą stroną.
+
+     Wyłącznie żetony var(--dn-*). Oba motywy.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* Okno o stałych proporcjach — jak okno dialogowe systemu, nie strona. */
+  .in-okno {
+    display: grid;
+    grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    width: min(920px, 100%);
+    height: 560px;
+    flex: none;
+    border: 1px solid var(--dn-obrys);
+    border-radius: var(--dn-r-xl);
+    background: var(--dn-powierzchnia);
+    box-shadow: var(--dn-cien-3);
+    overflow: hidden;
+  }
+
+  /* ── Pasek tytułu — instalator nie ma ramy aplikacji ─────────────────── */
+  .in-belka {
+    display: flex; align-items: center; gap: var(--dn-od-3);
+    height: var(--dn-wym-belka); padding: 0 0 0 var(--dn-od-3);
+    background: var(--dn-rama); color: var(--dn-rama-tekst);
+  }
+  .in-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
+  .in-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
+  .in-belka-uchwyt { flex: 1 1 auto; }
+  .in-belka-zamknij {
+    display: grid; place-content: center;
+    width: var(--dn-wym-ikonowy); height: var(--dn-wym-belka);
+    border: 0; background: transparent; color: var(--dn-rama-tekst-2); cursor: pointer;
+  }
+  .in-belka-zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }
+  .in-belka-zamknij svg { width: 12px; height: 12px; }
+
+  /* ── Korpus: kolumna kroków po lewej, treść kroku po prawej ──────────── */
+  .in-korpus { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; }
+
+  .in-kroki {
+    display: flex; flex-direction: column; gap: var(--dn-od-1);
+    padding: var(--dn-od-5) var(--dn-od-3);
+    background: var(--dn-rama); color: var(--dn-rama-tekst);
+  }
+  .in-marka { display: flex; align-items: center; gap: var(--dn-od-2); margin-bottom: var(--dn-od-5); padding: 0 var(--dn-od-2); }
+  .in-marka img { width: 32px; height: 32px; display: block; }
+  .in-marka-nazwa { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); }
+
+  /* Pozycja kroku — znak stanu, nazwa. Krok bieżący niesie tło i wstęgę. */
+  .in-krok {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    min-height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-2);
+    border-left: var(--dn-wym-wstega) solid transparent;
+    border-radius: var(--dn-r-sm);
+    font-size: var(--dn-fs-sm); color: var(--dn-rama-tekst-2);
+  }
+  .in-krok-numer {
+    display: grid; place-content: center; flex: none;
+    width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm);
+    border: 1px solid var(--dn-rama-obrys-mocny); border-radius: var(--dn-r-pill);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  }
+  .in-krok[data-stan='zrobiony'] { color: var(--dn-rama-tekst); }
+  .in-krok[data-stan='zrobiony'] .in-krok-numer { border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); }
+  .in-krok[data-stan='biezacy'] {
+    background: var(--dn-rama-hover); border-left-color: var(--dn-sygnal-500); color: var(--dn-rama-tekst);
+    font-weight: var(--dn-fw-polgruba);
+  }
+  .in-krok[data-stan='biezacy'] .in-krok-numer { border-color: var(--dn-sygnal-500); color: var(--dn-sygnal-300); }
+
+  /* ── Treść kroku ─────────────────────────────────────────────────────── */
+  .in-tresc { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; background: var(--dn-powierzchnia); }
+  .in-ekran { display: none; flex-direction: column; gap: var(--dn-od-4); padding: var(--dn-od-6); overflow-y: auto; }
+  .in-ekran[data-widoczny='tak'] { display: flex; }
+  .in-nadtytul {
+    margin: 0; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
+  }
+  .in-tytul { margin: var(--dn-od-1) 0 0; font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); }
+  .in-lid { margin: var(--dn-od-2) 0 0; max-width: 62ch; color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); }
+
+  /* Składniki — lista przewijana wewnątrz kroku, nie rozpychająca okna. */
+  .in-skladniki { display: flex; flex-direction: column; gap: var(--dn-od-2); margin: 0; padding: 0; list-style: none; }
+  .in-skladnik {
+    display: grid; grid-template-columns: var(--dn-wym-check) minmax(0, 1fr) auto;
+    align-items: start; gap: var(--dn-od-3);
+    padding: var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-tlo);
+  }
+  .in-skladnik-nazwa { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
+  .in-skladnik-opis { display: block; margin-top: var(--dn-od-1); font-size: var(--dn-fs-xs); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+  .in-skladnik-rozmiar { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); white-space: nowrap; }
+  .in-znacznik {
+    display: inline-block; margin-left: var(--dn-od-2); padding: 0 var(--dn-od-2);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+    font-family: var(--dn-ff-mono); font-size: 10px; letter-spacing: var(--dn-ls-mono-wersaliki);
+    text-transform: uppercase; color: var(--dn-tekst-3);
+  }
+  .in-znacznik--wymagany { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+
+  /* Pola i wiersze ustawień kroku */
+  .in-pole { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+  .in-pole-etykieta { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+  .in-sciezka { display: flex; align-items: center; gap: var(--dn-od-2); }
+  .in-sciezka code {
+    flex: 1 1 auto; min-width: 0; padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
+    background: var(--dn-tlo); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .in-wybor { display: flex; align-items: flex-start; gap: var(--dn-od-3); padding: var(--dn-od-2) 0; }
+  .in-wybor-tresc { font-size: var(--dn-fs-sm); }
+  .in-wybor-opis { display: block; margin-top: 2px; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  /* Licencja — obszar przewijany o stałej wysokości */
+  .in-licencja {
+    max-height: 190px; overflow-y: auto; padding: var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-tlo); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2);
+  }
+  .in-licencja p { margin: 0 0 var(--dn-od-3); }
+
+  /* Podsumowanie i postęp */
+  .in-suma {
+    display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3);
+    padding: var(--dn-od-3); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    font-size: var(--dn-fs-sm);
+  }
+  .in-suma-wolne { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .in-postep-tor { height: var(--dn-od-2); border-radius: var(--dn-r-pill); background: var(--dn-tlo); overflow: hidden; }
+  .in-postep-tor span { display: block; height: 100%; width: 62%; background: var(--dn-sygnal-wypelnienie); }
+  .in-postep-wiersz { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); }
+  .in-postep-stan { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .in-gotowe { display: flex; align-items: center; gap: var(--dn-od-3); }
+  .in-gotowe-znak {
+    display: grid; place-content: center; flex: none; width: 44px; height: 44px;
+    border-radius: var(--dn-r-pill); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst);
+  }
+  .in-gotowe-znak svg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); }
+
+  /* ── Stopka działań ──────────────────────────────────────────────────── */
+  .in-dzialania {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-3) var(--dn-od-6);
+    border-top: 1px solid var(--dn-obrys);
+  }
+  .in-dzialania-odstep { flex: 1 1 auto; }
+  .in-licznik { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  @media (max-width: 860px) {
+    .in-okno { height: auto; min-height: 520px; }
+    .in-korpus { grid-template-columns: minmax(0, 1fr); }
+    .in-kroki { flex-direction: row; overflow-x: auto; padding: var(--dn-od-3); }
+    .in-marka { display: none; }
+    .in-krok { border-left: 0; border-bottom: var(--dn-wym-wstega) solid transparent; white-space: nowrap; }
+    .in-krok[data-stan='biezacy'] { border-bottom-color: var(--dn-sygnal-500); }
+  }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="OKNA PLATFORMOWE · INSTALATOR"
+      data-prototyp-okno="Instalator aplikacji — okno przed uruchomieniem, sześć kroków"
+      data-prototyp-zrodlo="docs/interfejs-uzytkownika/okno-instalatora.md">
+<div class="we-scena">
+<section class="pt-okno pt-okno--plaskie" aria-label="Okno instalatora aplikacji Danaco Console">
+  <header class="pt-okno-naglowek">
+    <h1 class="pt-okno-tytul">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Instalator aplikacji
+    </h1>
+    <span class="pt-mono">etap 0 przepływu · przed pierwszym uruchomieniem aplikacji</span>
+  </header>
+  <div class="pt-okno-tresc">
+    <div class="we-scena">
+      <div class="in-okno">
+
+        <!-- ══ PASEK TYTUŁU ═══════════════════════════════════════════════ -->
+        <div class="in-belka">
+          <svg class="in-belka-znak" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/></svg>
+          <p class="in-belka-tytul">Instalacja programu Danaco Console</p>
+          <span class="in-belka-uchwyt" aria-hidden="true"></span>
+          <button class="in-belka-zamknij" type="button" aria-label="Zamknij instalator">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+
+        <div class="in-korpus">
+
+          <!-- ══ KOLUMNA KROKÓW ═══════════════════════════════════════════ -->
+          <nav class="in-kroki" aria-label="Kroki instalacji">
+            <span class="in-marka">
+              <img src="../../zasoby/marka/logo/sygnet-na-ciemnym.svg" alt="" aria-hidden="true">
+              <span class="in-marka-nazwa">Danaco Console</span>
+            </span>
+            <span class="in-krok" data-krok="1" data-stan="biezacy"><span class="in-krok-numer">1</span>Zasady korzystania</span>
+            <span class="in-krok" data-krok="2" data-stan="oczekuje"><span class="in-krok-numer">2</span>Miejsce na dysku</span>
+            <span class="in-krok" data-krok="3" data-stan="oczekuje"><span class="in-krok-numer">3</span>Co zainstalować</span>
+            <span class="in-krok" data-krok="4" data-stan="oczekuje"><span class="in-krok-numer">4</span>Skróty</span>
+            <span class="in-krok" data-krok="5" data-stan="oczekuje"><span class="in-krok-numer">5</span>Instalowanie</span>
+            <span class="in-krok" data-krok="6" data-stan="oczekuje"><span class="in-krok-numer">6</span>Gotowe</span>
+          </nav>
+
+          <!-- ══ TREŚĆ KROKU ══════════════════════════════════════════════ -->
+          <div class="in-tresc">
+
+            <!-- KROK 1 — zasady korzystania -->
+            <section class="in-ekran" data-ekran="1" data-widoczny="tak" aria-label="Zasady korzystania">
+              <div>
+                <p class="in-nadtytul">Krok 1 z 6</p>
+                <h2 class="in-tytul">Zasady korzystania</h2>
+                <p class="in-lid">Zanim zaczniemy — poniżej warunki, na jakich możesz korzystać z programu. Wystarczy, że je zaakceptujesz.</p>
+              </div>
+              <div class="in-licencja" tabindex="0">
+                <p>Program jest przeznaczony do pracy na Twoim komputerze. Treści, nad którymi pracujesz, pozostają u Ciebie — program nie wysyła ich nigdzie bez Twojego polecenia.</p>
+                <p>Możesz zainstalować program na tylu urządzeniach, ile potrzebujesz do własnej pracy. Nie możesz go odsprzedawać ani udostępniać dalej jako własnego produktu.</p>
+                <p>Program dostajesz w takiej postaci, w jakiej jest. Staramy się, żeby działał bez zarzutu, ale nie odpowiadamy za skutki decyzji, które podejmiesz na podstawie jego pracy.</p>
+                <p>Pełne warunki znajdziesz po instalacji, w oknie „Wersja i licencja”.</p>
+              </div>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" checked>
+                <span class="in-wybor-tresc">Akceptuję warunki korzystania z programu</span>
+              </label>
+            </section>
+
+            <!-- KROK 2 — miejsce na dysku -->
+            <section class="in-ekran" data-ekran="2" aria-label="Miejsce na dysku">
+              <div>
+                <p class="in-nadtytul">Krok 2 z 6</p>
+                <h2 class="in-tytul">Miejsce na dysku</h2>
+                <p class="in-lid">Tutaj wylądują pliki programu. Jeśli nie masz powodu tego zmieniać, zostaw jak jest.</p>
+              </div>
+              <div class="in-pole">
+                <span class="in-pole-etykieta">Folder programu</span>
+                <span class="in-sciezka">
+                  <code>C:\Program Files\Danaco Console</code>
+                  <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zmień…</button>
+                </span>
+              </div>
+              <div class="in-suma">
+                <span>Program zajmie około <b>1,8 GB</b></span>
+                <span class="in-suma-wolne">wolne na dysku C: 148,6 GB</span>
+              </div>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" checked>
+                <span class="in-wybor-tresc">Twoje projekty trzymaj w folderze Dokumenty
+                  <span class="in-wybor-opis">Możesz to zmienić później, w ustawieniach programu.</span></span>
+              </label>
+            </section>
+
+            <!-- KROK 3 — co zainstalować -->
+            <section class="in-ekran" data-ekran="3" aria-label="Co zainstalować">
+              <div>
+                <p class="in-nadtytul">Krok 3 z 6</p>
+                <h2 class="in-tytul">Co zainstalować</h2>
+                <p class="in-lid">Zaznacz to, czego chcesz używać. Każdą z tych rzeczy dodasz albo usuniesz później — nic tu nie jest decyzją na zawsze.</p>
+              </div>
+              <ul class="in-skladniki">
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox" checked disabled>
+                  <span>
+                    <span class="in-skladnik-nazwa">Program główny<span class="in-znacznik in-znacznik--wymagany">wymagany</span></span>
+                    <span class="in-skladnik-opis">Cztery środowiska pracy i wszystko, czego potrzebujesz na co dzień.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">412 MB</span>
+                </li>
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox" checked disabled>
+                  <span>
+                    <span class="in-skladnik-nazwa">Okno aplikacji<span class="in-znacznik in-znacznik--wymagany">wymagany</span></span>
+                    <span class="in-skladnik-opis">Samo okno programu i dostęp do plików na Twoim komputerze. Aktualizacje pobierają się same.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">86 MB</span>
+                </li>
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox" checked>
+                  <span>
+                    <span class="in-skladnik-nazwa">Praca bez internetu<span class="in-znacznik">zalecany</span></span>
+                    <span class="in-skladnik-opis">Pozwala pracować z modelem na Twoim komputerze, bez wysyłania treści na zewnątrz. Same modele pobierzesz później.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">1 240 MB</span>
+                </li>
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox" checked>
+                  <span>
+                    <span class="in-skladnik-nazwa">Czcionki programu<span class="in-znacznik">zalecany</span></span>
+                    <span class="in-skladnik-opis">Bez nich program użyje czcionek systemowych i będzie wyglądać nieco inaczej.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">38 MB</span>
+                </li>
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox" checked>
+                  <span>
+                    <span class="in-skladnik-nazwa">Otwieranie plików z pulpitu<span class="in-znacznik">zalecany</span></span>
+                    <span class="in-skladnik-opis">Dodaje „Otwórz w Danaco Console” do menu pod prawym przyciskiem myszy.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">12 MB</span>
+                </li>
+                <li class="in-skladnik">
+                  <input class="dn-check" type="checkbox">
+                  <span>
+                    <span class="in-skladnik-nazwa">Połączenie z telefonem<span class="in-znacznik">opcjonalny</span></span>
+                    <span class="in-skladnik-opis">Pozwala połączyć program z aplikacją na telefonie. Możesz włączyć później.</span>
+                  </span>
+                  <span class="in-skladnik-rozmiar">54 MB</span>
+                </li>
+              </ul>
+              <div class="in-suma">
+                <span>Zaznaczone zajmą <b>1 842 MB</b></span>
+                <span class="in-suma-wolne">wolne na dysku C: 148,6 GB</span>
+              </div>
+            </section>
+
+            <!-- KROK 4 — skróty -->
+            <section class="in-ekran" data-ekran="4" aria-label="Skróty">
+              <div>
+                <p class="in-nadtytul">Krok 4 z 6</p>
+                <h2 class="in-tytul">Skróty</h2>
+                <p class="in-lid">Skąd chcesz uruchamiać program.</p>
+              </div>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" checked>
+                <span class="in-wybor-tresc">Skrót na pulpicie</span>
+              </label>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" checked>
+                <span class="in-wybor-tresc">Skrót w menu Start</span>
+              </label>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox">
+                <span class="in-wybor-tresc">Uruchamiaj razem z komputerem
+                  <span class="in-wybor-opis">Program będzie gotowy od razu po włączeniu komputera.</span></span>
+              </label>
+            </section>
+
+            <!-- KROK 5 — instalowanie -->
+            <section class="in-ekran" data-ekran="5" aria-label="Instalowanie">
+              <div>
+                <p class="in-nadtytul">Krok 5 z 6</p>
+                <h2 class="in-tytul">Instalowanie</h2>
+                <p class="in-lid">To potrwa chwilę. Możesz w tym czasie zająć się czymś innym.</p>
+              </div>
+              <div class="in-postep-wiersz">
+                <span>Kopiowanie plików programu</span>
+                <span class="in-postep-stan">62%</span>
+              </div>
+              <div class="in-postep-tor" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+              <div class="in-postep-wiersz">
+                <span class="in-postep-stan">Program główny — gotowe</span>
+              </div>
+              <div class="in-postep-wiersz">
+                <span class="in-postep-stan">Czcionki programu — w toku</span>
+              </div>
+            </section>
+
+            <!-- KROK 6 — gotowe -->
+            <section class="in-ekran" data-ekran="6" aria-label="Gotowe">
+              <div>
+                <p class="in-nadtytul">Krok 6 z 6</p>
+                <h2 class="in-tytul">Gotowe</h2>
+              </div>
+              <div class="in-gotowe">
+                <span class="in-gotowe-znak" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </span>
+                <p class="in-lid" style="margin:0">Program jest zainstalowany. Przy pierwszym uruchomieniu założysz konto i wybierzesz, z jakich modeli chcesz korzystać.</p>
+              </div>
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" checked>
+                <span class="in-wybor-tresc">Uruchom Danaco Console teraz</span>
+              </label>
+            </section>
+
+            <!-- ══ DZIAŁANIA ════════════════════════════════════════════ -->
+            <div class="in-dzialania">
+              <span class="in-licznik" data-licznik>Krok 1 z 6</span>
+              <span class="in-dzialania-odstep" aria-hidden="true"></span>
+              <button class="dn-btn dn-btn--zarys" type="button" data-krok-wstecz>Wstecz</button>
+              <button class="dn-btn dn-btn--atrament" type="button" data-krok-dalej>Dalej</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script>
+/* Przełączanie kroków instalatora — jeden ekran naraz. */
+(function () {
+  'use strict';
+  var ILE = 6, biezacy = 1;
+  function pokaz(n) {
+    biezacy = Math.min(ILE, Math.max(1, n));
+    document.querySelectorAll('.in-ekran').forEach(function (e) {
+      if (Number(e.dataset.ekran) === biezacy) e.dataset.widoczny = 'tak';
+      else delete e.dataset.widoczny;
+    });
+    document.querySelectorAll('.in-krok').forEach(function (k) {
+      var nr = Number(k.dataset.krok);
+      k.dataset.stan = nr < biezacy ? 'zrobiony' : (nr === biezacy ? 'biezacy' : 'oczekuje');
+    });
+    var licz = document.querySelector('[data-licznik]');
+    if (licz) licz.textContent = 'Krok ' + biezacy + ' z ' + ILE;
+    var wstecz = document.querySelector('[data-krok-wstecz]');
+    var dalej = document.querySelector('[data-krok-dalej]');
+    if (wstecz) wstecz.textContent = biezacy === 1 ? 'Anuluj' : 'Wstecz';
+    if (dalej) dalej.textContent = biezacy === ILE ? 'Zamknij' : (biezacy === 4 ? 'Instaluj' : 'Dalej');
+  }
+  document.addEventListener('click', function (e) {
+    /* Zamkniecie instalatora: okno otwarte skryptem zamyka sie naprawde,
+       otwarte z innego widoku wraca tam, skad przyszlo. */
+    if (e.target.closest('.in-belka-zamknij')) {
+      if (window.opener && !window.opener.closed) { window.close(); return; }
+      if (document.referrer && history.length > 1) { history.back(); return; }
+      location.href = '../przeplyw/centrum-dowodzenia.html';
+      return;
+    }
+    if (e.target.closest('[data-krok-dalej]')) pokaz(biezacy + 1);
+    else if (e.target.closest('[data-krok-wstecz]')) pokaz(biezacy - 1);
+    else {
+      var k = e.target.closest('.in-krok');
+      if (k) pokaz(Number(k.dataset.krok));
+    }
+  });
+  pokaz(1);
+})();
+</script>
+</body>
+</html>

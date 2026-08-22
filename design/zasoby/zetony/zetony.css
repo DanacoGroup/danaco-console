@@ -1,0 +1,442 @@
+/* ============================================================================
+   DANACO CONSOLE — ŻETONY SYSTEMU WIZUALNEGO · v2.0 (projekt od podstaw)
+   ----------------------------------------------------------------------------
+   Jedno źródło prawdy wartości wizualnych. Warstwy:
+     1. prymitywy  — surowe skale barw (ZAKAZ użycia wprost w komponentach)
+     2. semantyczne — role per motyw (data-theme="light|dark", oba równoprawne)
+     3. niezależne od motywu — typografia, przestrzeń, ruch, wymiary, warstwy
+
+   Kierunek: monochromatyczna precyzja — odcienie bieli (motyw jasny),
+   odcienie czerni (motyw ciemny), jeden błękit sygnałowy. kierunek systemu projektowego.
+
+   Kontrasty: każda para tekst/tło zmierzona — komplet w kontrasty.json.
+   Zasady nienegocjowalne: jednostka 4 px · oba motywy równoprawne ·
+   stan nigdy samym kolorem · zero blokad · WCAG 2.1 AA na wejściu.
+   ============================================================================ */
+
+@import url('ruch.css');
+
+:root {
+  /* ==================================================================== *
+   *  1 · PRYMITYWY                                                       *
+   * ==================================================================== */
+
+  /* --- SZAROŚĆ — czysto neutralna (równe RGB): odcienie bieli i czerni  */
+  --dn-szary-0: #FFFFFF;      /* wyłącznie powierzchnie kart i tekst na atramencie */
+  --dn-szary-25: #FAFAFA;
+  --dn-szary-50: #F4F4F4;
+  --dn-szary-100: #ECECEC;
+  --dn-szary-150: #E3E3E3;
+  --dn-szary-200: #D7D7D7;
+  --dn-szary-300: #C0C0C0;
+  --dn-szary-400: #9E9E9E;
+  --dn-szary-500: #7C7C7C;
+  --dn-szary-600: #616161;
+  --dn-szary-700: #4A4A4A;
+  --dn-szary-750: #3A3A3A;
+  --dn-szary-800: #2A2A2A;
+  --dn-szary-850: #212121;
+  --dn-szary-900: #181818;
+  --dn-szary-925: #131313;
+  --dn-szary-950: #0F0F0F;
+  --dn-szary-1000: #0A0A0A;   /* kraniec skali; #000000 jest zakazane */
+
+  /* --- SYGNAŁ — błękit sygnałowy (jedyna barwa akcentu systemu)        */
+  --dn-sygnal-100: #EDF3FE;
+  --dn-sygnal-200: #C9DAFB;
+  --dn-sygnal-300: #8FB2F5;
+  --dn-sygnal-400: #5C8CEC;
+  --dn-sygnal-500: #3B6FE0;   /* bazowy — kropka sygnału, fokus */
+  --dn-sygnal-600: #2457C9;   /* tekst i wypełnienia na jasnym */
+  --dn-sygnal-700: #1D49AF;
+  --dn-sygnal-800: #173A8C;
+
+  /* --- STANY — prymitywy (informacja = rodzina sygnału)                */
+  --dn-zielen-700: #1E7A46;  --dn-zielen-400: #4FBD85;
+  --dn-zielen-200: #BCE3CD;  --dn-zielen-100: #E7F5EE;
+  --dn-bursztyn-700: #8A5B0C; --dn-bursztyn-400: #E0A63C;
+  --dn-bursztyn-200: #EED9A7; --dn-bursztyn-100: #FBF2DE;
+  --dn-czerwien-700: #C0362F; --dn-czerwien-400: #EE7168;
+  --dn-czerwien-200: #F3C8C4; --dn-czerwien-100: #FCEDEB;
+
+  /* ==================================================================== *
+   *  2 · RAMA KOKPITU — stała w obu motywach (kierunek systemu projektowego)           *
+   * ==================================================================== */
+  --dn-rama: var(--dn-szary-925);
+  --dn-rama-grafit: var(--dn-szary-850);   /* powierzchnie na atramencie ramy */
+  --dn-rama-tekst: var(--dn-szary-100);
+  --dn-rama-tekst-2: var(--dn-szary-400);
+  --dn-rama-tekst-3: var(--dn-szary-500);  /* trzeci stopień jasności ramy —
+       narzędzia stanowiska w stopce bocznej belki; 4,74 : 1 na ramie */
+  --dn-rama-tekst-4: var(--dn-szary-600);  /* czwarty stopień — ustawienia
+       w stopce bocznej belki; 3,10 : 1 na ramie, próg grafiki nietekstowej */
+  --dn-rama-hover: rgba(255, 255, 255, 0.08);
+  --dn-rama-obrys: rgba(255, 255, 255, 0.10);
+  --dn-rama-obrys-mocny: rgba(255, 255, 255, 0.24);  /* ramka pozycji szyny nawigacji */
+
+  /* ==================================================================== *
+   *  3 · TYPOGRAFIA — trzy role, trzy kroje                              *
+   * ==================================================================== */
+  --dn-ff-naglowek: 'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --dn-ff-bazowa: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --dn-ff-mono: 'IBM Plex Mono', 'Cascadia Mono', 'Consolas', monospace;
+
+  /* stopnie — gęstość zwarta, baza 14 px (cała skala interfejsu +1 px) */
+  --dn-fs-xs: 12px;        /* etykiety wersalikowe, nagłówki kolumn */
+  --dn-fs-sm: 13px;        /* metadane, tekst pomocniczy */
+  --dn-fs-base: 14px;      /* BAZOWY — tekst interfejsu */
+  --dn-fs-md: 15px;        /* wyróżniona treść, wpisy rozmowy */
+  --dn-fs-lg: 17px;        /* nagłówki paneli */
+  --dn-fs-xl: 21px;        /* nagłówki okien i modali */
+  --dn-fs-2xl: 24px;       /* tytuły sekcji strony głównej */
+  --dn-fs-3xl: 30px;       /* tytuły kart środowisk */
+  --dn-fs-display: 40px;   /* największy stopień ekspozycyjny */
+
+  --dn-fw-normalna: 400;
+  --dn-fw-srednia: 500;
+  --dn-fw-polgruba: 600;
+  --dn-fw-gruba: 700;
+
+  --dn-lh-ciasny: 1.25;    /* nagłówki */
+  --dn-lh-bazowy: 1.45;    /* interfejs (zwarta gęstość) */
+  --dn-lh-luzny: 1.6;      /* treść ciągła */
+
+  --dn-ls-naglowek: -0.01em;      /* Space Grotesk w dużych stopniach */
+  --dn-ls-wersaliki: 0.08em;      /* etykiety wersalikowe Plex Sans */
+  --dn-ls-mono-wersaliki: 0.14em; /* etykiety wersalikowe Plex Mono */
+
+  /* ==================================================================== *
+   *  4 · PRZESTRZEŃ — jednostka bazowa 4 px [NIENEGOCJOWALNE]            *
+   * ==================================================================== */
+  --dn-od-0: 0;
+  --dn-od-1: 4px;
+  --dn-od-2: 8px;
+  --dn-od-3: 12px;
+  --dn-od-4: 16px;
+  --dn-od-5: 20px;
+  --dn-od-6: 24px;
+  --dn-od-8: 32px;
+  --dn-od-10: 40px;
+  --dn-od-12: 48px;
+  --dn-od-16: 64px;
+
+  /* jeden system narożników: precyzja instrumentu (małe promienie) */
+  --dn-r-xs: 3px;      /* plakietki drobne, bloki kodu w wierszu */
+  --dn-r-sm: 6px;      /* przyciski, pola, kontrolki */
+  --dn-r-md: 8px;      /* karty pojedyncze, dymki */
+  --dn-r-lg: 10px;     /* karty, modale, panele */
+  --dn-r-xl: 14px;     /* karty środowisk, duże powierzchnie */
+  --dn-r-pill: 999px;  /* plakietki stanu, przełączniki, kropki */
+
+  /* ==================================================================== *
+   *  6 · WYMIARY — gęstość ZWARTA (kokpit)        *
+   * ==================================================================== */
+  --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
+  --dn-wym-ikonowy: 34px;          /* przycisk ikonowy */
+  --dn-wym-belka: 48px;            /* belka tytułowa okna — jej wysokość wyznacza szerokość szyny nawigacji */
+  --dn-wym-stan: 28px;             /* pasek stanu (dolny) */
+  --dn-wym-pasek: 48px;            /* pasek górny (rama) */
+  --dn-wym-pas-kart: 36px;         /* pas kart sesji */
+  --dn-wym-wiersz: 36px;           /* wiersz tabeli / listy */
+  --dn-wym-boczna: 224px;          /* boczna nawigacja modułów */
+  --dn-wym-pas-komunikacji: 320px; /* wysokość pasa komunikacji (powłoka środowiska) */
+  --dn-wym-modal: 560px;           /* maksymalna szerokość modala */
+  --dn-wym-toast-min: 280px;
+  --dn-wym-toast-max: 420px;
+  --dn-wym-awatar-sm: 24px;
+  --dn-wym-awatar: 28px;
+  --dn-wym-awatar-lg: 36px;
+  --dn-wym-ikona-sm: 16px;
+  --dn-wym-ikona: 18px;
+  --dn-wym-ikona-szyna: 20px;      /* ikona pozycji szyny nawigacji (szersza od belki) */
+  --dn-wym-ikona-lg: 22px;
+  --dn-wym-ikona-xl: 26px;
+  --dn-wym-przelacznik-szer: 36px;
+  --dn-wym-przelacznik-wys: 20px;
+  --dn-wym-check: 16px;
+  --dn-wym-kropka: 6px;            /* kropka sygnału */
+  --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
+  --dn-wym-spinner: 14px;
+  --dn-wym-fokus: 2px;             /* pierścień fokusu */
+  --dn-wym-fokus-odsuniecie: 2px;
+  --dn-odstep-panel: var(--dn-od-3);   /* wewnętrzny rytm paneli (12 px) */
+  --dn-odstep-sekcji: var(--dn-od-6);  /* rytm między sekcjami (24 px) */
+
+  /* ==================================================================== *
+   *  7 · SIATKA I PUNKTY ŁAMANIA                        *
+   * ==================================================================== */
+  --dn-bp-w1: 640px;    /* telefon poziomo — widok mobilny */
+  --dn-bp-w2: 960px;    /* tablet — boczna nawigacja zwijana do ikon */
+  --dn-bp-w3: 1280px;   /* biurko — pełny kokpit */
+  --dn-bp-w4: 1600px;   /* szerokie biurko — dwa okna komunikacji (para koordynator–wykonawca) */
+  --dn-tresc-max: 1200px;  /* maks. szerokość treści dokumentowej */
+  --dn-siatka-kolumny: 12;
+  --dn-siatka-przerwa: var(--dn-od-6);
+
+  /* ==================================================================== *
+   *  8 · WARSTWY (z-index)                       *
+   * ==================================================================== */
+  --dn-z-podloga: 0;
+  --dn-z-przybornik: 10;        /* przyklejone nagłówki tabel, przybornik */
+  --dn-z-pasek: 100;            /* pasek górny (rama) */
+  --dn-z-boczna: 200;           /* boczna nawigacja */
+  --dn-z-pas-komunikacji: 300;
+  --dn-z-nakladka: 800;         /* przyciemnienie pod modalem */
+  --dn-z-modal: 900;
+  --dn-z-powiadomienie: 1000;   /* toasty */
+  --dn-z-tooltip: 1100;
+  --dn-z-aod: 1200;             /* Always On Display */
+  --dn-z-centrum-polecen: 1300; /* Command Center — zawsze najwyżej */
+
+  /* ==================================================================== *
+   *  9 · GRADIENTY; użycie wyłącznie ilustracyjne *
+   * ==================================================================== */
+  --dn-grad-atrament: linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925));
+  --dn-grad-sygnal: linear-gradient(135deg, var(--dn-sygnal-400), var(--dn-sygnal-600));
+  /* Zakres: awatary bez zdjęcia, rdzeń AOD, grafiki brandowe.
+     Gradient NIGDY nie jest tłem przycisku, karty ani sekcji. */
+}
+
+/* ==========================================================================
+ *  10 · MOTYW JASNY — odcienie bieli (definiowany osobno, nie wywodzony)
+ * ========================================================================== */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --dn-tlo: var(--dn-szary-50);              /* #F4F4F4 — papier roboczy */
+  --dn-powierzchnia: var(--dn-szary-0);      /* #FFFFFF — karty, okna */
+  --dn-powierzchnia-2: var(--dn-szary-100);  /* #ECECEC — wgłębienia, tory */
+  --dn-panel: var(--dn-szary-25);            /* #FAFAFA — panele boczne */
+  --dn-wstazka: var(--dn-szary-0);           /* #FFFFFF — belka nakładana paska edycji */
+  --dn-wstazka-taca: var(--dn-szary-150);    /* #E3E3E3 — taca pod belką nakładaną */
+  --dn-hover: rgba(10, 10, 10, 0.05);
+  --dn-wcisniecie: rgba(10, 10, 10, 0.09);
+  --dn-nakladka: rgba(10, 10, 10, 0.45);
+
+  --dn-obrys: var(--dn-szary-150);           /* #E3E3E3 */
+  --dn-obrys-subtelny: var(--dn-szary-100);  /* #ECECEC */
+  --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
+
+  --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
+  --dn-tekst-2: var(--dn-szary-600);         /* #616161 · 6,4:1 na tle */
+  --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane
+                                                i tekst ≥ 18,66 px półgruby */
+  --dn-tekst-inv: var(--dn-szary-0);
+
+  /* działanie główne — inwersja atramentu */
+  --dn-atrament: var(--dn-szary-900);
+  --dn-atrament-hover: var(--dn-szary-1000);
+  --dn-atrament-tekst: var(--dn-szary-0);
+
+  /* sygnał */
+  --dn-sygnal: var(--dn-sygnal-600);            /* tekst, odnośniki · 5,5:1 */
+  --dn-sygnal-mocny: var(--dn-sygnal-700);
+  --dn-sygnal-wypelnienie: var(--dn-sygnal-600);/* biel na nim: 5,5:1 */
+  --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-700);
+  --dn-sygnal-tlo: var(--dn-sygnal-100);
+  --dn-sygnal-obrys: var(--dn-sygnal-200);
+  --dn-kropka: var(--dn-sygnal-500);
+
+  --dn-fokus: var(--dn-sygnal-500);
+  --dn-fokus-cien: rgba(59, 111, 224, 0.30);
+
+  /* stany — komplet par zmierzony (kontrasty.json) */
+  --dn-sukces-tekst: var(--dn-zielen-700);
+  --dn-sukces-tlo: var(--dn-zielen-100);
+  --dn-sukces-obrys: var(--dn-zielen-200);
+  --dn-ostrzezenie-tekst: var(--dn-bursztyn-700);
+  --dn-ostrzezenie-tlo: var(--dn-bursztyn-100);
+  --dn-ostrzezenie-obrys: var(--dn-bursztyn-200);
+  --dn-blad-tekst: var(--dn-czerwien-700);
+  --dn-blad-tlo: var(--dn-czerwien-100);
+  --dn-blad-obrys: var(--dn-czerwien-200);
+  --dn-informacja-tekst: var(--dn-sygnal-600);
+  --dn-informacja-tlo: var(--dn-sygnal-100);
+  --dn-informacja-obrys: var(--dn-sygnal-200);
+
+  /* cienie — tonowane neutralnie, jeden kierunek światła (z góry) */
+  --dn-cien-1: 0 1px 2px rgba(10, 10, 10, 0.05);
+  --dn-cien-2: 0 2px 8px rgba(10, 10, 10, 0.07), 0 1px 2px rgba(10, 10, 10, 0.05);
+  --dn-cien-3: 0 8px 24px rgba(10, 10, 10, 0.12);
+  --dn-cien-lg: 0 20px 48px rgba(10, 10, 10, 0.18);
+  --dn-cien-sygnal: 0 0 0 3px rgba(59, 111, 224, 0.18);
+  /* cien-sygnal ZAREZERWOWANY: pierścień pola aktywnego i poświata kropki */
+}
+
+/* ==========================================================================
+ *  11 · MOTYW CIEMNY — odcienie czerni (definiowany osobno, nie wywodzony)
+ * ========================================================================== */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --dn-tlo: var(--dn-szary-950);             /* #0F0F0F */
+  --dn-powierzchnia: var(--dn-szary-900);    /* #181818 — karty, okna */
+  --dn-powierzchnia-2: var(--dn-szary-925);  /* #131313 — wgłębienia */
+  --dn-panel: var(--dn-szary-850);           /* #212121 — panele uniesione */
+  --dn-wstazka: var(--dn-szary-800);         /* #2A2A2A — belka nakładana paska edycji */
+  --dn-wstazka-taca: var(--dn-szary-950);    /* #0F0F0F — taca pod belką nakładaną */
+  --dn-hover: rgba(255, 255, 255, 0.06);
+  --dn-wcisniecie: rgba(255, 255, 255, 0.10);
+  --dn-nakladka: rgba(0, 0, 0, 0.62);
+
+  --dn-obrys: var(--dn-szary-800);           /* #2A2A2A */
+  --dn-obrys-subtelny: var(--dn-szary-850);  /* #212121 */
+  --dn-obrys-mocny: var(--dn-szary-750);     /* #3A3A3A */
+
+  --dn-tekst: var(--dn-szary-100);           /* #ECECEC · 15,0:1 na tle */
+  --dn-tekst-2: var(--dn-szary-400);         /* #9E9E9E · 6,8:1 na tle */
+  --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane */
+  --dn-tekst-inv: var(--dn-szary-950);
+
+  /* działanie główne — inwersja atramentu (tu: biel) */
+  --dn-atrament: var(--dn-szary-100);
+  --dn-atrament-hover: var(--dn-szary-25);
+  --dn-atrament-tekst: var(--dn-szary-950);
+
+  /* sygnał */
+  --dn-sygnal: var(--dn-sygnal-300);            /* tekst, odnośniki · 8,0:1 */
+  --dn-sygnal-mocny: var(--dn-sygnal-200);
+  --dn-sygnal-wypelnienie: var(--dn-sygnal-500);/* biel na nim: 4,6:1 */
+  --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-400);
+  --dn-sygnal-tlo: rgba(59, 111, 224, 0.16);
+  --dn-sygnal-obrys: rgba(92, 140, 236, 0.40);
+  --dn-kropka: var(--dn-sygnal-400);
+
+  --dn-fokus: var(--dn-sygnal-400);
+  --dn-fokus-cien: rgba(92, 140, 236, 0.35);
+
+  /* stany — pełny komplet dla motywu ciemnego */
+  --dn-sukces-tekst: var(--dn-zielen-400);
+  --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+  --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
+  --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
+  --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+  --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
+  --dn-blad-tekst: var(--dn-czerwien-400);
+  --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+  --dn-blad-obrys: rgba(238, 113, 104, 0.34);
+  --dn-informacja-tekst: var(--dn-sygnal-300);
+  --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+  --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
+
+  /* cienie — głębsze; przełączają się wraz z motywem */
+  --dn-cien-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --dn-cien-2: 0 3px 10px rgba(0, 0, 0, 0.42), 0 1px 2px rgba(0, 0, 0, 0.30);
+  --dn-cien-3: 0 10px 30px rgba(0, 0, 0, 0.52);
+  --dn-cien-lg: 0 24px 60px rgba(0, 0, 0, 0.65);
+  --dn-cien-sygnal: 0 0 0 3px rgba(92, 140, 236, 0.22);
+}
+
+/* Brak jawnego wyboru — rozstrzyga preferencja systemu. Wartości muszą być
+   identyczne z blokami motywów; powielenie jest świadome (mechanizm kaskady,
+   nie drugie źródło prawdy — patrz opracowanie o przekazaniu, ruchu i dostępności). */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --dn-tlo: var(--dn-szary-50); --dn-powierzchnia: var(--dn-szary-0);
+    --dn-powierzchnia-2: var(--dn-szary-100); --dn-panel: var(--dn-szary-25);
+    --dn-wstazka: var(--dn-szary-0); --dn-wstazka-taca: var(--dn-szary-150);
+    --dn-hover: rgba(10, 10, 10, 0.05); --dn-wcisniecie: rgba(10, 10, 10, 0.09);
+    --dn-nakladka: rgba(10, 10, 10, 0.45);
+    --dn-obrys: var(--dn-szary-150); --dn-obrys-subtelny: var(--dn-szary-100);
+    --dn-obrys-mocny: var(--dn-szary-300);
+    --dn-tekst: var(--dn-szary-900); --dn-tekst-2: var(--dn-szary-600);
+    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-0);
+    --dn-atrament: var(--dn-szary-900); --dn-atrament-hover: var(--dn-szary-1000);
+    --dn-atrament-tekst: var(--dn-szary-0);
+    --dn-sygnal: var(--dn-sygnal-600); --dn-sygnal-mocny: var(--dn-sygnal-700);
+    --dn-sygnal-wypelnienie: var(--dn-sygnal-600);
+    --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-700);
+    --dn-sygnal-tlo: var(--dn-sygnal-100); --dn-sygnal-obrys: var(--dn-sygnal-200);
+    --dn-kropka: var(--dn-sygnal-500);
+    --dn-fokus: var(--dn-sygnal-500); --dn-fokus-cien: rgba(59, 111, 224, 0.30);
+    --dn-sukces-tekst: var(--dn-zielen-700); --dn-sukces-tlo: var(--dn-zielen-100);
+    --dn-sukces-obrys: var(--dn-zielen-200);
+    --dn-ostrzezenie-tekst: var(--dn-bursztyn-700);
+    --dn-ostrzezenie-tlo: var(--dn-bursztyn-100);
+    --dn-ostrzezenie-obrys: var(--dn-bursztyn-200);
+    --dn-blad-tekst: var(--dn-czerwien-700); --dn-blad-tlo: var(--dn-czerwien-100);
+    --dn-blad-obrys: var(--dn-czerwien-200);
+    --dn-informacja-tekst: var(--dn-sygnal-600);
+    --dn-informacja-tlo: var(--dn-sygnal-100);
+    --dn-informacja-obrys: var(--dn-sygnal-200);
+    --dn-cien-1: 0 1px 2px rgba(10, 10, 10, 0.05);
+    --dn-cien-2: 0 2px 8px rgba(10, 10, 10, 0.07), 0 1px 2px rgba(10, 10, 10, 0.05);
+    --dn-cien-3: 0 8px 24px rgba(10, 10, 10, 0.12);
+    --dn-cien-lg: 0 20px 48px rgba(10, 10, 10, 0.18);
+    --dn-cien-sygnal: 0 0 0 3px rgba(59, 111, 224, 0.18);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --dn-tlo: var(--dn-szary-950); --dn-powierzchnia: var(--dn-szary-900);
+    --dn-powierzchnia-2: var(--dn-szary-925); --dn-panel: var(--dn-szary-850);
+    --dn-wstazka: var(--dn-szary-800); --dn-wstazka-taca: var(--dn-szary-950);
+    --dn-hover: rgba(255, 255, 255, 0.06); --dn-wcisniecie: rgba(255, 255, 255, 0.10);
+    --dn-nakladka: rgba(0, 0, 0, 0.62);
+    --dn-obrys: var(--dn-szary-800); --dn-obrys-subtelny: var(--dn-szary-850);
+    --dn-obrys-mocny: var(--dn-szary-750);
+    --dn-tekst: var(--dn-szary-100); --dn-tekst-2: var(--dn-szary-400);
+    --dn-tekst-3: var(--dn-szary-500); --dn-tekst-inv: var(--dn-szary-950);
+    --dn-atrament: var(--dn-szary-100); --dn-atrament-hover: var(--dn-szary-25);
+    --dn-atrament-tekst: var(--dn-szary-950);
+    --dn-sygnal: var(--dn-sygnal-300); --dn-sygnal-mocny: var(--dn-sygnal-200);
+    --dn-sygnal-wypelnienie: var(--dn-sygnal-500);
+    --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-400);
+    --dn-sygnal-tlo: rgba(59, 111, 224, 0.16);
+    --dn-sygnal-obrys: rgba(92, 140, 236, 0.40);
+    --dn-kropka: var(--dn-sygnal-400);
+    --dn-fokus: var(--dn-sygnal-400); --dn-fokus-cien: rgba(92, 140, 236, 0.35);
+    --dn-sukces-tekst: var(--dn-zielen-400);
+    --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+    --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
+    --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
+    --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+    --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
+    --dn-blad-tekst: var(--dn-czerwien-400);
+    --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+    --dn-blad-obrys: rgba(238, 113, 104, 0.34);
+    --dn-informacja-tekst: var(--dn-sygnal-300);
+    --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+    --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
+    --dn-cien-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --dn-cien-2: 0 3px 10px rgba(0, 0, 0, 0.42), 0 1px 2px rgba(0, 0, 0, 0.30);
+    --dn-cien-3: 0 10px 30px rgba(0, 0, 0, 0.52);
+    --dn-cien-lg: 0 24px 60px rgba(0, 0, 0, 0.65);
+    --dn-cien-sygnal: 0 0 0 3px rgba(92, 140, 236, 0.22);
+  }
+}
+
+/* ==========================================================================
+ *  12 · DOTYK — cele dotykowe rosną żetonem, nie wyjątkiem
+ * ========================================================================== */
+@media (pointer: coarse) {
+  :root {
+    --dn-wym-kontrolka: 40px;
+    --dn-wym-ikonowy: 40px;
+    --dn-wym-wiersz: 44px;
+    --dn-wym-check: 20px;
+    --dn-wym-przelacznik-szer: 44px;
+    --dn-wym-przelacznik-wys: 24px;
+  }
+}
+
+/* ==========================================================================
+ *  13 · GĘSTOŚĆ PRZESTRONNA — przygotowana, domyślnie nieaktywna
+ * ========================================================================== */
+:root[data-gestosc='przestronna'] {
+  --dn-fs-base: 14px;
+  --dn-lh-bazowy: 1.5;
+  --dn-wym-kontrolka: 40px;
+  --dn-wym-ikonowy: 40px;
+  --dn-wym-wiersz: 44px;
+  --dn-wym-pasek: 56px;
+  --dn-wym-pas-kart: 40px;
+  --dn-odstep-panel: var(--dn-od-5);
+  --dn-odstep-sekcji: var(--dn-od-8);
+}
+
+/* ==========================================================================
+ *  14 · OGRANICZONY RUCH — globalnie, bez konfiguracji per komponent
+ * ========================================================================== */

@@ -1,0 +1,2671 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — System w ruchu</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../zasoby/prototyp.css">
+<style>
+/* ============================================================================
+   PLANSZA PORTFOLIO 06 — SYSTEM W RUCHU
+   Katalog animacji i przejść. Warstwa lokalna planszy.
+   ZASADA: wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych.
+   ZASADA: wyłącznie var(--dn-czas-*) i var(--dn-ease); linear tylko przy M6.
+   ============================================================================ */
+
+/* ── 0 · SZKIELET PLANSZY ─────────────────────────────────────────────── */
+
+body { min-height: 100dvh; background: var(--dn-tlo); }
+
+.pl-pomin {
+  position: absolute; left: var(--dn-od-3); top: var(--dn-od-1);
+  z-index: var(--dn-z-centrum-polecen);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia); color: var(--dn-tekst);
+  transform: translateY(-200%);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.pl-pomin:focus { transform: translateY(0); text-decoration: none; }
+
+.pl-pasek-tytul {
+  display: inline-flex; align-items: baseline; gap: var(--dn-od-2);
+  margin-left: var(--dn-od-4); min-width: 0;
+}
+.pl-pasek-tytul b {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-rama-tekst);
+  white-space: nowrap;
+}
+.pl-pasek-tytul span {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  white-space: nowrap;
+}
+@media (max-width: 960px) { .pl-pasek-tytul span { display: none; } }
+
+.pl-sygnet { width: 24px; height: 24px; flex: none; }
+.pl-sygnet .pl-sygnet-grot { fill: currentColor; }
+.pl-sygnet .pl-sygnet-kropka { fill: var(--dn-kropka); }
+
+.pl-uklad {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--dn-od-6);
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-5) var(--dn-od-16);
+}
+@media (max-width: 1100px) {
+  .pl-uklad { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-4); padding-inline: var(--dn-od-3); }
+}
+
+/* ── 1 · SPIS SEKCJI ──────────────────────────────────────────────────── */
+
+.pl-spis {
+  position: sticky; top: var(--dn-od-4);
+  display: flex; flex-direction: column; gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+@media (max-width: 1100px) { .pl-spis { position: static; } }
+.pl-spis-tytul { padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-2); }
+.pl-spis a {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  text-decoration: none;
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.pl-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pl-spis a i {
+  font-style: normal;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  min-width: 18px;
+}
+.pl-spis a[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+.pl-spis a[aria-current='true'] i { color: var(--dn-sygnal); }
+.pl-spis-stopka {
+  display: flex; flex-direction: column; gap: var(--dn-od-2);
+  margin-top: var(--dn-od-3);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  align-items: flex-start;
+}
+
+/* ── 2 · SEKCJE TREŚCI ────────────────────────────────────────────────── */
+
+.pl-tresc { display: flex; flex-direction: column; gap: var(--dn-od-16); min-width: 0; }
+
+.pl-sekcja { scroll-margin-top: var(--dn-od-16); }
+.pl-sekcja-glowa {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--dn-od-4);
+  margin-bottom: var(--dn-od-5);
+  padding-bottom: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.pl-numer {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-srednia);
+  line-height: 1;
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+.pl-sekcja-glowa h2 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+  margin-bottom: var(--dn-od-2);
+}
+.pl-lead { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 84ch; }
+.pl-p { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 84ch; margin-bottom: var(--dn-od-3); }
+.pl-p strong, .pl-lead strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pl-p code, .pl-lead code, .pl-tabela code, .pl-demo code, .pl-lista-opis code {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+  padding: 1px var(--dn-od-1); border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst);
+}
+.pl-podsekcja {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+}
+.pl-cytat {
+  margin: var(--dn-od-4) 0;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-left: var(--dn-wym-wstega) solid var(--dn-kropka);
+  background: var(--dn-powierzchnia-2);
+  border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0;
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst);
+}
+.pl-cytat cite {
+  display: block; margin-top: var(--dn-od-2);
+  font-style: normal;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+/* ── 3 · SIATKI I DEMONSTRATORY ───────────────────────────────────────── */
+
+.pl-siatka { display: grid; gap: var(--dn-od-3); }
+.pl-siatka--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.pl-siatka--3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.pl-siatka--4 { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+.pl-demo {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.pl-demo-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+}
+.pl-demo-glowa > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-2); }
+.pl-demo-tytul { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); font-size: var(--dn-fs-md); }
+.pl-demo-narzedzia { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-2); }
+.pl-demo-cialo { padding: var(--dn-od-4); }
+.pl-demo-stopka {
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.pl-demo-stopka b { color: var(--dn-tekst); font-family: var(--dn-ff-mono); font-weight: var(--dn-fw-srednia); }
+
+/* ── 4 · TABELE ───────────────────────────────────────────────────────── */
+
+.pl-przewijana { overflow-x: auto; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); }
+.pl-tabela {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--dn-fs-base);
+}
+.pl-tabela th, .pl-tabela td {
+  text-align: left; vertical-align: top;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-tabela thead th {
+  position: sticky; top: 0;
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  font-weight: var(--dn-fw-srednia);
+  white-space: nowrap;
+}
+.pl-tabela tbody tr { transition: background var(--dn-czas-1) var(--dn-ease); }
+.pl-tabela tbody tr:hover { background: var(--dn-hover); }
+.pl-tabela td { color: var(--dn-tekst-2); }
+.pl-tabela td b, .pl-tabela td strong { color: var(--dn-tekst); }
+.pl-tabela .pl-kol-mono { font-family: var(--dn-ff-mono); color: var(--dn-tekst); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pl-tabela th[data-sortuj] { cursor: pointer; }
+.pl-tabela th[aria-sort] { color: var(--dn-sygnal); }
+
+/* ── 5 · BLOK KODU Z KOPIOWANIEM ──────────────────────────────────────── */
+
+.pl-kod {
+  position: relative;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  margin: var(--dn-od-3) 0;
+  overflow: hidden;
+}
+.pl-kod-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-kod-glowa span {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pl-kod-glowa .pl-kod-akcje { margin-left: auto; }
+.pl-kod pre {
+  margin: 0; padding: var(--dn-od-3);
+  overflow-x: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst);
+  white-space: pre;
+}
+
+/* ── 6 · DEMONSTRATOR CZTERECH CZASÓW ─────────────────────────────────── */
+
+.pl-tory { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+.pl-tor {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+@media (max-width: 720px) { .pl-tor { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-1); } }
+.pl-tor-etykieta {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+}
+.pl-tor-bieznia {
+  position: relative;
+  container-type: inline-size;
+  height: var(--dn-od-8);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+.pl-tor-bieznia::before {
+  content: ''; position: absolute; inset: 50% var(--dn-od-2) auto;
+  height: 1px; background: var(--dn-obrys); transform: translateY(-50%);
+}
+.pl-znacznik {
+  position: absolute; top: 50%; left: var(--dn-od-2);
+  width: var(--dn-od-5); height: var(--dn-od-5);
+  margin-top: calc(var(--dn-od-5) / -2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-sygnal-wypelnienie);
+  transform: translateX(0);
+  transition-property: transform;
+  transition-timing-function: var(--dn-ease);
+}
+.pl-tor[data-czas='1'] .pl-znacznik { transition-duration: var(--dn-czas-1); }
+.pl-tor[data-czas='2'] .pl-znacznik { transition-duration: var(--dn-czas-2); }
+.pl-tor[data-czas='3'] .pl-znacznik { transition-duration: var(--dn-czas-3); }
+.pl-tor[data-czas='tetno'] .pl-znacznik { transition-duration: var(--dn-czas-tetno); }
+.pl-tory[data-biegnie='tak'] .pl-znacznik {
+  transform: translateX(calc(100cqi - var(--dn-od-5) - var(--dn-od-4)));
+}
+.pl-tor-wartosc {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ── 7 · KRZYWA EASE ──────────────────────────────────────────────────── */
+
+.pl-krzywa-blok {
+  display: grid; grid-template-columns: 260px minmax(0, 1fr);
+  gap: var(--dn-od-4); align-items: center;
+}
+@media (max-width: 860px) { .pl-krzywa-blok { grid-template-columns: minmax(0, 1fr); } }
+.pl-krzywa {
+  width: 100%; max-width: 260px; aspect-ratio: 1 / 1;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+.pl-krzywa .pl-os { stroke: var(--dn-obrys); stroke-width: 1; }
+.pl-krzywa .pl-siatka-linia { stroke: var(--dn-obrys-subtelny); stroke-width: 0.5; }
+.pl-krzywa .pl-tor-krzywej { fill: none; stroke: var(--dn-sygnal-wypelnienie); stroke-width: 2; stroke-linecap: round; }
+.pl-krzywa .pl-styczna { stroke: var(--dn-tekst-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.pl-krzywa .pl-punkt { fill: var(--dn-tekst-3); }
+.pl-krzywa .pl-wskaznik { fill: var(--dn-kropka); }
+.pl-krzywa .pl-opis-osi {
+  fill: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: 6px;
+  letter-spacing: 0.4px;
+}
+.pl-krzywa[data-biegnie='tak'] .pl-wskaznik {
+  offset-path: path('M 10 90 C 28 90 90 10 90 10');
+  animation: pl-po-krzywej var(--dn-czas-3) var(--dn-ease) both;
+}
+.pl-krzywa[data-biegnie='tak'][data-tempo='wolne'] .pl-wskaznik { animation-duration: var(--dn-czas-tetno); }
+@keyframes pl-po-krzywej {
+  from { offset-distance: 0%; }
+  to   { offset-distance: 100%; }
+}
+
+/* ── 8 · KARTY KATALOGU ───────────────────────────────────────────────── */
+
+.pl-poz {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.pl-poz-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-poz-kod {
+  font-family: var(--dn-ff-mono);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-sygnal);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+}
+.pl-poz-nazwa { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); font-size: var(--dn-fs-base); }
+.pl-poz-czas { margin-left: auto; }
+.pl-poz-scena {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--dn-od-3);
+  min-height: var(--dn-od-16);
+  padding: var(--dn-od-4) var(--dn-od-3);
+  background: var(--dn-powierzchnia-2);
+}
+.pl-poz-opis {
+  padding: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-2);
+}
+.pl-poz-opis b { color: var(--dn-tekst); }
+.pl-poz-stopka {
+  margin-top: auto;
+  display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* elementy scen demonstracyjnych */
+.pl-scena-pozycja {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  width: 100%; max-width: 240px;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  border: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  cursor: pointer;
+  transition: background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+}
+.pl-scena-pozycja svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.pl-scena-pozycja[aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-tekst);
+}
+.pl-panel-demo {
+  width: 100%;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  padding: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.pl-panel-demo[hidden] { display: none; }
+.pl-panel-demo.pt-wejscie { animation: pt-wejscie var(--dn-czas-3) var(--dn-ease) both; }
+
+.pl-boczna-demo {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  overflow: hidden;
+  transition: grid-template-columns var(--dn-czas-2) var(--dn-ease);
+}
+.pl-boczna-demo[data-zwinieta='tak'] { grid-template-columns: var(--dn-wym-kontrolka) minmax(0, 1fr); }
+.pl-boczna-demo[data-zwinieta='tak'] .pl-boczna-demo-etykieta { opacity: 0; }
+.pl-boczna-demo-lista {
+  display: flex; flex-direction: column;
+  background: var(--dn-powierzchnia);
+  border-right: 1px solid var(--dn-obrys-subtelny);
+  padding: var(--dn-od-1);
+  gap: 1px;
+  overflow: hidden;
+}
+.pl-boczna-demo-poz {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-2);
+  border-radius: var(--dn-r-xs);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+}
+.pl-boczna-demo-poz svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.pl-boczna-demo-poz[aria-current='true'] { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
+.pl-boczna-demo-etykieta { transition: opacity var(--dn-czas-2) var(--dn-ease); }
+.pl-boczna-demo-obszar {
+  padding: var(--dn-od-3);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* ── 9 · KATALOG ZAKAZÓW ──────────────────────────────────────────────── */
+
+.pl-zakaz {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.pl-zakaz-kod {
+  font-family: var(--dn-ff-mono);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-blad-tekst);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+}
+.pl-zakaz h4 {
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  margin-bottom: var(--dn-od-1);
+}
+.pl-zakaz p { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+.pl-zakaz-znak {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--dn-od-8); height: var(--dn-od-8);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-blad-tlo);
+  color: var(--dn-blad-tekst);
+  flex: none;
+}
+.pl-zakaz-znak svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* ── 10 · PARY PORÓWNAWCZE ────────────────────────────────────────────── */
+
+.pl-para { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--dn-obrys); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); overflow: hidden; }
+.pl-para-strona { background: var(--dn-powierzchnia); padding: var(--dn-od-3); }
+.pl-para-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  margin-bottom: var(--dn-od-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pl-para-scena {
+  display: flex; flex-direction: column; gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  margin-bottom: var(--dn-od-3);
+}
+.pl-para-opis { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+.pl-para-opis b { color: var(--dn-tekst); }
+
+.pl-karta-sesji-demo {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+.pl-karta-sesji-demo .pl-kropka-statyczna {
+  width: var(--dn-wym-kropka); height: var(--dn-wym-kropka);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  box-shadow: 0 0 0 2px var(--dn-fokus-cien);
+  flex: none;
+}
+.pl-karta-sesji-demo .pl-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+/* ── 11 · OŚ CZASU ZŁOŻONEGO PRZEJŚCIA ────────────────────────────────── */
+
+.pl-os-czasu { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.pl-os-wiersz {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+@media (max-width: 720px) { .pl-os-wiersz { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-1); } }
+.pl-os-nazwa { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); text-transform: uppercase; letter-spacing: var(--dn-ls-mono-wersaliki); }
+.pl-os-tor {
+  position: relative;
+  height: var(--dn-od-6);
+  border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  overflow: hidden;
+}
+.pl-os-belka {
+  position: absolute; inset: 2px auto 2px 2px;
+  width: 0;
+  border-radius: var(--dn-r-xs);
+  background: var(--dn-sygnal-wypelnienie);
+  transition: width var(--dn-czas-3) var(--dn-ease);
+}
+.pl-os[data-odtwarzaj='tak'] .pl-os-belka { width: calc(100% - 4px); }
+.pl-os-belka--fokus { background: var(--dn-sukces-obrys); }
+.pl-os-podzialka {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  margin-left: 132px;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+@media (max-width: 720px) { .pl-os-podzialka { margin-left: 0; } }
+.pl-os-podzialka span { border-left: 1px solid var(--dn-obrys-subtelny); padding-left: var(--dn-od-1); }
+
+.pl-faza {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--dn-od-3); align-items: start;
+  padding: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-faza:last-child { border-bottom: 0; }
+.pl-faza-kod { font-family: var(--dn-ff-mono); font-weight: var(--dn-fw-polgruba); color: var(--dn-sygnal); }
+.pl-faza-czas { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pl-faza h4 { font-size: var(--dn-fs-base); color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); margin-bottom: var(--dn-od-1); }
+.pl-faza p { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+
+/* ── 12 · SYMULATOR OGRANICZONEGO RUCHU ───────────────────────────────── */
+
+[data-ruch='ograniczony'] {
+  --dn-czas-1: 0.01ms;
+  --dn-czas-2: 0.01ms;
+  --dn-czas-3: 0.01ms;
+  --dn-czas-tetno: 0.01ms;
+}
+[data-ruch='ograniczony'] .pt-tetno {
+  animation: none;
+  box-shadow: 0 0 0 2px var(--dn-fokus-cien);
+  opacity: 1;
+}
+[data-ruch='ograniczony'] .pl-spinner-demo { animation: none; }
+.pl-stan-ruchu {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+
+.pl-spinner-demo {
+  width: var(--dn-wym-spinner); height: var(--dn-wym-spinner);
+  border: 2px solid var(--dn-obrys);
+  border-top-color: var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  animation: pl-obrot 0.8s linear infinite;
+  flex: none;
+}
+@keyframes pl-obrot { to { transform: rotate(360deg); } }
+
+/* ── 13 · LISTY OPISOWE I DROBNE ──────────────────────────────────────── */
+
+.pl-lista-opis { display: flex; flex-direction: column; gap: var(--dn-od-2); margin: var(--dn-od-3) 0; }
+.pl-lista-opis li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-left: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst-2);
+  line-height: var(--dn-lh-luzny);
+}
+.pl-lista-opis li b { color: var(--dn-tekst); }
+.pl-lista-opis li > span:first-child {
+  font-family: var(--dn-ff-mono);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+}
+.pl-pasek-akcji { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; margin-bottom: var(--dn-od-3); }
+.pl-schemat {
+  margin: var(--dn-od-3) 0;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+  white-space: pre;
+  overflow-x: auto;
+}
+.pl-o-opracowaniu { margin-top: var(--dn-od-6); }
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body data-ruch="pelny">
+
+<a class="pl-pomin" href="#tresc">Przejdź do treści planszy</a>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PASEK GÓRNY — atramentowy w obu motywach (kontrakt systemu projektowego)
+     ══════════════════════════════════════════════════════════════════════ -->
+<header class="dn-pasek" role="banner">
+  <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console — indeks opracowania">
+    <svg class="pl-sygnet" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+      <path class="pl-sygnet-grot" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+      <path class="pl-sygnet-grot" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+      <circle class="pl-sygnet-kropka" cx="83" cy="63.5" r="6.5"/>
+    </svg>
+    <span class="dn-pasek-logotyp">DANACO<small>Console</small></span>
+  </a>
+
+  <span class="pl-pasek-tytul">
+    <b>System w ruchu</b>
+    <span>Plansza portfolio 06</span>
+  </span>
+
+  <span class="dn-pasek-prawa">
+    <a class="dn-btn dn-btn--duch dn-btn--sm" href="../INDEKS.html" style="color: var(--dn-rama-tekst-2);">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="wejście i wyjście warstwy 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Indeks opracowania
+    </a>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+            data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+      <svg class="ik-slonce" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="przejście barwy 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg class="ik-ksiezyc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </button>
+  </span>
+</header>
+
+<div class="pl-uklad">
+
+  <!-- ══ SPIS SEKCJI ══════════════════════════════════════════════════ -->
+  <nav class="pl-spis" data-spis aria-label="Spis sekcji planszy">
+    <div class="pl-spis-tytul"><span class="pt-etykieta">Sekcje planszy</span></div>
+    <a href="#przeglad"><i>00</i><span>Przegląd</span></a>
+    <a href="#kontrakt"><i>01</i><span>Kontrakt ruchu 3/10</span></a>
+    <a href="#czasy"><i>02</i><span>Cztery czasy, jeden ease</span></a>
+    <a href="#dozwolone"><i>03</i><span>Katalog dozwolonych</span></a>
+    <a href="#zakazane"><i>04</i><span>Katalog zakazanych</span></a>
+    <a href="#ograniczony"><i>05</i><span>Ograniczony ruch</span></a>
+    <a href="#nosnik"><i>06</i><span>Ruch jako nośnik</span></a>
+    <a href="#wydajnosc"><i>07</i><span>Wydajność</span></a>
+    <a href="#os-czasu"><i>08</i><span>Oś złożonego przejścia</span></a>
+    <a href="#opracowanie"><i>09</i><span>O tym opracowaniu</span></a>
+    <div class="pl-spis-stopka">
+      <a class="dn-btn dn-btn--zarys dn-btn--sm" href="../INDEKS.html">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Powrót do indeksu
+      </a>
+      <span class="pl-stan-ruchu">
+        <span class="pt-tetno" aria-hidden="true"></span>
+        <span data-stan-ruchu>ruch pełny</span>
+      </span>
+      <span class="pt-mono" style="font-size: var(--dn-fs-xs);">06 · v2.0 · 2026-08-14</span>
+    </div>
+  </nav>
+
+  <!-- ══ TREŚĆ ════════════════════════════════════════════════════════ -->
+  <main class="pl-tresc" id="tresc">
+
+    <!-- ══════════════════════════════════════════════════════════════
+         00 · PRZEGLĄD
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="przeglad" aria-labelledby="przeglad-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">00</div>
+        <div>
+          <h2 id="przeglad-h">System w ruchu</h2>
+          <p class="pl-lead">
+            Danaco Console jest <strong>kokpitem dowodzenia</strong>, nie stroną marketingową.
+            Cały system ruchu wynika z jednej liczby kontraktu kierunku: pokrętło
+            <code>INTENSYWNOSC_RUCHU</code> ustawione na <strong>3/10</strong>. Ta plansza pokazuje,
+            co ta liczba znaczy operacyjnie — <strong>cztery czasy</strong>, <strong>jedną krzywą</strong>,
+            <strong>siedem dozwolonych animacji</strong>, <strong>dziesięć zakazanych</strong> —
+            i pokazuje to w działaniu, przyciskiem, a nie w opisie.
+          </p>
+        </div>
+      </div>
+
+      <blockquote class="pl-cytat">
+        <code>INTENSYWNOSC_RUCHU</code> = <strong>3/10</strong> — mikroprzejścia 100–220 ms
+        + <strong>jeden ruch znaczący</strong> (tętno kropki). Aplikacja robocza, nie strona marketingowa.
+        <cite>kierunek systemu projektowego · kontrakt systemu projektowego · 08-handoff-motion-dostepnosc.md rozdz. 8.1</cite>
+      </blockquote>
+
+      <div class="pl-siatka pl-siatka--4" style="margin-top: var(--dn-od-5);">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">3/10</span><span class="pl-poz-nazwa">pokrętło</span></div>
+          <div class="pl-poz-opis">Wartość kontraktu kierunku. Nie do negocjacji na poziomie okna.</div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">4</span><span class="pl-poz-nazwa">czasy</span></div>
+          <div class="pl-poz-opis">0,1 s · 0,16 s · 0,22 s · 2,4 s. Piątego czasu nie ma.</div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">1</span><span class="pl-poz-nazwa">krzywa</span></div>
+          <div class="pl-poz-opis"><code>cubic-bezier(0.2, 0, 0, 1)</code> dla całego systemu.</div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">7 / 10</span><span class="pl-poz-nazwa">katalogi</span></div>
+          <div class="pl-poz-opis">Siedem animacji dozwolonych, dziesięć zakazanych. Katalog dozwolonych jest <b>zamknięty</b>.</div>
+        </article>
+      </div>
+
+      <h3 class="pl-podsekcja">Co ta plansza pokazuje</h3>
+      <ul class="pl-lista-opis">
+        <li><span>02</span><span>Demonstrator porównawczy: <b>ten sam element</b> animowany równocześnie w czterech czasach, obok narysowana krzywa <code>--dn-ease</code> z biegnącym po niej wskaźnikiem.</span></li>
+        <li><span>03</span><span>Dwanaście demonstratorów dozwolonego ruchu — każdy odpalany przyciskiem, z podanym czasem, własnością CSS i gotowym kodem do skopiowania.</span></li>
+        <li><span>04</span><span>Dziesięć zakazów z uzasadnieniem „dlaczego szkodzi w kokpicie". <b>Żaden nie jest odtwarzany</b> — plansza nie łamie własnego kontraktu dla przykładu.</span></li>
+        <li><span>05</span><span>Symulator ograniczonego ruchu: co dokładnie dzieje się z tętnem, z czterema czasami i z informacją, gdy ruch znika.</span></li>
+        <li><span>06</span><span>Trzy pary porównawcze: ten sam przepływ z ruchem i bez — i nazwana informacja, którą Operator traci.</span></li>
+        <li><span>08</span><span>Oś czasu przejścia z Okna Konfiguracji do modala <b>„Pula kont Code CLI"</b>, rozłożona na pięć faz.</span></li>
+      </ul>
+
+      <p class="pl-p">
+        <strong>Każda liczba na tej planszy pochodzi z pliku.</strong> Czasy i krzywa odczytane
+        z <code>zasoby/zetony/zetony.css</code> (sekcja 5, wiersze 126–130; sekcja 14, wiersze 435–441),
+        klasy i klatki kluczowe z <code>zasoby/css/komponenty.css</code> i <code>zasoby/prototyp.css</code>,
+        katalogi z <code>01-dokumentacja-md/08-handoff-motion-dostepnosc.md</code> rozdz. 8–14.
+        Nazwy okien, modułów i ról — z kontraktu systemu projektowego.
+      </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         01 · KONTRAKT RUCHU
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="kontrakt" aria-labelledby="kontrakt-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">01</div>
+        <div>
+          <h2 id="kontrakt-h">Kontrakt ruchu — 3/10 operacyjnie</h2>
+          <p class="pl-lead">
+            Liczba <code>3/10</code> sama w sobie niczego nie rozstrzyga. Dokumentacja rozkłada ją
+            na <strong>sześć mierzalnych wymiarów</strong>, z których każdy ma test zaliczenia.
+            To jest właściwa treść kontraktu — reszta systemu ruchu jest jej konsekwencją.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Sześć wymiarów pomiaru</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Wymiar</th>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Wartość kontraktowa</th>
+              <th scope="col">Test zaliczenia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Górny czas przejścia</b></td>
+              <td class="pl-kol-mono">220 ms</td>
+              <td>Żadna animacja interfejsu nie trwa dłużej. Wyjątki: tętno 2,4 s (ruch ciągły) i obrót spinnera 0,8 s (ruch cykliczny).</td>
+            </tr>
+            <tr>
+              <td><b>Dolny czas przejścia</b></td>
+              <td class="pl-kol-mono">100 ms</td>
+              <td>Poniżej tej wartości ruch jest nieczytelny — lepiej zmienić stan natychmiast niż animować niewidocznie.</td>
+            </tr>
+            <tr>
+              <td><b>Ruchy ciągłe na widok</b></td>
+              <td class="pl-kol-mono">1</td>
+              <td>Tętno w miejscu, gdzie biegnie praca. Dwa tętna w jednym widoku = błąd projektu.</td>
+            </tr>
+            <tr>
+              <td><b>Ruch bez informacji</b></td>
+              <td class="pl-kol-mono">0</td>
+              <td>Każda animacja odpowiada na pytanie „co się właśnie zmieniło w systemie?”.</td>
+            </tr>
+            <tr>
+              <td><b>Dystans przesunięcia</b></td>
+              <td class="pl-kol-mono">≤ 8 px</td>
+              <td>Wejście warstwy <code>translateY(8px)</code> → 0 (<code>--dn-od-2</code>). Większy dystans czyta się jak strona marketingowa.</td>
+            </tr>
+            <tr>
+              <td><b>Skala</b></td>
+              <td class="pl-kol-mono">0,98 → 1</td>
+              <td>Wyłącznie wejście modala. Brak „bounce”, brak przeskoku ponad 1.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-2);">
+        Nagłówki „Wymiar” i „Wartość kontraktowa” są sortowalne — kliknięcie albo <kbd>Enter</kbd>.
+      </p>
+
+      <h3 class="pl-podsekcja">Trzy pytania przed dodaniem animacji</h3>
+      <div class="pl-schemat">1. Czy ruch niesie informację o stanie systemu?   NIE ──► NIE ANIMUJ
+                                                  │ TAK
+2. Czy mieści się w 100–220 ms?                   NIE ──► skróć albo zrezygnuj
+                                                  │ TAK
+3. Czy jest w katalogu dozwolonych (sekcja 03)?   NIE ──► ZAKAZANA (sekcja 04)
+                                                  │ TAK
+                                                  ▼
+                                             DOZWOLONA</div>
+      <p class="pl-p">
+        Kolejność pytań nie jest przypadkowa. Pierwsze odsiewa <strong>większość</strong> propozycji
+        i robi to zanim ktokolwiek zacznie dobierać czas. Animacja, która nie odpowiada na pytanie
+        „co się zmieniło w systemie”, nie staje się dopuszczalna przez skrócenie do 120 ms.
+      </p>
+
+      <h3 class="pl-podsekcja">Budżet ruchu na widok</h3>
+      <div class="pl-siatka pl-siatka--3">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">1</span><span class="pl-poz-nazwa">ruch ciągły</span></div>
+          <div class="pl-poz-opis">
+            Animacje <code>infinite</code>: <b>jedna</b> — tętno. Spinner jest ciągły wyłącznie
+            na czas trwania operacji, więc nie liczy się do budżetu stałego.
+          </div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">≤ 3</span><span class="pl-poz-nazwa">przejścia naraz</span></div>
+          <div class="pl-poz-opis">
+            Jednoczesne przejścia wywołane jednym działaniem. Wjazd modala =
+            <code>opacity</code> + <code>transform</code> + nakładka. Sekcja 08 rozkłada to na fazy.
+          </div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">1</span><span class="pl-poz-nazwa">element przy motywie</span></div>
+          <div class="pl-poz-opis">
+            Przejście deklaruje <code>body</code>; powierzchnie dziedziczą.
+            <b>Nigdy</b> przejścia deklarowane per komponent — to setki jednoczesnych animacji.
+          </div>
+        </article>
+      </div>
+
+      <h3 class="pl-podsekcja">Jak zmierzyć gotowe okno</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">Krok</th><th scope="col">Co się robi</th><th scope="col">Wynik zaliczający</th></tr></thead>
+          <tbody>
+            <tr><td class="pl-kol-mono">1</td><td>wyszukanie <code>animation:</code> i <code>transition:</code> w arkuszu okna</td><td>zero czasów wpisanych wprost — wyłącznie <code>var(--dn-czas-*)</code></td></tr>
+            <tr><td class="pl-kol-mono">2</td><td>zliczenie <code>infinite</code> w widoku</td><td><b>1</b></td></tr>
+            <tr><td class="pl-kol-mono">3</td><td>wyszukanie krzywych</td><td>wyłącznie <code>var(--dn-ease)</code>; <code>linear</code> tylko przy <code>dn-obrot</code></td></tr>
+            <tr><td class="pl-kol-mono">4</td><td>wyszukanie animowanych własności układu</td><td>brak <code>height</code>, <code>top</code>, <code>left</code>, <code>margin</code>; <code>width</code> wyłącznie w <code>.dn-postep-wartosc</code></td></tr>
+            <tr><td class="pl-kol-mono">5</td><td>przełączenie systemowej preferencji ograniczonego ruchu</td><td>ruch znika, <b>informacja zostaje</b> (sekcja 05)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pl-pasek-akcji" style="margin-top: var(--dn-od-4);">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                data-komunikat-tytul="Kontrakt ruchu"
+                data-komunikat="INTENSYWNOSC_RUCHU 3/10 — mikroprzejścia 100–220 ms plus jeden ruch znaczący."
+                data-komunikat-rodzaj="informacja">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          Pokaż zdanie kontraktowe
+        </button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                data-kopiuj="INTENSYWNOSC_RUCHU = 3/10 — mikroprzejścia 100–220 ms + jeden ruch znaczący (tętno kropki).">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="tętno kropki 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          Kopiuj zdanie kontraktowe
+        </button>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         02 · CZTERY CZASY I JEDEN EASE
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="czasy" aria-labelledby="czasy-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">02</div>
+        <div>
+          <h2 id="czasy-h">Cztery czasy i jeden ease</h2>
+          <p class="pl-lead">
+            System ruchu ma <strong>cztery żetony czasu</strong> i <strong>jedną krzywą</strong>.
+            Piątego czasu nie ma; drugiej krzywej nie ma. Poniżej: demonstrator porównawczy —
+            ten sam element ruszony równocześnie czterema czasami — oraz krzywa
+            <code>cubic-bezier(0.2, 0, 0, 1)</code> narysowana i przebiegnięta wskaźnikiem.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--4">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">--dn-czas-1</span><span class="pl-poz-czas"><span class="dn-plakietka dn-plakietka--informacja">0,1 s</span></span></div>
+          <div class="pl-poz-opis"><b>Mikroreakcja kontrolki.</b> Reakcja na kursor i naciśnięcie.<br><code>.dn-btn:hover</code> · <code>.dn-btn:active</code> · wiersz <code>.dn-tabela</code> · <code>.dn-check::before</code></div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">--dn-czas-2</span><span class="pl-poz-czas"><span class="dn-plakietka dn-plakietka--informacja">0,16 s</span></span></div>
+          <div class="pl-poz-opis"><b>Przejście barwy i motywu.</b><br><code>body</code> · <code>.dn-zakladka</code> · <code>.dn-boczna-pozycja</code> · <code>.dn-przelacznik</code> · <code>.dn-karta-srodowiska::before</code></div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">--dn-czas-3</span><span class="pl-poz-czas"><span class="dn-plakietka dn-plakietka--informacja">0,22 s</span></span></div>
+          <div class="pl-poz-opis"><b>Wejście i wyjście warstwy.</b><br><code>.dn-modal[open]</code> · <code>.dn-toast</code> · <code>.dn-tooltip-tresc</code> · <code>.dn-postep-wartosc</code></div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">--dn-czas-tetno</span><span class="pl-poz-czas"><span class="dn-plakietka dn-plakietka--sygnal">2,4 s</span></span></div>
+          <div class="pl-poz-opis"><b>Jedyny ruch ciągły.</b><br><code>.dn-kropka--tetno</code> · <code>.dn-wpis--pracuje</code> · <code>.dn-aod-rdzen::after</code> · <code>.pt-tetno</code></div>
+        </article>
+      </div>
+
+      <!-- DEMONSTRATOR PORÓWNAWCZY -->
+      <h3 class="pl-podsekcja">Demonstrator porównawczy — ten sam element, cztery czasy</h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span class="pl-demo-tytul">Cztery tory, jedno naciśnięcie</span>
+          <span class="pl-demo-narzedzia">
+            <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-uruchom-tory>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+              Uruchom wszystkie
+            </button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-reset-tory>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="wejście i wyjście warstwy 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              Wróć do startu
+            </button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-tory" data-tory data-biegnie="nie">
+            <div class="pl-tor" data-czas="1">
+              <span class="pl-tor-etykieta">--dn-czas-1</span>
+              <div class="pl-tor-bieznia"><span class="pl-znacznik" aria-hidden="true"></span></div>
+              <span class="pl-tor-wartosc">0,10 s</span>
+            </div>
+            <div class="pl-tor" data-czas="2">
+              <span class="pl-tor-etykieta">--dn-czas-2</span>
+              <div class="pl-tor-bieznia"><span class="pl-znacznik" aria-hidden="true"></span></div>
+              <span class="pl-tor-wartosc">0,16 s</span>
+            </div>
+            <div class="pl-tor" data-czas="3">
+              <span class="pl-tor-etykieta">--dn-czas-3</span>
+              <div class="pl-tor-bieznia"><span class="pl-znacznik" aria-hidden="true"></span></div>
+              <span class="pl-tor-wartosc">0,22 s</span>
+            </div>
+            <div class="pl-tor" data-czas="tetno">
+              <span class="pl-tor-etykieta">--dn-czas-tetno</span>
+              <div class="pl-tor-bieznia"><span class="pl-znacznik" aria-hidden="true"></span></div>
+              <span class="pl-tor-wartosc">2,40 s</span>
+            </div>
+          </div>
+          <p class="pl-p" style="margin-top: var(--dn-od-4); margin-bottom: 0;">
+            Wszystkie cztery tory ruszają w tej samej milisekundzie i pokonują ten sam dystans.
+            Różni je wyłącznie czas — dlatego znacznik jest identyczny w każdym torze.
+            Czwarty tor <strong>nie jest przejściem</strong>: pokazuje skalę tętna, żeby 220 ms
+            dało się z czymś porównać. 2,4 s jest <strong>jedenastokrotnie</strong> dłuższe
+            od najdłuższego dopuszczalnego przejścia.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">
+          Odczyt żetonów: <b>zetony.css</b> sekcja 5, wiersze 126–130.
+          Wszystkie tory używają <b>var(--dn-ease)</b> — różnicę robi wyłącznie <b>transition-duration</b>.
+        </div>
+      </article>
+
+      <!-- KRZYWA -->
+      <h3 class="pl-podsekcja">Krzywa — <code>cubic-bezier(0.2, 0, 0, 1)</code></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="wejście i wyjście warstwy 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <span class="pl-demo-tytul">Jedna krzywa dla całego systemu</span>
+          <span class="pl-demo-narzedzia">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-krzywa-bieg="szybkie">Przebieg w 0,22 s</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-krzywa-bieg="wolne">Przebieg w 2,4 s</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-krzywa-blok">
+            <svg class="pl-krzywa" viewBox="0 0 100 100" role="img"
+                 aria-label="Wykres krzywej cubic-bezier 0.2, 0, 0, 1 — oś pozioma to czas, oś pionowa to postęp"
+                 data-krzywa data-biegnie="nie">
+              <line class="pl-siatka-linia" x1="10" y1="70" x2="90" y2="70"/>
+              <line class="pl-siatka-linia" x1="10" y1="50" x2="90" y2="50"/>
+              <line class="pl-siatka-linia" x1="10" y1="30" x2="90" y2="30"/>
+              <line class="pl-siatka-linia" x1="30" y1="10" x2="30" y2="90"/>
+              <line class="pl-siatka-linia" x1="50" y1="10" x2="50" y2="90"/>
+              <line class="pl-siatka-linia" x1="70" y1="10" x2="70" y2="90"/>
+              <line class="pl-os" x1="10" y1="90" x2="90" y2="90"/>
+              <line class="pl-os" x1="10" y1="90" x2="10" y2="10"/>
+              <line class="pl-styczna" x1="10" y1="90" x2="28" y2="90"/>
+              <line class="pl-styczna" x1="90" y1="10" x2="10" y2="10"/>
+              <circle class="pl-punkt" cx="28" cy="90" r="1.6"/>
+              <circle class="pl-punkt" cx="10" cy="10" r="1.6"/>
+              <path class="pl-tor-krzywej" d="M 10 90 C 28 90 90 10 90 10"/>
+              <circle class="pl-wskaznik" cx="10" cy="90" r="3.2"/>
+              <text class="pl-opis-osi" x="46" y="98">czas</text>
+              <text class="pl-opis-osi" x="2" y="52" transform="rotate(-90 4 52)">postęp</text>
+            </svg>
+            <div>
+              <p class="pl-p">
+                Pierwszy punkt kontrolny <code>(0.2, 0)</code> leży nisko i blisko początku — ruch
+                <strong>rusza gwałtownie</strong>. Drugi <code>(0, 1)</code> przyciąga tor do wartości
+                docelowej długo przed końcem czasu — element <strong>dojeżdża i siada</strong>.
+                Po połowie czasu pokonane jest już około <strong>86%</strong> dystansu.
+              </p>
+              <p class="pl-p">
+                Skutek dla Operatora: reakcja jest widoczna niemal natychmiast, a mimo to nic nie
+                przeskakuje. To jest „ruch instrumentu pomiarowego” z kontraktu kierunku — energia
+                na starcie, cisza na końcu, <strong>zero przeregulowania</strong>.
+              </p>
+              <p class="pl-p" style="margin-bottom: 0;">
+                <strong>Zakazane:</strong> <code>ease-in-out</code>, <code>linear</code> (poza obrotem
+                spinnera), własne <code>cubic-bezier</code>, wszelkie krzywe sprężyste z wartością
+                przekraczającą 1.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          Wskaźnik biegnie po tym samym <b>path</b>, który rysuje krzywą — <b>offset-path</b> z klatkami
+          <b>offset-distance</b> 0% → 100%, czas <b>var(--dn-czas-3)</b> albo <b>var(--dn-czas-tetno)</b>.
+        </div>
+      </article>
+
+      <div class="pl-kod">
+        <div class="pl-kod-glowa">
+          <span>zetony.css · sekcja 5 · ruch</span>
+          <span class="pl-kod-akcje">
+            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                    data-kopiuj="--dn-ease: cubic-bezier(0.2, 0, 0, 1);
+--dn-czas-1: 0.1s;
+--dn-czas-2: 0.16s;
+--dn-czas-3: 0.22s;
+--dn-czas-tetno: 2.4s;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="tętno kropki 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Kopiuj
+            </button>
+          </span>
+        </div>
+        <pre>--dn-ease: cubic-bezier(0.2, 0, 0, 1);
+--dn-czas-1: 0.1s;     /* mikroreakcje: najechanie, naciśnięcie */
+--dn-czas-2: 0.16s;    /* przejścia barw, przełączenie motywu */
+--dn-czas-3: 0.22s;    /* wejście/wyjście warstw: modal, panel, toast */
+--dn-czas-tetno: 2.4s; /* tętno kropki sygnału — jedyny ruch ciągły */</pre>
+      </div>
+
+      <h3 class="pl-podsekcja">Tabela decyzyjna — który czas</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Co się zmienia</th>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Czas</th>
+              <th scope="col">Własność CSS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>tło kontrolki pod kursorem</td><td class="pl-kol-mono">--dn-czas-1</td><td><code>background-color</code></td></tr>
+            <tr><td>przesunięcie 1 px przy naciśnięciu</td><td class="pl-kol-mono">--dn-czas-1</td><td><code>transform</code></td></tr>
+            <tr><td>znacznik pola wyboru</td><td class="pl-kol-mono">--dn-czas-1</td><td><code>transform: scale()</code></td></tr>
+            <tr><td>barwa tekstu pozycji nawigacji</td><td class="pl-kol-mono">--dn-czas-2</td><td><code>color</code>, <code>background-color</code></td></tr>
+            <tr><td>przełączenie motywu całej strony</td><td class="pl-kol-mono">--dn-czas-2</td><td><code>background-color</code>, <code>color</code></td></tr>
+            <tr><td>gałka przełącznika</td><td class="pl-kol-mono">--dn-czas-2</td><td><code>left</code>, <code>background-color</code></td></tr>
+            <tr><td>obrys pola przy fokusie</td><td class="pl-kol-mono">--dn-czas-2</td><td><code>border-color</code>, <code>box-shadow</code></td></tr>
+            <tr><td>wjazd modala</td><td class="pl-kol-mono">--dn-czas-3</td><td><code>opacity</code>, <code>transform</code></td></tr>
+            <tr><td>wjazd powiadomienia</td><td class="pl-kol-mono">--dn-czas-3</td><td><code>opacity</code>, <code>transform</code></td></tr>
+            <tr><td>pojawienie się dymka</td><td class="pl-kol-mono">--dn-czas-3</td><td><code>opacity</code>, <code>transform</code></td></tr>
+            <tr><td>przyrost paska postępu</td><td class="pl-kol-mono">--dn-czas-3</td><td><code>width</code></td></tr>
+            <tr><td>tętno kropki pracy</td><td class="pl-kol-mono">--dn-czas-tetno</td><td><code>box-shadow</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="pl-podsekcja">Dwa czasy poza skalą</h3>
+      <div class="pl-siatka pl-siatka--2">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">dn-obrot</span><span class="pl-poz-nazwa">spinner</span><span class="pl-poz-czas"><span class="dn-plakietka">0,8 s linear</span></span></div>
+          <div class="pl-poz-scena">
+            <span class="pl-spinner-demo" aria-hidden="true"></span>
+            <span class="pt-mono" style="font-size: var(--dn-fs-sm);">operacja trwa, czas nieznany</span>
+          </div>
+          <div class="pl-poz-opis">
+            Ruch cykliczny <b>bez punktu docelowego</b>. Krzywa <code>--dn-ease</code> wprowadziłaby
+            pulsowanie prędkości, czytane jako zacinanie. <b>Jedyne dopuszczone <code>linear</code></b> w systemie.
+          </div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">dn-tetno</span><span class="pl-poz-nazwa">tętno</span><span class="pl-poz-czas"><span class="dn-plakietka dn-plakietka--sygnal">2,4 s</span></span></div>
+          <div class="pl-poz-scena">
+            <span class="pt-tetno" aria-hidden="true"></span>
+            <span class="pt-mono" style="font-size: var(--dn-fs-sm);">tu biegnie praca</span>
+          </div>
+          <div class="pl-poz-opis">
+            Ruch ciągły niosący stan. Rytm <b>wolniejszy od tętna spoczynkowego człowieka</b> —
+            nie pobudza, a pozostaje zauważalny peryferyjnie. <b>0,42 Hz</b> — siedmiokrotnie poniżej
+            progu WCAG 2.3.1 (3 Hz).
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         03 · KATALOG DOZWOLONYCH ANIMACJI
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="dozwolone" aria-labelledby="dozwolone-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">03</div>
+        <div>
+          <h2 id="dozwolone-h">Katalog dozwolonych animacji</h2>
+          <p class="pl-lead">
+            Katalog liczy <strong>siedem pozycji (mikroreakcja kontrolki–przełączenie motywu)</strong> i jest <strong>zamknięty</strong> —
+            animacja spoza niego wymaga decyzji Właściciela. Poniżej dwanaście demonstratorów;
+            każdy jest zastosowaniem jednej z siedmiu pozycji, nie nową animacją. Każdy odpalany
+            przyciskiem, z podanym czasem, własnością CSS i gotowym kodem do skopiowania.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-przewijana">
+        <table class="pl-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th data-sortuj="tekst" tabindex="0" scope="col">#</th>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Animacja</th>
+              <th scope="col">Nośnik</th>
+              <th scope="col">Czas</th>
+              <th scope="col">Własność</th>
+              <th scope="col">Informacja niesiona</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="pl-kol-mono">mikroreakcja kontrolki</td><td><b>Mikroreakcja kontrolki</b></td><td><code>.dn-btn</code>, <code>.dn-btn-ikona</code>, <code>.dn-karta--klikalna</code>, wiersz <code>.dn-tabela</code>, <code>.dn-zakladka</code></td><td class="pl-kol-mono">--dn-czas-1</td><td><code>background-color</code>, <code>translateY(1px)</code></td><td>„element jest interaktywny i przyjął moje działanie”</td></tr>
+            <tr><td class="pl-kol-mono">przejście barwy</td><td><b>Przejście barwy</b></td><td><code>body</code>, <code>.dn-boczna-pozycja</code>, <code>.dn-przelacznik</code>, <code>.dn-pole-kontrolka:focus</code></td><td class="pl-kol-mono">--dn-czas-2</td><td><code>color</code>, <code>background-color</code>, <code>border-color</code>, <code>box-shadow</code></td><td>„zmienił się stan wyboru / motyw / fokus”</td></tr>
+            <tr><td class="pl-kol-mono">wejście i wyjście warstwy</td><td><b>Wejście i wyjście warstwy</b></td><td><code>.dn-modal[open]</code>, <code>.dn-toast</code>, <code>.dn-tooltip-tresc</code></td><td class="pl-kol-mono">--dn-czas-3</td><td><code>opacity</code> 0→1, <code>translateY(8px)</code>→0, modal <code>scale(0.98)</code>→1</td><td>„pojawiła się nowa warstwa nad treścią”</td></tr>
+            <tr><td class="pl-kol-mono">tętno kropki</td><td><b>Tętno kropki</b></td><td><code>.dn-kropka--tetno</code>, <code>.dn-wpis--pracuje</code>, <code>.dn-aod-rdzen::after</code></td><td class="pl-kol-mono">--dn-czas-tetno</td><td><code>box-shadow</code></td><td><b>„tu biegnie praca”</b> — jedyny ruch ciągły</td></tr>
+            <tr><td class="pl-kol-mono">postęp kolejki</td><td><b>Postęp kolejki</b></td><td><code>.dn-postep-wartosc</code></td><td class="pl-kol-mono">--dn-czas-3</td><td><code>width</code></td><td>„proces posunął się o zmierzoną wartość”</td></tr>
+            <tr><td class="pl-kol-mono">wskaźnik pracy wpisu</td><td><b>Wskaźnik pracy wpisu</b></td><td><code>.dn-btn[aria-busy='true']::after</code>, <code>.dn-spinner</code></td><td class="pl-kol-mono">0,8 s linear</td><td><code>transform: rotate()</code></td><td>„operacja trwa, czas nieznany”</td></tr>
+            <tr><td class="pl-kol-mono">przełączenie motywu</td><td><b>Przełączenie motywu</b></td><td><code>body</code> + powierzchnie dziedziczące</td><td class="pl-kol-mono">--dn-czas-2</td><td><code>background-color</code>, <code>color</code></td><td>„zmieniłem motyw — to ta sama treść”</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── DEMONSTRATOR 1 — MIKROREAKCJA ── -->
+      <h3 class="pl-podsekcja">Demonstrator 1 · mikroreakcja kontrolki <span class="dn-plakietka">mikroreakcja kontrolki</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+          <span class="pl-demo-tytul">Najedź kursorem i naciśnij — <code>--dn-czas-1</code></span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,1 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-pasek-akcji">
+            <button class="dn-btn dn-btn--atrament" type="button" data-komunikat="Mikroreakcja: tło w 0,1 s, przesunięcie 1 px przy naciśnięciu." data-komunikat-tytul="mikroreakcja kontrolki" data-komunikat-rodzaj="informacja">Uruchom przepływ</button>
+            <button class="dn-btn dn-btn--sygnal" type="button" data-komunikat="To samo przejście na przycisku sygnałowym." data-komunikat-tytul="mikroreakcja kontrolki" data-komunikat-rodzaj="informacja">Zatwierdź</button>
+            <button class="dn-btn dn-btn--zarys" type="button" data-komunikat="Zarys — zmienia się barwa obrysu i tła." data-komunikat-tytul="mikroreakcja kontrolki" data-komunikat-rodzaj="informacja">Podgląd</button>
+            <button class="dn-btn dn-btn--duch" type="button" data-komunikat="Duch — zmienia się wyłącznie tło." data-komunikat-tytul="mikroreakcja kontrolki" data-komunikat-rodzaj="informacja">Anuluj</button>
+            <button class="dn-btn-ikona" type="button" aria-label="Odśwież widok">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="wejście i wyjście warstwy 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            </button>
+          </div>
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>komponenty.css · .dn-btn</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj=".dn-btn { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); } .dn-btn:hover { background: var(--dn-hover); } .dn-btn:active { transform: translateY(1px); }">Kopiuj kod</button></span>
+            </div>
+            <pre>.dn-btn {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color     var(--dn-czas-1) var(--dn-ease),
+    color            var(--dn-czas-1) var(--dn-ease),
+    transform        var(--dn-czas-1) var(--dn-ease);
+}
+.dn-btn:hover  { background: var(--dn-hover); }
+.dn-btn:active { transform: translateY(1px); }</pre>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          Własności wylicza się <b>jawnie</b>. <b>transition: all</b> animuje także własności układu i łamie zakaz X7.
+        </div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 2 — PRZEJŚCIE BARWY ── -->
+      <h3 class="pl-podsekcja">Demonstrator 2 · przejście barwy <span class="dn-plakietka">przejście barwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="przejście barwy 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="przejście barwy 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+          <span class="pl-demo-tytul">Wybór pozycji bocznej nawigacji — <code>--dn-czas-2</code></span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,16 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-poz-scena" style="flex-direction: column; align-items: stretch;">
+            <button class="pl-scena-pozycja" type="button" data-barwa-poz aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="przejście barwy 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/></svg>
+              Studio
+            </button>
+            <button class="pl-scena-pozycja" type="button" data-barwa-poz aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+              Research
+            </button>
+            <button class="pl-scena-pozycja" type="button" data-barwa-poz aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="wejście i wyjście warstwy 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+              Library
+            </button>
+            <button class="pl-scena-pozycja" type="button" data-barwa-poz aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="przejście barwy 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+              Agents
+            </button>
+          </div>
+          <p class="pl-p" style="margin-top: var(--dn-od-3); margin-bottom: 0;">
+            Nazwy pozycji pochodzą z bocznej nawigacji środowiska <strong>TalkIn</strong> (kontrakt systemu projektowego).
+            Zmienia się <strong>wyłącznie barwa i obrys</strong> — geometria pozycji stoi, więc ruch
+            nie powoduje przeliczenia układu listy.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">Nośnik: <b>.dn-boczna-pozycja</b> · własności: <b>color</b>, <b>background-color</b>, <b>border-color</b>.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 3 — PRZEŁĄCZENIE MOTYWU ── -->
+      <h3 class="pl-podsekcja">Demonstrator 3 · przełączenie motywu <span class="dn-plakietka">przełączenie motywu</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="przejście barwy 12h2"/><path d="M20 12h2"/></svg>
+          <span class="pl-demo-tytul">Jedno przejście na <code>body</code>, nie setki na komponentach</span>
+          <span class="pl-demo-narzedzia">
+            <span class="dn-plakietka dn-plakietka--informacja">0,16 s</span>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz-motyw>Przełącz motyw</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <p class="pl-p">
+            Motyw przełącza się zmianą atrybutu <code>data-theme</code> na <code>&lt;html&gt;</code>;
+            kaskada robi resztę. Przejście deklaruje wyłącznie <code>body</code> — powierzchnie
+            dziedziczą barwy z żetonów semantycznych. <strong>Pasek górny nie zmienia się z motywem</strong>:
+            rama kokpitu jest atramentowa w obu (kontrakt systemu projektowego).
+          </p>
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>fundament.css · body</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj="body { transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }">Kopiuj kod</button></span>
+            </div>
+            <pre>body {
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color            var(--dn-czas-2) var(--dn-ease);
+}</pre>
+          </div>
+        </div>
+        <div class="pl-demo-stopka"><b>Zakaz animowania każdego elementu z osobna</b> — to setki jednoczesnych przejść i pewne zacinanie.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 4 — WEJŚCIE MODALA ── -->
+      <h3 class="pl-podsekcja">Demonstrator 4 · wejście modala <span class="dn-plakietka">wejście i wyjście warstwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="wejście i wyjście warstwy 9h18"/></svg>
+          <span class="pl-demo-tytul">Modal „Pula kont Code CLI” — <code>--dn-czas-3</code></span>
+          <span class="pl-demo-narzedzia">
+            <span class="dn-plakietka dn-plakietka--informacja">0,22 s</span>
+            <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-otworz-modal="modal-pula-kont">Otwórz modal</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <p class="pl-p" style="margin-bottom: 0;">
+            Modal <strong>„Pula kont Code CLI”</strong> należy do Okna Konfiguracji (kontrakt systemu projektowego, poz. 8).
+            Wejście to trzy jednoczesne przejścia: <code>opacity</code> 0→1, <code>translateY(8px)</code>→0
+            i <code>scale(0.98)</code>→1, plus nakładka z <code>blur(2px)</code>.
+            Sekcja 08 rozkłada tę sekwencję na fazy z podanym czasem każdej.
+          </p>
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>komponenty.css · .dn-modal</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj=".dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); } @keyframes dn-wejscie { from { opacity: 0; transform: translateY(var(--dn-od-2)) scale(0.98); } } .dn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }">Kopiuj kod</button></span>
+            </div>
+            <pre>.dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
+
+@keyframes dn-wejscie {
+  from { opacity: 0; transform: translateY(var(--dn-od-2)) scale(0.98); }
+}
+
+.dn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }</pre>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          Klatka <b>to</b> pominięta świadomie — stan docelowy to stan spoczynkowy elementu.
+          Dystans 8 px = <b>--dn-od-2</b>. To <b>jedyne</b> dopuszczone rozmycie w systemie (zakaz rozmycie jako efekt).
+        </div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 5 — TOAST ── -->
+      <h3 class="pl-podsekcja">Demonstrator 5 · wejście i wyjście powiadomienia <span class="dn-plakietka">wejście i wyjście warstwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+          <span class="pl-demo-tytul">Toast dzieli klatki kluczowe z modalem</span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,22 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-pasek-akcji">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat-tytul="Zapisano konfigurację" data-komunikat="Zakres „Nakładka i wywołanie modelu” zapisany." data-komunikat-rodzaj="sukces">Powiadomienie — sukces</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat-tytul="Reguła orkiestracji wewnętrznie sprzeczna" data-komunikat="Warunek etapu 3 nie może być spełniony przy bieżącym rozgałęzieniu. Zapis nie jest blokowany." data-komunikat-rodzaj="ostrzezenie">Powiadomienie — ostrzeżenie</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat-tytul="Nieprawidłowy adres serwera MCP" data-komunikat="Connectors Manager nie nawiązał połączenia." data-komunikat-rodzaj="blad">Powiadomienie — błąd</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat-tytul="Kolejka wznowiona" data-komunikat="Queue Manager przejął pozycje oczekujące." data-komunikat-rodzaj="informacja">Powiadomienie — informacja</button>
+          </div>
+          <p class="pl-p" style="margin-bottom: 0;">
+            Jedno wejście warstwy = <strong>jedna definicja ruchu</strong>. Toast używa tych samych
+            klatek <code>dn-wejscie</code> co modal; różni je warstwa z-index (powiadomienie 1000,
+            modal 900) i to, że powiadomienie <strong>nie przejmuje fokusu</strong>.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">Nośnik: <b>.dn-toast</b> · wywołanie: <b>window.dnToast</b> z <b>prototyp.js</b>, atrybut <b>data-komunikat</b>.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 6 — WEJŚCIE PANELU ── -->
+      <h3 class="pl-podsekcja">Demonstrator 6 · wejście panelu <span class="dn-plakietka">wejście i wyjście warstwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></svg>
+          <span class="pl-demo-tytul">Panel boczny okna operacyjnego</span>
+          <span class="pl-demo-narzedzia">
+            <span class="dn-plakietka dn-plakietka--informacja">0,22 s</span>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-panel-przelacz aria-expanded="false" aria-controls="panel-demo">Pokaż Sources Panel</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-poz-scena" style="align-items: stretch;">
+            <div class="pl-panel-demo" id="panel-demo" hidden>
+              <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2);">Sources Panel · moduł Browser</div>
+              <div class="pl-karta-sesji-demo" style="margin-bottom: var(--dn-od-2);">
+                <span class="pl-kropka-statyczna" aria-hidden="true"></span>
+                Źródło pobrane do Notes Panel
+                <span class="pl-meta">3 poz.</span>
+              </div>
+              <p class="pl-para-opis" style="margin: 0;">
+                Panel wchodzi tymi samymi klatkami co modal i toast — <code>opacity</code>
+                plus <code>translateY</code>. Wysokość panelu <strong>nie jest animowana</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">Nazwy paneli: <b>Sources Panel</b>, <b>Notes Panel</b> — moduł <b>Browser</b>, kontrakt systemu projektowego.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 7 — PRZEJŚCIE WIDOKU ── -->
+      <h3 class="pl-podsekcja">Demonstrator 7 · przejście widoku <span class="dn-plakietka">wejście i wyjście warstwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="przejście barwy 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+          <span class="pl-demo-tytul"><code>opacity</code> + <code>translateY(4px)</code>, maks. 220 ms</span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,22 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="dn-zakladki" role="tablist" aria-label="Okna modułu Diagnostics">
+            <button class="dn-zakladka" role="tab" type="button" data-przelacz="widok-centrum" data-grupa="okna-diag" aria-selected="true">Diagnostics Center</button>
+            <button class="dn-zakladka" role="tab" type="button" data-przelacz="widok-logi" data-grupa="okna-diag" aria-selected="false">Logs Viewer</button>
+            <button class="dn-zakladka" role="tab" type="button" data-przelacz="widok-bledy" data-grupa="okna-diag" aria-selected="false">Errors Panel</button>
+            <button class="dn-zakladka" role="tab" type="button" data-przelacz="widok-rek" data-grupa="okna-diag" aria-selected="false">Recommendations Panel</button>
+          </div>
+          <div style="margin-top: var(--dn-od-3);">
+            <div data-widok="widok-centrum" data-grupa-widoku="okna-diag" data-widok-aktywny="tak" class="pt-wejscie">
+              <div class="pl-panel-demo"><b>Diagnostics Center</b> — okno wiodące modułu Diagnostics (kontrakt systemu projektowego). Przejście między oknami modułu przenosi wyłącznie <code>opacity</code> i 4 px w pionie.</div>
+            </div>
+            <div data-widok="widok-logi" data-grupa-widoku="okna-diag" class="pt-wejscie">
+              <div class="pl-panel-demo"><b>Logs Viewer</b> — dystans 4 px zamiast 8 px, bo widok wchodzi <em>wewnątrz</em> okna, a nie <em>nad</em> nim. Mniejszy dystans = słabszy sygnał warstwowości.</div>
+            </div>
+            <div data-widok="widok-bledy" data-grupa-widoku="okna-diag" class="pt-wejscie">
+              <div class="pl-panel-demo"><b>Errors Panel</b> — przejście nie kaskaduje na pozycje listy. Kaskadowe pojawianie się elementów to zakaz X5.</div>
+            </div>
+            <div data-widok="widok-rek" data-grupa-widoku="okna-diag" class="pt-wejscie">
+              <div class="pl-panel-demo"><b>Recommendations Panel</b> — wejście widoku jest jedynym ruchem przy przełączeniu; zakładka zmienia barwę w <code>--dn-czas-2</code>.</div>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">Klasa <b>.pt-wejscie</b> z <b>prototyp.css</b> · klatki <b>pt-wejscie</b>: <b>opacity 0 → 1</b>, <b>translateY(4px) → 0</b>.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 8 — TĘTNO ── -->
+      <h3 class="pl-podsekcja">Demonstrator 8 · tętno kropki sygnału <span class="dn-plakietka dn-plakietka--sygnal">tętno kropki</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+          <span class="pl-demo-tytul">Jedyny ruch ciągły — <code>--dn-czas-tetno</code></span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--sygnal">2,4 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-siatka pl-siatka--2">
+            <div class="pl-poz-scena" style="flex-direction: column; align-items: stretch;">
+              <div class="pl-karta-sesji-demo">
+                <span class="pt-tetno" aria-hidden="true"></span>
+                Sesja aktywna — Workflow Builder
+                <span class="pl-meta">pracuje</span>
+              </div>
+              <div class="pl-karta-sesji-demo">
+                <span class="pl-kropka-statyczna" aria-hidden="true"></span>
+                Sesja druga — Research Workspace
+                <span class="pl-meta">2 w kolejce</span>
+              </div>
+              <div class="pl-karta-sesji-demo">
+                <span class="pl-kropka-statyczna" aria-hidden="true"></span>
+                Sesja trzecia — Terminal Tabs
+                <span class="pl-meta">1 w kolejce</span>
+              </div>
+            </div>
+            <div>
+              <p class="pl-p">
+                <strong>Reguła jednego tętna.</strong> W jednym widoku pulsuje <strong>jedno</strong>
+                miejsce. Gdy pracują trzy sesje — pulsuje karta sesji aktywnej, pozostałe niosą
+                <strong>kropkę statyczną plus liczbę w plakietce</strong>. Dwa tętna w jednym widoku
+                to błąd projektu (zakaz więcej niż jeden ruch ciągły).
+              </p>
+              <p class="pl-p" style="margin-bottom: 0;">
+                Animowany jest <code>box-shadow</code>, nie <code>width</code>/<code>height</code> —
+                pierścień rozchodzi się <strong>bez wpływu na układ sąsiadów</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>komponenty.css · .dn-kropka--tetno</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj=".dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; } @keyframes dn-tetno { 0%, 100% { box-shadow: 0 0 0 0 var(--dn-fokus-cien); } 40% { box-shadow: 0 0 0 5px transparent; } }">Kopiuj kod</button></span>
+            </div>
+            <pre>.dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
+
+@keyframes dn-tetno {
+  0%, 100% { box-shadow: 0 0 0 0  var(--dn-fokus-cien); }
+  40%      { box-shadow: 0 0 0 5px transparent; }
+}</pre>
+          </div>
+
+          <h4 class="pt-etykieta" style="margin-top: var(--dn-od-4);">Tętno w pięciu miejscach kontraktu marki</h4>
+          <div class="pl-przewijana" style="margin-top: var(--dn-od-2);">
+            <table class="pl-tabela">
+              <thead><tr><th scope="col">Miejsce</th><th scope="col">Forma</th><th scope="col">Ruch</th></tr></thead>
+              <tbody>
+                <tr><td>godło <code>»».</code></td><td>kropka zamykająca podwójny grot</td><td><b>statyczna</b> — znak się nie animuje</td></tr>
+                <tr><td>emblematy czterech środowisk</td><td>dokładnie jedna wypełniona kropka na emblemat</td><td><b>statyczna</b></td></tr>
+                <tr><td>karty sesji</td><td>pulsująca kropka = proces w tle</td><td>animowana</td></tr>
+                <tr><td>okno komunikacji</td><td>kropka przy nadawcy aktywnie piszącym</td><td>animowana (<code>.dn-wpis--pracuje</code>)</td></tr>
+                <tr><td>Always On Display</td><td>rdzeń awatara, pierścień wokół rdzenia</td><td>animowana (<code>.dn-aod-rdzen::after</code>)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          Częstotliwość <b>0,42 Hz</b> — siedmiokrotnie poniżej progu WCAG 2.3.1 (3 Hz).
+          Kropka <b>6 px</b> (<b>--dn-wym-kropka</b>).
+        </div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 9 — POSTĘP KOLEJKI ── -->
+      <h3 class="pl-podsekcja">Demonstrator 9 · postęp kolejki <span class="dn-plakietka">postęp kolejki</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="wejście i wyjście warstwy 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <span class="pl-demo-tytul">Queue Manager — moduł Automations</span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,22 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="dn-postep" data-postep-do="61" data-postep-czas="1600" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="61" aria-label="Postęp kolejki Queue Manager">
+            <div class="dn-postep-etykieta">
+              <span>Kolejka zadań — Workflow Builder</span>
+              <span data-postep-licznik>0%</span>
+            </div>
+            <div class="dn-postep-tor"><div class="dn-postep-wartosc" style="width: 0%;"></div></div>
+          </div>
+
+          <div class="dn-kolejka" style="margin-top: var(--dn-od-4);">
+            <div class="dn-krok dn-krok--poprawny">
+              <span class="dn-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <span>Pobranie źródeł — Sources Manager</span>
+              <span class="dn-krok-meta">zakończony</span>
+            </div>
+            <div class="dn-krok dn-krok--poprawny">
+              <span class="dn-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <span>Walidacja wejścia — Validator</span>
+              <span class="dn-krok-meta">zakończony</span>
+            </div>
+            <div class="dn-krok dn-krok--pracuje">
+              <span class="dn-krok-znak" aria-hidden="true"><span class="pt-tetno"></span></span>
+              <span>Wykonanie etapu — Executor 2</span>
+              <span class="dn-krok-meta">pracuje</span>
+            </div>
+            <div class="dn-krok">
+              <span class="dn-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              <span>Złożenie wyniku — Results Analyzer</span>
+              <span class="dn-krok-meta">oczekuje</span>
+            </div>
+          </div>
+
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>komponenty.css · .dn-postep</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj=".dn-postep-tor { height: 4px; background: var(--dn-powierzchnia-2); overflow: hidden; } .dn-postep-wartosc { height: 100%; background: var(--dn-sygnal-wypelnienie); transition: width var(--dn-czas-3) var(--dn-ease); }">Kopiuj kod</button></span>
+            </div>
+            <pre>.dn-postep-tor      { height: 4px; background: var(--dn-powierzchnia-2); overflow: hidden; }
+.dn-postep-wartosc  {
+  height: 100%;
+  background: var(--dn-sygnal-wypelnienie);
+  transition: width var(--dn-czas-3) var(--dn-ease);
+}</pre>
+          </div>
+          <p class="pl-p" style="margin-bottom: 0;">
+            <strong>Pasek bez liczby to ozdoba; liczba bez paska to surowa dana</strong> — razem tworzą
+            pomiar. Etykieta jest krojem mono z <code>tabular-nums</code>, żeby cyfry nie drgały przy
+            zmianie wartości. Kolejka o znanej liście kroków używa <code>.dn-kolejka</code>, nie paska —
+            <strong>postęp jest wtedy listą</strong>.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">Nazwy: <b>Queue Manager</b>, <b>Workflow Builder</b> (Automations) · <b>Executor 2</b>, <b>Validator</b>, <b>Results Analyzer</b> (MultitaskingAI) — kontrakt systemu projektowego.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 10 — WSKAŹNIK PRACY ── -->
+      <h3 class="pl-podsekcja">Demonstrator 10 · wskaźnik pracy wpisu <span class="dn-plakietka">wskaźnik pracy wpisu</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20v2"/><path d="M12 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>
+          <span class="pl-demo-tytul">Operacja trwa, czas nieznany — 0,8 s <code>linear</code></span>
+          <span class="pl-demo-narzedzia">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                    data-symuluj="#wpis-pracuje" data-symuluj-czas="2200" data-symuluj-stan="gotowe"
+                    data-symuluj-etykieta="Trwa…" data-symuluj-komunikat="Odpowiedź złożona w Chat Window.">
+              <span data-etykieta>Uruchom operację</span>
+            </button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-poz-scena" style="flex-direction: column; align-items: stretch;">
+            <div class="pl-panel-demo" id="wpis-pracuje" data-stan="gotowe">
+              <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2);">Chat Window · wpis inteligencji</div>
+              <div style="display: flex; align-items: center; gap: var(--dn-od-2);">
+                <span class="pl-spinner-demo" aria-hidden="true"></span>
+                <span>Model składa odpowiedź — zakres i czas nieznane</span>
+              </div>
+            </div>
+          </div>
+          <p class="pl-p" style="margin-top: var(--dn-od-3);">
+            Ruch cykliczny <strong>bez punktu docelowego</strong> — jedyne dopuszczone <code>linear</code>.
+            <strong>Pasek postępu przy nieznanym zakresie to kłamstwo interfejsu</strong>: sugeruje pomiar,
+            którego system nie wykonał.
+          </p>
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>komponenty.css · .dn-spinner</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj=".dn-spinner { animation: dn-obrot 0.8s linear infinite; } @keyframes dn-obrot { to { transform: rotate(360deg); } }">Kopiuj kod</button></span>
+            </div>
+            <pre>.dn-spinner { animation: dn-obrot 0.8s linear infinite; }
+@keyframes dn-obrot { to { transform: rotate(360deg); } }</pre>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">Przy ograniczonym ruchu: zatrzymany po pierwszym obrocie, informację przejmuje <b>aria-busy="true"</b> i tekst „Trwa…”.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 11 — ROZWINIĘCIE SEKCJI ── -->
+      <h3 class="pl-podsekcja">Demonstrator 11 · rozwinięcie sekcji <span class="dn-plakietka">przejście barwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          <span class="pl-demo-tytul">Natywny <code>&lt;details&gt;</code> — bez animowania <code>height</code></span>
+          <span class="pl-demo-narzedzia"><span class="dn-plakietka dn-plakietka--informacja">0,16 s</span></span>
+        </div>
+        <div class="pl-demo-cialo">
+          <details class="pt-o-opracowaniu" style="margin: 0;">
+            <summary>Zakres „Nakładka i wywołanie modelu” — Okno Konfiguracji</summary>
+            <div class="pt-o-opracowaniu-tresc">
+              <p>
+                Treść sekcji pojawia się od razu; animowana jest wyłącznie <b>przezroczystość
+                i 4 px przesunięcia</b> na zawartości. Wysokość kontenera <b>nie jest animowana</b> —
+                animowanie <code>height</code> to zakaz animacja wysokości i szerokości układu i pewny layout thrash przy każdej klatce.
+              </p>
+              <p>
+                Natywny element daje przy okazji semantykę i obsługę klawiatury bez linijki
+                JavaScriptu — plus zachowanie „znajdź na stronie” otwierające ukrytą treść.
+              </p>
+            </div>
+          </details>
+        </div>
+        <div class="pl-demo-stopka">Wzorzec poprawny wg <b>08-handoff-motion-dostepnosc.md</b> rozdz. 14.4: „natywny <b>&lt;details&gt;</b> albo opacity + transform na treści o znanej wysokości”.</div>
+      </article>
+
+      <!-- ── DEMONSTRATOR 12 — ZWIJANIE BOCZNEJ ── -->
+      <h3 class="pl-podsekcja">Demonstrator 12 · zwijanie bocznej nawigacji <span class="dn-plakietka">przejście barwy</span></h3>
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          <span class="pl-demo-tytul">Jedna deklaracja <code>grid-template-columns</code> na kontenerze powłoki</span>
+          <span class="pl-demo-narzedzia">
+            <span class="dn-plakietka dn-plakietka--informacja">0,16 s</span>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zwin-boczna aria-pressed="false">Zwiń nawigację</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-boczna-demo" data-boczna-demo data-zwinieta="nie">
+            <div class="pl-boczna-demo-lista">
+              <span class="pl-boczna-demo-poz" aria-current="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                <span class="pl-boczna-demo-etykieta">Terminal</span>
+              </span>
+              <span class="pl-boczna-demo-poz">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20v2"/><path d="M12 2v2"/><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>
+                <span class="pl-boczna-demo-etykieta">Developer</span>
+              </span>
+              <span class="pl-boczna-demo-poz">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+                <span class="pl-boczna-demo-etykieta">Diagnostics</span>
+              </span>
+              <span class="pl-boczna-demo-poz">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="przejście barwy 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                <span class="pl-boczna-demo-etykieta">Agents</span>
+              </span>
+            </div>
+            <div class="pl-boczna-demo-obszar">
+              Obszar roboczy — <b>Code Editor</b> (moduł Developer, CodeStudio). Zwinięcie zmienia
+              szerokość <b>jednej kolumny siatki</b>; treść obszaru nie jest przeliczana element po elemencie.
+            </div>
+          </div>
+          <p class="pl-p" style="margin-top: var(--dn-od-3); margin-bottom: 0;">
+            Zwijanie do ikon jest zachowaniem powłoki przy punkcie łamania <strong>w2 = 960 px</strong>
+            (kontrakt systemu projektowego). W <code>prototyp.css</code> realizuje je klasa
+            <code>.pt-cialo--zwinieta</code> — <code>grid-template-columns: var(--dn-wym-kontrolka) minmax(0, 1fr)</code>.
+            Etykiety wygasza <code>opacity</code>, nie <code>display</code>, żeby zmiana miała czas trwania.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">Boczna nawigacja pełna: <b>224 px</b> · zwinięta: <b>--dn-wym-kontrolka</b> = 32 px (kontrakt systemu projektowego, Wymiary).</div>
+      </article>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         04 · KATALOG ZAKAZANYCH ANIMACJI
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="zakazane" aria-labelledby="zakazane-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">04</div>
+        <div>
+          <h2 id="zakazane-h">Katalog zakazanych animacji</h2>
+          <p class="pl-lead">
+            Dziesięć zakazów. W opracowaniu portfolio to, czego system <strong>nie robi</strong>,
+            definiuje go tak samo jak to, co robi. <strong>Żaden zakaz nie jest tu odtwarzany</strong> —
+            plansza nie uruchomi parallaxu ani bounce'u „dla przykładu”, bo złamałaby własny kontrakt.
+            Zakazy pokazujemy nazwą, mechanizmem i szkodą.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-pasek-akcji">
+        <label class="dn-szukaj" style="min-width: 280px;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <input id="filtr-zakazy" type="search" placeholder="Filtruj zakazy — np. przewijanie, gradient, height" data-filtruj="#lista-zakazow" aria-label="Filtruj katalog zakazanych animacji">
+        </label>
+        <span class="pt-mono" style="font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);">widoczne: <span data-filtr-licznik="filtr-zakazy">10 / 10</span></span>
+      </div>
+
+      <div class="pl-siatka" id="lista-zakazow" style="gap: var(--dn-od-3);">
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="parallaks parallax przewijanie warstwy prędkość kompozycja">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">parallaks</span> · Parallax</h4>
+            <p>
+              Warstwy przesuwające się z różną prędkością przy przewijaniu. Ruch <b>nie niesie żadnej
+              informacji o stanie systemu</b>; przy gęstości wizualnej 8/10 rozbija odczyt danych,
+              a wątek kompozycji obciąża przy każdej klatce przewijania. W kokpicie przewijanie służy
+              do czytania, nie do oglądania.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="scrollytelling scrollytelling przewijanie narracja odsłanianie treści">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">scrollytelling</span> · Scrollytelling</h4>
+            <p>
+              Treść odsłaniana i animowana wraz z przewijaniem. Wzorzec strony narracyjnej.
+              <b>Okno robocze nie opowiada historii — pokazuje stan.</b> Operator przewija, żeby
+              czytać dane, nie żeby uruchamiać przedstawienie.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="animacje dekoracyjne dekoracja gradient cząstki oddychające tło animowany gradient">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">animacje dekoracyjne</span> · Animacje dekoracyjne i animowane gradienty</h4>
+            <p>
+              Unoszące się kształty, cząstki, „oddychające” tła, przesuwające się gradienty.
+              Anty-domyślne kierunku brzmi <b>„zero dekoracji bez funkcji”</b>; gradient w tym systemie
+              jest wyłącznie ilustracyjny (awatary bez zdjęcia, rdzeń AOD, grafiki brandowe)
+              i <b>nigdy nie jest tłem przycisku, karty ani sekcji</b> — tym bardziej animowanym.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="przeregulowanie bounce elastic sprężyna przeregulowanie cubic-bezier">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">przeregulowanie</span> · Bounce, elastic, przeregulowanie</h4>
+            <p>
+              <code>cubic-bezier</code> przekraczający 1, sprężyny, odbicia. System ma <b>jedną</b>
+              krzywą <code>--dn-ease</code>. Przeregulowanie sugeruje fizyczność obiektu, a kontrolki
+              kokpitu <b>nie są obiektami fizycznymi</b> — są odczytami i przełącznikami instrumentu.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="ruch bez informacji ruch bez informacji kaskada listy animowany licznik wejście strony">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">ruch bez informacji</span> · Ruch bez informacji</h4>
+            <p>
+              Animacja przy wejściu na stronę, kaskadowe pojawianie się pozycji listy, liczniki
+              odliczające do wartości. Każda animacja musi odpowiadać na pytanie „co się zmieniło?”.
+              Animowany licznik <b>fałszuje pomiar</b> — pokazuje wartości, których system nigdy nie zmierzył.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="więcej niż jeden ruch ciągły dwa tętna ruch ciągły budżet infinite">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">więcej niż jeden ruch ciągły</span> · Więcej niż jeden ruch ciągły na widok</h4>
+            <p>
+              Tętno znaczy „tu biegnie praca”. <b>Gdy pulsuje wszystko, nie znaczy nic.</b>
+              Trzy pracujące sesje = jedno tętno na sesji aktywnej, pozostałe niosą kropkę statyczną
+              i liczbę w plakietce.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="animacja wysokości i szerokości układu height width top left margin padding układ layout przeliczenie">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">animacja wysokości i szerokości układu</span> · Animacja własności układu</h4>
+            <p>
+              <code>height</code>, <code>top</code>, <code>left</code>, <code>margin</code>,
+              <code>padding</code> na elementach układu. Wymusza przeliczenie geometrii w każdej klatce.
+              Jedyne dopuszczone <code>width</code> to <code>.dn-postep-wartosc</code> wewnątrz toru
+              o stałych wymiarach z <code>overflow: hidden</code>.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="migotanie migotanie 3 Hz WCAG 2.3.1 światłoczuły">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">migotanie</span> · Migotanie powyżej 3 Hz</h4>
+            <p>
+              Kryterium <b>WCAG 2.3.1</b> — ryzyko napadu światłoczułego. Nie jest to preferencja
+              estetyczna, tylko warunek wejściowy dostępności. Tętno 2,4 s daje <b>0,42 Hz</b>,
+              siedmiokrotnie poniżej progu.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="rozmycie jako efekt rozmycie blur backdrop-filter glassmorfizm">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">rozmycie jako efekt</span> · Rozmycie jako efekt</h4>
+            <p>
+              <code>backdrop-filter</code> poza nakładką modala. Anty-domyślne „glassmorfizm wszędzie”
+              → <b>powierzchnie kryjące</b>. Jedyne dopuszczone rozmycie to <code>blur(2px)</code>
+              na <code>.dn-modal::backdrop</code>, gdzie niesie informację „treść pod spodem
+              przestała być aktywna”.
+            </p>
+          </div>
+        </article>
+
+        <article class="pl-zakaz" data-filtr-pozycja data-filtr-tekst="animowane przewijanie sterowane skryptem scroll-behavior smooth przewijanie skrypt tempo czytania">
+          <span class="pl-zakaz-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
+          <div>
+            <h4><span class="pl-zakaz-kod">animowane przewijanie sterowane skryptem</span> · Animowane przewijanie sterowane skryptem</h4>
+            <p>
+              Globalnie wymuszone <code>scroll-behavior: smooth</code> oraz ruch wywoływany
+              przewijaniem. <b>Odbiera Operatorowi kontrolę nad tempem czytania.</b>
+              Przy <code>prefers-reduced-motion</code> system wymusza <code>scroll-behavior: auto</code>.
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <h3 class="pl-podsekcja">Zakazy pochodne — najczęstsze odruchy</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">Odruch</th><th scope="col">Który zakaz go obejmuje</th></tr></thead>
+          <tbody>
+            <tr><td>„animacja wjazdu kart środowisk na Centrum dowodzenia”</td><td class="pl-kol-mono">ruch bez informacji</td></tr>
+            <tr><td>„delikatny puls przycisku wysyłki, żeby zachęcić”</td><td class="pl-kol-mono">animacje dekoracyjne + więcej niż jeden ruch ciągły</td></tr>
+            <tr><td>„licznik zadań w kolejce odliczający od zera do wartości”</td><td class="pl-kol-mono">ruch bez informacji</td></tr>
+            <tr><td>„miękkie rozwinięcie panelu przez <code>height: auto</code>”</td><td class="pl-kol-mono">animacja wysokości i szerokości układu</td></tr>
+            <tr><td>„przyciemnianie tła paska górnego przy przewijaniu”</td><td class="pl-kol-mono">parallaks</td></tr>
+            <tr><td>„gradient przesuwający się w tle Always On Display”</td><td class="pl-kol-mono">animacje dekoracyjne</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         05 · OGRANICZONY RUCH
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="ograniczony" aria-labelledby="ograniczony-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">05</div>
+        <div>
+          <h2 id="ograniczony-h">Ograniczony ruch — <code>prefers-reduced-motion</code></h2>
+          <p class="pl-lead">
+            Obsługa jest <strong>globalna, w żetonach</strong> — nie per komponent. Cztery czasy
+            schodzą do 0,01 ms, siatka bezpieczeństwa <code>*</code> łapie animacje spoza skali,
+            a tętno <strong>zamienia nośnik informacji z ruchu na kształt</strong>.
+            Przełącznik poniżej symuluje ten mechanizm w obrębie planszy.
+          </p>
+        </div>
+      </div>
+
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="pl-demo-tytul">Symulator ograniczonego ruchu</span>
+          <span class="pl-demo-narzedzia">
+            <label class="dn-przelacznik">
+              <input type="checkbox" data-symuluj-ruch aria-describedby="opis-symulatora">
+              <span></span>
+              <span>Symuluj ograniczony ruch</span>
+            </label>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <p class="pl-p" id="opis-symulatora">
+            Przełącznik ustawia na <code>&lt;body&gt;</code> atrybut <code>data-ruch="ograniczony"</code>,
+            który <strong>lokalnie i wyłącznie na potrzeby demonstracji</strong> podmienia te same żetony
+            czasu i podstawia pierścień statyczny. To <strong>ilustracja mechanizmu, nie jego
+            implementacja</strong> — implementacja żyje w żetonach i działa niezależnie od tego
+            przełącznika, na podstawie ustawienia systemu operacyjnego.
+          </p>
+
+          <div class="pl-para">
+            <div class="pl-para-strona">
+              <div class="pl-para-glowa">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+                Ruch dozwolony
+              </div>
+              <div class="pl-para-scena">
+                <div class="pl-karta-sesji-demo">
+                  <span class="pt-tetno" aria-hidden="true"></span>
+                  Execution Monitor — przebieg 1 z 3
+                  <span class="pl-meta">2,4 s</span>
+                </div>
+              </div>
+              <p class="pl-para-opis">
+                Pierścień <b>rozchodzi się</b> w pętli 2,4 s.<br>
+                Informacja: praca biegnie. <b>Nośnik: ruch.</b>
+              </p>
+            </div>
+            <div class="pl-para-strona">
+              <div class="pl-para-glowa">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>
+                Ruch ograniczony
+              </div>
+              <div class="pl-para-scena">
+                <div class="pl-karta-sesji-demo">
+                  <span class="pl-kropka-statyczna" aria-hidden="true"></span>
+                  Execution Monitor — przebieg 1 z 3
+                  <span class="pl-meta">stat.</span>
+                </div>
+              </div>
+              <p class="pl-para-opis">
+                Pierścień <b>statyczny 2 px</b>, obecny zawsze.<br>
+                Informacja: praca biegnie. <b>Nośnik: kształt.</b>
+              </p>
+            </div>
+          </div>
+
+          <blockquote class="pl-cytat">
+            Ograniczenie ruchu <strong>nie może usuwać informacji</strong>. Jeżeli ruch był jedynym
+            jej nośnikiem, przy <code>reduce</code> informację przejmuje kształt, obrys albo etykieta.
+            <cite>08-handoff-motion-dostepnosc.md rozdz. 13.2</cite>
+          </blockquote>
+
+          <div class="pl-kod">
+            <div class="pl-kod-glowa"><span>zetony.css · sekcja 14 · wiersze 435–441</span>
+              <span class="pl-kod-akcje"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-kopiuj="@media (prefers-reduced-motion: reduce) { :root { --dn-czas-1: 0.01ms; --dn-czas-2: 0.01ms; --dn-czas-3: 0.01ms; --dn-czas-tetno: 0.01ms; } *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }">Kopiuj kod</button></span>
+            </div>
+            <pre>@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dn-czas-1: 0.01ms;
+    --dn-czas-2: 0.01ms;
+    --dn-czas-3: 0.01ms;
+    --dn-czas-tetno: 0.01ms;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}</pre>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          <b>animation-iteration-count: 1</b> zatrzymuje pętle po pierwszym przebiegu —
+          animacja nie „ucina się” w losowej klatce.
+        </div>
+      </article>
+
+      <h3 class="pl-podsekcja">Dwa mechanizmy działające razem</h3>
+      <div class="pl-siatka pl-siatka--2">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">1</span><span class="pl-poz-nazwa">podmiana żetonów czasu</span></div>
+          <div class="pl-poz-opis">
+            Obejmuje wszystko, co używa <code>--dn-czas-*</code>. <b>Źródło prawdy</b> — komponent
+            nie musi wiedzieć o preferencji użytkownika.
+          </div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">2</span><span class="pl-poz-nazwa">reguła <code>*</code> z <code>!important</code></span></div>
+          <div class="pl-poz-opis">
+            Obejmuje animacje o czasach spoza skali (0,8 s spinnera) i kod zewnętrzny.
+            <b>Siatka bezpieczeństwa</b> na wypadek pominięcia żetonu.
+          </div>
+        </article>
+      </div>
+
+      <h3 class="pl-podsekcja">Tabela zachowań przy <code>reduce</code></h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela" data-tabela>
+          <thead><tr><th data-sortuj="tekst" tabindex="0" scope="col">Animacja</th><th scope="col">Zachowanie</th><th scope="col">Nośnik informacji po zmianie</th></tr></thead>
+          <tbody>
+            <tr><td class="pl-kol-mono">mikroreakcja kontrolki mikroreakcja</td><td>zmiana natychmiastowa</td><td>barwa tła (<code>--dn-hover</code>)</td></tr>
+            <tr><td class="pl-kol-mono">przejście barwy przejście barwy</td><td>zmiana natychmiastowa</td><td>barwa docelowa</td></tr>
+            <tr><td class="pl-kol-mono">wejście i wyjście warstwy wejście warstwy</td><td>warstwa pojawia się bez wjazdu</td><td>obecność warstwy + cień + nakładka</td></tr>
+            <tr><td class="pl-kol-mono"><b>tętno kropki tętno</b></td><td><b>pierścień statyczny 2 px</b></td><td><b>kształt (pierścień)</b></td></tr>
+            <tr><td class="pl-kol-mono">postęp kolejki postęp</td><td>pasek skacze do wartości</td><td>liczba w etykiecie mono</td></tr>
+            <tr><td class="pl-kol-mono">wskaźnik pracy wpisu spinner</td><td>zatrzymany po pierwszym obrocie</td><td><code>aria-busy="true"</code> + tekst „Trwa…”</td></tr>
+            <tr><td class="pl-kol-mono">przełączenie motywu motyw</td><td>przełączenie natychmiastowe</td><td>nowe barwy</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="pl-podsekcja">Czego NIE robić</h3>
+      <ul class="pl-lista-opis">
+        <li><span>zakaz</span><span><b>Dublowanie zapytania <code>prefers-reduced-motion</code> w każdym komponencie.</b> Obsługa jest globalna; duplikat rozjeżdża się przy pierwszej zmianie wartości.</span></li>
+        <li><span>zakaz</span><span><b>Wykrywanie preferencji w JavaScripcie i wyłączanie klas.</b> Preferencja może zmienić się w trakcie sesji — CSS reaguje sam, skrypt nie.</span></li>
+        <li><span>zakaz</span><span><b>Całkowite usunięcie zamiennika przy <code>reduce</code>.</b> Usuwa informację o stanie systemu, a nie tylko ruch.</span></li>
+      </ul>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         06 · RUCH JAKO NOŚNIK INFORMACJI
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="nosnik" aria-labelledby="nosnik-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">06</div>
+        <div>
+          <h2 id="nosnik-h">Ruch jako nośnik informacji</h2>
+          <p class="pl-lead">
+            Trzy pary porównawcze. W każdej ten sam przepływ — raz z ruchem, raz bez.
+            Bez ruchu przepływ dalej działa, ale Operator traci <strong>konkretną, nazwaną informację</strong>
+            o stanie systemu. To jest jedyne uzasadnienie istnienia ruchu w tym systemie.
+          </p>
+        </div>
+      </div>
+
+      <!-- PARA A -->
+      <h3 class="pl-podsekcja">Para A · praca w tle sesji</h3>
+      <div class="pl-para">
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+            Z ruchem
+          </div>
+          <div class="pl-para-scena">
+            <div class="pl-karta-sesji-demo"><span class="pt-tetno" aria-hidden="true"></span>Sesja · Studio Editor<span class="pl-meta">TalkIn</span></div>
+            <div class="pl-karta-sesji-demo"><span class="pl-kropka-statyczna" aria-hidden="true"></span>Sesja · Library Explorer<span class="pl-meta">TalkIn</span></div>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„w tej sesji teraz coś się dzieje”</b>. Rozróżnienie sesji pracującej
+            od bezczynnej następuje <b>bez czytania etykiet</b> — peryferyjnie, kątem oka.
+          </p>
+        </div>
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>
+            Bez ruchu
+          </div>
+          <div class="pl-para-scena">
+            <div class="pl-karta-sesji-demo"><span class="pl-kropka-statyczna" aria-hidden="true"></span>Sesja · Studio Editor<span class="pl-meta">TalkIn</span></div>
+            <div class="pl-karta-sesji-demo"><span class="pl-kropka-statyczna" aria-hidden="true"></span>Sesja · Library Explorer<span class="pl-meta">TalkIn</span></div>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„te sesje istnieją”</b>. Traci się rozróżnienie pracująca / bezczynna.
+            Rekompensata wymagana: <b>pierścień statyczny 2 px + plakietka liczby</b>.
+          </p>
+        </div>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        Zastosowanie: pas kart sesji w powłokach <strong>TalkIn</strong>, <strong>WorkSpace</strong>,
+        <strong>CodeStudio</strong>, <strong>MultitaskingAI</strong> (kontrakt systemu projektowego).
+      </p>
+
+      <!-- PARA B -->
+      <h3 class="pl-podsekcja">Para B · przejście stanu w kolejce</h3>
+      <div class="pl-para">
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+            Z ruchem
+          </div>
+          <div class="pl-para-scena">
+            <div class="dn-postep" data-postep-do="78" data-postep-czas="1800" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="78" aria-label="Postęp z ruchem">
+              <div class="dn-postep-etykieta"><span>Execution Monitor</span><span data-postep-licznik>0%</span></div>
+              <div class="dn-postep-tor"><div class="dn-postep-wartosc" style="width: 0%;"></div></div>
+            </div>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„proces posunął się o tyle”</b> — widać kierunek i <b>wielkość skoku</b>,
+            czyli tempo pracy kolejki.
+          </p>
+        </div>
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>
+            Bez ruchu
+          </div>
+          <div class="pl-para-scena">
+            <div class="dn-postep" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="78" aria-label="Postęp bez ruchu">
+              <div class="dn-postep-etykieta"><span>Execution Monitor</span><span>78%</span></div>
+              <div class="dn-postep-tor"><div class="dn-postep-wartosc" style="width: 78%; transition: none;"></div></div>
+            </div>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„proces jest w innym miejscu niż przed chwilą”</b>. Traci się wielkość przyrostu.
+            Rekompensata wymagana: <b>liczba w etykiecie mono</b> z <code>tabular-nums</code>.
+          </p>
+        </div>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        Zastosowanie: <strong>Queue Manager</strong> i <strong>Execution Monitor</strong> modułu
+        <strong>Automations</strong>, silnik kolejek środowiska <strong>MultitaskingAI</strong>.
+      </p>
+
+      <!-- PARA C -->
+      <h3 class="pl-podsekcja">Para C · pojawienie się warstwy</h3>
+      <div class="pl-para">
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+            Z ruchem
+          </div>
+          <div class="pl-para-scena">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-modal="modal-pula-kont">Otwórz „Pula kont Code CLI”</button>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„nad treścią stanęła nowa warstwa; poprzednia nadal jest pod spodem”</b>.
+            Ruch niesie <b>relację przestrzenną</b> warstwy do tła.
+          </p>
+        </div>
+        <div class="pl-para-strona">
+          <div class="pl-para-glowa">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>
+            Bez ruchu
+          </div>
+          <div class="pl-para-scena">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-modal="modal-pula-kont" data-bez-ruchu>Otwórz bez wjazdu</button>
+          </div>
+          <p class="pl-para-opis">
+            Odczyt: <b>„ekran wygląda inaczej”</b>. Traci się informację, skąd warstwa przyszła
+            i co przykryła. Rekompensata wymagana: <b>nakładka + rozmycie + cień warstwy</b>.
+          </p>
+        </div>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        Zastosowanie: modal <strong>„Pula kont Code CLI”</strong> w Oknie Konfiguracji, okno punktów
+        izolacji, potwierdzenia w <strong>Permissions Center</strong> modułu <strong>Agents</strong>.
+      </p>
+
+      <blockquote class="pl-cytat">
+        Ruch nie jest warstwą estetyczną, którą można zdjąć bez konsekwencji. Jest
+        <strong>trzecim nośnikiem stanu</strong> obok barwy i kształtu — i jako jedyny z trzech
+        może zostać wyłączony decyzją systemową użytkownika. Dlatego każde jego użycie ma
+        zdefiniowany zamiennik.
+        <cite>Wniosek planszy 06 · zgodny z kontraktem systemu projektowego</cite>
+      </blockquote>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         07 · WYDAJNOŚĆ
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="wydajnosc" aria-labelledby="wydajnosc-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">07</div>
+        <div>
+          <h2 id="wydajnosc-h">Wydajność ruchu</h2>
+          <p class="pl-lead">
+            Wybór własności CSS nie jest kwestią gustu — decyduje o tym, na którym etapie potoku
+            renderowania wykonuje się animacja. <strong>Kompozycja</strong> jest tania,
+            <strong>malowanie</strong> średnie, <strong>układ</strong> najdroższe i zakazane.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-przewijana">
+        <table class="pl-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Własność</th>
+              <th data-sortuj="tekst" tabindex="0" scope="col">Etap potoku</th>
+              <th scope="col">Koszt</th>
+              <th scope="col">Status w systemie</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>transform</code></td><td>kompozycja</td><td>najniższy</td><td><span class="dn-plakietka dn-plakietka--sukces">preferowana</span></td></tr>
+            <tr><td><code>opacity</code></td><td>kompozycja</td><td>najniższy</td><td><span class="dn-plakietka dn-plakietka--sukces">preferowana</span></td></tr>
+            <tr><td><code>box-shadow</code></td><td>malowanie</td><td>średni</td><td><span class="dn-plakietka dn-plakietka--informacja">dopuszczona: tętno, fokus</span></td></tr>
+            <tr><td><code>color</code>, <code>background-color</code></td><td>malowanie</td><td>średni</td><td><span class="dn-plakietka dn-plakietka--informacja">dopuszczona: mikroreakcja kontrolki, przejście barwy</span></td></tr>
+            <tr><td><code>width</code>, <code>height</code>, <code>top</code>, <code>left</code>, <code>margin</code>, <code>padding</code></td><td>układ</td><td>najwyższy</td><td><span class="dn-plakietka dn-plakietka--blad">zakazane poza .dn-postep-wartosc</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="pl-podsekcja">Wyjątek jednego paska</h3>
+      <p class="pl-p">
+        <code>.dn-postep-wartosc</code> może animować <code>width</code>, ponieważ leży wewnątrz
+        <code>.dn-postep-tor</code> z <code>overflow: hidden</code> i stałą wysokością 4 px.
+        Przeliczenie układu ogranicza się do <strong>jednego niezależnego elementu</strong>
+        i nie propaguje na rodzeństwo. Zamiana na <code>transform: scaleX()</code> rozciągałaby
+        zaokrąglenia narożników — pogorszenie wizualne bez zysku pomiarowego przy jednym pasku na widok.
+      </p>
+
+      <h3 class="pl-podsekcja"><code>will-change</code> — zasada trzech warunków</h3>
+      <div class="pl-siatka pl-siatka--3">
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">1</span><span class="pl-poz-nazwa">ruch długi lub cykliczny</span></div>
+          <div class="pl-poz-opis">Tętno albo spinner. Dla przejścia 100–220 ms deklaracja nie zdąży się opłacić.</div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">2</span><span class="pl-poz-nazwa">znany, ograniczony rozmiar</span></div>
+          <div class="pl-poz-opis">Warstwa kompozycji zajmuje pamięć graficzną proporcjonalnie do powierzchni elementu.</div>
+        </article>
+        <article class="pl-poz">
+          <div class="pl-poz-glowa"><span class="pl-poz-kod">3</span><span class="pl-poz-nazwa">deklaracja zdejmowana</span></div>
+          <div class="pl-poz-opis">Po zakończeniu animacji <code>will-change</code> znika. W przeciwnym razie warstwa zostaje na stałe.</div>
+        </article>
+      </div>
+
+      <div class="pl-przewijana" style="margin-top: var(--dn-od-3);">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">Zakaz</th><th scope="col">Skutek</th></tr></thead>
+          <tbody>
+            <tr><td><code>will-change</code> na wielu elementach jednocześnie</td><td>każdy dostaje własną warstwę kompozycji — zużycie pamięci graficznej rośnie liniowo</td></tr>
+            <tr><td><code>will-change</code> na stałe w arkuszu</td><td>warstwa nigdy nie znika; przeglądarka traci możliwość optymalizacji</td></tr>
+            <tr><td><code>will-change: all</code></td><td>przeciwieństwo optymalizacji</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <blockquote class="pl-cytat">
+        <code>komponenty.css</code> <strong>nie deklaruje <code>will-change</code></strong> w żadnym
+        miejscu. Animowane elementy są małe — kropka 6 px, spinner 14 px, pierścień AOD 36 px —
+        i przeglądarka promuje je do warstwy samodzielnie. Wprowadzenie <code>will-change</code>
+        wymaga pomiaru pokazującego zysk.
+        <cite>08-handoff-motion-dostepnosc.md rozdz. 14.3</cite>
+      </blockquote>
+
+      <h3 class="pl-podsekcja">Unikanie przeliczeń układu (layout thrash)</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">Wzorzec błędny</th><th scope="col">Wzorzec poprawny</th></tr></thead>
+          <tbody>
+            <tr><td>w pętli: odczyt <code>offsetHeight</code> → zapis <code>style.height</code> → odczyt → zapis</td><td>wszystkie <b>odczyty przed</b> wszystkimi zapisami</td></tr>
+            <tr><td>animowanie <code>height</code> przy rozwijaniu sekcji</td><td>natywny <code>&lt;details&gt;</code> albo <code>opacity</code> + <code>transform</code> na treści o znanej wysokości</td></tr>
+            <tr><td>animowanie <code>top</code>/<code>left</code> przy przesuwaniu warstwy</td><td><code>transform: translateY()</code></td></tr>
+            <tr><td>pomiar szerokości paska postępu w skrypcie przy każdej klatce</td><td>zmiana deklaracji <code>width</code> <b>raz</b>; przejście wykonuje CSS</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         08 · OŚ CZASU ZŁOŻONEGO PRZEJŚCIA
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="os-czasu" aria-labelledby="os-czasu-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">08</div>
+        <div>
+          <h2 id="os-czasu-h">Oś czasu złożonego przejścia</h2>
+          <p class="pl-lead">
+            Przejście z <strong>Okna Konfiguracji</strong> do modala <strong>„Pula kont Code CLI”</strong>
+            (kontrakt systemu projektowego, poz. 8). Cała sekwencja mieści się w <code>--dn-czas-3</code> = 220 ms
+            i składa się z <strong>trzech przejść jednoczesnych</strong> — dokładnie na granicy budżetu
+            z sekcji 01.
+          </p>
+        </div>
+      </div>
+
+      <article class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span class="pl-demo-tytul">Rozkład na fazy — 0 do 220 ms</span>
+          <span class="pl-demo-narzedzia">
+            <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-odtworz-os>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="postęp kolejki 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+              Odtwórz oś
+            </button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-modal="modal-pula-kont">Odtwórz na modalu</button>
+          </span>
+        </div>
+        <div class="pl-demo-cialo">
+          <div class="pl-os" data-os data-odtwarzaj="nie">
+            <div class="pl-os-czasu">
+              <div class="pl-os-wiersz">
+                <span class="pl-os-nazwa">nakładka</span>
+                <div class="pl-os-tor"><span class="pl-os-belka"></span></div>
+              </div>
+              <div class="pl-os-wiersz">
+                <span class="pl-os-nazwa">modal opacity</span>
+                <div class="pl-os-tor"><span class="pl-os-belka"></span></div>
+              </div>
+              <div class="pl-os-wiersz">
+                <span class="pl-os-nazwa">modal transform</span>
+                <div class="pl-os-tor"><span class="pl-os-belka"></span></div>
+              </div>
+              <div class="pl-os-wiersz">
+                <span class="pl-os-nazwa">fokus</span>
+                <div class="pl-os-tor"><span class="pl-os-belka pl-os-belka--fokus"></span></div>
+              </div>
+            </div>
+            <div class="pl-os-podzialka" aria-hidden="true">
+              <span>0 ms</span><span>55 ms</span><span>110 ms</span><span>165 ms</span>
+            </div>
+          </div>
+
+          <div style="margin-top: var(--dn-od-5); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);">
+            <div class="pl-faza">
+              <div>
+                <h4>Naciśnięcie przycisku otwierającego</h4>
+                <p>Mikroreakcja mikroreakcja kontrolki: <code>transform: translateY(1px)</code> w <code>--dn-czas-1</code>.
+                Informacja: <b>„przyjąłem działanie”</b>. To potwierdzenie wyprzedza całą resztę sekwencji.</p>
+              </div>
+              <span class="pl-faza-czas">0 ms · 100 ms</span>
+            </div>
+            <div class="pl-faza">
+              <div>
+                <h4>Wejście nakładki</h4>
+                <p><code>::backdrop</code> wchodzi z <code>opacity</code> 0→1, dochodzi
+                <code>backdrop-filter: blur(2px)</code>. Informacja: <b>„treść pod spodem przestaje być aktywna”</b>.
+                Jedyne dopuszczone rozmycie w systemie.</p>
+              </div>
+              <span class="pl-faza-czas">0–220 ms</span>
+            </div>
+            <div class="pl-faza">
+              <div>
+                <h4>Wejście modala — przezroczystość</h4>
+                <p><code>opacity</code> 0→1 na etapie kompozycji. Informacja: <b>„jest nowa warstwa”</b>.</p>
+              </div>
+              <span class="pl-faza-czas">0–220 ms</span>
+            </div>
+            <div class="pl-faza">
+              <div>
+                <h4>Wejście modala — tor i skala</h4>
+                <p><code>translateY(8px)</code> → 0 oraz <code>scale(0.98)</code> → 1. Informacja:
+                <b>„warstwa stanęła nad treścią, przyszła z dołu”</b>. Dystans 8 px = <code>--dn-od-2</code>,
+                skala nigdy nie przekracza 1.</p>
+              </div>
+              <span class="pl-faza-czas">0–220 ms</span>
+            </div>
+            <div class="pl-faza">
+              <div>
+                <h4>Przejęcie fokusu</h4>
+                <p>Fokus przechodzi na pierwszą kontrolkę modala. <b>Bez animacji</b> — pierścień
+                fokusu pojawia się natychmiast. Informacja: <b>„tu teraz pracuję”</b>.</p>
+              </div>
+              <span class="pl-faza-czas">220 ms</span>
+            </div>
+          </div>
+
+          <h4 class="pt-etykieta" style="margin-top: var(--dn-od-5);">Rozkład toru przekształcenia modala na klatki</h4>
+          <div class="pl-schemat">   0 ms        55 ms       110 ms      165 ms      220 ms
+   ├───────────┼───────────┼───────────┼───────────┤
+      nakładka ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
+      modal    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
+      tor      8px ──── 3,1px ── 1,1px ── 0,2px ── 0
+               scale 0,98 ───────────────────── 1,00
+      fokus                                      ● pierwsza kontrolka</div>
+
+          <p class="pl-p" style="margin-bottom: 0;">
+            Wartości toru wynikają z krzywej <code>cubic-bezier(0.2, 0, 0, 1)</code>: po połowie czasu
+            element pokonał już około <strong>86%</strong> dystansu. To jest „ruch instrumentu” —
+            <strong>energia na starcie, cisza na końcu</strong>.
+          </p>
+        </div>
+        <div class="pl-demo-stopka">
+          Warstwy z-index: nakładka <b>800</b> · modal <b>900</b> · powiadomienie <b>1000</b>
+          (kontrakt systemu projektowego, Warstwy).
+        </div>
+      </article>
+
+      <h3 class="pl-podsekcja">Zamknięcie modala</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">Faza</th><th scope="col">Czas</th><th scope="col">Co się dzieje</th></tr></thead>
+          <tbody>
+            <tr><td class="pl-kol-mono">2</td><td class="pl-kol-mono">0 ms</td><td><kbd>Esc</kbd>, przycisk zamknięcia albo kliknięcie w nakładkę</td></tr>
+            <tr><td class="pl-kol-mono">3</td><td class="pl-kol-mono">0–220 ms</td><td>nakładka i modal wygaszają <code>opacity</code> do 0</td></tr>
+            <tr><td class="pl-kol-mono">4</td><td class="pl-kol-mono">220 ms</td><td>fokus wraca na kontrolkę, która modal otworzyła</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        <strong>Bez ruchu powrotnego w osi pionowej.</strong> Wyjście warstwy nie odtwarza wejścia
+        w odwrotną stronę — element <strong>znika</strong>, a nie „chowa się z powrotem”.
+        Odwrócenie toru sugerowałoby fizyczne schowanie obiektu w miejscu, którego w kokpicie nie ma.
+      </p>
+      <p class="pl-p">
+        <strong>Ta sama oś dla powiadomienia.</strong> Toast dzieli klatki kluczowe
+        <code>dn-wejscie</code> z modalem: jedno wejście warstwy = jedna definicja ruchu. Różnica leży
+        wyłącznie w warstwie z-index i w tym, że powiadomienie <strong>nie przejmuje fokusu</strong>.
+      </p>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         09 · O TYM OPRACOWANIU
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="pl-sekcja" id="opracowanie" aria-labelledby="opracowanie-h">
+      <div class="pl-sekcja-glowa">
+        <div class="pl-numer">09</div>
+        <div>
+          <h2 id="opracowanie-h">O tym opracowaniu</h2>
+          <p class="pl-lead">
+            Metryka planszy, decyzje projektowe i pełna lista źródeł dokumentacyjnych.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Decyzje projektowe planszy</h3>
+      <div class="pl-przewijana">
+        <table class="pl-tabela">
+          <thead><tr><th scope="col">#</th><th scope="col">Decyzja</th><th scope="col">Uzasadnienie</th></tr></thead>
+          <tbody>
+            <tr><td class="pl-kol-mono">2</td><td>Demonstrator czterech czasów uruchamia <b>ten sam element</b> czterokrotnie</td><td>porównanie ma dotyczyć wyłącznie czasu; różny kształt zaburzyłby odczyt</td></tr>
+            <tr><td class="pl-kol-mono">3</td><td>Krzywa narysowana jako SVG <code>path</code> z biegnącym wskaźnikiem</td><td>krzywa opisana liczbami jest nieczytelna; narysowana i przebiegnięta staje się argumentem</td></tr>
+            <tr><td class="pl-kol-mono">4</td><td>Tor 2,4 s obecny mimo że nie jest czasem przejścia</td><td>pokazuje <b>skalę</b> — bez niego 220 ms wygląda na dużo</td></tr>
+            <tr><td class="pl-kol-mono">5</td><td>Symulator ograniczonego ruchu działa na atrybucie <code>data-ruch</code>, nie na klasach komponentów</td><td>dokumentacja zakazuje wykrywania preferencji w skrypcie; symulator jest wyraźnie oznaczony jako demonstracja mechanizmu</td></tr>
+            <tr><td class="pl-kol-mono">6</td><td>Katalog zakazanych ma tę samą wagę wizualną co katalog dozwolonych</td><td>to, czego system nie robi, definiuje go tak samo jak to, co robi</td></tr>
+            <tr><td class="pl-kol-mono">7</td><td><b>Żaden</b> demonstrator zakazanej animacji nie jest odtwarzany</td><td>plansza nie może uruchamiać parallaxu ani bounce'u „dla przykładu” — złamałaby własny kontrakt</td></tr>
+            <tr><td class="pl-kol-mono">8</td><td>Rozwinięcie sekcji zrealizowane natywnym <code>&lt;details&gt;</code></td><td>animacja wysokości i szerokości układu zakazuje animowania <code>height</code>; natywny element daje semantykę i klawiaturę bez kodu</td></tr>
+            <tr><td class="pl-kol-mono">9</td><td>Zwijanie bocznej nawigacji zmienia <code>grid-template-columns</code> jednego kontenera</td><td>jedyna droga do zwinięcia bez animowania <code>width</code> każdej pozycji</td></tr>
+            <tr><td class="pl-kol-mono">10</td><td>Wszystkie fragmenty CSS mają przycisk kopiowania</td><td>plansza jest źródłem gotowego kodu; przepisywanie ręczne to droga do rozjazdu z biblioteką</td></tr>
+            <tr><td class="pl-kol-mono">11</td><td>Oś czasu liczona na realnym modalu „Pula kont Code CLI”</td><td>kontrakt systemu projektowego zakazuje przykładów spoza domeny produktu</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="pt-o-opracowaniu pl-o-opracowaniu" open>
+        <summary>O tym opracowaniu — zakres, źródła, interakcje, decyzje</summary>
+        <div class="pt-o-opracowaniu-tresc">
+          <h4>Co przedstawia</h4>
+          <ul>
+            <li>Kontrakt ruchu <code>INTENSYWNOSC_RUCHU</code> 3/10 rozłożony na sześć mierzalnych wymiarów z testami zaliczenia.</li>
+            <li>Cztery żetony czasu i jedną krzywą <code>--dn-ease</code> — z demonstratorem porównawczym i rysunkiem krzywej.</li>
+            <li>Katalog siedmiu dozwolonych animacji (mikroreakcja kontrolki–przełączenie motywu) w dwunastu demonstratorach, każdy z gotowym kodem CSS.</li>
+            <li>Katalog dziesięciu zakazanych animacji (parallaks–animowane przewijanie sterowane skryptem) z uzasadnieniem szkody w kokpicie — bez odtwarzania.</li>
+            <li>Mechanizm <code>prefers-reduced-motion</code> z symulatorem i tabelą zamienników informacji.</li>
+            <li>Trzy pary porównawcze pokazujące ruch jako trzeci nośnik stanu obok barwy i kształtu.</li>
+            <li>Zasady wydajności: kompozycja kontra malowanie kontra układ, <code>will-change</code>, layout thrash.</li>
+            <li>Oś czasu przejścia z Okna Konfiguracji do modala „Pula kont Code CLI” rozłożoną na pięć faz.</li>
+          </ul>
+
+          <h4>Źródła w dokumentacji</h4>
+          <ul>
+            <li>kontrakt systemu projektowego (pokrętła), rozdz. 2 (Ruch, Wymiary, Warstwy), rozdz. 3 (Kropka sygnału), rozdz. 9 (Dostępność), rozdz. 11 (Wzorzec animacji).</li>
+            <li><code>01-dokumentacja-md/08-handoff-motion-dostepnosc.md</code> — rozdz. 8 (kontrakt ruchu), 9 (czasy i ease), 10 (katalog dozwolonych), 11 (katalog zakazanych), 12 (wzorce implementacyjne), 13 (ograniczony ruch), 14 (wydajność).</li>
+            <li>kierunek systemu projektowego (trzy pokrętła, wiersz 29), rozdz. 3.4 (tętno jako jedyny ruch ciągły, wiersz 87).</li>
+            <li><code>zasoby/zetony/zetony.css</code> — sekcja 5 (wiersze 126–130: <code>--dn-ease</code>, cztery czasy), sekcja 14 (wiersze 435–441: ograniczony ruch).</li>
+            <li><code>zasoby/css/komponenty.css</code> — <code>.dn-postep</code> (867–893), <code>.dn-kolejka</code> i <code>.dn-krok</code> (895–944), <code>.dn-toast</code> (1000–1024), klatki <code>dn-wejscie</code>, <code>dn-tetno</code>, <code>dn-obrot</code>.</li>
+            <li><code>zasoby/prototyp.css</code> — <code>.pt-tetno</code> z zamiennikiem statycznym (288–302), <code>.pt-wejscie</code> (304–309), <code>.pt-cialo--zwinieta</code> (30).</li>
+            <li>Nazwy własne: kontrakt systemu projektowego (środowiska, moduły), rozdz. 7.2–7.6 (powłoki, Okno Konfiguracji, okna modułów, role MultitaskingAI).</li>
+            <li>Prototypy powiązane: <code>../05-okna/platformowe/konfiguracja.html</code>, <code>../05-okna/moduly/automations.html</code>, <code>../05-okna/moduly/diagnostics.html</code>, <code>../05-okna/platformowe/always-on-display.html</code>.</li>
+          </ul>
+
+          <h4>Odwzorowane interakcje</h4>
+          <ul>
+            <li>Przełącznik motywu na pasku górnym oraz drugi w demonstratorze 3 — oba działające, oba motywy równoprawne.</li>
+            <li>Demonstrator czterech czasów: uruchomienie i powrót do startu, przejście <code>transform</code> na czterech torach jednocześnie.</li>
+            <li>Krzywa <code>--dn-ease</code> z wskaźnikiem biegnącym po <code>offset-path</code> w dwóch czasach.</li>
+            <li>Modal <code>&lt;dialog&gt;</code> „Pula kont Code CLI” — otwarcie, zamknięcie klawiszem <kbd>Esc</kbd>, kliknięcie w podłoże, wariant bez wjazdu.</li>
+            <li>Powiadomienia czterech rodzajów przez <code>data-komunikat</code> i <code>window.dnToast</code>.</li>
+            <li>Zakładki okien modułu Diagnostics z przejściem widoku (<code>data-przelacz</code> + <code>.pt-wejscie</code>).</li>
+            <li>Paski postępu animowane przez <code>data-postep-do</code> z licznikiem mono.</li>
+            <li>Symulacja pracy wpisu przez <code>data-symuluj</code> z ustawieniem <code>aria-busy</code>.</li>
+            <li>Sortowanie tabel (<code>data-tabela</code> + <code>data-sortuj</code>), filtrowanie katalogu zakazów (<code>data-filtruj</code>) z licznikiem widocznych pozycji.</li>
+            <li>Kopiowanie każdego fragmentu CSS (<code>data-kopiuj</code>) z potwierdzeniem w powiadomieniu.</li>
+            <li>Symulator ograniczonego ruchu, rozwijanie panelu, zwijanie bocznej nawigacji, wybór pozycji nawigacji.</li>
+            <li>Spis sekcji z podświetlaniem aktywnej (<code>data-spis</code> + IntersectionObserver z <code>prototyp.js</code>), odnośnik pominięcia treści, powrót do <code>../INDEKS.html</code>.</li>
+          </ul>
+
+          <h4>Decyzje projektowe</h4>
+          <ul>
+            <li><b>Zakazy pokazujemy, nie odtwarzamy.</b> Uruchomienie parallaxu „dla przykładu” złamałoby kontrakt, którego plansza broni.</li>
+            <li><b>Tor 2,4 s w demonstratorze przejść</b> — obecny wyłącznie po to, by dać skalę dla 220 ms; wyraźnie opisany jako nie-przejście.</li>
+            <li><b>Symulator ograniczonego ruchu jako atrybut planszy</b>, nie jako wykrywanie w skrypcie — dokumentacja tego drugiego zakazuje.</li>
+            <li><b>Jedno tętno na sekcję.</b> Plansza rozkłada demonstratory tętna po osobnych sekcjach, żeby nie łamać reguły jednego ruchu ciągłego w polu widzenia.</li>
+            <li><b>Wszystkie liczby zweryfikowane odczytem pliku</b>, nie przepisane z pamięci: numery wierszy żetonów, numery wierszy klas komponentów, liczba pozycji katalogów.</li>
+            <li><b>Zero atrybutów blokujących kontrolki</b> — zgodnie z zasadą zero blokad. Każdy przycisk planszy jest klikalny.</li>
+          </ul>
+
+          <h4>Metryka</h4>
+          <ul>
+            <li>Produkt: <b>Danaco Console</b> — AI Operating Environment (warstwa wizualna v2.0)</li>
+            <li>Producent: Danaco Holding Group Sp. z o.o. · Twórca: Dariusz Naharnowicz</li>
+            <li>Plansza portfolio <b>06</b> · wersja v2.0 · status deweloperski · data 2026-08-14</li>
+            <li>Plik towarzyszący: <code>04-portfolio/06-system-w-ruchu.md</code></li>
+          </ul>
+        </div>
+      </details>
+
+      <div class="pl-pasek-akcji" style="margin-top: var(--dn-od-6);">
+        <a class="dn-btn dn-btn--zarys" href="../INDEKS.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          Powrót do indeksu opracowania
+        </a>
+        <a class="dn-btn dn-btn--duch" href="../05-okna/platformowe/konfiguracja.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2"/><circle cx="12" cy="12" r="3"/></svg>
+          Prototyp Okna Konfiguracji
+        </a>
+        <a class="dn-btn dn-btn--duch" href="../05-okna/moduly/automations.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="wejście i wyjście warstwy 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          Prototyp modułu Automations
+        </a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL — „Pula kont Code CLI” (Okno Konfiguracji, kontrakt systemu projektowego)
+     ══════════════════════════════════════════════════════════════════════ -->
+<dialog class="dn-modal" id="modal-pula-kont" data-zamknij-podlozem aria-labelledby="modal-pula-tytul">
+  <div class="dn-modal-naglowek">
+    <h2 class="dn-modal-tytul" id="modal-pula-tytul">Pula kont Code CLI</h2>
+    <button class="dn-btn-ikona" type="button" data-zamknij-modal aria-label="Zamknij modal">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <div class="dn-modal-cialo">
+    <p class="pl-para-opis" style="margin-bottom: var(--dn-od-3);">
+      Wejście tej warstwy to trzy jednoczesne przejścia w <code>--dn-czas-3</code>:
+      <b>opacity</b> 0→1, <b>translateY(8px)</b>→0 i <b>scale(0.98)</b>→1, plus nakładka
+      z <code>blur(2px)</code>. Po 220 ms fokus przechodzi na pierwszą kontrolkę.
+    </p>
+    <div class="dn-pole">
+      <label class="dn-pole-etykieta" for="pole-konto">Konto w puli</label>
+      <input class="dn-pole-kontrolka" id="pole-konto" type="text" value="konto-operacyjne-01" spellcheck="false">
+      <span class="dn-pole-opis">Przykładowa wartość z domeny produktu — pula kont zakresu „Nakładka i wywołanie modelu”.</span>
+    </div>
+    <div style="margin-top: var(--dn-od-3); display: flex; align-items: center; gap: var(--dn-od-2);">
+      <span class="pt-tetno" aria-hidden="true"></span>
+      <span class="pt-mono" style="font-size: var(--dn-fs-sm);">weryfikacja puli biegnie w tle</span>
+    </div>
+  </div>
+  <div class="dn-modal-stopka">
+    <button class="dn-btn dn-btn--duch" type="button" data-zamknij-modal>Zamknij</button>
+    <button class="dn-btn dn-btn--sygnal" type="button" data-zamknij-modal
+            data-komunikat-tytul="Zapisano pulę kont" data-komunikat="Zmiana zapisana w zakresie „Nakładka i wywołanie modelu”." data-komunikat-rodzaj="sukces">
+      Zapisz pulę
+    </button>
+  </div>
+</dialog>
+
+<script src="../zasoby/wspolne.js"></script>
+<script src="../zasoby/prototyp.js"></script>
+<script>
+/* ============================================================================
+   PLANSZA PORTFOLIO 06 — skrypt lokalny. Bez bibliotek, bez localStorage.
+   Sterowanie wyłącznie atrybutami; wszystkie czasy pochodzą z żetonów.
+   ============================================================================ */
+(function () {
+  'use strict';
+  var D = document;
+  function wszystkie(sel, k) { return Array.prototype.slice.call((k || D).querySelectorAll(sel)); }
+
+  /* ── 1 · DEMONSTRATOR CZTERECH CZASÓW ─────────────────────────────── */
+  var tory = D.querySelector('[data-tory]');
+  function ustawTory(stan) { if (tory) tory.setAttribute('data-biegnie', stan); }
+  wszystkie('[data-uruchom-tory]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      ustawTory('nie');
+      requestAnimationFrame(function () { requestAnimationFrame(function () { ustawTory('tak'); }); });
+      if (window.dnToast) window.dnToast('Cztery czasy uruchomione', 'Ten sam dystans, cztery wartości transition-duration.', 'informacja', 2600);
+    });
+  });
+  wszystkie('[data-reset-tory]').forEach(function (b) {
+    b.addEventListener('click', function () { ustawTory('nie'); });
+  });
+
+  /* ── 2 · KRZYWA EASE ──────────────────────────────────────────────── */
+  var krzywa = D.querySelector('[data-krzywa]');
+  wszystkie('[data-krzywa-bieg]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (!krzywa) return;
+      var tempo = b.getAttribute('data-krzywa-bieg');
+      krzywa.setAttribute('data-biegnie', 'nie');
+      krzywa.setAttribute('data-tempo', tempo === 'wolne' ? 'wolne' : 'szybkie');
+      requestAnimationFrame(function () { requestAnimationFrame(function () { krzywa.setAttribute('data-biegnie', 'tak'); }); });
+    });
+  });
+
+  /* ── 3 · PRZEJŚCIE BARWY — pozycje nawigacji ──────────────────────── */
+  var pozycje = wszystkie('[data-barwa-poz]');
+  pozycje.forEach(function (p) {
+    p.addEventListener('click', function () {
+      pozycje.forEach(function (x) { x.setAttribute('aria-pressed', x === p ? 'true' : 'false'); });
+    });
+  });
+
+  /* ── 4 · WEJŚCIE PANELU ───────────────────────────────────────────── */
+  wszystkie('[data-panel-przelacz]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var panel = D.getElementById(b.getAttribute('aria-controls'));
+      if (!panel) return;
+      var otwarty = b.getAttribute('aria-expanded') === 'true';
+      if (otwarty) {
+        panel.hidden = true;
+        b.setAttribute('aria-expanded', 'false');
+        b.textContent = 'Pokaż Sources Panel';
+      } else {
+        panel.hidden = false;
+        panel.classList.remove('pt-wejscie');
+        void panel.offsetWidth;
+        panel.classList.add('pt-wejscie');
+        b.setAttribute('aria-expanded', 'true');
+        b.textContent = 'Ukryj Sources Panel';
+      }
+    });
+  });
+
+  /* ── 5 · ZWIJANIE BOCZNEJ NAWIGACJI ───────────────────────────────── */
+  wszystkie('[data-zwin-boczna]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var boczna = D.querySelector('[data-boczna-demo]');
+      if (!boczna) return;
+      var zwinieta = boczna.getAttribute('data-zwinieta') === 'tak';
+      boczna.setAttribute('data-zwinieta', zwinieta ? 'nie' : 'tak');
+      b.setAttribute('aria-pressed', zwinieta ? 'false' : 'true');
+      b.textContent = zwinieta ? 'Zwiń nawigację' : 'Rozwiń nawigację';
+    });
+  });
+
+  /* ── 6 · SYMULATOR OGRANICZONEGO RUCHU ────────────────────────────── */
+  wszystkie('[data-symuluj-ruch]').forEach(function (wejscie) {
+    wejscie.addEventListener('change', function () {
+      var ograniczony = wejscie.checked;
+      D.body.setAttribute('data-ruch', ograniczony ? 'ograniczony' : 'pelny');
+      wszystkie('[data-stan-ruchu]').forEach(function (s) {
+        s.textContent = ograniczony ? 'ruch ograniczony' : 'ruch pełny';
+      });
+      if (window.dnToast) {
+        window.dnToast(
+          ograniczony ? 'Ruch ograniczony' : 'Ruch pełny',
+          ograniczony
+            ? 'Cztery czasy → 0,01 ms · tętno → pierścień statyczny 2 px. Informacja zostaje.'
+            : 'Cztery czasy wróciły do wartości żetonów.',
+          'informacja', 3200
+        );
+      }
+    });
+  });
+
+  /* ── 7 · OŚ CZASU ZŁOŻONEGO PRZEJŚCIA ─────────────────────────────── */
+  wszystkie('[data-odtworz-os]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var os = D.querySelector('[data-os]');
+      if (!os) return;
+      os.setAttribute('data-odtwarzaj', 'nie');
+      requestAnimationFrame(function () { requestAnimationFrame(function () { os.setAttribute('data-odtwarzaj', 'tak'); }); });
+    });
+  });
+
+  /* ── 8 · MODAL — wariant bez wjazdu (para porównawcza C) ──────────── */
+  var modal = D.getElementById('modal-pula-kont');
+  D.addEventListener('click', function (e) {
+    var bez = e.target.closest('[data-bez-ruchu]');
+    if (!modal) return;
+    if (bez) { modal.style.animation = 'none'; }
+    else if (e.target.closest('[data-otworz-modal="modal-pula-kont"]')) { modal.style.animation = ''; }
+  }, true);
+  if (modal) {
+    modal.addEventListener('close', function () {
+      var wyzwalacz = D.querySelector('[data-otworz-modal="modal-pula-kont"]');
+      if (wyzwalacz) wyzwalacz.focus();
+    });
+  }
+})();
+</script>
+</body>
+</html>

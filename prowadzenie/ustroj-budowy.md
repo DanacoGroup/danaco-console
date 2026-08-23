@@ -141,6 +141,13 @@ Poniższe reguły obowiązują bezwarunkowo i nie podlegają ocenie sytuacyjnej.
   albo zgłoszenie, które się rozstrzyga — nigdy dokument, który trwa.
 - **Bez zmian zbiorczych.** Podmiana wzorcem po katalogach jest zabroniona —
   plik czyta się i zmienia celowaną zmianą.
+- **Przed otwarciem terenu sprawdza się, czy przedmiot już nie istnieje.**
+  Budowa toczy się na przejętym kodzie liczącym setki tysięcy wierszy, więc
+  rzecz, która wygląda na brakującą, bywa już zrobiona. Sprawdzenie jest
+  odczytem drzewa, nie przypomnieniem sobie: wykaz plików, przeszukanie nazw,
+  uruchomienie tego, co znalezione. Teren otwarty na przedmiot już istniejący
+  jest pracą do wyrzucenia — zdarzyło się to przy generatorze typów kontraktu,
+  który stał gotowy w `budowa/shared/gen/` wraz z testem świeżości.
 - **Pomiar odróżnia brak wyniku od wyniku pustego.** Skrypt, który może zwrócić
   zero albo pustkę, musi najpierw potwierdzić, że zmierzył to, co miał zmierzyć.
   Zero naruszeń na stronie, która się nie wczytała, nie jest wynikiem — jest

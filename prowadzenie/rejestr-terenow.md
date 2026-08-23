@@ -6,7 +6,85 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-Żaden teren nie jest otwarty.
+Fala 1 — fundament klienta. Cztery tereny; pierwszy blokuje trzy pozostałe, bo
+one biorą z niego typy. Żaden nie zależy od prototypów.
+
+### typy-kontraktu · **blokujący**
+
+| | |
+|---|---|
+| **Gałąź** | `teren/typy-kontraktu` z `main` |
+| **Wykaz plików** | `budowa/klient/src/kontrakt.ts`, `budowa/narzedzia-kontraktu/` |
+| **Poza terenem** | `budowa/shared/contract.json` — źródło, tylko do odczytu; `budowa/server/` |
+
+**Przedmiot.** Wytworzenie typów TypeScript z `budowa/shared/contract.json` oraz
+polecenie wykrywające rozjazd między typami Go a TypeScript.
+
+**Kryteria odbioru.**
+
+1. Wytworzenie jest powtarzalne: dwa przebiegi dają plik identyczny co do bajta.
+2. Każda z 1077 komend, 542 struktur i 363 wyliczeń ma odpowiednik w typach.
+3. Zmiana w `contract.json` bez ponownego wytworzenia jest wykrywana poleceniem
+   kończącym się kodem różnym od zera.
+4. `tsc --noEmit` przechodzi na wytworzonym pliku.
+5. Źródło kontraktu nietknięte — wykazane `git status`.
+
+### warstwa-polaczenia
+
+| | |
+|---|---|
+| **Gałąź** | `teren/warstwa-polaczenia` z `teren/typy-kontraktu` po jego zamknięciu |
+| **Wykaz plików** | `budowa/klient/src/polaczenie/` |
+
+**Przedmiot.** Gniazdo, koperta kontraktu, korelacja żądanie–odpowiedź,
+wznowienie po zerwaniu, przeciwciśnienie.
+
+**Kryteria odbioru.**
+
+1. Żądanie otrzymuje swoją odpowiedź także wtedy, gdy w locie jest wiele żądań —
+   wykazane próbą z dwudziestoma naraz.
+2. Zerwanie połączenia w trakcie strumienia i powrót nie gubi zdarzeń —
+   wykazane próbą z przerwaniem i porównaniem wykazu odebranych zdarzeń.
+3. Koperta niezgodna z kontraktem jest odrzucana przed wysłaniem, nie przez rdzeń.
+4. Warstwa nie dotyka drzewa dokumentu — wykazane brakiem odwołań do `document`
+   i `window` w plikach terenu.
+
+### warstwa-stanu
+
+| | |
+|---|---|
+| **Gałąź** | `teren/warstwa-stanu` z `teren/typy-kontraktu` po jego zamknięciu |
+| **Wykaz plików** | `budowa/klient/src/stan/` |
+
+**Przedmiot.** Odbiór 75 zdarzeń kontraktu, jedno źródło stanu, brak stanu
+w warstwie widoku.
+
+**Kryteria odbioru.**
+
+1. Każde z 75 zdarzeń ma obsługę albo jawne pominięcie wraz z powodem —
+   wykazane wykazem zestawionym z kontraktem.
+2. Stan zmienia się wyłącznie przez zdarzenia; brak zapisu stanu z widoku.
+3. Warstwa nie dotyka drzewa dokumentu.
+
+### warstwa-zakresu
+
+| | |
+|---|---|
+| **Gałąź** | `teren/warstwa-zakresu` z `teren/typy-kontraktu` po jego zamknięciu |
+| **Wykaz plików** | `budowa/klient/src/zakres/` |
+
+**Przedmiot.** Kaskada czterech kondygnacji — aplikacja, projekt, sesja, karta —
+na dwóch osiach: upoważnienie i dostęp. Dziedziczenie i nadpisanie w obie strony.
+
+**Kryteria odbioru.**
+
+1. Rozstrzygnięcie zakresu zgodne z pozycją 6 rejestru decyzji — wykazane tabelą
+   przypadków obejmującą dziedziczenie, zawężenie i rozszerzenie.
+2. Stan „nieustawione" jest odróżniony od „ustawione na pełne" — wykazane
+   przypadkiem, w którym zmiana ustawienia projektu dochodzi do karty.
+3. Tryby upoważnienia noszą nazwy wiążące: `manual`, `auto`, `plan`,
+   `bypass permissions`.
+4. Warstwa nie dotyka drzewa dokumentu.
 
 ## Zgłoszenia oczekujące na teren
 

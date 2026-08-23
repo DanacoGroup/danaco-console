@@ -1,0 +1,280 @@
+{
+  "dokument": "Wykaz progów kontrastu żetonów motywu — WEJŚCIE POMIARU budowa/scripts/kontrasty.mjs",
+  "wersja": "2026-08-14",
+  "pochodzenie": "ODTWORZENIE, nie kopia oryginału. Pierwowzór leży na maszynie Właściciela pod C:\\DanacoConsole_Git\\opracowania\\design\\03-zetony\\kontrasty.json i NIE JEST pod kontrolą wersji (katalog opracowania/ jest poza repozytorium z zamysłu — README rozdz. 2). Na maszynie roboczej ~/DanacoConsole tego pliku nie ma, więc przyrząd pomiaru produktu nie miał wykazu i kończył się zdaniem BLOKUJACE „brak wykazu wymagań\" — czyli nie mierzył NICZEGO.",
+  "zasada": "Przyrząd pomiaru produktu nie może zależeć od katalogu spoza repozytorium. Wykaz stoi więc tutaj, pod kontrolą wersji. kontrasty.mjs czyta go DOPIERO, gdy nie znajdzie pierwowzoru — jeśli Właściciel poda swój plik (argument, DANACO_KONTRASTY albo opracowania/), pierwszeństwo ma jego dokument.",
+  "czego_ten_wykaz_NIE_niesie": [
+    "PÓL fg/bg z zapisem barwy. Pierwowzór niósł dla każdej pary zadeklarowany zapis barwy i kontrasty.mjs zderzał go z arkuszem oraz z motyw/zetony.json — trzy zapisy jednej barwy, rozbieżność blokująca. Odtworzenie tych pól znaczyłoby PRZEPISANIE barw z arkusza i zderzanie arkusza z samym sobą: kontrola dawałaby zgodność zawsze, niezależnie od stanu produktu. Pole pominięte świadomie — pomiar słabszy o jedno zderzenie jest uczciwszy niż zderzenie pozorne (README 5.5).",
+    "PROGÓW OBNIŻONYCH. Pierwowzór niósł dla części par próg niższy niż WCAG 2.1 AA i Właściciel rozstrzygnął, że progów nie ruszamy. Odtworzenie nie zna ANI KTÓRE pary miały próg obniżony, ANI DO JAKIEJ wartości — zgadnięcie byłoby wpisaniem liczby bez pokrycia. Wykaz niesie więc jeden próg jawny: 4.50, czyli WCAG 2.1 AA dla tekstu zwykłego.",
+    "RODZAJU ROLI. WCAG dopuszcza 3.00 dla tekstu dużego (1.4.3) oraz dla obrysów i wskaźników fokusu (1.4.11). Wykaz nie mówi, która para jest którą rolą, więc pary obrysu i fokusu wychodzą tu poniżej progu, choć wobec właściwej reguły WCAG mogą być zgodne. To jest NIEUSTALONE i rozstrzyga Właściciel przy porównaniu z pierwowzorem."
+  ],
+  "do_porownania_przez_wlasciciela": "Pary i ich żetony pochodzą z wykazu PARY w budowa/scripts/kontrasty.mjs — 33 pozycje, tyle samo, ile deklarował pierwowzór. Zgadza się liczba i zgadzają się nazwy ról; różnić się mogą PROGI. Przy porównaniu z oryginałem wystarczy podmienić wartości pola „prog\".",
+  "prog_domyslny": 4.5,
+  "prog_zrodlo": "WCAG 2.1 AA, tekst zwykły (kryterium 1.4.3)",
+  "pomiary": [
+    {
+      "para": "tekst / tło (jasny)",
+      "zetony": [
+        "tekst",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst / powierzchnia (jasny)",
+      "zetony": [
+        "tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-2 / tło (jasny)",
+      "zetony": [
+        "tekst-2",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-2 / powierzchnia (jasny)",
+      "zetony": [
+        "tekst-2",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-2 / powierzchnia-2 (jasny)",
+      "zetony": [
+        "tekst-2",
+        "powierzchnia-2"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-3 / tło (jasny)",
+      "zetony": [
+        "tekst-3",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-3 / powierzchnia (jasny)",
+      "zetony": [
+        "tekst-3",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "biel / przycisk atrament (jasny)",
+      "zetony": [
+        "atrament-tekst",
+        "atrament"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sygnal-tekst / tło (jasny)",
+      "zetony": [
+        "sygnal",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sygnal-tekst / powierzchnia (jasny)",
+      "zetony": [
+        "sygnal",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sygnal-tekst / sygnal-tlo (jasny)",
+      "zetony": [
+        "sygnal",
+        "sygnal-tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "biel / sygnał wypełnienie",
+      "zetony": [
+        "szary-0",
+        "sygnal-wypelnienie"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "obrys kontrolki / tło (jasny)",
+      "zetony": [
+        "obrys-mocny",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "fokus sygnał / tło (jasny)",
+      "zetony": [
+        "fokus",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sukces tekst / tło stanu (jasny)",
+      "zetony": [
+        "sukces-tekst",
+        "sukces-tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "ostrzeżenie tekst / tło stanu (jasny)",
+      "zetony": [
+        "ostrzezenie-tekst",
+        "ostrzezenie-tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "błąd tekst / tło stanu (jasny)",
+      "zetony": [
+        "blad-tekst",
+        "blad-tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sukces tekst / powierzchnia (jasny)",
+      "zetony": [
+        "sukces-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "ostrzeżenie tekst / powierzchnia (jasny)",
+      "zetony": [
+        "ostrzezenie-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "błąd tekst / powierzchnia (jasny)",
+      "zetony": [
+        "blad-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst / tło (ciemny)",
+      "zetony": [
+        "tekst",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst / powierzchnia (ciemny)",
+      "zetony": [
+        "tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-2 / tło (ciemny)",
+      "zetony": [
+        "tekst-2",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-2 / powierzchnia (ciemny)",
+      "zetony": [
+        "tekst-2",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "tekst-3 / powierzchnia (ciemny)",
+      "zetony": [
+        "tekst-3",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "atrament / przycisk biel (ciemny)",
+      "zetony": [
+        "atrament-tekst",
+        "atrament"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sygnal-tekst / tło (ciemny)",
+      "zetony": [
+        "sygnal",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sygnal-tekst / powierzchnia (ciemny)",
+      "zetony": [
+        "sygnal",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "fokus sygnał / tło (ciemny)",
+      "zetony": [
+        "fokus",
+        "tlo"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "sukces tekst / powierzchnia (ciemny)",
+      "zetony": [
+        "sukces-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "ostrzeżenie tekst / powierzchnia (ciemny)",
+      "zetony": [
+        "ostrzezenie-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "błąd tekst / powierzchnia (ciemny)",
+      "zetony": [
+        "blad-tekst",
+        "powierzchnia"
+      ],
+      "prog": 4.5
+    },
+    {
+      "para": "biel / sygnał wypełnienie (ciemny przycisk)",
+      "zetony": [
+        "szary-0",
+        "sygnal-wypelnienie"
+      ],
+      "prog": 4.5
+    }
+  ]
+}

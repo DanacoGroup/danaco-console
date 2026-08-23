@@ -1,0 +1,55 @@
+/*
+ * Panel „Archiwum ekspertów” Agent Buildera.
+ *
+ * Arkusz osobny, tak jak `doradca.css`: arkusz modułu przekracza próg
+ * 300 wierszy, więc podział idzie po komponentach.
+ *
+ * `data-pokrycie` niesie jedną z pięciu wartości `StanPokrycia`; wiersz maluje
+ * trzy z nich, bo tylko trzy znaczą coś innego niż „w porządku”: brak
+ * w kontrakcie, brak uchwytu w rdzeniu i stan nieustalony. Stan nieustalony nie
+ * dostaje barwy ostrzeżenia — brak odpowiedzi rdzenia nie jest orzeczeniem
+ * o braku.
+ */
+
+.da-archiwum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.da-archiwum__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.da-archiwum__wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm);
+}
+
+.da-archiwum__opis {
+  flex: 1 1 auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+
+.da-archiwum__wiersz[data-pokrycie='brak-w-kontrakcie'],
+.da-archiwum__wiersz[data-pokrycie='rdzen-nie-ma'] {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+/* Cisza rdzenia — przygaszone, ale bez barwy orzeczenia. */
+.da-archiwum__wiersz[data-pokrycie='nieustalone'] {
+  border-style: dashed;
+}

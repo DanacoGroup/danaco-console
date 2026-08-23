@@ -1,0 +1,75 @@
+/* ============================================================================
+   DANACO CONSOLE — RAMA OKNA OPERACYJNEGO
+   ----------------------------------------------------------------------------
+   Obudowa okna operacyjnego: nagłówek z rolą, pas akcji, pas narzędzi
+   kontekstowych i ciało treści.
+
+   Wygląd ramy należy do biblioteki, nie do modułu — moduł dokłada swoją klasę
+   tylko wtedy, gdy naprawdę ma czym (patrz `komponenty/rama-okna.ts`,
+   parametr `przedrostek`).
+
+   Barwa, obrys i cień pochodzą z `.dn-karta` — tutaj wyłącznie układ i odstępy,
+   wszystkie z żetonów `motyw/`.
+   ============================================================================ */
+
+.dn-okno {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Krój tytułu niesie `.dn-karta-tytul`; tutaj tylko zdjęcie marginesu
+   przeglądarki, żeby wiersz nagłówka nie rozjeżdżał się o styl domyślny h3. */
+.dn-okno__tytul {
+  margin: 0;
+}
+
+/* Miejsce na sterowanie wiersza tytułu — dosuwane do prawej krawędzi, żeby
+   nazwa i plakietka roli zostały przy lewej. */
+.dn-okno__pasek {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  margin-left: auto;
+}
+
+.dn-okno__znacznik {
+  margin-left: var(--dn-od-1);
+}
+
+.dn-okno__opis {
+  margin: 0;
+  padding: 0 var(--dn-od-4) var(--dn-od-2);
+}
+
+.dn-okno__akcje,
+.dn-okno__narzedzia {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  padding: 0 var(--dn-od-4) var(--dn-od-2);
+}
+
+/* Panel akcji zamyka się kreską — pod nią zaczyna się treść okna. */
+.dn-okno__akcje {
+  padding-bottom: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* Pas bez ani jednej kontrolki nie zostawia odstępu ani kreski: rama powstaje
+   z kompletem gniazd, a okno wypełnia tylko te, których używa. Bez tej reguły
+   okno bez akcji nosiłoby pustą kreskę pod nagłówkiem. */
+.dn-okno__pasek:empty,
+.dn-okno__akcje:empty,
+.dn-okno__narzedzia:empty {
+  display: none;
+}
+
+.dn-okno__cialo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}

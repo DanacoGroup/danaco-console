@@ -1,0 +1,131 @@
+/* ============================================================================
+   DANACO CONSOLE — BLOKI PRZEJRZYSTOŚCI WPISU
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: wygląd bloków zwijanych wpisu — prowenancji
+   („co poszło do modelu"), podglądu pracy modelu i wywołań narzędzi —
+   wraz z blokiem kodu i wierszem danych.
+
+   Blok prowenancji jest jedynym miejscem, w którym warstwa rozmowy sięga po
+   tło akcentu — powierzchnia drobna i zwinięta domyślnie.
+   ============================================================================ */
+
+.dc-blok {
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background-color: var(--dn-powierzchnia-2);
+}
+
+.dc-blok--akcent {
+  border-color: var(--dn-sygnal-obrys);
+  background-color: var(--dn-sygnal-tlo);
+}
+
+/* Odmiana dla `NastawyBloku.odmiana === 'blad'`. Błędne wywołanie narzędzia
+   znaczy plakietka `.dn-plakietka--blad` w środku bloku (`blok-narzedzi.ts`),
+   a sam blok zostaje neutralny — ta odmiana czeka na wywołującego. */
+.dc-blok--blad {
+  border-color: var(--dn-blad-obrys);
+  background-color: var(--dn-blad-tlo);
+}
+
+/* ---------------------------------------------------------------- *
+ * NAGŁÓWEK ZWIJANY                                                  *
+ * ---------------------------------------------------------------- */
+
+.dc-blok__naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  cursor: pointer;
+  list-style: none;
+}
+
+.dc-blok__naglowek::-webkit-details-marker {
+  display: none;
+}
+
+.dc-blok__naglowek:hover {
+  background-color: var(--dn-hover);
+}
+
+/* Pierścień ogniska jest obowiązkowy dla każdej kontrolki. */
+.dc-blok__naglowek:focus-visible {
+  outline: 2px solid var(--dn-fokus);
+  outline-offset: 2px;
+}
+
+.dc-blok__ikona {
+  color: var(--dn-tekst-3);
+  flex: none;
+}
+
+.dc-blok--akcent .dc-blok__ikona,
+.dc-blok--akcent .dc-blok__tytul {
+  color: var(--dn-sygnal);
+}
+
+.dc-blok__podtytul {
+  margin-left: auto;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------- *
+ * TREŚĆ BLOKU                                                       *
+ * ---------------------------------------------------------------- */
+
+.dc-blok__tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-3) var(--dn-od-3);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.dc-blok__podnaglowek {
+  margin: var(--dn-od-2) 0 0;
+}
+
+.dc-kod {
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-xs);
+  background-color: var(--dn-powierzchnia);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dc-dana {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  align-items: baseline;
+}
+
+.dc-dana__nazwa {
+  min-width: 160px;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+.dc-narzedzie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  align-items: flex-start;
+}

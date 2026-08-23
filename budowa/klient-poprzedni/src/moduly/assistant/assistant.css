@@ -1,0 +1,436 @@
+/*
+ * Warstwa wizualna modułu Assistant.
+ *
+ * Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
+ * z żetonów motywu. Klasy `dn-*` (pole, przycisk, plakietka, kafel,
+ * tabela, pusty stan, dymek) wnosi biblioteka komponentów; tutaj leży wyłącznie
+ * rozkład okien modułu i to, czego biblioteka nie ma: pasy układu, wykaz
+ * zleceń, chronologiczny zapis i znakowanie faz stanu.
+ *
+ * Kontrolki formularza modułu pochodzą z `modele/kontrolki-formularza`, więc
+ * moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
+ */
+
+@import '../../modele/modele.css';
+
+/* ── Rozkład modułu i okien ───────────────────────────────────────────────── */
+
+.ma-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  overflow: auto;
+}
+
+.ma-modul__pas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+}
+
+.ma-modul__pas--monitory,
+.ma-modul__pas--zarzadcy {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--dn-od-3);
+}
+
+/*
+ * Okna zarządcze są szersze od monitorów: prowadzą formularze i wykazy o dwóch
+ * kolumnach treści, a nie tabelę stanu. Poniżej progu oba pasy zwijają się do
+ * jednej kolumny tym samym mechanizmem.
+ */
+.ma-modul__pas--zarzadcy {
+  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+}
+
+.ma-okno {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ma-okno--wiodace {
+  border-color: var(--dn-sygnal-obrys);
+}
+
+.ma-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* Stopka okna — miejsce braków należących do całego okna, nie do zakładki. */
+.ma-okno__stopka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys);
+  padding-top: var(--dn-od-2);
+}
+
+.ma-panel__tytul {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+/* ── Cztery fazy okna: pustka, ładowanie, odmowa, gotowe ──────────────────── */
+
+.ma-stan__powloka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ma-stan {
+  padding: var(--dn-od-2);
+}
+
+.ma-stan__opis {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin: 0;
+}
+
+.ma-stan__powloka[data-faza='blad'] .ma-stan {
+  border-left: 2px solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+  color: var(--dn-blad-tekst);
+}
+
+.ma-stan__tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ma-brak {
+  border-top: 1px dashed var(--dn-obrys);
+  padding-top: var(--dn-od-1);
+}
+
+/* ── Dymek objaśnienia [?] ────────────────────────────────────────────────── */
+
+.ma-dymek {
+  flex: none;
+}
+
+.ma-dymek__znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-od-4);
+  height: var(--dn-od-4);
+  padding: 0;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  color: var(--dn-tekst-3);
+  cursor: help;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.ma-dymek__znak:hover {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+}
+
+.ma-dymek__znak:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* ── Voice Console: pasek promptu, odpowiedź, siatka akcji ────────────────── */
+
+.ma-pasek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ma-pasek__kontrolki,
+.ma-pasek__przyciski {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.ma-odpowiedz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+}
+
+.ma-odpowiedz__transkrypcja {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.ma-odpowiedz__odnosnik {
+  font-family: var(--dn-ff-mono);
+}
+
+.ma-odpowiedz__przyciski {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.ma-akcje {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ma-akcje__kafel {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ── Rozpoznawanie mowy ───────────────────────────────────────────────────── */
+
+.ma-mowa__kontrolki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* ── Okna zarządcze: obszary zakładek, formularze i wykazy ────────────────── */
+
+.ma-obszar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ma-formularz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ma-formularz__przyciski {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.ma-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* Wiersz wąski — przełącznik z nazwą w jednej linii, bez zdania objaśnienia. */
+.ma-wiersz--waski {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+}
+
+.ma-poziomy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2) var(--dn-od-4);
+}
+
+/* Pole definicji makra — dane krojem mono, jak każdy zapis maszynowy. */
+.ma-kod {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: pre;
+}
+
+.ma-wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ma-pozycja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+.ma-pozycja__tytul {
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-srednia);
+}
+
+.ma-pozycja__opis {
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+}
+
+.ma-pozycja__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/*
+ * Propozycja modelu odróżnia się kreską, nie barwą tła: znaczenie niesie
+ * plakietka pochodzenia w opisie pozycji, a kreska jest tylko jej echem.
+ */
+.ma-pozycja[data-pochodzenie='model'] {
+  border-left: 2px solid var(--dn-sygnal-obrys);
+}
+
+.ma-profile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* ── Actions Monitor: wykaz zleceń ────────────────────────────────────────── */
+
+.ma-zlecenia {
+  width: 100%;
+}
+
+.ma-zlecenia__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+.ma-zlecenia__priorytet {
+  width: var(--dn-od-16);
+}
+
+.ma-zlecenia__szczegoly,
+.ma-dziennik__wynik {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: pre-wrap;
+}
+
+/*
+ * Zlecenia spoza okna modułu — druga tabela Actions Monitora.
+ *
+ * Te zlecenia biegną w innym oknie tej samej sesji, więc wykaz musi dać się
+ * odróżnić od wykazu okna jednym spojrzeniem. Robi to obrys i wcięcie, a nie
+ * barwa sama — znaczenie niesie tytuł sekcji.
+ */
+.ma-spoza {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px dashed var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+.ma-spoza__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.ma-spoza__zasieg {
+  margin: 0;
+}
+
+/* ── Activity Feed: chronologiczny zapis ──────────────────────────────────── */
+
+.ma-dziennik {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ma-dziennik__wpis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm);
+}
+
+.ma-dziennik__wpis[data-wybrany='tak'] {
+  background: var(--dn-panel);
+}
+
+.ma-dziennik__czolo {
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+.ma-dziennik__tresc {
+  margin: 0;
+}
+
+.ma-dziennik__akcje,
+.ma-dziennik__stopka,
+.ma-dziennik__filtr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+.ma-dziennik__filtr {
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/*
+ * Nagłówek doby rozdziela zapis. Nie jest wpisem, więc nie ma tła pozycji ani
+ * przycisków — niesie sam napis wersalikami i kreskę pod nim.
+ */
+.ma-dziennik__dzien {
+  margin-top: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  padding-bottom: var(--dn-od-1);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+}
+
+.ma-dziennik__dzien:first-child {
+  margin-top: 0;
+}
+
+.ma-dziennik__zakres {
+  margin: 0;
+}

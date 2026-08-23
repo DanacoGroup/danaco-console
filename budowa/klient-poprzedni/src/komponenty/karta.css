@@ -1,0 +1,138 @@
+/* ============================================================================
+   Danaco Console — karta, karta środowiska, kafel.
+
+   Karta środowiska w spoczynku nie nosi sygnału. Sygnał pojawia się dopiero
+   przy najechaniu albo aktywności — wstęga górna 2 px (`--dn-wym-wstega`).
+   ============================================================================ */
+
+.dn-karta {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+}
+.dn-karta-cialo { padding: var(--dn-odstep-panel) var(--dn-od-4); }
+.dn-karta-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-karta-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+}
+
+/* Karta interaktywna */
+.dn-karta--klikalna {
+  cursor: pointer;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta--klikalna:hover {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-2);
+  transform: translateY(-1px);
+}
+.dn-karta--klikalna:active { transform: translateY(0); }
+.dn-karta--wybrana { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+
+/* Karta środowiska — wejście do środowiska. Spoczynek bez sygnału;
+   najechanie i aktywność: wstęga górna 2 px.
+   Wyparta przez `.dn-karta--akcent` z `.dn-strona__karta*`:
+   `strona-glowna/karta-srodowiska.ts` buduje karty środowisk na tamtej
+   rodzinie, nie na tej. */
+.dn-karta-srodowiska {
+  position: relative;
+  overflow: hidden;
+  padding: var(--dn-od-6);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-powierzchnia);
+  cursor: pointer;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--dn-wym-wstega);
+  background: var(--dn-kropka);
+  opacity: 0;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska[aria-current='true'] {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-2);
+  transform: translateY(-2px);
+}
+.dn-karta-srodowiska:hover::before,
+.dn-karta-srodowiska[aria-current='true']::before { opacity: 1; }
+.dn-karta-srodowiska-godlo {
+  width: 40px; height: 40px;
+  margin-bottom: var(--dn-od-4);
+  color: var(--dn-tekst);
+}
+.dn-karta-srodowiska-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-3xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+.dn-karta-srodowiska-motto {
+  margin-top: var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.dn-karta-srodowiska-opis {
+  margin-top: var(--dn-od-3);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst-2);
+  max-width: 44ch;
+}
+
+/* Kafel komponentu własnego — krój bazowy */
+.dn-kafel {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-kafel:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-powierzchnia); }
+/* Wyparta przez `.dn-karta--komponent` — `strona-glowna/kafel-komponentu.ts`
+   buduje kafel komponentu na rodzinie `.dn-karta`, nie na tej. */
+.dn-kafel-ikona {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  flex: none;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+}
+.dn-kafel-etykieta { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.dn-kafel-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }

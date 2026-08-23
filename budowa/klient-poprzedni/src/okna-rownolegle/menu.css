@@ -1,0 +1,243 @@
+/* ============================================================================
+   DANACO CONSOLE — MENU PANELI W NAGŁÓWKU OKNA ROZMOWY
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: wygląd menu rozwijanego, wykazu pozycji, zdania
+   o brakach i rzędu skrótów. Rozkład sceny opisuje `uklad.css`, wygląd samego
+   gniazda — `gniazdo.css` (podział arkusza per komponent).
+
+   Menu rozwijane stoi tutaj, bo klient nie ma wspólnej formy dropdownu,
+   popoveru ani menu kontekstowego. Powstaje więc pod nazwą własną `.dn-menu`,
+   a nie na aliasie zgodności.
+
+   Wszystkie wartości pochodzą z żetonów `motyw/` — zero barw, odstępów,
+   promieni i rozmiarów pisma zaszytych wprost.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   MENU ROZWIJANE — uchwyt i lista pod nim
+   --------------------------------------------------------------------------- */
+.dn-menu {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/* Znacznik „coś nowego" — mała kropka sygnałowa w prawym górnym rogu uchwytu.
+   Arkusz daje wyłącznie formę; zapala ją atrybut `data-znacznik`. */
+.dn-menu__uchwyt {
+  position: relative;
+}
+
+.dn-menu__uchwyt[data-znacznik='tak']::after,
+.dn-skroty-paneli__przycisk[data-znacznik='tak']::after {
+  content: '';
+  position: absolute;
+  top: var(--dn-od-1);
+  right: var(--dn-od-1);
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-informacja-tekst);
+}
+
+.dn-menu__lista {
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  right: 0;
+  z-index: var(--dn-z-przybornik);
+  display: flex;
+  flex-direction: column;
+  min-width: var(--dn-wym-toast-min);
+  max-width: var(--dn-wym-toast-max);
+  max-height: 60vh;
+  padding: var(--dn-od-1);
+  overflow-y: auto;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+}
+
+.dn-menu__lista[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   WYKAZ PANELI — sekcja „Panele" menu
+   --------------------------------------------------------------------------- */
+.dn-menu-paneli {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.dn-menu-paneli__sekcja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+/* Nagłówek sekcji jest drobny i nie jest pisany wersalikami */
+.dn-menu-paneli__naglowek {
+  margin: 0;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.dn-menu-paneli__wykaz {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Wiersz pozycji: ptaszek · ikona · treść · skrót. Wiersz jest przełącznikiem,
+   nie czynnością jednorazową — stan niesie aria-checked. */
+.dn-menu-paneli__pozycja {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  width: 100%;
+  padding: var(--dn-od-2);
+  border: none;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dn-menu-paneli__pozycja:hover {
+  background: var(--dn-hover);
+}
+
+.dn-menu-paneli__pozycja:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Miejsce ptaszka jest zajęte zawsze — znika widoczność, nie miejsce, żeby
+   wiersze nie skakały w poziomie przy przełączaniu panelu */
+.dn-menu-paneli__ptaszek {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  flex: none;
+  color: var(--dn-sygnal);
+  visibility: hidden;
+}
+
+.dn-menu-paneli__pozycja[aria-checked='true'] .dn-menu-paneli__ptaszek {
+  visibility: visible;
+}
+
+.dn-menu-paneli__pozycja[aria-checked='true'] .dn-menu-paneli__nazwa {
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dn-menu-paneli__ikona {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  color: var(--dn-tekst-3);
+}
+
+.dn-menu-paneli__tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-0);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dn-menu-paneli__nazwa {
+  color: var(--dn-tekst);
+  line-height: var(--dn-lh-ciasny);
+}
+
+/* Przeznaczenie — po co Operatorowi ten panel; drugi wiersz, nie dymek */
+.dn-menu-paneli__przeznaczenie {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+}
+
+/* Skrót klawiaturowy jest tu samym napisem — nic go nie podpina */
+.dn-menu-paneli__skrot {
+  flex: none;
+  align-self: center;
+  padding: var(--dn-od-0) var(--dn-od-1);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-xs);
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: nowrap;
+}
+
+/* Zdanie o brakach — mówi o braku, nigdy o zakazie. Stoi pod wykazem sekcji
+   paneli, nad kreską; przy zerze nie ma go wcale. */
+.dn-menu-paneli__braki {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.dn-menu-paneli__braki[hidden] {
+  display: none;
+}
+
+/* Kreska działań sesji — rysuje się wyłącznie, gdy jest co za nią postawić,
+   więc w kodzie powstaje warunkowo, a nie jest tu chowana */
+.dn-menu-paneli__kreska {
+  width: 100%;
+  margin: var(--dn-od-1) 0;
+  border: none;
+  border-top: 1px solid var(--dn-obrys);
+}
+
+/* ---------------------------------------------------------------------------
+   RZĄD SKRÓTÓW — ikony obok ⋮ w nagłówku rozmowy
+   --------------------------------------------------------------------------- */
+.dn-skroty-paneli {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  min-width: 0;
+}
+
+/* Rząd bez ani jednego skrótu znika zamiast zostawiać pustą szczelinę */
+.dn-skroty-paneli:empty {
+  display: none;
+}
+
+.dn-skroty-paneli__przycisk {
+  position: relative;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------------------
+   KOMPLET STEROWANIA PANELAMI W NAGŁÓWKU ROZMOWY
+   Rząd skrótów i przycisk `⋮` w jednym wierszu: najpierw skróty, potem menu.
+   Bez zawijania — wiersz ma zostać gęsty także przy wąskim nagłówku.
+   --------------------------------------------------------------------------- */
+.dn-okna__sterowanie-paneli {
+  display: flex;
+  flex: none;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--dn-od-1);
+}

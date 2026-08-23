@@ -1,0 +1,41 @@
+#!/bin/sh
+# Sprzątanie po zdjęciu pakietu serwera Danaco Console.
+set -e
+
+KATALOG_DANYCH=/var/lib/danaco-console
+
+case "$1" in
+remove)
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload >/dev/null 2>&1 || true
+	fi
+	;;
+purge)
+	if [ -d /run/systemd/system ]; then
+		systemctl disable danaco-console.service >/dev/null 2>&1 || true
+		systemctl daemon-reload >/dev/null 2>&1 || true
+	fi
+	rmdir /etc/danaco-console 2>/dev/null || true
+	# Konto usługi znika wraz z pakietem.
+	if getent passwd danaco-console >/dev/null; then
+		deluser --system danaco-console >/dev/null 2>&1 || true
+	fi
+	if getent group danaco-console >/dev/null; then
+		delgroup --system danaco-console >/dev/null 2>&1 || true
+	fi
+	# Katalog danych ZOSTAJE — świadomie. Niesie dorobek Operatora: bazę
+	# wiedzy, profile kont i dzienniki. Czyszczenie pakietu nie jest zgodą na
+	# skasowanie tego dorobku, więc pakiet mówi, co zostało, i pozostawia
+	# decyzję człowiekowi.
+	if [ -d "$KATALOG_DANYCH" ]; then
+		echo "Dane Operatora zostały w $KATALOG_DANYCH — usuń je z ręki, jeśli mają zniknąć."
+	fi
+	;;
+upgrade | failed-upgrade | abort-install | abort-upgrade | disappear) ;;
+*)
+	echo "postrm: nieznane wywołanie: $1" >&2
+	exit 1
+	;;
+esac
+
+exit 0

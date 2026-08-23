@@ -1,0 +1,117 @@
+/* ============================================================================
+   DANACO CONSOLE — SEKCJA MODELI · PANEL DWUKOLUMNOWY I KOLUMNY WYKAZU
+   ----------------------------------------------------------------------------
+   Arkusz opisuje układ wspólny dwóch paneli sekcji — kont oraz zasad
+   i tożsamości. Oba mają ten sam kształt: pasek działań u góry, kolumna wykazu
+   po lewej, treść po prawej.
+
+   Ramę sekcji i formularz konta prowadzi `modele.css`, który ten plik wciąga.
+   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
+
+   Pozycja wykazu opisująca byt nieczynny nie jest wygaszona ani nieklikalna:
+   nieczynność jest stanem danych, nie blokadą interfejsu.
+   ============================================================================ */
+
+/* --- Panel dwukolumnowy: pasek nad wykazem i treścią --------------------- */
+
+.dm-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-panel__pasek {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-5);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dm-panel__rozpychacz { flex: 1 1 auto; }
+
+.dm-panel__wyjasnienie {
+  flex: 1 1 420px;
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.dm-panel__cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* --- Kolumna wykazu (konta oraz kategorie zasad) ------------------------- */
+
+.dm-wykaz,
+.dm-kategorie {
+  flex: none;
+  width: var(--dn-wym-boczna);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dn-od-3);
+  border-right: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dm-wykaz__lista { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+
+.dm-wykaz__pozycja,
+.dm-kategorie__pozycja {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  height: auto;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  text-align: start;
+}
+
+.dm-wykaz__nazwa,
+.dm-kategorie__nazwa {
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst);
+}
+
+.dm-wykaz__opis {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dm-wykaz__znaki,
+.dm-kategorie__znaki {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  margin-top: 2px;
+}
+
+.dm-wykaz__znak,
+.dm-kategorie__znak { font-size: var(--dn-fs-xs); }
+
+.dm-kategorie__komunikat {
+  margin: 0;
+  padding: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.dm-kategorie__warstwa {
+  margin: var(--dn-od-3) 0 var(--dn-od-1);
+}
+
+.dm-kategorie__warstwa:first-child { margin-top: 0; }
+
+/* Stan pusty wykazu kont — biblioteczny `.dn-pusty-stan` niesie układ, tutaj
+   wyłącznie oddech dopasowany do wąskiej kolumny. */
+.dn-pusty-stan.dm-wykaz__pusto {
+  padding: var(--dn-od-6) var(--dn-od-3);
+}

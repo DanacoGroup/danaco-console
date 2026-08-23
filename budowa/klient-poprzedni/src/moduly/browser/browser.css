@@ -1,0 +1,207 @@
+/*
+ * Warstwa wizualna modułu Browser — układ modułu, ramy okien, trzy stany
+ * obowiązkowe i dymek objaśnienia. Prefiks lokalny `mb-`.
+ *
+ * Plik nie zna ani jednej barwy zapisanej wprost: wszystkie wartości pochodzą
+ * z żetonów motywu. Klasy `dn-*` (przycisk, pole, plakietka, pusty
+ * stan, spinner, dymek) wnosi biblioteka komponentów.
+ *
+ * Podział na cztery arkusze wynika z progu 300 wierszy na arkusz: podgląd
+ * strony, paski narzędzi i wykazy mieszkają w `podglad-i-wykazy.css`, scena
+ * z płótnem adnotacji — w `adnotacja.css`, a pasek kontekstu wraz z oknami
+ * operacji i panelami warstwy czwartej — w `operacje.css`. Kontrolki formularzy
+ * pochodzą z `modele/kontrolki-formularza`, stąd import `modele.css`.
+ */
+
+@import '../../modele/modele.css';
+@import './podglad-i-wykazy.css';
+@import './adnotacja.css';
+@import './operacje.css';
+
+.mb-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  overflow: auto;
+}
+
+/*
+ * Pas rozszerzeń bocznych. Kolumny układają się same, bo rozszerzeń widocznych
+ * naraz bywa od zera do pięciu — siatka o stałej liczbie kolumn zostawiałaby
+ * puste miejsca po zwiniętych panelach.
+ */
+.mb-modul__pas--rozszerzenia {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--dn-od-3);
+}
+
+.mb-okno {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+}
+
+.mb-okno--wiodace {
+  border-color: var(--dn-obrys-mocny);
+}
+
+/*
+ * Pas nagłówka stoi na bibliotecznym `.dn-karta-naglowek` (układ, odstęp, krój
+ * nazwy); moduł dokłada wyłącznie własne odstępstwo. Wcięcie zdejmowane, bo
+ * niesie je już `.mb-okno`, a zawijanie jest konieczne: nagłówek Browser Window
+ * mieści obok nazwy przycisk odczytu stanu i zdanie o stanie okna.
+ */
+.mb-okno__naglowek {
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.mb-stan-okna,
+.mb-uczciwosc,
+.mb-uwaga {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* ── Trzy stany obowiązkowe okna: pusty, ładowania, błędu ─────────────────── */
+
+.mb-stan__powloka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.mb-stan {
+  padding: var(--dn-od-3);
+}
+
+/*
+ * Komunikat blokowy stanu błędu: cienka kreska po lewej, bez tła i bez obwódki,
+ * trwały w układzie — „Spróbuj ponownie" go nie zdejmuje.
+ */
+.mb-stan__powloka[data-faza='blad'] .mb-stan {
+  align-items: flex-start;
+  padding-left: var(--dn-od-3);
+  border-left: 2px solid var(--dn-blad-obrys);
+  color: var(--dn-blad-tekst);
+  text-align: left;
+}
+
+.mb-stan__tytul,
+.mb-stan__opis,
+.mb-stan__ponow,
+.mb-stan__spinner {
+  margin: 0;
+}
+
+.mb-stan__tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ── Dymek objaśnienia [?] przy elemencie konfiguracji ────────────────────── */
+
+.mb-dymek {
+  align-items: center;
+}
+
+/*
+ * Znak [?] jest przyciskiem, więc musi dać się trafić palcem: wymiar bierze
+ * z żetonu pola wyboru (16 px, na dotyku 20 px), nie z żetonu kropki sygnału.
+ */
+.mb-dymek__znak {
+  width: var(--dn-wym-check);
+  height: var(--dn-wym-check);
+  padding: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  line-height: 1;
+  cursor: help;
+}
+
+.mb-dymek__znak:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* ── Browser Window: nawigacja i rozkład ciała okna ───────────────────────── */
+
+.mb-nawigacja {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
+
+.mb-nawigacja__przyciski {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
+
+.mb-przegladarka__cialo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--dn-od-3);
+}
+
+.mb-przegladarka__cialo[data-podzial='tak'] {
+  grid-template-columns: minmax(320px, 2fr) minmax(240px, 1fr);
+}
+
+/* ── Panel rodzin rdzenia ─────────────────────────────────────────────────────
+   Sekcje czynności obszaru `browser.*` prowadzonych przez rdzeń: karty,
+   przestrzenie, monitory, kanały, kolejka czytania, pobrania, wytwory, makra
+   i granice Wykonawcy. Układ jest zwarty i płynny, bo panel stoi w kolumnie
+   bocznej albo pod obszarem renderowania — ma być w zasięgu jednego kliknięcia,
+   nie zabierać miejsca stronie. */
+.mb-rodziny {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-odstep-3, 12px);
+  margin-top: var(--dn-odstep-3, 12px);
+}
+
+.mb-rodziny__sekcja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-odstep-2, 8px);
+  padding: var(--dn-odstep-3, 12px);
+  border: 1px solid var(--dn-obramowanie, rgba(127, 127, 127, 0.3));
+  border-radius: var(--dn-promien-2, 8px);
+}
+
+.mb-rodziny__tytul {
+  margin: 0;
+  font-size: var(--dn-tekst-sm, 0.875rem);
+  font-weight: 600;
+}
+
+.mb-rodziny__pola {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-odstep-2, 8px);
+}
+
+.mb-rodziny__pole {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.mb-rodziny__pasek {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-odstep-2, 8px);
+}

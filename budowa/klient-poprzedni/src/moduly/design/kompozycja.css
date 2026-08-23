@@ -1,0 +1,205 @@
+/* Moduł design — kanwa kompozycji, przybornik i panele boczne.
+   Reguły dotyczące układania kompozycji: plansza, warstwy, narzędzia i wykazy
+   paneli bocznych. Pozostałe reguły modułu stoją w `design.css`.
+   Barwy wyłącznie z żetonów motywu. */
+
+/* --- Przybornik kompozycji ------------------------------------------------ */
+
+.md-przybornik {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--dn-od-2);
+}
+
+.md-przybornik__grupa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+.md-przybornik__tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+/* --- Kanwa kompozycji ----------------------------------------------------- */
+
+.md-plansza__cialo {
+  display: grid;
+  grid-template-columns: minmax(320px, 2fr) minmax(260px, 1fr);
+  gap: var(--dn-od-3);
+}
+
+/* Kolumna boczna kanwy: panel warstw nad inspektorem właściwości. Porządek
+   wynika z pracy — najpierw wskazuje się warstwę, potem opisuje jej liczby. */
+.md-plansza__bok {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-width: 0;
+}
+
+/* --- Tryby narzędzia kanwy ------------------------------------------------ */
+
+.md-tryby {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.md-tryby__zdanie { margin: 0; max-width: 92ch; }
+
+/* Tryb bez wykonania w tej budowie jest w pełni wybieralny — znak stoi przy
+   zdaniu pod wykazem, nie w wygaszeniu kontrolki. */
+.md-tryby[data-czynny='false'] .md-tryby__zdanie {
+  padding-left: var(--dn-od-2);
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+}
+
+/* --- Inspektor właściwości warstwy ---------------------------------------- */
+
+.md-inspektor {
+  padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+.md-inspektor__siatka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--dn-od-2);
+}
+
+.md-inspektor__styl {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.md-inspektor__o-zapisie { margin: 0; }
+
+.md-inspektor__braki {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  gap: var(--dn-od-1) var(--dn-od-2);
+  margin: 0;
+  padding-top: var(--dn-od-2);
+  border-top: 1px dashed var(--dn-obrys);
+  font-size: var(--dn-fs-xs);
+}
+
+.md-inspektor__brak-nazwa { color: var(--dn-tekst-3); }
+
+.md-inspektor__brak-zdanie {
+  margin: 0;
+  color: var(--dn-tekst-2);
+}
+
+.md-plansza {
+  position: relative;
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+
+.md-plansza[data-siatka='true'] {
+  background-image:
+    linear-gradient(to right, var(--dn-obrys-subtelny) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--dn-obrys-subtelny) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.md-plansza__plotno {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
+.md-warstwa {
+  position: absolute;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+}
+
+.md-warstwa[data-zaznaczona='true'] {
+  border-color: var(--dn-sygnal-obrys);
+  box-shadow: var(--dn-cien-sygnal);
+}
+
+.md-warstwa[data-zablokowana='true'] { cursor: not-allowed; }
+
+/* --- Panele boczne okien -------------------------------------------------- */
+
+.md-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.md-panel__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  color: var(--dn-tekst-3);
+}
+
+.md-panel__opis { margin: 0; }
+
+.md-warstwy,
+.md-warianty,
+.md-historia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.md-warstwy__wiersz,
+.md-warianty__wiersz,
+.md-historia__wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm);
+}
+
+.md-warstwy__wiersz[data-zablokowana='true'] { background: var(--dn-powierzchnia-2); }
+.md-warstwy__adnotacja { flex: 1 1 auto; min-width: 8ch; }
+.md-historia__opis { flex: 1 1 auto; }
+
+.md-historia__roznica {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: pre-wrap;
+}
+
+
+/* Panel warstw stoi obok kanwy i nie może jej rozepchnąć — stąd własne
+   ograniczenie szerokości zamiast polegania na siatce nadrzędnej. */
+.md-panel-warstw { min-width: 0; }

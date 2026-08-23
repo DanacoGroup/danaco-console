@@ -1,0 +1,239 @@
+/* ============================================================================
+   DANACO CONSOLE — EKRAN INTERWENCJI Z TELEFONU (`mobile`, monitor)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy — wszystkie z żetonów motywu (`--dn-*`),
+   obudowa okna z `komponenty/rama-okna.ts`, przyciski z `komponenty/przycisk.css`.
+
+   Jeden wymiar jest tu własny: `--mb-cel-dotyku`. Motyw daje na
+   `(pointer: coarse)` 40 px (`motyw/wymiary.css`), a ten ekran potrzebuje
+   44 px. Próg podnosi się żetonem lokalnym o prefiksie modułu (jak `--dt-*`
+   Terminala), a nie wyjątkiem rozsypanym po regułach ani wpisem do słownika
+   `--dn-*`, bo podniesienie progu w całej powłoce należy do motywu.
+
+   Układ jednoręczny: jedna kolumna, karty pozycji u góry (czyta się je oczami),
+   arkusz dróg i pasek kwitu u dołu (dotyka się ich kciukiem). Nic nie zmniejsza
+   pisma poniżej `--dn-fs-sm` — treść ma być czytelna bez powiększania.
+   ============================================================================ */
+
+.mb-okno {
+  --mb-cel-dotyku: 44px;
+  --mb-cel-karty: 56px;
+}
+
+.mb-okno__cialo {
+  max-width: 100%;
+}
+
+/* Każdy cel dotknięcia mojego ekranu — przyciski ramy, arkusza i stopki. */
+.mb-cel {
+  min-height: var(--mb-cel-dotyku, 44px);
+  min-width: var(--mb-cel-dotyku, 44px);
+}
+
+/* ---------------------------------------------------------------------------
+   KAFELEK STANU PLATFORMY — jedyne miejsce okna wołające rodzinę `mobile.*`
+   --------------------------------------------------------------------------- */
+.mb-platforma {
+  margin: 0 0 var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.mb-platforma[data-stan='blad'] {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+.mb-platforma[data-stan='tresc'] {
+  border-color: var(--dn-sukces-obrys);
+  background: var(--dn-sukces-tlo);
+  color: var(--dn-sukces-tekst);
+}
+
+/* ---------------------------------------------------------------------------
+   EKRAN — jedna kolumna, od stanu przez wykaz do kwitu
+   --------------------------------------------------------------------------- */
+.mb-ekran {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+}
+
+.mb-ekran__stan {
+  margin: 0;
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst);
+}
+
+.mb-ekran__stan[data-stan='blad'] { color: var(--dn-blad-tekst); }
+.mb-ekran__stan[data-stan='pusto'] { color: var(--dn-tekst-2); }
+
+.mb-ekran__naglowek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-ekran__zrodlo {
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-left: 2px solid var(--dn-obrys-mocny);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-ekran__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ---------------------------------------------------------------------------
+   KARTA POZYCJI — cała karta jest celem pierwszego dotknięcia
+   --------------------------------------------------------------------------- */
+.mb-karta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-height: var(--mb-cel-karty, 56px);
+  width: 100%;
+  padding: var(--dn-od-3);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mb-karta__tytul {
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+}
+
+.mb-karta__kontekst {
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-karta[data-rodzaj='proces-bledny'] { border-color: var(--dn-blad-obrys); }
+.mb-karta[data-rodzaj='petla-zatrzymana'] { border-color: var(--dn-ostrzezenie-obrys); }
+
+/* ---------------------------------------------------------------------------
+   ARKUSZ DRÓG — drugie dotknięcie; kontekst u góry, drogi w zasięgu kciuka
+   --------------------------------------------------------------------------- */
+.mb-arkusz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-2);
+}
+
+.mb-arkusz[hidden] { display: none; }
+
+.mb-arkusz__naglowek {
+  margin: 0;
+  font-size: var(--dn-fs-lg);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+}
+
+.mb-arkusz__kontekst {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-arkusz__drogi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.mb-arkusz__sekcja {
+  margin: var(--dn-od-2) 0 0;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst-3);
+}
+
+.mb-arkusz__droga {
+  width: 100%;
+  min-height: var(--mb-cel-dotyku, 44px);
+  justify-content: center;
+}
+
+/* Zdanie na miejscu przycisku, którego nie ma — droga bez wywołania. */
+.mb-arkusz__brak,
+.mb-arkusz__wyjasnienie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-arkusz__polecenie {
+  width: 100%;
+  min-height: calc(var(--mb-cel-dotyku, 44px) * 2);
+  font-size: var(--dn-fs-md);
+}
+
+/* ---------------------------------------------------------------------------
+   PASEK KWITU — pierwsze, co widać po ponownym otwarciu telefonu
+   --------------------------------------------------------------------------- */
+.mb-kwity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+.mb-kwity__naglowek {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst-3);
+}
+
+.mb-kwity__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mb-kwity__wiersz,
+.mb-kwity__pusto {
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.mb-kwity__wiersz[data-udany='true'] { color: var(--dn-sukces-tekst); }
+.mb-kwity__wiersz[data-udany='false'] { color: var(--dn-blad-tekst); }

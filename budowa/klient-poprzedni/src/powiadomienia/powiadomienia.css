@@ -1,0 +1,107 @@
+/* ============================================================================
+   DANACO CONSOLE — CENTRUM POWIADOMIEŃ (kolumna boczna)
+   ----------------------------------------------------------------------------
+   Postać z karty komponentu (katalog-komponentow.md, rozdz. 11.6): kolumna
+   boczna o pełnej wysokości obszaru roboczego, szerokość 320–420 px,
+   regulowana wyłącznie na szerokość. Po zamknięciu kolumna znika z układu
+   całkowicie — stąd `hidden` na elemencie, a nie zerowa szerokość.
+
+   Plik nie zna ani jednej barwy: wszystko z żetonów motywu. Każdy selektor
+   zaczyna się od `.po-`.
+   ============================================================================ */
+
+.po-kolumna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  flex: 0 0 auto;
+  width: clamp(20rem, 24vw, 26.25rem);
+  height: 100%;
+  overflow-y: auto;
+  padding: var(--dn-od-4);
+  border-inline-start: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia);
+}
+
+.po-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.po-tytul {
+  margin: 0;
+  flex: 1 1 auto;
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+
+.po-zbiorcze { align-self: start; }
+
+.po-zdanie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-blad-tekst);
+}
+
+.po-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.po-pozycja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+}
+
+/* Zdarzenie wymagające decyzji wyróżnia kreska w barwie uwagi — i zostaje na
+   liście do chwili podjęcia decyzji. Sama barwa stanu nie niesie: klasa stoi
+   obok, wypisana słowem w plakietce. */
+.po-pozycja[data-waga='wymagajaca_decyzji'] {
+  border-inline-start: 3px solid var(--dn-ostrzezenie-tekst);
+}
+
+/* Zdarzenie odczytane przygasa, ale nie znika: rejestr jest trwały. */
+.po-pozycja[data-stan='odczytane'] { opacity: 0.7; }
+
+.po-pozycja__naglowek {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+}
+
+.po-pozycja__klasa { text-transform: capitalize; }
+
+.po-pozycja__czas {
+  margin-inline-start: auto;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.po-pozycja__tresc {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+
+.po-pozycja__czynnosci {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.po-pozycja__drogi { margin: 0; }
+
+.po-pusty {
+  padding: var(--dn-od-6) var(--dn-od-3);
+  text-align: center;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}

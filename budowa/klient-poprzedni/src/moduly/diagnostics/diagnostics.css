@@ -1,0 +1,351 @@
+/* ============================================================================
+   DANACO CONSOLE — MODUŁ DIAGNOSTICS (pięć okien operacyjnych)
+   ----------------------------------------------------------------------------
+   Plik nie zawiera ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
+   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
+   Tutaj leży wyłącznie rozkład okien modułu, odróżnienie stanów obowiązkowych
+   oraz oznaczenie poziomu wpisu dziennika i priorytetu błędu.
+
+   Poziomy i priorytety wyróżniają plakietki biblioteki
+   (`dn-plakietka--sukces|ostrzezenie|blad|informacja`) — własnej skali barw
+   ten moduł nie zakłada. Zostaje tu jedynie wstęga na krawędzi pozycji, bo
+   wykaz błędów czyta się wzrokiem po lewej krawędzi, nie po plakietce.
+   ============================================================================ */
+
+.dg-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Góra: okno wiodące (Diagnostics Center) obok monitora dziennika. */
+.dg-modul__gora {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--dn-od-4);
+}
+
+/* Dół: dwa okna pomocnicze — błędy i rekomendacje — po równo. */
+.dg-modul__dol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+}
+
+/* Pas ekspercki: Observability Tools na pełnej szerokości. Kontener niesie
+   pięć narzędzi w zakładkach, więc ściśnięcie go do połowy pasa zabrałoby
+   miejsce wykazom, a nie ozdobom. */
+.dg-modul__ekspercki {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 1100px) {
+  .dg-modul__gora,
+  .dg-modul__dol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Układ okna — nagłówek, opis, pas akcji i ciało — niesie biblioteka
+   (`komponenty/okno.css`, klasy `dn-okno*`). Klasy rodziny `dg-okno*` dokłada
+   rama po przedrostku modułu i zostają tu wyłącznie te reguły, których
+   biblioteka nie ma, bo należą do dziedziny Diagnostics. */
+
+
+.dg-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* Zakres czasu wspólny oknom modułu — pola obok siebie, dopóki się mieszczą. */
+.dg-zakres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--dn-od-2);
+}
+
+/* Skróty zakresu czasu — jeden rząd, zawijany, bez własnego wyglądu przycisku. */
+.dg-skroty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* ── Stany obowiązkowe ─────────────────────────────────────────────────────── */
+
+.dg-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dg-stan {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.dg-stan[data-stan='ladowanie'] {
+  font-style: italic;
+}
+
+.dg-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dg-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.dg-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.dg-tresc {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Wykaz pozycji ─────────────────────────────────────────────────────────── */
+
+.dg-wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dg-pozycja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dg-pozycja__tytul {
+  flex: 1 1 35%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dg-pozycja__opis {
+  flex: 1 1 45%;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.dg-pozycja__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* Czas i źródło wpisu — kolumna stałej szerokości znaku, żeby wpisy dziennika
+   dały się czytać pionem, a nie skakały z wiersza na wiersz. */
+.dg-pozycja__czas {
+  flex: 0 0 auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* ── Dziennik: poziom wpisu ────────────────────────────────────────────────── */
+
+/* Wpis dziennika jest zwarty, bo Logs Viewer jest oknem monitorującym: liczy
+   się liczba wierszy widocznych naraz, nie ich ozdobność. */
+.dg-wpis {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dg-wpis__tresc {
+  flex: 1 1 60%;
+  min-width: 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  overflow-wrap: anywhere;
+}
+
+.dg-wpis[data-poziom='error'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-wpis[data-poziom='warn'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-wpis[data-poziom='info'],
+.dg-wpis[data-poziom='debug'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-obrys-subtelny);
+  padding-left: var(--dn-od-2);
+}
+
+/* Licznik deduplikacji — wpis powtórzony niesie krotność, nie N wierszy. */
+.dg-wpis__licznik {
+  flex: 0 0 auto;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* ── Błędy: priorytet i stan ───────────────────────────────────────────────── */
+
+.dg-pozycja[data-priorytet='critical'],
+.dg-pozycja[data-priorytet='high'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-pozycja[data-priorytet='medium'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-pozycja[data-priorytet='low'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-obrys-subtelny);
+  padding-left: var(--dn-od-2);
+}
+
+/* Błąd rozwiązany i zignorowany schodzi na drugi plan, ale pozostaje widoczny:
+   ukryty wpis jest nie do odróżnienia od wpisu, którego nigdy nie było. */
+.dg-pozycja[data-stan-bledu='resolved'],
+.dg-pozycja[data-stan-bledu='ignored'] {
+  opacity: 0.7;
+}
+
+/* ── Analiza i rekomendacje ────────────────────────────────────────────────── */
+
+.dg-analiza {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dg-analiza__wynik {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.dg-analiza__znacznik {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Proponowana poprawka pokazana wprost, aby Operator widział treść zmiany
+   przed jej zastosowaniem. */
+.dg-poprawka {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+
+/* ── Observability Tools: kontener zakładek ────────────────────────────────── */
+
+/* Pas zakładek i obszary pod nim. Wygląd samego pasa niesie biblioteka
+   (`komponenty/zakladki.css`, klasy `dn-zakladki` i `dn-zakladka`); tutaj leży
+   wyłącznie rozkład kontenera. */
+.dg-narzedzia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.dg-narzedzia__pasek {
+  flex-wrap: wrap;
+}
+
+.dg-narzedzia__obszary {
+  min-height: 0;
+}
+
+/* Obszar zakładki niewidocznej znika atrybutem `hidden` (reguła globalna
+   w `motyw/fundament.css`), a nie zdejmowaniem go z drzewa — dzięki temu filtr
+   i odczyt zakładki przeżywają zajrzenie do sąsiedniej. */
+.dg-narzedzia__obszar {
+  min-width: 0;
+  min-height: 0;
+}
+
+.dg-narzedzie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+/* Zdanie o granicy zakładki czyta się przed jej treścią, nie po niej —
+   dlatego stoi w toku pionowym, a nie w przypisie. */
+.dg-narzedzie__opis {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dg-narzedzie__pasek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dn-od-2);
+}
+
+/* Stan procesu niesie plakietka z ikoną i etykietą; wstęga na krawędzi jest
+   drugim, nie jedynym rozróżnieniem — tak samo jak przy priorytecie błędu. */
+.dg-pozycja[data-stan-procesu='failed'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-pozycja[data-stan-procesu='paused'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dg-pozycja[data-stan-procesu='running'],
+.dg-pozycja[data-stan-procesu='pending'],
+.dg-pozycja[data-stan-procesu='stopped'],
+.dg-pozycja[data-stan-procesu='done'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-obrys-subtelny);
+  padding-left: var(--dn-od-2);
+}
+
+/* Filtry okien Diagnostics stoją na bibliotecznym `komponenty/menu-drzewo.ts`
+   (obsada: `moduly/apps/wybor-z-menu.ts`), nie na natywnym `<select>`. Wygląd
+   mechanizmu niesie `komponenty/menu-drzewo.css`; tutaj leży wyłącznie
+   szerokość uchwytu w wierszu paska narzędzi. */
+.dg-wiersz > .dn-drzewo {
+  align-self: stretch;
+}
+
+.dg-wiersz > .dn-drzewo > .dn-drzewo__uchwyt {
+  justify-content: space-between;
+  width: 100%;
+}

@@ -1,0 +1,48 @@
+# Nastawy serwera Danaco Console — plik czytany jednostką systemd
+# (EnvironmentFile). Każdy wiersz to ZMIENNA=wartość, bez „export" i bez
+# rozwijania powłoki. Po zmianie: systemctl restart danaco-console
+#
+# Wartości wpisane w jednostce (port 17870, katalog danych, katalog interfejsu,
+# nasłuch na wszystkich interfejsach) obowiązują bez tego pliku. Wpis tutaj je
+# nadpisuje.
+
+# ── Nasłuch ──────────────────────────────────────────────────────────────────
+# DANACO_PORT=17870
+# Adres jednego interfejsu, gdy serwer nie ma nasłuchiwać wszędzie. Wskazanie
+# adresu wymaga zdjęcia DANACO_WSZYSTKIE_INTERFEJSY=1 z jednostki.
+# DANACO_ADRES=10.0.0.5
+
+# ── Warstwa TLS ──────────────────────────────────────────────────────────────
+# Wskazanie OBU plików przełącza gniazdo na wss. Wskazanie jednego zatrzymuje
+# start — cicha praca otwartym tekstem po wskazaniu certyfikatu byłaby zejściem
+# poniżej wskazania. Pliki muszą być czytelne dla konta danaco-console.
+# DANACO_TLS_CERTYFIKAT=/etc/danaco-console/tls/serwer.crt
+# DANACO_TLS_KLUCZ=/etc/danaco-console/tls/serwer.key
+
+# ── Wymóg logowania ──────────────────────────────────────────────────────────
+# Bez wpisu rozstrzyga adres nasłuchu: poza pętlą zwrotną wymóg obowiązuje sam
+# z siebie. Zniesienie (nie) zostaje wypisane w dzienniku startu wprost.
+# DANACO_WYMOG_LOGOWANIA=tak
+
+# ── Pochodzenia gniazda ──────────────────────────────────────────────────────
+# Dodatkowe wzorce nagłówka Origin przyjmowane przy nawiązaniu gniazda;
+# pochodzeń własnych produktu nie zastępują.
+# DANACO_POCHODZENIA=https://konsola.firma.pl
+
+# ── Konto nadawcze platformy ─────────────────────────────────────────────────
+# Nim idą dwa listy systemowe: potwierdzenie adresu przy rejestracji i droga
+# odzyskania konta. To NIE jest skrzynka Operatora. Brak tych wartości nie
+# wstrzymuje startu — wstrzymuje wyłącznie rejestrację, odmową nazywającą brak.
+# DANACO_NADAWCA_HOST=smtp.firma.pl
+# DANACO_NADAWCA_PORT=587
+# DANACO_NADAWCA_UZYTKOWNIK=konsola@firma.pl
+# DANACO_NADAWCA_SEKRET=
+# DANACO_NADAWCA_ADRES=konsola@firma.pl
+# DANACO_NADAWCA_NAZWA=Danaco Console
+# Zejście do rozmowy otwartym tekstem dla przekaźnika na tej samej maszynie:
+# DANACO_NADAWCA_STARTTLS=nie
+
+# ── Arsenał mowy i modeli ────────────────────────────────────────────────────
+# Katalogi, w które skrypt arsenału kładzie wagi modelu i środowisko mowy.
+# DANACO_KATALOG_MODELI=/opt/danaco-arsenal/modele-mowy
+# DANACO_SRODOWISKO_MOWY=/opt/danaco-arsenal/mowa

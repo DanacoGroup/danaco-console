@@ -1,0 +1,333 @@
+/* ============================================================================
+   DANACO CONSOLE — MENU-DRZEWO · JEDEN MECHANIZM ROZWIJANY DLA CAŁEJ APLIKACJI
+   ----------------------------------------------------------------------------
+   Ujawnianie stopniowe: na ekranie stoi sam uchwyt z bieżącą wartością, a całe
+   drzewo funkcji siedzi pod nim.
+
+   Uchwyt niesie wartość, nie nazwę nastawy — i tym ten arkusz różni się od
+   `okna-rownolegle/menu.css`, który ubiera uchwyt ikonowy (`⋮`). Oba menu
+   zostają: tamto jest menu czynności okna, to jest ster nastawy.
+
+   Wszystkie wartości pochodzą z żetonów `motyw/` — zero barw, odstępów,
+   promieni i rozmiarów pisma zaszytych wprost.
+   ============================================================================ */
+
+.dn-drzewo {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+/* ---------------------------------------------------------------------------
+   UCHWYT — bieżąca wartość nastawy, klikalna
+   --------------------------------------------------------------------------- */
+.dn-drzewo__uchwyt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: var(--dn-obrys-subtelny) solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-ciasny);
+  cursor: pointer;
+}
+
+.dn-drzewo__uchwyt:hover {
+  background: var(--dn-powierzchnia);
+}
+
+.dn-drzewo__uchwyt:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Wartość może być długa (nazwa hosta, nazwa eksperta) — pasek ma zostać
+   jednym rzędem, więc nadmiar chowa się wielokropkiem, a całość niesie `title`. */
+.dn-drzewo__wartosc {
+  overflow: hidden;
+  max-width: var(--dn-wym-toast-min);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dn-drzewo__grot {
+  flex: none;
+  color: var(--dn-tekst-2);
+}
+
+.dn-drzewo[data-otwarte='tak'] .dn-drzewo__grot {
+  transform: rotate(180deg);
+}
+
+/* ---------------------------------------------------------------------------
+   POLE SZUKANIA — staje, gdy liści jest tyle, że przewijanie przestaje wystarczać
+   --------------------------------------------------------------------------- */
+.dn-drzewo__szukanie {
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  left: 0;
+  z-index: var(--dn-z-przybornik);
+  box-sizing: border-box;
+  width: var(--dn-wym-toast-min);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: var(--dn-obrys-subtelny) solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  border-bottom: 0;
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+}
+
+/* Zwinięte menu nie zostawia po sobie paska szukania wiszącego nad układem. */
+.dn-drzewo[data-otwarte='nie'] .dn-drzewo__szukanie {
+  display: none;
+}
+
+/* Wykaz podchodzi pod pole szukania, gdy ono stoi — jedna bryła, nie dwie. */
+.dn-drzewo:has(.dn-drzewo__szukanie:not([hidden])) .dn-drzewo__lista {
+  top: calc(100% + var(--dn-od-1) + var(--dn-wym-wiersz));
+  border-radius: 0 0 var(--dn-r-sm) var(--dn-r-sm);
+}
+
+/* ---------------------------------------------------------------------------
+   KIERUNEK „W GÓRĘ" — dla stera stojącego u dołu okna
+   ---------------------------------------------------------------------------
+   Ster w pasku u góry ma pod sobą całą scenę i rozwija się w dół; ster przy
+   polu wpisywania stoi u dołu, a wykaz rozwinięty w dół wyszedłby poza krawędź
+   okna.
+
+   `top` musi zejść do `auto`, bo inaczej stałoby obok `bottom` i element
+   rozciągnąłby się na całą wysokość między nimi. Zaokrąglenia i brzeg bez
+   kreski zamieniają się miejscami wraz ze stronami: pole szukania siada pod
+   wykazem, więc to ono traci brzeg górny, a nie dolny. */
+.dn-drzewo[data-kierunek='gora'] .dn-drzewo__lista,
+.dn-drzewo[data-kierunek='gora'] .dn-drzewo__szukanie {
+  top: auto;
+  bottom: calc(100% + var(--dn-od-1));
+}
+
+.dn-drzewo[data-kierunek='gora'] .dn-drzewo__szukanie {
+  border-top: 0;
+  border-bottom: var(--dn-obrys-subtelny) solid var(--dn-obrys);
+  border-radius: 0 0 var(--dn-r-sm) var(--dn-r-sm);
+}
+
+.dn-drzewo[data-kierunek='gora']:has(.dn-drzewo__szukanie:not([hidden]))
+  .dn-drzewo__lista {
+  top: auto;
+  bottom: calc(100% + var(--dn-od-1) + var(--dn-wym-wiersz));
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+   TRYB BEZ UCHWYTU — menu przywoływane ukośnikiem z pola wpisywania
+   ---------------------------------------------------------------------------
+   Uchwytu nie ma, więc element nie ma z czego wziąć wysokości i sam w sobie jest
+   punktem zaczepienia, a nie kontrolką. Zostaje `position: relative` z reguły
+   ogólnej — wykaz wiesza się względem miejsca, w którym wołający ten element
+   postawił. Zero wysokości znaczy, że nie rozpycha paska, w którym stoi. */
+.dn-drzewo[data-bez-uchwytu='tak'] {
+  display: block;
+  width: 100%;
+  height: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   WYKAZ I POZIOMY
+   --------------------------------------------------------------------------- */
+.dn-drzewo__lista {
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  left: 0;
+  z-index: var(--dn-z-przybornik);
+  display: flex;
+  overflow-y: auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: var(--dn-wym-toast-min);
+  max-height: var(--dn-wym-modal);
+  padding: var(--dn-od-1) 0;
+  border: var(--dn-obrys-subtelny) solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+}
+
+/* Podlista nie jest warstwą pływającą, tylko wcięciem w tej samej kolumnie.
+   Drzewo ma kilka poziomów, a warstwy wysuwane w bok na poziomie czwartym
+   wychodzą poza okno przeglądarki i przy wąskim gnieździe sceny nie mają dokąd
+   się rozwinąć. Wcięcie skaluje się w głąb bez granicy — koszt to jedna
+   kolumna szerokości na poziom. */
+.dn-drzewo__podlista {
+  display: flex;
+  flex-direction: column;
+}
+
+.dn-drzewo__grupa {
+  margin: var(--dn-od-1) 0 0;
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1)
+    calc(var(--dn-od-2) + var(--dn-drzewo-poziom, 0) * var(--dn-od-3));
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+/* ---------------------------------------------------------------------------
+   POZYCJA — haczyk · ikona · nazwa i opis
+   --------------------------------------------------------------------------- */
+.dn-drzewo__pozycja {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3) var(--dn-od-2)
+    calc(var(--dn-od-2) + var(--dn-drzewo-poziom, 0) * var(--dn-od-3));
+  border: 0;
+  background: transparent;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dn-drzewo__pozycja:hover {
+  background: var(--dn-hover);
+}
+
+.dn-drzewo__pozycja:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Miejsce na haczyk jest stałe, także gdy haczyka nie widać — inaczej wiersze
+   przeskakiwałyby w bok przy każdej zmianie wyboru. Arkusz rozstrzyga samą
+   widoczność znaku; znak wyboru w liściu jest ikoną zestawu i wstawia go
+   dokument (`menu-drzewo.ts`), bo arkusz zestawu ikon nie zna. Żadnego z tych
+   znaków czytnik ekranu nie czyta — haczyk jest ukryty przed odczytem, a wybór
+   liścia niesie `aria-checked`. */
+.dn-drzewo__haczyk {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  color: var(--dn-sygnal);
+  line-height: var(--dn-lh-ciasny);
+  visibility: hidden;
+}
+
+.dn-drzewo__pozycja[aria-checked='true'] .dn-drzewo__haczyk,
+.dn-drzewo__pozycja[data-znacznik='tak'] .dn-drzewo__haczyk {
+  visibility: visible;
+}
+
+.dn-drzewo__pozycja[aria-checked='true'] .dn-drzewo__nazwa {
+  font-weight: var(--dn-fw-polgruba);
+}
+
+/* Ślad wyboru na gałęzi — kropka mówiąca, że wybór siedzi w jej wnętrzu. Bez
+   niej trzeba by wejść w każdą gałąź, żeby sprawdzić, co jest ustawione. */
+.dn-drzewo__pozycja[data-znacznik='tak'] .dn-drzewo__haczyk::before {
+  content: '•';
+}
+
+.dn-drzewo__ikona {
+  flex: none;
+  margin-top: var(--dn-od-1);
+  color: var(--dn-tekst-2);
+}
+
+.dn-drzewo__napisy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.dn-drzewo__nazwa {
+  line-height: var(--dn-lh-ciasny);
+}
+
+/* Druga nazwa — ta sama pozycja krócej, bez źródła. Nawiasy stawia arkusz,
+   a nie dokument: gdyby siedziały w danych, wytłuszczenie trafienia cięłoby
+   napis razem z nimi i na ekranie stanąłby pogrubiony nawias. */
+.dn-drzewo__skrot {
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-normalna);
+}
+
+.dn-drzewo__skrot::before {
+  content: '(';
+}
+
+.dn-drzewo__skrot::after {
+  content: ')';
+}
+
+/* Trafiony fragment — każde wystąpienie frazy, nie tylko pierwsze.
+   Sam `font-weight` nie wystarcza, bo pozycja wybrana ma już całą nazwę
+   półgrubą i wytłuszczenie zginęłoby w niej bez śladu; stąd barwa sygnału,
+   która działa niezależnie od grubości pisma dookoła. */
+.dn-drzewo__traf {
+  color: var(--dn-sygnal);
+  font-weight: var(--dn-fw-gruba);
+}
+
+/* Wyróżnienie — pozycja, na którą pójdzie Enter.
+   Nie jest tym samym co `:hover` ani co `:focus-visible`: przy obsadzie
+   ukośnikiem ognisko zostaje w polu wpisywania, więc żaden z tamtych dwóch
+   stanów tu nie zapadnie, a wybór i tak musi być widoczny. */
+.dn-drzewo__pozycja[data-wyrozniona='tak'] {
+  background: var(--dn-hover);
+  box-shadow: inset var(--dn-wym-fokus) 0 0 0 var(--dn-sygnal);
+}
+
+/* Opis przy pozycji — objaśnienie `[?]` w innej postaci. Stoi zawsze, a nie
+   pod najechaniem: w drzewie o kilkudziesięciu liściach najechanie na każdy
+   z osobna nie jest drogą do wiedzy, czym one są. */
+.dn-drzewo__opis {
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.dn-drzewo__grot-galezi {
+  flex: none;
+  margin-top: var(--dn-od-1);
+  color: var(--dn-tekst-2);
+}
+
+.dn-drzewo__pozycja[aria-expanded='true'] .dn-drzewo__grot-galezi {
+  transform: rotate(90deg);
+}
+
+/* ---------------------------------------------------------------------------
+   STOPKA — droga do rejestru, oddzielona kreską od wyboru
+   ---------------------------------------------------------------------------
+   Menu obsługuje podłączenie (czego używam teraz), stopka prowadzi do
+   rejestracji (co w ogóle mam). Kreska jest granicą tych dwóch decyzji, więc
+   stoi zawsze, gdy stopka istnieje. */
+.dn-drzewo__kreska {
+  margin: var(--dn-od-1) 0;
+  border: 0;
+  border-top: var(--dn-obrys-subtelny) solid var(--dn-obrys);
+}
+
+.dn-drzewo__pozycja--stopka {
+  color: var(--dn-tekst-2);
+}
+
+.dn-drzewo__pusty {
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+}

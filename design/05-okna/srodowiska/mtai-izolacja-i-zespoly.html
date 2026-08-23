@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Punkty izolacji na poziomie „Rola” i szablony zespołu</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<style>
+  /* ── style lokalne — wyłącznie var(--dn-*) ────────────────────────────── */
+
+  .iz-obszar { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; overflow: hidden; }
+
+  /* pas wyboru części opracowania */
+  .iz-pas {
+    display: flex; align-items: center; gap: var(--dn-od-1); flex-wrap: wrap;
+    padding: var(--dn-od-2) var(--dn-od-3);
+    background: var(--dn-powierzchnia-2);
+    border-bottom: 1px solid var(--dn-obrys);
+  }
+  .iz-zakl {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    min-height: var(--dn-wym-kontrolka); padding: 0 var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst-2);
+    font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia);
+    white-space: nowrap; cursor: pointer;
+    transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+  }
+  .iz-zakl:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+  .iz-zakl:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+  .iz-zakl[aria-selected='true'] { background: var(--dn-sygnal-tlo); border-color: var(--dn-sygnal-obrys); color: var(--dn-tekst); }
+  .iz-zakl > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+  [data-widok] { min-height: 0; height: 100%; }
+
+  /* okno izolacji — trzy kolumny makiety 9.7 */
+  .iz-okno { display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; height: 100%; background: var(--dn-powierzchnia); }
+  .iz-naglowek {
+    display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap;
+    padding: var(--dn-od-3); border-bottom: 1px solid var(--dn-obrys); background: var(--dn-panel);
+  }
+  .iz-tytul {
+    font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl);
+    font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek); color: var(--dn-tekst);
+  }
+  .iz-narzedzia { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
+
+  /* wstęga stanu wyjściowego */
+  .iz-wstega {
+    display: flex; align-items: flex-start; gap: var(--dn-od-3);
+    padding: var(--dn-od-3);
+    border-bottom: 1px solid var(--dn-obrys);
+    background: var(--dn-sygnal-tlo);
+    color: var(--dn-tekst);
+  }
+  .iz-wstega > svg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); color: var(--dn-sygnal); flex: none; }
+  .iz-wstega-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-md); margin-bottom: var(--dn-od-1); }
+  .iz-wstega p { font-size: var(--dn-fs-base); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); max-width: 100ch; }
+
+  .iz-trzy { display: grid; grid-template-columns: minmax(190px, 240px) minmax(0, 1fr) minmax(240px, 320px); gap: 1px; background: var(--dn-obrys-subtelny); min-height: 0; }
+  .iz-kolumna { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; background: var(--dn-powierzchnia); }
+
+  /* selektor zasięgu — siedem poziomów */
+  .iz-poziom {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--dn-od-2);
+    width: 100%; min-height: var(--dn-wym-wiersz); padding: var(--dn-od-1) var(--dn-od-3);
+    border: 0; border-bottom: 1px solid var(--dn-obrys-subtelny); background: transparent;
+    color: var(--dn-tekst); font-size: var(--dn-fs-base); text-align: left; cursor: pointer;
+    transition: background-color var(--dn-czas-1) var(--dn-ease);
+  }
+  .iz-poziom:hover { background: var(--dn-hover); }
+  .iz-poziom:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1); }
+  .iz-poziom[aria-selected='true'] { background: var(--dn-sygnal-tlo); box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka); }
+  .iz-nr {
+    display: inline-grid; place-content: center; width: 18px; height: 18px; flex: none;
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);
+  }
+  .iz-poziom[aria-selected='true'] .iz-nr { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+  .iz-pierwszenstwo { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  /* macierz izolacji */
+  .iz-wiersz {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center;
+    gap: var(--dn-od-3);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border-bottom: 1px solid var(--dn-obrys-subtelny);
+  }
+  .iz-wiersz:hover { background: var(--dn-hover); }
+  .iz-wiersz > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); flex: none; }
+  .iz-nazwa { font-size: var(--dn-fs-base); color: var(--dn-tekst); }
+  .iz-opis { display: block; font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); margin-top: 2px; }
+  .iz-wiersz[data-wlaczony='tak'] { background: var(--dn-sygnal-tlo); }
+
+  /* segmentowany wybór współdzielone / odrębne */
+  .iz-segmenty { display: inline-flex; border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm); overflow: hidden; flex: none; }
+  .iz-segment {
+    min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
+    padding: 0 var(--dn-od-3);
+    border: 0; background: var(--dn-powierzchnia); color: var(--dn-tekst-2);
+    font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-sm); cursor: pointer; white-space: nowrap;
+    transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+  }
+  .iz-segment + .iz-segment { border-left: 1px solid var(--dn-obrys); }
+  .iz-segment:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+  .iz-segment:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1); }
+  .iz-segment[aria-pressed='true'] { background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); font-weight: var(--dn-fw-polgruba); }
+
+  /* etykieta stanu przełącznika — stan nigdy samym kolorem */
+  .iz-stan-przelacznika {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3); min-width: 68px; text-align: right; flex: none;
+  }
+  .iz-wiersz[data-wlaczony='tak'] .iz-stan-przelacznika { color: var(--dn-sygnal); }
+
+  .iz-objasnienie {
+    display: inline-grid; place-content: center; width: 16px; height: 16px; flex: none;
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst-3);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); line-height: 1; cursor: help;
+  }
+  .dn-tooltip:hover .iz-objasnienie, .dn-tooltip:focus-within .iz-objasnienie { color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
+
+  /* polityka efektywna */
+  .iz-polityka {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); line-height: var(--dn-lh-luzny);
+    padding: var(--dn-od-3); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia-2); color: var(--dn-tekst-2); white-space: pre-wrap;
+  }
+  .iz-polityka b { color: var(--dn-tekst); }
+
+  .iz-schemat {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); line-height: var(--dn-lh-bazowy);
+    white-space: pre; overflow: auto; padding: var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia-2); color: var(--dn-tekst-2);
+  }
+  .iz-schemat b { color: var(--dn-sygnal); font-weight: var(--dn-fw-polgruba); }
+
+  /* ── część B: szablony zespołu ───────────────────────────────────────── */
+  .iz-zespoly { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); gap: 1px; background: var(--dn-obrys-subtelny); min-height: 0; height: 100%; }
+  .iz-szablony { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; background: var(--dn-powierzchnia); }
+
+  .iz-karta-szablonu {
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-powierzchnia); overflow: hidden;
+    transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
+  }
+  .iz-karta-szablonu:hover { border-color: var(--dn-obrys-mocny); box-shadow: var(--dn-cien-2); }
+  .iz-karta-szablonu[data-wczytany='tak'] { border-color: var(--dn-sygnal-obrys); box-shadow: var(--dn-cien-sygnal); }
+  .iz-karta-naglowek {
+    display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap;
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border-bottom: 1px solid var(--dn-obrys-subtelny); background: var(--dn-panel);
+  }
+  .iz-karta-tytul { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek); color: var(--dn-tekst); }
+  .iz-karta-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); align-items: center; }
+
+  .iz-tabela-skladu { width: 100%; border-collapse: collapse; font-size: var(--dn-fs-sm); }
+  .iz-tabela-skladu th {
+    padding: var(--dn-od-2) var(--dn-od-3); text-align: left;
+    border-bottom: 1px solid var(--dn-obrys);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3); white-space: nowrap; font-weight: var(--dn-fw-srednia);
+  }
+  .iz-tabela-skladu td { padding: var(--dn-od-2) var(--dn-od-3); border-bottom: 1px solid var(--dn-obrys-subtelny); vertical-align: top; color: var(--dn-tekst-2); }
+  .iz-tabela-skladu td:first-child { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); white-space: nowrap; }
+  .iz-tabela-skladu tr:hover td { background: var(--dn-hover); }
+
+  /* formularz konfiguracji zespołu */
+  .iz-formularz { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; background: var(--dn-powierzchnia); }
+  .iz-formularz-tresc { overflow: auto; padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
+  .iz-grupa {
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm); overflow: hidden;
+  }
+  .iz-grupa-naglowek {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    background: var(--dn-panel); border-bottom: 1px solid var(--dn-obrys-subtelny);
+    font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
+    letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-2);
+  }
+  .iz-grupa-naglowek > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+  .iz-grupa-tresc { padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
+  .iz-formularz-stopka { display: flex; gap: var(--dn-od-2); flex-wrap: wrap; padding: var(--dn-od-3); border-top: 1px solid var(--dn-obrys); background: var(--dn-powierzchnia-2); }
+
+  .iz-lista-zespolow { display: flex; flex-direction: column; }
+  .iz-pozycja-zespolu {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--dn-od-2);
+    width: 100%; min-height: var(--dn-wym-wiersz); padding: var(--dn-od-2) var(--dn-od-3);
+    border: 0; border-bottom: 1px solid var(--dn-obrys-subtelny); background: transparent;
+    text-align: left; cursor: pointer; color: var(--dn-tekst); font-size: var(--dn-fs-base);
+  }
+  .iz-pozycja-zespolu:hover { background: var(--dn-hover); }
+  .iz-pozycja-zespolu:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1); }
+  .iz-pozycja-zespolu[aria-selected='true'] { background: var(--dn-sygnal-tlo); box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka); }
+  .iz-pozycja-zespolu > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); flex: none; }
+
+  @media (max-width: 1280px) {
+    .iz-trzy { grid-template-columns: minmax(180px, 220px) minmax(0, 1fr); }
+    .iz-trzy > .iz-kolumna:last-child { display: none; }
+    .iz-zespoly { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PROTOTYP KLIKALNY"
+      data-prototyp-okno="Punkty izolacji „Rola” i szablony zespołu — MultitaskingAI"
+      data-prototyp-zrodlo="dok/projekt-ui/srodowiska/multitaskingai.md — rozdz. 9.7, 13, 14">
+
+<div class="pt-powloka">
+
+  <!-- ══ PASEK GÓRNY ═════════════════════════════════════════════════════ -->
+  <header class="dn-pasek">
+    <a class="dn-pasek-godlo" href="#" aria-label="Danaco Console — powrót do Centrum dowodzenia">
+      <svg width="24" height="24" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+        <path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+        <path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+        <circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/>
+      </svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka nawigacji">
+      <span>MULTITASKINGAI</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span data-okruszek-sekcja>Role</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page" data-okruszek-okno>Punkty izolacji — zasięg „Rola”</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj">
+      <input type="search" placeholder="Szukaj zakresu izolacji lub szablonu…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zespół bieżącej karty sesji">
+        <span class="pt-tetno" aria-hidden="true"></span> Zespół „Budowa aplikacji”
+      </span>
+
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+              data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" aria-label="Powiadomienia"
+              data-komunikat="Brak nowych powiadomień." data-komunikat-tytul="Powiadomienia">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/></svg>
+      </button>
+
+      <a class="dn-btn-ikona dn-btn-ikona--na-ramie" href="mtai-okna-rol.html" aria-label="Okna robocze ról">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ══ PAS KART SESJI ══════════════════════════════════════════════════ -->
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji — procesy orkiestracji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button" data-przelacz="sesja-budowa" data-grupa="sesja">
+      <span class="pt-tetno" aria-hidden="true"></span>
+      <span>Zespół „Budowa aplikacji”</span>
+    </button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button" data-przelacz="sesja-badanie" data-grupa="sesja">
+      <span>Badanie rynku</span>
+    </button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta sesji"
+            data-komunikat="Nowa karta sesji otwiera pusty proces orkiestracji z własnym zespołem ról." data-komunikat-tytul="Nowa karta sesji">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+  </div>
+
+  <div class="pt-cialo">
+
+    <!-- PANEL ORKIESTRACJI -->
+    <nav class="dn-boczna" aria-label="Panel orkiestracji">
+      <div class="dn-boczna-naglowek pt-etykieta">Panel orkiestracji</div>
+
+      <button class="dn-boczna-pozycja" type="button" data-przelacz="zespoly" data-grupa="czesc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+        <span>Zespoły</span>
+      </button>
+
+      <button class="dn-boczna-pozycja" type="button" aria-current="page" data-przelacz="izolacja" data-grupa="czesc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Role</span>
+      </button>
+
+      <button class="dn-boczna-pozycja" type="button"
+              data-komunikat="Sekcja Kolejki: definicje kolejek pięciu zasięgów oraz jedenaście akcji silnika kolejek." data-komunikat-tytul="Kolejki">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg>
+        <span>Kolejki</span>
+      </button>
+
+      <button class="dn-boczna-pozycja" type="button"
+              data-komunikat="Sekcja Orkiestracja: zależności sekwencyjne, warunkowe i równoległe." data-komunikat-tytul="Orkiestracja">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+        <span>Orkiestracja</span>
+      </button>
+
+      <button class="dn-boczna-pozycja" type="button"
+              data-komunikat="Sekcja Harmonogram i automatyki: reguła czasowa pracy ciągłej oraz automatyki wpięte z modułu Automations." data-komunikat-tytul="Harmonogram i automatyki">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Harmonogram i automatyki</span>
+      </button>
+
+      <button class="dn-boczna-pozycja" type="button"
+              data-komunikat="Sekcja Monitor procesu: statusy przebiegów, hierarchia decyzji, nadzór Always On Display." data-komunikat-tytul="Monitor procesu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+        <span>Monitor procesu</span>
+      </button>
+    </nav>
+
+    <div class="iz-obszar">
+
+      <!-- ── PAS WYBORU CZĘŚCI ────────────────────────────────────────── -->
+      <div class="iz-pas" role="tablist" aria-label="Części opracowania">
+        <span class="pt-etykieta">Okna</span>
+        <button class="iz-zakl" type="button" role="tab" aria-selected="true"
+                data-przelacz="izolacja" data-grupa="czesc" data-sekcja="Role" data-okno="Punkty izolacji — zasięg „Rola”">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          A · Punkty izolacji na poziomie „Rola”
+        </button>
+        <button class="iz-zakl" type="button" role="tab" aria-selected="false"
+                data-przelacz="zespoly" data-grupa="czesc" data-sekcja="Zespoły" data-okno="Szablony konfiguracji zespołu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+          B · Szablony konfiguracji zespołu
+        </button>
+        <span class="pt-rozdzielacz" aria-hidden="true"></span>
+        <a class="dn-btn dn-btn--duch dn-btn--sm" href="mtai-okna-rol.html">Okna robocze ról</a>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- CZĘŚĆ A — OKNO KONFIGURACJI PUNKTÓW IZOLACJI, ZASIĘG „ROLA”    -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section data-widok="izolacja" data-grupa-widoku="czesc" data-widok-aktywny="tak" aria-label="Okno konfiguracji punktów izolacji — zasięg Rola">
+        <div class="iz-okno">
+
+          <header class="iz-naglowek">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-tekst-2)"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>
+              <span class="iz-tytul">Punkty izolacji</span>
+              <span class="mt-podpis-roli" style="display:flex; gap: var(--dn-od-2); align-items:center; flex-wrap:wrap; margin-top:2px">
+                <span class="dn-plakietka dn-plakietka--rola">zasięg: Rola</span>
+                <span class="pt-mono" data-podpis-roli>Executor 1 · Agent Backend · kanał CLI</span>
+              </span>
+            </span>
+
+            <div class="iz-narzedzia">
+              <span class="dn-plakietka dn-plakietka--informacja" data-licznik-wlaczonych>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                aktywne zakresy izolacji technicznej: 0 z 8
+              </span>
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-przywroc-domyslne>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                Przywróć stan wyjściowy
+              </button>
+            </div>
+          </header>
+
+          <!-- WSTĘGA: stan wyjściowy — wykonanie jest domyślne (rozdz. 13.4) -->
+          <div class="iz-wstega" role="note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div>
+              <div class="iz-wstega-tytul">Stan wyjściowy — wykonanie jest domyślne</div>
+              <p>
+                Dopóki Operator nie utworzy profilu izolacji ani nie zmieni ustawienia dla żadnej roli, obowiązuje stan wyjściowy:
+                <b>odrębny kontekst (historia, pamięć, kontekst) per karta sesji</b>, przy jednoczesnym <b>braku aktywnej izolacji technicznej</b> —
+                żaden z ośmiu zakresów nie jest domyślnie włączony, więc procesy ról nie są technicznie ograniczane.
+                Wszelka dalsza izolacja na poziomie roli — zarówno poluzowanie podziału kontekstu przez współdzielenie między rolami tego samego procesu,
+                jak i włączenie zakresów izolacji technicznej — jest <b>świadomą decyzją Operatora, a nie ustawieniem narzuconym przez środowisko</b>.
+                Rozszerzenia podłączone do agenta (wtyczki, umiejętności, konektory, serwery MCP) działają w pełnym zakresie zarejestrowanym w Permissions Center,
+                dopóki Operator świadomie go nie zawęzi. Przełączniki poniżej są <b>opcjami, nigdy bramami</b>.
+              </p>
+            </div>
+          </div>
+
+          <!-- TRZY KOLUMNY MAKIETY 9.7 -->
+          <div class="iz-trzy">
+
+            <!-- KOLUMNA 1 — SELEKTOR ZASIĘGU (siedem poziomów) -->
+            <div class="iz-kolumna">
+              <div class="pt-panel-naglowek">Selektor zasięgu</div>
+              <div style="overflow:auto">
+                <div data-lista-wyboru data-grupa="zasieg">
+                  <button class="iz-poziom" type="button" data-pozycja="globalny" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">1</span>
+                    <span>globalny</span>
+                    <span class="iz-pierwszenstwo">baza</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="srodowisko" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">2</span>
+                    <span>środowisko</span>
+                    <span class="iz-pierwszenstwo">·</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="modul" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">3</span>
+                    <span>moduł</span>
+                    <span class="iz-pierwszenstwo">·</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="para" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">4</span>
+                    <span>para modułów</span>
+                    <span class="iz-pierwszenstwo">·</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="projekt" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">5</span>
+                    <span>projekt</span>
+                    <span class="iz-pierwszenstwo">·</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="karta" aria-selected="false">
+                    <span class="iz-nr" aria-hidden="true">6</span>
+                    <span>karta sesji</span>
+                    <span class="iz-pierwszenstwo">·</span>
+                  </button>
+                  <button class="iz-poziom" type="button" data-pozycja="rola" aria-selected="true">
+                    <span class="iz-nr" aria-hidden="true">7</span>
+                    <span>rola</span>
+                    <span class="iz-pierwszenstwo">najwyższe</span>
+                  </button>
+                </div>
+
+                <!-- selektor konkretnej roli — widoczny wyłącznie przy zasięgu „Rola” -->
+                <div style="padding: var(--dn-od-3); border-top: 1px solid var(--dn-obrys-subtelny)" data-selektor-roli>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Rola, której dotyczy profil</span>
+                    <select class="dn-pole-kontrolka" data-wybor-roli>
+                      <option value="exec1" selected>Executor 1 · Agent Backend · kanał CLI</option>
+                      <option value="exec2">Executor 2 · model bazowy · kanał API</option>
+                      <option value="coord">Coordinator · Agent Project Lead · kanał API</option>
+                      <option value="validator">Executor 3 / Validator · model bazowy · kanał HTTP</option>
+                    </select>
+                    <span class="dn-pole-opis">Zmiana przełącza podgląd aktualnej polityki efektywnej danej roli.</span>
+                  </label>
+                </div>
+
+                <div style="padding: var(--dn-od-3); border-top: 1px solid var(--dn-obrys-subtelny)">
+                  <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2)">Pierwszeństwo poziomów</div>
+                  <div class="iz-schemat">globalny → środowisko → moduł →
+para modułów → projekt →
+karta sesji → <b>rola</b>
+
+(warstwa bazowa)   (pierwszeństwo
+                    najwyższe)
+
+brak ustawienia na poziomie
+= dziedziczenie z poziomu
+  szerszego, <b>nigdy blokada</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- KOLUMNA 2 — MACIERZ IZOLACJI -->
+            <div class="iz-kolumna">
+              <div class="pt-panel-naglowek">
+                Macierz izolacji
+                <span class="pt-panel-akcje">
+                  <input class="dn-pole-kontrolka" type="search" placeholder="Filtruj zakresy…" aria-label="Filtruj zakresy izolacji"
+                         data-filtruj="#macierz-izolacji" style="min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1)); font-size: var(--dn-fs-sm)">
+                </span>
+              </div>
+
+              <div style="overflow:auto" id="macierz-izolacji">
+
+                <!-- IZOLACJA KONTEKSTU -->
+                <div class="pt-przybornik-lokalny" style="background: var(--dn-panel)">
+                  <span class="pt-etykieta">Izolacja kontekstu</span>
+                  <span class="pt-mono">3 wartości · współdzielone albo odrębne</span>
+                </div>
+
+                <div class="iz-wiersz" data-filtr-pozycja data-filtr-tekst="historia rozmów kontekst">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+                  <span>
+                    <span class="iz-nazwa">Historia</span>
+                    <span class="iz-opis">Historia poleceń i wyników roli w bieżącym procesie orkiestracji.</span>
+                  </span>
+                  <span class="iz-segmenty" role="group" aria-label="Historia — współdzielona albo odrębna">
+                    <button class="iz-segment" type="button" aria-pressed="false" data-kontekst="historia" data-wartosc="wspoldzielona">współdz.</button>
+                    <button class="iz-segment" type="button" aria-pressed="true" data-kontekst="historia" data-wartosc="odrebna">odrębna</button>
+                  </span>
+                  <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Stan wyjściowy: odrębna per karta sesji. Współdzielenie historii między rolami tego samego procesu jest świadomym poluzowaniem podziału kontekstu.</span></span>
+                </div>
+
+                <div class="iz-wiersz" data-filtr-pozycja data-filtr-tekst="pamięć projekt sesja globalna">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+                  <span>
+                    <span class="iz-nazwa">Pamięć</span>
+                    <span class="iz-opis">Poziomy pamięci roli: globalna, projekt, sesja, środowisko.</span>
+                  </span>
+                  <span class="iz-segmenty" role="group" aria-label="Pamięć — współdzielona albo odrębna">
+                    <button class="iz-segment" type="button" aria-pressed="false" data-kontekst="pamiec" data-wartosc="wspoldzielona">współdz.</button>
+                    <button class="iz-segment" type="button" aria-pressed="true" data-kontekst="pamiec" data-wartosc="odrebna">odrębna</button>
+                  </span>
+                  <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Pamięć projektu bywa polem wejścia i wyjścia roli. Współdzielenie ułatwia wymianę ustaleń między wykonawcami tego samego procesu.</span></span>
+                </div>
+
+                <div class="iz-wiersz" data-filtr-pozycja data-filtr-tekst="kontekst bieżący proces">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+                  <span>
+                    <span class="iz-nazwa">Kontekst</span>
+                    <span class="iz-opis">Kontekst roboczy przekazywany modelowi w kolejnych wywołaniach roli.</span>
+                  </span>
+                  <span class="iz-segmenty" role="group" aria-label="Kontekst — współdzielony albo odrębny">
+                    <button class="iz-segment" type="button" aria-pressed="false" data-kontekst="kontekst" data-wartosc="wspoldzielony">współdz.</button>
+                    <button class="iz-segment" type="button" aria-pressed="true" data-kontekst="kontekst" data-wartosc="odrebny">odrębny</button>
+                  </span>
+                  <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Odrębny kontekst per karta sesji to stan wyjściowy platformy — nie jest to ograniczenie techniczne, lecz porządek pracy.</span></span>
+                </div>
+
+                <!-- IZOLACJA TECHNICZNA — osiem zakresów -->
+                <div class="pt-przybornik-lokalny" style="background: var(--dn-panel)">
+                  <span class="pt-etykieta">Izolacja techniczna</span>
+                  <span class="pt-mono">8 zakresów · stan wyjściowy każdego: wyłączony (pełny dostęp)</span>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" style="margin-left:auto"
+                          data-komunikat="Włączenie wszystkich ośmiu zakresów jest dopuszczalne, lecz nie jest zalecane jako punkt wyjścia — platforma domyślnie wykonuje polecenia bez ograniczeń."
+                          data-komunikat-tytul="Włączenie wszystkich zakresów" data-komunikat-rodzaj="ostrzezenie">Włącz wszystkie</button>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="katalog roboczy sesji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                  <span>
+                    <span class="iz-nazwa">1 · Katalog roboczy sesji</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: rola korzysta ze wspólnego katalogu roboczego.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="katalog" aria-label="Katalog roboczy sesji"
+                           data-opis-wl="Włączony: rola pracuje we własnym katalogu, niewidocznym dla innych ról."
+                           data-opis-wyl="Wyłączony: rola korzysta ze wspólnego katalogu roboczego.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Ustawienie wpływa na to, gdzie rola zapisuje pliki robocze zadania. Wyłączenie oznacza pełen dostęp do wspólnego katalogu.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="środowisko procesu zmienne środowiskowe">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>
+                  <span>
+                    <span class="iz-nazwa">2 · Środowisko procesu</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: proces dziedziczy wspólne środowisko uruchomieniowe.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="srodowisko" aria-label="Środowisko procesu"
+                           data-opis-wl="Włączony: rola otrzymuje własny zestaw zmiennych środowiskowych."
+                           data-opis-wyl="Wyłączony: proces dziedziczy wspólne środowisko uruchomieniowe.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Własny zestaw zmiennych środowiskowych bywa potrzebny, gdy role korzystają z różnych konfiguracji tego samego narzędzia.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="katalog danych konfiguracji modelu kanał">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="8" y="8" width="8" height="8" rx="1"/><path d="M12 2v2M17 2v2M7 2v2M12 20v2M17 20v2M7 20v2M2 7h2M2 12h2M2 17h2M20 7h2M20 12h2M20 17h2"/></svg>
+                  <span>
+                    <span class="iz-nazwa">3 · Katalog danych i konfiguracji modelu</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: katalog współdzielony z innymi rolami tego samego kanału.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="dane-modelu" aria-label="Katalog danych i konfiguracji modelu"
+                           data-opis-wl="Włączony: rola ma własny katalog danych kanału modelu."
+                           data-opis-wyl="Wyłączony: katalog współdzielony z innymi rolami tego samego kanału.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Dotyczy danych i konfiguracji kanału modelu (API, CLI, SSH, HTTP) używanego przez rolę.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="dostęp sieciowy sieć">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                  <span>
+                    <span class="iz-nazwa">4 · Dostęp sieciowy</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: rola korzysta ze wspólnego dostępu sieciowego.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="siec" aria-label="Dostęp sieciowy"
+                           data-opis-wl="Włączony: rola otrzymuje odrębny, ograniczony dostęp sieciowy."
+                           data-opis-wyl="Wyłączony: rola korzysta ze wspólnego dostępu sieciowego.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Przykład zastosowania: Executor 1 pracujący z zewnętrznymi źródłami może mieć odmienną politykę sieciową niż Executor 2 pracujący na materiałach lokalnych.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="odczyt zapis plików ścieżki">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
+                  <span>
+                    <span class="iz-nazwa">5 · Zakres odczytu i zapisu plików</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: pełny dostęp do zasobów plikowych w ramach uprawnień Operatora.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="pliki" aria-label="Zakres odczytu i zapisu plików"
+                           data-opis-wl="Włączony: dostęp ograniczony do jawnie dozwolonych ścieżek."
+                           data-opis-wyl="Wyłączony: pełny dostęp do zasobów plikowych w ramach uprawnień Operatora.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Po włączeniu pojawia się lista jawnie dozwolonych ścieżek. Puste ustawienie oznacza dziedziczenie z poziomu szerszego, nigdy brak dostępu.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="konto token sesja dane dostępowe">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span>
+                    <span class="iz-nazwa">6 · Konto i token per sesja</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: role korzystają ze wspólnych danych dostępowych platformy.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="token" aria-label="Konto i token per sesja"
+                           data-opis-wl="Włączony: rola korzysta z własnego, dedykowanego tokenu."
+                           data-opis-wyl="Wyłączony: role korzystają ze wspólnych danych dostępowych platformy.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Dedykowany token bywa przydatny przy rozliczaniu zużycia per rola albo przy pracy na odrębnych kontach modelu.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="model procesu instancja pula procesów">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+                  <span>
+                    <span class="iz-nazwa">7 · Model procesu</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: rola korzysta ze wspólnej puli procesów modelu.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="model-procesu" aria-label="Model procesu"
+                           data-opis-wl="Włączony: rola uruchamia własną, niezależną instancję procesu modelu."
+                           data-opis-wyl="Wyłączony: rola korzysta ze wspólnej puli procesów modelu.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Własna instancja procesu modelu zwiększa niezależność roli kosztem większego zużycia zasobów stanowiska.</span></span>
+                  </span>
+                </div>
+
+                <div class="iz-wiersz" data-wlaczony="nie" data-filtr-pozycja data-filtr-tekst="serwer wykonania dedykowany współdzielony">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                  <span>
+                    <span class="iz-nazwa">8 · Serwer wykonania</span>
+                    <span class="iz-opis" data-opis-zakresu>Wyłączony: rola wykonywana na współdzielonym serwerze platformy.</span>
+                  </span>
+                  <span class="iz-stan-przelacznika" data-etykieta-stanu>wyłączony</span>
+                  <span style="display:inline-flex; align-items:center; gap: var(--dn-od-2)">
+                    <input class="dn-przelacznik" type="checkbox" data-zakres="serwer" aria-label="Serwer wykonania"
+                           data-opis-wl="Włączony: rola przypisana do dedykowanego serwera wykonania."
+                           data-opis-wyl="Wyłączony: rola wykonywana na współdzielonym serwerze platformy.">
+                    <span class="dn-tooltip"><span class="iz-objasnienie" tabindex="0" role="img" aria-label="Objaśnienie">?</span><span class="dn-tooltip-tresc" role="tooltip">Dedykowany serwer wykonania bywa stosowany przy zespołach pracujących w trybie ciągłym 24/7/365.</span></span>
+                  </span>
+                </div>
+
+                <div class="dn-pusty-stan" data-filtr-pusty style="display:none">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                  <span class="dn-pusty-stan-tytul">Brak zakresów pasujących do filtru</span>
+                  <span class="dn-pusty-stan-opis">Wyczyść pole filtru, aby zobaczyć wszystkie jedenaście pozycji macierzy.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- KOLUMNA 3 — PROFIL I PODGLĄD -->
+            <div class="iz-kolumna">
+              <div class="pt-panel-naglowek">Profil i podgląd</div>
+              <div style="overflow:auto; padding: var(--dn-od-3); display:flex; flex-direction:column; gap: var(--dn-od-4)">
+
+                <div class="dn-przybornik">
+                  <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-profil="zapisz">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    Zapisz profil
+                  </button>
+                  <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-profil="wczytaj">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+                    Wczytaj profil
+                  </button>
+                  <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-profil="przypisz">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    Przypisz do roli
+                  </button>
+                </div>
+
+                <label class="dn-pole">
+                  <span class="dn-pole-etykieta">Nazwa profilu izolacji</span>
+                  <input class="dn-pole-kontrolka" type="text" value="Profil wykonawcy zewnętrznego" data-nazwa-profilu aria-label="Nazwa profilu izolacji">
+                  <span class="dn-pole-opis">Profil raz zbudowany może zostać przypisany wielokrotnie — do wielu ról lub sesji, bez ponownej konfiguracji.</span>
+                </label>
+
+                <fieldset style="border:1px solid var(--dn-obrys); border-radius: var(--dn-r-sm); padding: var(--dn-od-3)">
+                  <legend class="pt-etykieta" style="padding: 0 var(--dn-od-2)">Warstwa</legend>
+                  <label class="dn-wybor">
+                    <input class="dn-check dn-radio" type="radio" name="warstwa" value="domyslna" checked data-warstwa>
+                    <span>domyślna</span>
+                  </label><br>
+                  <label class="dn-wybor">
+                    <input class="dn-check dn-radio" type="radio" name="warstwa" value="sesji" data-warstwa>
+                    <span>sesji</span>
+                  </label>
+                </fieldset>
+
+                <div>
+                  <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2)">Polityka efektywna — podgląd reguł dziedziczonych</div>
+                  <div class="iz-polityka" data-polityka aria-live="polite">rola: <b>Executor 1</b>
+profil: <b>domyślny (dziedziczony)</b>
+
+kontekst:
+  historia  = odrębna     (poziom: karta sesji)
+  pamięć    = odrębna     (poziom: karta sesji)
+  kontekst  = odrębny     (poziom: karta sesji)
+
+izolacja techniczna: <b>0 z 8 zakresów aktywnych</b>
+  katalog roboczy       wyłączony (dziedziczone: globalny)
+  środowisko procesu    wyłączony (dziedziczone: globalny)
+  dane/konfig. modelu   wyłączony (dziedziczone: globalny)
+  dostęp sieciowy       wyłączony (dziedziczone: globalny)
+  odczyt/zapis plików   wyłączony (dziedziczone: globalny)
+  konto i token         wyłączony (dziedziczone: globalny)
+  model procesu         wyłączony (dziedziczone: globalny)
+  serwer wykonania      wyłączony (dziedziczone: globalny)
+
+brak ustawienia = dziedziczenie
+                  z poziomu szerszego</div>
+                </div>
+
+                <div>
+                  <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2)">Atrybuty roli w modelu danych</div>
+                  <table class="dn-tabela">
+                    <tbody>
+                      <tr><td>identyfikator</td><td class="dn-dane" data-kopiuj="rola-executor-1" style="cursor:pointer">rola-executor-1</td></tr>
+                      <tr><td>przypisanie</td><td class="dn-dane">proces-budowa-aplikacji</td></tr>
+                      <tr><td>rodzaj roli</td><td class="dn-dane">Executor</td></tr>
+                      <tr><td>przypisany model</td><td class="dn-dane">Agent Backend (agent)</td></tr>
+                      <tr><td>konfiguracja współpracy</td><td class="dn-dane">praca niezależna</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="dn-pole-opis" style="margin-top: var(--dn-od-2)">
+                    Profil izolacji jest przypisywalny do <b>sesji</b>, <b>roli</b> lub <b>projektu</b>.
+                    W warstwie komunikacji przypisanie realizuje polecenie
+                    <code class="pt-mono" data-kopiuj="isolation.profile.assign" style="cursor:pointer">isolation.profile.assign</code>.
+                  </p>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <!-- CZĘŚĆ B — SZABLONY KONFIGURACJI ZESPOŁU (rozdz. 14)            -->
+      <!-- ══════════════════════════════════════════════════════════════ -->
+      <section data-widok="zespoly" data-grupa-widoku="czesc" data-widok-aktywny="nie" aria-label="Szablony konfiguracji zespołu">
+        <div class="iz-zespoly">
+
+          <!-- LISTA SZABLONÓW -->
+          <div class="iz-szablony">
+            <div class="pt-panel-naglowek">
+              Szablony konfiguracji zespołu
+              <span class="pt-panel-akcje">
+                <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-zespol-akcja="zapisz">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  Zapisz zespół
+                </button>
+              </span>
+            </div>
+
+            <div style="overflow:auto; padding: var(--dn-od-3); display:flex; flex-direction:column; gap: var(--dn-od-4)">
+
+              <!-- 14.1 — Budowa aplikacji -->
+              <article class="iz-karta-szablonu" data-szablon="budowa" data-wczytany="tak">
+                <header class="iz-karta-naglowek">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-tekst-2)"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg>
+                  <span>
+                    <span class="iz-karta-tytul">Zespół „Budowa aplikacji”</span><br>
+                    <span class="pt-mono">oparty na scenariuszu realizacji produktu cyfrowego w module Apps</span>
+                  </span>
+                  <span class="iz-karta-akcje">
+                    <span class="dn-plakietka dn-plakietka--sygnal" data-znacznik-wczytania>wczytany do formularza</span>
+                    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-wczytaj-szablon="budowa">Wczytaj zespół</button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Duplikuj szablon" data-duplikuj="Zespół „Budowa aplikacji”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Usuń szablon" data-usun="Zespół „Budowa aplikacji”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </span>
+                </header>
+                <table class="iz-tabela-skladu">
+                  <thead>
+                    <tr><th>Rola</th><th>Zadanie</th><th>Tryb współpracy</th><th>Subagent Network</th><th>Profil izolacji</th><th>Automations</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Coordinator</td><td>Planowanie etapów, przypisanie pracy backendowi i frontendowi</td><td>—</td><td>Nie</td><td>Domyślny (dziedziczony)</td><td>Tak</td></tr>
+                    <tr><td>Executor 1</td><td>Realizacja backendu</td><td>Praca niezależna</td><td>Tak — Agent Backend, Agent API, Agent Database</td><td>Domyślny (dziedziczony)</td><td>Tak</td></tr>
+                    <tr><td>Executor 2</td><td>Realizacja frontendu (zasoby z modułu Design)</td><td>Praca niezależna</td><td>Tak — Agent UI</td><td>Domyślny (dziedziczony)</td><td>Tak</td></tr>
+                    <tr><td>Executor 3 / Validator</td><td>Wcielenie Security Auditor, następnie QA Lead w kolejnych przebiegach</td><td>—</td><td>Nie</td><td>Domyślny (dziedziczony)</td><td>Tak</td></tr>
+                    <tr><td>Always On Display</td><td>Operator procesu</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </article>
+
+              <!-- 14.2 — Badanie i redakcja -->
+              <article class="iz-karta-szablonu" data-szablon="badanie" data-wczytany="nie">
+                <header class="iz-karta-naglowek">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-tekst-2)"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+                  <span>
+                    <span class="iz-karta-tytul">Zespół „Badanie i redakcja”</span><br>
+                    <span class="pt-mono">proces jednorazowy, bez powiązania z modułem Automations</span>
+                  </span>
+                  <span class="iz-karta-akcje">
+                    <span class="dn-plakietka" data-znacznik-wczytania style="display:none">wczytany do formularza</span>
+                    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-wczytaj-szablon="badanie">Wczytaj zespół</button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Duplikuj szablon" data-duplikuj="Zespół „Badanie i redakcja”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Usuń szablon" data-usun="Zespół „Badanie i redakcja”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </span>
+                </header>
+                <table class="iz-tabela-skladu">
+                  <thead>
+                    <tr><th>Rola</th><th>Zadanie</th><th>Tryb współpracy</th><th>Subagent Network</th><th>Profil izolacji</th><th>Automations</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Coordinator</td><td>Planowanie etapów badania i redakcji raportu</td><td>—</td><td>Nie</td><td>Domyślny</td><td>Nie (proces jednorazowy)</td></tr>
+                    <tr><td>Executor 1</td><td>Zbieranie i analiza źródeł</td><td>Przekazywanie wyników → Executor 2</td><td>Nie</td><td>Domyślny</td><td>Nie</td></tr>
+                    <tr><td>Executor 2</td><td>Redakcja raportu końcowego na podstawie ustaleń Executora 1</td><td>Przekazywanie wyników</td><td>Nie</td><td>Domyślny</td><td>Nie</td></tr>
+                    <tr><td>Executor 3 / Validator</td><td>Wcielenie Reviewer — ocena spójności i kompletności raportu</td><td>—</td><td>Nie</td><td>Domyślny</td><td>Nie</td></tr>
+                    <tr><td>Always On Display</td><td>Obserwator</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </article>
+
+              <!-- 14.3 — Pętla ciągła 24/7 -->
+              <article class="iz-karta-szablonu" data-szablon="petla" data-wczytany="nie">
+                <header class="iz-karta-naglowek">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-tekst-2)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <span>
+                    <span class="iz-karta-tytul">Zespół „Pętla ciągła 24/7”</span><br>
+                    <span class="pt-mono">konfiguracja w pełni spięta z modułem Automations, do pracy bez stałego nadzoru</span>
+                  </span>
+                  <span class="iz-karta-akcje">
+                    <span class="dn-plakietka" data-znacznik-wczytania style="display:none">wczytany do formularza</span>
+                    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-wczytaj-szablon="petla">Wczytaj zespół</button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Duplikuj szablon" data-duplikuj="Zespół „Pętla ciągła 24/7”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    </button>
+                    <button class="dn-btn-ikona" type="button" aria-label="Usuń szablon" data-usun="Zespół „Pętla ciągła 24/7”">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </span>
+                </header>
+                <table class="iz-tabela-skladu">
+                  <thead>
+                    <tr><th>Rola</th><th>Zadanie</th><th>Tryb współpracy</th><th>Subagent Network</th><th>Profil izolacji</th><th>Automations</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Coordinator</td><td>Planowanie i sterowanie każdym cyklicznym przebiegiem</td><td>—</td><td>Nie</td><td>Odrębny profil roli (dostęp sieciowy wyłączony jako świadomy wybór)</td><td>Tak — Scheduler, Orchestrator</td></tr>
+                    <tr><td>Executor 1</td><td>Wykonanie zadań pobieranych z kolejki cyklicznej</td><td>Praca iteracyjna z Executorem 2</td><td>Tak, w miarę potrzeby zadania</td><td>Odrębny profil roli</td><td>Tak — Queue Manager</td></tr>
+                    <tr><td>Executor 2</td><td>Poprawa i uzupełnienie wyników Executora 1 w kolejnym cyklu</td><td>Praca iteracyjna</td><td>Tak, w miarę potrzeby zadania</td><td>Odrębny profil roli</td><td>Tak — Queue Manager</td></tr>
+                    <tr><td>Executor 3 / Validator</td><td>Wcielenie Validator — ocena jakości przed zamknięciem każdego cyklu, konfigurowalna i pomijalna</td><td>—</td><td>Nie</td><td>Odrębny profil roli</td><td>Tak — Execution Monitor</td></tr>
+                    <tr><td>Always On Display</td><td>Operator, z interwencją przez Mobile</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  </tbody>
+                </table>
+              </article>
+
+              <!-- 14.4 — Formularz pusty -->
+              <article class="iz-karta-szablonu" data-szablon="pusty" data-wczytany="nie">
+                <header class="iz-karta-naglowek">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-tekst-2)"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  <span>
+                    <span class="iz-karta-tytul">Formularz pusty konfiguracji zespołu</span><br>
+                    <span class="pt-mono">osiemnaście pól bez wartości wyjściowych — punkt startu własnej konfiguracji</span>
+                  </span>
+                  <span class="iz-karta-akcje">
+                    <span class="dn-plakietka" data-znacznik-wczytania style="display:none">wczytany do formularza</span>
+                    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-wczytaj-szablon="pusty">Wyczyść formularz</button>
+                  </span>
+                </header>
+                <div style="padding: var(--dn-od-3)">
+                  <p class="dn-pole-opis">
+                    Pola formularza: nazwa zespołu · cel procesu · Coordinator (przypisany agent lub model) ·
+                    Executor 1 (zadanie, przypisanie, wcielenia podagentów) · Executor 2 (zadanie, przypisanie, wcielenia podagentów) ·
+                    tryb współpracy Executor 1 / Executor 2 · Executor 3 / Validator (wcielenie, przypisanie) ·
+                    zasięg i nazwa kolejki · zależności orkiestracji · profil izolacji poziomu „Rola” ·
+                    powiązanie z Automations · harmonogram · tryb Always On Display.
+                  </p>
+                </div>
+              </article>
+
+              <!-- lista zapisanych zespołów (sekcja Zespoły, rozdz. 10.3) -->
+              <div>
+                <div class="pt-etykieta" style="margin-bottom: var(--dn-od-2)">Lista zapisanych zespołów</div>
+                <div class="iz-lista-zespolow" style="border:1px solid var(--dn-obrys); border-radius: var(--dn-r-sm); overflow:hidden">
+                  <button class="iz-pozycja-zespolu" type="button" aria-selected="true" data-wczytaj-szablon="budowa">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+                    <span>Zespół „Budowa aplikacji”</span>
+                    <span class="dn-krok-meta">5 pozycji · Automations spięte</span>
+                  </button>
+                  <button class="iz-pozycja-zespolu" type="button" aria-selected="false" data-wczytaj-szablon="badanie">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+                    <span>Zespół „Badanie i redakcja”</span>
+                    <span class="dn-krok-meta">5 pozycji · proces jednorazowy</span>
+                  </button>
+                  <button class="iz-pozycja-zespolu" type="button" aria-selected="false" data-wczytaj-szablon="petla">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+                    <span>Zespół „Pętla ciągła 24/7”</span>
+                    <span class="dn-krok-meta">5 pozycji · praca ciągła</span>
+                  </button>
+                </div>
+                <p class="dn-pole-opis" style="margin-top: var(--dn-od-2)">
+                  „Wczytaj zespół” nadpisuje bieżącą konfigurację ról od razu; modal potwierdzenia przed nadpisaniem jest opcją włączaną przez Operatora, domyślnie wyłączoną —
+                  po wykonaniu dostępne jest „Cofnij”. Tak samo działa usunięcie presetu.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- FORMULARZ KONFIGURACJI ZESPOŁU (14.4) -->
+          <div class="iz-formularz">
+            <div class="pt-panel-naglowek">
+              Formularz konfiguracji zespołu
+              <span class="pt-panel-akcje">
+                <span class="dn-plakietka dn-plakietka--sygnal" data-nazwa-wczytanego>Budowa aplikacji</span>
+              </span>
+            </div>
+
+            <div class="iz-formularz-tresc">
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>
+                  Zespół
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Nazwa zespołu</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="nazwa" aria-label="Nazwa zespołu">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Cel procesu</span>
+                    <textarea class="dn-pole-kontrolka" rows="2" data-pole="cel" aria-label="Cel procesu"></textarea>
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/><path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>
+                  Pozycja 1 · Coordinator
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Coordinator — przypisany agent lub model</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="coord-przypisanie" aria-label="Coordinator — przypisany agent lub model">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Coordinator — zadanie</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="coord-zadanie" aria-label="Coordinator — zadanie">
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
+                  Pozycja 2 · Executor 1
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 1 — zadanie</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e1-zadanie" aria-label="Executor 1 — zadanie">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 1 — przypisany agent lub model</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e1-przypisanie" aria-label="Executor 1 — przypisany agent lub model">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 1 — Subagent Network (wcielenia podagentów)</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e1-siec" aria-label="Executor 1 — wcielenia podagentów">
+                    <span class="dn-pole-opis">Do 15 wyspecjalizowanych podagentów jednocześnie; limit ma charakter referencyjny.</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
+                  Pozycja 3 · Executor 2
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 2 — zadanie</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e2-zadanie" aria-label="Executor 2 — zadanie">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 2 — przypisany agent lub model</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e2-przypisanie" aria-label="Executor 2 — przypisany agent lub model">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 2 — Subagent Network (wcielenia podagentów)</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="e2-siec" aria-label="Executor 2 — wcielenia podagentów">
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Tryb współpracy Executor 1 / Executor 2</span>
+                    <select class="dn-pole-kontrolka" data-pole="tryb" aria-label="Tryb współpracy">
+                      <option value="">— nie wybrano —</option>
+                      <option value="niezalezna">niezależna</option>
+                      <option value="przekazywanie">przekazywanie</option>
+                      <option value="naprzemienna">naprzemienna</option>
+                      <option value="iteracyjna">iteracyjna</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>
+                  Pozycja 4 · Executor 3 / Validator
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 3 / Validator — wcielenie</span>
+                    <select class="dn-pole-kontrolka" data-pole="v-wcielenie" aria-label="Wcielenie Executora 3 / Validatora">
+                      <option value="">— nie wybrano —</option>
+                      <option>Validator</option>
+                      <option>Reviewer</option>
+                      <option>Security Auditor</option>
+                      <option>Architect</option>
+                      <option>Product Owner</option>
+                      <option>QA Lead</option>
+                      <option>Arbitrator</option>
+                    </select>
+                    <span class="dn-pole-opis">Udział roli jest opcjonalny — prostszy zespół może ją pominąć.</span>
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Executor 3 / Validator — przypisany agent lub model</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="v-przypisanie" aria-label="Executor 3 / Validator — przypisany agent lub model">
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z"/></svg>
+                  Kolejki, orkiestracja i izolacja
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Zasięg i nazwa kolejki (kolejek)</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="kolejki" aria-label="Zasięg i nazwa kolejek">
+                    <span class="dn-pole-opis">Pięć zasięgów: globalna, lokalna, dla modelu, dla agenta, dla projektu.</span>
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Zależności orkiestracji</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="zaleznosci" aria-label="Zależności orkiestracji">
+                    <span class="dn-pole-opis">Sekwencyjne, warunkowe, równoległe niezależne. Każda zależność pozostaje odwracalna.</span>
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Profil izolacji — poziom „Rola” (per rola, jeśli odrębny od domyślnego)</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="izolacja" aria-label="Profil izolacji poziomu Rola">
+                    <span class="dn-pole-opis">Puste pole oznacza profil domyślny (dziedziczony) — brak aktywnej izolacji technicznej.</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="iz-grupa">
+                <div class="iz-grupa-naglowek">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg>
+                  Pozycja 5 · Always On Display i praca ciągła
+                </div>
+                <div class="iz-grupa-tresc">
+                  <label class="dn-wybor">
+                    <input class="dn-przelacznik" type="checkbox" data-pole-przelacznik="automations" aria-label="Powiązanie z Automations">
+                    <span>Powiązanie z modułem Automations</span>
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Harmonogram (jeśli powiązanie = tak)</span>
+                    <input class="dn-pole-kontrolka" type="text" data-pole="harmonogram" aria-label="Harmonogram">
+                    <span class="dn-pole-opis">Reguła czasowa i cykliczność; reguła sprzeczna zostaje zapisana z ostrzeżeniem zamiast blokady zapisu.</span>
+                  </label>
+                  <label class="dn-pole">
+                    <span class="dn-pole-etykieta">Tryb Always On Display</span>
+                    <select class="dn-pole-kontrolka" data-pole="aod" aria-label="Tryb Always On Display">
+                      <option value="">— nie wybrano —</option>
+                      <option>obserwator</option>
+                      <option>operator</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="iz-formularz-stopka">
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-zespol-akcja="zastosuj">Zastosuj konfigurację zespołu</button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zespol-akcja="zapisz">Zapisz jako nowy zespół</button>
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-wczytaj-szablon="pusty">Wyczyść</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /iz-obszar -->
+  </div><!-- /pt-cialo -->
+</div><!-- /pt-powloka -->
+
+<!-- ══ PANEL „O TYM OPRACOWANIU” ═══════════════════════════════════════ -->
+<details class="pt-o-opracowaniu">
+  <summary>O tym opracowaniu</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Co przedstawia</h4>
+    <p>
+      Dwa okna środowiska <b>MultitaskingAI</b> jako przełączalne widoki:
+      <b>A</b> — okno konfiguracji punktów izolacji z zasięgiem ustawionym na <b>„Rola”</b> (selektor siedmiu poziomów zasięgu,
+      macierz izolacji kontekstu i ośmiu zakresów izolacji technicznej, panel profilu z podglądem polityki efektywnej);
+      <b>B</b> — <b>szablony konfiguracji zespołu</b>: „Budowa aplikacji”, „Badanie i redakcja”, „Pętla ciągła 24/7”
+      oraz formularz pusty, wraz z formularzem konfiguracji zespołu obejmującym pięć pozycji zespołu.
+    </p>
+
+    <h4>Źródło w dokumentacji</h4>
+    <ul>
+      <li><code>dok/projekt-ui/srodowiska/multitaskingai.md</code> — rozdz. <b>9.7</b> makieta okna konfiguracji punktów izolacji, zasięg „Rola”</li>
+      <li>rozdz. <b>13.1</b> poziom zasięgu „Rola” — pierwszeństwo najwyższe wśród siedmiu poziomów</li>
+      <li>rozdz. <b>13.2</b> struktura profilu izolacji: 3 wartości izolacji kontekstu + 8 zakresów izolacji technicznej z opisami stanu włączonego i wyłączonego</li>
+      <li>rozdz. <b>13.3</b> atrybuty roli w modelu danych, polecenie <code>isolation.profile.assign</code></li>
+      <li>rozdz. <b>13.4</b> stan wyjściowy — wykonanie jest domyślne</li>
+      <li>rozdz. <b>13.5</b> katalog elementów interfejsu okna izolacji (pozycja „Rola”, selektor konkretnej roli, ikony objaśnień)</li>
+      <li>rozdz. <b>14.1–14.4</b> szablony zespołu i formularz pusty · rozdz. <b>10.3</b> elementy sekcji Zespoły</li>
+      <li>rozdz. <b>3.4</b> cztery tryby współpracy · <b>4.1</b> pięć zasięgów kolejek · <b>3.5</b> siedem wcieleń roli kontrolnej</li>
+      <li><code>KANON.md</code> — rozdz. 8 zasada zero blokad (ADL-017)</li>
+    </ul>
+
+    <h4>Odwzorowane interakcje</h4>
+    <ul>
+      <li>wybór jednego z siedmiu poziomów zasięgu; przy poziomie „Rola” ujawnia się selektor konkretnej roli (Executor 1, Executor 2, Coordinator, Executor 3 / Validator)</li>
+      <li>zmiana roli przebudowuje podgląd polityki efektywnej i podpis w nagłówku okna</li>
+      <li>osiem przełączników izolacji technicznej — stan wyjściowy każdego <b>wyłączony</b>; przełączenie aktualizuje opis zakresu, etykietę stanu, licznik aktywnych zakresów oraz podgląd polityki efektywnej</li>
+      <li>trzy segmentowane wybory izolacji kontekstu (współdzielone / odrębne) z komunikatem wyjaśniającym skutek</li>
+      <li>filtrowanie macierzy izolacji polem tekstowym, z pustym stanem przy braku dopasowań</li>
+      <li>„Przywróć stan wyjściowy” zeruje wszystkie zakresy techniczne i przywraca odrębny kontekst per karta sesji</li>
+      <li>zapis, wczytanie i przypisanie profilu izolacji z powiadomieniem; kopiowanie identyfikatora roli i nazwy polecenia</li>
+      <li>trzy szablony zespołu z pełnym składem pięciu pozycji; klik „Wczytaj zespół” wypełnia formularz konfiguracji i oznacza kartę jako wczytaną</li>
+      <li>duplikowanie presetu (sufiks „(kopia)”), usunięcie z komunikatem zawierającym „Cofnij”, wyczyszczenie formularza</li>
+      <li>przełącznik motywu — oba motywy równoprawne, pasek górny atramentowy w obu</li>
+    </ul>
+
+    <h4>Decyzje projektowe ponad źródła</h4>
+    <ul>
+      <li>Makieta 9.7 opisuje trzy kolumny; zachowano ten podział, a kolumnę środkową rozbito na dwie sekcje — izolacja kontekstu (3 wartości) i izolacja techniczna (8 zakresów) — zgodnie z rozdz. 13.2.</li>
+      <li>Do każdego z ośmiu zakresów dodano <b>etykietę tekstową stanu</b> („włączony” / „wyłączony”) obok przełącznika — stan nigdy nie jest niesiony samym kolorem. Opis pod nazwą zakresu zmienia się wraz z przełącznikiem, cytując brzmienie tabeli 13.2.</li>
+      <li>Stan wyjściowy wyeksponowano jako <b>wstęgę informacyjną</b> nad macierzą, zamiast przypisu pod nią — komunikat „wykonanie jest domyślne, przełączniki są opcjami, nigdy bramami” musi być widoczny przed pierwszą interakcją.</li>
+      <li>Izolacja kontekstu zachowuje dokumentowany stan wyjściowy „odrębne per karta sesji” (rozdz. 13.4) — nie jest to ograniczenie techniczne, lecz porządek pracy; osobno zaznaczono, że współdzielenie jest równie świadomą decyzją jak izolowanie.</li>
+      <li>Części A i B zebrano w jednym pliku jako widoki przełączane, ponieważ obie należą do panelu orkiestracji tego samego procesu (sekcje Role i Zespoły).</li>
+      <li>Formularz konfiguracji zespołu uporządkowano w sześć grup odpowiadających pięciu pozycjom zespołu plus warstwie kolejek i orkiestracji; komplet osiemnastu pól z rozdz. 14.4 jest zachowany.</li>
+      <li>Treści przykładowe (nazwy zespołów, wcielenia podagentów, zadania ról) pochodzą wprost z tabel 14.1–14.3.</li>
+    </ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script>
+/* ── zachowanie swoiste oknu izolacji i szablonom zespołu ──────────────── */
+(function () {
+  'use strict';
+  var D = document;
+  function q(s, k) { return (k || D).querySelector(s); }
+  function qa(s, k) { return Array.prototype.slice.call((k || D).querySelectorAll(s)); }
+
+  /* — okruszki nawigacji podążają za wybraną częścią — */
+  var okrSekcja = q('[data-okruszek-sekcja]');
+  var okrOkno = q('[data-okruszek-okno]');
+  qa('.iz-zakl[data-przelacz]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      if (okrSekcja) okrSekcja.textContent = b.getAttribute('data-sekcja');
+      if (okrOkno) okrOkno.textContent = b.getAttribute('data-okno');
+    });
+  });
+
+  /* ══ CZĘŚĆ A — OKNO IZOLACJI ═══════════════════════════════════════ */
+
+  var ROLE = {
+    exec1: { nazwa: 'Executor 1', podpis: 'Executor 1 · Agent Backend · kanał CLI', id: 'rola-executor-1', rodzaj: 'Executor', model: 'Agent Backend (agent)', wspolpraca: 'praca niezależna' },
+    exec2: { nazwa: 'Executor 2', podpis: 'Executor 2 · model bazowy · kanał API', id: 'rola-executor-2', rodzaj: 'Executor', model: 'model bazowy', wspolpraca: 'praca niezależna' },
+    coord: { nazwa: 'Coordinator', podpis: 'Coordinator · Agent Project Lead · kanał API', id: 'rola-coordinator', rodzaj: 'Coordinator', model: 'Agent Project Lead (agent)', wspolpraca: '—' },
+    validator: { nazwa: 'Executor 3 / Validator', podpis: 'Executor 3 / Validator · model bazowy · kanał HTTP', id: 'rola-executor-3-validator', rodzaj: 'Validator', model: 'model bazowy', wspolpraca: '—' }
+  };
+  var rolaBiezaca = 'exec1';
+
+  var NAZWY_ZAKRESOW = {
+    'katalog': 'katalog roboczy',
+    'srodowisko': 'środowisko procesu',
+    'dane-modelu': 'dane/konfig. modelu',
+    'siec': 'dostęp sieciowy',
+    'pliki': 'odczyt/zapis plików',
+    'token': 'konto i token',
+    'model-procesu': 'model procesu',
+    'serwer': 'serwer wykonania'
+  };
+  var KOLEJNOSC = ['katalog', 'srodowisko', 'dane-modelu', 'siec', 'pliki', 'token', 'model-procesu', 'serwer'];
+
+  var kontekst = { historia: 'odrębna', pamiec: 'odrębna', kontekst: 'odrębny' };
+
+  function dopelnij(t, n) { while (t.length < n) t += ' '; return t; }
+
+  function odswiezPolityke() {
+    var r = ROLE[rolaBiezaca];
+    var aktywne = qa('[data-zakres]').filter(function (p) { return p.checked; }).length;
+
+    var licznik = q('[data-licznik-wlaczonych]');
+    if (licznik) {
+      licznik.className = 'dn-plakietka ' + (aktywne ? 'dn-plakietka--sygnal' : 'dn-plakietka--informacja');
+      licznik.setAttribute('data-licznik-wlaczonych', '');
+      licznik.innerHTML =
+        '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> ' +
+        'aktywne zakresy izolacji technicznej: ' + aktywne + ' z 8';
+    }
+
+    var wiersze = KOLEJNOSC.map(function (k) {
+      var p = q('[data-zakres="' + k + '"]');
+      var wl = p && p.checked;
+      return '  ' + dopelnij(NAZWY_ZAKRESOW[k], 22) +
+        (wl ? 'WŁĄCZONY  (poziom: rola)' : 'wyłączony (dziedziczone: globalny)');
+    }).join('\n');
+
+    var pol = q('[data-polityka]');
+    if (!pol) return;
+    pol.innerHTML =
+      'rola: <b>' + r.nazwa + '</b>\n' +
+      'profil: <b>' + (aktywne ? 'dedykowany roli' : 'domyślny (dziedziczony)') + '</b>\n\n' +
+      'kontekst:\n' +
+      '  historia  = ' + dopelnij(kontekst.historia, 13) + '(poziom: karta sesji)\n' +
+      '  pamięć    = ' + dopelnij(kontekst.pamiec, 13) + '(poziom: karta sesji)\n' +
+      '  kontekst  = ' + dopelnij(kontekst.kontekst, 13) + '(poziom: karta sesji)\n\n' +
+      'izolacja techniczna: <b>' + aktywne + ' z 8 zakresów aktywnych</b>\n' +
+      wiersze + '\n\n' +
+      'brak ustawienia = dziedziczenie\n                  z poziomu szerszego';
+  }
+
+  /* selektor zasięgu — pozycja „Rola” ujawnia selektor konkretnej roli */
+  var selektorRoli = q('[data-selektor-roli]');
+  qa('.iz-poziom').forEach(function (p) {
+    p.addEventListener('click', function () {
+      var poziom = p.getAttribute('data-pozycja');
+      if (selektorRoli) selektorRoli.style.display = poziom === 'rola' ? '' : 'none';
+      if (poziom !== 'rola') {
+        window.dnToast('Zasięg: ' + p.children[1].textContent,
+          'Poziom szerszy niż „Rola”. Reguła ustalona na poziomie „Rola” nadpisuje ustawienia tego poziomu.', 'informacja');
+      } else {
+        window.dnToast('Zasięg: rola', 'Poziom o pierwszeństwie najwyższym spośród siedmiu poziomów zasięgu.', 'informacja');
+      }
+    });
+  });
+
+  var wyborRoli = q('[data-wybor-roli]');
+  if (wyborRoli) {
+    wyborRoli.addEventListener('change', function () {
+      rolaBiezaca = wyborRoli.value;
+      var r = ROLE[rolaBiezaca];
+      var podpis = q('[data-podpis-roli]');
+      if (podpis) podpis.textContent = r.podpis;
+      var komorki = qa('.dn-tabela tbody tr td:last-child');
+      if (komorki.length >= 5) {
+        komorki[0].textContent = r.id;
+        komorki[0].setAttribute('data-kopiuj', r.id);
+        komorki[2].textContent = r.rodzaj;
+        komorki[3].textContent = r.model;
+        komorki[4].textContent = r.wspolpraca;
+      }
+      odswiezPolityke();
+      window.dnToast('Podgląd polityki efektywnej', 'Przełączono na rolę: ' + r.nazwa + '.', 'informacja');
+    });
+  }
+
+  /* osiem przełączników izolacji technicznej */
+  qa('[data-zakres]').forEach(function (p) {
+    p.addEventListener('change', function () {
+      var wiersz = p.closest('.iz-wiersz');
+      var wl = p.checked;
+      wiersz.setAttribute('data-wlaczony', wl ? 'tak' : 'nie');
+      var etyk = q('[data-etykieta-stanu]', wiersz);
+      if (etyk) etyk.textContent = wl ? 'włączony' : 'wyłączony';
+      var opis = q('[data-opis-zakresu]', wiersz);
+      if (opis) opis.textContent = p.getAttribute(wl ? 'data-opis-wl' : 'data-opis-wyl');
+      odswiezPolityke();
+      window.dnToast(
+        NAZWY_ZAKRESOW[p.getAttribute('data-zakres')] + (wl ? ' — izolacja włączona' : ' — izolacja wyłączona'),
+        wl ? 'Ustawienie na poziomie „Rola” nadpisuje reguły poziomów szerszych. Opcja Operatora, nie wymóg platformy.'
+           : 'Powrót do stanu wyjściowego: pełny dostęp, dziedziczenie z poziomu szerszego.',
+        wl ? 'ostrzezenie' : 'sukces');
+    });
+  });
+
+  /* trzy segmentowane wybory izolacji kontekstu */
+  qa('[data-kontekst]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var grupa = b.getAttribute('data-kontekst');
+      qa('[data-kontekst="' + grupa + '"]').forEach(function (x) {
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      });
+      kontekst[grupa === 'kontekst' ? 'kontekst' : grupa] = b.textContent.trim() === 'współdz.'
+        ? (grupa === 'kontekst' ? 'wspólny' : 'wspólna')
+        : (grupa === 'kontekst' ? 'odrębny' : 'odrębna');
+      odswiezPolityke();
+      window.dnToast('Izolacja kontekstu — ' + grupa,
+        b.getAttribute('data-wartosc').indexOf('wspol') === 0
+          ? 'Współdzielenie między rolami tego samego procesu to świadome poluzowanie podziału kontekstu.'
+          : 'Stan wyjściowy platformy: odrębny kontekst per karta sesji.',
+        'informacja');
+    });
+  });
+
+  /* przywrócenie stanu wyjściowego */
+  var przywroc = q('[data-przywroc-domyslne]');
+  if (przywroc) {
+    przywroc.addEventListener('click', function () {
+      qa('[data-zakres]').forEach(function (p) {
+        if (p.checked) { p.checked = false; p.dispatchEvent(new Event('change')); }
+      });
+      qa('[data-kontekst]').forEach(function (b) {
+        var odr = b.getAttribute('data-wartosc').indexOf('odr') === 0;
+        b.setAttribute('aria-pressed', odr ? 'true' : 'false');
+      });
+      kontekst = { historia: 'odrębna', pamiec: 'odrębna', kontekst: 'odrębny' };
+      odswiezPolityke();
+      window.dnToast('Przywrócono stan wyjściowy',
+        'Osiem zakresów izolacji technicznej wyłączonych, kontekst odrębny per karta sesji. Wykonanie jest domyślne.', 'sukces');
+    });
+  }
+
+  /* profil izolacji — zapisz / wczytaj / przypisz */
+  var KOM_PROFIL = {
+    zapisz: ['Profil izolacji zapisany', 'Profil raz zbudowany może zostać przypisany wielokrotnie — do wielu ról lub sesji.'],
+    wczytaj: ['Profil wczytany', 'Wartości macierzy nadpisane wczytanym profilem; dostępne jest „Cofnij”.'],
+    przypisz: ['Profil przypisany do roli', 'Przypisanie realizuje polecenie isolation.profile.assign.']
+  };
+  qa('[data-profil]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = KOM_PROFIL[b.getAttribute('data-profil')];
+      var nazwa = q('[data-nazwa-profilu]');
+      if (b.getAttribute('data-profil') === 'zapisz' && nazwa && !nazwa.value.trim()) {
+        window.dnToast('Nazwa profilu jest pusta',
+          'Profil zostanie zapisany pod nazwą roboczą — uzupełnienie nazwy jest zalecane, lecz nie wymagane.', 'ostrzezenie');
+        return;
+      }
+      if (k) window.dnToast(k[0], k[1] + (nazwa && nazwa.value ? ' Profil: „' + nazwa.value.trim() + '”.' : ''), 'sukces');
+    });
+  });
+
+  /* ══ CZĘŚĆ B — SZABLONY ZESPOŁU ════════════════════════════════════ */
+
+  var SZABLONY = {
+    budowa: {
+      etykieta: 'Budowa aplikacji',
+      pola: {
+        'nazwa': 'Zespół „Budowa aplikacji”',
+        'cel': 'Realizacja produktu cyfrowego w module Apps — backend i frontend budowane równolegle, z walidacją bezpieczeństwa przed wdrożeniem.',
+        'coord-przypisanie': 'Agent Project Lead',
+        'coord-zadanie': 'Planowanie etapów, przypisanie pracy backendowi i frontendowi',
+        'e1-zadanie': 'Realizacja backendu',
+        'e1-przypisanie': 'Agent Backend',
+        'e1-siec': 'Agent Backend, Agent API, Agent Database',
+        'e2-zadanie': 'Realizacja frontendu (zasoby z modułu Design)',
+        'e2-przypisanie': 'model bazowy',
+        'e2-siec': 'Agent UI',
+        'tryb': 'niezalezna',
+        'v-wcielenie': 'Security Auditor',
+        'v-przypisanie': 'model bazowy',
+        'kolejki': 'Kolejka Backend (dla projektu), Kolejka główna (lokalna)',
+        'zaleznosci': 'Sekwencyjna: etap Frontend po zamknięciu kontraktu API; warunkowa po ocenie Validatora',
+        'izolacja': '',
+        'harmonogram': 'cykl dobowy, godz. 22:00',
+        'aod': 'operator'
+      },
+      automations: true
+    },
+    badanie: {
+      etykieta: 'Badanie i redakcja',
+      pola: {
+        'nazwa': 'Zespół „Badanie i redakcja”',
+        'cel': 'Zebranie źródeł, analiza ustaleń i redakcja raportu końcowego — proces jednorazowy.',
+        'coord-przypisanie': 'Agent Project Lead',
+        'coord-zadanie': 'Planowanie etapów badania i redakcji raportu',
+        'e1-zadanie': 'Zbieranie i analiza źródeł',
+        'e1-przypisanie': 'model bazowy',
+        'e1-siec': '',
+        'e2-zadanie': 'Redakcja raportu końcowego na podstawie ustaleń Executora 1',
+        'e2-przypisanie': 'model bazowy',
+        'e2-siec': '',
+        'tryb': 'przekazywanie',
+        'v-wcielenie': 'Reviewer',
+        'v-przypisanie': 'model bazowy',
+        'kolejki': 'Kolejka główna (lokalna)',
+        'zaleznosci': 'Sekwencyjna: redakcja po zamknięciu analizy źródeł',
+        'izolacja': '',
+        'harmonogram': '',
+        'aod': 'obserwator'
+      },
+      automations: false
+    },
+    petla: {
+      etykieta: 'Pętla ciągła 24/7',
+      pola: {
+        'nazwa': 'Zespół „Pętla ciągła 24/7”',
+        'cel': 'Realizacja zadań z kolejki cyklicznej bez stałego nadzoru Operatora, z oceną jakości przed zamknięciem każdego cyklu.',
+        'coord-przypisanie': 'Agent Project Lead',
+        'coord-zadanie': 'Planowanie i sterowanie każdym cyklicznym przebiegiem',
+        'e1-zadanie': 'Wykonanie zadań pobieranych z kolejki cyklicznej',
+        'e1-przypisanie': 'Agent Backend',
+        'e1-siec': 'w miarę potrzeby zadania',
+        'e2-zadanie': 'Poprawa i uzupełnienie wyników Executora 1 w kolejnym cyklu',
+        'e2-przypisanie': 'model bazowy',
+        'e2-siec': 'w miarę potrzeby zadania',
+        'tryb': 'iteracyjna',
+        'v-wcielenie': 'Validator',
+        'v-przypisanie': 'model bazowy',
+        'kolejki': 'Kolejka cykliczna (globalna), Kolejka QA (dla agenta)',
+        'zaleznosci': 'Warunkowa: zamknięcie cyklu po pozytywnej ocenie; retry przy ocenie negatywnej',
+        'izolacja': 'Odrębny profil roli — Coordinator z wyłączonym dostępem sieciowym jako świadomy wybór',
+        'harmonogram': 'cykl co 6 godzin, praca ciągła 24/7/365',
+        'aod': 'operator'
+      },
+      automations: true
+    },
+    pusty: {
+      etykieta: 'formularz pusty',
+      pola: {
+        'nazwa': '', 'cel': '', 'coord-przypisanie': '', 'coord-zadanie': '',
+        'e1-zadanie': '', 'e1-przypisanie': '', 'e1-siec': '',
+        'e2-zadanie': '', 'e2-przypisanie': '', 'e2-siec': '',
+        'tryb': '', 'v-wcielenie': '', 'v-przypisanie': '',
+        'kolejki': '', 'zaleznosci': '', 'izolacja': '', 'harmonogram': '', 'aod': ''
+      },
+      automations: false
+    }
+  };
+
+  function wczytajSzablon(klucz) {
+    var s = SZABLONY[klucz];
+    if (!s) return;
+    Object.keys(s.pola).forEach(function (k) {
+      var pole = q('[data-pole="' + k + '"]');
+      if (pole) pole.value = s.pola[k];
+    });
+    var aut = q('[data-pole-przelacznik="automations"]');
+    if (aut) aut.checked = !!s.automations;
+
+    qa('.iz-karta-szablonu').forEach(function (karta) {
+      var wczytany = karta.getAttribute('data-szablon') === klucz;
+      karta.setAttribute('data-wczytany', wczytany ? 'tak' : 'nie');
+      var znacznik = q('[data-znacznik-wczytania]', karta);
+      if (znacznik) {
+        znacznik.style.display = wczytany && klucz !== 'pusty' ? '' : 'none';
+        znacznik.className = 'dn-plakietka dn-plakietka--sygnal';
+        znacznik.setAttribute('data-znacznik-wczytania', '');
+      }
+    });
+    qa('.iz-pozycja-zespolu').forEach(function (p) {
+      p.setAttribute('aria-selected', p.getAttribute('data-wczytaj-szablon') === klucz ? 'true' : 'false');
+    });
+    var etyk = q('[data-nazwa-wczytanego]');
+    if (etyk) etyk.textContent = s.etykieta;
+
+    if (klucz === 'pusty') {
+      window.dnToast('Formularz wyczyszczony', 'Osiemnaście pól bez wartości wyjściowych — punkt startu własnej konfiguracji.', 'informacja');
+    } else {
+      window.dnToast('Wczytano zespół „' + s.etykieta + '”',
+        'Bieżąca konfiguracja ról nadpisana od razu; dostępne jest „Cofnij”. Modal potwierdzenia to opcja Operatora, domyślnie wyłączona.', 'sukces');
+    }
+  }
+
+  qa('[data-wczytaj-szablon]').forEach(function (b) {
+    b.addEventListener('click', function () { wczytajSzablon(b.getAttribute('data-wczytaj-szablon')); });
+  });
+
+  qa('[data-duplikuj]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      window.dnToast('Duplikat utworzony',
+        b.getAttribute('data-duplikuj') + ' (kopia) — dodano do listy zapisanych zespołów.', 'sukces');
+    });
+  });
+
+  qa('[data-usun]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      window.dnToast('Usunięto preset zespołu',
+        b.getAttribute('data-usun') + ' — pozycja usunięta od razu. Cofnij: dostępne w tym powiadomieniu.', 'ostrzezenie', 5200);
+    });
+  });
+
+  qa('[data-zespol-akcja]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var akcja = b.getAttribute('data-zespol-akcja');
+      var nazwa = q('[data-pole="nazwa"]');
+      if (!nazwa || !nazwa.value.trim()) {
+        window.dnToast('Nazwa zespołu jest pusta',
+          'Konfiguracja zostanie ' + (akcja === 'zapisz' ? 'zapisana' : 'zastosowana') +
+          ' pod nazwą roboczą — uzupełnienie nazwy jest zalecane, lecz nie wymagane.', 'ostrzezenie');
+        return;
+      }
+      if (akcja === 'zapisz') {
+        window.dnToast('Zespół zapisany', 'Preset „' + nazwa.value.trim() + '” dodany do listy zapisanych zespołów.', 'sukces');
+      } else {
+        window.dnToast('Konfiguracja zastosowana',
+          'Role, tryby współpracy i kolejki ustawione zgodnie z formularzem. Zmiany są odwracalne w dowolnym momencie.', 'sukces');
+      }
+    });
+  });
+
+  var przelAut = q('[data-pole-przelacznik="automations"]');
+  if (przelAut) {
+    przelAut.addEventListener('change', function () {
+      window.dnToast(przelAut.checked ? 'Powiązanie z Automations włączone' : 'Powiązanie z Automations wyłączone',
+        przelAut.checked
+          ? 'Silnik kolejek spięty z Queue Managerem; harmonogram trafia do Scheduler, zależności do Orchestrator, statusy do Execution Monitor.'
+          : 'Proces działa jednorazowo, bez trwałego zarządzania wykonaniem cyklicznym.',
+        'informacja');
+    });
+  }
+
+  odswiezPolityke();
+})();
+</script>
+</body>
+</html>

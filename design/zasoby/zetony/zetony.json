@@ -1,0 +1,345 @@
+{
+  "_meta": {
+    "produkt": "Danaco Console",
+    "rodzaj": "AI Operating Environment",
+    "warstwa": "zetony systemu wizualnego",
+    "wersja": "v2.0 (projekt od podstaw)",
+    "status": "Deweloperski",
+    "data": "2026-08-11",
+    "producent": "Danaco Holding Group Sp. z o.o.",
+    "tworca": "Dariusz Naharnowicz",
+    "kierunek": "monochromatyczna precyzja: odcienie bieli (jasny) + odcienie czerni (ciemny) + jeden blekit sygnalowy",
+    "zrodlo": "01-kierunek/KIERUNEK.md; pomiary kontrastu: kontrasty.json",
+    "zasady": [
+      "jednostka bazowa 4 px",
+      "oba motywy rownoprawne — definiowane osobno",
+      "stan nigdy samym kolorem",
+      "zero blokad (ADL-017)",
+      "WCAG 2.1 AA na wejsciu",
+      "zakaz #000000; #FFFFFF wylacznie jako powierzchnia kart i tekst na atramencie"
+    ]
+  },
+  "prymitywy": {
+    "szarosc": {
+      "--dn-szary-0": "#FFFFFF",
+      "--dn-szary-25": "#FAFAFA",
+      "--dn-szary-50": "#F4F4F4",
+      "--dn-szary-100": "#ECECEC",
+      "--dn-szary-150": "#E3E3E3",
+      "--dn-szary-200": "#D7D7D7",
+      "--dn-szary-300": "#C0C0C0",
+      "--dn-szary-400": "#9E9E9E",
+      "--dn-szary-500": "#7C7C7C",
+      "--dn-szary-600": "#616161",
+      "--dn-szary-700": "#4A4A4A",
+      "--dn-szary-750": "#3A3A3A",
+      "--dn-szary-800": "#2A2A2A",
+      "--dn-szary-850": "#212121",
+      "--dn-szary-900": "#181818",
+      "--dn-szary-925": "#131313",
+      "--dn-szary-950": "#0F0F0F",
+      "--dn-szary-1000": "#0A0A0A"
+    },
+    "sygnal": {
+      "--dn-sygnal-100": "#EDF3FE",
+      "--dn-sygnal-200": "#C9DAFB",
+      "--dn-sygnal-300": "#8FB2F5",
+      "--dn-sygnal-400": "#5C8CEC",
+      "--dn-sygnal-500": "#3B6FE0",
+      "--dn-sygnal-600": "#2457C9",
+      "--dn-sygnal-700": "#1D49AF",
+      "--dn-sygnal-800": "#173A8C"
+    },
+    "stany": {
+      "zielen": {
+        "--dn-zielen-700": "#1E7A46",
+        "--dn-zielen-400": "#4FBD85",
+        "--dn-zielen-200": "#BCE3CD",
+        "--dn-zielen-100": "#E7F5EE"
+      },
+      "bursztyn": {
+        "--dn-bursztyn-700": "#8A5B0C",
+        "--dn-bursztyn-400": "#E0A63C",
+        "--dn-bursztyn-200": "#EED9A7",
+        "--dn-bursztyn-100": "#FBF2DE"
+      },
+      "czerwien": {
+        "--dn-czerwien-700": "#C0362F",
+        "--dn-czerwien-400": "#EE7168",
+        "--dn-czerwien-200": "#F3C8C4",
+        "--dn-czerwien-100": "#FCEDEB"
+      }
+    }
+  },
+  "rama-kokpitu": {
+    "_uwaga": "stala w obu motywach — jedyny element (poza godlem) niezmienny przy przelaczeniu motywu",
+    "--dn-rama": "#131313",
+    "--dn-rama-tekst": "#ECECEC",
+    "--dn-rama-tekst-2": "#9E9E9E",
+    "--dn-rama-hover": "rgba(255,255,255,0.08)",
+    "--dn-rama-obrys": "rgba(255,255,255,0.10)"
+  },
+  "semantyczne": {
+    "jasny": {
+      "--dn-tlo": "#F4F4F4",
+      "--dn-powierzchnia": "#FFFFFF",
+      "--dn-powierzchnia-2": "#ECECEC",
+      "--dn-panel": "#FAFAFA",
+      "--dn-hover": "rgba(10,10,10,0.05)",
+      "--dn-wcisniecie": "rgba(10,10,10,0.09)",
+      "--dn-nakladka": "rgba(10,10,10,0.45)",
+      "--dn-obrys": "#E3E3E3",
+      "--dn-obrys-subtelny": "#ECECEC",
+      "--dn-obrys-mocny": "#C0C0C0",
+      "--dn-tekst": "#181818",
+      "--dn-tekst-2": "#616161",
+      "--dn-tekst-3": "#7C7C7C",
+      "--dn-tekst-inv": "#FFFFFF",
+      "--dn-atrament": "#181818",
+      "--dn-atrament-hover": "#0A0A0A",
+      "--dn-atrament-tekst": "#FFFFFF",
+      "--dn-sygnal": "#2457C9",
+      "--dn-sygnal-mocny": "#1D49AF",
+      "--dn-sygnal-wypelnienie": "#2457C9",
+      "--dn-sygnal-wypelnienie-hover": "#1D49AF",
+      "--dn-sygnal-tlo": "#EDF3FE",
+      "--dn-sygnal-obrys": "#C9DAFB",
+      "--dn-kropka": "#3B6FE0",
+      "--dn-fokus": "#3B6FE0",
+      "--dn-fokus-cien": "rgba(59,111,224,0.30)"
+    },
+    "ciemny": {
+      "--dn-tlo": "#0F0F0F",
+      "--dn-powierzchnia": "#181818",
+      "--dn-powierzchnia-2": "#131313",
+      "--dn-panel": "#212121",
+      "--dn-hover": "rgba(255,255,255,0.06)",
+      "--dn-wcisniecie": "rgba(255,255,255,0.10)",
+      "--dn-nakladka": "rgba(0,0,0,0.62)",
+      "--dn-obrys": "#2A2A2A",
+      "--dn-obrys-subtelny": "#212121",
+      "--dn-obrys-mocny": "#3A3A3A",
+      "--dn-tekst": "#ECECEC",
+      "--dn-tekst-2": "#9E9E9E",
+      "--dn-tekst-3": "#7C7C7C",
+      "--dn-tekst-inv": "#0F0F0F",
+      "--dn-atrament": "#ECECEC",
+      "--dn-atrament-hover": "#FAFAFA",
+      "--dn-atrament-tekst": "#0F0F0F",
+      "--dn-sygnal": "#8FB2F5",
+      "--dn-sygnal-mocny": "#C9DAFB",
+      "--dn-sygnal-wypelnienie": "#3B6FE0",
+      "--dn-sygnal-wypelnienie-hover": "#5C8CEC",
+      "--dn-sygnal-tlo": "rgba(59,111,224,0.16)",
+      "--dn-sygnal-obrys": "rgba(92,140,236,0.40)",
+      "--dn-kropka": "#5C8CEC",
+      "--dn-fokus": "#5C8CEC",
+      "--dn-fokus-cien": "rgba(92,140,236,0.35)"
+    }
+  },
+  "stany-semantyczne": {
+    "jasny": {
+      "sukces": {
+        "tekst": "#1E7A46",
+        "tlo": "#E7F5EE",
+        "obrys": "#BCE3CD"
+      },
+      "ostrzezenie": {
+        "tekst": "#8A5B0C",
+        "tlo": "#FBF2DE",
+        "obrys": "#EED9A7"
+      },
+      "blad": {
+        "tekst": "#C0362F",
+        "tlo": "#FCEDEB",
+        "obrys": "#F3C8C4"
+      },
+      "informacja": {
+        "tekst": "#2457C9",
+        "tlo": "#EDF3FE",
+        "obrys": "#C9DAFB"
+      }
+    },
+    "ciemny": {
+      "sukces": {
+        "tekst": "#4FBD85",
+        "tlo": "rgba(79,189,133,0.14)",
+        "obrys": "rgba(79,189,133,0.34)"
+      },
+      "ostrzezenie": {
+        "tekst": "#E0A63C",
+        "tlo": "rgba(224,166,60,0.14)",
+        "obrys": "rgba(224,166,60,0.34)"
+      },
+      "blad": {
+        "tekst": "#EE7168",
+        "tlo": "rgba(238,113,104,0.14)",
+        "obrys": "rgba(238,113,104,0.34)"
+      },
+      "informacja": {
+        "tekst": "#8FB2F5",
+        "tlo": "rgba(59,111,224,0.16)",
+        "obrys": "rgba(92,140,236,0.40)"
+      }
+    },
+    "_uwaga": "stan nigdy samym kolorem — zawsze ikona albo etykieta [NIENEGOCJOWALNE]"
+  },
+  "typografia": {
+    "kroje": {
+      "--dn-ff-naglowek": "'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif",
+      "--dn-ff-bazowa": "'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif",
+      "--dn-ff-mono": "'IBM Plex Mono', 'Cascadia Mono', 'Consolas', monospace",
+      "_role": "Space Grotesk = wejscie do srodowiska i marka; Plex Sans = praca; Plex Mono = maszyna",
+      "_licencja": "OFL 1.1, podzbiory latin + latin-ext (pelne polskie diakrytyki)"
+    },
+    "stopnie": {
+      "--dn-fs-xs": "11px",
+      "--dn-fs-sm": "12px",
+      "--dn-fs-base": "13px",
+      "--dn-fs-md": "14px",
+      "--dn-fs-lg": "16px",
+      "--dn-fs-xl": "20px",
+      "--dn-fs-2xl": "24px",
+      "--dn-fs-3xl": "30px",
+      "--dn-fs-display": "40px"
+    },
+    "grubosci": {
+      "--dn-fw-normalna": "400",
+      "--dn-fw-srednia": "500",
+      "--dn-fw-polgruba": "600",
+      "--dn-fw-gruba": "700"
+    },
+    "interlinie": {
+      "--dn-lh-ciasny": "1.25",
+      "--dn-lh-bazowy": "1.45",
+      "--dn-lh-luzny": "1.6"
+    },
+    "tracking": {
+      "--dn-ls-naglowek": "-0.01em",
+      "--dn-ls-wersaliki": "0.08em",
+      "--dn-ls-mono-wersaliki": "0.14em"
+    }
+  },
+  "przestrzen": {
+    "odstepy": {
+      "--dn-od-0": "0",
+      "--dn-od-1": "4px",
+      "--dn-od-2": "8px",
+      "--dn-od-3": "12px",
+      "--dn-od-4": "16px",
+      "--dn-od-5": "20px",
+      "--dn-od-6": "24px",
+      "--dn-od-8": "32px",
+      "--dn-od-10": "40px",
+      "--dn-od-12": "48px",
+      "--dn-od-16": "64px"
+    },
+    "promienie": {
+      "--dn-r-xs": "3px",
+      "--dn-r-sm": "6px",
+      "--dn-r-md": "8px",
+      "--dn-r-lg": "10px",
+      "--dn-r-xl": "14px",
+      "--dn-r-pill": "999px"
+    }
+  },
+  "ruch": {
+    "--dn-ease": "cubic-bezier(0.2, 0, 0, 1)",
+    "--dn-czas-1": "0.1s",
+    "--dn-czas-2": "0.16s",
+    "--dn-czas-3": "0.22s",
+    "--dn-czas-tetno": "2.4s",
+    "prefers-reduced-motion": "wszystko skraca sie do 0,01 ms; tetno kropki zastepuje pierscien statyczny"
+  },
+  "wymiary": {
+    "_gestosc": "zwarta (kokpit) — rozstrzygniecie L-P-13",
+    "--dn-wym-kontrolka": "32px",
+    "--dn-wym-ikonowy": "32px",
+    "--dn-wym-pasek": "48px",
+    "--dn-wym-pas-kart": "36px",
+    "--dn-wym-wiersz": "36px",
+    "--dn-wym-boczna": "224px",
+    "--dn-wym-pas-komunikacji": "320px",
+    "--dn-wym-modal": "560px",
+    "--dn-wym-toast-min": "280px",
+    "--dn-wym-toast-max": "420px",
+    "--dn-wym-awatar-sm": "24px",
+    "--dn-wym-awatar": "28px",
+    "--dn-wym-awatar-lg": "36px",
+    "--dn-wym-ikona-sm": "14px",
+    "--dn-wym-ikona": "16px",
+    "--dn-wym-ikona-lg": "20px",
+    "--dn-wym-ikona-xl": "24px",
+    "--dn-wym-przelacznik-szer": "36px",
+    "--dn-wym-przelacznik-wys": "20px",
+    "--dn-wym-check": "16px",
+    "--dn-wym-kropka": "6px",
+    "--dn-wym-wstega": "2px",
+    "--dn-wym-spinner": "14px",
+    "--dn-wym-fokus": "2px",
+    "--dn-wym-fokus-odsuniecie": "2px",
+    "--dn-odstep-panel": "12px",
+    "--dn-odstep-sekcji": "24px",
+    "dotyk (pointer coarse)": {
+      "--dn-wym-kontrolka": "40px",
+      "--dn-wym-ikonowy": "40px",
+      "--dn-wym-wiersz": "44px",
+      "--dn-wym-check": "20px",
+      "--dn-wym-przelacznik-szer": "44px",
+      "--dn-wym-przelacznik-wys": "24px"
+    },
+    "gestosc-przestronna (data-gestosc)": {
+      "--dn-fs-base": "14px",
+      "--dn-wym-kontrolka": "40px",
+      "--dn-wym-wiersz": "44px",
+      "--dn-wym-pasek": "56px",
+      "--dn-odstep-panel": "20px"
+    }
+  },
+  "siatka-i-lamanie": {
+    "--dn-bp-w1": "640px",
+    "--dn-bp-w2": "960px",
+    "--dn-bp-w3": "1280px",
+    "--dn-bp-w4": "1600px",
+    "--dn-tresc-max": "1200px",
+    "--dn-siatka-kolumny": "12",
+    "--dn-siatka-przerwa": "24px",
+    "_uwaga": "zamkniecie luk L-P-11 i L-P-12"
+  },
+  "warstwy": {
+    "--dn-z-podloga": 0,
+    "--dn-z-przybornik": 10,
+    "--dn-z-pasek": 100,
+    "--dn-z-boczna": 200,
+    "--dn-z-pas-komunikacji": 300,
+    "--dn-z-nakladka": 800,
+    "--dn-z-modal": 900,
+    "--dn-z-powiadomienie": 1000,
+    "--dn-z-tooltip": 1100,
+    "--dn-z-aod": 1200,
+    "--dn-z-centrum-polecen": 1300,
+    "_uwaga": "zamkniecie luki L-P-10"
+  },
+  "gradienty": {
+    "--dn-grad-atrament": "linear-gradient(180deg, #2A2A2A, #131313)",
+    "--dn-grad-sygnal": "linear-gradient(135deg, #5C8CEC, #2457C9)",
+    "_zakres": "awatary bez zdjecia, rdzen AOD, grafiki brandowe; NIGDY tla przyciskow, kart i sekcji (zamkniecie luki L-P-09)"
+  },
+  "cienie": {
+    "jasny": {
+      "--dn-cien-1": "0 1px 2px rgba(10,10,10,0.05)",
+      "--dn-cien-2": "0 2px 8px rgba(10,10,10,0.07), 0 1px 2px rgba(10,10,10,0.05)",
+      "--dn-cien-3": "0 8px 24px rgba(10,10,10,0.12)",
+      "--dn-cien-lg": "0 20px 48px rgba(10,10,10,0.18)",
+      "--dn-cien-sygnal": "0 0 0 3px rgba(59,111,224,0.18)"
+    },
+    "ciemny": {
+      "--dn-cien-1": "0 1px 2px rgba(0,0,0,0.35)",
+      "--dn-cien-2": "0 3px 10px rgba(0,0,0,0.42), 0 1px 2px rgba(0,0,0,0.30)",
+      "--dn-cien-3": "0 10px 30px rgba(0,0,0,0.52)",
+      "--dn-cien-lg": "0 24px 60px rgba(0,0,0,0.65)",
+      "--dn-cien-sygnal": "0 0 0 3px rgba(92,140,236,0.22)"
+    },
+    "_uwaga": "cien-sygnal ZAREZERWOWANY: pierscien pola aktywnego i poswiata kropki sygnalu"
+  }
+}

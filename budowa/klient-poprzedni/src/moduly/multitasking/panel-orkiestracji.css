@@ -1,0 +1,59 @@
+/* ============================================================================
+   DANACO CONSOLE — PANEL ORKIESTRACJI ŚRODOWISKA MULTITASKINGU
+   ----------------------------------------------------------------------------
+   Arkusz opisuje układ sekcji sterowania zespołem: odstępy między podsekcjami,
+   rząd kontrolek i miejsce znaku objaśnienia [?] obok każdego elementu
+   konfiguracji.
+
+   Barwy i odstępy pochodzą wyłącznie z żetonów warstwy `motyw/`; arkusz nie
+   wprowadza własnych decyzji wyglądu ponad układ.
+
+   Arkusz nie wygasza kontrolek. Sekcja bez powiązania z modułem Automations
+   mówi o tym zdaniem, nie szarością.
+   ============================================================================ */
+
+.dm-orkiestracja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+  padding: var(--dn-od-4);
+  overflow-y: auto;
+}
+
+.dm-orkiestracja__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-lg);
+  color: var(--dn-tekst-2);
+}
+
+/* Rząd kontrolek jednej podsekcji. Zawija się, bo panel stoi obok sceny okien
+   komunikacji i bywa wąski — bez zawijania kontrolka wypadałaby poza krawędź. */
+.dm-orkiestracja__pasek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dn-od-3);
+}
+
+/* Element konfiguracji wraz ze znakiem [?]. Znak stoi przy kontrolce, a nie pod
+   nią, żeby objaśnienie wiązało się czytelnie z tym, czego dotyczy. */
+.dm-orkiestracja__ustawienie {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--dn-od-1);
+  flex: 1 1 240px;
+}
+
+.dm-orkiestracja__ustawienie > .dn-tooltip { flex: none; }
+
+.dm-orkiestracja__wiez,
+.dm-orkiestracja__ocena {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* Sekcja Role niesie scenę czterech okien roboczych, która ma własny układ —
+   panel daje jej wyłącznie ramę przewijania i nie narzuca odstępów wewnątrz. */
+.dm-orkiestracja--role { gap: var(--dn-od-2); }

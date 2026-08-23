@@ -1,0 +1,255 @@
+// Odpowiedzialność pliku: trwałość skrzynek Operatora — wierszy tabeli
+// `skrzynka_pocztowa` wraz z protokołem, źródłem nastaw, trybem szyfrowania
+// i domyślnością. Ślad wysyłki leży w pliku obok (`poczta_skrzynki_slad.go`).
+//
+// Ta sama tabela, dwa różne pytania: `poczta.go` czyta ją pod kątem obserwatora
+// poczty (skrzynki czynne, takt odpytywania), a ten plik pod kątem rodziny
+// `mail.*` (podpięcie, wykaz, domyślna) — tak samo jak `macierz.go` czyta pod
+// swoim kątem tabelę `srodowisko_modul`. Drugiej tabeli na skrzynkę nie ma:
+// gdyby była, automatyka wyzwalana listem nie widziałaby skrzynki podpiętej
+// komendą.
+//
+// Hasła tu nie ma: kolumna `haslo_odwolanie` niesie odwołanie do wpisu sejfu
+// („sejf:poczta:<kod>”), a kolumny na sam sekret schemat nie zna, więc żaden
+// odczyt tego repozytorium nie ma jak go wynieść.
+package dane
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+)
+
+// SkrzynkaOperatora to wiersz `skrzynka_pocztowa` widziany oczami rodziny
+// `mail.*`. Od `SkrzynkaPocztowa` z `poczta.go` różni się zestawem pól: tamta
+// niesie `TaktSekundy` i `Aktywna` (sprawy obserwatora), a ta `Protokol`,
+// `Zrodlo` i `Domyslna` (sprawy podpięcia). Jeden wiersz, dwa widoki, każdy
+// z polami swojego pytania.
+type SkrzynkaOperatora struct {
+	ID               int64
+	Kod              string
+	Adres            string
+	NazwaWyswietlana *string
+	Protokol         string
+	Zrodlo           string
+	HostOdbioru      string
+	PortOdbioru      int
+	HostWysylki      string
+	PortWysylki      int
+	Uzytkownik       string
+	HasloOdwolanie   *string
+	SzyfrujOdbior    bool
+	SzyfrujWysylke   bool
+	WeryfikujTLS     bool
+	Domyslna         bool
+}
+
+// RepozytoriumSkrzynek jest kontraktem trwałości skrzynek Operatora.
+type RepozytoriumSkrzynek interface {
+	// Skrzynki oddaje wszystkie podpięte skrzynki, domyślną na początku.
+	Skrzynki(ctx context.Context) ([]SkrzynkaOperatora, error)
+	// Skrzynka odnajduje skrzynkę po kodzie (ErrBrakWiersza, gdy jej nie ma).
+	Skrzynka(ctx context.Context, kod string) (SkrzynkaOperatora, error)
+	// SkrzynkaDomyslna oddaje skrzynkę wskazaną jako domyślna, a przy jej braku
+	// — jedyną podpiętą. ErrBrakWiersza znaczy „Operator nie podpiął żadnej".
+	SkrzynkaDomyslna(ctx context.Context) (SkrzynkaOperatora, error)
+	// Zapisz zakłada skrzynkę albo nadpisuje zastaną po kodzie i oddaje wiersz
+	// po zapisie — z kluczem nadanym przez bazę.
+	Zapisz(ctx context.Context, s SkrzynkaOperatora) (SkrzynkaOperatora, error)
+	// Usun odpina skrzynkę. Fałsz znaczy „nie było czego odpinać”, nie błąd.
+	Usun(ctx context.Context, kod string) (bool, error)
+	// ZapiszSladWysylki utrwala fakt nadania listu — także nieudanego.
+	ZapiszSladWysylki(ctx context.Context, s SladWysylki) error
+}
+
+const (
+	kolumnySkrzynkiOperatora = `id, kod, adres, nazwa_wyswietlana, protokol, zrodlo,
+	                            host_odbioru, port_odbioru, host_wysylki, port_wysylki,
+	                            uzytkownik, haslo_odwolanie, szyfruj_odbior,
+	                            szyfruj_wysylke, tls_weryfikacja, domyslna`
+
+	// Domyślna idzie pierwsza, reszta po kodzie — wykaz ma ten sam porządek przy
+	// każdym odczycie, a ta, którą rdzeń weźmie bez wskazania, stoi na wierzchu.
+	wykazSkrzynekOperatora = `SELECT ` + kolumnySkrzynkiOperatora + `
+	                          FROM skrzynka_pocztowa ORDER BY domyslna DESC, kod`
+
+	skrzynkaOperatoraPoKodzie = `SELECT ` + kolumnySkrzynkiOperatora + `
+	                             FROM skrzynka_pocztowa WHERE kod = ?`
+
+	// Bez wskazanej domyślnej bierzemy pierwszą z tego samego porządku, co wykaz
+	// (`LIMIT 1`). Przy jednej podpiętej skrzynce jest to ona sama, więc nie
+	// trzeba jej osobno oznaczać.
+	skrzynkaOperatoraDomyslna = `SELECT ` + kolumnySkrzynkiOperatora + `
+	                             FROM skrzynka_pocztowa ORDER BY domyslna DESC, kod LIMIT 1`
+
+	zapiszSkrzynkeOperatora = `INSERT INTO skrzynka_pocztowa
+	    (kod, adres, nazwa_wyswietlana, protokol, zrodlo, host_odbioru, port_odbioru,
+	     host_wysylki, port_wysylki, uzytkownik, haslo_odwolanie, szyfruj_odbior,
+	     szyfruj_wysylke, tls_weryfikacja, domyslna)
+	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	    ON CONFLICT(kod) DO UPDATE SET
+	        adres = excluded.adres,
+	        nazwa_wyswietlana = excluded.nazwa_wyswietlana,
+	        protokol = excluded.protokol,
+	        zrodlo = excluded.zrodlo,
+	        host_odbioru = excluded.host_odbioru,
+	        port_odbioru = excluded.port_odbioru,
+	        host_wysylki = excluded.host_wysylki,
+	        port_wysylki = excluded.port_wysylki,
+	        uzytkownik = excluded.uzytkownik,
+	        haslo_odwolanie = excluded.haslo_odwolanie,
+	        szyfruj_odbior = excluded.szyfruj_odbior,
+	        szyfruj_wysylke = excluded.szyfruj_wysylke,
+	        tls_weryfikacja = excluded.tls_weryfikacja,
+	        domyslna = excluded.domyslna`
+
+	// Zdjęcie domyślności z pozostałych. Indeks częściowy schematu dopuszcza jedną
+	// domyślną skrzynkę, więc nadanie domyślności nowej musi zdjąć ją starej
+	// w tej samej transakcji. Bez tego INSERT rozbiłby się o indeks.
+	zdejmijDomyslnoscSkrzynek = `UPDATE skrzynka_pocztowa SET domyslna = 0 WHERE kod <> ?`
+
+	usunSkrzynkeOperatora = `DELETE FROM skrzynka_pocztowa WHERE kod = ?`
+)
+
+// repozytoriumSkrzynek stoi na wspólnej pamięci zapytań zestawu i na uchwycie
+// bazy — ten drugi jest potrzebny do transakcji przy nadawaniu domyślności.
+type repozytoriumSkrzynek struct {
+	zapytania *zapytania
+	db        *sql.DB
+}
+
+// SkrzynkiOperatora oddaje repozytorium skrzynek nad tą samą bazą, co reszta
+// zestawu. Jest metodą, a nie polem struktury — wzorem `SekcjePaneli`
+// i `RoleOkien` — bo repozytorium nie trzyma stanu poza wskaźnikami na wspólną
+// pamięć zapytań i uchwyt bazy.
+func (z *Zestaw) SkrzynkiOperatora() RepozytoriumSkrzynek {
+	if z == nil || z.zapytania == nil {
+		return nil
+	}
+	return &repozytoriumSkrzynek{zapytania: z.zapytania, db: z.zapytania.db}
+}
+
+func (r *repozytoriumSkrzynek) Skrzynki(ctx context.Context) ([]SkrzynkaOperatora, error) {
+	polecenie, err := r.zapytania.przygotuj(ctx, wykazSkrzynekOperatora)
+	if err != nil {
+		return nil, err
+	}
+	wiersze, err := polecenie.QueryContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("dane: nie można odczytać skrzynek Operatora: %w", err)
+	}
+	defer wiersze.Close()
+	lista := []SkrzynkaOperatora{}
+	for wiersze.Next() {
+		skrzynka, err := odczytajSkrzynkeOperatora(wiersze)
+		if err != nil {
+			return nil, err
+		}
+		lista = append(lista, skrzynka)
+	}
+	if err := wiersze.Err(); err != nil {
+		return nil, fmt.Errorf("dane: przerwany odczyt skrzynek Operatora: %w", err)
+	}
+	return lista, nil
+}
+
+func (r *repozytoriumSkrzynek) Skrzynka(ctx context.Context, kod string) (SkrzynkaOperatora, error) {
+	polecenie, err := r.zapytania.przygotuj(ctx, skrzynkaOperatoraPoKodzie)
+	if err != nil {
+		return SkrzynkaOperatora{}, err
+	}
+	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx, kod))
+	if errors.Is(err, sql.ErrNoRows) {
+		return SkrzynkaOperatora{}, ErrBrakWiersza
+	}
+	return skrzynka, err
+}
+
+func (r *repozytoriumSkrzynek) SkrzynkaDomyslna(ctx context.Context) (SkrzynkaOperatora, error) {
+	polecenie, err := r.zapytania.przygotuj(ctx, skrzynkaOperatoraDomyslna)
+	if err != nil {
+		return SkrzynkaOperatora{}, err
+	}
+	skrzynka, err := odczytajSkrzynkeOperatora(polecenie.QueryRowContext(ctx))
+	if errors.Is(err, sql.ErrNoRows) {
+		return SkrzynkaOperatora{}, ErrBrakWiersza
+	}
+	return skrzynka, err
+}
+
+// Zapisz zakłada albo nadpisuje skrzynkę. Nadanie domyślności i zdjęcie jej
+// z pozostałych idą jedną transakcją, bo opisują jedną zmianę; przerwane
+// w połowie zostawiłyby dwie domyślne skrzynki albo żadnej.
+func (r *repozytoriumSkrzynek) Zapisz(ctx context.Context, s SkrzynkaOperatora) (SkrzynkaOperatora, error) {
+	err := wTransakcji(ctx, r.db, func(tx *sql.Tx) error {
+		if s.Domyslna {
+			if _, err := tx.ExecContext(ctx, zdejmijDomyslnoscSkrzynek, s.Kod); err != nil {
+				return fmt.Errorf("dane: nie można zdjąć domyślności z pozostałych skrzynek: %w", err)
+			}
+		}
+		_, err := tx.ExecContext(ctx, zapiszSkrzynkeOperatora,
+			s.Kod, s.Adres, tekstDoKolumny(s.NazwaWyswietlana), s.Protokol, s.Zrodlo,
+			s.HostOdbioru, s.PortOdbioru, s.HostWysylki, s.PortWysylki, s.Uzytkownik,
+			tekstDoKolumny(s.HasloOdwolanie), liczbaLogiczna(s.SzyfrujOdbior),
+			liczbaLogiczna(s.SzyfrujWysylke), liczbaLogiczna(s.WeryfikujTLS),
+			liczbaLogiczna(s.Domyslna))
+		if err != nil {
+			return fmt.Errorf("dane: nie można zapisać skrzynki %q: %w", s.Kod, err)
+		}
+		return nil
+	})
+	if err != nil {
+		return SkrzynkaOperatora{}, err
+	}
+	// Oddajemy wiersz odczytany, nie ten przysłany: klucz nadaje baza, a wartości
+	// domyślne kolumn mogły dopowiedzieć to, czego wołający nie wskazał.
+	return r.Skrzynka(ctx, s.Kod)
+}
+
+func (r *repozytoriumSkrzynek) Usun(ctx context.Context, kod string) (bool, error) {
+	polecenie, err := r.zapytania.przygotuj(ctx, usunSkrzynkeOperatora)
+	if err != nil {
+		return false, err
+	}
+	wynik, err := polecenie.ExecContext(ctx, kod)
+	if err != nil {
+		return false, fmt.Errorf("dane: nie można odpiąć skrzynki %q: %w", kod, err)
+	}
+	usuniete, err := wynik.RowsAffected()
+	if err != nil {
+		return false, fmt.Errorf("dane: nieznany wynik odpięcia skrzynki %q: %w", kod, err)
+	}
+	return usuniete > 0, nil
+}
+
+// odczytajSkrzynkeOperatora czyta jeden wiersz. Przyjmuje `skaner` (interfejs
+// z `dane`), więc obsługuje i pojedynczy odczyt, i pętlę wykazu.
+func odczytajSkrzynkeOperatora(w skaner) (SkrzynkaOperatora, error) {
+	var (
+		s                SkrzynkaOperatora
+		nazwaWyswietlana sql.NullString
+		hasloOdwolanie   sql.NullString
+		szyfrujOdbior    int
+		szyfrujWysylke   int
+		weryfikujTLS     int
+		domyslna         int
+	)
+	err := w.Scan(&s.ID, &s.Kod, &s.Adres, &nazwaWyswietlana, &s.Protokol, &s.Zrodlo,
+		&s.HostOdbioru, &s.PortOdbioru, &s.HostWysylki, &s.PortWysylki,
+		&s.Uzytkownik, &hasloOdwolanie, &szyfrujOdbior, &szyfrujWysylke,
+		&weryfikujTLS, &domyslna)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return SkrzynkaOperatora{}, err
+		}
+		return SkrzynkaOperatora{}, fmt.Errorf("dane: nieczytelny wiersz skrzynki Operatora: %w", err)
+	}
+	s.NazwaWyswietlana = tekstZKolumny(nazwaWyswietlana)
+	s.HasloOdwolanie = tekstZKolumny(hasloOdwolanie)
+	s.SzyfrujOdbior = szyfrujOdbior == 1
+	s.SzyfrujWysylke = szyfrujWysylke == 1
+	s.WeryfikujTLS = weryfikujTLS == 1
+	s.Domyslna = domyslna == 1
+	return s, nil
+}

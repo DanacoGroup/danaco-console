@@ -1,0 +1,40 @@
+/* Powiadomienie (toast).
+
+   Stos powiadomień stoi na warstwie `--dn-z-powiadomienie`.
+   Stan nigdy samym kolorem: obok krawędzi stanu każdy wariant niesie ikonę
+   w tej samej barwie oraz tytuł.
+   Klatki `dn-wejscie` definiuje `nakladka.css`. */
+
+.dn-toasty {
+  position: fixed;
+  inset: auto var(--dn-od-4) var(--dn-od-4) auto;
+  z-index: var(--dn-z-powiadomienie);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+.dn-toast {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--dn-od-3);
+  min-width: var(--dn-wym-toast-min);
+  max-width: var(--dn-wym-toast-max);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-3);
+  animation: dn-wejscie var(--dn-czas-3) var(--dn-ease);
+}
+.dn-toast > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); margin-top: 1px; }
+.dn-toast-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.dn-toast-tresc { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.dn-toast--sukces { border-left: 2px solid var(--dn-sukces-tekst); }
+.dn-toast--sukces > svg { color: var(--dn-sukces-tekst); }
+.dn-toast--ostrzezenie { border-left: 2px solid var(--dn-ostrzezenie-tekst); }
+.dn-toast--ostrzezenie > svg { color: var(--dn-ostrzezenie-tekst); }
+.dn-toast--blad { border-left: 2px solid var(--dn-blad-tekst); }
+.dn-toast--blad > svg { color: var(--dn-blad-tekst); }
+.dn-toast--informacja { border-left: 2px solid var(--dn-informacja-tekst); }
+.dn-toast--informacja > svg { color: var(--dn-informacja-tekst); }

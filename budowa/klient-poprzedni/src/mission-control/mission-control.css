@@ -1,0 +1,29 @@
+/* Mission Control — punkt zbiorczy arkuszy pulpitu. Poza złożeniem importów
+   arkusz niesie tylko regułę ograniczonego ruchu wspólną dla całego pulpitu.
+
+   Kolejność odpowiada kolejności sekcji na ekranie:
+     pulpit.css        — rama, czoło, kafle liczb, pas decyzji, pas działań
+     matryca.css       — kanały modelu, matryca sesji, pas „Relacje", rząd „Utwórz"
+     kolumny.css       — procesy w tle, kolejki, zespół agentów
+     stany-pulpitu.css — stany puste i braki źródła w kontrakcie
+
+   Warunek użycia: warstwa żetonów (../motyw/) i biblioteka (../komponenty/)
+   muszą zostać wczytane wcześniej — robi to `aplikacja/arkusze-stylow.ts`.
+   Arkusz wciąga moduł `mission-control.ts`, więc trafia do pakietu razem
+   z pulpitem i nie wymaga wpisu w cudzym wykazie. */
+
+@import './pulpit.css';
+@import './matryca.css';
+@import './kolumny.css';
+@import './stany-pulpitu.css';
+
+/* Preferencja ograniczonego ruchu — respektowana dla całego pulpitu */
+@media (prefers-reduced-motion: reduce) {
+  [class*='mc-'],
+  [class*='mc-']::before,
+  [class*='mc-']::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

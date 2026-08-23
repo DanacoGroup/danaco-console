@@ -1,0 +1,273 @@
+/* Okno pętli wykonawczej — kolejka zadań, obsada wykonawców, warsztat łańcucha
+   i tryb wsadowy.
+
+   ── Powierzchnia należy do dokumentu ──────────────────────────────────────
+   Arkusz nie nadaje temu oknu stałej kolumny. Postacią domyślną jest NAKŁADKA
+   nad treścią (`[data-tryb='nakladka']`): okno wchodzi znacznikiem przebiegu
+   i schodzi po zwinięciu, nie zabierając dokumentowi ani jednego piksela, gdy
+   nie jest używane. Stała kolumna (`[data-tryb='kolumna']`) istnieje wyłącznie
+   jako tryb do wyboru Operatora.
+
+   Żetony — odstępy, barwy, promienie — pochodzą z warstwy wspólnej. Ten arkusz
+   nie wprowadza ani jednej wartości surowej poza wymiarami układu, których
+   warstwa wspólna nie nazywa. */
+
+.petla-znacznik {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Nakładka: postać domyślna ─────────────────────────────────────────────
+   Okno stoi nad treścią, przy prawej krawędzi obszaru roboczego, i ma własne
+   przewijanie. Treść dokumentu zostaje pod nim widoczna — Operator nie traci
+   z oczu tego, o czym pętla mówi. */
+.ms-okno[data-tryb='nakladka'] {
+  position: absolute;
+  inset-block: var(--dn-od-2);
+  inset-inline-end: var(--dn-od-2);
+  z-index: 20;
+  width: min(420px, calc(100% - var(--dn-od-8)));
+  max-height: calc(100% - var(--dn-od-4));
+  overflow: hidden auto;
+  box-shadow: var(--dn-cien-lg);
+}
+
+/* ── Stała kolumna: wyłącznie tryb do wyboru ─────────────────────────────── */
+.ms-okno[data-tryb='kolumna'] {
+  position: static;
+  width: auto;
+  max-height: none;
+  box-shadow: none;
+}
+
+/* ── Nastawy i wskaźniki przebiegu ─────────────────────────────────────────
+   Odmowa uruchomienia jest wyróżniona barwą błędu, bo jest odmową — a nie
+   zwykłym wierszem liczb. Powód stoi w treści, nie w tytule dymka. */
+.petla-nastawa,
+.petla-wskazniki {
+  margin-block: var(--dn-od-1);
+}
+.petla-wskazniki {
+  font-variant-numeric: tabular-nums;
+}
+.petla-wskazniki[data-odmowa='tak'] {
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-blad-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-blad-tlo);
+  color: var(--dn-blad-tekst);
+}
+
+.petla-sterowanie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  margin-block: var(--dn-od-3);
+}
+
+.petla-filtr {
+  margin-block-end: var(--dn-od-3);
+}
+
+/* ── Zakładki widoków ─────────────────────────────────────────────────────── */
+.petla-widoki {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+}
+.petla-zakladki {
+  flex-wrap: wrap;
+}
+
+/* ── Kolejka zadań ────────────────────────────────────────────────────────── */
+.petla-kolejka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.petla-zadanie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+}
+.petla-zadanie__naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
+.petla-zadanie__nazwa {
+  flex: 1 1 auto;
+  font-weight: var(--dn-fw-polgruba);
+}
+.petla-zadanie__czynnosci {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  margin-block-start: var(--dn-od-1);
+}
+
+/* Stan zadania barwi lewą krawędź wiersza. Kolor jest DODATKIEM do napisu
+   stanu, nigdy jego zamiennikiem: wiersz odczytany bez barw — przez czytnik
+   ekranu albo przez oko nierozróżniające odcieni — nadal mówi, co się stało. */
+.petla-zadanie[data-stan='running'] {
+  border-inline-start: 3px solid var(--dn-sygnal-obrys);
+}
+.petla-zadanie[data-stan='done'] {
+  border-inline-start: 3px solid var(--dn-sukces-obrys);
+}
+.petla-zadanie[data-stan='failed'] {
+  border-inline-start: 3px solid var(--dn-blad-obrys);
+}
+.petla-zadanie[data-stan='blocked'] {
+  border-inline-start: 3px solid var(--dn-ostrzezenie-obrys);
+}
+.petla-zadanie__powod {
+  color: var(--dn-blad-tekst);
+}
+
+/* ── Obsada wykonawców i spięcia ──────────────────────────────────────────── */
+.petla-podtytul {
+  margin-block: var(--dn-od-3) var(--dn-od-1);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+}
+.petla-obsada,
+.petla-spiecia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.petla-obsada__wiersz,
+.petla-spiecie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+}
+.petla-obsada__naglowek,
+.petla-spiecie__naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
+.petla-obsada__kto,
+.petla-spiecie__zakres {
+  flex: 1 1 auto;
+  font-weight: var(--dn-fw-polgruba);
+}
+.petla-obsada__wiersz[data-stan='conflicted'] {
+  border-inline-start: 3px solid var(--dn-ostrzezenie-obrys);
+}
+
+/* Odłożone brzmienie jest treścią do przeczytania, nie notatką techniczną —
+   dostaje więc pełną szerokość i zawijanie, a nie jednowierszowy pasek. */
+.petla-spiecie__brzmienie {
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.petla-spiecie__powod {
+  color: var(--dn-ostrzezenie-tekst);
+}
+.petla-spiecie[data-domkniete='tak'] {
+  opacity: 0.72;
+}
+
+/* ── Warsztat łańcucha ────────────────────────────────────────────────────── */
+.petla-warsztat__pas,
+.petla-wsad__pas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  align-items: center;
+}
+.petla-warsztat__kroki,
+.petla-warsztat__zapisane,
+.petla-wsad__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin-block: var(--dn-od-2);
+  padding: 0;
+  list-style: none;
+}
+.petla-warsztat__krok,
+.petla-warsztat__zapisany,
+.petla-wsad__wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+  padding: var(--dn-od-2) var(--dn-od-3);
+}
+.petla-warsztat__krok-nazwa {
+  flex: 1 1 auto;
+}
+.petla-warsztat__krok-nastawa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.petla-warsztat__krok-sterowanie {
+  display: flex;
+  gap: var(--dn-od-1);
+}
+
+/* ── Tryb wsadowy ─────────────────────────────────────────────────────────── */
+.petla-wsad__dokumenty {
+  width: 100%;
+  font-family: var(--dn-ff-mono);
+}
+.petla-wsad__wiersz {
+  flex-direction: column;
+  align-items: stretch;
+}
+.petla-wsad__naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
+.petla-wsad__dokument {
+  flex: 1 1 auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+}
+.petla-wsad__powod {
+  color: var(--dn-blad-tekst);
+}
+.petla-wsad__bilans {
+  font-variant-numeric: tabular-nums;
+}
+.petla-wsad__wiersz[data-stan='udana'] {
+  border-inline-start: 3px solid var(--dn-sukces-obrys);
+}
+.petla-wsad__wiersz[data-stan='odrzucona'] {
+  border-inline-start: 3px solid var(--dn-blad-obrys);
+}
+.petla-wsad__wiersz[data-stan='przerwana'] {
+  border-inline-start: 3px solid var(--dn-ostrzezenie-obrys);
+}
+
+/* ── Pas pętli: kotwica układu i miejsce znacznika ─────────────────────────
+   Pas jest przodkiem ustawionym, bez którego nakładka nie ma względem czego
+   się umieścić, i miejscem, w którym znacznik przebiegu zostaje widoczny przy
+   oknie zwiniętym. Sam pas zajmuje wysokość jednego przycisku — tyle, ile
+   kosztuje dostęp do pętli, gdy się z niej nie korzysta. */
+.petla-pas {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}

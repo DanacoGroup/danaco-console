@@ -1,0 +1,164 @@
+/* ============================================================================
+   DANACO CONSOLE — POWŁOKA APLIKACJI
+   ----------------------------------------------------------------------------
+   Rozkład powłoki (pasek górny, scena okna, panel sterowania) oraz
+   sprowadzenie zmiennych widoku okna do żetonów motywu.
+
+   Arkusz idzie w wykazie `arkusze-stylow.ts` po `okno-komunikacji/okno.css`.
+   Kolejność jest konieczna: widok okna niesie własny komplet zmiennych `--dc-*`
+   o barwach wpisanych na stałe. Nadpisanie ich tutaj sprawia, że okno i komplet
+   sterowania zmieniają się razem z motywem, bez zmian w katalogu widoku okna.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   ZMIENNE WIDOKU OKNA SPROWADZONE DO ŻETONÓW MOTYWU
+   Ta sama szczegółowość co zapis w okno.css, późniejsza pozycja — wygrywa.
+   --------------------------------------------------------------------------- */
+:root {
+  --dc-tlo: var(--dn-tlo);
+  --dc-tlo-panel: var(--dn-panel);
+  --dc-tlo-wpis: var(--dn-powierzchnia);
+  --dc-obrys: var(--dn-obrys);
+  --dc-tekst: var(--dn-tekst);
+  --dc-tekst-slaby: var(--dn-tekst-2);
+  --dc-akcent: var(--dn-sygnal-wypelnienie);
+
+  /* Barwy ról wiadomości — z żetonów stanów, nie z wartości własnych */
+  --dc-operator: var(--dn-informacja-tekst);
+  --dc-model: var(--dn-sukces-tekst);
+  --dc-system: var(--dn-ostrzezenie-tekst);
+  --dc-narzedzie: var(--dn-sygnal);
+
+  --dc-odstep: var(--dn-od-3);
+  --dc-promien: var(--dn-r-sm);
+}
+
+/* Krój i stopień pisma dokumentu również z warstwy żetonów */
+body {
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+}
+
+/* ---------------------------------------------------------------------------
+   SZKIELET POWŁOKI
+   Dwa wiersze: pasek stałej wysokości i obszar roboczy zajmujący resztę.
+   --------------------------------------------------------------------------- */
+.dn-powloka {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Blok godła na pasku nie jest kontrolką — nie udaje jej kursorem */
+.dn-powloka__godlo {
+  cursor: default;
+}
+
+.dn-powloka__godlo:hover {
+  background: transparent;
+}
+
+/* Nazwa projektu obok godła — drugi wiersz tożsamości */
+.dn-powloka__projekt {
+  color: var(--dn-rama-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-wersaliki);
+  opacity: 0.82;
+  text-transform: uppercase;
+}
+
+/* Rozpychacz — odsuwa akcje paska do prawej krawędzi */
+.dn-powloka__rozpychacz {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dn-powloka__akcje {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+}
+
+/* ---------------------------------------------------------------------------
+   ŁĄCZNOŚĆ W TOKU — STAN ŁADOWANIA
+   Na czas łączenia obok etykiety stoi wskaźnik ładowania. Spinner biblioteki
+   jest zmniejszony do rozmiaru kropki, którą zastępuje, więc plakietka nie
+   rośnie i nie przeskakuje. Kropka i spinner mają własne `display`, więc
+   ukrycie wymaga zapisu jawnego.
+   --------------------------------------------------------------------------- */
+.dn-spinner.dn-lacznosc__wskaznik {
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  border-width: 1px;
+}
+
+.dn-lacznosc .dn-kropka[hidden],
+.dn-lacznosc__wskaznik[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   OBSZAR ROBOCZY
+   Scena okna komunikacji i panel sterowania obok niej. Panel pusty nie
+   zabiera miejsca — dopóki rdzeń nie otworzy okna, komplet nie istnieje.
+   --------------------------------------------------------------------------- */
+.dn-powloka__obszar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dn-powloka__scena {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dn-powloka__scena > .dc-okno {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dn-powloka__panel {
+  width: 340px;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--dn-panel);
+  border-left: 1px solid var(--dn-obrys);
+}
+
+.dn-powloka__panel:empty {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   ZAWĘŻENIE OKNA — punkt łamania w2 (960 px)
+   Poniżej progu panel sterowania schodzi pod scenę, zamiast ją ściskać.
+
+   Wartość stoi tu liczbą, bo zapytanie medialne nie czyta zmiennych własnych;
+   żeton `--dn-bp-w2` (`motyw/wymiary.css`) pozostaje jej jedynym źródłem
+   i musi się z nią zgadzać.
+   --------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+  .dn-powloka__obszar {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow-y: auto;
+  }
+
+  .dn-powloka__panel {
+    width: auto;
+    border-left: none;
+    border-top: 1px solid var(--dn-obrys);
+  }
+}

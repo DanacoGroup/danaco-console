@@ -1,0 +1,146 @@
+/*
+ * Warstwa wizualna trybu adnotacji: scena podglądu, płótno nad nią i pływający
+ * pasek narzędzi.
+ *
+ * Wciągana importem z `browser.css`. Barwy wyłącznie z żetonów motywu.
+ *
+ * Pasek pływa na warstwie płótna, przy dolnej krawędzi — robi to ten arkusz,
+ * a nie układ okna. Rząd narzędzi nie ma zabierać stronie wysokości, więc pasek
+ * leży w warstwie pozycjonowanej bezwzględnie nad sceną i nie zajmuje żadnego
+ * piksela toku dokumentu.
+ */
+
+/*
+ * Scena — jedyny kontener pozycjonujący warstwy. Podgląd strony zostaje w toku
+ * dokumentu nietknięty; warstwa adnotacji kładzie się na nim bezwzględnie.
+ */
+.mb-scena {
+  position: relative;
+  min-width: 0;
+}
+
+.mb-adnotacja {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+}
+
+/*
+ * Tryb wyłączony znika całkowicie, a nie blednie: warstwa z `display: flex`
+ * łapałaby wskaźnik nad podglądem i odebrała zaznaczanie tekstu mimo atrybutu
+ * `hidden`.
+ */
+.mb-adnotacja[hidden] {
+  display: none;
+}
+
+/*
+ * Płótno leży nad sceną, a nie w niej: `inset: 0` rozpina je na całą scenę,
+ * a tło zostaje przezroczyste, bo zrzutu strony rdzeń nie oddaje. `touch-action`
+ * zdejmuje przewijanie gestem — na płótnie gest znaczy rysowanie.
+ */
+.mb-adnotacja__plotno {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/*
+ * Zdanie o braku tła stoi nad paskiem i pod płótnem w kolejności czytania —
+ * ma być przeczytane przed naciśnięciem „Dodaj do rozmowy", nie po nim.
+ */
+.mb-adnotacja__bez-tla {
+  position: relative;
+  margin: 0;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-left: 2px solid var(--dn-ostrzezenie-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+}
+
+.mb-adnotacja__pasek {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-2);
+}
+
+.mb-adnotacja__grupa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex-wrap: wrap;
+}
+
+/* Wybór narzędzia niesie `aria-pressed`, więc arkusz sięga po ten sam atrybut. */
+.mb-adnotacja__pasek .dn-btn[aria-pressed='true'] {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-wcisniecie);
+}
+
+.mb-adnotacja__napis {
+  max-width: 12rem;
+}
+
+/*
+ * Przy narzędziu „tekst" to pole stawia ślad — sygnalizuje to obrys sygnału.
+ * Pole zostaje widoczne i edytowalne przy każdym narzędziu.
+ */
+.mb-adnotacja__pasek[data-narzedzie='tekst'] .mb-adnotacja__napis {
+  border-color: var(--dn-sygnal-obrys);
+}
+
+/*
+ * Próbka barwy: krążek wypełniony tuszem adnotacji. Wybór sygnalizuje obrys,
+ * nie samo wypełnienie — stan nie jest przekazywany wyłącznie kolorem
+ * (`motyw/stany.css`).
+ */
+.mb-adnotacja__barwa {
+  width: var(--dn-wym-check);
+  height: var(--dn-wym-check);
+  padding: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+}
+
+.mb-adnotacja__barwa[aria-pressed='true'] {
+  outline: var(--dn-wym-fokus) solid var(--dn-sygnal-obrys);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/*
+ * Tusz bierze się z prymitywów palety, nie z żetonów stanu: załącznik ogląda
+ * się poza motywem, więc barwa nie ma prawa przełączać się razem z nim.
+ */
+.mb-adnotacja__barwa--czerwien {
+  background: var(--dn-czerwien-400);
+}
+
+.mb-adnotacja__barwa--bursztyn {
+  background: var(--dn-bursztyn-400);
+}
+
+.mb-adnotacja__barwa--zielen {
+  background: var(--dn-zielen-400);
+}
+
+.mb-adnotacja__barwa--sygnal {
+  background: var(--dn-sygnal-500);
+}

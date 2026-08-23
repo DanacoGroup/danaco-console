@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Developer (CodeStudio) · stanowisko Code</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  :root { --dn-fs-base:14px; --dn-fs-sm:13px; --dn-fs-xs:12px; }
+  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
+  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .szyna-lista { overflow:auto; min-height:0; }
+  .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
+  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
+  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .dv-drzewo { padding:var(--dn-od-2); font-size:var(--dn-fs-sm); font-family:var(--dn-ff-mono); }
+  .dv-drzewo .wpis { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-2); border-radius:var(--dn-promien-sm); }
+  .dv-drzewo .wpis[aria-current="true"] { background:var(--dn-powierzchnia-2); }
+  .dv-drzewo .wciecie { padding-left:var(--dn-od-4); }
+  .dv-drzewo .wciecie-2 { padding-left:var(--dn-od-6); }
+  .dv-drzewo svg { width:16px; height:16px; flex:none; color:var(--dn-tekst-3); }
+  .dv-karty { display:flex; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); overflow-x:auto; }
+  .dv-karta { display:flex; align-items:center; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2); font-size:var(--dn-fs-xs); font-family:var(--dn-ff-mono); border:1px solid transparent; border-radius:var(--dn-promien-sm); color:var(--dn-tekst-2); white-space:nowrap; }
+  .dv-karta[aria-selected="true"] { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); border-color:var(--dn-obrys-subtelny); }
+  .dv-stan-linia { display:flex; align-items:center; gap:var(--dn-od-3); padding:var(--dn-od-1) var(--dn-od-3); border-top:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-xs); font-family:var(--dn-ff-mono); color:var(--dn-tekst-3); }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="ROLLOUT v2 · MODUŁ Developer"
+      data-prototyp-okno="Developer — Code Editor + Project Tree · Git Panel · Build Output (stanowisko Code)"
+      data-prototyp-zrodlo="dok/projekt-ui/moduly/developer.md + KANON aneks v2.1">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY ══ -->
+  <header class="dn-pasek">
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Szyna<span class="skrot">Ctrl+B</span></button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Project Tree</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Git Panel</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Build Output</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false"><span class="ptaszek">✓</span>Terminal<span class="skrot">Ctrl+`</span></button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Powiększ<span class="skrot">Ctrl+=</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomniejsz<span class="skrot">Ctrl+-</span></button>
+        <button class="sta-menu-poz" role="menuitem">Rozmiar rzeczywisty<span class="skrot">Ctrl+0</span></button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Programista<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- TRYBY — Developer działa w Code -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="false">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="true">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>CodeStudio</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Developer</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj w repozytorium…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zadania w tle"><span class="pt-tetno" aria-hidden="true"></span> 2</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Ustawienia</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PAS KART SESJI ══ -->
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Silnik wykonawczy — rozgałęzienie</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>API doręczeń — refaktoryzacja</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Pokrycie testami — moduł kolejek</span></button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór repozytorium i trybu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
+  </div>
+
+  <!-- ══ CIAŁO ══ -->
+  <div class="sta-cialo">
+
+    <!-- SZYNA -->
+    <nav class="szyna" aria-label="Szyna">
+      <div class="szyna-naglowek">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
+        <div class="sta-menu">
+          <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+          </button>
+          <div class="sta-menu-tresc" id="menu-filtr" data-menu-tresc data-otwarte="nie" role="menu">
+            <div class="sta-menu-etyk">Stan</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Wszystkie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Pracujące</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Bezczynne</button>
+            <div class="sta-menu-etyk">Sortowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Ostatnia aktywność</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Nazwa</button>
+            <div class="sta-menu-etyk">Grupowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Repozytorium</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Brak</button>
+          </div>
+        </div>
+      </div>
+      <div class="szyna-lista">
+        <div class="szyna-grupa">danaco-core-crs</div>
+        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Silnik wykonawczy — rozgałęzienie</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">API doręczeń — refaktoryzacja</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Pokrycie testami — moduł kolejek</span></button>
+        <div class="szyna-grupa">danaco-console-ui</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Komponent szyny — przegląd zmian</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Migracja tokenów motywu</span></button>
+        <div class="szyna-grupa">Więcej</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Repozytoria · Gałęzie · Worktree · Konteksty · Logi budowania</span></button>
+      </div>
+    </nav>
+
+    <!-- STANOWISKO -->
+    <div class="sta-obszar" data-robocza="widoczna" style="--sta-udzial-czaty:1fr; --sta-udzial-robocza:1.5fr">
+
+      <!-- ── LEWA: CHAT WINDOW z OBSZAREM POLECENIA ── -->
+      <div class="sta-czaty" data-liczba="1">
+        <section class="sta-okno sta-kom" id="okno-czat-1" data-nazwa="Chat Window" data-aktywne="tak" aria-label="Chat Window">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H7l-4 3V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2z"/></svg>
+              <b>Chat Window</b>
+            </span>
+            <span class="sta-chip" title="Repozytorium powiązane z sesją"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>danaco-core-crs</span>
+            <span class="sta-okno-akcje">
+              <div class="sta-menu">
+                <button class="dn-btn-ikona" type="button" data-menu="menu-sesja" aria-expanded="false" aria-label="Panele i działania sesji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+                <div class="sta-menu-tresc" id="menu-sesja" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+                  <div class="sta-menu-etyk">Panele modułu</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-edytor"><span class="ptaszek">✓</span>Code Editor</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-drzewo"><span class="ptaszek">✓</span>Project Tree</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-git"><span class="ptaszek">✓</span>Git Panel</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-build"><span class="ptaszek">✓</span>Build Output</button>
+                  <div class="sta-menu-sep"></div>
+                  <div class="sta-menu-etyk">Panele uniwersalne</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-plan"><span class="ptaszek">✓</span>Plan</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-zadania"><span class="ptaszek">✓</span>Zadania w tle</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-terminal"><span class="ptaszek">✓</span>Terminal</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-kolejka"><span class="ptaszek">✓</span>Kolejka</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-subagenci"><span class="ptaszek">✓</span>Subagenci</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-artefakty"><span class="ptaszek">✓</span>Artefakty</button>
+                  <div class="sta-menu-sep"></div>
+                  <button class="sta-menu-poz" role="menuitem">Zmień nazwę<span class="skrot">R</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Rozgałęź<span class="skrot">F</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Archiwizuj<span class="skrot">A</span></button>
+                </div>
+              </div>
+            </span>
+          </header>
+
+          <div class="sta-kom-naglowek">
+            <span class="sta-kom-pole"><span>Środowisko</span><b>CodeStudio</b></span>
+            <span class="sta-kom-pole"><span>Model</span><b class="dane">Fable 5</b></span>
+            <span class="sta-kom-pole"><span>Wysiłek</span><b class="dane">Ultra</b></span>
+            <span class="sta-kom-stan"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> pracuje</span></span>
+          </div>
+
+          <div class="sta-kom-kontekst" aria-label="Kontekst">
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6"/></svg>silnik/kolejka.py<button class="odepnij" aria-label="Odepnij">×</button></span>
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>gałąź: feature/kolejka-ponowien<button class="odepnij" aria-label="Odepnij">×</button></span>
+          </div>
+
+          <div class="sta-kom-historia">
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">09:41</span></div><div class="sta-wpis-tresc">Dodaj wykładniczy backoff do ponawiania zadań w <code>kolejka.py</code> i uzupełnij testy jednostkowe.</div></div></article>
+            <article class="sta-wpis sta-wpis--system"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h8"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Zmieniono plik</span><span class="dn-plakietka">silnik/kolejka.py</span><span class="sta-wpis-godzina">6 s</span></div><div class="sta-wpis-tresc">+34 −8 · dodano <code>oblicz_opoznienie()</code></div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">09:42</span></div><div class="sta-wpis-tresc">Wprowadziłem backoff wykładniczy (baza 2 s, limit 60 s, jitter). Build Output potwierdza: <mark>42 testy przechodzą, pokrycie 91%</mark>. Git Panel pokazuje różnicę gotową do commitu — mogę wygenerować opis zmiany.</div></div></article>
+          </div>
+
+          <div class="sta-kom-monitor"><span class="pt-tetno" aria-hidden="true"></span> Budowanie · pytest silnik/tests · 42/42</div>
+
+          <!-- OBSZAR POLECENIA -->
+          <div class="sta-kom-dol">
+            <div class="sta-kontekst-akcji">
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>Ten komputer</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>danaco-core-crs</span>
+              <span class="sta-chip">feature/kolejka-ponowien</span>
+              <span class="sta-chip">worktree</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span class="sta-chip sta-chip--diff"><span class="plus">+34</span> <span class="minus">−8</span></span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatwierdź zmiany</button>
+            </div>
+
+            <form class="sta-prompt" onsubmit="return false;">
+              <span class="sta-prompt-grot" aria-hidden="true">»»</span>
+              <textarea class="sta-prompt-obszar" rows="1" placeholder="Opisz zadanie inżynierskie lub zadaj pytanie o repozytorium…" aria-label="Pole polecenia"></textarea>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm sta-prompt-wyslij" type="submit" aria-label="Do kolejki"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+            </form>
+
+            <div class="sta-sterowanie">
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--tryb" type="button" data-popover="pop-tryb-upr" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Z pominięciem zgód<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-tryb-upr" hidden>
+                  <div class="sta-popover-tytul">Tryb uprawnień</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Ręczny</span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przyjmij zmiany</span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Plan</span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Auto</span><span class="pt-mono">4</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Z pominięciem zgód</b><small>domyślny — zero blokad</small></span><span class="pt-mono">5</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-plus" aria-expanded="false" aria-label="Dodaj" title="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <div class="sta-popover" id="pop-plus" hidden>
+                  <div class="sta-popover-tytul">Dodaj do polecenia</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj folder</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">GitHub</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-mik" aria-expanded="false" aria-label="Mikrofon" title="Mikrofon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+                <div class="sta-popover" id="pop-mik" hidden>
+                  <div class="sta-popover-tytul">Mikrofon</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                </div>
+              </div>
+              <span class="rozciag"></span>
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--model" type="button" data-popover="pop-model" aria-expanded="false">Fable 5<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-model" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Model</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Fable 5</b><small>do najtrudniejszych wyzwań</small></span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Opus 5<small>do złożonych zadań</small></span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Sonnet 5<small>najwydajniejszy na co dzień</small></span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Haiku 4.5<small>najszybszy do prostych pytań</small></span><span class="pt-mono">4</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-chip" type="button" data-popover="pop-wysilek" aria-expanded="false">Ultra<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-wysilek" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Wysiłek — Ultra</div>
+                  <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
+                  <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
+                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                </div>
+              </div>
+              <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="sta-chip--glowny sta-prompt-wyslij" type="button">↑ Do kolejki</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── PRAWA: OKNO WIODĄCE (Code Editor) + DOKOWANE PANELE ── -->
+      <div class="sta-robocza sta-panele-siatka" data-uklad="siatka" style="grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr)">
+
+        <!-- OKNO WIODĄCE: Code Editor (rozciągnięte na 2 kolumny) -->
+        <section class="sta-okno" id="panel-edytor" data-nazwa="Code Editor" style="grid-column:1 / -1">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg><b>Code Editor</b><span class="dn-plakietka dn-plakietka--rola">wiodące</span></span>
+            <span class="sta-okno-akcje">
+              <button class="dn-btn-ikona" type="button" aria-label="Konfiguracja okna" data-komunikat="Konfiguracja Code Editor — motyw składni, tabulacja, linter." data-komunikat-tytul="Konfiguracja okna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 6 9.4"/></svg></button>
+              <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </span>
+          </header>
+          <div class="dv-karty" role="tablist" aria-label="Otwarte pliki">
+            <span class="dv-karta" role="tab" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span>kolejka.py</span>
+            <span class="dv-karta" role="tab" aria-selected="false">test_kolejka.py</span>
+            <span class="dv-karta" role="tab" aria-selected="false">silnik.py</span>
+            <span class="dv-karta" role="tab" aria-selected="false">README.md</span>
+          </div>
+          <div class="sta-okno-tresc pt-edytor" style="overflow:auto">
+            <div class="pt-edytor-numery">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14</div>
+            <div class="pt-edytor-kod"><span class="pt-skl-komentarz"># silnik/kolejka.py — ponawianie z backoffem</span>
+<span class="pt-skl-slowo">import</span> random
+
+BAZA_S = <span class="pt-skl-liczba">2</span>
+LIMIT_S = <span class="pt-skl-liczba">60</span>
+
+<span class="pt-skl-slowo">def</span> <span class="pt-skl-funkcja">oblicz_opoznienie</span>(proba):
+    <span class="pt-skl-komentarz"># wykładniczy backoff z jitterem</span>
+    baza = <span class="pt-skl-funkcja">min</span>(BAZA_S * <span class="pt-skl-liczba">2</span> ** proba, LIMIT_S)
+    jitter = random.<span class="pt-skl-funkcja">uniform</span>(<span class="pt-skl-liczba">0</span>, baza * <span class="pt-skl-liczba">0.25</span>)
+    <span class="pt-skl-slowo">return</span> baza + jitter
+
+<span class="pt-skl-slowo">def</span> <span class="pt-skl-funkcja">ponow</span>(zadanie, proba=<span class="pt-skl-liczba">0</span>):
+    <span class="pt-skl-slowo">return</span> <span class="pt-skl-funkcja">oblicz_opoznienie</span>(proba)</div>
+          </div>
+          <div class="dv-stan-linia"><span>Python</span><span>UTF-8</span><span>LF</span><span>Wiersz 9, Kol 24</span><span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto"><span class="pt-tetno" aria-hidden="true"></span> Inteligencja edytuje</span></div>
+        </section>
+
+        <!-- Project Tree -->
+        <section class="sta-okno" id="panel-drzewo" data-nazwa="Project Tree">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Project Tree</b></span><span class="sta-okno-znacznik">danaco-core-crs</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc dv-drzewo" style="overflow:auto">
+            <div class="wpis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>silnik/</div>
+            <div class="wpis wciecie" aria-current="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>kolejka.py <span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto">M</span></div>
+            <div class="wpis wciecie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>silnik.py</div>
+            <div class="wpis wciecie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>__init__.py</div>
+            <div class="wpis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>silnik/tests/</div>
+            <div class="wpis wciecie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>test_kolejka.py <span class="dn-plakietka dn-plakietka--sukces" style="margin-left:auto">M</span></div>
+            <div class="wpis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>pyproject.toml</div>
+            <div class="wpis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>README.md</div>
+          </div>
+        </section>
+
+        <!-- Git Panel -->
+        <section class="sta-okno" id="panel-git" data-nazwa="Git Panel">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="9" r="3"/><path d="M18 12a6 6 0 0 1-6 6H6M6 9v6"/></svg><b>Git Panel</b></span><span class="sta-okno-znacznik">feature/kolejka-ponowien</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="overflow:auto">
+            <div class="panel-lista">
+              <div class="pt-etykieta">Zmiany do zatwierdzenia (2)</div>
+              <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> silnik/kolejka.py <span class="meta">+34 −8</span></div>
+              <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> silnik/tests/test_kolejka.py <span class="meta">+21 −0</span></div>
+            </div>
+            <div class="pt-edytor" style="max-height:220px;overflow:auto;border-top:1px solid var(--dn-obrys-subtelny)">
+              <div class="pt-edytor-numery">7
+8
+9
+10
+11</div>
+              <div class="pt-edytor-kod"><span class="pt-wiersz-usuniety">-    return BAZA_S</span>
+<span class="pt-wiersz-dodany">+    baza = min(BAZA_S * 2 ** proba, LIMIT_S)</span>
+<span class="pt-wiersz-dodany">+    jitter = random.uniform(0, baza * 0.25)</span>
+<span class="pt-wiersz-dodany">+    return baza + jitter</span>
+     <span class="pt-skl-komentarz"># koniec funkcji</span></div>
+            </div>
+            <div class="panel-lista" style="border-top:1px solid var(--dn-obrys-subtelny)">
+              <label class="pt-etykieta">Opis commitu <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wygeneruj przez AI</button></label>
+              <div class="sta-chip" style="white-space:normal">feat(kolejka): wykładniczy backoff z jitterem przy ponawianiu zadań</div>
+              <div class="panel-wiersz"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź (commit)</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wypchnij (push)</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Build Output -->
+        <section class="sta-okno" id="panel-build" data-nazwa="Build Output" style="grid-column:1 / -1">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><b>Build Output</b></span><span class="sta-okno-znacznik">pytest</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc pt-konsola" style="overflow:auto"><span class="pt-znak-zachety">PS C:\danaco-core-crs></span> pytest silnik/tests -q
+<span class="pt-komentarz"># kolekcjonowanie przypadków…</span>
+<span class="pt-wynik-ok">........................................ 40 passed</span>
+<span class="pt-wynik-ok">..                                        2 passed</span>
+<span class="pt-wynik-uwaga">ostrzeżenie: DeprecationWarning w silnik.py:88</span>
+<span class="pt-wynik-ok">42 passed, 1 warning in 3.14s — pokrycie 91%</span>
+<span class="pt-znak-zachety">PS C:\danaco-core-crs></span> <span class="pt-tetno" aria-hidden="true"></span></div>
+        </section>
+
+        <!-- Plan -->
+        <section class="sta-okno" id="panel-plan" data-nazwa="Plan">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">3 / 4</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="pt-etykieta">Zlecenie: backoff w kolejce ponowień</div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Funkcja oblicz_opoznienie <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Podłączenie do ponow() <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Testy jednostkowe <span class="meta">▶</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Commit + push <span class="meta">○</span></div>
+          </div>
+        </section>
+
+        <!-- Zadania w tle (ukryte) -->
+        <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>ponowna-analiza-pokrycia</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">2 agentów · 214 tys. tok. · 3 m 41 s</div>
+            <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> lint całego pakietu <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+          </div>
+        </section>
+
+        <!-- Terminal (ukryty) -->
+        <section class="sta-okno" id="panel-terminal" data-nazwa="Terminal" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><b>Terminal</b></span><span class="sta-okno-znacznik">Sesja 1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc pt-konsola"><span class="pt-znak-zachety">PS C:\danaco-core-crs></span> git status -s
+<span class="pt-wynik-uwaga"> M silnik/kolejka.py</span>
+<span class="pt-wynik-uwaga"> M silnik/tests/test_kolejka.py</span>
+<span class="pt-znak-zachety">PS C:\danaco-core-crs></span> <span class="pt-tetno" aria-hidden="true"></span></div>
+        </section>
+
+        <!-- Kolejka (ukryta) -->
+        <section class="sta-okno" id="panel-kolejka" data-nazwa="Kolejka" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><b>Kolejka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz">Uruchom pełny zestaw testów <span class="dn-plakietka dn-plakietka--sygnal meta">AKTYWNE</span></div>
+            <div class="panel-wiersz">Wygeneruj opis commitu <span class="meta">po nr 1</span></div>
+            <div class="panel-wiersz">Aktualizacja README <span class="dn-plakietka dn-plakietka--ostrzezenie meta">retry 1/3</span></div>
+          </div>
+        </section>
+
+        <!-- Subagenci (ukryty) -->
+        <section class="sta-okno" id="panel-subagenci" data-nazwa="Subagenci i aktywność" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> generator-testów — przypadki brzegowe <span class="meta">1 m 12 s</span></div>
+            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Edit · silnik/kolejka.py — 09:42<br>Bash · pytest silnik/tests — 09:41<br>Read · pyproject.toml — 09:39</div>
+          </div>
+        </section>
+
+        <!-- Artefakty (ukryty) -->
+        <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz">raport_pokrycia.html <span class="meta">44 kB</span></div>
+            <div class="panel-wiersz">roznica_kolejki.diff <span class="meta">3,1 kB</span></div>
+            <div class="panel-wiersz">opis_commitu.txt <span class="meta">0,4 kB</span></div>
+          </div>
+        </section>
+
+      </div><!-- /sta-robocza -->
+    </div><!-- /sta-obszar -->
+  </div><!-- /sta-cialo -->
+</div><!-- /sta-powloka -->
+
+<details class="pt-o-opracowaniu">
+  <summary>O tym oknie — moduł Developer (rollout v2, stanowisko Code)</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Okna operacyjne modułu odwzorowane na stanowisko</h4>
+    <ul>
+      <li><b>Code Editor</b> — okno WIODĄCE (kanwa edytora, karty otwartych plików, składnia <code>.pt-skl-*</code>, linia stanu).</li>
+      <li><b>Project Tree</b> — dokowany panel: drzewo repozytorium ze znacznikami zmian (M).</li>
+      <li><b>Git Panel</b> — dokowany panel: lista zmian, różnicowanie <code>.pt-wiersz-dodany/usuniety</code>, opis commitu generowany przez AI.</li>
+      <li><b>Build Output</b> — dokowany panel: konsola <code>.pt-konsola</code> z wynikiem pytest.</li>
+      <li><b>Chat Window</b> — strefa czatów z pełnym obszarem polecenia (tryb uprawnień, „+”, mikrofon, model, wysiłek, ↑ Do kolejki).</li>
+    </ul>
+    <h4>Zgodność z aneksem v2.1</h4>
+    <ul>
+      <li>Tryb właściwy modułu: <b>Code</b> (podświetlony). Środowisko: CodeStudio &gt; Developer.</li>
+      <li>Panele uniwersalne: Plan, Zadania w tle, Terminal, Kolejka, Subagenci, Artefakty — sterowane menu „⋮ → Panele”.</li>
+      <li>Tryb uprawnień domyślny „Z pominięciem zgód”; modele Fable 5 / Opus 5 / Sonnet 5 / Haiku 4.5.</li>
+    </ul>
+    <h4>Źródło</h4>
+    <ul><li><code>dok/projekt-ui/moduly/developer.md</code> · <code>KANON.md</code> rozdz. 15 (ANEKS v2.1) · <code>WZORZEC-STANOWISKA.html</code></li></ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+(function(){
+  document.querySelectorAll('[data-srod]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-srod]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+      if(window.dnToast) window.dnToast('Tryb: '+b.textContent,'Obszar polecenia i panele dostrojone do trybu','informacja');
+    });
+  });
+  document.querySelectorAll('[data-panel-toggle]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.getAttribute('data-panel-toggle')); if(!el) return;
+      el.hidden=!el.hidden; b.setAttribute('aria-checked',el.hidden?'false':'true');
+    });
+  });
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

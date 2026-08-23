@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Mobile (funkcja globalna)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     STYLE LOKALNE — funkcja globalna Mobile.
+     Źródło: multitaskingai.md rozdz. 2.4 (współdziałanie z AOD), 7.5–7.6
+     (rola Mobile w pracy ciągłej, elementy interfejsu), 11.5 (przepływ
+     interwencji zdalnej); ustawienia.md rozdz. 6.2 (parowanie);
+     elementy-okien.md rozdz. 2.5 i 3.2 (punkty wejścia funkcji Mobile).
+     Punkt łamania w1 = 640 px (KANON.md §2) wyznacza szerokość widoku.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  .mo-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+  .mo-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+  /* ── układ: makieta telefonu + pulpit sekwencji ─────────────────────────── */
+  .mo-uklad {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--dn-od-8);
+    padding: var(--dn-od-6);
+    align-items: start;
+  }
+  .mo-scena { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-3); position: sticky; top: var(--dn-od-3); }
+  .mo-podpis-sceny {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3); text-align: center;
+  }
+
+  /* ── ramka urządzenia rysowana CSS ──────────────────────────────────────── */
+  .mo-telefon {
+    position: relative;
+    width: 348px; height: 716px; flex: none;
+    padding: 12px 10px;
+    border-radius: 44px;
+    background: var(--dn-szary-900);
+    box-shadow: var(--dn-cien-lg), 0 0 0 1px var(--dn-obrys-mocny) inset;
+  }
+  /* przyciski boczne urządzenia */
+  .mo-telefon::before,
+  .mo-telefon::after {
+    content: ''; position: absolute; left: -3px;
+    width: 3px; border-radius: var(--dn-r-pill);
+    background: var(--dn-szary-750);
+  }
+  .mo-telefon::before { top: 132px; height: 34px; }
+  .mo-telefon::after { top: 178px; height: 56px; }
+  .mo-przycisk-boczny {
+    position: absolute; right: -3px; top: 168px;
+    width: 3px; height: 74px; border-radius: var(--dn-r-pill);
+    background: var(--dn-szary-750);
+  }
+
+  .mo-ekran {
+    position: relative;
+    width: 100%; height: 100%;
+    border-radius: 34px;
+    overflow: hidden;
+    background: var(--dn-tlo);
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    border: 1px solid var(--dn-szary-800);
+  }
+
+  /* wysepka aparatu */
+  .mo-wysepka {
+    position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    z-index: 3;
+    width: 96px; height: 20px; border-radius: var(--dn-r-pill);
+    background: var(--dn-szary-1000);
+  }
+
+  /* pasek stanu systemu telefonu */
+  .mo-pasek-stanu {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    height: 34px; padding: 0 var(--dn-od-4);
+    background: var(--dn-rama); color: var(--dn-rama-tekst-2);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    font-variant-numeric: tabular-nums;
+  }
+  .mo-pasek-stanu .mo-prawa { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-2); }
+  .mo-pasek-stanu svg { width: 13px; height: 13px; }
+
+  /* pasek aplikacji — atramentowy w obu motywach */
+  .mo-pasek-app {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    min-height: 44px; padding: 0 var(--dn-od-3);
+    background: var(--dn-rama); color: var(--dn-rama-tekst);
+    border-bottom: 1px solid var(--dn-rama-obrys);
+  }
+  .mo-pasek-app-tytul { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); }
+  .mo-pasek-app .mo-prawa { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+
+  .mo-tresc { min-height: 0; overflow: auto; padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
+
+  /* dolna nawigacja mobilna — cztery widoki */
+  .mo-nawigacja {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--dn-obrys);
+    background: var(--dn-panel);
+    padding-bottom: var(--dn-od-2);
+  }
+  .mo-nawigacja-poz {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    min-height: 52px; padding: var(--dn-od-1);
+    border: 0; border-top: 2px solid transparent; background: transparent;
+    color: var(--dn-tekst-3); font-size: 10px; cursor: pointer;
+    transition: color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+  }
+  .mo-nawigacja-poz svg { width: 20px; height: 20px; }
+  .mo-nawigacja-poz:hover { color: var(--dn-tekst-2); background: var(--dn-hover); }
+  .mo-nawigacja-poz[aria-selected='true'] { color: var(--dn-sygnal); border-top-color: var(--dn-kropka); background: var(--dn-sygnal-tlo); }
+  .mo-znacznik-nawigacji {
+    position: absolute; top: 4px; right: 22%;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    display: grid; place-content: center;
+    border-radius: var(--dn-r-pill);
+    background: var(--dn-sygnal-wypelnienie); color: var(--dn-szary-0);
+    font-family: var(--dn-ff-mono); font-size: 10px;
+  }
+  .mo-nawigacja-poz { position: relative; }
+  .mo-znacznik-nawigacji[hidden] { display: none; }
+
+  /* ── karty treści mobilnej ──────────────────────────────────────────────── */
+  .mo-karta {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia);
+  }
+  .mo-karta-glowa { display: flex; align-items: center; gap: var(--dn-od-2); }
+  .mo-karta-tytul { font-size: var(--dn-fs-base); font-weight: var(--dn-fw-polgruba); }
+  .mo-karta-glowa .mo-prawa { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+  .mo-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .mo-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+  .mo-naglowek-sekcji {
+    font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs);
+    font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-wersaliki);
+    text-transform: uppercase; color: var(--dn-tekst-3);
+  }
+
+  /* wiersz roli w widoku mobilnym */
+  .mo-rola {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) 0;
+    border-bottom: 1px solid var(--dn-obrys-subtelny);
+  }
+  .mo-rola:last-child { border-bottom: 0; }
+  .mo-rola svg { width: 16px; height: 16px; color: var(--dn-tekst-3); }
+  .mo-rola-nazwa { font-size: var(--dn-fs-sm); }
+
+  /* przycisk zatwierdzenia zdalnego — pełna szerokość, kontekst mobilny */
+  .mo-akcja-pelna {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .mo-akcje-siatka { display: grid; gap: var(--dn-od-2); }
+
+  /* powiadomienie push nad ekranem telefonu */
+  .mo-push {
+    position: absolute; top: 44px; left: var(--dn-od-2); right: var(--dn-od-2);
+    z-index: 4;
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-2);
+    padding: var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-left: 2px solid var(--dn-ostrzezenie-tekst);
+    border-radius: var(--dn-r-md);
+    background: var(--dn-panel);
+    box-shadow: var(--dn-cien-lg);
+    opacity: 0; transform: translateY(-8px);
+    pointer-events: none;
+    transition: opacity var(--dn-czas-3) var(--dn-ease), transform var(--dn-czas-3) var(--dn-ease);
+  }
+  .mo-push[data-widoczne='tak'] { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .mo-push svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-ostrzezenie-tekst); }
+  .mo-push-tytul { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); }
+  .mo-push-tresc { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+  .mo-push-akcje { grid-column: 2; display: flex; gap: var(--dn-od-1); flex-wrap: wrap; margin-top: var(--dn-od-2); }
+  .mo-push-stan {
+    grid-column: 2; margin-top: var(--dn-od-1);
+    font-family: var(--dn-ff-mono); font-size: 10px;
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
+  }
+
+  /* ekran blokady / stan niesparowany */
+  .mo-zaslona {
+    position: absolute; inset: 0; z-index: 5;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: var(--dn-od-4);
+    padding: var(--dn-od-6);
+    background: var(--dn-tlo);
+    text-align: center;
+  }
+  .mo-zaslona[data-widoczna='tak'] { display: flex; }
+  .mo-rdzen {
+    display: grid; place-content: center;
+    width: 64px; height: 64px; border-radius: var(--dn-r-pill);
+    background: var(--dn-grad-sygnal); color: var(--dn-szary-0);
+  }
+  .mo-rdzen svg { width: 30px; height: 30px; }
+  .mo-kod-pary {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid var(--dn-sygnal-obrys); border-radius: var(--dn-r-sm);
+    background: var(--dn-sygnal-tlo);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-md);
+    letter-spacing: var(--dn-ls-mono-wersaliki); font-variant-numeric: tabular-nums;
+  }
+
+  /* ── pulpit sekwencji (poza telefonem) ──────────────────────────────────── */
+  .mo-panel { display: flex; flex-direction: column; gap: var(--dn-od-5); max-width: 760px; }
+  .mo-blok {
+    display: flex; flex-direction: column; gap: var(--dn-od-3);
+    padding: var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-powierzchnia);
+  }
+  .mo-blok-tytul {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-lg);
+    font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek);
+  }
+
+  /* kroki sekwencji interwencji zdalnej */
+  .mo-sekwencja { display: flex; flex-direction: column; }
+  .mo-krok {
+    display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: var(--dn-od-3);
+    padding: var(--dn-od-2) 0;
+    color: var(--dn-tekst-2);
+  }
+  .mo-krok-znak {
+    display: grid; place-content: center;
+    width: 28px; height: 28px;
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst-3);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  }
+  .mo-krok-znak svg { width: 14px; height: 14px; }
+  .mo-krok-tytul { font-size: var(--dn-fs-base); font-weight: var(--dn-fw-srednia); color: var(--dn-tekst); }
+  .mo-krok-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+  .mo-krok[data-stan='biezacy'] .mo-krok-znak {
+    border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal);
+    box-shadow: 0 0 0 3px var(--dn-fokus-cien);
+  }
+  .mo-krok[data-stan='wykonany'] .mo-krok-znak {
+    border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst);
+  }
+
+  .mo-tabela-ramka { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); overflow: auto; background: var(--dn-powierzchnia); }
+  .mo-tabela-ramka .dn-tabela td { vertical-align: top; height: auto; padding-block: var(--dn-od-2); }
+
+  .mo-komunikat {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-3);
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-left: 2px solid var(--dn-informacja-tekst);
+    border-radius: var(--dn-r-md);
+    background: var(--dn-informacja-tlo);
+    font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny);
+  }
+  .mo-komunikat svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-informacja-tekst); }
+  .mo-komunikat b { color: var(--dn-tekst); }
+  .mo-komunikat--luka { border-left-color: var(--dn-ostrzezenie-tekst); background: var(--dn-ostrzezenie-tlo); }
+  .mo-komunikat--luka svg { color: var(--dn-ostrzezenie-tekst); }
+
+  .mo-schemat {
+    margin: 0; padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia-2);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2);
+    overflow-x: auto; white-space: pre;
+  }
+
+  .mo-lamanie {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    color: var(--dn-tekst-3);
+  }
+  .mo-mowa { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  @media (max-width: 1100px) {
+    .mo-uklad { grid-template-columns: minmax(0, 1fr); }
+    .mo-scena { position: static; }
+  }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PROTOTYP KLIKALNY"
+      data-prototyp-okno="Mobile — funkcja globalna, widok mobilny (punkt łamania w1 = 640 px)"
+      data-prototyp-zrodlo="multitaskingai.md rozdz. 2.4, 7.5–7.6, 11.5 · ustawienia.md rozdz. 6.2 · elementy-okien.md rozdz. 2.5, 3.2">
+
+<div class="pt-powloka pt-powloka--bez-kart">
+
+  <header class="dn-pasek">
+    <a class="dn-pasek-godlo" href="#" aria-label="Danaco Console — powrót do Centrum dowodzenia">
+      <svg width="24" height="24" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+        <path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+        <path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+        <circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/>
+      </svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka nawigacji">
+      <span>Centrum dowodzenia</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span>Strefa 3 · listwa ustawień</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Mobile</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj">
+      <input type="search" placeholder="Szukaj…  Ctrl+K" aria-label="Wyszukiwanie globalne" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Urządzenie sparowane">
+        <span class="pt-tetno" aria-hidden="true"></span> kanał Mobile
+      </span>
+
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" aria-label="Always On Display"
+              data-komunikat="Always On Display w trybie operatora inicjuje interwencję; Mobile udostępnia kanał, przez który jest ona wykonywana z dowolnego urządzenia (rozdz. 2.4)."
+              data-komunikat-tytul="Always On Display">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+      </button>
+
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+              data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="pt-cialo pt-cialo--bez-bocznej">
+    <div class="pt-obszar">
+
+      <section class="pt-okno pt-okno--dol" aria-label="Funkcja globalna Mobile">
+        <header class="pt-okno-naglowek">
+          <h1 class="pt-okno-tytul">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            Mobile
+          </h1>
+          <span class="dn-plakietka dn-plakietka--informacja">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            funkcja globalna
+          </span>
+          <span class="mo-lamanie">punkt łamania w1 = 640 px · nie tworzy nowej przestrzeni roboczej</span>
+
+          <div class="pt-okno-narzedzia">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="mo-parowanie-tryb">
+              <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Podgląd stanu niesparowanego
+            </button>
+            <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" id="mo-odtworz">
+              <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+              <span data-etykieta>Odtwórz sekwencję interwencji zdalnej</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="pt-okno-tresc">
+          <div class="mo-uklad">
+
+            <!-- ══ MAKIETA URZĄDZENIA ═══════════════════════════════════════ -->
+            <div class="mo-scena">
+              <div class="mo-telefon" role="figure" aria-label="Makieta telefonu z widokiem mobilnym platformy">
+                <span class="mo-przycisk-boczny" aria-hidden="true"></span>
+                <span class="mo-wysepka" aria-hidden="true"></span>
+
+                <div class="mo-ekran">
+
+                  <!-- pasek stanu systemu -->
+                  <div class="mo-pasek-stanu">
+                    <span id="mo-godzina">21:47</span>
+                    <span class="mo-prawa">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg>
+                      <span>sieć prywatna</span>
+                    </span>
+                  </div>
+
+                  <!-- pasek aplikacji -->
+                  <div class="mo-pasek-app">
+                    <svg width="18" height="18" viewBox="0 0 96 96" aria-hidden="true">
+                      <path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+                      <path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+                      <circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/>
+                    </svg>
+                    <span class="mo-pasek-app-tytul" id="mo-tytul-widoku">Monitor procesu</span>
+                    <span class="mo-prawa">
+                      <span class="dn-plakietka dn-plakietka--sygnal" style="font-size:10px;">
+                        <span class="pt-tetno" aria-hidden="true"></span> 1
+                      </span>
+                    </span>
+                  </div>
+
+                  <!-- POWIADOMIENIE PUSH INTERWENCJI (rozdz. 7.6, 11.5) -->
+                  <div class="mo-push" id="mo-push" data-widoczne="nie" role="alert">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <div>
+                      <div class="mo-push-tytul">Always On Display — decyzja wymagana</div>
+                      <div class="mo-push-tresc">Pętla ciągła 24/7 · przebieg 41. Executor 3 / Validator zwrócił etap po raz trzeci (retry ×3).</div>
+                    </div>
+                    <div class="mo-push-akcje">
+                      <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" id="mo-push-otworz">Otwórz proces</button>
+                      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="mo-push-zatwierdz">Szybka odpowiedź: zatwierdź</button>
+                    </div>
+                    <div class="mo-push-stan" id="mo-push-stan">stan: wysłane</div>
+                  </div>
+
+                  <!-- ZASŁONA: URZĄDZENIE NIESPAROWANE (ustawienia.md rozdz. 6.2) -->
+                  <div class="mo-zaslona" id="mo-zaslona-parowanie" data-widoczna="nie">
+                    <span class="mo-rdzen" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </span>
+                    <div>
+                      <div class="mo-karta-tytul">Urządzenie niesparowane</div>
+                      <p class="mo-opis" style="margin-top: var(--dn-od-2);">Parowanie jest jedyną drogą wejścia funkcji Mobile. Otwórz na komputerze <b>Ustawienia → Urządzenia → Sparuj urządzenie</b> i zeskanuj wyświetlony kod albo wpisz go poniżej.</p>
+                    </div>
+                    <div class="mo-kod-pary">
+                      <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                      <span id="mo-kod-pary">DNC-4718-2K30</span>
+                    </div>
+                    <div class="mo-akcje-siatka" style="width:100%;">
+                      <button class="dn-btn dn-btn--atrament mo-akcja-pelna" type="button" id="mo-sparuj">
+                        <span data-etykieta>Sparuj to urządzenie</span>
+                      </button>
+                      <button class="dn-btn dn-btn--duch mo-akcja-pelna" type="button" id="mo-parowanie-anuluj">Wróć do widoku sparowanego</button>
+                    </div>
+                    <p class="mo-meta">poświadczenie odrębne od pozostałych urządzeń · odwołanie jednego telefonu nie odcina pozostałych</p>
+                  </div>
+
+                  <!-- TREŚĆ: CZTERY WIDOKI MOBILNE -->
+                  <div class="mo-tresc" id="mo-tresc">
+
+                    <!-- WIDOK 1 — MONITOR PROCESU -->
+                    <div data-widok="mob-monitor" data-grupa-widoku="mob" data-widok-aktywny="tak">
+                      <div style="display:flex; flex-direction:column; gap: var(--dn-od-3);">
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <span class="mo-karta-tytul">Pętla ciągła 24/7</span>
+                            <span class="mo-prawa">
+                              <span class="dn-plakietka dn-plakietka--sygnal" id="mo-stan-procesu"><span class="pt-tetno" aria-hidden="true"></span> uruchomiony</span>
+                            </span>
+                          </div>
+                          <span class="mo-meta">zespół „Budowa aplikacji” · przebieg 41</span>
+                          <div class="dn-postep" id="mo-postep">
+                            <div class="dn-postep-tor"><div class="dn-postep-wartosc" style="width:56%"></div></div>
+                            <span class="dn-postep-etykieta" data-postep-licznik>56%</span>
+                          </div>
+                          <span class="mo-meta" id="mo-etap">etap 3/6 — Executor 2 realizuje równolegle zadanie „warstwa widoku”</span>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-naglowek-sekcji">Stan ról</div>
+                          <div>
+                            <div class="mo-rola">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>
+                              <span class="mo-rola-nazwa">Coordinator</span>
+                              <span class="dn-plakietka">bezczynna</span>
+                            </div>
+                            <div class="mo-rola">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
+                              <span class="mo-rola-nazwa">Executor 1</span>
+                              <span class="dn-plakietka dn-plakietka--informacja">oczekuje na ocenę</span>
+                            </div>
+                            <div class="mo-rola">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9.003a1 1 0 0 1 1.517-.859l4.997 2.997a1 1 0 0 1 0 1.718l-4.997 2.997A1 1 0 0 1 9 14.996z"/><circle cx="12" cy="12" r="10"/></svg>
+                              <span class="mo-rola-nazwa">Executor 2</span>
+                              <span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> pracuje</span>
+                            </div>
+                            <div class="mo-rola">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></svg>
+                              <span class="mo-rola-nazwa">Executor 3 / Validator</span>
+                              <span class="dn-plakietka" id="mo-stan-validatora">bezczynna</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-naglowek-sekcji">Kolejki</div>
+                          <div class="mo-rola"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg><span class="mo-rola-nazwa">kolejka globalna</span><span class="mo-meta">2 zadania</span></div>
+                          <div class="mo-rola"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg><span class="mo-rola-nazwa">kolejka Executora 1</span><span class="mo-meta">podzielone</span></div>
+                          <div class="mo-rola"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></svg><span class="mo-rola-nazwa">kolejka projektu</span><span class="mo-meta">odroczone</span></div>
+                        </div>
+
+                        <button class="dn-btn dn-btn--zarys mo-akcja-pelna" type="button" data-mob-idz="mob-interwencja">
+                          Przejdź do szybkiej interwencji
+                          <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- WIDOK 2 — LISTA SESJI -->
+                    <div data-widok="mob-sesje" data-grupa-widoku="mob" data-widok-aktywny="nie">
+                      <div style="display:flex; flex-direction:column; gap: var(--dn-od-3);">
+                        <div class="mo-naglowek-sekcji">Karty sesji z procesem w tle</div>
+
+                        <button class="mo-karta" type="button" style="text-align:left; cursor:pointer;" data-mob-idz="mob-monitor">
+                          <div class="mo-karta-glowa">
+                            <span class="pt-tetno" aria-hidden="true"></span>
+                            <span class="mo-karta-tytul">Pętla ciągła 24/7</span>
+                            <span class="mo-prawa"><span class="dn-plakietka dn-plakietka--sygnal">uruchomiony</span></span>
+                          </div>
+                          <span class="mo-meta">MULTITASKINGAI · zespół „Budowa aplikacji” · przebieg 41</span>
+                        </button>
+
+                        <button class="mo-karta" type="button" style="text-align:left; cursor:pointer;"
+                                data-komunikat="Sesja „Badanie i redakcja” — przebieg 12 zakończony sukcesem; podgląd historii przebiegów dostępny w Monitorze procesu."
+                                data-komunikat-tytul="Badanie i redakcja">
+                          <div class="mo-karta-glowa">
+                            <span class="mo-karta-tytul">Badanie i redakcja</span>
+                            <span class="mo-prawa"><span class="dn-plakietka dn-plakietka--sukces">zakończony</span></span>
+                          </div>
+                          <span class="mo-meta">MULTITASKINGAI · przebieg 12</span>
+                        </button>
+
+                        <button class="mo-karta" type="button" style="text-align:left; cursor:pointer;"
+                                data-komunikat="Automatyka „Raport nocny” z modułu Automations zasila pętlę ciągłą — jej stan śledzi Execution Monitor."
+                                data-komunikat-tytul="Raport nocny">
+                          <div class="mo-karta-glowa">
+                            <span class="mo-karta-tytul">Raport nocny</span>
+                            <span class="mo-prawa"><span class="dn-plakietka">automatyka</span></span>
+                          </div>
+                          <span class="mo-meta">Automations · Scheduler · cykl 24 h</span>
+                        </button>
+
+                        <button class="mo-karta" type="button" style="text-align:left; cursor:pointer;"
+                                data-komunikat="Sesja modułu Studio w środowisku CodeStudio — bez procesu w tle, podgląd wyłącznie odczytowy."
+                                data-komunikat-tytul="Studio · repozytorium konsoli">
+                          <div class="mo-karta-glowa">
+                            <span class="mo-karta-tytul">Studio · repozytorium konsoli</span>
+                            <span class="mo-prawa"><span class="dn-plakietka">bez procesu</span></span>
+                          </div>
+                          <span class="mo-meta">CODESTUDIO · sesja robocza</span>
+                        </button>
+
+                        <div class="mo-komunikat">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                          <div>Wskaźnik stanu przy karcie sesji sygnalizuje pracę w tle i jest powiązany z funkcją Mobile — monitoring procesów.</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- WIDOK 3 — SZYBKA INTERWENCJA -->
+                    <div data-widok="mob-interwencja" data-grupa-widoku="mob" data-widok-aktywny="nie">
+                      <div style="display:flex; flex-direction:column; gap: var(--dn-od-3);">
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <span class="mo-karta-tytul">Etap oczekuje na decyzję</span>
+                            <span class="mo-prawa"><span class="dn-plakietka dn-plakietka--ostrzezenie">retry ×3</span></span>
+                          </div>
+                          <span class="mo-opis">Executor 3 / Validator zwrócił etap „warstwa danych” po raz trzeci. Always On Display w trybie operatora zgłosił zdarzenie do decyzji Operatora.</span>
+                          <span class="mo-meta">poziom 2 hierarchii decyzji · interwencja w imieniu użytkownika</span>
+                        </div>
+
+                        <div class="mo-naglowek-sekcji">Cztery drogi interwencji (rozdz. 11.5)</div>
+                        <div class="mo-akcje-siatka">
+                          <button class="dn-btn dn-btn--sygnal mo-akcja-pelna" type="button" id="mo-zatwierdz">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                            <span data-etykieta>Zatwierdź krok</span>
+                          </button>
+
+                          <button class="dn-btn dn-btn--zarys mo-akcja-pelna" type="button" id="mo-wstrzymaj">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="14" y="3" width="5" height="18" rx="1"/><rect x="5" y="3" width="5" height="18" rx="1"/></svg>
+                            <span data-etykieta>Wstrzymaj proces (pause)</span>
+                          </button>
+
+                          <button class="dn-btn dn-btn--zarys mo-akcja-pelna" type="button" id="mo-modyfikuj">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                            <span data-etykieta>Zmodyfikuj konfigurację Coordinatora</span>
+                          </button>
+
+                          <button class="dn-btn dn-btn--zarys mo-akcja-pelna" type="button" id="mo-przejmij">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                            <span data-etykieta>Przejmij bezpośrednie sterowanie</span>
+                          </button>
+
+                          <button class="dn-btn dn-btn--duch mo-akcja-pelna" type="button" id="mo-wznow">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+                            <span data-etykieta>Wznów proces (resume)</span>
+                          </button>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-naglowek-sekcji">Wynik interwencji</div>
+                          <span class="mo-opis" id="mo-wynik">Brak wykonanej interwencji w tym przebiegu. Każde wykonanie natychmiast odzwierciedla się w Monitorze procesu na stanowisku roboczym.</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- WIDOK 4 — POWIADOMIENIA -->
+                    <div data-widok="mob-powiadomienia" data-grupa-widoku="mob" data-widok-aktywny="nie">
+                      <div style="display:flex; flex-direction:column; gap: var(--dn-od-3);" id="mo-lista-powiadomien">
+                        <div class="mo-naglowek-sekcji">Kategorie dostarczane kanałem Mobile</div>
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                            <span class="mo-karta-tytul">Zdarzenia MultitaskingAI</span>
+                            <span class="mo-prawa"><span class="mo-meta">21:47</span></span>
+                          </div>
+                          <span class="mo-opis">Przebieg 41 — Executor 3 / Validator zwrócił etap po raz trzeci. Wymagana decyzja.</span>
+                          <button class="dn-btn dn-btn--zarys dn-btn--sm mo-akcja-pelna" type="button" data-mob-idz="mob-interwencja">Otwórz szybką interwencję</button>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></svg>
+                            <span class="mo-karta-tytul">Zakończenie procesu automatyki</span>
+                            <span class="mo-prawa"><span class="mo-meta">21:12</span></span>
+                          </div>
+                          <span class="mo-opis">Automatyka „Raport nocny” zakończona — Execution Monitor zapisał wynik cyklu.</span>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                            <span class="mo-karta-tytul">Wiadomości i zdolności telefonu</span>
+                            <span class="mo-prawa"><span class="mo-meta">20:03</span></span>
+                          </div>
+                          <span class="mo-opis">Kanał Mobile aktywny — powiadomienia dostarczane siecią prywatną, z zapasowym kanałem push przez pośrednika.</span>
+                        </div>
+
+                        <div class="mo-karta">
+                          <div class="mo-karta-glowa">
+                            <svg class="mo-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <span class="mo-karta-tytul">Konto i dostęp</span>
+                            <span class="mo-prawa"><span class="mo-meta">wczoraj</span></span>
+                          </div>
+                          <span class="mo-opis">To urządzenie zostało sparowane z Kontem Operatora. Token odrębny od pozostałych urządzeń.</span>
+                          <button class="dn-btn dn-btn--duch dn-btn--sm mo-akcja-pelna" type="button"
+                                  data-komunikat="Kategorie i kanały powiadomień ustawia okno Ustawień, sekcja „Powiadomienia”. Kanał Mobile jest jednym z trzech kanałów dostarczenia."
+                                  data-komunikat-tytul="Ustawienia → Powiadomienia">Ustawienia powiadomień</button>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <!-- DOLNA NAWIGACJA MOBILNA -->
+                  <nav class="mo-nawigacja" aria-label="Widoki mobilne">
+                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="true" data-mob="mob-monitor" data-tytul="Monitor procesu">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+                      <span>Monitor</span>
+                    </button>
+                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-sesje" data-tytul="Lista sesji">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+                      <span>Sesje</span>
+                    </button>
+                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-interwencja" data-tytul="Szybka interwencja">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+                      <span>Interwencja</span>
+                    </button>
+                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-powiadomienia" data-tytul="Powiadomienia">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+                      <span>Powiadomienia</span>
+                      <span class="mo-znacznik-nawigacji" id="mo-znacznik" hidden>1</span>
+                    </button>
+                  </nav>
+
+                </div><!-- /mo-ekran -->
+              </div><!-- /mo-telefon -->
+
+              <p class="mo-podpis-sceny">makieta urządzenia · widok mobilny platformy poniżej punktu łamania w1 = 640 px</p>
+            </div><!-- /mo-scena -->
+
+            <!-- ══ PULPIT SEKWENCJI I DOKUMENTACJA ══════════════════════════ -->
+            <div class="mo-panel">
+
+              <!-- SEKWENCJA INTERWENCJI ZDALNEJ (rozdz. 11.5) -->
+              <div class="mo-blok">
+                <div class="mo-blok-tytul">
+                  <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/><path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>
+                  Przepływ interwencji zdalnej
+                </div>
+                <p class="mo-opis">Sekwencja odwzorowuje rozdz. 11.5: proces zgłasza sytuację, Always On Display wykrywa zdarzenie wymagające decyzji, powiadomienie push trafia na urządzenie mobilne, Operator interweniuje zdalnie, proces wznawia pracę z zastosowaną decyzją.</p>
+
+                <div class="mo-sekwencja" id="mo-sekwencja">
+                  <div class="mo-krok" data-krok="1" data-stan="oczekuje">
+                    <span class="mo-krok-znak">1</span>
+                    <div>
+                      <div class="mo-krok-tytul">Proces działa w tle (praca ciągła)</div>
+                      <div class="mo-krok-opis">Pętla ciągła 24/7 zasilana harmonogramem Schedulera modułu Automations; Operator jest poza stanowiskiem roboczym.</div>
+                    </div>
+                  </div>
+                  <div class="mo-krok" data-krok="2" data-stan="oczekuje">
+                    <span class="mo-krok-znak">2</span>
+                    <div>
+                      <div class="mo-krok-tytul">Always On Display wykrywa zdarzenie wymagające decyzji</div>
+                      <div class="mo-krok-opis">AOD w trybie operatora rozpoznaje powtarzające się niepowodzenie walidacji (retry ×3) i inicjuje interwencję.</div>
+                    </div>
+                  </div>
+                  <div class="mo-krok" data-krok="3" data-stan="oczekuje">
+                    <span class="mo-krok-znak">3</span>
+                    <div>
+                      <div class="mo-krok-tytul">Powiadomienie push na urządzenie mobilne Operatora</div>
+                      <div class="mo-krok-opis">Stany powiadomienia: wysłane → odczytane → z akcją szybkiej odpowiedzi. Dostarczenie dwoma kanałami o różnej poufności — kanałem własnym przez sieć prywatną oraz push przez pośrednika.</div>
+                    </div>
+                  </div>
+                  <div class="mo-krok" data-krok="4" data-stan="oczekuje">
+                    <span class="mo-krok-znak">4</span>
+                    <div>
+                      <div class="mo-krok-tytul">Operator otwiera widok Mobile procesu MultitaskingAI</div>
+                      <div class="mo-krok-opis">Cztery drogi: zatwierdź krok · wstrzymaj (pause) · zmodyfikuj konfigurację Coordinatora · przejmij bezpośrednie sterowanie (poziom 1 hierarchii decyzji).</div>
+                    </div>
+                  </div>
+                  <div class="mo-krok" data-krok="5" data-stan="oczekuje">
+                    <span class="mo-krok-znak">5</span>
+                    <div>
+                      <div class="mo-krok-tytul">Proces wznawia się (resume) z zastosowaną decyzją</div>
+                      <div class="mo-krok-opis">Wykonanie akcji natychmiast odzwierciedla się w Monitorze procesu na stanowisku roboczym.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display:flex; gap: var(--dn-od-2); flex-wrap:wrap; align-items:center;">
+                  <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" id="mo-krok-dalej">
+                    <span data-etykieta>Następny krok sekwencji</span>
+                  </button>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" id="mo-sekwencja-reset">Przywróć stan wyjściowy</button>
+                  <span class="mo-meta" id="mo-sekwencja-stan">krok 0/5 — sekwencja nierozpoczęta</span>
+                </div>
+
+                <pre class="mo-schemat" aria-label="Diagram — przepływ interwencji zdalnej">Proces działa w tle (praca ciągła)
+        ▼
+Always On Display wykrywa zdarzenie wymagające decyzji
+        ▼
+powiadomienie push ──► urządzenie mobilne Operatora
+        ▼
+Operator otwiera widok Mobile procesu MultitaskingAI
+   ┌────┴────┬─────────────┬──────────────┐
+   ▼         ▼             ▼              ▼
+zatwierdź  wstrzymaj    zmodyfikuj     przejmij bezpośrednie
+ krok      (pause)      konfigurację    sterowanie (poziom 1
+                        Coordinatora    hierarchii)
+        ▼
+proces wznawia się (resume) z zastosowaną decyzją</pre>
+              </div>
+
+              <!-- WSPÓŁDZIAŁANIE Z AOD (rozdz. 2.4) -->
+              <div class="mo-blok">
+                <div class="mo-blok-tytul">
+                  <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+                  Współdziałanie z Always On Display
+                </div>
+                <div class="mo-tabela-ramka">
+                  <table class="dn-tabela">
+                    <thead><tr><th scope="col">Element</th><th scope="col">Rola w interwencji</th></tr></thead>
+                    <tbody>
+                      <tr><td>Always On Display (tryb operatora)</td><td class="dn-dane">Obserwuje przebieg procesu i inicjuje interwencję — na przykład zatwierdzenie kroku albo wstrzymanie procesu</td></tr>
+                      <tr><td>Mobile</td><td class="dn-dane">Udostępnia kanał, przez który interwencja jest faktycznie wykonywana z dowolnego urządzenia, niezależnie od lokalizacji</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <pre class="mo-schemat" aria-label="Schemat współdziałania AOD i Mobile"> Always On Display (operator)  ──inicjuje──►  decyzja interwencyjna
+         │
+         │  kanał wykonania
+         ▼
+      Mobile  ──►  zatwierdzenie / wstrzymanie / modyfikacja procesu
+                   z dowolnego urządzenia, poza stanowiskiem roboczym</pre>
+                <p class="mo-opis">Praca w trybie 24/7/365 z natury przebiega poza stałą obecnością użytkownika przy stanowisku roboczym. Funkcja Mobile udostępnia w takim przypadku kanał zatwierdzania, wstrzymywania i modyfikowania uruchomionych procesów z dowolnego miejsca — mechanizm komplementarny wobec Always On Display działającego w trybie operatora (rozdz. 7.5).</p>
+              </div>
+
+              <!-- ELEMENTY INTERFEJSU MOBILE (rozdz. 7.6, elementy-okien 2.5, 3.2) -->
+              <div class="mo-blok">
+                <div class="mo-blok-tytul">
+                  <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+                  Elementy interfejsu opisane w dokumentacji
+                </div>
+                <div class="mo-tabela-ramka">
+                  <table class="dn-tabela" data-tabela>
+                    <thead>
+                      <tr>
+                        <th scope="col" data-sortuj="tekst">Element</th>
+                        <th scope="col">Do czego służy</th>
+                        <th scope="col">Stany</th>
+                        <th scope="col">Źródło</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Przycisk zatwierdzenia zdalnego</td>
+                        <td class="dn-dane">Zatwierdzenie, wstrzymanie lub modyfikacja procesu spoza stanowiska roboczego; przycisk pełnej szerokości w kontekście mobilnym</td>
+                        <td class="dn-dane">domyślny · ładowanie · potwierdzony</td>
+                        <td class="dn-dane pt-mono">multitaskingai 7.6</td>
+                      </tr>
+                      <tr>
+                        <td>Powiadomienie push interwencji</td>
+                        <td class="dn-dane">Poinformowanie użytkownika o zdarzeniu wymagającym decyzji; dotknięcie otwiera widok Mobile z kontekstem zdarzenia</td>
+                        <td class="dn-dane">wysłane · odczytane · z akcją szybkiej odpowiedzi</td>
+                        <td class="dn-dane pt-mono">multitaskingai 7.6</td>
+                      </tr>
+                      <tr>
+                        <td>Pozycja „Mobile” na listwie ustawień</td>
+                        <td class="dn-dane">Aktywacja funkcji globalnej — nie tworzy nowej przestrzeni roboczej, nie przeładowuje niczego</td>
+                        <td class="dn-dane">domyślny · najechanie · aktywny · fokus</td>
+                        <td class="dn-dane pt-mono">elementy-okien 2.5</td>
+                      </tr>
+                      <tr>
+                        <td>Ikona „Mobile” na pasku górnym</td>
+                        <td class="dn-dane">Wejście w globalny tryb dostępu mobilnego i podgląd procesów w tle — jeden z kilku równoważnych punktów dostępu</td>
+                        <td class="dn-dane">domyślny · najechanie · aktywny · fokus</td>
+                        <td class="dn-dane pt-mono">elementy-okien 3.2</td>
+                      </tr>
+                      <tr>
+                        <td>Wskaźnik stanu karty sesji</td>
+                        <td class="dn-dane">Sygnalizacja aktywnej pracy w tle; powiązany z funkcją Mobile — monitoring procesów</td>
+                        <td class="dn-dane">brak aktywności (niewidoczny) · aktywny (kropka wg statusu)</td>
+                        <td class="dn-dane pt-mono">elementy-okien 4.4</td>
+                      </tr>
+                      <tr>
+                        <td>Parowanie urządzenia</td>
+                        <td class="dn-dane">Jedyna droga wejścia funkcji Mobile; wydaje nowemu urządzeniu poświadczenie odrębne od pozostałych</td>
+                        <td class="dn-dane">kod wyświetlony · potwierdzone · czas wygasł</td>
+                        <td class="dn-dane pt-mono">ustawienia 6.2</td>
+                      </tr>
+                      <tr>
+                        <td>Kanał powiadomień Mobile</td>
+                        <td class="dn-dane">Dostarczanie powiadomień dwoma kanałami o różnej poufności: kanałem własnym przez sieć prywatną oraz push przez pośrednika</td>
+                        <td class="dn-dane">aktywny · nieaktywny (ustawienie kategorii)</td>
+                        <td class="dn-dane pt-mono">ustawienia 7.3</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- PAROWANIE — nawiązanie do Ustawień -->
+              <div class="mo-blok">
+                <div class="mo-blok-tytul">
+                  <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Parowanie urządzenia — punkt wejścia
+                </div>
+                <p class="mo-opis">Parowanie zakładane jest w obecności Operatora przy uwierzytelnionej już maszynie i uruchamiane z okna Ustawień: <b>Ustawienia → Urządzenia → Sparuj urządzenie</b>. Nowe urządzenie otrzymuje poświadczenie odrębne od pozostałych — odwołanie jednego telefonu nie odcina pozostałych. Odłączenie urządzenia unieważnia jego token (<span class="pt-mono">device.revoke</span>) i odbiera dostęp funkcji Mobile na tym urządzeniu.</p>
+                <div style="display:flex; gap: var(--dn-od-2); flex-wrap:wrap;">
+                  <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="mo-pokaz-parowanie">Pokaż stan niesparowany w makiecie</button>
+                  <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                          data-komunikat="Pełny protokół parowania — kod QR, podpis urządzenia, zapis w rejestrze urządzeń — pozostaje własnością dokumentu Mobilne centrum dowodzenia. Okno Ustawień dokumentuje punkt wejścia."
+                          data-komunikat-tytul="Protokół parowania">Gdzie opisany jest protokół</button>
+                </div>
+              </div>
+
+              <!-- LUKA L3 -->
+              <div class="mo-komunikat mo-komunikat--luka">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <div>
+                  <b>Luka L3 odnotowana w dokumentacji.</b> Funkcje globalne Mobile i Always On Display nie mają odrębnych, pełnych dokumentów projektowych — <code>elementy-okien.md</code> wprost umieszcza „pełne widoki funkcji globalnych Mobile i Always On Display” poza swoim zakresem. Niniejszy prototyp zbudowany jest wyłącznie na tym, co opisują <code>multitaskingai.md</code> (rozdz. 2.4, 7.5–7.6, 11.5) oraz <code>elementy-okien.md</code> (rozdz. 2.5, 3.2, 4.4) i <code>ustawienia.md</code> (rozdz. 6.2, 7.3). Każde rozstrzygnięcie ponad źródła jest wymienione w panelu „O tym opracowaniu”.
+                </div>
+              </div>
+
+            </div><!-- /mo-panel -->
+          </div><!-- /mo-uklad -->
+        </div><!-- /pt-okno-tresc -->
+      </section>
+
+    </div><!-- /pt-obszar -->
+  </div><!-- /pt-cialo -->
+</div><!-- /pt-powloka -->
+
+<p class="mo-mowa" aria-live="polite" id="mo-mowa"></p>
+
+<!-- ══ PANEL „O TYM OPRACOWANIU" ════════════════════════════════════════ -->
+<details class="pt-o-opracowaniu">
+  <summary>O tym opracowaniu</summary>
+  <div class="pt-o-opracowaniu-tresc">
+
+    <h4>Co przedstawia</h4>
+    <p><b>Mobile</b> — funkcję globalną platformy, aktywowaną z listwy ustawień strony głównej oraz z paska górnego każdej powłoki środowiska. Aktywacja nie tworzy nowej przestrzeni roboczej i niczego nie przeładowuje. Prototyp pokazuje widok mobilny wewnątrz makiety telefonu rysowanej CSS (szerokość ekranu poniżej punktu łamania <b>w1 = 640 px</b>), a obok — pulpit odtwarzania sekwencji interwencji zdalnej i zestawienie elementów interfejsu opisanych w dokumentacji.</p>
+
+    <h4>Źródło w dokumentacji</h4>
+    <ul>
+      <li><code>dok/projekt-ui/srodowiska/multitaskingai.md</code> — rozdz. 2.4 (współdziałanie AOD i Mobile: AOD inicjuje, Mobile wykonuje)</li>
+      <li>tamże — rozdz. 7.5 (rola funkcji Mobile w pracy ciągłej 24/7/365), 7.6 (przycisk zatwierdzenia zdalnego i powiadomienie push interwencji wraz ze stanami)</li>
+      <li>tamże — rozdz. 11.4 (praca ciągła z modułem Automations), <b>11.5 (przepływ interwencji zdalnej — pełna sekwencja pięciu kroków i cztery drogi interwencji)</b></li>
+      <li>tamże — rozdz. 8.1 (hierarchia decyzji — poziom 1 użytkownika, poziom 2 AOD), 12.1–12.3 (stany procesu, ról i zadań w kolejce)</li>
+      <li><code>dok/projekt-ui/okna/ustawienia.md</code> — rozdz. 6.2 (parowanie urządzenia mobilnego: jedyna droga wejścia funkcji Mobile, poświadczenie odrębne, Diagram 2), 6.1 (odłączenie i unieważnienie tokenu), 7.3 (kanał „Mobile — powiadomienie push”, dwa kanały o różnej poufności)</li>
+      <li><code>dok/projekt-ui/przeplyw/elementy-okien.md</code> — rozdz. 2.5 Tabela 7 (pozycja „Mobile” na listwie strefy 3), rozdz. 3.2 (ikona „Mobile” na pasku górnym), rozdz. 4.4 (wskaźnik stanu karty sesji powiązany z funkcją Mobile), rozdz. 0.2 i tabela wyłączeń (luka L3)</li>
+      <li><code>WYNIK/KANON.md</code> — §2 (punkty łamania, dotykowe cele przy <code>pointer: coarse</code>, rama atramentowa w obu motywach), §8 (zero blokad)</li>
+    </ul>
+
+    <h4>Odwzorowane interakcje</h4>
+    <ul>
+      <li><b>Cztery widoki mobilne</b> przełączane dolną nawigacją: Monitor procesu · Lista sesji · Szybka interwencja · Powiadomienia; tytuł na pasku aplikacji podąża za widokiem</li>
+      <li><b>Odtwarzanie sekwencji interwencji zdalnej</b> — pięć kroków rozdz. 11.5 uruchamianych przyciskiem w nagłówku okna albo krok po kroku; każdy krok zmienia stan makiety telefonu: proces raportuje postęp, powiadomienie push wjeżdża nad ekran, widok przełącza się na szybką interwencję, proces wznawia pracę</li>
+      <li><b>Powiadomienie push</b> z pełnym cyklem stanów: <i>wysłane</i> → <i>odczytane</i> → <i>z akcją szybkiej odpowiedzi</i>; dwie akcje w treści powiadomienia — „Otwórz proces” i „Szybka odpowiedź: zatwierdź”</li>
+      <li><b>Cztery drogi interwencji</b> z rozdz. 11.5 jako przyciski pełnej szerokości ze stanami domyślny → ładowanie → potwierdzony; każda kończy się wznowieniem procesu i wpisem w polu „Wynik interwencji”</li>
+      <li><b>Przejęcie bezpośredniego sterowania</b> ustawia poziom 1 hierarchii decyzji i odnotowuje pominięcie poziomów pośrednich</li>
+      <li><b>Parowanie urządzenia</b> — przełączenie makiety w stan niesparowany z kodem parowania i przyciskiem „Sparuj to urządzenie”; po sparowaniu widok wraca do Monitora procesu z powiadomieniem o wydaniu odrębnego poświadczenia</li>
+      <li>Znacznik liczbowy przy pozycji „Powiadomienia” w dolnej nawigacji pojawia się wraz z powiadomieniem push i zeruje się po odczytaniu</li>
+      <li>Sortowanie tabeli elementów interfejsu, komunikaty kontekstowe przy pozycjach listy sesji, przełącznik motywu (pasek aplikacji telefonu pozostaje atramentowy w obu motywach), obszar <code>aria-live</code> dla zmian stanu</li>
+      <li>Cele dotykowe w makiecie mają wysokość 44 px — wartość żetonu <code>--dn-wym-wiersz</code> dla <code>pointer: coarse</code></li>
+    </ul>
+
+    <h4>Decyzje projektowe ponad źródła — luka L3</h4>
+    <p>Dokumentacja jawnie odnotowuje, że Mobile i Always On Display nie mają odrębnych pełnych dokumentów projektowych. Poniższe rozstrzygnięcia wykraczają poza źródła i są tu wymienione jako propozycje do zatwierdzenia, nie jako ustalenia dokumentacji:</p>
+    <ul>
+      <li><b>Zestaw czterech widoków mobilnych.</b> Źródła wymieniają zdolności Mobile (monitoring procesów, zatwierdzanie, wstrzymywanie, modyfikowanie, powiadomienia), nie wskazując podziału na ekrany. Podział na Monitor procesu, Listę sesji, Szybką interwencję i Powiadomienia wynika wprost z tych zdolności — jedna zdolność na jeden widok.</li>
+      <li><b>Dolna nawigacja czteropozycyjna.</b> Forma nawigacji mobilnej nie jest w dokumentacji rozstrzygnięta; przyjęto pas dolny, ponieważ pozostawia największą powierzchnię treści i mieści się w wymiarach dotykowych żetonów.</li>
+      <li><b>Ramka urządzenia.</b> Makieta telefonu jest afordancją prototypu — pozwala pokazać widok mobilny na ekranie biurkowym. Nie jest elementem produktu.</li>
+      <li><b>Kolejność i treść kroków sekwencji</b> odwzorowuje diagram rozdz. 11.5 dosłownie; opisy pod krokami łączą ten diagram z rozdz. 7.6 (stany powiadomienia push) i 8.1 (poziomy hierarchii).</li>
+      <li><b>Treść przykładowa.</b> Nazwy sesji („Pętla ciągła 24/7”, „Badanie i redakcja” — szablony zespołów z rozdz. 14), automatyki („Raport nocny” — moduł Automations), numery przebiegów, nazwy ról i akcji silnika kolejek pochodzą z domeny produktu. Godziny i numery cykli są przykładowymi danymi operacyjnymi.</li>
+      <li><b>Kod parowania</b> powtarza format użyty w prototypie okna Ustawień (<span class="pt-mono">DNC-XXXX-XXXX</span>); dokumentacja nie ustala postaci kodu, odsyłając po protokół do dokumentu Mobilne centrum dowodzenia.</li>
+      <li><b>Pasek stanu systemu telefonu</b> (godzina, oznaczenie sieci prywatnej) jest elementem makiety urządzenia, nie interfejsu platformy; oznaczenie „sieć prywatna” nawiązuje do kanału powiadomień opisanego w rozdz. 7.3 Ustawień.</li>
+    </ul>
+
+    <h4>Zgodność z zasadą zero blokad</h4>
+    <p>Wszystkie kontrolki pozostają klikalne. Wznowienie procesu, który nie został wstrzymany, oraz interwencja przed nadejściem zdarzenia kończą się komunikatem kontekstowym zamiast odebrania przycisku. Stan niesparowany nie odbiera dostępu do przycisku parowania — jest widokiem z drogą wyjścia, nie zaporą.</p>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   ZACHOWANIE SWOISTE FUNKCJI MOBILE
+   Widoki mobilne, powiadomienie push, cztery drogi interwencji zdalnej
+   oraz odtwarzanie sekwencji z rozdz. 11.5.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  var D = document;
+  function q(s, k) { return (k || D).querySelector(s); }
+  function qa(s, k) { return Array.prototype.slice.call((k || D).querySelectorAll(s)); }
+  function toast(t, o, r) { if (window.dnToast) window.dnToast(t, o, r || 'informacja'); }
+  function mowa(t) { var m = q('#mo-mowa'); if (m) m.textContent = t; }
+
+  var push = q('#mo-push');
+  var znacznik = q('#mo-znacznik');
+  var krokBiezacy = 0;
+  var zdarzenieZgloszone = false;
+  var procesWstrzymany = false;
+
+  /* ── 1 · NAWIGACJA MOBILNA ─────────────────────────────────────────────── */
+  function idzDoWidoku(nazwa) {
+    window.dnPrzelaczWidok(nazwa, 'mob');
+    qa('.mo-nawigacja-poz').forEach(function (p) {
+      var w = p.getAttribute('data-mob') === nazwa;
+      p.setAttribute('aria-selected', w ? 'true' : 'false');
+      if (w) q('#mo-tytul-widoku').textContent = p.getAttribute('data-tytul');
+    });
+    if (nazwa === 'mob-powiadomienia' || nazwa === 'mob-interwencja') {
+      znacznik.hidden = true;
+      if (push.getAttribute('data-widoczne') === 'tak') q('#mo-push-stan').textContent = 'stan: odczytane';
+    }
+    mowa('Widok mobilny: ' + nazwa.replace('mob-', '') + '.');
+  }
+  qa('.mo-nawigacja-poz').forEach(function (p) {
+    p.addEventListener('click', function () { idzDoWidoku(p.getAttribute('data-mob')); });
+    p.addEventListener('keydown', function (e) {
+      var k = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (!k) return;
+      e.preventDefault();
+      var lista = qa('.mo-nawigacja-poz');
+      var i = lista.indexOf(p);
+      var cel = lista[(i + k + lista.length) % lista.length];
+      cel.click(); cel.focus();
+    });
+  });
+  qa('[data-mob-idz]').forEach(function (b) {
+    b.addEventListener('click', function () { idzDoWidoku(b.getAttribute('data-mob-idz')); });
+  });
+
+  /* ── 2 · POWIADOMIENIE PUSH (rozdz. 7.6) ───────────────────────────────── */
+  function pokazPush() {
+    push.setAttribute('data-widoczne', 'tak');
+    q('#mo-push-stan').textContent = 'stan: wysłane';
+    znacznik.hidden = false;
+    zdarzenieZgloszone = true;
+    mowa('Powiadomienie push: Always On Display zgłasza zdarzenie wymagające decyzji.');
+  }
+  function schowajPush() { push.setAttribute('data-widoczne', 'nie'); }
+
+  q('#mo-push-otworz').addEventListener('click', function () {
+    q('#mo-push-stan').textContent = 'stan: odczytane';
+    idzDoWidoku('mob-interwencja');
+    setTimeout(schowajPush, 400);
+    ustawKrok(4);
+  });
+  q('#mo-push-zatwierdz').addEventListener('click', function () {
+    q('#mo-push-stan').textContent = 'stan: z akcją szybkiej odpowiedzi';
+    idzDoWidoku('mob-interwencja');
+    setTimeout(function () { schowajPush(); q('#mo-zatwierdz').click(); }, 500);
+  });
+
+  /* ── 3 · STAN PROCESU W MAKIECIE ───────────────────────────────────────── */
+  function ustawPostep(procent, opis) {
+    q('#mo-postep .dn-postep-wartosc').style.width = procent + '%';
+    q('#mo-postep [data-postep-licznik]').textContent = procent + '%';
+    if (opis) q('#mo-etap').textContent = opis;
+  }
+  function plakietkaProcesu(tekst, rodzaj, tetno) {
+    var pl = q('#mo-stan-procesu');
+    pl.className = 'dn-plakietka dn-plakietka--' + rodzaj;
+    pl.innerHTML = (tetno ? '<span class="pt-tetno" aria-hidden="true"></span> ' : '') + tekst;
+  }
+
+  /* ── 4 · SEKWENCJA INTERWENCJI ZDALNEJ (rozdz. 11.5) ───────────────────── */
+  function ustawKrok(numer) {
+    krokBiezacy = numer;
+    qa('.mo-krok').forEach(function (k) {
+      var n = parseInt(k.getAttribute('data-krok'), 10);
+      k.setAttribute('data-stan', n < numer ? 'wykonany' : n === numer ? 'biezacy' : 'oczekuje');
+      var znak = q('.mo-krok-znak', k);
+      if (n < numer) znak.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+      else znak.textContent = n;
+    });
+    q('#mo-sekwencja-stan').textContent = numer === 0
+      ? 'krok 0/5 — sekwencja nierozpoczęta'
+      : 'krok ' + numer + '/5 — ' + q('.mo-krok[data-krok="' + numer + '"] .mo-krok-tytul').textContent;
+  }
+
+  function wykonajKrok(numer) {
+    ustawKrok(numer);
+    if (numer === 1) {
+      idzDoWidoku('mob-monitor');
+      schowajPush();
+      procesWstrzymany = false;
+      plakietkaProcesu('uruchomiony', 'sygnal', true);
+      ustawPostep(56, 'etap 3/6 — Executor 2 realizuje równolegle zadanie „warstwa widoku”');
+      toast('Proces działa w tle', 'Pętla ciągła 24/7 · przebieg 41. Operator poza stanowiskiem roboczym.', 'informacja');
+    } else if (numer === 2) {
+      ustawPostep(74, 'etap 4/6 — Executor 3 / Validator ocenia wyniki wykonawców');
+      q('#mo-stan-validatora').className = 'dn-plakietka dn-plakietka--ostrzezenie';
+      q('#mo-stan-validatora').textContent = 'ocena negatywna · retry ×3';
+      plakietkaProcesu('oczekujący na decyzję', 'informacja', false);
+      toast('Always On Display', 'Wykryto powtarzające się niepowodzenie walidacji — AOD w trybie operatora inicjuje interwencję.', 'ostrzezenie');
+    } else if (numer === 3) {
+      pokazPush();
+      toast('Powiadomienie push wysłane', 'Kanał własny przez sieć prywatną oraz push przez pośrednika — dwa kanały o różnej poufności.', 'informacja');
+    } else if (numer === 4) {
+      q('#mo-push-stan').textContent = 'stan: odczytane';
+      idzDoWidoku('mob-interwencja');
+      setTimeout(schowajPush, 400);
+      toast('Widok Mobile procesu MultitaskingAI', 'Cztery drogi: zatwierdź krok · wstrzymaj · zmodyfikuj konfigurację Coordinatora · przejmij bezpośrednie sterowanie.', 'informacja');
+    } else if (numer === 5) {
+      idzDoWidoku('mob-monitor');
+      procesWstrzymany = false;
+      plakietkaProcesu('uruchomiony', 'sygnal', true);
+      ustawPostep(100, 'etap 6/6 — przebieg zamknięty, kolejny cykl w harmonogramie');
+      q('#mo-stan-validatora').className = 'dn-plakietka dn-plakietka--sukces';
+      q('#mo-stan-validatora').textContent = 'wynik zaakceptowany';
+      zdarzenieZgloszone = false;
+      toast('resume', 'Proces wznowił pracę z zastosowaną decyzją. Wykonanie odzwierciedliło się w Monitorze procesu na stanowisku roboczym.', 'sukces');
+    }
+  }
+
+  q('#mo-krok-dalej').addEventListener('click', function () {
+    if (krokBiezacy >= 5) {
+      toast('Sekwencja zakończona', 'Proces wznowił pracę. Użyj „Przywróć stan wyjściowy”, aby odtworzyć sekwencję ponownie.', 'informacja');
+      return;
+    }
+    wykonajKrok(krokBiezacy + 1);
+  });
+
+  q('#mo-sekwencja-reset').addEventListener('click', function () {
+    ustawKrok(0);
+    schowajPush();
+    znacznik.hidden = true;
+    zdarzenieZgloszone = false;
+    procesWstrzymany = false;
+    idzDoWidoku('mob-monitor');
+    plakietkaProcesu('uruchomiony', 'sygnal', true);
+    ustawPostep(56, 'etap 3/6 — Executor 2 realizuje równolegle zadanie „warstwa widoku”');
+    q('#mo-stan-validatora').className = 'dn-plakietka';
+    q('#mo-stan-validatora').textContent = 'bezczynna';
+    q('#mo-wynik').textContent = 'Brak wykonanej interwencji w tym przebiegu. Każde wykonanie natychmiast odzwierciedla się w Monitorze procesu na stanowisku roboczym.';
+    toast('Stan wyjściowy przywrócony', 'Sekwencja gotowa do ponownego odtworzenia.', 'informacja');
+  });
+
+  /* odtwarzanie automatyczne całej sekwencji */
+  var odtwarzanie = null;
+  q('#mo-odtworz').addEventListener('click', function () {
+    var przycisk = q('#mo-odtworz'), et = q('[data-etykieta]', przycisk);
+    clearInterval(odtwarzanie);
+    q('#mo-sekwencja-reset').click();
+    et.textContent = 'Odtwarzanie…';
+    przycisk.setAttribute('aria-busy', 'true');
+    var n = 0;
+    odtwarzanie = setInterval(function () {
+      n += 1;
+      wykonajKrok(n);
+      if (n >= 5) {
+        clearInterval(odtwarzanie);
+        et.textContent = 'Odtwórz sekwencję interwencji zdalnej';
+        przycisk.removeAttribute('aria-busy');
+      }
+    }, 1800);
+  });
+
+  /* ── 5 · CZTERY DROGI INTERWENCJI (rozdz. 11.5) ────────────────────────── */
+  function interwencja(przycisk, etykietaPracy, opisWyniku, poWykonaniu) {
+    var et = q('[data-etykieta]', przycisk);
+    var pierwotna = et.textContent;
+    et.textContent = etykietaPracy;
+    przycisk.setAttribute('aria-busy', 'true');
+    setTimeout(function () {
+      przycisk.removeAttribute('aria-busy');
+      et.textContent = pierwotna;
+      q('#mo-wynik').textContent = opisWyniku;
+      mowa(opisWyniku);
+      if (poWykonaniu) poWykonaniu();
+    }, 1200);
+  }
+
+  q('#mo-zatwierdz').addEventListener('click', function () {
+    if (!zdarzenieZgloszone) {
+      toast('Brak etapu oczekującego na decyzję', 'Zatwierdzenie zdalne dotyczy etapu zgłoszonego przez Always On Display. Odtwórz sekwencję, aby zobaczyć pełny przebieg. Przycisk pozostaje klikalny.', 'informacja');
+      return;
+    }
+    interwencja(q('#mo-zatwierdz'), 'Zatwierdzanie…',
+      'Krok zatwierdzony zdalnie. Wynik Executora 3 / Validatora przyjęty, proces przekazany do kolejnego kroku orkiestracji.',
+      function () {
+        toast('Krok zatwierdzony', 'Decyzja przekazana kanałem Mobile · poziom 2 hierarchii decyzji.', 'sukces');
+        setTimeout(function () { wykonajKrok(5); }, 700);
+      });
+  });
+
+  q('#mo-wstrzymaj').addEventListener('click', function () {
+    interwencja(q('#mo-wstrzymaj'), 'Wstrzymywanie…',
+      'Proces wstrzymany akcją pause z urządzenia mobilnego. Stan kolejki zachowany do czasu wznowienia.',
+      function () {
+        procesWstrzymany = true;
+        plakietkaProcesu('wstrzymany', 'ostrzezenie', false);
+        toast('pause', 'Kolejka zatrzymana, stan zachowany. Wznowienie akcją resume.', 'ostrzezenie');
+      });
+  });
+
+  q('#mo-modyfikuj').addEventListener('click', function () {
+    interwencja(q('#mo-modyfikuj'), 'Zapisywanie zmiany…',
+      'Konfiguracja Coordinatora zmodyfikowana zdalnie — plan przebiegu zostanie przebudowany przed kolejnym etapem.',
+      function () {
+        toast('Konfiguracja Coordinatora zmieniona', 'Zmiana obejmie najbliższy etap planowania; już uruchomione zadania zachowują dotychczasowy plan.', 'sukces');
+      });
+  });
+
+  q('#mo-przejmij').addEventListener('click', function () {
+    interwencja(q('#mo-przejmij'), 'Przejmowanie sterowania…',
+      'Operator przejął bezpośrednie sterowanie procesem — poziom 1 hierarchii decyzji. Poziomy pośrednie (Coordinator, Validator) zostały pominięte na czas interwencji.',
+      function () {
+        toast('Poziom 1 hierarchii decyzji', 'Decyzja użytkownika jest nadrzędna wobec każdego elementu procesu; żaden poziom niższy jej nie ogranicza.', 'sukces');
+      });
+  });
+
+  q('#mo-wznow').addEventListener('click', function () {
+    if (!procesWstrzymany) {
+      toast('Proces nie jest wstrzymany', 'Akcja resume przywraca proces zatrzymany akcją pause. Kontrolka pozostaje klikalna — komunikat zamiast blokady.', 'informacja');
+      return;
+    }
+    interwencja(q('#mo-wznow'), 'Wznawianie…',
+      'Proces wznowiony akcją resume z urządzenia mobilnego, z zachowanym stanem kolejki.',
+      function () {
+        procesWstrzymany = false;
+        plakietkaProcesu('uruchomiony', 'sygnal', true);
+        toast('resume', 'Proces wznowiony — zmiana widoczna natychmiast w Monitorze procesu.', 'sukces');
+      });
+  });
+
+  /* ── 6 · PAROWANIE URZĄDZENIA (ustawienia.md rozdz. 6.2) ───────────────── */
+  var zaslona = q('#mo-zaslona-parowanie');
+  function stanNiesparowany(wlacz) {
+    zaslona.setAttribute('data-widoczna', wlacz ? 'tak' : 'nie');
+    q('#mo-parowanie-tryb').textContent = wlacz ? 'Wróć do widoku sparowanego' : 'Podgląd stanu niesparowanego';
+    mowa(wlacz ? 'Urządzenie niesparowane — wymagane parowanie z okna Ustawień.' : 'Urządzenie sparowane.');
+  }
+  q('#mo-parowanie-tryb').addEventListener('click', function () {
+    stanNiesparowany(zaslona.getAttribute('data-widoczna') !== 'tak');
+  });
+  q('#mo-pokaz-parowanie').addEventListener('click', function () { stanNiesparowany(true); });
+  q('#mo-parowanie-anuluj').addEventListener('click', function () { stanNiesparowany(false); });
+
+  q('#mo-sparuj').addEventListener('click', function () {
+    var przycisk = q('#mo-sparuj'), et = q('[data-etykieta]', przycisk);
+    et.textContent = 'Parowanie…';
+    przycisk.setAttribute('aria-busy', 'true');
+    setTimeout(function () {
+      et.textContent = 'Sparuj to urządzenie';
+      przycisk.removeAttribute('aria-busy');
+      stanNiesparowany(false);
+      idzDoWidoku('mob-monitor');
+      toast('Sparowano urządzenie', 'device.changed — nowy wiersz w wykazie urządzeń okna Ustawień. Poświadczenie odrębne od pozostałych urządzeń: odwołanie jednego telefonu nie odcina pozostałych.', 'sukces');
+    }, 1400);
+  });
+
+  /* ── 7 · zegar makiety i stan początkowy ───────────────────────────────── */
+  function odswiezGodzine() {
+    var t = new Date();
+    q('#mo-godzina').textContent = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2);
+  }
+  odswiezGodzine();
+  setInterval(odswiezGodzine, 30000);
+  ustawKrok(0);
+  mowa('Funkcja globalna Mobile — widok mobilny platformy w makiecie urządzenia.');
+})();
+</script>
+</body>
+</html>

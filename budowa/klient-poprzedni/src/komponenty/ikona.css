@@ -1,0 +1,20 @@
+/* ============================================================================
+   DANACO CONSOLE — IKONA: hak semantyczny nośnika SVG
+   ----------------------------------------------------------------------------
+   `.dn-ikona` nie narzuca ani rozmiaru, ani barwy. Rozmiar niosą atrybuty
+   `width`/`height` nadawane przez `ikony/ikony.ts` z parametru `rozmiar`,
+   a barwa idzie z `currentColor`, więc ikona przejmuje kolor tekstu, obok
+   którego stoi, i przełącza się razem z motywem bez reguły warunkowej.
+
+   Klasa niesie znaczenie, nie wygląd: mówi „to jest ikona”. Po niej
+   selekcjonują sprawdziany, o nią zaczepiają się motywy i po niej pozna ikonę
+   każdy, kto czyta drzewo dokumentu.
+
+   Obie reguły niosą wyłącznie zachowanie w układzie: nośnik jest elementem
+   wierszowym i nie kurczy się w kontenerze elastycznym.
+   ========================================================================= */
+
+.dn-ikona {
+  display: inline-block;
+  flex: none;
+}

@@ -1,0 +1,90 @@
+/*
+ * Panel „Doradca” Agent Buildera. Osobny arkusz obok `agents.css`, bo podział
+ * stylów modułu idzie wzdłuż komponentu.
+ *
+ * Barwy biorą się z żetonów, nie z literałów. Etykieta rady i ostrzeżenie
+ * o urwanej turze sięgają po żetony ostrzeżenia — te same, którymi mówi
+ * odstępstwo promptu w `agents.css`. Rada ma być rozpoznawalna kolorem, bez
+ * czytania nagłówka.
+ */
+
+.da-doradca {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.da-doradca__wykaz {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.da-doradca__wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-ostrzezenie-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+}
+
+/* Etykieta pochodzenia — pierwsza rzecz w wierszu i najgłośniejsza w nim. */
+.da-doradca__etykieta {
+  align-self: flex-start;
+  padding: 0 var(--dn-od-1);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.da-doradca__naglowek {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+}
+
+.da-doradca__droga {
+  margin: 0;
+}
+
+/* Pytanie jest cytatem Operatora — wcięcie odróżnia je od rady doradcy. */
+.da-doradca__pytanie {
+  margin: 0;
+  padding: 0 0 0 var(--dn-od-2);
+  border-left: 2px solid var(--dn-obrys);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  white-space: pre-wrap;
+}
+
+.da-doradca__tresc {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-tlo);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+  white-space: pre-wrap;
+}
+
+/* Tura urwana albo zakończona błędem — powód stoi nad treścią częściową. */
+.da-doradca__stan {
+  margin: 0;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-blad-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-blad-tlo);
+  color: var(--dn-blad-tekst);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+}

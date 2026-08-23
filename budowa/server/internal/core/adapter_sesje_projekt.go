@@ -1,0 +1,104 @@
+package core
+
+import (
+	"context"
+
+	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/protocol"
+	"danacoconsole/shared"
+)
+
+// przedrostekProjektu znakuje kod projektu założonego przy przenoszeniu sesji.
+// Projekt zakładany z historii nie ma jeszcze wiersza w module Workspace, więc
+// kod nadaje rdzeń — nazwa pozostaje tym, co Operator wpisał.
+const przedrostekProjektu = "prj-"
+
+// ZProjektami wpina repozytorium projektów. Bez niego przenoszenie sesji do
+// projektu odmawia wprost, zamiast zapisywać wskazanie, którego nikt nie zna.
+func (a *adapterSesji) ZProjektami(p dane.RepozytoriumPrzestrzeniRoboczej) *adapterSesji {
+	a.projekty = p
+	return a
+}
+
+// PrzypiszProjekt przenosi sesje do projektu — wskazanego albo zakładanego.
+//
+// Jedna komenda obsługuje oba warianty żądania („przenieś do utworzonego już
+// projektu" i „przenieś, tworząc nowy"), bo z punktu widzenia historii jest to
+// ten sam gest: wskazanie, gdzie sesja ma odtąd należeć. Rozróżnia je wyłącznie
+// to, czy Operator podał istniejący kod, czy nazwę nowego.
+func (a *adapterSesji) PrzypiszProjekt(ctx context.Context,
+	z shared.SessionProjectSetRequest) (shared.SessionProjectSetResponse, error) {
+
+	kod, err := a.ustalProjekt(ctx, z)
+	if err != nil {
+		return shared.SessionProjectSetResponse{}, err
+	}
+	return shared.SessionProjectSetResponse{
+		ProjectId: kod,
+		MovedIds:  a.przestawProjekt(ctx, z.SessionIds, kod),
+	}, nil
+}
+
+// OdepnijProjekt wyjmuje sesje z projektu.
+//
+// Sesja zostaje w historii — wyjęcie z projektu NIE JEST usunięciem. To jest
+// osobna czynność Operatora („usuń z projektu" wobec „usuń"), więc i osobna
+// komenda; pomylenie ich kosztowałoby zapis.
+func (a *adapterSesji) OdepnijProjekt(ctx context.Context,
+	z shared.SessionProjectClearRequest) (shared.SessionProjectClearResponse, error) {
+
+	return shared.SessionProjectClearResponse{
+		ClearedIds: a.przestawProjekt(ctx, z.SessionIds, ""),
+	}, nil
+}
+
+// ustalProjekt rozstrzyga, do którego projektu trafiają sesje.
+//
+// Wskazanie istniejącego projektu jest sprawdzane, a nie przyjmowane na słowo:
+// zapisanie sesji do projektu, którego nie ma, dałoby wykaz wskazujący w pustkę.
+func (a *adapterSesji) ustalProjekt(ctx context.Context,
+	z shared.SessionProjectSetRequest) (string, error) {
+
+	if a.projekty == nil {
+		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+			"rdzeń nie ma repozytorium projektów — przeniesienie sesji nie ma dokąd trafić"))
+	}
+	if z.ProjectId != nil && *z.ProjectId != "" {
+		if _, err := a.projekty.Projekt(ctx, *z.ProjectId); err != nil {
+			return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+				"projekt "+*z.ProjectId+" nie istnieje"))
+		}
+		return *z.ProjectId, nil
+	}
+	if z.ProjectName == nil || *z.ProjectName == "" {
+		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
+			"przeniesienie wymaga wskazania projektu albo nazwy nowego"))
+	}
+	projekt, _, err := a.projekty.ZapewnijProjekt(ctx, nowyIdentyfikator(przedrostekProjektu), *z.ProjectName)
+	if err != nil {
+		return "", err
+	}
+	return projekt.Kod, nil
+}
+
+// przestawProjekt zapisuje przynależność sesji i zwraca te, które faktycznie
+// przestawiono. Wskazanie bez odpowiednika jest pomijane — czynność zbiorcza nie
+// może paść przez jedną pozycję.
+func (a *adapterSesji) przestawProjekt(ctx context.Context, wskazania []string, kod string) []string {
+	przestawione := make([]string, 0, len(wskazania))
+	for _, identyfikator := range wskazania {
+		if a.trwalosc == nil || a.trwalosc.sesje == nil {
+			continue
+		}
+		wiersz, err := a.trwalosc.sesje.PoIdentyfikatorze(ctx, identyfikator)
+		if err != nil {
+			continue
+		}
+		if err := a.trwalosc.sesje.ZmienProjekt(ctx, wiersz.ID, kod); err != nil {
+			continue
+		}
+		_, _ = a.nadzorca.Rejestr().ZmienProjektSesji(identyfikator, kod)
+		przestawione = append(przestawione, identyfikator)
+	}
+	return przestawione
+}

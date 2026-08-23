@@ -1,0 +1,216 @@
+/* ============================================================================
+   DANACO CONSOLE — EKRAN LOGOWANIA (bramka Operatora)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy, ani jednego rozmiaru — wszystko z żetonów
+   motywu (`--dn-*`) i biblioteki `komponenty/`. Kartę niesie
+   `komponenty/karta.css`, pola — `komponenty/pole.css`, przyciski —
+   `komponenty/przycisk.css`, stan treści — `komponenty/stan-tresci.ts`
+   z przedrostkiem `au`; tutaj zostaje wyłącznie układ przesłony i karty.
+
+   Każdy selektor tego arkusza zaczyna się od `.au-`, żeby żaden moduł nie mógł
+   odziedziczyć wyglądu bramki ani go nadpisać.
+
+   Przesłona stoi nad wszystkim, także nad Centrum poleceń — bramka jest progiem
+   wejścia, więc nic nie ma prawa jej przykryć. Skala warstw
+   (`motyw/warstwy.css`) nie ma osobnego żetonu bramki, więc przesłona liczy
+   swoją warstwę z żetonu najwyższego zamiast wpisywać gołą liczbę.
+   ============================================================================ */
+
+.au-brama {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dn-z-brama);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dn-od-6);
+  background: var(--dn-tlo);
+}
+
+.au-karta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  width: min(26rem, 100%);
+  padding: var(--dn-od-10) var(--dn-od-8);
+  box-shadow: var(--dn-cien-lg);
+}
+
+/* --- znak marki, nazwa i zdanie o przeznaczeniu ekranu -------------------- */
+
+/* Znak i nazwa stoją w jednym rzędzie, wyśrodkowane: to jedyny ekran produktu
+   oglądany bez żadnej nawigacji wokół, więc identyfikacja idzie na środek,
+   a nie do narożnika jak w pasku kokpitu. */
+.au-naglowek {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+
+.au-godlo {
+  display: block;
+}
+
+.au-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  color: var(--dn-tekst);
+  text-align: center;
+}
+
+.au-podtytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  text-align: center;
+}
+
+/* --- stan treści (`komponenty/stan-tresci.ts`, przedrostek `au`) ----------
+   Odmowa różni się barwą i wagą, nie samą treścią zdania: „bramki
+   jeszcze nie ustawiono" i „rdzeń pracuje bez sejfu" prowadzą do przeciwnych
+   czynności Operatora. */
+
+.au-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.au-stan {
+  margin: 0;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.au-stan[data-stan='ladowanie'] {
+  font-style: italic;
+}
+
+.au-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.au-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.au-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.au-tresc {
+  min-height: 0;
+}
+
+/* --- formularz bramki ----------------------------------------------------- */
+
+.au-formularz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+}
+
+.au-objasnienie {
+  margin: 0;
+  /* Zdanie pomocnicze, nie treść formularza — najniższy stopień skali. Przy
+     `--dn-fs-sm` z `.dn-pole-opis` ważyłoby tyle samo co etykiety pól i ciągnęło
+     wzrok na siebie zamiast na hasło, a przy `xs` konkurowałoby z odnośnikiem. */
+  font-size: var(--dn-fs-2xs);
+  line-height: 1.5;
+}
+
+/* --- segmenty metody wejścia ----------------------------------------------
+   Pas pigułkowy: hasło i PIN w jednej obwódce, wybrany segment wypełniony.
+   Pas staje wyłącznie wtedy, gdy metod jest więcej niż jedna — jednosegmentowy
+   przełącznik nie jest sterem, tylko napisem (chowa go `postac-bramki.ts`).
+
+   Odróżnienie nie idzie samą barwą: segment wybrany dostaje inne tło i inną
+   wagę pisma, więc odczytuje się go także bez rozróżniania barw, a znaczenie
+   niesie dodatkowo `aria-checked` grupy radiowej. */
+.au-metody[hidden] { display: none; }
+
+.au-metody {
+  display: flex;
+  gap: var(--dn-od-1);
+  align-self: center;
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+}
+
+.au-metoda {
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-4);
+  border: none;
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+
+.au-metoda:hover { color: var(--dn-tekst); background: var(--dn-hover); }
+
+.au-metoda[aria-checked='true'] {
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+  box-shadow: var(--dn-cien-1);
+}
+
+/* „Nie wyloguj mnie" — przełącznik i jego opis w jednym wierszu.
+   Cały wiersz jest etykietą, więc kliknięcie w napis przestawia przełącznik.
+   Napis brzmi tak samo jak nastawa w rdzeniu — jedna rzecz, jedna nazwa. */
+.au-niewylogowuj[hidden] { display: none; }
+
+.au-niewylogowuj {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  cursor: pointer;
+}
+
+.au-niewylogowuj__opis {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* „Reset hasła" — odnośnik w postaci przycisku (nigdzie nie prowadzi,
+   przestawia ten sam ekran na tryb zmiany hasła). */
+.au-odnosnik {
+  align-self: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: var(--dn-fs-xs);
+  /* Barwy odnośnika te same, co `a` w `motyw/fundament.css` — odnośnik
+     wygląda jak odnośnik, choć jest przyciskiem. Ognisko zostawiamy regule
+     globalnej `:focus-visible`, zamiast pisać drugą. */
+  color: var(--dn-sygnal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.au-odnosnik:hover { color: var(--dn-sygnal-mocny); }
+
+.au-wyslij {
+  align-self: stretch;
+  justify-content: center;
+}
+
+.au-ponow {
+  align-self: flex-start;
+}

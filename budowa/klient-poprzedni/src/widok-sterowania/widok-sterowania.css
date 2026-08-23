@@ -1,0 +1,216 @@
+/* ============================================================================
+   DANACO CONSOLE — WIDOK STEROWANIA OKNA
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: oprawa kompletu sterowania — kolumna, nagłówek,
+   szuflada, podsumowanie ośmiu wartości.
+
+   Arkusz nie stylizuje kontrolek. Kontrolki mają własny arkusz
+   (`sterowanie/sterowanie.css`), którego ten plik nie dubluje i nie
+   przepisuje; sięga do jego selektorów wyłącznie po to, by komplet osadzony
+   w szufladzie nie niósł drugiego nagłówka i drugiej krawędzi.
+
+   Wartości pochodzą wyłącznie z żetonów `motyw/` — ani jednej wartości
+   szesnastkowej, ani jednego odstępu spoza skali 4 px. Sygnał występuje
+   w trzech miejscach: licznik ustawień, wstęga uchwytu w stanie rozwiniętym
+   i pierścień ogniska — nigdy jako wypełnienie. Krój szeryfowy wyłącznie
+   w tytule.
+
+   Podsumowanie ośmiu wartości mieszka we własnym arkuszu
+   `podsumowanie-ustawien.css`, razem ze swoim plikiem `.ts`.
+
+   W arkuszu nie ma reguły `:disabled` ani wygaszenia. Zwinięcie szuflady
+   zmienia to, która warstwa zajmuje miejsce — nie odbiera klikalności
+   niczemu.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   KOLUMNA
+   --------------------------------------------------------------------------- */
+.dc-widok-ster {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+}
+
+/* ---------------------------------------------------------------------------
+   NAGŁÓWEK KOLUMNY
+   Tytuł krojem szeryfowym, rola okna plakietką, identyfikator monospaced.
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__naglowek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dc-widok-ster__wiersz-tytulu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-2);
+}
+
+.dc-widok-ster__tytul {
+  margin: 0;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.dc-widok-ster__rola {
+  flex: none;
+}
+
+/* Koordynator wyróżniony sygnałem — rola prowadząca w pętli.
+   Barwa nie niesie znaczenia sama: nazwa roli stoi w treści plakietki. */
+.dc-widok-ster__rola[data-rola='coordinator'] {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+}
+
+.dc-widok-ster__identyfikator {
+  overflow: hidden;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   SZUFLADA
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__szuflada {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dc-widok-ster__uchwyt {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  min-height: var(--dn-wym-kontrolka);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border: 0;
+  border-bottom: 1px solid var(--dn-obrys);
+  border-left: 3px solid transparent;
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  cursor: pointer;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-align: left;
+  text-transform: uppercase;
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    border-color var(--dn-czas-2) var(--dn-ease);
+}
+
+.dc-widok-ster__uchwyt:hover {
+  background: var(--dn-hover);
+}
+
+.dc-widok-ster__uchwyt:active {
+  transform: translateY(1px);
+}
+
+.dc-widok-ster__uchwyt:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Wstęga sygnału przy szufladzie rozwiniętej — wybór trwały */
+.dc-widok-ster__szuflada[data-otwarta='tak'] .dc-widok-ster__uchwyt {
+  border-left-color: var(--dn-sygnal-wypelnienie);
+}
+
+.dc-widok-ster__uchwyt-nazwa {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-widok-ster__licznik {
+  flex: none;
+  min-height: var(--dn-od-5);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: 0;
+}
+
+.dc-widok-ster__strzalka {
+  flex: none;
+  color: var(--dn-tekst-3);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+
+.dc-widok-ster__szuflada[data-otwarta='tak'] .dc-widok-ster__strzalka {
+  transform: rotate(180deg);
+}
+
+/* Dwie warstwy szuflady: podsumowanie i komplet kontrolek */
+.dc-widok-ster__warstwy {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dc-widok-ster__szuflada[data-otwarta='tak'] .dc-widok-ster__podsumowanie,
+.dc-widok-ster__szuflada[data-otwarta='nie'] .dc-widok-ster__tresc {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   KOMPLET KONTROLEK — warstwa rozwiniętej szuflady
+   Komplet pochodzi z `sterowanie/`; tutaj wyłącznie osadzenie.
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__tresc {
+  min-height: 0;
+}
+
+.dc-widok-ster__tresc:focus {
+  outline: none;
+}
+
+.dc-widok-ster__tresc:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Nagłówek kompletu powtarzałby tytuł i identyfikator kolumny — jeden
+   wystarczy. Kontrolki pozostają nietknięte. */
+.dc-widok-ster__tresc .dc-sterowanie__naglowek {
+  display: none;
+}
+
+.dc-widok-ster__tresc .dc-sterowanie {
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border-bottom: 0;
+  background: transparent;
+  font-size: var(--dn-fs-base);
+}
+
+/* ---------------------------------------------------------------------------
+   UCHWYT NA PASKU GÓRNYM
+   Drugie wejście do tej samej szuflady, obok przełącznika motywu.
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__uchwyt-paska[aria-expanded='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}

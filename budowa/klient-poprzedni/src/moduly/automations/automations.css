@@ -1,0 +1,493 @@
+/* ============================================================================
+   DANACO CONSOLE — MODUŁ AUTOMATIONS (pięć okien operacyjnych)
+   ----------------------------------------------------------------------------
+   Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu (`--dn-*`)
+   i z biblioteki `komponenty/`. Tutaj leży rozkład okien modułu, odróżnienie
+   trzech stanów obowiązkowych oraz oznaczenie ścieżki krytycznej i stanu
+   przebiegu.
+   ============================================================================ */
+
+.da-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Pas przywołania okna: jeden uchwyt menu wyrównany do lewej, nad układem.
+   Wygląd samego menu — uchwyt, wykaz, haczyk, opis pozycji i wcięcie poziomu —
+   niesie w całości `komponenty/menu-drzewo.css`; tutaj stoi wyłącznie miejsce,
+   które ten uchwyt zajmuje w module, bo rozkład należy do modułu. */
+.da-modul__nawigacja {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* Wykaz gotowych pętli: pas pełnej szerokości nad kreatorami, bo uruchomienie
+   pętli zapisanej jest wejściem do modułu, a budowanie nowej — pracą rzadszą. */
+.da-modul__start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Dwa kreatory obok siebie: budowa struktury i jej układ. */
+.da-modul__gora {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--dn-od-4);
+}
+
+/* Pas wykonania: harmonogram, kolejka, monitor. */
+.da-modul__dol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+}
+
+@media (max-width: 1100px) {
+  .da-modul__gora,
+  .da-modul__dol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Układ okna — nagłówek, opis, pas akcji i ciało — niesie biblioteka
+   (`komponenty/okno.css`, klasy `dn-okno*`). Klasy rodziny `da-okno*` dokłada
+   rama po przedrostku modułu i zostają tu wyłącznie te reguły, których
+   biblioteka nie ma, bo należą do dziedziny Automations. */
+
+
+.da-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.da-tozsamosc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ── Trzy stany obowiązkowe ────────────────────────────────────────────────── */
+
+.da-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.da-stan {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.da-stan[data-stan='ladowanie'] {
+  font-style: italic;
+}
+
+.da-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.da-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.da-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.da-tresc {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Wykaz pozycji ─────────────────────────────────────────────────────────── */
+
+.da-wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.da-pozycja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.da-pozycja__tytul {
+  flex: 1 1 35%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.da-pozycja__opis {
+  flex: 1 1 45%;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.da-pozycja__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* Podświetlenie ścieżki krytycznej — pozycja panelu akcji Orchestratora. */
+.da-pozycja[data-sciezka='krytyczna'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* Przebieg nieudany i przerwany ma być odróżnialny od trwającego. */
+.da-pozycja[data-stan-przebiegu='failed'],
+.da-pozycja[data-stan-przebiegu='stopped'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.da-pozycja[data-stan-przebiegu='running'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-informacja-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* Pętla czynna odróżnia się wstęgą, pętla wyłączona zostaje bez niej. Pozycja
+   wyłączona nie jest wygaszona: przycisk uruchomienia ma tam ten sam ciężar
+   co wszędzie, a stan jest opisany słowem w treści pozycji. */
+.da-pozycja[data-stan-petli='czynna'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-sukces-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* ── Edytor kroków ─────────────────────────────────────────────────────────── */
+
+.da-edytor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.da-kroki {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.da-krok {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.da-krok__numer {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.da-krok__pola {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.da-krok__akcje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* ── Panel zależności układu (rodzina orchestration.*) ────────────────────
+   Stoi w narzędziach kontekstowych okna Orchestratora: czyta układ bez
+   zapisu, zmienia pojedynczą krawędź i sprawdza graf bez dotykania go. */
+
+.da-zaleznosci {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--dn-od-2);
+}
+
+.da-zaleznosci__odpowiedz {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.da-zaleznosci__odpowiedz[data-powodzenie='false'] { color: var(--dn-blad-tekst); }
+
+.da-zaleznosci__wykaz {
+  flex-basis: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.da-zaleznosci__krawedz {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* ── Kreator cykliczności (Scheduler) ──────────────────────────────────────── */
+
+/* Pola kreatora w jednym rzędzie: wzorzec składa z nich zapis cron. Rząd zawija
+   się na wąskim oknie, bo Scheduler jest kolumną boczną, nie obszarem głównym. */
+.da-kreator {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.da-kreator .da-wiersz {
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+/* Zdanie o cykliczności w mowie Operatora, tuż pod polem zapisu. */
+.da-opis-cyklicznosci {
+  margin: 0;
+}
+
+/* ── Kalendarz uruchomień (Scheduler) ──────────────────────────────────────── */
+
+.da-kalendarz {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--dn-od-1);
+}
+
+.da-kalendarz__dzien {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  min-width: 0;
+}
+
+.da-kalendarz__data {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+}
+
+.da-kalendarz__opis {
+  font-size: var(--dn-fs-2xs);
+  color: var(--dn-tekst-2);
+  overflow-wrap: anywhere;
+}
+
+/* Dzień z zaplanowanym uruchomieniem i dzień z przebiegiem odbytym odróżniają
+   się wstęgą, nie samą barwą tła — stan nigdy nie idzie samym kolorem. */
+.da-kalendarz__dzien[data-zaplanowane] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-informacja-obrys);
+}
+
+.da-kalendarz__dzien[data-odbyte] {
+  border-bottom: var(--dn-wym-wstega) solid var(--dn-sukces-obrys);
+}
+
+/* ── Ocena definicji i zastrzeżenia walidacji (Workflow Builder) ───────────── */
+
+.da-ocena-definicji {
+  margin: 0;
+}
+
+.da-ocena-definicji[data-ocena='z-zastrzezeniami'] {
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+/* Krok z zastrzeżeniem zostaje w pełni edytowalny — zastrzeżenie jest
+   ostrzeżeniem, nie bramą, więc oznacza go wstęga, a nie wygaszenie wiersza. */
+.da-krok[data-zastrzezenie='ostrzezenie'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+}
+
+.da-krok[data-zastrzezenie='blad'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+}
+
+.da-pozycja[data-zastrzezenie='ostrzezenie'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.da-pozycja[data-zastrzezenie='blad'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* ── Kanwa grafu zależności (Orchestrator) ─────────────────────────────────── */
+
+/* Kanwa przewija się w obu osiach: graf wielokrokowy bywa szerszy od kolumny
+   bocznej, a przycięcie go w pionie ukryłoby tory równoległe. */
+.da-graf {
+  overflow: auto;
+  max-height: 22rem;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.da-graf__rysunek {
+  display: block;
+}
+
+.da-graf__wezel rect {
+  fill: var(--dn-powierzchnia);
+  stroke: var(--dn-obrys);
+  stroke-width: 1;
+}
+
+.da-graf__wezel text {
+  fill: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+}
+
+/* Krok na ścieżce krytycznej: grubszy obrys w barwie ostrzeżenia, a nie sama
+   barwa wypełnienia — odróżnienie ma zostać czytelne także bez rozpoznania barw. */
+.da-graf__wezel[data-sciezka='krytyczna'] rect {
+  stroke: var(--dn-ostrzezenie-obrys);
+  stroke-width: 2;
+}
+
+.da-graf__lacznik line {
+  stroke: var(--dn-obrys-mocny);
+  stroke-width: 1.5;
+}
+
+.da-graf__lacznik[data-sciezka='krytyczna'] line {
+  stroke: var(--dn-ostrzezenie-obrys);
+  stroke-width: 2;
+}
+
+.da-graf__grot {
+  fill: var(--dn-obrys-mocny);
+}
+
+/* ── Oś czasu i szuflada szczegółów (Execution Monitor) ────────────────────── */
+
+.da-os-czasu {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 14rem;
+}
+
+.da-os-czasu rect {
+  fill: var(--dn-obrys-mocny);
+}
+
+.da-os-czasu rect[data-stan-przebiegu='succeeded'] {
+  fill: var(--dn-sukces-obrys);
+}
+
+.da-os-czasu rect[data-stan-przebiegu='failed'],
+.da-os-czasu rect[data-stan-przebiegu='stopped'] {
+  fill: var(--dn-blad-obrys);
+}
+
+.da-os-czasu rect[data-stan-przebiegu='running'] {
+  fill: var(--dn-informacja-obrys);
+}
+
+.da-szuflada {
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  padding: var(--dn-od-2);
+}
+
+.da-szuflada summary {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  cursor: pointer;
+}
+
+/* Panele dopełniające okien operacyjnych (`panel-dobudowy.ts`).
+   Panel osadza się wewnątrz okna, do którego należy jego praca, więc odcina się
+   od treści okna kreską i odstępem, a nie ramką ani tłem — nie jest bytem
+   równorzędnym oknu i nie ma nim wyglądać. */
+.da-panel {
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  margin-top: var(--dn-od-3);
+  padding-top: var(--dn-od-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.da-panel__tytul {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  margin: 0;
+}
+
+.da-panel__opis {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  margin: 0;
+}
+
+/* Pola układają się w siatkę o kolumnach dopasowanych do szerokości okna:
+   panel stoi w kolumnie bocznej albo w obszarze dominującym, a wpisany na
+   sztywno układ dwukolumnowy byłby dobry tylko w jednym z tych miejsc. */
+.da-panel__pola {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--dn-od-2);
+}
+
+.da-panel__pole {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.da-panel__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* Odpowiedź rdzenia w postaci zapisu strukturalnego. Przewija się we własnym
+   obszarze, żeby długi wykaz zleceń nie rozpychał okna w poziomie. */
+.da-panel__odpowiedz {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  background: var(--dn-powierzchnia-2);
+  border-radius: var(--dn-r-sm);
+  padding: var(--dn-od-2);
+  margin: 0;
+  max-height: 20rem;
+  overflow: auto;
+  white-space: pre;
+}

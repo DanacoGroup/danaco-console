@@ -1,0 +1,109 @@
+/* ============================================================================
+   DANACO CONSOLE — WPIS ROZMOWY · DODATKI DO BUDOWY BIBLIOTECZNEJ
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: to, co wpis rozmowy ma ponad budowę biblioteczną.
+
+   Budowy wpisu ten arkusz nie opisuje. Siatkę `24px 1fr`, medalion, tożsamość,
+   nadawcę, godzinę, treść, trzy klasy semantyczne i kropkę tętna niesie
+   `komponenty/wpis.css`; powielenie tych reguł tutaj sprawiłoby, że ten sam
+   selektor deklarowałyby dwa arkusze naraz i o wyglądzie rozstrzygałby graf
+   importów.
+
+   Tutaj stoją wyłącznie części, których budowa biblioteczna nie zna, bo nie zna
+   tury rdzenia: plakietka stanu, blok błędów tury i stopka z podsumowaniem.
+   Każda z nich jest dzieckiem siatki, więc musi dostać kolumnę treści —
+   inaczej wpadłaby pod medalion i zwęziła się do 24 px.
+   ============================================================================ */
+
+/* Wszystko poza medalionem stoi w kolumnie treści. Reguła jest zawężona do
+   wpisu rozmowy (`.dc-wpis`), żeby nie sięgać `.dn-wpis` w innych widokach —
+   okno komunikacji buduje swój wpis z trzech dzieci i kolumn nie potrzebuje. */
+.dc-wpis.dn-wpis > * {
+  grid-column: 2;
+}
+
+.dc-wpis.dn-wpis > .dn-wpis-medalion {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Wpis odrzucony przez tryb widoku transkryptu (`widok-zapisu.ts`) znika
+   z zapisu, ale zostaje w drzewie ze swoim stanem. Samo `hidden` by go nie
+   schowało: biblioteka nadaje `.dn-wpis` `display: grid`, a to bije regułę
+   `[hidden] { display: none }` z arkusza przeglądarki — dokładnie ta sama
+   pułapka co przy plakietce roli niżej. Bez tego wiersza tryb „Streszczenie"
+   pokazywałby wszystko, co miał odfiltrować. */
+.dc-wpis[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- *
+ * STAN TURY — czego budowa biblioteczna nie zna                     *
+ * ---------------------------------------------------------------- */
+
+.dc-wpis__stan {
+  margin-left: var(--dn-od-2);
+}
+
+/* Plakietka roli niesie nazwę narzędzia i stoi tylko przy wpisie z wynikiem
+   narzędzia. Samo `hidden` by jej nie schowało: biblioteka nadaje plakietce
+   `display: inline-flex`, a to bije regułę `[hidden] { display: none }`
+   z arkusza przeglądarki. Bez tego wiersza przy każdym wpisie stałaby pusta
+   pigułka. */
+.dc-wpis .dn-plakietka--rola[hidden] {
+  display: none;
+}
+
+/* Stan wpisu: barwa towarzyszy słowu w plakietce, nigdy go nie zastępuje. */
+.dc-wpis[data-stan='bledny'] .dc-wpis__stan {
+  color: var(--dn-blad-tekst);
+  border-color: var(--dn-blad-obrys);
+  background-color: var(--dn-blad-tlo);
+}
+
+.dc-wpis[data-stan='przerwany'] .dc-wpis__stan {
+  color: var(--dn-ostrzezenie-tekst);
+  border-color: var(--dn-ostrzezenie-obrys);
+  background-color: var(--dn-ostrzezenie-tlo);
+}
+
+.dc-wpis[data-stan='strumien'] .dc-wpis__stan,
+.dc-wpis[data-stan='wysylanie'] .dc-wpis__stan {
+  color: var(--dn-informacja-tekst);
+  border-color: var(--dn-informacja-obrys);
+  background-color: var(--dn-informacja-tlo);
+}
+
+/* ---------------------------------------------------------------- *
+ * STOPKA I BŁĄD                                                     *
+ * ---------------------------------------------------------------- */
+
+.dc-wpis__stopka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-3);
+}
+
+.dc-wpis__stopka:empty,
+.dc-wpis__bledy:empty {
+  display: none;
+}
+
+.dc-wpis__notka {
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+
+.dc-blad {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-blad-obrys);
+  border-radius: var(--dn-r-sm);
+  background-color: var(--dn-blad-tlo);
+  color: var(--dn-blad-tekst);
+  font-size: var(--dn-fs-sm);
+}

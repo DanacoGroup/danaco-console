@@ -1,0 +1,32 @@
+<!-- ════════════════════════════════════════════════════════════════════════
+     Danaco Console — komplet wpięć godła dokumentu (wklej do <head>)
+     Kolejność jest znacząca: przeglądarka wspierająca SVG bierze pierwszy
+     wpis i ignoruje ICO; starsza pobiera /favicon.ico ze ścieżki domyślnej.
+     ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 1. Nośnik podstawowy: SVG adaptacyjny (przełącza barwy z prefers-color-scheme) -->
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+
+<!-- 2. Zapas rastrowy dla starszych przeglądarek: ICO 16/32/48 na kryjącym gruncie -->
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+
+<!-- 3. iOS / iPadOS — kwadrat bez zaokrąglenia i bez kanału alfa (maskę nakłada system) -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+<!-- 4. Manifest aplikacji internetowej (nazwa, barwy, ikony, skróty do środowisk) -->
+<link rel="manifest" href="/site.webmanifest">
+
+<!-- 5. Barwa paska systemowego — rama kokpitu w motywie ciemnym,
+        papier roboczy w motywie jasnym -->
+<meta name="theme-color" content="#F4F4F4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131313" media="(prefers-color-scheme: dark)">
+
+<!-- 6. Kafel Windows (opcjonalnie — bez pliku browserconfig.xml) -->
+<meta name="msapplication-TileColor" content="#131313">
+<meta name="msapplication-TileImage" content="/icon-192.png">
+
+<!-- 7. Nazwa aplikacji w trybie samodzielnym -->
+<meta name="application-name" content="Danaco Console">
+<meta name="apple-mobile-web-app-title" content="Danaco Console">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">

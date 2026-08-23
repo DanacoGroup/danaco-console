@@ -1,0 +1,2588 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Żetony systemu wizualnego</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   STYLE LOKALNE — PRZEGLĄDARKA ŻETONÓW
+   Prefiks .dok-* = warstwa dokumentacyjna (nie należy do biblioteki .dn-*).
+   Wyłącznie var(--dn-*). Zero wartości szesnastkowych. Zero czystej czerni.
+   ========================================================================== */
+
+/* --- Szkielet ------------------------------------------------------------- */
+.dok-powloka { display: grid; grid-template-rows: var(--dn-wym-pasek) 1fr; min-height: 100dvh; }
+.dok-pasek { position: sticky; top: 0; z-index: var(--dn-z-pasek); }
+.dok-pasek-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  white-space: nowrap;
+}
+.dok-cialo {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--dn-od-8);
+  width: 100%;
+  max-width: calc(var(--dn-tresc-max) + 264px + var(--dn-od-16));
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-6) var(--dn-od-16);
+}
+
+/* --- Spis treści ---------------------------------------------------------- */
+.dok-spis {
+  position: sticky;
+  top: calc(var(--dn-wym-pasek) + var(--dn-od-4));
+  align-self: start;
+  max-height: calc(100dvh - var(--dn-wym-pasek) - var(--dn-od-8));
+  overflow-y: auto;
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.dok-spis ol { list-style: none; margin: 0; padding: 0; }
+.dok-spis li { margin: 0; }
+.dok-spis a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  text-decoration: none;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dok-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); text-decoration: none; }
+.dok-spis a[aria-current='true'] { color: var(--dn-tekst); background: var(--dn-sygnal-tlo); }
+.dok-spis a[aria-current='true']::before {
+  content: '';
+  position: absolute; left: 0; top: 50%; translate: 0 -50%;
+  width: var(--dn-wym-wstega); height: 16px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+}
+.dok-spis-numer { flex: none; min-width: 18px; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+/* --- Treść ---------------------------------------------------------------- */
+.dok-tresc { min-width: 0; }
+.dok-naglowek-strony { padding-bottom: var(--dn-od-6); margin-bottom: var(--dn-odstep-sekcji); border-bottom: 1px solid var(--dn-obrys); }
+.dok-tytul { font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); line-height: var(--dn-lh-ciasny); }
+.dok-podtytul { margin-top: var(--dn-od-3); max-width: 76ch; font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+.dok-metryka { display: flex; flex-wrap: wrap; gap: var(--dn-od-2); margin-top: var(--dn-od-4); }
+.dok-sekcja { scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-4)); padding-top: var(--dn-od-6); margin-bottom: var(--dn-od-12); }
+.dok-sekcja > h2 { display: flex; align-items: baseline; gap: var(--dn-od-3); font-size: var(--dn-fs-2xl); margin-bottom: var(--dn-od-3); }
+.dok-sekcja > h2 .dok-nr {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki); color: var(--dn-kropka);
+}
+.dok-sekcja h3 { margin: var(--dn-od-6) 0 var(--dn-od-3); font-size: var(--dn-fs-lg); }
+.dok-sekcja h4 { margin: var(--dn-od-4) 0 var(--dn-od-2); font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3); }
+.dok-sekcja p { max-width: 78ch; margin-bottom: var(--dn-od-3); font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+.dok-sekcja p strong, .dok-sekcja li strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.dok-sekcja ul, .dok-sekcja ol.dok-lista { max-width: 78ch; margin: 0 0 var(--dn-od-3) var(--dn-od-5); padding: 0; }
+.dok-sekcja li { margin-bottom: var(--dn-od-1); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); }
+.dok-cytat {
+  max-width: 78ch; margin: var(--dn-od-4) 0; padding: var(--dn-od-4) var(--dn-od-5);
+  border: 1px solid var(--dn-obrys); border-left: 2px solid var(--dn-kropka);
+  border-radius: var(--dn-r-md); background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst);
+}
+
+/* --- Bloki demonstracyjne ------------------------------------------------- */
+.dok-demo { margin: var(--dn-od-4) 0; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); overflow: hidden; }
+.dok-demo-naglowek {
+  display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny); background: var(--dn-panel);
+}
+.dok-demo-tytul {
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
+}
+.dok-demo-narzedzia { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
+.dok-demo-cialo { padding: var(--dn-od-5); }
+.dok-demo-stopka {
+  padding: var(--dn-od-2) var(--dn-od-4); border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-3);
+}
+
+/* --- Tabele --------------------------------------------------------------- */
+.dok-tabela-owijka { margin: var(--dn-od-4) 0; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); overflow-x: auto; }
+.dok-tabela-owijka .dn-tabela th { background: var(--dn-panel); position: sticky; top: 0; z-index: var(--dn-z-przybornik); }
+.dok-tabela-owijka .dn-tabela td { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.dok-tabela-owijka .dn-tabela td:first-child { color: var(--dn-tekst); }
+.dok-tabela-owijka--wysoka { max-height: 620px; overflow-y: auto; }
+.dok-num { text-align: right; font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dok-mono { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); white-space: nowrap; }
+
+/* --- Siatki --------------------------------------------------------------- */
+.dok-siatka { display: grid; gap: var(--dn-od-3); }
+.dok-siatka--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.dok-siatka--3 { grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); }
+.dok-siatka--4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+
+/* --- Karta żetonu (klikalna, kopiuje nazwę) ------------------------------- */
+.dok-karta-zetonu {
+  display: grid; grid-template-rows: auto auto; gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia); color: var(--dn-tekst);
+  text-align: left; cursor: copy; width: 100%;
+  transition: border-color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease);
+}
+.dok-karta-zetonu:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-hover); }
+.dok-karta-zetonu:active { transform: translateY(1px); }
+.dok-karta-zetonu[data-skopiowany='tak'] { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
+.dok-zeton-probka {
+  height: 44px; border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
+  display: grid; place-content: center;
+}
+.dok-zeton-probka--pasek { height: 20px; }
+.dok-zeton-nazwa { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); word-break: break-all; line-height: var(--dn-lh-bazowy); }
+.dok-zeton-wiersz { display: flex; align-items: baseline; gap: var(--dn-od-2); flex-wrap: wrap; }
+.dok-zeton-wartosc {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst-3); word-break: break-all;
+}
+.dok-zeton-grupa {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase; color: var(--dn-tekst-3);
+}
+.dok-zeton-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+.dok-pomiar { display: flex; gap: var(--dn-od-2); flex-wrap: wrap; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-variant-numeric: tabular-nums; color: var(--dn-tekst-3); }
+.dok-pomiar b { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst-2); }
+
+/* --- Werdykt kontrastu — tekst + ikona, nigdy sam kolor ------------------- */
+.dok-werdykt {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1);
+  padding: 1px var(--dn-od-2); border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki); white-space: nowrap;
+}
+.dok-werdykt svg { width: 12px; height: 12px; flex: none; }
+.dok-werdykt--aaa { background: var(--dn-sukces-tlo); border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); }
+.dok-werdykt--aa { background: var(--dn-informacja-tlo); border-color: var(--dn-informacja-obrys); color: var(--dn-informacja-tekst); }
+.dok-werdykt--systemowy { background: var(--dn-ostrzezenie-tlo); border-color: var(--dn-ostrzezenie-obrys); color: var(--dn-ostrzezenie-tekst); }
+.dok-werdykt--nie { background: var(--dn-blad-tlo); border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); }
+
+/* --- Filtry i wyszukiwarka ------------------------------------------------ */
+.dok-filtry { display: flex; flex-wrap: wrap; align-items: center; gap: var(--dn-od-2); margin-bottom: var(--dn-od-3); }
+.dok-filtry .dn-szukaj { flex: 1; min-width: 240px; }
+.dok-licznik { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-variant-numeric: tabular-nums; color: var(--dn-tekst-3); white-space: nowrap; }
+.dok-grupy { display: flex; flex-wrap: wrap; gap: var(--dn-od-1); margin-bottom: var(--dn-od-3); }
+.dok-ukryty { display: none !important; }
+
+/* --- Warstwy anatomii ----------------------------------------------------- */
+.dok-warstwa {
+  padding: var(--dn-od-4); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia); text-align: left; width: 100%; cursor: pointer;
+  transition: border-color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
+}
+.dok-warstwa[aria-pressed='true'] { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+.dok-warstwa-tytul { display: flex; align-items: center; gap: var(--dn-od-2); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.dok-warstwa-lista { margin-top: var(--dn-od-2); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); word-break: break-word; }
+.dok-strzalka { display: grid; place-content: center; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-lg); }
+
+/* --- Typografia — okazy --------------------------------------------------- */
+.dok-okaz {
+  display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: var(--dn-od-3); align-items: baseline;
+  padding: var(--dn-od-2) 0; border-bottom: 1px dashed var(--dn-obrys-subtelny);
+}
+.dok-okaz:last-child { border-bottom: none; }
+.dok-okaz-etykieta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-variant-numeric: tabular-nums; color: var(--dn-tekst-3); }
+.dok-okaz-tekst { color: var(--dn-tekst); overflow-wrap: anywhere; }
+
+/* --- Przestrzeń — paski --------------------------------------------------- */
+.dok-pasek-odstepu { display: grid; grid-template-columns: 92px 1fr 64px; gap: var(--dn-od-3); align-items: center; padding: var(--dn-od-1) 0; }
+.dok-pasek-odstepu-slupek { height: var(--dn-od-3); border-radius: var(--dn-r-xs); background: var(--dn-kropka); }
+.dok-promien {
+  display: grid; place-content: center; height: 84px;
+  border: 1px solid var(--dn-obrys-mocny); background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);
+}
+
+/* --- Ruch — demonstracja -------------------------------------------------- */
+.dok-tor-ruchu {
+  position: relative; height: var(--dn-od-8);
+  border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2); overflow: hidden;
+}
+.dok-biegacz {
+  position: absolute; top: 50%; left: var(--dn-od-1); translate: 0 -50%;
+  width: var(--dn-od-6); height: var(--dn-od-6); border-radius: var(--dn-r-sm);
+  background: var(--dn-sygnal-wypelnienie);
+  transition-property: left, background-color;
+  transition-timing-function: var(--dn-ease);
+}
+.dok-tor-ruchu[data-biegnie='tak'] .dok-biegacz { left: calc(100% - var(--dn-od-6) - var(--dn-od-1)); }
+
+/* --- Warstwy z-index — stos ----------------------------------------------- */
+.dok-stos { position: relative; height: 300px; }
+.dok-stos-plyta {
+  position: absolute; left: 0; right: 0;
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
+  background: var(--dn-panel); box-shadow: var(--dn-cien-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2);
+  transition: transform var(--dn-czas-3) var(--dn-ease);
+}
+.dok-stos-plyta b { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.dok-stos-plyta-wartosc { margin-left: auto; color: var(--dn-kropka); font-variant-numeric: tabular-nums; }
+
+/* --- Wymiary — linijki ---------------------------------------------------- */
+.dok-linijka { display: grid; grid-template-columns: 188px 1fr 72px; gap: var(--dn-od-3); align-items: center; padding: var(--dn-od-1) 0; }
+.dok-linijka-nazwa { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+.dok-linijka-slupek { height: var(--dn-od-2); border-radius: var(--dn-r-pill); background: var(--dn-sygnal-wypelnienie); transition: width var(--dn-czas-3) var(--dn-ease); }
+.dok-linijka-wartosc { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); font-variant-numeric: tabular-nums; color: var(--dn-tekst-3); text-align: right; }
+
+/* --- Gradienty ------------------------------------------------------------ */
+.dok-gradient { height: 92px; border-radius: var(--dn-r-md); border: 1px solid var(--dn-obrys); display: grid; place-content: center; }
+.dok-gradient--atrament { background: var(--dn-grad-atrament); color: var(--dn-szary-100); }
+.dok-gradient--sygnal { background: var(--dn-grad-sygnal); color: var(--dn-szary-0); }
+
+/* --- Podgląd ramy --------------------------------------------------------- */
+.dok-podglad-ramy { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); overflow: hidden; }
+.dok-podglad-ramy-pasek {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-pasek); padding: 0 var(--dn-od-3);
+  background: var(--dn-rama); color: var(--dn-rama-tekst); font-size: var(--dn-fs-sm);
+}
+.dok-podglad-ramy-tresc { padding: var(--dn-od-5); background: var(--dn-tlo); color: var(--dn-tekst); font-size: var(--dn-fs-sm); }
+
+/* --- Diagram ASCII -------------------------------------------------------- */
+.dok-ascii {
+  display: block; padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); line-height: var(--dn-lh-bazowy);
+  white-space: pre; overflow-x: auto;
+}
+
+/* --- Kroki procedury ------------------------------------------------------ */
+.dok-krok-proc { display: grid; grid-template-columns: 28px 1fr; gap: var(--dn-od-3); padding: var(--dn-od-3) 0; border-bottom: 1px dashed var(--dn-obrys-subtelny); }
+.dok-krok-proc:last-child { border-bottom: none; }
+.dok-krok-numer {
+  display: grid; place-content: center; width: 28px; height: 28px;
+  border: 1px solid var(--dn-sygnal-obrys); border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo); color: var(--dn-sygnal);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba);
+}
+.dok-krok-tytul { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.dok-krok-opis { margin-top: var(--dn-od-1); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); }
+
+/* --- Powiadomienie kopiowania -------------------------------------------- */
+.dok-schowek {
+  position: fixed; inset: auto var(--dn-od-4) var(--dn-od-4) auto;
+  z-index: var(--dn-z-powiadomienie);
+  display: none; align-items: center; gap: var(--dn-od-2);
+  max-width: var(--dn-wym-toast-max);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border: 1px solid var(--dn-sukces-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-panel); box-shadow: var(--dn-cien-3);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst);
+}
+.dok-schowek[data-widoczny='tak'] { display: flex; animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
+.dok-schowek svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-sukces-tekst); flex: none; }
+.dok-schowek-nazwa { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); word-break: break-all; }
+
+/* --- Panel „O tym opracowaniu" ------------------------------------------- */
+.dok-o-opracowaniu { margin-top: var(--dn-od-12); border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-panel); }
+.dok-o-opracowaniu > summary {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka); padding: var(--dn-od-3) var(--dn-od-4);
+  cursor: pointer; font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba); border-radius: var(--dn-r-lg);
+}
+.dok-o-opracowaniu > summary:hover { background: var(--dn-hover); }
+.dok-o-opracowaniu[open] > summary { border-bottom: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-lg) var(--dn-r-lg) 0 0; }
+.dok-o-tresc { padding: var(--dn-od-5); }
+.dok-o-tresc h4 { margin: var(--dn-od-4) 0 var(--dn-od-2); font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3); }
+.dok-o-tresc h4:first-child { margin-top: 0; }
+.dok-o-tresc ul { margin: 0 0 0 var(--dn-od-5); }
+.dok-o-tresc li { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); }
+
+/* --- Stopka --------------------------------------------------------------- */
+.dok-stopka {
+  margin-top: var(--dn-od-10); padding-top: var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); text-align: center; line-height: var(--dn-lh-luzny);
+}
+
+/* --- Adaptacja ------------------------------------------------------------ */
+@media (max-width: 1000px) {
+  .dok-cialo { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-4); padding: var(--dn-od-4); }
+  .dok-spis { position: static; max-height: none; }
+  .dok-tytul { font-size: var(--dn-fs-3xl); }
+  .dok-okaz { grid-template-columns: 1fr; }
+  .dok-linijka { grid-template-columns: 132px 1fr 64px; }
+}
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+<a class="dn-sr-only" href="#tresc">Przejdź do treści</a>
+
+<div class="dok-powloka">
+
+  <!-- ==================== PASEK GÓRNY (rama kokpitu) ==================== -->
+  <header class="dn-pasek dok-pasek">
+    <span class="dn-pasek-godlo">
+      <svg width="28" height="28" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+        <path fill="currentColor" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+        <path fill="currentColor" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+        <circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-400)"/>
+      </svg>
+      <span class="dn-pasek-logotyp">DANACO<small>CONSOLE</small></span>
+    </span>
+    <span class="dn-separator--pionowy dn-separator" aria-hidden="true"></span>
+    <span class="dok-pasek-tytul">Żetony · A4</span>
+
+    <div class="dn-pasek-prawa">
+      <div class="dn-tooltip">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" id="przelacz-gestosc"
+                aria-pressed="false" aria-label="Przełącz gęstość interfejsu">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+        </button>
+        <span class="dn-tooltip-tresc" role="tooltip">Gęstość: zwarta ↔ przestronna — przebudowuje linijki wymiarów</span>
+      </div>
+      <div class="dn-tooltip">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+                data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny i ciemny">
+          <span class="ik-slonce"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></span>
+          <span class="ik-ksiezyc"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg></span>
+        </button>
+        <span class="dn-tooltip-tresc" role="tooltip">Przełączenie motywu przebudowuje wszystkie próbki i pomiary</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="dok-cialo">
+
+    <!-- ==================== SPIS TREŚCI ==================== -->
+    <nav class="dok-spis" aria-label="Spis treści opracowania">
+      <p class="dn-etykieta-wersalikowa" style="padding: var(--dn-od-2) var(--dn-od-3);">Spis treści</p>
+      <ol id="spis-lista">
+        <li><a href="#s1"><span class="dok-spis-numer">01</span> Czym jest żeton</a></li>
+        <li><a href="#s2"><span class="dok-spis-numer">02</span> Konwencja nazewnicza</a></li>
+        <li><a href="#s0"><span class="dok-spis-numer">◆</span> Przeglądarka żetonów</a></li>
+        <li><a href="#s3"><span class="dok-spis-numer">03</span> Prymitywy — szarość</a></li>
+        <li><a href="#s4"><span class="dok-spis-numer">04</span> Prymitywy — sygnał</a></li>
+        <li><a href="#s5"><span class="dok-spis-numer">05</span> Prymitywy — stany</a></li>
+        <li><a href="#s6"><span class="dok-spis-numer">06</span> Rama kokpitu</a></li>
+        <li><a href="#s7"><span class="dok-spis-numer">07</span> Typografia</a></li>
+        <li><a href="#s8"><span class="dok-spis-numer">08</span> Przestrzeń</a></li>
+        <li><a href="#s9"><span class="dok-spis-numer">09</span> Ruch</a></li>
+        <li><a href="#s10"><span class="dok-spis-numer">10</span> Wymiary</a></li>
+        <li><a href="#s11"><span class="dok-spis-numer">11</span> Siatka i łamanie</a></li>
+        <li><a href="#s12"><span class="dok-spis-numer">12</span> Warstwy z-index</a></li>
+        <li><a href="#s13"><span class="dok-spis-numer">13</span> Gradienty</a></li>
+        <li><a href="#s14"><span class="dok-spis-numer">14</span> Motyw jasny</a></li>
+        <li><a href="#s15"><span class="dok-spis-numer">15</span> Motyw ciemny</a></li>
+        <li><a href="#s16"><span class="dok-spis-numer">16</span> Tabela kontrastów</a></li>
+        <li><a href="#s17"><span class="dok-spis-numer">17</span> Żetony a JSON</a></li>
+        <li><a href="#s18"><span class="dok-spis-numer">18</span> Jak dodać żeton</a></li>
+        <li><a href="#s19"><span class="dok-spis-numer">19</span> Decyzje projektowe</a></li>
+      </ol>
+    </nav>
+
+    <!-- ==================== TREŚĆ ==================== -->
+    <main class="dok-tresc" id="tresc">
+
+      <div class="dok-naglowek-strony">
+        <h1 class="dok-tytul">Żetony systemu wizualnego</h1>
+        <p class="dok-podtytul">
+          Interaktywna przeglądarka <strong>177 unikalnych nazw żetonów</strong> Danaco Console.
+          Każda próbka barwna niesie <strong>zmierzony kontrast</strong> — obliczony w przeglądarce
+          wzorem luminancji względnej WCAG 2.1 z wartości odczytanych na żywo z arkusza
+          <span class="dn-kod dn-kod--wiersz">zasoby/zetony/zetony.css</span>, a nie z deklaracji w tekście.
+          Przełączenie motywu przebudowuje wszystkie próbki, wartości i pomiary.
+          Kliknięcie karty żetonu kopiuje jego wywołanie <span class="dn-kod dn-kod--wiersz">var(--dn-*)</span> do schowka.
+        </p>
+        <div class="dok-metryka">
+          <span class="dn-plakietka dn-plakietka--rola">v2.0</span>
+          <span class="dn-plakietka">Status: deweloperski</span>
+          <span class="dn-plakietka">Data: 2026-08-14</span>
+          <span class="dn-plakietka dn-plakietka--informacja">
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Kliknij żeton, aby skopiować
+          </span>
+          <span class="dn-plakietka dn-plakietka--sygnal" id="plakietka-motywu">
+            <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span>
+            <span id="etykieta-motywu">Motyw ciemny</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ==================== 1 · CZYM JEST ŻETON ==================== -->
+      <section class="dok-sekcja" id="s1">
+        <h2><span class="dok-nr">01</span> Czym jest żeton — trzy warstwy i reguła nieprzekraczalna</h2>
+        <p>
+          <strong>Żeton</strong> to nazwana, pojedyncza decyzja wizualna zapisana raz i przywoływana wszędzie.
+          W Danaco Console jest zmienną własną CSS o prefiksie <span class="dn-kod dn-kod--wiersz">--dn-</span>,
+          zadeklarowaną w <span class="dn-kod dn-kod--wiersz">zasoby/zetony/zetony.css</span> i powieloną maszynowo
+          w <span class="dn-kod dn-kod--wiersz">zasoby/zetony/zetony.json</span>. Nie jest zmienną pomocniczą
+          programisty — jest <strong>jednostką umowy</strong> między projektem a wdrożeniem.
+        </p>
+        <blockquote class="dok-cytat">
+          Nigdy nie wpisuj wartości szesnastkowej wprost. Zawsze <span class="dn-kod dn-kod--wiersz">var(--dn-*)</span>.
+          Komponent sięga wyłącznie po żetony <strong>semantyczne</strong>, nigdy po prymitywy.
+        </blockquote>
+
+        <h3>Trzy warstwy modelu</h3>
+        <p>Kliknij warstwę, aby zobaczyć jej zakres i regułę odwołań.</p>
+        <div class="dok-siatka dok-siatka--3" id="warstwy-modelu">
+          <button class="dok-warstwa" type="button" aria-pressed="true" data-warstwa="1">
+            <span class="dok-warstwa-tytul">
+              <span class="dn-plakietka">1</span> Prymitywy
+            </span>
+            <span class="dok-warstwa-lista">38 barw · surowe skale<br>--dn-szary-* · --dn-sygnal-* · --dn-zielen-* · --dn-bursztyn-* · --dn-czerwien-*</span>
+          </button>
+          <button class="dok-warstwa" type="button" aria-pressed="false" data-warstwa="2">
+            <span class="dok-warstwa-tytul">
+              <span class="dn-plakietka dn-plakietka--sygnal">2</span> Semantyczne
+            </span>
+            <span class="dok-warstwa-lista">43 nazwy × 2 motywy · role<br>--dn-tlo · --dn-tekst · --dn-obrys · --dn-sygnal · --dn-blad-tlo · --dn-cien-*</span>
+          </button>
+          <button class="dok-warstwa" type="button" aria-pressed="false" data-warstwa="3">
+            <span class="dok-warstwa-tytul">
+              <span class="dn-plakietka">3</span> Niezależne od motywu
+            </span>
+            <span class="dok-warstwa-lista">134 nazwy · te same w obu motywach<br>typografia · przestrzeń · ruch · wymiary · siatka · warstwy · gradienty · rama</span>
+          </button>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Warstwa wybrana</span></div>
+          <div class="dok-demo-cialo" id="opis-warstwy" aria-live="polite"></div>
+        </div>
+
+        <h3>Rachunek żetonów</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Liczba żetonów w podziale na grupy</caption>
+            <thead><tr><th scope="col">Warstwa / grupa</th><th scope="col" class="dok-num">Liczba nazw</th><th scope="col">Uwaga</th></tr></thead>
+            <tbody>
+              <tr><td>Prymitywy — szarość</td><td class="dok-num">18</td><td>skala od <span class="dok-mono">#FFFFFF</span> do <span class="dok-mono">#0A0A0A</span></td></tr>
+              <tr><td>Prymitywy — sygnał</td><td class="dok-num">8</td><td>jedyna rodzina akcentu</td></tr>
+              <tr><td>Prymitywy — stany</td><td class="dok-num">12</td><td>3 rodziny × 4 stopnie</td></tr>
+              <tr><td>Rama kokpitu</td><td class="dok-num">5</td><td>stałe w obu motywach</td></tr>
+              <tr><td>Typografia</td><td class="dok-num">22</td><td>3 kroje + 9 stopni + 4 wagi + 3 interlinie + 3 odstępy liter</td></tr>
+              <tr><td>Przestrzeń</td><td class="dok-num">17</td><td>11 odstępów + 6 promieni</td></tr>
+              <tr><td>Ruch</td><td class="dok-num">5</td><td>1 krzywa + 4 czasy</td></tr>
+              <tr><td>Wymiary</td><td class="dok-num">27</td><td>25 <span class="dok-mono">--dn-wym-*</span> + 2 <span class="dok-mono">--dn-odstep-*</span></td></tr>
+              <tr><td>Siatka i łamanie</td><td class="dok-num">7</td><td>4 punkty + max treści + kolumny + przerwa</td></tr>
+              <tr><td>Warstwy <span class="dok-mono">z-index</span></td><td class="dok-num">11</td><td>od podłogi do Centrum poleceń</td></tr>
+              <tr><td>Gradienty</td><td class="dok-num">2</td><td>wyłącznie ilustracyjne</td></tr>
+              <tr><td><strong>Razem niezależne od motywu</strong></td><td class="dok-num"><strong>134</strong></td><td>blok <span class="dok-mono">:root</span></td></tr>
+              <tr><td>Semantyczne — motyw jasny</td><td class="dok-num">43</td><td><span class="dok-mono">:root[data-theme='light']</span></td></tr>
+              <tr><td>Semantyczne — motyw ciemny</td><td class="dok-num">43</td><td><span class="dok-mono">:root[data-theme='dark']</span></td></tr>
+              <tr><td><strong>Razem unikalnych nazw</strong></td><td class="dok-num"><strong>177</strong></td><td>nazwy semantyczne są wspólne obu motywom</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Reguła nieprzekraczalna i sześć jawnych wyjątków</h3>
+        <p>
+          Prymityw nie wie, w jakim motywie się znajdzie. <span class="dok-mono">--dn-szary-900</span> w motywie
+          jasnym jest <strong>tekstem</strong>, a w ciemnym <strong>powierzchnią</strong>. Komponent, który sięgnie
+          po prymityw, przestaje działać po przełączeniu motywu — i nie zgłosi tego błędem.
+          W całej bibliotece (1207 linii) występuje <strong>sześć</strong> odstępstw; każde ma ten sam mianownik:
+          element leży na powierzchni, która nie przełącza się z motywem.
+        </p>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Sześć jawnych wyjątków od reguły odwołań</caption>
+            <thead><tr><th scope="col" class="dok-num">#</th><th scope="col">Miejsce w bibliotece</th><th scope="col">Prymityw</th><th scope="col">Uzasadnienie</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-num">1</td><td class="dok-mono">.dn-btn--sygnal</td><td class="dok-mono">--dn-szary-0</td><td>tekst leży na <span class="dok-mono">--dn-sygnal-wypelnienie</span> — ciemnym błękicie w obu motywach</td></tr>
+              <tr><td class="dok-num">2</td><td class="dok-mono">.dn-btn-ikona--na-ramie[aria-pressed]</td><td class="dok-mono">--dn-sygnal-300</td><td>rama jest zawsze atramentowa; sygnał musi być jasnym stopniem także w motywie jasnym</td></tr>
+              <tr><td class="dok-num">3</td><td class="dok-mono">.dn-przelacznik:checked::before</td><td class="dok-mono">--dn-szary-0</td><td>suwak leży na torze <span class="dok-mono">--dn-sygnal-wypelnienie</span></td></tr>
+              <tr><td class="dok-num">4</td><td class="dok-mono">.dn-awatar</td><td class="dok-mono">--dn-szary-100</td><td>inicjał leży na <span class="dok-mono">--dn-grad-atrament</span> — gradiencie stałym w obu motywach</td></tr>
+              <tr><td class="dok-num">5</td><td class="dok-mono">.dn-awatar--inteligencja</td><td class="dok-mono">--dn-szary-0</td><td>znak leży na <span class="dok-mono">--dn-grad-sygnal</span></td></tr>
+              <tr><td class="dok-num">6</td><td class="dok-mono">.dn-aod-rdzen</td><td class="dok-mono">--dn-szary-0</td><td>rdzeń Always On Display leży na <span class="dok-mono">--dn-grad-sygnal</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Wyjątki na żywo — przełącz motyw, wartości pozostają</span></div>
+          <div class="dok-demo-cialo">
+            <div style="display:flex; flex-wrap:wrap; gap:var(--dn-od-4); align-items:center;">
+              <button class="dn-btn dn-btn--sygnal" type="button">Uruchom przepływ</button>
+              <label class="dn-wybor"><input class="dn-przelacznik" type="checkbox" checked> Izolacja kontekstu</label>
+              <span class="dn-awatar" aria-label="Awatar Operatora">OP</span>
+              <span class="dn-awatar dn-awatar--inteligencja" aria-label="Jednostka inteligencji">AI</span>
+              <span class="dn-aod-rdzen" aria-hidden="true"></span>
+              <button class="dn-btn-ikona" type="button" aria-pressed="true" aria-label="Podgląd wyniku">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">Elementy przykładowe z domeny produktu. Biel na wypełnieniu sygnałowym i na gradientach jest ta sama w obu motywach — dlatego wyjątek jest zasadny.</div>
+        </div>
+
+        <h3>Kierunek odwołań</h3>
+        <pre class="dok-ascii">prymityw ──► semantyczny ──► komponent ──► wzorzec złożony ──► okno operacyjne
+     ▲                                                              │
+     └──────────────────── ZAKAZ przeskoku ─────────────────────────┘</pre>
+      </section>
+
+      <!-- ==================== 2 · KONWENCJA NAZEWNICZA ==================== -->
+      <section class="dok-sekcja" id="s2">
+        <h2><span class="dok-nr">02</span> Konwencja nazewnicza <span class="dok-mono">--dn-&lt;grupa&gt;-&lt;wariant&gt;</span></h2>
+        <pre class="dok-ascii">--dn-sygnal-600
+ │   │      └── wariant: stopień skali, rola szczegółowa albo modyfikator
+ │   └───────── grupa: rodzina żetonów
+ └───────────── prefiks systemu (Danaco), niezmienny</pre>
+        <p>
+          Nazwy są <strong>polskie i opisowe</strong> — spójnie z konwencją nazw ikon i klas komponentów.
+          Wyjątki od polszczyzny to skróty techniczne o ustalonym znaczeniu:
+          <span class="dok-mono">ff · fs · fw · lh · ls · od · r · bp · z · wym · grad</span>.
+        </p>
+
+        <h3>Pełna tabela prefiksów</h3>
+        <div class="dok-filtry">
+          <label class="dn-szukaj" style="flex:1;">
+            <span class="dn-sr-only">Filtruj prefiksy</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="filtr-prefiksow" placeholder="Filtruj prefiksy — nazwa, warstwa, znaczenie">
+          </label>
+          <span class="dok-licznik" id="licznik-prefiksow">30 / 30</span>
+        </div>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela" id="tabela-prefiksow">
+            <caption class="dn-sr-only">Prefiksy grup żetonów</caption>
+            <thead><tr><th scope="col">Grupa</th><th scope="col">Wzór nazwy</th><th scope="col" class="dok-num">Liczba</th><th scope="col">Warstwa</th><th scope="col">Znaczenie</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Dziesięć reguł nazewniczych</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Reguły nazewnicze R1–R10</caption>
+            <thead><tr><th scope="col">Reguła</th><th scope="col">Treść</th></tr></thead>
+            <tbody>
+              <tr><td><strong>R1</strong></td><td>Prefiks <span class="dok-mono">--dn-</span> jest obowiązkowy i niezmienny. Żeton bez tego prefiksu nie należy do systemu.</td></tr>
+              <tr><td><strong>R2</strong></td><td>Nazwa grupy jest rzeczownikiem albo skrótem technicznym o ustalonym znaczeniu. Nowa grupa wymaga decyzji prowadzącego system.</td></tr>
+              <tr><td><strong>R3</strong></td><td>Skale liczbowe rosną wraz z ciemnością i nasyceniem. Kierunek jednakowy we wszystkich rodzinach barwnych.</td></tr>
+              <tr><td><strong>R4</strong></td><td>Żeton semantyczny nie zawiera liczby stopnia. <span class="dok-mono">--dn-tekst-2</span> to druga rola tekstu, nie drugi stopień skali.</td></tr>
+              <tr><td><strong>R5</strong></td><td>Sufiks <span class="dok-mono">-hover</span> oznacza wariant przy najechaniu tej samej roli.</td></tr>
+              <tr><td><strong>R6</strong></td><td>Sufiks <span class="dok-mono">-inv</span> oznacza inwersję względem tła bieżącego motywu.</td></tr>
+              <tr><td><strong>R7</strong></td><td>Żeton stanu ma zawsze trójkę <span class="dok-mono">-tekst</span> / <span class="dok-mono">-tlo</span> / <span class="dok-mono">-obrys</span>. Stan z niepełną trójką jest niedopuszczalny.</td></tr>
+              <tr><td><strong>R8</strong></td><td>Nie tworzy się żetonów jednorazowych „pod jeden komponent”. Wartość występująca raz należy do komponentu, nie do systemu.</td></tr>
+              <tr><td><strong>R9</strong></td><td>Nie tworzy się aliasów semantycznych dla tej samej roli.</td></tr>
+              <tr><td><strong>R10</strong></td><td>Wartość żetonu semantycznego to zawsze <span class="dok-mono">var(--dn-&lt;prymityw&gt;)</span> albo <span class="dok-mono">rgba()</span> wyprowadzona z prymitywu. Nigdy nowy hex.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== PRZEGLĄDARKA ŻETONÓW ==================== -->
+      <section class="dok-sekcja" id="s0">
+        <h2><span class="dok-nr">◆</span> Przeglądarka żetonów</h2>
+        <p>
+          Pełny rejestr systemu. Wyszukiwarka obejmuje <strong>nazwę, wartość i opis</strong>.
+          Wartości żetonów semantycznych odczytywane są na żywo z arkusza — przełącz motyw,
+          a zmienią się w miejscu. <strong>Kliknięcie karty kopiuje</strong> wywołanie
+          <span class="dok-mono">var(--nazwa)</span> do schowka.
+        </p>
+        <div class="dok-filtry">
+          <label class="dn-szukaj">
+            <span class="dn-sr-only">Szukaj żetonu po nazwie lub wartości</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="szukaj-zetonu" placeholder="Szukaj: nazwa, wartość (np. 3B6FE0), opis roli…">
+          </label>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="czysc-filtry">Wyczyść</button>
+          <span class="dok-licznik" id="licznik-zetonow">177 / 177</span>
+        </div>
+        <div class="dok-grupy" id="grupy-zetonow" role="group" aria-label="Filtr grup żetonów"></div>
+        <div class="dok-siatka dok-siatka--3" id="siatka-zetonow"></div>
+        <div class="dn-pusty-stan dok-ukryty" id="pusty-wynik">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+          <p class="dn-pusty-stan-tytul">Brak żetonu o takiej nazwie lub wartości</p>
+          <p class="dn-pusty-stan-opis">Sprawdź pisownię albo wyczyść filtry. Rejestr obejmuje 177 nazw.</p>
+        </div>
+      </section>
+
+      <!-- ==================== 3 · PRYMITYWY — SZAROŚĆ ==================== -->
+      <section class="dok-sekcja" id="s3">
+        <h2><span class="dok-nr">03</span> Prymitywy — skala szarości (18 stopni)</h2>
+        <p>
+          Skala jest <strong>czysto neutralna</strong>: wszystkie trzy składowe RGB są równe.
+          KIERUNEK.md 3.1: „Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu —
+          »odcienie bieli i czerni« dosłownie.” Kontrasty poniżej są <strong>mierzone w przeglądarce</strong>
+          względem bieżącego <span class="dok-mono">--dn-tlo</span> i <span class="dok-mono">--dn-powierzchnia</span>.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">18 stopni — kliknij, aby skopiować nazwę</span>
+            <div class="dok-demo-narzedzia"><span class="dok-licznik" id="etykieta-tla-szarosci"></span></div>
+          </div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-szarosci"></div></div>
+          <div class="dok-demo-stopka">
+            <strong>tło</strong> = kontrast wobec <span class="dok-mono">--dn-tlo</span> ·
+            <strong>pow.</strong> = kontrast wobec <span class="dok-mono">--dn-powierzchnia</span>.
+            <span class="dok-mono">#000000</span> jest zakazane — skala kończy się na <span class="dok-mono">#0A0A0A</span>.
+          </div>
+        </div>
+
+        <h3>Zastosowania i zakazy</h3>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Skala szarości — zastosowania i zakazy</caption>
+            <thead><tr><th scope="col">Żeton</th><th scope="col">Wartość</th><th scope="col">Zastosowanie systemowe</th><th scope="col">Zakazy</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-mono">--dn-szary-0</td><td class="dok-mono">#FFFFFF</td><td>jasny: powierzchnia, tekst-inv, atrament-tekst; biel na wypełnieniu sygnałowym i gradientach</td><td><strong>nigdy jako tło całej strony</strong></td></tr>
+              <tr><td class="dok-mono">--dn-szary-25</td><td class="dok-mono">#FAFAFA</td><td>jasny: panel; ciemny: atrament-hover</td><td>nie na tekst w motywie jasnym</td></tr>
+              <tr><td class="dok-mono">--dn-szary-50</td><td class="dok-mono">#F4F4F4</td><td>jasny: tło — papier roboczy kokpitu</td><td>nie jako powierzchnia karty</td></tr>
+              <tr><td class="dok-mono">--dn-szary-100</td><td class="dok-mono">#ECECEC</td><td>jasny: powierzchnia-2, obrys-subtelny; ciemny: tekst, atrament; rama: rama-tekst</td><td>nie jako obrys widoczny w motywie jasnym</td></tr>
+              <tr><td class="dok-mono">--dn-szary-150</td><td class="dok-mono">#E3E3E3</td><td>jasny: obrys — podstawowa linia rozdzielająca</td><td>nie jako tekst</td></tr>
+              <tr><td class="dok-mono">--dn-szary-200</td><td class="dok-mono">#D7D7D7</td><td><strong>stopień rezerwowy</strong> — ciągłość skali, zapas dla przyszłych ról</td><td>nie wolno użyć wprost w komponencie</td></tr>
+              <tr><td class="dok-mono">--dn-szary-300</td><td class="dok-mono">#C0C0C0</td><td>jasny: obrys-mocny — obrysy kontrolek, kciuk paska przewijania</td><td>nie jako tekst</td></tr>
+              <tr><td class="dok-mono">--dn-szary-400</td><td class="dok-mono">#9E9E9E</td><td>ciemny: tekst-2; rama: rama-tekst-2</td><td><strong>nie jako tekst w motywie jasnym</strong> (2,44)</td></tr>
+              <tr><td class="dok-mono">--dn-szary-500</td><td class="dok-mono">#7C7C7C</td><td>oba motywy: tekst-3</td><td><strong>wyłącznie metadane i tekst ≥ 18,66 px półgruby</strong></td></tr>
+              <tr><td class="dok-mono">--dn-szary-600</td><td class="dok-mono">#616161</td><td>jasny: tekst-2 — tekst drugorzędny</td><td>nie jako tekst w motywie ciemnym (3,10)</td></tr>
+              <tr><td class="dok-mono">--dn-szary-700</td><td class="dok-mono">#4A4A4A</td><td><strong>stopień rezerwowy</strong> — przewidziany dla obrysów o wysokim kontraście na powierzchni jasnej</td><td>nie wolno użyć wprost w komponencie</td></tr>
+              <tr><td class="dok-mono">--dn-szary-750</td><td class="dok-mono">#3A3A3A</td><td>ciemny: obrys-mocny</td><td>nie jako powierzchnia</td></tr>
+              <tr><td class="dok-mono">--dn-szary-800</td><td class="dok-mono">#2A2A2A</td><td>ciemny: obrys; początek gradientu atramentowego</td><td>nie jako powierzchnia panelu</td></tr>
+              <tr><td class="dok-mono">--dn-szary-850</td><td class="dok-mono">#212121</td><td>ciemny: panel, obrys-subtelny</td><td>nie jako tło strony</td></tr>
+              <tr><td class="dok-mono">--dn-szary-900</td><td class="dok-mono">#181818</td><td>jasny: tekst, atrament; ciemny: powierzchnia</td><td>nie traktować jako „koloru tekstu” — rola odwraca się między motywami</td></tr>
+              <tr><td class="dok-mono">--dn-szary-925</td><td class="dok-mono">#131313</td><td><strong>rama w obu motywach</strong>; ciemny: powierzchnia-2; koniec gradientu atramentowego</td><td>nie jako tło treści przełączalnej</td></tr>
+              <tr><td class="dok-mono">--dn-szary-950</td><td class="dok-mono">#0F0F0F</td><td>ciemny: tło, tekst-inv, atrament-tekst</td><td>nie jako tekst w motywie ciemnym</td></tr>
+              <tr><td class="dok-mono">--dn-szary-1000</td><td class="dok-mono">#0A0A0A</td><td>jasny: atrament-hover; źródło alfy dla hover, wciśnięcia, nakładki i wszystkich cieni motywu jasnego</td><td><strong>kraniec skali — <span class="dok-mono">#000000</span> zakazane</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== 4 · PRYMITYWY — SYGNAŁ ==================== -->
+      <section class="dok-sekcja" id="s4">
+        <h2><span class="dok-nr">04</span> Prymitywy — sygnał (8 stopni)</h2>
+        <p>
+          Sygnał jest <strong>jedyną barwą akcentu systemu</strong>. KIERUNEK.md 3.1:
+          „Sygnał nie jest barwą przycisków głównych — <strong>czerń działa, sygnał wskazuje</strong>.”
+          Rodzina informacyjna stanów jest scalona z rodziną sygnału — decyzja celowa, nie oszczędność.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">8 stopni błękitu sygnałowego</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-sygnalu"></div></div>
+          <div class="dok-demo-stopka">Stopień bazowy <span class="dok-mono">--dn-sygnal-500 #3B6FE0</span> — kropka sygnału i pierścień fokusu.</div>
+        </div>
+
+        <h3>Sygnał a inwersja atramentu</h3>
+        <pre class="dok-ascii">   działanie główne                 wskazanie
+   ────────────────                 ─────────
+   --dn-atrament                    --dn-sygnal
+   jasny:  #181818 (czerń)          jasny:  #2457C9
+   ciemny: #ECECEC (biel)           ciemny: #8FB2F5
+   „to jest przycisk, kliknij"      „tu biegnie praca / tu jesteś"</pre>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Porównanie na żywo — przełącz motyw</span></div>
+          <div class="dok-demo-cialo">
+            <div style="display:flex; flex-wrap:wrap; gap:var(--dn-od-3); align-items:center;">
+              <button class="dn-btn dn-btn--atrament" type="button">Zapisz profil izolacji</button>
+              <button class="dn-btn dn-btn--sygnal" type="button">Uruchom Workflow Builder</button>
+              <button class="dn-btn dn-btn--zarys" type="button">Podgląd polityki</button>
+              <span class="dn-plakietka dn-plakietka--sygnal"><span class="dn-kropka dn-kropka--tetno"></span> Praca w tle</span>
+              <a href="#s4">Odnośnik sygnałowy</a>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">Zamknięty katalog wystąpień sygnału: fokus · stan aktywny/wybrany · odnośnik · postęp · kropka pracy w tle · komunikat informacyjny · jeden przycisk sygnałowy na widok · medalion jednostki inteligencji · rdzeń Always On Display.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 5 · PRYMITYWY — STANY ==================== -->
+      <section class="dok-sekcja" id="s5">
+        <h2><span class="dok-nr">05</span> Prymitywy — stany (zieleń · bursztyn · czerwień)</h2>
+        <p>
+          Trzy rodziny barwne po cztery stopnie. Czwarty stan systemu — <strong>informacja</strong> —
+          nie ma własnej rodziny: korzysta z rodziny sygnału. Każda rodzina ma ten sam układ:
+          <span class="dok-mono">-700</span> (tekst na jasnym) · <span class="dok-mono">-400</span>
+          (tekst na ciemnym i źródło alfy) · <span class="dok-mono">-200</span> (obrys na jasnym) ·
+          <span class="dok-mono">-100</span> (tło na jasnym).
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Zieleń — sukces</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-zieleni"></div></div>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Bursztyn — ostrzeżenie</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-bursztynu"></div></div>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Czerwień — błąd</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-czerwieni"></div></div>
+        </div>
+
+        <h3>Stan nigdy samym kolorem</h3>
+        <blockquote class="dok-cytat">
+          Barwa stanu jest wzmocnieniem, nie nośnikiem. Każdy stan niesie <strong>ikonę albo etykietę</strong>.
+          Zasada zapisana w <span class="dok-mono">zetony.json</span> jako <strong>[NIENEGOCJOWALNE]</strong>.
+        </blockquote>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Cztery stany w komplecie</span>
+            <div class="dok-demo-narzedzia">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="ukryj-oznaczenia" aria-pressed="false">
+                Pokaż naruszenie: ukryj ikony i etykiety
+              </button>
+            </div>
+          </div>
+          <div class="dok-demo-cialo" id="scena-stanow">
+            <div class="dok-siatka dok-siatka--2">
+              <div class="dn-toast dn-toast--sukces">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                <div><p class="dn-toast-tytul">Profil izolacji zapisany</p><p class="dn-toast-tresc">Zakres: Rola — Executor 1. Przykład operacyjny.</p></div>
+              </div>
+              <div class="dn-toast dn-toast--ostrzezenie">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <div><p class="dn-toast-tytul">Kolejka zbliża się do limitu</p><p class="dn-toast-tresc">Queue Manager — 46 z 50 pozycji. Przykład operacyjny.</p></div>
+              </div>
+              <div class="dn-toast dn-toast--blad">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                <div><p class="dn-toast-tytul">Krok planu zakończony błędem</p><p class="dn-toast-tresc">Execution Monitor — krok 4 z 7. Przykład operacyjny.</p></div>
+              </div>
+              <div class="dn-toast dn-toast--informacja">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <div><p class="dn-toast-tytul">Nowa wersja profilu asystenta</p><p class="dn-toast-tresc">Assistant — wersja 3. Przykład operacyjny.</p></div>
+              </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:var(--dn-od-2); margin-top:var(--dn-od-4);">
+              <span class="dn-plakietka dn-plakietka--sukces"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> Poprawny</span>
+              <span class="dn-plakietka dn-plakietka--ostrzezenie"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Z uwagami</span>
+              <span class="dn-plakietka dn-plakietka--blad"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> Błędy</span>
+              <span class="dn-plakietka dn-plakietka--informacja"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> Informacja</span>
+            </div>
+          </div>
+          <div class="dok-demo-stopka" id="stopka-stanow">Ikona i etykieta towarzyszą barwie. Naciśnij przycisk powyżej, aby zobaczyć, co znika przy naruszeniu zasady.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 6 · RAMA KOKPITU ==================== -->
+      <section class="dok-sekcja" id="s6">
+        <h2><span class="dok-nr">06</span> Rama kokpitu — 5 żetonów stałych w obu motywach</h2>
+        <blockquote class="dok-cytat">
+          Pasek górny jest zawsze atramentowy (<span class="dok-mono">szary-925</span>) — w obu motywach.
+          Ciemna rama wokół przełączalnej treści daje efekt stanowiska dowodzenia i stały dom dla godła,
+          wyszukiwarki i wskaźników. <em>KIERUNEK.md 3.3</em>
+        </blockquote>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Pięć żetonów ramy — wartości nie zmieniają się z motywem</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--3" id="probki-ramy"></div></div>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Podgląd — rama stała, treść przełączalna</span></div>
+          <div class="dok-demo-cialo">
+            <div class="dok-podglad-ramy">
+              <div class="dok-podglad-ramy-pasek">
+                <svg width="20" height="20" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="currentColor" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-400)"/></svg>
+                <span style="font-family:var(--dn-ff-naglowek); font-weight:var(--dn-fw-gruba);">DANACO</span>
+                <span style="color:var(--dn-rama-tekst-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); letter-spacing:var(--dn-ls-mono-wersaliki);">CONSOLE</span>
+                <span style="margin-left:auto; color:var(--dn-rama-tekst-2);">rama-tekst-2</span>
+              </div>
+              <div class="dok-podglad-ramy-tresc">
+                Obszar roboczy — <span class="dok-mono">--dn-tlo</span>: <strong id="podglad-tlo-wartosc"></strong>.
+                Przełącz motyw: zmieni się wyłącznie ta część.
+              </div>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">Trzy konsekwencje projektowe: (1) komponent na ramie nie może używać żetonów przełączalnych — służy do tego wariant <span class="dok-mono">.dn-btn-ikona--na-ramie</span>; (2) stan aktywny na ramie używa <span class="dok-mono">--dn-sygnal-300</span> (8,72 na ramie), a nie <span class="dok-mono">--dn-sygnal</span> (2,90 w motywie jasnym); (3) rama ma dwa stopnie tekstu, nie trzy — odpowiednika <span class="dok-mono">--dn-tekst-3</span> na ramie nie ma.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 7 · TYPOGRAFIA ==================== -->
+      <section class="dok-sekcja" id="s7">
+        <h2><span class="dok-nr">07</span> Typografia — 22 żetony</h2>
+        <p>
+          Trzy role, trzy kroje: <strong>Space Grotesk = wejście do środowiska i tożsamość marki ·
+          IBM Plex Sans = praca · IBM Plex Mono = maszyna.</strong> Licencja OFL 1.1, podzbiory
+          <span class="dok-mono">latin</span> + <span class="dok-mono">latin-ext</span> — pełne polskie diakrytyki.
+        </p>
+
+        <h3>Trzy kroje — okazy</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Test diakrytyków: ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span>
+            <div class="dok-demo-narzedzia">
+              <label class="dn-wybor" style="font-size:var(--dn-fs-sm);">
+                <input class="dn-check" type="checkbox" id="okaz-tresc-wlasna"> Wpisz własny tekst
+              </label>
+            </div>
+          </div>
+          <div class="dok-demo-cialo">
+            <label class="dn-pole dok-ukryty" id="pole-okazu">
+              <span class="dn-pole-etykieta">Tekst okazu</span>
+              <input class="dn-pole-kontrolka" type="text" id="tekst-okazu" value="ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ">
+              <span class="dn-pole-opis">Zmiana przebudowuje wszystkie okazy krojów i stopni.</span>
+            </label>
+            <div id="okazy-krojow"></div>
+          </div>
+        </div>
+
+        <h3>Dziewięć stopni pisma</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Skala — od 11 px do 40 px</span>
+            <div class="dok-demo-narzedzia">
+              <span class="dok-licznik">baza 13 px · gęstość zwarta</span>
+            </div>
+          </div>
+          <div class="dok-demo-cialo"><div id="okazy-stopni"></div></div>
+          <div class="dok-demo-stopka">
+            Skala jest <strong>dwuczęściowa</strong>: przyrost 1 px do 14 px (strefa robocza kokpitu),
+            przyrost mnożnikowy ≈ 1,25 powyżej (strefa ekspozycyjna).
+            W gęstości przestronnej <span class="dok-mono">--dn-fs-base</span> rośnie do 14 px.
+          </div>
+        </div>
+
+        <h3>Cztery wagi</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">400 · 500 · 600 · 700</span></div>
+          <div class="dok-demo-cialo"><div id="okazy-wag"></div></div>
+        </div>
+
+        <h3>Trzy interlinie i trzy odstępy liter</h3>
+        <div class="dok-siatka dok-siatka--2">
+          <div class="dok-demo">
+            <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Interlinie</span></div>
+            <div class="dok-demo-cialo" id="okazy-interlinii"></div>
+          </div>
+          <div class="dok-demo">
+            <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Odstępy liter</span></div>
+            <div class="dok-demo-cialo" id="okazy-odstepow-liter"></div>
+          </div>
+        </div>
+
+        <h3>Reguła liczb — <span class="dok-mono">tabular-nums</span></h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Kolumna liczbowa nie „skacze” przy aktualizacji na żywo</span></div>
+          <div class="dok-demo-cialo">
+            <div class="dok-tabela-owijka" style="margin:0;">
+              <table class="dn-tabela">
+                <caption class="dn-sr-only">Przykładowa kolejka zadań — dane przykładowe</caption>
+                <thead><tr><th scope="col">Zadanie w kolejce</th><th scope="col" class="dok-num">Pozycja</th><th scope="col" class="dok-num">Czas</th><th scope="col">Stan</th></tr></thead>
+                <tbody id="tabela-liczb">
+                  <tr><td>Workflow Builder — przebieg nocny</td><td class="dok-num dn-dane">0011</td><td class="dok-num dn-dane">00:04:18</td><td><span class="dn-plakietka dn-plakietka--sukces">Poprawny</span></td></tr>
+                  <tr><td>Execution Monitor — krok walidacji</td><td class="dok-num dn-dane">0107</td><td class="dok-num dn-dane">00:11:02</td><td><span class="dn-plakietka dn-plakietka--informacja">Pracuje</span></td></tr>
+                  <tr><td>Queue Manager — ponowienie</td><td class="dok-num dn-dane">1240</td><td class="dok-num dn-dane">00:00:47</td><td><span class="dn-plakietka dn-plakietka--ostrzezenie">Z uwagami</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">Dane przykładowe z domeny produktu. Wzorzec zamknięty w <span class="dok-mono">fundament.css</span> klasami <span class="dok-mono">.dn-dane</span> i <span class="dok-mono">.dn-liczba</span>.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 8 · PRZESTRZEŃ ==================== -->
+      <section class="dok-sekcja" id="s8">
+        <h2><span class="dok-nr">08</span> Przestrzeń — 11 odstępów i 6 promieni</h2>
+        <p>
+          Jednostka bazowa <strong>4 px</strong> — <strong>[NIENEGOCJOWALNE]</strong>.
+          Brakujące krotności (7×, 9×, 11×, 13×, 14×, 15×) są celowo pominięte: skala rzednie tam,
+          gdzie różnica przestaje być czytelna. Zamiast dodawać stopień — wybiera się sąsiedni.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Jedenaście odstępów — paski o realnej szerokości</span>
+            <div class="dok-demo-narzedzia"><span class="dok-licznik">kliknij pasek, aby skopiować żeton</span></div>
+          </div>
+          <div class="dok-demo-cialo"><div id="skala-odstepow"></div></div>
+          <div class="dok-demo-stopka">
+            Dwa aliasy kompozycyjne: <span class="dok-mono">--dn-odstep-panel</span> = <span class="dok-mono">--dn-od-3</span> ·
+            <span class="dok-mono">--dn-odstep-sekcji</span> = <span class="dok-mono">--dn-od-6</span>.
+            Komponent pyta o rytm, nie o liczbę pikseli.
+          </div>
+        </div>
+        <pre class="dok-ascii"> 0    4    8    12    16    20    24        32        40        48              64
+ │    │    │    │     │     │     │         │         │         │               │
+ od-0 od-1 od-2 od-3  od-4  od-5  od-6      od-8      od-10     od-12           od-16
+           ▲          ▲           ▲                             ▲
+           │          │           │                             │
+      kontrolki   karta      sekcja / siatka              pasek górny</pre>
+
+        <h3>Sześć promieni</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Jeden system narożników — precyzja instrumentu</span></div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="skala-promieni"></div></div>
+          <div class="dok-demo-stopka">Promień rośnie wraz z powierzchnią elementu — nigdy odwrotnie. Element wewnątrz elementu ma promień mniejszy albo równy promieniowi rodzica.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 9 · RUCH ==================== -->
+      <section class="dok-sekcja" id="s9">
+        <h2><span class="dok-nr">09</span> Ruch — krzywa i cztery czasy</h2>
+        <p>
+          Pokrętło <span class="dok-mono">INTENSYWNOSC_RUCHU</span> = <strong>3/10</strong>.
+          Ruch niesie informację o stanie systemu; nie ma ruchu dekoracyjnego.
+          Jedna krzywa czasowa w całym systemie: <span class="dok-mono">cubic-bezier(0.2, 0, 0, 1)</span>
+          — szybki start, miękkie dojście.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Ta sama animacja w czterech czasach — obok siebie</span>
+            <div class="dok-demo-narzedzia">
+              <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" id="odpal-ruch">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
+                Odpal wszystkie
+              </button>
+            </div>
+          </div>
+          <div class="dok-demo-cialo"><div id="tory-ruchu"></div></div>
+          <div class="dok-demo-stopka">
+            Wzorzec przejścia widoku: <span class="dok-mono">opacity</span> + <span class="dok-mono">translateY(4px)</span>,
+            maks. 220 ms. Bez parallaxu, bez scrollytellingu, bez animacji wejścia elementów listy.
+          </div>
+        </div>
+
+        <h3>Tętno kropki — jedyny ruch ciągły</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">2,4 s · <span class="dok-mono">--dn-czas-tetno</span></span>
+            <div class="dok-demo-narzedzia">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="bez-ruchu" aria-pressed="false">
+                Odwzoruj <span class="dok-mono">prefers-reduced-motion</span>
+              </button>
+            </div>
+          </div>
+          <div class="dok-demo-cialo" id="scena-tetna">
+            <div class="dok-siatka dok-siatka--2">
+              <div class="dn-karta"><div class="dn-karta-cialo" style="display:flex; align-items:center; gap:var(--dn-od-2);">
+                <span class="dn-kropka dn-kropka--tetno"></span> <span>Karta sesji — proces w tle</span>
+              </div></div>
+              <div class="dn-karta"><div class="dn-karta-cialo" style="display:flex; align-items:center; gap:var(--dn-od-2);">
+                <span class="dn-aod-rdzen" aria-hidden="true"></span> <span>Always On Display — rdzeń awatara</span>
+              </div></div>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">
+            Ograniczony ruch obsłużony jest <strong>globalnie w żetonach</strong>, nie per komponent.
+            Wszystkie czasy skracają się do 0,01 ms; tętno kropki zastępuje <strong>pierścień statyczny</strong>.
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 10 · WYMIARY ==================== -->
+      <section class="dok-sekcja" id="s10">
+        <h2><span class="dok-nr">10</span> Wymiary — 27 żetonów, warianty dotykowy i przestronny</h2>
+        <p>
+          Gęstość <strong>zwarta</strong> (pokrętło <span class="dok-mono">GESTOSC_WIZUALNA</span> = 8/10):
+          kontrolka 32 px, wiersz 36 px, pasek górny 48 px. Linijki poniżej odczytują wartości
+          <strong>na żywo</strong> — przełącznik gęstości na pasku górnym przebudowuje je w miejscu.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Linijki wymiarów — odczyt z arkusza</span>
+            <div class="dok-demo-narzedzia"><span class="dok-licznik" id="etykieta-gestosci">gęstość: zwarta</span></div>
+          </div>
+          <div class="dok-demo-cialo"><div id="linijki-wymiarow"></div></div>
+          <div class="dok-demo-stopka">Wartości odczytane przez <span class="dok-mono">getComputedStyle</span> z elementu głównego dokumentu — to realny stan arkusza, nie deklaracja w tekście.</div>
+        </div>
+
+        <h3>Wariant dotykowy — <span class="dok-mono">@media (pointer: coarse)</span></h3>
+        <p>Cele dotykowe rosną <strong>żetonem, nie wyjątkiem</strong> (rozstrzygnięcie L-P-14). Sześć nadpisań; reguły komponentów pozostają nietknięte.</p>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Nadpisania wymiarów w trybie dotykowym</caption>
+            <thead><tr><th scope="col">Żeton</th><th scope="col" class="dok-num">Zwarta</th><th scope="col" class="dok-num">Dotyk</th><th scope="col" class="dok-num">Przyrost</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-mono">--dn-wym-kontrolka</td><td class="dok-num">32 px</td><td class="dok-num"><strong>40 px</strong></td><td class="dok-num">+8</td></tr>
+              <tr><td class="dok-mono">--dn-wym-ikonowy</td><td class="dok-num">32 px</td><td class="dok-num"><strong>40 px</strong></td><td class="dok-num">+8</td></tr>
+              <tr><td class="dok-mono">--dn-wym-wiersz</td><td class="dok-num">36 px</td><td class="dok-num"><strong>44 px</strong></td><td class="dok-num">+8</td></tr>
+              <tr><td class="dok-mono">--dn-wym-check</td><td class="dok-num">16 px</td><td class="dok-num"><strong>20 px</strong></td><td class="dok-num">+4</td></tr>
+              <tr><td class="dok-mono">--dn-wym-przelacznik-szer</td><td class="dok-num">36 px</td><td class="dok-num"><strong>44 px</strong></td><td class="dok-num">+8</td></tr>
+              <tr><td class="dok-mono">--dn-wym-przelacznik-wys</td><td class="dok-num">20 px</td><td class="dok-num"><strong>24 px</strong></td><td class="dok-num">+4</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Wariant przestronny — <span class="dok-mono">[data-gestosc='przestronna']</span></h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Nadpisania w gęstości przestronnej</caption>
+            <thead><tr><th scope="col">Żeton</th><th scope="col" class="dok-num">Zwarta</th><th scope="col" class="dok-num">Przestronna</th><th scope="col">Grupa</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-mono">--dn-fs-base</td><td class="dok-num">13 px</td><td class="dok-num"><strong>14 px</strong></td><td>typografia</td></tr>
+              <tr><td class="dok-mono">--dn-lh-bazowy</td><td class="dok-num">1,45</td><td class="dok-num"><strong>1,5</strong></td><td>typografia</td></tr>
+              <tr><td class="dok-mono">--dn-wym-kontrolka</td><td class="dok-num">32 px</td><td class="dok-num"><strong>40 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-wym-ikonowy</td><td class="dok-num">32 px</td><td class="dok-num"><strong>40 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-wym-wiersz</td><td class="dok-num">36 px</td><td class="dok-num"><strong>44 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-wym-pasek</td><td class="dok-num">48 px</td><td class="dok-num"><strong>56 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-wym-pas-kart</td><td class="dok-num">36 px</td><td class="dok-num"><strong>40 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-odstep-panel</td><td class="dok-num">12 px</td><td class="dok-num"><strong>20 px</strong></td><td>wymiary</td></tr>
+              <tr><td class="dok-mono">--dn-odstep-sekcji</td><td class="dok-num">24 px</td><td class="dok-num"><strong>32 px</strong></td><td>wymiary</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Kontrolki w bieżącej gęstości</span></div>
+          <div class="dok-demo-cialo">
+            <div style="display:flex; flex-wrap:wrap; gap:var(--dn-od-3); align-items:center;">
+              <button class="dn-btn" type="button">Przycisk</button>
+              <button class="dn-btn dn-btn--atrament" type="button">Działanie główne</button>
+              <button class="dn-btn-ikona" type="button" aria-label="Odśwież">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              </button>
+              <label class="dn-wybor"><input class="dn-check" type="checkbox" checked> Pole wyboru</label>
+              <label class="dn-wybor"><input class="dn-przelacznik" type="checkbox"> Przełącznik</label>
+              <input class="dn-pole-kontrolka" type="text" value="Pole tekstowe" style="max-width:200px;">
+            </div>
+          </div>
+          <div class="dok-demo-stopka">
+            <strong>Reguła kompozycji trybów:</strong> dotyk i gęstość przestronna mogą wystąpić jednocześnie.
+            Przy równej specyficzności rozstrzyga blok późniejszy w arkuszu — <span class="dok-mono">[data-gestosc='przestronna']</span>.
+            Obie ścieżki dają te same 40/44 px, więc kolizja nie daje różnicy widocznej.
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 11 · SIATKA I ŁAMANIE ==================== -->
+      <section class="dok-sekcja" id="s11">
+        <h2><span class="dok-nr">11</span> Siatka i punkty łamania</h2>
+        <p>Zamknięcie luk <strong>L-P-11</strong> (punkty łamania) i <strong>L-P-12</strong> (siatka treści).</p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Cztery punkty łamania — bieżąca szerokość okna</span>
+            <div class="dok-demo-narzedzia"><span class="dok-licznik dn-dane" id="szerokosc-okna">—</span></div>
+          </div>
+          <div class="dok-demo-cialo"><div class="dok-siatka dok-siatka--4" id="probki-lamania"></div></div>
+          <div class="dok-demo-stopka">Zmień szerokość okna — aktywny punkt łamania podświetli się na żywo. Odczyt przez <span class="dok-mono">matchMedia</span>.</div>
+        </div>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Punkty łamania i zachowanie kokpitu</caption>
+            <thead><tr><th scope="col">Żeton</th><th scope="col" class="dok-num">Wartość</th><th scope="col">Nazwa</th><th scope="col">Zachowanie kokpitu</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-mono">--dn-bp-w1</td><td class="dok-num">640 px</td><td>telefon poziomo</td><td>widok mobilny — okno <strong>Mobile</strong>, funkcja globalna</td></tr>
+              <tr><td class="dok-mono">--dn-bp-w2</td><td class="dok-num">960 px</td><td>tablet</td><td>boczna nawigacja modułów zwija się do ikon</td></tr>
+              <tr><td class="dok-mono">--dn-bp-w3</td><td class="dok-num">1280 px</td><td>biurko</td><td>pełny kokpit: pasek + pas kart sesji + boczna + obszar roboczy</td></tr>
+              <tr><td class="dok-mono">--dn-bp-w4</td><td class="dok-num">1600 px</td><td>szerokie biurko</td><td>dwa okna komunikacji obok siebie</td></tr>
+              <tr><td class="dok-mono">--dn-tresc-max</td><td class="dok-num">1200 px</td><td>maks. szerokość treści</td><td>ograniczenie długości wiersza w widokach dokumentowych</td></tr>
+              <tr><td class="dok-mono">--dn-siatka-kolumny</td><td class="dok-num">12</td><td>kolumny siatki</td><td>podział obszaru roboczego</td></tr>
+              <tr><td class="dok-mono">--dn-siatka-przerwa</td><td class="dok-num">24 px</td><td>przerwa siatki</td><td>równa <span class="dok-mono">--dn-od-6</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <blockquote class="dok-cytat">
+          Punkt łamania jest żetonem, ale zapytanie medialne <strong>nie może</strong> go użyć
+          (<span class="dok-mono">@media (min-width: var(--dn-bp-w3))</span> nie działa w CSS).
+          Wartość w zapytaniu powtarza się liczbowo, a żeton pozostaje źródłem prawdy i punktem
+          odniesienia dla warstwy skryptowej. <strong>To jedyne miejsce w systemie, gdzie liczba
+          pojawia się poza żetonem — i jedyne, w którym jest to dopuszczone.</strong>
+        </blockquote>
+      </section>
+
+      <!-- ==================== 12 · WARSTWY Z-INDEX ==================== -->
+      <section class="dok-sekcja" id="s12">
+        <h2><span class="dok-nr">12</span> Warstwy — jedenaście poziomów <span class="dok-mono">z-index</span></h2>
+        <p>
+          Zamknięcie luki <strong>L-P-10</strong>. Skala jest rzadka (skoki 100 i większe), aby każde
+          piętro miało zapas na warstwy pośrednie bez renumeracji.
+          <strong>Komponent nigdy nie zapisuje liczby <span class="dok-mono">z-index</span> wprost</strong> —
+          nowa warstwa oznacza nowy żeton i decyzję prowadzącego system, nie <span class="dok-mono">z-index: 9999</span>.
+        </p>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Stos warstw — najazd rozsuwa piętra</span>
+            <div class="dok-demo-narzedzia">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="rozsun-stos" aria-pressed="false">Rozsuń stos</button>
+            </div>
+          </div>
+          <div class="dok-demo-cialo"><div class="dok-stos" id="stos-warstw"></div></div>
+          <div class="dok-demo-stopka">Kliknij płytę, aby skopiować nazwę żetonu. Centrum poleceń leży zawsze najwyżej — nad Always On Display.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 13 · GRADIENTY ==================== -->
+      <section class="dok-sekcja" id="s13">
+        <h2><span class="dok-nr">13</span> Gradienty — dwa, zakres i zakazy</h2>
+        <p>Zamknięcie luki <strong>L-P-09</strong>. Oba gradienty są <strong>stałe w obu motywach</strong> i wyprowadzone z zadeklarowanych prymitywów.</p>
+        <div class="dok-siatka dok-siatka--2">
+          <button class="dok-karta-zetonu" type="button" data-kopiuj="var(--dn-grad-atrament)">
+            <span class="dok-gradient dok-gradient--atrament">Aa</span>
+            <span>
+              <span class="dok-zeton-nazwa">--dn-grad-atrament</span>
+              <span class="dok-zeton-opis">Awatar bez zdjęcia (człowiek). <span class="dok-mono">#2A2A2A → #131313</span>, pionowo. Najsłabszy punkt <span class="dok-mono">#2A2A2A</span>; <span class="dok-mono">--dn-szary-100</span> na nim: <strong>12,15</strong> — zapas ponad AAA.</span>
+            </span>
+          </button>
+          <button class="dok-karta-zetonu" type="button" data-kopiuj="var(--dn-grad-sygnal)">
+            <span class="dok-gradient dok-gradient--sygnal">AI</span>
+            <span>
+              <span class="dok-zeton-nazwa">--dn-grad-sygnal</span>
+              <span class="dok-zeton-opis">Medalion jednostki inteligencji, rdzeń Always On Display. <span class="dok-mono">#5C8CEC → #2457C9</span>, po przekątnej. Najsłabszy punkt <span class="dok-mono">#5C8CEC</span>; biel na nim: <strong>3,27</strong> — wyłącznie inicjał albo znak, nigdy tekst czytany.</span>
+            </span>
+          </button>
+        </div>
+        <blockquote class="dok-cytat">
+          <strong>Gradient NIGDY nie jest tłem przycisku, karty ani sekcji.</strong>
+          Zakres dopuszczalny: awatary bez zdjęcia · rdzeń Always On Display · grafiki brandowe.
+          Z katalogu anty-domyślnych: <strong>fioletowy gradient „AI”</strong> jest pierwszym zablokowanym odruchem systemu.
+        </blockquote>
+      </section>
+
+      <!-- ==================== 14 · MOTYW JASNY ==================== -->
+      <section class="dok-sekcja" id="s14">
+        <h2><span class="dok-nr">14</span> Motyw jasny — pełna tabela żetonów semantycznych</h2>
+        <p>
+          Blok <span class="dok-mono">:root[data-theme='light']</span>, <span class="dok-mono">color-scheme: light</span>.
+          <strong>43 żetony.</strong> Motyw definiowany osobno, nie wywodzony z ciemnego.
+          Kontrasty w tabeli obliczone z wartości zadeklarowanych — niezależnie od motywu aktywnego w przeglądarce.
+        </p>
+        <div class="dok-filtry">
+          <label class="dn-szukaj">
+            <span class="dn-sr-only">Filtruj żetony motywu jasnego</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="filtr-jasny" placeholder="Filtruj: nazwa, wartość, rola, mapowanie…">
+          </label>
+          <span class="dok-licznik" id="licznik-jasny">43 / 43</span>
+        </div>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela" id="tabela-jasny">
+            <caption class="dn-sr-only">Żetony semantyczne motywu jasnego</caption>
+            <thead><tr><th scope="col">Próbka</th><th scope="col">Żeton (rola)</th><th scope="col">Wartość</th><th scope="col">Mapuje się na</th><th scope="col">Pomiar</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== 15 · MOTYW CIEMNY ==================== -->
+      <section class="dok-sekcja" id="s15">
+        <h2><span class="dok-nr">15</span> Motyw ciemny — pełna tabela żetonów semantycznych</h2>
+        <p>
+          Blok <span class="dok-mono">:root[data-theme='dark']</span>, <span class="dok-mono">color-scheme: dark</span>.
+          <strong>43 żetony</strong>, te same nazwy, inne wartości.
+        </p>
+        <div class="dok-filtry">
+          <label class="dn-szukaj">
+            <span class="dn-sr-only">Filtruj żetony motywu ciemnego</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="filtr-ciemny" placeholder="Filtruj: nazwa, wartość, rola, mapowanie…">
+          </label>
+          <span class="dok-licznik" id="licznik-ciemny">43 / 43</span>
+        </div>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela" id="tabela-ciemny">
+            <caption class="dn-sr-only">Żetony semantyczne motywu ciemnego</caption>
+            <thead><tr><th scope="col">Próbka</th><th scope="col">Żeton (rola)</th><th scope="col">Wartość</th><th scope="col">Mapuje się na</th><th scope="col">Pomiar</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Zasada tła stanu w motywie ciemnym</span></div>
+          <div class="dok-demo-cialo">
+            <p style="margin-bottom:var(--dn-od-3);">
+              Tło i obrys stanu nie są osobnym prymitywem, lecz <strong>barwą tekstu stanu z kryciem
+              0,14 i 0,34</strong>. Dzięki temu dostosowują się do powierzchni, na której leżą —
+              bez mnożenia żetonów.
+            </p>
+            <div class="dok-tabela-owijka" style="margin:0;">
+              <table class="dn-tabela">
+                <caption class="dn-sr-only">Kompozycja alfa stanów w motywie ciemnym</caption>
+                <thead><tr><th scope="col">Stan</th><th scope="col">Tekst</th><th scope="col">Tło (alfa)</th><th scope="col">Po złożeniu na powierzchni</th><th scope="col" class="dok-num">Kontrast</th></tr></thead>
+                <tbody>
+                  <tr><td>sukces</td><td class="dok-mono">#4FBD85</td><td class="dok-mono">rgba(79,189,133,0.14)</td><td class="dok-mono">#202F27</td><td class="dok-num">5,98</td></tr>
+                  <tr><td>ostrzeżenie</td><td class="dok-mono">#E0A63C</td><td class="dok-mono">rgba(224,166,60,0.14)</td><td class="dok-mono">#342C1D</td><td class="dok-num">6,36</td></tr>
+                  <tr><td>błąd</td><td class="dok-mono">#EE7168</td><td class="dok-mono">rgba(238,113,104,0.14)</td><td class="dok-mono">#362423</td><td class="dok-num">5,02</td></tr>
+                  <tr><td>informacja</td><td class="dok-mono">#8FB2F5</td><td class="dok-mono">rgba(59,111,224,0.16)</td><td class="dok-mono">#1E2638</td><td class="dok-num">7,09</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="dok-demo-stopka">Komplet stanów motywu ciemnego zamyka lukę <strong>L-P-19</strong>. Wartości po złożeniu liczone na <span class="dok-mono">--dn-powierzchnia #181818</span>.</div>
+        </div>
+      </section>
+
+      <!-- ==================== 16 · TABELA KONTRASTÓW ==================== -->
+      <section class="dok-sekcja" id="s16">
+        <h2><span class="dok-nr">16</span> Tabela kontrastów — komplet 33 pomiarów</h2>
+        <p>
+          Źródło: <span class="dok-mono">zasoby/zetony/kontrasty.json</span> (paleta odniesienia: 38 barw).
+          Metoda: <strong>luminancja względna WCAG 2.1</strong> —
+          <span class="dok-mono">(L₁ + 0,05) / (L₂ + 0,05)</span>, gdzie
+          <span class="dok-mono">L = 0,2126·R + 0,7152·G + 0,0722·B</span> po linearyzacji sRGB.
+          Kolumna <strong>„przeliczone”</strong> zawiera wynik obliczony w tej przeglądarce z wartości
+          szesnastkowych — służy weryfikacji zgodności z plikiem źródłowym.
+        </p>
+        <div class="dok-siatka dok-siatka--4" style="margin-bottom:var(--dn-od-4);">
+          <div class="dn-karta"><div class="dn-karta-cialo">
+            <p class="dn-etykieta-wersalikowa">Pomiarów ogółem</p>
+            <p class="dn-dane" style="font-size:var(--dn-fs-2xl); color:var(--dn-tekst);">33</p>
+          </div></div>
+          <div class="dn-karta"><div class="dn-karta-cialo">
+            <p class="dn-etykieta-wersalikowa">Werdykt AAA</p>
+            <p class="dn-dane" style="font-size:var(--dn-fs-2xl); color:var(--dn-sukces-tekst);" id="licznik-aaa">12</p>
+          </div></div>
+          <div class="dn-karta"><div class="dn-karta-cialo">
+            <p class="dn-etykieta-wersalikowa">Werdykt AA</p>
+            <p class="dn-dane" style="font-size:var(--dn-fs-2xl); color:var(--dn-informacja-tekst);" id="licznik-aa">20</p>
+          </div></div>
+          <div class="dn-karta"><div class="dn-karta-cialo">
+            <p class="dn-etykieta-wersalikowa">Nie przechodzi</p>
+            <p class="dn-dane" style="font-size:var(--dn-fs-2xl); color:var(--dn-tekst);" id="licznik-nie">0</p>
+          </div></div>
+        </div>
+        <div class="dok-filtry">
+          <label class="dn-szukaj">
+            <span class="dn-sr-only">Filtruj pomiary kontrastu</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="filtr-kontrastow" placeholder="Filtruj: para, barwa, motyw, werdykt…">
+          </label>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-werdykt-filtr="" aria-pressed="true">Wszystkie</button>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-werdykt-filtr="AAA" aria-pressed="false">AAA</button>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-werdykt-filtr="AA" aria-pressed="false">AA</button>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-werdykt-filtr="SYS" aria-pressed="false">Próg systemowy</button>
+          <span class="dok-licznik" id="licznik-kontrastow">33 / 33</span>
+        </div>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela" id="tabela-kontrastow">
+            <caption class="dn-sr-only">Komplet 33 pomiarów kontrastu</caption>
+            <thead><tr>
+              <th scope="col" class="dok-num">#</th><th scope="col">Para</th><th scope="col">Podgląd</th>
+              <th scope="col" class="dok-num">Kontrast</th><th scope="col" class="dok-num">Przeliczone</th>
+              <th scope="col" class="dok-num">Próg</th><th scope="col" class="dok-num">Zapas</th><th scope="col">Werdykt</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3>Legenda werdyktu</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Legenda werdyktów</caption>
+            <thead><tr><th scope="col">Werdykt</th><th scope="col">Warunek</th><th scope="col">Znaczenie</th></tr></thead>
+            <tbody>
+              <tr><td><span class="dok-werdykt dok-werdykt--aaa"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>AAA</span></td><td class="dok-num">≥ 7,0 przy progu 4,5</td><td>WCAG 2.1, kryterium 1.4.6 — tekst dowolnego rozmiaru</td></tr>
+              <tr><td><span class="dok-werdykt dok-werdykt--aa"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>AA</span></td><td class="dok-num">≥ próg</td><td>kryterium 1.4.3 (tekst) albo 1.4.11 (element nietekstowy)</td></tr>
+              <tr><td><span class="dok-werdykt dok-werdykt--systemowy"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>PRÓG SYSTEMOWY</span></td><td class="dok-num">próg 1,6</td><td>rozdzielenie powierzchni — <strong>nie jest progiem WCAG</strong>; patrz decyzja D8</td></tr>
+              <tr><td><span class="dok-werdykt dok-werdykt--nie"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>NIE PRZECHODZI</span></td><td class="dok-num">&lt; próg</td><td>w komplecie <strong>nie występuje ani razu</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Pary najciaśniejsze — do obserwacji przy zmianach</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Pary o najmniejszym zapasie</caption>
+            <thead><tr><th scope="col" class="dok-num">Pomiar</th><th scope="col">Para</th><th scope="col" class="dok-num">Zapas</th><th scope="col">Ryzyko</th></tr></thead>
+            <tbody>
+              <tr><td class="dok-num">13</td><td>obrys kontrolki / tło (jasny)</td><td class="dok-num">+0,05</td><td>próg systemowy — kwestia otwarta (D8)</td></tr>
+              <tr><td class="dok-num">15</td><td>sukces tekst / tło stanu (jasny)</td><td class="dok-num">+0,26</td><td>każde rozjaśnienie <span class="dok-mono">--dn-zielen-700</span> albo przyciemnienie <span class="dok-mono">--dn-zielen-100</span> zejdzie poniżej progu</td></tr>
+              <tr><td class="dok-num">17</td><td>błąd tekst / tło stanu (jasny)</td><td class="dok-num">+0,34</td><td>jw. dla rodziny czerwieni</td></tr>
+              <tr><td class="dok-num">5</td><td>tekst-2 / powierzchnia-2 (jasny)</td><td class="dok-num">+0,74</td><td>nie wolno zejść poniżej <span class="dok-mono">szary-600</span></td></tr>
+              <tr><td class="dok-num">16</td><td>ostrzeżenie tekst / tło stanu (jasny)</td><td class="dok-num">+0,76</td><td>jw. dla rodziny bursztynu</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== 17 · ŻETONY A JSON ==================== -->
+      <section class="dok-sekcja" id="s17">
+        <h2><span class="dok-nr">17</span> Żetony a JSON — jak czytać <span class="dok-mono">zetony.json</span></h2>
+        <p>
+          <span class="dok-mono">zetony.json</span> jest <strong>maszynowym odpowiednikiem</strong>
+          <span class="dok-mono">zetony.css</span>, nie drugim źródłem prawdy. Rozstrzyga plik CSS —
+          jest ładowany przez aplikację. JSON służy generatorom, walidatorom i eksportowi.
+        </p>
+        <pre class="dok-ascii">zetony.json
+├── _meta                      metryka: produkt, wersja, status, data, kierunek,
+│                              źródło, 6 zasad nienegocjowalnych
+├── prymitywy
+│   ├── szarosc                18 par nazwa→hex
+│   ├── sygnal                 8 par
+│   └── stany
+│       ├── zielen             4 pary
+│       ├── bursztyn           4 pary
+│       └── czerwien           4 pary
+├── rama-kokpitu               5 par + _uwaga
+├── semantyczne
+│   ├── jasny                  26 par (bez stanów i cieni)
+│   └── ciemny                 26 par
+├── stany-semantyczne
+│   ├── jasny                  4 stany × {tekst, tlo, obrys}
+│   ├── ciemny                 4 stany × {tekst, tlo, obrys}
+│   └── _uwaga                 „stan nigdy samym kolorem"
+├── typografia                 kroje (+ _role, _licencja) · stopnie ·
+│                              grubosci · interlinie · tracking
+├── przestrzen                 odstepy (11) · promienie (6)
+├── ruch                       ease · 4 czasy · zapis o prefers-reduced-motion
+├── wymiary                    _gestosc · 27 par ·
+│                              „dotyk (pointer coarse)" · „gestosc-przestronna"
+├── siatka-i-lamanie           4 punkty · tresc-max · kolumny · przerwa · _uwaga
+├── warstwy                    11 poziomów (liczby, nie napisy) · _uwaga
+├── gradienty                  2 pary + _zakres
+└── cienie                     jasny (5) · ciemny (5) · _uwaga</pre>
+
+        <h3>Sześć reguł czytania</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Reguły czytania pliku JSON</caption>
+            <thead><tr><th scope="col">Reguła</th><th scope="col">Treść</th></tr></thead>
+            <tbody>
+              <tr><td><strong>J1</strong></td><td>Klucz zaczynający się od podkreślnika (<span class="dok-mono">_meta</span>, <span class="dok-mono">_uwaga</span>, <span class="dok-mono">_zakres</span>, <span class="dok-mono">_role</span>, <span class="dok-mono">_licencja</span>, <span class="dok-mono">_gestosc</span>) jest <strong>komentarzem</strong>, nie żetonem.</td></tr>
+              <tr><td><strong>J2</strong></td><td>Wartości semantyczne w JSON są <strong>rozwiązane do wartości końcowej</strong> (<span class="dok-mono">"--dn-tlo": "#F4F4F4"</span>), a w CSS zapisane jako odwołanie (<span class="dok-mono">var(--dn-szary-50)</span>). JSON traci informację o mapowaniu — odczytuje się ją z CSS albo z rozdz. 14–15.</td></tr>
+              <tr><td><strong>J3</strong></td><td>Warstwy <span class="dok-mono">z-index</span> są <strong>liczbami</strong>, nie napisami. Pozostałe wartości są napisami z jednostką.</td></tr>
+              <tr><td><strong>J4</strong></td><td>Klucze <span class="dok-mono">"dotyk (pointer coarse)"</span> i <span class="dok-mono">"gestosc-przestronna (data-gestosc)"</span> opisują <strong>nadpisania kontekstowe</strong>, nie osobne żetony.</td></tr>
+              <tr><td><strong>J5</strong></td><td>Gałąź <span class="dok-mono">semantyczne</span> nie zawiera stanów ani cieni — te mają własne gałęzie. Suma 26 + 12 + 5 = <strong>43</strong> żetony semantyczne na motyw.</td></tr>
+              <tr><td><strong>J6</strong></td><td>Gradienty w JSON zapisane są z <strong>rozwiniętymi wartościami hex</strong>, a w CSS przez <span class="dok-mono">var()</span>. Przy zmianie prymitywu trzeba zaktualizować oba pliki.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Sześć zasad z <span class="dok-mono">_meta.zasady</span></h3>
+        <ol class="dok-lista">
+          <li>jednostka bazowa 4 px,</li>
+          <li>oba motywy równoprawne — definiowane osobno,</li>
+          <li>stan nigdy samym kolorem,</li>
+          <li>zero blokad (ADL-017),</li>
+          <li>WCAG 2.1 AA na wejściu,</li>
+          <li>zakaz <span class="dok-mono">#000000</span>; <span class="dok-mono">#FFFFFF</span> wyłącznie jako powierzchnia kart i tekst na atramencie.</li>
+        </ol>
+
+        <h3>Kolejność aktualizacji przy zmianie wartości</h3>
+        <pre class="dok-ascii">1. zetony.css      ← źródło prawdy dla aplikacji; zmiana najpierw tutaj
+2. zetony.json     ← odzwierciedlenie wartości (uwaga na J2 i J6)
+3. kontrasty.json  ← ponowny pomiar każdej pary dotkniętej zmianą   ◄ KROK KRYTYCZNY
+4. dokumentacja    ← 04-tokens.md + 04-tokens.html (rozdz. 3–6, 14–16)
+5. komponenty.css  ← wyłącznie jeśli zmiana wprowadza/usuwa nazwę żetonu</pre>
+        <p>
+          Pominięcie kroku 3 jest <strong>najczęstszym możliwym błędem</strong>: wartość zmieniona bez
+          ponownego pomiaru unieważnia deklarację zgodności WCAG całego pakietu.
+        </p>
+      </section>
+
+      <!-- ==================== 18 · JAK DODAĆ ŻETON ==================== -->
+      <section class="dok-sekcja" id="s18">
+        <h2><span class="dok-nr">18</span> Jak dodać żeton — procedura</h2>
+
+        <h3>Bramka wstępna — trzy pytania</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Bramka wstępna przed dodaniem żetonu</caption>
+            <thead><tr><th scope="col">Pytanie</th><th scope="col">Odpowiedź „nie” oznacza</th></tr></thead>
+            <tbody>
+              <tr><td>Czy wartość wystąpi w <strong>co najmniej dwóch</strong> niezależnych miejscach systemu?</td><td>to nie jest żeton — to wartość komponentu (R8)</td></tr>
+              <tr><td>Czy istniejący żeton <strong>nie</strong> obsługuje tej roli po nadaniu mu właściwej nazwy?</td><td>należy poprawić nazwę istniejącego, nie dodawać nowego (R9)</td></tr>
+              <tr><td>Czy rola jest <strong>semantyczna</strong> (co to znaczy), a nie opisowa (jak to wygląda)?</td><td><span class="dok-mono">--dn-niebieski-jasny</span> jest błędne; <span class="dok-mono">--dn-informacja-tlo</span> jest poprawne</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Siedem kroków</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Procedura wykonawcza</span></div>
+          <div class="dok-demo-cialo" id="kroki-procedury"></div>
+        </div>
+
+        <h3>Lista kontrolna odbioru</h3>
+        <div class="dok-demo">
+          <div class="dok-demo-naglowek">
+            <span class="dok-demo-tytul">Dwanaście sprawdzeń</span>
+            <div class="dok-demo-narzedzia">
+              <span class="dok-licznik" id="licznik-listy">0 / 12</span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="wyczysc-liste">Wyczyść</button>
+            </div>
+          </div>
+          <div class="dok-demo-cialo"><div id="lista-kontrolna"></div></div>
+          <div class="dok-demo-stopka" id="stopka-listy">Lista pomocnicza — zaznaczenia nie są nigdzie zapisywane.</div>
+        </div>
+
+        <h3>Czego nie wolno zrobić</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Katalog zakazów przy dodawaniu żetonu</caption>
+            <thead><tr><th scope="col">Zakaz</th><th scope="col">Dlaczego</th></tr></thead>
+            <tbody>
+              <tr><td>dodać żeton wyłącznie do jednego motywu</td><td>komponent nie wie o motywie; brak wartości = pusta deklaracja <span class="dok-mono">var()</span> i awaria wizualna</td></tr>
+              <tr><td>użyć nowego hexa zamiast stopnia skali</td><td>skale są zamknięte; nowa wartość rozmywa monochromatyczną precyzję</td></tr>
+              <tr><td>wprowadzić drugą barwę akcentu</td><td>KIERUNEK 3.1: jeden sygnał; rodzina informacyjna scalona z sygnałem celowo</td></tr>
+              <tr><td>zapisać <span class="dok-mono">z-index</span> wprost w komponencie</td><td>warstwy są zamkniętym rejestrem 11 poziomów</td></tr>
+              <tr><td>dodać gradient do przycisku, karty albo sekcji</td><td>zakaz bezwzględny (rozdz. 13)</td></tr>
+              <tr><td>obsłużyć <span class="dok-mono">prefers-reduced-motion</span> w komponencie</td><td>obsługa jest globalna, w żetonach</td></tr>
+              <tr><td>zastosować <span class="dok-mono">disabled</span> jako sposób sygnalizacji stanu</td><td>ADL-017 — zero blokad; komunikat po naciśnięciu albo opis obok</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== 19 · DECYZJE PROJEKTOWE ==================== -->
+      <section class="dok-sekcja" id="s19">
+        <h2><span class="dok-nr">19</span> Decyzje projektowe</h2>
+        <p>Rozstrzygnięcia podjęte <strong>ponad</strong> to, co dosłownie rozstrzygają źródła, wraz z uzasadnieniem i podstawą.</p>
+        <div class="dok-filtry">
+          <label class="dn-szukaj">
+            <span class="dn-sr-only">Filtruj decyzje projektowe</span>
+            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+            <input class="dn-pole-kontrolka" type="search" id="filtr-decyzji" placeholder="Filtruj decyzje — kwestia, rozstrzygnięcie, podstawa">
+          </label>
+          <span class="dok-licznik" id="licznik-decyzji">16 / 16</span>
+        </div>
+        <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
+          <table class="dn-tabela" id="tabela-decyzji">
+            <caption class="dn-sr-only">Decyzje projektowe D1–D16</caption>
+            <thead><tr><th scope="col">#</th><th scope="col">Kwestia</th><th scope="col">Rozstrzygnięcie</th><th scope="col">Podstawa</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Kwestie otwarte — do decyzji poza niniejszym opracowaniem</h3>
+        <div class="dok-tabela-owijka">
+          <table class="dn-tabela">
+            <caption class="dn-sr-only">Kwestie otwarte</caption>
+            <thead><tr><th scope="col">Kwestia</th><th scope="col">Stan</th><th scope="col">Kto rozstrzyga</th></tr></thead>
+            <tbody>
+              <tr><td>Formalny stosunek pomiaru 13 do kryterium WCAG 1.4.11</td><td>próg zadeklarowany jako systemowy (1,6); wymaga potwierdzenia albo podniesienia obrysu</td><td>prowadzący system + osoba odpowiedzialna za dostępność</td></tr>
+              <tr><td>Rola <span class="dok-mono">--dn-sygnal-800</span></td><td>propozycja: wciśnięcie wypełnienia sygnałowego; brak deklaracji w źródłach</td><td>prowadzący system</td></tr>
+              <tr><td>Korekta komentarzy kontrastowych w <span class="dok-mono">zetony.css</span> (D6)</td><td>rozbieżność redakcyjna zidentyfikowana; wartości barw poprawne</td><td>prowadzący system</td></tr>
+              <tr><td>Usunięcie zapasowego hexa w <span class="dok-mono">komponenty.css</span>, linia 163 (D5)</td><td>do rozważenia przy przeglądzie biblioteki</td><td>prowadzący system</td></tr>
+              <tr><td>Gęstość przestronna jako wybór Operatora w Oknie Ustawień</td><td>żetony gotowe; przełącznik niezadeklarowany w inwentarzu okien</td><td>prowadzący system + Właściciel</td></tr>
+              <tr><td>Wprowadzenie stopni rezerwowych (<span class="dok-mono">szary-200</span>, <span class="dok-mono">szary-700</span>) do użycia</td><td>wymaga nadania roli semantycznej</td><td>prowadzący system</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== O TYM OPRACOWANIU ==================== -->
+      <details class="dok-o-opracowaniu">
+        <summary>
+          <svg aria-hidden="true" width="20" height="20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          O tym opracowaniu
+        </summary>
+        <div class="dok-o-tresc">
+          <h4>Co zawiera</h4>
+          <ul>
+            <li>Definicję żetonu, trójwarstwowy model systemu i regułę nieprzekraczalną wraz z zamkniętą listą sześciu jawnych wyjątków zinwentaryzowanych w bibliotece komponentów.</li>
+            <li>Rachunek żetonów: 177 unikalnych nazw = 134 niezależne od motywu + 43 semantyczne (× 2 motywy).</li>
+            <li>Konwencję nazewniczą z pełną tabelą 30 prefiksów i dziesięcioma regułami R1–R10.</li>
+            <li>Interaktywną przeglądarkę wszystkich żetonów: wyszukiwarka po nazwie, wartości i opisie, filtr grup, kopiowanie do schowka.</li>
+            <li>Komplet prymitywów: 18 stopni szarości, 8 stopni sygnału, 12 stopni stanów — każdy z zastosowaniem i zakazami.</li>
+            <li>Pięć żetonów ramy kokpitu z podglądem zachowania przy przełączeniu motywu.</li>
+            <li>22 żetony typografii: trzy kroje w okazach, dziewięć stopni, cztery wagi, trzy interlinie, trzy odstępy liter.</li>
+            <li>17 żetonów przestrzeni: jedenaście odstępów jako paski o realnej szerokości, sześć promieni jako kwadraty.</li>
+            <li>Pięć żetonów ruchu z demonstracją tej samej animacji w czterech czasach obok siebie.</li>
+            <li>27 żetonów wymiarów z linijkami odczytywanymi na żywo oraz warianty dotykowy i przestronny.</li>
+            <li>Siedem żetonów siatki i punktów łamania ze wskaźnikiem aktywnego punktu.</li>
+            <li>Jedenaście warstw <span class="dn-dane">z-index</span> jako rozsuwany stos.</li>
+            <li>Dwa gradienty z zakresem użycia, zakazami i pomiarem najsłabszego punktu.</li>
+            <li>Pełne tabele 43 żetonów semantycznych w każdym motywie — z wartością, mapowaniem i pomiarem.</li>
+            <li>Komplet 33 pomiarów kontrastu z werdyktem, zapasem i przeliczeniem kontrolnym.</li>
+            <li>Instrukcję czytania <span class="dn-dane">zetony.json</span> (reguły J1–J6), procedurę dodania żetonu (7 kroków, 12 sprawdzeń) i szesnaście decyzji projektowych.</li>
+          </ul>
+
+          <h4>Źródła w dokumentacji</h4>
+          <ul>
+            <li><span class="dn-dane">WYNIK/KANON.md</span> — jedyne źródło prawdy projektu; wartości wiążące, zasady, zakazy.</li>
+            <li><span class="dn-dane">zasoby/zetony/zetony.css</span> (448 linii) — wszystkie wartości żetonów, oba motywy, dotyk, gęstość przestronna, ograniczony ruch.</li>
+            <li><span class="dn-dane">zasoby/zetony/zetony.json</span> — zapis maszynowy, sześć zasad w bloku <span class="dn-dane">_meta</span>.</li>
+            <li><span class="dn-dane">zasoby/zetony/kontrasty.json</span> — 33 pomiary + paleta 38 barw; rozdz. 16 odwzorowuje komplet.</li>
+            <li><span class="dn-dane">zasoby/css/fundament.css</span> (156 linii) — fokus globalny, wzorce tekstowe, dane tabelaryczne.</li>
+            <li><span class="dn-dane">zasoby/css/komponenty.css</span> (1207 linii) — źródło inwentaryzacji sześciu wyjątków od reguły odwołań (linie 90, 163, 307, 1073, 1083, 1196).</li>
+            <li><span class="dn-dane">design/opracowania/design/01-kierunek/KIERUNEK.md</span> — kontrakt kierunku, trzy pokrętła, decyzje fundamentalne 3.1–3.7.</li>
+            <li><span class="dn-dane">zasoby/ikony/manifest.json</span> — zestaw ikon; wszystkie ikony w tym pliku pochodzą z zestawu (Lucide, siatka 24×24, obrys 1,75).</li>
+            <li><span class="dn-dane">brief/INWENTARZ-KOMPONENTOW.md</span> — model siedmiu warstw systemu (rozdz. 3), zasada rozstrzygania na korzyść plików CSS.</li>
+            <li><span class="dn-dane">brief/INWENTARZ-OKIEN.md</span> — hierarchia trójstopniowa, kontekst okien operacyjnych przywoływanych w przykładach.</li>
+          </ul>
+
+          <h4>Jakie interakcje odwzorowano</h4>
+          <ul>
+            <li>Przełącznik motywu na pasku górnym (<span class="dn-dane">data-przelacz-motyw</span>) — <strong>przebudowuje wszystkie próbki, wartości i pomiary</strong>; pasek pozostaje atramentowy.</li>
+            <li>Przełącznik gęstości (<span class="dn-dane">data-gestosc="przestronna"</span>) — przebudowuje linijki wymiarów odczytywane z arkusza.</li>
+            <li>Spis treści z podświetlaniem sekcji aktywnej przy przewijaniu (<span class="dn-dane">IntersectionObserver</span>).</li>
+            <li>Kopiowanie <span class="dn-dane">var(--dn-*)</span> do schowka po kliknięciu karty, próbki, paska odstępu, kwadratu promienia i płyty stosu (<span class="dn-dane">navigator.clipboard</span> z zapasem opartym o pole tekstowe).</li>
+            <li>Wyszukiwarka rejestru żetonów po nazwie, wartości i opisie + filtr dwunastu grup.</li>
+            <li>Filtry: prefiksy, żetony motywu jasnego, żetony motywu ciemnego, pomiary kontrastu (z filtrem werdyktu), decyzje projektowe.</li>
+            <li>Pomiar kontrastu liczony w przeglądarce wzorem WCAG 2.1 z wartości odczytanych przez <span class="dn-dane">getComputedStyle</span> — z kompozycją alfa nad powierzchnią docelową.</li>
+            <li>Okazy typografii z polem własnego tekstu; domyślnie test diakrytyków <span class="dn-dane">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span>.</li>
+            <li>Demonstracja czterech czasów ruchu odpalana przyciskiem — ta sama animacja obok siebie.</li>
+            <li>Odwzorowanie <span class="dn-dane">prefers-reduced-motion</span> na żądanie: tętno kropki → pierścień statyczny.</li>
+            <li>Symulacja naruszenia zasady „stan nigdy samym kolorem” — ukrycie ikon i etykiet na żądanie.</li>
+            <li>Rozsuwany stos jedenastu warstw <span class="dn-dane">z-index</span>.</li>
+            <li>Wskaźnik aktywnego punktu łamania odczytywany przez <span class="dn-dane">matchMedia</span> przy zmianie szerokości okna.</li>
+            <li>Lista kontrolna odbioru żetonu z licznikiem (bez zapisu stanu).</li>
+          </ul>
+
+          <h4>Uwagi wykonawcze</h4>
+          <ul>
+            <li>Wszystkie style lokalne używają wyłącznie <span class="dn-dane">var(--dn-*)</span>; zero wartości szesnastkowych w CSS, zero atrybutu <span class="dn-dane">disabled</span>.</li>
+            <li>Wartości szesnastkowe w treści dokumentu i w rejestrze skryptu są <strong>cytatem z plików źródłowych</strong>. Próbki prymitywów malowane są przez <span class="dn-dane">var(--dn-*)</span>. Literalna wartość służy do stylowania wyłącznie tam, gdzie trzeba pokazać barwę motywu <em>nieaktywnego</em> w danej chwili (tabele rozdz. 14–15) albo zmierzoną parę rozdz. 16 — inaczej podgląd kłamałby o wartości.</li>
+            <li>Werdykt kontrastu podany jest <strong>tekstem i ikoną</strong>, nigdy samym kolorem — zgodnie z zasadą nienegocjowalną.</li>
+            <li>Tryb dotykowy nie jest odwzorowywany na żądanie: <span class="dn-dane">@media (pointer: coarse)</span> nie daje się wymusić z poziomu strony. Wartości podano tabelarycznie.</li>
+            <li>Wszystkie ikony pochodzą z zestawu <span class="dn-dane">zasoby/ikony/svg/</span> i są wklejone inline dla <span class="dn-dane">currentColor</span>. Zero emoji.</li>
+            <li>Treści przykładowe pochodzą wyłącznie z domeny produktu (Workflow Builder, Execution Monitor, Queue Manager, Executor 1, Assistant) i są oznaczone jako przykładowe. Zero fikcyjnych osób i zmyślonych metryk.</li>
+            <li>Plik działa po otwarciu z <span class="dn-dane">file://</span> — ścieżki względne, brak bibliotek zewnętrznych, brak CDN. Zapis <span class="dn-dane">localStorage</span> wyłącznie przez <span class="dn-dane">wspolne.js</span> (motyw).</li>
+          </ul>
+        </div>
+      </details>
+
+      <footer class="dok-stopka">
+        <p style="margin:0; color:var(--dn-tekst-3);"><em>Danaco Console — AI Operating Environment · v2.0</em></p>
+        <p style="margin:0; color:var(--dn-tekst-3);"><em>© 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz</em></p>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<div class="dok-schowek" id="schowek" role="status" aria-live="polite">
+  <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+  <span>Skopiowano <span class="dok-schowek-nazwa" id="schowek-tresc"></span></span>
+</div>
+
+<script src="../zasoby/wspolne.js"></script>
+<script>
+/* ============================================================================
+   DANACO CONSOLE — warstwa interakcji opracowania „Żetony systemu wizualnego”
+   Bez bibliotek zewnętrznych. Bez CDN. Działa z file://.
+   Zapis localStorage wyłącznie przez wspolne.js (motyw) — tutaj zero zapisu.
+   Wartości szesnastkowe w rejestrze są CYTATEM z plików źródłowych i służą
+   pomiarowi oraz identyfikacji — nie stylowaniu (stylowanie: wyłącznie var()).
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var d = document;
+  var korzen = d.documentElement;
+  var q = function (s, k) { return (k || d).querySelector(s); };
+  var qa = function (s, k) { return Array.prototype.slice.call((k || d).querySelectorAll(s)); };
+
+  /* ------------------------------------------------------------------ IKONY */
+  var IK = {
+    ptaszek: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    ptaszekKolo: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+    ostrzezenie: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
+    blad: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+    info: '<svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>'
+  };
+  function ucieczka(t) {
+    return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /* ---------------------------------------------------------------- SCHOWEK */
+  var schowek = q('#schowek');
+  var schowekTresc = q('#schowek-tresc');
+  var schowekCzas = null;
+
+  function meldunek(tekst) {
+    schowekTresc.textContent = tekst;
+    schowek.dataset.widoczny = 'tak';
+    if (schowekCzas) clearTimeout(schowekCzas);
+    schowekCzas = setTimeout(function () { schowek.dataset.widoczny = 'nie'; }, 2400);
+  }
+  function kopiuj(tekst, zrodlo) {
+    function zapas() {
+      var pole = d.createElement('textarea');
+      pole.value = tekst;
+      pole.setAttribute('readonly', '');
+      pole.style.position = 'fixed';
+      pole.style.top = '-1000px';
+      d.body.appendChild(pole);
+      pole.select();
+      try { d.execCommand('copy'); } catch (e) { /* brak wsparcia — meldunek i tak informuje */ }
+      d.body.removeChild(pole);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(tekst).then(function () { meldunek(tekst); }, function () { zapas(); meldunek(tekst); });
+    } else { zapas(); meldunek(tekst); }
+    if (zrodlo && zrodlo.classList && zrodlo.classList.contains('dok-karta-zetonu')) {
+      zrodlo.dataset.skopiowany = 'tak';
+      setTimeout(function () { zrodlo.dataset.skopiowany = 'nie'; }, 900);
+    }
+  }
+  d.addEventListener('click', function (e) {
+    var cel = e.target.closest('[data-kopiuj]');
+    if (cel) kopiuj(cel.dataset.kopiuj, cel);
+  });
+
+  /* ------------------------------------------------------ MATEMATYKA BARWY */
+  function parsuj(w) {
+    if (!w) return null;
+    w = String(w).trim();
+    var m = w.match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+    if (m) {
+      var h = m[1];
+      if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+      return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16), a: 1 };
+    }
+    m = w.match(/^rgba?\(\s*([0-9.]+)[\s,]+([0-9.]+)[\s,]+([0-9.]+)(?:[\s,/]+([0-9.%]+))?\s*\)$/);
+    if (m) {
+      var a = 1;
+      if (m[4] !== undefined) { a = m[4].indexOf('%') > -1 ? parseFloat(m[4]) / 100 : parseFloat(m[4]); }
+      return { r: +m[1], g: +m[2], b: +m[3], a: a };
+    }
+    return null;
+  }
+  function zloz(barwa, tlo) {
+    if (!barwa) return null;
+    if (barwa.a >= 1 || !tlo) return { r: barwa.r, g: barwa.g, b: barwa.b, a: 1 };
+    return {
+      r: Math.round(barwa.r * barwa.a + tlo.r * (1 - barwa.a)),
+      g: Math.round(barwa.g * barwa.a + tlo.g * (1 - barwa.a)),
+      b: Math.round(barwa.b * barwa.a + tlo.b * (1 - barwa.a)),
+      a: 1
+    };
+  }
+  function luminancja(c) {
+    function f(v) { v = v / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+  }
+  function kontrast(a, b) {
+    if (!a || !b) return null;
+    var la = luminancja(a), lb = luminancja(b);
+    var hi = Math.max(la, lb), lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+  function naHex(c) {
+    if (!c) return '';
+    function h(v) { var s = Math.max(0, Math.min(255, Math.round(v))).toString(16).toUpperCase(); return s.length < 2 ? '0' + s : s; }
+    return '#' + h(c.r) + h(c.g) + h(c.b);
+  }
+  function fmt(x) { return x === null ? '—' : x.toFixed(2).replace('.', ','); }
+  var stylKorzenia = getComputedStyle(korzen); /* obiekt żywy — aktualizuje się przy zmianie motywu */
+  function czytaj(nazwa) { return stylKorzenia.getPropertyValue(nazwa).trim(); }
+  function czytajLiczbe(nazwa) { return parseFloat(czytaj(nazwa)) || 0; }
+
+  function werdykt(k, prog) {
+    if (prog <= 1.6) return { kod: 'SYS', klasa: 'systemowy', etykieta: 'PRÓG SYSTEMOWY', ikona: IK.ostrzezenie };
+    if (k < prog) return { kod: 'NIE', klasa: 'nie', etykieta: 'NIE PRZECHODZI', ikona: IK.blad };
+    if (k >= 7 && prog >= 4.5) return { kod: 'AAA', klasa: 'aaa', etykieta: 'AAA', ikona: IK.ptaszekKolo };
+    return { kod: 'AA', klasa: 'aa', etykieta: 'AA', ikona: IK.ptaszek };
+  }
+  function werdyktHTML(k, prog) {
+    var w = werdykt(k, prog);
+    return '<span class="dok-werdykt dok-werdykt--' + w.klasa + '">' + w.ikona + w.etykieta + '</span>';
+  }
+
+  /* -------------------------------------------------------- SPIS TREŚCI (IO) */
+  var odnosniki = qa('#spis-lista a');
+  var mapaOdnosnikow = {};
+  odnosniki.forEach(function (a) { mapaOdnosnikow[a.getAttribute('href').slice(1)] = a; });
+  function ustawAktywna(id) {
+    odnosniki.forEach(function (a) { a.removeAttribute('aria-current'); });
+    if (mapaOdnosnikow[id]) mapaOdnosnikow[id].setAttribute('aria-current', 'true');
+  }
+  var sekcje = qa('.dok-sekcja');
+  if ('IntersectionObserver' in window) {
+    var widoczne = {};
+    var obs = new IntersectionObserver(function (wpisy) {
+      wpisy.forEach(function (w) { widoczne[w.target.id] = w.isIntersecting ? w.intersectionRatio : 0; });
+      var naj = null, najW = 0;
+      sekcje.forEach(function (s) { var v = widoczne[s.id] || 0; if (v > najW) { najW = v; naj = s.id; } });
+      if (naj) ustawAktywna(naj);
+    }, { rootMargin: '-64px 0px -55% 0px', threshold: [0, 0.05, 0.25, 0.5, 1] });
+    sekcje.forEach(function (s) { obs.observe(s); });
+  }
+  ustawAktywna('s1');
+
+  /* ================================================================ REJESTR */
+  /* Wartości cytowane z zasoby/zetony/zetony.css i zetony.json */
+
+  var PREFIKSY = [
+    ['szary', '--dn-szary-&lt;0…1000&gt;', 18, 'prymityw', 'neutralna skala achromatyczna'],
+    ['sygnal', '--dn-sygnal-&lt;100…800&gt;', 8, 'prymityw', 'rodzina błękitu sygnałowego'],
+    ['zielen', '--dn-zielen-&lt;100…700&gt;', 4, 'prymityw', 'rodzina sukcesu'],
+    ['bursztyn', '--dn-bursztyn-&lt;100…700&gt;', 4, 'prymityw', 'rodzina ostrzeżenia'],
+    ['czerwien', '--dn-czerwien-&lt;100…700&gt;', 4, 'prymityw', 'rodzina błędu'],
+    ['rama', '--dn-rama[-rola]', 5, 'stały', 'powierzchnia paska górnego, niezmienna w obu motywach'],
+    ['ff', '--dn-ff-&lt;rola&gt;', 3, 'niezależny', 'rodzina kroju (font family)'],
+    ['fs', '--dn-fs-&lt;stopień&gt;', 9, 'niezależny', 'stopień pisma (font size)'],
+    ['fw', '--dn-fw-&lt;waga&gt;', 4, 'niezależny', 'waga kroju (font weight)'],
+    ['lh', '--dn-lh-&lt;gęstość&gt;', 3, 'niezależny', 'interlinia (line height)'],
+    ['ls', '--dn-ls-&lt;zastosowanie&gt;', 3, 'niezależny', 'odstęp liter (letter spacing)'],
+    ['od', '--dn-od-&lt;krotność&gt;', 11, 'niezależny', 'odstęp = krotność 4 px'],
+    ['r', '--dn-r-&lt;rozmiar&gt;', 6, 'niezależny', 'promień narożnika'],
+    ['ease', '--dn-ease', 1, 'niezależny', 'krzywa czasowa — jedna w systemie'],
+    ['czas', '--dn-czas-&lt;1|2|3|tetno&gt;', 4, 'niezależny', 'czas trwania przejścia'],
+    ['wym', '--dn-wym-&lt;element&gt;', 25, 'niezależny', 'wymiar elementu interfejsu'],
+    ['odstep', '--dn-odstep-&lt;zakres&gt;', 2, 'niezależny', 'rytm kompozycyjny (alias na od)'],
+    ['bp', '--dn-bp-w&lt;1…4&gt;', 4, 'niezależny', 'punkt łamania (breakpoint)'],
+    ['tresc', '--dn-tresc-max', 1, 'niezależny', 'maksymalna szerokość treści'],
+    ['siatka', '--dn-siatka-&lt;cecha&gt;', 2, 'niezależny', 'kolumny i przerwa siatki'],
+    ['z', '--dn-z-&lt;warstwa&gt;', 11, 'niezależny', 'poziom z-index'],
+    ['grad', '--dn-grad-&lt;rodzina&gt;', 2, 'niezależny', 'gradient ilustracyjny'],
+    ['tlo · powierzchnia · panel', 'nazwa roli', 4, 'semantyczny', 'powierzchnie dokumentu'],
+    ['hover · wcisniecie · nakladka', 'nazwa roli', 3, 'semantyczny', 'nakładki interakcji'],
+    ['obrys', '--dn-obrys[-moc]', 3, 'semantyczny', 'linie rozdzielające'],
+    ['tekst', '--dn-tekst[-stopień|-inv]', 4, 'semantyczny', 'hierarchia tekstu'],
+    ['atrament', '--dn-atrament[-rola]', 3, 'semantyczny', 'działanie główne (inwersja)'],
+    ['sygnal · kropka · fokus', '--dn-sygnal[-rola]', 9, 'semantyczny', 'role akcentu, element sygnaturowy, fokus'],
+    ['sukces · ostrzezenie · blad · informacja', '--dn-&lt;stan&gt;-&lt;tekst|tlo|obrys&gt;', 12, 'semantyczny', 'komplet stanu'],
+    ['cien', '--dn-cien-&lt;1|2|3|lg|sygnal&gt;', 5, 'semantyczny', 'głębia per motyw']
+  ];
+
+  var SZAROSCI = [
+    ['--dn-szary-0', '#FFFFFF', 'powierzchnia kart, tekst na atramencie'],
+    ['--dn-szary-25', '#FAFAFA', 'panel (jasny), atrament-hover (ciemny)'],
+    ['--dn-szary-50', '#F4F4F4', 'tło dokumentu (jasny)'],
+    ['--dn-szary-100', '#ECECEC', 'powierzchnia-2 i obrys-subtelny (jasny); tekst i atrament (ciemny); rama-tekst'],
+    ['--dn-szary-150', '#E3E3E3', 'obrys (jasny)'],
+    ['--dn-szary-200', '#D7D7D7', 'stopień rezerwowy — bez mapowania semantycznego'],
+    ['--dn-szary-300', '#C0C0C0', 'obrys-mocny (jasny)'],
+    ['--dn-szary-400', '#9E9E9E', 'tekst-2 (ciemny); rama-tekst-2'],
+    ['--dn-szary-500', '#7C7C7C', 'tekst-3 w obu motywach — wyłącznie metadane'],
+    ['--dn-szary-600', '#616161', 'tekst-2 (jasny)'],
+    ['--dn-szary-700', '#4A4A4A', 'stopień rezerwowy — bez mapowania semantycznego'],
+    ['--dn-szary-750', '#3A3A3A', 'obrys-mocny (ciemny)'],
+    ['--dn-szary-800', '#2A2A2A', 'obrys (ciemny); początek gradientu atramentowego'],
+    ['--dn-szary-850', '#212121', 'panel i obrys-subtelny (ciemny)'],
+    ['--dn-szary-900', '#181818', 'tekst i atrament (jasny); powierzchnia (ciemny)'],
+    ['--dn-szary-925', '#131313', 'rama w obu motywach; powierzchnia-2 (ciemny)'],
+    ['--dn-szary-950', '#0F0F0F', 'tło, tekst-inv, atrament-tekst (ciemny)'],
+    ['--dn-szary-1000', '#0A0A0A', 'atrament-hover (jasny); źródło alfy nakładek i cieni motywu jasnego']
+  ];
+  var SYGNALY = [
+    ['--dn-sygnal-100', '#EDF3FE', 'sygnał-tło i informacja-tło (jasny)'],
+    ['--dn-sygnal-200', '#C9DAFB', 'sygnał-obrys (jasny); sygnał-mocny (ciemny)'],
+    ['--dn-sygnal-300', '#8FB2F5', 'sygnał i informacja-tekst (ciemny); sygnał na ramie'],
+    ['--dn-sygnal-400', '#5C8CEC', 'kropka, fokus, wypełnienie-hover (ciemny); początek gradientu sygnałowego'],
+    ['--dn-sygnal-500', '#3B6FE0', 'BAZOWY — kropka i fokus (jasny); wypełnienie (ciemny)'],
+    ['--dn-sygnal-600', '#2457C9', 'sygnał, wypełnienie, informacja-tekst (jasny); koniec gradientu'],
+    ['--dn-sygnal-700', '#1D49AF', 'sygnał-mocny i wypełnienie-hover (jasny)'],
+    ['--dn-sygnal-800', '#173A8C', 'stopień rezerwowy — najciemniejszy stopień rodziny']
+  ];
+  var ZIELENIE = [
+    ['--dn-zielen-700', '#1E7A46', 'sukces-tekst (jasny)'],
+    ['--dn-zielen-400', '#4FBD85', 'sukces-tekst (ciemny); źródło alfy tła 0,14 i obrysu 0,34'],
+    ['--dn-zielen-200', '#BCE3CD', 'sukces-obrys (jasny)'],
+    ['--dn-zielen-100', '#E7F5EE', 'sukces-tło (jasny)']
+  ];
+  var BURSZTYNY = [
+    ['--dn-bursztyn-700', '#8A5B0C', 'ostrzeżenie-tekst (jasny)'],
+    ['--dn-bursztyn-400', '#E0A63C', 'ostrzeżenie-tekst (ciemny); źródło alfy tła i obrysu'],
+    ['--dn-bursztyn-200', '#EED9A7', 'ostrzeżenie-obrys (jasny)'],
+    ['--dn-bursztyn-100', '#FBF2DE', 'ostrzeżenie-tło (jasny)']
+  ];
+  var CZERWIENIE = [
+    ['--dn-czerwien-700', '#C0362F', 'błąd-tekst (jasny)'],
+    ['--dn-czerwien-400', '#EE7168', 'błąd-tekst (ciemny); źródło alfy tła i obrysu'],
+    ['--dn-czerwien-200', '#F3C8C4', 'błąd-obrys (jasny)'],
+    ['--dn-czerwien-100', '#FCEDEB', 'błąd-tło (jasny)']
+  ];
+  var RAMA = [
+    ['--dn-rama', '#131313', 'powierzchnia paska górnego — jedyny element nieprzełączający się z motywem'],
+    ['--dn-rama-tekst', '#ECECEC', 'logotyp, etykiety główne, ikona aktywna'],
+    ['--dn-rama-tekst-2', '#9E9E9E', 'ikony w spoczynku, tekst pomocniczy, podpowiedź wyszukiwania'],
+    ['--dn-rama-hover', 'rgba(255,255,255,0.08)', 'tło przycisku ikonowego przy najechaniu i wciśnięciu'],
+    ['--dn-rama-obrys', 'rgba(255,255,255,0.10)', 'obrys pola wyszukiwania i separatorów na ramie']
+  ];
+
+  /* Żetony semantyczne — [nazwa, wartość, mapowanie, rola, grupa] */
+  var SEM_JASNY = [
+    ['--dn-tlo', '#F4F4F4', 'var(--dn-szary-50)', 'tło dokumentu — papier roboczy', 'powierzchnie'],
+    ['--dn-powierzchnia', '#FFFFFF', 'var(--dn-szary-0)', 'karty, okna, pola', 'powierzchnie'],
+    ['--dn-powierzchnia-2', '#ECECEC', 'var(--dn-szary-100)', 'wgłębienia, tory postępu, bloki kodu', 'powierzchnie'],
+    ['--dn-panel', '#FAFAFA', 'var(--dn-szary-25)', 'panele boczne, nagłówki tabel', 'powierzchnie'],
+    ['--dn-hover', 'rgba(10,10,10,0.05)', 'szary-1000 @ 5%', 'nakładka najechania', 'powierzchnie'],
+    ['--dn-wcisniecie', 'rgba(10,10,10,0.09)', 'szary-1000 @ 9%', 'nakładka naciśnięcia', 'powierzchnie'],
+    ['--dn-nakladka', 'rgba(10,10,10,0.45)', 'szary-1000 @ 45%', 'przyciemnienie pod modalem', 'powierzchnie'],
+    ['--dn-obrys', '#E3E3E3', 'var(--dn-szary-150)', 'podstawowa linia rozdzielająca', 'obrysy'],
+    ['--dn-obrys-subtelny', '#ECECEC', 'var(--dn-szary-100)', 'linia wewnątrz komponentu, separator', 'obrysy'],
+    ['--dn-obrys-mocny', '#C0C0C0', 'var(--dn-szary-300)', 'obrys kontrolki, kciuk paska przewijania', 'obrysy'],
+    ['--dn-tekst', '#181818', 'var(--dn-szary-900)', 'tekst główny', 'tekst'],
+    ['--dn-tekst-2', '#616161', 'var(--dn-szary-600)', 'tekst drugorzędny, opisy', 'tekst'],
+    ['--dn-tekst-3', '#7C7C7C', 'var(--dn-szary-500)', 'wyłącznie metadane i tekst ≥ 18,66 px półgruby', 'tekst'],
+    ['--dn-tekst-inv', '#FFFFFF', 'var(--dn-szary-0)', 'tekst na powierzchni odwróconej', 'tekst'],
+    ['--dn-atrament', '#181818', 'var(--dn-szary-900)', 'tło przycisku głównego', 'atrament'],
+    ['--dn-atrament-hover', '#0A0A0A', 'var(--dn-szary-1000)', 'przycisk główny przy najechaniu', 'atrament'],
+    ['--dn-atrament-tekst', '#FFFFFF', 'var(--dn-szary-0)', 'tekst na przycisku głównym', 'atrament'],
+    ['--dn-sygnal', '#2457C9', 'var(--dn-sygnal-600)', 'tekst sygnałowy, odnośniki', 'sygnał'],
+    ['--dn-sygnal-mocny', '#1D49AF', 'var(--dn-sygnal-700)', 'odnośnik przy najechaniu', 'sygnał'],
+    ['--dn-sygnal-wypelnienie', '#2457C9', 'var(--dn-sygnal-600)', 'wypełnienie przycisku sygnałowego, tor przełącznika', 'sygnał'],
+    ['--dn-sygnal-wypelnienie-hover', '#1D49AF', 'var(--dn-sygnal-700)', 'wypełnienie przy najechaniu', 'sygnał'],
+    ['--dn-sygnal-tlo', '#EDF3FE', 'var(--dn-sygnal-100)', 'tło stanu wybranego, zaznaczenie tekstu', 'sygnał'],
+    ['--dn-sygnal-obrys', '#C9DAFB', 'var(--dn-sygnal-200)', 'obrys stanu wybranego', 'sygnał'],
+    ['--dn-kropka', '#3B6FE0', 'var(--dn-sygnal-500)', 'kropka sygnału — element sygnaturowy', 'sygnał'],
+    ['--dn-fokus', '#3B6FE0', 'var(--dn-sygnal-500)', 'pierścień fokusu 2 px + odsunięcie 2 px', 'fokus'],
+    ['--dn-fokus-cien', 'rgba(59,111,224,0.30)', 'sygnal-500 @ 30%', 'poświata pola aktywnego', 'fokus'],
+    ['--dn-sukces-tekst', '#1E7A46', 'var(--dn-zielen-700)', 'tekst stanu sukcesu', 'stany'],
+    ['--dn-sukces-tlo', '#E7F5EE', 'var(--dn-zielen-100)', 'tło stanu sukcesu', 'stany'],
+    ['--dn-sukces-obrys', '#BCE3CD', 'var(--dn-zielen-200)', 'obrys stanu sukcesu', 'stany'],
+    ['--dn-ostrzezenie-tekst', '#8A5B0C', 'var(--dn-bursztyn-700)', 'tekst stanu ostrzeżenia', 'stany'],
+    ['--dn-ostrzezenie-tlo', '#FBF2DE', 'var(--dn-bursztyn-100)', 'tło stanu ostrzeżenia', 'stany'],
+    ['--dn-ostrzezenie-obrys', '#EED9A7', 'var(--dn-bursztyn-200)', 'obrys stanu ostrzeżenia', 'stany'],
+    ['--dn-blad-tekst', '#C0362F', 'var(--dn-czerwien-700)', 'tekst stanu błędu', 'stany'],
+    ['--dn-blad-tlo', '#FCEDEB', 'var(--dn-czerwien-100)', 'tło stanu błędu', 'stany'],
+    ['--dn-blad-obrys', '#F3C8C4', 'var(--dn-czerwien-200)', 'obrys stanu błędu', 'stany'],
+    ['--dn-informacja-tekst', '#2457C9', 'var(--dn-sygnal-600)', 'tekst stanu informacji', 'stany'],
+    ['--dn-informacja-tlo', '#EDF3FE', 'var(--dn-sygnal-100)', 'tło stanu informacji', 'stany'],
+    ['--dn-informacja-obrys', '#C9DAFB', 'var(--dn-sygnal-200)', 'obrys stanu informacji', 'stany'],
+    ['--dn-cien-1', '0 1px 2px rgba(10,10,10,0.05)', 'szary-1000 @ 5%', 'karta w spoczynku', 'cienie'],
+    ['--dn-cien-2', '0 2px 8px rgba(10,10,10,0.07), 0 1px 2px rgba(10,10,10,0.05)', 'szary-1000', 'karta przy najechaniu, dymek', 'cienie'],
+    ['--dn-cien-3', '0 8px 24px rgba(10,10,10,0.12)', 'szary-1000 @ 12%', 'menu kontekstowe, toast', 'cienie'],
+    ['--dn-cien-lg', '0 20px 48px rgba(10,10,10,0.18)', 'szary-1000 @ 18%', 'modal — największy cień systemu', 'cienie'],
+    ['--dn-cien-sygnal', '0 0 0 3px rgba(59,111,224,0.18)', 'sygnal-500 @ 18%', 'ZAREZERWOWANY: pierścień pola aktywnego, poświata kropki', 'cienie']
+  ];
+  var SEM_CIEMNY = [
+    ['--dn-tlo', '#0F0F0F', 'var(--dn-szary-950)', 'tło dokumentu', 'powierzchnie'],
+    ['--dn-powierzchnia', '#181818', 'var(--dn-szary-900)', 'karty, okna, pola', 'powierzchnie'],
+    ['--dn-powierzchnia-2', '#131313', 'var(--dn-szary-925)', 'wgłębienia, tory postępu, bloki kodu', 'powierzchnie'],
+    ['--dn-panel', '#212121', 'var(--dn-szary-850)', 'panele uniesione, nagłówki tabel', 'powierzchnie'],
+    ['--dn-hover', 'rgba(255,255,255,0.06)', 'biel @ 6%', 'nakładka najechania', 'powierzchnie'],
+    ['--dn-wcisniecie', 'rgba(255,255,255,0.10)', 'biel @ 10%', 'nakładka naciśnięcia', 'powierzchnie'],
+    ['--dn-nakladka', 'rgba(0,0,0,0.62)', 'czerń @ 62% — wyłącznie krycie, nigdy barwa powierzchni', 'przyciemnienie pod modalem', 'powierzchnie'],
+    ['--dn-obrys', '#2A2A2A', 'var(--dn-szary-800)', 'podstawowa linia rozdzielająca', 'obrysy'],
+    ['--dn-obrys-subtelny', '#212121', 'var(--dn-szary-850)', 'linia wewnątrz komponentu, separator', 'obrysy'],
+    ['--dn-obrys-mocny', '#3A3A3A', 'var(--dn-szary-750)', 'obrys kontrolki, kciuk paska przewijania', 'obrysy'],
+    ['--dn-tekst', '#ECECEC', 'var(--dn-szary-100)', 'tekst główny', 'tekst'],
+    ['--dn-tekst-2', '#9E9E9E', 'var(--dn-szary-400)', 'tekst drugorzędny, opisy', 'tekst'],
+    ['--dn-tekst-3', '#7C7C7C', 'var(--dn-szary-500)', 'wyłącznie metadane', 'tekst'],
+    ['--dn-tekst-inv', '#0F0F0F', 'var(--dn-szary-950)', 'tekst na powierzchni odwróconej', 'tekst'],
+    ['--dn-atrament', '#ECECEC', 'var(--dn-szary-100)', 'tło przycisku głównego — biel', 'atrament'],
+    ['--dn-atrament-hover', '#FAFAFA', 'var(--dn-szary-25)', 'przycisk główny przy najechaniu', 'atrament'],
+    ['--dn-atrament-tekst', '#0F0F0F', 'var(--dn-szary-950)', 'tekst na przycisku głównym', 'atrament'],
+    ['--dn-sygnal', '#8FB2F5', 'var(--dn-sygnal-300)', 'tekst sygnałowy, odnośniki', 'sygnał'],
+    ['--dn-sygnal-mocny', '#C9DAFB', 'var(--dn-sygnal-200)', 'odnośnik przy najechaniu', 'sygnał'],
+    ['--dn-sygnal-wypelnienie', '#3B6FE0', 'var(--dn-sygnal-500)', 'wypełnienie przycisku sygnałowego, tor przełącznika', 'sygnał'],
+    ['--dn-sygnal-wypelnienie-hover', '#5C8CEC', 'var(--dn-sygnal-400)', 'wypełnienie przy najechaniu', 'sygnał'],
+    ['--dn-sygnal-tlo', 'rgba(59,111,224,0.16)', 'sygnal-500 @ 16%', 'tło stanu wybranego', 'sygnał'],
+    ['--dn-sygnal-obrys', 'rgba(92,140,236,0.40)', 'sygnal-400 @ 40%', 'obrys stanu wybranego', 'sygnał'],
+    ['--dn-kropka', '#5C8CEC', 'var(--dn-sygnal-400)', 'kropka sygnału — element sygnaturowy', 'sygnał'],
+    ['--dn-fokus', '#5C8CEC', 'var(--dn-sygnal-400)', 'pierścień fokusu 2 px + odsunięcie 2 px', 'fokus'],
+    ['--dn-fokus-cien', 'rgba(92,140,236,0.35)', 'sygnal-400 @ 35%', 'poświata pola aktywnego', 'fokus'],
+    ['--dn-sukces-tekst', '#4FBD85', 'var(--dn-zielen-400)', 'tekst stanu sukcesu', 'stany'],
+    ['--dn-sukces-tlo', 'rgba(79,189,133,0.14)', 'zielen-400 @ 14%', 'tło stanu sukcesu', 'stany'],
+    ['--dn-sukces-obrys', 'rgba(79,189,133,0.34)', 'zielen-400 @ 34%', 'obrys stanu sukcesu', 'stany'],
+    ['--dn-ostrzezenie-tekst', '#E0A63C', 'var(--dn-bursztyn-400)', 'tekst stanu ostrzeżenia', 'stany'],
+    ['--dn-ostrzezenie-tlo', 'rgba(224,166,60,0.14)', 'bursztyn-400 @ 14%', 'tło stanu ostrzeżenia', 'stany'],
+    ['--dn-ostrzezenie-obrys', 'rgba(224,166,60,0.34)', 'bursztyn-400 @ 34%', 'obrys stanu ostrzeżenia', 'stany'],
+    ['--dn-blad-tekst', '#EE7168', 'var(--dn-czerwien-400)', 'tekst stanu błędu', 'stany'],
+    ['--dn-blad-tlo', 'rgba(238,113,104,0.14)', 'czerwien-400 @ 14%', 'tło stanu błędu', 'stany'],
+    ['--dn-blad-obrys', 'rgba(238,113,104,0.34)', 'czerwien-400 @ 34%', 'obrys stanu błędu', 'stany'],
+    ['--dn-informacja-tekst', '#8FB2F5', 'var(--dn-sygnal-300)', 'tekst stanu informacji', 'stany'],
+    ['--dn-informacja-tlo', 'rgba(59,111,224,0.16)', 'sygnal-500 @ 16%', 'tło stanu informacji', 'stany'],
+    ['--dn-informacja-obrys', 'rgba(92,140,236,0.40)', 'sygnal-400 @ 40%', 'obrys stanu informacji', 'stany'],
+    ['--dn-cien-1', '0 1px 2px rgba(0,0,0,0.35)', 'czerń @ 35%', 'karta w spoczynku', 'cienie'],
+    ['--dn-cien-2', '0 3px 10px rgba(0,0,0,0.42), 0 1px 2px rgba(0,0,0,0.30)', 'czerń', 'karta przy najechaniu, dymek', 'cienie'],
+    ['--dn-cien-3', '0 10px 30px rgba(0,0,0,0.52)', 'czerń @ 52%', 'menu kontekstowe, toast', 'cienie'],
+    ['--dn-cien-lg', '0 24px 60px rgba(0,0,0,0.65)', 'czerń @ 65%', 'modal — największy cień systemu', 'cienie'],
+    ['--dn-cien-sygnal', '0 0 0 3px rgba(92,140,236,0.22)', 'sygnal-400 @ 22%', 'ZAREZERWOWANY: pierścień pola aktywnego, poświata kropki', 'cienie']
+  ];
+
+  /* 33 pomiary z zasoby/zetony/kontrasty.json — [para, fg, bg, kontrast, prog] */
+  var POMIARY = [
+    ['tekst / tło (jasny)', 'szary-900 #181818', 'szary-50 #F4F4F4', 16.14, 4.5],
+    ['tekst / powierzchnia (jasny)', 'szary-900 #181818', 'szary-0 #FFFFFF', 17.76, 4.5],
+    ['tekst-2 / tło (jasny)', 'szary-600 #616161', 'szary-50 #F4F4F4', 5.63, 4.5],
+    ['tekst-2 / powierzchnia (jasny)', 'szary-600 #616161', 'szary-0 #FFFFFF', 6.19, 4.5],
+    ['tekst-2 / powierzchnia-2 (jasny)', 'szary-600 #616161', 'szary-100 #ECECEC', 5.24, 4.5],
+    ['tekst-3 / tło (jasny)', 'szary-500 #7C7C7C', 'szary-50 #F4F4F4', 3.80, 3.0],
+    ['tekst-3 / powierzchnia (jasny)', 'szary-500 #7C7C7C', 'szary-0 #FFFFFF', 4.17, 3.0],
+    ['biel / przycisk atrament (jasny)', 'szary-0 #FFFFFF', 'szary-900 #181818', 17.76, 4.5],
+    ['sygnał-tekst / tło (jasny)', 'sygnal-600 #2457C9', 'szary-50 #F4F4F4', 5.82, 4.5],
+    ['sygnał-tekst / powierzchnia (jasny)', 'sygnal-600 #2457C9', 'szary-0 #FFFFFF', 6.40, 4.5],
+    ['sygnał-tekst / sygnał-tło (jasny)', 'sygnal-600 #2457C9', 'sygnal-100 #EDF3FE', 5.74, 4.5],
+    ['biel / sygnał wypełnienie', 'szary-0 #FFFFFF', 'sygnal-600 #2457C9', 6.40, 4.5],
+    ['obrys kontrolki / tło (jasny)', 'szary-300 #C0C0C0', 'szary-50 #F4F4F4', 1.65, 1.6],
+    ['fokus sygnał / tło (jasny)', 'sygnal-500 #3B6FE0', 'szary-50 #F4F4F4', 4.21, 3.0],
+    ['sukces tekst / tło stanu (jasny)', 'sukces-700 #1E7A46', 'sukces-100 #E7F5EE', 4.76, 4.5],
+    ['ostrzeżenie tekst / tło stanu (jasny)', 'ostrz-700 #8A5B0C', 'ostrz-100 #FBF2DE', 5.26, 4.5],
+    ['błąd tekst / tło stanu (jasny)', 'blad-700 #C0362F', 'blad-100 #FCEDEB', 4.84, 4.5],
+    ['sukces tekst / powierzchnia (jasny)', 'sukces-700 #1E7A46', 'szary-0 #FFFFFF', 5.35, 4.5],
+    ['ostrzeżenie tekst / powierzchnia (jasny)', 'ostrz-700 #8A5B0C', 'szary-0 #FFFFFF', 5.86, 4.5],
+    ['błąd tekst / powierzchnia (jasny)', 'blad-700 #C0362F', 'szary-0 #FFFFFF', 5.51, 4.5],
+    ['tekst / tło (ciemny)', 'szary-100 #ECECEC', 'szary-950 #0F0F0F', 16.23, 4.5],
+    ['tekst / powierzchnia (ciemny)', 'szary-100 #ECECEC', 'szary-900 #181818', 15.03, 4.5],
+    ['tekst-2 / tło (ciemny)', 'szary-400 #9E9E9E', 'szary-950 #0F0F0F', 7.15, 4.5],
+    ['tekst-2 / powierzchnia (ciemny)', 'szary-400 #9E9E9E', 'szary-900 #181818', 6.63, 4.5],
+    ['tekst-3 / powierzchnia (ciemny)', 'szary-500 #7C7C7C', 'szary-900 #181818', 4.25, 3.0],
+    ['atrament / przycisk biel (ciemny)', 'szary-950 #0F0F0F', 'szary-100 #ECECEC', 16.23, 4.5],
+    ['sygnał-tekst / tło (ciemny)', 'sygnal-300 #8FB2F5', 'szary-950 #0F0F0F', 9.00, 4.5],
+    ['sygnał-tekst / powierzchnia (ciemny)', 'sygnal-300 #8FB2F5', 'szary-900 #181818', 8.33, 4.5],
+    ['fokus sygnał / tło (ciemny)', 'sygnal-400 #5C8CEC', 'szary-950 #0F0F0F', 5.86, 3.0],
+    ['sukces tekst / powierzchnia (ciemny)', 'sukces-400 #4FBD85', 'szary-900 #181818', 7.57, 4.5],
+    ['ostrzeżenie tekst / powierzchnia (ciemny)', 'ostrz-400 #E0A63C', 'szary-900 #181818', 8.19, 4.5],
+    ['błąd tekst / powierzchnia (ciemny)', 'blad-400 #EE7168', 'szary-900 #181818', 6.09, 4.5],
+    ['biel / sygnał wypełnienie (ciemny przycisk)', 'szary-0 #FFFFFF', 'sygnal-500 #3B6FE0', 4.63, 3.0]
+  ];
+
+  var DECYZJE = [
+    ['D1', 'Rachunek żetonów systemu nie był nigdzie podany liczbowo', 'Ustalono: 177 unikalnych nazw = 134 niezależne od motywu + 43 semantyczne. Liczby wyprowadzono ze zliczenia deklaracji w blokach :root, :root[data-theme=light] i :root[data-theme=dark].', 'pomiar na pliku zetony.css; suma grup zgodna z sumą całkowitą'],
+    ['D2', 'Prymitywy --dn-szary-200 i --dn-szary-700 nie mają mapowania semantycznego', 'Nazwano je stopniami rezerwowymi i opisano funkcję: ciągłość skali, zapas dla przyszłych ról. Nie usuwa się ich ani nie oznacza jako błędu.', 'zliczenie użyć w zetony.css, fundament.css, komponenty.css — zero wystąpień poza deklaracją'],
+    ['D3', 'To samo dotyczy --dn-sygnal-800', 'Oznaczono jako stopień rezerwowy z przewidzianą rolą (wciśnięcie wypełnienia sygnałowego). Rola jest propozycją, nie stanem obowiązującym.', 'analiza rodziny sygnału: -500 bazowy, -600 wypełnienie, -700 wypełnienie-hover; -800 bez roli'],
+    ['D4', 'Reguła „komponent nie sięga po prymityw” ma w bibliotece odstępstwa', 'Przeprowadzono inwentaryzację i ustalono zamkniętą listę sześciu wyjątków ze wspólnym uzasadnieniem: element leży na powierzchni nieprzełączającej się z motywem. Lista jest zamknięta.', 'komponenty.css, linie 90, 163, 307, 1073, 1083, 1196'],
+    ['D5', 'komponenty.css zawiera jedną wartość szesnastkową wprost: var(--dn-sygnal-300, #8FB2F5)', 'Zakwalifikowano jako wartość zapasową var(), nie naruszenie zakazu — hex jest identyczny z wartością żetonu i nie tworzy drugiego źródła prawdy. Odnotowano do rozważenia przy przeglądzie biblioteki.', 'komponenty.css, linia 163; KANON rozdz. 2'],
+    ['D6', 'Komentarze w zetony.css podają kontrasty zaokrąglone i miejscami rozbieżne z kontrasty.json (tekst-2 „6,4:1 na tle” wobec 5,63 i 6,19; sygnał „5,5:1” wobec 5,82 i 6,40; tekst ciemny „15,0:1 na tle” wobec 16,23 i 15,03)', 'Wiążący jest kontrasty.json (KANON rozdz. 9). Komentarze CSS potraktowano jako skrót redakcyjny, w którym pomylono odniesienie „tło” z „powierzchnią”. Zgłoszono do korekty redakcyjnej; żadna wartość barwy nie wymaga zmiany.', 'porównanie komentarzy zetony.css z pomiarami kontrasty.json i przeliczenie formułą WCAG'],
+    ['D7', 'Wartości kontrastu potrzebne w tabelach rozdz. 3–6 i 14–15 wykraczają poza 33 pomiary źródłowe', 'Doliczono brakujące pary tą samą formułą WCAG 2.1. Rozdz. 16 prezentuje wyłącznie komplet 33 pomiarów źródłowych; wartości doliczone występują w tabelach opisowych i są przypisane do pary.', 'metoda identyczna ze źródłem; brak konfliktu tam, gdzie pary się pokrywają'],
+    ['D8', 'Pomiar 13 (obrys kontrolki / tło, jasny) ma zadeklarowany próg 1,6, który nie jest progiem WCAG', 'Werdykt nazwano „próg systemowy” zamiast AA/AAA i opisano jawnie: obrys pełni funkcję rozdzielenia powierzchni, a nie jedynego nośnika rozpoznania kontrolki — kontrolkę identyfikuje wypełnienie, etykieta i pierścień fokusu (pomiar 14: 4,21 przy progu 3,0). Stosunek do kryterium 1.4.11 pozostaje kwestią otwartą.', 'kontrasty.json, pomiar 13; komponenty.css — .dn-pole-kontrolka, .dn-btn--zarys; KANON rozdz. 9'],
+    ['D9', '--dn-nakladka motywu ciemnego ma wartość rgba(0,0,0,0.62) przy zakazie #000000', 'Zakwalifikowano jako zgodne z zakazem: czerń występuje wyłącznie jako krycie warstwy przyciemniającej, nigdy jako barwa powierzchni ani tekstu.', 'zetony.css rozdz. 11; KIERUNEK 3.1 — „zakaz czystego #000000 jako tła i tekstu”'],
+    ['D10', 'Kolejność rozstrzygania przy jednoczesnym pointer: coarse i data-gestosc="przestronna" nie jest w źródłach opisana', 'Ustalono na podstawie kolejności bloków: przy równej specyficzności rozstrzyga blok późniejszy, czyli [data-gestosc=przestronna]. Kolizja nie daje różnicy widocznej — obie ścieżki dają 40 px kontrolki i 44 px wiersza.', 'zetony.css, rozdz. 12 i 13 pliku'],
+    ['D11', 'Punkty łamania są żetonami, ale CSS nie pozwala użyć var() w zapytaniu medialnym', 'Nazwano to jedynym dopuszczonym miejscem powtórzenia liczby poza żetonem; wskazano matchMedia jako ścieżkę dla warstwy skryptowej.', 'ograniczenie techniczne CSS; zetony.css rozdz. 7'],
+    ['D12', 'Układ tła stanów w motywie ciemnym (alfa zamiast prymitywu) nie był opisany jako zasada', 'Sformułowano zasadę: tło i obrys stanu w motywie ciemnym to barwa tekstu stanu z kryciem 0,14 i 0,34, dzięki czemu dostosowują się do powierzchni. Podano wartości po złożeniu.', 'zetony.css rozdz. 11; przeliczenie kompozycji alfa'],
+    ['D13', 'Asymetria uniesienia powierzchni między motywami mogła wyglądać na niekonsekwencję', 'Opisano jako decyzję celową: w motywie jasnym panel boczny cofa się, w ciemnym wysuwa. Obie ścieżki dają ten sam efekt hierarchii.', 'zestawienie wartości --dn-panel, --dn-powierzchnia i --dn-tlo w obu motywach'],
+    ['D14', 'Kolejność aktualizacji plików przy zmianie wartości nie była nigdzie zapisana', 'Ustalono pięciostopniową kolejność z wyróżnieniem kroku 3 (ponowny pomiar kontrastu) jako krytycznego.', 'KANON rozdz. 9 i 14; struktura pakietu'],
+    ['D15', 'Bramka wstępna przed dodaniem żetonu nie istniała w źródłach', 'Wprowadzono trzy pytania zapobiegające rozrostowi rejestru; reguły R8 i R9 wyprowadzono z zasady „zero dekoracji bez funkcji” i z zamkniętego charakteru skal.', 'KIERUNEK rozdz. 1 i 4'],
+    ['D16', 'Skala stopni pisma jest dwuczęściowa — źródła podają wartości bez opisu kształtu', 'Opisano kształt skali i jego uzasadnienie: strefa robocza wymaga drobnych różnic, strefa ekspozycyjna wyraźnych skoków. Wartości pozostają bez zmian.', 'zetony.css rozdz. 3; KIERUNEK 3.7']
+  ];
+
+  /* Pozostałe rejestry — [nazwa, wartość deklarowana, opis] */
+  var TYPO_KROJE = [
+    ['--dn-ff-naglowek', "'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif", 'nagłówki, tytuły środowisk, logotyp · wagi 500–700'],
+    ['--dn-ff-bazowa', "'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif", 'interfejs i treść · wagi 400–700'],
+    ['--dn-ff-mono', "'IBM Plex Mono', 'Cascadia Mono', 'Consolas', monospace", 'dane, identyfikatory, terminal · wagi 400–600 · tabular-nums']
+  ];
+  var TYPO_STOPNIE = [
+    ['--dn-fs-xs', '11px', 'etykiety wersalikowe, nagłówki kolumn, plakietki'],
+    ['--dn-fs-sm', '12px', 'metadane, tekst pomocniczy, godzina wpisu'],
+    ['--dn-fs-base', '13px', 'BAZOWY — tekst interfejsu, etykieta przycisku'],
+    ['--dn-fs-md', '14px', 'wyróżniona treść, wpisy rozmowy w Chat Window'],
+    ['--dn-fs-lg', '16px', 'nagłówki paneli, tytuł karty'],
+    ['--dn-fs-xl', '20px', 'nagłówki okien i modali'],
+    ['--dn-fs-2xl', '24px', 'tytuły sekcji strony głównej'],
+    ['--dn-fs-3xl', '30px', 'tytuły kart środowisk'],
+    ['--dn-fs-display', '40px', 'największy stopień ekspozycyjny']
+  ];
+  var TYPO_WAGI = [
+    ['--dn-fw-normalna', '400', 'tekst ciągły, treść wpisu, wartości w tabeli'],
+    ['--dn-fw-srednia', '500', 'etykieta przycisku, pozycja nawigacji, logotyp CONSOLE'],
+    ['--dn-fw-polgruba', '600', 'nagłówki h1–h3, tytuł karty, etykieta wersalikowa'],
+    ['--dn-fw-gruba', '700', 'logotyp DANACO, tytuł ekspozycyjny']
+  ];
+  var TYPO_LH = [
+    ['--dn-lh-ciasny', '1.25', 'nagłówki — ustawiane globalnie w fundament.css'],
+    ['--dn-lh-bazowy', '1.45', 'interfejs — wartość body; zwarta gęstość'],
+    ['--dn-lh-luzny', '1.6', 'treść ciągła, opisy, akapity']
+  ];
+  var TYPO_LS = [
+    ['--dn-ls-naglowek', '-0.01em', 'Space Grotesk w dużych stopniach'],
+    ['--dn-ls-wersaliki', '0.08em', 'etykiety wersalikowe Plex Sans'],
+    ['--dn-ls-mono-wersaliki', '0.14em', 'etykiety wersalikowe Plex Mono, logotyp CONSOLE']
+  ];
+  var ODSTEPY = [
+    ['--dn-od-0', 0, '0×', 'zerowanie odstępu w kompozycji zwartej'],
+    ['--dn-od-1', 4, '1×', 'odstęp ikona–etykieta, wewnętrzny rytm plakietki'],
+    ['--dn-od-2', 8, '2×', 'odstęp między kontrolkami w rzędzie'],
+    ['--dn-od-3', 12, '3×', 'rytm wewnętrzny paneli, padding poziomy pola'],
+    ['--dn-od-4', 16, '4×', 'padding karty, odstęp między grupami pól'],
+    ['--dn-od-5', 20, '5×', 'padding ciała modala i bloku demonstracyjnego'],
+    ['--dn-od-6', 24, '6×', 'rytm między sekcjami, przerwa siatki'],
+    ['--dn-od-8', 32, '8×', 'odstęp między blokami strony'],
+    ['--dn-od-10', 40, '10×', 'margines górny stopki, kontrolka dotykowa'],
+    ['--dn-od-12', 48, '12×', 'odstęp między sekcjami dokumentu, pasek górny'],
+    ['--dn-od-16', 64, '16×', 'margines dolny strony, największy odstęp kompozycyjny']
+  ];
+  var PROMIENIE = [
+    ['--dn-r-xs', '3px', 'plakietki drobne, bloki kodu w wierszu, pierścień fokusu'],
+    ['--dn-r-sm', '6px', 'przyciski, pola, kontrolki, karty sesji'],
+    ['--dn-r-md', '8px', 'karty pojedyncze, dymki, toasty'],
+    ['--dn-r-lg', '10px', 'karty, modale, panele'],
+    ['--dn-r-xl', '14px', 'karty środowisk, duże powierzchnie'],
+    ['--dn-r-pill', '999px', 'plakietki stanu, przełączniki, kropki, awatary, tory']
+  ];
+  var CZASY = [
+    ['--dn-czas-1', '0.1s', 'mikroreakcje: najechanie na wiersz, naciśnięcie przycisku'],
+    ['--dn-czas-2', '0.16s', 'przejścia barw: przełączenie motywu, obrys pola przy fokusie'],
+    ['--dn-czas-3', '0.22s', 'wejście i wyjście warstw: modal, panel, toast, zmiana widoku'],
+    ['--dn-czas-tetno', '2.4s', 'tętno kropki sygnału — jedyny ruch ciągły w interfejsie']
+  ];
+  var WYMIARY = [
+    ['--dn-wym-kontrolka', 'przyciski, pola, pozycje wyboru', 64],
+    ['--dn-wym-ikonowy', 'przycisk ikonowy (kwadrat)', 64],
+    ['--dn-wym-pasek', 'pasek górny (rama)', 64],
+    ['--dn-wym-pas-kart', 'pas kart sesji', 64],
+    ['--dn-wym-wiersz', 'wiersz tabeli i listy', 64],
+    ['--dn-wym-boczna', 'boczna nawigacja modułów', 340],
+    ['--dn-wym-pas-komunikacji', 'wysokość pasa komunikacji (Chat Window)', 600],
+    ['--dn-wym-modal', 'maksymalna szerokość modala', 600],
+    ['--dn-wym-toast-min', 'minimalna szerokość powiadomienia', 600],
+    ['--dn-wym-toast-max', 'maksymalna szerokość powiadomienia', 600],
+    ['--dn-wym-awatar-sm', 'awatar mały — wiersz listy', 48],
+    ['--dn-wym-awatar', 'awatar podstawowy — medalion wpisu', 48],
+    ['--dn-wym-awatar-lg', 'awatar duży — nagłówek, rdzeń AOD', 48],
+    ['--dn-wym-ikona-sm', 'ikona w plakietce i medalionie', 32],
+    ['--dn-wym-ikona', 'ikona podstawowa — przycisk, nawigacja', 32],
+    ['--dn-wym-ikona-lg', 'ikona w przycisku ikonowym paska', 32],
+    ['--dn-wym-ikona-xl', 'ikona w pustym stanie, w kaflu', 32],
+    ['--dn-wym-przelacznik-szer', 'tor przełącznika', 48],
+    ['--dn-wym-przelacznik-wys', 'wysokość toru przełącznika', 48],
+    ['--dn-wym-check', 'pole wyboru i opcja jednokrotna', 32],
+    ['--dn-wym-kropka', 'kropka sygnału — element sygnaturowy', 32],
+    ['--dn-wym-wstega', 'wstęga aktywności karty i pozycji', 32],
+    ['--dn-wym-spinner', 'wskaźnik pracy w przycisku', 32],
+    ['--dn-wym-fokus', 'grubość pierścienia fokusu', 32],
+    ['--dn-wym-fokus-odsuniecie', 'odsunięcie pierścienia od krawędzi', 32],
+    ['--dn-odstep-panel', 'wewnętrzny rytm paneli (alias)', 48],
+    ['--dn-odstep-sekcji', 'rytm między sekcjami (alias)', 48]
+  ];
+  var LAMANIE = [
+    ['--dn-bp-w1', 640, 'telefon poziomo', 'widok mobilny — okno Mobile'],
+    ['--dn-bp-w2', 960, 'tablet', 'boczna nawigacja zwija się do ikon'],
+    ['--dn-bp-w3', 1280, 'biurko', 'pełny kokpit'],
+    ['--dn-bp-w4', 1600, 'szerokie biurko', 'dwa okna komunikacji']
+  ];
+  var WARSTWY = [
+    ['--dn-z-centrum-polecen', 1300, 'Centrum poleceń — zawsze najwyżej'],
+    ['--dn-z-aod', 1200, 'Always On Display'],
+    ['--dn-z-tooltip', 1100, 'dymek kontekstowy'],
+    ['--dn-z-powiadomienie', 1000, 'toasty'],
+    ['--dn-z-modal', 900, 'okno modalne'],
+    ['--dn-z-nakladka', 800, 'przyciemnienie pod modalem'],
+    ['--dn-z-pas-komunikacji', 300, 'Chat Window'],
+    ['--dn-z-boczna', 200, 'boczna nawigacja / panel orkiestracji'],
+    ['--dn-z-pasek', 100, 'pasek górny (rama)'],
+    ['--dn-z-przybornik', 10, 'przyklejone nagłówki tabel, przybornik'],
+    ['--dn-z-podloga', 0, 'treść okna operacyjnego']
+  ];
+  var GRADIENTY = [
+    ['--dn-grad-atrament', 'linear-gradient(180deg, #2A2A2A, #131313)', 'awatar bez zdjęcia (człowiek)'],
+    ['--dn-grad-sygnal', 'linear-gradient(135deg, #5C8CEC, #2457C9)', 'medalion jednostki inteligencji, rdzeń AOD']
+  ];
+  var KROKI = [
+    ['Ustal warstwę', 'Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? Przy nowej rodzinie barwnej wymagana jest pełna czwórka stopni (R7).'],
+    ['Nadaj nazwę', 'Wzór --dn-&lt;grupa&gt;-&lt;wariant&gt; i reguły R1–R10. Nazwa nie może kolidować z żadną z istniejących 177.'],
+    ['Zadeklaruj w zetony.css', 'W bloku :root (niezależny) albo w OBU blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. Wartość zapisana jako var(--dn-&lt;prymityw&gt;) albo rgba() z prymitywu (R10).'],
+    ['Powiel do bloków prefers-color-scheme', 'Dotyczy wyłącznie żetonów semantycznych. Wartości muszą być identyczne z blokami motywów — powielenie jest świadomym mechanizmem kaskady, nie drugim źródłem prawdy.'],
+    ['Zmierz kontrast', 'Każdą nową parę tekst/tło i element/tło; dopisz pomiar do kontrasty.json (para, fg, bg, kontrast, prog, ok). Przy alfie mierzy się barwę PO ZŁOŻENIU na powierzchni docelowej.'],
+    ['Odzwierciedl w zetony.json', 'We właściwej gałęzi, z zachowaniem reguł J2, J3 i J6. Liczba żetonów w JSON musi zgadzać się z liczbą w CSS.'],
+    ['Udokumentuj', 'Dopisz wiersz do tabeli w 04-tokens.md i kartę w 04-tokens.html; jeżeli żeton wchodzi do komponentu — uzupełnij dokumentację komponentu. Zaktualizuj rachunek żetonów.']
+  ];
+  var LISTA = [
+    'Nazwa zgodna z konwencją --dn-&lt;grupa&gt;-&lt;wariant&gt; i regułami R1–R10.',
+    'Warstwa ustalona; komponent nie sięga po prymityw (poza sześcioma wyjątkami).',
+    'Żeton semantyczny obecny w OBU blokach motywów i w OBU blokach prefers-color-scheme.',
+    'Wartość zapisana przez var() albo rgba() z prymitywu — zero nowych hexów.',
+    'Brak #000000 w wartości i w łańcuchu odwołań.',
+    'Nowa rodzina stanu ma pełną trójkę -tekst / -tlo / -obrys w obu motywach.',
+    'Pomiar kontrastu dopisany do kontrasty.json; ok: true.',
+    'Żeton stanu — wskazana ikona towarzysząca (stan nigdy samym kolorem).',
+    'Żeton ruchu — mieści się w 100–220 ms albo jest tętnem 2,4 s.',
+    'Żeton wymiaru — wartość jest krotnością 4 px.',
+    'zetony.json zaktualizowany; rachunek żetonów się zgadza.',
+    'Dokumentacja MD i HTML uzupełniona; oba motywy sprawdzone wizualnie.'
+  ];
+
+  /* ============================================================ RENDEROWANIE */
+
+  function kartaBarwy(nazwa, wartosc, opis, grupa) {
+    return '<button class="dok-karta-zetonu" type="button" data-kopiuj="var(' + nazwa + ')" data-zeton-barwa="' + nazwa + '" data-wartosc-stala="' + ucieczka(wartosc) + '">' +
+      '<span class="dok-zeton-probka" style="background:var(' + nazwa + ');"></span>' +
+      '<span>' +
+        '<span class="dok-zeton-nazwa">' + nazwa + '</span>' +
+        '<span class="dok-zeton-wiersz"><span class="dok-zeton-wartosc">' + ucieczka(wartosc) + '</span></span>' +
+        '<span class="dok-pomiar" data-pomiar></span>' +
+        (opis ? '<span class="dok-zeton-opis">' + opis + '</span>' : '') +
+      '</span>' +
+    '</button>';
+  }
+  function wypelnijProbki(idPojemnika, dane) {
+    var pojemnik = q(idPojemnika);
+    if (!pojemnik) return;
+    pojemnik.innerHTML = dane.map(function (w) { return kartaBarwy(w[0], w[1], w[2], ''); }).join('');
+  }
+
+  function odswiezPomiaryProbek() {
+    var tlo = parsuj(czytaj('--dn-tlo'));
+    var pow = parsuj(czytaj('--dn-powierzchnia'));
+    qa('[data-zeton-barwa]').forEach(function (karta) {
+      var pole = q('[data-pomiar]', karta);
+      if (!pole) return;
+      var wart = karta.dataset.wartoscStala;
+      var b = parsuj(wart);
+      if (!b) { pole.textContent = ''; return; }
+      var bt = zloz(b, tlo), bp = zloz(b, pow);
+      var kt = kontrast(bt, tlo), kp = kontrast(bp, pow);
+      pole.innerHTML = '<span><b>tło</b> ' + fmt(kt) + '</span><span><b>pow.</b> ' + fmt(kp) + '</span>';
+    });
+    var et = q('#etykieta-tla-szarosci');
+    if (et) et.textContent = 'tło ' + naHex(tlo) + ' · powierzchnia ' + naHex(pow);
+    var pw = q('#podglad-tlo-wartosc');
+    if (pw) pw.textContent = naHex(tlo);
+  }
+
+  /* --------------------------------------------- REJESTR PRZEGLĄDARKI (177) */
+  var REJESTR = [];
+  function dodaj(nazwa, grupa, wartosc, opis, zywy, barwa) {
+    REJESTR.push({ n: nazwa, g: grupa, w: wartosc, o: opis, zywy: !!zywy, barwa: !!barwa });
+  }
+  SZAROSCI.forEach(function (x) { dodaj(x[0], 'prymityw · szarość', x[1], x[2], false, true); });
+  SYGNALY.forEach(function (x) { dodaj(x[0], 'prymityw · sygnał', x[1], x[2], false, true); });
+  ZIELENIE.concat(BURSZTYNY, CZERWIENIE).forEach(function (x) { dodaj(x[0], 'prymityw · stany', x[1], x[2], false, true); });
+  RAMA.forEach(function (x) { dodaj(x[0], 'rama kokpitu', x[1], x[2], false, true); });
+  TYPO_KROJE.concat(TYPO_STOPNIE, TYPO_WAGI, TYPO_LH, TYPO_LS).forEach(function (x) { dodaj(x[0], 'typografia', x[1], x[2], true, false); });
+  ODSTEPY.forEach(function (x) { dodaj(x[0], 'przestrzeń', x[1] + 'px', x[2] + ' jednostki bazowej · ' + x[3], true, false); });
+  PROMIENIE.forEach(function (x) { dodaj(x[0], 'przestrzeń', x[1], x[2], true, false); });
+  dodaj('--dn-ease', 'ruch', 'cubic-bezier(0.2, 0, 0, 1)', 'jedyna krzywa czasowa systemu', true, false);
+  CZASY.forEach(function (x) { dodaj(x[0], 'ruch', x[1], x[2], true, false); });
+  WYMIARY.forEach(function (x) { dodaj(x[0], 'wymiary', '', x[1], true, false); });
+  LAMANIE.forEach(function (x) { dodaj(x[0], 'siatka i łamanie', x[1] + 'px', x[2] + ' — ' + x[3], true, false); });
+  dodaj('--dn-tresc-max', 'siatka i łamanie', '1200px', 'maksymalna szerokość treści dokumentowej', true, false);
+  dodaj('--dn-siatka-kolumny', 'siatka i łamanie', '12', 'liczba kolumn siatki', true, false);
+  dodaj('--dn-siatka-przerwa', 'siatka i łamanie', '24px', 'przerwa między kolumnami (--dn-od-6)', true, false);
+  WARSTWY.forEach(function (x) { dodaj(x[0], 'warstwy z-index', String(x[1]), x[2], true, false); });
+  GRADIENTY.forEach(function (x) { dodaj(x[0], 'gradienty', x[1], x[2], false, false); });
+  SEM_JASNY.forEach(function (x, i) {
+    var c = SEM_CIEMNY[i];
+    dodaj(x[0], 'semantyczny · ' + x[4], '', x[3] + ' · jasny: ' + x[1] + ' · ciemny: ' + (c ? c[1] : ''), true, x[4] !== 'cienie');
+  });
+
+  /* --- Siatka przeglądarki -------------------------------------------------- */
+  var siatkaZetonow = q('#siatka-zetonow');
+  var GRUPY = [];
+  REJESTR.forEach(function (z) { if (GRUPY.indexOf(z.g) === -1) GRUPY.push(z.g); });
+
+  siatkaZetonow.innerHTML = REJESTR.map(function (z, i) {
+    return '<button class="dok-karta-zetonu" type="button" data-kopiuj="var(' + z.n + ')" data-indeks="' + i + '" data-grupa="' + ucieczka(z.g) + '">' +
+      (z.barwa ? '<span class="dok-zeton-probka dok-zeton-probka--pasek" data-probka style="background:var(' + z.n + ');"></span>' : '') +
+      '<span>' +
+        '<span class="dok-zeton-grupa">' + ucieczka(z.g) + '</span><br>' +
+        '<span class="dok-zeton-nazwa">' + z.n + '</span>' +
+        '<span class="dok-zeton-wiersz"><span class="dok-zeton-wartosc" data-wartosc-zywa>' + ucieczka(z.w) + '</span></span>' +
+        '<span class="dok-zeton-opis">' + z.o + '</span>' +
+      '</span>' +
+    '</button>';
+  }).join('');
+
+  var kartyRejestru = qa('#siatka-zetonow .dok-karta-zetonu');
+  function odswiezWartosciZywe() {
+    kartyRejestru.forEach(function (k) {
+      var z = REJESTR[+k.dataset.indeks];
+      if (!z.zywy) return;
+      var pole = q('[data-wartosc-zywa]', k);
+      var w = czytaj(z.n);
+      if (!w) return;
+      var b = parsuj(w);
+      if (b && b.a < 1) {
+        var pow = parsuj(czytaj('--dn-powierzchnia'));
+        pole.textContent = w + '  →  ' + naHex(zloz(b, pow));
+      } else {
+        pole.textContent = w.length > 92 ? w.slice(0, 90) + '…' : w;
+      }
+      pole.setAttribute('title', w);
+    });
+  }
+
+  /* --- Grupy jako filtry ---------------------------------------------------- */
+  var aktywnaGrupa = '';
+  var pojemnikGrup = q('#grupy-zetonow');
+  pojemnikGrup.innerHTML = '<button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-grupa-filtr="" aria-pressed="true">Wszystkie <span class="dn-dane">(' + REJESTR.length + ')</span></button>' +
+    GRUPY.map(function (g) {
+      var n = REJESTR.filter(function (z) { return z.g === g; }).length;
+      return '<button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-grupa-filtr="' + ucieczka(g) + '" aria-pressed="false">' + ucieczka(g) + ' <span class="dn-dane">(' + n + ')</span></button>';
+    }).join('');
+
+  var poleSzukaj = q('#szukaj-zetonu');
+  var licznikZetonow = q('#licznik-zetonow');
+  var pustyWynik = q('#pusty-wynik');
+  function filtrujRejestr() {
+    var fraza = (poleSzukaj.value || '').trim().toLowerCase();
+    var widocznych = 0;
+    kartyRejestru.forEach(function (k) {
+      var z = REJESTR[+k.dataset.indeks];
+      var zywa = z.zywy ? czytaj(z.n) : '';
+      var stog = (z.n + ' ' + z.g + ' ' + z.w + ' ' + z.o + ' ' + zywa).toLowerCase();
+      var pasuje = (!fraza || stog.indexOf(fraza) > -1) && (!aktywnaGrupa || z.g === aktywnaGrupa);
+      k.classList.toggle('dok-ukryty', !pasuje);
+      if (pasuje) widocznych++;
+    });
+    licznikZetonow.textContent = widocznych + ' / ' + REJESTR.length;
+    pustyWynik.classList.toggle('dok-ukryty', widocznych > 0);
+  }
+  poleSzukaj.addEventListener('input', filtrujRejestr);
+  pojemnikGrup.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-grupa-filtr]');
+    if (!b) return;
+    aktywnaGrupa = b.dataset.grupaFiltr;
+    qa('[data-grupa-filtr]', pojemnikGrup).forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    filtrujRejestr();
+  });
+  q('#czysc-filtry').addEventListener('click', function () {
+    poleSzukaj.value = '';
+    aktywnaGrupa = '';
+    qa('[data-grupa-filtr]', pojemnikGrup).forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.grupaFiltr === '')); });
+    filtrujRejestr();
+    meldunek('Filtry wyczyszczone');
+  });
+
+  /* --- Tabela prefiksów ----------------------------------------------------- */
+  q('#tabela-prefiksow tbody').innerHTML = PREFIKSY.map(function (p) {
+    return '<tr><td class="dok-mono">' + p[0] + '</td><td class="dok-mono">' + p[1] + '</td><td class="dok-num">' + p[2] + '</td><td>' + p[3] + '</td><td>' + p[4] + '</td></tr>';
+  }).join('');
+  function filtrProsty(idPola, idTabeli, idLicznika) {
+    var pole = q(idPola), tab = q(idTabeli), licz = q(idLicznika);
+    if (!pole || !tab) return;
+    var wiersze = qa('tbody tr', tab);
+    pole.addEventListener('input', function () {
+      var f = (pole.value || '').trim().toLowerCase();
+      var n = 0;
+      wiersze.forEach(function (w) {
+        var ok = !f || w.textContent.toLowerCase().indexOf(f) > -1;
+        w.classList.toggle('dok-ukryty', !ok);
+        if (ok) n++;
+      });
+      if (licz) licz.textContent = n + ' / ' + wiersze.length;
+    });
+  }
+  filtrProsty('#filtr-prefiksow', '#tabela-prefiksow', '#licznik-prefiksow');
+
+  /* --- Próbki prymitywów ---------------------------------------------------- */
+  wypelnijProbki('#probki-szarosci', SZAROSCI);
+  wypelnijProbki('#probki-sygnalu', SYGNALY);
+  wypelnijProbki('#probki-zieleni', ZIELENIE);
+  wypelnijProbki('#probki-bursztynu', BURSZTYNY);
+  wypelnijProbki('#probki-czerwieni', CZERWIENIE);
+  wypelnijProbki('#probki-ramy', RAMA);
+
+  /* --- Tabele semantyczne --------------------------------------------------- */
+  function tabelaSemantyczna(idTabeli, dane, tloHex, powHex) {
+    var tlo = parsuj(tloHex), pow = parsuj(powHex);
+    q(idTabeli + ' tbody').innerHTML = dane.map(function (x) {
+      var b = parsuj(x[1]);
+      var probka = b
+        ? '<span class="dok-zeton-probka dok-zeton-probka--pasek" style="background:' + x[1] + '; width:44px;"></span>'
+        : '<span class="dok-mono">—</span>';
+      var pomiar = '—';
+      if (b) {
+        var zl = zloz(b, pow);
+        var kp = kontrast(zl, pow), kt = kontrast(zloz(b, tlo), tlo);
+        pomiar = 'na powierzchni <strong>' + fmt(kp) + '</strong> · na tle <strong>' + fmt(kt) + '</strong>';
+        if (b.a < 1) pomiar += '<br>po złożeniu: <span class="dok-mono">' + naHex(zl) + '</span>';
+      }
+      return '<tr>' +
+        '<td>' + probka + '</td>' +
+        '<td><span class="dok-mono">' + x[0] + '</span><br><span style="color:var(--dn-tekst-3);">' + x[3] + '</span></td>' +
+        '<td class="dok-mono">' + ucieczka(x[1]) + '</td>' +
+        '<td class="dok-mono">' + ucieczka(x[2]) + '</td>' +
+        '<td class="dok-num">' + pomiar + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+  tabelaSemantyczna('#tabela-jasny', SEM_JASNY, '#F4F4F4', '#FFFFFF');
+  tabelaSemantyczna('#tabela-ciemny', SEM_CIEMNY, '#0F0F0F', '#181818');
+  filtrProsty('#filtr-jasny', '#tabela-jasny', '#licznik-jasny');
+  filtrProsty('#filtr-ciemny', '#tabela-ciemny', '#licznik-ciemny');
+
+  /* --- Tabela kontrastów ---------------------------------------------------- */
+  function hexZ(opis) { var m = String(opis).match(/#[0-9A-Fa-f]{6}/); return m ? m[0] : null; }
+  var wierszeKontrastow = POMIARY.map(function (p, i) {
+    var fg = hexZ(p[1]), bg = hexZ(p[2]);
+    var przeliczone = (fg && bg) ? kontrast(parsuj(fg), parsuj(bg)) : null;
+    var w = werdykt(p[3], p[4]);
+    var zapas = p[3] - p[4];
+    var podglad = (fg && bg)
+      ? '<span style="display:inline-block; padding:2px 8px; border-radius:var(--dn-r-xs); border:1px solid var(--dn-obrys); background:' + bg + '; color:' + fg + '; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs);">Aa 13</span>'
+      : '—';
+    return {
+      kod: w.kod,
+      html: '<tr>' +
+        '<td class="dok-num">' + (i + 1) + '</td>' +
+        '<td>' + p[0] + '<br><span class="dok-mono" style="color:var(--dn-tekst-3);">' + p[1] + ' na ' + p[2] + '</span></td>' +
+        '<td>' + podglad + '</td>' +
+        '<td class="dok-num"><strong>' + fmt(p[3]) + '</strong></td>' +
+        '<td class="dok-num">' + fmt(przeliczone) + '</td>' +
+        '<td class="dok-num">' + fmt(p[4]) + '</td>' +
+        '<td class="dok-num">' + (zapas >= 0 ? '+' : '') + fmt(zapas) + '</td>' +
+        '<td>' + werdyktHTML(p[3], p[4]) + '</td>' +
+      '</tr>'
+    };
+  });
+  q('#tabela-kontrastow tbody').innerHTML = wierszeKontrastow.map(function (w) { return w.html; }).join('');
+  q('#licznik-aaa').textContent = wierszeKontrastow.filter(function (w) { return w.kod === 'AAA'; }).length;
+  q('#licznik-aa').textContent = wierszeKontrastow.filter(function (w) { return w.kod === 'AA'; }).length;
+  q('#licznik-nie').textContent = wierszeKontrastow.filter(function (w) { return w.kod === 'NIE'; }).length;
+
+  var filtrWerdyktu = '';
+  var poleKontrastow = q('#filtr-kontrastow');
+  var licznikKontrastow = q('#licznik-kontrastow');
+  function filtrujKontrasty() {
+    var f = (poleKontrastow.value || '').trim().toLowerCase();
+    var wiersze = qa('#tabela-kontrastow tbody tr');
+    var n = 0;
+    wiersze.forEach(function (w, i) {
+      var ok = (!f || w.textContent.toLowerCase().indexOf(f) > -1) &&
+               (!filtrWerdyktu || wierszeKontrastow[i].kod === filtrWerdyktu);
+      w.classList.toggle('dok-ukryty', !ok);
+      if (ok) n++;
+    });
+    licznikKontrastow.textContent = n + ' / ' + wiersze.length;
+  }
+  poleKontrastow.addEventListener('input', filtrujKontrasty);
+  qa('[data-werdykt-filtr]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      filtrWerdyktu = b.dataset.werdyktFiltr;
+      qa('[data-werdykt-filtr]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+      filtrujKontrasty();
+    });
+  });
+
+  /* --- Decyzje projektowe --------------------------------------------------- */
+  q('#tabela-decyzji tbody').innerHTML = DECYZJE.map(function (x) {
+    return '<tr><td><strong>' + x[0] + '</strong></td><td>' + ucieczka(x[1]) + '</td><td>' + ucieczka(x[2]) + '</td><td>' + ucieczka(x[3]) + '</td></tr>';
+  }).join('');
+  filtrProsty('#filtr-decyzji', '#tabela-decyzji', '#licznik-decyzji');
+
+  /* --- Warstwy modelu (sekcja 1) -------------------------------------------- */
+  var OPIS_WARSTW = {
+    '1': '<p><strong>Prymitywy</strong> — 38 surowych barw. Nie mają znaczenia, mają tylko wartość. Kierunek skal: <span class="dok-mono">-0</span> najjaśniejszy, <span class="dok-mono">-1000</span> najciemniejszy.</p><p><strong>Zakaz:</strong> komponent nie wywołuje prymitywu (poza sześcioma jawnymi wyjątkami). Prymityw nie wie, w jakim motywie się znajdzie.</p><p><strong>Zawartość:</strong> 18 stopni szarości · 8 stopni sygnału · 3 × 4 stopnie stanów.</p>',
+    '2': '<p><strong>Semantyczne</strong> — 43 nazwy powtórzone w obu motywach. Niosą znaczenie, nie wartość: <span class="dok-mono">--dn-tekst</span> to „tekst główny”, a nie „ciemna szarość”.</p><p><strong>Jedyna warstwa</strong>, którą wolno wywołać z poziomu komponentu. Wartość zawsze przez <span class="dok-mono">var()</span> albo <span class="dok-mono">rgba()</span> z prymitywu.</p><p><strong>Zawartość:</strong> 26 powierzchni, obrysów, tekstu, atramentu, sygnału i fokusu · 12 stanów · 5 cieni.</p>',
+    '3': '<p><strong>Niezależne od motywu</strong> — 134 nazwy o tej samej wartości w obu motywach.</p><p><strong>Zawartość:</strong> 5 żetonów ramy kokpitu · 22 typografii · 17 przestrzeni · 5 ruchu · 27 wymiarów · 7 siatki i łamania · 11 warstw <span class="dok-mono">z-index</span> · 2 gradientów · 38 prymitywów barwnych.</p><p>Wartości nadpisywane kontekstowo: 6 przy <span class="dok-mono">pointer: coarse</span>, 9 przy <span class="dok-mono">data-gestosc="przestronna"</span>, 4 przy <span class="dok-mono">prefers-reduced-motion</span>.</p>'
+  };
+  var opisWarstwy = q('#opis-warstwy');
+  function pokazWarstwe(nr) {
+    opisWarstwy.innerHTML = OPIS_WARSTW[nr];
+    qa('#warstwy-modelu .dok-warstwa').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.warstwa === nr)); });
+  }
+  qa('#warstwy-modelu .dok-warstwa').forEach(function (b) {
+    b.addEventListener('click', function () { pokazWarstwe(b.dataset.warstwa); });
+  });
+  pokazWarstwe('1');
+
+  /* --- Naruszenie zasady „stan nigdy samym kolorem" -------------------------- */
+  var przyciskOznaczen = q('#ukryj-oznaczenia');
+  var scenaStanow = q('#scena-stanow');
+  var stopkaStanow = q('#stopka-stanow');
+  przyciskOznaczen.addEventListener('click', function () {
+    var ukryte = przyciskOznaczen.getAttribute('aria-pressed') === 'true';
+    ukryte = !ukryte;
+    przyciskOznaczen.setAttribute('aria-pressed', String(ukryte));
+    qa('.dn-toast > svg, .dn-toast-tytul, .dn-plakietka > svg', scenaStanow).forEach(function (el) {
+      el.style.visibility = ukryte ? 'hidden' : '';
+    });
+    qa('.dn-plakietka', scenaStanow).forEach(function (el) {
+      Array.prototype.forEach.call(el.childNodes, function (n) {
+        if (n.nodeType === 3) n.textContent = ukryte ? ' ' : (el.dataset.etykieta || n.textContent);
+      });
+    });
+    przyciskOznaczen.textContent = ukryte ? 'Przywróć ikony i etykiety' : 'Pokaż naruszenie: ukryj ikony i etykiety';
+    stopkaStanow.innerHTML = ukryte
+      ? '<strong>Tak wygląda naruszenie.</strong> Bez ikony i etykiety cztery stany różnią się wyłącznie odcieniem kreski — nieczytelne dla osoby z zaburzeniem rozpoznawania barw i niedostępne dla czytnika ekranu.'
+      : 'Ikona i etykieta towarzyszą barwie. Naciśnij przycisk powyżej, aby zobaczyć, co znika przy naruszeniu zasady.';
+  });
+  qa('.dn-plakietka', scenaStanow).forEach(function (el) {
+    Array.prototype.forEach.call(el.childNodes, function (n) {
+      if (n.nodeType === 3 && n.textContent.trim()) el.dataset.etykieta = n.textContent;
+    });
+  });
+
+  /* --- Typografia — okazy --------------------------------------------------- */
+  var TEKST_DOMYSLNY = 'ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ';
+  function tekstOkazu() {
+    var pole = q('#tekst-okazu');
+    var v = pole && pole.value.trim();
+    return v ? ucieczka(v) : TEKST_DOMYSLNY;
+  }
+  function rysujOkazy() {
+    var t = tekstOkazu();
+    q('#okazy-krojow').innerHTML = TYPO_KROJE.map(function (x) {
+      return '<div class="dok-okaz"><span class="dok-okaz-etykieta">' + x[0] + '</span>' +
+        '<span class="dok-okaz-tekst" style="font-family:var(' + x[0] + '); font-size:var(--dn-fs-xl); font-weight:var(--dn-fw-polgruba);">' + t + '</span></div>' +
+        '<div class="dok-okaz"><span class="dok-okaz-etykieta" style="color:var(--dn-tekst-3);">rola</span>' +
+        '<span style="font-size:var(--dn-fs-sm); color:var(--dn-tekst-2);">' + x[2] + '</span></div>';
+    }).join('');
+    q('#okazy-stopni').innerHTML = TYPO_STOPNIE.map(function (x) {
+      var krojStopnia = (parseInt(x[1], 10) >= 16) ? '--dn-ff-naglowek' : '--dn-ff-bazowa';
+      return '<div class="dok-okaz"><span class="dok-okaz-etykieta">' + x[0] + ' · ' + x[1] + '</span>' +
+        '<span class="dok-okaz-tekst" style="font-family:var(' + krojStopnia + '); font-size:var(' + x[0] + ');">' + t + '</span></div>';
+    }).join('');
+    q('#okazy-wag').innerHTML = TYPO_WAGI.map(function (x) {
+      return '<div class="dok-okaz"><span class="dok-okaz-etykieta">' + x[0] + ' · ' + x[1] + '</span>' +
+        '<span class="dok-okaz-tekst" style="font-size:var(--dn-fs-lg); font-weight:var(' + x[0] + ');">' + t + '</span></div>';
+    }).join('');
+    q('#okazy-interlinii').innerHTML = TYPO_LH.map(function (x) {
+      return '<div style="margin-bottom:var(--dn-od-3);"><p class="dn-etykieta-wersalikowa">' + x[0] + ' · ' + x[1] + '</p>' +
+        '<p style="line-height:var(' + x[0] + '); color:var(--dn-tekst); font-size:var(--dn-fs-base); max-width:44ch;">' + t + ' — ' + x[2] + '</p></div>';
+    }).join('');
+    q('#okazy-odstepow-liter').innerHTML = TYPO_LS.map(function (x) {
+      var mono = x[0].indexOf('mono') > -1;
+      var wersaliki = x[0].indexOf('naglowek') === -1;
+      return '<div style="margin-bottom:var(--dn-od-3);"><p class="dn-etykieta-wersalikowa">' + x[0] + ' · ' + x[1] + '</p>' +
+        '<p style="letter-spacing:var(' + x[0] + '); font-family:var(' + (mono ? '--dn-ff-mono' : '--dn-ff-naglowek') + '); font-size:var(--dn-fs-lg); color:var(--dn-tekst); ' + (wersaliki ? 'text-transform:uppercase;' : '') + '">' + t + '</p>' +
+        '<p style="font-size:var(--dn-fs-sm); color:var(--dn-tekst-3);">' + x[2] + '</p></div>';
+    }).join('');
+  }
+  q('#okaz-tresc-wlasna').addEventListener('change', function (e) {
+    q('#pole-okazu').classList.toggle('dok-ukryty', !e.target.checked);
+    if (e.target.checked) q('#tekst-okazu').focus();
+  });
+  q('#tekst-okazu').addEventListener('input', rysujOkazy);
+  rysujOkazy();
+
+  /* --- Przestrzeń ----------------------------------------------------------- */
+  q('#skala-odstepow').innerHTML = ODSTEPY.map(function (x) {
+    var szer = x[1] === 0 ? 2 : x[1];
+    return '<button class="dok-pasek-odstepu" type="button" data-kopiuj="var(' + x[0] + ')" style="width:100%; background:none; border:none; cursor:copy; text-align:left;">' +
+      '<span class="dok-linijka-nazwa">' + x[0] + '</span>' +
+      '<span class="dok-pasek-odstepu-slupek" style="width:' + szer + 'px;"></span>' +
+      '<span class="dok-linijka-wartosc">' + x[1] + ' px</span>' +
+    '</button>';
+  }).join('');
+  q('#skala-promieni').innerHTML = PROMIENIE.map(function (x) {
+    return '<button class="dok-karta-zetonu" type="button" data-kopiuj="var(' + x[0] + ')">' +
+      '<span class="dok-promien" style="border-radius:var(' + x[0] + ');">' + x[1] + '</span>' +
+      '<span><span class="dok-zeton-nazwa">' + x[0] + '</span><span class="dok-zeton-opis">' + x[2] + '</span></span>' +
+    '</button>';
+  }).join('');
+
+  /* --- Ruch ----------------------------------------------------------------- */
+  q('#tory-ruchu').innerHTML = CZASY.map(function (x) {
+    return '<div style="margin-bottom:var(--dn-od-3);">' +
+      '<div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:var(--dn-od-1);">' +
+        '<span class="dok-linijka-nazwa">' + x[0] + ' · ' + x[1] + '</span>' +
+        '<span style="font-size:var(--dn-fs-sm); color:var(--dn-tekst-3);">' + x[2] + '</span>' +
+      '</div>' +
+      '<div class="dok-tor-ruchu" data-biegnie="nie"><span class="dok-biegacz" style="transition-duration:var(' + x[0] + ');"></span></div>' +
+    '</div>';
+  }).join('');
+  q('#odpal-ruch').addEventListener('click', function () {
+    var tory = qa('.dok-tor-ruchu');
+    tory.forEach(function (t) { t.dataset.biegnie = 'nie'; });
+    setTimeout(function () { tory.forEach(function (t) { t.dataset.biegnie = 'tak'; }); }, 40);
+    setTimeout(function () { tory.forEach(function (t) { t.dataset.biegnie = 'nie'; }); }, 2900);
+  });
+  var przyciskBezRuchu = q('#bez-ruchu');
+  przyciskBezRuchu.addEventListener('click', function () {
+    var wl = przyciskBezRuchu.getAttribute('aria-pressed') !== 'true';
+    przyciskBezRuchu.setAttribute('aria-pressed', String(wl));
+    qa('#scena-tetna .dn-kropka--tetno, #scena-tetna .dn-aod-rdzen').forEach(function (el) {
+      el.style.animation = wl ? 'none' : '';
+      el.style.boxShadow = wl ? '0 0 0 2px var(--dn-fokus-cien)' : '';
+    });
+    przyciskBezRuchu.innerHTML = wl
+      ? 'Przywróć tętno (2,4 s)'
+      : 'Odwzoruj <span class="dok-mono">prefers-reduced-motion</span>';
+  });
+
+  /* --- Wymiary — linijki ---------------------------------------------------- */
+  q('#linijki-wymiarow').innerHTML = WYMIARY.map(function (x) {
+    return '<button class="dok-linijka" type="button" data-kopiuj="var(' + x[0] + ')" data-wym="' + x[0] + '" data-max="' + x[2] + '" style="width:100%; background:none; border:none; cursor:copy; text-align:left;">' +
+      '<span class="dok-linijka-nazwa">' + x[0] + '</span>' +
+      '<span><span class="dok-linijka-slupek" data-slupek style="width:0;"></span><br><span style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3);">' + x[1] + '</span></span>' +
+      '<span class="dok-linijka-wartosc" data-wartosc>—</span>' +
+    '</button>';
+  }).join('');
+  function odswiezLinijki() {
+    qa('#linijki-wymiarow [data-wym]').forEach(function (el) {
+      var v = czytajLiczbe(el.dataset.wym);
+      var max = +el.dataset.max || 64;
+      var slupek = q('[data-slupek]', el);
+      var pole = q('[data-wartosc]', el);
+      slupek.style.width = Math.max(1, Math.min(100, (v / max) * 100)) + '%';
+      pole.textContent = v + ' px';
+    });
+  }
+
+  /* --- Punkty łamania ------------------------------------------------------- */
+  q('#probki-lamania').innerHTML = LAMANIE.map(function (x) {
+    return '<button class="dok-karta-zetonu" type="button" data-kopiuj="var(' + x[0] + ')" data-bp="' + x[1] + '">' +
+      '<span class="dok-zeton-grupa">' + x[2] + '</span>' +
+      '<span><span class="dok-zeton-nazwa">' + x[0] + '</span>' +
+      '<span class="dok-zeton-wiersz"><span class="dok-zeton-wartosc">' + x[1] + ' px</span>' +
+      '<span class="dn-plakietka dok-ukryty" data-aktywny>aktywny</span></span>' +
+      '<span class="dok-zeton-opis">' + x[3] + '</span></span>' +
+    '</button>';
+  }).join('');
+  function odswiezLamanie() {
+    var szer = window.innerWidth;
+    q('#szerokosc-okna').textContent = szer + ' px';
+    var aktywny = null;
+    LAMANIE.forEach(function (x) { if (szer >= x[1]) aktywny = x[1]; });
+    qa('#probki-lamania [data-bp]').forEach(function (el) {
+      var jest = +el.dataset.bp === aktywny;
+      q('[data-aktywny]', el).classList.toggle('dok-ukryty', !jest);
+      el.style.borderColor = jest ? 'var(--dn-sygnal-obrys)' : '';
+    });
+  }
+  window.addEventListener('resize', odswiezLamanie);
+
+  /* --- Stos warstw ---------------------------------------------------------- */
+  q('#stos-warstw').innerHTML = WARSTWY.map(function (x, i) {
+    return '<button class="dok-stos-plyta" type="button" data-kopiuj="var(' + x[0] + ')" data-plyta="' + i + '" style="top:' + (i * 26) + 'px; z-index:' + (WARSTWY.length - i) + ';">' +
+      '<b>' + x[0] + '</b><span>' + x[2] + '</span><span class="dok-stos-plyta-wartosc">' + x[1] + '</span>' +
+    '</button>';
+  }).join('');
+  var przyciskStosu = q('#rozsun-stos');
+  przyciskStosu.addEventListener('click', function () {
+    var rozsuniety = przyciskStosu.getAttribute('aria-pressed') !== 'true';
+    przyciskStosu.setAttribute('aria-pressed', String(rozsuniety));
+    qa('#stos-warstw .dok-stos-plyta').forEach(function (el, i) {
+      el.style.transform = rozsuniety ? 'translateX(' + (i * 9) + 'px)' : '';
+    });
+    przyciskStosu.textContent = rozsuniety ? 'Zsuń stos' : 'Rozsuń stos';
+  });
+
+  /* --- Procedura i lista kontrolna ------------------------------------------ */
+  q('#kroki-procedury').innerHTML = KROKI.map(function (x, i) {
+    return '<div class="dok-krok-proc"><span class="dok-krok-numer">' + (i + 1) + '</span>' +
+      '<span><span class="dok-krok-tytul">' + x[0] + '</span><span class="dok-krok-opis">' + x[1] + '</span></span></div>';
+  }).join('');
+  q('#lista-kontrolna').innerHTML = LISTA.map(function (t, i) {
+    return '<label class="dn-wybor" style="display:flex; align-items:flex-start; gap:var(--dn-od-2); padding:var(--dn-od-1) 0; min-height:auto;">' +
+      '<input class="dn-check" type="checkbox" data-lista style="margin-top:2px;">' +
+      '<span style="font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); line-height:var(--dn-lh-luzny);">' + t + '</span></label>';
+  }).join('');
+  function odswiezListe() {
+    var pola = qa('#lista-kontrolna [data-lista]');
+    var n = pola.filter(function (p) { return p.checked; }).length;
+    q('#licznik-listy').textContent = n + ' / ' + pola.length;
+    q('#stopka-listy').textContent = n === pola.length
+      ? 'Komplet sprawdzeń zaliczony — żeton gotowy do odbioru przez prowadzącego system.'
+      : 'Lista pomocnicza — zaznaczenia nie są nigdzie zapisywane.';
+  }
+  q('#lista-kontrolna').addEventListener('change', odswiezListe);
+  q('#wyczysc-liste').addEventListener('click', function () {
+    qa('#lista-kontrolna [data-lista]').forEach(function (p) { p.checked = false; });
+    odswiezListe();
+  });
+  odswiezListe();
+
+  /* --- Gęstość -------------------------------------------------------------- */
+  var przyciskGestosci = q('#przelacz-gestosc');
+  przyciskGestosci.addEventListener('click', function () {
+    var przestronna = korzen.dataset.gestosc === 'przestronna';
+    if (przestronna) { delete korzen.dataset.gestosc; } else { korzen.dataset.gestosc = 'przestronna'; }
+    przestronna = !przestronna;
+    przyciskGestosci.setAttribute('aria-pressed', String(przestronna));
+    q('#etykieta-gestosci').textContent = 'gęstość: ' + (przestronna ? 'przestronna' : 'zwarta');
+    odswiezLinijki();
+    meldunek('Gęstość: ' + (przestronna ? 'przestronna' : 'zwarta'));
+  });
+
+  /* --- Reakcja na przełączenie motywu --------------------------------------- */
+  function odswiezWszystko() {
+    odswiezPomiaryProbek();
+    odswiezWartosciZywe();
+    odswiezLinijki();
+    odswiezLamanie();
+    var ciemny = korzen.dataset.theme === 'dark';
+    var et = q('#etykieta-motywu');
+    if (et) et.textContent = ciemny ? 'Motyw ciemny' : 'Motyw jasny';
+  }
+  if ('MutationObserver' in window) {
+    new MutationObserver(function (zmiany) {
+      for (var i = 0; i < zmiany.length; i++) {
+        if (zmiany[i].attributeName === 'data-theme') { odswiezWszystko(); break; }
+      }
+    }).observe(korzen, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+
+  /* --- Start ---------------------------------------------------------------- */
+  odswiezWszystko();
+  filtrujRejestr();
+})();
+</script>
+</body>
+</html>

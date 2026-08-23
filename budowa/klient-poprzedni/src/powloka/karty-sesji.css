@@ -1,0 +1,110 @@
+/* ============================================================================
+   POWŁOKA — PAS KART SESJI
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: pas kart sesji i pojedyncza karta.
+
+   Tło pasa, wysokość i kreska dolna pochodzą z `.dn-pasek--sesje`, a wygląd
+   zakładki wraz ze złotym podkreśleniem karty czynnej — z `.dn-zakladka`
+   biblioteki komponentów. Karty rozciągają się na całą wysokość pasa, żeby
+   podkreślenie legło dokładnie na jego kresce.
+   ============================================================================ */
+
+/* Odmiana paska dla pasa kart sesji. Biblioteka niesie sam `.dn-pasek` — pasek
+   ramy o wysokości 48 px na atramencie marki. Pas kart stoi na powierzchni
+   pracy, jest niższy i oddziela się od obszaru roboczego własną kreską, więc
+   odmianę opisuje arkusz widoku, a nie biblioteka. */
+.dn-pasek--sesje {
+  height: var(--dn-wym-pas-kart);
+  padding: 0 var(--dn-od-2);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+
+.dn-sesje {
+  align-items: stretch;
+  flex: none;
+  gap: var(--dn-od-2);
+}
+
+.dn-sesje__lista {
+  display: flex;
+  align-items: stretch;
+  gap: var(--dn-od-1);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* Przycisk ＋ stoi poza pasem zakładek: zakłada sesję, nie wybiera istniejącej */
+.dn-sesje__dodaj {
+  flex: none;
+  align-self: center;
+  color: var(--dn-sygnal);
+}
+
+/* Pas bez ani jednej karty mówi, dlaczego jej nie ma — oczekiwanie na rdzeń,
+   brak otwartej sesji albo odmowa wykazu */
+.dn-sesje__pustka {
+  flex: none;
+  align-self: center;
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+}
+
+.dn-sesje__pustka[hidden] {
+  display: none;
+}
+
+/* Odpowiedź rdzenia na naciśnięcie stoi przy pasie, a nie zamiast niego;
+   pełna treść zostaje w atrybucie `title` */
+.dn-sesje__komunikat {
+  margin: 0 0 0 auto;
+  align-self: center;
+  max-width: var(--dn-wym-boczna);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dn-sesje__komunikat[hidden] {
+  display: none;
+}
+
+/* Karta sesji — kropka pracy w tle, tytuł, plakietka stanu, zamknięcie */
+.dn-sesja {
+  max-width: var(--dn-wym-boczna);
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+}
+
+/* Poświata kropki liczy się na tle powierzchni, nie pasa — tutaj odpada */
+.dn-sesja__kropka {
+  box-shadow: none;
+}
+
+.dn-sesja__tytul {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Plakietka stanu — stan wstrzymany, zatrzymany i błędny niesie także napis,
+   więc rozpoznanie nie zależy od samej barwy kropki */
+.dn-sesja__stan {
+  min-height: var(--dn-od-4);
+  padding: 0 var(--dn-od-1);
+}
+
+.dn-sesja__stan[hidden] {
+  display: none;
+}
+
+.dn-sesja__zamknij {
+  width: var(--dn-od-6);
+  height: var(--dn-od-6);
+  border-radius: var(--dn-r-xs);
+  color: var(--dn-tekst-3);
+}

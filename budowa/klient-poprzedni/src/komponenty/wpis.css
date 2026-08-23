@@ -1,0 +1,98 @@
+/* Wpis okna komunikacji.
+
+   Nadawców rozróżniają trzy klasy semantyczne, nie osobna barwa tła dla
+   każdego. Rozróżnienie niesie zawsze komplet: ikona w medalionie, etykieta
+   nadawcy i klasa semantyczna krawędzi.
+
+     --czlowiek      atrament   (użytkownik)
+     --inteligencja  sygnał     (model, agent, Coordinator, Executor, Validator)
+     --system        neutralna  (Automation, Always On Display, wynik narzędzia)
+
+   Mapowanie ról kontraktu:
+     user      → .dn-wpis--czlowiek
+     assistant → .dn-wpis--inteligencja
+     system    → .dn-wpis--system
+     tool      → .dn-wpis--system oraz plakietka roli (.dn-plakietka--rola)
+                 z nazwą narzędzia
+   Wpis w trakcie pracy: dodatkowo .dn-wpis--pracuje (kropka tętna
+   przy nadawcy; klatki `dn-tetno` definiuje `plakietka.css`). */
+
+.dn-wpis {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--dn-wym-awatar-sm) 1fr;
+  gap: var(--dn-od-2) var(--dn-od-3);
+  max-width: 860px;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-left: 2px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.dn-wpis-medalion {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+}
+.dn-wpis-medalion > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+.dn-wpis-tozsamosc {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+.dn-wpis-nadawca {
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+.dn-wpis-godzina {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-wpis-tresc {
+  grid-column: 2;
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-luzny);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* klasa: człowiek — atrament */
+.dn-wpis--czlowiek { border-left-color: var(--dn-atrament); }
+.dn-wpis--czlowiek .dn-wpis-medalion {
+  background: var(--dn-atrament);
+  border-color: var(--dn-atrament);
+  color: var(--dn-atrament-tekst);
+}
+/* klasa: inteligencja — sygnał */
+.dn-wpis--inteligencja { border-left-color: var(--dn-sygnal-wypelnienie); }
+.dn-wpis--inteligencja .dn-wpis-medalion {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+}
+/* klasa: system — neutralna, tło wycofane */
+.dn-wpis--system { background: transparent; border-left-color: var(--dn-obrys-mocny); }
+
+/* wpis pracujący — kropka tętna przy nadawcy */
+.dn-wpis--pracuje .dn-wpis-nadawca::after {
+  content: '';
+  display: inline-block;
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  margin-left: var(--dn-od-1);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+  vertical-align: 1px;
+}

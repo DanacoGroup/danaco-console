@@ -1,0 +1,27 @@
+Package: danaco-console
+Version: 1.0.0
+Architecture: @ARCHITEKTURA@
+Installed-Size: @ROZMIAR_KB@
+Maintainer: Danaco Group <dnaharnowicz@danaco-group.pl>
+Section: web
+Priority: optional
+Homepage: https://danaco-group.pl
+Depends: libc6, adduser, systemd, ca-certificates, pandoc, poppler-utils, tesseract-ocr, tesseract-ocr-pol, libreoffice, ffmpeg, 7zip | p7zip-full, imagemagick, espeak-ng, openssh-client, shellcheck, shfmt, nodejs, python3, python3-venv, sane-utils, picocom, telnet
+Recommends: chromium | chromium-browser, docker.io | podman, golang-go
+Description: Danaco Console — rdzeń platformy wraz z pakietem interfejsu
+ Pakiet stawia SERWER platformy: rdzeń (danaco-console), serwer narzędzi modelu
+ (danaco-narzedzia) obok niego oraz pakiet interfejsu, który rdzeń serwuje
+ klientom. Zgodnie z modelem wdrożenia całość stoi na serwerze, a u Operatora
+ zostaje wyłącznie okno aplikacji.
+ .
+ Usługa nasłuchuje na porcie 17870 pod jednostką systemd danaco-console.service,
+ pracuje na koncie systemowym danaco-console, a dane trzyma w
+ /var/lib/danaco-console.
+ .
+ Pole Depends niesie te programy arsenału, które ma dystrybucja. Reszty arsenału
+ apt nie niesie — Real-ESRGAN (powiększanie obrazu), rembg (wycinanie tła),
+ piper wraz z głosami (synteza mowy), warsztat Go (gopls, goimports,
+ golangci-lint, staticcheck, Delve), prettier i eslint, a także kubectl oraz
+ PowerShell, które na Ubuntu jadą wyłącznie snapem. Stawia je skrypt arsenału
+ wskazany po instalacji; do tego czasu funkcje, które na nich stoją, odmawiają
+ zdaniem nazywającym brak, a pozostałe moduły pracują.

@@ -1,0 +1,264 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNO KONFIGURACJI · RAMA I TRZY OBSZARY
+   ----------------------------------------------------------------------------
+   Arkusz opisuje ramę okna oraz trzy obszary układu: pasek punktu widzenia,
+   kolumnę kategorii i kolumnę treści. Wnętrze formularza — wiersz ustawienia,
+   kontrolki, wskaźnik zasięgu i łańcuch dziedziczenia — prowadzi arkusz
+   `pola-konfiguracji.css`, wciągany na początku tego pliku.
+
+   Barw własnych nie ma — wszystko pochodzi z żetonów warstwy `motyw/`:
+   monochromatyczna precyzja, jeden błękit sygnałowy, gęstość zwarta.
+
+   Sygnał jest rzadki: błękit pojawia się w trzech miejscach i tylko w nich —
+   kategoria czynna w kolumnie, plakietka pochodzenia wartości nadpisanej oraz
+   wiersz dziedziczenia, który obowiązuje. Reszta jest atramentem i szarością.
+
+   Arkusz nie wygasza kontrolek. Pole, które nie ma zastosowania (byt poziomu
+   globalnego), znika w całości zamiast leżeć szare i nieczynne.
+   ============================================================================ */
+
+@import './pola-konfiguracji.css';
+
+/* --- Rama okna ----------------------------------------------------------- */
+
+.dk-okno {
+  width: min(1120px, calc(100vw - var(--dn-od-8)));
+  max-height: min(88dvh, 860px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dk-okno__naglowek > svg { color: var(--dn-tekst-2); }
+.dk-okno__rozpychacz { flex: 1 1 auto; }
+
+.dk-okno__cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Pas rejestrów pod katalogiem kluczy: obszary sesji (`config.effective.get`,
+   `config.session.set`) obok rejestru kanałów modelu (`channel.add|update|remove`).
+   Oba są bytami globalnymi, nie ustawieniem okna, więc stoją w oknie
+   konfiguracji otwieranym raz, a nie w komplecie sterowania per okno. */
+.dk-okno__rejestry {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4) 0 0;
+  min-width: 0;
+}
+
+.dk-okno__stopka { flex: none; }
+
+/* --- Pasek punktu widzenia ---------------------------------------------- */
+
+.dk-punkt {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-5);
+  background: var(--dn-powierzchnia-2);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+
+.dk-punkt__naglowek { display: flex; flex-direction: column; gap: 2px; }
+
+.dk-punkt__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+
+.dk-punkt__opis {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+/* --- Wybór adresu (punkt widzenia oraz poziom zapisu) -------------------- */
+
+.dk-adres {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--dn-od-2) var(--dn-od-3);
+  align-items: end;
+}
+
+.dk-adres__pole { min-width: 0; }
+.dk-adres__lista,
+.dk-adres__byt { width: 100%; }
+
+/* --- Kolumna kategorii --------------------------------------------------- */
+
+.dk-kategorie {
+  flex: none;
+  width: var(--dn-wym-boczna);
+  border-right: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dk-kategorie__pozycja { width: 100%; }
+.dk-kategorie__pozycja--wcieta {
+  padding-left: var(--dn-od-6);
+  font-weight: var(--dn-fw-normalna);
+}
+
+.dk-kategorie__nazwa {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Kolumna treści ------------------------------------------------------ */
+
+.dk-tresc {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.dk-tresc__naglowek {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--dn-od-4) var(--dn-od-5) var(--dn-od-3);
+  background: var(--dn-panel);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dk-tresc__tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+}
+
+.dk-tresc__opis {
+  margin: var(--dn-od-1) 0 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+.dk-formularz {
+  display: flex;
+  flex-direction: column;
+  padding: var(--dn-od-2) var(--dn-od-5) var(--dn-od-5);
+}
+
+/* Stan pusty formularza — biblioteczny `.dn-pusty-stan` niesie układ, tutaj
+   wyłącznie oddech dopasowany do kolumny treści. */
+.dn-pusty-stan.dk-formularz__pusto {
+  padding: var(--dn-od-8) var(--dn-od-5);
+}
+
+/* Przejście do okna rozwijającego zakres — dziś zakres „Izolacja". Stoi nad
+   formularzem, obrysowane, żeby nie czytało się jako pierwszy wiersz ustawień:
+   prowadzi do innego okna, a nie zmienia wartości w tym. */
+.dk-formularz__przejscie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  align-items: flex-start;
+  margin-bottom: var(--dn-od-4);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+/* ---------------------------------------------------------------------------
+   STANY ODCZYTU OKNA — pas nad stopką z akcjami
+   Wskaźnik i komunikat blokowy stoją obok formularza, nigdy zamiast niego:
+   pola pozostają edytowalne także przy niepowodzeniu odczytu.
+   --------------------------------------------------------------------------- */
+.dk-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: 0 var(--dn-od-5) var(--dn-od-3);
+}
+
+.dk-stany__odczyt {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* Komunikat blokowy: cienka kreska po lewej w barwie stanu, bez tła i bez
+   obwódki — żeby nie tworzyć „drugiej karty" w oknie. */
+.dk-stany__blad {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  margin: 0;
+  padding-left: var(--dn-od-3);
+  border-left: 2px solid var(--dn-blad-tekst);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-blad-tekst);
+}
+
+/* --- Ekran wąski: kolumna kategorii kładzie się na pas ------------------- */
+
+@media (max-width: 48rem) {
+  .dk-okno__cialo { flex-direction: column; }
+  .dk-kategorie {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--dn-obrys);
+  }
+  .dk-kategorie__pozycja { width: auto; }
+}
+
+/* Panel zaczepów cyklu życia kanału.
+
+   Odstępy, kreska i barwa błędu biorą się z żetonów, które warstwa `motyw/`
+   naprawdę definiuje: żeton, którego nikt nie ustawia, wygląda jak nastawa,
+   a jest wartością zapasową poza skalą. */
+.dk-zaczepy {
+  display: grid;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border-block-start: 1px solid var(--dn-obrys);
+}
+.dk-zaczepy__wykaz {
+  display: grid;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-zaczepy__wiersz {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) minmax(7rem, 1fr) minmax(12rem, 2fr) auto auto;
+  gap: var(--dn-od-2);
+  align-items: end;
+}
+.dk-zaczepy__pole {
+  display: grid;
+  gap: 0.25rem;
+}
+.dk-zaczepy__stopka {
+  display: flex;
+  gap: var(--dn-od-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.dk-zaczepy__odpowiedz[data-powodzenie='false'] {
+  color: var(--dn-blad-tekst);
+}

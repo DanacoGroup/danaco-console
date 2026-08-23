@@ -1,0 +1,33 @@
+-- Migracja 057 — zdjęcie dwóch tabel-sierot: `polaczenie` i `proces_sesji`.
+--
+-- Tabela-sierota to tabela, do której nikt nie pisze i z której nikt nie czyta.
+-- W całym drzewie nie ma ani jednego zdania SQL nazywającego którąkolwiek z tych
+-- dwóch tabel. Schemat, który je trzyma, obiecuje warstwie wyżej nośnik danych,
+-- którego nie ma.
+--
+-- `polaczenie` nie dostaje pisarza, tylko odchodzi:
+--   · Telemetria połączeń jest już trwała pod innym adresem — dziennik rdzenia
+--     rozgałęzia się do `diagnostyka_wpis` z czytelnikiem `diagnostics.log.query`
+--     (okno Logs Viewer). Drugi nośnik tego samego faktu rozjechałby się z nim.
+--   · Kolumna `urzadzenie_id` jest NOT NULL, a połączenie rejestruje się, zanim
+--     przyjdzie `connection.hello`; powitanie niesie `clientId`/`clientVersion`,
+--     nie identyfikator sprzętowy. Pisarz musiałby wpisywać urządzenie zgadnięte,
+--     a zgadywanie w kolumnie NOT NULL to wpis rzeczy nieustalonej.
+--   · Zapis do bazy wprost z transportu odebrałby pakietowi transport jego
+--     niezależność od rdzenia i trwałości. Stan czynnych połączeń prowadzi
+--     rejestr w pamięci (`transport/rejestr_polaczen.go`), który jest źródłem
+--     rozgłoszeń i ginie razem z procesem, tak jak ginie samo połączenie.
+--
+-- `proces_sesji` odchodzi, bo rejestr procesów żyje w pamięci i tam jest
+-- prawdziwy: proces okna to proces systemowy objęty uchwytem (Job Object / grupa
+-- procesów), ginący razem z rdzeniem. Wiersz, który przeżyłby restart ze stanem
+-- `pracuje`, opisywałby proces nieistniejący. `window.state.get` oddaje
+-- `processStatus` z rejestru w pamięci, bez tabeli. Historia, która ma być
+-- trwała, ma swoje miejsce w przebiegach automatyk.
+--
+-- Żadna tabela nie wskazuje kluczem obcym na `polaczenie` ani `proces_sesji`,
+-- więc DROP nie pociąga kaskad ani nie zostawia wiszących więzów; SQLite zdejmuje
+-- też indeksy tabeli. Obie tabele są puste, więc danych nie tracimy.
+
+DROP TABLE polaczenie;
+DROP TABLE proces_sesji;

@@ -1,0 +1,434 @@
+/* ============================================================================
+   DANACO CONSOLE — MODUŁ ROUNDTABLE (sześć okien operacyjnych)
+   ----------------------------------------------------------------------------
+   Barwy i rozmiary czcionek pochodzą wyłącznie z żetonów motywu (`--dn-*`)
+   i z biblioteki `komponenty/`. Tutaj leży rozkład okien modułu wraz z warstwami
+   widoczności, odróżnienie trzech stanów obowiązkowych oraz oznaczenie
+   uczestnika, tury i wypowiedzi.
+
+   Wypowiedzi wielu uczestników rozróżnia atrybut danych (`data-rola-mowcy`)
+   i warianty biblioteki — informacja, ostrzeżenie, błąd, sygnał — a nie własna
+   paleta modułu. Debata z sześcioma uczestnikami nie potrzebuje sześciu nowych
+   barw: potrzebuje tożsamości w nagłówku wypowiedzi i wstęgi w wariancie, który
+   motyw ma już zdefiniowany dla obu odcieni.
+   ============================================================================ */
+
+.dr-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Pas wiodący: skład debaty obok jej przebiegu. */
+.dr-modul__gora {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: var(--dn-od-4);
+}
+
+/* Pas rozszerzeń bocznych — warstwa druga widoczności. Okna zwinięte nie zajmują
+   miejsca, więc pas pusty nie zostawia luki pod warstwą pierwszą. */
+.dr-modul__rozszerzenia {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+}
+
+.dr-rozszerzenie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.dr-rozszerzenie__pasek {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1100px) {
+  .dr-modul__gora,
+  .dr-modul__rozszerzenia {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Pas uczciwości modułu ────────────────────────────────────────────────── */
+
+/* Trzy zdania o granicach modułu jako całości: rozjazd katalogu okien rdzenia,
+   stosunek liczby narzędzi opracowania do liczby komend kontraktu oraz brak
+   komendy odczytu. Żadne pojedyncze okno nie widzi tych trzech rzeczy naraz. */
+.dr-uczciwosc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dr-uczciwosc__zdanie {
+  margin: 0;
+}
+
+/* ── Warstwy widoczności trzecia i czwarta ────────────────────────────────── */
+
+/* Nośnikiem warstwy zwiniętej jest element rozwijany: warstwa zamknięta zajmuje
+   jeden wiersz, otwarta zostaje otwarta i działa klawiaturą bez reguły własnej.
+   Zwinięcie nie odbiera czynności — treść jest o jedno naciśnięcie dalej. */
+.dr-warstwa {
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dr-warstwa__podpis {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+}
+
+.dr-warstwa__wnetrze {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: 0 var(--dn-od-3) var(--dn-od-3);
+}
+
+/* Zestaw akcji układa przyciski w rząd zawijany — te same wymiary kontrolek co
+   w pasku akcji okna, bo to ten sam rodzaj czynności, tylko warstwę niżej. */
+.dr-warstwa__akcje {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.dr-warstwa__zdanie {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.dr-warstwa__sekcja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.dr-warstwa__nazwa {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-2);
+}
+
+.dr-funkcje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Pozycja wykazu funkcji: nazwa, stan słowem, zdanie o granicy wykonania.
+   Stan niesie napis, nie sama wstęga — wstęga jest dodatkiem dla czytającego
+   wykaz jednym spojrzeniem. */
+.dr-funkcja {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--dn-od-1) var(--dn-od-2);
+  padding-left: var(--dn-od-2);
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-obrys-subtelny);
+}
+
+.dr-funkcja[data-stan-funkcji='wykonana'] {
+  border-left-color: var(--dn-sukces-obrys);
+}
+
+.dr-funkcja[data-stan-funkcji='czesciowa'] {
+  border-left-color: var(--dn-ostrzezenie-obrys);
+}
+
+/* Komenda w kontrakcie bez zbudowanej obsługi — barwa sygnału, nie błędu:
+   to praca do wykonania, a nie usterka i nie brak uzgodnienia. Stan bez
+   pokrycia w kontrakcie zostaje przy barwie błędu, bo tam brakuje decyzji
+   spoza tego modułu. */
+.dr-funkcja[data-stan-funkcji='bez-obslugi'] {
+  border-left-color: var(--dn-informacja-obrys);
+}
+
+.dr-funkcja[data-stan-funkcji='bez-pokrycia'] {
+  border-left-color: var(--dn-blad-obrys);
+}
+
+.dr-funkcja[data-stan-funkcji='poza-modulem'] {
+  border-left-style: dashed;
+}
+
+.dr-funkcja__nazwa {
+  font-size: var(--dn-fs-sm);
+}
+
+.dr-funkcja__stan {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  text-align: right;
+}
+
+.dr-funkcja__zdanie {
+  grid-column: 1 / -1;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Układ okna — nagłówek, opis, pas akcji i ciało — niesie biblioteka
+   (`komponenty/okno.css`, klasy `dn-okno*`). Klasy rodziny `dr-okno*` dokłada
+   rama po przedrostku modułu i zostają tu wyłącznie te reguły, których
+   biblioteka nie ma, bo należą do dziedziny Roundtable. */
+
+
+.dr-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.dr-tozsamosc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ── Trzy stany obowiązkowe ────────────────────────────────────────────────── */
+
+.dr-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dr-stan {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.dr-stan[data-stan='ladowanie'] {
+  font-style: italic;
+}
+
+.dr-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dr-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.dr-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.dr-tresc {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Stan tury ────────────────────────────────────────────────────────────── */
+
+/* Cztery okna Roundtable nie używają `wykaz()`/`pozycjaWykazu()`: skład debaty
+   to osobny panel na uczestnika (`.dr-uczestnik`), a tura to `.dr-tura`.
+   Selektory rodziny `.dr-pozycja` nie mają tu więc na czym siąść.
+
+   Własności są rozpisane zamiast skrótu `border-left`, bo jsdom nie rozwija
+   `var()` wewnątrz skrótu i `getComputedStyle(...).borderLeftWidth` oddaje wtedy
+   `medium`. Rozpisanie czyni wartość mierzalną tym samym narzędziem, którym
+   mierzy ją przeglądarka. */
+.dr-tura[data-stan-tury='open'] {
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-informacja-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.dr-tura[data-stan-tury='closed'] {
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-obrys-mocny);
+  padding-left: var(--dn-od-2);
+}
+
+/* ── Skład debaty (Model Panels) ──────────────────────────────────────────── */
+
+.dr-sklad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.dr-uczestnik {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+/* Ten sam kanał modelu pod dwiema tożsamościami. Model Panels stawia osobny
+   panel na każdego uczestnika, więc atrybut siada na `.dr-uczestnik` — dwa
+   panele o tym samym kanale mają wyglądać na zamysł, a nie na pomyłkę.
+   Własności rozpisane, nie skrót — powód przy regułach `.dr-tura` wyżej. */
+.dr-uczestnik[data-kanal-powtorzony='tak'] {
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-ostrzezenie-obrys);
+}
+
+/* Uczestnik wyciszony w turze zostaje widoczny — Moderator Panel musi go
+   pokazać, żeby dało się przywrócić mu głos, więc wyciszenie zmienia krój
+   tożsamości, a nie ukrywa panel. Element `.dr-tozsamosc` buduje panel
+   uczestnika (`sklad-modeli.ts`, `panelUczestnika`). */
+.dr-uczestnik[data-wyciszony='tak'] .dr-tozsamosc {
+  color: var(--dn-tekst-2);
+  font-style: italic;
+}
+
+.dr-uczestnik__kolejnosc {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.dr-uczestnik__pola {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.dr-uczestnik__akcje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* Prompt systemowy tożsamości — jedyne miejsce, w którym widać różnicę między
+   dwiema tożsamościami jednego kanału. Krój mono, bo to treść wysłana modelowi
+   dosłownie, a nie zdanie opisowe okna. */
+.dr-uczestnik__prompt {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dr-uczestnik__prompt[data-prompt='brak'] {
+  font-family: var(--dn-ff-bazowa);
+  font-style: italic;
+}
+
+/* Uczestnik, którego głos padł w tej turze jako ostatni. Atrybut
+   `data-ostatni-glos` ustawia `sklad-modeli.ts` i nazywa wypowiedź już
+   zapisaną, nie trwającą — o mówieniu w toku mówi obok
+   `.dr-odpowiedz[data-rosnie='tak']`, bo to wie strumień, a nie zapis tury. */
+.dr-uczestnik[data-ostatni-glos='tak'] {
+  border-top-width: var(--dn-wym-wstega);
+  border-top-style: solid;
+  border-top-color: var(--dn-informacja-obrys);
+}
+
+/* Stany uczestnika nazwane słowem, nie samym krojem. Lista jest pozioma
+   i zwarta, żeby cztery panele obok siebie dały się porównać jednym
+   spojrzeniem. */
+.dr-uczestnik__stany {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dr-uczestnik__stan {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.dr-sklad__nota {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Zdanie o tym, czego kontrakt nie niesie, ma wyglądać jak przypis, a nie jak
+   odmowa czynności — Operatorowi nic tu nie zabrano. */
+.dr-sklad__nota[data-brak-sygnalu='tak'] {
+  font-style: italic;
+}
+
+/* ── Ilu uczestników mieści debata ────────────────────────────────────────── */
+
+/* Nota, nie bramka. Rdzeń nie liczy uczestników — `migracja_044_roundtable.sql`
+   nie stawia więzu na liczbę wierszy, a `roundtable.model.add` nie ma licznika
+   — więc nic tu nie blokuje dodania kolejnego. Nota opisuje stan: ilu
+   uczestników debata ma i gdzie leży sufit gniazd sceny okien równoległych. */
+.dr-sufit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dr-sufit__tytul {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dr-sufit__zdanie {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Skład szerszy niż scena okien równoległych — wstęga ostrzeżenia, bo to
+   rozjazd dwóch prawd platformy, a nie błąd Operatora i nie odmowa. */
+.dr-sufit[data-ponad-gniazda='tak'] {
+  border-left-width: var(--dn-wym-wstega);
+  border-left-style: solid;
+  border-left-color: var(--dn-ostrzezenie-obrys);
+}
+
+/* ── Zegar tury (Moderator Panel) ─────────────────────────────────────────── */
+
+/* Zegar mierzy czas od otwarcia tury i nie odlicza go do zera: limitu czasu nie
+   niesie żadne pole kontraktu. Liczba stoi krojem mono z cyframi tabelarycznymi,
+   żeby licznik nie drgał przy każdej zmianie sekundy. */
+.dr-zegar {
+  margin: 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst-2);
+}
+

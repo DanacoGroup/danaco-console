@@ -1,0 +1,14 @@
+#!/bin/sh
+# Zatrzymanie usługi przed zdjęciem plików rdzenia.
+set -e
+
+case "$1" in
+remove | deconfigure | upgrade | failed-upgrade)
+	if [ -d /run/systemd/system ]; then
+		systemctl stop danaco-console.service >/dev/null 2>&1 || true
+	fi
+	;;
+*) ;;
+esac
+
+exit 0

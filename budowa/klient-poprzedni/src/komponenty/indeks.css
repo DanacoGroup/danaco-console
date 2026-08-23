@@ -1,0 +1,39 @@
+/* ============================================================================
+   DANACO CONSOLE — BIBLIOTEKA KOMPONENTÓW · PUNKT ZBIORCZY
+   ----------------------------------------------------------------------------
+   Wyłącznie kompozycja — ani jednej reguły własnej. Każdy arkusz biblioteki
+   jest osiągalny stąd (zero atrap, zero plików osieroconych).
+
+   Warunek użycia: warstwa żetonów `../motyw/` (motyw.css → żetony + fundament)
+   musi zostać wczytana wcześniej. Kolejność importów jest kolejnością kaskady.
+
+   Preferencja ograniczonego ruchu jest respektowana globalnie w warstwie
+   żetonów (`../motyw/ruch.css`: czasy → 0,01 ms oraz `animation-duration` /
+   `animation-iteration-count` / `transition-duration` na `*`). Biblioteka nie
+   powtarza tej reguły — jedno źródło prawdy. Wyjątkiem jest zamiana tętna
+   kropki na pierścień statyczny (`plakietka.css`).
+   ============================================================================ */
+
+@import './przycisk.css';
+@import './pole.css';
+@import './wybor.css';
+@import './suwak.css';
+@import './plakietka.css';
+@import './karta.css';
+@import './okno.css';
+@import './tabela.css';
+@import './zakladki.css';
+@import './pasek.css';
+@import './boczna.css';
+@import './wpis.css';
+@import './postep.css';
+@import './rozmowa.css';
+@import './nakladka.css';
+@import './powiadomienie.css';
+@import './drobne.css';
+@import './ikona.css';
+@import './menu-drzewo.css';
+
+/* Biblioteka nie prowadzi arkusza aliasów zgodności: nazwa klasy z dawnego
+   słownika ma być poprawiona w widoku, który jej używa, a nie podparta mostem
+   nazw w tym katalogu. */

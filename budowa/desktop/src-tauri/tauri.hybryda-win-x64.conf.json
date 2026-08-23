@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Danaco Console Hybryda",
+  "version": "1.0.0",
+  "identifier": "pl.danaco.console",
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "resources": {
+      "zasoby/rdzen/danaco-console.exe": null,
+      "zasoby/rdzen/danaco-narzedzia.exe": null,
+      "zasoby/rdzen/dist/": null,
+      "zasoby/pomocniki/": null,
+      "zasoby/dokumentacja/": null,
+      "zasoby/dokumentacja-hybryda/": "dokumentacja/"
+    },
+    "shortDescription": "Danaco Console Hybryda — okno do rdzenia na serwerze",
+    "longDescription": "Powłoka natywna Danaco Console w wariancie hybrydowym: samo okno interfejsu, łączące się z rdzeniem stojącym na serwerze. Instalka nie niesie rdzenia, serwera narzędzi ani arsenału — te stoją na serwerze i są utrzymywane tam.",
+    "windows": {
+      "nsis": {
+        "installerHooks": "nsis/skroty.nsh"
+      }
+    }
+  }
+}

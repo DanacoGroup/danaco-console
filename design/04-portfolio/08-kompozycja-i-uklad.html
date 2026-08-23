@@ -1,0 +1,2230 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Kompozycja i układ</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../zasoby/prototyp.css">
+<style>
+/* ============================================================================
+   PLANSZA PORTFOLIO P8 — KOMPOZYCJA I UKŁAD
+   Warstwa lokalna. Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych.
+   ============================================================================ */
+
+/* ── 0 · SZKIELET PLANSZY ─────────────────────────────────────────────── */
+
+body { min-height: 100dvh; background: var(--dn-tlo); }
+
+.pl-pomin {
+  position: absolute; left: var(--dn-od-3); top: var(--dn-od-1);
+  z-index: var(--dn-z-centrum-polecen);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia); color: var(--dn-tekst);
+  transform: translateY(-200%);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.pl-pomin:focus { transform: translateY(0); text-decoration: none; }
+
+.pl-pasek-tytul {
+  display: inline-flex; align-items: baseline; gap: var(--dn-od-2);
+  margin-left: var(--dn-od-4); min-width: 0;
+}
+.pl-pasek-tytul b {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-rama-tekst);
+  white-space: nowrap;
+}
+.pl-pasek-tytul span {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  white-space: nowrap;
+}
+@media (max-width: 960px) { .pl-pasek-tytul span { display: none; } }
+
+.pl-sygnet { width: 24px; height: 24px; flex: none; }
+.pl-sygnet .pl-sygnet-grot { fill: currentColor; }
+.pl-sygnet .pl-sygnet-kropka { fill: var(--dn-kropka); }
+
+.pl-uklad {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--dn-od-6);
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-5) var(--dn-od-16);
+}
+@media (max-width: 1100px) {
+  .pl-uklad { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-4); padding-inline: var(--dn-od-3); }
+}
+
+/* ── 1 · SPIS SEKCJI ──────────────────────────────────────────────────── */
+
+.pl-spis {
+  position: sticky; top: var(--dn-od-4);
+  display: flex; flex-direction: column; gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+@media (max-width: 1100px) { .pl-spis { position: static; } }
+.pl-spis-tytul { padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-2); }
+.pl-spis a {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  text-decoration: none;
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.pl-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pl-spis a i {
+  font-style: normal;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  min-width: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.pl-spis a[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+.pl-spis a[aria-current='true'] i { color: var(--dn-sygnal); }
+.pl-spis-stopka {
+  display: flex; flex-direction: column; gap: var(--dn-od-2);
+  margin-top: var(--dn-od-3);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  align-items: flex-start;
+}
+
+/* ── 2 · SEKCJE TREŚCI ────────────────────────────────────────────────── */
+
+.pl-tresc { display: flex; flex-direction: column; gap: var(--dn-od-16); min-width: 0; }
+
+.pl-sekcja { scroll-margin-top: var(--dn-od-16); }
+.pl-sekcja-glowa {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--dn-od-4);
+  margin-bottom: var(--dn-od-5);
+  padding-bottom: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.pl-numer {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-srednia);
+  line-height: 1;
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+.pl-sekcja-glowa h2 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  color: var(--dn-tekst);
+  margin: 0 0 var(--dn-od-2);
+}
+.pl-sekcja-glowa h3 {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-lg);
+  color: var(--dn-tekst);
+  margin: var(--dn-od-6) 0 var(--dn-od-3);
+}
+.pl-lead { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); margin: 0; }
+.pl-p { font-size: var(--dn-fs-base); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); margin: 0 0 var(--dn-od-3); max-width: 82ch; }
+.pl-p strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pl-podtytul {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+}
+.pl-cytat {
+  margin: var(--dn-od-4) 0;
+  padding: var(--dn-od-4) var(--dn-od-5);
+  border-left: var(--dn-wym-wstega) solid var(--dn-kropka);
+  border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0;
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-luzny);
+}
+.pl-cytat cite {
+  display: block; margin-top: var(--dn-od-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  font-style: normal; letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase; color: var(--dn-tekst-2);
+}
+code, .pl-kod {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+  padding: 1px var(--dn-od-1); border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst);
+}
+
+/* ── 3 · KARTY DEMONSTRACYJNE ─────────────────────────────────────────── */
+
+.pl-demo {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.pl-demo-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.pl-demo-glowa .pl-demo-akcje { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); align-items: center; }
+.pl-demo-tresc { padding: var(--dn-od-4); }
+.pl-demo-tresc--ciasna { padding: var(--dn-od-3); }
+.pl-demo-tresc--zero { padding: 0; }
+.pl-demo-stopka {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.pl-siatka { display: grid; gap: var(--dn-od-4); }
+.pl-siatka--2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.pl-siatka--3 { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.pl-siatka--4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+/* ── 4 · LINIJKA RYTMU 4 PX ───────────────────────────────────────────── */
+
+.pl-rytm { position: relative; }
+.pl-rytm::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+  background:
+    repeating-linear-gradient(to bottom, var(--dn-obrys-subtelny) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(to right, var(--dn-obrys-subtelny) 0 1px, transparent 1px 4px);
+}
+.pl-rytm[data-linijka='tak']::after { opacity: 1; }
+.pl-rytm[data-linijka='tak'][data-linijka-gruba='tak']::after {
+  background:
+    repeating-linear-gradient(to bottom, var(--dn-sygnal-obrys) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(to bottom, var(--dn-kropka) 0 1px, transparent 1px 32px);
+}
+
+.pl-linijka-pion {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--dn-od-3); align-items: stretch;
+}
+.pl-podzialka {
+  width: 28px; flex: none;
+  background: repeating-linear-gradient(to bottom, var(--dn-obrys) 0 1px, transparent 1px 4px);
+  border-right: 1px solid var(--dn-obrys);
+}
+
+/* ── 5 · LINIE WYMIAROWE ──────────────────────────────────────────────── */
+
+.pl-wymiar {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr) 92px;
+  gap: var(--dn-od-3);
+  align-items: center;
+  padding: var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-wymiar:last-child { border-bottom: 0; }
+.pl-wymiar-nazwa { font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
+.pl-wymiar-nazwa small { display: block; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.pl-wymiar-okaz {
+  position: relative;
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding-inline: var(--dn-od-3);
+  overflow: hidden;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  transition: height var(--dn-czas-2) var(--dn-ease), width var(--dn-czas-2) var(--dn-ease);
+}
+.pl-wymiar-okaz--pion { align-items: stretch; }
+.pl-wymiar-liczba {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst);
+  text-align: right;
+}
+.pl-wymiar-liczba b { color: var(--dn-sygnal); font-weight: var(--dn-fw-polgruba); }
+
+.pl-strzalka-wym {
+  position: relative; flex: none;
+  border-left: 1px solid var(--dn-kropka);
+  border-right: 1px solid var(--dn-kropka);
+  height: 100%;
+}
+.pl-strzalka-wym::before {
+  content: ''; position: absolute; top: 50%; left: 0; right: 0;
+  border-top: 1px dashed var(--dn-kropka);
+}
+
+/* ── 6 · SZKIELETY UKŁADU ─────────────────────────────────────────────── */
+
+.pl-szkielet {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-tlo);
+  overflow: hidden;
+  display: grid;
+  min-height: 0;
+}
+.pl-szkielet--powloka {
+  grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) minmax(0, 1fr);
+  height: 340px;
+}
+.pl-strefa {
+  position: relative;
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+  background: var(--dn-powierzchnia);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+  overflow: hidden;
+}
+.pl-strefa:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pl-strefa[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  box-shadow: inset 0 0 0 1px var(--dn-sygnal-obrys);
+}
+.pl-strefa--rama { background: var(--dn-rama); color: var(--dn-rama-tekst-2); }
+.pl-strefa--rama:hover { background: var(--dn-szary-800); color: var(--dn-rama-tekst); }
+.pl-strefa--rama[aria-selected='true'] { color: var(--dn-rama-tekst); box-shadow: inset 0 0 0 1px var(--dn-rama-obrys); }
+.pl-strefa svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.pl-strefa-etykieta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-strefa-wym {
+  position: absolute; right: var(--dn-od-2); top: 50%; transform: translateY(-50%);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3); letter-spacing: normal;
+}
+
+.pl-cialo-szkieletu {
+  display: grid;
+  grid-template-columns: var(--dn-wym-boczna) minmax(0, 1fr);
+  min-height: 0;
+  gap: 1px;
+  background: var(--dn-obrys-subtelny);
+  transition: grid-template-columns var(--dn-czas-3) var(--dn-ease);
+}
+.pl-obszar-szkieletu {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(var(--dn-wym-pas-komunikacji), 46%);
+  min-height: 0; gap: 1px;
+  background: var(--dn-obrys-subtelny);
+  transition: grid-template-rows var(--dn-czas-3) var(--dn-ease);
+}
+
+.pl-opis-strefy {
+  margin-top: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-left: var(--dn-wym-wstega) solid var(--dn-kropka);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  line-height: var(--dn-lh-luzny);
+}
+.pl-opis-strefy h4 {
+  margin: 0 0 var(--dn-od-2);
+  font-size: var(--dn-fs-base); color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+.pl-opis-strefy dl { display: grid; grid-template-columns: auto minmax(0,1fr); gap: var(--dn-od-1) var(--dn-od-3); margin: var(--dn-od-2) 0 0; }
+.pl-opis-strefy dt { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); text-transform: uppercase; letter-spacing: var(--dn-ls-mono-wersaliki); }
+.pl-opis-strefy dd { margin: 0; font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
+
+/* ── 7 · KATALOG WZORCÓW ──────────────────────────────────────────────── */
+
+.pl-wzorzec { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-3); }
+.pl-plyta {
+  display: grid; gap: 1px; background: var(--dn-obrys-subtelny);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  overflow: hidden; height: 220px;
+}
+.pl-plyta--strefy { grid-template-rows: 3fr 2fr 1fr; }
+.pl-plyta--boczny-lewy { grid-template-columns: minmax(180px, 260px) minmax(0, 1fr); }
+.pl-plyta--boczny-prawy { grid-template-columns: minmax(0, 1fr) minmax(200px, 300px); }
+.pl-plyta--trojpodzial { grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(200px, 300px); }
+.pl-plyta--dwa { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pl-plyta--trzy { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pl-plyta--cztery { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.pl-plyta--asymetria { grid-template-columns: 1.6fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.pl-plyta--nakladka { position: relative; grid-template-columns: minmax(0,1fr); }
+.pl-plyta--warstwa { position: relative; grid-template-columns: minmax(0,1fr); }
+
+.pl-pole {
+  display: flex; flex-direction: column; justify-content: center; gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  min-width: 0; min-height: 0;
+}
+.pl-pole b { font-size: var(--dn-fs-sm); color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pl-pole span { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.pl-pole--mocne { background: var(--dn-powierzchnia-2); }
+.pl-pole--sygnal { background: var(--dn-sygnal-tlo); box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka); }
+
+.pl-nakladka-demo {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  background: var(--dn-nakladka);
+  backdrop-filter: blur(2px);
+}
+.pl-modal-demo {
+  width: min(var(--dn-wym-modal), 78%);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-lg);
+  overflow: hidden;
+}
+.pl-aod-demo {
+  position: absolute; inset: 0; display: grid; place-items: center;
+}
+.pl-aod-rdzen {
+  width: 64px; height: 64px; border-radius: var(--dn-r-pill);
+  background: var(--dn-grad-sygnal);
+  display: grid; place-items: center;
+  box-shadow: var(--dn-cien-3);
+}
+
+/* ── 8 · SIATKA 12 KOLUMN ─────────────────────────────────────────────── */
+
+.pl-siatka12 { position: relative; }
+.pl-siatka12::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  opacity: 0; transition: opacity var(--dn-czas-2) var(--dn-ease);
+  background: repeating-linear-gradient(
+    to right,
+    var(--dn-sygnal-tlo) 0 calc((100% - 11 * var(--dn-siatka-przerwa)) / 12),
+    transparent 0 calc((100% - 11 * var(--dn-siatka-przerwa)) / 12 + var(--dn-siatka-przerwa))
+  );
+}
+.pl-siatka12[data-siatka='tak']::after { opacity: 1; }
+
+/* ── 9 · SYMULATOR SZEROKOŚCI ─────────────────────────────────────────── */
+
+.pl-symulator { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+.pl-ramka-symulatora {
+  border: 1px dashed var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  padding: var(--dn-od-3);
+  background: var(--dn-powierzchnia-2);
+  overflow-x: auto;
+}
+.pl-scena { margin-inline: auto; transition: width var(--dn-czas-3) var(--dn-ease); }
+.pl-progi { display: flex; gap: var(--dn-od-2); flex-wrap: wrap; }
+.pl-prog {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  transition: background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.pl-prog[data-aktywny='tak'] {
+  background: var(--dn-sygnal-tlo); color: var(--dn-tekst);
+  border-color: var(--dn-sygnal-obrys);
+}
+
+/* ── 10 · PARY PORÓWNAWCZE ────────────────────────────────────────────── */
+
+.pl-para { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--dn-od-4); }
+.pl-para-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  margin-bottom: var(--dn-od-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+}
+.pl-para-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.pl-para-glowa--slaba { color: var(--dn-bursztyn-700); }
+:root[data-theme='dark'] .pl-para-glowa--slaba { color: var(--dn-bursztyn-400); }
+.pl-para-glowa--mocna { color: var(--dn-zielen-700); }
+:root[data-theme='dark'] .pl-para-glowa--mocna { color: var(--dn-zielen-400); }
+
+/* ── 11 · STOS WARSTW W PERSPEKTYWIE ──────────────────────────────────── */
+
+.pl-stos-scena {
+  perspective: 1400px;
+  padding: var(--dn-od-16) var(--dn-od-4);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.pl-stos {
+  position: relative;
+  width: min(420px, 100%);
+  height: 420px;
+  transform-style: preserve-3d;
+  transform: rotateX(58deg) rotateZ(-38deg);
+}
+.pl-warstwa {
+  position: absolute; inset-inline: 0; top: 0;
+  height: 150px;
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  cursor: pointer; text-align: left;
+  transition: background var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.pl-warstwa:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pl-warstwa[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-tekst);
+  box-shadow: 0 0 0 1px var(--dn-sygnal-obrys);
+}
+.pl-warstwa b { font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); letter-spacing: normal; text-transform: none; font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-sm); }
+.pl-warstwa i { margin-left: auto; font-style: normal; color: var(--dn-tekst-3); font-variant-numeric: tabular-nums; }
+
+.pl-stos-lista { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+.pl-stos-wiersz {
+  display: grid; grid-template-columns: 92px minmax(0, 1fr);
+  gap: var(--dn-od-3); align-items: baseline;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+}
+.pl-stos-wiersz[data-aktywny='tak'] { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
+.pl-stos-wiersz code { background: none; padding: 0; color: var(--dn-tekst-3); }
+
+/* ── 12 · TABELE PLANSZY ──────────────────────────────────────────────── */
+
+.pl-tabela-obudowa { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); overflow: auto; background: var(--dn-powierzchnia); }
+.pl-tabela-obudowa table { width: 100%; }
+
+/* ── 13 · PASKI STEROWANIA ────────────────────────────────────────────── */
+
+.pl-sterowanie {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  margin-bottom: var(--dn-od-4);
+}
+.pl-sterowanie .pl-sterowanie-opis {
+  margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3); font-variant-numeric: tabular-nums;
+}
+.pl-grupa-przyciskow { display: inline-flex; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm); overflow: hidden; }
+.pl-grupa-przyciskow > button { border-radius: 0; border: 0; border-right: 1px solid var(--dn-obrys); }
+.pl-grupa-przyciskow > button:last-child { border-right: 0; }
+.pl-grupa-przyciskow > button[aria-pressed='true'],
+.pl-grupa-przyciskow > button[aria-selected='true'] { background: var(--dn-sygnal-tlo); color: var(--dn-tekst); }
+
+.pl-znacznik-podgladu[data-gestosc] { display: contents; }
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<a class="pl-pomin" href="#tresc">Przejdź do treści planszy</a>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PASEK GÓRNY — atramentowy w obu motywach (KANON rozdz. 2)
+     ══════════════════════════════════════════════════════════════════════ -->
+<header class="dn-pasek" role="banner">
+  <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console — indeks opracowania">
+    <svg class="pl-sygnet" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+      <path class="pl-sygnet-grot" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+      <path class="pl-sygnet-grot" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+      <circle class="pl-sygnet-kropka" cx="83" cy="63.5" r="6.5"/>
+    </svg>
+    <span class="dn-pasek-logotyp">DANACO<small>Console</small></span>
+  </a>
+
+  <span class="pl-pasek-tytul">
+    <b>Kompozycja i układ</b>
+    <span>Plansza portfolio P8</span>
+  </span>
+
+  <span class="dn-pasek-prawa">
+    <a class="dn-btn dn-btn--duch dn-btn--sm" href="../INDEKS.html" style="color: var(--dn-rama-tekst-2);">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Indeks opracowania
+    </a>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+            data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+      <svg class="ik-slonce" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg class="ik-ksiezyc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </button>
+  </span>
+</header>
+
+<div class="pl-uklad">
+
+  <!-- ══ SPIS SEKCJI ══════════════════════════════════════════════════ -->
+  <nav class="pl-spis" data-spis aria-label="Spis sekcji planszy">
+    <div class="pl-spis-tytul"><span class="pt-etykieta">Sekcje planszy</span></div>
+    <a href="#przeglad"><i>00</i><span>Przegląd</span></a>
+    <a href="#jednostka"><i>01</i><span>Jednostka 4 px</span></a>
+    <a href="#gestosc"><i>02</i><span>Gęstość i wymiary</span></a>
+    <a href="#powloka"><i>03</i><span>Anatomia powłoki</span></a>
+    <a href="#komunikacja"><i>04</i><span>Obszar + pas komunikacji</span></a>
+    <a href="#wzorce"><i>05</i><span>Katalog wzorców</span></a>
+    <a href="#siatka"><i>06</i><span>Siatka 12 kolumn</span></a>
+    <a href="#lamanie"><i>07</i><span>Punkty łamania</span></a>
+    <a href="#hierarchia"><i>08</i><span>Hierarchia wizualna</span></a>
+    <a href="#warstwy"><i>09</i><span>Warstwy z-index</span></a>
+    <a href="#opracowanie"><i>10</i><span>O tym opracowaniu</span></a>
+    <div class="pl-spis-stopka">
+      <a class="dn-btn dn-btn--zarys dn-btn--sm" href="../INDEKS.html">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Powrót do indeksu
+      </a>
+      <span class="pt-mono" style="font-size: var(--dn-fs-xs);">P8 · v2.0 · 2026-08-14</span>
+    </div>
+  </nav>
+
+  <!-- ══ TREŚĆ ════════════════════════════════════════════════════════ -->
+  <main class="pl-tresc" id="tresc">
+
+    <!-- ── 00 · PRZEGLĄD ─────────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="przeglad" aria-labelledby="tyt-przeglad">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">00</span>
+        <div>
+          <h2 id="tyt-przeglad">Przegląd — jedna liczba i cała geometria</h2>
+          <p class="pl-lead">
+            Kokpit dowodzenia nie jest stroną. Nie przewija się w nieskończoność, nie oddycha
+            marginesami, nie zmienia proporcji przy każdym monitorze. Jest <strong>przyrządem</strong>:
+            ma stałe wymiary tam, gdzie sięga ręka, i proporcjonalne tam, gdzie pracuje oko.
+            Ta plansza pokazuje, skąd biorą się te wymiary — od jednostki <strong>4 px</strong>
+            aż po jedenaście warstw stosu.
+          </p>
+        </div>
+      </div>
+
+      <blockquote class="pl-cytat">
+        4 px. Wszystkie odstępy są jej wielokrotnością — brak wartości spoza skali.
+        <cite>SIATKA-I-UKLAD.md rozdz. 1 · [NIENEGOCJOWALNE]</cite>
+      </blockquote>
+
+      <p class="pl-p">
+        Wszystkie liczby na planszy pochodzą z <code>KANON.md</code> rozdz. 2 albo z bezpośredniego
+        odczytu <code>zasoby/zetony/zetony.css</code> i <code>zasoby/prototyp.css</code>. Wszystkie
+        układy mają wskazane miejsce występowania w platformie i odpowiadający im klikalny prototyp
+        w <code>05-okna/</code>. Nie ma tu ani jednego „przykładowego modułu”, ani jednego szarego
+        prostokąta zastępczego.
+      </p>
+
+      <div class="pl-siatka pl-siatka--4">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Jednostka</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">4</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              piksele — wielokrotność każdego odstępu i wymiaru
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Wzorce układu</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">8</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              od trzech stref o malejącej masie po warstwę centralną
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Punkty łamania</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">4</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              w1 640 · w2 960 · w3 1280 · w4 1600
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Warstwy stosu</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">11</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              od podłogi 0 do Centrum poleceń 1300
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 01 · JEDNOSTKA 4 PX ───────────────────────────────────────── -->
+    <section class="pl-sekcja" id="jednostka" aria-labelledby="tyt-jednostka">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">01</span>
+        <div>
+          <h2 id="tyt-jednostka">Jednostka 4 px — fundament nienegocjowalny</h2>
+          <p class="pl-lead">
+            Rytm 4 px nie jest konwencją porządkującą, tylko warunkiem, dzięki któremu gęstość
+            <strong>8/10</strong> pozostaje czytelna. Włącz linijkę rytmu na układzie poniżej —
+            każda krawędź trafia w linię siatki.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="pl-btn-linijka" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          <span id="pl-etykieta-linijki">Pokaż linijkę rytmu 4 px</span>
+        </button>
+        <span class="pl-sterowanie-opis">nakładka <code>repeating-linear-gradient</code> · skok 4 px</span>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pt-etykieta">Boczna nawigacja TalkIn — rytm zachowany</span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--zero pl-rytm" id="pl-rytm-ok">
+            <div class="pt-lista" role="list">
+              <div class="pt-pozycja" role="listitem" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg><span class="pt-pozycja-tytul">Studio</span><span class="pt-pozycja-meta">36</span></div>
+              <div class="pt-pozycja" role="listitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M12 3v18"/><path d="M3 15h18"/></svg><span class="pt-pozycja-tytul">Workspace</span><span class="pt-pozycja-meta">36</span></div>
+              <div class="pt-pozycja" role="listitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span class="pt-pozycja-tytul">Browser</span><span class="pt-pozycja-meta">36</span></div>
+              <div class="pt-pozycja" role="listitem" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="2"/><path d="m16 21-3.105-6.21"/><path d="m8 21 3.105-6.21"/><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/></svg><span class="pt-pozycja-tytul">Research</span><span class="pt-pozycja-meta">36</span></div>
+              <div class="pt-pozycja" role="listitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg><span class="pt-pozycja-tytul">Library</span><span class="pt-pozycja-meta">36</span></div>
+              <div class="pt-pozycja" role="listitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg><span class="pt-pozycja-tytul">Translate</span><span class="pt-pozycja-meta">36</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">wiersz 36 px = 9 × 4 · odstęp wewnętrzny 12 px = 3 × 4 · ikona–tekst 8 px = 2 × 4</div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pt-etykieta">Ten sam pas z odstępstwem od skali</span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--zero pl-rytm" id="pl-rytm-zle">
+            <div class="pt-lista" role="list">
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg><span class="pt-pozycja-tytul">Studio</span><span class="pt-pozycja-meta">35</span></div>
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M12 3v18"/><path d="M3 15h18"/></svg><span class="pt-pozycja-tytul">Workspace</span><span class="pt-pozycja-meta">35</span></div>
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span class="pt-pozycja-tytul">Browser</span><span class="pt-pozycja-meta">35</span></div>
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="2"/><path d="m16 21-3.105-6.21"/><path d="m8 21 3.105-6.21"/><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/></svg><span class="pt-pozycja-tytul">Research</span><span class="pt-pozycja-meta">35</span></div>
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg><span class="pt-pozycja-tytul">Library</span><span class="pt-pozycja-meta">35</span></div>
+              <div class="pt-pozycja" role="listitem" style="min-height: 35px; padding-inline: 11px; gap: 7px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg><span class="pt-pozycja-tytul">Translate</span><span class="pt-pozycja-meta">35</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">wiersz 35 px · odstęp 11 px · ikona–tekst 7 px — dryf narasta z każdą pozycją</div>
+        </div>
+      </div>
+
+      <p class="pl-p" style="margin-top: var(--dn-od-4);">
+        Na jednym wierszu różnica jest niewidoczna. Na dziewięciu pozycjach bocznej nawigacji TalkIn
+        daje <strong>9 px dryfu</strong> — dolna krawędź listy nie trafia już w żadną linię układu,
+        a przełączenie gęstości wymaga poprawiania każdego przypadku z osobna. Dlatego reguła jest
+        bezwzględna, nie zalecana.
+      </p>
+
+      <h3 class="pl-podtytul">Skala odstępów — jedenaście żetonów, jedna zasada</h3>
+
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th scope="col" data-sortuj="tekst">Żeton</th>
+              <th scope="col" data-sortuj="liczba">Wartość</th>
+              <th scope="col" data-sortuj="liczba">Krotność 4</th>
+              <th scope="col">Gdzie pracuje</th>
+              <th scope="col">Okaz</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>--dn-od-0</code></td><td class="dn-dane">0 px</td><td class="dn-dane">0×</td><td>zerowanie marginesu panelu (<code>.pt-panel-tresc--bez-marginesu</code>)</td><td><span style="display:block;height:8px;width:0;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-1</code></td><td class="dn-dane">4 px</td><td class="dn-dane">1×</td><td>odstęp między przyciskami ikonowymi paska górnego</td><td><span style="display:block;height:8px;width:4px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-2</code></td><td class="dn-dane">8 px</td><td class="dn-dane">2×</td><td>ikona ↔ etykieta w pozycji listy, wnętrze plakietki</td><td><span style="display:block;height:8px;width:8px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-3</code></td><td class="dn-dane">12 px</td><td class="dn-dane">3×</td><td>wnętrze paneli i list, margines okna operacyjnego</td><td><span style="display:block;height:8px;width:12px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-4</code></td><td class="dn-dane">16 px</td><td class="dn-dane">4×</td><td>wnętrze karty, odstęp między grupami pól</td><td><span style="display:block;height:8px;width:16px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-5</code></td><td class="dn-dane">20 px</td><td class="dn-dane">5×</td><td>wnętrze modala, wcięcie listy w panelu „O tym opracowaniu”</td><td><span style="display:block;height:8px;width:20px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-6</code></td><td class="dn-dane">24 px</td><td class="dn-dane">6×</td><td>przerwa siatki 12 kolumn (<code>--dn-siatka-przerwa</code>)</td><td><span style="display:block;height:8px;width:24px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-8</code></td><td class="dn-dane">32 px</td><td class="dn-dane">8×</td><td>marginesy boczne treści dokumentowej (<code>.pt-dokument</code>)</td><td><span style="display:block;height:8px;width:32px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-10</code></td><td class="dn-dane">40 px</td><td class="dn-dane">10×</td><td>odstęp nagłówka sekcji od treści w oknach platformowych</td><td><span style="display:block;height:8px;width:40px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-12</code></td><td class="dn-dane">48 px</td><td class="dn-dane">12×</td><td>odstęp bloków w oknie rejestracji i logowania</td><td><span style="display:block;height:8px;width:48px;background:var(--dn-kropka);"></span></td></tr>
+            <tr><td><code>--dn-od-16</code></td><td class="dn-dane">64 px</td><td class="dn-dane">16×</td><td>przerwa między sekcjami planszy portfolio</td><td><span style="display:block;height:8px;width:64px;background:var(--dn-kropka);"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        Skala jest <strong>nierównomierna z zamysłem</strong>: gęsta tam, gdzie decyzje zapadają często
+        (4–24 px — wnętrze paneli i list), rzadka tam, gdzie odstęp rozdziela całe bloki (32–64 px).
+        Nagłówki kolumn są sortowalne — kliknij albo naciśnij Enter na nagłówku.
+      </p>
+    </section>
+
+    <!-- ── 02 · GĘSTOŚĆ I WYMIARY ────────────────────────────────────── -->
+    <section class="pl-sekcja" id="gestosc" aria-labelledby="tyt-gestosc">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">02</span>
+        <div>
+          <h2 id="tyt-gestosc">Gęstość zwarta 8/10 — wymiary w skali 1:1</h2>
+          <p class="pl-lead">
+            Kokpit pokazuje dużo stanu naraz, więc gęstość jest narzędziem czytelności, nie
+            oszczędności miejsca. Poniżej <strong>każdy wymiar wiążący</strong> stoi obok okazu
+            o tej dokładnie wysokości. Przełącznik przebudowuje podgląd — dokładnie tak, jak
+            robi to platforma jednym atrybutem <code>data-gestosc</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <span class="pt-etykieta">Gęstość podglądu</span>
+        <span class="pl-grupa-przyciskow" role="group" aria-label="Wybór gęstości podglądu wymiarów">
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-gestosc-wybor="zwarta" aria-pressed="true">Zwarta</button>
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-gestosc-wybor="przestronna" aria-pressed="false">Przestronna</button>
+          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-gestosc-wybor="dotyk" aria-pressed="false">Dotyk</button>
+        </span>
+        <span class="pl-sterowanie-opis" id="pl-opis-gestosci">GESTOSC_WIZUALNA = 8/10 · wariant: zwarta</span>
+      </div>
+
+      <div class="pl-demo" id="pl-podglad-wymiarow">
+        <div class="pl-demo-glowa">
+          <span class="pt-etykieta">Wymiary wiążące — okaz w skali rzeczywistej</span>
+          <span class="pl-demo-akcje"><span class="pt-mono" style="font-size: var(--dn-fs-xs);">zetony.css</span></span>
+        </div>
+        <div class="pl-demo-tresc">
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Kontrolka<small>--dn-wym-kontrolka</small></span>
+            <span class="pl-wymiar-okaz" data-okaz="kontrolka" style="height: var(--dn-wym-kontrolka);">przycisk „Uruchom automatykę”</span>
+            <span class="pl-wymiar-liczba"><b data-liczba="kontrolka">32</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Przycisk ikonowy<small>--dn-wym-ikonowy</small></span>
+            <span class="pl-wymiar-okaz" data-okaz="ikonowy" style="height: var(--dn-wym-ikonowy); width: var(--dn-wym-ikonowy); justify-content: center; padding: 0;">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
+            <span class="pl-wymiar-liczba"><b data-liczba="ikonowy">32</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Pasek górny<small>--dn-wym-pasek</small></span>
+            <span class="pl-wymiar-okaz" data-okaz="pasek" style="height: var(--dn-wym-pasek); background: var(--dn-rama); color: var(--dn-rama-tekst-2); border-color: var(--dn-rama-obrys);">
+              blok marki · dom · szukaj · szybka konfiguracja · Mobile · AOD · motyw
+            </span>
+            <span class="pl-wymiar-liczba"><b data-liczba="pasek">48</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Pas kart sesji<small>--dn-wym-pas-kart</small></span>
+            <span class="pl-wymiar-okaz" data-okaz="pas-kart" style="height: var(--dn-wym-pas-kart);">karta „Studio” · karta „Research” · nowa sesja</span>
+            <span class="pl-wymiar-liczba"><b data-liczba="pas-kart">36</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Wiersz listy i tabeli<small>--dn-wym-wiersz</small></span>
+            <span class="pl-wymiar-okaz" data-okaz="wiersz" style="height: var(--dn-wym-wiersz);">#128 · Executor 1 · sukces · 12:04</span>
+            <span class="pl-wymiar-liczba"><b data-liczba="wiersz">36</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Boczna nawigacja<small>--dn-wym-boczna</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); width: var(--dn-wym-boczna); flex: none;">TalkIn — 9 modułów</span>
+            <span class="pl-wymiar-liczba"><b>224</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Pas komunikacji — minimum<small>--dn-wym-pas-komunikacji</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); width: var(--dn-wym-pas-komunikacji); flex: none;">Chat Window — szerokość okazu = 320 px</span>
+            <span class="pl-wymiar-liczba"><b>320</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Modal — maksimum<small>--dn-wym-modal</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); max-width: var(--dn-wym-modal);">„Pula kont Code CLI” — szerokość ograniczona do 560 px</span>
+            <span class="pl-wymiar-liczba"><b>560</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Awatar<small>--dn-wym-awatar-sm / - / -lg</small></span>
+            <span class="pl-wymiar-okaz" style="height: 36px; gap: var(--dn-od-3);">
+              <span style="display:inline-block;width:24px;height:24px;border-radius:var(--dn-r-pill);background:var(--dn-grad-atrament);"></span>
+              <span style="display:inline-block;width:28px;height:28px;border-radius:var(--dn-r-pill);background:var(--dn-grad-atrament);"></span>
+              <span style="display:inline-block;width:36px;height:36px;border-radius:var(--dn-r-pill);background:var(--dn-grad-sygnal);"></span>
+            </span>
+            <span class="pl-wymiar-liczba"><b>24/28/36</b></span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Ikona<small>--dn-wym-ikona-sm / - / -lg / -xl</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); gap: var(--dn-od-3);">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </span>
+            <span class="pl-wymiar-liczba"><b>14/16/20/24</b></span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Przełącznik<small>--dn-wym-przelacznik-szer / -wys</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz);">
+              <span style="display:inline-block;width:var(--dn-wym-przelacznik-szer);height:var(--dn-wym-przelacznik-wys);border-radius:var(--dn-r-pill);background:var(--dn-kropka);"></span>
+              <span>Always On Display — widoczny</span>
+            </span>
+            <span class="pl-wymiar-liczba"><b data-liczba="przelacznik">36×20</b></span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Pole wyboru<small>--dn-wym-check</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz);">
+              <span style="display:inline-block;width:var(--dn-wym-check);height:var(--dn-wym-check);border-radius:var(--dn-r-xs);border:1px solid var(--dn-obrys-mocny);"></span>
+              <span>Punkty izolacji — zapamiętaj wybór</span>
+            </span>
+            <span class="pl-wymiar-liczba"><b data-liczba="check">16</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Kropka sygnału<small>--dn-wym-kropka</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz);">
+              <span class="pt-tetno" aria-hidden="true"></span>
+              <span>praca w tle — jedyny ruch ciągły (2,4 s)</span>
+            </span>
+            <span class="pl-wymiar-liczba"><b>6</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Wstęga wyboru<small>--dn-wym-wstega</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);">pozycja wybrana w bocznej nawigacji</span>
+            <span class="pl-wymiar-liczba"><b>2</b> px</span>
+          </div>
+
+          <div class="pl-wymiar">
+            <span class="pl-wymiar-nazwa">Pierścień fokusu<small>--dn-wym-fokus + odsunięcie</small></span>
+            <span class="pl-wymiar-okaz" style="height: var(--dn-wym-wiersz); outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie);">kontrolka w stanie fokusu klawiaturowego</span>
+            <span class="pl-wymiar-liczba"><b>2 + 2</b> px</span>
+          </div>
+
+        </div>
+        <div class="pl-demo-stopka">wszystkie wartości odczytane z <code>zasoby/zetony/zetony.css</code> — bloki <code>:root</code>, <code>:root[data-gestosc='przestronna']</code>, <code>@media (pointer: coarse)</code></div>
+      </div>
+
+      <h3 class="pl-podtytul">Trzy warianty gęstości — porównanie liczbowe</h3>
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela" data-tabela>
+          <thead>
+            <tr>
+              <th scope="col" data-sortuj="tekst">Element</th>
+              <th scope="col" data-sortuj="tekst">Żeton</th>
+              <th scope="col" data-sortuj="liczba">Zwarta</th>
+              <th scope="col" data-sortuj="liczba">Przestronna</th>
+              <th scope="col" data-sortuj="liczba">Dotyk</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Kontrolka</td><td><code>--dn-wym-kontrolka</code></td><td class="dn-dane">32</td><td class="dn-dane">40</td><td class="dn-dane">40</td></tr>
+            <tr><td>Przycisk ikonowy</td><td><code>--dn-wym-ikonowy</code></td><td class="dn-dane">32</td><td class="dn-dane">40</td><td class="dn-dane">40</td></tr>
+            <tr><td>Pasek górny</td><td><code>--dn-wym-pasek</code></td><td class="dn-dane">48</td><td class="dn-dane">56</td><td class="dn-dane">48</td></tr>
+            <tr><td>Pas kart sesji</td><td><code>--dn-wym-pas-kart</code></td><td class="dn-dane">36</td><td class="dn-dane">40</td><td class="dn-dane">40</td></tr>
+            <tr><td>Wiersz</td><td><code>--dn-wym-wiersz</code></td><td class="dn-dane">36</td><td class="dn-dane">44</td><td class="dn-dane">44</td></tr>
+            <tr><td>Pole wyboru</td><td><code>--dn-wym-check</code></td><td class="dn-dane">16</td><td class="dn-dane">16</td><td class="dn-dane">20</td></tr>
+            <tr><td>Przełącznik (szer.)</td><td><code>--dn-wym-przelacznik-szer</code></td><td class="dn-dane">36</td><td class="dn-dane">36</td><td class="dn-dane">44</td></tr>
+            <tr><td>Przełącznik (wys.)</td><td><code>--dn-wym-przelacznik-wys</code></td><td class="dn-dane">20</td><td class="dn-dane">20</td><td class="dn-dane">24</td></tr>
+            <tr><td>Boczna nawigacja</td><td><code>--dn-wym-boczna</code></td><td class="dn-dane">224</td><td class="dn-dane">224</td><td class="dn-dane">224</td></tr>
+            <tr><td>Pas komunikacji (min.)</td><td><code>--dn-wym-pas-komunikacji</code></td><td class="dn-dane">320</td><td class="dn-dane">320</td><td class="dn-dane">320</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pl-opis-strefy" style="margin-top: var(--dn-od-4);">
+        <h4>Rozbieżność wobec pakietu v1.0 — rozstrzygnięcie jawne</h4>
+        <p style="margin: 0;">
+          <code>SIATKA-I-UKLAD.md</code> (v1.0, 2026-08-11) podaje przycisk ~36 px, przycisk ikonowy 36×36,
+          przełącznik 40×22, pasek górny 56 px. KANON v2.0 podaje odpowiednio 32 / 32 / 36×20 / 48.
+          <strong>Wiążący jest KANON v2.0</strong>; wartości v1.0 odpowiadają dzisiejszemu wariantowi
+          „przestronna” (kontrolka 40, pasek 56). Rozbieżność odnotowana zgodnie z KANON rozdz. 10 pkt 5.
+        </p>
+      </div>
+    </section>
+
+    <!-- ── 03 · ANATOMIA POWŁOKI ─────────────────────────────────────── -->
+    <section class="pl-sekcja" id="powloka" aria-labelledby="tyt-powloka">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">03</span>
+        <div>
+          <h2 id="tyt-powloka">Anatomia powłoki środowiska</h2>
+          <p class="pl-lead">
+            Powłoka środowisk modułowych — <strong>TalkIn · WorkSpace · CodeStudio</strong> — ma cztery
+            pasy. Kliknij dowolną strefę szkieletu: opis pod spodem podaje jej rolę, wymiar i zawartość
+            wprost z dokumentacji.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <span class="pt-mono" style="font-size: var(--dn-fs-xs);">grid-template-rows: 48px 36px 1fr</span>
+        <span class="pt-mono" style="font-size: var(--dn-fs-xs);">grid-template-columns: 224px 1fr</span>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                data-kopiuj="grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) minmax(0, 1fr);">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          Kopiuj deklarację
+        </button>
+        <span class="pl-sterowanie-opis">klasa <code>.pt-powloka</code> · prototyp.css rozdz. 1</span>
+      </div>
+
+      <div class="pl-szkielet pl-szkielet--powloka" data-lista-wyboru data-grupa="strefy" role="group" aria-label="Szkielet powłoki środowiska — strefy klikalne">
+        <button class="pl-strefa pl-strefa--rama" type="button" data-pozycja="pasek" data-pokaz="strefa-pasek" aria-selected="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20"/><path d="M6 4v4"/><path d="M10 4v4"/></svg>
+          <span class="pl-strefa-etykieta">Pasek górny</span>
+          <span class="pl-strefa-wym">48 px</span>
+        </button>
+
+        <button class="pl-strefa" type="button" data-pozycja="karty" data-pokaz="strefa-karty" aria-selected="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+          <span class="pl-strefa-etykieta">Pas kart sesji</span>
+          <span class="pl-strefa-wym">36 px</span>
+        </button>
+
+        <div class="pl-cialo-szkieletu">
+          <button class="pl-strefa" type="button" data-pozycja="boczna" data-pokaz="strefa-boczna" aria-selected="false" style="align-items: flex-start;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+            <span class="pl-strefa-etykieta">Boczna nawigacja</span>
+            <span class="pl-strefa-wym">224 px</span>
+          </button>
+
+          <div class="pl-obszar-szkieletu">
+            <button class="pl-strefa" type="button" data-pozycja="obszar" data-pokaz="strefa-obszar" aria-selected="false" style="align-items: flex-start;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+              <span class="pl-strefa-etykieta">Obszar roboczy — okna operacyjne modułu</span>
+              <span class="pl-strefa-wym">1fr</span>
+            </button>
+            <button class="pl-strefa" type="button" data-pozycja="komunikacja" data-pokaz="strefa-komunikacja" aria-selected="false" style="align-items: flex-start;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>
+              <span class="pl-strefa-etykieta">Chat Window — pas komunikacji</span>
+              <span class="pl-strefa-wym">min 320 px</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div data-widok="strefa-pasek" data-grupa-widoku="strefy" data-widok-aktywny="tak">
+        <div class="pl-opis-strefy">
+          <h4>Pasek górny — tożsamość i funkcje globalne</h4>
+          <p style="margin:0;">Jedyny element <strong>nieprzełączający się z motywem</strong> — atramentowy zawsze
+          (KANON rozdz. 2, „Rama kokpitu”). Mieści blok marki, ikonę „dom” (świadomy powrót do Centrum dowodzenia),
+          pole wyszukiwania elastyczne do 520 px, ikonę szybkiej konfiguracji sesji, Mobile, Always On Display
+          i przełącznik motywu.</p>
+          <dl>
+            <dt>Wymiar</dt><dd>48 px wysokości, pełna szerokość okna</dd>
+            <dt>Warstwa</dt><dd>pasek — <code>z-index: 100</code></dd>
+            <dt>Źródło</dt><dd>elementy-okien.md rozdz. 3.2, Tabela 8</dd>
+          </dl>
+        </div>
+      </div>
+      <div data-widok="strefa-karty" data-grupa-widoku="strefy">
+        <div class="pl-opis-strefy">
+          <h4>Pas kart sesji — równoległość pracy</h4>
+          <p style="margin:0;">Karty jak karty przeglądarki: każda niesie własny moduł i własny stan obszaru
+          roboczego. Kropka tętna na karcie oznacza proces biegnący w tle. Przycisk „+” zakłada nową sesję
+          w tym samym środowisku.</p>
+          <dl>
+            <dt>Wymiar</dt><dd>36 px wysokości — ten sam rytm co wiersz listy</dd>
+            <dt>Klasa</dt><dd><code>.dn-karty-sesji</code> · <code>.dn-karta-sesji</code></dd>
+            <dt>Źródło</dt><dd>elementy-okien.md rozdz. 3.3</dd>
+          </dl>
+        </div>
+      </div>
+      <div data-widok="strefa-boczna" data-grupa-widoku="strefy">
+        <div class="pl-opis-strefy">
+          <h4>Boczna nawigacja modułów — wybór zadania</h4>
+          <p style="margin:0;">Stała szerokość 224 px, wspólna dla wszystkich kart sesji danego środowiska
+          (nie jest odrębna per karta). Liczba pozycji zależy od środowiska: TalkIn 9 · WorkSpace 9 ·
+          CodeStudio 8. MultitaskingAI zamiast listy modułów ma <strong>panel orkiestracji</strong> —
+          6 sekcji: Zespoły · Role · Kolejki · Orkiestracja · Harmonogram i automatyki · Monitor procesu.</p>
+          <dl>
+            <dt>Wymiar</dt><dd>224 px; poniżej progu w2 zwija się do 32 px (same ikony)</dd>
+            <dt>Warstwa</dt><dd>boczna — <code>z-index: 200</code></dd>
+            <dt>Źródło</dt><dd>elementy-okien.md rozdz. 3.4 (Tabele 10–11), rozdz. 4.4 (Tabela 16)</dd>
+          </dl>
+        </div>
+      </div>
+      <div data-widok="strefa-obszar" data-grupa-widoku="strefy">
+        <div class="pl-opis-strefy">
+          <h4>Obszar roboczy — kontener okien operacyjnych</h4>
+          <p style="margin:0;">Powierzchnia, w której pojawiają się okna właściwe wybranemu modułowi:
+          Studio Editor, Code Editor, Research Workspace, Design Board, Terminal Tabs i pozostałe
+          z inwentarza (KANON rozdz. 7.5). Zmiana pozycji bocznej nawigacji przeładowuje całą zawartość
+          kontenera w obrębie bieżącej karty sesji.</p>
+          <dl>
+            <dt>Wymiar</dt><dd><code>minmax(0, 1fr)</code> — zero jako minimum, żeby treść mogła się kurczyć</dd>
+            <dt>Klasa</dt><dd><code>.pt-obszar</code> · <code>.pt-okno</code></dd>
+            <dt>Źródło</dt><dd>elementy-okien.md rozdz. 3.5, Schemat 5</dd>
+          </dl>
+        </div>
+      </div>
+      <div data-widok="strefa-komunikacja" data-grupa-widoku="strefy">
+        <div class="pl-opis-strefy">
+          <h4>Chat Window — pas komunikacji wspólny wszystkim modułom</h4>
+          <p style="margin:0;">Jedyne okno obecne w obszarze roboczym niezależnie od modułu; rekonfigurowane
+          w kontekście każdego z nich. Nigdy nie znika przy zwężaniu okna — to on niesie polecenie Operatora.</p>
+          <dl>
+            <dt>Wymiar</dt><dd><code>minmax(320px, 46%)</code> wysokości obszaru</dd>
+            <dt>Warstwa</dt><dd>pas komunikacji — <code>z-index: 300</code></dd>
+            <dt>Źródło</dt><dd>KANON rozdz. 7.4 · elementy-okien.md rozdz. 3.5</dd>
+          </dl>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Warianty powłoki w warstwie prototypu</h3>
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Klasa</th><th scope="col">Geometria</th><th scope="col">Gdzie występuje</th></tr></thead>
+          <tbody>
+            <tr><td><code>.pt-powloka</code></td><td class="dn-dane">48 · 36 · 1fr</td><td>powłoki czterech środowisk</td></tr>
+            <tr><td><code>.pt-powloka--bez-kart</code></td><td class="dn-dane">48 · 1fr</td><td>Okno Konfiguracji, Okno Ustawień</td></tr>
+            <tr><td><code>.pt-powloka--jednolita</code></td><td class="dn-dane">1fr</td><td>okno startowe, rejestracja i logowanie, Mobile</td></tr>
+            <tr><td><code>.pt-cialo</code></td><td class="dn-dane">224px · 1fr</td><td>ciało powłoki z boczną nawigacją</td></tr>
+            <tr><td><code>.pt-cialo--zwinieta</code></td><td class="dn-dane">32px · 1fr</td><td>boczna zwinięta do ikon poniżej progu w2</td></tr>
+            <tr><td><code>.pt-cialo--bez-bocznej</code></td><td class="dn-dane">1fr</td><td>Centrum dowodzenia, Always On Display</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 04 · OBSZAR + PAS KOMUNIKACJI ─────────────────────────────── -->
+    <section class="pl-sekcja" id="komunikacja" aria-labelledby="tyt-komunikacja">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">04</span>
+        <div>
+          <h2 id="tyt-komunikacja">Obszar roboczy z pasem komunikacji</h2>
+          <p class="pl-lead">
+            Chat Window zajmuje dolny pas obszaru roboczego. Deklaracja jest jednym wierszem —
+            i to w nim zapisana jest cała hierarchia: <code>minmax(0, 1fr) / minmax(320px, 46%)</code>.
+            Przesuń suwak, żeby zobaczyć, gdzie układ ustępuje, a gdzie stawia opór.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <label class="pt-etykieta" for="pl-suwak-proporcji">Udział pasa komunikacji</label>
+        <input class="dn-suwak" type="range" id="pl-suwak-proporcji" min="20" max="70" value="46" step="1"
+               style="flex: 1; min-width: 200px;" aria-describedby="pl-odczyt-proporcji">
+        <span class="pl-sterowanie-opis" id="pl-odczyt-proporcji">46 % · wartość projektowa</span>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Obszar roboczy modułu Research (przykład) — podgląd proporcji</span></div>
+        <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+          <div class="pl-obszar-szkieletu" id="pl-podglad-proporcji" style="height: 300px;">
+            <div class="pl-pole pl-pole--mocne" style="justify-content: flex-start;">
+              <b>Research Workspace</b>
+              <span>okno wiodące modułu · minmax(0, 1fr)</span>
+              <span id="pl-odczyt-gora">54 % wysokości obszaru</span>
+            </div>
+            <div class="pl-pole pl-pole--sygnal" style="justify-content: flex-start;">
+              <b>Chat Window — pas komunikacji</b>
+              <span>minmax(320px, 46%)</span>
+              <span id="pl-odczyt-dol">46 % wysokości obszaru</span>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">klasa <code>.pt-obszar--z-komunikacja</code> · wariant zwinięty: <code>.pt-obszar--komunikacja-zwinieta</code></div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2" style="margin-top: var(--dn-od-4);">
+        <div class="pl-opis-strefy" style="margin-top:0;">
+          <h4>Dlaczego 46 %, a nie 50 %</h4>
+          <p style="margin:0;">Równy podział czyta się jak dwa równoważne okna. Kokpit ma jeden środek
+          ciężkości — okno operacyjne modułu. Przewaga <strong>54 : 46</strong> jest minimalna, ale
+          jednoznaczna, i mieści się w <code>WARIANCJA_PROJEKTOWA 4/10</code>: asymetria wyłącznie tam,
+          gdzie niesie hierarchię.</p>
+        </div>
+        <div class="pl-opis-strefy" style="margin-top:0;">
+          <h4>Dlaczego 320 px twardego minimum</h4>
+          <p style="margin:0;">Poniżej tej szerokości wpis rozmowy (<code>.dn-wpis</code> — medalion 28 px,
+          nadawca, tożsamość, godzina, treść) łamie się na dwa wiersze przy pierwszym dłuższym zdaniu,
+          a historia przestaje czytać się jak rozmowa. <code>minmax()</code> zapisuje to jako regułę,
+          nie jako zalecenie.</p>
+        </div>
+      </div>
+
+      <div class="pl-demo" style="margin-top: var(--dn-od-4);">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Trzy stany pasa komunikacji</span></div>
+        <div class="pl-demo-tresc">
+          <div class="pl-siatka pl-siatka--3">
+            <div>
+              <div class="pl-para-glowa" style="color: var(--dn-tekst-2);">Rozwinięty</div>
+              <div class="pl-plyta" style="height: 120px; grid-template-rows: 1fr 1fr;">
+                <div class="pl-pole"><b>Okno operacyjne</b></div>
+                <div class="pl-pole pl-pole--sygnal"><b>Chat Window</b><span>46 %</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="pl-para-glowa" style="color: var(--dn-tekst-2);">Minimalny</div>
+              <div class="pl-plyta" style="height: 120px; grid-template-rows: 1fr 60px;">
+                <div class="pl-pole"><b>Okno operacyjne</b></div>
+                <div class="pl-pole pl-pole--sygnal"><b>Chat Window</b><span>320 px — próg</span></div>
+              </div>
+            </div>
+            <div>
+              <div class="pl-para-glowa" style="color: var(--dn-tekst-2);">Zwinięty</div>
+              <div class="pl-plyta" style="height: 120px; grid-template-rows: 1fr 32px;">
+                <div class="pl-pole"><b>Okno operacyjne</b></div>
+                <div class="pl-pole pl-pole--sygnal"><span>samo pole poleceń</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">zwinięcie nigdy nie usuwa pola poleceń — Chat Window jest oknem wspólnym wszystkim modułom (KANON rozdz. 7.4)</div>
+      </div>
+    </section>
+
+    <!-- ── 05 · KATALOG WZORCÓW ──────────────────────────────────────── -->
+    <section class="pl-sekcja" id="wzorce" aria-labelledby="tyt-wzorce">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">05</span>
+        <div>
+          <h2 id="tyt-wzorce">Katalog wzorców układu — osiem form, zero wymysłów</h2>
+          <p class="pl-lead">
+            Każdy wzorzec ma żywy szkielet z etykietami wymiarów, klasę prototypu i wskazane
+            <strong>realne miejsce występowania</strong> w platformie. Wybierz wzorzec z listy —
+            szkielet i opis przebudowują się bez przeładowania.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie" role="tablist" aria-label="Wybór wzorca układu">
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-strefy" data-grupa="wzorce" aria-selected="true">Trzy strefy</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-lewy" data-grupa="wzorce" aria-selected="false">Boczny lewy</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-prawy" data-grupa="wzorce" aria-selected="false">Boczny prawy</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-troj" data-grupa="wzorce" aria-selected="false">Trójpodział</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-panele" data-grupa="wzorce" aria-selected="false">Panele 2/3/4</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-asym" data-grupa="wzorce" aria-selected="false">Asymetria ról</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-modal" data-grupa="wzorce" aria-selected="false">Nakładka modalna</button>
+        <button class="dn-zakladka" role="tab" type="button" data-przelacz="w-aod" data-grupa="wzorce" aria-selected="false">Warstwa centralna</button>
+      </div>
+
+      <!-- wzorzec 1 -->
+      <div data-widok="w-strefy" data-grupa-widoku="wzorce" data-widok-aktywny="tak">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">01 · Trzy strefy o malejącej masie</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">Centrum dowodzenia</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--strefy" style="height: 260px;">
+              <div class="pl-pole pl-pole--mocne"><b>Strefa 1 — karty środowisk</b><span>4 × .dn-karta-srodowiska · emblemat, tytuł, motto, opis</span><span>masa największa — środek ciężkości strony</span></div>
+              <div class="pl-pole"><b>Strefa 2 — kafle komponentów własnych</b><span>4 × .dn-kafel · Automations · Agents · Workspace · Assistant</span></div>
+              <div class="pl-pole"><b>Strefa 3 — listwa ustawień</b><span>.dn-listwa · 3 pozycje</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">źródło: elementy-okien.md rozdz. 2.2–2.5 · SIATKA-I-UKLAD.md rozdz. 8 · prototyp: 05-okna/przeplyw/03-centrum-dowodzenia.html</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Dlaczego nie trzy równe karty</h4>
+          <p style="margin:0;">Katalog anty-domyślnych blokuje wprost odruch „trzy równe karty funkcji”.
+          Centrum dowodzenia rozwiązuje to <strong>malejącą masą</strong>: karta środowiska większa od kafla,
+          kafel większy od pozycji listwy. Czytelnik nie musi decydować, od czego zacząć — układ już
+          zdecydował. Liczebność stref (4 · 4 · 3) jest źródłowa; ich wymiary są decyzją projektową,
+          bo dokumentacja świadomie ich nie przesądza.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 2 -->
+      <div data-widok="w-lewy" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">02 · Boczny lewy — drzewo + treść</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">.pt-panele--boczny-lewy</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--boczny-lewy">
+              <div class="pl-pole pl-pole--mocne"><b>Project Tree</b><span>minmax(180px, 260px)</span></div>
+              <div class="pl-pole"><b>Code Editor</b><span>minmax(0, 1fr)</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Developer (Project Tree + Code Editor) · Library (Library Explorer + File Preview) · Research (Sources Manager)</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Zasada wzorca</h4>
+          <p style="margin:0;">Lewa kolumna jest <strong>nawigacją po materiale</strong>, prawa —
+          miejscem pracy. Zakres <code>minmax(180px, 260px)</code> pozwala drzewu urosnąć na szerokim
+          monitorze bez zabierania miejsca edytorowi na wąskim. Poniżej progu w1 lewa kolumna znika,
+          a wybór odbywa się z paska narzędzi panelu.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 3 -->
+      <div data-widok="w-prawy" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">03 · Boczny prawy — treść + panel</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">.pt-panele--boczny-prawy</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--boczny-prawy">
+              <div class="pl-pole pl-pole--mocne"><b>Research Workspace</b><span>minmax(0, 1fr)</span></div>
+              <div class="pl-pole"><b>Findings Panel</b><span>minmax(200px, 300px)</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Research (Findings Panel) · Konfiguracja (Panel prowenancji) · Browser (Notes Panel)</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Panel prowenancji jako przypadek wzorcowy</h4>
+          <p style="margin:0;">W Oknie Konfiguracji prawy panel niesie <strong>pochodzenie ustawienia</strong>:
+          skąd bierze się wartość, która warstwa ją nadpisuje, co się stanie po zmianie. Panel towarzyszy
+          treści, nigdy jej nie zastępuje — dlatego mieści się w wąskim zakresie 200–300 px i znika jako
+          pierwszy przy zwężaniu okna.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 4 -->
+      <div data-widok="w-troj" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">04 · Trójpodział</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">.pt-panele--trojpodzial</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--trojpodzial">
+              <div class="pl-pole"><b>Project Tree</b><span>minmax(160px, 220px)</span></div>
+              <div class="pl-pole pl-pole--mocne"><b>Code Editor</b><span>minmax(0, 1fr)</span></div>
+              <div class="pl-pole"><b>Git Panel</b><span>minmax(200px, 300px)</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Developer · Apps · Design · Workspace · Automations — prototypy 05-okna/moduly/*.html</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Trzy role, nie trzy kolumny</h4>
+          <p style="margin:0;">Lewa: <strong>co mam</strong> (materiał). Środek: <strong>co robię</strong>
+          (praca). Prawa: <strong>co się z tym stało</strong> (skutek — historia zmian, wynik budowania,
+          zasoby). Poniżej progu w2 znika lewa kolumna — najtańsza do odtworzenia jednym kliknięciem,
+          bo drzewo można wywołać z paska panelu.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 5 -->
+      <div data-widok="w-panele" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">05 · Panele równoległe 2 / 3 / 4</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">.pt-panele--2 / --3 / --4</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna" style="display: grid; gap: var(--dn-od-3);">
+            <div class="pl-plyta pl-plyta--dwa" style="height: 96px;">
+              <div class="pl-pole"><b>Source Panel</b><span>Translate</span></div>
+              <div class="pl-pole"><b>Translation Panels</b><span>1 język</span></div>
+            </div>
+            <div class="pl-plyta pl-plyta--trzy" style="height: 96px;">
+              <div class="pl-pole"><b>Source Panel</b></div>
+              <div class="pl-pole"><b>Translation Panels</b><span>język 1</span></div>
+              <div class="pl-pole"><b>Translation Panels</b><span>język 2</span></div>
+            </div>
+            <div class="pl-plyta pl-plyta--cztery" style="height: 96px;">
+              <div class="pl-pole"><b>Model Panels</b><span>model 1</span></div>
+              <div class="pl-pole"><b>Model Panels</b><span>model 2</span></div>
+              <div class="pl-pole"><b>Model Panels</b><span>model 3</span></div>
+              <div class="pl-pole"><b>Model Panels</b><span>model 4</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Roundtable — Model Panels (do 4) · Translate — Source Panel + Translation Panels · Studio — Diff/Grep Panel</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Równość jako informacja</h4>
+          <p style="margin:0;">To jedyny wzorzec, w którym <strong>równe kolumny są uzasadnione</strong>:
+          w Roundtable panele modeli są sobie równe z definicji — porównanie wymaga jednakowych warunków.
+          Hierarchię niesie wtedy nie rozmiar, lecz <strong>Moderator Panel</strong> i
+          <strong>Consensus Panel</strong> poza rzędem paneli.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 6 -->
+      <div data-widok="w-asym" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">06 · Asymetria koordynator–wykonawca</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">MultitaskingAI · sekcja „Role”</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--asymetria">
+              <div class="pl-pole pl-pole--sygnal" style="grid-row: span 2;">
+                <b>Coordinator</b>
+                <span>rozdziela pracę · masa największa</span>
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-2);"><span class="pt-tetno" aria-hidden="true"></span>praca w toku</span>
+              </div>
+              <div class="pl-pole pl-pole--mocne"><b>Executor 1</b><span>wykonawca</span></div>
+              <div class="pl-pole pl-pole--mocne"><b>Executor 2</b><span>wykonawca</span></div>
+              <div class="pl-pole" style="grid-column: span 2;"><b>Executor 3 / Validator</b><span>domyka pętlę — sprawdzenie wyniku</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">elementy-okien.md rozdz. 4.5, Makieta 18 i Tabela 17 · prototyp: 05-okna/srodowiska/mtai-okna-rol.html</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Układ opowiada pętlę produktu</h4>
+          <p style="margin:0;">Cztery role nie są czterema równymi kaflami. Coordinator rozdaje pracę,
+          Executory ją wykonują, Executor 3 / Validator sprawdza. Karta koordynatora ma większą masę,
+          karty wykonawców tworzą pod nią rytm równych jednostek, karta walidatora zamyka rząd.
+          Piąta pozycja zespołu — <strong>Subagent Network</strong> — jest rozwinięciem zagnieżdżonym
+          pod kartą wykonawcy, nie osobną sekcją panelu orkiestracji.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 7 -->
+      <div data-widok="w-modal" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pt-etykieta">07 · Nakładka modalna</span>
+            <span class="pl-demo-akcje">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-modal="pl-modal-pula">Otwórz modal na żywo</button>
+            </span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--nakladka">
+              <div class="pl-pole"><b>Okno Konfiguracji</b><span>13 zakresów + „Nakładka i wywołanie modelu” + Panel prowenancji</span></div>
+              <div class="pl-nakladka-demo">
+                <div class="pl-modal-demo">
+                  <div class="pl-demo-glowa"><span class="pt-etykieta">Pula kont Code CLI</span></div>
+                  <div class="pl-demo-tresc pl-demo-tresc--ciasna" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">
+                    szerokość maks. 560 px · nakładka z-index 800 · modal z-index 900
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Konfiguracja (modal „Pula kont Code CLI”, okno punktów izolacji) · Ustawienia · rozmycie wyłącznie tutaj</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Jedyne miejsce rozmycia w całym systemie</h4>
+          <p style="margin:0;">Katalog anty-domyślnych blokuje glassmorfizm — powierzchnie są kryjące.
+          Wyjątek jest jeden: <strong>nakładka modala</strong>. Rozmycie ma tu funkcję — mówi „to, co pod
+          spodem, nadal istnieje, ale teraz nie o nim decydujesz”. Maksimum 560 px trzyma treść modala
+          w jednej kolumnie czytania.</p>
+        </div>
+      </div>
+
+      <!-- wzorzec 8 -->
+      <div data-widok="w-aod" data-grupa-widoku="wzorce">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">08 · Warstwa centralna</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">Always On Display · z-index 1200</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--warstwa">
+              <div class="pl-pole"><b>Powłoka środowiska (dowolnego)</b><span>praca biegnie dalej pod spodem</span></div>
+              <div class="pl-aod-demo">
+                <div class="pl-aod-rdzen"><span class="pt-tetno" aria-hidden="true"></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">Always On Display — rdzeń awatara, monitor procesu · KANON rozdz. 7.3 · prototyp: 05-okna/platformowe/always-on-display.html</div>
+        </div>
+        <div class="pl-opis-strefy">
+          <h4>Warstwa, nie okno</h4>
+          <p style="margin:0;">Always On Display nie zajmuje miejsca w siatce — unosi się nad całą
+          przestrzenią roboczą. Rdzeń awatara to jedyne miejsce, gdzie gradient sygnału jest
+          dopuszczony jako powierzchnia (KANON rozdz. 2: gradient nigdy nie jest tłem przycisku,
+          karty ani sekcji). Tętno kropki oznacza pracę biegnącą w tle.</p>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Osiem wzorców — zestawienie</h3>
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela" data-tabela>
+          <thead><tr><th scope="col" data-sortuj="tekst">Wzorzec</th><th scope="col">Geometria</th><th scope="col">Klasa</th><th scope="col">Gdzie występuje</th></tr></thead>
+          <tbody>
+            <tr><td>Trzy strefy o malejącej masie</td><td class="dn-dane">pion 3 · 2 · 1</td><td>—</td><td>Centrum dowodzenia</td></tr>
+            <tr><td>Boczny lewy</td><td class="dn-dane">minmax(180,260) / 1fr</td><td><code>.pt-panele--boczny-lewy</code></td><td>Developer · Library · Research</td></tr>
+            <tr><td>Boczny prawy</td><td class="dn-dane">1fr / minmax(200,300)</td><td><code>.pt-panele--boczny-prawy</code></td><td>Research · Konfiguracja · Browser</td></tr>
+            <tr><td>Trójpodział</td><td class="dn-dane">220 / 1fr / 300</td><td><code>.pt-panele--trojpodzial</code></td><td>Developer · Apps · Design · Workspace · Automations</td></tr>
+            <tr><td>Panele równoległe</td><td class="dn-dane">repeat(n, 1fr)</td><td><code>.pt-panele--2/--3/--4</code></td><td>Roundtable · Translate · Studio</td></tr>
+            <tr><td>Asymetria koordynator–wykonawca</td><td class="dn-dane">1,6fr / 1fr / 1fr</td><td><code>.dn-karta</code></td><td>MultitaskingAI — sekcja „Role”</td></tr>
+            <tr><td>Nakładka modalna</td><td class="dn-dane">maks. 560 px</td><td><code>.dn-modal</code></td><td>Konfiguracja · Ustawienia</td></tr>
+            <tr><td>Warstwa centralna</td><td class="dn-dane">z-index 1200</td><td><code>.dn-aod</code></td><td>Always On Display</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── 06 · SIATKA 12 KOLUMN ─────────────────────────────────────── -->
+    <section class="pl-sekcja" id="siatka" aria-labelledby="tyt-siatka">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">06</span>
+        <div>
+          <h2 id="tyt-siatka">Siatka 12 kolumn — i granica jej obowiązywania</h2>
+          <p class="pl-lead">
+            <strong>12 kolumn · przerwa 24 px · treść maks. 1200 px.</strong> Siatka proporcjonalna
+            obowiązuje treść dokumentową. Kokpit jej nie używa — i to jest decyzja, nie przeoczenie.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="pl-btn-siatka" aria-pressed="false">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+          <span id="pl-etykieta-siatki">Pokaż nakładkę siatki 12 kolumn</span>
+        </button>
+        <span class="pt-mono" style="font-size: var(--dn-fs-xs);">--dn-siatka-kolumny: 12</span>
+        <span class="pt-mono" style="font-size: var(--dn-fs-xs);">--dn-siatka-przerwa: 24px</span>
+        <span class="pl-sterowanie-opis">--dn-tresc-max: 1200px</span>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Treść dokumentowa — Okno Konfiguracji, zakresy ustawień</span></div>
+        <div class="pl-demo-tresc pl-siatka12" id="pl-plansza-siatki">
+          <div style="display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: var(--dn-siatka-przerwa);">
+            <div class="pl-demo" style="grid-column: span 8;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">Zakres ustawienia — 8 kolumn</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">
+                Treść zakresu konfiguracji: opis, pola, wartości domyślne. Kolumna czytania utrzymuje
+                stałą szerokość niezależnie od przekątnej monitora.
+              </div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 4;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">Panel prowenancji — 4 kolumny</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">
+                Pochodzenie wartości, warstwa nadpisująca, skutek zmiany.
+              </div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 6;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">6 kolumn</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Para równorzędnych bloków treści.</div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 6;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">6 kolumn</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Druga połowa pary.</div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 3;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">3 kol.</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Karta środowiska — Strefa 1.</div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 3;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">3 kol.</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Karta środowiska — Strefa 1.</div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 3;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">3 kol.</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Karta środowiska — Strefa 1.</div>
+            </div>
+            <div class="pl-demo" style="grid-column: span 3;">
+              <div class="pl-demo-glowa"><span class="pt-etykieta">3 kol.</span></div>
+              <div class="pl-demo-tresc" style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Karta środowiska — Strefa 1.</div>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">cztery karty środowisk = 4 × 3 kolumny — pełne wykorzystanie siatki bez reszty</div>
+      </div>
+
+      <h3 class="pl-podtytul">Gdzie siatka obowiązuje, a gdzie układ jest sztywny</h3>
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Rodzaj powierzchni</th><th scope="col">Siatka 12</th><th scope="col">Uzasadnienie</th></tr></thead>
+          <tbody>
+            <tr><td>Treść dokumentowa — Konfiguracja, Ustawienia, plansze portfolio</td><td><span class="dn-plakietka dn-plakietka--sukces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>tak</span></td><td>czytanie wymaga stałej kolumny — treść ma tę samą szerokość na każdym monitorze</td></tr>
+            <tr><td>Centrum dowodzenia — w obrębie stref</td><td><span class="dn-plakietka dn-plakietka--sukces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>tak</span></td><td>4 karty × 3 kolumny · 4 kafle × 3 kolumny — podział bez reszty</td></tr>
+            <tr><td>Powłoka środowiska — kokpit</td><td><span class="dn-plakietka dn-plakietka--ostrzezenie"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>nie</span></td><td>224 px bocznej i 320 px pasa komunikacji to wymiary bezwzględne, nie ułamki</td></tr>
+            <tr><td>Okna operacyjne modułów</td><td><span class="dn-plakietka dn-plakietka--ostrzezenie"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>nie</span></td><td>proporcje paneli zapisane w <code>minmax()</code>, nie w kolumnach</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pl-opis-strefy" style="margin-top: var(--dn-od-4);">
+        <h4>Dlaczego kokpit nie może być proporcjonalny</h4>
+        <p style="margin:0;">Siatka proporcjonalna służy <strong>czytaniu</strong>. Kokpit służy
+        <strong>sterowaniu</strong> — boczna nawigacja ma mieć tę samą szerokość, żeby ręka trafiała
+        w tę samą pozycję na każdym stanowisku. Rozciągnięcie bocznej do 1/12 szerokości dałoby pas
+        213 px na monitorze 2560 px i 107 px na 1280 px — czyli inne narzędzie na każdym biurku.
+        Stałe wymiary to nie brak elastyczności, tylko warunek pamięci mięśniowej Operatora.</p>
+      </div>
+    </section>
+
+    <!-- ── 07 · PUNKTY ŁAMANIA ───────────────────────────────────────── -->
+    <section class="pl-sekcja" id="lamanie" aria-labelledby="tyt-lamanie">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">07</span>
+        <div>
+          <h2 id="tyt-lamanie">Cztery punkty łamania — symulator na żywo</h2>
+          <p class="pl-lead">
+            <strong>w1 640 · w2 960 · w3 1280 · w4 1600.</strong> Przesuń suwak szerokości: szkielet
+            powłoki przebudowuje się dokładnie tak, jak zrobi to platforma, a opis pod spodem mówi,
+            co właśnie się stało i dlaczego.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-sterowanie">
+        <label class="pt-etykieta" for="pl-suwak-szerokosci">Szerokość okna</label>
+        <input class="dn-suwak" type="range" id="pl-suwak-szerokosci" min="360" max="1720" value="1360" step="20"
+               style="flex: 1; min-width: 220px;" aria-describedby="pl-odczyt-szerokosci">
+        <span class="pl-sterowanie-opis" id="pl-odczyt-szerokosci">1360 px · próg w3 — pełny kokpit</span>
+      </div>
+
+      <div class="pl-progi" style="margin-bottom: var(--dn-od-3);">
+        <span class="pl-prog" data-prog="w1"><b>w1</b> 640 · telefon poziomo / Mobile</span>
+        <span class="pl-prog" data-prog="w2"><b>w2</b> 960 · tablet</span>
+        <span class="pl-prog" data-prog="w3" data-aktywny="tak"><b>w3</b> 1280 · biurko</span>
+        <span class="pl-prog" data-prog="w4"><b>w4</b> 1600 · szerokie biurko</span>
+      </div>
+
+      <div class="pl-ramka-symulatora">
+        <div class="pl-scena" id="pl-scena" style="width: 1360px; max-width: 100%;">
+          <div class="pl-szkielet pl-szkielet--powloka" style="height: 300px;" id="pl-szkielet-sym" aria-label="Szkielet powłoki w symulacji szerokości">
+            <div class="pl-strefa pl-strefa--rama" style="cursor: default;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+              <span class="pl-strefa-etykieta">Pasek górny — nigdy nie znika</span>
+            </div>
+            <div class="pl-strefa" style="cursor: default;">
+              <span class="pl-strefa-etykieta">Pas kart sesji</span>
+            </div>
+            <div class="pl-cialo-szkieletu" id="pl-cialo-sym">
+              <div class="pl-strefa" style="align-items: flex-start; cursor: default;" id="pl-boczna-sym">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+                <span class="pl-strefa-etykieta" id="pl-boczna-etykieta">Boczna nawigacja — 9 modułów</span>
+              </div>
+              <div class="pl-obszar-szkieletu" id="pl-obszar-sym">
+                <div class="pl-plyta pl-plyta--trojpodzial" id="pl-panele-sym" style="height: auto; border: 0; border-radius: 0;">
+                  <div class="pl-pole" id="pl-panel-lewy"><b>Project Tree</b><span>panel pomocniczy</span></div>
+                  <div class="pl-pole pl-pole--mocne"><b>Code Editor</b><span>okno wiodące</span></div>
+                  <div class="pl-pole" id="pl-panel-prawy"><b>Git Panel</b><span>panel pomocniczy</span></div>
+                </div>
+                <div class="pl-strefa" style="align-items: flex-start; cursor: default; background: var(--dn-sygnal-tlo);">
+                  <span class="pl-strefa-etykieta" id="pl-komunikacja-etykieta">Chat Window — pas komunikacji · 46 %</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-opis-strefy" id="pl-opis-progu">
+        <h4 id="pl-opis-progu-tytul">w3 · 1280 px — biurko, pełny kokpit</h4>
+        <p style="margin:0;" id="pl-opis-progu-tresc">
+          Wszystkie pasy i panele w wymiarach bazowych: boczna nawigacja 224 px, trójpodział w komplecie,
+          pas komunikacji na 46 % wysokości obszaru roboczego. To jest stan odniesienia, względem którego
+          opisujemy wszystkie pozostałe progi.
+        </p>
+      </div>
+
+      <h3 class="pl-podtytul">Co dzieje się na każdym progu</h3>
+      <div class="pl-tabela-obudowa">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Próg</th><th scope="col">Szerokość</th><th scope="col">Nazwa</th><th scope="col">Zachowanie układu</th></tr></thead>
+          <tbody>
+            <tr><td class="dn-dane">w1</td><td class="dn-dane">640 px</td><td>telefon poziomo / Mobile</td><td>boczna nawigacja znika całkowicie; panele boczne i równoległe składają się do jednej kolumny (widoczny wyłącznie pierwszy panel); <code>.pt-dokument</code> traci szerokie marginesy (32 → 16 px)</td></tr>
+            <tr><td class="dn-dane">w2</td><td class="dn-dane">960 px</td><td>tablet</td><td>boczna zwija się do ikon (224 → 32 px); etykiety pozycji i nagłówek nawigacji znikają; trójpodział traci lewą kolumnę</td></tr>
+            <tr><td class="dn-dane">w3</td><td class="dn-dane">1280 px</td><td>biurko</td><td>pełny kokpit — wszystkie pasy i panele w wymiarach bazowych</td></tr>
+            <tr><td class="dn-dane">w4</td><td class="dn-dane">1600 px</td><td>szerokie biurko</td><td>dwa okna komunikacji równolegle</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pl-opis-strefy" style="margin-top: var(--dn-od-4);">
+        <h4>Porządek zwijania — co znika najpierw</h4>
+        <p style="margin:0;">Znika najpierw to, co <strong>najtańsze do odtworzenia jednym kliknięciem</strong>.
+        Kolejność: panele pomocnicze → etykiety bocznej nawigacji → sama boczna nawigacja. Nigdy nie znika
+        pasek górny (tożsamość i funkcje globalne) ani pas komunikacji (Chat Window jest oknem wspólnym
+        wszystkim modułom). Reguły odczytane z <code>prototyp.css</code> rozdz. 7; progi z KANON rozdz. 2.</p>
+      </div>
+    </section>
+
+    <!-- ── 08 · HIERARCHIA WIZUALNA ──────────────────────────────────── -->
+    <section class="pl-sekcja" id="hierarchia" aria-labelledby="tyt-hierarchia">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">08</span>
+        <div>
+          <h2 id="tyt-hierarchia">Hierarchia wizualna w kokpicie — cztery narzędzia</h2>
+          <p class="pl-lead">
+            Monochrom odbiera projektantowi barwę jako narzędzie hierarchii. Zostają cztery:
+            <strong>masa · kontrast · pozycja · przestrzeń</strong>. Każde pokazane parą porównawczą
+            na realnym układzie platformy.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Narzędzie 1 · Masa — Strefa 1 Centrum dowodzenia</h3>
+      <div class="pl-para">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--slaba" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Słaba hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta" style="height: 200px; grid-template-rows: 1fr 1fr 1fr;">
+              <div class="pl-pole"><b>Karty środowisk</b><span>4 elementy</span></div>
+              <div class="pl-pole"><b>Kafle komponentów własnych</b><span>4 elementy</span></div>
+              <div class="pl-pole"><b>Listwa ustawień</b><span>3 pozycje</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">trzy strefy równej masy — oko nie wie, gdzie zacząć</div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--mocna" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Mocna hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-plyta pl-plyta--strefy" style="height: 200px;">
+              <div class="pl-pole pl-pole--mocne"><b>Karty środowisk</b><span>TalkIn · WorkSpace · CodeStudio · MultitaskingAI</span><span>masa największa</span></div>
+              <div class="pl-pole"><b>Kafle komponentów własnych</b><span>Automations · Agents · Workspace · Assistant</span></div>
+              <div class="pl-pole"><span>Listwa ustawień — 3 pozycje</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">masa maleje w dół — decyzja główna czytana pierwsza</div>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Narzędzie 2 · Kontrast — wiersz Monitora procesu (MultitaskingAI)</h3>
+      <div class="pl-para">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--slaba" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Słaba hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--zero">
+            <div class="pt-lista">
+              <div class="pt-pozycja" style="color: var(--dn-tekst);"><span class="pt-pozycja-tytul" style="color: var(--dn-tekst);">#128 · Executor 1 · sukces · 12:04</span></div>
+              <div class="pt-pozycja" style="color: var(--dn-tekst);"><span class="pt-pozycja-tytul" style="color: var(--dn-tekst);">#129 · Coordinator · w toku · 12:05</span></div>
+              <div class="pt-pozycja" style="color: var(--dn-tekst);"><span class="pt-pozycja-tytul" style="color: var(--dn-tekst);">#130 · Executor 2 · oczekuje · —</span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">wszystko w <code>--dn-tekst</code> — identyfikator, rola, stan i godzina mają tę samą wagę</div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--mocna" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Mocna hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc pl-demo-tresc--zero">
+            <div class="pt-lista">
+              <div class="pt-pozycja">
+                <span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span>
+                <span class="pt-pozycja-tytul"><strong style="color: var(--dn-tekst);">#128</strong> <span style="color: var(--dn-tekst-2);">Executor 1</span></span>
+                <span class="dn-plakietka dn-plakietka--sukces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>sukces</span>
+                <span class="pt-pozycja-meta">12:04</span>
+              </div>
+              <div class="pt-pozycja">
+                <span class="pt-tetno" aria-hidden="true"></span>
+                <span class="pt-pozycja-tytul"><strong style="color: var(--dn-tekst);">#129</strong> <span style="color: var(--dn-tekst-2);">Coordinator</span></span>
+                <span class="dn-plakietka dn-plakietka--informacja"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>w toku</span>
+                <span class="pt-pozycja-meta">12:05</span>
+              </div>
+              <div class="pt-pozycja">
+                <span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>
+                <span class="pt-pozycja-tytul"><strong style="color: var(--dn-tekst);">#130</strong> <span style="color: var(--dn-tekst-2);">Executor 2</span></span>
+                <span class="dn-plakietka"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>oczekuje</span>
+                <span class="pt-pozycja-meta">—</span>
+              </div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">identyfikator <code>--dn-tekst</code> · rola <code>--dn-tekst-2</code> · godzina <code>--dn-tekst-3</code> · stan zawsze z ikoną i etykietą</div>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Narzędzie 3 · Pozycja — stopka modala „Pula kont Code CLI”</h3>
+      <div class="pl-para">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--slaba" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Słaba hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc" style="display:flex; gap: var(--dn-od-2); flex-wrap: wrap;">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Wariant demonstracyjny — akcja główna wmieszana między poboczne." data-komunikat-tytul="Pozycja">Zapisz pulę</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Wariant demonstracyjny." data-komunikat-tytul="Pozycja">Dodaj konto</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Wariant demonstracyjny." data-komunikat-tytul="Pozycja">Anuluj</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Wariant demonstracyjny." data-komunikat-tytul="Pozycja">Wyczyść</button>
+          </div>
+          <div class="pl-demo-stopka">cztery przyciski o jednakowej wadze i przypadkowej kolejności</div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--mocna" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Mocna hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc" style="display:flex; gap: var(--dn-od-2); flex-wrap: wrap; align-items: center;">
+            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-komunikat="Akcja poboczna pozostaje klikalna — zasada zero blokad." data-komunikat-tytul="Wyczyść pulę">Wyczyść</button>
+            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-komunikat="Akcja poboczna pozostaje klikalna." data-komunikat-tytul="Dodaj konto">Dodaj konto</button>
+            <span style="flex: 1;"></span>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Zamknięcie bez zapisu." data-komunikat-tytul="Anuluj">Anuluj</button>
+            <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" data-komunikat="Pula kont Code CLI zapisana (przykład prezentacyjny)." data-komunikat-tytul="Zapisz pulę" data-komunikat-rodzaj="sukces">Zapisz pulę</button>
+          </div>
+          <div class="pl-demo-stopka">akcja główna zawsze ostatnia po prawej · poboczne odsunięte w lewo · żadna nie jest wyłączona</div>
+        </div>
+      </div>
+
+      <h3 class="pl-podtytul">Narzędzie 4 · Przestrzeń — panel „Role” (MultitaskingAI)</h3>
+      <div class="pl-para">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--slaba" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              Słaba hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc" style="display: grid; gap: var(--dn-od-3);">
+            <div style="display:grid; gap: var(--dn-od-3);">
+              <span class="pt-etykieta">Zespoły</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Konfiguracja zapisana</span>
+              <span class="pt-etykieta">Role</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Executor 1 · Executor 2</span>
+              <span class="pt-etykieta">Kolejki</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Silnik kolejek — 11 akcji</span>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">jednakowy odstęp między wszystkim — trzy sekcje czytają się jak jedna lista</div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <span class="pl-para-glowa pl-para-glowa--mocna" style="margin:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              Mocna hierarchia
+            </span>
+          </div>
+          <div class="pl-demo-tresc" style="display: grid; gap: var(--dn-od-6);">
+            <div style="display:grid; gap: var(--dn-od-2);">
+              <span class="pt-etykieta">Zespoły</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Konfiguracja zapisana</span>
+            </div>
+            <div style="display:grid; gap: var(--dn-od-2);">
+              <span class="pt-etykieta">Role</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Executor 1 · Executor 2</span>
+            </div>
+            <div style="display:grid; gap: var(--dn-od-2);">
+              <span class="pt-etykieta">Kolejki</span>
+              <span style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">Silnik kolejek — 11 akcji</span>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">wewnątrz grupy <code>od-2</code> = 8 px · między grupami <code>od-6</code> = 24 px</div>
+        </div>
+      </div>
+
+      <div class="pl-opis-strefy" style="margin-top: var(--dn-od-5);">
+        <h4>Ograniczenie bezwzględne</h4>
+        <p style="margin:0;">Każde z czterech narzędzi działa <strong>równolegle z ikoną albo etykietą</strong>.
+        Stan nigdy nie jest komunikowany samym kolorem (KANON rozdz. 9) — dlatego w parze „mocna
+        hierarchia” każdy stan przebiegu ma kropkę, plakietkę i słowo, a nie sam odcień tła.</p>
+      </div>
+    </section>
+
+    <!-- ── 09 · WARSTWY Z-INDEX ──────────────────────────────────────── -->
+    <section class="pl-sekcja" id="warstwy" aria-labelledby="tyt-warstwy">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">09</span>
+        <div>
+          <h2 id="tyt-warstwy">Jedenaście warstw — stos w perspektywie</h2>
+          <p class="pl-lead">
+            Stos warstw jest pojęciem przestrzennym, więc pokazujemy go przestrzennie. Kliknij
+            płaszczyznę albo wiersz listy — obie reprezentacje wskazują tę samą warstwę.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Stos w perspektywie</span><span class="pl-demo-akcje pt-mono" style="font-size: var(--dn-fs-xs);">rotateX 58° · rotateZ −38°</span></div>
+          <div class="pl-demo-tresc pl-stos-scena">
+            <div class="pl-stos" id="pl-stos" role="group" aria-label="Wizualizacja stosu warstw">
+              <button class="pl-warstwa" type="button" data-warstwa="podloga" style="transform: translateZ(0px);"><b>Podłoga</b><i>0</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="przybornik" style="transform: translateZ(26px);"><b>Przybornik</b><i>10</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="pasek" style="transform: translateZ(52px);"><b>Pasek</b><i>100</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="boczna" style="transform: translateZ(78px);"><b>Boczna</b><i>200</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="komunikacja" style="transform: translateZ(104px);"><b>Pas komunikacji</b><i>300</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="nakladka" style="transform: translateZ(140px);"><b>Nakładka</b><i>800</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="modal" style="transform: translateZ(166px);"><b>Modal</b><i>900</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="powiadomienie" style="transform: translateZ(192px);"><b>Powiadomienie</b><i>1000</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="tooltip" style="transform: translateZ(218px);"><b>Tooltip</b><i>1100</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="aod" style="transform: translateZ(244px);"><b>Always On Display</b><i>1200</i></button>
+              <button class="pl-warstwa" type="button" data-warstwa="polecenia" style="transform: translateZ(270px);" aria-selected="true"><b>Centrum poleceń</b><i>1300</i></button>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">przechył jest statyczny — animowane jest wyłącznie wyróżnienie warstwy (160 ms), zgodnie z budżetem ruchu 3/10</div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Warstwa · żeton · przykład elementu</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--ciasna">
+            <div class="pl-stos-lista">
+              <div class="pl-stos-wiersz" data-wiersz="podloga"><code>0</code><span><strong style="color:var(--dn-tekst);">Podłoga</strong> — obszar roboczy, okna operacyjne modułu · <code>--dn-z-podloga</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="przybornik"><code>10</code><span><strong style="color:var(--dn-tekst);">Przybornik</strong> — <code>.dn-przybornik</code>, lokalne paski narzędzi paneli · <code>--dn-z-przybornik</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="pasek"><code>100</code><span><strong style="color:var(--dn-tekst);">Pasek</strong> — pasek górny i pas kart sesji · <code>--dn-z-pasek</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="boczna"><code>200</code><span><strong style="color:var(--dn-tekst);">Boczna</strong> — boczna nawigacja, panel orkiestracji · <code>--dn-z-boczna</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="komunikacja"><code>300</code><span><strong style="color:var(--dn-tekst);">Pas komunikacji</strong> — Chat Window · <code>--dn-z-pas-komunikacji</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="nakladka"><code>800</code><span><strong style="color:var(--dn-tekst);">Nakładka</strong> — przyciemnienie tła modala, jedyne rozmycie w systemie · <code>--dn-z-nakladka</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="modal"><code>900</code><span><strong style="color:var(--dn-tekst);">Modal</strong> — „Pula kont Code CLI”, okno punktów izolacji · <code>--dn-z-modal</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="powiadomienie"><code>1000</code><span><strong style="color:var(--dn-tekst);">Powiadomienie</strong> — <code>.dn-toast</code> · <code>--dn-z-powiadomienie</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="tooltip"><code>1100</code><span><strong style="color:var(--dn-tekst);">Tooltip</strong> — <code>.dn-tooltip</code> · <code>--dn-z-tooltip</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="aod"><code>1200</code><span><strong style="color:var(--dn-tekst);">Always On Display</strong> — rdzeń awatara, monitor procesu · <code>--dn-z-aod</code></span></div>
+              <div class="pl-stos-wiersz" data-wiersz="polecenia" data-aktywny="tak"><code>1300</code><span><strong style="color:var(--dn-tekst);">Centrum poleceń</strong> — wywołanie polecenia ponad wszystkim · <code>--dn-z-centrum-polecen</code></span></div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka">wartości odczytane z <code>zasoby/zetony/zetony.css</code> · KANON rozdz. 2 „Warstwy”</div>
+        </div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2" style="margin-top: var(--dn-od-4);">
+        <div class="pl-opis-strefy" style="margin-top:0;">
+          <h4>Dlaczego AOD stoi nad powiadomieniem</h4>
+          <p style="margin:0;">Always On Display jest agentem towarzyszącym obecnym ponad bieżącą
+          przestrzenią roboczą. Toast, który przykryłby jego rdzeń, przerwałby <strong>jedyny stały
+          wskaźnik pracy w tle</strong> — a to informacja ważniejsza niż komunikat o zakończonej akcji.</p>
+        </div>
+        <div class="pl-opis-strefy" style="margin-top:0;">
+          <h4>Dlaczego skoki, a nie kolejne liczby</h4>
+          <p style="margin:0;">Przerwa 10 → 100 → 200 zostawia miejsce na warstwy pośrednie bez
+          przenumerowania całego stosu. Skok 300 → 800 oddziela <strong>warstwy powłoki</strong>
+          (zawsze obecne) od <strong>warstw przywołanych</strong> (pojawiają się na żądanie Operatora
+          albo systemu).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 10 · O TYM OPRACOWANIU ────────────────────────────────────── -->
+    <section class="pl-sekcja" id="opracowanie" aria-labelledby="tyt-opracowanie">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">10</span>
+        <div>
+          <h2 id="tyt-opracowanie">O tym opracowaniu</h2>
+          <p class="pl-lead">Metryka planszy, źródła w dokumentacji, odwzorowane interakcje i decyzje projektowe.</p>
+        </div>
+      </div>
+
+      <details class="pt-o-opracowaniu" open>
+        <summary>Plansza portfolio P8 — kompozycja i układ</summary>
+        <div class="pt-o-opracowaniu-tresc">
+          <h4>Co przedstawia</h4>
+          <ul>
+            <li>Jednostkę 4 px jako fundament nienegocjowalny — z linijką rytmu i parą porównawczą pokazującą dryf przy odstępstwie.</li>
+            <li>Pełną tabelę wymiarów gęstości zwartej (8/10) w skali 1:1, z przełącznikiem zwarta / przestronna / dotyk.</li>
+            <li>Anatomię powłoki środowiska: <code>48px 36px 1fr</code> × <code>224px 1fr</code>, ze strefami klikalnymi.</li>
+            <li>Obszar roboczy z pasem komunikacji: <code>minmax(0,1fr) / minmax(320px, 46%)</code> i suwak proporcji.</li>
+            <li>Katalog ośmiu wzorców układu z realnym miejscem występowania w platformie.</li>
+            <li>Siatkę 12 kolumn (przerwa 24 px, treść maks. 1200 px) z nakładką i granicą jej obowiązywania.</li>
+            <li>Cztery punkty łamania w1–w4 z symulatorem szerokości przebudowującym szkielet powłoki.</li>
+            <li>Cztery narzędzia hierarchii wizualnej, każde z parą porównawczą na realnym układzie.</li>
+            <li>Jedenaście warstw z-index jako stos w perspektywie 3D.</li>
+          </ul>
+
+          <h4>Źródła w dokumentacji</h4>
+          <ul>
+            <li><code>WYNIK/KANON.md</code> rozdz. 2 — przestrzeń (jednostka 4 px, skala odstępów), wymiary gęstości zwartej i dotyku, punkty łamania, siatka 12 kolumn, warstwy z-index.</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 6–7 — architektura pojęciowa, cztery środowiska, piętnaście modułów, inwentarz okien (7.1–7.6).</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 1 — pokrętła <code>WARIANCJA_PROJEKTOWA 4/10</code>, <code>GESTOSC_WIZUALNA 8/10</code>, katalog anty-domyślnych.</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 8 — zasada zero blokad (ADL-017); rozdz. 9 — dostępność.</li>
+            <li><code>dok/projekt-ui/przeplyw/elementy-okien.md</code> rozdz. 2.2–2.5 (Centrum dowodzenia, trzy strefy), 3.1–3.5 (anatomia powłoki, pasek górny Tabela 8, karty sesji, boczna nawigacja Tabele 10–11, obszar roboczy Schemat 5), 4.4–4.5 (panel orkiestracji Tabela 16, karty ról i Subagent Network Tabela 17).</li>
+            <li><code>design/opracowania/system-wizualny/pakiet/SIATKA-I-UKLAD.md</code> rozdz. 1–8 — jednostka bazowa, skala odstępów, promienie, wymiary kontrolek (v1.0), rytm strony głównej.</li>
+            <li><code>WYNIK/zasoby/prototyp.css</code> rozdz. 1–3 (powłoka, okno operacyjne, podział na panele) i rozdz. 7 (responsywność powłoki).</li>
+            <li><code>WYNIK/zasoby/zetony/zetony.css</code> — wartości wszystkich żetonów wymiarów, warstw i siatki (odczyt bezpośredni).</li>
+            <li><code>WYNIK/05-okna/</code> — potwierdzenie zastosowania wzorców: <code>srodowiska/codestudio.html</code>, <code>moduly/developer.html</code>, <code>moduly/roundtable.html</code>, <code>moduly/translate.html</code>, <code>srodowiska/mtai-okna-rol.html</code>, <code>platformowe/konfiguracja.html</code>, <code>platformowe/always-on-display.html</code>, <code>przeplyw/03-centrum-dowodzenia.html</code>.</li>
+          </ul>
+
+          <h4>Odwzorowane interakcje</h4>
+          <ul>
+            <li>Przełącznik motywu na pasku górnym (<code>data-przelacz-motyw</code>) — oba motywy równoprawne, pasek atramentowy w obu.</li>
+            <li>Spis sekcji z podświetlaniem aktywnej (<code>data-spis</code>, IntersectionObserver w <code>prototyp.js</code>).</li>
+            <li>Nakładka linijki rytmu 4 px i nakładka siatki 12 kolumn — przełączane przyciskami <code>aria-pressed</code>.</li>
+            <li>Przełącznik gęstości podglądu (zwarta / przestronna / dotyk) przebudowujący wysokości okazów i liczby.</li>
+            <li>Strefy szkieletu powłoki jako lista wyboru (<code>data-lista-wyboru</code> + <code>data-pozycja</code> + <code>data-pokaz</code>) sterująca opisem.</li>
+            <li>Suwak proporcji pasa komunikacji przebudowujący podgląd i odczyty procentowe.</li>
+            <li>Zakładki katalogu wzorców (<code>data-przelacz</code> + <code>data-grupa</code>, obsługa strzałek klawiaturą).</li>
+            <li>Symulator szerokości — suwak przebudowujący szkielet powłoki i opis progu w1–w4.</li>
+            <li>Stos warstw: klik płaszczyzny albo wiersza listy wyróżnia tę samą warstwę w obu reprezentacjach.</li>
+            <li>Modal „Pula kont Code CLI” (<code>data-otworz-modal</code>), kopiowanie deklaracji siatki (<code>data-kopiuj</code>), komunikaty zamiast blokad (<code>data-komunikat</code>), sortowanie tabel (<code>data-tabela</code> + <code>data-sortuj</code>).</li>
+            <li>Tętno kropki sygnału tam, gdzie w tle biegnie praca — jedyny ruch ciągły; <code>prefers-reduced-motion</code> obsłużone żetonami.</li>
+          </ul>
+
+          <h4>Decyzje projektowe</h4>
+          <ul>
+            <li><strong>Rytm jako własność układu, nie ilustracja.</strong> Linijka 4 px to nakładka na żywym elemencie powłoki, nie zrzut ekranu z narysowanymi liniami.</li>
+            <li><strong>Każdy wymiar w skali 1:1.</strong> Tabela wymiarów jest jednocześnie makietą — liczba bez okazu nie uczy niczego.</li>
+            <li><strong>Symulator zamiast zrzutów.</strong> Zachowanie na progach w1–w4 jest sprawdzalne suwakiem, a nie deklarowane w podpisie.</li>
+            <li><strong>Rozbieżność v1.0 / v2.0 pokazana jawnie.</strong> Wartości <code>SIATKA-I-UKLAD.md</code> (przycisk 36, pasek 56) odnotowane jako odpowiadające dzisiejszemu wariantowi „przestronna”; wiążący jest KANON v2.0.</li>
+            <li><strong>Perspektywa 3D wyłącznie dla stosu warstw.</strong> Jedyne miejsce, gdzie forma jest przestrzenna, bo pojęcie jest przestrzenne; przechył statyczny, ruch tylko w wyróżnieniu (160 ms).</li>
+            <li><strong>Pary porównawcze na realnych układach.</strong> Zero szarych prostokątów zastępczych — porównanie działa tylko wtedy, gdy czytelnik rozpoznaje ekran, który zna.</li>
+            <li><strong>Zero blokad.</strong> Przyciski wariantów już wybranych pozostają klikalne; żadna kontrolka planszy nie używa atrybutu wyłączającego.</li>
+            <li><strong>Zero wartości szesnastkowych.</strong> Cała warstwa lokalna stylu opiera się wyłącznie na <code>var(--dn-*)</code>; wartości pikselowe pojawiają się wyłącznie tam, gdzie plansza celowo demonstruje odstępstwo od skali (para porównawcza w sekcji 01).</li>
+          </ul>
+
+          <h4>Metryka</h4>
+          <ul>
+            <li>Danaco Console — AI Operating Environment · warstwa wizualna v2.0 · status: deweloperski.</li>
+            <li>Plansza P8 · 2026-08-14 · plik towarzyszący: <code>08-kompozycja-i-uklad.md</code>.</li>
+            <li>© 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz.</li>
+          </ul>
+        </div>
+      </details>
+
+      <p class="pl-p" style="margin-top: var(--dn-od-5);">
+        <a class="dn-btn dn-btn--zarys" href="../INDEKS.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          Powrót do indeksu opracowania
+        </a>
+      </p>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ MODAL DEMONSTRACYJNY ═══════════════════════════════════════════ -->
+<dialog class="dn-modal" id="pl-modal-pula" data-zamknij-podlozem aria-labelledby="pl-modal-tytul">
+  <div class="dn-modal-naglowek">
+    <h2 class="dn-modal-tytul" id="pl-modal-tytul">Pula kont Code CLI</h2>
+    <button class="dn-btn-ikona" type="button" data-zamknij-modal aria-label="Zamknij okno">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+  </div>
+  <div class="dn-modal-cialo">
+    <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); margin: 0 0 var(--dn-od-3);">
+      Modal jest jedynym miejscem w systemie, w którym dopuszczone jest rozmycie tła. Szerokość
+      ograniczona żetonem <code>--dn-wym-modal</code> do 560 px — treść zostaje w jednej kolumnie czytania.
+      Nakładka stoi na warstwie 800, modal na 900.
+    </p>
+    <div class="pl-opis-strefy" style="margin-top:0;">
+      <dl>
+        <dt>Szerokość</dt><dd>maks. 560 px</dd>
+        <dt>Nakładka</dt><dd><code>z-index: 800</code> — <code>--dn-z-nakladka</code></dd>
+        <dt>Modal</dt><dd><code>z-index: 900</code> — <code>--dn-z-modal</code></dd>
+        <dt>Źródło</dt><dd>KANON rozdz. 7.3 — Okno Konfiguracji</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="dn-modal-stopka">
+    <button class="dn-btn dn-btn--duch" type="button" data-zamknij-modal>Anuluj</button>
+    <button class="dn-btn dn-btn--sygnal" type="button" data-zamknij-modal
+            data-komunikat="Wzorzec nakładki modalnej — podgląd prezentacyjny." data-komunikat-tytul="Nakładka modalna" data-komunikat-rodzaj="informacja">Rozumiem</button>
+  </div>
+</dialog>
+
+<span data-prototyp="Plansza portfolio P8"
+      data-prototyp-okno="Kompozycja i układ"
+      data-prototyp-zrodlo="KANON rozdz. 2, 7 · elementy-okien.md rozdz. 2–4 · SIATKA-I-UKLAD.md" hidden></span>
+
+<script src="../zasoby/wspolne.js"></script>
+<script src="../zasoby/prototyp.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = document;
+
+  /* ── linijka rytmu 4 px ─────────────────────────────────────────────── */
+  var btnLinijka = D.getElementById('pl-btn-linijka');
+  var etLinijka = D.getElementById('pl-etykieta-linijki');
+  var poleRytmu = [D.getElementById('pl-rytm-ok'), D.getElementById('pl-rytm-zle')];
+  if (btnLinijka) {
+    btnLinijka.addEventListener('click', function () {
+      var wl = btnLinijka.getAttribute('aria-pressed') === 'true';
+      btnLinijka.setAttribute('aria-pressed', wl ? 'false' : 'true');
+      etLinijka.textContent = wl ? 'Pokaż linijkę rytmu 4 px' : 'Ukryj linijkę rytmu 4 px';
+      poleRytmu.forEach(function (p) { if (p) p.setAttribute('data-linijka', wl ? 'nie' : 'tak'); });
+    });
+  }
+
+  /* ── nakładka siatki 12 kolumn ──────────────────────────────────────── */
+  var btnSiatka = D.getElementById('pl-btn-siatka');
+  var etSiatka = D.getElementById('pl-etykieta-siatki');
+  var planszaSiatki = D.getElementById('pl-plansza-siatki');
+  if (btnSiatka && planszaSiatki) {
+    btnSiatka.addEventListener('click', function () {
+      var wl = btnSiatka.getAttribute('aria-pressed') === 'true';
+      btnSiatka.setAttribute('aria-pressed', wl ? 'false' : 'true');
+      etSiatka.textContent = wl ? 'Pokaż nakładkę siatki 12 kolumn' : 'Ukryj nakładkę siatki 12 kolumn';
+      planszaSiatki.setAttribute('data-siatka', wl ? 'nie' : 'tak');
+    });
+  }
+
+  /* ── przełącznik gęstości podglądu wymiarów ─────────────────────────── */
+  var WARIANTY = {
+    zwarta:      { kontrolka: '32px', ikonowy: '32px', pasek: '48px', pasKart: '36px', wiersz: '36px', check: '16px', przelSzer: '36px', przelWys: '20px', opis: 'zwarta' },
+    przestronna: { kontrolka: '40px', ikonowy: '40px', pasek: '56px', pasKart: '40px', wiersz: '44px', check: '16px', przelSzer: '36px', przelWys: '20px', opis: 'przestronna' },
+    dotyk:       { kontrolka: '40px', ikonowy: '40px', pasek: '48px', pasKart: '40px', wiersz: '44px', check: '20px', przelSzer: '44px', przelWys: '24px', opis: 'dotyk (pointer: coarse)' }
+  };
+  var podglad = D.getElementById('pl-podglad-wymiarow');
+  var opisGestosci = D.getElementById('pl-opis-gestosci');
+
+  function ustawGestosc(nazwa) {
+    var w = WARIANTY[nazwa];
+    if (!w || !podglad) return;
+    podglad.style.setProperty('--dn-wym-kontrolka', w.kontrolka);
+    podglad.style.setProperty('--dn-wym-ikonowy', w.ikonowy);
+    podglad.style.setProperty('--dn-wym-pasek', w.pasek);
+    podglad.style.setProperty('--dn-wym-pas-kart', w.pasKart);
+    podglad.style.setProperty('--dn-wym-wiersz', w.wiersz);
+    podglad.style.setProperty('--dn-wym-check', w.check);
+    podglad.style.setProperty('--dn-wym-przelacznik-szer', w.przelSzer);
+    podglad.style.setProperty('--dn-wym-przelacznik-wys', w.przelWys);
+    var mapa = {
+      kontrolka: parseInt(w.kontrolka, 10), ikonowy: parseInt(w.ikonowy, 10),
+      pasek: parseInt(w.pasek, 10), 'pas-kart': parseInt(w.pasKart, 10),
+      wiersz: parseInt(w.wiersz, 10), check: parseInt(w.check, 10)
+    };
+    Object.keys(mapa).forEach(function (k) {
+      var el = podglad.querySelector('[data-liczba="' + k + '"]');
+      if (el) el.textContent = mapa[k];
+    });
+    var elPrzel = podglad.querySelector('[data-liczba="przelacznik"]');
+    if (elPrzel) elPrzel.textContent = parseInt(w.przelSzer, 10) + '×' + parseInt(w.przelWys, 10);
+    if (opisGestosci) opisGestosci.textContent = 'GESTOSC_WIZUALNA = 8/10 · wariant: ' + w.opis;
+  }
+
+  Array.prototype.forEach.call(D.querySelectorAll('[data-gestosc-wybor]'), function (b) {
+    b.addEventListener('click', function () {
+      Array.prototype.forEach.call(D.querySelectorAll('[data-gestosc-wybor]'), function (x) {
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      });
+      ustawGestosc(b.getAttribute('data-gestosc-wybor'));
+    });
+  });
+
+  /* ── suwak proporcji pasa komunikacji ───────────────────────────────── */
+  var suwakProp = D.getElementById('pl-suwak-proporcji');
+  var podgladProp = D.getElementById('pl-podglad-proporcji');
+  var odczytProp = D.getElementById('pl-odczyt-proporcji');
+  var odczytGora = D.getElementById('pl-odczyt-gora');
+  var odczytDol = D.getElementById('pl-odczyt-dol');
+  if (suwakProp && podgladProp) {
+    suwakProp.addEventListener('input', function () {
+      var v = parseInt(suwakProp.value, 10);
+      podgladProp.style.gridTemplateRows = 'minmax(0, 1fr) minmax(0, ' + v + '%)';
+      odczytGora.textContent = (100 - v) + ' % wysokości obszaru';
+      odczytDol.textContent = v + ' % wysokości obszaru';
+      var komentarz = v === 46 ? 'wartość projektowa'
+        : v < 30 ? 'poniżej progu czytelności rozmowy'
+        : v > 54 ? 'pas komunikacji przejmuje środek ciężkości'
+        : 'w granicach użytecznych';
+      odczytProp.textContent = v + ' % · ' + komentarz;
+    });
+  }
+
+  /* ── symulator punktów łamania ──────────────────────────────────────── */
+  var suwakSzer = D.getElementById('pl-suwak-szerokosci');
+  var scena = D.getElementById('pl-scena');
+  var odczytSzer = D.getElementById('pl-odczyt-szerokosci');
+  var cialoSym = D.getElementById('pl-cialo-sym');
+  var bocznaEt = D.getElementById('pl-boczna-etykieta');
+  var panelLewy = D.getElementById('pl-panel-lewy');
+  var panelPrawy = D.getElementById('pl-panel-prawy');
+  var bocznaSym = D.getElementById('pl-boczna-sym');
+  var komEt = D.getElementById('pl-komunikacja-etykieta');
+  var opisTytul = D.getElementById('pl-opis-progu-tytul');
+  var opisTresc = D.getElementById('pl-opis-progu-tresc');
+
+  var OPISY = {
+    w0: ['poniżej w1 · < 640 px — widok mobilny',
+      'Boczna nawigacja znika całkowicie, panele pomocnicze są złożone do jednej kolumny — widoczne jest wyłącznie okno wiodące. Pas komunikacji zostaje: to on niesie polecenie Operatora. Marginesy treści dokumentowej schodzą z 32 px do 16 px.'],
+    w1: ['w1 · 640 px — telefon poziomo / Mobile',
+      'Próg, na którym znika boczna nawigacja i wszystkie panele poza pierwszym. Układ przechodzi w jedną kolumnę; wybór modułu przenosi się do menu w pasku górnym. Chat Window nadal obecny.'],
+    w2: ['w2 · 960 px — tablet',
+      'Boczna nawigacja zwija się do ikon: 224 px → 32 px, znikają etykiety pozycji i nagłówek z nazwą środowiska. Trójpodział traci lewą kolumnę (Project Tree) — najtańszy panel do odtworzenia jednym kliknięciem z paska panelu.'],
+    w3: ['w3 · 1280 px — biurko, pełny kokpit',
+      'Wszystkie pasy i panele w wymiarach bazowych: boczna nawigacja 224 px, trójpodział w komplecie, pas komunikacji na 46 % wysokości obszaru roboczego. To jest stan odniesienia dla wszystkich pozostałych progów.'],
+    w4: ['w4 · 1600 px — szerokie biurko',
+      'Powyżej tego progu obszar roboczy mieści dwa okna komunikacji równolegle. Panele pomocnicze osiągają górne granice swoich zakresów minmax (260 px i 300 px), a nadmiar szerokości przypada oknu wiodącemu.']
+  };
+
+  function przebuduj(v) {
+    var klucz = v < 640 ? 'w0' : v < 960 ? 'w1' : v < 1280 ? 'w2' : v < 1600 ? 'w3' : 'w4';
+    var opis = OPISY[klucz];
+    if (scena) scena.style.width = v + 'px';
+    if (odczytSzer) odczytSzer.textContent = v + ' px · ' + opis[0];
+    if (opisTytul) opisTytul.textContent = opis[0];
+    if (opisTresc) opisTresc.textContent = opis[1];
+
+    Array.prototype.forEach.call(D.querySelectorAll('[data-prog]'), function (p) {
+      var nazwa = p.getAttribute('data-prog');
+      p.setAttribute('data-aktywny', (klucz === nazwa || (klucz === 'w0' && nazwa === 'w1')) ? 'tak' : 'nie');
+    });
+
+    if (klucz === 'w0') {
+      cialoSym.style.gridTemplateColumns = 'minmax(0, 1fr)';
+      bocznaSym.style.display = 'none';
+      panelLewy.style.display = 'none';
+      panelPrawy.style.display = 'none';
+      D.getElementById('pl-panele-sym').style.gridTemplateColumns = 'minmax(0, 1fr)';
+    } else if (klucz === 'w1' || klucz === 'w2') {
+      cialoSym.style.gridTemplateColumns = 'var(--dn-wym-kontrolka) minmax(0, 1fr)';
+      bocznaSym.style.display = '';
+      bocznaEt.style.display = 'none';
+      panelLewy.style.display = 'none';
+      panelPrawy.style.display = '';
+      D.getElementById('pl-panele-sym').style.gridTemplateColumns = 'minmax(0, 1fr) minmax(200px, 280px)';
+    } else {
+      cialoSym.style.gridTemplateColumns = 'var(--dn-wym-boczna) minmax(0, 1fr)';
+      bocznaSym.style.display = '';
+      bocznaEt.style.display = '';
+      panelLewy.style.display = '';
+      panelPrawy.style.display = '';
+      D.getElementById('pl-panele-sym').style.gridTemplateColumns = 'minmax(160px, 220px) minmax(0, 1fr) minmax(200px, 300px)';
+    }
+    if (komEt) {
+      komEt.textContent = klucz === 'w4'
+        ? 'Chat Window — dwa okna komunikacji równolegle'
+        : 'Chat Window — pas komunikacji · 46 %';
+    }
+  }
+
+  if (suwakSzer) {
+    suwakSzer.addEventListener('input', function () { przebuduj(parseInt(suwakSzer.value, 10)); });
+    przebuduj(parseInt(suwakSzer.value, 10));
+  }
+
+  /* ── stos warstw — wyróżnienie wspólne dla obu reprezentacji ────────── */
+  function wyroznij(nazwa) {
+    Array.prototype.forEach.call(D.querySelectorAll('[data-warstwa]'), function (w) {
+      w.setAttribute('aria-selected', w.getAttribute('data-warstwa') === nazwa ? 'true' : 'false');
+    });
+    Array.prototype.forEach.call(D.querySelectorAll('[data-wiersz]'), function (w) {
+      w.setAttribute('data-aktywny', w.getAttribute('data-wiersz') === nazwa ? 'tak' : 'nie');
+    });
+  }
+  Array.prototype.forEach.call(D.querySelectorAll('[data-warstwa]'), function (w) {
+    w.addEventListener('click', function () { wyroznij(w.getAttribute('data-warstwa')); });
+  });
+  Array.prototype.forEach.call(D.querySelectorAll('[data-wiersz]'), function (w) {
+    w.setAttribute('tabindex', '0');
+    w.setAttribute('role', 'button');
+    w.addEventListener('click', function () { wyroznij(w.getAttribute('data-wiersz')); });
+    w.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); wyroznij(w.getAttribute('data-wiersz')); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

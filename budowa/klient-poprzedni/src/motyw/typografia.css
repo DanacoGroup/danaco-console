@@ -1,0 +1,60 @@
+/* ============================================================================
+   DANACO CONSOLE — ŻETONY TYPOGRAFII
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: kroje, skala stopni, grubości, interlinie, tracking.
+   Warstwa niezależna od motywu — te same wartości w jasnym i ciemnym.
+
+   Trzy role, trzy kroje:
+     Space Grotesk  — nagłówki, tytuły środowisk, logotyp (wejście i tożsamość)
+     IBM Plex Sans  — interfejs i treść (praca)
+     IBM Plex Mono  — dane techniczne, identyfikatory, terminal (maszyna)
+   Pliki krojów wczytuje fonty.css (OFL 1.1, podzbiory latin + latin-ext).
+
+   Wzorce tekstowe (.dn-etykieta-wersalikowa, .dn-etykieta-mono, .dn-dane)
+   należą do fundament.css — ta warstwa deklaruje wyłącznie wartości.
+   ============================================================================ */
+
+:root {
+  /* ---------------------------------------------------------------- *
+   * KROJE                                                             *
+   * ---------------------------------------------------------------- */
+  --dn-ff-naglowek: 'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --dn-ff-bazowa: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --dn-ff-mono: 'IBM Plex Mono', 'Cascadia Mono', 'Consolas', monospace;
+
+  /* ---------------------------------------------------------------- *
+   * SKALA STOPNI — gęstość zwarta, baza 13 px                         *
+   * ---------------------------------------------------------------- */
+  --dn-fs-2xs: 10px;       /* zdania pomocnicze pod polami — najniższy stopień */
+  --dn-fs-xs: 11px;        /* etykiety wersalikowe, nagłówki kolumn */
+  --dn-fs-sm: 12px;        /* metadane, tekst pomocniczy */
+  --dn-fs-base: 13px;      /* BAZOWY — tekst interfejsu */
+  --dn-fs-md: 14px;        /* wyróżniona treść, wpisy rozmowy */
+  --dn-fs-lg: 16px;        /* nagłówki paneli */
+  --dn-fs-xl: 20px;        /* nagłówki okien i modali */
+  --dn-fs-2xl: 24px;       /* tytuły sekcji strony głównej */
+  --dn-fs-3xl: 30px;       /* tytuły kart środowisk */
+  --dn-fs-display: 40px;   /* największy stopień ekspozycyjny */
+
+  /* ---------------------------------------------------------------- *
+   * GRUBOŚCI                                                          *
+   * ---------------------------------------------------------------- */
+  --dn-fw-normalna: 400;
+  --dn-fw-srednia: 500;
+  --dn-fw-polgruba: 600;
+  --dn-fw-gruba: 700;
+
+  /* ---------------------------------------------------------------- *
+   * INTERLINIE                                                        *
+   * ---------------------------------------------------------------- */
+  --dn-lh-ciasny: 1.25;    /* nagłówki */
+  --dn-lh-bazowy: 1.45;    /* interfejs (zwarta gęstość) */
+  --dn-lh-luzny: 1.6;      /* treść ciągła */
+
+  /* ---------------------------------------------------------------- *
+   * TRACKING                                                          *
+   * ---------------------------------------------------------------- */
+  --dn-ls-naglowek: -0.01em;      /* Space Grotesk w dużych stopniach */
+  --dn-ls-wersaliki: 0.08em;      /* etykiety wersalikowe Plex Sans */
+  --dn-ls-mono-wersaliki: 0.14em; /* etykiety wersalikowe Plex Mono */
+}

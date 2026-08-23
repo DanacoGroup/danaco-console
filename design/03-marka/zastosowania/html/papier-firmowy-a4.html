@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — papier firmowy A4</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   DANACO CONSOLE — PAPIER FIRMOWY A4
+   Układ w milimetrach. Arkusz 210 × 297 mm, marginesy 20 mm z każdej strony.
+   Nagłówek 32 mm (znak 45 mm szer.), stopka 18 mm. Zerowy margines strony
+   (@page margin: 0) — cały margines niesie arkusz, dzięki czemu podgląd na
+   ekranie i wydruk mają identyczną geometrię.
+   Barwy: atrament #181818, tekst pomocniczy #616161, metadane #7C7C7C,
+   reguły #E3E3E3, kropka sygnału #3B6FE0 — jedyny akcent barwny arkusza.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@page { size: A4 portrait; margin: 0; }
+
+:root {
+  --pf-atrament: #181818;
+  --pf-tekst-2: #616161;
+  --pf-tekst-3: #7C7C7C;
+  --pf-obrys: #E3E3E3;
+  --pf-papier: #FFFFFF;
+  --pf-pulpit: #E3E3E3;
+  --pf-margines: 20mm;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background: var(--pf-pulpit);
+  font-family: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--pf-atrament);
+  -webkit-font-smoothing: antialiased;
+}
+
+.pf-pulpit { padding: 16mm 0; display: flex; flex-direction: column; align-items: center; gap: 12mm; }
+
+/* --- arkusz ------------------------------------------------------------- */
+.pf-arkusz {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  padding: var(--pf-margines);
+  background: var(--pf-papier);
+  box-shadow: 0 8px 24px rgba(10, 10, 10, .12);
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+  break-after: page;
+}
+.pf-arkusz:last-child { page-break-after: auto; break-after: auto; }
+
+/* --- nagłówek 32 mm ----------------------------------------------------- */
+.pf-naglowek {
+  height: 32mm;
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10mm;
+  border-bottom: 0.25mm solid var(--pf-obrys);
+  padding-bottom: 6mm;
+}
+.pf-znak { width: 45mm; height: auto; display: block; }
+.pf-znak-meta {
+  text-align: right;
+  font-family: 'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 7pt;
+  line-height: 1.5;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pf-tekst-3);
+  padding-top: 1mm;
+  white-space: nowrap;
+}
+
+/* --- pole treści -------------------------------------------------------- */
+.pf-tresc {
+  flex: 1 1 auto;
+  padding-top: 12mm;
+  font-size: 10.5pt;
+  line-height: 1.55;
+  color: var(--pf-atrament);
+  max-width: 150mm;
+}
+.pf-tresc h1 {
+  font-family: 'Space Grotesk', 'IBM Plex Sans', sans-serif;
+  font-weight: 700;
+  font-size: 16pt;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin: 0 0 6mm;
+}
+.pf-tresc p { margin: 0 0 4mm; }
+.pf-tresc .pf-nadtytul {
+  font-family: 'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 7.5pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--pf-tekst-3);
+  margin: 0 0 3mm;
+}
+.pf-pole-robocze {
+  border: 0.25mm dashed var(--pf-obrys);
+  border-radius: 2mm;
+  padding: 6mm;
+  color: var(--pf-tekst-2);
+  font-size: 9.5pt;
+}
+
+/* --- stopka 18 mm ------------------------------------------------------- */
+.pf-stopka {
+  height: 18mm;
+  flex: none;
+  border-top: 0.25mm solid var(--pf-obrys);
+  padding-top: 4mm;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8mm;
+  font-family: 'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 7pt;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: var(--pf-tekst-3);
+}
+.pf-stopka strong { font-weight: 500; color: var(--pf-tekst-2); }
+.pf-stopka-kolumna { min-width: 0; }
+.pf-stopka-kolumna--prawa { text-align: right; white-space: nowrap; }
+
+/* numer strony — licznik CSS, działa też przy druku wielostronicowym */
+.pf-strona::after {
+  content: counter(page, decimal-leading-zero);
+  font-variant-numeric: tabular-nums;
+}
+body { counter-reset: page; }
+.pf-arkusz { counter-increment: page; }
+
+/* --- arkusz kolejny (bez znaku w nagłówku) ------------------------------ */
+.pf-arkusz--kolejny .pf-naglowek { height: 18mm; padding-bottom: 4mm; }
+.pf-arkusz--kolejny .pf-znak-kompakt { width: 26mm; height: auto; display: block; }
+
+/* --- pasek podglądu (tylko ekran) --------------------------------------- */
+.pf-pasek {
+  width: 210mm;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8mm;
+  font-family: 'IBM Plex Mono', 'Cascadia Mono', Consolas, monospace;
+  font-size: 8pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4A4A4A;
+}
+.pf-pasek button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  padding: 8px 14px;
+  border: 1px solid #C0C0C0;
+  border-radius: 6px;
+  background: #FAFAFA;
+  color: #181818;
+  cursor: pointer;
+}
+.pf-pasek button:hover { background: #FFFFFF; }
+.pf-pasek button:focus-visible { outline: 2px solid #3B6FE0; outline-offset: 2px; }
+
+/* --- podziałka marginesów (pomoc konstrukcyjna, tylko ekran) ------------- */
+.pf-arkusz[data-siatka='tak']::before {
+  content: '';
+  position: absolute;
+  inset: var(--pf-margines);
+  border: 0.25mm dashed #3B6FE0;
+  opacity: .45;
+  pointer-events: none;
+}
+
+@media print {
+  body { background: #FFFFFF; }
+  .pf-pulpit { padding: 0; gap: 0; }
+  .pf-pasek { display: none !important; }
+  .pf-arkusz { box-shadow: none; width: 210mm; height: 297mm; }
+  .pf-arkusz[data-siatka='tak']::before { display: none; }
+  .pf-pole-robocze { border-color: #ECECEC; }
+}
+</style>
+</head>
+<body>
+
+<div class="pf-pulpit">
+
+  <div class="pf-pasek">
+    <span>Danaco Console · papier firmowy A4 · 210 × 297 mm</span>
+    <span>
+      <button type="button" id="pf-siatka">Podziałka marginesów</button>
+      <button type="button" id="pf-druk">Drukuj / PDF</button>
+    </span>
+  </div>
+
+  <!-- ═══ ARKUSZ 1 — z pełnym nagłówkiem ═══ -->
+  <section class="pf-arkusz" aria-label="Papier firmowy — arkusz pierwszy">
+    <header class="pf-naglowek">
+      <svg class="pf-znak zn-lockup zn-jasny" viewBox="0 0 225 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,16.0000) scale(0.666667)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#3B6FE0"/></g><g transform="translate(76.0000,17.0000) scale(1.000000)"><path fill="#181818" d="M1.564 34.0V30.056H4.692V14.143999999999998H1.564V10.2H11.356000000000002Q16.150000000000002 10.2 18.649 12.630999999999998Q21.148000000000003 15.061999999999998 21.148000000000003 19.855999999999998V24.344Q21.148000000000003 29.137999999999998 18.649 31.569Q16.150000000000002 34.0 11.356000000000002 34.0ZM9.180000000000001 29.92H11.424000000000001Q14.144000000000002 29.92 15.402000000000001 28.492Q16.66 27.064 16.66 24.479999999999997V19.72Q16.66 17.102 15.402000000000001 15.690999999999999Q14.144000000000002 14.279999999999998 11.424000000000001 14.279999999999998H9.180000000000001Z M23.664 34.0 29.92 10.2H37.74L43.99600000000001 34.0H39.372L38.080000000000005 28.764H29.580000000000005L28.288000000000004 34.0ZM30.634000000000004 24.616H37.026L34.136 13.021999999999998H33.524Z M47.260000000000005 34.0V10.2H55.794000000000004L60.52000000000001 30.94H61.132000000000005V10.2H65.552V34.0H57.01800000000001L52.29200000000001 13.259999999999998H51.68000000000001V34.0Z M68.816 34.0 75.072 10.2H82.89200000000001L89.14800000000001 34.0H84.524L83.23200000000001 28.764H74.73200000000001L73.44000000000001 34.0ZM75.786 24.616H82.17800000000001L79.28800000000001 13.021999999999998H78.67600000000002Z M101.456 34.476Q97.036 34.476 94.452 32.010999999999996Q91.86800000000001 29.546 91.86800000000001 24.956V19.244Q91.86800000000001 14.654 94.452 12.188999999999998Q97.036 9.723999999999997 101.456 9.723999999999997Q105.84200000000001 9.723999999999997 108.239 12.120999999999997Q110.63600000000001 14.517999999999997 110.63600000000001 18.7V18.903999999999996H106.21600000000001V18.564Q106.21600000000001 16.456 105.043 15.095999999999998Q103.87 13.735999999999997 101.456 13.735999999999997Q99.07600000000001 13.735999999999997 97.71600000000001 15.197999999999999Q96.35600000000001 16.66 96.35600000000001 19.176V25.024Q96.35600000000001 27.506 97.71600000000001 28.985Q99.07600000000001 30.464 101.456 30.464Q103.87 30.464 105.043 29.087Q106.21600000000001 27.71 106.21600000000001 25.636V25.024H110.63600000000001V25.5Q110.63600000000001 29.682 108.239 32.079Q105.84200000000001 34.476 101.456 34.476Z M123.96400000000001 34.476Q119.47600000000001 34.476 116.82400000000001 32.010999999999996Q114.17200000000001 29.546 114.17200000000001 24.956V19.244Q114.17200000000001 14.654 116.82400000000001 12.188999999999998Q119.47600000000001 9.723999999999997 123.96400000000001 9.723999999999997Q128.452 9.723999999999997 131.10399999999998 12.188999999999998Q133.756 14.654 133.756 19.244V24.956Q133.756 29.546 131.10399999999998 32.010999999999996Q128.452 34.476 123.96400000000001 34.476ZM123.96400000000001 30.464Q126.48 30.464 127.874 29.002Q129.268 27.54 129.268 25.092V19.107999999999997Q129.268 16.66 127.874 15.197999999999999Q126.48 13.735999999999997 123.96400000000001 13.735999999999997Q121.48200000000001 13.735999999999997 120.07100000000001 15.197999999999999Q118.66000000000001 16.66 118.66000000000001 19.107999999999997V25.092Q118.66000000000001 27.54 120.07100000000001 29.002Q121.48200000000001 30.464 123.96400000000001 30.464Z"/><path fill="#181818" d="M4.0 50.15Q2.3375 50.15 1.53125 48.974999999999994Q0.7250000000000001 47.8 0.7250000000000001 45.6375Q0.7250000000000001 43.475 1.53125 42.3Q2.3375 41.125 4.0 41.125Q4.6375 41.125 5.10625 41.29375Q5.575 41.4625 5.9125 41.756249999999994Q6.25 42.05 6.48125 42.443749999999994Q6.7125 42.8375 6.862500000000001 43.2875L5.6000000000000005 43.7125Q5.5 43.4125 5.375 43.150000000000006Q5.25 42.8875 5.0625 42.7Q4.875 42.5125 4.61875 42.400000000000006Q4.3625 42.2875 3.9875000000000003 42.2875Q3.0625 42.2875 2.6375 42.993750000000006Q2.2125 43.7 2.2125 44.9V46.375Q2.2125 47.575 2.6375 48.28125Q3.0625 48.9875 3.9875000000000003 48.9875Q4.3625 48.9875 4.61875 48.875Q4.875 48.7625 5.0625 48.575Q5.25 48.3875 5.375 48.125Q5.5 47.8625 5.6000000000000005 47.5625L6.862500000000001 47.9875Q6.7125 48.4375 6.48125 48.83125Q6.25 49.225 5.9125 49.51875Q5.575 49.8125 5.10625 49.98125Q4.6375 50.15 4.0 50.15Z M15.0 50.15Q14.175 50.15 13.568750000000001 49.84375Q12.9625 49.5375 12.568750000000001 48.962500000000006Q12.175 48.3875 11.9875 47.55Q11.8 46.7125 11.8 45.6375Q11.8 44.575 11.9875 43.73125Q12.175 42.8875 12.568750000000001 42.3125Q12.9625 41.7375 13.568750000000001 41.43125Q14.175 41.125 15.0 41.125Q15.825 41.125 16.43125 41.43125Q17.0375 41.7375 17.43125 42.3125Q17.825 42.8875 18.0125 43.73125Q18.2 44.575 18.2 45.6375Q18.2 46.7125 18.0125 47.55Q17.825 48.3875 17.43125 48.962500000000006Q17.0375 49.5375 16.43125 49.84375Q15.825 50.15 15.0 50.15ZM15.0 48.9875Q15.9375 48.9875 16.325 48.28125Q16.7125 47.575 16.7125 46.3625V44.9Q16.7125 43.7 16.325 42.993750000000006Q15.9375 42.2875 15.0 42.2875Q14.0625 42.2875 13.675 42.993750000000006Q13.2875 43.7 13.2875 44.9V46.375Q13.2875 47.575 13.675 48.28125Q14.0625 48.9875 15.0 48.9875Z M24.7375 43.2875H24.625V50.0H23.4V41.275H25.2L27.7625 47.9875H27.875V41.275H29.1V50.0H27.3Z M37.425 50.15Q36.2875 50.15 35.5125 49.75Q34.7375 49.35 34.2375 48.6875L35.1375 47.825Q35.6375 48.425 36.2 48.70625Q36.7625 48.9875 37.475 48.9875Q38.3 48.9875 38.74375 48.6125Q39.1875 48.2375 39.1875 47.5375Q39.1875 46.975 38.8625 46.66875Q38.5375 46.3625 37.75 46.225L36.8 46.075Q36.175 45.975 35.75 45.743750000000006Q35.325 45.5125 35.0625 45.19375Q34.8 44.875 34.68125 44.48125Q34.5625 44.0875 34.5625 43.65Q34.5625 42.4125 35.3625 41.76875Q36.1625 41.125 37.5625 41.125Q38.6 41.125 39.33125 41.45625Q40.0625 41.7875 40.5125 42.3875L39.6375 43.2625Q39.275 42.825 38.78125 42.556250000000006Q38.2875 42.2875 37.5625 42.2875Q36.7875 42.2875 36.38125 42.618750000000006Q35.975 42.95 35.975 43.5875Q35.975 44.125 36.29375 44.43125Q36.6125 44.7375 37.425 44.875L38.35 45.0375Q39.525 45.25 40.0625 45.89375Q40.6 46.5375 40.6 47.4625Q40.6 48.0625 40.39375 48.5625Q40.1875 49.0625 39.78125 49.4125Q39.375 49.7625 38.78125 49.95625Q38.1875 50.15 37.425 50.15Z M48.75 50.15Q47.925 50.15 47.318749999999994 49.84375Q46.7125 49.5375 46.318749999999994 48.962500000000006Q45.925 48.3875 45.7375 47.55Q45.55 46.7125 45.55 45.6375Q45.55 44.575 45.7375 43.73125Q45.925 42.8875 46.318749999999994 42.3125Q46.7125 41.7375 47.318749999999994 41.43125Q47.925 41.125 48.75 41.125Q49.575 41.125 50.181250000000006 41.43125Q50.7875 41.7375 51.181250000000006 42.3125Q51.575 42.8875 51.7625 43.73125Q51.95 44.575 51.95 45.6375Q51.95 46.7125 51.7625 47.55Q51.575 48.3875 51.181250000000006 48.962500000000006Q50.7875 49.5375 50.181250000000006 49.84375Q49.575 50.15 48.75 50.15ZM48.75 48.9875Q49.6875 48.9875 50.075 48.28125Q50.4625 47.575 50.4625 46.3625V44.9Q50.4625 43.7 50.075 42.993750000000006Q49.6875 42.2875 48.75 42.2875Q47.8125 42.2875 47.425 42.993750000000006Q47.0375 43.7 47.0375 44.9V46.375Q47.0375 47.575 47.425 48.28125Q47.8125 48.9875 48.75 48.9875Z M57.6 50.0V41.275H59.0V48.825H62.975V50.0Z M68.575 50.0V41.275H74.0375V42.45H69.975V44.9875H73.8875V46.1625H69.975V48.825H74.0375V50.0Z"/><circle cx="82.0" cy="46.0" r="3.4" fill="#3B6FE0"/></g></g></svg>
+      <div class="pf-znak-meta">
+        AI Operating Environment<br>
+        Danaco Holding Group Sp. z o.o.
+      </div>
+    </header>
+
+    <main class="pf-tresc">
+      <p class="pf-nadtytul">Miejscowość, data</p>
+      <h1>Tytuł pisma</h1>
+      <div class="pf-pole-robocze">
+        Pole treści pisma. Blok tekstowy nie przekracza 150 mm szerokości —
+        przy stopniu 10,5 pt daje to wiersz o długości 80–90 znaków, czyli
+        wartość czytelną w druku. Interlinia 1,55. Akapit oddziela odstęp
+        4 mm, nie wcięcie.
+      </div>
+    </main>
+
+    <footer class="pf-stopka">
+      <div class="pf-stopka-kolumna">
+        <strong>Danaco Holding Group Sp. z o.o.</strong><br>
+        support@danaco-group.pl
+      </div>
+      <div class="pf-stopka-kolumna pf-stopka-kolumna--prawa">
+        Danaco Console · AI Operating Environment<br>
+        Strona <span class="pf-strona"></span>
+      </div>
+    </footer>
+  </section>
+
+  <!-- ═══ ARKUSZ 2 — kolejny, nagłówek skrócony ═══ -->
+  <section class="pf-arkusz pf-arkusz--kolejny" aria-label="Papier firmowy — arkusz kolejny">
+    <header class="pf-naglowek">
+      <svg class="pf-znak-kompakt zn-kompakt zn-jasny" viewBox="0 0 221.86 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g transform="translate(0.0000,0.0000) scale(1.000000)"><g transform="translate(0.0000,16.0000) scale(0.666667)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83.0" cy="63.5" r="6.5" fill="#3B6FE0"/></g><path fill="#181818" d="M77.564 59.0V55.056H80.69200000000001V39.144H77.564V35.2H87.356Q92.15 35.2 94.649 37.631Q97.148 40.062 97.148 44.855999999999995V49.344Q97.148 54.138 94.649 56.569Q92.15 59.0 87.356 59.0ZM85.18 54.92H87.424Q90.144 54.92 91.402 53.492000000000004Q92.66 52.064 92.66 49.48V44.72Q92.66 42.102000000000004 91.402 40.691Q90.144 39.28 87.424 39.28H85.18Z M99.664 59.0 105.92 35.2H113.74000000000001L119.99600000000001 59.0H115.37200000000001L114.08000000000001 53.763999999999996H105.58000000000001L104.28800000000001 59.0ZM106.63400000000001 49.616H113.02600000000001L110.13600000000001 38.022H109.524Z M123.26 59.0V35.2H131.794L136.52 55.94H137.132V35.2H141.55200000000002V59.0H133.018L128.292 38.26H127.68V59.0Z M144.816 59.0 151.072 35.2H158.892L165.14800000000002 59.0H160.524L159.232 53.763999999999996H150.732L149.44 59.0ZM151.786 49.616H158.178L155.288 38.022H154.67600000000002Z M177.45600000000002 59.476Q173.036 59.476 170.452 57.010999999999996Q167.868 54.546 167.868 49.956V44.244Q167.868 39.653999999999996 170.452 37.18899999999999Q173.036 34.724 177.45600000000002 34.724Q181.842 34.724 184.239 37.120999999999995Q186.636 39.518 186.636 43.7V43.903999999999996H182.216V43.564Q182.216 41.456 181.043 40.096000000000004Q179.87 38.736 177.45600000000002 38.736Q175.07600000000002 38.736 173.716 40.19799999999999Q172.356 41.66 172.356 44.176V50.024Q172.356 52.506 173.716 53.985Q175.07600000000002 55.464 177.45600000000002 55.464Q179.87 55.464 181.043 54.087Q182.216 52.71 182.216 50.635999999999996V50.024H186.636V50.5Q186.636 54.682 184.239 57.079Q181.842 59.476 177.45600000000002 59.476Z M199.964 59.476Q195.476 59.476 192.824 57.010999999999996Q190.172 54.546 190.172 49.956V44.244Q190.172 39.653999999999996 192.824 37.18899999999999Q195.476 34.724 199.964 34.724Q204.452 34.724 207.10399999999998 37.18899999999999Q209.756 39.653999999999996 209.756 44.244V49.956Q209.756 54.546 207.10399999999998 57.010999999999996Q204.452 59.476 199.964 59.476ZM199.964 55.464Q202.48000000000002 55.464 203.87400000000002 54.001999999999995Q205.268 52.54 205.268 50.092V44.108Q205.268 41.66 203.87400000000002 40.19799999999999Q202.48000000000002 38.736 199.964 38.736Q197.482 38.736 196.071 40.19799999999999Q194.66 41.66 194.66 44.108V50.092Q194.66 52.54 196.071 54.001999999999995Q197.482 55.464 199.964 55.464Z"/><circle cx="218.46" cy="55.00" r="3.4" fill="#3B6FE0"/></g></svg>
+      <div class="pf-znak-meta">Arkusz kolejny</div>
+    </header>
+
+    <main class="pf-tresc">
+      <div class="pf-pole-robocze">
+        Arkusz kolejny niesie znak w konfiguracji kompaktowej (sygnet +
+        <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;">DANACO</span>),
+        26 mm szerokości, i skrócony nagłówek 18 mm. Stopka pozostaje bez
+        zmian — dane producenta powtarzają się na każdej stronie.
+      </div>
+    </main>
+
+    <footer class="pf-stopka">
+      <div class="pf-stopka-kolumna">
+        <strong>Danaco Holding Group Sp. z o.o.</strong><br>
+        support@danaco-group.pl
+      </div>
+      <div class="pf-stopka-kolumna pf-stopka-kolumna--prawa">
+        Danaco Console · AI Operating Environment<br>
+        Strona <span class="pf-strona"></span>
+      </div>
+    </footer>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  var przyciskSiatki = document.getElementById('pf-siatka');
+  var przyciskDruku = document.getElementById('pf-druk');
+  przyciskSiatki.addEventListener('click', function () {
+    var wlaczona = document.querySelector('.pf-arkusz').dataset.siatka === 'tak';
+    document.querySelectorAll('.pf-arkusz').forEach(function (a) {
+      a.dataset.siatka = wlaczona ? 'nie' : 'tak';
+    });
+    przyciskSiatki.setAttribute('aria-pressed', String(!wlaczona));
+  });
+  przyciskDruku.addEventListener('click', function () { window.print(); });
+})();
+</script>
+</body>
+</html>

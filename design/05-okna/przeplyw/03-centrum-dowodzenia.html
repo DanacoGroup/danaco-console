@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Strona główna · Centrum dowodzenia (warstwa stanowiska v2)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     STYLE LOKALNE — Centrum dowodzenia (przedpokój, NIE stanowisko).
+     Warstwa stanowiska v2: powłoka .sta-powloka + pasek (hamburger · TRYBY ·
+     konto). Przedpokój NIE używa .sta-obszar — układ trzech stref o malejącej
+     masie wizualnej: karty (waga główna) → kafle (pośrednia) → listwa (najniższa).
+     Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
+     Źródło: elementy-okien.md rozdz. 2.2–2.6; KANON ANEKS v2.1 r.15.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  :root { --cd-maks-tresc: 1360px; }
+
+  /* ── płótno przedpokoju (zamiast .sta-obszar) ───────────────────────────── */
+  .cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
+  .cd-tresc {
+    width: 100%;
+    max-width: min(var(--cd-maks-tresc), 100%);
+    margin: 0 auto;
+    padding: var(--dn-od-8) var(--dn-od-6) var(--dn-od-16);
+    display: flex; flex-direction: column;
+    gap: var(--dn-odstep-sekcji, var(--dn-od-10));
+  }
+
+  /* ── ikony inline 24×24, stroke 1.75 (skalowane żetonem) ────────────────── */
+  .cd-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+  .cd-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+  .cd-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); }
+
+  /* ── nagłówek strony ────────────────────────────────────────────────────── */
+  .cd-naglowek { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--dn-od-4); flex-wrap: wrap; }
+  .cd-nadtytul {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3); margin: 0 0 var(--dn-od-1);
+  }
+  .cd-tytul {
+    font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-polgruba);
+    font-size: var(--dn-fs-4xl); letter-spacing: var(--dn-ls-naglowek);
+    line-height: var(--dn-lh-ciasny); margin: 0;
+  }
+  .cd-podtytul { margin: var(--dn-od-2) 0 0; max-width: 78ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-base); line-height: var(--dn-lh-luzny); }
+  .cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
+
+  /* ── legenda hierarchii (skala trzech stref) ────────────────────────────── */
+  .cd-legenda {
+    display: flex; align-items: center; gap: var(--dn-od-3);
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst-2);
+    font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny);
+  }
+  .cd-legenda-skala { display: inline-flex; align-items: flex-end; gap: var(--dn-od-1); flex: none; }
+  .cd-legenda-blok { width: var(--dn-od-3); border-radius: var(--dn-r-sm); background: var(--dn-obrys-mocny); }
+  .cd-legenda-blok--1 { height: var(--dn-od-6); }
+  .cd-legenda-blok--2 { height: var(--dn-od-4); }
+  .cd-legenda-blok--3 { height: var(--dn-od-2); }
+
+  /* ── strefa: wspólny szkielet sekcji ────────────────────────────────────── */
+  .cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
+  .cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
+  .cd-sekcja-tytul {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3);
+  }
+  .cd-sekcja-waga {
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    color: var(--dn-tekst-3); margin-left: auto;
+  }
+  .cd-sekcja-opis { color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); max-width: 74ch; }
+
+  /* podświetlenie hierarchii — opcjonalny tryb prezentacyjny */
+  [data-hierarchia='tak'] .cd-strefa { transition: opacity var(--dn-czas-2) var(--dn-ease); }
+  [data-hierarchia='tak'] .cd-strefa[data-waga='1'] { opacity: 1; }
+  [data-hierarchia='tak'] .cd-strefa[data-waga='2'] { opacity: .82; }
+  [data-hierarchia='tak'] .cd-strefa[data-waga='3'] { opacity: .66; }
+
+  /* ── STREFA 1 · karty środowisk (waga główna) ───────────────────────────── */
+  .cd-siatka-srodowisk {
+    display: grid; gap: var(--dn-od-4);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .cd-karta-akcent:hover, .cd-karta-akcent[aria-current='true'] { border-color: var(--dn-akcent, var(--dn-obrys-mocny)); }
+  .cd-karta-godlo svg { width: 100%; height: 100%; }
+  .cd-karta-meta {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    margin-top: var(--dn-od-4); padding-top: var(--dn-od-3);
+    border-top: 1px solid var(--dn-obrys-subtelny);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    color: var(--dn-tekst-3);
+  }
+  .cd-karta-meta .cd-wejdz { margin-left: auto; }
+
+  /* ── STREFA 2 · kafle komponentów własnych (waga pośrednia) ─────────────── */
+  .cd-siatka-kafli {
+    display: grid; gap: var(--dn-od-3);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .cd-kafel { display: flex; flex-direction: column; align-items: flex-start; gap: var(--dn-od-3); }
+  .cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+  .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+  .cd-kafel-etykieta-akcji {
+    margin-top: auto; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+  }
+
+  /* ── STREFA 3 · listwa ustawień (waga najniższa) ────────────────────────── */
+  .cd-listwa {
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-powierzchnia-2, var(--dn-powierzchnia));
+  }
+  .cd-listwa-poz {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid transparent; border-radius: var(--dn-r-md);
+    background: transparent; color: var(--dn-tekst); cursor: pointer;
+    font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-sm);
+    transition: background-color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+  }
+  .cd-listwa-poz:hover { background: var(--dn-panel); border-color: var(--dn-obrys); }
+  .cd-listwa-poz:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
+  .cd-listwa-poz[aria-pressed='true'] { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
+  .cd-listwa-sep { width: 1px; align-self: stretch; margin: var(--dn-od-1) var(--dn-od-1); background: var(--dn-obrys-subtelny); }
+  .cd-listwa-stan { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+  /* ── panel „Sesje w tle” (kropka tętna) ─────────────────────────────────── */
+  .cd-sesje {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-panel);
+  }
+  .cd-sesje-glowa { display: flex; align-items: center; gap: var(--dn-od-2); }
+  .cd-sesje-tytul { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+  .cd-sesje-lista { display: grid; gap: var(--dn-od-1); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cd-sesja {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia); font-size: var(--dn-fs-sm);
+  }
+  .cd-sesja-nazwa { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cd-sesja-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); flex: none; }
+
+  /* ── archiwum środowisk (details) ───────────────────────────────────────── */
+  .cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
+  .cd-archiwum > summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-3) var(--dn-od-4); color: var(--dn-tekst-2); font-size: var(--dn-fs-sm);
+  }
+  .cd-archiwum > summary::-webkit-details-marker { display: none; }
+  .cd-archiwum[open] > summary { border-bottom: 1px solid var(--dn-obrys-subtelny); }
+  .cd-archiwum-tresc { padding: var(--dn-od-3) var(--dn-od-4); color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); }
+
+  /* ── responsywność ──────────────────────────────────────────────────────── */
+  @media (max-width: 1100px) {
+    .cd-siatka-srodowisk { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cd-siatka-kafli { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cd-sesje-lista { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .cd-siatka-srodowisk { grid-template-columns: minmax(0, 1fr); }
+    .cd-siatka-kafli { grid-template-columns: minmax(0, 1fr); }
+    .cd-tresc { padding: var(--dn-od-5) var(--dn-od-3) var(--dn-od-10); }
+  }
+</style>
+<style data-fix-powloka>
+/* Poprawka: okno bez pasma kart — treść wiodąca zajmuje wiersz 1fr powłoki */
+.sta-powloka { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr) !important; }
+</style>
+<style data-fix-godlo>
+/* Poprawka: godło karty środowiska w rozsądnej skali (nie przewymiarowane) */
+.cd-karta-godlo { display: flex; align-items: center; justify-content: center; width: 72px; height: 72px; }
+.cd-karta-godlo svg { width: 72px !important; height: 72px !important; }
+.cd-karta-akcent { min-height: 0; }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PROTOTYP KLIKALNY · v2"
+      data-prototyp-okno="Strona główna — Centrum dowodzenia (przedpokój, warstwa stanowiska v2)"
+      data-prototyp-zrodlo="elementy-okien.md r.2 · KANON ANEKS v2.1 r.15 · WZORZEC-STANOWISKA.html">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY: hamburger · TRYBY Talk/Work/Code · konto ══════════════
+       Warstwa stanowiska v2. Centrum dowodzenia to przedpokój, ale nosi ten
+       sam pasek powłoki, aby przełączanie środowisk i tryby były spójne z
+       oknami roboczymi (KANON ANEKS v2.1 r.15).                              -->
+  <header class="dn-pasek">
+
+    <!-- 1 · HAMBURGER — menu aplikacji -->
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Legenda hierarchii</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Sesje w tle</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false"><span class="ptaszek">✓</span>Archiwum środowisk</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Okno konfiguracji<span class="skrot">Ctrl+,</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="#" data-godlo aria-label="Danaco Console — Centrum dowodzenia">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- 0 · TRYBY Talk / Work / Code -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="false">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>Danaco Console</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Centrum dowodzenia</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj środowiska, modułu, komponentu…  Ctrl+K" aria-label="Wyszukiwanie globalne" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Karty sesji pracujące w tle"><span class="pt-tetno" aria-hidden="true"></span> 4 sesje czynne</span>
+
+      <span class="cd-lacznosc dn-plakietka" title="Stan połączenia z rdzeniem platformy"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Połączony</span>
+
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+        <svg class="ik-slonce cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+
+      <!-- 2 · KONTO -->
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto: support@danaco-core.pl">
+          <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Dane konta i urządzenia</button>
+          <button class="sta-menu-poz" role="menuitem">Okno konfiguracji</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PŁÓTNO PRZEDPOKOJU (bez .sta-obszar — to nie warsztat) ═════════════ -->
+  <main class="cd-plotno">
+    <div class="cd-tresc" id="cd-tresc" data-hierarchia="nie">
+
+      <!-- ── NAGŁÓWEK STRONY ────────────────────────────────────────────── -->
+      <div class="cd-naglowek">
+        <div>
+          <p class="cd-nadtytul">Danaco Console</p>
+          <h1 class="cd-tytul">Centrum dowodzenia</h1>
+          <p class="cd-podtytul">
+            Przedpokój przed strefą roboczą. Strona główna nie otwiera przestrzeni roboczej bezpośrednio —
+            prowadzą z niej trzy niezależne ścieżki: wybór środowiska, budowa komponentu własnego oraz ustawienia.
+            Trzy strefy różnią się formą prezentacji celowo: hierarchia skali (karty → kafle → listwa) komunikuje
+            wagę, zanim Operator przeczyta którykolwiek napis.
+          </p>
+        </div>
+        <div class="cd-naglowek-akcje">
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="cd-hierarchia" aria-pressed="false">
+            <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+            <span data-etykieta-hierarchii>Pokaż hierarchię</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cd-legenda" id="cd-legenda" aria-hidden="true">
+        <span class="cd-legenda-skala">
+          <span class="cd-legenda-blok cd-legenda-blok--1"></span>
+          <span class="cd-legenda-blok cd-legenda-blok--2"></span>
+          <span class="cd-legenda-blok cd-legenda-blok--3"></span>
+        </span>
+        <span><b>Karty → kafle → listwa.</b> Malejąca masa wizualna trzech stref komunikuje wagę bez czytania napisów. Karta środowiska to waga główna; kafel komponentu — waga pośrednia; listwa ustawień — waga najniższa, stale dostępna.</span>
+      </div>
+
+      <!-- ══ STREFA 1 · KARTY ŚRODOWISK — waga główna ════════════════════ -->
+      <section class="cd-strefa" data-waga="1" aria-labelledby="cd-strefa-1">
+        <div class="cd-sekcja-glowa">
+          <span class="cd-sekcja-tytul" id="cd-strefa-1">Strefa 1 · Karty środowisk</span>
+          <span class="cd-sekcja-waga">waga główna — środek ciężkości strony</span>
+        </div>
+        <p class="cd-sekcja-opis">Cztery środowiska pracy. Klik karty otwiera przestrzeń roboczą wybranego środowiska (krok 1 nawigacji).</p>
+
+        <div class="cd-siatka-srodowisk" role="list">
+
+          <!-- TalkIn -->
+          <article class="dn-karta-srodowiska cd-karta-akcent" role="listitem" tabindex="-1" data-srodowisko="talkin" aria-labelledby="cd-sr-talkin">
+            <span class="dn-karta-srodowiska-godlo cd-karta-godlo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" fill="currentColor" stroke="none"/></svg>
+            </span>
+            <h2 class="dn-karta-srodowiska-tytul" id="cd-sr-talkin">TalkIn</h2>
+            <p class="dn-karta-srodowiska-motto">9 modułów · rozmowa i wiedza</p>
+            <p class="dn-karta-srodowiska-opis">Wiedza, komunikacja i praca z treścią.</p>
+            <div class="cd-karta-meta">
+              <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span> 2 sesje w tle
+              <button class="dn-btn dn-btn--zarys dn-btn--sm cd-wejdz" type="button" data-wejdz="TalkIn">Wejdź</button>
+            </div>
+          </article>
+
+          <!-- WorkSpace -->
+          <article class="dn-karta-srodowiska cd-karta-akcent" role="listitem" tabindex="-1" data-srodowisko="workspace" aria-labelledby="cd-sr-workspace">
+            <span class="dn-karta-srodowiska-godlo cd-karta-godlo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18"/><path d="M8 4v5"/><path d="M7 13h4"/><path d="M7 16h7"/></svg>
+            </span>
+            <h2 class="dn-karta-srodowiska-tytul" id="cd-sr-workspace">WorkSpace</h2>
+            <p class="dn-karta-srodowiska-motto">9 modułów · produktywność</p>
+            <p class="dn-karta-srodowiska-opis">Produktywność, organizacja i realizacja projektów.</p>
+            <div class="cd-karta-meta">
+              <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span> 1 sesja w tle
+              <button class="dn-btn dn-btn--zarys dn-btn--sm cd-wejdz" type="button" data-wejdz="WorkSpace">Wejdź</button>
+            </div>
+          </article>
+
+          <!-- CodeStudio -->
+          <article class="dn-karta-srodowiska cd-karta-akcent" role="listitem" tabindex="-1" data-srodowisko="codestudio" aria-labelledby="cd-sr-codestudio">
+            <span class="dn-karta-srodowiska-godlo cd-karta-godlo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 6-3 12"/></svg>
+            </span>
+            <h2 class="dn-karta-srodowiska-tytul" id="cd-sr-codestudio">CodeStudio</h2>
+            <p class="dn-karta-srodowiska-motto">8 modułów · programowanie</p>
+            <p class="dn-karta-srodowiska-opis">Programowanie — edytor, terminal, kontrola wersji.</p>
+            <div class="cd-karta-meta">
+              <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span> 1 sesja w tle
+              <button class="dn-btn dn-btn--zarys dn-btn--sm cd-wejdz" type="button" data-wejdz="CodeStudio">Wejdź</button>
+            </div>
+          </article>
+
+          <!-- MultitaskingAI -->
+          <article class="dn-karta-srodowiska cd-karta-akcent" role="listitem" tabindex="-1" data-srodowisko="multitaskingai" aria-labelledby="cd-sr-mtai">
+            <span class="dn-karta-srodowiska-godlo cd-karta-godlo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M6.6 7.4 10.2 10.6M17.4 7.4 13.8 10.6M6.6 16.6 10.2 13.4M17.4 16.6 13.8 13.4"/></svg>
+            </span>
+            <h2 class="dn-karta-srodowiska-tytul" id="cd-sr-mtai">MultitaskingAI</h2>
+            <p class="dn-karta-srodowiska-motto">panel orkiestracji · 6 sekcji</p>
+            <p class="dn-karta-srodowiska-opis">Orkiestracja autonomicznej pracy ciągłej.</p>
+            <div class="cd-karta-meta">
+              <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span> 0 sesji w tle
+              <button class="dn-btn dn-btn--zarys dn-btn--sm cd-wejdz" type="button" data-wejdz="MultitaskingAI">Wejdź</button>
+            </div>
+          </article>
+
+        </div>
+
+        <details class="cd-archiwum">
+          <summary>
+            <svg class="cd-ik cd-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            Jak działa wejście do środowiska
+          </summary>
+          <div class="cd-archiwum-tresc">
+            Klik lub Enter na karcie otwiera powłokę wybranego środowiska. Karty sesji bieżącego środowiska pozostają
+            aktywne w tle po powrocie do Centrum dowodzenia i odtwarzają pełny stan przy ponownym wejściu — nic nie jest
+            przeładowywane. Ikona „Strona główna” w pasku górnym każdej powłoki wraca tu z powrotem.
+          </div>
+        </details>
+      </section>
+
+      <!-- ══ STREFA 2 · KAFLE KOMPONENTÓW WŁASNYCH — waga pośrednia ══════ -->
+      <section class="cd-strefa" data-waga="2" aria-labelledby="cd-strefa-2">
+        <div class="cd-sekcja-glowa">
+          <span class="cd-sekcja-tytul" id="cd-strefa-2">Strefa 2 · Kafle komponentów własnych</span>
+          <span class="cd-sekcja-waga">waga pośrednia — tworzenie wytworów</span>
+        </div>
+        <p class="cd-sekcja-opis">Kliknięcie tworzy nowy wytwór (automatyka, agent, projekt, profil asystenta) — nie otwiera przestrzeni roboczej. Kafle są wizualnie lżejsze od kart środowisk: bez wstęgi i cienia złotego na spoczynku.</p>
+
+        <div class="cd-siatka-kafli" role="list">
+
+          <button class="dn-kafel cd-kafel" type="button" role="listitem" data-komponent="Automations">
+            <span class="dn-kafel-ikona" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            </span>
+            <span class="cd-kafel-tresc">
+              <span class="dn-kafel-etykieta">Automations</span>
+              <span class="dn-kafel-opis">Automatyka wykonawcza</span>
+            </span>
+            <span class="cd-kafel-etykieta-akcji">„Zbuduj automatykę”</span>
+          </button>
+
+          <button class="dn-kafel cd-kafel" type="button" role="listitem" data-komponent="Agents">
+            <span class="dn-kafel-ikona" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="2.5"/><path d="M12 8V5"/><circle cx="12" cy="4" r="1.5"/><path d="M9 13v1.5M15 13v1.5"/><path d="M2 13v3M22 13v3"/></svg>
+            </span>
+            <span class="cd-kafel-tresc">
+              <span class="dn-kafel-etykieta">Agents</span>
+              <span class="dn-kafel-opis">Agent autonomiczny</span>
+            </span>
+            <span class="cd-kafel-etykieta-akcji">„Skonfiguruj agenta”</span>
+          </button>
+
+          <button class="dn-kafel cd-kafel" type="button" role="listitem" data-komponent="Workspace">
+            <span class="dn-kafel-ikona" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            </span>
+            <span class="cd-kafel-tresc">
+              <span class="dn-kafel-etykieta">Workspace</span>
+              <span class="dn-kafel-opis">Projekt roboczy</span>
+            </span>
+            <span class="cd-kafel-etykieta-akcji">„Załóż projekt”</span>
+          </button>
+
+          <button class="dn-kafel cd-kafel" type="button" role="listitem" data-komponent="Assistant">
+            <span class="dn-kafel-ikona" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+            </span>
+            <span class="cd-kafel-tresc">
+              <span class="dn-kafel-etykieta">Assistant</span>
+              <span class="dn-kafel-opis">Profil asystenta</span>
+            </span>
+            <span class="cd-kafel-etykieta-akcji">„Ustaw profil asystenta”</span>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- ══ SESJE W TLE — kropka tętna (procesy trwające po stronie serwera) ══ -->
+      <section class="cd-sesje" aria-labelledby="cd-sesje-tytul">
+        <div class="cd-sesje-glowa">
+          <span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span>
+          <span class="cd-sesje-tytul" id="cd-sesje-tytul">Sesje w tle</span>
+          <span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto">4 czynne</span>
+        </div>
+        <p class="cd-sekcja-opis">Karty sesji trwają po stronie serwera niezależnie od Centrum dowodzenia. Kropka tętna oznacza aktywny proces; powrót do środowiska odtwarza pełny stan.</p>
+        <div class="cd-sesje-lista">
+          <div class="cd-sesja"><span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span><span class="cd-sesja-nazwa">Przebudowa powłoki warsztatu</span><span class="cd-sesja-meta">TalkIn · 3 min</span></div>
+          <div class="cd-sesja"><span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span><span class="cd-sesja-nazwa">Audyt usług i porządki</span><span class="cd-sesja-meta">CodeStudio · 11 min</span></div>
+          <div class="cd-sesja"><span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span><span class="cd-sesja-nazwa">Dokumentacja wdrożeniowa</span><span class="cd-sesja-meta">WorkSpace · 27 min</span></div>
+          <div class="cd-sesja"><span class="dn-kropka dn-kropka--tetno" aria-hidden="true"></span><span class="cd-sesja-nazwa">Poczta — diagnoza doręczeń</span><span class="cd-sesja-meta">TalkIn · 42 min</span></div>
+        </div>
+      </section>
+
+      <!-- ══ STREFA 3 · LISTWA USTAWIEŃ — waga najniższa ═════════════════ -->
+      <section class="cd-strefa" data-waga="3" aria-labelledby="cd-strefa-3">
+        <div class="cd-sekcja-glowa">
+          <span class="cd-sekcja-tytul" id="cd-strefa-3">Strefa 3 · Listwa ustawień</span>
+          <span class="cd-sekcja-waga">waga najniższa — stale dostępna</span>
+        </div>
+        <p class="cd-sekcja-opis">Pasek poziomy zwarty, bez kroju nagłówkowego. Złoto wyłącznie w najechaniu i fokusie pojedynczej pozycji. Funkcje globalne (Mobile, Always On Display) nie tworzą przestrzeni roboczej.</p>
+
+        <div class="cd-listwa" role="group" aria-label="Ustawienia i funkcje globalne">
+          <button class="cd-listwa-poz" type="button" id="cd-konfiguracja">
+            <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+            Okno konfiguracji
+          </button>
+          <span class="cd-listwa-sep" aria-hidden="true"></span>
+          <button class="cd-listwa-poz" type="button" id="cd-mobile" aria-pressed="false">
+            <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>
+            Mobile
+          </button>
+          <span class="cd-listwa-sep" aria-hidden="true"></span>
+          <button class="cd-listwa-poz" type="button" id="cd-aod-przelacz" aria-pressed="false">
+            <svg class="cd-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+            Always On Display
+          </button>
+          <span class="cd-listwa-stan" data-stan-aod>wyłączony</span>
+        </div>
+      </section>
+
+      <!-- ── NOTA O OPRACOWANIU ─────────────────────────────────────────── -->
+      <details class="pt-o-opracowaniu">
+        <summary>O opracowaniu — Centrum dowodzenia (warstwa stanowiska v2)</summary>
+        <div class="pt-o-opracowaniu-tresc">
+          <p><b>Okno:</b> Strona główna — Centrum dowodzenia (przedpokój, NIE stanowisko). Warstwa stanowiska v2 wg KANON ANEKS v2.1 r.15.</p>
+          <p><b>Powłoka:</b> <code>.sta-powloka</code> z paskiem górnym (hamburger · godło Danaco Console · TRYBY Talk/Work/Code · okruszki · wyszukiwanie · plakietka sesji w tle · przełącznik motywu · konto <code>support@danaco-core.pl</code>). Przedpokój świadomie NIE używa <code>.sta-obszar</code> — to nie warsztat; zamiast tego układ trzech stref o malejącej masie wizualnej.</p>
+          <p><b>Trzy strefy (źródło: elementy-okien.md r.2, rozdz. 2.2–2.6):</b></p>
+          <ul>
+            <li><b>Strefa 1</b> — cztery karty środowisk (<code>.dn-karta-srodowiska</code>): TalkIn, WorkSpace, CodeStudio, MultitaskingAI. Emblematy inline 24×24, stroke 1.75. Waga główna.</li>
+            <li><b>Strefa 2</b> — cztery kafle komponentów własnych (<code>.dn-kafel</code>): Automations, Agents, Workspace, Assistant. Etykiety zorientowane na tworzenie. Waga pośrednia.</li>
+            <li><b>Strefa 3</b> — listwa ustawień: Okno konfiguracji, Mobile, Always On Display. Waga najniższa.</li>
+          </ul>
+          <p><b>Sesje w tle:</b> panel z kropką tętna (<code>.dn-kropka--tetno</code>, <code>.pt-tetno</code>) — procesy trwające po stronie serwera niezależnie od przedpokoju.</p>
+          <p><b>Zasady wizualne:</b> monochrom, wyłącznie żetony <code>var(--dn-*)</code>, zero wartości szesnastkowych w stylach, brak twardych blokad (zero elementów wyłączonych), oba motywy (jasny/ciemny), <code>lang="pl"</code>. Wpięcia: fonty, żetony, fundament, komponenty, prototyp.css, stanowisko.css oraz wspolne.js, prototyp.js, stanowisko.js.</p>
+        </div>
+      </details>
+
+    </div>
+  </main>
+</div>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   SKRYPT LOKALNY — Centrum dowodzenia v2. Rozszerza zachowania powłoki
+   (menu, motyw, TRYBY) obsługiwane przez wspolne.js / prototyp.js / stanowisko.js.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  function q(s, k) { return (k || document).querySelector(s); }
+  function qq(s, k) { return Array.prototype.slice.call((k || document).querySelectorAll(s)); }
+  function oglos(t) { if (window.dnOglos) { window.dnOglos(t); } }
+  function toast(tyt, tre, rodz, ms) {
+    if (window.dnToast) { window.dnToast(tyt, tre, rodz || 'informacja', ms || 3200); }
+  }
+
+  /* ── TRYB PREZENTACJI HIERARCHII ─────────────────────────────────────── */
+  var tresc = q('#cd-tresc');
+  var legenda = q('#cd-legenda');
+  var przHier = q('#cd-hierarchia');
+  if (przHier && tresc) {
+    przHier.addEventListener('click', function () {
+      var wl = przHier.getAttribute('aria-pressed') === 'true';
+      przHier.setAttribute('aria-pressed', wl ? 'false' : 'true');
+      tresc.setAttribute('data-hierarchia', wl ? 'nie' : 'tak');
+      if (legenda) { legenda.setAttribute('aria-hidden', wl ? 'true' : 'false'); }
+      q('[data-etykieta-hierarchii]').textContent = wl ? 'Pokaż hierarchię' : 'Ukryj hierarchię';
+    });
+  }
+
+  /* ── STREFA 1 · wejście do środowiska ────────────────────────────────── */
+  qq('.cd-wejdz').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var srod = b.getAttribute('data-wejdz');
+      toast('Wejście do środowiska', 'Otwarcie powłoki środowiska ' + srod + ' — krok 1 nawigacji ze strony głównej.', 'sukces');
+      oglos('Otwieram środowisko ' + srod + '.');
+    });
+  });
+  qq('.dn-karta-srodowiska').forEach(function (k) {
+    k.addEventListener('click', function () {
+      var przy = q('.cd-wejdz', k);
+      if (przy) { przy.click(); }
+    });
+  });
+
+  /* ── STREFA 1 · nawigacja klawiaturą po kartach ──────────────────────── */
+  var karty = qq('.dn-karta-srodowiska');
+  karty.forEach(function (k, i) {
+    k.setAttribute('tabindex', i === 0 ? '0' : '-1');
+    k.addEventListener('keydown', function (e) {
+      var kier = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (kier) {
+        e.preventDefault();
+        var cel = karty[(i + kier + karty.length) % karty.length];
+        karty.forEach(function (x) { x.setAttribute('tabindex', '-1'); });
+        cel.setAttribute('tabindex', '0');
+        cel.focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        var przy = q('.cd-wejdz', k);
+        if (przy) { przy.click(); }
+      }
+    });
+  });
+
+  /* ── STREFA 2 · budowa komponentu własnego ───────────────────────────── */
+  var opisyKafli = {
+    Automations: 'Kreator automatyki wykonawczej — okno konfiguracji Automations (poza zakresem przedpokoju).',
+    Agents: 'Agent Builder — konfiguracja agenta autonomicznego (własny moduł Agents).',
+    Workspace: 'Zakładanie nowego projektu roboczego — okno konfiguracji modułu Workspace.',
+    Assistant: 'Ustawienie profilu asystenta — okno konfiguracji Assistant.'
+  };
+  qq('.cd-kafel').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var k = b.getAttribute('data-komponent');
+      toast(k, opisyKafli[k] || ('Tworzenie komponentu: ' + k), 'informacja', 3600);
+      oglos(opisyKafli[k] || k);
+    });
+  });
+
+  /* ── STREFA 3 · listwa ustawień ──────────────────────────────────────── */
+  var konf = q('#cd-konfiguracja');
+  if (konf) {
+    konf.addEventListener('click', function () {
+      toast('Okno konfiguracji', 'Otwarcie pełnego okna konfiguracji platformy (13 zakresów ustawień) — własny agent projektowy.', 'informacja');
+    });
+  }
+
+  var mobile = q('#cd-mobile');
+  if (mobile) {
+    mobile.addEventListener('click', function () {
+      var wl = mobile.getAttribute('aria-pressed') === 'true';
+      mobile.setAttribute('aria-pressed', wl ? 'false' : 'true');
+      toast('Mobile', wl ? 'Funkcja globalna Mobile wyłączona.' : 'Funkcja globalna Mobile aktywna — dostęp mobilny i monitoring procesów. Nie tworzy nowej przestrzeni roboczej.', wl ? 'informacja' : 'sukces');
+    });
+  }
+
+  var aod = q('#cd-aod-przelacz');
+  var stanAod = q('[data-stan-aod]');
+  if (aod) {
+    aod.addEventListener('click', function () {
+      var wl = aod.getAttribute('aria-pressed') === 'true';
+      aod.setAttribute('aria-pressed', wl ? 'false' : 'true');
+      if (stanAod) { stanAod.textContent = wl ? 'wyłączony' : 'włączony'; }
+      if (!wl) {
+        toast('Always On Display', 'Globalny agent towarzyszący przywołany: proaktywne doradztwo i pomoc kontekstowa nad całą platformą.', 'sukces', 3600);
+      }
+      oglos(wl ? 'Always On Display wyłączony.' : 'Always On Display włączony.');
+    });
+  }
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+/* ============================================================================
+   POWŁOKA · PAS 4 — OBSZAR ROBOCZY
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: kontener treści wybranej pozycji nawigacji, pasek
+   uczciwości nad nią i stan pusty pokazywany, gdy pozycja zbudowanego widoku
+   nie ma. Kolumna, bo pasek uczciwości stoi nad widokiem; widok bierze całą
+   resztę wysokości, stan pusty staje pośrodku.
+   ============================================================================ */
+
+.dn-obszar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--dn-od-6);
+  overflow: auto;
+  background: var(--dn-tlo);
+}
+
+/* Warstwa ukryta znika bez zdejmowania z drzewa — patrz `obszar-roboczy.ts`:
+   scena z żywym oknem rozmowy nie może być odmontowywana przy przełączeniu */
+.dn-obszar [hidden] {
+  display: none;
+}
+
+.dn-obszar > :not(.dn-obszar__zapowiedz, .dn-obszar__nota) {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   PLANSZA — okno modułu nad pasem komunikacji
+   ----------------------------------------------------------------------------
+   Okno operacyjne modułu stoi w wierszu górnym, pas komunikacji pod nim i bierze
+   do 54% wysokości. Okna równoległe stoją obok siebie dopiero wewnątrz tego pasa.
+
+   Moduł bez zbudowanego widoku oddaje rozmowie całą wysokość: strefa modułu
+   jest wtedy ukryta, a pas komunikacji zostaje jedynym wierszem planszy.
+
+   Próg 496 px to najmniejsza wysokość, przy której wnętrze pasa mieści się bez
+   ucinania: listwa przełącznika, wyściółka toru, pas relacji, nagłówek gniazda
+   oraz sama rozmowa (`rozmowa/rozmowa.css`: nagłówek modułu, historia min.
+   140 px, pole wysyłki ok. 148 px) sumują się do blisko 490 px, a `overflow:
+   hidden` gniazda i powłoki nadmiar obcina, zamiast go przewijać. Na ekranach
+   wysokich, gdzie 54% przekracza próg, pas dalej bierze swoje 54%.
+   ---------------------------------------------------------------------------- */
+.dn-obszar__plansza {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(496px, 54%);
+  gap: var(--dn-od-4);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Bez widoku modułu plansza ma jeden wiersz — rozmowa bierze całą wysokość */
+.dn-obszar__plansza:has(> .dn-obszar__modul[hidden]) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Okno operacyjne modułu — wiersz górny */
+.dn-obszar__modul {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Pas komunikacji — wiersz dolny, obecny w każdym module */
+.dn-obszar__czat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dn-obszar__modul > *,
+.dn-obszar__czat > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dn-obszar__zapowiedz {
+  margin: auto;
+}
+
+/* Znak modułu — ikona w obwódce, żeby stan pusty miał punkt ciężkości */
+.dn-obszar__znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-od-12);
+  height: var(--dn-od-12);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-3);
+}
+
+/* Katalog okien operacyjnych, których jeszcze nie ma — kody wprost z rdzenia,
+   krojem maszynowym, bo to identyfikatory, nie nazwy własne */
+.dn-obszar__braki {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: var(--dn-od-3) 0 0;
+  padding: 0;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  list-style: none;
+  text-align: left;
+}
+
+/* Pasek uczciwości nad widokiem: mówi, czego w tym module jeszcze nie ma */
+.dn-obszar__nota {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-informacja-tlo);
+  color: var(--dn-informacja-tekst);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+}

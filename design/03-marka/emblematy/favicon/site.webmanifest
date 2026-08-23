@@ -1,0 +1,28 @@
+{
+  "id": "/",
+  "name": "Danaco Console — AI Operating Environment",
+  "short_name": "Danaco Console",
+  "description": "Platforma operacyjna dla Operatora zarządzającego cyfrową organizacją: cztery środowiska, piętnaście modułów, wspólne okno komunikacji.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#0F0F0F",
+  "theme_color": "#131313",
+  "categories": ["productivity", "developer", "business"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/ikona-maskowalna-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "TalkIn", "url": "/talkin", "icons": [{ "src": "/emblematy/srodowisko-talkin-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "WorkSpace", "url": "/workspace", "icons": [{ "src": "/emblematy/srodowisko-workspace-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "CodeStudio", "url": "/codestudio", "icons": [{ "src": "/emblematy/srodowisko-codestudio-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "MultitaskingAI", "url": "/multitaskingai", "icons": [{ "src": "/emblematy/srodowisko-multitaskingai-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}

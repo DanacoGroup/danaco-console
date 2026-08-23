@@ -1,0 +1,89 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Panel rejestru kanałów modelu — układ własny panelu
+
+   Arkusz osobny od `sterowanie.css`: tamten opisuje komplet sterowania jednego
+   okna (siatka pól `dc-ster-*`) i jest bytem wspólnym. Panel kanałów to osobne
+   okno o innym układzie — wykaz, formularz, panel akcji — więc ma własny arkusz.
+
+   Bez barw własnych: wszystko z żetonów `motyw/` i z klas bibliotecznych
+   `dn-*`. Ten plik wnosi wyłącznie układ i odstępy.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.dc-kanaly__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* Pas trzech stanów obowiązkowych (ładowanie · pustka · odmowa). Treść
+   przesłania wykaz, a nie kasuje go: po powrocie do fazy `gotowe` Operator
+   widzi to, co widział wcześniej. */
+.dc-kanaly__stan {
+  margin: 0;
+}
+
+.dc-kanaly__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Wiersz rejestru: nazwa, identyfikator, jeden przycisk wskazania.
+   Przycisku usuwania w wierszu nie ma — stoi w panelu akcji (`wykaz-kanalow.ts`). */
+.dc-kanaly-pozycja {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+.dc-kanaly-pozycja[data-wskazany='true'] {
+  border-color: var(--dn-sygnal-obrys);
+}
+
+.dc-kanaly-pozycja__tytul {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dc-kanaly-pozycja__opis {
+  flex: none;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+
+.dc-kanaly__formularz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-4);
+  padding-top: var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys);
+}
+
+.dc-kanaly__wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+/* Przełącznik stoi w wierszu obok podpisu, a nie pod nim. */
+.dc-kanaly__wiersz--logiczny {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* Zdanie o niezmienialnym rodzaju kanału. Ostrzeżenie, nie blokada. */
+.dc-kanaly__uwaga {
+  margin: 0;
+  color: var(--dn-ostrzezenie-tekst);
+}

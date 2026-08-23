@@ -1,0 +1,30 @@
+-- Migracja 085 — nastawy procesu nakładane przez eksperta: zaczepy i harness.
+--
+-- `injection/argumenty.go` produkuje przełączniki procesu CLI; z nich ekspert
+-- miał dotąd nośnik wyłącznie na prompt (`agent_warstwa`). Ta migracja daje mu
+-- nośnik `--settings`, czyli zaczepów (hooks) i reguł narzędzi.
+--
+--
+-- Napis JSON, a nie rozebrane kolumny. `--settings` przyjmuje treść
+-- pliku ustawień Claude Code: zaczepy, reguły narzędzi, źródła ustawień. Kształt
+-- tego pliku należy do CLI, nie do platformy — rozebranie go na kolumny
+-- znaczyłoby, że rdzeń zna i wersjonuje cudzy format, a każda zmiana po tamtej
+-- stronie byłaby migracją tutaj. Kolumna niesie więc treść w całości, tak samo
+-- jak `agent.parametry_json` niesie parametry modelu.
+--
+-- Pusty napis znaczy „ekspert nie nakłada własnych ustawień". Nie ma tu NULL-a
+-- odróżnianego od pustki, bo nie ma czego odróżniać: ekspert bez zaczepów i
+-- ekspert, któremu zaczepów nie ustalono, zachowują się identycznie — okno
+-- rusza z ustawieniami sesji. Stąd NOT NULL DEFAULT '' i jedna wartość na jeden
+-- stan.
+--
+-- Zero bramek. Kolumna nie sprawdza treści i nie odmawia jej. Napis, który nie
+-- jest poprawnym JSON-em, jest faktem do pokazania Operatorowi w podglądzie
+-- wywołania — nie powodem, żeby zablokować turę.
+--
+-- Bezpieczeństwo kroku. ADD COLUMN z DEFAULT '' na tabeli `agent`; wszystkie
+-- tabele podrzędne (`agent_umiejetnosc`, `agent_konektor`, `agent_uprawnienie`,
+-- `agent_warstwa`, `agent_wtyczka`, `agent_kroku_automatyki`,
+-- `obsada_automatyki`) zostają nietknięte, bo przebudowy tabeli nie ma.
+
+ALTER TABLE agent ADD COLUMN ustawienia_json TEXT NOT NULL DEFAULT '';

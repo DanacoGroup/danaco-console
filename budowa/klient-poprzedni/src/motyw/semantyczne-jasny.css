@@ -1,0 +1,112 @@
+/* ============================================================================
+   DANACO CONSOLE — ŻETONY SEMANTYCZNE · MOTYW JASNY
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: wartości żetonów semantycznych motywu jasnego —
+   odcienie bieli.
+
+   Motyw jasny i ciemny są równoprawne. Ten plik nie jest podstawą, z której
+   wywodzi się motyw ciemny — oba są definiowane osobno i w pełni, żeton po
+   żetonie.
+
+   Budowa pliku:
+     1. wybór jawny data-theme="light",
+     2. zapas: brak jawnego wyboru i preferencja systemu ustawiona na jasny.
+   Powielenie wartości między blokami jest świadome — to mechanizm kaskady,
+   nie drugie źródło prawdy (źródłem jest zetony.json).
+
+   Podział warstwy:
+     stany.css      — sukces, ostrzeżenie, błąd, informacja,
+     przestrzen.css — cienie obu motywów,
+     rama.css       — pasek górny (atramentowy w obu motywach).
+   ============================================================================ */
+
+/* Wybór jawny: data-theme="light" */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  /* --- powierzchnie ------------------------------------------------ */
+  --dn-tlo: var(--dn-szary-50);              /* #F4F4F4 — papier roboczy */
+  --dn-powierzchnia: var(--dn-szary-0);      /* #FFFFFF — karty, okna */
+  --dn-powierzchnia-2: var(--dn-szary-100);  /* #ECECEC — wgłębienia, tory */
+  --dn-panel: var(--dn-szary-25);            /* #FAFAFA — panele boczne */
+  --dn-hover: rgba(10, 10, 10, 0.05);
+  --dn-wcisniecie: rgba(10, 10, 10, 0.09);
+  --dn-nakladka: rgba(10, 10, 10, 0.45);
+
+  /* --- obrysy ------------------------------------------------------ */
+  /* Obrys kontrolki niesie kształt pola, więc musi być czytelny jak tekst —
+     próg kontrastu WCAG 2.1 AA wynosi 4,50:1, stąd #616161 · 5,63:1. Pozostałe
+     dwa obrysy idą za nim, żeby zachować trzy rozróżnialne wagi obrysu. */
+  --dn-obrys: var(--dn-szary-200);           /* #D7D7D7 — obrys zwykły */
+  --dn-obrys-subtelny: var(--dn-szary-150);  /* #E3E3E3 */
+  --dn-obrys-mocny: var(--dn-szary-600);     /* #616161 · 5,63:1 na tle */
+
+  /* --- tekst ------------------------------------------------------- */
+  --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
+  /* Trzy wagi tekstu są dobrane tak, by każda przechodziła próg kontrastu
+     WCAG 2.1 AA (4,50:1) i pozostawała rozróżnialna od dwóch pozostałych. */
+  --dn-tekst-2: var(--dn-szary-700);         /* #4A4A4A · 8,06:1 na tle */
+  --dn-tekst-3: var(--dn-szary-600);         /* #616161 · 5,63:1 na tle —
+                                                metadane i tekst drugoplanowy */
+  --dn-tekst-inv: var(--dn-szary-0);         /* tekst na powierzchni odwróconej */
+
+  /* --- działanie główne — inwersja atramentu ----------------------- */
+  --dn-atrament: var(--dn-szary-900);
+  --dn-atrament-hover: var(--dn-szary-1000);
+  --dn-atrament-tekst: var(--dn-szary-0);
+
+  /* --- sygnał — wskazuje, nie działa ------------------------------- */
+  --dn-sygnal: var(--dn-sygnal-600);             /* tekst, odnośniki · 5,5:1 */
+  --dn-sygnal-mocny: var(--dn-sygnal-700);
+  --dn-sygnal-wypelnienie: var(--dn-sygnal-600); /* biel na nim: 5,5:1 */
+  --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-700);
+  --dn-sygnal-tlo: var(--dn-sygnal-100);
+  --dn-sygnal-obrys: var(--dn-sygnal-200);
+  --dn-kropka: var(--dn-sygnal-500);
+
+  /* --- fokus ------------------------------------------------------- */
+  /* Pierścień fokusu jest jedynym znakiem, gdzie stoi klawiatura, więc bierze
+     ten sam błękit co tekst sygnałowy (#2457C9 · 5,82:1); poświata idzie za
+     nim, żeby pierścień i jego cień nie były dwoma różnymi błękitami. */
+  --dn-fokus: var(--dn-sygnal-600);
+  --dn-fokus-cien: rgba(36, 87, 201, 0.30);
+}
+
+/* Brak jawnego wyboru — rozstrzyga preferencja systemu. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+
+    --dn-tlo: var(--dn-szary-50);
+    --dn-powierzchnia: var(--dn-szary-0);
+    --dn-powierzchnia-2: var(--dn-szary-100);
+    --dn-panel: var(--dn-szary-25);
+    --dn-hover: rgba(10, 10, 10, 0.05);
+    --dn-wcisniecie: rgba(10, 10, 10, 0.09);
+    --dn-nakladka: rgba(10, 10, 10, 0.45);
+
+    --dn-obrys: var(--dn-szary-200);
+    --dn-obrys-subtelny: var(--dn-szary-150);
+    --dn-obrys-mocny: var(--dn-szary-600);
+
+    --dn-tekst: var(--dn-szary-900);
+    --dn-tekst-2: var(--dn-szary-700);
+    --dn-tekst-3: var(--dn-szary-600);
+    --dn-tekst-inv: var(--dn-szary-0);
+
+    --dn-atrament: var(--dn-szary-900);
+    --dn-atrament-hover: var(--dn-szary-1000);
+    --dn-atrament-tekst: var(--dn-szary-0);
+
+    --dn-sygnal: var(--dn-sygnal-600);
+    --dn-sygnal-mocny: var(--dn-sygnal-700);
+    --dn-sygnal-wypelnienie: var(--dn-sygnal-600);
+    --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-700);
+    --dn-sygnal-tlo: var(--dn-sygnal-100);
+    --dn-sygnal-obrys: var(--dn-sygnal-200);
+    --dn-kropka: var(--dn-sygnal-500);
+
+    --dn-fokus: var(--dn-sygnal-600);
+    --dn-fokus-cien: rgba(36, 87, 201, 0.30);
+  }
+}

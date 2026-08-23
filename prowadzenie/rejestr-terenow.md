@@ -6,38 +6,27 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### ocena-warstwy-przejetej · **blokujący całą budowę klienta**
+### ocena-modulow
 
-Nie buduje niczego. Rozstrzyga, co z przejętego klienta przechodzi bez zmian,
-co wymaga pracy, a czego nie ma wcale — żeby kolejne tereny nie powstawały na
-przedmiot już istniejący.
+Największa masa logiki niedotykającej interfejsu leży w `moduly/` i nie została
+oceniona: 47 159 wierszy wobec 24 055 w warstwach już ocenionych. Teren
+rozstrzyga jej los tą samą miarą co poprzedni.
 
 | | |
 |---|---|
-| **Gałąź** | `teren/ocena-warstwy-przejetej` z `main` |
-| **Wykaz plików** | `prowadzenie/ocena-warstwy-przejetej.md` — jedyny wytwór |
+| **Gałąź** | `teren/ocena-modulow` z `main` |
+| **Wykaz plików** | `prowadzenie/ocena-modulow.md` — jedyny wytwór |
 | **Poza terenem** | całe `budowa/` — wyłącznie do odczytu i uruchamiania |
 
-**Przedmiot.** Ocena 103 tysięcy wierszy logiki klienta niedotykającej drzewa
-dokumentu, w podziale na warstwy: połączenie, stan, zakres i uprawnienia,
-kontrakt, uwierzytelnienie, modele.
+**Przedmiot.** Szesnaście modułów przejętego klienta, od Studio (42 954 wiersze)
+po Workspace (5056). Dla każdego rozstrzygnięcie: przechodzi bez zmian, wymaga
+pracy wraz z zakresem, nie istnieje.
 
-Dla każdej warstwy rozstrzygnięcie jednym z trzech: **przechodzi bez zmian**,
-**wymaga pracy** wraz z jej zakresem, **nie istnieje**.
+**Kryteria odbioru** — te same co przy ocenie warstwy przejętej: pomiar
+uruchomieniem, nie odczytem; „przechodzi" poparte próbą przeciw żywemu
+rdzeniowi; zależność od modelu okna nazwana wprost; jeden wytwór.
 
-**Kryteria odbioru.**
-
-1. Każda warstwa oceniona uruchomieniem, nie odczytem: przytoczony wynik
-   sprawdzenia typów, testów i próby działania przeciw żywemu rdzeniowi.
-2. Każde zdanie „przechodzi bez zmian" poparte pomiarem — nie samą liczbą
-   wierszy bez odwołań do drzewa dokumentu.
-3. Zależność od modelu okna nazwana wprost tam, gdzie występuje: warstwa
-   zakładająca `Session` jako kontener i `Window` jako okno czatu przechodzi
-   tylko wtedy, gdy to założenie nie sięga jej rozstrzygnięć.
-4. Wykaz tego, czego w przejętym kodzie **nie ma** — układ paneli, karty inne
-   niż czat, widok dzielony, okno boczne — z odesłaniem do miejsca, w którym
-   powstanie.
-5. Wynik to jedno opracowanie, nie notatki.
+Pierwszeństwo ma **Studio** — to na nim buduje się przekrój pionowy.
 
 ## Zgłoszenia oczekujące na teren
 

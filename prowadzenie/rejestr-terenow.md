@@ -6,85 +6,38 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-Fala 1 — fundament klienta. Cztery tereny; pierwszy blokuje trzy pozostałe, bo
-one biorą z niego typy. Żaden nie zależy od prototypów.
+### ocena-warstwy-przejetej · **blokujący całą budowę klienta**
 
-### typy-kontraktu · **blokujący**
-
-| | |
-|---|---|
-| **Gałąź** | `teren/typy-kontraktu` z `main` |
-| **Wykaz plików** | `budowa/klient/src/kontrakt.ts`, `budowa/narzedzia-kontraktu/` |
-| **Poza terenem** | `budowa/shared/contract.json` — źródło, tylko do odczytu; `budowa/server/` |
-
-**Przedmiot.** Wytworzenie typów TypeScript z `budowa/shared/contract.json` oraz
-polecenie wykrywające rozjazd między typami Go a TypeScript.
-
-**Kryteria odbioru.**
-
-1. Wytworzenie jest powtarzalne: dwa przebiegi dają plik identyczny co do bajta.
-2. Każda z 1077 komend, 542 struktur i 363 wyliczeń ma odpowiednik w typach.
-3. Zmiana w `contract.json` bez ponownego wytworzenia jest wykrywana poleceniem
-   kończącym się kodem różnym od zera.
-4. `tsc --noEmit` przechodzi na wytworzonym pliku.
-5. Źródło kontraktu nietknięte — wykazane `git status`.
-
-### warstwa-polaczenia
+Nie buduje niczego. Rozstrzyga, co z przejętego klienta przechodzi bez zmian,
+co wymaga pracy, a czego nie ma wcale — żeby kolejne tereny nie powstawały na
+przedmiot już istniejący.
 
 | | |
 |---|---|
-| **Gałąź** | `teren/warstwa-polaczenia` z `teren/typy-kontraktu` po jego zamknięciu |
-| **Wykaz plików** | `budowa/klient/src/polaczenie/` |
+| **Gałąź** | `teren/ocena-warstwy-przejetej` z `main` |
+| **Wykaz plików** | `prowadzenie/ocena-warstwy-przejetej.md` — jedyny wytwór |
+| **Poza terenem** | całe `budowa/` — wyłącznie do odczytu i uruchamiania |
 
-**Przedmiot.** Gniazdo, koperta kontraktu, korelacja żądanie–odpowiedź,
-wznowienie po zerwaniu, przeciwciśnienie.
+**Przedmiot.** Ocena 103 tysięcy wierszy logiki klienta niedotykającej drzewa
+dokumentu, w podziale na warstwy: połączenie, stan, zakres i uprawnienia,
+kontrakt, uwierzytelnienie, modele.
 
-**Kryteria odbioru.**
-
-1. Żądanie otrzymuje swoją odpowiedź także wtedy, gdy w locie jest wiele żądań —
-   wykazane próbą z dwudziestoma naraz.
-2. Zerwanie połączenia w trakcie strumienia i powrót nie gubi zdarzeń —
-   wykazane próbą z przerwaniem i porównaniem wykazu odebranych zdarzeń.
-3. Koperta niezgodna z kontraktem jest odrzucana przed wysłaniem, nie przez rdzeń.
-4. Warstwa nie dotyka drzewa dokumentu — wykazane brakiem odwołań do `document`
-   i `window` w plikach terenu.
-
-### warstwa-stanu
-
-| | |
-|---|---|
-| **Gałąź** | `teren/warstwa-stanu` z `teren/typy-kontraktu` po jego zamknięciu |
-| **Wykaz plików** | `budowa/klient/src/stan/` |
-
-**Przedmiot.** Odbiór 75 zdarzeń kontraktu, jedno źródło stanu, brak stanu
-w warstwie widoku.
+Dla każdej warstwy rozstrzygnięcie jednym z trzech: **przechodzi bez zmian**,
+**wymaga pracy** wraz z jej zakresem, **nie istnieje**.
 
 **Kryteria odbioru.**
 
-1. Każde z 75 zdarzeń ma obsługę albo jawne pominięcie wraz z powodem —
-   wykazane wykazem zestawionym z kontraktem.
-2. Stan zmienia się wyłącznie przez zdarzenia; brak zapisu stanu z widoku.
-3. Warstwa nie dotyka drzewa dokumentu.
-
-### warstwa-zakresu
-
-| | |
-|---|---|
-| **Gałąź** | `teren/warstwa-zakresu` z `teren/typy-kontraktu` po jego zamknięciu |
-| **Wykaz plików** | `budowa/klient/src/zakres/` |
-
-**Przedmiot.** Kaskada czterech kondygnacji — aplikacja, projekt, sesja, karta —
-na dwóch osiach: upoważnienie i dostęp. Dziedziczenie i nadpisanie w obie strony.
-
-**Kryteria odbioru.**
-
-1. Rozstrzygnięcie zakresu zgodne z pozycją 6 rejestru decyzji — wykazane tabelą
-   przypadków obejmującą dziedziczenie, zawężenie i rozszerzenie.
-2. Stan „nieustawione" jest odróżniony od „ustawione na pełne" — wykazane
-   przypadkiem, w którym zmiana ustawienia projektu dochodzi do karty.
-3. Tryby upoważnienia noszą nazwy wiążące: `manual`, `auto`, `plan`,
-   `bypass permissions`.
-4. Warstwa nie dotyka drzewa dokumentu.
+1. Każda warstwa oceniona uruchomieniem, nie odczytem: przytoczony wynik
+   sprawdzenia typów, testów i próby działania przeciw żywemu rdzeniowi.
+2. Każde zdanie „przechodzi bez zmian" poparte pomiarem — nie samą liczbą
+   wierszy bez odwołań do drzewa dokumentu.
+3. Zależność od modelu okna nazwana wprost tam, gdzie występuje: warstwa
+   zakładająca `Session` jako kontener i `Window` jako okno czatu przechodzi
+   tylko wtedy, gdy to założenie nie sięga jej rozstrzygnięć.
+4. Wykaz tego, czego w przejętym kodzie **nie ma** — układ paneli, karty inne
+   niż czat, widok dzielony, okno boczne — z odesłaniem do miejsca, w którym
+   powstanie.
+5. Wynik to jedno opracowanie, nie notatki.
 
 ## Zgłoszenia oczekujące na teren
 

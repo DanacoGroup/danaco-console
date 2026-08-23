@@ -1,0 +1,37 @@
+#!/bin/sh
+# Po rozpakowaniu pakietu natywnego Danaco Console.
+# Robi wyłącznie rzeczy LOKALNE — sieci nie tyka (polityka Debiana).
+set -e
+
+LIB=/usr/lib/danaco-console-natywna
+
+# Dowiązanie katalogu rdzenia obok powłoki. Powłoka sprawdza kolejno
+# /usr/bin/danaco-console i /usr/bin/rdzen/danaco-console; pierwszego NIE
+# tworzymy celowo — binarium bez katalogu dist obok nie poda interfejsu.
+ln -sfn "$LIB/rdzen" /usr/bin/rdzen
+# Rdzeń pod własnym poleceniem — do wykazów i pracy z wiersza poleceń.
+# Nazwa inna niż danaco-console, żeby nie wyprzedzić szukania powłoki.
+ln -sfn "$LIB/rdzen/danaco-console" /usr/bin/danaco-console-rdzen
+ln -sfn "$LIB/arsenal/arsenal-serwera.sh" /usr/bin/danaco-console-arsenal
+
+chmod 755 "$LIB/rdzen/danaco-console" "$LIB/rdzen/danaco-narzedzia" \
+	"$LIB/arsenal/arsenal-serwera.sh"
+
+echo "Danaco Console — instalka natywna: rdzeń, serwer narzędzi i interfejs stoją w $LIB"
+
+# Sonda rdzenia mówi wprost, czego brakuje — tym samym wykazem, którym rdzeń
+# melduje stan przy starcie. Bez tego Operator dowiadywałby się o braku dopiero
+# po naciśnięciu przycisku, osobno przy każdej funkcji.
+BRAKI=$("$LIB/rdzen/danaco-console" --wykaz-zaleznosci 2>/dev/null |
+	awk -F'\t' '$1 !~ /^#/ && $4 != "tak" { print "  - " $5 " (" $2 ") — " $3 }' || true)
+if [ -n "$BRAKI" ]; then
+	echo "Arsenał niekompletny — pakiet tego nie niesie i mówi o tym wprost:"
+	echo "$BRAKI"
+	echo "Domknięcie jednym poleceniem (ściąga wydania z GitHuba, snapy,"
+	echo "warsztat Go i npm, modele obrazu oraz arsenał mowy wraz z wagami):"
+	echo "    sudo danaco-console-arsenal"
+else
+	echo "Arsenał kompletny — rdzeń ma czym wykonać każdą czynność."
+fi
+
+exit 0

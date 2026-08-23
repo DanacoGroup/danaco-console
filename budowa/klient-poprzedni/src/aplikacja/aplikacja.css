@@ -1,0 +1,260 @@
+/* ============================================================================
+   DANACO CONSOLE — APLIKACJA · GOSPODARZ, TRASY, SCENA SESJI
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: rozkład warstwy najwyższego rzędu — miejsca, w którym
+   router zamienia widoki, paska aplikacji nad widokami bez własnego paska oraz
+   sceny sesji osadzonej w obszarze roboczym powłoki środowiska.
+
+   Wygląd samych widoków opisują arkusze ich katalogów; ten plik ich reguł nie
+   powtarza. Barwy, stopnie pisma, odstępy, promienie i czasy pochodzą z żetonów
+   `motyw/` — bez wartości szesnastkowych — a wymiary są wielokrotnością 4 px.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   GOSPODARZ — jedno okno na wysokość ekranu, jeden widok na wierzchu
+   --------------------------------------------------------------------------- */
+.dn-aplikacja {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+}
+
+/* Wszystkie widoki leżą w tej samej komórce siatki; na wierzchu ten, który
+   nie jest ukryty. Widok opuszczony zostaje w dokumencie i zachowuje stan. */
+.dn-aplikacja__widok {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dn-aplikacja__widok[hidden] {
+  display: none;
+}
+
+/* Widok z własnym paskiem aplikacji: pasek, pod nim treść na resztę wysokości */
+.dn-widok {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.dn-widok > :not(.dn-pasek-aplikacji) {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   PASEK APLIKACJI
+   Stoi nad Centrum dowodzenia i Mission Control. Powłoka środowiska ma pasek
+   własny i drugiego nie dostaje.
+   --------------------------------------------------------------------------- */
+.dn-pasek-aplikacji {
+  flex: none;
+  z-index: var(--dn-z-pasek);
+}
+
+.dn-powloka__nazwa {
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   PRZEŁĄCZNIK WIDOKÓW
+   Przyciski na tle ramy; trasa bieżąca oznaczona przez aria-current, nigdy
+   przez odebranie klikalności.
+   --------------------------------------------------------------------------- */
+.dn-trasy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+}
+
+.dn-trasy__przycisk {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  padding: 0 var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-rama-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease);
+}
+
+.dn-trasy__przycisk:hover {
+  background: var(--dn-rama-hover);
+}
+
+.dn-trasy__przycisk:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Trasa bieżąca: wypełnienie, bez obrysu. Ramka wokół znaku nadawałaby mu wagę
+   przycisku wciśniętego i odcinała go od sąsiadów, choć ikony paska tworzą
+   jeden rząd. Stan czyta też `aria-current`. */
+.dn-trasy__przycisk[aria-current='page'] {
+  background: var(--dn-rama-hover);
+}
+
+/* Trasy jako znaki: przycisk kwadratowy, bez napisu. Nazwa widoku żyje
+   w dymku i w etykiecie dostępności (`przelacznik-tras.ts`). */
+.dn-trasy--znaki .dn-trasy__przycisk {
+  padding: var(--dn-od-1);
+}
+
+/* ---------------------------------------------------------------------------
+   GRUPA DOKŁADANA DO AKCJI PASKA POWŁOKI
+   --------------------------------------------------------------------------- */
+.dn-akcje-tras {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  flex: none;
+}
+
+.dn-lacznosc {
+  gap: var(--dn-od-2);
+  border-color: var(--dn-rama-obrys);
+  background: var(--dn-rama-hover);
+  color: var(--dn-rama-tekst);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   SCENA SESJI
+   Rama osadzona w obszarze roboczym powłoki: układ okien po lewej, kolumna
+   sterowania po prawej. Rozkład niesie `aplikacja/powloka.css`
+   (`dn-powloka__obszar`), tutaj zostaje wyłącznie dopasowanie do obszaru.
+   --------------------------------------------------------------------------- */
+.dn-scena-sesji {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  overflow: hidden;
+  background: var(--dn-powierzchnia);
+}
+
+/* Kolumna sterowania: jedno okno widoczne — jedna kolumna. Kolumny okien
+   zdjętych ze sceny czekają ukryte, zamiast zostać zbudowane od nowa. */
+.dn-scena-sesji .dc-widok-ster[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   ROZMOWA W GNIEŹDZIE UKŁADU
+   Gniazdo `okna-rownolegle/` zostawia scenie sesji puste miejsce pod swoim
+   nagłówkiem (`GniazdoOkna.OpcjeGniazda.wbudowanaRozmowa` wyłączone — patrz
+   komentarz przy tym ustawieniu): jedynym widokiem, który tam staje, jest
+   właściwa rozmowa z modelem, osadzona z zewnątrz przez
+   `aplikacja/wiazanie-gniazda.ts`. Stanowisko podglądu układu włącza
+   ustawienie jawnie i pokazuje wbudowany widok bez zmian — te reguły go nie
+   dotyczą, bo są zawężone do `.dn-scena-sesji`.
+   --------------------------------------------------------------------------- */
+.dn-scena-sesji .dn-okna__gniazdo > .dc-rozmowa {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Uchwyt szuflady sterowania stoi w nagłówku swojego gniazda, a nie na pasku
+   górnym — trzy okna obok siebie dają trzy uchwyty i każdy musi być
+   przypisany do swojego okna. Nagłówek gniazda jest jasny, więc wariant
+   „na ramie" dostaje tu barwy powierzchni. */
+.dn-scena-sesji .dn-okna__naglowek > .dc-widok-ster__uchwyt-paska {
+  flex: none;
+  color: var(--dn-tekst-2);
+}
+
+.dn-scena-sesji .dn-okna__naglowek > .dc-widok-ster__uchwyt-paska:hover {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+}
+
+/* Znaczniki tras najwyższego rzędu. Nie są komponentami biblioteki — nazywają
+   widok, który router właśnie pokazuje, i dają mu siatkę. */
+.dn-widok--pulpit,
+.dn-widok--strona-glowna {
+  display: grid;
+}
+
+/* ── Menu aplikacji i menu Operatora w pasku ──────────────────────────────
+   Oba stoją na wspólnym bycie `okna-rownolegle/menu-rozwijane.ts` i biorą
+   z niego całą powłokę (.dn-menu, .dn-menu__uchwyt, .dn-menu__lista).
+   Tutaj wyłącznie to, czego tamten nie niesie: postać pozycji i dwa zdania
+   ramowe menu Operatora. */
+
+.dn-pasek-aplikacji__tozsamosc {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.dn-menu__pozycja {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  padding: var(--dn-od-2);
+  border: none;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dn-menu__pozycja:hover { background: var(--dn-hover); }
+
+.dn-menu__pozycja:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+.dn-menu-aplikacji__ikona {
+  display: inline-flex;
+  color: var(--dn-tekst-2);
+}
+
+.dn-menu-aplikacji__nazwa { flex: 1; }
+
+/* Skrót do Okna konfiguracji — ta sama waga co przełącznik motywu obok. */
+.dn-pasek-aplikacji__ustawienia { color: var(--dn-rama-tekst-2); }
+
+.dn-pasek-aplikacji__ustawienia:hover { color: var(--dn-rama-tekst); }
+
+/* Nagłówek menu Operatora — nazwa jedyna, jaką produkt zna. */
+.dn-menu__naglowek {
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-1);
+  font-size: var(--dn-fs-xs);
+  font-weight: 600;
+  color: var(--dn-tekst-2);
+}
+
+/* Zdanie o granicy — dlaczego nie ma tu konta ani wylogowania. */
+.dn-menu__granica {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-2xs);
+  color: var(--dn-tekst-3);
+}

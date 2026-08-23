@@ -1,0 +1,56 @@
+/* ============================================================================
+   Sekcja dostępów · obszar katalogu roboczego
+   ----------------------------------------------------------------------------
+   Obszar oddzielony wizualnie od dostępów, bo mówi o czym innym: gdzie model
+   zostawia swoje pliki, a nie do czego sięga. Ramę sekcji prowadzi
+   `dostepy.css`; barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
+   ============================================================================ */
+
+/* --- Obszar katalogu roboczego ------------------------------------------ */
+
+.dd-katalog {
+  padding: var(--dn-od-4);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+}
+
+.dd-katalog__rozroznienie,
+.dd-katalog__domyslna {
+  margin: var(--dn-od-1) 0 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+.dd-katalog__formularz { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+
+.dd-katalog__pole-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dd-katalog__klucz {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dd-katalog__wiersz {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.dd-katalog__wiersz > button > svg { margin-inline-end: var(--dn-od-1); }
+
+.dd-katalog__pochodzenie {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dd-katalog__pochodzenie[data-domyslna='false'] { color: var(--dn-sygnal); }

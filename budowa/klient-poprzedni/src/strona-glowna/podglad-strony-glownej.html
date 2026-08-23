@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Danaco Console — podgląd strony głównej</title>
+    <style>
+      /* Ramka samego podglądu. Widok strony wnosi własny styl —
+         tu wyłącznie to, czego strona nie ma prawa o sobie zakładać. */
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        background: var(--dn-tlo);
+      }
+
+      .podglad__listwa {
+        display: flex;
+        align-items: center;
+        gap: var(--dn-od-3);
+        flex: none;
+        padding: var(--dn-od-2) var(--dn-od-6);
+        background: var(--dn-powierzchnia);
+        border-bottom: 1px solid var(--dn-obrys);
+      }
+
+      .podglad__dziennik {
+        font-family: var(--dn-ff-mono);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="./podglad-strony-glownej.ts"></script>
+  </body>
+</html>

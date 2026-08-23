@@ -1,0 +1,26 @@
+# Zależności pomocnika transkrypcji Danaco Console.
+#
+# INSTALACJA JEST CPU-ONLY I TAKA MA POZOSTAĆ. Pomocnik wymusza w kodzie
+# device="cpu" i compute_type="int8", więc żaden pakiet CUDA nie jest tu
+# potrzebny ani pożądany — karta graficzna nie jest wymagana nigdy.
+#
+# CO TEN JEDEN WPIS CIĄGNIE ZA SOBĄ (zależności przechodnie faster-whisper):
+#   ctranslate2      — silnik inferencji w C++, największa pozycja instalacji
+#   onnxruntime      — wykrywanie mowy (VAD) i detekcja języka
+#   tokenizers       — tokenizer modelu Whisper
+#   huggingface-hub  — pobranie wag modelu z sieci (JEDNORAZOWO, przy pobraniu
+#                      modelu; sama transkrypcja działa potem bez sieci)
+#   av               — dekodowanie kontenerów dźwiękowych (wbudowane ffmpeg)
+#   numpy, tqdm, requests, filelock, pyyaml — drobne, ciągnięte przez powyższe
+#
+# WERSJA PRZYPIĘTA ŚWIADOMIE, BEZ ZAKRESU. Aktualizacja silnika potrafi zmienić
+# kształt obiektu `info` zwracanego przez transcribe(), z którego bierzemy
+# długość nagrania. Przypięcie sprawia, że pomocnik zachowuje się u każdego
+# Operatora tak samo — podniesienie wersji jest decyzją, a nie skutkiem ubocznym
+# dnia, w którym ktoś uruchomił instalację.
+#
+# ŹRÓDŁO WERSJI: PyPI, https://pypi.org/project/faster-whisper/ — sprawdzone
+# 2026-08-13, wtedy najnowsza była 1.2.1. Wersją zapasową, sprawdzoną wcześniej
+# i znaną jako zgodna z tym kodem, jest 1.0.3 — jeśli 1.2.1 nie instaluje się
+# na danej maszynie, wpisz faster-whisper==1.0.3.
+faster-whisper==1.2.1

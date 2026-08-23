@@ -1,0 +1,32 @@
+/* Suwak wartości ciągłej.
+
+   Zastosowanie wiodące: nakład rozumowania okna komunikacji
+   (szybciej ↔ mądrzej). Tor wypełniony sygnałem — wskazuje, nie działa.
+
+   `--dn-suwak-pozycja` nie jest żetonem warstwy `motyw/` — to zmienna ustawiana
+   w locie na elemencie (procent wypełnienia toru). Wartość zapasowa wynosi 50%,
+   więc bez ustawienia tor pokazuje połowę. */
+
+.dn-suwak {
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: var(--dn-r-pill);
+  background: linear-gradient(to right, var(--dn-sygnal-wypelnienie) var(--dn-suwak-pozycja, 50%), var(--dn-powierzchnia-2) var(--dn-suwak-pozycja, 50%));
+  outline-offset: var(--dn-od-1);
+  cursor: pointer;
+}
+.dn-suwak::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+}
+.dn-suwak::-moz-range-thumb {
+  width: 12px; height: 12px;
+  border: 2px solid var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+}

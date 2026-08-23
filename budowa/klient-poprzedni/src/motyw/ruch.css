@@ -1,0 +1,62 @@
+/* ============================================================================
+   DANACO CONSOLE — ŻETONY RUCHU
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: krzywa czasowa, czasy przejść, tętno kropki sygnału
+   oraz obsługa preferencji ograniczonego ruchu.
+   ============================================================================ */
+
+:root {
+  /* Jedna krzywa dla całego interfejsu — spójność ruchu. */
+  --dn-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Trzy czasy plus jedno tętno. Poza nimi nie wprowadza się wartości własnych. */
+  --dn-czas-1: 0.1s;     /* mikroreakcje: najechanie, naciśnięcie */
+  --dn-czas-2: 0.16s;    /* przejścia barw, przełączenie motywu */
+  --dn-czas-3: 0.22s;    /* wejście/wyjście warstw: modal, panel, toast */
+  --dn-czas-tetno: 2.4s; /* tętno kropki sygnału — jedyny ruch ciągły */
+}
+
+/* ---------------------------------------------------------------------------
+   PREFERENCJA OGRANICZONEGO RUCHU — globalnie, bez konfiguracji per komponent
+   Realizacja dwuwarstwowa:
+     1. skrócenie samych żetonów — obejmuje każdy komponent, który z nich
+        korzysta, bez zmiany reguł komponentu,
+     2. zabezpieczenie globalne — obejmuje także ruch wprowadzony poza żetonami.
+   To nie jest blokada: nic nie traci klikalności ani działania,
+   skraca się wyłącznie czas trwania ruchu. Tętno kropki zastępuje wtedy
+   pierścień statyczny.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dn-czas-1: 0.01ms;
+    --dn-czas-2: 0.01ms;
+    --dn-czas-3: 0.01ms;
+    --dn-czas-tetno: 0.01ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Zapas dla wskaźnika pracy. Zabezpieczenie globalne zatrzymuje każdą
+     animację po jednym obiegu, więc `.dn-spinner` zamarłby w przypadkowej
+     klatce obrotu — łuk pod dowolnym kątem nie znaczy już „trwa" i wygląda jak
+     usterka rysowania. Wskaźnik dostaje ten sam znak co kropka sygnału
+     (`komponenty/plakietka.css`): pełny pierścień z halo, złożony z żetonów już
+     stojących w motywie.
+
+     Znaczenia to nie niesie samo: wskaźnik pracy stoi zawsze obok etykiety,
+     nigdy zamiast niej (`motyw/znaczenia-stanow.ts`, pole `wTrakcie`).
+
+     Reguła stoi tutaj, bo to ten arkusz wskaźnik zamraża; sam `.dn-spinner`
+     mieszka w `komponenty/drobne.css`. */
+  .dn-spinner {
+    border-color: var(--dn-sygnal-wypelnienie);
+    box-shadow: 0 0 0 2px var(--dn-fokus-cien);
+  }
+}

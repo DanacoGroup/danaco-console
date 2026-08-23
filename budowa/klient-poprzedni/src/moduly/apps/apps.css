@@ -1,0 +1,245 @@
+/*
+ * Warstwa wizualna modułu Apps.
+ *
+ * Barwy i odstępy biorą się wyłącznie z żetonów motywu. Klasy `dn-*` (pole,
+ * przycisk, plakietka, tabela, postęp, pusty stan, dymek, rama okna) wnosi
+ * biblioteka komponentów; tutaj leży rozkład modułu, trzy stany obowiązkowe,
+ * znak dymka i wykazy braków kontraktu. Wnętrza okien opisuje `okna-apps.css`.
+ *
+ * Kontrolki formularzy modułu pochodzą z `modele/kontrolki-formularza`, więc
+ * moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
+ */
+
+@import '../../modele/modele.css';
+@import './okna-apps.css';
+
+.mp-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  overflow: auto;
+}
+
+.mp-modul__pas {
+  display: grid;
+  gap: var(--dn-od-3);
+}
+
+.mp-modul__pas--warsztaty {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+}
+
+/* ── Rama okna operacyjnego ──────────────────────────────────────────────── */
+
+/*
+ * Obudowę okna — obrys, nagłówek, pas akcji, ciało — rysuje biblioteka
+ * (`komponenty/okno.css`). Moduł dokłada to, czego biblioteka znać nie może:
+ * obwódkę okna, do którego oś etapów przeniosła ognisko, oprawę trzech stanów
+ * obowiązkowych i rozkład własnej treści.
+ */
+
+.mp-okno[data-ognisko='tak'] {
+  border-color: var(--dn-sygnal);
+}
+
+.mp-okno__tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ── Trzy stany obowiązkowe okna: pusty, ładowania, błędu ────────────────── */
+
+.mp-stan {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+}
+
+.mp-okno[data-faza='blad'] .mp-stan {
+  border-left: 2px solid var(--dn-blad-tekst);
+  color: var(--dn-blad-tekst);
+}
+
+.mp-stan__opis {
+  margin: 0;
+  text-align: left;
+}
+
+/* ── Dymek objaśnienia [?] ───────────────────────────────────────────────── */
+
+.mp-pole-z-dymkiem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+}
+
+.mp-pole-z-dymkiem > .dn-pole {
+  flex: 1 1 auto;
+}
+
+.mp-dymek {
+  display: inline-flex;
+  align-items: center;
+}
+
+.mp-dymek__znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: none;
+  color: var(--dn-tekst-3);
+  cursor: help;
+  font: inherit;
+  font-size: var(--dn-fs-xs);
+}
+
+.mp-dymek__znak:hover,
+.mp-dymek__znak:focus-visible {
+  color: var(--dn-tekst);
+  border-color: var(--dn-obrys-mocny);
+}
+
+/* ── Panel akcji i wykaz braków kontraktu ────────────────────────────────── */
+
+.mp-akcje__powloka,
+.mp-braki__powloka,
+.mp-wykaz__powloka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.mp-akcje__tytul,
+.mp-braki__tytul,
+.mp-wykaz__tytul,
+.mp-czesc__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-3);
+}
+
+.mp-akcje,
+.mp-braki {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.mp-akcje__wiersz,
+.mp-braki__wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+.mp-akcje__opis,
+.mp-akcje__powod {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.mp-akcje__powod {
+  margin: 0;
+}
+
+/* ── Formularze okien ────────────────────────────────────────────────────── */
+
+.mp-formularz {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--dn-od-2);
+}
+
+.mp-pasek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.mp-wersje,
+.mp-kondycja {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+
+/* Wybory okien Apps stoją na bibliotecznym `komponenty/menu-drzewo.ts`
+   (obsada: `wybor-z-menu.ts`), nie na natywnym `<select>`. Wygląd uchwytu,
+   wykazu, znacznika i opisu niesie `komponenty/menu-drzewo.css` — tutaj leży
+   sama szerokość, żeby uchwyt trzymał rytm pozostałych pól formularza zamiast
+   jako jedyny kurczyć się do treści. */
+.mp-pole-wyboru > .dn-drzewo {
+  align-self: stretch;
+}
+
+.mp-pole-wyboru > .dn-drzewo > .dn-drzewo__uchwyt {
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* ── Strona dystrybucji i konsumpcji ─────────────────────────────────────── */
+
+/*
+ * Rozdział układu. Moduł prowadzi dwie strony cyklu życia oprogramowania —
+ * budowę produktu i dystrybucję gotowych rozszerzeń — więc pasy drugiej strony
+ * oddziela podpis, a nie sama przerwa: przerwa mówi „dalej to samo”, podpis
+ * mówi, że dalej jest co innego.
+ */
+.mp-modul__rozdzial {
+  margin: var(--dn-od-2) 0 0;
+  padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  color: var(--dn-tekst);
+}
+
+.mp-modul__pas--rejestr {
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+}
+
+.mp-modul__pas--panele {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/*
+ * Zdanie o granicy okna — o oknie spoza katalogu rdzenia, o zakresie szukania,
+ * o tym, czego sprawdzenie nie obejmuje. Stoi ciszej niż treść, bo jest
+ * przypisem, ale nie znika: granica przemilczana czyta się jak jej brak.
+ */
+.mp-granica {
+  margin: 0;
+  padding-top: var(--dn-od-1);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+.mp-bez-blokad {
+  margin: 0;
+}
+
+/* Wykaz pokrycia komend w rdzeniu — element rozwijalny biblioteki `details`. */
+.mp-pokrycie > ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: var(--dn-od-1) 0 0;
+  padding-left: var(--dn-od-4);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}

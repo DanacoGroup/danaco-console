@@ -1,0 +1,98 @@
+/* ============================================================================
+   DANACO CONSOLE — ŻETONY BARW STANU
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: cztery stany semantyczne, każdy w trzech rolach.
+
+     -tekst   tekst i ikona stanu
+     -tlo     tło plakietki / alertu
+     -obrys   obrys plakietki / alertu
+
+   Informacja = rodzina sygnału. System ma jedną barwę akcentu, więc stan
+   informacyjny nie wprowadza kolejnej.
+
+   Stany przełączają się wraz z motywem — oba komplety są pełne (motyw ciemny
+   nie jest przyciemnionym jasnym). Zapas prefers-color-scheme jak w warstwie
+   semantycznej.
+
+   Dostępność: stan nigdy nie jest sygnalizowany samym kolorem — zawsze
+   towarzyszy mu ikona albo etykieta tekstowa. Żeton barwy nie zwalnia
+   komponentu z tego obowiązku.
+   ============================================================================ */
+
+/* --- MOTYW JASNY --------------------------------------------------------- */
+:root[data-theme='light'] {
+  --dn-sukces-tekst: var(--dn-zielen-700);
+  --dn-sukces-tlo: var(--dn-zielen-100);
+  --dn-sukces-obrys: var(--dn-zielen-200);
+
+  --dn-ostrzezenie-tekst: var(--dn-bursztyn-700);
+  --dn-ostrzezenie-tlo: var(--dn-bursztyn-100);
+  --dn-ostrzezenie-obrys: var(--dn-bursztyn-200);
+
+  --dn-blad-tekst: var(--dn-czerwien-700);
+  --dn-blad-tlo: var(--dn-czerwien-100);
+  --dn-blad-obrys: var(--dn-czerwien-200);
+
+  --dn-informacja-tekst: var(--dn-sygnal-600);
+  --dn-informacja-tlo: var(--dn-sygnal-100);
+  --dn-informacja-obrys: var(--dn-sygnal-200);
+}
+
+/* --- MOTYW CIEMNY -------------------------------------------------------- */
+:root[data-theme='dark'] {
+  --dn-sukces-tekst: var(--dn-zielen-400);
+  --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+  --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
+
+  --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
+  --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+  --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
+
+  --dn-blad-tekst: var(--dn-czerwien-400);
+  --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+  --dn-blad-obrys: rgba(238, 113, 104, 0.34);
+
+  --dn-informacja-tekst: var(--dn-sygnal-300);
+  --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+  --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
+}
+
+/* --- Brak jawnego wyboru — rozstrzyga preferencja systemu ---------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --dn-sukces-tekst: var(--dn-zielen-700);
+    --dn-sukces-tlo: var(--dn-zielen-100);
+    --dn-sukces-obrys: var(--dn-zielen-200);
+
+    --dn-ostrzezenie-tekst: var(--dn-bursztyn-700);
+    --dn-ostrzezenie-tlo: var(--dn-bursztyn-100);
+    --dn-ostrzezenie-obrys: var(--dn-bursztyn-200);
+
+    --dn-blad-tekst: var(--dn-czerwien-700);
+    --dn-blad-tlo: var(--dn-czerwien-100);
+    --dn-blad-obrys: var(--dn-czerwien-200);
+
+    --dn-informacja-tekst: var(--dn-sygnal-600);
+    --dn-informacja-tlo: var(--dn-sygnal-100);
+    --dn-informacja-obrys: var(--dn-sygnal-200);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --dn-sukces-tekst: var(--dn-zielen-400);
+    --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+    --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
+
+    --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
+    --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+    --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
+
+    --dn-blad-tekst: var(--dn-czerwien-400);
+    --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+    --dn-blad-obrys: rgba(238, 113, 104, 0.34);
+
+    --dn-informacja-tekst: var(--dn-sygnal-300);
+    --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+    --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
+  }
+}

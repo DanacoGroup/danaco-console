@@ -1,0 +1,1387 @@
+/*
+ * Warstwa wizualna okna pracy z dokumentem: wstążka, zakładki dokumentów,
+ * kartki, dymki komentarzy, panel Redaktora, wiersz polecenia i galeria
+ * szablonów.
+ *
+ * Arkusz zastępuje `studio-kanwa.css`, który opisywał kanwę tekstową i pasek
+ * narzędzi edytora — oba przestały istnieć przy scaleniu. Pasek powiązania
+ * z oknem rozmowy przeniósł się tu razem ze swoim elementem.
+ *
+ * Ani jednej barwy zapisanej wprost — wyłącznie żetony motywu. Rozmiary kartki
+ * i marginesów przychodzą zmiennymi ustawianymi przez `powierzchnia-dokumentu.ts`
+ * z nastaw strony (`StudioPageSetup`), bo tylko ten plik zna wybrany nośnik.
+ */
+
+/* ── Wstążka ───────────────────────────────────────────────────────────────── */
+
+.ms-wstazka {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  min-width: 0;
+}
+
+.ms-wstazka__zakladki {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.ms-wstazka__zakladka {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  background: none;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
+
+/* Zakładka czynna niesie obrys i tło panelu — stan nigdy samą barwą tekstu. */
+.ms-wstazka__zakladka[data-czynna='tak'] {
+  border-color: var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-1);
+}
+
+.ms-wstazka__plansza {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+}
+
+.ms-wstazka__grupa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: 0 var(--dn-od-2);
+  border-right: 1px solid var(--dn-obrys-subtelny);
+  min-width: 0;
+}
+
+.ms-wstazka__grupa:last-child {
+  border-right: none;
+}
+
+/* Tytuł grupy stoi POD kontrolkami, wzorem pakietu biurowego: najpierw sięga się
+   po czynność, a nazwa grupy jest podpisem, nie nagłówkiem do przeczytania. */
+.ms-wstazka__grupa-tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-3);
+  text-align: center;
+}
+
+.ms-wstazka__grupa-pas,
+.ms-wstazka__rzad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.ms-wstazka__pole {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ms-wstazka__etykieta {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.ms-wstazka__wybor,
+.ms-wstazka__liczba {
+  max-width: 14rem;
+}
+
+.ms-wstazka__liczba {
+  max-width: 7rem;
+}
+
+.ms-wstazka__barwa {
+  width: var(--dn-wym-ikona-md);
+  height: var(--dn-wym-ikona-md);
+  padding: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: none;
+}
+
+/* ── Suwaki koncepcyjne ────────────────────────────────────────────────────── */
+
+.ms-wstazka__suwaki {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.ms-suwak {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ms-suwak__etykieta {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.ms-suwak__kontrolka {
+  width: 100%;
+  accent-color: var(--dn-sygnal);
+}
+
+.ms-suwak__zdanie {
+  margin: 0;
+}
+
+/* ── Zakładki dokumentów ───────────────────────────────────────────────────── */
+
+.ms-karty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+.ms-karty__powloka {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ms-karty__karta {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: none;
+  background: none;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
+
+.ms-karty__karta[data-czynna='tak'] {
+  color: var(--dn-tekst-1);
+  font-weight: var(--dn-fw-mocny);
+}
+
+.ms-karty__zamkniecie,
+.ms-karty__dodaj {
+  border: none;
+  background: none;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
+
+.ms-karty__dodaj {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px dashed var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+/* ── Trzy kolumny: kartki, dymki, Redaktor ─────────────────────────────────── */
+
+/* ── Powierzchnia należy do dokumentu ──────────────────────────────────────────
+   Rozstrzygnięcie Właściciela: panele wchodzą na żądanie i schodzą, gdy nie są
+   używane. Postacią domyślną jest więc JEDNA kolumna — cała szerokość dla kartki
+   — a dymki komentarzy i panel Redaktora stoją NAKŁADKĄ nad treścią, przy jej
+   prawej krawędzi. Stałe kolumny zostają trybem do wyboru
+   (`data-uklad-paneli='kolumny'`), bo Operator z szerokim ekranem może ich chcieć,
+   ale nie są postacią domyślną. */
+
+.ms-praca__kolumny {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dn-od-2);
+  align-items: start;
+  min-width: 0;
+}
+
+.ms-praca__kolumny > .ms-dymki,
+.ms-praca__kolumny > .ms-redaktor {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--dn-od-2);
+  z-index: 3;
+  width: min(22rem, 34%);
+  max-height: 100%;
+  overflow: auto;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 22%);
+}
+
+/* Dwa panele naraz nie zasłaniają się: Redaktor staje obok dymków, nie na nich. */
+.ms-praca__kolumny > .ms-redaktor {
+  inset-inline-end: calc(min(22rem, 34%) + var(--dn-od-3));
+}
+
+.ms-praca__kolumny[data-uklad-paneli='kolumny'] {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.ms-praca__kolumny[data-uklad-paneli='kolumny'] > .ms-dymki,
+.ms-praca__kolumny[data-uklad-paneli='kolumny'] > .ms-redaktor {
+  position: static;
+  width: auto;
+  max-height: none;
+  box-shadow: none;
+}
+
+.ms-praca__kolumny[data-uklad-paneli='kolumny'] > .ms-dymki {
+  border: 0;
+  padding: 0;
+  background: none;
+}
+
+.ms-praca__powloka {
+  position: relative;
+  min-width: 0;
+}
+
+.ms-praca__powierzchnia {
+  position: relative;
+  max-height: 70vh;
+  overflow: auto;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-3, var(--dn-powierzchnia-2));
+}
+
+/* Tryb źródłowy pokazuje pole ze znacznikami, a kartki chowa; podgląd wydania
+   i różnica pracują na kartkach, więc pole źródłowe w nich nie stoi. */
+.ms-praca__powierzchnia[data-tryb='zrodlowy'] .ms-praca__plansza {
+  display: none;
+}
+
+.ms-praca__powierzchnia:not([data-tryb='zrodlowy']) .ms-praca__zrodlo {
+  display: none;
+}
+
+.ms-praca__zrodlo {
+  width: 100%;
+  font-family: var(--dn-ff-mono);
+}
+
+/* Plansza trzyma linijki i kartki w jednej siatce, żeby podziałka pozioma
+   stała dokładnie nad lewą krawędzią kartki. Narożnik jest pustym polem między
+   linijkami — bez niego obie byłyby przesunięte o swoją grubość. */
+.ms-praca__plansza {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+.ms-praca__naroznik {
+  grid-area: 1 / 1;
+}
+
+.ms-praca__plansza > .ms-linijka--pozioma {
+  grid-area: 1 / 2;
+}
+
+.ms-praca__plansza > .ms-linijka--pionowa {
+  grid-area: 2 / 1;
+}
+
+.ms-praca__kartki {
+  grid-area: 2 / 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+}
+
+.ms-praca__rzad {
+  display: grid;
+  grid-template-columns: repeat(var(--ms-kolumny, 1), max-content);
+  gap: var(--dn-od-3);
+  align-items: start;
+}
+
+/* Puste miejsce rozkładówki: okładka, nie strona. Zajmuje szerokość kartki
+   i nic nie rysuje — strona pierwsza staje przez to po prawej, jak w książce. */
+.ms-strona--puste {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  visibility: hidden;
+}
+
+/* Przewijanie strona po stronie — wybór Operatora, nie postać narzucona.
+   Zaczepienie wypada na górnej krawędzi kartki, więc przewinięcie zatrzymuje się
+   na kartce, a nie w jej środku. */
+.ms-praca__powierzchnia[data-przewijanie='strona-po-stronie'] {
+  scroll-snap-type: y mandatory;
+}
+
+.ms-praca__powierzchnia[data-przewijanie='strona-po-stronie'] .ms-praca__rzad {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Granica marginesu widoczna w treści — przełącznik Operatora. */
+.ms-praca__powierzchnia[data-granice='tak'] .ms-strona__pole {
+  outline: 1px dashed var(--dn-obrys);
+  outline-offset: 2px;
+}
+
+/* ── Kartka ────────────────────────────────────────────────────────────────── */
+
+.ms-strona {
+  display: flex;
+  flex-direction: column;
+  width: var(--ms-kartka-szerokosc, 794px);
+  min-height: var(--ms-kartka-wysokosc, 1123px);
+  padding: var(--ms-margines-gora, 76px) var(--ms-margines-prawy, 76px)
+    var(--ms-margines-dol, 76px) var(--ms-margines-lewy, 76px);
+  border: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 18%);
+  /* Skala widoku idzie `zoom`, nie `transform: scale`. Przekształcenie skalowałoby
+     sam wyrys, a miejsce w układzie zostawiałoby niezmienione — kartki nachodziłyby
+     na siebie przy skali powyżej stu procent i zostawiały dziurę poniżej. `zoom`
+     skaluje także miejsce, więc rzędy kartek i linijki stoją tam, gdzie widać. */
+  zoom: var(--ms-skala, 1);
+  font-family: var(--ms-kroj, var(--dn-ff-tekst));
+  font-size: var(--ms-stopien, 11pt);
+  line-height: var(--ms-interlinia, 1.5);
+  color: var(--dn-tekst-1);
+}
+
+/* Kartka WYRYSOWANA PRZEZ RDZEŃ — obraz strony podglądu wydania.
+   Marginesów ani kroju nie nakłada się na nią: obraz niesie już nagłówek, stopkę,
+   paginację i kolumnę tekstu wyliczone silnikiem składu rdzenia. Dołożenie
+   marginesu okna dodałoby biały pas WOKÓŁ marginesu, który jest już na obrazie,
+   i kartka wyszłaby węższa, niż wyjdzie w wydaniu. */
+.ms-strona--rdzen {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ms-strona__obraz {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ms-strona__naglowek,
+.ms-strona__stopka {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  min-height: 1.2em;
+}
+
+.ms-strona__naglowek {
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  margin-bottom: var(--dn-od-2);
+}
+
+.ms-strona__stopka {
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  margin-top: auto;
+  padding-top: var(--dn-od-1);
+  text-align: center;
+}
+
+.ms-strona__pole {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Bloki treści ──────────────────────────────────────────────────────────── */
+
+.ms-blok {
+  margin: var(--ms-odstep-akapitu, 11px) 0;
+}
+
+.ms-blok[data-blok='tekst'] {
+  text-indent: var(--ms-wciecie, 0);
+}
+
+.ms-blok[data-blok^='naglowek'] {
+  font-size: calc(var(--ms-stopien, 11pt) * var(--ms-krotnosc, 1));
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-mocny);
+  line-height: 1.2;
+}
+
+.ms-blok[data-blok='cytat'] {
+  padding-left: var(--dn-od-3);
+  border-left: 2px solid var(--dn-obrys);
+  color: var(--dn-tekst-2);
+  font-style: italic;
+}
+
+.ms-blok[data-blok='kod'] {
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  white-space: pre-wrap;
+}
+
+.ms-blok[data-blok='lista'],
+.ms-blok[data-blok='zadanie'],
+.ms-blok[data-blok='lista-numerowana'] {
+  padding-left: var(--dn-od-4, 2rem);
+}
+
+.ms-blok[data-blok='tabela'] {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ms-blok[data-blok='tabela'] th,
+.ms-blok[data-blok='tabela'] td {
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+}
+
+.ms-blok--linia {
+  height: 1px;
+  background: var(--dn-obrys);
+}
+
+/* Podział strony jest widoczny jako kreska z napisem — nastawa Operatora, więc
+   ma być widać, że stoi w treści, a nie że tekst się urwał. */
+.ms-blok--podzial {
+  border-top: 1px dashed var(--dn-obrys);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+.ms-blok[data-wyrownanie='srodek'] {
+  text-align: center;
+}
+
+.ms-blok[data-wyrownanie='prawo'] {
+  text-align: right;
+}
+
+.ms-blok[data-wyrownanie='obustronne'] {
+  text-align: justify;
+}
+
+/* Fragment różnicy nałożony na treść — rodzaj z `DiffHunkKind`, barwa z motywu. */
+.ms-blok[data-rodzaj-fragmentu='added'] {
+  border-left: 3px solid var(--dn-sukces-obrys, var(--dn-sygnal));
+  padding-left: var(--dn-od-2);
+}
+
+.ms-blok[data-rodzaj-fragmentu='removed'] {
+  border-left: 3px solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.ms-blok[data-rodzaj-fragmentu='changed'] {
+  border-left: 3px solid var(--dn-ostrzezenie-obrys, var(--dn-obrys));
+  padding-left: var(--dn-od-2);
+}
+
+/* ── Zmiany śledzone w treści ──────────────────────────────────────────────── */
+
+.ms-zmiana {
+  border-bottom: 2px solid var(--dn-sygnal);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ms-zmiana[data-autor='model'] {
+  border-bottom-style: dashed;
+}
+
+.ms-zmiana__decyzja {
+  margin-left: 2px;
+  padding: 0 4px;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+  cursor: pointer;
+}
+
+.ms-zatwierdzenie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-1);
+  margin: var(--dn-od-1) 0;
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-sygnal);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ms-zatwierdzenie__zdanie {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* ── Kotwica komentarza ────────────────────────────────────────────────────── */
+
+.ms-kotwica {
+  margin-left: 2px;
+  color: var(--dn-sygnal);
+  cursor: pointer;
+}
+
+/* ── Wiersz polecenia przy kursorze ────────────────────────────────────────── */
+
+.ms-wiersz {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  max-width: 34rem;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-sygnal);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
+}
+
+.ms-wiersz__pas,
+.ms-wiersz__gotowe {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+.ms-wiersz__pole {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.ms-wiersz__zakres {
+  margin: 0;
+}
+
+/* ── Dymki komentarzy ──────────────────────────────────────────────────────── */
+
+.ms-dymki {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.ms-dymek-komentarza {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  min-width: 0;
+}
+
+.ms-dymek-komentarza[data-rozwiazany='tak'] {
+  border-style: dashed;
+  opacity: 0.8;
+}
+
+.ms-dymek-komentarza[data-wskazany='tak'] {
+  border-color: var(--dn-sygnal);
+}
+
+.ms-dymek-komentarza__glowa {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.ms-dymek-komentarza__tresc {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.ms-dymek-komentarza__odpowiedz {
+  padding-left: var(--dn-od-2);
+  border-left: 2px solid var(--dn-obrys-subtelny);
+}
+
+.ms-dymek-komentarza__pas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* ── Panel Redaktora ──────────────────────────────────────────────────────── */
+
+.ms-redaktor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  min-width: 0;
+}
+
+.ms-redaktor__czesc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.ms-redaktor__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-2);
+}
+
+.ms-redaktor__ocena {
+  margin: 0;
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-mocny);
+}
+
+.ms-redaktor__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--dn-fs-sm);
+}
+
+.ms-redaktor__wykaz > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Pozycja bez pomiaru jest oznaczona kreską, nie wygaszeniem: brak pomiaru to
+   stan nazwany, a nie kontrolka martwa. */
+.ms-redaktor__wykaz > li[data-mierzone='nie'] {
+  padding-left: var(--dn-od-2);
+  border-left: 2px dashed var(--dn-obrys);
+}
+
+.ms-redaktor__licznik {
+  align-self: flex-start;
+  font-family: var(--dn-ff-mono);
+}
+
+/* ── Galeria szablonów ─────────────────────────────────────────────────────── */
+
+.ms-galeria {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ms-galeria__kategorie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+.ms-galeria__miniatury {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--dn-od-2);
+}
+
+.ms-galeria__miniatura {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  min-width: 0;
+}
+
+/* Miniatura jest wyrysem UKŁADU, nie obrazem pisma: kartka, tytuł i kreski
+   w liczbie pól szablonu. Rdzeń obrazów nie generuje i galeria ich nie dorabia. */
+.ms-galeria__kartka {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 120px;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+  overflow: hidden;
+}
+
+.ms-galeria__kartka-naglowek {
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-mocny);
+  color: var(--dn-tekst-2);
+}
+
+.ms-galeria__kartka-wiersz {
+  height: 4px;
+  background: var(--dn-obrys-subtelny);
+}
+
+.ms-galeria__kartka-wiersz[data-obowiazkowe='tak'] {
+  background: var(--dn-obrys);
+}
+
+.ms-galeria__nazwa {
+  margin: 0;
+  font-weight: var(--dn-fw-mocny);
+}
+
+.ms-galeria__pola {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* ── Pasek pochodzenia i fragmenty różnicy ─────────────────────────────────── */
+
+.ms-praca__pochodzenie,
+.ms-praca__zakres {
+  font-family: var(--dn-ff-mono);
+}
+
+.ms-praca__fragmenty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+/* ── Powiązanie z oknem rozmowy ────────────────────────────────────────────── */
+
+/* Przeniesione z `studio-kanwa.css` razem z elementem: pasek mówi, że rozmowa
+   modułu toczy się w oknie komunikacji sesji, a nie w oknie pracy. */
+.ms-rozmowa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px dashed var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  min-width: 0;
+}
+
+.ms-rozmowa__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-2);
+}
+
+.ms-rozmowa__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding-left: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.ms-rozmowa[data-postac='brak'] {
+  border-style: solid;
+  border-color: var(--dn-obrys-subtelny);
+}
+
+/* ── Pasek widoku ──────────────────────────────────────────────────────────────
+   Wąski rząd przy krawędzi powierzchni; nastawy rzadsze siedzą w nakładce, żeby
+   kartka nie oddawała ani milimetra szerokości na panel nastaw. */
+
+.ms-widok {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin-bottom: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+}
+
+.ms-widok__rzad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.ms-widok__pole,
+.ms-widok__przelacznik {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.ms-widok__etykieta {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  white-space: nowrap;
+}
+
+.ms-widok__skala,
+.ms-widok__liczba {
+  width: 5rem;
+}
+
+.ms-widok__suwak {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  max-width: 14rem;
+}
+
+.ms-widok__nakladka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2, var(--dn-panel));
+}
+
+/* ── Linijki ───────────────────────────────────────────────────────────────────
+   Podziałka i chwyty stoją w jednym pasie o rozmiarze kartki, więc każdy chwyt
+   ma współrzędną liczoną tym samym przelicznikiem, co kartka. */
+
+.ms-linijka {
+  position: relative;
+  color: var(--dn-tekst-3);
+  font-size: 9px;
+  user-select: none;
+}
+
+.ms-linijka--pozioma {
+  height: 1.5rem;
+  margin-bottom: var(--dn-od-1);
+}
+
+.ms-linijka--pionowa {
+  width: 1.5rem;
+  margin-right: var(--dn-od-1);
+}
+
+.ms-linijka__pas {
+  position: relative;
+  height: 100%;
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2, var(--dn-panel));
+}
+
+.ms-linijka--pionowa .ms-linijka__pas {
+  width: 100%;
+}
+
+.ms-linijka__podzialka,
+.ms-linijka__chwyty {
+  position: absolute;
+  inset: 0;
+}
+
+.ms-linijka__kreska {
+  position: absolute;
+  line-height: 1;
+}
+
+.ms-linijka--pozioma .ms-linijka__kreska {
+  top: 0;
+  border-left: 1px solid var(--dn-obrys);
+}
+
+.ms-linijka--pozioma .ms-linijka__kreska[data-kreska='mala'] {
+  height: 25%;
+}
+
+.ms-linijka--pozioma .ms-linijka__kreska[data-kreska='srednia'] {
+  height: 45%;
+}
+
+.ms-linijka--pozioma .ms-linijka__kreska[data-kreska='duza'] {
+  height: 70%;
+  padding-left: 2px;
+}
+
+.ms-linijka--pionowa .ms-linijka__kreska {
+  left: 0;
+  border-top: 1px solid var(--dn-obrys);
+}
+
+.ms-linijka--pionowa .ms-linijka__kreska[data-kreska='mala'] {
+  width: 25%;
+}
+
+.ms-linijka--pionowa .ms-linijka__kreska[data-kreska='srednia'] {
+  width: 45%;
+}
+
+.ms-linijka--pionowa .ms-linijka__kreska[data-kreska='duza'] {
+  width: 70%;
+}
+
+/* Pola marginesów są przygaszone, żeby granica pola pisania była widoczna na
+   samej linijce, a nie dopiero po policzeniu kresek. */
+.ms-linijka__marginesy {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ms-linijka--pozioma .ms-linijka__marginesy {
+  background:
+    linear-gradient(
+      to right,
+      var(--dn-powierzchnia-3, rgb(0 0 0 / 8%)) 0 var(--ms-linijka-lewy, 0),
+      transparent var(--ms-linijka-lewy, 0)
+    ),
+    linear-gradient(
+      to left,
+      var(--dn-powierzchnia-3, rgb(0 0 0 / 8%)) 0 var(--ms-linijka-prawy, 0),
+      transparent var(--ms-linijka-prawy, 0)
+    );
+}
+
+.ms-linijka--pionowa .ms-linijka__marginesy {
+  background:
+    linear-gradient(
+      to bottom,
+      var(--dn-powierzchnia-3, rgb(0 0 0 / 8%)) 0 var(--ms-linijka-gora, 0),
+      transparent var(--ms-linijka-gora, 0)
+    ),
+    linear-gradient(
+      to top,
+      var(--dn-powierzchnia-3, rgb(0 0 0 / 8%)) 0 var(--ms-linijka-dol, 0),
+      transparent var(--ms-linijka-dol, 0)
+    );
+}
+
+.ms-linijka__chwyt,
+.ms-linijka__tabulator,
+.ms-linijka__kolumna {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dn-tekst-2);
+  font-size: 10px;
+  line-height: 1;
+  cursor: grab;
+}
+
+.ms-linijka--pozioma .ms-linijka__chwyt,
+.ms-linijka--pozioma .ms-linijka__tabulator,
+.ms-linijka--pozioma .ms-linijka__kolumna {
+  transform: translateX(-50%);
+}
+
+.ms-linijka--pozioma .ms-linijka__chwyt[data-chwyt^='margines'] {
+  top: 0;
+}
+
+.ms-linijka--pozioma .ms-linijka__chwyt[data-chwyt='wciecie-pierwszego-wiersza'] {
+  top: 0;
+}
+
+.ms-linijka--pozioma .ms-linijka__chwyt[data-chwyt='wciecie-lewe'],
+.ms-linijka--pozioma .ms-linijka__chwyt[data-chwyt='wciecie-prawe'] {
+  bottom: 0;
+}
+
+.ms-linijka--pozioma .ms-linijka__tabulator,
+.ms-linijka--pozioma .ms-linijka__kolumna {
+  bottom: 0;
+  color: var(--dn-sygnal);
+}
+
+.ms-linijka--pionowa .ms-linijka__chwyt {
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ms-linijka__chwyt[data-wleczenie='tak'] {
+  color: var(--dn-sygnal);
+  cursor: grabbing;
+}
+
+.ms-linijka__chwyt:focus-visible,
+.ms-linijka__tabulator:focus-visible,
+.ms-linijka__kolumna:focus-visible {
+  outline: 2px solid var(--dn-sygnal);
+  outline-offset: 1px;
+}
+
+.ms-linijka__kursor {
+  position: absolute;
+  background: var(--dn-sygnal);
+  pointer-events: none;
+}
+
+.ms-linijka--pozioma .ms-linijka__kursor {
+  top: 0;
+  width: 1px;
+  height: 100%;
+}
+
+.ms-linijka--pionowa .ms-linijka__kursor {
+  left: 0;
+  width: 100%;
+  height: 1px;
+}
+
+.ms-linijka__zaznaczenie {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--dn-sygnal);
+  opacity: 0.18;
+  pointer-events: none;
+}
+
+/* Wybieracz rodzaju tabulatora i znak wiodący stoją POZA pasem, po jego lewej,
+   żeby nie przesuwały podziałki względem kartki. */
+.ms-linijka__wybieracz,
+.ms-linijka__znak {
+  position: absolute;
+  bottom: 0;
+  font-size: var(--dn-fs-xs);
+}
+
+.ms-linijka__wybieracz {
+  right: calc(100% + var(--dn-od-1));
+  width: 1.5rem;
+  padding: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-1);
+}
+
+.ms-linijka__znak {
+  right: calc(100% + 2.25rem);
+  max-width: 8rem;
+}
+
+/* ── Podział powierzchni ──────────────────────────────────────────────────── */
+
+.ms-podzial {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.ms-podzial[data-kierunek='pionowy'] {
+  grid-template-columns: calc(var(--ms-podzial-udzial, 0.5) * 100%) auto minmax(0, 1fr);
+}
+
+.ms-podzial[data-kierunek='poziomy'] {
+  grid-template-rows: calc(var(--ms-podzial-udzial, 0.5) * 100%) auto minmax(0, 1fr);
+}
+
+.ms-podzial[data-tryb='zakladki'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto;
+}
+
+.ms-podzial__pole {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+  padding: var(--dn-od-1);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+}
+
+.ms-podzial__pole[data-czynne='tak'] {
+  border-color: var(--dn-sygnal);
+}
+
+.ms-podzial[data-tryb='zakladki'] .ms-podzial__plakietka {
+  display: none;
+}
+
+.ms-podzial__tresc {
+  flex: 1;
+  min-width: 0;
+}
+
+.ms-podzial__granica {
+  background: var(--dn-obrys);
+  cursor: col-resize;
+}
+
+.ms-podzial[data-kierunek='pionowy'] > .ms-podzial__granica {
+  width: 6px;
+  cursor: col-resize;
+}
+
+.ms-podzial[data-kierunek='poziomy'] > .ms-podzial__granica {
+  height: 6px;
+  cursor: row-resize;
+}
+
+.ms-podzial__granica:focus-visible,
+.ms-podzial__granica[data-wleczenie='tak'] {
+  background: var(--dn-sygnal);
+  outline: none;
+}
+
+/* ── Panele na żądanie: historia wersji, wstążka PDF, narzędziownia ────────────
+   Trzy panele, jeden wzorzec: wąski wyzwalacz stoi w układzie, a treść wchodzi
+   nakładką nad nim. Nakładka nie zabiera miejsca w siatce, więc powierzchnia
+   zostaje przy dokumencie — to jest rozstrzygnięcie Właściciela zapisane
+   w arkuszu, nie tylko w kodzie okna. */
+
+.ms-historia,
+.ms-pdf,
+.ms-cyfryzacja {
+  position: relative;
+  min-width: 0;
+}
+
+.ms-historia__nakladka,
+.ms-pdf__nakladka,
+.ms-cyfryzacja__nakladka {
+  position: absolute;
+  z-index: 6;
+  inset-inline: 0;
+  top: calc(100% + var(--dn-od-1));
+  max-height: 70vh;
+  overflow: auto;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  box-shadow: 0 4px 18px rgb(0 0 0 / 26%);
+}
+
+/* Wyzwalacz niesie stan otwarcia obrysem, nie samą strzałką: strzałka jest
+   drobna, a stan panelu ma być widoczny z odległości ręki. */
+.ms-historia__wyzwalacz[aria-expanded='true'],
+.ms-pdf__wyzwalacz[aria-expanded='true'],
+.ms-cyfryzacja .dn-btn[aria-expanded='true'] {
+  border-color: var(--dn-sygnal);
+  color: var(--dn-tekst-1);
+}
+
+/* ── Grupy wstążki PDF ────────────────────────────────────────────────────── */
+
+.ms-pdf__grupy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  padding-bottom: var(--dn-od-1);
+}
+
+.ms-pdf__grupa {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  background: none;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
+
+.ms-pdf__grupa[data-czynna='tak'] {
+  border-color: var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-1);
+  font-weight: var(--dn-fw-mocny);
+}
+
+.ms-pdf__opis-grupy {
+  margin: 0;
+}
+
+.ms-pdf__czynnosc,
+.ms-pdf__gniazdo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+/* ── Historia wersji: kropka stanu i menu pozycji ─────────────────────────── */
+
+.ms-repozytorium__kropka {
+  color: var(--dn-tekst-3);
+}
+
+/* Wersja bieżąca dostaje kropkę pełną w barwie sygnału, ale obok niej stoi
+   plakietka ze słowem — stan nigdy samą barwą. */
+.ms-repozytorium__kropka[data-stan='biezaca'] {
+  color: var(--dn-sygnal);
+}
+
+.ms-repozytorium__kropka[data-stan='niedostepna'] {
+  color: var(--dn-blad, var(--dn-tekst-3));
+}
+
+.ms-repozytorium__czynnosci {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+.ms-repozytorium__menu {
+  position: relative;
+}
+
+.ms-repozytorium__menu > summary {
+  cursor: pointer;
+  padding: 0 var(--dn-od-1);
+  color: var(--dn-tekst-2);
+  list-style: none;
+}
+
+.ms-repozytorium__menu-pas {
+  position: absolute;
+  z-index: 7;
+  inset-inline-end: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 22%);
+}
+
+.ms-repozytorium__zbiorcze,
+.ms-repozytorium__przelacznik {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* Wiersz zapisu samoczynnego jest przygaszony: szereg autozapisu ma być
+   odróżnialny od wersji nazwanych przez Operatora także wzrokiem. */
+.ms-repozytorium tr[data-samoczynna='tak'] {
+  color: var(--dn-tekst-3);
+  font-style: italic;
+}
+
+.ms-repozytorium tr[data-biezaca='tak'] {
+  background: var(--dn-powierzchnia-2);
+}
+
+/* ── Wydruk ────────────────────────────────────────────────────────────────────
+   Drukuje się TO, co pokazuje podgląd: kartki powierzchni w nośniku i orientacji
+   naprawdę ustawionych. Reszta okna — wstążka, pasek widoku, linijki, dymki,
+   panele — na papier nie wychodzi, bo nie jest pismem. Wydruk różniący się od
+   podglądu byłby usterką gorszą niż brak funkcji, więc żadna reguła tutaj nie
+   przestawia marginesów ani rozmiaru kartki. */
+
+@media print {
+  .ms-wstazka,
+  .ms-widok,
+  .ms-karty,
+  .ms-linijka,
+  .ms-praca__naroznik,
+  .ms-dymki,
+  .ms-redaktor,
+  .ms-wiersz,
+  .ms-status,
+  .ms-rozmowa,
+  .ms-decyzja,
+  .ms-historia,
+  .ms-pdf,
+  .ms-cyfryzacja,
+  .ms-zatwierdzenie,
+  .ms-zmiana__decyzja {
+    display: none !important;
+  }
+
+  .ms-praca__powierzchnia {
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .ms-praca__plansza {
+    display: block;
+    width: auto;
+    margin: 0;
+  }
+
+  .ms-praca__kartki,
+  .ms-praca__rzad {
+    display: block;
+    gap: 0;
+  }
+
+  /* Kartka na papierze nie ma obrysu ani cienia — to były znaki ekranu. Skala
+     druku jest osobną nastawą niż skala widoku: Operator może patrzeć na 60 %
+     i drukować w 100 %. */
+  .ms-strona {
+    zoom: var(--ms-skala-druku, 1);
+    border: 0;
+    box-shadow: none;
+    break-after: page;
+  }
+
+  .ms-strona:last-of-type {
+    break-after: auto;
+  }
+
+  /* Strony poza wskazanym zakresem nie wychodzą na papier. */
+  .ms-strona[data-druk='pomin'],
+  .ms-strona--puste {
+    display: none !important;
+  }
+
+  /* Granica marginesu jest kreską pomocniczą ekranu, nie elementem pisma. */
+  .ms-praca__powierzchnia[data-granice='tak'] .ms-strona__pole {
+    outline: none;
+  }
+}

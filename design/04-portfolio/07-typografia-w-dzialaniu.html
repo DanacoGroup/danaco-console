@@ -1,0 +1,2198 @@
+<!doctype html>
+<html lang="pl" data-theme="dark" data-gestosc="zwarta">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Typografia w działaniu</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../zasoby/prototyp.css">
+<style>
+/* ============================================================================
+   PLANSZA PORTFOLIO P7 — TYPOGRAFIA W DZIAŁANIU
+   Warstwa lokalna. Wyłącznie żetony var(--dn-*). Zero wartości wprost.
+   ============================================================================ */
+
+/* ── 0 · SZKIELET PLANSZY ─────────────────────────────────────────────── */
+
+body { min-height: 100dvh; background: var(--dn-tlo); }
+
+.pl-pomin {
+  position: absolute; left: var(--dn-od-3); top: var(--dn-od-1);
+  z-index: var(--dn-z-centrum-polecen);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia); color: var(--dn-tekst);
+  transform: translateY(-200%);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.pl-pomin:focus { transform: translateY(0); text-decoration: none; }
+
+.pl-pasek-tytul {
+  display: inline-flex; align-items: baseline; gap: var(--dn-od-2);
+  margin-left: var(--dn-od-4); min-width: 0;
+}
+.pl-pasek-tytul b {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-rama-tekst);
+  white-space: nowrap;
+}
+.pl-pasek-tytul span {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  white-space: nowrap;
+}
+@media (max-width: 960px) { .pl-pasek-tytul span { display: none; } }
+
+.pl-sygnet { width: 24px; height: 24px; flex: none; }
+.pl-sygnet .pl-sygnet-grot { fill: currentColor; }
+.pl-sygnet .pl-sygnet-kropka { fill: var(--dn-kropka); }
+
+.pl-uklad {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--dn-od-6);
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-5) var(--dn-od-16);
+}
+@media (max-width: 1100px) {
+  .pl-uklad { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-4); padding-inline: var(--dn-od-3); }
+}
+
+/* ── 1 · SPIS SEKCJI ──────────────────────────────────────────────────── */
+
+.pl-spis {
+  position: sticky; top: var(--dn-od-4);
+  display: flex; flex-direction: column; gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+@media (max-width: 1100px) { .pl-spis { position: static; } }
+.pl-spis-tytul { padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-2); }
+.pl-spis a {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  text-decoration: none;
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.pl-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pl-spis a i {
+  font-style: normal;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  min-width: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.pl-spis a[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+.pl-spis a[aria-current='true'] i { color: var(--dn-sygnal); }
+.pl-spis-stopka {
+  display: flex; flex-direction: column; gap: var(--dn-od-2);
+  margin-top: var(--dn-od-3);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  align-items: flex-start;
+}
+
+/* ── 2 · SEKCJE TREŚCI ────────────────────────────────────────────────── */
+
+.pl-tresc { display: flex; flex-direction: column; gap: var(--dn-od-16); min-width: 0; }
+
+.pl-sekcja { scroll-margin-top: var(--dn-od-16); }
+.pl-sekcja-glowa {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--dn-od-4);
+  margin-bottom: var(--dn-od-5);
+  padding-bottom: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.pl-numer {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-srednia);
+  line-height: 1;
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+.pl-sekcja-glowa h2 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+  margin-bottom: var(--dn-od-2);
+}
+.pl-lead { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 84ch; }
+.pl-p { font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); max-width: 84ch; margin-bottom: var(--dn-od-3); }
+.pl-p strong, .pl-lead strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pl-p code, .pl-lead code, .pl-tabela code, .pl-demo code, .pl-lista-zasad code {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+  padding: 1px var(--dn-od-1); border-radius: var(--dn-r-xs);
+  background: var(--dn-powierzchnia-2); color: var(--dn-tekst);
+}
+.pl-podsekcja {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+}
+.pl-cytat {
+  margin: var(--dn-od-4) 0;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-left: var(--dn-wym-wstega) solid var(--dn-kropka);
+  background: var(--dn-powierzchnia-2);
+  border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0;
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst);
+}
+.pl-cytat cite {
+  display: block; margin-top: var(--dn-od-2);
+  font-style: normal;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.pl-lista-zasad { list-style: none; display: flex; flex-direction: column; gap: var(--dn-od-2); max-width: 84ch; margin: var(--dn-od-3) 0; }
+.pl-lista-zasad li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-3);
+  font-size: var(--dn-fs-base); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2);
+}
+.pl-lista-zasad li b {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-sygnal); font-weight: var(--dn-fw-srednia);
+  font-variant-numeric: tabular-nums; padding-top: 2px;
+}
+
+/* ── 3 · SIATKI ───────────────────────────────────────────────────────── */
+
+.pl-siatka { display: grid; gap: var(--dn-od-3); }
+.pl-siatka--2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.pl-siatka--3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.pl-siatka--4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+/* ── 4 · POLE DEMONSTRACYJNE ──────────────────────────────────────────── */
+
+.pl-demo {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.pl-demo-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
+  min-height: var(--dn-wym-kontrolka);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+}
+.pl-demo-glowa svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-2); flex: none; }
+.pl-demo-glowa .pl-demo-prawa { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-2); }
+.pl-demo-tresc { padding: var(--dn-od-4); }
+.pl-demo-tresc--bez-marginesu { padding: 0; }
+.pl-demo-stopka {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+  display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap;
+}
+
+/* ── 5 · OKAZ TYPOGRAFICZNY ───────────────────────────────────────────── */
+
+.pl-okaz {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
+  gap: var(--dn-od-4); align-items: center;
+  padding: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-okaz:last-child { border-bottom: 0; }
+@media (max-width: 720px) { .pl-okaz { grid-template-columns: minmax(0, 1fr); } }
+.pl-okaz-probka { min-width: 0; overflow: hidden; }
+.pl-okaz-metryka {
+  display: flex; flex-direction: column; gap: var(--dn-od-1);
+  padding-left: var(--dn-od-3);
+  border-left: 1px solid var(--dn-obrys-subtelny);
+}
+@media (max-width: 720px) { .pl-okaz-metryka { border-left: 0; padding-left: 0; border-top: 1px solid var(--dn-obrys-subtelny); padding-top: var(--dn-od-3); } }
+.pl-okaz-metryka b {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3); font-weight: var(--dn-fw-srednia);
+}
+.pl-okaz-metryka span { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); font-variant-numeric: tabular-nums; }
+.pl-okaz-metryka span em { font-style: normal; color: var(--dn-tekst); }
+
+/* próbki krojów */
+.pl-krojo-naglowek { font-family: var(--dn-ff-naglowek); color: var(--dn-tekst); letter-spacing: var(--dn-ls-naglowek); line-height: var(--dn-lh-ciasny); }
+.pl-krojo-bazowa { font-family: var(--dn-ff-bazowa); color: var(--dn-tekst); line-height: var(--dn-lh-bazowy); }
+.pl-krojo-mono { font-family: var(--dn-ff-mono); color: var(--dn-tekst); line-height: var(--dn-lh-bazowy); font-variant-numeric: tabular-nums; }
+
+/* ── 6 · MINIATURA INTERFEJSU ─────────────────────────────────────────── */
+
+.pl-miniatura {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-tlo);
+  overflow: hidden;
+}
+.pl-miniatura-pasek {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-kontrolka);
+  padding-inline: var(--dn-od-3);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+.pl-miniatura-pasek svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-rama-tekst-2); }
+.pl-miniatura-cialo { padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-2); }
+
+.pl-wiersz-mini {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+  padding-inline: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  border: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-wiersz-mini svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); flex: none; }
+.pl-wiersz-mini-tytul { font-size: var(--dn-fs-base); color: var(--dn-tekst); flex: 1; min-width: 0; }
+.pl-wiersz-mini-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); font-variant-numeric: tabular-nums; }
+
+/* ── 7 · TABELE ───────────────────────────────────────────────────────── */
+
+.pl-tabela { width: 100%; border-collapse: collapse; font-size: var(--dn-fs-base); }
+.pl-tabela caption {
+  text-align: left; padding: var(--dn-od-2) var(--dn-od-3);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pl-tabela th {
+  text-align: left;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+  white-space: nowrap;
+}
+.pl-tabela th[data-sortuj] { cursor: pointer; }
+.pl-tabela th[data-sortuj]:hover { color: var(--dn-tekst); background: var(--dn-hover); }
+.pl-tabela th[aria-sort]::after { content: ' ↕'; color: var(--dn-sygnal); }
+.pl-tabela td {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  color: var(--dn-tekst-2);
+  vertical-align: top;
+}
+.pl-tabela tbody tr:hover td { background: var(--dn-hover); }
+.pl-tabela td strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.pl-tabela .pl-kol-liczba { text-align: right; font-family: var(--dn-ff-mono); color: var(--dn-tekst); }
+.pl-tabela .pl-kol-kod { font-family: var(--dn-ff-mono); color: var(--dn-tekst); }
+
+/* liczby — przełączane wyrównanie */
+.pl-liczby-tabelaryczne { font-variant-numeric: tabular-nums; }
+.pl-liczby-proporcjonalne { font-variant-numeric: proportional-nums; }
+
+/* ── 8 · PORÓWNANIE DWUKOLUMNOWE ──────────────────────────────────────── */
+
+.pl-porownanie { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1px; background: var(--dn-obrys-subtelny); }
+@media (max-width: 720px) { .pl-porownanie { grid-template-columns: minmax(0, 1fr); } }
+.pl-porownanie-pole { background: var(--dn-powierzchnia); padding: var(--dn-od-4); min-width: 0; }
+.pl-porownanie-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  margin-bottom: var(--dn-od-3);
+  padding-bottom: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-porownanie-glowa b {
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-2); font-weight: var(--dn-fw-polgruba);
+}
+
+/* ── 9 · WERSALIKI ────────────────────────────────────────────────────── */
+
+.pl-wersalik-sans {
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba); text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki); color: var(--dn-tekst-2);
+}
+.pl-wersalik-mono {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia); text-transform: uppercase;
+  letter-spacing: var(--dn-ls-mono-wersaliki); color: var(--dn-tekst-2);
+}
+.pl-wersalik-zero { letter-spacing: 0; }
+
+/* ── 10 · DIAKRYTYKI ──────────────────────────────────────────────────── */
+
+.pl-znaki { display: flex; flex-wrap: wrap; gap: var(--dn-od-2); }
+.pl-znak {
+  display: grid; place-items: center; gap: var(--dn-od-1);
+  min-width: 56px; padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  transition: border-color var(--dn-czas-1) var(--dn-ease), background var(--dn-czas-1) var(--dn-ease);
+}
+.pl-znak:hover { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+.pl-znak b { font-size: var(--dn-fs-xl); color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); line-height: 1; }
+.pl-znak span { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+.pl-diakryt-wiersz {
+  display: grid; grid-template-columns: minmax(120px, 160px) minmax(0, 1fr);
+  gap: var(--dn-od-3); align-items: baseline;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-diakryt-wiersz:last-child { border-bottom: 0; }
+.pl-diakryt-etykieta {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pl-diakryt-tekst { color: var(--dn-tekst); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── 11 · OKAZ INTERAKTYWNY ───────────────────────────────────────────── */
+
+.pl-okaz-panel { display: grid; grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); gap: 1px; background: var(--dn-obrys-subtelny); }
+@media (max-width: 900px) { .pl-okaz-panel { grid-template-columns: minmax(0, 1fr); } }
+.pl-okaz-sterowanie { background: var(--dn-powierzchnia); padding: var(--dn-od-4); display: flex; flex-direction: column; gap: var(--dn-od-4); }
+.pl-okaz-podglad { background: var(--dn-powierzchnia); padding: var(--dn-od-4); display: flex; flex-direction: column; gap: var(--dn-od-4); min-width: 0; }
+.pl-suwak-wiersz { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.pl-suwak-glowa { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-2); }
+.pl-suwak-glowa label { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.pl-suwak-glowa output {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst); font-variant-numeric: tabular-nums;
+}
+.pl-podglad-blok {
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  min-width: 0; overflow: hidden;
+}
+.pl-podglad-blok header {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-2);
+  margin-bottom: var(--dn-od-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pl-podglad-tekst { color: var(--dn-tekst); overflow-wrap: anywhere; }
+
+/* ── 12 · GĘSTOŚĆ ─────────────────────────────────────────────────────── */
+
+html[data-gestosc='przestronna'] .pl-gestosc-zalezne { --pl-baza: var(--dn-fs-md); --pl-lh: 1.5; --pl-wiersz: 44px; }
+.pl-gestosc-zalezne { --pl-baza: var(--dn-fs-base); --pl-lh: var(--dn-lh-bazowy); --pl-wiersz: var(--dn-wym-wiersz); }
+.pl-gestosc-zalezne .pl-wiersz-mini { min-height: var(--pl-wiersz); transition: min-height var(--dn-czas-2) var(--dn-ease); }
+.pl-gestosc-zalezne .pl-wiersz-mini-tytul { font-size: var(--pl-baza); line-height: var(--pl-lh); transition: font-size var(--dn-czas-2) var(--dn-ease); }
+.pl-gestosc-zalezne .pl-tabela td { font-size: var(--pl-baza); line-height: var(--pl-lh); }
+
+.pl-stan-gestosci {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+
+/* ── 13 · WPIS ROZMOWY — próbka zestawienia ───────────────────────────── */
+
+.pl-wpis-probka { display: grid; gap: var(--dn-od-3); }
+
+/* ── 14 · KARTA KROJU ─────────────────────────────────────────────────── */
+
+.pl-karta-kroju {
+  display: flex; flex-direction: column; gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  transition: border-color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+}
+.pl-karta-kroju:hover { border-color: var(--dn-obrys-mocny); }
+.pl-karta-kroju-glowa { display: flex; align-items: flex-start; gap: var(--dn-od-3); }
+.pl-karta-kroju-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-sygnal); flex: none; }
+.pl-karta-kroju h4 { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.pl-karta-kroju p { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
+.pl-karta-kroju-okno {
+  padding: var(--dn-od-3);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+}
+.pl-karta-kroju-role { display: flex; flex-wrap: wrap; gap: var(--dn-od-1); }
+
+/* ── 15 · PRZEŁĄCZNIKI WIDOKÓW ────────────────────────────────────────── */
+
+.pl-przelaczniki { display: inline-flex; gap: var(--dn-od-1); flex-wrap: wrap; }
+.pl-przelaczniki .dn-btn[aria-pressed='true'],
+.pl-przelaczniki .dn-btn[data-aktywny='tak'] {
+  background: var(--dn-sygnal-tlo);
+  border-color: var(--dn-sygnal-obrys);
+  color: var(--dn-tekst);
+}
+
+/* ── 16 · SKALA — LISTA WYBORU ────────────────────────────────────────── */
+
+.pl-skala-uklad { display: grid; grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); gap: 1px; background: var(--dn-obrys-subtelny); }
+@media (max-width: 900px) { .pl-skala-uklad { grid-template-columns: minmax(0, 1fr); } }
+.pl-skala-lista { background: var(--dn-powierzchnia); display: flex; flex-direction: column; }
+.pl-skala-poz {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  min-height: var(--dn-wym-wiersz);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  cursor: pointer;
+  transition: background var(--dn-czas-1) var(--dn-ease);
+}
+.pl-skala-poz:last-child { border-bottom: 0; }
+.pl-skala-poz:hover { background: var(--dn-hover); }
+.pl-skala-poz[aria-selected='true'] { background: var(--dn-sygnal-tlo); box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka); }
+.pl-skala-zeton { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
+.pl-skala-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-skala-px { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); font-variant-numeric: tabular-nums; }
+.pl-skala-podglad { background: var(--dn-powierzchnia); padding: var(--dn-od-4); min-width: 0; }
+
+/* ── 17 · PASEK PROMPTU — próbka ──────────────────────────────────────── */
+
+.pl-prompt-probka {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+.pl-prompt-grot { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-sygnal); font-weight: var(--dn-fw-srednia); }
+.pl-prompt-tekst { font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-md); color: var(--dn-tekst-2); }
+
+/* ── 18 · DROBNE ──────────────────────────────────────────────────────── */
+
+.pl-notka {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-informacja-tlo);
+  font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst);
+  margin: var(--dn-od-4) 0;
+}
+.pl-notka svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-informacja-tekst); flex: none; }
+
+.pl-para-etykieta-wartosc { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-2) var(--dn-od-4); align-items: baseline; }
+.pl-para-etykieta-wartosc dt {
+  font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba); text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki); color: var(--dn-tekst-3);
+  white-space: nowrap;
+}
+.pl-para-etykieta-wartosc dd {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-srednia); color: var(--dn-tekst);
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-podpis {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3); letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+}
+
+.pl-stopka-planszy {
+  margin-top: var(--dn-od-12);
+  padding-top: var(--dn-od-5);
+  border-top: 1px solid var(--dn-obrys);
+  display: flex; flex-wrap: wrap; gap: var(--dn-od-3);
+  align-items: center; justify-content: space-between;
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst-3);
+}
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<a class="pl-pomin" href="#tresc">Przejdź do treści planszy</a>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     PASEK GÓRNY — atramentowy w obu motywach (KANON rozdz. 2)
+     ══════════════════════════════════════════════════════════════════════ -->
+<header class="dn-pasek" role="banner">
+  <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console — indeks opracowania">
+    <svg class="pl-sygnet" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+      <path class="pl-sygnet-grot" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+      <path class="pl-sygnet-grot" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+      <circle class="pl-sygnet-kropka" cx="83" cy="63.5" r="6.5"/>
+    </svg>
+    <span class="dn-pasek-logotyp">DANACO<small>Console</small></span>
+  </a>
+
+  <span class="pl-pasek-tytul">
+    <b>Typografia w działaniu</b>
+    <span>Plansza portfolio P7</span>
+  </span>
+
+  <span class="dn-pasek-prawa">
+    <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" id="pl-przelacz-gestosc"
+            style="color: var(--dn-rama-tekst-2);" aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+      <span id="pl-etykieta-gestosci">Gęstość: zwarta</span>
+    </button>
+    <a class="dn-btn dn-btn--duch dn-btn--sm" href="../INDEKS.html" style="color: var(--dn-rama-tekst-2);">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      Indeks opracowania
+    </a>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+            data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+      <svg class="ik-slonce" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg class="ik-ksiezyc" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </button>
+  </span>
+</header>
+
+<div class="pl-uklad">
+
+  <!-- ══ SPIS SEKCJI ══════════════════════════════════════════════════ -->
+  <nav class="pl-spis" data-spis aria-label="Spis sekcji planszy">
+    <div class="pl-spis-tytul"><span class="pt-etykieta">Sekcje planszy</span></div>
+    <a href="#przeglad"><i>00</i><span>Przegląd</span></a>
+    <a href="#role"><i>01</i><span>Trzy role, trzy kroje</span></a>
+    <a href="#skala"><i>02</i><span>Pełna skala</span></a>
+    <a href="#zestawienia"><i>03</i><span>Zestawienia</span></a>
+    <a href="#liczby"><i>04</i><span>Liczby tabelaryczne</span></a>
+    <a href="#wersaliki"><i>05</i><span>Wersaliki</span></a>
+    <a href="#diakrytyki"><i>06</i><span>Diakrytyki polskie</span></a>
+    <a href="#okaz"><i>07</i><span>Okaz interaktywny</span></a>
+    <a href="#gestosc"><i>08</i><span>Gęstość a typografia</span></a>
+    <a href="#opracowanie"><i>09</i><span>O tym opracowaniu</span></a>
+    <div class="pl-spis-stopka">
+      <a class="dn-btn dn-btn--zarys dn-btn--sm" href="../INDEKS.html">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Powrót do indeksu
+      </a>
+      <span class="pt-mono" style="font-size: var(--dn-fs-xs);">P7 · v2.0 · 2026-08-14</span>
+    </div>
+  </nav>
+
+  <!-- ══ TREŚĆ ════════════════════════════════════════════════════════ -->
+  <main class="pl-tresc" id="tresc">
+
+    <!-- ── 00 · PRZEGLĄD ─────────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="przeglad" aria-labelledby="tyt-przeglad">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">00</span>
+        <div>
+          <h2 id="tyt-przeglad">Przegląd — inwentarz kontra typografia</h2>
+          <p class="pl-lead">
+            Dokumentacja wymienia <strong>trzy kroje</strong> i <strong>dziewięć stopni</strong>. To jeszcze nie jest
+            typografia — to inwentarz. Ta plansza pokazuje ten sam inwentarz <strong>w miejscu pracy</strong>:
+            tam, gdzie stopień <code>xs</code> naprawdę występuje (nagłówek kolumny), tam, gdzie <code>3xl</code>
+            naprawdę występuje (tytuł karty środowiska), tam, gdzie mono naprawdę występuje
+            (identyfikator, ścieżka repozytorium, znacznik czasu, wynik powłoki).
+          </p>
+        </div>
+      </div>
+
+      <blockquote class="pl-cytat">
+        Space Grotesk = wejście do środowiska i tożsamość marki; IBM Plex Sans = praca; IBM Plex Mono = maszyna.
+        <cite>KANON rozdz. 2 · KIERUNEK.md rozdz. 3.2</cite>
+      </blockquote>
+
+      <p class="pl-p">
+        Każda próbka na tej planszy jest <strong>cytatem z platformy</strong>. Nie ma tu ani jednego
+        „przykładowego nagłówka”, ani jednej wymyślonej etykiety. Gdy potrzebna jest treść wypełniająca,
+        pochodzi z domeny produktu: nazwy modułów i okien operacyjnych z inwentarza (KANON rozdz. 7),
+        ścieżka repozytorium przepisana z prototypu <code>05-okna/moduly/terminal.html</code>,
+        kod parowania urządzenia z prototypu <code>05-okna/platformowe/ustawienia.html</code>.
+      </p>
+
+      <div class="pl-siatka pl-siatka--4" style="margin-top: var(--dn-od-5);">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Kroje</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">3</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              Space Grotesk · IBM Plex Sans · IBM Plex Mono
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Stopnie</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">9</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              od <code>xs</code> 11 px do <code>display</code> 40 px
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Wagi</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">4</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              400 · 500 · 600 · 700 (mono do 600)
+            </p>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Baza</span></div>
+          <div class="pl-demo-tresc">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba); color: var(--dn-tekst); line-height: 1;">13</div>
+            <p style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-2);">
+              px — wynik pokrętła <code>GESTOSC_WIZUALNA 8/10</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pl-notka">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>
+          Plansza działa w obu motywach i w obu gęstościach. Przełącznik gęstości na pasku górnym
+          przebudowuje warstwę roboczą całej planszy — bo gęstość jest właściwością systemu,
+          nie właściwością pojedynczego komponentu.
+        </span>
+      </div>
+    </section>
+
+    <!-- ── 01 · TRZY ROLE, TRZY KROJE ────────────────────────────────── -->
+    <section class="pl-sekcja" id="role" aria-labelledby="tyt-role">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">01</span>
+        <div>
+          <h2 id="tyt-role">Trzy role, trzy kroje</h2>
+          <p class="pl-lead">
+            Podział krojów nie jest estetyczny — jest <strong>funkcjonalny</strong>. Operator nie musi go znać,
+            żeby z niego korzystać, ale rozpoznaje go podświadomie: to, co wygląda na mono,
+            można skopiować i wkleić.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--3">
+
+        <!-- Space Grotesk -->
+        <article class="pl-karta-kroju">
+          <div class="pl-karta-kroju-glowa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+            <div>
+              <h4>Space Grotesk</h4>
+              <span class="pl-podpis">Wejście do środowiska · tożsamość marki</span>
+            </div>
+          </div>
+          <p>Tytuł karty środowiska, logotyp, nagłówek okna modalnego, tytuł sekcji Strony głównej.</p>
+          <div class="pl-karta-kroju-okno">
+            <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-3xl); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek); line-height: var(--dn-lh-ciasny); color: var(--dn-tekst);">MultitaskingAI</div>
+            <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-1);">tytuł karty środowiska · Strona główna, Strefa 1</div>
+          </div>
+          <div class="pl-karta-kroju-role">
+            <span class="dn-plakietka">500</span>
+            <span class="dn-plakietka">600</span>
+            <span class="dn-plakietka">700</span>
+          </div>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="var(--dn-ff-naglowek)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Kopiuj żeton
+          </button>
+        </article>
+
+        <!-- IBM Plex Sans -->
+        <article class="pl-karta-kroju">
+          <div class="pl-karta-kroju-glowa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>
+            <div>
+              <h4>IBM Plex Sans</h4>
+              <span class="pl-podpis">Praca</span>
+            </div>
+          </div>
+          <p>Etykieta pola, treść wpisu rozmowy, opis modułu, pozycja bocznej nawigacji, przyciski, tabele.</p>
+          <div class="pl-karta-kroju-okno">
+            <div class="pl-wersalik-sans" style="margin-bottom: var(--dn-od-1);">Nazwa profilu izolacji</div>
+            <div style="font-size: var(--dn-fs-md); color: var(--dn-tekst); line-height: var(--dn-lh-luzny);">
+              Przygotuj zestawienie zmian w gałęzi roboczej i opisz je w Findings Panel.
+            </div>
+            <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); margin-top: var(--dn-od-1);">treść wpisu rozmowy · Chat Window (przykład)</div>
+          </div>
+          <div class="pl-karta-kroju-role">
+            <span class="dn-plakietka">400</span>
+            <span class="dn-plakietka">500</span>
+            <span class="dn-plakietka">600</span>
+            <span class="dn-plakietka">700</span>
+          </div>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="var(--dn-ff-bazowa)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Kopiuj żeton
+          </button>
+        </article>
+
+        <!-- IBM Plex Mono -->
+        <article class="pl-karta-kroju">
+          <div class="pl-karta-kroju-glowa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>
+            <div>
+              <h4>IBM Plex Mono</h4>
+              <span class="pl-podpis">Maszyna</span>
+            </div>
+          </div>
+          <p>Identyfikator, ścieżka repozytorium, wynik powłoki, nazwa żetonu, znacznik czasu, metryka.</p>
+          <div class="pl-karta-kroju-okno">
+            <div class="pt-konsola" style="border: 0; padding: 0; background: transparent;"><span class="pt-komentarz"># katalog roboczy C:\Projekty\danaco-pilot\api</span>
+<span class="pt-znak-zachety">PS C:\Projekty\danaco-pilot\api&gt;</span> npm run build
+<span class="pt-wynik-ok">kompilacja zakończona · 2,1 s</span></div>
+            <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); margin-top: var(--dn-od-2);">wynik powłoki · Terminal → Output Console (przykład)</div>
+          </div>
+          <div class="pl-karta-kroju-role">
+            <span class="dn-plakietka">400</span>
+            <span class="dn-plakietka">500</span>
+            <span class="dn-plakietka">600</span>
+          </div>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="var(--dn-ff-mono)">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            Kopiuj żeton
+          </button>
+        </article>
+      </div>
+
+      <h3 class="pl-podsekcja">Każda rola w realnym kontekście</h3>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+          <span class="pt-etykieta">Wybierz rolę kroju</span>
+          <span class="pl-demo-prawa pl-przelaczniki">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz="rola-naglowek" data-grupa="role">Space Grotesk</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz="rola-bazowa" data-grupa="role">Plex Sans</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz="rola-mono" data-grupa="role">Plex Mono</button>
+          </span>
+        </div>
+
+        <!-- widok: Space Grotesk -->
+        <div class="pl-demo-tresc" data-widok="rola-naglowek" data-grupa-widoku="role" data-widok-aktywny="tak">
+          <div class="pl-siatka pl-siatka--2">
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" fill="currentColor" stroke="none"/></svg>
+                Strona główna — Strefa 1
+              </div>
+              <div class="pl-miniatura-cialo">
+                <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-3xl); font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek); color: var(--dn-tekst); line-height: var(--dn-lh-ciasny);">WorkSpace</div>
+                <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">tytuł karty środowiska — <code>3xl</code> 30 px / 600 / 1.25</div>
+              </div>
+            </div>
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
+                Okno modalne
+              </div>
+              <div class="pl-miniatura-cialo">
+                <div style="font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); line-height: var(--dn-lh-ciasny);">Pula kont Code CLI</div>
+                <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">nagłówek modala — <code>xl</code> 20 px / 600 / 1.25 · Okno Konfiguracji</div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-notka">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>Space Grotesk nie występuje w tekście ciągłym ani poniżej stopnia <code>lg</code> (16 px). Jedyny wyjątek: logotyp paska górnego, gdzie krój pełni funkcję znaku, nie tekstu.</span>
+          </div>
+        </div>
+
+        <!-- widok: Plex Sans -->
+        <div class="pl-demo-tresc" data-widok="rola-bazowa" data-grupa-widoku="role">
+          <div class="pl-siatka pl-siatka--2">
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
+                Boczna nawigacja — CodeStudio
+              </div>
+              <div class="pl-miniatura-cialo pl-gestosc-zalezne">
+                <div class="pl-wiersz-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                  <span class="pl-wiersz-mini-tytul">Developer</span>
+                  <span class="pl-wiersz-mini-meta">base 13</span>
+                </div>
+                <div class="pl-wiersz-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>
+                  <span class="pl-wiersz-mini-tytul">Terminal</span>
+                  <span class="pl-wiersz-mini-meta">base 13</span>
+                </div>
+                <div class="pl-wiersz-mini">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/></svg>
+                  <span class="pl-wiersz-mini-tytul">Diagnostics</span>
+                  <span class="pl-wiersz-mini-meta">base 13</span>
+                </div>
+              </div>
+            </div>
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>
+                Chat Window — wpis rozmowy
+              </div>
+              <div class="pl-miniatura-cialo">
+                <div class="dn-wpis dn-wpis--czlowiek">
+                  <div class="dn-wpis-medalion">
+                    <span class="dn-awatar dn-awatar--sm" aria-hidden="true">OP</span>
+                  </div>
+                  <div>
+                    <div class="dn-wpis-tozsamosc">
+                      <span class="dn-wpis-nadawca">Operator</span>
+                      <span class="dn-plakietka dn-plakietka--rola">user</span>
+                      <span class="dn-wpis-godzina">07:12</span>
+                    </div>
+                    <div class="dn-wpis-tresc">Uruchom Workflow Builder i pokaż kolejkę zadań w Queue Manager.</div>
+                  </div>
+                </div>
+                <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);">treść wpisu — <code>md</code> 14 px / 400 / 1.6 (przykład)</div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-notka">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>Plex Sans jest krojem domyślnym dokumentu. Pozostałe dwa są przydzielane świadomie — to Plex Sans obsługuje wszystko, czego nie przypisano wprost.</span>
+          </div>
+        </div>
+
+        <!-- widok: Plex Mono -->
+        <div class="pl-demo-tresc" data-widok="rola-mono" data-grupa-widoku="role">
+          <div class="pl-siatka pl-siatka--2">
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+                Panel danych — Ustawienia
+              </div>
+              <div class="pl-miniatura-cialo">
+                <dl class="pl-para-etykieta-wartosc">
+                  <dt>Kod parowania</dt><dd>DNC-4718-2K30</dd>
+                  <dt>Ścieżka</dt><dd>C:\Projekty\danaco-pilot\api</dd>
+                  <dt>Ostatni przebieg</dt><dd>2026-08-14 07:00</dd>
+                  <dt>Czas kompilacji</dt><dd>2,1 s</dd>
+                  <dt>Pamięć procesu</dt><dd>210 MB</dd>
+                  <dt>Żeton</dt><dd>--dn-ff-mono</dd>
+                </dl>
+              </div>
+            </div>
+            <div class="pl-miniatura">
+              <div class="pl-miniatura-pasek">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg>
+                Terminal — Output Console
+              </div>
+              <div class="pl-miniatura-cialo">
+                <div class="pt-konsola" role="log" aria-label="Przykładowy wynik powłoki"><span class="pt-komentarz"># sesja powłoki PowerShell (przykład)</span>
+<span class="pt-znak-zachety">PS C:\Projekty\danaco-pilot\api&gt;</span> Get-Process node
+<span class="pt-wynik-ok">node · 2 procesy · 210 MB</span>
+<span class="pt-wynik-uwaga">ostrzeżenie: 1 pakiet do aktualizacji</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-notka">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>Wartość, którą można skopiować, jest zapisana krojem mono. To sygnał afordancji — mono nie występuje w zdaniach.</span>
+          </div>
+        </div>
+
+        <div class="pl-demo-stopka">
+          <span class="pt-mono" style="font-size: var(--dn-fs-xs);">Źródło: KANON rozdz. 2 · zetony.css sekcja 3 · fonty.css</span>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Reguły przydziału</h3>
+      <ol class="pl-lista-zasad">
+        <li><b>01</b><span>Space Grotesk nie występuje w tekście ciągłym. Wyłącznie tytuły, nagłówki i logotyp.</span></li>
+        <li><b>02</b><span>Space Grotesk nie występuje poniżej stopnia <code>lg</code> (16 px) — poniżej tego progu jego charakter ginie, a przewaga czytelności Plex Sans rośnie.</span></li>
+        <li><b>03</b><span>Plex Mono nie występuje w zdaniach. Wyłącznie wartości, identyfikatory, ścieżki, kod, wynik.</span></li>
+        <li><b>04</b><span>Wartość, którą można skopiować, jest zapisana krojem mono — to sygnał afordancji.</span></li>
+        <li><b>05</b><span>Plex Sans jest krojem domyślnym całego dokumentu; pozostałe dwa są przydzielane świadomie.</span></li>
+      </ol>
+    </section>
+
+    <!-- ── 02 · PEŁNA SKALA ──────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="skala" aria-labelledby="tyt-skala">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">02</span>
+        <div>
+          <h2 id="tyt-skala">Pełna skala — dziewięć stopni w kontekście</h2>
+          <p class="pl-lead">
+            Skala jest krótka celowo. Kokpit ma <strong>cztery poziomy hierarchii</strong>
+            (środowisko → moduł → okno → wiersz danych) i każdemu odpowiada jeden stopień wiodący.
+            Pozostałe pięć stopni obsługuje metadane, etykiety i ekspozycję.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          <span class="pt-etykieta">Skala w kontekście — wybierz stopień</span>
+          <span class="pl-demo-prawa"><span class="pl-podpis">Klawiatura: Tab + Enter</span></span>
+        </div>
+
+        <div class="pl-skala-uklad">
+          <div class="pl-skala-lista" role="listbox" aria-label="Stopnie skali typograficznej" data-lista-wyboru data-grupa="skala">
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="true" data-pozycja="xs" data-pokaz="skala-xs">
+              <span class="pl-skala-zeton">xs</span><span class="pl-skala-opis">etykiety wersalikowe, nagłówki kolumn</span><span class="pl-skala-px">11 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="sm" data-pokaz="skala-sm">
+              <span class="pl-skala-zeton">sm</span><span class="pl-skala-opis">metadane, tekst pomocniczy</span><span class="pl-skala-px">12 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="base" data-pokaz="skala-base">
+              <span class="pl-skala-zeton">base</span><span class="pl-skala-opis">tekst interfejsu</span><span class="pl-skala-px">13 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="md" data-pokaz="skala-md">
+              <span class="pl-skala-zeton">md</span><span class="pl-skala-opis">wpisy rozmowy</span><span class="pl-skala-px">14 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="lg" data-pokaz="skala-lg">
+              <span class="pl-skala-zeton">lg</span><span class="pl-skala-opis">nagłówki paneli</span><span class="pl-skala-px">16 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="xl" data-pokaz="skala-xl">
+              <span class="pl-skala-zeton">xl</span><span class="pl-skala-opis">nagłówki okien</span><span class="pl-skala-px">20 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="2xl" data-pokaz="skala-2xl">
+              <span class="pl-skala-zeton">2xl</span><span class="pl-skala-opis">tytuły sekcji</span><span class="pl-skala-px">24 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="3xl" data-pokaz="skala-3xl">
+              <span class="pl-skala-zeton">3xl</span><span class="pl-skala-opis">tytuły kart środowisk</span><span class="pl-skala-px">30 px</span>
+            </div>
+            <div class="pl-skala-poz" role="option" tabindex="0" aria-selected="false" data-pozycja="display" data-pokaz="skala-display">
+              <span class="pl-skala-zeton">display</span><span class="pl-skala-opis">stopień ekspozycyjny</span><span class="pl-skala-px">40 px</span>
+            </div>
+          </div>
+
+          <div class="pl-skala-podglad">
+
+            <div data-widok="skala-xs" data-grupa-widoku="skala" data-widok-aktywny="tak">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <table class="pl-tabela">
+                    <thead><tr><th>Zadanie</th><th>Stan</th><th class="pl-kol-liczba">Czas</th></tr></thead>
+                    <tbody>
+                      <tr><td>Kompilacja pakietu API</td><td>Zakończone</td><td class="pl-kol-liczba">2,1 s</td></tr>
+                      <tr><td>Analiza dziennika zdarzeń</td><td>W kolejce</td><td class="pl-kol-liczba">—</td></tr>
+                    </tbody>
+                  </table>
+                  <div style="margin-top: var(--dn-od-3);"><span class="pl-wersalik-sans">Środowisko</span></div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-xs</em></span>
+                  <b>Stopień</b><span>11 px</span>
+                  <b>Waga</b><span>500–600</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>Queue Manager</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-sm" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="dn-wpis dn-wpis--system">
+                    <div class="dn-wpis-medalion"><span class="dn-awatar dn-awatar--sm dn-awatar--kwadrat" aria-hidden="true">SY</span></div>
+                    <div>
+                      <div class="dn-wpis-tozsamosc">
+                        <span class="dn-wpis-nadawca">System</span>
+                        <span class="dn-plakietka dn-plakietka--rola">system</span>
+                        <span class="dn-wpis-godzina">07:00</span>
+                      </div>
+                      <div class="dn-wpis-tresc" style="font-size: var(--dn-fs-sm);">Przebieg automatyki uruchomiony według harmonogramu.</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-sm</em></span>
+                  <b>Stopień</b><span>12 px</span>
+                  <b>Waga</b><span>400–500</span>
+                  <b>Interlinia</b><span>1.45</span>
+                  <b>Kontekst</b><span>metadane wpisu</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-base" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka pl-gestosc-zalezne">
+                  <div class="pl-wiersz-mini" style="margin-bottom: var(--dn-od-2);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>
+                    <span class="pl-wiersz-mini-tytul">Roundtable</span>
+                    <span class="pl-wiersz-mini-meta">TalkIn</span>
+                  </div>
+                  <div class="pl-wiersz-mini">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>
+                    <span class="pl-wiersz-mini-tytul">Library</span>
+                    <span class="pl-wiersz-mini-meta">TalkIn</span>
+                  </div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-base</em></span>
+                  <b>Stopień</b><span>13 px</span>
+                  <b>Waga</b><span>400–500</span>
+                  <b>Interlinia</b><span>1.45</span>
+                  <b>Kontekst</b><span>boczna nawigacja</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-md" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-bazowa" style="font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny);">
+                    Zestaw zmian w gałęzi roboczej został opisany w Findings Panel; raport końcowy czeka
+                    na złożenie w Report Builder.
+                  </div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-md</em></span>
+                  <b>Stopień</b><span>14 px</span>
+                  <b>Waga</b><span>400</span>
+                  <b>Interlinia</b><span>1.6</span>
+                  <b>Kontekst</b><span>Chat Window</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-lg" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba);">Project Dashboard</div>
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); margin-top: var(--dn-od-2);">Logs Viewer</div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-lg</em></span>
+                  <b>Stopień</b><span>16 px</span>
+                  <b>Waga</b><span>600</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>nagłówek panelu</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-xl" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-polgruba);">Permissions Center</div>
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-polgruba); margin-top: var(--dn-od-2);">Pula kont Code CLI</div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-xl</em></span>
+                  <b>Stopień</b><span>20 px</span>
+                  <b>Waga</b><span>600</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>nagłówek okna / modala</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-2xl" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-2xl); font-weight: var(--dn-fw-polgruba);">Centrum dowodzenia</div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-2xl</em></span>
+                  <b>Stopień</b><span>24 px</span>
+                  <b>Waga</b><span>600</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>tytuł sekcji</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-3xl" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-3xl); font-weight: var(--dn-fw-polgruba);">CodeStudio</div>
+                  <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-1);">karta środowiska — Strona główna, Strefa 1</div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-3xl</em></span>
+                  <b>Stopień</b><span>30 px</span>
+                  <b>Waga</b><span>600–700</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>tytuł karty środowiska</span>
+                </div>
+              </div>
+            </div>
+
+            <div data-widok="skala-display" data-grupa-widoku="skala">
+              <div class="pl-okaz">
+                <div class="pl-okaz-probka">
+                  <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba);">Danaco Console</div>
+                  <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-1);">stopień ekspozycyjny — Okno startowe, Always On Display</div>
+                </div>
+                <div class="pl-okaz-metryka">
+                  <b>Żeton</b><span><em>--dn-fs-display</em></span>
+                  <b>Stopień</b><span>40 px</span>
+                  <b>Waga</b><span>700</span>
+                  <b>Interlinia</b><span>1.25</span>
+                  <b>Kontekst</b><span>ekspozycja</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="pl-demo-stopka">
+          <span class="pt-mono" style="font-size: var(--dn-fs-xs);">Źródło: zetony.css sekcja 3 · KANON rozdz. 2</span>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Skoki w skali</h3>
+      <p class="pl-p">
+        11 → 12 → 13 → 14 to skoki jednopunktowe: te cztery stopnie żyją obok siebie w jednym wierszu tabeli
+        albo w jednym wpisie rozmowy, więc różnica musi być subtelna. Powyżej 14 skoki rosną
+        (16 → 20 → 24 → 30 → 40), bo te stopnie <strong>nigdy nie sąsiadują</strong> — dzieli je zawsze
+        warstwa układu.
+      </p>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Pokrycie skali w warstwie roboczej</span></div>
+        <div class="pl-demo-tresc">
+          <div class="dn-postep" data-postep-do="44" data-postep-czas="1400">
+            <div class="dn-postep-etykieta">
+              <span>Stopnie robocze (xs, sm, base, md) w łącznej skali</span>
+              <span class="pt-mono" data-postep-licznik>0 %</span>
+            </div>
+            <div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div>
+          </div>
+          <p class="pl-p" style="margin-top: var(--dn-od-3); margin-bottom: 0;">
+            Cztery z dziewięciu stopni obsługują niemal całą powierzchnię kokpitu. Pięć pozostałych
+            występuje punktowo — w tytułach, nagłówkach i ekspozycji.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 03 · ZESTAWIENIA ──────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="zestawienia" aria-labelledby="tyt-zestawienia">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">03</span>
+        <div>
+          <h2 id="tyt-zestawienia">Zestawienia typograficzne</h2>
+          <p class="pl-lead">
+            Zestawienie to najmniejsza jednostka projektowa typografii: nie pojedynczy stopień, lecz
+            <strong>para albo trójka stopni, które zawsze występują razem</strong>. W każdej parze zmienia się
+            co najmniej dwie cechy — stopień i waga, stopień i krój, waga i barwa tekstu.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2">
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Tytuł + podtytuł</span><span class="pl-demo-prawa pl-podpis">3xl / sm</span></div>
+          <div class="pl-demo-tresc">
+            <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-3xl); font-weight: var(--dn-fw-polgruba);">TalkIn</div>
+            <div style="font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: var(--dn-od-1);">
+              Środowisko rozmowy — dziewięć modułów w bocznej nawigacji
+            </div>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Karta środowiska · Strona główna</span></div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Etykieta + wartość</span><span class="pl-demo-prawa pl-podpis">xs wersaliki / base mono</span></div>
+          <div class="pl-demo-tresc">
+            <dl class="pl-para-etykieta-wartosc">
+              <dt>Profil izolacji</dt><dd>Domyślny (dziedziczony)</dd>
+              <dt>Kod parowania</dt><dd>DNC-4718-2K30</dd>
+              <dt>Ostatni przebieg</dt><dd>2026-08-14 07:00</dd>
+            </dl>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Panel prowenancji · Okno Konfiguracji</span></div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Nagłówek panelu + treść</span><span class="pl-demo-prawa pl-podpis">lg / base</span></div>
+          <div class="pl-demo-tresc">
+            <div class="pl-krojo-naglowek" style="font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); margin-bottom: var(--dn-od-2);">Instructions Panel</div>
+            <div style="font-size: var(--dn-fs-base); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy);">
+              Instrukcje projektu obowiązują we wszystkich oknach modułu Workspace i są dziedziczone
+              przez agentów zarejestrowanych w Agent Manager.
+            </div>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Moduł Workspace</span></div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Wpis rozmowy</span><span class="pl-demo-prawa pl-podpis">sm + xs + sm mono + md</span></div>
+          <div class="pl-demo-tresc pl-wpis-probka">
+            <div class="dn-wpis dn-wpis--czlowiek">
+              <div class="dn-wpis-medalion"><span class="dn-awatar dn-awatar--sm" aria-hidden="true">OP</span></div>
+              <div>
+                <div class="dn-wpis-tozsamosc">
+                  <span class="dn-wpis-nadawca">Operator</span>
+                  <span class="dn-plakietka dn-plakietka--rola">user</span>
+                  <span class="dn-wpis-godzina">07:12</span>
+                </div>
+                <div class="dn-wpis-tresc">Zestaw zmian w gałęzi roboczej — przygotuj podsumowanie.</div>
+              </div>
+            </div>
+            <div class="dn-wpis dn-wpis--inteligencja">
+              <div class="dn-wpis-medalion"><span class="dn-awatar dn-awatar--sm dn-awatar--inteligencja" aria-hidden="true"></span></div>
+              <div>
+                <div class="dn-wpis-tozsamosc">
+                  <span class="dn-wpis-nadawca">Asystent</span>
+                  <span class="dn-plakietka dn-plakietka--rola">assistant</span>
+                  <span class="dn-wpis-godzina">07:12</span>
+                </div>
+                <div class="dn-wpis-tresc">Podsumowanie złożone w Findings Panel. Gotowe do eksportu przez Export Panel.</div>
+              </div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Chat Window · przykład operacyjny</span></div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Wiersz tabeli</span><span class="pl-demo-prawa pl-podpis">xs / base / sm mono</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu pl-gestosc-zalezne">
+            <table class="pl-tabela">
+              <thead><tr><th>Okno operacyjne</th><th>Moduł</th><th class="pl-kol-liczba">Pozycji</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Workflow Builder</strong></td><td>Automations</td><td class="pl-kol-liczba">11</td></tr>
+                <tr><td><strong>Queue Manager</strong></td><td>Automations</td><td class="pl-kol-liczba">5</td></tr>
+                <tr><td><strong>Execution Monitor</strong></td><td>Automations</td><td class="pl-kol-liczba">3</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Silnik kolejek — 11 akcji (KANON rozdz. 7.6)</span></div>
+        </div>
+
+        <div class="pl-demo">
+          <div class="pl-demo-glowa"><span class="pt-etykieta">Blok kodu</span><span class="pl-demo-prawa pl-podpis">sm mono</span></div>
+          <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu">
+            <div class="pt-edytor">
+              <div class="pt-edytor-numery">1
+2
+3
+4</div>
+              <div class="pt-edytor-kod"><span class="pt-skl-komentarz">// Studio Editor — fragment przykładowy</span>
+<span class="pt-skl-slowo">const</span> <span class="pt-skl-funkcja">kolejka</span> = <span class="pt-skl-funkcja">pobierzKolejke</span>(<span class="pt-skl-tekst">'Queue Manager'</span>);
+<span class="pt-skl-slowo">const</span> <span class="pt-skl-funkcja">limit</span> = <span class="pt-skl-liczba">11</span>;
+<span class="pt-skl-funkcja">uruchom</span>(kolejka, limit);</div>
+            </div>
+          </div>
+          <div class="pl-demo-stopka"><span class="pl-podpis">Studio Editor · Code Editor</span></div>
+        </div>
+
+      </div>
+
+      <h3 class="pl-podsekcja">Pasek promptu — zestawienie wspólne wszystkim modułom</h3>
+      <div class="pl-prompt-probka">
+        <span class="pl-prompt-grot" aria-hidden="true">&raquo;&raquo;</span>
+        <span class="pl-prompt-tekst">Opisz stan kolejki i wskaż zadania oczekujące dłużej niż jeden przebieg</span>
+        <span style="margin-left: auto;" class="pl-podpis">md 14 px / 400</span>
+      </div>
+      <p class="pl-p" style="margin-top: var(--dn-od-3);">
+        Grot promptu jest zapisany krojem mono i powtarza kształt sygnetu marki. Treść wpisywana przez
+        Operatora idzie krojem pracy — Plex Sans, stopień <code>md</code>, ten sam co treść wpisu rozmowy,
+        bo to jest ta sama treść przed wysłaniem i po wysłaniu.
+      </p>
+    </section>
+
+    <!-- ── 04 · LICZBY ───────────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="liczby" aria-labelledby="tyt-liczby">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">04</span>
+        <div>
+          <h2 id="tyt-liczby">Liczby — <code>tabular-nums</code></h2>
+          <p class="pl-lead">
+            Liczba w kolumnie musi być <strong>porównywalna wzrokiem</strong>. Proporcjonalne cyfry sprawiają,
+            że kolumna identyfikatorów albo rozmiarów faluje, a Operator traci możliwość odczytania rzędu
+            wielkości bez czytania cyfr. <code>font-variant-numeric: tabular-nums</code> wyrównuje szerokość
+            każdej cyfry.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
+          <span class="pt-etykieta">Porównanie — te same dane, dwa ustawienia cyfr</span>
+          <span class="pl-demo-prawa">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="pl-toggle-cyfry" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+              <span id="pl-toggle-cyfry-etykieta">Podświetl różnicę</span>
+            </button>
+          </span>
+        </div>
+
+        <div class="pl-porownanie">
+          <div class="pl-porownanie-pole">
+            <div class="pl-porownanie-glowa">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-sukces-tekst);"><path d="M20 6 9 17l-5-5"/></svg>
+              <b>tabular-nums — obowiązujące</b>
+            </div>
+            <table class="pl-tabela pl-liczby-tabelaryczne" id="pl-tabela-tabelaryczna" data-tabela>
+              <caption>Monitor przebiegów — dane przykładowe</caption>
+              <thead>
+                <tr>
+                  <th data-sortuj="tekst" tabindex="0">Przebieg</th>
+                  <th data-sortuj="tekst" tabindex="0">Znacznik czasu</th>
+                  <th data-sortuj="liczba" tabindex="0" class="pl-kol-liczba">Czas [s]</th>
+                  <th data-sortuj="liczba" tabindex="0" class="pl-kol-liczba">Pamięć [MB]</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td class="pl-kol-kod">DNC-4718-2K30</td><td class="pl-kol-kod">2026-08-14 07:00</td><td class="pl-kol-liczba">2,1</td><td class="pl-kol-liczba">210</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K31</td><td class="pl-kol-kod">2026-08-14 07:11</td><td class="pl-kol-liczba">11,4</td><td class="pl-kol-liczba">1180</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K32</td><td class="pl-kol-kod">2026-08-14 07:18</td><td class="pl-kol-liczba">0,8</td><td class="pl-kol-liczba">96</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K33</td><td class="pl-kol-kod">2026-08-14 07:41</td><td class="pl-kol-liczba">118,0</td><td class="pl-kol-liczba">1024</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pl-porownanie-pole">
+            <div class="pl-porownanie-glowa">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-ostrzezenie-tekst);"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <b>proportional-nums — kontrprzykład</b>
+            </div>
+            <table class="pl-tabela pl-liczby-proporcjonalne">
+              <caption>Te same dane, cyfry proporcjonalne</caption>
+              <thead>
+                <tr><th>Przebieg</th><th>Znacznik czasu</th><th class="pl-kol-liczba">Czas [s]</th><th class="pl-kol-liczba">Pamięć [MB]</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="pl-kol-kod">DNC-4718-2K30</td><td class="pl-kol-kod">2026-08-14 07:00</td><td class="pl-kol-liczba">2,1</td><td class="pl-kol-liczba">210</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K31</td><td class="pl-kol-kod">2026-08-14 07:11</td><td class="pl-kol-liczba">11,4</td><td class="pl-kol-liczba">1180</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K32</td><td class="pl-kol-kod">2026-08-14 07:18</td><td class="pl-kol-liczba">0,8</td><td class="pl-kol-liczba">96</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K33</td><td class="pl-kol-kod">2026-08-14 07:41</td><td class="pl-kol-liczba">118,0</td><td class="pl-kol-liczba">1024</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pl-demo-stopka">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span>Nagłówki lewej tabeli są sortowalne — kliknięcie albo Enter zmienia kolejność wierszy i pokazuje, że kolumna liczb zachowuje rytm przy każdym porządku.</span>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Formaty danych platformy</h3>
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <span class="pt-etykieta">Katalog formatów</span>
+          <span class="pl-demo-prawa">
+            <input class="dn-pole-kontrolka" type="search" id="pl-filtr-formatow" data-filtruj="#pl-lista-formatow"
+                   placeholder="Filtruj formaty…" aria-label="Filtruj katalog formatów danych" style="width: 200px;">
+            <span class="pt-mono" data-filtr-licznik="pl-filtr-formatow" style="font-size: var(--dn-fs-xs);">8 / 8</span>
+          </span>
+        </div>
+        <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu">
+          <table class="pl-tabela">
+            <thead><tr><th>Format</th><th>Przykład</th><th>Krój i waga</th><th>Wyrównanie</th></tr></thead>
+            <tbody id="pl-lista-formatow">
+              <tr data-filtr-pozycja data-filtr-tekst="kod parowania urządzenia DNC"><td>Kod parowania urządzenia</td><td class="pl-kol-kod">DNC-4718-2K30</td><td>mono 500</td><td>do lewej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="znacznik czasu przebiegu"><td>Znacznik czasu przebiegu</td><td class="pl-kol-kod">2026-08-14 07:00</td><td>mono 400</td><td>do lewej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="czas trwania sekundy"><td>Czas trwania</td><td class="pl-kol-kod">2,1 s</td><td>mono 400</td><td>do prawej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="rozmiar pamięć procesu MB"><td>Rozmiar procesu</td><td class="pl-kol-kod">210 MB</td><td>mono 400</td><td>do prawej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="licznik filtru"><td>Licznik filtru</td><td class="pl-kol-kod">7 / 7</td><td>mono 500</td><td>do prawej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="postęp procent"><td>Postęp</td><td class="pl-kol-kod">72 %</td><td>mono 500</td><td>do prawej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="wersja pakietu"><td>Wersja pakietu</td><td class="pl-kol-kod">v2.0</td><td>mono 500</td><td>do lewej</td></tr>
+              <tr data-filtr-pozycja data-filtr-tekst="suma kontrolna SHA"><td>Suma kontrolna</td><td class="pl-kol-kod">SHA-256</td><td>mono 400</td><td>do lewej</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pl-demo-stopka"><span class="pl-podpis">Wartości przepisane z prototypów 05-okna · dane przykładowe</span></div>
+      </div>
+
+      <ol class="pl-lista-zasad">
+        <li><b>01</b><span>Każda liczba w tabeli, kolejce, monitorze i panelu metryk ma <code>tabular-nums</code>.</span></li>
+        <li><b>02</b><span>Liczby wyrównujemy do prawej wtedy i tylko wtedy, gdy są porównywalne między wierszami.</span></li>
+        <li><b>03</b><span>Identyfikatory (kody, wersje, znaczniki czasu) wyrównujemy do lewej — czyta się je od początku, nie porównuje wielkością.</span></li>
+        <li><b>04</b><span>Separator dziesiętny — przecinek. Separator tysięcy — spacja nierozdzielająca.</span></li>
+        <li><b>05</b><span>Jednostka jest częścią wartości, idzie tym samym krojem, oddzielona spacją nierozdzielającą.</span></li>
+      </ol>
+    </section>
+
+    <!-- ── 05 · WERSALIKI ────────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="wersaliki" aria-labelledby="tyt-wersaliki">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">05</span>
+        <div>
+          <h2 id="tyt-wersaliki">Wersaliki — 0,08em i 0,14em</h2>
+          <p class="pl-lead">
+            Mono wymaga większego odstępu, bo jego wersaliki są już szerokie i gęste — bez rozstrzelenia
+            zlewają się w blok. Sans przy 0,08em zachowuje rytm słowa. Rozstrzelenie komunikuje:
+            <strong>to nie jest treść, to jest opis pola treści</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Odstęp systemowy kontra odstęp zerowy</span></div>
+        <div class="pl-porownanie">
+          <div class="pl-porownanie-pole">
+            <div class="pl-porownanie-glowa">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-sukces-tekst);"><path d="M20 6 9 17l-5-5"/></svg>
+              <b>Odstęp systemowy</b>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--dn-od-3);">
+              <div>
+                <div class="pl-wersalik-sans">Środowisko robocze</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">Plex Sans 600 · 0,08em · <code>--dn-ls-wersaliki</code></div>
+              </div>
+              <div>
+                <div class="pl-wersalik-mono">Profil izolacji</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">Plex Mono 500 · 0,14em · <code>--dn-ls-mono-wersaliki</code></div>
+              </div>
+              <div>
+                <div class="pl-wersalik-mono">Console</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">druga część logotypu — maszyna</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pl-porownanie-pole">
+            <div class="pl-porownanie-glowa">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--dn-ostrzezenie-tekst);"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <b>Odstęp zerowy — kontrprzykład</b>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--dn-od-3);">
+              <div>
+                <div class="pl-wersalik-sans pl-wersalik-zero">Środowisko robocze</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">czyta się jak skrót, nie jak etykieta</div>
+              </div>
+              <div>
+                <div class="pl-wersalik-mono pl-wersalik-zero">Profil izolacji</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">wersaliki mono zlewają się w blok</div>
+              </div>
+              <div>
+                <div class="pl-wersalik-mono pl-wersalik-zero">Console</div>
+                <div class="pl-podpis" style="letter-spacing: normal; text-transform: none; margin-top: var(--dn-od-1);">logotyp traci oddech pary krojów</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka"><span class="pl-podpis">Żetony: --dn-ls-wersaliki 0.08em · --dn-ls-mono-wersaliki 0.14em</span></div>
+      </div>
+
+      <div class="pl-siatka pl-siatka--2" style="margin-top: var(--dn-od-5);">
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <span class="pt-etykieta">Gdzie wolno</span>
+          </div>
+          <div class="pl-demo-tresc">
+            <ul class="pl-lista-zasad" style="margin: 0;">
+              <li><b>·</b><span>etykiety sekcji i grup pól</span></li>
+              <li><b>·</b><span>nagłówki kolumn tabel</span></li>
+              <li><b>·</b><span>drobne plakietki techniczne — nazwa żetonu, nazwa roli</span></li>
+              <li><b>·</b><span><code>CONSOLE</code> w logotypie</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="pl-demo">
+          <div class="pl-demo-glowa">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <span class="pt-etykieta">Gdzie nie wolno</span>
+          </div>
+          <div class="pl-demo-tresc">
+            <ul class="pl-lista-zasad" style="margin: 0;">
+              <li><b>·</b><span>nazwy własne modułów i okien (<code>Studio Editor</code>, <code>Workflow Builder</code>) — zakaz parafrazy obejmuje także zmianę wielkości liter</span></li>
+              <li><b>·</b><span>nazwy środowisk (<code>TalkIn</code>, <code>MultitaskingAI</code>) — wielbłądzia pisownia jest częścią nazwy</span></li>
+              <li><b>·</b><span>treść wpisów, opisy, komunikaty, teksty przycisków</span></li>
+              <li><b>·</b><span>wszystko powyżej stopnia <code>lg</code></span></li>
+            </ul>
+            <div style="margin-top: var(--dn-od-3);">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                      data-komunikat="Nazwy własne okien zapisujemy dokładnie tak, jak w dokumentacji: Workflow Builder, nie WORKFLOW BUILDER."
+                      data-komunikat-tytul="Zakaz zmiany pisowni"
+                      data-komunikat-rodzaj="ostrzezenie">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Sprawdź regułę
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 06 · DIAKRYTYKI ───────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="diakrytyki" aria-labelledby="tyt-diakrytyki">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">06</span>
+        <div>
+          <h2 id="tyt-diakrytyki">Diakrytyki polskie</h2>
+          <p class="pl-lead">
+            Podzbiory <code>latin</code> i <code>latin-ext</code> są w pakiecie dla wszystkich trzech krojów
+            i wszystkich wag. Zdanie testowe kanoniczne: <strong>ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</strong>.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <span class="pt-etykieta">Zdanie testowe — trzy kroje, wszystkie wagi</span>
+          <span class="pl-demo-prawa">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              Kopiuj zdanie
+            </button>
+          </span>
+        </div>
+        <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu">
+
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Grotesk 500 · 24</span><span class="pl-diakryt-tekst pl-krojo-naglowek" style="font-size: var(--dn-fs-2xl); font-weight: var(--dn-fw-srednia);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Grotesk 600 · 30</span><span class="pl-diakryt-tekst pl-krojo-naglowek" style="font-size: var(--dn-fs-3xl); font-weight: var(--dn-fw-polgruba);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Grotesk 700 · 40</span><span class="pl-diakryt-tekst pl-krojo-naglowek" style="font-size: var(--dn-fs-display); font-weight: var(--dn-fw-gruba);">ŁÓDŹ ŻÓŁĆ</span></div>
+
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Sans 400 · 13</span><span class="pl-diakryt-tekst pl-krojo-bazowa" style="font-size: var(--dn-fs-base); font-weight: var(--dn-fw-normalna);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ · ą ć ę ł ń ó ś ź ż</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Sans 500 · 14</span><span class="pl-diakryt-tekst pl-krojo-bazowa" style="font-size: var(--dn-fs-md); font-weight: var(--dn-fw-srednia);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ · ą ć ę ł ń ó ś ź ż</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Sans 600 · 16</span><span class="pl-diakryt-tekst pl-krojo-bazowa" style="font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Sans 700 · 20</span><span class="pl-diakryt-tekst pl-krojo-bazowa" style="font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-gruba);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span></div>
+
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Mono 400 · 12</span><span class="pl-diakryt-tekst pl-krojo-mono" style="font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-normalna);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ · ą ć ę ł ń ó ś ź ż</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Mono 500 · 13</span><span class="pl-diakryt-tekst pl-krojo-mono" style="font-size: var(--dn-fs-base); font-weight: var(--dn-fw-srednia);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ · Ą Ć Ę Ł Ń Ó Ś Ź Ż</span></div>
+          <div class="pl-diakryt-wiersz"><span class="pl-diakryt-etykieta">Mono 600 · 16</span><span class="pl-diakryt-tekst pl-krojo-mono" style="font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</span></div>
+        </div>
+        <div class="pl-demo-stopka"><span class="pl-podpis">Źródło: fonty.css — zakres U+0100-024F (latin-ext) we wszystkich wagach</span></div>
+      </div>
+
+      <h3 class="pl-podsekcja">Pełen zestaw znaków</h3>
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <span class="pt-etykieta">Zestaw kontrolny</span>
+          <span class="pl-demo-prawa">
+            <input class="dn-pole-kontrolka" type="search" id="pl-filtr-znakow" data-filtruj="#pl-zestaw-znakow"
+                   placeholder="Filtruj znaki…" aria-label="Filtruj zestaw znaków diakrytycznych" style="width: 180px;">
+            <span class="pt-mono" data-filtr-licznik="pl-filtr-znakow" style="font-size: var(--dn-fs-xs);">18 / 18</span>
+          </span>
+        </div>
+        <div class="pl-demo-tresc">
+          <div class="pl-znaki" id="pl-zestaw-znakow">
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ą a ogonek male"><b>ą</b><span>U+0105</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ć c akut male"><b>ć</b><span>U+0107</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ę e ogonek male"><b>ę</b><span>U+0119</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ł l kreska male"><b>ł</b><span>U+0142</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ń n akut male"><b>ń</b><span>U+0144</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ó o akut male"><b>ó</b><span>U+00F3</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ś s akut male"><b>ś</b><span>U+015B</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ź z akut male"><b>ź</b><span>U+017A</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="ż z kropka male"><b>ż</b><span>U+017C</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ą A ogonek wielkie"><b>Ą</b><span>U+0104</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ć C akut wielkie"><b>Ć</b><span>U+0106</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ę E ogonek wielkie"><b>Ę</b><span>U+0118</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ł L kreska wielkie"><b>Ł</b><span>U+0141</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ń N akut wielkie"><b>Ń</b><span>U+0143</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ó O akut wielkie"><b>Ó</b><span>U+00D3</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ś S akut wielkie"><b>Ś</b><span>U+015A</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ź Z akut wielkie"><b>Ź</b><span>U+0179</span></div>
+            <div class="pl-znak" data-filtr-pozycja data-filtr-tekst="Ż Z kropka wielkie"><b>Ż</b><span>U+017B</span></div>
+          </div>
+        </div>
+        <div class="pl-demo-stopka">
+          <span class="pl-podpis">18 znaków · 9 małych, 9 wielkich</span>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Punkty ryzyka i rozstrzygnięcia</h3>
+      <div class="pl-demo">
+        <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu">
+          <table class="pl-tabela">
+            <thead><tr><th>Znak</th><th>Ryzyko</th><th>Rozstrzygnięcie</th></tr></thead>
+            <tbody>
+              <tr><td class="pl-kol-kod">Ł / ł</td><td>przekreślenie kolidujące z sąsiadem w wersalikach mono</td><td>odstęp 0,14em rozwiązuje kolizję</td></tr>
+              <tr><td class="pl-kol-kod">ą / ę</td><td>ogonek wchodzący w interlinię przy 1.25</td><td>interlinia ciasna zarezerwowana dla nagłówków w stopniach ≥ 16 px</td></tr>
+              <tr><td class="pl-kol-kod">Ź / Ż</td><td>kropka i akut mylone przy 11 px</td><td>stopień <code>xs</code> wyłącznie z wagą ≥ 500</td></tr>
+              <tr><td class="pl-kol-kod">Ń</td><td>akut nad wąskim <code>N</code> w mono</td><td>akceptowalne we wszystkich stopniach pakietu</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 07 · OKAZ INTERAKTYWNY ────────────────────────────────────── -->
+    <section class="pl-sekcja" id="okaz" aria-labelledby="tyt-okaz">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">07</span>
+        <div>
+          <h2 id="tyt-okaz">Okaz interaktywny</h2>
+          <p class="pl-lead">
+            Wpisany tekst renderowany <strong>jednocześnie we wszystkich trzech krojach</strong>.
+            Trzy suwaki sterują stopniem, interlinią i odstępem liter. Zakres suwaków jest pełny —
+            wyjście poza skalę systemową jest <strong>komunikowane plakietką, nie blokadą</strong> (ADL-017).
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>
+          <span class="pt-etykieta">Okaz — trzy kroje równolegle</span>
+          <span class="pl-demo-prawa" id="pl-okaz-werdykt"></span>
+        </div>
+
+        <div class="pl-okaz-panel">
+          <div class="pl-okaz-sterowanie">
+            <div class="dn-pole">
+              <label class="dn-pole-etykieta" for="pl-okaz-tekst">Tekst okazu</label>
+              <input class="dn-pole-kontrolka" type="text" id="pl-okaz-tekst"
+                     value="ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ" autocomplete="off" spellcheck="false">
+              <span class="dn-pole-opis">Domyślnie zdanie testowe diakrytyków (KANON rozdz. 2).</span>
+            </div>
+
+            <div class="pl-suwak-wiersz">
+              <div class="pl-suwak-glowa">
+                <label for="pl-okaz-stopien">Stopień</label>
+                <output id="pl-okaz-stopien-wartosc" for="pl-okaz-stopien">20 px</output>
+              </div>
+              <input class="dn-suwak" type="range" id="pl-okaz-stopien" min="11" max="48" step="1" value="20"
+                     aria-describedby="pl-okaz-stopien-wartosc">
+            </div>
+
+            <div class="pl-suwak-wiersz">
+              <div class="pl-suwak-glowa">
+                <label for="pl-okaz-interlinia">Interlinia</label>
+                <output id="pl-okaz-interlinia-wartosc" for="pl-okaz-interlinia">1,45</output>
+              </div>
+              <input class="dn-suwak" type="range" id="pl-okaz-interlinia" min="100" max="200" step="5" value="145"
+                     aria-describedby="pl-okaz-interlinia-wartosc">
+            </div>
+
+            <div class="pl-suwak-wiersz">
+              <div class="pl-suwak-glowa">
+                <label for="pl-okaz-odstep">Odstęp liter</label>
+                <output id="pl-okaz-odstep-wartosc" for="pl-okaz-odstep">0,00em</output>
+              </div>
+              <input class="dn-suwak" type="range" id="pl-okaz-odstep" min="-2" max="20" step="1" value="0"
+                     aria-describedby="pl-okaz-odstep-wartosc">
+            </div>
+
+            <div style="display: flex; gap: var(--dn-od-2); flex-wrap: wrap;">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="pl-okaz-reset">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+                Wartości systemowe
+              </button>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-modal="pl-modal-kroje">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                Karta krojów
+              </button>
+            </div>
+
+            <div class="pl-notka" style="margin: 0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <span>Suwaki nie mają blokad. Wartość spoza skali systemowej jest oznaczana plakietką ostrzegawczą i opisem — Operator decyduje sam.</span>
+            </div>
+          </div>
+
+          <div class="pl-okaz-podglad">
+            <div class="pl-podglad-blok">
+              <header><span>Space Grotesk</span><span id="pl-echo-grotesk">600</span></header>
+              <div class="pl-podglad-tekst pl-krojo-naglowek" id="pl-podglad-grotesk" style="font-weight: var(--dn-fw-polgruba);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</div>
+            </div>
+            <div class="pl-podglad-blok">
+              <header><span>IBM Plex Sans</span><span id="pl-echo-sans">400</span></header>
+              <div class="pl-podglad-tekst pl-krojo-bazowa" id="pl-podglad-sans">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</div>
+            </div>
+            <div class="pl-podglad-blok">
+              <header><span>IBM Plex Mono</span><span id="pl-echo-mono">500</span></header>
+              <div class="pl-podglad-tekst pl-krojo-mono" id="pl-podglad-mono" style="font-weight: var(--dn-fw-srednia);">ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</div>
+            </div>
+
+            <div class="pl-siatka pl-siatka--3">
+              <div class="pl-podglad-blok">
+                <header><span>Waga 400</span></header>
+                <div class="pl-podglad-tekst pl-krojo-bazowa pl-echo-waga" style="font-weight: var(--dn-fw-normalna);">ŁÓDŹ ŻÓŁĆ</div>
+              </div>
+              <div class="pl-podglad-blok">
+                <header><span>Waga 500</span></header>
+                <div class="pl-podglad-tekst pl-krojo-bazowa pl-echo-waga" style="font-weight: var(--dn-fw-srednia);">ŁÓDŹ ŻÓŁĆ</div>
+              </div>
+              <div class="pl-podglad-blok">
+                <header><span>Waga 700</span></header>
+                <div class="pl-podglad-tekst pl-krojo-bazowa pl-echo-waga" style="font-weight: var(--dn-fw-gruba);">ŁÓDŹ ŻÓŁĆ</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pl-demo-stopka">
+          <span class="pl-podpis">Skala systemowa: 11 · 12 · 13 · 14 · 16 · 20 · 24 · 30 · 40 px</span>
+        </div>
+      </div>
+
+      <h3 class="pl-podsekcja">Renderowanie okazu — przejście stanu</h3>
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <span class="pt-etykieta">Symulacja złożenia próbki</span>
+          <span class="pl-demo-prawa">
+            <button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button"
+                    data-symuluj="#pl-stan-render" data-symuluj-czas="1600" data-symuluj-stan="gotowe"
+                    data-symuluj-etykieta="Składam…" data-symuluj-komunikat="Próbka złożona we wszystkich trzech krojach.">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.714 3.048a.498.498 0 0 0-.683.627l2.843 7.627a2 2 0 0 1 0 1.396l-2.842 7.627a.498.498 0 0 0 .682.627l18-8.5a.5.5 0 0 0 0-.904z"/><path d="M6 12h16"/></svg>
+              <span data-etykieta>Złóż próbkę</span>
+            </button>
+          </span>
+        </div>
+        <div class="pl-demo-tresc">
+          <div id="pl-stan-render" data-stan="gotowe" style="display: flex; align-items: center; gap: var(--dn-od-3);">
+            <span class="dn-kropka dn-kropka--tetno pt-tetno" aria-hidden="true"></span>
+            <span style="font-size: var(--dn-fs-base); color: var(--dn-tekst-2);">
+              Kropka sygnału pulsuje, gdy w tle biegnie praca — to jedyny ruch ciągły na planszy (2,4 s).
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <dialog class="dn-modal" id="pl-modal-kroje" data-zamknij-podlozem aria-labelledby="pl-modal-tytul">
+        <div class="dn-modal-naglowek">
+          <h3 class="dn-modal-tytul" id="pl-modal-tytul">Karta krojów</h3>
+          <button class="dn-btn-ikona" type="button" data-zamknij-modal aria-label="Zamknij okno">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+        <div class="dn-modal-cialo">
+          <table class="pl-tabela">
+            <thead><tr><th>Krój</th><th>Żeton</th><th>Wagi</th><th>Rola</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Space Grotesk</strong></td><td class="pl-kol-kod">--dn-ff-naglowek</td><td class="pl-kol-kod">500 600 700</td><td>marka i wejście</td></tr>
+              <tr><td><strong>IBM Plex Sans</strong></td><td class="pl-kol-kod">--dn-ff-bazowa</td><td class="pl-kol-kod">400 500 600 700</td><td>praca</td></tr>
+              <tr><td><strong>IBM Plex Mono</strong></td><td class="pl-kol-kod">--dn-ff-mono</td><td class="pl-kol-kod">400 500 600</td><td>maszyna</td></tr>
+            </tbody>
+          </table>
+          <p class="pl-p" style="margin-top: var(--dn-od-4); margin-bottom: 0;">
+            Wszystkie trzy kroje na licencji OFL 1.1, podzbiory <code>latin</code> i <code>latin-ext</code>,
+            <code>font-display: swap</code> — tekst widoczny natychmiast na kroju zapasowym.
+          </p>
+        </div>
+        <div class="dn-modal-stopka">
+          <button class="dn-btn dn-btn--zarys" type="button" data-zamknij-modal>Zamknij</button>
+          <button class="dn-btn dn-btn--sygnal" type="button" data-kopiuj="--dn-ff-naglowek · --dn-ff-bazowa · --dn-ff-mono">Kopiuj żetony</button>
+        </div>
+      </dialog>
+    </section>
+
+    <!-- ── 08 · GĘSTOŚĆ ──────────────────────────────────────────────── -->
+    <section class="pl-sekcja" id="gestosc" aria-labelledby="tyt-gestosc">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">08</span>
+        <div>
+          <h2 id="tyt-gestosc">Gęstość a typografia</h2>
+          <p class="pl-lead">
+            Pokrętło <code>GESTOSC_WIZUALNA = 8/10</code> przekłada się na dwie konfiguracje typograficzne.
+            Przestronna nie jest „wersją dla słabszego wzroku” — jest wariantem dla <strong>wskaźnika grubego</strong>
+            (<code>pointer: coarse</code>), gdzie cele muszą urosnąć, a typografia idzie za nimi,
+            żeby proporcja została zachowana.
+          </p>
+        </div>
+      </div>
+
+      <div class="pl-demo">
+        <div class="pl-demo-glowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+          <span class="pt-etykieta">Przełącznik gęstości — przebudowuje całą planszę</span>
+          <span class="pl-demo-prawa">
+            <span class="pl-stan-gestosci" aria-live="polite" id="pl-stan-gestosci">
+              <span class="dn-kropka" aria-hidden="true"></span>
+              <span id="pl-stan-gestosci-tekst">stan: zwarta</span>
+            </span>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-gestosc-cel="zwarta">Zwarta</button>
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-gestosc-cel="przestronna">Przestronna</button>
+          </span>
+        </div>
+
+        <div class="pl-porownanie">
+          <div class="pl-porownanie-pole pl-gestosc-zalezne">
+            <div class="pl-porownanie-glowa"><b>Boczna nawigacja — TalkIn</b></div>
+            <div style="display: flex; flex-direction: column; gap: var(--dn-od-2);">
+              <div class="pl-wiersz-mini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"/></svg>
+                <span class="pl-wiersz-mini-tytul">Studio</span><span class="pl-wiersz-mini-meta">01</span>
+              </div>
+              <div class="pl-wiersz-mini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/><path d="m13.56 11.747 4.332-.924"/><path d="m16 21-3.105-6.21"/><path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z"/><path d="m6.158 8.633 1.114 4.456"/><path d="m8 21 3.105-6.21"/><circle cx="12" cy="13" r="2"/></svg>
+                <span class="pl-wiersz-mini-tytul">Research</span><span class="pl-wiersz-mini-meta">02</span>
+              </div>
+              <div class="pl-wiersz-mini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>
+                <span class="pl-wiersz-mini-tytul">Library</span><span class="pl-wiersz-mini-meta">03</span>
+              </div>
+              <div class="pl-wiersz-mini">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                <span class="pl-wiersz-mini-tytul">Translate</span><span class="pl-wiersz-mini-meta">04</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="pl-porownanie-pole pl-gestosc-zalezne">
+            <div class="pl-porownanie-glowa"><b>Tabela — Execution Monitor</b></div>
+            <table class="pl-tabela">
+              <thead><tr><th>Przebieg</th><th class="pl-kol-liczba">Czas [s]</th></tr></thead>
+              <tbody>
+                <tr><td class="pl-kol-kod">DNC-4718-2K30</td><td class="pl-kol-liczba">2,1</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K31</td><td class="pl-kol-liczba">11,4</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K32</td><td class="pl-kol-liczba">0,8</td></tr>
+                <tr><td class="pl-kol-kod">DNC-4718-2K33</td><td class="pl-kol-liczba">118,0</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pl-demo-stopka">
+          <span class="pl-podpis">Atrybut <code>data-gestosc</code> na elemencie html — zwarta | przestronna</span>
+        </div>
+      </div>
+
+      <div class="pl-demo" style="margin-top: var(--dn-od-5);">
+        <div class="pl-demo-glowa"><span class="pt-etykieta">Tabela porównawcza konfiguracji</span></div>
+        <div class="pl-demo-tresc pl-demo-tresc--bez-marginesu">
+          <table class="pl-tabela">
+            <thead><tr><th>Cecha</th><th>Zwarta (domyślna)</th><th>Przestronna</th></tr></thead>
+            <tbody>
+              <tr><td>Baza tekstu interfejsu</td><td class="pl-kol-kod">13 px</td><td class="pl-kol-kod">14 px</td></tr>
+              <tr><td>Interlinia bazowa</td><td class="pl-kol-kod">1.45</td><td class="pl-kol-kod">1.50</td></tr>
+              <tr><td>Wysokość wiersza</td><td class="pl-kol-kod">36 px</td><td class="pl-kol-kod">44 px</td></tr>
+              <tr><td>Wysokość kontrolki</td><td class="pl-kol-kod">32 px</td><td class="pl-kol-kod">40 px</td></tr>
+              <tr><td>Zastosowanie</td><td>biurko, pełny kokpit (w3, w4)</td><td>Mobile, wskaźnik gruby</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="pl-demo-stopka"><span class="pl-podpis">Źródło: KANON rozdz. 2 — wymiary, dotyk (pointer: coarse)</span></div>
+      </div>
+
+      <h3 class="pl-podsekcja">Co się nie zmienia</h3>
+      <p class="pl-p">
+        Skala stopni ekspozycyjnych (<code>xl</code>, <code>2xl</code>, <code>3xl</code>, <code>display</code>)
+        jest identyczna w obu gęstościach. Zmienia się wyłącznie warstwa robocza: baza, interlinia i wysokość
+        wiersza. Tytuł karty środowiska ma 30 px zawsze — bo to element <strong>tożsamości</strong>,
+        nie element pracy.
+      </p>
+    </section>
+
+    <!-- ── 09 · O TYM OPRACOWANIU ────────────────────────────────────── -->
+    <section class="pl-sekcja" id="opracowanie" aria-labelledby="tyt-opracowanie">
+      <div class="pl-sekcja-glowa">
+        <span class="pl-numer" aria-hidden="true">09</span>
+        <div>
+          <h2 id="tyt-opracowanie">O tym opracowaniu</h2>
+          <p class="pl-lead">
+            Metryka planszy, źródła w dokumentacji, odwzorowane interakcje i decyzje projektowe.
+          </p>
+        </div>
+      </div>
+
+      <details class="pt-o-opracowaniu" open>
+        <summary>Plansza P7 — Typografia w działaniu · metryka, źródła, decyzje</summary>
+        <div class="pt-o-opracowaniu-tresc">
+
+          <h4>Co przedstawia</h4>
+          <ul>
+            <li>Podział trzech krojów na trzy role, pokazany w realnych kontekstach platformy: tytuł karty środowiska, nagłówek modala, pozycja bocznej nawigacji, treść wpisu rozmowy, wynik powłoki, panel danych.</li>
+            <li>Pełną dziewięciostopniową skalę <code>xs</code>–<code>display</code> — każdy stopień w miniaturze interfejsu, w którym realnie występuje, z żetonem, wagą i interlinią.</li>
+            <li>Siedem zestawień typograficznych: tytuł + podtytuł, etykieta + wartość, nagłówek panelu + treść, wpis rozmowy, wiersz tabeli, blok kodu, pasek promptu.</li>
+            <li>Demonstrację porównawczą <code>tabular-nums</code> kontra <code>proportional-nums</code> na tych samych danych monitora przebiegów oraz katalog ośmiu formatów danych platformy.</li>
+            <li>Porównanie odstępu wersalikowego 0,08em (Plex Sans) i 0,14em (Plex Mono) z odstępem zerowym, wraz z katalogiem dozwolonych i zakazanych zastosowań.</li>
+            <li>Test diakrytyków „ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ” w trzech krojach, wszystkich wagach i kilku stopniach oraz pełen zestaw 18 polskich znaków z punktami kodowymi.</li>
+            <li>Interaktywny okaz typograficzny i przełącznik gęstości przebudowujący warstwę roboczą planszy.</li>
+          </ul>
+
+          <h4>Źródła w dokumentacji</h4>
+          <ul>
+            <li><code>WYNIK/KANON.md</code> rozdz. 2 — „Typografia — trzy role, trzy kroje”: kroje, żetony, stopnie, wagi, interlinie, odstępy liter, <code>tabular-nums</code>, test diakrytyków.</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 1 — kontrakt kierunku i pokrętło <code>GESTOSC_WIZUALNA 8/10</code>; <code>KIERUNEK.md</code> rozdz. 3.2 — para krojów marka + maszyna.</li>
+            <li><code>WYNIK/zasoby/zetony/zetony.css</code> sekcja 3 — definicje <code>--dn-ff-*</code>, <code>--dn-fs-*</code>, <code>--dn-fw-*</code>, <code>--dn-lh-*</code>, <code>--dn-ls-*</code>.</li>
+            <li><code>WYNIK/zasoby/zetony/fonty.css</code> — deklaracje <code>@font-face</code>, podzbiory <code>latin</code> i <code>latin-ext</code>, licencja OFL 1.1, <code>font-display: swap</code>.</li>
+            <li><code>WYNIK/zasoby/css/komponenty.css</code> — klasy <code>.dn-wpis</code>, <code>.dn-plakietka</code>, <code>.dn-postep</code>, <code>.dn-modal</code>, <code>.dn-pole</code>, <code>.dn-suwak</code>.</li>
+            <li><code>WYNIK/zasoby/prototyp.css</code> — <code>.pt-konsola</code>, <code>.pt-edytor</code>, <code>.pt-etykieta</code>, <code>.pt-mono</code>, <code>.pt-tetno</code>.</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 6 i 7 — nazwy środowisk, modułów i okien operacyjnych użyte jako treść próbek.</li>
+            <li><code>WYNIK/05-okna/moduly/terminal.html</code> — ścieżka repozytorium i wynik powłoki przepisane jako przykład.</li>
+            <li><code>WYNIK/05-okna/platformowe/ustawienia.html</code> oraz <code>mobile.html</code> — kod parowania urządzenia.</li>
+            <li><code>WYNIK/KANON.md</code> rozdz. 8 (ADL-017) — zero blokad; rozdz. 9 — dostępność, fokus, <code>prefers-reduced-motion</code>.</li>
+          </ul>
+
+          <h4>Odwzorowane interakcje</h4>
+          <ul>
+            <li>Przełącznik motywu <code>data-przelacz-motyw</code> — oba motywy równoprawne, pasek górny atramentowy w obu.</li>
+            <li>Spis sekcji <code>data-spis</code> z podświetlaniem aktywnej pozycji (IntersectionObserver w <code>prototyp.js</code>).</li>
+            <li>Przełączanie ról krojów: <code>data-przelacz</code> + <code>data-grupa</code> → <code>data-widok</code>.</li>
+            <li>Wybór stopnia skali: <code>data-lista-wyboru</code> + <code>data-pozycja</code> + <code>data-pokaz</code>, obsługa klawiatury.</li>
+            <li>Sortowanie tabeli metryk: <code>table[data-tabela]</code> + <code>th[data-sortuj]</code>.</li>
+            <li>Filtrowanie katalogu formatów i zestawu znaków: <code>input[data-filtruj]</code> + <code>data-filtr-pozycja</code> + licznik.</li>
+            <li>Kopiowanie nazw żetonów i zdania testowego: <code>data-kopiuj</code> z powiadomieniem <code>window.dnToast</code>.</li>
+            <li>Komunikat zamiast blokady: <code>data-komunikat</code> przy regule zapisu nazw własnych.</li>
+            <li>Symulacja złożenia próbki: <code>data-symuluj</code> — przejście „pracuje” → „gotowe”.</li>
+            <li>Pasek postępu pokrycia skali: <code>.dn-postep[data-postep-do]</code>.</li>
+            <li>Okno modalne z kartą krojów: <code>data-otworz-modal</code> na elemencie <code>&lt;dialog&gt;</code>.</li>
+            <li>Okaz interaktywny: pole tekstowe i trzy suwaki sterujące stopniem, interlinią i odstępem liter we wszystkich trzech krojach jednocześnie.</li>
+            <li>Przełącznik gęstości: atrybut <code>data-gestosc</code> na elemencie <code>html</code> — przebudowa warstwy roboczej.</li>
+            <li>Tętno kropki sygnału <code>.pt-tetno</code> — jedyny ruch ciągły, 2,4 s, przy <code>prefers-reduced-motion</code> zastąpione pierścieniem statycznym przez żetony.</li>
+          </ul>
+
+          <h4>Decyzje projektowe</h4>
+          <ul>
+            <li><b>Zero abstrakcyjnych próbek.</b> Każdy okaz typograficzny to fragment realnego interfejsu — nazwa okna operacyjnego z inwentarza, wpis rozmowy na klasach <code>.dn-wpis</code>, ścieżka repozytorium z prototypu Terminal.</li>
+            <li><b>Skala pokazana w kontekście, nie jako lista.</b> Dziewięć stopni występuje w dziewięciu miniaturach; żeton, waga i interlinia są metadanymi okazu, nie jego treścią.</li>
+            <li><b>Porównania zawsze parami w jednym kadrze.</b> Cyfry tabelaryczne kontra proporcjonalne, wersaliki z odstępem kontra bez, gęstość zwarta kontra przestronna — dwie kolumny obok siebie, bo w rozdzieleniu różnica znika.</li>
+            <li><b>Interaktywny okaz zamiast statycznej specyfikacji.</b> Domyślna treść pola to zdanie testowe diakrytyków — pierwsze, co widzi recenzent, to test najtrudniejszych znaków.</li>
+            <li><b>Przełącznik gęstości przebudowuje planszę, nie demonstrację.</b> Gęstość jest właściwością systemu, nie właściwością komponentu.</li>
+            <li><b>Ruch 3/10.</b> Jedyny ruch ciągły to tętno kropki sygnału; reszta to mikroprzejścia 100–220 ms wywołane działaniem Operatora.</li>
+            <li><b>Zero blokad (ADL-017).</b> Suwaki mają pełny zakres; wyjście poza skalę systemową jest komunikowane plakietką i opisem, nigdy blokadą.</li>
+            <li><b>Space Grotesk odcięty poniżej 16 px.</b> Rozstrzygnięcie własne, odnotowane tutaj: dokumentacja nie zakazuje wprost, ale poniżej tego progu charakter kroju ginie, a przewaga czytelności Plex Sans rośnie. Wyjątek: logotyp paska górnego.</li>
+            <li><b>Wersaliki mono wagą 500, nie 400.</b> Rozstrzygnięcie własne: przy 11 px waga 400 osłabia znaki diakrytyczne <code>Ź</code> i <code>Ż</code>.</li>
+          </ul>
+
+          <h4>Kontrola jakości</h4>
+          <ul>
+            <li>Zero wartości szesnastkowych w warstwie lokalnej — wyłącznie <code>var(--dn-*)</code>.</li>
+            <li>Zero atrybutów blokujących kontrolki; zero emoji jako ikon — wyłącznie inline SVG 24×24, obrys 1,75, <code>currentColor</code>.</li>
+            <li>Zero Lorem ipsum, zmyślonych nazwisk, fikcyjnych firm i wymyślonych metryk.</li>
+            <li>Fokus widoczny na każdej kontrolce; nawigacja klawiaturą; <code>lang="pl"</code>; role i atrybuty <code>aria-*</code>.</li>
+          </ul>
+        </div>
+      </details>
+
+      <div class="pl-stopka-planszy">
+        <span>Danaco Console — AI Operating Environment · v2.0 · © 2026 Danaco Holding Group Sp. z o.o.</span>
+        <a class="dn-btn dn-btn--zarys dn-btn--sm" href="../INDEKS.html">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          Powrót do indeksu opracowania
+        </a>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="dn-toasty" id="dn-toasty" role="status" aria-live="polite"></div>
+
+<span data-prototyp="Plansza portfolio"
+      data-prototyp-okno="P7 — Typografia w działaniu"
+      data-prototyp-zrodlo="KANON rozdz. 2 · zetony.css sekcja 3 · fonty.css" hidden></span>
+
+<script src="../zasoby/wspolne.js"></script>
+<script src="../zasoby/prototyp.js"></script>
+<script>
+/* ============================================================================
+   PLANSZA P7 — WARSTWA INTERAKCJI LOKALNYCH
+   Bez bibliotek, bez CDN. Działa po otwarciu z file://.
+   ============================================================================ */
+(function () {
+  'use strict';
+  var D = document;
+  function pierwszy(s, k) { return (k || D).querySelector(s); }
+  function wszystkie(s, k) { return Array.prototype.slice.call((k || D).querySelectorAll(s)); }
+
+  /* ── 1 · GĘSTOŚĆ — atrybut data-gestosc na <html> ────────────────────── */
+
+  var korzen = D.documentElement;
+  var etykietaGestosci = pierwszy('#pl-etykieta-gestosci');
+  var stanGestosciTekst = pierwszy('#pl-stan-gestosci-tekst');
+  var przyciskGestosci = pierwszy('#pl-przelacz-gestosc');
+
+  function ustawGestosc(wartosc, zPowiadomieniem) {
+    var docelowa = wartosc === 'przestronna' ? 'przestronna' : 'zwarta';
+    korzen.setAttribute('data-gestosc', docelowa);
+    if (etykietaGestosci) etykietaGestosci.textContent = 'Gęstość: ' + docelowa;
+    if (stanGestosciTekst) stanGestosciTekst.textContent = 'stan: ' + docelowa;
+    if (przyciskGestosci) przyciskGestosci.setAttribute('aria-pressed', docelowa === 'przestronna' ? 'true' : 'false');
+    wszystkie('[data-gestosc-cel]').forEach(function (b) {
+      b.setAttribute('data-aktywny', b.getAttribute('data-gestosc-cel') === docelowa ? 'tak' : 'nie');
+    });
+    if (zPowiadomieniem && window.dnToast) {
+      window.dnToast(
+        'Gęstość: ' + docelowa,
+        docelowa === 'zwarta'
+          ? 'Baza 13 px · interlinia 1.45 · wiersz 36 px — biurko, pełny kokpit.'
+          : 'Baza 14 px · interlinia 1.50 · wiersz 44 px — wskaźnik gruby, Mobile.',
+        'informacja', 3200);
+    }
+  }
+
+  if (przyciskGestosci) {
+    przyciskGestosci.addEventListener('click', function () {
+      ustawGestosc(korzen.getAttribute('data-gestosc') === 'przestronna' ? 'zwarta' : 'przestronna', true);
+    });
+  }
+  wszystkie('[data-gestosc-cel]').forEach(function (b) {
+    b.addEventListener('click', function () { ustawGestosc(b.getAttribute('data-gestosc-cel'), true); });
+  });
+  ustawGestosc('zwarta', false);
+
+  /* ── 2 · OKAZ INTERAKTYWNY ───────────────────────────────────────────── */
+
+  var SKALA_SYSTEMOWA = [11, 12, 13, 14, 16, 20, 24, 30, 40];
+  var DOMYSLNE_OKAZU = { tekst: 'ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ', stopien: 20, interlinia: 145, odstep: 0 };
+
+  var poleTekstu = pierwszy('#pl-okaz-tekst');
+  var suwakStopnia = pierwszy('#pl-okaz-stopien');
+  var suwakInterlinii = pierwszy('#pl-okaz-interlinia');
+  var suwakOdstepu = pierwszy('#pl-okaz-odstep');
+  var wyjscieStopnia = pierwszy('#pl-okaz-stopien-wartosc');
+  var wyjscieInterlinii = pierwszy('#pl-okaz-interlinia-wartosc');
+  var wyjscieOdstepu = pierwszy('#pl-okaz-odstep-wartosc');
+  var werdykt = pierwszy('#pl-okaz-werdykt');
+  var podglady = [pierwszy('#pl-podglad-grotesk'), pierwszy('#pl-podglad-sans'), pierwszy('#pl-podglad-mono')];
+  var podgladyWagi = wszystkie('.pl-echo-waga');
+
+  function ikonaInline(sciezka, rozmiar) {
+    return '<svg viewBox="0 0 24 24" width="' + rozmiar + '" height="' + rozmiar + '" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + sciezka + '</svg>';
+  }
+  var IK_PTASZEK = '<path d="M20 6 9 17l-5-5"/>';
+  var IK_OSTRZEZENIE = '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>';
+
+  function liczbaPrzecinkiem(x, miejsca) {
+    return x.toFixed(miejsca).replace('.', ',');
+  }
+
+  var ostatnioPozaSkala = null;
+
+  function odswiezOkaz(zPowiadomieniem) {
+    if (!poleTekstu || !suwakStopnia) return;
+    var tekst = poleTekstu.value.length ? poleTekstu.value : DOMYSLNE_OKAZU.tekst;
+    var stopien = parseInt(suwakStopnia.value, 10);
+    var interlinia = parseInt(suwakInterlinii.value, 10) / 100;
+    var odstep = parseInt(suwakOdstepu.value, 10) / 100;
+
+    podglady.forEach(function (p) {
+      if (!p) return;
+      p.textContent = tekst;
+      p.style.fontSize = stopien + 'px';
+      p.style.lineHeight = String(interlinia);
+      p.style.letterSpacing = odstep + 'em';
+    });
+    podgladyWagi.forEach(function (p) {
+      p.textContent = tekst;
+      p.style.fontSize = Math.max(11, Math.round(stopien * 0.6)) + 'px';
+      p.style.lineHeight = String(interlinia);
+      p.style.letterSpacing = odstep + 'em';
+    });
+
+    if (wyjscieStopnia) wyjscieStopnia.textContent = stopien + ' px';
+    if (wyjscieInterlinii) wyjscieInterlinii.textContent = liczbaPrzecinkiem(interlinia, 2);
+    if (wyjscieOdstepu) wyjscieOdstepu.textContent = liczbaPrzecinkiem(odstep, 2) + 'em';
+
+    var wSkali = SKALA_SYSTEMOWA.indexOf(stopien) !== -1;
+    if (werdykt) {
+      werdykt.innerHTML = '';
+      var pl = D.createElement('span');
+      if (wSkali) {
+        pl.className = 'dn-plakietka dn-plakietka--sukces';
+        pl.innerHTML = ikonaInline(IK_PTASZEK, 12) + ' Stopień ze skali systemowej';
+      } else {
+        pl.className = 'dn-plakietka dn-plakietka--ostrzezenie';
+        pl.innerHTML = ikonaInline(IK_OSTRZEZENIE, 12) + ' Stopień spoza skali — ' + stopien + ' px';
+      }
+      werdykt.appendChild(pl);
+    }
+
+    if (zPowiadomieniem && !wSkali && ostatnioPozaSkala !== stopien && window.dnToast) {
+      window.dnToast('Stopień spoza skali systemowej',
+        stopien + ' px nie należy do dziewięciu stopni pakietu. Kontrolka pozostaje aktywna — decyzja należy do Operatora (ADL-017).',
+        'ostrzezenie', 3600);
+    }
+    ostatnioPozaSkala = wSkali ? null : stopien;
+  }
+
+  [poleTekstu, suwakStopnia, suwakInterlinii, suwakOdstepu].forEach(function (k) {
+    if (k) k.addEventListener('input', function () { odswiezOkaz(true); });
+  });
+
+  var resetOkazu = pierwszy('#pl-okaz-reset');
+  if (resetOkazu) {
+    resetOkazu.addEventListener('click', function () {
+      if (poleTekstu) poleTekstu.value = DOMYSLNE_OKAZU.tekst;
+      if (suwakStopnia) suwakStopnia.value = DOMYSLNE_OKAZU.stopien;
+      if (suwakInterlinii) suwakInterlinii.value = DOMYSLNE_OKAZU.interlinia;
+      if (suwakOdstepu) suwakOdstepu.value = DOMYSLNE_OKAZU.odstep;
+      ostatnioPozaSkala = null;
+      odswiezOkaz(false);
+      if (window.dnToast) window.dnToast('Wartości systemowe',
+        'Stopień 20 px (xl) · interlinia 1,45 · odstęp 0,00em — ustawienia zgodne z żetonami.', 'informacja');
+    });
+  }
+  odswiezOkaz(false);
+
+  /* ── 3 · PODŚWIETLENIE RÓŻNICY W CYFRACH ─────────────────────────────── */
+
+  var toggleCyfry = pierwszy('#pl-toggle-cyfry');
+  var etykietaCyfr = pierwszy('#pl-toggle-cyfry-etykieta');
+  var tabelaTab = pierwszy('#pl-tabela-tabelaryczna');
+  if (toggleCyfry && tabelaTab) {
+    toggleCyfry.addEventListener('click', function () {
+      var wlaczone = toggleCyfry.getAttribute('aria-pressed') === 'true';
+      var nowe = !wlaczone;
+      toggleCyfry.setAttribute('aria-pressed', nowe ? 'true' : 'false');
+      wszystkie('.pl-kol-liczba, .pl-kol-kod', tabelaTab).forEach(function (td) {
+        td.style.background = nowe ? 'var(--dn-sygnal-tlo)' : '';
+      });
+      if (etykietaCyfr) etykietaCyfr.textContent = nowe ? 'Wyłącz podświetlenie' : 'Podświetl różnicę';
+      if (window.dnToast) {
+        window.dnToast(nowe ? 'Kolumny liczbowe podświetlone' : 'Podświetlenie wyłączone',
+          nowe ? 'Porównaj rytm kolumn: po lewej stały, po prawej falujący.' : 'Powrót do widoku bazowego.',
+          'informacja', 2400);
+      }
+    });
+  }
+
+  /* ── 4 · LISTA STOPNI — obsługa klawiatury ───────────────────────────── */
+
+  wszystkie('.pl-skala-poz').forEach(function (poz) {
+    poz.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); poz.click(); }
+    });
+  });
+
+  /* ── 5 · KOMUNIKAT PO WYBORZE STOPNIA ────────────────────────────────── */
+
+  var listaSkali = pierwszy('[data-lista-wyboru][data-grupa="skala"]');
+  if (listaSkali) {
+    listaSkali.addEventListener('dn:wybor', function (e) {
+      var nazwa = e.detail && e.detail.wartosc;
+      if (!nazwa || !window.dnToast) return;
+      window.dnToast('Stopień ' + nazwa, 'Żeton --dn-fs-' + nazwa + ' — podgląd w realnym kontekście platformy.', 'informacja', 2200);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

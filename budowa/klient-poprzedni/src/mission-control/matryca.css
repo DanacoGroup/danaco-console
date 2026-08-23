@@ -1,0 +1,292 @@
+/* ============================================================================
+   MISSION CONTROL — OPERACJE, MATRYCA SESJI, RELACJE, UTWÓRZ
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: sekcje środkowe pulpitu — plakietki kanałów modelu,
+   cztery kolumny środowisk z sesjami, pas „Relacje" i rząd tworzenia.
+
+   Wartości pochodzą wyłącznie z żetonów `motyw/`: bez zapisów szesnastkowych
+   i bez odstępów spoza skali 4 px.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   OPERACJE AI — plakietki kanałów modelu
+   --------------------------------------------------------------------------- */
+.mc-kanaly {
+  display: grid;
+  gap: var(--dn-od-4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.mc-kanal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+}
+
+.mc-kanal__naglowek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-2);
+}
+
+.mc-kanal__nazwa {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--dn-fw-polgruba);
+}
+
+/* Pasek wysycenia kanału. Czeka na odczyt telemetrii kanału (wysycenie,
+   kolejka, limit, koszt narastający); dopóki rdzeń jej nie oddaje,
+   `mission-control/sekcja-operacji.ts` wypisuje w tym miejscu etykietę braku
+   źródła zamiast montować pasek bez danych. */
+.mc-kanal__tor {
+  position: relative;
+  height: var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+
+.mc-kanal__wypelnienie {
+  display: block;
+  height: 100%;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-informacja-tekst);
+  transition: width var(--dn-czas-2) var(--dn-ease);
+}
+
+.mc-kanal__miary {
+  display: grid;
+  gap: var(--dn-od-1) var(--dn-od-3);
+  grid-template-columns: 1fr auto 1fr auto;
+  margin: 0;
+  align-items: baseline;
+}
+
+.mc-kanal__etykieta {
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.mc-kanal__wartosc {
+  margin: 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------------
+   MATRYCA SESJI — cztery środowiska obok siebie
+   --------------------------------------------------------------------------- */
+.mc-matryca {
+  display: grid;
+  gap: var(--dn-od-4);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* Punkt łamania w2 — wartość stoi liczbą, bo zapytanie medialne nie czyta
+   zmiennych własnych; żeton `--dn-bp-w2` (`motyw/wymiary.css`) pozostaje jej
+   jedynym źródłem i musi się z nią zgadzać. */
+@media (max-width: 960px) {
+  .mc-matryca {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.mc-kolumna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  min-width: 0;
+}
+
+.mc-kolumna__naglowek {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  align-items: flex-start;
+}
+
+/* Nazwa środowiska krojem nagłówkowym — jest nagłówkiem kolumny. */
+.mc-kolumna__nazwa {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.mc-kolumna__motto {
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+}
+
+.mc-kolumna__licznik {
+  margin-top: var(--dn-od-1);
+}
+
+.mc-kolumna__sesje {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+/* ---------------------------------------------------------------------------
+   KAFEL SESJI — kontrolka wejścia do sesji
+   Karta jest przyciskiem, więc sprowadzamy domyślną szatę przycisku do zera.
+   --------------------------------------------------------------------------- */
+.mc-sesja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  width: 100%;
+  padding: var(--dn-od-3);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mc-sesja__gora {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+/* Wskaźnik pracy w tle nie kurczy się przy długim tytule sesji. */
+.mc-sesja__kropka {
+  flex: none;
+}
+
+.mc-sesja__tytul {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.mc-sesja__opis {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+
+.mc-sesja__wejscie {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  margin-top: var(--dn-od-1);
+  color: var(--dn-sygnal);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------------
+   PAS RELACJE — powiązania sesji, także między środowiskami
+   --------------------------------------------------------------------------- */
+.mc-relacje {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-4);
+  margin-top: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  border: 1px dashed var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.mc-relacje__etykieta {
+  flex: none;
+  padding-top: var(--dn-od-1);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.mc-relacje__wykaz {
+  display: grid;
+  gap: var(--dn-od-2) var(--dn-od-5);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mc-relacja {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  min-width: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.mc-relacja__wezel {
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  font-weight: var(--dn-fw-polgruba);
+  white-space: nowrap;
+}
+
+.mc-relacja__znak {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-md);
+  color: var(--dn-sygnal);
+}
+
+.mc-relacja__przedmiot {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+
+.mc-relacja--brak {
+  color: var(--dn-tekst-3);
+}
+
+/* ---------------------------------------------------------------------------
+   UTWÓRZ — rząd szybkiego tworzenia
+   --------------------------------------------------------------------------- */
+.mc-utworz {
+  display: grid;
+  gap: var(--dn-od-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.mc-utworz__kafel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--dn-od-2);
+  height: auto;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  text-align: left;
+}
+
+.mc-utworz__napis {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+}

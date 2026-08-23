@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Okno Konfiguracji · Nakładka i wywołanie modelu (na warstwie stanowiska)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  /* ══ STYLE LOKALNE OKNA KONFIGURACJI — wyłącznie var(--dn-*), zero hex ══ */
+  :root { --dn-fs-base:14px; --dn-fs-sm:13px; --dn-fs-xs:12px; --kf-nav:250px; --kf-prow:340px; }
+
+  /* Szyna (skrót do wzorca) */
+  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
+  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .szyna-lista { overflow:auto; min-height:0; }
+  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
+  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+
+  /* ── NAKŁADKA MODALNA OKNA KONFIGURACJI na tle powłoki (rozdz. 6.1) ── */
+  .kf-nakladka {
+    position:fixed; inset:0; z-index:800;
+    display:grid; place-items:center;
+    padding:var(--dn-od-4);
+    background:var(--dn-nakladka);
+    backdrop-filter:blur(2px);
+    animation:dn-wejscie var(--dn-czas-3) var(--dn-ease);
+  }
+  .kf-nakladka[hidden] { display:none; }
+  .kf-okno {
+    width:min(1360px, 100%); height:min(880px, 100%);
+    display:grid; grid-template-rows:auto minmax(0,1fr) auto;
+    background:var(--dn-tlo); border:1px solid var(--dn-obrys);
+    border-radius:var(--dn-r-3); box-shadow:var(--dn-cien-3); overflow:hidden;
+  }
+
+  .kf-belka {
+    display:flex; align-items:center; gap:var(--dn-od-3);
+    padding:var(--dn-od-3) var(--dn-od-4);
+    border-bottom:1px solid var(--dn-obrys); background:var(--dn-panel); flex-wrap:wrap;
+  }
+  .kf-belka-tytul {
+    display:inline-flex; align-items:center; gap:var(--dn-od-2);
+    font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-xl);
+    font-weight:var(--dn-fw-polgruba); letter-spacing:var(--dn-ls-naglowek); color:var(--dn-tekst);
+  }
+  .kf-belka-tytul svg { width:var(--dn-wym-ikona-lg); height:var(--dn-wym-ikona-lg); color:var(--dn-tekst-2); }
+  .kf-belka-opis { font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); max-width:56ch; }
+  .kf-belka-prawa { margin-left:auto; display:inline-flex; align-items:center; gap:var(--dn-od-2); flex-wrap:wrap; }
+
+  /* Trzy kolumny: nawigacja zakresów · obszar roboczy (3 warstwy + pola) · Panel prowenancji */
+  .kf-korpus { display:grid; grid-template-columns:var(--kf-nav) minmax(0,1fr) var(--kf-prow); min-height:0; }
+
+  /* Panel lewy — 13 zakresów */
+  .kf-nav { border-right:1px solid var(--dn-obrys); background:var(--dn-panel); overflow:auto; padding:var(--dn-od-2); }
+  .kf-nav-grupa-tyt { padding:var(--dn-od-2) var(--dn-od-2) var(--dn-od-1); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .kf-nav-poz {
+    display:flex; align-items:center; gap:var(--dn-od-2); width:100%;
+    padding:var(--dn-od-2) var(--dn-od-2); margin-bottom:2px;
+    border:1px solid transparent; border-radius:var(--dn-r-2);
+    background:transparent; color:var(--dn-tekst-2);
+    font:inherit; font-size:var(--dn-fs-sm); text-align:left; cursor:pointer;
+    transition:background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+  }
+  .kf-nav-poz svg { width:var(--dn-wym-ikona); height:var(--dn-wym-ikona); flex:none; color:var(--dn-tekst-3); }
+  .kf-nav-poz:hover { background:var(--dn-hover); color:var(--dn-tekst); }
+  .kf-nav-poz[aria-current="page"] { background:var(--dn-akcent-tlo); color:var(--dn-akcent-txt); border-color:var(--dn-obrys); }
+  .kf-nav-poz[aria-current="page"] svg { color:var(--dn-akcent-txt); }
+  .kf-nav-nr { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .kf-nav-pod { padding-left:var(--dn-od-5); display:none; }
+  .kf-nav-grupa[data-rozwiniete="tak"] .kf-nav-pod { display:block; }
+  .kf-nav-pod .kf-nav-poz { font-size:var(--dn-fs-xs); }
+
+  /* Panel środkowy */
+  .kf-srodek { overflow:auto; min-height:0; }
+  .kf-warstwy-pasek {
+    display:flex; align-items:center; gap:var(--dn-od-1); flex-wrap:wrap;
+    padding:var(--dn-od-2) var(--dn-od-4);
+    border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-powierzchnia-2);
+    position:sticky; top:0; z-index:2;
+  }
+  .kf-warstwy-pasek .pt-etykieta { margin-right:var(--dn-od-2); }
+  .kf-warstwa-btn {
+    display:inline-flex; align-items:center; gap:var(--dn-od-1);
+    min-height:calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+    padding:0 var(--dn-od-3);
+    border:1px solid var(--dn-obrys); border-radius:var(--dn-r-pill);
+    background:transparent; color:var(--dn-tekst-2);
+    font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); cursor:pointer;
+  }
+  .kf-warstwa-btn:hover { background:var(--dn-hover); color:var(--dn-tekst); }
+  .kf-warstwa-btn[aria-pressed="true"] { background:var(--dn-akcent-tlo); color:var(--dn-akcent-txt); border-color:var(--dn-obrys); }
+
+  .kf-tresc { padding:var(--dn-od-4); display:flex; flex-direction:column; gap:var(--dn-od-4); }
+  .kf-sekcja { border:1px solid var(--dn-obrys); border-radius:var(--dn-r-3); background:var(--dn-panel); overflow:hidden; transition:box-shadow var(--dn-czas-3) var(--dn-ease); }
+  .kf-sekcja[data-podswietlona="tak"] { box-shadow:0 0 0 2px var(--dn-sygnal-wypelnienie); }
+  .kf-sekcja-naglowek {
+    display:flex; align-items:center; gap:var(--dn-od-2);
+    padding:var(--dn-od-3) var(--dn-od-4);
+    border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-powierzchnia-2);
+  }
+  .kf-sekcja-marka {
+    font-family:var(--dn-ff-mono); font-size:10px; letter-spacing:var(--dn-ls-wersaliki);
+    text-transform:uppercase; color:var(--dn-tekst-3);
+    padding:2px var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-1);
+  }
+  .kf-sekcja-tyt { font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-lg); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
+  .kf-sekcja-podtyt { font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); margin-left:auto; }
+  .kf-sekcja-cialo { padding:var(--dn-od-4); display:flex; flex-direction:column; gap:var(--dn-od-3); }
+
+  .kf-pytanie { font-size:var(--dn-fs-sm); color:var(--dn-tekst-3); font-style:italic; }
+
+  .kf-pole { display:flex; flex-direction:column; gap:var(--dn-od-1); }
+  .kf-pole-belka { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .kf-pole-etyk { font-size:var(--dn-fs-sm); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
+  .kf-pole-zasieg { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .kf-pomoc { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+
+  .kf-textarea {
+    width:100%; min-height:150px; resize:vertical;
+    padding:var(--dn-od-3); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-2);
+    background:var(--dn-powierzchnia-2); color:var(--dn-tekst);
+    font-family:var(--dn-ff-mono); font-size:var(--dn-fs-sm); line-height:var(--dn-lh-luzny);
+  }
+  .kf-textarea:focus-visible { outline:2px solid var(--dn-focus); outline-offset:2px; }
+
+  .kf-select, .kf-input {
+    min-height:var(--dn-wym-kontrolka);
+    padding:0 var(--dn-od-3); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-2);
+    background:var(--dn-powierzchnia-2); color:var(--dn-tekst);
+    font:inherit; font-size:var(--dn-fs-sm);
+  }
+  .kf-select:focus-visible, .kf-input:focus-visible { outline:2px solid var(--dn-focus); outline-offset:2px; }
+
+  .kf-podglad {
+    border:1px dashed var(--dn-obrys); border-radius:var(--dn-r-2);
+    background:var(--dn-powierzchnia-2); padding:var(--dn-od-3);
+    font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); line-height:var(--dn-lh-luzny);
+  }
+  .kf-podglad b { color:var(--dn-tekst); }
+  .kf-skrot {
+    display:inline-flex; align-items:center; gap:var(--dn-od-1);
+    color:var(--dn-akcent-txt); background:none; border:none;
+    font:inherit; font-size:var(--dn-fs-sm); cursor:pointer; padding:0;
+  }
+  .kf-skrot:hover { text-decoration:underline; }
+
+  .kf-wiersz { display:flex; align-items:center; gap:var(--dn-od-3); flex-wrap:wrap; }
+  .kf-hash { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); }
+
+  .kf-hooki { display:flex; flex-direction:column; gap:var(--dn-od-1); }
+  .kf-hook {
+    display:flex; align-items:center; gap:var(--dn-od-2);
+    padding:var(--dn-od-2) var(--dn-od-3); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-2);
+    background:var(--dn-powierzchnia-2); font-size:var(--dn-fs-sm);
+  }
+  .kf-hook .kf-hook-pkt { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .kf-hook .odepnij { margin-left:auto; background:none; border:none; color:var(--dn-tekst-3); cursor:pointer; font-size:16px; line-height:1; }
+  .kf-hook .odepnij:hover { color:var(--dn-tekst); }
+
+  .kf-radio-grupa { display:flex; gap:var(--dn-od-1); flex-wrap:wrap; }
+  .kf-radio {
+    display:inline-flex; align-items:center; gap:var(--dn-od-1);
+    padding:var(--dn-od-1) var(--dn-od-3); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-pill);
+    font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); cursor:pointer;
+  }
+  .kf-radio:has(input:checked) { background:var(--dn-akcent-tlo); color:var(--dn-akcent-txt); border-color:var(--dn-obrys); }
+  .kf-radio input { accent-color:var(--dn-atrament); }
+
+  .kf-podsekcja-cli {
+    border-top:1px dashed var(--dn-obrys-subtelny); padding-top:var(--dn-od-3);
+    display:flex; flex-direction:column; gap:var(--dn-od-2);
+  }
+  .kf-podsekcja-cli[hidden] { display:none; }
+
+  /* Ikona objaśnienia [?] */
+  .kf-info {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%;
+    border:1px solid var(--dn-obrys); background:var(--dn-powierzchnia-2);
+    color:var(--dn-tekst-3); font-size:11px; font-family:var(--dn-ff-mono); cursor:help;
+  }
+  .kf-info:hover, .kf-info:focus-visible { color:var(--dn-tekst); border-color:var(--dn-tekst-3); outline:none; }
+
+  /* ── Panel prowenancji (prawy) — element ponad źródła L6 ── */
+  .kf-prow { border-left:1px solid var(--dn-obrys); background:var(--dn-panel); overflow:auto; display:flex; flex-direction:column; }
+  .kf-prow-naglowek { padding:var(--dn-od-3) var(--dn-od-3) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .kf-prow-tyt { display:flex; align-items:center; gap:var(--dn-od-2); font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-md); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
+  .kf-prow-tyt svg { width:var(--dn-wym-ikona); height:var(--dn-wym-ikona); color:var(--dn-tekst-2); }
+  .kf-prow-podtyt { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .kf-prow-meta { margin-top:var(--dn-od-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); line-height:var(--dn-lh-luzny); }
+  .kf-prow-znacznik {
+    display:inline-block; margin-top:var(--dn-od-2);
+    font-family:var(--dn-ff-mono); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki);
+    color:var(--dn-akcent-txt); background:var(--dn-akcent-tlo);
+    padding:2px var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-1);
+  }
+  .kf-prow-bloki { padding:var(--dn-od-3); display:flex; flex-direction:column; gap:var(--dn-od-3); }
+  .kf-blok { border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-2); overflow:hidden; background:var(--dn-tlo); }
+  .kf-blok-belka {
+    display:flex; align-items:center; gap:var(--dn-od-2); width:100%;
+    padding:var(--dn-od-2) var(--dn-od-3); background:var(--dn-powierzchnia-2);
+    border:none; color:var(--dn-tekst); font:inherit; font-size:var(--dn-fs-sm); font-weight:var(--dn-fw-polgruba); cursor:pointer;
+  }
+  .kf-blok-belka .kf-strzalka { transition:transform var(--dn-czas-2) var(--dn-ease); color:var(--dn-tekst-3); }
+  .kf-blok[data-otwarte="tak"] .kf-strzalka { transform:rotate(90deg); }
+  .kf-blok-belka .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); font-weight:var(--dn-fw-zwykla); }
+  .kf-blok-cialo { padding:var(--dn-od-3); border-top:1px solid var(--dn-obrys-subtelny); }
+  .kf-blok[data-otwarte="nie"] .kf-blok-cialo { display:none; }
+  .kf-kod {
+    margin:0; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); line-height:var(--dn-lh-luzny);
+    color:var(--dn-tekst-2); white-space:pre-wrap; word-break:break-word;
+  }
+  .kf-kod .war { color:var(--dn-akcent-txt); font-weight:var(--dn-fw-polgruba); }
+  .kf-prow-stopka { margin-top:auto; padding:var(--dn-od-3); border-top:1px solid var(--dn-obrys-subtelny); display:flex; flex-direction:column; gap:var(--dn-od-2); }
+
+  .kf-stopka {
+    display:flex; align-items:center; gap:var(--dn-od-3); flex-wrap:wrap;
+    padding:var(--dn-od-3) var(--dn-od-4);
+    border-top:1px solid var(--dn-obrys); background:var(--dn-panel);
+  }
+  .kf-stopka .rozciag { margin-left:auto; }
+
+  /* Modal Pula kont — na wierzchu nakładki konfiguracji */
+  .kf-modal-pula { z-index:900; }
+  .kf-konto-wiersz {
+    display:flex; align-items:center; gap:var(--dn-od-2);
+    padding:var(--dn-od-2) var(--dn-od-3); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-2);
+    background:var(--dn-powierzchnia-2); font-size:var(--dn-fs-sm); margin-bottom:var(--dn-od-2);
+  }
+  .kf-konto-wiersz .kf-konto-stan { margin-left:auto; margin-right:var(--dn-od-2); display:inline-flex; align-items:center; gap:var(--dn-od-1); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); }
+
+  @media (max-width:1100px){
+    .kf-korpus { grid-template-columns:1fr; grid-auto-rows:min-content; overflow:auto; }
+    .kf-nav, .kf-prow { border:none; border-bottom:1px solid var(--dn-obrys); }
+  }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="ANEKS v2.1 · r.15 · Okno 8"
+      data-prototyp-okno="Okno Konfiguracji — nakładka modalna na warstwie stanowiska (nasz wygląd)"
+      data-prototyp-zrodlo="okna/konfiguracja.md (r.1.2)">
+
+<!-- ════════════════════════ POWŁOKA STANOWISKA (tło) ════════════════════════ -->
+<div class="sta-powloka" aria-hidden="true">
+
+  <header class="dn-pasek">
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Szyna<span class="skrot">Ctrl+B</span></button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Panel prowenancji</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Konfiguracja<span class="skrot">Ctrl+,</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="false">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>DanacoConsole</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Konfiguracja</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zadania w tle"><span class="pt-tetno" aria-hidden="true"></span> 2</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Ustawienia</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Konfiguracja platformy</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Sprawa X — redakcja pism</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Orkiestracja MultitaskingAI</span></button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
+
+  <div class="sta-cialo">
+    <nav class="szyna" aria-label="Szyna">
+      <div class="szyna-naglowek">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
+        <div class="sta-menu">
+          <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+          </button>
+          <div class="sta-menu-tresc" id="menu-filtr" data-menu-tresc data-otwarte="nie" role="menu">
+            <div class="sta-menu-etyk">Stan</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Wszystkie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Pracujące</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Bezczynne</button>
+            <div class="sta-menu-etyk">Sortowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Ostatnia aktywność</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Nazwa</button>
+            <div class="sta-menu-etyk">Grupowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Projekt</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Brak</button>
+          </div>
+        </div>
+      </div>
+      <div class="szyna-lista">
+        <div class="szyna-grupa">DanacoConsole</div>
+        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Konfiguracja platformy</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Nakładka — Agent Redaktor</span></button>
+        <div class="szyna-grupa">Kancelaria — sprawy</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprawa X — redakcja pism</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprawa Y — analiza akt</span></button>
+        <div class="szyna-grupa">Więcej</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Projekty · Sesje · Środowiska · Kontekst · Pliki · Logi</span></button>
+      </div>
+    </nav>
+
+    <div class="sta-obszar" data-robocza="widoczna" style="--sta-udzial-czaty:1fr; --sta-udzial-robocza:1fr">
+      <div class="sta-czaty" data-liczba="1">
+        <section class="sta-okno sta-kom" data-nazwa="Rozmowa" data-aktywne="tak" aria-label="Okno komunikacji">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H7l-4 3V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2z"/></svg>
+              <b>Konfiguracja platformy</b>
+            </span>
+            <span class="sta-okno-akcje">
+              <button class="dn-btn-ikona" type="button" data-otworz-konfig aria-label="Otwórz okno Konfiguracji" title="Konfiguracja (Ctrl+,)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            </span>
+          </header>
+          <div class="sta-kom-naglowek">
+            <span class="sta-kom-pole"><span>Środowisko</span><b>WorkSpace</b></span>
+            <span class="sta-kom-pole"><span>Model</span><b class="dane">Fable 5</b></span>
+            <span class="sta-kom-pole"><span>Wysiłek</span><b class="dane">Ultra</b></span>
+            <span class="sta-kom-stan"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> gotowe</span></span>
+          </div>
+          <div class="sta-kom-historia">
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">14:30</span></div><div class="sta-wpis-tresc">Otwórz konfigurację nakładki dla roli Executor 1 w zespole „Sprawa X" i pokaż, co dokładnie idzie do modelu.</div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">14:31</span></div><div class="sta-wpis-tresc">Otwieram okno Konfiguracji na obszarze <mark>Nakładka i wywołanie modelu</mark>. Panel prowenancji pokazuje trzy warstwy nakładki, siedem pól wywołania i hash Konstytucji.</div></div></article>
+          </div>
+          <div class="sta-kom-dol">
+            <div class="sta-kontekst-akcji">
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>Ten komputer</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>DanacoConsole</span>
+              <span class="sta-chip">rola: Executor 1</span>
+              <span class="sta-chip">zespół „Sprawa X"</span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-konfig>Otwórz Konfigurację</button>
+            </div>
+            <form class="sta-prompt" onsubmit="return false;">
+              <span class="sta-prompt-grot" aria-hidden="true">»»</span>
+              <textarea class="sta-prompt-obszar" rows="1" placeholder="Opisz zadanie lub zadaj pytanie…" aria-label="Pole polecenia"></textarea>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm sta-prompt-wyslij" type="submit" aria-label="Do kolejki"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+            </form>
+            <div class="sta-sterowanie">
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--tryb" type="button" data-popover="pop-tryb-upr" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Z pominięciem zgód<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-tryb-upr" hidden>
+                  <div class="sta-popover-tytul">Tryb uprawnień</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Ręczny</span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przyjmij zmiany</span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Plan</span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Auto</span><span class="pt-mono">4</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Z pominięciem zgód</b><small>domyślny — zero blokad</small></span><span class="pt-mono">5</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-plus" aria-expanded="false" aria-label="Dodaj" title="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <div class="sta-popover" id="pop-plus" hidden>
+                  <div class="sta-popover-tytul">Dodaj do polecenia</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj folder</span></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-mik" aria-expanded="false" aria-label="Mikrofon" title="Mikrofon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+                <div class="sta-popover" id="pop-mik" hidden>
+                  <div class="sta-popover-tytul">Mikrofon</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
+                </div>
+              </div>
+              <span class="rozciag"></span>
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--model" type="button" data-popover="pop-model" aria-expanded="false">Fable 5<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-model" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Model</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Fable 5</b><small>do najtrudniejszych wyzwań</small></span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Opus 5<small>do złożonych zadań</small></span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Sonnet 5<small>najwydajniejszy na co dzień</small></span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Haiku 4.5<small>najszybszy do prostych pytań</small></span><span class="pt-mono">4</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-chip" type="button" data-popover="pop-wysilek" aria-expanded="false">Ultra<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-wysilek" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Wysiłek — Ultra</div>
+                  <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
+                  <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
+                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                </div>
+              </div>
+              <button class="sta-rec" type="button" aria-label="Nagrywaj"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="sta-chip--glowny sta-prompt-wyslij" type="button">↑ Do kolejki</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="sta-robocza sta-panele-siatka" data-uklad="siatka" style="grid-template-columns:minmax(0,1fr); grid-auto-rows:minmax(0,1fr)">
+        <section class="sta-okno" data-nazwa="Karty sesji">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg><b>Karty sesji</b></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Executor 1 <span class="dn-plakietka dn-plakietka--sygnal meta">nakładka: rola</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Coordinator <span class="meta">buduje ekspertyzę</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Reviewer <span class="meta">bezczynny</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ NAKŁADKA MODALNA — OKNO KONFIGURACJI ════════════════ -->
+<div class="kf-nakladka" data-nakladka role="dialog" aria-modal="true" aria-label="Okno Konfiguracji">
+  <div class="kf-okno">
+
+    <!-- ── Belka okna ── -->
+    <div class="kf-belka">
+      <span class="kf-belka-tytul">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Konfiguracja
+      </span>
+      <span class="kf-belka-opis">Jedyne miejsce ustalania wszystkich zależności i zachowań platformy — trzynaście zakresów oraz obszar „Nakładka i wywołanie modelu".</span>
+      <span class="kf-belka-prawa">
+        <span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> połączono</span>
+        <button class="dn-btn-ikona" type="button" data-zamknij-konfig aria-label="Zamknij okno Konfiguracji">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </span>
+    </div>
+
+    <!-- ── Korpus trójkolumnowy ── -->
+    <div class="kf-korpus">
+
+      <!-- KOLUMNA 1 · nawigacja 13 zakresów (nazwy z r.1.2) -->
+      <nav class="kf-nav" aria-label="Zakresy ustawień">
+        <div class="kf-nav-grupa-tyt">Trzynaście zakresów</div>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>Aplikacja<span class="kf-nav-nr">5.1</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>Procesy<span class="kf-nav-nr">5.2</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Akcje<span class="kf-nav-nr">5.3</span></button>
+
+        <div class="kf-nav-grupa" data-rozwiniete="tak">
+          <button class="kf-nav-poz" type="button" data-grupa-przelacz aria-current="page" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>Nakładka i wywołanie modelu<span class="kf-nav-nr">5.4–5.6</span></button>
+          <div class="kf-nav-pod">
+            <button class="kf-nav-poz" type="button" data-nav-sekcja="kf-sek-behawior" aria-current="page">Zachowanie modeli<span class="kf-nav-nr">5.4</span></button>
+            <button class="kf-nav-poz" type="button" data-nav-sekcja="kf-sek-profil">Tożsamość modeli<span class="kf-nav-nr">5.5</span></button>
+            <button class="kf-nav-poz" type="button" data-nav-sekcja="kf-sek-konstytucja">Prompty systemowe<span class="kf-nav-nr">5.6</span></button>
+          </div>
+        </div>
+
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg>Rozszerzenia<span class="kf-nav-nr">5.7</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8a4 4 0 0 1 0 8M17 8a4 4 0 0 0 0 8M9 12h6"/></svg>Integracje<span class="kf-nav-nr">5.8</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historia<span class="kf-nav-nr">5.9</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Pamięć<span class="kf-nav-nr">5.10</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Izolacja <span class="kf-nav-nr">5.11</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 5v14"/></svg>Karty sesji<span class="kf-nav-nr">5.12</span></button>
+        <button class="kf-nav-poz" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg>Komponenty własne<span class="kf-nav-nr">5.13</span></button>
+
+        <div class="kf-nav-grupa-tyt" style="margin-top:var(--dn-od-3)">Warstwa zapisu</div>
+        <div class="kf-radio-grupa" style="padding:var(--dn-od-2)">
+          <label class="kf-radio"><input type="radio" name="kf-zapis" checked> globalna</label>
+          <label class="kf-radio"><input type="radio" name="kf-zapis"> sesji</label>
+        </div>
+      </nav>
+
+      <!-- KOLUMNA 2 · obszar roboczy: selektor warstwy + 3 warstwy + pola wywołania -->
+      <div class="kf-srodek">
+        <div class="kf-warstwy-pasek" role="group" aria-label="Selektor warstwy nakładki">
+          <span class="pt-etykieta">Warstwa zasięgu</span>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="globalna" aria-pressed="false">Globalna</button>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="srodowisko" aria-pressed="false">Środowisko</button>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="projekt" aria-pressed="false">Projekt</button>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="sesja" aria-pressed="false">Sesja</button>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="rola" aria-pressed="true">Rola</button>
+          <button class="kf-warstwa-btn" type="button" data-warstwa="agent" aria-pressed="false">Agent</button>
+        </div>
+
+        <div class="kf-tresc">
+
+          <!-- WARSTWA 1 · KONSTYTUCJA -->
+          <section class="kf-sekcja" id="kf-sek-konstytucja">
+            <div class="kf-sekcja-naglowek">
+              <span class="kf-sekcja-marka">Warstwa 1</span>
+              <span class="kf-sekcja-tyt">Konstytucja</span>
+              <span class="kf-sekcja-podtyt">zasięg: globalna · środowisko</span>
+            </div>
+            <div class="kf-sekcja-cialo">
+              <p class="kf-pytanie">„Jakimi zasadami kieruje się AI w tej organizacji, zawsze?"</p>
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Treść Konstytucji</span>
+                  <span class="kf-info" tabindex="0" title="Trwałe zasady pracy AI obowiązujące każde wywołanie na platformie albo w tym środowisku; brak treści oznacza pominięcie tej warstwy.">?</span>
+                  <span class="kf-pole-zasieg">poziom: globalna</span>
+                </div>
+                <textarea class="kf-textarea" aria-label="Treść Konstytucji" spellcheck="false"># Konstytucja Danaco Console — zasady nadrzędne pracy AI
+
+1. Operator ma zawsze pełny wgląd we własne dane dostępowe; maskowanie jest opcją, nie wymogiem.
+2. Brak twardych blokad — każde zawężenie uprawnień jest świadomą decyzją Operatora.
+3. Kompozycyjność: Konstytucja jest dokładana do warstw węższych, nigdy nadpisywana.
+4. Prowenancja każdego wywołania jest zapisywana, o ile Operator nie wyłączy tego jawnie.
+5. Odrębność spraw klientów kancelarii ma pierwszeństwo przy przydziale kont i procesów.</textarea>
+              </div>
+              <div class="kf-wiersz">
+                <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zapisz-konstytucja>Zapisz</button>
+                <span class="kf-hash">hash: <b data-hash>8f3a2c1d…</b></span>
+                <button class="kf-skrot" type="button" data-kopiuj-hash aria-label="Kopiuj pełny hash"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>kopiuj</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- WARSTWA 2 · PROFIL / ROLA -->
+          <section class="kf-sekcja" id="kf-sek-profil">
+            <div class="kf-sekcja-naglowek">
+              <span class="kf-sekcja-marka">Warstwa 2</span>
+              <span class="kf-sekcja-tyt">Profil / Rola</span>
+              <span class="kf-sekcja-podtyt">zasięg: agent · rola MultitaskingAI</span>
+            </div>
+            <div class="kf-sekcja-cialo">
+              <p class="kf-pytanie">„Kim — w sensie operacyjnym — jest wykonawca tego zadania?"</p>
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Agent: „Agent Redaktor"</span>
+                  <span class="kf-pole-zasieg">tylko do odczytu</span>
+                </div>
+                <div class="kf-podglad">
+                  <b>Tożsamość:</b> redaktor pism procesowych; ton formalny, rzeczowy.<br>
+                  <b>Instrukcje systemowe:</b> weryfikuj cytaty aktów prawnych, oznaczaj niepewności, nie dodawaj twierdzeń bez podstawy w aktach sprawy.
+                </div>
+                <button class="kf-skrot" type="button">Edytuj w Agent Builder →</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- WARSTWA 3 · EKSPERTYZA ZADANIOWA -->
+          <section class="kf-sekcja" id="kf-sek-ekspertyza">
+            <div class="kf-sekcja-naglowek">
+              <span class="kf-sekcja-marka">Warstwa 3</span>
+              <span class="kf-sekcja-tyt">Ekspertyza zadaniowa</span>
+              <span class="kf-sekcja-podtyt">zasięg: projekt · sesja · krok procesu</span>
+            </div>
+            <div class="kf-sekcja-cialo">
+              <p class="kf-pytanie">„Co dokładnie trzeba wiedzieć, aby wykonać to zadanie?"</p>
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Projekt: „Sprawa X"</span>
+                  <span class="kf-pole-zasieg">tylko do odczytu</span>
+                </div>
+                <div class="kf-podglad">
+                  <b>Instrukcje projektu:</b> jednolita numeracja pism, wzorce pełnomocnictw, terminy procesowe sprawy X.<br>
+                  <b>Skille agenta:</b> „redagowanie-pism", „kontrola-cytatów".
+                </div>
+                <button class="kf-skrot" type="button">Edytuj w Instructions Panel →</button>
+              </div>
+              <div class="kf-pole-belka">
+                <span class="kf-pole-etyk">Budowa dynamiczna przez Coordinatora</span>
+                <span class="kf-info" tabindex="0" title="Włącza dynamiczne dokładanie ekspertyzy zadaniowej przez rolę Coordinator dla wykonawców. Efekt widoczny w Panelu prowenancji.">?</span>
+                <label class="dn-tooltip" style="margin-left:auto"><input type="checkbox" class="dn-przelacznik" checked aria-label="Budowa dynamiczna przez Coordinatora"></label>
+              </div>
+            </div>
+          </section>
+
+          <!-- POLA WYWOŁANIA -->
+          <section class="kf-sekcja" id="kf-sek-behawior">
+            <div class="kf-sekcja-naglowek">
+              <span class="kf-sekcja-marka">Pola wywołania</span>
+              <span class="kf-sekcja-tyt">Siedem pól sterujących (ta warstwa)</span>
+              <span class="kf-sekcja-podtyt">poziom: rola</span>
+            </div>
+            <div class="kf-sekcja-cialo">
+
+              <!-- System prompt (podgląd wynikowy) -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">System prompt (podgląd wynikowy)</span>
+                  <span class="kf-info" tabindex="0" title="Tekst przekazywany modelowi przed każdą wiadomością — wynik złożenia Konstytucji, Profilu/Roli i Ekspertyzy zadaniowej.">?</span>
+                  <span class="kf-pole-zasieg">wynik kompozycji</span>
+                </div>
+                <div class="kf-podglad">Złożenie trzech warstw powyżej; pełny, wysyłany tekst w Panelu prowenancji, blok „system prompt".</div>
+              </div>
+
+              <!-- Harness -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Harness</span>
+                  <span class="kf-info" tabindex="0" title="Mechanizm spinający wywołanie modelu w pętlę narzędziową; pochodzenie zależy od wybranego kanału.">?</span>
+                  <span class="kf-pole-zasieg" data-harness-zasieg>pochodny od kanału</span>
+                </div>
+                <div class="kf-podglad" data-harness-podglad>Wbudowany w narzędzie Code CLI — tylko do odczytu; edytowalne wyłącznie argumenty startowe (blok argv).</div>
+              </div>
+
+              <!-- Hooki -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Hooki</span>
+                  <span class="kf-info" tabindex="0" title="Dodatkowe działanie — zwykle automatyka — wykonywane automatycznie w wybranym punkcie cyklu wywołania; nie warunkuje przebiegu.">?</span>
+                  <span class="kf-pole-zasieg">poziom: agent</span>
+                </div>
+                <div class="kf-hooki" data-hooki>
+                  <div class="kf-hook"><span class="kf-hook-pkt">po odpowiedzi modelu →</span> automatyka „Zapis do repertorium"<button class="odepnij" type="button" aria-label="Odłącz hook">×</button></div>
+                </div>
+                <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-dodaj-hook style="align-self:flex-start"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> dodaj punkt zaczepienia</button>
+              </div>
+
+              <!-- Narzędzia dozwolone -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Narzędzia dozwolone</span>
+                  <span class="kf-info" tabindex="0" title="Zestaw rozszerzeń i akcji dostępnych modelowi w tym wywołaniu; brak zawężenia oznacza pełny dostęp.">?</span>
+                  <span class="kf-pole-zasieg">dziedziczone: Permissions Center</span>
+                </div>
+                <div class="kf-wiersz">
+                  <select class="kf-select" aria-label="Narzędzia dozwolone">
+                    <option selected>pełny dostęp</option>
+                    <option>zawężony — wybrane rozszerzenia</option>
+                  </select>
+                  <button class="kf-skrot" type="button">Edytuj w Permissions Center →</button>
+                </div>
+              </div>
+
+              <!-- Model -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Model</span>
+                  <span class="kf-info" tabindex="0" title="Model bazowy przyjmujący nakładkę; lista zależy od wybranego kanału.">?</span>
+                  <span class="kf-pole-zasieg">poziom: agent</span>
+                </div>
+                <select class="kf-select" aria-label="Model bazowy" data-model>
+                  <option selected>Fable 5</option>
+                  <option>Opus 5</option>
+                  <option>Sonnet 5</option>
+                  <option>Haiku 4.5</option>
+                </select>
+              </div>
+
+              <!-- Effort -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Effort / wysiłek</span>
+                  <span class="kf-info" tabindex="0" title="Poziom rozumowania angażowanego przed odpowiedzią; wyższy poziom wydłuża czas i koszt wywołania.">?</span>
+                  <span class="kf-pole-zasieg">poziom: rola</span>
+                </div>
+                <div class="kf-wiersz">
+                  <label class="kf-radio"><input type="checkbox" data-effort-wl checked> nadpisz na tej warstwie</label>
+                  <select class="kf-select" aria-label="Poziom effort" data-effort>
+                    <option>szybki</option>
+                    <option>standardowy</option>
+                    <option selected>dogłębny</option>
+                    <option>maksymalny</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Kanał -->
+              <div class="kf-pole">
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Kanał</span>
+                  <span class="kf-info" tabindex="0" title="Sposób technicznego dotarcia do modelu: Code CLI, Agent SDK albo API.">?</span>
+                  <span class="kf-pole-zasieg">poziom: rola</span>
+                </div>
+                <div class="kf-radio-grupa" role="radiogroup" aria-label="Kanał / tryb wywołania">
+                  <label class="kf-radio"><input type="radio" name="kf-kanal" value="Code CLI" data-kanal checked> Code CLI</label>
+                  <label class="kf-radio"><input type="radio" name="kf-kanal" value="Agent SDK" data-kanal> Agent SDK</label>
+                  <label class="kf-radio"><input type="radio" name="kf-kanal" value="API" data-kanal> API</label>
+                </div>
+              </div>
+
+              <!-- Rotacja kont (Code CLI) -->
+              <div class="kf-podsekcja-cli" data-cli-tylko>
+                <div class="kf-pole-belka">
+                  <span class="kf-pole-etyk">Pula kont · Rotacja</span>
+                  <span class="kf-info" tabindex="0" title="Kilka odrębnie uwierzytelnionych kont Code CLI, między którymi rozdzielane są wywołania; każde konto działa w ramach własnego uwierzytelnienia.">?</span>
+                  <span class="kf-pole-zasieg">tylko kanał Code CLI</span>
+                </div>
+                <div class="kf-wiersz">
+                  <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-pula>zarządzaj…</button>
+                  <span class="kf-pomoc">Bieżąco: „Konto 2" (Sprawa X)</span>
+                  <select class="kf-select" aria-label="Strategia przydziału" data-strategia>
+                    <option selected>kolejno (round-robin)</option>
+                    <option>najmniej obciążone</option>
+                    <option>ręcznie wskazane per sesja/rola</option>
+                  </select>
+                </div>
+              </div>
+
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="align-self:flex-start;margin-top:var(--dn-od-2)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Otwórz okno konfiguracji punktów izolacji →</button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+      <!-- KOLUMNA 3 · Panel prowenancji — element ponad źródła L6 -->
+      <aside class="kf-prow" aria-label="Panel prowenancji">
+        <div class="kf-prow-naglowek">
+          <div class="kf-prow-tyt">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            Panel prowenancji
+          </div>
+          <div class="kf-prow-podtyt">„co poszło do modelu"</div>
+          <div class="kf-prow-meta">tryb: <b data-prow-tryb>Code CLI</b> · zasięg: rola Executor 1<br>zespół „Sprawa X" · 2026-08-06 14:32:07</div>
+          <span class="kf-prow-znacznik" title="Mechanizm nowy niniejszego dokumentu — element ponad źródła L6">element ponad źródła L6</span>
+        </div>
+
+        <div class="kf-prow-bloki">
+          <!-- Blok 1 · argv -->
+          <div class="kf-blok" data-otwarte="tak">
+            <button class="kf-blok-belka" type="button" data-blok-przelacz>
+              <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              argv <span class="meta" data-argv-etyk>argumenty startowe</span>
+            </button>
+            <div class="kf-blok-cialo">
+              <pre class="kf-kod" data-argv>narzędzie: danaco-code-cli
+--konto=Konto 2 --model=Fable 5
+--token=9f83a91f  (jawnie — wgląd Operatora)</pre>
+            </div>
+          </div>
+
+          <!-- Blok 2 · system prompt -->
+          <div class="kf-blok" data-otwarte="tak">
+            <button class="kf-blok-belka" type="button" data-blok-przelacz>
+              <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              system prompt <span class="meta">3 warstwy</span>
+            </button>
+            <div class="kf-blok-cialo">
+              <pre class="kf-kod"><span class="war"># KONSTYTUCJA (poziom: globalna)</span>
+Zasady nadrzędne pracy AI Danaco…
+<span class="war"># PROFIL / ROLA — Agent Redaktor (poziom: agent)</span>
+Redaktor pism procesowych; ton formalny…
+<span class="war"># EKSPERTYZA ZADANIOWA (projekt + dynamiczna, krok 3)</span>
+Instrukcje sprawy X + skille + tekst Coordinatora…</pre>
+            </div>
+          </div>
+
+          <!-- Blok 3 · settings -->
+          <div class="kf-blok" data-otwarte="tak">
+            <button class="kf-blok-belka" type="button" data-blok-przelacz>
+              <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              settings <span class="meta">7 pól</span>
+            </button>
+            <div class="kf-blok-cialo">
+              <pre class="kf-kod" data-settings>harness            : wbudowany w Code CLI   (rola)
+hooki              : po odpowiedzi → „Zapis do repertorium" (agent)
+narzędzia dozwolone: pełny dostęp            (Permissions Center)
+model              : Fable 5                 (agent)
+effort             : dogłębny                (rola)
+kanał              : Code CLI                (rola)
+pula kont          : „Konto 2" (Sprawa X)    (rola)</pre>
+            </div>
+          </div>
+
+          <!-- Blok 4 · hash konstytucji -->
+          <div class="kf-blok" data-otwarte="tak">
+            <button class="kf-blok-belka" type="button" data-blok-przelacz>
+              <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              hash konstytucji <span class="meta">SHA-256</span>
+            </button>
+            <div class="kf-blok-cialo">
+              <div class="kf-wiersz">
+                <pre class="kf-kod" data-hash-prow style="margin:0">8f3a2c1d9e0b…</pre>
+                <button class="kf-skrot" type="button" data-kopiuj-hash>kopiuj pełną wartość</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kf-prow-stopka">
+          <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" data-podglad-zywo>Podgląd na żywo</button>
+          <div class="kf-pole-belka">
+            <span class="kf-pole-etyk">Zapis archiwalny</span>
+            <label style="margin-left:auto"><input type="checkbox" class="dn-przelacznik" checked aria-label="Zapis archiwalny"></label>
+          </div>
+        </div>
+      </aside>
+
+    </div>
+
+    <!-- ── Stopka okna ── -->
+    <div class="kf-stopka">
+      <span class="kf-pomoc">Stan wyjściowy: Konstytucja pominięta · narzędzia pełny dostęp · hooki brak · jedno konto — rotacja jest opcją.</span>
+      <span class="rozciag"></span>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zamknij-konfig>Zamknij</button>
+      <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" data-zapisz-konstytucja>Zapisz zmiany</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ MODAL „PULA KONT CODE CLI" (rozdz. 6.3) ════════════════ -->
+<dialog class="dn-modal kf-modal-pula" id="modal-pula" aria-label="Pula kont Code CLI">
+  <div class="dn-modal-naglowek">
+    <span class="dn-modal-tytul">Pula kont Code CLI</span>
+    <button class="dn-btn-ikona" type="button" data-zamknij-pula aria-label="Zamknij">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="dn-modal-cialo">
+    <div class="kf-konto-wiersz">Konto 1 — „Ogólne"<span class="kf-konto-stan"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> dostępne</span><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Usuń</button></div>
+    <div class="kf-konto-wiersz">Konto 2 — „Sprawa X"<span class="kf-konto-stan"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> dostępne</span><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Usuń</button></div>
+    <div class="kf-konto-wiersz">Konto 3 — „Sprawa Y"<span class="kf-konto-stan"><span class="pt-tetno" aria-hidden="true"></span> zajęte</span><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Usuń</button></div>
+    <div class="kf-konto-wiersz">Konto 4 — „Zapasowe"<span class="kf-konto-stan"><span class="dn-kropka dn-kropka--ostrzezenie" aria-hidden="true"></span> błąd uwierz.</span><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Popraw</button></div>
+
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-top:var(--dn-od-2)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Dodaj konto</button>
+
+    <div class="kf-pole" style="margin-top:var(--dn-od-4)">
+      <span class="kf-pole-etyk">Strategia przydziału</span>
+      <div class="kf-radio-grupa" role="radiogroup" aria-label="Strategia przydziału">
+        <label class="kf-radio"><input type="radio" name="kf-strat-modal" checked> kolejno (round-robin)</label>
+        <label class="kf-radio"><input type="radio" name="kf-strat-modal"> najmniej obciążone</label>
+        <label class="kf-radio"><input type="radio" name="kf-strat-modal"> ręcznie wskazane per sesja/rola</label>
+      </div>
+    </div>
+  </div>
+  <div class="dn-modal-stopka">
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zamknij-pula>Anuluj</button>
+    <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" data-zamknij-pula>Zapisz</button>
+  </div>
+</dialog>
+
+<details class="pt-o-opracowaniu">
+  <summary>O tym oknie — Konfiguracja na warstwie stanowiska (Danaco Console, ANEKS v2.1 r.15)</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Co zbudowano</h4>
+    <ul>
+      <li><b>Powłoka stanowiska</b> w tle: pasek (hamburger, Talk/Work/Code, okruszki, szukajka, konto <code>support@danaco-core.pl</code>), pas kart sesji, szyna z filtrem i grupami, okno komunikacji z pełnym obszarem polecenia (tryb „Z pominięciem zgód", „+" konektory/wtyczki, mikrofon, model Fable 5/Opus 5/Sonnet 5/Haiku 4.5, suwak wysiłku Ultra, ↑ Do kolejki).</li>
+      <li><b>Nakładka modalna</b> okna Konfiguracji nad powłoką — trójkolumnowa: 13 zakresów (nazwy z r.1.2), obszar „Nakładka i wywołanie modelu" oraz Panel prowenancji.</li>
+      <li><b>Trzy warstwy nakładki</b>: Konstytucja (edytor), Profil/Rola (podgląd + skrót do Agent Builder), Ekspertyza zadaniowa (podgląd + przełącznik budowy dynamicznej Coordinatora).</li>
+      <li><b>Pola wywołania</b>: System prompt (podgląd wynikowy), Harness, Hooki, Narzędzia dozwolone, Model, Effort, Kanał (Code CLI / Agent SDK / API), Rotacja kont.</li>
+      <li><b>Panel prowenancji</b> — cztery bloki (argv, system prompt, settings, hash konstytucji), oznaczony jako <b>element ponad źródła L6</b>.</li>
+      <li><b>Modal „Pula kont Code CLI"</b> ze stanami kont i strategią przydziału.</li>
+    </ul>
+    <h4>Źródło</h4>
+    <ul><li><code>okna/konfiguracja.md</code> (r.1.2) · KANON ANEKS v2.1 r.15 · WZORZEC-STANOWISKA.html · KATALOG-FUNKCJI-DANACO-CONSOLE.md</li></ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+/* przełączniki swoiste + logika okna Konfiguracji */
+(function () {
+  var D = document;
+  function q(s, r) { return (r || D).querySelector(s); }
+  function qa(s, r) { return Array.prototype.slice.call((r || D).querySelectorAll(s)); }
+  function toast(t, o, w) { if (window.dnToast) window.dnToast(t, o, w || 'informacja'); }
+
+  /* Tryby Talk/Work/Code */
+  qa('[data-srod]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      qa('[data-srod]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      toast('Tryb: ' + b.textContent, 'Obszar polecenia i panele dostrojone do trybu');
+    });
+  });
+
+  /* Otwieranie/zamykanie nakładki Konfiguracji */
+  var nakladka = q('[data-nakladka]');
+  qa('[data-otworz-konfig]').forEach(function (b) { b.addEventListener('click', function () { nakladka.hidden = false; }); });
+  qa('[data-zamknij-konfig]').forEach(function (b) { b.addEventListener('click', function () { nakladka.hidden = true; }); });
+  D.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !nakladka.hidden) { nakladka.hidden = true; }
+    if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); nakladka.hidden = false; }
+  });
+
+  /* Selektor warstwy */
+  qa('[data-warstwa]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      qa('[data-warstwa]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      toast('Warstwa: ' + b.textContent, 'Pola środkowe i Panel prowenancji przełączone na wybraną warstwę zasięgu');
+    });
+  });
+
+  /* Nawigacja do sekcji z podpozycji */
+  qa('[data-nav-sekcja]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      qa('.kf-nav-pod [data-nav-sekcja]').forEach(function (x) { x.removeAttribute('aria-current'); });
+      b.setAttribute('aria-current', 'page');
+      var el = D.getElementById(b.getAttribute('data-nav-sekcja'));
+      if (el) {
+        el.setAttribute('data-podswietlona', 'tak');
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(function () { el.removeAttribute('data-podswietlona'); }, 1600);
+      }
+    });
+  });
+
+  /* Bloki Panelu prowenancji — rozwijanie */
+  qa('[data-blok-przelacz]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var blok = b.closest('.kf-blok');
+      blok.setAttribute('data-otwarte', blok.getAttribute('data-otwarte') === 'tak' ? 'nie' : 'tak');
+    });
+  });
+
+  /* Zależność pola Kanał → Rotacja + Harness + Panel prowenancji */
+  var cli = q('[data-cli-tylko]');
+  var harnessPodglad = q('[data-harness-podglad]');
+  var harnessZasieg = q('[data-harness-zasieg]');
+  var prowTryb = q('[data-prow-tryb]');
+  var argvEtyk = q('[data-argv-etyk]');
+  function odswiezKanal() {
+    var wybr = q('[data-kanal]:checked');
+    var k = wybr ? wybr.value : 'Code CLI';
+    if (cli) { cli.hidden = (k !== 'Code CLI'); }
+    if (prowTryb) { prowTryb.textContent = k; }
+    if (harnessZasieg) { harnessZasieg.textContent = 'pochodny od kanału'; }
+    if (harnessPodglad) {
+      harnessPodglad.textContent = k === 'Code CLI'
+        ? 'Wbudowany w narzędzie Code CLI — tylko do odczytu; edytowalne wyłącznie argumenty startowe (blok argv).'
+        : (k === 'Agent SDK'
+          ? 'Dostarczany przez bibliotekę dostawcy: limit kroków pętli, strategia ponawiania, format komunikatów.'
+          : 'Budowany przez rdzeń platformy: limit kroków, limit czasu kroku, zachowanie przy błędzie narzędzia.');
+    }
+    if (argvEtyk) {
+      argvEtyk.textContent = k === 'Code CLI' ? 'argumenty startowe' : (k === 'Agent SDK' ? 'parametry wywołania' : 'parametry żądania');
+    }
+  }
+  qa('[data-kanal]').forEach(function (r) { r.addEventListener('change', odswiezKanal); });
+
+  /* Model → Panel prowenancji settings */
+  var model = q('[data-model]');
+  var settings = q('[data-settings]');
+  var argv = q('[data-argv]');
+  if (model) {
+    model.addEventListener('change', function () {
+      if (settings) { settings.textContent = settings.textContent.replace(/model {14}: .*/, 'model              : ' + model.value + '                 (agent)'); }
+      if (argv) { argv.textContent = argv.textContent.replace(/--model=[^\s]+/, '--model=' + model.value.replace(/ /g, ' ')); }
+      toast('Model: ' + model.value, 'Lista modeli zależna od kanału; Panel prowenancji odświeżony');
+    });
+  }
+
+  /* Effort */
+  var effort = q('[data-effort]');
+  if (effort) { effort.addEventListener('change', function () { toast('Effort: ' + effort.value, 'Poziom rozumowania nadpisany na tej warstwie'); }); }
+
+  /* Modal Pula kont */
+  var modalPula = q('#modal-pula');
+  qa('[data-otworz-pula]').forEach(function (b) { b.addEventListener('click', function () { if (modalPula.showModal) { modalPula.showModal(); } else { modalPula.setAttribute('open', ''); } }); });
+  qa('[data-zamknij-pula]').forEach(function (b) { b.addEventListener('click', function () { if (modalPula.close) { modalPula.close(); } else { modalPula.removeAttribute('open'); } }); });
+
+  /* Zapis Konstytucji + hash */
+  function nowyHash() {
+    var znaki = '0123456789abcdef', s = '';
+    for (var i = 0; i < 8; i++) { s += znaki[Math.floor(Math.random() * 16)]; }
+    return s;
+  }
+  qa('[data-zapisz-konstytucja]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var h = nowyHash();
+      var el = q('[data-hash]'); if (el) { el.textContent = h + '…'; }
+      var el2 = q('[data-hash-prow]'); if (el2) { el2.textContent = h + '9e0b…'; }
+      toast('Zapisano Konstytucję', 'Hash przeliczony i odświeżony w Panelu prowenancji', 'sukces');
+    });
+  });
+  qa('[data-kopiuj-hash]').forEach(function (b) {
+    b.addEventListener('click', function () { toast('Skopiowano', 'Pełna wartość hasha Konstytucji w schowku', 'sukces'); });
+  });
+
+  /* Dodaj hook */
+  var dodajHook = q('[data-dodaj-hook]');
+  if (dodajHook) {
+    dodajHook.addEventListener('click', function () {
+      var lista = q('[data-hooki]');
+      var el = D.createElement('div');
+      el.className = 'kf-hook';
+      el.innerHTML = '<span class="kf-hook-pkt">przed wywołaniem narzędzia →</span> automatyka „Zapis do dziennika"<button class="odepnij" type="button" aria-label="Odłącz hook">×</button>';
+      lista.appendChild(el);
+      toast('Dodano hook', 'Punkt zaczepienia podłączony — nie warunkuje przebiegu wywołania');
+    });
+  }
+  D.addEventListener('click', function (e) {
+    if (e.target.classList && e.target.classList.contains('odepnij') && e.target.closest('.kf-hook')) {
+      e.target.closest('.kf-hook').remove();
+    }
+  });
+
+  /* Podgląd na żywo */
+  var pz = q('[data-podglad-zywo]');
+  if (pz) { pz.addEventListener('click', function () { toast('Podgląd na żywo', 'Cztery bloki Panelu prowenancji przeliczone bez wysyłania wywołania', 'sukces'); }); }
+
+  /* Rozwijanie grupy nawigacji */
+  var grupa = q('.kf-nav-grupa');
+  var gp = q('[data-grupa-przelacz]');
+  if (gp && grupa) {
+    gp.addEventListener('click', function () {
+      var rozw = grupa.getAttribute('data-rozwiniete') === 'tak';
+      grupa.setAttribute('data-rozwiniete', rozw ? 'nie' : 'tak');
+      gp.setAttribute('aria-expanded', rozw ? 'false' : 'true');
+    });
+  }
+
+  odswiezKanal();
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

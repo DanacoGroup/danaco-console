@@ -1,0 +1,1 @@
+{"domyslne":{"identifier":"domyslne","description":"Uprawnienia okna głównego powłoki: zdarzenia, sterowanie oknem, natywne okna dialogowe.","remote":{"urls":["http://127.0.0.1:*","http://localhost:*"]},"local":true,"windows":["glowne"],"permissions":["core:default","dialog:default"]}}

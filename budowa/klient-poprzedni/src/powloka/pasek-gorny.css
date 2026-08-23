@@ -1,0 +1,141 @@
+/* ============================================================================
+   POWŁOKA — PASEK GÓRNY
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: cechy paska górnego, których nie niesie klasa
+   `.dn-pasek` biblioteki komponentów. Wysokość 48 px (`--dn-wym-pasek`), tło
+   ramy i barwa treści przychodzą stamtąd; tutaj zostaje tożsamość produktu,
+   kontekst, pole poleceń i licznik powiadomień.
+
+   Arkusz sięga wyłącznie po żetony `motyw/` i klasy `komponenty/`
+   (`--dn-rama-*`, `--dn-fw-polgruba`, `--dn-ls-naglowek`). Klasy, których
+   biblioteka nie niesie — kontekst pracy, rozdzielacz i uchwyt profilu —
+   stoją tutaj pod nazwą własną widoku.
+
+   Pasek jest atramentowy w OBU motywach. Każda kontrolka, która na nim staje,
+   ubiera się więc żetonami ramy, nie żetonami treści; wyjątkiem są nakładki
+   opadające POD pasek (wykaz wyników, panel menu profilu), bo te leżą już na
+   powierzchni pracy i przełączają się z motywem razem z nią.
+   ============================================================================ */
+
+.dn-pasek-gorny {
+  flex: none;
+  z-index: var(--dn-z-pasek);
+}
+
+/* Blok tożsamości nie jest kontrolką — nie udaje jej ani kursorem, ani tłem */
+.dn-pasek-gorny__godlo {
+  flex: none;
+  cursor: default;
+}
+
+.dn-pasek-gorny__godlo:hover {
+  background: transparent;
+}
+
+/* Nazwa produktu — jedyne miejsce kroju szeryfowego na pasku */
+.dn-pasek-gorny__produkt {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  white-space: nowrap;
+}
+
+/* Kontekst pracy: środowisko i moduł karty czynnej */
+.dn-pasek-gorny__kontekst {
+  flex: none;
+  max-width: var(--dn-wym-toast-min);
+  margin: 0;
+  overflow: hidden;
+  color: var(--dn-rama-tekst-2);
+  font-size: var(--dn-fs-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Włosowa kreska oddzielająca awatar od kontrolek paska */
+.dn-pasek-gorny__rozdzielacz {
+  flex: none;
+  width: 1px;
+  height: var(--dn-od-5);
+  background: var(--dn-rama-obrys);
+}
+
+/* Pole poleceń — wygląd i ognisko; wykonanie należy do centrum poleceń.
+   Pole nie jest wyłączone ani tylko do odczytu: zasada zera blokad. */
+.dn-pasek-gorny__pole {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 480px;
+  margin-left: auto;
+}
+
+.dn-pasek-gorny__polecenie {
+  padding-right: var(--dn-od-12);
+}
+
+/* Podpowiedź skrótu — nieklikalna etykieta wewnątrz pola */
+.dn-pasek-gorny__skrot {
+  position: absolute;
+  right: var(--dn-od-2);
+  border-color: transparent;
+  background: transparent;
+  color: var(--dn-rama-tekst);
+  font-size: var(--dn-fs-xs);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+/* Powiadomienia — licznik osadzony w rogu dzwonka */
+.dn-powiadomienia {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.dn-powiadomienia__licznik {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-height: var(--dn-od-4);
+  padding: 0 var(--dn-od-1);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  pointer-events: none;
+}
+
+/* Plakietka ma własne `display`, więc ukrycie wymaga zapisu jawnego */
+.dn-powiadomienia__licznik[hidden] {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   UCHWYT MENU PROFILU NA RAMIE
+
+   `menu-profilu.ts` buduje uchwyt mechanizmem `komponenty/menu-drzewo`, który
+   ubiera go żetonami treści (`--dn-hover`, `--dn-tekst`, `--dn-obrys`). Na
+   powierzchni pracy to jest właściwe, ale na atramencie ramy uchwyt był jedyną
+   rzeczą w pasku przełączającą się z motywem: w motywie jasnym stawał się
+   jasnym kafelkiem z ciemnym napisem. Tutaj dostaje żetony ramy — bez zmiany
+   mechanizmu i bez ruszania biblioteki, bo ta sama klasa obsługuje też uchwyty
+   stojące na treści.
+
+   Sam panel menu zostaje przy żetonach treści: opada pod pasek, na powierzchnię
+   pracy, i tam ma się przełączać z motywem.
+   --------------------------------------------------------------------------- */
+.dn-pasek-gorny__profil .dn-drzewo__uchwyt {
+  border-color: var(--dn-rama-obrys);
+  background: var(--dn-rama-hover);
+  color: var(--dn-rama-tekst);
+}
+
+.dn-pasek-gorny__profil .dn-drzewo__uchwyt:hover {
+  background: var(--dn-rama-obrys);
+}
+
+.dn-pasek-gorny__profil .dn-drzewo__grot {
+  color: var(--dn-rama-tekst-2);
+}

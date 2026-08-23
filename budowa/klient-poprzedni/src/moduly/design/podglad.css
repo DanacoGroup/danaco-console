@@ -1,0 +1,143 @@
+/* ============================================================================
+   MODUŁ DESIGN — PREVIEW WINDOW: PŁYTA PODGLĄDU I PORÓWNANIE WARIANTÓW
+   ----------------------------------------------------------------------------
+   Arkusz podglądu; pozostałe arkusze modułu to `design.css` (rama i stany),
+   `kompozycja.css` (kanwa) i `zasoby.css` (wykaz i kreator).
+
+   Płyta sygnalizuje kreską brak treści obrazu: obrys ciągły należy się treści,
+   którą rdzeń oddał, obrys kreskowany — miejscu na treść, której nie ma. Ta sama
+   zasada obowiązuje w polu podglądu karty zasobu i w miniaturze paska postępu,
+   żeby brak wyglądał wszędzie w module tak samo.
+
+   Barwy wyłącznie z żetonów motywu.
+   ============================================================================ */
+
+/* Okno pomocnicze jest niższe od zarządcy i kreatora: nie niesie ani wykazu,
+   ani formularza — niesie jeden zasób. */
+.md-okno--pomocnicze { min-height: 320px; }
+
+.md-podglad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.md-podglad__plyta {
+  display: grid;
+  place-content: center;
+  min-height: 160px;
+  padding: var(--dn-od-3);
+  border: 1px dashed var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-3);
+  text-align: center;
+}
+
+/* Treść obrazu oddana przez rdzeń dostaje obrys ciągły — jedyny stan płyty,
+   w którym widać obraz. */
+.md-podglad__plyta[data-tresc='obraz'] {
+  border-style: solid;
+  padding: var(--dn-od-1);
+}
+
+.md-podglad__plyta[data-tresc='obraz-niewczytany'] {
+  border-color: var(--dn-blad-obrys);
+  color: var(--dn-blad-tekst);
+}
+
+.md-podglad__obraz {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+}
+
+.md-podglad__napis {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+
+.md-podglad__zrodlo,
+.md-podglad__o-slowie,
+.md-podglad__o-tle {
+  margin: 0;
+}
+
+/* Słowo modelu jest cytatem, nie tytułem: łamie się jak tekst nadany, zachowuje
+   końce wierszy modelu i stoi przy kresce, żeby nie zlało się z opisem okna. */
+.md-podglad__slowo {
+  margin: 0;
+  padding-left: var(--dn-od-3);
+  border-left: 2px solid var(--dn-obrys-mocny);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.md-podglad__slowo[hidden] { display: none; }
+
+.md-podglad__wykaz {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  gap: var(--dn-od-1) var(--dn-od-2);
+  margin: 0;
+  padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-xs);
+}
+
+.md-podglad__klucz { color: var(--dn-tekst-3); }
+
+.md-podglad__wartosc {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Pole, którego rdzeń nie podał, jest wyciszone, ale widoczne — zdanie o braku
+   ma pozostać czytelne. */
+.md-podglad__wartosc[data-podane='false'] {
+  color: var(--dn-tekst-3);
+  font-style: italic;
+}
+
+/* --- Porównanie wariantów ------------------------------------------------- */
+
+.md-porownanie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+.md-porownanie__para {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--dn-od-2);
+}
+
+.md-porownanie__strona {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+}
+
+.md-porownanie__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+}
+
+.md-porownanie__tresc {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.md-porownanie__obraz,
+.md-porownanie__zdanie { margin: 0; }

@@ -1,0 +1,141 @@
+/* ============================================================================
+   DANACO CONSOLE — WYSZUKIWANIE PO ZNACZENIU (okno modułu Poczta i wiedza)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy, ani jednego rozmiaru pisma: wszystko pochodzi
+   z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`. Tutaj leży wyłącznie
+   rozkład: co obok czego i ile między nimi odstępu.
+
+   Odróżnienie trafności jedzie plakietkami biblioteki
+   (`dn-plakietka--sukces|ostrzezenie`) — własnej skali barw to okno nie zakłada.
+   ============================================================================ */
+
+/* ── Pasek narzędzi: pytanie zajmuje cały wiersz, zawężenia stoją obok ─────── */
+
+.dwz-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+/* Pytanie jest treścią okna, nie zawężeniem — dostaje całą szerokość wiersza. */
+.dwz-wiersz--szeroki {
+  flex: 1 1 100%;
+}
+
+/* Ster zakresu (`komponenty/menu-drzewo.ts`) stoi w rytmie pozostałych pól:
+   uchwyt bierze całą szerokość wiersza, żeby nie był jedynym w pasku, który
+   kurczy się do treści. Sam mechanizm rozwijania jest w bibliotece — tutaj
+   leży wyłącznie szerokość, tak jak przy każdym innym polu tego okna. */
+.dwz-wiersz > .dn-drzewo {
+  align-self: stretch;
+}
+
+.dwz-wiersz > .dn-drzewo > .dn-drzewo__uchwyt {
+  justify-content: space-between;
+  width: 100%;
+}
+
+/* ── Stany obowiązkowe (ładowanie · pustka · błąd · treść) ─────────────────── */
+
+.dwz-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dwz-stan {
+  margin: 0;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+}
+
+/* Odmowa rdzenia ma być widoczna od razu, a nie do wyszukania wzrokiem. */
+.dwz-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  background: var(--dn-blad-tlo);
+  border: 1px solid var(--dn-blad-obrys);
+  border-radius: var(--dn-r-sm);
+  padding: var(--dn-od-2);
+}
+
+.dwz-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-sukces-tekst);
+}
+
+.dwz-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.dwz-tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+/* ── Wykaz trafień ─────────────────────────────────────────────────────────── */
+
+.dwz-trafienia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dwz-trafienie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+/* Źródło i miary stoją nad fragmentem: Operator ma wiedzieć, czyje to zdanie,
+   zanim je przeczyta. Zawijanie, bo nazwa źródła bywa ścieżką pliku. */
+.dwz-trafienie__naglowek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* Źródło z uchwytem jest przyciskiem biblioteki — zostaje tu tylko granica
+   szerokości, żeby długa ścieżka nie wypchnęła plakietek poza okno. */
+.dwz-trafienie__zrodlo {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+
+/* Źródło bez wskazania nie jest przyciskiem i ma tak wyglądać, żeby nikt nie
+   klikał w coś, co nigdzie nie prowadzi. */
+.dwz-trafienie__zrodlo--bez-wskazania {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  font-style: italic;
+}
+
+.dwz-trafienie__tresc {
+  margin: 0;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Zdanie o przycięciu wykazu granicą — przypis, nie ostrzeżenie. */
+.dwz-przypis {
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}

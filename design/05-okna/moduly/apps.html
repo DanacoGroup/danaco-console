@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Apps (Product Builder)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  :root { --dn-fs-base:14px; --dn-fs-sm:13px; --dn-fs-xs:12px; }
+  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
+  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .szyna-lista { overflow:auto; min-height:0; }
+  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
+  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+
+  /* Product Builder — kanwa wiodąca */
+  .pb-kanwa { padding:var(--dn-od-3); display:flex; flex-direction:column; gap:var(--dn-od-3); }
+  .pb-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); flex-wrap:wrap; }
+  .pb-naglowek h2 { font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-xl); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); margin:0; }
+  .pb-tracker { display:flex; align-items:center; gap:var(--dn-od-1); flex-wrap:wrap; padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia-2); }
+  .pb-etap { display:inline-flex; align-items:center; gap:var(--dn-od-1); height:28px; padding:0 var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-pill); font-size:var(--dn-fs-sm); color:var(--dn-tekst-2); background:var(--dn-powierzchnia); cursor:pointer; }
+  .pb-etap[aria-current="step"] { border-color:var(--dn-sygnal-obrys); color:var(--dn-sygnal); background:var(--dn-sygnal-tlo); }
+  .pb-etap svg { width:14px; height:14px; }
+  .pb-strzalka { color:var(--dn-tekst-3); }
+  .pb-kondycja { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--dn-od-2); }
+  .pb-metryka { padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia); }
+  .pb-metryka .etyk { font-family:var(--dn-ff-mono); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-mono-wersaliki); color:var(--dn-tekst-3); }
+  .pb-metryka .liczba { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xl); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
+  .pb-kafle { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:var(--dn-od-2); }
+  .pb-kafel { display:flex; flex-direction:column; gap:var(--dn-od-1); padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia); cursor:pointer; text-align:left; transition:border-color var(--dn-czas-1) var(--dn-ease); }
+  .pb-kafel:hover { border-color:var(--dn-sygnal-obrys); }
+  .pb-kafel .tyt { display:flex; align-items:center; gap:var(--dn-od-1); font-size:var(--dn-fs-sm); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); }
+  .pb-kafel .tyt svg { width:16px; height:16px; color:var(--dn-tekst-2); }
+  .pb-kafel .op { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .pb-sekcja-tyt { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-2); margin:0 0 var(--dn-od-1); }
+  .pb-lista { display:flex; flex-direction:column; gap:var(--dn-od-1); }
+  .pb-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) 0; border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); color:var(--dn-tekst); }
+  .pb-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+
+  /* Architecture Designer — diagram SVG */
+  .ad-diagram { width:100%; height:100%; display:block; }
+  .ad-diagram text { font-family:var(--dn-ff-bazowa); font-size:11px; fill:var(--dn-tekst); }
+  .ad-diagram .wezel { fill:var(--dn-powierzchnia-2); stroke:var(--dn-obrys-mocny); stroke-width:1.5; cursor:pointer; }
+  .ad-diagram .wezel-blad { stroke:var(--dn-czerwien-400); stroke-dasharray:4 3; }
+  .ad-diagram .linia { stroke:var(--dn-tekst-3); stroke-width:1.5; fill:none; marker-end:url(#grot); }
+  .ad-diagram .api { fill:var(--dn-sygnal); font-family:var(--dn-ff-mono); font-size:9px; }
+  .kod-blok { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); background:var(--dn-powierzchnia-2); border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); padding:var(--dn-od-2); color:var(--dn-tekst-2); white-space:pre; overflow:auto; }
+  .metoda { display:inline-grid; place-content:center; min-width:42px; height:18px; padding:0 6px; border-radius:var(--dn-r-xs); font-family:var(--dn-ff-mono); font-size:10px; font-weight:var(--dn-fw-polgruba); }
+  .metoda--get { background:var(--dn-sygnal-tlo); color:var(--dn-sygnal); }
+  .metoda--post { background:var(--dn-zielen-tlo); color:var(--dn-zielen-tekst); }
+  .respo { display:inline-flex; gap:2px; }
+  .respo button { width:26px; height:24px; display:inline-grid; place-content:center; border:1px solid var(--dn-obrys); background:var(--dn-powierzchnia); color:var(--dn-tekst-2); border-radius:var(--dn-r-xs); cursor:pointer; }
+  .respo button[aria-pressed="true"] { border-color:var(--dn-sygnal-obrys); color:var(--dn-sygnal); background:var(--dn-sygnal-tlo); }
+  .respo button svg { width:14px; height:14px; }
+  .podglad-ramka { border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia-2); margin:var(--dn-od-2) auto 0; height:120px; display:grid; place-content:center; color:var(--dn-tekst-3); font-size:var(--dn-fs-xs); transition:max-width var(--dn-czas-2) var(--dn-ease); }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="Moduł Apps · v2.1"
+      data-prototyp-okno="Apps — stanowisko (Product Builder wiodące + panele)"
+      data-prototyp-zrodlo="dok/projekt-ui/moduly/apps.md">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY ══ -->
+  <header class="dn-pasek">
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Nowy produkt<span class="skrot">Ctrl+N</span></button>
+        <button class="sta-menu-poz" role="menuitem">Otwórz produkt<span class="skrot">Ctrl+O</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Panele modułu</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-architektura"><span class="ptaszek">✓</span>Architecture Designer</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-frontend"><span class="ptaszek">✓</span>Frontend Workspace</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-backend"><span class="ptaszek">✓</span>Backend Workspace</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-deployment"><span class="ptaszek">✓</span>Deployment Panel</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Powiększ<span class="skrot">Ctrl+=</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomniejsz<span class="skrot">Ctrl+-</span></button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../../INDEKS.html" aria-label="Danaco Console">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- TRYBY Talk/Work/Code — Apps: Work/Code -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="true">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>WorkSpace</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Apps</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj w produkcie…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zadania w tle"><span class="pt-tetno" aria-hidden="true"></span> 2</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Ustawienia</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PAS KART SESJI ══ -->
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Portal klienta — budowa produktu</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Aplikacja mobilna — kurierzy</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Panel administracyjny — wdrożenie</span></button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór produktu." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
+  </div>
+
+  <!-- ══ CIAŁO: szyna + stanowisko ══ -->
+  <div class="sta-cialo">
+
+    <!-- SZYNA -->
+    <nav class="szyna" aria-label="Szyna">
+      <div class="szyna-naglowek">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowy produkt</button>
+        <div class="sta-menu">
+          <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+          </button>
+          <div class="sta-menu-tresc" id="menu-filtr" data-menu-tresc data-otwarte="nie" role="menu">
+            <div class="sta-menu-etyk">Stan</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Wszystkie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>W budowie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Wdrożone</button>
+            <div class="sta-menu-etyk">Sortowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Ostatnia aktywność</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Nazwa</button>
+            <div class="sta-menu-etyk">Grupowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Projekt</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Brak</button>
+          </div>
+        </div>
+      </div>
+      <div class="szyna-lista">
+        <div class="szyna-grupa">Portal klienta</div>
+        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Budowa produktu</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kontrakt API zamówień</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Migracja schematu bazy</span></button>
+        <div class="szyna-grupa">Aplikacja mobilna — kurierzy</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Warstwa frontendowa — mapa tras</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Usługi backendu — powiadomienia</span></button>
+        <div class="szyna-grupa">Panel administracyjny</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie do produkcji</span></button>
+        <div class="szyna-grupa">Więcej</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Produkty · Środowiska · Repozytoria · Artefakty · Wydania</span></button>
+      </div>
+    </nav>
+
+    <!-- STANOWISKO: czat (obszar polecenia) + Product Builder + panele -->
+    <div class="sta-obszar" data-robocza="widoczna" style="--sta-udzial-czaty:0.85fr; --sta-udzial-robocza:1.4fr">
+
+      <!-- ── LEWA: OKNO KOMUNIKACJI (Chat Window) ── -->
+      <div class="sta-czaty" data-liczba="1">
+        <section class="sta-okno sta-kom" id="okno-czat-1" data-nazwa="Chat Window" data-aktywne="tak" aria-label="Chat Window">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H7l-4 3V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2z"/></svg>
+              <b>Chat Window — Portal klienta</b>
+            </span>
+            <span class="sta-chip" title="Etap bieżący"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="12" rx="2"/></svg>etap: Backend Workspace</span>
+            <span class="sta-okno-akcje">
+              <button class="dn-btn-ikona" type="button" data-konfig-okno="konfig-czat" aria-expanded="false" aria-label="Konfiguracja okna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 6 9.4"/></svg></button>
+              <div class="sta-menu">
+                <button class="dn-btn-ikona" type="button" data-menu="menu-sesja" aria-expanded="false" aria-label="Panele i działania sesji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+                <div class="sta-menu-tresc" id="menu-sesja" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+                  <div class="sta-menu-etyk">Panele</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-builder"><span class="ptaszek">✓</span>Product Builder</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-architektura"><span class="ptaszek">✓</span>Architecture Designer</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-frontend"><span class="ptaszek">✓</span>Frontend Workspace</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-backend"><span class="ptaszek">✓</span>Backend Workspace</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-deployment"><span class="ptaszek">✓</span>Deployment Panel</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-plan"><span class="ptaszek">✓</span>Plan</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-zadania"><span class="ptaszek">✓</span>Zadania w tle</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-terminal"><span class="ptaszek">✓</span>Terminal</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-pliki"><span class="ptaszek">✓</span>Pliki</button>
+                  <div class="sta-menu-sep"></div>
+                  <button class="sta-menu-poz" role="menuitem">Zmień nazwę<span class="skrot">R</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Rozgałęź<span class="skrot">F</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Archiwizuj<span class="skrot">A</span></button>
+                </div>
+              </div>
+            </span>
+          </header>
+
+          <!-- konfiguracja per okno -->
+          <div class="sta-konfig" id="konfig-czat" hidden>
+            <div class="sta-konfig-belka"><b>Konfiguracja — Chat Window</b><button class="dn-btn-ikona" type="button" data-konfig-zamknij aria-label="Zamknij" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+            <details class="sta-konfig-sekcja" open><summary>Wykonawca i kanał</summary>
+              <div class="sta-konfig-pole"><label>Wykonawca polecenia</label><span class="dn-plakietka dn-plakietka--rola">Executor 2 — Backend</span></div>
+              <div class="sta-konfig-pole"><label>Kanał modelu</label><span class="pt-mono">Fable 5</span></div>
+            </details>
+            <details class="sta-konfig-sekcja"><summary>Powiązania modułu</summary>
+              <div class="sta-konfig-pole"><label>Design — zasoby wizualne</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Powiązanie z Design" aria-pressed="true" role="switch" aria-checked="true"></button></div>
+              <div class="sta-konfig-pole"><label>MultitaskingAI — Executor 1/2</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Powiązanie z MultitaskingAI" aria-pressed="true" role="switch" aria-checked="true"></button></div>
+            </details>
+          </div>
+
+          <div class="sta-kom-naglowek">
+            <span class="sta-kom-pole"><span>Środowisko</span><b>WorkSpace</b></span>
+            <span class="sta-kom-pole"><span>Model</span><b class="dane">Fable 5</b></span>
+            <span class="sta-kom-pole"><span>Wykonawca</span><b class="dane">Executor 2</b></span>
+            <span class="sta-kom-stan"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> pracuje</span></span>
+          </div>
+
+          <div class="sta-kom-kontekst" aria-label="Kontekst">
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg>@architektura: Portal klienta<button class="odepnij" aria-label="Odepnij">×</button></span>
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6"/></svg>api/zamowienia.js<button class="odepnij" aria-label="Odepnij">×</button></span>
+          </div>
+
+          <div class="sta-kom-historia">
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">14:02</span></div><div class="sta-wpis-tresc">Dodaj endpoint GET /zamowienia z paginacją i filtrem po statusie. Zsynchronizuj z kontraktem API w Architecture Designer.</div></div></article>
+            <article class="sta-wpis sta-wpis--system"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h8"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Generowanie kodu usługi</span><span class="dn-plakietka">Backend Workspace</span><span class="sta-wpis-godzina">3 s</span></div><div class="sta-wpis-tresc">GET /zamowienia — router + kontroler + walidator zapytania</div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">14:03</span></div><div class="sta-wpis-tresc">Utworzyłem trasę <mark>GET /zamowienia</mark> z parametrami <code>strona</code>, <code>rozmiar</code>, <code>status</code>. Kontrakt zgodny z Architecture Designer; test zapytania w Backend Workspace zwrócił 200 OK. Frontend Workspace może już konsumować odpowiedź w widoku listy.</div></div></article>
+          </div>
+
+          <div class="sta-kom-monitor"><span class="pt-tetno" aria-hidden="true"></span> Backend: kompilacja usług · Frontend: podgląd na żywo — dwa równoległe wskaźniki</div>
+
+          <!-- OBSZAR POLECENIA -->
+          <div class="sta-kom-dol">
+            <div class="sta-kontekst-akcji">
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>Ten komputer</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>portal-klienta</span>
+              <span class="sta-chip">claude/api-zamowienia</span>
+              <span class="sta-chip">worktree</span>
+              <span class="sta-chip sta-chip--diff"><span class="plus">+318</span> <span class="minus">−74</span></span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatwierdź zmiany</button>
+            </div>
+
+            <form class="sta-prompt" onsubmit="return false;">
+              <span class="sta-prompt-grot" aria-hidden="true">»»</span>
+              <textarea class="sta-prompt-obszar" rows="1" placeholder="Opisz zadanie lub zadaj pytanie…  @ odwołuje do komponentu / pliku" aria-label="Pole polecenia"></textarea>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm sta-prompt-wyslij" type="submit" aria-label="Do kolejki"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+            </form>
+
+            <div class="sta-sterowanie">
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--tryb" type="button" data-popover="pop-tryb-upr" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Z pominięciem zgód<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-tryb-upr" hidden>
+                  <div class="sta-popover-tytul">Tryb uprawnień</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Ręczny</span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przyjmij zmiany</span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Plan</span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Auto</span><span class="pt-mono">4</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Z pominięciem zgód</b><small>domyślny — zero blokad</small></span><span class="pt-mono">5</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-plus" aria-expanded="false" aria-label="Dodaj" title="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <div class="sta-popover" id="pop-plus" hidden>
+                  <div class="sta-popover-tytul">Dodaj do polecenia</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Zasób z modułu Design</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-mik" aria-expanded="false" aria-label="Mikrofon" title="Mikrofon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+                <div class="sta-popover" id="pop-mik" hidden>
+                  <div class="sta-popover-tytul">Mikrofon</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
+                </div>
+              </div>
+              <span class="rozciag"></span>
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--model" type="button" data-popover="pop-model" aria-expanded="false">Fable 5<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-model" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Model</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Fable 5</b><small>do najtrudniejszych wyzwań</small></span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Opus 5<small>do złożonych zadań</small></span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Sonnet 5<small>najwydajniejszy na co dzień</small></span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Haiku 4.5<small>najszybszy do prostych pytań</small></span><span class="pt-mono">4</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-chip" type="button" data-popover="pop-wysilek" aria-expanded="false">Ultra<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-wysilek" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Wysiłek — Ultra</div>
+                  <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
+                  <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
+                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację Executor 1 / Executor 2.</p>
+                </div>
+              </div>
+              <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="sta-chip--glowny sta-prompt-wyslij" type="button">↑ Do kolejki</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── PRAWA: Product Builder (wiodące) + panele ── -->
+      <div class="sta-robocza sta-panele-siatka" data-uklad="siatka" style="grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr)">
+
+        <!-- Product Builder — WIODĄCE, pełna szerokość -->
+        <section class="sta-okno" id="panel-builder" data-nazwa="Product Builder" style="grid-column:1 / -1">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><b>Product Builder — Portal klienta</b></span><span class="dn-plakietka dn-plakietka--sygnal">W budowie</span><span class="sta-okno-akcje">
+            <button class="dn-btn-ikona" type="button" data-konfig-okno="konfig-builder" aria-expanded="false" aria-label="Konfiguracja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82M4.6 9A1.65 1.65 0 0 0 4.5 11"/></svg></button>
+            <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-konfig" id="konfig-builder" hidden>
+            <div class="sta-konfig-belka"><b>Konfiguracja — Product Builder</b><button class="dn-btn-ikona" type="button" data-konfig-zamknij aria-label="Zamknij" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+            <details class="sta-konfig-sekcja" open><summary>Metadane produktu</summary>
+              <div class="sta-konfig-pole"><label>Platformy docelowe</label><span class="pt-mono">web · desktop</span></div>
+              <div class="sta-konfig-pole"><label>Repozytorium</label><span class="pt-mono">danaco/portal-klienta</span></div>
+            </details>
+          </div>
+          <div class="sta-okno-tresc pb-kanwa">
+            <div class="pb-naglowek">
+              <h2>Portal klienta</h2>
+              <span class="dn-plakietka">web</span><span class="dn-plakietka">desktop</span>
+              <span class="pt-mono" style="margin-left:auto;color:var(--dn-tekst-3)">danaco/portal-klienta</span>
+            </div>
+
+            <!-- Tracker etapów -->
+            <div class="pb-tracker" role="group" aria-label="Etapy budowy produktu">
+              <button class="pb-etap" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Architektura</button>
+              <svg class="pb-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              <button class="pb-etap" type="button" aria-current="step"><span class="pt-tetno" aria-hidden="true"></span>Frontend / Backend</button>
+              <svg class="pb-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              <button class="pb-etap" type="button"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>Wdrożenie</button>
+            </div>
+
+            <!-- Panel kondycji -->
+            <div class="pb-kondycja">
+              <div class="pb-metryka"><div class="etyk">Otwarte zadania</div><div class="liczba">8</div></div>
+              <div class="pb-metryka"><div class="etyk">Błędy budowania</div><div class="liczba">0</div></div>
+              <div class="pb-metryka"><div class="etyk">Ostatnie wdrożenie</div><div class="liczba" style="font-size:var(--dn-fs-md)">v1.2.0</div></div>
+              <div class="pb-metryka"><div class="etyk">Dostępność</div><div class="liczba" style="font-size:var(--dn-fs-md)">99,98%</div></div>
+            </div>
+
+            <!-- Kafle nawigacji do okien -->
+            <div>
+              <p class="pb-sekcja-tyt">Okna modułu</p>
+              <div class="pb-kafle">
+                <button class="pb-kafel" type="button" data-skok="panel-architektura"><span class="tyt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M10 6.5h4a2 2 0 0 1 2 2V14"/></svg>Architecture Designer</span><span class="op">architektura zatwierdzona</span></button>
+                <button class="pb-kafel" type="button" data-skok="panel-frontend"><span class="tyt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18"/></svg>Frontend Workspace</span><span class="op">3 zadania · Executor 1</span></button>
+                <button class="pb-kafel" type="button" data-skok="panel-backend"><span class="tyt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg>Backend Workspace</span><span class="op">5 zadań · Executor 2</span></button>
+                <button class="pb-kafel" type="button" data-skok="panel-deployment"><span class="tyt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7l9 5 9-5z"/><path d="m3 12 9 5 9-5"/></svg>Deployment Panel</span><span class="op">v1.2.0 na produkcji</span></button>
+              </div>
+            </div>
+
+            <!-- Kamienie milowe -->
+            <div>
+              <p class="pb-sekcja-tyt">Kamienie milowe</p>
+              <div class="pb-lista">
+                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Architektura i kontrakt API <span class="meta">✓ 30 lip</span></div>
+                <div class="pb-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Warstwa zamówień — frontend + backend <span class="meta">▶ 18 sie</span></div>
+                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Wdrożenie produkcyjne v1.3 <span class="meta">○ 28 sie</span></div>
+              </div>
+            </div>
+
+            <!-- Wykonawcy + Dziennik wydań -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--dn-od-3)">
+              <div>
+                <p class="pb-sekcja-tyt">Przypisanie wykonawców</p>
+                <div class="pb-lista">
+                  <div class="pb-wiersz">Frontend Workspace <span class="dn-plakietka dn-plakietka--rola meta">Executor 1</span></div>
+                  <div class="pb-wiersz">Backend Workspace <span class="dn-plakietka dn-plakietka--rola meta">Executor 2</span></div>
+                  <div class="pb-wiersz">Kontrola jakości <span class="dn-plakietka meta">Executor 3 / Validator</span></div>
+                </div>
+              </div>
+              <div>
+                <p class="pb-sekcja-tyt">Dziennik wydań</p>
+                <div class="pb-lista">
+                  <div class="pb-wiersz">v1.2.0 — endpointy zamówień <span class="meta">05 sie</span></div>
+                  <div class="pb-wiersz">v1.1.3 — poprawki logowania <span class="meta">29 lip</span></div>
+                  <div class="pb-wiersz">v1.1.2 — szkielet interfejsu <span class="meta">22 lip</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Architecture Designer — diagram SVG -->
+        <section class="sta-okno" id="panel-architektura" data-nazwa="Architecture Designer">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><path d="M10 6.5h4a2 2 0 0 1 2 2V14"/></svg><b>Architecture Designer</b></span><span class="sta-okno-akcje">
+            <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Walidacja: komponent „Integracja zewnętrzna” bez połączenia zwrotnego — ostrzeżenie, nie blokuje pracy." data-komunikat-tytul="Walidacja architektury">Waliduj</button>
+            <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="padding:var(--dn-od-2)">
+            <svg class="ad-diagram" viewBox="0 0 360 220" role="img" aria-label="Diagram komponentów: Frontend, Backend, Baza danych, Integracja zewnętrzna">
+              <defs><marker id="grot" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0l8 4-8 4z" fill="var(--dn-tekst-3)"/></marker></defs>
+              <rect class="wezel" x="12" y="20" width="90" height="46" rx="6"/><text x="57" y="40" text-anchor="middle">Frontend</text><text x="57" y="55" text-anchor="middle" fill="var(--dn-tekst-3)">React</text>
+              <rect class="wezel" x="135" y="20" width="90" height="46" rx="6"/><text x="180" y="40" text-anchor="middle">Backend</text><text x="180" y="55" text-anchor="middle" fill="var(--dn-tekst-3)">Node.js</text>
+              <rect class="wezel" x="258" y="20" width="90" height="46" rx="6"/><text x="303" y="40" text-anchor="middle">Baza danych</text><text x="303" y="55" text-anchor="middle" fill="var(--dn-tekst-3)">PostgreSQL</text>
+              <rect class="wezel wezel-blad" x="135" y="140" width="90" height="46" rx="6"/><text x="180" y="160" text-anchor="middle">Integracja</text><text x="180" y="175" text-anchor="middle" fill="var(--dn-tekst-3)">zewnętrzna</text>
+              <line class="linia" x1="102" y1="43" x2="133" y2="43"/><text class="api" x="118" y="36" text-anchor="middle">API</text>
+              <line class="linia" x1="225" y1="43" x2="256" y2="43"/>
+              <line class="linia" x1="180" y1="66" x2="180" y2="138"/>
+            </svg>
+            <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap;margin-top:var(--dn-od-2)">
+              <span class="dn-plakietka">Szablon: monolit</span>
+              <span class="dn-plakietka dn-plakietka--ostrzezenie">1 komponent bez połączenia</span>
+              <span class="dn-plakietka">wersja diagramu: 4</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Frontend Workspace -->
+        <section class="sta-okno" id="panel-frontend" data-nazwa="Frontend Workspace">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 8h18"/></svg><b>Frontend Workspace</b></span><span class="dn-plakietka dn-plakietka--rola">Executor 1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="padding:var(--dn-od-2)">
+            <div style="display:flex;align-items:center;gap:var(--dn-od-2);flex-wrap:wrap">
+              <span class="pt-etykieta">Podgląd na żywo</span>
+              <div class="respo" role="group" aria-label="Podgląd responsywny" style="margin-left:auto">
+                <button type="button" data-respo="100%" aria-pressed="true" aria-label="Desktop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg></button>
+                <button type="button" data-respo="55%" aria-pressed="false" aria-label="Tablet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/></svg></button>
+                <button type="button" data-respo="35%" aria-pressed="false" aria-label="Telefon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></button>
+              </div>
+            </div>
+            <div class="podglad-ramka" data-podglad style="max-width:100%">Widok listy zamówień · hot reload</div>
+            <div class="kod-blok" style="margin-top:var(--dn-od-2)">// ListaZamowien.jsx
+const { dane } = usePobierz('/zamowienia?strona=1');
+return &lt;Tabela wiersze={dane} /&gt;;</div>
+            <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap;margin-top:var(--dn-od-2)">
+              <span class="dn-plakietka dn-plakietka--sukces">Build: 0 błędów</span>
+              <span class="dn-plakietka dn-plakietka--ostrzezenie">2 ostrzeżenia lintera</span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Otwiera Assets Panel modułu Design." data-komunikat-tytul="Zasoby Design">Zasoby z Design</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Backend Workspace -->
+        <section class="sta-okno" id="panel-backend" data-nazwa="Backend Workspace" data-stan="pracuje">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg><b>Backend Workspace</b></span><span class="dn-plakietka dn-plakietka--rola">Executor 2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <p class="pb-sekcja-tyt">Punkty końcowe API</p>
+            <div class="panel-wiersz"><span class="metoda metoda--get">GET</span> /zamowienia <span class="dn-plakietka dn-plakietka--sukces meta">200</span></div>
+            <div class="panel-wiersz"><span class="metoda metoda--post">POST</span> /klienci <span class="dn-plakietka dn-plakietka--sukces meta">201</span></div>
+            <div class="panel-wiersz"><span class="metoda metoda--get">GET</span> /zamowienia/:id <span class="pt-tetno meta" aria-hidden="true"></span></div>
+            <div class="kod-blok">$ curl /zamowienia?status=nowe
+&lt; 200 OK · 41 ms · 12 rekordów</div>
+            <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap">
+              <span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> kompilacja usług</span>
+              <span class="dn-plakietka">schemat: 6 tabel</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Deployment Panel -->
+        <section class="sta-okno" id="panel-deployment" data-nazwa="Deployment Panel" style="grid-column:1 / -1">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7l9 5 9-5z"/><path d="m3 12 9 5 9-5"/></svg><b>Deployment Panel</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="padding:var(--dn-od-2)">
+            <div style="display:flex;align-items:center;gap:var(--dn-od-2);flex-wrap:wrap">
+              <label class="dn-wybor" style="min-width:160px"><select aria-label="Środowisko"><option>produkcja</option><option>staging</option><option>deweloperskie</option></select></label>
+              <span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> aktywne · v1.2.0 · uptime 99,98%</span>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" style="margin-left:auto" data-komunikat="Wdrożenie uruchomione — podgląd logów na żywo." data-komunikat-tytul="Deployment">Wdróż</button>
+            </div>
+            <p class="pb-sekcja-tyt" style="margin-top:var(--dn-od-3)">Historia wdrożeń</p>
+            <table class="dn-tabela"><tbody>
+              <tr><td class="pt-mono">v1.2.0</td><td>2026-08-05 14:20</td><td><span class="dn-plakietka dn-plakietka--sukces">sukces</span></td><td><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-komunikat="Rollback wykonany od razu; potwierdzenie opcjonalne. Dostępne „Cofnij tę zmianę”." data-komunikat-tytul="Cofnięcie wdrożenia">Cofnij do tej wersji</button></td></tr>
+              <tr><td class="pt-mono">v1.1.3</td><td>2026-07-29 09:05</td><td><span class="dn-plakietka dn-plakietka--sukces">sukces</span></td><td><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Cofnij do tej wersji</button></td></tr>
+              <tr><td class="pt-mono">v1.1.2</td><td>2026-07-22 11:40</td><td><span class="dn-plakietka dn-plakietka--blad">błąd</span></td><td><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">log</button></td></tr>
+            </tbody></table>
+            <div style="display:flex;gap:var(--dn-od-3);flex-wrap:wrap;margin-top:var(--dn-od-2)">
+              <label class="dn-radio"><input type="radio" name="strategia"> natychmiastowa</label>
+              <label class="dn-radio"><input type="radio" name="strategia" checked> etapowa (staged)</label>
+              <label class="dn-radio"><input type="radio" name="strategia"> blue-green</label>
+            </div>
+          </div>
+        </section>
+
+        <!-- Plan (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="pt-etykieta">Zlecenie: warstwa zamówień</div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Kontrakt API zamówień <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Endpoint GET /zamowienia <span class="meta">▶</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Widok listy — frontend <span class="meta">○</span></div>
+          </div>
+        </section>
+
+        <!-- Zadania w tle (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>build-frontendu</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+            <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> testy backendu <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+          </div>
+        </section>
+
+        <!-- Terminal (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-terminal" data-nazwa="Terminal" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg><b>Terminal</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc pt-konsola"><span class="pt-znak-zachety">PS C:\portal-klienta></span> npm run build
+<span class="pt-komentarz"># kompilacja warstwy frontendowej…</span>
+<span class="pt-wynik-ok">build zakończony (2,1 s) — 0 błędów</span>
+<span class="pt-znak-zachety">PS C:\portal-klienta></span> <span class="pt-tetno" aria-hidden="true"></span></div>
+        </section>
+
+        <!-- Pliki (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz">api/zamowienia.js <span class="meta">+142 −18</span></div>
+            <div class="panel-wiersz">ui/ListaZamowien.jsx <span class="meta">+96 −12</span></div>
+            <div class="panel-wiersz">db/migracje/006.sql <span class="meta">+34</span></div>
+          </div>
+        </section>
+
+      </div><!-- /sta-robocza -->
+    </div><!-- /sta-obszar -->
+  </div><!-- /sta-cialo -->
+</div><!-- /sta-powloka -->
+
+<details class="pt-o-opracowaniu">
+  <summary>O tym oknie — Moduł Apps (Danaco Console)</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Co przedstawia</h4>
+    <ul>
+      <li>Pełne stanowisko modułu <b>Apps</b> w warstwie stanowiska v2.1 (monochrom + kropka sygnału).</li>
+      <li>Okno wiodące: <b>Product Builder</b> (tracker etapów, panel kondycji, kafle nawigacji, kamienie milowe, wykonawcy, dziennik wydań).</li>
+      <li>Dokowane panele: <b>Architecture Designer</b> (diagram SVG komponentów + walidacja), <b>Frontend Workspace</b> (podgląd responsywny + build), <b>Backend Workspace</b> (punkty końcowe API + konstruktor zapytań), <b>Deployment Panel</b> (środowisko, historia wdrożeń, strategia).</li>
+      <li><b>Chat Window</b> z pełnym obszarem polecenia: pasek kontekstu (Ten komputer · projekt · repo · worktree · diff · Zatwierdź zmiany) i wiersz sterowania (tryb uprawnień „Z pominięciem zgód”, „+”, mikrofon, model Fable 5, wysiłek Ultra, nagrywanie, ↑ Do kolejki).</li>
+      <li>Panele uniwersalne (ukryte, w menu „⋮”): Plan, Zadania w tle, Terminal, Pliki.</li>
+    </ul>
+    <h4>Do wypróbowania</h4>
+    <ul>
+      <li>Tryby Work/Code, hamburger, menu konta, „⋮ → Panele” (pokaż/ukryj), filtr szyny.</li>
+      <li>Kafle Product Buildera przewijają do właściwego okna; tracker etapów, przełącznik podglądu responsywnego we Frontend Workspace.</li>
+      <li>Chipy obszaru polecenia (tryb uprawnień, „+”, model, wysiłek), konfiguracja per okno (koło zębate), zamknięcie panelu „×” i przywrócenie z paska kart.</li>
+    </ul>
+    <h4>Źródło</h4>
+    <ul><li><code>dok/projekt-ui/moduly/apps.md</code> · KANON aneks v2.1 (rozdz. 15) · <code>WZORZEC-STANOWISKA.html</code></li></ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+(function(){
+  /* Tryby Talk/Work/Code */
+  document.querySelectorAll('[data-srod]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-srod]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+      if(window.dnToast) window.dnToast('Tryb: '+b.textContent,'Obszar polecenia i panele dostrojone do trybu','informacja');
+    });
+  });
+  /* Panele z menu „⋮" i hamburgera */
+  document.querySelectorAll('[data-panel-toggle]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.getAttribute('data-panel-toggle')); if(!el) return;
+      el.hidden=!el.hidden; b.setAttribute('aria-checked',el.hidden?'false':'true');
+    });
+  });
+  /* Kafle Product Buildera — skok do panelu */
+  document.querySelectorAll('[data-skok]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.getAttribute('data-skok')); if(!el) return;
+      el.hidden=false; el.setAttribute('data-aktywne','tak');
+      el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    });
+  });
+  /* Podgląd responsywny */
+  document.querySelectorAll('[data-respo]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var grupa=b.parentElement;
+      grupa.querySelectorAll('[data-respo]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+      var ramka=b.closest('.sta-okno-tresc').querySelector('[data-podglad]');
+      if(ramka) ramka.style.maxWidth=b.getAttribute('data-respo');
+    });
+  });
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

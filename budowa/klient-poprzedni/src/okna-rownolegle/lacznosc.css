@@ -1,0 +1,57 @@
+/* ============================================================================
+   DANACO CONSOLE — ŁĄCZNOŚĆ W OKNIE ROBOCZYM
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: plakietka łączności stojąca w nagłówku gniazda.
+   Kropka, plakietka i spinner pochodzą z biblioteki (`komponenty/plakietka.css`,
+   `komponenty/spinner.css`) — tutaj stoi wyłącznie to, czego biblioteka nie
+   niesie: miejsce plakietki w nagłówku i rozmiar przycisku „Ponów teraz".
+
+   Bez barw własnych i bez nowych żetonów.
+   ============================================================================ */
+
+.dn-okna__lacznosc {
+  flex: none;
+  gap: var(--dn-od-1);
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dn-okna__lacznosc[hidden] {
+  display: none;
+}
+
+/* Napis kurczy się przed plakietką: przy wąskim gnieździe ma zniknąć ogon
+   („w kolejce 3"), a nie cała informacja o stanie łącza. */
+.dn-okna__lacznosc-napis {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Spinner w plakietce ma rozmiar kropki, którą zastępuje — inaczej plakietka
+   podskakiwałaby przy każdym przejściu w stan „w toku". */
+.dn-okna__lacznosc-wskaznik {
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  flex: none;
+}
+
+.dn-okna__lacznosc-wskaznik[hidden] {
+  display: none;
+}
+
+/* Czynność wewnątrz plakietki: cel dotykowy tak duży, jak pozwala pigułka,
+   bez rozpychania nagłówka. Barwę bierze z plakietki, czyli ze stanu. */
+.dn-okna__lacznosc-ponow {
+  width: var(--dn-od-5);
+  height: var(--dn-od-5);
+  flex: none;
+  margin-right: calc(-1 * var(--dn-od-1));
+  border-radius: var(--dn-r-pill);
+  color: inherit;
+}
+
+.dn-okna__lacznosc-ponow[hidden] {
+  display: none;
+}

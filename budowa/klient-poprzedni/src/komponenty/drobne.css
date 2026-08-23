@@ -1,0 +1,202 @@
+/* ============================================================================
+   DANACO CONSOLE — DROBNE: DYMEK · AWATAR · SPINNER · PUSTY STAN ·
+                    POLE PROMPTU · ALWAYS ON DISPLAY
+   ----------------------------------------------------------------------------
+   Dymek stoi na atramencie ramy w obu motywach (`--dn-rama`) — objaśnienie
+   należy do ramy kokpitu, nie do powierzchni treści.
+   Klatki `dn-obrot` definiuje ten arkusz (spinner) — używa ich także przycisk
+   w stanie ładowania. Klatki `dn-tetno` definiuje `plakietka.css`.
+   ============================================================================ */
+
+/* --- DYMEK OBJAŚNIENIA (tooltip) ----------------------------------------- */
+.dn-tooltip { position: relative; display: inline-flex; }
+.dn-tooltip-tresc {
+  position: absolute;
+  bottom: calc(100% + var(--dn-od-2));
+  left: 50%;
+  z-index: var(--dn-z-tooltip);
+  max-width: 260px;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  box-shadow: var(--dn-cien-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, var(--dn-od-1));
+  transition:
+    opacity var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease),
+    visibility var(--dn-czas-2) var(--dn-ease);
+  pointer-events: none;
+}
+.dn-tooltip:hover .dn-tooltip-tresc,
+.dn-tooltip:focus-within .dn-tooltip-tresc {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* --- AWATAR · SPINNER · PUSTY STAN --------------------------------------- */
+.dn-awatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-awatar);
+  height: var(--dn-wym-awatar);
+  flex: none;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-grad-atrament);
+  color: var(--dn-szary-100);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  overflow: hidden;
+}
+.dn-awatar--sm { width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm); font-size: var(--dn-fs-xs); }
+/* Bez odbiorcy w produkcie: żaden znacznik nie nosi tych dwóch klas — układ
+   sięga wyłącznie po --sm i --inteligencja. */
+.dn-awatar--lg { width: var(--dn-wym-awatar-lg); height: var(--dn-wym-awatar-lg); font-size: var(--dn-fs-md); }
+.dn-awatar--kwadrat { border-radius: var(--dn-r-sm); }
+/* jednostka inteligencji (agent/model) — rdzeń sygnałowy */
+.dn-awatar--inteligencja { background: var(--dn-grad-sygnal); color: var(--dn-szary-0); }
+.dn-awatar-stan {
+  position: absolute;
+  right: -1px; bottom: -1px;
+  width: 8px; height: 8px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sukces-tekst);
+  box-shadow: 0 0 0 2px var(--dn-powierzchnia);
+}
+
+.dn-spinner {
+  display: inline-block;
+  width: var(--dn-wym-spinner);
+  height: var(--dn-wym-spinner);
+  flex: none;
+  border: 2px solid var(--dn-obrys-mocny);
+  border-top-color: var(--dn-sygnal-wypelnienie);
+  border-radius: var(--dn-r-pill);
+  animation: dn-obrot 0.8s linear infinite;
+}
+@keyframes dn-obrot { to { transform: rotate(360deg); } }
+
+.dn-pusty-stan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-10) var(--dn-od-5);
+  text-align: center;
+  color: var(--dn-tekst-3);
+}
+.dn-pusty-stan > svg { width: 28px; height: 28px; }
+/* Stan pusty ma jedną formę: ikona, tytuł 13 px półgrubą, opis 12 px. Moduły
+   nie nadpisują jej własnymi wariantami.
+   Tytuł idzie stopniem --dn-fs-base, nie --dn-fs-lg: --dn-fs-base jako jedyny
+   jest przestawiany przez gęstość przestronną (motyw/wymiary.css, 13 px →
+   14 px), więc tytuł stanu pustego idzie za gęstością zamiast stać w miejscu,
+   i nie waży w układzie tyle, co nagłówek okna nad nim. */
+.dn-pusty-stan-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst-2);
+}
+.dn-pusty-stan-opis { max-width: 40ch; font-size: var(--dn-fs-sm); }
+
+/* --- POLE WPISYWANIA PROMPTU — grot ❯ jako sygnatura wejścia ------------- */
+.dn-prompt {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: end;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  transition: border-color var(--dn-czas-2) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.dn-prompt:focus-within {
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+.dn-prompt-grot {
+  align-self: start;
+  padding: var(--dn-od-2) 0 0 var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-kropka);
+  user-select: none;
+}
+.dn-prompt-obszar {
+  min-height: 40px;
+  max-height: 160px;
+  padding: var(--dn-od-2) 0;
+  border: none;
+  background: transparent;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-md);
+  line-height: var(--dn-lh-bazowy);
+  resize: none;
+}
+.dn-prompt-obszar:focus { outline: none; }
+.dn-prompt-obszar::placeholder { color: var(--dn-tekst-3); }
+
+/* Wariant zwarty — para okien koordynator/wykonawca. Zwarcie jest
+   modyfikatorem, a nie selektorem potomka od obudowy: pole wpisywania samo
+   wie, że jest zwarte, i nie zależy od tego, kto je otacza.
+   Górna granica 160 px zostaje — zwęża się wejście, nie zakres rozrostu. */
+.dn-prompt--zwarty { padding: var(--dn-od-1); }
+.dn-prompt--zwarty .dn-prompt-obszar { min-height: 28px; }
+
+/* Przybornik promptu — załączniki, biblioteka, agent, model… */
+.dn-przybornik {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex-wrap: wrap;
+}
+
+/* --- ALWAYS ON DISPLAY — pływający awatar -------------------------------- */
+/* Czeka na widok: `strona-glowna/pozycje-ustawien.ts` niesie pozycję listwy
+   ustawień `kod: 'aod'`, ale ta pozycja, jak i `mobile`, nie ma okna —
+   listwa renderuje ją przyciskiem duch bez treści za nim. */
+.dn-aod {
+  position: fixed;
+  right: var(--dn-od-5);
+  bottom: var(--dn-od-5);
+  z-index: var(--dn-z-aod);
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-4) var(--dn-od-2) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-panel);
+  box-shadow: var(--dn-cien-3);
+}
+.dn-aod-rdzen {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-grad-sygnal);
+  color: var(--dn-szary-0);
+}
+.dn-aod-rdzen::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid var(--dn-sygnal-obrys);
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+.dn-aod-tresc { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); max-width: 36ch; }
+.dn-aod-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }

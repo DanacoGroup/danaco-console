@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Ustawienia (poziom aplikacji, warstwa stanowiska v2)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  /* ══════════════════════════════════════════════════════════════════════════
+     STYLE LOKALNE — Okno Ustawień (okno globalne poziomu aplikacji).
+     Warstwa stanowiska v2: powłoka .sta-powloka + pasek (hamburger · TRYBY ·
+     konto support@danaco-core.pl). Ustawienia to okno globalne, NIE warsztat —
+     świadomie NIE używa .sta-obszar (czaty + panele); zamiast tego własne
+     płótno dwupanelowe: nawigacja sekcji (lewy) + zawartość sekcji (prawy),
+     wg makiety źródła (rozdz. 2.1). Wyłącznie żetony var(--dn-*). Oba motywy.
+     Źródło: dok/projekt-ui/okna/ustawienia.md · KANON ANEKS v2.1 r.15 ·
+     WZORZEC-STANOWISKA.html.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  .us-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+  .us-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+  .us-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); }
+
+  /* ── płótno Ustawień (zamiast .sta-obszar) ──────────────────────────────── */
+  .us-plotno {
+    min-height: 0; overflow: hidden; background: var(--dn-tlo);
+    display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr);
+  }
+
+  /* ── PASMO ROZGRANICZENIA „Ustawienia ↔ Konfiguracja" (rozdz. 1.1) ───────── */
+  .us-rozgraniczenie {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid var(--dn-obrys-subtelny);
+    background: var(--dn-powierzchnia-2);
+  }
+  .us-rozgraniczenie > summary {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    min-height: var(--dn-wym-kontrolka); padding: 0 var(--dn-od-4);
+    cursor: pointer; list-style: none;
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-2);
+  }
+  .us-rozgraniczenie > summary::-webkit-details-marker { display: none; }
+  .us-rozgraniczenie > summary:hover { color: var(--dn-tekst); background: var(--dn-hover); }
+  .us-rozgraniczenie[open] > summary { color: var(--dn-tekst); border-bottom: 1px solid var(--dn-obrys-subtelny); }
+  .us-rozgraniczenie-tresc { padding: var(--dn-od-4); display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .us-rozg-kolumna {
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+    line-height: var(--dn-lh-luzny);
+  }
+  .us-rozg-kolumna h4 { margin: 0 0 var(--dn-od-1); font-size: var(--dn-fs-base); color: var(--dn-tekst); }
+  .us-rozg-kolumna--tu { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+
+  /* ── NAWIGACJA SEKCJI (panel lewy, wąski) ───────────────────────────────── */
+  .us-nawigacja {
+    min-height: 0; overflow: auto;
+    border-right: 1px solid var(--dn-obrys);
+    background: var(--dn-panel);
+    padding: var(--dn-od-3) var(--dn-od-2);
+    display: flex; flex-direction: column; gap: var(--dn-od-1);
+  }
+  .us-nawigacja-etyk {
+    padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-1);
+    font-family: var(--dn-ff-mono); font-size: 10px;
+    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+    color: var(--dn-tekst-3);
+  }
+  .us-nawigacja-poz {
+    display: flex; align-items: center; gap: var(--dn-od-3);
+    min-height: calc(var(--dn-wym-wiersz) + var(--dn-od-1));
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid transparent; border-radius: var(--dn-r-md);
+    background: transparent; color: var(--dn-tekst-2); cursor: pointer;
+    font-family: var(--dn-ff-bazowa); font-size: var(--dn-fs-base); text-align: left;
+    transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+  }
+  .us-nawigacja-poz:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+  .us-nawigacja-poz:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
+  .us-nawigacja-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-3); }
+  .us-nawigacja-kolumna { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .us-nawigacja-poz .podpis {
+    display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-3);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .us-nawigacja-poz[aria-current='true'] {
+    background: var(--dn-powierzchnia); border-color: var(--dn-obrys-mocny); color: var(--dn-tekst);
+  }
+  .us-nawigacja-poz[aria-current='true'] svg { color: var(--dn-tekst); }
+
+  /* ── ZAWARTOŚĆ SEKCJI (panel prawy, główny) ─────────────────────────────── */
+  .us-zawartosc { min-height: 0; overflow: auto; padding: var(--dn-od-6) var(--dn-od-6) var(--dn-od-12); }
+  .us-sekcja { display: none; flex-direction: column; gap: var(--dn-od-5); max-width: 940px; margin: 0 auto; }
+  .us-sekcja[data-aktywna='tak'] { display: flex; }
+  .us-sekcja-glowa {
+    display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap;
+    padding-bottom: var(--dn-od-3); border-bottom: 1px solid var(--dn-obrys-subtelny);
+  }
+  .us-sekcja-tytul {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-2xl);
+    font-weight: var(--dn-fw-polgruba); letter-spacing: var(--dn-ls-naglowek);
+    color: var(--dn-tekst);
+  }
+  .us-sekcja-glowa .us-sekcja-narzedzia { margin-left: auto; display: inline-flex; gap: var(--dn-od-2); align-items: center; }
+  .us-sekcja-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); max-width: 78ch; }
+
+  /* ── pozycja ustawienia ─────────────────────────────────────────────────── */
+  .us-pozycja {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia);
+  }
+  .us-pozycja--pas { flex-direction: row; align-items: center; gap: var(--dn-od-4); flex-wrap: wrap; }
+  .us-pozycja-glowa { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
+  .us-pozycja-glowa .us-prawa { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-2); }
+  .us-etykieta { font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+  .us-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); max-width: 74ch; }
+  .us-opis--drobny { font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+  .us-pole-szer { width: 100%; max-width: 420px; }
+  .us-wiersz { display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap; }
+
+  /* ── objaśnienie kontekstowe [?] (rozdz. 2.3) ───────────────────────────── */
+  .us-pomoc {
+    display: inline-grid; place-content: center; width: 20px; height: 20px; flex: none;
+    padding: 0; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia-2); color: var(--dn-tekst-3); cursor: help;
+  }
+  .us-pomoc:hover { color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
+  .us-pomoc svg { width: 14px; height: 14px; }
+
+  /* ── komunikat blokowy ──────────────────────────────────────────────────── */
+  .us-komunikat {
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-3);
+    padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys); border-left: 2px solid var(--dn-obrys-mocny);
+    border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+    line-height: var(--dn-lh-luzny);
+  }
+  .us-komunikat svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-3); }
+  .us-komunikat b { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+  .us-komunikat--informacja { border-left-color: var(--dn-informacja-tekst); background: var(--dn-informacja-tlo); }
+  .us-komunikat--informacja svg { color: var(--dn-informacja-tekst); }
+  .us-komunikat--ostrzezenie { border-left-color: var(--dn-ostrzezenie-tekst); background: var(--dn-ostrzezenie-tlo); }
+  .us-komunikat--ostrzezenie svg { color: var(--dn-ostrzezenie-tekst); }
+
+  /* ── segmenty (odpowiednik .dn-zakladki--pigulki) ───────────────────────── */
+  .us-segmenty {
+    display: inline-flex; gap: var(--dn-od-1); padding: var(--dn-od-1);
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia-2);
+  }
+  .us-segment {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2)); padding: 0 var(--dn-od-4);
+    border: 1px solid transparent; border-radius: var(--dn-r-pill);
+    background: transparent; color: var(--dn-tekst-2);
+    font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); cursor: pointer;
+    transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+  }
+  .us-segment:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+  .us-segment svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+  .us-segment[aria-checked='true'] {
+    background: var(--dn-powierzchnia); border-color: var(--dn-sygnal-obrys);
+    color: var(--dn-tekst); box-shadow: var(--dn-cien-1);
+  }
+
+  /* ── schematy dokumentacyjne krojem mono ────────────────────────────────── */
+  .us-schemat {
+    margin: 0; padding: var(--dn-od-3) var(--dn-od-4);
+    border: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia-2);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+    line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2);
+    overflow-x: auto; white-space: pre;
+  }
+
+  /* ── tabele sekcji ──────────────────────────────────────────────────────── */
+  .us-tabela-ramka {
+    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+    background: var(--dn-powierzchnia); overflow: auto;
+  }
+  .us-tabela-ramka .dn-tabela th:first-child,
+  .us-tabela-ramka .dn-tabela td:first-child { padding-left: var(--dn-od-4); }
+  .us-akcje-komorka { display: inline-flex; gap: var(--dn-od-1); align-items: center; }
+  .us-urzadzenie { display: inline-flex; align-items: center; gap: var(--dn-od-2); }
+  .us-urzadzenie svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
+
+  /* ── macierz powiadomień ────────────────────────────────────────────────── */
+  .us-macierz td { text-align: left; }
+  .us-macierz th.us-kol-kanal, .us-macierz td.us-kom-kanal { text-align: center; width: 118px; }
+  .us-wygaszona { opacity: .55; }
+
+  /* ── awatar Operatora ───────────────────────────────────────────────────── */
+  .us-awatar-blok { display: flex; align-items: center; gap: var(--dn-od-4); flex-wrap: wrap; }
+  .us-awatar-duzy {
+    width: 56px; height: 56px; border-radius: var(--dn-r-pill);
+    display: grid; place-content: center; flex: none;
+    background: var(--dn-grad-atrament); color: var(--dn-szary-100);
+    font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl);
+    font-weight: var(--dn-fw-polgruba);
+  }
+
+  /* ── kod parowania i rysunek kodu QR ────────────────────────────────────── */
+  .us-parowanie { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-5); align-items: start; }
+  .us-qr {
+    width: 152px; height: 152px; flex: none; padding: var(--dn-od-2);
+    border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
+    background: var(--dn-powierzchnia); color: var(--dn-tekst);
+  }
+  .us-kod-parowania {
+    display: inline-flex; align-items: center; gap: var(--dn-od-2);
+    padding: var(--dn-od-2) var(--dn-od-3);
+    border: 1px solid var(--dn-sygnal-obrys); border-radius: var(--dn-r-sm);
+    background: var(--dn-sygnal-tlo);
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-lg);
+    letter-spacing: var(--dn-ls-mono-wersaliki); color: var(--dn-tekst);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── nawiązania AOD/Mobile ──────────────────────────────────────────────── */
+  .us-nawiazania { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .us-nawiazanie {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-4); border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg);
+    background: var(--dn-powierzchnia);
+  }
+  .us-nawiazanie-glowa { display: flex; align-items: center; gap: var(--dn-od-2); }
+  .us-nawiazanie-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
+  .us-nawiazanie-glowa b { font-size: var(--dn-fs-base); color: var(--dn-tekst); }
+
+  /* ── responsywność ──────────────────────────────────────────────────────── */
+  @media (max-width: 1000px) {
+    .us-plotno { grid-template-columns: minmax(0, 1fr); grid-auto-rows: min-content minmax(0, 1fr); }
+    .us-nawigacja { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--dn-obrys); }
+    .us-nawigacja-etyk { display: none; }
+    .us-rozgraniczenie-tresc, .us-nawiazania { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+<style data-fix-powloka>
+/* Poprawka: okno bez pasma kart — treść wiodąca zajmuje wiersz 1fr powłoki */
+.sta-powloka { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr) !important; }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="PROTOTYP KLIKALNY · v2"
+      data-prototyp-okno="Okno Ustawień — poziom aplikacji (warstwa stanowiska v2)"
+      data-prototyp-zrodlo="okna/ustawienia.md · KANON ANEKS v2.1 r.15 · WZORZEC-STANOWISKA.html">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY: hamburger · TRYBY Talk/Work/Code · konto ═══════════════
+       Ustawienia to okno globalne, lecz noszą ten sam pasek powłoki, aby
+       nawigacja i tryby były spójne z warsztatem (KANON ANEKS v2.1 r.15).   -->
+  <header class="dn-pasek">
+
+    <!-- 1 · HAMBURGER — menu aplikacji -->
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg class="us-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Nawigacja sekcji<span class="skrot">Ctrl+B</span></button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false"><span class="ptaszek">✓</span>Rozgraniczenie z Konfiguracją</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Okno konfiguracji<span class="skrot">Ctrl+,</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../przeplyw/03-centrum-dowodzenia.html" aria-label="Danaco Console — Centrum dowodzenia">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- 0 · TRYBY Talk / Work / Code -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="false">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>Danaco Console</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Ustawienia</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj ustawienia…  Ctrl+K" aria-label="Wyszukiwanie w Ustawieniach" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka" title="Zasięg okna"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Globalne</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+        <svg class="ik-slonce us-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc us-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+
+      <!-- 2 · KONTO -->
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto: support@danaco-core.pl">
+          <svg class="us-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem" data-idz-sekcja="konto">Konto Operatora</button>
+          <button class="sta-menu-poz" role="menuitem" data-idz-sekcja="wyglad">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Okno konfiguracji</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PŁÓTNO USTAWIEŃ (bez .sta-obszar — okno globalne, nie warsztat) ════ -->
+  <main class="us-plotno" id="us-plotno">
+
+    <!-- PASMO ROZGRANICZENIA: Ustawienia ↔ Konfiguracja (rozdz. 1.1) -->
+    <details class="us-rozgraniczenie" id="us-rozgraniczenie">
+      <summary>
+        <svg class="us-ik us-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+        Ustawienia ↔ Konfiguracja — podział zakresów
+      </summary>
+      <div class="us-rozgraniczenie-tresc">
+        <div class="us-rozg-kolumna us-rozg-kolumna--tu">
+          <h4>Ustawienia <span class="dn-plakietka dn-plakietka--sygnal">to okno</span></h4>
+          „Kim jestem w platformie i jak z niej korzystam na moich urządzeniach?” — zakres <b>Aplikacja</b> (rozszerzony): Konto Operatora, Uwierzytelnianie, Wygląd i język, Urządzenia, Powiadomienia, Konta modeli. Zmiany zapisywane natychmiast i rozgłaszane na wszystkie urządzenia.
+        </div>
+        <div class="us-rozg-kolumna">
+          <h4>Konfiguracja <span class="dn-plakietka">okno odrębne</span></h4>
+          „Jak platforma ma się zachowywać podczas pracy?” — dwanaście zakresów: Procesy, Akcje, Zachowanie i Tożsamość modeli, Prompty systemowe, Rozszerzenia, Integracje, Historia, Pamięć, Izolacja, Karty sesji, Komponenty własne. Cztery warstwy: globalna, środowisko, projekt, sesja.
+          <div style="margin-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-otworz-konfiguracje>Otwórz Konfigurację</button></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- NAWIGACJA SEKCJI (panel lewy) -->
+    <nav class="us-nawigacja" id="us-nawigacja" aria-label="Sekcje Ustawień">
+      <div class="us-nawigacja-etyk">Ustawienia · zakres Aplikacja</div>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="konto" aria-current="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Konto</span><span class="podpis">Login · e-mail · hasło</span></span>
+      </button>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="uwierzytelnianie" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Uwierzytelnianie</span><span class="podpis">Metody logowania</span></span>
+      </button>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="wyglad" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Wygląd i język</span><span class="podpis">Motyw · język · gęstość</span></span>
+      </button>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="urzadzenia" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Urządzenia</span><span class="podpis">Wykaz · parowanie Mobile</span></span>
+      </button>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="powiadomienia" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Powiadomienia</span><span class="podpis">Kategorie · kanały</span></span>
+      </button>
+
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="modele" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 6-3 12"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Konta modeli</span><span class="podpis">Kanał CLI · katalogi profili</span></span>
+      </button>
+
+      <div class="us-nawigacja-etyk">Funkcje globalne</div>
+      <button class="us-nawigacja-poz" type="button" role="tab" data-sekcja="nawiazania" aria-current="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+        <span class="us-nawigacja-kolumna"><span>Mobile i AOD</span><span class="podpis">Nawiązania</span></span>
+      </button>
+    </nav>
+
+    <!-- ZAWARTOŚĆ SEKCJI (panel prawy) -->
+    <div class="us-zawartosc">
+
+      <!-- ═══════════ SEKCJA 1 · KONTO OPERATORA ═══════════ -->
+      <section class="us-sekcja" id="sekcja-konto" data-aktywna="tak" role="tabpanel" aria-label="Konto Operatora">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+            Konto Operatora
+          </span>
+          <span class="us-sekcja-narzedzia"><span class="dn-plakietka">jedno konto · wiele urządzeń</span></span>
+        </div>
+        <p class="us-sekcja-opis">Platforma nie jest systemem wielokontowym (Bezpieczeństwo i uwierzytelnianie, rozdz. 3). Sekcja zarządza jedyną encją Konto oraz profilem Operatora. Zmiany zapisują się po stronie serwera i są widoczne na wszystkich urządzeniach.</p>
+
+        <div class="us-pozycja us-pozycja--pas">
+          <div class="us-awatar-blok">
+            <div class="us-awatar-duzy" aria-hidden="true">S</div>
+            <div class="us-wiersz">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zmień awatar</button>
+              <button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Usuń</button>
+              <span class="us-opis--drobny">Inicjał loginu domyślnie; obraz wgrywalny przez Operatora.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Login</span>
+            <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
+          </div>
+          <input class="dn-pole us-pole-szer" type="text" value="support" aria-label="Login">
+          <p class="us-opis--drobny">Nazwa właściciela konta wykorzystywana przy logowaniu. Potwierdzenie bieżącym hasłem jest opcją zabezpieczającą (Uwierzytelnianie) — domyślnie zmiana zapisuje się bez tego kroku.</p>
+        </div>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Adres e-mail uwierzytelniający</span>
+            <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
+            <span class="us-prawa"><span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> potwierdzony</span></span>
+          </div>
+          <input class="dn-pole us-pole-szer" type="email" value="support@danaco-core.pl" aria-label="Adres e-mail uwierzytelniający">
+          <div class="us-wiersz">
+            <button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Wyślij ponownie potwierdzenie</button>
+            <span class="us-opis--drobny">Pełni funkcję weryfikacji, logowania i odzyskiwania konta. Zmiana uruchamia ponowną weryfikację adresu.</span>
+          </div>
+        </div>
+
+        <div class="us-pozycja us-pozycja--pas">
+          <div class="us-pozycja-glowa" style="flex:1">
+            <span class="us-etykieta">Hasło</span>
+            <span class="pt-mono" style="color:var(--dn-tekst-3)">••••••••••</span>
+          </div>
+          <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="us-zmien-haslo">Zmień hasło</button>
+        </div>
+
+        <div class="us-komunikat us-komunikat--informacja">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <div>Konto utworzone: <b>12.03.2026</b> · dane dostępowe (skrót hasła) przechowywane poza bazą danych, zgodnie z zasadą platformy (Bezpieczeństwo, rozdz. 10).</div>
+        </div>
+
+        <div class="us-wiersz" style="justify-content:flex-end">
+          <button class="dn-btn dn-btn--atrament" type="button" data-zapisz>Zapisz zmiany</button>
+        </div>
+      </section>
+
+      <!-- ═══════════ SEKCJA 2 · UWIERZYTELNIANIE ═══════════ -->
+      <section class="us-sekcja" id="sekcja-uwierzytelnianie" role="tabpanel" aria-label="Uwierzytelnianie">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            Uwierzytelnianie
+          </span>
+        </div>
+        <p class="us-sekcja-opis">Operator konfiguruje cztery metody logowania. Żadna, hasło włącznie, nie jest wymuszona — każdą włącza i wyłącza świadomą decyzją. Hasło pozostaje metodą domyślną. Przy próbie wyłączenia ostatniej aktywnej metody sekcja wyświetla ostrzeżenie, nie blokadę (zasada zerowych blokad, rozdz. 1.3).</p>
+
+        <div class="us-pozycja us-pozycja--pas" data-metoda="haslo">
+          <div class="us-nawigacja-kolumna" style="flex:1">
+            <span class="us-etykieta">Login + hasło <span class="dn-plakietka">metoda bazowa</span></span>
+            <span class="us-opis--drobny">Metoda domyślna, aktywna od rejestracji. Zmiana hasła w sekcji Konto.</span>
+          </div>
+          <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" data-metoda-przel aria-label="Login + hasło"></button>
+        </div>
+
+        <div class="us-pozycja us-pozycja--pas" data-metoda="email">
+          <div class="us-nawigacja-kolumna" style="flex:1">
+            <span class="us-etykieta">Adres e-mail jako metoda logowania</span>
+            <span class="us-opis--drobny">support@danaco-core.pl — logowanie kodem jednorazowym wysyłanym na adres uwierzytelniający.</span>
+          </div>
+          <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" data-metoda-przel aria-label="E-mail jako metoda logowania"></button>
+        </div>
+
+        <div class="us-pozycja us-pozycja--pas" data-metoda="pin">
+          <div class="us-nawigacja-kolumna" style="flex:1">
+            <span class="us-etykieta">PIN <span class="dn-plakietka">wyłączony</span></span>
+            <span class="us-opis--drobny">Krótki kod numeryczny do szybkiego potwierdzenia tożsamości na tym urządzeniu. Nie zastępuje hasła — działa niezależnie.</span>
+            <div class="us-wiersz" data-po-wlaczeniu hidden style="margin-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Ustaw PIN</button></div>
+          </div>
+          <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="false" aria-pressed="false" data-metoda-przel aria-label="PIN"></button>
+        </div>
+
+        <div class="us-pozycja us-pozycja--pas" data-metoda="hello">
+          <div class="us-nawigacja-kolumna" style="flex:1">
+            <span class="us-etykieta">Windows Hello <span class="dn-plakietka">wyłączony</span></span>
+            <span class="us-opis--drobny">Wiąże metodę logowania z tym urządzeniem (biometria lub PIN systemowy).</span>
+            <div class="us-wiersz" data-po-wlaczeniu hidden style="margin-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Skonfiguruj w systemie Windows</button></div>
+          </div>
+          <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="false" aria-pressed="false" data-metoda-przel aria-label="Windows Hello"></button>
+        </div>
+
+        <div class="us-komunikat us-komunikat--ostrzezenie" id="us-ostrzezenie-metody" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+          <div>To jedyna aktywna metoda logowania. Jej wyłączenie pozostawi konto bez metody uwierzytelnienia — sekcja tego nie blokuje, lecz ostrzega. Zalecane włączenie innej metody wcześniej.</div>
+        </div>
+
+        <div class="us-komunikat us-komunikat--informacja">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <div><b>Wymóg logowania:</b> wyłączony (faza budowy). To ustawienie okna <b>Konfiguracji</b>, nie Ustawień — pozostaje jednak w pełni dostępne i zmienialne przez Operatora w każdej fazie. <button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-otworz-konfiguracje style="margin-left:var(--dn-od-2)">Zmień w Konfiguracji</button></div>
+        </div>
+      </section>
+
+      <!-- ═══════════ SEKCJA 3 · WYGLĄD I JĘZYK ═══════════ -->
+      <section class="us-sekcja" id="sekcja-wyglad" role="tabpanel" aria-label="Wygląd i język">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+            Wygląd i język
+          </span>
+        </div>
+        <p class="us-sekcja-opis">Motyw i język mają wartość domyślną (motyw systemowy, język polski). Zmiana jest natychmiastowa i widoczna we wszystkich otwartych oknach — bez przeładowania karty sesji.</p>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Motyw wizualny</span>
+            <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
+            <span class="us-prawa"><span class="pt-mono" id="us-motyw-stan">wartość: ciemny</span></span>
+          </div>
+          <div class="us-segmenty" role="radiogroup" aria-label="Motyw wizualny" id="us-motyw">
+            <button class="us-segment" type="button" role="radio" aria-checked="false" data-motyw="light"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>Jasny</button>
+            <button class="us-segment" type="button" role="radio" aria-checked="true" data-motyw="dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>Ciemny</button>
+            <button class="us-segment" type="button" role="radio" aria-checked="false" data-motyw="system"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>Systemowy</button>
+          </div>
+          <p class="us-opis--drobny">Bez wyboru platforma stosuje motyw zgodny z ustawieniem systemu operacyjnego (<code>prefers-color-scheme</code>). Przełączenie działa na żywo i respektuje <code>prefers-reduced-motion</code>.</p>
+        </div>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Język interfejsu</span>
+            <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
+          </div>
+          <select class="dn-pole us-pole-szer" id="us-jezyk" aria-label="Język interfejsu">
+            <option value="pl" selected>Polski</option>
+            <option value="en">English (wkrótce)</option>
+            <option value="de">Deutsch (wkrótce)</option>
+          </select>
+          <p class="us-opis--drobny">Polski jest językiem wbudowanym i domyślnym. Pole jest listą wyboru, aby dodanie kolejnego języka nie wymagało zmiany interfejsu (Architektura, rozdz. 12).</p>
+        </div>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Gęstość interfejsu</span>
+            <button class="us-pomoc" type="button" aria-label="Objaśnienie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3"/><path d="M12 17h.01"/></svg></button>
+            <span class="us-prawa"><span class="pt-mono" id="us-gestosc-stan">wartość: zwarta</span></span>
+          </div>
+          <div class="us-segmenty" role="radiogroup" aria-label="Gęstość interfejsu" id="us-gestosc">
+            <button class="us-segment" type="button" role="radio" aria-checked="true" data-gestosc="zwarta">Zwarta</button>
+            <button class="us-segment" type="button" role="radio" aria-checked="false" data-gestosc="przestronna">Przestronna</button>
+          </div>
+          <p class="us-opis--drobny">Gęstość sterowana atrybutem <code>data-gestosc</code> na elemencie głównym (KANON §2). Przestronna podnosi wysokość kontrolek i wierszy oraz stopień pisma bazowego. Zmiana widoczna natychmiast.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════ SEKCJA 4 · URZĄDZENIA ═══════════ -->
+      <section class="us-sekcja" id="sekcja-urzadzenia" role="tabpanel" aria-label="Urządzenia">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>
+            Urządzenia
+          </span>
+          <span class="us-sekcja-narzedzia"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> Synchronizacja aktywna</span></span>
+        </div>
+        <p class="us-sekcja-opis">Wykaz urządzeń powiązanych z jedynym Kontem. Brak ograniczenia liczby urządzeń; synchronizacja jest właściwością platformy, nie ustawieniem do włączenia. Odłączenie urządzenia unieważnia jego token dostępu.</p>
+
+        <div class="us-tabela-ramka">
+          <table class="dn-tabela us-tabela">
+            <thead>
+              <tr>
+                <th scope="col">Urządzenie</th>
+                <th scope="col">Identyfikator</th>
+                <th scope="col">Ostatnie połączenie</th>
+                <th scope="col">Stan</th>
+                <th scope="col">Akcje</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="us-urzadzenie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>DP-Biuro</span></td>
+                <td class="pt-mono">a1f·9c20</td>
+                <td>teraz</td>
+                <td><span class="dn-plakietka dn-plakietka--sygnal">to urządzenie</span></td>
+                <td><span class="us-akcje-komorka"><span class="us-opis--drobny">bieżące</span></span></td>
+              </tr>
+              <tr>
+                <td><span class="us-urzadzenie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>iPhone Dariusz</span></td>
+                <td class="pt-mono">b7e·4410</td>
+                <td>dziś 08:12</td>
+                <td><span class="dn-plakietka dn-plakietka--sukces">aktywne</span></td>
+                <td><span class="us-akcje-komorka"><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-odlacz>Odłącz</button></span></td>
+              </tr>
+              <tr>
+                <td><span class="us-urzadzenie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>Pixel — zapas</span></td>
+                <td class="pt-mono">c3a·8821</td>
+                <td>3 dni temu</td>
+                <td><span class="dn-plakietka dn-plakietka--sukces">aktywne</span></td>
+                <td><span class="us-akcje-komorka"><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-odlacz>Odłącz</button></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="us-pozycja">
+          <div class="us-pozycja-glowa">
+            <span class="us-etykieta">Parowanie urządzenia mobilnego (Mobile)</span>
+            <span class="us-prawa"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" id="us-sparuj">Sparuj urządzenie</button></span>
+          </div>
+          <p class="us-opis">Parowanie jest jedyną drogą wejścia funkcji Mobile — zakładane w obecności Operatora przy uwierzytelnionej maszynie; wydaje telefonowi poświadczenie odrębne od pozostałych (odwołanie jednego telefonu nie odcina innych). Pełny protokół w dokumencie „Mobilne centrum dowodzenia”, rozdz. 2.1.</p>
+          <div class="us-parowanie" id="us-panel-parowania" hidden>
+            <svg class="us-qr" viewBox="0 0 100 100" aria-label="Kod QR parowania" role="img">
+              <rect x="6" y="6" width="24" height="24" fill="none" stroke="currentColor" stroke-width="4"/>
+              <rect x="70" y="6" width="24" height="24" fill="none" stroke="currentColor" stroke-width="4"/>
+              <rect x="6" y="70" width="24" height="24" fill="none" stroke="currentColor" stroke-width="4"/>
+              <rect x="14" y="14" width="8" height="8" fill="currentColor"/><rect x="78" y="14" width="8" height="8" fill="currentColor"/><rect x="14" y="78" width="8" height="8" fill="currentColor"/>
+              <rect x="42" y="6" width="6" height="6" fill="currentColor"/><rect x="54" y="12" width="6" height="6" fill="currentColor"/><rect x="42" y="24" width="6" height="6" fill="currentColor"/>
+              <rect x="70" y="42" width="6" height="6" fill="currentColor"/><rect x="82" y="48" width="6" height="6" fill="currentColor"/><rect x="42" y="42" width="6" height="6" fill="currentColor"/><rect x="54" y="54" width="12" height="12" fill="currentColor"/><rect x="42" y="70" width="6" height="6" fill="currentColor"/><rect x="70" y="70" width="6" height="6" fill="currentColor"/><rect x="82" y="82" width="6" height="6" fill="currentColor"/>
+            </svg>
+            <div class="us-nawigacja-kolumna" style="gap:var(--dn-od-3)">
+              <p class="us-opis">Zeskanuj kod aplikacją Danaco Console Mobile na telefonie lub wprowadź kod ręcznie:</p>
+              <span class="us-kod-parowania">DNC · 7K42 · 9QX</span>
+              <span class="us-opis--drobny">Kod ważny 5 minut. Po sparowaniu urządzenie pojawi się w wykazie powyżej.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════ SEKCJA 5 · POWIADOMIENIA ═══════════ -->
+      <section class="us-sekcja" id="sekcja-powiadomienia" role="tabpanel" aria-label="Powiadomienia">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+            Powiadomienia
+          </span>
+        </div>
+        <p class="us-sekcja-opis">Każda kategoria wyłączalna niezależnie; wyłączenie wszystkich nie ogranicza dostępu do żadnej funkcji platformy. Zmiana pojedynczej komórki zapisywana natychmiast, bez przycisku zbiorczego zapisu.</p>
+
+        <div class="us-pozycja us-pozycja--pas">
+          <div class="us-nawigacja-kolumna" style="flex:1">
+            <span class="us-etykieta">Powiadomienia aktywne</span>
+            <span class="us-opis--drobny">Wyłączenie wygasza wszystkie kategorie jednocześnie, zachowując ich indywidualne ustawienia — ponowne włączenie przywraca poprzedni stan, nie domyślny.</span>
+          </div>
+          <button class="dn-przelacznik" type="button" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" id="us-powiadomienia-glowny" aria-label="Powiadomienia aktywne"></button>
+        </div>
+
+        <div class="us-tabela-ramka">
+          <table class="dn-tabela us-macierz" id="us-macierz">
+            <thead>
+              <tr>
+                <th scope="col">Kategoria zdarzeń</th>
+                <th scope="col" class="us-kol-kanal">W aplikacji</th>
+                <th scope="col" class="us-kol-kanal">E-mail</th>
+                <th scope="col" class="us-kol-kanal">Mobile push</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Konto i dostęp <span class="us-opis--drobny">auth.changed · device.changed</span></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Konto — w aplikacji"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Konto — e-mail"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Konto — Mobile"></td>
+              </tr>
+              <tr>
+                <td>Zakończenie procesu automatyki <span class="us-opis--drobny">Execution Monitor · Automations</span></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Automatyka — w aplikacji"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Automatyka — e-mail"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Automatyka — Mobile"></td>
+              </tr>
+              <tr>
+                <td>Zdarzenia MultitaskingAI <span class="us-opis--drobny">Monitor procesu · panel orkiestracji</span></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="MTAI — w aplikacji"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="MTAI — e-mail"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="MTAI — Mobile"></td>
+              </tr>
+              <tr>
+                <td>Wiadomości i zdolności telefonu <span class="us-opis--drobny">funkcja Mobile</span></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Telefon — w aplikacji"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Telefon — e-mail"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" checked aria-label="Telefon — Mobile"></td>
+              </tr>
+              <tr>
+                <td>Zmiany konfiguracji <span class="us-opis--drobny">config.changed · memory.changed</span></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Konfiguracja — w aplikacji"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Konfiguracja — e-mail"></td>
+                <td class="us-kom-kanal"><input type="checkbox" class="dn-check" aria-label="Konfiguracja — Mobile"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="us-opis--drobny">Kanał Mobile push dostarcza powiadomienia dwiema drogami o różnej poufności (kanał własny przez sieć prywatną vs. push przez pośrednika) — mechanizm w dokumencie „Mobilne centrum dowodzenia”, rozdz. 6.3. E-mail trafia na adres uwierzytelniający support@danaco-core.pl.</p>
+      </section>
+
+      <!-- ═══════════ SEKCJA 6 · KONTA MODELI ═══════════ -->
+      <section class="us-sekcja" id="sekcja-modele" role="tabpanel" aria-label="Konta modeli">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m13.5 6-3 12"/></svg>
+            Konta modeli
+          </span>
+          <span class="us-sekcja-narzedzia"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button" id="us-dodaj-konto">Dodaj konto modelu</button></span>
+        </div>
+        <p class="us-sekcja-opis">Katalog Operatora dla kanału CLI (narzędzie wiersza poleceń Claude Code). Utrzymanie wykazu kont, ich danych dostępowych i katalogów profili jest czynnością Operatora jako takiego — dlatego należy do Ustawień. Przypisanie kanału do sesji lub roli pozostaje w Konfiguracji → Zachowanie modeli.</p>
+
+        <div class="us-tabela-ramka">
+          <table class="dn-tabela us-tabela">
+            <thead>
+              <tr>
+                <th scope="col">Nazwa konta</th>
+                <th scope="col">Katalog profilu</th>
+                <th scope="col">Stan</th>
+                <th scope="col">Ostatnio użyte</th>
+                <th scope="col">Akcje</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Danaco — konto główne</td>
+                <td class="pt-mono">~/.danaco/profile-danaco-glowne</td>
+                <td><span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> aktywne</span></td>
+                <td>dziś 20:41</td>
+                <td><span class="us-akcje-komorka"><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Testuj</button><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Edytuj</button></span></td>
+              </tr>
+              <tr>
+                <td>Zespół prawny — zapasowe</td>
+                <td class="pt-mono">~/.danaco/profile-prawny</td>
+                <td><span class="dn-plakietka">skonfigurowane</span></td>
+                <td>wczoraj 17:03</td>
+                <td><span class="us-akcje-komorka"><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-ustaw-aktywne>Ustaw jako aktywne</button><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Edytuj</button></span></td>
+              </tr>
+              <tr>
+                <td>Zapasowe</td>
+                <td class="pt-mono">~/.danaco/profile-zapas</td>
+                <td><span class="dn-plakietka dn-plakietka--blad"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span> błąd uwierzytelnienia</span></td>
+                <td>5 dni temu</td>
+                <td><span class="us-akcje-komorka"><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Testuj</button><button class="dn-btn dn-btn--cichy dn-btn--sm" type="button">Edytuj</button></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="us-komunikat us-komunikat--informacja">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+          <div>Przełączenie konta aktywnego jest wyłącznie <b>jawną, ręczną akcją</b> Operatora („Ustaw jako aktywne”) — brak automatycznego, niewidocznego przełączania między wywołaniami (Koncepcja platformy, rozdz. 1). Dane dostępowe przechowywane poza bazą; katalog profilu odrębny dla każdego konta, więc konta nie współdzielą sesji ani pamięci podręcznej.</div>
+        </div>
+
+        <p class="us-opis--drobny">Przypisanie kanałów do sesji i ról: <button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-otworz-konfiguracje>Konfiguracja → Zachowanie modeli</button></p>
+      </section>
+
+      <!-- ═══════════ SEKCJA 7 · NAWIĄZANIA MOBILE / AOD ═══════════ -->
+      <section class="us-sekcja" id="sekcja-nawiazania" role="tabpanel" aria-label="Nawiązania Mobile i AOD">
+        <div class="us-sekcja-glowa">
+          <span class="us-sekcja-tytul">
+            <svg class="us-ik us-ik--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M2 12h20M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>
+            Mobile i Always On Display — nawiązania
+          </span>
+        </div>
+        <p class="us-sekcja-opis">Mobile i Always On Display są funkcjami globalnymi platformy (Koncepcja platformy, rozdz. 10). Nie są sekcjami Ustawień, lecz Ustawienia stykają się z nimi w dwóch punktach: parowanie telefonu (sekcja Urządzenia) oraz kanał powiadomień push (sekcja Powiadomienia).</p>
+
+        <div class="us-nawiazania">
+          <div class="us-nawiazanie">
+            <div class="us-nawiazanie-glowa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>
+              <b>Mobile</b><span class="dn-plakietka">funkcja globalna</span>
+            </div>
+            <p class="us-opis">Mobilne centrum dowodzenia. Wejście wyłącznie przez parowanie w sekcji Urządzenia. Powiadomienia telefonu i push konfiguruje się w sekcji Powiadomienia.</p>
+            <div class="us-wiersz">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-idz-sekcja="urzadzenia">Przejdź do parowania</button>
+              <button class="dn-btn dn-btn--cichy dn-btn--sm" type="button" data-idz-sekcja="powiadomienia">Kanał push</button>
+            </div>
+          </div>
+
+          <div class="us-nawiazanie">
+            <div class="us-nawiazanie-glowa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+              <b>Always On Display</b><span class="dn-plakietka">funkcja globalna</span>
+            </div>
+            <p class="us-opis">Globalny agent towarzyszący — proaktywne doradztwo i nadzór nad Mobile oraz Monitorem procesu. Sam nadzór jest poza zakresem Ustawień; tutaj jedynie odesłanie i stan.</p>
+            <div class="us-wiersz">
+              <span class="dn-plakietka" data-stan-aod><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> wyłączony</span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="us-aod-przelacz">Przełącz AOD</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /us-zawartosc -->
+  </main>
+
+  <!-- MODAL: Zmień hasło (rozdz. 3.4) -->
+  <div class="dn-modal-tlo" id="us-modal-haslo" data-otwarte="nie" hidden>
+    <div class="dn-modal" role="dialog" aria-modal="true" aria-labelledby="us-modal-haslo-tytul">
+      <header class="dn-modal-glowa">
+        <h2 class="dn-modal-tytul" id="us-modal-haslo-tytul">Zmień hasło</h2>
+        <button class="dn-btn-ikona" type="button" data-modal-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </header>
+      <div class="dn-modal-tresc" style="display:flex;flex-direction:column;gap:var(--dn-od-3)">
+        <label class="us-nawigacja-kolumna" style="gap:var(--dn-od-1)"><span class="us-etykieta">Nowe hasło</span><input class="dn-pole" type="password" autocomplete="new-password"></label>
+        <label class="us-nawigacja-kolumna" style="gap:var(--dn-od-1)"><span class="us-etykieta">Powtórz nowe hasło</span><input class="dn-pole" type="password" autocomplete="new-password"></label>
+        <p class="us-opis--drobny">Pole hasła bieżącego pojawia się, gdy w Uwierzytelnianiu włączono opcję „Wymagaj hasła bieżącego”. Przycisk „Zmień hasło” jest aktywny niezależnie od stanu pól; walidacja następuje po stronie serwera.</p>
+      </div>
+      <footer class="dn-modal-stopa" style="display:flex;gap:var(--dn-od-2);justify-content:flex-end">
+        <button class="dn-btn dn-btn--cichy" type="button" data-modal-zamknij>Anuluj</button>
+        <button class="dn-btn dn-btn--atrament" type="button" data-modal-zatwierdz>Zmień hasło</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- NOTA O OPRACOWANIU -->
+  <details class="pt-o-opracowaniu">
+    <summary>O opracowaniu — Okno Ustawień (warstwa stanowiska v2)</summary>
+    <div class="pt-o-opracowaniu-tresc">
+      <p><b>Okno:</b> Ustawienia — okno globalne poziomu aplikacji, odrębne od Konfiguracji. Warstwa stanowiska v2 wg KANON ANEKS v2.1 r.15.</p>
+      <p><b>Powłoka:</b> <code>.sta-powloka</code> z paskiem górnym (hamburger · godło Danaco Console · TRYBY Talk/Work/Code · okruszki · wyszukiwanie · przełącznik motywu · konto <code>support@danaco-core.pl</code>). Ustawienia świadomie NIE używają <code>.sta-obszar</code> (czaty + dokowane panele) — to okno globalne, nie warsztat; zamiast tego własne płótno dwupanelowe wg makiety źródła (rozdz. 2.1): nawigacja sekcji (lewy) + zawartość sekcji (prawy).</p>
+      <p><b>Zakresy (źródło: okna/ustawienia.md):</b></p>
+      <ul>
+        <li><b>Rozgraniczenie Ustawienia ↔ Konfiguracja</b> (rozdz. 1.1) — pasmo rozwijane u góry płótna.</li>
+        <li><b>Konto Operatora</b> (rozdz. 3) — awatar, login, e-mail (potwierdzony), hasło (modal zmiany), data utworzenia. Konto: support@danaco-core.pl.</li>
+        <li><b>Uwierzytelnianie</b> (rozdz. 4) — metody: Login+hasło (wł.), e-mail (wł.), PIN (wył.), Windows Hello (wył.); ostrzeżenie przy ostatniej aktywnej metodzie; plakietka Wymogu logowania z odnośnikiem do Konfiguracji.</li>
+        <li><b>Wygląd i język</b> (rozdz. 5) — motyw jasny/ciemny/systemowy (działa, przez <code>data-theme</code>), język (lista), gęstość zwarta/przestronna (działa, przez <code>data-gestosc</code>).</li>
+        <li><b>Urządzenia</b> (rozdz. 6) — wykaz w <code>.dn-tabela</code>, synchronizacja jako wskaźnik, parowanie Mobile z kodem QR i kodem.</li>
+        <li><b>Powiadomienia</b> (rozdz. 7) — przełącznik główny wygaszający macierz, macierz kategorii × kanały (<code>.dn-check</code>).</li>
+        <li><b>Konta modeli</b> (rozdz. 8) — katalog kont kanału CLI, jawne przełączanie konta aktywnego, katalogi profili.</li>
+        <li><b>Mobile i AOD</b> — sekcja nawiązań (bez osobnych plików), zgodnie z zadaniem dodatkowym.</li>
+      </ul>
+      <p><b>Zasady wizualne:</b> monochrom, wyłącznie żetony <code>var(--dn-*)</code>, zero wartości szesnastkowych w stylach, brak twardych blokad (zero elementów wyłączonych), oba motywy (jasny/ciemny), <code>lang="pl"</code>. Wpięcia: fonty, żetony, fundament, komponenty, prototyp.css, stanowisko.css oraz wspolne.js, prototyp.js, stanowisko.js.</p>
+    </div>
+  </details>
+</div>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   SKRYPT LOKALNY — Okno Ustawień v2. Rozszerza zachowania powłoki
+   (menu, motyw, TRYBY) obsługiwane przez wspolne.js / prototyp.js / stanowisko.js.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+  var R = document.documentElement;
+  function q(s, k) { return (k || document).querySelector(s); }
+  function qq(s, k) { return Array.prototype.slice.call((k || document).querySelectorAll(s)); }
+  function oglos(t) { if (window.dnOglos) { window.dnOglos(t); } }
+  function toast(tyt, tre, rodz, ms) { if (window.dnToast) { window.dnToast(tyt, tre, rodz || 'informacja', ms || 3200); } }
+
+  /* ── NAWIGACJA SEKCJI ────────────────────────────────────────────────── */
+  function pokazSekcje(nazwa) {
+    qq('.us-sekcja').forEach(function (s) {
+      s.setAttribute('data-aktywna', s.id === 'sekcja-' + nazwa ? 'tak' : 'nie');
+    });
+    qq('.us-nawigacja-poz').forEach(function (b) {
+      b.setAttribute('aria-current', b.getAttribute('data-sekcja') === nazwa ? 'true' : 'false');
+    });
+    var zaw = q('.us-zawartosc'); if (zaw) { zaw.scrollTop = 0; }
+  }
+  qq('.us-nawigacja-poz').forEach(function (b) {
+    b.addEventListener('click', function () { pokazSekcje(b.getAttribute('data-sekcja')); });
+  });
+  qq('[data-idz-sekcja]').forEach(function (b) {
+    b.addEventListener('click', function () { pokazSekcje(b.getAttribute('data-idz-sekcja')); });
+  });
+
+  /* ── MOTYW (jasny/ciemny/systemowy) — działa przez data-theme ──────────── */
+  var stanMotyw = q('#us-motyw-stan');
+  function ustawMotyw(w) {
+    if (w === 'system') {
+      var ciemny = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      R.setAttribute('data-theme', ciemny ? 'dark' : 'light');
+    } else {
+      R.setAttribute('data-theme', w);
+    }
+    if (stanMotyw) { stanMotyw.textContent = 'wartość: ' + (w === 'light' ? 'jasny' : w === 'dark' ? 'ciemny' : 'systemowy'); }
+  }
+  qq('#us-motyw .us-segment').forEach(function (s) {
+    s.addEventListener('click', function () {
+      qq('#us-motyw .us-segment').forEach(function (x) { x.setAttribute('aria-checked', x === s ? 'true' : 'false'); });
+      ustawMotyw(s.getAttribute('data-motyw'));
+      oglos('Motyw: ' + s.textContent.trim());
+    });
+  });
+  /* synchronizacja segmentów przy przełączniku motywu w pasku */
+  var obserwMotyw = new MutationObserver(function () {
+    var akt = R.getAttribute('data-theme');
+    qq('#us-motyw .us-segment').forEach(function (x) {
+      var w = x.getAttribute('data-motyw');
+      x.setAttribute('aria-checked', w === akt ? 'true' : 'false');
+    });
+    if (stanMotyw) { stanMotyw.textContent = 'wartość: ' + (akt === 'light' ? 'jasny' : 'ciemny'); }
+  });
+  obserwMotyw.observe(R, { attributes: true, attributeFilter: ['data-theme'] });
+
+  /* ── GĘSTOŚĆ — atrybut data-gestosc na elemencie głównym (KANON §2) ─────── */
+  var stanGest = q('#us-gestosc-stan');
+  qq('#us-gestosc .us-segment').forEach(function (s) {
+    s.addEventListener('click', function () {
+      qq('#us-gestosc .us-segment').forEach(function (x) { x.setAttribute('aria-checked', x === s ? 'true' : 'false'); });
+      var w = s.getAttribute('data-gestosc');
+      if (w === 'przestronna') { R.setAttribute('data-gestosc', 'przestronna'); }
+      else { R.removeAttribute('data-gestosc'); }
+      if (stanGest) { stanGest.textContent = 'wartość: ' + w; }
+      oglos('Gęstość: ' + w);
+    });
+  });
+
+  /* ── JĘZYK ─────────────────────────────────────────────────────────────── */
+  var jezyk = q('#us-jezyk');
+  if (jezyk) {
+    jezyk.addEventListener('change', function () {
+      if (jezyk.value !== 'pl') {
+        toast('Język interfejsu', 'Wybrany język jest przygotowany, lecz nie został jeszcze wbudowany. Polski pozostaje aktywny.', 'ostrzezenie');
+        jezyk.value = 'pl';
+      }
+    });
+  }
+
+  /* ── UWIERZYTELNIANIE — metody + ostrzeżenie ostatniej aktywnej ─────────── */
+  function liczbaAktywnych() {
+    return qq('[data-metoda-przel]').filter(function (p) { return p.getAttribute('aria-checked') === 'true'; }).length;
+  }
+  var ostrz = q('#us-ostrzezenie-metody');
+  qq('[data-metoda-przel]').forEach(function (p) {
+    p.addEventListener('click', function () {
+      var wl = p.getAttribute('aria-checked') === 'true';
+      if (wl && liczbaAktywnych() === 1) {
+        /* nie blokujemy — sygnalizujemy ostrzeżeniem (zasada zerowych blokad) */
+        if (ostrz) { ostrz.hidden = false; }
+        toast('Ostatnia aktywna metoda', 'Wyłączasz jedyną aktywną metodę logowania. To nie jest blokowane, lecz zalecane jest wcześniejsze włączenie innej metody.', 'ostrzezenie', 4200);
+      }
+      var nowy = !wl;
+      p.setAttribute('aria-checked', nowy ? 'true' : 'false');
+      p.setAttribute('aria-pressed', nowy ? 'true' : 'false');
+      if (!wl && ostrz) { ostrz.hidden = liczbaAktywnych() > 0 ? true : ostrz.hidden; }
+      if (liczbaAktywnych() > 1 && ostrz) { ostrz.hidden = true; }
+      var poz = p.closest('.us-pozycja');
+      var dodatk = poz ? q('[data-po-wlaczeniu]', poz) : null;
+      if (dodatk) { dodatk.hidden = !nowy; }
+    });
+  });
+
+  /* ── URZĄDZENIA — parowanie + odłączanie ───────────────────────────────── */
+  var sparuj = q('#us-sparuj');
+  var panelPar = q('#us-panel-parowania');
+  if (sparuj && panelPar) {
+    sparuj.addEventListener('click', function () {
+      panelPar.hidden = !panelPar.hidden;
+      sparuj.textContent = panelPar.hidden ? 'Sparuj urządzenie' : 'Ukryj kod parowania';
+      if (!panelPar.hidden) { toast('Parowanie Mobile', 'Kod parowania ważny 5 minut. Zeskanuj aplikacją Danaco Console Mobile.', 'informacja'); }
+    });
+  }
+  qq('[data-odlacz]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var w = b.closest('tr');
+      if (w) { w.classList.toggle('us-wygaszona'); }
+      var odlaczone = b.textContent.trim() === 'Odłącz';
+      b.textContent = odlaczone ? 'Przywróć' : 'Odłącz';
+      toast('Urządzenia', odlaczone ? 'Token urządzenia unieważniony — dostęp odcięty.' : 'Urządzenie ponownie dopuszczone.', odlaczone ? 'ostrzezenie' : 'sukces');
+    });
+  });
+
+  /* ── POWIADOMIENIA — przełącznik główny wygasza macierz ────────────────── */
+  var glowny = q('#us-powiadomienia-glowny');
+  var macierz = q('#us-macierz');
+  if (glowny && macierz) {
+    glowny.addEventListener('click', function () {
+      var wl = glowny.getAttribute('aria-checked') === 'true';
+      var nowy = !wl;
+      glowny.setAttribute('aria-checked', nowy ? 'true' : 'false');
+      glowny.setAttribute('aria-pressed', nowy ? 'true' : 'false');
+      macierz.classList.toggle('us-wygaszona', !nowy);
+      qq('.dn-check', macierz).forEach(function (c) { c.readOnly = !nowy; });
+      oglos(nowy ? 'Powiadomienia włączone.' : 'Powiadomienia wygaszone — ustawienia kategorii zachowane.');
+    });
+  }
+
+  /* ── KONTA MODELI — jawne przełączanie aktywnego ───────────────────────── */
+  qq('[data-ustaw-aktywne]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var tab = b.closest('table');
+      qq('tbody tr', tab).forEach(function (tr) {
+        var plak = q('.dn-plakietka', tr);
+        if (plak && /aktywne/.test(plak.textContent)) {
+          plak.className = 'dn-plakietka';
+          plak.textContent = 'skonfigurowane';
+        }
+      });
+      var wiersz = b.closest('tr');
+      var stanKom = wiersz.children[2];
+      if (stanKom) { stanKom.innerHTML = '<span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> aktywne</span>'; }
+      b.remove();
+      toast('Konta modeli', 'Konto ustawione jako aktywne. Zdarzenie model.account.changed rozgłoszone do urządzeń.', 'sukces');
+    });
+  });
+  var dodaj = q('#us-dodaj-konto');
+  if (dodaj) { dodaj.addEventListener('click', function () { toast('Dodaj konto modelu', 'Otwarcie modalu z polami: nazwa, katalog profilu, dane dostępowe (jawne domyślnie), test połączenia.', 'informacja'); }); }
+
+  /* ── MODAL ZMIANY HASŁA ────────────────────────────────────────────────── */
+  var modal = q('#us-modal-haslo');
+  function otworzModal() { if (modal) { modal.hidden = false; modal.setAttribute('data-otwarte', 'tak'); } }
+  function zamknijModal() { if (modal) { modal.hidden = true; modal.setAttribute('data-otwarte', 'nie'); } }
+  var przyciskHaslo = q('#us-zmien-haslo');
+  if (przyciskHaslo) { przyciskHaslo.addEventListener('click', otworzModal); }
+  qq('[data-modal-zamknij]', modal).forEach(function (b) { b.addEventListener('click', zamknijModal); });
+  var zatw = q('[data-modal-zatwierdz]', modal);
+  if (zatw) { zatw.addEventListener('click', function () { zamknijModal(); toast('Hasło', 'Nowy skrót hasła zapisany poza bazą danych. Zdarzenie auth.changed rozgłoszone.', 'sukces'); }); }
+  if (modal) { modal.addEventListener('click', function (e) { if (e.target === modal) { zamknijModal(); } }); }
+
+  /* ── AOD ───────────────────────────────────────────────────────────────── */
+  var aod = q('#us-aod-przelacz');
+  var stanAod = q('[data-stan-aod]');
+  if (aod && stanAod) {
+    aod.addEventListener('click', function () {
+      var wl = /wyłączony/.test(stanAod.textContent);
+      stanAod.innerHTML = wl
+        ? '<span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> włączony'
+        : '<span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> wyłączony';
+      toast('Always On Display', wl ? 'Globalny agent towarzyszący przywołany.' : 'Always On Display wyłączony.', wl ? 'sukces' : 'informacja');
+    });
+  }
+
+  /* ── ODNOŚNIKI DO KONFIGURACJI ─────────────────────────────────────────── */
+  qq('[data-otworz-konfiguracje]').forEach(function (b) {
+    b.addEventListener('click', function () { toast('Konfiguracja', 'Otwarcie okna Konfiguracji — dwanaście zakresów zachowania platformy (okno odrębne).', 'informacja'); });
+  });
+
+  /* ── ZAPIS SEKCJI KONTO ────────────────────────────────────────────────── */
+  qq('[data-zapisz]').forEach(function (b) {
+    b.addEventListener('click', function () { toast('Konto', 'Zmiany zapisane po stronie serwera i rozgłoszone na wszystkie urządzenia.', 'sukces'); });
+  });
+
+  /* ── TRYBY Talk/Work/Code (spójne z powłoką) ───────────────────────────── */
+  qq('[data-srod]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      qq('[data-srod]').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      toast('Tryb: ' + b.textContent, 'Ustawienia są oknem globalnym — tryb wpływa na powrót do warsztatu.', 'informacja');
+    });
+  });
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

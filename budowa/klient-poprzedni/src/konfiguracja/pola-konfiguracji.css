@@ -1,0 +1,157 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNO KONFIGURACJI · WNĘTRZE FORMULARZA
+   ----------------------------------------------------------------------------
+   Wiersz jednego ustawienia, kontrolki generowane z rodzaju wartości, wskaźnik
+   zasięgu i łańcuch dziedziczenia. Ramę okna i trzy obszary układu prowadzi
+   `konfiguracja.css`, który ten arkusz wciąga.
+
+   Barw własnych ani jednej — wyłącznie żetony warstwy `motyw/`.
+   Sygnał (błękit) występuje tu dokładnie dwa razy: plakietka pochodzenia
+   wartości nadpisanej oraz wiersz dziedziczenia, który obowiązuje.
+   ============================================================================ */
+
+/* --- Wiersz jednego ustawienia ------------------------------------------- */
+
+.dk-pole {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-3) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dk-pole:last-child { border-bottom: none; }
+
+.dk-pole__naglowek {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.dk-pole__etykieta { color: var(--dn-tekst); font-size: var(--dn-fs-base); }
+
+.dk-pole__klucz {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dk-pole__znak { flex: none; }
+
+.dk-pole__kontrolka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  max-width: 640px;
+}
+.dk-pole__kontrolka > .dn-pole-kontrolka,
+.dk-pole__kontrolka > .dk-kontrolka__koszyk { flex: 1 1 auto; min-width: 0; }
+
+.dk-pole__jednostka {
+  flex: none;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+.dk-pole__ostrzezenie { color: var(--dn-ostrzezenie-tekst); }
+
+.dk-pole__stan { margin: 0; font-size: var(--dn-fs-sm); color: var(--dn-sukces-tekst); }
+.dk-pole__stan[data-powodzenie='false'] { color: var(--dn-blad-tekst); }
+
+/* --- Kontrolki generowane z rodzaju wartości ----------------------------- */
+
+.dk-kontrolka--mono { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
+.dk-kontrolka--liczba { max-width: 200px; }
+.dk-kontrolka--lista { max-width: 340px; }
+
+.dk-kontrolka__koszyk { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+.dk-kontrolka__blad { margin: 0; }
+
+.dk-kontrolka__przelacznik { gap: var(--dn-od-2); }
+.dk-kontrolka__stan { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+
+.dk-kontrolka__wielokrotna {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1) var(--dn-od-4);
+}
+
+/* --- Wskaźnik zasięgu ---------------------------------------------------- */
+
+.dk-wskaznik { margin-left: auto; position: relative; }
+
+.dk-wskaznik__plakietka {
+  cursor: pointer;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+}
+.dk-wskaznik__plakietka:hover { border-color: var(--dn-tekst-3); }
+.dk-wskaznik__plakietka:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+.dk-wskaznik__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  margin-top: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dk-wskaznik__naglowek { display: flex; flex-direction: column; gap: 2px; }
+
+.dk-wskaznik__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-2);
+}
+
+/* --- Łańcuch dziedziczenia ----------------------------------------------- */
+
+.dk-lancuch {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dk-lancuch__wiersz {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 2fr) auto auto;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-sm);
+}
+.dk-lancuch__wiersz[data-obowiazuje='tak'] { background: var(--dn-sygnal-tlo); }
+
+.dk-lancuch__adres { color: var(--dn-tekst-2); }
+
+.dk-lancuch__wartosc {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dk-lancuch__znak,
+.dk-lancuch__usun { justify-self: end; }
+.dk-lancuch__wiersz--domyslna .dk-lancuch__adres { font-style: italic; }
+
+@media (max-width: 48rem) {
+  .dk-lancuch__wiersz { grid-template-columns: 1fr auto; }
+}

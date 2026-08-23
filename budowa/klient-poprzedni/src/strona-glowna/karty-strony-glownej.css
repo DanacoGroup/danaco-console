@@ -1,0 +1,264 @@
+/* ============================================================================
+   DANACO CONSOLE — STRONA GŁÓWNA · KARTA ŚRODOWISKA I KAFEL KOMPONENTU
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: wygląd dwóch bytów klikalnych strony głównej.
+
+   Oba powstają z jednej karty biblioteki `../komponenty/karta.css`. Ten arkusz
+   nie powtarza jej reguł — dokłada wyłącznie to, czego wymaga strona główna,
+   a czego biblioteka nie mogła przesądzić, bo nie zna ekranu.
+
+   Różnica krojów niesie znaczenie:
+     nagłówkowy 24/30 px = wejście do środowiska,
+     bazowy półgruby     = zbudowanie komponentu.
+   Dlatego kafel nie dostaje wariantu `--akcent`, a karta środowiska nie
+   dostaje wariantu `--komponent`. Wymiana klas zamieniłaby znaczenia.
+
+   Selektory są dwuklasowe (`.dn-karta-tytul.dn-strona__karta-tytul`), bo
+   nadpisują regułę biblioteki o tej samej wadze. Przy równej szczegółowości
+   rozstrzygałaby kolejność wczytania arkuszy, a ta nie jest własnością tego
+   katalogu.
+
+   Wartości pochodzą z żetonów `motyw/`. Barwą wyróżnienia jest sygnał —
+   jedyny akcent systemu; poświatę niesie `--dn-cien-sygnal`.
+   ============================================================================ */
+
+/* ===========================================================================
+   KARTA ŚRODOWISKA
+   Powierzchnia największa, promień 20 px, padding 24 px, godło 48 px.
+   =========================================================================== */
+.dn-karta.dn-strona__karta {
+  /* Godła stoją równo we wszystkich kartach. Karta jest `<button>`, a przycisk
+     centruje swoją zawartość w pionie — przy `min-height` wyższym od treści
+     karta z krótszym mottem spychałaby godło niżej niż sąsiadka z mottem na
+     trzy wiersze. Karta jest więc własnym pasem kolumnowym, a treść rozpycha
+     się do jego pełnej wysokości i liczy się od góry. */
+  display: flex;
+  align-items: stretch;
+  /* 192 px = 3 × 64. Wysokość ustala masę tej linii wobec pozostałych. */
+  min-height: calc(var(--dn-od-16) * 3);
+  /* Układ odniesienia wstęgi sygnału i obcięcie jej do promienia karty */
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border-radius: var(--dn-r-xl);
+  font-family: inherit;
+  text-align: left;
+}
+
+/* Wstęga sygnału — w spoczynku jej nie ma. Powierzchnia zostaje neutralna,
+   a wstęga wchodzi dopiero przy najechaniu i w stanie czynnym; stoi na miejscu
+   zwinięta do zera, więc pojawia się przesunięciem, nie mignięciem.
+
+   Wstęgę rysuje ten arkusz, nie biblioteka: biblioteka zna wstęgę wyłącznie na
+   własnej karcie środowiska (`.dn-karta-srodowiska::before`), a karta strony
+   głównej stoi na karcie bazowej. Wymiar i barwa pochodzą z żetonów — ani
+   jednej wartości własnej. */
+.dn-strona__karta.dn-karta--akcent::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--dn-wym-wstega);
+  background: var(--dn-kropka);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+
+.dn-strona__karta.dn-karta--akcent:hover::before,
+.dn-strona__karta.dn-karta--akcent:focus-visible::before,
+.dn-strona__karta.dn-karta--wybrana::before {
+  transform: scaleX(1);
+}
+
+/* Stan czynny niesie ten sam zapis co najechanie: wstęga, cień sygnału,
+   uniesienie o 2 px. Oznaczenie nie opiera się na samym kolorze — kartę niesie
+   także atrybut `aria-current`.
+
+   Powierzchnia pozostaje neutralna. Biblioteczny wariant `--wybrana` podkłada
+   pod kartę `--dn-sygnal-tlo`, ale karta środowiska jest największą
+   powierzchnią ekranu, a sygnał nie wypełnia dużych powierzchni — wybór niosą
+   tu wstęga, cień i uniesienie. */
+.dn-karta.dn-strona__karta.dn-karta--wybrana {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-sygnal), var(--dn-cien-3);
+  transform: translateY(-2px);
+}
+
+/* Treść karty — kontener bazowy. Biblioteka tej klasy nie zna (jej karta
+   środowiska trzyma treść wprost w sobie, `.dn-karta-srodowiska`), a oba
+   selektory dwuklasowe niżej zakładają, że to ona daje kontener flex. Bez
+   reguły bazowej `flex-direction`, `align-items` i `gap` byłyby martwe
+   i elementy kart płynęłyby jednym wierszem.
+
+   Kolumna jest kierunkiem domyślnym, bo taki ma karta środowiska; kafel
+   komponentu przestawia się na wiersz sam. Reguła stoi przed selektorami
+   złożonymi dla czytelności zapisu „bazowa, potem odmiany" — złożony i tak
+   wygrywa specyficznością. */
+.dn-karta-tresc {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dn-karta-tresc.dn-strona__karta-tresc {
+  flex: 1;
+  flex-direction: column;
+  /* Treść liczona od góry, nie od środka — inaczej godła rozjeżdżają się
+     razem z długością motta (zob. komentarz przy `.dn-strona__karta`). */
+  justify-content: flex-start;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-6);
+}
+
+/* Godło środowiska — ikona 24 px w polu 48 px. W spoczynku neutralne;
+   sygnał wchodzi dopiero razem ze wstęgą, i tylko na tej małej powierzchni. */
+.dn-strona__godlo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  margin-bottom: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    border-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease);
+}
+
+.dn-strona__karta:hover .dn-strona__godlo,
+.dn-strona__karta:focus-visible .dn-strona__godlo,
+.dn-strona__karta.dn-karta--wybrana .dn-strona__godlo {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
+
+/* Tytuł środowiska — 24/30 px krojem nagłówkowym (Space Grotesk).
+   Interlinia zapisana stopniem 30 px ze skali, bo para 24/30 nie wypada
+   z żadnej z trzech interlinii bazowych (1,25 dałoby 30 px tylko przypadkiem
+   i rozjechałaby się przy zmianie stopnia). */
+.dn-karta-tytul.dn-strona__karta-tytul {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  line-height: var(--dn-fs-3xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  color: var(--dn-tekst);
+}
+
+/* Motto — trzy czasowniki trybu pracy, krojem bazowym */
+.dn-strona__karta-motto {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-srednia);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst);
+}
+
+/* Jednozdaniowy opis trybu pracy. Kontrakt wyglądu (stopień, interlinia,
+   barwa) żyje w klasie bazowej z tego samego powodu co przy `.dn-karta-tresc`
+   wyżej: biblioteka nie zna `.dn-karta-opis`, więc element z tą klasą, a bez
+   modyfikatora widoku, miałby zerowy zapisany wygląd. Odstęp od tytułu zostaje
+   w kompozycie — to własność miejsca w układzie, nie klasy. */
+.dn-karta-opis {
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+.dn-karta-opis.dn-strona__karta-opis {
+  margin-top: var(--dn-od-1);
+}
+
+/* ===========================================================================
+   KAFEL KOMPONENTU WŁASNEGO
+   Ta sama karta: mniejsza powierzchnia, promień 10 px, padding 16 px,
+   ikona 18 px w polu 32 px, układ poziomy. Bez wstęgi i bez cienia sygnału.
+   =========================================================================== */
+.dn-karta.dn-strona__kafel {
+  /* Kafel też jest `<button>`, więc obowiązuje to samo wyrównanie co przy
+     kartach środowisk: treść liczy się od góry, nie od środka. */
+  display: flex;
+  align-items: stretch;
+  /* 112 px = 64 + 48. Kafel modułu jest duży, bo moduł jest ważny. Trzy linie
+     strony mają trzy masy: karta środowiska 192 px, kafel komponentu 112 px,
+     kafel ustawienia 64 px — hierarchia czytelna, zanim Operator przeczyta
+     którykolwiek napis. */
+  min-height: calc(var(--dn-od-16) + var(--dn-od-12));
+  padding: 0;
+  border-radius: var(--dn-r-md);
+  box-shadow: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+.dn-karta-tresc.dn-strona__kafel-tresc {
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+}
+
+.dn-strona__ikona-kafla {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-wym-awatar);
+  height: var(--dn-wym-awatar);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease);
+}
+
+/* Najechanie kafla pozostaje neutralne — żadnego sygnału */
+.dn-strona__kafel:hover .dn-strona__ikona-kafla,
+.dn-strona__kafel:focus-visible .dn-strona__ikona-kafla {
+  background: var(--dn-obrys-subtelny);
+  color: var(--dn-tekst);
+}
+
+.dn-strona__kafel-napisy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Etykieta kafla krojem bazowym półgrubym, nie nagłówkowym — kafel mówi
+   „zbuduj", karta środowiska „wejdź". Reguła nadpisuje krój nagłówkowy
+   `.dn-karta-tytul` biblioteki, więc selektor jest dwuklasowy. */
+.dn-karta-tytul.dn-strona__kafel-nazwa {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: normal;
+}
+
+/* Wezwanie pod etykietą kafla — najlżejszy wiersz tej linii */
+.dn-strona__kafel-wezwanie {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+
+/* Kafel komponentu: ta sama karta co w bibliotece, mniejsza masa — bez cienia
+   w spoczynku. Jedno użycie w całym drzewie, więc nie zasługuje na wariant
+   biblioteki. */
+.dn-karta--komponent {
+  box-shadow: none;
+}
+
+/* Strefa trzecia nie ma tu ani jednej reguły z rozmysłu: opracowanie mówi,
+   że pozycje listwy ustawień nie mają formy kart ani kafli (rozdz. 3.4).
+   Ich wygląd — belka segmentów o wysokości kontrolki — mieszka w całości
+   w `strona-glowna.css`. */

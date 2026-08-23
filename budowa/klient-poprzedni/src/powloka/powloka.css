@@ -1,0 +1,76 @@
+/* ============================================================================
+   DANACO CONSOLE — POWŁOKA ŚRODOWISKA · SZKIELET
+   ----------------------------------------------------------------------------
+   Rozkład czterech pasów powłoki i jego zachowanie przy zawężeniu okna.
+   Wygląd każdego pasa niesie własny arkusz obok modułu, który go buduje
+   (README, „Modularność" — podział arkusza per komponent):
+
+     pasek-gorny.css · karty-sesji.css · nawigacja-modulow.css · obszar-roboczy.css
+
+   Arkusz wciąga sam moduł `powloka.ts`, więc trafia do pakietu razem z nim.
+   Wszystkie barwy, stopnie pisma, odstępy, promienie i czasy pochodzą
+   z żetonów `motyw/`; wymiary układu są wielokrotnością 4 px.
+   ============================================================================ */
+
+.dn-srodowisko {
+  /* Szerokość pełnej kolumny nawigacji niesie system wizualny
+     (`--dn-wym-boczna`). Zwężony wariant jest właściwością samej powłoki:
+     system nazywa zachowanie (nawigacja schodzi do ikon), ale szerokości
+     szyny ikon nie ustala. */
+  --dn-szer-nawigacja-waska: 64px;
+
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+}
+
+/* Korpus — nawigacja stałej szerokości i obszar roboczy zabierający resztę */
+.dn-srodowisko__korpus {
+  display: grid;
+  grid-template-columns: var(--dn-wym-boczna) minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   ZAWĘŻENIE OKNA — punkt łamania w2 (960 px)
+   Nawigacja pozostaje pionowa i schodzi do samych ikon. Odpadają podpisy
+   powtarzające informację dostępną gdzie indziej.
+
+   Próg jest punktem łamania w2 systemu wizualnego — tym samym, przy którym
+   system nazywa zwinięcie bocznej nawigacji do ikon. Wartość stoi tu liczbą,
+   bo zapytanie medialne nie czyta zmiennych własnych; żeton `--dn-bp-w2`
+   (`motyw/wymiary.css`) pozostaje jej jedynym źródłem i musi się z nią zgadzać.
+   --------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+  .dn-srodowisko__korpus {
+    grid-template-columns: var(--dn-szer-nawigacja-waska) minmax(0, 1fr);
+  }
+
+  .dn-srodowisko .dn-nawigacja {
+    align-items: center;
+  }
+
+  .dn-srodowisko .dn-nawigacja__motto,
+  .dn-srodowisko .dn-nawigacja__licznik,
+  .dn-srodowisko .dn-nawigacja__nazwa,
+  .dn-srodowisko .dn-pasek-gorny__kontekst,
+  .dn-srodowisko .dn-pasek-gorny__skrot {
+    display: none;
+  }
+
+  .dn-srodowisko .dn-nawigacja__srodowisko {
+    font-size: var(--dn-fs-base);
+  }
+
+  .dn-srodowisko .dn-nawigacja__pozycja {
+    justify-content: center;
+  }
+}

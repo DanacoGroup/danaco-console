@@ -1,0 +1,160 @@
+/* Obudowa okna rozmowy.
+
+   `.dn-rozmowa` nie jest `.dn-okno` (`okno.css`). `.dn-okno` to rama okna
+   operacyjnego modułu — pion, gniazda akcji i narzędzi. `.dn-rozmowa` to
+   pięciowierszowa siatka rozmowy, w której rozciąga się wyłącznie historia:
+   nagłówek tożsamości, panel kontekstu, historia, monitor wykonania, dół
+   z polem wpisywania i paskiem akcji.
+
+   Obudowa nie nosi cienia — inaczej niż `.dn-karta`. Okno rozmowy stoi wewnątrz
+   środowiska i uniesienia nie deklaruje; kto potrzebuje uniesienia, dokłada
+   `.dn-karta` na rodzicu.
+
+   Wnętrze wierszy niosą osobne arkusze: `wpis.css` (historia), `postep.css`
+   (monitor), `drobne.css` (pole wpisywania i przybornik). */
+
+/* --- OBUDOWA — pięć wierszy, rozciąga się historia ------------------------ */
+.dn-rozmowa {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  min-height: 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+
+/* Wariant zwarty — trzy wiersze: głowa, historia, dół. Para okien
+   koordynator/wykonawca stoi w kolumnach, więc wyściółki schodzą o jeden
+   stopień, a wierszy kontekstu i monitora nie ma. */
+.dn-rozmowa--zwarta {
+  grid-template-rows: auto 1fr auto;
+}
+
+/* Wstęga roli okna — koordynator w atramencie, wykonawca w sygnale.
+   Rozpisana bez skrótu `border-top`, bo skrót kasowałby szerokość i styl
+   z reguły bazowej. */
+.dn-rozmowa--koordynator {
+  border-top-width: var(--dn-wym-wstega);
+  border-top-style: solid;
+  border-top-color: var(--dn-atrament);
+}
+.dn-rozmowa--wykonawca {
+  border-top-width: var(--dn-wym-wstega);
+  border-top-style: solid;
+  border-top-color: var(--dn-sygnal-wypelnienie);
+}
+
+/* --- WIERSZ 1: NAGŁÓWEK TOŻSAMOŚCI --------------------------------------- */
+/* Kreska subtelna (nie `--dn-obrys`), tło panelu. Pasek przewija się w poziomie
+   bez widocznego suwaka — pola tożsamości nigdy się nie łamią. */
+.dn-rozmowa-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dn-rozmowa-naglowek::-webkit-scrollbar { display: none; }
+
+/* Pole tożsamości: etykieta nad wartością. Etykietę niesie `.dn-etykieta-mono`
+   z warstwy żetonów, nie ten arkusz — tu wyłącznie układ i krój wartości. */
+.dn-rozmowa-pole {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+.dn-rozmowa-pole > b,
+.dn-rozmowa-pole-wartosc {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+/* Stan połączenia — dosunięty do prawej krawędzi nagłówka. */
+.dn-rozmowa-stan {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  white-space: nowrap;
+}
+
+/* Głowa wariantu zwartego — jeden wiersz z plakietką roli, nazwą okna
+   i danymi modelu; łamie się, gdy zabraknie szerokości. */
+.dn-rozmowa-glowa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.dn-rozmowa-glowa > b { font-size: var(--dn-fs-base); font-weight: var(--dn-fw-polgruba); }
+.dn-rozmowa-glowa .dn-dane { font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+/* --- WIERSZ 2: PANEL KONTEKSTU ------------------------------------------- */
+/* Czynne źródła jako plakietki z odłączaniem. Bez tła własnego — kontekst
+   należy do powierzchni okna, nie do panelu. */
+.dn-rozmowa-kontekst {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dn-rozmowa-kontekst::-webkit-scrollbar { display: none; }
+
+/* --- WIERSZ 3: HISTORIA --------------------------------------------------- */
+/* Tło `--dn-tlo` zadeklarowane wprost: obudowa wyżej ustawia
+   `--dn-powierzchnia`, więc bez tej deklaracji historia dostałaby barwę karty
+   zamiast papieru roboczego. */
+.dn-rozmowa-historia {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  overflow-y: auto;
+  background: var(--dn-tlo);
+}
+.dn-rozmowa--zwarta .dn-rozmowa-historia { padding: var(--dn-od-3); }
+
+/* --- WIERSZ 4: MONITOR WYKONANIA ----------------------------------------- */
+/* Kreska górna subtelna, tło panelu. Wnętrze niesie `.dn-postep` (postep.css)
+   w wariancie rozciągniętym oraz przycisk zatrzymania. */
+.dn-rozmowa-monitor {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+
+/* --- WIERSZ 5: DÓŁ — pole wpisywania i pasek akcji ------------------------ */
+/* W układzie pełnym kreski górnej nie ma, bo odgradza go monitor. W wariancie
+   zwartym monitora nie ma, więc dół niesie własną kreskę górną. */
+.dn-rozmowa-dol {
+  padding: var(--dn-od-2) var(--dn-od-4) var(--dn-od-3);
+  background: var(--dn-panel);
+}
+.dn-rozmowa--zwarta .dn-rozmowa-dol {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* Pasek akcji pod polem — przybornik promptu i etykieta czynności. */
+.dn-rozmowa-akcje {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  margin-top: var(--dn-od-2);
+}
+.dn-rozmowa-akcje-etykieta { margin-right: var(--dn-od-1); }

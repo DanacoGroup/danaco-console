@@ -1,0 +1,2388 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — System marki</title>
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   09 · SYSTEM MARKI — warstwa układu opracowania.
+   Wyłącznie żetony semantyczne --dn-*. Zero wartości szesnastkowych.
+   Barwy własne marki występują wyłącznie wewnątrz wklejonych elementów svg znaku.
+   ========================================================================== */
+
+/* --- Powłoka strony ------------------------------------------------------ */
+.op-powloka {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--dn-od-8);
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: var(--dn-od-8) var(--dn-od-6) var(--dn-od-16);
+}
+@media (max-width: 1080px) {
+  .op-powloka { grid-template-columns: minmax(0, 1fr); gap: var(--dn-od-6); }
+  .op-spis { position: static; max-height: none; }
+}
+
+/* --- Pasek górny — rama kokpitu, atramentowa w obu motywach --------------- */
+.op-pasek { position: sticky; top: 0; z-index: var(--dn-z-pasek); }
+.op-pasek .dn-pasek-godlo svg { width: 26px; height: 26px; }
+.op-pasek-kontekst {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  padding-left: var(--dn-od-3);
+  margin-left: var(--dn-od-1);
+  border-left: 1px solid var(--dn-rama-obrys);
+}
+@media (max-width: 720px) { .op-pasek-kontekst { display: none; } }
+
+/* --- Spis treści --------------------------------------------------------- */
+.op-spis {
+  position: sticky;
+  top: calc(var(--dn-wym-pasek) + var(--dn-od-4));
+  align-self: start;
+  max-height: calc(100dvh - var(--dn-wym-pasek) - var(--dn-od-8));
+  overflow-y: auto;
+  padding-right: var(--dn-od-2);
+}
+.op-spis-naglowek {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+}
+.op-spis ol { list-style: none; margin: 0; padding: 0; }
+.op-spis a {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3);
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--dn-r-sm) var(--dn-r-sm) 0;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  text-decoration: none;
+  transition: background-color var(--dn-czas-1) var(--dn-ease),
+              color var(--dn-czas-1) var(--dn-ease),
+              border-color var(--dn-czas-1) var(--dn-ease);
+}
+.op-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.op-spis a[aria-current='true'] {
+  border-left-color: var(--dn-kropka);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+.op-spis-nr {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  min-width: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Sekcje i nagłówki --------------------------------------------------- */
+.op-tresc { min-width: 0; }
+.op-sekcja { scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-4)); margin-bottom: var(--dn-od-12); }
+.op-sekcja > h2 {
+  font-size: var(--dn-fs-2xl);
+  margin-bottom: var(--dn-od-2);
+  padding-bottom: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.op-sekcja > h2 .op-nr {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst-3);
+  margin-right: var(--dn-od-3);
+  font-variant-numeric: tabular-nums;
+}
+.op-sekcja h3 { font-size: var(--dn-fs-lg); margin: var(--dn-od-6) 0 var(--dn-od-2); }
+.op-sekcja h4 {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  margin: var(--dn-od-4) 0 var(--dn-od-2);
+}
+.op-sekcja p { margin: var(--dn-od-2) 0; color: var(--dn-tekst-2); max-width: 76ch; }
+.op-sekcja p strong { color: var(--dn-tekst); }
+.op-lid { font-size: var(--dn-fs-md); color: var(--dn-tekst-2); max-width: 72ch; }
+
+/* --- Nagłówek opracowania ------------------------------------------------ */
+.op-metryka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--dn-od-1);
+  margin-top: var(--dn-od-5);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.op-metryka div { display: flex; flex-direction: column; gap: 2px; padding: var(--dn-od-1) var(--dn-od-2); }
+.op-metryka dt, .op-metryka .op-et {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.op-metryka .op-wt { font-size: var(--dn-fs-base); color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+
+/* --- Bloki wspólne ------------------------------------------------------- */
+.op-panel {
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+.op-panel--wglebienie { background: var(--dn-powierzchnia-2); box-shadow: none; }
+.op-siatka { display: grid; gap: var(--dn-od-4); }
+.op-siatka--2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.op-siatka--3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.op-siatka--4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+.op-tabela-otoczka {
+  margin: var(--dn-od-4) 0;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  overflow: auto;
+  background: var(--dn-powierzchnia);
+}
+.op-tabela-otoczka .dn-tabela th { background: var(--dn-panel); }
+.op-mono {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst-2);
+}
+.op-kod {
+  display: block;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  white-space: pre;
+  overflow-x: auto;
+}
+.op-cytat {
+  margin: var(--dn-od-4) 0;
+  padding: var(--dn-od-4) var(--dn-od-5);
+  border-left: var(--dn-wym-wstega) solid var(--dn-kropka);
+  border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0;
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-md);
+}
+.op-cytat strong { font-weight: var(--dn-fw-polgruba); }
+
+/* --- Pasek narzędzi demonstracji ----------------------------------------- */
+.op-narzedzia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin-bottom: var(--dn-od-4);
+  padding-bottom: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.op-narzedzia-etykieta {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin-right: var(--dn-od-1);
+}
+
+/* --- Znak: para wariantów przełączana motywem ---------------------------- */
+.op-znak { display: inline-flex; align-items: center; justify-content: center; }
+.op-znak .op-z-c { display: none; }
+:root[data-theme='dark'] .op-znak .op-z-j { display: none; }
+:root[data-theme='dark'] .op-znak .op-z-c { display: block; }
+
+/* --- Scena żywego sygnetu ------------------------------------------------ */
+.op-scena {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 320px;
+  padding: var(--dn-od-6);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-powierzchnia);
+  background-image: radial-gradient(circle at 1px 1px, var(--dn-obrys) 1px, transparent 0);
+  background-size: 16px 16px;
+}
+.op-scena-znak { position: relative; width: 240px; height: 240px; }
+.op-scena-znak .op-znak, .op-scena-znak svg { width: 240px; height: 240px; }
+.op-scena-siatka {
+  position: absolute;
+  inset: 0;
+  color: var(--dn-sygnal);
+  opacity: 0;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+}
+.op-scena[data-siatka='tak'] .op-scena-siatka { opacity: .55; }
+.op-scena-opis {
+  position: absolute;
+  left: var(--dn-od-4);
+  bottom: var(--dn-od-4);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+/* Tętno kropki — jedyny ruch ciągły; przy ograniczonym ruchu zamiera */
+@keyframes op-tetno-znak {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  40%      { transform: scale(1.14); opacity: .72; }
+}
+.op-kropka-znaku { transform-box: fill-box; transform-origin: center; }
+.op-scena[data-tetno='tak'] .op-kropka-znaku {
+  animation: op-tetno-znak var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .op-scena[data-tetno='tak'] .op-kropka-znaku { animation: none; transform: none; }
+}
+.op-scena[data-wariant='uproszczony'] .op-w-pelny { display: none; }
+.op-scena[data-wariant='pelny'] .op-w-uproszczony { display: none; }
+
+/* --- Próba skali --------------------------------------------------------- */
+.op-skala { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--dn-od-6); }
+.op-skala figure { display: grid; justify-items: center; gap: var(--dn-od-2); margin: 0; }
+.op-skala figcaption {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Pary „jesteśmy / nie jesteśmy" -------------------------------------- */
+.op-para { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--dn-od-4); }
+.op-para-kolumna {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+.op-para-kolumna--tak { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
+.op-para-kolumna--nie { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); }
+.op-para-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+}
+.op-para-kolumna--tak .op-para-naglowek { color: var(--dn-sukces-tekst); }
+.op-para-kolumna--nie .op-para-naglowek { color: var(--dn-blad-tekst); }
+.op-para-naglowek svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.op-para-scena {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-3);
+  min-height: 96px;
+  padding: var(--dn-od-4);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  border: 1px solid var(--dn-obrys-subtelny);
+}
+.op-para-wniosek { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin: 0; }
+
+/* Ilustracje kontrastowe wewnątrz par */
+.op-obrys-demo { display: flex; gap: var(--dn-od-3); color: var(--dn-tekst); }
+.op-obrys-demo svg { width: 32px; height: 32px; }
+.op-obrys-demo--chwiejny svg:nth-child(1) { stroke-width: 1; }
+.op-obrys-demo--chwiejny svg:nth-child(2) { stroke-width: 2.4; }
+.op-obrys-demo--chwiejny svg:nth-child(3) { stroke-width: 3.2; }
+.op-gestosc-wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  padding: 0 var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-base);
+}
+.op-gestosc-wiersz--zwarty { height: var(--dn-wym-wiersz); }
+.op-gestosc-wiersz--luzny { height: 64px; }
+.op-ruch-pole { display: flex; gap: var(--dn-od-4); align-items: center; }
+.op-liczby-prop { font-family: var(--dn-ff-bazowa); font-variant-numeric: proportional-nums; }
+.op-liczby-tab { font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; }
+.op-liczby-prop span, .op-liczby-tab span { display: block; text-align: right; }
+.op-rama-demo {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  height: var(--dn-wym-pasek); padding: 0 var(--dn-od-3);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-rama); color: var(--dn-rama-tekst);
+  font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-gruba);
+  font-size: var(--dn-fs-sm); letter-spacing: 0.02em; width: 100%;
+}
+.op-rama-demo--chwiejna { background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
+
+/* --- Hierarchia architektury marki --------------------------------------- */
+.op-hierarchia { display: grid; gap: var(--dn-od-3); }
+.op-poziom {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--dn-od-4);
+  width: 100%;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color var(--dn-czas-2) var(--dn-ease),
+              background-color var(--dn-czas-2) var(--dn-ease),
+              transform var(--dn-czas-2) var(--dn-ease);
+}
+.op-poziom:hover { border-color: var(--dn-obrys-mocny); transform: translateY(-1px); }
+.op-poziom[aria-expanded='true'] { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
+.op-poziom:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.op-poziom-nr {
+  display: grid; place-content: center;
+  width: 40px; height: 40px;
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
+}
+.op-poziom[aria-expanded='true'] .op-poziom-nr { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+.op-poziom-tytul { font-family: var(--dn-ff-naglowek); font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-lg); }
+.op-poziom-podtytul { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); margin-top: 2px; }
+.op-poziom-grot { color: var(--dn-tekst-3); transition: transform var(--dn-czas-2) var(--dn-ease); }
+.op-poziom-grot svg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); }
+.op-poziom[aria-expanded='true'] .op-poziom-grot { transform: rotate(90deg); color: var(--dn-sygnal); }
+.op-poziom-panel {
+  margin: calc(var(--dn-od-2) * -1) 0 var(--dn-od-2) var(--dn-od-8);
+  padding: var(--dn-od-4);
+  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-obrys);
+  background: var(--dn-powierzchnia-2);
+  border-radius: 0 var(--dn-r-md) var(--dn-r-md) 0;
+}
+.op-poziom-panel[hidden] { display: none; }
+.op-poziom-panel ul { margin: var(--dn-od-2) 0 0; padding-left: var(--dn-od-5); color: var(--dn-tekst-2); font-size: var(--dn-fs-base); }
+.op-poziom-panel li { margin-bottom: var(--dn-od-1); }
+.op-poziom-probki { display: flex; flex-wrap: wrap; gap: var(--dn-od-4); align-items: center; margin-top: var(--dn-od-3); }
+.op-poziom-probki .op-znak svg, .op-poziom-probki > svg { width: 40px; height: 40px; }
+
+/* --- Emblematy środowisk ------------------------------------------------- */
+.op-srodowisko { display: grid; gap: var(--dn-od-3); }
+.op-srodowisko-godlo { width: 40px; height: 40px; color: var(--dn-tekst); }
+.op-srodowisko[aria-current='true'] .op-srodowisko-godlo { color: var(--dn-sygnal); }
+.op-obietnica {
+  margin-top: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst);
+}
+.op-obietnica-etykieta {
+  display: block;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin-bottom: var(--dn-od-1);
+}
+
+/* --- Kropka sygnału: pięć miejsc ----------------------------------------- */
+.op-miejsca { display: grid; gap: var(--dn-od-3); }
+.op-miejsce {
+  display: grid;
+  grid-template-columns: 28px minmax(160px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.op-miejsce-nr { font-family: var(--dn-ff-mono); color: var(--dn-tekst-3); font-variant-numeric: tabular-nums; }
+.op-miejsce-demo { display: flex; align-items: center; gap: var(--dn-od-2); }
+.op-miejsce-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+
+/* --- Terytoria ----------------------------------------------------------- */
+.op-terytorium-lit {
+  display: grid; place-content: center;
+  width: 28px; height: 28px;
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-sygnal);
+}
+
+/* --- Lista kontrolna ----------------------------------------------------- */
+.op-kontrola-blok { margin-bottom: var(--dn-od-4); }
+.op-kontrola-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.op-kontrola-lista li { display: flex; align-items: center; }
+.op-kontrola-poz {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  width: 100%; min-height: var(--dn-wym-wiersz);
+  padding: 0 var(--dn-od-3);
+  border: 1px solid transparent; border-radius: var(--dn-r-sm);
+  background: transparent; color: var(--dn-tekst-2);
+  font: inherit; font-size: var(--dn-fs-base); text-align: left; cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.op-kontrola-poz:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.op-kontrola-poz:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.op-kontrola-znak {
+  display: grid; place-content: center;
+  width: var(--dn-wym-check); height: var(--dn-wym-check); flex: none;
+  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-xs);
+  color: var(--dn-atrament-tekst);
+}
+.op-kontrola-znak svg { width: 12px; height: 12px; opacity: 0; }
+.op-kontrola-poz[aria-pressed='true'] { color: var(--dn-tekst); }
+.op-kontrola-poz[aria-pressed='true'] .op-kontrola-znak { background: var(--dn-atrament); border-color: var(--dn-atrament); }
+.op-kontrola-poz[aria-pressed='true'] .op-kontrola-znak svg { opacity: 1; }
+.op-kontrola-licznik {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); font-variant-numeric: tabular-nums;
+}
+.op-kontrola-tor { flex: 1; height: 6px; border-radius: var(--dn-r-pill); background: var(--dn-powierzchnia-2); overflow: hidden; }
+.op-kontrola-wartosc { height: 100%; width: 0; background: var(--dn-sygnal-wypelnienie); transition: width var(--dn-czas-3) var(--dn-ease); }
+
+/* --- Komunikat zwrotny (zero blokad) ------------------------------------- */
+.op-odzew {
+  margin-top: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-informacja-tlo);
+  color: var(--dn-informacja-tekst);
+  font-size: var(--dn-fs-sm);
+  display: flex; align-items: flex-start; gap: var(--dn-od-2);
+}
+.op-odzew[hidden] { display: none; }
+.op-odzew svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; margin-top: 1px; }
+
+/* --- Kopiowanie ---------------------------------------------------------- */
+.op-kopiuj-rzad { display: flex; align-items: center; gap: var(--dn-od-2); margin-top: var(--dn-od-2); }
+.op-kopiuj-rzad code { flex: 1; }
+.op-toasty { position: fixed; right: var(--dn-od-4); bottom: var(--dn-od-4); z-index: var(--dn-z-powiadomienie); display: grid; gap: var(--dn-od-2); }
+
+/* --- Stopka i panel informacyjny ----------------------------------------- */
+.op-o-opracowaniu {
+  margin-top: var(--dn-od-12);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+.op-o-opracowaniu > summary {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  cursor: pointer;
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-polgruba);
+  border-radius: var(--dn-r-lg);
+}
+.op-o-opracowaniu > summary:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
+.op-o-opracowaniu > summary svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-3); }
+.op-o-tresc { padding: 0 var(--dn-od-4) var(--dn-od-4); }
+.op-o-tresc h4 { margin-top: var(--dn-od-4); }
+.op-o-tresc ul { padding-left: var(--dn-od-5); color: var(--dn-tekst-2); font-size: var(--dn-fs-base); }
+.op-stopka {
+  margin-top: var(--dn-od-8);
+  padding-top: var(--dn-od-4);
+  border-top: 1px solid var(--dn-obrys);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  display: grid; gap: 4px;
+}
+.op-pomin {
+  position: absolute; left: -9999px;
+  background: var(--dn-atrament); color: var(--dn-atrament-tekst);
+  padding: var(--dn-od-2) var(--dn-od-3); border-radius: var(--dn-r-sm); z-index: var(--dn-z-tooltip);
+}
+.op-pomin:focus { left: var(--dn-od-3); top: var(--dn-od-3); position: fixed; }
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+<body>
+
+<a class="op-pomin" href="#tresc">Przejdź do treści</a>
+
+<!-- ====================================================================== -->
+<!-- PASEK GÓRNY — rama kokpitu, atramentowa w obu motywach                  -->
+<!-- ====================================================================== -->
+<header class="dn-pasek op-pasek">
+  <a class="dn-pasek-godlo" href="#tresc" aria-label="Danaco Console — system marki">
+    <!-- sygnet-na-ciemnym.svg — wklejony inline, barwy własne marki -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+      <path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+      <path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+      <circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/>
+    </svg>
+    <span class="dn-pasek-logotyp">DANACO<small>Console</small></span>
+  </a>
+  <span class="op-pasek-kontekst">09 · System marki</span>
+  <div class="dn-pasek-prawa">
+    <span class="dn-plakietka dn-plakietka--rola">v2.0</span>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+            data-przelacz-motyw data-motyw-ikona
+            aria-label="Przełącz motyw jasny i ciemny" title="Przełącz motyw">
+      <svg class="ik-slonce" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+      <svg class="ik-ksiezyc" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="op-powloka">
+
+<!-- ====================================================================== -->
+<!-- SPIS TREŚCI                                                            -->
+<!-- ====================================================================== -->
+<nav class="op-spis" aria-label="Spis treści opracowania">
+  <p class="op-spis-naglowek">System marki</p>
+  <ol id="spis">
+    <li><a href="#r1"><span class="op-spis-nr">01</span>Pozycjonowanie</a></li>
+    <li><a href="#r2"><span class="op-spis-nr">02</span>Producent i dwie warstwy</a></li>
+    <li><a href="#r3"><span class="op-spis-nr">03</span>Instrument pomiarowy</a></li>
+    <li><a href="#r4"><span class="op-spis-nr">04</span>Osobowość marki</a></li>
+    <li><a href="#r5"><span class="op-spis-nr">05</span>Obietnica i znak</a></li>
+    <li><a href="#r6"><span class="op-spis-nr">06</span>Cztery środowiska</a></li>
+    <li><a href="#r7"><span class="op-spis-nr">07</span>Zero blokad</a></li>
+    <li><a href="#r8"><span class="op-spis-nr">08</span>Architektura marki</a></li>
+    <li><a href="#r9"><span class="op-spis-nr">09</span>Elementy konstytutywne</a></li>
+    <li><a href="#r10"><span class="op-spis-nr">10</span>Kropka sygnału</a></li>
+    <li><a href="#r11"><span class="op-spis-nr">11</span>Barwa marki</a></li>
+    <li><a href="#r12"><span class="op-spis-nr">12</span>Terytoria marki</a></li>
+    <li><a href="#r13"><span class="op-spis-nr">13</span>Lista kontrolna</a></li>
+    <li><a href="#r14"><span class="op-spis-nr">14</span>Decyzje projektowe</a></li>
+  </ol>
+</nav>
+
+<!-- ====================================================================== -->
+<!-- TREŚĆ                                                                  -->
+<!-- ====================================================================== -->
+<main class="op-tresc" id="tresc">
+
+  <h1 style="font-size: var(--dn-fs-3xl);">System marki Danaco Console</h1>
+  <p class="op-lid">Interaktywny przewodnik po marce: pozycjonowanie, osobowość, obietnica,
+  architektura znaku i lista kontrolna zgodności. Wszystkie znaki na tej stronie są
+  wklejone inline z plików źródłowych i przebudowują się wraz z przełącznikiem motywu.</p>
+
+  <div class="op-metryka">
+    <div><span class="op-et">Produkt</span><span class="op-wt">Danaco Console</span></div>
+    <div><span class="op-et">Warstwa</span><span class="op-wt">wizualna v2.0</span></div>
+    <div><span class="op-et">Producent</span><span class="op-wt">Danaco Holding Group Sp. z o.o.</span></div>
+    <div><span class="op-et">Twórca</span><span class="op-wt">Dariusz Naharnowicz</span></div>
+    <div><span class="op-et">Status</span><span class="op-wt">Deweloperski</span></div>
+    <div><span class="op-et">Data pakietu</span><span class="op-wt">2026-08-11</span></div>
+  </div>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r1" aria-labelledby="r1-h">
+    <h2 id="r1-h"><span class="op-nr">01</span>Pozycjonowanie marki</h2>
+
+    <blockquote class="op-cytat">
+      <strong>Danaco Console to platforma operacyjna — kokpit dowodzenia — dla zawodowego
+      Operatora zarządzającego cyfrową organizacją</strong>, w języku monochromatycznej
+      precyzji: odcienie bieli w motywie jasnym, odcienie czerni w motywie ciemnym, jeden
+      chłodny sygnał; z ciążeniem ku własnemu systemowi „instrumentu pomiarowego": zwarta
+      gęstość, dane krojem mono, zero dekoracji bez funkcji.
+    </blockquote>
+
+    <p>Zdanie pochodzi z <span class="op-mono">KIERUNEK.md</span>, rozdz. 1, i jest kontraktem
+    marki. Opracowanie, które da się z tego zdania wyprowadzić, jest zgodne z marką.
+    Opracowanie, którego się nie da — nie jest.</p>
+
+    <h3>Adresat: Operator</h3>
+    <p>Marka nie mówi do „użytkownika". Mówi do <strong>Operatora</strong> — osoby, która
+    nie rozmawia z jednym modelem, tylko zarządza cyfrową organizacją złożoną z modeli,
+    agentów, projektów, procesów i automatyzacji.</p>
+
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <caption class="op-mono" style="text-align:left;padding:var(--dn-od-3);">Adresat marki wobec adresata, którym nie jest</caption>
+        <thead>
+          <tr><th scope="col">Wymiar</th><th scope="col">Operator Danaco Console</th><th scope="col">Adresat, którym nie jest</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Rola</td><td>dowodzi pracą wielu modeli i agentów</td><td class="dn-dane">użytkownik jednej rozmowy</td></tr>
+          <tr><td>Sposób pracy</td><td>równolegle: wiele kart sesji, wiele okien</td><td class="dn-dane">sekwencyjnie, jeden wątek</td></tr>
+          <tr><td>Oczekiwanie</td><td>czytelność pod obciążeniem, przewidywalność</td><td class="dn-dane">efektowność, „przyjazność"</td></tr>
+          <tr><td>Reakcja na blokadę</td><td>traktuje ją jako wadę narzędzia</td><td class="dn-dane">traktuje ją jako opiekę</td></tr>
+          <tr><td>Gęstość</td><td>chce więcej informacji na ekranie</td><td class="dn-dane">chce mniej i większe</td></tr>
+          <tr><td>Dane</td><td>czyta identyfikatory, ścieżki, liczby</td><td class="dn-dane">nie czyta ich</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Cztery dowody, które interfejs składa bez słów</h3>
+    <div class="op-siatka op-siatka--2">
+      <div class="op-panel">
+        <p style="margin:0;"><strong>1 · To nie jest czat.</strong> Rama kokpitu (pasek 48 px,
+        atramentowy w obu motywach), pas kart sesji, okna operacyjne modułów, pas komunikacji
+        jako jeden z paneli — nie jako całe okno.</p>
+      </div>
+      <div class="op-panel">
+        <p style="margin:0;"><strong>2 · Praca biegnie w tle.</strong> Kropka sygnału tętniąca
+        co 2,4 s na kartach sesji i przy nadawcy aktywnie piszącym.</p>
+      </div>
+      <div class="op-panel">
+        <p style="margin:0;"><strong>3 · Modele pracują dla siebie nawzajem.</strong> Asymetria
+        koordynator–wykonawca; role: Executor 1, Executor 2, Coordinator, Executor 3 / Validator.</p>
+      </div>
+      <div class="op-panel">
+        <p style="margin:0;"><strong>4 · Wszystko jest konfigurowalne.</strong> Okno konfiguracji,
+        profile izolacji, Permissions Center — wszystkie jako opcje Operatora, nie bramy.</p>
+      </div>
+    </div>
+
+    <h3>Czym marka nie jest — odrzucone odruchy</h3>
+    <p>Katalog anty-domyślnych jest częścią pozycjonowania, nie tylko regulaminem CSS.
+    Każdy wiersz jest <strong>testowalny w pliku</strong>.</p>
+    <code class="op-kod">   ODRZUCONY ODRUCH                    POZYCJA MARKI
+   ─────────────────────────────────────────────────────────────────────
+   fioletowy gradient „AI"      ──►    monochrom + jeden błękit sygnałowy
+   Inter + slate-900            ──►    Plex Sans + czysto neutralna skala
+   trzy równe karty funkcji     ──►    strefy o malejącej masie
+   wyszarzone przyciski-bramy   ──►    ZERO BLOKAD (ADL-017)
+   stan samym kolorem           ──►    zawsze ikona albo etykieta
+   emoji jako ikony             ──►    wyłącznie SVG z zestawu
+   glassmorfizm wszędzie        ──►    powierzchnie kryjące
+   czysta czerń jako tło        ──►    szary-950 / szary-50
+   Lorem ipsum, zmyślone dane   ──►    treści operacyjne z domeny produktu</code>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r2" aria-labelledby="r2-h">
+    <h2 id="r2-h"><span class="op-nr">02</span>Producent, twórca i dwie warstwy produktu</h2>
+
+    <p>Produkt istnieje w dwóch warstwach dokumentacyjnych, wydanych w różnym czasie
+    i o różnym zakresie. <strong>Nie są to dwa produkty ani dwie marki.</strong></p>
+
+    <code class="op-kod">   ┌──────────────────────────────────────────────────────────────────┐
+   │  DANACO PILOT  ·  warstwa funkcjonalna  ·  v1.0  ·  2026-08-06   │
+   │  co system robi:  4 środowiska · 15 modułów · okna operacyjne ·  │
+   │  przepływ okien · role MultitaskingAI · ADL-017 zero blokad      │
+   └───────────────────────────────┬──────────────────────────────────┘
+                                   │  obowiązuje nadal w całości
+                                   ▼
+   ┌──────────────────────────────────────────────────────────────────┐
+   │  DANACO CONSOLE  ·  warstwa wizualna  ·  v2.0  ·  2026-08-11     │
+   │  jak system wygląda i brzmi:  znak „Delegacja" · monochrom +     │
+   │  jeden sygnał · Space Grotesk / Plex Sans / Plex Mono · żetony   │
+   │  --dn-* · gęstość zwarta · tętno 2,4 s                           │
+   └──────────────────────────────────────────────────────────────────┘</code>
+
+    <h3>Zasada nazewnicza</h3>
+    <ol style="color:var(--dn-tekst-2);padding-left:var(--dn-od-5);">
+      <li>Produkt nazywamy <strong>Danaco Console</strong>.</li>
+      <li>Nazwa <strong>Danaco Pilot</strong> występuje wyłącznie przy cytowaniu dokumentacji
+      funkcjonalnej v1.0 — jako <em>nazwa warstwy</em>, nie alternatywna nazwa produktu.</li>
+      <li>Zakaz mieszania obu nazw w jednym zdaniu bez wyjaśnienia relacji.</li>
+      <li>Nazwy własne środowisk, modułów, okien i ról pozostają w brzmieniu dokumentacji
+      (<span class="op-mono">Studio Editor</span>, <span class="op-mono">Workflow Builder</span>,
+      <span class="op-mono">Chat Window</span>, <span class="op-mono">Coordinator</span>).</li>
+    </ol>
+
+    <h3>Co zostało zastąpione</h3>
+    <p>Warstwa wizualna v2.0 zastępuje w całości poprzednią warstwę — parę granat + złoto,
+    godło „tarcza z belką wagi" i parę krojów Cormorant Garamond + Inter — uznaną przez
+    Właściciela za zastępczą i nieobowiązującą.</p>
+
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Element</th><th scope="col">v1.0 — nieobowiązujące</th><th scope="col">v2.0 — obowiązujące</th></tr></thead>
+        <tbody>
+          <tr><td>Para barw</td><td class="dn-dane">granat + złoto</td><td>monochrom + <strong>jeden</strong> sygnał</td></tr>
+          <tr><td>Godło</td><td class="dn-dane">tarcza, monogram „D", belka wagi</td><td>sygnet <strong>„Delegacja"</strong></td></tr>
+          <tr><td>Nagłówki</td><td class="dn-dane">Cormorant Garamond</td><td>Space Grotesk</td></tr>
+          <tr><td>Interfejs</td><td class="dn-dane">Inter</td><td>IBM Plex Sans</td></tr>
+          <tr><td>Dane</td><td class="dn-dane">JetBrains Mono</td><td>IBM Plex Mono</td></tr>
+          <tr><td>Charakter</td><td class="dn-dane">„kancelaryjno-nowoczesny"</td><td>instrument pomiarowy</td></tr>
+          <tr><td>Godło pełnokolorowe</td><td class="dn-dane">tak — gradienty w tarczy</td><td>nie — znak jednobarwny + kropka</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Ciągłość zachowały trzy rzeczy: <strong>kokpit zamiast okna rozmowy</strong>,
+    <strong>oba motywy równoprawne</strong> i <strong>zasada zero blokad</strong>.
+    To one, a nie barwy, były nośnikiem tożsamości.</p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r3" aria-labelledby="r3-h">
+    <h2 id="r3-h"><span class="op-nr">03</span>Idea przewodnia: instrument pomiarowy</h2>
+
+    <p>Marka nie odwołuje się do metafory „asystenta", „mózgu" ani „iskry". Odwołuje się do
+    <strong>instrumentu pomiarowego</strong>: urządzenia, które ma jedno zadanie — pokazać
+    stan rzeczy wiernie, bez upiększania i bez opóźnienia.</p>
+
+    <div class="op-siatka op-siatka--3">
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Skala jest gęsta</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Instrument mieści dużo odczytów na małej
+        powierzchni: kontrolka 32 px, wiersz 36 px, pasek 48 px, odstępy paneli 12–16 px.</p>
+        <p class="op-mono" style="margin-top:var(--dn-od-2);">--dn-wym-kontrolka: 32px</p>
+      </div>
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Odczyt jest maszynowy</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Liczba ma być porównywalna, nie ładna:
+        dane krojem mono z <span class="op-mono">tabular-nums</span> — identyfikatory, ścieżki,
+        czasy, wersje.</p>
+        <p class="op-mono" style="margin-top:var(--dn-od-2);">--dn-ff-mono</p>
+      </div>
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Nic nie jest ozdobne</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Każdy element tarczy coś znaczy: żaden
+        gradient jako tło, żaden cień „domyślny", żaden ruch bez informacji.</p>
+        <p class="op-mono" style="margin-top:var(--dn-od-2);">--dn-grad-* — tylko ilustracja</p>
+      </div>
+    </div>
+
+    <h3>Trzy pokrętła jako miara idei</h3>
+    <p>Idea „instrumentu" jest skwantyfikowana, nie zostawiona intuicji.</p>
+    <code class="op-kod">   WARIANCJA      ├────●─────────────────────┤   4 / 10   przewidywalność
+   RUCH           ├──●───────────────────────┤   3 / 10   jeden ruch znaczący
+   GĘSTOŚĆ        ├───────────────────●──────┤   8 / 10   kokpit, nie strona
+                  0                        10</code>
+
+    <h3>Test idei — trzy pytania do każdego elementu</h3>
+    <div class="op-siatka op-siatka--3">
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>Czy niesie informację?</strong><br>Jeżeli nie — jest dekoracją i odpada.</p></div>
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>Czy zachowuje się tak samo w obu motywach?</strong><br>Jeżeli nie — jest wyjątkiem i wymaga uzasadnienia.</p></div>
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>Czy da się go zmierzyć?</strong><br>Barwa ma pomiar, odstęp ma być wielokrotnością 4 px, czas ma być żetonem.</p></div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r4" aria-labelledby="r4-h">
+    <h2 id="r4-h"><span class="op-nr">04</span>Osobowość marki — pięć cech</h2>
+
+    <p>Każda cecha jest wyprowadzona z konkretnego rozdziału <span class="op-mono">KIERUNEK.md</span>
+    i ma dowód w pliku. <strong>Cecha bez dowodu w pliku nie jest cechą marki, tylko przymiotnikiem.</strong>
+    Wybierz cechę, żeby zobaczyć parę porównawczą na żywo.</p>
+
+    <div class="op-panel" style="margin-top:var(--dn-od-4);">
+      <div class="dn-zakladki" role="tablist" aria-label="Cechy osobowości marki">
+        <button class="dn-zakladka" type="button" role="tab" id="tab-c1" aria-controls="pan-c1" aria-selected="true"  data-cecha="c1">Precyzyjni</button>
+        <button class="dn-zakladka" type="button" role="tab" id="tab-c2" aria-controls="pan-c2" aria-selected="false" data-cecha="c2" tabindex="-1">Zwarci</button>
+        <button class="dn-zakladka" type="button" role="tab" id="tab-c3" aria-controls="pan-c3" aria-selected="false" data-cecha="c3" tabindex="-1">Sprawczy</button>
+        <button class="dn-zakladka" type="button" role="tab" id="tab-c4" aria-controls="pan-c4" aria-selected="false" data-cecha="c4" tabindex="-1">Techniczni</button>
+        <button class="dn-zakladka" type="button" role="tab" id="tab-c5" aria-controls="pan-c5" aria-selected="false" data-cecha="c5" tabindex="-1">Przewidywalni</button>
+      </div>
+
+      <!-- C1 · Precyzyjni, nie ozdobni -->
+      <div class="op-panel-cechy" role="tabpanel" id="pan-c1" aria-labelledby="tab-c1" tabindex="0" style="padding-top:var(--dn-od-4);">
+        <p><strong>Precyzyjni — nie ozdobni.</strong> Źródło: KIERUNEK 1 („zero dekoracji bez funkcji"),
+        3.1 (neutralne czysto neutralne), 3.6 (obrys ikon ujednolicony do <strong>1,75</strong> — „precyzja instrumentu").</p>
+        <div class="op-para">
+          <div class="op-para-kolumna op-para-kolumna--tak">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Jesteśmy</p>
+            <div class="op-para-scena">
+              <div class="op-obrys-demo">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Jedna wartość obrysu — <span class="op-mono">1,75</span> — w całym zestawie.
+            Zestaw czyta się jako jedno narzędzie.</p>
+          </div>
+          <div class="op-para-kolumna op-para-kolumna--nie">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Nie jesteśmy</p>
+            <div class="op-para-scena">
+              <div class="op-obrys-demo op-obrys-demo--chwiejny">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Obrysy 1 / 2,4 / 3,2 „dla urozmaicenia". Zestaw rozpada się na trzy biblioteki.</p>
+          </div>
+        </div>
+        <p class="op-mono" style="margin-top:var(--dn-od-3);">dowód: srodowiska/*.svg — stroke-width="1.75" w każdym z czterech emblematów</p>
+      </div>
+
+      <!-- C2 · Zwarci, nie ciaśni -->
+      <div class="op-panel-cechy" role="tabpanel" id="pan-c2" aria-labelledby="tab-c2" tabindex="0" hidden style="padding-top:var(--dn-od-4);">
+        <p><strong>Zwarci — nie ciaśni.</strong> Źródło: KIERUNEK 2 (GĘSTOŚĆ 8/10), 3.7 (gęstość zwarta;
+        <span class="op-mono">pointer: coarse</span> → kontrolki 40 px „żeton, nie wyjątek").</p>
+        <div class="op-para">
+          <div class="op-para-kolumna op-para-kolumna--tak">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Jesteśmy</p>
+            <div class="op-para-scena" style="display:block;padding:0;">
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--zwarty"><span class="dn-kropka"></span><span>Raport finansowy Q3</span><span class="op-mono" style="margin-left:auto;">TalkIn · 2 okna</span></div>
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--zwarty"><span class="dn-kropka dn-kropka--neutralna"></span><span>Analiza rynku OZE</span><span class="op-mono" style="margin-left:auto;">TalkIn · 1 okno</span></div>
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--zwarty"><span class="dn-kropka"></span><span>Orchestrator #7</span><span class="op-mono" style="margin-left:auto;">MultitaskingAI · 3 okna</span></div>
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--zwarty" style="border-bottom:none;"><span class="dn-kropka dn-kropka--neutralna"></span><span>Migracja bazy klientów</span><span class="op-mono" style="margin-left:auto;">CodeStudio · 2 okna</span></div>
+            </div>
+            <p class="op-para-wniosek">Wiersz <span class="op-mono">36 px</span> — cztery sesje widoczne
+            naraz, cel dotykowy rośnie żetonem do 44 px.</p>
+          </div>
+          <div class="op-para-kolumna op-para-kolumna--nie">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Nie jesteśmy</p>
+            <div class="op-para-scena" style="display:block;padding:0;">
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--luzny"><span class="dn-kropka"></span><span>Raport finansowy Q3</span><span class="op-mono" style="margin-left:auto;">TalkIn · 2 okna</span></div>
+              <div class="op-gestosc-wiersz op-gestosc-wiersz--luzny" style="border-bottom:none;"><span class="dn-kropka dn-kropka--neutralna"></span><span>Analiza rynku OZE</span><span class="op-mono" style="margin-left:auto;">TalkIn · 1 okno</span></div>
+            </div>
+            <p class="op-para-wniosek">Wiersz 64 px — dwie sesje zamiast czterech. Operator przewija zamiast czytać.</p>
+          </div>
+        </div>
+        <p class="op-mono" style="margin-top:var(--dn-od-3);">dowód: --dn-od-* = 0/4/8/12/16/20/24/32/40/48/64 · jednostka 4 px [NIENEGOCJOWALNE]</p>
+      </div>
+
+      <!-- C3 · Sprawczy, nie hałaśliwi -->
+      <div class="op-panel-cechy" role="tabpanel" id="pan-c3" aria-labelledby="tab-c3" tabindex="0" hidden style="padding-top:var(--dn-od-4);">
+        <p><strong>Sprawczy — nie hałaśliwi.</strong> Źródło: KIERUNEK 2 (RUCH 3/10 — „jeden ruch znaczący:
+        tętno pracy w tle"), 3.1 („czerń działa, sygnał wskazuje"), 3.4 (tętno jako jedyny ruch ciągły).</p>
+        <div class="op-para">
+          <div class="op-para-kolumna op-para-kolumna--tak">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Jesteśmy</p>
+            <div class="op-para-scena">
+              <div class="op-ruch-pole">
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-2);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">Orchestrator #7 pracuje</span></span>
+              </div>
+              <div style="width:100%;display:flex;gap:var(--dn-od-2);margin-top:var(--dn-od-3);">
+                <button class="dn-btn dn-btn--atrament" type="button">Uruchom kolejkę</button>
+                <button class="dn-btn dn-btn--zarys" type="button">Podgląd</button>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Jeden ruch na widok. Działanie główne to <strong>inwersja atramentu</strong> —
+            czerń działa, sygnał wskazuje.</p>
+          </div>
+          <div class="op-para-kolumna op-para-kolumna--nie">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Nie jesteśmy</p>
+            <div class="op-para-scena">
+              <div class="op-ruch-pole" style="flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-1);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">sesja</span></span>
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-1);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">panel</span></span>
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-1);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">zakładka</span></span>
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-1);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">wiersz</span></span>
+                <span style="display:inline-flex;align-items:center;gap:var(--dn-od-1);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">stopka</span></span>
+              </div>
+              <div style="width:100%;display:flex;gap:var(--dn-od-2);margin-top:var(--dn-od-3);">
+                <button class="dn-btn dn-btn--sygnal" type="button">Uruchom</button>
+                <button class="dn-btn dn-btn--sygnal" type="button">Podgląd</button>
+                <button class="dn-btn dn-btn--sygnal" type="button">Zapisz</button>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Pięć tętniących kropek i trzy akcenty naraz. Nic nie wskazuje,
+            bo wskazuje wszystko.</p>
+          </div>
+        </div>
+        <p class="op-mono" style="margin-top:var(--dn-od-3);">dowód: --dn-czas-tetno: 2.4s — jedyny ruch ciągły w interfejsie</p>
+      </div>
+
+      <!-- C4 · Techniczni, nie zimni -->
+      <div class="op-panel-cechy" role="tabpanel" id="pan-c4" aria-labelledby="tab-c4" tabindex="0" hidden style="padding-top:var(--dn-od-4);">
+        <p><strong>Techniczni — nie zimni.</strong> Źródło: KIERUNEK 3.2 (Plex Sans — czytelność w małych
+        stopniach i wzorowe polskie diakrytyki), 3.6 (nazwy ikon polskie, opisowe), dostępność jako
+        <strong>warunek wejściowy</strong>, nie cel.</p>
+        <div class="op-para">
+          <div class="op-para-kolumna op-para-kolumna--tak">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Jesteśmy</p>
+            <div class="op-para-scena" style="justify-content:space-between;">
+              <div class="op-liczby-tab"><span>1 284</span><span>96</span><span>17 003</span><span>2,4 s</span></div>
+              <div style="text-align:right;font-size:var(--dn-fs-sm);color:var(--dn-tekst-2);">
+                <div>ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ</div>
+                <div class="op-mono" style="margin-top:var(--dn-od-1);">ikony: wykonawca · tabela-danych</div>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Mono z <span class="op-mono">tabular-nums</span> — cyfry stoją w kolumnie.
+            Nazwy po polsku, diakrytyki sprawdzone.</p>
+          </div>
+          <div class="op-para-kolumna op-para-kolumna--nie">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Nie jesteśmy</p>
+            <div class="op-para-scena" style="justify-content:space-between;">
+              <div class="op-liczby-prop"><span>1 284</span><span>96</span><span>17 003</span><span>2,4 s</span></div>
+              <div style="text-align:right;font-size:var(--dn-fs-sm);color:var(--dn-tekst-2);">
+                <div class="op-mono">CALY INTERFEJS KROJEM MONO</div>
+                <div class="op-mono" style="margin-top:var(--dn-od-1);">icon-check-circle-alt-2</div>
+              </div>
+            </div>
+            <p class="op-para-wniosek">Cyfry proporcjonalne — kolumna „faluje". Mono użyte jako styl,
+            nie jako rola. Nazwy nieczytelne dla zespołu.</p>
+          </div>
+        </div>
+        <p class="op-mono" style="margin-top:var(--dn-od-3);">dowód: kontrasty.json — 33 zmierzone pary; pomiar jest wejściem do palety</p>
+      </div>
+
+      <!-- C5 · Przewidywalni, nie nudni -->
+      <div class="op-panel-cechy" role="tabpanel" id="pan-c5" aria-labelledby="tab-c5" tabindex="0" hidden style="padding-top:var(--dn-od-4);">
+        <p><strong>Przewidywalni — nie nudni.</strong> Źródło: KIERUNEK 2 (WARIANCJA 4/10 — „asymetria tylko
+        tam, gdzie niesie hierarchię"), 3.3 (rama kokpitu jako stały dom godła), 3.5 (znak opowiadający pętlę).</p>
+        <div class="op-para">
+          <div class="op-para-kolumna op-para-kolumna--tak">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Jesteśmy</p>
+            <div class="op-para-scena" style="display:block;">
+              <div class="op-rama-demo">
+                <span class="op-znak" style="width:20px;height:20px;">
+                  <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+                  <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+                </span>
+                DANACO CONSOLE
+              </div>
+              <p style="margin:var(--dn-od-3) 0 0;font-size:var(--dn-fs-sm);color:var(--dn-tekst-2);">
+                Przełącz motyw w pasku górnym — <strong>ta rama się nie zmieni</strong>.</p>
+            </div>
+            <p class="op-para-wniosek">Rama atramentowa w obu motywach. Operator zawsze wie, gdzie jest góra systemu.</p>
+          </div>
+          <div class="op-para-kolumna op-para-kolumna--nie">
+            <p class="op-para-naglowek"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Nie jesteśmy</p>
+            <div class="op-para-scena" style="display:block;">
+              <div class="op-rama-demo op-rama-demo--chwiejna">DANACO CONSOLE</div>
+              <p style="margin:var(--dn-od-3) 0 0;font-size:var(--dn-fs-sm);color:var(--dn-tekst-2);">
+                Ta rama przełącza się z motywem — traci charakter stanowiska dowodzenia.</p>
+            </div>
+            <p class="op-para-wniosek">Pasek zmieniający charakter przy każdym przełączeniu motywu.
+            Punkt orientacji znika.</p>
+          </div>
+        </div>
+        <p class="op-mono" style="margin-top:var(--dn-od-3);">dowód: --dn-rama: var(--dn-szary-925) — wartość stała w obu motywach</p>
+      </div>
+    </div>
+
+    <h3>Pięć cech — zestawienie</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">#</th><th scope="col">Cecha</th><th scope="col">Jesteśmy</th><th scope="col">Nie jesteśmy</th><th scope="col">Twardy dowód</th></tr></thead>
+        <tbody>
+          <tr><td class="op-mono">1</td><td>Precyzja</td><td>jedna wartość obrysu, czyste neutralne</td><td class="dn-dane">ozdobność, gradient jako tło</td><td class="op-mono">stroke-width 1,75</td></tr>
+          <tr><td class="op-mono">2</td><td>Zwartość</td><td>32 / 36 / 48 px, jednostka 4 px</td><td class="dn-dane">ciasnota, nietrafialny cel</td><td class="op-mono">--dn-od-*</td></tr>
+          <tr><td class="op-mono">3</td><td>Sprawczość</td><td>jeden ruch ciągły, sygnał ≤ 5 %</td><td class="dn-dane">hałas wizualny</td><td class="op-mono">--dn-czas-tetno</td></tr>
+          <tr><td class="op-mono">4</td><td>Techniczność</td><td>pomiar, mono dla danych, polskie nazwy</td><td class="dn-dane">zimno, ozdobna „konsolowość"</td><td class="op-mono">kontrasty.json</td></tr>
+          <tr><td class="op-mono">5</td><td>Przewidywalność</td><td>stała rama, stałe komponenty</td><td class="dn-dane">monotonia formy zamiast treści</td><td class="op-mono">--dn-rama</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r5" aria-labelledby="r5-h">
+    <h2 id="r5-h"><span class="op-nr">05</span>Obietnica marki i pętla produktu w znaku „»».”</h2>
+
+    <blockquote class="op-cytat">
+      <strong>Wydajesz polecenie — praca rusza. Widzisz, że biegnie. Nic cię nie zatrzymuje.</strong>
+    </blockquote>
+
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Człon obietnicy</th><th scope="col">Nośnik wizualny</th><th scope="col">Nośnik funkcjonalny</th></tr></thead>
+        <tbody>
+          <tr><td>Wydajesz polecenie</td><td>grot promptu „»" — sygnet, <span class="op-mono">.dn-prompt-grot</span></td><td class="dn-dane">Chat Window wspólne wszystkim modułom</td></tr>
+          <tr><td>Praca rusza i biegnie</td><td>kropka sygnału + tętno 2,4 s</td><td class="dn-dane">karty sesji w tle, kolejka, monitor procesu</td></tr>
+          <tr><td>Nic cię nie zatrzymuje</td><td>brak stanu wyłączonego w bibliotece komponentów</td><td class="dn-dane">ADL-017 — zero blokad</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Żywy sygnet</h3>
+    <p>Znak wklejony inline z plików <span class="op-mono">logo/sygnet.svg</span> i
+    <span class="op-mono">logo/sygnet-na-ciemnym.svg</span> — <strong>bez zmiany ani jednej
+    współrzędnej</strong>. Przełącznik motywu w pasku górnym przebudowuje wszystkie znaki
+    na tej stronie.</p>
+
+    <div class="op-narzedzia" role="group" aria-label="Sterowanie podglądem znaku">
+      <span class="op-narzedzia-etykieta">Podgląd</span>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="btn-tetno" aria-pressed="true">Tętno kropki</button>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="btn-siatka" aria-pressed="false">Siatka konstrukcyjna</button>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="btn-wariant" aria-pressed="false">Wariant uproszczony</button>
+      <span class="dn-plakietka dn-plakietka--sygnal" id="etykieta-wariantu">wariant pełny · 96 × 96</span>
+    </div>
+
+    <div class="op-scena" id="scena-znaku" data-tetno="tak" data-siatka="nie" data-wariant="pelny">
+      <div class="op-scena-znak">
+        <!-- wariant pełny -->
+        <span class="op-znak op-w-pelny">
+          <!-- logo/sygnet.svg -->
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 96 96" role="img" aria-label="Sygnet Danaco Console — wariant pełny, motyw jasny">
+            <path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+            <path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+            <circle class="op-kropka-znaku" cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/>
+          </svg>
+          <!-- logo/sygnet-na-ciemnym.svg -->
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 96 96" role="img" aria-label="Sygnet Danaco Console — wariant pełny, motyw ciemny">
+            <path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/>
+            <path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+            <circle class="op-kropka-znaku" cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/>
+          </svg>
+        </span>
+        <!-- wariant uproszczony -->
+        <span class="op-znak op-w-uproszczony">
+          <!-- logo/sygnet-uproszczony.svg -->
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 96 96" role="img" aria-label="Sygnet Danaco Console — wariant uproszczony, motyw jasny">
+            <path fill="#181818" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/>
+            <circle class="op-kropka-znaku" cx="79" cy="69" r="9" fill="#3B6FE0"/>
+          </svg>
+          <!-- logo/sygnet-uproszczony-na-ciemnym.svg -->
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 96 96" role="img" aria-label="Sygnet Danaco Console — wariant uproszczony, motyw ciemny">
+            <path fill="#F4F4F4" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/>
+            <circle class="op-kropka-znaku" cx="79" cy="69" r="9" fill="#5C8CEC"/>
+          </svg>
+        </span>
+        <!-- siatka konstrukcyjna — warstwa pomocnicza, nie część znaku -->
+        <svg class="op-scena-siatka" viewBox="0 0 96 96" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="0.5">
+          <path d="M0 26 H96 M0 48 H96 M0 70 H96" stroke-dasharray="2 2"/>
+          <path d="M12 0 V96 M24 0 V96 M32 0 V96 M40 0 V96 M44 0 V96 M52 0 V96 M60 0 V96 M72 0 V96 M83 0 V96" stroke-dasharray="2 2"/>
+          <circle cx="83" cy="63.5" r="6.5"/>
+          <rect x="12" y="26" width="60" height="44"/>
+        </svg>
+      </div>
+      <p class="op-scena-opis" id="opis-sceny">groty 12–44 i 40–72 · wysokość 44 · kropka (83; 63,5) r 6,5</p>
+    </div>
+
+    <div class="op-kopiuj-rzad">
+      <code class="op-kod" id="sciezka-grotu">M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z</code>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#sciezka-grotu">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Kopiuj ścieżkę grotu 1
+      </button>
+    </div>
+
+    <h3>Znak przedstawia zdarzenie, nie literę</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Element znaku</th><th scope="col">Znaczenie</th><th scope="col">Kto to jest w produkcie</th></tr></thead>
+        <tbody>
+          <tr><td>Grot 1</td><td>polecenie wydane</td><td class="dn-dane">Operator / koordynator</td></tr>
+          <tr><td>Grot 2</td><td>polecenie przyjęte i przekazane dalej</td><td class="dn-dane">wykonawca / model</td></tr>
+          <tr><td>Kropka</td><td>praca, która właśnie ruszyła</td><td class="dn-dane">proces w tle, sesja czynna</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Pętla produktu</h3>
+    <code class="op-kod">   ┌───────────────┐   polecenie   ┌───────────────┐   wykonanie   ┌──────────────┐
+   │   OPERATOR    │ ────  »  ───► │  KOORDYNATOR  │ ────  »  ───► │  WYKONAWCA   │
+   │   (kokpit)    │               │ (Coordinator) │               │  (Executor)  │
+   └───────────────┘               └───────────────┘               └──────┬───────┘
+           ▲                                                              │
+           │                        wynik + dowód pracy                   │
+           └──────────────────────────────  ●  ◄───────────────────────────┘
+                                       kropka sygnału</code>
+    <p>Pętla jest jednocześnie <strong>treścią znaku</strong>, <strong>mechaniką środowiska
+    MultitaskingAI</strong> i <strong>wzorcem interakcji</strong> w każdym oknie komunikacji.
+    Jeden rysunek opisuje markę, architekturę i interfejs.</p>
+
+    <h3>Próba skali — próg 24 px</h3>
+    <p>Poniżej 24 px znika grot drugi, czyli człon „przekazanie". Zostaje to, co nieredukowalne:
+    polecenie i praca, która ruszyła.</p>
+    <div class="op-panel">
+      <div class="op-skala">
+        <figure><span class="op-znak" style="width:64px;height:64px;">
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+        </span><figcaption>64 px · pełny</figcaption></figure>
+        <figure><span class="op-znak" style="width:32px;height:32px;">
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+        </span><figcaption>32 px · pełny</figcaption></figure>
+        <figure><span class="op-znak" style="width:24px;height:24px;">
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+        </span><figcaption>24 px · próg</figcaption></figure>
+        <figure><span class="op-znak" style="width:16px;height:16px;">
+          <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/><circle cx="79" cy="69" r="9" fill="#3B6FE0"/></svg>
+          <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/><circle cx="79" cy="69" r="9" fill="#5C8CEC"/></svg>
+        </span><figcaption>16 px · uproszczony</figcaption></figure>
+      </div>
+      <div class="op-tabela-otoczka" style="margin-bottom:0;">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Wariant</th><th scope="col">Grot</th><th scope="col">Kropka</th><th scope="col">Kropka / wysokość znaku</th></tr></thead>
+          <tbody>
+            <tr><td>Pełny (≥ 24 px)</td><td class="dn-dane">dwa groty, 12…44 i 40…72, wysokość 44</td><td class="dn-dane">cx 83 · cy 63,5 · r 6,5</td><td class="op-mono">13 / 44 ≈ 0,30</td></tr>
+            <tr><td>Uproszczony (&lt; 24 px)</td><td class="dn-dane">jeden grot, 18…64, wysokość 60</td><td class="dn-dane">cx 79 · cy 69 · r 9</td><td class="op-mono">18 / 60 = 0,30</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-bottom:0;">Stosunek jest <strong>identyczny</strong>. Wariant uproszczony
+      nie jest innym znakiem, tylko tym samym znakiem o zmienionej liczbie członów.</p>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r6" aria-labelledby="r6-h">
+    <h2 id="r6-h"><span class="op-nr">06</span>Filary marki — cztery środowiska, cztery obietnice</h2>
+
+    <p>Marka nie ma abstrakcyjnych filarów. Ma cztery środowiska, a każde jest obietnicą złożoną
+    Operatorowi. Motta i opisy pochodzą z makiety Centrum dowodzenia i z dokumentacji przepływu —
+    <strong>nie są wymyślone na potrzeby tego opracowania</strong>. Wybierz kartę, żeby zobaczyć
+    szczegóły.</p>
+
+    <div class="op-siatka op-siatka--2" id="srodowiska" style="margin-top:var(--dn-od-4);">
+
+      <button class="dn-karta-srodowiska op-srodowisko" type="button" data-srodowisko="talkin" aria-current="true">
+        <span class="op-srodowisko-godlo dn-karta-srodowiska-godlo">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="dn-karta-srodowiska-tytul">TalkIn</span>
+        <span class="dn-karta-srodowiska-motto">Myśl. Analizuj. Rozumiej.</span>
+        <span class="dn-karta-srodowiska-opis">Wiedza, treść, dokumenty, badania i tłumaczenia.
+        Boczna nawigacja: 9 modułów.</span>
+        <span class="op-obietnica">
+          <span class="op-obietnica-etykieta">Obietnica marki</span>
+          Zrozumiesz materiał, zanim podejmiesz decyzję.
+        </span>
+      </button>
+
+      <button class="dn-karta-srodowiska op-srodowisko" type="button" data-srodowisko="workspace">
+        <span class="op-srodowisko-godlo dn-karta-srodowiska-godlo">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="dn-karta-srodowiska-tytul">WorkSpace</span>
+        <span class="dn-karta-srodowiska-motto">Planuj. Organizuj. Realizuj.</span>
+        <span class="dn-karta-srodowiska-opis">Projekty, procesy, automatyzacje i produkty.
+        Boczna nawigacja: 9 modułów.</span>
+        <span class="op-obietnica">
+          <span class="op-obietnica-etykieta">Obietnica marki</span>
+          Praca nie zginie między narzędziami.
+        </span>
+      </button>
+
+      <button class="dn-karta-srodowiska op-srodowisko" type="button" data-srodowisko="codestudio">
+        <span class="op-srodowisko-godlo dn-karta-srodowiska-godlo">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9.2l3.1 2.8L7 14.8"/><path d="M12.6 15.4h4"/><circle cx="18.4" cy="9.9" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </span>
+        <span class="dn-karta-srodowiska-tytul">CodeStudio</span>
+        <span class="dn-karta-srodowiska-motto">Projektuj. Buduj. Rozwijaj.</span>
+        <span class="dn-karta-srodowiska-opis">Programowanie, terminale i architektura systemów.
+        Boczna nawigacja: 8 modułów.</span>
+        <span class="op-obietnica">
+          <span class="op-obietnica-etykieta">Obietnica marki</span>
+          Zobaczysz, co system naprawdę robi.
+        </span>
+      </button>
+
+      <button class="dn-karta-srodowiska op-srodowisko" type="button" data-srodowisko="multitaskingai">
+        <span class="op-srodowisko-godlo dn-karta-srodowiska-godlo">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
+        </span>
+        <span class="dn-karta-srodowiska-tytul">MultitaskingAI</span>
+        <span class="dn-karta-srodowiska-motto">Deleguj. Koordynuj. Nadzoruj.</span>
+        <span class="dn-karta-srodowiska-opis">Orkiestracja zespołów modeli i procesy autonomiczne.
+        Panel orkiestracji (6 sekcji) zamiast listy modułów.</span>
+        <span class="op-obietnica">
+          <span class="op-obietnica-etykieta">Obietnica marki</span>
+          Możesz oddać pracę i nadal nad nią panować.
+        </span>
+      </button>
+    </div>
+
+    <div class="op-panel" id="szczegol-srodowiska" style="margin-top:var(--dn-od-4);" aria-live="polite">
+      <h3 style="margin-top:0;" id="sz-tytul">TalkIn</h3>
+      <p class="op-mono" id="sz-plik">srodowiska/srodowisko-talkin.svg</p>
+      <p id="sz-opis">Wiedza, komunikacja i praca z treścią. Powłoka: pasek górny, pas kart sesji,
+      boczna nawigacja dziewięciu modułów, obszar roboczy.</p>
+      <p><strong>Moduły:</strong> <span id="sz-moduly" class="op-mono">Studio · Research · Library · Translate · Browser · Assistant · Roundtable · Workspace · Agents</span></p>
+      <p><strong>Kropka sygnału w emblemacie:</strong> <span id="sz-kropka" class="op-mono">cx 16,2 · cy 10,8 · r 1,5 — koniec drugiej linii tekstu w dymku</span></p>
+      <p id="sz-uwaga" style="color:var(--dn-tekst-3);font-size:var(--dn-fs-sm);">—</p>
+    </div>
+
+    <h3>Reguła emblematu</h3>
+    <p>Siatka <strong>24 × 24</strong> · obrys <strong>1,75</strong> · wypełnienie
+    <span class="op-mono">none</span> · barwa <span class="op-mono">currentColor</span> ·
+    zakończenia i łączenia <span class="op-mono">round</span> ·
+    <strong>dokładnie jedna wypełniona kropka sygnału</strong>.
+    Emblemat, który ma zero kropek albo dwie, nie należy do systemu.</p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r7" aria-labelledby="r7-h">
+    <h2 id="r7-h"><span class="op-nr">07</span>Zero blokad (ADL-017) jako wartość marki</h2>
+
+    <blockquote class="op-cytat">
+      <strong>Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych
+      zgód. Domyślne zachowanie systemu to wykonanie polecenia.</strong>
+    </blockquote>
+
+    <p>Zasada rozstrzyga <strong>stosunek producenta do Operatora</strong>. System, który blokuje,
+    zakłada, że użytkownik jest zagrożeniem. System, który wykonuje i opisuje konsekwencje,
+    zakłada, że użytkownik jest zawodowcem odpowiadającym za swoją pracę. Danaco Console przyjmuje
+    drugie założenie — i to jest zdanie o marce, nie o CSS.</p>
+
+    <p>Konsekwencja mierzalna: <strong>atrybut wyłączający kontrolkę nie występuje w produkcie</strong>.
+    Nie jest odradzany — nie występuje. Stany realizuje się atrybutami ARIA:
+    <span class="op-mono">aria-pressed</span>, <span class="op-mono">aria-busy</span>,
+    <span class="op-mono">aria-invalid</span>, <span class="op-mono">aria-selected</span>,
+    <span class="op-mono">aria-current</span>.</p>
+
+    <h3>A · Objaw w interfejsie — demonstracja</h3>
+    <p>Przycisk poniżej jest zawsze klikalny, mimo niespełnionego warunku. Naciśnij go.</p>
+    <div class="op-panel">
+      <div class="dn-pole" style="max-width:420px;">
+        <label class="dn-pole-etykieta" for="pole-projekt">Nazwa projektu</label>
+        <input class="dn-pole-kontrolka" id="pole-projekt" type="text" placeholder="np. Wdrożenie CRM" autocomplete="off">
+        <span class="dn-pole-opis">Pole przykładowe. Puste pole nie blokuje zapisu — zapis pominie tę wartość.</span>
+      </div>
+      <div style="display:flex;gap:var(--dn-od-2);margin-top:var(--dn-od-4);">
+        <button class="dn-btn dn-btn--atrament" type="button" id="btn-zapisz">Załóż projekt</button>
+        <button class="dn-btn dn-btn--duch" type="button" id="btn-pomin">Pomiń</button>
+      </div>
+      <p class="op-odzew" id="odzew-zapis" hidden role="status">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span id="odzew-tresc">—</span>
+      </p>
+    </div>
+
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Sytuacja</th><th scope="col">Zachowanie zgodne z marką</th><th scope="col">Zachowanie naruszające markę</th></tr></thead>
+        <tbody>
+          <tr><td>Warunek formularza niespełniony</td><td>przycisk klikalny; komunikat, czego brakuje</td><td class="dn-dane">przycisk wyszarzony jako brama</td></tr>
+          <tr><td>Trwa walidacja</td><td>kontrolka fokusowalna, <span class="op-mono">aria-busy</span>, opis obok</td><td class="dn-dane">zablokowany formularz</td></tr>
+          <tr><td>Brak uprawnienia</td><td>opis w miejscu użycia: dymek, tekst pomocniczy, plakietka</td><td class="dn-dane">usunięcie kontrolki z obiegu interakcji</td></tr>
+          <tr><td>Odliczanie „Wyślij ponownie"</td><td>licznik informacyjny, kliknięcie działa</td><td class="dn-dane">licznik blokujący</td></tr>
+          <tr><td>Metoda uwierzytelniania wyłączona</td><td>w ogóle nierenderowana — mniej segmentów</td><td class="dn-dane">segment zablokowany</td></tr>
+          <tr><td>Akcja o dużej wadze</td><td>wariant sygnalizujący ciężar; modal potwierdzenia opcjonalny</td><td class="dn-dane">obowiązkowa bramka</td></tr>
+          <tr><td>Wartość odziedziczona z izolacji</td><td>jawnie nadpisywalna w każdym widoku</td><td class="dn-dane">zablokowana do edycji</td></tr>
+          <tr><td>Przycisk „Pomiń" w logowaniu</td><td>obecny i klikalny w obu fazach wdrożenia</td><td class="dn-dane">ukryty albo zablokowany</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>B · Objaw w języku</h3>
+    <p>Zasada rządzi tonem komunikatów. Zdanie interfejsu ma <strong>opisywać stan i wskazywać
+    następny krok</strong>, nie odmawiać.</p>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Zamiast</th><th scope="col">Marka mówi</th></tr></thead>
+        <tbody>
+          <tr><td class="dn-dane">„Nie masz uprawnień do tej operacji."</td><td>„Operacja wymaga dostępu do katalogu roboczego. Włącz go w Oknie konfiguracji → Dostępy."</td></tr>
+          <tr><td class="dn-dane">„Formularz zawiera błędy."</td><td>„Pole „Nazwa projektu" jest puste — zapis pominie tę wartość."</td></tr>
+          <tr><td class="dn-dane">„Poczekaj 30 s."</td><td>„Kolejna wiadomość może zostać wysłana za 30 s. Wysyłka teraz jest możliwa."</td></tr>
+          <tr><td class="dn-dane">„Funkcja niedostępna w tym środowisku."</td><td>„Terminal działa w CodeStudio. Otworzyć CodeStudio z tą sesją?"</td></tr>
+          <tr><td class="dn-dane">„Czy na pewno chcesz kontynuować?"</td><td>„Usunięcie skasuje 3 pliki repozytorium sesji." + odwołanie działania</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="op-siatka op-siatka--3">
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>1 · Nie odmawiaj</strong> — opisz warunek i drogę. Komunikat kończy się czynnością, nie zakazem.</p></div>
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>2 · Nie strasz</strong> — waga akcji opisana faktem, nie przymiotnikiem.</p></div>
+      <div class="op-panel op-panel--wglebienie"><p style="margin:0;"><strong>3 · Nie proś o zgodę</strong>, której nie potrzebujesz — potwierdzenie tylko przy skutku nieodwracalnym, z zakresem podanym liczbowo.</p></div>
+    </div>
+
+    <h3>C · Objaw w komunikacji zewnętrznej</h3>
+    <p>Marka nie obiecuje „bezpieczeństwa przez ograniczenie". Obiecuje <strong>kontrolę przez
+    konfigurowalność i widoczność</strong>. Nie używamy sformułowań „system nie pozwoli",
+    „zabezpieczy przed"; używamy: „Operator decyduje", „wartość wyjściowa: pełny dostęp",
+    „każda izolacja jest opcją, nie warunkiem". Funkcje bezpieczeństwa opisujemy jako narzędzia
+    Operatora — Permissions Center, punkty izolacji, Panel prowenancji — nie jako strażników produktu.</p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r8" aria-labelledby="r8-h">
+    <h2 id="r8-h"><span class="op-nr">08</span>Architektura marki</h2>
+
+    <p>Marka ma <strong>cztery poziomy</strong>, o malejącym zakresie i rosnącej liczbie wystąpień.
+    Poziom niższy nigdy nie zastępuje wyższego; poziom wyższy nigdy nie schodzi do roli niższego.
+    Kliknij poziom, żeby rozwinąć.</p>
+
+    <div class="op-hierarchia" id="hierarchia">
+
+      <button class="op-poziom" type="button" aria-expanded="true" aria-controls="poz-0">
+        <span class="op-poziom-nr">00</span>
+        <span>
+          <span class="op-poziom-tytul">Znak nadrzędny</span>
+          <span class="op-poziom-podtytul">sygnet „Delegacja" + logotyp · siatka 96 × 96 · barwy własne</span>
+        </span>
+        <span class="op-poziom-grot"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="op-poziom-panel" id="poz-0">
+        <p style="margin:0;">Nie przełącza się z motywem. Warianty: poziomy · pionowy · sam logotyp ·
+        sam sygnet · mono biały · mono czarny · uproszczony.</p>
+        <div class="op-poziom-probki">
+          <span class="op-znak">
+            <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>
+            <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+          </span>
+          <span class="op-znak">
+            <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/><circle cx="79" cy="69" r="9" fill="#3B6FE0"/></svg>
+            <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z"/><circle cx="79" cy="69" r="9" fill="#5C8CEC"/></svg>
+          </span>
+          <span class="op-mono">logo/sygnet.svg · logo/sygnet-uproszczony.svg · logo/logo-poziomy.svg</span>
+        </div>
+      </div>
+
+      <button class="op-poziom" type="button" aria-expanded="false" aria-controls="poz-1">
+        <span class="op-poziom-nr">01</span>
+        <span>
+          <span class="op-poziom-tytul">Emblematy środowisk</span>
+          <span class="op-poziom-podtytul">siatka 24 × 24 · obrys 1,75 · currentColor · jedna wypełniona kropka</span>
+        </span>
+        <span class="op-poziom-grot"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="op-poziom-panel" id="poz-1" hidden>
+        <p style="margin:0;">Dziedziczą po znaku: kropkę sygnału, monochrom i zasadę jednego akcentu.
+        Barwę biorą z kontekstu przez <span class="op-mono">currentColor</span>.</p>
+        <div class="op-poziom-probki">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/><path d="M7.5 7.5h9"/><path d="M7.5 10.8h5"/><circle cx="16.2" cy="10.8" r="1.5" fill="currentColor" stroke="none"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M7 9.2l3.1 2.8L7 14.8"/><path d="M12.6 15.4h4"/><circle cx="18.4" cy="9.9" r="1.5" fill="currentColor" stroke="none"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
+        </div>
+      </div>
+
+      <button class="op-poziom" type="button" aria-expanded="false" aria-controls="poz-2">
+        <span class="op-poziom-nr">02</span>
+        <span>
+          <span class="op-poziom-tytul">Zestaw ikon interfejsu</span>
+          <span class="op-poziom-podtytul">Lucide · siatka 24 × 24 · obrys 1,75 · bez kropki sygnału</span>
+        </span>
+        <span class="op-poziom-grot"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="op-poziom-panel" id="poz-2" hidden>
+        <p style="margin:0;">Kropka jest zarezerwowana dla marki i dla stanu. Ikona z kropką
+        konkurowałaby ze wskaźnikiem pracy — dlatego zestaw interfejsu jej <strong>nie zawiera</strong>.
+        Nazewnictwo polskie, opisowe.</p>
+        <div class="op-poziom-probki">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/><path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></svg>
+          <span class="op-mono">82 nazwy · zasoby/ikony/manifest.json</span>
+        </div>
+      </div>
+
+      <button class="op-poziom" type="button" aria-expanded="false" aria-controls="poz-3">
+        <span class="op-poziom-nr">03</span>
+        <span>
+          <span class="op-poziom-tytul">Tożsamości systemowe</span>
+          <span class="op-poziom-podtytul">ikona aplikacji · ikona maskowalna · favicon · manifest</span>
+        </span>
+        <span class="op-poziom-grot"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>
+      </button>
+      <div class="op-poziom-panel" id="poz-3" hidden>
+        <p style="margin:0;">Wycinki znaku, nigdy osobne rysunki. Kafel aplikacji stoi na polu
+        tożsamym z ramą kokpitu — jest jej zapowiedzią na pulpicie.</p>
+        <div class="op-poziom-probki">
+          <!-- ikona-aplikacji/ikona-aplikacji.svg -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 1024 1024" role="img" aria-label="Ikona aplikacji Danaco Console">
+            <rect width="1024" height="1024" rx="224" fill="#131313"/>
+            <g transform="translate(194.6,194.6) scale(6.6133)">
+              <path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+              <circle fill="#5C8CEC" cx="83" cy="63.5" r="6.5"/>
+            </g>
+          </svg>
+          <!-- ikona-aplikacji/ikona-maskowalna.svg -->
+          <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 1024 1024" role="img" aria-label="Ikona maskowalna Danaco Console">
+            <rect width="1024" height="1024" rx="0" fill="#131313"/>
+            <g transform="translate(245.8,245.8) scale(5.5467)">
+              <path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/>
+              <circle fill="#5C8CEC" cx="83" cy="63.5" r="6.5"/>
+            </g>
+          </svg>
+          <span class="op-mono">kafel r 224 (≈ 21,9 %) · znak ≈ 62 % pola · maskowalna ≈ 52 %</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Reguły dziedziczenia</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Reguła</th><th scope="col">Treść</th></tr></thead>
+        <tbody>
+          <tr><td class="op-mono">R1</td><td><strong>Jedna kropka.</strong> Raz w znaku i raz w każdym emblemacie. W zestawie ikon interfejsu — wcale.</td></tr>
+          <tr><td class="op-mono">R2</td><td><strong>Barwy własne w górę.</strong> Poziomy 0 i 3 nie reagują na motyw; poziomy 1–2 dziedziczą barwę tekstu.</td></tr>
+          <tr><td class="op-mono">R3</td><td><strong>Siatka niżej.</strong> Poziom 0 na siatce 96, poziomy 1–2 na siatce 24. Poniżej 24 px wchodzi wariant uproszczony.</td></tr>
+          <tr><td class="op-mono">R4</td><td><strong>Emblemat nie zastępuje znaku</strong> — nigdy jako godło produktu.</td></tr>
+          <tr><td class="op-mono">R5</td><td><strong>Znak nie zastępuje ikony</strong> — sygnet nie jest ikoną akcji ani punktorem listy.</td></tr>
+          <tr><td class="op-mono">R6</td><td><strong>Tożsamości systemowe pochodzą ze znaku</strong>, nie są rysowane osobno.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Kiedy którego wariantu użyć</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Kontekst</th><th scope="col">Wariant</th><th scope="col">Uzasadnienie</th></tr></thead>
+        <tbody>
+          <tr><td>Pasek górny aplikacji (48 px)</td><td class="op-mono">sygnet-na-ciemnym</td><td class="dn-dane">rama jest atramentowa w obu motywach</td></tr>
+          <tr><td>Nagłówek dokumentu, papier firmowy</td><td class="op-mono">logo-poziomy</td><td class="dn-dane">pełna nazwa produktu w jednej linii</td></tr>
+          <tr><td>Format kwadratowy, roll-up, awatar duży</td><td class="op-mono">logo-pionowy</td><td class="dn-dane">proporcja bliższa 1 : 1</td></tr>
+          <tr><td>Gdy sygnet występuje już obok</td><td class="op-mono">logotyp</td><td class="dn-dane">zakaz podwajania sygnetu w jednym układzie</td></tr>
+          <tr><td>Druk jednobarwny, grawer, pieczęć</td><td class="op-mono">sygnet-mono-czarny / -bialy</td><td class="dn-dane">brak drugiej farby</td></tr>
+          <tr><td>Kafel aplikacji, PWA, pulpit</td><td class="op-mono">ikona-aplikacji</td><td class="dn-dane">pełny znak na własnym tle</td></tr>
+          <tr><td>Android maskable</td><td class="op-mono">ikona-maskowalna</td><td class="dn-dane">system sam przycina kształt</td></tr>
+          <tr><td>Favicon, awatar poniżej 24 px</td><td class="op-mono">sygnet-uproszczony</td><td class="dn-dane">próg czytelności dwóch grotów</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r9" aria-labelledby="r9-h">
+    <h2 id="r9-h"><span class="op-nr">09</span>Elementy konstytutywne marki</h2>
+
+    <p>Sześć elementów. Usunięcie któregokolwiek sprawia, że opracowanie przestaje być
+    rozpoznawalne jako Danaco Console.</p>
+
+    <h3>9.1 · Sygnet — geometria odczytana z pliku</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Cecha</th><th scope="col">Wartość</th></tr></thead>
+        <tbody>
+          <tr><td>Siatka</td><td class="op-mono">96 × 96 · viewBox="0 0 96 96"</td></tr>
+          <tr><td>Grot 1</td><td class="op-mono">M12 26 H24 L44 48 L24 70 H12 L32 48 Z</td></tr>
+          <tr><td>Grot 2</td><td class="op-mono">M40 26 H52 L72 48 L52 70 H40 L60 48 Z</td></tr>
+          <tr><td>Kropka</td><td class="op-mono">cx 83 · cy 63,5 · r 6,5</td></tr>
+          <tr><td>Wysokość grotu</td><td class="op-mono">44 (26 → 70) · oś symetrii y = 48</td></tr>
+          <tr><td>Ramię grotu</td><td class="op-mono">12 · wcięcie karbu 20 (12 → 32)</td></tr>
+          <tr><td>Rytm grotów</td><td class="op-mono">28 jednostek (12 → 40)</td></tr>
+          <tr><td>Odstęp grot 2 → kropka</td><td class="op-mono">4,5 (72 → 76,5)</td></tr>
+          <tr><td>Styczność</td><td class="op-mono">63,5 + 6,5 = 70 = linia bazowa grotów</td></tr>
+          <tr><td>Krzywe</td><td>zero łuków w grotach — wyłącznie odcinki proste; kropka jest idealnym kołem</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Zakaz bezwzględny:</strong> krzywych sygnetu nie wolno modyfikować. Wolno budować
+    warianty, konfiguracje i zastosowania — nie wolno zmieniać ani jednej współrzędnej.</p>
+
+    <h3>9.2 · Logotyp</h3>
+    <div class="op-panel">
+      <div style="display:flex;flex-wrap:wrap;gap:var(--dn-od-6);align-items:center;">
+        <span class="op-znak" style="width:225px;height:96px;">
+<svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="225" height="96" viewBox="0 0 225 96" role="img" aria-label="Danaco Console — logo poziome">
+<g transform="translate(0,16) scale(0.6667)"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></g><g transform="translate(76,51)"><path transform="translate(0.00,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M46 0V116H138V584H46V700H334Q475 700 548.5 628.5Q622 557 622 416V284Q622 143 548.5 71.5Q475 0 334 0ZM270 120H336Q416 120 453.0 162.0Q490 204 490 280V420Q490 497 453.0 538.5Q416 580 336 580H270Z"/>
+<path transform="translate(23.05,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M18 0 202 700H432L616 0H480L442 154H192L154 0ZM223 276H411L326 617H308Z"/>
+<path transform="translate(45.02,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M66 0V700H317L456 90H474V700H604V0H353L214 610H196V0Z"/>
+<path transform="translate(68.20,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M18 0 202 700H432L616 0H480L442 154H192L154 0ZM223 276H411L326 617H308Z"/>
+<path transform="translate(90.17,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M332 -14Q202 -14 126.0 58.5Q50 131 50 266V434Q50 569 126.0 641.5Q202 714 332 714Q461 714 531.5 643.5Q602 573 602 450V444H472V454Q472 516 437.5 556.0Q403 596 332 596Q262 596 222.0 553.0Q182 510 182 436V264Q182 191 222.0 147.5Q262 104 332 104Q403 104 437.5 144.5Q472 185 472 246V264H602V250Q602 127 531.5 56.5Q461 -14 332 -14Z"/>
+<path transform="translate(112.47,0.00) scale(0.034000,-0.034000)" fill="#181818" d="M338 -14Q206 -14 128.0 58.5Q50 131 50 266V434Q50 569 128.0 641.5Q206 714 338 714Q470 714 548.0 641.5Q626 569 626 434V266Q626 131 548.0 58.5Q470 -14 338 -14ZM338 104Q412 104 453.0 147.0Q494 190 494 262V438Q494 510 453.0 553.0Q412 596 338 596Q265 596 223.5 553.0Q182 510 182 438V262Q182 190 223.5 147.0Q265 104 338 104Z"/></g><g transform="translate(76,67)"><path transform="translate(0.00,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M320 -12Q187 -12 122.5 82.0Q58 176 58 349Q58 522 122.5 616.0Q187 710 320 710Q371 710 408.5 696.5Q446 683 473.0 659.5Q500 636 518.5 604.5Q537 573 549 537L448 503Q440 527 430.0 548.0Q420 569 405.0 584.0Q390 599 369.5 608.0Q349 617 319 617Q245 617 211.0 560.5Q177 504 177 408V290Q177 194 211.0 137.5Q245 81 319 81Q349 81 369.5 90.0Q390 99 405.0 114.0Q420 129 430.0 150.0Q440 171 448 195L549 161Q537 125 518.5 93.5Q500 62 473.0 38.5Q446 15 408.5 1.5Q371 -12 320 -12Z"/>
+<path transform="translate(11.25,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M300 -12Q234 -12 185.5 12.5Q137 37 105.5 83.0Q74 129 59.0 196.0Q44 263 44 349Q44 434 59.0 501.5Q74 569 105.5 615.0Q137 661 185.5 685.5Q234 710 300 710Q366 710 414.5 685.5Q463 661 494.5 615.0Q526 569 541.0 501.5Q556 434 556 349Q556 263 541.0 196.0Q526 129 494.5 83.0Q463 37 414.5 12.5Q366 -12 300 -12ZM300 81Q375 81 406.0 137.5Q437 194 437 291V408Q437 504 406.0 560.5Q375 617 300 617Q225 617 194.0 560.5Q163 504 163 408V290Q163 194 194.0 137.5Q225 81 300 81Z"/>
+<path transform="translate(22.50,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M179 537H170V0H72V698H216L421 161H430V698H528V0H384Z"/>
+<path transform="translate(33.75,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M294 -12Q203 -12 141.0 20.0Q79 52 39 105L111 174Q151 126 196.0 103.5Q241 81 298 81Q364 81 399.5 111.0Q435 141 435 197Q435 242 409.0 266.5Q383 291 320 302L244 314Q194 322 160.0 340.5Q126 359 105.0 384.5Q84 410 74.5 441.5Q65 473 65 508Q65 607 129.0 658.5Q193 710 305 710Q388 710 446.5 683.5Q505 657 541 609L471 539Q442 574 402.5 595.5Q363 617 305 617Q243 617 210.5 590.5Q178 564 178 513Q178 470 203.5 445.5Q229 421 294 410L368 397Q462 380 505.0 328.5Q548 277 548 203Q548 155 531.5 115.0Q515 75 482.5 47.0Q450 19 402.5 3.5Q355 -12 294 -12Z"/>
+<path transform="translate(45.00,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M300 -12Q234 -12 185.5 12.5Q137 37 105.5 83.0Q74 129 59.0 196.0Q44 263 44 349Q44 434 59.0 501.5Q74 569 105.5 615.0Q137 661 185.5 685.5Q234 710 300 710Q366 710 414.5 685.5Q463 661 494.5 615.0Q526 569 541.0 501.5Q556 434 556 349Q556 263 541.0 196.0Q526 129 494.5 83.0Q463 37 414.5 12.5Q366 -12 300 -12ZM300 81Q375 81 406.0 137.5Q437 194 437 291V408Q437 504 406.0 560.5Q375 617 300 617Q225 617 194.0 560.5Q163 504 163 408V290Q163 194 194.0 137.5Q225 81 300 81Z"/>
+<path transform="translate(56.25,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M108 0V698H220V94H538V0Z"/>
+<path transform="translate(67.50,0.00) scale(0.012500,-0.012500)" fill="#181818" d="M86 0V698H523V604H198V401H511V307H198V94H523V0Z"/></g><circle cx="158.0" cy="63" r="3.4" fill="#3B6FE0"/>
+</svg>
+<svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="225" height="96" viewBox="0 0 225 96" role="img" aria-label="Danaco Console — logo poziome na ciemnym tle">
+<g transform="translate(0,16) scale(0.6667)"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></g><g transform="translate(76,51)"><path transform="translate(0.00,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M46 0V116H138V584H46V700H334Q475 700 548.5 628.5Q622 557 622 416V284Q622 143 548.5 71.5Q475 0 334 0ZM270 120H336Q416 120 453.0 162.0Q490 204 490 280V420Q490 497 453.0 538.5Q416 580 336 580H270Z"/>
+<path transform="translate(23.05,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M18 0 202 700H432L616 0H480L442 154H192L154 0ZM223 276H411L326 617H308Z"/>
+<path transform="translate(45.02,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M66 0V700H317L456 90H474V700H604V0H353L214 610H196V0Z"/>
+<path transform="translate(68.20,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M18 0 202 700H432L616 0H480L442 154H192L154 0ZM223 276H411L326 617H308Z"/>
+<path transform="translate(90.17,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M332 -14Q202 -14 126.0 58.5Q50 131 50 266V434Q50 569 126.0 641.5Q202 714 332 714Q461 714 531.5 643.5Q602 573 602 450V444H472V454Q472 516 437.5 556.0Q403 596 332 596Q262 596 222.0 553.0Q182 510 182 436V264Q182 191 222.0 147.5Q262 104 332 104Q403 104 437.5 144.5Q472 185 472 246V264H602V250Q602 127 531.5 56.5Q461 -14 332 -14Z"/>
+<path transform="translate(112.47,0.00) scale(0.034000,-0.034000)" fill="#F4F4F4" d="M338 -14Q206 -14 128.0 58.5Q50 131 50 266V434Q50 569 128.0 641.5Q206 714 338 714Q470 714 548.0 641.5Q626 569 626 434V266Q626 131 548.0 58.5Q470 -14 338 -14ZM338 104Q412 104 453.0 147.0Q494 190 494 262V438Q494 510 453.0 553.0Q412 596 338 596Q265 596 223.5 553.0Q182 510 182 438V262Q182 190 223.5 147.0Q265 104 338 104Z"/></g><g transform="translate(76,67)"><path transform="translate(0.00,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M320 -12Q187 -12 122.5 82.0Q58 176 58 349Q58 522 122.5 616.0Q187 710 320 710Q371 710 408.5 696.5Q446 683 473.0 659.5Q500 636 518.5 604.5Q537 573 549 537L448 503Q440 527 430.0 548.0Q420 569 405.0 584.0Q390 599 369.5 608.0Q349 617 319 617Q245 617 211.0 560.5Q177 504 177 408V290Q177 194 211.0 137.5Q245 81 319 81Q349 81 369.5 90.0Q390 99 405.0 114.0Q420 129 430.0 150.0Q440 171 448 195L549 161Q537 125 518.5 93.5Q500 62 473.0 38.5Q446 15 408.5 1.5Q371 -12 320 -12Z"/>
+<path transform="translate(11.25,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M300 -12Q234 -12 185.5 12.5Q137 37 105.5 83.0Q74 129 59.0 196.0Q44 263 44 349Q44 434 59.0 501.5Q74 569 105.5 615.0Q137 661 185.5 685.5Q234 710 300 710Q366 710 414.5 685.5Q463 661 494.5 615.0Q526 569 541.0 501.5Q556 434 556 349Q556 263 541.0 196.0Q526 129 494.5 83.0Q463 37 414.5 12.5Q366 -12 300 -12ZM300 81Q375 81 406.0 137.5Q437 194 437 291V408Q437 504 406.0 560.5Q375 617 300 617Q225 617 194.0 560.5Q163 504 163 408V290Q163 194 194.0 137.5Q225 81 300 81Z"/>
+<path transform="translate(22.50,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M179 537H170V0H72V698H216L421 161H430V698H528V0H384Z"/>
+<path transform="translate(33.75,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M294 -12Q203 -12 141.0 20.0Q79 52 39 105L111 174Q151 126 196.0 103.5Q241 81 298 81Q364 81 399.5 111.0Q435 141 435 197Q435 242 409.0 266.5Q383 291 320 302L244 314Q194 322 160.0 340.5Q126 359 105.0 384.5Q84 410 74.5 441.5Q65 473 65 508Q65 607 129.0 658.5Q193 710 305 710Q388 710 446.5 683.5Q505 657 541 609L471 539Q442 574 402.5 595.5Q363 617 305 617Q243 617 210.5 590.5Q178 564 178 513Q178 470 203.5 445.5Q229 421 294 410L368 397Q462 380 505.0 328.5Q548 277 548 203Q548 155 531.5 115.0Q515 75 482.5 47.0Q450 19 402.5 3.5Q355 -12 294 -12Z"/>
+<path transform="translate(45.00,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M300 -12Q234 -12 185.5 12.5Q137 37 105.5 83.0Q74 129 59.0 196.0Q44 263 44 349Q44 434 59.0 501.5Q74 569 105.5 615.0Q137 661 185.5 685.5Q234 710 300 710Q366 710 414.5 685.5Q463 661 494.5 615.0Q526 569 541.0 501.5Q556 434 556 349Q556 263 541.0 196.0Q526 129 494.5 83.0Q463 37 414.5 12.5Q366 -12 300 -12ZM300 81Q375 81 406.0 137.5Q437 194 437 291V408Q437 504 406.0 560.5Q375 617 300 617Q225 617 194.0 560.5Q163 504 163 408V290Q163 194 194.0 137.5Q225 81 300 81Z"/>
+<path transform="translate(56.25,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M108 0V698H220V94H538V0Z"/>
+<path transform="translate(67.50,0.00) scale(0.012500,-0.012500)" fill="#F4F4F4" d="M86 0V698H523V604H198V401H511V307H198V94H523V0Z"/></g><circle cx="158.0" cy="63" r="3.4" fill="#5C8CEC"/>
+</svg>
+        </span>
+        <div style="min-width:260px;">
+          <p style="margin-top:0;"><strong>DANACO</strong> — Space Grotesk 700.<br>
+          <strong>CONSOLE</strong> — IBM Plex Mono 500, rozstrzelone wersaliki, zakończone
+          <strong>kropką sygnału</strong> <span class="op-mono">r 3,4</span>.</p>
+          <p style="margin-bottom:0;">Para krojów opowiada produkt: <strong>marka + maszyna</strong>.
+          To ta sama różnica, która rządzi każdym oknem interfejsu.</p>
+        </div>
+      </div>
+      <p class="op-mono" style="margin-bottom:0;">W pliku produkcyjnym litery są krzywymi (13 ścieżek) —
+      logotyp nie zależy od obecności fontu w systemie.</p>
+    </div>
+
+    <h3>9.3–9.6 · Pozostałe elementy</h3>
+    <div class="op-siatka op-siatka--2">
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Kropka sygnału</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Element sygnaturowy — opisany osobno
+        w rozdziale 10. Wypełniony punkt błękitu oznaczający „tu biegnie praca".</p>
+      </div>
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Para krojów</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Space Grotesk (wejście i tożsamość) ·
+        IBM Plex Sans (praca) · IBM Plex Mono (maszyna). OFL 1.1, latin + latin-ext, pliki lokalne.
+        Liczby w mono zawsze <span class="op-mono">tabular-nums</span>.</p>
+      </div>
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Monochrom + jeden sygnał</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Neutralne ≈ 95 % ekranu · atrament jako
+        działanie · sygnał ≤ 5 % · stany zawsze z ikoną albo etykietą.</p>
+      </div>
+      <div class="op-panel">
+        <h4 style="margin-top:0;">Rama atramentowa</h4>
+        <p style="margin:0;font-size:var(--dn-fs-sm);">Pasek górny 48 px, stały w obu motywach.
+        Daje efekt stanowiska dowodzenia, dom dla godła i stały punkt orientacji.
+        Własne żetony: <span class="op-mono">--dn-rama-tekst</span>,
+        <span class="op-mono">--dn-rama-obrys</span>.</p>
+      </div>
+    </div>
+
+    <div class="op-kopiuj-rzad">
+      <code class="op-kod" id="zetony-ramy">--dn-rama · --dn-rama-tekst · --dn-rama-tekst-2 · --dn-rama-hover · --dn-rama-obrys</code>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#zetony-ramy">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Kopiuj żetony ramy
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r10" aria-labelledby="r10-h">
+    <h2 id="r10-h"><span class="op-nr">10</span>Kropka sygnału — element sygnaturowy</h2>
+
+    <p><strong>Wypełniony punkt błękitu sygnałowego oznaczający „tu biegnie praca".</strong>
+    Jedna rzecz, po której platformę się zapamięta.</p>
+
+    <h3>Pięć miejsc wystąpienia</h3>
+    <div class="op-miejsca">
+      <div class="op-miejsce">
+        <span class="op-miejsce-nr">01</span>
+        <span class="op-miejsce-demo">
+          <span class="op-znak" style="width:28px;height:28px;">
+            <svg class="op-z-j" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 96 96" aria-hidden="true"><path fill="#181818" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#181818" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>
+            <svg class="op-z-c" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 96 96" aria-hidden="true"><path fill="#F4F4F4" d="M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z"/><path fill="#F4F4F4" d="M40 26 H52 L72 48.0 L52 70 H40 L60 48.0 Z"/><circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/></svg>
+          </span>
+          <strong>Godło</strong>
+        </span>
+        <span class="op-miejsce-opis">Kropka zamykająca podwójny grot — zlecenie przekazane, praca ruszyła.</span>
+      </div>
+
+      <div class="op-miejsce">
+        <span class="op-miejsce-nr">02</span>
+        <span class="op-miejsce-demo">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/><rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/><rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/><circle cx="16.9" cy="16.9" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <strong>Emblematy środowisk</strong>
+        </span>
+        <span class="op-miejsce-opis">Każdy zawiera dokładnie jedną wypełnioną kropkę — to środowisko jest miejscem, gdzie praca biegnie.</span>
+      </div>
+
+      <div class="op-miejsce">
+        <span class="op-miejsce-nr">03</span>
+        <span class="op-miejsce-demo">
+          <span class="dn-kropka dn-kropka--tetno"></span>
+          <strong>Karty sesji</strong>
+        </span>
+        <span class="op-miejsce-opis">Kropka pulsująca = proces w tle tej sesji. Tętno 2,4 s.</span>
+      </div>
+
+      <div class="op-miejsce">
+        <span class="op-miejsce-nr">04</span>
+        <span class="op-miejsce-demo">
+          <span class="dn-kropka dn-kropka--tetno"></span>
+          <strong>Okno komunikacji</strong>
+        </span>
+        <span class="op-miejsce-opis">Kropka przy nadawcy aktywnie piszącym — ten rozmówca właśnie pracuje.</span>
+      </div>
+
+      <div class="op-miejsce">
+        <span class="op-miejsce-nr">05</span>
+        <span class="op-miejsce-demo">
+          <span class="dn-awatar dn-awatar--inteligencja" aria-hidden="true">AOD</span>
+          <strong>Always On Display</strong>
+        </span>
+        <span class="op-miejsce-opis">Rdzeń awatara — system pracuje, choć nie patrzysz. Kropka powiększona do rozmiaru warstwy.</span>
+      </div>
+    </div>
+
+    <h3>Tętno — 2,4 s</h3>
+    <div class="op-siatka op-siatka--2">
+      <div class="op-panel">
+        <div class="op-tabela-otoczka" style="margin:0;border:none;">
+          <table class="dn-tabela">
+            <tbody>
+              <tr><td>Żeton</td><td class="op-mono">--dn-czas-tetno: 2.4s</td></tr>
+              <tr><td>Status</td><td>jedyny ruch ciągły w interfejsie</td></tr>
+              <tr><td>Krzywa</td><td class="op-mono">cubic-bezier(0.2, 0, 0, 1)</td></tr>
+              <tr><td>Ograniczony ruch</td><td>tętno zamiera, zastępuje je <strong>pierścień statyczny</strong></td></tr>
+              <tr><td>Wymiar bazowy</td><td class="op-mono">--dn-wym-kropka: 6px</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="op-panel">
+        <code class="op-kod" style="border:none;background:transparent;padding:0;">   krycie / skala
+       │        ╭──╮                    ╭──╮
+       │      ╭─╯  ╰─╮                ╭─╯  ╰─╮
+       │   ╭──╯      ╰──╮          ╭──╯      ╰──╮
+       │ ──╯            ╰──────────╯            ╰────►
+       └────────────────┬────────────────┬──────────
+                      2,4 s            4,8 s</code>
+        <p style="margin-bottom:0;font-size:var(--dn-fs-sm);">Rytm szybszy odbierany jest jako alarm,
+        wolniejszy — jako awaria animacji. 2,4 s nie rozprasza przy pracy wielogodzinnej,
+        a widać je kątem oka.</p>
+      </div>
+    </div>
+
+    <h3>Czego kropka nie oznacza</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Kropka sygnału nie oznacza</th><th scope="col">Właściwy nośnik</th><th scope="col">Podgląd</th></tr></thead>
+        <tbody>
+          <tr><td>błędu</td><td class="dn-dane">wariant błędu + ikona + etykieta</td><td><span class="dn-plakietka dn-plakietka--blad"><span class="dn-kropka dn-kropka--blad"></span>błąd</span></td></tr>
+          <tr><td>powodzenia</td><td class="dn-dane">wariant sukcesu + ikona + etykieta</td><td><span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces"></span>gotowe</span></td></tr>
+          <tr><td>ostrzeżenia</td><td class="dn-dane">wariant ostrzeżenia + ikona + etykieta</td><td><span class="dn-plakietka dn-plakietka--ostrzezenie"><span class="dn-kropka dn-kropka--ostrzezenie"></span>uwaga</span></td></tr>
+          <tr><td>powiadomienia nieprzeczytanego</td><td class="dn-dane">plakietka licznikowa</td><td><span class="dn-plakietka dn-plakietka--informacja">3</span></td></tr>
+          <tr><td>ozdoby, punktora, separatora</td><td class="dn-dane">znak przestankowy w treści albo obrys</td><td class="op-mono">·</td></tr>
+          <tr><td>elementu aktywnego w nawigacji</td><td class="dn-dane"><span class="op-mono">aria-current</span> + podświetlenie</td><td><span class="dn-plakietka dn-plakietka--sygnal">wybrany</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Kropka <strong>sygnałowa</strong> (błękit) ma jedno znaczenie: <strong>praca biegnie</strong>.
+    Warianty stanowe są osobnym mechanizmem i zawsze występują z ikoną albo etykietą — nigdy samą barwą.</p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r11" aria-labelledby="r11-h">
+    <h2 id="r11-h"><span class="op-nr">11</span>Barwa marki</h2>
+
+    <h3>Dlaczego monochrom</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Powód</th><th scope="col">Konsekwencja</th></tr></thead>
+        <tbody>
+          <tr><td>Kokpit pracuje długo — Operator patrzy godzinami</td><td class="dn-dane">neutralne tło nie męczy i nie konkuruje z treścią</td></tr>
+          <tr><td>Treść jest kolorowa sama z siebie — wykresy, podglądy, diffy</td><td class="dn-dane">interfejs musi być tłem dla treści, nie jej konkurentem</td></tr>
+          <tr><td>Stany potrzebują wolnego kanału barwy</td><td class="dn-dane">w barwnym interfejsie ostrzeżenie przestaje być widoczne</td></tr>
+          <tr><td>Neutralne czysto neutralne — równe składowe RGB</td><td class="dn-dane">brak podbarwienia slate ani beżu</td></tr>
+          <tr><td>Oba motywy równoprawne</td><td class="dn-dane">żaden nie jest „przyciemnioną" wersją drugiego</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Dlaczego jeden sygnał</h3>
+    <p>Jeden akcent to <strong>jedna reguła czytania</strong>: „błękit = system coś robi albo coś
+    wskazuje". Dwa akcenty wymagałyby pamiętania, który jest który — koszt poznawczy bez zysku
+    informacyjnego. <strong>Celowe scalenie:</strong> rodzina stanu „informacja" <em>jest</em>
+    rodziną sygnału.</p>
+
+    <div class="op-panel">
+      <div class="op-siatka op-siatka--4">
+        <div><p class="op-mono" style="margin:0 0 var(--dn-od-1);">Fokus</p><button class="dn-btn dn-btn--zarys" type="button">Kliknij i użyj Tab</button></div>
+        <div><p class="op-mono" style="margin:0 0 var(--dn-od-1);">Wybór</p><span class="dn-plakietka dn-plakietka--sygnal">aria-selected</span></div>
+        <div><p class="op-mono" style="margin:0 0 var(--dn-od-1);">Postęp</p>
+          <div class="dn-postep"><div class="dn-postep-tor"><div class="dn-postep-wartosc" style="width:64%"></div></div></div>
+        </div>
+        <div><p class="op-mono" style="margin:0 0 var(--dn-od-1);">Praca w tle</p><span style="display:inline-flex;align-items:center;gap:var(--dn-od-2);"><span class="dn-kropka dn-kropka--tetno"></span><span class="op-mono">czynna</span></span></div>
+      </div>
+    </div>
+
+    <h3>Dlaczego działanie główne to inwersja atramentu</h3>
+    <p>Przycisk główny jest <strong>czarny na jasnym motywie i biały na ciemnym</strong>.
+    Przełącz motyw — przycisk poniżej odwróci się razem z nim, nie zmieniając reguły.</p>
+    <div class="op-panel">
+      <div style="display:flex;flex-wrap:wrap;gap:var(--dn-od-3);align-items:center;">
+        <button class="dn-btn dn-btn--atrament" type="button">Działanie główne</button>
+        <button class="dn-btn dn-btn--zarys" type="button">Działanie poboczne</button>
+        <button class="dn-btn dn-btn--duch" type="button">Działanie trzeciorzędne</button>
+        <span class="dn-plakietka dn-plakietka--rola">czerń działa · sygnał wskazuje</span>
+      </div>
+      <div class="op-tabela-otoczka" style="margin-bottom:0;">
+        <table class="dn-tabela">
+          <thead><tr><th scope="col">Zaleta</th><th scope="col">Wyjaśnienie</th></tr></thead>
+          <tbody>
+            <tr><td>Najwyższy możliwy kontrast</td><td class="op-mono">17,76 : 1 (jasny) · 16,23 : 1 (ciemny)</td></tr>
+            <tr><td>Brak drugiej barwy</td><td class="dn-dane">najsilniejszy akcent bez wydania kanału barwy</td></tr>
+            <tr><td>Sygnał zostaje wolny</td><td class="dn-dane">błękit nie oznacza jednocześnie „działania" i „pracy w tle"</td></tr>
+            <tr><td>Odróżnienie od odruchu</td><td class="dn-dane">„przycisk główny w kolorze marki" jest domyślnym odruchem, którego katalog zakazuje</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>Pomiar zamiast deklaracji</h3>
+    <p>Paleta powstała z pomiaru: wartość, która nie przechodzi progu WCAG 2.1 AA, nie wchodzi
+    do żetonów. Komplet: <strong>33 pomiary</strong> w
+    <span class="op-mono">zasoby/zetony/kontrasty.json</span>.</p>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Para (wybór)</th><th scope="col">Kontrast</th><th scope="col">Próg</th><th scope="col">Wynik</th></tr></thead>
+        <tbody>
+          <tr><td>tekst / tło (jasny)</td><td class="op-mono">16,14 : 1</td><td class="op-mono">4,5</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>tekst / tło (ciemny)</td><td class="op-mono">16,23 : 1</td><td class="op-mono">4,5</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>biel / przycisk atrament (jasny)</td><td class="op-mono">17,76 : 1</td><td class="op-mono">4,5</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>sygnał-tekst / tło (jasny)</td><td class="op-mono">5,82 : 1</td><td class="op-mono">4,5</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>sygnał-tekst / tło (ciemny)</td><td class="op-mono">9,00 : 1</td><td class="op-mono">4,5</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>fokus sygnał / tło (jasny)</td><td class="op-mono">4,21 : 1</td><td class="op-mono">3,0</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+          <tr><td>fokus sygnał / tło (ciemny)</td><td class="op-mono">5,86 : 1</td><td class="op-mono">3,0</td><td><span class="dn-plakietka dn-plakietka--sukces">AA</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>Reguła metadanych:</strong> żeton <span class="op-mono">--dn-tekst-3</span> jest
+    zarezerwowany dla metadanych, znaczników czasu i etykiet pomocniczych — treść czytelna używa
+    <span class="op-mono">--dn-tekst-2</span>.</p>
+
+    <h3>Zakazy barwne</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">Zakaz</th><th scope="col">Powód</th></tr></thead>
+        <tbody>
+          <tr><td>Czysta czerń jako tło i jako tekst</td><td class="dn-dane">zabija głębię, powoduje halację na OLED; skala kończy się na szary-1000</td></tr>
+          <tr><td>Czysta biel jako tło całej strony</td><td class="dn-dane">tło strony to szary-50; biel jest powierzchnią karty</td></tr>
+          <tr><td>Gradient jako tło przycisku, karty, sekcji</td><td class="dn-dane">gradienty są wyłącznie ilustracyjne</td></tr>
+          <tr><td>Wartość szesnastkowa wpisana wprost w CSS</td><td class="dn-dane">wyłącznie var(--dn-*); wyjątek: pliki SVG znaku</td></tr>
+          <tr><td>Komponent sięgający po prymitywy</td><td class="dn-dane">komponent sięga wyłącznie po żetony semantyczne</td></tr>
+          <tr><td>Stan wyrażony samym kolorem</td><td class="dn-dane">zawsze ikona albo etykieta</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r12" aria-labelledby="r12-h">
+    <h2 id="r12-h"><span class="op-nr">12</span>Terytoria marki</h2>
+
+    <div class="op-siatka op-siatka--2">
+      <div class="op-panel">
+        <div style="display:flex;align-items:center;gap:var(--dn-od-3);"><span class="op-terytorium-lit">A</span><h4 style="margin:0;">Aplikacja</h4></div>
+        <p style="font-size:var(--dn-fs-sm);">Pasek górny, karty środowisk, AOD, okno startowe, Mobile.
+        Nośnik: sygnet + logotyp tekstem na ramie; emblematy w kartach i bocznej nawigacji.</p>
+        <p class="op-mono" style="margin:0;">reguła: godło zachowuje barwy własne; rama atramentowa w obu motywach</p>
+      </div>
+      <div class="op-panel">
+        <div style="display:flex;align-items:center;gap:var(--dn-od-3);"><span class="op-terytorium-lit">B</span><h4 style="margin:0;">Dokumentacja</h4></div>
+        <p style="font-size:var(--dn-fs-sm);">Opracowania MD i HTML, prototypy okien, indeks.
+        Nośnik: nagłówek metrykowy + stopka; favicon w nagłówku dokumentu.</p>
+        <p class="op-mono" style="margin:0;">reguła: zero wartości hex wprost — wyłącznie var(--dn-*)</p>
+      </div>
+      <div class="op-panel">
+        <div style="display:flex;align-items:center;gap:var(--dn-od-3);"><span class="op-terytorium-lit">C</span><h4 style="margin:0;">Materiały</h4></div>
+        <p style="font-size:var(--dn-fs-sm);">Grafika OG, banner, tapeta, tło slajdu, papier firmowy.
+        Nośnik: logo poziome albo pionowe.</p>
+        <p class="op-mono" style="margin:0;">reguła: gradienty brandowe dopuszczone wyłącznie tutaj</p>
+      </div>
+      <div class="op-panel">
+        <div style="display:flex;align-items:center;gap:var(--dn-od-3);"><span class="op-terytorium-lit">D</span><h4 style="margin:0;">Ikony systemowe</h4></div>
+        <p style="font-size:var(--dn-fs-sm);">Favicon, ICO, apple-touch-icon, kafel PWA, manifest.
+        Nośnik: wariant uproszczony (favicon) albo pełny (kafel).</p>
+        <p class="op-mono" style="margin:0;">reguła: tożsamości systemowe pochodzą ze znaku, nie są rysowane osobno</p>
+      </div>
+    </div>
+
+    <h3>Mapa wystąpień w aplikacji</h3>
+    <code class="op-kod">   ┌──────────────────────────────────────────────────────────────────────┐
+   │ »». DANACO CONSOLE      TalkIn        [ szukaj ]        ● DN         │ ← A: rama
+   ├──────────┬───────────────────────────────────────────────────────────┤
+   │ ● TalkIn │  ┌── karta sesji ──┬── karta sesji ●──┬── + ──┐           │ ← kropka (3)
+   │   Studio │  │                                                        │
+   │   Resea… │  │   OKNO OPERACYJNE MODUŁU                               │
+   │   Libra… │  │                                                        │
+   │   Trans… │  ├────────────────────────────────────────────────────────┤
+   │   Brows… │  │   CHAT WINDOW      ● nadawca pisze                     │ ← kropka (4)
+   │   Assis… │  │   » prompt…                                            │
+   └──────────┴───────────────────────────────────────────────────────────┘
+          ▲                                                    ▲
+     emblemat środowiska (poziom 1)                    AOD — rdzeń awatara
+     jedna wypełniona kropka                           kropka (5)</code>
+
+    <h3>Reguły terytorialne</h3>
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">#</th><th scope="col">Reguła</th></tr></thead>
+        <tbody>
+          <tr><td class="op-mono">T1</td><td><strong>Znak nie wchodzi w treść.</strong> Sygnet występuje w ramie, w nagłówku dokumentu i w materiałach — nigdy jako element treści okna operacyjnego.</td></tr>
+          <tr><td class="op-mono">T2</td><td><strong>Jedno wystąpienie znaku na widok.</strong> Sygnet i logo poziome nie występują jednocześnie w jednym układzie.</td></tr>
+          <tr><td class="op-mono">T3</td><td><strong>Emblemat mieszka w swoim środowisku.</strong> Emblemat TalkIn nie pojawia się w kontekście CodeStudio inaczej niż jako odnośnik do TalkIn.</td></tr>
+          <tr><td class="op-mono">T4</td><td><strong>Gradient tylko na terytorium C</strong> i w dwóch wyjątkach terytorium A: awatar bez zdjęcia oraz rdzeń AOD.</td></tr>
+          <tr><td class="op-mono">T5</td><td><strong>Dokumentacja dziedziczy żetony bez modyfikacji.</strong> Opracowanie nie definiuje własnych barw.</td></tr>
+          <tr><td class="op-mono">T6</td><td><strong>Favicon jest zawsze wariantem uproszczonym.</strong> Dwa groty w 16 px zlewają się w plamę.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Komplet ikon dokumentu</h3>
+    <div class="op-kopiuj-rzad">
+      <code class="op-kod" id="snippet-glowy">&lt;link rel="icon" href="/favicon.svg" type="image/svg+xml"&gt;
+&lt;link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"&gt;
+&lt;link rel="apple-touch-icon" href="/apple-touch-icon.png"&gt;
+&lt;link rel="manifest" href="/site.webmanifest"&gt;</code>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#snippet-glowy">
+        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+        Kopiuj wpięcie
+      </button>
+    </div>
+    <p>Manifest deklaruje: <span class="op-mono">name</span> Danaco Console ·
+    <span class="op-mono">short_name</span> Danaco · <span class="op-mono">display</span> standalone ·
+    trzy ikony, w tym jedna <span class="op-mono">maskable</span>.</p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r13" aria-labelledby="r13-h">
+    <h2 id="r13-h"><span class="op-nr">13</span>Spójność — lista kontrolna zgodności z marką</h2>
+
+    <p>Opracowanie jest zgodne z marką Danaco Console, jeżeli przechodzi wszystkie pozycje poniżej.
+    Lista jest interaktywna — odhaczaj pozycje, licznik u dołu pokazuje postęp.
+    Próg jest binarny: <strong>6 bloków na 6</strong>.</p>
+
+    <div class="op-panel" id="kontrola">
+
+      <div class="op-kontrola-blok">
+        <h4 style="margin-top:0;">Blok I — znak</h4>
+        <ul class="op-kontrola-lista" data-blok="1">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Sygnet użyty w wariancie właściwym dla nośnika</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Krzywe sygnetu niezmienione co do współrzędnej</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Kropka sygnału obecna i w błękicie (poza wariantami mono)</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Poniżej 24 px zastosowany wariant uproszczony</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Godło zachowuje barwy własne w obu motywach</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Znak nierozciągnięty, nieobrócony, nieprzebarwiony, nieskładany z fontu</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Jedno wystąpienie znaku na widok</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-blok">
+        <h4>Blok II — barwa</h4>
+        <ul class="op-kontrola-lista" data-blok="2">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero wartości szesnastkowych wprost w CSS — wyłącznie var(--dn-*)</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero czystej czerni</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Komponent sięga po żetony semantyczne, nie po prymitywy</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Sygnał zajmuje ≤ 5 % powierzchni i nie jest tłem sekcji</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Przycisk główny jest inwersją atramentu, nie błękitem</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Pasek górny atramentowy w obu motywach</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Gradient nieużyty jako tło przycisku, karty ani sekcji</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Oba motywy sprawdzone wzrokowo, nie tylko zadeklarowane</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-blok">
+        <h4>Blok III — typografia i treść</h4>
+        <ul class="op-kontrola-lista" data-blok="3">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Nagłówki Space Grotesk, treść IBM Plex Sans, dane IBM Plex Mono</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Liczby w mono z tabular-nums</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Polskie diakrytyki poprawne w całym pliku</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Atrybut lang="pl" w dokumencie</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Nazwy własne modułów, okien i ról dokładnie jak w dokumentacji</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero tekstu zastępczego, zmyślonych nazwisk i zmyślonych metryk</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Dane przykładowe z domeny produktu, oznaczone jako przykładowe</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-blok">
+        <h4>Blok IV — zero blokad</h4>
+        <ul class="op-kontrola-lista" data-blok="4">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero atrybutów wyłączających kontrolkę</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero blokad zdarzeń wskaźnika na kontrolce</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero kursora „operacja niedozwolona"</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Każda odmowa zawiera następny krok</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Liczniki czasu opisane jako informacyjne</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Metoda wyłączona w konfiguracji nie jest renderowana, nie jest blokowana</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-blok">
+        <h4>Blok V — ruch i dostępność</h4>
+        <ul class="op-kontrola-lista" data-blok="5">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Ruch ciągły wyłącznie jako tętno kropki (2,4 s)</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Mikroprzejścia 100–220 ms, krzywa --dn-ease</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Ograniczony ruch obsłużony żetonami, nie per komponent</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Stan nigdy samym kolorem — ikona albo etykieta towarzyszy</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Fokus widoczny na każdej kontrolce (2 px + odsunięcie 2 px)</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Nawigacja klawiaturą działa; role i atrybuty aria obecne</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Cele dotykowe rosną żetonem przy wskaźniku zgrubnym</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-blok">
+        <h4>Blok VI — struktura opracowania</h4>
+        <ul class="op-kontrola-lista" data-blok="6">
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Nagłówek metrykowy obecny</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Stopka z wersją i notą praw autorskich</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Przełącznik motywu działa</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Sekcja „O tym opracowaniu" obecna</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Plik działa po otwarciu z dysku, cały skrypt inline, zero bibliotek zewnętrznych</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Ikony wyłącznie z zestawu, wklejane inline; zero emoji jako ikon</button></li>
+          <li><button class="op-kontrola-poz" type="button" aria-pressed="false"><span class="op-kontrola-znak"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>Zero elementów bez pokrycia w dokumentacji</button></li>
+        </ul>
+      </div>
+
+      <div class="op-kontrola-licznik" role="status" aria-live="polite">
+        <span id="kontrola-tekst">0 / 42 pozycji · bloków zaliczonych: 0 / 6</span>
+        <span class="op-kontrola-tor"><span class="op-kontrola-wartosc" id="kontrola-pasek"></span></span>
+        <span class="dn-plakietka" id="kontrola-werdykt">niezgodne — opracowanie wymaga przeróbki</span>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" id="btn-kontrola-reset">Wyczyść</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section class="op-sekcja" id="r14" aria-labelledby="r14-h">
+    <h2 id="r14-h"><span class="op-nr">14</span>Decyzje projektowe</h2>
+
+    <p>Rozstrzygnięcia podjęte tam, gdzie dokumentacja źródłowa nie wypowiada się wprost.
+    Każde jest odwracalne i podlega akceptacji Właściciela.</p>
+
+    <div class="op-tabela-otoczka">
+      <table class="dn-tabela">
+        <thead><tr><th scope="col">#</th><th scope="col">Decyzja</th><th scope="col">Uzasadnienie</th><th scope="col">Alternatywa odrzucona</th></tr></thead>
+        <tbody>
+          <tr><td class="op-mono">D1</td><td>Osobowość opisana pięcioma cechami w parach „jesteśmy / nie jesteśmy", każda z dowodem w pliku</td><td class="dn-dane">cecha bez dowodu jest nieweryfikowalna</td><td class="dn-dane">lista przymiotników bez odniesień</td></tr>
+          <tr><td class="op-mono">D2</td><td>Obietnica marki jako trzy człony — po jednym na każdy element znaku i na ADL-017</td><td class="dn-dane">obietnica musi mieć nośnik; trzy człony pokrywają się z trzema znakami „»»."</td><td class="dn-dane">jedno zdanie ogólne</td></tr>
+          <tr><td class="op-mono">D3</td><td>Obietnice środowisk wyprowadzone z ich mott i opisów w dokumentacji</td><td class="dn-dane">zakaz projektowania treści bez pokrycia</td><td class="dn-dane">wymyślenie haseł marketingowych</td></tr>
+          <tr><td class="op-mono">D4</td><td>ADL-017 opisane w trzech warstwach: interfejs, język, komunikacja zewnętrzna</td><td class="dn-dane">zasada jest wartością marki, więc ma konsekwencje poza CSS-em</td><td class="dn-dane">ADL-017 jako reguła komponentów</td></tr>
+          <tr><td class="op-mono">D5</td><td>Architektura marki jako cztery poziomy z regułami dziedziczenia R1–R6</td><td class="dn-dane">hierarchia bez reguł nie rozstrzyga sporów granicznych</td><td class="dn-dane">lista plików bez modelu</td></tr>
+          <tr><td class="op-mono">D6</td><td>Zestaw ikon interfejsu nie zawiera kropki sygnału</td><td class="dn-dane">kropka zarezerwowana dla marki i stanu</td><td class="dn-dane">kropka w ikonach domenowych</td></tr>
+          <tr><td class="op-mono">D7</td><td>Odnotowano, że znak na ciemnym tle używa bieli znaku, a nie żetonu tekstu motywu ciemnego</td><td class="dn-dane">biel znaku jest barwą własną marki; wartość odczytana z plików i pozostawiona bez zmian</td><td class="dn-dane">ujednolicenie znaku do żetonu tekstu</td></tr>
+          <tr><td class="op-mono">D8</td><td>Kropka wariantu uproszczonego opisana stałym stosunkiem 0,30 do wysokości znaku</td><td class="dn-dane">stosunek tłumaczy, dlaczego oba warianty czyta się jako ten sam znak</td><td class="dn-dane">opis samymi wartościami promienia</td></tr>
+          <tr><td class="op-mono">D9</td><td>CodeStudio wskazane jako jedyny emblemat cytujący grot znaku; MultitaskingAI — jako jedyny z kropką w węźle centralnym</td><td class="dn-dane">obie cechy są faktem geometrycznym i niosą znaczenie</td><td class="dn-dane">pominięcie różnic jako przypadkowych</td></tr>
+          <tr><td class="op-mono">D10</td><td>Ikona aplikacji opisana jako zapowiedź paska górnego — pole kafla tożsame z ramą</td><td class="dn-dane">tożsamość barwy jest faktem w plikach; nazwanie czyni ją regułą</td><td class="dn-dane">opis kafla jako „ciemne tło"</td></tr>
+          <tr><td class="op-mono">D11</td><td>Lista kontrolna podzielona na sześć bloków z progiem binarnym 6/6</td><td class="dn-dane">próg binarny wymusza rozstrzygnięcie zamiast negocjacji</td><td class="dn-dane">płaska lista bez progu</td></tr>
+          <tr><td class="op-mono">D12</td><td>Relacja Console ↔ Pilot opisana tabelą „co zostało zastąpione" z trzema elementami ciągłości</td><td class="dn-dane">bez tego czytelnik uzna całą dokumentację v1.0 za nieaktualną</td><td class="dn-dane">wzmianka jednozdaniowa</td></tr>
+          <tr><td class="op-mono">D13</td><td>Nie powtórzono księgi znaku (pole ochronne, rozmiary minimalne, katalog zakazów)</td><td class="dn-dane">te treści należą do opracowania 10 — powielenie groziłoby rozjechaniem się źródeł</td><td class="dn-dane">skrócona księga w tym pliku</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <details class="op-o-opracowaniu">
+    <summary>
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      O tym opracowaniu
+    </summary>
+    <div class="op-o-tresc">
+      <h4>Co przedstawia</h4>
+      <p>System marki Danaco Console w warstwie wizualnej v2.0: pozycjonowanie, relację do warstwy
+      funkcjonalnej Danaco Pilot, ideę przewodnią, osobowość, obietnicę, cztery filary środowiskowe,
+      zasadę zero blokad jako wartość, architekturę marki, elementy konstytutywne, kropkę sygnału,
+      barwę, terytoria oraz listę kontrolną spójności.</p>
+
+      <h4>Źródła</h4>
+      <ul>
+        <li><span class="op-mono">WYNIK/KANON.md</span> — jedyne źródło prawdy dla wszystkich zespołów</li>
+        <li><span class="op-mono">design/opracowania/design/01-kierunek/KIERUNEK.md</span> — rozdz. 1–4; znak: 3.4 i 3.5</li>
+        <li><span class="op-mono">WYNIK/zasoby/marka/logo/*.svg</span> — geometria znaku odczytana z plików</li>
+        <li><span class="op-mono">WYNIK/zasoby/marka/srodowiska/*.svg</span> — cztery emblematy</li>
+        <li><span class="op-mono">WYNIK/zasoby/marka/favicon/*</span>, <span class="op-mono">ikona-aplikacji/*</span></li>
+        <li><span class="op-mono">WYNIK/zasoby/zetony/zetony.css</span>, <span class="op-mono">kontrasty.json</span> — 33 pomiary</li>
+        <li><span class="op-mono">dok/projekt-ui/przeplyw/przeplyw-okien.md</span> — opisy trybów pracy czterech środowisk</li>
+        <li><span class="op-mono">design/opracowania/design/06-okna/e1-centrum-dowodzenia-v3.html</span> — motta kart środowisk</li>
+        <li><span class="op-mono">design/opracowania/design/07-ksiega/ksiega-marki.html</span> — istniejąca księga (wersja podstawowa)</li>
+        <li>Dokument towarzyszący: <span class="op-mono">WYNIK/01-dokumentacja-md/09-brand-system.md</span></li>
+      </ul>
+
+      <h4>Jakie interakcje są odwzorowane</h4>
+      <ul>
+        <li>Przełącznik motywu w pasku górnym — <strong>przebudowuje wszystkie znaki na stronie</strong>
+        (para wariantów jasny / na ciemnym przełączana atrybutem motywu).</li>
+        <li>Żywy sygnet: tętno kropki (2,4 s), siatka konstrukcyjna, przełączanie wariantu pełny ↔ uproszczony.</li>
+        <li>Pięć cech osobowości jako zakładki z parami porównawczymi „jesteśmy / nie jesteśmy" na żywo.</li>
+        <li>Cztery karty środowisk — wybór karty przebudowuje panel szczegółu (moduły, emblemat, kropka).</li>
+        <li>Klikalny diagram architektury marki — cztery poziomy z rozwijanymi panelami i próbkami.</li>
+        <li>Demonstracja zero blokad: przycisk zawsze klikalny, komunikat zamiast bramy.</li>
+        <li>Interaktywna lista kontrolna 42 pozycji w 6 blokach z licznikiem, paskiem postępu i werdyktem.</li>
+        <li>Kopiowanie do schowka: ścieżka grotu, żetony ramy, wpięcie ikon dokumentu.</li>
+        <li>Boczny spis treści z podświetlaniem czynnej sekcji podczas przewijania.</li>
+      </ul>
+
+      <h4>Uwagi techniczne</h4>
+      <ul>
+        <li>Plik działa po otwarciu z dysku — bez serwera i bez budowania. Zero bibliotek zewnętrznych.</li>
+        <li>Wszystkie znaki i ikony wklejone <strong>inline</strong>; ikony dziedziczą barwę przez
+        <span class="op-mono">currentColor</span>.</li>
+        <li>Warstwa układu używa wyłącznie żetonów semantycznych; wartości własne marki występują
+        tylko wewnątrz elementów <span class="op-mono">svg</span> znaku.</li>
+        <li>Ograniczony ruch obsłużony globalnie w żetonach; tętno kropki zamiera, zastępuje je pierścień statyczny.</li>
+        <li>Zero atrybutów odbierających klikalność — zgodnie z ADL-017.</li>
+      </ul>
+    </div>
+  </details>
+
+  <footer class="op-stopka">
+    <span>Danaco Console — AI Operating Environment · v2.0</span>
+    <span>© 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz</span>
+  </footer>
+
+</main>
+</div>
+
+<div class="dn-toasty op-toasty" id="toasty" aria-live="polite" aria-atomic="false"></div>
+
+<script src="../zasoby/wspolne.js"></script>
+<script>
+/* ==========================================================================
+   09 · SYSTEM MARKI — warstwa interakcji.
+   Cały skrypt inline, bez bibliotek. Zgodność z ADL-017: żaden element
+   nie traci klikalności ani fokusowalności.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var $  = function (s, k) { return (k || document).querySelector(s); };
+  var $$ = function (s, k) { return Array.prototype.slice.call((k || document).querySelectorAll(s)); };
+
+  /* ---------------------------------------------------------------------- */
+  /* 1 · Powiadomienia — informacja zwrotna po akcji                         */
+  /* ---------------------------------------------------------------------- */
+  var toasty = $('#toasty');
+  function powiadom(tytul, tresc, rodzaj) {
+    if (!toasty) return;
+    var t = document.createElement('div');
+    t.className = 'dn-toast' + (rodzaj ? ' dn-toast--' + rodzaj : '');
+    t.setAttribute('role', 'status');
+    var a = document.createElement('div');
+    a.className = 'dn-toast-tytul';
+    a.textContent = tytul;
+    t.appendChild(a);
+    if (tresc) {
+      var b = document.createElement('div');
+      b.className = 'dn-toast-tresc';
+      b.textContent = tresc;
+      t.appendChild(b);
+    }
+    toasty.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 3200);
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* 2 · Spis treści — podświetlanie czynnej sekcji                          */
+  /* ---------------------------------------------------------------------- */
+  var odnosniki = $$('#spis a');
+  var sekcje = odnosniki.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); })
+                        .filter(Boolean);
+
+  function oznacz(id) {
+    odnosniki.forEach(function (a) {
+      a.setAttribute('aria-current', a.getAttribute('href') === '#' + id ? 'true' : 'false');
+    });
+  }
+
+  if ('IntersectionObserver' in window && sekcje.length) {
+    var widoczne = {};
+    var obs = new IntersectionObserver(function (wpisy) {
+      wpisy.forEach(function (w) { widoczne[w.target.id] = w.isIntersecting ? w.intersectionRatio : 0; });
+      var najlepszy = null, maks = 0;
+      sekcje.forEach(function (s) {
+        var v = widoczne[s.id] || 0;
+        if (v > maks) { maks = v; najlepszy = s.id; }
+      });
+      if (najlepszy) oznacz(najlepszy);
+    }, { rootMargin: '-72px 0px -55% 0px', threshold: [0, 0.15, 0.4, 0.75, 1] });
+    sekcje.forEach(function (s) { obs.observe(s); });
+  }
+  if (odnosniki.length) odnosniki[0].setAttribute('aria-current', 'true');
+
+  /* ---------------------------------------------------------------------- */
+  /* 3 · Żywy sygnet — tętno, siatka, wariant                                */
+  /* ---------------------------------------------------------------------- */
+  var scena     = $('#scena-znaku');
+  var btnTetno  = $('#btn-tetno');
+  var btnSiatka = $('#btn-siatka');
+  var btnWar    = $('#btn-wariant');
+  var etWar     = $('#etykieta-wariantu');
+  var opisSc    = $('#opis-sceny');
+  var sciezka   = $('#sciezka-grotu');
+
+  var OPIS = {
+    pelny:       'groty 12–44 i 40–72 · wysokość 44 · kropka (83; 63,5) r 6,5',
+    uproszczony: 'jeden grot 18–64 · wysokość 60 · kropka (79; 69) r 9'
+  };
+  var SCIEZKA = {
+    pelny:       'M12 26 H24 L44 48.0 L24 70 H12 L32 48.0 Z',
+    uproszczony: 'M18 18 H35 L64 48.0 L35 78 H18 L45 48.0 Z'
+  };
+
+  function przelaczCechę(btn, atrybut) {
+    if (!scena || !btn) return;
+    var wl = scena.getAttribute(atrybut) === 'tak';
+    scena.setAttribute(atrybut, wl ? 'nie' : 'tak');
+    btn.setAttribute('aria-pressed', String(!wl));
+  }
+
+  if (btnTetno)  btnTetno.addEventListener('click',  function () { przelaczCechę(btnTetno,  'data-tetno');  });
+  if (btnSiatka) btnSiatka.addEventListener('click', function () { przelaczCechę(btnSiatka, 'data-siatka'); });
+
+  if (btnWar && scena) {
+    btnWar.addEventListener('click', function () {
+      var uproszczony = scena.getAttribute('data-wariant') === 'uproszczony';
+      var nowy = uproszczony ? 'pelny' : 'uproszczony';
+      scena.setAttribute('data-wariant', nowy);
+      btnWar.setAttribute('aria-pressed', String(!uproszczony));
+      if (etWar) etWar.textContent = nowy === 'pelny'
+        ? 'wariant pełny · 96 × 96'
+        : 'wariant uproszczony · poniżej 24 px';
+      if (opisSc)  opisSc.textContent  = OPIS[nowy];
+      if (sciezka) sciezka.textContent = SCIEZKA[nowy];
+    });
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* 4 · Zakładki osobowości — pary „jesteśmy / nie jesteśmy"                */
+  /* ---------------------------------------------------------------------- */
+  var zakladki = $$('.dn-zakladka[data-cecha]');
+
+  function pokazCeche(btn) {
+    zakladki.forEach(function (z) {
+      var czynny = z === btn;
+      z.setAttribute('aria-selected', String(czynny));
+      z.tabIndex = czynny ? 0 : -1;
+      var panel = document.getElementById(z.getAttribute('aria-controls'));
+      if (panel) panel.hidden = !czynny;
+    });
+  }
+
+  zakladki.forEach(function (z, i) {
+    z.addEventListener('click', function () { pokazCeche(z); });
+    z.addEventListener('keydown', function (e) {
+      var k = e.key, cel = null;
+      if (k === 'ArrowRight') cel = zakladki[(i + 1) % zakladki.length];
+      else if (k === 'ArrowLeft') cel = zakladki[(i - 1 + zakladki.length) % zakladki.length];
+      else if (k === 'Home') cel = zakladki[0];
+      else if (k === 'End') cel = zakladki[zakladki.length - 1];
+      if (cel) { e.preventDefault(); pokazCeche(cel); cel.focus(); }
+    });
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* 5 · Cztery środowiska — karta przebudowuje panel szczegółu              */
+  /* ---------------------------------------------------------------------- */
+  var SRODOWISKA = {
+    talkin: {
+      tytul: 'TalkIn',
+      plik: 'srodowiska/srodowisko-talkin.svg',
+      opis: 'Wiedza, komunikacja i praca z treścią. Powłoka: pasek górny, pas kart sesji, boczna nawigacja dziewięciu modułów, obszar roboczy.',
+      moduly: 'Studio · Research · Library · Translate · Browser · Assistant · Roundtable · Workspace · Agents',
+      kropka: 'cx 16,2 · cy 10,8 · r 1,5 — koniec drugiej linii tekstu w dymku',
+      uwaga: 'Obietnica: zrozumiesz materiał, zanim podejmiesz decyzję. Środowisko zdejmuje pracę czytania, porównywania i tłumaczenia — nie podejmuje decyzji za Operatora.'
+    },
+    workspace: {
+      tytul: 'WorkSpace',
+      plik: 'srodowiska/srodowisko-workspace.svg',
+      opis: 'Produktywność, organizacja i realizacja projektów. Powłoka: pasek górny, pas kart sesji, boczna nawigacja dziewięciu modułów, obszar roboczy.',
+      moduly: 'Studio · Research · Library · Browser · Roundtable · Workspace · Design · Apps · Agents',
+      kropka: 'cx 16,9 · cy 16,9 · r 1,6 — pole prawe dolne z czterech',
+      uwaga: 'Emblemat niesie dodatkową treść: cztery pola, jedno z kropką — praca biegnie w jednym z nich, reszta czeka.'
+    },
+    codestudio: {
+      tytul: 'CodeStudio',
+      plik: 'srodowiska/srodowisko-codestudio.svg',
+      opis: 'Programowanie. Powłoka: pasek górny, pas kart sesji, boczna nawigacja ośmiu modułów, obszar roboczy.',
+      moduly: 'Roundtable · Workspace · Design · Apps · Terminal · Developer · Diagnostics · Agents',
+      kropka: 'cx 18,4 · cy 9,9 · r 1,5 — prawa górna część okna, obok grotu',
+      uwaga: 'Jedyny emblemat cytujący grot znaku nadrzędnego — CodeStudio jest środowiskiem, w którym polecenie wydaje się najbardziej dosłownie.'
+    },
+    multitaskingai: {
+      tytul: 'MultitaskingAI',
+      plik: 'srodowiska/srodowisko-multitaskingai.svg',
+      opis: 'Orkiestracja autonomicznej pracy ciągłej. Powłoka: pasek górny, pas kart sesji, panel orkiestracji (6 sekcji) zamiast bocznej nawigacji, obszar roboczy.',
+      moduly: 'Executor 1 · Executor 2 · Coordinator · Executor 3 / Validator · Subagent Network · silnik kolejek (11 akcji) · integracja Automations 24/7',
+      kropka: 'cx 12 · cy 12 · r 2,6 — węzeł centralny, czyli koordynator',
+      uwaga: 'Środowisko, które jest znakiem marki rozwiniętym do systemu: sygnet pokazuje jedno przekazanie, panel orkiestracji pokazuje ich wiele naraz.'
+    }
+  };
+
+  var karty = $$('#srodowiska .op-srodowisko');
+  var szTytul = $('#sz-tytul'), szPlik = $('#sz-plik'), szOpis = $('#sz-opis');
+  var szModuly = $('#sz-moduly'), szKropka = $('#sz-kropka'), szUwaga = $('#sz-uwaga');
+
+  function wybierzSrodowisko(karta) {
+    var klucz = karta.getAttribute('data-srodowisko');
+    var d = SRODOWISKA[klucz];
+    if (!d) return;
+    karty.forEach(function (k) { k.setAttribute('aria-current', String(k === karta)); });
+    if (szTytul)  szTytul.textContent  = d.tytul;
+    if (szPlik)   szPlik.textContent   = d.plik;
+    if (szOpis)   szOpis.textContent   = d.opis;
+    if (szModuly) szModuly.textContent = d.moduly;
+    if (szKropka) szKropka.textContent = d.kropka;
+    if (szUwaga)  szUwaga.textContent  = d.uwaga;
+  }
+
+  karty.forEach(function (k) { k.addEventListener('click', function () { wybierzSrodowisko(k); }); });
+  if (karty.length) wybierzSrodowisko(karty[0]);
+
+  /* ---------------------------------------------------------------------- */
+  /* 6 · Hierarchia architektury marki — klikalny diagram                    */
+  /* ---------------------------------------------------------------------- */
+  $$('#hierarchia .op-poziom').forEach(function (p) {
+    p.addEventListener('click', function () {
+      var otwarty = p.getAttribute('aria-expanded') === 'true';
+      var panel = document.getElementById(p.getAttribute('aria-controls'));
+      p.setAttribute('aria-expanded', String(!otwarty));
+      if (panel) panel.hidden = otwarty;
+    });
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* 7 · Zero blokad — przycisk zawsze klikalny, komunikat zamiast bramy     */
+  /* ---------------------------------------------------------------------- */
+  var pole = $('#pole-projekt');
+  var odzew = $('#odzew-zapis');
+  var odzewTresc = $('#odzew-tresc');
+
+  function pokazOdzew(tekst) {
+    if (!odzew || !odzewTresc) return;
+    odzewTresc.textContent = tekst;
+    odzew.hidden = false;
+  }
+
+  var btnZapisz = $('#btn-zapisz');
+  if (btnZapisz) {
+    btnZapisz.addEventListener('click', function () {
+      var wartosc = pole && pole.value.trim();
+      if (!wartosc) {
+        pokazOdzew('Pole „Nazwa projektu" jest puste — zapis pominie tę wartość. Projekt otrzyma nazwę roboczą i można ją zmienić w Project Dashboard.');
+        powiadom('Projekt założony', 'Nazwa pominięta — do uzupełnienia w Project Dashboard.', 'informacja');
+      } else {
+        pokazOdzew('Projekt „' + wartosc + '" założony. Otwórz Project Dashboard, żeby dodać instrukcje i kontekst.');
+        powiadom('Projekt założony', wartosc, 'sukces');
+      }
+    });
+  }
+
+  var btnPomin = $('#btn-pomin');
+  if (btnPomin) {
+    btnPomin.addEventListener('click', function () {
+      pokazOdzew('Krok pominięty. Przycisk „Pomiń" jest obecny i klikalny w obu fazach wdrożenia — zasada zero blokad (ADL-017).');
+    });
+  }
+
+  /* ---------------------------------------------------------------------- */
+  /* 8 · Lista kontrolna — licznik, pasek postępu, werdykt                   */
+  /* ---------------------------------------------------------------------- */
+  var pozycje = $$('#kontrola .op-kontrola-poz');
+  var listy = $$('#kontrola .op-kontrola-lista');
+  var ktekst = $('#kontrola-tekst');
+  var kpasek = $('#kontrola-pasek');
+  var kwerdykt = $('#kontrola-werdykt');
+
+  function przeliczKontrole() {
+    var razem = pozycje.length;
+    var zaznaczone = pozycje.filter(function (p) { return p.getAttribute('aria-pressed') === 'true'; }).length;
+
+    var blokiOk = listy.filter(function (l) {
+      var w = $$('.op-kontrola-poz', l);
+      return w.length > 0 && w.every(function (p) { return p.getAttribute('aria-pressed') === 'true'; });
+    }).length;
+
+    if (ktekst) ktekst.textContent = zaznaczone + ' / ' + razem + ' pozycji · bloków zaliczonych: ' + blokiOk + ' / ' + listy.length;
+    if (kpasek) kpasek.style.width = (razem ? Math.round(zaznaczone / razem * 100) : 0) + '%';
+
+    if (kwerdykt) {
+      kwerdykt.className = 'dn-plakietka';
+      if (blokiOk === listy.length) {
+        kwerdykt.classList.add('dn-plakietka--sukces');
+        kwerdykt.textContent = 'zgodne z marką — do oddania';
+      } else if (blokiOk === listy.length - 1) {
+        kwerdykt.classList.add('dn-plakietka--ostrzezenie');
+        kwerdykt.textContent = 'do poprawy — wskaż blok i pozycję';
+      } else {
+        kwerdykt.classList.add('dn-plakietka--blad');
+        kwerdykt.textContent = 'niezgodne — opracowanie wymaga przeróbki';
+      }
+    }
+  }
+
+  pozycje.forEach(function (p) {
+    p.addEventListener('click', function () {
+      p.setAttribute('aria-pressed', p.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+      przeliczKontrole();
+    });
+  });
+
+  var btnReset = $('#btn-kontrola-reset');
+  if (btnReset) {
+    btnReset.addEventListener('click', function () {
+      pozycje.forEach(function (p) { p.setAttribute('aria-pressed', 'false'); });
+      przeliczKontrole();
+      powiadom('Lista wyczyszczona', 'Wszystkie 42 pozycje odznaczone.', 'informacja');
+    });
+  }
+  przeliczKontrole();
+
+  /* ---------------------------------------------------------------------- */
+  /* 9 · Kopiowanie do schowka — z zapasem dla otwarcia z dysku              */
+  /* ---------------------------------------------------------------------- */
+  function doSchowka(tekst, opis) {
+    function zapas() {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = tekst;
+        ta.setAttribute('readonly', 'readonly');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        powiadom('Skopiowano', opis, 'sukces');
+      } catch (e) {
+        powiadom('Kopiowanie niedostępne', 'Zaznacz tekst i skopiuj skrótem klawiaturowym.', 'ostrzezenie');
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(tekst).then(function () {
+        powiadom('Skopiowano', opis, 'sukces');
+      }, zapas);
+    } else {
+      zapas();
+    }
+  }
+
+  $$('[data-kopiuj]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var cel = $(b.getAttribute('data-kopiuj'));
+      if (!cel) return;
+      doSchowka(cel.textContent, (cel.textContent || '').trim().slice(0, 48));
+    });
+  });
+
+  /* ---------------------------------------------------------------------- */
+  /* 10 · Miękkie przewijanie spisu treści                                   */
+  /* ---------------------------------------------------------------------- */
+  odnosniki.forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var cel = document.getElementById(a.getAttribute('href').slice(1));
+      if (!cel) return;
+      e.preventDefault();
+      cel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      cel.setAttribute('tabindex', '-1');
+      cel.focus({ preventScroll: true });
+      oznacz(cel.id);
+      if (history.replaceState) history.replaceState(null, '', '#' + cel.id);
+    });
+  });
+})();
+</script>
+</body>
+</html>

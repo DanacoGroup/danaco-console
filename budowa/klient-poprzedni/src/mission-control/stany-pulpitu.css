@@ -1,0 +1,43 @@
+/* Stany puste pulpitu.
+   Jedna odpowiedzialność: szata miejsc, w których danych nie ma — sekcja bez
+   odczytu, kolumna bez sesji, miara bez źródła w kontrakcie. Treść buduje
+   `stan-pusty.ts` i widoki sekcji; tu wyłącznie wygląd. */
+
+/* Osadzenie komponentu dn-pusty-stan w sekcjach pulpitu */
+.mc-pusto {
+  border: 1px dashed var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+}
+
+/* Sesje bez wskazania środowiska w odczycie — wiersz pod kolumnami matrycy */
+.mc-matryca__poza-etykieta {
+  margin: var(--dn-od-3) 0 var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.mc-matryca__poza-wykaz {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+.mc-matryca__poza-sesja {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* Kolumna środowiska bez sesji mówi to wprost */
+.mc-kolumna__pusto {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+/* Uwaga o miarach kanału bez źródła w kontrakcie */
+.mc-kanal__uwaga {
+  margin: var(--dn-od-2) 0 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}

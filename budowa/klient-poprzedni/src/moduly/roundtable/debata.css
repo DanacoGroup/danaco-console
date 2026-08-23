@@ -1,0 +1,264 @@
+/* ============================================================================
+   DANACO CONSOLE — MODUŁ ROUNDTABLE, PRZEBIEG DEBATY I STANOWISKO
+   ----------------------------------------------------------------------------
+   Drugi arkusz modułu obok `roundtable.css`. Podział idzie po oknach: tutaj
+   leżą dwa okna czytające przebieg debaty — Debate Panel (wypowiedzi
+   narastające w turze) i Consensus Panel (stanowisko końcowe) — a
+   w `roundtable.css` zostaje rozkład modułu, stany obowiązkowe, wykaz pozycji
+   i skład debaty (Model Panels, Moderator Panel).
+
+   Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu (`--dn-*`)
+   i z biblioteki `komponenty/`.
+   ============================================================================ */
+
+/* ── Przebieg debaty (Debate Panel) ───────────────────────────────────────── */
+
+/* Debate Panel nie stawia własnego kontenera przebiegu: rysuje wprost do
+   miejsca treści okna (`.dr-tresc`), które ma już i przewijanie, i odstęp. */
+
+.dr-tura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.dr-wypowiedzi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Spis głosów tury — ilu mówców i ile od każdego, nad samym wykazem. */
+.dr-glosy-tury {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+/* Wypowiedź ma dwie kolumny: znacznik mówcy i treść. Znacznik pozwala czytać
+   głosy obok siebie bez rozpoznawania barwy wstęgi i niesie te same znaki, co
+   skład debaty. */
+.dr-wypowiedz {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--dn-od-3);
+  row-gap: var(--dn-od-1);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-left: var(--dn-wym-wstega) solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dr-wypowiedz__znacznik {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: start;
+  min-width: var(--dn-wym-ikona-lg);
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-align: center;
+  color: var(--dn-tekst-2);
+}
+
+.dr-wypowiedz__glowa,
+.dr-wypowiedz__tresc,
+.dr-wypowiedz__nota {
+  grid-column: 2;
+}
+
+.dr-wypowiedz__glowa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+}
+
+.dr-wypowiedz__nota {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-style: italic;
+  color: var(--dn-tekst-2);
+}
+
+/* Gęstość niesie zmianę mówcy: nowy głos dostaje przerwę ponad odstępem listy,
+   ciąg tego samego mówcy zostaje ciasny. Rozróżnienie działa bez odczytania
+   barwy wstęgi. */
+.dr-wypowiedz[data-ciag='nowy-mowca'] {
+  margin-top: var(--dn-od-2);
+}
+
+/* Głos moderatora to inny rodzaj głosu, nie kolejny uczestnik: jedna kolumna,
+   znacznik nad treścią, wcięcie i kursywa nagłówka. */
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] {
+  grid-template-columns: minmax(0, 1fr);
+  padding-left: var(--dn-od-5);
+}
+
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__znacznik,
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__glowa,
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__tresc,
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__nota {
+  grid-column: 1;
+}
+
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__znacznik {
+  justify-self: start;
+}
+
+.dr-wypowiedz[data-rodzaj-glosu='moderator'] .dr-wypowiedz__mowca {
+  font-style: italic;
+}
+
+/* Mówca składowi nieznany — okno mówi to słowem w nagłówku, a znacznik trzyma
+   krój przerywany, żeby brak wiedzy nie wyglądał jak zwyczajny uczestnik. */
+.dr-wypowiedz[data-rodzaj-glosu='nieznany'] .dr-wypowiedz__znacznik {
+  border-style: dashed;
+}
+
+.dr-wypowiedz__mowca {
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dr-wypowiedz__czas {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.dr-wypowiedz__tresc {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Rozróżnienie mówców: warianty motywu przypisywane po kolei uczestnikom,
+   nie barwy własne modułu. Wariant „moderator" jest osobny, bo interwencja
+   moderatora nie jest głosem uczestnika. */
+.dr-wypowiedz[data-rola-mowcy='pierwszy'] {
+  border-left-color: var(--dn-informacja-obrys);
+}
+
+.dr-wypowiedz[data-rola-mowcy='drugi'] {
+  border-left-color: var(--dn-ostrzezenie-obrys);
+}
+
+.dr-wypowiedz[data-rola-mowcy='trzeci'] {
+  border-left-color: var(--dn-blad-obrys);
+}
+
+.dr-wypowiedz[data-rola-mowcy='dalszy'] {
+  border-left-color: var(--dn-obrys-mocny);
+}
+
+.dr-wypowiedz[data-rola-mowcy='moderator'] {
+  border-left-color: var(--dn-kropka);
+  background: var(--dn-informacja-tlo);
+}
+
+.dr-wypowiedz[data-rola-mowcy='nieznany'] {
+  border-left-color: var(--dn-obrys-subtelny);
+  border-left-style: dashed;
+}
+
+/* ── Głos rosnący na żywo (stream.chunk) ──────────────────────────────────── */
+
+/* Trzy stany głosu — utrwalony przez rdzeń, rosnący w tej chwili, zerwany —
+   różnią się wyglądem, nie tylko nazwą. Napis niesie każdy z nich zawsze,
+   barwa jest dodatkiem, nie nośnikiem znaczenia. */
+.dr-wypowiedz__stan,
+.dr-odpowiedz__stan {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.dr-wypowiedz__stan[data-stan-glosu='mówi teraz'],
+.dr-odpowiedz[data-stan-glosu='mówi teraz'] .dr-odpowiedz__stan {
+  color: var(--dn-informacja-tekst);
+}
+
+.dr-wypowiedz__stan[data-stan-glosu='strumień zerwany'],
+.dr-odpowiedz[data-stan-glosu='strumień zerwany'] .dr-odpowiedz__stan {
+  color: var(--dn-blad-tekst);
+}
+
+/* Tok rozumowania nie jest wypowiedzią: rdzeń nie liczy fragmentów `thinking`
+   do treści wypowiedzi, więc nie może wyglądać jak zdanie uczestnika. */
+.dr-wypowiedz__rozumowanie,
+.dr-odpowiedz__rozumowanie {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-style: italic;
+  color: var(--dn-tekst-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── Odpowiedź uczestnika w panelu składu (Model Panels) ──────────────────── */
+
+.dr-odpowiedz {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  min-width: 0;
+}
+
+/* Treść rosnąca dostaje wstęgę u dołu panelu, żeby przy kilku panelach naraz
+   było widać, który mówi w tej chwili, bez czytania każdego napisu z osobna.
+   Własności rozpisane zamiast skrótu, bo skrót nie rozwija `var()` w środowisku
+   sprawdzianów oprawy. */
+.dr-odpowiedz[data-rosnie='tak'] {
+  border-top-width: var(--dn-wym-wstega);
+  border-top-style: solid;
+  border-top-color: var(--dn-informacja-obrys);
+}
+
+.dr-odpowiedz__tresc {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dr-odpowiedz__uwaga {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* ── Stanowisko końcowe (Consensus Panel) ─────────────────────────────────── */
+
+.dr-stanowisko {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dr-stanowisko__tresc {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dr-stanowisko__wersja {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}

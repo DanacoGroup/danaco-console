@@ -1,0 +1,50 @@
+/* ============================================================================
+   DANACO CONSOLE — MOTYW · ARKUSZ SPINAJĄCY
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: złożenie warstwy żetonów i fundamentu w całość.
+   Wartości żyją w plikach składowych; reszta aplikacji wczytuje wyłącznie
+   ten plik.
+
+   Kolejność wczytania odpowiada łańcuchowi zależności:
+     kroje  →  prymitywy  →  rama  →  motywy  →  warstwy niezależne od motywu
+     →  fundament (wyzerowanie, podłoże, fokus, wzorce tekstowe)
+
+   Fundament wczytuje się po żetonach, bo z nich czerpie, i przed komponentami,
+   bo komponenty nadpisują jego reguły bazowe (arkusze-stylow.ts).
+
+   Mechanizm motywu:
+     data-theme="light"  wybór jawny — motyw jasny
+     data-theme="dark"   wybór jawny — motyw ciemny
+     brak atrybutu       rozstrzyga prefers-color-scheme
+   Oba motywy są równoprawne: przełączenie motywu zmienia wartości żetonów,
+   nie reguły komponentów. `color-scheme` ustawiają pliki semantyczne,
+   osobno dla każdego motywu.
+
+   Gęstość zwarta jest domyślna; wariant przestronny czeka pod
+   data-gestosc="przestronna" (wymiary.css).
+   ============================================================================ */
+
+/* --- kroje: muszą poprzedzać cokolwiek, co ich używa --------------------- */
+@import './fonty.css';
+
+/* --- prymitywy: surowe skale, z których czerpią żetony semantyczne ------- */
+@import './prymitywy.css';
+
+/* --- rama kokpitu: stała w obu motywach, więc przed blokami motywów ------ */
+@import './rama.css';
+
+/* --- żetony semantyczne obu motywów + stany ------------------------------ */
+@import './semantyczne-jasny.css';
+@import './semantyczne-ciemny.css';
+@import './stany.css';
+@import './gradienty.css';
+
+/* --- warstwy niezależne od motywu ---------------------------------------- */
+@import './typografia.css';
+@import './przestrzen.css';
+@import './wymiary.css';
+@import './warstwy.css';
+@import './ruch.css';
+
+/* --- fundament: warstwa zerowa nad żetonami ------------------------------ */
+@import './fundament.css';

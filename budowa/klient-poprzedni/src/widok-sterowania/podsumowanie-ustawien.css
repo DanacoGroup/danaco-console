@@ -1,0 +1,150 @@
+/* ============================================================================
+   DANACO CONSOLE — PODSUMOWANIE OŚMIU USTAWIEŃ OKNA
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: warstwa zwiniętej szuflady widoku sterowania —
+   lista opisowa ośmiu wartości z przejściem do kontrolki, dymkiem objaśnienia
+   [?] (komponent `.dn-tooltip`) i wskaźnikiem ładowania wykazu kanałów
+   (`.dn-spinner` obok pola, nigdy zamiast kontrolki).
+
+   Arkusz wydzielony z `widok-sterowania.css`; resztę oprawy (kolumna, nagłówek,
+   szuflada) niesie tamten plik. Wartości wyłącznie z żetonów `motyw/`.
+   Ani jednej reguły `:disabled`.
+   ============================================================================ */
+
+.dc-widok-ster__podsumowanie {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-0);
+}
+
+.dc-widok-ster__pozycja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+  padding-bottom: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* Nazwa ustawienia: przejście do kontrolki po lewej, dymek [?] po prawej */
+.dc-widok-ster__nazwa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  margin: 0;
+}
+
+.dc-widok-ster__przejscie {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-width: 0;
+  padding: var(--dn-od-0) var(--dn-od-4);
+  border: 0;
+  background: transparent;
+  color: var(--dn-tekst-3);
+  cursor: pointer;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.dc-widok-ster__przejscie:hover {
+  color: var(--dn-sygnal);
+}
+
+.dc-widok-ster__przejscie:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+.dc-widok-ster__etykieta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   DYMEK OBJAŚNIENIA [?]
+   Treść i zachowanie niesie `.dn-tooltip` z biblioteki (`komponenty/drobne.css`);
+   tutaj wyłącznie znak zapytania — mały pierścień w barwie tekstu trzeciego.
+   Znak pozostaje przyciskiem: naciśnięcie prowadzi ognisko, a ognisko pokazuje
+   objaśnienie (`:focus-within`) — odpowiedź zamiast blokady.
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__dymek {
+  flex: none;
+  margin-right: var(--dn-od-4);
+}
+
+.dc-widok-ster__dymek-znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-od-4);
+  height: var(--dn-od-4);
+  padding: 0;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  color: var(--dn-tekst-3);
+  cursor: help;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+}
+
+.dc-widok-ster__dymek-znak:hover {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+}
+
+.dc-widok-ster__dymek-znak:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* ---------------------------------------------------------------------------
+   WARTOŚĆ USTAWIENIA
+   --------------------------------------------------------------------------- */
+.dc-widok-ster__wartosc {
+  margin: 0;
+  padding: 0 var(--dn-od-4) 0 var(--dn-od-10);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-bazowy);
+  overflow-wrap: anywhere;
+}
+
+/* Katalogi robocze czytamy krojem technicznym — to ścieżki, nie treść */
+.dc-widok-ster__wartosc[data-ustawienie='katalogi'] {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+}
+
+/* Wskaźnik ładowania obok wartości — wykaz kanałów jeszcze w drodze z rdzenia.
+   Wartość pozostaje widoczna i klikalna; spinner niczego nie zastępuje. */
+.dc-widok-ster__wartosc > .dn-spinner {
+  margin-left: var(--dn-od-2);
+  vertical-align: text-bottom;
+}
+
+/* ---------------------------------------------------------------------------
+   ZAWĘŻENIE OKNA — punkt łamania w2 (960 px)
+   Poniżej progu powłoka przenosi kolumnę pod scenę. Podsumowanie układa się
+   wtedy w dwie kolumny, żeby osiem wartości mieściło się bez przewijania.
+
+   Wartość stoi tu liczbą, bo zapytanie medialne nie czyta zmiennych własnych;
+   żeton `--dn-bp-w2` (`motyw/wymiary.css`) pozostaje jej jedynym źródłem
+   i musi się z nią zgadzać.
+   --------------------------------------------------------------------------- */
+@media (max-width: 960px) {
+  .dc-widok-ster__podsumowanie {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+}

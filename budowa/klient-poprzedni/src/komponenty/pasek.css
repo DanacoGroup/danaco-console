@@ -1,0 +1,90 @@
+/* Rama kokpitu: pasek górny i listwa ustawień.
+
+   Pasek górny jest atramentowy w obu motywach — to rama kokpitu, nie
+   powierzchnia treści. Sięga wyłącznie po żetony `--dn-rama-*` z `motyw/rama.css`,
+   które stoją poza blokami motywów.
+
+   Tło pola wyszukiwania w pasku jest półprzezroczystą bielą 6%, a nie żetonem:
+   to warstwa na atramencie ramy, niezależna od motywu. */
+
+.dn-pasek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  height: var(--dn-wym-pasek);
+  padding: 0 var(--dn-od-3);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  border-bottom: 1px solid var(--dn-rama-obrys);
+}
+.dn-pasek-godlo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-rama-tekst);
+  text-decoration: none;
+}
+.dn-pasek-godlo:hover { color: var(--dn-rama-tekst); text-decoration: none; }
+/* Napis logotypu w produkcie niesie `.dn-powloka__nazwa`
+   (`aplikacja/godlo-aplikacji.ts`); samo godło pozostaje przy `.dn-pasek-godlo`. */
+.dn-pasek-logotyp {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-gruba);
+  letter-spacing: 0.02em;
+}
+.dn-pasek-logotyp small {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  color: var(--dn-rama-tekst-2);
+  text-transform: uppercase;
+  margin-left: var(--dn-od-1);
+}
+.dn-pasek-szukaj {
+  flex: 1;
+  max-width: 420px;
+  min-height: 30px;
+  padding: 0 var(--dn-od-3);
+  border: 1px solid var(--dn-rama-obrys);
+  border-radius: var(--dn-r-sm);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dn-rama-tekst);
+  font-size: var(--dn-fs-sm);
+}
+.dn-pasek-szukaj::placeholder { color: var(--dn-rama-tekst-2); }
+.dn-pasek-szukaj:focus {
+  outline: none;
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+.dn-pasek-prawa { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
+
+/* Listwa ustawień — najniższa masa wizualna */
+.dn-listwa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia-2);
+}
+/* Pozycje listwy w produkcie renderuje `strona-glowna/listwa-ustawien.ts`
+   jako przyciski `.dn-btn dn-btn--duch dn-btn--sm`, z pominięciem tej klasy. */
+.dn-listwa-pozycja {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
+  padding: 0 var(--dn-od-3);
+  border: none;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-listwa-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }

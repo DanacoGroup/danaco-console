@@ -1,0 +1,9 @@
+
+# Zrzuty przejazdu przez uruchomiony produkt — wynik POMIARU, nie kod.
+# Kontrola weryfikujaca nie ma prawa zmieniac repozytorium: kazdy przejazd
+# nadpisywal trzynascie plikow PNG (1,9 MB) i robil z pomiaru zmiane do
+# zacommitowania. Zrzuty zyja w drzewie roboczym i tam sie je oglada.
+.przejazd/
+# Zrzuty dowodu odmowy (`scripts/dowod-odmowy-w-errors-panel.mjs`) — z tego
+# samego powodu: pomiar, nie kod.
+.dowod-odmowy/

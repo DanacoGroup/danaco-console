@@ -1,0 +1,152 @@
+/* ============================================================================
+   DANACO CONSOLE — TOŻSAMOŚĆ MODELU · EDYTOR I PODGLĄD ZŁOŻONEGO PROMPTU
+   ----------------------------------------------------------------------------
+   Arkusz opisuje wnętrze dwóch obszarów sekcji modeli: edytora kategorii zasad
+   oraz podglądu nakładki obowiązującej. Ramę i wykazy prowadzi `modele.css`,
+   który ten plik wciąga.
+
+   Tryb ZASTĄP zdejmuje prompt fabryczny w całości, więc jego ostrzeżenie stoi
+   w bursztynie, na pełnej szerokości i na stałe. Tryb DOŁĄCZ dostaje barwę
+   informacyjną.
+
+   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
+   ============================================================================ */
+
+/* --- Edytor kategorii zasad --------------------------------------------- */
+
+.dm-edytor__opis,
+.dm-edytor__pochodzenie {
+  margin: 0;
+  max-width: var(--dn-tresc-max);
+}
+
+.dm-edytor__ostrzezenie {
+  margin: 0;
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-informacja-tlo);
+  color: var(--dn-informacja-tekst);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.dm-edytor__ostrzezenie[data-zastapienie='true'] {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+  font-weight: var(--dn-fw-srednia);
+}
+
+.dm-pole--tresc {
+  min-height: 320px;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  resize: vertical;
+}
+
+/* --- Podgląd złożonego promptu ------------------------------------------ */
+
+.dm-podglad__naglowek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+
+.dm-podglad__odcisk {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dm-podglad__tytul {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.dm-podglad__braki {
+  margin: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-ostrzezenie-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+}
+
+.dm-podglad__warstwy {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.dm-podglad__warstwa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+}
+
+.dm-podglad__warstwa-nazwa {
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst);
+}
+
+.dm-podglad__warstwa-zrodlo {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.dm-podglad__warstwa--pusta {
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.dm-podglad__prompt {
+  margin: 0;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* --- Ustawienia osi: podpis nad ramą okna konfiguracji ------------------ */
+
+.dm-ustawienia {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.dm-ustawienia__podpis {
+  flex: none;
+  margin: 0;
+  padding: var(--dn-od-3) var(--dn-od-5);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.dm-ustawienia__cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+}

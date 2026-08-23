@@ -1,0 +1,6 @@
+# Wytwory przebiegu scripts/pakiet-serwera.sh — do repozytorium nie należą:
+# binaria buduje się z drzewa, a drzewo robocze składa się od zera przy każdym
+# przebiegu. W repozytorium zostaje wyłącznie szkielet pakietu (drzewo/).
+/roboczy/
+/danaco-console
+/danaco-narzedzia

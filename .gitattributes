@@ -1,0 +1,23 @@
+# Jednolite końce linii w repozytorium — LF wszędzie. Bez tego narzędzie
+# windowsowe wnosi CRLF, którego `git status` nie pokazuje po normalizacji,
+# a kompilator i linter widzą inny plik niż repozytorium.
+#
+# Wykrycie CRLF w drzewie roboczym (kolumna w/ dotyczy drzewa, nie indeksu):
+#   git ls-files --eol | grep 'w/crlf'
+
+* text=auto eol=lf
+
+# Pliki wyłącznie windowsowe zachowują CRLF.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Pliki binarne — bez konwersji.
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.pdf   binary
+*.exe   binary
+*.dll   binary
+*.db    binary
+*.woff2 binary

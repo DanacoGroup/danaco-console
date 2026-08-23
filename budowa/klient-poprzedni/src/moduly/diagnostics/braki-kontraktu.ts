@@ -1,0 +1,35 @@
+import { KOMENDY } from '../../../../shared/contract';
+
+/**
+ * Powód nieczynnej kontrolki składany z kontraktu, nie wpisany na stałe.
+ *
+ * `shared/contract.ts` niesie `KOMENDY` — wykaz komend kontraktu dostępny w czasie
+ * działania, wytwarzany z `contract.json`. Zdanie powstaje z odczytu tego wykazu
+ * przy składaniu okna, więc dopisanie komendy do kontraktu przepisuje je samo;
+ * zdanie wpisane na stałe przestałoby być prawdziwe w dniu takiej zmiany i nikt
+ * by tego nie zauważył.
+ *
+ * Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje — to osobne pytanie.
+ * Tutaj brak jest po stronie kontraktu i tylko o kontrakcie zdanie mówi.
+ */
+
+/** Komendy obszaru odczytane z kontraktu w czasie działania. */
+function komendyObszaru(obszar: string): readonly string[] {
+  const przedrostek = `${obszar}.`;
+  return [...(KOMENDY as readonly string[])].filter((komenda) => komenda.startsWith(przedrostek)).sort();
+}
+
+/**
+ * Zdanie powodu dla kontrolki bez pokrycia w kontrakcie.
+ *
+ * @param czegoByTrzeba czynność, której kontrolka miała dokonać — zdanie własne
+ *   okna, bo to okno wie, po co ta pozycja stoi w inwentarzu.
+ * @param obszar przedrostek komend, w którym takiej komendy szukamy.
+ */
+export function powodBezKomendy(czegoByTrzeba: string, obszar = 'diagnostics'): string {
+  const komendy = komendyObszaru(obszar);
+  if (komendy.length === 0) {
+    return `${czegoByTrzeba} Kontrakt nie niesie w obszarze ${obszar} ani jednej komendy — sprawdzone w wykazie kontraktu przy składaniu okna.`;
+  }
+  return `${czegoByTrzeba} Kontrakt niesie dziś w obszarze ${obszar} wyłącznie: ${komendy.join(', ')} — sprawdzone w wykazie kontraktu przy składaniu okna, nie wpisane na stałe.`;
+}

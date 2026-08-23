@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Design — stanowisko (Work/Code)</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  :root { --dn-fs-base:14px; --dn-fs-sm:13px; --dn-fs-xs:12px; }
+  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
+  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .szyna-lista { overflow:auto; min-height:0; }
+  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
+  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+
+  .dg-robocza { grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(140px,auto); }
+  .dg-wiodace { grid-column:1 / -1; min-height:320px; }
+
+  /* pasek narzędzi Design Board */
+  .dg-narzedzia { display:flex; align-items:center; gap:var(--dn-od-1); padding:var(--dn-od-1) var(--dn-od-2);
+    border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-powierzchnia); overflow-x:auto; scrollbar-width:none; }
+  .dg-narzedzia::-webkit-scrollbar { display:none; }
+
+  /* kanwa Design Board — kompozycje SVG monochrom */
+  .dg-kanwa { position:relative; overflow:auto; padding:var(--dn-od-3); background:
+      linear-gradient(90deg, transparent 31px, var(--dn-obrys-subtelny) 32px),
+      linear-gradient(0deg, transparent 31px, var(--dn-obrys-subtelny) 32px);
+      background-size:32px 32px; }
+  .dg-kanwa svg { display:block; width:100%; height:auto; }
+  .dg-etyk { font-family:var(--dn-ff-mono); font-size:9px; fill:var(--dn-tekst-3); text-transform:uppercase; }
+
+  /* siatka miniatur Assets Panel */
+  .dg-siatka { display:grid; grid-template-columns:repeat(3,1fr); gap:var(--dn-od-2); padding:var(--dn-od-2); }
+  .dg-miniatura { position:relative; border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm);
+    background:var(--dn-powierzchnia-2); overflow:hidden; cursor:pointer; transition:border-color var(--dn-czas-1) var(--dn-ease); }
+  .dg-miniatura:hover { border-color:var(--dn-obrys-mocny); }
+  .dg-miniatura[aria-selected="true"] { border-color:var(--dn-sygnal-obrys); box-shadow:var(--dn-cien-sygnal); }
+  .dg-miniatura svg { display:block; width:100%; height:auto; }
+  .dg-miniatura .podpis { display:flex; align-items:center; gap:var(--dn-od-1); padding:2px var(--dn-od-1);
+    font-size:10px; color:var(--dn-tekst-2); border-top:1px solid var(--dn-obrys-subtelny); }
+  .dg-nowy { position:absolute; top:4px; right:4px; }
+
+  /* Prompt Builder — pola strukturalne */
+  .dg-pola { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); }
+  .dg-pole { display:grid; gap:3px; }
+  .dg-pole label { font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); }
+  .dg-dwa { display:grid; grid-template-columns:1fr 1fr; gap:var(--dn-od-2); }
+
+  /* Preview Window — podgląd + suwak przed/po */
+  .dg-podglad { position:relative; margin:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm);
+    background:var(--dn-powierzchnia-2); overflow:hidden; }
+  .dg-podglad svg { display:block; width:100%; height:auto; }
+  .dg-tlo { display:inline-flex; gap:2px; }
+  .dg-tlo button { width:22px; height:22px; }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="Moduł Design · v2.1 stanowisko"
+      data-prototyp-okno="Design — Design Board + panele (Assets Panel, Prompt Builder, Preview Window)"
+      data-prototyp-zrodlo="dok/projekt-ui/moduly/design.md + KATALOG-FUNKCJI-DANACO-CONSOLE.md">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY ══ -->
+  <header class="dn-pasek">
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok — panele Design</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-assets"><span class="ptaszek">✓</span>Assets Panel</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-prompt"><span class="ptaszek">✓</span>Prompt Builder</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-preview"><span class="ptaszek">✓</span>Preview Window</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Powiększ<span class="skrot">Ctrl+=</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomniejsz<span class="skrot">Ctrl+-</span></button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Programista<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../../INDEKS.html" aria-label="Danaco Console">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- TRYBY — Design: Work/Code -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="false">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="true">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <!-- OKRUSZKI — środowisko WorkSpace › moduł Design -->
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>WorkSpace</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page">Design</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj zasobu, tagu, polecenia…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zadania w tle"><span class="pt-tetno" aria-hidden="true"></span> 2</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Ustawienia</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PAS KART SESJI ══ -->
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Strona główna — wariant A</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Branding — kampania Q3</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Ikony interfejsu — Apps</span></button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta otwiera pusty Design Board." data-komunikat-tytul="Nowa kompozycja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
+  </div>
+
+  <!-- ══ CIAŁO ══ -->
+  <div class="sta-cialo">
+
+    <!-- SZYNA -->
+    <nav class="szyna" aria-label="Szyna">
+      <div class="szyna-naglowek">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa kompozycja</button>
+        <div class="sta-menu">
+          <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+          </button>
+          <div class="sta-menu-tresc" id="menu-filtr" data-menu-tresc data-otwarte="nie" role="menu">
+            <div class="sta-menu-etyk">Stan</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Wszystkie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>W generowaniu</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Zaakceptowane</button>
+            <div class="sta-menu-etyk">Sortowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Ostatnia aktywność</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Nazwa</button>
+            <div class="sta-menu-etyk">Grupowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Kolekcja</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Brak</button>
+          </div>
+        </div>
+      </div>
+      <div class="szyna-lista">
+        <div class="szyna-grupa">Kampania Q3</div>
+        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Strona główna — wariant A</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Branding — kampania Q3</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Tablica nastroju — granat + złoto</span></button>
+        <div class="szyna-grupa">Apps · Frontend</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Ikony interfejsu — Apps</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Elementy UI — makieta ekranu</span></button>
+        <div class="szyna-grupa">Więcej</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kompozycje · Zasoby · Szablony · Historia · Kolekcje</span></button>
+      </div>
+    </nav>
+
+    <!-- STANOWISKO -->
+    <div class="sta-obszar" data-robocza="widoczna" style="--sta-udzial-czaty:1fr; --sta-udzial-robocza:1.35fr">
+
+      <!-- ── LEWA: CHAT WINDOW ── -->
+      <div class="sta-czaty" data-liczba="1">
+        <section class="sta-okno sta-kom" id="okno-czat-1" data-nazwa="Chat Window" data-aktywne="tak" aria-label="Chat Window">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H7l-4 3V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2z"/></svg>
+              <b>Chat Window — „Ilustracja bohatera — wariant złoty”</b>
+            </span>
+            <span class="sta-chip" title="Kompozycja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Design Board</span>
+            <span class="sta-okno-akcje">
+              <div class="sta-menu">
+                <button class="dn-btn-ikona" type="button" data-menu="menu-sesja" aria-expanded="false" aria-label="Panele i działania sesji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+                <div class="sta-menu-tresc" id="menu-sesja" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+                  <div class="sta-menu-etyk">Panele — okna operacyjne</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-board"><span class="ptaszek">✓</span>Design Board</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-assets"><span class="ptaszek">✓</span>Assets Panel</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-prompt"><span class="ptaszek">✓</span>Prompt Builder</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-preview"><span class="ptaszek">✓</span>Preview Window</button>
+                  <div class="sta-menu-etyk">Panele uniwersalne</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-plan"><span class="ptaszek">✓</span>Plan</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-zadania"><span class="ptaszek">✓</span>Zadania w tle</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-pliki"><span class="ptaszek">✓</span>Pliki</button>
+                  <div class="sta-menu-sep"></div>
+                  <button class="sta-menu-poz" role="menuitem">Zmień nazwę<span class="skrot">R</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Rozgałęź<span class="skrot">F</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Archiwizuj<span class="skrot">A</span></button>
+                </div>
+              </div>
+            </span>
+          </header>
+
+          <div class="sta-kom-naglowek">
+            <span class="sta-kom-pole"><span>Środowisko</span><b>WorkSpace</b></span>
+            <span class="sta-kom-pole"><span>Model</span><b class="dane">Fable 5</b></span>
+            <span class="sta-kom-pole"><span>Wysiłek</span><b class="dane">Ultra</b></span>
+            <span class="sta-kom-stan"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> generuje</span></span>
+          </div>
+
+          <div class="sta-kom-kontekst" aria-label="Kontekst">
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>@zasób: bohater_v3<button class="odepnij" aria-label="Odepnij">×</button></span>
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.44 11.05-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-8.49 8.49"/></svg>referencja: paleta.png<button class="odepnij" aria-label="Odepnij">×</button></span>
+          </div>
+
+          <div class="sta-kom-historia">
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">11:20</span></div><div class="sta-wpis-tresc">Zrób wariant z ciemniejszym tłem i usuń element w lewym dolnym rogu. Zachowaj proporcje 16:9.</div></div></article>
+            <article class="sta-wpis sta-wpis--system"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Generowanie</span><span class="dn-plakietka">Prompt Builder</span><span class="sta-wpis-godzina">w toku</span></div><div class="sta-wpis-tresc">4 warianty wsadowe · proporcje 16:9 · seed 4821</div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">11:21</span></div><div class="sta-wpis-tresc">Nowy wariant trafi do <mark>Assets Panel</mark> po wygenerowaniu, a do oceny — do Preview Window z aktywnym suwakiem przed/po. Trzy akcje decyzyjne dostępne od razu, bez wstrzymywania dalszej pracy.</div></div></article>
+          </div>
+
+          <div class="sta-kom-monitor"><span class="pt-tetno" aria-hidden="true"></span> Generowanie wsadowe — 3/4 warianty gotowe</div>
+
+          <div class="sta-kom-dol">
+            <div class="sta-kontekst-akcji">
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>Ten komputer</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>Kompozycja</span>
+              <span class="sta-chip">strona-glowna-A</span>
+              <span class="sta-chip">wersja 4</span>
+              <span class="sta-chip sta-chip--diff"><span class="plus">+2 zasoby</span> <span class="minus">−1</span></span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w Prompt Builder</button>
+            </div>
+
+            <form class="sta-prompt" onsubmit="return false;">
+              <span class="sta-prompt-grot" aria-hidden="true">»»</span>
+              <textarea class="sta-prompt-obszar" rows="1" placeholder="Opisz zmianę zasobu lub wygeneruj wprost…  @zasób  📎 referencja" aria-label="Pole polecenia"></textarea>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm sta-prompt-wyslij" type="submit" aria-label="Do kolejki"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+            </form>
+
+            <div class="sta-sterowanie">
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--tryb" type="button" data-popover="pop-tryb-upr" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Z pominięciem zgód<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-tryb-upr" hidden>
+                  <div class="sta-popover-tytul">Tryb uprawnień</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Ręczny</span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przyjmij zmiany</span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Plan</span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Auto</span><span class="pt-mono">4</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Z pominięciem zgód</b><small>domyślny — zero blokad</small></span><span class="pt-mono">5</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-plus" aria-expanded="false" aria-label="Dodaj" title="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <div class="sta-popover" id="pop-plus" hidden>
+                  <div class="sta-popover-tytul">Dodaj do polecenia</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj obraz referencyjny</span><span class="pt-mono">Ctrl+U</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Zasób z Assets Panel</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Zapisz jako szablon promptu</span></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Library — kolekcje</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Apps · Frontend Workspace</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-mik" aria-expanded="false" aria-label="Mikrofon" title="Mikrofon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+                <div class="sta-popover" id="pop-mik" hidden>
+                  <div class="sta-popover-tytul">Mikrofon</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                </div>
+              </div>
+              <span class="rozciag"></span>
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--model" type="button" data-popover="pop-model" aria-expanded="false">Fable 5<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-model" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Model</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Fable 5</b><small>do najtrudniejszych wyzwań</small></span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Opus 5<small>do złożonych zadań</small></span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Sonnet 5<small>najwydajniejszy na co dzień</small></span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Haiku 4.5<small>najszybszy do prostych pytań</small></span><span class="pt-mono">4</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-chip" type="button" data-popover="pop-wysilek" aria-expanded="false">Ultra<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-wysilek" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Wysiłek — Ultra</div>
+                  <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
+                  <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
+                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                </div>
+              </div>
+              <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="sta-chip--glowny sta-prompt-wyslij" type="button">↑ Do kolejki</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── PRAWA: OKNO WIODĄCE + DOKOWANE PANELE ── -->
+      <div class="sta-robocza dg-robocza" data-uklad="siatka">
+
+        <!-- OKNO WIODĄCE — Design Board -->
+        <section class="sta-okno dg-wiodace" id="panel-board" data-nazwa="Design Board">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg><b>Design Board — „Strona główna — wariant A”</b></span>
+            <span class="sta-okno-znacznik">siatka: przyciąganie aktywne</span>
+            <span class="sta-okno-akcje">
+              <button class="dn-btn-ikona" type="button" data-komunikat="Koło zębate: konfiguracja tego okna (osobny komplet ustawień)." data-komunikat-tytul="Konfiguracja okna" aria-label="Konfiguracja okna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
+              <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </span>
+          </header>
+          <div style="display:grid; grid-template-rows:auto minmax(0,1fr) auto; min-height:0;">
+            <div class="dg-narzedzia">
+              <span class="sta-chip">Warstwy</span>
+              <span class="sta-chip">Wyrównaj</span>
+              <span class="sta-chip">Siatka</span>
+              <span class="sta-chip">Szablon układu</span>
+              <span class="sta-chip">Wersje</span>
+              <span class="sta-chip">Adnotacja</span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-left:auto">Eksport (PDF/PNG)</button>
+            </div>
+            <div class="dg-kanwa">
+              <svg viewBox="0 0 640 300" role="img" aria-label="Kompozycja monochromatyczna: logo, ilustracja bohatera, blok tekstu na siatce pomocniczej">
+                <!-- ramka kompozycji -->
+                <rect x="40" y="24" width="560" height="252" rx="10" fill="var(--dn-powierzchnia)" stroke="var(--dn-obrys)" stroke-width="1.5"/>
+                <!-- logo -->
+                <g><rect x="64" y="48" width="120" height="48" rx="6" fill="var(--dn-powierzchnia-2)" stroke="var(--dn-obrys-mocny)" stroke-width="1.5"/>
+                  <path d="M78 60 h8 l12 12 -12 12 h-8 l12 -12 z" fill="var(--dn-tekst)"/>
+                  <circle cx="112" cy="80" r="4" fill="var(--dn-sygnal-500)"/>
+                  <text class="dg-etyk" x="126" y="76">logo</text></g>
+                <!-- ilustracja bohatera (przeciągnięta z Assets) -->
+                <g><rect x="330" y="48" width="240" height="150" rx="8" fill="var(--dn-powierzchnia-2)" stroke="var(--dn-sygnal-obrys)" stroke-width="2"/>
+                  <circle cx="410" cy="120" r="30" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/>
+                  <path d="M370 175 q80 -60 160 0" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/>
+                  <path d="M470 90 l14 -14 M486 74 l6 6" stroke="var(--dn-sygnal-500)" stroke-width="2" fill="none"/>
+                  <text class="dg-etyk" x="342" y="190">ilustracja bohatera · z Assets</text></g>
+                <!-- blok tekstu -->
+                <g><rect x="64" y="120" width="230" height="120" rx="6" fill="var(--dn-powierzchnia-2)" stroke="var(--dn-obrys)" stroke-width="1.5"/>
+                  <rect x="80" y="140" width="180" height="10" rx="3" fill="var(--dn-tekst-3)"/>
+                  <rect x="80" y="158" width="140" height="8" rx="3" fill="var(--dn-obrys-mocny)"/>
+                  <rect x="80" y="174" width="160" height="8" rx="3" fill="var(--dn-obrys-mocny)"/>
+                  <rect x="80" y="200" width="90" height="24" rx="6" fill="var(--dn-atrament)"/>
+                  <text class="dg-etyk" x="80" y="235">blok treści + CTA</text></g>
+              </svg>
+            </div>
+            <div class="dg-narzedzia" style="border-top:1px solid var(--dn-obrys-subtelny); border-bottom:none;">
+              <span class="sta-chip">Zaznaczenie wielokrotne</span>
+              <span class="sta-chip">Grupuj</span>
+              <span class="sta-chip"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> edycja współdzielona · 1 kursor</span>
+              <span class="sta-chip" style="margin-left:auto">Zoom 100%</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Prompt Builder -->
+        <section class="sta-okno" id="panel-prompt" data-nazwa="Prompt Builder">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h7"/><path d="m17 15 3 3-3 3"/></svg><b>Prompt Builder</b></span><span class="sta-okno-akcje"><span class="sta-chip">Szablony</span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc dg-pola">
+            <div class="dg-pole"><label>Temat</label><input class="dn-pole-kontrolka" type="text" value="ilustracja bohatera strony"></div>
+            <div class="dg-dwa">
+              <div class="dg-pole"><label>Styl</label><select class="dn-wybor"><option>nowoczesny, płaski, geometryczny</option><option>realistyczny</option><option>liniowy</option></select></div>
+              <div class="dg-pole"><label>Paleta barw</label><select class="dn-wybor"><option>granat + złoto</option><option>monochrom</option><option>pastele</option></select></div>
+            </div>
+            <div class="dg-dwa">
+              <div class="dg-pole"><label>Proporcje</label><select class="dn-wybor"><option>16:9</option><option>1:1</option><option>4:3</option></select></div>
+              <div class="dg-pole"><label>Warianty</label><select class="dn-wybor"><option>4</option><option>2</option><option>1</option></select></div>
+            </div>
+            <div class="dg-pole"><label>Wykluczenia (negative prompt)</label><input class="dn-pole-kontrolka" type="text" value="bez tekstu, bez logotypów"></div>
+            <div class="dg-pole"><label>Kreatywność / wierność — 0.7</label><input type="range" class="sta-suwak" min="0" max="10" value="7" aria-label="Kreatywność"></div>
+            <div class="panel-wiersz"><span class="meta">≈ 148 znaków · seed 4821</span><button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button" style="margin-left:auto" data-komunikat="Uruchomienie generowania — wynik trafia do Assets Panel. Przy pustym poleceniu komunikat zamiast blokady." data-komunikat-tytul="Generuj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg> Generuj</button></div>
+          </div>
+        </section>
+
+        <!-- Preview Window -->
+        <section class="sta-okno" id="panel-preview" data-nazwa="Preview Window">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><b>Preview Window — bohater_v3, wariant 2/4</b></span><span class="sta-okno-akcje"><span class="dg-tlo" role="group" aria-label="Tło podglądu"><button class="dn-btn-ikona" type="button" aria-pressed="true" title="Szachownica" aria-label="Tło szachownica"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 3h18v18H3z"/><path d="M3 12h18M12 3v18"/></svg></button><button class="dn-btn-ikona" type="button" aria-pressed="false" title="Białe" aria-label="Tło białe"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg></button></span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="min-height:0;">
+            <div class="dg-podglad">
+              <svg viewBox="0 0 320 160" role="img" aria-label="Podgląd wariantu ilustracji, suwak porównawczy przed/po">
+                <rect x="0" y="0" width="320" height="160" fill="var(--dn-powierzchnia-2)"/>
+                <circle cx="140" cy="72" r="34" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/>
+                <path d="M90 135 q60 -50 120 0" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/>
+                <path d="M200 40 l16 -16 M216 24 l6 6" stroke="var(--dn-sygnal-500)" stroke-width="2" fill="none"/>
+                <line x1="160" y1="0" x2="160" y2="160" stroke="var(--dn-sygnal-obrys)" stroke-width="2"/>
+                <circle cx="160" cy="80" r="8" fill="var(--dn-sygnal-500)"/>
+              </svg>
+            </div>
+            <div class="dg-narzedzia" style="border:none;"><span class="sta-chip">◀ przed</span><input type="range" class="sta-suwak" min="0" max="100" value="50" aria-label="Suwak przed/po" style="flex:1"><span class="sta-chip">po ▶</span></div>
+            <div class="dg-narzedzia" style="border:none;"><button class="dn-btn dn-btn--sygnal dn-btn--sm" type="button">Akceptuj</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Regeneruj</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Odrzuć</button><span class="sta-chip" style="margin-left:auto">oczekuje decyzji</span></div>
+          </div>
+        </section>
+
+        <!-- Assets Panel -->
+        <section class="sta-okno" id="panel-assets" data-nazwa="Assets Panel">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg><b>Assets Panel</b></span><span class="sta-okno-znacznik">48 zasobów</span><span class="sta-okno-akcje"><span class="sta-chip">Siatka</span><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="min-height:0;">
+            <div class="dg-narzedzia"><label class="dn-szukaj" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Szukaj po nazwie, tagu, poleceniu" aria-label="Szukaj zasobów"></label><span class="dn-plakietka dn-plakietka--sygnal">ilustracje</span></div>
+            <div class="dg-siatka">
+              <div class="dg-miniatura" role="button" tabindex="0" aria-selected="true">
+                <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><circle cx="50" cy="34" r="16" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><path d="M28 66 q22 -20 44 0" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><circle cx="72" cy="20" r="4" fill="var(--dn-sygnal-500)"/></svg>
+                <span class="podpis"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 3 7 7 .5-5.5 4.5 2 7-6.5-4-6.5 4 2-7L2 9.5 9 9z"/></svg> bohater_v3</span>
+              </div>
+              <div class="dg-miniatura" role="button" tabindex="0">
+                <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><path d="M30 30 h10 l14 14 -14 14 h-10 l14 -14 z" fill="var(--dn-tekst)"/><circle cx="66" cy="58" r="5" fill="var(--dn-sygnal-500)"/></svg>
+                <span class="podpis">logo_zloto <span class="dn-plakietka meta">branding</span></span>
+              </div>
+              <div class="dg-miniatura" role="button" tabindex="0">
+                <span class="dn-plakietka dn-plakietka--sygnal dg-nowy">nowy</span>
+                <svg viewBox="0 0 100 80" aria-hidden="true"><rect width="100" height="80" fill="var(--dn-powierzchnia)"/><rect x="30" y="24" width="40" height="40" rx="8" fill="none" stroke="var(--dn-tekst-2)" stroke-width="2"/><path d="M42 44 h16 M50 36 v16" stroke="var(--dn-sygnal-500)" stroke-width="2"/></svg>
+                <span class="podpis">ikona_produktu <span class="dn-plakietka meta">UI</span></span>
+              </div>
+            </div>
+            <div class="dg-narzedzia" style="border:none;"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">→ Design Board</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">→ Studio</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">→ Apps · Frontend</button></div>
+          </div>
+        </section>
+
+        <!-- Zadania w tle -->
+        <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>generowanie-bohater-v3</b><span class="dn-plakietka dn-plakietka--sygnal meta">3/4</span></div>
+            <div class="dn-postep" data-postep-do="75" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> eksport-tablicy-Q3 <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+          </div>
+        </section>
+
+        <!-- Plan (ukryty) -->
+        <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="pt-etykieta">Zestaw ilustracji brandingowych — kampania Q3</div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Styl bazowy zapisany jako szablon <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Generowanie wariantów <span class="meta">▶</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zestawienie na Design Board <span class="meta">○</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport PDF do przeglądu <span class="meta">○</span></div>
+          </div>
+        </section>
+
+        <!-- Pliki (ukryty) -->
+        <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz">bohater_v3.png <span class="meta">1600×900 · 241 kB</span></div>
+            <div class="panel-wiersz">logo_zloto.svg <span class="meta">12 kB</span></div>
+            <div class="panel-wiersz">tablica_Q3.pdf <span class="meta">2,1 MB</span></div>
+          </div>
+        </section>
+
+      </div><!-- /sta-robocza -->
+    </div><!-- /sta-obszar -->
+  </div><!-- /sta-cialo -->
+</div><!-- /sta-powloka -->
+
+<details class="pt-o-opracowaniu">
+  <summary>O tym opracowaniu — Moduł Design (v2.1 stanowisko)</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Jakie okno przedstawia</h4>
+    <p>Pełne stanowisko modułu <b>Design</b> w warstwie v2.1 (KANON, aneks r.15). Moduł dostępny w środowiskach WorkSpace i CodeStudio — okruszki: WorkSpace › Design. Tryby właściwe: Work/Code.</p>
+    <h4>Odwzorowane okna operacyjne</h4>
+    <ul>
+      <li><b>Chat Window</b> — okno komunikacji z pełnym obszarem polecenia (tryb „Z pominięciem zgód”, „+” z referencją/konektorami, mikrofon, model Fable 5, wysiłek Ultra, nagrywanie, ↑ Do kolejki), wzmianki @zasób i załącznik referencyjny.</li>
+      <li><b>Design Board</b> (okno WIODĄCE) — kanwa z monochromatyczną kompozycją SVG (logo, ilustracja bohatera przeciągnięta z Assets, blok treści+CTA), siatka pomocnicza, warstwy, wyrównanie, wersje, eksport, edycja współdzielona.</li>
+      <li><b>Assets Panel</b> — siatka miniatur SVG, plakietka „nowy”, ulubione, tagi/kolekcje, wyszukiwanie, „Wyślij do modułu” (Design Board / Studio / Apps).</li>
+      <li><b>Prompt Builder</b> — pola strukturalne (temat, styl, paleta, proporcje, warianty, wykluczenia), suwak kreatywności, seed, przycisk „Generuj”.</li>
+      <li><b>Preview Window</b> — podgląd wariantu SVG, suwak porównawczy przed/po, przełącznik tła, akcje Akceptuj/Regeneruj/Odrzuć (dostępne od razu, bez bramki).</li>
+      <li>Panele uniwersalne: Zadania w tle, Plan, Pliki — sterowane menu „⋮ → Panele”.</li>
+    </ul>
+    <h4>Do wypróbowania</h4>
+    <ul>
+      <li>Tryby Talk/Work/Code, hamburger, menu konta, „⋮ Panele”, filtr szyny.</li>
+      <li>Chipy obszaru polecenia (popovery), suwak przed/po w Preview, wybór miniatury w Assets, zamknięcie „×” panelu i przywrócenie z paska kart.</li>
+    </ul>
+    <h4>Źródło</h4>
+    <ul><li><code>dok/projekt-ui/moduly/design.md</code> · <code>KATALOG-FUNKCJI-DANACO-CONSOLE.md</code> · KANON r.15 (aneks v2.1)</li></ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+(function(){
+  document.querySelectorAll('[data-srod]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-srod]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+      if(window.dnToast) window.dnToast('Tryb: '+b.textContent,'Obszar polecenia i panele dostrojone do trybu','informacja');
+    });
+  });
+  document.querySelectorAll('[data-panel-toggle]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.getAttribute('data-panel-toggle')); if(!el) return;
+      el.hidden=!el.hidden; b.setAttribute('aria-checked',el.hidden?'false':'true');
+    });
+  });
+  document.querySelectorAll('.dg-miniatura').forEach(function(m){
+    m.addEventListener('click',function(){
+      document.querySelectorAll('.dg-miniatura').forEach(function(x){x.setAttribute('aria-selected',x===m?'true':'false');});
+    });
+  });
+})();
+</script>
+
+<script>/* Console: przełącznik środowisk */(function(){var bs=document.querySelectorAll("[data-srod]");if(!bs.length)return;bs.forEach(function(b){b.addEventListener("click",function(){bs.forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});if(window.dnToast)window.dnToast("Środowisko: "+b.textContent,"Moduły i panele właściwe środowisku","informacja");});});})();</script>
+</body>
+</html>

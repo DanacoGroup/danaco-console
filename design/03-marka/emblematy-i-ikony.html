@@ -1,0 +1,1923 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Emblematy środowisk, ikona aplikacji, favicon</title>
+<meta name="description" content="Galeria godeł pochodnych Danaco Console: cztery emblematy środowisk w drabinie rozmiarowej 16–64 px, ikona aplikacji, wariant maskowalny, favicon, symulacja kontekstów systemowych.">
+<link rel="icon" href="../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+<style>
+/* ==========================================================================
+   EMBLEMATY I IKONY — warstwa własna dokumentu.
+   Prefiks .eb-* = „emblematy". Klasy .dn-* pochodzą z biblioteki systemu.
+   ZASADA BEZWZGLĘDNA: wyłącznie var(--dn-*). Zero wartości szesnastkowych.
+   ========================================================================== */
+
+/* --- 1. Szkielet strony -------------------------------------------------- */
+.eb-pasek { position: sticky; top: 0; z-index: var(--dn-z-pasek); }
+.eb-pasek-godlo { width: 26px; height: 26px; flex: none; }
+.eb-pasek-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-rama-tekst-2);
+  padding-left: var(--dn-od-3);
+  margin-left: var(--dn-od-3);
+  border-left: 1px solid var(--dn-rama-obrys);
+  white-space: nowrap;
+}
+@media (max-width: 860px) { .eb-pasek-tytul { display: none; } }
+
+.eb-uklad {
+  display: grid;
+  grid-template-columns: 264px minmax(0, 1fr);
+  gap: var(--dn-od-8);
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--dn-od-6) var(--dn-od-6) var(--dn-od-16);
+}
+@media (max-width: 1080px) { .eb-uklad { grid-template-columns: 1fr; gap: var(--dn-od-4); } }
+
+/* --- 2. Boczny spis treści ---------------------------------------------- */
+.eb-spis {
+  position: sticky;
+  top: calc(var(--dn-wym-pasek) + var(--dn-od-4));
+  align-self: start;
+  max-height: calc(100vh - var(--dn-wym-pasek) - var(--dn-od-8));
+  overflow: auto;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+}
+@media (max-width: 1080px) { .eb-spis { position: static; max-height: none; } }
+.eb-spis-tytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin-bottom: var(--dn-od-3);
+}
+.eb-spis ol { list-style: none; margin: 0; padding: 0; counter-reset: eb; }
+.eb-spis li { counter-increment: eb; }
+.eb-spis a {
+  display: flex;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-tekst-2);
+  text-decoration: none;
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-ciasny);
+  transition: background var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.eb-spis a::before {
+  content: counter(eb, decimal-leading-zero);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  flex: none;
+  padding-top: 1px;
+}
+.eb-spis a:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.eb-spis a[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+.eb-spis a[aria-current='true']::before { color: var(--dn-sygnal); }
+
+/* --- 2b. Nagłówek dokumentu --------------------------------------------- */
+.eb-czolo {
+  padding: var(--dn-od-6);
+  margin-bottom: var(--dn-od-10);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-powierzchnia);
+}
+.eb-czolo-nadtytul {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-sygnal);
+  margin-bottom: var(--dn-od-2);
+}
+.eb-czolo h1 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-3xl);
+  font-weight: var(--dn-fw-gruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  margin: 0 0 var(--dn-od-3);
+}
+.eb-czolo-opis { max-width: 78ch; color: var(--dn-tekst-2); margin: 0 0 var(--dn-od-4); }
+.eb-metryka { display: flex; flex-wrap: wrap; gap: var(--dn-od-2); }
+
+/* --- 3. Rozdziały -------------------------------------------------------- */
+.eb-rozdzial { scroll-margin-top: calc(var(--dn-wym-pasek) + var(--dn-od-4)); }
+.eb-rozdzial + .eb-rozdzial { margin-top: var(--dn-od-12); }
+.eb-naglowek {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dn-od-3);
+  padding-bottom: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  margin-bottom: var(--dn-od-5);
+}
+.eb-numer {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-sygnal);
+  flex: none;
+}
+.eb-naglowek h2 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  margin: 0;
+}
+.eb-rozdzial h3 {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  margin: var(--dn-od-6) 0 var(--dn-od-3);
+}
+.eb-rozdzial p { max-width: 78ch; color: var(--dn-tekst-2); margin: 0 0 var(--dn-od-3); }
+.eb-rozdzial p strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+.eb-lead { font-size: var(--dn-fs-md); color: var(--dn-tekst) !important; }
+
+/* --- 4. Elementy wspólne ------------------------------------------------- */
+.eb-panel {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  padding: var(--dn-od-4);
+}
+.eb-panel + .eb-panel { margin-top: var(--dn-od-4); }
+.eb-pasek-narzedzi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  margin-bottom: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+.eb-etykieta-narzedzia {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  margin-right: var(--dn-od-1);
+}
+.eb-sep { width: 1px; align-self: stretch; background: var(--dn-obrys); margin: 0 var(--dn-od-2); }
+
+.eb-uwaga {
+  display: flex;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-left: 3px solid var(--dn-sygnal);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-sygnal-tlo);
+  margin: var(--dn-od-4) 0;
+}
+.eb-uwaga svg { width: 18px; height: 18px; flex: none; color: var(--dn-sygnal); margin-top: 2px; }
+.eb-uwaga p { margin: 0; color: var(--dn-tekst); }
+
+.eb-tabela { width: 100%; border-collapse: collapse; font-size: var(--dn-fs-base); margin: var(--dn-od-3) 0; }
+.eb-tabela th, .eb-tabela td {
+  text-align: left;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  vertical-align: top;
+}
+.eb-tabela thead th {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  border-bottom: 1px solid var(--dn-obrys-mocny);
+  white-space: nowrap;
+}
+.eb-tabela td.eb-l { font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.eb-tabela tbody tr:hover { background: var(--dn-hover); }
+
+code, .eb-kod { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
+.eb-blok-kodu {
+  position: relative;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+  margin: var(--dn-od-3) 0;
+}
+.eb-blok-kodu-glowa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+}
+.eb-blok-kodu-nazwa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.eb-blok-kodu pre {
+  margin: 0;
+  padding: var(--dn-od-3);
+  overflow: auto;
+  max-height: 340px;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst);
+  white-space: pre;
+}
+.eb-schemat {
+  margin: var(--dn-od-4) 0;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: 1.5;
+  color: var(--dn-tekst-2);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* --- 5. Tablice prezentacyjne (jasna / ciemna) --------------------------- */
+.eb-tablice { display: grid; grid-template-columns: 1fr 1fr; gap: var(--dn-od-4); }
+@media (max-width: 900px) { .eb-tablice { grid-template-columns: 1fr; } }
+.eb-tablica {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  overflow: hidden;
+}
+.eb-tablica-glowa {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.eb-plansza { padding: var(--dn-od-5) var(--dn-od-4); }
+/* barwy plansz — żetony prymitywne użyte świadomie: plansza demonstruje
+   znak na konkretnym tle marki niezależnie od aktywnego motywu strony */
+.eb-plansza--jasna { background: var(--dn-szary-50); color: var(--dn-szary-900); }
+.eb-plansza--ciemna { background: var(--dn-szary-950); color: var(--dn-szary-100); }
+
+.eb-drabina { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--dn-od-6); }
+.eb-stopien { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-2); }
+.eb-stopien-znak { display: flex; align-items: center; justify-content: center; min-height: 64px; }
+.eb-stopien-znak svg { max-width: none; flex: none; }
+.eb-stopien-podpis {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+.eb-stopien--uproszczony .eb-stopien-podpis { color: var(--dn-sygnal-500); opacity: 1; font-weight: var(--dn-fw-polgruba); }
+
+/* --- 6. Karty emblematów ------------------------------------------------- */
+.eb-karty { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--dn-od-4); }
+.eb-karta {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  overflow: hidden;
+}
+.eb-karta-glowa {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.eb-karta-godlo { width: 40px; height: 40px; flex: none; color: var(--dn-tekst); }
+.eb-karta-tytul { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); font-weight: var(--dn-fw-polgruba); }
+.eb-karta-motto { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+.eb-karta-cialo { padding: var(--dn-od-4); }
+.eb-karta-cialo p { font-size: var(--dn-fs-base); }
+.eb-lista-cech { list-style: none; margin: var(--dn-od-3) 0 0; padding: 0; }
+.eb-lista-cech li {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) 0;
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-base);
+}
+.eb-lista-cech b {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  font-weight: var(--dn-fw-normalna);
+  padding-top: 2px;
+}
+
+/* --- 7. Nakładka siatki i znacznika kropki ------------------------------- */
+.eb-lupa { display: flex; flex-wrap: wrap; gap: var(--dn-od-5); }
+.eb-lupa-poz { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-2); }
+.eb-scena {
+  position: relative;
+  width: 216px; height: 216px;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+.eb-scena > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.eb-scena-znak { color: var(--dn-tekst); }
+.eb-siatka { opacity: 0; transition: opacity var(--dn-czas-2) var(--dn-ease); pointer-events: none; }
+.eb-scena[data-siatka='1'] .eb-siatka { opacity: 1; }
+.eb-siatka-linia { stroke: var(--dn-obrys-mocny); stroke-width: 0.08; }
+.eb-siatka-os { stroke: var(--dn-sygnal-400); stroke-width: 0.14; stroke-dasharray: 0.6 0.6; }
+.eb-znacznik { opacity: 0; transition: opacity var(--dn-czas-2) var(--dn-ease); pointer-events: none; }
+.eb-scena[data-znacznik='1'] .eb-znacznik { opacity: 1; }
+.eb-znacznik-pierscien { fill: none; stroke: var(--dn-sygnal-500); stroke-width: 0.3; }
+.eb-znacznik-nitka { stroke: var(--dn-sygnal-500); stroke-width: 0.12; stroke-dasharray: 0.5 0.5; }
+.eb-pas-kropek { fill: var(--dn-sygnal-500); opacity: 0.14; }
+.eb-podpis-scena {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- 8. Symulacje kontekstów -------------------------------------------- */
+.eb-mockupy { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--dn-od-5); }
+
+/* 8.1 karta przeglądarki */
+.eb-przegladarka {
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  overflow: hidden;
+  background: var(--dn-szary-800);
+  box-shadow: var(--dn-cien-2);
+}
+.eb-przegladarka-pas { display: flex; align-items: flex-end; gap: var(--dn-od-1); padding: var(--dn-od-2) var(--dn-od-2) 0; }
+.eb-karta-przegl {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-sm) var(--dn-r-sm) 0 0;
+  background: var(--dn-szary-750);
+  color: var(--dn-szary-300);
+  font-size: var(--dn-fs-sm);
+  max-width: 230px;
+  cursor: pointer;
+  transition: background var(--dn-czas-1) var(--dn-ease);
+}
+.eb-karta-przegl:hover { background: var(--dn-szary-700); }
+.eb-karta-przegl[aria-selected='true'] { background: var(--dn-szary-900); color: var(--dn-szary-50); }
+.eb-karta-przegl img, .eb-karta-przegl svg { width: 16px; height: 16px; flex: none; }
+.eb-karta-przegl span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.eb-przegladarka-adres {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  background: var(--dn-szary-900);
+}
+.eb-przegladarka-pole {
+  flex: 1;
+  padding: var(--dn-od-1) var(--dn-od-3);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-szary-800);
+  color: var(--dn-szary-300);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.eb-przegladarka-tresc { height: 96px; background: var(--dn-szary-925); }
+
+/* 8.2 pasek zadań */
+.eb-pulpit {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  overflow: hidden;
+  background: var(--dn-grad-atrament);
+  min-height: 190px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.eb-pasek-zadan {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-4);
+  background: var(--dn-szary-1000);
+  border-top: 1px solid var(--dn-rama-obrys);
+}
+.eb-zadanie { position: relative; width: 32px; height: 32px; border-radius: var(--dn-r-xs); }
+.eb-zadanie img { width: 100%; height: 100%; display: block; border-radius: inherit; }
+.eb-zadanie--zastepnik { background: var(--dn-szary-800); border: 1px solid var(--dn-szary-750); }
+.eb-zadanie[data-aktywne]::after {
+  content: '';
+  position: absolute; left: 25%; right: 25%; bottom: -6px; height: 2px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-400);
+}
+
+/* 8.3 ekran domowy telefonu */
+.eb-telefon {
+  width: 232px; margin: 0 auto;
+  border: 8px solid var(--dn-szary-1000);
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--dn-grad-atrament);
+  box-shadow: var(--dn-cien-3);
+}
+.eb-telefon-pas {
+  display: flex; justify-content: space-between;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-szary-200);
+}
+.eb-telefon-siatka {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-5);
+}
+.eb-app { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1); }
+.eb-app-kafel { width: 42px; height: 42px; overflow: hidden; background: var(--dn-szary-800); }
+.eb-app-kafel img { width: 100%; height: 100%; display: block; }
+.eb-app-nazwa { font-size: 9px; color: var(--dn-szary-200); text-align: center; line-height: 1.2; }
+.eb-maska--squircle { border-radius: 28%; }
+.eb-maska--kolo { border-radius: 50%; }
+.eb-maska--kwadrat { border-radius: 12%; }
+.eb-maska--kropla { border-radius: 50% 50% 50% 12%; }
+
+/* 8.4 lista aplikacji */
+.eb-lista-app { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md); overflow: hidden; }
+.eb-wiersz-app {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  background: var(--dn-powierzchnia);
+  transition: background var(--dn-czas-1) var(--dn-ease);
+}
+.eb-wiersz-app + .eb-wiersz-app { border-top: 1px solid var(--dn-obrys-subtelny); }
+.eb-wiersz-app:hover { background: var(--dn-hover); }
+.eb-wiersz-app img { width: 48px; height: 48px; border-radius: var(--dn-r-sm); flex: none; }
+.eb-wiersz-app-tytul { font-weight: var(--dn-fw-polgruba); }
+.eb-wiersz-app-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.eb-wiersz-app-meta { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+
+/* --- 9. Ikona aplikacji — sceny z nakładką ------------------------------ */
+.eb-ikony-scena { display: flex; flex-wrap: wrap; gap: var(--dn-od-5); align-items: flex-start; }
+.eb-ikona-ramka {
+  position: relative; width: 220px; height: 220px;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+.eb-ikona-ramka > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.eb-nakladka { opacity: 0; transition: opacity var(--dn-czas-2) var(--dn-ease); pointer-events: none; }
+.eb-ikona-ramka[data-nakladka='1'] .eb-nakladka { opacity: 1; }
+.eb-strefa { fill: none; stroke: var(--dn-sygnal-400); stroke-width: 8; stroke-dasharray: 26 18; }
+.eb-obwiednia { fill: none; stroke: var(--dn-sygnal-300); stroke-width: 5; stroke-dasharray: 14 12; }
+.eb-os { stroke: var(--dn-sygnal-500); stroke-width: 3; stroke-dasharray: 10 10; }
+
+/* --- 10. Karty faviconu -------------------------------------------------- */
+.eb-nosniki { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--dn-od-4); }
+.eb-nosnik { border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-lg); overflow: hidden; }
+.eb-nosnik-glowa {
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+  background: var(--dn-panel);
+}
+.eb-nosnik-rola {
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.eb-nosnik-cialo { padding: var(--dn-od-4); background: var(--dn-powierzchnia); }
+.eb-probki { display: flex; align-items: flex-end; gap: var(--dn-od-4); flex-wrap: wrap; }
+.eb-probka { display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1); }
+.eb-probka img { display: block; image-rendering: auto; }
+.eb-probka-podpis { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
+.eb-pikselowo img { image-rendering: pixelated; }
+
+/* --- 11. Odznaki i drobiazgi -------------------------------------------- */
+.eb-odznaka {
+  display: inline-flex; align-items: center; gap: var(--dn-od-1);
+  padding: 2px var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  border: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  white-space: nowrap;
+}
+.eb-odznaka--sygnal { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+.eb-odznaka--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
+.eb-odznaka--ostrz { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); color: var(--dn-ostrzezenie-tekst); }
+
+.eb-toasty { position: fixed; right: var(--dn-od-4); bottom: var(--dn-od-4); z-index: var(--dn-z-powiadomienie); display: grid; gap: var(--dn-od-2); }
+.eb-toast {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-sukces-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  font-size: var(--dn-fs-base);
+  animation: eb-wjazd var(--dn-czas-3) var(--dn-ease);
+}
+.eb-toast svg { width: 16px; height: 16px; color: var(--dn-sukces-tekst); flex: none; }
+@keyframes eb-wjazd { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.eb-tetno { animation: eb-puls var(--dn-czas-tetno) var(--dn-ease) infinite; transform-origin: center; }
+@keyframes eb-puls { 0%, 100% { opacity: 1; } 50% { opacity: 0.42; } }
+@media (prefers-reduced-motion: reduce) { .eb-tetno { animation: none; } .eb-toast { animation: none; } }
+
+.eb-o-opracowaniu { max-width: 1440px; margin: 0 auto var(--dn-od-16); padding: 0 var(--dn-od-6); }
+.eb-o-opracowaniu > details {
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  overflow: hidden;
+}
+.eb-o-opracowaniu summary {
+  padding: var(--dn-od-4);
+  cursor: pointer;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+}
+.eb-o-opracowaniu summary:focus-visible { outline: 2px solid var(--dn-fokus); outline-offset: 2px; }
+.eb-o-tresc { padding: 0 var(--dn-od-4) var(--dn-od-4); }
+.eb-o-tresc h4 { margin: var(--dn-od-4) 0 var(--dn-od-2); font-size: var(--dn-fs-md); }
+.eb-o-tresc ul { margin: 0 0 var(--dn-od-2); padding-left: var(--dn-od-5); color: var(--dn-tekst-2); }
+.eb-o-tresc li { margin-bottom: var(--dn-od-1); }
+
+.eb-stopka {
+  max-width: 1440px; margin: 0 auto; padding: var(--dn-od-6);
+  border-top: 1px solid var(--dn-obrys);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3); text-align: center; line-height: 1.8;
+}
+
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--dn-fokus);
+  outline-offset: 2px;
+  border-radius: var(--dn-r-xs);
+}
+</style>
+<style data-fix-szerokosc>
+/* Poprawka krytyczna #1 — pełna szerokość roboczego obszaru monitora.
+   Neutralizuje sztywne wyśrodkowanie (max-width w px + margin auto). */
+[class$="-uklad"], [class$="-plansza"], [class$="-powloka"], [class$="-cialo"], [class$="-tresc"], [class$="-strona"], .uklad, .dok-cialo, .dok-uklad, .op-powloka, .ekran-uklad, .pl-plansza, .pl-tresc, .ix-uklad {
+  max-width: none !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  padding-left: clamp(16px, 2.5vw, 56px) !important;
+  padding-right: clamp(16px, 2.5vw, 56px) !important;
+}
+[class$="-stopka"], [class$="-metryki"], [class$="-pas"] { max-width: none !important; margin-left: 0 !important; margin-right: 0 !important; }
+/* Czytelna szerokość akapitu zachowana (jednostki ch) */
+.dok-tekst, .dok-lid, .dok-sekcja > p, .dok-sekcja > ul, .dok-sekcja > ol,
+.dok-sekcja li, .pl-lid, .pl-sekcja-opis { max-width: 108ch !important; }
+:root { --dn-tresc-max: none; }
+</style>
+</head>
+
+<body>
+
+<!-- ══════════ PASEK GÓRNY — atramentowy w obu motywach ══════════ -->
+<header class="dn-pasek eb-pasek">
+  <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console — indeks opracowań">
+    <svg class="eb-pasek-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console">
+      <path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+      <path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+      <circle class="eb-tetno" cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/>
+    </svg>
+    <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+  </a>
+  <span class="eb-pasek-tytul">Emblematy · ikona aplikacji · favicon</span>
+
+  <div class="dn-pasek-prawa">
+    <span class="dn-plakietka dn-plakietka--sygnal" title="Liczba wytworzonych plików">102 pliki</span>
+    <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button"
+            data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw jasny / ciemny">
+      <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="eb-uklad">
+
+  <!-- ══════════ BOCZNY SPIS TREŚCI ══════════ -->
+  <nav class="eb-spis" aria-label="Spis treści opracowania">
+    <div class="eb-spis-tytul">Spis treści</div>
+    <ol>
+      <li><a href="#r01">System godeł — trzy piętra</a></li>
+      <li><a href="#r02">Wspólna gramatyka</a></li>
+      <li><a href="#r03">Cztery emblematy — konstrukcja</a></li>
+      <li><a href="#r04">Drabina rozmiarowa 16–64 px</a></li>
+      <li><a href="#r05">Prawo kropki</a></li>
+      <li><a href="#r06">Barwa emblematu</a></li>
+      <li><a href="#r07">Ikona aplikacji</a></li>
+      <li><a href="#r08">Favicon — trzy nośniki</a></li>
+      <li><a href="#r09">Podgląd w kontekście</a></li>
+      <li><a href="#r10">Snippet i manifest</a></li>
+      <li><a href="#r11">Zasady doboru</a></li>
+      <li><a href="#r12">Inwentarz plików</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+<!-- ══════════ NAGŁÓWEK DOKUMENTU ══════════ -->
+<header class="eb-czolo">
+  <div class="eb-czolo-nadtytul">Danaco Console · marka · opracowanie B5</div>
+  <h1>Emblematy środowisk, ikona aplikacji, favicon</h1>
+  <p class="eb-czolo-opis">System godeł pochodnych zbudowany wyłącznie z zatwierdzonej geometrii:
+  sygnetu „Delegacja” na siatce 96 × 96 i czterech emblematów środowisk na siatce 24 × 24.
+  Nie powstał tu ani jeden nowy znak — powstały warianty, konfiguracje i zastosowania.
+  Krzywe pozostały nietknięte.</p>
+  <div class="eb-metryka">
+    <span class="eb-odznaka">wersja v2.0</span>
+    <span class="eb-odznaka">status deweloperski</span>
+    <span class="eb-odznaka">2026-08-14</span>
+    <span class="eb-odznaka eb-odznaka--sygnal">102 pliki wytworzone</span>
+    <span class="eb-odznaka">4 emblematy · 6 rozmiarów</span>
+    <span class="eb-odznaka">2 kontenery ICO</span>
+    <span class="eb-odznaka eb-odznaka--sukces">3 defekty naprawione</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ 01 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r01" aria-labelledby="t01">
+  <div class="eb-naglowek"><span class="eb-numer">01</span><h2 id="t01">System godeł — trzy piętra</h2></div>
+
+  <p class="eb-lead">Znak marki nie stoi sam. Rozgałęzia się w rodzinę godeł pochodnych,
+  w której każde piętro cytuje piętro wyższe i żadne nie cytuje niższego.</p>
+
+  <div class="eb-schemat">                       ┌──────────────────────────────────────┐
+   PIĘTRO 1            │        SYGNET „DELEGACJA”             │   siatka 96 × 96
+   ZNAK NADRZĘDNY      │        »». — dwa groty + kropka       │   barwy własne
+                       └───────────────────┬──────────────────┘   ≥ 24 px
+                                           │  „czyj to produkt”
+                    ┌──────────────────────┼──────────────────────┐
+                    ▼                      ▼                      ▼
+   PIĘTRO 2   ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐
+   EMBLEMATY  │  TalkIn   │  │ WorkSpace │  │CodeStudio │  │Multitask… │  siatka 24 × 24
+   ŚRODOWISK  └───────────┘  └───────────┘  └───────────┘  └───────────┘  obrys 1,75
+                    └──────────────┴───────┬──────┴──────────────┘        currentColor
+                                           │  „gdzie jestem”
+   PIĘTRO 3   ┌────────────────────────────▼─────────────────────────────┐
+   IKONY      │  82 ikony Lucide — BEZ kropki sygnału                    │  siatka 24 × 24
+   MODUŁÓW    └──────────────────────────────────────────────────────────┘  „czym pracuję”
+
+   ODNOGA     ┌──────────────────────────────────────────────────────────┐
+   SYSTEMOWA  │  IKONA APLIKACJI · FAVICON — sygnet w kaflu #131313      │  promień 21,875 %
+              └──────────────────────────────────────────────────────────┘</div>
+
+  <h3>Żywe porównanie trzech pięter</h3>
+  <p>Trzy znaki na tej samej siatce renderowania. Różnica jest jedna: <strong>obecność
+  wypełnionej kropki</strong>. Ikona modułu jej nie ma — i dlatego nie należy do rodziny godeł.</p>
+
+  <div class="eb-tablice">
+    <div class="eb-tablica">
+      <div class="eb-tablica-glowa"><span>Plansza jasna — #F4F4F4</span><span>--dn-tekst</span></div>
+      <div class="eb-plansza eb-plansza--jasna">
+        <div class="eb-drabina" data-pietra></div>
+      </div>
+    </div>
+    <div class="eb-tablica">
+      <div class="eb-tablica-glowa"><span>Plansza ciemna — #0F0F0F</span><span>--dn-tekst</span></div>
+      <div class="eb-plansza eb-plansza--ciemna">
+        <div class="eb-drabina" data-pietra></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="eb-uwaga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <p><strong>Hierarchia jest jednokierunkowa.</strong> Emblemat cytuje sygnet (kropka),
+    ikona modułu nie cytuje niczego (jest słownikiem), ikona aplikacji jest oprawą sygnetu —
+    nie osobnym znakiem.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 02 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r02" aria-labelledby="t02">
+  <div class="eb-naglowek"><span class="eb-numer">02</span><h2 id="t02">Wspólna gramatyka</h2></div>
+
+  <p>Pięć wielkości łączy wszystkie cztery emblematy. Włącz nakładkę, żeby zobaczyć
+  siatkę 24 × 24, osie i pas, w którym leżą kropki satelickie.</p>
+
+  <div class="eb-pasek-narzedzi" role="group" aria-label="Nakładki podglądu gramatyki">
+    <span class="eb-etykieta-narzedzia">Nakładki</span>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz-siatke aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      Siatka 24 × 24
+    </button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz-znacznik aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="currentColor"/><circle cx="12" cy="12" r="8"/></svg>
+      Znacznik kropki
+    </button>
+    <span class="eb-sep" aria-hidden="true"></span>
+    <span class="eb-odznaka">obrys 1,75 j.</span>
+    <span class="eb-odznaka">fill: none</span>
+    <span class="eb-odznaka">currentColor</span>
+    <span class="eb-odznaka eb-odznaka--sygnal">dokładnie 1 kropka</span>
+  </div>
+
+  <div class="eb-panel">
+    <div class="eb-lupa" data-lupa></div>
+  </div>
+
+  <table class="eb-tabela">
+    <caption class="eb-podpis-scena" style="text-align:left;padding-bottom:var(--dn-od-2)">Pięć elementów wspólnej gramatyki</caption>
+    <thead><tr><th>#</th><th>Element</th><th>Wartość</th><th>Zakres</th></tr></thead>
+    <tbody>
+      <tr><td class="eb-l">1</td><td>Siatka</td><td class="eb-l">24 × 24 j.</td><td>emblematy + ikony modułów (sygnet: 96 × 96 = czterokrotność)</td></tr>
+      <tr><td class="eb-l">2</td><td>Obrys</td><td class="eb-l">1,75 j. · round</td><td>emblematy + ikony modułów</td></tr>
+      <tr><td class="eb-l">3</td><td>Wypełnienie</td><td class="eb-l">none</td><td>wszystkie kształty obrysowe</td></tr>
+      <tr><td class="eb-l">4</td><td>Barwa</td><td class="eb-l">currentColor</td><td>jedna barwa na cały znak — także kropka</td></tr>
+      <tr><td class="eb-l">5</td><td>Kropka sygnału</td><td class="eb-l">dokładnie 1</td><td><strong>wyłącznie emblematy i sygnet</strong> — ikony modułów jej nie mają</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════ 03 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r03" aria-labelledby="t03">
+  <div class="eb-naglowek"><span class="eb-numer">03</span><h2 id="t03">Cztery emblematy — konstrukcja</h2></div>
+
+  <p>Metafora, konstrukcja, położenie jedynej wypełnionej kropki i miejsca zastosowania.
+  Każdą kartę można skopiować jako gotowy SVG do wklejenia inline.</p>
+
+  <div class="eb-karty" data-karty></div>
+</section>
+
+<!-- ═══════════════════════════ 04 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r04" aria-labelledby="t04">
+  <div class="eb-naglowek"><span class="eb-numer">04</span><h2 id="t04">Drabina rozmiarowa 16–64 px</h2></div>
+
+  <p>Sześć stopni w <strong>realnej skali</strong>, na obu planszach. Warianty 16 px są
+  uproszczone — najdrobniejszy element ustępuje, kropka zostaje i rośnie.</p>
+
+  <div class="eb-pasek-narzedzi" role="group" aria-label="Sterowanie drabiną rozmiarową">
+    <span class="eb-etykieta-narzedzia">Powiększenie podglądu</span>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zoom="1" aria-pressed="true">1 ×</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zoom="2" aria-pressed="false">2 ×</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zoom="4" aria-pressed="false">4 ×</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-zoom="8" aria-pressed="false">8 ×</button>
+    <span class="eb-sep" aria-hidden="true"></span>
+    <span class="eb-etykieta-narzedzia">Emblemat</span>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-drabina="wszystkie" aria-pressed="true">Wszystkie</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-drabina="srodowisko-talkin" aria-pressed="false">TalkIn</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-drabina="srodowisko-workspace" aria-pressed="false">WorkSpace</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-drabina="srodowisko-codestudio" aria-pressed="false">CodeStudio</button>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-drabina="srodowisko-multitaskingai" aria-pressed="false">MultitaskingAI</button>
+  </div>
+
+  <div class="eb-tablice">
+    <div class="eb-tablica">
+      <div class="eb-tablica-glowa"><span>Na jasnym — #181818</span><span data-echo-zoom>1 ×</span></div>
+      <div class="eb-plansza eb-plansza--jasna"><div data-drabina-plansza="jasna"></div></div>
+    </div>
+    <div class="eb-tablica">
+      <div class="eb-tablica-glowa"><span>Na ciemnym — #ECECEC</span><span data-echo-zoom>1 ×</span></div>
+      <div class="eb-plansza eb-plansza--ciemna"><div data-drabina-plansza="ciemna"></div></div>
+    </div>
+  </div>
+
+  <h3>Kompensacja obrysu poniżej 24 px</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>Render</th><th>Obrys (j.)</th><th>Obrys efektywny</th><th>Ø kropki</th><th>Detal</th></tr></thead>
+    <tbody>
+      <tr><td class="eb-l">16 px</td><td class="eb-l">1,90</td><td class="eb-l">1,27 px</td><td class="eb-l">2,4–4,0 px</td><td><span class="eb-odznaka eb-odznaka--ostrz">uproszczony</span></td></tr>
+      <tr><td class="eb-l">20 px</td><td class="eb-l">1,90</td><td class="eb-l">1,58 px</td><td class="eb-l">2,50 px</td><td>pełny</td></tr>
+      <tr><td class="eb-l">24 px</td><td class="eb-l">1,75</td><td class="eb-l">1,75 px</td><td class="eb-l">3,00 px</td><td><span class="eb-odznaka eb-odznaka--sygnal">kanoniczny</span></td></tr>
+      <tr><td class="eb-l">32 px</td><td class="eb-l">1,75</td><td class="eb-l">2,33 px</td><td class="eb-l">4,00 px</td><td>pełny</td></tr>
+      <tr><td class="eb-l">48 px</td><td class="eb-l">1,75</td><td class="eb-l">3,50 px</td><td class="eb-l">6,00 px</td><td>pełny — Ø kropki = żeton <code>--dn-wym-kropka</code></td></tr>
+      <tr><td class="eb-l">64 px</td><td class="eb-l">1,75</td><td class="eb-l">4,67 px</td><td class="eb-l">8,00 px</td><td>pełny</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Co ustępuje przy 16 px</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>Emblemat</th><th>Element usunięty</th><th>Korekta kropki</th><th>Powód</th></tr></thead>
+    <tbody>
+      <tr><td>TalkIn</td><td>górna (dłuższa) linia tekstu</td><td class="eb-l">r 1,5 → 1,9</td><td>para „linia + kropka” niesie znaczenie; jedna linia wystarczy</td></tr>
+      <tr><td>WorkSpace</td><td><strong>obrys czwartego modułu</strong></td><td class="eb-l">r 1,6 → 3,0</td><td>przy 3,3 px wnętrza obrys i kropka sklejają się w plamę</td></tr>
+      <tr><td>CodeStudio</td><td>linia wyniku pod grotem</td><td class="eb-l">r 1,5 → 1,85</td><td>luz kropka–ramka rośnie z 0,225 do 0,60 j.</td></tr>
+      <tr><td>MultitaskingAI</td><td><strong>nic</strong></td><td class="eb-l">r 2,6 → 2,9</td><td>trzej wykonawcy to fakt produktowy, nie ozdoba</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════ 05 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r05" aria-labelledby="t05">
+  <div class="eb-naglowek"><span class="eb-numer">05</span><h2 id="t05">Prawo kropki</h2></div>
+
+  <p>Trzy z czterech kropek leżą w pasie <code>x ∈ [16,2 ; 18,4]</code> — 9,2 % szerokości
+  znaku. Czwarta stoi dokładnie na środku siatki. To reguła z jednym umotywowanym wyjątkiem.</p>
+
+  <div class="eb-schemat">   cx kropek satelickich:   16,2 (TalkIn)  ·  16,9 (WorkSpace)  ·  18,4 (CodeStudio)
+   ────────────────────────────────────────────────────────────────────────────
+   pas pionowy  x ∈ [16,2 ; 18,4]   szerokość 2,2 j. na siatce 24  =  9,2 %
+
+   MultitaskingAI:  cx = 12,0  ← WYJĄTEK ŚWIADOMY
+   trzy środowiska mają pracę OBOK siebie; MultitaskingAI ma pracę W SOBIE</div>
+
+  <table class="eb-tabela">
+    <thead><tr><th>Emblemat</th><th>cx</th><th>cy</th><th>r</th><th>Ø</th><th>Odl. od środka siatki</th><th>Rola kropki</th></tr></thead>
+    <tbody>
+      <tr><td>TalkIn</td><td class="eb-l">16,2</td><td class="eb-l">10,8</td><td class="eb-l">1,5</td><td class="eb-l">3,0</td><td class="eb-l">4,36 j.</td><td>odpowiedź w toku, na osi drugiej linii</td></tr>
+      <tr><td>WorkSpace</td><td class="eb-l">16,9</td><td class="eb-l">16,9</td><td class="eb-l">1,6</td><td class="eb-l">3,2</td><td class="eb-l">6,93 j.</td><td>środek modułu aktywnego — co do jednostki</td></tr>
+      <tr><td>CodeStudio</td><td class="eb-l">18,4</td><td class="eb-l">9,9</td><td class="eb-l">1,5</td><td class="eb-l">3,0</td><td class="eb-l">6,73 j.</td><td>proces w tle, prawy górny róg okna</td></tr>
+      <tr><td>MultitaskingAI</td><td class="eb-l">12,0</td><td class="eb-l">12,0</td><td class="eb-l">2,6</td><td class="eb-l">5,2</td><td class="eb-l">0,00 j.</td><td><strong>rdzeń koordynatora</strong> — nie satelita</td></tr>
+    </tbody>
+  </table>
+
+  <div class="eb-uwaga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <p><strong>Zbieżność strukturalna.</strong> Kropka satelicka ma Ø 3 j. na siatce 24.
+    Wyrenderowana w <strong>48 px</strong> daje dokładnie <strong>6 px</strong> — czyli żeton
+    <code>--dn-wym-kropka</code>. Kropka emblematu jest tą samą kropką, którą interfejs stawia
+    przy karcie sesji i przy nadawcy piszącym.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 06 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r06" aria-labelledby="t06">
+  <div class="eb-naglowek"><span class="eb-numer">06</span><h2 id="t06">Barwa emblematu</h2></div>
+
+  <p class="eb-lead"><strong>Emblemat jest zawsze jednobarwny. Kropka nigdy nie odrywa się
+  barwą od obrysu.</strong></p>
+
+  <p>Kropka w emblemacie jest cytatem <strong>formy</strong> sygnetu, nie cytatem
+  <strong>barwy</strong>. Boczna nawigacja WorkSpace ma 9 pozycji, pas kart sesji do 8 kart,
+  strona główna 4 karty środowisk — gdyby każdy emblemat niósł własną błękitną kropkę,
+  na jednym ekranie zapaliłoby się do <strong>21 punktów sygnału naraz</strong>. Barwa
+  przestałaby cokolwiek znaczyć.</p>
+
+  <div class="eb-panel">
+    <div class="eb-tablice">
+      <div class="eb-tablica">
+        <div class="eb-tablica-glowa"><span>Motyw jasny</span><span>--dn-tekst · --dn-sygnal</span></div>
+        <div class="eb-plansza eb-plansza--jasna"><div class="eb-drabina" data-barwy="jasny"></div></div>
+      </div>
+      <div class="eb-tablica">
+        <div class="eb-tablica-glowa"><span>Motyw ciemny</span><span>--dn-tekst · --dn-sygnal</span></div>
+        <div class="eb-plansza eb-plansza--ciemna"><div class="eb-drabina" data-barwy="ciemny"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <table class="eb-tabela">
+    <thead><tr><th>Wariant</th><th>Żeton</th><th>Wartość</th><th>Kontrast</th><th>Kiedy</th></tr></thead>
+    <tbody>
+      <tr><td>na tle jasnym</td><td class="eb-l">--dn-tekst</td><td class="eb-l">#181818</td><td class="eb-l">16,14 : 1</td><td>karta środowiska, nawigacja, nagłówek</td></tr>
+      <tr><td>na tle ciemnym</td><td class="eb-l">--dn-tekst</td><td class="eb-l">#ECECEC</td><td class="eb-l">16,74 : 1</td><td>jw. w motywie ciemnym</td></tr>
+      <tr><td>aktywne, motyw jasny</td><td class="eb-l">--dn-sygnal</td><td class="eb-l">#2457C9</td><td class="eb-l">6,42 : 1</td><td>gdy wdrożenie przebarwia <strong>cały</strong> emblemat</td></tr>
+      <tr><td>aktywne, motyw ciemny</td><td class="eb-l">--dn-sygnal</td><td class="eb-l">#8FB2F5</td><td class="eb-l">8,04 : 1</td><td>jw.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="eb-uwaga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01M10.3 3.9 2.4 17.4A2 2 0 0 0 4.1 20.4h15.8a2 2 0 0 0 1.7-3l-7.9-13.5a2 2 0 0 0-3.4 0Z"/></svg>
+    <p><strong>Zakaz.</strong> Nie istnieje plik z niebieską kropką w emblemacie i nie wolno
+    go wytworzyć. Sygnał w interfejsie niosą elementy sąsiadujące: kreska aktywności 2 px
+    obok ikony (<code>.dn-boczna-pozycja[aria-current]::before</code>) i wstęga górna karty
+    środowiska — nie sam emblemat.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 07 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r07" aria-labelledby="t07">
+  <div class="eb-naglowek"><span class="eb-numer">07</span><h2 id="t07">Ikona aplikacji</h2></div>
+
+  <p>Sygnet w kaflu kryjącym <code>#131313</code> (<code>--dn-rama</code>). Promień naroża
+  <strong>224/1024 = 21,875 %</strong> — dokładnie ta sama proporcja co kafel faviconu (21/96).
+  Kafel faviconu i ikona aplikacji to jedna bryła w dwóch skalach.</p>
+
+  <div class="eb-pasek-narzedzi" role="group" aria-label="Nakładki ikony aplikacji">
+    <span class="eb-etykieta-narzedzia">Nakładka</span>
+    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-przelacz-nakladke aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke-dasharray="3 3"/><path d="M12 3v18M3 12h18"/></svg>
+      Pole bezpieczne i osie
+    </button>
+    <span class="eb-sep" aria-hidden="true"></span>
+    <span class="eb-odznaka">zadruk 50,1 % szer.</span>
+    <span class="eb-odznaka">margines min. 23,2 %</span>
+    <span class="eb-odznaka eb-odznaka--sukces">maska: 248,4 z 409,6</span>
+  </div>
+
+  <div class="eb-panel">
+    <div class="eb-ikony-scena">
+
+      <div class="eb-lupa-poz">
+        <div class="eb-ikona-ramka" data-ramka-ikony>
+          <svg viewBox="0 0 1024 1024" role="img" aria-label="Ikona aplikacji Danaco Console — kafel zaokrąglony">
+            <rect width="1024" height="1024" rx="224" fill="#131313"/>
+            <g transform="translate(194.6,194.6) scale(6.6133)">
+              <path fill="#ECECEC" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+              <path fill="#ECECEC" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+              <circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/>
+            </g>
+            <g class="eb-nakladka" aria-hidden="true">
+              <rect class="eb-obwiednia" x="274" y="366.5" width="512.5" height="291"/>
+              <line class="eb-os" x1="512" y1="0" x2="512" y2="1024"/>
+              <line class="eb-os" x1="0" y1="512" x2="1024" y2="512"/>
+            </g>
+          </svg>
+        </div>
+        <div class="eb-podpis-scena">ikona-aplikacji.svg · rx 224 · scale 6,6133</div>
+      </div>
+
+      <div class="eb-lupa-poz">
+        <div class="eb-ikona-ramka" data-ramka-ikony>
+          <svg viewBox="0 0 1024 1024" role="img" aria-label="Wariant maskowalny — Android adaptive icon">
+            <rect width="1024" height="1024" rx="0" fill="#131313"/>
+            <g transform="translate(245.8,245.8) scale(5.5467)">
+              <path fill="#ECECEC" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+              <path fill="#ECECEC" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+              <circle cx="83" cy="63.5" r="6.5" fill="#5C8CEC"/>
+            </g>
+            <g class="eb-nakladka" aria-hidden="true">
+              <circle class="eb-strefa" cx="512" cy="512" r="409.6"/>
+              <circle class="eb-obwiednia" cx="512" cy="512" r="248.4"/>
+            </g>
+          </svg>
+        </div>
+        <div class="eb-podpis-scena">ikona-maskowalna.svg · rx 0 · zapas 39,3 %</div>
+      </div>
+
+      <div class="eb-lupa-poz">
+        <div class="eb-ikona-ramka" data-ramka-ikony>
+          <svg viewBox="0 0 1024 1024" role="img" aria-label="Wariant uproszczony dla rastrów do 32 px">
+            <rect width="1024" height="1024" rx="224" fill="#131313"/>
+            <g transform="translate(88,128) scale(8)">
+              <path fill="#ECECEC" d="M18 18 H35 L64 48 L35 78 H18 L45 48 Z"/>
+              <circle cx="79" cy="69" r="9" fill="#5C8CEC"/>
+            </g>
+          </svg>
+        </div>
+        <div class="eb-podpis-scena">ikona-uproszczona.svg · rastry ≤ 32 px</div>
+      </div>
+
+    </div>
+  </div>
+
+  <h3>Pomiary konstrukcji</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>Wielkość</th><th>Ikona zwykła</th><th>Ikona maskowalna</th></tr></thead>
+    <tbody>
+      <tr><td>Płótno</td><td class="eb-l">1024 × 1024 px</td><td class="eb-l">1024 × 1024 px</td></tr>
+      <tr><td>Promień naroża</td><td class="eb-l">224 px = 21,875 %</td><td class="eb-l">0 — grunt do krawędzi</td></tr>
+      <tr><td>Skala sygnetu</td><td class="eb-l">6,6133</td><td class="eb-l">5,5467</td></tr>
+      <tr><td>Odsunięcie</td><td class="eb-l">194,6 · 194,6</td><td class="eb-l">245,8 · 245,8</td></tr>
+      <tr><td>Pole zadruku (x)</td><td class="eb-l">274,0 – 786,5 (50,1 %)</td><td class="eb-l">312,4 – 742,2 (42,0 %)</td></tr>
+      <tr><td>Pole zadruku (y)</td><td class="eb-l">366,5 – 657,5</td><td class="eb-l">390,0 – 634,1</td></tr>
+      <tr><td>Margines min.</td><td class="eb-l">237,5 px = 23,2 %</td><td class="eb-l">—</td></tr>
+      <tr><td>Najdalszy punkt od środka</td><td class="eb-l">—</td><td class="eb-l">248,4 px z 409,6 ✓</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Komplet rozmiarów</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>Cel</th><th>Plik</th><th>Rozmiar</th><th>Wariant znaku</th></tr></thead>
+    <tbody>
+      <tr><td>Tauri <code>32x32.png</code></td><td class="eb-l">ikona-32.png</td><td class="eb-l">32</td><td><span class="eb-odznaka eb-odznaka--ostrz">uproszczony</span></td></tr>
+      <tr><td>Windows, Linux</td><td class="eb-l">ikona-64.png</td><td class="eb-l">64</td><td>pełny</td></tr>
+      <tr><td>Tauri <code>128x128.png</code></td><td class="eb-l">ikona-128.png</td><td class="eb-l">128</td><td>pełny</td></tr>
+      <tr><td>Tauri <code>128x128@2x.png</code></td><td class="eb-l">ikona-128@2x.png</td><td class="eb-l">256</td><td>pełny</td></tr>
+      <tr><td>iOS</td><td class="eb-l">ikona-180.png</td><td class="eb-l">180</td><td>pełny</td></tr>
+      <tr><td>PWA</td><td class="eb-l">ikona-192.png · ikona-512.png</td><td class="eb-l">192 · 512</td><td>pełny</td></tr>
+      <tr><td>Windows</td><td class="eb-l">ikona-256.png</td><td class="eb-l">256</td><td>pełny</td></tr>
+      <tr><td>Źródło <code>icon.png</code>, macOS <code>.icns</code></td><td class="eb-l">ikona-1024.png</td><td class="eb-l">1024</td><td>pełny</td></tr>
+      <tr><td>Android adaptive</td><td class="eb-l">ikona-maskowalna-192/512.png</td><td class="eb-l">192 · 512</td><td>pełny, mniejsza skala</td></tr>
+      <tr><td>Windows / Tauri <code>icon.ico</code></td><td class="eb-l">ikona-aplikacji.ico</td><td class="eb-l">16–256, 7 wpisów</td><td>mieszany wg rozmiaru</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════ 08 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r08" aria-labelledby="t08">
+  <div class="eb-naglowek"><span class="eb-numer">08</span><h2 id="t08">Favicon — trzy nośniki</h2></div>
+
+  <p>Favicon renderuje się najczęściej w 16–20 px, czyli <strong>poniżej progu 24 px</strong> —
+  dlatego wariant uproszczony jest tu wariantem podstawowym, nie awaryjnym.</p>
+
+  <div class="eb-nosniki">
+    <div class="eb-nosnik">
+      <div class="eb-nosnik-glowa">
+        <div class="eb-nosnik-rola">Nośnik podstawowy</div>
+        <div><strong>favicon.svg</strong> — adaptacyjny</div>
+      </div>
+      <div class="eb-nosnik-cialo">
+        <p style="font-size:var(--dn-fs-sm)">Tło przezroczyste, barwy przełącza
+        <code>prefers-color-scheme</code>. Znak: sygnet uproszczony.</p>
+        <div class="eb-probki eb-pikselowo">
+          <div class="eb-probka"><img src="emblematy/favicon/favicon.svg" width="16" height="16" alt="favicon 16 px"><span class="eb-probka-podpis">16</span></div>
+          <div class="eb-probka"><img src="emblematy/favicon/favicon.svg" width="32" height="32" alt="favicon 32 px"><span class="eb-probka-podpis">32</span></div>
+          <div class="eb-probka"><img src="emblematy/favicon/favicon.svg" width="64" height="64" alt="favicon 64 px"><span class="eb-probka-podpis">64</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eb-nosnik">
+      <div class="eb-nosnik-glowa">
+        <div class="eb-nosnik-rola">Zapas rastrowy</div>
+        <div><strong>favicon.ico</strong> — kafel kryjący</div>
+      </div>
+      <div class="eb-nosnik-cialo">
+        <p style="font-size:var(--dn-fs-sm)">Trzy osobne obrazy: 16 px z jednym grotem,
+        32 i 48 px z pełnym sygnetem. Grunt <code>#131313</code>.</p>
+        <div class="eb-probki eb-pikselowo">
+          <div class="eb-probka"><img src="emblematy/favicon/favicon-16.png" width="16" height="16" alt="favicon ICO 16 px"><span class="eb-probka-podpis">16</span></div>
+          <div class="eb-probka"><img src="emblematy/favicon/favicon-32.png" width="32" height="32" alt="favicon ICO 32 px"><span class="eb-probka-podpis">32</span></div>
+          <div class="eb-probka"><img src="emblematy/favicon/favicon-48.png" width="48" height="48" alt="favicon ICO 48 px"><span class="eb-probka-podpis">48</span></div>
+          <div class="eb-probka"><img src="emblematy/favicon/favicon-16.png" width="64" height="64" alt="favicon 16 px w powiększeniu 4×"><span class="eb-probka-podpis">16 @ 4×</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="eb-nosnik">
+      <div class="eb-nosnik-glowa">
+        <div class="eb-nosnik-rola">Nośnik systemowy</div>
+        <div><strong>apple-touch-icon.png</strong></div>
+      </div>
+      <div class="eb-nosnik-cialo">
+        <p style="font-size:var(--dn-fs-sm)">180 px, <code>rx 0</code>, tryb RGB bez alfy —
+        maskę nakłada iOS. Własne zaokrąglenie dałoby podwójny łuk.</p>
+        <div class="eb-probki">
+          <div class="eb-probka"><img src="emblematy/favicon/apple-touch-icon.png" width="60" height="60" alt="apple-touch-icon bez maski"><span class="eb-probka-podpis">plik</span></div>
+          <div class="eb-probka"><img class="eb-maska--squircle" src="emblematy/favicon/apple-touch-icon.png" width="60" height="60" alt="apple-touch-icon po nałożeniu maski iOS"><span class="eb-probka-podpis">po masce</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Trzy wady plików zastanych — wykryte pomiarowo i naprawione</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>#</th><th>Plik</th><th>Defekt</th><th>Pomiar</th><th>Naprawa</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="eb-l">W-1</td><td class="eb-l">favicon-16.png</td>
+        <td><strong>kropka sygnału nie istnieje</strong> — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera</td>
+        <td class="eb-l">0 px błękitu</td>
+        <td>kafel uproszczony, skala 0,72 → <strong>2 px błękitu</strong></td>
+      </tr>
+      <tr>
+        <td class="eb-l">W-2</td><td class="eb-l">favicon-16/32/48.png</td>
+        <td>tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart</td>
+        <td class="eb-l">1,6 : 1</td>
+        <td>grunt kryjący <code>#131313</code>, znak <code>#ECECEC</code> → 16,32 : 1</td>
+      </tr>
+      <tr>
+        <td class="eb-l">W-3</td><td class="eb-l">apple-touch-icon.png</td>
+        <td>kopia <code>ikona-180.png</code> z wypalonym <code>rx 224</code>; białe naroża po spłaszczeniu alfy</td>
+        <td class="eb-l">piksel (0,0) = #FFFFFF</td>
+        <td><code>rx 0</code>, tryb RGB → piksel (0,0) = <code>#131313</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="eb-uwaga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <p>Naprawy dotyczą <strong>wyłącznie plików wytworzonych w <code>03-marka/emblematy/</code></strong>.
+    Pliki w <code>zasoby/marka/</code> pozostawiono nietknięte — ich podmiana jest decyzją
+    wdrożeniową, nie projektową.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 09 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r09" aria-labelledby="t09">
+  <div class="eb-naglowek"><span class="eb-numer">09</span><h2 id="t09">Podgląd w kontekście</h2></div>
+
+  <p>Cztery symulacje narysowane w HTML i CSS, z realnymi plikami godła. Kliknij kartę
+  przeglądarki albo ikonę na pasku zadań — reagują.</p>
+
+  <div class="eb-mockupy">
+
+    <!-- 9.1 karta przeglądarki -->
+    <div>
+      <h3 style="margin-top:0">Karta przeglądarki — favicon 16 px</h3>
+      <div class="eb-przegladarka">
+        <div class="eb-przegladarka-pas" role="tablist" aria-label="Karty przeglądarki (symulacja)">
+          <button class="eb-karta-przegl" role="tab" aria-selected="true" type="button" data-karta-przegl="1">
+            <img src="emblematy/favicon/favicon-16.png" width="16" height="16" alt="">
+            <span>Danaco Console — Centrum dowodzenia</span>
+          </button>
+          <button class="eb-karta-przegl" role="tab" aria-selected="false" type="button" data-karta-przegl="2">
+            <img src="emblematy/favicon/favicon-16.png" width="16" height="16" alt="">
+            <span>Danaco Console — CodeStudio</span>
+          </button>
+        </div>
+        <div class="eb-przegladarka-adres">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--dn-szary-400)"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span class="eb-przegladarka-pole" data-adres-przegl>console.danaco-group.pl/</span>
+        </div>
+        <div class="eb-przegladarka-tresc"></div>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin-top:var(--dn-od-2)">Przy 16 px w kaflu widoczne są
+      <strong>trzy formy</strong>: grunt, grot, kropka. W pliku zastanym widoczne były dwie.</p>
+    </div>
+
+    <!-- 9.2 pasek zadań -->
+    <div>
+      <h3 style="margin-top:0">Pasek zadań — ikona 32 px</h3>
+      <div class="eb-pulpit">
+        <div class="eb-pasek-zadan" role="group" aria-label="Pasek zadań (symulacja)">
+          <button class="eb-zadanie" type="button" data-aktywne aria-label="Danaco Console — okno aktywne" data-zadanie>
+            <img src="emblematy/ikona-aplikacji/ikona-32.png" width="32" height="32" alt="">
+          </button>
+          <span class="eb-zadanie eb-zadanie--zastepnik" aria-hidden="true"></span>
+          <span class="eb-zadanie eb-zadanie--zastepnik" aria-hidden="true"></span>
+          <span class="eb-zadanie eb-zadanie--zastepnik" aria-hidden="true"></span>
+        </div>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin-top:var(--dn-od-2)">Przy 32 px kafel ma ok. 7 px
+      promienia naroża i ok. 16 px znaku — stąd wariant z jednym grotem.</p>
+    </div>
+
+    <!-- 9.3 ekran domowy telefonu -->
+    <div>
+      <h3 style="margin-top:0">Ekran domowy — ikona maskowalna</h3>
+      <div class="eb-pasek-narzedzi" role="group" aria-label="Maska producenta">
+        <span class="eb-etykieta-narzedzia">Maska</span>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-maska="squircle" aria-pressed="true">Squircle</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-maska="kolo" aria-pressed="false">Koło</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-maska="kwadrat" aria-pressed="false">Kwadrat</button>
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-maska="kropla" aria-pressed="false">Kropla</button>
+      </div>
+      <div class="eb-telefon">
+        <div class="eb-telefon-pas"><span>9:41</span><span>▮▮▮</span></div>
+        <div class="eb-telefon-siatka">
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app">
+            <span class="eb-app-kafel eb-maska--squircle" data-kafel-app data-kafel-danaco>
+              <img src="emblematy/ikona-aplikacji/ikona-maskowalna-192.png" alt="Danaco Console — ikona na ekranie domowym">
+            </span>
+            <span class="eb-app-nazwa">Danaco<br>Console</span>
+          </div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+          <div class="eb-app"><span class="eb-app-kafel eb-maska--squircle" data-kafel-app aria-hidden="true"></span><span class="eb-app-nazwa">&nbsp;</span></div>
+        </div>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin-top:var(--dn-od-2)">Żadna maska nie utnie kropki —
+      zadruk mieści się w promieniu 248,4 px ze strefy 409,6 px.</p>
+    </div>
+
+    <!-- 9.4 lista aplikacji -->
+    <div>
+      <h3 style="margin-top:0">Lista aplikacji — ikona 48 px</h3>
+      <div class="eb-lista-app">
+        <div class="eb-wiersz-app">
+          <img src="emblematy/ikona-aplikacji/ikona-64.png" width="48" height="48" alt="">
+          <div>
+            <div class="eb-wiersz-app-tytul">Danaco Console</div>
+            <div class="eb-wiersz-app-opis">AI Operating Environment · Danaco Holding Group</div>
+          </div>
+          <div class="eb-wiersz-app-meta">v2.0</div>
+        </div>
+        <div class="eb-wiersz-app">
+          <img src="emblematy/ikona-aplikacji/ikona-64.png" width="48" height="48" alt="">
+          <div>
+            <div class="eb-wiersz-app-tytul">Danaco Console — Mobile</div>
+            <div class="eb-wiersz-app-opis">Widok mobilny, parowanie urządzeń</div>
+          </div>
+          <div class="eb-wiersz-app-meta">v2.0</div>
+        </div>
+      </div>
+      <p style="font-size:var(--dn-fs-sm);margin-top:var(--dn-od-2)">Przy 48 px kafel niesie
+      <strong>pełny sygnet</strong> — dwa groty i kropkę.</p>
+    </div>
+
+  </div>
+
+  <h3>Cztery karty środowisk — strona główna</h3>
+  <p>Emblematy są tu atramentowe. Sygnał niesie wstęga górna karty, nie emblemat.
+  Najedź na kartę albo wybierz ją klawiaturą.</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--dn-od-4)" data-karty-srodowisk></div>
+</section>
+
+<!-- ═══════════════════════════ 10 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r10" aria-labelledby="t10">
+  <div class="eb-naglowek"><span class="eb-numer">10</span><h2 id="t10">Snippet i manifest</h2></div>
+
+  <p>Kolejność wpięć jest znacząca: przeglądarka obsługująca SVG bierze wpis pierwszy
+  i ignoruje ICO. Odwrócenie kolejności sprawia, że część przeglądarek utknie na rastrze.</p>
+
+  <div class="eb-blok-kodu">
+    <div class="eb-blok-kodu-glowa">
+      <span class="eb-blok-kodu-nazwa">naglowek-snippet.html — wklej do &lt;head&gt;</span>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#kod-snippet">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        Kopiuj
+      </button>
+    </div>
+    <pre id="kod-snippet">&lt;!-- 1. Nośnik podstawowy: SVG adaptacyjny --&gt;
+&lt;link rel="icon" href="/favicon.svg" type="image/svg+xml"&gt;
+
+&lt;!-- 2. Zapas rastrowy: ICO 16/32/48 na kryjącym gruncie --&gt;
+&lt;link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48"&gt;
+
+&lt;!-- 3. iOS / iPadOS — kwadrat bez zaokrąglenia i bez alfy --&gt;
+&lt;link rel="apple-touch-icon" href="/apple-touch-icon.png"&gt;
+
+&lt;!-- 4. Manifest aplikacji internetowej --&gt;
+&lt;link rel="manifest" href="/site.webmanifest"&gt;
+
+&lt;!-- 5. Barwa paska systemowego --&gt;
+&lt;meta name="theme-color" content="#F4F4F4" media="(prefers-color-scheme: light)"&gt;
+&lt;meta name="theme-color" content="#131313" media="(prefers-color-scheme: dark)"&gt;
+
+&lt;!-- 6. Kafel Windows --&gt;
+&lt;meta name="msapplication-TileColor" content="#131313"&gt;
+&lt;meta name="msapplication-TileImage" content="/icon-192.png"&gt;
+
+&lt;!-- 7. Nazwa aplikacji w trybie samodzielnym --&gt;
+&lt;meta name="application-name" content="Danaco Console"&gt;
+&lt;meta name="apple-mobile-web-app-title" content="Danaco Console"&gt;
+&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;
+&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;</pre>
+  </div>
+
+  <div class="eb-blok-kodu">
+    <div class="eb-blok-kodu-glowa">
+      <span class="eb-blok-kodu-nazwa">site.webmanifest</span>
+      <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#kod-manifest">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        Kopiuj
+      </button>
+    </div>
+    <pre id="kod-manifest">{
+  "id": "/",
+  "name": "Danaco Console — AI Operating Environment",
+  "short_name": "Danaco Console",
+  "description": "Platforma operacyjna dla Operatora zarządzającego cyfrową organizacją: cztery środowiska, piętnaście modułów, wspólne okno komunikacji.",
+  "lang": "pl",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "background_color": "#0F0F0F",
+  "theme_color": "#131313",
+  "categories": ["productivity", "developer", "business"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/ikona-maskowalna-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "TalkIn", "url": "/talkin", "icons": [{ "src": "/emblematy/srodowisko-talkin-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "WorkSpace", "url": "/workspace", "icons": [{ "src": "/emblematy/srodowisko-workspace-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "CodeStudio", "url": "/codestudio", "icons": [{ "src": "/emblematy/srodowisko-codestudio-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "MultitaskingAI", "url": "/multitaskingai", "icons": [{ "src": "/emblematy/srodowisko-multitaskingai-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
+}</pre>
+  </div>
+
+  <div class="eb-uwaga">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+    <p><strong>Dlaczego skróty niosą emblematy, nie ikonę aplikacji.</strong> Skrót prowadzi
+    <em>do środowiska</em>, nie do aplikacji — cztery skróty z tą samą ikoną byłyby
+    nierozróżnialne. To jedyne miejsce, w którym emblemat pełni rolę ikony na poziomie
+    systemu operacyjnego.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 11 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r11" aria-labelledby="t11">
+  <div class="eb-naglowek"><span class="eb-numer">11</span><h2 id="t11">Zasady doboru</h2></div>
+
+  <div class="eb-schemat">   Co oznaczasz tym znakiem?
+   │
+   ├─ PRODUKT / FIRMĘ (nadawcę)                    ──►  SYGNET  (lub logotyp)
+   │   pasek górny · dokument · wizytówka · stopka
+   │   │
+   │   └─ mniej niż 24 px?                         ──►  SYGNET UPROSZCZONY
+   │
+   ├─ ŚRODOWISKO (gdzie użytkownik jest)           ──►  EMBLEMAT ŚRODOWISKA
+   │   karta środowiska · boczna nawigacja
+   │   tytuł powłoki · karta sesji · skrót systemowy
+   │
+   ├─ MODUŁ / NARZĘDZIE (czym pracuje)             ──►  IKONA Z zasoby/ikony/
+   │   pozycja bocznej nawigacji · przycisk · zakładka
+   │
+   └─ APLIKACJĘ W SYSTEMIE (plik wykonywalny)      ──►  IKONA APLIKACJI
+       pulpit · pasek zadań · ekran domowy
+       lista aplikacji · karta przeglądarki (favicon)</div>
+
+  <table class="eb-tabela">
+    <thead><tr><th>Miejsce</th><th>Znak</th><th>Rozmiar</th><th>Barwa</th></tr></thead>
+    <tbody>
+      <tr><td>Pasek górny aplikacji</td><td>sygnet</td><td class="eb-l">24–28 px</td><td class="eb-l">--dn-rama-tekst + kropka --dn-sygnal-500</td></tr>
+      <tr><td>Okno startowe (ładowanie)</td><td>logo pionowy</td><td class="eb-l">≥ 96 px</td><td>barwy własne</td></tr>
+      <tr><td>Karta środowiska (strona główna)</td><td><strong>emblemat</strong></td><td class="eb-l">40 px</td><td class="eb-l">--dn-tekst</td></tr>
+      <tr><td>Boczna nawigacja — nagłówek środowiska</td><td><strong>emblemat</strong></td><td class="eb-l">20 px</td><td class="eb-l">--dn-tekst-2</td></tr>
+      <tr><td>Boczna nawigacja — pozycja modułu</td><td>ikona modułu</td><td class="eb-l">20 px</td><td class="eb-l">--dn-tekst-2 / --dn-tekst</td></tr>
+      <tr><td>Pas kart sesji</td><td><strong>emblemat</strong></td><td class="eb-l">16 px</td><td class="eb-l">--dn-tekst-2</td></tr>
+      <tr><td>Panel orkiestracji (MultitaskingAI)</td><td><strong>emblemat</strong> MultitaskingAI</td><td class="eb-l">20 px</td><td class="eb-l">--dn-tekst</td></tr>
+      <tr><td>Modal, toast, tooltip</td><td>ikona z zestawu</td><td class="eb-l">16 px</td><td>wg klasy semantycznej</td></tr>
+      <tr><td>Karta przeglądarki</td><td><strong>favicon</strong></td><td class="eb-l">16–20 px</td><td>kafel #131313</td></tr>
+      <tr><td>Pasek zadań / dok</td><td><strong>ikona aplikacji</strong></td><td class="eb-l">32–64 px</td><td>kafel #131313</td></tr>
+      <tr><td>Ekran domowy telefonu</td><td><strong>ikona maskowalna</strong></td><td class="eb-l">192 px</td><td>kafel #131313</td></tr>
+      <tr><td>Lista aplikacji systemu</td><td><strong>ikona aplikacji</strong></td><td class="eb-l">48–128 px</td><td>kafel #131313</td></tr>
+      <tr><td>Skrót do środowiska (manifest)</td><td><strong>emblemat</strong></td><td class="eb-l">192 px</td><td class="eb-l">#ECECEC</td></tr>
+      <tr><td>Papier firmowy, faktura, wizytówka</td><td>logotyp / sygnet</td><td>wg makiety</td><td>barwy własne</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Sześć zakazów</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>#</th><th>Zakaz</th></tr></thead>
+    <tbody>
+      <tr><td class="eb-l">1</td><td><strong>Emblemat środowiska nie jest znakiem marki</strong> — nie stanie na papierze firmowym, wizytówce, fakturze ani w stopce dokumentu.</td></tr>
+      <tr><td class="eb-l">2</td><td><strong>Sygnet nie jest ikoną interfejsu</strong> — nie stanie w bocznej nawigacji jako pozycja modułu ani w przycisku.</td></tr>
+      <tr><td class="eb-l">3</td><td><strong>Ikona aplikacji nie jest godłem wewnątrz aplikacji</strong> — kafel z gruntem nie pojawia się w treści okna; wewnątrz stoi sam sygnet.</td></tr>
+      <tr><td class="eb-l">4</td><td><strong>Nie miesza się pięter</strong> — cztery karty środowisk mają cztery emblematy, nie cztery sygnety.</td></tr>
+      <tr><td class="eb-l">5</td><td><strong>Nie dorabia się piątego emblematu</strong> — środowiska są cztery. Komponenty własne strefy 2 mają kafle z ikonami.</td></tr>
+      <tr><td class="eb-l">6</td><td><strong>Nie przebarwia się samej kropki emblematu.</strong></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════ 12 ═══════════════════════════ -->
+<section class="eb-rozdzial" id="r12" aria-labelledby="t12">
+  <div class="eb-naglowek"><span class="eb-numer">12</span><h2 id="t12">Inwentarz plików</h2></div>
+
+  <p>Katalog <code>03-marka/emblematy/</code> — <strong>102 pliki</strong>. Cały komplet
+  odtwarza się jednym poleceniem: <code>python3 generator-godel.py</code>.</p>
+
+  <div class="eb-schemat">03-marka/emblematy/
+├── generator-godel.py                        odtwarza cały komplet + kontrola regresji
+├── svg/                              24 pliki  drabina 16/20/24/32/48/64 · currentColor
+│   └── warianty/                     16 plików wypalona barwa: jasny · ciemny · sygnał ×2
+├── png/                              32 pliki  24/48/96/192 px × jasny/ciemny
+├── ikona-aplikacji/                  16 plików SVG ×4 · PNG ×11 · ICO ×1
+└── favicon/                          13 plików SVG ×3 · PNG ×7 · ICO ×1 · manifest · snippet</div>
+
+  <table class="eb-tabela">
+    <thead><tr><th>Katalog</th><th>Plików</th><th>Zawartość</th></tr></thead>
+    <tbody>
+      <tr><td class="eb-l">svg/</td><td class="eb-l">24</td><td>4 emblematy × 6 rozmiarów, wariant interfejsowy <code>currentColor</code></td></tr>
+      <tr><td class="eb-l">svg/warianty/</td><td class="eb-l">16</td><td>4 emblematy × 4 barwy wypalone (osadzenia bez <code>currentColor</code>)</td></tr>
+      <tr><td class="eb-l">png/</td><td class="eb-l">32</td><td>4 emblematy × 24/48/96/192 px × jasny/ciemny, kanał alfa</td></tr>
+      <tr><td class="eb-l">ikona-aplikacji/</td><td class="eb-l">16</td><td>4 źródła SVG, 11 rastrów (32…1024 + maskowalne), ICO 7-wpisowy</td></tr>
+      <tr><td class="eb-l">favicon/</td><td class="eb-l">13</td><td>3 źródła SVG, 7 rastrów, ICO 3-wpisowy, manifest, snippet</td></tr>
+      <tr><td class="eb-l">.</td><td class="eb-l">1</td><td><code>generator-godel.py</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Kontrola jakości</h3>
+  <table class="eb-tabela">
+    <thead><tr><th>#</th><th>Sprawdzenie</th><th>Wynik</th></tr></thead>
+    <tbody>
+      <tr><td class="eb-l">1</td><td>krzywe sygnetu i emblematów nietknięte</td><td><span class="eb-odznaka eb-odznaka--sukces">✓</span></td></tr>
+      <tr><td class="eb-l">2</td><td>dokładnie jedna wypełniona kropka w każdym rozmiarze</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ 24 pliki</span></td></tr>
+      <tr><td class="eb-l">3</td><td>zero <code>#000000</code></td><td><span class="eb-odznaka eb-odznaka--sukces">✓ min. #0F0F0F</span></td></tr>
+      <tr><td class="eb-l">4</td><td>kropka nie odrywa się barwą od obrysu</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ 16 wariantów</span></td></tr>
+      <tr><td class="eb-l">5</td><td>kropka sygnału widoczna w faviconie 16 px</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ 2 px błękitu</span></td></tr>
+      <tr><td class="eb-l">6</td><td>zadruk ikony maskowalnej w strefie 80 %</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ 248,4 / 409,6</span></td></tr>
+      <tr><td class="eb-l">7</td><td><code>apple-touch-icon</code> bez alfy i bez zaokrąglenia</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ RGB</span></td></tr>
+      <tr><td class="eb-l">8</td><td>ICO wielorozmiarowe odczytane poprawnie</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ 3 i 7 wpisów</span></td></tr>
+      <tr><td class="eb-l">9</td><td>manifest poprawny składniowo</td><td><span class="eb-odznaka eb-odznaka--sukces">✓ JSON</span></td></tr>
+      <tr><td class="eb-l">10</td><td>nazwy własne środowisk zgodne z dokumentacją</td><td><span class="eb-odznaka eb-odznaka--sukces">✓</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+  </main>
+</div>
+
+<!-- ══════════ O TYM OPRACOWANIU ══════════ -->
+<div class="eb-o-opracowaniu">
+  <details>
+    <summary>O tym opracowaniu</summary>
+    <div class="eb-o-tresc">
+      <h4>Co przedstawia</h4>
+      <ul>
+        <li>System godeł pochodnych Danaco Console: cztery emblematy środowisk, ikonę aplikacji z wariantem maskowalnym i favicon w trzech nośnikach.</li>
+        <li>Drabinę rozmiarową emblematów 16 / 20 / 24 / 32 / 48 / 64 px z regułą upraszczania poniżej 24 px.</li>
+        <li>Symulacje kontekstów systemowych: karta przeglądarki, pasek zadań, ekran domowy telefonu, lista aplikacji — narysowane w HTML i CSS z realnymi plikami godła.</li>
+      </ul>
+
+      <h4>Źródło w dokumentacji</h4>
+      <ul>
+        <li><code>KANON.md</code> — rozdz. 3 (znak marki i element sygnaturowy), rozdz. 4 (ikony), rozdz. 5 (komponenty), rozdz. 6 (cztery środowiska)</li>
+        <li><code>design/opracowania/design/01-kierunek/KIERUNEK.md</code> — rozdz. 3.4 (kropka sygnału), 3.5 (znak marki), 3.6 (ikony)</li>
+        <li>realne pliki <code>zasoby/marka/srodowiska/srodowisko-*.svg</code>, <code>zasoby/marka/logo/sygnet*.svg</code>, <code>zasoby/marka/ikona-aplikacji/*</code>, <code>zasoby/marka/favicon/*</code></li>
+        <li><code>zasoby/css/komponenty.css</code> — <code>.dn-karta-srodowiska-godlo</code>, <code>.dn-boczna-pozycja</code></li>
+        <li><code>zasoby/zetony/zetony.css</code> i <code>kontrasty.json</code> — wartości żetonów i pomiary kontrastu</li>
+        <li>opracowanie tekstowe: <code>03-marka/emblematy-i-ikony.md</code></li>
+      </ul>
+
+      <h4>Odwzorowane interakcje</h4>
+      <ul>
+        <li>przełącznik motywu na pasku górnym — oba motywy równoprawne, pasek pozostaje atramentowy;</li>
+        <li>boczny spis treści z podświetlaniem aktywnego rozdziału podczas przewijania;</li>
+        <li>nakładka siatki 24 × 24 i znacznik położenia kropki na czterech emblematach;</li>
+        <li>przełącznik powiększenia drabiny rozmiarowej (1 ×, 2 ×, 4 ×, 8 ×) i filtr emblematu;</li>
+        <li>nakładka pola bezpiecznego i strefy maski na ikonie aplikacji;</li>
+        <li>przełącznik maski producenta na ekranie domowym telefonu (squircle, koło, kwadrat, kropla);</li>
+        <li>kopiowanie do schowka: inline SVG każdego emblematu, snippet <code>&lt;head&gt;</code>, manifest;</li>
+        <li>karty przeglądarki i ikona na pasku zadań reagują na kliknięcie;</li>
+        <li>tętno kropki sygnału w godle paska górnego (2,4 s) — wyłączane przez <code>prefers-reduced-motion</code>.</li>
+      </ul>
+
+      <h4>Decyzje projektowe ponad źródła</h4>
+      <ul>
+        <li><strong>Emblemat pozostaje jednobarwny</strong> — kropka jest cytatem formy, nie barwy. Rozstrzyga <code>komponenty.css</code> i argument ilościowy: do 21 punktów sygnału na jednym ekranie.</li>
+        <li><strong>Obrys poniżej 24 px rośnie do 1,90 j.</strong> — kompensacja optyczna, krzywe nietknięte.</li>
+        <li><strong>WorkSpace przy 16 px traci obrys czwartego modułu</strong> — obrys i kropka na 3,3 px wnętrza sklejają się w plamę.</li>
+        <li><strong>MultitaskingAI przy 16 px nie traci niczego</strong> — trzej wykonawcy to fakt produktowy.</li>
+        <li><strong>Kompozycji ikony aplikacji nie zmieniono</strong> mimo nierównych marginesów poziomych (274,0 / 237,5 px) — jest zatwierdzona i zgodna z rastrami już wydanymi.</li>
+        <li><strong>Rastry faviconu stoją na kryjącym gruncie</strong> — raster nie przełączy barwy z motywem systemu, a znak atramentowy na ciemnym pasku kart daje 1,6 : 1.</li>
+        <li><strong>Plików w <code>zasoby/marka/</code> nie podmieniono</strong> — trzy wykryte defekty naprawiono wyłącznie w komplecie wytworzonym.</li>
+      </ul>
+
+      <h4>Dostępność</h4>
+      <ul>
+        <li>język dokumentu <code>lang="pl"</code>; nagłówki w kolejności <code>h1 → h2 → h3</code>;</li>
+        <li>spis treści jako <code>&lt;nav&gt;</code> z <code>aria-label</code>, aktywna pozycja przez <code>aria-current</code>;</li>
+        <li>przełączniki jako <code>&lt;button&gt;</code> z <code>aria-pressed</code>; grupy z <code>role="group"</code> i etykietą;</li>
+        <li>pierścień fokusu 2 px z odsunięciem 2 px na każdej kontrolce;</li>
+        <li>komunikat o skopiowaniu ogłaszany w obszarze <code>role="status"</code>;</li>
+        <li>zero atrybutu <code>disabled</code> — zgodnie z zasadą zero blokad (ADL-017);</li>
+        <li>wszystkie pary tekst/tło zmierzone — patrz rozdz. 06.</li>
+      </ul>
+    </div>
+  </details>
+</div>
+
+<footer class="eb-stopka">
+  Danaco Console — AI Operating Environment · v2.0<br>
+  © 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz
+</footer>
+
+<div class="eb-toasty" data-toasty role="status" aria-live="polite"></div>
+
+<script src="../zasoby/wspolne.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   EMBLEMATY I IKONY — warstwa zachowania. Cały JS inline, bez zależności.
+   Geometria poniżej jest DOKŁADNYM odwzorowaniem plików wytworzonych
+   w 03-marka/emblematy/svg/ — ten sam zestaw ścieżek, te same współrzędne.
+   ══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ── 1. Dane geometryczne ─────────────────────────────────────────────── */
+  var EMBLEMATY = [
+    {
+      klucz: 'srodowisko-talkin',
+      nazwa: 'TalkIn',
+      motto: 'środowisko rozmowy',
+      metafora: 'Dymek rozmowy z dwiema liniami tekstu. Druga linia jest krótsza — wypowiedź trwa. Przy jej końcu biegnie odpowiedź.',
+      kropkaOpis: 'na osi drugiej linii tekstu (cy identyczne = 10,8), 2,2 j. za jej końcem',
+      moduly: '9 modułów w bocznej nawigacji',
+      zastosowanie: 'karta środowiska · boczna nawigacja · tytuł powłoki · karta sesji · Centrum poleceń',
+      obrys: [
+        '<path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/>',
+        '<path d="M7.5 7.5h9"/>',
+        '<path d="M7.5 10.8h5"/>'
+      ],
+      kropka: [16.2, 10.8, 1.5],
+      obrys16: [
+        '<path d="M20.5 5.5a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 5.5v8A2.5 2.5 0 0 0 6 16h1v4l4.4-4H18a2.5 2.5 0 0 0 2.5-2.5Z"/>',
+        '<path d="M7.5 9.4h4.6"/>'
+      ],
+      kropka16: [16.2, 9.4, 1.9],
+      usuniete16: 'górna (dłuższa) linia tekstu'
+    },
+    {
+      klucz: 'srodowisko-workspace',
+      nazwa: 'WorkSpace',
+      motto: 'środowisko projektu',
+      metafora: 'Cztery moduły projektu o równej masie. W jednym — prawym dolnym — biegnie praca.',
+      kropkaOpis: 'geometryczny środek modułu prawego dolnego: 13,3 + 7,2/2 = 16,9 w obu osiach',
+      moduly: '9 modułów w bocznej nawigacji',
+      zastosowanie: 'karta środowiska · boczna nawigacja · kafel „Workspace (Projekt)” · Project Dashboard',
+      obrys: [
+        '<rect x="3.5" y="3.5" width="7.2" height="7.2" rx="2"/>',
+        '<rect x="13.3" y="3.5" width="7.2" height="7.2" rx="2"/>',
+        '<rect x="3.5" y="13.3" width="7.2" height="7.2" rx="2"/>',
+        '<rect x="13.3" y="13.3" width="7.2" height="7.2" rx="2"/>'
+      ],
+      kropka: [16.9, 16.9, 1.6],
+      obrys16: [
+        '<rect x="3.55" y="3.55" width="6.9" height="6.9" rx="1.4"/>',
+        '<rect x="13.55" y="3.55" width="6.9" height="6.9" rx="1.4"/>',
+        '<rect x="3.55" y="13.55" width="6.9" height="6.9" rx="1.4"/>'
+      ],
+      kropka16: [17, 17, 3],
+      usuniete16: 'obrys czwartego modułu — kropka przejmuje jego miejsce'
+    },
+    {
+      klucz: 'srodowisko-codestudio',
+      nazwa: 'CodeStudio',
+      motto: 'środowisko wytwarzania',
+      metafora: 'Ramka okna terminala, grot zachęty „>” i linia wyniku pod nim. Grot jest jedynym bezpośrednim cytatem z sygnetu w całym zestawie.',
+      kropkaOpis: 'prawy górny róg wnętrza ramki — miejsce wskaźnika procesu; luz do ramki 0,225 j.',
+      moduly: '8 modułów w bocznej nawigacji',
+      zastosowanie: 'karta środowiska · boczna nawigacja · Terminal Tabs · Code Editor · Build Output',
+      obrys: [
+        '<rect x="3" y="4" width="18" height="16" rx="2.5"/>',
+        '<path d="M7 9.2l3.1 2.8L7 14.8"/>',
+        '<path d="M12.6 15.4h4"/>'
+      ],
+      kropka: [18.4, 9.9, 1.5],
+      obrys16: [
+        '<rect x="3.2" y="4.2" width="17.6" height="15.6" rx="2.2"/>',
+        '<path d="M7.2 9.4l3.1 2.8-3.1 2.8"/>'
+      ],
+      kropka16: [17.4, 10, 1.85],
+      usuniete16: 'linia wyniku pod grotem'
+    },
+    {
+      klucz: 'srodowisko-multitaskingai',
+      nazwa: 'MultitaskingAI',
+      motto: 'środowisko orkiestracji',
+      metafora: 'Wypełniony rdzeń w środku (Coordinator) i trzy węzły obrysowe (Executor 1, Executor 2, Executor 3 / Validator) połączone z rdzeniem.',
+      kropkaOpis: 'geometryczny środek siatki (12 · 12) — jedyny emblemat, w którym kropka nie jest satelitą, lecz rdzeniem; największy promień w zestawie',
+      moduly: 'panel orkiestracji — 6 sekcji zamiast modułów',
+      zastosowanie: 'karta środowiska · panel orkiestracji · Coordinator Chat · Results Analyzer · plakietka roli',
+      obrys: [
+        '<circle cx="12" cy="4.6" r="1.9"/>',
+        '<circle cx="4.9" cy="16.4" r="1.9"/>',
+        '<circle cx="19.1" cy="16.4" r="1.9"/>',
+        '<path d="M12 9.4V6.5"/>',
+        '<path d="M9.8 13.4l-3.3 1.9"/>',
+        '<path d="M14.2 13.4l3.3 1.9"/>'
+      ],
+      kropka: [12, 12, 2.6],
+      obrys16: [
+        '<circle cx="12" cy="4.6" r="2"/>',
+        '<circle cx="4.9" cy="16.4" r="2"/>',
+        '<circle cx="19.1" cy="16.4" r="2"/>',
+        '<path d="M12 9.1V6.6"/>',
+        '<path d="M9.55 13.55l-2.95 1.8"/>',
+        '<path d="M14.45 13.55l2.95 1.8"/>'
+      ],
+      kropka16: [12, 12, 2.9],
+      usuniete16: 'nic — usunięcie gałęzi zmienia treść znaku'
+    }
+  ];
+
+  var ROZMIARY = [16, 20, 24, 32, 48, 64];
+
+  /* ── 2. Wytwarzanie SVG ───────────────────────────────────────────────── */
+  function svgEmblematu(e, rozmiar, barwa) {
+    var upr = rozmiar <= 16;
+    var obrys = upr ? e.obrys16 : e.obrys;
+    var k = upr ? e.kropka16 : e.kropka;
+    var w = upr ? '1.9' : (rozmiar < 24 ? '1.9' : '1.75');
+    var b = barwa || 'currentColor';
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + rozmiar + '" height="' + rozmiar +
+      '" viewBox="0 0 24 24" role="img" aria-label="Środowisko ' + e.nazwa +
+      '" fill="none" stroke="' + b + '" stroke-width="' + w +
+      '" stroke-linecap="round" stroke-linejoin="round">' + obrys.join('') +
+      '<circle cx="' + k[0] + '" cy="' + k[1] + '" r="' + k[2] + '" fill="' + b + '" stroke="none"/></svg>';
+  }
+
+  function wstaw(el, html) { el.innerHTML = html; }
+
+  /* ── 3. Rozdz. 01 — trzy piętra ───────────────────────────────────────── */
+  var SYGNET_48 =
+    '<svg width="48" height="48" viewBox="0 0 96 96" role="img" aria-label="Sygnet Delegacja">' +
+    '<path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>' +
+    '<path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>' +
+    '<circle cx="83" cy="63.5" r="6.5" fill="#3B6FE0"/></svg>';
+  var IKONA_MODULU_48 =
+    '<svg width="48" height="48" viewBox="0 0 24 24" role="img" aria-label="Ikona modułu Terminal" ' +
+    'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3"/><path d="M12.5 15h4.5"/></svg>';
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pietra]'), function (host) {
+    var h = '';
+    h += '<div class="eb-stopien"><div class="eb-stopien-znak">' + SYGNET_48 +
+         '</div><div class="eb-stopien-podpis">1 · sygnet</div></div>';
+    EMBLEMATY.forEach(function (e) {
+      h += '<div class="eb-stopien"><div class="eb-stopien-znak">' + svgEmblematu(e, 48) +
+           '</div><div class="eb-stopien-podpis">2 · ' + e.nazwa + '</div></div>';
+    });
+    h += '<div class="eb-stopien"><div class="eb-stopien-znak">' + IKONA_MODULU_48 +
+         '</div><div class="eb-stopien-podpis">3 · terminal</div></div>';
+    wstaw(host, h);
+  });
+
+  /* ── 4. Rozdz. 02 — lupy z nakładką siatki ────────────────────────────── */
+  function siatkaSVG() {
+    var g = '';
+    for (var i = 0; i <= 24; i += 2) {
+      g += '<line class="eb-siatka-linia" x1="' + i + '" y1="0" x2="' + i + '" y2="24"/>';
+      g += '<line class="eb-siatka-linia" x1="0" y1="' + i + '" x2="24" y2="' + i + '"/>';
+    }
+    g += '<line class="eb-siatka-os" x1="12" y1="0" x2="12" y2="24"/>';
+    g += '<line class="eb-siatka-os" x1="0" y1="12" x2="24" y2="12"/>';
+    return '<svg class="eb-siatka" viewBox="0 0 24 24" aria-hidden="true">' + g + '</svg>';
+  }
+  function znacznikSVG(k) {
+    return '<svg class="eb-znacznik" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<rect class="eb-pas-kropek" x="16.2" y="0" width="2.2" height="24"/>' +
+      '<circle class="eb-znacznik-pierscien" cx="' + k[0] + '" cy="' + k[1] + '" r="' + (k[2] + 2.2) + '"/>' +
+      '<line class="eb-znacznik-nitka" x1="' + k[0] + '" y1="0" x2="' + k[0] + '" y2="24"/>' +
+      '<line class="eb-znacznik-nitka" x1="0" y1="' + k[1] + '" x2="24" y2="' + k[1] + '"/></svg>';
+  }
+
+  var lupa = document.querySelector('[data-lupa]');
+  if (lupa) {
+    var hl = '';
+    EMBLEMATY.forEach(function (e) {
+      hl += '<div class="eb-lupa-poz">' +
+        '<div class="eb-scena" data-scena data-siatka="0" data-znacznik="0">' +
+        '<div class="eb-scena-znak" style="position:absolute;inset:0">' +
+        svgEmblematu(e, 216).replace('width="216" height="216"', 'width="100%" height="100%"') +
+        '</div>' + siatkaSVG() + znacznikSVG(e.kropka) + '</div>' +
+        '<div class="eb-podpis-scena">' + e.nazwa + ' · kropka ' +
+        String(e.kropka[0]).replace('.', ',') + ' · ' + String(e.kropka[1]).replace('.', ',') +
+        ' · r ' + String(e.kropka[2]).replace('.', ',') + '</div></div>';
+    });
+    wstaw(lupa, hl);
+  }
+
+  function przelacznikNakladki(selektorPrzycisku, atrybut) {
+    var btn = document.querySelector(selektorPrzycisku);
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var wl = btn.getAttribute('aria-pressed') !== 'true';
+      btn.setAttribute('aria-pressed', wl ? 'true' : 'false');
+      btn.classList.toggle('dn-btn--wybrany', wl);
+      Array.prototype.forEach.call(document.querySelectorAll('[data-scena]'), function (s) {
+        s.setAttribute(atrybut, wl ? '1' : '0');
+      });
+    });
+  }
+  przelacznikNakladki('[data-przelacz-siatke]', 'data-siatka');
+  przelacznikNakladki('[data-przelacz-znacznik]', 'data-znacznik');
+
+  /* ── 5. Rozdz. 03 — karty emblematów z kopiowaniem ────────────────────── */
+  var karty = document.querySelector('[data-karty]');
+  if (karty) {
+    var hk = '';
+    EMBLEMATY.forEach(function (e, i) {
+      var kod = svgEmblematu(e, 24);
+      hk += '<article class="eb-karta">' +
+        '<div class="eb-karta-glowa">' +
+          '<div class="eb-karta-godlo">' + svgEmblematu(e, 40) + '</div>' +
+          '<div><div class="eb-karta-tytul">' + e.nazwa + '</div>' +
+          '<div class="eb-karta-motto">' + e.motto + '</div></div>' +
+        '</div>' +
+        '<div class="eb-karta-cialo">' +
+          '<p>' + e.metafora + '</p>' +
+          '<ul class="eb-lista-cech">' +
+            '<li><b>Kropka</b><span>' + e.kropkaOpis + '</span></li>' +
+            '<li><b>Elementów</b><span>' + e.obrys.length + ' kształtów obrysowych + 1 kropka</span></li>' +
+            '<li><b>Struktura</b><span>' + e.moduly + '</span></li>' +
+            '<li><b>Zastosowanie</b><span>' + e.zastosowanie + '</span></li>' +
+            '<li><b>Przy 16 px</b><span>ustępuje: ' + e.usuniete16 + '</span></li>' +
+          '</ul>' +
+          '<div class="eb-blok-kodu" style="margin-bottom:0">' +
+            '<div class="eb-blok-kodu-glowa">' +
+              '<span class="eb-blok-kodu-nazwa">' + e.klucz + '-24.svg</span>' +
+              '<button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-kopiuj="#kod-' + e.klucz + '">Kopiuj SVG</button>' +
+            '</div>' +
+            '<pre id="kod-' + e.klucz + '">' + kod.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>' +
+          '</div>' +
+        '</div></article>';
+    });
+    wstaw(karty, hk);
+  }
+
+  /* ── 6. Rozdz. 04 — drabina rozmiarowa ────────────────────────────────── */
+  var stanDrabiny = { zoom: 1, filtr: 'wszystkie' };
+
+  function rysujDrabine() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-drabina-plansza]'), function (host) {
+      var lista = EMBLEMATY.filter(function (e) {
+        return stanDrabiny.filtr === 'wszystkie' || e.klucz === stanDrabiny.filtr;
+      });
+      var h = '';
+      lista.forEach(function (e) {
+        h += '<div style="margin-bottom:var(--dn-od-5)">' +
+          '<div class="eb-stopien-podpis" style="margin-bottom:var(--dn-od-2)">' + e.nazwa + '</div>' +
+          '<div class="eb-drabina">';
+        ROZMIARY.forEach(function (r) {
+          var px = r * stanDrabiny.zoom;
+          var svg = svgEmblematu(e, r).replace(
+            'width="' + r + '" height="' + r + '"',
+            'width="' + px + '" height="' + px + '" style="image-rendering:auto"'
+          );
+          h += '<div class="eb-stopien' + (r <= 16 ? ' eb-stopien--uproszczony' : '') + '">' +
+            '<div class="eb-stopien-znak" style="min-height:' + Math.max(64, px) + 'px">' + svg + '</div>' +
+            '<div class="eb-stopien-podpis">' + r + ' px' + (r <= 16 ? ' ·' : '') + '</div></div>';
+        });
+        h += '</div></div>';
+      });
+      wstaw(host, h);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-echo-zoom]'), function (el) {
+      el.textContent = stanDrabiny.zoom + ' ×';
+    });
+  }
+
+  function grupaPrzyciskow(selektor, nazwaAtrybutu, przyWyborze) {
+    var btns = document.querySelectorAll(selektor);
+    Array.prototype.forEach.call(btns, function (b) {
+      b.addEventListener('click', function () {
+        Array.prototype.forEach.call(btns, function (x) {
+          x.setAttribute('aria-pressed', 'false');
+          x.classList.remove('dn-btn--wybrany');
+        });
+        b.setAttribute('aria-pressed', 'true');
+        b.classList.add('dn-btn--wybrany');
+        przyWyborze(b.getAttribute(nazwaAtrybutu));
+      });
+      if (b.getAttribute('aria-pressed') === 'true') b.classList.add('dn-btn--wybrany');
+    });
+  }
+
+  grupaPrzyciskow('[data-zoom]', 'data-zoom', function (v) {
+    stanDrabiny.zoom = parseInt(v, 10) || 1;
+    rysujDrabine();
+  });
+  grupaPrzyciskow('[data-drabina]', 'data-drabina', function (v) {
+    stanDrabiny.filtr = v;
+    rysujDrabine();
+  });
+  rysujDrabine();
+
+  /* ── 7. Rozdz. 06 — warianty barwne ───────────────────────────────────── */
+  var BARWY = {
+    jasny: [['#181818', 'atrament — --dn-tekst'], ['#2457C9', 'sygnał — --dn-sygnal']],
+    ciemny: [['#ECECEC', 'biel — --dn-tekst'], ['#8FB2F5', 'sygnał — --dn-sygnal']]
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('[data-barwy]'), function (host) {
+    var tryb = host.getAttribute('data-barwy');
+    var h = '';
+    BARWY[tryb].forEach(function (para) {
+      EMBLEMATY.forEach(function (e) {
+        h += '<div class="eb-stopien"><div class="eb-stopien-znak">' +
+          svgEmblematu(e, 40, para[0]) + '</div>' +
+          '<div class="eb-stopien-podpis">' + para[0] + '</div></div>';
+      });
+    });
+    wstaw(host, h);
+  });
+
+  /* ── 8. Rozdz. 07 — nakładka ikony aplikacji ──────────────────────────── */
+  var btnNakl = document.querySelector('[data-przelacz-nakladke]');
+  if (btnNakl) {
+    btnNakl.addEventListener('click', function () {
+      var wl = btnNakl.getAttribute('aria-pressed') !== 'true';
+      btnNakl.setAttribute('aria-pressed', wl ? 'true' : 'false');
+      btnNakl.classList.toggle('dn-btn--wybrany', wl);
+      Array.prototype.forEach.call(document.querySelectorAll('[data-ramka-ikony]'), function (r) {
+        r.setAttribute('data-nakladka', wl ? '1' : '0');
+      });
+    });
+  }
+
+  /* ── 9. Rozdz. 09 — konteksty ─────────────────────────────────────────── */
+  var kartyPrzegl = document.querySelectorAll('[data-karta-przegl]');
+  var adres = document.querySelector('[data-adres-przegl]');
+  var ADRESY = { '1': 'console.danaco-group.pl/', '2': 'console.danaco-group.pl/codestudio' };
+  Array.prototype.forEach.call(kartyPrzegl, function (k) {
+    k.addEventListener('click', function () {
+      Array.prototype.forEach.call(kartyPrzegl, function (x) { x.setAttribute('aria-selected', 'false'); });
+      k.setAttribute('aria-selected', 'true');
+      if (adres) adres.textContent = ADRESY[k.getAttribute('data-karta-przegl')] || ADRESY['1'];
+    });
+  });
+
+  var zadanie = document.querySelector('[data-zadanie]');
+  if (zadanie) {
+    zadanie.addEventListener('click', function () {
+      var akt = zadanie.hasAttribute('data-aktywne');
+      if (akt) { zadanie.removeAttribute('data-aktywne'); zadanie.setAttribute('aria-label', 'Danaco Console — okno zminimalizowane'); }
+      else { zadanie.setAttribute('data-aktywne', ''); zadanie.setAttribute('aria-label', 'Danaco Console — okno aktywne'); }
+      komunikat(akt ? 'Okno zminimalizowane — wskaźnik pod kaflem znika.' : 'Okno przywrócone — wskaźnik pod kaflem wraca.');
+    });
+  }
+
+  grupaPrzyciskow('[data-maska]', 'data-maska', function (v) {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-kafel-app]'), function (k) {
+      k.className = 'eb-app-kafel eb-maska--' + v;
+    });
+  });
+
+  /* karty środowisk */
+  var hostKart = document.querySelector('[data-karty-srodowisk]');
+  if (hostKart) {
+    var hs = '';
+    EMBLEMATY.forEach(function (e, i) {
+      hs += '<button class="dn-karta-srodowiska" type="button" aria-current="' + (i === 0 ? 'true' : 'false') +
+        '" data-karta-srod style="text-align:left">' +
+        '<div class="dn-karta-srodowiska-godlo">' + svgEmblematu(e, 40) + '</div>' +
+        '<div class="dn-karta-srodowiska-tytul" style="font-size:var(--dn-fs-xl)">' + e.nazwa + '</div>' +
+        '<div class="dn-karta-srodowiska-motto">' + e.moduly + '</div>' +
+        '</button>';
+    });
+    wstaw(hostKart, hs);
+    var ks = document.querySelectorAll('[data-karta-srod]');
+    Array.prototype.forEach.call(ks, function (k) {
+      k.addEventListener('click', function () {
+        Array.prototype.forEach.call(ks, function (x) { x.setAttribute('aria-current', 'false'); });
+        k.setAttribute('aria-current', 'true');
+      });
+    });
+  }
+
+  /* ── 10. Kopiowanie do schowka (zapas dla file://) ────────────────────── */
+  function doSchowka(tekst, etykieta) {
+    function zapas() {
+      var ta = document.createElement('textarea');
+      ta.value = tekst;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); komunikat('Skopiowano: ' + etykieta); }
+      catch (e) { komunikat('Zaznacz treść i skopiuj ręcznie (Ctrl+C).'); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(tekst).then(function () {
+        komunikat('Skopiowano: ' + etykieta);
+      })['catch'](zapas);
+    } else { zapas(); }
+  }
+
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-kopiuj]') : null;
+    if (!b) return;
+    var cel = document.querySelector(b.getAttribute('data-kopiuj'));
+    if (!cel) return;
+    var nazwa = b.getAttribute('data-kopiuj').replace('#kod-', '');
+    doSchowka(cel.textContent, nazwa);
+  });
+
+  var toasty = document.querySelector('[data-toasty]');
+  function komunikat(tresc) {
+    if (!toasty) return;
+    var t = document.createElement('div');
+    t.className = 'eb-toast';
+    t.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg>' +
+      '<span></span>';
+    t.querySelector('span').textContent = tresc;
+    toasty.appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+  }
+
+  /* ── 11. Podświetlanie spisu treści ───────────────────────────────────── */
+  var odnosniki = document.querySelectorAll('.eb-spis a');
+  var rozdzialy = document.querySelectorAll('.eb-rozdzial');
+  function ustawAktywny(id) {
+    Array.prototype.forEach.call(odnosniki, function (a) {
+      a.setAttribute('aria-current', a.getAttribute('href') === '#' + id ? 'true' : 'false');
+    });
+  }
+  if ('IntersectionObserver' in window && rozdzialy.length) {
+    var obs = new IntersectionObserver(function (wpisy) {
+      var widoczne = wpisy.filter(function (w) { return w.isIntersecting; });
+      if (!widoczne.length) return;
+      widoczne.sort(function (a, b) { return a.boundingClientRect.top - b.boundingClientRect.top; });
+      ustawAktywny(widoczne[0].target.id);
+    }, { rootMargin: '-88px 0px -66% 0px', threshold: 0 });
+    Array.prototype.forEach.call(rozdzialy, function (r) { obs.observe(r); });
+  }
+  ustawAktywny('r01');
+
+})();
+</script>
+</body>
+</html>

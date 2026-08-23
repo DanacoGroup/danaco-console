@@ -1,0 +1,90 @@
+#!/bin/sh
+# Skrypt poinstalacyjny pakietu serwera Danaco Console.
+#
+# Robi trzy rzeczy i ani jednej więcej: zakłada konto usługi, wprowadza jednostkę
+# systemd do obiegu i nazywa Operatorowi tę część arsenału, której apt nie
+# niesie. Arsenału NIE stawia sam — instalacja pakietów w trakcie postinst
+# weszłaby na blokadę dpkg trzymaną przez apt, który ten skrypt właśnie
+# uruchomił. Od stawiania arsenału jest osobny skrypt, wskazany na końcu.
+set -e
+
+KONTO=danaco-console
+KATALOG_DANYCH=/var/lib/danaco-console
+ARSENAL=/opt/danaco-console/scripts/arsenal-serwera.sh
+
+case "$1" in
+configure)
+	# ── Konto usługi ─────────────────────────────────────────────────────
+	# Konto systemowe bez powłoki i bez katalogu domowego do logowania:
+	# rdzeń ma pracować, nie przyjmować sesji.
+	if ! getent group "$KONTO" >/dev/null; then
+		addgroup --system "$KONTO"
+	fi
+	if ! getent passwd "$KONTO" >/dev/null; then
+		adduser --system --ingroup "$KONTO" \
+			--home "$KATALOG_DANYCH" --no-create-home \
+			--gecos "Danaco Console" --shell /usr/sbin/nologin "$KONTO"
+	fi
+
+	# Grupy urządzeń — port szeregowy w module Terminal i skaner w cyfryzacji
+	# Studia. Dopisanie jest warunkowe: brak grupy nie jest błędem instalacji,
+	# tylko brakiem tej klasy urządzeń na maszynie.
+	for grupa in dialout scanner video plugdev; do
+		if getent group "$grupa" >/dev/null; then
+			adduser "$KONTO" "$grupa" >/dev/null 2>&1 || true
+		fi
+	done
+
+	# ── Katalog danych ───────────────────────────────────────────────────
+	# Jednostka zakłada go sama (StateDirectory), ale pakiet zakłada go tu
+	# także dla uruchomienia z ręki, poza systemd.
+	mkdir -p "$KATALOG_DANYCH/profile"
+	chown -R "$KONTO:$KONTO" "$KATALOG_DANYCH"
+	chmod 0750 "$KATALOG_DANYCH"
+
+	# Nastawy Operatora mogą nieść sekret konta nadawczego i klucz TLS —
+	# do czytania wyłącznie dla konta usługi i administratora.
+	if [ -f /etc/danaco-console/srodowisko ]; then
+		chown root:"$KONTO" /etc/danaco-console/srodowisko
+		chmod 0640 /etc/danaco-console/srodowisko
+	fi
+
+	# ── Jednostka systemd ────────────────────────────────────────────────
+	if [ -d /run/systemd/system ]; then
+		systemctl daemon-reload >/dev/null 2>&1 || true
+		systemctl enable danaco-console.service >/dev/null 2>&1 || true
+		if [ -n "$2" ]; then
+			# Aktualizacja pakietu — usługa wraca w nowej postaci.
+			systemctl try-restart danaco-console.service >/dev/null 2>&1 || true
+		else
+			systemctl start danaco-console.service >/dev/null 2>&1 || true
+		fi
+	fi
+
+	# ── Co jeszcze zostało do postawienia ────────────────────────────────
+	# Wykaz bierze rdzeń z własnego rejestru deklaracji (--wykaz-zaleznosci);
+	# ten skrypt go nie przepisuje, żeby druga lista nie rozjechała się
+	# z pierwszą.
+	echo "Danaco Console 1.0.0 — serwer postawiony."
+	echo "  usługa:    systemctl status danaco-console   (port 17870)"
+	echo "  dane:      $KATALOG_DANYCH"
+	echo "  nastawy:   /etc/danaco-console/srodowisko (TLS, konto nadawcze)"
+	echo "  dokumenty: /usr/share/doc/danaco-console"
+	echo ""
+	echo "Arsenał spoza apt (Real-ESRGAN, rembg, piper wraz z głosami, warsztat Go,"
+	echo "prettier, eslint, kubectl, PowerShell) nie stoi jeszcze. Wykaz i postawienie:"
+	if [ -x "$ARSENAL" ]; then
+		echo "  sudo $ARSENAL plan      # co brakuje"
+		echo "  sudo $ARSENAL postaw    # postaw"
+	else
+		echo "  scripts/arsenal-serwera.sh plan|postaw z drzewa budowy"
+	fi
+	;;
+abort-upgrade | abort-remove | abort-deconfigure) ;;
+*)
+	echo "postinst: nieznane wywołanie: $1" >&2
+	exit 1
+	;;
+esac
+
+exit 0

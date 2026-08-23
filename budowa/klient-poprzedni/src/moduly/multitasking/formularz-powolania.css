@@ -1,0 +1,28 @@
+/* ============================================================================
+   DANACO CONSOLE — MULTITASKINGAI · FORMULARZ POWOŁANIA PODAGENTA
+   ----------------------------------------------------------------------------
+   Rozkład formularza `subagent.spawn` w panelu Subagent Network. Barwy
+   i odstępy biorą się wyłącznie z żetonów motywu `--dn-*`, więc oba motywy
+   obsługują się same. Wygląd pól i przycisku pochodzi z biblioteki `dn-*`;
+   tutaj leży wyłącznie rozkład, którego biblioteka nie ma.
+   ============================================================================ */
+
+@import '../../modele/modele.css';
+
+.dm-powolanie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+
+.dm-powolanie__pole {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}

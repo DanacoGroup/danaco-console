@@ -1,0 +1,437 @@
+/* ============================================================================
+   DANACO CONSOLE — MODUŁ TERMINAL (sześć okien operacyjnych)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
+   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
+   Tutaj leży wyłącznie rozkład okien modułu, warstwy widoczności, odróżnienie
+   trzech stanów obowiązkowych (ładowanie, pustka, błąd) oraz to, bez czego
+   konsola nie działa: przewijanie ogona wyjścia i czcionka o stałej szerokości
+   znaku.
+   ============================================================================ */
+
+.dt-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Okno wiodące na całej szerokości — z niego biorą się karty i polecenia. */
+.dt-modul__gora {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dn-od-4);
+}
+
+/* Pas obserwacyjny: konsola szersza od monitora, bo niesie strumień. */
+.dt-modul__dol {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--dn-od-4);
+}
+
+/* Pas rozszerzeń: trzy okna przygotowujące pracę, którą wykonuje okno wiodące. */
+.dt-modul__rozszerzenia {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+}
+
+/* Pas nastaw wspólnych modułu — widoczność warstw i paleta poleceń. */
+.dt-modul__pas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+
+@media (max-width: 1100px) {
+  .dt-modul__dol,
+  .dt-modul__rozszerzenia {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Warstwy widoczności ────────────────────────────────────────────────────
+   Widoczność podstawowa zdejmuje z pola widzenia rozwinięcia kontekstowe
+   i funkcje eksperckie. To nie jest blokada i nie wolno jej z blokadą mylić:
+   element nie dostaje `disabled`, nie zmienia się w wygaszony i nie przestaje
+   działać — droga do niego prowadzi paletą poleceń albo skrótem. */
+
+.dt-modul[data-widocznosc='podstawowa'] [data-warstwa='kontekstowa'],
+.dt-modul[data-widocznosc='podstawowa'] [data-warstwa='ekspercka'] {
+  display: none;
+}
+
+/* Układ okna, jego pasów i ciała daje biblioteka (`komponenty/okno.css`).
+   Modułowi zostaje jedno: rozmiar pisma konsoli, przestawiany z okna kart
+   przyciskami A– / A+, i uchwyt dla przełącznika zawijania wierszy. */
+.dt-okno {
+  font-size: var(--dt-pismo, 100%);
+}
+
+/* Podział widoku karty — opis karty i jej wyjście obok siebie. To układ
+   widoku, nie druga powłoka: kontrakt nie zna panelu wewnątrz karty. */
+.dt-okno[data-podzial-widoku='true'] .dt-tresc {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+/* Schemat barw obszaru wyjścia — trzy nastawy złożone wyłącznie z żetonów
+   motywu. Nastawa stoi na węźle modułu, bo ten sam strumień niosą trzy okna. */
+.dt-modul[data-schemat='atrament'] .dt-konsola {
+  background: var(--dn-atrament);
+  color: var(--dn-atrament-tekst);
+}
+
+.dt-modul[data-schemat='pergamin'] .dt-konsola {
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst);
+}
+
+.dt-modul[data-schemat='kontrast'] .dt-konsola {
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+  border: 1px solid var(--dn-obrys-mocny);
+}
+
+/* ── Pasek kart ─────────────────────────────────────────────────────────── */
+
+.dt-pasek-kart {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.dt-karta__opakowanie {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Zakładka niesie znak przypięcia przed nazwą karty — stąd układ wierszowy. */
+.dt-karta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+.dt-karta[data-ognisko='true'] {
+  font-weight: var(--dn-fw-polgruba);
+  text-decoration: underline;
+}
+
+/* ── Konsola wyjścia ────────────────────────────────────────────────────── */
+
+.dt-konsola {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  max-height: 24rem;
+  overflow: auto;
+  font-family: var(--dn-ff-mono);
+  white-space: pre;
+}
+
+/* Zawijanie jest przełącznikiem okna, więc steruje nim znacznik na ramie. */
+.dt-okno[data-zawijanie='true'] .dt-konsola {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.dt-konsola__wiersz[data-rodzaj='error'] {
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+.dt-odtwarzanie {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* Podzielony widok strumienia — dwa zawężenia tego samego bufora obok siebie.
+   Podpis nad każdą taflą jest obowiązkowy: bez niego nie da się odróżnić
+   strumienia zbiorczego od strumienia jednej karty. */
+.dt-tafle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.dt-tafla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-height: 0;
+}
+
+.dt-tafla__podpis {
+  margin: 0;
+  color: var(--dn-tekst-2);
+}
+
+@media (max-width: 1100px) {
+  .dt-tafle {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Ogon wyjścia w karcie okna wiodącego ───────────────────────────────────
+   Karta pokazuje wyjście, nie tylko opis karty. Stoi pod listą metadanych,
+   bierze wiersze z tego samego bufora co Output Console i jest podglądem —
+   dlatego niższy niż konsola. Kreska u góry oddziela opis od wyjścia; barwa
+   i odstęp pochodzą z żetonów motywu. */
+
+.dt-ogon-karty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys);
+}
+
+.dt-ogon-karty__podpis {
+  margin: 0;
+}
+
+.dt-ogon-karty__pusto {
+  margin: 0;
+  color: var(--dn-tekst-2);
+}
+
+.dt-ogon-karty .dt-konsola {
+  max-height: 14rem;
+}
+
+/* ── Podgląd wyjścia procesu (terminal.output.read) ─────────────────────────
+   Rozwija się pod pozycją wykazu Process Monitora, więc wcięcie i kreska po
+   lewej wiążą go wzrokowo z procesem, którego dotyczy. Dwa strumienie stoją
+   jeden pod drugim i każdy ma podpis — bez podpisów nie dałoby się odróżnić
+   pustego stderr od stderr, którego nie pokazano. */
+
+.dt-podglad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-2);
+  padding-left: var(--dn-od-3);
+  border-left: 2px solid var(--dn-obrys);
+}
+
+.dt-podglad__stan {
+  margin: 0;
+}
+
+/* Proces zakończony błędem mówi to tą samą barwą co stan błędu okna — żeton jest
+   ten sam, więc nie ma tu drugiej definicji „czerwonego”. */
+.dt-podglad[data-stan='failed'] .dt-podglad__stan {
+  color: var(--dn-blad-tekst);
+}
+
+.dt-podglad__przyciecie {
+  margin: 0;
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+.dt-podglad__strumien {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-height: 0;
+}
+
+.dt-podglad__podpis {
+  margin: 0;
+}
+
+.dt-podglad__pusty {
+  margin: 0;
+  color: var(--dn-tekst-2);
+}
+
+.dt-podglad__tresc {
+  max-height: 16rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ── Wykazy i pozycje ───────────────────────────────────────────────────── */
+
+.dt-wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.dt-pozycja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+.dt-pozycja__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.dt-pozycja[data-przypiety='true'] {
+  border-width: 2px;
+}
+
+/* Pozycja zakończona błędem. Barwa jest tu dopowiedzeniem, nie nośnikiem stanu:
+   stan stoi słowem w opisie każdej pozycji. */
+.dt-pozycja[data-stan='failed'] {
+  border-color: var(--dn-blad-obrys);
+}
+
+.dt-grupa {
+  margin: var(--dn-od-3) 0 var(--dn-od-1);
+}
+
+.dt-opis-karty {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--dn-od-1) var(--dn-od-3);
+  margin: 0;
+}
+
+/* ── Sekcje okien zarządcy i kreatora ───────────────────────────────────────
+   Wszystkie sekcje trzech okien pasa rozszerzeń mają jeden kształt: podpis,
+   zdanie objaśniające i wykaz. Jedna reguła zamiast siedmiu bliźniaczych —
+   inaczej odstęp w jednej sekcji rozjechałby się z odstępem w pozostałych. */
+
+.dt-hosty,
+.dt-sesje,
+.dt-zadania,
+.dt-harmonogram,
+.dt-kolejki,
+.dt-potok,
+.dt-historia,
+.dt-biblioteka,
+.dt-parametry,
+.dt-uwagi,
+.dt-zaleznosci,
+.dt-skroty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dt-hosty__podpis,
+.dt-sesje__podpis,
+.dt-zadania__podpis,
+.dt-harmonogram__podpis,
+.dt-kolejki__podpis,
+.dt-potok__podpis,
+.dt-historia__podpis,
+.dt-biblioteka__podpis,
+.dt-parametry__podpis,
+.dt-uwagi__podpis,
+.dt-zaleznosci__podpis,
+.dt-skroty__podpis {
+  margin: 0;
+}
+
+/* Wykaz zależności zewnętrznych i wykaz skrótów: nazwa i zdanie w dwóch
+   kolumnach, nazwa krojem danych — to identyfikator, nie treść. */
+.dt-zaleznosci__wykaz,
+.dt-skroty__wykaz {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--dn-od-1) var(--dn-od-3);
+  margin: 0;
+}
+
+.dt-zaleznosci__wykaz dt,
+.dt-skroty__wykaz dt {
+  font-family: var(--dn-ff-mono);
+}
+
+.dt-zaleznosci {
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+}
+
+/* Skrót należący do okna spoza tego złożenia — odróżniony etykietą w treści
+   i wyciszeniem nazwy, nie samym kolorem. */
+.dt-skroty__wykaz dt[data-poza='zlozenie'] {
+  color: var(--dn-tekst-2);
+}
+
+/* Formularz parametrów skryptu: etykieta, pole i objaśnienie w jednym wierszu. */
+.dt-parametry__wiersz {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: var(--dn-od-1) var(--dn-od-3);
+}
+
+/* Edytor treści skryptu i pole kroków potoku — dane, więc krój o stałej
+   szerokości znaku; bez zawijania wiersz skryptu przestaje być czytelny. */
+.dt-edytor,
+.dt-potok__pole {
+  font-family: var(--dn-ff-mono);
+  white-space: pre-wrap;
+}
+
+/* Pole wyboru pliku stoi w pasku narzędzi obok pól tekstowych. */
+.dt-plik {
+  padding: var(--dn-od-1);
+}
+
+/* Paleta poleceń: uchwyt menu wraz ze zdaniem o wybranej pozycji katalogu. */
+.dt-paleta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.dt-paleta__objasnienie {
+  margin: 0;
+  flex: 1 1 20rem;
+}
+
+/* ── Trzy stany obowiązkowe ─────────────────────────────────────────────── */
+
+.dt-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.dt-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+}
+
+.dt-stan[data-stan='ladowanie'],
+.dt-stan[data-stan='pusto'] {
+  color: var(--dn-tekst-2);
+}
+
+.dt-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.dt-tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}

@@ -1,0 +1,373 @@
+/* ============================================================================
+   Danaco Console — moduł Developer (pięć okien operacyjnych)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy, ani jednego rozmiaru czcionki: wszystko
+   pochodzi z żetonów motywu (`--dn-*`) i z biblioteki `komponenty/`.
+   Tutaj leży wyłącznie rozkład pięciu okien modułu — Code Editor (wiodące),
+   Project Tree (pomocnicze), Git Panel (zarządca), Build Output i Run & Debug
+   (monitor), Dev Tools (pomocnicze) — odróżnienie trzech stanów obowiązkowych
+   oraz oznaczenie wagi zgłoszeń budowania i konfliktów repozytorium.
+   ============================================================================ */
+
+.mdev-modul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Pas kodu: drzewo projektu przy edytorze, który jest oknem wiodącym. */
+.mdev-modul__gora {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 5fr);
+  gap: var(--dn-od-4);
+  min-height: 0;
+}
+
+/* Pas repozytorium: zarządca zmian obok monitora budowania. */
+.mdev-modul__srodek {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+}
+
+/* Pas integracji: Dev Tools na pełnej szerokości — kolumna zakładek niesie
+   wykazy zależności zewnętrznych, którym wąska kolumna łamałaby wiersze. */
+.mdev-modul__dol {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--dn-od-4);
+}
+
+@media (max-width: 1100px) {
+  .mdev-modul__gora,
+  .mdev-modul__srodek {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Układ okna — nagłówek, opis, pas akcji i ciało — niesie biblioteka
+   (`komponenty/okno.css`, klasy `dn-okno*`). Zostają tu wyłącznie reguły,
+   których biblioteka nie ma, bo należą do dziedziny Developer. */
+
+
+.mdev-wiersz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.mdev-pas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+}
+
+/* Ścieżka pliku bieżącego — jedna prawda czterech okien, więc widoczna wszędzie. */
+.mdev-sciezka {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  overflow-wrap: anywhere;
+}
+
+.mdev-sciezka[data-wskazana='nie'] {
+  font-style: italic;
+}
+
+/* Pasek statusu edytora — pola, które rdzeń o pliku naprawdę powiedział, oraz
+   nazwane wprost pola, których kontrakt nie ma. Lżejszy od ścieżki, bo ścieżka
+   jest tożsamością pliku, a status jego metryką. */
+.mdev-status {
+  color: var(--dn-tekst-3);
+}
+
+/* ── Trzy stany obowiązkowe ────────────────────────────────────────────────── */
+
+.mdev-stany {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.mdev-stan {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.mdev-stan[data-stan='ladowanie'] {
+  font-style: italic;
+}
+
+.mdev-stan[data-stan='blad'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.mdev-potwierdzenie {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+}
+
+.mdev-potwierdzenie[data-udane='false'] {
+  color: var(--dn-blad-tekst);
+}
+
+.mdev-tresc {
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ── Wykaz pozycji (zmiany repozytorium, zgłoszenia budowania) ─────────────── */
+
+.mdev-wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mdev-pozycja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.mdev-pozycja__tytul {
+  flex: 1 1 35%;
+  min-width: 0;
+  font-family: var(--dn-ff-mono);
+  overflow-wrap: anywhere;
+}
+
+.mdev-pozycja__opis {
+  flex: 1 1 45%;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.mdev-pozycja__akcje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+
+/* Ścieżka z konfliktem to rzecz do rozstrzygnięcia, nie zwykły wiersz wykazu. */
+.mdev-pozycja[data-konflikt='tak'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* Waga zgłoszenia budowania — błąd odróżniony od ostrzeżenia i podpowiedzi. */
+.mdev-pozycja[data-waga='error'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.mdev-pozycja[data-waga='warning'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-ostrzezenie-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.mdev-pozycja[data-waga='info'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-informacja-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+/* ── Drzewo projektu (okno pomocnicze) ─────────────────────────────────────── */
+
+.mdev-drzewo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mdev-wezel {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+
+.mdev-wezel__nazwa {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
+
+.mdev-wezel__opis {
+  color: var(--dn-tekst-3);
+}
+
+/* Katalog odróżniony od pliku, a plik wskazany — od pozostałych. */
+.mdev-wezel[data-rodzaj='directory'] .mdev-wezel__nazwa {
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.mdev-wezel[data-wskazany='tak'] {
+  background: var(--dn-sygnal-tlo);
+  border-radius: var(--dn-r-sm);
+}
+
+/* Wskazany to nie to samo co wczytany: wskazanie jest natychmiastowe, wczytanie
+   przychodzi dopiero odpowiedzią rdzenia i potrafi nie przyjść wcale. Węzeł
+   leżący w edytorze dostaje wstęgę; sam kolor tła tych dwóch stanów by nie
+   rozróżnił. */
+.mdev-wezel[data-wczytany='tak'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-obrys);
+  padding-left: var(--dn-od-1);
+}
+
+/* ── Edytor kodu (okno wiodące) ────────────────────────────────────────────── */
+
+.mdev-edytor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-height: 0;
+}
+
+.mdev-kod {
+  width: 100%;
+  min-height: var(--dn-wym-modal);
+  resize: vertical;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  padding: var(--dn-od-3);
+}
+
+/* ── Log budowania (okno monitora) ─────────────────────────────────────────── */
+
+.mdev-log {
+  margin: 0;
+  padding: var(--dn-od-3);
+  max-height: var(--dn-wym-modal);
+  overflow: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst-2);
+  background: var(--dn-powierzchnia-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Stan przebiegu budowania widoczny bez czytania logu. */
+.mdev-przebieg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--dn-od-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.mdev-przebieg[data-stan-budowania='failed'] {
+  color: var(--dn-blad-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.mdev-przebieg[data-stan-budowania='succeeded'] {
+  color: var(--dn-sukces-tekst);
+}
+
+.mdev-przebieg[data-stan-budowania='running'] {
+  color: var(--dn-informacja-tekst);
+}
+
+/* Zdanie o zawężeniu widoku — log przycięty frazą i zgłoszenia zawężone wagą.
+   Odróżnione od treści, bo mówi o widoku, nie o przebiegu. */
+.mdev-zawezenie {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* ── Zakładki okien wielo-obszarowych (monitor, Dev Tools) ─────────────────── */
+
+/* Pas zakładek stoi w wierszu tytułu ramy — „zakładki w nagłówku kolumny”
+   z opracowania modułu. Zawijanie, bo cztery nazwy własne integracji nie
+   mieszczą się w wąskiej kolumnie. */
+.mdev-zakladki {
+  flex-wrap: wrap;
+}
+
+.mdev-zakladki__obszary {
+  min-height: 0;
+}
+
+/* Obszar zakładki niewidocznej znika atrybutem `hidden` (reguła globalna
+   w `motyw/fundament.css`), a nie zdejmowaniem go z drzewa — dzięki temu treść
+   pola zadania i zebrany log przeżywają zajrzenie do sąsiedniej zakładki. */
+.mdev-zakladki__obszar {
+  min-width: 0;
+  min-height: 0;
+}
+
+.mdev-zakladka-tresc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  min-height: 0;
+}
+
+.mdev-zakladka-opis {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.mdev-zakladka-pasek {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--dn-od-2);
+}
+
+/* ── Zależności od programów spoza instalki ────────────────────────────────── */
+
+.mdev-zaleznosci {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}
+
+.mdev-zaleznosci__naglowek {
+  margin: 0;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+/* Program uruchamiany dziś odróżniony od tego, który czeka na komendę:
+   wstęga sygnałowa przy pozycji czynnej, bo jej brak zatrzymuje pracę teraz,
+   a nie po dobudowie rdzenia. Sam kolor tych dwóch stanów by nie rozróżnił —
+   pozycja niesie ponadto zdanie o stanie w swoim opisie. */
+.mdev-pozycja[data-zaleznosc='w-uzyciu'] {
+  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-obrys);
+  padding-left: var(--dn-od-2);
+}
+
+.mdev-pozycja[data-zaleznosc='po-dobudowie-komendy'] .mdev-pozycja__tytul {
+  color: var(--dn-tekst-2);
+}

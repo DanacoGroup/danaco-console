@@ -1,0 +1,162 @@
+/* ============================================================================
+   DANACO CONSOLE — PANELE POMOCNICZE NA SCENIE OKIEN RÓWNOLEGŁYCH
+   ----------------------------------------------------------------------------
+   Wygląd trzech rzeczy: kolumny paneli jednego gniazda, panelu w stosie wraz
+   z jego gęstym nagłówkiem oraz widoku pełnoekranowego. Rozkład sceny opisuje
+   `uklad.css`, wygląd gniazda `gniazdo.css`; ten arkusz nie sięga do żadnego
+   z nich.
+
+   Wartości wyłącznie z żetonów `motyw/` (`--dn-*`, skala odstępów `--dn-od-N`
+   co 4 px) — ani jednej barwy, ani jednego odstępu wpisanego wprost.
+
+   Gęstość jest wymaganiem, nie skutkiem ciasnoty. Nagłówek panelu ma wysokość
+   jednego wiersza i mieści tytuł oraz rząd ikon. Nie ma tu reguły dla drugiego
+   rzędu ani dla paska narzędzi, bo panel z drugim rzędem jest zbudowany źle,
+   nawet jeśli działa.
+   ============================================================================ */
+
+/* ── Kolumna paneli — pionowy stos jednego gniazda ────────────────────────── */
+
+/* Panele dzielą wysokość równo (`1fr` na pozycję): stos nie ma pozycji
+   uprzywilejowanej, bo żadna nie jest „główna". */
+.dn-okna__kolumna-paneli {
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: var(--dn-od-3);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Zero paneli to stan poprawny — kolumna znika całkowicie i oddaje
+   miejsce rozmowie. `display: grid` nie może przykryć atrybutu `hidden`. */
+.dn-okna__kolumna-paneli[hidden] {
+  display: none;
+}
+
+/* ── Panel w stosie ──────────────────────────────────────────────────────── */
+
+.dn-okna__panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+
+.dn-okna__panel[hidden] {
+  display: none;
+}
+
+/* Treść przewija się wewnątrz panelu — inaczej długie wyjście rozpychałoby
+   stos i wypychało sąsiednie panele poza gniazdo. */
+.dn-okna__panel-tresc {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--dn-od-2);
+}
+
+/* ── Gęsty nagłówek panelu — jeden wiersz ────────────────────────────────── */
+
+/* `nowrap` jest tu regułą, nie ozdobą: rząd ikon nie ma prawa zawinąć się do
+   drugiego wiersza. Miejsce oddaje tytuł. */
+.dn-okna__naglowek-panelu {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+/* Tytuł ustępuje ikonom — `min-width: 0` pozwala mu zejść poniżej treści,
+   a wielokropek bierze na siebie resztę. Pełna nazwa zostaje w `title`
+   i w etykiecie dostępności, więc skrócenie dotyczy oka, nie danych. */
+.dn-okna__naglowek-panelu-tytul {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-ciasny);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dn-okna__naglowek-panelu-czynnosci {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+}
+
+/* Przycisk jest kwadratem wielkości wiersza — rząd ośmiu czynności ma się
+   zmieścić bez podnoszenia wysokości nagłówka. */
+.dn-okna__naglowek-panelu-przycisk {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dn-od-6);
+  height: var(--dn-od-6);
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+}
+
+.dn-okna__naglowek-panelu-przycisk:hover {
+  /* Podświetlenie bierze powierzchnię ciała panelu — nagłówek stoi na
+     `--dn-powierzchnia-2`, więc przycisk pod kursorem odcina się od niego
+     bez trzeciego odcienia, którego słownik żetonów nie ma. */
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+}
+
+.dn-okna__naglowek-panelu-przycisk:focus-visible {
+  outline: 2px solid var(--dn-sygnal-wypelnienie);
+  outline-offset: 1px;
+}
+
+/* ── Widok pełnoekranowy — trzeci rodzaj obszaru ─────────────────────────── */
+
+.dn-okna__pelny-ekran {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-2);
+}
+
+.dn-okna__pelny-ekran[hidden] {
+  display: none;
+}
+
+/* Widok bierze ognisko z kodu (`tabIndex = -1`), żeby usłyszeć Escape.
+   Obrys ogniska własnego elementu byłby wtedy szumem — obrysy należą do
+   kontrolek wewnątrz, nie do obszaru sceny. */
+.dn-okna__pelny-ekran:focus {
+  outline: none;
+}
+
+.dn-okna__pelny-ekran-tresc {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--dn-od-4);
+}

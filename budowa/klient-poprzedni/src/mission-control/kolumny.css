@@ -1,0 +1,227 @@
+/* ============================================================================
+   MISSION CONTROL — TRZY KOLUMNY: PROCESY · KOLEJKI · ZESPÓŁ
+   ----------------------------------------------------------------------------
+   Jedna odpowiedzialność: dolny pas pulpitu — procesy w tle z paskami postępu,
+   kolejki ze sterowaniem per rola i wykaz agentów.
+
+   Arkusz nie ma reguły `:disabled` ani wygaszającej: przyciski transportu
+   wyglądają tak samo w każdym stanie kolejki, a stan niesie plakietka ze słowem.
+   ============================================================================ */
+
+.mc-trojkolumna {
+  display: grid;
+  gap: var(--dn-od-5);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+}
+
+/* Punkt łamania w2 — wartość stoi liczbą, bo zapytanie medialne nie czyta
+   zmiennych własnych; żeton `--dn-bp-w2` (`motyw/wymiary.css`) pozostaje jej
+   jedynym źródłem i musi się z nią zgadzać. */
+@media (max-width: 960px) {
+  .mc-trojkolumna {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   PROCESY W TLE
+   --------------------------------------------------------------------------- */
+.mc-procesy,
+.mc-kolejki,
+.mc-zespol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mc-proces {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.mc-proces__gora {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-2);
+}
+
+.mc-proces__nazwa {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-sm);
+}
+
+.mc-proces__stan {
+  flex: none;
+}
+
+.mc-proces__etap {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+
+/* Pasek postępu — napis „etap N/M" obok toru, nigdy sama barwa */
+.mc-postep {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+.mc-postep__tor {
+  position: relative;
+  flex: 1 1 auto;
+  height: var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia);
+  border: 1px solid var(--dn-obrys-subtelny);
+  overflow: hidden;
+}
+
+.mc-postep__wypelnienie {
+  display: block;
+  height: 100%;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-tekst-3);
+  transition: width var(--dn-czas-2) var(--dn-ease);
+}
+
+.mc-postep__napis {
+  flex: none;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+
+.mc-postep--biegnie .mc-postep__wypelnienie {
+  background: var(--dn-informacja-tekst);
+}
+
+.mc-postep--zakonczony .mc-postep__wypelnienie {
+  background: var(--dn-sukces-tekst);
+}
+
+.mc-postep--wstrzymany .mc-postep__wypelnienie {
+  background: var(--dn-ostrzezenie-tekst);
+}
+
+.mc-postep--zatrzymany .mc-postep__wypelnienie,
+.mc-postep--bledny .mc-postep__wypelnienie {
+  background: var(--dn-blad-tekst);
+}
+
+.mc-postep--oczekuje .mc-postep__wypelnienie {
+  background: var(--dn-obrys-mocny);
+}
+
+/* ---------------------------------------------------------------------------
+   KOLEJKI ZE STEROWANIEM PER ROLA
+   --------------------------------------------------------------------------- */
+.mc-kolejka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.mc-kolejka__gora {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-od-2);
+}
+
+/* Nazwa roli krojem technicznym — jest identyfikatorem, nie nagłówkiem */
+.mc-kolejka__rola {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.mc-kolejka__liczniki {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1) var(--dn-od-3);
+}
+
+.mc-kolejka__licznik {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+
+.mc-transport {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  padding-top: var(--dn-od-1);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+.mc-transport__przycisk {
+  flex: none;
+}
+
+/* ---------------------------------------------------------------------------
+   ZESPÓŁ AGENTÓW
+   --------------------------------------------------------------------------- */
+.mc-agent {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+
+.mc-agent__awatar {
+  flex: none;
+}
+
+.mc-agent__blok {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
+
+.mc-agent__gora {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.mc-agent__nazwa {
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-sm);
+}
+
+.mc-agent__zajecie {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.mc-agent__podagenci {
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}

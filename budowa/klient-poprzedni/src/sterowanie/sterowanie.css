@@ -1,0 +1,242 @@
+/*
+ * Komplet sterowania okna komunikacji.
+ *
+ * Arkusz opisuje wyłącznie komplet i nie sięga do selektorów okna, nagłówka
+ * ani historii — te należą do `okno-komunikacji/okno.css`. Zmienne `--dc-*`
+ * sprowadza do żetonów motywu `aplikacja/powloka.css`, i to na `:root`, więc
+ * mają wartość wszędzie tam, gdzie komplet da się zamontować. Wartości
+ * zastępczych przy nich nie ma: były barwami wpisanymi na stałe, a taka
+ * wartość zastępcza nie ratuje wyglądu, tylko cicho przypina jeden motyw.
+ *
+ * W arkuszu nie ma stanu `:disabled` ani reguły wygaszającej sterowanie —
+ * żaden element kompletu nie jest blokadą.
+ */
+
+.dc-sterowanie {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--dc-tlo-panel);
+  border-bottom: 1px solid var(--dc-obrys);
+  color: var(--dc-tekst);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+/* Nagłówek kompletu */
+
+.dc-sterowanie__naglowek {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.dc-sterowanie__tytul {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dc-sterowanie__okno {
+  color: var(--dc-tekst-slaby);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Siatka sterowań */
+
+.dc-sterowanie__siatka {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+}
+
+/* Pojedyncze sterowanie */
+
+.dc-ster-pole {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dc-ster-pole--lista {
+  grid-column: 1 / -1;
+}
+
+/* Wiersz etykiety: nazwa, znak [?] i wskaźnik odczytu katalogu.
+   Wskaźnik stoi obok pola, nigdy zamiast niego, więc jego miejsce jest tutaj,
+   a nie w miejscu kontrolki. */
+.dc-ster-pole__naglowek {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dc-ster-pole__etykieta {
+  color: var(--dc-tekst-slaby);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Zdanie pod polem — nośnik stanu pustego katalogu wyboru. */
+.dc-ster-pole__uwaga {
+  margin: 0;
+  color: var(--dc-tekst-slaby);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Pole zawężania wykazu — stoi nad listą, bo rozwinięcia natywnego <select>
+   nie rysuje dokument i nic się do niego wstawić nie da. */
+.dc-ster-pole__szukanie {
+  font-size: 12px;
+}
+
+.dc-ster-pole__lista,
+.dc-ster-pole__wpis {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--dc-tlo-wpis);
+  border: 1px solid var(--dc-obrys);
+  border-radius: var(--dc-promien);
+  color: inherit;
+  font: inherit;
+}
+
+.dc-ster-pole__lista:focus-visible,
+.dc-ster-pole__wpis:focus-visible,
+.dc-ster-suwak:focus-visible,
+.dc-ster-przycisk:focus-visible {
+  outline: 2px solid var(--dc-akcent);
+  outline-offset: 1px;
+}
+
+/* Suwak nakładu rozumowania */
+
+.dc-ster-suwak {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--dc-akcent);
+}
+
+.dc-ster-suwak__skala {
+  color: var(--dc-tekst-slaby);
+  font-size: 11px;
+}
+
+.dc-ster-suwak__opis {
+  font-weight: 600;
+}
+
+/* Lista katalogów roboczych */
+
+.dc-ster-katalogi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dc-ster-katalogi__pozycja {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--dc-tlo-wpis);
+  border: 1px solid var(--dc-obrys);
+  border-radius: var(--dc-promien);
+}
+
+.dc-ster-katalogi__sciezka {
+  flex: 1;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dc-ster-katalogi__pusta {
+  color: var(--dc-tekst-slaby);
+  font-style: italic;
+}
+
+.dc-ster-katalogi__dodawanie {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dc-ster-katalogi__dodawanie .dc-ster-pole__wpis {
+  flex: 1;
+}
+
+/* Przyciski kompletu — zawsze czynne */
+
+.dc-ster-przycisk {
+  padding: 6px 12px;
+  background: var(--dc-akcent);
+  border: 1px solid transparent;
+  border-radius: var(--dc-promien);
+  /* Wypełnienie sygnału jest błękitne w obu motywach, więc pismo na nim jest
+     białe w obu — nie odwraca się razem z motywem. */
+  color: var(--dn-szary-0);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.dc-ster-przycisk--usun {
+  padding: 2px 10px;
+  background: transparent;
+  border-color: var(--dc-obrys);
+  color: var(--dc-tekst-slaby);
+  font-weight: 400;
+}
+
+.dc-ster-przycisk--usun:hover {
+  border-color: var(--dc-system);
+  color: var(--dc-tekst);
+}
+
+/* Pasek komunikatów */
+
+.dc-ster-komunikat {
+  margin: 0;
+  color: var(--dc-tekst-slaby);
+  font-size: 12px;
+  min-height: 16px;
+}
+
+.dc-ster-komunikat[data-stan="udany"] {
+  color: var(--dc-model);
+}
+
+.dc-ster-komunikat[data-stan="nieudany"] {
+  color: var(--dc-system);
+}
+
+/* Blok dwóch kontrolek stojących pod sobą jako jedna pozycja siatki.
+   Niesie wybór modelu i rozesłanie tego wyboru na kartę sesji: wybór dotyczy
+   okna, a rozesłanie jest osobną czynnością i ma stać osobno — zlane w jedną
+   kontrolkę kazałoby Operatorowi zgadywać, ile okien właśnie przestawił.
+   Odstęp mniejszy niż między pozycjami siatki, bo to jedna sprawa w dwóch
+   ruchach, a nie dwa niezależne sterowania. */
+.dn-sterowanie__blok {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  min-width: 0;
+}

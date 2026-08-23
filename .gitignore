@@ -1,0 +1,26 @@
+# Sekrety
+.env
+.env.local
+*.key
+*.pem
+
+# Zależności i wytwory budowania
+node_modules/
+dist/
+target/
+budowa/danaco-console
+budowa/danaco-console.exe
+
+# Stan lokalny
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Narzędzia systemowe
+.DS_Store
+__pycache__/
+*.pyc
+
+# Katalog roboczy sesji
+.claude/

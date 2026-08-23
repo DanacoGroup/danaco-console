@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — TalkIn (Studio) · stanowisko kolumnowe</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/stanowisko.css">
+<style>
+  :root { --dn-fs-base:14px; --dn-fs-sm:13px; --dn-fs-xs:12px; }
+  .boczna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; width:200px; }
+  .boczna-naglowek { padding:var(--dn-od-2) var(--dn-od-3); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .boczna-lista { overflow:auto; min-height:0; padding:var(--dn-od-2); display:flex; flex-direction:column; gap:2px; }
+  .boczna-poz { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border:1px solid transparent; border-radius:var(--dn-promien-sm); background:none; color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); text-align:left; width:100%; }
+  .boczna-poz svg { width:20px; height:20px; flex:none; color:var(--dn-tekst-3); }
+  .boczna-poz[aria-current="true"] { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); border-color:var(--dn-obrys-subtelny); }
+  .boczna-poz[aria-current="true"] svg { color:var(--dn-sygnal); }
+  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
+  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
+  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .szyna-lista { overflow:auto; min-height:0; }
+  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
+  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
+  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .dok-dokument { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); max-width:64ch; }
+  .dok-dokument h2 { font-size:var(--dn-fs-lg); margin:0 0 var(--dn-od-3); }
+  .dok-dokument h3 { font-size:var(--dn-fs-md); margin:var(--dn-od-4) 0 var(--dn-od-2); color:var(--dn-tekst-2); }
+  .dok-dokument p { margin:0 0 var(--dn-od-3); }
+  .dok-dokument mark { background:var(--dn-sygnal-100); color:inherit; padding:0 2px; border-radius:3px; }
+  .dok-stan-linia { display:flex; align-items:center; gap:var(--dn-od-3); padding:var(--dn-od-1) var(--dn-od-3); border-top:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-xs); font-family:var(--dn-ff-mono); color:var(--dn-tekst-3); }
+  .dok-galeria { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:var(--dn-od-2); padding:var(--dn-od-2); }
+  .dok-kafel { border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-promien-sm); padding:var(--dn-od-2); font-size:var(--dn-fs-xs); display:flex; flex-direction:column; gap:var(--dn-od-1); }
+  .dok-kafel svg { width:24px; height:24px; color:var(--dn-tekst-3); }
+</style>
+<style data-fix-cialo>
+/* Poprawka: TalkIn ma trzy rejony — nawigacja modułów + lista rozmów + stanowisko */
+.sta-cialo { grid-template-columns: 200px var(--dn-wym-boczna) minmax(0, 1fr) !important; }
+</style>
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="ROLLOUT v2 · ŚRODOWISKO TalkIn"
+      data-prototyp-okno="TalkIn — Chat Window + Studio Editor · Artefakty · Pliki · Podgląd (układ kolumnowy stanowiska)"
+      data-prototyp-zrodlo="dok/projekt-ui/srodowiska/talkin.md + KANON aneks v2.1 + WZORZEC-STANOWISKA.html">
+
+<div class="sta-powloka">
+
+  <!-- ══ PASEK GÓRNY ══ -->
+  <header class="dn-pasek">
+    <div class="sta-menu">
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-app" aria-expanded="false" aria-label="Menu aplikacji">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="sta-menu-tresc" id="menu-app" data-menu-tresc data-otwarte="nie" role="menu">
+        <button class="sta-menu-poz" role="menuitem">Plik<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Edycja<span class="skrot">▸</span></button>
+        <div class="sta-menu-sep"></div>
+        <div class="sta-menu-etyk">Widok</div>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Moduły<span class="skrot">Ctrl+B</span></button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Rozmowy</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Studio Editor</button>
+        <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true"><span class="ptaszek">✓</span>Artefakty</button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Powiększ<span class="skrot">Ctrl+=</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomniejsz<span class="skrot">Ctrl+-</span></button>
+        <button class="sta-menu-poz" role="menuitem">Rozmiar rzeczywisty<span class="skrot">Ctrl+0</span></button>
+        <div class="sta-menu-sep"></div>
+        <button class="sta-menu-poz" role="menuitem">Środowiska<span class="skrot">▸</span></button>
+        <button class="sta-menu-poz" role="menuitem">Pomoc<span class="skrot">▸</span></button>
+      </div>
+    </div>
+
+    <a class="dn-pasek-godlo" href="../INDEKS.html" aria-label="Danaco Console">
+      <svg width="22" height="22" viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="var(--dn-sygnal-500)"/></svg>
+      <span class="dn-pasek-logotyp">Danaco <b>Console</b></span>
+    </a>
+
+    <!-- TRYBY — cztery środowiska, TalkIn aktywne -->
+    <div class="sta-tryby" role="group" aria-label="Środowisko" style="margin-left:var(--dn-od-3)"><button type="button" data-srod="talkin" aria-pressed="true">TalkIn</button><button type="button" data-srod="workspace" aria-pressed="false">WorkSpace</button><button type="button" data-srod="codestudio" aria-pressed="false">CodeStudio</button><button type="button" data-srod="multitaskingai" aria-pressed="false">MultitaskingAI</button></div>
+
+    <nav class="pt-okruszki" aria-label="Ścieżka" style="margin-left:var(--dn-od-3)">
+      <span>TalkIn</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span id="okruszek-modul">Studio</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      <span aria-current="page" id="okruszek-okno">Studio Editor</span>
+    </nav>
+
+    <label class="dn-pasek-szukaj" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" placeholder="Szukaj w rozmowach i Library…  Ctrl+K" aria-label="Wyszukiwanie" data-szukaj>
+    </label>
+
+    <div class="dn-pasek-prawa">
+      <span class="dn-plakietka dn-plakietka--sygnal" title="Zadania w tle"><span class="pt-tetno" aria-hidden="true"></span> 2</span>
+      <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-przelacz-motyw data-motyw-ikona aria-label="Przełącz motyw">
+        <svg class="ik-slonce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ik-ksiezyc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/></svg>
+      </button>
+      <div class="sta-menu">
+        <button class="dn-btn-ikona dn-btn-ikona--na-ramie" type="button" data-menu="menu-konto" aria-expanded="false" aria-label="Konto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg>
+        </button>
+        <div class="sta-menu-tresc" id="menu-konto" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+          <div class="sta-menu-etyk">support@danaco-core.pl</div>
+          <button class="sta-menu-poz" role="menuitem">Ustawienia</button>
+          <button class="sta-menu-poz" role="menuitem">Język</button>
+          <button class="sta-menu-poz" role="menuitem">Pomoc</button>
+          <button class="sta-menu-poz" role="menuitem">Funkcje doświadczalne <span class="skrot dn-plakietka">Labs</span></button>
+          <div class="sta-menu-sep"></div>
+          <button class="sta-menu-poz" role="menuitem">Wyloguj</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ PAS KART SESJI ══ -->
+  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
+    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Studio · Raport kwartalny Q3</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Research · Zakres regulacyjny</span></button>
+    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Library · Rejestr umów</span></button>
+    <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór modułu i trybu rozmowy." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+    <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
+  </div>
+
+  <!-- ══ CIAŁO ══ -->
+  <div class="sta-cialo">
+
+    <!-- BOCZNA NAWIGACJA MODUŁÓW TalkIn (9) -->
+    <nav class="boczna" aria-label="Moduły środowiska TalkIn">
+      <div class="boczna-naglowek">Moduły · TalkIn</div>
+      <div class="boczna-lista">
+        <button class="boczna-poz" type="button" aria-current="true" data-modul="Studio" data-okno="Studio Editor">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <span>Studio</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Research" data-okno="Research Workspace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44"/><path d="m13.56 11.747 4.332-.924"/><path d="m16 21-3.105-6.21"/><path d="M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z"/><path d="m6.158 8.633 1.114 4.456"/><path d="m8 21 3.105-6.21"/><circle cx="12" cy="13" r="2"/></svg>
+          <span>Research</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Library" data-okno="Library Explorer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/><path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/></svg>
+          <span>Library</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Translate" data-okno="Translation Panels">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+          <span>Translate</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Browser" data-okno="Browser Window">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          <span>Browser</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Assistant" data-okno="Voice Console">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg>
+          <span>Assistant</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Roundtable" data-okno="Model Panels">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg>
+          <span>Roundtable</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Workspace" data-okno="Project Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg>
+          <span>Workspace</span>
+        </button>
+        <button class="boczna-poz" type="button" data-modul="Agents" data-okno="Agent Builder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>
+          <span>Agents</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- SZYNA — rozmowy modułu -->
+    <nav class="szyna" aria-label="Rozmowy">
+      <div class="szyna-naglowek">
+        <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
+        <div class="sta-menu">
+          <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg>
+          </button>
+          <div class="sta-menu-tresc" id="menu-filtr" data-menu-tresc data-otwarte="nie" role="menu">
+            <div class="sta-menu-etyk">Stan</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Wszystkie</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Pracujące</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Bezczynne</button>
+            <div class="sta-menu-etyk">Sortowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Ostatnia aktywność</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Nazwa</button>
+            <div class="sta-menu-etyk">Grupowanie</div>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="true"><span class="ptaszek">✓</span>Projekt</button>
+            <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Brak</button>
+          </div>
+        </div>
+      </div>
+      <div class="szyna-lista">
+        <div class="szyna-grupa">Projekt „Raport kwartalny Q3”</div>
+        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Redakcja rozdziału 3 — przychody serwisowe</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Streszczenie zarządcze</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zestawienie z notami rachunkowymi</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Weryfikacja tabeli przychodów</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wersja do zarządu — korekta języka</span></button>
+        <div class="szyna-grupa">Rejestr umów</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Rozpoznanie przychodu — analiza</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Klasyfikacja umów serwisowych</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kary umowne — przegląd zdarzeń</span></button>
+        <div class="szyna-grupa">Zakres regulacyjny</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Stan na kwartał bieżący</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Struktura kosztów przyłączeniowych</span></button>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprzeczność między źródłem 3 i 7</span></button>
+        <div class="szyna-grupa">Więcej</div>
+        <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Projekty · Kolekcje Library · Eksperci Agents · Historia</span></button>
+      </div>
+    </nav>
+
+    <!-- STANOWISKO (układ kolumnowy) -->
+    <div class="sta-obszar" data-robocza="widoczna" style="--sta-udzial-czaty:1fr; --sta-udzial-robocza:1.5fr">
+
+      <!-- ── LEWA KOLUMNA: CHAT WINDOW z pełnym OBSZAREM POLECENIA ── -->
+      <div class="sta-czaty" data-liczba="1">
+        <section class="sta-okno sta-kom" id="okno-czat-1" data-nazwa="Chat Window" data-aktywne="tak" aria-label="Chat Window">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H7l-4 3V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2z"/></svg>
+              <b>Chat Window</b>
+            </span>
+            <span class="sta-chip" title="Projekt powiązany z sesją"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Raport kwartalny Q3</span>
+            <span class="sta-okno-akcje">
+              <div class="sta-menu">
+                <button class="dn-btn-ikona" type="button" data-menu="menu-sesja" aria-expanded="false" aria-label="Panele i działania sesji">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+                <div class="sta-menu-tresc" id="menu-sesja" data-menu-tresc data-otwarte="nie" data-kotwica="prawo" role="menu">
+                  <div class="sta-menu-etyk">Panele modułu</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-studio"><span class="ptaszek">✓</span>Studio Editor</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-artefakty"><span class="ptaszek">✓</span>Artefakty</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-pliki"><span class="ptaszek">✓</span>Pliki</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="true" data-panel-toggle="panel-podglad"><span class="ptaszek">✓</span>Podgląd</button>
+                  <div class="sta-menu-sep"></div>
+                  <div class="sta-menu-etyk">Panele uniwersalne</div>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-plan"><span class="ptaszek">✓</span>Plan</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-zadania"><span class="ptaszek">✓</span>Zadania w tle</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-kontekst"><span class="ptaszek">✓</span>Źródła kontekstu</button>
+                  <button class="sta-menu-poz" role="menuitemcheckbox" aria-checked="false" data-panel-toggle="panel-historia"><span class="ptaszek">✓</span>Historia aktywności</button>
+                  <div class="sta-menu-sep"></div>
+                  <button class="sta-menu-poz" role="menuitem">Zmień nazwę<span class="skrot">R</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Rozgałęź<span class="skrot">F</span></button>
+                  <button class="sta-menu-poz" role="menuitem">Archiwizuj<span class="skrot">A</span></button>
+                </div>
+              </div>
+            </span>
+          </header>
+
+          <div class="sta-kom-naglowek">
+            <span class="sta-kom-pole"><span>Moduł</span><b>Studio</b></span>
+            <span class="sta-kom-pole"><span>Model</span><b class="dane">Fable 5</b></span>
+            <span class="sta-kom-pole"><span>Wysiłek</span><b class="dane">Ultra</b></span>
+            <span class="sta-kom-stan"><span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> pracuje</span></span>
+          </div>
+
+          <div class="sta-kom-kontekst" aria-label="Kontekst">
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>raport-kwartalny-q3.docx<button class="odepnij" aria-label="Odepnij">×</button></span>
+            <span class="sta-zrodlo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/></svg>Library: rozpoznanie-przychodu.md<button class="odepnij" aria-label="Odepnij">×</button></span>
+          </div>
+
+          <div class="sta-kom-historia">
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">09:41</span></div><div class="sta-wpis-tresc">Wczytaj z Library notę „rozpoznanie-przychodu.md” i zestaw ją z rozdziałem 3 dokumentu otwartego w Studio Editor. Uspójnij ujęcie przychodów serwisowych.</div></div></article>
+            <article class="sta-wpis sta-wpis--system"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="18" x="3" y="3" rx="1"/><path d="M7 3v18"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Wpięto źródło</span><span class="dn-plakietka">rozpoznanie-przychodu.md</span><span class="sta-wpis-godzina">6 s</span></div><div class="sta-wpis-tresc">Nota rachunkowa z kolekcji „Rejestr umów” dołączona do pasa kontekstu.</div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">09:42</span></div><div class="sta-wpis-tresc">Zestawiłam notę z rozdziałem 3. Ujęcie przychodu w dokumencie zgadza się z zasadą <mark>rozpoznawania w czasie</mark> wg noty. Zaproponowałam trzy poprawki redakcyjne wprost w Studio Editor — czekają na zatwierdzenie. Podgląd pokazuje wersję do akceptacji.</div></div></article>
+            <article class="sta-wpis sta-wpis--czlowiek"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Operator</span><span class="sta-wpis-godzina">09:44</span></div><div class="sta-wpis-tresc">Dobrze. Wygeneruj jeszcze streszczenie zarządcze rozdziału do maksymalnie 120 słów i zapisz je jako artefakt.</div></div></article>
+            <article class="sta-wpis sta-wpis--inteligencja"><div class="sta-wpis-medalion" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M12 3v4"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg></div><div><div class="sta-wpis-tozsamosc"><span class="sta-wpis-nadawca">Inteligencja</span><span class="dn-plakietka dn-plakietka--rola">Fable</span><span class="sta-wpis-godzina">09:44</span></div><div class="sta-wpis-tresc">Uruchomiłam zadanie w tle „generowanie-streszczenia”. Gotowy plik <code>streszczenie-zarzadcze.md</code> pojawi się w panelu Artefakty. Postęp śledzisz w panelu Zadania w tle.</div></div></article>
+          </div>
+
+          <div class="sta-kom-monitor"><span class="pt-tetno" aria-hidden="true"></span> Redakcja · rozdział 3 · 3 poprawki gotowe do akceptacji</div>
+
+          <!-- OBSZAR POLECENIA -->
+          <div class="sta-kom-dol">
+            <div class="sta-kontekst-akcji">
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>Ten komputer</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Raport kwartalny Q3</span>
+              <span class="sta-chip">rozdział 3</span>
+              <span class="sta-chip">raport-kwartalny-q3.docx</span>
+              <span class="sta-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+              <span class="sta-chip sta-chip--diff"><span class="plus">3 poprawki</span></span>
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatwierdź poprawki</button>
+            </div>
+
+            <form class="sta-prompt" onsubmit="return false;">
+              <span class="sta-prompt-grot" aria-hidden="true">»»</span>
+              <textarea class="sta-prompt-obszar" rows="1" placeholder="Opisz zadanie redakcyjne lub zadaj pytanie o dokument…" aria-label="Pole polecenia"></textarea>
+              <button class="dn-btn dn-btn--atrament dn-btn--sm sta-prompt-wyslij" type="submit" aria-label="Do kolejki"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg></button>
+            </form>
+
+            <div class="sta-sterowanie">
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--tryb" type="button" data-popover="pop-tryb-upr" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 13 4 4L19 7"/></svg>Z pominięciem zgód<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-tryb-upr" hidden>
+                  <div class="sta-popover-tytul">Tryb uprawnień</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Ręczny</span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przyjmij zmiany</span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Plan</span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Auto</span><span class="pt-mono">4</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Z pominięciem zgód</b><small>domyślny — zero blokad</small></span><span class="pt-mono">5</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-plus" aria-expanded="false" aria-label="Dodaj" title="Dodaj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></button>
+                <div class="sta-popover" id="pop-plus" hidden>
+                  <div class="sta-popover-tytul">Dodaj do polecenia</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dodaj pliki i zdjęcia</span><span class="pt-mono">Ctrl+U</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Wepnij plik z Library</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Wepnij projekt z Workspace</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco Library</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Claude in Chrome</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco marketing</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-nrz-przycisk" type="button" data-popover="pop-mik" aria-expanded="false" aria-label="Mikrofon" title="Mikrofon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+                <div class="sta-popover" id="pop-mik" hidden>
+                  <div class="sta-popover-tytul">Mikrofon</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                </div>
+              </div>
+              <span class="rozciag"></span>
+              <div class="sta-nrz">
+                <button class="sta-chip sta-chip--model" type="button" data-popover="pop-model" aria-expanded="false">Fable 5<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-model" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Model</div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta"><b>Fable 5</b><small>do najtrudniejszych wyzwań</small></span><span class="pt-mono">1</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Opus 5<small>do złożonych zadań</small></span><span class="pt-mono">2</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Sonnet 5<small>najwydajniejszy na co dzień</small></span><span class="pt-mono">3</span></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Haiku 4.5<small>najszybszy do prostych pytań</small></span><span class="pt-mono">4</span></div>
+                </div>
+              </div>
+              <div class="sta-nrz">
+                <button class="sta-chip" type="button" data-popover="pop-wysilek" aria-expanded="false">Ultra<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="sta-popover" id="pop-wysilek" data-kotwica="prawo" hidden>
+                  <div class="sta-popover-tytul">Wysiłek — Ultra</div>
+                  <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
+                  <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
+                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                </div>
+              </div>
+              <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="sta-chip--glowny sta-prompt-wyslij" type="button">↑ Do kolejki</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ── PRAWA KOLUMNA: OKNO WIODĄCE (Studio Editor) + DOKOWANE PANELE ── -->
+      <div class="sta-robocza sta-panele-siatka" data-uklad="siatka" style="grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(0,1fr)">
+
+        <!-- OKNO WIODĄCE: Studio Editor -->
+        <section class="sta-okno" id="panel-studio" data-nazwa="Studio Editor" style="grid-column:1 / -1">
+          <header class="sta-okno-belka">
+            <span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><b>Studio Editor</b><span class="dn-plakietka dn-plakietka--rola">wiodące</span></span>
+            <span class="sta-okno-akcje">
+              <button class="dn-btn-ikona" type="button" aria-label="Konfiguracja okna" data-komunikat="Konfiguracja Studio Editor — styl akapitu, tryb korekty, format eksportu." data-komunikat-tytul="Konfiguracja okna"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.17V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15H4.5a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 6 9.4"/></svg></button>
+              <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </span>
+          </header>
+          <div class="sta-okno-tresc" style="overflow:auto">
+            <div class="dok-dokument">
+              <h2>Raport kwartalny Q3 — segment usług serwisowych</h2>
+              <h3>3. Przychody z umów serwisowych</h3>
+              <p>Segment usług serwisowych zamknął kwartał wynikiem opisanym w księgach kontraktowych wpiętych do sesji z modułu Library. Zestawienie źródłowe pozostaje podpięte w pasie kontekstu Chat Window.</p>
+              <p>Zgodnie z notą <mark>„rozpoznanie-przychodu.md”</mark> przychód z umów o stałym okresie obsługi rozpoznaje się w czasie, proporcjonalnie do postępu świadczenia. Rozdział uspójniono z tą zasadą — usunięto ujęcie jednorazowe z akapitu drugiego.</p>
+              <p>Umowy z gwarantowanym poziomem dostępności rozliczane są odrębnie; kary umowne pomniejszają przychód okresu, w którym powstało zdarzenie. Szczegółowe zestawienie znajduje się w załączniku tabelarycznym.</p>
+              <h3>3.1. Struktura przychodu wg typu umowy</h3>
+              <p>Portfel umów serwisowych dzieli się na trzy typy: obsługę ryczałtową, obsługę rozliczaną według zużycia oraz kontrakty z gwarancją dostępności. Największy udział w przychodzie kwartału utrzymuje obsługa ryczałtowa, co odpowiada strukturze z poprzednich okresów.</p>
+              <h3>3.2. Zdarzenia jednorazowe</h3>
+              <p>W kwartale nie wystąpiły istotne zdarzenia jednorazowe wpływające na porównywalność wyniku. Rozliczenie kar umownych mieści się w granicach przyjętego szacunku i nie wymaga korekty prezentacyjnej.</p>
+              <h3>3.3. Uwagi do prezentacji</h3>
+              <p>Zestawienie tabelaryczne przeniesiono do załącznika; w treści rozdziału pozostawiono syntetyczny opis struktury przychodu. Redakcja zachowuje spójność terminologiczną z pozostałymi rozdziałami raportu oraz z notami rachunkowymi wpiętymi z modułu Library.</p>
+              <p>Wersję do akceptacji zapisano jako artefakt <code>rozdzial-3-wersja-do-akceptacji.docx</code>. Po zatwierdzeniu poprawek dokument wróci do głównego pliku raportu i zostanie odblokowany do dalszej redakcji rozdziału 4.</p>
+            </div>
+          </div>
+          <div class="dok-stan-linia"><span>DOCX</span><span>PL</span><span>1 480 słów</span><span>Rozdział 3 / 7</span><span class="dn-plakietka dn-plakietka--sygnal" style="margin-left:auto"><span class="pt-tetno" aria-hidden="true"></span> Inteligencja redaguje</span></div>
+        </section>
+
+        <!-- Artefakty -->
+        <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><b>Artefakty</b></span><span class="sta-okno-znacznik">5</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista" style="overflow:auto">
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> rozdzial-3-wersja-do-akceptacji.docx <span class="meta">62 kB</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> streszczenie-zarzadcze.md <span class="meta">4,8 kB</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> zestawienie-przychodow-q3.xlsx <span class="meta">18 kB</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> struktura-portfela-umow.svg <span class="meta">9,2 kB</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> nota-do-audytora.md <span class="meta">3,1 kB</span></div>
+            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w Studio</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zapisz w Library</button></div>
+          </div>
+        </section>
+
+        <!-- Pliki -->
+        <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-znacznik">sesja</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista" style="overflow:auto">
+            <div class="pt-etykieta">Wpięte do sesji</div>
+            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> raport-kwartalny-q3.docx <span class="meta">otwarty</span></div>
+            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> rozpoznanie-przychodu.md <span class="meta">Library</span></div>
+            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> umowy-serwisowe-rejestr.xlsx <span class="meta">Library</span></div>
+            <div class="pt-etykieta" style="margin-top:var(--dn-od-2)">Wygenerowane w sesji</div>
+            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> streszczenie-zarzadcze.md <span class="dn-plakietka dn-plakietka--sygnal meta">nowe</span></div>
+            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> zestawienie-przychodow-q3.xlsx <span class="dn-plakietka dn-plakietka--sygnal meta">nowe</span></div>
+            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Dodaj plik</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wepnij z Library</button></div>
+          </div>
+        </section>
+
+        <!-- Podgląd -->
+        <section class="sta-okno" id="panel-podglad" data-nazwa="Podgląd" style="grid-column:1 / -1">
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><b>Podgląd</b></span><span class="sta-okno-znacznik">wersja do akceptacji</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc" style="overflow:auto">
+            <div class="dok-dokument" style="max-width:none">
+              <p style="color:var(--dn-tekst-3);font-size:var(--dn-fs-xs);font-family:var(--dn-ff-mono)">Podgląd renderu — 3 poprawki naniesione, oczekują akceptacji operatora.</p>
+              <div class="dok-galeria">
+                <div class="dok-kafel">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>
+                  <b>Rozdział 3</b>
+                  <span style="color:var(--dn-tekst-3)">wersja robocza · str. 12–14</span>
+                </div>
+                <div class="dok-kafel">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h18"/></svg>
+                  <b>Załącznik</b>
+                  <span style="color:var(--dn-tekst-3)">struktura przychodu</span>
+                </div>
+              </div>
+              <p><b>Rozdział 3 · akapit 2</b> — usunięto ujęcie jednorazowe przychodu; zastąpiono rozpoznaniem w czasie zgodnym z notą rachunkową.</p>
+              <p><b>Rozdział 3 · akapit 3</b> — dodano rozgraniczenie umów z gwarantowaną dostępnością oraz ujęcie kar umownych.</p>
+              <p><b>Rozdział 3.1 · nowy śródtytuł</b> — dodano opis struktury przychodu wg typu umowy.</p>
+              <table class="dn-tabela" style="width:100%;font-size:var(--dn-fs-sm);border-collapse:collapse;margin-top:var(--dn-od-2)">
+                <thead>
+                  <tr>
+                    <th style="text-align:left;padding:var(--dn-od-1)">Typ umowy</th>
+                    <th style="text-align:right;padding:var(--dn-od-1)">Udział</th>
+                    <th style="text-align:right;padding:var(--dn-od-1)">Zmiana kw/kw</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding:var(--dn-od-1)">Obsługa ryczałtowa</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">58%</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">+2 pp</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:var(--dn-od-1)">Rozliczenie wg zużycia</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">27%</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">−1 pp</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:var(--dn-od-1)">Gwarancja dostępności</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">15%</td>
+                    <td style="text-align:right;padding:var(--dn-od-1)" class="pt-mono">−1 pp</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="panel-wiersz" style="margin-top:var(--dn-od-3)"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź wszystkie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Przejrzyj pojedynczo</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Odrzuć</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Plan (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">2 / 5</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="pt-etykieta">Zlecenie: uspójnienie rozdziału 3</div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wczytanie noty z Library <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zestawienie z rozdziałem 3 <span class="meta">✓</span></div>
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Poprawki redakcyjne <span class="meta">▶</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="meta">○</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Powrót do głównego pliku raportu <span class="meta">○</span></div>
+            <div class="pt-etykieta" style="margin-top:var(--dn-od-2)">Następny etap</div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Redakcja rozdziału 4 <span class="meta">zaplanowane</span></div>
+          </div>
+        </section>
+
+        <!-- Zadania w tle (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>generowanie-streszczenia</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">1 agent · 86 tys. tok. · 1 m 12 s</div>
+            <div class="dn-postep" data-postep-do="72" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zestawienie tabelaryczne Q3 <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> weryfikacja spójności not <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatrzymaj wszystkie</button></div>
+          </div>
+        </section>
+
+        <!-- Źródła kontekstu (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-kontekst" data-nazwa="Źródła kontekstu" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6M12 19h8"/></svg><b>Źródła kontekstu</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="dn-plakietka">Studio Editor: raport-kwartalny-q3.docx</span></div>
+            <div class="panel-wiersz"><span class="dn-plakietka">Library: rozpoznanie-przychodu.md</span></div>
+            <div class="panel-wiersz"><span class="dn-plakietka">Workspace: projekt „Raport kwartalny Q3”</span></div>
+            <div class="panel-wiersz"><span class="dn-plakietka">Agents: ekspert „Redaktor”</span></div>
+            <div class="panel-wiersz"><span class="dn-plakietka">Library: umowy-serwisowe-rejestr.xlsx</span></div>
+            <div class="panel-wiersz"><span class="dn-plakietka">Research: zakres regulacyjny (kwartał bieżący)</span></div>
+          </div>
+        </section>
+
+        <!-- Historia aktywności (uniwersalny, ukryty) -->
+        <section class="sta-okno" id="panel-historia" data-nazwa="Historia aktywności" hidden>
+          <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg><b>Historia aktywności</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
+          <div class="sta-okno-tresc panel-lista">
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wpięto rozpoznanie-przychodu.md <span class="meta">09:41</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Naniesiono 3 poprawki <span class="meta">09:42</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Uruchomiono streszczenie <span class="meta">09:44</span></div>
+            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="meta">oczekuje</span></div>
+          </div>
+        </section>
+
+      </div><!-- /sta-robocza -->
+    </div><!-- /sta-obszar -->
+  </div><!-- /sta-cialo -->
+</div><!-- /sta-powloka -->
+
+<details class="pt-o-opracowaniu">
+  <summary>O tym oknie — środowisko TalkIn (rollout v2, układ kolumnowy stanowiska)</summary>
+  <div class="pt-o-opracowaniu-tresc">
+    <h4>Wada usunięta</h4>
+    <ul>
+      <li>Wycofano poprzedni układ góra/dół (strefa komunikacji nad obszarem roboczym). Zastąpiono go kolumnowym <code>.sta-obszar</code> wg wzorca <code>moduly/developer.html</code>: LEWO Chat Window w pionie z pełnym obszarem polecenia, PRAWO dokowane panele.</li>
+    </ul>
+    <h4>Okna środowiska odwzorowane na stanowisko</h4>
+    <ul>
+      <li><b>Studio Editor</b> — okno WIODĄCE (dokument raportu, linia stanu redakcji).</li>
+      <li><b>Artefakty</b> — dokowany panel: pliki wygenerowane w sesji.</li>
+      <li><b>Pliki</b> — dokowany panel: źródła wpięte i wytworzone.</li>
+      <li><b>Podgląd</b> — dokowany panel: render wersji do akceptacji z poprawkami.</li>
+      <li><b>Chat Window</b> — strefa czatów z pełnym obszarem polecenia (tryb uprawnień „Z pominięciem zgód”, „+”, mikrofon, model Fable 5 / Opus 5 / Sonnet 5 / Haiku 4.5, wysiłek Ultra, ↑ Do kolejki).</li>
+    </ul>
+    <h4>Zgodność z aneksem v2.1</h4>
+    <ul>
+      <li>Produkt: <b>Danaco Console</b>. Przełącznik czterech środowisk (TalkIn / WorkSpace / CodeStudio / MultitaskingAI) — aktywne TalkIn.</li>
+      <li>Boczna nawigacja modułów TalkIn (9): Studio, Research, Library, Translate, Browser, Assistant, Roundtable, Workspace, Agents.</li>
+      <li>Asystent występuje jako <b>Inteligencja</b> (rola Fable). Okruszki: TalkIn › Studio › Studio Editor.</li>
+    </ul>
+    <h4>Obszar polecenia</h4>
+    <ul>
+      <li>Tryb uprawnień domyślny <b>„Z pominięciem zgód”</b> (poziom 5), przełączany w popoverze.</li>
+      <li>Sterowanie: „+” (pliki, Library, Workspace, konektory), mikrofon, model, wysiłek <b>Ultra</b>, ↑ Do kolejki / Wyślij.</li>
+      <li>Modele: Fable 5 (aktywny) / Opus 5 / Sonnet 5 / Haiku 4.5.</li>
+    </ul>
+    <h4>Panele uniwersalne</h4>
+    <ul>
+      <li>Plan, Zadania w tle, Źródła kontekstu, Historia aktywności — sterowane z menu „⋮ → Panele”.</li>
+      <li>Panele właściwe TalkIn: Studio Editor (wiodące), Artefakty, Pliki, Podgląd.</li>
+    </ul>
+    <h4>Persona i domena</h4>
+    <ul>
+      <li>Kontekst: Danaco — segment usług serwisowych, redakcja raportu kwartalnego Q3.</li>
+      <li>Operator prowadzi rozmowę z <b>Inteligencją</b> (Fable); nie stosuje się dawnej nazwy asystenta.</li>
+      <li>Treści osadzone w rachunkowości kontraktowej (rozpoznanie przychodu, kary umowne, gwarancja dostępności).</li>
+    </ul>
+    <h4>Źródło</h4>
+    <ul><li><code>dok/projekt-ui/srodowiska/talkin.md</code> · <code>KANON.md</code> rozdz. 15 (ANEKS v2.1) · <code>WZORZEC-STANOWISKA.html</code> · wzorzec układu <code>moduly/developer.html</code></li></ul>
+  </div>
+</details>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/stanowisko.js"></script>
+<script>
+(function(){
+  // Przełącznik środowisk (Console)
+  document.querySelectorAll('[data-srod]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('[data-srod]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+      if(window.dnToast) window.dnToast('Środowisko: '+b.textContent,'Moduły i panele właściwe środowisku','informacja');
+    });
+  });
+  // Boczna nawigacja modułów — aktualizuje okruszki
+  document.querySelectorAll('.boczna-poz').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.boczna-poz').forEach(function(x){x.setAttribute('aria-current',x===b?'true':'false');});
+      var m=b.getAttribute('data-modul'), o=b.getAttribute('data-okno');
+      var em=document.getElementById('okruszek-modul'), eo=document.getElementById('okruszek-okno');
+      if(em) em.textContent=m; if(eo) eo.textContent=o;
+      if(window.dnToast) window.dnToast('Moduł: '+m, o, 'informacja');
+    });
+  });
+  // Przełączanie paneli z menu sesji
+  document.querySelectorAll('[data-panel-toggle]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var el=document.getElementById(b.getAttribute('data-panel-toggle')); if(!el) return;
+      el.hidden=!el.hidden; b.setAttribute('aria-checked',el.hidden?'false':'true');
+    });
+  });
+})();
+</script>
+</body>
+</html>

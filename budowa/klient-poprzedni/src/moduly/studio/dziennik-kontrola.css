@@ -1,0 +1,166 @@
+/*
+ * Warstwa wizualna odcinka kontroli pracy i bezpieczeństwa: dziennik czynności,
+ * zmiany modelu, kopie zapasowe, autozapis, blokady fragmentów i zajęcia
+ * wykonawców.
+ *
+ * Arkusz wchodzi z plików `dziennik-panel.ts`, `kopie-panel.ts`
+ * i `blokada-panel.ts`, a nie z `studio.css`: ten należy do innego odcinka prac
+ * i dopisanie do niego wiersza `@import` byłoby zmianą w cudzym pliku.
+ * Wciągnięcie arkusza przez moduł kliencki daje ten sam skutek bez tej zmiany.
+ *
+ * Ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą z żetonów
+ * motywu, więc oba motywy obsługują się same. Klasy `dn-*` wnosi biblioteka
+ * komponentów.
+ */
+
+.ms-kontrola {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-panel);
+}
+
+.ms-kontrola__czesc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.ms-kontrola__tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-2xs);
+  font-weight: var(--dn-fw-mocny);
+  letter-spacing: var(--dn-ls-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+/* Zasada, której nie wolno zgubić — różnica drzew przy cofaniu oraz to, że
+   blokadę zdejmuje wyłącznie Operator. Stoi na obrysie informacyjnym, bo jest
+   treścią rozstrzygającą, a nie ozdobą przy kontrolce. */
+.ms-kontrola__zasada {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-left: 3px solid var(--dn-informacja-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-informacja-tlo);
+}
+
+.ms-kontrola__licznik {
+  margin: 0;
+  font-weight: var(--dn-fw-mocny);
+}
+
+.ms-kontrola__pas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+  align-items: center;
+}
+
+.ms-kontrola__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.ms-kontrola__wykaz > li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.ms-kontrola__glowa {
+  margin: 0;
+  font-weight: var(--dn-fw-mocny);
+}
+
+/* Czynność cofnięta zostaje w wykazie: cofnięcie samo ma być odwracalne.
+   Wyróżnienie jest obrysem I słowem w wierszu — barwa sama nie mówi nic
+   Operatorowi, który jej nie rozróżnia. */
+.ms-kontrola__wykaz > li[data-stan='reverted'] {
+  border-style: dashed;
+  background: var(--dn-powierzchnia-3);
+}
+
+/* Czynność, na której stoją późniejsze — cofnięcie jej rdzeń odmówi. */
+.ms-kontrola__wykaz > li [data-zaleznosc='tak'] {
+  border-color: var(--dn-ostrzezenie-obrys);
+}
+
+/* Kopia niosąca zmiany niezapisane — to po niej Studio zgłasza przywrócenie po
+   nagłym zamknięciu, więc musi się odróżniać od kopii zwyczajnej. */
+.ms-kontrola__wykaz > li[data-niezapisane='tak'] {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+}
+
+/* Kopia, której zapis się NIE udał. Wskaźnik „zapisano" pokazany przy nieudanym
+   zapisie jest najgorszym możliwym błędem tego modułu, więc niepowodzenie ma tu
+   własne, mocne oznaczenie. */
+.ms-kontrola__wykaz > li[data-udana='nie'],
+.ms-kontrola__stan[data-stan='nieudany'] {
+  border-color: var(--dn-blad-obrys);
+  background: var(--dn-blad-tlo);
+}
+
+.ms-kontrola__stan {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm);
+}
+
+.ms-kontrola__stan[data-stan='zapisano'] {
+  border-color: var(--dn-sukces-obrys);
+  background: var(--dn-sukces-tlo);
+}
+
+.ms-kontrola__stan[data-stan='niezapisane'] {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+}
+
+.ms-kontrola__odpowiedz {
+  margin: 0;
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia-2);
+}
+
+.ms-kontrola__odpowiedz[data-udana='nie'] {
+  border-left: 3px solid var(--dn-blad-obrys);
+  background: var(--dn-blad-tlo);
+}
+
+.ms-kontrola__odpowiedz[data-udana='tak'] {
+  border-left: 3px solid var(--dn-sukces-obrys);
+  background: var(--dn-sukces-tlo);
+}
+
+/* Blokada o zasięgu obejmującym także Operatora jest wyjątkiem, nie normą —
+   ma się różnić od blokady skierowanej przeciw modelowi. */
+.ms-kontrola__wykaz > li[data-zasieg='everyone'] {
+  border-left: 3px solid var(--dn-ostrzezenie-obrys);
+}
+
+.ms-kontrola__wykaz > li[data-zajecie='czynne'] {
+  border-left: 3px solid var(--dn-informacja-obrys);
+}

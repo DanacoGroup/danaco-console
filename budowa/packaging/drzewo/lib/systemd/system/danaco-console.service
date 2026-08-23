@@ -1,0 +1,71 @@
+[Unit]
+# Jednostka rdzenia Danaco Console — serwer platformy.
+Description=Danaco Console — rdzeń platformy
+Documentation=file:///usr/share/doc/danaco-console/INSTALACJA-I-KONFIGURACJA.md
+# Nasłuch idzie na wszystkie interfejsy, więc usługa czeka na sieć zestawioną,
+# a nie tylko na podniesiony stos.
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=danaco-console
+Group=danaco-console
+
+# Katalog roboczy stoi tam, gdzie leżą oba binaria i pakiet interfejsu. Rdzeń
+# szuka serwera narzędzi OBOK SIEBIE, a pakietu interfejsu domyślnie po ścieżce
+# względnej (client/dist) — jedno i drugie wychodzi z tego katalogu.
+WorkingDirectory=/opt/danaco-console
+ExecStart=/opt/danaco-console/danaco-console
+
+# Port nasłuchu. Zmiana wymaga też otwarcia go na zaporze.
+Environment=DANACO_PORT=17870
+# Nasłuch poza pętlą zwrotną — bez tego okno Operatora nie dosięgnie serwera.
+# Skutek uboczny jest pożądany: poza pętlą zwrotną wymóg logowania obowiązuje
+# sam z siebie (DANACO_WYMOG_LOGOWANIA rozstrzyga adres nasłuchu).
+Environment=DANACO_WSZYSTKIE_INTERFEJSY=1
+# Katalog danych zakłada systemd (StateDirectory) na koncie usługi.
+Environment=DANACO_KATALOG_DANYCH=/var/lib/danaco-console
+Environment=DANACO_KATALOG_PROFILI=/var/lib/danaco-console/profile
+# Pakiet interfejsu wskazany wprost, żeby nie zależał od katalogu roboczego.
+Environment=DANACO_KATALOG_KLIENTA=/opt/danaco-console/client/dist
+# Nastawy Operatora — plik nieobowiązkowy (wiodący minus), więc brak nie
+# wstrzymuje startu. Tu idą TLS i konto nadawcze platformy.
+EnvironmentFile=-/etc/danaco-console/srodowisko
+
+# /var/lib/danaco-console wraz z prawami konta usługi.
+StateDirectory=danaco-console
+StateDirectoryMode=0750
+RuntimeDirectory=danaco-console
+LogsDirectory=danaco-console
+
+Restart=on-failure
+RestartSec=5s
+# Nieudany start w pętli nie ma się kręcić bez końca — pięć prób w minucie.
+StartLimitBurst=5
+StartLimitIntervalSec=60s
+TimeoutStopSec=30s
+KillMode=mixed
+
+# ── Ograniczenia przywilejów ─────────────────────────────────────────────────
+# Rdzeń woła programy arsenału jako procesy potomne (ffmpeg, LibreOffice,
+# Chromium, scanimage, picocom), dlatego ograniczenia są umiarkowane i świadomie
+# NIE ma tu PrivateDevices ani ProtectSystem=strict: moduł Terminal otwiera
+# konsolę portu szeregowego (/dev/tty*), a cyfryzacja Studia sięga po skaner
+# przez USB. Zamknięcie urządzeń wyciszyłoby te funkcje bez odmowy zrozumiałej
+# dla Operatora.
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LimitNOFILE=65535
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=danaco-console
+
+[Install]
+WantedBy=multi-user.target

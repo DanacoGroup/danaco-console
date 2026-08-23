@@ -1,0 +1,315 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNO USTAWIEŃ · RAMA I NAWIGACJA SEKCJI
+   ----------------------------------------------------------------------------
+   Arkusz opisuje wyłącznie ramę: okno, kolumnę nawigacji sekcji i miejsce
+   treści sekcji czynnej. Wnętrze każdej sekcji stylizuje jej własny plik —
+   ta rama nie zna ich pól.
+
+   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`. Żeton bez definicji
+   cicho spada do wartości domyślnej, więc arkusz nie wymyśla nazw spoza
+   `motyw/`.
+   ============================================================================ */
+
+/* --- Rama okna ----------------------------------------------------------- */
+
+.du-okno {
+  width: min(1120px, calc(100vw - var(--dn-od-8)));
+  max-height: min(88dvh, 860px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.du-okno__naglowek > svg { color: var(--dn-tekst-2); }
+.du-okno__rozpychacz { flex: 1 1 auto; }
+
+.du-okno__cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.du-okno__tresc {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: var(--dn-od-5);
+}
+
+.du-okno__stopka { flex: none; }
+
+/* --- Nawigacja sekcji ------------------------------------------------------
+   Rejestr jest stały (wpisy z `sekcje.ts`, nie katalog rdzenia), więc kolumna
+   nie potrzebuje zagnieżdżenia — jeden poziom pozycji, tak jak kolumna
+   kategorii okna konfiguracji przy braku dzieci. `okno-ustawien.ts` osadza
+   kolumnę, gdy rejestr niesie więcej niż jedną pozycję. */
+
+.du-nawigacja {
+  flex: none;
+  width: var(--dn-wym-boczna);
+  border-right: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia-2);
+}
+
+.du-nawigacja__pozycja { width: 100%; }
+
+.du-nawigacja__nazwa {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Sekcja bez pokrycia w rdzeniu -----------------------------------------
+   Sekcje Konto Operatora i Powiadomienia stoją jako miejsca nazwane: mówią,
+   czego w rdzeniu nie ma, i nie niosą pól bez pokrycia.
+   Kreska po lewej w barwie ostrzeżenia, bez tła i bez obwódki — zamysł jak
+   w `.dk-stany__blad` okna konfiguracji, żeby nie tworzyć „drugiej karty"
+   wewnątrz okna. */
+
+.du-sekcja {
+  padding: var(--dn-od-5);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+.du-sekcja--brak-pokrycia {
+  border-left: 2px solid var(--dn-ostrzezenie-tekst);
+  color: var(--dn-tekst-2);
+}
+
+/* --- Ekran wąski: kolumna nawigacji kładzie się na pas -------------------- */
+
+@media (max-width: 48rem) {
+  .du-okno__cialo { flex-direction: column; }
+  .du-nawigacja {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border-right: none;
+    border-bottom: 1px solid var(--dn-obrys);
+  }
+  .du-nawigacja__pozycja { width: auto; }
+}
+
+/* ── Sekcja „Uwierzytelnianie" — cztery komendy auth.* po zalogowaniu ─────
+   Wygląd idzie z żetonów motywu; sekcja nie zapisuje barw wprost. */
+
+.du-metody {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+.du-metoda {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+}
+
+.du-metoda__nazwa { font-weight: 600; color: var(--dn-tekst); }
+
+/* Kotwica bramki nie ma przycisku zdjęcia — plakietka mówi dlaczego. */
+.du-metoda__kotwica { margin-inline-start: auto; }
+
+.du-odpowiedz {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
+.du-odpowiedz[data-powodzenie='false'] { color: var(--dn-blad-tekst); }
+
+/* Granica czynności — czego sekcja nie robi i dlaczego. */
+.du-granica {
+  border-top: 1px dashed var(--dn-obrys);
+  padding-top: var(--dn-od-1);
+}
+
+.du-pole-pin,
+.du-pole-haslo,
+.du-pole-urzadzenie { max-width: 22rem; }
+
+/* ── Wiersz nastawy — jedna nastawa, jeden wiersz, uchwyt z wartością ──────
+   Ujawnianie stopniowe po stronie układu: sekcja pokazuje wiersze, nie
+   rozwinięte płachty. Wykaz wyboru rysuje i pozycjonuje `menu-drzewo.css`
+   z biblioteki — tutaj stoi wyłącznie miejsce, w którym uchwyt stanął, i to,
+   co go otacza. */
+
+.du-wiersz {
+  display: grid;
+  grid-template-columns: minmax(8rem, 14rem) 1fr;
+  align-items: center;
+  gap: var(--dn-od-1) var(--dn-od-3);
+  padding: var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+.du-wiersz__nazwa {
+  font-weight: 600;
+  color: var(--dn-tekst);
+}
+
+.du-wiersz__ster { min-width: 0; justify-self: start; }
+
+/* Opis i zdanie odmowy biegną pod obiema kolumnami — łamanie ich w kolumnie
+   uchwytu zwężałoby tekst do szerokości menu bez powodu. */
+.du-wiersz__opis,
+.du-wiersz__zdanie {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+.du-wiersz__zdanie { color: var(--dn-blad-tekst); }
+
+/* Wiersz wyłącznie do odczytu — wartość stoi na plakietce, bo nie jest
+   uchwytem i nie ma udawać, że da się ją tu kliknąć (żadnej
+   kontrolki wyłączonej jako brama). */
+.du-wiersz--odczyt .du-wiersz__wartosc { justify-self: start; }
+
+.du-miejsce-wiersza { display: block; }
+
+/* ── Sekcja nazwanego braku ─────────────────────────────────────────────── */
+
+.du-brak__wstep {
+  margin: 0 0 var(--dn-od-2);
+  color: var(--dn-tekst-2);
+}
+
+.du-brak__pomiar {
+  margin: var(--dn-od-1) 0 0;
+  padding-inline-start: var(--dn-od-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+}
+
+/* ── Sekcja „Urządzenia" — wykaz device.* i unieważnienie tokenu ──────────
+   Układ idzie za sekcją „Uwierzytelnianie": wykaz bez punktorów, wiersz
+   w subtelnej obwódce. Stan wiersza niesie plakietka z ikoną i etykietą —
+   kreska po lewej wyłącznie go wzmacnia i nigdy nie jest jedynym nośnikiem
+   (KANON: „stan nigdy samym kolorem"). */
+
+.du-urzadzenia {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+}
+
+.du-urzadzenia__pusto {
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+}
+
+.du-urzadzenie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-md);
+}
+
+/* Urządzenie bieżące — kreska wzmacniająca plakietkę „to urządzenie". */
+.du-urzadzenie[data-biezace='true'] {
+  border-inline-start: 2px solid var(--dn-sygnal);
+  background: var(--dn-powierzchnia-2);
+}
+
+.du-urzadzenie__glowa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+}
+
+.du-urzadzenie__nazwa {
+  font-weight: 600;
+  color: var(--dn-tekst);
+  overflow-wrap: anywhere;
+}
+
+/* Czynność idzie na koniec wiersza; przy zawinięciu wraca pod nazwę i wtedy
+   marginesu automatycznego nie ma czego rozpychać — stąd sam `margin-inline-
+   start`, bez rozpychacza w treści. */
+.du-urzadzenie__czynnosc { margin-inline-start: auto; }
+
+.du-urzadzenie__bez-czynnosci {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.du-urzadzenie__szczegol {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1) var(--dn-od-3);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.du-urzadzenie__identyfikator {
+  font-family: var(--dn-ff-mono);
+  overflow-wrap: anywhere;
+}
+
+/* Ostrzeżenie stoi pod czynnością jako jej opis — nie jest bramą przed nią. */
+.du-urzadzenie__ostrzezenie {
+  margin: 0;
+  display: flex;
+  align-items: start;
+  gap: var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+.du-urzadzenie__ostrzezenie > svg { flex: none; margin-block-start: 2px; }
+
+/* --- sekcja „Powiadomienia" ---------------------------------------------- */
+
+/* Tabela klas zdarzeń: nazwa, przełącznik zgłaszania, kanały dostarczenia.
+   Kolumna kanałów jest ostatnia i najszersza, bo jako jedyna rośnie razem
+   z liczbą kanałów wniesionych do katalogu. */
+.du-powiadomienia {
+  width: 100%;
+  table-layout: auto;
+}
+
+.du-powiadomienia__klasa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-1);
+  text-align: start;
+  font-weight: 400;
+}
+
+.du-powiadomienia__nazwa {
+  font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst);
+}
+
+.du-powiadomienia__kanaly {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--dn-od-3);
+}
+
+.du-powiadomienia__kanal { font-size: var(--dn-fs-sm); }
+
+/* Wygaszenie przełącznikiem głównym jest widokiem, nie zapisem: wartości
+   zostają widoczne, sterowanie przestaje przyjmować. Sam odcień nie niesie
+   tu stanu — kontrolki są przy tym wyłączone, więc czytnik ekranu i kursor
+   mówią to samo, co barwa. */
+.du-powiadomienia tr[data-wygaszony='true'] { opacity: 0.55; }

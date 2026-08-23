@@ -1,0 +1,116 @@
+/* ============================================================================
+   DANACO CONSOLE — SCENA WEJŚCIA (ładowanie po przejściu bramki)
+   ----------------------------------------------------------------------------
+   Plik nie zna ani jednej barwy — wszystko z żetonów motywu (`--dn-*`). Każdy
+   selektor zaczyna się od `.la-`, żeby żaden moduł nie odziedziczył wyglądu
+   sceny ani go nie nadpisał.
+
+   Bryła jest prawdziwą bryłą przestrzeni CSS (`transform-style: preserve-3d`),
+   nie obrazkiem udającym trójwymiar i nie płótnem WebGL. Powód jest ten sam,
+   dla którego w tym drzewie nie ma bibliotek zewnętrznych: sześć ścian i jeden
+   obrót to dwadzieścia wierszy arkusza, a WebGL to zależność, warstwa
+   sterowników i ekran, który u kogoś nie wstanie.
+
+   Scena stoi POD bramką (`--dn-z-brama`), a nad wszystkim innym: przesłona
+   logowania schodzi dopiero wtedy, gdy scena już stoi, więc żaden ekran nie
+   mignie pomiędzy nimi.
+   ============================================================================ */
+
+.la-scena {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--dn-z-brama) - 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dn-od-8);
+  background: var(--dn-tlo);
+  opacity: 1;
+  transition: opacity var(--dn-czas-2) ease-out;
+}
+
+/* Zejście sceny jest jedynym jej ruchem poza obrotem bryły: scena gaśnie,
+   a Centrum dowodzenia jest pod nią gotowe od pierwszej klatki. */
+.la-scena--schodzi {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- bryła ---------------------------------------------------------------- */
+
+.la-pole {
+  perspective: 44rem;
+  width: 9rem;
+  height: 9rem;
+}
+
+.la-bryla {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: la-obrot 7s linear infinite;
+}
+
+.la-sciana {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: color-mix(in srgb, var(--dn-powierzchnia) 88%, transparent);
+  box-shadow: var(--dn-cien-lg);
+}
+
+/* Sześć ścian sześcianu o boku 9rem — połowa boku to 4.5rem. */
+.la-sciana--przod { transform: translateZ(4.5rem); }
+.la-sciana--tyl { transform: rotateY(180deg) translateZ(4.5rem); }
+.la-sciana--prawo { transform: rotateY(90deg) translateZ(4.5rem); }
+.la-sciana--lewo { transform: rotateY(-90deg) translateZ(4.5rem); }
+.la-sciana--gora { transform: rotateX(90deg) translateZ(4.5rem); }
+.la-sciana--dol { transform: rotateX(-90deg) translateZ(4.5rem); }
+
+@keyframes la-obrot {
+  from { transform: rotateX(-18deg) rotateY(0deg); }
+  to { transform: rotateX(-18deg) rotateY(360deg); }
+}
+
+/* Ruch bez zgody Operatora nie idzie. Scena zostaje — bo niesie zdanie o tym,
+   co się dzieje — ale bryła staje w jednym ujęciu, zamiast wirować. */
+@media (prefers-reduced-motion: reduce) {
+  .la-bryla {
+    animation: none;
+    transform: rotateX(-18deg) rotateY(-24deg);
+  }
+
+  .la-scena {
+    transition: none;
+  }
+}
+
+/* --- zdania --------------------------------------------------------------- */
+
+.la-napisy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  text-align: center;
+}
+
+.la-nazwa {
+  margin: 0;
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: 0.02em;
+  color: var(--dn-tekst);
+}
+
+.la-krok {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}

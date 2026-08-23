@@ -1,0 +1,88 @@
+/*
+ * Postać dokumentu — pas otwarć i trzy panele nastaw.
+ *
+ * Powierzchnia należy do dokumentu: panele są NAKŁADKAMI otwieranymi z pasa,
+ * domyślnie schowanymi atrybutem `hidden`. Stałej kolumny nie zajmują i zajmować
+ * nie mogą — arkusz nie ma więc ani jednej reguły szerokości kolumny.
+ *
+ * Żetony barw i odstępów pochodzą z warstwy wspólnej produktu. Arkusz nie zakłada
+ * własnej palety: panel nastaw strony ma wyglądać jak reszta modułu, a nie jak
+ * wyspa.
+ */
+
+.ms-postac__pas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-odstep-xs, 0.375rem);
+  margin-block: var(--dn-odstep-xs, 0.375rem);
+}
+
+/* Panel jako nakładka nad treścią — przewijana, bo nastaw strony jest wiele. */
+.ms-postac {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-odstep-s, 0.5rem);
+  max-height: 32rem;
+  overflow-y: auto;
+  padding: var(--dn-odstep-s, 0.5rem);
+  border: 1px solid var(--dn-obwod, rgba(127, 127, 127, 0.35));
+  border-radius: var(--dn-promien-s, 0.375rem);
+  background: var(--dn-tlo-panel, transparent);
+}
+
+.ms-postac[hidden] {
+  display: none;
+}
+
+.ms-postac__grupa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-odstep-xs, 0.375rem);
+  padding-block-end: var(--dn-odstep-s, 0.5rem);
+  border-block-end: 1px solid var(--dn-obwod-slaby, rgba(127, 127, 127, 0.2));
+}
+
+.ms-postac__grupa:last-of-type {
+  border-block-end: none;
+}
+
+.ms-postac__tytul {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--dn-tekst-drugi, inherit);
+}
+
+.ms-postac__wykaz {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-odstep-xs, 0.375rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ms-postac__styl,
+.ms-postac__zasada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--dn-odstep-xs, 0.375rem);
+  font-size: 0.8125rem;
+}
+
+/* Tablica znaków — siatka gęsta, bo znaków bywa kilkaset. */
+.ms-postac__znaki {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.ms-postac__znak {
+  min-width: 2rem;
+  font-size: 1rem;
+  /* Znak ma być czytelny jako znak, a nie jako etykieta przycisku. */
+  font-variant-ligatures: none;
+}

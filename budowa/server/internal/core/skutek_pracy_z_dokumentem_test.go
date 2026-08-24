@@ -304,3 +304,77 @@ func TestOperacjaKontekstowaOdKoncaDoKonca(t *testing.T) {
 			"nie ma do czego wrócić po odrzuceniu wyniku")
 	}
 }
+
+// TestPorownanieBezStronWracaOdmowa pilnuje granicy, na której `studio.diff.compare`
+// meldował powodzenie kopertą pustą.
+//
+// Koperta pusta ze stanem `ok` mówi oknu „porównałem i nie ma czego pokazać",
+// a rdzeń nie porównał niczego: fragmenty różnicy potrzebują dwóch stron,
+// a wzorzec potrzebuje strony, po której ma szukać. Odmowa nazywająca brakujące
+// pole jest tu jedyną odpowiedzią prawdziwą — po pustej kopercie okno nie ma jak
+// odróżnić „wersje są zgodne" od „nie podałeś, co z czym porównać".
+func TestPorownanieBezStronWracaOdmowa(t *testing.T) {
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	sesja := zalozSesjeSprawdzianu(t, zmontowany, zycie)
+	okno := zalozOknoSprawdzianu(t, zmontowany, zycie, sesja, "kanal-sprawdzianu")
+
+	var otwarcie shared.StudioDocumentOpenResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentOpen,
+		shared.StudioDocumentOpenRequest{WindowId: okno}, &otwarcie)
+	dokument := otwarcie.Document.Id
+
+	zalozWersje := func(tresc string) string {
+		t.Helper()
+		var zapis shared.StudioDocumentSaveResponse
+		wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentSave,
+			shared.StudioDocumentSaveRequest{
+				DocumentId:    dokument,
+				Content:       tresc,
+				CreateVersion: wskaznik(true),
+			}, &zapis)
+		if zapis.Version == nil {
+			t.Fatalf("zapis z createVersion nie oddał wersji: %+v", zapis)
+		}
+		return zapis.Version.Id
+	}
+	pierwsza := zalozWersje("ala ma psa i kota")
+	druga := zalozWersje("ala ma psa oraz kota")
+
+	t.Run("bez wskazania stron", func(t *testing.T) {
+		blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioDiffCompare,
+			shared.StudioDiffCompareRequest{DocumentId: dokument})
+		odmowaNazywa(t, blad, shared.ErrorCodeValidationFailed,
+			"baseVersionId", "targetVersionId")
+	})
+
+	t.Run("sam wzorzec bez strony przeszukiwanej", func(t *testing.T) {
+		blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioDiffCompare,
+			shared.StudioDiffCompareRequest{DocumentId: dokument, Pattern: wskaznik("ma")})
+		odmowaNazywa(t, blad, shared.ErrorCodeValidationFailed, "wzorzec")
+	})
+
+	t.Run("jedna strona bez drugiej", func(t *testing.T) {
+		blad := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioDiffCompare,
+			shared.StudioDiffCompareRequest{DocumentId: dokument, BaseVersionId: &pierwsza})
+		odmowaNazywa(t, blad, shared.ErrorCodeValidationFailed, "targetVersionId")
+	})
+
+	// Odmowa nie ma prawa objąć żądania, z którego da się coś policzyć —
+	// dwie wersje mają dać różnicę, a wzorzec przy nich trafienia.
+	t.Run("dwie strony dają różnicę", func(t *testing.T) {
+		var porownanie shared.StudioDiffCompareResponse
+		wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDiffCompare,
+			shared.StudioDiffCompareRequest{
+				DocumentId:      dokument,
+				BaseVersionId:   &pierwsza,
+				TargetVersionId: &druga,
+				Pattern:         wskaznik("ma"),
+			}, &porownanie)
+		if len(porownanie.Hunks) == 0 {
+			t.Error("porównanie dwóch różnych wersji nie oddało ani jednego fragmentu")
+		}
+		if len(porownanie.Matches) == 0 {
+			t.Error("wzorzec obecny w treści strony nie dał ani jednego trafienia")
+		}
+	})
+}

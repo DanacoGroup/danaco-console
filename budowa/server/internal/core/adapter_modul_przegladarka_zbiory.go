@@ -17,6 +17,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/shared"
@@ -34,8 +35,8 @@ const (
 // wobec identyfikatora zewnętrznego: powtórne wywołanie z tym samym `Id`
 // nadpisuje wiersz, nie dubluje go (patrz `ZapiszZrodlo`).
 func (a *adapterPrzegladarki) DodajZrodlo(ctx context.Context, z shared.BrowserSourceAddRequest) (shared.BrowserSourceAddResponse, error) {
-	if z.WindowId == "" || z.Url == "" {
-		return shared.BrowserSourceAddResponse{}, fmt.Errorf("core: źródło przeglądania bez okna albo adresu")
+	if brak := brakiZrodlaPrzegladania(z); brak != "" {
+		return shared.BrowserSourceAddResponse{}, bladWskazaniaPrzegladarki(brak)
 	}
 
 	zrodlo := dane.ZrodloPrzegladania{
@@ -57,8 +58,8 @@ func (a *adapterPrzegladarki) DodajZrodlo(ctx context.Context, z shared.BrowserS
 // DodajNotatke zapisuje notatkę Operatora, opcjonalnie powiązaną ze źródłem
 // i cytatem fragmentu strony.
 func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.BrowserNoteAddRequest) (shared.BrowserNoteAddResponse, error) {
-	if z.WindowId == "" || z.Content == "" {
-		return shared.BrowserNoteAddResponse{}, fmt.Errorf("core: notatka przeglądania bez okna albo treści")
+	if brak := brakiNotatkiPrzegladania(z); brak != "" {
+		return shared.BrowserNoteAddResponse{}, bladWskazaniaPrzegladarki(brak)
 	}
 
 	notatka := dane.NotatkaPrzegladania{
@@ -82,6 +83,39 @@ func (a *adapterPrzegladarki) DodajNotatke(ctx context.Context, z shared.Browser
 		return shared.BrowserNoteAddResponse{}, fmt.Errorf("core: nie można dodać notatki przeglądania: %w", err)
 	}
 	return shared.BrowserNoteAddResponse{Note: notatkaKontraktu(zapisana)}, nil
+}
+
+// brakiZrodlaPrzegladania i brakiNotatkiPrzegladania nazywają pole, które
+// przyszło puste, zamiast mówić „okna albo adresu": odmowa idzie do Operatora
+// i ma powiedzieć, co dopisać. Brak samego pola w treści żądania odsiewa brama
+// kontraktu (`brama_kontraktu.go`) — tutaj rozstrzyga się wyłącznie wartość
+// pusta, bo tylko dziedzina wie, że pusty adres źródłem nie jest.
+func brakiZrodlaPrzegladania(z shared.BrowserSourceAddRequest) string {
+	var puste []string
+	if strings.TrimSpace(z.WindowId) == "" {
+		puste = append(puste, "windowId")
+	}
+	if strings.TrimSpace(z.Url) == "" {
+		puste = append(puste, "url")
+	}
+	if len(puste) == 0 {
+		return ""
+	}
+	return "źródło przeglądania z pustymi polami: " + strings.Join(puste, ", ")
+}
+
+func brakiNotatkiPrzegladania(z shared.BrowserNoteAddRequest) string {
+	var puste []string
+	if strings.TrimSpace(z.WindowId) == "" {
+		puste = append(puste, "windowId")
+	}
+	if strings.TrimSpace(z.Content) == "" {
+		puste = append(puste, "content")
+	}
+	if len(puste) == 0 {
+		return ""
+	}
+	return "notatka przeglądania z pustymi polami: " + strings.Join(puste, ", ")
 }
 
 // zrodloKontraktu przekłada wiersz źródła na byt kontraktu `BrowserSource`.

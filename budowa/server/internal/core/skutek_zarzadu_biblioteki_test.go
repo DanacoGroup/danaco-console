@@ -502,6 +502,36 @@ func TestPulpitStanuLiczyCalyZbiorNieProbke(t *testing.T) {
 	}
 }
 
+// TestPulpitStanuNaPustymRepozytoriumOddajeZera mierzy pulpit na rdzeniu świeżo
+// założonym — czyli w stanie, w którym zastaje go Operator otwierający moduł
+// Library po raz pierwszy.
+//
+// Zbiór pusty jest tu przypadkiem granicznym agregatów: sumowanie po zbiorze
+// pustym daje w SQL wartość pustą, a pulpit ma pola liczbowe bez stanu pustego.
+// Zbiór pusty ma dać ZERA, nie odmowę — zero zasobów jest wynikiem, a nie
+// niepowodzeniem odczytu.
+func TestPulpitStanuNaPustymRepozytoriumOddajeZera(t *testing.T) {
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	var pulpit shared.LibraryStatsGetResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandLibraryStatsGet,
+		shared.LibraryStatsGetRequest{}, &pulpit)
+
+	if pulpit.Stats.FileCount != 0 || pulpit.Stats.ArchivedCount != 0 {
+		t.Errorf("puste repozytorium: pulpit mówi o %d zasobach czynnych i %d archiwalnych",
+			pulpit.Stats.FileCount, pulpit.Stats.ArchivedCount)
+	}
+	if pulpit.Stats.TotalBytes != 0 {
+		t.Errorf("puste repozytorium ma rozmiar %d bajtów", pulpit.Stats.TotalBytes)
+	}
+	if pulpit.Stats.MissingChecksumCount != 0 || pulpit.Stats.DuplicateCount != 0 ||
+		pulpit.Stats.OrphanCount != 0 {
+		t.Errorf("puste repozytorium: bez sumy kontrolnej %d, duplikatów %d, osieroconych %d",
+			pulpit.Stats.MissingChecksumCount, pulpit.Stats.DuplicateCount,
+			pulpit.Stats.OrphanCount)
+	}
+}
+
 // TestKlasyfikacjaWytwarzaSugestieAPrzyjecieJeWykonuje mierzy pełną drogę
 // sugestii: wytworzenie, zapis w bazie i skutek przyjęcia.
 //

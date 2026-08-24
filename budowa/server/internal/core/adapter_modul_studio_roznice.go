@@ -240,11 +240,24 @@ func (a *adapterStudia) Porownaj(ctx context.Context,
 		return shared.StudioDiffCompareResponse{}, err
 	}
 
+	// Żądanie, z którego nie da się policzyć ANI fragmentów różnicy, ANI
+	// trafień wzorca, jest żądaniem bez odpowiedzi. Powodzenie z kopertą pustą
+	// mówiłoby oknu „porównałem i nie ma różnic", a rdzeń niczego nie porównał:
+	// fragmenty potrzebują dwóch stron, a wzorzec potrzebuje strony, po której
+	// ma szukać — sama treść dokumentu stroną porównania nie jest.
+	maFragmenty := idBazy != "" && idCelu != ""
+	maWzorzec := z.Pattern != nil && strings.TrimSpace(*z.Pattern) != ""
+	maTrafienia := maWzorzec && (idBazy != "" || idCelu != "")
+	if !maFragmenty && !maTrafienia {
+		return shared.StudioDiffCompareResponse{},
+			bladWskazaniaStudio(brakStronPorownania(idBazy, idCelu, maWzorzec))
+	}
+
 	odpowiedz := shared.StudioDiffCompareResponse{}
-	if idBazy != "" && idCelu != "" {
+	if maFragmenty {
 		odpowiedz.Hunks = policzFragmentyRoznicy(baza, cel)
 	}
-	if z.Pattern != nil && strings.TrimSpace(*z.Pattern) != "" {
+	if maWzorzec {
 		trescDoSzukania, idStrony := cel, idCelu
 		if idStrony == "" {
 			trescDoSzukania, idStrony = baza, idBazy
@@ -301,6 +314,26 @@ func trescBytuPorownania(kod string, tresc, odwolanie *string) (string, string, 
 				"), rdzeń nie ma tu mechanizmu jej odczytu"))
 	}
 	return "", kod, nil
+}
+
+// brakStronPorownania nazywa to, czego w żądaniu zabrakło, polami kontraktu.
+// Odmowa idzie do Operatora, więc mówi, co dopisać, a nie że „czegoś brakuje":
+// sam wzorzec bez wskazanej strony jest innym brakiem niż jedna strona bez
+// drugiej, choć obydwa kończą się tą samą pustą odpowiedzią.
+func brakStronPorownania(idBazy, idCelu string, maWzorzec bool) string {
+	if idBazy == "" && idCelu == "" {
+		if maWzorzec {
+			return "wyszukanie wzorca bez wskazania strony przeszukiwanej — " +
+				"wzorzec szuka w wersji albo propozycji, nie w bieżącej treści dokumentu; " +
+				"wskaż baseVersionId albo targetVersionId lub proposalId"
+		}
+		return "porównanie bez wskazania stron — potrzebne są baseVersionId " +
+			"oraz targetVersionId albo proposalId"
+	}
+	if idCelu == "" {
+		return "porównanie bez strony porównywanej — wskaż targetVersionId albo proposalId"
+	}
+	return "porównanie bez strony odniesienia — wskaż baseVersionId"
 }
 
 // bladWskazaniaStronyPorownania odróżnia brak wiersza od usterki wewnętrznej

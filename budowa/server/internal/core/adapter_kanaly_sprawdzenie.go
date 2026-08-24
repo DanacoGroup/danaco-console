@@ -202,7 +202,8 @@ func zarzadcaPoswiadczeniaKanalu(kanal dane.Kanal) string {
 	return "sejf poświadczeń rdzenia"
 }
 
-// bladWskazaniaKanalu nazywa niepoprawne żądanie obu czynności pytających.
+// bladWskazaniaKanalu nazywa niepoprawne żądanie czynności rejestru kanałów —
+// błąd Operatora, nie rdzenia.
 func bladWskazaniaKanalu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"kanały: "+powod))

@@ -174,9 +174,13 @@ func (r *repozytoriumBiblioteki) Statystyki(ctx context.Context, kolekcjaKod, pr
 	// Nazwa tabeli stoi przy kolumnie stanu jawnie, bo część agregatów łączy
 	// tabele i sama „stan" byłaby wtedy dwuznaczna.
 	czynne := zawezenie + ` AND plik_biblioteki.stan = 'aktywny'`
+	// Każdy agregat sumujący idzie przez COALESCE: SUM po zbiorze pustym daje
+	// w SQLite NULL, a docelowe pola pulpitu są liczbami całkowitymi bez stanu
+	// pustego. Bez tej osłony repozytorium puste — czyli rdzeń świeżo założony —
+	// wywracało odczyt pulpitu zamiast oddać zera.
 	wiersz := r.db.QueryRowContext(ctx, `SELECT COUNT(*), COALESCE(SUM(rozmiar_bajtow), 0),
-	                                            SUM(CASE WHEN suma_kontrolna IS NULL
-	                                                       OR suma_kontrolna = '' THEN 1 ELSE 0 END)
+	                                            COALESCE(SUM(CASE WHEN suma_kontrolna IS NULL
+	                                                       OR suma_kontrolna = '' THEN 1 ELSE 0 END), 0)
 	                                     FROM plik_biblioteki WHERE `+czynne, argumenty...)
 	if err := wiersz.Scan(&stat.LiczbaZasobow, &stat.LacznyRozmiar, &stat.BezSumyKontrolnej); err != nil {
 		return StatystykiBiblioteki{}, fmt.Errorf("dane: nie można policzyć zasobów repozytorium: %w", err)

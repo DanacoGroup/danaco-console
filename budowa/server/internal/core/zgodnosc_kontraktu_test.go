@@ -106,7 +106,7 @@ func TestRejestrNieMaNazwSpozaKontraktu(t *testing.T) {
 func TestPowitanieOddajeWykazZRejestru(t *testing.T) {
 	zmontowany, zycie := zmontujDoSprawdzenia(t)
 
-	odpowiedz := wykonajKomende(t, zmontowany, zycie, shared.CommandConnectionHello, struct{}{})
+	odpowiedz := wykonajKomende(t, zmontowany, zycie, shared.CommandConnectionHello, powitanieSprawdzianu())
 	if odpowiedz.Error != nil {
 		t.Fatalf("powitanie odmówiło: %+v", *odpowiedz.Error)
 	}
@@ -152,9 +152,21 @@ func TestKomendaSpozaKontraktuWracaJakoNieznana(t *testing.T) {
 	}
 
 	// Po odmowie rdzeń ma pracować dalej.
-	dalsza := wykonajKomende(t, zmontowany, zycie, shared.CommandConnectionHello, struct{}{})
+	dalsza := wykonajKomende(t, zmontowany, zycie, shared.CommandConnectionHello, powitanieSprawdzianu())
 	if dalsza.Error != nil {
 		t.Errorf("po nieznanej komendzie powitanie odmówiło: %+v", *dalsza.Error)
+	}
+}
+
+// powitanieSprawdzianu składa powitanie kompletne wobec kontraktu. Powitanie
+// jest tu narzędziem, nie przedmiotem pomiaru — oba sprawdziany powyżej pytają
+// o wykaz komend i o to, czy rdzeń pracuje po odmowie. Treść niepełna mierzyłaby
+// w tym miejscu bramę kontraktu zamiast tego, o co sprawdzianom idzie.
+func powitanieSprawdzianu() shared.ConnectionHelloRequest {
+	return shared.ConnectionHelloRequest{
+		ClientId:        "sprawdzian",
+		ClientVersion:   "0",
+		ProtocolVersion: shared.ProtocolVersion,
 	}
 }
 

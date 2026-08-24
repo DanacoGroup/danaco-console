@@ -21,6 +21,13 @@ func obsluz[Z any, W any](czynnosc func(context.Context, Z) (W, error)) Obsluga 
 		if err := z.LadunekDo(&zadanie); err != nil {
 			return bladNiepoprawnegoLadunku(err)
 		}
+		// Zgodność z kontraktem sprawdza się PRZED czynnością domeny i po
+		// odczytaniu ładunku: odczyt orzeka o kształcie treści, brama — o jej
+		// zawartości. Bez bramy czynność domeny dostawała żądanie niepełne
+		// i uzupełniała brak wartością domyślną, meldując powodzenie.
+		if err := sprawdzZadanieWobecKontraktu(z.Komenda, z.Ladunek, zadanie); err != nil {
+			return porazka(err)
+		}
 		// Tożsamość żądania jedzie dalej kontekstem, bo ładunek jej nie niesie:
 		// pole `id` mieszka w kopercie, a czynność domeny dostaje wyłącznie
 		// rozpakowaną treść. Bez tego wpisu nadawca strumienia nie miałby czym

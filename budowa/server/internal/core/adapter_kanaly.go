@@ -36,6 +36,9 @@ func nowyAdapterKanalow(repozytorium dane.RepozytoriumKanalow, rejestr *models.R
 
 // Dodaj dopisuje wiersz rejestru kanałów.
 func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) (shared.ChannelAddResponse, error) {
+	if brak := brakiWierszaKanalu(z); brak != "" {
+		return shared.ChannelAddResponse{}, bladWskazaniaKanalu(brak)
+	}
 	kanal := dane.Kanal{
 		Kod:                    nowyIdentyfikator(przedrostekKanalu),
 		Nazwa:                  z.Name,
@@ -56,6 +59,10 @@ func (a *adapterKanalow) Dodaj(ctx context.Context, z shared.ChannelAddRequest) 
 
 // Zmien zmienia wiersz rejestru kanałów wybiórczo.
 func (a *adapterKanalow) Zmien(ctx context.Context, z shared.ChannelUpdateRequest) (shared.ChannelUpdateResponse, error) {
+	if strings.TrimSpace(z.ChannelId) == "" {
+		return shared.ChannelUpdateResponse{},
+			bladWskazaniaKanalu("zmiana kanału z pustym polem channelId")
+	}
 	kanal, err := a.repozytorium.PobierzPoKodzie(ctx, z.ChannelId)
 	if err != nil {
 		return shared.ChannelUpdateResponse{}, err
@@ -205,6 +212,26 @@ func kontoKanalu(config json.RawMessage) *int64 {
 	default:
 		return nil
 	}
+}
+
+// brakiWierszaKanalu nazywa pola wiersza kanału, które przyszły puste. Wiersz
+// bez rodzaju kanału nie przechodził dotąd więzu schematu i wracał jako usterka
+// wewnętrzna z treścią zapytania SQL — Operator dostawał nazwę kolumny bazy
+// zamiast nazwy pola, którego nie wypełnił. Brak samego pola w treści żądania
+// odsiewa brama kontraktu (`brama_kontraktu.go`); tutaj rozstrzyga się wartość
+// pusta.
+func brakiWierszaKanalu(z shared.ChannelAddRequest) string {
+	var puste []string
+	if strings.TrimSpace(z.Name) == "" {
+		puste = append(puste, "name")
+	}
+	if strings.TrimSpace(z.Kind) == "" {
+		puste = append(puste, "kind")
+	}
+	if len(puste) == 0 {
+		return ""
+	}
+	return "wiersz rejestru kanałów z pustymi polami: " + strings.Join(puste, ", ")
 }
 
 // kanalKontraktu przekłada wiersz repozytorium na kanał kontraktu.

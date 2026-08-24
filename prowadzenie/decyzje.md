@@ -865,6 +865,36 @@ swobody.
 
 ---
 
+## 10. Powitanie kanału jest wyjęte spod bramy kontraktu
+
+**Data:** 2026-08-24 · **Stan:** obowiązuje
+
+**Kontekst.** Rdzeń przyjmował żądania bez pól wymaganych i wartości spoza
+wyliczeń, milcząc — klient mógł wysyłać treść niezgodną z kontraktem i nie
+dowiedzieć się o tym. Naprawa wniosła bramę sprawdzającą każde żądanie wobec
+kontraktu. Brama objęła także `connection.hello`, którego trzy pola kontrakt
+oznacza jako wymagane.
+
+**Skutek, który to ujawniło.** Powitanie jest jedynym miejscem, w którym klient
+odczytuje `protocolVersion` rdzenia — a więc jedynym, w którym rozpoznaje, że
+jest starszy niż rdzeń. Klient nieznający pola `clientId`, bo pochodzi sprzed
+jego wprowadzenia, dostaje od bramy odmowę zamiast informacji o niezgodności
+wersji. Im starszy klient, tym pewniej nie dowie się, dlaczego został odrzucony.
+
+**Decyzja.** `connection.hello` **nie podlega bramie**. Odpowiada zawsze, także
+na żądanie niepełne. Braki pól zgłasza w treści odpowiedzi, nie odmową.
+
+**Powód.** Uzgodnienie wersji musi działać przed uzgodnieniem czegokolwiek
+innego — w tym przed zgodnością co do pól. Brama sprawdzająca powitanie wobec
+kontraktu zakłada, że obie strony już znają ten sam kontrakt, czyli zakłada to,
+co powitanie ma dopiero ustalić.
+
+**Konsekwencje.** Powitanie jest jedynym wyjątkiem i pozostanie jedynym. Każda
+inna komenda przechodzi przez bramę bez ustępstw — wyjątek dla powitania wynika
+z jego roli w uzgodnieniu, nie z wygody.
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
@@ -889,4 +919,5 @@ Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
 | Nazwy poziomów w bibliotece | etap 2 | Uzgodnienie `.dn-karty-sesji` i `.dn-karta-widoku` z modelem czterech poziomów, razem z przebudową mechanizmu kart. |
 | Wskaźnik izolacji — poziom przypisania | etap 2 | `izolacja.css` stanowi, że izolacja jest cechą okna roboczego; wskaźnik stoi w ramie aplikacji. |
 | Pierwsze uruchomienie bez poczty | etap 1 | Żeby ustawić pocztę, trzeba wejść; żeby wejść, trzeba potwierdzić adres; żeby potwierdzić — trzeba poczty. Dziś rejestracja przechodzi, ale droga potwierdzenia nie powstaje: konto istnieje, wejść się nie da, powtórzyć rejestracji też nie. Do rozstrzygnięcia: konto potwierdzone z urzędu przy braku poczty, poczta ustawiana w instalatorze, wejście bez konta, albo odmowa prowadząca wprost do ustawienia poczty. Wiąże nowy przepływ wejścia. |
+| Wartość domyślna `createVersion` | etap 2 | Kontrakt nie ustala, co znaczy brak pola w `studio.document.save`, choć w trzech komendach siostrzanych mówi wprost „brak znaczy tak". Rdzeń stosuje oba idiomy niejednolicie. Do rozstrzygnięcia wraz z tym, czy reguła obejmuje `document.save.as` i `document.form.save`. |
 | Metryki w planszach i indeksie designu | etap 1 | Podają wartości rozjechane ze stanem plików, a metody liczenia „interakcji" nie da się odtworzyć. Albo dostają definicję, albo znikają. |

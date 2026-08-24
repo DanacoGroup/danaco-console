@@ -6,27 +6,40 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### ocena-modulow
+### naprawy-rdzenia
 
-Największa masa logiki niedotykającej interfejsu leży w `moduly/` i nie została
-oceniona: 47 159 wierszy wobec 24 055 w warstwach już ocenionych. Teren
-rozstrzyga jej los tą samą miarą co poprzedni.
+Usterki rdzenia wykryte pomiarem przy ocenie warstwy i modułów. Wszystkie
+jednoznaczne — nie wymagają rozstrzygnięcia Właściciela ani gotowych prototypów.
+Naprawione teraz nie zostaną odziedziczone przez nowy interfejs.
 
 | | |
 |---|---|
-| **Gałąź** | `teren/ocena-modulow` z `main` |
-| **Wykaz plików** | `prowadzenie/ocena-modulow.md` — jedyny wytwór |
-| **Poza terenem** | całe `budowa/` — wyłącznie do odczytu i uruchamiania |
+| **Gałąź** | `teren/naprawy-rdzenia` z `main` |
+| **Wykaz plików** | `budowa/server/internal/` oraz sprawdziany w tych samych pakietach |
+| **Poza terenem** | `budowa/shared/contract.json`, `budowa/klient-poprzedni/`, `prowadzenie/` |
 
-**Przedmiot.** Szesnaście modułów przejętego klienta, od Studio (42 954 wiersze)
-po Workspace (5056). Dla każdego rozstrzygnięcie: przechodzi bez zmian, wymaga
-pracy wraz z zakresem, nie istnieje.
+**Przedmiot — pięć usterek z pomiaru:**
 
-**Kryteria odbioru** — te same co przy ocenie warstwy przejętej: pomiar
-uruchomieniem, nie odczytem; „przechodzi" poparte próbą przeciw żywemu
-rdzeniowi; zależność od modelu okna nazwana wprost; jeden wytwór.
+1. `library.stats.get` kończy się błędem SQL przy każdym wywołaniu.
+2. `studio.document.save` nie zakłada wersji dokumentu, choć odpowiedź mówi
+   Operatorowi, że zakłada.
+3. Rdzeń przyjmuje żądania bez pól obowiązkowych i wartości spoza wyliczeń,
+   milcząc — klient może wysyłać treść niezgodną z kontraktem i nie dowie się
+   o tym.
+4. `channel.add`, `channel.update`, `browser.source.add`, `browser.note.add`
+   oddają błąd wewnętrzny zamiast odmowy nazywającej brak.
+5. `studio.diff.compare` bez dwóch wersji oddaje kopertę pustą zamiast odmowy.
 
-Pierwszeństwo ma **Studio** — to na nim buduje się przekrój pionowy.
+**Kryteria odbioru.**
+
+1. Każda usterka odtworzona przed naprawą i wykazana jako nieobecna po niej —
+   z przytoczonym wynikiem obu przebiegów.
+2. Każda naprawa ma sprawdzian, który zawodzi na kodzie sprzed naprawy.
+3. `gotestsum ./...` — liczba niepowodzeń nie rośnie wobec stanu zastanego
+   (2003 zdane, 4 niezdane).
+4. Kontrakt nietknięty — wykazane `git status`.
+5. Usterka, której nie da się naprawić bez rozstrzygnięcia Właściciela, wraca
+   jako zgłoszenie wraz z przyczyną — nie jest naprawiana domysłem.
 
 ## Zgłoszenia oczekujące na teren
 

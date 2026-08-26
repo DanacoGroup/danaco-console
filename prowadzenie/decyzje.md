@@ -694,8 +694,12 @@ od wariantu wybranego wcześniej.
 
 **Konsekwencje.** Instalator ma dwie ścieżki, nie jedną. Opis produktu
 w zasadach korzystania obejmuje oba warianty bez wskazywania któregokolwiek jako
-domyślnego sposobu pracy. Zachowany skrypt `narzedzia/instalka-hybryda-win-x64.sh`
-składa wariant cienki i jest w tej sprawie zgodny z decyzją.
+domyślnego sposobu pracy. Skrypt składający wariant cienki
+(`instalka-hybryda-win-x64.sh` wraz z odmianami dla ARM i Linuksa) **nie leży
+w repozytorium budowy** — stoi w materiale zabezpieczonym poza gitem,
+`~/robocze/material/repo-2.0/budowa/scripts/`. Jest zgodny z decyzją: wkompilowuje
+`client/dist` w powłokę i sprawdza wykazem zawartości, że rdzenia w instalce nie
+ma. Wchodzi do budowy wraz z terenem instalatora.
 
 ---
 

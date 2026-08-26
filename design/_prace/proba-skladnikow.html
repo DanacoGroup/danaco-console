@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>Próba składników — instalator i wejście</title>
+<link rel="stylesheet" href="../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../zasoby/zetony/ruch.css">
+<link rel="stylesheet" href="../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../zasoby/css/komponenty.css">
+</head>
+<body>
+<div class="dn-scena dn-scena--gora">
+  <div class="dn-okno-wejsciowe dn-okno-wejsciowe--z-belka">
+    <div class="dn-okno-wejsciowe-belka">
+      <svg class="dn-godlo dn-godlo--ikonowy" viewBox="0 0 96 96" aria-hidden="true">
+        <path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/>
+        <path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/>
+        <circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+      <span class="dn-belka-tytul">Instalator Danaco Console</span>
+    </div>
+
+    <aside class="dn-tozsamosc">
+      <p class="dn-etyk-mono dn-etyk-mono--na-ramie">Krok 2 z 6</p>
+      <h1 class="dn-tytul-okna dn-tytul-okna--sm dn-tytul-okna--na-ramie">Warunki licencji</h1>
+      <div class="dn-postep">
+        <div class="dn-postep-glowa"><span>Przygotowanie</span><span class="dn-meta dn-meta--mocna">33%</span></div>
+        <div class="dn-postep-tor"><span style="width:33%"></span></div>
+      </div>
+      <p class="dn-tozsamosc-stopka">Wydanie 2.0 · kompilacja 2026.08</p>
+    </aside>
+
+    <main class="dn-okno-wejsciowe-panel">
+      <div>
+        <p class="dn-etyk-mono">Umowa licencyjna</p>
+        <h2 class="dn-tytul-okna dn-tytul-okna--sm">Zapoznaj się z warunkami</h2>
+      </div>
+      <p class="dn-lid">Instalacja wymaga przyjęcia warunków. Poniższy skrót nie zastępuje
+      pełnego dokumentu, do którego odsyłacz stoi pod zgodą.</p>
+
+      <div class="dn-przewijane">
+        <div class="dn-tekst-ciagly dn-tekst-ciagly--osadzony" tabindex="0">
+          <p><b>1 · Przedmiot licencji.</b> Licencjodawca udziela Operatorowi niewyłącznej,
+          nieprzenoszalnej licencji na korzystanie z oprogramowania Danaco Console
+          w zakresie i na warunkach określonych poniżej.</p>
+          <p><b>2 · Zakres korzystania.</b> Licencja obejmuje instalację oprogramowania
+          na stanowiskach należących do Operatora oraz korzystanie z niego w celach
+          prowadzonej działalności.</p>
+          <p><b>3 · Ograniczenia.</b> Operator nie jest uprawniony do odtwarzania kodu
+          źródłowego, udostępniania oprogramowania osobom trzecim ani usuwania oznaczeń
+          identyfikujących Licencjodawcę.</p>
+          <p><b>4 · Dane i poufność.</b> Treść pracy prowadzonej w oprogramowaniu pozostaje
+          własnością Operatora. Licencjodawca nie nabywa do niej praw.</p>
+        </div>
+        <div class="dn-przewijane-szyna"><div class="dn-przewijane-suwak" style="top:0;height:40%"></div></div>
+      </div>
+
+      <label class="dn-wybor dn-wybor--blokowy">
+        <input class="dn-check" type="checkbox">
+        <span>
+          <span class="dn-wybor-nazwa">Przyjmuję warunki licencji</span>
+          <span class="dn-wybor-opis">Zgoda jest warunkiem przejścia do kolejnego kroku.</span>
+        </span>
+      </label>
+
+      <div class="dn-zestawienie">
+        <span>Miejsce wymagane na dysku</span>
+        <b>1,4 GB</b>
+      </div>
+
+      <div class="dn-pas-dzialan">
+        <span class="dn-akcje-tekst">Pełny tekst umowy otwiera się w oknie przeglądarki.</span>
+        <button class="dn-btn dn-btn--sygnal" type="button">Dalej</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="dn-scena dn-scena--gora">
+  <div class="dn-okno-wejsciowe dn-okno-wejsciowe--jednokolumnowe">
+    <main class="dn-okno-wejsciowe-panel">
+      <nav class="dn-tor-krokow" aria-label="Odzyskiwanie dostępu">
+        <span class="dn-tor-krokow-poz" data-zrobiony="tak"><span class="dn-tor-krokow-nr">1</span>Adres konta</span>
+        <span class="dn-tor-krokow-strzalka">→</span>
+        <span class="dn-tor-krokow-poz" aria-current="step"><span class="dn-tor-krokow-nr">2</span>Potwierdzenie</span>
+        <span class="dn-tor-krokow-strzalka">→</span>
+        <span class="dn-tor-krokow-poz"><span class="dn-tor-krokow-nr">3</span>Nowe hasło</span>
+      </nav>
+
+      <div>
+        <p class="dn-etyk-mono">Odzyskiwanie dostępu</p>
+        <h2 class="dn-tytul-okna dn-tytul-okna--sm">Potwierdź adres konta</h2>
+      </div>
+      <p class="dn-lid">Na wskazany adres wysłano sześciocyfrowy kod. Zachowuje ważność
+      przez dziesięć minut.</p>
+
+      <div class="dn-potwierdzenie">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" value="4" aria-label="Znak 1">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" value="7" aria-label="Znak 2">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" value="2" aria-label="Znak 3">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" aria-label="Znak 4">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" aria-label="Znak 5">
+        <input class="dn-potwierdzenie-pole" inputmode="numeric" maxlength="1" aria-label="Znak 6">
+      </div>
+      <div class="dn-potwierdzenie-stopka">
+        <span class="dn-meta">Kod ważny jeszcze <b>08:41</b></span>
+        <a class="dn-link" href="#">Wyślij ponownie</a>
+      </div>
+
+      <div class="dn-pole">
+        <label class="dn-pole-etykieta" for="nowe">Nowe hasło</label>
+        <input class="dn-pole-kontrolka" id="nowe" type="password" value="xxxxxxxxxxxx">
+        <div class="dn-sila" data-stopien="3">
+          <div class="dn-sila-tor">
+            <span class="dn-sila-odcinek"></span><span class="dn-sila-odcinek"></span>
+            <span class="dn-sila-odcinek"></span><span class="dn-sila-odcinek"></span>
+          </div>
+          <p class="dn-sila-opis">Siła hasła: dostateczna</p>
+        </div>
+        <div class="dn-kryteria">
+          <span class="dn-kryterium" data-spelniony="tak">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 6l3 3 5-6"/></svg>
+            co najmniej 12 znaków</span>
+          <span class="dn-kryterium" data-spelniony="tak">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 6l3 3 5-6"/></svg>
+            cyfra</span>
+          <span class="dn-kryterium">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="4"/></svg>
+            znak przestankowy</span>
+        </div>
+      </div>
+
+      <div class="dn-alert dn-alert--sukces">
+        <span class="dn-alert-znak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12l5 5L19 7"/></svg>
+        </span>
+        <span class="dn-alert-tresc"><b>Adres potwierdzony.</b> Możesz ustawić nowe hasło.</span>
+      </div>
+      <div class="dn-alert dn-alert--blad">
+        <span class="dn-alert-znak">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 7v6M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        </span>
+        <span class="dn-alert-tresc"><b>Kod nieprawidłowy.</b> Sprawdź wiadomość i wprowadź go ponownie.</span>
+      </div>
+
+      <div class="dn-akcje">
+        <button class="dn-btn dn-btn--sygnal" type="button">Ustaw nowe hasło</button>
+        <div class="dn-akcje dn-akcje--poboczne">
+          <a class="dn-link dn-link--drugorzedny" href="#">Wróć do logowania</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</body>
+</html>

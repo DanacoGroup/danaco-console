@@ -25,7 +25,12 @@ func obsluz[Z any, W any](czynnosc func(context.Context, Z) (W, error)) Obsluga 
 		// odczytaniu ładunku: odczyt orzeka o kształcie treści, brama — o jej
 		// zawartości. Bez bramy czynność domeny dostawała żądanie niepełne
 		// i uzupełniała brak wartością domyślną, meldując powodzenie.
-		if err := sprawdzZadanieWobecKontraktu(z.Komenda, z.Ladunek, zadanie); err != nil {
+		//
+		// Kontekst wchodzi do bramy, bo powitanie przepuszczone mimo braków
+		// zostawia po sobie wpis w dzienniku rdzenia, a dziennik jedzie właśnie
+		// kontekstem (`rdzen.go`). O tym, która komenda bramie nie podlega,
+		// rozstrzyga sama brama — obsługiwacz komend po nazwach nie rozróżnia.
+		if err := sprawdzZadanieWobecKontraktu(ctx, z.Komenda, z.Ladunek, zadanie); err != nil {
 			return porazka(err)
 		}
 		// Tożsamość żądania jedzie dalej kontekstem, bo ładunek jej nie niesie:

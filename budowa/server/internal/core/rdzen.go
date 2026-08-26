@@ -70,6 +70,7 @@ func (r *Rdzen) Wykonaj(ctx context.Context, zadanie protocol.Koperta) protocol.
 // komendy" trafia do Errors Panel razem z odmową wykonania — inaczej byłaby
 // jedynym rodzajem odmowy niewidocznym w jedynym oknie, które odmowy pokazuje.
 func (r *Rdzen) WykonajZadanie(ctx context.Context, z protocol.Request) protocol.Koperta {
+	ctx = zDziennikiemRdzenia(ctx, r.dziennik)
 	if !z.Znana {
 		return r.odmowaNieznanej(ctx, z)
 	}
@@ -145,6 +146,36 @@ func (r *Rdzen) zapisz(wzorzec string, argumenty ...any) {
 		return
 	}
 	r.dziennik.Printf(wzorzec, argumenty...)
+}
+
+// kluczDziennikaRdzenia znakuje dziennik włożony do kontekstu żądania.
+type kluczDziennikaRdzenia struct{}
+
+// zDziennikiemRdzenia niesie dziennik do warstw, które stoją na drodze żądania,
+// a rdzenia nie widzą.
+//
+// Taką warstwą jest brama kontraktu: przepuszczone powitanie niepełne ma
+// zostawić ślad w dzienniku (`brama_kontraktu.go`), a brama jest funkcją wolną
+// i innej drogi do dziennika nie ma. Kontekst wchodzi tu raz, w jedynym gardle
+// każdego żądania, więc warstwy niższe nie muszą go sobie podawać.
+func zDziennikiemRdzenia(ctx context.Context, dziennik *log.Logger) context.Context {
+	if dziennik == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, kluczDziennikaRdzenia{}, dziennik)
+}
+
+// dziennikZKontekstu oddaje dziennik rdzenia albo nic. Nic jest odpowiedzią
+// prawidłową: rdzeń złożony bez dziennika pracuje tak samo, tylko milcząco.
+func dziennikZKontekstu(ctx context.Context) *log.Logger {
+	if ctx == nil {
+		return nil
+	}
+	dziennik, jest := ctx.Value(kluczDziennikaRdzenia{}).(*log.Logger)
+	if !jest {
+		return nil
+	}
+	return dziennik
 }
 
 // odmowaZakresu pyta straż o wywołanie ręki modelu.

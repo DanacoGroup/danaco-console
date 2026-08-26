@@ -1112,6 +1112,11 @@ label.dn-pasek-szukaj:focus-within {
 .dn-ekran-startowy { position: relative; display: block; width: 100%; height: 100%; }
 .dn-ekran-startowy > canvas { display: block; width: 100%; height: 100%; }
 
+/* Powłoki platformy — pole dla animacji składania. Bez własnego tła, jak bryła
+   i ekran startowy: rysunek kładzie się na powierzchni okna. */
+.dn-powloki { position: relative; display: block; width: 100%; height: 100%; }
+.dn-powloki > canvas { display: block; width: 100%; height: 100%; }
+
 /* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
    nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */

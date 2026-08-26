@@ -20,44 +20,253 @@ import (
 
 // ── rejestracja ──────────────────────────────────────────────────────────────
 
-// TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta pilnuje kolejności,
-// od której zależy, czy Operator w ogóle wejdzie: nadajnik sprawdza się PRZED
-// zapisaniem czegokolwiek.
+// ── droga bez poczty ─────────────────────────────────────────────────────────
 //
-// Konto założone bez wysłanego listu byłoby kontem, do którego nikt nie ma jak
-// wejść: droga potwierdzenia idzie wyłącznie listem, a rejestracja wykonuje się
-// raz i drugi raz odmawia konfliktem. Operator zostałby więc z platformą, która
-// o nim wie, i bez jednej ścieżki do środka.
+// Cztery sprawdziany poniżej trzymają drogę pierwszego uruchomienia na maszynie,
+// która konta nadawczego nie ma. Rejestr decyzji rozstrzyga ją pozycją 11:
+// rejestracja bez poczty PRZECHODZI, bo poczta jest potrzebna do pisania do
+// innych ludzi, a nie do postawienia bramki na własnym urządzeniu — a nadajnik
+// ustawia się w oknie Konfiguracji, czyli za tą bramką.
 //
-// Sprawdzian mierzy trzy tabele, nie samą odmowę: odmowa oddana po zapisaniu
-// konta wygląda w kopercie identycznie jak odmowa oddana przed nim.
-func TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta(t *testing.T) {
+// Do tej pory droga stała wyłącznie na komentarzu w rdzeniu i na pomiarze
+// jednorazowym, więc pierwsza zmiana w bramce zniosłaby ją bez niczyjej wiedzy.
+
+// TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik pilnuje pierwszego kroku:
+// konto powstaje, a platforma zapamiętuje, że listu nie było komu nadać.
+//
+// Mierzony jest skutek trwały, nie koperta. `registered: true` wygląda tak samo
+// przy koncie zapisanym i przy zapisie, który się nie udał, więc dowodem jest
+// wiersz konta, kotwica hasła i wpis w sejfie.
+//
+// `pendingVerification` idzie FAŁSZEM, choć adres potwierdzenia nie ma:
+// kontrakt wiąże prawdę tego pola z faktem nadania listu, a tu żaden list nie
+// wyszedł. Trzeciego stanu — „konto jest, adres niepotwierdzony, listu nie
+// wysłano" — kontrakt nie ma i to pole go nie udaje.
+func TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaBrak)
 
-	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+	var tresc shared.AuthRegisterResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+		shared.AuthRegisterRequest{
+			Login:    loginSprawdzianu,
+			Email:    adresSprawdzianu,
+			Password: hasloPierwsze,
+		}, &tresc)
+
+	if !tresc.Registered {
+		t.Error("rejestracja bez poczty oddała stan udany i registered=false naraz")
+	}
+	if tresc.PendingVerification {
+		t.Error("rejestracja bez poczty oznaczyła konto jako czekające na potwierdzenie —" +
+			" klient pokaże okno wpisania drogi z listu, którego nikt nie wysłał")
+	}
+
+	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM konto_wlasciciela`); ile != 1 {
+		t.Errorf("po rejestracji bez poczty w bazie leży %d kont właściciela, oczekiwane 1", ile)
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
+		t.Errorf("kont niepotwierdzonych w bazie: %d, oczekiwane 1 — adresu nikt nie"+
+			" sprawdził i nikt tego stanu nie ma prawa udawać", ile)
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM metoda_uwierzytelnienia WHERE kotwica = 1`); ile != 1 {
+		t.Errorf("kotwic hasła w bazie: %d, oczekiwana 1 — bez niej bramki nie otworzy nic", ile)
+	}
+	// Droga potwierdzenia NIE powstaje: zapisuje ją dopiero czynność nadania
+	// listu, a ta się tu nie wykonuje. Skrót zapisany bez listu byłby drogą,
+	// której nie zna nikt.
+	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM potwierdzenie_tozsamosci`); ile != 0 {
+		t.Errorf("po rejestracji bez poczty leży %d dróg potwierdzenia, oczekiwane 0", ile)
+	}
+	// Rejestracja nie wpuszcza — ani z pocztą, ani bez niej.
+	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM sesja_bramki`); ile != 0 {
+		t.Errorf("rejestracja bez poczty założyła %d sesji bramki", ile)
+	}
+
+	adres, jest := znacznikWSejfie(t, u)
+	if !jest {
+		t.Fatal("bramka nie zapamiętała, że powstała bez poczty — przy następnym wejściu" +
+			" zamknie się przed potwierdzeniem, którego platforma nie miała czym wysłać")
+	}
+	if adres != adresSprawdzianu {
+		t.Errorf("znacznik niesie adres %q, rejestracja podała %q — bez właściwego adresu"+
+			" odmowy nie powiedzą, o który adres idzie", adres, adresSprawdzianu)
+	}
+}
+
+// TestBezPocztyBramkeOtwieraSamoHaslo pilnuje drugiego kroku: konto założone bez
+// listu naprawdę wpuszcza.
+//
+// To jest cały cel znacznika. Bramkę zamyka brak potwierdzenia adresu (straż
+// pierwsza w `usterki_wejscia_test.go`), a na świeżej instalce potwierdzenia nie
+// ma skąd wziąć — więc bez tego wyjątku pierwszy Operator zostawałby przed
+// platformą na zawsze: listu nie ma, bo nie było czym nadać, a drugiej
+// rejestracji nie ma, bo wykonuje się raz.
+//
+// Dowodem jest token sesji i wiersz w `sesja_bramki`, nie samo `ok`.
+func TestBezPocztyBramkeOtwieraSamoHaslo(t *testing.T) {
+	u := zmontujDrogeWejscia(t, pocztaBrak)
+
+	var rejestracja shared.AuthRegisterResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+		shared.AuthRegisterRequest{
+			Login:    loginSprawdzianu,
+			Email:    adresSprawdzianu,
+			Password: hasloPierwsze,
+		}, &rejestracja)
+
+	var wejscie shared.AuthLoginResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthLogin, shared.AuthLoginRequest{
+		Method: shared.AuthMethodKindPassword,
+		Login:  wskaznik(loginSprawdzianu),
+		Secret: wskaznik(hasloPierwsze),
+	}, &wejscie)
+
+	if strings.TrimSpace(wejscie.Session.Token) == "" {
+		t.Error("wejście hasłem oddało sesję bez tokenu — bramka wpuściła i nie dała klucza")
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM sesja_bramki WHERE uniewazniono IS NULL`); ile != 1 {
+		t.Errorf("po wejściu hasłem czynnych sesji w bazie: %d, oczekiwana 1", ile)
+	}
+	// Wejście niczego nie udaje: adres dalej jest niepotwierdzony, a znacznik
+	// dalej stoi. Zdjęcie któregokolwiek z nich przy wejściu znaczyłoby, że
+	// platforma uznała adres za sprawdzony, choć nikt go nie sprawdził.
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
+		t.Errorf("po wejściu hasłem kont niepotwierdzonych: %d, oczekiwane 1", ile)
+	}
+	if _, jest := znacznikWSejfie(t, u); !jest {
+		t.Error("wejście hasłem zdjęło znacznik bramki bez poczty — następne wejście" +
+			" odbije się o brak potwierdzenia")
+	}
+	// Hasło nie pasujące ma dalej odmawiać: wyjątek zdejmuje warunek
+	// potwierdzenia adresu i tylko ten jeden.
+	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthLogin,
+		shared.AuthLoginRequest{
+			Method: shared.AuthMethodKindPassword,
+			Login:  wskaznik(loginSprawdzianu),
+			Secret: wskaznik(hasloDrugie),
+		})
+	if blad.Code != shared.ErrorCodeNotAuthenticated {
+		t.Errorf("wejście złym hasłem niesie kod %q, oczekiwany %q",
+			blad.Code, shared.ErrorCodeNotAuthenticated)
+	}
+}
+
+// TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu pilnuje trzeciego kroku:
+// ustawienie nadajnika w oknie Konfiguracji NIE potwierdza adresu samo z siebie.
+//
+// Adres pozostaje niepotwierdzony, bo potwierdza go wyłącznie droga przepisana
+// z listu, a listu na tej instalce nie było. Rejestracja wykonuje się raz, więc
+// drugi list z drogą weryfikacji nie wyjdzie; droga z odzyskania konta jest
+// wydana do innej czynności i `auth.verify` jej nie przyjmuje.
+//
+// Sprawdzian utrwala stan, w którym po ustawieniu poczty Operator nie ma czym
+// potwierdzić adresu. Wejście hasłem działa dalej, ale odzyskanie konta listem
+// stoi na adresie, którego nikt nie sprawdził.
+func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
+	u := zmontujDrogeWejscia(t, pocztaBrak)
+
+	var rejestracja shared.AuthRegisterResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+		shared.AuthRegisterRequest{
+			Login:    loginSprawdzianu,
+			Email:    adresSprawdzianu,
+			Password: hasloPierwsze,
+		}, &rejestracja)
+
+	// Nadajnik pojawia się PO rejestracji — tą samą drogą, którą ustawia go
+	// Operator: komendą konfiguracji, zza bramki.
+	odbiornik := podnieOdbiornikSMTP(t)
+	ustawNadajnik(t, u, odbiornik)
+
+	// Drugiej rejestracji nie ma, więc drugiego listu z drogą weryfikacji też nie.
+	powtorka := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
 		shared.AuthRegisterRequest{
 			Login:    loginSprawdzianu,
 			Email:    adresSprawdzianu,
 			Password: hasloPierwsze,
 		})
-	if blad.Code != shared.ErrorCodeInternalError {
-		t.Errorf("odmowa niesie kod %q, oczekiwany %q — brak konta nadawczego jest brakiem"+
-			" po stronie platformy, nie pomyłką Operatora", blad.Code, shared.ErrorCodeInternalError)
-	}
-	if strings.TrimSpace(blad.Message) == "" {
-		t.Error("odmowa bez treści — Operator nie dowie się, czego brakuje")
+	if powtorka.Code != shared.ErrorCodeConflict {
+		t.Errorf("druga rejestracja niesie kod %q, oczekiwany %q",
+			powtorka.Code, shared.ErrorCodeConflict)
 	}
 
-	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM konto_wlasciciela`); ile != 0 {
-		t.Errorf("po odmowie w bazie leży %d kont właściciela — konto założone bez listu"+
-			" jest kontem bez drogi wejścia, a rejestracji nie da się powtórzyć", ile)
+	// Odzyskanie konta list wysyła — nadajnik już działa — ale droga z niego
+	// jest wydana do ustawienia hasła, nie do potwierdzenia adresu.
+	var odzyskanie shared.AuthRecoverResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
+		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
+	droga := drogaZListu(t, odbiornik.Ostatni(t))
+
+	odmowa := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
+		shared.AuthVerifyRequest{Token: droga})
+	if odmowa.Code != shared.ErrorCodeNotAuthenticated {
+		t.Errorf("potwierdzenie drogą z odzyskania niesie kod %q, oczekiwany %q",
+			odmowa.Code, shared.ErrorCodeNotAuthenticated)
 	}
-	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM metoda_uwierzytelnienia`); ile != 0 {
-		t.Errorf("po odmowie w bazie leży %d metod wejścia", ile)
+	if !strings.Contains(odmowa.Message, "innej czynności") {
+		t.Errorf("odmowa nie mówi, że droga wydana jest do innej czynności: %q", odmowa.Message)
 	}
-	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM potwierdzenie_tozsamosci`); ile != 0 {
-		t.Errorf("po odmowie w bazie leży %d dróg potwierdzenia — droga zapisana bez"+
-			" wysłanego listu nie jest znana nikomu", ile)
+
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
+		t.Errorf("po ustawieniu nadajnika kont niepotwierdzonych: %d, oczekiwane 1", ile)
+	}
+	if _, jest := znacznikWSejfie(t, u); !jest {
+		t.Error("znacznik zniknął po ustawieniu nadajnika, a adres pozostał niepotwierdzony —" +
+			" bramka zamknie się przed potwierdzeniem, którego nie da się zdobyć")
+	}
+	// Bramka ma być otwarta dalej: nadajnik ustawiony nie może zamknąć wejścia,
+	// które przed nim działało.
+	var wejscie shared.AuthLoginResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthLogin, shared.AuthLoginRequest{
+		Method: shared.AuthMethodKindPassword,
+		Login:  wskaznik(loginSprawdzianu),
+		Secret: wskaznik(hasloPierwsze),
+	}, &wejscie)
+	if strings.TrimSpace(wejscie.Session.Token) == "" {
+		t.Error("po ustawieniu nadajnika wejście hasłem oddało sesję bez tokenu")
+	}
+}
+
+// TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo pilnuje czwartego kroku:
+// granicy istnienia znacznika po obu jej stronach.
+//
+// Znacznik zdejmuje potwierdzenie adresu (`auth.verify`) i cofnięcie
+// rejestracji — obie chwile, w których przestaje być prawdą. Sprawdzian mierzy
+// drogę Z POCZTĄ, bo tylko ona daje drogę potwierdzenia przepisaną z listu:
+// znacznik nie ma tam prawa powstać ani przed potwierdzeniem, ani po nim.
+//
+// Ta strona granicy jest ważniejsza od drugiej. Znacznik postawiony tam, gdzie
+// list doszedł, zdejmowałby warunek potwierdzenia adresu na instalce, która ten
+// adres potwierdzić potrafi — czyli zamieniałby wyjątek pierwszego uruchomienia
+// w trwałe obejście bramki.
+func TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo(t *testing.T) {
+	u := zmontujDrogeWejscia(t, pocztaDziala)
+
+	droga := zarejestrujWlasciciela(t, u)
+	if adres, jest := znacznikWSejfie(t, u); jest {
+		t.Fatalf("rejestracja z wysłanym listem postawiła znacznik bramki bez poczty (adres %q) —"+
+			" bramka przestałaby czekać na potwierdzenie, które właśnie poszło listem", adres)
+	}
+
+	var potwierdzenie shared.AuthVerifyResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
+		shared.AuthVerifyRequest{Token: droga}, &potwierdzenie)
+	if !potwierdzenie.Verified {
+		t.Fatal("potwierdzenie adresu oddało stan udany i verified=false naraz")
+	}
+
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 1`); ile != 1 {
+		t.Errorf("po potwierdzeniu kont potwierdzonych: %d, oczekiwane 1", ile)
+	}
+	if adres, jest := znacznikWSejfie(t, u); jest {
+		t.Errorf("po potwierdzeniu adresu w sejfie leży znacznik bramki bez poczty (adres %q) —"+
+			" bramkę trzyma odtąd sam wiersz konta i drugiej pamięci o niej nie ma", adres)
 	}
 }
 

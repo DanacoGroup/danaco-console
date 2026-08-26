@@ -3,13 +3,17 @@ package core
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"net"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/konfiguracja"
 	"danacoconsole/server/internal/store"
 	"danacoconsole/shared"
@@ -60,6 +64,11 @@ type uprzazWejscia struct {
 	zycie  context.Context
 	baza   *store.Baza
 	poczta *odbiornikSMTP
+	// katalog jest katalogiem danych rdzenia. Stoi tu, bo część stanu drogi
+	// wejścia nie leży w bazie: znacznik bramki bez poczty mieszka w sejfie
+	// poświadczeń, a sejf jest plikiem w tym katalogu
+	// (`adapter_modul_auth_pierwsze_uruchomienie.go`).
+	katalog string
 }
 
 // trybPoczty opisuje stan konta nadawczego platformy. Trzy stany, bo trzy są
@@ -134,7 +143,8 @@ func zmontujDrogeWejscia(t *testing.T, tryb trybPoczty) uprzazWejscia {
 	}
 	t.Cleanup(zmontowany.Zamknij)
 
-	return uprzazWejscia{rdzen: zmontowany, zycie: zycie, baza: baza, poczta: poczta}
+	return uprzazWejscia{rdzen: zmontowany, zycie: zycie, baza: baza, poczta: poczta,
+		katalog: katalog}
 }
 
 // ── odbiornik listów ─────────────────────────────────────────────────────────
@@ -407,4 +417,47 @@ func zarejestrujWlasciciela(t *testing.T, u uprzazWejscia) string {
 		t.Fatal("rejestracja oddała stan udany i registered=false naraz")
 	}
 	return drogaZListu(t, u.poczta.Ostatni(t))
+}
+
+// znacznikWSejfie odpowiada, czy bramka pamięta, że powstała bez poczty, i jaki
+// adres wtedy zapamiętała.
+//
+// Odczyt idzie do sejfu, nie do bazy, bo tam ten stan leży — trzeciego stanu
+// konta schemat nie ma i znacznik mieszka w sejfie poświadczeń obok sekretu
+// kotwicy (`adapter_modul_auth_pierwsze_uruchomienie.go`). Sejf otwierany jest
+// nad tym samym katalogiem danych, który dostał rdzeń, więc czytany jest ten sam
+// plik, do którego rdzeń pisze.
+func znacznikWSejfie(t *testing.T, u uprzazWejscia) (string, bool) {
+	t.Helper()
+
+	return dane.NowySejfPlikowy(u.katalog).Odczytaj(u.zycie, bytZnacznikaBezPoczty)
+}
+
+// ustawNadajnik zapisuje konto nadawcze platformy tak, jak robi to Operator
+// w oknie Konfiguracji — komendą `config.set` na zasięgu aplikacji.
+//
+// Droga jest ta sama co w produkcie, nie skrót przez nastawy montażu: badane
+// jest właśnie to, co się dzieje, gdy poczta pojawia się PO rejestracji.
+func ustawNadajnik(t *testing.T, u uprzazWejscia, odbiornik *odbiornikSMTP) {
+	t.Helper()
+
+	nastawy := []struct {
+		klucz   string
+		wartosc string
+	}{
+		{konfig.KluczNadawcaHost, odbiornik.Host()},
+		{konfig.KluczNadawcaPort, strconv.Itoa(odbiornik.Port())},
+		{konfig.KluczNadawcaAdres, "platforma@danaco.sprawdzian"},
+		{konfig.KluczNadawcaNazwa, "Danaco Console"},
+		{konfig.KluczNadawcaStartTLS, "false"},
+	}
+	for _, nastawa := range nastawy {
+		wartosc, err := json.Marshal(nastawa.wartosc)
+		if err != nil {
+			t.Fatalf("nie można złożyć wartości nastawy %s: %v", nastawa.klucz, err)
+		}
+		wykonajUdana(t, u.rdzen, u.zycie, shared.CommandConfigSet, shared.ConfigSetRequest{
+			Key: nastawa.klucz, Value: wartosc, Scope: shared.ConfigScopeApplication,
+		}, nil)
+	}
 }

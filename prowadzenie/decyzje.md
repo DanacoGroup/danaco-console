@@ -964,6 +964,47 @@ sprawdzony, dowie się o tym w dniu, w którym będzie go potrzebował.
 
 ---
 
+## 12. Prototyp instalatora jest wersją przyjętą
+
+**Data:** 2026-08-26 · **Stan:** obowiązuje · **Rozstrzygnął:** Właściciel
+
+Treść i przepływ kreatora instalacji ustala prototyp
+`design/05-okna/platformowe/instalator.html` wraz ze składnikami
+w `design/zasoby/okna/instalator/`. To, co mówi prototyp, obowiązuje —
+wykonawca nie zastępuje jego rozstrzygnięć własnym rozumowaniem.
+
+**Sześć kroków:** Wymagania · Licencja · Wersja programu · Lokalizacja ·
+Instalacja · Podsumowanie.
+
+**Wykrycie procesora zamiast wyboru wariantu.** Krok 3 rozpoznaje procesor
+i zaznacza właściwą postać, oznaczając ją plakietką ZALECANE. Wybór ręczny
+zostaje; niezgodność ostrzega i pyta osobnym oknem, ale nie blokuje.
+
+**Katalog treści jest jedynym miejscem z tekstem widocznym dla użytkownika.**
+Sprawdzone pomiarem: w składnikach i ekranach stoi 427 łańcuchów i żaden nie
+jest tekstem dla użytkownika. Ta właściwość jest wiążąca — łańcuch dopisany
+poza `tresci.js` jest usterką.
+
+**Odsłony osiągalne adresem** — `?procesor=arm|brak`, `?stan=blad|wycofywanie`,
+`?wynik=ostrzezenia` — należą do prototypu i mają przetrwać przejście do kodu.
+Bez nich odsłony błędu przestają być przeglądalne.
+
+**Dwie sprzeczności wewnętrzne do rozstrzygnięcia.** Przyjęcie ich nie znosi,
+bo prototyp mówi w nich dwie rzeczy naraz:
+
+| Rzecz | Krok mówi jedno | Krok mówi drugie |
+|---|---|---|
+| pobieranie a rozpakowanie | krok 1: „Instalator pobiera składniki programu z serwera Danaco" | krok 5: „Rozpakowywanie plików — zapis plików programu w katalogu docelowym", licznik „Rozpakowano 250 MB" |
+| uprawnienia | krok 4: „instalacja w katalogu profilu użytkownika nie wymaga uprawnień administratora" | krok 5: odmowa dostępu do tego samego katalogu profilu, rada „uruchom jako administrator" |
+
+**Jeżeli instalator pobiera z serwera Danaco, adres serwera musi skądś pochodzić.**
+Żaden z sześciu kroków o niego nie pyta, więc jest wpisany w postać instalki przy
+jej składaniu — osobnej dla każdego wdrożenia. To wniosek z prototypu, nie
+zastrzeżenie wobec niego.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

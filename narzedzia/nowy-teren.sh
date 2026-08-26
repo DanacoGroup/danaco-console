@@ -11,7 +11,7 @@ set -euo pipefail
 
 if [ $# -ne 2 ]; then
   echo "Użycie: bash narzedzia/nowy-teren.sh <nazwa> <galaz-bazowa>" >&2
-  echo "Przykład: bash narzedzia/nowy-teren.sh zetony przebudowa/design" >&2
+  echo "Przykład: bash narzedzia/nowy-teren.sh zetony main" >&2
   exit 1
 fi
 

@@ -62,10 +62,10 @@ prawdy, którym nie są.
    dopiero po przyjęciu.
 
 **Decyzja.** Wariant trzeci. Warstwa projektowa leży na gałęzi
-`przebudowa/design`, opracowania na gałęzi `przebudowa/dokumentacja`. Obie są
-oznaczone jako materiał w przebudowie i nie są źródłem prawdy. Budowa aplikacji
-rusza dopiero po scaleniu obu gałęzi do `main`; dopiero scalona dokumentacja
-jest oficjalna i wiążąca dla wykonawcy.
+`teren/prototypy`, opracowania zamkniętego podejścia pod
+`refs/przeniesienie/dokumentacja-zastana`. Materiał przeniesiony nie jest
+źródłem prawdy. Dorobek wchodzi do `main` dopiero po przyjęciu — dopiero wtedy
+jest wiążący dla wykonawcy.
 
 **Konsekwencje.** Gałąź główna nie zawiera dokumentacji produktu przez cały czas
 trwania etapów 1 i 2. Gałęzie nie nakładają się plikami, więc scalenie jest

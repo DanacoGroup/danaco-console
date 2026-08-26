@@ -59,9 +59,9 @@ kart, przypisanie wskaźników — idzie do [rejestru decyzji](decyzje.md), bo
 transkrypt sesji jest ulotny, a kolejne okna muszą wiedzieć, co ustalono przy
 poprzednich.
 
-**Stan wyjściowy.** Gałąź `teren/proba-prototypow`, drzewo
-`~/robocze/proba-prototypow`. Zrzuty stanu wyjściowego leżą poza repozytorium
-w `~/robocze/zrzuty-probki/`.
+**Miejsce pracy.** Gałąź `teren/prototypy`, drzewo `~/robocze/prototypy`.
+Prototypy okien leżą w `design/05-okna/`. Zrzuty stanu wyjściowego stoją poza
+repozytorium w `~/robocze/zrzuty-probki/`.
 
 **Ograniczenie warstwy wspólnej.** Warstwa o zasięgu ogólnym — żetony, fundament,
 komponenty, rama, stanowisko, karty okna — jest wspólna dla wszystkiego, co

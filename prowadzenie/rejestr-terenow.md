@@ -147,14 +147,14 @@ po raz drugi.
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
-| `proba-prototypow` | `teren/proba-prototypow` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
+| `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna
 `createVersion` — wróciła jako zgłoszenie, bo kontrakt jej nie ustala. Brama
 kontraktu ujawniła, że powitanie kanału musi stać poza nią; rozstrzygnięcie
 niesie pozycja 10 rejestru decyzji.
 
-Wynik terenu `proba-prototypow`: oba przedmioty wykonane, wszystkie kryteria spełnione. Zakresy trzech
+Wynik terenu `proba-prototypow`, przeniesionego na gałąź `teren/prototypy`: oba przedmioty wykonane, wszystkie kryteria spełnione. Zakresy trzech
 rewizji rozłączne — sprawdzone. Drzewo czyste. Kryterium 7a zwraca zero trafień
 w całym repozytorium, nie tylko w `design/`. Gałąź czeka na ocenę kierunku
 przez Właściciela; **nie jest scalona** — próbka rozstrzyga kierunek, a nie

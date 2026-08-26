@@ -131,6 +131,26 @@ Metryki wymagają rozstrzygnięcia Właściciela: albo są normatywne i dostają
 definicję sposobu liczenia, albo znikają. Metody liczenia „interakcji" nie da
 się odtworzyć z treści plików, więc dziś nikt nie jest w stanie ich utrzymać.
 
+### Sprawdziany drogi wejścia rozjechane z rdzeniem — gotowe do otwarcia
+
+Trzy sprawdziany zawodzą od chwili przejęcia rdzenia. Pomiar wykazał, że nie są
+usterką rdzenia — opisują zamiar porzucony i nikt ich za zmianą nie poprawił.
+
+| Sprawdzian | Czego żąda | Co rdzeń robi |
+|---|---|---|
+| `TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta` | odmowy i zera wierszy przy braku nadajnika | zakłada konto, stawia znacznik, wpuszcza hasłem — pozycja 11 rejestru decyzji |
+| `TestNieudaneNadanieListuCofaRejestracje` | cofnięcia rejestracji przy nadajniku nieosiągalnym | do zmierzenia w terenie |
+| `TestSkanowanieZUrzadzeniaOdmawiaNazwanie` | odmowy nazywającej brak | do zmierzenia w terenie |
+
+Osobno: **droga bez poczty nie ma ani jednego sprawdzianu własnego**. Zachowanie
+rozstrzygnięte pozycją 11 stoi dziś wyłącznie na komentarzu i na pomiarze
+jednorazowym — pierwsza zmiana w bramce zniesie je bez niczyjej wiedzy.
+
+Teren ma dla każdego z trzech sprawdzianów rozstrzygnąć pomiarem, czy zawodzi
+sprawdzian, czy rdzeń, i poprawić tę stronę, która się myli — a nie tę, którą
+łatwiej. Do tego założyć sprawdziany drogi bez poczty: rejestracja, wejście
+hasłem, potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika.
+
 ### Reguła odbioru wyprowadzona z pomiarów
 
 `axe.run()` sam wywołuje dwa błędy 404 (`menu.css`, `ruch.css`), bo rozwiązuje

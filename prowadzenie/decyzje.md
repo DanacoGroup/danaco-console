@@ -895,6 +895,48 @@ z jego roli w uzgodnieniu, nie z wygody.
 
 ---
 
+## 11. Pierwsze uruchomienie bez poczty przechodzi i nie wymaga rozstrzygnięcia
+
+**Data:** 2026-08-26 · **Stan:** obowiązuje · **Podstawa:** pomiar uruchomieniem
+
+**Pozycja otwarta w tej sprawie została zamknięta bez rozstrzygnięcia
+Właściciela, bo pytania nie było** — rdzeń niesie odpowiedź, a otworzyłem ją
+biorąc zawodzący sprawdzian za usterkę.
+
+**Co rdzeń robi.** Rejestracja idzie dwiema drogami. Z pocztą nadaje list
+z drogą potwierdzenia i zostawia konto niepotwierdzone. Bez poczty zakłada
+konto i zapamiętuje w sejfie znacznik `auth:bramka-bez-poczty` niosący adres,
+którego nikt nie potwierdził. Bramka czyta ten znacznik i wpuszcza hasłem.
+
+**Co zmierzono.** Świeża instalacja bez nadajnika: rejestracja udana
+(`Registered:true`, `PendingVerification:false`), jedno konto w bazie, zero
+wierszy potwierdzenia, logowanie hasłem wydaje sesję z tokenem. Droga przechodzi
+w całości.
+
+**Dlaczego rdzeń tak stanowi.** Poczta jest potrzebna do pisania do innych
+ludzi — do potwierdzania ich adresów i do odzyskiwania hasła listem — a nie do
+postawienia bramki na własnym urządzeniu. Nadajnik ustawia się w oknie
+Konfiguracji, czyli za bramką; wymaganie poczty do jej postawienia zamykałoby
+pierwszego Operatora przed platformą na zawsze.
+
+**Czego stan bez poczty nie udaje.** Wiersz konta stoi na „niepotwierdzone"
+i nikt tego nie zmienia. Znacznik zdejmuje jeden warunek i tylko jeden: bramki
+nie zamyka potwierdzenie, którego platforma nie miała czym wysłać.
+
+**Skutek dla okna.** Przepływ wejścia ma dwie gałęzie, nie jedną.
+
+| Nadajnik | Odpowiedź rejestracji | Co okno mówi |
+|---|---|---|
+| ustawiony | `PendingVerification: true` | list wysłany, przepisz drogę potwierdzenia |
+| brak | `PendingVerification: false` | konto założone, adres niepotwierdzony — wejście działa hasłem, **odzyskanie konta listem nie zadziała do chwili potwierdzenia** |
+
+Ostrzeżenie z drugiego wiersza jest wymagane, nie zalecane. Adres jest jedyną
+drogą odzyskania konta; Operator, który nie wie, że jego adres nie został
+sprawdzony, dowie się o tym w dniu, w którym będzie go potrzebował.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
@@ -918,6 +960,5 @@ Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.
 | Dziennik pracy bez nadzoru | etap 2 | Praca prowadzona bez człowieka wymaga zapisu przebiegu, bo inaczej nie da się odtworzyć, dlaczego zadanie potoczyło się tak, a nie inaczej. |
 | Nazwy poziomów w bibliotece | etap 2 | Uzgodnienie `.dn-karty-sesji` i `.dn-karta-widoku` z modelem czterech poziomów, razem z przebudową mechanizmu kart. |
 | Wskaźnik izolacji — poziom przypisania | etap 2 | `izolacja.css` stanowi, że izolacja jest cechą okna roboczego; wskaźnik stoi w ramie aplikacji. |
-| Pierwsze uruchomienie bez poczty | etap 1 | Żeby ustawić pocztę, trzeba wejść; żeby wejść, trzeba potwierdzić adres; żeby potwierdzić — trzeba poczty. Dziś rejestracja przechodzi, ale droga potwierdzenia nie powstaje: konto istnieje, wejść się nie da, powtórzyć rejestracji też nie. Do rozstrzygnięcia: konto potwierdzone z urzędu przy braku poczty, poczta ustawiana w instalatorze, wejście bez konta, albo odmowa prowadząca wprost do ustawienia poczty. Wiąże nowy przepływ wejścia. |
 | Wartość domyślna `createVersion` | etap 2 | Kontrakt nie ustala, co znaczy brak pola w `studio.document.save`, choć w trzech komendach siostrzanych mówi wprost „brak znaczy tak". Rdzeń stosuje oba idiomy niejednolicie. Do rozstrzygnięcia wraz z tym, czy reguła obejmuje `document.save.as` i `document.form.save`. |
 | Metryki w planszach i indeksie designu | etap 1 | Podają wartości rozjechane ze stanem plików, a metody liczenia „interakcji" nie da się odtworzyć. Albo dostają definicję, albo znikają. |

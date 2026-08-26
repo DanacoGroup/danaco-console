@@ -1,0 +1,306 @@
+/* ============================================================================
+   EKRAN STARTOWY — składnik biblioteki
+
+   Znak marki kreślony światłem. Odtwarza się po uruchomieniu programu, zanim
+   stanie okno: punkt świetlny obrysowuje oba chevrony sygnetu, kontur wypełnia
+   się i zyskuje głębię, kropka marki dolatuje na swoje miejsce z jednym
+   impulsem pierścienia, po czym kamera wchodzi w znak i wygasza kadr.
+
+   Trwa 3,00 s i dzieli się tak:
+       0,00–0,30  punkt świetlny wpada w kadr
+       0,20–1,25  światło obrysowuje oba chevrony
+       1,15–1,80  kontur wypełnia się, znak zyskuje głębię
+       1,70–2,20  kropka marki siada na miejsce, impuls pierścienia
+       2,20–3,00  kamera wchodzi w znak, rozbłysk, wygaszenie
+
+   Geometria pochodzi wprost z `marka/logo/sygnet.svg` — dwa chevrony i kropka.
+   Bez tekstu, bez plików zewnętrznych.
+
+   Okno wstawia puste pole i nic więcej:
+
+       <div class="dn-ekran-startowy" data-ekran-startowy
+            role="img" aria-label="Uruchamianie Danaco Console"></div>
+
+   Ekran NIE MA własnego tła — kładzie się na tym, co pod spodem: na pulpicie
+   użytkownika, na oknie powłoki, na powierzchni podglądu. Barwy wyłącznie
+   z żetonów `--dn-znak-*` i `--dn-kropka`, więc znak podąża za motywem.
+
+   Sterowanie z okna:
+       var e = document.querySelector('[data-ekran-startowy]').ekranStartowy;
+       e.odtworz({ poKoncu: fn, czekajNaGotowosc: true });
+       e.gotowe();            // program wstał — wolno domknąć animację
+       e.pomin();             // przeskocz do końca
+       e.zakonczony();
+       e.wstrzymaj(); e.wznow(); e.zdejmij();
+
+   Atrybuty pola:
+       data-czas="3"          długość biegu w sekundach, 1,5–8
+       data-czekaj            zatrzymaj przed wygaszeniem do czasu `gotowe()`
+       data-powtarzaj         graj w kółko — wyłącznie do oglądania
+
+   Koniec biegu zgłasza zdarzenie `ekran-startowy-koniec`, bąbelkujące. Powłoka
+   na nim pokazuje okno programu i zamyka ekran startowy.
+   ============================================================================ */
+(function () {
+'use strict';
+
+/* Czytnik barw stoi w `narzedzia-okien.js` — potrzebuje go każdy składnik
+   rysujący na płótnie. */
+var czytnikBarw = window.DanacoNarzedzia.czytnikBarw;
+
+function zaloz(host) {
+  if (host.ekranStartowy) return host.ekranStartowy;
+
+  var st=host, cv=document.createElement('canvas'), ctx=cv.getContext('2d');
+  host.appendChild(cv);
+  var dane=host.dataset;
+
+  function clamp(v,a,b){return v<a?a:(v>b?b:v);}
+  function ss(t,a,b){return clamp((t-a)/(b-a),0,1);}
+  function eOut(t){return 1-Math.pow(1-clamp(t,0,1),3);}
+  function eInOut(t){t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function eIn(t){t=clamp(t,0,1);return t*t*t;}
+  function lerp(a,b,t){return a+(b-a)*t;}
+
+  var cz=czytnikBarw(host);
+  var MARK   = cz.barwa('--dn-znak-lico', '#F4F4F4').css;
+  var MARK2  = cz.barwa('--dn-znak-bok', '#C9D8EC').css;      // ścianki boczne wyciągnięcia
+  var ACCENT = cz.barwa('--dn-kropka', '#5C8CEC').css;
+  var P      = cz.barwa('--dn-znak-poswiata', '#5C8CEC').rgb;
+  var GLOW   = 'rgba('+P[0]+','+P[1]+','+P[2]+',';
+  var HALO   = cz.barwa('--dn-znak-halo', 'rgba(6,12,20,.55)').css;
+  cz.zdejmij();
+
+  /* --- geometria znaku z sygnet.svg (viewBox 96x96) -> model 3D --- */
+  function toModel(p){ return {x:(p[0]-48)/48, y:(48-p[1])/48}; }
+  var CH1=[[12,26],[24,26],[44,48],[24,70],[12,70],[32,48]].map(toModel);
+  var CH2=[[40,26],[52,26],[72,48],[52,70],[40,70],[60,48]].map(toModel);
+  var DOT={x:(83-48)/48, y:(48-63.5)/48, r:6.5/48};
+
+  var W=0,H=0,DPR=1,unit=1,cX=0,cY=0;
+  var cam={yaw:0,pitch:0,dist:3.2,f:1.9};
+  function p3(x,y,z){
+    var cy=Math.cos(cam.yaw),sy=Math.sin(cam.yaw);
+    var rx=x*cy-z*sy, rz=x*sy+z*cy;
+    var cp=Math.cos(cam.pitch),sp=Math.sin(cam.pitch);
+    var yc=y*cp+rz*sp, zc=-y*sp+rz*cp+cam.dist;
+    var s=cam.f*unit/Math.max(.05,zc);
+    return {x:cX+rx*s,y:cY-yc*s,s:s,d:zc};
+  }
+  function resize(){
+    DPR=Math.min(2,window.devicePixelRatio||1);
+    W=st.clientWidth||1; H=st.clientHeight||1;
+    cv.width=Math.max(1,Math.round(W*DPR)); cv.height=Math.max(1,Math.round(H*DPR));
+    cv.style.width=W+'px'; cv.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    unit=Math.min(W,H)*0.72; cX=W*0.5; cY=H*0.5;
+  }
+
+  /* --- pomocnicze: obwód wielokąta w modelu --- */
+  function perim(P){
+    var segs=[],tot=0;
+    for(var i=0;i<P.length;i++){
+      var a=P[i], b=P[(i+1)%P.length];
+      var L=Math.hypot(b.x-a.x,b.y-a.y); segs.push(L); tot+=L;
+    }
+    return {segs:segs,tot:tot};
+  }
+  var PM1=perim(CH1), PM2=perim(CH2);
+  function pointAt(P,PM,f){
+    var d=f*PM.tot, acc=0,i;
+    for(i=0;i<PM.segs.length;i++){ if(acc+PM.segs[i]>=d) break; acc+=PM.segs[i]; }
+    i=Math.min(i,PM.segs.length-1);
+    var t=(d-acc)/Math.max(1e-5,PM.segs[i]);
+    var a=P[i], b=P[(i+1)%P.length];
+    return {x:lerp(a.x,b.x,t), y:lerp(a.y,b.y,t)};
+  }
+  function strokePath(P,PM,f,z,alpha,lw,col){
+    if(f<=0.001||alpha<=0.01) return;
+    var d=f*PM.tot, acc=0,i,pts=[p3(P[0].x,P[0].y,z)];
+    for(i=0;i<PM.segs.length;i++){
+      if(acc+PM.segs[i]<d){ acc+=PM.segs[i]; pts.push(p3(P[(i+1)%P.length].x,P[(i+1)%P.length].y,z)); }
+      else{
+        var t=(d-acc)/Math.max(1e-5,PM.segs[i]);
+        var a=P[i], b=P[(i+1)%P.length];
+        pts.push(p3(lerp(a.x,b.x,t),lerp(a.y,b.y,t),z));
+        break;
+      }
+    }
+    ctx.save();
+    ctx.globalAlpha=alpha; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.strokeStyle=col; ctx.lineWidth=lw;
+    ctx.shadowBlur=16; ctx.shadowColor=GLOW+'.9)';
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function fillPrism(P,z0,depth,alpha,tint){
+    if(alpha<=0.01) return;
+    var i,front=[],back=[];
+    for(i=0;i<P.length;i++){ front.push(p3(P[i].x,P[i].y,z0)); back.push(p3(P[i].x,P[i].y,z0+depth)); }
+    ctx.save(); ctx.globalAlpha=alpha;
+    if(depth>0.001){
+      for(i=0;i<P.length;i++){
+        var j=(i+1)%P.length, q=[front[i],front[j],back[j],back[i]], area=0,k;
+        for(k=0;k<4;k++){ var a=q[k],b=q[(k+1)%4]; area+=(a.x*b.y-b.x*a.y); }
+        if(area<=0) continue;
+        ctx.beginPath(); ctx.moveTo(q[0].x,q[0].y);
+        for(k=1;k<4;k++) ctx.lineTo(q[k].x,q[k].y);
+        ctx.closePath();
+        ctx.fillStyle=MARK2; ctx.fill();
+      }
+    }
+    ctx.beginPath(); ctx.moveTo(front[0].x,front[0].y);
+    for(i=1;i<front.length;i++) ctx.lineTo(front[i].x,front[i].y);
+    ctx.closePath();
+    ctx.shadowBlur=18; ctx.shadowColor=HALO;
+    ctx.fillStyle=MARK; ctx.fill();
+    ctx.shadowBlur=0;
+    if(tint>0.01){
+      ctx.fillStyle=GLOW+(0.35*tint)+')'; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* --------------------------------------------------------------- czas */
+  var D=clamp(parseFloat(dane.czas||'3')||3,1.5,8), SC=D/3;
+  var T={draw0:0.18, draw1:1.25, fill0:1.15, fill1:1.80, dot0:1.70, dot1:2.15, out0:2.20, end:3.00};
+  for(var k in T) T[k]*=SC;
+  var t=0,last=0,running=true,done=false,onDone=null;
+  var holdMode=dane.czekaj!==undefined, ready=!holdMode, loopPrev=dane.powtarzaj!==undefined;
+  var rings=[], trail=[];
+
+  function reset(){ t=0; done=false; rings=[]; trail=[]; }
+  function finish(){
+    done=true;
+    if(loopPrev){ setTimeout(reset,400); return; }
+    if(typeof onDone==='function'){ try{ onDone(); }catch(e){} }
+    /* Jedno wyjście dla wszystkich osadzeń: powłoka, okno nadrzędne i podgląd
+       słuchają tego samego zdarzenia. Kto potrzebuje mostu do Electrona albo
+       `postMessage`, zakłada nasłuch — składnik o tym nie wie. */
+    host.dispatchEvent(new CustomEvent('ekran-startowy-koniec',{bubbles:true}));
+  }
+  function update(dt){
+    var prev=t; t+=dt;
+    // kamera: lekki obrót w fazie rysowania, wejście w znak na końcu
+    var io=ss(t,T.out0,T.end);
+    cam.yaw   = (1-eOut(ss(t,0,T.fill1)))*0.55 + Math.sin(t*0.8)*0.06*(1-io);
+    cam.pitch = (1-eOut(ss(t,0,T.fill1)))*0.18 + Math.sin(t*0.6)*0.03*(1-io);
+    cam.dist  = 3.2 - 1.85*eIn(io);
+    if(prev<T.dot1 && t>=T.dot1) rings.push({t:0,life:0.9*SC});
+    for(var i=rings.length-1;i>=0;i--){ rings[i].t+=dt; if(rings[i].t>=rings[i].life) rings.splice(i,1); }
+    // ślad świetlny czubka kreślącego
+    var f=ss(t,T.draw0,T.draw1);
+    if(f>0&&f<1){
+      var pA=pointAt(CH1,PM1,f), pB=pointAt(CH2,PM2,f);
+      trail.push({x:pA.x,y:pA.y,a:1},{x:pB.x,y:pB.y,a:1});
+    }
+    for(i=trail.length-1;i>=0;i--){ trail[i].a-=dt*2.6; if(trail[i].a<=0) trail.splice(i,1); }
+    if(!done && t>=T.end && (ready||!holdMode)) finish();
+    if(holdMode && !ready && t>T.out0) t=T.out0;
+  }
+  function render(){
+    ctx.clearRect(0,0,W,H);
+    if(done&&!loopPrev) return;
+    var io=ss(t,T.out0,T.end);
+    var glob=1-ss(t,T.out0+(T.end-T.out0)*0.55,T.end);
+    var drawF=ss(t,T.draw0,T.draw1);
+    var fillF=eOut(ss(t,T.fill0,T.fill1));
+    var depth=0.13*fillF;
+    var sep=0.55*eIn(io);              // rozsuwanie chevronów w głąb
+
+    // ślad
+    ctx.save(); ctx.globalCompositeOperation='lighter';
+    for(var i=0;i<trail.length;i++){
+      var q=p3(trail[i].x,trail[i].y,0), s=trail[i].a*6;
+      ctx.fillStyle=GLOW+(0.35*trail[i].a)+')';
+      ctx.beginPath(); ctx.arc(q.x,q.y,Math.max(1,s),0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+
+    // kontur kreślony światłem
+    if(fillF<0.98){
+      var lw=Math.max(1.6,unit*0.012);
+      strokePath(CH1,PM1,drawF,-sep,glob*(1-fillF*0.75),lw,MARK);
+      strokePath(CH2,PM2,drawF, sep,glob*(1-fillF*0.75),lw,MARK);
+    }
+    // wypełnienie z głębią
+    if(fillF>0.02){
+      fillPrism(CH1,-sep,depth,glob*fillF,0.25*(1-fillF));
+      fillPrism(CH2, sep,depth,glob*fillF,0.25*(1-fillF));
+    }
+    // czubek kreślący
+    if(drawF>0&&drawF<1){
+      var a=pointAt(CH1,PM1,drawF), b=pointAt(CH2,PM2,drawF);
+      [a,b].forEach(function(pt){
+        var q=p3(pt.x,pt.y,0);
+        ctx.save(); ctx.globalAlpha=glob;
+        ctx.shadowBlur=22; ctx.shadowColor=GLOW+'1)';
+        ctx.fillStyle=ACCENT;
+        ctx.beginPath(); ctx.arc(q.x,q.y,Math.max(2.4,unit*0.016),0,Math.PI*2); ctx.fill();
+        ctx.restore();
+      });
+    }
+    // kropka marki
+    var dp=ss(t,T.dot0,T.dot1);
+    if(dp>0){
+      var k=eOut(dp);
+      var fromX=DOT.x+0.85, fromY=DOT.y+0.55;
+      var q2=p3(lerp(fromX,DOT.x,k), lerp(fromY,DOT.y,k), lerp(0.5,depth*0.5,k));
+      var pr=1+0.30*Math.max(0,Math.sin((dp-1)*6))*(dp>=1?1:0);
+      ctx.save(); ctx.globalAlpha=glob*Math.min(1,dp*1.6);
+      ctx.shadowBlur=26; ctx.shadowColor=GLOW+'1)';
+      ctx.fillStyle=ACCENT;
+      ctx.beginPath(); ctx.arc(q2.x,q2.y,DOT.r*q2.s*pr,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    // pierścień po osadzeniu kropki
+    ctx.save();
+    for(i=0;i<rings.length;i++){
+      var R=rings[i], kk=R.t/R.life, c=p3(DOT.x,DOT.y,0);
+      ctx.globalAlpha=glob*(1-kk)*(1-kk)*0.8;
+      ctx.strokeStyle=ACCENT; ctx.lineWidth=2.2*(1-kk)+0.4;
+      ctx.beginPath(); ctx.arc(c.x,c.y,(DOT.r+kk*0.55)*c.s,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+    // rozbłysk przy wejściu w znak
+    if(io>0.35){
+      var fl=Math.sin(clamp((io-0.35)/0.65,0,1)*Math.PI)*0.38;
+      var g=ctx.createRadialGradient(cX,cY,0,cX,cY,Math.min(W,H)*0.52);
+      g.addColorStop(0,'rgba(240,248,255,'+fl+')');
+      g.addColorStop(1,GLOW+'0)');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    }
+  }
+  function frame(ts){
+    if(!running) return;
+    if(!last) last=ts;
+    var dt=Math.min(0.05,(ts-last)/1000); last=ts;
+    update(dt); render();
+    requestAnimationFrame(frame);
+  }
+  var api={
+    odtworz:function(o){ o=o||{}; if(typeof o.poKoncu==='function') onDone=o.poKoncu;
+      if(typeof o.czekajNaGotowosc==='boolean'){ holdMode=o.czekajNaGotowosc; ready=!o.czekajNaGotowosc; }
+      reset(); },
+    gotowe:function(){ ready=true; },
+    pomin:function(){ if(!done) finish(); },
+    zakonczony:function(){ return done; },
+    wstrzymaj:function(){ running=false; },
+    wznow:function(){ if(!running){ running=true; last=0; requestAnimationFrame(frame); } },
+    zdejmij:function(){ running=false; window.removeEventListener('resize',resize);
+      if(cv.parentNode) cv.parentNode.removeChild(cv); delete host.ekranStartowy; }
+  };
+  host.ekranStartowy=api;
+  window.addEventListener('resize',resize);
+  resize();
+  requestAnimationFrame(frame);
+  return api;
+}
+
+/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-ekran-startowy', zaloz);
+
+window.DanacoEkranStartowy = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };
+})();

@@ -68,6 +68,12 @@
   --dn-bryla-cien: rgba(16, 36, 66, .26);         /* cień pod modułem */
   --dn-bryla-plakietka: rgba(22, 36, 56, .92);    /* podpis etapu */
   --dn-bryla-plakietka-tekst: #E2EEFC;
+  --dn-bryla-etykieta: #96B2D6;            /* podpis warstwy na blacie */
+
+  /* Znak marki kreślony światłem — ekran startowy. Poświata jest jedna dla obu
+     motywów, bo to barwa światła, a nie powierzchni: rozjaśnia to, na czym
+     leży, czy będzie tym atrament okna, papier, czy pulpit użytkownika. */
+  --dn-znak-poswiata: #5C8CEC;
 
   /* --- STANY — prymitywy (informacja = rodzina sygnału)                */
   --dn-zielen-700: #1E7A46;  --dn-zielen-400: #4FBD85;
@@ -189,6 +195,7 @@
   --dn-wym-bryly-min: 260px;               /* pole bryły warstw — próg czytelności sceny */
   --dn-wym-okno-instalatora-szer: 1020px;   /* okno instalatora */
   --dn-wym-okno-instalatora-wys: 720px;
+  --dn-wym-okno-wejscia-wys: 780px;         /* okno wejścia — gęstsze od kreatora */
   --dn-wym-belka-instalatora: 44px;
   --dn-wym-stopki-instalatora: 64px;
   --dn-od-tresci-instalatora: 40px;
@@ -302,6 +309,9 @@
   --dn-sygnal-tlo: var(--dn-sygnal-100);
   --dn-sygnal-obrys: var(--dn-sygnal-200);
   --dn-kropka: var(--dn-sygnal-500);
+  --dn-znak-lico: #12151A;              /* przednia ściana znaku */
+  --dn-znak-bok: #2B3442;               /* ścianki wyciągnięcia w głąb */
+  --dn-znak-halo: rgba(255, 255, 255, 0.65);  /* poświata pod wypełnionym znakiem */
 
   --dn-fokus: var(--dn-sygnal-500);
   --dn-fokus-cien: rgba(59, 111, 224, 0.30);
@@ -383,6 +393,9 @@
   --dn-sygnal-tlo: rgba(59, 111, 224, 0.16);
   --dn-sygnal-obrys: rgba(92, 140, 236, 0.40);
   --dn-kropka: var(--dn-sygnal-400);
+  --dn-znak-lico: #F4F4F4;              /* przednia ściana znaku */
+  --dn-znak-bok: #C9D8EC;               /* ścianki wyciągnięcia w głąb */
+  --dn-znak-halo: rgba(6, 12, 20, 0.55);      /* poświata pod wypełnionym znakiem */
 
   --dn-fokus: var(--dn-sygnal-400);
   --dn-fokus-cien: rgba(92, 140, 236, 0.35);
@@ -440,6 +453,8 @@
     --dn-sygnal-wypelnienie-hover: var(--dn-sygnal-700);
     --dn-sygnal-tlo: var(--dn-sygnal-100); --dn-sygnal-obrys: var(--dn-sygnal-200);
     --dn-kropka: var(--dn-sygnal-500);
+    --dn-znak-lico: #12151A; --dn-znak-bok: #2B3442;
+    --dn-znak-halo: rgba(255, 255, 255, 0.65);
     --dn-fokus: var(--dn-sygnal-500); --dn-fokus-cien: rgba(59, 111, 224, 0.30);
     --dn-sukces-tekst: var(--dn-zielen-700); --dn-sukces-tlo: var(--dn-zielen-100);
     --dn-sukces-obrys: var(--dn-zielen-200);
@@ -486,6 +501,8 @@
     --dn-sygnal-tlo: rgba(59, 111, 224, 0.16);
     --dn-sygnal-obrys: rgba(92, 140, 236, 0.40);
     --dn-kropka: var(--dn-sygnal-400);
+    --dn-znak-lico: #F4F4F4; --dn-znak-bok: #C9D8EC;
+    --dn-znak-halo: rgba(6, 12, 20, 0.55);
     --dn-fokus: var(--dn-sygnal-400); --dn-fokus-cien: rgba(92, 140, 236, 0.35);
     --dn-sukces-tekst: var(--dn-zielen-400);
     --dn-sukces-tlo: #27372F;

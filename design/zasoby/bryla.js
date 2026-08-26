@@ -55,25 +55,9 @@ function miedzy(a, b, t) { return a + (b - a) * t; }
    do innego żetonu. Zamiast rozbierać każdy zapis z osobna, wartość idzie do
    próbki i wraca znormalizowana przez przeglądarkę — razem z kryciem, bo ściany
    klocków są półprzezroczyste i krycie należy do żetonu, nie do rysunku. */
-function czytnikBarw(host) {
-  var probka = document.createElement('span');
-  probka.setAttribute('aria-hidden', 'true');
-  probka.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden';
-  host.appendChild(probka);
-  var styl = getComputedStyle(host);
-  return {
-    barwa: function (zeton, zapas) {
-      var v = styl.getPropertyValue(zeton).trim() || zapas;
-      probka.style.color = '';
-      probka.style.color = v;
-      var m = getComputedStyle(probka).color.match(/[\d.]+/g) || ['0', '0', '0'];
-      var rgb = [Math.round(+m[0]), Math.round(+m[1]), Math.round(+m[2])];
-      var a = m.length > 3 ? +m[3] : 1;
-      return { rgb: rgb, a: a, css: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')' };
-    },
-    zdejmij: function () { if (probka.parentNode) probka.parentNode.removeChild(probka); }
-  };
-}
+/* Czytnik barw stoi w `narzedzia-okien.js` — potrzebuje go każdy składnik
+   rysujący na płótnie. */
+var czytnikBarw = window.DanacoNarzedzia.czytnikBarw;
 function kry(c, a) { return 'rgba(' + c.rgb[0] + ',' + c.rgb[1] + ',' + c.rgb[2] + ',' + (a * c.a) + ')'; }
 
 function zbudujPalete(host) {
@@ -571,16 +555,8 @@ function zaloz(host, opcje) {
   return api;
 }
 
-function zalozWszystkie(zakres) {
-  var pola = (zakres || document).querySelectorAll('[data-bryla]');
-  for (var i = 0; i < pola.length; i++) zaloz(pola[i]);
-}
+/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-bryla', zaloz);
 
 window.DanacoBryla = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () { zalozWszystkie(); });
-} else {
-  zalozWszystkie();
-}
 })();

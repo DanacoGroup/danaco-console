@@ -30,6 +30,24 @@
 /* Scena bierze całą szerokość, jaką ma do dyspozycji. Bez tego kurczyłaby się
    do treści, a okno o szerokości `min(920px, 100%)` zmieniałoby wymiar razem
    z długością tekstu w kroku — okno instalatora ma stać nieruchomo. */
+/* Warstwa uruchomienia leży na scenie, nie w oknie — dlatego scena jest polem
+   odniesienia. Póki animacja gra, okno jest ukryte przed czytnikiem tak samo
+   jak przed okiem: `visibility`, nie samo krycie. */
+.we-scena { position: relative; }
+/* Okno bywa dzieckiem sceny wprost albo stoi w miejscu montażu — zejście
+   potomkiem zamiast dziecka obejmuje oba przypadki. Zapis „> .we-okno"
+   przestał trafiać, gdy okno przestało być pisane w znaczniku. */
+.we-scena[data-uruchamianie] .we-okno { visibility: hidden; }
+
+.we-uruchomienie {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.we-uruchomienie > .dn-ekran-startowy { width: 560px; height: 420px; }
+
 .we-scena {
   display: flex;
   align-items: center;
@@ -45,13 +63,29 @@
    w trakcie uruchomienia. Pierwszy wiersz siatki zajmuje belka tytułowa,
    drugi — kolumna tożsamości i kolumna stanu. */
 .we-okno {
+  /* Wcięcie kolumny treści. Stopka sięga krawędzi kolumny, więc musi znać tę
+     samą wartość, którą kolumna wnosi wypełnieniem — inaczej pas urywa się
+     w powietrzu zamiast domykać panel. */
+  --we-wciecie-x: var(--dn-od-6);
+  --we-wciecie-y: var(--dn-od-5);
+
   /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
-     `min-height` pozwalał mu rosnąć razem z treścią widoku. */
+     `min-height` pozwalał mu rosnąć razem z treścią widoku.
+
+     Wyższe od kreatora o 60 px, bo niesie gęstszą treść: formularz, miernik
+     siły hasła, zgodę na sesję i trzy metody logowania naraz. Przy wysokości
+     kreatora sekcje musiałyby stać ciasno jedna przy drugiej i zlewać się
+     w jeden blok. Szerokość i oprawa zostają wspólne — bryła rodziny się
+     nie zmienia. */
   width: 1040px;
-  height: 696px;
+  height: var(--dn-wym-okno-wejscia-wys);
   flex: none;
   display: grid;
   grid-template-columns: 384px minmax(0, 1fr);
+  /* Nazwa wiersza, bo w tym samym wierszu stają dwie rzeczy: pas działań
+     przez całą szerokość i nota wydawcy w kolumnie tożsamości. Numer
+     rozjeżdżałby się między wariantem z belką i bez niej. */
+  grid-template-rows: minmax(0, 1fr) [pas] auto;
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-xl);
   background: var(--dn-okno-plotno);
@@ -61,7 +95,7 @@
 
 /* Wariant z belką okna systemowego: pierwszy wiersz siatki zajmuje belka,
    drugi — kolumna tożsamości i kolumna stanu. */
-.we-okno--z-belka { grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr); }
+.we-okno--z-belka { grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr) [pas] auto; }
 
 /* ── 2 · MINIMALNA BELKA OKNA SYSTEMOWEGO ───────────────────────────────── */
 /* Okno przed uwierzytelnieniem nie ma ramy aplikacji: ani szyny nawigacji,
@@ -79,6 +113,10 @@
   background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
+/* Belka jest ciemna w obu motywach, więc kropka bierze barwę sygnału ramy,
+   a nie kropki treści — ta w motywie jasnym byłaby ciemniejsza od tła. */
+.we-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
+
 .we-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
 .we-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
 .we-belka-uchwyt { flex: 1 1 auto; }
@@ -143,9 +181,20 @@
 .we-marka-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst); }
 .we-marka-poz b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
 .we-marka-stopka {
-  margin-top: auto;
-  /* Stopka odcina się odstępem i stopniem pisma, nie kreską. */
-  padding-top: var(--dn-od-5);
+  /* Nota wydawcy stoi w wierszu pasa działań, w kolumnie tożsamości — na tej
+     samej linii co czynność główna. Nad pasem wisiała w próżni, bo kolumna
+     kończy się wyżej niż okno. Leży na pasie, nie w nim: pas należy do panelu,
+     który się przełącza, a nota jest jedna dla całego okna. */
+  grid-row: pas;
+  grid-column: 1;
+  /* Nota siada przy dnie okna, ale nie na krawędzi: odstęp od dołu jest ten
+     sam co od lewej, więc róg kolumny czyta się jako róg, a nie jako obcięcie.
+     Blok bywa wyższy od pasa i wtedy wychodzi w górę, w pustą część kolumny —
+     tam nic nie stoi, więc niczego nie zasłania. */
+  align-self: end;
+  z-index: 1;
+  margin: 0;
+  padding: 0 var(--dn-od-6) var(--dn-od-6);
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
   line-height: var(--dn-lh-ciasny);
@@ -162,10 +211,25 @@
   background: var(--dn-okno-plotno);
   display: flex;
   flex-direction: column;
-  gap: var(--dn-od-5);
-  padding: var(--dn-od-8) var(--dn-od-6);
+  /* Rytm kolumny. Najwyższa odsłona to logowanie z komunikatem o brakujących
+     danych: przy 16 px wychodziła 22 px poza okno. 12 px mieści ją z zapasem
+     i nie zbliża bloków na tyle, żeby się zlewały — odstęp wewnątrz grupy pól
+     jest i tak mniejszy, więc podział na bloki nadal widać. */
+  gap: var(--dn-od-3);
+  /* Wcięcie z jednego źródła: stopka sięga krawędzi kolumny ujemnym
+     marginesem tej samej wielkości. Dwie wartości wpisane osobno rozjeżdżają
+     się przy pierwszej zmianie i zostawiają pas wiszący nad krawędzią. */
+  padding: var(--we-wciecie-y) var(--we-wciecie-x);
   min-width: 0;
+  /* Kolumna oddała wiersz pasowi działań, więc treść wyższa od niej musi mieć
+     gdzie się przewinąć — inaczej ostatni wiersz urywa się przy pasie. */
+  min-height: 0;
+  overflow-y: auto;
 }
+
+/* Zdanie z wplecionym odsyłaczem — pytanie i czynność w jednym wierszu.
+   Rozbite na dwa wiersze czyta się jak dwie osobne rzeczy. */
+.we-fraza-pytanie { color: var(--dn-tekst-2); }
 /* Głowa panelu: nadtytuł albo tytuł, tor kroków i zdanie wprowadzające.
    Reset zeruje marginesy nagłówkom i akapitom, więc odstęp musi wnieść
    kontener — inaczej trzy różne treści zlewają się w jeden blok. */
@@ -197,33 +261,6 @@
    dwiema równorzędnymi drogami — wskazuje, gdzie stoisz, a nie co wykonasz.
    Wypełnienie sygnałowe zostaje zarezerwowane dla przycisku „Zaloguj się”
    pod formularzem, który jest właściwym działaniem tego okna. */
-.we-panel .dn-zakladki {
-  align-self: flex-start;
-  gap: var(--dn-od-1);
-  padding: 3px;
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-pill);
-  background: var(--dn-powierzchnia-2);
-}
-.we-panel .dn-zakladka {
-  border: 0; border-radius: var(--dn-r-pill);
-  padding: 0 var(--dn-od-4);
-  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
-  color: var(--dn-tekst-2);
-}
-.we-panel .dn-zakladka::after { content: none; }
-.we-panel .dn-zakladka[aria-selected='true'] {
-  background: var(--dn-sygnal-tlo);
-  border: 1px solid var(--dn-sygnal-obrys);
-  color: var(--dn-sygnal);
-  font-weight: var(--dn-fw-polgruba);
-}
-.we-panel .dn-zakladka[aria-selected='true']:hover {
-  background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
-}
-.we-panel .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-
 /* ── 5 · TOR KROKÓW URUCHOMIENIA ────────────────────────────────────────── */
 
 .we-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
@@ -260,52 +297,81 @@
 
 /* ── 6 · KOMUNIKAT W KOLUMNIE STANU ─────────────────────────────────────── */
 
-.we-alarm {
+/* Wykaz usterek wewnątrz komunikatu. Punktory są potrzebne: bez nich cztery
+   zdania zlewają się w akapit, w którym nie widać, ile rzeczy jest do
+   poprawienia. */
+.dn-alert-lista {
+  margin: var(--dn-od-1) 0 0;
+  padding-left: var(--dn-od-4);
+  /* Jedna pozycja na wiersz. Dwie kolumny mieściły więcej, ale przy dwóch
+     usterkach sklejały je w jeden wiersz i wykaz czytał się jak zdanie
+     z punktorami w środku. */
   display: flex;
-  gap: var(--dn-od-3);
-  padding: var(--dn-od-3);
-  border: 1px solid var(--dn-obrys);
-  border-left-width: 2px;
-  border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia-2);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-bazowy);
-  color: var(--dn-tekst-2);
+  flex-direction: column;
+  gap: 2px;
 }
-.we-alarm svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-2); }
-.we-alarm b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
-.we-alarm--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
-.we-alarm--sukces svg, .we-alarm--sukces b { color: var(--dn-sukces-tekst); }
-.we-alarm--ostrzezenie { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
-.we-alarm--ostrzezenie svg, .we-alarm--ostrzezenie b { color: var(--dn-ostrzezenie-tekst); }
-.we-alarm--informacja { border-color: var(--dn-informacja-obrys); background: var(--dn-informacja-tlo); }
-.we-alarm--informacja svg, .we-alarm--informacja b { color: var(--dn-informacja-tekst); }
-.we-alarm--blad { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); }
-.we-alarm--blad svg, .we-alarm--blad b { color: var(--dn-blad-tekst); }
+
+/* Komunikat z wykazem jest z natury wyższy od jednozdaniowego, więc oddycha
+   węziej — inaczej przy czterech usterkach naraz formularz wychodzi poza okno. */
+.dn-alert:has(.dn-alert-lista) { padding-block: var(--dn-od-2); }
+
 
 /* ── 7 · DZIAŁANIA I STOPKA KOLUMNY ─────────────────────────────────────── */
 
 .we-akcje { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
 .we-akcje .dn-btn { white-space: nowrap; }
 .we-akcje .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-.we-stopka {
+/* Pas działań domyka okno przez całą jego szerokość — pod kolumną tożsamości
+   też. Pas urwany na granicy kolumny czyta się jak niedokończony rysunek,
+   a nie jak dno okna. Ta sama zasada rządzi paskiem instalatora. */
+.we-pas {
+  grid-row: pas;
+  grid-column: 1 / -1;
   display: flex;
-  margin-top: auto;
   align-items: center;
-  justify-content: space-between;
   gap: var(--dn-od-3);
-  flex-wrap: wrap;
-  /* Pas działań odcina się powierzchnią, nie kreską — sięga krawędzi kolumny. */
-  margin: auto calc(-1 * var(--we-wciecie-x)) calc(-1 * var(--we-wciecie-y));
-  padding: var(--dn-od-4) var(--we-wciecie-x);
+  /* Czynności zbierają się przy prawej krawędzi — tam ręka szuka ich w każdym
+     oknie tej rodziny, a gdy zostaje jedna, nie zawisa samotnie po lewej. */
+  justify-content: flex-end;
+  min-height: var(--dn-wym-stopki-instalatora);
+  padding: var(--dn-od-3) var(--we-wciecie-x);
   background: var(--dn-okno-obrzeze);
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-2);
 }
+
 /* Wariant ciągły: stopka niesie jedno zdanie z wplecionymi wywołaniami
    („Nie masz konta? Utwórz konto · lub · Kontynuuj bez konta”). Rozsunięcie
    do krawędzi rozrywałoby zdanie, więc pozycje stoją obok siebie. */
-.we-stopka--ciag { justify-content: flex-start; gap: var(--dn-od-2); }
+
+
+/* Zdanie nawigacyjne i odsyłacze stoją nad pasem, w treści. W pasie zostają
+   same czynności — inaczej zdanie, czynność poboczna i główna nie mieszczą się
+   w jednym wierszu i pas łamie się poza okno. */
+/* Grupa oddycha ciasno, sekcja szeroko. Odstęp podstawowy kolumny wiąże bloki
+   należące do siebie — pola formularza, miernik pod polem hasła. Początek nowej
+   sekcji dostaje odstęp dwa razy większy, inaczej „Inne metody logowania"
+   czyta się jak dalszy ciąg pola hasła, a zdanie zamykające — jak podpis pod
+   ostatnią kontrolką. */
+/* Głowa ekranu odcina się od treści szerzej niż bloki między sobą: tytuł,
+   tor kroków i zdanie wprowadzające to jedna rzecz, a formularz — druga. */
+.we-glowa { margin-bottom: var(--dn-od-5); }
+.we-panel .au-etykieta,
+.we-panel .au-opcje,
+.we-panel .au-kod,
+.we-panel > .we-fraza { margin-top: var(--dn-od-3); }
+.we-panel > .we-fraza:last-child { margin-top: var(--dn-od-6); }
+
+.we-fraza {
+  /* Zdanie idzie za treścią, do której należy — nie spada na dno panelu.
+     Dosunięcie do dołu wyrywało je z kontekstu: przy dwóch frazach pierwsza
+     wyżerała całą wolną wysokość, a w krótkich ekranach odsyłacz zawisał
+     kilkanaście wierszy pod tym, czego dotyczy. */
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+
 .we-lacznik { color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
 
 /* ── 8 · FORMULARZ UWIERZYTELNIENIA ─────────────────────────────────────── */
@@ -343,7 +409,26 @@
 .au-sila-warunki { display: flex; flex-wrap: wrap; gap: var(--dn-od-1) var(--dn-od-3); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 .au-sila-warunek { display: inline-flex; align-items: center; gap: var(--dn-od-1); }
 .au-sila-warunek svg { width: 12px; height: 12px; }
+/* Znak warunku różni się KSZTAŁTEM, nie samą barwą: niespełniony niesie puste
+   kółko, spełniony ptaszka. Ptaszek w każdym stanie czytał się jako „zrobione",
+   a barwa jako jedyna różnica łamie WCAG 1.4.1. */
+.au-sila-warunek .ik-jest { display: none; }
+.au-sila-warunek[data-spelniony='tak'] .ik-brak { display: none; }
+.au-sila-warunek[data-spelniony='tak'] .ik-jest { display: inline; }
 .au-sila-warunek[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
+
+/* Przeglądarka dokłada polom hasła własny przycisk odsłonięcia — obok naszego
+   dawał dwa oczka jedno przy drugim.
+
+   KAŻDY z tych selektorów stoi w OSOBNEJ regule, i to jest tu istotne: wykaz
+   selektorów unieważnia się w całości, gdy przeglądarka nie zna choćby jednego.
+   Edge zna `::-ms-reveal`, ale nie zna `::-ms-clear`, więc wykaz z obydwoma
+   nie robił nic — także tego, co robić umiał. */
+.au-haslo > .dn-pole-kontrolka::-ms-reveal { display: none; }
+.au-haslo > .dn-pole-kontrolka::-ms-clear { display: none; }
+/* Ta sama ostrożność wobec przeglądarek opartych na WebKicie. */
+.au-haslo > .dn-pole-kontrolka::-webkit-credentials-auto-fill-button { display: none; }
+.au-haslo > .dn-pole-kontrolka::-webkit-strong-password-auto-fill-button { display: none; }
 
 /* wiersz opcji sesji */
 .au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }
@@ -358,7 +443,8 @@
    otoczenia wyłącznie barwą (1,03:1 w motywie jasnym), więc niesie też
    podkreślenie — WCAG 1.4.1 wymaga rozróżnienia niebędącego samym kolorem. */
 .au-link { font-size: var(--dn-fs-sm); }
-.we-stopka .au-link { text-decoration: underline; text-underline-offset: 2px; }
+.we-fraza .au-link { text-decoration: underline; text-underline-offset: 2px; }
+
 
 /* Opis pola przejmuje trzeci stopień tekstu z biblioteki komponentów
    (`komponenty.css` → `.dn-pole-opis`); w oknie wejściowym to tekst 13 px,

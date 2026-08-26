@@ -740,6 +740,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   font-size: var(--dn-fs-sm);
 }
 .dn-zakladki--pigulki .dn-zakladka::after { content: none; }
+
 .dn-zakladki--pigulki .dn-zakladka:hover { background: var(--dn-hover); }
 .dn-zakladki--pigulki .dn-zakladka[aria-selected='true'] {
   background: var(--dn-sygnal-wypelnienie);
@@ -756,6 +757,32 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
+
+/* Pigułki wyboru — wariant dla dwóch dróg RÓWNORZĘDNYCH. Stan wybrany niesie
+   podświetlenie i obwódkę, nie pełne wypełnienie: pigułka w pełnym błękicie
+   czyta się jak przycisk działania, a to kontrolka wskazująca, gdzie stoisz,
+   nie co wykonasz. Wariant stał wcześniej w arkuszu okna wejścia i po cichu
+   przemalowywał składnik biblioteki. */
+.dn-zakladki--wybor {
+  gap: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+}
+.dn-zakladki--wybor .dn-zakladka {
+  border: 0;
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  color: var(--dn-tekst-2);
+}
+.dn-zakladki--wybor .dn-zakladka[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  border: 1px solid var(--dn-sygnal-obrys);
+  color: var(--dn-sygnal);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-zakladki--wybor .dn-zakladka[aria-selected='true']:hover {
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+}
+.dn-zakladki--wybor .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
 
 /* Pas kart sesji powłoki środowiska — mechanika zakładek + wskaźnik pracy w tle */
 .dn-karty-sesji {
@@ -1064,6 +1091,16 @@ label.dn-pasek-szukaj:focus-within {
   background: var(--dn-powierzchnia-2);
   overflow: hidden;
 }
+/* Zakładki bez kreski pod spodem — gdy pasek zakładek stoi w oprawie, która
+   sama niesie granicę, druga kreska daje podwójną linię. Zawijanie na wypadek
+   paska szerszego niż kolumna. */
+.dn-zakladki--bez-kreski { border-bottom: 0; }
+.dn-zakladki--zawijane { flex-wrap: wrap; }
+
+/* Miara postępu bierze się z danej na znaczniku, nie z wyglądu wpisanego
+   w atrybut `style` — wartość ustawia mechanika okna. */
+.dn-postep-wartosc { width: 0; }
+
 .dn-postep-wartosc {
   height: 100%;
   border-radius: var(--dn-r-pill);
@@ -1096,6 +1133,16 @@ label.dn-pasek-szukaj:focus-within {
    płótno, więc pole nie potrzebuje ani ramki, ani przycięcia. */
 .dn-bryla { position: relative; display: block; min-width: 0; min-height: 0; }
 .dn-bryla > canvas { display: block; width: 100%; height: 100%; }
+
+/* Ekran startowy — pole dla znaku kreślonego światłem. Bez własnego tła:
+   kładzie się na tym, co pod spodem. Płótno zakłada składnik. */
+.dn-ekran-startowy { position: relative; display: block; width: 100%; height: 100%; }
+.dn-ekran-startowy > canvas { display: block; width: 100%; height: 100%; }
+
+/* Powłoki platformy — pole dla animacji składania. Bez własnego tła, jak bryła
+   i ekran startowy: rysunek kładzie się na powierzchni okna. */
+.dn-powloki { position: relative; display: block; width: 100%; height: 100%; }
+.dn-powloki > canvas { display: block; width: 100%; height: 100%; }
 
 /* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
@@ -2449,6 +2496,47 @@ button.dn-link {
 .dn-alert-tresc b,
 .dn-alert-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
 
+/* Alert ze wstęgą — komunikat, który stoi w treści okna, a nie nad nią.
+   Barwa stanu obejmuje ZNAK I GŁOWĘ, nie całe pismo: treść pozostaje w barwie
+   tekstu drugiego stopnia, więc czyta się tak samo dobrze jak reszta okna.
+   Wstęga przy lewej krawędzi niesie stan kształtem, nie samą barwą tła.
+   Wariant stał wcześniej w arkuszu okna wejścia jako `.we-alarm`. */
+.dn-alert--wstega {
+  display: flex;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border-left-width: 2px;
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+/* Znak stoi przy GŁOWIE, nie w połowie wysokości: komunikat ze wstęgą ma głowę
+   i treść, więc znak należy do pierwszego wiersza. Wyśrodkowanie z reguły
+   `.dn-alert:has(> .dn-alert-znak)` dotyczy komunikatów jednozdaniowych i ma
+   równą siłę, więc odwrócenie wymaga selektora tej samej budowy. */
+.dn-alert--wstega:has(> .dn-alert-znak) { align-items: flex-start; }
+/* Gniazdo znaku dorównuje samemu znakowi: komunikat stojący w treści nie ma
+   nad sobą pola nagłówkowego, więc większe gniazdo odsuwałoby pismo od wstęgi
+   bez powodu. */
+.dn-alert--wstega > .dn-alert-znak {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  color: var(--dn-tekst-2);
+}
+.dn-alert--wstega > .dn-alert-tresc > b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+.dn-alert--wstega.dn-alert--sukces { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--sukces > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--sukces > .dn-alert-tresc > b { color: var(--dn-sukces-tekst); }
+.dn-alert--wstega.dn-alert--ostrzezenie { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--ostrzezenie > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--ostrzezenie > .dn-alert-tresc > b { color: var(--dn-ostrzezenie-tekst); }
+.dn-alert--wstega.dn-alert--info { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--info > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--info > .dn-alert-tresc > b { color: var(--dn-informacja-tekst); }
+.dn-alert--wstega.dn-alert--blad { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--blad > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--blad > .dn-alert-tresc > b { color: var(--dn-blad-tekst); }
+
 /* ==========================================================================
    POSTĘP — brakująca głowa · CZYNNOŚCI — tekst w pasie
    ========================================================================== */
@@ -2638,7 +2726,7 @@ button.dn-link {
 
 .dn-tekst-ciagly h2 {
   margin: var(--dn-od-8) 0 var(--dn-od-3);
-  font-family: var(--dn-ff-naglowkowa);
+  font-family: var(--dn-ff-naglowek);
   font-size: var(--dn-fs-md);
   font-weight: var(--dn-fw-polgruba);
   line-height: var(--dn-lh-ciasny);

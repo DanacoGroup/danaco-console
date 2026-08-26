@@ -1,8 +1,8 @@
 # Danaco Console — przewodnik wykonawcy
 
 Aplikacja desktopowa (Tauri 2): rdzeń w Go, interfejs TypeScript/Vite, poczta
-IMAP, WebSocket. Repozytorium jest w fazie pierwszego okna modułowego —
-**kod aplikacji jeszcze nie powstaje**. Kolejność prac podaje
+IMAP, WebSocket. Rdzeń wersji poprzedniej jest przejęty i działa; warstwa widoku
+powstaje od nowa. Kolejność prac podaje
 [plan etapów](prowadzenie/plan-etapow.md).
 
 ## Przed pierwszą zmianą
@@ -19,16 +19,42 @@ W skrócie:
 - Rozstrzygnięcie obowiązuje wyłącznie wtedy, gdy stoi
   w [rejestrze decyzji](prowadzenie/decyzje.md).
 
+## Gdzie co leży
+
+Jedno repozytorium: `~/budowa`. Poza nim nie ma drugiego drzewa z tą samą treścią.
+
+| Ścieżka | Zawiera |
+|---|---|
+| `budowa/server/` | rdzeń w Go |
+| `budowa/shared/` | `contract.json` — jedyne źródło prawdy typów — wraz z generatorem |
+| `budowa/klient/` | nowy klient TypeScript; powstaje w terenie `fundament-klienta` |
+| `budowa/desktop/` | powłoka Tauri |
+| `budowa/klient-poprzedni/` | klient wersji poprzedniej; **materiał do czytania i przeszczepu, nie do rozwoju** |
+| `design/` | system projektowy wraz z prototypami okien |
+| `docs/` | dokumentacja projektowa |
+| `prowadzenie/` | prowadzenie budowy; **znika przed wydaniem** |
+| `narzedzia/` | skrypty budowy |
+
+**Design, nad którym pracuje Właściciel, stoi w `~/robocze/prototypy/design`.**
+Jest to drzewo robocze gałęzi `teren/prototypy` tego repozytorium — nie osobna
+kopia. Prototypy okien etapu 1 leżą w `05-okna/`: `platformowe/instalator.html`,
+`przeplyw/przeplyw-wejscia.html`, `przeplyw/centrum-dowodzenia.html`,
+`srodowiska/talkin-przedsionek.html`, `moduly/studio.html`.
+
+Materiał zabezpieczony poza gitem stoi w `~/robocze/material/` — kopie
+bezpieczeństwa, punkt kontrolny wersji poprzedniej i opracowania zamkniętego
+podejścia. **Nie jest źródłem prawdy i nie wchodzi do budowy.**
+
 ## Gałęzie
 
 | Gałąź | Zawiera | Wolno pisać |
 |---|---|---|
-| `main` | prowadzenie budowy, narzędzia | tylko Prowadzący budowę |
-| `teren/proba-prototypow` | przepływ wejścia i okno Studio | **wyłącznie Właściciel** — warsztat etapu 1 |
-| `przebudowa/design`, `przebudowa/dokumentacja` | dorobek zastany | nikt — materiał do czytania |
+| `main` | całość budowy | tylko Prowadzący budowę |
+| `teren/prototypy` | design i prototypy okien etapu 1 | **wyłącznie Właściciel** — warsztat etapu 1 |
 | `teren/<nazwa>` | praca jednej sesji | sesja prowadząca teren |
+| `refs/przeniesienie/*` | dorobek zamkniętego podejścia | nikt — materiał do czytania |
 
-Materiał na gałęziach przebudowy **nie jest źródłem prawdy** — pochodzi
+Materiał pod `refs/przeniesienie/` **nie jest źródłem prawdy** — pochodzi
 z zamkniętego podejścia do budowy. Odwołuje się do usuniętego drzewa kodu;
 odwołanie do nieistniejącego pliku nie jest wskazówką, jest pozostałością.
 

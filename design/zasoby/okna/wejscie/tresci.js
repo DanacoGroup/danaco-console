@@ -114,10 +114,42 @@ window.DanacoWejscie.tresci = {
     "logowanieBlad": {
       "baner": {
         "glowa": "Nie rozpoznano danych logowania.",
-        "tresc": "Pozostały dwie próby, po nich logowanie zostanie wstrzymane na godzinę."
+        "tresc": "{pozostalo}, po nich logowanie zostanie wstrzymane na godzinę."
+      },
+      "banerOstatnia": {
+        "glowa": "Nie rozpoznano danych logowania.",
+        "tresc": "To ostatnia próba. Po niej logowanie zostanie wstrzymane na godzinę."
       },
       "capsLock": "Sprawdź, czy nie jest włączony Caps Lock.",
       "fraza": "Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp można wtedy odzyskać przez adres e-mail."
+    },
+
+    "proby": {
+      "1": "Pozostała jedna próba",
+      "2": "Pozostały dwie próby",
+      "3": "Pozostały trzy próby",
+      "4": "Pozostały cztery próby"
+    },
+
+    "logowanieWstrzymane": {
+      "tytul": "Logowanie wstrzymane",
+      "lid": "Po pięciu nieudanych próbach logowanie zostało wstrzymane na godzinę.",
+      "baner": {
+        "glowa": "Kolejna próba będzie możliwa za {czas}.",
+        "tresc": "Dostęp możesz odzyskać przez adres e-mail konta — odzyskiwanie nie jest wstrzymane."
+      },
+      "banerDane": { "czas": "59:41" },
+      "odzyskaj": "Odzyskaj dostęp"
+    },
+
+    "odzyskiwanieWstrzymane": {
+      "tytul": "Wysyłanie kodu wstrzymane",
+      "lid": "Kod potwierdzający został wysłany pięć razy. Kolejne wysłanie będzie możliwe za godzinę.",
+      "baner": {
+        "glowa": "Kolejne wysłanie będzie możliwe za {czas}.",
+        "tresc": "Jeśli któryś z wysłanych kodów dotarł, wpisz go — każdy zachowuje ważność przez 10 minut od wysłania."
+      },
+      "banerDane": { "czas": "59:41" }
     },
 
     "rejestracja": {
@@ -204,7 +236,8 @@ window.DanacoWejscie.tresci = {
     "potwierdzKonto": "Potwierdź konto",
     "potwierdzKod": "Potwierdź kod",
     "wyslijKod": "Wyślij kod potwierdzający",
-    "potwierdzHaslo": "Potwierdź nowe hasło"
+    "potwierdzHaslo": "Potwierdź nowe hasło",
+    "wrocDoLogowania": "Wróć do logowania"
   },
 
   "usterki": {

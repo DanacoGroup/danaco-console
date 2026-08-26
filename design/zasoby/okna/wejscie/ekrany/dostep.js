@@ -132,6 +132,39 @@ W.ekrany.dostep = function (N) {
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.kod.zmienAdres', cel: 'rejestracja' })
     ]), 'dostep.kod.tytul'),
 
+    /* ── logowanie wstrzymane po pięciu nieudanych próbach ─────────────── */
+    panel(N, 'logowanie-wstrzymane', false, 'logowanie', [
+      S.naglowekEkranu(N, {
+        tytul: 'dostep.logowanieWstrzymane.tytul',
+        lid: 'dostep.logowanieWstrzymane.lid'
+      }),
+      S.baner(N, {
+        rodzaj: 'ostrzezenie', ikona: 'zegar',
+        glowa: 'dostep.logowanieWstrzymane.baner.glowa',
+        tresc: 'dostep.logowanieWstrzymane.baner.tresc',
+        daneGlowy: N.tekst('dostep.logowanieWstrzymane.banerDane')
+      }),
+      S.frazaNawigacyjna(N, {
+        czynnosc: 'dostep.logowanieWstrzymane.odzyskaj', cel: 'odzyskiwanie-adres'
+      })
+    ], 'dostep.logowanieWstrzymane.tytul'),
+
+    /* ── wysyłanie kodu wstrzymane po pięciu wysłaniach ─────────────────── */
+    panel(N, 'odzyskiwanie-wstrzymane', false, 'logowanie', [
+      S.naglowekEkranu(N, {
+        tytul: 'dostep.odzyskiwanieWstrzymane.tytul',
+        poTytule: [S.krokiOdzyskiwania(N, { biezacy: 1 })],
+        lid: 'dostep.odzyskiwanieWstrzymane.lid'
+      }),
+      S.baner(N, {
+        rodzaj: 'ostrzezenie', ikona: 'zegar',
+        glowa: 'dostep.odzyskiwanieWstrzymane.baner.glowa',
+        tresc: 'dostep.odzyskiwanieWstrzymane.baner.tresc',
+        daneGlowy: N.tekst('dostep.odzyskiwanieWstrzymane.banerDane')
+      }),
+      S.frazaNawigacyjna(N, { czynnosc: 'dostep.odzyskiwanie.powrot', cel: 'logowanie' })
+    ], 'dostep.odzyskiwanieWstrzymane.tytul'),
+
     /* ── odzyskiwanie: adres ───────────────────────────────────────────── */
     panel(N, 'odzyskiwanie-adres', false, 'logowanie', [
       S.naglowekEkranu(N, {
@@ -209,7 +242,11 @@ W.ekrany.dostepPasy = function (N) {
     pas('kod', false, 'dzialania.potwierdzKonto', 'przygotowanie'),
     pas('odzyskiwanie-adres', false, 'dzialania.wyslijKod', 'odzyskiwanie-kod', 'stan'),
     pas('odzyskiwanie-kod', false, 'dzialania.potwierdzKod', 'odzyskiwanie-haslo', 'stan'),
-    pas('odzyskiwanie-haslo', false, 'dzialania.potwierdzHaslo', 'logowanie', 'stan')
+    pas('odzyskiwanie-haslo', false, 'dzialania.potwierdzHaslo', 'logowanie', 'stan'),
+    /* Odsłony wstrzymania nie mają czynności głównej — nie ma czego wykonać,
+       póki godzina nie minie. Zostaje wyjście z programu. */
+    S.pasDzialan(N, { widok: 'logowanie-wstrzymane', grupa: 'stan', czynnosci: [zamknij] }),
+    S.pasDzialan(N, { widok: 'odzyskiwanie-wstrzymane', grupa: 'stan', czynnosci: [zamknij] })
   ];
 };
 })();

@@ -77,9 +77,9 @@ bash narzedzia/nowy-teren.sh <nazwa> <galaz-bazowa>
 ```
 
 Skrypt zakłada gałąź `teren/<nazwa>` na wskazanej gałęzi bazowej, tworzy drzewo
-robocze w `~/robocze/<nazwa>` i dowiązuje wspólne zasoby. Gałąź bazowa to
-`przebudowa/design` albo `przebudowa/dokumentacja` — nigdy `main`, dopóki trwa
-przebudowa dokumentacji.
+robocze w `~/robocze/<nazwa>` i dowiązuje wspólne zasoby. Gałęzią bazową jest
+`main` — niesie całość budowy. Wyjątkiem jest teren wyrastający z pracy innego
+terenu; wtedy gałąź bazowa jest wskazana wprost w rejestrze terenów.
 
 Reguły obowiązujące każdą sesję:
 

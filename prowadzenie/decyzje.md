@@ -968,10 +968,29 @@ sprawdzony, dowie się o tym w dniu, w którym będzie go potrzebował.
 
 **Data:** 2026-08-26 · **Stan:** obowiązuje · **Rozstrzygnął:** Właściciel
 
-Treść i przepływ kreatora instalacji ustala prototyp
+Kompozycję kreatora instalacji ustala prototyp
 `design/05-okna/platformowe/instalator.html` wraz ze składnikami
-w `design/zasoby/okna/instalator/`. To, co mówi prototyp, obowiązuje —
-wykonawca nie zastępuje jego rozstrzygnięć własnym rozumowaniem.
+w `design/zasoby/okna/instalator/`.
+
+**Prototyp jest projektem, nie inżynierią ostateczną.** Rozstrzyga to, czego
+uruchomiony układ nie rozstrzygnie sam; nie rozstrzyga tego, co układ zmierzy.
+Ta granica obowiązuje wszystkie prototypy, nie tylko instalator.
+
+| Prototyp **rozstrzyga** | Prototyp **nie rozstrzyga** |
+|---|---|
+| które ekrany, w jakiej kolejności | ile co trwa |
+| co Operator wybiera i czego nie musi | ile waży i ile zajmuje |
+| co się dzieje po wyborze, odmowie, przerwaniu | ile jest czego — plików, składników, etapów |
+| gęstość, układ, hierarchia, ton wypowiedzi | kody błędów, ścieżki, numery wersji |
+| które stany są przewidziane | wartości, które da się odczytać z działającego układu |
+
+**Wartość liczbowa w prototypie jest miejscem na wartość, nie wartością.**
+Wykonawca bierze prawdziwą z pomiaru i **nie zgłasza różnicy jako rozjazdu**.
+Odwrotnie też: „to tylko parametr" nie upoważnia do zmiany kompozycji.
+
+**Jak rozpoznać, po której stronie stoi rzecz.** Jeżeli działający układ potrafi
+ją zmierzyć — to parametr. Jeżeli nie potrafi jej wybrać, bo to rozstrzygnięcie
+człowieka — to kompozycja.
 
 **Sześć kroków:** Wymagania · Licencja · Wersja programu · Lokalizacja ·
 Instalacja · Podsumowanie.
@@ -989,8 +1008,8 @@ poza `tresci.js` jest usterką.
 `?wynik=ostrzezenia` — należą do prototypu i mają przetrwać przejście do kodu.
 Bez nich odsłony błędu przestają być przeglądalne.
 
-**Dwie sprzeczności wewnętrzne do rozstrzygnięcia.** Przyjęcie ich nie znosi,
-bo prototyp mówi w nich dwie rzeczy naraz:
+**Dwie rzeczy stoją po stronie kompozycji, a prototyp mówi w nich dwie rzeczy
+naraz** — nie są to parametry, bo żaden pomiar ich nie rozstrzygnie:
 
 | Rzecz | Krok mówi jedno | Krok mówi drugie |
 |---|---|---|

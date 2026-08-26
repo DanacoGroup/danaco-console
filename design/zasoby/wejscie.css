@@ -417,10 +417,18 @@
 .au-sila-warunek[data-spelniony='tak'] .ik-jest { display: inline; }
 .au-sila-warunek[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
 
-/* Przeglądarka dokłada polom hasła własny przycisk odsłonięcia. Obok naszego
-   dawał dwa oczka jedno przy drugim. */
-.au-haslo > .dn-pole-kontrolka::-ms-reveal,
+/* Przeglądarka dokłada polom hasła własny przycisk odsłonięcia — obok naszego
+   dawał dwa oczka jedno przy drugim.
+
+   KAŻDY z tych selektorów stoi w OSOBNEJ regule, i to jest tu istotne: wykaz
+   selektorów unieważnia się w całości, gdy przeglądarka nie zna choćby jednego.
+   Edge zna `::-ms-reveal`, ale nie zna `::-ms-clear`, więc wykaz z obydwoma
+   nie robił nic — także tego, co robić umiał. */
+.au-haslo > .dn-pole-kontrolka::-ms-reveal { display: none; }
 .au-haslo > .dn-pole-kontrolka::-ms-clear { display: none; }
+/* Ta sama ostrożność wobec przeglądarek opartych na WebKicie. */
+.au-haslo > .dn-pole-kontrolka::-webkit-credentials-auto-fill-button { display: none; }
+.au-haslo > .dn-pole-kontrolka::-webkit-strong-password-auto-fill-button { display: none; }
 
 /* wiersz opcji sesji */
 .au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }

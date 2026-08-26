@@ -1097,6 +1097,11 @@ label.dn-pasek-szukaj:focus-within {
 .dn-bryla { position: relative; display: block; min-width: 0; min-height: 0; }
 .dn-bryla > canvas { display: block; width: 100%; height: 100%; }
 
+/* Ekran startowy — pole dla znaku kreślonego światłem. Bez własnego tła:
+   kładzie się na tym, co pod spodem. Płótno zakłada składnik. */
+.dn-ekran-startowy { position: relative; display: block; width: 100%; height: 100%; }
+.dn-ekran-startowy > canvas { display: block; width: 100%; height: 100%; }
+
 /* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
    nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */
@@ -2638,7 +2643,7 @@ button.dn-link {
 
 .dn-tekst-ciagly h2 {
   margin: var(--dn-od-8) 0 var(--dn-od-3);
-  font-family: var(--dn-ff-naglowkowa);
+  font-family: var(--dn-ff-naglowek);
   font-size: var(--dn-fs-md);
   font-weight: var(--dn-fw-polgruba);
   line-height: var(--dn-lh-ciasny);

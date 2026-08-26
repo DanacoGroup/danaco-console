@@ -261,33 +261,6 @@
    dwiema równorzędnymi drogami — wskazuje, gdzie stoisz, a nie co wykonasz.
    Wypełnienie sygnałowe zostaje zarezerwowane dla przycisku „Zaloguj się”
    pod formularzem, który jest właściwym działaniem tego okna. */
-.we-panel .dn-zakladki {
-  align-self: flex-start;
-  gap: var(--dn-od-1);
-  padding: 3px;
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-pill);
-  background: var(--dn-powierzchnia-2);
-}
-.we-panel .dn-zakladka {
-  border: 0; border-radius: var(--dn-r-pill);
-  padding: 0 var(--dn-od-4);
-  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
-  color: var(--dn-tekst-2);
-}
-.we-panel .dn-zakladka::after { content: none; }
-.we-panel .dn-zakladka[aria-selected='true'] {
-  background: var(--dn-sygnal-tlo);
-  border: 1px solid var(--dn-sygnal-obrys);
-  color: var(--dn-sygnal);
-  font-weight: var(--dn-fw-polgruba);
-}
-.we-panel .dn-zakladka[aria-selected='true']:hover {
-  background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
-}
-.we-panel .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-
 /* ── 5 · TOR KROKÓW URUCHOMIENIA ────────────────────────────────────────── */
 
 .we-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }

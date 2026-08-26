@@ -222,61 +222,9 @@
               <section class="pt-okno pt-okno--plaskie" aria-label="Okno przygotowania środowiska pracy">
                 <div class="pt-okno-tresc">
                   <div class="we-scena">
-                    <div class="we-okno">
 
-                      <div class="we-marka">
-                        <div>
-                          <svg class="we-marka-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
-                          <p class="we-marka-nazwa">Danaco Console</p>
-                          <p class="we-marka-motto">AI Operating Environment</p>
-                        </div>
+                    <div data-wejscie-okno="przygotowanie"></div>
 
-                        <!-- Cztery powłoki programu składają się w blok. Pole jest puste —
-                             rysunek wnosi składnik biblioteki, nie znacznik okna. -->
-                        <div class="pg-bryla-pole dn-powloki" data-powloki role="img"
-                             aria-label="Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs"></div>
-
-                      </div>
-
-                      <div class="we-panel">
-                        <div class="we-glowa">
-                          <p class="we-nadtytul">Uruchomienie</p>
-                          <h2 class="we-tytul">Przygotowanie środowiska pracy</h2>
-                          <p class="we-lid">Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji,
-                             kontekst projektów i kanały modeli.</p>
-                        </div>
-
-                        <ol class="we-kroki" aria-live="polite" aria-label="Postęp przygotowania środowiska pracy">
-                          <li class="we-krok" data-stan="gotowy"><span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span>Uwierzytelnienie</span><span class="we-krok-meta">urządzenie rozpoznane</span></li>
-                          <li class="we-krok" data-stan="gotowy"><span class="we-krok-znak" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span>Profil Operatora i uprawnienia</span><span class="we-krok-meta">18 uprawnień</span></li>
-                          <li class="we-krok" data-stan="pracuje"><span class="we-krok-znak" aria-hidden="true"><span class="pt-tetno" aria-hidden="true"></span></span><span>Przywracanie sesji z poprzedniej pracy</span><span class="we-krok-meta">3 z 7 kart</span></li>
-                          <li class="we-krok" data-stan="oczekuje"><span class="we-krok-znak" aria-hidden="true">4</span><span>Kanały modeli i konektory</span><span class="we-krok-meta">oczekuje</span></li>
-                          <li class="we-krok" data-stan="oczekuje"><span class="we-krok-znak" aria-hidden="true">5</span><span>Magistrala kontekstu i pamięć projektów</span><span class="we-krok-meta">oczekuje</span></li>
-                        </ol>
-
-                        <div class="pg-postep">
-                          <div class="pg-postep-wiersz"><span>Przywracanie sesji</span><b>43%</b></div>
-                          <div class="dn-postep">
-                            <div class="dn-postep-tor" role="progressbar" aria-valuenow="43" aria-valuemin="0" aria-valuemax="100"
-                                 aria-label="Postęp przygotowania środowiska">
-                              <div class="dn-postep-wartosc" data-wartosc="43"></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="we-pas">
-                        <span class="we-akcje">
-                          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                                  data-komunikat="Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji."
-                                  data-komunikat-tytul="Pominięcie przywracania"
-                                  data-komunikat-rodzaj="informacja">Pomiń przywracanie sesji</button>
-                          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                                  data-idz="uwierzytelnienie" data-idz-grupa="etap">Przerwij i wyloguj</button>
-                        </span>
-                      </div>
-
-                        <p class="we-marka-stopka">Przywracanie trwa po stronie serwera.<br>Zamknięcie okna nie przerywa przywracania.</p>
-                    </div>
                   </div>
                 </div>
               </section>
@@ -401,9 +349,11 @@
 <script src="../../zasoby/okna/wejscie/skladniki/metody-logowania.js"></script>
 <script src="../../zasoby/okna/wejscie/skladniki/pole-kodu.js"></script>
 <script src="../../zasoby/okna/wejscie/skladniki/kroki-odzyskiwania.js"></script>
+<script src="../../zasoby/okna/wejscie/skladniki/pasek-postepu.js"></script>
 
 <script src="../../zasoby/okna/wejscie/ekrany/uruchomienie.js"></script>
 <script src="../../zasoby/okna/wejscie/ekrany/dostep.js"></script>
+<script src="../../zasoby/okna/wejscie/ekrany/przygotowanie.js"></script>
 <script src="../../zasoby/okna/wejscie/montaz.js"></script>
 
 <script src="../../zasoby/okna/przeplyw-wejscia-podglad.js"></script>

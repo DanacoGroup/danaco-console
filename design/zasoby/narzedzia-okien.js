@@ -72,5 +72,47 @@ function zwiaz(katalog) {
   return { el: el, zeZnacznika: zeZnacznika, podstaw: podstaw, tekst: tekst, katalog: katalog };
 }
 
-window.DanacoNarzedzia = { el: el, zeZnacznika: zeZnacznika, podstaw: podstaw, zwiaz: zwiaz };
+/* Odczyt żetonu do postaci, którą przyjmuje płótno. Próbka jest niewidoczna
+   i znika po zbudowaniu palety — służy wyłącznie temu, żeby przeglądarka
+   rozwinęła wartość żetonu do składowych. Potrzebuje jej każdy składnik
+   rysujący na płótnie, więc stoi tu, a nie w trzech kopiach. */
+function czytnikBarw(host) {
+  var probka = document.createElement('span');
+  probka.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden';
+  host.appendChild(probka);
+  var styl = getComputedStyle(host);
+  return {
+    barwa: function (zeton, zapas) {
+      var v = styl.getPropertyValue(zeton).trim() || zapas;
+      probka.style.color = '';
+      probka.style.color = v;
+      var m = getComputedStyle(probka).color.match(/[\d.]+/g) || ['0', '0', '0'];
+      var rgb = [Math.round(+m[0]), Math.round(+m[1]), Math.round(+m[2])];
+      var a = m.length > 3 ? +m[3] : 1;
+      return { rgb: rgb, a: a, css: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')' };
+    },
+    zdejmij: function () { if (probka.parentNode) probka.parentNode.removeChild(probka); }
+  };
+}
+
+/* Zakładanie składnika na wszystkich polach danego rodzaju. Każdy składnik
+   rysujący powtarzał ten sam blok: wykaz pól, pętla, nasłuch na wczytaniu
+   dokumentu. */
+function polaSkladnika(uchwyt, zaloz) {
+  function wszystkie(zakres) {
+    var pola = (zakres || document).querySelectorAll('[' + uchwyt + ']');
+    for (var i = 0; i < pola.length; i++) zaloz(pola[i]);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () { wszystkie(); });
+  } else {
+    wszystkie();
+  }
+  return wszystkie;
+}
+
+window.DanacoNarzedzia = {
+  el: el, zeZnacznika: zeZnacznika, podstaw: podstaw, zwiaz: zwiaz,
+  czytnikBarw: czytnikBarw, polaSkladnika: polaSkladnika
+};
 })();

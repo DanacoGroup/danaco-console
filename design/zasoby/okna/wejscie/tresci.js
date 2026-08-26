@@ -49,6 +49,7 @@ window.DanacoWejscie.tresci = {
           "tresc": "Punkty izolacji kontekstu ustala Operator, nie sztywna reguła systemu." }
       ]
     },
+    "przygotowanie": { "motto": "AI Operating Environment" },
     "wydawca": "Danaco Holding Group Sp. z o.o.",
     "wydanie": "wydanie 2.0",
     "wsparcie": "support@danaco-core.pl"
@@ -226,6 +227,35 @@ window.DanacoWejscie.tresci = {
     }
   },
 
+  "przygotowanie": {
+    "motto": "AI Operating Environment",
+    "obszarPowlok": "Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs",
+    "nadtytul": "Uruchomienie",
+    "tytul": "Przygotowanie środowiska pracy",
+    "lid": "Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji, kontekst projektów i kanały modeli.",
+    "obszarEtapow": "Postęp przygotowania środowiska pracy",
+    "etapy": [
+      "Uwierzytelnienie",
+      "Profil Operatora i uprawnienia",
+      "Przywracanie sesji z poprzedniej pracy",
+      "Kanały modeli i konektory",
+      "Magistrala kontekstu i pamięć projektów"
+    ],
+    "miary": {
+      "rozpoznane": "urządzenie rozpoznane",
+      "uprawnienia": "{ile} uprawnień",
+      "karty": "{odtworzone} z {wszystkie} kart",
+      "oczekuje": "oczekuje"
+    },
+    "miaryDane": { "ile": 18, "odtworzone": 3, "wszystkie": 7 },
+    "postep": {
+      "etykieta": "Przywracanie sesji",
+      "opisPaska": "Postęp przywracania sesji",
+      "wartosc": 43
+    },
+    "nota": "Przywracanie trwa po stronie serwera. Zamknięcie okna nie przerywa przywracania."
+  },
+
   "dzialania": {
     "zamknijAplikacje": "Zamknij aplikację",
     "ustawieniaPolaczenia": "Ustawienia połączenia",
@@ -237,7 +267,9 @@ window.DanacoWejscie.tresci = {
     "potwierdzKod": "Potwierdź kod",
     "wyslijKod": "Wyślij kod potwierdzający",
     "potwierdzHaslo": "Potwierdź nowe hasło",
-    "wrocDoLogowania": "Wróć do logowania"
+    "wrocDoLogowania": "Wróć do logowania",
+    "pominPrzywracanie": "Pomiń przywracanie sesji",
+    "przerwijIWyloguj": "Przerwij i wyloguj"
   },
 
   "usterki": {
@@ -292,6 +324,10 @@ window.DanacoWejscie.tresci = {
     "kodPonowiony": {
       "tytul": "Kod wysłany ponownie",
       "tresc": "Nowy kod wysłany na adres konta. Poprzedni przestał obowiązywać."
+    },
+    "pominiecie": {
+      "tytul": "Pominięcie przywracania",
+      "tresc": "Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji."
     },
     "schowek": {
       "tytul": "Schowek niedostępny",

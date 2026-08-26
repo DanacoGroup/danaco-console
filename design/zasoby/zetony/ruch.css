@@ -77,8 +77,21 @@
   0%, 100% { box-shadow: 0 0 0 0 var(--dn-fokus-cien); }
   40%      { box-shadow: 0 0 0 5px transparent; }
 }
+/* Tętno kropki sygnału — jedyny ruch ciągły znaku marki. Kropka gaśnie do
+   trzeciej części krycia i wraca; nic się nie przesuwa ani nie zmienia rozmiaru,
+   bo znak stoi obok pisma i każdy ruch krawędzi ciągnąłby wzrok. */
+@keyframes dn-tetno-kropki {
+  0%, 100% { opacity: 1; }
+  45%      { opacity: 0.35; }
+}
 @keyframes dn-obrot {
   to { transform: rotate(360deg); }
+}
+/* Przebieg toru bez miary — praca trwa, ale jej postępu nie da się wyrazić
+   liczbą. Wypełnienie przechodzi tor i wraca, zamiast rosnąć do końca. */
+@keyframes dn-postep-przebieg {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(320%); }
 }
 
 /* Ograniczony ruch: czasy gasną żetonem, informację przejmuje kształt.

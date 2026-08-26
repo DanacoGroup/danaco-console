@@ -1090,6 +1090,8 @@
 .dn-stan-poz b { font-weight: var(--dn-fw-srednia); color: var(--dn-tekst-2); }
 .dn-stan-poz--prawa { margin-left: auto; }
 .dn-stan-sep { width: 1px; height: 14px; flex: none; background: var(--dn-obrys); }
+/* Miara w pasku stanu — ta sama rola co `.dn-meta--mocna`, ze stopniem pisma
+   dziedziczonym z paska. Nowy znacznik używa `.dn-meta .dn-meta--mocna`. */
 .dn-stan-miara { font-family: var(--dn-ff-mono); color: var(--dn-tekst-2); }
 
 /* Miniaturowy wykres obciążenia — pasek wypełnienia bez animacji. */
@@ -1393,16 +1395,13 @@
   padding: var(--dn-od-3);
   border-bottom: 1px solid var(--dn-obrys);
 }
+/* Głowa sekcji AOD — samo rozmieszczenie. Typografię niesie `.dn-etyk-mono`,
+   którą znacznik nakłada obok tej klasy. */
 .dn-aod-sekcja-glowa {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--dn-od-2);
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  letter-spacing: var(--dn-ls-mono-wersaliki);
-  text-transform: uppercase;
-  color: var(--dn-tekst-3);
 }
 .dn-aod-pusty {
   padding: var(--dn-od-3) 0;

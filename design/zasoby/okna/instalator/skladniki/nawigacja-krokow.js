@@ -1,0 +1,41 @@
+/* ============================================================================
+   SKŁADNIK — NAWIGACJA KROKÓW
+   ----------------------------------------------------------------------------
+   Pionowy wykaz kroków kreatora w kolumnie bocznej. Pokazuje, gdzie stoi
+   przepływ i co go czeka. Pozycja niesie stan atrybutem `data-stan`, nie klasą
+   — stan jest daną, nie odmianą składnika.
+
+   Właściwości:
+     klucz      klucz katalogu z tablicą nazw kroków
+     biezacy    numer kroku bieżącego (1..n)
+     naKrok     wywołanie zwrotne (numer) — pozycja jest klikalna, gdy podane
+   ============================================================================ */
+(function () {
+'use strict';
+var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;
+K.skladniki = K.skladniki || {};
+
+K.skladniki.nawigacjaKrokow = function (w) {
+  var nazwy = tekst(w.klucz);
+  var pozycje = nazwy.map(function (nazwa, i) {
+    var nr = i + 1;
+    var stan = nr < w.biezacy ? 'zrobiony' : (nr === w.biezacy ? 'biezacy' : 'oczekuje');
+    return el('span', {
+      klasa: 'dn-kreator-krok',
+      dane: { krok: nr, stan: stan }
+    }, [el('span', { klasa: 'dn-kreator-krok-nr', tekst: String(nr) }), nazwa]);
+  });
+  var nawigacja = el('nav', { klasa: 'dn-kreator-kroki', 'aria-label': tekst('szyna.etykieta') },
+    [el('span', { klasa: 'dn-kreator-marka' }, [
+        N.zeZnacznika(K.ikony.godloDuze.replace('<svg', '<svg class="dn-kreator-marka-znak" aria-hidden="true"')),
+        el('span', { klasa: 'dn-kreator-marka-nazwa', tekst: tekst('szyna.marka') })
+      ])].concat(pozycje));
+  if (w.naKrok) {
+    nawigacja.addEventListener('click', function (e) {
+      var p = e.target.closest('.dn-kreator-krok');
+      if (p) w.naKrok(Number(p.dataset.krok));
+    });
+  }
+  return nawigacja;
+};
+})();

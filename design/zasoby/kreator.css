@@ -1,0 +1,387 @@
+/* ============================================================================
+   DANACO CONSOLE — OKNO KREATORA
+   ----------------------------------------------------------------------------
+   Bryła okna prowadzącego przez ponumerowane kroki: instalator, przepływ
+   wejścia, przygotowanie środowiska. Trzy pasma jeden pod drugim —
+
+       belka tytułowa  ·  korpus (szyna kroków + płótno)  ·  pas działań
+
+   — a korpus dzieli się na dwie kolumny. Tym różni się od okna wejściowego
+   (`.dn-okno-wejsciowe` w komponenty.css), które ma dwie kolumny i nie ma pasa
+   działań na dnie: tam czynność stoi w panelu, tu biegnie pod obiema kolumnami.
+
+   Trzy strefy okna rozdziela sama powierzchnia, bez kreski: belka najciemniejsza,
+   szyna kroków to obrzeże, płótno treści najjaśniejsze. Patrz NORMA-OKNA.md.
+
+   Okno kreatora stoi PRZED uwierzytelnieniem, więc nie ma ramy aplikacji.
+   Belka tego okna nie jest `.dn-belka` z `rama.css` — tamta należy do ramy
+   aplikacji i niesie jej sterowanie.
+
+   Kolejne okno kreatora nie przepisuje stąd żadnej reguły: wpina ten arkusz
+   i używa klas. Co należy do jednego okna, a nie do rodziny, stoi
+   w `okna/<okno>.css`.
+
+   Wyłącznie żetony var(--dn-*). Oba motywy.
+   ============================================================================ */
+
+/* ── 10 · INSTALATOR ────────────────────────────────────────────────────── *//* Okno instalatora ma stałą wysokość i pokazuje JEDEN krok naraz. Gdyby
+   wszystkie kroki i cała lista składników stały pod sobą w jednej kolumnie,
+   okno rosłoby na kilka ekranów — instalator przestawałby przypominać
+   okno dialogowe, a stawał się długą stroną. */
+.dn-kreator {
+  display: grid;
+  grid-template-rows: var(--dn-wym-belka-instalatora) minmax(0, 1fr) var(--dn-wym-stopki-instalatora);
+  grid-template-columns: minmax(0, 1fr);
+  /* Wymiar stały. Okno instalatora nie zmienia rozmiaru między krokami —
+     `min(…, 100%)` wiązało szerokość z treścią kroku przez rusztowanie prototypu,
+     które kurczy się do zawartości. */
+  width: var(--dn-wym-okno-instalatora-szer);
+  height: var(--dn-wym-okno-instalatora-wys);
+  flex: none;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-okno-plotno);
+  box-shadow: var(--dn-cien-3);
+  overflow: hidden;
+}
+
+/* ── Pasek tytułu — instalator nie ma ramy aplikacji ─────────────────── */
+.dn-kreator-belka {
+  display: flex; align-items: center; gap: var(--dn-od-3);
+  /* Wysokość belki musi być tą samą wartością co wiersz siatki okna — przy 48 px
+     w wierszu 44 px kontrolki wychodziły ku górze. */
+  height: var(--dn-wym-belka-instalatora);
+  padding: 0 0 0 var(--dn-od-3);
+  /* Strefa 1 z 3 — najciemniejsza. Patrz NORMA-OKNA.md. */
+  background: var(--dn-okno-belka);
+  color: var(--dn-rama-tekst);
+}
+
+/* Znak w belce dorównuje wielkością ikonom sterowania oknem i niesie kropkę
+   w barwie sygnału — przygaszony monochromat czytał się jak brakująca ikona. */
+.dn-kreator-belka-znak { width: 16px; height: 16px; flex: none; color: var(--dn-rama-tekst); }
+
+/* Belka jest ciemna w obu motywach, więc kropka bierze barwę sygnału ramy,
+   a nie kropki treści — ta w motywie jasnym byłaby ciemniejsza od tła. */
+.dn-kreator-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
+
+.dn-kreator-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
+
+/* ── Korpus: kolumna kroków po lewej, treść kroku po prawej ──────────── *//* Kolumna boczna ma stałą szerokość — przy równym podziale podświetlenie kroku
+   ciągnęło się przez pół okna, a wiersze tabeli rozjeżdżały się na całą szerokość. */
+.dn-kreator-korpus { display: grid; grid-template-columns: var(--dn-wym-szyna-krokow) minmax(0, 1fr); min-height: 0; }
+
+/* Lewa kolumna jako jeden pojemnik: kroki u góry, bryła zabiera resztę wysokości.
+   Strefa 2 z 3 — obrzeże, nigdy w barwie belki. Patrz NORMA-OKNA.md. */
+.dn-kreator-szyna {
+  display: flex; flex-direction: column;
+  min-height: 0;
+  background: var(--dn-okno-obrzeze);
+  color: var(--dn-tekst);
+  /* Pole odniesienia dla bryły: scena leży pod całą kolumną, nie tylko pod
+     wykazem kroków. Klocki lecące w górę mają wtedy dokąd lecieć. */
+  position: relative;
+}
+
+.dn-kreator-kroki {
+  display: flex; flex-direction: column; gap: var(--dn-od-1);
+  /* Wykaz kroków stoi NAD sceną — scena nie ma tła, więc nic nie przesłania. */
+  position: relative;
+  z-index: 1;
+  padding: var(--dn-od-5) var(--dn-od-3);
+  /* Kolumna kroków to strefa okna, nie element marki — bierze powierzchnie
+     zależne od motywu, nie stały atrament ramy. Czarna kolumna przy białym
+     panelu dawała w motywie jasnym 92 stopnie różnicy jasności; ta para daje
+     4,9 w jasnym i 6,9 w ciemnym: strefy nadal się rozdzielają, ale krawędź
+     przestaje ciąć okno na pół. Belka tytułowa zostaje atramentowa. */
+  flex: none;
+}
+
+.dn-kreator-marka { display: flex; align-items: center; gap: var(--dn-od-2); margin-bottom: var(--dn-od-5); padding: 0 var(--dn-od-2); }
+
+/* Znak dziedziczy barwę pisma kolumny, więc czyta się w obu motywach. */
+.dn-kreator-marka-znak { width: 32px; height: 32px; display: block; flex: none; color: var(--dn-tekst); }
+
+/* Kropka godła pulsuje jednym, ciągłym tętnem — jedyny ruch kolumny kroków.
+   W belce ta sama kropka stoi nieruchomo: znak okna w pasku tytułu ma być
+   punktem odniesienia, nie sygnałem. */
+.dn-kreator-marka-znak .kropka {
+  fill: var(--dn-kropka);
+  animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dn-kreator-marka-znak .kropka { animation: none; }
+}
+
+.dn-kreator-marka-nazwa { font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); }
+
+/* Pozycja kroku — znak stanu, nazwa. Krok bieżący niesie tło i wstęgę. */
+.dn-kreator-krok {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-2);
+  border-left: var(--dn-wym-wstega) solid transparent;
+  border-radius: var(--dn-r-sm);
+  /* Sześć kroków to główna nawigacja okna, nie podpis pod składnikiem — stoi
+     więc w stopniu treści i w wadze średniej, nie w stopniu noty. */
+  font-size: var(--dn-fs-base); font-weight: var(--dn-fw-srednia);
+  color: var(--dn-tekst);
+}
+
+/* Numer stoi w środku okręgu. Środkowanie siatką ustawia BLOK WIERSZA, nie sam
+   znak: kratka firetowa ma pod linią pisma miejsce na wydłużenie dolne, którego
+   cyfra nie ma, więc tusz wypada poniżej środka okręgu. Interlinia 1 sprowadza
+   blok do wysokości znaku, a wcięcie dolne wyrównuje resztę — pikselowy dosuw
+   optyczny, jedyne miejsce w rodzinie, gdzie miara nie idzie z żetonu. */
+.dn-kreator-krok-nr {
+  display: grid; place-content: center; flex: none;
+  width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  line-height: 1;
+  padding-bottom: 1px;
+}
+
+.dn-kreator-krok[data-stan='zrobiony'] { color: var(--dn-tekst-2); font-weight: var(--dn-fw-normalna); }
+
+.dn-kreator-krok[data-stan='zrobiony'] .dn-kreator-krok-nr { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
+
+.dn-kreator-krok[data-stan='biezacy'] {
+  /* Krok bieżący niesie podświetlenie sygnałowe. `--dn-powierzchnia` zrównała się
+     z barwą obrzeża w motywie ciemnym i wyróżnienie znikało zupełnie. */
+  background: var(--dn-sygnal-tlo);
+  border-left-color: var(--dn-sygnal-500);
+  color: var(--dn-sygnal);
+  /* Krok bieżący różni się od pozostałych stopniem, wagą, barwą i podłożem.
+     Sama waga i barwa nie wystarczały: przy równym stopniu pozycja bieżąca
+     ginęła w kolumnie sześciu jednakowych wierszy. */
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.dn-kreator-krok[data-stan='biezacy'] .dn-kreator-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+
+/* ── Treść kroku ─────────────────────────────────────────────────────── *//* Strefa 3 z 3 — płótno treści. Sięga prawej krawędzi okna; granicę z kolumną
+   boczną niesie kreska z lewej, bo sama różnica powierzchni ginęła. */
+.dn-kreator-plotno {
+  display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0;
+  background: var(--dn-okno-plotno);
+}
+
+/* Treść kroku i pas działań dzielą jedną miarę i te same krawędzie boczne.
+   Przy szerokim oknie kolumna treści nie rozciąga się bez końca — zatrzymuje się
+   na mierze czytelnego wiersza i zostaje dosunięta do kolumny bocznej. *//* Stopka biegnie pod obiema kolumnami, a jej przyciski mają to samo wcięcie
+   z prawej co treść — dlatego licują z krawędzią panelu, nie okna. */
+.dn-kreator-pas {
+  grid-column: 1 / -1;
+  display: flex; align-items: center;
+  height: var(--dn-wym-stopki-instalatora);
+  padding-inline: var(--dn-od-tresci-instalatora);
+  background: var(--dn-okno-obrzeze);
+}
+
+.dn-kreator-pas-tresc {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  width: 100%;
+}
+
+.dn-kreator-pas-odstep { flex: 1 1 auto; }
+
+/* Rytm kroku. 28 px między grupami rozpychało kroki 4 i 5 poza wysokość okna
+   i wprowadzało przewijanie tam, gdzie treść mieści się bez niego — a krok
+   kreatora ma być widoczny w całości, bez szukania reszty pod krawędzią. */
+.dn-kreator-ekran {
+  display: none; flex-direction: column;
+  gap: var(--dn-od-5);
+  padding: var(--dn-od-tresci-instalatora);
+  overflow-y: auto;
+}
+
+.dn-kreator-ekran[data-widoczny='tak'] { display: flex; }
+
+.dn-kreator-nadtytul {
+  margin: 0; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-2);
+}
+
+.dn-kreator-tytul { margin: var(--dn-od-1) 0 0; font-family: var(--dn-ff-naglowek); font-size: var(--dn-fs-xl); }
+
+.dn-kreator-lid { margin: var(--dn-od-2) 0 0; max-width: 62ch; color: var(--dn-tekst-2); line-height: var(--dn-lh-luzny); }
+
+/* Fraza nawigacyjna zamykająca krok — wzorzec Windows Installer. Stoi jako
+   ostatni wiersz treści, w randze opisu: mówi, co zrobić, a nie co jest. */
+.dn-kreator-nawigacja {
+  margin: 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+/* Ta sama fraza po nieudanej próbie przejścia dalej — mówi już nie „co zrobić",
+   tylko „czego brakuje", i bierze barwę błędu. Stan niesie także jej treść,
+   więc nie stoi na samej barwie. */
+.dn-kreator-nawigacja--blad { color: var(--dn-blad-tekst); }
+
+/* Nagłówek bloku wewnątrz kroku. Osobny składnik, bo goły `<h3>` bierze
+   z fundamentu pełny kontrast i półgrubą wagę tytułu, więc od tytułu różnił go
+   wyłącznie stopień.
+
+   Stoi NIŻEJ od zdania wprowadzającego krok: nazywa jeden blok, a nie cały
+   krok. Przy 17 px przerastał je i blok danych czytał się jak druga sekcja
+   okna. Poniżej 15 px stopień przestaje różnicować rangi — dalej robi to
+   kontrast i waga, i tak wygląda ta drabina:
+
+       tytuł kroku      21 px · 600 · --dn-tekst
+       podtytuł kroku   15 px · 400 · --dn-tekst-wiodacy
+       nagłówek bloku   13 px · 600 · --dn-tekst
+       odczyt danej     13 px · 500 · --dn-tekst-wiodacy
+       treść i etykieta 13 px · 400 · --dn-tekst-2                              */
+.dn-kreator-podtytul {
+  margin: 0 0 var(--dn-od-2);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-bazowy);
+  /* Pełny kontrast należy do tytułu kroku i do niczego poniżej. Nagłówek bloku
+     odcina się od odczytu wagą, nie barwą — obie rangi stoją w treści. */
+  color: var(--dn-tekst-wiodacy);
+}
+
+/* Składniki — lista przewijana wewnątrz kroku, nie rozpychająca okna. *//* Pola i wiersze ustawień kroku *//* `display` autora wygrywa z `[hidden]` przeglądarki — stąd warunek. *//* Wyjaśnienie pod polem — mówi, co się z tą ścieżką dzieje. Trzeci stopień
+   kontrastu, bo jest przypisem do pola, nie jego treścią. *//* Licencja — obszar przewijany o stałej wysokości *//* Pole warunków bierze całą wolną wysokość kroku — sztywne 190 px zostawiało
+   pod spodem prawie dwieście pikseli pustki, a treść i tak się nie mieściła.
+   Powierzchnia zagłębiona o jeden stopień, nie o cztery: `--dn-tlo` na ciemnym
+   panelu robiło studnię, w której tekst leżał na prawie czarnym. *//* Pole warunków licencji jest osadzonym tekstem ciągłym z biblioteki. Własne
+   zostaje wyłącznie to, czego biblioteka znać nie może: tło strefy tego okna
+   i obrys odcinający je od płótna kroku. */
+.dn-kreator-dokument {
+  border: 1px solid var(--dn-obrys);
+  background: var(--dn-okno-obrzeze);
+}
+
+.dn-kreator-dokument [data-licencja-stan] { color: var(--dn-tekst-3); }
+
+.dn-kreator-dokument [data-licencja-stan='blad'] { color: var(--dn-blad-tekst); }
+
+/* Podsumowanie i postęp *//* ── Stopka działań ──────────────────────────────────────────────────── */
+.dn-kreator-pas-odstep { flex: 1 1 auto; }
+
+@media (max-width: 860px) {
+  .dn-kreator { width: 100%; height: auto; min-height: 520px; }
+  .dn-kreator-korpus { grid-template-columns: minmax(0, 1fr); }
+  .dn-kreator-kroki { flex-direction: row; overflow-x: auto; padding: var(--dn-od-3); }
+  .dn-kreator-marka { display: none; }
+  .dn-kreator-krok { border-left: 0; border-bottom: var(--dn-wym-wstega) solid transparent; white-space: nowrap; }
+  .dn-kreator-krok[data-stan='biezacy'] { border-bottom-color: var(--dn-sygnal-500); }
+}
+
+/* Wybrany wariant instalacji — obrys sygnałowy i podniesiona powierzchnia.
+   Stan niesie także zaznaczona kontrolka, więc nie stoi na samej barwie. *//* ── Wymagania stanowiska ──────────────────────────────────────────────────
+   Pary etykieta–wartość w jednym rytmie. Wcześniej stały w dwóch kolumnach
+   o różnym stylu — jedna półgruba, druga maszynowa — co czytało się jak dwie
+   przypadkowe rzeczy zamiast jednej tabliczki znamionowej. *//* Wartość dociągnięta do prawej krawędzi wykazu — nazwa przy lewej, wartość
+   przy prawej, na całą szerokość pola. Wartości są krótkie (hasła), więc prawa
+   krawędź daje jedną linię odczytu i domyka wiersz do separatora. *//* Warunek blokujący — jedyny, bez którego instalacja nie ruszy. Niesie znak,
+   nie samą barwę, i odcina się powierzchnią od wykazu wymagań. *//* Krok ukończony niesie znak, nie tylko barwę pierścienia — inaczej kroki
+   przyszłe i zrobione czytają się identycznie. */
+.dn-kreator-krok[data-stan='zrobiony'] .dn-kreator-krok-nr { font-size: 0; }
+
+.dn-kreator-krok[data-stan='zrobiony'] .dn-kreator-krok-nr::after {
+  content: '✓'; font-family: var(--dn-ff-bazowa); font-size: 12px; line-height: 1;
+}
+
+/* Dopowiedzenie przy wartości — jeden zapis dla wszystkich wierszy: pismo
+   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. *//* ── Sterowanie oknem w belce tytułowej ────────────────────────────────────
+   Trzy przyciski w kolejności systemowej: zwinięcie · rozwinięcie · zamknięcie.
+   Wymiar wg Windows — 46 px szerokości na pełną wysokość belki, znak 14 px.
+   Wcześniej stał jeden przycisk 34 px ze znakiem 12 px, poniżej standardu.
+   Zamknięcie ma czerwień na wskazaniu, tak jak w systemie. */
+.dn-kreator-belka-sterowanie {
+  display: flex;
+  margin-left: auto;
+  align-self: stretch;
+}
+
+.dn-kreator-belka-btn {
+  display: grid; place-items: center; place-content: center;
+  width: var(--dn-wym-belka-btn); height: 100%;
+  padding: 0; margin: 0;
+  flex: none;
+  border: 0; background: transparent;
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+
+/* Znaki sterowania oknem są cieńsze i mniejsze od znaku marki — pole kliknięcia
+   ma 46 px, ale sam rysunek dorównuje wadze tytułu, nie przewyższa go. */
+.dn-kreator-belka-btn svg { width: 12px; height: 12px; display: block; stroke-width: 1.2; }
+
+.dn-kreator-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+
+.dn-kreator-belka-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+.dn-kreator-belka-btn--zamknij:hover { background: var(--dn-czerwien-700); color: var(--dn-szary-0); }
+
+/* ── Bryła warstw platformy ────────────────────────────────────────────────
+   Pole sceny. Bryłę rysuje składnik biblioteki `zasoby/bryla.js` w płótnie,
+   barwami z żetonów — okno daje jej wyłącznie miejsce w kolumnie. */
+/* Pole bryły obejmuje CAŁĄ kolumnę, także obszar pod wykazem kroków. Scena nie
+   ma własnego tła, więc leży pod tekstem, nie zakrywa go — a klocki wylatujące
+   ku górze nie urywają się na krawędzi pola, tylko wychodzą za wykaz.
+   Sam moduł składa się w dolnej części kolumny; którą część zostawić nad nim,
+   mówi `data-kadr-gora` w oknie. */
+.dn-kreator-bryla {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ── Jedna siatka treści kroku ─────────────────────────────────────────────
+   Akapity, tabela i baner kończą się na tej samej prawej linii. Wcześniej
+   akapity brały `max-width: 72ch` z biblioteki i łamały się o 100 px wcześniej
+   niż tabela, co czytało się jak rozjazd układu. Miarę wiersza wyznacza tu
+   szerokość panelu, nie liczba znaków. */
+.dn-kreator-ekran > * { max-width: none; width: 100%; }
+
+.dn-kreator-ekran .dn-lid,
+.dn-kreator-ekran .dn-kreator-lid,
+.dn-kreator-ekran .dn-tekst-ciagly,
+.dn-kreator-ekran .dn-tekst-ciagly > p { max-width: none; }
+
+/* Obustronne wyrównanie z dzieleniem wyrazów — bez dzielenia polszczyzna
+   robi w justowanym tekście rzeki świateł. Dokument ma `lang="pl"`. *//* Trzy stopnie w treści kroku: nagłówek, zdanie wprowadzające, tekst zwykły.
+   Wcześniej zdanie wprowadzające i akapity miały tę samą barwę i niemal ten sam
+   stopień, więc po nagłówku wszystko czytało się jednym płaskim głosem. *//* Podtytuł jest o stopień nad tekstem, nie tuż pod tytułem: przy 17 px wobec
+   21 px konkurował z nagłówkiem. Rozdziela go teraz przede wszystkim barwa. */
+.dn-kreator-ekran .dn-kreator-lid {
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-normalna);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-wiodacy);
+}
+
+/* Akapity trzymają ten sam rytm co bloki kroku — 28 px. Przy 16 px luka przed
+   pierwszym akapitem była półtora raza większa od pozostałych i tekst rozpadał
+   się na dwa różne rytmy. */
+.dn-kreator-ekran .dn-tekst-ciagly > p {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  /* Akapity jednej myśli stoją w rytmie akapitu, nie w rytmie sekcji. Przy 28 px
+     dwa zdania tego samego wprowadzenia rozchodziły się na dwa osobne bloki. */
+  margin-bottom: var(--dn-od-2);
+}
+
+.dn-kreator-ekran .dn-tekst-ciagly > p:last-child { margin-bottom: 0; }
+
+/* Wyrównanie do lewej, nie obustronne. Justowanie bez dzielenia wyrazów robi
+   w polszczyźnie rzeki świateł, a wyrównanie do lewej jest standardem UI
+   (Microsoft, Apple). Zostaje `text-wrap: pretty` dla lepszego łamania. */
+.dn-kreator-ekran .dn-kreator-lid,
+.dn-kreator-ekran .dn-tekst-ciagly > p {
+  text-align: left;
+  text-wrap: pretty;
+}
+
+/* Wykaz wersji programu — kolumna kart wyboru. Czyste rozmieszczenie:
+   wygląd karty niesie `.dn-wybor--pole` z biblioteki. */
+.dn-kreator-wybory { display: flex; flex-direction: column; gap: var(--dn-od-3); }

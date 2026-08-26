@@ -116,8 +116,11 @@ okna kontekstowe strefy pracy szyny.
 
 Wszystkie prototypy zależą od `design/zasoby/`:
 `zetony/` (żetony i fonty), `css/fundament.css`, `css/komponenty.css`,
-`prototyp.css` (+ `.js`), `rama.css` (+ `.js`), `okna-modalne.css` (+ `.js`),
-oraz — okna wejściowe — `wejscie.css`. Prototypy przestrzeni roboczej dodają
-`stanowisko.css` (+ `.js`), przedsionki — `przedsionek.css`.
-Instalator korzysta w pełni z `wejscie.css`: jego style `.in-*` stoją w tym
-arkuszu, a nie w samym pliku okna.
+`prototyp.css` (+ `.js`), `rama.css` (+ `.js`), `okna-modalne.css` (+ `.js`).
+Prototypy przestrzeni roboczej dodają `stanowisko.css` (+ `.js`),
+przedsionki — `przedsionek.css`.
+
+Instalator i przepływ wejścia nie mają własnego arkusza: rodzina okna sprzed
+uwierzytelnienia (`.dn-scena`, `.dn-okno-wejsciowe`, `.dn-tozsamosc` i dalsze)
+stoi w `css/komponenty.css`, a oba pliki wpinają wyłącznie `zetony/`,
+`css/fundament.css`, `css/komponenty.css` i `prototyp.css`.

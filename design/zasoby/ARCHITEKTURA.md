@@ -25,8 +25,13 @@ z pisania stylów od nowa i nie z nadpisywania wartości z plików niższych war
 | 13 | `stanowisko.css` | wnętrze stanowiska: okna operacyjne, pas komunikacji, żetony polecenia | żetony, komponenty |
 | 14 | `okna-modalne.css` | okna nakładkowe | komponenty |
 | 15 | `przedsionek.css` | przedsionek środowiska | żetony, komponenty |
+| 15a | `kreator.css` | okno kreatora: trzy pasma (belka · korpus · pas działań), szyna kroków, płótno treści | żetony, komponenty |
 | 16 | `prototyp.css` | oprawa prototypu: plakietka, pasek dolny, nota o oknie | żetony |
 | 17 | `okna/<okno>.css` | złożenie jednego okna — wyłącznie układ, bez definicji komponentów | wszystkie wyżej |
+
+Okno, które nie ma nic własnego poza znacznikiem, **nie zakłada pliku z wiersza 17**.
+Instalator jest takim oknem: wpina żetony, fundament, komponenty, `kreator.css`
+i `prototyp.css`, a całą jego mechanikę niesie `okna/instalator.js`.
 
 ## Skrypty
 
@@ -43,6 +48,7 @@ z pisania stylów od nowa i nie z nadpisywania wartości z plików niższych war
 | `pasek-okna.js` | obecność paska narzędzi i zwijanie nadmiaru pod „…" |
 | `panel-sesji.js` | grupowanie wykazu, drzewo, czynności wiersza, akcje zbiorcze |
 | `okno-robocze.js` | maksymalizacja, skrót, Esc, przełączniki izolacji |
+| `bryla.js` | bryła warstw platformy — scena przestrzenna w płótnie, barwy z żetonów |
 | `okna/<okno>.js` | złożenie jednego okna |
 
 ## Zasady wiążące

@@ -9,15 +9,15 @@ import (
 
 // STRAŻE DROGI WEJŚCIA.
 //
-// Trzy sprawdziany poniżej powstały jako ZAPORY opisujące usterki: wypadały
-// niepomyślnie i wtedy, gdy usterka się pogłębi, i wtedy, gdy zostanie
-// naprawiona. Wszystkie trzy usterki są dziś naprawione, więc — zgodnie
-// z własnym poleceniem tamtych zapór — zostały ODWRÓCONE w straże pilnujące
-// stanu naprawionego.
+// Trzy sprawdziany poniżej trzymają zachowania, których zerwanie zamyka
+// Operatorowi drogę do platformy albo otwiera ją komuś, kto nie powinien wejść.
+// Każdy niesie przy sobie zdanie „czym się to łamie" — bo straż bez opisu wagi
+// wygląda na przesadę i pierwszy, kto ją zobaczy, uzna ją za zbędną.
 //
-// Zapisu nie usunięto, bo trzy rzeczy warto trzymać razem: co produkt obiecuje,
-// czym się to złamało i czym jest trzymane teraz. Straż bez tej pamięci wygląda
-// na przesadę i pierwszy, kto ją zobaczy, uzna ją za zbędną.
+// Trzy razem, a nie osobno, bo trzymają się nawzajem: bramka zamknięta do
+// potwierdzenia adresu bez drogi wyjścia z nieudanego nadania zamieniałaby
+// zatrzymany serwer poczty w trwałą utratę produktu, a wykaz urządzeń bez
+// wejścia hasłem nie miałby czego pokazać w oknie odbierania dostępu.
 
 // ── STRAŻ PIERWSZA ───────────────────────────────────────────────────────────
 
@@ -69,68 +69,101 @@ func TestBramkaZamknietaDoPotwierdzeniaAdresu(t *testing.T) {
 
 // ── STRAŻ DRUGA ──────────────────────────────────────────────────────────────
 
-// TestNieudaneNadanieListuCofaRejestracje pilnuje, że zatrzymany przekaźnik
-// poczty nie zamienia się w trwałą utratę platformy.
+// TestNieudaneNadanieListuSchodziNaDrogeBezPoczty pilnuje, że zatrzymany
+// przekaźnik poczty nie zamienia się w trwałą utratę platformy.
 //
-// CZYM SIĘ TO ZŁAMAŁO. Sprawdzana była wyłącznie OBECNOŚĆ nastaw konta
-// nadawczego — i owszem, przed zapisem. Samo nadanie szło ostatnie, już po
-// zapisaniu konta, kotwicy i drogi, a cofnięcia nie było.
+// CZYM SIĘ TO ŁAMIE. Sprawdzana bywała wyłącznie OBECNOŚĆ nastaw konta
+// nadawczego — i owszem, przed zapisem. Samo nadanie idzie ostatnie, już po
+// zapisaniu konta, kotwicy i drogi, a nastawa wskazana nie znaczy, że serwer
+// odpowiada: przekaźnik bywa zatrzymany, zapora zamknięta, a nazwa hosta
+// wpisana z literówką.
 //
-// DLACZEGO TO WAŻY. Rejestracja wykonuje się raz. Konto zostawione po nieudanym
-// nadaniu było platformą nie do otwarcia: drugiej rejestracji nie ma, wejść nie
-// ma czym, bo adresu nikt nie potwierdził, a nowej drogi weryfikacji nie wysyła
-// żadna komenda. Naprawa samej straży pierwszej BEZ tej zamieniłaby zatrzymany
-// serwer poczty w trwałą utratę produktu przy pierwszym uruchomieniu — te dwie
-// trzymają się nawzajem i tak trzeba je czytać.
-func TestNieudaneNadanieListuCofaRejestracje(t *testing.T) {
+// CZEGO TU NIE MA I DLACZEGO. Cofnięcia rejestracji. Było ono ratunkiem przed
+// platformą NIE DO OTWARCIA — bramkę zamykał wtedy brak potwierdzenia adresu,
+// więc konto zostawione po nieudanym nadaniu nie miało czym wejść. Odkąd konto
+// bez potwierdzonego adresu wchodzi hasłem (rejestr decyzji, pozycja 11),
+// ratunek jest zbędny, a sam był pułapką: literówka w nazwie hosta zamykała
+// pierwsze uruchomienie równie szczelnie jak brak poczty w ogóle. Rejestracja
+// schodzi więc na drogę bez poczty i kończy się tym samym stanem, co instalka,
+// która nadajnika nie ma wcale.
+//
+// DLACZEGO TO WAŻY. Rejestracja wykonuje się raz. Gdyby nieudane nadanie
+// cofało ją bez otwarcia drogi powrotu albo zostawiało konto bez klucza,
+// pierwszy Operator tracił platformę na jedną niedostępność serwera poczty.
+func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaNieosiagalna)
 
-	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
+	var tresc shared.AuthRegisterResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
 		shared.AuthRegisterRequest{
 			Login:    loginSprawdzianu,
 			Email:    adresSprawdzianu,
 			Password: hasloPierwsze,
-		})
-	if !strings.Contains(blad.Message, "nie udało się wysłać listu") {
-		t.Fatalf("odmowa nie mówi o nieudanym nadaniu: %q", blad.Message)
+		}, &tresc)
+
+	if !tresc.Registered {
+		t.Error("rejestracja oddała stan udany i registered=false naraz")
+	}
+	if tresc.PendingVerification {
+		t.Error("rejestracja po nieudanym nadaniu oznaczyła konto jako czekające na" +
+			" potwierdzenie — klient każe przepisać drogę z listu, który nie wyszedł")
 	}
 
 	konta := liczbaWierszy(t, u, `SELECT COUNT(*) FROM konto_wlasciciela`)
 	kotwice := liczbaWierszy(t, u, `SELECT COUNT(*) FROM metoda_uwierzytelnienia WHERE kotwica = 1`)
-
-	// Te dwa wiersze rozstrzygają o tym, czy Operator może spróbować ponownie:
-	// konto blokuje drugą rejestrację warunkiem schematu, kotwica — odmową
-	// „konto już założone". Oba muszą zniknąć.
-	if konta != 0 {
-		t.Errorf("po nieudanym nadaniu w bazie leży %d kont — druga rejestracja odbije się o nie", konta)
+	if konta != 1 {
+		t.Errorf("po nieudanym nadaniu kont właściciela w bazie: %d, oczekiwane 1", konta)
 	}
-	if kotwice != 0 {
-		t.Errorf("po nieudanym nadaniu w bazie leży %d kotwic — druga rejestracja odmówi konfliktem", kotwice)
+	if kotwice != 1 {
+		t.Errorf("po nieudanym nadaniu kotwic hasła w bazie: %d, oczekiwana 1 —"+
+			" bez kotwicy konto zostaje bez klucza, a drugiej rejestracji nie ma", kotwice)
 	}
 
-	// Droga potwierdzenia MOŻE zostać i to nie jest usterka: leży jako sam skrót
-	// materiału, który do nikogo nie dojechał, wygasa po godzinie, a bez konta
-	// nie ma czego otworzyć. Kasowanie jej wymagałoby czwartej czynności
-	// repozytorium dla stanu, który sam się kończy.
+	// Znacznik jest tu jedyną rzeczą, która trzyma bramkę otwartą: adres został
+	// niepotwierdzony, bo list nie doszedł.
+	adres, jest := znacznikWSejfie(t, u)
+	if !jest {
+		t.Fatal("bramka nie zapamiętała nieudanego nadania — zamknie się przed" +
+			" potwierdzeniem, którego nie miała jak wysłać")
+	}
+	if adres != adresSprawdzianu {
+		t.Errorf("znacznik niesie adres %q, rejestracja podała %q", adres, adresSprawdzianu)
+	}
+	if ile := liczbaWierszy(t, u,
+		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
+		t.Errorf("kont niepotwierdzonych po nieudanym nadaniu: %d, oczekiwane 1 —"+
+			" adresu nikt nie sprawdził i nikt tego stanu nie ma prawa udawać", ile)
+	}
 
-	// Dowód właściwy: droga powrotu MA BYĆ OTWARTA. Bez tego straż pilnowałaby
-	// pustych tabel, a nie tego, po co je opróżniono.
-	//
-	// Poczta w tej uprzęży pozostaje nieosiągalna, więc druga rejestracja też
-	// odmówi — ale MUSI odmówić z powodu nadania, nie konfliktem. Konflikt
-	// znaczyłby, że konto wciąż stoi i Operator nie ma jak spróbować ponownie po
-	// naprawieniu serwera poczty.
+	// Droga potwierdzenia ZOSTAJE i to nie jest usterka: leży jako sam skrót
+	// materiału, który do nikogo nie dojechał, i wygasa po godzinie. Kasowanie
+	// jej wymagałoby czwartej czynności repozytorium dla stanu, który sam się
+	// kończy.
+
+	// Dowód właściwy: platforma jest do otwarcia. Bez tego straż pilnowałaby
+	// wierszy w bazie, a nie tego, po co one tam są.
+	var wejscie shared.AuthLoginResponse
+	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthLogin, shared.AuthLoginRequest{
+		Method: shared.AuthMethodKindPassword,
+		Login:  wskaznik(loginSprawdzianu),
+		Secret: wskaznik(hasloPierwsze),
+	}, &wejscie)
+	if strings.TrimSpace(wejscie.Session.Token) == "" {
+		t.Error("wejście hasłem po nieudanym nadaniu oddało sesję bez tokenu")
+	}
+
+	// Druga rejestracja odmawia konfliktem i tak ma być: konto stoi, hasło je
+	// otwiera, a powtórzone żądanie jest próbą podmiany hasła bez znajomości
+	// starego.
 	powtorka := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
 		shared.AuthRegisterRequest{
 			Login:    loginSprawdzianu,
 			Email:    adresSprawdzianu,
-			Password: hasloPierwsze,
+			Password: hasloDrugie,
 		})
-	if powtorka.Code == shared.ErrorCodeConflict {
-		t.Error("druga rejestracja odmawia konfliktem — cofnięcie nie otworzyło drogi powrotu")
-	}
-	if !strings.Contains(powtorka.Message, "nie udało się wysłać listu") {
-		t.Errorf("druga rejestracja odmawia z innego powodu niż nadanie: %q", powtorka.Message)
+	if powtorka.Code != shared.ErrorCodeConflict {
+		t.Errorf("druga rejestracja niesie kod %q, oczekiwany %q",
+			powtorka.Code, shared.ErrorCodeConflict)
 	}
 }
 

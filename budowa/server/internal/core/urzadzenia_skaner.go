@@ -237,7 +237,7 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 				// pobrane przed tym momentem są prawdziwe i wracają do kolejki.
 				return sciezki, nil
 			}
-			return nil, err
+			return nil, a.odmowaSkanuSane(ctx, err)
 		}
 		if len(wyjscie) == 0 {
 			return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
@@ -252,6 +252,45 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 		sciezki = append(sciezki, sciezka)
 	}
 	return sciezki, nil
+}
+
+// odmowaSkanuSane rozstrzyga, czy skan nie doszedł do skutku z BRAKU URZĄDZENIA,
+// czy z innej przyczyny — i dopiero wtedy nazywa brak.
+//
+// Bez tego rozstrzygnięcia obie sytuacje wychodziły jednym zdaniem: `scanimage`
+// kończy się kodem 1 przy każdej przyczynie, a odmowa arsenału przekłada kod
+// niezerowy na usterkę wewnętrzną wraz ze zrzutem procesu. Operator, który po
+// prostu nie ma podłączonego skanera, dostawał więc `internal_error` — kod
+// mówiący „usterka rdzenia, zgłoś ją" — zamiast zdania o tym, czego brakuje
+// i co z tym zrobić. Droga WIA rozróżnia te dwie rzeczy od początku
+// (`odmowaWia`, przypadek `BRAK-URZADZENIA`) i to samo należy się drodze SANE:
+// stan maszyny jest ten sam, więc i odpowiedź ma być ta sama.
+//
+// Rozstrzyga PYTANIEM O WYKAZ, nie czytaniem diagnostyki programu. Zdanie, które
+// `scanimage` mówi o sobie, jest napisem obcego programu — rdzeń nie ma prawa
+// opierać kodu odmowy na tym, że napis nie zmieni się przy następnym wydaniu.
+// Wykaz jest drogą własną rdzenia i odpowiada wprost na pytanie, które tu padło.
+//
+// Wykaz pusty znaczy „nie ma czego skanować": to nie awaria drogi, tylko brak
+// urządzenia, więc kod jest `not_found`. Wykaz niepusty albo niedostępny
+// zostawia odmowę pierwotną — rdzeń nie wie wtedy nic ponad to, co powiedział
+// program, a odmowa zgadnięta byłaby gorsza od surowej.
+//
+// Pytanie idzie WYŁĄCZNIE po nieudanym skanie, więc droga udana nie płaci za nie
+// ani jednym wywołaniem.
+func (a *adapterStudia) odmowaSkanuSane(ctx context.Context, pierwotna error) error {
+	urzadzenia, blad := a.wykazSkanerow(ctx)
+	if blad != nil || len(urzadzenia) > 0 {
+		return pierwotna
+	}
+	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+		"moduł Studio: warstwa SANE (`scanimage`) odpowiedziała i nie widzi ani jednego "+
+			"skanera. To nie jest awaria drogi ani usterka rdzenia, lecz brak urządzenia "+
+			"po stronie maszyny Operatora. Naprawa: podłączyć skaner, włączyć go i sprawdzić "+
+			"wykaz komendą `studio.ingest.device.list`; jeżeli urządzenie tam jest, procesowi "+
+			"rdzenia brakuje prawa do jego węzła (grupa `scanner`). Droga, która działa bez "+
+			"skanera: zeskanuj materiał programem systemu i dołóż plik komendą "+
+			"`studio.ingest.queue.add`. Diagnostyka warstwy: "+pierwotna.Error()))
 }
 
 // trybBarwnySane przekłada słowo Operatora na tryb SANE. Nierozpoznane słowo

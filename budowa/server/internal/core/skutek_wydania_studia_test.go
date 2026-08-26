@@ -16,6 +16,7 @@ import (
 	_ "modernc.org/sqlite"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
 )
 
@@ -557,12 +558,42 @@ func TestWyszukiwanieZnaczenioweMowiKtoraDrogaPoszlo(t *testing.T) {
 // TestSkanowanieZUrzadzeniaOdmawiaNazwanie pilnuje zasady bezwzględnej:
 // czynność bez drogi ma ODMÓWIĆ, nazywając brak, a nie oddać pusty wykaz
 // pozycji, który czyta się jako „skanowałem i nic nie przyszło".
+//
+// Nazwanie braku to trzy rzeczy naraz: czym rdzeń szukał (`scanimage`), po
+// czyjej stronie leży brak (maszyna Operatora, nie usterka rdzenia) i jaka droga
+// działa mimo niego (`studio.ingest.queue.add`). Odmowa bez tych trzech członów
+// zostawia Operatora tam, gdzie zostawiał go pusty wykaz.
+//
+// Mierzony jest jeden stan maszyny: warstwa skanera JEST, a urządzenia nie ma.
+// Oba warunki sprawdzają się przed pomiarem, bo maszyna bez `scanimage` i maszyna
+// z podłączonym skanerem prowadzą tę czynność innymi drogami — pomiar wykonany
+// tam mierzyłby coś innego i meldował to jako wynik.
 func TestSkanowanieZUrzadzeniaOdmawiaNazwanie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	if !zewnetrzne.Stoi(narzedzieSkanera) {
+		t.Skipf("pomiar niewykonany: na tej maszynie nie ma programu %s (%s), więc"+
+			" skanowanie odmawia brakiem warstwy, a nie brakiem urządzenia",
+			narzedzieSkanera.Nazwa, narzedzieSkanera.Program)
+	}
+	var wykaz shared.StudioIngestDeviceListResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioIngestDeviceList,
+		shared.StudioIngestDeviceListRequest{}, &wykaz)
+	if len(wykaz.Devices) > 0 {
+		t.Skipf("pomiar niewykonany: warstwa skanera widzi %d urządzeń, więc skanowanie"+
+			" nie odmawia brakiem urządzenia", len(wykaz.Devices))
+	}
 
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandStudioIngestDeviceScan,
 		shared.StudioIngestDeviceScanRequest{WindowId: oknoSprawdzianuStudia})
 
+	// Brak urządzenia jest stanem maszyny, nie usterką rdzenia. Kod `internal_error`
+	// kazałby Operatorowi zgłosić usterkę i ponowić żądanie, które nie ma prawa
+	// się udać, dopóki skanera nie ma.
+	if odmowa.Code != shared.ErrorCodeNotFound {
+		t.Errorf("odmowa niesie kod %q, oczekiwany %q — brak urządzenia nie jest usterką"+
+			" rdzenia; treść: %s", odmowa.Code, shared.ErrorCodeNotFound, odmowa.Message)
+	}
 	komunikat := strings.ToLower(odmowa.Message)
 	for _, slowo := range []string{"operator", "scanimage", "queue.add"} {
 		if !strings.Contains(komunikat, slowo) {

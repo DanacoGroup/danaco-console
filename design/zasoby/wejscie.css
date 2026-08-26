@@ -67,7 +67,7 @@
      samą wartość, którą kolumna wnosi wypełnieniem — inaczej pas urywa się
      w powietrzu zamiast domykać panel. */
   --we-wciecie-x: var(--dn-od-6);
-  --we-wciecie-y: var(--dn-od-6);
+  --we-wciecie-y: var(--dn-od-5);
 
   /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
      `min-height` pozwalał mu rosnąć razem z treścią widoku. Wysokość jest ta
@@ -319,14 +319,19 @@
    zdania zlewają się w akapit, w którym nie widać, ile rzeczy jest do
    poprawienia. */
 .we-alarm-lista {
-  margin: var(--dn-od-2) 0 0;
+  margin: var(--dn-od-1) 0 0;
   padding-left: var(--dn-od-4);
-  /* Dwie kolumny: rozpoznania są krótkie, a wykaz w jednej kolumnie rósł
-     wysokością tak, że wypychał formularz poza okno. */
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--dn-od-1) var(--dn-od-5);
+  /* Jedna pozycja na wiersz. Dwie kolumny mieściły więcej, ale przy dwóch
+     usterkach sklejały je w jeden wiersz i wykaz czytał się jak zdanie
+     z punktorami w środku. */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
+
+/* Komunikat z wykazem jest z natury wyższy od jednozdaniowego, więc oddycha
+   węziej — inaczej przy czterech usterkach naraz formularz wychodzi poza okno. */
+.we-alarm:has(.we-alarm-lista) { padding-block: var(--dn-od-2); }
 
 .we-alarm {
   display: flex;
@@ -384,7 +389,11 @@
    same czynności — inaczej zdanie, czynność poboczna i główna nie mieszczą się
    w jednym wierszu i pas łamie się poza okno. */
 .we-fraza {
-  margin: auto 0 0;
+  /* Zdanie idzie za treścią, do której należy — nie spada na dno panelu.
+     Dosunięcie do dołu wyrywało je z kontekstu: przy dwóch frazach pierwsza
+     wyżerała całą wolną wysokość, a w krótkich ekranach odsyłacz zawisał
+     kilkanaście wierszy pod tym, czego dotyczy. */
+  margin: 0;
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-2);
 }

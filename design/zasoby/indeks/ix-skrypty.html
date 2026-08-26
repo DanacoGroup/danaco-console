@@ -1,0 +1,19 @@
+<script src="zasoby/wspolne.js"></script>
+<script src="zasoby/prototyp.js"></script>
+<script>
+(function () {
+  var pole = document.getElementById('ix-filtr');
+  var karty = Array.prototype.slice.call(document.querySelectorAll('[data-filtr-pozycja]'));
+  var sekcje = Array.prototype.slice.call(document.querySelectorAll('.ix-sekcja'));
+  pole.addEventListener('input', function () {
+    var f = pole.value.trim().toLowerCase();
+    karty.forEach(function (k) {
+      k.style.display = (!f || (k.getAttribute('data-filtr-tekst') || '').indexOf(f) !== -1) ? '' : 'none';
+    });
+    sekcje.forEach(function (s) {
+      var widoczne = s.querySelectorAll('[data-filtr-pozycja]:not([style*="none"])').length;
+      s.style.display = widoczne ? '' : 'none';
+    });
+  });
+})();
+</script>

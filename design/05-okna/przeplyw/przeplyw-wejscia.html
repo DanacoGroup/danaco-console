@@ -261,7 +261,7 @@
               <div class="we-glowa">
                 <p class="we-nadtytul">Uruchomienie</p>
                 <h2 class="we-tytul">Nawiązywanie połączenia</h2>
-                <p class="we-lid">Platforma loguje się do serwera Danaco. Poczekaj.</p>
+                <p class="we-lid">Danaco Console łączy się z serwerem. Poczekaj.</p>
               </div>
               <ol class="we-kroki" aria-live="polite" aria-label="Postęp nawiązywania połączenia">
                 <li class="we-krok" data-stan="gotowy">
@@ -295,7 +295,7 @@
               <div class="we-glowa">
                 <p class="we-nadtytul">Uruchomienie</p>
                 <h2 class="we-tytul">Przywracanie sesji</h2>
-                <p class="we-lid">Platforma przywraca Twoje aktywne sesje na koncie.</p>
+                <p class="we-lid">Danaco Console przywraca sesje otwarte na tym koncie.</p>
               </div>
               <ol class="we-kroki" aria-live="polite" aria-label="Postęp przywracania sesji">
                 <li class="we-krok" data-stan="gotowy">
@@ -316,7 +316,7 @@
                 </li>
               </ol>
               <div class="we-alarm we-alarm--sukces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Rozpoznano zaufane urządzenie</b>Uruchomienie bez logowania.</span></div>
-              <p class="we-fraza"><span>Krok rejestracji i logowania zostaje pominięty — token urządzenia jest ważny.</span></p>
+              <p class="we-fraza"><span>Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane.</span></p>
             </div>
             <div class="we-pas" data-widok="w-token" data-grupa-widoku="wariant" data-widok-aktywny="nie">
               <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
@@ -352,20 +352,19 @@
                 </li>
               </ol>
               <div class="we-alarm we-alarm--ostrzezenie" role="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span><b>Serwer nie odpowiada</b>Ponowna próba za 15 sekund.</span></div>
-              <div class="we-akcje">
-                <button class="dn-btn dn-btn--zarys" type="button" id="btn-ponow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 4v5h-5"/></svg>Spróbuj ponownie</button>
-                <button class="dn-btn dn-btn--duch" type="button"
-                        data-komunikat="Ustawienia połączenia otwierają się w oknie konfiguracji, w zakresie „Sieć i serwer”."
-                        data-komunikat-tytul="Ustawienia połączenia"
-                        data-komunikat-rodzaj="informacja">Ustawienia połączenia</button>
-              </div>
-              <p class="we-fraza"><span>Praca zapamiętana na serwerze pozostaje nienaruszona.</span></p>
+              <p class="we-fraza"><span>Praca zapisana na serwerze jest bezpieczna.</span></p>
             </div>
             <div class="we-pas" data-widok="w-blad" data-grupa-widoku="wariant" data-widok-aktywny="nie">
               <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
                       data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
                       data-komunikat-tytul="Zamknięcie aplikacji"
                       data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
+            
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                        data-komunikat="Ustawienia połączenia otwierają się w oknie konfiguracji, w zakresie „Sieć i serwer”."
+                        data-komunikat-tytul="Ustawienia połączenia"
+                        data-komunikat-rodzaj="informacja">Ustawienia połączenia</button>
+              <button class="dn-btn dn-btn--sygnal" type="button" id="btn-ponow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3.2-6.9"/><path d="M21 4v5h-5"/></svg>Spróbuj ponownie</button>
             </div>
 
               <p class="we-marka-stopka">
@@ -507,7 +506,7 @@
                 <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Nie wylogowuj mnie na tym urządzeniu<small>Sesja pozostanie aktywna do czasu wylogowania. Nie zaznaczaj na urządzeniu współdzielonym.</small></span></label>
               </div>
               <p class="we-fraza"><span class="we-fraza-pytanie">Nie pamiętasz hasła?</span> <a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Resetuj hasło</a></p>
-              <p class="au-etykieta">Inna metoda</p>
+              <p class="au-etykieta">Inne metody logowania</p>
               <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
               <p class="we-fraza"><span>Nie masz konta? <a class="au-link" href="#s-rejestracja" data-idz="rejestracja" data-idz-grupa="stan">Utwórz konto Operatora</a></span></p>
             </div>
@@ -531,9 +530,9 @@
                 <div class="dn-pole"><label class="dn-pole-etykieta" for="blad-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="blad-haslo" autocomplete="current-password" aria-invalid="true" aria-describedby="blad-logowania blad-haslo-opis"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="blad-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span><span class="dn-pole-opis" id="blad-haslo-opis">Sprawdź, czy nie jest włączony Caps Lock.</span></div>
               </div>
               <p class="we-fraza"><span class="we-fraza-pytanie">Nie pamiętasz hasła?</span> <a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Resetuj hasło</a></p>
-              <p class="au-etykieta">Inna metoda</p>
+              <p class="au-etykieta">Inne metody logowania</p>
               <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
-              <p class="we-fraza"><span>Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp przywraca wówczas odzyskiwanie konta adresem e-mail.</span></p>
+              <p class="we-fraza"><span>Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp można wtedy odzyskać przez adres e-mail.</span></p>
             </div>
             <div class="we-pas" data-widok="logowanie-blad" data-grupa-widoku="stan" data-widok-aktywny="nie">
               <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Zaloguj się ponownie</button>
@@ -587,11 +586,11 @@
 
               <div class="we-glowa">
                 <h2 class="we-tytul">Potwierdź adres e-mail</h2>
-                <p class="we-lid">Kod potwierdzający wysłano na adres <span class="au-kod-adres">login@przykład.pl</span> — ważny przez 1 godzinę.</p>
+                <p class="we-lid">Na adres <span class="au-kod-adres">operator@danaco-group.pl</span> został wysłany sześciocyfrowy kod. Zachowuje ważność przez 10 minut.</p>
               </div>
               <div class="au-kod" role="group" aria-label="Kod potwierdzający — sześć znaków"><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 1 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 2 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 3 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 4 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 5 z sześciu" data-kod><input class="au-kod-pole" type="text" inputmode="numeric" maxlength="1" aria-label="Znak 6 z sześciu" data-kod></div>
               <div class="au-kod-stopka">
-                <span class="au-odliczanie">Kod traci ważność za <b>59:12</b></span>
+                <span class="au-odliczanie">Kod traci ważność za <b>09:12</b></span>
                 <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-wklej-kod>Wklej kod ze schowka</button>
               </div>
               <div class="we-komunikaty" aria-live="polite">
@@ -614,11 +613,11 @@
 
               <div class="we-glowa">
                 <h2 class="we-tytul">Odzyskaj dostęp do konta</h2>
-                <div class="au-kroki"><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">1</span>Adres konta</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
-                <p class="we-lid">Podaj adres konta. Wyślemy na niego sześciocyfrowy kod potwierdzający.</p>
+                <div class="au-kroki"><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">1</span>Adres e-mail</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
+                <p class="we-lid">Podaj adres e-mail konta. Zostanie na niego wysłany sześciocyfrowy kod potwierdzający.</p>
               </div>
               <div class="au-pola">
-                <label class="dn-pole"><span class="dn-pole-etykieta">Adres konta</span><input class="dn-pole-kontrolka" type="email" id="odz-email" autocomplete="email"></label>
+                <label class="dn-pole"><span class="dn-pole-etykieta">Adres e-mail</span><input class="dn-pole-kontrolka" type="email" id="odz-email" autocomplete="email"></label>
               </div>
               <div class="we-komunikaty" aria-live="polite">
                 <div class="we-alarm we-alarm--informacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Zmiana hasła kończy wszystkie sesje.</b>Na pozostałych urządzeniach trzeba zalogować się ponownie.</span></div>
@@ -637,8 +636,8 @@
 
               <div class="we-glowa">
                 <h2 class="we-tytul">Potwierdź adres konta</h2>
-                <div class="au-kroki"><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">1</span>Adres konta</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
-                <p class="we-lid">Na adres <b>operator@danaco-group.pl</b> wysłaliśmy sześciocyfrowy kod. Zachowuje ważność przez dziesięć minut.</p>
+                <div class="au-kroki"><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">1</span>Adres e-mail</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
+                <p class="we-lid">Na adres <b>operator@danaco-group.pl</b> został wysłany sześciocyfrowy kod. Zachowuje ważność przez 10 minut.</p>
               </div>
               <div class="we-komunikaty" aria-live="polite"></div>
               <div class="au-kod">
@@ -656,9 +655,9 @@
               </div>
               <div class="we-alarm we-alarm--informacja">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg>
-                <span><b>Kod wprowadza się wyłącznie w tym oknie.</b>Danaco Console nigdy nie prosi o kod przez telefon ani pocztą zwrotną.</span>
+                <span><b>Kod wprowadza się wyłącznie w tym oknie.</b>Danaco Console nigdy nie prosi o kod przez telefon ani w wiadomości zwrotnej.</span>
               </div>
-              <p class="we-fraza"><a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Zmień adres konta</a></p>
+              <p class="we-fraza"><a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Zmień adres e-mail</a></p>
             </div>
             <div class="we-pas" data-widok="odzyskiwanie-kod" data-grupa-widoku="stan" data-widok-aktywny="nie">
               <button class="dn-btn dn-btn--sygnal" type="button" data-idz="odzyskiwanie-haslo" data-idz-grupa="stan">Potwierdź kod</button>
@@ -671,8 +670,8 @@
 
               <div class="we-glowa">
                 <h2 class="we-tytul">Ustaw nowe hasło</h2>
-                <div class="au-kroki"><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">1</span>Adres konta</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
-                <p class="we-lid">Nowe hasło zacznie obowiązywać od razu. Pozostałe stanowiska i aplikacja na telefonie zostaną wylogowane.</p>
+                <div class="au-kroki"><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">1</span>Adres e-mail</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="nie" data-zrobiony="tak"><span class="au-krok-nr">2</span>Potwierdzenie</span><span class="au-krok-strzalka" aria-hidden="true">→</span><span class="au-krok" data-biezacy="tak"><span class="au-krok-nr">3</span>Nowe hasło</span></div>
+                <p class="we-lid">Nowe hasło zacznie obowiązywać od razu. Pozostałe urządzenia zostaną wylogowane.</p>
               </div>
               <div class="we-komunikaty" aria-live="polite"></div>
               <div class="au-pola">

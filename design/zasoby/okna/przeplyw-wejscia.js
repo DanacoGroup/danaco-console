@@ -30,6 +30,21 @@
 (function () {
 'use strict';
 
+/* Okna powstają z montażu, więc przy wczytaniu tego pliku nie ma jeszcze czego
+   obsługiwać. Mechanika rusza dopiero na zdarzenie `wejscie-gotowe`.
+
+   Gotowość rozstrzyga PUSTE miejsce montażu, nie obecność panelu: w podglądzie
+   stoi jeszcze okno pisane ręcznie, więc panel istnieje od pierwszej chwili
+   i mylił ten warunek. */
+var miejsceMontazu = document.querySelector('[data-wejscie-okno]');
+if (miejsceMontazu && !miejsceMontazu.firstElementChild) {
+  document.addEventListener('wejscie-gotowe', uruchom, { once: true });
+} else {
+  uruchom();
+}
+
+function uruchom() {
+
 var scena = document.querySelector('[data-uruchomienie-scena]');
 if (!scena) return;
 var warstwa = scena.querySelector('[data-uruchomienie]');
@@ -390,5 +405,6 @@ if (zAdresu && USTERKI[zAdresu]) {
     window.dnPrzelaczWidok('rejestracja', 'stan');
   }
   pokazUsterki(f, [zAdresu]);
+}
 }
 })();

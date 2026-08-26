@@ -203,6 +203,59 @@ for (var m = 0; m < miary.length; m++) {
   miary[m].style.width = miary[m].dataset.wartosc + '%';
 }
 
+/* ── Liczniki prób ───────────────────────────────────────────────────────── */
+
+/* Pięć prób logowania i pięć wysłań kodu. Po piątej — wstrzymanie na godzinę.
+   Licznik żyje w oknie, bo w produkcie prowadzi go serwer: prototyp pokazuje
+   skutek, nie odtwarza reguły. */
+var DOZWOLONE_PROBY = 5;
+var zuzytePrzyLogowaniu = 0;
+var zuzyteWysylkiKodu = 0;
+
+function slownieProby(ile) {
+  return tekst('dostep.proby.' + ile);
+}
+
+/* Komunikat o nierozpoznanych danych mówi, ile prób zostało — a przy ostatniej
+   nazywa ją ostatnią, bo „pozostała jedna próba" i „to ostatnia próba" znaczą
+   to samo, ale drugie zdanie ostrzega mocniej. */
+function odswiezLicznikLogowania() {
+  var panel = document.querySelector('.we-panel[data-widok="logowanie-blad"]');
+  var alarm = panel && panel.querySelector('.we-alarm');
+  if (!alarm) return;
+  var zostalo = DOZWOLONE_PROBY - zuzytePrzyLogowaniu;
+  var b = alarm.querySelector('b');
+  var span = alarm.querySelector('span');
+  if (!b || !span) return;
+  if (zostalo <= 1) {
+    b.textContent = tekst('dostep.logowanieBlad.banerOstatnia.glowa');
+    span.lastChild.textContent = tekst('dostep.logowanieBlad.banerOstatnia.tresc');
+  } else {
+    b.textContent = tekst('dostep.logowanieBlad.baner.glowa');
+    span.lastChild.textContent = N.podstaw(tekst('dostep.logowanieBlad.baner.tresc'),
+      { pozostalo: slownieProby(zostalo) });
+  }
+}
+
+function policzProbe(rodzaj) {
+  if (rodzaj === 'logowanie') {
+    zuzytePrzyLogowaniu += 1;
+    if (zuzytePrzyLogowaniu >= DOZWOLONE_PROBY) {
+      window.dnPrzelaczWidok('logowanie-wstrzymane', 'stan');
+      return true;
+    }
+    odswiezLicznikLogowania();
+    window.dnPrzelaczWidok('logowanie-blad', 'stan');
+    return true;
+  }
+  zuzyteWysylkiKodu += 1;
+  if (zuzyteWysylkiKodu >= DOZWOLONE_PROBY) {
+    window.dnPrzelaczWidok('odzyskiwanie-wstrzymane', 'stan');
+    return true;
+  }
+  return false;
+}
+
 /* ── Zakładanie konta: sprawdzenie przed wysłaniem ───────────────────────── */
 
 /* Formularze, które ustawiają hasło. Oba sprawdzają to samo — różnią się
@@ -211,8 +264,10 @@ var FORMULARZE = [
   { widok: 'logowanie', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
     wymagane: [{ id: 'log-login', usterka: 'brakLoginu' }, { id: 'log-haslo', usterka: 'brakHasla' }] },
   { widok: 'logowanie-blad', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
+    licznik: 'logowanie',
     wymagane: [{ id: 'blad-login', usterka: 'brakLoginu' }, { id: 'blad-haslo', usterka: 'brakHasla' }] },
   { widok: 'odzyskiwanie-adres', naglowek: 'usterki.naglowekKod',
+    licznik: 'kod',
     wymagane: [{ id: 'odz-email', usterka: 'brakAdresu' }], email: 'odz-email' },
   { widok: 'rejestracja', naglowek: 'usterki.naglowekKonto',
     login: 'rej-login', email: 'rej-email', haslo: 'rej-haslo', haslo2: 'rej-haslo-2' },
@@ -263,10 +318,16 @@ function pola(f) {
   return lista;
 }
 
+/* Zdejmowany jest wyłącznie komunikat postawiony przez sprawdzenie. Odsłona
+   bywa niesie własny baner — jak „Nie rozpoznano danych logowania" — i ten
+   należy do niej, nie do nas. */
 function wyczysc(f) {
   var panel = document.querySelector('.we-panel[data-widok="' + f.widok + '"]');
   var kom = panel && panel.querySelector('.we-komunikaty');
-  if (kom) kom.innerHTML = '';
+  if (kom) {
+    var moje = kom.querySelectorAll('[data-usterka-formularza]');
+    for (var i = 0; i < moje.length; i++) moje[i].parentNode.removeChild(moje[i]);
+  }
   pola(f).forEach(function (id) {
     var e = document.getElementById(id);
     if (e) e.removeAttribute('aria-invalid');
@@ -297,6 +358,7 @@ function pokazUsterki(f, klucze) {
   var el = document.createElement('div');
   el.className = 'we-alarm we-alarm--blad';
   el.setAttribute('role', 'alert');
+  el.setAttribute('data-usterka-formularza', '');
   el.innerHTML = ZNAK_USTERKI + '<span>' + tresc + '</span>';
   komunikaty.appendChild(el);
 
@@ -406,10 +468,20 @@ FORMULARZE.forEach(function (f) {
        dokumencie, więc zatrzymanie musi nastąpić, zanim tam dojdzie. */
     glowna.addEventListener('click', function (e) {
       var braki = sprawdz(f);
-      if (!braki.length) { wyczysc(f); return; }
-      e.preventDefault();
-      e.stopPropagation();
-      pokazUsterki(f, braki);
+      if (braki.length) {
+        e.preventDefault();
+        e.stopPropagation();
+        pokazUsterki(f, braki);
+        return;
+      }
+      wyczysc(f);
+      /* Dane kompletne, więc idzie próba. Odsłona nierozpoznanych danych jest
+         w prototypie odsłoną NIEUDANEJ próby — każde stąd wysłanie ją zużywa.
+         Wysłanie kodu zużywa jedną z pięciu dozwolonych wysyłek. */
+      if (f.licznik && policzProbe(f.licznik)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     }, true);
   }
 
@@ -422,6 +494,14 @@ FORMULARZE.forEach(function (f) {
 });
 
 /* Odsłona wskazana adresem — żeby dało się obejrzeć komunikat bez wpisywania. */
+/* „Wyślij kod ponownie" to kolejna wysyłka, więc liczy się tak samo. */
+var ponowienia = document.querySelectorAll('.we-panel[data-widok="odzyskiwanie-kod"] .au-kod-stopka .au-link');
+for (var r = 0; r < ponowienia.length; r++) {
+  ponowienia[r].addEventListener('click', function (e) {
+    if (policzProbe('kod')) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+}
+
 var zAdresu = new URLSearchParams(location.search).get('rejestracja');
 if (zAdresu && USTERKI[zAdresu]) {
   var f = FORMULARZE.filter(function (x) { return x.widok === 'rejestracja'; })[0];

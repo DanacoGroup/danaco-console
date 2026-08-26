@@ -10,7 +10,8 @@
      ikona   nazwa znaku z zestawu
      glowa   klucz katalogu
      tresc   klucz katalogu
-     dane    dane do podstawienia w treść
+     dane      dane do podstawienia w treść
+     daneGlowy dane do podstawienia w głowę
    ============================================================================ */
 (function () {
 'use strict';
@@ -22,13 +23,15 @@ W.skladniki.baner = function (N, w) {
   znak.setAttribute('aria-hidden', 'true');
   var tresc = N.tekst(w.tresc);
   if (w.dane) tresc = N.podstaw(tresc, w.dane);
+  var glowa = N.tekst(w.glowa);
+  if (w.daneGlowy) glowa = N.podstaw(glowa, w.daneGlowy);
   return N.el('div', {
     klasa: 'we-alarm we-alarm--' + (w.rodzaj || 'informacja'),
     id: w.id || null,
     role: w.rodzaj === 'blad' || w.rodzaj === 'ostrzezenie' ? 'alert' : 'status'
   }, [
     znak,
-    N.el('span', {}, [N.el('b', { tekst: N.tekst(w.glowa) }), tresc])
+    N.el('span', {}, [N.el('b', { tekst: glowa }), tresc])
   ]);
 };
 })();

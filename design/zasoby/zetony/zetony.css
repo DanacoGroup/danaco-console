@@ -23,23 +23,23 @@
 
   /* --- SZAROŚĆ — czysto neutralna (równe RGB): odcienie bieli i czerni  */
   --dn-szary-0: #FFFFFF;      /* wyłącznie powierzchnie kart i tekst na atramencie */
-  --dn-szary-25: #FAFAFA;
-  --dn-szary-50: #F4F4F4;
-  --dn-szary-100: #ECECEC;
-  --dn-szary-150: #E3E3E3;
-  --dn-szary-200: #D7D7D7;
-  --dn-szary-300: #C0C0C0;
-  --dn-szary-400: #9E9E9E;
-  --dn-szary-500: #7C7C7C;
-  --dn-szary-600: #616161;
-  --dn-szary-700: #4A4A4A;
-  --dn-szary-750: #3A3A3A;
-  --dn-szary-800: #2A2A2A;
-  --dn-szary-850: #212121;
-  --dn-szary-900: #181818;
-  --dn-szary-925: #131313;
-  --dn-szary-950: #0F0F0F;
-  --dn-szary-1000: #0A0A0A;   /* kraniec skali; #000000 jest zakazane */
+  --dn-szary-25: #F9FAFB;
+  --dn-szary-50: #F3F4F6;
+  --dn-szary-100: #EBECEF;
+  --dn-szary-150: #E1E3E7;
+  --dn-szary-200: #D5D7DC;
+  --dn-szary-300: #BDC0C6;
+  --dn-szary-400: #9A9EA6;
+  --dn-szary-500: #787C85;
+  --dn-szary-600: #5D6169;
+  --dn-szary-700: #464A52;
+  --dn-szary-750: #373A41;
+  --dn-szary-800: #272A30;
+  --dn-szary-850: #1E2126;
+  --dn-szary-900: #16181D;
+  --dn-szary-925: #111317;
+  --dn-szary-950: #0D0F13;
+  --dn-szary-1000: #080A0D;   /* kraniec skali; #000000 jest zakazane */
 
   /* --- SYGNAŁ — błękit sygnałowy (jedyna barwa akcentu systemu)        */
   --dn-sygnal-100: #EDF3FE;
@@ -50,6 +50,24 @@
   --dn-sygnal-600: #2457C9;   /* tekst i wypełnienia na jasnym */
   --dn-sygnal-700: #1D49AF;
   --dn-sygnal-800: #173A8C;
+
+  /* --- BRYŁA MODUŁU — paleta sceny przestrzennej                        */
+  /* Sześcian programu składany z klocków. Bryła nie ma własnego tła i kładzie
+     się wprost na powierzchni okna, więc paleta jest JEDNA dla obu motywów:
+     granatowe klocki z jasnoniebieską krawędzią czytają się i na atramencie,
+     i na papierze. Ściany są półprzezroczyste — krycie należy do żetonu. */
+  --dn-bryla-linia: #68A8F6;               /* krawędź klocka */
+  --dn-bryla-poswiata: #3474C8;            /* poświata rdzenia, cień znaku */
+  --dn-bryla-lagodna: #84B6F0;             /* obwód na blacie */
+  --dn-bryla-wezel: #A8CEF6;               /* pierścień ukończonej warstwy */
+  --dn-bryla-blysk: #F0F8FF;               /* błysk zatrzasku, impuls danych */
+  --dn-bryla-blat: rgba(41, 66, 101, .97);        /* blat klocka */
+  --dn-bryla-blat-wierzch: rgba(52, 82, 122, .97);/* blat warstwy najwyższej */
+  --dn-bryla-bok: rgba(26, 45, 71, .97);          /* bok bliższy kamerze */
+  --dn-bryla-bok-cien: rgba(17, 30, 48, .97);     /* bok dalszy */
+  --dn-bryla-cien: rgba(16, 36, 66, .26);         /* cień pod modułem */
+  --dn-bryla-plakietka: rgba(22, 36, 56, .92);    /* podpis etapu */
+  --dn-bryla-plakietka-tekst: #E2EEFC;
 
   /* --- STANY — prymitywy (informacja = rodzina sygnału)                */
   --dn-zielen-700: #1E7A46;  --dn-zielen-400: #4FBD85;
@@ -70,6 +88,12 @@
        narzędzia stanowiska w stopce bocznej belki; 4,74 : 1 na ramie */
   --dn-rama-tekst-4: var(--dn-szary-600);  /* czwarty stopień — ustawienia
        w stopce bocznej belki; 3,10 : 1 na ramie, próg grafiki nietekstowej */
+  /* Stany na atramencie ramy. Rama nie zmienia się z motywem, więc role stanu
+     mają tu własne żetony — semantyczne żetony stanu przełączają się z motywem
+     i na stałej powierzchni atramentu byłyby nieczytelne. */
+  --dn-rama-sygnal: var(--dn-sygnal-400);              /* wskazanie kroku bieżącego */
+  --dn-rama-sygnal-wypelnienie: var(--dn-sygnal-500);  /* wypełnienie znacznika */
+  --dn-rama-sukces: var(--dn-zielen-400);              /* czynność wykonana */
   --dn-rama-hover: rgba(255, 255, 255, 0.08);
   --dn-rama-obrys: rgba(255, 255, 255, 0.10);
   --dn-rama-obrys-mocny: rgba(255, 255, 255, 0.24);  /* ramka pozycji szyny nawigacji */
@@ -133,6 +157,7 @@
    * ==================================================================== */
   --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
   --dn-wym-ikonowy: 34px;          /* przycisk ikonowy */
+  --dn-wym-belka-btn: 46px;        /* przycisk sterowania oknem — szerokość wg Windows */
   --dn-wym-belka: 48px;            /* belka tytułowa okna — jej wysokość wyznacza szerokość szyny nawigacji */
   --dn-wym-stan: 28px;             /* pasek stanu (dolny) */
   --dn-wym-pasek: 48px;            /* pasek górny (rama) */
@@ -146,13 +171,37 @@
   --dn-wym-awatar-sm: 24px;
   --dn-wym-awatar: 28px;
   --dn-wym-awatar-lg: 36px;
+  --dn-wym-ikona-xs: 12px;         /* znacznik kryterium, znak w wykazie warunków */
   --dn-wym-ikona-sm: 16px;
   --dn-wym-ikona: 18px;
   --dn-wym-ikona-szyna: 20px;      /* ikona pozycji szyny nawigacji (szersza od belki) */
   --dn-wym-ikona-lg: 22px;
   --dn-wym-ikona-xl: 26px;
+  /* Godło — skale znaku z księgi marki. */
+  --dn-wym-godlo-ikonowy: var(--dn-wym-ikona);
+  --dn-wym-godlo: 44px;            /* kolumna tożsamości okna wejściowego */
+  --dn-wym-godlo-lg: 88px;         /* odsłona powitalna, przygotowanie środowiska */
+  --dn-wym-godlo-lockup: 280px;    /* znak poziomy z logotypem */
+
+  /* Okno sprzed uwierzytelnienia — wymiar stały, bo w produkcie jest oknem
+     systemowym o zadanej wielkości, nie stroną skalującą się z przeglądarką. */
+  --dn-wym-szyna-krokow: 300px;            /* kolumna kroków instalatora */
+  --dn-wym-bryly-min: 260px;               /* pole bryły warstw — próg czytelności sceny */
+  --dn-wym-okno-instalatora-szer: 1020px;   /* okno instalatora */
+  --dn-wym-okno-instalatora-wys: 720px;
+  --dn-wym-belka-instalatora: 44px;
+  --dn-wym-stopki-instalatora: 64px;
+  --dn-od-tresci-instalatora: 40px;
+  --dn-wym-okno-wejsciowe-szer: 1040px;
+  --dn-wym-okno-wejsciowe-wys: 720px;
+  --dn-wym-okno-wejsciowe-kolumna: 384px;
+
   --dn-wym-przelacznik-szer: 36px;
   --dn-wym-przelacznik-wys: 20px;
+  --dn-wym-kod-szer: 52px;         /* pole jednego znaku kodu potwierdzenia */
+  --dn-wym-kod-wys: 60px;
+  --dn-wym-krok-nr: 20px;          /* numer w poziomym torze kroków */
+  --dn-wym-sila: 3px;              /* odcinek miary siły hasła */
   --dn-wym-check: 16px;
   --dn-wym-kropka: 6px;            /* kropka sygnału */
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
@@ -201,6 +250,19 @@
  *  10 · MOTYW JASNY — odcienie bieli (definiowany osobno, nie wywodzony)
  * ========================================================================== */
 :root[data-theme='light'] {
+
+
+  /* ── Okno przedaplikacyjne: trzy strefy, trzy barwy ──────────────────────
+     Zasada właściciela: belka tytułowa jest najciemniejsza, a kolumna boczna
+     i pas działań NIE MOGĄ mieć jej barwy. Trzy stopnie, obowiązkowo różne
+     w obu motywach — instalator, uruchomienie, logowanie i każde następne
+     okno tego rodzaju biorą je stąd, nie ustalają własnych. */
+  --dn-okno-belka: var(--dn-szary-925);
+  --dn-okno-obrzeze: var(--dn-szary-100);
+  --dn-okno-plotno: var(--dn-szary-0);
+  --dn-okno-obrys: var(--dn-szary-200);
+  --dn-okno-karta: var(--dn-szary-0);
+
   color-scheme: light;
 
   --dn-tlo: var(--dn-szary-50);              /* #F4F4F4 — papier roboczy */
@@ -218,6 +280,10 @@
   --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
 
   --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
+  /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
+     pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
+     przez co po nagłówku wszystko czytało się jednym głosem. */
+  --dn-tekst-wiodacy: var(--dn-szary-700);
   --dn-tekst-2: var(--dn-szary-600);         /* #616161 · 6,4:1 na tle */
   --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane
                                                 i tekst ≥ 18,66 px półgruby */
@@ -267,6 +333,18 @@
  *  11 · MOTYW CIEMNY — odcienie czerni (definiowany osobno, nie wywodzony)
  * ========================================================================== */
 :root[data-theme='dark'] {
+
+  /* ── Okno przedaplikacyjne: trzy strefy, trzy barwy ──────────────────────
+     Zasada właściciela: belka tytułowa jest najciemniejsza, a kolumna boczna
+     i pas działań NIE MOGĄ mieć jej barwy. Trzy stopnie, obowiązkowo różne
+     w obu motywach — instalator, uruchomienie, logowanie i każde następne
+     okno tego rodzaju biorą je stąd, nie ustalają własnych. */
+  --dn-okno-belka: #0B0D11;                /* oklch(0.16) */
+  --dn-okno-obrzeze: #14161B;              /* oklch(0.20) */
+  --dn-okno-plotno: #1C1F24;               /* oklch(0.24) */
+  --dn-okno-obrys: #2B2E34;                /* oklch(0.30) */
+  --dn-okno-karta: #2B2E34;                /* warstwy bryły — o stopień nad obrzeżem */
+
   color-scheme: dark;
 
   --dn-tlo: var(--dn-szary-950);             /* #0F0F0F */
@@ -284,6 +362,10 @@
   --dn-obrys-mocny: var(--dn-szary-750);     /* #3A3A3A */
 
   --dn-tekst: var(--dn-szary-100);           /* #ECECEC · 15,0:1 na tle */
+  /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
+     pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
+     przez co po nagłówku wszystko czytało się jednym głosem. */
+  --dn-tekst-wiodacy: var(--dn-szary-300);
   --dn-tekst-2: var(--dn-szary-400);         /* #9E9E9E · 6,8:1 na tle */
   --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane */
   --dn-tekst-inv: var(--dn-szary-950);
@@ -307,16 +389,16 @@
 
   /* stany — pełny komplet dla motywu ciemnego */
   --dn-sukces-tekst: var(--dn-zielen-400);
-  --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+  --dn-sukces-tlo: #27372F;
   --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
   --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
-  --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+  --dn-ostrzezenie-tlo: #3C3425;
   --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
   --dn-blad-tekst: var(--dn-czerwien-400);
-  --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+  --dn-blad-tlo: #3A2B2A;
   --dn-blad-obrys: rgba(238, 113, 104, 0.34);
   --dn-informacja-tekst: var(--dn-sygnal-300);
-  --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+  --dn-informacja-tlo: #252D40;
   --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
 
   /* cienie — głębsze; przełączają się wraz z motywem */
@@ -332,6 +414,15 @@
    nie drugie źródło prawdy — patrz opracowanie o przekazaniu, ruchu i dostępności). */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
+
+    --dn-tekst-wiodacy: var(--dn-szary-700);
+    /* Strefy okna przedaplikacyjnego — te same trzy stopnie co przy wyborze ręcznym. */
+    --dn-okno-belka: var(--dn-szary-925);
+    --dn-okno-obrzeze: var(--dn-szary-100);
+    --dn-okno-plotno: var(--dn-szary-0);
+    --dn-okno-obrys: var(--dn-szary-200);
+    --dn-okno-karta: var(--dn-szary-0);
+
     color-scheme: light;
     --dn-tlo: var(--dn-szary-50); --dn-powierzchnia: var(--dn-szary-0);
     --dn-powierzchnia-2: var(--dn-szary-100); --dn-panel: var(--dn-szary-25);
@@ -369,6 +460,14 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
+    --dn-tekst-wiodacy: var(--dn-szary-300);
+    /* Strefy okna przedaplikacyjnego — te same trzy stopnie co przy wyborze ręcznym. */
+    --dn-okno-belka: #0B0D11;
+    --dn-okno-obrzeze: #14161B;
+    --dn-okno-plotno: #1C1F24;
+    --dn-okno-obrys: #2B2E34;
+    --dn-okno-karta: #2B2E34;
+
     color-scheme: dark;
     --dn-tlo: var(--dn-szary-950); --dn-powierzchnia: var(--dn-szary-900);
     --dn-powierzchnia-2: var(--dn-szary-925); --dn-panel: var(--dn-szary-850);
@@ -389,16 +488,16 @@
     --dn-kropka: var(--dn-sygnal-400);
     --dn-fokus: var(--dn-sygnal-400); --dn-fokus-cien: rgba(92, 140, 236, 0.35);
     --dn-sukces-tekst: var(--dn-zielen-400);
-    --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
+    --dn-sukces-tlo: #27372F;
     --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
     --dn-ostrzezenie-tekst: var(--dn-bursztyn-400);
-    --dn-ostrzezenie-tlo: rgba(224, 166, 60, 0.14);
+    --dn-ostrzezenie-tlo: #3C3425;
     --dn-ostrzezenie-obrys: rgba(224, 166, 60, 0.34);
     --dn-blad-tekst: var(--dn-czerwien-400);
-    --dn-blad-tlo: rgba(238, 113, 104, 0.14);
+    --dn-blad-tlo: #3A2B2A;
     --dn-blad-obrys: rgba(238, 113, 104, 0.34);
     --dn-informacja-tekst: var(--dn-sygnal-300);
-    --dn-informacja-tlo: rgba(59, 111, 224, 0.16);
+    --dn-informacja-tlo: #252D40;
     --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
     --dn-cien-1: 0 1px 2px rgba(0, 0, 0, 0.35);
     --dn-cien-2: 0 3px 10px rgba(0, 0, 0, 0.42), 0 1px 2px rgba(0, 0, 0, 0.30);

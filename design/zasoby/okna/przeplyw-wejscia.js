@@ -203,6 +203,56 @@ for (var m = 0; m < miary.length; m++) {
   miary[m].style.width = miary[m].dataset.wartosc + '%';
 }
 
+/* ── Odliczanie czasu ────────────────────────────────────────────────────── */
+
+/* Każdy węzeł z `data-odliczanie` niesie czas w sekundach i sam się wypisuje.
+   Napis „09:12", który nie ubywa, jest gorszy od braku napisu: obiecuje odmierzanie,
+   którego nie ma. Jeden zegar na całe okno — nie dwanaście osobnych. */
+function naZegar(sekundy) {
+  var m = Math.floor(sekundy / 60), s = sekundy % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+function odliczaj() {
+  var pola = document.querySelectorAll('[data-odliczanie]');
+  for (var i = 0; i < pola.length; i++) {
+    var e = pola[i];
+    var zostalo = parseInt(e.dataset.odliczanie, 10);
+    if (isNaN(zostalo)) continue;
+    /* Wypisywane są WSZYSTKIE liczniki, także w odsłonach ukrytych — inaczej
+       licznik byłby pusty przez sekundę po pokazaniu odsłony. Ubywa natomiast
+       tylko licznik widoczny: czas, który schodzi za plecami, doprowadza do
+       tego, że użytkownik zastaje zero, choć odsłonę zobaczył przed chwilą. */
+    var napis = e.dataset.odliczaniePostac === 'sekundy' ? String(zostalo) : naZegar(zostalo);
+    if (e.textContent !== napis) e.textContent = napis;
+    if (!e.offsetParent) continue;
+    if (zostalo <= 0) { poZerze(e); continue; }
+    e.dataset.odliczanie = String(zostalo - 1);
+  }
+}
+
+/* Co się dzieje po dojściu do zera, rozstrzyga odsłona, w której licznik stoi.
+   Wstrzymanie mija — okno wraca do logowania. Ważność kodu wygasa — to stan,
+   którego prototyp jeszcze nie ma, więc licznik staje i nic nie udaje. */
+function poZerze(e) {
+  var panel = e.closest('.we-panel');
+  if (!panel) return;
+  var widok = panel.dataset.widok;
+  if (widok === 'w-blad') {
+    /* Serwer nie odpowiadał; po odliczonym czasie okno ponawia próbę samo —
+       tak, jak zapowiada baner. Licznik rusza od nowa razem z przebiegiem. */
+    e.dataset.odliczanie = '15';
+    window.dnPrzelaczWidok('w-laczenie', 'wariant');
+    polacz();
+    return;
+  }
+  if (widok === 'logowanie-wstrzymane') { zuzytePrzyLogowaniu = 0; window.dnPrzelaczWidok('logowanie', 'stan'); }
+  else if (widok === 'odzyskiwanie-wstrzymane') { zuzyteWysylkiKodu = 0; window.dnPrzelaczWidok('odzyskiwanie-adres', 'stan'); }
+}
+
+setInterval(odliczaj, 1000);
+odliczaj();
+
 /* ── Liczniki prób ───────────────────────────────────────────────────────── */
 
 /* Pięć prób logowania i pięć wysłań kodu. Po piątej — wstrzymanie na godzinę.

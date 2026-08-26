@@ -53,7 +53,7 @@ W.ekrany.uruchomienie = function (N) {
       S.baner(N, {
         rodzaj: 'ostrzezenie', ikona: 'ostrzezenie',
         glowa: 'uruchomienie.blad.baner.glowa', tresc: 'uruchomienie.blad.baner.tresc',
-        dane: N.tekst('uruchomienie.blad.banerDane')
+        odliczanieTresci: 15, postacOdliczania: 'sekundy'
       }),
       S.frazaNawigacyjna(N, { klucz: 'uruchomienie.blad.fraza' })
     ])

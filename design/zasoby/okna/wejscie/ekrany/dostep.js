@@ -121,7 +121,7 @@ W.ekrany.dostep = function (N) {
     /* ── potwierdzenie adresu po założeniu konta ───────────────────────── */
     panel(N, 'kod', false, 'rejestracja', [
       S.naglowekEkranu(N, { tytul: 'dostep.kod.tytul', lidWezly: lidKodu() })
-    ].concat(S.poleKodu(N, { odliczanie: '09:12', czynnosc: 'wklej' })).concat([
+    ].concat(S.poleKodu(N, { odliczanie: 552, czynnosc: 'wklej' })).concat([
       N.el('div', { klasa: 'we-komunikaty', 'aria-live': 'polite' }, [
         S.baner(N, {
           rodzaj: 'informacja', ikona: 'informacja',
@@ -142,7 +142,7 @@ W.ekrany.dostep = function (N) {
         rodzaj: 'ostrzezenie', ikona: 'zegar',
         glowa: 'dostep.logowanieWstrzymane.baner.glowa',
         tresc: 'dostep.logowanieWstrzymane.baner.tresc',
-        daneGlowy: N.tekst('dostep.logowanieWstrzymane.banerDane')
+        daneGlowy: { czas: '{odliczanie}' }, odliczanie: 3581
       }),
       S.frazaNawigacyjna(N, {
         czynnosc: 'dostep.logowanieWstrzymane.odzyskaj', cel: 'odzyskiwanie-adres'
@@ -160,7 +160,7 @@ W.ekrany.dostep = function (N) {
         rodzaj: 'ostrzezenie', ikona: 'zegar',
         glowa: 'dostep.odzyskiwanieWstrzymane.baner.glowa',
         tresc: 'dostep.odzyskiwanieWstrzymane.baner.tresc',
-        daneGlowy: N.tekst('dostep.odzyskiwanieWstrzymane.banerDane')
+        daneGlowy: { czas: '{odliczanie}' }, odliczanie: 3581
       }),
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.odzyskiwanie.powrot', cel: 'logowanie' })
     ], 'dostep.odzyskiwanieWstrzymane.tytul'),
@@ -193,7 +193,7 @@ W.ekrany.dostep = function (N) {
         lidWezly: lidKodu()
       }),
       N.el('div', { klasa: 'we-komunikaty', 'aria-live': 'polite' })
-    ].concat(S.poleKodu(N, { odliczanie: '08:41', czynnosc: 'ponow' })).concat([
+    ].concat(S.poleKodu(N, { odliczanie: 521, czynnosc: 'ponow' })).concat([
       S.baner(N, {
         rodzaj: 'informacja', ikona: 'tarcza',
         glowa: 'dostep.kod.ostrzezenie.glowa', tresc: 'dostep.kod.ostrzezenie.tresc'

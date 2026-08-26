@@ -85,9 +85,8 @@ window.DanacoWejscie.tresci = {
       "lid": "Sprawdź połączenie sieciowe i spróbuj ponownie.",
       "baner": {
         "glowa": "Serwer nie odpowiada",
-        "tresc": "Ponowna próba za {sekundy} sekund."
+        "tresc": "Ponowna próba za {odliczanie} s."
       },
-      "banerDane": { "sekundy": 15 },
       "fraza": "Praca zapisana na serwerze jest bezpieczna."
     }
   },

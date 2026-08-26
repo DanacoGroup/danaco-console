@@ -14,6 +14,24 @@
 // z artefaktu kontraktu (`shared/contract.go`), więc pole dołożone do kontraktu
 // jest pilnowane od razu, bez zmiany w tym pliku.
 //
+// ── Jedyna komenda spod bramy wyjęta ────────────────────────────────────────
+// Powitanie kanału (`connection.hello`) bramie nie podlega i odpowiada zawsze,
+// także na żądanie niepełne — rejestr decyzji, pozycja 10. Powitanie jest
+// jedynym miejscem, w którym klient odczytuje `protocolVersion` rdzenia, czyli
+// jedynym, w którym rozpoznaje, że jest starszy. Brama sprawdzająca je wobec
+// kontraktu zakłada, że obie strony znają już ten sam kontrakt — zakłada więc
+// to, co powitanie ma dopiero ustalić, i klientowi sprzed wprowadzenia pola
+// oddaje odmowę zamiast wersji, po której ten rozpoznałby rozjazd.
+//
+// Braki pól powitania idą do dziennika rdzenia, nie do treści odpowiedzi:
+// `ConnectionHelloResponse` nie ma pola, w którym mogłyby wrócić wołającemu,
+// a dołożenie takiego pola jest zmianą kontraktu. Celowi wyjątku to wystarcza —
+// klient starszy ma odczytać wersję protokołu i sam rozpoznać rozjazd, a do
+// tego potrzebuje odpowiedzi, nie wykazu swoich braków.
+//
+// Wyjątek jest jeden i pozostaje jeden. Wynika z roli powitania w uzgodnieniu,
+// nie z wygody, więc każda inna komenda przechodzi bramę bez ustępstw.
+//
 // ── Czego brama NIE obejmuje ────────────────────────────────────────────────
 // Obecność pól wymaganych sprawdzana jest dla każdej komendy: oznaczenie
 // `wymagane` niesie znacznik struktury żądania, a struktury ma każda komenda.
@@ -28,6 +46,7 @@
 package core
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"sort"
@@ -47,6 +66,11 @@ const znacznikPolaKontraktu = "json"
 // z oznaczenia `wymagane` w `contract.json`.
 const wskazaniePolaOpcjonalnego = "omitempty"
 
+// komendaPozaBrama nazywa jedyną komendę, której brama nie sprawdza. Stała
+// zamiast warunku wpisanego w gałąź, bo wyjątek ma być odczytywalny w jednym
+// miejscu — wyjątek rozsypany po warunkach przestaje być jedynym.
+const komendaPozaBrama = shared.CommandConnectionHello
+
 // sprawdzZadanieWobecKontraktu odmawia żądaniu niezgodnemu z kontraktem.
 //
 // Sprawdzane są dwie rzeczy, obie wyczytane z kontraktu:
@@ -63,12 +87,22 @@ const wskazaniePolaOpcjonalnego = "omitempty"
 //
 // Żądanie zgodne przechodzi bez śladu; niezgodne wraca kodem `validation_failed`
 // z treścią nazywającą brak albo wartość spoza zakresu.
-func sprawdzZadanieWobecKontraktu(komenda shared.MessageType, ladunek json.RawMessage, wzor any) error {
+//
+// Powitanie kanału przechodzi zawsze — jest jedyną komendą spod bramy wyjętą,
+// a jego braki idą do dziennika rdzenia (nagłówek pliku).
+func sprawdzZadanieWobecKontraktu(ctx context.Context, komenda shared.MessageType,
+	ladunek json.RawMessage, wzor any) error {
+
 	pola, sa := polaTresci(ladunek)
 	if !sa {
 		return nil
 	}
-	if brakujace := brakujacePolaWymagane(wzor, pola); len(brakujace) > 0 {
+	brakujace := brakujacePolaWymagane(wzor, pola)
+	if komenda == komendaPozaBrama {
+		odnotujBrakiPowitania(ctx, komenda, brakujace)
+		return nil
+	}
+	if len(brakujace) > 0 {
 		return bladZgodnosciZKontraktem(komenda,
 			"żądanie bez pól wymaganych kontraktem: "+strings.Join(brakujace, ", "))
 	}
@@ -76,6 +110,26 @@ func sprawdzZadanieWobecKontraktu(komenda shared.MessageType, ladunek json.RawMe
 		return bladZgodnosciZKontraktem(komenda, powod)
 	}
 	return nil
+}
+
+// odnotujBrakiPowitania kładzie braki powitania w dzienniku rdzenia — jedynym
+// miejscu, do którego mają dojść.
+//
+// Zapis idzie wyłącznie przy brakach: powitanie pełne jest przypadkiem zwykłym
+// i wpis o nim zasypywałby dziennik przy każdym nawiązaniu połączenia. Brak
+// dziennika nie zmienia zachowania rdzenia — znika sam zapis, a powitanie
+// odpowiada tak samo.
+func odnotujBrakiPowitania(ctx context.Context, komenda shared.MessageType, brakujace []string) {
+	if len(brakujace) == 0 {
+		return
+	}
+	dziennik := dziennikZKontekstu(ctx)
+	if dziennik == nil {
+		return
+	}
+	dziennik.Printf("brama kontraktu: %s bez pól wymaganych kontraktem: %s; "+
+		"powitanie odpowiada mimo to, bo klient odczytuje z niego wersję protokołu",
+		komenda, strings.Join(brakujace, ", "))
 }
 
 // polaTresci rozkłada treść żądania na pola wierzchnie. Drugi wynik odróżnia

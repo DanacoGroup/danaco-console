@@ -5,6 +5,8 @@ import (
 	"io"
 	"log"
 	"path/filepath"
+	"strings"
+	"sync"
 	"testing"
 
 	"danacoconsole/server/internal/konfiguracja"
@@ -30,6 +32,26 @@ import (
 // zasobów po zakończeniu sprawdzianu. Zwraca zmontowany rdzeń wraz z jego
 // kontekstem życia — kontekst przydaje się sprawdzianom wywołującym komendy.
 func zmontujDoSprawdzenia(t *testing.T) (*Zmontowany, context.Context) {
+	t.Helper()
+
+	return zmontujNadDziennikiem(t, io.Discard)
+}
+
+// zmontujZDziennikiem składa ten sam rdzeń, ale nad dziennikiem, który da się
+// przeczytać. Potrzebny tam, gdzie przedmiotem pomiaru jest sam zapis — rdzeń
+// odnotowuje w dzienniku rzeczy, których nie ma jak oddać w odpowiedzi, więc
+// dziennik niemy zamieniłby taki sprawdzian w sprawdzenie niczego.
+func zmontujZDziennikiem(t *testing.T) (*Zmontowany, context.Context, *dziennikDoOdczytu) {
+	t.Helper()
+
+	dziennik := &dziennikDoOdczytu{}
+	zmontowany, zycie := zmontujNadDziennikiem(t, dziennik)
+	return zmontowany, zycie, dziennik
+}
+
+// zmontujNadDziennikiem jest wspólnym montażem obu uprzęży. Osobna, bo dwa
+// montaże rozjechałyby się przy pierwszej zmianie nastaw sprawdzianu.
+func zmontujNadDziennikiem(t *testing.T, zapis io.Writer) (*Zmontowany, context.Context) {
 	t.Helper()
 
 	katalog := t.TempDir()
@@ -58,7 +80,7 @@ func zmontujDoSprawdzenia(t *testing.T) (*Zmontowany, context.Context) {
 	zmontowany, err := Zmontuj(zycie, Montaz{
 		Konfiguracja: ustawienia,
 		Baza:         baza,
-		Dziennik:     dziennikNiemy(),
+		Dziennik:     log.New(zapis, "", 0),
 	})
 	if err != nil {
 		t.Fatalf("montaż rdzenia nie powiódł się: %v", err)
@@ -74,4 +96,27 @@ func zmontujDoSprawdzenia(t *testing.T) (*Zmontowany, context.Context) {
 // miejscu montażu.
 func dziennikNiemy() *log.Logger {
 	return log.New(io.Discard, "", 0)
+}
+
+// dziennikDoOdczytu zbiera zapisy dziennika rdzenia, żeby sprawdzian mógł je
+// przeczytać.
+//
+// Pod zamkiem, bo rdzeń pisze do dziennika także z własnych gorutyn — budzika
+// harmonogramu i pętli adapterów — a sprawdzian czyta z gorutyny swojej.
+type dziennikDoOdczytu struct {
+	zamek sync.Mutex
+	tresc strings.Builder
+}
+
+func (d *dziennikDoOdczytu) Write(bajty []byte) (int, error) {
+	d.zamek.Lock()
+	defer d.zamek.Unlock()
+	return d.tresc.Write(bajty)
+}
+
+// Tresc oddaje wszystko, co dotąd trafiło do dziennika.
+func (d *dziennikDoOdczytu) Tresc() string {
+	d.zamek.Lock()
+	defer d.zamek.Unlock()
+	return d.tresc.String()
 }

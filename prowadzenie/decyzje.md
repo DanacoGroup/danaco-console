@@ -679,6 +679,12 @@ rdzeń i całe zaplecze na serwerze Danaco. **Wariant pełny natywny nie powstaj
 |---|---|---|
 | hybryda | **~250 MB** | serwer Danaco |
 
+**Jedyna platforma: Windows 11.** Jedynym wyborem w instalatorze jest
+architektura — **x64** albo **ARM64**. Linuksa, macOS ani Windows 10 produkt nie
+obsługuje. Oba cele budowania stoją na maszynie budowlanej i są sprawdzone:
+`x86_64-pc-windows-gnu`, `aarch64-pc-windows-msvc`, llvm-mingw
+z `aarch64-w64-mingw32-gcc`.
+
 **Podstawa — pomiar.** Zaplecze pracy zważone na maszynie budowlanej: modele AI
 15,6 GB, arsenał mediów i dokumentów 2,7 GB, n8n 2,5 GB, whisper z wagami
 1,7 GB, przeglądarki Playwright 0,93 GB, silnik rembg 0,72 GB, reszta programów
@@ -697,7 +703,13 @@ druga droga nie jest wykonalna.
 
 1. **Instalator ma jedną ścieżkę.** Nie ma kroku wyboru wariantu ani kroku
    wyboru składników — nie ma czego wybierać, bo składniki nie schodzą na
-   urządzenie.
+   urządzenie. Architekturę instalator rozpoznaje sam i wskazuje właściwą
+   postać; wybór ręczny zostaje jako możliwość, nie jako krok wymagany.
+1a. **Rdzenia nie ma w instalce w ogóle.** Wchodzi wyłącznie powłoka
+   z wkompilowanym interfejsem, więc budowanie krzyżowe rdzenia na Windows nie
+   jest produktowi potrzebne. Zostaje sama powłoka Tauri w dwóch celach.
+1b. **WebView2 jest składnikiem Windows 11.** Instalator go nie niesie i nie
+   stawia — to jedyna zależność systemowa produktu i jest zaspokojona z góry.
 2. **Produkt wymaga łączności z serwerem Danaco.** Praca bez sieci nie jest
    przewidziana. Wdrożenie odcięte od sieci nie jest obsługiwane.
 3. **Zasady korzystania opisują jeden sposób pracy.** Zapis wymagający

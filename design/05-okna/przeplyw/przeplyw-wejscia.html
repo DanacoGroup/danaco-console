@@ -216,7 +216,17 @@
       </div>
 
       <div class="pt-etap-tresc">
-        <div class="we-scena">
+        <div class="we-scena" data-uruchomienie-scena>
+
+          <!-- Ekran startowy. Po kliknięciu ikony programu gra tu animacja znaku,
+               a okno stoi za nią niewidoczne — dopiero jej koniec je odsłania.
+               Warstwa nie ma własnego tła: leży na tle sceny tak, jak w produkcie
+               leży na pulpicie. -->
+          <div class="we-uruchomienie" data-uruchomienie>
+            <div class="dn-ekran-startowy" data-ekran-startowy
+                 role="img" aria-label="Uruchamianie Danaco Console"></div>
+          </div>
+
           <div class="we-okno we-okno--z-belka">
 
             <div class="we-belka">
@@ -243,16 +253,11 @@
                 <p class="we-marka-motto">AI Operating Environment</p>
               </div>
               <ul class="we-marka-lista"><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/></svg><span><b>Cztery środowiska pracy</b>Rozmowa i wiedza, projekty, wytwarzanie oprogramowania oraz praca zespołu modeli.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg><span><b>Praca wraca w tym samym stanie</b>Zamknięcie aplikacji nie przerywa zadań — wracają wraz z kartami i kontekstem.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Jedno konto na wszystkie urządzenia</b>Ten sam dostęp na komputerze, tablecie i telefonie.</span></li></ul>
-              <p class="we-marka-stopka">
-                Danaco Holding Group Sp. z o.o.<br>
-                wydanie 2.0<br>
-                support@danaco-core.pl
-              </p>
             </div>
 
             <!-- WARIANT 1 · ŁĄCZENIE -->
             <div class="we-panel" id="w-laczenie" role="tabpanel" tabindex="0" aria-labelledby="zak-w-laczenie"
-                 data-widok="w-laczenie" data-grupa-widoku="wariant" data-widok-aktywny="tak">
+                 data-widok="w-laczenie" data-grupa-widoku="wariant" data-po-polaczeniu="uwierzytelnienie" data-widok-aktywny="tak">
               <div class="we-glowa">
                 <p class="we-nadtytul">Uruchomienie</p>
                 <h2 class="we-tytul">Nawiązywanie połączenia</h2>
@@ -276,23 +281,17 @@
                   <span>Przygotowanie okna</span><span class="we-krok-meta">—</span>
                 </li>
               </ol>
-              <div class="we-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="uwierzytelnienie" data-idz-grupa="etap">
-                  Przejdź do rejestracji i logowania
-                </button>
-              </div>
-              <div class="we-stopka">
-                <span>Kolejny krok: okno rejestracji i logowania.</span>
-                <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                        data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
-                        data-komunikat-tytul="Zamknięcie aplikacji"
-                        data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
-              </div>
+            </div>
+            <div class="we-pas" data-widok="w-laczenie" data-grupa-widoku="wariant" data-widok-aktywny="tak">
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                      data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                      data-komunikat-tytul="Zamknięcie aplikacji"
+                      data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
             </div>
 
             <!-- WARIANT 2 · POWRÓT Z WAŻNYM TOKENEM -->
             <div class="we-panel" id="w-token" role="tabpanel" tabindex="0" aria-labelledby="zak-w-token"
-                 data-widok="w-token" data-grupa-widoku="wariant" data-widok-aktywny="nie">
+                 data-widok="w-token" data-grupa-widoku="wariant" data-po-polaczeniu="przygotowanie" data-widok-aktywny="nie">
               <div class="we-glowa">
                 <p class="we-nadtytul">Uruchomienie</p>
                 <h2 class="we-tytul">Przywracanie sesji</h2>
@@ -317,18 +316,13 @@
                 </li>
               </ol>
               <div class="we-alarm we-alarm--sukces"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Rozpoznano zaufane urządzenie</b>Uruchomienie bez logowania.</span></div>
-              <div class="we-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">
-                  Przejdź do przygotowania środowiska
-                </button>
-              </div>
-              <div class="we-stopka">
-                <span>Krok rejestracji i logowania zostaje pominięty — token urządzenia jest ważny.</span>
-                <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                        data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
-                        data-komunikat-tytul="Zamknięcie aplikacji"
-                        data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
-              </div>
+              <p class="we-fraza"><span>Krok rejestracji i logowania zostaje pominięty — token urządzenia jest ważny.</span></p>
+            </div>
+            <div class="we-pas" data-widok="w-token" data-grupa-widoku="wariant" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                      data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                      data-komunikat-tytul="Zamknięcie aplikacji"
+                      data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
             </div>
 
             <!-- WARIANT 3 · BŁĄD POŁĄCZENIA -->
@@ -365,15 +359,20 @@
                         data-komunikat-tytul="Ustawienia połączenia"
                         data-komunikat-rodzaj="informacja">Ustawienia połączenia</button>
               </div>
-              <div class="we-stopka">
-                <span>Praca zapamiętana na serwerze pozostaje nienaruszona.</span>
-                <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                        data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
-                        data-komunikat-tytul="Zamknięcie aplikacji"
-                        data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
-              </div>
+              <p class="we-fraza"><span>Praca zapamiętana na serwerze pozostaje nienaruszona.</span></p>
+            </div>
+            <div class="we-pas" data-widok="w-blad" data-grupa-widoku="wariant" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                      data-komunikat="Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu."
+                      data-komunikat-tytul="Zamknięcie aplikacji"
+                      data-komunikat-rodzaj="informacja">Zamknij aplikację</button>
             </div>
 
+              <p class="we-marka-stopka">
+                Danaco Holding Group Sp. z o.o.<br>
+                wydanie 2.0<br>
+                support@danaco-core.pl
+              </p>
           </div>
         </div>
 
@@ -455,8 +454,8 @@
           <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-blad" aria-controls="s-logowanie-blad" data-przelacz="logowanie-blad" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>2 · Logowanie — dane niezgodne</button>
           <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-rejestracja" aria-controls="s-rejestracja" data-przelacz="rejestracja" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>3 · Rejestracja</button>
           <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-kod" aria-controls="s-kod" data-przelacz="kod" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>4 · Kod potwierdzający</button>
-          <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-odz1" aria-controls="s-odzyskiwanie-1" data-przelacz="odzyskiwanie-1" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>5 · Odzyskiwanie — adres</button>
-          <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-odz2" aria-controls="s-odzyskiwanie-2" data-przelacz="odzyskiwanie-2" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>6 · Odzyskiwanie — nowe hasło</button>
+          <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-odz1" aria-controls="s-odzyskiwanie-adres" data-przelacz="odzyskiwanie-adres" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>5 · Odzyskiwanie — adres</button>
+          <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-odz2" aria-controls="s-odzyskiwanie-haslo" data-przelacz="odzyskiwanie-haslo" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>6 · Odzyskiwanie — nowe hasło</button>
         </div>
       </div>
 
@@ -488,11 +487,6 @@
                 <p class="we-marka-motto">Platforma AI Workspace OS</p>
               </div>
               <ul class="we-marka-lista"><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a4 4 0 0 0 0-8H9a4 4 0 0 1 0-8"/></svg><span><b>Cztery środowiska pracy</b>Osobna przestrzeń robocza dla każdego rodzaju pracy: TalkIn, WorkSpace, CodeStudio, MultitaskingAI.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.8 2.8M14.9 14.9l2.8 2.8M17.7 6.3l-2.8 2.8M9.1 14.9l-2.8 2.8"/></svg><span><b>Wiele modeli nad jednym zleceniem</b>Koordynator rozdziela zlecenie między wykonawców; przebieg śledzisz w Execution Loop Window.</span></li><li class="we-marka-poz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Izolacja kontekstu pod kontrolą</b>Punkty izolacji kontekstu ustala Operator, nie sztywna reguła systemu.</span></li></ul>
-              <p class="we-marka-stopka">
-                Danaco Holding Group Sp. z o.o.<br>
-                wydanie 2.0<br>
-                support@danaco-core.pl
-              </p>
             </div>
 
             <!-- STAN 1 · LOGOWANIE -->
@@ -510,22 +504,15 @@
                 <div class="dn-pole"><label class="dn-pole-etykieta" for="log-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="log-haslo" autocomplete="current-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="log-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
               </div>
               <div class="au-opcje">
-                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Pozostań zalogowany na tym stanowisku<small>Sesja nie wygaśnie do czasu wylogowania. Nie włączaj na urządzeniu wspólnym.</small></span></label>
+                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Nie wylogowuj mnie na tym urządzeniu<small>Sesja pozostanie aktywna do czasu wylogowania. Nie zaznaczaj na urządzeniu współdzielonym.</small></span></label>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Zaloguj się</button>
-                <a class="au-link" href="#s-odzyskiwanie-1" data-idz="odzyskiwanie-1" data-idz-grupa="stan">Nie pamiętam hasła</a>
-              </div>
+              <p class="we-fraza"><span class="we-fraza-pytanie">Nie pamiętasz hasła?</span> <a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Resetuj hasło</a></p>
               <p class="au-etykieta">Inna metoda</p>
               <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
-              <div class="we-stopka we-stopka--ciag">
-                <span>Nie masz konta? <a class="au-link" href="#s-rejestracja" data-idz="rejestracja" data-idz-grupa="stan">Utwórz konto Operatora</a></span>
-                <span class="we-lacznik">lub</span>
-                <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                        data-komunikat="Praca bez konta jest możliwa w trybie lokalnym: sesje nie wrócą na innym urządzeniu i nie zostaną zapamiętane po stronie serwera."
-                        data-komunikat-tytul="Praca bez konta"
-                        data-komunikat-rodzaj="informacja">Kontynuuj bez konta</button>
-              </div>
+              <p class="we-fraza"><span>Nie masz konta? <a class="au-link" href="#s-rejestracja" data-idz="rejestracja" data-idz-grupa="stan">Utwórz konto Operatora</a></span></p>
+            </div>
+            <div class="we-pas" data-widok="logowanie" data-grupa-widoku="stan" data-widok-aktywny="tak">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Zaloguj się</button>
             </div>
 
             <!-- STAN 2 · LOGOWANIE — DANE NIEZGODNE -->
@@ -543,15 +530,13 @@
                 <label class="dn-pole"><span class="dn-pole-etykieta">Login albo adres e-mail</span><input class="dn-pole-kontrolka" type="text" id="blad-login" autocomplete="username" aria-invalid="true" aria-describedby="blad-logowania"></label>
                 <div class="dn-pole"><label class="dn-pole-etykieta" for="blad-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="blad-haslo" autocomplete="current-password" aria-invalid="true" aria-describedby="blad-logowania blad-haslo-opis"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="blad-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span><span class="dn-pole-opis" id="blad-haslo-opis">Sprawdź, czy nie jest włączony Caps Lock.</span></div>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Zaloguj się ponownie</button>
-                <a class="au-link" href="#s-odzyskiwanie-1" data-idz="odzyskiwanie-1" data-idz-grupa="stan">Nie pamiętam hasła</a>
-              </div>
+              <p class="we-fraza"><span class="we-fraza-pytanie">Nie pamiętasz hasła?</span> <a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Resetuj hasło</a></p>
               <p class="au-etykieta">Inna metoda</p>
               <div class="au-metody"><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg><span>Kod PIN</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span>Klucz systemowy</span><span class="au-metoda-stan">nieaktywna</span></button><button class="au-metoda" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Kod na adres e-mail</span><span class="au-metoda-stan">aktywna</span></button></div>
-              <div class="we-stopka we-stopka--ciag">
-                <span>Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp przywraca wówczas odzyskiwanie konta adresem e-mail.</span>
-              </div>
+              <p class="we-fraza"><span>Po pięciu nieudanych próbach logowanie zostaje wstrzymane na godzinę. Dostęp przywraca wówczas odzyskiwanie konta adresem e-mail.</span></p>
+            </div>
+            <div class="we-pas" data-widok="logowanie-blad" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Zaloguj się ponownie</button>
             </div>
 
             <!-- STAN 3 · REJESTRACJA -->
@@ -561,7 +546,7 @@
 
               <div class="we-glowa">
                 <h2 class="we-tytul">Utwórz konto Operatora</h2>
-                <p class="we-lid">Podaj adres e-mail, z którego stale korzystasz. Posłuży do potwierdzenia konta i odzyskania dostępu.</p>
+                <p class="we-lid">Adres e-mail posłuży do potwierdzenia konta i odzyskania dostępu.</p>
               </div>
               <div class="we-komunikaty" aria-live="polite"></div>
               <div class="au-pola">
@@ -572,14 +557,14 @@
                 <div class="au-para">
                   <div>
                     <div class="dn-pole"><label class="dn-pole-etykieta" for="rej-haslo">Hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="rej-haslo" autocomplete="new-password" aria-describedby="rej-sila-opis"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="rej-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
-                    <div class="au-sila" data-stopien="0">
+                    <div class="au-sila" data-stopien="0" data-sila-dla="rej-haslo">
                       <div class="au-sila-tor" aria-hidden="true"><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span></div>
                       <span class="au-sila-opis" id="rej-sila-opis" data-sila-opis aria-live="polite">Siła hasła zostanie oceniona podczas wpisywania</span>
                       <div class="au-sila-warunki">
-                        <span class="au-sila-warunek" data-warunek="dlugosc" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>co najmniej 12 znaków</span>
-                        <span class="au-sila-warunek" data-warunek="wielkosc" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>wielka i mała litera</span>
-                        <span class="au-sila-warunek" data-warunek="cyfra" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>cyfra</span>
-                        <span class="au-sila-warunek" data-warunek="znak" data-spelniony="nie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>znak specjalny</span>
+                        <span class="au-sila-warunek" data-warunek="dlugosc" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>co najmniej 12 znaków</span>
+                        <span class="au-sila-warunek" data-warunek="wielkosc" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>wielka i mała litera</span>
+                        <span class="au-sila-warunek" data-warunek="cyfra" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>cyfra</span>
+                        <span class="au-sila-warunek" data-warunek="znak" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>znak specjalny</span>
                       </div>
                     </div>
                   </div>
@@ -587,19 +572,12 @@
                 </div>
               </div>
               <div class="au-opcje">
-                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Pozostań zalogowany na tym stanowisku<small>Sesja nie wygaśnie do czasu wylogowania. Nie włączaj na urządzeniu wspólnym.</small></span></label>
+                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Nie wylogowuj mnie na tym urządzeniu<small>Sesja pozostanie aktywna do czasu wylogowania. Nie zaznaczaj na urządzeniu współdzielonym.</small></span></label>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="kod" data-idz-grupa="stan">Utwórz konto</button>
-              </div>
-              <div class="we-stopka we-stopka--ciag">
-                <span>Masz już konto? <a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Zaloguj się</a></span>
-                <span class="we-lacznik">lub</span>
-                <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                        data-komunikat="Praca bez konta jest możliwa w trybie lokalnym: sesje nie wrócą na innym urządzeniu i nie zostaną zapamiętane po stronie serwera."
-                        data-komunikat-tytul="Praca bez konta"
-                        data-komunikat-rodzaj="informacja">Kontynuuj bez konta</button>
-              </div>
+              <p class="we-fraza"><span>Masz już konto? <a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Zaloguj się</a></span></p>
+            </div>
+            <div class="we-pas" data-widok="rejestracja" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="kod" data-idz-grupa="stan">Utwórz konto</button>
             </div>
 
             <!-- STAN 4 · KOD POTWIERDZAJĄCY -->
@@ -616,24 +594,22 @@
                 <span class="au-odliczanie">Kod traci ważność za <b>59:12</b></span>
                 <button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-wklej-kod>Wklej kod ze schowka</button>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Potwierdź konto</button>
-              </div>
               <div class="we-komunikaty" aria-live="polite">
                 <div class="we-alarm we-alarm--informacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span><b>Nie ma wiadomości?</b>Sprawdź folder wiadomości niechcianych. Kod wysyłamy z adresu noreply@danaco-core.pl — dociera zwykle w ciągu minuty. Jeśli nie dotarł, wyślij go ponownie.</span></div>
               </div>
-              <div class="we-stopka we-stopka--ciag">
-                <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
-                        data-komunikat="Nowy kod potwierdzający został wysłany na adres login@przykład.pl."
-                        data-komunikat-tytul="Kod wysłany ponownie"
-                        data-komunikat-rodzaj="sukces">Wyślij kod ponownie</button>
-                <a class="au-link" href="#s-rejestracja" data-idz="rejestracja" data-idz-grupa="stan">Zmień adres e-mail</a>
-              </div>
+              <p class="we-fraza"><a class="au-link" href="#s-rejestracja" data-idz="rejestracja" data-idz-grupa="stan">Zmień adres e-mail</a></p>
+            </div>
+            <div class="we-pas" data-widok="kod" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button"
+                      data-komunikat="Nowy kod potwierdzający został wysłany na adres login@przykład.pl."
+                      data-komunikat-tytul="Kod wysłany ponownie"
+                      data-komunikat-rodzaj="sukces">Wyślij kod ponownie</button>
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="przygotowanie" data-idz-grupa="etap">Potwierdź konto</button>
             </div>
 
             <!-- STAN 5 · ODZYSKIWANIE — ADRES -->
-            <div class="we-panel" id="s-odzyskiwanie-1" role="tabpanel" tabindex="0" data-pigulka="logowanie" aria-labelledby="zak-s-odz1"
-                 data-widok="odzyskiwanie-1" data-grupa-widoku="stan" data-widok-aktywny="nie">
+            <div class="we-panel" id="s-odzyskiwanie-adres" role="tabpanel" tabindex="0" data-pigulka="logowanie" aria-labelledby="zak-s-odz1"
+                 data-widok="odzyskiwanie-adres" data-grupa-widoku="stan" data-widok-aktywny="nie">
               <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" aria-controls="s-logowanie" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" aria-controls="s-rejestracja" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
 
               <div class="we-glowa">
@@ -647,12 +623,10 @@
               <div class="we-komunikaty" aria-live="polite">
                 <div class="we-alarm we-alarm--informacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg><span><b>Zmiana hasła kończy wszystkie sesje.</b>Na pozostałych urządzeniach trzeba zalogować się ponownie.</span></div>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="odzyskiwanie-kod" data-idz-grupa="stan">Wyślij kod potwierdzający</button>
-              </div>
-              <div class="we-stopka we-stopka--ciag">
-                <a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Wróć do logowania</a>
-              </div>
+              <p class="we-fraza"><a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Wróć do logowania</a></p>
+            </div>
+            <div class="we-pas" data-widok="odzyskiwanie-adres" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="odzyskiwanie-kod" data-idz-grupa="stan">Wyślij kod potwierdzający</button>
             </div>
 
 
@@ -668,9 +642,9 @@
               </div>
               <div class="we-komunikaty" aria-live="polite"></div>
               <div class="au-kod">
-                <input class="au-kod-pole" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Znak 1 z 6" value="4">
-                <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 2 z 6" value="7">
-                <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 3 z 6" value="2">
+                <input class="au-kod-pole" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Znak 1 z 6">
+                <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 2 z 6">
+                <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 3 z 6">
                 <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 4 z 6">
                 <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 5 z 6">
                 <input class="au-kod-pole" inputmode="numeric" maxlength="1" aria-label="Znak 6 z 6">
@@ -684,17 +658,15 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.5-3.1 8.3-7.5 9.5-4.4-1.2-7.5-5-7.5-9.5V6z"/></svg>
                 <span><b>Kod wprowadza się wyłącznie w tym oknie.</b>Danaco Console nigdy nie prosi o kod przez telefon ani pocztą zwrotną.</span>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="odzyskiwanie-2" data-idz-grupa="stan">Potwierdź kod</button>
-              </div>
-              <div class="we-stopka we-stopka--ciag">
-                <a class="au-link" href="#s-odzyskiwanie-1" data-idz="odzyskiwanie-1" data-idz-grupa="stan">Zmień adres konta</a>
-              </div>
+              <p class="we-fraza"><a class="au-link" href="#s-odzyskiwanie-adres" data-idz="odzyskiwanie-adres" data-idz-grupa="stan">Zmień adres konta</a></p>
+            </div>
+            <div class="we-pas" data-widok="odzyskiwanie-kod" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="odzyskiwanie-haslo" data-idz-grupa="stan">Potwierdź kod</button>
             </div>
 
             <!-- STAN 7 · ODZYSKIWANIE — NOWE HASŁO -->
-            <div class="we-panel" id="s-odzyskiwanie-2" role="tabpanel" tabindex="0" data-pigulka="logowanie" aria-labelledby="zak-s-odz2"
-                 data-widok="odzyskiwanie-2" data-grupa-widoku="stan" data-widok-aktywny="nie">
+            <div class="we-panel" id="s-odzyskiwanie-haslo" role="tabpanel" tabindex="0" data-pigulka="logowanie" aria-labelledby="zak-s-odz2"
+                 data-widok="odzyskiwanie-haslo" data-grupa-widoku="stan" data-widok-aktywny="nie">
               <div class="dn-zakladki dn-zakladki--pigulki" role="tablist" aria-label="Logowanie albo rejestracja"><button class="dn-zakladka" type="button" role="tab" aria-selected="true" aria-controls="s-logowanie" data-przelacz="logowanie" data-grupa="stan">Zaloguj się</button><button class="dn-zakladka" type="button" role="tab" aria-selected="false" aria-controls="s-rejestracja" data-przelacz="rejestracja" data-grupa="stan">Zarejestruj się</button></div>
 
               <div class="we-glowa">
@@ -708,29 +680,32 @@
                   <div class="dn-pole"><label class="dn-pole-etykieta" for="odz-haslo">Nowe hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="odz-haslo" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="odz-haslo"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
                   <div class="dn-pole"><label class="dn-pole-etykieta" for="odz-haslo-2">Powtórz nowe hasło</label><span class="au-haslo"><input class="dn-pole-kontrolka" type="password" id="odz-haslo-2" autocomplete="new-password"><button class="au-haslo-oko" type="button" aria-pressed="false" aria-label="Pokaż hasło" data-odsloniecie="odz-haslo-2"><svg class="ik-odkryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ik-zakryte" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.7 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.5 3.4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 5.4-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button></span></div>
 
-                <div class="au-sila" data-stopien="3">
-                  <div class="au-sila-tor"><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span></div>
-                  <p class="au-sila-opis">Siła hasła: dostateczna — dołożenie znaku przestankowego podniesie ją do wysokiej.</p>
+                <div class="au-sila" data-stopien="0" data-sila-dla="odz-haslo">
+                  <div class="au-sila-tor" aria-hidden="true"><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span><span class="au-sila-odc"></span></div>
+                  <span class="au-sila-opis" id="odz-sila-opis" data-sila-opis aria-live="polite">Siła hasła zostanie oceniona podczas wpisywania</span>
                   <div class="au-sila-warunki">
-                    <span class="au-sila-warunek" data-spelniony="tak"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 6l3 3 5-6"/></svg>co najmniej 12 znaków</span>
-                    <span class="au-sila-warunek" data-spelniony="tak"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 6l3 3 5-6"/></svg>cyfra</span>
-                    <span class="au-sila-warunek" data-spelniony="tak"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M2 6l3 3 5-6"/></svg>wielka litera</span>
-                    <span class="au-sila-warunek"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="6" cy="6" r="4"/></svg>znak przestankowy</span>
+                    <span class="au-sila-warunek" data-warunek="dlugosc" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>co najmniej 12 znaków</span>
+                    <span class="au-sila-warunek" data-warunek="wielkosc" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>wielka i mała litera</span>
+                    <span class="au-sila-warunek" data-warunek="cyfra" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>cyfra</span>
+                    <span class="au-sila-warunek" data-warunek="znak" data-spelniony="nie"><svg class="ik-brak" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="7"/></svg><svg class="ik-jest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>znak specjalny</span>
                   </div>
                 </div>
                 </div>
               </div>
               <div class="au-opcje">
-                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Pozostań zalogowany na tym stanowisku<small>Sesja nie wygaśnie do czasu wylogowania. Nie włączaj na urządzeniu wspólnym.</small></span></label>
+                <label class="au-opcja"><input class="dn-check" type="checkbox"><span>Nie wylogowuj mnie na tym urządzeniu<small>Sesja pozostanie aktywna do czasu wylogowania. Nie zaznaczaj na urządzeniu współdzielonym.</small></span></label>
               </div>
-              <div class="au-akcje">
-                <button class="dn-btn dn-btn--sygnal" type="button" data-idz="logowanie" data-idz-grupa="stan">Potwierdź nowe hasło</button>
-              </div>
-              <div class="we-stopka we-stopka--ciag">
-                <a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Wróć do logowania</a>
-              </div>
+              <p class="we-fraza"><a class="au-link" href="#s-logowanie" data-idz="logowanie" data-idz-grupa="stan">Wróć do logowania</a></p>
+            </div>
+            <div class="we-pas" data-widok="odzyskiwanie-haslo" data-grupa-widoku="stan" data-widok-aktywny="nie">
+              <button class="dn-btn dn-btn--sygnal" type="button" data-idz="logowanie" data-idz-grupa="stan">Potwierdź nowe hasło</button>
             </div>
 
+              <p class="we-marka-stopka">
+                Danaco Holding Group Sp. z o.o.<br>
+                wydanie 2.0<br>
+                support@danaco-core.pl
+              </p>
           </div>
         </div>
       </div>
@@ -784,7 +759,6 @@
                           </div>
                         </div>
 
-                        <p class="we-marka-stopka">Odtwarzanie trwa po stronie serwera.<br>Zamknięcie okna nie przerywa przywracania.</p>
                       </div>
 
                       <div class="we-panel">
@@ -812,20 +786,19 @@
                             </div>
                           </div>
                         </div>
-
-                        <div class="we-stopka">
-                          <span>Kolejny krok: strona główna platformy.</span>
-                          <span class="we-akcje">
-                            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                                    data-komunikat="Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji."
-                                    data-komunikat-tytul="Pominięcie przywracania"
-                                    data-komunikat-rodzaj="informacja">Pomiń przywracanie sesji</button>
-                            <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
-                                    data-idz="uwierzytelnienie" data-idz-grupa="etap">Przerwij i wyloguj</button>
-                          </span>
-                        </div>
+                      </div>
+                      <div class="we-pas">
+                        <span class="we-akcje">
+                          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                                  data-komunikat="Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji."
+                                  data-komunikat-tytul="Pominięcie przywracania"
+                                  data-komunikat-rodzaj="informacja">Pomiń przywracanie sesji</button>
+                          <button class="dn-btn dn-btn--duch dn-btn--sm" type="button"
+                                  data-idz="uwierzytelnienie" data-idz-grupa="etap">Przerwij i wyloguj</button>
+                        </span>
                       </div>
 
+                        <p class="we-marka-stopka">Odtwarzanie trwa po stronie serwera.<br>Zamknięcie okna nie przerywa przywracania.</p>
                     </div>
                   </div>
                 </div>
@@ -888,7 +861,8 @@
     <h2>Odwzorowane interakcje</h2>
     <ul>
       <li>Przejście między trzema etapami przepływu — zakładkami rusztowania oraz kontrolkami
-          wewnątrz okien („Przejdź do rejestracji i logowania”, „Zaloguj się”, „Potwierdź konto”).</li>
+          wewnątrz okien („Zaloguj się”, „Potwierdź konto”). Nawiązanie połączenia przechodzi
+          dalej samo — po ostatnim etapie, bez czynności użytkownika.</li>
       <li>Przełączanie trzech wariantów stanu etapu 1 i sześciu stanów etapu 2
           (zakładki z obsługą klawiatury: strzałki, Home, End).</li>
       <li>„Odtwórz przebieg” — sekwencja <code>connection.hello</code> → <code>connection.hello.ack</code>:
@@ -992,6 +966,11 @@
     odswiezPigulki();
     if (grupa === 'etap') poEtapie(nazwa);
   }
+
+  /* Szew dla mechaniki okna: przejście między etapami wywołuje się z zewnątrz
+     tak samo, jak wywołuje je kliknięcie. Skrypt okna nie zna wnętrza podglądu
+     i nie musi go znać. */
+  window.dnPrzejdz = idz;
 
   function poEtapie(nazwa) {
     var podpis = D.querySelector('[data-podpis-etapu]');
@@ -1349,33 +1328,6 @@
     });
   });
 
-  /* Ocena siły hasła — cztery warunki, cztery stopnie. */
-  var haslo = D.getElementById('rej-haslo');
-  if (haslo) {
-    var blok = haslo.closest('.dn-pole').parentNode.querySelector('.au-sila');
-    var opis = blok.querySelector('[data-sila-opis]');
-    var OPISY = ['Siła hasła zostanie oceniona podczas wpisywania', 'Hasło słabe — spełnia jeden warunek',
-                 'Hasło dostateczne — spełnia dwa warunki', 'Hasło dobre — spełnia trzy warunki',
-                 'Hasło mocne — spełnia wszystkie cztery warunki'];
-    haslo.addEventListener('input', function () {
-      var v = haslo.value;
-      var w = {
-        dlugosc: v.length >= 12,
-        wielkosc: /[a-ząćęłńóśźż]/.test(v) && /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(v),
-        cyfra: /[0-9]/.test(v),
-        znak: /[^0-9A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(v)
-      };
-      var stopien = 0;
-      Object.keys(w).forEach(function (k) {
-        var el = blok.querySelector('[data-warunek="' + k + '"]');
-        if (el) el.setAttribute('data-spelniony', w[k] ? 'tak' : 'nie');
-        if (w[k]) stopien += 1;
-      });
-      blok.setAttribute('data-stopien', String(stopien));
-      opis.textContent = OPISY[stopien];
-    });
-  }
-
   /* Kod potwierdzający — przejście między polami i wklejenie całości. */
   var pola = wszystkie('[data-kod]');
   pola.forEach(function (p, i) {
@@ -1416,5 +1368,7 @@
 })();
 </script>
 
+<script src="../../zasoby/ekran-startowy.js"></script>
+<script src="../../zasoby/okna/przeplyw-wejscia.js"></script>
 </body>
 </html>

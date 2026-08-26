@@ -160,15 +160,18 @@ wszystkie('.au-kod').forEach(function (grupa) {
   var polaKodu = Array.prototype.slice.call(grupa.querySelectorAll('.au-kod-pole'));
   if (!polaKodu.length) return;
 
+  /* Kod jest sześciocyfrowy — tak nazywa go okno i tak zapowiada pole
+     (`inputmode="numeric"`). Przyjmowanie liter i zamiana ich na wersaliki
+     przeczyła obu tym zapowiedziom. */
   function rozsyp(tekst) {
-    var czysty = String(tekst || '').replace(/[^0-9A-Za-z]/g, '');
-    polaKodu.forEach(function (q, j) { q.value = (czysty[j] || '').toUpperCase(); });
+    var czysty = String(tekst || '').replace(/[^0-9]/g, '');
+    polaKodu.forEach(function (q, j) { q.value = czysty[j] || ''; });
     polaKodu[Math.min(czysty.length, polaKodu.length - 1)].focus();
   }
 
   polaKodu.forEach(function (p, i) {
     p.addEventListener('input', function () {
-      p.value = p.value.replace(/[^0-9A-Za-z]/g, '').slice(0, 1).toUpperCase();
+      p.value = p.value.replace(/[^0-9]/g, '').slice(0, 1);
       if (p.value && polaKodu[i + 1]) polaKodu[i + 1].focus();
     });
     p.addEventListener('keydown', function (e) {

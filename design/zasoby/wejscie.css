@@ -70,11 +70,15 @@
   --we-wciecie-y: var(--dn-od-5);
 
   /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
-     `min-height` pozwalał mu rosnąć razem z treścią widoku. Wysokość jest ta
-     sama co w instalatorze: rodzina okien przed uruchomieniem programu ma
-     jedną bryłę, a użytkownik widzi te okna jedno po drugim. */
+     `min-height` pozwalał mu rosnąć razem z treścią widoku.
+
+     Wyższe od kreatora o 60 px, bo niesie gęstszą treść: formularz, miernik
+     siły hasła, zgodę na sesję i trzy metody logowania naraz. Przy wysokości
+     kreatora sekcje musiałyby stać ciasno jedna przy drugiej i zlewać się
+     w jeden blok. Szerokość i oprawa zostają wspólne — bryła rodziny się
+     nie zmienia. */
   width: 1040px;
-  height: var(--dn-wym-okno-instalatora-wys);
+  height: var(--dn-wym-okno-wejscia-wys);
   flex: none;
   display: grid;
   grid-template-columns: 384px minmax(0, 1fr);
@@ -393,6 +397,20 @@
 /* Zdanie nawigacyjne i odsyłacze stoją nad pasem, w treści. W pasie zostają
    same czynności — inaczej zdanie, czynność poboczna i główna nie mieszczą się
    w jednym wierszu i pas łamie się poza okno. */
+/* Grupa oddycha ciasno, sekcja szeroko. Odstęp podstawowy kolumny wiąże bloki
+   należące do siebie — pola formularza, miernik pod polem hasła. Początek nowej
+   sekcji dostaje odstęp dwa razy większy, inaczej „Inne metody logowania"
+   czyta się jak dalszy ciąg pola hasła, a zdanie zamykające — jak podpis pod
+   ostatnią kontrolką. */
+/* Głowa ekranu odcina się od treści szerzej niż bloki między sobą: tytuł,
+   tor kroków i zdanie wprowadzające to jedna rzecz, a formularz — druga. */
+.we-glowa { margin-bottom: var(--dn-od-5); }
+.we-panel .au-etykieta,
+.we-panel .au-opcje,
+.we-panel .au-kod,
+.we-panel > .we-fraza { margin-top: var(--dn-od-3); }
+.we-panel > .we-fraza:last-child { margin-top: var(--dn-od-6); }
+
 .we-fraza {
   /* Zdanie idzie za treścią, do której należy — nie spada na dno panelu.
      Dosunięcie do dołu wyrywało je z kontekstu: przy dwóch frazach pierwsza

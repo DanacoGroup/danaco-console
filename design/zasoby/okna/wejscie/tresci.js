@@ -156,8 +156,8 @@ window.DanacoWejscie.tresci = {
       "tytul": "Potwierdź adres e-mail",
       "lid": "Na adres {adres} został wysłany sześciocyfrowy kod. Zachowuje ważność przez {minuty} minut.",
       "lidDane": { "adres": "operator@danaco-group.pl", "minuty": 10 },
-      "obszar": "Kod potwierdzający — sześć znaków",
-      "znak": "Znak {numer} z sześciu",
+      "obszar": "Kod potwierdzający — sześć cyfr",
+      "znak": "Cyfra {numer} z sześciu",
       "odliczanie": "Kod traci ważność za",
       "wklej": "Wklej kod ze schowka",
       "ponow": "Wyślij kod ponownie",
@@ -254,7 +254,7 @@ window.DanacoWejscie.tresci = {
     },
     "ustawienia": {
       "tytul": "Ustawienia połączenia",
-      "tresc": "Ustawienia połączenia otwierają się w oknie konfiguracji, w zakresie „Sieć i serwer”."
+      "tresc": "Ustawienia połączenia otwierają się w oknie konfiguracji, w sekcji „Sieć i serwer”."
     },
     "kodPonowiony": {
       "tytul": "Kod wysłany ponownie",

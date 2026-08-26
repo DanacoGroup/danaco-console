@@ -195,6 +195,7 @@
   --dn-wym-bryly-min: 260px;               /* pole bryły warstw — próg czytelności sceny */
   --dn-wym-okno-instalatora-szer: 1020px;   /* okno instalatora */
   --dn-wym-okno-instalatora-wys: 720px;
+  --dn-wym-okno-wejscia-wys: 780px;         /* okno wejścia — gęstsze od kreatora */
   --dn-wym-belka-instalatora: 44px;
   --dn-wym-stopki-instalatora: 64px;
   --dn-od-tresci-instalatora: 40px;

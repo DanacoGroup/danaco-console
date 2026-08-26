@@ -15,9 +15,13 @@
 var W = window.DanacoWejscie;
 W.ekrany = W.ekrany || {};
 
-function panel(N, nazwa, aktywny, pigulka, dzieci) {
+function panel(N, nazwa, aktywny, pigulka, dzieci, nazwaDostepna) {
   return N.el('div', {
     klasa: 'we-panel', id: 's-' + nazwa, role: 'tabpanel', tabindex: '0',
+    /* Obszar o roli `tabpanel` musi mieć nazwę — bez niej czytnik ekranu
+       ogłasza „panel" i nic więcej. Zakładki rusztowania mają nieregularne
+       identyfikatory, więc nazwa bierze się z tytułu odsłony, nie z nich. */
+    'aria-label': nazwaDostepna ? N.tekst(nazwaDostepna) : null,
     dane: {
       widok: nazwa, 'grupa-widoku': 'stan',
       'widok-aktywny': aktywny ? 'tak' : 'nie',
@@ -73,7 +77,7 @@ W.ekrany.dostep = function (N) {
         pytanie: 'dostep.logowanie.fraza.pytanie', czynnosc: 'dostep.logowanie.fraza.czynnosc',
         cel: 'rejestracja'
       })
-    ])),
+    ]), 'dostep.logowanie.tytul'),
 
     /* ── logowanie, dane nierozpoznane ─────────────────────────────────── */
     panel(N, 'logowanie-blad', false, 'logowanie', [
@@ -88,7 +92,7 @@ W.ekrany.dostep = function (N) {
       resetHasla()
     ].concat(S.metodyLogowania(N, { dostepne: ['email'] })).concat([
       S.frazaNawigacyjna(N, { klucz: 'dostep.logowanieBlad.fraza' })
-    ])),
+    ]), 'dostep.logowanie.tytul'),
 
     /* ── zakładanie konta ──────────────────────────────────────────────── */
     panel(N, 'rejestracja', false, 'rejestracja', [
@@ -112,7 +116,7 @@ W.ekrany.dostep = function (N) {
         pytanie: 'dostep.rejestracja.fraza.pytanie', czynnosc: 'dostep.rejestracja.fraza.czynnosc',
         cel: 'logowanie'
       })
-    ]),
+    ], 'dostep.rejestracja.tytul'),
 
     /* ── potwierdzenie adresu po założeniu konta ───────────────────────── */
     panel(N, 'kod', false, 'rejestracja', [
@@ -126,7 +130,7 @@ W.ekrany.dostep = function (N) {
         })
       ]),
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.kod.zmienAdres', cel: 'rejestracja' })
-    ])),
+    ]), 'dostep.kod.tytul'),
 
     /* ── odzyskiwanie: adres ───────────────────────────────────────────── */
     panel(N, 'odzyskiwanie-adres', false, 'logowanie', [
@@ -146,7 +150,7 @@ W.ekrany.dostep = function (N) {
         })
       ]),
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.odzyskiwanie.powrot', cel: 'logowanie' })
-    ]),
+    ], 'dostep.odzyskiwanie.adres.tytul'),
 
     /* ── odzyskiwanie: kod ─────────────────────────────────────────────── */
     panel(N, 'odzyskiwanie-kod', false, 'logowanie', [
@@ -162,7 +166,7 @@ W.ekrany.dostep = function (N) {
         glowa: 'dostep.kod.ostrzezenie.glowa', tresc: 'dostep.kod.ostrzezenie.tresc'
       }),
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.kod.zmienAdres', cel: 'odzyskiwanie-adres' })
-    ])),
+    ]), 'dostep.kod.tytul'),
 
     /* ── odzyskiwanie: nowe hasło ──────────────────────────────────────── */
     panel(N, 'odzyskiwanie-haslo', false, 'logowanie', [
@@ -181,7 +185,7 @@ W.ekrany.dostep = function (N) {
       ]),
       S.poleSesji(N),
       S.frazaNawigacyjna(N, { czynnosc: 'dostep.odzyskiwanie.powrot', cel: 'logowanie' })
-    ])
+    ], 'dostep.odzyskiwanie.haslo.tytul')
   ];
 };
 
@@ -189,20 +193,23 @@ W.ekrany.dostepPasy = function (N) {
   var S = W.skladniki;
   var zamknij = { klucz: 'dzialania.zamknijAplikacje', komunikat: 'zamkniecie' };
   var glowna = 'dn-btn dn-btn--sygnal';
-  function pas(widok, aktywny, klucz, cel) {
+  /* Czynność główna prowadzi albo do kolejnego etapu, albo do kolejnej odsłony
+     tego samego okna. Bez celu przycisk nie dostaje uchwytu `data-idz` i jest
+     martwy — cały tor odzyskiwania dostępu stał tak od pierwszego kroku. */
+  function pas(widok, aktywny, klucz, cel, grupa) {
     return S.pasDzialan(N, {
       widok: widok, grupa: 'stan', aktywny: aktywny,
-      czynnosci: [zamknij, { klucz: klucz, klasa: glowna, cel: cel, grupa: 'etap' }]
+      czynnosci: [zamknij, { klucz: klucz, klasa: glowna, cel: cel, grupa: grupa || 'etap' }]
     });
   }
   return [
     pas('logowanie', true, 'dzialania.zaloguj', 'przygotowanie'),
     pas('logowanie-blad', false, 'dzialania.zalogujPonownie', 'przygotowanie'),
-    pas('rejestracja', false, 'dzialania.utworzKonto', 'przygotowanie'),
+    pas('rejestracja', false, 'dzialania.utworzKonto', 'kod', 'stan'),
     pas('kod', false, 'dzialania.potwierdzKonto', 'przygotowanie'),
-    pas('odzyskiwanie-adres', false, 'dzialania.wyslijKod', null),
-    pas('odzyskiwanie-kod', false, 'dzialania.potwierdzKod', null),
-    pas('odzyskiwanie-haslo', false, 'dzialania.potwierdzHaslo', null)
+    pas('odzyskiwanie-adres', false, 'dzialania.wyslijKod', 'odzyskiwanie-kod', 'stan'),
+    pas('odzyskiwanie-kod', false, 'dzialania.potwierdzKod', 'odzyskiwanie-haslo', 'stan'),
+    pas('odzyskiwanie-haslo', false, 'dzialania.potwierdzHaslo', 'logowanie', 'stan')
   ];
 };
 })();

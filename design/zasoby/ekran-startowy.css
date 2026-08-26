@@ -1,0 +1,52 @@
+/* ============================================================================
+   PODGLĄD EKRANU STARTOWEGO — oprawa, nie sam ekran
+
+   Trzy kadry obok siebie, żeby ocenić znak w wielkości powłoki, w połowie tej
+   wielkości i na tle udającym pulpit. Ani jedna reguła stąd nie należy do
+   produktu — ekran startowy w produkcie nie ma oprawy.
+   ============================================================================ */
+
+.es-podglad {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--dn-od-8) var(--dn-od-6);
+  background: var(--dn-tlo);
+  color: var(--dn-tekst);
+}
+
+.es-siatka {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--dn-od-8);
+}
+
+.es-kadr { margin: 0; display: flex; flex-direction: column; gap: var(--dn-od-3); }
+
+.es-kadr > .dn-ekran-startowy {
+  width: 560px; height: 420px;
+  background: var(--dn-powierzchnia);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+}
+
+.es-kadr--male > .dn-ekran-startowy { width: 280px; height: 210px; }
+
+/* Pulpit zastępczy — nie jest wzorem żadnej tapety, ma tylko pokazać, że znak
+   czyta się na tle, którego nie zna. */
+.es-kadr--pulpit > .dn-ekran-startowy {
+  width: 560px; height: 420px;
+  background: linear-gradient(135deg, #1B2A44 0%, #24405F 45%, #3A6089 100%);
+  border: 0;
+}
+
+.es-podpis {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}

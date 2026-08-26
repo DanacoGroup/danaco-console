@@ -882,7 +882,13 @@ jego wprowadzenia, dostaje od bramy odmowę zamiast informacji o niezgodności
 wersji. Im starszy klient, tym pewniej nie dowie się, dlaczego został odrzucony.
 
 **Decyzja.** `connection.hello` **nie podlega bramie**. Odpowiada zawsze, także
-na żądanie niepełne. Braki pól zgłasza w treści odpowiedzi, nie odmową.
+na żądanie niepełne.
+
+Braków pól powitanie **nie zgłasza w treści odpowiedzi** — `ConnectionHelloResponse`
+nie ma pola, w którym mogłoby to zrobić, a dołożenie takiego pola jest zmianą
+kontraktu, czyli rzeczą osobną i większą. Braki idą do dziennika rdzenia. Do
+celu wyjątku to wystarcza: klient starszy ma odczytać `protocolVersion` i sam
+rozpoznać rozjazd, a do tego potrzebuje odpowiedzi, nie wykazu swoich braków.
 
 **Powód.** Uzgodnienie wersji musi działać przed uzgodnieniem czegokolwiek
 innego — w tym przed zgodnością co do pól. Brama sprawdzająca powitanie wobec

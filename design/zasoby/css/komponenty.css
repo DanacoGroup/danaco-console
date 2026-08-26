@@ -1064,6 +1064,16 @@ label.dn-pasek-szukaj:focus-within {
   background: var(--dn-powierzchnia-2);
   overflow: hidden;
 }
+/* Zakładki bez kreski pod spodem — gdy pasek zakładek stoi w oprawie, która
+   sama niesie granicę, druga kreska daje podwójną linię. Zawijanie na wypadek
+   paska szerszego niż kolumna. */
+.dn-zakladki--bez-kreski { border-bottom: 0; }
+.dn-zakladki--zawijane { flex-wrap: wrap; }
+
+/* Miara postępu bierze się z danej na znaczniku, nie z wyglądu wpisanego
+   w atrybut `style` — wartość ustawia mechanika okna. */
+.dn-postep-wartosc { width: 0; }
+
 .dn-postep-wartosc {
   height: 100%;
   border-radius: var(--dn-r-pill);
@@ -2619,13 +2629,33 @@ button.dn-link {
    `aria-valuenow`, i to ona, nie animacja, ogłasza stan nieokreślony.
    Przy ograniczonym ruchu tor stoi wypełniony i przygaszony — nieokreśloność
    niesie brak wartości, więc gaszenie ruchu niczego nie zabiera. */
-.dn-postep-tor--nieokreslony > .dn-postep-wartosc {
+.dn-postep-tor--nieokreslony > /* Zakładki bez kreski pod spodem — gdy pasek zakładek stoi w oprawie, która
+   sama niesie granicę, druga kreska daje podwójną linię. Zawijanie na wypadek
+   paska szerszego niż kolumna. */
+.dn-zakladki--bez-kreski { border-bottom: 0; }
+.dn-zakladki--zawijane { flex-wrap: wrap; }
+
+/* Miara postępu bierze się z danej na znaczniku, nie z wyglądu wpisanego
+   w atrybut `style` — wartość ustawia mechanika okna. */
+.dn-postep-wartosc { width: 0; }
+
+.dn-postep-wartosc {
   width: 35%;
   transition: none;
   animation: dn-postep-przebieg 1.4s var(--dn-ease) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .dn-postep-tor--nieokreslony > .dn-postep-wartosc {
+  .dn-postep-tor--nieokreslony > /* Zakładki bez kreski pod spodem — gdy pasek zakładek stoi w oprawie, która
+   sama niesie granicę, druga kreska daje podwójną linię. Zawijanie na wypadek
+   paska szerszego niż kolumna. */
+.dn-zakladki--bez-kreski { border-bottom: 0; }
+.dn-zakladki--zawijane { flex-wrap: wrap; }
+
+/* Miara postępu bierze się z danej na znaczniku, nie z wyglądu wpisanego
+   w atrybut `style` — wartość ustawia mechanika okna. */
+.dn-postep-wartosc { width: 0; }
+
+.dn-postep-wartosc {
     width: 100%;
     animation: none;
     opacity: 0.45;

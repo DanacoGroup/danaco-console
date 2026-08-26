@@ -6,7 +6,70 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-Żaden teren nie jest otwarty.
+### droga-wejscia
+
+Widok drogi wejścia na gotowym fundamencie klienta. Prototyp jest przyjęty
+(pozycja 12 rejestru decyzji), rdzeń przechodzi całą drogę, warstwy połączenia
+i protokołu stoją. Nic tego terenu nie blokuje.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/droga-wejscia` z `main` |
+| **Wykaz plików** | `budowa/klient/src/wejscie/` — katalog powstaje w tym terenie |
+| **Do czytania, bez zapisu** | `design/zasoby/okna/wejscie/`, `design/05-okna/przeplyw/przeplyw-wejscia.html`, `budowa/shared/contract.json`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
+| **Poza terenem** | `budowa/server/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
+
+**Przedmiot.** Trzy etapy prototypu w działającym kliencie: łączenie z rdzeniem,
+rejestracja i logowanie wraz z odzyskaniem konta, przygotowanie środowiska.
+Odsłony niesie prototyp — nawiązywanie połączenia, przywracanie sesji, błąd
+połączenia, logowanie, wstrzymanie po pięciu próbach, założenie konta Operatora,
+potwierdzenie adresu, odzyskanie dostępu, ustawienie nowego hasła.
+
+**Kompozycji nie wymyślasz — czytasz ją z prototypu.** Pozycja 12 rejestru
+decyzji rozstrzyga, co prototyp wiąże, a co jest parametrem inżynierskim.
+
+**Kryteria odbioru.**
+
+1. Każdy z trzech etapów rozmawia z **żywym rdzeniem** — z przytoczoną
+   odpowiedzią rdzenia dla `connection.hello`, `auth.register`, `auth.login`
+   i `environment.enter`.
+2. Rejestracja obsługuje **obie gałęzie pozycji 11**: przy nadajniku
+   `pendingVerification: true` prowadzi do potwierdzenia listem, przy braku
+   nadajnika kończy się wejściem hasłem i **nazywa niepotwierdzony adres**.
+3. Tekst widoczny dla użytkownika stoi w jednym katalogu treści — poza nim zero
+   łańcuchów. Wykazane pomiarem, tak jak w prototypie.
+4. `tsc --noEmit` bez błędu, sprawdziany zdane — z przytoczonym wynikiem.
+5. Warstwy połączenia i protokołu **nietknięte** — wykazane `git diff`.
+6. Zero dotknięć DOM poza katalogiem tego terenu.
+7. Odsłony błędu i wstrzymania są osiągalne w sprawdzianie, nie tylko opisane.
+8. Rzecz wymagająca rozstrzygnięcia Właściciela wraca jako zgłoszenie.
+
+### powloka-tauri
+
+Powłoka okna dla Windows 11 w dwóch architekturach. Wariant natywny zniesiony
+(pozycja 8), więc powłoka niesie interfejs i **nie niesie rdzenia**.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/powloka-tauri` z `main` |
+| **Wykaz plików** | `budowa/desktop/` |
+| **Do czytania, bez zapisu** | `budowa/klient/`, `budowa/shared/contract.json`, `design/05-okna/platformowe/instalator.html` |
+| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `design/`, `prowadzenie/` |
+
+**Przedmiot.** Doprowadzić powłokę do postaci budowalnej na oba cele Windows 11,
+zgodnej z hybrydą: okno, cykl życia, wskazanie serwera, brak rdzenia w pakiecie.
+
+**Kryteria odbioru.**
+
+1. Powłoka buduje się na `x86_64-pc-windows-gnu` **oraz** `aarch64-pc-windows-msvc`
+   — z przytoczonym wynikiem obu przebiegów.
+2. Pakiet **nie zawiera** rdzenia ani serwera narzędzi — wykazane wykazem
+   zawartości pakietu, nie deklaracją.
+3. Adres rdzenia pochodzi z nastawy budowania; **budowa wydaniowa nie niesie
+   adresu serwera rozwojowego** — wykazane przeszukaniem gotowego pliku.
+4. Powłoka nie stawia i nie wygasza rdzenia — w hybrydzie rdzeń stoi na serwerze.
+5. Uprawnienia powłoki odmawiają domyślnie; każde nadane ma podany powód.
+6. Rzecz wymagająca rozstrzygnięcia Właściciela wraca jako zgłoszenie.
 
 ## Zgłoszenia oczekujące na teren
 
@@ -141,6 +204,8 @@ po raz drugi.
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
 | `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` wyjątek powitania · `e41dd78` straże drogi bez poczty · `9a8ec0c` brak skanera | weryfikacja Prowadzącego pomiarem: bieg wymuszony `-count=1` 537 s — 2029 sprawdzianów, 1 niezdany wobec 4 zastanych; powitanie niepełne odpowiada wersją protokołu na żywym rdzeniu, `channel.add` z brakiem pola dalej odmawia; kontrakt nietknięty |
+| `prototypy` | `teren/prototypy` | paczki instalatora i drogi wejścia | przyjęte przez Właściciela; weryfikacja Prowadzącego pomiarem: oba okna wczytują się bez błędu konsoli, zero łańcuchów widocznych poza katalogiem treści |
+| `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` · `e41dd78` · `9a8ec0c` | weryfikacja Prowadzącego pomiarem: 2029 sprawdzianów, 1 niepowodzenie zastane spoza terenu wobec 4 zastanych; wyjątek bramy w jednym miejscu; kontrakt nietknięty |
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |

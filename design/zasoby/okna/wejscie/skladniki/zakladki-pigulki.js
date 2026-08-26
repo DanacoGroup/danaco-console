@@ -1,9 +1,9 @@
 /* ============================================================================
    SKŁADNIK — ZAKŁADKI LOGOWANIA I REJESTRACJI
 
-   Dwie drogi równorzędne. Stan wybrany niesie PODŚWIETLENIE, nie wypełnienie:
-   pigułka w pełnym błękicie czytała się jak przycisk działania, a to kontrolka
-   wyboru — wskazuje, gdzie stoisz, a nie co wykonasz.
+   Dwie drogi równorzędne. Wygląd wnosi wariant biblioteki `--wybor`: stan
+   wybrany niesie podświetlenie, nie wypełnienie, bo pigułka w pełnym błękicie
+   czyta się jak przycisk działania, a to kontrolka wskazująca położenie.
 
    Właściwości:
      wybrana   'logowanie' | 'rejestracja'
@@ -17,7 +17,7 @@ var CELE = ['logowanie', 'rejestracja'];
 
 W.skladniki.zakladkiPigulki = function (N, w) {
   return N.el('div', {
-    klasa: 'dn-zakladki dn-zakladki--pigulki', role: 'tablist',
+    klasa: 'dn-zakladki dn-zakladki--pigulki dn-zakladki--wybor', role: 'tablist',
     'aria-label': N.tekst('dostep.zakladki').join(' albo ')
   }, N.tekst('dostep.zakladki').map(function (napis, i) {
     var cel = CELE[i];

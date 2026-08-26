@@ -30,16 +30,30 @@ var OKNA = {
     odslona: 'dostep',
     panele: function (N) { return W.ekrany.dostep(N); },
     pasy: function (N) { return W.ekrany.dostepPasy(N); }
+  },
+  /* Okno przygotowania nie ma belki systemowej — stoi już wewnątrz ramy
+     aplikacji, a ta niesie własną. Nie ma też odsłon do przełączania: jest
+     jedno, więc panel i pas nie noszą `data-widok`. */
+  przygotowanie: {
+    belka: false,
+    nota: 'przygotowanie.nota',
+    odslona: 'przygotowanie',
+    panele: function (N) { return [W.ekrany.przygotowanie(N)]; },
+    pasy: function (N) { return [W.ekrany.przygotowaniePas(N)]; }
   }
 };
 
 function zbuduj(N, nazwa) {
   var o = OKNA[nazwa];
   var S = W.skladniki;
-  var dzieci = [S.belkaOkna(N, { tytul: o.tytul }), S.kolumnaTozsamosci(N, { odslona: o.odslona })];
+  var dzieci = [];
+  if (o.belka !== false) dzieci.push(S.belkaOkna(N, { tytul: o.tytul }));
+  dzieci.push(S.kolumnaTozsamosci(N, { odslona: o.odslona }));
   dzieci = dzieci.concat(o.panele(N)).concat(o.pasy(N));
-  dzieci.push(S.notaWydawcy(N));
-  return N.el('div', { klasa: 'we-okno we-okno--z-belka' }, dzieci);
+  dzieci.push(o.nota ? S.notaPasa(N, o.nota) : S.notaWydawcy(N));
+  return N.el('div', {
+    klasa: 'we-okno' + (o.belka === false ? '' : ' we-okno--z-belka')
+  }, dzieci.filter(Boolean));
 }
 
 W.zamontuj = function (korzen) {

@@ -38,26 +38,9 @@
 (function () {
 'use strict';
 
-/* Odczyt żetonu do postaci, którą przyjmuje płótno. Próbka jest niewidoczna
-   i znika po zbudowaniu palety. */
-function czytnikBarw(host) {
-  var probka = document.createElement('span');
-  probka.style.cssText = 'position:absolute;width:0;height:0;visibility:hidden';
-  host.appendChild(probka);
-  var styl = getComputedStyle(host);
-  return {
-    barwa: function (zeton, zapas) {
-      var v = styl.getPropertyValue(zeton).trim() || zapas;
-      probka.style.color = '';
-      probka.style.color = v;
-      var m = getComputedStyle(probka).color.match(/[\d.]+/g) || ['0', '0', '0'];
-      var rgb = [Math.round(+m[0]), Math.round(+m[1]), Math.round(+m[2])];
-      var a = m.length > 3 ? +m[3] : 1;
-      return { rgb: rgb, a: a, css: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',' + a + ')' };
-    },
-    zdejmij: function () { if (probka.parentNode) probka.parentNode.removeChild(probka); }
-  };
-}
+/* Czytnik barw stoi w `narzedzia-okien.js` — potrzebuje go każdy składnik
+   rysujący na płótnie. */
+var czytnikBarw = window.DanacoNarzedzia.czytnikBarw;
 
 function zaloz(host) {
   if (host.powloki) return host.powloki;
@@ -346,16 +329,8 @@ function zaloz(host) {
   return api;
 }
 
-function zalozWszystkie(zakres) {
-  var pola = (zakres || document).querySelectorAll('[data-powloki]');
-  for (var i = 0; i < pola.length; i++) zaloz(pola[i]);
-}
+/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-powloki', zaloz);
 
 window.DanacoPowloki = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };
-
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function () { zalozWszystkie(); });
-} else {
-  zalozWszystkie();
-}
 })();

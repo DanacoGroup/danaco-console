@@ -1024,6 +1024,45 @@ zastrzeżenie wobec niego.
 
 ---
 
+## 13. Rejestr kont i kanałów modelu jest otwarty
+
+**Data:** 2026-08-26 · **Stan:** obowiązuje · **Podstawa:** pomiar uruchomieniem
+
+**Wymaganie Właściciela.** Aplikacja niesie na starcie konta Anthropic przez
+Code CLI, ale **to nie jest wykaz zamknięty**. Za jakiś czas kont może być
+sześć zamiast czterech, albo jedno zostanie przy CLI, a pozostałe przejdą na
+API — i produkt ma to znieść **bez przerabiania aplikacji**.
+
+**Zmierzone.** Sprawdzian przeszedł całą drogę wobec rdzenia:
+
+| Krok | Wynik |
+|---|---|
+| cztery konta Anthropic przez CLI | założone, `rodzaj=cli`, `dostawca=anthropic` |
+| piąte i szóste konto CLI | **dołożone bez przeszkody** — wykaz nie jest zamknięty |
+| konto obcego dostawcy przez API | założone, `dostawca=openai`, własny `baseUrl` |
+| kanał na generycznym adapterze sieciowym | założony, `rodzaj=api` |
+| usunięcie konta | **kanały przeżyły: 3 przed, 3 po** |
+
+**Dlaczego rdzeń to znosi.** `KanalAPI` nie zna żadnego dostawcy — adres, model,
+odwołanie do klucza, nagłówki, kształt ciała żądania i ścieżka do treści
+w odpowiedzi pochodzą z wiersza rejestru. Nagłówek pliku stanowi wprost: „nowy
+dostawca to nowy wiersz danych, nie nowy typ w kodzie". Pole `provider`
+kontrakt opisuje jako „wartość danych, nie typ kodu". Adapter CLI bierze wykaz
+kont z katalogu profili na progu każdej tury, więc konto dodane komendą
+`account.*` wchodzi do rotacji **bez restartu rdzenia**.
+
+**Jedyny przypadek wymagający kodu** to dostawca bez HTTP, dostępny wyłącznie
+własną biblioteką — wtedy powstaje nowa fabryka adaptera. Dostawca z API
+publicznym nie wymaga ani jednej linii.
+
+**Konsekwencja dla wdrożenia.** Konta i kanały stoją na serwerze wdrożenia, nie
+u Operatora. Dołożenie dostawcy nie wymaga nowego wydania ani aktualizacji
+u kogokolwiek — to jest osobny powód, dla którego wariant natywny nie powstaje
+(pozycja 8).
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

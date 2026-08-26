@@ -93,9 +93,13 @@
   border-color: var(--dn-atrament);
   color: var(--dn-atrament-tekst);
 }
+/* Czynność główna odpowiada na wskazanie barwą sygnałową. Przejście
+   `szary-900 → szary-1000` było niewidoczne i przycisk czytał się jak martwy.
+   Biel na wypełnieniu sygnałowym to konwencja domu — patrz `.dn-btn--sygnal`. */
 .dn-btn--atrament:hover {
-  background: var(--dn-atrament-hover);
-  border-color: var(--dn-atrament-hover);
+  background: var(--dn-sygnal-wypelnienie);
+  border-color: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-szary-0);
 }
 
 /* SYGNAŁOWY — wyłącznie działanie systemowe „uruchom / zatwierdź plan";
@@ -183,6 +187,10 @@
    POLE FORMULARZA
    ========================================================================== */
 .dn-pole { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+/* Pole, którego kontrolka bierze całą wolną wysokość — dokument do przeczytania,
+   wykaz do przejrzenia. Bez tego pole kurczy się do treści i osadzona kontrolka
+   nie ma do czego urosnąć, choć sama o wzrost prosi. */
+.dn-pole--rosnace { flex: 1 1 auto; min-height: 0; }
 
 .dn-pole-etykieta {
   font-size: var(--dn-fs-sm);
@@ -221,9 +229,11 @@ textarea.dn-pole-kontrolka {
   color: var(--dn-tekst-2);
 }
 
+/* Drugi stopień: opis pola bywa jedyną informacją o wymaganiach wobec wartości,
+   a przy 13 px trzeci stopień daje 3,85:1 wobec panelu. */
 .dn-pole-opis {
   font-size: var(--dn-fs-sm);
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 
 /* ── Klasy formularzowe używane w oknach nakładkowych i w Ustawieniach ──────
@@ -258,10 +268,19 @@ textarea.dn-pole-kontrolka {
 }
 .dn-pole-blad {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--dn-od-1);
   font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
   color: var(--dn-blad-tekst);
+}
+/* Znak przy komunikacie — bez wymiaru `svg` bez atrybutów rozpycha się do
+   rozmiaru zastępczego elementu zastępowanego (300 × 150 px). */
+.dn-pole-blad > svg {
+  width: var(--dn-wym-ikona-xs);
+  height: var(--dn-wym-ikona-xs);
+  flex: none;
+  margin-top: calc((var(--dn-fs-sm) * var(--dn-lh-bazowy) - var(--dn-wym-ikona-xs)) / 2);
 }
 
 /* Pole wyszukiwania z ikoną */
@@ -306,6 +325,33 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   min-height: var(--dn-wym-kontrolka);
   cursor: pointer;
   font-size: var(--dn-fs-base);
+}
+
+/* Wybór blokowy — kontrolka u góry, obok niej kolumna: nazwa, opis, nota.
+   Postać dla wariantów instalacji i innych wyborów wymagających wyjaśnienia. */
+.dn-wybor--blokowy {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+}
+.dn-wybor-nazwa {
+  display: block;
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.dn-wybor-opis {
+  display: block;
+  margin-top: var(--dn-od-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+/* Zero blokad: wybór niegotowy nie odbiera klikalności, tylko niesie stan. */
+.dn-wybor:has([aria-invalid='true']) { color: var(--dn-blad-tekst); }
+.dn-wybor [aria-invalid='true'] {
+  border-color: var(--dn-blad-obrys);
+  box-shadow: 0 0 0 1px var(--dn-blad-obrys);
 }
 
 .dn-check {
@@ -678,6 +724,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    pole nieaktywne, a to jest kontrolka wyboru, nie etykieta. */
 .dn-zakladki--pigulki {
   display: inline-flex;
+  /* Pigułki mają szerokość własnej treści także wtedy, gdy stoją w kolumnie
+     rozciągającej dzieci — inaczej przełącznik dwóch dróg rozpiera się na całą
+     kolumnę i przestaje czytać się jako kontrolka wyboru. */
+  align-self: flex-start;
   gap: 2px;
   padding: 3px;
   border: 0;
@@ -693,7 +743,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-zakladki--pigulki .dn-zakladka:hover { background: var(--dn-hover); }
 .dn-zakladki--pigulki .dn-zakladka[aria-selected='true'] {
   background: var(--dn-sygnal-wypelnienie);
-  color: var(--dn-tekst-inv);
+  /* Biel, nie `--dn-tekst-inv`: w motywie ciemnym odwrotność tekstu jest niemal
+     czarna i na wypełnieniu sygnałowym daje 4,14:1. Konwencja domu dla pisma na
+     wypełnieniu sygnałowym stoi w `.dn-btn--sygnal`. */
+  color: var(--dn-szary-0);
   font-weight: var(--dn-fw-polgruba);
 }
 .dn-zakladki--pigulki .dn-zakladka[aria-selected='true']:hover {
@@ -1024,10 +1077,37 @@ label.dn-pasek-szukaj:focus-within {
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   BRYŁA WARSTW PLATFORMY
+   --------------------------------------------------------------------------
+   Cztery powłoki produktu — rdzeń, środowiska, moduły, stanowisko — osadzane
+   jedna na drugiej wraz z postępem. Bryła nie jest ozdobą: pokazuje, ile
+   z programu już stoi.
+
+   Scenę rysuje `zasoby/bryla.js` w płótnie, biorąc barwy wyłącznie z żetonów
+   `--dn-*`; okno wstawia puste pole i nadaje mu miejsce w układzie. Płótno jest
+   powtórzeniem tego, co niesie `aria-label` pola, więc nie wchodzi w drzewo
+   dostępności. Ruch gaśnie przy `prefers-reduced-motion` po stronie skryptu —
+   stan bryły czyta się z osadzonych powłok, nie z ruchu.
+   ========================================================================== */
+/* Bryła nie ma własnego tła. Stoi wprost na powierzchni, na której leży okno —
+   scena z własnym podłożem czyta się jako okno w oknie, niezależnie od tego,
+   jak starannie wygaszy się jej krawędzie. Brzegi rysunku rozpuszcza samo
+   płótno, więc pole nie potrzebuje ani ramki, ani przycięcia. */
+.dn-bryla { position: relative; display: block; min-width: 0; min-height: 0; }
+.dn-bryla > canvas { display: block; width: 100%; height: 100%; }
+
 /* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
    nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */
-.dn-kolejka { display: flex; flex-direction: column; }
+.dn-kolejka {
+  display: flex;
+  flex-direction: column;
+  /* Kolejka bywa listą porządkową — wcięcie i znaczniki listy należą do niej,
+     nie do okna, które ją wstawia. */
+  list-style: none;
+  padding: 0;
+}
 .dn-krok {
   display: grid;
   grid-template-columns: 20px 1fr auto;
@@ -1050,13 +1130,70 @@ label.dn-pasek-szukaj:focus-within {
   font-size: var(--dn-fs-xs);
 }
 .dn-krok-znak > svg { width: 12px; height: 12px; }
+/* Opis pod pozycją kolejki — mówi, co dzieje się z komputerem na tym etapie.
+   Wchodzi w drugi wiersz pozycji, pod nazwą; znak i stan zostają w pierwszym,
+   więc kolumna znaków i kolumna stanów biegną nieprzerwanie przez cały wykaz. */
+.dn-krok:has(> .dn-krok-opis) {
+  align-items: start;
+  padding-block: var(--dn-od-2);
+}
+.dn-krok-opis {
+  grid-column: 2 / -1;
+  margin-top: var(--dn-od-1);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+/* Nota maszynowa — metryka pod tytułem, miara przy pozycji, nota na dnie kolumny.
+   Rola ogólna: jeden przepis pisma dla całej aplikacji.
+   Barwa to DRUGI stopień, nie trzeci: `--dn-tekst-3` (#7C7C7C) wolno stosować
+   wyłącznie do tekstu ≥ 18,66 px półgrubego — przy 12 px daje 3,85:1 wobec panelu
+   i nie przechodzi WCAG 1.4.3. Nota jest drobna z definicji, więc bierze drugi. */
+.dn-meta,
+.dn-krok-meta {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.dn-meta { font-variant-numeric: tabular-nums; }
+.dn-meta b,
+.dn-meta strong { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+.dn-meta--mocna { color: var(--dn-tekst); }
+.dn-meta--na-ramie { color: var(--dn-rama-tekst-2); }
+.dn-meta--przygaszona { color: var(--dn-tekst-3); font-size: var(--dn-fs-base); }
+.dn-meta--w-wierszu,
 .dn-krok-meta {
   display: inline-flex;
   align-items: center;
   gap: var(--dn-od-2);
+}
+
+/* Etykieta w mono-wersalikach — nadtytuł, nazwa modułu, głowa kolumny, zapowiedź
+   grupy kontrolek. Rola ogólna; dotąd istniała wyłącznie wewnątrz rodziny AOD. */
+.dn-etyk-mono {
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  /* Drugi stopień z tego samego powodu co przy `.dn-meta`. */
+  color: var(--dn-tekst-2);
+}
+.dn-etyk-mono--mocna { color: var(--dn-tekst); }
+.dn-etyk-mono--na-ramie { color: var(--dn-rama-tekst-2); }
+/* Etykieta w rzędzie z czynnością po prawej stronie. */
+.dn-etyk-mono--z-czynnoscia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* Słowo stanu w kolejce kroków. Osobne od `.dn-krok-meta`, bo stan nie jest
+   miarą: „Gotowe" to tekst interfejsu i idzie pismem bezszeryfowym, podczas gdy
+   nota maszynowa niesie liczbę. Barwy nie bierze — stan rozróżnia znak kroku,
+   więc słowo nie musi go powtarzać kolorem. */
+.dn-krok-stan {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+  white-space: nowrap;
 }
 .dn-krok--pracuje { border-left-color: var(--dn-sygnal-wypelnienie); }
 .dn-krok--pracuje .dn-krok-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
@@ -1114,6 +1251,9 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-modal-cialo { padding: var(--dn-od-5); overflow-y: auto; }
 /* Akapit wprowadzający w oknie nakładkowym — jedno zdanie o tym, co okno robi. */
+/* Zdanie wprowadzające — stoi pod tytułem i tłumaczy, czego dotyczy widok.
+   Rola ogólna; dotąd istniała wyłącznie wewnątrz rodziny modalu. */
+.dn-lid,
 .dn-modal-lid {
   margin: 0 0 var(--dn-od-4);
   max-width: 72ch;
@@ -1121,6 +1261,8 @@ label.dn-pasek-szukaj:focus-within {
   font-size: var(--dn-fs-sm);
   line-height: var(--dn-lh-luzny);
 }
+.dn-lid--bez-odstepu { margin-bottom: 0; }
+.dn-lid--na-ramie { color: var(--dn-rama-tekst-2); }
 .dn-modal-stopka {
   display: flex;
   justify-content: flex-end;
@@ -1447,7 +1589,6 @@ label.dn-pasek-szukaj:focus-within {
   padding: var(--dn-od-4);
   background: var(--dn-nakladka);
 }
-.dn-modal-tlo[hidden] { display: none; }
 
 /* Nazwa barwy przy próbce w widoku dostępności. */
 .dn-dost-barwa-nazwa { white-space: nowrap; }
@@ -1644,7 +1785,15 @@ label.dn-pasek-szukaj:focus-within {
 .dn-btn:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); box-shadow: none; }
 .dn-btn--sygnal:hover { box-shadow: var(--dn-poswiata-sygnal); }
 .dn-btn--atrament:hover, .dn-btn--niebezpieczny:hover { box-shadow: var(--dn-cien-2); }
-.dn-btn[disabled], .dn-btn[aria-disabled='true'] { transform: none; box-shadow: none; }
+/* Stan nieczynny. `aria-disabled` zamiast `disabled`: przycisk zostaje osiągalny
+   klawiaturą i czytnikiem, więc operator dowie się, dlaczego nie działa, zamiast
+   trafiać na kontrolkę, której nie da się dosięgnąć. */
+.dn-btn[disabled], .dn-btn[aria-disabled='true'] {
+  transform: none;
+  box-shadow: none;
+  opacity: .45;
+  cursor: default;
+}
 
 .dn-btn-ikona {
   transition:
@@ -1734,3 +1883,853 @@ label.dn-pasek-szukaj:focus-within {
 .dn-karta-srodowiska:hover,
 .dn-karta-srodowiska:focus-within,
 .dn-karta-srodowiska:has(.sta-menu-tresc[data-otwarte='tak']) { z-index: 3; }
+
+/* ==========================================================================
+   OKNO SPRZED UWIERZYTELNIENIA
+   --------------------------------------------------------------------------
+   Instalator, okno startowe, rejestracja i logowanie oraz przygotowanie
+   środowiska stoją poza ramą aplikacji: nie mają szyny nawigacji, wstążki
+   ani paska stanu. Mają wspólną bryłę — jedną dla całej rodziny, żeby
+   wszystkie okna drogi wejścia czytały się jako to samo okno w kolejnych
+   odsłonach, a nie jako cztery różne programy.
+   ========================================================================== */
+
+/* Scena — podłoże, na którym stoi bryła okna. */
+.dn-scena {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Scena bierze całą szerokość, jaką ma. Bez tego kurczy się do treści,
+     a okno o szerokości `min(…, 100%)` zmienia wymiar razem z długością
+     tekstu w kroku — okno kreatora ma stać nieruchomo. */
+  width: 100%;
+  min-height: 100%;
+  padding: var(--dn-od-8) var(--dn-od-6);
+  background: var(--dn-tlo);
+}
+.dn-scena--gora { align-items: flex-start; }
+
+/* Bryła okna. Wymiar stały: okno wejściowe nie skaluje się z przeglądarką,
+   bo w produkcie jest oknem systemowym o zadanej wielkości. */
+.dn-okno-wejsciowe {
+  --dn-okw-szerokosc: var(--dn-wym-okno-wejsciowe-szer);
+  --dn-okw-wysokosc: var(--dn-wym-okno-wejsciowe-wys);
+  --dn-okw-kolumna: var(--dn-wym-okno-wejsciowe-kolumna);
+  --dn-okw-wciecie-x: var(--dn-od-6);
+  --dn-okw-wciecie-y: var(--dn-od-6);
+  --dn-okw-pas-dzialan: calc(var(--dn-wym-kontrolka) + var(--dn-od-8));
+  --dn-okw-rytm: var(--dn-od-4);          /* odstęp między blokami kolumny */
+
+  width: min(var(--dn-okw-szerokosc), 100%);
+  height: var(--dn-okw-wysokosc);
+  flex: none;
+  display: grid;
+  grid-template-columns: var(--dn-okw-kolumna) minmax(0, 1fr);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-xl);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  overflow: hidden;
+}
+/* Wariant z belką okna systemowego: pierwszy wiersz siatki zajmuje belka,
+   drugi — kolumna tożsamości i kolumna stanu. */
+.dn-okno-wejsciowe--z-belka { grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr); }
+.dn-okno-wejsciowe--jednokolumnowe { grid-template-columns: minmax(0, 1fr); }
+
+/* Belka okna systemowego — znak, tytuł, uchwyt przeciągania, zamknięcie.
+   Rozciąga się na obie kolumny bryły. */
+.dn-okno-wejsciowe-belka {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  height: var(--dn-wym-belka);
+  /* Sterowanie okna stoi na przyciskach ikonowych biblioteki, a te mają własny
+     narożnik — stąd odstęp od prawej krawędzi, którego belka ramy nie ma. */
+  padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+}
+/* Uchwyt przeciągania rozpiera belkę: tytuł zostaje przy znaku, sterowanie
+   okna odchodzi do prawej krawędzi. */
+.dn-okno-wejsciowe-belka > .dn-belka-tytul { margin-right: auto; }
+
+/* Kolumna stanu albo formularza — jasna powierzchnia, własny rytm bloków. */
+.dn-okno-wejsciowe-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-okw-rytm);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
+  overflow-y: auto;
+  /* Panel unosi się nad atramentową kolumną tożsamości. Rozdzielenie stref
+     idzie samą powierzchnią, bez kreski — a przy `--dn-powierzchnia` różnica
+     jasności w motywie ciemnym wynosiła 2 stopnie L* i strefy się zlewały. */
+  background: var(--dn-panel);
+}
+.dn-okno-wejsciowe-panel--scentrowany { justify-content: center; }
+
+/* ── Czynności okna wejściowego ─────────────────────────────────────────── */
+
+/* Czynność główna i drogi poboczne — kolumna przycisków pełnej szerokości. */
+.dn-akcje { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.dn-akcje .dn-btn { justify-content: center; white-space: nowrap; }
+.dn-akcje .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+/* Czynności poboczne — rząd przycisków przy lewej krawędzi, nie na całą szerokość. */
+.dn-akcje--poboczne {
+  flex-direction: row;
+  align-items: center;
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+.dn-akcje--poboczne .dn-btn { width: auto; }
+
+/* Pas działań na dnie kolumny. Odcina się powierzchnią, nie kreską, i sięga
+   krawędzi kolumny — stąd ujemne marginesy równe wcięciom panelu. */
+.dn-pas-dzialan {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--dn-od-3);
+  margin: auto calc(-1 * var(--dn-okw-wciecie-x)) calc(-1 * var(--dn-okw-wciecie-y));
+  min-height: var(--dn-okw-pas-dzialan);
+  padding: var(--dn-od-3) var(--dn-okw-wciecie-x);
+  /* Pas odcina się od kolumny samą powierzchnią. Żeton --dn-tlo dawał w motywie
+     jasnym 2,1 stopnia L* różnicy wobec --dn-panel — strefy się zlewały.
+     --dn-powierzchnia-2 daje 4,9 stopnia w jasnym i 6,9 w ciemnym. */
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.dn-pas-dzialan--ciag { justify-content: flex-end; }
+/* Dwa marginesy `auto` w jednej kolumnie dzielą wolne miejsce na dwa pola
+   zamiast jednego. Tam, gdzie nadmiar zbiera czynność główna, pas go nie dobiera. */
+.dn-okno-wejsciowe-panel > .dn-akcje { margin-top: auto; }
+.dn-okno-wejsciowe-panel:has(> .dn-akcje) > .dn-pas-dzialan { margin-top: 0; }
+
+/* ── Kolumna tożsamości ─────────────────────────────────────────────────── */
+
+/* Atramentowa kolumna okna wejściowego: godło, nazwa, motto, wykaz cech
+   i nota na dnie. Atrament jest stały w obu motywach — kolumna tożsamości
+   niesie markę, a marka nie zmienia barwy razem z motywem systemu. */
+.dn-tozsamosc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-6);
+  padding: var(--dn-okw-wciecie-y) var(--dn-okw-wciecie-x);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+}
+
+/* Pozycja wykazu cech: ikona, wytłuszczony lead w osobnym wierszu, zdanie opisu. */
+.dn-tozsamosc-poz {
+  display: flex;
+  gap: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-rama-tekst-2);
+}
+.dn-tozsamosc-poz > svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  color: var(--dn-rama-tekst);
+}
+.dn-tozsamosc-poz b { display: block; color: var(--dn-rama-tekst); font-weight: var(--dn-fw-srednia); }
+
+/* Stopka kolumny odcina się odstępem i stopniem pisma, nie kreską. */
+.dn-tozsamosc-stopka {
+  margin-top: auto;
+  padding-top: var(--dn-od-5);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-rama-tekst-2);
+}
+
+/* ── Godło ──────────────────────────────────────────────────────────────── */
+
+/* Samodzielny znak marki albo modułu — nieinteraktywny, w jednej ze skal
+   księgi znaku, w barwie z żetonu. Interaktywny znak w pasku aplikacji
+   pozostaje osobnym komponentem `.dn-pasek-godlo`, bo jest odsyłaczem. */
+.dn-godlo {
+  width: var(--dn-wym-godlo);
+  height: var(--dn-wym-godlo);
+  flex: none;
+  color: var(--dn-rama-tekst);
+}
+.dn-godlo--lg { --dn-wym-godlo: var(--dn-wym-godlo-lg); }
+.dn-godlo--ikonowy { --dn-wym-godlo: var(--dn-wym-godlo-ikonowy); }
+.dn-godlo--lockup { width: var(--dn-wym-godlo-lockup); height: auto; }
+.dn-godlo--na-plotnie { color: var(--dn-tekst); }
+.dn-godlo--sygnal { color: var(--dn-sygnal); }
+.dn-godlo .kropka { fill: var(--dn-sygnal-500); }
+
+/* Kropka godła pulsuje jednym, ciągłym tętnem — wspólnym pulsem sygnału
+   całej platformy. W oknie wejściowym jest jedynym ruchem. */
+.dn-godlo--tetno .kropka {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dn-godlo--tetno .kropka { animation: none; }
+}
+
+/* ==========================================================================
+   TYTUŁ OKNA · ODSYŁACZ
+   ========================================================================== */
+
+/* Tytuł okna w stopniu ekspozycyjnym — najwyższy poziom nagłówka na płótnie
+   treści. Nad nim stoi zwykle `.dn-etyk-mono` jako nadtytuł, pod nim `.dn-lid`. */
+.dn-tytul-okna {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-display);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+}
+/* Tytuł ze znakiem wyniku w wierszu — zakończenie kreatora, wynik operacji.
+   Znak stoi przed tekstem, nie pod nim: `svg` jest w tym pakiecie blokowy,
+   więc rząd musi zbudować rodzina, a nie okno własną regułą. Znak jest
+   powtórzeniem tego, co mówi tytuł — dlatego bierze `aria-hidden`. */
+.dn-tytul-ze-znakiem { display: flex; align-items: center; gap: var(--dn-od-3); }
+.dn-tytul-znak {
+  flex: none;
+  width: var(--dn-wym-ikona-lg);
+  height: var(--dn-wym-ikona-lg);
+  color: var(--dn-tekst-2);
+}
+.dn-tytul-znak--sukces { color: var(--dn-sukces-tekst); }
+.dn-tytul-znak--ostrzezenie { color: var(--dn-ostrzezenie-tekst); }
+.dn-tytul-okna--sm { font-size: var(--dn-fs-3xl); }
+.dn-tytul-okna--na-ramie { color: var(--dn-rama-tekst); }
+
+/* Odsyłacz w treści. Podkreślenie niesie rolę — barwa sama nie wystarcza,
+   bo stan nigdy nie może stać wyłącznie na kolorze. */
+.dn-link {
+  color: var(--dn-sygnal);
+  text-decoration: underline;
+  text-underline-offset: var(--dn-wym-fokus-odsuniecie);
+  border-radius: var(--dn-r-sm);
+  transition: color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-link:hover { color: var(--dn-sygnal-600); }
+.dn-link:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+/* Odsyłacz bywa czynnością w oknie, a nie adresem — niesie go wtedy `<button>`,
+   bo klawiatura i czytnik mają dostać przycisk. Bryłę przycisku zdejmuje
+   rodzina, żeby okno nie musiało tego robić własną regułą. */
+button.dn-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+/* Odsyłacz stojący samodzielnie — poza tokiem zdania — nie musi nieść
+   podkreślenia w spoczynku: nie ma tekstu, od którego miałby się odróżnić
+   inaczej niż barwą, a WCAG 1.4.1 mówi o odsyłaczu wewnątrz akapitu.
+   Podkreślenie wraca przy najechaniu i przy fokusie. Wewnątrz zdania ten
+   wariant jest niedozwolony. */
+.dn-link--cichy { text-decoration: none; }
+.dn-link--cichy:hover,
+.dn-link--cichy:focus-visible { text-decoration: underline; }
+.dn-link--drugorzedny { color: var(--dn-tekst-2); }
+.dn-link--drugorzedny:hover { color: var(--dn-tekst); }
+.dn-link--na-ramie { color: var(--dn-rama-tekst); }
+
+/* ==========================================================================
+   POLE PRZEWIJANE
+   --------------------------------------------------------------------------
+   Obszar dłuższy niż miejsce, jakie na niego przypada: warunki licencji,
+   wykaz składników, długa treść panelu. Niesie własną szynę i suwak, bo pasek
+   systemowy w oknie o stałym wymiarze rysuje się drugi raz obok istniejącego.
+   Gaśnięcie u góry i u dołu mówi, że treść biegnie dalej.
+   ========================================================================== */
+
+.dn-przewijane {
+  --dn-przew-gasniecie: var(--dn-od-6);
+  --dn-przew-tlo: var(--dn-powierzchnia-2);
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dn-przewijane::before,
+.dn-przewijane::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: var(--dn-od-5);
+  height: var(--dn-od-10);
+  pointer-events: none;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+}
+.dn-przewijane::before {
+  top: 0;
+  border-radius: var(--dn-r-md) var(--dn-r-md) 0 0;
+  background: linear-gradient(to bottom, var(--dn-przew-tlo) var(--dn-przew-gasniecie), transparent);
+}
+.dn-przewijane::after {
+  bottom: 0;
+  border-radius: 0 0 var(--dn-r-md) var(--dn-r-md);
+  background: linear-gradient(to top, var(--dn-przew-tlo) var(--dn-przew-gasniecie), transparent);
+}
+/* Skrajne położenia gaszą znacznik od tej strony, w którą już nie ma dokąd iść. */
+.dn-przewijane[data-gora='tak']::before,
+.dn-przewijane[data-dol='tak']::after { opacity: 0; }
+
+.dn-przewijane-szyna {
+  position: absolute;
+  top: var(--dn-od-3);
+  right: var(--dn-od-3);
+  bottom: var(--dn-od-3);
+  width: var(--dn-od-1);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-obrys-mocny);
+}
+.dn-przewijane-suwak {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-tekst-2);
+}
+/* Szyna własna ZASTĘPUJE pasek systemowy. Bez tego przewijające się wnętrze
+   dostaje własny pasek z `fundament.css` i obok szyny rysuje się drugi. */
+.dn-przewijane > * { scrollbar-width: none; }
+.dn-przewijane > *::-webkit-scrollbar { width: 0; height: 0; }
+
+/* ==========================================================================
+   TEKST CIĄGŁY
+   --------------------------------------------------------------------------
+   Płótno treści czytanej, nie przeglądanej: warunki licencji, nota prawna,
+   samouczek. Miara wiersza i interlinia są jego jedynym zadaniem.
+   ========================================================================== */
+
+.dn-tekst-ciagly {
+  max-width: 72ch;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-2);
+}
+.dn-tekst-ciagly > p { margin: 0 0 var(--dn-od-4); }
+.dn-tekst-ciagly > p:last-child { margin-bottom: 0; }
+.dn-tekst-ciagly b,
+.dn-tekst-ciagly strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+/* Osadzony — własna powierzchnia i przewijanie. Postać dla warunków licencji
+   wewnątrz kroku kreatora. Ogniskowalny klawiaturą, bo sam się przewija. */
+.dn-tekst-ciagly--osadzony {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: none;
+  overflow-y: auto;
+  padding: var(--dn-od-4) var(--dn-od-6) var(--dn-od-4) var(--dn-od-4);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+}
+.dn-tekst-ciagly--osadzony:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-tekst-ciagly--dokument { max-width: 78ch; font-size: var(--dn-fs-base); }
+.dn-tekst-ciagly--drobny { font-size: var(--dn-fs-xs); }
+
+/* ==========================================================================
+   POZIOMY TOR KROKÓW
+   --------------------------------------------------------------------------
+   Wskazanie miejsca w przepływie, czytane w jednym wierszu nad treścią.
+   Różny od `.dn-kolejka` z `.dn-krok`, która jest pionowym wykazem czynności.
+   ========================================================================== */
+
+.dn-tor-krokow {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.dn-tor-krokow-poz {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+.dn-tor-krokow-nr {
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-krok-nr);
+  height: var(--dn-wym-krok-nr);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-pill);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.dn-tor-krokow-strzalka { color: var(--dn-tekst-2); }
+/* Krok bieżący niesie wypełnienie i pismo, nie samą barwę. */
+.dn-tor-krokow-poz[aria-current='step'] { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+.dn-tor-krokow-poz[aria-current='step'] .dn-tor-krokow-nr {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
+.dn-tor-krokow-poz[data-zrobiony='tak'] .dn-tor-krokow-nr {
+  border-color: var(--dn-sukces-obrys);
+  background: var(--dn-sukces-tlo);
+  color: var(--dn-sukces-tekst);
+}
+
+/* ==========================================================================
+   SIŁA HASŁA I KRYTERIA
+   ========================================================================== */
+
+.dn-sila { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.dn-sila-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--dn-wym-sila); }
+.dn-sila-odcinek {
+  height: var(--dn-wym-sila);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-obrys);
+}
+.dn-sila[data-stopien='1'] .dn-sila-odcinek:nth-child(-n+1),
+.dn-sila[data-stopien='2'] .dn-sila-odcinek:nth-child(-n+2) { background: var(--dn-ostrzezenie-tekst); }
+.dn-sila[data-stopien='3'] .dn-sila-odcinek:nth-child(-n+3),
+.dn-sila[data-stopien='4'] .dn-sila-odcinek { background: var(--dn-sukces-tekst); }
+.dn-sila-opis { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+
+/* Wykaz warunków, jakie hasło ma spełnić. Stan niesie znak, nie sama barwa. */
+.dn-kryteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1) var(--dn-od-3);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.dn-kryterium { display: inline-flex; align-items: center; gap: var(--dn-od-1); }
+.dn-kryterium > svg { width: var(--dn-wym-ikona-xs); height: var(--dn-wym-ikona-xs); flex: none; }
+.dn-kryterium[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
+
+/* ==========================================================================
+   KOD POTWIERDZENIA
+   ========================================================================== */
+
+/* Nazwa `.dn-kod` należy do bloku kodu w `fundament.css` — ta rodzina nosi
+   nazwę roli, nie treści: wprowadzenie kodu potwierdzenia. */
+.dn-potwierdzenie { display: flex; gap: var(--dn-od-2); }
+.dn-potwierdzenie-pole {
+  width: var(--dn-wym-kod-szer);
+  height: var(--dn-wym-kod-wys);
+  flex: none;
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-2xl);
+  text-align: center;
+  transition:
+    border-color var(--dn-czas-1) var(--dn-ease),
+    box-shadow var(--dn-czas-1) var(--dn-ease);
+}
+.dn-potwierdzenie-pole:focus {
+  outline: none;
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+.dn-potwierdzenie-pole[aria-invalid='true'] { border-color: var(--dn-blad-obrys); }
+.dn-potwierdzenie-stopka {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+}
+
+/* ==========================================================================
+   ZESTAWIENIE
+   --------------------------------------------------------------------------
+   Wiersz „nazwa — wartość" domykający wybór: zajętość, suma, rachunek miejsca.
+   ========================================================================== */
+
+.dn-zestawienie {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border-radius: var(--dn-r-md);
+  /* Ta sama miara rozdzielenia stref co w pasie działań — patrz .dn-pas-dzialan. */
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+.dn-zestawienie b { font-family: var(--dn-ff-mono); font-weight: var(--dn-fw-srednia); }
+
+/* Wykaz cichy — dane bez własnej bryły. Wiersze rozdziela włos, nie ramka:
+   cztery zestawienia w pudełkach czytają się jak cztery osobne rzeczy,
+   a to jest jedna tabliczka znamionowa. */
+.dn-zestawienie--cichy {
+  /* Wiersz tabliczki jest wierszem wykazu, nie sekcją — 8 px u góry i u dołu
+     dawało 16 px między danymi i wykaz rozpadał się na osobne pasy. */
+  padding: var(--dn-od-1) 0;
+  border-radius: 0;
+  background: none;
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-zestawienie--cichy:last-child { border-bottom: 0; }
+/* Nazwa i odczyt to jeden wiersz jednej tabliczki, więc idą TYM SAMYM pismem:
+   ten sam krój, stopień i waga. Pismo maszynowe po prawej przy bezszeryfowym
+   po lewej robiło z jednego wiersza dwie różne rzeczy. Rozdziela je wyłącznie
+   kontrast — nazwa przygaszona, odczyt pełny. */
+/* Nazwa i odczyt to jeden wiersz jednej tabliczki — idą TYM SAMYM pismem
+   i w TEJ SAMEJ barwie. Rozdziela je wyłącznie położenie: nazwa przy lewej
+   krawędzi, odczyt przy prawej. Każda różnica pisma albo kontrastu rozbijała
+   wiersz na dwie różne rzeczy i podnosiła kolumnę danych do rangi, która jej
+   nie przysługuje. */
+.dn-zestawienie--cichy > span,
+.dn-zestawienie--cichy > b {
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-normalna);
+  color: var(--dn-tekst-2);
+}
+.dn-wykaz-cichy { display: flex; flex-direction: column; }
+
+/* ==========================================================================
+   ADNOTACJA — brakujące części i warianty
+   ========================================================================== */
+
+.dn-alert--sukces {
+  border-left: var(--dn-wym-wstega) solid var(--dn-sukces-obrys);
+  background: var(--dn-sukces-tlo);
+  color: var(--dn-sukces-tekst);
+}
+.dn-alert--blad {
+  border-left: var(--dn-wym-wstega) solid var(--dn-blad-obrys);
+  background: var(--dn-blad-tlo);
+  color: var(--dn-blad-tekst);
+}
+/* Adnotacja ze znakiem: gniazdo ikony i gniazdo treści w jednym wierszu. */
+/* Znak stoi w osi komunikatu, nie przy jego pierwszym wierszu. */
+.dn-alert:has(> .dn-alert-znak) { display: flex; align-items: center; gap: var(--dn-od-3); }
+.dn-alert-znak {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: var(--dn-wym-ikona-lg);
+  height: var(--dn-wym-ikona-lg);
+  color: currentColor;
+}
+.dn-alert-znak > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-alert-tresc { flex: 1 1 auto; min-width: 0; line-height: var(--dn-lh-bazowy); }
+/* Głowa komunikatu — nazywa rzecz, treść pod nią ją uzasadnia. Bez tego rozdziału
+   komunikat i uzasadnienie czytają się jako jeden ciąg zdania. Wyróżnia waga
+   i osobny wiersz, nie barwa: barwa należy do rodzaju komunikatu, nie do jego
+   głowy, i przełączenie jej rozbijałoby alert na dwa różne stany. */
+.dn-alert-tresc b.dn-alert-tytul {
+  display: block;
+  margin-bottom: var(--dn-od-1);
+  /* Głowa niesie komunikat, treść pod nią tylko go uzasadnia — musi więc być
+     wyeksponowana stopniem, nie samą wagą. Przy równym stopniu i równej barwie
+     półgruba waga sama nie wystarczała, żeby oko rozdzieliło te dwie rangi. */
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-ciasny);
+  /* Głowa odcina się od uzasadnienia także barwą: pełny kontrast tekstu wobec
+     przygaszonej barwy komunikatu. Sam stopień i waga za mało ją eksponowały. */
+  color: var(--dn-tekst);
+}
+.dn-alert-tresc b,
+.dn-alert-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+/* ==========================================================================
+   POSTĘP — brakująca głowa · CZYNNOŚCI — tekst w pasie
+   ========================================================================== */
+
+/* Głowa paska postępu: nazwa czynności z lewej, miara z prawej, nad torem. */
+.dn-postep-glowa {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+
+/* Objaśnienie albo odsyłacz stojący w pasie działań obok przycisków. */
+.dn-akcje-tekst {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+.dn-akcje-tekst--blad { color: var(--dn-blad-tekst); }
+
+/* ==========================================================================
+   TOR KROKÓW — odsłona pionowa i odsłona na ramie
+   --------------------------------------------------------------------------
+   Kreator instalacji prowadzi sześć kroków. Poziomo sześć nazw nie mieści się
+   w kolumnie, więc ten sam tor dostaje odsłonę pionową; stoi w atramentowej
+   kolumnie tożsamości, stąd druga odsłona — barwy z rodziny ramy. Rama nie
+   zmienia się z motywem, więc stany biorą prymitywy, tak samo jak
+   `.dn-btn-ikona--na-ramie` — z tą różnicą, że barwy stanu na ramie mają
+   własne żetony `--dn-rama-*`, a nie prymitywy wprost.
+   ========================================================================== */
+
+/* Krok zrobiony niesie znak, nie samą barwę — znak wchodzi w miejsce numeru. */
+.dn-tor-krokow-nr > svg { width: var(--dn-wym-ikona-xs); height: var(--dn-wym-ikona-xs); }
+
+.dn-tor-krokow--pionowy {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+}
+.dn-tor-krokow--pionowy .dn-tor-krokow-poz { gap: var(--dn-od-3); }
+.dn-tor-krokow--pionowy .dn-tor-krokow-strzalka { display: none; }
+
+/* Drugi stopień jasności ramy, nie trzeci: kroki przyszłe przy 13 px na atramencie
+   dawały 4,45:1. Stopień „jeszcze niezrobiony" niesie tu numer bez wypełnienia,
+   więc rozróżnienie nie stoi na samej barwie i wolno ją podnieść. */
+.dn-tor-krokow--na-ramie { color: var(--dn-rama-tekst-2); }
+.dn-tor-krokow--na-ramie .dn-tor-krokow-nr {
+  border-color: var(--dn-rama-obrys-mocny);
+  color: var(--dn-rama-tekst-2);
+}
+.dn-tor-krokow--na-ramie .dn-tor-krokow-poz[data-zrobiony='tak'] { color: var(--dn-rama-tekst-2); }
+.dn-tor-krokow--na-ramie .dn-tor-krokow-poz[data-zrobiony='tak'] .dn-tor-krokow-nr {
+  border-color: var(--dn-rama-sukces);
+  background: transparent;
+  color: var(--dn-rama-sukces);
+}
+.dn-tor-krokow--na-ramie .dn-tor-krokow-poz[aria-current='step'] { color: var(--dn-rama-tekst); }
+.dn-tor-krokow--na-ramie .dn-tor-krokow-poz[aria-current='step'] .dn-tor-krokow-nr {
+  border-color: var(--dn-rama-sygnal);
+  background: var(--dn-rama-sygnal-wypelnienie);
+  color: var(--dn-szary-0);
+}
+
+/* ==========================================================================
+   WYBÓR W POSTACI POLA
+   --------------------------------------------------------------------------
+   Odsłona wyboru blokowego dla dróg równorzędnych, między którymi trzeba
+   rozstrzygnąć raz na całą instalację: wariant, magazyn, tryb pracy. Cała
+   pozycja jest celem wskazania, a stan wybrania niesie wstęga przy krawędzi
+   i zaznaczona kontrolka — nie sama barwa tła.
+   ========================================================================== */
+
+.dn-wybor--pole {
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.dn-wybor--pole:hover { border-color: var(--dn-tekst-3); background: var(--dn-hover); }
+.dn-wybor--pole:active { box-shadow: var(--dn-cien-1); }
+.dn-wybor--pole:focus-within {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-wybor--pole:has(:checked) {
+  border-color: var(--dn-sygnal-obrys);
+  background: var(--dn-sygnal-tlo);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+.dn-wybor--pole:has([aria-busy='true']) { cursor: progress; }
+.dn-wybor--pole:has([aria-invalid='true']) {
+  border-color: var(--dn-blad-obrys);
+  background: var(--dn-blad-tlo);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-blad-tekst);
+}
+/* Nota maszynowa pod opisem wyboru — miara miejsca, czas, wydanie. */
+.dn-wybor-opis > .dn-meta { display: block; margin-top: var(--dn-od-2); }
+
+/* ==========================================================================
+   POLE Z CZYNNOŚCIĄ · POLA W RZĘDZIE
+   --------------------------------------------------------------------------
+   Kontrolka, przy której stoi czynność: wskazanie katalogu, odsłonięcie hasła,
+   skopiowanie klucza. Odsłona osadzona kładzie czynność w świetle pola —
+   tak, jak wskazują wytyczne Windows dla pól hasła.
+   ========================================================================== */
+
+.dn-pole-zestaw {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.dn-pole-zestaw > .dn-pole-kontrolka { flex: 1 1 auto; min-width: 0; }
+.dn-pole-zestaw > .dn-btn,
+.dn-pole-zestaw > .dn-btn-ikona { flex: none; }
+
+.dn-pole-zestaw--osadzona { gap: 0; }
+.dn-pole-zestaw--osadzona > .dn-pole-kontrolka {
+  padding-right: calc(var(--dn-od-16) + var(--dn-od-2));
+}
+.dn-pole-zestaw--osadzona > .dn-btn {
+  position: absolute;
+  top: 50%;
+  right: var(--dn-od-1);
+  translate: 0 -50%;
+}
+.dn-pole-zestaw--osadzona > .dn-btn:hover { transform: none; }
+
+/* Dwa pola w jednym rzędzie — para równorzędnych krótkich wartości. */
+.dn-pole-grupa--rzad {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+  margin: 0;
+}
+
+/* ==========================================================================
+   POSTĘP Z GŁOWĄ
+   --------------------------------------------------------------------------
+   `.dn-postep` jest wierszem: tor i miara obok siebie. Głowa stoi NAD torem,
+   więc odsłona z głową układa te same części w kolumnie.
+   ========================================================================== */
+
+.dn-postep--z-glowa {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--dn-od-2);
+}
+.dn-postep--z-glowa > .dn-postep-tor { flex: none; width: 100%; }
+
+/* Tor bez miary — praca, której postępu nie da się wyrazić liczbą: wycofywanie
+   zmian, oczekiwanie na odpowiedź. Rola `progressbar` zostaje wtedy BEZ
+   `aria-valuenow`, i to ona, nie animacja, ogłasza stan nieokreślony.
+   Przy ograniczonym ruchu tor stoi wypełniony i przygaszony — nieokreśloność
+   niesie brak wartości, więc gaszenie ruchu niczego nie zabiera. */
+.dn-postep-tor--nieokreslony > .dn-postep-wartosc {
+  width: 35%;
+  transition: none;
+  animation: dn-postep-przebieg 1.4s var(--dn-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dn-postep-tor--nieokreslony > .dn-postep-wartosc {
+    width: 100%;
+    animation: none;
+    opacity: 0.45;
+  }
+}
+
+/* ==========================================================================
+   STRUKTURA DOKUMENTU W TEKŚCIE CIĄGŁYM
+   --------------------------------------------------------------------------
+   Akt prawny, regulamin albo instrukcja wyświetlana w całości: śródtytuły
+   dwóch stopni, wykazy, uwagi redakcyjne i zestawienia. Osobne od `.dn-tabela`,
+   która jest tabelą danych z nagłówkiem przyklejonym do góry — tutaj tabela
+   jest częścią czytanego tekstu i przewija się razem z nim.
+   ========================================================================== */
+
+.dn-tekst-ciagly h2 {
+  margin: var(--dn-od-8) 0 var(--dn-od-3);
+  font-family: var(--dn-ff-naglowkowa);
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-ciasny);
+  letter-spacing: -0.01em;
+  color: var(--dn-tekst);
+}
+.dn-tekst-ciagly h3 {
+  margin: var(--dn-od-6) 0 var(--dn-od-2);
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-wiodacy);
+}
+.dn-tekst-ciagly > :first-child { margin-top: 0; }
+
+.dn-tekst-ciagly ol,
+.dn-tekst-ciagly ul {
+  margin: 0 0 var(--dn-od-4);
+  padding-left: var(--dn-od-5);
+}
+.dn-tekst-ciagly li { margin-bottom: var(--dn-od-2); }
+.dn-tekst-ciagly li:last-child { margin-bottom: 0; }
+.dn-tekst-ciagly li::marker { color: var(--dn-tekst-3); }
+
+/* Uwaga redakcyjna — wyróżniona kreską, nie tłem: w długim dokumencie tło
+   powtórzone kilkadziesiąt razy zamienia tekst w pasy. */
+.dn-tekst-ciagly blockquote {
+  margin: 0 0 var(--dn-od-4);
+  padding-left: var(--dn-od-4);
+  border-left: 2px solid var(--dn-sygnal-500);
+  color: var(--dn-tekst-3);
+}
+.dn-tekst-ciagly blockquote > p:last-child { margin-bottom: 0; }
+
+.dn-tekst-ciagly code {
+  font-family: var(--dn-ff-mono);
+  font-size: 0.92em;
+  color: var(--dn-tekst-wiodacy);
+}
+.dn-tekst-ciagly hr {
+  margin: var(--dn-od-6) 0;
+  border: 0;
+  border-top: 1px solid var(--dn-obrys);
+}
+
+/* Zestawienie wewnątrz dokumentu. Węższe pole niż tabela danych, więc szeroka
+   tabela przewija się we własnym pojemniku — nigdy nie rozpycha kolumny tekstu. */
+.dn-zestawienie-pole {
+  margin: 0 0 var(--dn-od-4);
+  overflow-x: auto;
+}
+.dn-tekst-ciagly table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+}
+.dn-tekst-ciagly th,
+.dn-tekst-ciagly td {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  text-align: left;
+  vertical-align: top;
+}
+.dn-tekst-ciagly th {
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   SPIS TREŚCI
+   --------------------------------------------------------------------------
+   Wykaz odsyłaczy do rozdziałów dokumentu czytanego w jednym polu. Dwa stopnie
+   zagłębienia; stopień drugi wciśnięty i drobniejszy.
+   ========================================================================== */
+
+.dn-spis-tresci { margin: 0 0 var(--dn-od-6); }
+.dn-spis-tresci ol,
+.dn-spis-tresci ul { margin: 0; padding: 0; list-style: none; }
+.dn-spis-tresci li { margin-bottom: var(--dn-od-1); }
+.dn-spis-tresci ul { margin-top: var(--dn-od-1); padding-left: var(--dn-od-4); }
+.dn-spis-tresci ul li { font-size: var(--dn-fs-xs); }
+.dn-spis-tresci a {
+  color: var(--dn-tekst-2);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+.dn-spis-tresci a:hover { color: var(--dn-sygnal-500); border-bottom-color: currentColor; }
+.dn-spis-tresci a:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: 2px;
+}
+.dn-spis-tresci > ol > li > a { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }

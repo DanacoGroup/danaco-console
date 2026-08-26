@@ -29,6 +29,12 @@ body {
 
 img, svg, video, canvas { display: block; max-width: 100%; }
 
+/* Atrybut `hidden` musi wygrać z układem składnika. Reguła przeglądarki stoi na
+   selektorze typu, a każda rodzina biblioteki niesie własne `display` na klasie
+   — bez tego wiersz oznaczony jako ukryty zostaje na ekranie, a okno łata to
+   własną regułą. Widoczność jest sprawą dokumentu, więc rozstrzyga ją fundament. */
+[hidden] { display: none !important; }
+
 input, button, textarea, select { font: inherit; color: inherit; }
 
 p, h1, h2, h3, h4 { overflow-wrap: break-word; }

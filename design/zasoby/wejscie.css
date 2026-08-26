@@ -9,17 +9,8 @@
    Dzięki temu kolejne ekrany uruchomienia czytają się jako jeden produkt,
    nie jako ekran powitalny, formularz i kolejny ekran powitalny.
 
-   BRYŁA WSPÓLNA. Instalator i okna przepływu wejścia to jedna rodzina okien,
-   więc wymiar okna, szerokość kolumny tożsamości, wcięcia, wysokość belki
-   tytułowej i wysokość pasa działań stoją w jednym bloku zmiennych (§1).
-   Żaden widok nie deklaruje ich osobno — inaczej dwa prototypy rozjeżdżają
-   się przy pierwszej zmianie.
-
-   SEPARACJA BARWĄ POWIERZCHNI. Sekcje okna rozdziela zmiana powierzchni
-   (atrament kolumny tożsamości, powierzchnia kolumny treści, panel pasa
-   działań), nie kreska. Kreska zostaje wyłącznie tam, gdzie niesie inne
-   znaczenie niż rozdzielenie sekcji: obrys okna, obrys kontrolki, obwódka
-   komunikatu niosąca jego wagę.
+   Szerokość docelowa okna 1040 px — okno wejściowe niesie wagę produktu,
+   nie wagę okienka dialogowego.
 
    Okna wejściowe stoją PRZED uwierzytelnieniem, więc nie mają ramy
    aplikacji. Własna, minimalna belka tytułowa okna systemowego (§2) jest
@@ -36,40 +27,37 @@
 
 /* ── 1 · SCENA I OKNO ───────────────────────────────────────────────────── */
 
+/* Scena bierze całą szerokość, jaką ma do dyspozycji. Bez tego kurczyłaby się
+   do treści, a okno o szerokości `min(920px, 100%)` zmieniałoby wymiar razem
+   z długością tekstu w kroku — okno instalatora ma stać nieruchomo. */
 .we-scena {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   min-height: 100%;
   padding: var(--dn-od-8) var(--dn-od-6);
   background: var(--dn-tlo);
 }
 
-/* Bryła okna wejściowego. Wysokość jest stała, nie najmniejsza: wariant
-   z komunikatem i wariant bez komunikatu nie mogą zmieniać rozmiaru okna
-   w trakcie uruchomienia, a instalator nie może kurczyć się między krokami.
-   Blok zmiennych obowiązuje całą rodzinę — okno startowe, okno rejestracji
-   i logowania, okno przygotowania środowiska oraz instalator. */
-.we-okno, .in-okno {
-  --we-szerokosc: 1040px;
-  --we-wysokosc: 696px;
-  --we-kolumna: 384px;                 /* kolumna tożsamości */
-  --we-wciecie-x: var(--dn-od-6);
-  --we-wciecie-y: var(--dn-od-6);
-  --we-pas-dzialan: calc(var(--dn-wym-kontrolka) + var(--dn-od-8));
-  --we-rytm: var(--dn-od-4);           /* odstęp między blokami kolumny */
-
-  width: min(var(--we-szerokosc), 100%);
-  height: var(--we-wysokosc);
+/* Okno wejściowe trzyma jedną szerokość i jedną wysokość we wszystkich
+   wariantach stanu — wariant z komunikatem nie może zmieniać rozmiaru okna
+   w trakcie uruchomienia. Pierwszy wiersz siatki zajmuje belka tytułowa,
+   drugi — kolumna tożsamości i kolumna stanu. */
+.we-okno {
+  /* Wymiar stały. Okno wejścia nie zmienia rozmiaru między widokami —
+     `min-height` pozwalał mu rosnąć razem z treścią widoku. */
+  width: 1040px;
+  height: 696px;
   flex: none;
   display: grid;
+  grid-template-columns: 384px minmax(0, 1fr);
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-xl);
-  background: var(--dn-powierzchnia);
+  background: var(--dn-okno-plotno);
   box-shadow: var(--dn-cien-3);
   overflow: hidden;
 }
-.we-okno { grid-template-columns: var(--we-kolumna) minmax(0, 1fr); }
 
 /* Wariant z belką okna systemowego: pierwszy wiersz siatki zajmuje belka,
    drugi — kolumna tożsamości i kolumna stanu. */
@@ -87,13 +75,11 @@
   gap: var(--dn-od-3);
   height: var(--dn-wym-belka);
   padding: 0 0 0 var(--dn-od-3);
-  background: var(--dn-rama);
+  /* Strefa 1 z 3 — najciemniejsza. Patrz NORMA-OKNA.md. */
+  background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
-/* Belka niesie pełne godło — podwójny grot z kropką sygnału — wzięte
-   z pliku marki `marka/logo/sygnet-na-ciemnym.svg`. Belka jest atramentowa
-   w obu motywach, więc wariant na ciemnym podłożu obowiązuje zawsze. */
-.we-belka-znak { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; display: block; }
+.we-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
 .we-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
 .we-belka-uchwyt { flex: 1 1 auto; }
 .we-belka-zamknij {
@@ -110,11 +96,21 @@
   display: flex;
   flex-direction: column;
   gap: var(--dn-od-6);
-  padding: var(--we-wciecie-y) var(--we-wciecie-x);
-  background: var(--dn-rama);
-  color: var(--dn-rama-tekst);
+  padding: var(--dn-od-8) var(--dn-od-6);
+  /* Kolumna tożsamości to strefa okna, nie plansza marki. Atrament przy białym
+     panelu dawał w motywie jasnym 94 stopnie różnicy jasności — okno rozpadało
+     się na dwie połowy. Ta para daje 4,9 w jasnym i 6,9 w ciemnym. */
+  /* Strefa 2 z 3 — obrzeże. */
+  background: var(--dn-okno-obrzeze);
+  color: var(--dn-tekst);
+  /* Nic z kolumny nie wychodzi poza jej krawędzie — ani ilustracja, ani cień. */
+  overflow: hidden;
+  /* Rozdzielenie idzie samą barwą, bez kreski. Kolumna stoi na atramencie,
+     panel obok unosi się na `--dn-panel`: różnica jasności 6,9 stopnia L*
+     w motywie ciemnym, 92 w jasnym. Przy `--dn-powierzchnia` było 2,4 —
+     stąd brała się kreska, którą tu wcześniej postawiono. */
 }
-.we-marka-godlo { width: 44px; height: 44px; color: var(--dn-rama-tekst); }
+.we-marka-godlo { width: 44px; height: 44px; color: var(--dn-tekst); }
 /* Kropka godła pulsuje jednym, ciągłym tętnem — jedyny ruch kolumny tożsamości.
    Tętno 2,4 s jest wspólnym pulsem sygnału w całej platformie; tu ożywia okno
    wejściowe, w którym poza tym nic się nie porusza. */
@@ -124,11 +120,8 @@
   transform-origin: center;
   animation: we-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
 }
-@keyframes we-tetno {
-  0%, 100% { opacity: 1; }
-  45%      { opacity: 0.35; }
-}
-@media (prefers-reduced-motion: reduce) { .we-marka-godlo .kropka { animation: none; } }
+@keyframes we-tetno {0%, 100% { opacity: 1; }45% { opacity: 0.35; }}
+@media (prefers-reduced-motion: reduce) {.we-marka-godlo .kropka { animation: none; }}
 .we-marka-nazwa {
   margin: 0;
   font-family: var(--dn-ff-naglowek);
@@ -143,20 +136,20 @@
   font-size: var(--dn-fs-xs);
   letter-spacing: var(--dn-ls-mono-wersaliki);
   text-transform: uppercase;
-  color: var(--dn-rama-tekst-2);
+  color: var(--dn-tekst-2);
 }
 .we-marka-lista { display: flex; flex-direction: column; gap: var(--dn-od-3); margin: 0; padding: 0; list-style: none; }
-.we-marka-poz { display: flex; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-rama-tekst-2); }
-.we-marka-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-rama-tekst); }
-.we-marka-poz b { display: block; color: var(--dn-rama-tekst); font-weight: var(--dn-fw-srednia); }
-/* Stopka kolumny tożsamości odcina się odstępem i stopniem pisma, nie kreską. */
+.we-marka-poz { display: flex; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2); }
+.we-marka-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst); }
+.we-marka-poz b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
 .we-marka-stopka {
   margin-top: auto;
+  /* Stopka odcina się odstępem i stopniem pisma, nie kreską. */
   padding-top: var(--dn-od-5);
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
   line-height: var(--dn-lh-ciasny);
-  color: var(--dn-rama-tekst-2);
+  color: var(--dn-tekst-2);
 }
 
 /* ── 4 · KOLUMNA STANU ALBO FORMULARZA ──────────────────────────────────── */
@@ -165,14 +158,13 @@
    z komunikatem i wariant bez komunikatu nie mogą zmieniać rozmiaru okna
    w trakcie uruchomienia. Stopka opada na dół wolnego miejsca. */
 .we-panel {
+  /* Strefa 3 z 3 — płótno treści. */
+  background: var(--dn-okno-plotno);
   display: flex;
   flex-direction: column;
-  gap: var(--we-rytm);
-  padding: var(--we-wciecie-y) var(--we-wciecie-x);
+  gap: var(--dn-od-5);
+  padding: var(--dn-od-8) var(--dn-od-6);
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  background: var(--dn-powierzchnia);
 }
 /* Głowa panelu: nadtytuł albo tytuł, tor kroków i zdanie wprowadzające.
    Reset zeruje marginesy nagłówkom i akapitom, więc odstęp musi wnieść
@@ -195,28 +187,6 @@
   line-height: var(--dn-lh-ciasny);
   color: var(--dn-tekst);
 }
-/* Kolumna ma stałą wysokość, więc widok ubogi w treść zostaje z wolnym
-   miejscem. Wolne miejsce NIE wchodzi w bloki treści: każdy blok trzyma
-   wysokość swojej treści i własny rytm wierszy, niezależnie od tego, ile
-   miejsca zostaje w kolumnie. Nadmiar leży jednym polem nad czynnością
-   główną — czytanie idzie od głowy widoku w dół rytmem kolumny, a czynność
-   główna stoi przy pasie działań, na dnie okna.
-
-   Blok rozciągnięty na wolne miejsce rozpycha swoje wnętrze: wiersze
-   formularza stoją wtedy dalej od siebie, niż mówi rytm, a widok z jednym
-   polem zostawia je w środku pustki.
-
-   Rosną wyłącznie bloki z własnym przewijaniem — warunki licencji
-   instalatora (§10). Tam wolne miejsce jest treścią bloku, nie luką
-   w kolumnie. */
-.we-panel > .we-akcje,
-.we-panel > .au-akcje { margin-top: auto; }
-/* Pas działań opada na dno kolumny sam z siebie tylko w widoku bez czynności
-   głównej. Dwa marginesy `auto` w jednej kolumnie dzielą wolne miejsce na
-   dwa pola zamiast jednego, więc tam, gdzie nadmiar zbiera czynność główna,
-   pas działań go nie dobiera. */
-.we-panel:has(> .we-akcje, > .au-akcje) > .we-stopka { margin-top: 0; }
-
 /* Obszar komunikatów panelu — pusty nie zabiera odstępu kolumny. */
 .we-komunikaty { display: contents; }
 .we-lid { margin: 0; max-width: 62ch; font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2); }
@@ -290,7 +260,7 @@
 
 /* ── 6 · KOMUNIKAT W KOLUMNIE STANU ─────────────────────────────────────── */
 
-.we-alarm:not([hidden]) {
+.we-alarm {
   display: flex;
   gap: var(--dn-od-3);
   padding: var(--dn-od-3);
@@ -301,9 +271,6 @@
   font-size: var(--dn-fs-sm);
   line-height: var(--dn-lh-bazowy);
   color: var(--dn-tekst-2);
-}
-.we-alarm {
-  gap: var(--dn-od-3);
 }
 .we-alarm svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-2); }
 .we-alarm b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
@@ -318,39 +285,33 @@
 
 /* ── 7 · DZIAŁANIA I STOPKA KOLUMNY ─────────────────────────────────────── */
 
-/* Czynność główna kroku zajmuje pełną szerokość kolumny — jedna na widok.
-   Czynności poboczne są krótkie i stoją pod nią albo w pasie działań. */
-.we-akcje { display: flex; flex-direction: column; gap: var(--dn-od-2); }
-.we-akcje .dn-btn { justify-content: center; white-space: nowrap; }
+.we-akcje { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; }
+.we-akcje .dn-btn { white-space: nowrap; }
 .we-akcje .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-.we-akcje-poboczne { display: flex; align-items: center; gap: var(--dn-od-2); flex-wrap: wrap; align-self: flex-start; }
-.we-akcje-poboczne .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-
-/* Pas działań kolumny. Odcina się powierzchnią panelu, nie kreską, i sięga
-   krawędzi kolumny — stąd ujemne marginesy równe wcięciom panelu. Wysokość
-   bierze ze zmiennej wspólnej, tej samej co pas działań instalatora. */
 .we-stopka {
   display: flex;
-  margin: auto calc(-1 * var(--we-wciecie-x)) calc(-1 * var(--we-wciecie-y));
+  margin-top: auto;
   align-items: center;
   justify-content: space-between;
   gap: var(--dn-od-3);
   flex-wrap: wrap;
-  min-height: var(--we-pas-dzialan);
-  padding: var(--dn-od-3) var(--we-wciecie-x);
-  background: var(--dn-tlo);
+  /* Pas działań odcina się powierzchnią, nie kreską — sięga krawędzi kolumny. */
+  margin: auto calc(-1 * var(--we-wciecie-x)) calc(-1 * var(--we-wciecie-y));
+  padding: var(--dn-od-4) var(--we-wciecie-x);
+  background: var(--dn-okno-obrzeze);
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-2);
 }
-/* Wariant ciągły: stopka niesie jedno zdanie z wplecionym wywołaniem.
-   Rozsunięcie do krawędzi rozrywałoby zdanie, więc pozycje stoją obok siebie. */
+/* Wariant ciągły: stopka niesie jedno zdanie z wplecionymi wywołaniami
+   („Nie masz konta? Utwórz konto · lub · Kontynuuj bez konta”). Rozsunięcie
+   do krawędzi rozrywałoby zdanie, więc pozycje stoją obok siebie. */
 .we-stopka--ciag { justify-content: flex-start; gap: var(--dn-od-2); }
 .we-lacznik { color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
 
 /* ── 8 · FORMULARZ UWIERZYTELNIENIA ─────────────────────────────────────── */
 /* Rejestracja, logowanie, kod potwierdzający i odzyskiwanie dostępu. */
 
-.au-pola { display: flex; flex-direction: column; gap: var(--we-rytm); }
+.au-pola { display: flex; flex-direction: column; gap: var(--dn-od-4); }
 .au-para { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--dn-od-4); }
 
 /* pole hasła z odsłonięciem */
@@ -385,7 +346,7 @@
 .au-sila-warunek[data-spelniony='tak'] { color: var(--dn-sukces-tekst); }
 
 /* wiersz opcji sesji */
-.au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-2); }
+.au-opcje { display: flex; flex-direction: column; gap: var(--dn-od-3); }
 .au-opcja { display: flex; align-items: flex-start; gap: var(--dn-od-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); cursor: pointer; }
 .au-opcja small { display: block; font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 
@@ -404,18 +365,10 @@
    więc bierze drugi stopień. */
 .we-panel .dn-pole-opis { color: var(--dn-tekst-2); }
 
-/* Wykaz metod zapowiada etykieta wersalikowa, nie kreska z napisem w środku. */
-.au-etykieta {
-  margin: 0;
-  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
-  color: var(--dn-tekst-2);
-}
-
 .au-metody { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dn-od-2); }
 .au-metoda {
   display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-1);
-  padding: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-2);
   border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
   background: var(--dn-panel); color: var(--dn-tekst-2);
   font-size: var(--dn-fs-xs); text-align: center; cursor: pointer;
@@ -453,6 +406,15 @@
 }
 .au-krok[data-biezacy='tak'] { color: var(--dn-tekst); }
 .au-krok[data-biezacy='tak'] .au-krok-nr { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); color: var(--dn-sygnal); }
+/* Krok zrobiony — znak zamiast numeru, żeby stan nie stał na samej barwie. */
+.au-krok[data-zrobiony='tak'] { color: var(--dn-tekst-2); }
+.au-krok[data-zrobiony='tak'] .au-krok-nr {
+  border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst);
+  font-size: 0;
+}
+.au-krok[data-zrobiony='tak'] .au-krok-nr::after {
+  content: '✓'; font-size: 11px; line-height: 1;
+}
 .au-krok-strzalka { color: var(--dn-tekst-2); }
 
 /* ── 9 · PRZYGOTOWANIE ŚRODOWISKA ───────────────────────────────────────── */
@@ -466,10 +428,7 @@
   transform: rotateX(58deg) rotateZ(0deg);
   animation: pg-obrot 24s linear infinite;
 }
-@keyframes pg-obrot {
-  from { transform: rotateX(58deg) rotateZ(0deg); }
-  to   { transform: rotateX(58deg) rotateZ(360deg); }
-}
+@keyframes pg-obrot {from { transform: rotateX(58deg) rotateZ(0deg); }to { transform: rotateX(58deg) rotateZ(360deg); }}
 .pg-warstwa {
   position: absolute; inset: 0;
   display: grid; place-content: center;
@@ -498,461 +457,41 @@
   letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
   color: var(--dn-rama-tekst-2);
 }
-@media (prefers-reduced-motion: reduce) {
-  .pg-bryla { animation: none; transform: rotateX(58deg) rotateZ(28deg); }
-}
+@media (prefers-reduced-motion: reduce) {.pg-bryla { animation: none; transform: rotateX(58deg) rotateZ(28deg); }}
 
 .pg-postep { display: flex; flex-direction: column; gap: var(--dn-od-2); }
-.pg-postep .dn-postep-wartosc { width: 0; }
 .pg-postep-wiersz { display: flex; justify-content: space-between; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 .pg-postep-wiersz b { font-family: var(--dn-ff-mono); color: var(--dn-tekst); }
 
-/* ── 10 · INSTALATOR ────────────────────────────────────────────────────── */
-/* Instalator należy do tej samej rodziny okien co okno startowe i okno
-   uwierzytelnienia: bierze bryłę i wcięcia z §1, belkę z §2, kolumnę
-   tożsamości z §3 i głowę kroku z §4. Własne są tylko wykaz kroków
-   w kolumnie tożsamości, treść kroku i pas działań.
-
-   DWA OBRAZY PRZESTRZENNE, DWIE RÓŻNE ROLE. Otwarcie okna niesie gotową
-   grafikę sygnetu, wyrenderowaną przestrzennie poza przeglądarką: gra raz,
-   przy otwarciu dokumentu, i schodzi. Krok postępu niesie bryłę rysowaną
-   regułami, bo musi być sprzęgnięta z rzeczywistym postępem — prowadzi ją
-   liczba `--in-postep`, a bez postępu stoi nieruchomo. Krok zakończenia
-   domyka ją drugim ujęciem: mniejszym i osiadłym. Otwarcia nie da się
-   rysować regułami, a postępu nie da się wyrenderować z góry — stąd dwie
-   różne rzeczy zamiast jednej.
-
-   Okno pokazuje JEDEN krok naraz. Gdyby sześć kroków stało pod sobą,
-   okno rosłoby na kilka ekranów i przestawało być oknem dialogowym.
-   Wysokość okna jest stała (§1), więc krok krótki i krok długi zajmują
-   dokładnie tyle samo miejsca — instalator nie zmienia rozmiaru w trakcie. */
-
-.in-okno {
-  grid-template-rows: var(--dn-wym-belka) minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr);
-
-  /* Geometria bryły przestrzennej kroku instalowania. Kąty i skoki nie mają
-     żetonów semantycznych — stoją w jednym bloku zmiennych komponentu. */
-  --in-bryla-bok: 176px;
-  --in-bryla-bok-lekki: 104px;
-  --in-otwarcie-bok: 520px;   /* wymiar renderowania grafiki otwarcia */
-  --in-plyta-skok: 17px;
-  --in-plyta-lot: 76px;
-  --in-perspektywa: 900px;
-  --in-siatka-skok: 18px;
-  /* Stos rośnie w górę, więc jego środek ciężkości leży nad podstawą.
-     Osadzenie sprowadza całość do środka sceny. */
-  --in-osadzenie: calc(var(--in-plyta-skok) * 2);
-  /* Ściemnienie krawędzi pola przewijanego: głębia i barwa, w którą gaśnie.
-     Kryje jeden pełny wiersz treści ciągłej, więc wiersz przecięty w połowie
-     gaśnie zamiast być przecięty. */
-  --in-gasniecie: calc(var(--dn-fs-sm) * var(--dn-lh-luzny));
-  --in-gasniecie-tlo: var(--dn-powierzchnia-2);
-  --in-pochyl: 58deg;
-  --in-obrot: 288deg;
-  --in-spoczynek: 24deg;
-}
-
-/* ── Korpus: kolumna tożsamości po lewej, treść kroku po prawej ──────── */
-.in-korpus { display: grid; grid-template-columns: var(--we-kolumna) minmax(0, 1fr); min-height: 0; }
-
-/* ── Otwarcie okna ───────────────────────────────────────────────────── */
-/* Okno otwiera się grafiką przestrzenną sygnetu na CAŁEJ swojej powierzchni:
-   kolumna tożsamości, wykaz kroków, treść kroku i pas działań wchodzą dopiero
-   wtedy, gdy grafika osiądzie. Z okna zostaje jego rama — belka tytułowa
-   z zamknięciem — więc poza zamknięciem okna nie ma w tej chwili czego
-   dosięgnąć.
-
-   Ruchu nie rysuje przeglądarka: grafika jest gotowym plikiem wyrenderowanym
-   przestrzennie (`marka/otwarcie/`), grającym raz i zatrzymującym się na
-   ostatniej klatce — płaskim sygnecie widzianym na wprost. Stąd brak tu
-   klatek kluczowych; z żetonów ruchu bierze się wyłącznie zejście.
-
-   Rzecz dotyczy OTWARCIA DOKUMENTU, nie wejścia w krok: powrót na powitanie
-   przyciskiem „Wstecz” niczego nie odtwarza. Stan niesie `data-otwarcie`
-   na oknie — `gra` w trakcie ujęcia, `gasnie` przy zejściu, brak atrybutu
-   w stanie ustalonym.
-
-   Otwarcie stoi w tej samej komórce siatki, co korpus, więc okno zachowuje
-   swój wymiar przez cały czas: zmienia się zawartość okna, nie okno. */
-.in-otwarcie {
-  grid-row: 2; grid-column: 1;
-  z-index: 1;
-  display: grid; place-items: center;
-  min-height: 0; overflow: hidden;
-  background: var(--dn-powierzchnia);
-}
-.in-okno:not([data-otwarcie]) .in-otwarcie { display: none; }
-.in-okno[data-otwarcie='gra'] .in-korpus { display: none; }
-
-/* Grafika stoi we własnym wymiarze renderowania — powiększona traciłaby
-   ostrość fazowanych krawędzi. Progi okna nie mogą jej wypchnąć poza scenę. */
-.in-otwarcie-znak {
-  display: block;
-  width: var(--in-otwarcie-bok); height: var(--in-otwarcie-bok);
-  max-width: 100%; max-height: 100%;
-}
-
-/* Zejście: ujęcie gaśnie, kreator wchodzi w jego miejsce tym samym czasem. */
-.in-okno[data-otwarcie='gasnie'] .in-otwarcie {
-  opacity: 0; pointer-events: none;
-  transition: opacity var(--dn-czas-2) var(--dn-ease);
-}
-.in-okno[data-otwarcie='gasnie'] .in-korpus {
-  animation: dn-pojawienie var(--dn-czas-2) var(--dn-ease) backwards;
-}
-
-/* ── Wykaz kroków w kolumnie tożsamości ──────────────────────────────── */
-/* Wykaz jest wskazaniem miejsca w przepływie, nie nawigacją: instalator
-   prowadzi pasem działań, tak jak instalatory systemowe. Krok bieżący
-   niesie powierzchnię i barwę numeru — nie wstęgę i nie kreskę. */
-.in-kroki { display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
-.in-krok {
-  display: flex; align-items: center; gap: var(--dn-od-3);
-  min-height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-3);
-  border-radius: var(--dn-r-sm);
-  font-size: var(--dn-fs-sm); color: var(--dn-rama-tekst-2);
-}
-.in-krok-numer {
-  display: grid; place-content: center; flex: none;
-  width: var(--dn-wym-awatar-sm); height: var(--dn-wym-awatar-sm);
-  border: 1px solid var(--dn-rama-obrys-mocny); border-radius: var(--dn-r-pill);
-  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-}
-.in-krok-numer svg { width: calc(var(--dn-wym-ikona-sm) - var(--dn-od-1)); height: calc(var(--dn-wym-ikona-sm) - var(--dn-od-1)); }
-.in-krok[data-stan='zrobiony'] { color: var(--dn-rama-tekst); }
-.in-krok[data-stan='zrobiony'] .in-krok-numer { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); color: var(--dn-sukces-tekst); }
-.in-krok[data-stan='biezacy'] { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); font-weight: var(--dn-fw-polgruba); }
-.in-krok[data-stan='biezacy'] .in-krok-numer { border-color: var(--dn-sygnal-400); color: var(--dn-sygnal-300); }
-
-/* ── Kolumna treści kroku ────────────────────────────────────────────── */
-.in-tresc { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; background: var(--dn-powierzchnia); }
-.in-ekran {
-  display: none; flex-direction: column; gap: var(--we-rytm);
-  padding: var(--we-wciecie-y) var(--we-wciecie-x);
-  min-height: 0; overflow-y: auto;
-}
-.in-ekran[data-widoczny='tak'] { display: flex; }
-
-/* ── Powitanie ───────────────────────────────────────────────────────── */
-/* Krok podaje nazwę produktu i wydanie — tego wymaga wytyczna instalacji
-   aplikacji desktopowej. Wydanie i wydawca stoją w jednym wierszu maszynowym
-   pod tytułem, bez własnej powierzchni i bez kreski.
-
-   Powitanie niesie sam tekst. Bryła przestrzenna rozgrywa się przed nim, na
-   całej powierzchni okna, i schodzi — obok tekstu nie zostaje po niej nic.
-   Krok jest krótki, więc pod tekstem zostaje wolne miejsce: leży ono jednym
-   polem nad pasem działań, tak jak w każdym innym kroku i w oknach przepływu
-   wejścia (§4). Tekst stoi u góry kolumny — środkowanie w pionie zrywałoby
-   wspólną linię głowy kroku. */
-.in-wydanie {
-  margin: 0;
-  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-2);
-}
-.in-powitanie { display: flex; flex-direction: column; gap: var(--dn-od-4); max-width: 62ch; }
-.in-powitanie p { margin: 0; font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst); }
-.in-powitanie .au-link { font-size: inherit; text-decoration: underline; text-underline-offset: 2px; }
-
-/* ── Pole przewijane ─────────────────────────────────────────────────── */
-/* Blok dłuższy niż jego okno musi to pokazywać sam z siebie — pasek nakładkowy
-   systemu pojawia się dopiero w trakcie przewijania, więc nie jest wskazaniem.
-   Pole niesie trzy własne: szynę z suwakiem prowadzonym miarą przewinięcia,
-   ściemnienie dolnej krawędzi, dopóki jest co przewijać, i ściemnienie górnej,
-   gdy początek został już minięty. Wiersz urwany w połowie wysokości gaśnie
-   w ściemnieniu, zamiast być przecięty.
-
-   Mechanizm niesie jeden blok — warunki licencji (krok 2). Miarę zapasu pole
-   niesie w `data-zapas`. */
-.in-przewijane { position: relative; flex: 1 1 auto; min-height: 0; display: flex; }
-.in-przewijane::before,
-.in-przewijane::after {
-  content: '';
-  position: absolute; left: 0; right: var(--dn-od-5);
-  height: var(--dn-od-10);
-  pointer-events: none;
-  transition: opacity var(--dn-czas-2) var(--dn-ease);
-}
-.in-przewijane::before {
-  top: 0;
-  border-radius: var(--dn-r-md) var(--dn-r-md) 0 0;
-  background: linear-gradient(to bottom, var(--in-gasniecie-tlo) var(--in-gasniecie), transparent);
-}
-.in-przewijane::after {
-  bottom: 0;
-  border-radius: 0 0 var(--dn-r-md) var(--dn-r-md);
-  background: linear-gradient(to top, var(--in-gasniecie-tlo) var(--in-gasniecie), transparent);
-}
-.in-przewijane[data-poczatek='tak']::before { opacity: 0; }
-.in-przewijane[data-koniec='tak']::after { opacity: 0; }
-.in-przewijane-szyna {
-  position: absolute; top: var(--dn-od-3); bottom: var(--dn-od-3); right: var(--dn-od-3);
-  width: var(--dn-od-1);
-  border-radius: var(--dn-r-pill);
-  background: var(--dn-obrys-mocny);
-}
-.in-przewijane-suwak {
-  position: absolute; left: 0; right: 0;
-  border-radius: var(--dn-r-pill);
-  background: var(--dn-tekst-2);
-}
-/* ── Warunki licencji ────────────────────────────────────────────────── */
-/* Blok warunków jest polem przewijanym o własnej powierzchni: wcięcie od
-   prawej robi miejsce szynie, która stoi na jego tle. */
-.in-licencja {
-  flex: 1 1 auto; min-height: 0;
-  overflow-y: auto;
-  padding: var(--dn-od-4) var(--dn-od-6) var(--dn-od-4) var(--dn-od-4);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia-2);
-  font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2);
-}
-.in-licencja:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: var(--dn-wym-fokus-odsuniecie); }
-.in-licencja p { margin: 0 0 var(--dn-od-4); }
-.in-licencja p:last-child { margin-bottom: 0; }
-.in-licencja b { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
-
-/* Odsyłacze do dokumentów wiążących stoją pod skrótem warunków, nad zgodą —
-   tak jak mówi o nich sam skrót. Trzy pozycje idą jednym wierszem ciągłym,
-   rozdzielone kropką w połowie wysokości: to zdanie, nie wykaz, więc nie
-   dostaje ani własnych pozycji, ani siatki. Różnią się od tekstu otoczenia
-   barwą i podkreśleniem, bo sama barwa nie wystarcza (WCAG 1.4.1). */
-.in-odsylacze {
-  margin: 0;
-  font-size: var(--dn-fs-sm); line-height: var(--dn-lh-luzny); color: var(--dn-tekst-2);
-}
-.in-odsylacze .au-link { text-decoration: underline; text-underline-offset: 2px; }
-
-/* ── Wybór wariantu instalacji ───────────────────────────────────────── */
-/* Wariant rozstrzyga zakres instalacji w całości, więc jest jedynym wyborem
-   tego kroku. Pozycja wybrana odcina się powierzchnią sygnału i obwódką
-   sygnału — obwódka niesie tu stan wyboru, nie rozdziela sekcji.
-
-   Pozycja mieści cztery wiersze: nazwę, dwa zdania opisu i miarę instalacji.
-   Miara jest zdaniem, nie liczbą w kolumnie obok, więc stoi pod opisem
-   w piśmie maszynowym — kolumna z prawej łamałaby ją na sylaby. */
-.in-warianty { display: flex; flex-direction: column; gap: var(--dn-od-3); }
-.in-wariant {
-  display: grid; grid-template-columns: var(--dn-wym-check) minmax(0, 1fr);
-  align-items: start; gap: var(--dn-od-3) var(--dn-od-4);
-  padding: var(--dn-od-4);
-  border: 1px solid transparent; border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia-2); cursor: pointer;
-  transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
-}
-.in-wariant:hover { background: var(--dn-hover); }
-.in-wariant:has(:checked) { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
-.in-wariant-nazwa { display: block; font-size: var(--dn-fs-md); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
-.in-wariant-opis { display: block; margin-top: var(--dn-od-2); font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2); }
-.in-wariant-miara {
-  display: block; margin-top: var(--dn-od-3);
-  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2);
-}
-
-/* ── Katalogi i wybory kroku ─────────────────────────────────────────── */
-/* Krok scala katalog programu z wyborami skrótów, więc druga grupa wyborów
-   zapowiada się etykietą wersalikową — nie kreską i nie własną powierzchnią. */
-.in-etykieta {
-  margin: 0;
-  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
-  color: var(--dn-tekst-2);
-}
-/* Etykieta wiąże się ze swoją grupą ciaśniej, niż rytm kolumny wiąże bloki —
-   inaczej stoi równo daleko od obu i nie wiadomo, co zapowiada. */
-.in-grupa { display: flex; flex-direction: column; gap: var(--dn-od-2); }
-.in-pola { display: flex; flex-direction: column; gap: var(--we-rytm); }
-.in-pole { display: flex; flex-direction: column; gap: var(--dn-od-2); }
-.in-pole-etykieta { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
-/* `display` autora wygrywa z `[hidden]` przeglądarki — stąd warunek. */
-.in-sciezka:not([hidden]) { display: flex; align-items: center; gap: var(--dn-od-2); }
-.in-sciezka code {
-  flex: 1 1 auto; min-width: 0;
-  display: flex; align-items: center;
-  min-height: var(--dn-wym-kontrolka); padding: 0 var(--dn-od-3);
-  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-sm);
-  background: var(--dn-powierzchnia); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm);
-  color: var(--dn-tekst); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.in-sciezka-stala {
-  flex: 1 1 auto; min-width: 0;
-  display: flex; align-items: center;
-  min-height: var(--dn-wym-kontrolka); padding: 0 var(--dn-od-3);
-  border-radius: var(--dn-r-sm);
-  background: var(--dn-powierzchnia-2); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
-}
-.in-wybory { display: flex; flex-direction: column; gap: var(--dn-od-3); }
-.in-wybor { display: flex; align-items: flex-start; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); color: var(--dn-tekst); cursor: pointer; }
-/* Zero blokad: pole niegotowe nie odbiera klikalności, tylko niesie stan. */
-.in-wybor:has([aria-invalid='true']) { color: var(--dn-blad-tekst); }
-.in-wybor [aria-invalid='true'] { border-color: var(--dn-blad-obrys); box-shadow: 0 0 0 1px var(--dn-blad-obrys); }
-.in-wybor-opis { display: block; margin-top: var(--dn-od-1); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-
-/* ── Zestawienie miejsca ─────────────────────────────────────────────── */
-.in-suma {
-  display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3);
-  padding: var(--dn-od-3) var(--dn-od-4);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-tlo);
-  font-size: var(--dn-fs-sm); color: var(--dn-tekst);
-}
-.in-suma b { font-family: var(--dn-ff-mono); font-weight: var(--dn-fw-srednia); }
-.in-suma-wolne { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-
-/* ── Przebieg instalacji: bryła przestrzenna + postęp + wykaz czynności ─ */
-/* Bryła jest obrazem tego, co instalator w tej chwili robi: podstawa to
-   urządzenie, na którym stanie program, każda płyta to jeden etap zapisu
-   osiadający na nim.
-   Obrót bryły i osiadanie płyt prowadzi ta sama liczba, którą pokazuje
-   pasek postępu — zmienna `--in-postep` (0…1) ustawiana przez skrypt.
-   Bryła nie ma własnego cyklu: bez postępu stoi nieruchomo. */
-/* Blok przebiegu jest wysoki na tyle, na ile wysoka jest scena bryły;
-   wykaz czynności środkuje się względem niej. Wolne miejsce kroku leży pod
-   blokiem, nad pasem działań — tak samo jak w pozostałych krokach. */
-.in-przebieg { min-height: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-6); align-items: center; }
-/* Pole bryły musi pomieścić kwadrat obrócony wokół osi pionowej: przy 45°
-   jego rzut poziomy rośnie do przekątnej, czyli półtora boku. Wysokość
-   bierze miarę z bryły, a nie z kolumny — inaczej połowa sceny stoi pusta. */
-.in-bryla-pole {
-  display: grid; place-items: center;
-  width: calc(var(--in-bryla-bok) * 1.5);
-  height: calc(var(--in-bryla-bok) * 1.6);
-  border-radius: var(--dn-r-lg);
-  background: var(--dn-rama);
-  perspective: var(--in-perspektywa);
-}
-.in-bryla {
-  position: relative;
-  width: var(--in-bryla-bok); height: var(--in-bryla-bok);
-  transform-style: preserve-3d;
-  transform: translateY(var(--in-osadzenie)) rotateX(var(--in-pochyl)) rotateZ(calc(var(--in-postep, 0) * var(--in-obrot)));
-  transition: transform var(--dn-czas-3) var(--dn-ease);
-}
-.in-plyta {
-  position: absolute; inset: 0;
-  display: grid; place-content: center;
-  border: 1px solid var(--dn-rama-obrys-mocny); border-radius: var(--dn-r-md);
-  background: var(--dn-rama-grafit);
-  box-shadow: var(--dn-cien-2);
-  opacity: 0;
-  transform: translateZ(calc(var(--in-plyta-nr, 0) * var(--in-plyta-skok) + var(--in-plyta-lot)));
-  transition:
-    transform var(--dn-czas-3) var(--dn-ease),
-    opacity var(--dn-czas-3) var(--dn-ease),
-    border-color var(--dn-czas-2) var(--dn-ease);
-}
-.in-plyta[data-stan='w-toku'] {
-  opacity: var(--dn-przygasz-rodzenstwa);
-  border-color: var(--dn-sygnal-500);
-  transform: translateZ(calc(var(--in-plyta-nr, 0) * var(--in-plyta-skok) + var(--in-plyta-lot) / 2));
-}
-.in-plyta[data-stan='zakonczone'] {
-  opacity: 1;
-  transform: translateZ(calc(var(--in-plyta-nr, 0) * var(--in-plyta-skok)));
-}
-.in-plyta--podstawa { opacity: 1; transform: translateZ(0); background: var(--dn-szary-800); }
-.in-plyta--podstawa[data-plyta] { --in-plyta-nr: 0; }
-.in-plyta[data-plyta='1'] { --in-plyta-nr: 1; }
-.in-plyta[data-plyta='2'] { --in-plyta-nr: 2; }
-.in-plyta[data-plyta='3'] { --in-plyta-nr: 3; }
-.in-plyta[data-plyta='4'] { --in-plyta-nr: 4; }
-.in-plyta[data-plyta='5'] { --in-plyta-nr: 5; }
-.in-plyta-siatka {
-  position: absolute; inset: var(--dn-od-3);
-  border-radius: var(--dn-r-sm);
-  background:
-    repeating-linear-gradient(0deg,  var(--dn-rama-obrys) 0 1px, transparent 1px var(--in-siatka-skok)),
-    repeating-linear-gradient(90deg, var(--dn-rama-obrys) 0 1px, transparent 1px var(--in-siatka-skok));
-}
-
-/* Domknięcie na kroku zakończenia: ta sama bryła, mniejsza i osiadła. */
-.in-bryla-pole--lekka { width: calc(var(--in-bryla-bok-lekki) * 1.8); height: calc(var(--in-bryla-bok-lekki) * 1.8); background: transparent; }
-.in-bryla-pole--lekka .in-bryla {
-  width: var(--in-bryla-bok-lekki); height: var(--in-bryla-bok-lekki);
-  transform: translateY(var(--in-osadzenie)) rotateX(var(--in-pochyl)) rotateZ(var(--in-spoczynek));
-  animation: dn-wejscie var(--dn-czas-3) var(--dn-ease) backwards;
-}
-.in-bryla-pole--lekka .in-plyta { opacity: 1; transform: translateZ(calc(var(--in-plyta-nr, 0) * var(--in-plyta-skok))); }
-
-/* ── Postęp i wykaz czynności ────────────────────────────────────────── */
-.in-postep { display: flex; flex-direction: column; gap: var(--dn-od-2); }
-.in-postep-wiersz { display: flex; align-items: baseline; justify-content: space-between; gap: var(--dn-od-3); font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
-.in-postep-stan { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); font-variant-numeric: tabular-nums; }
-.in-postep-tor { height: var(--dn-od-2); border-radius: var(--dn-r-pill); background: var(--dn-powierzchnia-2); overflow: hidden; }
-.in-postep-tor > span {
-  display: block; height: 100%;
-  width: calc(var(--in-postep, 0) * 100%);
-  background: var(--dn-sygnal-wypelnienie);
-  transition: width var(--dn-czas-3) var(--dn-ease);
-}
-.in-fazy { flex: 0 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: var(--dn-od-1); margin: 0; padding: 0; list-style: none; }
-.in-faza {
-  display: flex; align-items: center; gap: var(--dn-od-3);
-  min-height: var(--dn-wym-wiersz); padding: 0 var(--dn-od-3);
-  border-radius: var(--dn-r-sm);
-  font-size: var(--dn-fs-sm); color: var(--dn-tekst-2);
-}
-.in-faza[data-stan='w-toku'] { background: var(--dn-powierzchnia-2); color: var(--dn-tekst); }
-.in-faza-stan { margin-left: auto; font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-.in-faza[data-stan='zakonczone'] .in-faza-stan { color: var(--dn-sukces-tekst); }
-.in-faza[data-stan='w-toku'] .in-faza-stan { color: var(--dn-sygnal); }
-.in-prawa { display: flex; flex-direction: column; gap: var(--dn-od-4); min-height: 0; align-self: center; }
-
-/* ── Zakończenie ─────────────────────────────────────────────────────── */
-.in-zakonczenie { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--dn-od-6); align-items: center; }
-.in-wynik { display: flex; flex-direction: column; gap: var(--dn-od-3); }
-.in-wynik-zdanie { margin: 0; font-size: var(--dn-fs-md); line-height: var(--dn-lh-luzny); color: var(--dn-tekst); }
-
-/* ── Pas działań ─────────────────────────────────────────────────────── */
-/* Pas odcina się powierzchnią panelu, nie kreską. Wysokość i wcięcie
-   poziome bierze z bloku wspólnego — te same, co pas działań w oknach
-   przepływu wejścia. */
-.in-dzialania {
-  display: flex; align-items: center; gap: var(--dn-od-2);
-  min-height: var(--we-pas-dzialan);
-  padding: var(--dn-od-3) var(--we-wciecie-x);
-  background: var(--dn-tlo);
-}
-.in-dzialania > .dn-btn[hidden] { display: none; }
-.in-dzialania-odstep { flex: 1 1 auto; }
-.in-podsumowanie { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-
-/* Ruch ograniczony: bryła stoi w jednym ujęciu, płyty są osiadłe, a cały
-   przekaz o postępie niosą pasek postępu i wykaz czynności. */
-@media (prefers-reduced-motion: reduce) {
-  .in-bryla {
-    transform: translateY(var(--in-osadzenie)) rotateX(var(--in-pochyl)) rotateZ(var(--in-spoczynek));
-    transition: none;
-  }
-  .in-plyta, .in-plyta[data-stan] {
-    opacity: 1;
-    transform: translateZ(calc(var(--in-plyta-nr, 0) * var(--in-plyta-skok)));
-    transition: none;
-  }
-  .in-bryla-pole--lekka .in-bryla { animation: none; }
-  /* Otwarcia okna nie ma wcale: kreator stoi od pierwszej klatki, a powitanie
-     jest widoczne od razu. Reguła wyprzedza skrypt — stan `data-otwarcie`
-     w znaczniku nie zdąży niczego pokazać. */
-  .in-otwarcie { display: none; }
-  .in-okno[data-otwarcie] .in-korpus { display: grid; }
-}
-
 /* ── 11 · PROGI ─────────────────────────────────────────────────────────── */
 
-/* Poniżej szerokości okna kolumna tożsamości ustępuje kolumnie treści —
-   w oknach przepływu znika, w instalatorze zwija się w pasek kroków. */
-@media (max-width: 1100px) {
-  .we-okno { grid-template-columns: minmax(0, 1fr); }
-  .we-marka { display: none; }
-  .in-korpus { grid-template-columns: minmax(0, 1fr); }
-  .in-korpus > .we-marka { display: none; }
+@media (max-width: 1000px) {.we-okno { width: 100%; height: auto; min-height: 640px; grid-template-columns: minmax(0, 1fr); }.we-marka { display: none; }}
+@media (max-width: 640px) {.we-panel { padding: var(--dn-od-5) var(--dn-od-4); }.we-scena { padding: var(--dn-od-5) var(--dn-od-4); }.au-para, .au-metody { grid-template-columns: minmax(0, 1fr); }.au-kod-pole { width: 40px; height: 48px; font-size: var(--dn-fs-lg); }}
+/* Dopowiedzenie przy wartości — jeden zapis dla wszystkich wierszy: pismo
+   podstawowe, drobniejsze, przygaszone, oddzielone kropką środkową. *//* ── Sterowanie oknem w belce tytułowej ────────────────────────────────────
+   Trzy przyciski w kolejności systemowej: zwinięcie · rozwinięcie · zamknięcie.
+   Wymiar wg Windows — 46 px szerokości na pełną wysokość belki, znak 14 px.
+   Wcześniej stał jeden przycisk 34 px ze znakiem 12 px, poniżej standardu.
+   Zamknięcie ma czerwień na wskazaniu, tak jak w systemie. */.we-belka-sterowanie {
+  display: flex;
+  margin-left: auto;
+  align-self: stretch;
 }
-@media (max-width: 640px) {
-  .we-okno, .in-okno { height: auto; min-height: var(--we-wysokosc); }
-  .we-panel, .in-ekran { padding: var(--dn-od-5) var(--dn-od-4); }
-  .we-scena { padding: var(--dn-od-5) var(--dn-od-4); }
-  .au-para { grid-template-columns: minmax(0, 1fr); }
-  .au-metody { grid-template-columns: minmax(0, 1fr); }
-  .au-kod-pole { width: 40px; height: 48px; font-size: var(--dn-fs-lg); }
-  .in-przebieg, .in-zakonczenie { grid-template-columns: minmax(0, 1fr); }
+.we-belka-btn {
+  display: grid; place-items: center; place-content: center;
+  width: var(--dn-wym-belka-btn); height: 100%;
+  padding: 0; margin: 0;
+  flex: none;
+  border: 0; background: transparent;
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
 }
+/* Znaki sterowania oknem są cieńsze i mniejsze od znaku marki — pole kliknięcia
+   ma 46 px, ale sam rysunek dorównuje wadze tytułu, nie przewyższa go. */.we-belka-btn svg { width: 12px; height: 12px; display: block; stroke-width: 1.2; }
+.we-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+.we-belka-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.we-belka-btn--zamknij:hover { background: var(--dn-czerwien-700); color: var(--dn-szary-0); }

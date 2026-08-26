@@ -211,6 +211,24 @@ window.DanacoWejscie.tresci = {
     "wiele": "Popraw zaznaczone dane.",
     "naglowekKonto": "Nie można utworzyć konta.",
     "naglowekHaslo": "Nie można ustawić hasła.",
+    "naglowekLogowanie": "Nie można się zalogować.",
+    "naglowekKod": "Nie można wysłać kodu.",
+    "brakLoginu": {
+      "glowa": "Podaj login albo adres e-mail.",
+      "tresc": "Pole logowania jest puste."
+    },
+    "brakHasla": {
+      "glowa": "Podaj hasło.",
+      "tresc": "Pole hasła jest puste."
+    },
+    "brakDanych": {
+      "glowa": "Podaj dane logowania.",
+      "tresc": "Wpisz login albo adres e-mail oraz hasło do konta Operatora."
+    },
+    "brakAdresu": {
+      "glowa": "Podaj adres e-mail konta.",
+      "tresc": "Na ten adres zostanie wysłany kod potwierdzający."
+    },
     "loginZajety": {
       "glowa": "Ten login jest już zajęty.",
       "tresc": "Wybierz inny login. Adres e-mail może pozostać bez zmian."

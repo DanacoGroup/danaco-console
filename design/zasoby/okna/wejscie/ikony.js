@@ -7,7 +7,9 @@
    ============================================================================ */
 window.DanacoWejscie = window.DanacoWejscie || {};
 window.DanacoWejscie.ikony = {
-  godlo: '<svg viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle cx="83" cy="63.5" r="6.5" fill="currentColor"/></svg>',
+  /* Kropka sygnału niesie KLASĘ, nie wpisaną barwę: barwę rozstrzyga arkusz,
+     osobno dla belki (ciemnej w obu motywach) i dla kolumny tożsamości. */
+  godlo: '<svg viewBox="0 0 96 96" aria-hidden="true"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>',
   zwin: '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M2 7h10"/></svg>',
   rozwin: '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><rect x="2.2" y="2.2" width="9.6" height="9.6" rx="1.2"/></svg>',
   zamknij: '<svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg>',

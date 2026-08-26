@@ -667,45 +667,46 @@ nadana hierarchia, przydzielone role, umiejętności i tożsamości. Produkt daj
 skutki.
 ---
 
-## 8. Model wdrożenia: hybryda z dwoma wariantami instalacji
+## 8. Model wdrożenia: wyłącznie hybryda
 
-**Data:** 2026-08-23 · **Stan:** obowiązuje
+**Data:** 2026-08-26 · **Stan:** obowiązuje · **Zastępuje** wcześniejsze
+rozstrzygnięcie o dwóch wariantach instalacji
 
-**Kontekst.** Prototyp instalatora opisywał produkt jako program do pracy na
-komputerze Operatora. To jest nieprawda i przekłamuje istotę wdrożenia.
+**Decyzja.** Produkt występuje w **jednej postaci**: cienka instalka u Operatora,
+rdzeń i całe zaplecze na serwerze Danaco. **Wariant pełny natywny nie powstaje.**
 
-**Decyzja.** Produkt jest **hybrydowy** i występuje w dwóch wariantach
-instalacji:
-
-| Wariant | Co staje u Operatora | Serwer Danaco |
+| | Na dysku Operatora | Gdzie stoi zaplecze |
 |---|---|---|
-| **cienki (hybryda)** | okno aplikacji wraz z interfejsem | **wymagany** — rdzeń i całe zaplecze stoją tam |
-| **pełny natywny** | **wszystko**: okno, rdzeń, zaplecze, wagi modeli | **niepotrzebny** — produkt pracuje sam |
+| hybryda | **~250 MB** | serwer Danaco |
 
-Rozróżnienie idzie po **zależności od serwera Danaco**, nie po miejscu obliczeń.
-Natywna nie może niczego dobierać z serwera Danaco po instalacji, więc instalka
-niesie komplet tego, po co rdzeń sięga.
+**Podstawa — pomiar.** Zaplecze pracy zważone na maszynie budowlanej: modele AI
+15,6 GB, arsenał mediów i dokumentów 2,7 GB, n8n 2,5 GB, whisper z wagami
+1,7 GB, przeglądarki Playwright 0,93 GB, silnik rembg 0,72 GB, reszta programów
+i bibliotek 3,7 GB — **razem ~28 GB**. Wariant natywny musiałby to powtórzyć na
+każdym urządzeniu; z miejscem roboczym na obróbkę mediów daje to **30 GB
+minimum, 50 GB zalecane**. Hybryda potrzebuje **~250 MB** — sto dwadzieścia razy
+mniej.
 
-**Zasady korzystania są jedne i uniwersalne.** Nie rozdziela się ich na dwie
-wersje wedle wariantu instalacji i nie opisuje się produktu tak, jakby istniał
-tylko jeden z nich. Treść, która zakłada pracę wyłącznie lokalną, jest błędna;
-treść zakładająca wyłącznie serwerową — również.
+**Powód.** Nie chodzi o rozmiar pliku, lecz o utrzymanie. Zaplecze rośnie:
+narzędzie dołożone do produktu w wariancie serwerowym staje przed wszystkimi
+Operatorami tego samego dnia, a w natywnym wymaga nowego wydania, nowego
+pobrania i nowej instalacji u każdego z osobna. Przy zapleczu tej wielkości
+druga droga nie jest wykonalna.
 
-**Zakres składników do zainstalowania wynika z wybranego wariantu.** Wykaz
-przedstawiany w instalatorze nie jest stały: wariant cienki nie niesie rdzenia
-ani jego zaplecza, więc nie może ich proponować. Krok wyboru składników zależy
-od wariantu wybranego wcześniej.
+**Konsekwencje.**
 
-**Konsekwencje.** Instalator ma dwie ścieżki, nie jedną. Opis produktu
-w zasadach korzystania obejmuje oba warianty bez wskazywania któregokolwiek jako
-domyślnego sposobu pracy. Skrypt składający wariant cienki
-(`instalka-hybryda-win-x64.sh` wraz z odmianami dla ARM i Linuksa) **nie leży
-w repozytorium budowy** — stoi w materiale zabezpieczonym poza gitem,
-`~/robocze/material/repo-2.0/budowa/scripts/`. Jest zgodny z decyzją: wkompilowuje
-`client/dist` w powłokę i sprawdza wykazem zawartości, że rdzenia w instalce nie
-ma. Wchodzi do budowy wraz z terenem instalatora.
-
----
+1. **Instalator ma jedną ścieżkę.** Nie ma kroku wyboru wariantu ani kroku
+   wyboru składników — nie ma czego wybierać, bo składniki nie schodzą na
+   urządzenie.
+2. **Produkt wymaga łączności z serwerem Danaco.** Praca bez sieci nie jest
+   przewidziana. Wdrożenie odcięte od sieci nie jest obsługiwane.
+3. **Zasady korzystania opisują jeden sposób pracy.** Zapis wymagający
+   opisywania dwóch wariantów bez wskazywania domyślnego przestaje obowiązywać.
+4. **Skrypty instalek natywnych są materiałem zamkniętym.** Leżą poza
+   repozytorium, w `~/robocze/material/repo-2.0/budowa/scripts/`. Do budowy nie
+   wchodzą.
+5. **Modele i arsenał nie wchodzą do żadnej instalki.** Stoją na serwerze
+   wdrożenia i są utrzymywane w jednym miejscu.
 
 ## 9. Wstążka narzędziowa okna roboczego i przybornik karty
 

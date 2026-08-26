@@ -221,7 +221,7 @@ function slownieProby(ile) {
    to samo, ale drugie zdanie ostrzega mocniej. */
 function odswiezLicznikLogowania() {
   var panel = document.querySelector('.we-panel[data-widok="logowanie-blad"]');
-  var alarm = panel && panel.querySelector('.we-alarm');
+  var alarm = panel && panel.querySelector('.dn-alert');
   if (!alarm) return;
   var zostalo = DOZWOLONE_PROBY - zuzytePrzyLogowaniu;
   var b = alarm.querySelector('b');
@@ -350,16 +350,17 @@ function pokazUsterki(f, klucze) {
        wypchnęłyby formularz poza okno. Bez liczebnika, bo „dwie / trzy / cztery
        rzeczy” to trzy odmiany do utrzymania i trzy okazje do pomyłki. */
     tresc = '<b>' + tekst(f.naglowek) + ' ' + tekst('usterki.wiele') + '</b>' +
-            '<ul class="we-alarm-lista">' +
+            '<ul class="dn-alert-lista">' +
             klucze.map(function (k) { return '<li>' + usterkaTekst(k, 'glowa') + '</li>'; }).join('') +
             '</ul>';
   }
 
   var el = document.createElement('div');
-  el.className = 'we-alarm we-alarm--blad';
+  el.className = 'dn-alert dn-alert--wstega dn-alert--blad';
   el.setAttribute('role', 'alert');
   el.setAttribute('data-usterka-formularza', '');
-  el.innerHTML = ZNAK_USTERKI + '<span>' + tresc + '</span>';
+  el.innerHTML = '<span class="dn-alert-znak" aria-hidden="true">' + ZNAK_USTERKI +
+                 '</span><span class="dn-alert-tresc">' + tresc + '</span>';
   komunikaty.appendChild(el);
 
   klucze.forEach(function (k) {

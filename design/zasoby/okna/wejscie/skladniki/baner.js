@@ -1,9 +1,10 @@
 /* ============================================================================
    SKŁADNIK — BANER KOMUNIKATU
 
-   Głowa nazywa rzecz, treść mówi, co z niej wynika albo co zrobić. Baner
-   odcina się wstęgą przy lewej krawędzi, nie samym tłem — barwa jako jedyna
-   różnica nie wystarcza (WCAG 1.4.1).
+   Głowa nazywa rzecz, treść mówi, co z niej wynika albo co zrobić. Wygląd
+   wnosi składnik biblioteki `.dn-alert` w wariancie ze wstęgą: barwa stanu
+   obejmuje znak i głowę, a wstęga przy lewej krawędzi niesie stan kształtem —
+   barwa jako jedyna różnica nie wystarcza (WCAG 1.4.1).
 
    Właściwości:
      rodzaj  'informacja' | 'ostrzezenie' | 'blad' | 'sukces'
@@ -25,13 +26,14 @@ W.skladniki.baner = function (N, w) {
   if (w.dane) tresc = N.podstaw(tresc, w.dane);
   var glowa = N.tekst(w.glowa);
   if (w.daneGlowy) glowa = N.podstaw(glowa, w.daneGlowy);
+  var RODZAJE = { informacja: 'info', ostrzezenie: 'ostrzezenie', blad: 'blad', sukces: 'sukces' };
   return N.el('div', {
-    klasa: 'we-alarm we-alarm--' + (w.rodzaj || 'informacja'),
+    klasa: 'dn-alert dn-alert--wstega dn-alert--' + (RODZAJE[w.rodzaj] || 'info'),
     id: w.id || null,
     role: w.rodzaj === 'blad' || w.rodzaj === 'ostrzezenie' ? 'alert' : 'status'
   }, [
-    znak,
-    N.el('span', {}, [N.el('b', { tekst: glowa }), tresc])
+    N.el('span', { klasa: 'dn-alert-znak', 'aria-hidden': 'true' }, [znak]),
+    N.el('span', { klasa: 'dn-alert-tresc' }, [N.el('b', { tekst: glowa }), tresc])
   ]);
 };
 })();

@@ -300,7 +300,7 @@
 /* Wykaz usterek wewnątrz komunikatu. Punktory są potrzebne: bez nich cztery
    zdania zlewają się w akapit, w którym nie widać, ile rzeczy jest do
    poprawienia. */
-.we-alarm-lista {
+.dn-alert-lista {
   margin: var(--dn-od-1) 0 0;
   padding-left: var(--dn-od-4);
   /* Jedna pozycja na wiersz. Dwie kolumny mieściły więcej, ale przy dwóch
@@ -313,30 +313,8 @@
 
 /* Komunikat z wykazem jest z natury wyższy od jednozdaniowego, więc oddycha
    węziej — inaczej przy czterech usterkach naraz formularz wychodzi poza okno. */
-.we-alarm:has(.we-alarm-lista) { padding-block: var(--dn-od-2); }
+.dn-alert:has(.dn-alert-lista) { padding-block: var(--dn-od-2); }
 
-.we-alarm {
-  display: flex;
-  gap: var(--dn-od-3);
-  padding: var(--dn-od-3);
-  border: 1px solid var(--dn-obrys);
-  border-left-width: 2px;
-  border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia-2);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-bazowy);
-  color: var(--dn-tekst-2);
-}
-.we-alarm svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-2); }
-.we-alarm b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
-.we-alarm--sukces { border-color: var(--dn-sukces-obrys); background: var(--dn-sukces-tlo); }
-.we-alarm--sukces svg, .we-alarm--sukces b { color: var(--dn-sukces-tekst); }
-.we-alarm--ostrzezenie { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
-.we-alarm--ostrzezenie svg, .we-alarm--ostrzezenie b { color: var(--dn-ostrzezenie-tekst); }
-.we-alarm--informacja { border-color: var(--dn-informacja-obrys); background: var(--dn-informacja-tlo); }
-.we-alarm--informacja svg, .we-alarm--informacja b { color: var(--dn-informacja-tekst); }
-.we-alarm--blad { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); }
-.we-alarm--blad svg, .we-alarm--blad b { color: var(--dn-blad-tekst); }
 
 /* ── 7 · DZIAŁANIA I STOPKA KOLUMNY ─────────────────────────────────────── */
 
@@ -458,6 +436,7 @@
    podkreślenie — WCAG 1.4.1 wymaga rozróżnienia niebędącego samym kolorem. */
 .au-link { font-size: var(--dn-fs-sm); }
 .we-fraza .au-link { text-decoration: underline; text-underline-offset: 2px; }
+
 
 /* Opis pola przejmuje trzeci stopień tekstu z biblioteki komponentów
    (`komponenty.css` → `.dn-pole-opis`); w oknie wejściowym to tekst 13 px,

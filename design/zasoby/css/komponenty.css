@@ -2496,6 +2496,47 @@ button.dn-link {
 .dn-alert-tresc b,
 .dn-alert-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
 
+/* Alert ze wstęgą — komunikat, który stoi w treści okna, a nie nad nią.
+   Barwa stanu obejmuje ZNAK I GŁOWĘ, nie całe pismo: treść pozostaje w barwie
+   tekstu drugiego stopnia, więc czyta się tak samo dobrze jak reszta okna.
+   Wstęga przy lewej krawędzi niesie stan kształtem, nie samą barwą tła.
+   Wariant stał wcześniej w arkuszu okna wejścia jako `.we-alarm`. */
+.dn-alert--wstega {
+  display: flex;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3);
+  border-left-width: 2px;
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-2);
+}
+/* Znak stoi przy GŁOWIE, nie w połowie wysokości: komunikat ze wstęgą ma głowę
+   i treść, więc znak należy do pierwszego wiersza. Wyśrodkowanie z reguły
+   `.dn-alert:has(> .dn-alert-znak)` dotyczy komunikatów jednozdaniowych i ma
+   równą siłę, więc odwrócenie wymaga selektora tej samej budowy. */
+.dn-alert--wstega:has(> .dn-alert-znak) { align-items: flex-start; }
+/* Gniazdo znaku dorównuje samemu znakowi: komunikat stojący w treści nie ma
+   nad sobą pola nagłówkowego, więc większe gniazdo odsuwałoby pismo od wstęgi
+   bez powodu. */
+.dn-alert--wstega > .dn-alert-znak {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  color: var(--dn-tekst-2);
+}
+.dn-alert--wstega > .dn-alert-tresc > b { display: block; color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+.dn-alert--wstega.dn-alert--sukces { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--sukces > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--sukces > .dn-alert-tresc > b { color: var(--dn-sukces-tekst); }
+.dn-alert--wstega.dn-alert--ostrzezenie { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--ostrzezenie > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--ostrzezenie > .dn-alert-tresc > b { color: var(--dn-ostrzezenie-tekst); }
+.dn-alert--wstega.dn-alert--info { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--info > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--info > .dn-alert-tresc > b { color: var(--dn-informacja-tekst); }
+.dn-alert--wstega.dn-alert--blad { color: var(--dn-tekst-2); }
+.dn-alert--wstega.dn-alert--blad > .dn-alert-znak,
+.dn-alert--wstega.dn-alert--blad > .dn-alert-tresc > b { color: var(--dn-blad-tekst); }
+
 /* ==========================================================================
    POSTĘP — brakująca głowa · CZYNNOŚCI — tekst w pasie
    ========================================================================== */

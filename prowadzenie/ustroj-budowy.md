@@ -160,11 +160,25 @@ Poniższe reguły obowiązują bezwarunkowo i nie podlegają ocenie sytuacyjnej.
 
 ## 7. Zgłoszenia
 
+**Zgłoszenie jest ostatecznością, nie odruchem.** Zanim sesja zgłosi cokolwiek,
+wyczerpuje źródła: kontrakt, kod rdzenia, prototyp przyjęty, rejestr decyzji —
+i mierzy uruchomieniem. Większość rzeczy, które wyglądają na braki, jest
+odpowiedzią, której nikt nie doczytał. Zdarzyło się to w tej budowie wprost:
+pozycja „pierwsze uruchomienie bez poczty" wisiała jako otwarta, a rdzeń miał
+rozstrzygnięcie od początku wraz z uzasadnieniem — Prowadzący wziął nieaktualny
+sprawdzian za usterkę. Pozycja otwarta, którą źródło zamyka, kosztuje Właściciela
+uwagę i zatrzymuje front bez powodu.
+
 Sesja zgłasza Prowadzącemu, gdy: brakuje wartości w źródle, dwa źródła są
 sprzeczne, praca wymaga wyjścia poza teren albo kryterium odbioru okazuje się
 niesprawdzalne. Zgłoszenie jest jednym akapitem: co stwierdzono, gdzie, jaki
 skutek. Sesja nie wstrzymuje reszty pracy — wykonuje wszystko, co od zgłoszenia
 nie zależy, i przekazuje teren z nazwanym brakiem.
+
+Zgłoszenie nie wstrzymuje pracy. Sesja podaje rozstrzygnięcie, które przyjmuje,
+wraz z powodem, i idzie dalej pod tym założeniem — wstrzymanie jest właściwe
+wyłącznie wtedy, gdy praca pod dowolnym założeniem byłaby bezużyteczna, gdyby
+założenie okazało się błędne.
 
 Zgłoszenie rozstrzygnięte przez Właściciela trafia do rejestru decyzji. Poza
 rejestrem żadne rozstrzygnięcie nie obowiązuje.

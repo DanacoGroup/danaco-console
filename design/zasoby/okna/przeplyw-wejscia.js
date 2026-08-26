@@ -205,8 +205,16 @@ for (var m = 0; m < miary.length; m++) {
 /* Formularze, które ustawiają hasło. Oba sprawdzają to samo — różnią się
    wyłącznie tym, co jeszcze mają do sprawdzenia poza samym hasłem. */
 var FORMULARZE = [
-  { widok: 'rejestracja',    login: 'rej-login', email: 'rej-email', haslo: 'rej-haslo', haslo2: 'rej-haslo-2' },
-  { widok: 'odzyskiwanie-haslo', haslo: 'odz-haslo', haslo2: 'odz-haslo-2' }
+  { widok: 'logowanie', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
+    wymagane: [{ id: 'log-login', usterka: 'brakLoginu' }, { id: 'log-haslo', usterka: 'brakHasla' }] },
+  { widok: 'logowanie-blad', naglowek: 'usterki.naglowekLogowanie', zbiorczyBrak: 'brakDanych',
+    wymagane: [{ id: 'blad-login', usterka: 'brakLoginu' }, { id: 'blad-haslo', usterka: 'brakHasla' }] },
+  { widok: 'odzyskiwanie-adres', naglowek: 'usterki.naglowekKod',
+    wymagane: [{ id: 'odz-email', usterka: 'brakAdresu' }], email: 'odz-email' },
+  { widok: 'rejestracja', naglowek: 'usterki.naglowekKonto',
+    login: 'rej-login', email: 'rej-email', haslo: 'rej-haslo', haslo2: 'rej-haslo-2' },
+  { widok: 'odzyskiwanie-haslo', naglowek: 'usterki.naglowekHaslo',
+    haslo: 'odz-haslo', haslo2: 'odz-haslo-2' }
 ];
 
 /* Loginy zajęte. W produkcie odpowiada na to serwer; w podglądzie musi stać
@@ -216,29 +224,30 @@ var ZAJETE = ['operator', 'admin', 'danaco', 'konsola'];
 /* Każda usterka nazywa rzecz i mówi, co z nią zrobić. Kolejność jest
    kolejnością pól w formularzu — lista czyta się z góry na dół tak samo, jak
    wzrok wraca do pól. */
+/* Rozpoznania usterek. Same POLA stoją tutaj — to kontrakt z formularzem,
+   nie treść. Napisy bierze się z katalogu, bo są tekstem dla użytkownika. */
 var USTERKI = {
-  'login-zajety': {
-    glowa: 'Ten login jest już zajęty.',
-    tresc: 'Wybierz inny login. Adres e-mail może pozostać bez zmian.',
-    pola: ['rej-login']
-  },
-  'email-bledny': {
-    glowa: 'Nieprawidłowy adres e-mail.',
-    tresc: 'Sprawdź, czy adres zawiera znak @ oraz nazwę domeny, na przykład nazwa@firma.pl.',
-    pola: ['rej-email']
-  },
-  'haslo-slabe': {
-    glowa: 'Hasło nie spełnia wymagań.',
-    tresc: 'Spełnij wszystkie cztery warunki podane pod polem hasła.',
-    pola: ['rej-haslo']
-  },
-  'hasla-rozne': {
-    glowa: 'Hasła nie są zgodne.',
-    tresc: 'Wpisz to samo hasło w obu polach.',
-    pola: ['rej-haslo', 'rej-haslo-2']
-  }
+  'brakLoginu':   { pola: ['log-login', 'blad-login'] },
+  'brakHasla':    { pola: ['log-haslo', 'blad-haslo'] },
+  'brakAdresu':   { pola: ['odz-email'] },
+  'brakDanych':   { pola: ['log-login', 'log-haslo', 'blad-login', 'blad-haslo'] },
+  'login-zajety': { klucz: 'loginZajety', pola: ['rej-login'] },
+  'email-bledny': { klucz: 'emailBledny', pola: ['rej-email', 'odz-email'] },
+  'haslo-slabe':  { klucz: 'hasloSlabe',  pola: ['rej-haslo', 'odz-haslo'] },
+  'hasla-rozne':  { klucz: 'haslaRozne',  pola: ['rej-haslo', 'rej-haslo-2', 'odz-haslo', 'odz-haslo-2'] }
 };
-var KOLEJNOSC = ['login-zajety', 'email-bledny', 'haslo-slabe', 'hasla-rozne'];
+
+/* Katalog treści okna. Ani jeden napis nie stoi w tym pliku. */
+var N = window.DanacoNarzedzia.zwiaz((window.DanacoWejscie || {}).tresci || {});
+function tekst(sciezka) { return N.tekst(sciezka); }
+function usterkaTekst(k, co) { return tekst('usterki.' + (USTERKI[k].klucz || k) + '.' + co); }
+
+/* Pole, którego usterka dotyczy, ale tylko to obecne w tym formularzu. */
+function polaUsterki(f, k) {
+  return USTERKI[k].pola.filter(function (id) { return pola(f).indexOf(id) !== -1; });
+}
+
+var KOLEJNOSC = ['brakDanych', 'brakLoginu', 'brakHasla', 'brakAdresu', 'login-zajety', 'email-bledny', 'haslo-slabe', 'hasla-rozne'];
 
 var ZNAK_USTERKI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" ' +
   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
@@ -246,7 +255,9 @@ var ZNAK_USTERKI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
   '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
 
 function pola(f) {
-  return [f.login, f.email, f.haslo, f.haslo2].filter(Boolean);
+  var lista = [f.login, f.email, f.haslo, f.haslo2].filter(Boolean);
+  (f.wymagane || []).forEach(function (w) { if (lista.indexOf(w.id) === -1) lista.push(w.id); });
+  return lista;
 }
 
 function wyczysc(f) {
@@ -268,16 +279,15 @@ function pokazUsterki(f, klucze) {
 
   var tresc;
   if (klucze.length === 1) {
-    var u = USTERKI[klucze[0]];
-    tresc = '<b>' + u.glowa + '</b>' + u.tresc;
+    tresc = '<b>' + usterkaTekst(klucze[0], 'glowa') + '</b>' + usterkaTekst(klucze[0], 'tresc');
   } else {
     /* Przy kilku usterkach wykaz niesie same rozpoznania, bez wskazówek: co
        zrobić, mówi zaznaczone pole, a wskazówki powtórzone cztery razy
        wypchnęłyby formularz poza okno. Bez liczebnika, bo „dwie / trzy / cztery
        rzeczy” to trzy odmiany do utrzymania i trzy okazje do pomyłki. */
-    tresc = '<b>' + f.naglowek + ' Popraw zaznaczone dane.</b>' +
+    tresc = '<b>' + tekst(f.naglowek) + ' ' + tekst('usterki.wiele') + '</b>' +
             '<ul class="we-alarm-lista">' +
-            klucze.map(function (k) { return '<li>' + USTERKI[k].glowa + '</li>'; }).join('') +
+            klucze.map(function (k) { return '<li>' + usterkaTekst(k, 'glowa') + '</li>'; }).join('') +
             '</ul>';
   }
 
@@ -288,12 +298,12 @@ function pokazUsterki(f, klucze) {
   komunikaty.appendChild(el);
 
   klucze.forEach(function (k) {
-    USTERKI[k].pola.forEach(function (id) {
+    polaUsterki(f, k).forEach(function (id) {
       var pole = document.getElementById(id);
       if (pole) pole.setAttribute('aria-invalid', 'true');
     });
   });
-  var pierwsze = document.getElementById(USTERKI[klucze[0]].pola[0]);
+  var pierwsze = document.getElementById(polaUsterki(f, klucze[0])[0]);
   if (pierwsze) pierwsze.focus();
 }
 
@@ -361,6 +371,20 @@ function sprawdz(f) {
   var w = function (id) { return id ? document.getElementById(id) : null; };
   var login = w(f.login), email = w(f.email), haslo = w(f.haslo), haslo2 = w(f.haslo2);
   var braki = [];
+  /* Pole puste rozstrzyga się przed wszystkim innym: „nieprawidłowy adres"
+     przy pustym polu mówi nieprawdę — nic nie zostało wpisane. */
+  var puste = (f.wymagane || []).filter(function (r) {
+    var pole = w(r.id);
+    return pole && !pole.value.trim();
+  });
+  /* Wszystkie pola puste to JEDNA sprawa — formularz nie został wypełniony.
+     Rozbicie jej na osobne rozpoznania mnożyło wiersze komunikatu i wypychało
+     treść poza okno, nie mówiąc przy tym nic więcej. */
+  if (f.zbiorczyBrak && puste.length === (f.wymagane || []).length && puste.length > 1) {
+    return [f.zbiorczyBrak];
+  }
+  puste.forEach(function (r) { braki.push(r.usterka); });
+  if (braki.length) return braki;
   if (login && ZAJETE.indexOf(login.value.trim().toLowerCase()) !== -1) braki.push('login-zajety');
   if (email && !adresPoprawny(email.value)) braki.push('email-bledny');
   if (haslo && !hasloSpelnia(haslo.value)) braki.push('haslo-slabe');
@@ -371,7 +395,6 @@ function sprawdz(f) {
 FORMULARZE.forEach(function (f) {
   var panel = document.querySelector('.we-panel[data-widok="' + f.widok + '"]');
   if (!panel) return;
-  f.naglowek = f.widok === 'rejestracja' ? 'Nie można utworzyć konta.' : 'Nie można ustawić hasła.';
 
   var pas = document.querySelector('.we-pas[data-widok="' + f.widok + '"]');
   var glowna = pas && pas.querySelector('.dn-btn--sygnal');
@@ -398,8 +421,7 @@ FORMULARZE.forEach(function (f) {
 /* Odsłona wskazana adresem — żeby dało się obejrzeć komunikat bez wpisywania. */
 var zAdresu = new URLSearchParams(location.search).get('rejestracja');
 if (zAdresu && USTERKI[zAdresu]) {
-  var f = FORMULARZE[0];
-  f.naglowek = 'Nie można utworzyć konta.';
+  var f = FORMULARZE.filter(function (x) { return x.widok === 'rejestracja'; })[0];
   if (window.dnPrzelaczWidok) {
     window.dnPrzejdz && window.dnPrzejdz('uwierzytelnienie', 'etap');
     window.dnPrzelaczWidok('rejestracja', 'stan');

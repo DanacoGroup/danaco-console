@@ -109,6 +109,10 @@
   background: var(--dn-okno-belka);
   color: var(--dn-rama-tekst);
 }
+/* Belka jest ciemna w obu motywach, więc kropka bierze barwę sygnału ramy,
+   a nie kropki treści — ta w motywie jasnym byłaby ciemniejsza od tła. */
+.we-belka-znak .kropka { fill: var(--dn-rama-sygnal); }
+
 .we-belka-znak { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-rama-tekst-2); }
 .we-belka-tytul { margin: 0; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); }
 .we-belka-uchwyt { flex: 1 1 auto; }
@@ -203,10 +207,11 @@
   background: var(--dn-okno-plotno);
   display: flex;
   flex-direction: column;
-  /* Rytm kolumny. Odstęp 20 px zostawiał okno logowania z przewijaniem —
-     16 px mieści najwyższy wariant (logowanie z komunikatem błędu) bez niego
-     i nie zbliża do siebie bloków na tyle, żeby się zlewały. */
-  gap: var(--dn-od-4);
+  /* Rytm kolumny. Najwyższa odsłona to logowanie z komunikatem o brakujących
+     danych: przy 16 px wychodziła 22 px poza okno. 12 px mieści ją z zapasem
+     i nie zbliża bloków na tyle, żeby się zlewały — odstęp wewnątrz grupy pól
+     jest i tak mniejszy, więc podział na bloki nadal widać. */
+  gap: var(--dn-od-3);
   /* Wcięcie z jednego źródła: stopka sięga krawędzi kolumny ujemnym
      marginesem tej samej wielkości. Dwie wartości wpisane osobno rozjeżdżają
      się przy pierwszej zmianie i zostawiają pas wiszący nad krawędzią. */

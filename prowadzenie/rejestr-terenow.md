@@ -6,40 +6,50 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### naprawy-rdzenia
+### fundament-klienta
 
-Usterki rdzenia wykryte pomiarem przy ocenie warstwy i modułów. Wszystkie
-jednoznaczne — nie wymagają rozstrzygnięcia Właściciela ani gotowych prototypów.
-Naprawione teraz nie zostaną odziedziczone przez nowy interfejs.
+Nowy klient nie ma dziś ani jednego wiersza. Trzy warstwy przejętego klienta są
+wolne od widoku — pomiar wykazał 0 dotknięć DOM w warstwie połączenia i 2
+w warstwie protokołu. Przeszczep tych warstw nie zależy od kompozycji okna,
+więc jest jedyną pracą, która może biec, dopóki Właściciel kompletuje prototypy.
 
 | | |
 |---|---|
-| **Gałąź** | `teren/naprawy-rdzenia` z `main` |
-| **Wykaz plików** | `budowa/server/internal/` oraz sprawdziany w tych samych pakietach |
-| **Poza terenem** | `budowa/shared/contract.json`, `budowa/klient-poprzedni/`, `prowadzenie/` |
+| **Gałąź** | `teren/fundament-klienta` z `main` |
+| **Wykaz plików** | `budowa/klient/` — katalog powstaje w tym terenie |
+| **Do czytania, bez zapisu** | `budowa/klient-poprzedni/src/polaczenie`, `budowa/klient-poprzedni/src/protokol`, `budowa/shared/gen`, `budowa/shared/contract.json` |
+| **Poza terenem** | `budowa/server/`, `budowa/desktop/`, `budowa/shared/`, `prowadzenie/`, `design/`, `docs/` |
 
-**Przedmiot — pięć usterek z pomiaru:**
+**Przedmiot.** Nowy klient TypeScript z trzema warstwami i niczym ponadto.
+Widok nie powstaje — teren kończy się warstwą, która rozmawia z rdzeniem i nie
+wie nic o oknie.
 
-1. `library.stats.get` kończy się błędem SQL przy każdym wywołaniu.
-2. `studio.document.save` nie zakłada wersji dokumentu, choć odpowiedź mówi
-   Operatorowi, że zakłada.
-3. Rdzeń przyjmuje żądania bez pól obowiązkowych i wartości spoza wyliczeń,
-   milcząc — klient może wysyłać treść niezgodną z kontraktem i nie dowie się
-   o tym.
-4. `channel.add`, `channel.update`, `browser.source.add`, `browser.note.add`
-   oddają błąd wewnętrzny zamiast odmowy nazywającej brak.
-5. `studio.diff.compare` bez dwóch wersji oddaje kopertę pustą zamiast odmowy.
+1. **Typy z kontraktu.** Wytwarzanie `contract.ts` z `contract.json` istniejącym
+   generatorem. Generator nie jest przepisywany — sprawdzono, że działa.
+2. **Warstwa połączenia.** Gniazdo, koperta, korelacja żądanie–odpowiedź,
+   wznowienie po zerwaniu, przeciwciśnienie.
+3. **Warstwa protokołu.** Wysyłanie komend i odbiór 75 zdarzeń kontraktu.
+
+Warstwa zakresu **nie wchodzi** do tego terenu — kaskada czeka na
+rozstrzygnięcie Właściciela i budowanie jej teraz byłoby zgadywaniem.
 
 **Kryteria odbioru.**
 
-1. Każda usterka odtworzona przed naprawą i wykazana jako nieobecna po niej —
-   z przytoczonym wynikiem obu przebiegów.
-2. Każda naprawa ma sprawdzian, który zawodzi na kodzie sprzed naprawy.
-3. `gotestsum ./...` — liczba niepowodzeń nie rośnie wobec stanu zastanego
-   (2003 zdane, 4 niezdane).
-4. Kontrakt nietknięty — wykazane `git status`.
-5. Usterka, której nie da się naprawić bez rozstrzygnięcia Właściciela, wraca
-   jako zgłoszenie wraz z przyczyną — nie jest naprawiana domysłem.
+1. `tsc --noEmit` na `budowa/klient/` kończy się bez błędu — z przytoczonym
+   wynikiem uruchomienia.
+2. Wytworzenie typów powtórzone dwukrotnie daje plik bajtowo ten sam —
+   wykazane sumą kontrolną obu przebiegów.
+3. Nowy klient łączy się z uruchomionym rdzeniem, wysyła `connection.hello`
+   i odczytuje `protocolVersion` — z przytoczoną odpowiedzią rdzenia.
+4. Zerwanie połączenia w trakcie strumienia i powrót nie gubią zdarzeń —
+   wykazane sprawdzianem, nie deklaracją.
+5. `grep -r 'document\.\|window\.' budowa/klient/` zwraca zero trafień.
+6. Każde z 75 zdarzeń kontraktu ma obsługę albo jawne pominięcie z powodem —
+   wykazane zestawieniem nazwa zdarzenia wobec miejsca obsługi.
+7. Żaden plik przeszczepiony nie zostaje martwy: plik nieużywany jest usunięty,
+   nie przeniesiony na zapas.
+8. Rzecz, której nie da się rozstrzygnąć bez Właściciela, wraca jako zgłoszenie
+   wraz z przyczyną — nie jest domyślana.
 
 ## Zgłoszenia oczekujące na teren
 
@@ -136,9 +146,15 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/proba-prototypow` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
 
-Wynik: oba przedmioty wykonane, wszystkie kryteria spełnione. Zakresy trzech
+Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna
+`createVersion` — wróciła jako zgłoszenie, bo kontrakt jej nie ustala. Brama
+kontraktu ujawniła, że powitanie kanału musi stać poza nią; rozstrzygnięcie
+niesie pozycja 10 rejestru decyzji.
+
+Wynik terenu `proba-prototypow`: oba przedmioty wykonane, wszystkie kryteria spełnione. Zakresy trzech
 rewizji rozłączne — sprawdzone. Drzewo czyste. Kryterium 7a zwraca zero trafień
 w całym repozytorium, nie tylko w `design/`. Gałąź czeka na ocenę kierunku
 przez Właściciela; **nie jest scalona** — próbka rozstrzyga kierunek, a nie

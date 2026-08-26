@@ -13,11 +13,31 @@
      tresc   klucz katalogu
      dane      dane do podstawienia w treść
      daneGlowy dane do podstawienia w głowę
+     odliczanie        czas w sekundach — licznik w GŁOWIE
+     odliczanieTresci  czas w sekundach — licznik w TREŚCI
+     postacOdliczania  'sekundy' — sama liczba zamiast zapisu mm:ss
    ============================================================================ */
 (function () {
 'use strict';
 var W = window.DanacoWejscie;
 W.skladniki = W.skladniki || {};
+
+/* Głowa z licznikiem rozpada się na trzy części: to, co przed liczbą, sam
+   licznik i to, co po niej. Inaczej mechanika musiałaby przepisywać całe
+   zdanie co sekundę, a wtedy czytnik ekranu ogłaszałby je od nowa. */
+function zLicznikiem(N, znacznik, zdanie, sekundy, postac) {
+  var czesci = String(zdanie).split('{odliczanie}');
+  return N.el(znacznik, {}, [
+    czesci[0] || '',
+    N.el('span', { dane: { odliczanie: sekundy, 'odliczanie-postac': postac || null } }),
+    czesci[1] || ''
+  ]);
+}
+
+function zbudujGlowe(N, w, glowa) {
+  if (!w.odliczanie) return N.el('b', { tekst: glowa });
+  return zLicznikiem(N, 'b', glowa, w.odliczanie, w.postacOdliczania);
+}
 
 W.skladniki.baner = function (N, w) {
   var znak = N.zeZnacznika(W.ikony[w.ikona || 'informacja']);
@@ -33,7 +53,12 @@ W.skladniki.baner = function (N, w) {
     role: w.rodzaj === 'blad' || w.rodzaj === 'ostrzezenie' ? 'alert' : 'status'
   }, [
     N.el('span', { klasa: 'dn-alert-znak', 'aria-hidden': 'true' }, [znak]),
-    N.el('span', { klasa: 'dn-alert-tresc' }, [N.el('b', { tekst: glowa }), tresc])
+    N.el('span', { klasa: 'dn-alert-tresc' }, [
+      zbudujGlowe(N, w, glowa),
+      w.odliczanieTresci
+        ? zLicznikiem(N, 'span', tresc, w.odliczanieTresci, w.postacOdliczania)
+        : tresc
+    ])
   ]);
 };
 })();

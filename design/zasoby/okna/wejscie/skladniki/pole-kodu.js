@@ -12,7 +12,8 @@
    rodzeństwem w kolumnie panelu.
 
    Właściwości:
-     odliczanie  napis odliczania, na przykład '09:12'
+     odliczanie  czas ważności w sekundach — mechanika odlicza go co sekundę
+                 i sama go wypisuje; postać `mm:ss` należy do mechaniki
      czynnosc    'wklej' | 'ponow' — czynność w stopce zestawu. Wklejenie jest
                  wygodą, więc niesie przycisk; ponowienie wysyłki jest wyjściem
                  z sytuacji bez wyjścia, więc niesie odsyłacz — waga czynności
@@ -38,7 +39,8 @@ W.skladniki.poleKodu = function (N, w) {
     }, pola),
     N.el('div', { klasa: 'au-kod-stopka' }, [
       N.el('span', { klasa: 'au-odliczanie' }, [
-        N.tekst('dostep.kod.odliczanie') + ' ', N.el('b', { tekst: w.odliczanie })
+        N.tekst('dostep.kod.odliczanie') + ' ',
+        N.el('b', { dane: { odliczanie: w.odliczanie } })
       ]),
       w.czynnosc === 'ponow'
         ? N.el('button', {

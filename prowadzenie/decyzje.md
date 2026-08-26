@@ -677,10 +677,14 @@ komputerze Operatora. To jest nieprawda i przekłamuje istotę wdrożenia.
 **Decyzja.** Produkt jest **hybrydowy** i występuje w dwóch wariantach
 instalacji:
 
-| Wariant | Co staje u Operatora | Gdzie toczy się praca |
+| Wariant | Co staje u Operatora | Serwer Danaco |
 |---|---|---|
-| **cienki** | samo okno aplikacji — dostęp do produktu | na serwerze |
-| **pełny natywny** | całość wraz z rdzeniem | na urządzeniu Operatora |
+| **cienki (hybryda)** | okno aplikacji wraz z interfejsem | **wymagany** — rdzeń i całe zaplecze stoją tam |
+| **pełny natywny** | **wszystko**: okno, rdzeń, zaplecze, wagi modeli | **niepotrzebny** — produkt pracuje sam |
+
+Rozróżnienie idzie po **zależności od serwera Danaco**, nie po miejscu obliczeń.
+Natywna nie może niczego dobierać z serwera Danaco po instalacji, więc instalka
+niesie komplet tego, po co rdzeń sięga.
 
 **Zasady korzystania są jedne i uniwersalne.** Nie rozdziela się ich na dwie
 wersje wedle wariantu instalacji i nie opisuje się produktu tak, jakby istniał

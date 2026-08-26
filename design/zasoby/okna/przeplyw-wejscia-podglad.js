@@ -71,7 +71,20 @@
   function poEtapie(nazwa) {
     var podpis = D.querySelector('[data-podpis-etapu]');
     if (podpis && PODPISY[nazwa]) podpis.textContent = PODPISY[nazwa];
-    if (nazwa === 'przygotowanie') zamontujRame();
+    if (nazwa === 'przygotowanie') { zamontujRame(); odswiezSkladniki(); }
+  }
+
+  /* Etap trzeci składa okno z kopii znacznika, a kopia niesie martwe płótna bez
+     wiązania. Składniki trzeba więc założyć jeszcze raz — i przez chwilę
+     ponawiać, bo powłoka wstawia treść własnym rytmem. */
+  function odswiezSkladniki() {
+    var prob = 0;
+    (function zaloz() {
+      wszystkie('[data-powloki]').forEach(function (pole) {
+        if (!pole.powloki && window.DanacoPowloki) window.DanacoPowloki.zaloz(pole);
+      });
+      if (++prob < 30) setTimeout(zaloz, 60);
+    })();
   }
 
   D.addEventListener('click', function (e) {

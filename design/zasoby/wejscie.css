@@ -34,7 +34,10 @@
    odniesienia. Póki animacja gra, okno jest ukryte przed czytnikiem tak samo
    jak przed okiem: `visibility`, nie samo krycie. */
 .we-scena { position: relative; }
-.we-scena[data-uruchamianie] > .we-okno { visibility: hidden; }
+/* Okno bywa dzieckiem sceny wprost albo stoi w miejscu montażu — zejście
+   potomkiem zamiast dziecka obejmuje oba przypadki. Zapis „> .we-okno"
+   przestał trafiać, gdy okno przestało być pisane w znaczniku. */
+.we-scena[data-uruchamianie] .we-okno { visibility: hidden; }
 
 .we-uruchomienie {
   position: absolute;

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Produkt** | **Danaco Console** — AI Operating Environment (warstwa wizualna v2.0) |
-| **Rodzaj** | Specyfikacja biblioteki komponentów interfejsu — opracowanie merytoryczno-techniczne (A6 · COMPONENTS) |
+| **Rodzaj** | Specyfikacja biblioteki komponentów interfejsu — opracowanie merytoryczno-techniczne (opracowanie 06 · Komponenty) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -11,7 +11,7 @@
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | Projektant (co narysować, w jakiej formie, w jakich stanach) · Deweloper (jaką klasę zaimplementować, z jakimi wariantami i zachowaniem) · Redaktor dokumentacji (jak nazywać komponent w tekście) |
 | **Zakres** | Wszystkie 33 komponenty biblioteki `.dn-*` zaimplementowane w `zasoby/css/komponenty.css` (1207 linii), uporządkowane w siedem kategorii; karta każdego komponentu (definicja, anatomia, warianty, komplet stanów, wymiary z żetonów, użyte żetony, zachowanie, dostępność, kiedy używać, przykład kodu); macierz komponent × moduł; ściągawka wymiarów; pełna lista klas; zasada zero blokad; luki i rozbieżności między katalogiem v1.0 a implementacją v2.0 |
-| **Czego NIE zawiera** | Wartości żetonów (przedmiot opracowania A4 · TOKENS) · reguł CSS warstwy zerowej (A5 · STYLES) · makiet i przepływów okien operacyjnych (opracowania zespołu okien) · modelu danych, kontraktów komunikacji i logiki modułów · gotowych plików wykonawczych aplikacji |
+| **Czego NIE zawiera** | Wartości żetonów (przedmiot opracowania 04 · Żetony) · reguł CSS warstwy zerowej (opracowanie 05 · Style) · makiet i przepływów okien operacyjnych (opracowania zespołu okien) · modelu danych, kontraktów komunikacji i logiki modułów · gotowych plików wykonawczych aplikacji |
 
 ---
 
@@ -75,11 +75,11 @@ Biblioteka komponentów to **warstwa trzecia** systemu wizualnego Danaco Console
 
 | # | Zasada | Zapis w pliku źródłowym |
 |---|---|---|
-| Z1 | **Wyłącznie żetony semantyczne.** Zero wartości szesnastkowych zaszytych w komponencie | Nagłówek `komponenty.css`: „Wyłącznie żetony semantyczne z `zetony.css`. Zero wartości zaszytych." |
-| Z2 | **Komplet stanów.** Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd | Nagłówek `komponenty.css` |
-| Z3 | **Zero blokad (ADL-017).** Żaden wariant nie odbiera klikalności — niegotowość komunikuje się opisem albo komunikatem | Nagłówek `komponenty.css`; KANON rozdz. 8 |
-| Z4 | **Stan nigdy samym kolorem.** Komponent stanu niesie ikonę albo etykietę | Nagłówek `komponenty.css`; KANON rozdz. 9 |
-| Z5 | **Nazwy klas są wiążące.** Nie wolno zmieniać nazw istniejących klas; wolno rozszerzać o nowe modyfikatory | KANON rozdz. 5 |
+| 1 | **Wyłącznie żetony semantyczne.** Zero wartości szesnastkowych zaszytych w komponencie | Nagłówek `komponenty.css`: „Wyłącznie żetony semantyczne z `zetony.css`. Zero wartości zaszytych." |
+| 2 | **Komplet stanów.** Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd | Nagłówek `komponenty.css` |
+| 3 | **Zero blokad.** Żaden wariant nie odbiera klikalności — niegotowość komunikuje się opisem albo komunikatem | Nagłówek `komponenty.css`; kontrakt systemu projektowego |
+| 4 | **Stan nigdy samym kolorem.** Komponent stanu niesie ikonę albo etykietę | Nagłówek `komponenty.css`; kontrakt systemu projektowego |
+| 5 | **Nazwy klas są wiążące.** Nie wolno zmieniać nazw istniejących klas; wolno rozszerzać o nowe modyfikatory | kontrakt systemu projektowego |
 
 ### 1.3. Trzy poziomy zapisu klasy
 
@@ -99,36 +99,36 @@ Rozróżnienie jednego dywizu od dwóch jest kluczowe przy czytaniu arkusza: `.d
 BIBLIOTEKA KOMPONENTÓW DANACO CONSOLE · 33 komponenty · 7 kategorii
 │
 ├── A. PRZYCISKI I AKCJE                                        2 komponenty
-│     A1 .dn-btn (+7 wariantów, +1 modyfikator stanu)
-│     A2 .dn-btn-ikona (+1 wariant)
+│     .dn-btn (+7 wariantów, +1 modyfikator stanu)
+│     .dn-btn-ikona (+1 wariant)
 │
 ├── B. POLA FORMULARZY                                          7 komponentów
-│     B1 .dn-pole (4 elementy)     B2 .dn-wybor      B3 .dn-check
-│     B4 .dn-radio                 B5 .dn-przelacznik
-│     B6 .dn-suwak                 B7 .dn-szukaj
+│     .dn-pole (4 elementy)     .dn-wybor      .dn-check
+│     .dn-radio                 .dn-przelacznik
+│     .dn-suwak                 .dn-szukaj
 │
 ├── C. NAWIGACJA                                                6 komponentów
-│     C1 .dn-pasek (4 elementy)    C2 .dn-boczna (2 elementy)
-│     C3 .dn-karty-sesji / .dn-karta-sesji
-│     C4 .dn-zakladki / .dn-zakladka
-│     C5 .dn-listwa (1 element)    C6 .dn-przybornik
+│     .dn-pasek (4 elementy)    .dn-boczna (2 elementy)
+│     .dn-karty-sesji / .dn-karta-sesji
+│     .dn-zakladki / .dn-zakladka
+│     .dn-listwa (1 element)    .dn-przybornik
 │
 ├── D. DANE I TREŚĆ                                            10 komponentów
-│     D1 .dn-karta (+2, 3 elementy)   D2 .dn-karta-srodowiska (4 elementy)
-│     D3 .dn-kafel (3 elementy)       D4 .dn-tabela
-│     D5 .dn-dane                     D6 .dn-plakietka (+6)
-│     D7 .dn-kropka (+5)              D8 .dn-pusty-stan (2 elementy)
-│     D9 .dn-postep (3 elementy)      D10 .dn-kolejka / .dn-krok (+4, 2 elementy)
+│     .dn-karta (+2, 3 elementy)   .dn-karta-srodowiska (4 elementy)
+│     .dn-kafel (3 elementy)       .dn-tabela
+│     .dn-dane                     .dn-plakietka (+6)
+│     .dn-kropka (+5)              .dn-pusty-stan (2 elementy)
+│     .dn-postep (3 elementy)      .dn-kolejka / .dn-krok (+4, 2 elementy)
 │
 ├── E. INFORMACJA ZWROTNA I NAKŁADKI                            4 komponenty
-│     E1 .dn-modal (4 elementy)       E2 .dn-toasty / .dn-toast (+4, 2 elementy)
-│     E3 .dn-tooltip (1 element)      E4 .dn-spinner
+│     .dn-modal (4 elementy)       .dn-toasty / .dn-toast (+4, 2 elementy)
+│     .dn-tooltip (1 element)      .dn-spinner
 │
 ├── F. TOŻSAMOŚĆ                                                2 komponenty
-│     F1 .dn-awatar (+4, 1 element)   F2 .dn-aod (2 elementy)
+│     .dn-awatar (+4, 1 element)   .dn-aod (2 elementy)
 │
 └── G. KOMUNIKACJA                                              2 komponenty
-      G1 .dn-wpis (+4, 5 elementów)   G2 .dn-prompt (2 elementy)
+      .dn-wpis (+4, 5 elementów)   .dn-prompt (2 elementy)
 ```
 
 **Kryterium podziału.** Kategoria odpowiada na pytanie **co komponent robi w interfejsie**, nie w którym module występuje. Ten sam `.dn-plakietka` oznacza status przebiegu w Execution Monitor i etykietę zasobu w Library Explorer — kategoria pozostaje ta sama (D — dane i treść), bo funkcja jest ta sama: opisać jednostkę treści.
@@ -151,39 +151,41 @@ BIBLIOTEKA KOMPONENTÓW DANACO CONSOLE · 33 komponenty · 7 kategorii
 
 | # | Nazwa produktowa (PL) | Klasa `.dn-*` | Kategoria | Warianty | Stany | Wymiar bazowy | Gdzie występuje |
 |---|---|---|---|---|---|---|---|
-| **A1** | Przycisk | `.dn-btn` | A | `--atrament` `--sygnal` `--zarys` `--duch` `--niebezpieczny` `--sm` `--lg` (+`--wybrany` jako stan) | spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd | wys. 32 px, padding 0/16, promień 6 | Wszystkie okna operacyjne, stopki modali, stopki kart, wiersze tabel |
-| **A2** | Przycisk ikonowy | `.dn-btn-ikona` | A | `--na-ramie` | spoczynek · najechanie · naciśnięcie · fokus · wybrany | 32×32 px, ikona 16–20 | Pasek górny, zamknięcie karty sesji, akcje wierszy tabel, przybornik promptu |
-| **B1** | Pole formularza | `.dn-pole` (`-etykieta` `-kontrolka` `-opis` `-blad`) | B | jednowierszowe · wieloliniowe (`textarea`) · rozwijane (`select`) | spoczynek · najechanie · fokus · błąd · tylko do odczytu · podpowiedź | wys. 32 px (textarea min. 64) | Agent Builder, Instructions Panel, Source Panel, Prompt Builder, Okno Ustawień |
-| **B2** | Wiersz wyboru | `.dn-wybor` | B | — | dziedziczy stany kontrolki wewnętrznej | min. wys. 32 px, odstęp 8 | Okno Konfiguracji, Permissions Center, Connectors Manager |
-| **B3** | Pole wyboru | `.dn-check` | B | — | niezaznaczone · zaznaczone · najechanie · fokus | 16×16 px (dotyk 20) | Wybór warstwy konfiguracji, zaznaczenia wielokrotne w Sources Manager |
-| **B4** | Opcja jednokrotna | `.dn-radio` | B | — | niewybrane · wybrane · najechanie · fokus | 16×16 px, kropka 8 | Wybór warstwy: domyślna / sesji (Okno Konfiguracji) |
-| **B5** | Przełącznik | `.dn-przelacznik` | B | — | wyłączony · włączony · najechanie · fokus · odziedziczony | tor 36×20 (dotyk 44×24) | Macierz izolacji (11 przełączników na poziom), Permissions Center, Skills Manager |
-| **B6** | Suwak zakresu | `.dn-suwak` | B | — | spoczynek · przeciąganie · fokus | tor 4 px, kciuk 16 | Nakład rozumowania (szybciej ↔ mądrzej) — Model Configuration |
-| **B7** | Pole wyszukiwania | `.dn-szukaj` | B | — | spoczynek · najechanie · fokus · z treścią | wys. 32 px, wcięcie 32 | Library Explorer, Sources Manager, Agent Manager, Glossary Manager |
-| **C1** | Pasek górny | `.dn-pasek` (`-godlo` `-logotyp` `-szukaj` `-prawa`) | C | — (kontener) | statyczny; stany należą do elementów wewnątrz | wys. 48 px (przestronna 56) | Powłoka każdego z czterech środowisk |
-| **C2** | Boczna nawigacja | `.dn-boczna` (`-naglowek` `-pozycja`) | C | lista modułów · panel orkiestracji | spoczynek · najechanie · bieżąca · fokus | szer. 224 px, pozycja 32 px | TalkIn (9), WorkSpace (9), CodeStudio (8), MultitaskingAI (6 sekcji) |
-| **C3** | Pas kart sesji / karta sesji | `.dn-karty-sesji` / `.dn-karta-sesji` | C | — | w tle · aktywna · najechanie · praca w tle · nowa (pusta) | pas 36 px (przestronna 40) | Powłoka każdego środowiska, pod paskiem górnym |
-| **C4** | Zakładki / zakładka | `.dn-zakladki` / `.dn-zakladka` | C | — | spoczynek · najechanie · wybrana · fokus | wys. 32 px, wskaźnik 2 px | Terminal Tabs, Model Panels (Roundtable), Okno Konfiguracji |
-| **C5** | Listwa ustawień | `.dn-listwa` (`-pozycja`) | C | — | spoczynek · najechanie · fokus | pozycja 28 px, promień 10 | Strefa 3 strony głównej — Okno Konfiguracji, Mobile, Always On Display |
-| **C6** | Przybornik | `.dn-przybornik` | C | — | statyczny; stany należą do przycisków wewnątrz | odstęp 4 px, zawijany | Pole promptu Chat Window, paski narzędzi paneli |
-| **D1** | Karta | `.dn-karta` (`-naglowek` `-tytul` `-cialo`) | D | `--klikalna` `--wybrana` | spoczynek · najechanie · naciśnięcie · wybrana · fokus · ładowanie · błąd | promień 10, cień 1 | Session Repository, Sources Manager, Assets Panel, karty ról MultitaskingAI |
-| **D2** | Karta środowiska | `.dn-karta-srodowiska` (`-godlo` `-tytul` `-motto` `-opis`) | D | — | spoczynek · najechanie · bieżąca · fokus | padding 24, promień 14, godło 40 | Strefa 1 strony głównej — cztery karty środowisk |
-| **D3** | Kafel komponentu własnego | `.dn-kafel` (`-ikona` `-etykieta` `-opis`) | D | — | spoczynek · najechanie · fokus | padding 16, ikona 36 | Strefa 2 strony głównej — Automations, Agents, Workspace, Assistant |
-| **D4** | Tabela | `.dn-tabela` | D | — | wiersz spoczynek · najechanie · wybrany · pusta | wiersz 36 px (dotyk 44) | Execution Monitor, Queue Manager, Process Monitor, Permissions Center |
-| **D5** | Komórka danych | `.dn-dane` | D | — | statyczna | krój mono, stopień 12 | Każda kolumna liczbowa i identyfikatorowa tabel |
-| **D6** | Plakietka | `.dn-plakietka` | D | `--sukces` `--ostrzezenie` `--blad` `--informacja` `--sygnal` `--rola` | statyczna (nośnik stanu innej jednostki) | wys. ok. 18 px, promień pełny | Kolumny statusu monitorów, Tags & Collections, plakietki ról |
-| **D7** | Kropka sygnału | `.dn-kropka` | D | `--tetno` `--sukces` `--ostrzezenie` `--blad` `--neutralna` | statyczna · tętno (2,4 s) · pierścień statyczny (ograniczony ruch) | 6×6 px | Karty sesji, wpisy komunikacji, monitory, godło |
-| **D8** | Pusty stan | `.dn-pusty-stan` (`-tytul` `-opis`) | D | — | statyczny (sam jest stanem panelu) | padding 40/20, ikona 28 | Sources Manager, Findings Panel, Queue Manager przed pierwszą konfiguracją |
-| **D9** | Pasek postępu | `.dn-postep` (`-etykieta` `-tor` `-wartosc`) | D | — | 0% · w toku · 100% · nieokreślony | tor 4 px | Execution Monitor, Build Output, Deployment Panel |
-| **D10** | Kolejka / krok | `.dn-kolejka` / `.dn-krok` (`-znak` `-meta`) | D | `--pracuje` `--poprawny` `--bledy` `--wstrzymany` | oczekuje · pracuje · poprawny · błędy · wstrzymany | krok 36 px, znak 20 | Queue Manager, Orchestrator, Workflow Builder, Results Analyzer |
-| **E1** | Modal | `.dn-modal` (`-naglowek` `-tytul` `-cialo` `-stopka`) | E | — | zamknięty · otwierany · otwarty · ładowanie · błąd | maks. 560 px, maks. 80 dvh | Pula kont Code CLI, potwierdzenia, kreatory strefy 2 |
-| **E2** | Powiadomienie | `.dn-toasty` / `.dn-toast` (`-tytul` `-tresc`) | E | `--sukces` `--ostrzezenie` `--blad` `--informacja` | pojawienie · widoczny · znikanie | 280–420 px, prawy dolny róg | Zapis profilu izolacji, zakończenie automatyki, komunikaty Mobile |
-| **E3** | Dymek objaśnienia | `.dn-tooltip` (`-tresc`) | E | — | ukryty · widoczny (najechanie / fokus) | maks. 260 px, odsunięcie 8 | Oznaczenia `[?]` w Oknie Konfiguracji, ikony paska górnego |
-| **E4** | Wskaźnik pracy | `.dn-spinner` | E | — | obecny · nieobecny · statyczny (ograniczony ruch) | 14×14 px, obrót 0,8 s | Wnętrze przycisku, Chat Window, Build Output, panele w trakcie pobierania |
-| **F1** | Awatar | `.dn-awatar` (`-stan`) | F | `--sm` `--lg` `--kwadrat` `--inteligencja` | domyślny · ze wskaźnikiem stanu · ładowanie obrazu | 28 px (sm 24, lg 36) | Chat Window, Model Panels, karty ról, pasek górny |
-| **F2** | Always On Display | `.dn-aod` (`-rdzen` `-tresc`) | F | — | spoczynek (tętno rdzenia) · rozwinięty · nadzór | rdzeń 36 px, warstwa 1200 | Ponad całą powłoką; sekcja Monitor procesu MultitaskingAI |
-| **G1** | Wpis komunikacji | `.dn-wpis` (`-medalion` `-nadawca` `-tozsamosc` `-godzina` `-tresc`) | G | `--czlowiek` `--inteligencja` `--system` `--pracuje` | spoczynek · pracuje (tętno) | maks. 860 px, medalion 24 | Chat Window — wspólny wszystkim 15 modułom |
-| **G2** | Pole promptu | `.dn-prompt` (`-grot` `-obszar`) | G | — | spoczynek · fokus · z treścią · wysyłanie | obszar 40–160 px | Chat Window, Executor Chat, Coordinator Chat, Voice Console |
+| **1** | Przycisk | `.dn-btn` | Przyciski i akcje | `--atrament` `--sygnal` `--zarys` `--duch` `--niebezpieczny` `--sm` `--lg` (+`--wybrany` jako stan) | spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd | wys. 32 px, padding 0/16, promień 6 | Wszystkie okna operacyjne, stopki modali, stopki kart, wiersze tabel |
+| **2** | Przycisk ikonowy | `.dn-btn-ikona` | Przyciski i akcje | `--na-ramie` | spoczynek · najechanie · naciśnięcie · fokus · wybrany | 32×32 px, ikona 16–20 | Pasek górny, zamknięcie karty sesji, akcje wierszy tabel, przybornik promptu |
+| **3** | Pole formularza | `.dn-pole` (`-etykieta` `-kontrolka` `-opis` `-blad`) | Pola formularzy | jednowierszowe · wieloliniowe (`textarea`) · rozwijane (`select`) | spoczynek · najechanie · fokus · błąd · tylko do odczytu · podpowiedź | wys. 32 px (textarea min. 64) | Agent Builder, Instructions Panel, Source Panel, Prompt Builder, Okno Ustawień |
+| **4** | Wiersz wyboru | `.dn-wybor` | Pola formularzy | — | dziedziczy stany kontrolki wewnętrznej | min. wys. 32 px, odstęp 8 | Okno Konfiguracji, Permissions Center, Connectors Manager |
+| **5** | Pole wyboru | `.dn-check` | Pola formularzy | — | niezaznaczone · zaznaczone · najechanie · fokus | 16×16 px (dotyk 20) | Wybór warstwy konfiguracji, zaznaczenia wielokrotne w Sources Manager |
+| **6** | Opcja jednokrotna | `.dn-radio` | Pola formularzy | — | niewybrane · wybrane · najechanie · fokus | 16×16 px, kropka 8 | Wybór warstwy: domyślna / sesji (Okno Konfiguracji) |
+| **7** | Przełącznik | `.dn-przelacznik` | Pola formularzy | — | wyłączony · włączony · najechanie · fokus · odziedziczony | tor 36×20 (dotyk 44×24) | Macierz izolacji (11 przełączników na poziom), Permissions Center, Skills Manager |
+| **8** | Suwak zakresu | `.dn-suwak` | Pola formularzy | — | spoczynek · przeciąganie · fokus | tor 4 px, kciuk 16 | Nakład rozumowania (szybciej ↔ mądrzej) — Model Configuration |
+| **9** | Pole wyszukiwania | `.dn-szukaj` | Pola formularzy | — | spoczynek · najechanie · fokus · z treścią | wys. 32 px, wcięcie 32 | Library Explorer, Sources Manager, Agent Manager, Glossary Manager |
+| **10** | Pasek górny | `.dn-pasek` (`-godlo` `-logotyp` `-szukaj` `-prawa`) | Nawigacja | — (kontener) | statyczny; stany należą do elementów wewnątrz | wys. 48 px (przestronna 56) | Powłoka każdego z czterech środowisk |
+| **11** | Boczna nawigacja | `.dn-boczna` (`-naglowek` `-pozycja`) | Nawigacja | lista modułów · panel orkiestracji | spoczynek · najechanie · bieżąca · fokus | szer. 224 px, pozycja 32 px | TalkIn (9), WorkSpace (9), CodeStudio (8), MultitaskingAI (6 sekcji) |
+| **11a** | Belka tytułowa okna | `.dn-belka` (`-marka` `-nazwa` `-tytul` `-okno` `-btn`) | Nawigacja | `--zamknij` na kontrolce zamknięcia | kontrolka: spoczynek · najechanie · fokus | pas 36 px, kontrolka 46 × 36 | Rama każdego okna platformy — jedyny dom godła |
+| **11b** | Pasek narzędzi okna | `.dn-narzedzia` (`-grupa` `-srodek` `-szukaj`) + `.dn-nrz-btn` + `.dn-etykietka` | Nawigacja | — | kontrolka: spoczynek · najechanie (uniesienie 1 px) · naciśnięcie · fokus · rozwinięta · dwustanowa | pas 48 px, kontrolka 32 × 32 | Rama każdego okna platformy |
+| **12** | Pas kart sesji / karta sesji | `.dn-karty-sesji` / `.dn-karta-sesji` | Nawigacja | — | w tle · aktywna · najechanie · praca w tle · nowa (pusta) | pas 36 px (przestronna 40) | Powłoka każdego środowiska, pod paskiem górnym |
+| **13** | Zakładki / zakładka | `.dn-zakladki` / `.dn-zakladka` | Nawigacja | — | spoczynek · najechanie · wybrana · fokus | wys. 32 px, wskaźnik 2 px | Terminal Tabs, Model Panels (Roundtable), Okno Konfiguracji |
+| **14** | Listwa ustawień | `.dn-listwa` (`-pozycja`) | Nawigacja | — | spoczynek · najechanie · fokus | pozycja 28 px, promień 10 | Strefa 3 strony głównej — Okno Konfiguracji, Mobile, Always On Display |
+| **15** | Przybornik | `.dn-przybornik` | Nawigacja | — | statyczny; stany należą do przycisków wewnątrz | odstęp 4 px, zawijany | Pole promptu Chat Window, paski narzędzi paneli |
+| **16** | Karta | `.dn-karta` (`-naglowek` `-tytul` `-cialo`) | Dane i treść | `--klikalna` `--wybrana` | spoczynek · najechanie · naciśnięcie · wybrana · fokus · ładowanie · błąd | promień 10, cień 1 | Session Repository, Sources Manager, Assets Panel, karty ról MultitaskingAI |
+| **17** | Karta środowiska | `.dn-karta-srodowiska` (`-godlo` `-tytul` `-motto` `-opis`) | Dane i treść | — | spoczynek · najechanie · bieżąca · fokus | padding 24, promień 14, godło 40 | Strefa 1 strony głównej — cztery karty środowisk |
+| **18** | Kafel komponentu własnego | `.dn-kafel` (`-ikona` `-etykieta` `-opis`) | Dane i treść | — | spoczynek · najechanie · fokus | padding 16, ikona 36 | Strefa 2 strony głównej — Automations, Agents, Workspace, Assistant |
+| **19** | Tabela | `.dn-tabela` | Dane i treść | — | wiersz spoczynek · najechanie · wybrany · pusta | wiersz 36 px (dotyk 44) | Execution Monitor, Queue Manager, Process Monitor, Permissions Center |
+| **20** | Komórka danych | `.dn-dane` | Dane i treść | — | statyczna | krój mono, stopień 12 | Każda kolumna liczbowa i identyfikatorowa tabel |
+| **21** | Plakietka | `.dn-plakietka` | Dane i treść | `--sukces` `--ostrzezenie` `--blad` `--informacja` `--sygnal` `--rola` | statyczna (nośnik stanu innej jednostki) | wys. ok. 18 px, promień pełny | Kolumny statusu monitorów, Tags & Collections, plakietki ról |
+| **22** | Kropka sygnału | `.dn-kropka` | Dane i treść | `--tetno` `--sukces` `--ostrzezenie` `--blad` `--neutralna` | statyczna · tętno (2,4 s) · pierścień statyczny (ograniczony ruch) | 6×6 px | Karty sesji, wpisy komunikacji, monitory, godło |
+| **23** | Pusty stan | `.dn-pusty-stan` (`-tytul` `-opis`) | Dane i treść | — | statyczny (sam jest stanem panelu) | padding 40/20, ikona 28 | Sources Manager, Findings Panel, Queue Manager przed pierwszą konfiguracją |
+| **24** | Pasek postępu | `.dn-postep` (`-etykieta` `-tor` `-wartosc`) | Dane i treść | — | 0% · w toku · 100% · nieokreślony | tor 4 px | Execution Monitor, Build Output, Deployment Panel |
+| **25** | Kolejka / krok | `.dn-kolejka` / `.dn-krok` (`-znak` `-meta`) | Dane i treść | `--pracuje` `--poprawny` `--bledy` `--wstrzymany` | oczekuje · pracuje · poprawny · błędy · wstrzymany | krok 36 px, znak 20 | Queue Manager, Orchestrator, Workflow Builder, Results Analyzer |
+| **26** | Modal | `.dn-modal` (`-naglowek` `-tytul` `-cialo` `-stopka`) | Informacja zwrotna | — | zamknięty · otwierany · otwarty · ładowanie · błąd | maks. 560 px, maks. 80 dvh | Pula kont Code CLI, potwierdzenia, kreatory strefy 2 |
+| **27** | Powiadomienie | `.dn-toasty` / `.dn-toast` (`-tytul` `-tresc`) | Informacja zwrotna | `--sukces` `--ostrzezenie` `--blad` `--informacja` | pojawienie · widoczny · znikanie | 280–420 px, prawy dolny róg | Zapis profilu izolacji, zakończenie automatyki, komunikaty Mobile |
+| **28** | Dymek objaśnienia | `.dn-tooltip` (`-tresc`) | Informacja zwrotna | — | ukryty · widoczny (najechanie / fokus) | maks. 260 px, odsunięcie 8 | Oznaczenia `[?]` w Oknie Konfiguracji, ikony paska górnego |
+| **29** | Wskaźnik pracy | `.dn-spinner` | Informacja zwrotna | — | obecny · nieobecny · statyczny (ograniczony ruch) | 14×14 px, obrót 0,8 s | Wnętrze przycisku, Chat Window, Build Output, panele w trakcie pobierania |
+| **30** | Awatar | `.dn-awatar` (`-stan`) | Tożsamość | `--sm` `--lg` `--kwadrat` `--inteligencja` | domyślny · ze wskaźnikiem stanu · ładowanie obrazu | 28 px (sm 24, lg 36) | Chat Window, Model Panels, karty ról, pasek górny |
+| **31** | Always On Display | `.dn-aod` (`-rdzen` `-tresc`) | Tożsamość | — | spoczynek (tętno rdzenia) · rozwinięty · nadzór | rdzeń 36 px, warstwa 1200 | Ponad całą powłoką; sekcja Monitor procesu MultitaskingAI |
+| **32** | Wpis komunikacji | `.dn-wpis` (`-medalion` `-nadawca` `-tozsamosc` `-godzina` `-tresc`) | Komunikacja | `--czlowiek` `--inteligencja` `--system` `--pracuje` | spoczynek · pracuje (tętno) | maks. 860 px, medalion 24 | Chat Window — wspólny wszystkim 15 modułom |
+| **33** | Pole promptu | `.dn-prompt` (`-grot` `-obszar`) | Komunikacja | — | spoczynek · fokus · z treścią · wysyłanie | obszar 40–160 px | Chat Window, Executor Chat, Coordinator Chat, Voice Console |
 
 **Rachunek:** 33 klasy bazowe · 26 modyfikatorów · 43 elementy wewnętrzne = **102 nazwy klasowe w bibliotece komponentów** (pełny wykaz w Załączniku C; łącznie z 17 klasami warstwy fundamentu — 119 nazw `.dn-*` w arkuszach projektu).
 
@@ -211,7 +213,7 @@ Biblioteka v2.0 nie zawiera ani jednej klasy stanu w rodzaju `.is-active` czy `.
 | Zaznaczenie kontrolki | pseudoklasa | `:checked` | `.dn-check` `.dn-radio` `.dn-przelacznik` |
 | Otwarcie nakładki | atrybut natywny | `[open]` | `.dn-modal` (element `<dialog>`) |
 
-**Atrybutu `disabled` nie ma w bibliotece ani jednego wystąpienia.** To nie jest przeoczenie — to zasada ADL-017 (rozdz. 13).
+**Atrybutu `disabled` nie ma w bibliotece ani jednego wystąpienia.** To nie jest przeoczenie — to Zasada zero blokad (rozdz. 13).
 
 ### 4.2. Siedem stanów kontraktowych
 
@@ -922,7 +924,7 @@ Anatomia pojedynczej karty: kropka stanu (opcjonalna) → tytuł modułu → prz
 
 **Anatomia.** Rząd `flex` z odstępem 4 px i kreską dolną 1 px pod całą grupą. Pozycja: opcjonalna ikona 16 px → etykieta → opcjonalna plakietka licznika. Wskaźnik wybranej pozycji to `::after` o wysokości 2 px w barwie `--dn-kropka`, przyklejony do dolnej krawędzi grupy (`bottom: -1px`) — przykrywa kreskę grupy.
 
-**Warianty.** Brak modyfikatorów w implementacji v2.0. Wariant pigułkowy opisany w katalogu v1.0 nie ma odpowiednika (→ Załącznik B, luka L-04).
+**Warianty.** Brak modyfikatorów w implementacji v2.0. Wariant pigułkowy opisany w katalogu v1.0 nie ma odpowiednika (→ Załącznik B, pozycja „Zakładki pigułkowe").
 
 **Stany.**
 
@@ -2008,7 +2010,7 @@ Legenda: `●●●` największe w platformie nasilenie komponentu · `●●` z
 
 ## 13. Zasada zero blokad w komponentach
 
-> **Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód. Domyślne zachowanie systemu to wykonanie polecenia.** (ADL-017)
+> **Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód. Domyślne zachowanie systemu to wykonanie polecenia.** (zasada zero blokad)
 
 ### 13.1. Co to znaczy w warstwie komponentu
 
@@ -2143,94 +2145,94 @@ Wartość odziedziczona jest **stanem informacyjnym**, nie ograniczeniem. Przeł
 
 ## Załącznik B — luki i rozbieżności katalog ↔ implementacja
 
-Katalog komponentów v1.0 (`dok/projekt-ui/komponenty/katalog-komponentow.md`, 1500 linii) opisuje bibliotekę `system-wizualny/components.css`. Implementacja v2.0 (`zasoby/css/komponenty.css`, 1207 linii) jest **inną, nowszą generacją** o częściowo rozbieżnym nazewnictwie. Rozbieżności wypisane są tu jawnie, nie rozstrzygane milcząco. Reguła nadrzędna: **rozbieżność między opisem prozą a plikiem CSS rozstrzyga się na korzyść pliku CSS.**
+Katalog komponentów v1.0 (`docs/interfejs-uzytkownika/katalog-komponentow.md`, 1500 linii) opisuje bibliotekę `system-wizualny/components.css`. Implementacja v2.0 (`zasoby/css/komponenty.css`, 1207 linii) jest **inną, nowszą generacją** o częściowo rozbieżnym nazewnictwie. Rozbieżności wypisane są tu jawnie, nie rozstrzygane milcząco. Reguła nadrzędna: **rozbieżność między opisem prozą a plikiem CSS rozstrzyga się na korzyść pliku CSS.**
 
 ### B.1. Ta sama rola, inna nazwa
 
 | # | Rola | Katalog v1.0 | Implementacja v2.0 | Rozstrzygnięcie |
 |---|---|---|---|---|
-| R-01 | Przycisk główny | `.dn-btn--glowny` | `.dn-btn--atrament` | v2.0 — nazwa opisuje mechanikę (inwersja atramentu), nie barwę |
-| R-02 | Przycisk CTA | `.dn-btn--zloty` | `.dn-btn--sygnal` | v2.0 — złoto nie istnieje w palecie v2.0 |
-| R-03 | Akcja ryzykowna | `.dn-btn--blad` | `.dn-btn--niebezpieczny` | v2.0 — „błąd" to stan, „niebezpieczny" to waga akcji |
-| R-04 | Kontrolka pola | `.dn-input` / `.dn-textarea` / `.dn-select` | jedna `.dn-pole-kontrolka` | v2.0 — jedna klasa, trzy znaczniki natywne |
-| R-05 | Tekst pomocy / błędu | `.dn-pomoc` / `.dn-pomoc--blad` | `.dn-pole-opis` / `.dn-pole-blad` | v2.0 |
-| R-06 | **Przełącznik (toggle)** | **`.dn-suwak`** | **`.dn-przelacznik`** | v2.0 — **kolizja nazwy o odwróconym znaczeniu**, patrz R-07 |
-| R-07 | **Suwak zakresu (range)** | brak w katalogu | **`.dn-suwak`** | v2.0 — nazwa `.dn-suwak` znaczy w v2.0 co innego niż w v1.0; przy migracji kodu wymaga uwagi |
-| R-08 | Karta interaktywna | `.dn-karta--interaktywna` | `.dn-karta--klikalna` | v2.0 |
-| R-09 | Karta wyróżniona | `.dn-karta--akcent` | `.dn-karta--wybrana` | v2.0 — akcent v1.0 był wstęgą złotą; v2.0 rozdziela wyróżnienie od wyboru |
-| R-10 | Karta środowiska | `.dn-karta--interaktywna --akcent` | osobna `.dn-karta-srodowiska` | v2.0 — osobny komponent zamiast złożenia modyfikatorów |
-| R-11 | Kafel komponentu własnego | `.dn-karta--interaktywna` | osobna `.dn-kafel` | v2.0 |
-| R-12 | Treść karty / modala | `.dn-karta-tresc` / `.dn-modal-tresc` | `.dn-karta-cialo` / `.dn-modal-cialo` | v2.0 |
-| R-13 | Nakładka modala | klasa `.dn-nakladka` | `::backdrop` natywnego `<dialog>` | v2.0 — mniej kodu, pułapka fokusu i `Escape` za darmo |
-| R-14 | Boczna nawigacja | `.dn-karta--pozycja` w kolumnie | dedykowane `.dn-boczna*` | v2.0 |
-| R-15 | Karta sesji | `.dn-karta--pozycja` w pasku | dedykowane `.dn-karty-sesji`, `.dn-karta-sesji` | v2.0 |
-| R-16 | Listwa ustawień | wariant „lekki" `.dn-pasek` | dedykowane `.dn-listwa*` | v2.0 |
-| R-17 | Marka i rozpychacz paska | `.dn-pasek-marka`, `.dn-rozpychacz` | `.dn-pasek-godlo`, `.dn-pasek-logotyp`, `.dn-pasek-prawa` | v2.0 |
-| R-18 | Always On Display | `.dn-awatar` pływający | dedykowane `.dn-aod*` | v2.0 |
-| R-19 | Awatar jednostki AI | `--zloto` | `--inteligencja` | v2.0 |
-| R-20 | Warianty semantyczne | `--ostrz`, `--info` | `--ostrzezenie`, `--informacja` | v2.0 — pełne słowa polskie, bez skrótów |
+| 1 | Przycisk główny | `.dn-btn--glowny` | `.dn-btn--atrament` | v2.0 — nazwa opisuje mechanikę (inwersja atramentu), nie barwę |
+| 2 | Przycisk CTA | `.dn-btn--zloty` | `.dn-btn--sygnal` | v2.0 — złoto nie istnieje w palecie v2.0 |
+| 3 | Akcja ryzykowna | `.dn-btn--blad` | `.dn-btn--niebezpieczny` | v2.0 — „błąd" to stan, „niebezpieczny" to waga akcji |
+| 4 | Kontrolka pola | `.dn-input` / `.dn-textarea` / `.dn-select` | jedna `.dn-pole-kontrolka` | v2.0 — jedna klasa, trzy znaczniki natywne |
+| 5 | Tekst pomocy / błędu | `.dn-pomoc` / `.dn-pomoc--blad` | `.dn-pole-opis` / `.dn-pole-blad` | v2.0 |
+| 6 | **Przełącznik (toggle)** | **`.dn-suwak`** | **`.dn-przelacznik`** | v2.0 — **kolizja nazwy o odwróconym znaczeniu**, patrz pozycja „Suwak zakresu" w Załączniku B |
+| 7 | **Suwak zakresu (range)** | brak w katalogu | **`.dn-suwak`** | v2.0 — nazwa `.dn-suwak` znaczy w v2.0 co innego niż w v1.0; przy migracji kodu wymaga uwagi |
+| 8 | Karta interaktywna | `.dn-karta--interaktywna` | `.dn-karta--klikalna` | v2.0 |
+| 9 | Karta wyróżniona | `.dn-karta--akcent` | `.dn-karta--wybrana` | v2.0 — akcent v1.0 był wstęgą złotą; v2.0 rozdziela wyróżnienie od wyboru |
+| 10 | Karta środowiska | `.dn-karta--interaktywna --akcent` | osobna `.dn-karta-srodowiska` | v2.0 — osobny komponent zamiast złożenia modyfikatorów |
+| 11 | Kafel komponentu własnego | `.dn-karta--interaktywna` | osobna `.dn-kafel` | v2.0 |
+| 12 | Treść karty / modala | `.dn-karta-tresc` / `.dn-modal-tresc` | `.dn-karta-cialo` / `.dn-modal-cialo` | v2.0 |
+| 13 | Nakładka modala | klasa `.dn-nakladka` | `::backdrop` natywnego `<dialog>` | v2.0 — mniej kodu, pułapka fokusu i `Escape` za darmo |
+| 14 | Boczna nawigacja | `.dn-karta--pozycja` w kolumnie | dedykowane `.dn-boczna*` | v2.0 |
+| 15 | Karta sesji | `.dn-karta--pozycja` w pasku | dedykowane `.dn-karty-sesji`, `.dn-karta-sesji` | v2.0 |
+| 16 | Listwa ustawień | wariant „lekki" `.dn-pasek` | dedykowane `.dn-listwa*` | v2.0 |
+| 17 | Marka i rozpychacz paska | `.dn-pasek-marka`, `.dn-rozpychacz` | `.dn-pasek-godlo`, `.dn-pasek-logotyp`, `.dn-pasek-prawa` | v2.0 |
+| 18 | Always On Display | `.dn-awatar` pływający | dedykowane `.dn-aod*` | v2.0 |
+| 19 | Awatar jednostki AI | `--zloto` | `--inteligencja` | v2.0 |
+| 20 | Warianty semantyczne | `--ostrz`, `--info` | `--ostrzezenie`, `--informacja` | v2.0 — pełne słowa polskie, bez skrótów |
 
 ### B.2. Komponenty katalogu bez odpowiednika w implementacji (luki)
 
 | # | Komponent katalogu | Klasa v1.0 | Stan w v2.0 | Zalecane postępowanie |
 |---|---|---|---|---|
-| L-01 | **Komunikat blokowy (Alert)** | `.dn-alert` + 4 warianty | **Brak** | Zastępczo: `.dn-pole-blad` przy polu · plakietka semantyczna w wierszu · `.dn-krok--wstrzymany` w kolejce · `.dn-toast` przy zdarzeniu. **Rekomendacja: dodać `.dn-alert` w kolejnej rewizji biblioteki** — wzorzec „stan trwały w układzie" nie ma dziś jednego nośnika |
-| L-02 | **Blok kodu** | `.dn-kod` | Obecny, ale w `fundament.css` (warstwa 0), nie w bibliotece | Bez zmian — blok kodu jest wzorcem tekstowym, nie komponentem interaktywnym |
-| L-03 | **Ikona systemowa** | `.dn-ikona` + `--sm` `--lg` | **Brak klasy** — ikony wklejane inline jako `<svg>` z `zasoby/ikony/svg/` | Bez zmian — `currentColor` i rozmiar ustawiane w miejscu użycia; klasa nie wnosiłaby nic ponad `width`/`height` |
-| L-04 | Zakładki pigułkowe | `.dn-zakladki--pigulki` | **Brak** | Do rozstrzygnięcia przy oknie punktów izolacji: wybór warstwy realizuje dziś para `.dn-radio` |
-| L-05 | Tabela naprzemienna | `.dn-tabela--paski` | **Brak** | Zgodne z kierunkiem: gęstość 8/10 i kreska subtelna wystarczą; naprzemienne tło dodałoby szumu |
-| L-06 | Owijka tabeli | `.dn-tabela-owijka` | **Brak** | Owijka realizowana lokalnie w oknie (przewijanie + obrys), nie w bibliotece |
-| L-07 | Pozycja listy | `.dn-karta--pozycja` | **Brak** | Zastąpione trzema dedykowanymi komponentami: `.dn-boczna-pozycja`, `.dn-karta-sesji`, `.dn-listwa-pozycja` |
-| L-08 | Stopka karty | `.dn-karta-stopka` | **Brak** | Akcje karty umieszcza się w `.dn-karta-cialo` albo w `.dn-karta-naglowek`; stopka istnieje tylko w modalu |
-| L-09 | Plakietka złota / wersalikowa / ze stanem | `--zloto` `--wersaliki` `--stan` | **Brak** | `--sygnal` zastępuje złotą; wersaliki daje `--rola`; „ze stanem" realizuje plakietka z kropką w środku |
-| L-10 | Awatar złoty | `.dn-awatar--zloto` | **Brak** | Zastąpione przez `--inteligencja` |
-| L-11 | Panel jako klasa | `.dn-panel` | **Brak klasy** — `--dn-panel` istnieje jako żeton tła | Panel pozostaje wzorcem złożonym, nie komponentem |
-| L-12 | Menu kontekstowe | `.dn-karta` + `.dn-karta--pozycja` pływające | **Brak wzorca w bibliotece** | Do zbudowania z `.dn-karta` + `.dn-listwa-pozycja` w warstwie okna; **rekomendacja: rozważyć `.dn-menu` w kolejnej rewizji** |
+| 1 | **Komunikat blokowy (Alert)** | `.dn-alert` + 4 warianty | **Brak** | Zastępczo: `.dn-pole-blad` przy polu · plakietka semantyczna w wierszu · `.dn-krok--wstrzymany` w kolejce · `.dn-toast` przy zdarzeniu. **Rekomendacja: dodać `.dn-alert` w kolejnej rewizji biblioteki** — wzorzec „stan trwały w układzie" nie ma dziś jednego nośnika |
+| 2 | **Blok kodu** | `.dn-kod` | Obecny, ale w `fundament.css` (warstwa 0), nie w bibliotece | Bez zmian — blok kodu jest wzorcem tekstowym, nie komponentem interaktywnym |
+| 3 | **Ikona systemowa** | `.dn-ikona` + `--sm` `--lg` | **Brak klasy** — ikony wklejane inline jako `<svg>` z `zasoby/ikony/svg/` | Bez zmian — `currentColor` i rozmiar ustawiane w miejscu użycia; klasa nie wnosiłaby nic ponad `width`/`height` |
+| 4 | Zakładki pigułkowe | `.dn-zakladki--pigulki` | **Brak** | Do rozstrzygnięcia przy oknie punktów izolacji: wybór warstwy realizuje dziś para `.dn-radio` |
+| 5 | Tabela naprzemienna | `.dn-tabela--paski` | **Brak** | Zgodne z kierunkiem: gęstość 8/10 i kreska subtelna wystarczą; naprzemienne tło dodałoby szumu |
+| 6 | Owijka tabeli | `.dn-tabela-owijka` | **Brak** | Owijka realizowana lokalnie w oknie (przewijanie + obrys), nie w bibliotece |
+| 7 | Pozycja listy | `.dn-karta--pozycja` | **Brak** | Zastąpione trzema dedykowanymi komponentami: `.dn-boczna-pozycja`, `.dn-karta-sesji`, `.dn-listwa-pozycja` |
+| 8 | Stopka karty | `.dn-karta-stopka` | **Brak** | Akcje karty umieszcza się w `.dn-karta-cialo` albo w `.dn-karta-naglowek`; stopka istnieje tylko w modalu |
+| 9 | Plakietka złota / wersalikowa / ze stanem | `--zloto` `--wersaliki` `--stan` | **Brak** | `--sygnal` zastępuje złotą; wersaliki daje `--rola`; „ze stanem" realizuje plakietka z kropką w środku |
+| 10 | Awatar złoty | `.dn-awatar--zloto` | **Brak** | Zastąpione przez `--inteligencja` |
+| 11 | Panel jako klasa | `.dn-panel` | **Brak klasy** — `--dn-panel` istnieje jako żeton tła | Panel pozostaje wzorcem złożonym, nie komponentem |
+| 12 | Menu kontekstowe | `.dn-karta` + `.dn-karta--pozycja` pływające | **Brak wzorca w bibliotece** | Do zbudowania z `.dn-karta` + `.dn-listwa-pozycja` w warstwie okna; **rekomendacja: rozważyć `.dn-menu` w kolejnej rewizji** |
 
 ### B.3. Komponenty implementacji nieobecne w katalogu (nadmiar)
 
 | # | Klasa v2.0 | Rola | Uzasadnienie istnienia |
 |---|---|---|---|
-| N-01 | `.dn-wybor` | Wiersz etykieta + kontrolka wyboru | Ujednolica wysokość i cel kliknięcia trzech kontrolek |
-| N-02 | `.dn-radio` | Osobna klasa opcji jednokrotnej | Katalog łączył z `.dn-check`; rozdzielenie upraszcza arkusz |
-| N-03 | `.dn-suwak` (range) | Nakład rozumowania | Pojęcie produktowe nieobecne w katalogu v1.0 |
-| N-04 | `.dn-szukaj` | Pole wyszukiwania z ikoną | Wzorzec powtarzalny w kilkunastu panelach |
-| N-05 | `.dn-wpis` + 9 klas | Wpis okna komunikacji | Rozstrzygnięcie dziewięciu nadawców przez trzy klasy semantyczne |
-| N-06 | `.dn-postep` + 3 klasy | Pasek postępu | Monitory wykonania wymagają wskaźnika o znanym zakresie |
-| N-07 | `.dn-kolejka` / `.dn-krok` + 7 klas | Kolejka kroków | Trzy wyjścia weryfikacji: poprawny · błędy · wstrzymany |
-| N-08 | `.dn-prompt` + 2 klasy | Pole promptu z grotem | Sygnatura wejścia powtarzająca motyw godła |
-| N-09 | `.dn-przybornik` | Przybornik promptu | Grupowanie narzędzi pod polem wejścia |
-| N-10 | `.dn-plakietka--rola` | Plakietka roli okna | Coordinator · Executor · Validator |
-| N-11 | `.dn-kropka--tetno` | Jedyny ruch ciągły | Element sygnaturowy systemu |
-| N-12 | `.dn-btn--wybrany` | Stan wybrany trwale | Przyciski przełączające w przybornikach |
-| N-13 | `.dn-dane` | Komórka danych maszynowych | Liczby tabelaryczne w monitorach |
-| N-14 | `.dn-karta-srodowiska` + 4 klasy | Karta środowiska | Osobny komponent zamiast złożenia modyfikatorów |
-| N-15 | `.dn-kafel` + 3 klasy | Kafel komponentu własnego | Jak wyżej |
-| N-16 | `.dn-aod` + 2 klasy | Always On Display | Jak wyżej |
+| 1 | `.dn-wybor` | Wiersz etykieta + kontrolka wyboru | Ujednolica wysokość i cel kliknięcia trzech kontrolek |
+| 2 | `.dn-radio` | Osobna klasa opcji jednokrotnej | Katalog łączył z `.dn-check`; rozdzielenie upraszcza arkusz |
+| 3 | `.dn-suwak` (range) | Nakład rozumowania | Pojęcie produktowe nieobecne w katalogu v1.0 |
+| 4 | `.dn-szukaj` | Pole wyszukiwania z ikoną | Wzorzec powtarzalny w kilkunastu panelach |
+| 5 | `.dn-wpis` + 9 klas | Wpis okna komunikacji | Rozstrzygnięcie dziewięciu nadawców przez trzy klasy semantyczne |
+| 6 | `.dn-postep` + 3 klasy | Pasek postępu | Monitory wykonania wymagają wskaźnika o znanym zakresie |
+| 7 | `.dn-kolejka` / `.dn-krok` + 7 klas | Kolejka kroków | Trzy wyjścia weryfikacji: poprawny · błędy · wstrzymany |
+| 8 | `.dn-prompt` + 2 klasy | Pole promptu z grotem | Sygnatura wejścia powtarzająca motyw godła |
+| 9 | `.dn-przybornik` | Przybornik promptu | Grupowanie narzędzi pod polem wejścia |
+| 10 | `.dn-plakietka--rola` | Plakietka roli okna | Coordinator · Executor · Validator |
+| 11 | `.dn-kropka--tetno` | Jedyny ruch ciągły | Element sygnaturowy systemu |
+| 12 | `.dn-btn--wybrany` | Stan wybrany trwale | Przyciski przełączające w przybornikach |
+| 13 | `.dn-dane` | Komórka danych maszynowych | Liczby tabelaryczne w monitorach |
+| 14 | `.dn-karta-srodowiska` + 4 klasy | Karta środowiska | Osobny komponent zamiast złożenia modyfikatorów |
+| 15 | `.dn-kafel` + 3 klasy | Kafel komponentu własnego | Jak wyżej |
+| 16 | `.dn-aod` + 2 klasy | Always On Display | Jak wyżej |
 
 ### B.4. Rozbieżności wartości liczbowych
 
 | # | Wielkość | Katalog v1.0 | Implementacja v2.0 | Rozstrzygnięcie |
 |---|---|---|---|---|
-| W-01 | Wysokość kontrolki | 36 px | **32 px** (`--dn-wym-kontrolka`) | v2.0 — gęstość zwarta 8/10 |
-| W-02 | Przycisk ikonowy | 36×36, ikona 18 | **32×32, ikona 16** | v2.0 |
-| W-03 | Pasek górny | 56 px | **48 px** | v2.0 (56 px pozostaje w gęstości przestronnej) |
-| W-04 | Przełącznik | tor 40×22, suwak 18 | **tor 36×20, suwak 14** | v2.0 |
-| W-05 | Awatar | 36 / 28 / 48 px | **28 / 24 / 36 px** | v2.0 |
-| W-06 | Wskaźnik pracy | 16 px, obrót 0,7 s | **14 px, obrót 0,8 s** | v2.0 |
-| W-07 | Modal — wysokość | 92 % ekranu | **`min(80dvh, 720px)`** | v2.0 — `dvh` obsługuje paski przeglądarek mobilnych |
-| W-08 | Powiadomienie — pozycja | dół ekranu, wyśrodkowane | **prawy dolny róg** | v2.0 — nie zasłania pasa komunikacji |
-| W-09 | Powiadomienie — tło | „zawsze ciemne" | **`--dn-panel`** (przełącza się z motywem) | v2.0 — ciemne pozostają wyłącznie pasek i dymek |
-| W-10 | Kropka statusu awatara | 11 px | **8 px** | v2.0 |
-| W-11 | Pusty stan — opis | 42 znaki | **40 znaków (`40ch`)** | v2.0 |
-| W-12 | Przycisk — stopień i waga | 13 px, `semibold` | **13 px (`--dn-fs-base`), waga 500** | v2.0 — skala v2.0 ma inną bazę niż v1.0 |
-| W-13 | Skala typografii | 12·13·15·16·18·22·28·36·46 | **11·12·13·14·16·20·24·30·40** | v2.0 — skala zwarta kokpitu |
-| W-14 | Wartości pikselowe w arkuszu | podawane wprost | **wyłącznie żetony** | v2.0 — „zero wartości zaszytych" |
-| W-15 | Tętno kropki | brak w katalogu | **2,4 s** (`--dn-czas-tetno`) | v2.0 — element sygnaturowy |
+| 1 | Wysokość kontrolki | 36 px | **32 px** (`--dn-wym-kontrolka`) | v2.0 — gęstość zwarta 8/10 |
+| 2 | Przycisk ikonowy | 36×36, ikona 18 | **32×32, ikona 16** | v2.0 |
+| 3 | Pasek górny | 56 px | **48 px** | v2.0 (56 px pozostaje w gęstości przestronnej) |
+| 4 | Przełącznik | tor 40×22, suwak 18 | **tor 36×20, suwak 14** | v2.0 |
+| 5 | Awatar | 36 / 28 / 48 px | **28 / 24 / 36 px** | v2.0 |
+| 6 | Wskaźnik pracy | 16 px, obrót 0,7 s | **14 px, obrót 0,8 s** | v2.0 |
+| 7 | Modal — wysokość | 92 % ekranu | **`min(80dvh, 720px)`** | v2.0 — `dvh` obsługuje paski przeglądarek mobilnych |
+| 8 | Powiadomienie — pozycja | dół ekranu, wyśrodkowane | **prawy dolny róg** | v2.0 — nie zasłania pasa komunikacji |
+| 9 | Powiadomienie — tło | „zawsze ciemne" | **`--dn-panel`** (przełącza się z motywem) | v2.0 — ciemne pozostają wyłącznie pasek i dymek |
+| 10 | Kropka statusu awatara | 11 px | **8 px** | v2.0 |
+| 11 | Pusty stan — opis | 42 znaki | **40 znaków (`40ch`)** | v2.0 |
+| 12 | Przycisk — stopień i waga | 13 px, `semibold` | **13 px (`--dn-fs-base`), waga 500** | v2.0 — skala v2.0 ma inną bazę niż v1.0 |
+| 13 | Skala typografii | 12·13·15·16·18·22·28·36·46 | **11·12·13·14·16·20·24·30·40** | v2.0 — skala zwarta kokpitu |
+| 14 | Wartości pikselowe w arkuszu | podawane wprost | **wyłącznie żetony** | v2.0 — „zero wartości zaszytych" |
+| 15 | Tętno kropki | brak w katalogu | **2,4 s** (`--dn-czas-tetno`) | v2.0 — element sygnaturowy |
 
 ### B.5. Zgodność bez rozbieżności
 
-Zasada zero blokad z rozdziału 15 katalogu v1.0 jest w implementacji v2.0 zapisana wprost jako **ADL-017** w nagłówku arkusza. Obie generacje zgadzają się co do: braku stanu wyłączonego, opisowego komunikowania niegotowości, zakazu komunikowania stanu samą barwą, pełnej kompozycyjności komponentów i pierwszeństwa plików CSS przed opisem prozą.
+Zasada zero blokad z rozdziału 15 katalogu v1.0 jest w implementacji v2.0 zapisana wprost jako **zasadę zero blokad** w nagłówku arkusza. Obie generacje zgadzają się co do: braku stanu wyłączonego, opisowego komunikowania niegotowości, zakazu komunikowania stanu samą barwą, pełnej kompozycyjności komponentów i pierwszeństwa plików CSS przed opisem prozą.
 
 ---
 
@@ -2286,9 +2288,9 @@ Zasada zero blokad z rozdziału 15 katalogu v1.0 jest w implementacji v2.0 zapis
 | `.dn-etykieta-wersalikowa` | Etykieta metadanych krojem bazowym | Warstwa 0 |
 | `.dn-etykieta-mono` | Etykieta metadanych krojem mono | Warstwa 0 |
 | `.dn-dane` · `.dn-liczba` | Krój mono + liczby tabelaryczne | Uzupełniane w bibliotece dla komórek tabeli |
-| `.dn-kod` · `.dn-kod--wiersz` | Blok kodu i kod w wierszu | Odpowiednik `.dn-kod` z katalogu v1.0 (luka L-02) |
+| `.dn-kod` · `.dn-kod--wiersz` | Blok kodu i kod w wierszu | Odpowiednik `.dn-kod` z katalogu v1.0 (luka odnotowana w Załączniku B) |
 | `.dn-kbd` | Klawisz | Nieobecny w katalogu v1.0 |
-| `.dn-separator` · `.dn-separator--pionowy` | Separator | Odpowiednik G2 katalogu v1.0 |
+| `.dn-separator` · `.dn-separator--pionowy` | Separator | Odpowiednik separatora z katalogu v1.0 |
 | `.dn-sr-only` | Ukrycie dostępne — treść dla czytnika ekranu | Warunek dostępności komponentów |
 
 ### C.3. Animacje zdefiniowane w bibliotece
@@ -2318,22 +2320,22 @@ Rozstrzygnięcia podjęte ponad źródła — każde z uzasadnieniem i wskazanie
 
 | # | Decyzja | Uzasadnienie | Co rozstrzygało |
 |---|---|---|---|
-| **D-01** | **Kategoria G nazwana „Komunikacja", nie „Elementy pomocnicze"** | Katalog v1.0 umieszczał w G ikonę systemową i separator; oba przeszły w v2.0 do warstwy fundamentu (`.dn-separator`) albo zniknęły jako klasa (ikony inline). Miejsce po nich zajmują dwa komponenty rozmowy, których katalog nie znał: `.dn-wpis` i `.dn-prompt` | KANON rozdz. 5 grupuje je pod nagłówkiem „Komunikacja" |
-| **D-02** | **`.dn-btn` opisany jako 7 wariantów + 1 modyfikator stanu** | Arkusz definiuje osiem modyfikatorów, ale `--wybrany` nie jest wariantem wyglądu — jest zapisem stanu równoważnym `aria-pressed='true'` (obie reguły dzielą jeden blok CSS) | Struktura arkusza: `--wybrany` stoi w bloku stanów, przed wariantami |
-| **D-03** | **`.dn-radio` opisane jako osobna karta komponentu** | Katalog v1.0 łączył checkbox i radio w jeden komponent B4. Implementacja v2.0 ma dwie osobne klasy o różnym kształcie i różnej mechanice wyboru; jedna karta zaciemniałaby różnicę w obsłudze klawiatury (spacja vs strzałki) | Arkusz: `.dn-radio` to osobny selektor z własnymi regułami |
-| **D-04** | **`.dn-toasty` opisany wewnątrz karty `.dn-toast`, nie jako osobny komponent** | Stos nie ma sensu bez powiadomienia i nie występuje samodzielnie; rozdzielenie dałoby kartę bez treści merytorycznej | Analogia do `.dn-kolejka`/`.dn-krok`, gdzie oba opisano łącznie |
-| **D-05** | **`.dn-kolejka` i `.dn-krok` opisane w jednej karcie** | Krok nie występuje poza kolejką; stany kroku są jednocześnie wariantami — rozbicie na dwie karty powielałoby tabelę wariantów | Struktura arkusza: wspólny blok „Monitor wykonania · kolejka kroków" |
-| **D-06** | **`.dn-przybornik` zaliczony do kategorii C (nawigacja), mimo sąsiedztwa z `.dn-prompt` w arkuszu** | Przybornik jest kontenerem narzędzi, nie elementem rozmowy; występuje także poza polem promptu (paski narzędzi paneli) | KANON rozdz. 5 wymienia go w grupie „Nawigacja" |
-| **D-07** | **Rekomendacja dodania `.dn-alert` (komunikat blokowy) w kolejnej rewizji** | Katalog v1.0 opisuje komponent E3 wywoływany z dziewięciu paneli; v2.0 nie ma jego odpowiednika. Dziś rolę pełnią zastępczo cztery różne komponenty, co rozprasza wzorzec „stan trwały w układzie" | Luka L-01; rekomendacja **nie zmienia** stanu biblioteki — jest odnotowana, nie wprowadzona |
-| **D-08** | **Rekomendacja rozważenia `.dn-menu` (menu kontekstowe) w kolejnej rewizji** | Katalog v1.0 opisuje wzorzec złożony C5 obecny „w całej platformie"; v2.0 nie ma dla niego ani klasy, ani wskazanego złożenia | Luka L-12; jak wyżej — odnotowana, nie wprowadzona |
-| **D-09** | **Brak klasy `.dn-ikona` uznany za rozstrzygnięcie, nie brak** | Ikony wklejane inline jako `<svg>` z `currentColor` nie potrzebują klasy; rozmiar ustawia atrybut w miejscu użycia. Klasa dodałaby warstwę pośrednią bez korzyści | Praktyka wszystkich arkuszy i makiet projektu; KANON rozdz. 11 pkt 9 |
-| **D-10** | **Wymiary podawane w wartościach gęstości zwartej z jawną kolumną wariantów** | Żetony zmieniają wartość w trzech kontekstach (dotyk, gęstość przestronna, ograniczony ruch); podanie jednej liczby bez kontekstu wprowadzałoby w błąd | Żetony rozdz. 12–13 pliku `zetony.css` |
-| **D-11** | **Stany wymuszane w galerii atrybutem `data-stan`, nie klasami modyfikującymi** | Biblioteka nie ma klas stanu; dodanie ich na potrzeby galerii złamałoby regułę „nie zmieniać nazw i nie mnożyć klas". Atrybut należy do warstwy dokumentacyjnej `.dok-*` i nie zanieczyszcza biblioteki | Zasada Z5 (rozdz. 1.2) |
-| **D-12** | **Kolejność kategorii A→G przyjęta za katalogiem v1.0, mimo zmiany zawartości G** | Zachowanie kolejności pozwala czytać oba dokumenty równolegle; zmiana kolejności zerwałaby odsyłacze między nimi | Katalog v1.0 rozdz. 4 |
-| **D-13** | **Macierz rozbita na dwie tabele (moduły osobno, okna platformowe osobno)** | Jedna tabela o 25 kolumnach byłaby nieczytelna; podział przebiega po naturalnej granicy: moduł ma boczną nawigację, okno platformowe jej nie ma | Inwentarz okien, rozdz. 7.1–7.5 |
-| **D-14** | **Nasilenie w macierzy oznaczone czterostopniowo (`—` `●` `●●` `●●●`)** | Skala przejęta z katalogu v1.0 rozdz. 14 dla zachowania porównywalności; wartości dla komponentów nieobecnych w katalogu ustalono na podstawie inwentarza okien i specyfikacji modułów | Katalog v1.0, legenda rozdz. 14 |
-| **D-15** | **Treści przykładowe wyłącznie z domeny produktu** | Nazwy sesji, identyfikatory zadań (`QUE-0142`), nazwy ról (Coordinator, Executor 1), nazwy okien (Workflow Builder, Queue Manager) i ścieżki repozytoriów pochodzą z dokumentacji platformy i są oznaczone jako przykładowe | KANON rozdz. 10 pkt 3–4 |
-| **D-16** | **Kolizja nazwy `.dn-suwak` odnotowana jako ryzyko migracji, nie naprawiona** | Zmiana nazwy klasy złamałaby zasadę Z5 („nazwy klas są wiążące"). Ryzyko jest realne: ten sam zapis znaczy w v1.0 przełącznik, a w v2.0 suwak zakresu | Rozbieżność R-06 / R-07; decyzja o nienaprawianiu należy do właściciela biblioteki |
+| **1** | **Kategoria G nazwana „Komunikacja", nie „Elementy pomocnicze"** | Katalog v1.0 umieszczał w G ikonę systemową i separator; oba przeszły w v2.0 do warstwy fundamentu (`.dn-separator`) albo zniknęły jako klasa (ikony inline). Miejsce po nich zajmują dwa komponenty rozmowy, których katalog nie znał: `.dn-wpis` i `.dn-prompt` | kontrakt systemu projektowego grupuje je pod nagłówkiem „Komunikacja" |
+| **2** | **`.dn-btn` opisany jako 7 wariantów + 1 modyfikator stanu** | Arkusz definiuje osiem modyfikatorów, ale `--wybrany` nie jest wariantem wyglądu — jest zapisem stanu równoważnym `aria-pressed='true'` (obie reguły dzielą jeden blok CSS) | Struktura arkusza: `--wybrany` stoi w bloku stanów, przed wariantami |
+| **3** | **`.dn-radio` opisane jako osobna karta komponentu** | Katalog v1.0 łączył checkbox i radio w jeden komponent B4. Implementacja v2.0 ma dwie osobne klasy o różnym kształcie i różnej mechanice wyboru; jedna karta zaciemniałaby różnicę w obsłudze klawiatury (spacja vs strzałki) | Arkusz: `.dn-radio` to osobny selektor z własnymi regułami |
+| **4** | **`.dn-toasty` opisany wewnątrz karty `.dn-toast`, nie jako osobny komponent** | Stos nie ma sensu bez powiadomienia i nie występuje samodzielnie; rozdzielenie dałoby kartę bez treści merytorycznej | Analogia do `.dn-kolejka`/`.dn-krok`, gdzie oba opisano łącznie |
+| **5** | **`.dn-kolejka` i `.dn-krok` opisane w jednej karcie** | Krok nie występuje poza kolejką; stany kroku są jednocześnie wariantami — rozbicie na dwie karty powielałoby tabelę wariantów | Struktura arkusza: wspólny blok „Monitor wykonania · kolejka kroków" |
+| **6** | **`.dn-przybornik` zaliczony do kategorii C (nawigacja), mimo sąsiedztwa z `.dn-prompt` w arkuszu** | Przybornik jest kontenerem narzędzi, nie elementem rozmowy; występuje także poza polem promptu (paski narzędzi paneli) | kontrakt systemu projektowego wymienia go w grupie „Nawigacja" |
+| **7** | **Rekomendacja dodania `.dn-alert` (komunikat blokowy) w kolejnej rewizji** | Katalog v1.0 opisuje komunikat blokowy wywoływany z dziewięciu paneli; v2.0 nie ma jego odpowiednika. Dziś rolę pełnią zastępczo cztery różne komponenty, co rozprasza wzorzec „stan trwały w układzie" | Luka odnotowana w Załączniku B; rekomendacja **nie zmienia** stanu biblioteki — jest odnotowana, nie wprowadzona |
+| **8** | **Rekomendacja rozważenia `.dn-menu` (menu kontekstowe) w kolejnej rewizji** | Katalog v1.0 opisuje menu kontekstowe obecne „w całej platformie"; v2.0 nie ma dla niego ani klasy, ani wskazanego złożenia | Luka odnotowana w Załączniku B; jak wyżej — odnotowana, nie wprowadzona |
+| **9** | **Brak klasy `.dn-ikona` uznany za rozstrzygnięcie, nie brak** | Ikony wklejane inline jako `<svg>` z `currentColor` nie potrzebują klasy; rozmiar ustawia atrybut w miejscu użycia. Klasa dodałaby warstwę pośrednią bez korzyści | Praktyka wszystkich arkuszy i makiet projektu; kontrakt systemu projektowego |
+| **10** | **Wymiary podawane w wartościach gęstości zwartej z jawną kolumną wariantów** | Żetony zmieniają wartość w trzech kontekstach (dotyk, gęstość przestronna, ograniczony ruch); podanie jednej liczby bez kontekstu wprowadzałoby w błąd | Żetony rozdz. 12–13 pliku `zetony.css` |
+| **11** | **Stany wymuszane w galerii atrybutem `data-stan`, nie klasami modyfikującymi** | Biblioteka nie ma klas stanu; dodanie ich na potrzeby galerii złamałoby regułę „nie zmieniać nazw i nie mnożyć klas". Atrybut należy do warstwy dokumentacyjnej `.dok-*` i nie zanieczyszcza biblioteki | Zasada wiążących nazw klas (rozdz. 1.2) |
+| **12** | **Kolejność kategorii A→G przyjęta za katalogiem v1.0, mimo zmiany zawartości G** | Zachowanie kolejności pozwala czytać oba dokumenty równolegle; zmiana kolejności zerwałaby odsyłacze między nimi | Katalog v1.0 rozdz. 4 |
+| **13** | **Macierz rozbita na dwie tabele (moduły osobno, okna platformowe osobno)** | Jedna tabela o 25 kolumnach byłaby nieczytelna; podział przebiega po naturalnej granicy: moduł ma boczną nawigację, okno platformowe jej nie ma | Inwentarz okien, rozdz. 7.1–7.5 |
+| **14** | **Nasilenie w macierzy oznaczone czterostopniowo (`—` `●` `●●` `●●●`)** | Skala przejęta z katalogu v1.0 rozdz. 14 dla zachowania porównywalności; wartości dla komponentów nieobecnych w katalogu ustalono na podstawie inwentarza okien i specyfikacji modułów | Katalog v1.0, legenda rozdz. 14 |
+| **15** | **Treści przykładowe wyłącznie z domeny produktu** | Nazwy sesji, identyfikatory zadań (`QUE-0142`), nazwy ról (Coordinator, Executor 1), nazwy okien (Workflow Builder, Queue Manager) i ścieżki repozytoriów pochodzą z dokumentacji platformy i są oznaczone jako przykładowe | kontrakt systemu projektowego |
+| **16** | **Kolizja nazwy `.dn-suwak` odnotowana jako ryzyko migracji, nie naprawiona** | Zmiana nazwy klasy złamałaby zasadę wiążących nazw klas („nazwy klas są wiążące"). Ryzyko jest realne: ten sam zapis znaczy w v1.0 przełącznik, a w v2.0 suwak zakresu | Rozbieżność odnotowana w Załączniku B; decyzja o nienaprawianiu należy do właściciela biblioteki |
 
 ---
 

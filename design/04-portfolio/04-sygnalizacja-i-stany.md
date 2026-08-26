@@ -1,9 +1,9 @@
-# Danaco Console — Plansza portfolio P4: System sygnalizacji i stanów
+# Danaco Console — Plansza portfolio 04: System sygnalizacji i stanów
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment (warstwa wizualna v2.0) |
-| **Warstwa funkcjonalna** | Danaco Pilot — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
+| **Warstwa funkcjonalna** | Danaco Console — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -12,7 +12,7 @@
 | **Rodzaj opracowania** | Plansza portfolio design identity (nie dokumentacja techniczna) |
 | **Odbiorcy** | Właściciel · Designer · Deweloper · odbiorca portfolio |
 | **Zakres** | Kropka sygnału jako element sygnaturowy · cztery rodziny stanów z pomiarem kontrastu · zasada „stan nigdy samym kolorem" · katalog nośników stanu · zero blokad jako sygnalizacja · katalog wszystkich modeli stanów platformy · budżet akcentu |
-| **Czego NIE zawiera** | Wnętrz okien operacyjnych (te mają prototypy w `05-okna/`), tożsamości środowisk (plansza P1), tożsamości modułów (plansza P2), ról i orkiestracji (plansza P3) |
+| **Czego NIE zawiera** | Wnętrz okien operacyjnych (te mają prototypy w `05-okna/`), tożsamości środowisk (plansza 01), tożsamości modułów (plansza 02), ról i orkiestracji (plansza 03) |
 | **Plik towarzyszący** | `04-portfolio/04-sygnalizacja-i-stany.html` |
 
 ---
@@ -40,7 +40,7 @@ w motywie ciemnym, jeden chłodny błękit sygnałowy — i nic więcej. W takim
 barwy jest zdarzeniem**. Nie dekoracją, nie „wyróżnieniem sekcji", nie sposobem na rozbicie monotonii.
 Barwa w tym interfejsie znaczy: *coś się dzieje* albo *coś się stało*.
 
-Plansza P4 pokazuje, jak ten jeden mechanizm jest zbudowany i jak działa w komplecie.
+Plansza 04 pokazuje, jak ten jeden mechanizm jest zbudowany i jak działa w komplecie.
 
 Trzy twierdzenia, które plansza demonstruje na żywo:
 
@@ -56,35 +56,35 @@ Trzy twierdzenia, które plansza demonstruje na żywo:
 Czwarte twierdzenie jest osobliwością tej platformy i wymaga własnego rozdziału:
 **niedostępność nie jest komunikowana wyszarzeniem.** Danaco Console nie stosuje atrybutu
 wyłączającego kontrolkę. Przycisk jest zawsze klikalny; niegotowość sygnalizuje się
-**komunikatem po naciśnięciu** albo **opisem obok**. To zasada ADL-017, opisana w rozdziale 6.
+**komunikatem po naciśnięciu** albo **opisem obok**. To Zasada zero blokad, opisana w rozdziale 6.
 
 ### 1.1. Liczby planszy
 
 | Wielkość | Wartość | Źródło |
 |---|---|---|
-| Rodziny stanów | **4** (sukces · ostrzeżenie · błąd · informacja) | KANON rozdz. 2 |
-| Miejsca wystąpienia kropki sygnału | **5** | KANON rozdz. 3 · KIERUNEK.md rozdz. 3.4 |
+| Rodziny stanów | **4** (sukces · ostrzeżenie · błąd · informacja) | kontrakt systemu projektowego |
+| Miejsca wystąpienia kropki sygnału | **5** | kontrakt systemu projektowego · kierunek systemu projektowego |
 | Średnica kropki sygnału | **6 px** (`--dn-wym-kropka`) | `zetony.css` rozdz. 6 |
 | Czas tętna | **2,4 s** (`--dn-czas-tetno`) | `zetony.css` rozdz. 5 |
 | Pomiary kontrastu w pakiecie | **33** | `zasoby/zetony/kontrasty.json` |
-| Nośniki stanu w katalogu `.dn-*` | **8** | KANON rozdz. 5 · `komponenty.css` |
+| Nośniki stanu w katalogu `.dn-*` | **8** | kontrakt systemu projektowego · `komponenty.css` |
 | Warianty nośników stanu | **23** | `komponenty.css` |
 | Modele stanów w dokumentacji | **19** | rozdz. 7 tej planszy |
 | Nazwane stany łącznie | **105** | rozdz. 7 tej planszy |
-| Budżet akcentu | **≤ 5 % powierzchni ekranu** | `HANDOFF.md` rozdz. 4 |
-| Intensywność ruchu | **3/10** | KANON rozdz. 1 |
+| Budżet akcentu | **≤ 5 % powierzchni ekranu** | opracowanie o przekazaniu, ruchu i dostępności |
+| Intensywność ruchu | **3/10** | kontrakt systemu projektowego |
 
 ### 1.2. Siedem zagadnień planszy
 
 | # | Sekcja | Co demonstruje | Źródło |
 |---|---|---|---|
-| 01 | Kropka sygnału | pięć miejsc wystąpienia, każde na żywo; tętno; zachowanie przy ograniczonym ruchu | KANON 3 · KIERUNEK 3.4 |
-| 02 | Cztery rodziny stanów | żetony tekst/tło/obrys w obu motywach + kontrast liczony na żywo | KANON 2 · KIERUNEK 3.1 · `kontrasty.json` |
-| 03 | Stan nigdy samym kolorem | pary porównawcze + symulacja widzenia monochromatycznego | KANON 9 · KIERUNEK 3.1 |
+| 01 | Kropka sygnału | pięć miejsc wystąpienia, każde na żywo; tętno; zachowanie przy ograniczonym ruchu | kontrakt systemu projektowego · kierunek systemu projektowego |
+| 02 | Cztery rodziny stanów | żetony tekst/tło/obrys w obu motywach + kontrast liczony na żywo | kontrakt systemu projektowego · kierunek systemu projektowego · `kontrasty.json` |
+| 03 | Stan nigdy samym kolorem | pary porównawcze + symulacja widzenia monochromatycznego | kontrakt systemu projektowego · kierunek systemu projektowego |
 | 04 | Nośniki stanu | 8 nośników, 23 warianty, wszystkie na żywo | `komponenty.css` |
-| 05 | Zero blokad | dwa wzorce komunikowania niedostępności + kontrprzykład | KANON 8 (ADL-017) |
+| 05 | Zero blokad | dwa wzorce komunikowania niedostępności + kontrprzykład | kontrakt systemu projektowego (zasada zero blokad) |
 | 06 | Katalog modeli stanów | 19 modeli, 105 stanów, tabela sortowalna i filtrowana | rozdz. 5.1/6.2 modułów · multitaskingai 12 |
-| 07 | Budżet akcentu | kalkulator udziału sygnału w powierzchni ekranu | `HANDOFF.md` 4 |
+| 07 | Budżet akcentu | kalkulator udziału sygnału w powierzchni ekranu | opracowanie o przekazaniu, ruchu i dostępności |
 
 ---
 
@@ -93,7 +93,7 @@ wyłączającego kontrolkę. Przycisk jest zawsze klikalny; niegotowość sygnal
 ### 2.1. Definicja
 
 > Wypełniony punkt błękitu sygnałowego oznaczający „**tu biegnie praca**".
-> — KANON rozdz. 3
+> — kontrakt systemu projektowego
 
 Kropka nie jest ikoną i nie należy do zestawu ikon. Jest **elementem geometrycznym systemu**:
 koło o średnicy `--dn-wym-kropka` (6 px) wypełnione żetonem `--dn-kropka`
@@ -136,7 +136,7 @@ praca nie „dzieje się gdzieś", tylko jest z jednego miejsca rozdzielana.
 | Czas cyklu | 2,4 s (`--dn-czas-tetno`) | poniżej częstotliwości, przy której ruch staje się natrętny; powyżej progu, przy którym przestaje być zauważalny |
 | Krzywa | `--dn-ease` = `cubic-bezier(0.2, 0, 0, 1)` | ta sama krzywa co wszystkie przejścia systemu |
 | Postać | rozchodzący się pierścień `box-shadow` 0 → 5 px, barwa `--dn-fokus-cien` | pierścień nie zmienia geometrii kropki — nie powoduje przeskoków układu |
-| Liczba jednocześnie | jeden ruch znaczący na widok | KANON rozdz. 11 — wzorzec animacji |
+| Liczba jednocześnie | jeden ruch znaczący na widok | kontrakt systemu projektowego — wzorzec animacji |
 
 Wszystkie inne animacje systemu są **przejściami** (100–220 ms) i kończą się.
 Tętno jest jedyną animacją **nieskończoną**. To jest cała różnica: gdy coś w interfejsie
@@ -145,7 +145,7 @@ Danaco Console porusza się bez końca, to znaczy, że gdzieś biegnie praca.
 ### 2.5. Zachowanie przy `prefers-reduced-motion`
 
 Preferencja obsłużona **globalnie w żetonach**, nie per komponent
-(`zetony.css` rozdz. 12, KANON rozdz. 9):
+(`zetony.css` rozdz. 12, kontrakt systemu projektowego):
 
 ```
 @media (prefers-reduced-motion: reduce) {
@@ -245,7 +245,7 @@ zaliczenia. Dla porównania: `kontrasty.json` przyjmuje dla obrysu kontrolki pr�
 
 ### 3.4. Dlaczego informacja jest rodziną sygnału
 
-Rozstrzygnięcie z KIERUNEK.md rozdz. 3.1: **rodzina informacyjna stanów = rodzina sygnału
+Rozstrzygnięcie z kierunku systemu projektowego: **rodzina informacyjna stanów = rodzina sygnału
 (celowe scalenie)**.
 
 Uzasadnienie projektowe:
@@ -270,7 +270,7 @@ i różne przeznaczenie — pierwsza opisuje stan bytu, druga wyróżnia bieżą
 ### 4.1. Reguła
 
 > **Stan nigdy samym kolorem** — zawsze ikona albo etykieta.
-> — KANON rozdz. 9 (Dostępność) i rozdz. 1 (katalog anty-domyślnych)
+> — kontrakt systemu projektowego (Dostępność) i rozdz. 1 (katalog anty-domyślnych)
 
 W katalogu anty-domyślnych zapisana jako zablokowany odruch:
 
@@ -333,7 +333,7 @@ w kodzie systemu, nie tylko w dokumencie.
 ## 5. Nośniki stanu — katalog
 
 Osiem nośników, 23 warianty. Wszystkie pochodzą z `zasoby/css/komponenty.css`
-i z listy wiążącej w KANON rozdz. 5.
+i z listy wiążącej w kontrakcie systemu projektowego.
 
 ### 5.1. `.dn-plakietka` — 6 wariantów
 
@@ -344,7 +344,7 @@ i z listy wiążącej w KANON rozdz. 5.
 | `--blad` | `--dn-blad-*` | automatyka błędna (Automations 6.2); proces zakończony błędem (MTAI 12.1) |
 | `--informacja` | `--dn-informacja-*` | etap oczekujący na decyzję (MTAI 12.1, z ikoną `oko`) |
 | `--sygnal` | `--dn-sygnal-tlo / -obrys / --dn-sygnal` | wyróżnienie bieżącego wyboru |
-| `--rola` | krój mono, wersaliki, `--dn-r-xs` | plakietka roli okna: koordynator / wykonawca / walidator (KANON 5) |
+| `--rola` | krój mono, wersaliki, `--dn-r-xs` | plakietka roli okna: koordynator / wykonawca / walidator (kontrakt systemu projektowego) |
 
 Wariant `--rola` różni się od pozostałych **nie barwą, lecz typografią** — IBM Plex Mono,
 wersaliki, rozstrzelenie `--dn-ls-mono-wersaliki`, mniejszy promień. To jest wizualne
@@ -381,7 +381,7 @@ Czas życia domyślny 3200 ms, dla potwierdzenia kopiowania 2000 ms.
 
 ### 5.4. `.dn-krok` — 4 warianty
 
-Kolejka kroków realizuje rozstrzygnięcie L-P-33 zapisane w komentarzu `komponenty.css`:
+Kolejka kroków realizuje rozstrzygnięcie projektowe zapisane w komentarzu `komponenty.css`:
 **trzy wyjścia weryfikacji**.
 
 | Wariant | Wstęga lewa | Znak | Znaczenie |
@@ -436,7 +436,7 @@ właśnie generuje odpowiedź.
 Dokumentacja przewiduje **komunikat kontekstowy w postaci bloku** — Agents rozdz. 4.2
 („komunikatem, ostrzeżeniem lub dymkiem — albo opisowo obok kontrolki") oraz
 MultitaskingAI rozdz. 12.6 („komunikat kontekstowy" przy stanach Ostrzeżenie i Błąd).
-Katalog `.dn-*` w KANON rozdz. 5 **nie zawiera dla niego klasy**.
+Katalog `.dn-*` w kontrakcie systemu projektowego **nie zawiera dla niego klasy**.
 
 Rozstrzygnięcie planszy: komunikat blokowy pokazany jest jako wzorzec lokalny
 zbudowany wyłącznie z żetonów rodziny stanu (tło `--dn-{rodzina}-tlo`,
@@ -461,13 +461,13 @@ Odnotowane w decyzjach projektowych (rozdz. 9).
 
 ## 6. Zero blokad jako sygnalizacja
 
-### 6.1. Zasada ADL-017
+### 6.1. Zasada zero blokad
 
 > **Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód.
 > Domyślne zachowanie systemu to wykonanie polecenia.**
-> — KANON rozdz. 8
+> — kontrakt systemu projektowego
 
-Konsekwencje projektowe zapisane w KANON rozdz. 8 jako bezwzględne:
+Konsekwencje projektowe zapisane w kontrakcie systemu projektowego jako bezwzględne:
 
 | # | Konsekwencja | Sygnalizacja zastępcza |
 |---|---|---|
@@ -491,7 +491,7 @@ Ta sama zasada wraca w dokumentacji modułowej dwoma niezależnymi zapisami:
 | Wzorzec | Kiedy | Realizacja techniczna | Przykład z dokumentacji |
 |---|---|---|---|
 | **A — komunikat po naciśnięciu** | warunek zależy od stanu, którego Operator może nie znać | `data-komunikat` + `data-komunikat-tytul` + `data-komunikat-rodzaj` w `prototyp.js` → toast | „Scal wyniki" (`merge`) przed zakończeniem wszystkich podagentów (MTAI 12.6) |
-| **B — opis obok** | warunek jest stały i przewidywalny; opis oszczędza kliknięcie | tekst `--dn-tekst-2` / `--dn-fs-sm` przy kontrolce, bez zmiany jej wyglądu | odliczanie „Wyślij ponownie" (KANON 8) |
+| **B — opis obok** | warunek jest stały i przewidywalny; opis oszczędza kliknięcie | tekst `--dn-tekst-2` / `--dn-fs-sm` przy kontrolce, bez zmiany jej wyglądu | odliczanie „Wyślij ponownie" (kontrakt systemu projektowego) |
 
 Wybór między A a B jest decyzją projektową o **koszcie kliknięcia**: jeżeli warunek da się
 opisać jednym zdaniem i nie zmienia się w czasie, opis obok jest tańszy dla Operatora.
@@ -531,8 +531,8 @@ Trzy ograniczenia tego wyjątku, wszystkie zapisane w dokumentacji:
 |---|---|---|---|
 | „Scal wyniki" (`merge`) w panelu Subagent Network | nie wszystkie podzadania zakończone | A | wykonanie częściowe z ostrzeżeniem albo komunikat kontekstowy (MTAI 12.6) |
 | „Zapisz eksperta" w Agent Builder | pole nazwy puste | A | ostrzeżenie: zapis pod nazwą roboczą; walidacja formy **nigdy nie blokuje zapisu** (Agents 4.1, 4.2) |
-| „Wyślij ponownie" w oknie rejestracji | trwa odliczanie | B | odliczanie informacyjne obok przycisku (KANON 8) |
-| „Pomiń" w oknie logowania | faza wdrożenia | — | przycisk obecny i klikalny w obu fazach (KANON 8) |
+| „Wyślij ponownie" w oknie rejestracji | trwa odliczanie | B | odliczanie informacyjne obok przycisku (kontrakt systemu projektowego) |
+| „Pomiń" w oknie logowania | faza wdrożenia | — | przycisk obecny i klikalny w obu fazach (kontrakt systemu projektowego) |
 
 ---
 
@@ -648,7 +648,7 @@ Dwie pozycje zasługują na podkreślenie, bo odróżniają ten system od domyś
 ### 8.1. Reguła
 
 > Zasada jednego akcentu (**sygnał ≤ 5 % ekranu**, nigdy tła sekcji).
-> — `HANDOFF.md` rozdz. 4, „Czego nie wolno zmienić po cichu"
+> — opracowanie o przekazaniu, ruchu i dostępności, „Czego nie wolno zmienić po cichu"
 
 Reguła zapisana jest w tym samym akapicie co wartości żetonów i geometria znaku —
 w kategorii zmian, których nie wolno wprowadzić bez decyzji projektowej. To nie jest
@@ -676,10 +676,10 @@ Kompozycja odniesienia (typowy kokpit z jedną pracą w tle):
 
 | Odruch | Koszt | Dlaczego zakazany |
 |---|---|---|
-| Sygnał jako tło sekcji | dziesiątki tysięcy px² | jedno użycie zjada cały budżet; KANON 2: gradient/sygnał nigdy tłem sekcji |
-| Sygnał jako barwa przycisku głównego | 3 840 px² × liczba przycisków | działanie główne to **inwersja atramentu**, nie sygnał (KIERUNEK 3.1) |
+| Sygnał jako tło sekcji | dziesiątki tysięcy px² | jedno użycie zjada cały budżet; kontrakt systemu projektowego: gradient/sygnał nigdy tłem sekcji |
+| Sygnał jako barwa przycisku głównego | 3 840 px² × liczba przycisków | działanie główne to **inwersja atramentu**, nie sygnał (kierunek systemu projektowego) |
 | Barwne tło całego toastu | ≈ 12 000 px² na powiadomienie | toast barwi wstęgę 2 px i ikonę, nie powierzchnię |
-| Dziewięć barw dla dziewięciu nadawców | cała powierzchnia okna komunikacji | anty-domyślne KANON 1 |
+| Dziewięć barw dla dziewięciu nadawców | cała powierzchnia okna komunikacji | anty-domyślne kontrakt systemu projektowego |
 
 Zdanie, które podsumowuje regułę: **czerń działa, sygnał wskazuje.**
 Przycisk główny jest czarny na jasnym motywie i biały na ciemnym — monochromatyczna
@@ -702,21 +702,21 @@ i wartość procentowa krojem mono. Ta sama reguła co w całej planszy.
 
 | # | Decyzja | Uzasadnienie | Umocowanie |
 |---|---|---|---|
-| 1 | Kontrasty liczone **na żywo w JS**, nie odczytywane z `kontrasty.json` | plansza ma dowodzić, nie cytować; pomiar z faktycznie wyrenderowanych żetonów wyklucza rozejście się dokumentu z kodem | KANON 9 („każda para **zmierzona**") |
-| 2 | Pomiar obu motywów jednocześnie przez chwilowe przełączenie `data-theme` | oba motywy są równoprawne, więc tabela musi pokazywać oba naraz; przełączenie nie zapisuje preferencji, bo omija `wspolne.js` | KANON 2, 11 |
-| 3 | Próbki barwne obu motywów malowane **wartościami zmierzonymi**, wpisywanymi z JS | pozwala zestawić motyw jasny i ciemny obok siebie na jednej stronie; zero wartości szesnastkowych w `<style>` | KANON 14 |
-| 4 | Obrysy stanów mierzone, lecz **bez werdyktu zaliczenia** | obrys jest nośnikiem pomocniczym — stan niesie tekst i ikona; wystawienie progu 4,5 dla obrysu byłoby fałszywym niepowodzeniem | KANON 9 · `kontrasty.json` (próg obrysu 1,6) |
-| 5 | Kropka w emblematach pokazana w dwóch wariantach: wiernym (`currentColor`) i z wyróżnieniem | pliki emblematów rysują kropkę w `currentColor`; wyróżnienie służy **wyłącznie dydaktyce planszy** i jest jawnie oznaczone jako podgląd | KANON 3 · pliki `marka/srodowiska/*.svg` |
-| 6 | Symulacja `prefers-reduced-motion` jako przełącznik planszy | ustawienie systemowe nie da się przełączyć ze strony; bez symulacji nie da się zestawić tętna i pierścienia statycznego obok siebie | KANON 9, 11 |
-| 7 | Symulacja widzenia monochromatycznego filtrem `grayscale(1)` | jedyny sposób pokazania skutku zasady „stan nigdy samym kolorem" bez opisywania go słowami | KANON 9 |
-| 8 | Kontrprzykład wyszarzonej kontrolki zbudowany **bez atrybutu wyłączającego** | plansza pokazuje wygląd zakazanego wzorca, sama go nie stosuje; kontrolka pozostaje klikalna i po kliknięciu wyjaśnia, dlaczego ten wzorzec jest zakazany | KANON 8, 14 |
-| 9 | Komunikat blokowy jako wzorzec lokalny z propozycją nazwy `.dn-komunikat` | dokumentacja przewiduje komunikat kontekstowy, katalog `.dn-*` nie ma dla niego klasy; luka odnotowana zamiast przemilczana | KANON 5, 10 pkt 5 |
-| 10 | Katalog modeli rozszerzony z 15 do 19 pozycji | cztery dołożone modele mają identyczne umocowanie dokumentacyjne; pominięcie ich dałoby obraz niepełny | KANON 10 pkt 5 |
-| 11 | „Stan sesji modułu" rozbity na Studio i Developer | dokumentacja opisuje dwa różne modele o różnej liczbie stanów; scalenie ich wymagałoby uśrednienia, czyli wymyślenia | KANON 10 pkt 2 |
-| 12 | Mapowanie stanów na rodziny barwne oznaczone jako decyzja planszy | dokumentacja przypisuje barwy wprost tylko dla MultitaskingAI; reszta jest rozstrzygnięciem projektowym i musi być tak nazwana | KANON 10 pkt 5 |
+| 1 | Kontrasty liczone **na żywo w JS**, nie odczytywane z `kontrasty.json` | plansza ma dowodzić, nie cytować; pomiar z faktycznie wyrenderowanych żetonów wyklucza rozejście się dokumentu z kodem | kontrakt systemu projektowego („każda para **zmierzona**") |
+| 2 | Pomiar obu motywów jednocześnie przez chwilowe przełączenie `data-theme` | oba motywy są równoprawne, więc tabela musi pokazywać oba naraz; przełączenie nie zapisuje preferencji, bo omija `wspolne.js` | kontrakt systemu projektowego 11 |
+| 3 | Próbki barwne obu motywów malowane **wartościami zmierzonymi**, wpisywanymi z JS | pozwala zestawić motyw jasny i ciemny obok siebie na jednej stronie; zero wartości szesnastkowych w `<style>` | kontrakt systemu projektowego |
+| 4 | Obrysy stanów mierzone, lecz **bez werdyktu zaliczenia** | obrys jest nośnikiem pomocniczym — stan niesie tekst i ikona; wystawienie progu 4,5 dla obrysu byłoby fałszywym niepowodzeniem | kontrakt systemu projektowego · `kontrasty.json` (próg obrysu 1,6) |
+| 5 | Kropka w emblematach pokazana w dwóch wariantach: wiernym (`currentColor`) i z wyróżnieniem | pliki emblematów rysują kropkę w `currentColor`; wyróżnienie służy **wyłącznie dydaktyce planszy** i jest jawnie oznaczone jako podgląd | kontrakt systemu projektowego · pliki `marka/srodowiska/*.svg` |
+| 6 | Symulacja `prefers-reduced-motion` jako przełącznik planszy | ustawienie systemowe nie da się przełączyć ze strony; bez symulacji nie da się zestawić tętna i pierścienia statycznego obok siebie | kontrakt systemu projektowego 11 |
+| 7 | Symulacja widzenia monochromatycznego filtrem `grayscale(1)` | jedyny sposób pokazania skutku zasady „stan nigdy samym kolorem" bez opisywania go słowami | kontrakt systemu projektowego |
+| 8 | Kontrprzykład wyszarzonej kontrolki zbudowany **bez atrybutu wyłączającego** | plansza pokazuje wygląd zakazanego wzorca, sama go nie stosuje; kontrolka pozostaje klikalna i po kliknięciu wyjaśnia, dlaczego ten wzorzec jest zakazany | kontrakt systemu projektowego 14 |
+| 9 | Komunikat blokowy jako wzorzec lokalny z propozycją nazwy `.dn-komunikat` | dokumentacja przewiduje komunikat kontekstowy, katalog `.dn-*` nie ma dla niego klasy; luka odnotowana zamiast przemilczana | kontrakt systemu projektowego 10 pkt 5 |
+| 10 | Katalog modeli rozszerzony z 15 do 19 pozycji | cztery dołożone modele mają identyczne umocowanie dokumentacyjne; pominięcie ich dałoby obraz niepełny | kontrakt systemu projektowego pkt 5 |
+| 11 | „Stan sesji modułu" rozbity na Studio i Developer | dokumentacja opisuje dwa różne modele o różnej liczbie stanów; scalenie ich wymagałoby uśrednienia, czyli wymyślenia | kontrakt systemu projektowego pkt 2 |
+| 12 | Mapowanie stanów na rodziny barwne oznaczone jako decyzja planszy | dokumentacja przypisuje barwy wprost tylko dla MultitaskingAI; reszta jest rozstrzygnięciem projektowym i musi być tak nazwana | kontrakt systemu projektowego pkt 5 |
 | 13 | Kalkulator budżetu akcentu na ekranie odniesienia 1280 × 800 | punkt łamania `w3` jest zdefiniowany jako „biurko — pełny kokpit"; procent bez powierzchni odniesienia byłby liczbą bez znaczenia | `zetony.css` rozdz. 7 |
-| 14 | Dane przykładowe wyłącznie z domeny produktu, jawnie oznaczone | zakaz Lorem ipsum, zmyślonych nazwisk i metryk; identyfikatory zadań i nazwy sesji budowane z realnych nazw okien i modułów | KANON 10 pkt 3, 4 |
-| 15 | Wszystkie ikony wklejone inline z realnych plików `zasoby/ikony/svg/` | `currentColor` wymaga inline; jednocześnie gwarantuje zgodność z zestawem (obrys 1,75, siatka 24×24) | KANON 4, 11 pkt 9 |
+| 14 | Dane przykładowe wyłącznie z domeny produktu, jawnie oznaczone | zakaz Lorem ipsum, zmyślonych nazwisk i metryk; identyfikatory zadań i nazwy sesji budowane z realnych nazw okien i modułów | kontrakt systemu projektowego pkt 3, 4 |
+| 15 | Wszystkie ikony wklejone inline z realnych plików `zasoby/ikony/svg/` | `currentColor` wymaga inline; jednocześnie gwarantuje zgodność z zestawem (obrys 1,75, siatka 24×24) | kontrakt systemu projektowego 11 pkt 9 |
 
 ---
 
@@ -726,16 +726,16 @@ i wartość procentowa krojem mono. Ta sama reguła co w całej planszy.
 
 | Zakres | Plik | Rozdział |
 |---|---|---|
-| Żetony, rodziny stanów, wymiary, ruch | `WYNIK/KANON.md` | 2 |
-| Znak marki, kropka sygnału, pięć miejsc | `WYNIK/KANON.md` | 3 |
-| Ikony — zestaw i zasady | `WYNIK/KANON.md` | 4 |
-| Katalog komponentów `.dn-*` | `WYNIK/KANON.md` | 5 |
-| Zero blokad (ADL-017) | `WYNIK/KANON.md` | 8 |
-| Dostępność — warunek wejściowy | `WYNIK/KANON.md` | 9 |
-| Standard techniczny prototypów | `WYNIK/KANON.md` | 11 |
-| Barwa: monochrom + jeden sygnał | `design/opracowania/design/01-kierunek/KIERUNEK.md` | 3.1 |
-| Element sygnaturowy: kropka sygnału | `design/opracowania/design/01-kierunek/KIERUNEK.md` | 3.4 |
-| Budżet akcentu ≤ 5 % | `design/opracowania/design/HANDOFF.md` | 4 |
+| Żetony, rodziny stanów, wymiary, ruch | kontrakt systemu projektowego | 2 |
+| Znak marki, kropka sygnału, pięć miejsc | kontrakt systemu projektowego | 3 |
+| Ikony — zestaw i zasady | kontrakt systemu projektowego | 4 |
+| Katalog komponentów `.dn-*` | kontrakt systemu projektowego | 5 |
+| Zero blokad | kontrakt systemu projektowego | 8 |
+| Dostępność — warunek wejściowy | kontrakt systemu projektowego | 9 |
+| Standard techniczny prototypów | kontrakt systemu projektowego | 11 |
+| Barwa: monochrom + jeden sygnał | kierunek systemu projektowego | 3.1 |
+| Element sygnaturowy: kropka sygnału | kierunek systemu projektowego | 3.4 |
+| Budżet akcentu ≤ 5 % | `design/opracowania/opracowanie o przekazaniu, ruchu i dostępności | 4 |
 
 ### 10.2. Pliki systemu wizualnego
 
@@ -754,34 +754,34 @@ i wartość procentowa krojem mono. Ta sama reguła co w całej planszy.
 
 | Model | Plik | Rozdział |
 |---|---|---|
-| Stan sesji modułu (Studio) | `dok/projekt-ui/moduly/studio.md` | 5.1 |
-| Stan sesji modułu (Developer) | `dok/projekt-ui/moduly/developer.md` | 5.1 |
-| Stan zlecenia głosowego | `dok/projekt-ui/moduly/assistant.md` | 5.1 |
-| Stan segmentu tłumaczenia | `dok/projekt-ui/moduly/translate.md` | 5.1 |
-| Stan badania | `dok/projekt-ui/moduly/research.md` | 5.1 |
-| Stan rekomendacji | `dok/projekt-ui/moduly/diagnostics.md` | 5.1 |
-| Stan repozytorium | `dok/projekt-ui/moduly/library.md` | 5.1 |
-| Stan procesu (Terminal) | `dok/projekt-ui/moduly/terminal.md` | 5.1 |
-| Stan sesji przeglądania | `dok/projekt-ui/moduly/browser.md` | 5.1 |
-| Stan sesji Roundtable | `dok/projekt-ui/moduly/roundtable.md` | 5.1 |
-| Stan zasobu wizualnego | `dok/projekt-ui/moduly/design.md` | 6.2 |
-| Stan produktu | `dok/projekt-ui/moduly/apps.md` | 6.2 |
-| Stan automatyki | `dok/projekt-ui/moduly/automations.md` | 6.2 |
-| Stan projektu | `dok/projekt-ui/moduly/workspace.md` | 6.2 |
-| Stan eksperta · stany interfejsu | `dok/projekt-ui/okna/agents.md` | 4.1, 4.2 |
-| Stan przebiegu procesu · roli · zadania · AOD · konwencja | `dok/projekt-ui/srodowiska/multitaskingai.md` | 12.1–12.6 |
-| Jedenaście akcji silnika kolejek | `dok/projekt-ui/srodowiska/multitaskingai.md` | 4.2 |
-| Cykl życia zadania w kolejce | `dok/projekt-ui/srodowiska/multitaskingai.md` | 4.3 |
-| Wskaźnik stanu na karcie sesji | `dok/projekt-ui/przeplyw/elementy-okien.md` | katalog elementów |
+| Stan sesji modułu (Studio) | `docs/moduly/studio.md` | 5.1 |
+| Stan sesji modułu (Developer) | `docs/moduly/developer.md` | 5.1 |
+| Stan zlecenia głosowego | `docs/moduly/assistant.md` | 5.1 |
+| Stan segmentu tłumaczenia | `docs/moduly/translate.md` | 5.1 |
+| Stan badania | `docs/moduly/research.md` | 5.1 |
+| Stan rekomendacji | `docs/moduly/diagnostics.md` | 5.1 |
+| Stan repozytorium | `docs/moduly/library.md` | 5.1 |
+| Stan procesu (Terminal) | `docs/moduly/terminal.md` | 5.1 |
+| Stan sesji przeglądania | `docs/moduly/browser.md` | 5.1 |
+| Stan sesji Roundtable | `docs/moduly/roundtable.md` | 5.1 |
+| Stan zasobu wizualnego | `docs/moduly/design.md` | 6.2 |
+| Stan produktu | `docs/moduly/apps.md` | 6.2 |
+| Stan automatyki | `docs/moduly/automations.md` | 6.2 |
+| Stan projektu | `docs/moduly/workspace.md` | 6.2 |
+| Stan eksperta · stany interfejsu | `docs/moduly/agents.md` | 4.1, 4.2 |
+| Stan przebiegu procesu · roli · zadania · AOD · konwencja | `docs/srodowiska/multitaskingai.md` | 12.1–12.6 |
+| Jedenaście akcji silnika kolejek | `docs/srodowiska/multitaskingai.md` | 4.2 |
+| Cykl życia zadania w kolejce | `docs/srodowiska/multitaskingai.md` | 4.3 |
+| Wskaźnik stanu na karcie sesji | `docs/interfejs-uzytkownika/elementy-okien.md` | katalog elementów |
 
 ### 10.4. Plansze siostrzane
 
 | Plansza | Plik | Zakres |
 |---|---|---|
-| P1 | `04-portfolio/01-tozsamosc-srodowisk.html` | cztery środowiska, emblematy, powłoki |
-| P2 | `04-portfolio/02-tozsamosc-modulow.html` | piętnaście modułów, okna operacyjne |
-| P3 | `04-portfolio/03-role-i-orkiestracja.md` | role MultitaskingAI, silnik kolejek |
-| **P4** | **`04-portfolio/04-sygnalizacja-i-stany.html`** | **ta plansza** |
+| 1 | `04-portfolio/01-tozsamosc-srodowisk.html` | cztery środowiska, emblematy, powłoki |
+| 2 | `04-portfolio/02-tozsamosc-modulow.html` | piętnaście modułów, okna operacyjne |
+| 3 | `04-portfolio/03-role-i-orkiestracja.md` | role MultitaskingAI, silnik kolejek |
+| **4** | **`04-portfolio/04-sygnalizacja-i-stany.html`** | **ta plansza** |
 
 ---
 

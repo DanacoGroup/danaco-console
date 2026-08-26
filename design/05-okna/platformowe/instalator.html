@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danaco Console — Instalator</title>
+<link rel="icon" href="../../zasoby/marka/favicon/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../zasoby/zetony/fonty.css">
+<link rel="stylesheet" href="../../zasoby/zetony/zetony.css">
+<link rel="stylesheet" href="../../zasoby/css/fundament.css">
+<link rel="stylesheet" href="../../zasoby/css/komponenty.css">
+<link rel="stylesheet" href="../../zasoby/prototyp.css">
+<link rel="stylesheet" href="../../zasoby/wejscie.css">
+</head>
+
+<body class="pt-pelny-ekran"
+      data-prototyp="OKNA WEJŚCIOWE · INSTALATOR"
+      data-prototyp-okno="Instalator Danaco Console — sześć kroków, wariant szybki i pełny">
+
+<div class="pt-powloka pt-powloka--jednolita">
+<section class="pt-okno pt-okno--plaskie" aria-label="Instalator Danaco Console">
+  <header class="pt-okno-naglowek">
+    <h1 class="pt-okno-tytul">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+      Instalator
+    </h1>
+    <span class="pt-mono">przed pierwszym uruchomieniem · sześć kroków</span>
+  </header>
+
+  <div class="pt-okno-tresc">
+    <div class="we-scena">
+      <div class="in-okno" data-otwarcie="gra">
+
+        <!-- ══ BELKA OKNA SYSTEMOWEGO ═════════════════════════════════════ -->
+        <div class="we-belka">
+          <img class="we-belka-znak" src="../../zasoby/marka/logo/sygnet-na-ciemnym.svg" alt="" aria-hidden="true" width="96" height="96">
+          <p class="we-belka-tytul">Danaco Console — instalator</p>
+          <span class="we-belka-uchwyt" aria-hidden="true"></span>
+          <button class="we-belka-zamknij" type="button" aria-label="Zamknij instalator" data-zamknij>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+
+        <!-- ══ OTWARCIE OKNA ══════════════════════════════════════════════ -->
+        <!-- Grafika przestrzenna sygnetu na całej powierzchni okna. Gra raz,
+             przy otwarciu dokumentu, i ustępuje miejsca kreatorowi. Ozdoba:
+             całą treść niesie powitanie, które po niej wchodzi, więc obraz
+             nie wchodzi do drzewa dostępności i nie ma w nim niczego do
+             dosięgnięcia.
+
+             Źródła obrazu nie ma w znaczniku: rozstrzyga je skrypt (§8), bo
+             zależy od motywu czynnego, a przy ograniczonym ruchu nie wolno
+             wczytać animacji, której się nie odtworzy. -->
+        <div class="in-otwarcie" aria-hidden="true" data-otwarcie-warstwa>
+          <img class="in-otwarcie-znak" alt="" width="520" height="520" data-otwarcie-obraz>
+        </div>
+
+        <div class="in-korpus">
+
+          <!-- ══ KOLUMNA TOŻSAMOŚCI ═══════════════════════════════════════ -->
+          <div class="we-marka">
+            <div>
+              <svg class="we-marka-godlo" viewBox="0 0 96 96" role="img" aria-label="Danaco Console"><path fill="currentColor" d="M12 26 H24 L44 48 L24 70 H12 L32 48 Z"/><path fill="currentColor" d="M40 26 H52 L72 48 L52 70 H40 L60 48 Z"/><circle class="kropka" cx="83" cy="63.5" r="6.5"/></svg>
+              <p class="we-marka-nazwa">Danaco Console</p>
+              <p class="we-marka-motto">AI Operating Environment</p>
+            </div>
+
+            <ol class="in-kroki" aria-label="Kroki instalacji">
+              <li class="in-krok" data-krok="1" data-stan="biezacy"><span class="in-krok-numer" aria-hidden="true">1</span>Powitanie</li>
+              <li class="in-krok" data-krok="2" data-stan="oczekuje"><span class="in-krok-numer" aria-hidden="true">2</span>Warunki licencji</li>
+              <li class="in-krok" data-krok="3" data-stan="oczekuje"><span class="in-krok-numer" aria-hidden="true">3</span>Wariant instalacji</li>
+              <li class="in-krok" data-krok="4" data-stan="oczekuje"><span class="in-krok-numer" aria-hidden="true">4</span>Katalog instalacji i skróty</li>
+              <li class="in-krok" data-krok="5" data-stan="oczekuje"><span class="in-krok-numer" aria-hidden="true">5</span>Postęp</li>
+              <li class="in-krok" data-krok="6" data-stan="oczekuje"><span class="in-krok-numer" aria-hidden="true">6</span>Zakończenie</li>
+            </ol>
+
+            <p class="we-marka-stopka">
+              Danaco Holding Group Sp. z o.o.<br>
+              wydanie 2.0
+            </p>
+          </div>
+
+          <!-- ══ KOLUMNA TREŚCI KROKU ═════════════════════════════════════ -->
+          <div class="in-tresc">
+
+            <!-- KROK 1 · POWITANIE -->
+            <section class="in-ekran" data-ekran="1" data-widoczny="tak" aria-label="Powitanie">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Instalator Danaco Console</h2>
+                <p class="in-wydanie">Wydanie 2.0 · Danaco Holding Group Sp. z o.o.</p>
+              </div>
+
+              <div class="in-powitanie">
+                <p>Kreator przeprowadzi Cię przez instalację Danaco Console na tym urządzeniu.</p>
+                <p>W trakcie tego procesu wybierzesz rodzaj instalacji oraz ścieżkę katalogu docelowego. Czas instalacji zależny jest od wybranego wariantu.</p>
+                <p>Zapoznaj się z <a class="au-link" href="instrukcja-uzytkowania.html">Instrukcja konfiguracji</a></p>
+              </div>
+            </section>
+
+            <!-- KROK 2 · WARUNKI LICENCJI -->
+            <section class="in-ekran" data-ekran="2" aria-label="Warunki licencji">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Warunki korzystania z Danaco Console</h2>
+              </div>
+
+              <div class="in-przewijane" data-przewijane>
+                <div class="in-licencja" tabindex="0" data-przewijana>
+                  <p>Poniższy tekst stanowi skrót istotnych postanowień. Wiążąca jest pełna treść Umowy Licencyjnej Użytkownika Końcowego, dostępnej pod linkiem na dole tego okna. W razie rozbieżności rozstrzyga treść pełnego dokumentu.</p>
+                  <p>Danaco Holding Group Sp. z o.o. udziela Operatorowi niewyłącznej i nieprzenoszalnej licencji na korzystanie z Danaco Console, w tym samym zakresie niezależnie od wybranego wariantu instalacji. Licencja obejmuje dowolną liczbę urządzeń wykorzystywanych do własnej pracy Operatora. Wyłączone pozostają odsprzedaż, dalsze udostępnianie osobom trzecim oraz wprowadzanie oprogramowania do obrotu jako produktu własnego.</p>
+                  <p>Przez pracę Operatora rozumie się projekty, sesje, automatyzacje, agentów, kod oraz korespondencję utworzone lub przetwarzane w aplikacji. Danaco Holding Group nie udostępnia pracy Operatora podmiotom trzecim ani nie wykorzystuje jej do celów własnych, a przetwarzanie po stronie serwera obejmuje wyłącznie zakres niezbędny do wykonania czynności zleconych przez Operatora. Szczegółowe zasady określa Polityka Prywatności.</p>
+                  <p>Oprogramowanie jest udostępniane w stanie, w jakim się znajduje, bez gwarancji przydatności do określonego celu. Odpowiedzialność Danaco Holding Group ogranicza się do wysokości opłaty licencyjnej wniesionej za bieżący okres rozliczeniowy, w zakresie dopuszczalnym przez obowiązujące prawo.</p>
+                  <p>Warunki obowiązują przez okres ważności licencji. Naruszenie postanowień dotyczących zakresu korzystania powoduje jej wygaśnięcie.</p>
+                </div>
+                <span class="in-przewijane-szyna" aria-hidden="true"><span class="in-przewijane-suwak" data-suwak></span></span>
+              </div>
+
+              <p class="in-odsylacze"><a class="au-link" href="#">Pełna treść licencji</a> <span class="we-lacznik">·</span> <a class="au-link" href="#">Polityka Prywatności</a> <span class="we-lacznik">·</span> <a class="au-link" href="instrukcja-uzytkowania.html">Instrukcja użytkowania i konfiguracji</a></p>
+
+              <label class="in-wybor">
+                <input class="dn-check" type="checkbox" data-zgoda aria-describedby="in-blad-zgody">
+                <span>Zapoznałem się z warunkami i akceptuję Umowę Licencyjną Użytkownika Końcowego.</span>
+              </label>
+
+              <div class="we-alarm we-alarm--blad" role="alert" id="in-blad-zgody" data-blad-zgody hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <span><b>Warunki licencji nie zostały zaakceptowane</b>Zaznacz akceptację warunków, aby przejść do wyboru wariantu instalacji.</span>
+              </div>
+            </section>
+
+            <!-- KROK 3 · WARIANT INSTALACJI -->
+            <section class="in-ekran" data-ekran="3" aria-label="Wariant instalacji">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Wariant instalacji</h2>
+              </div>
+
+              <p class="we-lid" id="in-zdanie-wariantu">Wybierz rodzaj instalacji, którą chcesz wykonać, poniżej:</p>
+
+              <div class="in-warianty" role="radiogroup" aria-labelledby="in-zdanie-wariantu">
+                <label class="in-wariant">
+                  <input class="dn-check dn-radio" type="radio" name="wariant" value="szybka" checked data-wariant>
+                  <span>
+                    <span class="in-wariant-nazwa">Szybka (zalecana)</span>
+                    <span class="in-wariant-opis">Na urządzeniu instalowany jest wyłącznie klient. Biblioteki i narzędzia pozostają na serwerze Danaco Console.</span>
+                    <span class="in-wariant-opis">Praca jest dostępna z dowolnego urządzenia oraz z aplikacji mobilnej. Wymaga stałego połączenia z serwerem.</span>
+                    <span class="in-wariant-miara">Instalacja: ~80 MB, około 30 sekund.</span>
+                  </span>
+                </label>
+
+                <label class="in-wariant">
+                  <input class="dn-check dn-radio" type="radio" name="wariant" value="pelna" data-wariant>
+                  <span>
+                    <span class="in-wariant-nazwa">Pełna</span>
+                    <span class="in-wariant-opis">Na urządzeniu instalowany jest komplet bibliotek i narzędzi. Aplikacja działa bez połączenia z serwerem Danaco Console, nadal wymaga jednak dostępu do internetu.</span>
+                    <span class="in-wariant-opis">Praca pozostaje na tym urządzeniu — bez dostępu z innych urządzeń i z aplikacji mobilnej.</span>
+                    <span class="in-wariant-miara">Instalacja: ~450 MB, około 4 minuty.</span>
+                  </span>
+                </label>
+              </div>
+            </section>
+
+            <!-- KROK 4 · KATALOG INSTALACJI I SKRÓTY -->
+            <section class="in-ekran" data-ekran="4" aria-label="Katalog instalacji i skróty">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Katalog instalacji i skróty</h2>
+              </div>
+
+              <div class="in-pola">
+                <div class="in-pole">
+                  <span class="in-pole-etykieta" id="in-etykieta-program">Katalog programu</span>
+                  <span class="in-sciezka">
+                    <code data-sciezka-programu>C:\Users\Operator\AppData\Local\Programs\Danaco Console</code>
+                    <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" aria-describedby="in-etykieta-program">Zmień</button>
+                  </span>
+                </div>
+              </div>
+
+              <div class="in-wybory">
+                <label class="in-wybor">
+                  <input class="dn-check" type="checkbox" data-wszystkie-konta>
+                  <span>Katalog programu dostępny dla wszystkich kont systemu
+                    <span class="in-wybor-opis">Zaznaczenie przenosi program do katalogu wspólnego i wymaga uprawnień administratora.</span></span>
+                </label>
+              </div>
+
+              <div class="in-grupa">
+                <p class="in-etykieta">Skróty i integracja</p>
+                <div class="in-wybory">
+                  <label class="in-wybor">
+                    <input class="dn-check" type="checkbox" checked data-skroty>
+                    <span>Skróty programu
+                      <span class="in-wybor-opis">Pozycja na pulpicie i w menu Start.</span></span>
+                  </label>
+                  <label class="in-wybor">
+                    <input class="dn-check" type="checkbox" data-menu-systemu>
+                    <span>Pozycja w menu systemu
+                      <span class="in-wybor-opis">Danaco Console w menu podręcznym plików i folderów.</span></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="in-suma">
+                <span>Wymagane miejsce <b data-suma>~80 MB</b></span>
+                <span class="in-suma-wolne">wolne na dysku C: 148,6 GB</span>
+              </div>
+            </section>
+
+            <!-- KROK 5 · POSTĘP -->
+            <section class="in-ekran" data-ekran="5" aria-label="Postęp">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Postęp</h2>
+              </div>
+
+              <div class="in-przebieg">
+                <div class="in-bryla-pole" role="img"
+                     aria-label="Etapy instalacji osiadające na urządzeniu — obraz postępu">
+                  <div class="in-bryla" data-bryla>
+                    <div class="in-plyta in-plyta--podstawa" data-plyta="0">
+                      <span class="in-plyta-siatka" aria-hidden="true"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="in-prawa">
+                  <div class="in-postep">
+                    <p class="in-postep-wiersz" aria-live="polite">
+                      <span data-czynnosc>Rozpakowanie pakietu</span>
+                      <span class="in-postep-stan" data-procent>0%</span>
+                    </p>
+                    <div class="in-postep-tor" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Postęp instalacji" data-tor><span></span></div>
+                  </div>
+                  <ol class="in-fazy" data-fazy aria-label="Przebieg instalacji"></ol>
+                </div>
+              </div>
+            </section>
+
+            <!-- KROK 6 · ZAKOŃCZENIE -->
+            <section class="in-ekran" data-ekran="6" aria-label="Zakończenie">
+              <div class="we-glowa">
+                <h2 class="we-tytul">Zakończenie</h2>
+              </div>
+
+              <div class="in-zakonczenie">
+                <div class="in-bryla-pole in-bryla-pole--lekka" role="img"
+                     aria-label="Etapy instalacji osiadłe na urządzeniu — instalacja zakończona">
+                  <div class="in-bryla" data-bryla-lekka>
+                    <div class="in-plyta in-plyta--podstawa" data-plyta="0">
+                      <span class="in-plyta-siatka" aria-hidden="true"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="in-wynik">
+                  <p class="in-wynik-zdanie" data-wynik>Danaco Console jest zainstalowana na tym urządzeniu. Biblioteki i narzędzia pozostają na serwerze Danaco Console.</p>
+                  <p class="we-lid">Konto Operatora i zakres modeli wybiera się przy pierwszym uruchomieniu.</p>
+                  <label class="in-wybor">
+                    <input class="dn-check" type="checkbox" checked>
+                    <span>Uruchom Danaco Console</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <!-- ══ PAS DZIAŁAŃ ══════════════════════════════════════════ -->
+            <div class="in-dzialania">
+              <span class="in-podsumowanie" data-podsumowanie></span>
+              <span class="in-dzialania-odstep" aria-hidden="true"></span>
+              <button class="dn-btn dn-btn--zarys" type="button" data-krok-wstecz>Anuluj</button>
+              <button class="dn-btn dn-btn--atrament" type="button" data-krok-dalej>Dalej</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script src="../../zasoby/wspolne.js"></script>
+<script src="../../zasoby/prototyp.js"></script>
+<script src="../../zasoby/okna/instalator.js"></script>
+</body>
+</html>

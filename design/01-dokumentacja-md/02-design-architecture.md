@@ -11,7 +11,7 @@
 | **Data** | 2026-08-14 (pakiet źródłowy: 2026-08-11) |
 | **Odbiorcy** | Deweloper wdrażający warstwę wizualną do `budowa/client`, projektant systemu, osoba prowadząca odbiór wizualny, autor kolejnych opracowań pakietu |
 | **Zakres** | Model warstwowy żetonów, architektura plików pakietu i katalogu docelowego, regulamin budowy arkuszy, mechanizm motywu i gęstości, skala warstw `z-index`, siatka i punkty łamania, kompozycja powłoki i okna operacyjnego, kontrakt komponent ↔ żeton, architektura ikon, architektura ruchu, bramy weryfikacyjne fal wdrożeniowych |
-| **Czego NIE zawiera** | Wartości żetonów jako katalogu barw (opracowanie A1 — system żetonów), katalogu komponentów z pełnymi stanami (opracowanie zespołu B), księgi znaku i portfolio marki (zespół C), makiet okien operacyjnych (zespół D), specyfikacji funkcjonalnej modułów i logiki serwera |
+| **Czego NIE zawiera** | Wartości żetonów jako katalogu barw (opracowanie A1 — system żetonów), katalogu komponentów z pełnymi stanami (opracowanie zespołu marki), księgi znaku i portfolio marki (zespół C), makiet okien operacyjnych (zespół D), specyfikacji funkcjonalnej modułów i logiki serwera |
 
 ---
 
@@ -44,25 +44,25 @@ czterowarstwowy, w którym **kierunek zależności jest jednokierunkowy i nieodw
 
 ```
    ┌───────────────────────────────────────────────────────────────────────┐
-   │  W4 · WARSTWA KOMPONENTOWA          komponenty.css · 119 klas .dn-*    │
+   │  WARSTWA KOMPONENTOWA          komponenty.css · 119 klas .dn-*    │
    │      .dn-btn · .dn-pole · .dn-karta · .dn-wpis · .dn-modal …           │
-   │      wolno czytać: W2 i W3        ·  ZAKAZ czytania: W1               │
+   │      wolno czytać: semantykę i warstwę niezależną        ·  ZAKAZ czytania: prymitywów               │
    └───────────────────────────────▲───────────────────────────────────────┘
                                    │  var(--dn-tlo), var(--dn-od-3), var(--dn-z-modal)
    ┌───────────────────────────────┴────────────┬──────────────────────────┐
-   │  W2 · SEMANTYKA PER MOTYW                  │  W3 · NIEZALEŻNE OD       │
+   │  SEMANTYKA PER MOTYW                  │  NIEZALEŻNE OD       │
    │      :root[data-theme='light']             │       MOTYWU              │
    │      :root[data-theme='dark']              │  typografia · przestrzeń  │
    │      @media (prefers-color-scheme)         │  ruch · wymiary · siatka  │
    │      role: tło, powierzchnia, tekst,       │  warstwy · gradienty      │
    │      obrys, sygnał, stany, cienie          │  rama kokpitu            │
-   │      wolno czytać: W1                      │  wolno czytać: W1        │
+   │      wolno czytać: prymitywy                      │  wolno czytać: prymitywy        │
    └───────────────────────────────▲────────────┴──────────────────────────┘
                                    │  var(--dn-szary-900), var(--dn-sygnal-500)
    ┌───────────────────────────────┴───────────────────────────────────────┐
-   │  W1 · PRYMITYWY                     surowe skale — 18 szarości,        │
+   │  PRYMITYWY                     surowe skale — 18 szarości,        │
    │      --dn-szary-* · --dn-sygnal-*    8 stopni sygnału, 12 stanów       │
-   │      --dn-zielen/bursztyn/czerwien-* ZAKAZ użycia poza W2/W3          │
+   │      --dn-zielen/bursztyn/czerwien-* ZAKAZ użycia poza semantyka per motyw/warstwa niezależna od motywu          │
    └───────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -70,10 +70,10 @@ czterowarstwowy, w którym **kierunek zależności jest jednokierunkowy i nieodw
 
 | Warstwa | Nazwa | Miejsce w `zetony.css` | Selektor | Co zawiera | Kto ją czyta |
 |---|---|---|---|---|---|
-| **W1** | Prymitywy | sekcja 1 (l. 18–58) | `:root` | 18 kroków szarości, 8 stopni sygnału, 12 wartości stanów | wyłącznie W2 i W3 |
-| **W2** | Semantyka per motyw | sekcje 10–11 + blok zapasowy (l. 198–401) | `:root[data-theme='light' \| 'dark']`, `@media (prefers-color-scheme)` | 26 ról semantycznych × 2 motywy, 4 rodziny stanów × 2 motywy, 5 cieni × 2 motywy | W4 |
-| **W3** | Niezależne od motywu | sekcje 2–9 oraz 12–14 (l. 60–195, 403–448) | `:root`, `@media (pointer: coarse)`, `:root[data-gestosc]`, `@media (prefers-reduced-motion)` | rama kokpitu, typografia, przestrzeń, ruch, wymiary, siatka i łamanie, warstwy, gradienty | W4 |
-| **W4** | Komponenty | `komponenty.css` (1207 linii) | klasy `.dn-*` | 119 tokenów klasowych w 18 sekcjach tematycznych | okna i prototypy |
+| **1** | Prymitywy | sekcja 1 (l. 18–58) | `:root` | 18 kroków szarości, 8 stopni sygnału, 12 wartości stanów | wyłącznie semantyka i warstwa niezależna od motywu |
+| **2** | Semantyka per motyw | sekcje 10–11 + blok zapasowy (l. 198–401) | `:root[data-theme='light' \| 'dark']`, `@media (prefers-color-scheme)` | 26 ról semantycznych × 2 motywy, 4 rodziny stanów × 2 motywy, 5 cieni × 2 motywy | warstwa komponentowa |
+| **3** | Niezależne od motywu | sekcje 2–9 oraz 12–14 (l. 60–195, 403–448) | `:root`, `@media (pointer: coarse)`, `:root[data-gestosc]`, `@media (prefers-reduced-motion)` | rama kokpitu, typografia, przestrzeń, ruch, wymiary, siatka i łamanie, warstwy, gradienty | warstwa komponentowa |
+| **4** | Komponenty | `komponenty.css` (1207 linii) | klasy `.dn-*` | 119 tokenów klasowych w 18 sekcjach tematycznych | okna i prototypy |
 
 ### 1.3. Reguła kierunku — trzy zdania wiążące
 
@@ -83,17 +83,17 @@ czterowarstwowy, w którym **kierunek zależności jest jednokierunkowy i nieodw
    sygnałowym — bo gradient jest identyczny w obu motywach i semantyka „tekst na
    gradiencie" nie ma odrębnego żetonu.
 2. **Semantyka nie wywołuje semantyki drugiego motywu.** Motyw jasny i ciemny są
-   definiowane osobno, nie wywodzone przez inwersję ani filtr (KIERUNEK.md 3.1:
+   definiowane osobno, nie wywodzone przez inwersję ani filtr (kierunek systemu projektowego:
    „Oba motywy równoprawne — definiowane osobno, nie wywodzone").
 3. **Warstwa niezależna od motywu nie zawiera barwy** — z jednym wyjątkiem:
    **rama kokpitu** (sekcja 2), która jest barwą stałą w obu motywach i dlatego
-   należy do W3, nie do W2.
+   należy do warstwy niezależnej od motywu, nie do semantyki.
 
 ### 1.4. Dlaczego rama kokpitu jest w warstwie niezależnej od motywu
 
 `--dn-rama`, `--dn-rama-tekst`, `--dn-rama-tekst-2`, `--dn-rama-hover`,
 `--dn-rama-obrys` są zdefiniowane raz, w bloku `:root`, poza obydwoma motywami.
-KIERUNEK.md 3.3: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w obu
+kierunek systemu projektowego: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w obu
 motywach. […] To jedyny element, który nie przełącza się z motywem (poza godłem)."*
 
 Konsekwencja architektoniczna: **każdy komponent osadzony na ramie musi mieć
@@ -140,7 +140,7 @@ W `komponenty.css` realizuje to `.dn-btn-ikona--na-ramie` (l. 159–165) oraz
 ```
 design/
 ├── 01-kierunek/
-│   └── KIERUNEK.md            kontrakt kierunku, trzy pokrętła, anty-domyślne
+│   └── kierunek systemu projektowego            kontrakt kierunku, trzy pokrętła, anty-domyślne
 ├── 02-marka/
 │   ├── logo/                  sygnet · logotyp · lockupy · mono · kontrowe (+png/)
 │   ├── favicon/               favicon.svg/ico/png · apple-touch · manifest · snippet
@@ -154,16 +154,20 @@ design/
 │   └── fonty/                 pliki .woff2 + licencje OFL 1.1
 ├── 04-css/
 │   ├── fundament.css          157 linii · warstwa zerowa nad żetonami
-│   └── komponenty.css         1207 linii · 119 klas .dn-* · 18 sekcji
+│   ├── komponenty.css         1264 linii · biblioteka klas .dn-*
+│   ├── rama.css               298 linii · belka tytułowa i pasek narzędzi okna
+│   ├── stanowisko.css         374 linii · układ wielookienny przestrzeni roboczej
+│   ├── przedsionek.css        309 linii · widok wejściowy środowiska
+│   └── prototyp.css           341 linii · warstwa poglądowa prototypów
 ├── 05-ikony/
 │   ├── svg/                   82 pliki SVG (siatka 24, obrys 1,75)
 │   ├── manifest.json          82 wpisy: nazwa · źródło · zastosowanie
 │   └── ikony.html             galeria przeglądowa
-├── 06-okna/                   E1 · E2+E3 · E4 · komponenty.html · wspolne.js
+├── 06-okna/                   makiety okien · komponenty.html · wspolne.js
 ├── 07-ksiega/                 ksiega-marki.html + zrzuty/
 ├── 08-grafika/                og-image · banner-linkedin · tapeta-2560 · tlo-slajdu
 ├── README.md                  przewodnik po pakiecie + rejestr zamkniętych luk
-└── HANDOFF.md                 mapowanie wdrożeniowe na budowa/client
+└── opracowanie o przekazaniu, ruchu i dostępności                 mapowanie wdrożeniowe na budowa/client
 ```
 
 ### 2.2. Zależności między katalogami pakietu
@@ -172,7 +176,9 @@ design/
   01-kierunek  ────────────────────────────────────────────────┐
       │  (kontrakt: monochrom, pokrętła, anty-domyślne)         │
       ▼                                                        ▼
-  03-zetony ──► 04-css/fundament.css ──► 04-css/komponenty.css ──► 06-okna
+  03-zetony ──► 04-css/fundament.css ──► 04-css/komponenty.css ──► 04-css/rama.css
+                                                │                  04-css/stanowisko.css
+                                                │                  04-css/przedsionek.css ──► 06-okna
       │                                        ▲                    ▲
       │                                        │                    │
       └──► 02-marka (barwy własne znaku)  05-ikony ─────────────────┘
@@ -186,7 +192,7 @@ kontraktem tekstowym. `03-zetony` jest korzeniem technicznym. `02-marka`
 i `05-ikony` są warstwami zasobowymi: ikony czytają barwę przez `currentColor`
 (czyli pośrednio z żetonów), znak marki ma barwy własne wpisane w SVG.
 
-### 2.3. Struktura docelowa w `budowa/client/src` (wg HANDOFF.md §1)
+### 2.3. Struktura docelowa w `budowa/client/src` (wg opracowania o przekazaniu, ruchu i dostępności)
 
 ```
 budowa/client/
@@ -204,7 +210,7 @@ budowa/client/
     │   ├── przestrzen.css           zetony.css §4 + cienie z §10/§11
     │   ├── ruch.css                 zetony.css §5 + §14
     │   ├── wymiary.css              zetony.css §6 + §12 + §13
-    │   ├── siatka.css               zetony.css §7        ← plik dodany (rozdz. 14, D-01)
+    │   ├── siatka.css               zetony.css §7        ← plik dodany (rozdz. 14)
     │   ├── warstwy.css              zetony.css §8
     │   ├── gradienty.css            zetony.css §9
     │   ├── semantyczne-jasny.css    zetony.css §10 + blok zapasowy „light"
@@ -248,7 +254,7 @@ budowa/client/
   index.css
     │
     ├─ 1. motyw/fonty.css          (@font-face — musi być pierwszy)
-    ├─ 2. motyw/motyw.css          (żetony: W1 → W3 → W2)
+    ├─ 2. motyw/motyw.css          (żetony: prymitywy → warstwa niezależna → semantyka)
     │      ├─ prymitywy.css
     │      ├─ rama.css
     │      ├─ typografia.css
@@ -274,13 +280,13 @@ To jedyny błąd tej architektury, którego kompilator nie zgłasza.
 
 ## 3. Regulamin budowy
 
-### 3.1. Trzy zasady wiążące (HANDOFF.md, nagłówek)
+### 3.1. Trzy zasady wiążące (opracowanie o przekazaniu, ruchu i dostępności nagłówek)
 
 | # | Zasada | Egzekwowanie |
 |---|---|---|
-| R1 | **Jedna odpowiedzialność = jeden plik** | podział per komponent; arkusz nie łączy dwóch niepowiązanych komponentów |
-| R2 | **Arkusz ≤ 300 linii** | próg twardy; przekroczenie = sygnał do dalszego podziału |
-| R3 | **Komponent sięga wyłącznie po żetony semantyczne** | przegląd kodu: wystąpienie `--dn-szary-*` / `--dn-sygnal-[0-9]` w `komponenty/` jest błędem |
+| 1 | **Jedna odpowiedzialność = jeden plik** | podział per komponent; arkusz nie łączy dwóch niepowiązanych komponentów |
+| 2 | **Arkusz ≤ 300 linii** | próg twardy; przekroczenie = sygnał do dalszego podziału |
+| 3 | **Komponent sięga wyłącznie po żetony semantyczne** | przegląd kodu: wystąpienie `--dn-szary-*` / `--dn-sygnal-[0-9]` w `komponenty/` jest błędem |
 
 ### 3.2. Podział `zetony.css` (448 linii → 13 arkuszy + arkusz spinający)
 
@@ -302,7 +308,7 @@ To jedyny błąd tej architektury, którego kompilator nie zgłasza.
 
 **Suma docelowa:** ~628 linii wobec 448 linii źródła. Przyrost ≈ 40% to nagłówki
 komentarzowe i domknięcia selektorów, które w pliku scalonym występowały raz.
-Przyrost jest kosztem świadomym i zapisanym: R1 przed zwięzłością.
+Przyrost jest kosztem świadomym i zapisanym: jedna odpowiedzialność przed zwięzłością.
 
 ### 3.3. Podział `komponenty.css` (1207 linii → 14 arkuszy + arkusz spinający)
 
@@ -324,9 +330,9 @@ Przyrost jest kosztem świadomym i zapisanym: R1 przed zwięzłością.
 | `drobne.css` | Tooltip + Awatar/Spinner/Pusty stan + Prompt + AOD | 1026–1207 | 179 | `.dn-tooltip`, `.dn-awatar`, `.dn-spinner`, `.dn-pusty-stan`, `.dn-prompt`, `.dn-przybornik`, `.dn-aod` |
 | `komponenty.css` | — (nowy) | — | ~20 | wyłącznie `@import` |
 
-**Kontrola progu R2:** największy arkusz to `drobne.css` (179 linii) — mieści się.
+**Kontrola progu 300 linii:** największy arkusz to `drobne.css` (179 linii) — mieści się.
 Drugi w kolejności `przycisk.css` (154) i `karta.css` (129) również. Żaden arkusz
-nie zbliża się do progu 300 linii, więc podział z HANDOFF.md jest wystarczający
+nie zbliża się do progu 300 linii, więc podział z opracowania o przekazaniu, ruchu i dostępności jest wystarczający
 bez dalszego rozdrabniania.
 
 ### 3.4. Reguła dalszego podziału — kiedy dzielić ponownie
@@ -356,7 +362,7 @@ Odwrócenie tej kolejności w importach cofa specyficzność i psuje `:hover`.
 | Wartość szesnastkowa wprost | żetony są jedynym źródłem prawdy | przegląd kodu; wyjątek: brak |
 | Prymitywy `--dn-szary-*` / `--dn-sygnal-[0-9]{3}` | łamie kontrakt warstw (rozdz. 1.3) | przegląd kodu; wyjątek udokumentowany: `.dn-awatar--inteligencja` |
 | `!important` | kaskada jest jednokierunkowa i wystarczająca | przegląd kodu |
-| Atrybut `disabled` | zasada zero blokad (ADL-017) | przegląd kodu + lista sprawdzeń |
+| Atrybut `disabled` | zasada zero blokad | przegląd kodu + lista sprawdzeń |
 | Zagnieżdżenie selektorów głębsze niż 2 poziomy | koszt utrzymania i nieprzewidywalna specyficzność | przegląd kodu |
 | Media query barwna wewnątrz komponentu | motyw obsługiwany wyłącznie w warstwie żetonów | przegląd kodu |
 | `@media (prefers-reduced-motion)` wewnątrz komponentu | obsługa jest globalna (zetony.css §14) | przegląd kodu |
@@ -390,7 +396,7 @@ Odwrócenie tej kolejności w importach cofa specyficzność i psuje `:hover`.
 | `data-theme="dark"` | dowolna | `:root[data-theme='dark']` | motyw ciemny | `dark` |
 | brak atrybutu | jasna | `@media (prefers-color-scheme: light) :root:not([data-theme])` | motyw jasny | `light` |
 | brak atrybutu | ciemna | `@media (prefers-color-scheme: dark) :root:not([data-theme])` | motyw ciemny | `dark` |
-| brak atrybutu | brak deklaracji systemu | żaden blok W2 nie wchodzi | **W1 i W3 działają, W2 pusta** | nieustawiony |
+| brak atrybutu | brak deklaracji systemu | żaden blok semantyki nie wchodzi | **prymitywy i warstwa niezależna działają, semantyka pusta** | nieustawiony |
 
 Ostatni wiersz jest ważny: bez atrybutu i bez preferencji systemowej role
 semantyczne pozostają nierozwinięte. Dlatego `wspolne.js` **zawsze** ustawia
@@ -405,7 +411,7 @@ bez skryptu.
 
 > *„Brak jawnego wyboru — rozstrzyga preferencja systemu. Wartości muszą być
 > identyczne z blokami motywów; powielenie jest świadome (mechanizm kaskady,
-> nie drugie źródło prawdy — patrz HANDOFF.md)."*
+> nie drugie źródło prawdy — patrz opracowanie o przekazaniu, ruchu i dostępności)."*
 
 Rozwinięcie argumentacji:
 
@@ -413,7 +419,7 @@ Rozwinięcie argumentacji:
 |---|---|
 | `:root[data-theme='light'], @media(...) :root:not([data-theme])` — wspólna lista selektorów | **Odrzucone.** Selektora spoza media query nie można połączyć przecinkiem z selektorem wewnątrz media query — to nie jest legalna składnia CSS. |
 | Warstwa pośrednia `--dn-motyw-tlo` wskazywana raz | **Odrzucone.** Wprowadza piąty poziom pośrednictwa dla całej palety; koszt czytelności większy niż koszt powielenia. |
-| Preprocesor generujący oba bloki z jednego źródła | **Odrzucone.** Pakiet ma działać z `file://` bez budowania (KANON §11.1). Preprocesor przenosi źródło prawdy poza `zetony.css`. |
+| Preprocesor generujący oba bloki z jednego źródła | **Odrzucone.** Pakiet ma działać z `file://` bez budowania (kontrakt systemu projektowego). Preprocesor przenosi źródło prawdy poza `zetony.css`. |
 | `@container style()` / `light-dark()` | **Odrzucone na dziś.** Cel produkcyjny to Tauri WebView2; oparcie mechanizmu motywu na funkcji o niepewnym wsparciu byłoby ryzykiem bez zysku. |
 | **Powielenie jawne, oznaczone komentarzem** | **Przyjęte.** Jedno źródło prawdy pozostaje w sekcjach 10–11; blok `@media` jest ich mechanicznym odbiciem. |
 
@@ -435,11 +441,11 @@ w jednym otwartym pliku, a nie rozrzucona po dwóch.
 | Tekst (3 stopnie) i obrysy (3 stopnie) | tak | rdzeń motywu |
 | Sygnał (tekst, wypełnienie, tło, obrys, kropka) | tak | inne stopnie rodziny dla różnych kontrastów |
 | Cienie (5 stopni) | tak | dwa komplety tonowane per motyw |
-| Stany (sukces, ostrzeżenie, błąd, informacja) | tak | pełny komplet obu motywów (zamknięcie luki L-P-19) |
-| **Pasek górny (rama kokpitu)** | **nie** | KIERUNEK.md 3.3 — stanowisko dowodzenia ma stały dom |
-| **Godło i emblematy środowisk** | **nie** | geometria i barwy własne znaku (HANDOFF §4) |
+| Stany (sukces, ostrzeżenie, błąd, informacja) | tak | pełny komplet obu motywów  |
+| **Pasek górny (rama kokpitu)** | **nie** | kierunek systemu projektowego — stanowisko dowodzenia ma stały dom |
+| **Godło i emblematy środowisk** | **nie** | geometria i barwy własne znaku (opracowanie o przekazaniu, ruchu i dostępności) |
 | Gradienty `--dn-grad-*` | nie | zdefiniowane raz na prymitywach, zakres ilustracyjny |
-| Typografia, przestrzeń, wymiary, ruch, warstwy | nie | warstwa W3 z definicji |
+| Typografia, przestrzeń, wymiary, ruch, warstwy | nie | warstwa warstwa niezależna od motywu z definicji |
 
 ### 4.6. Animacja przełączenia
 
@@ -502,7 +508,7 @@ przestronna nie nadpisuje `--dn-wym-check`.
 
 ### 5.4. Zasada „żeton, nie wyjątek"
 
-KIERUNEK.md 3.7 oraz README pakietu (L-P-14) rozstrzygają: cele dotykowe rosną
+Kierunek systemu projektowego rozstrzyga: cele dotykowe rosną
 **żetonem**, nie regułą per komponent. Konsekwencja: `komponenty.css` nie zawiera
 ani jednego `@media (pointer: coarse)`. Komponent, który czyta
 `var(--dn-wym-kontrolka)`, dostosowuje się bez własnego kodu.
@@ -513,10 +519,10 @@ reagować na obie osie. To jeden z powodów, dla których zakaz wartości wprost
 
 ### 5.5. Wartość domyślna i jej status
 
-Gęstość **zwarta** jest decyzją Właściciela (README, L-P-13; KIERUNEK.md
-`GESTOSC_WIZUALNA = 8/10`). HANDOFF §4 zapisuje: *„Gęstość — domyślnie zwarta;
+Gęstość **zwarta** jest decyzją Właściciela (kierunek systemu projektowego
+`GESTOSC_WIZUALNA = 8/10`). opracowanie o przekazaniu, ruchu i dostępności zapisuje: *„Gęstość — domyślnie zwarta;
 przełącznik przyszłościowo przez `data-gestosc="przestronna"` na `<html>`
-(żetony gotowe)."* HANDOFF §4 wymienia ją także wśród rzeczy, których nie wolno
+(żetony gotowe)."* opracowanie o przekazaniu, ruchu i dostępności wymienia ją także wśród rzeczy, których nie wolno
 zmienić po cichu.
 
 Wariant przestronny jest **przygotowany, nie wdrożony** — żetony istnieją,
@@ -540,7 +546,7 @@ na jego udostępnienie.
 | 7 | `--dn-z-modal` | 900 | Modal | `.dn-modal` | dokładnie jeden krok nad własną nakładką |
 | 8 | `--dn-z-powiadomienie` | 1000 | Powiadomienie | `.dn-toasty`, `.dn-toast` | komunikat o wyniku operacji musi być widoczny także przy otwartym modalu |
 | 9 | `--dn-z-tooltip` | 1100 | Dymek objaśnienia | `.dn-tooltip-tresc` | objaśnia elementy modala i toasta — musi być nad nimi |
-| 10 | `--dn-z-aod` | 1200 | Always On Display | `.dn-aod` | funkcja globalna, obecna ponad bieżącą przestrzenią roboczą (dokumentacja E12) |
+| 10 | `--dn-z-aod` | 1200 | Always On Display | `.dn-aod` | funkcja globalna, obecna ponad bieżącą przestrzenią roboczą (dokumentacja funkcji globalnej) |
 | 11 | `--dn-z-centrum-polecen` | 1300 | Centrum poleceń | Command Center (`Ctrl K`) | **zawsze najwyżej** — wywoływane z każdego stanu, także znad AOD |
 
 ### 6.2. Stos w perspektywie
@@ -604,7 +610,7 @@ paska, gdy boczna rozwija się jako panel nakładkowy.
 
 | Żeton | Wartość | Nazwa robocza | Klasa urządzenia | Rozstrzygnięcie źródłowe |
 |---|---:|---|---|---|
-| `--dn-bp-w1` | 640 px | w1 | telefon poziomo | widok mobilny (okno Mobile, E11) |
+| `--dn-bp-w1` | 640 px | w1 | telefon poziomo | widok mobilny (okno Mobile) |
 | `--dn-bp-w2` | 960 px | w2 | tablet | boczna nawigacja zwija się do ikon |
 | `--dn-bp-w3` | 1280 px | w3 | biurko | pełny kokpit |
 | `--dn-bp-w4` | 1600 px | w4 | szerokie biurko | dwa okna komunikacji |
@@ -649,7 +655,7 @@ Uzupełniająco: `--dn-tresc-max` 1200 px (maks. szerokość treści dokumentowe
 
 Punkty łamania są zapisane jako `min-width` **w kierunku rosnącym** — projekt
 zaczyna od najwęższego układu i rozwija go progami. Wyjątkiem są makiety okien
-w pakiecie (E1, E4), które używają `max-width` dla nielicznych korekt siatki
+w pakiecie (Centrum dowodzenia, para koordynator–wykonawca), które używają `max-width` dla nielicznych korekt siatki
 wewnątrz sekcji; to korekty lokalne, nie progi architektoniczne.
 
 | Zapis | Zakres | Zastosowanie |
@@ -674,11 +680,11 @@ jest funkcjonalny, nie proporcjonalny.
 
 | Kontekst | Model siatki | Podstawa |
 |---|---|---|
-| Centrum dowodzenia — Strefa 1 | 4 kolumny kart środowisk (→ 2 poniżej 1100 px) | makieta E1 |
-| Centrum dowodzenia — Strefa 2 | 4 kolumny kafli (→ 2 poniżej 1100 px) | makieta E1 |
-| Centrum dowodzenia — Strefa 3 | listwa jednorzędowa, 3 pozycje | makieta E1 |
-| Powłoka środowiska | `grid-template-columns: var(--dn-wym-boczna) 1fr` | makieta E2 |
-| Para koordynator–wykonawca | `grid-template-columns: 1fr 1fr` | makieta E4 |
+| Centrum dowodzenia — Strefa 1 | 4 kolumny kart środowisk (→ 2 poniżej 1100 px) | makieta Centrum dowodzenia |
+| Centrum dowodzenia — Strefa 2 | 4 kolumny kafli (→ 2 poniżej 1100 px) | makieta Centrum dowodzenia |
+| Centrum dowodzenia — Strefa 3 | listwa jednorzędowa, 3 pozycje | makieta Centrum dowodzenia |
+| Powłoka środowiska | `grid-template-columns: var(--dn-wym-boczna) 1fr` | makieta powłoki środowiska |
+| Para koordynator–wykonawca | `grid-template-columns: 1fr 1fr` | makieta pary koordynator–wykonawca |
 | Treść dokumentowa | jedna kolumna, `max-width: var(--dn-tresc-max)` | żeton `--dn-tresc-max` |
 
 ---
@@ -720,11 +726,11 @@ Obszar roboczy zawiera okna operacyjne modułu i Chat Window.
 
 | Poziom | Selektor roboczy | Deklaracja | Skąd |
 |---|---|---|---|
-| 1 — powłoka | `.powloka` | `display: grid; grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) 1fr; height: 100dvh` | makieta E2, E4 |
-| 2 — ciało | `.cialo` | `display: grid; grid-template-columns: var(--dn-wym-boczna) 1fr; min-height: 0` | makieta E2 |
-| 3 — obszar główny | `.glowna` | `display: grid; grid-template-rows: minmax(0, 1fr) minmax(320px, 54%); min-width: 0; min-height: 0` | makieta E2 |
+| 1 — powłoka | `.powloka` | `display: grid; grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) 1fr; height: 100dvh` | makieta powłoki środowiska, makieta pary koordynator–wykonawca |
+| 2 — ciało | `.cialo` | `display: grid; grid-template-columns: var(--dn-wym-boczna) 1fr; min-height: 0` | makieta powłoki środowiska |
+| 3 — obszar główny | `.glowna` | `display: grid; grid-template-rows: minmax(0, 1fr) minmax(320px, 54%); min-width: 0; min-height: 0` | makieta powłoki środowiska |
 
-W makiecie E4 (para koordynator–wykonawca) poziom 3 przyjmuje proporcje
+W makiecie pary koordynator–wykonawca (para koordynator–wykonawca) poziom 3 przyjmuje proporcje
 `minmax(0, 58%) minmax(0, 42%)`, a wewnątrz górnego wiersza wchodzi czwarty
 poziom: `.para { grid-template-columns: 1fr 1fr }`.
 
@@ -765,13 +771,13 @@ Element siatki (`grid item`) ma domyślnie `min-height: auto`, co oznacza:
 ```
 
 **Reguła:** każdy pojemnik siatki, który ma przewijać własną treść, deklaruje
-`min-height: 0` (oraz `min-width: 0` w osi poziomej). W makietach E2 i E4 reguła
+`min-height: 0` (oraz `min-width: 0` w osi poziomej). W makietach powłoki środowiska i pary koordynator–wykonawca reguła
 występuje na `.cialo`, `.glowna`, `.okno-operacyjne`, `.okno-komunikacji`, `.para`
 i `.dol` — czyli na **każdym** pojemniku pośrednim między `100dvh` a elementem
 z `overflow-y: auto`.
 
 Dokumentacja źródłowa nie formułuje tego jako reguły; wynika ona z makiet
-i zostaje podniesiona do rangi reguły architektonicznej (rozdz. 14, D-09).
+i zostaje podniesiona do rangi reguły architektonicznej (rozdz. 14).
 
 ### 8.5. Powłoka MultitaskingAI — różnice
 
@@ -863,12 +869,12 @@ kompozycji: pas komunikacji jest elementem powłoki, nie elementem modułu.
       rozłączenie klienta NIE zamyka okna
 ```
 
-Deklaracja siatki: `grid-template-rows: auto 1fr` (E2) albo `auto 1fr auto`
-(E4, gdy okno ma pas konfiguracji), zawsze z `min-height: 0`.
+Deklaracja siatki: `grid-template-rows: auto 1fr` (powłoka środowiska) albo `auto 1fr auto`
+(para koordynator–wykonawca, gdy okno ma pas konfiguracji), zawsze z `min-height: 0`.
 
 ### 9.4. Chat Window — pięć pasów
 
-Makieta E2 realizuje Chat Window jako siatkę `grid-template-rows: auto auto 1fr auto auto`:
+Makieta powłoki środowiska realizuje Chat Window jako siatkę `grid-template-rows: auto auto 1fr auto auto`:
 
 | # | Pas | Wysokość | Zawartość | Klasy |
 |---:|---|---|---|---|
@@ -879,12 +885,12 @@ Makieta E2 realizuje Chat Window jako siatkę `grid-template-rows: auto auto 1fr
 | 5 | Dół | auto | pole promptu + przybornik akcji | `.dn-prompt`, `.dn-przybornik` |
 
 **Wysokość pasa:** żeton `--dn-wym-pas-komunikacji` (320 px) jest **minimum**,
-nie wartością stałą. Makieta E2 zapisuje `minmax(320px, 54%)` — pas rośnie
+nie wartością stałą. Makieta powłoki środowiska zapisuje `minmax(320px, 54%)` — pas rośnie
 proporcjonalnie na wysokich ekranach, ale nigdy nie schodzi poniżej 320 px.
 
 ### 9.5. Dziewięciu nadawców, trzy klasy semantyczne
 
-Rozstrzygnięcie L-P-28 (README pakietu): dziewięć ról nadawców nie dostaje
+Rozstrzygnięcie projektowe: dziewięć ról nadawców nie dostaje
 dziewięciu barw tła. Dostaje **trzy klasy semantyczne**, a rozróżnienie w obrębie
 klasy niesie komplet: **ikona medalionu + etykieta nadawcy + plakietka roli**.
 
@@ -900,7 +906,7 @@ oznacza nadawcę aktywnie piszącego.
 
 ### 9.6. Kompozycja przy w4 — dwa okna komunikacji
 
-Próg w4 (1600 px) uruchamia układ pary koordynator–wykonawca (makieta E4):
+Próg w4 (1600 px) uruchamia układ pary koordynator–wykonawca (makieta pary koordynator–wykonawca):
 dwa Chat Window obok siebie, każdy z własnym kontekstem roli.
 
 ```
@@ -927,27 +933,27 @@ Asymetria dolnego wiersza (1,25fr : 1fr) jest zgodna z pokrętłem
 
 | # | Uprawnienie | Przykład z `komponenty.css` |
 |---|---|---|
-| M1 | Czytać żetony semantyczne (W2) | `.dn-karta { background: var(--dn-powierzchnia) }` |
-| M2 | Czytać żetony niezależne od motywu (W3) | `.dn-btn { height: var(--dn-wym-kontrolka) }` |
-| M3 | Czytać żetony ramy, jeśli jest komponentem ramy | `.dn-btn-ikona--na-ramie { color: var(--dn-rama-tekst-2) }` |
-| M4 | Składać żetony arytmetycznie | `calc(100vw - var(--dn-od-8))` w `.dn-modal` |
-| M5 | Definiować własne `@keyframes` | `dn-tetno`, `dn-wejscie`, `dn-obrot` |
-| M6 | Deklarować stany atrybutami ARIA | `[aria-pressed='true']`, `[aria-busy='true']`, `[aria-selected='true']`, `[aria-current='page']`, `[aria-invalid='true']` |
-| M7 | Wprowadzać własne wartości geometryczne bez odpowiednika w żetonach | `width: 12px` dla ikony wewnątrz plakietki; `8px` dla kropki radia |
+| 1 | Czytać żetony semantyczne (semantyka per motyw) | `.dn-karta { background: var(--dn-powierzchnia) }` |
+| 2 | Czytać żetony niezależne od motywu (warstwa niezależna od motywu) | `.dn-btn { height: var(--dn-wym-kontrolka) }` |
+| 3 | Czytać żetony ramy, jeśli jest komponentem ramy | `.dn-btn-ikona--na-ramie { color: var(--dn-rama-tekst-2) }` |
+| 4 | Składać żetony arytmetycznie | `calc(100vw - var(--dn-od-8))` w `.dn-modal` |
+| 5 | Definiować własne `@keyframes` | `dn-tetno`, `dn-wejscie`, `dn-obrot` |
+| 6 | Deklarować stany atrybutami ARIA | `[aria-pressed='true']`, `[aria-busy='true']`, `[aria-selected='true']`, `[aria-current='page']`, `[aria-invalid='true']` |
+| 7 | Wprowadzać własne wartości geometryczne bez odpowiednika w żetonach | `width: 12px` dla ikony wewnątrz plakietki; `8px` dla kropki radia |
 
 ### 10.2. Czego komponent NIE MOŻE
 
 | # | Zakaz | Dlaczego | Konsekwencja złamania |
 |---|---|---|---|
-| N1 | Sięgać po prymitywy W1 | łamie oś motywu | komponent nie przełącza się z motywem |
-| N2 | Wpisywać wartość barwy wprost | omija źródło prawdy | rozjazd z `kontrasty.json`, niemierzalna dostępność |
-| N3 | Definiować własną media query barwną | motyw jest mechanizmem żetonów | dwa źródła prawdy motywu |
-| N4 | Definiować własną obsługę `prefers-reduced-motion` | obsługa jest globalna (§14 żetonów) | podwójne wyłączenie albo pominięcie |
-| N5 | Używać `disabled` | ADL-017 zero blokad | interfejs przestaje być klikalny |
-| N6 | Komunikować stan samą barwą | WCAG + KIERUNEK.md | stan niewidoczny dla części Operatorów |
-| N7 | Używać `z-index` jako liczby | rozsypuje skalę warstw | konflikt warstw nie do wyśledzenia |
-| N8 | Używać gradientu jako tła przycisku, karty albo sekcji | L-P-09, zakres ilustracyjny | wprowadza drugą barwę do monochromu |
-| N9 | Używać `!important` | kaskada jest jednokierunkowa | nadpisanie nie do cofnięcia bez kolejnego `!important` |
+| 1 | Sięgać po prymitywy | łamie oś motywu | komponent nie przełącza się z motywem |
+| 2 | Wpisywać wartość barwy wprost | omija źródło prawdy | rozjazd z `kontrasty.json`, niemierzalna dostępność |
+| 3 | Definiować własną media query barwną | motyw jest mechanizmem żetonów | dwa źródła prawdy motywu |
+| 4 | Definiować własną obsługę `prefers-reduced-motion` | obsługa jest globalna (§14 żetonów) | podwójne wyłączenie albo pominięcie |
+| 5 | Używać `disabled` | zasada zero blokad | interfejs przestaje być klikalny |
+| 6 | Komunikować stan samą barwą | WCAG + kierunek systemu projektowego | stan niewidoczny dla części Operatorów |
+| 7 | Używać `z-index` jako liczby | rozsypuje skalę warstw | konflikt warstw nie do wyśledzenia |
+| 8 | Używać gradientu jako tła przycisku, karty albo sekcji | zakres ilustracyjny | wprowadza drugą barwę do monochromu |
+| 9 | Używać `!important` | kaskada jest jednokierunkowa | nadpisanie nie do cofnięcia bez kolejnego `!important` |
 
 ### 10.3. Zasada „stan nigdy samym kolorem" — realizacja
 
@@ -962,7 +968,7 @@ Asymetria dolnego wiersza (1,25fr : 1fr) jest zgodna z pokrętłem
 
 ### 10.4. Realizacja zasady zero blokad w warstwie komponentowej
 
-Nagłówek `komponenty.css` zapisuje ADL-017 wprost: *„żaden wariant nie odbiera
+Nagłówek `komponenty.css` zapisuje zasadę zero blokad wprost: *„żaden wariant nie odbiera
 klikalności — niegotowość komunikuje się opisem albo komunikatem"*.
 
 | Zamiast | Stosuje się | Klasa / atrybut |
@@ -977,7 +983,7 @@ klikalności — niegotowość komunikuje się opisem albo komunikatem"*.
 
 | Miejsce | Odstępstwo | Uzasadnienie |
 |---|---|---|
-| `.dn-awatar--inteligencja` | używa `var(--dn-szary-0)` (prymityw W1) | tekst na gradiencie sygnałowym, identycznym w obu motywach; brak żetonu semantycznego dla tej roli |
+| `.dn-awatar--inteligencja` | używa `var(--dn-szary-0)` (prymityw) | tekst na gradiencie sygnałowym, identycznym w obu motywach; brak żetonu semantycznego dla tej roli |
 | `.dn-plakietka > svg`, `.dn-krok-znak > svg` | `width: 12px` wprost | stopień pośredni między `--dn-wym-ikona-sm` (14) a brakiem żetonu 12 px |
 | `.dn-radio::before` | `8px` wprost | wypełnienie radia = połowa `--dn-wym-check`; wyrażenie `calc()` byłoby mniej czytelne niż wartość |
 | `.dn-awatar-stan` | kropka 8×8 px | większa niż `--dn-wym-kropka` (6 px), bo nosi obrys odcinający od awatara |
@@ -1030,7 +1036,7 @@ Nazwy plików i wpisów manifestu są polskie i opisują **pojęcie**, nie kszta
 `walidator` (nie „tarcza z ptaszkiem"). To celowe: literówka w nazwie opisowej
 jest wychwytywalna przy czytaniu kodu, literówka w nazwie kształtu — nie.
 
-Pełny wykaz 82 nazw znajduje się w KANON §4 i w `manifest.json`.
+Pełny wykaz 82 nazw znajduje się w kontrakcie systemu projektowego i w `manifest.json`.
 
 ### 11.4. Manifest jako źródło prawdy
 
@@ -1046,7 +1052,7 @@ Pełny wykaz 82 nazw znajduje się w KANON §4 i w `manifest.json`.
    BŁĄD KOMPILACJI  ◄─────────────────────────────────  nazwa spoza unii
 ```
 
-HANDOFF §2.1 zapisuje wprost: *„Literówka ma dalej zatrzymywać kompilację."*
+opracowanie o przekazaniu, ruchu i dostępności zapisuje wprost: *„Literówka ma dalej zatrzymywać kompilację."*
 Mechanizm: `zrodla-ikon.ts` deklaruje typ unii złożony z 82 dosłownych nazw;
 `ikony.ts` przyjmuje wyłącznie ten typ. Nazwa spoza wykazu nie jest błędem
 w czasie działania (brakująca ikona), tylko **błędem kompilacji**.
@@ -1060,11 +1066,11 @@ w czasie działania (brakująca ikona), tylko **błędem kompilacji**.
 | Emblematy środowisk | 4 | **rysunek własny** na siatce zestawu | `srodowisko-talkin`, `srodowisko-workspace`, `srodowisko-codestudio`, `srodowisko-multitaskingai` |
 
 Emblematy środowisk mają cechę wspólną wymuszoną przez kierunek: **dokładnie
-jedną wypełnioną kropkę sygnału** (KIERUNEK.md 3.4).
+jedną wypełnioną kropkę sygnału** (kierunek systemu projektowego).
 
 ### 11.6. Zasada „nie rysuj, jeśli istnieje"
 
-KIERUNEK.md 3.6 i KANON §4: *„Ikon nie rysuje się ręcznie, jeżeli istnieją
+kierunek systemu projektowego i kontrakt systemu projektowego: *„Ikon nie rysuje się ręcznie, jeżeli istnieją
 w bibliotece. Dorysowuje się wyłącznie brakujące pojęcia domenowe."*
 
 Procedura dodania ikony:
@@ -1117,7 +1123,7 @@ v1.0 (0,7 s); obowiązuje wartość v2.0.
 
 ### 12.3. Wzorzec przejścia widoku
 
-KANON §11 (wzorzec animacji, `INTENSYWNOSC_RUCHU = 3/10`):
+kontrakt systemu projektowego (wzorzec animacji, `INTENSYWNOSC_RUCHU = 3/10`):
 
 | Reguła | Wartość |
 |---|---|
@@ -1151,7 +1157,7 @@ Poziom 2 jest jedynym miejscem w całym systemie, gdzie `!important` jest
 dozwolony — bo musi wygrać z każdą regułą komponentu, także przyszłą.
 
 **Zastępstwo dla tętna:** przy ograniczonym ruchu kropka nie miga, tylko
-otrzymuje **pierścień statyczny** (L-P-16). `komponenty.css` realizuje to
+otrzymuje **pierścień statyczny**. `komponenty.css` realizuje to
 regułą w bloku `@media (prefers-reduced-motion: reduce)` w sekcji kropki
 (l. 353) — to jedyny komponent z własnym blokiem tej media query, i jest to
 odstępstwo świadome: chodzi o **zamianę formy**, nie o wyłączenie ruchu.
@@ -1171,7 +1177,7 @@ odstępstwo świadome: chodzi o **zamianę formy**, nie o wyłączenie ruchu.
 
 ## 13. Bramy weryfikacyjne fal wdrożeniowych
 
-### 13.1. Cztery fale (HANDOFF.md §3)
+### 13.1. Cztery fale (opracowanie o przekazaniu, ruchu i dostępności)
 
 ```
    FALA 1 — ŻETONY                FALA 2 — KOMPONENTY
@@ -1186,7 +1192,7 @@ odstępstwo świadome: chodzi o **zamianę formy**, nie o wyłączenie ruchu.
           ▼                                ▼
    FALA 3 — IKONY I MARKA         FALA 4 — OKNA
    ikony/, favicon,               okno-komunikacji + powłoka
-   ikony Tauri                    wg makiet E1 / E2 / E4
+   ikony Tauri                    wg makiet Centrum dowodzenia, powłoki środowiska i pary koordynator–wykonawca
    ────────────────────────       ────────────────────────
    podmiana całego katalogu       przepięcie --dc-* na .dn-wpis,
    svg/; manifest jako            .dn-prompt, .dn-postep
@@ -1195,7 +1201,7 @@ odstępstwo świadome: chodzi o **zamianę formy**, nie o wyłączenie ruchu.
 
 ### 13.2. Brama wspólna wszystkich fal
 
-HANDOFF.md §3, zdanie zamykające:
+opracowanie o przekazaniu, ruchu i dostępności, zdanie zamykające:
 
 > *„Brama weryfikacyjna każdej fali: porównanie z makietami w obu motywach oraz
 > przebieg `kontrasty.json` (pomiar, nie deklaracja)."*
@@ -1212,11 +1218,11 @@ Dwa człony bramy są rozłączne i oba obowiązkowe:
 | Fala | Zakres | Brama specyficzna | Kryterium przejścia |
 |---|---|---|---|
 | **1 — żetony** | `motyw/` (13 arkuszy + spinający) | wartości przeniesione **dosłownie** z `zetony.css`; żaden arkusz > 300 linii; kolejność importów zgodna z rozdz. 2.5 | wszystkie 33 pary `kontrasty.json` z `ok: true`; oba motywy renderują się na nowej palecie; brak wartości szesnastkowej poza `motyw/prymitywy.css` i `motyw/stany.css` |
-| **2 — komponenty** | `komponenty/` (14 arkuszy) + `fundament.css` | galeria `06-okna/komponenty.html` jako wzorzec odbioru wizualnego; usunięty duplikat fokusu z dotychczasowego `motyw.css` | 119 klas `.dn-*` obecnych i renderujących się; zero wystąpień `disabled`; zero prymitywów W1 poza listą wyjątków (rozdz. 10.5); fokus widoczny na każdej kontrolce |
+| **2 — komponenty** | `komponenty/` (14 arkuszy) + `fundament.css` | galeria `06-okna/komponenty.html` jako wzorzec odbioru wizualnego; usunięty duplikat fokusu z dotychczasowego `motyw.css` | 119 klas `.dn-*` obecnych i renderujących się; zero wystąpień `disabled`; zero prymitywów poza listą wyjątków (rozdz. 10.5); fokus widoczny na każdej kontrolce |
 | **3 — ikony i marka** | `ikony/svg/` (podmiana całego katalogu), `manifest.json`, favicon, ikony Tauri | wykaz nazw w `zrodla-ikon.ts` zgodny z manifestem (82 pozycje) | kompilacja przechodzi; próba użycia nazwy spoza wykazu **zatrzymuje kompilację**; ikony dziedziczą barwę przez `currentColor` w obu motywach; godło zachowuje barwy własne |
-| **4 — okna** | `okno-komunikacji/` + powłoka wg makiet E1/E2/E4 | usunięte lokalne `--dc-*`; mapowanie ról kontraktu na klasy `.dn-wpis--*` | pas komunikacji nie schodzi poniżej 320 px; Chat Window nie znika przy zmianie modułu; karty sesji zachowują stan; powłoka zachowuje się poprawnie na progach w1–w4 |
+| **4 — okna** | `okno-komunikacji/` + powłoka wg makiet Centrum dowodzenia, powłoki środowiska i pary koordynator–wykonawca | usunięte lokalne `--dc-*`; mapowanie ról kontraktu na klasy `.dn-wpis--*` | pas komunikacji nie schodzi poniżej 320 px; Chat Window nie znika przy zmianie modułu; karty sesji zachowują stan; powłoka zachowuje się poprawnie na progach w1–w4 |
 
-### 13.4. Czego nie wolno zmienić po cichu (HANDOFF §4)
+### 13.4. Czego nie wolno zmienić po cichu (opracowanie o przekazaniu, ruchu i dostępności)
 
 | # | Element chroniony | Skutek zmiany bez decyzji |
 |---:|---|---|
@@ -1224,7 +1230,7 @@ Dwa człony bramy są rozłączne i oba obowiązkowe:
 | 2 | Geometria znaku i emblematów (krzywe, nie fonty) | znak przestaje być odtwarzalny w skali |
 | 3 | Zasada jednego akcentu (sygnał ≤ 5% ekranu, nigdy tło sekcji) | monochrom przestaje być monochromem |
 | 4 | Pierścień fokusu i zachowanie `prefers-reduced-motion` | naruszenie warunku wejściowego WCAG |
-| 5 | Gęstość zwarta jako domyślna | zmiana decyzji Właściciela (L-P-13) |
+| 5 | Gęstość zwarta jako domyślna | zmiana decyzji Właściciela |
 
 ### 13.5. Kolejność fal — dlaczego ta, a nie inna
 
@@ -1256,21 +1262,21 @@ Rozstrzygnięcia podjęte ponad dokumentację źródłową — wraz z uzasadnien
 
 | # | Zagadnienie | Co mówi dokumentacja | Rozstrzygnięcie | Uzasadnienie |
 |---|---|---|---|---|
-| **D-01** | Sekcja 7 `zetony.css` (siatka i punkty łamania) nie ma pliku docelowego | HANDOFF.md §1 wymienia arkusze dla sekcji 1, 2, 3, 4, 5, 6, 8, 9, 10–11, 12, 13, 14 — **pomija sekcję 7** | wprowadzono arkusz **`motyw/siatka.css`** | sekcja 7 jest samodzielną odpowiedzialnością (progi + siatka + maks. szerokość treści); doklejenie jej do `wymiary.css` złamałoby R1 |
-| **D-02** | Liczba poziomów warstw | README pakietu (L-P-10) mówi „10 poziomów"; `zetony.css` §8 i KANON §2 wymieniają **11** | przyjęto **11 poziomów** | źródłem prawdy wartości jest `zetony.css` (HANDOFF §4.1); README podaje liczbę omyłkowo |
-| **D-03** | Zawartość `stany.css` | HANDOFF wymienia nazwę pliku bez wskazania sekcji | do `stany.css` trafiają: prymitywy stanów (§1, blok STANY) + żetony stanów semantycznych z §10/§11 + odpowiadające bloki zapasowe | stany są jedyną rodziną barw przecinającą wszystkie trzy warstwy żetonów; trzymanie ich razem jest jedyną wersją zgodną z R1 |
-| **D-04** | Cienie w `przestrzen.css` | HANDOFF: „`przestrzen.css` (odstępy+promienie+cienie)"; cienie leżą fizycznie w blokach motywów §10/§11 | cienie wydzielone z bloków motywów do `przestrzen.css`, z zachowaniem selektorów `:root[data-theme='light' \| 'dark']` | zgodnie z literą HANDOFF; selektor musi zostać, bo cienie są jedyną częścią `przestrzen.css` zależną od motywu |
-| **D-05** | Kolejność importów w `motyw.css` | HANDOFF: „arkusz spinający importuje całość" — bez kolejności | ustalono kolejność: prymitywy → rama → typografia → przestrzeń → ruch → wymiary → siatka → warstwy → gradienty → semantyczne-jasny → semantyczne-ciemny → stany (rozdz. 2.5) | W1 przed W3 przed W2; `stany.css` ostatni, bo czyta prymitywy i musi nadpisać ewentualne wartości z bloków motywów |
-| **D-06** | Kolejność importów w `komponenty.css` | brak wskazania | kolejność **zgodna z kolejnością sekcji w pliku źródłowym** (przycisk → pole → wybór → plakietka → karta → tabela → zakładki → pasek → boczna → wpis → postęp → nakładka → powiadomienie → drobne) | plik źródłowy jest kaskadą jednokierunkową; zmiana kolejności na alfabetyczną mogłaby odwrócić zależności `.dn-suwak` ↔ `.dn-przelacznik` |
-| **D-07** | Zachowanie powłoki na progach w1 i w3 | dokumentacja rozstrzyga wyłącznie w2 („boczna zwija się do ikon") i w4 („dwa okna komunikacji") | w1: jedno okno naraz, boczna jako szuflada, Chat Window jako osobny widok. w3: boczna 224 px z etykietami, okna wspomagające w zakładkach | doprecyzowanie wyprowadzone z wymiarów (`--dn-wym-boczna` 224 px nie mieści się poniżej w3 obok okna wiodącego) oraz z inwentarza okien (E11 Mobile = widok w1) |
-| **D-08** | Szerokość bocznej w stanie zwiniętym (w2) | brak wartości w dokumentacji | **48 px** | równa wysokości paska górnego (`--dn-wym-pasek`) — zwinięta boczna tworzy kwadrat 48×48 dla ikony 16 px z marginesem, i zachowuje rytm rogu kompozycji |
-| **D-09** | Reguła `min-height: 0` | brak w dokumentacji jako reguły; obecna w makietach E2 i E4 na sześciu pojemnikach | podniesiona do rangi **reguły architektonicznej**: każdy pojemnik siatki między `100dvh` a elementem przewijanym deklaruje `min-height: 0` | bez niej powłoka o stałej wysokości pęka przy przyroście treści; to jedyna reguła układu, której brak nie daje błędu, tylko cichą awarię kompozycji |
-| **D-10** | Model kompozycji okna operacyjnego | README pakietu odnotowuje pytanie otwarte M-4 („układ okien per moduł") | przyjęto układ makiet: **okno wiodące u góry, Chat Window na dole (min. 320 px), okna wspomagające jako zakładki (w3) albo druga kolumna (w4)** | makiety E2 i E4 są jedynym rozstrzygnięciem wizualnym w pakiecie; oznaczone jako układ dokumentacyjny do potwierdzenia decyzją Właściciela |
-| **D-11** | Rozbieżności wartości między katalogiem v1.0 a żetonami v2.0 | katalog v1.0 podaje pasek 56 px, przycisk ikonowy 36 px, stopień bazowy 15 px; `zetony.css` v2.0 podaje 48 / 32 / 13 px | obowiązują **wartości v2.0** | KIERUNEK.md: pakiet v2.0 „zastępuje w całości" warstwę wizualną v1.0; wartości v1.0 pozostają wyłącznie jako zapis historyczny w inwentarzu |
-| **D-12** | Punkty łamania w zapytaniach `@media` | żetony `--dn-bp-*` istnieją, ale zmienne CSS nie działają w warunkach `@media` | progi zapisuje się liczbą; żetony pełnią rolę **rejestru wartości** dla dokumentacji i skryptu; zgodność sprawdza przegląd kodu | ograniczenie języka, nie decyzja projektowa; odnotowane, by nie zostało odczytane jako niekonsekwencja |
-| **D-13** | `!important` w obsłudze ograniczonego ruchu | zakaz `!important` w warstwie komponentowej vs. jego obecność w `zetony.css` §14 | `!important` dozwolony **wyłącznie** w bloku `@media (prefers-reduced-motion: reduce)` w `ruch.css` | siatka bezpieczeństwa musi wygrać z każdą regułą komponentu, także przyszłą i nieprzewidzianą |
-| **D-14** | Odstępstwo `.dn-kropka` od zakazu N4 | zakaz media query ograniczonego ruchu w komponencie vs. `komponenty.css` l. 353 | odstępstwo utrzymane i odnotowane | blok nie **wyłącza** ruchu (to robi warstwa żetonów), tylko **zamienia formę** — tętno na pierścień statyczny; zamiana formy jest odpowiedzialnością komponentu |
-| **D-15** | Wyjątki od zakazu wartości wprost | brak listy w dokumentacji | zamknięta lista czterech wyjątków (rozdz. 10.5) | wyjątek bez rejestru staje się precedensem; rejestr zamienia go w decyzję |
+| **1** | Sekcja 7 `zetony.css` (siatka i punkty łamania) nie ma pliku docelowego | opracowanie o przekazaniu, ruchu i dostępności wymienia arkusze dla sekcji 1, 2, 3, 4, 5, 6, 8, 9, 10–11, 12, 13, 14 — **pomija sekcję 7** | wprowadzono arkusz **`motyw/siatka.css`** | sekcja 7 jest samodzielną odpowiedzialnością (progi + siatka + maks. szerokość treści); doklejenie jej do `wymiary.css` złamałoby zasadę jednej odpowiedzialności |
+| **2** | Liczba poziomów warstw | Wcześniejsze zestawienie podawało 10 poziomów; `zetony.css` §8 i kontrakt systemu projektowego wymieniają **11** | przyjęto **11 poziomów** | źródłem prawdy wartości jest `zetony.css` (opracowanie o przekazaniu, ruchu i dostępności); wcześniejsze zestawienie podawało liczbę omyłkowo |
+| **3** | Zawartość `stany.css` | opracowanie o przekazaniu, ruchu i dostępności wymienia nazwę pliku bez wskazania sekcji | do `stany.css` trafiają: prymitywy stanów (§1, blok STANY) + żetony stanów semantycznych z §10/§11 + odpowiadające bloki zapasowe | stany są jedyną rodziną barw przecinającą wszystkie trzy warstwy żetonów; trzymanie ich razem jest jedyną wersją zgodną z zasadą jednej odpowiedzialności |
+| **4** | Cienie w `przestrzen.css` | opracowanie o przekazaniu, ruchu i dostępności: „`przestrzen.css` (odstępy+promienie+cienie)"; cienie leżą fizycznie w blokach motywów §10/§11 | cienie wydzielone z bloków motywów do `przestrzen.css`, z zachowaniem selektorów `:root[data-theme='light' \| 'dark']` | zgodnie z literą opracowania o przekazaniu, ruchu i dostępności; selektor musi zostać, bo cienie są jedyną częścią `przestrzen.css` zależną od motywu |
+| **5** | Kolejność importów w `motyw.css` | opracowanie o przekazaniu, ruchu i dostępności: „arkusz spinający importuje całość" — bez kolejności | ustalono kolejność: prymitywy → rama → typografia → przestrzeń → ruch → wymiary → siatka → warstwy → gradienty → semantyczne-jasny → semantyczne-ciemny → stany (rozdz. 2.5) | prymitywy przed warstwą niezależną przed semantyką; `stany.css` ostatni, bo czyta prymitywy i musi nadpisać ewentualne wartości z bloków motywów |
+| **6** | Kolejność importów w `komponenty.css` | brak wskazania | kolejność **zgodna z kolejnością sekcji w pliku źródłowym** (przycisk → pole → wybór → plakietka → karta → tabela → zakładki → pasek → boczna → wpis → postęp → nakładka → powiadomienie → drobne) | plik źródłowy jest kaskadą jednokierunkową; zmiana kolejności na alfabetyczną mogłaby odwrócić zależności `.dn-suwak` ↔ `.dn-przelacznik` |
+| **7** | Zachowanie powłoki na progach w1 i w3 | dokumentacja rozstrzyga wyłącznie w2 („boczna zwija się do ikon") i w4 („dwa okna komunikacji") | w1: jedno okno naraz, boczna jako szuflada, Chat Window jako osobny widok. w3: boczna 224 px z etykietami, okna wspomagające w zakładkach | doprecyzowanie wyprowadzone z wymiarów (`--dn-wym-boczna` 224 px nie mieści się poniżej w3 obok okna wiodącego) oraz z inwentarza okien (Mobile = widok na progu w1) |
+| **8** | Szerokość bocznej w stanie zwiniętym (w2) | brak wartości w dokumentacji | **48 px** | równa wysokości paska górnego (`--dn-wym-pasek`) — zwinięta boczna tworzy kwadrat 48×48 dla ikony 16 px z marginesem, i zachowuje rytm rogu kompozycji |
+| **9** | Reguła `min-height: 0` | brak w dokumentacji jako reguły; obecna w makietach powłoki środowiska i pary koordynator–wykonawca na sześciu pojemnikach | podniesiona do rangi **reguły architektonicznej**: każdy pojemnik siatki między `100dvh` a elementem przewijanym deklaruje `min-height: 0` | bez niej powłoka o stałej wysokości pęka przy przyroście treści; to jedyna reguła układu, której brak nie daje błędu, tylko cichą awarię kompozycji |
+| **10** | Model kompozycji okna operacyjnego | Pytanie o układ okien właściwy każdemu modułowi pozostawało otwarte | przyjęto układ makiet: **okno wiodące u góry, Chat Window na dole (min. 320 px), okna wspomagające jako zakładki (w3) albo druga kolumna (w4)** | makiety powłoki środowiska i pary koordynator–wykonawca są jedynym rozstrzygnięciem wizualnym w pakiecie; oznaczone jako układ dokumentacyjny do potwierdzenia decyzją Właściciela |
+| **11** | Rozbieżności wartości między katalogiem v1.0 a żetonami v2.0 | katalog v1.0 podaje pasek 56 px, przycisk ikonowy 36 px, stopień bazowy 15 px; `zetony.css` v2.0 podaje 48 / 32 / 13 px | obowiązują **wartości v2.0** | kierunek systemu projektowego: pakiet v2.0 „zastępuje w całości" warstwę wizualną v1.0; wartości v1.0 pozostają wyłącznie jako zapis historyczny w inwentarzu |
+| **12** | Punkty łamania w zapytaniach `@media` | żetony `--dn-bp-*` istnieją, ale zmienne CSS nie działają w warunkach `@media` | progi zapisuje się liczbą; żetony pełnią rolę **rejestru wartości** dla dokumentacji i skryptu; zgodność sprawdza przegląd kodu | ograniczenie języka, nie decyzja projektowa; odnotowane, by nie zostało odczytane jako niekonsekwencja |
+| **13** | `!important` w obsłudze ograniczonego ruchu | zakaz `!important` w warstwie komponentowej vs. jego obecność w `zetony.css` §14 | `!important` dozwolony **wyłącznie** w bloku `@media (prefers-reduced-motion: reduce)` w `ruch.css` | siatka bezpieczeństwa musi wygrać z każdą regułą komponentu, także przyszłą i nieprzewidzianą |
+| **14** | Odstępstwo `.dn-kropka` od zakazu własnej obsługi ograniczonego ruchu | zakaz media query ograniczonego ruchu w komponencie vs. `komponenty.css` l. 353 | odstępstwo utrzymane i odnotowane | blok nie **wyłącza** ruchu (to robi warstwa żetonów), tylko **zamienia formę** — tętno na pierścień statyczny; zamiana formy jest odpowiedzialnością komponentu |
+| **15** | Wyjątki od zakazu wartości wprost | brak listy w dokumentacji | zamknięta lista czterech wyjątków (rozdz. 10.5) | wyjątek bez rejestru staje się precedensem; rejestr zamienia go w decyzję |
 
 ---
 

@@ -14,7 +14,7 @@
 | **Odbiorcy** | projektant wizualny · wdrożeniowiec front-end · dostawca materiałów firmowych · drukarnia · zakład grawerski i hafciarski |
 | **Zakres** | moduł konstrukcyjny, rysunki techniczne sygnetu i lockupów, pole ochronne, wielkości minimalne, skalowanie, wyrównanie optyczne, znak w interfejsie, barwy i kontrasty, katalog naruszeń, reprodukcja |
 | **Poza zakresem** | idea i narracja znaku (→ `ksiega-znaku.md`), typografia marki (→ `typografia-i-glos.md`), emblematy i ikonografia (→ `emblematy-i-ikony.md`), zastosowania nośnikowe (→ `zastosowania-marki.md`) |
-| **Źródła wiążące** | `KANON.md` rozdz. 3 · `KIERUNEK.md` rozdz. 3.4–3.5 · pliki `zasoby/marka/logo/*.svg` (odczytane co do współrzędnej) · `zasoby/zetony/zetony.css` · `zasoby/zetony/kontrasty.json` |
+| **Źródła wiążące** | kontrakt systemu projektowego · kierunek systemu projektowego · pliki `zasoby/marka/logo/*.svg` (odczytane co do współrzędnej) · `zasoby/zetony/zetony.css` · `zasoby/zetony/kontrasty.json` |
 | **Rysunki** | `03-marka/konstrukcja/rys-01…14.svg` + rasteryzacje `konstrukcja/png/*.png` |
 | **Prototyp interaktywny** | `03-marka/konstrukcja-znaku.html` |
 
@@ -1688,7 +1688,7 @@ Do wydruku i powieszenia obok stanowiska:
 
 ## 20. Decyzje projektowe
 
-### D-1 · Moduł X przywiązany do farby, nie do kadru
+### Moduł X przywiązany do farby, nie do kadru
 
 **Kontekst.** Modułem mogła być wysokość kadru (96 j.), połowa kadru (48 j.)
 albo wysokość grotu (44 j.).
@@ -1704,7 +1704,7 @@ przypadków, w których jest potrzebna.
 **Konsekwencja.** Wszystkie proporcje w tym dokumencie podano dwukrotnie:
 w jednostkach siatki (do rysowania) i w module X (do kontroli w terenie).
 
-### D-2 · Dwa poziomy pola ochronnego: ½X i 1X
+### Dwa poziomy pola ochronnego: ½X i 1X
 
 **Kontekst.** `ksiega-znaku.md` rozdz. 5 ustala pole ochronne **½X** jako
 [REGUŁA]. Brief dokumentacji konstrukcyjnej wskazuje **1X** jako wartość
@@ -1724,7 +1724,7 @@ osłabiania reguły: **wartość wiążąca pozostaje ½X**, 1X jest zaleceniem.
 **Konsekwencja.** Kalkulator pola w prototypie HTML podaje obie wartości
 jednocześnie i oznacza, która jest obowiązkowa.
 
-### D-3 · Grubość ramienia liczona prostopadle, nie poziomo
+### Grubość ramienia liczona prostopadle, nie poziomo
 
 **Kontekst.** Ścieżka znaku daje grubość poziomą 12 j. To liczba, którą widać
 w pliku i którą naturalnie się cytuje.
@@ -1740,7 +1740,7 @@ w praktyce zalewa się przy pierwszym wydruku.
 **Konsekwencja.** Tablica przeliczeniowa w rozdz. 4.3 i wszystkie progi
 w rozdz. 11 i 17 są policzone od 0,2018 X.
 
-### D-4 · Wyrównanie w kontenerze przez kadr, nie przez farbę
+### Wyrównanie w kontenerze przez kadr, nie przez farbę
 
 **Kontekst.** Kadr 96 × 96 ma niesymetryczne marginesy poziome (12 j. z lewej,
 6,5 j. z prawej). To wygląda na błąd i kusi, żeby „naprawić" kadrowanie.
@@ -1757,7 +1757,7 @@ zapisanym kompromisem.
 **Konsekwencja.** Reguła „kadrowanie po obwiedni farby" jest naruszeniem
 (16.13), a nie optymalizacją.
 
-### D-5 · Wariant uproszczony ma inny kąt niż wariant pełny
+### Wariant uproszczony ma inny kąt niż wariant pełny
 
 **Kontekst.** Naturalne oczekiwanie: wariant uproszczony to jeden grot
 wycięty z wariantu pełnego i powiększony.
@@ -1774,7 +1774,7 @@ optycznymi na małe wielkości.
 **Konsekwencja.** Nie wolno generować wariantu uproszczonego przez wycięcie
 grotu z `sygnet.svg`. Obowiązuje plik `sygnet-uproszczony.svg`.
 
-### D-6 · Kropka po `CONSOLE` centrowana na osi wersalika, nie na linii bazowej
+### Kropka po `CONSOLE` centrowana na osi wersalika, nie na linii bazowej
 
 **Kontekst.** W sygnecie kropka stoi na linii bazowej. W logotypie leży na
 połowie wysokości wersalika `CONSOLE`. To wygląda na niekonsekwencję.
@@ -1790,7 +1790,7 @@ zawieszona pod tekstem.
 **Konsekwencja.** Przy odtwarzaniu logotypu kropkę centruje się na
 `cy = baseline − cap/2`, nie stawia na baseline.
 
-### D-7 · Wyraz `CONSOLE` centrowany bez kropki
+### Wyraz `CONSOLE` centrowany bez kropki
 
 **Kontekst.** W lockupie pionowym wszystkie elementy są centrowane. Kropka
 po `CONSOLE` zwiększa szerokość wiersza o 11,4 j.
@@ -1807,7 +1807,7 @@ wyśrodkowany.
 **Konsekwencja.** Wartość odczytana z pliku (`CONSOLE` bez kropki: środek
 79,56 wobec osi kadru 79,5) potwierdza rozstrzygnięcie.
 
-### D-8 · Obrys emblematów nie skaluje się liniowo powyżej 48 px
+### Obrys emblematów nie skaluje się liniowo powyżej 48 px
 
 **Kontekst.** Emblematy środowisk mają `stroke-width="1.75"` w siatce 24 × 24.
 Przy renderowaniu 96 px daje to kreskę 7 px, która wygląda znacznie grubiej
@@ -1825,7 +1825,7 @@ cieńszej względem pola. Obniżenie zachowuje **wrażenie** tej samej wagi.
 **Konsekwencja.** Zakaz `vector-effect="non-scaling-stroke"` — ten atrybut
 rozwiązuje odwrotny problem i psuje wygląd w ekspozycji.
 
-### D-9 · Nie podajemy numeru Pantone
+### Nie podajemy numeru Pantone
 
 **Kontekst.** Księgi znaku zwykle podają numer Pantone jako wartość wiążącą.
 
@@ -1841,7 +1841,7 @@ markę na to, że najczęściej reprodukowana barwa będzie za każdym razem inn
 **Konsekwencja.** Do czasu przeprowadzenia próby kontrolnej materiały spotowe
 zamawia się z podaniem sRGB i profilu ICC, a nie numeru katalogowego.
 
-### D-10 · Kropka jako element niepołączony we wszystkich technikach wycinania
+### Kropka jako element niepołączony we wszystkich technikach wycinania
 
 **Kontekst.** W wycinaniu laserowym, plotterowym i w odlewie kropka jest
 osobnym, niepodpartym elementem — wypada z materiału.

@@ -1,0 +1,401 @@
+/* ============================================================================
+   DANACO CONSOLE — PRZEDSIONEK ŚRODOWISKA
+   ----------------------------------------------------------------------------
+   Widok wejściowy środowiska pracy: stan przed wyborem modułu. Powłoka nosi ten
+   sam pasek górny co przestrzeń robocza; poniżej dzieli się na szynę sesji
+   (lewa krawędź) i płótno z kaflami modułów oraz listwą działań środowiska.
+
+   Hierarchia trzech stref o malejącej masie: nagłówek środowiska → kafle
+   modułów → listwa działań. Ten sam porządek co na stronie głównej.
+
+   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
+   ============================================================================ */
+
+:root { --pd-szyna: 288px; --pd-tresc-maks: 1360px; }
+
+/* ── 1 · POWŁOKA — dwa rzędy: pasek i ciało (brak pasa kart sesji) ───────── */
+
+.pd-powloka { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr); }
+
+.pd-cialo {
+  display: grid;
+  grid-template-columns: var(--pd-szyna) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.pd-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+.pd-ik-sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+/* ── 2 · SZYNA SESJI ────────────────────────────────────────────────────── */
+
+.pd-szyna { min-width: 0; }
+.pd-szyna-tytul {
+  margin-right: auto;
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+.pd-szyna-filtr {
+  display: flex;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.pd-filtr {
+  flex: 1;
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  padding: 0 var(--dn-od-2);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-3);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.pd-filtr:hover { background: var(--dn-hover); color: var(--dn-tekst-2); }
+.pd-filtr[aria-pressed='true'] {
+  background: var(--dn-powierzchnia-2);
+  border-color: var(--dn-obrys-subtelny);
+  color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+
+.pd-szyna-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--dn-od-2);
+}
+
+.pd-sesja {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0 var(--dn-od-2);
+  width: 100%;
+  padding: var(--dn-od-2);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-bazowa);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
+}
+.pd-sesja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pd-sesja[aria-selected='true'] {
+  background: var(--dn-powierzchnia-2);
+  border-color: var(--dn-obrys-subtelny);
+  color: var(--dn-tekst);
+}
+.pd-sesja > .pt-tetno { grid-row: 1 / span 2; }
+.pd-sesja-tytul {
+  grid-column: 2;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-ciasny);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-sesja-meta {
+  grid-column: 2;
+  margin-top: 2px;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+.pd-szyna-stopka {
+  margin-top: auto;
+  padding: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+.pd-szyna-stopka .dn-btn { width: 100%; justify-content: center; }
+
+/* ── 3 · PŁÓTNO PRZEDSIONKA ─────────────────────────────────────────────── */
+
+.pd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
+.pd-tresc {
+  width: 100%;
+  max-width: min(var(--pd-tresc-maks), 100%);
+  margin: 0 auto;
+  padding: var(--dn-od-8) var(--dn-od-6) var(--dn-od-10);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-8);
+}
+
+/* ── 4 · NAGŁÓWEK ŚRODOWISKA — waga główna ──────────────────────────────── */
+
+.pd-naglowek { display: flex; align-items: flex-start; gap: var(--dn-od-4); }
+.pd-godlo {
+  display: grid;
+  place-content: center;
+  width: 56px;
+  height: 56px;
+  flex: none;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+}
+.pd-godlo svg { width: 32px; height: 32px; }
+.pd-nadtytul {
+  margin: 0 0 var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.pd-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-display);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
+}
+.pd-motto {
+  margin: var(--dn-od-1) 0 0;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+.pd-opis {
+  margin: var(--dn-od-3) 0 0;
+  max-width: 78ch;
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-2);
+}
+
+/* ── 5 · STREFY ─────────────────────────────────────────────────────────── */
+
+.pd-strefa { display: flex; flex-direction: column; gap: var(--dn-od-3); }
+.pd-strefa-glowa { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+.pd-strefa-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-bazowa);
+  font-weight: var(--dn-fw-polgruba);
+  font-size: var(--dn-fs-md);
+  color: var(--dn-tekst);
+}
+.pd-strefa-opis { margin: 0; max-width: 78ch; font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+
+/* ── 6 · KAFLE MODUŁÓW — waga pośrednia ─────────────────────────────────── */
+
+.pd-siatka {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--dn-od-3);
+}
+
+.pd-kafel {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: var(--dn-od-1) var(--dn-od-3);
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.pd-kafel:hover {
+  border-color: var(--dn-obrys-mocny);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+}
+.pd-kafel-ikona {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
+  flex: none;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst-2);
+}
+.pd-kafel:hover .pd-kafel-ikona { color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
+.pd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-1); min-width: 0; }
+.pd-kafel-nazwa { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
+.pd-kafel-opis { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+.pd-kafel-meta {
+  grid-column: 2;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* ── 7 · LISTWA DZIAŁAŃ ŚRODOWISKA — waga najniższa ─────────────────────── */
+
+.pd-strefa--listwa { gap: 0; }
+.pd-listwa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia-2);
+}
+.pd-listwa-poz {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.pd-listwa-poz:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.pd-listwa-poz--glowna {
+  border-color: var(--dn-obrys-mocny);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-weight: var(--dn-fw-polgruba);
+}
+.pd-listwa-rozdzielacz {
+  width: 1px;
+  align-self: stretch;
+  margin: var(--dn-od-1) var(--dn-od-1);
+  background: var(--dn-obrys-subtelny);
+}
+.pd-listwa-meta {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+
+/* ── 8 · PROGI ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 1600px) { .pd-siatka { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1400px) { .pd-siatka { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1200px) {
+  :root { --pd-szyna: 240px; }
+  .pd-siatka { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 960px) {
+  .pd-cialo { grid-template-columns: minmax(0, 1fr); }
+  .pd-szyna { display: none; }
+}
+@media (max-width: 640px) {
+  .pd-siatka { grid-template-columns: minmax(0, 1fr); }
+  .pd-tresc { padding: var(--dn-od-5) var(--dn-od-4) var(--dn-od-8); gap: var(--dn-od-6); }
+  .pd-naglowek { flex-direction: column; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RUCH PRZEDSIONKA — to samo prawo reakcji, co w Centrum dowodzenia
+   --------------------------------------------------------------------------
+   Kafel modułu w przedsionku jest tym samym archetypem, co kafel budowania
+   w Centrum dowodzenia: wskazanie podnosi płytę, wstęga sygnału wjeżdża od
+   lewej krawędzi, ikona rośnie i bierze błękit, naciśnięcie ustępuje pod
+   palcem. Żetony i klatki kluczowe pochodzą z arkusza żetonów i biblioteki
+   komponentów — tu jest samo złożenie (rozstrzygnięcie Właściciela 2026-08-21).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.pd-kafel {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.pd-kafel::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--dn-wym-wstega);
+  background: var(--dn-sygnal-wypelnienie);
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.pd-kafel:hover, .pd-kafel:focus-visible {
+  border-color: var(--dn-sygnal-obrys);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-md));
+}
+.pd-kafel:hover::before, .pd-kafel:focus-visible::before { transform: scaleY(1); }
+.pd-kafel:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.pd-kafel-ikona {
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.pd-kafel:hover .pd-kafel-ikona {
+  background: var(--dn-sygnal-tlo);
+  transform: scale(var(--dn-skala-ikony));
+}
+
+/* Sesja w szynie przedsionka — kreska sygnału wjeżdża przy lewej krawędzi,
+   tak samo jak w bocznej nawigacji modułu. */
+.pd-sesja { position: relative; transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease); }
+.pd-sesja::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: var(--dn-wym-wstega);
+  height: 60%;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  transform: scaleY(0);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.pd-sesja:hover::before { transform: scaleY(0.6); }
+.pd-sesja[aria-selected='true']::before { transform: scaleY(1); }
+
+/* Listwa dolna — reakcja najkrótsza, jak w strefie trzeciej Centrum. */
+.pd-listwa-poz { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
+.pd-listwa-poz:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.pd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.pd-listwa-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
+.pd-listwa-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); color: var(--dn-sygnal); }
+
+/* Kaskada wejścia stref przedsionka — kolejność stref niesie ich ważność. */
+/* `backwards`, nie `both`: animacja wypełniająca w przód pozostaje animacją
+     czynną, a element z czynną animacją krycia albo przesunięcia jest kontekstem
+     nakładania — panel rozwinięty w tej strefie schodził wtedy pod strefę stojącą
+     niżej w dokumencie (zmierzone: wykaz zapisanych automatyk pod listwą ustawień).
+     Przy `backwards` klatka początkowa działa tylko na czas opóźnienia i ruchu,
+     a po jego zakończeniu element wraca do zwykłego stanu. */
+  .pd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
+.pd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
+.pd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.pd-tresc > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.pd-tresc > *:nth-child(n + 4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pd-tresc > * { animation: none; }
+  .pd-kafel:hover::before, .pd-sesja[aria-selected='true']::before { transition: none; }
+}

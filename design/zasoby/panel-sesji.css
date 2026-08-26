@@ -1,0 +1,204 @@
+/* PANEL SESJI I PROJEKTÓW
+   Zawartość panelu bocznego: płaski wykaz sesji, drzewo projektów i stopka
+   panelu. Obudowa panelu i wiersz wykazu należą do
+   `rama.css`. Mechanizm: `panel-sesji.js`.
+   Wykaz sesji jest płaski: porządek niesie sortowanie (`data-sesje-sort`),
+   zakres — zawężenie (`data-sesje-widok`). Grupowanie należy do projektu,
+   czyli do drzewa na drugiej karcie panelu. */
+/* Filtry wykazu stoją w pasku panelu, razem z pozostałymi jego kontrolkami.
+   Osobny wiersz pod paskiem, w którym stała sama ta jedna ikona, zniknął —
+   pas kontrolek jest jeden. Karta Sesje i karta Projekty mają własne zakresy
+   zawężenia i porządku, więc każda niesie własną kontrolkę; widoczna jest ta,
+   która należy do karty odsłoniętej. */
+.dn-obszar-panel--boczny:has(#panel-projekty:not([hidden])) [data-filtr='sesje'],
+.dn-obszar-panel--boczny:has(#panel-sesje:not([hidden])) [data-filtr='projekty'] { display: none; }
+/* Menu nagłówka karty stoi przy prawej krawędzi panelu — wyrównuje się prawą
+   stroną, inaczej wchodzi na okno obok. Zapas arkuszowy dla widoków bez
+   `menu.js`; z nim położenie liczy komponent. */
+.dn-panel-glowa .sta-menu-tresc { left: auto; right: 0; }
+
+/* Karta panelu jest kolumną: nagłówek i stopka stoją, wykaz przewija się.
+   Warunek `:not([hidden])` jest konieczny — `display` zadeklarowany przez autora
+   wygrywa z `[hidden]` z arkusza przeglądarki i karta odłożona zostałaby
+   widoczna. */
+.dn-obszar-panel--boczny .dn-obszar-tresc:not([hidden]) { display: flex; flex-direction: column; min-height: 0; }
+
+.dn-panel-wykaz {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--dn-od-2);
+}
+.dn-panel-galaz .dn-panel-wykaz { flex: none; overflow: visible; }
+
+/* Nagłówek zakresu w drzewie projektów. Wykaz sesji jest płaski — porządek
+   niesie sortowanie, nie nagłówki. */
+.dn-panel-grupa {
+  padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+
+.dn-panel-poz > .dn-stan-znacznik { margin-right: var(--dn-od-1); }
+
+/* Wiersz wykazu i jego menu są rodzeństwem, nie zagnieżdżeniem: przycisk
+   wewnątrz przycisku jest niepoprawnym dokumentem i czytnik ekranu gubi na nim
+   granicę pozycji. Menu leży na prawej krawędzi wiersza, więc wiersz rezerwuje
+   dla niego miejsce w wyściółce. */
+.dn-panel-wiersz { position: relative; }
+.dn-panel-wiersz > .dn-obszar-pozycja { padding-right: calc(var(--dn-od-2) + var(--dn-wym-ikona-lg)); }
+.dn-panel-wiersz > .dn-obszar-pozycja-menu {
+  position: absolute;
+  top: 50%;
+  right: var(--dn-od-2);
+  transform: translateY(-50%);
+}
+.dn-panel-wiersz:hover > .dn-obszar-pozycja-menu,
+.dn-panel-wiersz:focus-within > .dn-obszar-pozycja-menu { opacity: 1; }
+
+/* Środowisko przy wierszu — wymiar sortowania widoczny bez nagłówków grup.
+   Wykaz zostaje jednowierszowy: nazwa skraca się wielokropkiem, środowisko
+   stoi przy prawej krawędzi i ustępuje miejsca menu wiersza. */
+/* Krój bazowy zamiast maszynowego: w 12 px Plex Mono jest o jedną trzecią
+   szerszy od Plex Sans i przy wierszu sesji czytał się jak drugi tytuł.
+   Barwa idzie o stopień wyżej — --dn-tekst-3 dawało 3,43 : 1 na panelu,
+   poniżej progu 4,5 : 1 dla tekstu tej wielkości.
+
+   Przy ciasnym wierszu ustępuje oznaczenie środowiska, nie nazwa sesji: nazwa
+   jest rzeczą, po której Operator poznaje wiersz, a środowisko wymiarem
+   porządkującym. `flex: none` trzymało środowisko w pełnej szerokości i cały
+   niedobór spadał na nazwę. Współczynnik kurczenia tysiąc wobec jednego przy
+   nazwie sprawia, że niedobór zdejmuje najpierw środowisko — aż do wielokropka
+   i do zera. */
+.dn-panel-srod {
+  flex: 0 1000 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+  transition: opacity var(--dn-czas-1) var(--dn-ease);
+}
+/* Nazwa oddaje miejsce dopiero wtedy, gdy oznaczenie środowiska nie ma już co
+   oddawać; nie schodzi przy tym poniżej progu czytelności. */
+.dn-panel-wiersz .dn-obszar-pozycja-tekst { flex: 1 1 auto; min-width: 12ch; }
+/* Resztka oznaczenia nic nie mówi — poniżej progu ustępuje w całości.
+   Próg liczy `panel-sesji.js`. */
+.dn-panel-wiersz[data-srod='ukryte'] .dn-panel-srod { display: none; }
+.dn-panel-wiersz:hover .dn-panel-srod,
+.dn-panel-wiersz:focus-within .dn-panel-srod { opacity: 0; }
+
+/* Zawężenie wykazu. Wiersz odłożony zostaje w znaczniku — wraca bez
+   przebudowy wykazu. Odkłada się cała obudowa wiersza wraz z jego menu, więc
+   warunek stoi na obudowie, nie na wierszu. */
+/* Zestaw stanów sesji jest zamknięty i liczy trzy wartości: praca, reakcja,
+   zakonczone. Stan `blad` nie występuje — sesja przerwana czeka na Operatora,
+   czyli jest w stanie `reakcja`. */
+.dn-panel-wykaz[data-sesje-widok='czynne']     > .sta-menu:not(:has(> .dn-panel-poz[data-stan='praca'])),
+.dn-panel-wykaz[data-sesje-widok='reakcja']    > .sta-menu:not(:has(> .dn-panel-poz[data-stan='reakcja'])),
+.dn-panel-wykaz[data-sesje-widok='zakonczone'] > .sta-menu:not(:has(> .dn-panel-poz[data-stan='zakonczone'])) { display: none; }
+
+/* Zawężenie drzewa projektów: gałąź bez sesji w danym stanie odkłada się. */
+.dn-panel-drzewo[data-projekty-widok='praca']   > .dn-panel-galaz:not(:has(.dn-panel-poz[data-stan='praca'])),
+.dn-panel-drzewo[data-projekty-widok='reakcja'] > .dn-panel-galaz:not(:has(.dn-panel-poz[data-stan='reakcja'])) { display: none; }
+
+/* ── Drzewo projektów ───────────────────────────────────────────────────────
+   Gałąź rozwija się i zwija na każdym poziomie; sesje projektu są liśćmi.
+   Znak rozwinięcia obraca się — kierunek grotu niesie stan gałęzi. */
+.dn-panel-drzewo { display: flex; flex-direction: column; }
+
+.dn-panel-galaz > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-wiersz);
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+  border-left: var(--dn-wym-wstega) solid transparent;
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-panel-galaz > summary::-webkit-details-marker { display: none; }
+.dn-panel-galaz > summary:hover { background: var(--dn-hover); }
+.dn-panel-galaz > summary:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+/* Grot stoi po prawej stronie pozycji — po tej samej, po której rozwija się
+   drzewo, i po tej, na której w drzewach systemowych stoi znak rozwinięcia
+   pozycji z czynnościami. Kolejność w wierszu: nazwa · licznik · menu · grot. */
+.dn-panel-galaz-grot {
+  order: 9;
+  flex: none;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  color: var(--dn-tekst-2);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-panel-galaz[open] > summary > .dn-panel-galaz-grot { transform: rotate(90deg); }
+.dn-panel-galaz-nazwa { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Licznik sesji projektu nie niesie stanu: znacznik stanu należy do sesji,
+   nie do zbioru, w którym sesje stoją. */
+.dn-panel-galaz-licznik {
+  flex: none;
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+/* Czynności gałęzi ujawniają się przy wskazaniu, tak samo jak przy wierszu
+   sesji. Reguła z `rama.css` odsłania je przy `.dn-obszar-pozycja`, a gałąź
+   nie jest pozycją wykazu — tu potrzebny jest własny warunek. */
+.dn-panel-galaz > summary > .dn-obszar-pozycja-menu { opacity: 0; }
+.dn-panel-galaz > summary:hover > .dn-obszar-pozycja-menu,
+.dn-panel-galaz > summary:focus-within > .dn-obszar-pozycja-menu { opacity: 1; }
+
+/* Wcięcie liścia rysuje przynależność do gałęzi. Wymiar nie jest dobrany na
+   oko: nazwa projektu zaczyna się o wstęgę i jeden odstęp od krawędzi panelu,
+   a sesja o dokładnie jeden stopień skali odstępów dalej. Wszystkie sesje
+   gałęzi stoją przez to w jednej pionowej linii.
+   Kreska prowadząca idzie pseudoelementem, nie obrysem: obrys wchodziłby do
+   układu i psuł wymiar wcięcia o swój włos. */
+.dn-panel-galaz > .dn-panel-wykaz {
+  position: relative;
+  margin-left: calc(var(--dn-wym-wstega) + var(--dn-od-3) + var(--dn-od-3));
+  padding-bottom: 0;
+}
+.dn-panel-galaz > .dn-panel-wykaz::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--dn-od-2));
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--dn-obrys);
+  pointer-events: none;
+}
+
+/* ── Stopka panelu: akcja zbiorcza właściwa karcie ──────────────────────────
+   Sesje niosą „Usuń wszystkie sesje", projekty „Usuń wszystkie projekty" —
+   akcja stoi w tym samym miejscu, ale dotyczy tylko widocznego zakresu. */
+.dn-panel-stopka {
+  margin-top: auto;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys);
+  background: var(--dn-panel);
+}
+.dn-panel-stopka > .dn-btn { width: 100%; justify-content: center; }
+
+/* ── Zwinięcie i przypięcie panelu ──────────────────────────────────────────
+   Panel jest dostępny niezależnie od modułu w oknie centralnym. Zwinięcie
+   ręczne idzie z pasa narzędzi, automatyczne z ustawienia; przypięcie blokuje
+   zwijanie automatyczne. */
+.dn-obszar-sterowanie > [data-panel-przypnij][aria-pressed='true'] {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}

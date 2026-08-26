@@ -1,0 +1,1898 @@
+/* ============================================================================
+   DANACO CONSOLE — RAMA OKNA APLIKACJI
+   ----------------------------------------------------------------------------
+   Pasy ramy, obecne w każdym oknie platformy niezależnie od środowiska,
+   modułu i widoku:
+
+   1 · SZYNA NAWIGACJI — pionowy pas przy lewej krawędzi, biegnący od samej
+       góry okna. Jej pierwszą pozycją jest menu aplikacji; szerokość szyny
+       równa się wysokości belki tytułowej, więc pozycja ta zajmuje kwadrat
+       w narożniku okna.
+
+   2 · BELKA TYTUŁOWA — pas atramentowy zaczynający się na prawo od szyny.
+       Po lewej znak i nazwa produktu, pośrodku tytuł bieżącego widoku,
+       po prawej sterowanie oknem systemowym.
+
+   3 · PASEK EDYCJI — belka nakładana pod belką tytułową. Po lewej narzędzia
+       operowania oknem i treścią, dalej pole wyszukiwania, za nim pasmo kart
+       otwartych sesji, po prawej narzędzia widoku i aplikacji.
+
+   Każda kontrolka pasa niesie etykietę ujawnianą najechaniem i fokusem oraz
+   mikroreakcję ruchu w czasie --dn-czas-1. Rozwijane menu korzystają
+   z mechaniki .sta-menu.
+
+   Wyłącznie żetony var(--dn-*). Zero wartości szesnastkowych. Oba motywy.
+   ============================================================================ */
+
+/* Żeton --dn-wym-belka należy do rejestru w zetony.css. */
+
+/* ══ 1 · BELKA TYTUŁOWA ═══════════════════════════════════════════════════ */
+
+.dn-belka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  height: var(--dn-wym-belka);
+  padding: 0 0 0 var(--dn-od-3);
+  background: var(--dn-rama);
+  color: var(--dn-rama-tekst);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.dn-belka-marka {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+}
+.dn-belka-marka svg { width: 18px; height: 18px; flex: none; }
+.dn-belka-nazwa {
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-srednia);
+  letter-spacing: var(--dn-ls-naglowek);
+  white-space: nowrap;
+}
+.dn-belka-nazwa b { font-weight: var(--dn-fw-polgruba); }
+
+/* Tytuł bieżącego widoku — środek belki, przycięty przy ciasnym oknie. */
+.dn-belka-tytul {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-rama-tekst-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sterowanie oknem systemowym — po prawej, bez odstępu od krawędzi. */
+.dn-belka-okno { display: flex; flex: none; -webkit-app-region: no-drag; }
+.dn-belka-btn {
+  display: grid;
+  place-content: center;
+  width: 46px;
+  height: var(--dn-wym-belka);
+  border: 0;
+  background: transparent;
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-belka-btn svg { width: 12px; height: 12px; }
+.dn-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+.dn-belka-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-belka-btn--zamknij:hover { background: var(--dn-blad-tekst); color: var(--dn-tekst-inv); }
+
+/* ══ 2 · PASEK NARZĘDZI ═══════════════════════════════════════════════════ */
+
+/* Pas edycji jest belką nakładaną: leży na własnej tacy, ma zaokrąglone rogi
+   i nie ma obrysu. Od tacy pod sobą oddziela go wyłącznie różnica odcienia
+   — kreska w tym miejscu dokładałaby linię tam, gdzie wystarcza ton.
+
+   Para żetonów --dn-wstazka i --dn-wstazka-taca istnieje wyłącznie po to, by
+   różnica odcienia była równie czytelna w motywie jasnym co w ciemnym. Żetony
+   ogólne na tę parę nie wystarczają: w motywie jasnym --dn-panel i --dn-tło
+   dzieli sześć stopni skali — za mało, by belka odcięła się bez obrysu. */
+.dn-narzedzia-pas {
+  display: flex;
+  align-items: center;
+  flex: none;
+  /* Pas edycji musi tworzyć własną warstwę ponad treścią widoku: jego menu są
+     pozycjonowane bezwzględnie i bez tego otwierają się POD płótnem — z pozoru
+     „nie rozwijają się". */
+  position: relative;
+  z-index: var(--dn-z-pasek);
+  padding: var(--dn-od-2);
+  /* Taca pasa narzędzi to obudowa aplikacji, nie rama okna: ta sama barwa co
+     tło strony, belka i szyna. Jaśniejsze jest tylko pasmo kart w oknie. */
+  background: var(--dn-tlo);
+}
+.dn-narzedzia {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  height: var(--dn-wym-pasek);
+  padding: 0 var(--dn-od-2);
+  border: 0;
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-wstazka);
+  /* Wstążka jest jednym pasem: nie zawija się do drugiego wiersza, a nadmiar
+     przycina pasmo kart, nie rodziny ikon. Sama wstążka NIE może przycinać —
+     przycinanie zamykałoby rozwinięte menu w jej wysokości, przez co menu
+     z pozoru „nie rozwijałyby się". Nadmiar przycina pasmo kart u siebie. */
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow: visible;
+  white-space: nowrap;
+}
+
+.dn-narzedzia-grupa {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+/* Separator rozdziela rodziny ikon, nie pojedyncze ikony. Kreska stoi blisko
+   obu rodzin — odstęp bez kreski czytałby się jako brak ikony. */
+.dn-narzedzia-karty + .dn-narzedzia-grupa::before,
+.dn-narzedzia-grupa + .dn-narzedzia-grupa::before,
+.dn-narzedzia-szukaj + .dn-narzedzia-grupa::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--dn-od-2) 0 var(--dn-od-1);
+  background: var(--dn-obrys-mocny);
+}
+/* Układ przeglądarkowy: sterowanie i ścieżka po lewej, pole wyszukiwania
+   zaraz za nimi, a dalej wolne pasmo na karty otwartych sesji. */
+.dn-narzedzia-szukaj {
+  position: relative;
+  /* Pole trzyma zwartą szerokość — filtr ma stać tuż za wpisywanym tekstem,
+     nie na drugim końcu wstążki. */
+  flex: 0 1 340px;
+  min-width: 180px;
+}
+.dn-narzedzia-szukaj > input { font-size: var(--dn-fs-sm); }
+
+/* Filtr zakresu wyszukiwania — sama ikona przy prawej krawędzi pola, wewnątrz
+   jego obrysu. Nie jest osobnym przyciskiem obok pola: pozostaje znakiem
+   wewnątrz kontrolki, tak jak lupa po lewej stronie. Nazwę niesie etykieta
+   ujawniana najechaniem, nie napis zajmujący miejsce w polu. */
+.dn-szukaj-filtr {
+  /* Znak wewnątrz obrysu pola: pole jest ustawione względnie, więc przycisk
+     kładzie się na jego prawej krawędzi — nie stoi za nim jako kolejny element
+     wiersza. Wcześniej `margin-left` wypychał go poza obrys. */
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: calc(var(--dn-wym-ikonowy) - 6px);
+  height: calc(var(--dn-wym-ikonowy) - 6px);
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-3);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-szukaj-filtr svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-szukaj-filtr:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-szukaj-filtr:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+/* Ikona filtra zostaje monochromatyczna w każdym stanie — jak lupa po lewej.
+   Otwarta lista: neutralne tło wciśnięcia, tak jak w pozostałych przyciskach
+   ikonowych. Zawężony zakres: kropka sygnałowa w narożniku, czyli kształt,
+   a nie przemalowana ikona (zasada „stan nigdy samym kolorem"). */
+.dn-szukaj-filtr[aria-expanded='true'] { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-szukaj-filtr[data-zawezony='tak']::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+}
+
+/* Umiejscowienie z wyższą swoistością niż `.dn-etykietka`, która nadaje
+   przyciskowi `position: relative` na potrzeby podpowiedzi. */
+.dn-szukaj > .dn-szukaj-filtr {
+  position: absolute;
+  right: var(--dn-od-1);
+}
+
+/* Pole z filtrem rezerwuje miejsce po prawej, żeby wpisywany tekst i tekst
+   zastępczy nie wchodziły pod ikonę. */
+.dn-szukaj:has(> .dn-szukaj-filtr) > input,
+.dn-szukaj:has(> .dn-szukaj-filtr) > .dn-pole-kontrolka {
+  padding-right: var(--dn-od-8);
+}
+
+/* Rozwijany zakres — lista środowisk do zaznaczenia. */
+.dn-szukaj-zakres {
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  right: 0;
+  z-index: var(--dn-z-tooltip);
+  width: 280px;
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+}
+.dn-szukaj-zakres[hidden] { display: none; }
+.dn-szukaj-zakres-glowa {
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-2);
+  font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
+}
+.dn-szukaj-opcja {
+  display: flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-2); border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst); cursor: pointer;
+}
+.dn-szukaj-opcja:hover { background: var(--dn-hover); }
+.dn-szukaj-zakres-stopka {
+  display: flex; justify-content: space-between; gap: var(--dn-od-2);
+  margin-top: var(--dn-od-2); padding-top: var(--dn-od-2);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* Pasmo kart otwartych sesji — wolne miejsce między wyszukiwaniem
+   a przyciskiem dostosowania. */
+.dn-narzedzia-karty {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* ── Dostosowanie wstążki ───────────────────────────────────────────────── */
+
+/* Przycisk jest wejściem w konfigurację samego pasa, nie czynnością na treści,
+   więc nie należy do żadnej rodziny ikon. Wstążka niesie same ikony bez napisów,
+   więc i ten przycisk jest samą ikoną — napis zostaje wyłącznie jako etykieta
+   ujawniana najechaniem i nazwa dla technologii wspomagających.
+   Ostatnią pozycją pasa jest rozwinięcie „Więcej" (trzy kropki); dostosowanie
+   stoi bezpośrednio przed nim — kolejność ustawiają własności `order` niżej. */
+.dn-narzedzia-dostosuj {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  order: 1;
+  flex: none;
+  width: var(--dn-wym-ikonowy);
+  height: var(--dn-wym-ikonowy);
+  /* Miejsce na kreskę separatora, która stoi POZA przyciskiem (niżej). */
+  margin-left: var(--dn-od-3);
+  padding: 0;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-narzedzia-dostosuj svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+.dn-narzedzia-dostosuj:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-narzedzia-dostosuj:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+/* Kreska oddziela dostosowanie od poprzedzającej rodziny ikon — w tej samej
+   odległości co pozostałe separatory pasa. Przycisk nie ma już poziomego
+   dopełnienia, więc kreska nie wymaga kompensacji. */
+/* Kreska stoi poza obrysem przycisku: wewnątrz zabierałaby miejsce ikonie
+   i spychała ją z osi, a tło najechania obejmowałoby sam separator. */
+.dn-narzedzia-dostosuj::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--dn-od-2) * -1);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 20px;
+  background: var(--dn-obrys-mocny);
+}
+
+/* Napis przycisku nie wchodzi do pasa: wstążka niesie same ikony. Tekst zostaje
+   w znaczniku dla technologii wspomagających i dla etykiety najechania. */
+.dn-narzedzia-dostosuj span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Rozwinięcie „Więcej" stoi za dostosowaniem i nie oddziela się od niego kreską
+   — obie pozycje należą do sterowania samym pasem, nie do rodzin ikon
+   działających na treści. */
+/* Grupa wskazana klasą, nie pozycją w dokumencie: kolejność w pasie ustala
+   `order`, a pozycja ostatnia w znaczniku należy do Always On Display. Selektor
+   oparty na `:last-of-type` przestałby tu działać. */
+.dn-narzedzia-grupa--wiecej {
+  order: 2;
+}
+/* Separator znosimy selektorem o specyficzności nie niższej niż reguła, która
+   go tworzy (`.dn-narzedzia-grupa + .dn-narzedzia-grupa::before`) — inaczej
+   kreska wraca między dostosowaniem a rozwinięciem „Więcej". */
+.dn-narzedzia-grupa + .dn-narzedzia-grupa--wiecej::before,
+.dn-narzedzia-karty + .dn-narzedzia-grupa--wiecej::before,
+.dn-narzedzia-szukaj + .dn-narzedzia-grupa--wiecej::before {
+  content: none;
+}
+
+/* ── Always On Display — pozycja zamykająca pas ──────────────────────────── */
+
+/* Nakładka podglądu jest odrębną warstwą pracy, nie czynnością na treści okna:
+   zamyka pas jako pozycja własna, wyróżniona kapsułą w błękicie sygnałowym.
+   Wyróżnienie odpowiada miejscu, jakie w pasach przeglądarek zajmuje wejście
+   w warstwę sztucznej inteligencji. Napisu nie niesie — pas ma same ikony. */
+/* Grupa niesie pozycjonowanie rozwinięcia — menu korzysta z mechaniki .sta-menu,
+   tak jak pozostałe rozwinięcia pasa. */
+.dn-narzedzia-aod-grupa {
+  position: relative;
+  order: 3;
+  flex: none;
+  margin-left: var(--dn-od-1);
+}
+
+/* Pozycja jest paskiem, nie ikoną w kole: niesie ikonę agenta towarzyszącego,
+   nazwę funkcji globalnej i grot rozwinięcia. Nazwa stoi wprost, bo pozycja nie należy do rodzin
+   ikon pasa — jest wejściem w funkcję globalną i ma być rozpoznawalna bez
+   najeżdżania kursorem.
+
+   Menu niesie wyłącznie funkcje udokumentowane w funkcje-globalne/always-on-display.md:
+   powierzchnię interakcji (rozdz. 8.2, skrót Ctrl+Shift+A), listę oczekujących sugestii
+   i historię sugestii (rozdz. 2 i 13, warstwy 2–3), tor głosowy, obserwację procesu,
+   wyciszanie (warstwa 3) oraz reguły wyzwalania (warstwa 4). Żadnej pozycji spoza tego
+   zbioru menu nie zawiera. */
+.dn-narzedzia-aod {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  height: var(--dn-wym-ikonowy);
+  padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
+  border: 1px solid var(--dn-sygnal-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-narzedzia-aod svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+/* Grot zapowiada menu — mniejszy od ikony wiodącej, nie konkuruje z nazwą. */
+.dn-narzedzia-aod .dn-aod-grot { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); opacity: 0.75; }
+.dn-narzedzia-aod:hover {
+  background: var(--dn-sygnal-wypelnienie);
+  border-color: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-szary-0);
+}
+.dn-narzedzia-aod:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+/* Menu otwarte albo powierzchnia interakcji czynna — kapsuła wypełniona. */
+.dn-narzedzia-aod[aria-expanded='true'],
+.dn-narzedzia-aod[data-czynna='tak'] {
+  background: var(--dn-sygnal-wypelnienie);
+  border-color: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-szary-0);
+}
+
+/* Wąskie okno — nazwa ustępuje, zostaje ikona z grotem. */
+@media (max-width: 1200px) {
+  .dn-narzedzia-aod span { display: none; }
+  .dn-narzedzia-aod { padding: 0 var(--dn-od-2); }
+}
+
+/* ── Kontrolka narzędziowa: ikona z mikroreakcją ruchu ──────────────────── */
+
+.dn-nrz-btn {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-ikonowy);
+  height: var(--dn-wym-ikonowy);
+  flex: none;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-nrz-btn svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-nrz-btn:hover {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+  transform: translateY(-1px);
+}
+.dn-nrz-btn:active { transform: translateY(0); }
+.dn-nrz-btn:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-nrz-btn[aria-expanded='true'],
+.dn-nrz-btn[aria-pressed='true'] {
+  background: var(--dn-powierzchnia-2);
+  color: var(--dn-tekst);
+}
+.dn-nrz-btn[disabled] { cursor: default; }
+
+/* ── Etykieta ujawniana najechaniem i fokusem ───────────────────────────── */
+
+.dn-etykietka { position: relative; }
+.dn-etykietka::after {
+  content: attr(data-etykietka);
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  left: 50%;
+  z-index: var(--dn-z-tooltip);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-xs);
+  font-weight: var(--dn-fw-srednia);
+  line-height: var(--dn-lh-ciasny);
+  white-space: nowrap;
+  box-shadow: var(--dn-cien-3);
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  pointer-events: none;
+  transition: opacity var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-etykietka:hover::after,
+.dn-etykietka:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+/* Etykieta przy krawędzi pasa nie wychodzi poza okno: przy lewej krawędzi
+   kotwiczy się lewym bokiem, przy prawej — prawym. Wyśrodkowanie obowiązuje
+   wyłącznie kontrolki, które mają miejsce po obu stronach. */
+.dn-narzedzia > .dn-narzedzia-grupa:first-child .dn-etykietka::after {
+  left: 0;
+  transform: translate(0, -2px);
+}
+.dn-narzedzia > .dn-narzedzia-grupa:first-child .dn-etykietka:hover::after,
+.dn-narzedzia > .dn-narzedzia-grupa:first-child .dn-etykietka:focus-visible::after {
+  transform: translate(0, 0);
+}
+.dn-narzedzia > .dn-narzedzia-grupa:last-child .dn-etykietka::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -2px);
+}
+.dn-narzedzia > .dn-narzedzia-grupa:last-child .dn-etykietka:hover::after,
+.dn-narzedzia > .dn-narzedzia-grupa:last-child .dn-etykietka:focus-visible::after {
+  transform: translate(0, 0);
+}
+/* Pasek panelu jest węższy niż okno: etykietka wyśrodkowana pod przyciskiem
+   przy prawej krawędzi panelu wychodziła poza jego obrys i była ucinana
+   („Zawężenie i por…"). W pasku panelu kotwiczy się więc prawym bokiem —
+   ta sama zasada, co dla skrajnych grup paska narzędzi wyżej. */
+.dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka::after {
+  left: auto;
+  right: 0;
+  transform: translate(0, -2px);
+}
+.dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:hover::after,
+.dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:focus-visible::after {
+  transform: translate(0, 0);
+}
+
+/* Menu otwarte przejmuje uwagę — etykieta ustępuje. */
+.dn-etykietka[aria-expanded='true']::after { content: none; }
+
+/* Pozycja szyny nosi własną etykietę — panel `.dn-szyna-etyk` wysuwany w bok.
+   Dymka ogólna rysowała się na niej drugi raz: pod pozycją i wyśrodkowana na
+   ikonie o szerokości 40 px, a szyna ma szerokość belki, więc lewa połowa
+   dymki wychodziła poza krawędź okna i zostawała ucięta (widoczna jako ramka
+   bez tekstu). W szynie obowiązuje jedna etykieta — panel boczny. */
+.dn-szyna-poz.dn-etykietka::after { content: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-nrz-btn:hover { transform: none; }
+  .dn-etykietka::after { transition: none; }
+}
+
+/* ══ 3 · MENU ROZWIJANE PASA NARZĘDZI ═════════════════════════════════════ */
+
+.dn-nrz-menu { position: relative; }
+/* ── Położenie menu wywołanych z ramy — zapas arkuszowy ───────────────────────
+   Gdy `menu.js` jest wpięty, wylicza położenie każdego panelu i te reguły
+   nadpisuje. Bez niego panel musi trafić w miejsce właściwe dla pasa, z którego
+   go wywołano: szyna stoi przy krawędzi okna, więc jej menu wychodzi w prawo;
+   stopka szyny kotwiczy się dołem; sterowanie panelu i grupa funkcji globalnych
+   stoją przy prawej krawędzi, więc ich menu wyrównuje się prawą stroną. */
+.dn-nrz-menu > .sta-menu-tresc { top: calc(100% + var(--dn-od-1)); }
+.dn-narzedzia-aod-grupa .sta-menu-tresc { top: calc(100% + var(--dn-od-1)); right: 0; left: auto; }
+.dn-obszar-sterowanie .sta-menu-tresc { left: auto; right: 0; }
+.dn-szyna-nawigacji .sta-menu-tresc { top: 0; bottom: auto; left: calc(100% + var(--dn-od-2)); right: auto; }
+.dn-szyna-stopka .sta-menu-tresc { top: auto; bottom: 0; }
+.dn-szyna-nawigacji > .sta-menu:first-child > .sta-menu-tresc { top: var(--dn-wym-belka); }
+/* Menu z podmenu nie jest pojemnikiem przewijanym — przewijanie przycina panele
+   wysuwane w bok. */
+.dn-szyna-nawigacji .sta-menu-tresc:has(.sta-podmenu),
+#menu-aplikacji { max-height: none; overflow: visible; }
+
+
+.dn-menu-szeroki { min-width: 320px; }
+
+/* Nagłówek menu profilu — awatar konta obok nazwy użytkownika. Awatar jest
+   miejscem na własne zdjęcie Operatora: komponent `.dn-awatar` ma `overflow:
+   hidden`, więc wstawiony `<img>` przycina się do koła sam. Bez zdjęcia pozycję
+   wypełniają inicjały, a przy ich braku — znak konta. */
+.dn-menu-profil {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-2);
+}
+.dn-menu-profil .dn-awatar { flex: none; }
+.dn-menu-profil .dn-awatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dn-menu-profil-dane { display: flex; flex-direction: column; min-width: 0; }
+.dn-menu-profil-nazwa {
+  font-size: var(--dn-fs-base);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dn-menu-profil-login {
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Treść rozwinięcia łamie wiersze normalnie. Wstążka niesie `white-space: nowrap`,
+   bo jej pozycje mają stać w jednym pasie — ale menu są jej potomkami i bez tego
+   dziedziczą zakaz łamania: długi opis pod pozycjami rozpychał wtedy rozwinięcie
+   na całą swoją długość, dając menu szersze od okna treści. */
+/* Wiersz pozycji zostaje w jednym wierszu — łamie się wyłącznie proza objaśnień. */
+.dn-narzedzia .sta-menu-poz,
+.dn-szyna-nawigacji .sta-menu-poz { white-space: nowrap; }
+.dn-menu-naglowek {
+  padding: var(--dn-od-2) var(--dn-od-2) var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-menu-opis {
+  padding: 0 var(--dn-od-2) var(--dn-od-2);
+  font-size: var(--dn-fs-xs);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-3);
+}
+.dn-menu-poz-ikona { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; color: var(--dn-tekst-3); }
+.sta-menu-poz:hover .dn-menu-poz-ikona { color: var(--dn-tekst-2); }
+
+/* Wiersz przypisania skrótu klawiszowego. */
+.dn-menu-skrot {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+}
+.dn-menu-skrot-etykieta { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
+.dn-menu-skrot-pole {
+  margin-left: auto;
+  min-width: 132px;
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  padding: 0 var(--dn-od-2);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  text-align: center;
+}
+
+/* Pole wyszukiwania rozwijane spod lupy. */
+.dn-menu-szukaj { padding: var(--dn-od-2); }
+.dn-menu-szukaj .dn-szukaj { width: 100%; }
+
+/* ══ 4 · POWŁOKA Z RAMĄ ═══════════════════════════════════════════════════ */
+
+/* Powłoka z ramą układa się kolumnowo: belka · pas narzędzi · korpus.
+   Warunek `:has(> .dn-rama-korpus)` wiąże regułę z obecnością ramy, więc wynik
+   nie zależy od kolejności wpięcia arkuszy: powłoki bez ramy zachowują układ
+   siatkowy zadeklarowany w swoich arkuszach (`stanowisko.css`, `przedsionek.css`,
+   `prototyp.css`). */
+.sta-powloka:has(> .dn-rama-korpus),
+.pd-powloka:has(> .dn-rama-korpus),
+.pt-powloka:has(> .dn-rama-korpus) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  background: var(--dn-tlo);
+  overflow: hidden;
+}
+/* Strefa treści bierze resztę wysokości; pasy ramy zachowują własną. */
+.sta-powloka > .sta-cialo,
+.sta-powloka > .cd-plotno,
+.sta-powloka > main,
+.pd-powloka > .pd-cialo,
+.pt-powloka > .pt-cialo,
+.pt-powloka > main { flex: 1 1 auto; min-height: 0; }
+.sta-powloka > .dn-belka,   .sta-powloka > .dn-narzedzia,
+.pd-powloka > .dn-belka,    .pd-powloka > .dn-narzedzia,
+.pt-powloka > .dn-belka,    .pt-powloka > .dn-narzedzia { flex: none; }
+
+/* ══ 5 · PROGI ════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1400px) { .dn-narzedzia-szukaj { flex-basis: 340px; } }
+@media (max-width: 1200px) {
+  }
+@media (max-width: 960px) {
+  .dn-belka-tytul { display: none; }
+  .dn-narzedzia-grupa--drugorzedna { display: none; }
+}
+
+/* ══ 5 · SZYNA NAWIGACJI — środowiska i moduły ════════════════════════════ */
+
+/* Pionowy pas przy lewej krawędzi, biegnący od samej góry okna aż do paska
+   stanu. Niesie barwę ramy — odwróconą względem powierzchni okna w obu
+   motywach — dzięki czemu czyta się jako część ramy, nie jako panel treści.
+
+   Szerokość szyny równa się wysokości belki tytułowej: menu aplikacji zajmuje
+   przez to kwadrat w narożniku okna, a belka tytułowa zaczyna się dokładnie
+   na prawo od niego.
+
+   Środowiska stoją w ramkach, moduły bez ramek. Wybór środowiska rozwija
+   jego moduły w dół, przesuwając środowiska następne; rozwinięte jest
+   najwyżej jedno środowisko naraz. */
+
+/* Szerokość szyny wynika z wysokości belki tytułowej: to belka wyznacza wymiar,
+   szyna go przyjmuje. Dzięki temu menu aplikacji zajmuje w narożniku okna
+   kwadrat, a dolna krawędź belki pokrywa się z dolną krawędzią tej pozycji.
+   Szyna nie ma własnej wartości — rozejście się obu wymiarów łamie narożnik. */
+:root { --dn-wym-szyna: var(--dn-wym-belka); }
+
+.dn-szyna-nawigacji {
+  /* Geometria pozycji szyny zapisana raz, jako zmienne komponentu; reguły
+     niżej wyłącznie się do niej odwołują. Wymiar zwarty nie może iść z żetonu
+     przycisku ikonowego: ten rośnie do 40 px przy wskaźniku dotykowym i przy
+     gęstości przestronnej, a szyna zwarta ma zmieścić trzy strefy w oknie
+     o 768 px wysokości. */
+  --szyna-poz: 40px;
+  --szyna-poz-zwarta: 34px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: var(--dn-z-boczna);
+  gap: var(--dn-od-2);
+  width: var(--dn-wym-szyna);
+  flex: none;
+  padding: 0 0 var(--dn-od-2);
+  overflow: visible;
+  /* Szyna i belka tytułowa niosą tę samą barwę atramentu i łączą się bez
+     kreski: rama okna czyta się jako jedna bryła, nie jako dwa pasy zestawione
+     obok siebie. Od treści oddziela szynę różnica odcienia, nie obrys. */
+  background: var(--dn-rama);
+  overflow: visible;
+}
+/* Trzy strefy szyny stoją w jednym pasie, ale tylko jedna z nich się przewija.
+   Strefa pracy zachowuje się jak głowa, strefa szybkiego wyboru jak stopka:
+   obie są zakotwiczone i zawsze widoczne. Przewija się wyłącznie strefa
+   środowisk, bo tylko ona rośnie — cztery środowiska po osiem–dziesięć modułów
+   to blisko czterdzieści pozycji, które przy 1366×768 wypychały szybki wybór
+   poza kontener i cicho go ucinały.
+
+   Etykieta pozycji nie ucierpi na przewijaniu: ma położenie ustalane względem
+   okna (position: fixed, współrzędne nadaje rama.js), więc kontener
+   przycinający nie ma nad nią władzy. */
+.dn-szyna-tresc {
+  /* Pozycje zaczynają się dokładnie na górnej krawędzi okna sesji: pasek edycji
+     plus przerwa między nim a panelami. Zmierzone: panele startują na y=112
+     przy pasku górnym 56 px i pasku edycji 48 px. */
+  padding-top: calc(var(--dn-wym-belka) + var(--dn-od-2));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Pas nie przewija się jako całość — przewijanie zeszło o poziom niżej, do
+     strefy środowisk. Przepełnienie zostaje widoczne, żeby ramka pozycji i
+     kreska modułów nie były przycinane przy krawędziach pasa. */
+  overflow: visible;
+}
+/* Strefa pracy i kreski nie ustępują miejsca nigdy. */
+.dn-szyna-tresc > .dn-szyna-sekcja,
+.dn-szyna-tresc > .dn-szyna-kreska { flex: none; }
+
+/* Żadna strefa się nie rozciąga. Wszystkie mają podstawę z własnej treści
+   (`flex-basis: auto`) i `flex-grow: 0`, więc nadmiar wysokości nigdy nie
+   wchodzi do wnętrza pasa — zostaje jednym polem pod ostatnią strefą, przed
+   stopką. Rozciągnięta strefa środowisk rozdawała ten nadmiar w środku szyny
+   i między strefami powstawała szpara szeroka na dwie pozycje.
+
+   Niedobór miejsca zdejmuje się w ustalonej kolejności, przez współczynnik
+   kurczenia:
+     strefa pracy     `flex: none`      — nie ustępuje nigdy, trzy pozycje
+     strefa środowisk `flex: 0 1000 auto` — ustępuje pierwsza, aż do jednej pozycji
+     szybki wybór     `flex: 0 1 auto`  — ustępuje dopiero po niej
+   Obie strefy ustępujące przewijają się we własnym wnętrzu, więc nic nie
+   wychodzi poza pas i żadna pozycja nie rysuje się na drugiej — także przy
+   oknie 899×558, gdzie sam komplet pozycji zakotwiczonych nie mieści się już
+   w szynie. */
+.dn-szyna-nawigacji-lista,
+.dn-szyna-skroty {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Pasek przewijania systemowy zabrałby szynie kilka pikseli szerokości i
+     zsunął ikony w lewo względem pozostałych stref. Sygnał przewijania niesie
+     zamiast niego przygaszenie krawędzi (niżej). */
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+.dn-szyna-nawigacji-lista::-webkit-scrollbar,
+.dn-szyna-skroty::-webkit-scrollbar { width: 0; }
+
+.dn-szyna-nawigacji-lista {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  flex: 0 1000 auto;
+  /* Jedna pozycja zostaje widoczna nawet w oknie najniższym: strefa zwinięta do
+     zera nie mówiłaby, że środowiska w ogóle są. */
+  min-height: var(--szyna-poz-zwarta);
+}
+
+/* Strefa przewijana kończy się na całej pozycji, nie w połowie ikony: wysokość
+   docina do rytmu `rama.js`, oddając resztę do wspólnego nadmiaru pod ostatnią
+   strefą. Wartość wchodzi żetonem, nie wstawką stylu — znacznik zostaje czysty.
+   Bez skryptu strefa zachowuje wysokość z zginania. */
+.dn-szyna-nawigacji-lista,
+.dn-szyna-skroty { max-height: var(--szyna-strefa-wys, none); }
+
+/* Sygnał przewijania strefy środowisk — krawędź, za którą jest dalszy ciąg,
+   gaśnie zamiast urywać się w pół ikony. Stan nadaje `rama.js`
+   (`data-przewijanie`: gora, dol, oba); bez skryptu strefa zostaje bez maski,
+   czyli w stanie sprzed zmiany. */
+[data-przewijanie] { --szyna-zanik: var(--dn-od-6); }
+.dn-szyna-nawigacji-lista[data-przewijanie~='gora'],
+.dn-szyna-skroty[data-przewijanie~='gora'] {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--szyna-zanik), #000 100%);
+}
+.dn-szyna-nawigacji-lista[data-przewijanie~='dol'],
+.dn-szyna-skroty[data-przewijanie~='dol'] {
+  mask-image: linear-gradient(to bottom, #000 0, #000 calc(100% - var(--szyna-zanik)), transparent 100%);
+}
+.dn-szyna-nawigacji-lista[data-przewijanie~='gora'][data-przewijanie~='dol'],
+.dn-szyna-skroty[data-przewijanie~='gora'][data-przewijanie~='dol'] {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--szyna-zanik),
+                              #000 calc(100% - var(--szyna-zanik)), transparent 100%);
+}
+/* Menu aplikacji — kwadrat narożnika o boku równym wysokości belki. */
+.dn-szyna-nawigacji > .sta-menu:first-child {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: var(--dn-wym-belka);
+  flex: none;
+}
+
+/* ── Trzy strefy szyny ──────────────────────────────────────────────────── */
+
+/* Szyna dzieli się na trzy strefy o różnym przeznaczeniu: praca (nowa sesja,
+   historia, nowy projekt), środowiska oraz szybki wybór. Strefy rozdziela
+   delikatna kreska — na tyle słaba, by nie rysować pasa w pasie, i na tyle
+   obecna, by trzy zbiory nie zlewały się w jedną kolumnę ikon. */
+.dn-szyna-sekcja {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  width: 100%;
+}
+.dn-szyna-kreska {
+  width: 32px;
+  height: 1px;
+  flex: none;
+  margin: var(--dn-od-2) 0;
+  background: var(--dn-rama-obrys-mocny);
+}
+
+/* Strefa pracy — pozycje wielkości modułu, bez ramki. */
+.dn-szyna-poz--praca {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+}
+.dn-szyna-poz--praca svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* ── Szybki wybór — komponenty własne i okna platformowe ────────────────── */
+
+/* Grupa stoi pod środowiskami i odcina się od nich odstępem, nie kreską:
+   szyna nie niesie żadnych linii. Pozycje są tego samego rodzaju co moduły —
+   bez ramki — bo nie rozwijają niczego, tylko otwierają wskazany komponent. */
+.dn-szyna-skroty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  width: 100%;
+  flex: 0 1 auto;
+}
+.dn-szyna-poz--skrot,
+.dn-szyna-poz--dodaj {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+  color: var(--dn-rama-tekst-2);
+}
+.dn-szyna-poz--skrot svg,
+.dn-szyna-poz--dodaj svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-szyna-poz--skrot:hover,
+.dn-szyna-poz--dodaj:hover { color: var(--dn-rama-tekst); }
+
+/* „Dodaj skrót" bez obrysu: biała ramka na atramentowej belce czytała się jak
+   stan wybrania i rzucała się w oczy mocniej niż same pozycje pracy. Miejsce
+   czekające na wypełnienie znaczy sam znak plus (rozstrzygnięcie Właściciela). */
+.dn-szyna-poz--dodaj {
+  border: 0;
+  margin-top: var(--dn-od-1);
+}
+/* Najechanie zmienia samo tło i kreskę znaku — bez ramki. */
+.dn-szyna-poz--dodaj:hover { border-color: transparent; }
+
+.dn-szyna-stopka { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: var(--dn-od-2); }
+/* Stopka szyny niesie narzędzia stanowiska — ustawienia, dostosowanie, motyw,
+   profil — a nie pracę. Rozstrzygnięcie Właściciela (2026-08-20): ikony pracy
+   zostają w pełnej jasności ramy, stopka schodzi do --dn-rama-tekst-4
+   (3,10 : 1 na ramie — próg grafiki nietekstowej). Najechanie i fokus przywracają pełną
+   jasność, żeby cel kliknięcia nie był bledszy od pozostałych. */
+.dn-szyna-stopka .dn-szyna-poz { color: var(--dn-rama-tekst-4); }
+.dn-szyna-stopka .dn-szyna-poz:hover,
+.dn-szyna-stopka .dn-szyna-poz:focus-visible { color: var(--dn-rama-tekst); }
+
+/* Szyna zwarta — okno niskie.
+   Trzy strefy zakotwiczone mają stałą wysokość, więc przy niskim oknie zajmują
+   cały pas i na środowiska nie zostaje nic. Próg wynika z rachunku, nie z
+   wyczucia: belka 48 + przerwa 8 + zapas pasa 56 + strefa pracy 128 + dwie
+   kreski 36 + trzy środowiska 128 + szybki wybór 308 + przerwa 8 + stopka 209
+   + zapas 8 + pasek stanu 28 = 965 px. Poniżej ~980 px wysokości okna szyna
+   przechodzi w wymiar zwarty: pozycja schodzi do 34 px (wymiar modułu), kreska
+   traci szeroki margines, a pas rezygnuje z zapasu wyrównującego go z panelami.
+   Powyżej progu geometria szyny zostaje bez zmian. */
+@media (max-height: 980px) {
+  .dn-szyna-tresc { padding-top: var(--dn-od-2); }
+  .dn-szyna-tresc .dn-szyna-poz,
+  .dn-szyna-stopka .dn-szyna-poz { width: var(--szyna-poz-zwarta); height: var(--szyna-poz-zwarta); }
+  .dn-szyna-stopka { gap: var(--dn-od-1); }
+}
+
+/* ── Pozycja szyny ─────────────────────────────────────────────────────── */
+
+.dn-szyna-poz {
+  position: relative;
+  display: grid;
+  place-content: center;
+  /* Pozycja jest węższa od szyny: ramka potrzebuje marginesu, inaczej dotyka
+     obu krawędzi pasa i czyta się jak pole, nie jak przycisk. */
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  background: transparent;
+  /* Cztery stopnie jasności w belce (rozstrzygnięcie Właściciela 2026-08-21):
+     menu aplikacji pełną bielą, środowiska i praca lekko przydymione, moduły
+     wysunięte z środowiska mocniej, ustawienia w stopce najmocniej. Różnica
+     jasności mówi, na którym poziomie wyboru stoi Operator. */
+  color: var(--dn-rama-tekst-2);
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-szyna-poz svg { width: var(--dn-wym-ikona-szyna); height: var(--dn-wym-ikona-szyna); stroke-width: 1.9; }
+/* Menu aplikacji zostaje w pełnej jasności — jest wejściem do wszystkiego. */
+.dn-szyna-nawigacji > .sta-menu:first-child > .dn-szyna-poz { color: var(--dn-rama-tekst); }
+/* Moduły wysunięte z środowiska: stopień niżej od środowisk, bo to wybór
+   wewnątrz już wybranego środowiska. */
+.dn-szyna-moduly .dn-szyna-poz { color: var(--dn-rama-tekst-3); }
+.dn-szyna-poz:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
+.dn-szyna-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Środowisko — pozycja bez ramki w spoczynku. Ramka jest znakiem stanu:
+   nosi ją wyłącznie środowisko rozwinięte. */
+.dn-szyna-poz--srodowisko { border-color: transparent; background: transparent; }
+/* Najechanie na środowisko daje samo tło, jak na każdej innej pozycji belki —
+   biała ramka przy przesuwaniu kursora czytała się jak stan wybrania.
+   Ramkę nosi wyłącznie środowisko rozwinięte (reguła niżej). */
+.dn-szyna-poz--srodowisko:hover { border-color: transparent; }
+
+/* Środowisko rozwinięte — ramka i tło rozjaśnione. Wypełnienie sygnałowe
+   pozostaje zarezerwowane dla wskazania modułu bieżącego. */
+/* Środowisko rozwinięte tylko do przeglądania listy modułów — ramka neutralna:
+   samo rozwinięcie nie jest jeszcze pracą. */
+.dn-szyna-poz--srodowisko[aria-expanded='true'] {
+  border-color: var(--dn-rama-obrys-mocny);
+  background: var(--dn-rama-hover);
+  color: var(--dn-rama-tekst);
+}
+/* Środowisko bieżące — to, w którego module Operator faktycznie pracuje.
+   Ramka w błękicie sygnałowym; błękit godła jest w platformie barwą aktywności
+   i tu, i niżej w wypełnieniu modułu bieżącego. */
+.dn-szyna-poz--srodowisko[data-biezace='true'] {
+  border-color: var(--dn-sygnal-500);
+}
+/* Moduł — pozycja bez ramki, wcięta, ikona mniejsza. */
+.dn-szyna-poz--modul {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--dn-r-sm);
+}
+.dn-szyna-poz--modul svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-szyna-poz--modul[aria-current='true'] {
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+}
+
+/* Grupa modułów rozwijana pod środowiskiem. */
+.dn-szyna-moduly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--dn-od-1);
+  width: 100%;
+  padding: var(--dn-od-2) 0;
+  /* Moduły należą do środowiska nad nimi — kreska po lewej wiąże je z nim.
+     Kreska niesie błękit sygnałowy: to barwa aktywności platformy, ta sama,
+     która stoi w kropce godła. */
+  /* Kreska stoi na samej krawędzi okna — bez odsunięcia, żeby czytała się jako
+     znak brzegowy środowiska, nie jako obrys grupy w środku belki. */
+  border-left: 2px solid var(--dn-sygnal-500);
+  margin-left: 0;
+}
+.dn-szyna-moduly[hidden] { display: none; }
+
+/* ── Etykieta pozycji: nazwa i zdanie o przeznaczeniu ───────────────────── */
+
+.dn-szyna-etyk {
+  position: fixed;
+  z-index: var(--dn-z-tooltip);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 280px;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  text-align: left;
+  box-shadow: var(--dn-cien-3);
+  opacity: 0;
+  transform: translate(-4px, -50%);
+  pointer-events: none;
+  transition: opacity var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-szyna-etyk b { font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-polgruba); }
+.dn-szyna-etyk span { font-size: var(--dn-fs-xs); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+.dn-szyna-poz:hover .dn-szyna-etyk,
+.dn-szyna-poz:focus-visible .dn-szyna-etyk { opacity: 1; transform: translate(0, -50%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-szyna-etyk { transition: none; }
+}
+
+/* ── Menu wywołane z szyny ──────────────────────────────────────────────── */
+
+/* Szyna stoi przy krawędzi okna, więc jej menu wychodzi w prawo od niej,
+   nie w dół. Menu głowy kotwiczy się górą, menu stopki — dołem, inaczej
+   wyszłoby poza dolną krawędź okna. */
+/* Menu z podmenu nie może być kontenerem przewijanym: przewijanie przycina
+   panele wysuwane w bok i dokłada paski przewijania w obu osiach. Menu aplikacji
+   niesie same tytuły sekcji, więc mieści się bez przewijania w każdym oknie. */
+
+
+/* Menu aplikacji zajmuje kwadrat w narożniku okna — dotyka górnej krawędzi.
+   Jego rozwinięcie opuszczamy pod belkę tytułową: przy `top: 0` obrys i cień
+   menu wychodziłyby ponad brzeg okna. */
+/* Z tego samego powodu pierścień fokusu pierwszej pozycji rysujemy do wewnątrz:
+   na zewnątrz nie ma miejsca, bo pozycja styka się z krawędzią okna. */
+.dn-szyna-nawigacji > .sta-menu:first-child .dn-szyna-poz:focus-visible {
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Etykieta ustępuje, gdy menu pozycji jest otwarte — menu samo się nazywa. */
+.dn-szyna-poz[aria-expanded='true'] .dn-szyna-etyk { display: none; }
+
+/* ══ 6 · PASEK STANU ══════════════════════════════════════════════════════ */
+
+.dn-stan {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-4);
+  height: var(--dn-wym-stan);
+  flex: none;
+  padding: 0 var(--dn-od-3);
+  background: var(--dn-panel);
+  border-top: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-xs);
+  /* --dn-tekst-3 daje na panelu 3,85 : 1 (ciemny) i 3,99 : 1 (jasny) — poniżej
+     progu 4,5 : 1 dla tekstu 12 px. Pasek stanu niesie treść czytaną, nie
+     grafikę, więc schodzi o stopień wyżej w skali tekstu. */
+  color: var(--dn-tekst-2);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.dn-stan-poz {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+}
+.dn-stan-poz svg { width: 14px; height: 14px; flex: none; }
+.dn-stan-poz b { font-weight: var(--dn-fw-srednia); color: var(--dn-tekst-2); }
+.dn-stan-poz--prawa { margin-left: auto; }
+.dn-stan-sep { width: 1px; height: 14px; flex: none; background: var(--dn-obrys); }
+.dn-stan-miara { font-family: var(--dn-ff-mono); color: var(--dn-tekst-2); }
+
+/* Miniaturowy wykres obciążenia — pasek wypełnienia bez animacji. */
+.dn-stan-tor {
+  width: 40px;
+  height: 4px;
+  flex: none;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+  overflow: hidden;
+}
+/* Udział miary wchodzi żetonem `--dn-stan-udzial` ustawianym przez
+   `pasek-stanu.js` z atrybutu `data-udzial`; znacznik nie nosi wstawek stylu. */
+.dn-stan-tor > span {
+  display: block;
+  width: var(--dn-stan-udzial, 0%);
+  height: 100%;
+  background: var(--dn-tekst-3);
+  border-radius: inherit;
+  transition: width var(--dn-czas-3) var(--dn-ease);
+}
+.dn-stan-tor[data-poziom='wysoki'] > span { background: var(--dn-ostrzezenie-tekst); }
+
+/* ══ 7 · POWŁOKA Z RAMĄ PEŁNĄ ═════════════════════════════════════════════ */
+
+/* Rama zajmuje cztery pasy: belka, następnie kolumna szyny obok pasa
+   narzędzi i treści, na końcu pasek stanu. */
+.dn-rama-korpus {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dn-rama-prawa {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.dn-rama-prawa > .dn-narzedzia-pas,
+.dn-rama-prawa > .dn-narzedzia,
+.dn-rama-prawa > .dn-karty-sesji,
+.dn-rama-prawa > .sta-karty,
+.dn-rama-prawa > .pt-karty { flex: none; }
+.dn-rama-prawa > .sta-cialo,
+.dn-rama-prawa > .pd-cialo,
+.dn-rama-prawa > .pt-cialo,
+.dn-rama-prawa > .cd-plotno,
+.dn-rama-prawa > main,
+.dn-rama-prawa > .sta-karty { min-width: 0; }
+.dn-rama-prawa > .sta-cialo,
+.dn-rama-prawa > .pd-cialo,
+.dn-rama-prawa > .pt-cialo,
+.dn-rama-prawa > .cd-plotno,
+.dn-rama-prawa > main { flex: 1 1 auto; min-height: 0; }
+
+/* Rodziny prawej strony ustępują przed pasmem kart sesji: karty są pracą
+   Operatora, ikony funkcji mają swoje miejsce także w menu aplikacji. */
+@media (max-width: 1400px) { .dn-narzedzia-grupa--proba-1400 { display: none; } }
+@media (max-width: 1200px) { .dn-narzedzia-grupa--proba-1200 { display: none; } }
+
+@media (max-width: 960px) {
+  .dn-narzedzia-grupa--prawa { display: none; }
+  .dn-szyna-poz { width: 36px; height: 36px; }
+  .dn-stan-poz--drugorzedna { display: none; }
+}
+
+
+
+/* ══ 8 · OKNO „DOSTOSUJ WSTĄŻKĘ" ══════════════════════════════════════════ */
+
+/* Konfiguracja samego paska edycji: skład, kolejność, postać kontrolek oraz
+   sposób wyświetlania kart sesji. Okno należy do ramy, nie do modułu —
+   otwiera je przycisk zamykający wstążkę od prawej. */
+
+.dn-dost-lid {
+  margin: 0 0 var(--dn-od-4);
+  max-width: 78ch;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-3);
+}
+.dn-dost-widok[data-widok-aktywny='nie'] { display: none; }
+.dn-dost-widok { padding-top: var(--dn-od-5); }
+
+/* ── Przenoszenie składników ────────────────────────────────────────────── */
+
+.dn-dost-przenoszenie {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--dn-od-4);
+  align-items: start;
+}
+.dn-dost-kolumna { display: flex; flex-direction: column; gap: var(--dn-od-2); min-width: 0; }
+.dn-dost-kolumna-glowa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-dost-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 268px;
+  margin: 0;
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  list-style: none;
+  overflow-y: auto;
+}
+.dn-dost-poz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-base);
+  color: var(--dn-tekst);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-dost-poz svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; color: var(--dn-tekst-3); }
+.dn-dost-poz-nazwa { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dn-dost-poz-rodzina {
+  flex: none;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-dost-poz:hover { background: var(--dn-hover); }
+/* Wskazanie pozycji niesie wypełnienie i kreska sygnałowa, nie sama barwa. */
+.dn-dost-poz[aria-selected='true'] {
+  background: var(--dn-sygnal-tlo);
+  box-shadow: inset 2px 0 0 var(--dn-sygnal-500);
+}
+.dn-dost-poz[aria-selected='true'] svg,
+.dn-dost-poz[aria-selected='true'] .dn-dost-poz-rodzina { color: var(--dn-sygnal); }
+.dn-dost-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+
+/* Sterowanie stoi pod kolumną, do której należy — przycisk mówi wprost,
+   skąd i dokąd przenosi, więc nie potrzebuje wspólnego środka. */
+.dn-dost-sterowanie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--dn-od-1);
+}
+.dn-dost-sterowanie .dn-btn { justify-content: center; white-space: nowrap; }
+.dn-dost-nota {
+  margin: var(--dn-od-4) 0 0;
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst-3);
+}
+
+/* ── Grupy ustawień ─────────────────────────────────────────────────────── */
+
+.dn-dost-siatka {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--dn-od-5);
+}
+/* Grupa z wykazem pozycji potrzebuje całej szerokości siatki — w jednej kolumnie
+   tabela łamała nazwy na dwa wiersze. */
+.dn-dost-grupa--pelna { grid-column: 1 / -1; }
+.dn-dost-grupa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+}
+.dn-dost-grupa legend {
+  padding: 0 var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-dost-wybor {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2);
+  border-radius: var(--dn-r-sm);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-dost-wybor:hover { background: var(--dn-hover); }
+.dn-dost-wybor input { margin-top: 2px; flex: none; }
+.dn-dost-wybor b { display: block; font-size: var(--dn-fs-base); font-weight: var(--dn-fw-srednia); color: var(--dn-tekst); }
+.dn-dost-wybor small { display: block; font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+
+.dn-dost-stopka { justify-content: flex-start; }
+.dn-dost-stopka-odstep { flex: 1 1 auto; }
+
+@media (max-width: 900px) {
+  .dn-dost-przenoszenie { grid-template-columns: minmax(0, 1fr); }
+}
+
+
+/* ══ 9 · PERSONALIZACJA W OKNIE „DOSTOSUJ" ════════════════════════════════ */
+
+/* Próbki barw pasów i podświetlenia — wybór z palety systemu, nie dowolny
+   kolor: każda opcja pozostaje czytelna w obu motywach. */
+.dn-dost-barwy { display: flex; flex-wrap: wrap; gap: var(--dn-od-2); }
+.dn-dost-barwa {
+  display: inline-flex; align-items: center; gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-1);
+  border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
+  font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); cursor: pointer;
+  transition: border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-dost-barwa:hover { border-color: var(--dn-obrys-mocny); }
+.dn-dost-barwa input { position: absolute; opacity: 0; width: 0; height: 0; }
+.dn-dost-probka {
+  width: 22px; height: 22px; flex: none;
+  border: 1px solid var(--dn-obrys-mocny); border-radius: var(--dn-r-pill);
+}
+/* Próbki barw okna „Dostosuj": każda niesie jedną rolę żetonu. Barwa próbki
+   jest daną, więc stoi w klasie, a nie we wstawce stylu w znaczniku. */
+.dn-dost-probka--rama      { background: var(--dn-rama); }
+.dn-dost-probka--grafit    { background: var(--dn-szary-800); }
+.dn-dost-probka--panel     { background: var(--dn-panel); }
+.dn-dost-probka--sygnal    { background: var(--dn-sygnal-500); }
+.dn-dost-probka--zielen    { background: var(--dn-zielen-400); }
+.dn-dost-probka--bursztyn  { background: var(--dn-bursztyn-400); }
+.dn-dost-probka--stal      { background: var(--dn-szary-400); }
+.dn-dost-probka--indygo    { background: var(--dn-sygnal-800); }
+.dn-dost-barwa:has(input:checked) {
+  border-color: var(--dn-sygnal-500);
+  box-shadow: inset 0 0 0 1px var(--dn-sygnal-500);
+  color: var(--dn-tekst);
+}
+.dn-dost-barwa:has(input:focus-visible) { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: 2px; }
+
+/* ══ 8 · POWIERZCHNIA INTERAKCJI ALWAYS ON DISPLAY ════════════════════════ */
+
+/* Kolumna boczna rozszerzenia — powierzchnia rozmowy z agentem towarzyszącym.
+   Postać wg funkcje-globalne/always-on-display.md rozdz. 2: kolumna po prawej
+   stronie obszaru roboczego, na pełną wysokość, szerokość regulowana; nagłówek
+   niesie przycisk mikrofonu toru głosowego, korpus — listę oczekujących sugestii
+   i strumień rozmowy, stopka — pole polecenia wysyłające `aod.chat.send`.
+
+   Kolumna nie przykrywa treści: wchodzi obok niej i zwęża obszar roboczy, bo
+   rozmowa z agentem towarzyszy pracy, zamiast ją zasłaniać. */
+.dn-aod-powierzchnia {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  width: 380px;
+  min-width: 300px;
+  max-width: 560px;
+  height: 100%;
+  border-left: 1px solid var(--dn-obrys);
+  background: var(--dn-powierzchnia);
+}
+.dn-aod-powierzchnia[hidden] { display: none; }
+
+.dn-aod-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  padding: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.dn-aod-glowa-tytul {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.dn-aod-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+/* Awatar agenta w nagłówku — ten sam byt co awatar pływający, w postaci małej. */
+.dn-aod-awatar {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: var(--dn-wym-awatar);
+  height: var(--dn-wym-awatar);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+}
+
+/* Sekcja sugestii — lista pozycji `.dn-karta--klikalna` ze stanem pustym. */
+.dn-aod-sekcja {
+  flex: none;
+  padding: var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.dn-aod-sekcja-glowa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-aod-pusty {
+  padding: var(--dn-od-3) 0;
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-3);
+}
+
+/* Strumień rozmowy — rośnie i przewija się; stopka i nagłówek stoją. */
+.dn-aod-strumien {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dn-od-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+}
+.dn-aod-wpis { display: flex; flex-direction: column; gap: var(--dn-od-1); }
+.dn-aod-wpis-autor {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.dn-aod-wpis-tresc {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-tlo);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst);
+}
+.dn-aod-wpis--operator .dn-aod-wpis-tresc {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-tekst);
+}
+
+/* Stopka — pole polecenia poza kontekstem karty sesji. */
+.dn-aod-stopka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  padding: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys);
+}
+.dn-aod-stopka .dn-pole-kontrolka { flex: 1 1 auto; min-width: 0; }
+
+/* ══ 9 · OBSZAR ROBOCZY — trzy kolumny ════════════════════════════════════ */
+
+/* Obszar pod wstążką dzieli się na trzy kolumny: panel boczny (sesje i projekty),
+   okno główne oraz panel samouczka. Wszystkie trzy są panelami nakładanymi —
+   tak jak wstążka odcinają się od tacy własną barwą powierzchni, a nie obrysem.
+
+   Geometria wynika z tego, że panele wchodzą pod ramę okna: dołem znikają pod
+   paskiem stanu, a bokami wychodzą poza krawędź okna. Zaokrąglone są więc
+   wyłącznie te narożniki, które faktycznie widać — górne wewnętrzne. */
+.dn-obszar {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--dn-od-2);
+  padding: 0 var(--dn-od-2);
+  /* Przestrzeń wokół okien i przerwy między nimi to obudowa aplikacji:
+     ta sama barwa co tło strony. Jaśniejsze — o jeden stopień — jest tylko
+     pasmo kart, czyli górna rama samego okna (--dn-panel), a wnętrze okna
+     jest jaśniejsze jeszcze o stopień. */
+  background: var(--dn-tlo);
+}
+
+.dn-obszar-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Ta sama para barw co wstążka: panel na tacy. W motywie ciemnym para
+     powierzchnia/tło dawała różnicę dziewięciu stopni skali — za mało, by panel
+     odciął się od tacy bez obrysu. Para wstążkowa odcina go w obu motywach. */
+  background: var(--dn-wstazka);
+  /* Dół bez promienia: panel wchodzi pod pasek stanu i tam się kończy. */
+  border-radius: var(--dn-r-lg) var(--dn-r-lg) 0 0;
+  /* Panel przycina z zapasem: `hidden` zamykałby rozwinięcia pasma w obrysie
+     panelu (menu zwężało się do paska z uciętym napisem), a `visible` pozwalał
+     treści rozpychać panel w pionie — korpus rósł i wypychał pasek stanu poza
+     okno. `clip` z marginesem trzyma wysokość panelu, a rozwinięciom pozwala
+     wyjść poza jego obrys. */
+  overflow: hidden;
+}
+
+/* Panel boczny wychodzi poza lewą krawędź okna — widoczny zostaje wyłącznie
+   jego narożnik wewnętrzny, czyli prawy górny. */
+.dn-obszar-panel--boczny {
+  flex: none;
+  width: 280px;
+  min-width: 220px;
+  margin-left: calc(var(--dn-od-2) * -1);
+  border-radius: 0 var(--dn-r-lg) 0 0;
+}
+
+/* Okno główne stoi między panelami: oba jego górne narożniki są wewnętrzne. */
+.dn-obszar-panel--glowny {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Panel samouczka wychodzi poza prawą krawędź — widoczny jest lewy górny róg. */
+.dn-obszar-panel--samouczek {
+  flex: none;
+  width: 320px;
+  min-width: 260px;
+  margin-right: calc(var(--dn-od-2) * -1);
+  border-radius: var(--dn-r-lg) 0 0 0;
+}
+.dn-obszar-panel--samouczek[hidden] { display: none; }
+
+/* ── Pasmo zakładek panelu ─────────────────────────────────────────────── */
+
+/* Zakładki dzielą panel na sekcje: w panelu bocznym rozdzielają sesje od
+   projektów, w oknie głównym — otwarte widoki. Pasmo stoi nieruchomo u góry,
+   przewija się wyłącznie treść pod nim. */
+.dn-obszar-zakladki {
+  display: flex;
+  align-items: stretch;
+  flex: none;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-1) var(--dn-od-2) 0;
+  border-bottom: 1px solid var(--dn-obrys);
+}
+.dn-obszar-zakladka {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: var(--dn-wym-pas-kart);
+  padding: 0 var(--dn-od-3);
+  border: 0;
+  border-bottom: var(--dn-wym-wstega) solid transparent;
+  background: transparent;
+  color: var(--dn-tekst-3);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dn-czas-1) var(--dn-ease),
+              border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-obszar-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.dn-obszar-zakladka:hover { color: var(--dn-tekst); }
+.dn-obszar-zakladka:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+/* Zakładka wybrana — wstęga sygnałowa pod nią, nie samo pogrubienie. */
+.dn-obszar-zakladka[aria-selected='true'] {
+  color: var(--dn-tekst);
+  border-bottom-color: var(--dn-sygnal-500);
+}
+
+/* Treść panelu przewija się pod nieruchomym pasmem zakładek. */
+.dn-obszar-tresc {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.dn-obszar-tresc[hidden] { display: none; }
+
+/* Nagłówek panelu samouczka — nazwa i zwinięcie. */
+.dn-obszar-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-height: var(--dn-wym-pas-kart);
+  padding: 0 var(--dn-od-2) 0 var(--dn-od-3);
+  border-bottom: 1px solid var(--dn-obrys);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.dn-obszar-glowa svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+.dn-obszar-glowa-odstep { flex: 1 1 auto; }
+
+/* Znak marki w nagłówku widoku — sygnet obok nadtytułu. */
+.dn-obszar-marka {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin: 0 0 var(--dn-od-2);
+}
+.dn-obszar-marka img { width: 64px; height: 64px; display: block; }
+
+/* Stan pusty panelu bocznego i samouczka. */
+.cd-boczny-pusty {
+  padding: var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-bazowy);
+  color: var(--dn-tekst-3);
+}
+
+/* ── Sterowanie panelu: przyciski w paśmie zakładek ───────────────────────── */
+
+/* Pasmo zakładek niesie po prawej sterowanie panelu: dodanie pozycji, zawężenie
+   wykazu i menu widoku. Przyciski stoją w tym samym paśmie co zakładki, bo
+   dotyczą tego, co pasmo rozdziela — nie treści pod nim. */
+.dn-obszar-zakladki-odstep { flex: 1 1 auto; }
+.dn-obszar-sterowanie {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  padding-bottom: var(--dn-od-1);
+}
+.dn-obszar-sterowanie .dn-btn-ikona {
+  width: calc(var(--dn-wym-ikonowy) - 6px);
+  height: calc(var(--dn-wym-ikonowy) - 6px);
+}
+.dn-obszar-sterowanie .dn-btn-ikona svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* ── Wykaz pozycji panelu bocznego ────────────────────────────────────────── */
+
+.dn-obszar-grupa {
+  padding: var(--dn-od-3) var(--dn-od-3) var(--dn-od-1);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-obszar-pozycja {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  width: 100%;
+  min-height: var(--dn-wym-wiersz);
+  padding: var(--dn-od-1) var(--dn-od-2) var(--dn-od-1) var(--dn-od-3);
+  border: 0;
+  border-left: var(--dn-wym-wstega) solid transparent;
+  background: transparent;
+  color: var(--dn-tekst);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-obszar-pozycja:hover { background: var(--dn-hover); }
+.dn-obszar-pozycja:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-obszar-pozycja[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  border-left-color: var(--dn-sygnal-500);
+}
+.dn-obszar-pozycja-tekst { flex: 1 1 auto; min-width: 0; }
+.dn-obszar-pozycja-nazwa {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Wykaz jest jednowierszowy — wymiar porządkujący niesie nagłówek grupy,
+   nie druga linia pod nazwą. */
+.dn-obszar-pozycja-meta {
+  display: none;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Menu pozycji ujawnia się przy wskazaniu wiersza: trzy kropki przy każdym
+   wierszu w spoczynku tworzą kolumnę szumu. Znak drobny, nie przycisk. */
+.dn-obszar-pozycja-menu {
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--dn-czas-1) var(--dn-ease);
+}
+.dn-obszar-pozycja-menu .dn-btn-ikona {
+  width: var(--dn-wym-ikona-lg);
+  height: var(--dn-wym-ikona-lg);
+  border-radius: var(--dn-r-xs);
+  background: transparent;
+  color: var(--dn-tekst-3);
+}
+.dn-obszar-pozycja-menu .dn-btn-ikona svg {
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+}
+.dn-obszar-pozycja-menu .dn-btn-ikona:hover {
+  background: var(--dn-wcisniecie);
+  color: var(--dn-tekst);
+}
+.dn-obszar-pozycja:hover .dn-obszar-pozycja-menu,
+.dn-obszar-pozycja:focus-within .dn-obszar-pozycja-menu { opacity: 1; }
+
+/* ── Znacznik zasięgu wykonania i katalogu roboczego ─────────────────────── */
+
+/* Okno komunikacji niesie zasięg wykonania (ExecutionEnv: local · core · remote)
+   oraz katalogi robocze (Window.workingDirs). Oba są stanem, który Operator musi
+   widzieć bez otwierania konfiguracji: polecenie wykonane na niewłaściwym hoście
+   albo w niewłaściwym katalogu jest kosztowną pomyłką. */
+.dn-zasieg {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-2));
+  padding: 0 var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font: inherit;
+  font-size: var(--dn-fs-xs);
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-zasieg:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.dn-zasieg:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-zasieg svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.dn-zasieg-sciezka {
+  font-family: var(--dn-ff-mono);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Zasięg zdalny wyróżniamy: wykonanie opuszcza stanowisko Operatora. */
+.dn-zasieg[data-zasieg='remote'] { border-color: var(--dn-ostrzezenie-obrys); color: var(--dn-ostrzezenie-tekst); }
+.dn-zasieg[data-zasieg='core'] { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); }
+
+/* Wiersz ścieżki w menu — kopiowanie katalogu roboczego. */
+.dn-menu-sciezka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin: var(--dn-od-1) var(--dn-od-2) var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-tlo);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.dn-menu-sciezka code { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Karty pasma mieszkają w `karty-okna.css` — ten arkusz odpowiada za obudowę
+   okna: belkę, szynę, obszary i panele. */
+
+/* Treść panelu nie maluje własnego tła: barwę niesie panel. Płótna prototypów
+   mają własne `background: var(--dn-tlo)` — wewnątrz panelu przykrywałoby ono
+   jego powierzchnię i panel zlewałby się z tacą, najmocniej w motywie ciemnym. */
+.dn-obszar-panel .dn-obszar-tresc { background: transparent; }
+
+/* Sterowanie stoi przy prawej krawędzi panelu — jego menu otwiera się w lewo,
+   inaczej wychodzi poza okno. */
+/* Treść przycina się sama, więc zaokrąglenie dolnych narożników panelu nie jest
+   potrzebne; górne trzyma pasmo kart. */
+.dn-obszar-tresc { border-radius: 0; }
+
+/* ── Pasek narzędzi panelu — sterowanie wewnątrz okna, nie w wierszu kart ── */
+
+/* Sterowanie widoku (zasięg wykonania, katalog roboczy, narzędzia, menu
+   przestrzeni roboczej) należy do wnętrza okna, nie do pasma kart: karty mówią,
+   co jest otwarte, a pasek — czym operujemy w otwartym widoku. Stoi nieruchomo
+   pod pasmem, treść przewija się pod nim. */
+.dn-obszar-pasek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-height: var(--dn-wym-pas-kart);
+  padding: var(--dn-od-1) var(--dn-od-3);
+  /* Bez kreski domykającej pasek: włoskowa linia ciągnęła się przez całą
+     szerokość okna i dzieliła kokpit na pasy. Pasek oddziela od treści
+     odstęp, nie linia. */
+}
+.dn-obszar-pasek .dn-obszar-sterowanie { margin-left: auto; padding-bottom: 0; }
+
+/* Cienka ramka domyka panel: karta i treść czytają się jako jedna bryła.
+   Dolnej krawędzi nie ma — panel schodzi pod pasek stanu. */
+.dn-obszar-panel {
+  border: 1px solid var(--dn-obrys);
+  border-bottom: 0;
+}
+.dn-obszar-panel--boczny { border-left: 0; }
+.dn-obszar-panel--samouczek { border-right: 0; }
+
+
+/* Taca ramy okien: jedna powierzchnia od pasa narzędzi w dół — pas edycji,
+   przerwy między oknami i obwódka wokół nich. Żeton siedzi na wspólnym
+   przodku, żeby czarny prześwit tła nie przecinał tacy w poprzek. */
+
+/* ── Rama zrównana z tłem aplikacji (motyw ciemny) ─────────────────────────
+   Belka i szyna nawigacji chodziły na żetonie --dn-rama (#131313), o cztery
+   stopnie jaśniejszym od tła powłoki (#0F0F0F) — na dużym ekranie widać było
+   dwa różne czernie zestawione ze sobą. W motywie ciemnym oba pasy biorą
+   barwę tła aplikacji. W jasnym belka zostaje atramentowa: tekst i ikony
+   ramy są jasne i na papierze roboczym byłyby nieczytelne. */
+[data-theme='dark'] .dn-belka,
+[data-theme='dark'] .dn-szyna-nawigacji { background: var(--dn-tlo); }
+
+/* ============================================================================
+   RUCH RAMY — szyna nawigacji, pas narzędzi
+   ----------------------------------------------------------------------------
+   Czerń szyny, belki i tła aplikacji pozostaje nietknięta: reakcję niosą
+   warstwy nakładane, skala ikony i błękit sygnałowy. Ikony pasa narzędzi
+   i pola wyszukiwania nie rosną (rozdz. 0 `stanowisko.css`).
+   ============================================================================ */
+
+.dn-szyna-poz {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-szyna-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease); }
+.dn-szyna-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); }
+.dn-szyna-poz:active { transform: scale(var(--dn-skala-nacisk)); }
+.dn-szyna-poz:active > svg { transform: scale(1); }
+
+/* Błysk naciśnięcia: potwierdzenie przyjęcia kliknięcia u źródła — skutek
+   pokazuje się dopiero w oknie centralnym. Wchodzi natychmiast, gaśnie
+   w czasie warstwy. */
+.dn-szyna-poz::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(circle at center, var(--dn-blysk) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity var(--dn-czas-3) var(--dn-ease), transform var(--dn-czas-3) var(--dn-ease);
+}
+.dn-szyna-poz:active::after { opacity: 1; transform: scale(1); transition-duration: 0s; }
+
+/* Środowisko bieżące i moduł bieżący: poświata zamiast samego obrysu. */
+.dn-szyna-poz--srodowisko[data-biezace='true'] { box-shadow: var(--dn-poswiata-szyna); }
+.dn-szyna-poz--modul[aria-current='true'] { box-shadow: var(--dn-poswiata-szyna); }
+.dn-szyna-poz--srodowisko[aria-expanded='true'] > svg { transform: scale(var(--dn-skala-ikony)); }
+
+/* Rozwinięcie modułów: ruch niosą krycie pozycji i przesunięcie ikony.
+   Pojemnik nie dostaje klatki `transform` — etykiety pozycji stoją na
+   współrzędnych okna (`position: fixed`) i przodek z animowanym przesunięciem
+   staje się dla nich blokiem odniesienia. */
+.dn-szyna-moduly:not([hidden]) {
+  animation: dn-pojawienie var(--dn-czas-3) var(--dn-ease) backwards;
+  border-left-color: var(--dn-sygnal-500);
+}
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz {
+  animation: dn-pojawienie var(--dn-czas-3) var(--dn-ease) backwards;
+}
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz > svg {
+  animation: dn-wysuniecie-ikony var(--dn-czas-3) var(--dn-ease) backwards;
+  animation-delay: inherit;
+}
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz:nth-child(1) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz:nth-child(2) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz:nth-child(3) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+.dn-szyna-moduly:not([hidden]) .dn-szyna-poz:nth-child(n + 4) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
+
+.dn-szyna-etyk { transform: translate(calc(-1 * var(--dn-od-2)), -50%); }
+
+/* „Dodaj skrót" niesie wyłącznie reakcję wspólną dla pozycji szyny (tło,
+   barwa, skala ikony). Bez obrotu: obrót o 90° prowadzi znak plus przez kształt
+   krzyżyka, więc dodawanie czytałoby się jak zamykanie. */
+
+/* ── Pas narzędzi: pole wyszukiwania ─────────────────────────────────────── */
+
+.dn-szukaj > input,
+.dn-szukaj > .dn-pole-kontrolka {
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease);
+}
+.dn-szukaj > input:focus,
+.dn-szukaj > .dn-pole-kontrolka:focus { border-color: var(--dn-fokus); box-shadow: var(--dn-cien-sygnal); }
+.dn-szukaj > svg { transition: color var(--dn-czas-2) var(--dn-ease); }
+.dn-szukaj:focus-within > svg { color: var(--dn-sygnal); }
+.dn-szukaj-filtr { transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease); }
+.dn-szukaj-filtr:hover { color: var(--dn-tekst); }
+.dn-szukaj-filtr[aria-expanded='true'] { color: var(--dn-sygnal); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-szyna-moduly:not([hidden]),
+  .dn-szyna-moduly:not([hidden]) .dn-szyna-poz { animation: none; }
+  .dn-szyna-poz::after { display: none; }
+}

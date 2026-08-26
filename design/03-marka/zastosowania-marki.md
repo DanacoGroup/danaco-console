@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Produkt** | **Danaco Console** — AI Operating Environment (warstwa wizualna v2.0) |
-| **Opracowanie** | B6 · Zastosowania marki — materiały i nośniki |
+| **Opracowanie** | Zastosowania marki — materiały i nośniki |
 | **Wersja** | 2.0 |
 | **Status** | wiążący — obowiązuje przy każdym wytworzeniu nośnika marki |
 | **Data** | 2026-08-14 |
@@ -12,7 +12,7 @@
 | **Kontakt** | support@danaco-group.pl |
 | **Odbiorcy** | projektant wizualny · osoba wytwarzająca materiały · drukarnia · dział wsparcia · autor prezentacji |
 | **Zakres** | dwanaście nośników: sieć, ekran, druk, poczta, prezentacja, dokument |
-| **Podstawa** | `KANON.md` · `KIERUNEK.md` (3.4, 3.5) · `03-marka/ksiega-znaku.md` (5, 6, 7, 8) · `zasoby/marka/logo/*.svg` |
+| **Podstawa** | kontrakt systemu projektowego · kierunek systemu projektowego (3.4, 3.5) · `03-marka/ksiega-znaku.md` (5, 6, 7, 8) · `zasoby/marka/logo/*.svg` |
 | **Pliki wytworzone** | `03-marka/zastosowania/` — 30 SVG + 32 PNG + 4 HTML |
 
 ---
@@ -326,7 +326,7 @@ W polu ochronnym nie stoi nic — także siatka tła jest w tym miejscu
 przykryta jednolitym tłem.
 
 **Zdanie ekspozycyjne.** „Zarządzaj cyfrową organizacją." — sformułowanie
-pochodzi wprost z kontraktu kierunku projektowego (`KIERUNEK.md`: *platforma
+pochodzi wprost z kontraktu kierunku projektowego (kierunek systemu projektowego: *platforma
 operacyjna dla zawodowego Operatora zarządzającego cyfrową organizacją*).
 Kropka kończąca zdanie jest **kropką sygnału**, nie znakiem interpunkcyjnym —
 to jedyne miejsce w systemie, gdzie kropka znaku wchodzi w tekst.
@@ -785,7 +785,7 @@ Rewers: sygnet 11 mm → ½X = 2,5 mm, odstęp od krawędzi 7 mm.
 ### 4.9 Ekran powitalny aplikacji 1280 × 800 i 2560 × 1600
 
 **Przeznaczenie.** Okno startowe aplikacji w stanie **Łączenie** — pierwszy
-stan przepływu głównego (`KANON.md` 7.1, okno 1). Nośnik żyje 0,5–3 sekundy.
+stan przepływu głównego (kontrakt systemu projektowego okno 1). Nośnik żyje 0,5–3 sekundy.
 
 **Wymiary.** 1280 × 800 (moduł 40 px) i 2560 × 1600 (moduł 80 px).
 Kompozycja identyczna względnie; wersja 2 × jest przeskalowaniem, nie
@@ -1005,11 +1005,11 @@ błąd druku, nie jako akcent.
 ## 5. Materiał źródłowy — pakiet 08-grafika
 
 Katalog `design/opracowania/design/08-grafika/` zawiera cztery pliki
-wytworzone w pierwszym podejściu do nośników. Opracowanie B6 **zachowuje ich
+wytworzone w pierwszym podejściu do nośników. Niniejsze opracowanie **zachowuje ich
 język i naprawia trzy rzeczy**: rozdzielczości, dyscyplinę jednego akcentu
 oraz źródło danych kontaktowych.
 
-| Plik źródłowy | Wymiary rzeczywiste | Ocena | Następca w B6 |
+| Plik źródłowy | Wymiary rzeczywiste | Ocena | Następca |
 |---|---:|---|---|
 | `og-image.png` | **1200 × 630** | kompozycja i typografia zgodne z kierunkiem; do przeniesienia bez zmian | `obraz-og-1200x630.png` |
 | `banner-linkedin.png` | **3168 × 792** | to **2 × 1584 × 396** — plik jest wariantem podwójnej gęstości, nie odrębnym formatem; zawiera niebieski pas przy dolnej krawędzi (drugi akcent) i adres serwisu spoza metryki produktu | `baner-linkedin-1584x396.png` |
@@ -1020,12 +1020,12 @@ oraz źródło danych kontaktowych.
 o bardzo niskim kryciu, typografia Space Grotesk + IBM Plex Mono, kropka
 sygnału jako punkt kompozycji, brak zdjęć i gradientów.
 
-**Trzy poprawki wprowadzone w B6:**
+**Trzy poprawki wprowadzone w niniejszym opracowaniu:**
 
 1. **Jeden akcent bez wyjątku.** Niebieski pas przy dolnej krawędzi banera
    został usunięty. Kropka sygnału jest jedynym elementem barwnym.
 2. **Dane kontaktowe wyłącznie z metryki produktu.** Adres serwisu
-   internetowego z banera źródłowego nie ma pokrycia w `KANON.md`;
+   internetowego z banera źródłowego nie ma pokrycia w kontrakcie systemu projektowego;
    zastąpiono go nazwą producenta i adresem `support@danaco-group.pl`.
 3. **Znak wodny zamiast znaku.** Tapeta źródłowa pokazuje znak w pełnym
    kryciu. Tapeta ma być podkładem pulpitu, więc groty schodzą do 7 %,
@@ -1242,7 +1242,7 @@ Każdy plik SVG wytworzony przez generator ma `role="img"` i
 - `lang="pl"` w każdym pliku,
 - kontrolki podglądu obsługiwane klawiaturą, `aria-pressed` na przełącznikach,
 - pierścień fokusu 2 px + odsunięcie 2 px w barwie sygnału,
-- **zero atrybutu `disabled`** (ADL-017),
+- **zero atrybutu `disabled`** (zasada zero blokad),
 - `@media print` nie wymaga barwy tła do czytelności.
 
 ### 8.4 Nośniki drukowane
@@ -1305,7 +1305,7 @@ Lista obowiązuje przed oddaniem **każdego** nośnika.
 
 ## 10. Decyzje projektowe
 
-### D-1 · Jeden akcent bez wyjątku — także tam, gdzie materiał źródłowy dopuszczał drugi
+### Jeden akcent bez wyjątku — także tam, gdzie materiał źródłowy dopuszczał drugi
 
 **Problem.** Baner źródłowy (`08-grafika/banner-linkedin.png`) niesie
 niebieski pas przy dolnej krawędzi. Pas jest ładny i czyta się jako
@@ -1315,24 +1315,24 @@ podpis marki. Czy zachować?
 sygnale**, a księga znaku o kropce jako **jedynym** akcencie. Pas jest drugim
 wystąpieniem barwy sygnału w tym samym kadrze — osłabia kropkę, bo oko
 przestaje traktować błękit jako punkt informacji, a zaczyna jako kolor marki.
-Wszystkie reguły i podziały na nośnikach B6 są neutralne.
+Wszystkie reguły i podziały na nośnikach są neutralne.
 
 **Konsekwencja.** Podziały nośne wykonuje reguła 1 px w `#2A2A2A` / `#E3E3E3`.
 
 ---
 
-### D-2 · Baner LinkedIn — 1584 × 396, nie 3168 × 792
+### Baner LinkedIn — 1584 × 396, nie 3168 × 792
 
 **Problem.** Plik źródłowy ma 3168 × 792 px. Czy to odrębny format?
 
 **Rozstrzygnięcie.** **Nie — to wariant podwójnej gęstości.** 3168 = 2 × 1584,
 792 = 2 × 396. Format bazowy LinkedIn to 1584 × 396; plik 2 × jest wynikiem
-rasteryzacji, nie osobnym projektem. B6 utrzymuje kadr projektowy 1584 × 396
+rasteryzacji, nie osobnym projektem. Opracowanie utrzymuje kadr projektowy 1584 × 396
 w SVG i wytwarza rastry o dowolnej gęstości z tego samego źródła.
 
 ---
 
-### D-3 · Logotyp w jednym wierszu — wyłącznie na banerze
+### Logotyp w jednym wierszu — wyłącznie na banerze
 
 **Problem.** Kadr 4 : 1 nie mieści dwuwierszowego lockupu w skali czytelnej
 przy 30 % powiększenia. Księga zabrania tworzenia własnych konfiguracji (7.5).
@@ -1349,7 +1349,7 @@ innym nośniku obowiązują konfiguracje A–H bez zmian.
 
 ---
 
-### D-4 · Tapeta — znak wodny, nie znak
+### Tapeta — znak wodny, nie znak
 
 **Problem.** Tapeta źródłowa pokazuje znak w pełnym kryciu na środku ekranu.
 Pulpit z otwartymi oknami przykrywa go w 90 %, a odsłonięty fragment
@@ -1364,7 +1364,7 @@ jeden punkt sygnału na neutralnym polu, z ledwie wyczuwalną fakturą znaku.
 
 ---
 
-### D-5 · Tor postępu na ekranie powitalnym — biel, nie sygnał
+### Tor postępu na ekranie powitalnym — biel, nie sygnał
 
 **Problem.** Odruch projektowy każe zabarwić wypełnienie toru na błękit.
 
@@ -1375,7 +1375,7 @@ z regułą „stan nigdy samym kolorem".
 
 ---
 
-### D-6 · Awatar — oś optyczna, nie środek kadru
+### Awatar — oś optyczna, nie środek kadru
 
 **Problem.** Znak wyśrodkowany geometrycznie w kwadracie czyta się jako
 przesunięty w lewo, bo kropka wysuwa farbę w prawo.
@@ -1394,31 +1394,31 @@ nowe nośniki medalionowe używają osi optycznej.
 
 ---
 
-### D-7 · Pola użytkownika w nawiasach kwadratowych, nie przykładowe osoby
+### Pola użytkownika w nawiasach kwadratowych, nie przykładowe osoby
 
 **Problem.** Wizytówka i sygnatura poczty potrzebują nazwiska i stanowiska.
 Odruch każe wpisać przykładową osobę.
 
 **Rozstrzygnięcie.** **Pola `[Imię i nazwisko]`, `[stanowisko]`.** Zakaz
-zmyślonych nazwisk z `KANON.md` 10.3 jest bezwzględny, a przykładowa osoba
+zmyślonych nazwisk z kontraktu systemu projektowego jest bezwzględny, a przykładowa osoba
 w pliku produkcyjnym prędzej czy później trafia do druku. Nawias kwadratowy
 jest sygnałem „to pole do wypełnienia" czytelnym bez instrukcji.
 
 ---
 
-### D-8 · Dane kontaktowe wyłącznie z metryki produktu
+### Dane kontaktowe wyłącznie z metryki produktu
 
 **Problem.** Baner źródłowy zawiera adres serwisu internetowego, którego nie
-ma w `KANON.md`.
+ma w kontrakcie systemu projektowego.
 
-**Rozstrzygnięcie.** Na nośnikach B6 występują wyłącznie: **Danaco Holding
+**Rozstrzygnięcie.** Na nośnikach występują wyłącznie: **Danaco Holding
 Group Sp. z o.o.** i **support@danaco-group.pl** — obie wartości z metryki
 produktu. Adres serwisu wróci na nośniki, gdy zostanie potwierdzony
 w dokumentacji.
 
 ---
 
-### D-9 · Typografia zamieniona na krzywe w plikach SVG
+### Typografia zamieniona na krzywe w plikach SVG
 
 **Problem.** Kroje są dostarczone jako `woff2` (podzbiory `latin`
 i `latin-ext`). SVG z żywym tekstem zależy od instalacji kroju na maszynie
@@ -1435,9 +1435,9 @@ przechodzi w obu rodzinach.
 
 ---
 
-### D-10 · Siatka 32 kolumn na nośnikach, 12 w interfejsie
+### Siatka 32 kolumn na nośnikach, 12 w interfejsie
 
-**Problem.** Interfejs używa siatki 12 kolumn (`KANON.md` 2). Nośnik
+**Problem.** Interfejs używa siatki 12 kolumn (kontrakt systemu projektowego). Nośnik
 ekspozycyjny w tej siatce ma moduł 100–160 px — za gruby jako faktura.
 
 **Rozstrzygnięcie.** Nośniki ekspozycyjne używają **siatki kwadratowej
@@ -1448,7 +1448,7 @@ kokpitu.
 
 ---
 
-### D-11 · Dwie wartości krycia znaku wodnego
+### Dwie wartości krycia znaku wodnego
 
 **Problem.** Czy krycie znaku wodnego na jasnym i ciemnym może być takie samo?
 
@@ -1459,7 +1459,7 @@ za mocny na jasnym.
 
 ---
 
-### D-12 · Sygnatura poczty jako tabela ze stylami w atrybutach
+### Sygnatura poczty jako tabela ze stylami w atrybutach
 
 **Problem.** Nowoczesny HTML (flex, grid, `<style>`) nie działa w silniku
 Word, którego używa Outlook dla Windows.

@@ -1,0 +1,63 @@
+/* IZOLACJA OKNA ROBOCZEGO
+   Izolacja jest cechą okna, nigdy pojedynczej karty. Dwa niezależne
+   przełączniki: incognito izoluje wiedzę, własna gałąź izoluje pliki;
+   incognito domyślnie włącza gałąź i daje się z nią rozłączyć.
+   Stan okna: `[data-izolacja="incognito|galaz|brak"]`. W pasku okna stoi jeden
+   wskaźnik monochromatyczny — stan i uprawnienia rozwija jego menu.
+   Mechanizm: `okno-robocze.js`. */
+.dn-izolacja { display: inline-flex; align-items: center; flex: none; }
+
+/* Wskaźnik jest monochromatyczny: błękit sygnałowy niesie wyłącznie znak
+   incognito, bo to on mówi, że okno pracuje w izolacji wiedzy. */
+.dn-izolacja-wskaznik {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  height: var(--dn-wym-ikona-lg);
+  padding: 0 var(--dn-od-2);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-izolacja-wskaznik:hover { background: var(--dn-hover); border-color: var(--dn-obrys-mocny); }
+.dn-izolacja-wskaznik:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-izolacja-wskaznik > svg {
+  flex: none;
+  width: var(--dn-wym-ikona-sm);
+  height: var(--dn-wym-ikona-sm);
+  color: var(--dn-sygnal);
+}
+
+/* Okno w izolacji: kreska sygnałowa u góry pasma kart. Jedyny znak barwny
+   stanu izolacji w oknie. */
+[data-izolacja='incognito'] .dn-karty-pasmo { box-shadow: inset 0 var(--dn-wym-wstega) 0 0 var(--dn-sygnal-500); }
+
+/* Okno na własnej gałęzi: kreska neutralna — izolacja plików nie jest izolacją
+   wiedzy, więc nie sięga po barwę sygnałową. */
+[data-izolacja='galaz'] .dn-karty-pasmo { box-shadow: inset 0 var(--dn-wym-wstega) 0 0 var(--dn-tekst-3); }
+
+/* Wskaźnik niesie znak stanu; nazwa stanu stoi obok znaku i skraca się
+   pierwsza, gdy pasek okna zwęża się do szerokości narzędzi. */
+.dn-izolacja-nazwa { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* Uprawnienia okna w menu wskaźnika: wiersz z nazwą zakresu i jego stanem.
+   Wiersz nie jest kontrolką — stanem zakresu rządzi konfiguracja środowiska. */
+.dn-izolacja-uprawnienie {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+}
+.dn-izolacja-uprawnienie > svg { flex: none; width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
+.dn-izolacja-uprawnienie > .skrot { margin-left: auto; }

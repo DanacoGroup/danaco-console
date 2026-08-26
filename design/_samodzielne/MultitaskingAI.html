@@ -308,11 +308,11 @@
      3. niezależne od motywu — typografia, przestrzeń, ruch, wymiary, warstwy
 
    Kierunek: monochromatyczna precyzja — odcienie bieli (motyw jasny),
-   odcienie czerni (motyw ciemny), jeden błękit sygnałowy. KIERUNEK.md.
+   odcienie czerni (motyw ciemny), jeden błękit sygnałowy. kierunek systemu projektowego.
 
    Kontrasty: każda para tekst/tło zmierzona — komplet w kontrasty.json.
    Zasady nienegocjowalne: jednostka 4 px · oba motywy równoprawne ·
-   stan nigdy samym kolorem · zero blokad (ADL-017) · WCAG 2.1 AA na wejściu.
+   stan nigdy samym kolorem · zero blokad · WCAG 2.1 AA na wejściu.
    ============================================================================ */
 
 :root {
@@ -359,7 +359,7 @@
   --dn-czerwien-200: #F3C8C4; --dn-czerwien-100: #FCEDEB;
 
   /* ==================================================================== *
-   *  2 · RAMA KOKPITU — stała w obu motywach (KIERUNEK.md 3.3)           *
+   *  2 · RAMA KOKPITU — stała w obu motywach (kierunek systemu projektowego)           *
    * ==================================================================== */
   --dn-rama: var(--dn-szary-925);
   --dn-rama-tekst: var(--dn-szary-100);
@@ -431,7 +431,7 @@
   --dn-czas-tetno: 2.4s; /* tętno kropki sygnału — jedyny ruch ciągły */
 
   /* ==================================================================== *
-   *  6 · WYMIARY — gęstość ZWARTA (kokpit); L-P-13 rozstrzygnięte        *
+   *  6 · WYMIARY — gęstość ZWARTA (kokpit)        *
    * ==================================================================== */
   --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
   --dn-wym-ikonowy: 32px;          /* przycisk ikonowy */
@@ -439,7 +439,7 @@
   --dn-wym-pas-kart: 36px;         /* pas kart sesji */
   --dn-wym-wiersz: 36px;           /* wiersz tabeli / listy */
   --dn-wym-boczna: 224px;          /* boczna nawigacja modułów */
-  --dn-wym-pas-komunikacji: 320px; /* wysokość pasa komunikacji (E2) */
+  --dn-wym-pas-komunikacji: 320px; /* wysokość pasa komunikacji (powłoka środowiska) */
   --dn-wym-modal: 560px;           /* maksymalna szerokość modala */
   --dn-wym-toast-min: 280px;
   --dn-wym-toast-max: 420px;
@@ -453,7 +453,7 @@
   --dn-wym-przelacznik-szer: 36px;
   --dn-wym-przelacznik-wys: 20px;
   --dn-wym-check: 16px;
-  --dn-wym-kropka: 6px;            /* kropka sygnału (L-P-16) */
+  --dn-wym-kropka: 6px;            /* kropka sygnału */
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
   --dn-wym-spinner: 14px;
   --dn-wym-fokus: 2px;             /* pierścień fokusu */
@@ -462,18 +462,18 @@
   --dn-odstep-sekcji: var(--dn-od-6);  /* rytm między sekcjami (24 px) */
 
   /* ==================================================================== *
-   *  7 · SIATKA I PUNKTY ŁAMANIA (L-P-11, L-P-12)                        *
+   *  7 · SIATKA I PUNKTY ŁAMANIA                        *
    * ==================================================================== */
-  --dn-bp-w1: 640px;    /* telefon poziomo — widok mobilny E11 */
+  --dn-bp-w1: 640px;    /* telefon poziomo — widok mobilny */
   --dn-bp-w2: 960px;    /* tablet — boczna nawigacja zwijana do ikon */
   --dn-bp-w3: 1280px;   /* biurko — pełny kokpit */
-  --dn-bp-w4: 1600px;   /* szerokie biurko — dwa okna komunikacji (E4) */
+  --dn-bp-w4: 1600px;   /* szerokie biurko — dwa okna komunikacji (para koordynator–wykonawca) */
   --dn-tresc-max: 1200px;  /* maks. szerokość treści dokumentowej */
   --dn-siatka-kolumny: 12;
   --dn-siatka-przerwa: var(--dn-od-6);
 
   /* ==================================================================== *
-   *  8 · WARSTWY (z-index) — L-P-10 rozstrzygnięte                       *
+   *  8 · WARSTWY (z-index)                       *
    * ==================================================================== */
   --dn-z-podloga: 0;
   --dn-z-przybornik: 10;        /* przyklejone nagłówki tabel, przybornik */
@@ -488,7 +488,7 @@
   --dn-z-centrum-polecen: 1300; /* Command Center — zawsze najwyżej */
 
   /* ==================================================================== *
-   *  9 · GRADIENTY — L-P-09 rozstrzygnięte; użycie wyłącznie ilustracyjne *
+   *  9 · GRADIENTY; użycie wyłącznie ilustracyjne *
    * ==================================================================== */
   --dn-grad-atrament: linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925));
   --dn-grad-sygnal: linear-gradient(135deg, var(--dn-sygnal-400), var(--dn-sygnal-600));
@@ -600,7 +600,7 @@
   --dn-fokus: var(--dn-sygnal-400);
   --dn-fokus-cien: rgba(92, 140, 236, 0.35);
 
-  /* stany — pełny komplet dla motywu ciemnego (luka L-P-19 zamknięta) */
+  /* stany — pełny komplet dla motywu ciemnego */
   --dn-sukces-tekst: var(--dn-zielen-400);
   --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
   --dn-sukces-obrys: rgba(79, 189, 133, 0.34);
@@ -624,7 +624,7 @@
 
 /* Brak jawnego wyboru — rozstrzyga preferencja systemu. Wartości muszą być
    identyczne z blokami motywów; powielenie jest świadome (mechanizm kaskady,
-   nie drugie źródło prawdy — patrz HANDOFF.md). */
+   nie drugie źródło prawdy — patrz opracowanie o przekazaniu, ruchu i dostępności). */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     color-scheme: light;
@@ -702,7 +702,7 @@
 }
 
 /* ==========================================================================
- *  12 · DOTYK — cele dotykowe rosną żetonem, nie wyjątkiem (L-P-14)
+ *  12 · DOTYK — cele dotykowe rosną żetonem, nie wyjątkiem
  * ========================================================================== */
 @media (pointer: coarse) {
   :root {
@@ -716,7 +716,7 @@
 }
 
 /* ==========================================================================
- *  13 · GĘSTOŚĆ PRZESTRONNA — przygotowana, domyślnie nieaktywna (L-P-13)
+ *  13 · GĘSTOŚĆ PRZESTRONNA — przygotowana, domyślnie nieaktywna
  * ========================================================================== */
 :root[data-gestosc='przestronna'] {
   --dn-fs-base: 14px;
@@ -912,7 +912,7 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
    ----------------------------------------------------------------------------
    Wyłącznie żetony semantyczne z 03-zetony/zetony.css. Zero wartości zaszytych.
    Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie ·
-   fokus · wybrany · ładowanie · błąd. ADL-017: żaden wariant nie odbiera
+   fokus · wybrany · ładowanie · błąd. Zasada zero blokad: żaden wariant nie odbiera
    klikalności — niegotowość komunikuje się opisem albo komunikatem.
    Stan nigdy samym kolorem — komponent stanu niesie ikonę albo etykietę.
    ============================================================================ */
@@ -1242,7 +1242,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   KROPKA SYGNAŁU — element sygnaturowy (praca w tle; L-P-16)
+   KROPKA SYGNAŁU — element sygnaturowy (praca w tle; rozstrzygnięcie projektowe)
    ========================================================================== */
 .dn-kropka {
   display: inline-block;
@@ -1342,7 +1342,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta--klikalna:active { transform: translateY(0); }
 .dn-karta--wybrana { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
 
-/* KARTA ŚRODOWISKA (E1, strefa 1) — wejście do środowiska.
+/* KARTA ŚRODOWISKA (Centrum dowodzenia, strefa 1) — wejście do środowiska.
    Spoczynek bez sygnału; najechanie/aktywność: wstęga górna 2 px. */
 .dn-karta-srodowiska {
   position: relative;
@@ -1399,7 +1399,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   max-width: 44ch;
 }
 
-/* KAFEL KOMPONENTU WŁASNEGO (E1, strefa 2) — budowanie, krój bazowy */
+/* KAFEL KOMPONENTU WŁASNEGO (Centrum dowodzenia, strefa 2) — budowanie, krój bazowy */
 .dn-kafel {
   display: flex;
   align-items: center;
@@ -1500,7 +1500,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   background: var(--dn-kropka);
 }
 
-/* Pas kart sesji (E2) — mechanika zakładek + wskaźnik pracy w tle */
+/* Pas kart sesji powłoki środowiska — mechanika zakładek + wskaźnik pracy w tle */
 .dn-karty-sesji {
   display: flex;
   align-items: stretch;
@@ -1600,7 +1600,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 .dn-pasek-prawa { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 
-/* Listwa ustawień (E1, strefa 3) — najniższa masa */
+/* Listwa ustawień (Centrum dowodzenia, strefa 3) — najniższa masa */
 .dn-listwa {
   display: flex;
   align-items: center;
@@ -1627,7 +1627,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-listwa-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
 /* ==========================================================================
-   BOCZNA NAWIGACJA MODUŁÓW (E2)
+   BOCZNA NAWIGACJA MODUŁÓW
    ========================================================================== */
 .dn-boczna {
   width: var(--dn-wym-boczna);
@@ -1680,7 +1680,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-boczna-pozycja > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
 
 /* ==========================================================================
-   WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie L-P-28)
+   WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie projektowe)
    --------------------------------------------------------------------------
    Zasada: wspólne tło powierzchni; rozróżnienie niesie ZAWSZE komplet:
    ikona w medalionie + etykieta nadawcy + klasa semantyczna krawędzi.
@@ -1771,7 +1771,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   MONITOR WYKONANIA · KOLEJKA KROKÓW (E3, E5)
+   MONITOR WYKONANIA · KOLEJKA KROKÓW
    ========================================================================== */
 .dn-postep {
   display: flex;
@@ -1798,7 +1798,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   white-space: nowrap;
 }
 
-/* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie L-P-33):
+/* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
    nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */
 .dn-kolejka { display: flex; flex-direction: column; }
@@ -2030,7 +2030,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-pusty-stan-opis { max-width: 40ch; font-size: var(--dn-fs-sm); }
 
 /* ==========================================================================
-   POLE WPISYWANIA PROMPTU (E3) — grot ❯ jako sygnatura wejścia
+   POLE WPISYWANIA PROMPTU — grot ❯ jako sygnatura wejścia
    ========================================================================== */
 .dn-prompt {
   display: grid;
@@ -2078,7 +2078,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   ALWAYS ON DISPLAY — pływający awatar (E12)
+   ALWAYS ON DISPLAY — pływający awatar
    ========================================================================== */
 .dn-aod {
   position: fixed;
@@ -2846,7 +2846,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 <body class="pt-pelny-ekran"
       data-prototyp="PROTOTYP KLIKALNY"
       data-prototyp-okno="Powłoka MultitaskingAI — panel orkiestracji (6 sekcji)"
-      data-prototyp-zrodlo="dok/projekt-ui/srodowiska/multitaskingai.md · przeplyw/elementy-okien.md rozdz. 4">
+      data-prototyp-zrodlo="docs/srodowiska/multitaskingai.md · przeplyw/elementy-okien.md rozdz. 4">
 
 <div class="pt-powloka">
 
@@ -4646,10 +4646,10 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 
     <h4>Źródło w dokumentacji</h4>
     <ul>
-      <li><code>dok/projekt-ui/srodowiska/multitaskingai.md</code> — rozdz. 1 (miejsce w platformie, schemat warstw), 2 (Always On Display: 2.2 dwa tryby, 2.3 oprzyrządowanie, 2.5 zakres dostępu, 2.6 katalog elementów), 3 (3.0 cel/wejście/wyjście, 3.1 Executor 1, 3.2 Subagent Network, 3.3 Coordinator, 3.4 cztery tryby współpracy, 3.5 siedem wcieleń, 3.6 zestawienie zbiorcze), 4 (4.1 pięć zasięgów, 4.2 jedenaście akcji, 4.3 cykl życia zadania, 4.5 katalog elementów, 4.6 makieta sekcji Kolejki), 5 (5.2 rodzaje zależności, 5.4 katalog, 5.5 mapa zależności), 6 (6.2 sześć sekcji, 6.3 układ panelu, 6.4 katalog elementów, 6.5 konfigurowalność kolejności i widoczności), 7 (7.1 warunek uruchomienia, 7.2 mapowanie mechanizmów, 7.4 podział odpowiedzialności, 7.5 Mobile, 7.6 katalog elementów), 8 (hierarchia decyzji — sześć poziomów), 9.3 (makieta główna), 9.5–9.7 (Coordinator Chat, Results Analyzer, punkty izolacji), 10 (katalog elementów interfejsu), 12 (12.1 stany przebiegu, 12.2 stany roli, 12.3 stany zadania, 12.5 stany Always On Display), 13 (izolacja na poziomie roli), 14 (szablony zespołu i formularz 14.4).</li>
-      <li><code>dok/projekt-ui/przeplyw/elementy-okien.md</code> — rozdz. 4 (4.1 różnice względem powłoki modułowej, 4.2 układ całościowy, 4.3 pasek górny i karty sesji, 4.4 panel orkiestracji, 4.5 obszar roboczy, 4.6 zestawienie strukturalne).</li>
+      <li><code>docs/srodowiska/multitaskingai.md</code> — rozdz. 1 (miejsce w platformie, schemat warstw), 2 (Always On Display: 2.2 dwa tryby, 2.3 oprzyrządowanie, 2.5 zakres dostępu, 2.6 katalog elementów), 3 (3.0 cel/wejście/wyjście, 3.1 Executor 1, 3.2 Subagent Network, 3.3 Coordinator, 3.4 cztery tryby współpracy, 3.5 siedem wcieleń, 3.6 zestawienie zbiorcze), 4 (4.1 pięć zasięgów, 4.2 jedenaście akcji, 4.3 cykl życia zadania, 4.5 katalog elementów, 4.6 makieta sekcji Kolejki), 5 (5.2 rodzaje zależności, 5.4 katalog, 5.5 mapa zależności), 6 (6.2 sześć sekcji, 6.3 układ panelu, 6.4 katalog elementów, 6.5 konfigurowalność kolejności i widoczności), 7 (7.1 warunek uruchomienia, 7.2 mapowanie mechanizmów, 7.4 podział odpowiedzialności, 7.5 Mobile, 7.6 katalog elementów), 8 (hierarchia decyzji — sześć poziomów), 9.3 (makieta główna), 9.5–9.7 (Coordinator Chat, Results Analyzer, punkty izolacji), 10 (katalog elementów interfejsu), 12 (12.1 stany przebiegu, 12.2 stany roli, 12.3 stany zadania, 12.5 stany Always On Display), 13 (izolacja na poziomie roli), 14 (szablony zespołu i formularz 14.4).</li>
+      <li><code>docs/interfejs-uzytkownika/elementy-okien.md</code> — rozdz. 4 (4.1 różnice względem powłoki modułowej, 4.2 układ całościowy, 4.3 pasek górny i karty sesji, 4.4 panel orkiestracji, 4.5 obszar roboczy, 4.6 zestawienie strukturalne).</li>
       <li><code>design/opracowania/design/06-okna/e4-koordynator-wykonawca.html</code> — istniejąca makieta relacji koordynator–wykonawca; przejęto z niej asymetrię mas okien ról, wzorzec kolejki kroków oraz nazwy modeli przykładowych (opus-4.2, sonet-4.6).</li>
-      <li><code>WYNIK/KANON.md</code> — żetony, komponenty <code>.dn-*</code>, zasada zero blokad (ADL-017), dostępność.</li>
+      <li>kontrakt systemu projektowego — żetony, komponenty <code>.dn-*</code>, zasada zero blokad, dostępność.</li>
     </ul>
 
     <h4>Odwzorowane interakcje</h4>
@@ -4672,7 +4672,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
     <ul>
       <li><b>Asymetria koordynator–wykonawca w układzie.</b> Dokumentacja rozstrzyga rozdział odpowiedzialności, nie formę. Coordinator otrzymał największą masę wizualną: pełną szerokość, wstęgę atramentową, cień i nagłówek krojem Space Grotesk oraz cztery bloki wewnętrzne (plan etapów, kreator promptu, widok stanu kolejki, sterowanie procesem). Wykonawcy tworzą symetryczną parę o masie średniej ze wstęgą sygnałową. Executor 3 / Validator ma masę najmniejszą — tło panelu, brak wstęgi, zwarte wnętrze. Subagent Network nie jest kartą równorzędną, lecz rozwinięciem wewnątrz karty wykonawcy, zgodnie z jego statusem mechanizmu, a nie roli.</li>
       <li><b>Ikony spoza katalogu.</b> Dokumentacja przypisuje wcieleniu Arbitrator ikonę <code>waga</code>, której nie ma w zestawie <code>zasoby/ikony/svg/</code>. Użyto ikony <code>debata</code> (rozstrzyganie sporu) jako najbliższej znaczeniowo. Dla czterech stanów przebiegu, dla których źródło podaje wyłącznie klasę plakietki, dobrano ikony z zestawu: <code>zegar</code> (nieuruchomiony), <code>wstrzymaj</code> (wstrzymany), <code>blad</code> (zakończony błędem), <code>zatrzymaj</code> (zatrzymany trwale).</li>
-      <li><b>Klasy komponentów.</b> Dokumentacja środowiska cytuje nazwy z wcześniejszej wersji systemu wizualnego (<code>.dn-btn--zloty</code>, <code>.dn-karta--pozycja</code>, <code>.dn-select</code>, <code>.dn-plakietka--stan</code>). Odwzorowano je klasami wiążącymi z KANON: <code>.dn-btn--sygnal</code> / <code>.dn-btn--atrament</code>, <code>.mt-pozycja-karty</code> na wzorcu <code>.pt-pozycja</code>, <code>.dn-pole-kontrolka</code>, <code>.dn-plakietka--*</code>. Barwa akcentu to jeden błękit sygnałowy — złoto nie występuje w systemie v2.0.</li>
+      <li><b>Klasy komponentów.</b> Dokumentacja środowiska cytuje nazwy z wcześniejszej wersji systemu wizualnego (<code>.dn-btn--zloty</code>, <code>.dn-karta--pozycja</code>, <code>.dn-select</code>, <code>.dn-plakietka--stan</code>). Odwzorowano je klasami wiążącymi z kontraktu systemu projektowego: <code>.dn-btn--sygnal</code> / <code>.dn-btn--atrament</code>, <code>.mt-pozycja-karty</code> na wzorcu <code>.pt-pozycja</code>, <code>.dn-pole-kontrolka</code>, <code>.dn-plakietka--*</code>. Barwa akcentu to jeden błękit sygnałowy — złoto nie występuje w systemie v2.0.</li>
       <li><b>Mapa zależności.</b> Źródło podaje diagram tekstowy (rozdz. 5.5) i wymaga „dużego panelu wizualnego”. Zbudowano go jako SVG na siatce 780×380 z sześcioma węzłami i ośmioma krawędziami; podświetlenie łańcucha realizuje przejście w dół przepływu ze zbiorem odwiedzonych węzłów, dzięki czemu pętla <code>retry → Coordinator</code> nie zapętla podświetlenia.</li>
       <li><b>Chat Window w sekcji Role.</b> Makieta 16 dokumentu <code>elementy-okien.md</code> umieszcza pas komunikacji per rola w powłoce. Odwzorowano go jako zwarty pas u dołu sekcji Role z segmentowym wyborem roli — wnętrza okien roboczych (Executor Chat, Coordinator Chat, Results Analyzer) są przedmiotem odrębnych prototypów, więc przyciski „Otwórz…” sygnalizują przejście komunikatem.</li>
       <li><b>Zero blokad.</b> Żadna kontrolka nie jest wyłączana. „Scal wyniki” przed zakończeniem podagentów, „Zatwierdź krok” w trybie obserwatora, akcja niepasująca do stanu zadania — wszystkie pozostają klikalne i odpowiadają komunikatem kontekstowym.</li>

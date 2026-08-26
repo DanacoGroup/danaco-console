@@ -2,7 +2,7 @@
   "produkt": "Danaco Console",
   "warstwa": "zestaw ikon",
   "wersja": "v2.0",
-  "data": "2026-08-11",
+  "data": "2026-08-20",
   "zasady": {
     "siatka": "24x24",
     "obrys": "1.75",
@@ -58,6 +58,31 @@
       "zastosowanie": "Wejście w głąb, okruszki nawigacji"
     },
     {
+      "nazwa": "grot-lewo",
+      "zrodlo": "lucide:chevron-left",
+      "zastosowanie": "Wyjście z gałęzi, cofnięcie w okruszkach nawigacji"
+    },
+    {
+      "nazwa": "kompas",
+      "zrodlo": "lucide:compass",
+      "zastosowanie": "Przejście do innego środowiska lub przedsionka — menu Przejdź"
+    },
+    {
+      "nazwa": "panel-boczny",
+      "zrodlo": "lucide:panel-left",
+      "zastosowanie": "Zwinięcie i rozwinięcie szyny sesji oraz panelu bocznego"
+    },
+    {
+      "nazwa": "kolumny",
+      "zrodlo": "lucide:columns-2",
+      "zastosowanie": "Podział obszaru roboczego na dwie kolumny"
+    },
+    {
+      "nazwa": "pulpit",
+      "zrodlo": "lucide:layout-dashboard",
+      "zastosowanie": "Pulpit projektu — zestawienie kafli Project Dashboard"
+    },
+    {
       "nazwa": "wiecej",
       "zrodlo": "lucide:ellipsis",
       "zastosowanie": "Menu dodatkowych czynności pozycji"
@@ -68,9 +93,54 @@
       "zastosowanie": "Odesłanie poza bieżący widok"
     },
     {
+      "nazwa": "ogniwo",
+      "zrodlo": "lucide:link",
+      "zastosowanie": "Powiązanie wewnętrzne — źródło, referencja"
+    },
+    {
+      "nazwa": "znacznik",
+      "zrodlo": "lucide:tag",
+      "zastosowanie": "Znacznik i zbiór — Tags & Collections"
+    },
+    {
+      "nazwa": "paczka",
+      "zrodlo": "lucide:package",
+      "zastosowanie": "Artefakt, wydanie produktu"
+    },
+    {
+      "nazwa": "karta-platnicza",
+      "zrodlo": "lucide:credit-card",
+      "zastosowanie": "Plan i rozliczenia konta"
+    },
+    {
+      "nazwa": "klucz-dostepu",
+      "zrodlo": "lucide:key-round",
+      "zastosowanie": "Klucz dostępu, token konta"
+    },
+    {
+      "nazwa": "wtyczka",
+      "zrodlo": "lucide:plug",
+      "zastosowanie": "Wtyczka, konektor, serwer narzędziowy"
+    },
+    {
+      "nazwa": "ukladanka",
+      "zrodlo": "lucide:puzzle",
+      "zastosowanie": "Rozszerzenia platformy"
+    },
+    {
       "nazwa": "szukaj",
       "zrodlo": "lucide:search",
       "zastosowanie": "Wyszukiwanie — pasek górny, Command Center"
+    },
+    {
+      "nazwa": "powieksz",
+      "zrodlo": "lucide:zoom-in",
+      "zastosowanie": "Powiększenie widoku"
+    },
+    {
+      "nazwa": "pomniejsz",
+      "zrodlo": "lucide:zoom-out",
+      "zastosowanie": "Pomniejszenie widoku"
     },
     {
       "nazwa": "filtr",
@@ -88,9 +158,39 @@
       "zastosowanie": "Okno, karta przeglądarki, moduł Browser"
     },
     {
+      "nazwa": "grupa-kart",
+      "zrodlo": "lucide:group",
+      "zastosowanie": "Grupa kart sesji — kilka kart pod jedną nazwą"
+    },
+    {
+      "nazwa": "okno-plywajace",
+      "zrodlo": "lucide:picture-in-picture-2",
+      "zastosowanie": "Always On Display — awatar pływający ponad powłoką, podgląd pracy bez otwierania okna"
+    },
+    {
       "nazwa": "plus",
       "zrodlo": "lucide:plus",
       "zastosowanie": "Utworzenie bytu: sesja, okno, kanał"
+    },
+    {
+      "nazwa": "minus",
+      "zrodlo": "lucide:minus",
+      "zastosowanie": "Minimalizacja okna, odjęcie pozycji z wykazu"
+    },
+    {
+      "nazwa": "rozszerz",
+      "zrodlo": "lucide:copy odbity w poziomie",
+      "zastosowanie": "Maksymalizacja okna — kontrolka belki tytułowej; kwadrat wierzchni po lewej, zgodnie z układem belek tytułowych wskazanym przez Właściciela"
+    },
+    {
+      "nazwa": "pelny-ekran",
+      "zrodlo": "lucide:fullscreen",
+      "zastosowanie": "Tryb pełnego ekranu — ekran monitora w narożnikach kadru"
+    },
+    {
+      "nazwa": "zwez",
+      "zrodlo": "lucide:minimize-2",
+      "zastosowanie": "Przywrócenie okna z pełnej powierzchni do rozmiaru zwykłego"
     },
     {
       "nazwa": "olowek",
@@ -158,6 +258,11 @@
       "zastosowanie": "Podgląd, odsłonięcie wartości ukrytej"
     },
     {
+      "nazwa": "skupienie",
+      "zrodlo": "lucide:target",
+      "zastosowanie": "Tryb skupienia — praca nad jedną rzeczą"
+    },
+    {
       "nazwa": "gwiazdka",
       "zrodlo": "lucide:star",
       "zastosowanie": "Wyróżnienie pozycji, presety zespołów"
@@ -166,6 +271,96 @@
       "nazwa": "kopiuj",
       "zrodlo": "lucide:copy",
       "zastosowanie": "Kopiowanie treści, identyfikatora"
+    },
+    {
+      "nazwa": "wytnij",
+      "zrodlo": "lucide:scissors",
+      "zastosowanie": "Wycięcie zaznaczenia do schowka"
+    },
+    {
+      "nazwa": "wklej",
+      "zrodlo": "lucide:clipboard-paste",
+      "zastosowanie": "Wklejenie zawartości schowka"
+    },
+    {
+      "nazwa": "cofnij",
+      "zrodlo": "lucide:undo-2",
+      "zastosowanie": "Cofnięcie ostatniej czynności"
+    },
+    {
+      "nazwa": "ponow",
+      "zrodlo": "lucide:redo-2",
+      "zastosowanie": "Ponowienie cofniętej czynności"
+    },
+    {
+      "nazwa": "zapisz",
+      "zrodlo": "lucide:save",
+      "zastosowanie": "Zapis sesji, pliku, opracowania"
+    },
+    {
+      "nazwa": "wyloguj",
+      "zrodlo": "lucide:log-out",
+      "zastosowanie": "Wyjście z konta, zakończenie pracy aplikacji"
+    },
+    {
+      "nazwa": "aparat",
+      "zrodlo": "lucide:camera",
+      "zastosowanie": "Zrzut ekranu okna lub obszaru"
+    },
+    {
+      "nazwa": "zrzut",
+      "zrodlo": "własna — narożniki kadru + lucide:scissors (0,6; kreska niezmienna przy skalowaniu)",
+      "zastosowanie": "Zrzut ekranu — narożniki kadru z nożyczkami"
+    },
+    {
+      "nazwa": "kadr",
+      "zrodlo": "lucide:crop",
+      "zastosowanie": "Zrzut zaznaczonego obszaru, przycięcie kadru"
+    },
+    {
+      "nazwa": "klucz-nastawczy",
+      "zrodlo": "lucide:wrench",
+      "zastosowanie": "Narzędzia obsługi aplikacji, naprawa"
+    },
+    {
+      "nazwa": "suwaki",
+      "zrodlo": "lucide:sliders-horizontal",
+      "zastosowanie": "Dostosowanie paska i gęstości widoku"
+    },
+    {
+      "nazwa": "pinezka",
+      "zrodlo": "lucide:pin",
+      "zastosowanie": "Przypięcie wniosku, źródła, karty sesji"
+    },
+    {
+      "nazwa": "rozmowa-nowa",
+      "zrodlo": "lucide:message-square-plus",
+      "zastosowanie": "Otwarcie nowej sesji rozmowy"
+    },
+    {
+      "nazwa": "udostepnij",
+      "zrodlo": "lucide:share-2",
+      "zastosowanie": "Udostępnienie wyniku poza bieżącą sesję"
+    },
+    {
+      "nazwa": "flaga",
+      "zrodlo": "lucide:flag",
+      "zastosowanie": "Oznaczenie pozycji do przeglądu"
+    },
+    {
+      "nazwa": "sortowanie",
+      "zrodlo": "lucide:arrow-up-down",
+      "zastosowanie": "Zmiana porządku wykazu"
+    },
+    {
+      "nazwa": "uchwyt",
+      "zrodlo": "lucide:grip-vertical",
+      "zastosowanie": "Uchwyt przenoszenia panelu i pozycji wykazu"
+    },
+    {
+      "nazwa": "uzytkownik-nowy",
+      "zrodlo": "lucide:user-plus",
+      "zastosowanie": "Dodanie osoby do zespołu"
     },
     {
       "nazwa": "ptaszek",
@@ -183,6 +378,11 @@
       "zastosowanie": "Błąd — niepowodzenie operacji"
     },
     {
+      "nazwa": "minus-kolo",
+      "zrodlo": "lucide:circle-minus",
+      "zastosowanie": "Stan zajętości — dostępność wstrzymana"
+    },
+    {
       "nazwa": "ostrzezenie",
       "zrodlo": "lucide:triangle-alert",
       "zastosowanie": "Ostrzeżenie — skutki wymagające uwagi"
@@ -198,14 +398,39 @@
       "zastosowanie": "Treść chroniona, dane dostępowe"
     },
     {
+      "nazwa": "klodka-otwarta",
+      "zrodlo": "lucide:lock-open",
+      "zastosowanie": "Dostęp otwarty, zgoda udzielona"
+    },
+    {
       "nazwa": "tarcza",
       "zrodlo": "lucide:shield",
       "zastosowanie": "Uprawnienia, zakres dostępu, izolacja"
     },
     {
+      "nazwa": "tarcza-dzielona",
+      "zrodlo": "lucide:shield-half",
+      "zastosowanie": "Izolacja kontekstu — rozdzielenie zakresów pracy"
+    },
+    {
       "nazwa": "zegar",
       "zrodlo": "lucide:clock",
       "zastosowanie": "Oczekiwanie, znacznik czasu"
+    },
+    {
+      "nazwa": "licznik",
+      "zrodlo": "lucide:timer",
+      "zastosowanie": "Odliczanie — ponowne wydanie kodu, limit czasu"
+    },
+    {
+      "nazwa": "blyskawica",
+      "zrodlo": "lucide:zap",
+      "zastosowanie": "Wyzwolenie zdarzeniem — reguły wyzwalania automatyki"
+    },
+    {
+      "nazwa": "iskra",
+      "zrodlo": "lucide:sparkles",
+      "zastosowanie": "Wyróżnienie, wynik wytworzony przez model"
     },
     {
       "nazwa": "historia",
@@ -218,6 +443,26 @@
       "zastosowanie": "Powiadomienia"
     },
     {
+      "nazwa": "dzwonek-wyciszony",
+      "zrodlo": "lucide:bell-off",
+      "zastosowanie": "Powiadomienia wyciszone"
+    },
+    {
+      "nazwa": "oko-przekreslone",
+      "zrodlo": "lucide:eye-off",
+      "zastosowanie": "Wartość ukryta, podgląd wyłączony"
+    },
+    {
+      "nazwa": "mikrofon-wyciszony",
+      "zrodlo": "lucide:mic-off",
+      "zastosowanie": "Nasłuch głosowy wyłączony"
+    },
+    {
+      "nazwa": "monitor-wylaczony",
+      "zrodlo": "lucide:monitor-off",
+      "zastosowanie": "Stanowisko nieczynne, podgląd odłączony"
+    },
+    {
       "nazwa": "aktywnosc",
       "zrodlo": "lucide:activity",
       "zastosowanie": "Praca w tle, telemetria procesu"
@@ -228,14 +473,29 @@
       "zastosowanie": "Dokument, opracowanie — moduł Studio"
     },
     {
+      "nazwa": "schowek",
+      "zrodlo": "lucide:clipboard-check",
+      "zastosowanie": "Schowek aplikacji — wykaz odłożonych pozycji"
+    },
+    {
       "nazwa": "plik",
       "zrodlo": "lucide:file",
       "zastosowanie": "Plik o nieokreślonym rodzaju"
     },
     {
+      "nazwa": "plik-kodu",
+      "zrodlo": "lucide:file-code",
+      "zastosowanie": "Plik źródłowy w drzewie projektu"
+    },
+    {
       "nazwa": "folder",
       "zrodlo": "lucide:folder",
       "zastosowanie": "Katalog roboczy, grupa zasobów"
+    },
+    {
+      "nazwa": "drzewo-katalogow",
+      "zrodlo": "lucide:folder-tree",
+      "zastosowanie": "Drzewo katalogów projektu"
     },
     {
       "nazwa": "archiwum",
@@ -268,9 +528,39 @@
       "zastosowanie": "Zestawienie, dane tabelaryczne"
     },
     {
+      "nazwa": "lista-zadan",
+      "zrodlo": "lucide:list-checks",
+      "zastosowanie": "Wykaz zadań, plan zlecenia"
+    },
+    {
+      "nazwa": "klawiatura",
+      "zrodlo": "lucide:keyboard",
+      "zastosowanie": "Skróty klawiszowe"
+    },
+    {
       "nazwa": "biblioteka",
       "zrodlo": "lucide:library-big",
       "zastosowanie": "Moduł Library — repozytorium wiedzy"
+    },
+    {
+      "nazwa": "ksiazka",
+      "zrodlo": "lucide:book-open",
+      "zastosowanie": "Instrukcja użytkowania, słownik pojęć"
+    },
+    {
+      "nazwa": "probowka",
+      "zrodlo": "lucide:flask-conical",
+      "zastosowanie": "Funkcje doświadczalne"
+    },
+    {
+      "nazwa": "zarowka",
+      "zrodlo": "lucide:lightbulb",
+      "zastosowanie": "Zalecenie, podpowiedź do przeglądu"
+    },
+    {
+      "nazwa": "cytat",
+      "zrodlo": "lucide:quote",
+      "zastosowanie": "Cytat w redakcji treści"
     },
     {
       "nazwa": "baza",
@@ -283,6 +573,16 @@
       "zastosowanie": "Metryki, moduł Research (wyniki)"
     },
     {
+      "nazwa": "wykres-slupkowy",
+      "zrodlo": "lucide:chart-column",
+      "zastosowanie": "Zestawienie wartości w słupkach"
+    },
+    {
+      "nazwa": "wykres-kolowy",
+      "zrodlo": "lucide:chart-pie",
+      "zastosowanie": "Udział procentowy"
+    },
+    {
       "nazwa": "terminal",
       "zrodlo": "lucide:square-terminal",
       "zastosowanie": "Moduł Terminal — powłoki wykonawcze"
@@ -291,6 +591,21 @@
       "nazwa": "galaz",
       "zrodlo": "lucide:git-branch",
       "zastosowanie": "Repozytorium, moduł Developer"
+    },
+    {
+      "nazwa": "rozwidlenie",
+      "zrodlo": "lucide:git-fork",
+      "zastosowanie": "Rozwidlenie gałęzi repozytorium"
+    },
+    {
+      "nazwa": "scalenie",
+      "zrodlo": "lucide:git-merge",
+      "zastosowanie": "Scalenie gałęzi"
+    },
+    {
+      "nazwa": "rewizja",
+      "zrodlo": "lucide:git-commit-horizontal",
+      "zastosowanie": "Rewizja w historii repozytorium"
     },
     {
       "nazwa": "agent",
@@ -306,6 +621,11 @@
       "nazwa": "uzytkownik",
       "zrodlo": "lucide:user",
       "zastosowanie": "Operator, konto, tożsamość"
+    },
+    {
+      "nazwa": "konto",
+      "zrodlo": "lucide:circle-user",
+      "zastosowanie": "Konto Operatora — profil, status obecności, wylogowanie; odróżnia konto od osoby w treści"
     },
     {
       "nazwa": "siec",
@@ -348,6 +668,11 @@
       "zastosowanie": "Moduł Translate"
     },
     {
+      "nazwa": "wielkosc-liter",
+      "zrodlo": "lucide:case-sensitive",
+      "zastosowanie": "Rozróżnianie wielkości liter w wyszukiwaniu"
+    },
+    {
       "nazwa": "badanie",
       "zrodlo": "lucide:telescope",
       "zastosowanie": "Moduł Research — analizy i raporty"
@@ -373,6 +698,11 @@
       "zastosowanie": "Moduł Assistant — interfejs głosowy"
     },
     {
+      "nazwa": "glosnik",
+      "zrodlo": "lucide:volume-2",
+      "zastosowanie": "Odtwarzanie dźwięku, głośność"
+    },
+    {
       "nazwa": "diagnostyka",
       "zrodlo": "lucide:stethoscope",
       "zastosowanie": "Moduł Diagnostics — analiza problemów"
@@ -385,12 +715,32 @@
     {
       "nazwa": "telefon",
       "zrodlo": "lucide:smartphone",
-      "zastosowanie": "Widok mobilny — pozycja „Mobile\" (L-P-18)"
+      "zastosowanie": "Widok mobilny — pozycja „Mobile\""
+    },
+    {
+      "nazwa": "tablet",
+      "zrodlo": "lucide:tablet",
+      "zastosowanie": "Widok tabletu w podglądzie responsywnym"
+    },
+    {
+      "nazwa": "drukarka",
+      "zrodlo": "lucide:printer",
+      "zastosowanie": "Wydruk opracowania"
     },
     {
       "nazwa": "cpu",
       "zrodlo": "lucide:cpu",
       "zastosowanie": "Zasoby wykonawcze, serwer rdzenia"
+    },
+    {
+      "nazwa": "serwer",
+      "zrodlo": "lucide:server",
+      "zastosowanie": "Host rdzenia, serwer wykonawczy"
+    },
+    {
+      "nazwa": "chmura",
+      "zrodlo": "lucide:cloud",
+      "zastosowanie": "Host zdalny, zasób poza stanowiskiem"
     },
     {
       "nazwa": "polecenie",
@@ -433,5 +783,5 @@
       "zastosowanie": "Środowisko MultitaskingAI — Deleguj. Koordynuj. Nadzoruj."
     }
   ],
-  "liczba-ikon": 82
+  "liczba-ikon": 152
 }

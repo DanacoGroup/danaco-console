@@ -1,0 +1,53 @@
+/* ZNACZNIKI STANU — jeden kod dla sesji, okien, kart i grup
+   `data-stan`: praca (błękit, tętno w strefie bieżącej) · reakcja (bursztyn) ·
+   blad (czerwień) · zakonczone (sam obrys) · brak (miejsce zachowane).
+   Stan zbiorczy pozycji nadrzędnej wylicza `stany.js`: blad › reakcja › praca ›
+   zakonczone. Tętno tylko przy `data-tetno="tak"` — jeden ruch ciągły na widok. */
+.dn-stan-znacznik {
+  display: inline-block;
+  flex: none;
+  width: var(--dn-wym-kropka);
+  height: var(--dn-wym-kropka);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  transition: background-color var(--dn-czas-2) var(--dn-ease),
+              border-color var(--dn-czas-2) var(--dn-ease);
+}
+
+.dn-stan-znacznik[data-stan='praca']      { background: var(--dn-sygnal-500); border-color: var(--dn-sygnal-500); }
+.dn-stan-znacznik[data-stan='reakcja']    { background: var(--dn-ostrzezenie-tekst); border-color: var(--dn-ostrzezenie-tekst); }
+.dn-stan-znacznik[data-stan='blad']       { background: var(--dn-blad-tekst); border-color: var(--dn-blad-tekst); }
+.dn-stan-znacznik[data-stan='zakonczone'] { background: transparent; border-color: var(--dn-tekst-3); }
+.dn-stan-znacznik[data-stan='brak']       { background: transparent; border-color: transparent; }
+
+.dn-stan-znacznik[data-stan='praca'][data-tetno='tak'] {
+  animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+
+/* Liczba niosąca stan zbiorczy: licznik okien roboczych w pasmie kart,
+   licznik okien w grupie. Bez stanu — pismo drugorzędne. */
+.dn-stan-liczba {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--dn-tekst-2);
+  transition: color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-stan-liczba[data-stan='praca']      { color: var(--dn-sygnal); }
+.dn-stan-liczba[data-stan='reakcja']    { color: var(--dn-ostrzezenie-tekst); }
+.dn-stan-liczba[data-stan='blad']       { color: var(--dn-blad-tekst); }
+.dn-stan-liczba[data-stan='zakonczone'] { color: var(--dn-tekst-3); }
+
+/* Wiersz wykazu z reakcją albo błędem niesie obrys w barwie stanu: kropka sama
+   nie wystarcza na liście kilkunastu pozycji. */
+.dn-stan-wiersz[data-stan='reakcja'] { border-color: var(--dn-ostrzezenie-obrys); background: var(--dn-ostrzezenie-tlo); }
+.dn-stan-wiersz[data-stan='blad']    { border-color: var(--dn-blad-obrys); background: var(--dn-blad-tlo); }
+
+/* Ograniczony ruch: tętno zastąpione pierścieniem stałym — nośnikiem
+   informacji zostaje kształt. */
+@media (prefers-reduced-motion: reduce) {
+  .dn-stan-znacznik[data-stan='praca'][data-tetno='tak'] {
+    box-shadow: 0 0 0 2px var(--dn-fokus-cien);
+  }
+}

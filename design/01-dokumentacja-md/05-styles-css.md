@@ -6,11 +6,11 @@
 | **Rodzaj** | Opracowanie merytoryczno-techniczne — architektura arkuszy stylów |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
-| **Wersja** | v2.0 · dokument A5 (Zespół A — Fundament systemu projektowego) |
+| **Wersja** | v2.0 · fundament systemu projektowego |
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | deweloper wdrażający warstwę wizualną w `budowa/client/src/`; projektant utrzymujący bibliotekę `.dn-*`; recenzent arkusza przed scaleniem; autor nowego okna operacyjnego |
-| **Zakres** | warstwa fundamentu (`fundament.css`, 156 linii), biblioteka komponentów (`komponenty.css`, 1207 linii), kolejność importu, konwencja nazewnicza, kontrakt specyficzności, wzorce stanu / fokusu / przejścia, podział na pliki per komponent, obsługa motywu i preferencji środowiska, antywzorce, lista kontrolna przeglądu |
+| **Zakres** | warstwa fundamentu (`fundament.css`), biblioteka komponentów (`komponenty.css`), arkusze widoku (`rama.css`, `stanowisko.css`, `przedsionek.css`), kolejność importu, konwencja nazewnicza, kontrakt specyficzności, wzorce stanu / fokusu / przejścia, podział na pliki per komponent, obsługa motywu i preferencji środowiska, antywzorce, lista kontrolna przeglądu |
 | **Czego NIE zawiera** | wartości żetonów (są w opracowaniu A4 „Żetony” i w `zetony.css` / `zetony.json`), pomiarów kontrastu (`kontrasty.json`), katalogu ikon (`manifest.json`), makiet okien (katalog `05-okna/`), zasad marki i znaku (opracowania 03-marka / 09-brand-system), warstwy JavaScript poza `wspolne.js` |
 
 ---
@@ -104,7 +104,7 @@ Fundament stylizuje **tylko to, czego komponent nie może przejąć**: podłoże
 <style>/* 5 — style lokalne okna, prefiks lokalny */</style>
 ```
 
-Kolejność jest identyczna w KANON rozdz. 11 (standard techniczny prototypów) i w HANDOFF rozdz. 1 („import po żetonach, przed komponentami”). Nie jest kwestią gustu — każdy krok ma twarde uzasadnienie.
+Kolejność jest identyczna w kontrakcie systemu projektowego (standard techniczny prototypów) i w opracowaniu o przekazaniu, ruchu i dostępności („import po żetonach, przed komponentami”). Nie jest kwestią gustu — każdy krok ma twarde uzasadnienie.
 
 ### 2.2. Uzasadnienie krok po kroku
 
@@ -114,7 +114,9 @@ Kolejność jest identyczna w KANON rozdz. 11 (standard techniczny prototypów) 
 | 2 | `zetony.css` | wszystkie `--dn-*`: prymitywy, żetony semantyczne obu motywów, typografia, przestrzeń, ruch, wymiary, warstwy | Własność niestandardowa musi istnieć **w chwili obliczania** reguły, która ją czyta. `var(--dn-tlo)` odczytane przed zdefiniowaniem `--dn-tlo` daje wartość nieprawidłową i element traci tło. |
 | 3 | `fundament.css` | podłoże, dziedziczenie, fokus, drobne wzorce | Musi być **przed** komponentami, bo jego reguły elementowe mają być nadpisywalne klasą. Zamiana miejscami odwróciłaby zależność — patrz 2.3. |
 | 4 | `komponenty.css` | biblioteka `.dn-*` | Wygrywa z fundamentem przy równej specyficzności, bo jest później. To jest zamierzone. |
-| 5 | styl lokalny okna | kompozycja, siatka, wyjątki jednego okna | Ostatni, bo wyjątek zawsze musi mieć możliwość zwycięstwa bez podnoszenia specyficzności. |
+| 5 | `rama.css` | belka tytułowa i pasek narzędzi okna | Rama jest wspólna wszystkim oknom platformy i musi móc nadpisać ustawienia powłoki (kierunek układu, rozdział wysokości), dlatego stoi po bibliotece komponentów. |
+| 6 | `stanowisko.css` · `przedsionek.css` | układ wielookienny przestrzeni roboczej · widok wejściowy środowiska | Arkusze widoku: jeden opisuje pracę w module, drugi wejście w środowisko. Rozłączne — okno wczytuje ten, który go dotyczy. |
+| 7 | styl lokalny okna | kompozycja, siatka, wyjątki jednego okna | Ostatni, bo wyjątek zawsze musi mieć możliwość zwycięstwa bez podnoszenia specyficzności. |
 
 ### 2.3. Dowód konieczności kolejności 3 → 4
 
@@ -211,8 +213,8 @@ Konwencja ma jedną wadę wrodzoną, którą trzeba znać: `.dn-karta-tytul` i `
 | `.dn-karta-tytul` | **elementem** `.dn-karta` | wymaga rodzica `.dn-karta` |
 | `.dn-karta-cialo` | **elementem** `.dn-karta` | wymaga rodzica `.dn-karta` |
 | `.dn-karta-naglowek` | **elementem** `.dn-karta` | wymaga rodzica `.dn-karta` |
-| `.dn-karta-sesji` | **osobnym blokiem** | pas kart sesji E2; nie ma nic wspólnego z `.dn-karta` |
-| `.dn-karta-srodowiska` | **osobnym blokiem** | karta środowiska E1 strefa 1 |
+| `.dn-karta-sesji` | **osobnym blokiem** | pas kart sesji powłoki środowiska; nie ma nic wspólnego z `.dn-karta` |
+| `.dn-karta-srodowiska` | **osobnym blokiem** | karta środowiska — Centrum dowodzenia, strefa 1 |
 | `.dn-karty-sesji` | **osobnym blokiem** (kontener) | liczba mnoga oznacza kontener pozycji |
 | `.dn-btn-ikona` | **osobnym blokiem** | ma własną szerokość, wysokość, obrys i stany; nie dziedziczy z `.dn-btn` |
 
@@ -226,7 +228,7 @@ Recenzja musi je znać, żeby nie zgłaszać ich powtórnie jako błędów:
 
 | Klasa | Odstępstwo | Powód zachowania |
 |---|---|---|
-| `.dn-radio` | powinna brzmieć `.dn-check--radio` (rozszerza `.dn-check`, wymaga jej w `class`) | nazwa krótka, zgodna z atrybutem `type="radio"`; zapisana w KANON rozdz. 5 jako wiążąca |
+| `.dn-radio` | powinna brzmieć `.dn-check--radio` (rozszerza `.dn-check`, wymaga jej w `class`) | nazwa krótka, zgodna z atrybutem `type="radio"`; zapisana w kontrakcie systemu projektowego jako wiążąca |
 | `.dn-dane` | pełni **dwie role**: klasa pomocnicza fundamentu (krój mono + `tabular-nums`) i modyfikator komórki tabeli (`.dn-tabela td.dn-dane`) | rola jest ta sama — „to są dane maszynowe”; zdublowanie jest zamierzone |
 | `.dn-liczba` | synonim `.dn-dane` w tej samej regule fundamentu (linia 92) | dwie nazwy dla jednej reguły; `.dn-liczba` czytelniejsza w tabelach liczbowych |
 | `.dn-suwak` | w katalogu komponentów (v1.0) nazwa oznaczała przełącznik, w `komponenty.css` (v2.0) oznacza suwak zakresu | rozjazd między generacjami; wiążąca jest v2.0 — przełącznik to `.dn-przelacznik` |
@@ -234,10 +236,10 @@ Recenzja musi je znać, żeby nie zgłaszać ich powtórnie jako błędów:
 
 ### 3.6. Identyfikatory a język
 
-Zasada KANON rozdz. 10.1: **komentarze i opisy po polsku, identyfikatory kodu i klasy po polsku wg istniejącej konwencji `.dn-*`, nazwy własne okien i modułów po angielsku.** W praktyce:
+Zasada kontrakt systemu projektowego: **komentarze i opisy po polsku, identyfikatory kodu i klasy po polsku wg istniejącej konwencji `.dn-*`, nazwy własne okien i modułów po angielsku.** W praktyce:
 
 ```css
-/* Pas kart sesji (E2) — mechanika zakładek + wskaźnik pracy w tle */   ← komentarz PL
+/* Pas kart sesji powłoki środowiska — mechanika zakładek + wskaźnik pracy w tle */   ← komentarz PL
 .dn-karty-sesji { … }                                                   ← klasa PL
 ```
 
@@ -410,7 +412,7 @@ Odnośnik jest jedynym miejscem, w którym sygnał pełni rolę barwy tekstu na 
 
 | Linie | Klasa | Deklaracje kluczowe | Zastosowanie w produkcie |
 |---|---|---|---|
-| 71–79 | `.dn-etykieta-wersalikowa` | `--dn-ff-bazowa`, `--dn-fs-xs` 11 px, `--dn-fw-polgruba`, `--dn-ls-wersaliki` 0.08em, `text-transform: uppercase`, `--dn-tekst-3` | nagłówki sekcji paneli, etykiety stref E1, podpisy grup w Oknie Konfiguracji |
+| 71–79 | `.dn-etykieta-wersalikowa` | `--dn-ff-bazowa`, `--dn-fs-xs` 11 px, `--dn-fw-polgruba`, `--dn-ls-wersaliki` 0.08em, `text-transform: uppercase`, `--dn-tekst-3` | nagłówki sekcji paneli, etykiety stref Centrum dowodzenia, podpisy grup w Oknie Konfiguracji |
 | 82–89 | `.dn-etykieta-mono` | `--dn-ff-mono`, `--dn-fs-xs`, `--dn-fw-srednia`, `--dn-ls-mono-wersaliki` 0.14em, wersaliki, `--dn-tekst-3` | nagłówki kolumn, identyfikatory stref, znaczniki poziomów zasięgu |
 | 92–95 | `.dn-dane`, `.dn-liczba` | `--dn-ff-mono`, `font-variant-numeric: tabular-nums` | każda liczba w kokpicie: liczniki kolejki, czasy, rozmiary, identyfikatory zadań |
 | 98–110 | `.dn-kod` | `display: block`, padding `--dn-od-3`/`--dn-od-4`, obrys `--dn-obrys-subtelny`, `--dn-r-sm`, tło `--dn-powierzchnia-2`, `--dn-tekst-2`, mono `--dn-fs-sm`, `white-space: pre-wrap`, `overflow-x: auto` | Output Console, Logs Viewer, podgląd polityki efektywnej, ładunek narzędzia |
@@ -501,16 +503,16 @@ Karta klikalna unosi się przy najechaniu o −1 px, więc jej naciśnięcie to 
 .dn-tabela tbody tr[aria-selected='true'] { background: var(--dn-sygnal-tlo); }
 ```
 
-Zwróć uwagę: **stan nigdy nie jest samą barwą.** Zakładka wybrana dostaje podkreślenie 2 px, pozycja nawigacji — kreskę sygnału po lewej, karta sesji — wstęgę górną. Barwa jest wzmocnieniem kształtu, nie jedynym nośnikiem. To realizacja zasady z KANON rozdz. 9.
+Zwróć uwagę: **stan nigdy nie jest samą barwą.** Zakładka wybrana dostaje podkreślenie 2 px, pozycja nawigacji — kreskę sygnału po lewej, karta sesji — wstęgę górną. Barwa jest wzmocnieniem kształtu, nie jedynym nośnikiem. To realizacja zasady z kontraktu systemu projektowego.
 
-**Praca w toku — ADL-017:**
+**Praca w toku — Zasada zero blokad:**
 
 ```css
 .dn-btn[aria-busy='true'] { cursor: progress; }
 .dn-btn[aria-busy='true']::after { … animation: dn-obrot 0.8s linear infinite; }
 ```
 
-Przycisk pracujący **pozostaje klikalny**. Zmienia się kursor i dochodzi wskaźnik, nie znika sprawczość. Nagłówek arkusza mówi to wprost: *„ADL-017: żaden wariant nie odbiera klikalności”*.
+Przycisk pracujący **pozostaje klikalny**. Zmienia się kursor i dochodzi wskaźnik, nie znika sprawczość. Nagłówek arkusza mówi to wprost: *„Zasada zero blokad: żaden wariant nie odbiera klikalności”*.
 
 **Błąd:**
 
@@ -559,7 +561,7 @@ W obu arkuszach nie ma ani jednego selektora `[data-stan]`. Atrybuty `data-*` s�
 }
 ```
 
-Wartości pochodzą z KANON rozdz. 2 („fokus 2 px + odsunięcie 2 px”) i rozdz. 9 („Pierścień fokusu: 2 px + odsunięcie 2 px, barwa `--dn-fokus`”). HANDOFF rozdz. 4 wymienia pierścień fokusu wśród rzeczy, **których nie wolno zmienić po cichu**.
+Wartości pochodzą z kontraktu systemu projektowego („fokus 2 px + odsunięcie 2 px”) i rozdz. 9 („Pierścień fokusu: 2 px + odsunięcie 2 px, barwa `--dn-fokus`”). opracowanie o przekazaniu, ruchu i dostępności wymienia pierścień fokusu wśród rzeczy, **których nie wolno zmienić po cichu**.
 
 ### 7.2. Sześć powodów, dla których fokus jest globalny, a nie per komponent
 
@@ -568,7 +570,7 @@ Wartości pochodzą z KANON rozdz. 2 („fokus 2 px + odsunięcie 2 px”) i roz
 | 1 | **Zasięg poza biblioteką** | Fokus dostaje każdy element fokusowalny: odnośnik w treści, `<summary>` panelu „O tym opracowaniu”, wiersz listy z `tabindex`, kontrolka natywna bez klasy `.dn-*`. Reguła per komponent obsłużyłaby wyłącznie bibliotekę. |
 | 2 | **Nowy komponent dziedziczy za darmo** | Klasa dopisana jutro do `komponenty.css` ma poprawny fokus, zanim ktokolwiek o nim pomyśli. Nie da się „zapomnieć fokusu” w nowym komponencie. |
 | 3 | **Jedna wartość, jedno miejsce zmiany** | Zmiana grubości pierścienia to jedna deklaracja. Rozproszona wersja wymagałaby edycji kilkudziesięciu reguł i gwarantowała rozjazd. |
-| 4 | **Symetria z `prefers-reduced-motion`** | KANON rozdz. 9 stawia obie sprawy obok siebie: ruch ograniczony **globalnie w żetonach**, fokus **globalnie w fundamencie** — nie per komponent. Ten sam wzorzec architektoniczny. |
+| 4 | **Symetria z `prefers-reduced-motion`** | kontrakt systemu projektowego stawia obie sprawy obok siebie: ruch ograniczony **globalnie w żetonach**, fokus **globalnie w fundamencie** — nie per komponent. Ten sam wzorzec architektoniczny. |
 | 5 | **`:focus-visible`, nie `:focus`** | Pierścień pojawia się przy nawigacji klawiaturą, nie po kliknięciu myszą. Bez tego rozróżnienia projektanci zaczynają usuwać obrys, żeby „nie brzydził” — i kokpit traci dostępność. |
 | 6 | **Audyt w jednym miejscu** | Recenzja dostępności sprawdza jedną regułę zamiast przeglądać cały arkusz. |
 
@@ -703,7 +705,7 @@ Trzy cechy warte zapamiętania:
 
 ### 9.1. Podstawa
 
-Regulamin budowy przywołany w HANDOFF: **jedna odpowiedzialność = jeden plik, arkusz ≤ 300 linii, komponenty sięgają wyłącznie po żetony semantyczne.** `komponenty.css` ma 1207 linii — czterokrotność progu. HANDOFF rozdz. 1 wskazuje cel `komponenty/` i wylicza czternaście plików.
+Regulamin budowy przywołany w opracowaniu o przekazaniu, ruchu i dostępności: **jedna odpowiedzialność = jeden plik, arkusz ≤ 300 linii, komponenty sięgają wyłącznie po żetony semantyczne.** `komponenty.css` ma 1207 linii — czterokrotność progu. opracowanie o przekazaniu, ruchu i dostępności wskazuje cel `komponenty/` i wylicza czternaście plików.
 
 ### 9.2. Zmierzone granice sekcji w pliku źródłowym
 
@@ -811,10 +813,10 @@ Wszystkie mieszkają w `fundament.css` (rozdz. 5.6). Dzielą się na trzy rodzin
 | Rodzina odrzucona | Przykłady zakazane | Uzasadnienie |
 |---|---|---|
 | **Odstępy** | `.mt-2`, `.p-4`, `.gap-3`, `.dn-od-4` jako klasa | Odstęp jest **cechą komponentu**, nie dokumentu. Kokpit ma jeden rytm — 12–16 px wewnątrz paneli — zapisany w `--dn-odstep-panel` i `--dn-odstep-sekcji`. Klasa odstępowa pozwala go ominąć w znaczniku, gdzie recenzja stylu jej nie widzi. Dodatkowo `data-gestosc="przestronna"` przelicza wymiary przez żetony — klasa `.mt-2` na to nie zareaguje i gęstość przestronna rozjedzie się w tych właśnie miejscach. |
-| **Barwy** | `.text-blad`, `.bg-panel`, `.obrys-mocny` | Barwa niesie znaczenie stanu, a stan **nigdy nie jest samym kolorem** (KANON rozdz. 9). Klasa barwna zachęca dokładnie do naruszenia tej zasady: pomaluj na czerwono zamiast dodać ikonę i etykietę. Właściwym narzędziem jest wariant komponentu (`.dn-plakietka--blad` niesie tło, obrys, barwę **i** miejsce na ikonę 12 px). |
+| **Barwy** | `.text-blad`, `.bg-panel`, `.obrys-mocny` | Barwa niesie znaczenie stanu, a stan **nigdy nie jest samym kolorem** (kontrakt systemu projektowego). Klasa barwna zachęca dokładnie do naruszenia tej zasady: pomaluj na czerwono zamiast dodać ikonę i etykietę. Właściwym narzędziem jest wariant komponentu (`.dn-plakietka--blad` niesie tło, obrys, barwę **i** miejsce na ikonę 12 px). |
 | **Układ** | `.flex`, `.grid`, `.items-center`, `.justify-between` | Układ wewnętrzny należy do komponentu, układ zewnętrzny — do arkusza lokalnego okna. Klasy układowe rozmywają tę granicę: znacznik zaczyna opisywać wygląd, a arkusz przestaje być kompletnym opisem systemu. Przy 12 modułach i kilkudziesięciu oknach oznacza to, że makieta nie jest już źródłem prawdy. |
 | **Typografia parametryczna** | `.fs-sm`, `.fw-600`, `.lh-tight` | Duplikat żetonu z gorszym interfejsem. `.dn-etykieta-wersalikowa` mówi, **czym** jest tekst; `.fs-xs` mówi tylko, **jak duży** jest — i pozwala zbudować etykietę o właściwym rozmiarze, ale bez wersalików i światła. |
-| **Widoczność i wymiar** | `.hidden`, `.w-full`, `.truncate` | `.hidden` bywa protezą blokady (ADL-017: element niegotowy nie znika, tylko komunikuje). Szerokość i przycięcie to sprawa kontekstu, w którym komponent stoi. |
+| **Widoczność i wymiar** | `.hidden`, `.w-full`, `.truncate` | `.hidden` bywa protezą blokady (Zasada zero blokad: element niegotowy nie znika, tylko komunikuje). Szerokość i przycięcie to sprawa kontekstu, w którym komponent stoi. |
 
 ### 10.3. Bilans
 
@@ -855,7 +857,7 @@ Wersja zakazana ma cztery wady: podwaja objętość arkusza, podnosi specyficzno
 
 ### 11.3. Pięć dopuszczonych użyć prymitywu w komponentach
 
-Zasada KANON rozdz. 2 mówi: *„komponent sięga wyłącznie po żetony SEMANTYCZNE, nigdy po prymitywy”*. Arkusz łamie ją **pięć razy** — i każde złamanie jest uzasadnione tą samą przyczyną: **tło jest stałe w obu motywach, więc tekst na nim też musi być stały.**
+Zasada kontrakt systemu projektowego mówi: *„komponent sięga wyłącznie po żetony SEMANTYCZNE, nigdy po prymitywy”*. Arkusz łamie ją **pięć razy** — i każde złamanie jest uzasadnione tą samą przyczyną: **tło jest stałe w obu motywach, więc tekst na nim też musi być stały.**
 
 | Linia | Reguła | Prymityw | Powierzchnia pod spodem |
 |---|---|---|---|
@@ -1007,9 +1009,9 @@ Lista zakazów. Kolumna „stan” podaje wynik pomiaru na obu arkuszach źród�
 | # | Antywzorzec | Stan | Uzasadnienie zakazu | Zamiast tego |
 |---|---|---|---|---|
 | 1 | **Wartość szesnastkowa wprost** | 1 wystąpienie (linia 163) | Wartość poza żetonem nie zmieni się przy przełączeniu motywu ani przy korekcie palety; omija pomiar kontrastu z `kontrasty.json` | `var(--dn-*)` |
-| 2 | **`#000000`** | 0 | Czysta czerń zabija głębię i wywołuje halację na OLED; skala kończy się na `#0A0A0A` (KIERUNEK 3.1) | `--dn-szary-950` (tło) / `--dn-szary-900` (tekst) |
+| 2 | **`#000000`** | 0 | Czysta czerń zabija głębię i wywołuje halację na OLED; skala kończy się na `#0A0A0A` (kierunek systemu projektowego) | `--dn-szary-950` (tło) / `--dn-szary-900` (tekst) |
 | 3 | **Prymityw w komponencie** | 5 uzasadnionych + 1 nieuzasadnione | Prymityw nie przełącza się z motywem — komponent traci zdolność reakcji | żeton semantyczny; prymityw wyłącznie na powierzchni stałej (rozdz. 11.3) |
-| 4 | **`disabled` / `aria-disabled` jako brama** | 0 | ADL-017: domyślne zachowanie systemu to wykonanie polecenia; wyszarzony przycisk nie mówi, czego brakuje | przycisk klikalny + komunikat po naciśnięciu albo opis obok |
+| 4 | **`disabled` / `aria-disabled` jako brama** | 0 | Zasada zero blokad: domyślne zachowanie systemu to wykonanie polecenia; wyszarzony przycisk nie mówi, czego brakuje | przycisk klikalny + komunikat po naciśnięciu albo opis obok |
 | 5 | **`opacity: .5` jako „wyłączenie”** | 0 | Obejście zakazu z punktu 4; dodatkowo psuje kontrast wszystkich warstw pod spodem | `--dn-tekst-2` / `--dn-tekst-3` jeśli chodzi o hierarchię; plakietka jeśli chodzi o stan |
 | 6 | **`!important`** | 0 w komponentach; 4 w `zetony.css` (blok ograniczonego ruchu) | Kończy kaskadę; jedyny sposób nadpisania to kolejny `!important` | popraw specyficzność albo kolejność w pliku; wzorzec podwojenia klasy (rozdz. 4.3) |
 | 7 | **Selektor identyfikatorowy** | 0 | Specyficzność (1,0,0) — nie do pokonania klasą; wiąże styl z jednym wystąpieniem | klasa `.dn-*` |
@@ -1017,14 +1019,14 @@ Lista zakazów. Kolumna „stan” podaje wynik pomiaru na obu arkuszach źród�
 | 9 | **Goły selektor elementowy w komponencie** | 0 | Dosięga elementów, których autor reguły nie widział | kwalifikator klasy (`textarea.dn-pole-kontrolka`) albo dziecko bezpośrednie (`> svg`) |
 | 10 | **`transition: all`** | 0 | Animuje właściwości układu w każdej klatce; wymusza jeden czas dla wszystkiego | wyliczona lista właściwości (rozdz. 8.3) |
 | 11 | **Animacja ciągła poza tętnem** | 1 (spinner — uzasadniona) | `INTENSYWNOSC_RUCHU` 3/10: jeden ruch znaczący na widok | tętno kropki; spinner wyłącznie na czas trwania operacji |
-| 12 | **Gradient jako tło przycisku, karty, sekcji** | 0 | KANON rozdz. 2: gradient wyłącznie ilustracyjny — awatary, rdzeń AOD, grafiki brandowe | powierzchnia kryjąca `--dn-powierzchnia` / `--dn-panel` |
+| 12 | **Gradient jako tło przycisku, karty, sekcji** | 0 | kontrakt systemu projektowego: gradient wyłącznie ilustracyjny — awatary, rdzeń AOD, grafiki brandowe | powierzchnia kryjąca `--dn-powierzchnia` / `--dn-panel` |
 | 13 | **`backdrop-filter` poza nakładką modala** | 1 (`.dn-modal::backdrop`) | Anty-domyślne: „glassmorfizm wszędzie” — powierzchnie mają być kryjące | tło kryjące + cień `--dn-cien-*` |
 | 14 | **`z-index` liczbowy wprost** | 0 | Wojna warstw; jedenaście poziomów jest zdefiniowanych (`--dn-z-*`) | `var(--dn-z-modal)`, `var(--dn-z-tooltip)`, `var(--dn-z-aod)`… |
 | 15 | **Wartość pikselowa spoza skali 4 px** | 27 literałów (rozdz. 13.1) | Jednostka 4 px jest [NIENEGOCJOWALNA]; wartość spoza skali psuje rytm i nie reaguje na gęstość | `--dn-od-*`, `--dn-wym-*`, `calc()` na żetonie |
 | 16 | **`[data-theme]` w komponencie** | 0 | Podwaja regułę i podnosi specyficzność jednego motywu ponad drugi (rozdz. 11.1) | żeton semantyczny |
-| 17 | **Stan wyrażony samą barwą** | 0 | KANON rozdz. 9: stan zawsze niesie ikonę albo etykietę | barwa + kształt (wstęga, kreska, podkreślenie) + ikona albo etykieta |
+| 17 | **Stan wyrażony samą barwą** | 0 | kontrakt systemu projektowego: stan zawsze niesie ikonę albo etykietę | barwa + kształt (wstęga, kreska, podkreślenie) + ikona albo etykieta |
 | 18 | **`outline: none` bez zastąpienia** | 0 (3 zastąpienia poprawne) | Usuwa jedyne wskazanie fokusu dla nawigacji klawiaturą | obrys w barwie `--dn-fokus` + poświata `--dn-cien-sygnal` (rozdz. 7.4) |
-| 19 | **Emoji jako ikona** | 0 | Anty-domyślne KIERUNEK 4; emoji renderuje się inaczej w każdym systemie i nie przyjmuje `currentColor` | SVG z `zasoby/ikony/svg/` (82 pliki), obrys 1,75 |
+| 19 | **Emoji jako ikona** | 0 | Anty-domyślne kierunek systemu projektowego; emoji renderuje się inaczej w każdym systemie i nie przyjmuje `currentColor` | SVG z `zasoby/ikony/svg/` (82 pliki), obrys 1,75 |
 | 20 | **Jednostka `em`/`rem` w odstępach** | 0 | Odstęp zależałby od stopnia pisma rodzica — rytm 4 px przestaje być przewidywalny | `--dn-od-*` (px); `ch` dopuszczone dla szerokości bloku tekstu (`44ch`, `40ch`, `36ch`) |
 
 ### 13.1. Odstępstwa faktycznie obecne — pełny wykaz do przeglądu
@@ -1109,7 +1111,7 @@ Kolejność jest celowa: punkty blokujące (1–9) przed poprawkami jakościowym
 
 | # | Sprawdzenie |
 |---|---|
-| 33 | Komponent obejrzany w galerii `06-okna/komponenty.html` (brama odbioru z HANDOFF rozdz. 3) |
+| 33 | Komponent obejrzany w galerii `06-okna/komponenty.html` (brama odbioru z opracowania o przekazaniu, ruchu i dostępności) |
 | 34 | Fokus widoczny na każdej kontrolce przy nawigacji Tab |
 | 35 | Wygląd sprawdzony przy `pointer: coarse` (emulacja dotyku) |
 | 36 | Wygląd sprawdzony przy `data-gestosc="przestronna"` |
@@ -1120,23 +1122,23 @@ Kolejność jest celowa: punkty blokujące (1–9) przed poprawkami jakościowym
 
 ## 15. Decyzje projektowe
 
-Rozstrzygnięcia podjęte ponad literalny zapis dokumentacji źródłowej, wraz z podstawą i uzasadnieniem. Każde jest zgodne z KANON i katalogiem komponentów.
+Rozstrzygnięcia podjęte ponad literalny zapis dokumentacji źródłowej, wraz z podstawą i uzasadnieniem. Każde jest zgodne z kontraktem systemu projektowego i katalogiem komponentów.
 
 | # | Rozstrzygnięcie | Podstawa w źródłach | Uzasadnienie |
 |---|---|---|---|
-| **D-A5-01** | **Test przynależności reguły do fundamentu** (trzy warunki, rozdz. 1.3) | Nagłówek `fundament.css` wylicza zakres, ale nie podaje kryterium rozstrzygania przypadków spornych | Bez kryterium fundament rośnie przy każdej wątpliwości; test przenosi decyzję z gustu na sprawdzalny warunek |
-| **D-A5-02** | **Reguła rozstrzygająca „element czy blok”** (rozdz. 3.4): klasa deklarująca własne `display`, wymiary i tło jest blokiem, choćby nazwa wyglądała na element | KANON rozdz. 5 wylicza klasy, ale nie podaje reguły ich czytania; `komponenty.css` stosuje ją konsekwentnie (`.dn-karta-sesji`, `.dn-btn-ikona`, `.dn-kafel`), nie nazywając | Konwencja ma wadę wrodzoną — `.dn-karta-tytul` i `.dn-karta-sesji` są lekturalnie nierozróżnialne. Reguła wywiedziona z faktycznego zapisu arkusza, nie wymyślona |
-| **D-A5-03** | **Drabina wyboru nośnika stanu** (rozdz. 6.2): pseudoklasa → ARIA → modyfikator klasowy → `[data-stan]` | Nagłówek `komponenty.css` wymienia siedem stanów; rozkład nośników zmierzony w pliku (ARIA 17 wystąpień, modyfikator 7) | Kolejność wynika z pomiaru, nie z preferencji. „ARIA przed klasą” daje zysk dostępnościowy: nie da się rozjechać wyglądu ze stanem dla czytnika ekranu |
-| **D-A5-04** | **`[data-stan]` pozostaje furtką, nie wzorcem** — `data-*` zarezerwowane dla trybów `<html>` i zaczepów skryptu | Zero wystąpień `[data-stan]` w obu arkuszach; `data-theme` i `data-gestosc` na `:root`; `data-przelacz-motyw` bez reguły CSS w `wspolne.js` | Zadanie wymieniało `[data-stan]` wśród wzorców stanu; stan faktyczny jest inny. Odnotowano rzeczywistość i podano warunki dopuszczalności zamiast opisywać nieistniejący wzorzec |
-| **D-A5-05** | **Zachowanie dwóch powtórzeń reguły fokusu** w `.dn-btn` i `.dn-btn-ikona` mimo nadmiarowości | HANDOFF rozdz. 1: podział na pliki per komponent; rozdz. 9 tego opracowania | `przycisk.css` ma być czytelny i poprawny w oderwaniu od fundamentu. Zakaz rozszerzania powtórzenia na kolejne komponenty |
-| **D-A5-06** | **Kolejność importu w arkuszu spinającym wyznaczają zależności `@keyframes`**, nie kolejność alfabetyczna | Trzy definicje klatek w `komponenty.css`, sześć miejsc użycia; HANDOFF rozdz. 1 nie porusza tematu | Najczęstsza pułapka podziału pliku: po rozbiciu spinner przestaje się obracać. Zależność musi być zapisana jawnie, z komentarzem |
-| **D-A5-07** | **Wyjątek `[data-theme]` dla `::selection` zostaje** do czasu wprowadzenia żetonu roli `--dn-zaznaczenie-tlo`; nie stanowi precedensu dla komponentów | `fundament.css` linie 52–53; brak żetonu roli „zaznaczenie” w `zetony.css` | Przyczyna wyjątku jest strukturalna (brak żetonu), nie estetyczna. Nazwanie luki chroni przed powoływaniem się na wyjątek w komponentach |
-| **D-A5-08** | **Reguła `forced-colors` do dopisania w `fundament.css`** (rozdz. 12.3), ~15 linii, słowa kluczowe systemowe, zero zmian w komponentach | Zero wystąpień `forced-colors` w pakiecie; KANON rozdz. 9: WCAG 2.1 AA jako warunek wejściowy | Jedyna luka o realnym skutku: usunięcie `box-shadow` gasi pierścień tętna i poświatę fokusu pola. Umiejscowienie w fundamencie zgodne z zasadą „preferencje środowiska poza komponentem” |
-| **D-A5-09** | **Cztery warunki przyjęcia klasy użytkowej** (rozdz. 10.1) i katalog pięciu odrzuconych rodzin (rozdz. 10.2) | Jedenaście istniejących klas w `fundament.css`, zero w `komponenty.css`; KANON rozdz. 2 i 9 | Dokumentacja źródłowa nie zajmuje stanowiska wobec klas użytkowych. Bez zapisanej granicy każde okno dopisze własne — i rytm 4 px przestanie obowiązywać |
-| **D-A5-10** | **Podział na 14 plików z wyliczoną objętością** i przypisaniem klas (tabela 9.3) | HANDOFF rozdz. 1 wymienia nazwy plików bez objętości i bez przypisania klas; granice sekcji zmierzone w `komponenty.css` | Wykonawca potrzebuje sprawdzalnego przypisania. Suma zweryfikowana: 1189 + 18 = 1207 linii ✔; wszystkie pliki poniżej progu 300 linii |
-| **D-A5-11** | **Wykaz odstępstw od „zera wartości zaszytych”** z oceną trzystopniową: dopuszczalne / do przeglądu / do poprawy (rozdz. 13.1) | Nagłówek `komponenty.css` deklaruje „zero wartości zaszytych”; pomiar wskazuje 27 literałów pikselowych i 1 szesnastkowy | Deklaracja i stan faktyczny się rozchodzą. Milczenie oznaczałoby, że recenzja zgłasza te same pozycje przy każdym przeglądzie. Trzy pozycje oznaczono do poprawy: `var(--dn-sygnal-300, #8FB2F5)`, `rgba(255,255,255,.06)` w polu paska, `min-height: 30px` w polu paska |
-| **D-A5-12** | **Punkt łamania w arkuszu lokalnym zapisuje się literałem z komentarzem wskazującym żeton** | `--dn-bp-w1…w4` istnieją w `zetony.css`; zero zapytań szerokościowych w `fundament.css` i `komponenty.css` | Ograniczenie techniczne CSS: własności niestandardowe nie działają w warunku `@media`. Bez zapisanej reguły powstałby kod pozornie poprawny, który nigdy nie zadziała |
-| **D-A5-13** | **Uzasadnienie kolejności importu dowodem na `border-radius`** (rozdz. 2.3) zamiast odwołania do zwyczaju | `fundament.css` linia 48 (`border-radius: var(--dn-r-xs)` w regule fokusu); `komponenty.css` linia 22 (`border-radius: var(--dn-r-sm)` w `.dn-btn`); obie o specyficzności (0,1,0) | Kolejność importu bywa traktowana jako konwencja. Dowód czyni ją sprawdzalną: zamiana miejscami daje widoczny defekt — przycisk zmienia kształt przy fokusie klawiaturowym |
+| **1** | **Test przynależności reguły do fundamentu** (trzy warunki, rozdz. 1.3) | Nagłówek `fundament.css` wylicza zakres, ale nie podaje kryterium rozstrzygania przypadków spornych | Bez kryterium fundament rośnie przy każdej wątpliwości; test przenosi decyzję z gustu na sprawdzalny warunek |
+| **2** | **Reguła rozstrzygająca „element czy blok”** (rozdz. 3.4): klasa deklarująca własne `display`, wymiary i tło jest blokiem, choćby nazwa wyglądała na element | kontrakt systemu projektowego wylicza klasy, ale nie podaje reguły ich czytania; `komponenty.css` stosuje ją konsekwentnie (`.dn-karta-sesji`, `.dn-btn-ikona`, `.dn-kafel`), nie nazywając | Konwencja ma wadę wrodzoną — `.dn-karta-tytul` i `.dn-karta-sesji` są lekturalnie nierozróżnialne. Reguła wywiedziona z faktycznego zapisu arkusza, nie wymyślona |
+| **3** | **Drabina wyboru nośnika stanu** (rozdz. 6.2): pseudoklasa → ARIA → modyfikator klasowy → `[data-stan]` | Nagłówek `komponenty.css` wymienia siedem stanów; rozkład nośników zmierzony w pliku (ARIA 17 wystąpień, modyfikator 7) | Kolejność wynika z pomiaru, nie z preferencji. „ARIA przed klasą” daje zysk dostępnościowy: nie da się rozjechać wyglądu ze stanem dla czytnika ekranu |
+| **4** | **`[data-stan]` pozostaje furtką, nie wzorcem** — `data-*` zarezerwowane dla trybów `<html>` i zaczepów skryptu | Zero wystąpień `[data-stan]` w obu arkuszach; `data-theme` i `data-gestosc` na `:root`; `data-przelacz-motyw` bez reguły CSS w `wspolne.js` | Zadanie wymieniało `[data-stan]` wśród wzorców stanu; stan faktyczny jest inny. Odnotowano rzeczywistość i podano warunki dopuszczalności zamiast opisywać nieistniejący wzorzec |
+| **5** | **Zachowanie dwóch powtórzeń reguły fokusu** w `.dn-btn` i `.dn-btn-ikona` mimo nadmiarowości | opracowanie o przekazaniu, ruchu i dostępności: podział na pliki per komponent; rozdz. 9 tego opracowania | `przycisk.css` ma być czytelny i poprawny w oderwaniu od fundamentu. Zakaz rozszerzania powtórzenia na kolejne komponenty |
+| **6** | **Kolejność importu w arkuszu spinającym wyznaczają zależności `@keyframes`**, nie kolejność alfabetyczna | Trzy definicje klatek w `komponenty.css`, sześć miejsc użycia; opracowanie o przekazaniu, ruchu i dostępności nie porusza tematu | Najczęstsza pułapka podziału pliku: po rozbiciu spinner przestaje się obracać. Zależność musi być zapisana jawnie, z komentarzem |
+| **7** | **Wyjątek `[data-theme]` dla `::selection` zostaje** do czasu wprowadzenia żetonu roli `--dn-zaznaczenie-tlo`; nie stanowi precedensu dla komponentów | `fundament.css` linie 52–53; brak żetonu roli „zaznaczenie” w `zetony.css` | Przyczyna wyjątku jest strukturalna (brak żetonu), nie estetyczna. Nazwanie luki chroni przed powoływaniem się na wyjątek w komponentach |
+| **8** | **Reguła `forced-colors` do dopisania w `fundament.css`** (rozdz. 12.3), ~15 linii, słowa kluczowe systemowe, zero zmian w komponentach | Zero wystąpień `forced-colors` w pakiecie; kontrakt systemu projektowego: WCAG 2.1 AA jako warunek wejściowy | Jedyna luka o realnym skutku: usunięcie `box-shadow` gasi pierścień tętna i poświatę fokusu pola. Umiejscowienie w fundamencie zgodne z zasadą „preferencje środowiska poza komponentem” |
+| **9** | **Cztery warunki przyjęcia klasy użytkowej** (rozdz. 10.1) i katalog pięciu odrzuconych rodzin (rozdz. 10.2) | Jedenaście istniejących klas w `fundament.css`, zero w `komponenty.css`; kontrakt systemu projektowego | Dokumentacja źródłowa nie zajmuje stanowiska wobec klas użytkowych. Bez zapisanej granicy każde okno dopisze własne — i rytm 4 px przestanie obowiązywać |
+| **10** | **Podział na 14 plików z wyliczoną objętością** i przypisaniem klas (tabela 9.3) | opracowanie o przekazaniu, ruchu i dostępności wymienia nazwy plików bez objętości i bez przypisania klas; granice sekcji zmierzone w `komponenty.css` | Wykonawca potrzebuje sprawdzalnego przypisania. Suma zweryfikowana: 1189 + 18 = 1207 linii ✔; wszystkie pliki poniżej progu 300 linii |
+| **11** | **Wykaz odstępstw od „zera wartości zaszytych”** z oceną trzystopniową: dopuszczalne / do przeglądu / do poprawy (rozdz. 13.1) | Nagłówek `komponenty.css` deklaruje „zero wartości zaszytych”; pomiar wskazuje 27 literałów pikselowych i 1 szesnastkowy | Deklaracja i stan faktyczny się rozchodzą. Milczenie oznaczałoby, że recenzja zgłasza te same pozycje przy każdym przeglądzie. Trzy pozycje oznaczono do poprawy: `var(--dn-sygnal-300, #8FB2F5)`, `rgba(255,255,255,.06)` w polu paska, `min-height: 30px` w polu paska |
+| **12** | **Punkt łamania w arkuszu lokalnym zapisuje się literałem z komentarzem wskazującym żeton** | `--dn-bp-w1…w4` istnieją w `zetony.css`; zero zapytań szerokościowych w `fundament.css` i `komponenty.css` | Ograniczenie techniczne CSS: własności niestandardowe nie działają w warunku `@media`. Bez zapisanej reguły powstałby kod pozornie poprawny, który nigdy nie zadziała |
+| **13** | **Uzasadnienie kolejności importu dowodem na `border-radius`** (rozdz. 2.3) zamiast odwołania do zwyczaju | `fundament.css` linia 48 (`border-radius: var(--dn-r-xs)` w regule fokusu); `komponenty.css` linia 22 (`border-radius: var(--dn-r-sm)` w `.dn-btn`); obie o specyficzności (0,1,0) | Kolejność importu bywa traktowana jako konwencja. Dowód czyni ją sprawdzalną: zamiana miejscami daje widoczny defekt — przycisk zmienia kształt przy fokusie klawiaturowym |
 
 ---
 

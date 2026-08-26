@@ -607,7 +607,7 @@ code.tg-wiersz {
     Typografia i głos marki
   </span>
   <div class="dn-pasek-prawa">
-    <span class="tg-panel-meta" style="color: var(--dn-rama-tekst-2);">B7 · v2.0</span>
+    <span class="tg-panel-meta" style="color: var(--dn-rama-tekst-2);">v2.0</span>
     <button type="button" class="dn-btn-ikona dn-btn-ikona--na-ramie"
             data-przelacz-motyw data-motyw-ikona
             aria-label="Przełącz motyw jasny i ciemny">
@@ -702,7 +702,7 @@ code.tg-wiersz {
 <section class="tg-sekcja" id="s1">
   <h2><span class="tg-numer">01</span>Trzy kroje, trzy role</h2>
   <p>
-    <strong>Kontrakt kierunku</strong> (<code class="tg-wiersz">KIERUNEK.md</code>, rozdz. 3.2)
+    <strong>Kontrakt kierunku</strong> (kierunek systemu projektowego)
     rozstrzyga zestaw krojów raz i na zawsze: <strong>Space Grotesk = wejście do środowiska
     i tożsamość marki; IBM Plex Sans = praca; IBM Plex Mono = maszyna.</strong>
     Różnica kroju niesie w tym produkcie znaczenie — nie jest ozdobą.
@@ -1709,7 +1709,7 @@ h1, h2, h3, .dn-naglowek {
       <thead><tr><th scope="col">Uwaga</th><th scope="col">Wyjaśnienie</th></tr></thead>
       <tbody>
         <tr><td>Space Grotesk spada na <b>Plex Sans</b>, nie na krój systemowy</td><td>jeżeli jeden plik się nie wczyta, drugi zwykle tak — dokument zachowuje spójność rodziny</td></tr>
-        <tr><td><b>Inter nie występuje</b> w żadnym łańcuchu</td><td>zablokowany jako anty-domyślny (<code class="tg-wiersz">KIERUNEK.md</code>, rozdz. 4) — także jako krój zapasowy</td></tr>
+        <tr><td><b>Inter nie występuje</b> w żadnym łańcuchu</td><td>zablokowany jako anty-domyślny (kierunek systemu projektowego) — także jako krój zapasowy</td></tr>
         <tr><td><code class="tg-wiersz">system-ui</code> przed <code class="tg-wiersz">sans-serif</code></td><td>krój systemowy jest lepszym zapasem niż domyślny szeryfowy</td></tr>
         <tr><td>Łańcuch mono zaczyna się od krojów o rozróżnialnym zerze</td><td><code class="tg-wiersz">Cascadia Mono</code> i <code class="tg-wiersz">Consolas</code> mają przekreślone zero</td></tr>
       </tbody>
@@ -1861,7 +1861,7 @@ h1, h2, h3, .dn-naglowek {
             <p class="tg-para-tresc">Kanał modelu nie odpowiada. Wybierz inny kanał w Model Configuration albo ponów za chwilę — kolejka wznowi się automatycznie.</p>
           </div>
         </div>
-        <p style="font-size: var(--dn-fs-sm); margin: 0;"><b>Dlaczego:</b> zasada zero blokad (ADL-017) w warstwie językowej — system nigdy nie zostawia Operatora bez drogi dalej.</p>
+        <p style="font-size: var(--dn-fs-sm); margin: 0;"><b>Dlaczego:</b> zasada zero blokad w warstwie językowej — system nigdy nie zostawia Operatora bez drogi dalej.</p>
       </div>
     </div>
 
@@ -2135,7 +2135,7 @@ h1, h2, h3, .dn-naglowek {
 <section class="tg-sekcja" id="s17">
   <h2><span class="tg-numer">17</span>Zero blokad w języku</h2>
   <p>
-    <code class="tg-wiersz">KANON.md</code>, rozdz. 8 (ADL-017): <strong>Danaco Console nie
+    kontrakt systemu projektowego (zasada zero blokad): <strong>Danaco Console nie
     narzuca twardych blokad. Izolacja, uprawnienia i profile są wyłącznie opcjami
     konfigurowalnymi ze stanem wyjściowym „wyłączone / pełny dostęp”.</strong>
     W warstwie językowej: <strong>nie piszemy o braku uprawnienia — opisujemy stan bieżący
@@ -2476,9 +2476,9 @@ h1, h2, h3, .dn-naglowek {
           <tr><td>najlepszy, wiodący</td><td>— (usunąć)</td><td>reklama</td><td>twierdzenie bez pomiaru</td></tr>
           <tr><td>błyskawicznie</td><td>wartość czasu</td><td>reklama</td><td>„w 1,2 s” zamiast „błyskawicznie”</td></tr>
           <tr><td>pełna kontrola</td><td>opis zakresu opcji</td><td>reklama</td><td>—</td></tr>
-          <tr><td>brak uprawnień</td><td>opis stanu opcji + miejsce zmiany</td><td>blokada</td><td>ADL-017</td></tr>
-          <tr><td>nie możesz, nie wolno</td><td>opis stanu</td><td>blokada</td><td>ADL-017</td></tr>
-          <tr><td>zablokowane, zabronione</td><td><b>wyłączone</b> (o opcji Operatora)</td><td>blokada</td><td>ADL-017</td></tr>
+          <tr><td>brak uprawnień</td><td>opis stanu opcji + miejsce zmiany</td><td>blokada</td><td>zasada zero blokad</td></tr>
+          <tr><td>nie możesz, nie wolno</td><td>opis stanu</td><td>blokada</td><td>zasada zero blokad</td></tr>
+          <tr><td>zablokowane, zabronione</td><td><b>wyłączone</b> (o opcji Operatora)</td><td>blokada</td><td>zasada zero blokad</td></tr>
           <tr><td>wymagane, obowiązkowe (o polu)</td><td>opis skutku pozostawienia pustego</td><td>blokada</td><td>zero blokad</td></tr>
           <tr><td>niedostępne</td><td><b>nieskonfigurowane</b> albo <b>wyłączone</b></td><td>blokada</td><td>—</td></tr>
           <tr><td>odmowa dostępu</td><td>opis punktu izolacji</td><td>blokada</td><td>—</td></tr>
@@ -2868,30 +2868,30 @@ Objaśnienie [?]: {Czym jest pole}. {Co się dzieje przy braku wartości}. — m
     <table class="tg-tabela">
       <thead><tr><th scope="col">#</th><th scope="col">Decyzja</th><th scope="col">Uzasadnienie</th><th scope="col">Alternatywa odrzucona</th></tr></thead>
       <tbody>
-        <tr><td class="tg-ff-mono">D-1</td><td>Typografia i głos w jednym dokumencie</td><td>litera i słowo są jednym przedmiotem projektowym</td><td>dwa osobne dokumenty</td></tr>
-        <tr><td class="tg-ff-mono">D-2</td><td>Space Grotesk nie schodzi poniżej 16 px</td><td>rysunek geometryczny traci czytelność</td><td>13–14 px dla „małych nagłówków”</td></tr>
-        <tr><td class="tg-ff-mono">D-3</td><td>Waga 400 Space Grotesk nie jest wgrywana</td><td>krój ma nieść charakter; waga regularna go traci</td><td>komplet czterech wag</td></tr>
-        <tr><td class="tg-ff-mono">D-4</td><td>Waga 700 Plex Mono nie jest wgrywana</td><td>mono w wadze grubej zlewa się w blok</td><td>komplet czterech wag</td></tr>
-        <tr><td class="tg-ff-mono">D-5</td><td>O kroju etykiety decyduje krój wartości</td><td>para etykieta+wartość jest jednym blokiem semantycznym</td><td>etykieta zawsze Plex Sans</td></tr>
-        <tr><td class="tg-ff-mono">D-6</td><td>Nagłówek kolumny = mono 0,14 em; etykieta formularza = Sans 0,08 em</td><td>tabela należy do świata maszyny, formularz do świata pracy</td><td>jednolity krój etykiet</td></tr>
-        <tr><td class="tg-ff-mono">D-7</td><td><span class="tg-ff-mono">tabular-nums</span> mimo stałej szerokości mono</td><td>zabezpieczenie przed wczytaniem kroju + deklaracja intencji</td><td>poleganie na naturze kroju</td></tr>
-        <tr><td class="tg-ff-mono">D-8</td><td>Stopień 11 px zarezerwowany dla etykiet</td><td>rozróżnienie <span class="tg-ff-bazowa">ź</span>/<span class="tg-ff-bazowa">ż</span> w 11 px wymaga uwagi</td><td>11 px dla metadanych z nazwami</td></tr>
-        <tr><td class="tg-ff-mono">D-9</td><td>Skala nie skaluje się płynnie</td><td>kokpit wymaga przewidywalności (wariancja 4/10)</td><td>typografia płynna <span class="tg-ff-mono">clamp()</span></td></tr>
-        <tr><td class="tg-ff-mono">D-10</td><td>Wyjątek: 40 px → 30 px w widoku mobilnym</td><td><span class="tg-ff-naglowek">MultitaskingAI</span> nie mieści się w 40 px na telefonie</td><td>łamanie nazwy środowiska</td></tr>
-        <tr><td class="tg-ff-mono">D-11</td><td>Kod w wierszu ma stopień względny 0,92 em</td><td>stopień bezwzględny byłby za mały w 14 px i za duży w 11 px</td><td>12 px na sztywno</td></tr>
-        <tr><td class="tg-ff-mono">D-12</td><td>Inter nieobecny także w łańcuchu zapasowym</td><td>anty-domyślne blokują odruch, nie tylko deklarację główną</td><td>Inter jako pierwszy zapas</td></tr>
-        <tr><td class="tg-ff-mono">D-13</td><td>Space Grotesk spada na Plex Sans</td><td>spójność rodziny przy częściowym niepowodzeniu wczytania</td><td><span class="tg-ff-mono">system-ui</span> bezpośrednio</td></tr>
-        <tr><td class="tg-ff-mono">D-14</td><td>Odbiorca nazwany Operator także w interfejsie</td><td>nazwa roli jest częścią pozycjonowania produktu</td><td>„użytkownik” w interfejsie</td></tr>
-        <tr><td class="tg-ff-mono">D-15</td><td>Nazwy własne angielskie nieodmienne</td><td>odmiana niszczy nazwę i łamie rozdz. 10 KANON.md</td><td>odmiana fonetyczna</td></tr>
-        <tr><td class="tg-ff-mono">D-16</td><td>Para przycisków nazywa dwa skutki</td><td>„Anuluj” nie jest skutkiem</td><td>„Usuń / Anuluj”</td></tr>
-        <tr><td class="tg-ff-mono">D-17</td><td>Zero komunikatów „brak uprawnień”</td><td>bezpośrednia konsekwencja ADL-017 w warstwie językowej</td><td>standardowe komunikaty odmowy</td></tr>
-        <tr><td class="tg-ff-mono">D-18</td><td>Zakaz formy „my” w interfejsie</td><td>system nie jest osobą; „my” wprowadza fikcyjny podmiot</td><td>„Nie mogliśmy zapisać…”</td></tr>
-        <tr><td class="tg-ff-mono">D-19</td><td>Wersaliki wyłącznie przez <span class="tg-ff-mono">text-transform</span></td><td>tłumaczenie, czytniki ekranu, wyszukiwanie, odwracalność</td><td>zapis wersalikami w treści</td></tr>
-        <tr><td class="tg-ff-mono">D-20</td><td>Odmiana przez liczebnik obowiązkowa</td><td>poprawność językowa jest częścią precyzji głosu</td><td>forma z nawiasem</td></tr>
-        <tr><td class="tg-ff-mono">D-21</td><td>Skracanie środka albo końca, nigdy początku</td><td>Operator rozpoznaje element po początku ciągu</td><td>skracanie od lewej</td></tr>
-        <tr><td class="tg-ff-mono">D-22</td><td><span class="tg-ff-mono">font-synthesis: none</span> jako reguła globalna</td><td>blokuje syntezę niszczącą ogonki <span class="tg-ff-bazowa">ą ę</span></td><td>domyślne zachowanie przeglądarki</td></tr>
-        <tr><td class="tg-ff-mono">D-23</td><td>Wgrywanie wstępne obejmuje dwa pliki</td><td>wgranie wstępne całości opóźnia pierwsze wyświetlenie</td><td>preload wszystkich 20 plików</td></tr>
-        <tr><td class="tg-ff-mono">D-24</td><td>Słownik podaje formy odmiany, nie tylko definicje</td><td>bez form odmiany słownik nie rozstrzyga sporu redakcyjnego</td><td>słownik definicyjny</td></tr>
+        <tr><td class="tg-ff-mono">2</td><td>Typografia i głos w jednym dokumencie</td><td>litera i słowo są jednym przedmiotem projektowym</td><td>dwa osobne dokumenty</td></tr>
+        <tr><td class="tg-ff-mono">3</td><td>Space Grotesk nie schodzi poniżej 16 px</td><td>rysunek geometryczny traci czytelność</td><td>13–14 px dla „małych nagłówków”</td></tr>
+        <tr><td class="tg-ff-mono">4</td><td>Waga 400 Space Grotesk nie jest wgrywana</td><td>krój ma nieść charakter; waga regularna go traci</td><td>komplet czterech wag</td></tr>
+        <tr><td class="tg-ff-mono">5</td><td>Waga 700 Plex Mono nie jest wgrywana</td><td>mono w wadze grubej zlewa się w blok</td><td>komplet czterech wag</td></tr>
+        <tr><td class="tg-ff-mono">6</td><td>O kroju etykiety decyduje krój wartości</td><td>para etykieta+wartość jest jednym blokiem semantycznym</td><td>etykieta zawsze Plex Sans</td></tr>
+        <tr><td class="tg-ff-mono">7</td><td>Nagłówek kolumny = mono 0,14 em; etykieta formularza = Sans 0,08 em</td><td>tabela należy do świata maszyny, formularz do świata pracy</td><td>jednolity krój etykiet</td></tr>
+        <tr><td class="tg-ff-mono">8</td><td><span class="tg-ff-mono">tabular-nums</span> mimo stałej szerokości mono</td><td>zabezpieczenie przed wczytaniem kroju + deklaracja intencji</td><td>poleganie na naturze kroju</td></tr>
+        <tr><td class="tg-ff-mono">9</td><td>Stopień 11 px zarezerwowany dla etykiet</td><td>rozróżnienie <span class="tg-ff-bazowa">ź</span>/<span class="tg-ff-bazowa">ż</span> w 11 px wymaga uwagi</td><td>11 px dla metadanych z nazwami</td></tr>
+        <tr><td class="tg-ff-mono">10</td><td>Skala nie skaluje się płynnie</td><td>kokpit wymaga przewidywalności (wariancja 4/10)</td><td>typografia płynna <span class="tg-ff-mono">clamp()</span></td></tr>
+        <tr><td class="tg-ff-mono">11</td><td>Wyjątek: 40 px → 30 px w widoku mobilnym</td><td><span class="tg-ff-naglowek">MultitaskingAI</span> nie mieści się w 40 px na telefonie</td><td>łamanie nazwy środowiska</td></tr>
+        <tr><td class="tg-ff-mono">12</td><td>Kod w wierszu ma stopień względny 0,92 em</td><td>stopień bezwzględny byłby za mały w 14 px i za duży w 11 px</td><td>12 px na sztywno</td></tr>
+        <tr><td class="tg-ff-mono">13</td><td>Inter nieobecny także w łańcuchu zapasowym</td><td>anty-domyślne blokują odruch, nie tylko deklarację główną</td><td>Inter jako pierwszy zapas</td></tr>
+        <tr><td class="tg-ff-mono">14</td><td>Space Grotesk spada na Plex Sans</td><td>spójność rodziny przy częściowym niepowodzeniu wczytania</td><td><span class="tg-ff-mono">system-ui</span> bezpośrednio</td></tr>
+        <tr><td class="tg-ff-mono">15</td><td>Odbiorca nazwany Operator także w interfejsie</td><td>nazwa roli jest częścią pozycjonowania produktu</td><td>„użytkownik” w interfejsie</td></tr>
+        <tr><td class="tg-ff-mono">16</td><td>Nazwy własne angielskie nieodmienne</td><td>odmiana niszczy nazwę i łamie rozdz. 10 kontrakt systemu projektowego</td><td>odmiana fonetyczna</td></tr>
+        <tr><td class="tg-ff-mono">17</td><td>Para przycisków nazywa dwa skutki</td><td>„Anuluj” nie jest skutkiem</td><td>„Usuń / Anuluj”</td></tr>
+        <tr><td class="tg-ff-mono">18</td><td>Zero komunikatów „brak uprawnień”</td><td>bezpośrednia konsekwencja zasady zero blokad w warstwie językowej</td><td>standardowe komunikaty odmowy</td></tr>
+        <tr><td class="tg-ff-mono">19</td><td>Zakaz formy „my” w interfejsie</td><td>system nie jest osobą; „my” wprowadza fikcyjny podmiot</td><td>„Nie mogliśmy zapisać…”</td></tr>
+        <tr><td class="tg-ff-mono">20</td><td>Wersaliki wyłącznie przez <span class="tg-ff-mono">text-transform</span></td><td>tłumaczenie, czytniki ekranu, wyszukiwanie, odwracalność</td><td>zapis wersalikami w treści</td></tr>
+        <tr><td class="tg-ff-mono">21</td><td>Odmiana przez liczebnik obowiązkowa</td><td>poprawność językowa jest częścią precyzji głosu</td><td>forma z nawiasem</td></tr>
+        <tr><td class="tg-ff-mono">22</td><td>Skracanie środka albo końca, nigdy początku</td><td>Operator rozpoznaje element po początku ciągu</td><td>skracanie od lewej</td></tr>
+        <tr><td class="tg-ff-mono">23</td><td><span class="tg-ff-mono">font-synthesis: none</span> jako reguła globalna</td><td>blokuje syntezę niszczącą ogonki <span class="tg-ff-bazowa">ą ę</span></td><td>domyślne zachowanie przeglądarki</td></tr>
+        <tr><td class="tg-ff-mono">24</td><td>Wgrywanie wstępne obejmuje dwa pliki</td><td>wgranie wstępne całości opóźnia pierwsze wyświetlenie</td><td>preload wszystkich 20 plików</td></tr>
+        <tr><td class="tg-ff-mono">25</td><td>Słownik podaje formy odmiany, nie tylko definicje</td><td>bez form odmiany słownik nie rozstrzyga sporu redakcyjnego</td><td>słownik definicyjny</td></tr>
       </tbody>
     </table>
     </div>
@@ -2919,16 +2919,16 @@ Objaśnienie [?]: {Czym jest pole}. {Co się dzieje przy braku wartości}. — m
         </dd>
         <dt>Źródła w dokumentacji</dt>
         <dd>
-          <span class="tg-ff-mono">KANON.md</span> rozdz. 2 (żetony typograficzne), 8 (zero
-          blokad, ADL-017), 9 (dostępność), 10 (zasady redakcyjne) ·
-          <span class="tg-ff-mono">KIERUNEK.md</span> rozdz. 3.2 (trzy kroje, trzy role),
+          kontrakt systemu projektowego (żetony typograficzne), 8 (zero
+          blokad), 9 (dostępność), 10 (zasady redakcyjne) ·
+          kierunek systemu projektowego (trzy kroje, trzy role),
           3.5 (znak i logotyp), 4 (anty-domyślne) ·
           <span class="tg-ff-mono">zasoby/zetony/zetony.css</span> i
           <span class="tg-ff-mono">zasoby/zetony/fonty.css</span> (wartości żetonów
           i deklaracje <span class="tg-ff-mono">@font-face</span>) ·
           <span class="tg-ff-mono">zasoby/css/fundament.css</span>,
           <span class="tg-ff-mono">zasoby/css/komponenty.css</span> ·
-          dokumentacja modułów i okien w <span class="tg-ff-mono">dok/projekt-ui/</span>
+          dokumentacja modułów i okien w <span class="tg-ff-mono">docs/</span>
           (nazwy własne, akcje silnika kolejek, warstwy nakładki, Panel prowenancji,
           panel orkiestracji).
         </dd>

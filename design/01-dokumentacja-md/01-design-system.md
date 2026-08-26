@@ -11,7 +11,7 @@
 | **Data** | 2026-08-14 (pakiet wizualny źródłowy: 2026-08-11) |
 | **Odbiorcy** | projektanci interfejsu, deweloperzy warstwy klienckiej, autorzy makiet i prototypów, osoby prowadzące odbiór wizualny, redaktorzy tekstów interfejsu |
 | **Zakres** | definicja systemu projektowego: kontrakt kierunku, filozofia, zasady nienegocjowalne, anatomia trójwarstwowa, katalog anty-domyślnych, zasada jednego akcentu, rama kokpitu, element sygnaturowy, gęstości, zarządzanie systemem, słownik pojęć, mapa zależności |
-| **Czego NIE zawiera** | pełnych kart poszczególnych komponentów (osobne opracowanie katalogu komponentów), tabeli 33 pomiarów kontrastu w rozbiciu na pary (plik `zasoby/zetony/kontrasty.json` i opracowanie barw), księgi znaku i konstrukcji godła (opracowanie marki), makiet okien operacyjnych (katalog `05-okna/`), specyfikacji protokołu i warstwy funkcjonalnej Danaco Pilot |
+| **Czego NIE zawiera** | pełnych kart poszczególnych komponentów (osobne opracowanie katalogu komponentów), tabeli 33 pomiarów kontrastu w rozbiciu na pary (plik `zasoby/zetony/kontrasty.json` i opracowanie barw), księgi znaku i konstrukcji godła (opracowanie marki), makiet okien operacyjnych (katalog `05-okna/`), specyfikacji protokołu i warstwy funkcjonalnej |
 
 ---
 
@@ -57,7 +57,7 @@ Drugim powodem był rozjazd źródeł. Dokumentacja v1.0 opisywała dwie równol
 
 ### 1.3. Kontrakt kierunku
 
-Zdanie źródłowe, z którego wyprowadza się każda decyzja wizualna (`KIERUNEK.md`, rozdz. 1):
+Zdanie źródłowe, z którego wyprowadza się każda decyzja wizualna (kierunek systemu projektowego):
 
 > Platforma operacyjna (**kokpit dowodzenia**) dla zawodowego **Operatora** zarządzającego cyfrową organizacją, w języku **monochromatycznej precyzji** — odcienie bieli w motywie jasnym, odcienie czerni w motywie ciemnym, **jeden chłodny sygnał** — z ciążeniem ku własnemu systemowi „**instrumentu pomiarowego**”: zwarta gęstość, dane krojem mono, zero dekoracji bez funkcji.
 
@@ -158,7 +158,7 @@ Zasady zapisane są w nagłówku `zetony.css` (linie 13–14) i powtórzone masz
 | 1 | **Jednostka 4 px** | `--dn-od-0…16` = 0 / 4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48 / 64 px | żaden odstęp w arkuszu nie jest liczbą spoza skali |
 | 2 | **Oba motywy równoprawne** | bloki `light` i `dark` definiowane osobno; `color-scheme` ustawiany per motyw; `prefers-color-scheme` honorowany przy braku jawnego wyboru | każdy widok sprawdzony w obu motywach; żaden nie jest „wersją drugą” |
 | 3 | **Stan nigdy samym kolorem** | każdy komponent stanu niesie ikonę albo etykietę: `.dn-plakietka`, `.dn-krok`, `.dn-toast`, `.dn-kropka` | wyłączenie barw (symulacja monochromii) nie odbiera odczytu stanu |
-| 4 | **Zero blokad (ADL-017)** | brak atrybutu `disabled`; stany przez ARIA: `aria-pressed`, `aria-busy`, `aria-invalid`, `aria-selected`, `aria-current` | żaden przycisk nie jest wyszarzoną bramą; niegotowość komunikuje opis obok albo komunikat po naciśnięciu |
+| 4 | **Zero blokad** | brak atrybutu `disabled`; stany przez ARIA: `aria-pressed`, `aria-busy`, `aria-invalid`, `aria-selected`, `aria-current` | żaden przycisk nie jest wyszarzoną bramą; niegotowość komunikuje opis obok albo komunikat po naciśnięciu |
 | 5 | **WCAG 2.1 AA na wejściu** | 33 zmierzone pary w `kontrasty.json`; wartość bez przekroczonego progu nie wchodzi do żetonów | pomiar, nie deklaracja — przebieg `kontrasty.json` jest bramą każdej fali wdrożenia |
 
 **Zasada szósta zapisana w `zetony.json`** (rozszerzenie, nie odrębna reguła): zakaz `#000000`; `#FFFFFF` wyłącznie jako powierzchnia kart i tekst na atramencie. Traktujemy ją jako konsekwencję zasady 5 — czysta czerń zabija głębię i powoduje halację na OLED, a biel jako tło całej strony podnosi jasność ponad próg komfortu przy pracy wielogodzinnej.
@@ -189,7 +189,7 @@ Zero blokad nie oznacza „system pozwala na wszystko”. Oznacza: **system nie 
 | Element zależy od konfiguracji Operatora | obecny i w pełni dostępny; brak konfiguracji = wartość domyślna | przełącznik macierzy izolacji; powiązanie międzymodułowe |
 | Element dotyczy progu uwierzytelnienia | przycisk „Pomiń” klikalny w obu fazach wdrożenia; skuteczność zależy od ustawienia „Wymóg logowania” | okno rejestracji i logowania |
 
-Dodatkowe rozstrzygnięcia ADL-017 wiążące dla makiet:
+Dodatkowe rozstrzygnięcia dotyczące zasady zero blokad wiążące dla makiet:
 - Odliczanie przy „Wyślij ponownie” ma charakter **wyłącznie informacyjny** — nie blokuje kliknięcia.
 - Metoda uwierzytelniania wyłączona w konfiguracji **nie jest renderowana w ogóle** — „brak metody = mniej segmentów, nie zablokowany segment”.
 - Jedyny sankcjonowany wyjątek to pole w widoku tylko do odczytu (`readonly`), gdzie element fizycznie nie ma czego przyjąć.
@@ -289,7 +289,7 @@ Katalog jest listą odruchów, które w projektach interfejsów AI pojawiają si
 | 1 | Fioletowy gradient „AI” | monochrom + jeden błękit sygnałowy | kontrakt mówi „monochromatyczna precyzja, jeden chłodny sygnał”; gradient AI jest znakiem kategorii, nie produktu — nie odróżnia kokpitu od czatu |
 | 2 | Inter + slate-900 jako niezadeklarowana baza | IBM Plex Sans + czysta neutralna skala, zadeklarowane wprost | slate jest podbarwiony niebieskim; kontrakt żąda „odcieni bieli i czerni” dosłownie, o równych składowych RGB |
 | 3 | Trzy równe karty funkcji | strefy o malejącej masie (Centrum dowodzenia), asymetria koordynator–wykonawca | równa masa oznacza równą wagę; w kokpicie wagi nie są równe — środowisko waży więcej niż komponent własny, komponent więcej niż ustawienie |
-| 4 | Wyszarzone przyciski jako bramy | **zero blokad** — komunikat po naciśnięciu albo opis obok | ADL-017: domyślne zachowanie systemu to wykonanie polecenia; wyszarzenie jest odmową bez uzasadnienia |
+| 4 | Wyszarzone przyciski jako bramy | **zero blokad** — komunikat po naciśnięciu albo opis obok | Zasada zero blokad: domyślne zachowanie systemu to wykonanie polecenia; wyszarzenie jest odmową bez uzasadnienia |
 | 5 | Stan samym kolorem | **zawsze** ikona albo etykieta | zasada 3; ok. 8% populacji męskiej ma zaburzenie rozróżniania barw, a kokpit czyta się także w monochromatycznym zrzucie i przy wysokim kontraście systemowym |
 | 6 | Emoji jako ikony | wyłącznie SVG z zestawu (Lucide, obrys 1,75, siatka 24×24) | emoji renderuje się inaczej na każdej platformie, nie przyjmuje `currentColor` i nie skaluje się do 14 px bez utraty czytelności |
 | 7 | Dziewięć kolorów tła dla dziewięciu nadawców | trzy klasy semantyczne + ikona + etykieta + plakietka roli | dziewięć teł rozbiłoby spójność i złamało zasadę „stan nigdy samym kolorem”; rola różnicuje się znakiem, nie barwą |
@@ -300,7 +300,7 @@ Katalog jest listą odruchów, które w projektach interfejsów AI pojawiają si
 
 ### 5.1. Rozszerzenie katalogu — odruchy odnotowane w toku prac
 
-Poniższe pozycje nie występują w źródłowym katalogu `KIERUNEK.md`, ale wynikają wprost z zasad nienegocjowalnych. Odnotowane jako rozstrzygnięcia ponad źródła (rozdz. 13).
+Poniższe pozycje nie występują w źródłowym katalogu kierunku systemu projektowego ale wynikają wprost z zasad nienegocjowalnych. Odnotowane jako rozstrzygnięcia ponad źródła (rozdz. 13).
 
 | Odruch | Zamiast tego | Zasada źródłowa |
 |---|---|---|
@@ -553,7 +553,7 @@ Punkty łamania są niezależne od gęstości i dotyczą **układu**, nie wymiar
 
 ### 10.1. Czego nie wolno zmienić po cichu
 
-Lista zamknięta, przeniesiona z `HANDOFF.md` rozdz. 4. Zmiana którejkolwiek pozycji wymaga decyzji Właściciela i nowego numeru wersji pakietu.
+Lista zamknięta, przeniesiona z opracowania o przekazaniu, ruchu i dostępności. Zmiana którejkolwiek pozycji wymaga decyzji Właściciela i nowego numeru wersji pakietu.
 
 | # | Pozycja | Nośnik |
 |---|---|---|
@@ -568,7 +568,7 @@ Do listy dołączamy — jako konsekwencje zasad nienegocjowalnych — pozycje s
 | # | Pozycja | Nośnik |
 |---|---|---|
 | 6 | pasek górny atramentowy w obu motywach | `zetony.css` sekcja 2 |
-| 7 | zakaz `disabled` (ADL-017) | `komponenty.css`, nagłówek pliku |
+| 7 | zakaz `disabled` (zasada zero blokad) | `komponenty.css`, nagłówek pliku |
 
 ### 10.2. Co wolno zmienić i w jakim trybie
 
@@ -590,7 +590,7 @@ Do listy dołączamy — jako konsekwencje zasad nienegocjowalnych — pozycje s
 | **Prowadzący system projektowy** | katalog komponentów, katalog ikon, wzorce okien, redakcja opracowań | działa wyłącznie w granicach żetonów i zasad |
 | **Wykonawca widoku** (projektant / deweloper) | kompozycja widoku z istniejących komponentów, teksty operacyjne | nie tworzy wartości; brak komponentu zgłasza procedurą 10.4 |
 
-**Zasada rozstrzygania sporów:** przy rozbieżności między opisem prozą a plikiem CSS **rozstrzyga plik CSS** jako jedyne źródło prawdy o klasach i wartościach. Zasada przeniesiona z README katalogu komponentów (zasada 4) i rozszerzona na cały pakiet v2.0.
+**Zasada rozstrzygania sporów:** przy rozbieżności między opisem prozą a plikiem CSS **rozstrzyga plik CSS** jako jedyne źródło prawdy o klasach i wartościach. Zasada przeniesiona z zasad katalogu komponentów i rozszerzona na cały pakiet v2.0.
 
 ### 10.4. Procedura dodania komponentu
 
@@ -684,7 +684,7 @@ KROK 7 · ODBIÓR
 | gęstość zwarta | compact density | tryb domyślny: kontrolka 32 px, wiersz 36 px |
 | gęstość przestronna | comfortable density | tryb przygotowany: `data-gestosc="przestronna"` |
 | anty-domyślne | anti-defaults | katalog zablokowanych odruchów projektowych |
-| zero blokad | no hard gates (ADL-017) | zasada: system nie odbiera klikalności |
+| zero blokad | no hard gates | zasada: system nie odbiera klikalności |
 | wstęga | ribbon | pasek 2 px oznaczający element aktywny (karta sesji, karta środowiska) |
 | plakietka | badge | etykieta stanu lub roli; zawsze z ikoną albo tekstem |
 | medalion | medallion | kwadratowy nośnik ikony nadawcy we wpisie okna komunikacji |
@@ -726,7 +726,7 @@ Jedno pojęcie, jedno słowo — synonimy zabronione: **Operator · środowisko 
 
 ```
         ┌───────────────────────────────────────────────────────────┐
-        │  KONTRAKT KIERUNKU  (KIERUNEK.md)                         │
+        │  KONTRAKT KIERUNKU  (kierunek systemu projektowego)                         │
         │  monochromatyczna precyzja · instrument pomiarowy         │
         │  pokrętła: wariancja 4 · ruch 3 · gęstość 8               │
         └────────────────────────┬──────────────────────────────────┘
@@ -822,27 +822,27 @@ Sekcja zawiera rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie doku
 
 | # | Zagadnienie | Stan w źródłach | Rozstrzygnięcie | Uzasadnienie |
 |---|---|---|---|---|
-| **D-01** | Uzasadnienia poszczególnych zakazów w katalogu anty-domyślnych | `KIERUNEK.md` i `KANON.md` podają **parę** „odruch → zamiast tego”, bez uzasadnień | Dopisano kolumnę uzasadnień (rozdz. 5) | Katalog bez uzasadnień jest listą zakazów do obejścia; z uzasadnieniami staje się narzędziem decyzyjnym w sytuacjach nieprzewidzianych |
-| **D-02** | Rozszerzenie katalogu anty-domyślnych o 6 pozycji (rozdz. 5.1) | brak w źródłach | Dodano jako **rozszerzenie oznaczone jawnie**, wyprowadzone z zasad nienegocjowalnych | Pozycje te były łamane najczęściej w toku prac (wartości hex wprost, odstępy spoza skali, usuwanie fokusu); zapis czyni je sprawdzalnymi |
-| **D-03** | Trzy wyjątki „komponent sięga po prymityw” | `komponenty.css` zawiera trzy takie odwołania, bez komentarza wyjaśniającego | Zinwentaryzowano i uzasadniono wspólnym mianownikiem: powierzchnia pod tekstem nie przełącza się z motywem (rozdz. 4.2) | Bez zapisu wyjątki wyglądają na błąd i zostałyby „naprawione”, psując kontrast na wypełnieniu sygnałowym |
-| **D-04** | Status trybu „dotyk” względem gęstości | `zetony.css` definiuje `pointer: coarse` i `data-gestosc` w osobnych sekcjach, bez opisu relacji | Ustalono, że dotyk **nakłada się** na tryb bieżący, nie zastępuje go; udokumentowano bezkolizyjność (rozdz. 9.3) | Wartości 40 px i 44 px są identyczne w obu warstwach, więc złożenie jest deterministyczne niezależnie od specyficzności selektorów |
-| **D-05** | Uzasadnienie czasu tętna 2,4 s | źródła podają wartość, nie uzasadnienie | Dopisano uzasadnienie percepcyjne: wolniej niż tętno spoczynkowe, szybciej niż próg utraty powiązania ruchu (rozdz. 8.3) | Bez uzasadnienia wartość wygląda na dowolną i jest pierwszą kandydatką do „drobnej korekty” |
-| **D-06** | Rejestr wystąpień sygnału | źródła podają zasadę ≤ 5% i listę ról, bez zamkniętego rejestru miejsc | Zbudowano **zamkniętą listę 12 wystąpień** (rozdz. 6.4) na podstawie faktycznych selektorów w `komponenty.css` i `fundament.css` | Zasada procentowa bez rejestru jest niesprawdzalna; rejestr pozwala odbierać widok bez pomiaru pikseli |
-| **D-07** | Lista „czego kropka nie oznacza” | brak w źródłach | Dopisano (rozdz. 8.5) z odesłaniem do właściwego komponentu dla każdego przypadku | Element sygnaturowy rozmywa się przez nadużycie; zapis negatywny chroni skuteczniej niż pozytywny |
-| **D-08** | Procedura dodania komponentu (7 kroków) | źródła opisują zasady komponentów i fale wdrożenia, nie opisują procedury rozszerzania | Zbudowano procedurę z istniejących elementów: katalog + żetony semantyczne + 7 stanów + pomiar + dokumentacja + brama odbioru (rozdz. 10.4) | Procedura nie wprowadza nowych reguł — porządkuje istniejące w kolejność wykonawczą |
-| **D-09** | Model wersjonowania (kontrakt / główna / pomocnicza) | źródła podają wersję v2.0 i fakt zastąpienia v1.0, bez modelu | Zaproponowano trójstopniowy model z wyzwalaczami i konsekwencjami (rozdz. 10.5) | Trzy poziomy odpowiadają trzem warstwom anatomii: kierunek → wartości → komponenty |
-| **D-10** | Podział ról decyzyjnych | źródła wskazują decyzje Właściciela punktowo (gęstość, emblematy, paleta) | Uogólniono do trzech ról z zakresami i ograniczeniami (rozdz. 10.3) | Zakresy odtworzono z faktycznych decyzji odnotowanych w `KIERUNEK.md` i README pakietu; nie wprowadzono nowych uprawnień |
-| **D-11** | Macierz wpływu zmiany | brak w źródłach | Zbudowano na podstawie kierunku zależności z rozdz. 12.2 | Jest konsekwencją arytmetyczną jednokierunkowości zależności, nie nową regułą |
-| **D-12** | Rozstrzygnięcie sporu proza ↔ CSS dla całego pakietu | zasada zapisana w README **katalogu komponentów** (zasada 4), ograniczona do klas | Rozszerzono na cały pakiet v2.0: przy rozbieżności rozstrzyga plik CSS | Rozjazd źródeł był przyczyną zastąpienia poprzedniej generacji (rozdz. 1.2); rozszerzenie zasady zamyka tę klasę problemów |
-| **D-13** | Sprzężenie pokręteł | źródła podają trzy wartości niezależnie | Opisano regułę sprzężenia: gęstość 8 wymusza wariancję 4, wariancja 4 uzasadnia ruch 3 (rozdz. 1.4) | Bez opisu sprzężenia pokrętła wyglądają na trzy niezależne suwaki i kuszą do zmiany pojedynczej |
-| **D-14** | Godło jako jedyne odstępstwo od reguły żetonów w SVG | `HANDOFF.md`: „godło zachowuje barwy własne w obu motywach” | W opracowaniach HTML sygnet rysowany inline z `currentColor` dla grotów i `var(--dn-sygnal-400)` dla kropki | Grot dziedziczy barwę ramy (stałą), kropka zachowuje tożsamość znaku; oba zapisy pozostają odwołaniem `var(--dn-*)`, nie wartością szesnastkową |
+| **1** | Uzasadnienia poszczególnych zakazów w katalogu anty-domyślnych | kierunek systemu projektowego i kontrakt systemu projektowego podają **parę** „odruch → zamiast tego”, bez uzasadnień | Dopisano kolumnę uzasadnień (rozdz. 5) | Katalog bez uzasadnień jest listą zakazów do obejścia; z uzasadnieniami staje się narzędziem decyzyjnym w sytuacjach nieprzewidzianych |
+| **2** | Rozszerzenie katalogu anty-domyślnych o 6 pozycji (rozdz. 5.1) | brak w źródłach | Dodano jako **rozszerzenie oznaczone jawnie**, wyprowadzone z zasad nienegocjowalnych | Pozycje te były łamane najczęściej w toku prac (wartości hex wprost, odstępy spoza skali, usuwanie fokusu); zapis czyni je sprawdzalnymi |
+| **3** | Trzy wyjątki „komponent sięga po prymityw” | `komponenty.css` zawiera trzy takie odwołania, bez komentarza wyjaśniającego | Zinwentaryzowano i uzasadniono wspólnym mianownikiem: powierzchnia pod tekstem nie przełącza się z motywem (rozdz. 4.2) | Bez zapisu wyjątki wyglądają na błąd i zostałyby „naprawione”, psując kontrast na wypełnieniu sygnałowym |
+| **4** | Status trybu „dotyk” względem gęstości | `zetony.css` definiuje `pointer: coarse` i `data-gestosc` w osobnych sekcjach, bez opisu relacji | Ustalono, że dotyk **nakłada się** na tryb bieżący, nie zastępuje go; udokumentowano bezkolizyjność (rozdz. 9.3) | Wartości 40 px i 44 px są identyczne w obu warstwach, więc złożenie jest deterministyczne niezależnie od specyficzności selektorów |
+| **5** | Uzasadnienie czasu tętna 2,4 s | źródła podają wartość, nie uzasadnienie | Dopisano uzasadnienie percepcyjne: wolniej niż tętno spoczynkowe, szybciej niż próg utraty powiązania ruchu (rozdz. 8.3) | Bez uzasadnienia wartość wygląda na dowolną i jest pierwszą kandydatką do „drobnej korekty” |
+| **6** | Rejestr wystąpień sygnału | źródła podają zasadę ≤ 5% i listę ról, bez zamkniętego rejestru miejsc | Zbudowano **zamkniętą listę 12 wystąpień** (rozdz. 6.4) na podstawie faktycznych selektorów w `komponenty.css` i `fundament.css` | Zasada procentowa bez rejestru jest niesprawdzalna; rejestr pozwala odbierać widok bez pomiaru pikseli |
+| **7** | Lista „czego kropka nie oznacza” | brak w źródłach | Dopisano (rozdz. 8.5) z odesłaniem do właściwego komponentu dla każdego przypadku | Element sygnaturowy rozmywa się przez nadużycie; zapis negatywny chroni skuteczniej niż pozytywny |
+| **8** | Procedura dodania komponentu (7 kroków) | źródła opisują zasady komponentów i fale wdrożenia, nie opisują procedury rozszerzania | Zbudowano procedurę z istniejących elementów: katalog + żetony semantyczne + 7 stanów + pomiar + dokumentacja + brama odbioru (rozdz. 10.4) | Procedura nie wprowadza nowych reguł — porządkuje istniejące w kolejność wykonawczą |
+| **9** | Model wersjonowania (kontrakt / główna / pomocnicza) | źródła podają wersję v2.0 i fakt zastąpienia v1.0, bez modelu | Zaproponowano trójstopniowy model z wyzwalaczami i konsekwencjami (rozdz. 10.5) | Trzy poziomy odpowiadają trzem warstwom anatomii: kierunek → wartości → komponenty |
+| **10** | Podział ról decyzyjnych | źródła wskazują decyzje Właściciela punktowo (gęstość, emblematy, paleta) | Uogólniono do trzech ról z zakresami i ograniczeniami (rozdz. 10.3) | Zakresy odtworzono z faktycznych decyzji odnotowanych w kierunku systemu projektowego; nie wprowadzono nowych uprawnień |
+| **11** | Macierz wpływu zmiany | brak w źródłach | Zbudowano na podstawie kierunku zależności z rozdz. 12.2 | Jest konsekwencją arytmetyczną jednokierunkowości zależności, nie nową regułą |
+| **12** | Rozstrzygnięcie sporu proza ↔ CSS dla całego pakietu | zasada zapisana w zasad katalogu komponentów, ograniczona do klas | Rozszerzono na cały pakiet v2.0: przy rozbieżności rozstrzyga plik CSS | Rozjazd źródeł był przyczyną zastąpienia poprzedniej generacji (rozdz. 1.2); rozszerzenie zasady zamyka tę klasę problemów |
+| **13** | Sprzężenie pokręteł | źródła podają trzy wartości niezależnie | Opisano regułę sprzężenia: gęstość 8 wymusza wariancję 4, wariancja 4 uzasadnia ruch 3 (rozdz. 1.4) | Bez opisu sprzężenia pokrętła wyglądają na trzy niezależne suwaki i kuszą do zmiany pojedynczej |
+| **14** | Godło jako jedyne odstępstwo od reguły żetonów w SVG | opracowanie o przekazaniu, ruchu i dostępności: „godło zachowuje barwy własne w obu motywach” | W opracowaniach HTML sygnet rysowany inline z `currentColor` dla grotów i `var(--dn-sygnal-400)` dla kropki | Grot dziedziczy barwę ramy (stałą), kropka zachowuje tożsamość znaku; oba zapisy pozostają odwołaniem `var(--dn-*)`, nie wartością szesnastkową |
 
 ### 13.1. Kwestie pozostawione otwarte
 
 | Kwestia | Stan | Kto rozstrzyga |
 |---|---|---|
-| Zakres widoku Mobile (L-P-31) | otwarta w źródłach | Właściciel |
-| Układ okien per moduł (M-4) | makiety przyjmują układ „okno modułu + pas komunikacji na dole” | Właściciel |
+| Zakres widoku Mobile | otwarta w źródłach | Właściciel |
+| Układ okien właściwy każdemu modułowi | makiety przyjmują układ „okno modułu + pas komunikacji na dole” | Właściciel |
 | Domyślne włączenie gęstości przestronnej jako wyboru w Oknie Ustawień | żetony gotowe, przełącznik nie jest zadeklarowany w inwentarzu okien | prowadzący system + Właściciel |
 | Zachowanie pasa kart sesji przy przepełnieniu (przewijanie poziome vs zwężanie kart) | „przedmiot fazy wykonawczej” | prowadzący system |
 | Powrót na stronę główną: godło czy odrębna ikona `dom` | rozbieżność między dwoma dokumentami źródłowymi | prowadzący system |

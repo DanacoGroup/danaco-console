@@ -1,0 +1,485 @@
+/* ============================================================================
+   DANACO CONSOLE — CENTRUM DOWODZENIA: ZŁOŻENIE OKNA
+   ----------------------------------------------------------------------------
+   Kompetencja: układ karty Centrum dowodzenia — nagłówek, wiersz pierwszego
+   wejścia oraz cztery strefy wyboru (środowiska, komponenty aplikacji,
+   komponenty własne Operatora, listwa ustawień) i panel samouczka. Wygląd
+   komponentów pochodzi z arkuszy kompetencyjnych; tutaj stoi wyłącznie ich
+   złożenie w tym oknie.
+
+   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `css/komponenty.css`,
+   `stany.css`, `rama.css`, `karty-okna.css`, `panel-sesji.css`,
+   `pasek-okna.css`, `izolacja.css`, `okno-robocze.css`.
+   Mechanizm: `okna/centrum-dowodzenia.js`.
+
+   Punkty łamania mierzą szerokość płótna (`@container plotno`), nie szerokość
+   ekranu: panel samouczka zwęża okno główne o 320 px.
+   ============================================================================ */
+
+:root { --cd-maks-tresc: 100%; }
+
+/* ── Położenie panelu bocznego ────────────────────────────────────────────
+   Panel sesji stoi domyślnie po lewej. Menu panelu przenosi go na prawą stronę
+   okna — obszar roboczy jest zginany w rzędzie, więc kolejność wystarczy
+   zmienić porządkiem, bez przenoszenia znacznika. */
+.dn-obszar-panel--boczny[data-strona='prawo'] { order: 9; }
+
+/* ── Płótno i rytm treści ─────────────────────────────────────────────────── */
+
+.cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
+
+/* Płótno karty. Warunek `:not([hidden])` jest konieczny: `display`
+   zadeklarowany przez autora wygrywa z `[hidden]` z arkusza przeglądarki,
+   a wtedy karta odłożona zostawałaby na ekranie razem z kartą bieżącą. */
+.cd-tresc:not([hidden]) {
+  container-type: inline-size;
+  container-name: plotno;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-10);
+  width: 100%;
+  max-width: min(var(--cd-maks-tresc), 100%);
+  margin: 0 auto;
+  padding: var(--dn-od-2) var(--dn-od-6) var(--dn-od-16);
+}
+
+/* Wejście stref w kolejności ważności. `backwards`, nie `both`: animacja
+   wypełniająca w przód pozostaje czynna i czyni ze strefy kontekst nakładania,
+   co przycina panele rozwijane w jej wnętrzu. */
+.cd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
+.cd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
+.cd-tresc > *:nth-child(n + 6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
+
+/* ── Nagłówek okna ────────────────────────────────────────────────────────── */
+
+.cd-naglowek {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--dn-od-4);
+  flex-wrap: wrap;
+}
+.cd-nadtytul {
+  margin: 0 0 var(--dn-od-1);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+}
+.cd-tytul {
+  margin: 0;
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-display);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+}
+.cd-podtytul {
+  margin: var(--dn-od-2) 0 0;
+  max-width: 78ch;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-base);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
+/* Lockup poziomy z zasobów marki; 280 px wobec minimum 120 px z księgi znaku. */
+.cd-marka-lockup { width: 280px; height: auto; flex: none; color: var(--dn-tekst); }
+
+/* ── Wiersz pierwszego wejścia ────────────────────────────────────────────── */
+
+.cd-start {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-500);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-panel);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-start[hidden] { display: none; }
+.cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
+.cd-start-tresc { flex: 1 1 auto; margin: 0; }
+.cd-start-tresc b { color: var(--dn-tekst); }
+
+/* ── Strefy wyboru ────────────────────────────────────────────────────────── */
+
+.cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
+.cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
+.cd-sekcja-tytul { font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
+.cd-sekcja-meta {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-sekcja-opis { max-width: 74ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
+
+/* Waga strefy zapisana atrybutem `data-waga`; nośnikiem jest kreska sygnałowa
+   przed tytułem, w trzech stopniach krycia. */
+.cd-sekcja-tytul::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 0.9em;
+  margin-right: var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-500);
+  vertical-align: -1px;
+}
+.cd-strefa[data-waga='2'] .cd-sekcja-tytul::before { opacity: 0.62; }
+.cd-strefa[data-waga='3'] .cd-sekcja-tytul::before { opacity: 0.38; }
+
+/* ── Strefa 1 · karty środowisk ───────────────────────────────────────────── */
+
+/* Cztery środowiska stoją w jednej linii — komplet wyboru czyta się jako jeden
+   rząd, a nie jako trzy plus sierota. Karta zwęża się razem z płótnem; nie
+   ubywa kolumn, ubywa szerokości karty. */
+.cd-siatka-srodowisk { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* Karta jest kolumną: wiersz meta z przyciskiem wejścia stoi przy dolnej
+   krawędzi, więc cztery przyciski w rzędzie leżą na jednej wysokości. */
+/* Karta w rzędzie czterech ma węższe pole niż karta w rzędzie trzech: wyściółka
+   i stopień tytułu schodzą o krok, żeby najdłuższa nazwa środowiska
+   (MultitaskingAI) mieściła się w jednym wierszu przy 1366 px. */
+.cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; padding: var(--dn-od-4); }
+.cd-karta-akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-2xl); }
+.cd-karta-akcent .dn-karta-srodowiska-godlo { width: var(--dn-od-8); height: var(--dn-od-8); }
+/* Wiersz metryki łamał się sam z siebie i tylko na dwóch kartach z czterech:
+   przy 1366 i 1440 px pole tekstu ma 200 px, a „9 modułów · rozmowa i wiedza"
+   potrzebuje 224 px i „panel orkiestracji · 6 sekcji" 232 px. Zdanie opisowe
+   startowało przez to na dwóch różnych wysokościach i rząd czterech kart czytał
+   się jako niewyrównany.
+   Jednowierszowa metryka jest nieosiągalna: najmniejszy żeton stopnia
+   (--dn-fs-xs, 12 px) daje 203 px w Chromium i 208,8 px w Firefoksie — nadal
+   ponad pole, a zejście z wyściółki karty do 8 px zostawiałoby margines poniżej
+   piksela i pękało przy innych metrykach kroju. Dlatego metryka jest łamana
+   celowo i jednakowo na wszystkich czterech kartach: człon ilościowy w wierszu
+   pierwszym, człon opisowy w drugim. Podział niesie markup, nie zawijanie, więc
+   wypada identycznie w obu silnikach i przy każdej z trzech szerokości okna —
+   a zdanie opisowe zaczyna się wszędzie na tej samej wysokości.
+   Treść metryki bez zmian: separator „·" zostaje i otwiera wiersz drugi. */
+.cd-karta-akcent .cd-metryka-czlon { display: block; }
+/* Wstęga sygnałowa na górnej krawędzi kończyła się przed łukiem narożnika:
+   pseudoelement kotwiczy się do pola wyściółki, a przycięcie liczy promień
+   pomniejszony o obrys, więc jej koniec wystawał poza łuk i czytał się jak
+   kreska urwana w rogu. Stan karty niesie sam obrys — na czterech krawędziach
+   o jednej geometrii. */
+.cd-karta-akcent::before { content: none; }
+.cd-karta-akcent > .cd-karta-meta { margin-top: auto; }
+.cd-karta-godlo svg { width: 100%; height: 100%; }
+.cd-karta-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-4);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-karta-meta .cd-wejdz { margin-left: auto; }
+/* Menu operacji środowiska; wyzwalacz `wiecej` (⋯) — zestaw ikon nie ma kebaba
+   pionowego. */
+.cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
+.cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
+.dn-karta-srodowiska:hover .cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst); }
+
+/* ── Strefa 2 · komponenty aplikacji ──────────────────────────────────────── */
+
+/* Kafel niesie treść, nie pustkę: znak po lewej, nazwa i zdanie o przeznaczeniu
+   po prawej, w jednym wierszu. Układ kolumnowy z osobnym wierszem czynności
+   rozciągał kafel na dwukrotność potrzebnej wysokości i zostawiał w nim puste
+   pole. Licznik zapisanych zniknął z narożnika — zapisane komponenty stoją
+   w strefie własnej Operatora, niżej. */
+.cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cd-kafel {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  width: 100%;
+  padding: var(--dn-od-3);
+}
+.cd-kafel .dn-kafel-ikona {
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+}
+.cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-kafel-tresc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-sm); }
+.cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
+.cd-kafel-blok { display: flex; }
+.cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
+
+/* Przycisk zakładający komponent własny stoi między strefą aplikacji a strefą
+   Operatora — to on jest przejściem między jedną a drugą. */
+.cd-dodaj-pas { display: flex; }
+.cd-dodaj-pas > .dn-btn { gap: var(--dn-od-1); }
+.cd-dodaj-pas > .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* ── Strefa 3 · komponenty własne Operatora ───────────────────────────────── */
+
+/* Menu sekcji stoi w linii jej tytułu, wyrównane do środka wiersza —
+   `align-items: baseline` nagłówka sekcji podciągało ikonę ponad tekst. */
+.cd-sekcja-menu { align-self: center; }
+.cd-sekcja-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
+
+.cd-siatka-wlasnych { display: grid; gap: var(--dn-od-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cd-wlasny { position: relative; display: flex; }
+.cd-wlasny-poz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  padding-right: calc(var(--dn-od-3) + var(--dn-wym-ikonowy));
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
+}
+.cd-wlasny-poz:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
+.cd-wlasny-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.cd-wlasny-znak { display: grid; place-content: center; flex: none; color: var(--dn-tekst-2); }
+.cd-wlasny-znak svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-wlasny-tresc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cd-wlasny-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cd-wlasny-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+/* Menu pozycji stoi obok przycisku, nie w nim, i ujawnia się przy wskazaniu. */
+.cd-wlasny-menu {
+  position: absolute;
+  top: 50%;
+  right: var(--dn-od-2);
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity var(--dn-czas-1) var(--dn-ease);
+}
+.cd-wlasny:hover > .cd-wlasny-menu,
+.cd-wlasny:focus-within > .cd-wlasny-menu { opacity: 1; }
+.cd-wlasny-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
+
+/* Stan pusty strefy własnej: pokazuje się dopiero wtedy, gdy Operator nie ma
+   ani jednego komponentu. Warunek liczy sam arkusz — bez skryptu. */
+.cd-wlasne-pusto { display: none; }
+.cd-siatka-wlasnych:empty { display: none; }
+.cd-siatka-wlasnych:empty + .cd-wlasne-pusto { display: flex; }
+.cd-wlasne-pusto > svg { width: var(--dn-wym-ikona-xl); height: var(--dn-wym-ikona-xl); color: var(--dn-tekst-3); }
+.cd-wlasne-pusto .dn-pusty-stan-opis { color: var(--dn-tekst-2); }
+
+/* ── Strefa 3 · listwa ustawień ───────────────────────────────────────────── */
+
+.cd-listwa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-powierzchnia);
+}
+/* Znak pozycji listwy i kafla — jeden wymiar dla obu miejsc. */
+.cd-ik { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+.cd-listwa-poz {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  background: transparent;
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.cd-listwa-poz:hover { background: var(--dn-panel); border-color: var(--dn-obrys); transform: translateY(var(--dn-podniesienie-sm)); }
+.cd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+/* Pierścień fokusu rysuje się do wewnątrz, na czterech krawędziach. Poprzednio
+   stan fokusu niósł sam `--dn-cien-sygnal` (krycie 0,18–0,22) — obrys o
+   kontraście 1,2 : 1 wobec listwy, praktycznie niewidoczny, a przy krawędzi
+   listwy jeszcze przycinany. */
+.cd-listwa-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.cd-listwa-poz[aria-pressed='true'] { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
+.cd-listwa-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
+.cd-listwa-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); color: var(--dn-sygnal); }
+.cd-listwa-sep { width: 1px; align-self: stretch; margin: var(--dn-od-1); background: var(--dn-obrys-subtelny); }
+.cd-listwa-menu { position: relative; margin-left: var(--dn-od-1); }
+.cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
+.cd-listwa:hover .cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst); }
+
+/* ── Archiwum środowisk ───────────────────────────────────────────────────── */
+
+.cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
+.cd-archiwum > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-3) var(--dn-od-4);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  list-style: none;
+  cursor: pointer;
+  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
+}
+.cd-archiwum > summary::-webkit-details-marker { display: none; }
+.cd-archiwum > summary:hover { background: var(--dn-hover); color: var(--dn-tekst); }
+.cd-archiwum[open] > summary { border-bottom: 1px solid var(--dn-obrys-subtelny); }
+.cd-archiwum-tresc {
+  padding: var(--dn-od-3) var(--dn-od-4);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+  animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards;
+}
+
+/* ── Panel samouczka ──────────────────────────────────────────────────────── */
+
+.cd-nauka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.cd-nauka-wstep { margin: 0; color: var(--dn-tekst-2); }
+.cd-nauka-kroki { display: flex; flex-direction: column; gap: var(--dn-od-3); margin: 0; padding: 0; list-style: none; }
+.cd-nauka-kroki > li {
+  display: grid;
+  grid-template-columns: var(--dn-wym-awatar-sm) minmax(0, 1fr);
+  gap: var(--dn-od-1) var(--dn-od-3);
+  align-items: start;
+}
+.cd-nauka-kroki > li > b { color: var(--dn-tekst); }
+.cd-nauka-kroki > li > span:last-child { grid-column: 2; color: var(--dn-tekst-2); }
+.cd-nauka-numer {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-sygnal-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.cd-nauka-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-xs);
+}
+.cd-nauka-nota > svg { flex: none; color: var(--dn-tekst-3); }
+
+/* ── Zasłona treści modułu ────────────────────────────────────────────────── */
+
+.cd-zaslona { display: grid; place-content: center; padding: var(--dn-od-16) var(--dn-od-6); }
+.cd-zaslona[hidden] { display: none; }
+.cd-zaslona-tresc {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  max-width: 64ch;
+  margin: 0;
+  color: var(--dn-tekst-3);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+
+/* Liczba kolumn stref 1 i 2 wynika z miejsca na płótnie; przy otwartym panelu
+   samouczka płótno jest o 320 px węższe, więc progi przesuwają się o tę samą
+   wartość. Karta środowiska nie schodzi poniżej ~260 px — niżej tytuł
+   środowiska łamie się w połowie wyrazu.
+   Liczba powtórzeń w `repeat()` musi być literałem: `var()` w tym miejscu jest
+   nieprawidłowe i deklaracja przepada. */
+/* Cztery kolumny to komplet wyboru, więc trzymają się do progu, poniżej
+   którego karta przestaje mieścić nazwę środowiska. Panel samouczka zwęża
+   płótno o 320 px, więc jego otwarcie przesuwa progi o tę samą wartość. */
+@media (max-width: 1180px) {
+  .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
+}
+
+body:has(#panel-samouczek:not([hidden])) .cd-siatka-srodowisk,
+body:has(#panel-samouczek:not([hidden])) .cd-siatka-kafli { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 1180px) {
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-srodowisk,
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-kafli,
+  body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .cd-tresc { padding: var(--dn-od-5) var(--dn-od-3) var(--dn-od-10); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cd-tresc > *,
+  .cd-archiwum-tresc { animation: none; }
+}
+
+/* ── Menu tego okna ───────────────────────────────────────────────────────
+   Pozycja z zaznaczeniem ma ikonę po lewej, a znacznik stanu przy prawej
+   krawędzi. Kolejność w dokumencie jest teraz zgodna z kolejnością widzianą,
+   więc czytnik ekranu podaje nazwę przed znacznikiem, nie odwrotnie. */
+.sta-menu-poz > .ptaszek { order: 9; margin-left: auto; }
+
+/* ── PŁÓTNO KARTY MODUŁOWEJ ────────────────────────────────────────────────
+   Karta modułu wskazuje własne płótno: wybranie karty zdejmuje pulpit Centrum.
+   Prototyp niesie tu nagłówek warsztatu i odnośnik do prototypu modułu —
+   układ warsztatu należy do tamtego okna, nie do Centrum dowodzenia. */
+.cd-tresc--modul { gap: var(--dn-od-3); }
+
+.cd-modul-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.cd-modul-nazwa {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-sm);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst);
+}
+.cd-modul-sesja {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-3);
+}
+.cd-modul-odnosnik { display: flex; align-items: center; gap: var(--dn-od-2); }

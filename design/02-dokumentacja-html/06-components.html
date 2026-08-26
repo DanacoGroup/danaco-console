@@ -14,7 +14,7 @@
    STYLE LOKALNE — GALERIA KOMPONENTÓW
    Prefiks .dok-* = warstwa dokumentacyjna (nie należy do biblioteki .dn-*).
    Wyłącznie var(--dn-*). Zero wartości szesnastkowych. Zero czystej czerni.
-   Zero atrybutu disabled (ADL-017).
+   Zero atrybutu disabled (zasada zero blokad).
    ========================================================================== */
 
 /* --- Szkielet ------------------------------------------------------------- */
@@ -255,7 +255,7 @@
 .dok-kokpit-obszar { padding: var(--dn-od-4); background: var(--dn-tlo); }
 
 /* ==========================================================================
-   WYMUSZANIE STANÓW — warstwa dokumentacyjna (decyzja D-11)
+   WYMUSZANIE STANÓW — warstwa dokumentacyjna
    Biblioteka nie ma klas stanu; galeria odwzorowuje te same deklaracje,
    co reguły :hover / :active / :focus-visible arkusza komponentów.
    Nośnik: [data-stan-cela] w celach stanów oraz [data-stan] na galerii.
@@ -451,7 +451,7 @@
         <p class="dok-podtytul">
           Trzydzieści trzy komponenty <span class="dn-dane">.dn-*</span> w siedmiu kategoriach — pokazane na żywo,
           we wszystkich wariantach i stanach, z kodem do skopiowania. Każdy komponent sięga wyłącznie po żetony
-          semantyczne, żaden nie odbiera klikalności (ADL-017), żaden nie komunikuje stanu samą barwą.
+          semantyczne, żaden nie odbiera klikalności (zasada zero blokad), żaden nie komunikuje stanu samą barwą.
         </p>
         <div class="dok-metryka">
           <span class="dn-plakietka dn-plakietka--sygnal">v2.0</span>
@@ -489,11 +489,11 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
             <caption class="dn-sr-only">Pięć zasad wiążących bibliotekę komponentów</caption>
             <thead><tr><th scope="col">Zasada</th><th scope="col">Treść</th><th scope="col">Źródło</th></tr></thead>
             <tbody>
-              <tr><td>Z1</td><td>Wyłącznie żetony semantyczne — zero wartości zaszytych w komponencie</td><td>nagłówek <span class="dok-mono">komponenty.css</span></td></tr>
-              <tr><td>Z2</td><td>Komplet stanów: spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd</td><td>nagłówek <span class="dok-mono">komponenty.css</span></td></tr>
-              <tr><td>Z3</td><td>Zero blokad — żaden wariant nie odbiera klikalności</td><td>ADL-017 · KANON rozdz. 8</td></tr>
-              <tr><td>Z4</td><td>Stan nigdy samym kolorem — komponent stanu niesie ikonę albo etykietę</td><td>KANON rozdz. 9</td></tr>
-              <tr><td>Z5</td><td>Nazwy klas wiążące — wolno rozszerzać o modyfikatory, nie wolno zmieniać</td><td>KANON rozdz. 5</td></tr>
+              <tr><td>2</td><td>Wyłącznie żetony semantyczne — zero wartości zaszytych w komponencie</td><td>nagłówek <span class="dok-mono">komponenty.css</span></td></tr>
+              <tr><td>3</td><td>Komplet stanów: spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd</td><td>nagłówek <span class="dok-mono">komponenty.css</span></td></tr>
+              <tr><td>4</td><td>Zero blokad — żaden wariant nie odbiera klikalności</td><td>zasada zero blokad · kontrakt systemu projektowego</td></tr>
+              <tr><td>5</td><td>Stan nigdy samym kolorem — komponent stanu niesie ikonę albo etykietę</td><td>kontrakt systemu projektowego</td></tr>
+              <tr><td>6</td><td>Nazwy klas wiążące — wolno rozszerzać o modyfikatory, nie wolno zmieniać</td><td>kontrakt systemu projektowego</td></tr>
             </tbody>
           </table>
         </div>
@@ -527,37 +527,37 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
         </p>
         <div class="dok-siatka dok-siatka--szeroka" id="karty-kategorii">
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="A" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">A · Przyciski i akcje — 2</span>
+            <span class="dok-cela-etykieta">Przyciski i akcje — 2</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Sprawczość</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-btn · .dn-btn-ikona</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="B" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">B · Pola formularzy — 7</span>
+            <span class="dok-cela-etykieta">Pola formularzy — 7</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Wprowadzanie danych</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-pole · .dn-przelacznik · .dn-suwak…</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="C" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">C · Nawigacja — 6</span>
+            <span class="dok-cela-etykieta">Nawigacja — 6</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Rama kokpitu</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-pasek · .dn-boczna · .dn-zakladki…</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="D" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">D · Dane i treść — 10</span>
+            <span class="dok-cela-etykieta">Dane i treść — 10</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Treść operacyjna</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-karta · .dn-tabela · .dn-kolejka…</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="E" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">E · Informacja zwrotna — 4</span>
+            <span class="dok-cela-etykieta">Informacja zwrotna — 4</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Reakcja systemu</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-modal · .dn-toast · .dn-tooltip…</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="F" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">F · Tożsamość — 2</span>
+            <span class="dok-cela-etykieta">Tożsamość — 2</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Kto jest kim</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-awatar · .dn-aod</span>
           </button>
           <button class="dn-karta dn-karta--klikalna dok-cela" type="button" data-kat-karta="G" style="cursor:pointer; text-align:left;">
-            <span class="dok-cela-etykieta">G · Komunikacja — 2</span>
+            <span class="dok-cela-etykieta">Komunikacja — 2</span>
             <span style="color:var(--dn-tekst); font-weight:var(--dn-fw-polgruba)">Rozmowa</span>
             <span class="dn-dane" style="font-size:var(--dn-fs-xs); color:var(--dn-tekst-3)">.dn-wpis · .dn-prompt</span>
           </button>
@@ -579,7 +579,7 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
                 <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="0">#</button></th>
                 <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="1">Nazwa</button></th>
                 <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="2">Klasa</button></th>
-                <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="3">Kat.</button></th>
+                <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="3">Kategoria</button></th>
                 <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="4">Warianty</button></th>
                 <th scope="col"><button class="dn-btn dn-btn--duch dn-btn--sm" type="button" data-sortuj="5">Wymiar bazowy</button></th>
               </tr>
@@ -614,7 +614,7 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
               <tr><td>Tylko do odczytu</td><td>atrybut</td><td class="dok-mono">[readonly]</td><td>kontrolka pola</td></tr>
               <tr><td>Zaznaczenie</td><td>pseudoklasa</td><td class="dok-mono">:checked</td><td>pole wyboru, opcja jednokrotna, przełącznik</td></tr>
               <tr><td>Otwarcie nakładki</td><td>atrybut natywny</td><td class="dok-mono">[open]</td><td>modal (<span class="dok-mono">&lt;dialog&gt;</span>)</td></tr>
-              <tr><td>Blokada</td><td>—</td><td class="dok-mono">disabled</td><td><strong>nie występuje ani razu</strong> — ADL-017</td></tr>
+              <tr><td>Blokada</td><td>—</td><td class="dok-mono">disabled</td><td><strong>nie występuje ani razu</strong> — zasada zero blokad</td></tr>
             </tbody>
           </table>
         </div>
@@ -653,11 +653,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 
       <div class="dok-galeria" id="galeria" data-stan="domyslny">
 
-<!-- ============================ A1 · PRZYCISK ============================ -->
+<!-- ============================ PRZYCISK ============================ -->
 <article class="dok-komponent" id="k-btn" data-kat="A" data-nazwa="Przycisk" data-klasa=".dn-btn"
          data-szukaj="przycisk button akcja atrament sygnał zarys duch niebezpieczny">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">A1</span>
     <h3 class="dok-komponent-nazwa">Przycisk</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-btn">.dn-btn</button>
     <span class="dn-plakietka">7 wariantów</span>
@@ -735,11 +734,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ======================= A2 · PRZYCISK IKONOWY ======================= -->
+<!-- ======================= PRZYCISK IKONOWY ======================= -->
 <article class="dok-komponent" id="k-btn-ikona" data-kat="A" data-nazwa="Przycisk ikonowy" data-klasa=".dn-btn-ikona"
          data-szukaj="przycisk ikonowy iconbutton zamknij plus wiecej na ramie">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">A2</span>
     <h3 class="dok-komponent-nazwa">Przycisk ikonowy</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-btn-ikona">.dn-btn-ikona</button>
     <span class="dn-plakietka">1 wariant</span>
@@ -796,11 +794,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ========================= B1 · POLE FORMULARZA ========================= -->
+<!-- ========================= POLE FORMULARZA ========================= -->
 <article class="dok-komponent" id="k-pole" data-kat="B" data-nazwa="Pole formularza" data-klasa=".dn-pole"
          data-szukaj="pole input textarea select formularz etykieta opis błąd walidacja">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B1</span>
     <h3 class="dok-komponent-nazwa">Pole formularza</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-pole">.dn-pole</button>
     <span class="dn-plakietka">4 elementy</span>
@@ -890,7 +887,6 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 <article class="dok-komponent" id="k-wybor" data-kat="B" data-nazwa="Wiersz wyboru" data-klasa=".dn-wybor"
          data-szukaj="wybor label opakowanie etykieta kontrolka">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B2</span>
     <h3 class="dok-komponent-nazwa">Wiersz wyboru</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-wybor">.dn-wybor</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -917,7 +913,6 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 <article class="dok-komponent" id="k-check" data-kat="B" data-nazwa="Pole wyboru" data-klasa=".dn-check"
          data-szukaj="check checkbox zaznaczenie wielokrotne ptaszek">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B3</span>
     <h3 class="dok-komponent-nazwa">Pole wyboru</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-check">.dn-check</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -946,7 +941,6 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 <article class="dok-komponent" id="k-radio" data-kat="B" data-nazwa="Opcja jednokrotna" data-klasa=".dn-radio"
          data-szukaj="radio opcja jednokrotna grupa warstwa konfiguracji">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B4</span>
     <h3 class="dok-komponent-nazwa">Opcja jednokrotna</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-radio">.dn-radio</button>
     <span class="dn-plakietka">nakładka na .dn-check</span>
@@ -976,11 +970,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ===================== B5 · PRZEŁĄCZNIK ===================== -->
+<!-- ===================== PRZEŁĄCZNIK ===================== -->
 <article class="dok-komponent" id="k-przelacznik" data-kat="B" data-nazwa="Przełącznik" data-klasa=".dn-przelacznik"
          data-szukaj="przelacznik toggle switch izolacja macierz odziedziczone">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B5</span>
     <h3 class="dok-komponent-nazwa">Przełącznik</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-przelacznik">.dn-przelacznik</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -992,7 +985,7 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
       Kontrolka dwuwartościowa o skutku natychmiastowym. Największe skupisko w platformie: macierz izolacji, jedenaście
       przełączników na jeden poziom zasięgu (trzy izolacji kontekstu, osiem izolacji technicznej).
       <strong>Stan wyjściowy wszystkich ośmiu przełączników izolacji technicznej to „wyłączony"</strong> — pełny dostęp
-      na starcie, zgodnie z ADL-017.
+      na starcie, zgodnie z zasadą zero blokad.
     </p>
 
     <h4>Macierz izolacji — fragment działający (dane przykładowe)</h4>
@@ -1043,11 +1036,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ===================== B6 · SUWAK · B7 · SZUKAJ ===================== -->
+<!-- ===================== SUWAK · B7 · SZUKAJ ===================== -->
 <article class="dok-komponent" id="k-suwak" data-kat="B" data-nazwa="Suwak zakresu" data-klasa=".dn-suwak"
          data-szukaj="suwak range naklad rozumowania szybciej madrzej">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B6</span>
     <h3 class="dok-komponent-nazwa">Suwak zakresu</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-suwak">.dn-suwak</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -1078,7 +1070,6 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 <article class="dok-komponent" id="k-szukaj" data-kat="B" data-nazwa="Pole wyszukiwania" data-klasa=".dn-szukaj"
          data-szukaj="szukaj wyszukiwanie filtr lupa biblioteka">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">B7</span>
     <h3 class="dok-komponent-nazwa">Pole wyszukiwania</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-szukaj">.dn-szukaj</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -1115,11 +1106,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ===================== C1 · PASEK GÓRNY ===================== -->
+<!-- ===================== PASEK GÓRNY ===================== -->
 <article class="dok-komponent" id="k-pasek" data-kat="C" data-nazwa="Pasek górny" data-klasa=".dn-pasek"
          data-szukaj="pasek gorny topbar rama godlo logotyp szukaj prawa">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C1</span>
     <h3 class="dok-komponent-nazwa">Pasek górny</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-pasek">.dn-pasek</button>
     <span class="dn-plakietka">4 elementy</span>
@@ -1168,11 +1158,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ============ C2 · BOCZNA NAWIGACJA + C3 · KARTY SESJI ============ -->
+<!-- ============ BOCZNA NAWIGACJA + C3 · KARTY SESJI ============ -->
 <article class="dok-komponent" id="k-boczna" data-kat="C" data-nazwa="Boczna nawigacja" data-klasa=".dn-boczna"
          data-szukaj="boczna nawigacja moduly panel orkiestracji pozycja">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C2</span>
     <h3 class="dok-komponent-nazwa">Boczna nawigacja</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-boczna">.dn-boczna</button>
     <span class="dn-plakietka">2 elementy</span>
@@ -1226,7 +1215,6 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
 <article class="dok-komponent" id="k-karty-sesji" data-kat="C" data-nazwa="Pas kart sesji" data-klasa=".dn-karty-sesji"
          data-szukaj="karty sesji tab przestrzen robocza wstega tetno zamknij">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C3</span>
     <h3 class="dok-komponent-nazwa">Pas kart sesji</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-karty-sesji">.dn-karty-sesji</button>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-karta-sesji">.dn-karta-sesji</button>
@@ -1263,11 +1251,10 @@ WARSTWA 7 · ŚRODOWISKO       TalkIn · WorkSpace · CodeStudio · Multitasking
   </div>
 </article>
 
-<!-- ============ C4 · ZAKŁADKI · C5 · LISTWA · C6 · PRZYBORNIK ============ -->
+<!-- ============ ZAKŁADKI · C5 · LISTWA · C6 · PRZYBORNIK ============ -->
 <article class="dok-komponent" id="k-zakladki" data-kat="C" data-nazwa="Zakładki" data-klasa=".dn-zakladki"
          data-szukaj="zakladki tab terminal tabs model panels przelaczanie widoku">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C4</span>
     <h3 class="dok-komponent-nazwa">Zakładki</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-zakladki">.dn-zakladki</button>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-zakladka">.dn-zakladka</button>
@@ -1309,7 +1296,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-listwa" data-kat="C" data-nazwa="Listwa ustawień" data-klasa=".dn-listwa"
          data-szukaj="listwa ustawien strefa 3 mobile always on display konfiguracja">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C5</span>
     <h3 class="dok-komponent-nazwa">Listwa ustawień</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-listwa">.dn-listwa</button>
     <span class="dn-plakietka">1 element</span>
@@ -1344,7 +1330,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-przybornik" data-kat="C" data-nazwa="Przybornik" data-klasa=".dn-przybornik"
          data-szukaj="przybornik toolbar narzedzia promptu zalaczniki">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">C6</span>
     <h3 class="dok-komponent-nazwa">Przybornik</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-przybornik">.dn-przybornik</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -1372,11 +1357,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ===================== D1 · KARTA ===================== -->
+<!-- ===================== KARTA ===================== -->
 <article class="dok-komponent" id="k-karta" data-kat="D" data-nazwa="Karta" data-klasa=".dn-karta"
          data-szukaj="karta card panel naglowek tytul cialo klikalna wybrana">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D1</span>
     <h3 class="dok-komponent-nazwa">Karta</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-karta">.dn-karta</button>
     <span class="dn-plakietka">2 warianty</span>
@@ -1428,11 +1412,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ============ D2 · KARTA ŚRODOWISKA · D3 · KAFEL ============ -->
+<!-- ============ KARTA ŚRODOWISKA · D3 · KAFEL ============ -->
 <article class="dok-komponent" id="k-karta-srodowiska" data-kat="D" data-nazwa="Karta środowiska" data-klasa=".dn-karta-srodowiska"
          data-szukaj="karta srodowiska talkin workspace codestudio multitaskingai strefa 1 wstega">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D2</span>
     <h3 class="dok-komponent-nazwa">Karta środowiska</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-karta-srodowiska">.dn-karta-srodowiska</button>
     <span class="dn-plakietka">4 elementy</span>
@@ -1468,7 +1451,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-kafel" data-kat="D" data-nazwa="Kafel komponentu własnego" data-klasa=".dn-kafel"
          data-szukaj="kafel strefa 2 automations agents workspace assistant komponent wlasny">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D3</span>
     <h3 class="dok-komponent-nazwa">Kafel komponentu własnego</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-kafel">.dn-kafel</button>
     <span class="dn-plakietka">3 elementy</span>
@@ -1497,11 +1479,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ============ D4 · TABELA · D5 · KOMÓRKA DANYCH ============ -->
+<!-- ============ TABELA · D5 · KOMÓRKA DANYCH ============ -->
 <article class="dok-komponent" id="k-tabela" data-kat="D" data-nazwa="Tabela" data-klasa=".dn-tabela"
          data-szukaj="tabela monitor queue manager wiersz sortowanie naglowek przyklejony">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D4</span>
     <h3 class="dok-komponent-nazwa">Tabela</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-tabela">.dn-tabela</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -1557,7 +1538,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-dane" data-kat="D" data-nazwa="Komórka danych" data-klasa=".dn-dane"
          data-szukaj="dane mono tabular nums identyfikator liczba czas">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D5</span>
     <h3 class="dok-komponent-nazwa">Komórka danych</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-dane">.dn-dane</button>
     <span class="dn-plakietka">klasa pomocnicza</span>
@@ -1590,11 +1570,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ============ D6 · PLAKIETKA · D7 · KROPKA ============ -->
+<!-- ============ PLAKIETKA · D7 · KROPKA ============ -->
 <article class="dok-komponent" id="k-plakietka" data-kat="D" data-nazwa="Plakietka" data-klasa=".dn-plakietka"
          data-szukaj="plakietka pigulka badge tag status rola sukces ostrzezenie blad informacja sygnal">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D6</span>
     <h3 class="dok-komponent-nazwa">Plakietka</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-plakietka">.dn-plakietka</button>
     <span class="dn-plakietka">6 wariantów</span>
@@ -1627,7 +1606,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-kropka" data-kat="D" data-nazwa="Kropka sygnału" data-klasa=".dn-kropka"
          data-szukaj="kropka sygnal tetno praca w tle element sygnaturowy ruch">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D7</span>
     <h3 class="dok-komponent-nazwa">Kropka sygnału</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-kropka">.dn-kropka</button>
     <span class="dn-plakietka">5 wariantów</span>
@@ -1659,11 +1637,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ======= D8 · PUSTY STAN · D9 · POSTĘP · D10 · KOLEJKA ======= -->
+<!-- ======= PUSTY STAN · D9 · POSTĘP · D10 · KOLEJKA ======= -->
 <article class="dok-komponent" id="k-pusty-stan" data-kat="D" data-nazwa="Pusty stan" data-klasa=".dn-pusty-stan"
          data-szukaj="pusty stan empty state brak pozycji pierwsze uzycie">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D8</span>
     <h3 class="dok-komponent-nazwa">Pusty stan</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-pusty-stan">.dn-pusty-stan</button>
     <span class="dn-plakietka">2 elementy</span>
@@ -1692,7 +1669,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-postep" data-kat="D" data-nazwa="Pasek postępu" data-klasa=".dn-postep"
          data-szukaj="postep progress tor wartosc etykieta execution monitor build">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D9</span>
     <h3 class="dok-komponent-nazwa">Pasek postępu</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-postep">.dn-postep</button>
     <span class="dn-plakietka">3 elementy</span>
@@ -1722,7 +1698,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-kolejka" data-kat="D" data-nazwa="Kolejka i krok" data-klasa=".dn-kolejka"
          data-szukaj="kolejka krok queue manager orchestrator weryfikacja poprawny bledy wstrzymany">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">D10</span>
     <h3 class="dok-komponent-nazwa">Kolejka i krok</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-kolejka">.dn-kolejka</button>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-krok">.dn-krok</button>
@@ -1776,11 +1751,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ===================== E1 · MODAL ===================== -->
+<!-- ===================== MODAL ===================== -->
 <article class="dok-komponent" id="k-modal" data-kat="E" data-nazwa="Modal" data-klasa=".dn-modal"
          data-szukaj="modal dialog nakladka potwierdzenie kreator pula kont code cli">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">E1</span>
     <h3 class="dok-komponent-nazwa">Modal</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-modal">.dn-modal</button>
     <span class="dn-plakietka">4 elementy</span>
@@ -1808,11 +1782,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ===================== E2 · POWIADOMIENIE ===================== -->
+<!-- ===================== POWIADOMIENIE ===================== -->
 <article class="dok-komponent" id="k-toast" data-kat="E" data-nazwa="Powiadomienie" data-klasa=".dn-toast"
          data-szukaj="toast powiadomienie sukces ostrzezenie blad informacja stos">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">E2</span>
     <h3 class="dok-komponent-nazwa">Powiadomienie</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-toasty">.dn-toasty</button>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-toast">.dn-toast</button>
@@ -1861,11 +1834,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ============ E3 · DYMEK · E4 · WSKAŹNIK PRACY ============ -->
+<!-- ============ DYMEK · WSKAŹNIK PRACY ============ -->
 <article class="dok-komponent" id="k-tooltip" data-kat="E" data-nazwa="Dymek objaśnienia" data-klasa=".dn-tooltip"
          data-szukaj="tooltip dymek objasnienie znak zapytania konfiguracja">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">E3</span>
     <h3 class="dok-komponent-nazwa">Dymek objaśnienia</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-tooltip">.dn-tooltip</button>
     <span class="dn-plakietka">1 element</span>
@@ -1904,7 +1876,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-spinner" data-kat="E" data-nazwa="Wskaźnik pracy" data-klasa=".dn-spinner"
          data-szukaj="spinner wskaznik ladowanie obrot praca nieznany czas">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">E4</span>
     <h3 class="dok-komponent-nazwa">Wskaźnik pracy</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-spinner">.dn-spinner</button>
     <span class="dn-plakietka">bez wariantów</span>
@@ -1937,11 +1908,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ===================== F1 · AWATAR · F2 · AOD ===================== -->
+<!-- ===================== AWATAR · AOD ===================== -->
 <article class="dok-komponent" id="k-awatar" data-kat="F" data-nazwa="Awatar" data-klasa=".dn-awatar"
          data-szukaj="awatar avatar tozsamosc inteligencja kwadrat agent model operator">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">F1</span>
     <h3 class="dok-komponent-nazwa">Awatar</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-awatar">.dn-awatar</button>
     <span class="dn-plakietka">4 warianty</span>
@@ -1972,7 +1942,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-aod" data-kat="F" data-nazwa="Always On Display" data-klasa=".dn-aod"
          data-szukaj="aod always on display agent globalny rdzen tetno monitor procesu">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">F2</span>
     <h3 class="dok-komponent-nazwa">Always On Display</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-aod">.dn-aod</button>
     <span class="dn-plakietka">2 elementy</span>
@@ -2001,11 +1970,10 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   </div>
 </article>
 
-<!-- ===================== G1 · WPIS · G2 · PROMPT ===================== -->
+<!-- ===================== WPIS · G2 · PROMPT ===================== -->
 <article class="dok-komponent" id="k-wpis" data-kat="G" data-nazwa="Wpis okna komunikacji" data-klasa=".dn-wpis"
          data-szukaj="wpis chat window nadawca czlowiek inteligencja system pracuje medalion">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">G1</span>
     <h3 class="dok-komponent-nazwa">Wpis okna komunikacji</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-wpis">.dn-wpis</button>
     <span class="dn-plakietka">4 warianty</span>
@@ -2067,7 +2035,6 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 <article class="dok-komponent" id="k-prompt" data-kat="G" data-nazwa="Pole promptu" data-klasa=".dn-prompt"
          data-szukaj="prompt grot polecenie chat window wyslij przybornik">
   <header class="dok-komponent-naglowek">
-    <span class="dok-komponent-kod">G2</span>
     <h3 class="dok-komponent-nazwa">Pole promptu</h3>
     <button class="dok-komponent-klasa" type="button" data-kopiuj="dn-prompt">.dn-prompt</button>
     <span class="dn-plakietka">2 elementy</span>
@@ -2159,7 +2126,7 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
         <h2><span class="dok-nr">13</span> Zasada zero blokad w komponentach</h2>
         <blockquote class="dok-cytat">
           Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód.
-          <strong>Domyślne zachowanie systemu to wykonanie polecenia.</strong> (ADL-017)
+          <strong>Domyślne zachowanie systemu to wykonanie polecenia.</strong> (zasada zero blokad)
         </blockquote>
         <div class="dok-tabela-owijka">
           <table class="dn-tabela">
@@ -2263,23 +2230,23 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
         </p>
         <div class="dok-grupa-filtrow" role="group" aria-label="Filtr rodzaju rozbieżności" style="margin-bottom:var(--dn-od-3)">
           <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="wszystko" aria-pressed="true">Wszystkie</button>
-          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="R" aria-pressed="false">Inna nazwa (R)</button>
-          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="L" aria-pressed="false">Luki (L)</button>
-          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="N" aria-pressed="false">Nadmiar (N)</button>
-          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="W" aria-pressed="false">Wartości (W)</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="inna nazwa" aria-pressed="false">Inna nazwa</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="luka" aria-pressed="false">Luki</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="nadmiar" aria-pressed="false">Nadmiar</button>
+          <button class="dn-btn dn-btn--sm" type="button" data-filtr-b="wartość" aria-pressed="false">Wartości</button>
         </div>
         <div class="dok-tabela-owijka dok-tabela-owijka--wysoka">
           <table class="dn-tabela" id="tabela-b">
             <caption class="dn-sr-only">Rozbieżności między katalogiem v1.0 a implementacją v2.0</caption>
-            <thead><tr><th scope="col">#</th><th scope="col">Zagadnienie</th><th scope="col">Katalog v1.0</th><th scope="col">Implementacja v2.0</th><th scope="col">Rozstrzygnięcie</th></tr></thead>
+            <thead><tr><th scope="col">#</th><th scope="col">Rodzaj</th><th scope="col">Zagadnienie</th><th scope="col">Katalog v1.0</th><th scope="col">Implementacja v2.0</th><th scope="col">Rozstrzygnięcie</th></tr></thead>
             <tbody id="tabela-b-cialo"></tbody>
           </table>
         </div>
         <p>
-          Dwie luki wymagają decyzji właściciela biblioteki: <strong>L-01</strong> — brak komponentu „komunikat blokowy”
+          Dwie luki wymagają decyzji właściciela biblioteki: <strong>brak komponentu</strong> „komunikat blokowy”
           (<span class="dn-dane">.dn-alert</span>) obecnego w katalogu i wywoływanego z dziewięciu paneli — oraz
-          <strong>L-12</strong> — brak wzorca menu kontekstowego. Rekomendacje odnotowano w rozdziale decyzji
-          (D-07, D-08); <strong>nie wprowadzono ich do biblioteki</strong>, bo zasada Z5 zabrania samowolnego mnożenia klas.
+          <strong>brak wzorca menu kontekstowego. Rekomendacje odnotowano w rozdziale decyzji
+          ; <strong>nie wprowadzono ich do biblioteki</strong>, bo zasada Z5 zabrania samowolnego mnożenia klas.
         </p>
       </section>
 
@@ -2305,7 +2272,7 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
               <tr><td class="dok-mono">.dn-etykieta-wersalikowa</td><td>Etykieta metadanych krojem bazowym</td><td>warstwa 0</td></tr>
               <tr><td class="dok-mono">.dn-etykieta-mono</td><td>Etykieta metadanych krojem mono</td><td>warstwa 0</td></tr>
               <tr><td class="dok-mono">.dn-dane · .dn-liczba</td><td>Krój mono i liczby tabelaryczne</td><td>uzupełniane w bibliotece dla komórek tabeli</td></tr>
-              <tr><td class="dok-mono">.dn-kod · .dn-kod--wiersz</td><td>Blok kodu i kod w wierszu</td><td>odpowiednik komponentu D6 katalogu — luka L-02</td></tr>
+              <tr><td class="dok-mono">.dn-kod · .dn-kod--wiersz</td><td>Blok kodu i kod w wierszu</td><td>odpowiednik komponentu z katalogu v1.0 — luka nieuzupełniona</td></tr>
               <tr><td class="dok-mono">.dn-kbd</td><td>Klawisz</td><td>nieobecny w katalogu v1.0</td></tr>
               <tr><td class="dok-mono">.dn-separator · --pionowy</td><td>Separator</td><td>odpowiednik komponentu G2 katalogu</td></tr>
               <tr><td class="dok-mono">.dn-sr-only</td><td>Ukrycie dostępne — treść dla czytnika ekranu</td><td>warunek dostępności komponentów</td></tr>
@@ -2351,14 +2318,14 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
 
           <h4>Źródła w dokumentacji</h4>
           <ul>
-            <li><span class="dn-dane">WYNIK/KANON.md</span> — jedyne źródło prawdy projektu: lista klas wiążących (rozdz. 5), zasada zero blokad (rozdz. 8), dostępność (rozdz. 9), standard prototypów (rozdz. 11).</li>
+            <li>kontrakt systemu projektowego — jedyne źródło prawdy projektu: lista klas wiążących (rozdz. 5), zasada zero blokad (rozdz. 8), dostępność (rozdz. 9), standard prototypów (rozdz. 11).</li>
             <li><span class="dn-dane">zasoby/css/komponenty.css</span> (1207 linii) — źródło każdej reguły, każdego wariantu i każdego stanu opisanego w galerii.</li>
             <li><span class="dn-dane">zasoby/css/fundament.css</span> (156 linii) — warstwa zerowa: fokus globalny, wzorce tekstowe, separator, blok kodu, ukrycie dostępne.</li>
             <li><span class="dn-dane">zasoby/zetony/zetony.css</span> (448 linii) — wszystkie wartości wymiarów, czasów i barw przywołane w kartach komponentów.</li>
-            <li><span class="dn-dane">dok/projekt-ui/komponenty/katalog-komponentow.md</span> (1500 linii, v1.0) — taksonomia siedmiu kategorii, macierz komponent × moduł, załączniki A–C, zasada zero blokad (rozdz. 15).</li>
-            <li><span class="dn-dane">brief/INWENTARZ-KOMPONENTOW.md</span> (644 linie) — inwentaryzacja selektorów faktycznie istniejących w arkuszu i rozjazd katalog ↔ implementacja (rozdz. 7–8).</li>
-            <li><span class="dn-dane">brief/INWENTARZ-OKIEN.md</span> — nazwy okien operacyjnych i modułów użyte w macierzy oraz w treściach przykładowych.</li>
-            <li><span class="dn-dane">design/opracowania/design/01-kierunek/KIERUNEK.md</span> — kontrakt kierunku, trzy pokrętła, decyzje fundamentalne 3.1–3.4.</li>
+            <li><span class="dn-dane">docs/interfejs-uzytkownika/katalog-komponentow.md</span> (1500 linii, v1.0) — taksonomia siedmiu kategorii, macierz komponent × moduł, załączniki A–C, zasada zero blokad (rozdz. 15).</li>
+            <li><span class="dn-dane">inwentarz komponentów</span> (644 linie) — inwentaryzacja selektorów faktycznie istniejących w arkuszu i rozjazd katalog ↔ implementacja (rozdz. 7–8).</li>
+            <li><span class="dn-dane">inwentarz okien platformy</span> — nazwy okien operacyjnych i modułów użyte w macierzy oraz w treściach przykładowych.</li>
+            <li>kierunek systemu projektowego — kontrakt kierunku, trzy pokrętła, decyzje fundamentalne 3.1–3.4.</li>
             <li><span class="dn-dane">design/opracowania/design/06-okna/komponenty.html</span> — istniejąca galeria v2.0 jako wzorzec konwencji demonstracyjnych.</li>
             <li><span class="dn-dane">zasoby/ikony/manifest.json</span> — zestaw ikon; wszystkie ikony w tym pliku pochodzą z zestawu (Lucide, siatka 24×24, obrys 1,75).</li>
           </ul>
@@ -2379,7 +2346,7 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
           <h4>Uwagi wykonawcze</h4>
           <ul>
             <li>Wszystkie style lokalne używają wyłącznie <span class="dn-dane">var(--dn-*)</span>; zero wartości szesnastkowych, zero czystej czerni, zero atrybutu <span class="dn-dane">disabled</span>.</li>
-            <li>Wymuszanie stanów należy do warstwy dokumentacyjnej <span class="dn-dane">.dok-*</span> i odwzorowuje deklaracje arkusza komponentów — <strong>biblioteka nie została rozszerzona o klasy stanu</strong> (decyzja D-11).</li>
+            <li>Wymuszanie stanów należy do warstwy dokumentacyjnej <span class="dn-dane">.dok-*</span> i odwzorowuje deklaracje arkusza komponentów — <strong>biblioteka nie została rozszerzona o klasy stanu</strong>.</li>
             <li>Wszystkie ikony pochodzą z <span class="dn-dane">zasoby/ikony/svg/</span> i są wklejone inline dla <span class="dn-dane">currentColor</span>. Zero emoji.</li>
             <li>Treści przykładowe pochodzą wyłącznie z domeny produktu (Workflow Builder, Queue Manager, Library Explorer, Executor 1, Coordinator, Validator, Agent Manager) i są oznaczone jako przykładowe. Zero fikcyjnych osób i zmyślonych metryk.</li>
             <li>Plik działa po otwarciu z <span class="dn-dane">file://</span> — ścieżki względne, brak bibliotek zewnętrznych, brak CDN. Zapis <span class="dn-dane">localStorage</span> wyłącznie przez <span class="dn-dane">wspolne.js</span> (motyw).</li>
@@ -2469,44 +2436,46 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   var Z = function (s, k) { return (k || document).querySelector(s); };
   var ZZ = function (s, k) { return Array.prototype.slice.call((k || document).querySelectorAll(s)); };
   var ZNAKI = ['—', '●', '●●', '●●●'];
+  var KATEGORIE = { A: 'Przyciski i akcje', B: 'Pola formularzy', C: 'Nawigacja',
+    D: 'Dane i treść', E: 'Informacja zwrotna', F: 'Tożsamość', G: 'Komunikacja' };
 
   /* ------------------------------------------------------------------ *
    *  1 · REJESTR KOMPONENTÓW — źródło tabeli zbiorczej, spisu i macierzy
    * ------------------------------------------------------------------ */
   var KOMPONENTY = [
-    ['A1', 'Przycisk', '.dn-btn', 'A', '--atrament --sygnal --zarys --duch --niebezpieczny --sm --lg', 'wys. 32 px', 'k-btn'],
-    ['A2', 'Przycisk ikonowy', '.dn-btn-ikona', 'A', '--na-ramie', '32 × 32 px', 'k-btn-ikona'],
-    ['B1', 'Pole formularza', '.dn-pole', 'B', 'input · textarea · select', 'wys. 32 px', 'k-pole'],
-    ['B2', 'Wiersz wyboru', '.dn-wybor', 'B', '—', 'min. 32 px', 'k-wybor'],
-    ['B3', 'Pole wyboru', '.dn-check', 'B', '—', '16 × 16 px', 'k-check'],
-    ['B4', 'Opcja jednokrotna', '.dn-radio', 'B', '—', '16 × 16 px', 'k-radio'],
-    ['B5', 'Przełącznik', '.dn-przelacznik', 'B', '—', 'tor 36 × 20 px', 'k-przelacznik'],
-    ['B6', 'Suwak zakresu', '.dn-suwak', 'B', '—', 'tor 4 px', 'k-suwak'],
-    ['B7', 'Pole wyszukiwania', '.dn-szukaj', 'B', '—', 'wys. 32 px', 'k-szukaj'],
-    ['C1', 'Pasek górny', '.dn-pasek', 'C', '— (4 elementy)', 'wys. 48 px', 'k-pasek'],
-    ['C2', 'Boczna nawigacja', '.dn-boczna', 'C', 'lista modułów · panel orkiestracji', 'szer. 224 px', 'k-boczna'],
-    ['C3', 'Pas kart sesji', '.dn-karty-sesji', 'C', '—', 'wys. 36 px', 'k-karty-sesji'],
-    ['C4', 'Zakładki', '.dn-zakladki', 'C', '—', 'wys. 32 px', 'k-zakladki'],
-    ['C5', 'Listwa ustawień', '.dn-listwa', 'C', '—', 'pozycja 28 px', 'k-listwa'],
-    ['C6', 'Przybornik', '.dn-przybornik', 'C', '—', 'odstęp 4 px', 'k-przybornik'],
-    ['D1', 'Karta', '.dn-karta', 'D', '--klikalna --wybrana', 'promień 10 px', 'k-karta'],
-    ['D2', 'Karta środowiska', '.dn-karta-srodowiska', 'D', '—', 'promień 14 px', 'k-karta-srodowiska'],
-    ['D3', 'Kafel komponentu własnego', '.dn-kafel', 'D', '—', 'ikona 36 px', 'k-kafel'],
-    ['D4', 'Tabela', '.dn-tabela', 'D', '—', 'wiersz 36 px', 'k-tabela'],
-    ['D5', 'Komórka danych', '.dn-dane', 'D', '—', 'stopień 12 px', 'k-dane'],
-    ['D6', 'Plakietka', '.dn-plakietka', 'D', '--sukces --ostrzezenie --blad --informacja --sygnal --rola', 'stopień 11 px', 'k-plakietka'],
-    ['D7', 'Kropka sygnału', '.dn-kropka', 'D', '--tetno --sukces --ostrzezenie --blad --neutralna', '6 × 6 px', 'k-kropka'],
-    ['D8', 'Pusty stan', '.dn-pusty-stan', 'D', '—', 'ikona 28 px', 'k-pusty-stan'],
-    ['D9', 'Pasek postępu', '.dn-postep', 'D', '—', 'tor 4 px', 'k-postep'],
-    ['D10', 'Kolejka i krok', '.dn-kolejka', 'D', '--pracuje --poprawny --bledy --wstrzymany', 'krok 36 px', 'k-kolejka'],
-    ['E1', 'Modal', '.dn-modal', 'E', '—', 'maks. 560 px', 'k-modal'],
-    ['E2', 'Powiadomienie', '.dn-toast', 'E', '--sukces --ostrzezenie --blad --informacja', '280–420 px', 'k-toast'],
-    ['E3', 'Dymek objaśnienia', '.dn-tooltip', 'E', '—', 'maks. 260 px', 'k-tooltip'],
-    ['E4', 'Wskaźnik pracy', '.dn-spinner', 'E', '—', '14 × 14 px', 'k-spinner'],
-    ['F1', 'Awatar', '.dn-awatar', 'F', '--sm --lg --kwadrat --inteligencja', '24 / 28 / 36 px', 'k-awatar'],
-    ['F2', 'Always On Display', '.dn-aod', 'F', '—', 'rdzeń 36 px', 'k-aod'],
-    ['G1', 'Wpis okna komunikacji', '.dn-wpis', 'G', '--czlowiek --inteligencja --system --pracuje', 'maks. 860 px', 'k-wpis'],
-    ['G2', 'Pole promptu', '.dn-prompt', 'G', '—', 'obszar 40–160 px', 'k-prompt']
+    ['1', 'Przycisk', '.dn-btn', 'A', '--atrament --sygnal --zarys --duch --niebezpieczny --sm --lg', 'wys. 32 px', 'k-btn'],
+    ['2', 'Przycisk ikonowy', '.dn-btn-ikona', 'A', '--na-ramie', '32 × 32 px', 'k-btn-ikona'],
+    ['3', 'Pole formularza', '.dn-pole', 'B', 'input · textarea · select', 'wys. 32 px', 'k-pole'],
+    ['4', 'Wiersz wyboru', '.dn-wybor', 'B', '—', 'min. 32 px', 'k-wybor'],
+    ['5', 'Pole wyboru', '.dn-check', 'B', '—', '16 × 16 px', 'k-check'],
+    ['6', 'Opcja jednokrotna', '.dn-radio', 'B', '—', '16 × 16 px', 'k-radio'],
+    ['7', 'Przełącznik', '.dn-przelacznik', 'B', '—', 'tor 36 × 20 px', 'k-przelacznik'],
+    ['8', 'Suwak zakresu', '.dn-suwak', 'B', '—', 'tor 4 px', 'k-suwak'],
+    ['9', 'Pole wyszukiwania', '.dn-szukaj', 'B', '—', 'wys. 32 px', 'k-szukaj'],
+    ['10', 'Pasek górny', '.dn-pasek', 'C', '— (4 elementy)', 'wys. 48 px', 'k-pasek'],
+    ['11', 'Boczna nawigacja', '.dn-boczna', 'C', 'lista modułów · panel orkiestracji', 'szer. 224 px', 'k-boczna'],
+    ['12', 'Pas kart sesji', '.dn-karty-sesji', 'C', '—', 'wys. 36 px', 'k-karty-sesji'],
+    ['13', 'Zakładki', '.dn-zakladki', 'C', '—', 'wys. 32 px', 'k-zakladki'],
+    ['14', 'Listwa ustawień', '.dn-listwa', 'C', '—', 'pozycja 28 px', 'k-listwa'],
+    ['15', 'Przybornik', '.dn-przybornik', 'C', '—', 'odstęp 4 px', 'k-przybornik'],
+    ['16', 'Karta', '.dn-karta', 'D', '--klikalna --wybrana', 'promień 10 px', 'k-karta'],
+    ['17', 'Karta środowiska', '.dn-karta-srodowiska', 'D', '—', 'promień 14 px', 'k-karta-srodowiska'],
+    ['18', 'Kafel komponentu własnego', '.dn-kafel', 'D', '—', 'ikona 36 px', 'k-kafel'],
+    ['19', 'Tabela', '.dn-tabela', 'D', '—', 'wiersz 36 px', 'k-tabela'],
+    ['20', 'Komórka danych', '.dn-dane', 'D', '—', 'stopień 12 px', 'k-dane'],
+    ['21', 'Plakietka', '.dn-plakietka', 'D', '--sukces --ostrzezenie --blad --informacja --sygnal --rola', 'stopień 11 px', 'k-plakietka'],
+    ['22', 'Kropka sygnału', '.dn-kropka', 'D', '--tetno --sukces --ostrzezenie --blad --neutralna', '6 × 6 px', 'k-kropka'],
+    ['23', 'Pusty stan', '.dn-pusty-stan', 'D', '—', 'ikona 28 px', 'k-pusty-stan'],
+    ['24', 'Pasek postępu', '.dn-postep', 'D', '—', 'tor 4 px', 'k-postep'],
+    ['25', 'Kolejka i krok', '.dn-kolejka', 'D', '--pracuje --poprawny --bledy --wstrzymany', 'krok 36 px', 'k-kolejka'],
+    ['26', 'Modal', '.dn-modal', 'E', '—', 'maks. 560 px', 'k-modal'],
+    ['27', 'Powiadomienie', '.dn-toast', 'E', '--sukces --ostrzezenie --blad --informacja', '280–420 px', 'k-toast'],
+    ['28', 'Dymek objaśnienia', '.dn-tooltip', 'E', '—', 'maks. 260 px', 'k-tooltip'],
+    ['29', 'Wskaźnik pracy', '.dn-spinner', 'E', '—', '14 × 14 px', 'k-spinner'],
+    ['30', 'Awatar', '.dn-awatar', 'F', '--sm --lg --kwadrat --inteligencja', '24 / 28 / 36 px', 'k-awatar'],
+    ['31', 'Always On Display', '.dn-aod', 'F', '—', 'rdzeń 36 px', 'k-aod'],
+    ['32', 'Wpis okna komunikacji', '.dn-wpis', 'G', '--czlowiek --inteligencja --system --pracuje', 'maks. 860 px', 'k-wpis'],
+    ['33', 'Pole promptu', '.dn-prompt', 'G', '—', 'obszar 40–160 px', 'k-prompt']
   ];
 
   var MACIERZ = [
@@ -2570,66 +2539,66 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   ];
 
   var TABELA_B = [
-    ['R-01', 'Przycisk główny', '.dn-btn--glowny', '.dn-btn--atrament', 'v2.0 — nazwa opisuje mechanikę, nie barwę'],
-    ['R-02', 'Przycisk CTA', '.dn-btn--zloty', '.dn-btn--sygnal', 'v2.0 — złoto nie istnieje w palecie v2.0'],
-    ['R-03', 'Akcja ryzykowna', '.dn-btn--blad', '.dn-btn--niebezpieczny', 'v2.0 — „błąd” to stan, „niebezpieczny” to waga akcji'],
-    ['R-04', 'Kontrolka pola', '.dn-input / .dn-textarea / .dn-select', 'jedna .dn-pole-kontrolka', 'v2.0 — jedna klasa, trzy znaczniki natywne'],
-    ['R-05', 'Tekst pomocy i błędu', '.dn-pomoc / .dn-pomoc--blad', '.dn-pole-opis / .dn-pole-blad', 'v2.0'],
-    ['R-06', 'Przełącznik (toggle)', '.dn-suwak', '.dn-przelacznik', 'v2.0 — kolizja nazwy o odwróconym znaczeniu'],
-    ['R-07', 'Suwak zakresu (range)', 'brak w katalogu', '.dn-suwak', 'v2.0 — przy migracji kodu wymaga szczególnej uwagi'],
-    ['R-08', 'Karta interaktywna', '.dn-karta--interaktywna', '.dn-karta--klikalna', 'v2.0'],
-    ['R-09', 'Karta wyróżniona', '.dn-karta--akcent', '.dn-karta--wybrana', 'v2.0 — rozdzielenie wyróżnienia od wyboru'],
-    ['R-10', 'Karta środowiska', 'złożenie --interaktywna --akcent', 'osobna .dn-karta-srodowiska', 'v2.0 — osobny komponent'],
-    ['R-11', 'Kafel komponentu własnego', '.dn-karta--interaktywna', 'osobna .dn-kafel', 'v2.0'],
-    ['R-12', 'Treść karty i modala', '.dn-karta-tresc / .dn-modal-tresc', '.dn-karta-cialo / .dn-modal-cialo', 'v2.0'],
-    ['R-13', 'Nakładka modala', 'klasa .dn-nakladka', '::backdrop natywnego dialog', 'v2.0 — pułapka fokusu i Escape za darmo'],
-    ['R-14', 'Boczna nawigacja', '.dn-karta--pozycja w kolumnie', 'dedykowane .dn-boczna*', 'v2.0'],
-    ['R-15', 'Karta sesji', '.dn-karta--pozycja w pasku', 'dedykowane .dn-karty-sesji, .dn-karta-sesji', 'v2.0'],
-    ['R-16', 'Listwa ustawień', 'wariant „lekki” .dn-pasek', 'dedykowane .dn-listwa*', 'v2.0'],
-    ['R-17', 'Marka i rozpychacz paska', '.dn-pasek-marka, .dn-rozpychacz', '.dn-pasek-godlo, -logotyp, -prawa', 'v2.0'],
-    ['R-18', 'Always On Display', '.dn-awatar pływający', 'dedykowane .dn-aod*', 'v2.0'],
-    ['R-19', 'Awatar jednostki AI', '--zloto', '--inteligencja', 'v2.0'],
-    ['R-20', 'Warianty semantyczne', '--ostrz, --info', '--ostrzezenie, --informacja', 'v2.0 — pełne słowa polskie'],
-    ['L-01', 'Komunikat blokowy (Alert)', '.dn-alert + 4 warianty', 'BRAK', 'Zastępczo: .dn-pole-blad · plakietka · .dn-krok--wstrzymany · .dn-toast. Rekomendacja: dodać w kolejnej rewizji'],
-    ['L-02', 'Blok kodu', '.dn-kod', 'obecny w fundament.css, nie w bibliotece', 'Bez zmian — wzorzec tekstowy, nie komponent interaktywny'],
-    ['L-03', 'Ikona systemowa', '.dn-ikona + --sm --lg', 'BRAK klasy — SVG inline', 'Bez zmian — currentColor i rozmiar w miejscu użycia'],
-    ['L-04', 'Zakładki pigułkowe', '.dn-zakladki--pigulki', 'BRAK', 'Wybór warstwy realizuje dziś para .dn-radio'],
-    ['L-05', 'Tabela naprzemienna', '.dn-tabela--paski', 'BRAK', 'Zgodne z kierunkiem: gęstość 8/10 i kreska subtelna wystarczą'],
-    ['L-06', 'Owijka tabeli', '.dn-tabela-owijka', 'BRAK', 'Owijka realizowana lokalnie w oknie'],
-    ['L-07', 'Pozycja listy', '.dn-karta--pozycja', 'BRAK', 'Zastąpione trzema dedykowanymi komponentami'],
-    ['L-08', 'Stopka karty', '.dn-karta-stopka', 'BRAK', 'Stopka istnieje wyłącznie w modalu'],
-    ['L-09', 'Plakietka złota, wersalikowa, ze stanem', '--zloto --wersaliki --stan', 'BRAK', '--sygnal, --rola i plakietka z kropką w środku'],
-    ['L-10', 'Awatar złoty', '.dn-awatar--zloto', 'BRAK', 'Zastąpione przez --inteligencja'],
-    ['L-11', 'Panel jako klasa', '.dn-panel', 'BRAK klasy — istnieje żeton tła', 'Panel pozostaje wzorcem złożonym'],
-    ['L-12', 'Menu kontekstowe', 'wzorzec złożony C5', 'BRAK wzorca', 'Do zbudowania z .dn-karta + .dn-listwa-pozycja. Rekomendacja: rozważyć .dn-menu'],
-    ['N-01', '.dn-wybor', 'brak', 'wiersz etykieta + kontrolka wyboru', 'Ujednolica wysokość i cel kliknięcia trzech kontrolek'],
-    ['N-02', '.dn-radio', 'wspólna .dn-check', 'osobna klasa', 'Rozdzielenie upraszcza arkusz i obsługę klawiatury'],
-    ['N-03', '.dn-suwak (range)', 'brak', 'nakład rozumowania', 'Pojęcie produktowe nieobecne w katalogu v1.0'],
-    ['N-04', '.dn-szukaj', 'brak', 'pole wyszukiwania z ikoną', 'Wzorzec powtarzalny w kilkunastu panelach'],
-    ['N-05', '.dn-wpis + 9 klas', 'brak', 'wpis okna komunikacji', 'Rozstrzygnięcie dziewięciu nadawców przez trzy klasy semantyczne'],
-    ['N-06', '.dn-postep + 3 klasy', 'brak', 'pasek postępu', 'Monitory wykonania wymagają wskaźnika o znanym zakresie'],
-    ['N-07', '.dn-kolejka / .dn-krok + 7 klas', 'brak', 'kolejka kroków', 'Trzy wyjścia weryfikacji'],
-    ['N-08', '.dn-prompt + 2 klasy', 'brak', 'pole promptu z grotem', 'Sygnatura wejścia powtarzająca motyw godła'],
-    ['N-09', '.dn-przybornik', 'brak', 'przybornik promptu', 'Grupowanie narzędzi pod polem wejścia'],
-    ['N-10', '.dn-plakietka--rola', 'brak', 'plakietka roli okna', 'Coordinator · Executor · Validator'],
-    ['N-11', '.dn-kropka--tetno', 'brak', 'jedyny ruch ciągły', 'Element sygnaturowy systemu'],
-    ['N-12', '.dn-btn--wybrany', 'brak', 'stan wybrany trwale', 'Przyciski przełączające w przybornikach'],
-    ['N-13', '.dn-dane', 'brak', 'komórka danych maszynowych', 'Liczby tabelaryczne w monitorach'],
-    ['W-01', 'Wysokość kontrolki', '36 px', '32 px', 'v2.0 — gęstość zwarta 8/10'],
-    ['W-02', 'Przycisk ikonowy', '36 × 36, ikona 18', '32 × 32, ikona 16', 'v2.0'],
-    ['W-03', 'Pasek górny', '56 px', '48 px', 'v2.0 (56 px w gęstości przestronnej)'],
-    ['W-04', 'Przełącznik', 'tor 40 × 22, suwak 18', 'tor 36 × 20, suwak 14', 'v2.0'],
-    ['W-05', 'Awatar', '36 / 28 / 48 px', '28 / 24 / 36 px', 'v2.0'],
-    ['W-06', 'Wskaźnik pracy', '16 px, obrót 0,7 s', '14 px, obrót 0,8 s', 'v2.0'],
-    ['W-07', 'Modal — wysokość', '92 % ekranu', 'min(80dvh, 720px)', 'v2.0 — dvh obsługuje paski przeglądarek mobilnych'],
-    ['W-08', 'Powiadomienie — pozycja', 'dół ekranu, wyśrodkowane', 'prawy dolny róg', 'v2.0 — nie zasłania pasa komunikacji'],
-    ['W-09', 'Powiadomienie — tło', 'zawsze ciemne', '--dn-panel (przełącza się z motywem)', 'v2.0 — ciemne pozostają pasek i dymek'],
-    ['W-10', 'Kropka statusu awatara', '11 px', '8 px', 'v2.0'],
-    ['W-11', 'Pusty stan — opis', '42 znaki', '40ch', 'v2.0'],
-    ['W-12', 'Przycisk — stopień i waga', '13 px, semibold', '13 px (--dn-fs-base), waga 500', 'v2.0 — inna baza skali'],
-    ['W-13', 'Skala typografii', '12·13·15·16·18·22·28·36·46', '11·12·13·14·16·20·24·30·40', 'v2.0 — skala zwarta kokpitu'],
-    ['W-14', 'Wartości pikselowe w arkuszu', 'podawane wprost', 'wyłącznie żetony', 'v2.0 — zero wartości zaszytych'],
-    ['W-15', 'Tętno kropki', 'brak w katalogu', '2,4 s', 'v2.0 — element sygnaturowy']
+    ['inna nazwa', 'Przycisk główny', '.dn-btn--glowny', '.dn-btn--atrament', 'v2.0 — nazwa opisuje mechanikę, nie barwę'],
+    ['inna nazwa', 'Przycisk CTA', '.dn-btn--zloty', '.dn-btn--sygnal', 'v2.0 — złoto nie istnieje w palecie v2.0'],
+    ['inna nazwa', 'Akcja ryzykowna', '.dn-btn--blad', '.dn-btn--niebezpieczny', 'v2.0 — „błąd” to stan, „niebezpieczny” to waga akcji'],
+    ['inna nazwa', 'Kontrolka pola', '.dn-input / .dn-textarea / .dn-select', 'jedna .dn-pole-kontrolka', 'v2.0 — jedna klasa, trzy znaczniki natywne'],
+    ['inna nazwa', 'Tekst pomocy i błędu', '.dn-pomoc / .dn-pomoc--blad', '.dn-pole-opis / .dn-pole-blad', 'v2.0'],
+    ['inna nazwa', 'Przełącznik (toggle)', '.dn-suwak', '.dn-przelacznik', 'v2.0 — kolizja nazwy o odwróconym znaczeniu'],
+    ['inna nazwa', 'Suwak zakresu (range)', 'brak w katalogu', '.dn-suwak', 'v2.0 — przy migracji kodu wymaga szczególnej uwagi'],
+    ['inna nazwa', 'Karta interaktywna', '.dn-karta--interaktywna', '.dn-karta--klikalna', 'v2.0'],
+    ['inna nazwa', 'Karta wyróżniona', '.dn-karta--akcent', '.dn-karta--wybrana', 'v2.0 — rozdzielenie wyróżnienia od wyboru'],
+    ['inna nazwa', 'Karta środowiska', 'złożenie --interaktywna --akcent', 'osobna .dn-karta-srodowiska', 'v2.0 — osobny komponent'],
+    ['inna nazwa', 'Kafel komponentu własnego', '.dn-karta--interaktywna', 'osobna .dn-kafel', 'v2.0'],
+    ['inna nazwa', 'Treść karty i modala', '.dn-karta-tresc / .dn-modal-tresc', '.dn-karta-cialo / .dn-modal-cialo', 'v2.0'],
+    ['inna nazwa', 'Nakładka modala', 'klasa .dn-nakladka', '::backdrop natywnego dialog', 'v2.0 — pułapka fokusu i Escape za darmo'],
+    ['inna nazwa', 'Boczna nawigacja', '.dn-karta--pozycja w kolumnie', 'dedykowane .dn-boczna*', 'v2.0'],
+    ['inna nazwa', 'Karta sesji', '.dn-karta--pozycja w pasku', 'dedykowane .dn-karty-sesji, .dn-karta-sesji', 'v2.0'],
+    ['inna nazwa', 'Listwa ustawień', 'wariant „lekki” .dn-pasek', 'dedykowane .dn-listwa*', 'v2.0'],
+    ['inna nazwa', 'Marka i rozpychacz paska', '.dn-pasek-marka, .dn-rozpychacz', '.dn-pasek-godlo, -logotyp, -prawa', 'v2.0'],
+    ['inna nazwa', 'Always On Display', '.dn-awatar pływający', 'dedykowane .dn-aod*', 'v2.0'],
+    ['inna nazwa', 'Awatar jednostki AI', '--zloto', '--inteligencja', 'v2.0'],
+    ['inna nazwa', 'Warianty semantyczne', '--ostrz, --info', '--ostrzezenie, --informacja', 'v2.0 — pełne słowa polskie'],
+    ['luka', 'Komunikat blokowy (Alert)', '.dn-alert + 4 warianty', 'BRAK', 'Zastępczo: .dn-pole-blad · plakietka · .dn-krok--wstrzymany · .dn-toast. Rekomendacja: dodać w kolejnej rewizji'],
+    ['luka', 'Blok kodu', '.dn-kod', 'obecny w fundament.css, nie w bibliotece', 'Bez zmian — wzorzec tekstowy, nie komponent interaktywny'],
+    ['luka', 'Ikona systemowa', '.dn-ikona + --sm --lg', 'BRAK klasy — SVG inline', 'Bez zmian — currentColor i rozmiar w miejscu użycia'],
+    ['luka', 'Zakładki pigułkowe', '.dn-zakladki--pigulki', 'BRAK', 'Wybór warstwy realizuje dziś para .dn-radio'],
+    ['luka', 'Tabela naprzemienna', '.dn-tabela--paski', 'BRAK', 'Zgodne z kierunkiem: gęstość 8/10 i kreska subtelna wystarczą'],
+    ['luka', 'Owijka tabeli', '.dn-tabela-owijka', 'BRAK', 'Owijka realizowana lokalnie w oknie'],
+    ['luka', 'Pozycja listy', '.dn-karta--pozycja', 'BRAK', 'Zastąpione trzema dedykowanymi komponentami'],
+    ['luka', 'Stopka karty', '.dn-karta-stopka', 'BRAK', 'Stopka istnieje wyłącznie w modalu'],
+    ['luka', 'Plakietka złota, wersalikowa, ze stanem', '--zloto --wersaliki --stan', 'BRAK', '--sygnal, --rola i plakietka z kropką w środku'],
+    ['luka', 'Awatar złoty', '.dn-awatar--zloto', 'BRAK', 'Zastąpione przez --inteligencja'],
+    ['luka', 'Panel jako klasa', '.dn-panel', 'BRAK klasy — istnieje żeton tła', 'Panel pozostaje wzorcem złożonym'],
+    ['luka', 'Menu kontekstowe', 'wzorzec złożony C5', 'BRAK wzorca', 'Do zbudowania z .dn-karta + .dn-listwa-pozycja. Rekomendacja: rozważyć .dn-menu'],
+    ['nadmiar', '.dn-wybor', 'brak', 'wiersz etykieta + kontrolka wyboru', 'Ujednolica wysokość i cel kliknięcia trzech kontrolek'],
+    ['nadmiar', '.dn-radio', 'wspólna .dn-check', 'osobna klasa', 'Rozdzielenie upraszcza arkusz i obsługę klawiatury'],
+    ['nadmiar', '.dn-suwak (range)', 'brak', 'nakład rozumowania', 'Pojęcie produktowe nieobecne w katalogu v1.0'],
+    ['nadmiar', '.dn-szukaj', 'brak', 'pole wyszukiwania z ikoną', 'Wzorzec powtarzalny w kilkunastu panelach'],
+    ['nadmiar', '.dn-wpis + 9 klas', 'brak', 'wpis okna komunikacji', 'Rozstrzygnięcie dziewięciu nadawców przez trzy klasy semantyczne'],
+    ['nadmiar', '.dn-postep + 3 klasy', 'brak', 'pasek postępu', 'Monitory wykonania wymagają wskaźnika o znanym zakresie'],
+    ['nadmiar', '.dn-kolejka / .dn-krok + 7 klas', 'brak', 'kolejka kroków', 'Trzy wyjścia weryfikacji'],
+    ['nadmiar', '.dn-prompt + 2 klasy', 'brak', 'pole promptu z grotem', 'Sygnatura wejścia powtarzająca motyw godła'],
+    ['nadmiar', '.dn-przybornik', 'brak', 'przybornik promptu', 'Grupowanie narzędzi pod polem wejścia'],
+    ['nadmiar', '.dn-plakietka--rola', 'brak', 'plakietka roli okna', 'Coordinator · Executor · Validator'],
+    ['nadmiar', '.dn-kropka--tetno', 'brak', 'jedyny ruch ciągły', 'Element sygnaturowy systemu'],
+    ['nadmiar', '.dn-btn--wybrany', 'brak', 'stan wybrany trwale', 'Przyciski przełączające w przybornikach'],
+    ['nadmiar', '.dn-dane', 'brak', 'komórka danych maszynowych', 'Liczby tabelaryczne w monitorach'],
+    ['wartość', 'Wysokość kontrolki', '36 px', '32 px', 'v2.0 — gęstość zwarta 8/10'],
+    ['wartość', 'Przycisk ikonowy', '36 × 36, ikona 18', '32 × 32, ikona 16', 'v2.0'],
+    ['wartość', 'Pasek górny', '56 px', '48 px', 'v2.0 (56 px w gęstości przestronnej)'],
+    ['wartość', 'Przełącznik', 'tor 40 × 22, suwak 18', 'tor 36 × 20, suwak 14', 'v2.0'],
+    ['wartość', 'Awatar', '36 / 28 / 48 px', '28 / 24 / 36 px', 'v2.0'],
+    ['wartość', 'Wskaźnik pracy', '16 px, obrót 0,7 s', '14 px, obrót 0,8 s', 'v2.0'],
+    ['wartość', 'Modal — wysokość', '92 % ekranu', 'min(80dvh, 720px)', 'v2.0 — dvh obsługuje paski przeglądarek mobilnych'],
+    ['wartość', 'Powiadomienie — pozycja', 'dół ekranu, wyśrodkowane', 'prawy dolny róg', 'v2.0 — nie zasłania pasa komunikacji'],
+    ['wartość', 'Powiadomienie — tło', 'zawsze ciemne', '--dn-panel (przełącza się z motywem)', 'v2.0 — ciemne pozostają pasek i dymek'],
+    ['wartość', 'Kropka statusu awatara', '11 px', '8 px', 'v2.0'],
+    ['wartość', 'Pusty stan — opis', '42 znaki', '40ch', 'v2.0'],
+    ['wartość', 'Przycisk — stopień i waga', '13 px, semibold', '13 px (--dn-fs-base), waga 500', 'v2.0 — inna baza skali'],
+    ['wartość', 'Skala typografii', '12·13·15·16·18·22·28·36·46', '11·12·13·14·16·20·24·30·40', 'v2.0 — skala zwarta kokpitu'],
+    ['wartość', 'Wartości pikselowe w arkuszu', 'podawane wprost', 'wyłącznie żetony', 'v2.0 — zero wartości zaszytych'],
+    ['wartość', 'Tętno kropki', 'brak w katalogu', '2,4 s', 'v2.0 — element sygnaturowy']
   ];
 
   var TABELA_C = [
@@ -2673,22 +2642,22 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   ];
 
   var DECYZJE = [
-    ['D-01', 'Kategoria G nazwana „Komunikacja”, nie „Elementy pomocnicze”', 'Ikona systemowa i separator katalogu v1.0 przeszły do warstwy fundamentu albo zniknęły jako klasa; miejsce zajmują dwa komponenty rozmowy nieznane katalogowi.', 'KANON rozdz. 5 grupuje .dn-wpis i .dn-prompt pod nagłówkiem „Komunikacja”'],
-    ['D-02', '.dn-btn opisany jako 7 wariantów + 1 modyfikator stanu', 'Arkusz ma osiem modyfikatorów, ale --wybrany nie jest wariantem wyglądu — to zapis stanu równoważny aria-pressed.', 'Struktura arkusza: --wybrany stoi w bloku stanów, przed wariantami'],
-    ['D-03', '.dn-radio opisane jako osobna karta', 'Katalog łączył checkbox i radio; implementacja ma dwie klasy o różnym kształcie i różnej obsłudze klawiatury.', 'Arkusz: .dn-radio to osobny selektor z własnymi regułami'],
-    ['D-04', '.dn-toasty opisany wewnątrz karty .dn-toast', 'Stos nie ma sensu bez powiadomienia i nie występuje samodzielnie.', 'Analogia do .dn-kolejka/.dn-krok'],
-    ['D-05', '.dn-kolejka i .dn-krok w jednej karcie', 'Krok nie występuje poza kolejką; stany kroku są jednocześnie wariantami.', 'Wspólny blok arkusza „Monitor wykonania · kolejka kroków”'],
-    ['D-06', '.dn-przybornik zaliczony do kategorii C', 'Przybornik jest kontenerem narzędzi, nie elementem rozmowy; występuje także poza polem promptu.', 'KANON rozdz. 5 wymienia go w grupie „Nawigacja”'],
-    ['D-07', 'Rekomendacja dodania .dn-alert w kolejnej rewizji', 'Katalog opisuje komponent wywoływany z dziewięciu paneli; dziś jego rolę pełnią zastępczo cztery różne komponenty.', 'Luka L-01 — rekomendacja odnotowana, nie wprowadzona'],
-    ['D-08', 'Rekomendacja rozważenia .dn-menu', 'Katalog opisuje wzorzec obecny „w całej platformie”; implementacja nie ma dla niego ani klasy, ani wskazanego złożenia.', 'Luka L-12 — jak wyżej'],
-    ['D-09', 'Brak klasy .dn-ikona uznany za rozstrzygnięcie, nie brak', 'Ikony inline z currentColor nie potrzebują klasy; rozmiar ustawia atrybut w miejscu użycia.', 'KANON rozdz. 11 pkt 9; praktyka wszystkich arkuszy projektu'],
-    ['D-10', 'Wymiary podawane w wartościach gęstości zwartej z kolumną wariantów', 'Żetony zmieniają wartość w trzech kontekstach; jedna liczba bez kontekstu wprowadzałaby w błąd.', 'zetony.css rozdz. 12–13'],
-    ['D-11', 'Stany wymuszane atrybutem data-stan, nie klasami', 'Biblioteka nie ma klas stanu; dodanie ich złamałoby zasadę Z5. Atrybut należy do warstwy .dok-* i nie zanieczyszcza biblioteki.', 'Zasada Z5 — nazwy klas wiążące'],
-    ['D-12', 'Kolejność kategorii A→G przyjęta za katalogiem', 'Zachowanie kolejności pozwala czytać oba dokumenty równolegle.', 'Katalog v1.0 rozdz. 4'],
-    ['D-13', 'Macierz rozbita na dwie tabele', 'Jedna tabela o 25 kolumnach byłaby nieczytelna; podział przebiega po naturalnej granicy.', 'Inwentarz okien rozdz. 7.1–7.5'],
-    ['D-14', 'Nasilenie oznaczone czterostopniowo', 'Skala przejęta z katalogu dla porównywalności; wartości dla komponentów spoza katalogu ustalono na podstawie inwentarza okien.', 'Katalog v1.0, legenda rozdz. 14'],
-    ['D-15', 'Treści przykładowe wyłącznie z domeny produktu', 'Nazwy sesji, identyfikatory zadań, role i okna pochodzą z dokumentacji platformy i są oznaczone jako przykładowe.', 'KANON rozdz. 10 pkt 3–4'],
-    ['D-16', 'Kolizja nazwy .dn-suwak odnotowana jako ryzyko, nie naprawiona', 'Zmiana nazwy klasy złamałaby zasadę Z5, choć ryzyko migracji jest realne.', 'Rozbieżność R-06 / R-07 — decyzja należy do właściciela biblioteki']
+    ['Kategoria G nazwana „Komunikacja”, nie „Elementy pomocnicze”', 'Ikona systemowa i separator katalogu v1.0 przeszły do warstwy fundamentu albo zniknęły jako klasa; miejsce zajmują dwa komponenty rozmowy nieznane katalogowi.', 'kontrakt systemu projektowego grupuje .dn-wpis i .dn-prompt pod nagłówkiem „Komunikacja”'],
+    ['.dn-btn opisany jako 7 wariantów + 1 modyfikator stanu', 'Arkusz ma osiem modyfikatorów, ale --wybrany nie jest wariantem wyglądu — to zapis stanu równoważny aria-pressed.', 'Struktura arkusza: --wybrany stoi w bloku stanów, przed wariantami'],
+    ['.dn-radio opisane jako osobna karta', 'Katalog łączył checkbox i radio; implementacja ma dwie klasy o różnym kształcie i różnej obsłudze klawiatury.', 'Arkusz: .dn-radio to osobny selektor z własnymi regułami'],
+    ['.dn-toasty opisany wewnątrz karty .dn-toast', 'Stos nie ma sensu bez powiadomienia i nie występuje samodzielnie.', 'Analogia do .dn-kolejka/.dn-krok'],
+    ['.dn-kolejka i .dn-krok w jednej karcie', 'Krok nie występuje poza kolejką; stany kroku są jednocześnie wariantami.', 'Wspólny blok arkusza „Monitor wykonania · kolejka kroków”'],
+    ['.dn-przybornik zaliczony do kategorii C', 'Przybornik jest kontenerem narzędzi, nie elementem rozmowy; występuje także poza polem promptu.', 'kontrakt systemu projektowego wymienia go w grupie „Nawigacja”'],
+    ['Rekomendacja dodania .dn-alert w kolejnej rewizji', 'Katalog opisuje komponent wywoływany z dziewięciu paneli; dziś jego rolę pełnią zastępczo cztery różne komponenty.', 'Luka odnotowana w Załączniku B — rekomendacja odnotowana, nie wprowadzona'],
+    ['Rekomendacja rozważenia .dn-menu', 'Katalog opisuje wzorzec obecny „w całej platformie”; implementacja nie ma dla niego ani klasy, ani wskazanego złożenia.', 'Luka odnotowana w Załączniku B — jak wyżej'],
+    ['Brak klasy .dn-ikona uznany za rozstrzygnięcie, nie brak', 'Ikony inline z currentColor nie potrzebują klasy; rozmiar ustawia atrybut w miejscu użycia.', 'kontrakt systemu projektowego; praktyka wszystkich arkuszy projektu'],
+    ['Wymiary podawane w wartościach gęstości zwartej z kolumną wariantów', 'Żetony zmieniają wartość w trzech kontekstach; jedna liczba bez kontekstu wprowadzałaby w błąd.', 'zetony.css rozdz. 12–13'],
+    ['Stany wymuszane atrybutem data-stan, nie klasami', 'Biblioteka nie ma klas stanu; dodanie ich złamałoby zasadę Z5. Atrybut należy do warstwy .dok-* i nie zanieczyszcza biblioteki.', 'Zasada Z5 — nazwy klas wiążące'],
+    ['Kolejność kategorii A→G przyjęta za katalogiem', 'Zachowanie kolejności pozwala czytać oba dokumenty równolegle.', 'Katalog v1.0 rozdz. 4'],
+    ['Macierz rozbita na dwie tabele', 'Jedna tabela o 25 kolumnach byłaby nieczytelna; podział przebiega po naturalnej granicy.', 'Inwentarz okien rozdz. 7.1–7.5'],
+    ['Nasilenie oznaczone czterostopniowo', 'Skala przejęta z katalogu dla porównywalności; wartości dla komponentów spoza katalogu ustalono na podstawie inwentarza okien.', 'Katalog v1.0, legenda rozdz. 14'],
+    ['Treści przykładowe wyłącznie z domeny produktu', 'Nazwy sesji, identyfikatory zadań, role i okna pochodzą z dokumentacji platformy i są oznaczone jako przykładowe.', 'kontrakt systemu projektowego'],
+    ['Kolizja nazwy .dn-suwak odnotowana jako ryzyko, nie naprawiona', 'Zmiana nazwy klasy złamałaby zasadę Z5, choć ryzyko migracji jest realne.', 'Rozbieżność odnotowana w Załączniku B — decyzja należy do właściciela biblioteki']
   ];
 
   /* ------------------------------------------------------------------ *
@@ -2706,7 +2675,7 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
         '<td class="dn-dane">' + k[0] + '</td>' +
         '<td><a href="#' + k[6] + '">' + esc(k[1]) + '</a></td>' +
         '<td class="dok-mono">' + esc(k[2]) + '</td>' +
-        '<td class="dok-num">' + k[3] + '</td>' +
+        '<td>' + KATEGORIE[k[3]] + '</td>' +
         '<td class="dok-mono" style="white-space:normal">' + esc(k[4]) + '</td>' +
         '<td>' + esc(k[5]) + '</td></tr>';
     }).join('');
@@ -2717,7 +2686,7 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
     if (!lista) return;
     lista.innerHTML = KOMPONENTY.map(function (k) {
       return '<li data-kat="' + k[3] + '" data-cel="' + k[6] + '">' +
-        '<a href="#' + k[6] + '"><span class="dok-spis-kod">' + k[0] + '</span> ' + esc(k[1]) + '</a></li>';
+        '<a href="#' + k[6] + '">' + esc(k[1]) + '</a></li>';
     }).join('');
   }
 
@@ -2766,8 +2735,9 @@ Walidator wyników   kanał: CLI   stan: gotowy</code>
   function zbudujTabeleB() {
     var cialo = Z('#tabela-b-cialo');
     if (!cialo) return;
-    cialo.innerHTML = TABELA_B.map(function (r) {
-      return '<tr data-rodzaj="' + r[0].charAt(0) + '"><td class="dn-dane">' + r[0] + '</td>' +
+    cialo.innerHTML = TABELA_B.map(function (r, i) {
+      return '<tr data-rodzaj="' + esc(r[0]) + '"><td class="dn-dane">' + (i + 1) + '</td>' +
+        '<td>' + esc(r[0]) + '</td>' +
         '<td>' + esc(r[1]) + '</td><td class="dok-mono" style="white-space:normal">' + esc(r[2]) + '</td>' +
         '<td class="dok-mono" style="white-space:normal">' + esc(r[3]) + '</td>' +
         '<td style="white-space:normal">' + esc(r[4]) + '</td></tr>';

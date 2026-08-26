@@ -1,9 +1,9 @@
-# P7 — Typografia w działaniu
+# Danaco Console — Plansza portfolio 07: Typografia w działaniu
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment |
-| **Warstwa** | Portfolio Design Identity · plansza tematyczna P7 |
+| **Warstwa** | Portfolio Design Identity · plansza tematyczna 07 |
 | **Wersja pakietu wizualnego** | v2.0 |
 | **Status** | Deweloperski |
 | **Data opracowania** | 2026-08-14 |
@@ -16,7 +16,7 @@
 ## 0. Po co ta plansza
 
 Dokumentacja techniczna wymienia trzy kroje i dziewięć stopni. To jeszcze nie jest typografia —
-to inwentarz. Plansza P7 pokazuje **ten sam inwentarz w miejscu pracy**: tam, gdzie stopień `xs`
+to inwentarz. Plansza 07 pokazuje **ten sam inwentarz w miejscu pracy**: tam, gdzie stopień `xs`
 naprawdę występuje (nagłówek kolumny tabeli), tam, gdzie `3xl` naprawdę występuje (tytuł karty
 środowiska na Stronie głównej), tam, gdzie mono naprawdę występuje (identyfikator, ścieżka
 repozytorium, znacznik czasu, wynik powłoki).
@@ -31,7 +31,7 @@ w prototypie Ustawień) i jest opisana jako przykładowa.
 
 ## 1. Trzy role, trzy kroje
 
-Źródło wiążące: KANON rozdz. 2 („Typografia — trzy role, trzy kroje"), KIERUNEK.md rozdz. 3.2,
+Źródło wiążące: kontrakt systemu projektowego („Typografia — trzy role, trzy kroje"), kierunek systemu projektowego,
 `zasoby/zetony/fonty.css`, `zasoby/zetony/zetony.css` sekcja 3.
 
 | Rola | Krój | Żeton | Wagi w pakiecie | Gdzie występuje w platformie |
@@ -64,7 +64,7 @@ podświadomie: **to, co wygląda na mono, można skopiować i wkleić**.
 
 ## 2. Pełna skala — dziewięć stopni w kontekście
 
-Źródło: `zetony.css` sekcja 3, KANON rozdz. 2. Baza **13 px** wynika z pokrętła
+Źródło: `zetony.css` sekcja 3, kontrakt systemu projektowego. Baza **13 px** wynika z pokrętła
 `GESTOSC_WIZUALNA = 8/10` — kokpit ma być zwarty.
 
 | Żeton | Stopień | Krój typowy | Waga | Interlinia | Realny kontekst w platformie |
@@ -119,7 +119,7 @@ samej barwy łamie zasadę „stan nigdy samym kolorem" przeniesioną na poziom 
 
 ## 4. Liczby — `tabular-nums`
 
-Źródło: KANON rozdz. 2 („Liczby: `tabular-nums` w Plex Mono").
+Źródło: kontrakt systemu projektowego („Liczby: `tabular-nums` w Plex Mono").
 
 Liczba w kolumnie musi być **porównywalna wzrokiem**. Proporcjonalne cyfry sprawiają, że kolumna
 identyfikatorów albo rozmiarów faluje, a operator traci możliwość odczytania rzędu wielkości bez
@@ -248,7 +248,7 @@ Zmienia się wyłącznie warstwa robocza: baza, interlinia i wysokość wiersza.
    jest właściwością systemu, nie właściwością komponentu.
 6. **Ruch 3/10.** Jedyny ruch ciągły to tętno kropki sygnału przy okazie „praca w tle".
    Wszystkie pozostałe zmiany to mikroprzejścia 100–220 ms wywołane działaniem użytkownika.
-7. **Zero blokad (ADL-017).** Żadna kontrolka planszy nie jest wyłączona. Suwaki mają pełny
+7. **Zero blokad.** Żadna kontrolka planszy nie jest wyłączona. Suwaki mają pełny
    zakres; wyjście poza zakres skali systemowej jest komunikowane plakietką, nie blokadą.
 
 ---
@@ -277,17 +277,17 @@ Zmienia się wyłącznie warstwa robocza: baza, interlinia i wysokość wiersza.
 
 | Zakres | Plik / rozdział |
 |---|---|
-| Trzy role, trzy kroje; skala; wagi; interlinie; odstępy | `WYNIK/KANON.md` rozdz. 2 |
-| Kontrakt kierunku, pokrętła | `WYNIK/KANON.md` rozdz. 1 · `design/opracowania/design/01-kierunek/KIERUNEK.md` rozdz. 3.2 |
+| Trzy role, trzy kroje; skala; wagi; interlinie; odstępy | kontrakt systemu projektowego |
+| Kontrakt kierunku, pokrętła | kontrakt systemu projektowego · kierunek systemu projektowego |
 | Definicje żetonów typograficznych | `WYNIK/zasoby/zetony/zetony.css` sekcja 3 |
 | Deklaracje `@font-face`, podzbiory latin-ext | `WYNIK/zasoby/zetony/fonty.css` |
-| Klasy komponentów (`.dn-wpis`, `.dn-dane`, `.dn-tabela`, `.dn-plakietka`) | `WYNIK/zasoby/css/komponenty.css` · KANON rozdz. 5 |
+| Klasy komponentów (`.dn-wpis`, `.dn-dane`, `.dn-tabela`, `.dn-plakietka`) | `WYNIK/zasoby/css/komponenty.css` · kontrakt systemu projektowego |
 | Warstwa prototypu (`.pt-konsola`, `.pt-etykieta`, `.pt-mono`, `.pt-tetno`) | `WYNIK/zasoby/prototyp.css` |
-| Nazwy modułów i okien operacyjnych | `WYNIK/KANON.md` rozdz. 6 i 7 |
+| Nazwy modułów i okien operacyjnych | kontrakt systemu projektowego |
 | Przykładowa ścieżka repozytorium i wynik powłoki | `WYNIK/05-okna/moduly/terminal.html` |
 | Przykładowy kod parowania urządzenia | `WYNIK/05-okna/platformowe/ustawienia.html` · `mobile.html` |
-| Zasada zero blokad | `WYNIK/KANON.md` rozdz. 8 (ADL-017) |
-| Dostępność, `prefers-reduced-motion`, fokus | `WYNIK/KANON.md` rozdz. 9 |
+| Zasada zero blokad | kontrakt systemu projektowego (zasada zero blokad) |
+| Dostępność, `prefers-reduced-motion`, fokus | kontrakt systemu projektowego |
 
 ---
 

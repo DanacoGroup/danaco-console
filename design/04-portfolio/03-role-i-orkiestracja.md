@@ -1,9 +1,9 @@
-# Danaco Console — Portfolio Design Identity — P3: Role i orkiestracja (MultitaskingAI)
+# Danaco Console — Portfolio design identity, plansza 03: Role i orkiestracja (MultitaskingAI)
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment (warstwa wizualna v2.0) |
-| **Produkt (warstwa funkcjonalna)** | Danaco Pilot — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
+| **Produkt (warstwa funkcjonalna)** | Danaco Console — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -14,10 +14,10 @@
 
 | | |
 |---|---|
-| **Dokument** | Plansza portfolio P3 — tożsamość systemu ról i orkiestracji środowiska MultitaskingAI (opracowanie towarzyszące planszy `03-role-i-orkiestracja.html`) |
+| **Dokument** | Plansza portfolio 03 — tożsamość systemu ról i orkiestracji środowiska MultitaskingAI (opracowanie towarzyszące planszy `03-role-i-orkiestracja.html`) |
 | **Odbiorcy** | Designer (masa wizualna węzła, hierarchia, forma paneli i diagramów) · Deweloper (komplet nazw ról, akcji, sekcji, stanów i przejść) · Odbiorca portfolio (jak wygląda zespół modeli w działaniu) |
 | **Zakres** | Pięć pozycji zespołu · asymetria koordynator–wykonawca jako decyzja projektowa · sześć sekcji panelu orkiestracji · silnik kolejek (5 zasięgów, 11 akcji, cykl życia zadania) · trzy rodzaje zależności i mapa zależności · sześć poziomów hierarchii decyzji · trzy szablony zespołu · praca ciągła 24/7/365 z modułem Automations · relacja Agents → MultitaskingAI |
-| **Czego NIE zawiera** | Specyfikacji wnętrza okien roboczych (to zakres `dok/projekt-ui/srodowiska/multitaskingai.md` rozdz. 9–10 oraz prototypów w `WYNIK/05-okna/srodowiska/`) · nowych ról, akcji, sekcji ani stanów · żadnej nazwy, liczby ani mechanizmu bez pokrycia w dokumentacji |
+| **Czego NIE zawiera** | Specyfikacji wnętrza okien roboczych (to zakres `docs/srodowiska/multitaskingai.md` rozdz. 9–10 oraz prototypów w `WYNIK/05-okna/srodowiska/`) · nowych ról, akcji, sekcji ani stanów · żadnej nazwy, liczby ani mechanizmu bez pokrycia w dokumentacji |
 | **Zasada nadrzędna** | Każda nazwa własna, każda liczba i każde przejście stanu na planszy pochodzi z dokumentacji merytorycznej albo z odczytu realnego pliku w repozytorium wynikowym. Zero elementów ilustracyjnych. |
 
 ---
@@ -178,7 +178,7 @@ Oprzyrządowanie tożsame z Executorem 1. Rolę odróżniają **cztery tryby wsp
 | QA Lead | Przygotowanie przypadków testowych i raportów jakości | `ptaszek` |
 | Arbitrator | Rozstrzyganie konfliktów powstałych między wynikami Executora 1 i Executora 2 | `waga` |
 
-**Uwaga wykonawcza dla planszy:** ikona `waga` przypisana wcieleniu Arbitrator **nie występuje** w komplecie 82 plików `WYNIK/zasoby/ikony/svg/` (potwierdzone odczytem katalogu). Plansza nie rysuje jej zastępczo — wcielenie Arbitrator opatrzone jest ikoną `walidator` (rodzina roli) i etykietą tekstową, zgodnie z zasadą „stan nigdy samym kolorem, zawsze ikona lub etykieta” (KANON rozdz. 9). Odnotowane w decyzjach projektowych (rozdz. 13).
+**Uwaga wykonawcza dla planszy:** ikona `waga` przypisana wcieleniu Arbitrator **nie występuje** w komplecie 82 plików `WYNIK/zasoby/ikony/svg/` (potwierdzone odczytem katalogu). Plansza nie rysuje jej zastępczo — wcielenie Arbitrator opatrzone jest ikoną `walidator` (rodzina roli) i etykietą tekstową, zgodnie z zasadą „stan nigdy samym kolorem, zawsze ikona lub etykieta” (kontrakt systemu projektowego). Odnotowane w decyzjach projektowych (rozdz. 13).
 
 **Oprzyrządowanie:** wejście oceny (rezultat pracy Executora 1 i Executora 2, wynik Subagent Network po agregacji), akcje `retry` oraz udział w `condition`/`branch` jako źródło warunku, panel porównania wyników dwóch wykonawców (wcielenie Arbitrator). Okno robocze: **Results Analyzer**.
 
@@ -188,15 +188,15 @@ Oprzyrządowanie tożsame z Executorem 1. Rolę odróżniają **cztery tryby wsp
 
 ### 4.1. Podstawa kontraktowa
 
-`KIERUNEK.md` rozdz. 2 (pokrętło `WARIANCJA_PROJEKTOWA` = 4/10): *„Kokpit wymaga przewidywalności. **Asymetria tylko tam, gdzie niesie hierarchię** (strefy E1, relacja koordynator–wykonawca). Zero ozdobnego chaosu.”*
+kierunek systemu projektowego (pokrętło `WARIANCJA_PROJEKTOWA` = 4/10): *„Kokpit wymaga przewidywalności. **Asymetria tylko tam, gdzie niesie hierarchię** (strefy Centrum dowodzenia, relacja koordynator–wykonawca). Zero ozdobnego chaosu.”*
 
-`KIERUNEK.md` rozdz. 4, katalog anty-domyślnych: odruch **„trzy równe karty funkcji”** ma być zastąpiony przez **„strefy o malejącej masie (E1), asymetria koordynator–wykonawca (E4)”**. To samo powtarza KANON rozdz. 1.
+kierunek systemu projektowego, katalog anty-domyślnych: odruch **„trzy równe karty funkcji”** ma być zastąpiony przez **„strefy o malejącej masie, asymetria koordynator–wykonawca (para koordynator–wykonawca)”**. To samo powtarza kontrakt systemu projektowego.
 
 Wniosek dla planszy: **układ zespołu nie może być siatką pięciu równych kart.** Węzły muszą mieć różną masę wizualną, a różnica masy musi być czytelna jako informacja, nie jako ozdoba.
 
 ### 4.2. Reguła masy przyjęta na planszy
 
-Plansza wiąże masę wizualną węzła **wprost z poziomem hierarchii decyzji** (rozdz. 8.1 dokumentu źródłowego). Dokumentacja nie rozstrzyga formy graficznej — rozstrzygnięcie należy do warstwy wizualnej i zostaje tu odnotowane (KANON rozdz. 10 pkt 5).
+Plansza wiąże masę wizualną węzła **wprost z poziomem hierarchii decyzji** (rozdz. 8.1 dokumentu źródłowego). Dokumentacja nie rozstrzyga formy graficznej — rozstrzygnięcie należy do warstwy wizualnej i zostaje tu odnotowane (kontrakt systemu projektowego).
 
 > **masa wizualna = 7 − poziom hierarchii decyzji**
 
@@ -360,7 +360,7 @@ Kolejki przykładowe (makieta rozdz. 4.6): **Kolejka główna** (zasięg lokalna
 | Do powtórzenia | Zadanie zwrócone po negatywnej ocenie lub błędzie | `retry` | powrót do stanu „w kolejce” (`enqueue`) |
 | Zakończone | Zadanie w pełni obsłużone, wynik zaakceptowany | zatwierdzenie Executora 3 / Validatora lub Coordinatora | — |
 
-**Odwzorowanie stanów zadania na klasy komponentów** (decyzja warstwy wizualnej, KANON rozdz. 5):
+**Odwzorowanie stanów zadania na klasy komponentów** (decyzja warstwy wizualnej, kontrakt systemu projektowego):
 
 | Stan zadania | Klasa kroku | Uzasadnienie |
 |---|---|---|
@@ -372,7 +372,7 @@ Kolejki przykładowe (makieta rozdz. 4.6): **Kolejka główna** (zasięg lokalna
 
 ### 7.4. Stan „niegotowy” — realizacja zasady zero blokad (rozdz. 12.6)
 
-Dokumentacja definiuje osobny stan interfejsu: **„Niegotowy (aktywny, z komunikatem)”** — „wygląd tożsamy ze stanem domyślnym, bez przyciemnienia i bez blokady kursora — element pozostaje w pełni klikalny”. Zastosowanie: akcje, których warunek nie jest jeszcze spełniony (np. `merge` przed zakończeniem wszystkich podagentów). Kliknięcie wywołuje komunikat kontekstowy zamiast wykonania akcji. Plansza odwzorowuje ten stan atrybutem `data-komunikat` (toast), nigdy atrybutem `disabled` (KANON rozdz. 8).
+Dokumentacja definiuje osobny stan interfejsu: **„Niegotowy (aktywny, z komunikatem)”** — „wygląd tożsamy ze stanem domyślnym, bez przyciemnienia i bez blokady kursora — element pozostaje w pełni klikalny”. Zastosowanie: akcje, których warunek nie jest jeszcze spełniony (np. `merge` przed zakończeniem wszystkich podagentów). Kliknięcie wywołuje komunikat kontekstowy zamiast wykonania akcji. Plansza odwzorowuje ten stan atrybutem `data-komunikat` (toast), nigdy atrybutem `disabled` (kontrakt systemu projektowego).
 
 ---
 
@@ -503,7 +503,7 @@ Konfiguracja w pełni spięta z modułem Automations, przeznaczona do pracy bez 
 | Wymiar | Budowa aplikacji | Badanie i redakcja | Pętla ciągła 24/7 |
 |---|---|---|---|
 | Tryb współpracy wykonawców | Praca niezależna | Przekazywanie wyników | Praca iteracyjna |
-| Subagent Network | Tak (E1: 3 wcielenia, E2: 1 wcielenie) | Nie | Tak, w miarę potrzeby zadania |
+| Subagent Network | Tak (Executor 1: 3 wcielenia, Executor 2: 1 wcielenie) | Nie | Tak, w miarę potrzeby zadania |
 | Wcielenie Executora 3 | Security Auditor → QA Lead | Reviewer | Validator |
 | Profil izolacji | Domyślny (dziedziczony) | Domyślny | Odrębny profil roli |
 | Automations | Tak | Nie (proces jednorazowy) | Tak — Scheduler, Orchestrator, Queue Manager, Execution Monitor |
@@ -655,18 +655,18 @@ Poziom „Rola (MultitaskingAI)” ma pierwszeństwo najwyższe spośród siedmi
 
 | # | Decyzja | Uzasadnienie | Podstawa |
 |:--:|---|---|---|
-| 1 | Masa wizualna węzła = 7 − poziom hierarchii decyzji | Asymetria musi nieść hierarchię, nie estetykę; wiązanie masy z udokumentowanym poziomem czyni różnicę rozmiarów sprawdzalną | KIERUNEK.md rozdz. 2 i 4; `multitaskingai.md` rozdz. 8.1 |
+| 1 | Masa wizualna węzła = 7 − poziom hierarchii decyzji | Asymetria musi nieść hierarchię, nie estetykę; wiązanie masy z udokumentowanym poziomem czyni różnicę rozmiarów sprawdzalną | kierunek systemu projektowego; `multitaskingai.md` rozdz. 8.1 |
 | 2 | Para Executor 1 / Executor 2 pozostaje symetryczna | Ten sam poziom hierarchii i „oprzyrządowanie tożsame”; zróżnicowanie byłoby asymetrią bez pokrycia | `multitaskingai.md` rozdz. 3.4, 8.1 |
-| 3 | Przełącznik „pokaż masę wizualną” zamiast stałych adnotacji | Diagram ma się czytać najpierw jako układ zespołu, dopiero na żądanie jako dowód reguły; jeden ruch informacyjny, mikroprzejście 160 ms | KANON rozdz. 1 (`INTENSYWNOSC_RUCHU` 3/10) |
-| 4 | Jedenaście akcji jako jedna tabela sortowalna z filtrem, nie jako jedenaście kafli | Akcje są zbiorem o jednorodnej strukturze (akcja · grupa · działanie · inicjator · reprezentacja); tabela zachowuje gęstość zwartą 8/10 | KANON rozdz. 1, rozdz. 5; `multitaskingai.md` rozdz. 4.2 |
-| 5 | Symulacja cyklu życia sterowana jednym przyciskiem, z krokami `.dn-krok--*` i paskiem `.dn-postep` | Ruch niesie informację o stanie systemu — dokładnie ten przypadek opisuje wzorzec animacji KANON rozdz. 11 | KANON rozdz. 11; `multitaskingai.md` rozdz. 4.3, 12.3 |
-| 6 | Mapa zależności jako SVG z podświetlaniem łańcucha przy najechaniu i fokusie | Element „Widok grafu zależności” przewiduje podświetlanie powiązanych zależności; obsługa fokusu wynika z warunku dostępności | `multitaskingai.md` rozdz. 5.4; KANON rozdz. 9 |
-| 7 | Wcielenie Arbitrator bez ikony `waga` | Ikona `waga` nie istnieje w komplecie 82 plików `zasoby/ikony/svg/` (potwierdzone odczytem); KANON zakazuje ikon spoza zestawu, więc użyto ikony rodziny roli (`walidator`) z etykietą tekstową | KANON rozdz. 4; odczyt katalogu ikon |
-| 8 | Stan „niegotowy” odwzorowany atrybutem `data-komunikat`, nigdy `disabled` | Dokumentacja definiuje ten stan jako „w pełni klikalny”, a KANON zakazuje `disabled` bezwzględnie | `multitaskingai.md` rozdz. 12.6; KANON rozdz. 8 |
+| 3 | Przełącznik „pokaż masę wizualną” zamiast stałych adnotacji | Diagram ma się czytać najpierw jako układ zespołu, dopiero na żądanie jako dowód reguły; jeden ruch informacyjny, mikroprzejście 160 ms | kontrakt systemu projektowego (`INTENSYWNOSC_RUCHU` 3/10) |
+| 4 | Jedenaście akcji jako jedna tabela sortowalna z filtrem, nie jako jedenaście kafli | Akcje są zbiorem o jednorodnej strukturze (akcja · grupa · działanie · inicjator · reprezentacja); tabela zachowuje gęstość zwartą 8/10 | kontrakt systemu projektowego; `multitaskingai.md` rozdz. 4.2 |
+| 5 | Symulacja cyklu życia sterowana jednym przyciskiem, z krokami `.dn-krok--*` i paskiem `.dn-postep` | Ruch niesie informację o stanie systemu — dokładnie ten przypadek opisuje wzorzec animacji kontrakt systemu projektowego | kontrakt systemu projektowego; `multitaskingai.md` rozdz. 4.3, 12.3 |
+| 6 | Mapa zależności jako SVG z podświetlaniem łańcucha przy najechaniu i fokusie | Element „Widok grafu zależności” przewiduje podświetlanie powiązanych zależności; obsługa fokusu wynika z warunku dostępności | `multitaskingai.md` rozdz. 5.4; kontrakt systemu projektowego |
+| 7 | Wcielenie Arbitrator bez ikony `waga` | Ikona `waga` nie istnieje w komplecie 82 plików `zasoby/ikony/svg/` (potwierdzone odczytem); kontrakt systemu projektowego zakazuje ikon spoza zestawu, więc użyto ikony rodziny roli (`walidator`) z etykietą tekstową | kontrakt systemu projektowego; odczyt katalogu ikon |
+| 8 | Stan „niegotowy” odwzorowany atrybutem `data-komunikat`, nigdy `disabled` | Dokumentacja definiuje ten stan jako „w pełni klikalny”, a kontrakt systemu projektowego zakazuje `disabled` bezwzględnie | `multitaskingai.md` rozdz. 12.6; kontrakt systemu projektowego |
 | 9 | Przełącznik trybu ciągłego dodaje uczestnika (moduł Automations), nie przebudowuje układu | Rozdz. 7.4 utrzymuje ten sam podział ról po spięciu — przenosi wyłącznie zarządzanie harmonogramami i kolejkami | `multitaskingai.md` rozdz. 7.4 |
 | 10 | Karta roli w dwóch warstwach: stanowisko (niezmienne) i obsada (konfigurowalna) | Rola jest stanowiskiem obsadzanym ekspertem z modułu Agents; definicja eksperta jest „punktem wyjścia, nadpisywalnym” | `agents.md` rozdz. 10.3 |
 | 11 | Szablony zespołu rozwijane w miejscu, bez modala | Modal jest w tym środowisku zarezerwowany dla opcjonalnego potwierdzenia akcji nieodwracalnej i domyślnie wyłączony | `multitaskingai.md` Załącznik A.2, wiersz „Modal” |
-| 12 | Dane przykładowe wyłącznie z makiet dokumentu i oznaczone jako przykładowe | Zakaz zmyślonych metryk i nazw; każde zadanie, kolejka i podagent ma numer rozdziału źródła | KANON rozdz. 10 pkt 3–4 |
+| 12 | Dane przykładowe wyłącznie z makiet dokumentu i oznaczone jako przykładowe | Zakaz zmyślonych metryk i nazw; każde zadanie, kolejka i podagent ma numer rozdziału źródła | kontrakt systemu projektowego |
 
 ---
 
@@ -674,24 +674,24 @@ Poziom „Rola (MultitaskingAI)” ma pierwszeństwo najwyższe spośród siedmi
 
 | Zakres | Plik | Rozdziały |
 |---|---|---|
-| Kontrakt kierunku, żetony, komponenty, zasady redakcyjne | `WYNIK/KANON.md` | 1, 2, 4, 5, 6, 7.6, 8, 9, 10, 11 |
-| Role zespołu — cel, wejście, wyjście, oprzyrządowanie | `dok/projekt-ui/srodowiska/multitaskingai.md` | 3.0–3.6 |
-| Silnik kolejek — zasięgi, akcje, cykl życia, elementy sekcji Kolejki | `dok/projekt-ui/srodowiska/multitaskingai.md` | 4.1–4.6 |
-| Orkiestracja i zależności, mapa zależności | `dok/projekt-ui/srodowiska/multitaskingai.md` | 5.1–5.5 |
-| Panel orkiestracji — sześć sekcji, elementy, konfigurowalność | `dok/projekt-ui/srodowiska/multitaskingai.md` | 6.1–6.5 |
-| Integracja z Automations — praca ciągła 24/7/365 | `dok/projekt-ui/srodowiska/multitaskingai.md` | 7.1–7.6 |
-| Hierarchia decyzji i rozstrzyganie konfliktów | `dok/projekt-ui/srodowiska/multitaskingai.md` | 8.1–8.4 |
-| Okna robocze ról — makiety tekstowe (dane przykładowe) | `dok/projekt-ui/srodowiska/multitaskingai.md` | 9.1–9.7 |
-| Katalog elementów interfejsu | `dok/projekt-ui/srodowiska/multitaskingai.md` | 10.1–10.9 |
-| Stany procesu, roli, zadania; konwencja stanów interfejsu | `dok/projekt-ui/srodowiska/multitaskingai.md` | 12.1–12.6 |
-| Izolacja na poziomie roli — pierwszeństwo zasięgu | `dok/projekt-ui/srodowiska/multitaskingai.md` | 13.1–13.5 |
-| Szablony konfiguracji zespołu | `dok/projekt-ui/srodowiska/multitaskingai.md` | 14.1–14.4 |
-| Scenariusze operacyjne | `dok/projekt-ui/srodowiska/multitaskingai.md` | 15.1–15.4 |
-| Ikony i komponenty środowiska | `dok/projekt-ui/srodowiska/multitaskingai.md` | Załącznik A.1, A.2 |
-| Warstwa centralna Always On Display, tryby, Mobile | `dok/projekt-ui/srodowiska/multitaskingai.md` | 2.1–2.6 |
-| Agents jako fabryka ekspertów, łańcuch wartości | `dok/projekt-ui/okna/agents.md` | 1.1–1.3 |
-| Od eksperta do wykonawcy — przypisanie do roli | `dok/projekt-ui/okna/agents.md` | 10, 10.1–10.3 |
-| Asymetria koordynator–wykonawca, anty-domyślne | `design/opracowania/design/01-kierunek/KIERUNEK.md` | 2, 4, 5 |
+| Kontrakt kierunku, żetony, komponenty, zasady redakcyjne | kontrakt systemu projektowego | 1, 2, 4, 5, 6, 7.6, 8, 9, 10, 11 |
+| Role zespołu — cel, wejście, wyjście, oprzyrządowanie | `docs/srodowiska/multitaskingai.md` | 3.0–3.6 |
+| Silnik kolejek — zasięgi, akcje, cykl życia, elementy sekcji Kolejki | `docs/srodowiska/multitaskingai.md` | 4.1–4.6 |
+| Orkiestracja i zależności, mapa zależności | `docs/srodowiska/multitaskingai.md` | 5.1–5.5 |
+| Panel orkiestracji — sześć sekcji, elementy, konfigurowalność | `docs/srodowiska/multitaskingai.md` | 6.1–6.5 |
+| Integracja z Automations — praca ciągła 24/7/365 | `docs/srodowiska/multitaskingai.md` | 7.1–7.6 |
+| Hierarchia decyzji i rozstrzyganie konfliktów | `docs/srodowiska/multitaskingai.md` | 8.1–8.4 |
+| Okna robocze ról — makiety tekstowe (dane przykładowe) | `docs/srodowiska/multitaskingai.md` | 9.1–9.7 |
+| Katalog elementów interfejsu | `docs/srodowiska/multitaskingai.md` | 10.1–10.9 |
+| Stany procesu, roli, zadania; konwencja stanów interfejsu | `docs/srodowiska/multitaskingai.md` | 12.1–12.6 |
+| Izolacja na poziomie roli — pierwszeństwo zasięgu | `docs/srodowiska/multitaskingai.md` | 13.1–13.5 |
+| Szablony konfiguracji zespołu | `docs/srodowiska/multitaskingai.md` | 14.1–14.4 |
+| Scenariusze operacyjne | `docs/srodowiska/multitaskingai.md` | 15.1–15.4 |
+| Ikony i komponenty środowiska | `docs/srodowiska/multitaskingai.md` | Załącznik A.1, A.2 |
+| Warstwa centralna Always On Display, tryby, Mobile | `docs/srodowiska/multitaskingai.md` | 2.1–2.6 |
+| Agents jako fabryka ekspertów, łańcuch wartości | `docs/moduly/agents.md` | 1.1–1.3 |
+| Od eksperta do wykonawcy — przypisanie do roli | `docs/moduly/agents.md` | 10, 10.1–10.3 |
+| Asymetria koordynator–wykonawca, anty-domyślne | kierunek systemu projektowego | 2, 4, 5 |
 | Klasy komponentów `.dn-*` | `WYNIK/zasoby/css/komponenty.css` | odczyt pliku |
 | Klasy warstwy prototypu `.pt-*` i atrybuty `data-*` | `WYNIK/zasoby/prototyp.css`, `WYNIK/zasoby/prototyp.js` | odczyt plików |
 | Ikony (82 pliki) i ich zastosowania | `WYNIK/zasoby/ikony/svg/*.svg`, `WYNIK/zasoby/ikony/manifest.json` | odczyt katalogu i manifestu |

@@ -1,9 +1,9 @@
-# Danaco Console — Plansza portfolio P6: System w ruchu
+# Danaco Console — Plansza portfolio 06: System w ruchu
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment (warstwa wizualna v2.0) |
-| **Warstwa funkcjonalna** | Danaco Pilot — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
+| **Warstwa funkcjonalna** | Danaco Console — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -12,7 +12,7 @@
 | **Rodzaj opracowania** | Plansza portfolio design identity (nie dokumentacja techniczna) |
 | **Odbiorcy** | Właściciel · Designer prowadzący makiety · Deweloper wdrażający · odbiorca portfolio |
 | **Zakres** | Kontrakt ruchu `INTENSYWNOSC_RUCHU` 3/10 · cztery czasy i jedna krzywa · katalog siedmiu dozwolonych animacji · katalog dziesięciu zakazanych · `prefers-reduced-motion` · ruch jako nośnik informacji · wydajność · oś czasu złożonego przejścia |
-| **Czego NIE zawiera** | definicji żetonów (→ `01-dokumentacja-md/04-tokens.md`), anatomii komponentów (→ `06-components.md`), sygnalizacji i stanów (→ plansza P4), makiet okien (→ `05-okna/`) |
+| **Czego NIE zawiera** | definicji żetonów (→ `01-dokumentacja-md/04-tokens.md`), anatomii komponentów (→ `06-components.md`), sygnalizacji i stanów (→ plansza 04), makiet okien (→ `05-okna/`) |
 | **Plik towarzyszący** | `04-portfolio/06-system-w-ruchu.html` |
 
 ---
@@ -41,7 +41,7 @@ ustawia pokrętło `INTENSYWNOSC_RUCHU` na **3/10** i to jedna liczba, z której
 mikroprzejścia **100–220 ms** plus **jeden ruch znaczący** — tętno kropki sygnału, czytane jako
 „tu biegnie praca".
 
-Plansza P6 zbiera ten system w jedno miejsce i pokazuje go **w działaniu**, a nie w opisie:
+Plansza 06 zbiera ten system w jedno miejsce i pokazuje go **w działaniu**, a nie w opisie:
 cztery czasy odpalane obok siebie na tym samym elemencie, krzywa `--dn-ease` narysowana jako
 wykres z biegnącym po niej wskaźnikiem, siedem dozwolonych animacji uruchamianych przyciskiem,
 dziesięć zakazanych z uzasadnieniem, symulator ograniczonego ruchu i rozbita na fazy oś czasu
@@ -51,14 +51,14 @@ przejścia z okna operacyjnego do modala.
 pochodzą z `zasoby/zetony/zetony.css` (sekcja 5 i 14), `zasoby/css/komponenty.css`,
 `zasoby/prototyp.css` oraz z rozdziałów 8–14 opracowania
 `01-dokumentacja-md/08-handoff-motion-dostepnosc.md`. Wszystkie nazwy okien, modułów i ról
-pochodzą z KANON rozdz. 6 i 7.
+pochodzą z kontraktu systemu projektowego.
 
 ### 1.1. Jedno zdanie kontraktowe
 
 > `INTENSYWNOSC_RUCHU` = **3/10** — mikroprzejścia 100–220 ms + **jeden ruch znaczący**
 > (tętno kropki). Aplikacja robocza, nie strona marketingowa.
 >
-> — KIERUNEK.md rozdz. 2, powtórzone w KANON rozdz. 1 i w `08-handoff-motion-dostepnosc.md` rozdz. 8.1
+> — kierunek systemu projektowego, powtórzone w kontrakcie systemu projektowego i w `08-handoff-motion-dostepnosc.md` rozdz. 8.1
 
 ---
 
@@ -179,13 +179,13 @@ w układzie 100×100, oś Y odwrócona) z biegnącym po niej wskaźnikiem odpala
 
 | # | Animacja | Nośnik | Czas | Własność | Informacja niesiona |
 |---|---|---|---|---|---|
-| **M1** | Mikroreakcja kontrolki | `.dn-btn`, `.dn-btn-ikona`, `.dn-karta--klikalna`, wiersz `.dn-tabela`, `.dn-zakladka` | `--dn-czas-1` | `background-color`, `transform: translateY(1px)` | „element jest interaktywny i przyjął moje działanie" |
-| **M2** | Przejście barwy | `body`, `.dn-boczna-pozycja`, `.dn-przelacznik`, `.dn-pole-kontrolka:focus` | `--dn-czas-2` | `color`, `background-color`, `border-color`, `box-shadow` | „zmienił się stan wyboru / motyw / fokus" |
-| **M3** | Wejście i wyjście warstwy | `.dn-modal[open]`, `.dn-toast`, `.dn-tooltip-tresc` | `--dn-czas-3` | `opacity` 0→1, `translateY(8px)`→0, modal dodatkowo `scale(0.98)`→1 | „pojawiła się nowa warstwa nad treścią" |
-| **M4** | Tętno kropki | `.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after` | `--dn-czas-tetno` | `box-shadow` | **„tu biegnie praca"** — jedyny ruch ciągły |
-| **M5** | Postęp kolejki | `.dn-postep-wartosc` | `--dn-czas-3` | `width` | „proces posunął się o zmierzoną wartość" |
-| **M6** | Wskaźnik pracy wpisu | `.dn-btn[aria-busy='true']::after`, `.dn-spinner` | 0,8 s `linear` | `transform: rotate()` | „operacja trwa, czas nieznany" |
-| **M7** | Przełączenie motywu | `body` + powierzchnie dziedziczące | `--dn-czas-2` | `background-color`, `color` | „zmieniłem motyw — to ta sama treść" |
+| **1** | Mikroreakcja kontrolki | `.dn-btn`, `.dn-btn-ikona`, `.dn-karta--klikalna`, wiersz `.dn-tabela`, `.dn-zakladka` | `--dn-czas-1` | `background-color`, `transform: translateY(1px)` | „element jest interaktywny i przyjął moje działanie" |
+| **2** | Przejście barwy | `body`, `.dn-boczna-pozycja`, `.dn-przelacznik`, `.dn-pole-kontrolka:focus` | `--dn-czas-2` | `color`, `background-color`, `border-color`, `box-shadow` | „zmienił się stan wyboru / motyw / fokus" |
+| **3** | Wejście i wyjście warstwy | `.dn-modal[open]`, `.dn-toast`, `.dn-tooltip-tresc` | `--dn-czas-3` | `opacity` 0→1, `translateY(8px)`→0, modal dodatkowo `scale(0.98)`→1 | „pojawiła się nowa warstwa nad treścią" |
+| **4** | Tętno kropki | `.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after` | `--dn-czas-tetno` | `box-shadow` | **„tu biegnie praca"** — jedyny ruch ciągły |
+| **5** | Postęp kolejki | `.dn-postep-wartosc` | `--dn-czas-3` | `width` | „proces posunął się o zmierzoną wartość" |
+| **6** | Wskaźnik pracy wpisu | `.dn-btn[aria-busy='true']::after`, `.dn-spinner` | 0,8 s `linear` | `transform: rotate()` | „operacja trwa, czas nieznany" |
+| **7** | Przełączenie motywu | `body` + powierzchnie dziedziczące | `--dn-czas-2` | `background-color`, `color` | „zmieniłem motyw — to ta sama treść" |
 
 ### 4.1. Pozycje planszy a pozycje katalogu
 
@@ -194,20 +194,20 @@ pozycji katalogu — nie nową animacją:
 
 | Demonstrator planszy | Pozycja katalogu | Czas |
 |---|---|---|
-| mikroreakcja kontrolki (hover / active) | M1 | `--dn-czas-1` |
-| przejście barwy pozycji bocznej nawigacji | M2 | `--dn-czas-2` |
-| przełączenie motywu | M7 (= M2 na `body`) | `--dn-czas-2` |
-| wejście modala | M3 | `--dn-czas-3` |
-| wejście i wyjście powiadomienia | M3 | `--dn-czas-3` |
-| wejście panelu | M3 | `--dn-czas-3` |
-| przejście widoku (`opacity` + `translateY(4px)`) | M3 (wariant wewnątrz okna) | `--dn-czas-3` |
-| tętno kropki sygnału | M4 | `--dn-czas-tetno` |
-| postęp kolejki | M5 | `--dn-czas-3` |
-| wskaźnik pracy wpisu | M6 | 0,8 s `linear` |
-| rozwinięcie sekcji (`<details>`) | M2 na treści o znanej wysokości | `--dn-czas-2` |
-| zwijanie bocznej nawigacji | M2 na szerokości kolumny siatki powłoki | `--dn-czas-2` |
+| mikroreakcja kontrolki (hover / active) | katalog dozwolonych, poz. 1 | `--dn-czas-1` |
+| przejście barwy pozycji bocznej nawigacji | katalog dozwolonych, poz. 2 | `--dn-czas-2` |
+| przełączenie motywu | katalog dozwolonych, poz. 7 | `--dn-czas-2` |
+| wejście modala | wejście i wyjście warstwy | `--dn-czas-3` |
+| wejście i wyjście powiadomienia | wejście i wyjście warstwy | `--dn-czas-3` |
+| wejście panelu | wejście i wyjście warstwy | `--dn-czas-3` |
+| przejście widoku (`opacity` + `translateY(4px)`) | wejście i wyjście warstwy (wariant wewnątrz okna) | `--dn-czas-3` |
+| tętno kropki sygnału | katalog dozwolonych, poz. 4 | `--dn-czas-tetno` |
+| postęp kolejki | postęp kolejki | `--dn-czas-3` |
+| wskaźnik pracy wpisu | wskaźnik pracy wpisu | 0,8 s `linear` |
+| rozwinięcie sekcji (`<details>`) | katalog dozwolonych, poz. 2 — treść o znanej wysokości | `--dn-czas-2` |
+| zwijanie bocznej nawigacji | katalog dozwolonych, poz. 2 — szerokość kolumny siatki powłoki | `--dn-czas-2` |
 
-**Uwaga do dwóch ostatnich pozycji.** Dokumentacja rozdz. 11 (X7) zakazuje animowania własności
+**Uwaga do dwóch ostatnich pozycji.** Dokumentacja rozdz. 11 (animacja wysokości i szerokości układu) zakazuje animowania własności
 układu. Rozwinięcie sekcji realizuje więc natywny `<details>` z przejściem `opacity` + `transform`
 na treści, a nie `height`. Zwijanie bocznej nawigacji zmienia **jedną deklarację
 `grid-template-columns`** na kontenerze `.pt-cialo` (`.pt-cialo--zwinieta` w `prototyp.css`) —
@@ -215,7 +215,7 @@ przeliczenie dotyczy jednego kontenera powłoki, nie kaskady elementów. Odnotow
 
 ### 4.2. Wzorce implementacyjne — cytat z biblioteki
 
-**M1 — mikroreakcja:**
+**Mikroreakcja kontrolki:**
 
 ```css
 .dn-btn {
@@ -229,9 +229,9 @@ przeliczenie dotyczy jednego kontenera powłoki, nie kaskady elementów. Odnotow
 .dn-btn:active { transform: translateY(1px); }
 ```
 
-Reguła: własności wylicza się jawnie. `transition: all` animuje także własności układu i łamie X7.
+Reguła: własności wylicza się jawnie. `transition: all` animuje także własności układu i łamie zakaz animowania wysokości i szerokości układu.
 
-**M4 — tętno:**
+**Tętno kropki:**
 
 ```css
 .dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
@@ -244,7 +244,7 @@ Reguła: własności wylicza się jawnie. `transition: all` animuje także włas
 
 Animowany jest `box-shadow`, nie `width`/`height` — pierścień rozchodzi się bez wpływu na układ sąsiadów.
 
-**M3 — wejście modala:**
+**wejście i wyjście warstwy — wejście modala:**
 
 ```css
 .dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
@@ -256,7 +256,7 @@ Animowany jest `box-shadow`, nie `width`/`height` — pierścień rozchodzi się
 
 Klatka `to` pominięta świadomie — stan docelowy to stan spoczynkowy elementu.
 
-**M5 — postęp:**
+**postęp kolejki — postęp:**
 
 ```css
 .dn-postep-tor     { height: 4px; background: var(--dn-powierzchnia-2); overflow: hidden; }
@@ -264,14 +264,14 @@ Klatka `to` pominięta świadomie — stan docelowy to stan spoczynkowy elementu
                      transition: width var(--dn-czas-3) var(--dn-ease); }
 ```
 
-**M6 — wskaźnik pracy:**
+**wskaźnik pracy wpisu — wskaźnik pracy:**
 
 ```css
 .dn-spinner { animation: dn-obrot 0.8s linear infinite; }
 @keyframes dn-obrot { to { transform: rotate(360deg); } }
 ```
 
-**M7 — motyw:**
+**przełączenie motywu — motyw:**
 
 ```css
 body {
@@ -281,7 +281,7 @@ body {
 }
 ```
 
-### 4.3. M4 — tętno w pięciu miejscach kontraktu marki
+### 4.3. tętno kropki — tętno w pięciu miejscach kontraktu marki
 
 | Miejsce | Forma | Ruch |
 |---|---|---|
@@ -294,7 +294,7 @@ body {
 **Reguła jednego tętna.** W jednym widoku pulsuje jedno miejsce. Gdy pracują trzy sesje —
 pulsuje karta sesji aktywnej, pozostałe niosą kropkę statyczną plus liczbę w plakietce.
 
-### 4.4. M5 — kiedy postęp, kiedy spinner
+### 4.4. postęp kolejki — kiedy postęp, kiedy spinner
 
 | Sytuacja | Komponent | Dlaczego |
 |---|---|---|
@@ -308,27 +308,27 @@ pulsuje karta sesji aktywnej, pozostałe niosą kropkę statyczną plus liczbę 
 
 | # | Zakazane | Dlaczego szkodzi w kokpicie |
 |---|---|---|
-| **X1** | **Parallax** — warstwy przesuwające się z różną prędkością przy przewijaniu | ruch nie niesie żadnej informacji o stanie systemu; przy gęstości 8/10 rozbija odczyt danych; obciąża wątek kompozycji przy każdej klatce przewijania |
-| **X2** | **Scrollytelling** — treść odsłaniana i animowana wraz z przewijaniem | wzorzec strony narracyjnej; okno robocze nie opowiada historii, pokazuje stan. Operator przewija, żeby czytać dane, nie żeby uruchamiać przedstawienie |
-| **X3** | **Animacje dekoracyjne** — unoszące się kształty, animowane gradienty, cząstki, „oddychające" tła | anty-domyślne kierunku: zero dekoracji bez funkcji; gradient jest wyłącznie ilustracyjny i nigdy nie jest tłem sekcji |
-| **X4** | **Bounce / przeregulowanie** — `cubic-bezier` przekraczający 1, sprężyny, `elastic` | system ma jedną krzywą `--dn-ease`; przeregulowanie sugeruje fizyczność obiektu, a kontrolki kokpitu nie są obiektami fizycznymi |
-| **X5** | **Ruch bez informacji** — animacja wejścia strony, kaskadowe pojawianie się list, animowane liczniki | animowany licznik **fałszuje pomiar**: pokazuje wartości, których system nigdy nie zmierzył |
-| **X6** | **Więcej niż jeden ruch ciągły na widok** | tętno traci znaczenie „tu biegnie praca", gdy pulsuje wszystko |
-| **X7** | **Animacja własności układu** — `height`, `top`, `left`, `margin`, `padding` | wymusza przeliczenie geometrii w każdej klatce; jedyne dopuszczone `width` to `.dn-postep-wartosc` w torze o stałych wymiarach |
-| **X8** | **Migotanie** powyżej 3 Hz | kryterium WCAG 2.3.1, ryzyko napadu światłoczułego. Tętno 2,4 s = 0,42 Hz |
-| **X9** | **Rozmycie jako efekt** — `backdrop-filter` poza nakładką modala | anty-domyślne „glassmorfizm wszędzie" → powierzchnie kryjące; jedyne dopuszczone rozmycie to `blur(2px)` na `.dn-modal::backdrop` |
-| **X10** | **Animowane przewijanie sterowane skryptem** — globalne `scroll-behavior: smooth` | odbiera Operatorowi kontrolę nad tempem czytania; przy `prefers-reduced-motion` system wymusza `scroll-behavior: auto` |
+| **1** | **Parallax** — warstwy przesuwające się z różną prędkością przy przewijaniu | ruch nie niesie żadnej informacji o stanie systemu; przy gęstości 8/10 rozbija odczyt danych; obciąża wątek kompozycji przy każdej klatce przewijania |
+| **2** | **Scrollytelling** — treść odsłaniana i animowana wraz z przewijaniem | wzorzec strony narracyjnej; okno robocze nie opowiada historii, pokazuje stan. Operator przewija, żeby czytać dane, nie żeby uruchamiać przedstawienie |
+| **3** | **Animacje dekoracyjne** — unoszące się kształty, animowane gradienty, cząstki, „oddychające" tła | anty-domyślne kierunku: zero dekoracji bez funkcji; gradient jest wyłącznie ilustracyjny i nigdy nie jest tłem sekcji |
+| **4** | **Bounce / przeregulowanie** — `cubic-bezier` przekraczający 1, sprężyny, `elastic` | system ma jedną krzywą `--dn-ease`; przeregulowanie sugeruje fizyczność obiektu, a kontrolki kokpitu nie są obiektami fizycznymi |
+| **5** | **Ruch bez informacji** — animacja wejścia strony, kaskadowe pojawianie się list, animowane liczniki | animowany licznik **fałszuje pomiar**: pokazuje wartości, których system nigdy nie zmierzył |
+| **6** | **Więcej niż jeden ruch ciągły na widok** | tętno traci znaczenie „tu biegnie praca", gdy pulsuje wszystko |
+| **7** | **Animacja własności układu** — `height`, `top`, `left`, `margin`, `padding` | wymusza przeliczenie geometrii w każdej klatce; jedyne dopuszczone `width` to `.dn-postep-wartosc` w torze o stałych wymiarach |
+| **8** | **Migotanie** powyżej 3 Hz | kryterium WCAG 2.3.1, ryzyko napadu światłoczułego. Tętno 2,4 s = 0,42 Hz |
+| **9** | **Rozmycie jako efekt** — `backdrop-filter` poza nakładką modala | anty-domyślne „glassmorfizm wszędzie" → powierzchnie kryjące; jedyne dopuszczone rozmycie to `blur(2px)` na `.dn-modal::backdrop` |
+| **10** | **Animowane przewijanie sterowane skryptem** — globalne `scroll-behavior: smooth` | odbiera Operatorowi kontrolę nad tempem czytania; przy `prefers-reduced-motion` system wymusza `scroll-behavior: auto` |
 
 ### 5.1. Zakazy dodatkowe wynikające z zakazów podstawowych
 
 | Odruch | Który zakaz go obejmuje |
 |---|---|
-| „animacja wjazdu kart środowisk na Centrum dowodzenia" | X5 |
-| „delikatny puls przycisku wysyłki, żeby zachęcić" | X3 + X6 |
-| „licznik zadań w kolejce odliczający od 0 do 47" | X5 |
-| „miękkie rozwinięcie panelu przez `height: auto`" | X7 |
-| „przyciemnianie tła paska górnego przy przewijaniu" | X1 |
-| „gradient przesuwający się w tle Always On Display" | X3 |
+| „animacja wjazdu kart środowisk na Centrum dowodzenia" | ruch bez informacji |
+| „delikatny puls przycisku wysyłki, żeby zachęcić" | animacje dekoracyjne + więcej niż jeden ruch ciągły |
+| „licznik zadań w kolejce odliczający od 0 do 47" | ruch bez informacji |
+| „miękkie rozwinięcie panelu przez `height: auto`" | animacja wysokości i szerokości układu |
+| „przyciemnianie tła paska górnego przy przewijaniu" | parallaks |
+| „gradient przesuwający się w tle Always On Display" | animacje dekoracyjne |
 
 ---
 
@@ -389,13 +389,13 @@ nośnikiem, przy `reduce` informację przejmuje kształt, obrys albo etykieta.
 
 | Animacja | Zachowanie | Nośnik informacji po zmianie |
 |---|---|---|
-| M1 mikroreakcja | zmiana natychmiastowa | barwa tła (`--dn-hover`) |
-| M2 przejście barwy | zmiana natychmiastowa | barwa docelowa |
-| M3 wejście warstwy | warstwa pojawia się bez wjazdu | obecność warstwy + cień + nakładka |
-| **M4 tętno** | **pierścień statyczny 2 px** | **kształt (pierścień)** |
-| M5 postęp | pasek skacze do wartości | liczba w etykiecie mono |
-| M6 spinner | zatrzymany po pierwszym obrocie | `aria-busy="true"` + tekst „Trwa…" |
-| M7 motyw | przełączenie natychmiastowe | nowe barwy |
+| Mikroreakcja kontrolki — mikroreakcja | zmiana natychmiastowa | barwa tła (`--dn-hover`) |
+| Przejście barwy — przejście barwy | zmiana natychmiastowa | barwa docelowa |
+| Wejście i wyjście warstwy — wejście warstwy | warstwa pojawia się bez wjazdu | obecność warstwy + cień + nakładka |
+| **Tętno kropki** | **pierścień statyczny 2 px** | **kształt (pierścień)** |
+| Postęp kolejki — postęp | pasek skacze do wartości | liczba w etykiecie mono |
+| Wskaźnik pracy wpisu — spinner | zatrzymany po pierwszym obrocie | `aria-busy="true"` + tekst „Trwa…" |
+| Przełączenie motywu — motyw | przełączenie natychmiastowe | nowe barwy |
 
 ### 6.4. Czego NIE robić
 
@@ -470,7 +470,7 @@ decyzją systemową użytkownika. Dlatego każde jego użycie ma zdefiniowany za
 | `transform` | kompozycja | najniższy | **preferowana** |
 | `opacity` | kompozycja | najniższy | **preferowana** |
 | `box-shadow` | malowanie | średni | dopuszczona: tętno, fokus |
-| `color`, `background-color` | malowanie | średni | dopuszczona: M1, M2 |
+| `color`, `background-color` | malowanie | średni | dopuszczona: mikroreakcja kontrolki, przejście barwy |
 | `width`, `height`, `top`, `left`, `margin`, `padding` | układ | najwyższy | **zakazane** poza `.dn-postep-wartosc` |
 
 ### 8.2. Dlaczego `.dn-postep-wartosc` może animować `width`
@@ -512,39 +512,39 @@ warstwy samodzielnie. Wprowadzenie `will-change` wymaga pomiaru pokazującego zy
 ## 9. Oś czasu złożonego przejścia
 
 Przejście z okna operacyjnego do modala — na przykładzie **Okna Konfiguracji** i modala
-**„Pula kont Code CLI"** (KANON rozdz. 7.3, poz. 8). Cała sekwencja mieści się w `--dn-czas-3`
+**„Pula kont Code CLI"** (kontrakt systemu projektowego, poz. 8). Cała sekwencja mieści się w `--dn-czas-3`
 = 220 ms i składa się z trzech przejść jednoczesnych (limit budżetu z rozdz. 2.3).
 
 | Faza | Zakres czasu | Co się dzieje | Własność | Informacja |
 |---|---|---|---|---|
-| **F0** | 0 ms | naciśnięcie przycisku otwierającego | `transform: translateY(1px)` (M1, 100 ms) | „przyjąłem działanie" |
-| **F1** | 0–220 ms | nakładka `::backdrop` wchodzi z `opacity` 0→1, `blur(2px)` | `opacity` | „treść pod spodem przestaje być aktywna" |
-| **F2** | 0–220 ms | modal `opacity` 0→1 | `opacity` | „jest nowa warstwa" |
-| **F3** | 0–220 ms | modal `translateY(8px)` → 0 oraz `scale(0.98)` → 1 | `transform` | „warstwa **stanęła nad** treścią, przyszła z dołu" |
-| **F4** | 220 ms | fokus przechodzi na pierwszą kontrolkę modala | brak animacji | „tu teraz pracuję" |
+| **1** | 0 ms | naciśnięcie przycisku otwierającego | `transform: translateY(1px)` (mikroreakcja kontrolki, 100 ms) | „przyjąłem działanie" |
+| **2** | 0–220 ms | nakładka `::backdrop` wchodzi z `opacity` 0→1, `blur(2px)` | `opacity` | „treść pod spodem przestaje być aktywna" |
+| **3** | 0–220 ms | modal `opacity` 0→1 | `opacity` | „jest nowa warstwa" |
+| **4** | 0–220 ms | modal `translateY(8px)` → 0 oraz `scale(0.98)` → 1 | `transform` | „warstwa **stanęła nad** treścią, przyszła z dołu" |
+| **5** | 220 ms | fokus przechodzi na pierwszą kontrolkę modala | brak animacji | „tu teraz pracuję" |
 
 ### 9.1. Rozkład na klatki
 
 ```
    0 ms        55 ms       110 ms      165 ms      220 ms
    ├───────────┼───────────┼───────────┼───────────┤
-   F1 nakładka  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
-   F2 modal     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
-   F3 tor       8px ──── 3,1px ─ 1,1px ─ 0,2px ─── 0
+      nakładka  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
+      modal     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▶ opacity 1
+      tor       8px ──── 3,1px ─ 1,1px ─ 0,2px ─── 0
                 scale 0,98 ──────────────────── 1,00
-   F4 fokus                                      ● pierwsza kontrolka
+      fokus                                      ● pierwsza kontrolka
 ```
 
-Wartości toru F3 wynikają z krzywej `cubic-bezier(0.2, 0, 0, 1)`: po połowie czasu element pokonał
+Wartości toru przekształcenia modala wynikają z krzywej `cubic-bezier(0.2, 0, 0, 1)`: po połowie czasu element pokonał
 już około 86% dystansu. To jest właśnie „ruch instrumentu" — energia na starcie, cisza na końcu.
 
 ### 9.2. Zamknięcie modala
 
 | Faza | Czas | Co się dzieje |
 |---|---|---|
-| Z0 | 0 ms | `Esc`, przycisk zamknięcia albo kliknięcie w nakładkę |
-| Z1 | 0–220 ms | nakładka i modal wygaszają `opacity` do 0 |
-| Z2 | 220 ms | fokus wraca na kontrolkę, która modal otworzyła |
+| 1 | 0 ms | `Esc`, przycisk zamknięcia albo kliknięcie w nakładkę |
+| 2 | 0–220 ms | nakładka i modal wygaszają `opacity` do 0 |
+| 3 | 220 ms | fokus wraca na kontrolkę, która modal otworzyła |
 
 **Bez ruchu powrotnego w osi pionowej.** Wyjście warstwy nie odtwarza wejścia w odwrotną stronę —
 element znika, a nie „chowa się z powrotem". Odwrócenie toru sugerowałoby fizyczne schowanie
@@ -562,16 +562,16 @@ powiadomienie nie przejmuje fokusu.
 
 | # | Decyzja | Uzasadnienie |
 |---|---|---|
-| **D1** | Demonstrator czterech czasów uruchamia **ten sam element** czterokrotnie zamiast czterech różnych | porównanie ma dotyczyć wyłącznie czasu; różny kształt zaburzyłby odczyt |
-| **D2** | Krzywa `--dn-ease` narysowana jako SVG `<path>` z biegnącym wskaźnikiem | krzywa opisana liczbami jest nieczytelna; narysowana i przebiegnięta staje się argumentem |
-| **D3** | Tor 2,4 s obecny w demonstratorze mimo że nie jest czasem przejścia | pokazuje **skalę** — bez niego 220 ms wygląda na dużo, z nim widać, że jest jedenastokrotnie krótsze |
-| **D4** | Symulator ograniczonego ruchu działa na atrybucie `data-ruch` planszy, nie na klasach komponentów | dokumentacja zakazuje wykrywania preferencji w JS; symulator jest wyraźnie oznaczony jako demonstracja mechanizmu |
-| **D5** | Katalog zakazanych ma tę samą wagę wizualną co katalog dozwolonych | w opracowaniu portfolio to, czego system nie robi, definiuje go tak samo jak to, co robi |
-| **D6** | Żaden demonstrator zakazanej animacji nie jest odtwarzany | plansza nie może uruchamiać parallaxu ani bounce'u „dla przykładu" — złamałaby własny kontrakt. Zakazy pokazujemy tekstem i statycznym diagramem |
-| **D7** | Rozwinięcie sekcji zrealizowane natywnym `<details>` | X7 zakazuje animowania `height`; natywny element daje semantykę i klawiaturę bez kodu |
-| **D8** | Zwijanie bocznej nawigacji zmienia `grid-template-columns` jednego kontenera | to jedyna droga do zwinięcia bez animowania `width` każdej pozycji; przeliczenie dotyczy jednego kontenera powłoki |
-| **D9** | Wszystkie fragmenty CSS na planszy mają przycisk kopiowania (`data-kopiuj`) | plansza jest źródłem gotowego kodu dla dewelopera; przepisywanie ręczne to droga do rozjazdu z biblioteką |
-| **D10** | Oś czasu przejścia liczona na przykładzie realnego modala „Pula kont Code CLI" | KANON rozdz. 10 zakazuje przykładów spoza domeny produktu |
+| **1** | Demonstrator czterech czasów uruchamia **ten sam element** czterokrotnie zamiast czterech różnych | porównanie ma dotyczyć wyłącznie czasu; różny kształt zaburzyłby odczyt |
+| **2** | Krzywa `--dn-ease` narysowana jako SVG `<path>` z biegnącym wskaźnikiem | krzywa opisana liczbami jest nieczytelna; narysowana i przebiegnięta staje się argumentem |
+| **3** | Tor 2,4 s obecny w demonstratorze mimo że nie jest czasem przejścia | pokazuje **skalę** — bez niego 220 ms wygląda na dużo, z nim widać, że jest jedenastokrotnie krótsze |
+| **4** | Symulator ograniczonego ruchu działa na atrybucie `data-ruch` planszy, nie na klasach komponentów | dokumentacja zakazuje wykrywania preferencji w JS; symulator jest wyraźnie oznaczony jako demonstracja mechanizmu |
+| **5** | Katalog zakazanych ma tę samą wagę wizualną co katalog dozwolonych | w opracowaniu portfolio to, czego system nie robi, definiuje go tak samo jak to, co robi |
+| **6** | Żaden demonstrator zakazanej animacji nie jest odtwarzany | plansza nie może uruchamiać parallaxu ani bounce'u „dla przykładu" — złamałaby własny kontrakt. Zakazy pokazujemy tekstem i statycznym diagramem |
+| **7** | Rozwinięcie sekcji zrealizowane natywnym `<details>` | animacja wysokości i szerokości układu zakazuje animowania `height`; natywny element daje semantykę i klawiaturę bez kodu |
+| **8** | Zwijanie bocznej nawigacji zmienia `grid-template-columns` jednego kontenera | to jedyna droga do zwinięcia bez animowania `width` każdej pozycji; przeliczenie dotyczy jednego kontenera powłoki |
+| **9** | Wszystkie fragmenty CSS na planszy mają przycisk kopiowania (`data-kopiuj`) | plansza jest źródłem gotowego kodu dla dewelopera; przepisywanie ręczne to droga do rozjazdu z biblioteką |
+| **10** | Oś czasu przejścia liczona na przykładzie realnego modala „Pula kont Code CLI" | kontrakt systemu projektowego zakazuje przykładów spoza domeny produktu |
 
 ---
 
@@ -579,22 +579,22 @@ powiadomienie nie przejmuje fokusu.
 
 | Zakres | Plik i rozdział |
 |---|---|
-| Pokrętło `INTENSYWNOSC_RUCHU` 3/10 | `KANON.md` rozdz. 1 (Trzy pokrętła); `KIERUNEK.md` rozdz. 2, wiersz 29 |
-| Cztery czasy i krzywa | `KANON.md` rozdz. 2 (Ruch); `zasoby/zetony/zetony.css` sekcja 5, wiersze 126–130 |
-| Wzorzec animacji prototypów | `KANON.md` rozdz. 11 (Standard techniczny, „Wzorzec animacji") |
+| Pokrętło `INTENSYWNOSC_RUCHU` 3/10 | kontrakt systemu projektowego (Trzy pokrętła); kierunek systemu projektowego, wiersz 29 |
+| Cztery czasy i krzywa | kontrakt systemu projektowego (Ruch); `zasoby/zetony/zetony.css` sekcja 5, wiersze 126–130 |
+| Wzorzec animacji prototypów | kontrakt systemu projektowego (Standard techniczny, „Wzorzec animacji") |
 | Kontrakt ruchu — sześć wymiarów | `01-dokumentacja-md/08-handoff-motion-dostepnosc.md` rozdz. 8.2 |
 | Trzy pytania przed animacją | tamże, rozdz. 8.3 |
 | Cztery czasy, tabela decyzyjna | tamże, rozdz. 9.1–9.4 |
-| Katalog dozwolonych M1–M7 | tamże, rozdz. 10, 10.1, 10.2 |
-| Katalog zakazanych X1–X10 | tamże, rozdz. 11 |
+| Katalog dozwolonych animacji | tamże, rozdz. 10, 10.1, 10.2 |
+| Katalog zakazanych animacji | tamże, rozdz. 11 |
 | Wzorce implementacyjne | tamże, rozdz. 12.1–12.7 (cytat z biblioteki) |
 | `prefers-reduced-motion` | tamże, rozdz. 13.1–13.4; `zasoby/zetony/zetony.css` sekcja 14, wiersze 435–441 |
 | Wydajność, `will-change`, layout thrash | tamże, rozdz. 14.1–14.5 |
-| Tętno jako element sygnaturowy | `KANON.md` rozdz. 3 (Kropka sygnału); `KIERUNEK.md` rozdz. 3.4, wiersz 87 |
+| Tętno jako element sygnaturowy | kontrakt systemu projektowego (Kropka sygnału); kierunek systemu projektowego, wiersz 87 |
 | Klasy komponentów i klatki kluczowe | `zasoby/css/komponenty.css` (`.dn-postep` 867–893, `.dn-krok` 896–944, `.dn-toast` 1000–1024) |
 | `.pt-tetno`, `.pt-wejscie`, `.pt-cialo--zwinieta` | `zasoby/prototyp.css` wiersze 30, 288–309 |
 | Interakcje sterowane atrybutami | `zasoby/prototyp.js` (przełączanie widoków, modale, `data-kopiuj`, `data-symuluj`, `data-postep-do`, spis treści) |
-| Nazwy okien użytych w przykładach | `KANON.md` rozdz. 7.3 (Okno Konfiguracji, modal „Pula kont Code CLI"), 7.5 (Queue Manager, Execution Monitor, Permissions Center) |
+| Nazwy okien użytych w przykładach | kontrakt systemu projektowego (Okno Konfiguracji, modal „Pula kont Code CLI"), 7.5 (Queue Manager, Execution Monitor, Permissions Center) |
 
 ---
 
@@ -607,12 +607,12 @@ powiadomienie nie przejmuje fokusu.
 | Emoji jako ikony | **0** — wyłącznie inline SVG 24×24, obrys 1,75, `currentColor`, pliki z `zasoby/ikony/svg/` |
 | Ruchy ciągłe na planszy | tętno demonstracyjne odpalane przyciskiem; poza demonstratorem widok bez ruchu ciągłego |
 | Czasy użyte w arkuszu lokalnym | wyłącznie `var(--dn-czas-1/2/3/-tetno)` |
-| Krzywe użyte w arkuszu lokalnym | wyłącznie `var(--dn-ease)`; `linear` wyłącznie przy demonstratorze M6 |
-| Animowane własności układu | brak; `width` wyłącznie w demonstratorze M5 wewnątrz toru |
+| Krzywe użyte w arkuszu lokalnym | wyłącznie `var(--dn-ease)`; `linear` wyłącznie przy demonstratorze wskaźnik pracy wpisu |
+| Animowane własności układu | brak; `width` wyłącznie w demonstratorze postęp kolejki wewnątrz toru |
 | `prefers-reduced-motion` | obsłużone globalnie żetonami; plansza nie dubluje zapytania poza jawnie oznaczonym symulatorem i zamiennikiem `.pt-tetno` |
 | Oba motywy | działają; pasek górny atramentowy w obu |
 | Dostępność | `lang="pl"`, `role`/`aria`, odnośnik pominięcia, fokus widoczny, spis sekcji z `aria-current` |
-| Nazwy własne | wyłącznie z KANON rozdz. 6 i 7 |
+| Nazwy własne | wyłącznie z kontraktu systemu projektowego |
 | Powrót do indeksu | `../INDEKS.html` — dwa odnośniki (pasek górny, spis sekcji) |
 
 ---

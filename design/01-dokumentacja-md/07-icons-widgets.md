@@ -42,7 +42,7 @@
 
 ## 1. Zasady zestawu
 
-Ikona w Danaco Console jest **przyrządem odczytu**, nie ozdobą. Kontrakt kierunku (`KIERUNEK.md`, rozdz. 3.6) wiąże ją z językiem „instrumentu pomiarowego": jedna siatka, jedna grubość kreski, jedna barwa dziedziczona z kontekstu.
+Ikona w Danaco Console jest **przyrządem odczytu**, nie ozdobą. Kontrakt kierunku (kierunek systemu projektowego) wiąże ją z językiem „instrumentu pomiarowego": jedna siatka, jedna grubość kreski, jedna barwa dziedziczona z kontekstu.
 
 ### 1.1. Sześć niezmienników
 
@@ -119,7 +119,7 @@ Cztery pozycje własne to wyłącznie emblematy środowisk: `srodowisko-talkin`,
 
 ### 2.2. Zasada „nie rysuj ręcznie, jeśli istnieje w bibliotece"
 
-> **Ikon nie rysuje się ręcznie, jeżeli istnieją w bibliotece. Dorysowuje się wyłącznie brakujące pojęcia domenowe.** (`KIERUNEK.md` 3.6, `KANON.md` rozdz. 4)
+> **Ikon nie rysuje się ręcznie, jeżeli istnieją w bibliotece. Dorysowuje się wyłącznie brakujące pojęcia domenowe.** (kierunek systemu projektowego kontrakt systemu projektowego)
 
 Reguła ma trzy skutki praktyczne, widoczne w samym zestawie:
 
@@ -263,7 +263,7 @@ Nie ma mapowania pośredniego, tablicy aliasów ani nazw kodowych. Jeżeli nazwa
 | 70 | `mikrofon` | `lucide:mic` | moduł | Moduł Assistant — interfejs głosowy | Moduł **Assistant** — Voice Console, Activity Feed |
 | 71 | `diagnostyka` | `lucide:stethoscope` | moduł | Moduł Diagnostics — analiza problemów | Moduł **Diagnostics** — Diagnostics Center, Recommendations Panel |
 | 72 | `monitor` | `lucide:monitor` | obiekt | Stanowisko, środowisko wykonania | Okno Ustawień (urządzenia i parowanie) · Process Monitor |
-| 73 | `telefon` | `lucide:smartphone` | obiekt | Widok mobilny — pozycja „Mobile" (L-P-18) | Strefa 3 (**Mobile**) · pasek górny · Okno Ustawień |
+| 73 | `telefon` | `lucide:smartphone` | obiekt | Widok mobilny — pozycja „Mobile" | Strefa 3 (**Mobile**) · pasek górny · Okno Ustawień |
 | 74 | `cpu` | `lucide:cpu` | obiekt | Zasoby wykonawcze, serwer rdzenia | Process Monitor · Diagnostics Center · Deployment Panel |
 | 75 | `polecenie` | `lucide:command` | nawigacja | Command Center — paleta poleceń | **Command Center** (warstwa 1300) |
 | 76 | `slonce` | `lucide:sun` | działanie | Przełącznik motywu — jasny | Pasek górny (`data-przelacz-motyw`) · Okno Ustawień (wygląd) |
@@ -280,7 +280,7 @@ Nie ma mapowania pośredniego, tablicy aliasów ani nazw kodowych. Jeżeli nazwa
 
 ## 5. Grupy semantyczne
 
-Grupy **nie występują w manifeście** — są warstwą porządkującą wprowadzoną w tym opracowaniu (patrz rozdz. 13, decyzja **DP-1**). Służą do dwóch rzeczy: filtrowania galerii i rozstrzygania, czy nowa ikona ma prawo powstać.
+Grupy **nie występują w manifeście** — są warstwą porządkującą wprowadzoną w tym opracowaniu (patrz rozdz. 13, decyzje projektowe opracowania). Służą do dwóch rzeczy: filtrowania galerii i rozstrzygania, czy nowa ikona ma prawo powstać.
 
 ### 5.1. Siedem grup
 
@@ -449,7 +449,7 @@ Odstęp jest **zawsze z żetonu** i zawsze realizowany przez `gap`, nie przez `m
 
 ### 7.4. Zakaz: ikona jako jedyny nośnik znaczenia stanu
 
-> **Stan nigdy samym kolorem — zawsze ikona albo etykieta.** (`KANON.md` rozdz. 9)
+> **Stan nigdy samym kolorem — zawsze ikona albo etykieta.** (kontrakt systemu projektowego)
 
 Zasadę czytamy w obie strony. Kolor sam nie wystarczy — ale **ikona sama też nie wystarczy**, gdy komunikuje stan. Powód: użytkownik nie ma słownika ikon stanu przed oczami, a różnica między `ptaszek-kolo` a `walidator` przy 14 px jest subtelna.
 
@@ -541,7 +541,7 @@ Wybór trybu rozstrzyga jedno pytanie: **czy usunięcie ikony odbiera informacj�
 | Cel dotykowy | 32 px (`--dn-wym-ikonowy`); przy `pointer: coarse` żeton podnosi do **40 px** — bez wyjątku w komponencie |
 | Fokus widoczny | `:focus-visible` → `outline: 2px solid var(--dn-fokus)` + odsunięcie 2 px |
 | Stan wciśnięty | `aria-pressed="true"` → tło `--dn-sygnal-tlo`, barwa `--dn-sygnal` |
-| Stan zajęty | `aria-busy="true"` → spinner; **przycisk pozostaje klikalny** (ADL-017) |
+| Stan zajęty | `aria-busy="true"` → spinner; **przycisk pozostaje klikalny** (zasada zero blokad) |
 | Objaśnienie | `.dn-tooltip` przy każdej ikonie bez etykiety |
 | Zakaz | **`disabled` nie występuje** — zamiast blokady komunikat po naciśnięciu |
 
@@ -633,7 +633,7 @@ Pozycję wstawiamy **w miejscu wynikającym z grupy semantycznej**, nie na konie
 | 2 | Usuń plik `svg/<nazwa>.svg` |
 | 3 | Usuń wpis z tablicy `ikony` |
 | 4 | Zmniejsz `liczba-ikon` |
-| 5 | Zaktualizuj listę nazw w `KANON.md` rozdz. 4 i katalog w rozdz. 4 niniejszego opracowania |
+| 5 | Zaktualizuj listę nazw w kontrakcie systemu projektowego i katalog w rozdz. 4 niniejszego opracowania |
 
 ---
 
@@ -685,7 +685,7 @@ Widżet sięga **wyłącznie po warstwę 3** (komponenty) i po żetony semantycz
 
 ### 10.4. Kryterium wejścia do katalogu
 
-Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródłowej**: w `komponenty.css` (istniejąca klasa złożona), w `KANON.md` (opisany element powłoki) albo w inwentarzach `brief/`. Widżet bez pokrycia nie wchodzi do katalogu — zgodnie z zasadą nadrzędną projektu.
+Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródłowej**: w `komponenty.css` (istniejąca klasa złożona), w kontrakcie systemu projektowego (opisany element powłoki) albo w inwentarzach `brief/`. Widżet bez pokrycia nie wchodzi do katalogu — zgodnie z zasadą nadrzędną projektu.
 
 ---
 
@@ -693,37 +693,37 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 | # | Widżet | Klasa wiodąca | Grupa | Ruch | Gdzie występuje |
 |---:|---|---|---|---|---|
-| **W1** | **Karta środowiska** | `.dn-karta-srodowiska` | wejście | wstęga na hover | Strona główna — Strefa 1 (4 wystąpienia) |
-| **W2** | **Kafel komponentu własnego** | `.dn-kafel` | wejście | brak | Strona główna — Strefa 2 (4 wystąpienia) |
-| **W3** | **Karta sesji z kropką tętna** | `.dn-karta-sesji` + `.dn-kropka--tetno` | stan | **tętno 2,4 s** | Pas kart sesji — 4 powłoki środowisk |
-| **W4** | **Wskaźnik postępu kolejki** | `.dn-postep` | stan | przejście szerokości 0,22 s | Execution Monitor · Queue Manager · Monitor procesu |
-| **W5** | **Krok kolejki** | `.dn-krok` | stan | brak | Queue Manager · Workflow Builder · Coordinator Chat |
-| **W6** | **Monitor procesu** | `.dn-tabela` + `.dn-plakietka` | stan | zmiana plakietek na żywo | Panel orkiestracji, sekcja Monitor procesu |
-| **W7** | **Rdzeń Always On Display** | `.dn-aod` | tożsamość | **tętno pierścienia 2,4 s** | Warstwa AOD (z-index 1200) — ponad całą powłoką |
-| **W8** | **Plakietka roli** | `.dn-plakietka--rola` | tożsamość | brak | Okna ról MultitaskingAI · Chat Window (klasa `tool`) |
-| **W9** | **Wpis komunikacji** | `.dn-wpis` | komunikacja | tętno kropki w `--pracuje` | **Chat Window** — wszystkie 15 modułów |
-| **W10** | **Pasek promptu** | `.dn-prompt` | komunikacja | pierścień fokusu 0,16 s | **Chat Window** — wszystkie 15 modułów |
-| **W11** | **Pusty stan** | `.dn-pusty-stan` | stan | brak | Nowa karta sesji · panele przed konfiguracją |
-| **W12** | **Toast** | `.dn-toast` | powiadomienie | wejście 0,22 s | Warstwa powiadomień (z-index 1000) — globalnie |
-| **W13** | **Przybornik okna** | `.dn-przybornik` | działanie | mikroprzejścia przycisków | Pasek promptu · nagłówki okien operacyjnych |
+| **1** | **Karta środowiska** | `.dn-karta-srodowiska` | wejście | wstęga na hover | Strona główna — Strefa 1 (4 wystąpienia) |
+| **2** | **Kafel komponentu własnego** | `.dn-kafel` | wejście | brak | Strona główna — Strefa 2 (4 wystąpienia) |
+| **3** | **Karta sesji z kropką tętna** | `.dn-karta-sesji` + `.dn-kropka--tetno` | stan | **tętno 2,4 s** | Pas kart sesji — 4 powłoki środowisk |
+| **4** | **Wskaźnik postępu kolejki** | `.dn-postep` | stan | przejście szerokości 0,22 s | Execution Monitor · Queue Manager · Monitor procesu |
+| **5** | **Krok kolejki** | `.dn-krok` | stan | brak | Queue Manager · Workflow Builder · Coordinator Chat |
+| **6** | **Monitor procesu** | `.dn-tabela` + `.dn-plakietka` | stan | zmiana plakietek na żywo | Panel orkiestracji, sekcja Monitor procesu |
+| **7** | **Rdzeń Always On Display** | `.dn-aod` | tożsamość | **tętno pierścienia 2,4 s** | Warstwa AOD (z-index 1200) — ponad całą powłoką |
+| **8** | **Plakietka roli** | `.dn-plakietka--rola` | tożsamość | brak | Okna ról MultitaskingAI · Chat Window (klasa `tool`) |
+| **9** | **Wpis komunikacji** | `.dn-wpis` | komunikacja | tętno kropki w `--pracuje` | **Chat Window** — wszystkie 15 modułów |
+| **10** | **Pasek promptu** | `.dn-prompt` | komunikacja | pierścień fokusu 0,16 s | **Chat Window** — wszystkie 15 modułów |
+| **11** | **Pusty stan** | `.dn-pusty-stan` | stan | brak | Nowa karta sesji · panele przed konfiguracją |
+| **12** | **Toast** | `.dn-toast` | powiadomienie | wejście 0,22 s | Warstwa powiadomień (z-index 1000) — globalnie |
+| **13** | **Przybornik okna** | `.dn-przybornik` | działanie | mikroprzejścia przycisków | Pasek promptu · nagłówki okien operacyjnych |
 
 ### 11.1. Rozkład widżetów na okna
 
 | Okno / powłoka | Widżety obecne |
 |---|---|
-| **Strona główna — Centrum dowodzenia** | W1 (×4) · W2 (×4) · W7 · W12 |
-| **Powłoka TalkIn / WorkSpace / CodeStudio** | W3 · W9 · W10 · W11 · W12 · W13 · W7 |
-| **Powłoka MultitaskingAI** | W3 · W4 · W5 · W6 · W8 · W9 · W10 · W12 · W13 · W7 |
-| **Chat Window** (wspólne, 15 modułów) | W9 · W10 · W13 · W11 (historia pusta) |
-| **Execution Monitor / Queue Manager** (Automations) | W4 · W5 · W6 · W11 · W12 |
-| **Okno Konfiguracji** | W12 · W13 |
-| **Always On Display** | W7 · W6 (monitor procesu w trybie nadzoru) |
+| **Strona główna — Centrum dowodzenia** | Karta środowiska (×4) · Kafel komponentu własnego (×4) · Rdzeń Always On Display · Toast |
+| **Powłoka TalkIn / WorkSpace / CodeStudio** | Karta sesji · Wpis komunikacji · Pasek promptu · Pusty stan · Toast · Przybornik okna · Rdzeń Always On Display |
+| **Powłoka MultitaskingAI** | Karta sesji · Wskaźnik postępu kolejki · Krok kolejki · Monitor procesu · Plakietka roli · Wpis komunikacji · Pasek promptu · Toast · Przybornik okna · Rdzeń Always On Display |
+| **Chat Window** (wspólne, 15 modułów) | Wpis komunikacji · Pasek promptu · Przybornik okna · Pusty stan (historia pusta) |
+| **Execution Monitor / Queue Manager** (Automations) | Wskaźnik postępu kolejki · Krok kolejki · Monitor procesu · Pusty stan · Toast |
+| **Okno Konfiguracji** | Toast · Przybornik okna |
+| **Always On Display** | Rdzeń Always On Display · Monitor procesu w trybie nadzoru |
 
 ---
 
 ## 12. Karty widżetów
 
-### W1 · Karta środowiska
+### Karta środowiska
 
 **Anatomia**
 
@@ -743,7 +743,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 | Aspekt | Treść |
 |---|---|
-| **Dane** | Emblemat środowiska (W6 zestawu ikon) · nazwa własna środowiska · motto · zdanie opisowe · liczba modułów |
+| **Dane** | Emblemat środowiska (Monitor procesu zestawu ikon) · nazwa własna środowiska · motto · zdanie opisowe · liczba modułów |
 | **Stany** | Spoczynek (bez wstęgi) · najechanie (wstęga 2 px `--dn-kropka`, `--dn-cien-2`, `translateY(-2px)`) · `aria-current="true"` — środowisko z otwartymi kartami sesji (wstęga trwała) · fokus (pierścień 2 px) |
 | **Zachowanie** | Klik / `Enter` zamyka stronę główną i otwiera powłokę środowiska; przy powrocie odtwarza wszystkie karty sesji tego środowiska |
 | **Gdzie** | Strona główna — **Strefa 1**, dokładnie cztery wystąpienia |
@@ -760,7 +760,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W2 · Kafel komponentu własnego
+### Kafel komponentu własnego
 
 **Anatomia**
 
@@ -780,7 +780,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 | **Zachowanie** | Klik otwiera **okno budowy komponentu** albo modal kreatora — nie przestrzeń roboczą środowiska. Etykieta działania rozróżnia „zbuduj" (nowy wytwór) od „wejdź" (istniejący) |
 | **Gdzie** | Strona główna — **Strefa 2**, dokładnie cztery wystąpienia |
 | **Skład** | `.dn-kafel` · `-ikona` · `-etykieta` · `-opis` |
-| **Waga wobec W1** | Krój **bazowy**, nie nagłówkowy; brak wstęgi; mniejszy promień. Różnica wagi niesie hierarchię stref |
+| **Waga wobec Karta środowiska** | Krój **bazowy**, nie nagłówkowy; brak wstęgi; mniejszy promień. Różnica wagi niesie hierarchię stref |
 
 **Cztery kafle (dokumentacja)**
 
@@ -793,7 +793,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W3 · Karta sesji z kropką tętna
+### Karta sesji z kropką tętna
 
 **Anatomia**
 
@@ -811,7 +811,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 |---|---|
 | **Dane** | Tytuł karty (nazwa modułu w środowiskach modułowych; **nazwa procesu orkiestracji** w MultitaskingAI) · wskaźnik pracy w tle · kontrolka zamknięcia |
 | **Stany** | Aktywna (`aria-selected="true"` — tło `--dn-powierzchnia`, obrys, wstęga sygnału) · w tle (tło przezroczyste, tekst `--dn-tekst-2`) · najechanie · z pracą w tle (kropka tętni) · bez pracy (brak kropki) · fokus |
-| **Zachowanie** | Klik w dowolnym miejscu poza `✕` przełącza obszar roboczy na układ, historię i kontekst tej karty. `✕` zamyka widok karty — proces sesji trwa po stronie serwera. `+` tworzy nową kartę w stanie pustym (W11) |
+| **Zachowanie** | Klik w dowolnym miejscu poza `✕` przełącza obszar roboczy na układ, historię i kontekst tej karty. `✕` zamyka widok karty — proces sesji trwa po stronie serwera. `+` tworzy nową kartę w stanie pustym (Pusty stan) |
 | **Ruch** | **Tętno kropki 2,4 s** — jedyny ruch ciągły interfejsu. Przy `prefers-reduced-motion` żeton skraca animację, a `.dn-kropka--tetno` otrzymuje **pierścień statyczny** 2 px |
 | **Gdzie** | Pas kart sesji (`--dn-wym-pas-kart` = 36 px) we wszystkich czterech powłokach |
 | **Skład** | `.dn-karty-sesji` › `.dn-karta-sesji` + `.dn-kropka--tetno` + `.dn-btn-ikona` (`zamknij`) + `.dn-btn-ikona` (`plus`) |
@@ -826,7 +826,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W4 · Wskaźnik postępu kolejki
+### Wskaźnik postępu kolejki
 
 **Anatomia**
 
@@ -852,7 +852,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W5 · Krok kolejki
+### Krok kolejki
 
 **Anatomia**
 
@@ -893,7 +893,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W6 · Monitor procesu
+### Monitor procesu
 
 **Anatomia**
 
@@ -911,9 +911,9 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 | Aspekt | Treść |
 |---|---|
 | **Dane** | Identyfikator przebiegu (mono, `tabular-nums`) · nazwa roli · plakietka stanu · znacznik czasu |
-| **Stany** | Wiersz w spoczynku · najechanie (`--dn-hover`) · wybrany (`aria-selected="true"` → `--dn-sygnal-tlo`) · tabela pusta (W11 w miejsce ciała) |
+| **Stany** | Wiersz w spoczynku · najechanie (`--dn-hover`) · wybrany (`aria-selected="true"` → `--dn-sygnal-tlo`) · tabela pusta (Pusty stan w miejsce ciała) |
 | **Zachowanie** | Aktualizacja na żywo kanałem WebSocket — zmienia się plakietka i czas, wiersz nie przeskakuje. Klik wiersza otwiera okno robocze roli. Nagłówek `th` jest przyklejony (`position: sticky`, `--dn-z-przybornik`) |
-| **Ruch** | Brak własnego. Tętno należy do W3 i W7 — monitor jest tabelą odczytu, nie źródłem ruchu |
+| **Ruch** | Brak własnego. Tętno należy do Karta sesji i Rdzeń Always On Display — monitor jest tabelą odczytu, nie źródłem ruchu |
 | **Gdzie** | Panel orkiestracji, sekcja **Monitor procesu** (MultitaskingAI) · Execution Monitor · Process Monitor (Terminal) · Actions Monitor (Assistant) · tryb nadzoru **Always On Display** |
 | **Skład** | `.dn-tabela` + `.dn-plakietka--sukces / --informacja / --ostrzezenie / --blad` + `.dn-kropka` + `.dn-dane` |
 
@@ -928,7 +928,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W7 · Rdzeń Always On Display
+### Rdzeń Always On Display
 
 **Anatomia**
 
@@ -963,7 +963,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W8 · Plakietka roli
+### Plakietka roli
 
 **Anatomia**
 
@@ -994,7 +994,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W9 · Wpis komunikacji
+### Wpis komunikacji
 
 **Anatomia**
 
@@ -1009,10 +1009,10 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 | Aspekt | Treść |
 |---|---|
-| **Dane** | Ikona nadawcy w medalionie · etykieta nadawcy (wersaliki) · plakietka roli (W8, opcjonalnie) · godzina (mono) · treść |
+| **Dane** | Ikona nadawcy w medalionie · etykieta nadawcy (wersaliki) · plakietka roli (Plakietka roli, opcjonalnie) · godzina (mono) · treść |
 | **Trzy klasy semantyczne** | `--czlowiek` (atrament) · `--inteligencja` (sygnał) · `--system` (neutralna, tło wycofane). **Nie dziewięć barw dla dziewięciu nadawców** — rozróżnienie niesie komplet: ikona + etykieta + klasa krawędzi |
 | **Stany** | Spoczynek · `--pracuje` (kropka tętna przy etykiecie nadawcy, `::after` na `.dn-wpis-nadawca`) · najechanie (ujawnia kontrolkę `odpowiedz`) · strumień na żywo (treść narasta) |
-| **Zachowanie** | Treść dopisuje się w czasie rzeczywistym kanałem WebSocket. Kontrolka `odpowiedz` wstawia cytat do paska promptu (W10). Zaznaczenie fragmentu czyni go przedmiotem operacji modułu |
+| **Zachowanie** | Treść dopisuje się w czasie rzeczywistym kanałem WebSocket. Kontrolka `odpowiedz` wstawia cytat do paska promptu (Pasek promptu). Zaznaczenie fragmentu czyni go przedmiotem operacji modułu |
 | **Gdzie** | **Chat Window** — okno wspólne wszystkich piętnastu modułów, we wszystkich czterech środowiskach |
 | **Skład** | `.dn-wpis` (+ `--czlowiek` / `--inteligencja` / `--system` / `--pracuje`) › `-medalion` › `<svg>` · `-tozsamosc` › `-nadawca` + `.dn-plakietka--rola` + `-godzina` · `-tresc` |
 
@@ -1035,7 +1035,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W10 · Pasek promptu
+### Pasek promptu
 
 **Anatomia**
 
@@ -1048,22 +1048,22 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
     -obszar: textarea 40–160 px, resize none, 14 px
     :focus-within → obrys --dn-fokus + --dn-cien-sygnal
  ┌──────────────────────────────────────────────────────────────┐
- │  [spinacz] [biblioteka] [agent] [ustawienia] model           │  ← W13
+ │  [spinacz] [biblioteka] [agent] [ustawienia] model           │  ← Przybornik okna
  └──────────────────────────────────────────────────────────────┘
 ```
 
 | Aspekt | Treść |
 |---|---|
-| **Dane** | Grot `❯` (stały) · treść polecenia · przybornik (W13) · przycisk wysyłki |
+| **Dane** | Grot `❯` (stały) · treść polecenia · przybornik (Przybornik okna) · przycisk wysyłki |
 | **Stany** | Puste (podpowiedź `--dn-tekst-3`) · wypełnione · fokus (`:focus-within` → pierścień sygnału) · generowanie odpowiedzi — **pole pozostaje edytowalne** |
-| **Zachowanie** | `Enter` wysyła, `Shift+Enter` łamie wiersz. Pole rośnie od 40 do 160 px, potem przewija. **Przycisk wysyłki jest zawsze klikalny**: przy pustym polu klik pokazuje krótkie ostrzeżenie zamiast blokady (ADL-017) |
+| **Zachowanie** | `Enter` wysyła, `Shift+Enter` łamie wiersz. Pole rośnie od 40 do 160 px, potem przewija. **Przycisk wysyłki jest zawsze klikalny**: przy pustym polu klik pokazuje krótkie ostrzeżenie zamiast blokady (zasada zero blokad) |
 | **Sygnatura** | Grot `❯` w barwie `--dn-kropka` jest wizualnym echem podwójnego grotu `»»` z sygnetu marki — znak „tu wchodzi zlecenie" |
 | **Gdzie** | **Chat Window** — dolna strefa pasa komunikacji (`--dn-wym-pas-komunikacji` = 320 px), wszystkie 15 modułów |
 | **Skład** | `.dn-prompt` › `-grot` + `-obszar` (`<textarea>`) + `.dn-btn-ikona` (`wyslij`) · pod spodem `.dn-przybornik` |
 
 ---
 
-### W11 · Pusty stan
+### Pusty stan
 
 **Anatomia**
 
@@ -1102,7 +1102,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W12 · Toast
+### Toast
 
 **Anatomia**
 
@@ -1137,7 +1137,7 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ---
 
-### W13 · Przybornik okna
+### Przybornik okna
 
 **Anatomia**
 
@@ -1170,28 +1170,28 @@ Katalog obejmuje **wyłącznie widżety mające pokrycie w dokumentacji źródł
 
 ## 13. Decyzje projektowe
 
-Rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie dokumentacja nie rozstrzygała formy. Każde odnotowane jawnie, zgodnie z zasadą 5 rozdz. 10 `KANON.md`.
+Rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie dokumentacja nie rozstrzygała formy. Każde odnotowane jawnie, zgodnie z zasadą 5 rozdz. 10 kontrakt systemu projektowego.
 
 | # | Zagadnienie | Stan źródeł | Rozstrzygnięcie | Uzasadnienie |
 |---|---|---|---|---|
-| **DP-1** | **Grupy semantyczne ikon** | `manifest.json` nie zawiera pola grupy; `KANON.md` podaje płaską listę 82 nazw | Wprowadzono **siedem grup**: nawigacja · działanie · stan · obiekt · moduł · środowisko · rola, z pełnym przypisaniem wszystkich 82 pozycji (rozdz. 5.2) | Zadanie wprost wymaga grup. Podział wyprowadzono z pola `zastosowanie` manifestu — żadna ikona nie została przypisana wbrew opisowi. Grupa jest warstwą dokumentacyjną, **nie trafia do manifestu** |
-| **DP-2** | **Liczba pozycji Lucide vs własnych** | Manifest podaje regułę („Lucide + emblematy własne"), nie podaje liczb | **78 Lucide / 4 własne** — policzone po polu `zrodlo` (`"wlasna"` występuje dokładnie 4 razy) | Liczba jest wyprowadzalna z manifestu jednoznacznie; podanie jej ułatwia audyt licencyjny |
-| **DP-3** | **Dwa wyjątki 12 px** | `komponenty.css` renderuje `.dn-plakietka > svg` i `.dn-krok-znak > svg` w 12 px, poza skalą 14/16/20/24 z manifestu | Uznano za **udokumentowany wyjątek dwóch komponentów**, nie za piąty stopień skali | Skala manifestu pozostaje wiążąca dla ikon samodzielnych. Wyjątek dotyczy ikon wewnątrz elementów 16–20 px, gdzie 14 px rozsadza pojemnik. Odnotowanie zamyka lukę zamiast ją ukrywać |
-| **DP-4** | **Zakaz „ikona jako jedyny nośnik stanu"** | `KANON.md` formułuje zasadę jako „stan nigdy samym kolorem — zawsze ikona albo etykieta" | Zaostrzono: przy komunikacie **stanu** ikona sama także nie wystarcza — wymagana etykieta słowna (rozdz. 7.4) | Spójnik „albo" w źródle dotyczy uzupełnienia koloru. Dla stanu wymagamy pary ikona **+** etykieta, bo różnica między `ptaszek-kolo` a `walidator` przy 14 px jest nieczytelna. Wyjątek (kropka na karcie sesji) opisany i uzasadniony |
-| **DP-5** | **Przypisanie ikon do piętnastu modułów** | Manifest wiąże z modułem 12 ikon; trzy moduły (**Studio**, **Browser**, **Developer**) nie mają ikony z grupy „moduł" | Przyjęto ikony wskazane w polu `zastosowanie`: Studio → `dokument`, Browser → `karta-okna`, Developer → `kod`; rozbieżność opisano jawnie (rozdz. 5.3) | Manifest wprost przypisuje te ikony do tych modułów w opisie. Nie tworzymy nowych ikon dla trzech modułów — zestaw jest zamknięty |
-| **DP-6** | **Definicja widżetu** | Źródła używają pojęcia „wzorzec złożony" (`INWENTARZ-KOMPONENTOW.md`, 6 pozycji); nie definiują „widżetu" | Przyjęto definicję trójczłonową: **złożony + samodzielny + prezentuje stan systemu** (rozdz. 10.1), umieszczoną jako **warstwa 4** między komponentami a oknem operacyjnym | Zadanie wymaga definicji. Trójczłon pozwala jednoznacznie odrzucić kandydatów (nagłówek okna, tabela źródeł) i zgadza się z warstwowaniem systemu z katalogu komponentów |
-| **DP-7** | **Zamknięcie katalogu na trzynastu pozycjach** | Zadanie wymienia trzynaście widżetów | Każdą z trzynastu pozycji zweryfikowano wobec `komponenty.css` — **wszystkie mają klasę wiodącą albo jawny opis w inwentarzu**; nie dodano żadnej pozycji ponad listę | Katalog bez pokrycia w kodzie byłby projektowaniem, nie dokumentowaniem |
-| **DP-8** | **Kształt plakietki roli jako nośnik znaczenia** | `komponenty.css` nadaje `.dn-plakietka--rola` promień `--dn-r-xs` zamiast `--dn-r-pill`; nie wyjaśnia dlaczego | Odczytano jako **celowe rozróżnienie**: plakietka roli maszynowa (kanciasta), plakietka stanu organiczna (pill) — i opisano jako regułę (W8) | Różnica jest w kodzie; nadanie jej znaczenia czyni ją powtarzalną, zamiast pozostawiać przypadkową |
-| **DP-9** | **Dwa miejsca ruchu ciągłego** | `KANON.md` wymienia pięć miejsc kropki sygnału, `komponenty.css` animuje `dn-tetno` w trzech selektorach (`.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after`) | Skatalogowano jako **trzy nośniki tętna** w widżetach: W3 (karta sesji), W9 (wpis pracujący), W7 (rdzeń AOD); pozostałe widżety mają ruch **zerowy** albo mikroprzejście | `INTENSYWNOSC_RUCHU = 3/10` wymaga policzalności ruchu. Lista zamknięta zapobiega rozlaniu animacji na kolejne widżety |
-| **DP-10** | **Dostępność wskaźnika postępu** | `komponenty.css` nie deklaruje ról ARIA dla `.dn-postep` | Wskazano `role="progressbar"` + `aria-valuenow/min/max` na `.dn-postep-tor` oraz obowiązkową etykietę (W4) | WCAG 2.1 AA jest warunkiem wejściowym; pasek bez roli i bez etykiety nie przekazuje wartości technologii wspomagającej |
-| **DP-11** | **Dostępność stosu powiadomień** | `komponenty.css` nie deklaruje roli dla `.dn-toasty` | Wskazano `role="status"` + `aria-live="polite"`, a dla `--blad` — `aria-live="assertive"` (W12) | Toast pojawia się bez akcji użytkownika; bez obszaru żywego jest niesłyszalny |
-| **DP-12** | **Zestaw ikon przybornika per moduł** | Źródła opisują przybornik jako „zależny od modułu — konkretna forma poza zakresem" | Podano **cztery przykładowe zestawy** (Studio, Terminal, Automations, Research) złożone wyłącznie z ikon istniejących w zestawie i oznaczone jako przykładowe (W13) | Zestawy ilustrują regułę doboru (tylko grupy działanie i nawigacja), nie ustanawiają wiążącego kontraktu — źródło jawnie zostawia formę fazie wykonawczej |
+| **1** | **Grupy semantyczne ikon** | `manifest.json` nie zawiera pola grupy; kontrakt systemu projektowego podaje płaską listę 82 nazw | Wprowadzono **siedem grup**: nawigacja · działanie · stan · obiekt · moduł · środowisko · rola, z pełnym przypisaniem wszystkich 82 pozycji (rozdz. 5.2) | Zadanie wprost wymaga grup. Podział wyprowadzono z pola `zastosowanie` manifestu — żadna ikona nie została przypisana wbrew opisowi. Grupa jest warstwą dokumentacyjną, **nie trafia do manifestu** |
+| **2** | **Liczba pozycji Lucide vs własnych** | Manifest podaje regułę („Lucide + emblematy własne"), nie podaje liczb | **78 Lucide / 4 własne** — policzone po polu `zrodlo` (`"wlasna"` występuje dokładnie 4 razy) | Liczba jest wyprowadzalna z manifestu jednoznacznie; podanie jej ułatwia audyt licencyjny |
+| **3** | **Dwa wyjątki 12 px** | `komponenty.css` renderuje `.dn-plakietka > svg` i `.dn-krok-znak > svg` w 12 px, poza skalą 14/16/20/24 z manifestu | Uznano za **udokumentowany wyjątek dwóch komponentów**, nie za piąty stopień skali | Skala manifestu pozostaje wiążąca dla ikon samodzielnych. Wyjątek dotyczy ikon wewnątrz elementów 16–20 px, gdzie 14 px rozsadza pojemnik. Odnotowanie zamyka lukę zamiast ją ukrywać |
+| **4** | **Zakaz „ikona jako jedyny nośnik stanu"** | kontrakt systemu projektowego formułuje zasadę jako „stan nigdy samym kolorem — zawsze ikona albo etykieta" | Zaostrzono: przy komunikacie **stanu** ikona sama także nie wystarcza — wymagana etykieta słowna (rozdz. 7.4) | Spójnik „albo" w źródle dotyczy uzupełnienia koloru. Dla stanu wymagamy pary ikona **+** etykieta, bo różnica między `ptaszek-kolo` a `walidator` przy 14 px jest nieczytelna. Wyjątek (kropka na karcie sesji) opisany i uzasadniony |
+| **5** | **Przypisanie ikon do piętnastu modułów** | Manifest wiąże z modułem 12 ikon; trzy moduły (**Studio**, **Browser**, **Developer**) nie mają ikony z grupy „moduł" | Przyjęto ikony wskazane w polu `zastosowanie`: Studio → `dokument`, Browser → `karta-okna`, Developer → `kod`; rozbieżność opisano jawnie (rozdz. 5.3) | Manifest wprost przypisuje te ikony do tych modułów w opisie. Nie tworzymy nowych ikon dla trzech modułów — zestaw jest zamknięty |
+| **6** | **Definicja widżetu** | Źródła używają pojęcia „wzorzec złożony" (inwentarz komponentów, 6 pozycji); nie definiują „widżetu" | Przyjęto definicję trójczłonową: **złożony + samodzielny + prezentuje stan systemu** (rozdz. 10.1), umieszczoną jako **warstwa 4** między komponentami a oknem operacyjnym | Zadanie wymaga definicji. Trójczłon pozwala jednoznacznie odrzucić kandydatów (nagłówek okna, tabela źródeł) i zgadza się z warstwowaniem systemu z katalogu komponentów |
+| **7** | **Zamknięcie katalogu na trzynastu pozycjach** | Zadanie wymienia trzynaście widżetów | Każdą z trzynastu pozycji zweryfikowano wobec `komponenty.css` — **wszystkie mają klasę wiodącą albo jawny opis w inwentarzu**; nie dodano żadnej pozycji ponad listę | Katalog bez pokrycia w kodzie byłby projektowaniem, nie dokumentowaniem |
+| **8** | **Kształt plakietki roli jako nośnik znaczenia** | `komponenty.css` nadaje `.dn-plakietka--rola` promień `--dn-r-xs` zamiast `--dn-r-pill`; nie wyjaśnia dlaczego | Odczytano jako **celowe rozróżnienie**: plakietka roli maszynowa (kanciasta), plakietka stanu organiczna (pill) — i opisano jako regułę (Plakietka roli) | Różnica jest w kodzie; nadanie jej znaczenia czyni ją powtarzalną, zamiast pozostawiać przypadkową |
+| **9** | **Dwa miejsca ruchu ciągłego** | kontrakt systemu projektowego wymienia pięć miejsc kropki sygnału, `komponenty.css` animuje `dn-tetno` w trzech selektorach (`.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after`) | Skatalogowano jako **trzy nośniki tętna** w widżetach: Karta sesji (karta sesji), Wpis komunikacji (wpis pracujący), Rdzeń Always On Display (rdzeń AOD); pozostałe widżety mają ruch **zerowy** albo mikroprzejście | `INTENSYWNOSC_RUCHU = 3/10` wymaga policzalności ruchu. Lista zamknięta zapobiega rozlaniu animacji na kolejne widżety |
+| **10** | **Dostępność wskaźnika postępu** | `komponenty.css` nie deklaruje ról ARIA dla `.dn-postep` | Wskazano `role="progressbar"` + `aria-valuenow/min/max` na `.dn-postep-tor` oraz obowiązkową etykietę (Wskaźnik postępu kolejki) | WCAG 2.1 AA jest warunkiem wejściowym; pasek bez roli i bez etykiety nie przekazuje wartości technologii wspomagającej |
+| **11** | **Dostępność stosu powiadomień** | `komponenty.css` nie deklaruje roli dla `.dn-toasty` | Wskazano `role="status"` + `aria-live="polite"`, a dla `--blad` — `aria-live="assertive"` (Toast) | Toast pojawia się bez akcji użytkownika; bez obszaru żywego jest niesłyszalny |
+| **12** | **Zestaw ikon przybornika per moduł** | Źródła opisują przybornik jako „zależny od modułu — konkretna forma poza zakresem" | Podano **cztery przykładowe zestawy** (Studio, Terminal, Automations, Research) złożone wyłącznie z ikon istniejących w zestawie i oznaczone jako przykładowe (Przybornik okna) | Zestawy ilustrują regułę doboru (tylko grupy działanie i nawigacja), nie ustanawiają wiążącego kontraktu — źródło jawnie zostawia formę fazie wykonawczej |
 
 ### 13.1. Czego świadomie nie rozstrzygnięto
 
 | Zagadnienie | Powód pozostawienia otwartym |
 |---|---|
-| Forma rozwiniętej powierzchni Always On Display (dymek / panel boczny / pełne okno) | Źródło (`INWENTARZ-KOMPONENTOW.md`, rozdz. 12.2) jawnie odsyła do fazy wykonawczej |
+| Forma rozwiniętej powierzchni Always On Display (dymek / panel boczny / pełne okno) | Źródło (inwentarz komponentów, rozdz. 12.2) jawnie odsyła do fazy wykonawczej |
 | Zachowanie pasa kart sesji przy przepełnieniu (przewijanie vs zwężanie) | Źródło jawnie odsyła do fazy wykonawczej |
 | Czas ekspozycji toastu przed samoczynnym zniknięciem | Brak wartości w żetonach i w dokumentacji; wpisanie liczby byłoby wymyśleniem |
 | Ikony dla wcieleń Results Analyzer poza `walidator` | Zestaw jest zamknięty; sześć pozostałych wcieleń różnicuje **plakietka roli**, nie ikona |
@@ -1209,8 +1209,8 @@ Rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie dokumentacja nie ro
 | Stopni renderowania | 4 (14 · 16 · 20 · 24 px) |
 | Udokumentowanych wyjątków rozmiaru | 2 (plakietka, znak kroku — 12 px) |
 | Widżetów w katalogu | **13** |
-| — z ruchem ciągłym (tętno) | 3 (W3, W7, W9) |
-| — bez ruchu własnego | 6 (W2, W5, W6, W8, W11, W13) |
+| — z ruchem ciągłym (tętno) | 3 (Karta sesji, Rdzeń Always On Display, Wpis komunikacji) |
+| — bez ruchu własnego | 6 (Kafel komponentu własnego, Krok kolejki, Monitor procesu, Plakietka roli, Pusty stan, Przybornik okna) |
 | Klas `.dn-*` wykorzystanych w widżetach | 34 |
 | Decyzji projektowych ponad źródła | 12 |
 

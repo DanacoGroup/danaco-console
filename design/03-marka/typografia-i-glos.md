@@ -14,7 +14,7 @@
 | **Zakres** | trzy kroje marki i ich role, pełna skala typograficzna, zestawienia typograficzne, wersaliki, liczby, diakrytyki, wcielenie techniczne, katalog zakazów typograficznych; charakterystyka głosu marki, zasady pisania w interfejsie, słownik terminów obowiązujących, wzorce tekstów, mikrokopia, lista kontrolna redakcyjna |
 | **Status wiążący** | **wiążący bezwarunkowo** — kroje, skala i słownik są zamknięte; odstępstwa wymagają pisemnej zgody Właściciela |
 | **Dokument towarzyszący** | `typografia-i-glos.html` (wersja interaktywna z żywymi okazami i wyszukiwarką słownika) |
-| **Źródła** | `KANON.md` (rozdz. 2, 10) · `KIERUNEK.md` (rozdz. 3.2, 3.5, 4) · `zasoby/zetony/zetony.css` · `zasoby/zetony/fonty.css` · `zasoby/css/fundament.css` · `zasoby/css/komponenty.css` · dokumentacja modułów `dok/projekt-ui/` |
+| **Źródła** | kontrakt systemu projektowego · kierunek systemu projektowego · `zasoby/zetony/zetony.css` · `zasoby/zetony/fonty.css` · `zasoby/css/fundament.css` · `zasoby/css/komponenty.css` · dokumentacja modułów `docs/` |
 
 ---
 
@@ -76,7 +76,7 @@ w kolejce**, a więc czas Operatora i poprawność decyzji.
 | Rozstrzyga | Nie rozstrzyga |
 |---|---|
 | jakie trzy kroje obowiązują i dlaczego | geometrii znaku (→ `ksiega-znaku.md`, rozdz. 3–4) |
-| dziewięciostopniową skalę i przypisanie stopni | barw tekstu i tła (→ `KANON.md`, rozdz. 2) |
+| dziewięciostopniową skalę i przypisanie stopni | barw tekstu i tła (→ kontrakt systemu projektowego) |
 | gotowe zestawienia typograficzne dla komponentów | układu siatki i punktów łamania |
 | reguły wersalików, liczb i diakrytyków | zestawu ikon (→ `emblematy-i-ikony.md`) |
 | sposób osadzenia plików fontów | strategii marketingowej i pozycjonowania |
@@ -100,7 +100,7 @@ jest jednocześnie wzorcem redakcyjnym z rozdz. 20.5.
 
 ### 2.1 Kontrakt kierunku
 
-`KIERUNEK.md`, rozdz. 3.2 rozstrzyga:
+kierunek systemu projektowego rozstrzyga:
 
 > Trzy role, trzy kroje (wszystkie OFL, pełny `latin-ext`).
 > **Space Grotesk = wejście do środowiska i tożsamość marki;
@@ -118,7 +118,7 @@ tłumaczą je na poziom wykonawczy.
 | Dane, identyfikatory, terminal | **IBM Plex Mono** | 400 · 500 · 600 | `--dn-ff-mono` | SIL OFL 1.1 | ok. 30 % |
 
 Udział powierzchni jest szacunkiem wyprowadzonym z inwentarza okien
-(`KANON.md`, rozdz. 7) — nie pomiarem. Podano go, żeby uzmysłowić proporcję:
+(kontrakt systemu projektowego) — nie pomiarem. Podano go, żeby uzmysłowić proporcję:
 **krój tożsamości zajmuje najmniej miejsca i dlatego musi być najmocniejszy.**
 
 ### 2.3 Dlaczego trzy, a nie dwa albo pięć
@@ -175,7 +175,7 @@ Ten sam kierunek opowiada znak marki — dwa groty i kropka.
 
 ### 2.5 Zgodność z anty-domyślnymi
 
-`KIERUNEK.md`, rozdz. 4 blokuje odruch „Inter + slate-900 jako niezadeklarowana
+kierunek systemu projektowego blokuje odruch „Inter + slate-900 jako niezadeklarowana
 baza". Konsekwencja typograficzna jest jednoznaczna: **Inter nie występuje
 w produkcie w żadnej roli, także jako krój zapasowy.** Łańcuch zapasowy
 (rozdz. 12.4) prowadzi do krojów systemowych, nie do Intera.
@@ -248,7 +248,7 @@ rozmowy, nie w tooltipie.
 |---|---|
 | **Zakaz stosowania poniżej 16 px** | rysunek geometryczny traci czytelność w małych stopniach; poniżej 16 px obowiązuje Plex Sans |
 | **Zakaz w tekście ciągłym** | krój nie jest przeznaczony do dłuższych bloków; akapit złożony Space Grotesk męczy po trzech wierszach |
-| **Zakaz wersalikowania nagłówków środowisk** | `TALKIN` zamiast `TalkIn` niszczy nazwę własną i łamie rozdz. 10 `KANON.md` |
+| **Zakaz wersalikowania nagłówków środowisk** | `TALKIN` zamiast `TalkIn` niszczy nazwę własną i łamie rozdz. 10 kontrakt systemu projektowego |
 | **Zakaz odmiany pochyłej** | kursywa nie jest wgrywana; syntetyczna kursywa zablokowana przez `font-synthesis: none` |
 | **Zakaz wagi 400 i 800+** | nie wgrywane; przeglądarka nie ma z czego syntezować |
 | **Zakaz dodatniego odstępu liter** | dla stopni ≥ 24 px obowiązuje `--dn-ls-naglowek` = −0,01 em; rozstrzelanie rozbija masę wersalików |
@@ -289,7 +289,7 @@ poprawnie wydrukować logotyp.
 
 ### 4.2 Dlaczego krój inżynierski
 
-Gęstość wizualna produktu wynosi **8/10** (`KIERUNEK.md`, rozdz. 2). Wiersz
+Gęstość wizualna produktu wynosi **8/10** (kierunek systemu projektowego). Wiersz
 tabeli ma 36 px, kontrolka 32 px, stopień bazowy 13 px. W tej gęstości krój
 o wyrazistej osobowości staje się szumem: każda litera walczy o uwagę
 z sąsiednią liczbą i z ikoną 16-pikselową.
@@ -587,7 +587,7 @@ wyczerpują zbiór. Wartość `1,5` albo `normal` w arkuszu okna jest błędem.
 | 13–14 px | wszystkie żetony tekstu zgodnie z `kontrasty.json` |
 | ≥ 16 px | wszystkie; przy wadze ≥ 600 i stopniu ≥ 18,66 px obowiązuje próg WCAG dla dużego tekstu |
 
-Podstawa: `KANON.md`, rozdz. 9 — `--dn-tekst-3` (#7C7C7C) wyłącznie metadane
+Podstawa: kontrakt systemu projektowego — `--dn-tekst-3` (#7C7C7C) wyłącznie metadane
 i tekst ≥ 18,66 px półgruby.
 
 ### 7.5 Skala a punkty łamania
@@ -719,7 +719,7 @@ obowiązuje interlinia luźna (1,60) — wpis rozmowy jest tekstem ciągłym.
 | Liczba | Plex Mono | 12 px | 400–600 | **do prawej**, `tabular-nums` |
 
 **Reguła bezwzględna:** status nigdy nie jest wyrażony samym kolorem —
-kropka `.dn-kropka` albo ikona towarzyszy etykiecie zawsze (`KANON.md`, rozdz. 9).
+kropka `.dn-kropka` albo ikona towarzyszy etykiecie zawsze (kontrakt systemu projektowego).
 
 ### 8.6 Para 6 · Kod
 
@@ -1048,7 +1048,7 @@ do trzech sekund — w kokpicie niedopuszczalne.
 | Uwaga | Wyjaśnienie |
 |---|---|
 | Space Grotesk spada na **Plex Sans**, nie na krój systemowy | jeżeli jeden plik się nie wczyta, drugi zwykle tak — dokument zachowuje spójność rodziny |
-| Inter **nie występuje** w żadnym łańcuchu | zablokowany jako anty-domyślny (`KIERUNEK.md`, rozdz. 4) |
+| Inter **nie występuje** w żadnym łańcuchu | zablokowany jako anty-domyślny (kierunek systemu projektowego) |
 | `system-ui` przed `sans-serif` | krój systemowy jest lepszym zapasem niż domyślny szeryfowy |
 | Łańcuch mono zaczyna się od krojów o rozróżnialnym `0` | `Cascadia Mono` i `Consolas` mają przekreślone zero |
 
@@ -1126,7 +1126,7 @@ Lista zamknięta. Każda pozycja jest wiążąca bezwarunkowo.
 | 12 | **Przekreślenie jako wyróżnienie** | zarezerwowane dla wartości wycofanej w Diff/Grep Panel |
 | 13 | **Cień tekstu** | zakaz bezwzględny — instrument pomiarowy nie ma cieni na literach |
 | 14 | **Obrys tekstu (`-webkit-text-stroke`)** | jw. |
-| 15 | **Gradient na tekście** | gradienty wyłącznie ilustracyjne (`KANON.md`, rozdz. 2) |
+| 15 | **Gradient na tekście** | gradienty wyłącznie ilustracyjne (kontrakt systemu projektowego) |
 | 16 | **Tekst na obrazie bez warstwy kryjącej** | nieprzewidywalny kontrast |
 | 17 | **Justowanie obustronne** | rzeki w tekście przy wąskich kolumnach kokpitu |
 | 18 | **Dzielenie wyrazów (`hyphens: auto`)** | dzieli identyfikatory i nazwy własne |
@@ -1135,8 +1135,8 @@ Lista zamknięta. Każda pozycja jest wiążąca bezwarunkowo.
 | 21 | **`font-family` wprost w arkuszu okna** | krój dostarcza żeton albo klasa komponentu |
 | 22 | **Wartość stopnia wprost (`font-size: 13px`)** | wyłącznie `var(--dn-fs-*)` |
 | 23 | **Zmiana kroju wewnątrz zdania bez powodu semantycznego** | zmiana kroju niesie znaczenie, nie ozdobę |
-| 24 | **Wielkie litery w nazwach własnych modułów** | `TALKIN` zamiast `TalkIn` — łamie rozdz. 10 `KANON.md` |
-| 25 | **Emoji w treści interfejsu** | zakaz z `KANON.md`, rozdz. 4 |
+| 24 | **Wielkie litery w nazwach własnych modułów** | `TALKIN` zamiast `TalkIn` — łamie rozdz. 10 kontrakt systemu projektowego |
+| 25 | **Emoji w treści interfejsu** | zakaz z kontraktu systemu projektowego |
 | 26 | **Cudzysłów prosty `"` w treści** | obowiązuje cudzysłów polski `„ "` |
 | 27 | **Kropka jako separator tysięcy** | obowiązuje spacja nierozdzielająca |
 | 28 | **Kropka dziesiętna** | obowiązuje przecinek |
@@ -1192,7 +1192,7 @@ w stanie zawieszenia.
 | **Zasada** | Komunikat = **stan + następny krok**. Jeżeli następnego kroku nie ma — podajemy, co system zrobi sam i kiedy. |
 | **Źle** | „Model niedostępny." |
 | **Dobrze** | „Kanał modelu nie odpowiada. Wybierz inny kanał w Model Configuration albo ponów za chwilę — kolejka wznowi się automatycznie." |
-| **Dlaczego** | Zasada zero blokad (ADL-017) w warstwie językowej: system nigdy nie zostawia Operatora bez drogi dalej. |
+| **Dlaczego** | Zasada zero blokad w warstwie językowej: system nigdy nie zostawia Operatora bez drogi dalej. |
 
 #### Cecha 4 · Bez żargonu
 
@@ -1338,7 +1338,7 @@ Nie „Usuń / Anuluj", lecz „Usuń projekt / Zachowaj projekt".
 | **Puste** | rzeczownik + brak | rozdz. 20.3 |
 
 **Reguła bezwzględna:** stan nigdy nie jest wyrażony samym kolorem.
-Etykieta tekstowa albo ikona towarzyszy zawsze (`KANON.md`, rozdz. 9).
+Etykieta tekstowa albo ikona towarzyszy zawsze (kontrakt systemu projektowego).
 
 ### 16.4 Komunikat błędu — stan + następny krok
 
@@ -1387,7 +1387,7 @@ Przykład zbudowany według piramidy:
 
 ### 17.1 Reguła
 
-`KANON.md`, rozdz. 8 (ADL-017): **Danaco Console nie narzuca twardych blokad.
+kontrakt systemu projektowego (zasada zero blokad): **Danaco Console nie narzuca twardych blokad.
 Izolacja, uprawnienia i profile są wyłącznie opcjami konfigurowalnymi
 ze stanem wyjściowym „wyłączone / pełny dostęp".**
 
@@ -1424,7 +1424,7 @@ i włącza się tutaj" albo „ta akcja jest nieodwracalna — oto co się stani
 
 | Zakaz | Powód |
 |---|---|
-| **Zakaz atrybutu `disabled`** | przycisk jest zawsze klikalny (`KANON.md`, rozdz. 8) |
+| **Zakaz atrybutu `disabled`** | przycisk jest zawsze klikalny (kontrakt systemu projektowego) |
 | **Zakaz wyszarzania jako komunikatu** | stan nigdy samym kolorem |
 | **Zakaz słowa „zablokowane"** w odniesieniu do funkcji | funkcja nie jest zablokowana, tylko wyłączona przez Operatora |
 | **Zakaz odliczania blokującego** | odliczanie jest informacyjne, przycisk działa |
@@ -1550,7 +1550,7 @@ w mianowniku: „skierowane do Executor 2".
 
 | Zakazane | Zamiennik | Powód |
 |---|---|---|
-| brak uprawnień | **opis stanu opcji + miejsce zmiany** | ADL-017 |
+| brak uprawnień | **opis stanu opcji + miejsce zmiany** | zasada zero blokad |
 | nie możesz, nie wolno | **opis stanu** | j.w. |
 | zablokowane, zabronione | **wyłączone** (o opcji Operatora) | j.w. |
 | wymagane, obowiązkowe (o polu) | **opis skutku pozostawienia pustego** | zero blokad |
@@ -1882,30 +1882,30 @@ Zdanie przechodzi, jeżeli po przeczytaniu na głos:
 
 | # | Decyzja | Uzasadnienie | Alternatywa odrzucona |
 |---|---|---|---|
-| **D-1** | Typografia i głos w jednym dokumencie | litera i słowo są jednym przedmiotem projektowym; rozdzielenie prowadzi do rozjazdu formy i treści | dwa osobne dokumenty |
-| **D-2** | Space Grotesk **nie schodzi poniżej 16 px** | rysunek geometryczny traci czytelność; Plex Sans przejmuje wszystko poniżej | dopuszczenie 13–14 px dla „małych nagłówków" |
-| **D-3** | Waga 400 Space Grotesk **nie jest wgrywana** | krój ma nieść charakter; waga regularna go traci, a każdy plik kosztuje | komplet czterech wag |
-| **D-4** | Waga 700 Plex Mono **nie jest wgrywana** | mono w wadze grubej zlewa się w blok przy gęstości zwartej | komplet czterech wag |
-| **D-5** | O kroju **etykiety** decyduje krój **wartości** | para etykieta+wartość jest jednym blokiem semantycznym; mieszanie krojów w parze rozbija go | etykieta zawsze Plex Sans |
-| **D-6** | Nagłówek kolumny danych = Plex Mono 0,14 em, etykieta formularza = Plex Sans 0,08 em | tabela danych należy do świata maszyny, formularz do świata pracy | jednolity krój etykiet wersalikowych |
-| **D-7** | `tabular-nums` deklarowane mimo stałej szerokości Plex Mono | zabezpieczenie na czas przed wczytaniem kroju + czytelna deklaracja intencji | poleganie na naturze kroju |
-| **D-8** | Stopień **11 px zarezerwowany** dla etykiet, nigdy dla nazw własnych | rozróżnienie `ź`/`ż` w 11 px wymaga uwagi; nazwa własna nie może być odczytana błędnie | dopuszczenie 11 px dla metadanych z nazwami |
-| **D-9** | Skala **nie skaluje się płynnie** przy punktach łamania | kokpit wymaga przewidywalności (`WARIANCJA_PROJEKTOWA` 4/10) | typografia płynna `clamp()` |
-| **D-10** | Wyjątek: `--dn-fs-display` → `--dn-fs-3xl` w widoku mobilnym | `MultitaskingAI` nie mieści się w 40 px na ekranie telefonu | łamanie nazwy środowiska |
-| **D-11** | Kod w wierszu ma stopień **względny** 0,92 em | stopień bezwzględny byłby za mały w wierszu 14 px i za duży w 11 px | 12 px na sztywno |
-| **D-12** | **Inter nieobecny także w łańcuchu zapasowym** | anty-domyślne `KIERUNEK.md` rozdz. 4 blokuje odruch, nie tylko deklarację główną | Inter jako pierwszy zapas |
-| **D-13** | Space Grotesk spada na **Plex Sans**, nie na krój systemowy | zachowanie spójności rodziny przy częściowym niepowodzeniu wczytania | `system-ui` bezpośrednio |
-| **D-14** | Odbiorca nazwany **Operator** w interfejsie, nie tylko w dokumentacji | nazwa roli jest częścią pozycjonowania produktu; „użytkownik" należy do innej klasy narzędzi | „użytkownik" w interfejsie, „Operator" w dokumentacji |
-| **D-15** | Nazwy własne angielskie **nieodmienne** | odmiana `w CodeStudiu` niszczy nazwę i łamie `KANON.md` rozdz. 10 | odmiana fonetyczna |
-| **D-16** | Para przycisków w modalu **nazywa dwa skutki** | „Anuluj" nie jest skutkiem; Operator ma wybierać między dwoma stanami świata | „Usuń / Anuluj" |
-| **D-17** | Zero komunikatów „brak uprawnień" — **opis stanu i ścieżki** | bezpośrednia konsekwencja ADL-017 w warstwie językowej | standardowe komunikaty odmowy |
-| **D-18** | Zakaz formy „my" w interfejsie | system nie jest osobą; „my" wprowadza fikcyjny podmiot między Operatora a maszynę | „Nie mogliśmy zapisać…" |
-| **D-19** | Wersaliki **wyłącznie przez `text-transform`** | tłumaczenie, czytniki ekranu, wyszukiwanie, odwracalność decyzji | zapis wersalikami w treści |
-| **D-20** | Odmiana przez liczebnik **obowiązkowa**, zapis `3 zadanie(a)` zakazany | poprawność językowa jest częścią precyzji głosu | forma z nawiasem |
-| **D-21** | Skracanie **środka albo końca**, nigdy początku | Operator rozpoznaje element po początku ciągu | skracanie od lewej |
-| **D-22** | `font-synthesis: none` jako reguła globalna | blokuje syntetyczną kursywę i pogrubienie, które niszczą ogonki `ą`, `ę` | domyślne zachowanie przeglądarki |
-| **D-23** | Wgrywanie wstępne obejmuje **dwa pliki**, nie cały pakiet | wgranie wstępne całości opóźnia pierwsze wyświetlenie | preload wszystkich 20 plików |
-| **D-24** | Słownik podaje **formy odmiany**, nie tylko definicje | bez form odmiany słownik nie rozstrzyga sporu redakcyjnego | słownik definicyjny |
+| **1** | Typografia i głos w jednym dokumencie | litera i słowo są jednym przedmiotem projektowym; rozdzielenie prowadzi do rozjazdu formy i treści | dwa osobne dokumenty |
+| **2** | Space Grotesk **nie schodzi poniżej 16 px** | rysunek geometryczny traci czytelność; Plex Sans przejmuje wszystko poniżej | dopuszczenie 13–14 px dla „małych nagłówków" |
+| **3** | Waga 400 Space Grotesk **nie jest wgrywana** | krój ma nieść charakter; waga regularna go traci, a każdy plik kosztuje | komplet czterech wag |
+| **4** | Waga 700 Plex Mono **nie jest wgrywana** | mono w wadze grubej zlewa się w blok przy gęstości zwartej | komplet czterech wag |
+| **5** | O kroju **etykiety** decyduje krój **wartości** | para etykieta+wartość jest jednym blokiem semantycznym; mieszanie krojów w parze rozbija go | etykieta zawsze Plex Sans |
+| **6** | Nagłówek kolumny danych = Plex Mono 0,14 em, etykieta formularza = Plex Sans 0,08 em | tabela danych należy do świata maszyny, formularz do świata pracy | jednolity krój etykiet wersalikowych |
+| **7** | `tabular-nums` deklarowane mimo stałej szerokości Plex Mono | zabezpieczenie na czas przed wczytaniem kroju + czytelna deklaracja intencji | poleganie na naturze kroju |
+| **8** | Stopień **11 px zarezerwowany** dla etykiet, nigdy dla nazw własnych | rozróżnienie `ź`/`ż` w 11 px wymaga uwagi; nazwa własna nie może być odczytana błędnie | dopuszczenie 11 px dla metadanych z nazwami |
+| **9** | Skala **nie skaluje się płynnie** przy punktach łamania | kokpit wymaga przewidywalności (`WARIANCJA_PROJEKTOWA` 4/10) | typografia płynna `clamp()` |
+| **10** | Wyjątek: `--dn-fs-display` → `--dn-fs-3xl` w widoku mobilnym | `MultitaskingAI` nie mieści się w 40 px na ekranie telefonu | łamanie nazwy środowiska |
+| **11** | Kod w wierszu ma stopień **względny** 0,92 em | stopień bezwzględny byłby za mały w wierszu 14 px i za duży w 11 px | 12 px na sztywno |
+| **12** | **Inter nieobecny także w łańcuchu zapasowym** | anty-domyślne kierunek systemu projektowego blokuje odruch, nie tylko deklarację główną | Inter jako pierwszy zapas |
+| **13** | Space Grotesk spada na **Plex Sans**, nie na krój systemowy | zachowanie spójności rodziny przy częściowym niepowodzeniu wczytania | `system-ui` bezpośrednio |
+| **14** | Odbiorca nazwany **Operator** w interfejsie, nie tylko w dokumentacji | nazwa roli jest częścią pozycjonowania produktu; „użytkownik" należy do innej klasy narzędzi | „użytkownik" w interfejsie, „Operator" w dokumentacji |
+| **15** | Nazwy własne angielskie **nieodmienne** | odmiana `w CodeStudiu` niszczy nazwę i łamie kontrakt systemu projektowego | odmiana fonetyczna |
+| **16** | Para przycisków w modalu **nazywa dwa skutki** | „Anuluj" nie jest skutkiem; Operator ma wybierać między dwoma stanami świata | „Usuń / Anuluj" |
+| **17** | Zero komunikatów „brak uprawnień" — **opis stanu i ścieżki** | bezpośrednia konsekwencja zasady zero blokad w warstwie językowej | standardowe komunikaty odmowy |
+| **18** | Zakaz formy „my" w interfejsie | system nie jest osobą; „my" wprowadza fikcyjny podmiot między Operatora a maszynę | „Nie mogliśmy zapisać…" |
+| **19** | Wersaliki **wyłącznie przez `text-transform`** | tłumaczenie, czytniki ekranu, wyszukiwanie, odwracalność decyzji | zapis wersalikami w treści |
+| **20** | Odmiana przez liczebnik **obowiązkowa**, zapis `3 zadanie(a)` zakazany | poprawność językowa jest częścią precyzji głosu | forma z nawiasem |
+| **21** | Skracanie **środka albo końca**, nigdy początku | Operator rozpoznaje element po początku ciągu | skracanie od lewej |
+| **22** | `font-synthesis: none` jako reguła globalna | blokuje syntetyczną kursywę i pogrubienie, które niszczą ogonki `ą`, `ę` | domyślne zachowanie przeglądarki |
+| **23** | Wgrywanie wstępne obejmuje **dwa pliki**, nie cały pakiet | wgranie wstępne całości opóźnia pierwsze wyświetlenie | preload wszystkich 20 plików |
+| **24** | Słownik podaje **formy odmiany**, nie tylko definicje | bez form odmiany słownik nie rozstrzyga sporu redakcyjnego | słownik definicyjny |
 
 ---
 

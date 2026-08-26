@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Danaco Console — generator nośników marki (B6 · zastosowania).
+Danaco Console — generator nośników marki (zastosowania).
 
 Wytwarza z ZATWIERDZONEJ geometrii znaku (zero modyfikacji krzywych sygnetu):
   * obraz Open Graph 1200x630,

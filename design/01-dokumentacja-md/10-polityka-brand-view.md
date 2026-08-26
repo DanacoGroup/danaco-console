@@ -4,17 +4,17 @@
 |---|---|
 | **Produkt** | Danaco Console · AI Operating Environment (warstwa wizualna v2.0) |
 | **Dokument** | Główna polityka Brand View — dokument nadrzędny |
-| **Numer** | 10 · Zespół B (Marka i identyfikacja) · zadanie B4 |
+| **Numer** | 10 · Marka i identyfikacja |
 | **Wersja** | v2.0 |
 | **Status** | **Wiążący** — Deweloperski (obowiązuje od chwili wydania) |
 | **Data wydania** | 2026-08-14 |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Kontakt** | support@danaco-group.pl |
-| **Odbiorcy** | projektanci interfejsu · programiści warstwy widoku · redaktorzy treści interfejsu · osoba odbierająca pracę · zespoły A/B/C projektu Danaco Console |
+| **Odbiorcy** | projektanci interfejsu · programiści warstwy widoku · redaktorzy treści interfejsu · osoba odbierająca pracę |
 | **Zakres** | wszystkie widoki platformy: okno startowe, okno rejestracji i logowania, Centrum dowodzenia, powłoki czterech środowisk, okno Konfiguracji, okno Ustawień, Always On Display, Mobile, Chat Window, okna operacyjne piętnastu modułów, okna robocze ról MultitaskingAI, nakładki (modal, toast, tooltip, Centrum poleceń) |
 | **Poza zakresem** | materiały marketingowe, strona internetowa producenta, komunikacja handlowa, dokumentacja drukowana |
-| **Nadrzędność** | `KANON.md` § 1–14 · `KIERUNEK.md` § 2–5 · ADL-017 (zero blokad) |
+| **Nadrzędność** | kontrakt systemu projektowego · kierunek systemu projektowego · zasada zero blokad |
 | **Podrzędne wobec tego dokumentu** | opracowania 01 (Design System), 02 (Design Architecture), 03 (Design View), 09 (System marki) w zakresie sposobu **objawiania się marki w widoku** |
 
 ---
@@ -97,9 +97,9 @@ elementem, który niesie godło.
 | **Programista warstwy widoku** | Pełny w zakresie rozdziałów 3, 6–9, 12. Odpowiada za żetony, ikony, ruch, dostępność. |
 | **Redaktor treści interfejsu** | Rozdziały 10, 11. Odpowiada za język, terminologię, treści przykładowe. |
 | **Osoba odbierająca pracę** | Rozdziały 14, 15. Prowadzi listę kontrolną, wydaje werdykt, prowadzi rejestr odstępstw. |
-| **Zespół A (system i architektura)** | Rozdziały 6–9 jako warunek brzegowy przy definiowaniu żetonów i komponentów. |
-| **Zespół B (marka)** | Właściciel dokumentu; rozdziały 2–5 są jego wyłączną domeną redakcyjną. |
-| **Zespół C (okna i prototypy)** | Pełny — każdy prototyp okna jest widokiem w rozumieniu tej polityki. |
+| **Zespół systemu i architektury** | Rozdziały 6–9 jako warunek brzegowy przy definiowaniu żetonów i komponentów. |
+| **Zespół marki** | Właściciel dokumentu; rozdziały 2–5 są jego wyłączną domeną redakcyjną. |
+| **Zespół okien i prototypów** | Pełny — każdy prototyp okna jest widokiem w rozumieniu tej polityki. |
 | **Wykonawca zewnętrzny** | Pełny, przekazywany razem z pakietem `zasoby/`. |
 
 ### 1.4. Jak stosuje się politykę przy odbiorze pracy
@@ -130,7 +130,7 @@ negocjacja odbywa się wyłącznie w trybie rozdziału 13.
 
 | Zdarzenie | Skutek |
 |---|---|
-| Zmiana w `KANON.md` § 1–3 | Obowiązkowy przegląd rozdziałów 2–9 tej polityki |
+| Zmiana w kontrakcie systemu projektowego | Obowiązkowy przegląd rozdziałów 2–9 tej polityki |
 | Zmiana geometrii znaku | Wyłącznie decyzją Właściciela; unieważnia rozdział 4 do czasu nowego wydania |
 | Nowe okno w inwentarzu | Obowiązkowe uzupełnienie tabeli rozdziału 4 przed pierwszym projektem tego okna |
 | Trzy odstępstwa tego samego typu | Sygnał do przeglądu reguły — reguła albo się zmienia, albo odstępstwa się cofa |
@@ -182,14 +182,14 @@ Widok, o którym któreś z tych zdań jest nieprawdziwe, opiera markę na ozdob
 
 ## 3. Pięć reguł konstytutywnych brand view
 
-Reguły R1–R5 są **konstytutywne**: nie wynikają z estetyki, lecz z kontraktu
-kierunku projektowego i z zasady nadrzędnej platformy (ADL-017). Naruszenie
+Pięć reguł poniższych jest **konstytutywnych**: nie wynikają z estetyki, lecz z kontraktu
+kierunku projektowego i z zasady nadrzędnej platformy (zasada zero blokad). Naruszenie
 którejkolwiek z nich jest naruszeniem krytycznym albo poważnym — katalog wag
 w rozdziale 15.
 
 ---
 
-### R1 · Rama atramentowa
+### 3.1. Rama atramentowa
 
 > **Pasek górny jest zawsze atramentowy — w obu motywach.
 > To jedyny stały dom godła w całym produkcie.**
@@ -255,7 +255,7 @@ MOTYW JASNY — pasek przyjął barwę tła strony
 
 ---
 
-### R2 · Jeden akcent
+### 3.2. Jeden akcent
 
 > **Sygnał zajmuje co najwyżej 5% powierzchni ekranu.
 > Nigdy nie jest tłem sekcji. Nigdy nie jest tłem przycisku głównego.**
@@ -289,7 +289,7 @@ powierzchnię widoku. Kalkulator w wersji HTML tej polityki liczy to automatyczn
 
 **Metoda C — próba usunięcia (jakościowa).**
 Wyłącz w widoku wszystkie barwy sygnału. Jeżeli widok stracił czytelność
-hierarchii, sygnał niesie hierarchię zamiast jej wskazywać — to naruszenie R2
+hierarchii, sygnał niesie hierarchię zamiast jej wskazywać — to naruszenie reguły „jeden akcent"
 niezależnie od wyniku pomiaru.
 
 #### Co jest naruszeniem
@@ -346,7 +346,7 @@ niewidoczna, bo tonie w tle tej samej rodziny.
 
 ---
 
-### R3 · Jeden ruch ciągły
+### 3.3. Jeden ruch ciągły
 
 > **W widoku biegnie dokładnie jeden ruch ciągły: tętno kropki sygnału, 2,4 s.
 > Każdy inny ruch jest przejściem, nie animacją.**
@@ -420,7 +420,7 @@ bo rusza się wszystko. Sygnaturowy element marki został zużyty.
 
 ---
 
-### R4 · Stan nigdy samym kolorem
+### 3.4. Stan nigdy samym kolorem
 
 > **Każdy stan komunikowany barwą ma obok ikonę albo etykietę.
 > Barwa jest wzmocnieniem, nigdy jedynym nośnikiem.**
@@ -491,14 +491,14 @@ zieleni od bursztynu. Czytnik ekranu odczyta cztery razy to samo.
 
 ---
 
-### R5 · Zero blokad
+### 3.5. Zero blokad
 
 > **Brak atrybutu `disabled` w całym produkcie.
 > Zamiast bramy — komunikat. Zamiast wyszarzenia — opis obok.**
 
 #### Co znaczy
 
-Zasada wywodzi się z ADL-017: *Danaco Console nie narzuca twardych blokad, bram
+Zasada wywodzi się z zasady zero blokad: *Danaco Console nie narzuca twardych blokad, bram
 bezpieczeństwa ani wymuszonych zgód. Domyślne zachowanie systemu to wykonanie
 polecenia.* W warstwie widoku oznacza to:
 
@@ -570,7 +570,7 @@ Naciśnięcie „Wyślij ponownie" przed upływem 0:42:
 
 Skutek: Operator nie wie, czy przycisk jest zepsuty, czy czeka.
 Czytnik ekranu pomija kontrolkę. Nawigacja klawiaturą przeskakuje.
-Produkt zaczyna decydować za Operatora — wbrew ADL-017.
+Produkt zaczyna decydować za Operatora — wbrew zasadzie zero blokad.
 ```
 
 ---
@@ -579,11 +579,11 @@ Produkt zaczyna decydować za Operatora — wbrew ADL-017.
 
 | Reguła | Zdanie | Miara | Główne naruszenie |
 |---|---|---|---|
-| **R1** | Rama atramentowa | pasek `--dn-rama` w obu motywach | pasek zmienia się z motywem |
-| **R2** | Jeden akcent | sygnał ≤ 5% powierzchni | sygnał jako tło sekcji lub przycisku głównego |
-| **R3** | Jeden ruch ciągły | tętno 2,4 s, reszta ≤ 220 ms | drugi rodzaj ruchu ciągłego |
-| **R4** | Stan nigdy samym kolorem | ≥ 2 nośniki na stan | barwa jako jedyny nośnik |
-| **R5** | Zero blokad | zero `disabled` | brama zamiast komunikatu |
+| **1** | Rama atramentowa | pasek `--dn-rama` w obu motywach | pasek zmienia się z motywem |
+| **2** | Jeden akcent | sygnał ≤ 5% powierzchni | sygnał jako tło sekcji lub przycisku głównego |
+| **3** | Jeden ruch ciągły | tętno 2,4 s, reszta ≤ 220 ms | drugi rodzaj ruchu ciągłego |
+| **4** | Stan nigdy samym kolorem | ≥ 2 nośniki na stan | barwa jako jedyny nośnik |
+| **5** | Zero blokad | zero `disabled` | brama zamiast komunikatu |
 
 ---
 
@@ -611,7 +611,7 @@ Produkt zaczyna decydować za Operatora — wbrew ADL-017.
 |---|---|---|---|---|---|
 | **Okno startowe (ładowania)** | logo pionowy (sygnet + logotyp) | sygnet 96 px, blok 159 × 172 | oś pionowa, ok. 42% wysokości od góry | na ciemnym / na jasnym wg motywu strony | Jedyny moment, w którym produkt nie pracuje. Marka mówi pełnym głosem, bo nie zabiera miejsca pracy. |
 | **Okno startowe — stan „Łączenie"** | kropka sygnału pod logo | 6 px, tętno 2,4 s | pod logotypem, odstęp `--dn-od-6` | kropka `--dn-kropka` | Tętno mówi „system żyje" w chwili, gdy nie ma jeszcze żadnej treści. |
-| **Okno startowe — „Błąd połączenia"** | logo pionowy bez kropki | jw. | jw. | jw. | Kropka znika, bo praca nie biegnie. Zastępuje ją plakietka błędu z ikoną i etykietą (R4). |
+| **Okno startowe — „Błąd połączenia"** | logo pionowy bez kropki | jw. | jw. | jw. | Kropka znika, bo praca nie biegnie. Zastępuje ją plakietka błędu z ikoną i etykietą (reguła „stan nigdy samym kolorem"). |
 | **Okno rejestracji i logowania** | logo pionowy | sygnet 64 px, blok skalowany do 106 × 115 | nad panelem formularza, wyśrodkowany | na ciemnym / na jasnym wg motywu | Wejście do produktu — drugi i ostatni moment „głośny" przed pracą. |
 | **Okno rejestracji — segmenty metod** | brak znaku | — | — | — | Segmenty niosą ikony metod, nie znak. Godło raz na widok. |
 | **Strona główna — Centrum dowodzenia** | sygnet pełny + logotyp w ramie | sygnet 26 px | pasek górny, skrajnie z lewej | na ciemnym (rama) | Marka wraca do roli oznaczenia. Treść widoku należy do czterech środowisk. |
@@ -644,7 +644,7 @@ Produkt zaczyna decydować za Operatora — wbrew ADL-017.
 | **Okno Ustawień** | sygnet + logotyp | 26 px | pasek górny, lewa | na ciemnym | jw. |
 | **Okno Ustawień — sekcja „Wygląd"** | podgląd motywu z godłem | sygnet 20 px | wewnątrz miniatury podglądu motywu | uproszczony (< 24 px) | Podgląd pokazuje ramę z godłem, bo rama jest tym, co się zmienia — a raczej: co się **nie** zmienia. |
 | **Always On Display** | sygnet uproszczony | 16 px | listwa tożsamości nakładki, górna krawędź | uproszczony, na ciemnym | AOD leży nad ramą (`--dn-z-aod` 1200), więc traci dom godła. Uproszczony sygnet przywraca oznaczenie przy minimalnym koszcie powierzchni. |
-| **Always On Display — rdzeń awatara** | kropka sygnału (rdzeń) | zależny od stanu | centrum warstwy | `--dn-grad-sygnal` dopuszczony ilustracyjnie | Rdzeń jest elementem sygnaturowym w największej skali w całym produkcie — patrz odstępstwo stałe OS-1 (rozdz. 13.5). |
+| **Always On Display — rdzeń awatara** | kropka sygnału (rdzeń) | zależny od stanu | centrum warstwy | `--dn-grad-sygnal` dopuszczony ilustracyjnie | Rdzeń jest elementem sygnaturowym w największej skali w całym produkcie — patrz odstępstwo stałe dla Always On Display (rozdz. 13.5). |
 | **Mobile** | sygnet uproszczony | 20 px | pasek górny mobilny, lewa | uproszczony, na ciemnym | Szerokość paska na progu `w1` nie mieści logotypu; poniżej 24 px obowiązuje wariant uproszczony. |
 | **Mobile — ekran główny** | logotyp bez sygnetu | wysokość 14 px | pasek górny, wyśrodkowany | na ciemnym | Wyjątek dopuszczony: sygnet po lewej + logotyp na środku dublowałyby znak; na ekranie głównym prowadzi logotyp. |
 
@@ -662,7 +662,7 @@ Produkt zaczyna decydować za Operatora — wbrew ADL-017.
 | **Podgląd dokumentu / File Preview / Preview Window** | brak znaku | — | — | — | jw. Treść dokumentu Operatora nie jest powierzchnią marki. |
 | **Okna robocze ról MultitaskingAI** (Executor 1/2/3, Coordinator, Validator, Executor Chat, Coordinator Chat, Results Analyzer, Subagent Network) | brak znaku | — | — | — | Rola ma plakietkę roli i emblemat środowiska w ramie; znak byłby trzecim oznaczeniem. |
 | **Modal `.dn-modal`** | brak znaku | — | — | — | Nakładka nad widokiem, nie widok samodzielny. |
-| **Toast `.dn-toast`** | ikona rodziny stanu | 12 px | lewa krawędź | ikona z zestawu | Nośnik stanu wg R4, nie nośnik marki. |
+| **Toast `.dn-toast`** | ikona rodziny stanu | 12 px | lewa krawędź | ikona z zestawu | Nośnik stanu wg reguły „stan nigdy samym kolorem", nie nośnik marki. |
 | **Tooltip `.dn-tooltip`** | brak znaku | — | — | — | jw. |
 | **Centrum poleceń** | sygnet uproszczony | 16 px | lewa krawędź pola polecenia | uproszczony, na ciemnym | Warstwa `--dn-z-centrum-polecen` (1300) leży nad wszystkim, w tym nad ramą — traci dom godła jak AOD. |
 | **Pusty stan `.dn-pusty-stan`** | ikona z zestawu | 24 px | nad tytułem pustego stanu | `currentColor` = `--dn-tekst-3` | Pusty stan to komunikat, nie okazja do ekspozycji znaku. |
@@ -794,7 +794,7 @@ kłamie o źródle. Instrument pomiarowy pokazuje pomiar, nie własne logo na wy
 | Powłoka MultitaskingAI | cicha | sygnet 26 px + emblemat 20 px | ≤ 4% |
 | Okno Konfiguracji | cicha | sygnet 26 px | ≤ 4% |
 | Okno Ustawień | cicha | sygnet 26 px | ≤ 3% |
-| Always On Display | cicha | sygnet uproszczony 16 px | ≤ 8% (OS-1) |
+| Always On Display | cicha | sygnet uproszczony 16 px | ≤ 8% (odstępstwo stałe) |
 | Mobile | cicha | sygnet uproszczony 20 px | ≤ 4% |
 | Centrum poleceń | cicha | sygnet uproszczony 16 px | ≤ 3% |
 | Chat Window | milczy | — | ≤ 3% |
@@ -826,7 +826,7 @@ kłamie o źródle. Instrument pomiarowy pokazuje pomiar, nie własne logo na wy
 │ WARSTWA 3 · STANY — wyjątek                                     │
 │ sukces · ostrzeżenie · błąd · informacja (= rodzina sygnału)     │
 │ Pojawia się tylko wtedy, gdy system ma coś do zakomunikowania.   │
-│ Zawsze z ikoną albo etykietą (R4). Znika, gdy stan mija.        │
+│ Zawsze z ikoną albo etykietą (reguła „stan nigdy samym kolorem"). Znika, gdy stan mija.        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -873,7 +873,7 @@ rodziny sygnału łącznie (warstwa 2 + informacyjna część warstwy 3).
 | Okno operacyjne — wiodące | **5%** | Pułap ogólny. Okna wiodące mają najwięcej stanów jednocześnie. |
 | Okno operacyjne — panelowe | **4%** | Panel to jedna lista i jedno zaznaczenie. |
 | Okna robocze ról MultitaskingAI | **5%** | Kolejka z wieloma krokami „pracuje" jednocześnie. |
-| Always On Display | **8%** | **Odstępstwo stałe OS-1** — rdzeń awatara jest elementem sygnaturowym w największej skali. |
+| Always On Display | **8%** | **Odstępstwo stałe dla Always On Display** — rdzeń awatara jest elementem sygnaturowym w największej skali. |
 | Mobile | **4%** | Mniejsza powierzchnia, ta sama liczba wskazań — udział rośnie naturalnie. |
 | Centrum poleceń | **3%** | Fokus pola + zaznaczenie wyniku. |
 | Terminal / edytor kodu / podgląd dokumentu | **2%** | Terytorium milczenia. Wyłącznie fokus i zaznaczenie. |
@@ -990,7 +990,7 @@ diakrytyk renderuje się z zapasu systemowego, jest niezgodny.
 | Wypełnienie | `none` (wyjątek: kropka sygnału w emblemacie środowiska) |
 | Barwa | `currentColor` |
 | Zakończenia i łączenia | `round` |
-| Nazewnictwo | polskie, opisowe (kompletna lista w `KANON.md` § 4) |
+| Nazewnictwo | polskie, opisowe (kompletna lista w kontrakcie systemu projektowego) |
 
 **Ikon nie rysuje się ręcznie, jeżeli istnieją w bibliotece.** Dorysowuje się
 wyłącznie brakujące pojęcia domenowe — emblematy czterech środowisk i rola
@@ -1033,7 +1033,7 @@ z ikonami 20 px nie ma pozycji z ikoną 16 px.
 | Ikona z innego zestawu (inna metryka, inny obrys) | poważne |
 | Ikona wypełniona tam, gdzie zestaw jest obrysowy | poważne |
 | Ikona przeskalowana niezgodnie ze skalą 14/16/20/24 | drobne |
-| Ikona jako jedyny nośnik stanu bez etykiety i bez `aria-label` | **krytyczne** (R4 + dostępność) |
+| Ikona jako jedyny nośnik stanu bez etykiety i bez `aria-label` | **krytyczne** (reguła „stan nigdy samym kolorem" + dostępność) |
 | Emblemat środowiska z więcej niż jedną wypełnioną kropką | poważne |
 | Emblemat środowiska bez kropki sygnału | poważne |
 | Ikona dekoracyjna bez `aria-hidden="true"` | drobne |
@@ -1125,7 +1125,7 @@ nie dubluje tej obsługi. Przy włączonym ograniczeniu:
 
 **Sprawdzenie:** widok z włączonym `prefers-reduced-motion` musi nadal
 komunikować wszystkie stany. Jeżeli po wyłączeniu ruchu znika informacja —
-to naruszenie krytyczne R3.
+to naruszenie krytyczne reguły „jeden ruch ciągły".
 
 ---
 
@@ -1172,11 +1172,11 @@ Każdy komunikat błędu ma **dwie części**:
 |---|---|---|
 | „Nie udało się połączyć z usługą modeli. Sprawdź konfigurację konta w oknie Ustawień." | „Wystąpił błąd." | brak stanu i brak kroku |
 | „Kolejka zawiera 3 zadania w stanie błędu. Otwórz Execution Monitor, aby zobaczyć przyczyny." | „Ups! Coś poszło nie tak [emotikona]" | żargon, emoji, brak informacji |
-| „Poprzednia wiadomość została wysłana 18 s temu. Kolejną można wysłać za 42 s." | (przycisk wyszarzony bez komunikatu) | narusza R5 |
+| „Poprzednia wiadomość została wysłana 18 s temu. Kolejną można wysłać za 42 s." | (przycisk wyszarzony bez komunikatu) | narusza regułę „zero blokad" |
 | „Repozytorium `danaco/console` nie jest podłączone. Dodaj je w Project Tree." | „Brak dostępu." | brak kroku, brzmi jak brama |
 
 **Zakaz:** komunikat nie może opisywać przeszkody bez podania kroku.
-Komunikat bez kroku jest bramą w przebraniu i narusza R5.
+Komunikat bez kroku jest bramą w przebraniu i narusza regułę „zero blokad".
 
 ### 10.4. Nazewnictwo elementów interfejsu
 
@@ -1217,7 +1217,7 @@ Komunikat bez kroku jest bramą w przebraniu i narusza R5.
 | Zakazane | Waga |
 |---|---|
 | Lorem ipsum i jakikolwiek tekst zastępczy bez znaczenia | **krytyczne** |
-| Zmyślone nazwiska osób (katalog anty-domyślnych, `KANON.md` § 1) | **krytyczne** |
+| Zmyślone nazwiska osób (katalog anty-domyślnych, kontrakt systemu projektowego) | **krytyczne** |
 | Zmyślone metryki („99,9% skuteczności", „3× szybciej") | **krytyczne** |
 | Fikcyjne firmy i klienci | **krytyczne** |
 | Zmyślone cytaty i opinie | **krytyczne** |
@@ -1277,24 +1277,24 @@ zobowiązaniem co zero blokad: produkt nie decyduje za Operatora i nie wyklucza 
 |---|---|---|
 | **Kontrast** | każda para tekst/tło zmierzona; komplet w `kontrasty.json` (33 pomiary) | pomiar narzędziem, nie na oko |
 | **`--dn-tekst-3`** | wyłącznie metadane i tekst ≥ 18,66 px półgruby | przegląd wystąpień |
-| **Stan nigdy samym kolorem** | R4 — zawsze ikona albo etykieta | próba desaturacji |
+| **Stan nigdy samym kolorem** | reguła konstytutywna — zawsze ikona albo etykieta | próba desaturacji |
 | **Fokus** | pierścień 2 px + odsunięcie 2 px, `--dn-fokus`, widoczny na każdej kontrolce | przejście `Tab` przez cały widok |
 | **Klawiatura** | każda funkcja osiągalna bez myszy; kolejność `Tab` zgodna z układem wizualnym | przejście klawiaturą |
 | **`prefers-reduced-motion`** | obsłużone globalnie w żetonach | przełączenie w systemie |
 | **Cele dotykowe** | `pointer: coarse` → kontrolka 40 px, wiersz 44 px, check 20 px, przełącznik 44 × 24 | emulacja dotyku |
 | **Role i `aria-*`** | semantyczne znaczniki; `aria-label` na kontrolkach ikonowych; `aria-live` na obszarach zmiennych | przegląd drzewa dostępności |
 | **`lang="pl"`** | w każdym dokumencie | przegląd źródła |
-| **Zero `disabled`** | R5 | wyszukanie w kodzie |
+| **Zero `disabled`** | zero blokad | wyszukanie w kodzie |
 
 ### 12.3. Dostępność a pięć reguł
 
 | Reguła | Wkład w dostępność |
 |---|---|
-| R1 Rama atramentowa | stały punkt orientacji; kontrast tekstu na ramie zmierzony raz i niezmienny |
-| R2 Jeden akcent | ≤ 5% sygnału oznacza, że fokus jest zawsze widoczny — nie tonie w błękitnym tle |
-| R3 Jeden ruch | brak ruchu dekoracyjnego = brak wyzwalaczy dla wrażliwości przedsionkowej |
-| R4 Stan nigdy kolorem | bezpośrednio realizuje kryterium 1.4.1 |
-| R5 Zero blokad | brak `disabled` = brak kontrolek pomijanych przez czytnik i klawiaturę |
+| Rama atramentowa | stały punkt orientacji; kontrast tekstu na ramie zmierzony raz i niezmienny |
+| Jeden akcent | ≤ 5% sygnału oznacza, że fokus jest zawsze widoczny — nie tonie w błękitnym tle |
+| Jeden ruch | brak ruchu dekoracyjnego = brak wyzwalaczy dla wrażliwości przedsionkowej |
+| Stan nigdy kolorem | bezpośrednio realizuje kryterium 1.4.1 |
+| Zero blokad | brak `disabled` = brak kontrolek pomijanych przez czytnik i klawiaturę |
 
 **Wniosek:** przestrzeganie brand view realizuje znaczną część WCAG 2.1 AA
 niejako przy okazji. To nie przypadek — reguły były tak formułowane.
@@ -1305,7 +1305,7 @@ niejako przy okazji. To nie przypadek — reguły były tak formułowane.
 |---|---|
 | „Zwiększyłem kontrast, więc dodałem drugą barwę" | Kontrast osiąga się jasnością, nie liczbą barw. |
 | „Dodałem animację, żeby zwrócić uwagę na błąd" | Uwagę zwraca ikona, etykieta i pozycja komunikatu. |
-| „Wyszarzenie informuje, że nie można kliknąć" | Wyszarzenie obniża kontrast i narusza R5. |
+| „Wyszarzenie informuje, że nie można kliknąć" | Wyszarzenie obniża kontrast i narusza regułę „zero blokad". |
 | „Powiększyłem tekst poza skalę, bo tak czytelniej" | Skala ma dziewięć stopni; czytelność zapewnia stopień bazowy 13 px i interlinia 1,45. |
 
 ---
@@ -1322,13 +1322,13 @@ niezależnie od tego, kto go zaprojektował.
 
 | Zakres odstępstwa | Uprawniony | Forma |
 |---|---|---|
-| Geometria znaku, geometria emblematów, para krojów, barwa sygnału | **Właściciel** (Dariusz Naharnowicz) | decyzja, nie odstępstwo — powoduje nowe wydanie `KANON.md` i tej polityki |
-| Reguła konstytutywna R1–R5 | **Właściciel** | odstępstwo stałe, wpisane do rozdziału 13.5 |
-| Budżet akcentu, budżet ruchu, budżet stanów | **Zespół B (marka)** | odstępstwo terminowe, rejestr 13.4 |
-| Obecność znaku w konkretnym widoku (rozdz. 4) | **Zespół B (marka)** | odstępstwo terminowe |
+| Geometria znaku, geometria emblematów, para krojów, barwa sygnału | **Właściciel** (Dariusz Naharnowicz) | decyzja, nie odstępstwo — powoduje nowe wydanie kontrakt systemu projektowego i tej polityki |
+| Reguła konstytutywna | **Właściciel** | odstępstwo stałe, wpisane do rozdziału 13.5 |
+| Budżet akcentu, budżet ruchu, budżet stanów | **Zespół marki** | odstępstwo terminowe, rejestr 13.4 |
+| Obecność znaku w konkretnym widoku (rozdz. 4) | **Zespół marki** | odstępstwo terminowe |
 | Rozmiar ikony, stopień typograficzny, żeton odstępu | **Osoba odbierająca pracę** | odstępstwo jednorazowe, adnotacja w karcie odbioru |
 | Nazwa własna okna, modułu, roli | **nikt** | nazwy własne są cytatem z dokumentacji |
-| Zero blokad (ADL-017) | **nikt** | zasada nadrzędna platformy |
+| Zero blokad | **nikt** | zasada nadrzędna platformy |
 | Zakaz `#000000`, Lorem ipsum, emoji jako ikon | **nikt** | zakaz bezwzględny |
 
 ### 13.3. Tryb
@@ -1366,7 +1366,7 @@ Rejestr prowadzi osoba odbierająca pracę. Wpis zawiera obowiązkowo:
 | Numer | `OT-nn` |
 | Data | data zgody |
 | Widok | pełna nazwa widoku wg inwentarza |
-| Reguła / rozdział | np. `R2 · budżet akcentu 6,5%` |
+| Reguła / rozdział | np. `jeden akcent · budżet akcentu 6,5%` |
 | Uzasadnienie | jedno zdanie, rzeczowo |
 | Alternatywy rozważone | co sprawdzono i dlaczego nie działa |
 | Uprawniony | kto wyraził zgodę |
@@ -1379,9 +1379,9 @@ Rejestr prowadzi osoba odbierająca pracę. Wpis zawiera obowiązkowo:
 
 | Nr | Zakres | Reguła | Treść | Uzasadnienie |
 |---|---|---|---|---|
-| **OS-1** | Always On Display | R2 · budżet akcentu | Budżet akcentu podniesiony z 5% do **8%** | Rdzeń awatara AOD jest elementem sygnaturowym marki w największej skali w produkcie. AOD nie jest widokiem roboczym — nie ma w nim treści, której sygnał mógłby przeszkodzić. Gradient sygnałowy dopuszczony ilustracyjnie zgodnie z `KANON.md` § 2 (zakres gradientów: rdzeń AOD). |
-| **OS-2** | Mobile — ekran główny | Rozdz. 4 · jedno godło na widok | Logotyp bez sygnetu na środku paska, przy jednoczesnym braku sygnetu po lewej | Szerokość paska na progu `w1` nie mieści sygnetu i logotypu jednocześnie z kontrolkami. Wybór: logotyp niesie więcej informacji niż sam sygnet dla Operatora, który dopiero wchodzi do produktu na urządzeniu mobilnym. |
-| **OS-3** | Edytor kodu, terminal | R2 · budżet akcentu | Podświetlenie składni poza budżetem akcentu | Barwy składni nie należą do marki (rozdz. 5.3.1). Wliczanie ich do budżetu wymuszałoby monochromatyczny edytor, co obniżyłoby użyteczność bez zysku dla marki. |
+| **1** | Always On Display | jeden akcent · budżet akcentu | Budżet akcentu podniesiony z 5% do **8%** | Rdzeń awatara AOD jest elementem sygnaturowym marki w największej skali w produkcie. AOD nie jest widokiem roboczym — nie ma w nim treści, której sygnał mógłby przeszkodzić. Gradient sygnałowy dopuszczony ilustracyjnie zgodnie z kontraktem systemu projektowego (zakres gradientów: rdzeń AOD). |
+| **2** | Mobile — ekran główny | Rozdz. 4 · jedno godło na widok | Logotyp bez sygnetu na środku paska, przy jednoczesnym braku sygnetu po lewej | Szerokość paska na progu `w1` nie mieści sygnetu i logotypu jednocześnie z kontrolkami. Wybór: logotyp niesie więcej informacji niż sam sygnet dla Operatora, który dopiero wchodzi do produktu na urządzeniu mobilnym. |
+| **3** | Edytor kodu, terminal | jeden akcent · budżet akcentu | Podświetlenie składni poza budżetem akcentu | Barwy składni nie należą do marki (rozdz. 5.3.1). Wliczanie ich do budżetu wymuszałoby monochromatyczny edytor, co obniżyłoby użyteczność bez zysku dla marki. |
 
 ---
 
@@ -1393,7 +1393,7 @@ Rejestr prowadzi osoba odbierająca pracę. Wpis zawiera obowiązkowo:
 |---|---|
 | Przekazanie projektu widoku do realizacji | pełna lista, 39 pozycji |
 | Przekazanie zaimplementowanego widoku | pełna lista, 39 pozycji |
-| Zmiana w widoku już odebranym | pozycje dotknięte zmianą + reguły R1–R5 zawsze |
+| Zmiana w widoku już odebranym | pozycje dotknięte zmianą + wszystkie pięć reguł konstytutywnych zawsze |
 | Przegląd okresowy pakietu | próba losowa 5 widoków, pełna lista |
 
 ### 14.2. Tryb weryfikacji
@@ -1404,9 +1404,9 @@ Rejestr prowadzi osoba odbierająca pracę. Wpis zawiera obowiązkowo:
 | 2 | Przełączenie motywu `[data-przelacz-motyw]`, kontrola ramy | przeglądarka |
 | 3 | Zrzut widoku w progu `w3` (1280 px) | zrzut ekranu |
 | 4 | Pomiar budżetu akcentu metodą A (siatka 20 × 20) | kalkulator w wersji HTML polityki |
-| 5 | Próba desaturacji — kontrola R4 | filtr `grayscale(1)` |
-| 6 | Obserwacja 10 s bez interakcji — kontrola R3 | obserwacja |
-| 7 | Przejście całego widoku klawiszem `Tab` — kontrola fokusu i R5 | klawiatura |
+| 5 | Próba desaturacji — kontrola reguły „stan nigdy samym kolorem" | filtr `grayscale(1)` |
+| 6 | Obserwacja 10 s bez interakcji — kontrola reguły „jeden ruch ciągły" | obserwacja |
+| 7 | Przejście całego widoku klawiszem `Tab` — kontrola fokusu i reguły „zero blokad" | klawiatura |
 | 8 | Wyszukanie `disabled`, `#000000`, wartości hex, `pointer-events: none` | wyszukiwanie w źródle |
 | 9 | Kontrola treści: nazwy własne, brak żargonu, komunikaty z krokiem | odczyt |
 | 10 | Włączenie `prefers-reduced-motion`, ponowna obserwacja | ustawienia systemu |
@@ -1418,80 +1418,80 @@ Rejestr prowadzi osoba odbierająca pracę. Wpis zawiera obowiązkowo:
 
 | # | Pozycja | Reguła | Waga naruszenia |
 |---:|---|---|---|
-| A1 | Pasek górny jest atramentowy w **obu** motywach | R1 | krytyczne |
-| A2 | Godło występuje wyłącznie na pasku (albo zgodnie z rozdz. 4 dla widoków głośnych) | R1 | poważne |
-| A3 | Godło zachowuje barwy własne marki i wariant na ciemnym tle | R1 | poważne |
-| A4 | Sygnał zajmuje ≤ budżet z tabeli 6.4 | R2 | poważne / krytyczne |
-| A5 | Sygnał nie jest tłem sekcji ani tłem przycisku głównego | R2 | krytyczne |
-| A6 | W widoku biegnie co najwyżej jeden **rodzaj** ruchu ciągłego | R3 | poważne |
-| A7 | Każdy stan barwny ma ikonę albo etykietę | R4 | krytyczne |
-| A8 | W kodzie widoku nie ma `disabled`, `[inert]`, `pointer-events: none` jako bramy | R5 | krytyczne |
+| 1 | Pasek górny jest atramentowy w **obu** motywach | rama atramentowa | krytyczne |
+| 2 | Godło występuje wyłącznie na pasku (albo zgodnie z rozdz. 4 dla widoków głośnych) | rama atramentowa | poważne |
+| 3 | Godło zachowuje barwy własne marki i wariant na ciemnym tle | rama atramentowa | poważne |
+| 4 | Sygnał zajmuje ≤ budżet z tabeli 6.4 | jeden akcent | poważne / krytyczne |
+| 5 | Sygnał nie jest tłem sekcji ani tłem przycisku głównego | jeden akcent | krytyczne |
+| 6 | W widoku biegnie co najwyżej jeden **rodzaj** ruchu ciągłego | jeden ruch ciągły | poważne |
+| 7 | Każdy stan barwny ma ikonę albo etykietę | stan nigdy samym kolorem | krytyczne |
+| 8 | W kodzie widoku nie ma `disabled`, `[inert]`, `pointer-events: none` jako bramy | zero blokad | krytyczne |
 
 #### Blok B · Znak i emblematy (5)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| B1 | Forma, rozmiar i pozycja znaku zgodne z tabelą rozdz. 4 | 4 | poważne |
-| B2 | Poniżej 24 px użyto wariantu uproszczonego | 4.1 | poważne |
-| B3 | Pole ochronne znaku zachowane (≈ 0,46 × wysokość znaku) | 4.1 | drobne |
-| B4 | Geometria sygnetu nietknięta (groty i kropka co do współrzędnej) | 4.1 | krytyczne |
-| B5 | Emblemat środowiska ma dokładnie jedną wypełnioną kropkę | 8.5 | poważne |
+| 1 | Forma, rozmiar i pozycja znaku zgodne z tabelą rozdz. 4 | 4 | poważne |
+| 2 | Poniżej 24 px użyto wariantu uproszczonego | 4.1 | poważne |
+| 3 | Pole ochronne znaku zachowane (≈ 0,46 × wysokość znaku) | 4.1 | drobne |
+| 4 | Geometria sygnetu nietknięta (groty i kropka co do współrzędnej) | 4.1 | krytyczne |
+| 5 | Emblemat środowiska ma dokładnie jedną wypełnioną kropkę | 8.5 | poważne |
 
 #### Blok C · Barwa (6)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| C1 | Zero wartości szesnastkowych wprost (poza SVG znaku) | 6.2 | krytyczne |
-| C2 | Zero `#000000` | 6.2 | krytyczne |
-| C3 | Komponenty sięgają po żetony semantyczne, nie po prymitywy | 6.2 | poważne |
-| C4 | Przycisk główny w inwersji atramentu, nie w sygnale | 6.2 | krytyczne |
-| C5 | Gradient nie jest tłem przycisku, karty ani sekcji | 6.2 | poważne |
-| C6 | Rozmycie wyłącznie w nakładce modala | 6.2 | poważne |
+| 1 | Zero wartości szesnastkowych wprost (poza SVG znaku) | 6.2 | krytyczne |
+| 2 | Zero `#000000` | 6.2 | krytyczne |
+| 3 | Komponenty sięgają po żetony semantyczne, nie po prymitywy | 6.2 | poważne |
+| 4 | Przycisk główny w inwersji atramentu, nie w sygnale | 6.2 | krytyczne |
+| 5 | Gradient nie jest tłem przycisku, karty ani sekcji | 6.2 | poważne |
+| 6 | Rozmycie wyłącznie w nakładce modala | 6.2 | poważne |
 
 #### Blok D · Typografia (4)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| D1 | Space Grotesk wyłącznie w roli tożsamości i wejścia | 7.2 | poważne |
-| D2 | Plex Mono wyłącznie w danych, identyfikatorach, terminalu | 7.2 | poważne |
-| D3 | Liczby w kolumnach z `tabular-nums` w Plex Mono | 7.4 | drobne |
-| D4 | Diakrytyki `ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ` renderują się z kroju, nie z zapasu | 7.5 | poważne |
+| 1 | Space Grotesk wyłącznie w roli tożsamości i wejścia | 7.2 | poważne |
+| 2 | Plex Mono wyłącznie w danych, identyfikatorach, terminalu | 7.2 | poważne |
+| 3 | Liczby w kolumnach z `tabular-nums` w Plex Mono | 7.4 | drobne |
+| 4 | Diakrytyki `ŁÓDŹ ŻÓŁĆ GĘŚLĄ JAŹŃ` renderują się z kroju, nie z zapasu | 7.5 | poważne |
 
 #### Blok E · Ikonografia (3)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| E1 | Wszystkie ikony z jednego zestawu, obrys 1,75 | 8.1–8.2 | poważne |
-| E2 | Jeden rozmiar ikony per kontekst (14/16/20/24) | 8.3 | drobne |
-| E3 | Zero emoji jako ikon | 8.4 | krytyczne |
+| 1 | Wszystkie ikony z jednego zestawu, obrys 1,75 | 8.1–8.2 | poważne |
+| 2 | Jeden rozmiar ikony per kontekst (14/16/20/24) | 8.3 | drobne |
+| 3 | Zero emoji jako ikon | 8.4 | krytyczne |
 
 #### Blok F · Ruch (3)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| F1 | Czasy przejść wyłącznie z żetonów `--dn-czas-*`, krzywa `--dn-ease` | 9.4 | drobne |
-| F2 | Tętno wyłącznie tam, gdzie realnie biegnie praca | 9.2 | poważne |
-| F3 | Przy `prefers-reduced-motion` widok nadal komunikuje wszystkie stany | 9.5 | krytyczne |
+| 1 | Czasy przejść wyłącznie z żetonów `--dn-czas-*`, krzywa `--dn-ease` | 9.4 | drobne |
+| 2 | Tętno wyłącznie tam, gdzie realnie biegnie praca | 9.2 | poważne |
+| 3 | Przy `prefers-reduced-motion` widok nadal komunikuje wszystkie stany | 9.5 | krytyczne |
 
 #### Blok G · Język i treść (5)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| G1 | Nazwy własne okien, modułów, ról dokładnie jak w dokumentacji | 10.1 | poważne |
-| G2 | Jedna forma zwracania się do Operatora w całym widoku | 10.1 | drobne |
-| G3 | Zero żargonu marketingowego, zero wykrzykników, zero emoji w tekście | 10.2 | poważne |
-| G4 | Każdy komunikat błędu zawiera stan **i** następny krok | 10.3 | poważne |
-| G5 | Treści przykładowe z domeny produktu, oznaczone jako przykładowe; zero Lorem ipsum, zmyślonych nazwisk i metryk | 11 | krytyczne |
+| 1 | Nazwy własne okien, modułów, ról dokładnie jak w dokumentacji | 10.1 | poważne |
+| 2 | Jedna forma zwracania się do Operatora w całym widoku | 10.1 | drobne |
+| 3 | Zero żargonu marketingowego, zero wykrzykników, zero emoji w tekście | 10.2 | poważne |
+| 4 | Każdy komunikat błędu zawiera stan **i** następny krok | 10.3 | poważne |
+| 5 | Treści przykładowe z domeny produktu, oznaczone jako przykładowe; zero Lorem ipsum, zmyślonych nazwisk i metryk | 11 | krytyczne |
 
 #### Blok H · Dostępność (5)
 
 | # | Pozycja | Rozdział | Waga |
 |---:|---|---|---|
-| H1 | Fokus widoczny na każdej kontrolce (2 px + odsunięcie 2 px) | 12.2 | krytyczne |
-| H2 | Cały widok osiągalny klawiaturą, kolejność `Tab` zgodna z układem | 12.2 | krytyczne |
-| H3 | Pary tekst/tło mają pokrycie w `kontrasty.json` albo zmierzony pomiar | 12.2 | krytyczne |
-| H4 | Kontrolki ikonowe mają `aria-label`; ikony dekoracyjne `aria-hidden` | 12.2 | poważne |
-| H5 | `lang="pl"`, role semantyczne, `aria-live` na obszarach zmiennych | 12.2 | poważne |
+| 1 | Fokus widoczny na każdej kontrolce (2 px + odsunięcie 2 px) | 12.2 | krytyczne |
+| 2 | Cały widok osiągalny klawiaturą, kolejność `Tab` zgodna z układem | 12.2 | krytyczne |
+| 3 | Pary tekst/tło mają pokrycie w `kontrasty.json` albo zmierzony pomiar | 12.2 | krytyczne |
+| 4 | Kontrolki ikonowe mają `aria-label`; ikony dekoracyjne `aria-hidden` | 12.2 | poważne |
+| 5 | `lang="pl"`, role semantyczne, `aria-live` na obszarach zmiennych | 12.2 | poważne |
 
 **Razem: 39 pozycji w 8 blokach.**
 
@@ -1525,74 +1525,74 @@ odstępstwa powołane · termin ponownego odbioru.
 
 | Nr | Naruszenie | Reguła | Naprawa |
 |---|---|---|---|
-| **K1** | Pasek górny przełącza się z motywem | R1 | Ustaw tło paska na `--dn-rama`; usuń zależność od `data-theme` |
-| **K2** | Zmieniona geometria sygnetu (groty, kropka, proporcje, promień) | R1 / rozdz. 4 | Przywróć plik z `zasoby/marka/logo/`; wklej inline bez modyfikacji ścieżek |
-| **K3** | Atrybut `disabled` na kontrolce | R5 | Usuń atrybut; dodaj komunikat po naciśnięciu albo opis obok |
-| **K4** | `pointer-events: none` albo `[inert]` użyte jako brama | R5 | jw. |
-| **K5** | Stan komunikowany wyłącznie barwą | R4 | Dodaj ikonę z zestawu **i** etykietę słowną |
-| **K6** | Sygnał jako tło sekcji, panelu albo nagłówka | R2 | Zamień na `--dn-powierzchnia` / `--dn-panel`; sygnał zostaw obrysowi i kropce |
-| **K7** | Sygnał jako tło przycisku głównego | R2 | Zamień na `.dn-btn--atrament` |
-| **K8** | Budżet akcentu przekroczony o ≥ 3 punkty procentowe | R2 | Zredukuj wypełnienia sygnałowe do obrysów i kropek |
-| **K9** | Ruch jako jedyny nośnik informacji o stanie | R3 | Dodaj etykietę stanu; ruch zostaw jako wzmocnienie |
-| **K10** | Widok traci informację przy `prefers-reduced-motion` | R3 / rozdz. 12 | Przenieś informację do etykiety i ikony |
-| **K11** | `#000000` jako tło, tekst albo obrys | rozdz. 6.2 | Zamień na `--dn-szary-1000` albo właściwy żeton semantyczny |
-| **K12** | Wartość szesnastkowa wpisana wprost w CSS widoku | rozdz. 6.2 | Zamień na `var(--dn-*)`; brakujący żeton zgłoś Zespołowi A |
-| **K13** | Emoji użyte jako ikona | rozdz. 8.4 | Zamień na ikonę z `zasoby/ikony/svg/` |
-| **K14** | Lorem ipsum, zmyślone nazwisko, zmyślona metryka, fikcyjna firma | rozdz. 11.2 | Zamień na treść z domeny produktu, oznacz jako przykładową |
-| **K15** | Brak widocznego fokusu na kontrolce | rozdz. 12.2 | Przywróć `:focus-visible` z `--dn-fokus`, 2 px + odsunięcie 2 px |
-| **K16** | Kontrast pary tekst/tło poniżej progu WCAG AA | rozdz. 12.2 | Zamień żeton na zmierzoną parę z `kontrasty.json` |
-| **K17** | Czwarty krój pisma w widoku | rozdz. 7.2 | Usuń; przypisz treść do jednej z trzech ról |
-| **K18** | Element osiągalny wyłącznie myszą | rozdz. 12.2 | Dodaj obsługę klawiatury i kolejność `Tab` |
+| **1** | Pasek górny przełącza się z motywem | rama atramentowa | Ustaw tło paska na `--dn-rama`; usuń zależność od `data-theme` |
+| **2** | Zmieniona geometria sygnetu (groty, kropka, proporcje, promień) | reguła „rama atramentowa" / rozdz. 4 | Przywróć plik z `zasoby/marka/logo/`; wklej inline bez modyfikacji ścieżek |
+| **3** | Atrybut `disabled` na kontrolce | zero blokad | Usuń atrybut; dodaj komunikat po naciśnięciu albo opis obok |
+| **4** | `pointer-events: none` albo `[inert]` użyte jako brama | zero blokad | jw. |
+| **5** | Stan komunikowany wyłącznie barwą | stan nigdy samym kolorem | Dodaj ikonę z zestawu **i** etykietę słowną |
+| **6** | Sygnał jako tło sekcji, panelu albo nagłówka | jeden akcent | Zamień na `--dn-powierzchnia` / `--dn-panel`; sygnał zostaw obrysowi i kropce |
+| **7** | Sygnał jako tło przycisku głównego | jeden akcent | Zamień na `.dn-btn--atrament` |
+| **8** | Budżet akcentu przekroczony o ≥ 3 punkty procentowe | jeden akcent | Zredukuj wypełnienia sygnałowe do obrysów i kropek |
+| **9** | Ruch jako jedyny nośnik informacji o stanie | jeden ruch ciągły | Dodaj etykietę stanu; ruch zostaw jako wzmocnienie |
+| **10** | Widok traci informację przy `prefers-reduced-motion` | reguła „jeden ruch ciągły" / rozdz. 12 | Przenieś informację do etykiety i ikony |
+| **11** | `#000000` jako tło, tekst albo obrys | rozdz. 6.2 | Zamień na `--dn-szary-1000` albo właściwy żeton semantyczny |
+| **12** | Wartość szesnastkowa wpisana wprost w CSS widoku | rozdz. 6.2 | Zamień na `var(--dn-*)`; brakujący żeton zgłoś zespołowi systemu i architektury |
+| **13** | Emoji użyte jako ikona | rozdz. 8.4 | Zamień na ikonę z `zasoby/ikony/svg/` |
+| **14** | Lorem ipsum, zmyślone nazwisko, zmyślona metryka, fikcyjna firma | rozdz. 11.2 | Zamień na treść z domeny produktu, oznacz jako przykładową |
+| **15** | Brak widocznego fokusu na kontrolce | rozdz. 12.2 | Przywróć `:focus-visible` z `--dn-fokus`, 2 px + odsunięcie 2 px |
+| **16** | Kontrast pary tekst/tło poniżej progu WCAG AA | rozdz. 12.2 | Zamień żeton na zmierzoną parę z `kontrasty.json` |
+| **17** | Czwarty krój pisma w widoku | rozdz. 7.2 | Usuń; przypisz treść do jednej z trzech ról |
+| **18** | Element osiągalny wyłącznie myszą | rozdz. 12.2 | Dodaj obsługę klawiatury i kolejność `Tab` |
 
 ### 15.3. Naruszenia poważne
 
 | Nr | Naruszenie | Reguła | Naprawa |
 |---|---|---|---|
-| **P1** | Godło poza paskiem w widoku niebędącym „głośnym" | rozdz. 4 | Usuń wystąpienie; oznaczenie dziedziczy z ramy |
-| **P2** | Godło w wersji na jasnym tle użyte na ramie | R1 | Zamień na `sygnet-na-ciemnym.svg` |
-| **P3** | Sygnet pełny użyty poniżej 24 px | rozdz. 4.1 | Zamień na `sygnet-uproszczony*.svg` |
-| **P4** | Druga barwa akcentu poza rodziną sygnału i rodzinami stanów | R2 | Usuń; przypisz znaczenie do sygnału albo do stanu |
-| **P5** | Budżet akcentu przekroczony o < 3 punkty procentowe | R2 | Zamień wypełnienia na obrysy |
-| **P6** | Gradient jako tło przycisku, karty albo sekcji | rozdz. 6.2 | Zamień na powierzchnię kryjącą |
-| **P7** | Rozmycie (glassmorfizm) poza nakładką modala | rozdz. 6.2 | Zamień na `--dn-powierzchnia` |
-| **P8** | Drugi rodzaj ruchu ciągłego | R3 | Usuń; zostaw tętno |
-| **P9** | Tętno na elemencie bez biegnącej pracy | R3 | Usuń klasę `--tetno`; kropka statyczna albo brak kropki |
-| **P10** | Parallaks, scrollytelling, karuzela w oknie roboczym | rozdz. 9.3 | Usuń |
-| **P11** | Space Grotesk w treści roboczej albo w oknie operacyjnym | rozdz. 7.2 | Zamień na `--dn-ff-bazowa` |
-| **P12** | Plex Mono w prozie i w komunikatach ciągłych | rozdz. 7.2 | Zamień na `--dn-ff-bazowa` |
-| **P13** | Ikony o różnej grubości obrysu w jednym widoku | rozdz. 8.2 | Ujednolić do 1,75 z zestawu |
-| **P14** | Ikona spoza zestawu | rozdz. 8.4 | Zamień na ikonę z manifestu; brak pojęcia zgłoś Zespołowi A |
-| **P15** | Emblemat środowiska bez kropki albo z więcej niż jedną kropką | rozdz. 8.5 | Przywróć plik z `zasoby/marka/srodowiska/` |
-| **P16** | Komunikat błędu bez następnego kroku | rozdz. 10.3 | Dopisz zdanie z krokiem |
-| **P17** | Żargon marketingowy, wykrzyknik, emoji w tekście interfejsu | rozdz. 10.2 | Przeredaguj rzeczowo |
-| **P18** | Nazwa własna przetłumaczona albo sparafrazowana | rozdz. 10.1 | Przywróć zapis z dokumentacji |
-| **P19** | Wyszarzenie kontrolki jako komunikat o niedostępności | R5 | Usuń wyszarzenie; dodaj opis obok |
-| **P20** | Naciśnięcie bez reakcji zamiast komunikatu | R5 | Dodaj toast z przyczyną i krokiem |
-| **P21** | Dane wyglądające na prawdziwe bez oznaczenia „przykładowe" | rozdz. 11.2 | Dodaj oznaczenie |
-| **P22** | Kontrolka ikonowa bez `aria-label` | rozdz. 12.2 | Dodaj `aria-label` po polsku |
-| **P23** | Więcej niż trzy klasy semantyczne nadawców w oknie komunikacji | R4 | Zredukuj do `--czlowiek / --inteligencja / --system` + plakietka roli |
-| **P24** | Kontrolki na pasku bez modyfikatora `--na-ramie` | R1 | Dodaj `.dn-btn-ikona--na-ramie` |
-| **P25** | Stopień `--dn-fs-display` w widoku cichym albo milczącym | rozdz. 7.3 | Zejdź do `--dn-fs-xl` lub niżej |
+| **1** | Godło poza paskiem w widoku niebędącym „głośnym" | rozdz. 4 | Usuń wystąpienie; oznaczenie dziedziczy z ramy |
+| **2** | Godło w wersji na jasnym tle użyte na ramie | rama atramentowa | Zamień na `sygnet-na-ciemnym.svg` |
+| **3** | Sygnet pełny użyty poniżej 24 px | rozdz. 4.1 | Zamień na `sygnet-uproszczony*.svg` |
+| **4** | Druga barwa akcentu poza rodziną sygnału i rodzinami stanów | jeden akcent | Usuń; przypisz znaczenie do sygnału albo do stanu |
+| **5** | Budżet akcentu przekroczony o < 3 punkty procentowe | jeden akcent | Zamień wypełnienia na obrysy |
+| **6** | Gradient jako tło przycisku, karty albo sekcji | rozdz. 6.2 | Zamień na powierzchnię kryjącą |
+| **7** | Rozmycie (glassmorfizm) poza nakładką modala | rozdz. 6.2 | Zamień na `--dn-powierzchnia` |
+| **8** | Drugi rodzaj ruchu ciągłego | jeden ruch ciągły | Usuń; zostaw tętno |
+| **9** | Tętno na elemencie bez biegnącej pracy | jeden ruch ciągły | Usuń klasę `--tetno`; kropka statyczna albo brak kropki |
+| **10** | Parallaks, scrollytelling, karuzela w oknie roboczym | rozdz. 9.3 | Usuń |
+| **11** | Space Grotesk w treści roboczej albo w oknie operacyjnym | rozdz. 7.2 | Zamień na `--dn-ff-bazowa` |
+| **12** | Plex Mono w prozie i w komunikatach ciągłych | rozdz. 7.2 | Zamień na `--dn-ff-bazowa` |
+| **13** | Ikony o różnej grubości obrysu w jednym widoku | rozdz. 8.2 | Ujednolić do 1,75 z zestawu |
+| **14** | Ikona spoza zestawu | rozdz. 8.4 | Zamień na ikonę z manifestu; brak pojęcia zgłoś zespołowi systemu i architektury |
+| **15** | Emblemat środowiska bez kropki albo z więcej niż jedną kropką | rozdz. 8.5 | Przywróć plik z `zasoby/marka/srodowiska/` |
+| **16** | Komunikat błędu bez następnego kroku | rozdz. 10.3 | Dopisz zdanie z krokiem |
+| **17** | Żargon marketingowy, wykrzyknik, emoji w tekście interfejsu | rozdz. 10.2 | Przeredaguj rzeczowo |
+| **18** | Nazwa własna przetłumaczona albo sparafrazowana | rozdz. 10.1 | Przywróć zapis z dokumentacji |
+| **19** | Wyszarzenie kontrolki jako komunikat o niedostępności | zero blokad | Usuń wyszarzenie; dodaj opis obok |
+| **20** | Naciśnięcie bez reakcji zamiast komunikatu | zero blokad | Dodaj toast z przyczyną i krokiem |
+| **21** | Dane wyglądające na prawdziwe bez oznaczenia „przykładowe" | rozdz. 11.2 | Dodaj oznaczenie |
+| **22** | Kontrolka ikonowa bez `aria-label` | rozdz. 12.2 | Dodaj `aria-label` po polsku |
+| **23** | Więcej niż trzy klasy semantyczne nadawców w oknie komunikacji | stan nigdy samym kolorem | Zredukuj do `--czlowiek / --inteligencja / --system` + plakietka roli |
+| **24** | Kontrolki na pasku bez modyfikatora `--na-ramie` | rama atramentowa | Dodaj `.dn-btn-ikona--na-ramie` |
+| **25** | Stopień `--dn-fs-display` w widoku cichym albo milczącym | rozdz. 7.3 | Zejdź do `--dn-fs-xl` lub niżej |
 
 ### 15.4. Naruszenia drobne
 
 | Nr | Naruszenie | Rozdział | Naprawa |
 |---|---|---|---|
-| **D1** | Odstęp spoza skali 4 px | `KANON` § 2 | Zamień na `--dn-od-*` |
-| **D2** | Promień spoza skali `--dn-r-*` | `KANON` § 2 | Zamień na żeton |
-| **D3** | Czas przejścia wpisany wprost | 9.4 | Zamień na `--dn-czas-*` |
-| **D4** | Krzywa inna niż `--dn-ease` | 9.4 | Zamień na `--dn-ease` |
-| **D5** | Etykieta wersalikowa bez rozstrzelenia | 7.4 | Dodaj `--dn-ls-wersaliki` / `--dn-ls-mono-wersaliki` |
-| **D6** | Liczby w kolumnie bez `tabular-nums` | 7.4 | Dodaj `--dn-ff-mono` + `tabular-nums` |
-| **D7** | Ikona w rozmiarze spoza 14/16/20/24 | 8.3 | Zamień na żeton `--dn-wym-ikona*` |
-| **D8** | Cień spoza kompletu `--dn-cien-*` | 6.2 | Zamień na żeton |
-| **D9** | Przejście dłuższe niż 220 ms poza modalem | 9.3 | Skróć do `--dn-czas-3` |
-| **D10** | Kaskadowe wejście elementów listy | 9.3 | Usuń opóźnienia |
-| **D11** | Animacja `width`/`height` zamiast `transform`/`opacity` | 9.3 | Przenieś na `transform` |
-| **D12** | Mieszanie formy bezosobowej i zwrotu do Operatora w jednym widoku | 10.1 | Ujednolić |
-| **D13** | Ikona dekoracyjna bez `aria-hidden="true"` | 8.4 | Dodaj atrybut |
-| **D14** | Pole ochronne znaku naruszone | 4.1 | Zwiększ odstęp |
-| **D15** | Etykieta stanu w żargonie zamiast w nazwie stanu | R4 | Zamień na nazwę stanu |
+| **1** | Odstęp spoza skali 4 px | kontrakt systemu projektowego | Zamień na `--dn-od-*` |
+| **2** | Promień spoza skali `--dn-r-*` | kontrakt systemu projektowego | Zamień na żeton |
+| **3** | Czas przejścia wpisany wprost | 9.4 | Zamień na `--dn-czas-*` |
+| **4** | Krzywa inna niż `--dn-ease` | 9.4 | Zamień na `--dn-ease` |
+| **5** | Etykieta wersalikowa bez rozstrzelenia | 7.4 | Dodaj `--dn-ls-wersaliki` / `--dn-ls-mono-wersaliki` |
+| **6** | Liczby w kolumnie bez `tabular-nums` | 7.4 | Dodaj `--dn-ff-mono` + `tabular-nums` |
+| **7** | Ikona w rozmiarze spoza 14/16/20/24 | 8.3 | Zamień na żeton `--dn-wym-ikona*` |
+| **8** | Cień spoza kompletu `--dn-cien-*` | 6.2 | Zamień na żeton |
+| **9** | Przejście dłuższe niż 220 ms poza modalem | 9.3 | Skróć do `--dn-czas-3` |
+| **10** | Kaskadowe wejście elementów listy | 9.3 | Usuń opóźnienia |
+| **11** | Animacja `width`/`height` zamiast `transform`/`opacity` | 9.3 | Przenieś na `transform` |
+| **12** | Mieszanie formy bezosobowej i zwrotu do Operatora w jednym widoku | 10.1 | Ujednolić |
+| **13** | Ikona dekoracyjna bez `aria-hidden="true"` | 8.4 | Dodaj atrybut |
+| **14** | Pole ochronne znaku naruszone | 4.1 | Zwiększ odstęp |
+| **15** | Etykieta stanu w żargonie zamiast w nazwie stanu | stan nigdy samym kolorem | Zamień na nazwę stanu |
 
 ### 15.5. Rozkład naruszeń — podsumowanie
 
@@ -1609,26 +1609,26 @@ odstępstwa powołane · termin ponownego odbioru.
 ## 16. Decyzje projektowe
 
 Poniższe rozstrzygnięcia nie wynikają wprost z dokumentacji źródłowej.
-Zostały podjęte w tym opracowaniu, zgodnie z `KANON.md` § 10 pkt 5,
+Zostały podjęte w tym opracowaniu, zgodnie z kontraktem systemu projektowego,
 i wymagają odnotowania.
 
 | # | Decyzja | Alternatywy rozważone | Uzasadnienie wyboru |
 |---:|---|---|---|
 | **1** | Wprowadzenie pojęcia **brand view** jako pięciu warstw (znak · rama · język · słowo · postawa) | (a) brand view jako sam zbiór reguł znaku; (b) brand view jako rozdział księgi marki | Pięć warstw pozwala uporządkować trwałość: znak zmienia Właściciel, budżety zmienia zespół marki, żetony zmienia zespół systemu. Bez tej warstwowości procedura odstępstwa nie miałaby adresata. |
-| **2** | Pięć reguł konstytutywnych R1–R5 zamiast dłuższej listy | (a) dziesięć reguł; (b) reguły per warstwa (barwa, typografia, ruch…) | Pięć reguł da się zapamiętać i wyrecytować przy odbiorze. Reguły per warstwa powielałyby dokumentację systemu; reguły konstytutywne dotyczą **sposobu objawiania się marki**, nie definicji żetonów. |
+| **2** | Pięć reguł konstytutywnych zamiast dłuższej listy | (a) dziesięć reguł; (b) reguły per warstwa (barwa, typografia, ruch…) | Pięć reguł da się zapamiętać i wyrecytować przy odbiorze. Reguły per warstwa powielałyby dokumentację systemu; reguły konstytutywne dotyczą **sposobu objawiania się marki**, nie definicji żetonów. |
 | **3** | Budżet akcentu **5%** jako pułap ogólny, z budżetami szczegółowymi 1–8% per widok | (a) jedna wartość dla wszystkich widoków; (b) brak liczby, ocena jakościowa | Jedna wartość byłaby zbyt luźna dla okna startowego i zbyt ciasna dla AOD. Ocena jakościowa nie daje się sprawdzić przy odbiorze — a polityka ma być sprawdzalna. Wartości szczegółowe wyprowadzone z liczby jednoczesnych wskazań w każdym widoku. |
 | **4** | Metoda pomiaru budżetu: siatka **20 × 20 pól** (1 pole = 0,25%) | (a) pomiar pikselowy narzędziem; (b) inwentaryzacja elementów | Siatka daje powtarzalny wynik w minutę, bez narzędzi, przy `file://`. Pomiar pikselowy jest dokładniejszy, ale nie jest wykonalny podczas odbioru projektu (przed implementacją). Metoda B (inwentaryzacja) pozostaje jako rozstrzygająca w sporze. |
 | **5** | Trzy poziomy głośności marki (**głośna / cicha / milcząca**) z przypisaniem każdego widoku | (a) dwa poziomy (marka jest / marki nie ma); (b) głośność jako decyzja projektanta per widok | Dwa poziomy nie oddają różnicy między powłoką (marka oznacza) a oknem operacyjnym (marka milczy, ale rama nad nim istnieje). Decyzja per widok prowadziłaby do niespójności między modułami. |
-| **6** | Wprowadzenie **terytoriów milczenia bezwzględnego** (treść dokumentu, terminal, edytor kodu) | (a) objęcie tych obszarów zwykłym budżetem 5%; (b) brak rozróżnienia | Produkt, który koloruje cudzą treść własnymi barwami, kłamie o źródle. Wyłączenie podświetlenia składni z budżetu (OS-3) jest tego konsekwencją — inaczej edytor musiałby być monochromatyczny. |
+| **6** | Wprowadzenie **terytoriów milczenia bezwzględnego** (treść dokumentu, terminal, edytor kodu) | (a) objęcie tych obszarów zwykłym budżetem 5%; (b) brak rozróżnienia | Produkt, który koloruje cudzą treść własnymi barwami, kłamie o źródle. Wyłączenie podświetlenia składni z budżetu (odstępstwo stałe dla edytora kodu i terminala) jest tego konsekwencją — inaczej edytor musiałby być monochromatyczny. |
 | **7** | Sygnet **26 px** na pasku 48 px jako rozmiar standardowy w widokach cichych | (a) 20 px; (b) 32 px | 26 px daje pole ochronne 11 px w pasku 48 px (48 − 26 = 22, po 11 z każdej strony) i zachowuje czytelność dwóch grotów. 20 px zbliżałoby do progu wariantu uproszczonego; 32 px nie mieści pola ochronnego. |
 | **8** | **Trzy widoki nad ramą** (AOD, Centrum poleceń, Mobile) dostają sygnet uproszczony 16–20 px | (a) brak znaku; (b) sygnet pełny | Warstwy `--dn-z-aod` (1200) i `--dn-z-centrum-polecen` (1300) leżą nad paskiem, więc godło traci swój dom. Uproszczony sygnet przywraca oznaczenie przy koszcie powierzchni poniżej 0,1%. |
-| **9** | Odstępstwo stałe **OS-1** dla AOD (budżet 8%) zamiast wyjątku milczącego | (a) trzymanie 5% i zmniejszenie rdzenia; (b) brak budżetu dla AOD | Rdzeń AOD jest wprost wymieniony w `KIERUNEK.md` § 3.4 jako wystąpienie elementu sygnaturowego. Zapisanie tego jako odstępstwa stałego pokazuje procedurę rozdz. 13 w działaniu i chroni przed rozlewaniem się wyjątku na inne widoki. |
+| **9** | Odstępstwo stałe dla Always On Display dla AOD (budżet 8%) zamiast wyjątku milczącego | (a) trzymanie 5% i zmniejszenie rdzenia; (b) brak budżetu dla AOD | Rdzeń AOD jest wprost wymieniony w kierunku systemu projektowego jako wystąpienie elementu sygnaturowego. Zapisanie tego jako odstępstwa stałego pokazuje procedurę rozdz. 13 w działaniu i chroni przed rozlewaniem się wyjątku na inne widoki. |
 | **10** | Lista kontrolna ma **39 pozycji w 8 blokach** | (a) 25 pozycji minimum; (b) 60 pozycji szczegółowych | 25 nie pokrywa wszystkich pięciu reguł plus czterech polityk warstwowych plus dostępności. 60 pozycji nie zostałoby przeprowadzone w praktyce. 39 pozycji = ok. 25 minut odbioru jednego widoku. |
 | **11** | Werdykt trójstopniowy z progiem „**3 poważne = niezgodny**" | (a) próg 5; (b) tylko krytyczne decydują | Trzy naruszenia poważne w jednym widoku oznaczają, że wykonawca nie czytał polityki — poprawianie punktowe jest wtedy droższe niż powtórzenie widoku. |
-| **12** | **Katalog naruszeń** jako osobny rozdział z numeracją K/P/D i kolumną „naprawa" | (a) naruszenia opisane przy regułach; (b) brak katalogu | Numeracja pozwala zapisać werdykt jako listę kodów (`K3, P11, D6`), co czyni odbiór porównywalnym między widokami i w czasie. Kolumna „naprawa" skraca iterację — wykonawca dostaje rozwiązanie, nie tylko zarzut. |
+| **12** | **Katalog naruszeń** jako osobny rozdział uporządkowany wagą naruszenia, z kolumną „naprawa" | (a) naruszenia opisane przy regułach; (b) brak katalogu | Podział na wagi pozwala zapisać werdykt jako liczbę naruszeń w każdej z trzech kategorii, co czyni odbiór porównywalnym między widokami i w czasie. Kolumna „naprawa" skraca iterację — wykonawca dostaje rozwiązanie, nie tylko zarzut. |
 | **13** | Terminologia obowiązująca (rozdz. 10.4, załącznik C) ze wskazaniem nazw **zakazanych** | (a) tylko lista nazw obowiązujących | Kolizje są realne: `Workspace` jest jednocześnie modułem i komponentem własnym, więc „workspace" jako synonim środowiska wprowadzałby w błąd. Podobnie `Agents` (moduł) vs. „agent" (potoczna nazwa roli). |
-| **14** | Komunikat błędu jako konstrukcja **dwuczęściowa** (stan + następny krok) | (a) sam stan; (b) trójczęściowa (stan + przyczyna + krok) | Sam stan zamienia komunikat w bramę i narusza R5. Trzecia część (przyczyna techniczna) należy do panelu diagnostycznego, nie do komunikatu w widoku roboczym. |
-| **15** | Odstępstwo **OS-2** dla ekranu głównego Mobile | (a) sygnet + skrócony logotyp; (b) sam sygnet | Pasek na progu `w1` mieści godło **albo** logotyp obok kontrolek. Wybrano logotyp, bo na urządzeniu mobilnym Operator częściej wchodzi do produktu „od zera" i nazwa niesie więcej niż znak. |
+| **14** | Komunikat błędu jako konstrukcja **dwuczęściowa** (stan + następny krok) | (a) sam stan; (b) trójczęściowa (stan + przyczyna + krok) | Sam stan zamienia komunikat w bramę i narusza regułę „zero blokad". Trzecia część (przyczyna techniczna) należy do panelu diagnostycznego, nie do komunikatu w widoku roboczym. |
+| **15** | Odstępstwo stałe dla ekranu głównego Mobile | (a) sygnet + skrócony logotyp; (b) sam sygnet | Pasek na progu `w1` mieści godło **albo** logotyp obok kontrolek. Wybrano logotyp, bo na urządzeniu mobilnym Operator częściej wchodzi do produktu „od zera" i nazwa niesie więcej niż znak. |
 
 ---
 
@@ -1643,28 +1643,27 @@ i wymagają odnotowania.
 ║  Budżet akcentu wg tabeli 6.4: ......... %   Pomiar: ......... %         ║
 ║  Data ..................  Osoba odbierająca ...........................  ║
 ╠══════════════════════════════════════════════════════════════════════════╣
-║  BLOK A · REGUŁY KONSTYTUTYWNE                                           ║
-║  [ ] A1 rama atramentowa w obu motywach              [K1]                ║
-║  [ ] A2 godło tylko na pasku (lub wg rozdz. 4)       [P1]                ║
-║  [ ] A3 godło w barwach własnych, wariant ciemny     [P2]                ║
-║  [ ] A4 budżet akcentu dotrzymany                    [P5/K8]             ║
-║  [ ] A5 sygnał nie jest tłem sekcji ani przycisku    [K6/K7]             ║
-║  [ ] A6 jeden rodzaj ruchu ciągłego                  [P8]                ║
-║  [ ] A7 każdy stan z ikoną albo etykietą             [K5]                ║
-║  [ ] A8 zero blokad w kodzie                         [K3/K4]             ║
+║  BLOK · REGUŁY KONSTYTUTYWNE                                             ║
+║  [ ] rama atramentowa w obu motywach                 krytyczne           ║
+║  [ ] godło tylko na pasku (lub wg rozdz. 4)          poważne             ║
+║  [ ] godło w barwach własnych, wariant ciemny        poważne             ║
+║  [ ] budżet akcentu dotrzymany                       poważne             ║
+║  [ ] sygnał nie jest tłem sekcji ani przycisku       krytyczne           ║
+║  [ ] jeden rodzaj ruchu ciągłego                     poważne             ║
+║  [ ] każdy stan z ikoną albo etykietą                krytyczne           ║
+║  [ ] zero blokad w kodzie                            krytyczne           ║
 ║                                                                          ║
-║  BLOK B · ZNAK                B1 [ ]  B2 [ ]  B3 [ ]  B4 [ ]  B5 [ ]     ║
-║  BLOK C · BARWA               C1 [ ]  C2 [ ]  C3 [ ]  C4 [ ]  C5 [ ]     ║
-║                               C6 [ ]                                     ║
-║  BLOK D · TYPOGRAFIA          D1 [ ]  D2 [ ]  D3 [ ]  D4 [ ]             ║
-║  BLOK E · IKONOGRAFIA         E1 [ ]  E2 [ ]  E3 [ ]                     ║
-║  BLOK F · RUCH                F1 [ ]  F2 [ ]  F3 [ ]                     ║
-║  BLOK G · JĘZYK I TREŚĆ       G1 [ ]  G2 [ ]  G3 [ ]  G4 [ ]  G5 [ ]     ║
-║  BLOK H · DOSTĘPNOŚĆ          H1 [ ]  H2 [ ]  H3 [ ]  H4 [ ]  H5 [ ]     ║
+║  BLOK · ZNAK                  [ ] [ ] [ ] [ ] [ ]                        ║
+║  BLOK · BARWA                 [ ] [ ] [ ] [ ] [ ] [ ]                    ║
+║  BLOK · TYPOGRAFIA            [ ] [ ] [ ] [ ]                            ║
+║  BLOK · IKONOGRAFIA           [ ] [ ] [ ]                                ║
+║  BLOK · RUCH                  [ ] [ ] [ ]                                ║
+║  BLOK · JĘZYK I TREŚĆ         [ ] [ ] [ ] [ ] [ ]                        ║
+║  BLOK · DOSTĘPNOŚĆ            [ ] [ ] [ ] [ ] [ ]                        ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  SPEŁNIONE: ...... / 39                                                  ║
 ║  NARUSZENIA — krytyczne: ......  poważne: ......  drobne: ......         ║
-║  Kody: ................................................................  ║
+║  Uwagi: ...............................................................  ║
 ║  Odstępstwa powołane: .................................................  ║
 ╠══════════════════════════════════════════════════════════════════════════╣
 ║  WERDYKT:   [ ] ZGODNY     [ ] DO POPRAWY     [ ] NIEZGODNY              ║
@@ -1678,23 +1677,23 @@ i wymagają odnotowania.
 
 | Rozdział polityki | Źródło wiążące | Miejsce |
 |---|---|---|
-| 2 · Zasada nadrzędna | `KIERUNEK.md` — deklaracja kierunku | § 1 |
-| 3 · R1 Rama atramentowa | `KIERUNEK.md` § 3.3 · `KANON.md` § 2 (Rama kokpitu) | wprost |
-| 3 · R2 Jeden akcent | `KIERUNEK.md` § 3.1 · `KANON.md` § 2 (Sygnał) | wprost; **budżet 5% — decyzja nr 3** |
-| 3 · R3 Jeden ruch | `KIERUNEK.md` § 2, § 3.4 · `KANON.md` § 2 (Ruch) | wprost |
-| 3 · R4 Stan nie kolorem | `KIERUNEK.md` § 3.1 · `KANON.md` § 9 | wprost |
-| 3 · R5 Zero blokad | ADL-017 · `KANON.md` § 8 | wprost |
-| 4 · Obecność znaku | `KIERUNEK.md` § 3.5 · `KANON.md` § 3, § 7 (inwentarz okien) | forma znaku wprost; **przypisanie per widok — decyzje nr 7, 8** |
+| 2 · Zasada nadrzędna | kierunek systemu projektowego — deklaracja kierunku | § 1 |
+| 3 · Rama atramentowa | kierunek systemu projektowego · kontrakt systemu projektowego (Rama kokpitu) | wprost |
+| 3 · Jeden akcent | kierunek systemu projektowego · kontrakt systemu projektowego (Sygnał) | wprost; **budżet 5% — decyzja nr 3** |
+| 3 · Jeden ruch | kierunek systemu projektowego · kontrakt systemu projektowego (Ruch) | wprost |
+| 3 · Stan nie kolorem | kierunek systemu projektowego · kontrakt systemu projektowego | wprost |
+| 3 · Zero blokad | zasada zero blokad · kontrakt systemu projektowego | wprost |
+| 4 · Obecność znaku | kierunek systemu projektowego · kontrakt systemu projektowego (inwentarz okien) | forma znaku wprost; **przypisanie per widok — decyzje nr 7, 8** |
 | 5 · Hierarchia obecności | — | **decyzja nr 5, 6** |
-| 6 · Barwa | `KANON.md` § 2 · `zasoby/zetony/zetony.css` | wprost; **budżety — decyzja nr 3** |
-| 7 · Typografia | `KIERUNEK.md` § 3.2 · `KANON.md` § 2 | wprost |
-| 8 · Ikonografia | `KIERUNEK.md` § 3.6 · `KANON.md` § 4 | wprost |
-| 9 · Ruch | `KIERUNEK.md` § 2 · `KANON.md` § 11 (wzorzec animacji) | wprost |
-| 10 · Język | `KANON.md` § 10 | wprost; **słownik terminów — decyzja nr 13** |
-| 11 · Treści przykładowe | `KANON.md` § 1 (anty-domyślne), § 10 pkt 3–4 | wprost |
-| 12 · Dostępność | `KANON.md` § 9 · `zasoby/zetony/kontrasty.json` | wprost |
+| 6 · Barwa | kontrakt systemu projektowego · `zasoby/zetony/zetony.css` | wprost; **budżety — decyzja nr 3** |
+| 7 · Typografia | kierunek systemu projektowego · kontrakt systemu projektowego | wprost |
+| 8 · Ikonografia | kierunek systemu projektowego · kontrakt systemu projektowego | wprost |
+| 9 · Ruch | kierunek systemu projektowego · kontrakt systemu projektowego (wzorzec animacji) | wprost |
+| 10 · Język | kontrakt systemu projektowego | wprost; **słownik terminów — decyzja nr 13** |
+| 11 · Treści przykładowe | kontrakt systemu projektowego (anty-domyślne), § 10 pkt 3–4 | wprost |
+| 12 · Dostępność | kontrakt systemu projektowego · `zasoby/zetony/kontrasty.json` | wprost |
 | 13 · Odstępstwa | — | **decyzje nr 9, 15** |
-| 14 · Odbiór | `KANON.md` § 14 (lista sprawdzeń) rozszerzona | **decyzje nr 10, 11** |
+| 14 · Odbiór | kontrakt systemu projektowego (lista sprawdzeń) rozszerzona | **decyzje nr 10, 11** |
 | 15 · Katalog naruszeń | — | **decyzja nr 12** |
 
 **Pliki znaku odczytane i zachowane co do współrzędnej:**
@@ -1703,11 +1702,11 @@ i wymagają odnotowania.
 `zasoby/marka/srodowiska/srodowisko-{talkin,workspace,codestudio,multitaskingai}.svg` ·
 `zasoby/marka/favicon/favicon.svg` · `zasoby/marka/ikona-aplikacji/ikona-aplikacji.svg`
 
-**Uwaga o `PRZEWODNIK-MARKI.md`:** dokument opisuje warstwę wizualną v1.0
+**Uwaga o poprzednie wydanie przewodnika marki:** dokument opisuje warstwę wizualną v1.0
 (granat + złoto, styl „kancelaryjno-nowoczesny"), uznaną przez Właściciela
-za zastępczą i nieobowiązującą (`KIERUNEK.md`, nagłówek „Zastępuje").
+za zastępczą i nieobowiązującą (kierunek systemu projektowego nagłówek „Zastępuje").
 Jego wartości wizualne **nie obowiązują**; obowiązuje wyłącznie zawarta w nim
-zasada oszczędności akcentu, przeniesiona tutaj jako R2 w nowej rodzinie barw.
+zasada oszczędności akcentu, przeniesiona tutaj jako reguła „jeden akcent" w nowej rodzinie barw.
 
 ---
 
@@ -1744,9 +1743,9 @@ zespołów**. Kolumna „nie mówimy" wymienia nazwy zakazane.
 | **Żeton** | Zmienna projektowa `--dn-*`; jedyny dopuszczony nośnik wartości w CSS widoku. | token (dopuszczalne w kodzie), zmienna |
 | **Brand view** | Sposób, w jaki tożsamość marki jest widoczna i egzekwowana w pojedynczym widoku produktu. Pięć warstw: znak, rama, język, słowo, postawa. | branding, identyfikacja wizualna |
 | **Budżet akcentu** | Maksymalny udział powierzchni widoku zajęty przez rodzinę sygnału; wartości per widok w tabeli 6.4. | limit koloru |
-| **Punkt izolacji** | Konfigurowalne miejsce ograniczenia dostępu; stan wyjściowy „wyłączone / pełny dostęp" zgodnie z ADL-017. | blokada, zabezpieczenie |
+| **Punkt izolacji** | Konfigurowalne miejsce ograniczenia dostępu; stan wyjściowy „wyłączone / pełny dostęp" zgodnie z zasadą zero blokad. | blokada, zabezpieczenie |
 | **Panel prowenancji** | Element okna Konfiguracji prezentujący pochodzenie danych i decyzji. | audyt, historia |
-| **Zero blokad** | Zasada nadrzędna platformy (ADL-017): brak `disabled`, komunikat zamiast bramy. | soft lock, tryb bezpieczny |
+| **Zero blokad** | Zasada nadrzędna platformy (zasada zero blokad): brak `disabled`, komunikat zamiast bramy. | soft lock, tryb bezpieczny |
 
 ---
 

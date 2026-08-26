@@ -9,12 +9,12 @@
     "producent": "Danaco Holding Group Sp. z o.o.",
     "tworca": "Dariusz Naharnowicz",
     "kierunek": "monochromatyczna precyzja: odcienie bieli (jasny) + odcienie czerni (ciemny) + jeden blekit sygnalowy",
-    "zrodlo": "01-kierunek/KIERUNEK.md; pomiary kontrastu: kontrasty.json",
+    "zrodlo": "kierunek systemu projektowego; pomiary kontrastu: kontrasty.json",
     "zasady": [
       "jednostka bazowa 4 px",
       "oba motywy rownoprawne — definiowane osobno",
       "stan nigdy samym kolorem",
-      "zero blokad (ADL-017)",
+      "zero blokad",
       "WCAG 2.1 AA na wejsciu",
       "zakaz #000000; #FFFFFF wylacznie jako powierzchnia kart i tekst na atramencie"
     ]
@@ -76,6 +76,8 @@
     "--dn-rama": "#131313",
     "--dn-rama-tekst": "#ECECEC",
     "--dn-rama-tekst-2": "#9E9E9E",
+    "--dn-rama-tekst-3": "#7C7C7C",
+    "--dn-rama-tekst-4": "#616161",
     "--dn-rama-hover": "rgba(255,255,255,0.08)",
     "--dn-rama-obrys": "rgba(255,255,255,0.10)"
   },
@@ -252,7 +254,7 @@
     "prefers-reduced-motion": "wszystko skraca sie do 0,01 ms; tetno kropki zastepuje pierscien statyczny"
   },
   "wymiary": {
-    "_gestosc": "zwarta (kokpit) — rozstrzygniecie L-P-13",
+    "_gestosc": "zwarta (kokpit) — rozstrzygniecie projektowe",
     "--dn-wym-kontrolka": "32px",
     "--dn-wym-ikonowy": "32px",
     "--dn-wym-pasek": "48px",
@@ -304,7 +306,7 @@
     "--dn-tresc-max": "1200px",
     "--dn-siatka-kolumny": "12",
     "--dn-siatka-przerwa": "24px",
-    "_uwaga": "zamkniecie luk L-P-11 i L-P-12"
+    "_uwaga": "zamkniecie luk rozstrzygnięcie projektowe i rozstrzygnięcie projektowe"
   },
   "warstwy": {
     "--dn-z-podloga": 0,
@@ -318,12 +320,12 @@
     "--dn-z-tooltip": 1100,
     "--dn-z-aod": 1200,
     "--dn-z-centrum-polecen": 1300,
-    "_uwaga": "zamkniecie luki L-P-10"
+    "_uwaga": "zamkniecie luki rozstrzygnięcie projektowe"
   },
   "gradienty": {
     "--dn-grad-atrament": "linear-gradient(180deg, #2A2A2A, #131313)",
     "--dn-grad-sygnal": "linear-gradient(135deg, #5C8CEC, #2457C9)",
-    "_zakres": "awatary bez zdjecia, rdzen AOD, grafiki brandowe; NIGDY tla przyciskow, kart i sekcji (zamkniecie luki L-P-09)"
+    "_zakres": "awatary bez zdjecia, rdzen AOD, grafiki brandowe; NIGDY tla przyciskow, kart i sekcji (zamkniecie luki rozstrzygnięcie projektowe)"
   },
   "cienie": {
     "jasny": {

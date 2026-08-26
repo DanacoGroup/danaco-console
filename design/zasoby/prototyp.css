@@ -46,9 +46,11 @@ body.pt-pelny-ekran { overflow: hidden; }
 
 /* ── 2 · OKNO OPERACYJNE (kontener) ─────────────────────────────────────── */
 
+/* Okno prototypu ma nagłówek, dowolną liczbę pasów pomocniczych i treść.
+   Układ kolumnowy przyjmuje każdą liczbę pasów; treść bierze resztę wysokości. */
 .pt-okno {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   margin: var(--dn-od-3) var(--dn-od-3) 0;
   border: 1px solid var(--dn-obrys);
@@ -75,7 +77,8 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-okno-tytul svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); color: var(--dn-tekst-2); }
 .pt-okno-podtytul { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 .pt-okno-narzedzia { margin-left: auto; display: inline-flex; align-items: center; gap: var(--dn-od-1); }
-.pt-okno-tresc { min-height: 0; overflow: auto; }
+.pt-okno-tresc { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.pt-okno > :not(.pt-okno-tresc) { flex: none; }
 .pt-okno-tresc--gniazdo { padding: var(--dn-od-3); }
 
 /* ── 3 · PODZIAŁ NA PANELE ──────────────────────────────────────────────── */
@@ -131,7 +134,8 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-pasek-prototypu .pt-pasek-prawa { margin-left: auto; display: inline-flex; gap: var(--dn-od-2); align-items: center; }
 
 .pt-uchwyt-prototypu {
-  position: fixed; right: var(--dn-od-3); bottom: var(--dn-od-3);
+  /* Nad paskiem stanu — nie zasłania jego prawej strony. */
+  position: fixed; right: var(--dn-od-3); bottom: calc(var(--dn-wym-stan) + var(--dn-od-2));
   z-index: calc(var(--dn-z-powiadomienie) + 1);
   display: inline-flex; align-items: center; gap: var(--dn-od-2);
   height: var(--dn-wym-kontrolka); padding-inline: var(--dn-od-3);
@@ -283,6 +287,10 @@ body.pt-pelny-ekran { overflow: hidden; }
 .pt-okruszki { display: flex; align-items: center; gap: var(--dn-od-1); font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); flex-wrap: wrap; }
 .pt-okruszki svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
 .pt-okruszki [aria-current='page'] { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+/* Okruszki na pasku atramentowym czerpią barwy z rodziny ramy, nie z treści. */
+.dn-pasek .pt-okruszki { color: var(--dn-rama-tekst-2); }
+.dn-pasek .pt-okruszki svg { color: var(--dn-rama-tekst-2); }
+.dn-pasek .pt-okruszki [aria-current='page'] { color: var(--dn-rama-tekst); }
 
 /* wskaźnik pracy w tle — tętno */
 .pt-tetno {

@@ -11,9 +11,9 @@
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | prowadzący system projektowy · projektanci interfejsu · zespół wdrożeniowy (front-end) · osoba odpowiedzialna za dostępność · audyt zgodności wizualnej |
 | **Zakres** | Kompletny rejestr **177 unikalnych nazw żetonów** systemu: trzy warstwy modelu, konwencja nazewnicza, 38 prymitywów barwnych, 5 żetonów ramy kokpitu, 22 żetony typografii, 17 żetonów przestrzeni, 5 żetonów ruchu, 27 żetonów wymiarów (+ dwa nadpisania kontekstowe), 7 żetonów siatki i punktów łamania, 11 warstw `z-index`, 2 gradienty, po 43 żetony semantyczne w każdym z dwóch motywów, komplet 33 pomiarów kontrastu, procedura dodania żetonu |
-| **Czego NIE zawiera** | specyfikacji komponentów `.dn-*` (opracowanie osobne), makiet okien, katalogu ikon, księgi znaku, wytycznych redakcyjnych treści, wartości warstwy funkcjonalnej Danaco Pilot v1.0 (zastąpionych niniejszym pakietem) |
+| **Czego NIE zawiera** | specyfikacji komponentów `.dn-*` (opracowanie osobne), makiet okien, katalogu ikon, księgi znaku, wytycznych redakcyjnych treści, wartości warstwy funkcjonalnej v1.0 (zastąpionych niniejszym pakietem) |
 
-**Źródła wiążące:** `WYNIK/KANON.md` · `zasoby/zetony/zetony.css` (448 linii) · `zasoby/zetony/zetony.json` · `zasoby/zetony/kontrasty.json` (33 pomiary) · `zasoby/css/fundament.css` (156 linii) · `zasoby/css/komponenty.css` (1207 linii) · `design/opracowania/design/01-kierunek/KIERUNEK.md` · `zasoby/ikony/manifest.json` · `brief/INWENTARZ-KOMPONENTOW.md` · `brief/INWENTARZ-OKIEN.md`.
+**Źródła wiążące:** kontrakt systemu projektowego · `zasoby/zetony/zetony.css` (448 linii) · `zasoby/zetony/zetony.json` · `zasoby/zetony/kontrasty.json` (33 pomiary) · `zasoby/css/fundament.css` (156 linii) · `zasoby/css/komponenty.css` (1207 linii) · kierunek systemu projektowego · `zasoby/ikony/manifest.json` · inwentarz komponentów · inwentarz okien platformy.
 
 ---
 
@@ -49,7 +49,7 @@
 
 Żeton nie jest zmienną pomocniczą programisty. Jest **jednostką umowy** między projektem a wdrożeniem: zmiana wartości żetonu jest zmianą systemu, nie zmianą pliku.
 
-> Zasada z KANON-u, rozdz. 2: *nigdy nie wpisuj wartości szesnastkowej wprost. Zawsze `var(--dn-*)`.*
+> Zasada z kontraktu systemu projektowego: *nigdy nie wpisuj wartości szesnastkowej wprost. Zawsze `var(--dn-*)`.*
 
 ### 1.2. Trzy warstwy modelu
 
@@ -126,7 +126,7 @@ prymityw ──► semantyczny ──► komponent ──► wzorzec złożony �
      └──────────────────── ZAKAZ przeskoku ─────────────────────────┘
 ```
 
-Każda warstwa odwołuje się **wyłącznie do warstwy bezpośrednio niższej**. Reguła jest zbieżna z modelem siedmiu warstw systemu opisanym w `brief/INWENTARZ-KOMPONENTOW.md` (rozdz. 3): *prymitywy → tokeny semantyczne → komponenty zdefiniowane `.dn-*` → wzorce złożone → okno operacyjne → moduł → środowisko*.
+Każda warstwa odwołuje się **wyłącznie do warstwy bezpośrednio niższej**. Reguła jest zbieżna z modelem siedmiu warstw systemu opisanym w inwentarz komponentów (rozdz. 3): *prymitywy → tokeny semantyczne → komponenty zdefiniowane `.dn-*` → wzorce złożone → okno operacyjne → moduł → środowisko*.
 
 ---
 
@@ -183,26 +183,26 @@ Nazwy są **polskie i opisowe** — spójnie z konwencją nazw ikon (`zasoby/iko
 
 | Reguła | Treść |
 |---|---|
-| **R1** | Prefiks `--dn-` jest obowiązkowy i niezmienny. Żeton bez tego prefiksu nie należy do systemu. |
-| **R2** | Nazwa grupy jest rzeczownikiem albo skrótem technicznym o ustalonym znaczeniu (tabela 2.2). Nowa grupa wymaga decyzji prowadzącego system. |
-| **R3** | Skale liczbowe rosną wraz z ciemnością (`szary-0` = biel → `szary-1000` = niemal czerń) oraz z nasyceniem (`sygnal-100` najjaśniejszy → `sygnal-800` najciemniejszy). Kierunek jest jednakowy we wszystkich rodzinach barwnych. |
-| **R4** | Żeton semantyczny **nie zawiera liczby stopnia**. `--dn-tekst-2` to druga rola tekstu, nie drugi stopień skali. |
-| **R5** | Sufiks `-hover` oznacza wariant przy najechaniu tej samej roli (`--dn-atrament-hover`, `--dn-sygnal-wypelnienie-hover`, `--dn-rama-hover`). |
-| **R6** | Sufiks `-inv` oznacza inwersję względem tła bieżącego motywu (`--dn-tekst-inv`). |
-| **R7** | Żeton stanu ma zawsze trójkę `-tekst` / `-tlo` / `-obrys`. Nie wolno wprowadzić stanu z niepełną trójką. |
-| **R8** | Nie tworzy się żetonów jednorazowych „pod jeden komponent". Jeżeli wartość występuje raz — należy do komponentu, nie do systemu. |
-| **R9** | Nie tworzy się aliasów semantycznych dla tej samej roli (`--dn-tekst-glowny` obok `--dn-tekst` jest zabroniony). |
-| **R10** | Wartość żetonu semantycznego jest zawsze `var(--dn-<prymityw>)` albo `rgba(...)` wyprowadzoną z prymitywu. Nigdy nowy, niezadeklarowany hex. |
+| **1** | Prefiks `--dn-` jest obowiązkowy i niezmienny. Żeton bez tego prefiksu nie należy do systemu. |
+| **2** | Nazwa grupy jest rzeczownikiem albo skrótem technicznym o ustalonym znaczeniu (tabela 2.2). Nowa grupa wymaga decyzji prowadzącego system. |
+| **3** | Skale liczbowe rosną wraz z ciemnością (`szary-0` = biel → `szary-1000` = niemal czerń) oraz z nasyceniem (`sygnal-100` najjaśniejszy → `sygnal-800` najciemniejszy). Kierunek jest jednakowy we wszystkich rodzinach barwnych. |
+| **4** | Żeton semantyczny **nie zawiera liczby stopnia**. `--dn-tekst-2` to druga rola tekstu, nie drugi stopień skali. |
+| **5** | Sufiks `-hover` oznacza wariant przy najechaniu tej samej roli (`--dn-atrament-hover`, `--dn-sygnal-wypelnienie-hover`, `--dn-rama-hover`). |
+| **6** | Sufiks `-inv` oznacza inwersję względem tła bieżącego motywu (`--dn-tekst-inv`). |
+| **7** | Żeton stanu ma zawsze trójkę `-tekst` / `-tlo` / `-obrys`. Nie wolno wprowadzić stanu z niepełną trójką. |
+| **8** | Nie tworzy się żetonów jednorazowych „pod jeden komponent". Jeżeli wartość występuje raz — należy do komponentu, nie do systemu. |
+| **9** | Nie tworzy się aliasów semantycznych dla tej samej roli (`--dn-tekst-glowny` obok `--dn-tekst` jest zabroniony). |
+| **10** | Wartość żetonu semantycznego jest zawsze `var(--dn-<prymityw>)` albo `rgba(...)` wyprowadzoną z prymitywu. Nigdy nowy, niezadeklarowany hex. |
 
 ---
 
 ## 3. Prymitywy — skala szarości (18 stopni)
 
-Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. KIERUNEK.md, rozdz. 3.1: *„Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu — »odcienie bieli i czerni« dosłownie."*
+Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. kierunek systemu projektowego: *„Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu — »odcienie bieli i czerni« dosłownie."*
 
 | Żeton | Wartość | Kontrast do `#F4F4F4` (tło jasne) | Kontrast do `#0F0F0F` (tło ciemne) | Zastosowanie systemowe | Zakazy |
 |---|---|---:|---:|---|---|
-| `--dn-szary-0` | `#FFFFFF` | 1,10 | 19,17 | jasny: `--dn-powierzchnia`, `--dn-tekst-inv`, `--dn-atrament-tekst`; biel na wypełnieniu sygnałowym i na gradientach | **nigdy jako tło całej strony** (KIERUNEK 3.1) |
+| `--dn-szary-0` | `#FFFFFF` | 1,10 | 19,17 | jasny: `--dn-powierzchnia`, `--dn-tekst-inv`, `--dn-atrament-tekst`; biel na wypełnieniu sygnałowym i na gradientach | **nigdy jako tło całej strony** (kierunek systemu projektowego) |
 | `--dn-szary-25` | `#FAFAFA` | 1,05 | 18,36 | jasny: `--dn-panel`; ciemny: `--dn-atrament-hover` | nie na tekst w motywie jasnym (1,05 wobec tła) |
 | `--dn-szary-50` | `#F4F4F4` | 1,00 | 17,43 | jasny: `--dn-tlo` — papier roboczy kokpitu | nie jako powierzchnia karty (znika na tle) |
 | `--dn-szary-100` | `#ECECEC` | 1,07 | 16,23 | jasny: `--dn-powierzchnia-2`, `--dn-obrys-subtelny`; ciemny: `--dn-tekst`, `--dn-atrament`; rama: `--dn-rama-tekst` | nie jako obrys widoczny w motywie jasnym (1,18 do bieli) |
@@ -210,7 +210,7 @@ Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. KIERUN
 | `--dn-szary-200` | `#D7D7D7` | 1,31 | 13,32 | **stopień rezerwowy** — brak mapowania semantycznego; utrzymywany dla ciągłości skali i wykresów danych | nie wolno użyć wprost w komponencie; wprowadzenie do użycia wymaga nadania roli semantycznej |
 | `--dn-szary-300` | `#C0C0C0` | 1,65 | 10,54 | jasny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako tekst (1,65 wobec tła) |
 | `--dn-szary-400` | `#9E9E9E` | 2,44 | 7,15 | ciemny: `--dn-tekst-2`; rama: `--dn-rama-tekst-2` | **nie jako tekst w motywie jasnym** (2,44 — poniżej progu) |
-| `--dn-szary-500` | `#7C7C7C` | 3,80 | 4,59 | oba motywy: `--dn-tekst-3` | **wyłącznie metadane i tekst ≥ 18,66 px półgruby** (KANON, rozdz. 9); nigdy tekst ciągły |
+| `--dn-szary-500` | `#7C7C7C` | 3,80 | 4,59 | oba motywy: `--dn-tekst-3` | **wyłącznie metadane i tekst ≥ 18,66 px półgruby** (kontrakt systemu projektowego); nigdy tekst ciągły |
 | `--dn-szary-600` | `#616161` | 5,63 | 3,10 | jasny: `--dn-tekst-2` — tekst drugorzędny | nie jako tekst w motywie ciemnym (3,10) |
 | `--dn-szary-700` | `#4A4A4A` | 8,06 | 2,16 | **stopień rezerwowy** — brak mapowania semantycznego; przewidziany dla obrysów o wysokim kontraście na powierzchni jasnej | nie wolno użyć wprost w komponencie |
 | `--dn-szary-750` | `#3A3A3A` | 10,34 | 1,69 | ciemny: `--dn-obrys-mocny` — obrysy kontrolek, kciuk paska przewijania | nie jako powierzchnia (za jasny na tło ciemne) |
@@ -219,7 +219,7 @@ Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. KIERUN
 | `--dn-szary-900` | `#181818` | 16,14 | 1,08 | jasny: `--dn-tekst`, `--dn-atrament`; ciemny: `--dn-powierzchnia` | najlepszy przykład odwrócenia roli między motywami — nie wolno traktować jako „koloru tekstu" |
 | `--dn-szary-925` | `#131313` | 16,89 | 1,03 | **`--dn-rama` w obu motywach**; ciemny: `--dn-powierzchnia-2`; punkt końcowy `--dn-grad-atrament` | nie jako tło treści przełączalnej |
 | `--dn-szary-950` | `#0F0F0F` | 17,43 | 1,00 | ciemny: `--dn-tlo`, `--dn-tekst-inv`, `--dn-atrament-tekst` | nie jako tekst w motywie ciemnym |
-| `--dn-szary-1000` | `#0A0A0A` | 18,00 | 1,03 | jasny: `--dn-atrament-hover`; źródło alfy dla `--dn-hover`, `--dn-wcisniecie`, `--dn-nakladka` i wszystkich cieni motywu jasnego | **kraniec skali — `#000000` jest zakazane** (KIERUNEK 3.1: „czysta czerń zabija głębię i powoduje halację na OLED") |
+| `--dn-szary-1000` | `#0A0A0A` | 18,00 | 1,03 | jasny: `--dn-atrament-hover`; źródło alfy dla `--dn-hover`, `--dn-wcisniecie`, `--dn-nakladka` i wszystkich cieni motywu jasnego | **kraniec skali — `#000000` jest zakazane** (kierunek systemu projektowego: „czysta czerń zabija głębię i powoduje halację na OLED") |
 
 **Zakaz nadrzędny skali:** `#000000` nie występuje w systemie w żadnej postaci barwy powierzchni ani tekstu. Skala kończy się na `#0A0A0A`.
 
@@ -229,7 +229,7 @@ Skala jest **czysto neutralna**: wszystkie trzy składowe RGB są równe. KIERUN
 
 ## 4. Prymitywy — sygnał (8 stopni)
 
-Sygnał jest **jedyną barwą akcentu w systemie**. KIERUNEK.md 3.1: *„Sygnał nie jest barwą przycisków głównych — czerń działa, sygnał wskazuje."* Rodzina informacyjna stanów jest **scalona z rodziną sygnału** — to decyzja celowa, nie oszczędność.
+Sygnał jest **jedyną barwą akcentu w systemie**. kierunek systemu projektowego: *„Sygnał nie jest barwą przycisków głównych — czerń działa, sygnał wskazuje."* Rodzina informacyjna stanów jest **scalona z rodziną sygnału** — to decyzja celowa, nie oszczędność.
 
 | Żeton | Wartość | / `#F4F4F4` | / `#FFFFFF` | / `#0F0F0F` | / `#181818` | Rola systemowa | Zakazy |
 |---|---|---:|---:|---:|---:|---|---|
@@ -294,17 +294,17 @@ Trzy rodziny barwne po cztery stopnie. Czwarty stan systemu — **informacja** �
 
 ### 5.4. Reguła nadrzędna stanów
 
-> **Stan nigdy samym kolorem — zawsze ikona albo etykieta.** (KANON rozdz. 1 i 9; `zetony.json`: *„stan nigdy samym kolorem — zawsze ikona albo etykieta [NIENEGOCJOWALNE]"*.)
+> **Stan nigdy samym kolorem — zawsze ikona albo etykieta.** (kontrakt systemu projektowego; `zetony.json`: *„stan nigdy samym kolorem — zawsze ikona albo etykieta [NIENEGOCJOWALNE]"*.)
 
 Barwa stanu jest wzmocnieniem, nie nośnikiem. Komplet ikon towarzyszących pochodzi z zestawu: `ptaszek-kolo` (sukces), `ostrzezenie` (ostrzeżenie), `blad` (błąd), `info` (informacja).
 
-**Symetria trzech rodzin** — każda ma dokładnie ten sam układ: stopień `-700` (tekst na jasnym), `-400` (tekst na ciemnym oraz źródło alfy), `-200` (obrys na jasnym), `-100` (tło na jasnym). Nowa rodzina stanu musiałaby powtórzyć ten układ w całości (reguła R7).
+**Symetria trzech rodzin** — każda ma dokładnie ten sam układ: stopień `-700` (tekst na jasnym), `-400` (tekst na ciemnym oraz źródło alfy), `-200` (obrys na jasnym), `-100` (tło na jasnym). Nowa rodzina stanu musiałaby powtórzyć ten układ w całości (reguła nazewnicza 7).
 
 ---
 
 ## 6. Rama kokpitu — 5 żetonów stałych w obu motywach
 
-KIERUNEK.md 3.3: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w obu motywach. Ciemna rama wokół przełączalnej treści daje efekt stanowiska dowodzenia i stały dom dla godła, wyszukiwarki i wskaźników."*
+kierunek systemu projektowego: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w obu motywach. Ciemna rama wokół przełączalnej treści daje efekt stanowiska dowodzenia i stały dom dla godła, wyszukiwarki i wskaźników."*
 
 | Żeton | Wartość | Mapuje się na | Kontrast na ramie | Rola |
 |---|---|---|---:|---|
@@ -338,7 +338,7 @@ KIERUNEK.md 3.3: *„Pasek górny jest zawsze atramentowy (`szary-925`) — w ob
 
 ### 7.1. Trzy kroje, trzy role
 
-| Żeton | Wartość (stos) | Rola | Wagi w zestawie | Uzasadnienie (KIERUNEK 3.2) |
+| Żeton | Wartość (stos) | Rola | Wagi w zestawie | Uzasadnienie (kierunek systemu projektowego) |
 |---|---|---|---|---|
 | `--dn-ff-naglowek` | `'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif` | nagłówki, tytuły środowisk, logotyp | 500 · 600 · 700 | geometryczno-techniczny charakter; wyraźna osobowość bez ozdobności; wersaliki do kokpitu |
 | `--dn-ff-bazowa` | `'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif` | interfejs i treść | 400 · 500 · 600 · 700 | krój projektowany do środowisk inżynierskich; czytelność w małych stopniach; wzorowe polskie diakrytyki |
@@ -488,7 +488,10 @@ Konsekwencja: **komponent nigdy nie definiuje własnej obsługi ograniczonego ru
 |---:|---|---:|---|---|
 | 1 | `--dn-wym-kontrolka` | 32 px | przyciski, pola, pozycje wyboru | podstawa gęstości zwartej |
 | 2 | `--dn-wym-ikonowy` | 32 px | przycisk ikonowy (kwadrat) | równy kontrolce — rząd nie „faluje" |
-| 3 | `--dn-wym-pasek` | 48 px | pasek górny (rama) | `--dn-od-12` |
+| 3 | `--dn-wym-belka` | 36 px | belka tytułowa okna (rama) | `--dn-od-9` |
+| 3 | `--dn-wym-szyna` | 56 px | szyna nawigacji środowisk i modułów (rama) | `--dn-od-14` |
+| 3 | `--dn-wym-stan` | 28 px | pasek stanu (rama) | `--dn-od-7` |
+| 3 | `--dn-wym-pasek` | 48 px | pasek narzędzi okna (rama) | `--dn-od-12` |
 | 4 | `--dn-wym-pas-kart` | 36 px | pas kart sesji pod paskiem | |
 | 5 | `--dn-wym-wiersz` | 36 px | wiersz tabeli i listy | równy pasowi kart |
 | 6 | `--dn-wym-boczna` | 224 px | boczna nawigacja modułów | 56 × 4 px |
@@ -506,7 +509,7 @@ Konsekwencja: **komponent nigdy nie definiuje własnej obsługi ograniczonego ru
 | 18 | `--dn-wym-przelacznik-szer` | 36 px | tor przełącznika | |
 | 19 | `--dn-wym-przelacznik-wys` | 20 px | wysokość toru przełącznika | suwak = `wys − 6 px` |
 | 20 | `--dn-wym-check` | 16 px | pole wyboru i opcja jednokrotna | |
-| 21 | `--dn-wym-kropka` | **6 px** | kropka sygnału — element sygnaturowy | rozstrzygnięcie L-P-16 |
+| 21 | `--dn-wym-kropka` | **6 px** | kropka sygnału — element sygnaturowy | rozstrzygnięcie projektowe |
 | 22 | `--dn-wym-wstega` | 2 px | wstęga aktywności karty i pozycji nawigacji | |
 | 23 | `--dn-wym-spinner` | 14 px | wskaźnik pracy w przycisku | |
 | 24 | `--dn-wym-fokus` | 2 px | grubość pierścienia fokusu | |
@@ -516,7 +519,7 @@ Konsekwencja: **komponent nigdy nie definiuje własnej obsługi ograniczonego ru
 
 ### 10.2. Wariant dotykowy — `@media (pointer: coarse)`
 
-Cele dotykowe rosną **żetonem, nie wyjątkiem** (rozstrzygnięcie L-P-14). Sześć nadpisań; reguły komponentów pozostają nietknięte.
+Cele dotykowe rosną **żetonem, nie wyjątkiem** (rozstrzygnięcie projektowe). Sześć nadpisań; reguły komponentów pozostają nietknięte.
 
 | Żeton | Zwarta | Dotyk | Przyrost |
 |---|---:|---:|---:|
@@ -529,7 +532,7 @@ Cele dotykowe rosną **żetonem, nie wyjątkiem** (rozstrzygnięcie L-P-14). Sze
 
 ### 10.3. Wariant przestronny — `[data-gestosc='przestronna']`
 
-Przygotowany w żetonach, **domyślnie nieaktywny** (rozstrzygnięcie L-P-13). Dziewięć nadpisań, w tym dwa spoza grupy wymiarów (stopień bazowy i interlinia bazowa).
+Przygotowany w żetonach, **domyślnie nieaktywny** (rozstrzygnięcie projektowe). Dziewięć nadpisań, w tym dwa spoza grupy wymiarów (stopień bazowy i interlinia bazowa).
 
 | Żeton | Zwarta | Przestronna | Grupa |
 |---|---:|---:|---|
@@ -557,9 +560,6 @@ Przygotowany w żetonach, **domyślnie nieaktywny** (rozstrzygnięcie L-P-13). D
 | `--dn-bp-w2` | 960 px | tablet | boczna nawigacja modułów zwija się do ikon |
 | `--dn-bp-w3` | 1280 px | biurko | pełny kokpit: pasek + pas kart sesji + boczna + obszar roboczy |
 | `--dn-bp-w4` | 1600 px | szerokie biurko | dwa okna komunikacji obok siebie (powłoka środowiska) |
-
-Zamknięcie luki **L-P-11**.
-
 ### 11.2. Siatka treści
 
 | Żeton | Wartość | Rola |
@@ -567,9 +567,6 @@ Zamknięcie luki **L-P-11**.
 | `--dn-tresc-max` | 1200 px | maksymalna szerokość treści dokumentowej |
 | `--dn-siatka-kolumny` | 12 | liczba kolumn siatki |
 | `--dn-siatka-przerwa` | 24 px (`--dn-od-6`) | przerwa między kolumnami |
-
-Zamknięcie luki **L-P-12**.
-
 ```
  ◄── 640 ──►◄──── 960 ────►◄──── 1280 ────►◄──── 1600 ────►
    w1          w2              w3              w4
@@ -582,7 +579,7 @@ Zamknięcie luki **L-P-12**.
 
 ## 12. Warstwy — jedenaście poziomów `z-index`
 
-Zamknięcie luki **L-P-10**. Skala jest rzadka (skoki 100 i większe), aby każde piętro miało zapas na warstwy pośrednie bez renumeracji.
+Skala jest rzadka (skoki 100 i większe), aby każde piętro miało zapas na warstwy pośrednie bez renumeracji.
 
 | Żeton | Wartość | Warstwa | Co leży na tym piętrze |
 |---|---:|---|---|
@@ -617,9 +614,6 @@ Zamknięcie luki **L-P-10**. Skala jest rzadka (skoki 100 i większe), aby każd
 ---
 
 ## 13. Gradienty — dwa, zakres i zakazy
-
-Zamknięcie luki **L-P-09**.
-
 | Żeton | Wartość | Skład | Rola |
 |---|---|---|---|
 | `--dn-grad-atrament` | `linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925))` | `#2A2A2A` → `#131313`, pionowo | tło awatara bez zdjęcia (`.dn-awatar`) |
@@ -633,7 +627,7 @@ Zamknięcie luki **L-P-09**.
 
 ### 13.2. Zakazy bezwzględne
 
-> **Gradient NIGDY nie jest tłem przycisku, karty ani sekcji.** (`zetony.css` rozdz. 9, `zetony.json`, KANON rozdz. 2.)
+> **Gradient NIGDY nie jest tłem przycisku, karty ani sekcji.** (`zetony.css` rozdz. 9, `zetony.json`, kontrakt systemu projektowego.)
 
 Dodatkowo z katalogu anty-domyślnych: **fioletowy gradient „AI"** jest pierwszym zablokowanym odruchem systemu. Oba dopuszczone gradienty są wyprowadzone z zadeklarowanych prymitywów — nie wolno wprowadzić trzeciego bez decyzji prowadzącego system.
 
@@ -794,7 +788,7 @@ To najczystszy przykład inwersji: **ten sam żeton `--dn-atrament` jest czerni�
 
 Fokus w motywie ciemnym jest **o stopień jaśniejszy** niż w jasnym (`sygnal-400` zamiast `sygnal-500`) — inaczej pierścień zlałby się z ciemnym tłem.
 
-### 15.7. Stany (12) — zamknięcie luki L-P-19
+### 15.7. Stany (12)
 
 | Stan | `-tekst` | `-tlo` (alfa) | `-obrys` (alfa) | Tło po złożeniu na `#181818` | Kontrast tekst/tło | Ikona |
 |---|---|---|---|---|---:|---|
@@ -803,7 +797,7 @@ Fokus w motywie ciemnym jest **o stopień jaśniejszy** niż w jasnym (`sygnal-4
 | błąd | `#EE7168` (`czerwien-400`) | `rgba(238,113,104,0.14)` | `rgba(238,113,104,0.34)` | `#362423` | 5,02 | `blad` |
 | informacja | `#8FB2F5` (`sygnal-300`) | `rgba(59,111,224,0.16)` | `rgba(92,140,236,0.40)` | `#1E2638` | 7,09 | `info` |
 
-Komentarz źródłowy w `zetony.css`: *„stany — pełny komplet dla motywu ciemnego (luka L-P-19 zamknięta)"*.
+Komentarz źródłowy w `zetony.css`: *„stany — pełny komplet dla motywu ciemnego"*.
 
 ### 15.8. Cienie (5)
 
@@ -888,7 +882,7 @@ Cienie motywu ciemnego są **głębsze i większe** (rozmycie 24–60 px wobec 2
 |---|---|---:|---|
 | 15 | sukces tekst / tło stanu (jasny) | +0,26 | każde rozjaśnienie `--dn-zielen-700` albo przyciemnienie `--dn-zielen-100` zejdzie poniżej progu |
 | 17 | błąd tekst / tło stanu (jasny) | +0,34 | jw. dla rodziny czerwieni |
-| 13 | obrys kontrolki / tło (jasny) | +0,05 | próg systemowy — patrz decyzja D8 |
+| 13 | obrys kontrolki / tło (jasny) | +0,05 | próg systemowy — patrz rozdz. 19, decyzja o progu obrysu kontrolki |
 | 5 | tekst-2 / powierzchnia-2 (jasny) | +0,74 | `--dn-tekst-2` na wgłębieniu; nie wolno zejść poniżej `szary-600` |
 | 16 | ostrzeżenie tekst / tło stanu (jasny) | +0,76 | jw. dla rodziny bursztynu |
 
@@ -937,19 +931,19 @@ zetony.json
 
 | Reguła | Treść |
 |---|---|
-| **J1** | Klucz zaczynający się od podkreślnika (`_meta`, `_uwaga`, `_zakres`, `_role`, `_licencja`, `_gestosc`) jest **komentarzem**, nie żetonem. Generator ma go pominąć albo przenieść do dokumentacji. |
-| **J2** | Wartości semantyczne w JSON są **rozwiązane do wartości końcowej** (`"--dn-tlo": "#F4F4F4"`), podczas gdy w CSS zapisane są jako odwołanie (`var(--dn-szary-50)`). JSON traci informację o mapowaniu — mapowanie odczytuje się z CSS albo z rozdz. 14–15 niniejszego dokumentu. |
-| **J3** | Warstwy `z-index` są **liczbami**, nie napisami (`"--dn-z-modal": 900`). Pozostałe wartości są napisami z jednostką. |
-| **J4** | Klucze `"dotyk (pointer coarse)"` i `"gestosc-przestronna (data-gestosc)"` w gałęzi `wymiary` opisują **nadpisania kontekstowe**, nie osobne żetony. |
-| **J5** | Gałąź `semantyczne` **nie zawiera** stanów ani cieni — te mają własne gałęzie (`stany-semantyczne`, `cienie`). Suma 26 + 12 + 5 = 43 żetony semantyczne na motyw. |
-| **J6** | Gradienty w JSON zapisane są z **rozwiniętymi wartościami hex** (`linear-gradient(180deg, #2A2A2A, #131313)`), a w CSS przez `var()`. Przy zmianie prymitywu trzeba zaktualizować oba pliki. |
+| **1** | Klucz zaczynający się od podkreślnika (`_meta`, `_uwaga`, `_zakres`, `_role`, `_licencja`, `_gestosc`) jest **komentarzem**, nie żetonem. Generator ma go pominąć albo przenieść do dokumentacji. |
+| **2** | Wartości semantyczne w JSON są **rozwiązane do wartości końcowej** (`"--dn-tlo": "#F4F4F4"`), podczas gdy w CSS zapisane są jako odwołanie (`var(--dn-szary-50)`). JSON traci informację o mapowaniu — mapowanie odczytuje się z CSS albo z rozdz. 14–15 niniejszego dokumentu. |
+| **3** | Warstwy `z-index` są **liczbami**, nie napisami (`"--dn-z-modal": 900`). Pozostałe wartości są napisami z jednostką. |
+| **4** | Klucze `"dotyk (pointer coarse)"` i `"gestosc-przestronna (data-gestosc)"` w gałęzi `wymiary` opisują **nadpisania kontekstowe**, nie osobne żetony. |
+| **5** | Gałąź `semantyczne` **nie zawiera** stanów ani cieni — te mają własne gałęzie (`stany-semantyczne`, `cienie`). Suma 26 + 12 + 5 = 43 żetony semantyczne na motyw. |
+| **6** | Gradienty w JSON zapisane są z **rozwiniętymi wartościami hex** (`linear-gradient(180deg, #2A2A2A, #131313)`), a w CSS przez `var()`. Przy zmianie prymitywu trzeba zaktualizować oba pliki. |
 
 ### 17.4. Sześć zasad z `_meta.zasady` — zapis maszynowy
 
 1. jednostka bazowa 4 px,
 2. oba motywy równoprawne — definiowane osobno,
 3. stan nigdy samym kolorem,
-4. zero blokad (ADL-017),
+4. zero blokad,
 5. WCAG 2.1 AA na wejściu,
 6. zakaz `#000000`; `#FFFFFF` wyłącznie jako powierzchnia kart i tekst na atramencie.
 
@@ -957,7 +951,7 @@ zetony.json
 
 ```
 1. zetony.css      ← źródło prawdy dla aplikacji; zmiana najpierw tutaj
-2. zetony.json     ← odzwierciedlenie wartości (uwaga na J2 i J6)
+2. zetony.json     ← odzwierciedlenie wartości (uwaga na reguły czytania 2 i 6, rozdz. 17.3)
 3. kontrasty.json  ← ponowny pomiar każdej pary dotkniętej zmianą
 4. dokumentacja    ← 04-tokens.md + 04-tokens.html (rozdz. 3–6, 14–16)
 5. komponenty.css  ← wyłącznie jeśli zmiana wprowadza/usuwa nazwę żetonu
@@ -973,8 +967,8 @@ Pominięcie kroku 3 jest **najczęstszym możliwym błędem**: wartość zmienio
 
 | Pytanie | Odpowiedź „nie" oznacza |
 |---|---|
-| Czy wartość wystąpi w **co najmniej dwóch** niezależnych miejscach systemu? | to nie jest żeton — to wartość komponentu (reguła R8) |
-| Czy istniejący żeton **nie** obsługuje tej roli po nadaniu mu właściwej nazwy? | należy poprawić nazwę istniejącego, nie dodawać nowego (reguła R9) |
+| Czy wartość wystąpi w **co najmniej dwóch** niezależnych miejscach systemu? | to nie jest żeton — to wartość komponentu (reguła nazewnicza 8) |
+| Czy istniejący żeton **nie** obsługuje tej roli po nadaniu mu właściwej nazwy? | należy poprawić nazwę istniejącego, nie dodawać nowego (reguła nazewnicza 9) |
 | Czy rola jest **semantyczna** (co to znaczy), a nie opisowa (jak to wygląda)? | nazwa `--dn-niebieski-jasny` jest błędna; `--dn-informacja-tlo` jest poprawna |
 
 Trzy odpowiedzi „tak" otwierają procedurę.
@@ -983,17 +977,17 @@ Trzy odpowiedzi „tak" otwierają procedurę.
 
 | Krok | Czynność | Plik / miejsce | Kryterium zakończenia |
 |---:|---|---|---|
-| 1 | **Ustal warstwę.** Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? | decyzja projektowa | warstwa zapisana; przy nowej rodzinie barwnej wymagana pełna czwórka stopni (reguła R7) |
-| 2 | **Nadaj nazwę** wg konwencji `--dn-<grupa>-<wariant>` i reguł R1–R10 (rozdz. 2.3). | — | nazwa nie koliduje z żadną z istniejących 177 |
-| 3 | **Zadeklaruj w `zetony.css`** w bloku właściwej warstwy: `:root` (niezależny) albo **obu** blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. | `zasoby/zetony/zetony.css` | wartość zapisana jako `var(--dn-<prymityw>)` albo `rgba()` wyprowadzona z prymitywu (reguła R10) |
+| 1 | **Ustal warstwę.** Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? | decyzja projektowa | warstwa zapisana; przy nowej rodzinie barwnej wymagana pełna czwórka stopni (reguła nazewnicza 7) |
+| 2 | **Nadaj nazwę** wg konwencji `--dn-<grupa>-<wariant>` i dziesięciu reguł nazewniczych (rozdz. 2.3). | — | nazwa nie koliduje z żadną z istniejących 177 |
+| 3 | **Zadeklaruj w `zetony.css`** w bloku właściwej warstwy: `:root` (niezależny) albo **obu** blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. | `zasoby/zetony/zetony.css` | wartość zapisana jako `var(--dn-<prymityw>)` albo `rgba()` wyprowadzona z prymitywu (reguła nazewnicza 10) |
 | 4 | **Powiel do bloków `@media (prefers-color-scheme: …)`** — dotyczy wyłącznie żetonów semantycznych. Wartości muszą być identyczne z blokami motywów. | `zasoby/zetony/zetony.css`, rozdz. 11 pliku | oba bloki medialne uzupełnione |
 | 5 | **Zmierz kontrast** każdej nowej pary tekst/tło oraz element/tło i dopisz pomiar do `kontrasty.json` (`para`, `fg`, `bg`, `kontrast`, `prog`, `ok`). Przy alfie mierzy się barwę **po złożeniu** na powierzchni docelowej. | `zasoby/zetony/kontrasty.json` | `ok: true` przy progu 4,5 (tekst) albo 3,0 (element nietekstowy / duży tekst) |
-| 6 | **Odzwierciedl w `zetony.json`** w odpowiedniej gałęzi, z zachowaniem reguł J2, J3 i J6. | `zasoby/zetony/zetony.json` | liczba żetonów w JSON zgadza się z liczbą w CSS |
+| 6 | **Odzwierciedl w `zetony.json`** w odpowiedniej gałęzi, z zachowaniem reguł czytania 2, 3 i 6 (rozdz. 17.3). | `zasoby/zetony/zetony.json` | liczba żetonów w JSON zgadza się z liczbą w CSS |
 | 7 | **Udokumentuj** — dopisz wiersz do właściwej tabeli w `01-dokumentacja-md/04-tokens.md` i kartę w `02-dokumentacja-html/04-tokens.html`; jeżeli żeton wchodzi do komponentu, uzupełnij też dokumentację komponentu. | dokumentacja | rachunek żetonów (rozdz. 1.3) zaktualizowany |
 
 ### 18.3. Lista kontrolna odbioru nowego żetonu
 
-- [ ] Nazwa zgodna z konwencją `--dn-<grupa>-<wariant>` i regułami R1–R10.
+- [ ] Nazwa zgodna z konwencją `--dn-<grupa>-<wariant>` i dziesięcioma regułami nazewniczymi (rozdz. 2.3).
 - [ ] Warstwa ustalona; komponent nie sięga po prymityw (poza sześcioma wyjątkami z rozdz. 1.4).
 - [ ] Żeton semantyczny obecny w **obu** blokach motywów i w **obu** blokach `prefers-color-scheme`.
 - [ ] Wartość zapisana przez `var()` albo `rgba()` z prymitywu — zero nowych hexów.
@@ -1012,11 +1006,11 @@ Trzy odpowiedzi „tak" otwierają procedurę.
 |---|---|
 | dodać żeton wyłącznie do motywu ciemnego „bo w jasnym się nie przyda" | komponent nie wie o motywie; brak wartości = pusta deklaracja `var()` i awaria wizualna |
 | użyć nowego hexa zamiast stopnia skali | skale są zamknięte; nowa wartość rozmywa monochromatyczną precyzję |
-| wprowadzić drugą barwę akcentu | KIERUNEK 3.1: jeden sygnał; rodzina informacyjna jest scalona z sygnałem celowo |
+| wprowadzić drugą barwę akcentu | kierunek systemu projektowego: jeden sygnał; rodzina informacyjna jest scalona z sygnałem celowo |
 | zapisać `z-index` wprost w komponencie | warstwy są zamkniętym rejestrem 11 poziomów |
 | dodać gradient do przycisku, karty albo sekcji | zakaz bezwzględny (rozdz. 13.2) |
 | obsłużyć `prefers-reduced-motion` w komponencie | obsługa jest globalna, w żetonach |
-| zastosować `disabled` jako sposób sygnalizacji stanu | ADL-017 — zero blokad; komunikat po naciśnięciu albo opis obok |
+| zastosować `disabled` jako sposób sygnalizacji stanu | zasada zero blokad; komunikat po naciśnięciu albo opis obok |
 
 ---
 
@@ -1026,22 +1020,22 @@ Sekcja obejmuje rozstrzygnięcia podjęte **ponad** to, co dosłownie rozstrzyga
 
 | # | Kwestia | Rozstrzygnięcie | Podstawa |
 |---:|---|---|---|
-| **D1** | Rachunek żetonów systemu nie był nigdzie podany liczbowo | Ustalono i zapisano: **177 unikalnych nazw** = 134 niezależne od motywu + 43 semantyczne. Liczby wyprowadzono z `zetony.css` przez zliczenie deklaracji w blokach `:root`, `:root[data-theme='light']` i `:root[data-theme='dark']`. | pomiar na pliku źródłowym; zgodność sumy grup z sumą całkowitą potwierdzona |
-| **D2** | Prymitywy `--dn-szary-200` i `--dn-szary-700` nie mają mapowania semantycznego | Nazwano je **stopniami rezerwowymi** i opisano funkcję (ciągłość skali, zapas dla przyszłych ról). Nie usuwa się ich ani nie oznacza jako błędu. | zliczenie użyć w `zetony.css`, `fundament.css`, `komponenty.css` — zero wystąpień poza deklaracją |
-| **D3** | To samo dotyczy `--dn-sygnal-800` | Oznaczono jako stopień rezerwowy z przewidzianą rolą (wciśnięcie wypełnienia sygnałowego). Rola jest **propozycją**, nie stanem obowiązującym — do decyzji prowadzącego system. | analiza rodziny sygnału: `-500` bazowy, `-600` wypełnienie, `-700` wypełnienie-hover; `-800` bez roli |
-| **D4** | Reguła „komponent nie sięga po prymityw" ma w bibliotece odstępstwa | Przeprowadzono inwentaryzację i ustalono **zamkniętą listę sześciu wyjątków** ze wspólnym uzasadnieniem: element leży na powierzchni nieprzełączającej się z motywem. Lista jest zamknięta — siódmy wyjątek wymaga decyzji. | `komponenty.css`, linie 90, 163, 307, 1073, 1083, 1196 |
-| **D5** | `komponenty.css` zawiera jedną wartość szesnastkową wprost: `var(--dn-sygnal-300, #8FB2F5)` | Zakwalifikowano jako **wartość zapasowa `var()`**, nie naruszenie zakazu — hex jest identyczny z wartością żetonu i nie tworzy drugiego źródła prawdy. Odnotowano do rozważenia usunięcia przy najbliższym przeglądzie biblioteki. | `komponenty.css`, linia 163; KANON rozdz. 2 |
-| **D6** | Komentarze w `zetony.css` podają wartości kontrastu zaokrąglone i miejscami rozbieżne z `kontrasty.json` (np. `--dn-tekst-2` opisany jako „6,4:1 na tle", pomiar 3 daje 5,63 na tle i 6,19 na powierzchni; `--dn-sygnal` opisany jako „5,5:1", pomiary 9–10 dają 5,82 i 6,40; `--dn-tekst` w motywie ciemnym opisany „15,0:1 na tle", pomiar 21 daje 16,23 na tle i 15,03 na powierzchni) | **Wiążący jest `kontrasty.json`** — zgodnie z KANON rozdz. 9 („komplet w `zasoby/zetony/kontrasty.json`"). Komentarze CSS potraktowano jako skrót redakcyjny, w którym pomylono odniesienie „tło" z „powierzchnią". Rozbieżność zgłoszono do korekty redakcyjnej pliku; **żadna wartość barwy nie wymaga zmiany**. | porównanie komentarzy `zetony.css` z pomiarami `kontrasty.json` oraz przeliczenie obu par formułą WCAG |
-| **D7** | Wartości kontrastu potrzebne w tabelach rozdz. 3–6, 14–15 wykraczają poza 33 pomiary z `kontrasty.json` | Doliczono brakujące pary **tą samą formułą WCAG 2.1** (luminancja względna). W rozdz. 16 prezentowany jest wyłącznie komplet 33 pomiarów źródłowych; wartości doliczone występują tylko w tabelach opisowych i są tam jednoznacznie przypisane do pary. | metoda identyczna ze źródłem; brak konfliktu wartości tam, gdzie pary się pokrywają |
-| **D8** | Pomiar 13 (obrys kontrolki / tło, jasny) ma zadeklarowany próg **1,6**, który nie jest progiem WCAG | Werdykt nazwano **„próg systemowy"** zamiast AA/AAA i opisano jawnie: obrys `--dn-obrys-mocny` pełni funkcję **rozdzielenia powierzchni**, a nie jedynego nośnika rozpoznania kontrolki — kontrolkę identyfikuje wypełnienie, etykieta i pierścień fokusu (`--dn-fokus`, pomiar 14: 4,21 przy progu 3,0). Kwestia formalnego stosunku do kryterium 1.4.11 pozostaje **otwarta i wskazana do decyzji** prowadzącego system. | `kontrasty.json`, pomiar 13; `komponenty.css` — `.dn-pole-kontrolka`, `.dn-btn--zarys`; KANON rozdz. 9 |
-| **D9** | `--dn-nakladka` motywu ciemnego ma wartość `rgba(0,0,0,0.62)` przy zakazie `#000000` | Zakwalifikowano jako **zgodne z zakazem**: czerń występuje wyłącznie jako krycie warstwy przyciemniającej, nigdy jako barwa powierzchni ani tekstu. Zapisano jako regułę czytania zakazu. | `zetony.css` rozdz. 11; KIERUNEK 3.1 („zakaz czystego `#000000` **jako tła i tekstu**") |
-| **D10** | Kolejność rozstrzygania przy jednoczesnym `pointer: coarse` i `data-gestosc="przestronna"` nie jest w źródłach opisana | Ustalono na podstawie kolejności bloków w pliku: przy równej specyficzności rozstrzyga blok **późniejszy**, czyli `[data-gestosc='przestronna']`. Odnotowano, że kolizja nie daje różnicy widocznej (obie ścieżki dają 40 px kontrolki i 44 px wiersza). | `zetony.css`, rozdz. 12 i 13 pliku |
-| **D11** | Punkty łamania są żetonami, ale CSS nie pozwala użyć `var()` w zapytaniu medialnym | Nazwano to **jedynym dopuszczonym miejscem powtórzenia liczby poza żetonem** i wskazano `matchMedia` jako ścieżkę dla warstwy skryptowej. | ograniczenie techniczne CSS; `zetony.css` rozdz. 7 |
-| **D12** | Układ tła stanów w motywie ciemnym (alfa zamiast prymitywu) nie był opisany jako zasada | Sformułowano zasadę: **tło i obrys stanu w motywie ciemnym to barwa tekstu stanu z kryciem 0,14 i 0,34**, dzięki czemu dostosowują się do powierzchni, na której leżą. Podano wartości po złożeniu na `--dn-powierzchnia`. | `zetony.css` rozdz. 11; przeliczenie kompozycji alfa |
-| **D13** | Asymetria uniesienia powierzchni między motywami (`--dn-panel` jaśniejszy od powierzchni w ciemnym, ciemniejszy w jasnym) mogła wyglądać na niekonsekwencję | Opisano jako **decyzję celową**: w motywie jasnym panel boczny cofa się, w ciemnym wysuwa. Obie ścieżki dają ten sam efekt hierarchii — panel odróżnia się od powierzchni roboczej. | zestawienie wartości `--dn-panel`, `--dn-powierzchnia`, `--dn-tlo` w obu motywach |
-| **D14** | Kolejność aktualizacji plików przy zmianie wartości nie była nigdzie zapisana | Ustalono pięciostopniową kolejność (rozdz. 17.5) z wyróżnieniem kroku 3 (ponowny pomiar kontrastu) jako krytycznego. | KANON rozdz. 9 i 14; struktura pakietu |
-| **D15** | Bramka wstępna przed dodaniem żetonu (trzy pytania) nie istniała w źródłach | Wprowadzono jako narzędzie zapobiegające rozrostowi rejestru; reguły R8 i R9 wyprowadzono z zasady „zero dekoracji bez funkcji" i z zamkniętego charakteru skal. | KIERUNEK rozdz. 1 i 4 |
-| **D16** | Skala stopni pisma jest dwuczęściowa (przyrost 1 px do 14 px, mnożnikowy powyżej) — źródła podają wartości bez opisu kształtu | Opisano kształt skali i jego uzasadnienie (strefa robocza wymaga drobnych różnic, strefa ekspozycyjna wyraźnych skoków). Wartości pozostają bez zmian. | `zetony.css` rozdz. 3; KIERUNEK 3.7 (gęstość zwarta) |
+| **1** | Rachunek żetonów systemu nie był nigdzie podany liczbowo | Ustalono i zapisano: **177 unikalnych nazw** = 134 niezależne od motywu + 43 semantyczne. Liczby wyprowadzono z `zetony.css` przez zliczenie deklaracji w blokach `:root`, `:root[data-theme='light']` i `:root[data-theme='dark']`. | pomiar na pliku źródłowym; zgodność sumy grup z sumą całkowitą potwierdzona |
+| **2** | Prymitywy `--dn-szary-200` i `--dn-szary-700` nie mają mapowania semantycznego | Nazwano je **stopniami rezerwowymi** i opisano funkcję (ciągłość skali, zapas dla przyszłych ról). Nie usuwa się ich ani nie oznacza jako błędu. | zliczenie użyć w `zetony.css`, `fundament.css`, `komponenty.css` — zero wystąpień poza deklaracją |
+| **3** | To samo dotyczy `--dn-sygnal-800` | Oznaczono jako stopień rezerwowy z przewidzianą rolą (wciśnięcie wypełnienia sygnałowego). Rola jest **propozycją**, nie stanem obowiązującym — do decyzji prowadzącego system. | analiza rodziny sygnału: `-500` bazowy, `-600` wypełnienie, `-700` wypełnienie-hover; `-800` bez roli |
+| **4** | Reguła „komponent nie sięga po prymityw" ma w bibliotece odstępstwa | Przeprowadzono inwentaryzację i ustalono **zamkniętą listę sześciu wyjątków** ze wspólnym uzasadnieniem: element leży na powierzchni nieprzełączającej się z motywem. Lista jest zamknięta — siódmy wyjątek wymaga decyzji. | `komponenty.css`, linie 90, 163, 307, 1073, 1083, 1196 |
+| **5** | `komponenty.css` zawiera jedną wartość szesnastkową wprost: `var(--dn-sygnal-300, #8FB2F5)` | Zakwalifikowano jako **wartość zapasowa `var()`**, nie naruszenie zakazu — hex jest identyczny z wartością żetonu i nie tworzy drugiego źródła prawdy. Odnotowano do rozważenia usunięcia przy najbliższym przeglądzie biblioteki. | `komponenty.css`, linia 163; kontrakt systemu projektowego |
+| **6** | Komentarze w `zetony.css` podają wartości kontrastu zaokrąglone i miejscami rozbieżne z `kontrasty.json` (np. `--dn-tekst-2` opisany jako „6,4:1 na tle", pomiar 3 daje 5,63 na tle i 6,19 na powierzchni; `--dn-sygnal` opisany jako „5,5:1", pomiary 9–10 dają 5,82 i 6,40; `--dn-tekst` w motywie ciemnym opisany „15,0:1 na tle", pomiar 21 daje 16,23 na tle i 15,03 na powierzchni) | **Wiążący jest `kontrasty.json`** — zgodnie z kontraktem systemu projektowego („komplet w `zasoby/zetony/kontrasty.json`"). Komentarze CSS potraktowano jako skrót redakcyjny, w którym pomylono odniesienie „tło" z „powierzchnią". Rozbieżność zgłoszono do korekty redakcyjnej pliku; **żadna wartość barwy nie wymaga zmiany**. | porównanie komentarzy `zetony.css` z pomiarami `kontrasty.json` oraz przeliczenie obu par formułą WCAG |
+| **7** | Wartości kontrastu potrzebne w tabelach rozdz. 3–6, 14–15 wykraczają poza 33 pomiary z `kontrasty.json` | Doliczono brakujące pary **tą samą formułą WCAG 2.1** (luminancja względna). W rozdz. 16 prezentowany jest wyłącznie komplet 33 pomiarów źródłowych; wartości doliczone występują tylko w tabelach opisowych i są tam jednoznacznie przypisane do pary. | metoda identyczna ze źródłem; brak konfliktu wartości tam, gdzie pary się pokrywają |
+| **8** | Pomiar 13 (obrys kontrolki / tło, jasny) ma zadeklarowany próg **1,6**, który nie jest progiem WCAG | Werdykt nazwano **„próg systemowy"** zamiast AA/AAA i opisano jawnie: obrys `--dn-obrys-mocny` pełni funkcję **rozdzielenia powierzchni**, a nie jedynego nośnika rozpoznania kontrolki — kontrolkę identyfikuje wypełnienie, etykieta i pierścień fokusu (`--dn-fokus`, pomiar 14: 4,21 przy progu 3,0). Kwestia formalnego stosunku do kryterium 1.4.11 pozostaje **otwarta i wskazana do decyzji** prowadzącego system. | `kontrasty.json`, pomiar 13; `komponenty.css` — `.dn-pole-kontrolka`, `.dn-btn--zarys`; kontrakt systemu projektowego |
+| **9** | `--dn-nakladka` motywu ciemnego ma wartość `rgba(0,0,0,0.62)` przy zakazie `#000000` | Zakwalifikowano jako **zgodne z zakazem**: czerń występuje wyłącznie jako krycie warstwy przyciemniającej, nigdy jako barwa powierzchni ani tekstu. Zapisano jako regułę czytania zakazu. | `zetony.css` rozdz. 11; kierunek systemu projektowego („zakaz czystego `#000000` **jako tła i tekstu**") |
+| **10** | Kolejność rozstrzygania przy jednoczesnym `pointer: coarse` i `data-gestosc="przestronna"` nie jest w źródłach opisana | Ustalono na podstawie kolejności bloków w pliku: przy równej specyficzności rozstrzyga blok **późniejszy**, czyli `[data-gestosc='przestronna']`. Odnotowano, że kolizja nie daje różnicy widocznej (obie ścieżki dają 40 px kontrolki i 44 px wiersza). | `zetony.css`, rozdz. 12 i 13 pliku |
+| **11** | Punkty łamania są żetonami, ale CSS nie pozwala użyć `var()` w zapytaniu medialnym | Nazwano to **jedynym dopuszczonym miejscem powtórzenia liczby poza żetonem** i wskazano `matchMedia` jako ścieżkę dla warstwy skryptowej. | ograniczenie techniczne CSS; `zetony.css` rozdz. 7 |
+| **12** | Układ tła stanów w motywie ciemnym (alfa zamiast prymitywu) nie był opisany jako zasada | Sformułowano zasadę: **tło i obrys stanu w motywie ciemnym to barwa tekstu stanu z kryciem 0,14 i 0,34**, dzięki czemu dostosowują się do powierzchni, na której leżą. Podano wartości po złożeniu na `--dn-powierzchnia`. | `zetony.css` rozdz. 11; przeliczenie kompozycji alfa |
+| **13** | Asymetria uniesienia powierzchni między motywami (`--dn-panel` jaśniejszy od powierzchni w ciemnym, ciemniejszy w jasnym) mogła wyglądać na niekonsekwencję | Opisano jako **decyzję celową**: w motywie jasnym panel boczny cofa się, w ciemnym wysuwa. Obie ścieżki dają ten sam efekt hierarchii — panel odróżnia się od powierzchni roboczej. | zestawienie wartości `--dn-panel`, `--dn-powierzchnia`, `--dn-tlo` w obu motywach |
+| **14** | Kolejność aktualizacji plików przy zmianie wartości nie była nigdzie zapisana | Ustalono pięciostopniową kolejność (rozdz. 17.5) z wyróżnieniem kroku 3 (ponowny pomiar kontrastu) jako krytycznego. | kontrakt systemu projektowego; struktura pakietu |
+| **15** | Bramka wstępna przed dodaniem żetonu (trzy pytania) nie istniała w źródłach | Wprowadzono jako narzędzie zapobiegające rozrostowi rejestru; reguły nazewnicze 8 i 9 wyprowadzono z zasady „zero dekoracji bez funkcji" i z zamkniętego charakteru skal. | kierunek systemu projektowego |
+| **16** | Skala stopni pisma jest dwuczęściowa (przyrost 1 px do 14 px, mnożnikowy powyżej) — źródła podają wartości bez opisu kształtu | Opisano kształt skali i jego uzasadnienie (strefa robocza wymaga drobnych różnic, strefa ekspozycyjna wyraźnych skoków). Wartości pozostają bez zmian. | `zetony.css` rozdz. 3; kierunek systemu projektowego (gęstość zwarta) |
 
 ### 19.1. Kwestie otwarte — do decyzji poza niniejszym opracowaniem
 
@@ -1049,8 +1043,8 @@ Sekcja obejmuje rozstrzygnięcia podjęte **ponad** to, co dosłownie rozstrzyga
 |---|---|---|
 | Formalny stosunek pomiaru 13 do kryterium WCAG 1.4.11 | próg zadeklarowany jako systemowy (1,6); wymaga potwierdzenia albo podniesienia obrysu | prowadzący system + osoba odpowiedzialna za dostępność |
 | Rola `--dn-sygnal-800` | propozycja: wciśnięcie wypełnienia sygnałowego; brak deklaracji w źródłach | prowadzący system |
-| Korekta komentarzy kontrastowych w `zetony.css` (D6) | rozbieżność redakcyjna zidentyfikowana; wartości barw poprawne | prowadzący system |
-| Usunięcie zapasowego hexa w `komponenty.css` linia 163 (D5) | do rozważenia przy przeglądzie biblioteki | prowadzący system |
+| Korekta komentarzy kontrastowych w `zetony.css` | rozbieżność redakcyjna zidentyfikowana; wartości barw poprawne | prowadzący system |
+| Usunięcie zapasowego hexa w `komponenty.css`, linia 163 | do rozważenia przy przeglądzie biblioteki | prowadzący system |
 | Gęstość przestronna jako wybór Operatora w Oknie Ustawień | żetony gotowe; przełącznik niezadeklarowany w inwentarzu okien | prowadzący system + Właściciel |
 | Wprowadzenie stopni rezerwowych (`szary-200`, `szary-700`) do użycia | wymaga nadania roli semantycznej | prowadzący system |
 

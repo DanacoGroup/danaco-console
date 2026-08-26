@@ -1,0 +1,65 @@
+/* PASEK NARZĘDZI OKNA ROBOCZEGO
+   Narzędzia karty bieżącej, na pełną szerokość okna, pod pasmem kart. Istnieje
+   tylko dla kart modułowych — na karcie Centrum dowodzenia nie ma go wcale.
+   Nadmiar pozycji schodzi pod „…" (`[data-nadmiar]`), pasek nigdy nie łamie się
+   do drugiego wiersza. Mechanizm: `pasek-okna.js`. */
+.dn-pasek-okna {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  width: 100%;
+  min-height: var(--dn-wym-pas-kart);
+  padding: 0 var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-wstazka);
+  overflow: hidden;
+}
+.dn-pasek-okna[hidden] { display: none; }
+
+/* Nazwa modułu ustępuje pierwsza: przy wąskim oknie zostaje sam znak modułu,
+   nazwa skraca się wielokropkiem. Narzędzia mają pierwszeństwo przed napisem. */
+.dn-pasek-okna-modul {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: 0 1 auto;
+  min-width: var(--dn-wym-ikona-sm);
+  overflow: hidden;
+  padding-right: var(--dn-od-2);
+  color: var(--dn-tekst-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+}
+.dn-pasek-okna-modul > [data-pasek-modul-nazwa] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dn-pasek-okna-modul svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+
+.dn-pasek-okna-grupa {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+}
+.dn-pasek-okna-rozdzielacz {
+  flex: none;
+  width: 1px;
+  height: var(--dn-wym-ikona-lg);
+  margin: 0 var(--dn-od-1);
+  background: var(--dn-obrys);
+}
+.dn-pasek-okna-odstep { flex: 1 1 auto; }
+
+.dn-pasek-okna [data-nadmiar='tak'] { display: none; }
+/* Grupa bez widocznej pozycji gaśnie razem z nią — inaczej zostaje po niej
+   sam odstęp i pasek nadal nie mieści przycisku „…". */
+.dn-pasek-okna-grupa:not(:has(> *:not([data-nadmiar='tak']))) { display: none; }
+
+.dn-pasek-okna-nadmiar { flex: none; margin-left: auto; }
+.dn-pasek-okna-nadmiar[hidden] { display: none; }

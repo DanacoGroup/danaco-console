@@ -4,7 +4,7 @@
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment |
-| **Warstwa** | marka · system godeł pochodnych (B5) |
+| **Warstwa** | marka · system godeł pochodnych |
 | **Wersja** | v2.0 |
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
@@ -12,8 +12,8 @@
 | **Twórca** | Dariusz Naharnowicz |
 | **Odbiorcy** | projektant wizualny · zespół wdrożeniowy front-end · osoba pakująca aplikację (Tauri, PWA) · dostawca materiałów firmowych |
 | **Zakres** | hierarchia godeł, konstrukcja czterech emblematów środowisk, drabina rozmiarowa 16–64 px, rastry, ikona aplikacji, wariant maskowalny, favicon, ICO, manifest, snippet `<head>`, zasady doboru |
-| **Poza zakresem** | konstrukcja sygnetu i logotypu (→ `03-marka/ksiega-znaku.md`), zestaw ikon interfejsu (→ `zasoby/ikony/manifest.json`), typografia i barwa systemu (→ `KANON.md` rozdz. 2) |
-| **Źródła wiążące** | `KANON.md` rozdz. 3, 4, 5 · `KIERUNEK.md` rozdz. 3.4–3.6 · realne pliki `zasoby/marka/**` · `zasoby/css/komponenty.css` · `zasoby/zetony/zetony.css` |
+| **Poza zakresem** | konstrukcja sygnetu i logotypu (→ `03-marka/ksiega-znaku.md`), zestaw ikon interfejsu (→ `zasoby/ikony/manifest.json`), typografia i barwa systemu (→ kontrakt systemu projektowego) |
+| **Źródła wiążące** | kontrakt systemu projektowego · kierunek systemu projektowego · realne pliki `zasoby/marka/**` · `zasoby/css/komponenty.css` · `zasoby/zetony/zetony.css` |
 | **Wytworzone pliki** | `03-marka/emblematy/` — 102 pliki |
 
 > **Zasada nadrzędna tego opracowania.** Nie powstał tu ani jeden nowy znak.
@@ -75,11 +75,11 @@ Opracowanie dokłada:
 - **generator** (`emblematy/generator-godel.py`) — cały komplet odtwarza się
   jednym poleceniem z tej samej geometrii źródłowej.
 
-### 1.3 Uwaga o dokumencie `PRZEWODNIK-MARKI.md`
+### 1.3 Uwaga o dokumencie poprzednie wydanie przewodnika marki
 
-Plik `design/opracowania/system-wizualny/pakiet/PRZEWODNIK-MARKI.md` (v1.0,
+Plik poprzednie wydanie przewodnika marki (v1.0,
 para **granat + złoto**, tarcza kancelaryjna z monogramem „D") opisuje
-**poprzednią** warstwę wizualną. Zastąpił go `KIERUNEK.md` i `KANON.md` v2.0:
+**poprzednią** warstwę wizualną. Zastąpił go kierunek systemu projektowego i kontrakt systemu projektowego:
 monochrom + jeden błękit sygnałowy, sygnet „Delegacja". W tym opracowaniu
 przewodnik v1.0 pełni wyłącznie rolę historyczną — **żadna jego wartość barwna,
 typograficzna ani konstrukcyjna nie obowiązuje.**
@@ -153,11 +153,11 @@ emblematy stojące obok siebie na stronie głównej nie zlewają się w plamę.
 
 ### 2.4 Czego w gramatyce nie ma i być nie może
 
-- **gradientu** — gradienty są wyłącznie ilustracyjne (`KANON` rozdz. 2), nigdy w godle,
+- **gradientu** — gradienty są wyłącznie ilustracyjne (kontrakt systemu projektowego), nigdy w godle,
 - **drugiej barwy** — jeden emblemat = jedna barwa, także kropka,
 - **wypełnienia obszarowego** — poza kropką wszystko jest obrysem,
 - **cienia, poświaty, obrysu wtórnego**,
-- **emoji jako godła** — bezwzględny zakaz z `KANON` rozdz. 1.
+- **emoji jako godła** — bezwzględny zakaz z kontraktu systemu projektowego.
 
 ---
 
@@ -427,7 +427,7 @@ sesji i przy nadawcy piszącym. Rodzina domyka się na jednej liczbie.
 
 ### 5.1 Napięcie do rozstrzygnięcia
 
-`KIERUNEK.md` rozdz. 3.4 mówi: „w **emblematach czterech środowisk**: każdy
+kierunek systemu projektowego mówi: „w **emblematach czterech środowisk**: każdy
 zawiera dokładnie jedną wypełnioną kropkę" — w akapicie o **kropce sygnału**,
 która jest z definicji błękitna. Realne pliki `srodowisko-*.svg` mają jednak
 `fill="currentColor"` także na kropce. `komponenty.css` rozstrzyga to
@@ -448,7 +448,7 @@ wstęga karty, kreska aktywności).
 sesji do 8 kart, strona główna 4 karty środowisk. Gdyby każdy emblemat niósł
 własną błękitną kropkę, na jednym ekranie zapaliłoby się do **21 punktów
 sygnału naraz** — barwa przestałaby cokolwiek znaczyć, a to jest wprost
-zablokowany odruch z `KANON` rozdz. 1 („Dziewięć kolorów tła dla dziewięciu
+zablokowany odruch z kontraktu systemu projektowego („Dziewięć kolorów tła dla dziewięciu
 nadawców").
 
 ### 5.3 Cztery dopuszczone barwy emblematu
@@ -715,7 +715,7 @@ agresywna maska kołowa nie utnie ani fragmentu kropki.
 **Uproszczenie dla rozmiarów ≤ 32 px.** Rastry 32 px budowane są z wariantu
 `ikona-uproszczona.svg` — jeden grot i kropka zamiast dwóch grotów. Przy 32 px
 kafel ma ok. 8 px marginesu, a znak ok. 16 px szerokości; podwójny grot rozpada
-się wtedy na cztery szare kreski. Reguła progu 24 px z `KANON` rozdz. 3 obowiązuje
+się wtedy na cztery szare kreski. Reguła progu 24 px z kontraktu systemu projektowego obowiązuje
 **dla wielkości renderowanego znaku, nie dla wielkości kafla**.
 
 ### 8.6 Rozmiary PWA
@@ -832,9 +832,9 @@ Trzy defekty wykryte pomiarowo w plikach `zasoby/marka/favicon/`:
 
 | # | Plik zastany | Defekt | Pomiar | Naprawa |
 |---|---|---|---|---|
-| **W-1** | `favicon-16.png` | **kropka sygnału nie istnieje** — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera | histogram: **0 pikseli błękitu**; barwy w pliku wyłącznie `#181818` + alfa | kafel uproszczony ze skalą 0,72 → **2 piksele błękitu** przy 16 px |
-| **W-2** | `favicon-16/32/48.png` | tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart | kontrast `#181818` / `#35363A` = **1,6 : 1** | grunt kryjący `#131313`, znak `#ECECEC` — 16,32 : 1 |
-| **W-3** | `apple-touch-icon.png` | identyczny z `ikona-180.png`, czyli z wypalonym `rx 224`; dodatkowo **białe naroża** po spłaszczeniu alfy | piksel (0,0) = `#FFFFFF` | kwadrat `rx 0`, tryb `RGB`, piksel (0,0) = `#131313` |
+| **1** | `favicon-16.png` | **kropka sygnału nie istnieje** — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera | histogram: **0 pikseli błękitu**; barwy w pliku wyłącznie `#181818` + alfa | kafel uproszczony ze skalą 0,72 → **2 piksele błękitu** przy 16 px |
+| **2** | `favicon-16/32/48.png` | tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart | kontrast `#181818` / `#35363A` = **1,6 : 1** | grunt kryjący `#131313`, znak `#ECECEC` — 16,32 : 1 |
+| **3** | `apple-touch-icon.png` | identyczny z `ikona-180.png`, czyli z wypalonym `rx 224`; dodatkowo **białe naroża** po spłaszczeniu alfy | piksel (0,0) = `#FFFFFF` | kwadrat `rx 0`, tryb `RGB`, piksel (0,0) = `#131313` |
 
 > Naprawy dotyczą **wyłącznie plików wytworzonych w `03-marka/emblematy/`**.
 > Pliki w `zasoby/marka/` pozostawiono nietknięte — ich podmiana jest decyzją
@@ -891,15 +891,15 @@ Plik: `emblematy/favicon/site.webmanifest`
 
 | Pole | Wartość | Źródło |
 |---|---|---|
-| `name` | `Danaco Console — AI Operating Environment` | `KANON` rozdz. 0 |
+| `name` | `Danaco Console — AI Operating Environment` | kontrakt systemu projektowego |
 | `short_name` | `Danaco Console` | — |
-| `lang` | `pl` | `KANON` rozdz. 9 |
+| `lang` | `pl` | kontrakt systemu projektowego |
 | `background_color` | `#0F0F0F` | `--dn-tlo` (motyw ciemny) = `szary-950` |
 | `theme_color` | `#131313` | `--dn-rama` = `szary-925` |
 | `display` | `standalone` | — |
 | `display_override` | `["window-controls-overlay", "standalone"]` | pasek górny aplikacji przejmuje pas tytułowy okna |
 | `icons` | 192, 512, 512 maskowalna, SVG `any` | rozdz. 8.6 |
-| `shortcuts` | cztery środowiska: TalkIn, WorkSpace, CodeStudio, MultitaskingAI | `KANON` rozdz. 6 |
+| `shortcuts` | cztery środowiska: TalkIn, WorkSpace, CodeStudio, MultitaskingAI | kontrakt systemu projektowego |
 
 **Skróty do środowisk** używają rastrów emblematów 192 px — to jedyne miejsce
 w systemie, w którym emblemat środowiska pełni rolę ikony na poziomie systemu
@@ -964,7 +964,7 @@ gdyby wszystkie cztery skróty miały ikonę aplikacji, byłyby nierozróżnialn
 4. **Nie miesza się pięter** — cztery karty środowisk mają cztery emblematy,
    nie cztery sygnety i nie cztery ikony aplikacji.
 5. **Nie dorabia się piątego emblematu** — środowiska są cztery
-   (`KANON` rozdz. 6). Komponenty własne strefy 2 mają **kafle z ikonami**,
+   (kontrakt systemu projektowego). Komponenty własne strefy 2 mają **kafle z ikonami**,
    nie emblematy.
 6. **Nie przebarwia się samej kropki emblematu** (rozdz. 5.2).
 
@@ -985,7 +985,7 @@ gdyby wszystkie cztery skróty miały ikonę aplikacji, byłyby nierozróżnialn
 ```
 
 Kontrola: przy 16 px w kaflu widoczne są **trzy formy** — grunt, grot, kropka.
-W pliku zastanym widoczne były dwie (kropka nie istniała, defekt W-1).
+W pliku zastanym widoczne były dwie (kropka nie istniała — defekt pierwszy).
 
 ### 12.2 Pasek zadań
 
@@ -1122,7 +1122,7 @@ srodowisko-<środowisko>-{24,48,96,192}-{jasny,ciemny}.png
 
 Odtwarza cały komplet: `python3 generator-godel.py`. Zależności: `cairosvg`,
 `Pillow`. Zawiera kontrolę końcową — liczy piksele błękitu w rastrach faviconu
-i przerywa, jeżeli kropka sygnału zniknęła (regresja W-1).
+i przerywa, jeżeli kropka sygnału zniknęła (regresja pierwszego defektu).
 
 ---
 
@@ -1149,7 +1149,7 @@ i przerywa, jeżeli kropka sygnału zniknęła (regresja W-1).
 
 ## 15. Decyzje projektowe
 
-### D-1 · Emblemat pozostaje jednobarwny — kropka nie dostaje błękitu
+### Emblemat pozostaje jednobarwny — kropka nie dostaje błękitu
 
 **Rozstrzygnięcie.** Kropka w emblemacie środowiska jest cytatem **formy**
 sygnetu, nie cytatem **barwy**. Cały emblemat ma jedną barwę, także kropka.
@@ -1163,7 +1163,7 @@ sygnału — barwa przestałaby cokolwiek znaczyć.
 **Konsekwencja.** Rastry PNG emblematów są jednobarwne. Nie istnieje plik
 z niebieską kropką w emblemacie.
 
-### D-2 · Obrys poniżej 24 px rośnie do 1,90 j.
+### Obrys poniżej 24 px rośnie do 1,90 j.
 
 **Rozstrzygnięcie.** Warianty 16 i 20 px mają obrys 1,90 j. zamiast kanonicznych
 1,75 j.
@@ -1171,13 +1171,13 @@ z niebieską kropką w emblemacie.
 **Uzasadnienie.** 1,75 j. przy 16 px daje 1,17 px — linię cieńszą od piksela,
 którą rasteryzator rozmywa na dwa rzędy o połowicznym kryciu. Znak szarzeje
 i traci kontur. 1,90 j. daje 1,27 px z wyraźniejszym rdzeniem. Wartość kanoniczna
-obowiązuje od 24 px w górę — czyli wszędzie tam, gdzie `KANON` rozdz. 4 ją
+obowiązuje od 24 px w górę — czyli wszędzie tam, gdzie kontrakt systemu projektowego ją
 przewiduje.
 
 **Czego nie zrobiono.** Nie zmieniono żadnej współrzędnej w wariantach 20 px —
 wyłącznie grubość obrysu.
 
-### D-3 · WorkSpace 16 px traci obrys czwartego modułu
+### WorkSpace 16 px traci obrys czwartego modułu
 
 **Rozstrzygnięcie.** W wariancie 16 px emblemat WorkSpace ma trzy obrysowe moduły
 i jedną kropkę o promieniu 3,0 j. w miejscu czwartego.
@@ -1190,16 +1190,16 @@ liczba wypełnionych kropek nadal dokładnie jedna.
 **Wariant odrzucony.** Wypełnienie całego czwartego modułu — łamie zasadę
 „dokładnie jedna wypełniona **kropka**" (kwadrat nie jest kropką).
 
-### D-4 · MultitaskingAI nie traci przy 16 px żadnego elementu
+### MultitaskingAI nie traci przy 16 px żadnego elementu
 
 **Rozstrzygnięcie.** Wariant 16 px zachowuje rdzeń, trzy węzły i trzy łączniki;
 uproszczenie polega wyłącznie na pogrubieniu i przeliczeniu łączników.
 
 **Uzasadnienie.** Liczba wykonawców (Executor 1, Executor 2, Executor 3 /
-Validator) jest faktem produktowym z `KANON` rozdz. 7.6. Usunięcie węzła zmienia
+Validator) jest faktem produktowym z kontraktu systemu projektowego. Usunięcie węzła zmienia
 treść znaku. Usunięcie łączników zamienia orkiestrację w cztery niezależne punkty.
 
-### D-5 · Kompozycji ikony aplikacji nie zmieniono mimo nierównych marginesów
+### Kompozycji ikony aplikacji nie zmieniono mimo nierównych marginesów
 
 **Rozstrzygnięcie.** Zachowano zastane `translate(194,6 · 194,6) scale(6,6133)`,
 choć margines lewy (274,0 px) różni się od prawego (237,5 px) o 36,5 px.
@@ -1212,16 +1212,16 @@ w `zasoby/marka/`.
 
 **Odnotowano jako obserwację, nie jako defekt.**
 
-### D-6 · Rastry ikony aplikacji ≤ 32 px używają wariantu uproszczonego
+### Rastry ikony aplikacji ≤ 32 px używają wariantu uproszczonego
 
 **Rozstrzygnięcie.** `ikona-32.png` i wpisy ICO 16 / 24 / 32 budowane są
 z `ikona-uproszczona.svg` (jeden grot).
 
-**Uzasadnienie.** Próg 24 px z `KANON` rozdz. 3 dotyczy **renderowanego znaku**,
+**Uzasadnienie.** Próg 24 px z kontraktu systemu projektowego dotyczy **renderowanego znaku**,
 nie kafla. Przy kaflu 32 px znak ma ok. 16 px szerokości — podwójny grot rozpada
 się na cztery szare kreski. To ta sama reguła, nie odstępstwo od niej.
 
-### D-7 · Rastry faviconu stoją na kryjącym gruncie
+### Rastry faviconu stoją na kryjącym gruncie
 
 **Rozstrzygnięcie.** `favicon-16/32/48.png` i `favicon.ico` to kafle `#131313`
 ze znakiem `#ECECEC` i kropką `#5C8CEC`. `favicon.svg` pozostaje przezroczysty
@@ -1235,7 +1235,7 @@ z 224/1024 ikony aplikacji — to ta sama bryła w dwóch skalach.
 **Koszt świadomy.** Favicon ma widoczny kwadrat. Przyjęty, bo alternatywą jest
 znak niewidoczny dla połowy użytkowników.
 
-### D-8 · ICO budowane bezpośrednim zapisem kontenera
+### ICO budowane bezpośrednim zapisem kontenera
 
 **Rozstrzygnięcie.** Oba pliki ICO powstają przez zapis nagłówka `ICONDIR`
 i tablicy `ICONDIRENTRY` z osobnymi blokami PNG, a nie przez
@@ -1246,15 +1246,15 @@ i tablicy `ICONDIRENTRY` z osobnymi blokami PNG, a nie przez
 pozwala dać każdemu rozmiarowi własną grafikę, co jest oryginalnym powodem
 istnienia formatu ICO.
 
-### D-9 · apple-touch-icon jest kwadratem bez alfy
+### apple-touch-icon jest kwadratem bez alfy
 
 **Rozstrzygnięcie.** 180 × 180 px, `rx 0`, tryb `RGB`.
 
 **Uzasadnienie.** iOS nakłada własną maskę — własne zaokrąglenie daje podwójny
 łuk. iOS nie obsługuje przezroczystości w tej ikonie i kompozytuje ją na czarno,
-co przy zastanym pliku dawało białe naroża (defekt W-3).
+co przy zastanym pliku dawało białe naroża — defekt trzeci.
 
-### D-10 · Manifest niesie skróty do czterech środowisk
+### Manifest niesie skróty do czterech środowisk
 
 **Rozstrzygnięcie.** `shortcuts[]` zawiera cztery pozycje z rastrami emblematów
 192 px.
@@ -1264,16 +1264,16 @@ z tą samą ikoną aplikacji byłyby nierozróżnialne. To jedyne miejsce, w kt�
 emblemat pełni rolę ikony na poziomie systemu operacyjnego; zakaz z rozdz. 11.3
 pkt 1 dotyczy materiałów firmowych, nie interfejsu systemowego.
 
-### D-11 · Plików w `zasoby/marka/` nie podmieniono
+### Plików w `zasoby/marka/` nie podmieniono
 
-**Rozstrzygnięcie.** Trzy wykryte defekty (W-1, W-2, W-3) naprawiono wyłącznie
+**Rozstrzygnięcie.** Trzy wykryte defekty naprawiono wyłącznie
 w plikach wytworzonych w `03-marka/emblematy/`.
 
 **Uzasadnienie.** Podmiana zasobów wspólnych zmieniłaby wygląd wszystkich
 prototypów i opracowań innych zespołów w trakcie pracy. Zalecenie podmiany
 odnotowano; decyzja należy do wdrożenia.
 
-### D-12 · Komplet odtwarzalny generatorem
+### Komplet odtwarzalny generatorem
 
 **Rozstrzygnięcie.** Wszystkie 101 plików graficznych i konfiguracyjnych powstaje
 z jednego skryptu, w którym geometria źródłowa jest wpisana raz, jako stała.

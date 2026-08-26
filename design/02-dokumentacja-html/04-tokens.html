@@ -590,19 +590,19 @@
         <h3>Dziesięć reguł nazewniczych</h3>
         <div class="dok-tabela-owijka">
           <table class="dn-tabela">
-            <caption class="dn-sr-only">Reguły nazewnicze R1–R10</caption>
+            <caption class="dn-sr-only">Dziesięć reguł nazewniczych</caption>
             <thead><tr><th scope="col">Reguła</th><th scope="col">Treść</th></tr></thead>
             <tbody>
-              <tr><td><strong>R1</strong></td><td>Prefiks <span class="dok-mono">--dn-</span> jest obowiązkowy i niezmienny. Żeton bez tego prefiksu nie należy do systemu.</td></tr>
-              <tr><td><strong>R2</strong></td><td>Nazwa grupy jest rzeczownikiem albo skrótem technicznym o ustalonym znaczeniu. Nowa grupa wymaga decyzji prowadzącego system.</td></tr>
-              <tr><td><strong>R3</strong></td><td>Skale liczbowe rosną wraz z ciemnością i nasyceniem. Kierunek jednakowy we wszystkich rodzinach barwnych.</td></tr>
-              <tr><td><strong>R4</strong></td><td>Żeton semantyczny nie zawiera liczby stopnia. <span class="dok-mono">--dn-tekst-2</span> to druga rola tekstu, nie drugi stopień skali.</td></tr>
-              <tr><td><strong>R5</strong></td><td>Sufiks <span class="dok-mono">-hover</span> oznacza wariant przy najechaniu tej samej roli.</td></tr>
-              <tr><td><strong>R6</strong></td><td>Sufiks <span class="dok-mono">-inv</span> oznacza inwersję względem tła bieżącego motywu.</td></tr>
-              <tr><td><strong>R7</strong></td><td>Żeton stanu ma zawsze trójkę <span class="dok-mono">-tekst</span> / <span class="dok-mono">-tlo</span> / <span class="dok-mono">-obrys</span>. Stan z niepełną trójką jest niedopuszczalny.</td></tr>
-              <tr><td><strong>R8</strong></td><td>Nie tworzy się żetonów jednorazowych „pod jeden komponent”. Wartość występująca raz należy do komponentu, nie do systemu.</td></tr>
-              <tr><td><strong>R9</strong></td><td>Nie tworzy się aliasów semantycznych dla tej samej roli.</td></tr>
-              <tr><td><strong>R10</strong></td><td>Wartość żetonu semantycznego to zawsze <span class="dok-mono">var(--dn-&lt;prymityw&gt;)</span> albo <span class="dok-mono">rgba()</span> wyprowadzona z prymitywu. Nigdy nowy hex.</td></tr>
+              <tr><td>2</td><td>Prefiks <span class="dok-mono">--dn-</span> jest obowiązkowy i niezmienny. Żeton bez tego prefiksu nie należy do systemu.</td></tr>
+              <tr><td>3</td><td>Nazwa grupy jest rzeczownikiem albo skrótem technicznym o ustalonym znaczeniu. Nowa grupa wymaga decyzji prowadzącego system.</td></tr>
+              <tr><td>4</td><td>Skale liczbowe rosną wraz z ciemnością i nasyceniem. Kierunek jednakowy we wszystkich rodzinach barwnych.</td></tr>
+              <tr><td>5</td><td>Żeton semantyczny nie zawiera liczby stopnia. <span class="dok-mono">--dn-tekst-2</span> to druga rola tekstu, nie drugi stopień skali.</td></tr>
+              <tr><td>6</td><td>Sufiks <span class="dok-mono">-hover</span> oznacza wariant przy najechaniu tej samej roli.</td></tr>
+              <tr><td>7</td><td>Sufiks <span class="dok-mono">-inv</span> oznacza inwersję względem tła bieżącego motywu.</td></tr>
+              <tr><td>8</td><td>Żeton stanu ma zawsze trójkę <span class="dok-mono">-tekst</span> / <span class="dok-mono">-tlo</span> / <span class="dok-mono">-obrys</span>. Stan z niepełną trójką jest niedopuszczalny.</td></tr>
+              <tr><td>9</td><td>Nie tworzy się żetonów jednorazowych „pod jeden komponent”. Wartość występująca raz należy do komponentu, nie do systemu.</td></tr>
+              <tr><td>10</td><td>Nie tworzy się aliasów semantycznych dla tej samej roli.</td></tr>
+              <tr><td>11</td><td>Wartość żetonu semantycznego to zawsze <span class="dok-mono">var(--dn-&lt;prymityw&gt;)</span> albo <span class="dok-mono">rgba()</span> wyprowadzona z prymitywu. Nigdy nowy hex.</td></tr>
             </tbody>
           </table>
         </div>
@@ -640,7 +640,7 @@
         <h2><span class="dok-nr">03</span> Prymitywy — skala szarości (18 stopni)</h2>
         <p>
           Skala jest <strong>czysto neutralna</strong>: wszystkie trzy składowe RGB są równe.
-          KIERUNEK.md 3.1: „Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu —
+          kierunek systemu projektowego: „Żadnego podbarwienia slate/niebieskiego ani ciepłego beżu —
           »odcienie bieli i czerni« dosłownie.” Kontrasty poniżej są <strong>mierzone w przeglądarce</strong>
           względem bieżącego <span class="dok-mono">--dn-tlo</span> i <span class="dok-mono">--dn-powierzchnia</span>.
         </p>
@@ -690,7 +690,7 @@
       <section class="dok-sekcja" id="s4">
         <h2><span class="dok-nr">04</span> Prymitywy — sygnał (8 stopni)</h2>
         <p>
-          Sygnał jest <strong>jedyną barwą akcentu systemu</strong>. KIERUNEK.md 3.1:
+          Sygnał jest <strong>jedyną barwą akcentu systemu</strong>. kierunek systemu projektowego:
           „Sygnał nie jest barwą przycisków głównych — <strong>czerń działa, sygnał wskazuje</strong>.”
           Rodzina informacyjna stanów jest scalona z rodziną sygnału — decyzja celowa, nie oszczędność.
         </p>
@@ -795,7 +795,7 @@
         <blockquote class="dok-cytat">
           Pasek górny jest zawsze atramentowy (<span class="dok-mono">szary-925</span>) — w obu motywach.
           Ciemna rama wokół przełączalnej treści daje efekt stanowiska dowodzenia i stały dom dla godła,
-          wyszukiwarki i wskaźników. <em>KIERUNEK.md 3.3</em>
+          wyszukiwarki i wskaźników. <em>kierunek systemu projektowego</em>
         </blockquote>
         <div class="dok-demo">
           <div class="dok-demo-naglowek"><span class="dok-demo-tytul">Pięć żetonów ramy — wartości nie zmieniają się z motywem</span></div>
@@ -1010,7 +1010,7 @@
         </div>
 
         <h3>Wariant dotykowy — <span class="dok-mono">@media (pointer: coarse)</span></h3>
-        <p>Cele dotykowe rosną <strong>żetonem, nie wyjątkiem</strong> (rozstrzygnięcie L-P-14). Sześć nadpisań; reguły komponentów pozostają nietknięte.</p>
+        <p>Cele dotykowe rosną <strong>żetonem, nie wyjątkiem</strong> (rozstrzygnięcie projektowe). Sześć nadpisań; reguły komponentów pozostają nietknięte.</p>
         <div class="dok-tabela-owijka">
           <table class="dn-tabela">
             <caption class="dn-sr-only">Nadpisania wymiarów w trybie dotykowym</caption>
@@ -1069,8 +1069,7 @@
       <!-- ==================== 11 · SIATKA I ŁAMANIE ==================== -->
       <section class="dok-sekcja" id="s11">
         <h2><span class="dok-nr">11</span> Siatka i punkty łamania</h2>
-        <p>Zamknięcie luk <strong>L-P-11</strong> (punkty łamania) i <strong>L-P-12</strong> (siatka treści).</p>
-        <div class="dok-demo">
+                <div class="dok-demo">
           <div class="dok-demo-naglowek">
             <span class="dok-demo-tytul">Cztery punkty łamania — bieżąca szerokość okna</span>
             <div class="dok-demo-narzedzia"><span class="dok-licznik dn-dane" id="szerokosc-okna">—</span></div>
@@ -1106,7 +1105,7 @@
       <section class="dok-sekcja" id="s12">
         <h2><span class="dok-nr">12</span> Warstwy — jedenaście poziomów <span class="dok-mono">z-index</span></h2>
         <p>
-          Zamknięcie luki <strong>L-P-10</strong>. Skala jest rzadka (skoki 100 i większe), aby każde
+          Skala jest rzadka (skoki 100 i większe), aby każde
           piętro miało zapas na warstwy pośrednie bez renumeracji.
           <strong>Komponent nigdy nie zapisuje liczby <span class="dok-mono">z-index</span> wprost</strong> —
           nowa warstwa oznacza nowy żeton i decyzję prowadzącego system, nie <span class="dok-mono">z-index: 9999</span>.
@@ -1126,7 +1125,7 @@
       <!-- ==================== 13 · GRADIENTY ==================== -->
       <section class="dok-sekcja" id="s13">
         <h2><span class="dok-nr">13</span> Gradienty — dwa, zakres i zakazy</h2>
-        <p>Zamknięcie luki <strong>L-P-09</strong>. Oba gradienty są <strong>stałe w obu motywach</strong> i wyprowadzone z zadeklarowanych prymitywów.</p>
+        <p>Oba gradienty są <strong>stałe w obu motywach</strong> i wyprowadzone z zadeklarowanych prymitywów.</p>
         <div class="dok-siatka dok-siatka--2">
           <button class="dok-karta-zetonu" type="button" data-kopiuj="var(--dn-grad-atrament)">
             <span class="dok-gradient dok-gradient--atrament">Aa</span>
@@ -1218,7 +1217,7 @@
               </table>
             </div>
           </div>
-          <div class="dok-demo-stopka">Komplet stanów motywu ciemnego zamyka lukę <strong>L-P-19</strong>. Wartości po złożeniu liczone na <span class="dok-mono">--dn-powierzchnia #181818</span>.</div>
+          <div class="dok-demo-stopka">Motyw ciemny ma pełny komplet stanów. Wartości po złożeniu liczone na <span class="dok-mono">--dn-powierzchnia #181818</span>.</div>
         </div>
       </section>
 
@@ -1346,12 +1345,12 @@
             <caption class="dn-sr-only">Reguły czytania pliku JSON</caption>
             <thead><tr><th scope="col">Reguła</th><th scope="col">Treść</th></tr></thead>
             <tbody>
-              <tr><td><strong>J1</strong></td><td>Klucz zaczynający się od podkreślnika (<span class="dok-mono">_meta</span>, <span class="dok-mono">_uwaga</span>, <span class="dok-mono">_zakres</span>, <span class="dok-mono">_role</span>, <span class="dok-mono">_licencja</span>, <span class="dok-mono">_gestosc</span>) jest <strong>komentarzem</strong>, nie żetonem.</td></tr>
-              <tr><td><strong>J2</strong></td><td>Wartości semantyczne w JSON są <strong>rozwiązane do wartości końcowej</strong> (<span class="dok-mono">"--dn-tlo": "#F4F4F4"</span>), a w CSS zapisane jako odwołanie (<span class="dok-mono">var(--dn-szary-50)</span>). JSON traci informację o mapowaniu — odczytuje się ją z CSS albo z rozdz. 14–15.</td></tr>
-              <tr><td><strong>J3</strong></td><td>Warstwy <span class="dok-mono">z-index</span> są <strong>liczbami</strong>, nie napisami. Pozostałe wartości są napisami z jednostką.</td></tr>
-              <tr><td><strong>J4</strong></td><td>Klucze <span class="dok-mono">"dotyk (pointer coarse)"</span> i <span class="dok-mono">"gestosc-przestronna (data-gestosc)"</span> opisują <strong>nadpisania kontekstowe</strong>, nie osobne żetony.</td></tr>
-              <tr><td><strong>J5</strong></td><td>Gałąź <span class="dok-mono">semantyczne</span> nie zawiera stanów ani cieni — te mają własne gałęzie. Suma 26 + 12 + 5 = <strong>43</strong> żetony semantyczne na motyw.</td></tr>
-              <tr><td><strong>J6</strong></td><td>Gradienty w JSON zapisane są z <strong>rozwiniętymi wartościami hex</strong>, a w CSS przez <span class="dok-mono">var()</span>. Przy zmianie prymitywu trzeba zaktualizować oba pliki.</td></tr>
+              <tr><td>2</td><td>Klucz zaczynający się od podkreślnika (<span class="dok-mono">_meta</span>, <span class="dok-mono">_uwaga</span>, <span class="dok-mono">_zakres</span>, <span class="dok-mono">_role</span>, <span class="dok-mono">_licencja</span>, <span class="dok-mono">_gestosc</span>) jest <strong>komentarzem</strong>, nie żetonem.</td></tr>
+              <tr><td>3</td><td>Wartości semantyczne w JSON są <strong>rozwiązane do wartości końcowej</strong> (<span class="dok-mono">"--dn-tlo": "#F4F4F4"</span>), a w CSS zapisane jako odwołanie (<span class="dok-mono">var(--dn-szary-50)</span>). JSON traci informację o mapowaniu — odczytuje się ją z CSS albo z rozdz. 14–15.</td></tr>
+              <tr><td>4</td><td>Warstwy <span class="dok-mono">z-index</span> są <strong>liczbami</strong>, nie napisami. Pozostałe wartości są napisami z jednostką.</td></tr>
+              <tr><td>5</td><td>Klucze <span class="dok-mono">"dotyk (pointer coarse)"</span> i <span class="dok-mono">"gestosc-przestronna (data-gestosc)"</span> opisują <strong>nadpisania kontekstowe</strong>, nie osobne żetony.</td></tr>
+              <tr><td>6</td><td>Gałąź <span class="dok-mono">semantyczne</span> nie zawiera stanów ani cieni — te mają własne gałęzie. Suma 26 + 12 + 5 = <strong>43</strong> żetony semantyczne na motyw.</td></tr>
+              <tr><td>7</td><td>Gradienty w JSON zapisane są z <strong>rozwiniętymi wartościami hex</strong>, a w CSS przez <span class="dok-mono">var()</span>. Przy zmianie prymitywu trzeba zaktualizować oba pliki.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1361,14 +1360,14 @@
           <li>jednostka bazowa 4 px,</li>
           <li>oba motywy równoprawne — definiowane osobno,</li>
           <li>stan nigdy samym kolorem,</li>
-          <li>zero blokad (ADL-017),</li>
+          <li>zero blokad,</li>
           <li>WCAG 2.1 AA na wejściu,</li>
           <li>zakaz <span class="dok-mono">#000000</span>; <span class="dok-mono">#FFFFFF</span> wyłącznie jako powierzchnia kart i tekst na atramencie.</li>
         </ol>
 
         <h3>Kolejność aktualizacji przy zmianie wartości</h3>
         <pre class="dok-ascii">1. zetony.css      ← źródło prawdy dla aplikacji; zmiana najpierw tutaj
-2. zetony.json     ← odzwierciedlenie wartości (uwaga na J2 i J6)
+2. zetony.json     ← odzwierciedlenie wartości (uwaga na reguły czytania 2 i 6)
 3. kontrasty.json  ← ponowny pomiar każdej pary dotkniętej zmianą   ◄ KROK KRYTYCZNY
 4. dokumentacja    ← 04-tokens.md + 04-tokens.html (rozdz. 3–6, 14–16)
 5. komponenty.css  ← wyłącznie jeśli zmiana wprowadza/usuwa nazwę żetonu</pre>
@@ -1388,8 +1387,8 @@
             <caption class="dn-sr-only">Bramka wstępna przed dodaniem żetonu</caption>
             <thead><tr><th scope="col">Pytanie</th><th scope="col">Odpowiedź „nie” oznacza</th></tr></thead>
             <tbody>
-              <tr><td>Czy wartość wystąpi w <strong>co najmniej dwóch</strong> niezależnych miejscach systemu?</td><td>to nie jest żeton — to wartość komponentu (R8)</td></tr>
-              <tr><td>Czy istniejący żeton <strong>nie</strong> obsługuje tej roli po nadaniu mu właściwej nazwy?</td><td>należy poprawić nazwę istniejącego, nie dodawać nowego (R9)</td></tr>
+              <tr><td>Czy wartość wystąpi w <strong>co najmniej dwóch</strong> niezależnych miejscach systemu?</td><td>to nie jest żeton — to wartość komponentu (reguła nazewnicza 8)</td></tr>
+              <tr><td>Czy istniejący żeton <strong>nie</strong> obsługuje tej roli po nadaniu mu właściwej nazwy?</td><td>należy poprawić nazwę istniejącego, nie dodawać nowego (reguła nazewnicza 9)</td></tr>
               <tr><td>Czy rola jest <strong>semantyczna</strong> (co to znaczy), a nie opisowa (jak to wygląda)?</td><td><span class="dok-mono">--dn-niebieski-jasny</span> jest błędne; <span class="dok-mono">--dn-informacja-tlo</span> jest poprawne</td></tr>
             </tbody>
           </table>
@@ -1422,11 +1421,11 @@
             <tbody>
               <tr><td>dodać żeton wyłącznie do jednego motywu</td><td>komponent nie wie o motywie; brak wartości = pusta deklaracja <span class="dok-mono">var()</span> i awaria wizualna</td></tr>
               <tr><td>użyć nowego hexa zamiast stopnia skali</td><td>skale są zamknięte; nowa wartość rozmywa monochromatyczną precyzję</td></tr>
-              <tr><td>wprowadzić drugą barwę akcentu</td><td>KIERUNEK 3.1: jeden sygnał; rodzina informacyjna scalona z sygnałem celowo</td></tr>
+              <tr><td>wprowadzić drugą barwę akcentu</td><td>kierunek systemu projektowego: jeden sygnał; rodzina informacyjna scalona z sygnałem celowo</td></tr>
               <tr><td>zapisać <span class="dok-mono">z-index</span> wprost w komponencie</td><td>warstwy są zamkniętym rejestrem 11 poziomów</td></tr>
               <tr><td>dodać gradient do przycisku, karty albo sekcji</td><td>zakaz bezwzględny (rozdz. 13)</td></tr>
               <tr><td>obsłużyć <span class="dok-mono">prefers-reduced-motion</span> w komponencie</td><td>obsługa jest globalna, w żetonach</td></tr>
-              <tr><td>zastosować <span class="dok-mono">disabled</span> jako sposób sygnalizacji stanu</td><td>ADL-017 — zero blokad; komunikat po naciśnięciu albo opis obok</td></tr>
+              <tr><td>zastosować <span class="dok-mono">disabled</span> jako sposób sygnalizacji stanu</td><td>zasada zero blokad; komunikat po naciśnięciu albo opis obok</td></tr>
             </tbody>
           </table>
         </div>
@@ -1480,7 +1479,7 @@
           <ul>
             <li>Definicję żetonu, trójwarstwowy model systemu i regułę nieprzekraczalną wraz z zamkniętą listą sześciu jawnych wyjątków zinwentaryzowanych w bibliotece komponentów.</li>
             <li>Rachunek żetonów: 177 unikalnych nazw = 134 niezależne od motywu + 43 semantyczne (× 2 motywy).</li>
-            <li>Konwencję nazewniczą z pełną tabelą 30 prefiksów i dziesięcioma regułami R1–R10.</li>
+            <li>Konwencję nazewniczą z pełną tabelą 30 prefiksów i dziesięcioma regułami nazewniczymi.</li>
             <li>Interaktywną przeglądarkę wszystkich żetonów: wyszukiwarka po nazwie, wartości i opisie, filtr grup, kopiowanie do schowka.</li>
             <li>Komplet prymitywów: 18 stopni szarości, 8 stopni sygnału, 12 stopni stanów — każdy z zastosowaniem i zakazami.</li>
             <li>Pięć żetonów ramy kokpitu z podglądem zachowania przy przełączeniu motywu.</li>
@@ -1493,21 +1492,21 @@
             <li>Dwa gradienty z zakresem użycia, zakazami i pomiarem najsłabszego punktu.</li>
             <li>Pełne tabele 43 żetonów semantycznych w każdym motywie — z wartością, mapowaniem i pomiarem.</li>
             <li>Komplet 33 pomiarów kontrastu z werdyktem, zapasem i przeliczeniem kontrolnym.</li>
-            <li>Instrukcję czytania <span class="dn-dane">zetony.json</span> (reguły J1–J6), procedurę dodania żetonu (7 kroków, 12 sprawdzeń) i szesnaście decyzji projektowych.</li>
+            <li>Instrukcję czytania <span class="dn-dane">zetony.json</span> (sześć reguł czytania), procedurę dodania żetonu (7 kroków, 12 sprawdzeń) i szesnaście decyzji projektowych.</li>
           </ul>
 
           <h4>Źródła w dokumentacji</h4>
           <ul>
-            <li><span class="dn-dane">WYNIK/KANON.md</span> — jedyne źródło prawdy projektu; wartości wiążące, zasady, zakazy.</li>
+            <li>kontrakt systemu projektowego — jedyne źródło prawdy projektu; wartości wiążące, zasady, zakazy.</li>
             <li><span class="dn-dane">zasoby/zetony/zetony.css</span> (448 linii) — wszystkie wartości żetonów, oba motywy, dotyk, gęstość przestronna, ograniczony ruch.</li>
             <li><span class="dn-dane">zasoby/zetony/zetony.json</span> — zapis maszynowy, sześć zasad w bloku <span class="dn-dane">_meta</span>.</li>
             <li><span class="dn-dane">zasoby/zetony/kontrasty.json</span> — 33 pomiary + paleta 38 barw; rozdz. 16 odwzorowuje komplet.</li>
             <li><span class="dn-dane">zasoby/css/fundament.css</span> (156 linii) — fokus globalny, wzorce tekstowe, dane tabelaryczne.</li>
             <li><span class="dn-dane">zasoby/css/komponenty.css</span> (1207 linii) — źródło inwentaryzacji sześciu wyjątków od reguły odwołań (linie 90, 163, 307, 1073, 1083, 1196).</li>
-            <li><span class="dn-dane">design/opracowania/design/01-kierunek/KIERUNEK.md</span> — kontrakt kierunku, trzy pokrętła, decyzje fundamentalne 3.1–3.7.</li>
+            <li>kierunek systemu projektowego — kontrakt kierunku, trzy pokrętła, decyzje fundamentalne 3.1–3.7.</li>
             <li><span class="dn-dane">zasoby/ikony/manifest.json</span> — zestaw ikon; wszystkie ikony w tym pliku pochodzą z zestawu (Lucide, siatka 24×24, obrys 1,75).</li>
-            <li><span class="dn-dane">brief/INWENTARZ-KOMPONENTOW.md</span> — model siedmiu warstw systemu (rozdz. 3), zasada rozstrzygania na korzyść plików CSS.</li>
-            <li><span class="dn-dane">brief/INWENTARZ-OKIEN.md</span> — hierarchia trójstopniowa, kontekst okien operacyjnych przywoływanych w przykładach.</li>
+            <li><span class="dn-dane">inwentarz komponentów</span> — model siedmiu warstw systemu (rozdz. 3), zasada rozstrzygania na korzyść plików CSS.</li>
+            <li><span class="dn-dane">inwentarz okien platformy</span> — hierarchia trójstopniowa, kontekst okien operacyjnych przywoływanych w przykładach.</li>
           </ul>
 
           <h4>Jakie interakcje odwzorowano</h4>
@@ -1926,18 +1925,18 @@
     ['D2', 'Prymitywy --dn-szary-200 i --dn-szary-700 nie mają mapowania semantycznego', 'Nazwano je stopniami rezerwowymi i opisano funkcję: ciągłość skali, zapas dla przyszłych ról. Nie usuwa się ich ani nie oznacza jako błędu.', 'zliczenie użyć w zetony.css, fundament.css, komponenty.css — zero wystąpień poza deklaracją'],
     ['D3', 'To samo dotyczy --dn-sygnal-800', 'Oznaczono jako stopień rezerwowy z przewidzianą rolą (wciśnięcie wypełnienia sygnałowego). Rola jest propozycją, nie stanem obowiązującym.', 'analiza rodziny sygnału: -500 bazowy, -600 wypełnienie, -700 wypełnienie-hover; -800 bez roli'],
     ['D4', 'Reguła „komponent nie sięga po prymityw” ma w bibliotece odstępstwa', 'Przeprowadzono inwentaryzację i ustalono zamkniętą listę sześciu wyjątków ze wspólnym uzasadnieniem: element leży na powierzchni nieprzełączającej się z motywem. Lista jest zamknięta.', 'komponenty.css, linie 90, 163, 307, 1073, 1083, 1196'],
-    ['D5', 'komponenty.css zawiera jedną wartość szesnastkową wprost: var(--dn-sygnal-300, #8FB2F5)', 'Zakwalifikowano jako wartość zapasową var(), nie naruszenie zakazu — hex jest identyczny z wartością żetonu i nie tworzy drugiego źródła prawdy. Odnotowano do rozważenia przy przeglądzie biblioteki.', 'komponenty.css, linia 163; KANON rozdz. 2'],
-    ['D6', 'Komentarze w zetony.css podają kontrasty zaokrąglone i miejscami rozbieżne z kontrasty.json (tekst-2 „6,4:1 na tle” wobec 5,63 i 6,19; sygnał „5,5:1” wobec 5,82 i 6,40; tekst ciemny „15,0:1 na tle” wobec 16,23 i 15,03)', 'Wiążący jest kontrasty.json (KANON rozdz. 9). Komentarze CSS potraktowano jako skrót redakcyjny, w którym pomylono odniesienie „tło” z „powierzchnią”. Zgłoszono do korekty redakcyjnej; żadna wartość barwy nie wymaga zmiany.', 'porównanie komentarzy zetony.css z pomiarami kontrasty.json i przeliczenie formułą WCAG'],
+    ['D5', 'komponenty.css zawiera jedną wartość szesnastkową wprost: var(--dn-sygnal-300, #8FB2F5)', 'Zakwalifikowano jako wartość zapasową var(), nie naruszenie zakazu — hex jest identyczny z wartością żetonu i nie tworzy drugiego źródła prawdy. Odnotowano do rozważenia przy przeglądzie biblioteki.', 'komponenty.css, linia 163; kontrakt systemu projektowego'],
+    ['D6', 'Komentarze w zetony.css podają kontrasty zaokrąglone i miejscami rozbieżne z kontrasty.json (tekst-2 „6,4:1 na tle” wobec 5,63 i 6,19; sygnał „5,5:1” wobec 5,82 i 6,40; tekst ciemny „15,0:1 na tle” wobec 16,23 i 15,03)', 'Wiążący jest kontrasty.json (kontrakt systemu projektowego). Komentarze CSS potraktowano jako skrót redakcyjny, w którym pomylono odniesienie „tło” z „powierzchnią”. Zgłoszono do korekty redakcyjnej; żadna wartość barwy nie wymaga zmiany.', 'porównanie komentarzy zetony.css z pomiarami kontrasty.json i przeliczenie formułą WCAG'],
     ['D7', 'Wartości kontrastu potrzebne w tabelach rozdz. 3–6 i 14–15 wykraczają poza 33 pomiary źródłowe', 'Doliczono brakujące pary tą samą formułą WCAG 2.1. Rozdz. 16 prezentuje wyłącznie komplet 33 pomiarów źródłowych; wartości doliczone występują w tabelach opisowych i są przypisane do pary.', 'metoda identyczna ze źródłem; brak konfliktu tam, gdzie pary się pokrywają'],
-    ['D8', 'Pomiar 13 (obrys kontrolki / tło, jasny) ma zadeklarowany próg 1,6, który nie jest progiem WCAG', 'Werdykt nazwano „próg systemowy” zamiast AA/AAA i opisano jawnie: obrys pełni funkcję rozdzielenia powierzchni, a nie jedynego nośnika rozpoznania kontrolki — kontrolkę identyfikuje wypełnienie, etykieta i pierścień fokusu (pomiar 14: 4,21 przy progu 3,0). Stosunek do kryterium 1.4.11 pozostaje kwestią otwartą.', 'kontrasty.json, pomiar 13; komponenty.css — .dn-pole-kontrolka, .dn-btn--zarys; KANON rozdz. 9'],
-    ['D9', '--dn-nakladka motywu ciemnego ma wartość rgba(0,0,0,0.62) przy zakazie #000000', 'Zakwalifikowano jako zgodne z zakazem: czerń występuje wyłącznie jako krycie warstwy przyciemniającej, nigdy jako barwa powierzchni ani tekstu.', 'zetony.css rozdz. 11; KIERUNEK 3.1 — „zakaz czystego #000000 jako tła i tekstu”'],
+    ['D8', 'Pomiar 13 (obrys kontrolki / tło, jasny) ma zadeklarowany próg 1,6, który nie jest progiem WCAG', 'Werdykt nazwano „próg systemowy” zamiast AA/AAA i opisano jawnie: obrys pełni funkcję rozdzielenia powierzchni, a nie jedynego nośnika rozpoznania kontrolki — kontrolkę identyfikuje wypełnienie, etykieta i pierścień fokusu (pomiar 14: 4,21 przy progu 3,0). Stosunek do kryterium 1.4.11 pozostaje kwestią otwartą.', 'kontrasty.json, pomiar 13; komponenty.css — .dn-pole-kontrolka, .dn-btn--zarys; kontrakt systemu projektowego'],
+    ['D9', '--dn-nakladka motywu ciemnego ma wartość rgba(0,0,0,0.62) przy zakazie #000000', 'Zakwalifikowano jako zgodne z zakazem: czerń występuje wyłącznie jako krycie warstwy przyciemniającej, nigdy jako barwa powierzchni ani tekstu.', 'zetony.css rozdz. 11; kierunek systemu projektowego — „zakaz czystego #000000 jako tła i tekstu”'],
     ['D10', 'Kolejność rozstrzygania przy jednoczesnym pointer: coarse i data-gestosc="przestronna" nie jest w źródłach opisana', 'Ustalono na podstawie kolejności bloków: przy równej specyficzności rozstrzyga blok późniejszy, czyli [data-gestosc=przestronna]. Kolizja nie daje różnicy widocznej — obie ścieżki dają 40 px kontrolki i 44 px wiersza.', 'zetony.css, rozdz. 12 i 13 pliku'],
     ['D11', 'Punkty łamania są żetonami, ale CSS nie pozwala użyć var() w zapytaniu medialnym', 'Nazwano to jedynym dopuszczonym miejscem powtórzenia liczby poza żetonem; wskazano matchMedia jako ścieżkę dla warstwy skryptowej.', 'ograniczenie techniczne CSS; zetony.css rozdz. 7'],
     ['D12', 'Układ tła stanów w motywie ciemnym (alfa zamiast prymitywu) nie był opisany jako zasada', 'Sformułowano zasadę: tło i obrys stanu w motywie ciemnym to barwa tekstu stanu z kryciem 0,14 i 0,34, dzięki czemu dostosowują się do powierzchni. Podano wartości po złożeniu.', 'zetony.css rozdz. 11; przeliczenie kompozycji alfa'],
     ['D13', 'Asymetria uniesienia powierzchni między motywami mogła wyglądać na niekonsekwencję', 'Opisano jako decyzję celową: w motywie jasnym panel boczny cofa się, w ciemnym wysuwa. Obie ścieżki dają ten sam efekt hierarchii.', 'zestawienie wartości --dn-panel, --dn-powierzchnia i --dn-tlo w obu motywach'],
-    ['D14', 'Kolejność aktualizacji plików przy zmianie wartości nie była nigdzie zapisana', 'Ustalono pięciostopniową kolejność z wyróżnieniem kroku 3 (ponowny pomiar kontrastu) jako krytycznego.', 'KANON rozdz. 9 i 14; struktura pakietu'],
-    ['D15', 'Bramka wstępna przed dodaniem żetonu nie istniała w źródłach', 'Wprowadzono trzy pytania zapobiegające rozrostowi rejestru; reguły R8 i R9 wyprowadzono z zasady „zero dekoracji bez funkcji” i z zamkniętego charakteru skal.', 'KIERUNEK rozdz. 1 i 4'],
-    ['D16', 'Skala stopni pisma jest dwuczęściowa — źródła podają wartości bez opisu kształtu', 'Opisano kształt skali i jego uzasadnienie: strefa robocza wymaga drobnych różnic, strefa ekspozycyjna wyraźnych skoków. Wartości pozostają bez zmian.', 'zetony.css rozdz. 3; KIERUNEK 3.7']
+    ['D14', 'Kolejność aktualizacji plików przy zmianie wartości nie była nigdzie zapisana', 'Ustalono pięciostopniową kolejność z wyróżnieniem kroku 3 (ponowny pomiar kontrastu) jako krytycznego.', 'kontrakt systemu projektowego; struktura pakietu'],
+    ['D15', 'Bramka wstępna przed dodaniem żetonu nie istniała w źródłach', 'Wprowadzono trzy pytania zapobiegające rozrostowi rejestru; reguły nazewnicze 8 i 9 wyprowadzono z zasady „zero dekoracji bez funkcji” i z zamkniętego charakteru skal.', 'kierunek systemu projektowego'],
+    ['D16', 'Skala stopni pisma jest dwuczęściowa — źródła podają wartości bez opisu kształtu', 'Opisano kształt skali i jego uzasadnienie: strefa robocza wymaga drobnych różnic, strefa ekspozycyjna wyraźnych skoków. Wartości pozostają bez zmian.', 'zetony.css rozdz. 3; kierunek systemu projektowego']
   ];
 
   /* Pozostałe rejestry — [nazwa, wartość deklarowana, opis] */
@@ -2053,16 +2052,16 @@
     ['--dn-grad-sygnal', 'linear-gradient(135deg, #5C8CEC, #2457C9)', 'medalion jednostki inteligencji, rdzeń AOD']
   ];
   var KROKI = [
-    ['Ustal warstwę', 'Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? Przy nowej rodzinie barwnej wymagana jest pełna czwórka stopni (R7).'],
-    ['Nadaj nazwę', 'Wzór --dn-&lt;grupa&gt;-&lt;wariant&gt; i reguły R1–R10. Nazwa nie może kolidować z żadną z istniejących 177.'],
-    ['Zadeklaruj w zetony.css', 'W bloku :root (niezależny) albo w OBU blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. Wartość zapisana jako var(--dn-&lt;prymityw&gt;) albo rgba() z prymitywu (R10).'],
+    ['Ustal warstwę', 'Prymityw czy semantyczny? Jeżeli semantyczny — czy potrzebuje nowego prymitywu, czy wystarczy istniejący stopień skali? Przy nowej rodzinie barwnej wymagana jest pełna czwórka stopni (reguła nazewnicza 7).'],
+    ['Nadaj nazwę', 'Wzór --dn-&lt;grupa&gt;-&lt;wariant&gt; i dziesięć reguł nazewniczych. Nazwa nie może kolidować z żadną z istniejących 177.'],
+    ['Zadeklaruj w zetony.css', 'W bloku :root (niezależny) albo w OBU blokach motywów (semantyczny). Żeton semantyczny zadeklarowany tylko w jednym motywie jest błędem krytycznym. Wartość zapisana jako var(--dn-&lt;prymityw&gt;) albo rgba() z prymitywu (reguła nazewnicza 10).'],
     ['Powiel do bloków prefers-color-scheme', 'Dotyczy wyłącznie żetonów semantycznych. Wartości muszą być identyczne z blokami motywów — powielenie jest świadomym mechanizmem kaskady, nie drugim źródłem prawdy.'],
     ['Zmierz kontrast', 'Każdą nową parę tekst/tło i element/tło; dopisz pomiar do kontrasty.json (para, fg, bg, kontrast, prog, ok). Przy alfie mierzy się barwę PO ZŁOŻENIU na powierzchni docelowej.'],
-    ['Odzwierciedl w zetony.json', 'We właściwej gałęzi, z zachowaniem reguł J2, J3 i J6. Liczba żetonów w JSON musi zgadzać się z liczbą w CSS.'],
+    ['Odzwierciedl w zetony.json', 'We właściwej gałęzi, z zachowaniem reguł czytania 2, 3 i 6. Liczba żetonów w JSON musi zgadzać się z liczbą w CSS.'],
     ['Udokumentuj', 'Dopisz wiersz do tabeli w 04-tokens.md i kartę w 04-tokens.html; jeżeli żeton wchodzi do komponentu — uzupełnij dokumentację komponentu. Zaktualizuj rachunek żetonów.']
   ];
   var LISTA = [
-    'Nazwa zgodna z konwencją --dn-&lt;grupa&gt;-&lt;wariant&gt; i regułami R1–R10.',
+    'Nazwa zgodna z konwencją --dn-&lt;grupa&gt;-&lt;wariant&gt; i dziesięcioma regułami nazewniczymi.',
     'Warstwa ustalona; komponent nie sięga po prymityw (poza sześcioma wyjątkami).',
     'Żeton semantyczny obecny w OBU blokach motywów i w OBU blokach prefers-color-scheme.',
     'Wartość zapisana przez var() albo rgba() z prymitywu — zero nowych hexów.',

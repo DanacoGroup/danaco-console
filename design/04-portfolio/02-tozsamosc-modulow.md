@@ -1,9 +1,9 @@
-# Danaco Console — Portfolio Design Identity — P2: Tożsamość piętnastu modułów
+# Danaco Console — Portfolio design identity, plansza 02: Tożsamość piętnastu modułów
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment (warstwa wizualna v2.0) |
-| **Produkt (warstwa funkcjonalna)** | Danaco Pilot — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
+| **Produkt (warstwa funkcjonalna)** | Danaco Console — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -14,10 +14,10 @@
 
 | | |
 |---|---|
-| **Dokument** | Plansza portfolio P2 — tożsamość piętnastu modułów platformy (opracowanie towarzyszące planszy `02-tozsamosc-modulow.html`) |
+| **Dokument** | Plansza portfolio 02 — tożsamość piętnastu modułów platformy (opracowanie towarzyszące planszy `02-tozsamosc-modulow.html`) |
 | **Odbiorcy** | Designer (tożsamość wizualna modułu, ikona, waga, miejsce w nawigacji) · Deweloper (kompletny inwentarz okien, macierz dostępności) · Odbiorca portfolio (co platforma faktycznie zawiera) |
 | **Zakres** | Karta tożsamości każdego z 15 modułów · macierz moduł × środowisko · pełny inwentarz 77 wystąpień okien operacyjnych · grupowanie wg charakteru pracy · trzy przypadki szczególne klasyfikacji · mapa powiązań międzymodułowych |
-| **Czego NIE zawiera** | Specyfikacji wnętrza okien (to zakres `dok/projekt-ui/moduly/*.md` rozdz. 3 oraz prototypów w `WYNIK/05-okna/moduly/`) · nowych ustaleń projektowych · żadnego modułu, okna ani nazwy bez pokrycia w dokumentacji |
+| **Czego NIE zawiera** | Specyfikacji wnętrza okien (to zakres `docs/moduly/*.md` rozdz. 3 oraz prototypów w `WYNIK/05-okna/moduly/`) · nowych ustaleń projektowych · żadnego modułu, okna ani nazwy bez pokrycia w dokumentacji |
 | **Zasada nadrzędna** | Każda nazwa, liczba i przynależność na planszy pochodzi z dokumentacji merytorycznej albo z odczytu realnego pliku w repozytorium wynikowym. Zero elementów ilustracyjnych. |
 
 ---
@@ -39,21 +39,21 @@
 
 ## 1. Czym jest tożsamość modułu
 
-Moduł jest środkowym stopniem trójstopniowej hierarchii platformy: **Środowisko** („w jakim trybie pracuję?”) → **Moduł** („jakie zadanie wykonuję?”) → **Okno operacyjne** („jakim narzędziem realizuję?”) — KANON rozdz. 6; `projekt-ui/README.md` rozdz. 2.
+Moduł jest środkowym stopniem trójstopniowej hierarchii platformy: **Środowisko** („w jakim trybie pracuję?”) → **Moduł** („jakie zadanie wykonuję?”) → **Okno operacyjne** („jakim narzędziem realizuję?”) — kontrakt systemu projektowego; `docs/README.md` rozdz. 2.
 
 Na tożsamość pojedynczego modułu w warstwie wizualnej składa się siedem rozstrzygalnych cech. Wszystkie siedem jest udokumentowanych — żadnej nie wymyślono na potrzeby planszy:
 
 | # | Cecha tożsamości | Gdzie rozstrzygnięta |
 |---|---|---|
 | 1 | **Ikona modułu** — jeden znak z zestawu, siatka 24×24, obrys 1,75, `currentColor` | `zasoby/ikony/manifest.json`, pole `zastosowanie` (przypisanie ikona → moduł jest tam jawne) |
-| 2 | **Nazwa własna** — po angielsku, bez tłumaczenia i parafrazy | KANON rozdz. 10 pkt 1–2 |
-| 3 | **Istota** — jedno zdanie odpowiadające na pytanie „jakie zadanie wykonuję?” | `projekt-ui/README.md` rozdz. 3.5, kolumna „Istota” |
-| 4 | **Środowiska dostępności** — w których powłokach moduł ma pozycję w bocznej nawigacji | KANON rozdz. 6 (macierz) · `README.md` rozdz. 5 · nagłówek pliku modułu |
-| 5 | **Komplet okien operacyjnych** z jawnie wskazanym **oknem wiodącym** (punkt wejścia) | KANON rozdz. 7.5 · `README.md` rozdz. 4 · rozdz. 2 pliku modułu |
-| 6 | **Podwójna rola** — czy moduł jest jednocześnie komponentem własnym strefy 2 | KANON rozdz. 6 · `README.md` rozdz. 3.5, kolumna „Komp.” · L9 |
+| 2 | **Nazwa własna** — po angielsku, bez tłumaczenia i parafrazy | kontrakt systemu projektowego |
+| 3 | **Istota** — jedno zdanie odpowiadające na pytanie „jakie zadanie wykonuję?” | `docs/README.md` rozdz. 3.5, kolumna „Istota” |
+| 4 | **Środowiska dostępności** — w których powłokach moduł ma pozycję w bocznej nawigacji | kontrakt systemu projektowego (macierz) · `README.md` rozdz. 5 · nagłówek pliku modułu |
+| 5 | **Komplet okien operacyjnych** z jawnie wskazanym **oknem wiodącym** (punkt wejścia) | kontrakt systemu projektowego · `README.md` rozdz. 4 · rozdz. 2 pliku modułu |
+| 6 | **Podwójna rola** — czy moduł jest jednocześnie komponentem własnym strefy 2 | kontrakt systemu projektowego · `README.md` rozdz. 3.5, kolumna „Komp.” · L9 |
 | 7 | **Powiązania z innymi modułami** — jawne, konfigurowalne, nigdy domyślnie aktywne | rozdz. 5.4 albo 6.3 pliku modułu |
 
-Ósma cecha jest wspólna wszystkim piętnastu i dlatego nie różnicuje: **Chat Window**. Pas komunikacji jest oknem wspólnym każdego modułu, rekonfigurowanym w jego kontekście (KANON rozdz. 7.4; `przeplyw/elementy-okien.md` rozdz. 3.6).
+Ósma cecha jest wspólna wszystkim piętnastu i dlatego nie różnicuje: **Chat Window**. Pas komunikacji jest oknem wspólnym każdego modułu, rekonfigurowanym w jego kontekście (kontrakt systemu projektowego; `przeplyw/elementy-okien.md` rozdz. 3.6).
 
 ---
 
@@ -279,7 +279,7 @@ Dokumentacja **nie definiuje kategorii modułów** — nie ma w niej rozdziału 
 | Grupa „badanie i wiedza” jest jedyną domkniętą — wszystkie jej powiązania biegną wewnątrz grupy plus do Studio | `research.md`, `browser.md`, `library.md` rozdz. 5.4 |
 | Grupa „warstwa wykonawcza” jest jedyną, w której żaden moduł nie wytwarza artefaktu treści — przedmiotem pracy jest bieg procesu | `terminal.md`, `diagnostics.md`, `automations.md` rozdz. 1 |
 | Grupa „fabryka ekspertów” jest jednoelementowa i zasila wszystkie pozostałe grupy | `agents.md` rozdz. 1.2–1.3 |
-| Trzy z sześciu grup mają moduł o podwójnej roli (Assistant, Workspace, Automations) — czwarty komponent własny, Agent, tworzy grupę samodzielnie | KANON rozdz. 6; `agents.md` rozdz. 1.2 |
+| Trzy z sześciu grup mają moduł o podwójnej roli (Assistant, Workspace, Automations) — czwarty komponent własny, Agent, tworzy grupę samodzielnie | kontrakt systemu projektowego; `agents.md` rozdz. 1.2 |
 
 ---
 
@@ -287,15 +287,15 @@ Dokumentacja **nie definiuje kategorii modułów** — nie ma w niej rozdziału 
 
 | Miara | Wartość | Skąd |
 |---|---:|---|
-| Moduły platformy | 15 | KANON rozdz. 6 |
+| Moduły platformy | 15 | kontrakt systemu projektowego |
 | Pliki dokumentacji modułowej w `moduly/` | 14 | `README.md` rozdz. 3.5 (Agents w `okna/`) |
-| Okna właściwe modułom (bez Chat Window) | 62 | suma kolumn KANON rozdz. 7.5 |
-| Wystąpienia Chat Window | 15 | jedno na moduł, KANON rozdz. 7.4 |
+| Okna właściwe modułom (bez Chat Window) | 62 | suma kolumn kontrakt systemu projektowego |
+| Wystąpienia Chat Window | 15 | jedno na moduł, kontrakt systemu projektowego |
 | Wystąpienia okien operacyjnych łącznie | 77 | 62 + 15 |
 | Okna odrębne (Chat Window liczone raz) | 63 | 62 + 1 |
-| Okna wiodące (punkty wejścia) | 15 | jedno na moduł, KANON rozdz. 7.5 |
+| Okna wiodące (punkty wejścia) | 15 | jedno na moduł, kontrakt systemu projektowego |
 | Moduły o podwójnej roli wg `README.md` 3.5 | 3 | Assistant, Workspace, Automations |
-| Kafle komponentów własnych w strefie 2 | 4 | Automations, Agents, Workspace, Assistant — KANON rozdz. 6 |
+| Kafle komponentów własnych w strefie 2 | 4 | Automations, Agents, Workspace, Assistant — kontrakt systemu projektowego |
 
 ### 5.1. Rozkład liczby okien
 
@@ -341,7 +341,7 @@ Rozkład jest trójstopniowy i pokrywa się z wagą wizualną modułu: moduły s
 | CodeStudio | Projektuj. Buduj. Rozwijaj. | Roundtable, Workspace, Design, Apps, Terminal, Developer, Diagnostics, Agents |
 | MultitaskingAI | Deleguj. Koordynuj. Nadzoruj. | brak modułów — panel orkiestracji (6 sekcji), role zamiast modułów |
 
-**Uwaga dokumentacyjna (L5):** dokładny skład bocznej nawigacji WorkSpace i CodeStudio nie jest jawnie wyliczony w żadnym pliku zestawu — powyższe składy odczytano z macierzy KANON rozdz. 6 / `README.md` rozdz. 5 i one same są w README oznaczone jako rekonstrukcja do potwierdzenia.
+**Uwaga dokumentacyjna (L5):** dokładny skład bocznej nawigacji WorkSpace i CodeStudio nie jest jawnie wyliczony w żadnym pliku zestawu — powyższe składy odczytano z macierzy kontrakt systemu projektowego / `README.md` rozdz. 5 i one same są w README oznaczone jako rekonstrukcja do potwierdzenia.
 
 ### 6.2. Zasięg modułów
 
@@ -362,13 +362,13 @@ Rozkład jest trójstopniowy i pokrywa się z wagą wizualną modułu: moduły s
 
 **Cytat źródłowy:** „Brak okna w bocznej nawigacji jest architektoniczną decyzją, nie brakiem — odzwierciedla naturę automatyki jako wytworu konfigurowanego raz, a wykorzystywanego wielokrotnie, w wielu miejscach platformy jednocześnie.” (`automations.md` rozdz. 1.4)
 
-**Konsekwencja projektowa:** w każdej powłoce środowiska pozycja „Automations” **nie może się pojawić** w bocznej nawigacji — ani jako pozycja wyszarzona, ani jako pozycja „niedostępna”. Zgodnie z zasadą zero blokad (KANON rozdz. 8) obowiązuje reguła „brak metody = mniej segmentów, nie zablokowany segment”: moduł jest po prostu nieobecny w tej liście, a obecny w strefie 2.
+**Konsekwencja projektowa:** w każdej powłoce środowiska pozycja „Automations” **nie może się pojawić** w bocznej nawigacji — ani jako pozycja wyszarzona, ani jako pozycja „niedostępna”. Zgodnie z zasadą zero blokad (kontrakt systemu projektowego) obowiązuje reguła „brak metody = mniej segmentów, nie zablokowany segment”: moduł jest po prostu nieobecny w tej liście, a obecny w strefie 2.
 
 **Cykl pracy:** budowa (strona główna) → zapis jako komponent własny → wpięcie do sesji modułu docelowego → wykonanie samodzielne wg harmonogramu lub zdarzenia.
 
 ### 7.2. Agents — 15. moduł, którego dokument leży w katalogu `okna/`
 
-**Fakt:** Agents jest 15. modułem platformy (Koncepcja platformy rozdz. 9.15), ale jego dokument projektowy leży w `projekt-ui/okna/agents.md`, a nie w `projekt-ui/moduly/`. Katalog `moduly/` zawiera 14 plików.
+**Fakt:** Agents jest 15. modułem platformy (Koncepcja platformy rozdz. 9.15), ale jego dokument projektowy leży w `docs/moduly/agents.md`, a nie w `docs/moduly/`. Katalog `moduly/` zawiera 14 plików.
 
 **Zapis niespójności:** pozycja **L1** w `README.md` rozdz. 7 — „Niespójność klasyfikacji”, priorytet **Ś**. Proponowane rozstrzygnięcie: przenieść dokument do `moduly/agents.md` albo pozostawić jawną notę w README i wyrównać odsyłacze w `elementy-okien.md` rozdz. 0.2.
 
@@ -398,11 +398,11 @@ Przy zestawianiu inwentarza ujawniła się rozbieżność wewnątrz zestawu źr�
 
 | Źródło | Okna własne Apps | Liczba łącznie |
 |---|---|---:|
-| KANON rozdz. 7.5 | Product Builder, Architecture Designer, Frontend Workspace, Backend Workspace, Deployment Panel | 6 |
+| kontrakt systemu projektowego | Product Builder, Architecture Designer, Frontend Workspace, Backend Workspace, Deployment Panel | 6 |
 | `moduly/apps.md` rozdz. 2 | Product Builder, Architecture Designer, Frontend Workspace, Backend Workspace, Deployment Panel | 6 |
-| `projekt-ui/README.md` rozdz. 4 | Product Builder, Frontend Workspace, Backend Workspace, Deployment Panel — **brak Architecture Designer** | 5 |
+| `docs/README.md` rozdz. 4 | Product Builder, Frontend Workspace, Backend Workspace, Deployment Panel — **brak Architecture Designer** | 5 |
 
-**Rozstrzygnięcie planszy:** przyjęto zapis KANON rozdz. 7.5, zgodny z rozdz. 2 pliku modułu (sześć okien). Tabela zbiorcza README rozdz. 4 pomija Architecture Designer — rozbieżność odnotowano tutaj, nie usuwając jej samodzielnie ze źródła.
+**Rozstrzygnięcie planszy:** przyjęto zapis kontrakt systemu projektowego, zgodny z rozdz. 2 pliku modułu (sześć okien). Tabela zbiorcza README rozdz. 4 pomija Architecture Designer — rozbieżność odnotowano tutaj, nie usuwając jej samodzielnie ze źródła.
 
 ---
 
@@ -462,15 +462,15 @@ Wykaz obejmuje **wyłącznie powiązania opisane w dokumentacji** (rozdz. 5.4 al
 |---|---|---|
 | 1 | **Ikona modułu odczytana z `manifest.json`, nie dobrana intuicyjnie** | Manifest zawiera jawne przypisania w polu `zastosowanie` („Moduł Library — repozytorium wiedzy”, „Moduł Translate”, „Moduł Assistant — interfejs głosowy”…). Wszystkie 15 ikon ma tam potwierdzenie; żadna nie została dorysowana. |
 | 2 | **Karta modułu ma stałą siatkę siedmiu pól** | Tożsamość ma się porównywać, nie opowiadać. Stała siatka pozwala czytać kolumnowo (wszystkie okna wiodące, wszystkie środowiska) — zgodnie z `GESTOSC_WIZUALNA` 8/10. |
-| 3 | **Okno wiodące wyróżnione plakietką, nie kolorem** | KANON rozdz. 9: stan nigdy samym kolorem. Plakietka `.dn-plakietka--sygnal` niesie etykietę „wiodące”. |
+| 3 | **Okno wiodące wyróżnione plakietką, nie kolorem** | kontrakt systemu projektowego: stan nigdy samym kolorem. Plakietka `.dn-plakietka--sygnal` niesie etykietę „wiodące”. |
 | 4 | **Filtr środowiska jako grupa przełączników, nie lista rozwijana** | Cztery środowiska plus „wszystkie” mieszczą się w jednym rzędzie; przełączniki pokazują cały zakres wyboru bez otwierania. Wybór nie blokuje niczego — zmienia tylko widoczność kart. |
-| 5 | **Zero `disabled` na całej planszy** | KANON rozdz. 8 (ADL-017). Filtr, który nie ma trafień, pokazuje stan pusty z komunikatem, nie wyłącza przycisku. |
+| 5 | **Zero `disabled` na całej planszy** | kontrakt systemu projektowego (zasada zero blokad). Filtr, który nie ma trafień, pokazuje stan pusty z komunikatem, nie wyłącza przycisku. |
 | 6 | **Automations pokazany bez ikony „brak”** | Moduł nie jest ułomny — jego nieobecność w bocznej nawigacji jest decyzją architektoniczną. Karta niesie plakietkę „strefa 2” zamiast pustego pola środowisk. |
 | 7 | **Agents pokazany jako pełnoprawny 15. moduł, z adnotacją L1** | Klasyfikacja wg Koncepcji platformy rozdz. 9.15, a nie wg położenia pliku. Adnotacja o katalogu `okna/` towarzyszy karcie, żeby nie ukrywać niespójności. |
 | 8 | **Grupowanie oznaczone jawnie jako warstwa redakcyjna** | Dokumentacja nie definiuje kategorii modułów. Każde przypisanie ma kotwicę w opisie produktu i w udokumentowanym powiązaniu — bez tego byłoby kategorią wymyśloną, czego zakazuje zasada nadrzędna zespołu. |
 | 9 | **Mapa powiązań rysuje wyłącznie krawędzie z tabel 5.4 / 6.3** | Powiązania „Agents → wszystkie” i „Automations → wszystkie” rysowane są odrębną klasą i pojawiają się dopiero po wskazaniu węzła — inaczej 28 dodatkowych krawędzi zasłoniłoby czytelny rdzeń mapy. |
-| 10 | **Diagram jest SVG w `currentColor`, bez rastrów** | Ten sam wymóg co dla ikon (KANON rozdz. 4): jedna geometria, dwa motywy, skalowanie bez utraty. |
-| 11 | **Liczby na planszy policzone, nie oszacowane** | 62 okna własne, 77 wystąpień, 9/9/8 pozycji w nawigacji — każda liczba wyprowadzona z tabeli KANON rozdz. 7.5 i macierzy rozdz. 6, a istnienie 15 plików prototypów potwierdzone odczytem katalogu `05-okna/moduly/`. |
+| 10 | **Diagram jest SVG w `currentColor`, bez rastrów** | Ten sam wymóg co dla ikon (kontrakt systemu projektowego): jedna geometria, dwa motywy, skalowanie bez utraty. |
+| 11 | **Liczby na planszy policzone, nie oszacowane** | 62 okna własne, 77 wystąpień, 9/9/8 pozycji w nawigacji — każda liczba wyprowadzona z tabeli kontrakt systemu projektowego i macierzy rozdz. 6, a istnienie 15 plików prototypów potwierdzone odczytem katalogu `05-okna/moduly/`. |
 | 12 | **Rozbieżność liczby okien Apps odnotowana, nie ukryta** | Zasada „nie usuwaj niespójności źródła po cichu” — plansza podaje rozstrzygnięcie i wskazuje miejsce rozbieżności (rozdz. 7.4). |
 
 ---
@@ -479,12 +479,12 @@ Wykaz obejmuje **wyłącznie powiązania opisane w dokumentacji** (rozdz. 5.4 al
 
 | Zakres | Plik | Rozdziały |
 |---|---|---|
-| Kanon projektu | `WYNIK/KANON.md` | 4 (ikony), 6 (architektura, macierz), 7.4–7.5 (inwentarz okien), 8 (zero blokad), 9 (dostępność), 10 (redakcja) |
-| Indeks projektu UI | `dok/projekt-ui/README.md` | 2 (model pojęciowy), 3.3, 3.5 (istota modułów), 4 (inwentarz okien), 5 (macierz), 6 (mapa zależności), 7 (luki L1, L5, L9) |
-| Moduły | `dok/projekt-ui/moduly/*.md` | nagłówek (środowiska, forma udostępnienia), 1 (przeznaczenie), 2 (komplet okien), 5.4 albo 6.3 (powiązania) |
-| Moduł Agents | `dok/projekt-ui/okna/agents.md` | nota terminologiczna, 1.1 (łańcuch wartości), 1.2 (komponenty własne), 1.3 (gdzie ekspert działa), 2 (mapa okien) |
-| Katalog modułów | `dok/projekt-ui/moduly/README.md` | zasada „jeden plik = jeden moduł”, struktura 7 rozdziałów |
-| Elementy powłoki | `dok/projekt-ui/przeplyw/elementy-okien.md` | 3.4 (boczna nawigacja), 3.5 (obszar roboczy), 4.4 (panel orkiestracji), Zał. A (katalog ikon) |
+| Kanon projektu | kontrakt systemu projektowego | 4 (ikony), 6 (architektura, macierz), 7.4–7.5 (inwentarz okien), 8 (zero blokad), 9 (dostępność), 10 (redakcja) |
+| Indeks projektu UI | `docs/README.md` | 2 (model pojęciowy), 3.3, 3.5 (istota modułów), 4 (inwentarz okien), 5 (macierz), 6 (mapa zależności), 7 (luki L1, L5, L9) |
+| Moduły | `docs/moduly/*.md` | nagłówek (środowiska, forma udostępnienia), 1 (przeznaczenie), 2 (komplet okien), 5.4 albo 6.3 (powiązania) |
+| Moduł Agents | `docs/moduly/agents.md` | nota terminologiczna, 1.1 (łańcuch wartości), 1.2 (komponenty własne), 1.3 (gdzie ekspert działa), 2 (mapa okien) |
+| Katalog modułów | `docs/README.md` | zasada „jeden plik = jeden moduł”, struktura 7 rozdziałów |
+| Elementy powłoki | `docs/interfejs-uzytkownika/elementy-okien.md` | 3.4 (boczna nawigacja), 3.5 (obszar roboczy), 4.4 (panel orkiestracji), Zał. A (katalog ikon) |
 | Ikony | `WYNIK/zasoby/ikony/manifest.json`, `WYNIK/zasoby/ikony/svg/*.svg` | pola `nazwa`, `zrodlo`, `zastosowanie` |
 | Emblematy i motta środowisk | `WYNIK/zasoby/marka/srodowiska/*.svg`, `manifest.json` | pozycje `srodowisko-*` |
 | Prototypy okien | `WYNIK/05-okna/moduly/*.html` | 15 plików — istnienie potwierdzone odczytem katalogu |

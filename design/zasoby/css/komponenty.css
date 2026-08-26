@@ -3,10 +3,15 @@
    ----------------------------------------------------------------------------
    Wyłącznie żetony semantyczne z 03-zetony/zetony.css. Zero wartości zaszytych.
    Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie ·
-   fokus · wybrany · ładowanie · błąd. ADL-017: żaden wariant nie odbiera
+   fokus · wybrany · ładowanie · błąd. Zasada zero blokad: żaden wariant nie odbiera
    klikalności — niegotowość komunikuje się opisem albo komunikatem.
    Stan nigdy samym kolorem — komponent stanu niesie ikonę albo etykietę.
    ============================================================================ */
+
+/* Panel menu rozwijanego jest osobnym komponentem: bryła, szerokość i
+   przewijanie w `menu.css`. Wpięty tutaj, bo każdy widok korzystający
+   z biblioteki komponentów korzysta z menu. */
+@import url('../menu.css');
 
 /* ==========================================================================
    PRZYCISK
@@ -38,6 +43,17 @@
 }
 .dn-btn:hover { background: var(--dn-hover); }
 .dn-btn:active { transform: translateY(1px); }
+/* Ikona w przycisku z napisem: wymiar niesie przycisk, nie znacznik. Bez tej
+   reguły wstawiony `svg` bierze wymiar z pojemnika i rośnie do jego wysokości. */
+/* Przycisk ikonowy: wymiar znaku należy do przycisku. Bez tej reguły `svg`
+   bez klasy rozciąga się do wysokości pojemnika, a reguły miejsc (pas narzędzi,
+   pasmo kart, panel) łapią tylko wybrane zagnieżdżenia. */
+.dn-btn-ikona > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-btn-ikona--sm > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+.dn-btn > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.dn-btn--sm > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
 .dn-btn:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);
@@ -209,6 +225,37 @@ textarea.dn-pole-kontrolka {
   font-size: var(--dn-fs-sm);
   color: var(--dn-tekst-3);
 }
+
+/* ── Klasy formularzowe używane w oknach nakładkowych i w Ustawieniach ──────
+   Były w markupie prototypów bez deklaracji; opis stawia je w jednym miejscu. */
+.dn-pole-etyk {
+  display: block;
+  margin-bottom: var(--dn-od-1);
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-pole-grupa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  margin: var(--dn-od-3) 0;
+}
+/* Komórka tabeli z ikoną przed nazwą — ikona jest elementem blokowym, więc
+   bez tego opakowania nazwa spadała do drugiego wiersza. */
+.dn-tabela-ikona-tekst {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.dn-check-etyk {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  color: var(--dn-tekst);
+  font-size: var(--dn-fs-sm);
+  cursor: pointer;
+}
 .dn-pole-blad {
   display: inline-flex;
   align-items: center;
@@ -228,6 +275,23 @@ textarea.dn-pole-kontrolka {
   pointer-events: none;
 }
 .dn-szukaj > .dn-pole-kontrolka { width: 100%; padding-left: var(--dn-od-8); }
+/* Pole wpisane bezpośrednio, bez klasy kontrolki, dziedziczy jej wygląd —
+   inaczej ikona wyszukiwania nachodzi na tekst zastępczy. */
+.dn-szukaj > input {
+  width: 100%;
+  min-height: var(--dn-wym-kontrolka);
+  padding: 0 var(--dn-od-3) 0 var(--dn-od-8);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-radius: var(--dn-r-sm);
+  background: var(--dn-panel);
+  color: var(--dn-tekst);
+  font-family: var(--dn-ff-bazowa);
+  font-size: var(--dn-fs-base);
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease);
+}
 
 /* Wybór rozwijany */
 select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
@@ -298,11 +362,17 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   background: var(--dn-tekst-2);
   transition: left var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
 }
-.dn-przelacznik:checked {
+.dn-przelacznik:checked,
+/* Przełącznik bywa w prototypach przyciskiem z role="switch" — bez tej reguły
+   stan włączony nie był widoczny w żadnym oknie. */
+.dn-przelacznik[aria-checked='true'],
+.dn-przelacznik[aria-pressed='true'] {
   background: var(--dn-sygnal-wypelnienie);
   border-color: var(--dn-sygnal-wypelnienie);
 }
-.dn-przelacznik:checked::before {
+.dn-przelacznik:checked::before,
+.dn-przelacznik[aria-checked='true']::before,
+.dn-przelacznik[aria-pressed='true']::before {
   left: calc(100% - var(--dn-wym-przelacznik-wys) + 4px);
   background: var(--dn-szary-0);
 }
@@ -333,7 +403,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   KROPKA SYGNAŁU — element sygnaturowy (praca w tle; L-P-16)
+   KROPKA SYGNAŁU — element sygnaturowy (praca w tle; rozstrzygnięcie projektowe)
    ========================================================================== */
 .dn-kropka {
   display: inline-block;
@@ -345,10 +415,6 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 /* Tętno — jedyny ruch ciągły interfejsu (2,4 s) */
 .dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
-@keyframes dn-tetno {
-  0%, 100% { box-shadow: 0 0 0 0 var(--dn-fokus-cien); }
-  40% { box-shadow: 0 0 0 5px transparent; }
-}
 /* Przy ograniczonym ruchu tętno zamiera — kropkę wzmacnia pierścień statyczny */
 @media (prefers-reduced-motion: reduce) {
   .dn-kropka--tetno { box-shadow: 0 0 0 2px var(--dn-fokus-cien); }
@@ -433,7 +499,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta--klikalna:active { transform: translateY(0); }
 .dn-karta--wybrana { border-color: var(--dn-sygnal-obrys); background: var(--dn-sygnal-tlo); }
 
-/* KARTA ŚRODOWISKA (E1, strefa 1) — wejście do środowiska.
+/* KARTA ŚRODOWISKA (Centrum dowodzenia, strefa 1) — wejście do środowiska.
    Spoczynek bez sygnału; najechanie/aktywność: wstęga górna 2 px. */
 .dn-karta-srodowiska {
   position: relative;
@@ -441,7 +507,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   padding: var(--dn-od-6);
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-xl);
-  background: var(--dn-powierzchnia);
+  /* Wypełnienie o stopień jaśniejsze od powierzchni: w motywie ciemnym karta na
+     tacy panelu (--dn-wstazka) była za głucha. Nadal ciemniejsza od panelu,
+     więc hierarchia „taca → karta" zostaje (rozstrzygnięcie Właściciela). */
+  background: var(--dn-panel);
   cursor: pointer;
   transition:
     border-color var(--dn-czas-2) var(--dn-ease),
@@ -466,7 +535,18 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska:hover::before,
 .dn-karta-srodowiska[aria-current='true']::before { opacity: 1; }
 .dn-karta-srodowiska-godlo {
-  width: 40px; height: 40px;
+  /* Wielkość wiążąca: księga znaku rozdz. 15.1 — „Strona główna, karty
+     środowisk: emblemat środowiska 24 px". Odpowiada żetonowi --dn-wym-ikona-xl
+     i utrzymuje hierarchię wobec ikony kafla strefy 2. */
+  /* Element liniowy nie przyjmuje szerokości — bez tej deklaracji godło
+     rozciągało się na całą kartę. */
+  display: grid;
+  place-content: center;
+  /* 48 px — rozstrzygnięcie Właściciela z 2026-08-20. Emblemat jest elementem
+     marki, nie ikoną interfejsu, więc nie podlega skali 14/16/20/24; pozostaje
+     większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
+     Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
+  width: 48px; height: 48px;
   margin-bottom: var(--dn-od-4);
   color: var(--dn-tekst);
 }
@@ -490,7 +570,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   max-width: 44ch;
 }
 
-/* KAFEL KOMPONENTU WŁASNEGO (E1, strefa 2) — budowanie, krój bazowy */
+/* KAFEL KOMPONENTU WŁASNEGO (Centrum dowodzenia, strefa 2) — budowanie, krój bazowy */
 .dn-kafel {
   display: flex;
   align-items: center;
@@ -591,7 +671,40 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   background: var(--dn-kropka);
 }
 
-/* Pas kart sesji (E2) — mechanika zakładek + wskaźnik pracy w tle */
+/* ── Wariant pigułkowy ──────────────────────────────────────────────────────
+   Przełącznik dwóch równorzędnych stanów (np. logowanie albo rejestracja).
+   Nie ma dolnej kreski zakładek: wybór niesie wypełniona pigułka. Stan wybrany
+   dostaje barwę sygnałową i kontrę — sam kształt bez koloru czytałby się jako
+   pole nieaktywne, a to jest kontrolka wyboru, nie etykieta. */
+.dn-zakladki--pigulki {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-powierzchnia-2);
+}
+.dn-zakladki--pigulki .dn-zakladka {
+  border-radius: var(--dn-r-pill);
+  padding: 0 var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+}
+.dn-zakladki--pigulki .dn-zakladka::after { content: none; }
+.dn-zakladki--pigulki .dn-zakladka:hover { background: var(--dn-hover); }
+.dn-zakladki--pigulki .dn-zakladka[aria-selected='true'] {
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-zakladki--pigulki .dn-zakladka[aria-selected='true']:hover {
+  background: var(--dn-sygnal-wypelnienie);
+}
+.dn-zakladki--pigulki .dn-zakladka:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+
+/* Pas kart sesji powłoki środowiska — mechanika zakładek + wskaźnik pracy w tle */
 .dn-karty-sesji {
   display: flex;
   align-items: stretch;
@@ -689,9 +802,31 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   border-color: var(--dn-fokus);
   box-shadow: var(--dn-cien-sygnal);
 }
+/* Wariant opakowany — <label class="dn-pasek-szukaj"> z ikoną i polem w środku.
+   Ramka i tło należą do opakowania; pole wewnątrz jest przezroczyste. */
+label.dn-pasek-szukaj {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+label.dn-pasek-szukaj > input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+label.dn-pasek-szukaj:focus-within {
+  border-color: var(--dn-fokus);
+  box-shadow: var(--dn-cien-sygnal);
+}
+
 .dn-pasek-prawa { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 
-/* Listwa ustawień (E1, strefa 3) — najniższa masa */
+/* Listwa ustawień (Centrum dowodzenia, strefa 3) — najniższa masa */
 .dn-listwa {
   display: flex;
   align-items: center;
@@ -718,7 +853,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-listwa-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
 /* ==========================================================================
-   BOCZNA NAWIGACJA MODUŁÓW (E2)
+   BOCZNA NAWIGACJA MODUŁÓW
    ========================================================================== */
 .dn-boczna {
   width: var(--dn-wym-boczna);
@@ -771,7 +906,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-boczna-pozycja > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
 
 /* ==========================================================================
-   WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie L-P-28)
+   WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie projektowe)
    --------------------------------------------------------------------------
    Zasada: wspólne tło powierzchni; rozróżnienie niesie ZAWSZE komplet:
    ikona w medalionie + etykieta nadawcy + klasa semantyczna krawędzi.
@@ -862,7 +997,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   MONITOR WYKONANIA · KOLEJKA KROKÓW (E3, E5)
+   MONITOR WYKONANIA · KOLEJKA KROKÓW
    ========================================================================== */
 .dn-postep {
   display: flex;
@@ -889,7 +1024,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   white-space: nowrap;
 }
 
-/* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie L-P-33):
+/* Kolejka kroków — trzy wyjścia weryfikacji (rozstrzygnięcie projektowe):
    poprawny → zieleń · błędy + licznik obiegów → bursztyn · zdarzenie
    nieoczekiwane → czerwień + wstrzymanie kolejki. Zawsze ikona + etykieta. */
 .dn-kolejka { display: flex; flex-direction: column; }
@@ -948,6 +1083,9 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    MODAL (dialog) · NAKŁADKA
    ========================================================================== */
 .dn-modal {
+  /* Reset zeruje marginesy wszystkim elementom — dialog modalny musi odzyskać
+     margin:auto, inaczej okno staje przy lewej górnej krawędzi ekranu. */
+  margin: auto;
   width: min(var(--dn-wym-modal), calc(100vw - var(--dn-od-8)));
   max-height: min(80dvh, 720px);
   padding: 0;
@@ -957,11 +1095,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   color: var(--dn-tekst);
   box-shadow: var(--dn-cien-lg);
 }
+.dn-modal--szeroki { width: min(1080px, calc(100vw - var(--dn-od-8))); max-height: min(86dvh, 780px); }
+.dn-modal-zamknij { margin-left: auto; }
 .dn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }
 .dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
-@keyframes dn-wejscie {
-  from { opacity: 0; transform: translateY(var(--dn-od-2)) scale(0.98); }
-}
 .dn-modal-naglowek {
   display: flex;
   align-items: center;
@@ -976,6 +1113,14 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   letter-spacing: var(--dn-ls-naglowek);
 }
 .dn-modal-cialo { padding: var(--dn-od-5); overflow-y: auto; }
+/* Akapit wprowadzający w oknie nakładkowym — jedno zdanie o tym, co okno robi. */
+.dn-modal-lid {
+  margin: 0 0 var(--dn-od-4);
+  max-width: 72ch;
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
 .dn-modal-stopka {
   display: flex;
   justify-content: flex-end;
@@ -1100,8 +1245,6 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   border-radius: var(--dn-r-pill);
   animation: dn-obrot 0.8s linear infinite;
 }
-@keyframes dn-obrot { to { transform: rotate(360deg); } }
-
 .dn-pusty-stan {
   display: flex;
   flex-direction: column;
@@ -1121,7 +1264,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-pusty-stan-opis { max-width: 40ch; font-size: var(--dn-fs-sm); }
 
 /* ==========================================================================
-   POLE WPISYWANIA PROMPTU (E3) — grot ❯ jako sygnatura wejścia
+   POLE WPISYWANIA PROMPTU — grot ❯ jako sygnatura wejścia
    ========================================================================== */
 .dn-prompt {
   display: grid;
@@ -1169,12 +1312,14 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 
 /* ==========================================================================
-   ALWAYS ON DISPLAY — pływający awatar (E12)
+   ALWAYS ON DISPLAY — pływający awatar
    ========================================================================== */
 .dn-aod {
+  /* Awatar unosi się nad paskiem stanu i nad uchwytem prototypu — żaden pas
+     ramy nie może zniknąć pod warstwą pływającą. */
   position: fixed;
   right: var(--dn-od-5);
-  bottom: var(--dn-od-5);
+  bottom: calc(var(--dn-wym-stan) + var(--dn-wym-kontrolka) + var(--dn-od-4));
   z-index: var(--dn-z-aod);
   display: flex;
   align-items: center;
@@ -1205,3 +1350,387 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 .dn-aod-tresc { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); max-width: 36ch; }
 .dn-aod-tresc strong { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+/* ==========================================================================
+   MENU ROZWIJANE — pasek narzędzi, belki okien, kontrolki kontekstowe
+   ========================================================================== */
+/* Bryła i położenie panelu menu: `menu.css` + `menu.js`. Tutaj zostaje
+   anatomia wnętrza: wiersz, nagłówek, separator, skrót, znacznik. */
+.sta-menu-poz { display:flex; align-items:center; gap:var(--dn-od-2); width:100%; padding:var(--dn-od-1) var(--dn-od-2);
+  border:none; background:none; border-radius:var(--dn-r-sm); color:var(--dn-tekst); font-size:var(--dn-fs-sm);
+  text-align:left; cursor:pointer;
+  /* Wiersz menu jest nazwą, więc nie łamie się nigdy: przy ciasnym panelu
+     skraca się wartość obok, nie etykieta. */
+  white-space:nowrap; }
+.sta-menu-poz:hover { background:var(--dn-hover); }
+.sta-menu-poz .skrot { order:2; margin-left:auto; min-width:0; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+/* Znacznik włączonej opcji stoi po PRAWEJ — tam, gdzie w menu systemowych
+   oznacza się stan włączony. Ikony wszystkich wierszy zaczynają się od lewej,
+   bez rezerwowanej kolumny z przodu (rozstrzygnięcie Właściciela 2026-08-20).
+   Kolejność w wierszu: ikona · etykieta · skrót · znacznik. */
+.sta-menu-poz .ptaszek {
+  order: 3;
+  flex: none;
+  width: var(--dn-wym-ikona-sm);
+  text-align: right;
+  color: var(--dn-sygnal);
+}
+/* Wiersz bez skrótu: znacznik sam dosuwa się do prawej krawędzi. */
+.sta-menu-poz:not(:has(.skrot)) .ptaszek { margin-left: auto; }
+/* Wyłączona opcja zachowuje miejsce znacznika, żeby prawa kolumna nie drgała. */
+.sta-menu-poz[aria-checked="false"] .ptaszek { visibility:hidden; }
+/* Rozmiar ikony wstawianej poza komponentem, który sam ją wymiaruje. Trzy
+   stopnie skali ikon systemu; poza tymi klasami ikona bierze rozmiar z reguły
+   swojego komponentu. */
+.dn-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+.dn-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+.dn-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; }
+
+/* Wiersz menu z czynnością dodatkową: pozycja i jej zamknięcie stoją obok
+   siebie jako rodzeństwo — przycisk w przycisku jest niepoprawnym dokumentem. */
+.sta-menu-wiersz { display: flex; align-items: center; gap: var(--dn-od-1); }
+.sta-menu-wiersz > .sta-menu-poz { flex: 1 1 auto; min-width: 0; }
+.sta-menu-wiersz > .dn-btn-ikona { flex: none; opacity: 0; transition: opacity var(--dn-czas-1) var(--dn-ease); }
+.sta-menu-wiersz:hover > .dn-btn-ikona,
+.sta-menu-wiersz:focus-within > .dn-btn-ikona { opacity: 1; }
+
+.sta-menu-sep { height:1px; background:var(--dn-obrys-subtelny); margin:var(--dn-od-1) 0; }
+
+/* ── Menu aplikacji z podmenu rozwijanym w bok ─────────────────────────────
+   Menu aplikacji nie jest jednym długim blokiem od góry do dołu ekranu: górna
+   lista jest wąska (same tytuły sekcji), a szczegóły wysuwają się w prawo jako
+   podmenu. Mechanika stoi na :hover i :focus-within — bez skryptu, żeby nie
+   ingerować w prototyp.js. */
+#menu-aplikacji { min-width:220px; }
+.sta-podmenu { position:relative; }
+.sta-podmenu-wyzw { justify-content:flex-start; }
+.sta-podmenu-grot { margin-left:auto; color:var(--dn-tekst-3); font-size:var(--dn-fs-md); }
+.sta-podmenu-tresc {
+  position:absolute; top:calc(-1 * var(--dn-od-1)); left:100%; z-index:1;
+  min-width:260px; margin-left:var(--dn-od-1);
+  padding:var(--dn-od-1); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md);
+  background:var(--dn-powierzchnia); box-shadow:var(--dn-cien-3);
+  opacity:0; visibility:hidden; transform:translateX(-4px);
+  transition:opacity var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease), visibility var(--dn-czas-1);
+}
+.sta-podmenu:hover > .sta-podmenu-tresc,
+.sta-podmenu:focus-within > .sta-podmenu-tresc {
+  opacity:1; visibility:visible; transform:translateX(0);
+}
+.sta-podmenu:hover > .sta-podmenu-wyzw,
+.sta-podmenu:focus-within > .sta-podmenu-wyzw { background:var(--dn-hover); }
+.sta-podmenu:hover > .sta-podmenu-wyzw .sta-podmenu-grot,
+.sta-podmenu:focus-within > .sta-podmenu-wyzw .sta-podmenu-grot { color:var(--dn-tekst); }
+/* Podmenu przy prawej krawędzi okna otwiera się w lewo. */
+.sta-podmenu-tresc--w-lewo { left:auto; right:100%; margin-left:0; margin-right:var(--dn-od-1); transform:translateX(4px); }
+.sta-podmenu--w-lewo:hover > .sta-podmenu-tresc--w-lewo,
+.sta-podmenu--w-lewo:focus-within > .sta-podmenu-tresc--w-lewo { transform:translateX(0); }
+@media (prefers-reduced-motion: reduce) { .sta-podmenu-tresc { transition:none; } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KOMPONENTY BRAKUJĄCE W ARKUSZU
+
+   Poniższe klasy były używane w prototypach, lecz nie miały deklaracji —
+   elementy renderowały się bez żadnego stylu. Nazwy zachowane, ponieważ
+   należą do istniejących rodzin (.dn-modal, .dn-kropka, .dn-btn-ikona,
+   .dn-karta-sesji, .dn-dost-barwa, .sta-chip, .sta-wpis). Wyłącznie żetony.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Tło okna nakładkowego budowanego bez znacznika dialog. */
+.dn-modal-tlo {
+  position: fixed;
+  inset: 0;
+  z-index: var(--dn-z-nakladka);
+  display: grid;
+  place-items: center;
+  padding: var(--dn-od-4);
+  background: var(--dn-nakladka);
+}
+.dn-modal-tlo[hidden] { display: none; }
+
+/* Nazwa barwy przy próbce w widoku dostępności. */
+.dn-dost-barwa-nazwa { white-space: nowrap; }
+
+/* Kropka w barwie sygnałowej — rodzina miała sukces, błąd, ostrzeżenie
+   i barwę neutralną, brakowało odpowiednika dla barwy wiodącej. */
+.dn-kropka--sygnal { background: var(--dn-sygnal-500); }
+
+/* Drobniejszy przycisk ikonowy — wymiar wyprowadzony z żetonu podstawowego,
+   żeby nadążał za jego przesterowaniem w innych zakresach. */
+.dn-btn-ikona--sm {
+  width: calc(var(--dn-wym-ikonowy) - var(--dn-od-1));
+  height: calc(var(--dn-wym-ikonowy) - var(--dn-od-1));
+}
+.dn-btn-ikona--sm svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* Zamknięcie karty sesji — znak wewnątrz karty, nie osobny przycisk. */
+.dn-karta-sesji-zamknij {
+  display: inline-grid;
+  place-content: center;
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  border-radius: var(--dn-r-xs);
+  color: var(--dn-tekst-3);
+}
+.dn-karta-sesji-zamknij svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+.dn-karta-sesji:hover .dn-karta-sesji-zamknij { color: var(--dn-tekst-2); }
+
+/* Adnotacja w toku treści — krótka uwaga przy wpisie albo pozycji listy. */
+.dn-alert {
+  display: block;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia-2);
+  font-size: var(--dn-fs-sm);
+  color: var(--dn-tekst-2);
+}
+.dn-alert--info {
+  border-color: var(--dn-informacja-obrys);
+  background: var(--dn-informacja-tlo);
+  color: var(--dn-informacja-tekst);
+}
+.dn-alert--ostrzezenie {
+  border-color: var(--dn-ostrzezenie-obrys);
+  background: var(--dn-ostrzezenie-tlo);
+  color: var(--dn-ostrzezenie-tekst);
+}
+
+/* Rząd znaczników pod wpisem rozmowy. */
+.sta-chip-rzad { display: flex; flex-wrap: wrap; gap: var(--dn-od-1); }
+
+/* Czynności przypisane do wpisu rozmowy. */
+.sta-wpis-akcje { display: flex; gap: var(--dn-od-1); margin-top: var(--dn-od-2); }
+
+/* ============================================================================
+   WARSTWA RUCHU, AKCJI I UWYDATNIENIA
+   ----------------------------------------------------------------------------
+   Reakcja na wskazanie, naciśnięcie i wybór dla komponentów biblioteki.
+   Granice: jedna krzywa `--dn-ease`, czasy z żetonów, animowane wyłącznie
+   `transform`, `opacity`, `box-shadow` i barwy, jedno tętno na widok,
+   `prefers-reduced-motion` gasi ruch żetonem — informację przejmuje kształt.
+   ============================================================================ */
+
+:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli, .dn-karty-sesji, .dn-przybornik) > * {
+  transition: opacity var(--dn-czas-uwyd) var(--dn-ease);
+}
+:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli):hover > *:not(:hover) {
+  opacity: var(--dn-przygasz-rodzenstwa);
+}
+
+.dn-karta-srodowiska {
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta-srodowiska::before {
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--dn-sygnal-wypelnienie);
+  opacity: 1;
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+
+.dn-karta-srodowiska::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 0% 0%, var(--dn-sygnal-tlo) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska:focus-visible,
+.dn-karta-srodowiska[aria-current='true'] {
+  border-color: var(--dn-sygnal);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-lg));
+}
+.dn-karta-srodowiska:hover::before,
+.dn-karta-srodowiska:focus-visible::before,
+.dn-karta-srodowiska[aria-current='true']::before { transform: scaleX(1); }
+.dn-karta-srodowiska:hover::after,
+.dn-karta-srodowiska[aria-current='true']::after { opacity: 1; }
+.dn-karta-srodowiska:active {
+  transform: translateY(0) scale(var(--dn-skala-nacisk));
+  box-shadow: var(--dn-cien-1);
+}
+.dn-karta-srodowiska:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+}
+.dn-karta-srodowiska-godlo {
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover .dn-karta-srodowiska-godlo {
+  transform: scale(var(--dn-skala-godla));
+  color: var(--dn-sygnal);
+}
+
+.dn-karta-srodowiska:hover .dn-btn {
+  border-color: var(--dn-sygnal-wypelnienie);
+  background: var(--dn-sygnal-wypelnienie);
+  color: var(--dn-tekst-inv);
+  box-shadow: var(--dn-poswiata-sygnal);
+}
+
+.dn-karta--klikalna {
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-karta--klikalna:hover {
+  border-color: var(--dn-obrys-mocny);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-md));
+}
+.dn-karta--klikalna:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+
+.dn-kafel {
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color var(--dn-czas-2) var(--dn-ease),
+    background-color var(--dn-czas-2) var(--dn-ease),
+    box-shadow var(--dn-czas-uwyd) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+
+.dn-kafel::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--dn-wym-wstega);
+  background: var(--dn-sygnal-wypelnienie);
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel:hover, .dn-kafel:focus-visible {
+  border-color: var(--dn-sygnal-obrys);
+  box-shadow: var(--dn-cien-uniesienie);
+  transform: translateY(var(--dn-podniesienie-md));
+}
+.dn-kafel:hover::before, .dn-kafel:focus-visible::before { transform: scaleY(1); }
+.dn-kafel:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.dn-kafel-ikona {
+  transition:
+    background-color var(--dn-czas-2) var(--dn-ease),
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-uwyd) var(--dn-ease);
+}
+.dn-kafel:hover .dn-kafel-ikona {
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  transform: scale(var(--dn-skala-ikony));
+}
+
+.dn-btn {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    box-shadow var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-btn:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.dn-btn:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); box-shadow: none; }
+.dn-btn--sygnal:hover { box-shadow: var(--dn-poswiata-sygnal); }
+.dn-btn--atrament:hover, .dn-btn--niebezpieczny:hover { box-shadow: var(--dn-cien-2); }
+.dn-btn[disabled], .dn-btn[aria-disabled='true'] { transform: none; box-shadow: none; }
+
+.dn-btn-ikona {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+
+.dn-btn-ikona > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease); }
+.dn-btn-ikona:not(.dn-btn-ikona--na-ramie):hover > svg { transform: scale(var(--dn-skala-ikony)); }
+.dn-btn-ikona--na-ramie:hover { transform: translateY(var(--dn-podniesienie-sm)); }
+.dn-btn-ikona:active { transform: scale(var(--dn-skala-nacisk)); }
+
+.dn-boczna-pozycja::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  translate: 0 -50%;
+  width: var(--dn-wym-wstega);
+  height: 16px;
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-kropka);
+  transform: scaleY(0);
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-boczna-pozycja:hover::before { transform: scaleY(0.6); }
+.dn-boczna-pozycja[aria-current='page']::before { transform: scaleY(1); }
+
+.sta-menu-poz {
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease);
+}
+
+.sta-menu-poz > svg,
+.sta-menu-poz > .dn-menu-poz-ikona { transition: transform var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease); }
+.sta-menu-poz:hover > svg,
+.sta-menu-poz:hover > .dn-menu-poz-ikona { transform: translateX(2px); color: var(--dn-sygnal); }
+
+.dn-tabela tbody tr { transition: background-color var(--dn-czas-1) var(--dn-ease); }
+
+.dn-zakladka::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: var(--dn-wym-wstega);
+  background: var(--dn-kropka);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-zakladka:hover::after { transform: scaleX(0.4); }
+.dn-zakladka[aria-selected='true']::after { transform: scaleX(1); }
+
+.dn-check, .dn-radio, .dn-przelacznik { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), box-shadow var(--dn-czas-2) var(--dn-ease); }
+.dn-check:active, .dn-radio:active, .dn-przelacznik:active { transform: scale(var(--dn-skala-nacisk)); }
+.dn-check:checked, .dn-radio:checked { box-shadow: var(--dn-cien-sygnal); }
+.dn-pole-kontrolka:focus, .dn-pole-kontrolka:focus-visible { box-shadow: var(--dn-cien-sygnal); }
+
+.dn-wejscie-kaskada > * {
+  animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) both;
+}
+.dn-wejscie-kaskada > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
+.dn-wejscie-kaskada > *:nth-child(n + 7) { animation-delay: calc(6 * var(--dn-krok-kaskady)); }
+
+@media (prefers-reduced-motion: reduce) {
+  
+  .dn-karta-srodowiska:hover::before,
+  .dn-karta-srodowiska[aria-current='true']::before,
+  .dn-kafel:hover::before,
+  .dn-zakladka[aria-selected='true']::after,
+  .dn-boczna-pozycja[aria-current='page']::before { transition: none; }
+  .dn-wejscie-kaskada > * { animation: none; }
+}
+
+.dn-karta-srodowiska { overflow: visible; }
+.dn-karta-srodowiska::before { border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0; }
+.dn-karta-srodowiska::after { border-radius: inherit; }
+
+.dn-karta-srodowiska:hover,
+.dn-karta-srodowiska:focus-within,
+.dn-karta-srodowiska:has(.sta-menu-tresc[data-otwarte='tak']) { z-index: 3; }

@@ -52,7 +52,7 @@ w pasku górnym aplikacji, na fakturze, na obudowie serwera, w karcie przegląda
 i na ekranie telefonu w trybie Always On Display.
 
 Znak został zatwierdzony przez Właściciela z koncepcji **A5 „Delegacja"**
-(rozstrzygnięcie odnotowane w `KIERUNEK.md`, rozdz. 3.5). Od tego momentu jego
+(rozstrzygnięcie odnotowane w kierunku systemu projektowego). Od tego momentu jego
 geometria jest **zamknięta**. Wszystko, co zawiera ta księga, jest albo pomiarem
 tej geometrii, albo regułą jej stosowania.
 
@@ -97,7 +97,7 @@ zastosowania i uzasadnieniem technicznym. Brak odpowiedzi **nie jest zgodą**.
 
 - projektów materiałów firmowych (papier, wizytówka, prezentacja) — te powstają
   na podstawie tej księgi, ale nie są jej częścią,
-- pełnego systemu wizualnego interfejsu — opisuje go `KANON.md` i biblioteka
+- pełnego systemu wizualnego interfejsu — opisuje go kontrakt systemu projektowego i biblioteka
   komponentów `zasoby/css/komponenty.css`,
 - repozytorium plików z opisem każdego pliku — to `logotyp/PORTFOLIO.md`.
 
@@ -111,7 +111,7 @@ zastosowania i uzasadnieniem technicznym. Brak odpowiedzi **nie jest zgodą**.
 > na linii bazowej. Znak czyta się **„»»."** i opowiada pętlę produktu: zlecenie
 > przechodzi od koordynatora do wykonawcy, kropka to praca, która właśnie ruszyła.
 >
-> — `KIERUNEK.md`, rozdz. 3.5
+> — kierunek systemu projektowego
 
 To zdanie jest źródłem wszystkich decyzji konstrukcyjnych opisanych w rozdz. 3.
 Każdy element znaku ma w nim swój odpowiednik — nie ma w znaku elementu, którego
@@ -163,8 +163,7 @@ koordynator–wykonawca w środowisku MultitaskingAI.
 
 ### 2.5 Kropka — dlaczego jest i dlaczego jest jedna
 
-Kropka sygnału jest **elementem sygnaturowym całego systemu** (`KIERUNEK.md`,
-rozdz. 3.4), nie ozdobą godła. Ta sama kropka występuje w pięciu miejscach
+Kropka sygnału jest **elementem sygnaturowym całego systemu** (kierunek systemu projektowego), nie ozdobą godła. Ta sama kropka występuje w pięciu miejscach
 produktu:
 
 | Miejsce | Postać | Znaczenie |
@@ -846,7 +845,7 @@ system opiera się na tym, że błękit znaczy „tu biegnie praca".
 ### 10.05 Gradient na znaku
 
 **Czego dotyczy:** wypełnienie grotów albo kropki gradientem.
-**Dlaczego zabronione:** `KIERUNEK.md` rozdz. 4 blokuje gradient jako odruch
+**Dlaczego zabronione:** kierunek systemu projektowego blokuje gradient jako odruch
 „AI". Gradienty w systemie są **wyłącznie ilustracyjne** (awatary bez zdjęcia,
 rdzeń AOD) i **nigdy** nie wypełniają znaku.
 **Co zrobić:** wypełnienie jednolite.
@@ -1363,7 +1362,7 @@ bo przełącza się powierzchnia, na której stoi.
 
 ```
 WYNIK/
-├── zasoby/marka/                       ← komplet zatwierdzony (KANON rozdz. 3)
+├── zasoby/marka/                       ← komplet zatwierdzony (kontrakt systemu projektowego)
 │   ├── logo/
 │   │   ├── sygnet.svg                          96 × 96
 │   │   ├── sygnet-na-ciemnym.svg
@@ -1485,9 +1484,9 @@ podgląd zastosowania, miejsce wystąpienia, datę, numer naruszenia z rozdz. 10
 ## 18. Decyzje projektowe
 
 Rozstrzygnięcia podjęte w tym opracowaniu tam, gdzie dokumentacja źródłowa
-nie rozstrzygała formy. Każde jest odnotowane zgodnie z KANON rozdz. 10 pkt 5.
+nie rozstrzygała formy. Każde jest odnotowane zgodnie z kontraktem systemu projektowego.
 
-### D-1 · Moduł pola ochronnego: X = wysokość grotu
+### Moduł pola ochronnego: X = wysokość grotu
 
 **Rozstrzygnięcie.** Modułem jest **X = wysokość grotu = 44 j.**, pole ochronne
 wynosi **½X = 22 j.**
@@ -1500,7 +1499,7 @@ weryfikowalny bez dostępu do pliku źródłowego. Różnica między 22 a 24 j. 
 8 % i mieści się w zaokrągleniu warsztatowym — obie wartości są zgodne
 z `logotyp/PORTFOLIO.md`, przy czym **22 j. jest minimum bezwzględnym**.
 
-### D-2 · Progi czytelności: 2 px kreski, 3 px kropki
+### Progi czytelności: 2 px kreski, 3 px kropki
 
 **Rozstrzygnięcie.** Próg 24 px dla sygnetu pełnego i 16 px dla uproszczonego
 wyprowadzono z dwóch progów renderowania: **kreska ≥ 2 px**, **kropka ≥ 3 px**.
@@ -1513,18 +1512,18 @@ odzyskuje oba progi dokładnie przy 16 px (2,04 px i 3,00 px), co potwierdza,
 że został zaprojektowany pod ten właśnie próg. Wniosek nie zmienia progów —
 zmienia ich **uzasadnienie na weryfikowalne**.
 
-### D-3 · Dwie kropki w lockupie pełnym nie łamią reguły jednej kropki
+### Dwie kropki w lockupie pełnym nie łamią reguły jednej kropki
 
 **Rozstrzygnięcie.** Reguła „dokładnie jedna kropka" dotyczy **jednego znaku**:
 sygnet ma jedną (r = 6,5), logotyp ma jedną (r = 3,4). Lockup jest złożeniem
 dwóch znaków i zawiera dwie.
 
-**Uzasadnienie.** Reguła w `KIERUNEK.md` rozdz. 3.4 wymienia „godło" i „emblematy
+**Uzasadnienie.** Reguła w kierunku systemu projektowego wymienia „godło" i „emblematy
 środowisk" jako miejsca z jedną kropką. Logotyp jest osobnym znakiem z własną
 kropką interpunkcyjną — kropka po `CONSOLE` jest znakiem przestankowym, nie drugim
 wskaźnikiem pracy. Rozróżnienie zapisano w rozdz. 4.5.
 
-### D-4 · Wielkości minimalne dla sitodruku i flexo
+### Wielkości minimalne dla sitodruku i flexo
 
 **Rozstrzygnięcie.** Wprowadzono czwarty wiersz tabeli 6.1: sitodruk / flexo /
 opakowanie — pomiędzy drukiem offsetowym a grawerem.
@@ -1535,7 +1534,7 @@ głębokości — pominięcie tego progu prowadziło do zamawiania offsetowego m
 (9 mm) na opakowaniach, gdzie prześwit 1,5 mm zamyka się. Wartości wyprowadzono
 z progu 1,0 mm dla kreski i 1,6 mm dla kropki.
 
-### D-5 · Emblemat nie zastępuje sygnetu
+### Emblemat nie zastępuje sygnetu
 
 **Rozstrzygnięcie.** Emblematy środowisk **nie są znakami marki** i nie wolno ich
 używać na papierze firmowym, wizytówce ani fakturze. Rozgraniczenie: emblemat mówi
@@ -1544,9 +1543,9 @@ używać na papierze firmowym, wizytówce ani fakturze. Rozgraniczenie: emblemat
 **Uzasadnienie.** Emblematy leżą na siatce ikon (24 × 24, obrys 1,75) i dziedziczą
 `currentColor` — są elementami interfejsu. Sygnet leży na siatce 96 × 96 i ma
 barwy własne. Dokumentacja nie zabraniała tego wprost, ale użycie emblematu jako
-znaku marki złamałoby zasadę barw własnych godła (KANON rozdz. 3).
+znaku marki złamałoby zasadę barw własnych godła (kontrakt systemu projektowego).
 
-### D-6 · Wyjątek pola ochronnego w pasku górnym
+### Wyjątek pola ochronnego w pasku górnym
 
 **Rozstrzygnięcie.** W pasku górnym (48 px) pole ochronne redukuje się **pionowo
 do ½ wartości** (10 px przy znaku 28 px); w poziomie obowiązuje pełne ½X.
@@ -1556,7 +1555,7 @@ ochronne (½X przy znaku 28 px = 14 px góra i dół) wymagałoby paska 56 px, c
 złamałoby żeton wymiaru. Redukcja pionowa jest bezpieczna, bo pasek jest jednolitą
 powierzchnią `#131313` — w polu ochronnym i tak nic nie stoi.
 
-### D-7 · Katalog naruszeń liczy 16 pozycji
+### Katalog naruszeń liczy 16 pozycji
 
 **Rozstrzygnięcie.** Do trzynastu naruszeń wymienionych w zadaniu dodano trzy:
 **10.02 ściskanie w pionie** (osobno od rozciągania — inny objaw: elipsa zamiast
@@ -1567,7 +1566,7 @@ obejmuje „subtelne szarości") oraz **10.17 listę kontrolną**.
 łączenie ich w jeden przypadek utrudnia kontrolę. Lista kontrolna zamyka rozdział
 narzędziem roboczym.
 
-### D-8 · Deskryptor `AI Operating Environment` nie jest częścią znaku
+### Deskryptor `AI Operating Environment` nie jest częścią znaku
 
 **Rozstrzygnięcie.** Deskryptor jest **konfiguracją F**, nie elementem znaku.
 Znak bez deskryptora jest kompletny.
@@ -1577,7 +1576,7 @@ z marką. Włączenie go do znaku podnosiłoby wielkość minimalną wszystkich
 zastosowań (tekst 10,5 j. wymaga ≥ 40 mm w druku) i uniemożliwiało użycie
 w pasku 48 px.
 
-### D-9 · Wariant mono zachowuje kropkę
+### Wariant mono zachowuje kropkę
 
 **Rozstrzygnięcie.** W wariantach `mono-czarny` i `mono-bialy` kropka **pozostaje**,
 przyjmując barwę grotów — nie jest usuwana.

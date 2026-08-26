@@ -1,4 +1,4 @@
-# Danaco Console — Kompozycja i układ (plansza portfolio P8)
+# Danaco Console — Plansza portfolio 08: Kompozycja i układ
 
 | | |
 |---|---|
@@ -14,15 +14,15 @@
 
 ## 0. Czym jest ta plansza
 
-Plansza P8 opowiada **budowę ekranu** Danaco Console. Nie jest dokumentacją techniczną —
+Plansza 08 opowiada **budowę ekranu** Danaco Console. Nie jest dokumentacją techniczną —
 ta powstała w `01-dokumentacja-md/` i `02-dokumentacja-html/`. Jest opracowaniem
 prezentacyjnym: pokazuje, jak z jednej liczby (**4 px**) wyrasta cała geometria kokpitu,
 i dlaczego każdy wymiar jest taki, jaki jest.
 
-Wszystkie liczby na planszy pochodzą z KANON rozdz. 2 (przestrzeń, wymiary, punkty łamania,
+Wszystkie liczby na planszy pochodzą z kontraktu systemu projektowego (przestrzeń, wymiary, punkty łamania,
 warstwy) albo z bezpośredniego odczytu plików `WYNIK/zasoby/zetony/zetony.css`
 i `WYNIK/zasoby/prototyp.css`. Wszystkie nazwy okien, modułów, paneli i stref pochodzą
-z KANON rozdz. 6–7 oraz z `dok/projekt-ui/przeplyw/elementy-okien.md`.
+z kontraktu systemu projektowego oraz z `docs/interfejs-uzytkownika/elementy-okien.md`.
 Żaden układ pokazany na planszy nie jest ilustracyjnym wymysłem — każdy ma wskazane
 miejsce występowania w platformie i odpowiadający mu prototyp w `WYNIK/05-okna/`.
 
@@ -31,7 +31,7 @@ miejsce występowania w platformie i odpowiadający mu prototyp w `WYNIK/05-okna
 ## 1. Jednostka 4 px — fundament nienegocjowalny
 
 > **4 px.** Wszystkie odstępy są jej wielokrotnością — brak wartości spoza skali.
-> `SIATKA-I-UKLAD.md` rozdz. 1 · [NIENEGOCJOWALNE]
+> standard siatki i układu · [NIENEGOCJOWALNE]
 
 ### 1.1. Skala odstępów
 
@@ -73,7 +73,7 @@ reguła jest bezwzględna, nie zalecana.
 
 ## 2. Gęstość zwarta (8/10) — pełna tabela wymiarów
 
-`GESTOSC_WIZUALNA = 8/10` (KANON rozdz. 1). Kokpit dowodzenia pokazuje dużo stanu naraz;
+`GESTOSC_WIZUALNA = 8/10` (kontrakt systemu projektowego). Kokpit dowodzenia pokazuje dużo stanu naraz;
 gęstość jest narzędziem czytelności, nie oszczędności.
 
 ### 2.1. Wymiary wiążące
@@ -105,15 +105,15 @@ Wszystkie odczytane bezpośrednio z `WYNIK/zasoby/zetony/zetony.css`
 Gęstość zmienia się **jednym atrybutem** na elemencie głównym (`data-gestosc`),
 nie interwencją na poziomie komponentu. Żaden komponent nie zna słowa „przestronna” —
 sięga wyłącznie po żeton. Ta sama zasada obowiązuje przy `pointer: coarse`:
-**cele dotykowe rosną żetonem, nie wyjątkiem** (KANON rozdz. 9).
+**cele dotykowe rosną żetonem, nie wyjątkiem** (kontrakt systemu projektowego).
 
 ### 2.3. Rozbieżność wobec pakietu v1.0 — rozstrzygnięcie
 
-`SIATKA-I-UKLAD.md` (v1.0, 2026-08-11) podaje: przycisk ~36 px, przycisk ikonowy 36×36,
-przełącznik 40×22, pasek górny 56 px. KANON v2.0 podaje odpowiednio 32 / 32 / 36×20 / 48.
-**Wiążący jest KANON v2.0** — wartości v1.0 pozostają jako zapis wcześniejszego etapu
+standard siatki i układu (v1.0, 2026-08-11) podaje: przycisk ~36 px, przycisk ikonowy 36×36,
+przełącznik 40×22, pasek górny 56 px. kontrakt systemu projektowego podaje odpowiednio 32 / 32 / 36×20 / 48.
+**Wiążący jest kontrakt systemu projektowego** — wartości v1.0 pozostają jako zapis wcześniejszego etapu
 i odpowiadają dzisiejszemu wariantowi „przestronna” (kontrolka 40, pasek 56).
-Rozbieżność odnotowana jawnie, zgodnie z KANON rozdz. 10 pkt 5.
+Rozbieżność odnotowana jawnie, zgodnie z kontraktem systemu projektowego.
 
 ---
 
@@ -135,7 +135,7 @@ grid-template-columns: 224px minmax(0, 1fr);    /* boczna · obszar roboczy (.pt
 | Obszar roboczy | reszta | praca | okna operacyjne modułu + Chat Window (pas komunikacji) |
 
 **Pasek górny jest atramentowy w obu motywach** — jedyny element nieprzełączający się
-z motywem (KANON rozdz. 2, „Rama kokpitu”).
+z motywem (kontrakt systemu projektowego, „Rama kokpitu”).
 
 ### 3.1. Warianty powłoki w prototypie
 
@@ -151,7 +151,7 @@ z motywem (KANON rozdz. 2, „Rama kokpitu”).
 
 ## 4. Obszar roboczy z pasem komunikacji
 
-Chat Window jest **oknem wspólnym wszystkim modułom** (KANON rozdz. 7.4). W obszarze
+Chat Window jest **oknem wspólnym wszystkim modułom** (kontrakt systemu projektowego). W obszarze
 roboczym zajmuje dolny pas:
 
 ```
@@ -194,7 +194,7 @@ Osiem wzorców — każdy z realnym miejscem występowania w platformie i klasą
 
 ### 5.1. Wzorzec 1 — trzy strefy o malejącej masie
 
-Anty-domyślne KANON rozdz. 1 blokuje wprost „trzy równe karty funkcji”. Centrum
+Anty-domyślne kontrakt systemu projektowego blokuje wprost „trzy równe karty funkcji”. Centrum
 dowodzenia rozwiązuje to malejącą masą:
 
 | Strefa | Element | Liczba | Masa wizualna |
@@ -204,7 +204,7 @@ dowodzenia rozwiązuje to malejącą masą:
 | 3 | listwa ustawień (`.dn-listwa`) — pas jednowierszowy | 3 pozycje | najmniejsza |
 
 Kolejność i liczebność są źródłowe (`elementy-okien.md` rozdz. 2.2–2.5,
-`SIATKA-I-UKLAD.md` rozdz. 8). Wymiary stref są decyzją projektową — dokumentacja
+standard siatki i układu). Wymiary stref są decyzją projektową — dokumentacja
 świadomie ich nie przesądza.
 
 ### 5.2. Wzorzec 6 — asymetria koordynator–wykonawca
@@ -251,7 +251,7 @@ i 107 px na drugim — czyli różne narzędzie na każdym biurku.
 | `w4` | 1600 px | szerokie biurko | **dwa okna komunikacji** równolegle |
 
 Reguły odczytane z `prototyp.css` rozdz. 7 (`@media (max-width: 960px)`,
-`@media (max-width: 640px)`); progi z KANON rozdz. 2.
+`@media (max-width: 640px)`); progi z kontraktu systemu projektowego.
 
 **Zasada porządku zwijania:** znika najpierw to, co najtańsze do odtworzenia jednym
 kliknięciem. Kolejność: panele pomocnicze → etykiety bocznej nawigacji → sama boczna
@@ -275,7 +275,7 @@ Para porównawcza na planszy zbudowana jest na realnym układzie: **Strefa 1 Cen
 dowodzenia** (masa), **wiersz Monitora procesu MultitaskingAI** (kontrast),
 **stopka modala „Pula kont Code CLI”** (pozycja), **panel Role** (przestrzeń).
 
-Ograniczenie bezwzględne (KANON rozdz. 9): **stan nigdy samym kolorem** — każde
+Ograniczenie bezwzględne (kontrakt systemu projektowego): **stan nigdy samym kolorem** — każde
 narzędzie hierarchii działa równolegle z ikoną albo etykietą.
 
 ---
@@ -320,7 +320,7 @@ warstwy pośrednie bez przenumerowania stosu. Skok 300 → 800 oddziela **warstw
    kontenera szkieletu; szkielet reaguje zapytaniami kontenerowymi odwzorowującymi
    progi w1–w4. Dzięki temu zachowanie jest **sprawdzalne**, a nie deklarowane.
 5. **Rozbieżność v1.0 / v2.0 pokazana, nie zamieciona.** Sekcja wymiarów odnotowuje
-   różnicę wobec `SIATKA-I-UKLAD.md` i wskazuje, że dawne wartości odpowiadają
+   różnicę wobec standardu siatki i układu i wskazuje, że dawne wartości odpowiadają
    dzisiejszemu wariantowi „przestronna”.
 6. **Stos z-index w perspektywie 3D.** Jedenaście płaszczyzn przechylonych transformacją
    CSS — jedyne miejsce planszy, gdzie forma jest przestrzenna, bo pojęcie jest
@@ -339,14 +339,14 @@ warstwy pośrednie bez przenumerowania stosu. Skok 300 → 800 oddziela **warstw
 
 | Zakres | Plik / rozdział |
 |---|---|
-| Przestrzeń, wymiary, punkty łamania, warstwy, siatka | `WYNIK/KANON.md` rozdz. 2 |
-| Inwentarz okien i powłok | `WYNIK/KANON.md` rozdz. 7 |
-| Architektura pojęciowa, moduły, środowiska | `WYNIK/KANON.md` rozdz. 6 |
-| Zero blokad (ADL-017) | `WYNIK/KANON.md` rozdz. 8 |
-| Anatomia powłoki, pasek górny, karty sesji, boczna nawigacja, obszar roboczy | `dok/projekt-ui/przeplyw/elementy-okien.md` rozdz. 3.1–3.5 |
-| Centrum dowodzenia — trzy strefy | `dok/projekt-ui/przeplyw/elementy-okien.md` rozdz. 2.2–2.5 |
-| Panel orkiestracji (6 sekcji), karty ról, Subagent Network | `dok/projekt-ui/przeplyw/elementy-okien.md` rozdz. 4.4–4.5 |
-| Jednostka 4 px, skala odstępów, promienie, rytm strony głównej | `design/opracowania/system-wizualny/pakiet/SIATKA-I-UKLAD.md` rozdz. 1–8 |
+| Przestrzeń, wymiary, punkty łamania, warstwy, siatka | kontrakt systemu projektowego |
+| Inwentarz okien i powłok | kontrakt systemu projektowego |
+| Architektura pojęciowa, moduły, środowiska | kontrakt systemu projektowego |
+| Zero blokad | kontrakt systemu projektowego |
+| Anatomia powłoki, pasek górny, karty sesji, boczna nawigacja, obszar roboczy | `docs/interfejs-uzytkownika/elementy-okien.md` rozdz. 3.1–3.5 |
+| Centrum dowodzenia — trzy strefy | `docs/interfejs-uzytkownika/elementy-okien.md` rozdz. 2.2–2.5 |
+| Panel orkiestracji (6 sekcji), karty ról, Subagent Network | `docs/interfejs-uzytkownika/elementy-okien.md` rozdz. 4.4–4.5 |
+| Jednostka 4 px, skala odstępów, promienie, rytm strony głównej | `design/opracowania/system-wizualny/pakiet/standard siatki i układu |
 | Klasy układu powłoki i paneli, responsywność | `WYNIK/zasoby/prototyp.css` rozdz. 1–3, 7 |
 | Wartości żetonów wymiarów i warstw | `WYNIK/zasoby/zetony/zetony.css` |
 | Realne zastosowania wzorców | `WYNIK/05-okna/srodowiska/*.html`, `WYNIK/05-okna/moduly/*.html`, `WYNIK/05-okna/platformowe/*.html` |

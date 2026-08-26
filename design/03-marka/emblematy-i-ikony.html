@@ -1081,19 +1081,19 @@ code, .eb-kod { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
     <thead><tr><th>#</th><th>Plik</th><th>Defekt</th><th>Pomiar</th><th>Naprawa</th></tr></thead>
     <tbody>
       <tr>
-        <td class="eb-l">W-1</td><td class="eb-l">favicon-16.png</td>
+        <td class="eb-l">2</td><td class="eb-l">favicon-16.png</td>
         <td><strong>kropka sygnału nie istnieje</strong> — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera</td>
         <td class="eb-l">0 px błękitu</td>
         <td>kafel uproszczony, skala 0,72 → <strong>2 px błękitu</strong></td>
       </tr>
       <tr>
-        <td class="eb-l">W-2</td><td class="eb-l">favicon-16/32/48.png</td>
+        <td class="eb-l">3</td><td class="eb-l">favicon-16/32/48.png</td>
         <td>tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart</td>
         <td class="eb-l">1,6 : 1</td>
         <td>grunt kryjący <code>#131313</code>, znak <code>#ECECEC</code> → 16,32 : 1</td>
       </tr>
       <tr>
-        <td class="eb-l">W-3</td><td class="eb-l">apple-touch-icon.png</td>
+        <td class="eb-l">4</td><td class="eb-l">apple-touch-icon.png</td>
         <td>kopia <code>ikona-180.png</code> z wypalonym <code>rx 224</code>; białe naroża po spłaszczeniu alfy</td>
         <td class="eb-l">piksel (0,0) = #FFFFFF</td>
         <td><code>rx 0</code>, tryb RGB → piksel (0,0) = <code>#131313</code></td>
@@ -1431,8 +1431,8 @@ code, .eb-kod { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
 
       <h4>Źródło w dokumentacji</h4>
       <ul>
-        <li><code>KANON.md</code> — rozdz. 3 (znak marki i element sygnaturowy), rozdz. 4 (ikony), rozdz. 5 (komponenty), rozdz. 6 (cztery środowiska)</li>
-        <li><code>design/opracowania/design/01-kierunek/KIERUNEK.md</code> — rozdz. 3.4 (kropka sygnału), 3.5 (znak marki), 3.6 (ikony)</li>
+        <li>kontrakt systemu projektowego (znak marki i element sygnaturowy), rozdz. 4 (ikony), rozdz. 5 (komponenty), rozdz. 6 (cztery środowiska)</li>
+        <li>kierunek systemu projektowego (kropka sygnału), 3.5 (znak marki), 3.6 (ikony)</li>
         <li>realne pliki <code>zasoby/marka/srodowiska/srodowisko-*.svg</code>, <code>zasoby/marka/logo/sygnet*.svg</code>, <code>zasoby/marka/ikona-aplikacji/*</code>, <code>zasoby/marka/favicon/*</code></li>
         <li><code>zasoby/css/komponenty.css</code> — <code>.dn-karta-srodowiska-godlo</code>, <code>.dn-boczna-pozycja</code></li>
         <li><code>zasoby/zetony/zetony.css</code> i <code>kontrasty.json</code> — wartości żetonów i pomiary kontrastu</li>
@@ -1470,7 +1470,7 @@ code, .eb-kod { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-sm); }
         <li>przełączniki jako <code>&lt;button&gt;</code> z <code>aria-pressed</code>; grupy z <code>role="group"</code> i etykietą;</li>
         <li>pierścień fokusu 2 px z odsunięciem 2 px na każdej kontrolce;</li>
         <li>komunikat o skopiowaniu ogłaszany w obszarze <code>role="status"</code>;</li>
-        <li>zero atrybutu <code>disabled</code> — zgodnie z zasadą zero blokad (ADL-017);</li>
+        <li>zero atrybutu <code>disabled</code> — zgodnie z zasadą zero blokad;</li>
         <li>wszystkie pary tekst/tło zmierzone — patrz rozdz. 06.</li>
       </ul>
     </div>

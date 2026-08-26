@@ -524,7 +524,7 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
           </div>
           <div class="dok-demo-stopka">
             Reguła <span class="dok-mono">*, *::before, *::after { box-sizing: border-box }</span> jest warunkiem
-            działania jednostki 4 px — pozycji oznaczonej w KANON jako [NIENEGOCJOWALNA].
+            działania jednostki 4 px — pozycji oznaczonej w kontrakcie systemu projektowego jako [NIENEGOCJOWALNA].
           </div>
         </div>
 
@@ -603,7 +603,7 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
       <section class="dok-sekcja" id="s2" tabindex="-1">
         <h2><span class="dok-nr">02</span> Kolejność importu arkuszy</h2>
         <p>
-          Kolejność jest identyczna w KANON rozdz. 11 i w HANDOFF rozdz. 1 („import po żetonach, przed komponentami”).
+          Kolejność jest identyczna w kontrakcie systemu projektowego i w opracowaniu o przekazaniu, ruchu i dostępności („import po żetonach, przed komponentami”).
           Nie jest kwestią gustu — każdy krok ma twarde uzasadnienie, a jego złamanie daje widoczny defekt.
         </p>
 
@@ -757,8 +757,8 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
               <tr><td class="dok-mono">.dn-karta-tytul</td><td><span class="dn-plakietka">element</span></td><td>wymaga rodzica <span class="dok-mono">.dn-karta</span></td></tr>
               <tr><td class="dok-mono">.dn-karta-cialo</td><td><span class="dn-plakietka">element</span></td><td>wymaga rodzica <span class="dok-mono">.dn-karta</span></td></tr>
               <tr><td class="dok-mono">.dn-karta-naglowek</td><td><span class="dn-plakietka">element</span></td><td>wymaga rodzica <span class="dok-mono">.dn-karta</span></td></tr>
-              <tr><td class="dok-mono">.dn-karta-sesji</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>pas kart sesji E2 — bez związku z <span class="dok-mono">.dn-karta</span></td></tr>
-              <tr><td class="dok-mono">.dn-karta-srodowiska</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>karta środowiska E1 strefa 1; ma cztery własne elementy</td></tr>
+              <tr><td class="dok-mono">.dn-karta-sesji</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>pas kart sesji powłoki środowiska — bez związku z <span class="dok-mono">.dn-karta</span></td></tr>
+              <tr><td class="dok-mono">.dn-karta-srodowiska</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>karta środowiska — Centrum dowodzenia, strefa 1; ma cztery własne elementy</td></tr>
               <tr><td class="dok-mono">.dn-karty-sesji</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>liczba mnoga oznacza kontener pozycji</td></tr>
               <tr><td class="dok-mono">.dn-btn-ikona</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>własna szerokość, wysokość, obrys i stany; nie dziedziczy z <span class="dok-mono">.dn-btn</span></td></tr>
               <tr><td class="dok-mono">.dn-kafel</td><td><span class="dn-plakietka dn-plakietka--sygnal">blok</span></td><td>kafel strefy 2 — nazwa własna zamiast <span class="dok-mono">.dn-karta-kafel</span></td></tr>
@@ -822,7 +822,7 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
             <caption class="dn-sr-only">Odstępstwa od konwencji nazewniczej</caption>
             <thead><tr><th scope="col">Klasa</th><th scope="col">Odstępstwo</th><th scope="col">Powód zachowania</th></tr></thead>
             <tbody>
-              <tr><td class="dok-mono">.dn-radio</td><td class="dok-td-luzna">powinna brzmieć <span class="dok-mono">.dn-check--radio</span> — rozszerza <span class="dok-mono">.dn-check</span> i wymaga jej w atrybucie</td><td class="dok-td-luzna">nazwa krótka, zgodna z <span class="dok-mono">type="radio"</span>; zapisana w KANON rozdz. 5 jako wiążąca</td></tr>
+              <tr><td class="dok-mono">.dn-radio</td><td class="dok-td-luzna">powinna brzmieć <span class="dok-mono">.dn-check--radio</span> — rozszerza <span class="dok-mono">.dn-check</span> i wymaga jej w atrybucie</td><td class="dok-td-luzna">nazwa krótka, zgodna z <span class="dok-mono">type="radio"</span>; zapisana w kontrakcie systemu projektowego jako wiążąca</td></tr>
               <tr><td class="dok-mono">.dn-dane</td><td class="dok-td-luzna">pełni dwie role: klasa fundamentu i modyfikator komórki tabeli</td><td class="dok-td-luzna">rola jest ta sama — „to są dane maszynowe”; zdublowanie zamierzone</td></tr>
               <tr><td class="dok-mono">.dn-liczba</td><td class="dok-td-luzna">synonim <span class="dok-mono">.dn-dane</span> w tej samej regule (fundament, linia 92)</td><td class="dok-td-luzna">czytelniejsza w tabelach liczbowych</td></tr>
               <tr><td class="dok-mono">.dn-suwak</td><td class="dok-td-luzna">w katalogu v1.0 oznaczała przełącznik, w bibliotece v2.0 oznacza suwak zakresu</td><td class="dok-td-luzna">rozjazd między generacjami; wiążąca jest v2.0 — przełącznik to <span class="dok-mono">.dn-przelacznik</span></td></tr>
@@ -835,8 +835,8 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
         <div class="dok-demo">
           <div class="dok-para">
             <div class="dok-para-kod">
-              <span class="dok-para-etykieta">Zasada KANON rozdz. 10.1</span>
-              <pre class="dn-kod">/* Pas kart sesji (E2) — mechanika
+              <span class="dok-para-etykieta">Zasada kontrakt systemu projektowego</span>
+              <pre class="dn-kod">/* Pas kart sesji powłoki środowiska — mechanika
    zakładek + wskaźnik pracy */    ← komentarz PL
 .dn-karty-sesji { … }              ← klasa PL
 
@@ -1075,7 +1075,7 @@ body[data-inspektor='wlaczony'] [data-zetony] { outline: 1px dashed var(--dn-syg
         <h2><span class="dok-nr">06</span> Wzorzec stanu</h2>
         <blockquote class="dok-cytat">
           Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie · fokus · wybrany · ładowanie · błąd.
-          ADL-017: żaden wariant nie odbiera klikalności. Stan nigdy samym kolorem.
+          Zasada zero blokad: żaden wariant nie odbiera klikalności. Stan nigdy samym kolorem.
           <em>— nagłówek <span class="dok-mono">komponenty.css</span></em>
         </blockquote>
 
@@ -1293,7 +1293,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
               <tr><td class="dn-dane">1</td><td><strong>Zasięg poza biblioteką</strong></td><td class="dok-td-luzna">fokus dostaje każdy element fokusowalny — odnośnik w treści, <span class="dok-mono">&lt;summary&gt;</span>, wiersz z <span class="dok-mono">tabindex</span>, kontrolka bez klasy <span class="dok-mono">.dn-*</span></td></tr>
               <tr><td class="dn-dane">2</td><td><strong>Nowy komponent dziedziczy za darmo</strong></td><td class="dok-td-luzna">klasa dopisana jutro ma poprawny fokus, zanim ktokolwiek o nim pomyśli; nie da się „zapomnieć fokusu”</td></tr>
               <tr><td class="dn-dane">3</td><td><strong>Jedna wartość, jedno miejsce zmiany</strong></td><td class="dok-td-luzna">zmiana grubości pierścienia to jedna deklaracja zamiast kilkudziesięciu reguł i gwarantowanego rozjazdu</td></tr>
-              <tr><td class="dn-dane">4</td><td><strong>Symetria z ograniczonym ruchem</strong></td><td class="dok-td-luzna">KANON rozdz. 9 stawia obie sprawy obok siebie: ruch globalnie w żetonach, fokus globalnie w fundamencie</td></tr>
+              <tr><td class="dn-dane">4</td><td><strong>Symetria z ograniczonym ruchem</strong></td><td class="dok-td-luzna">kontrakt systemu projektowego stawia obie sprawy obok siebie: ruch globalnie w żetonach, fokus globalnie w fundamencie</td></tr>
               <tr><td class="dn-dane">5</td><td><span class="dok-mono">:focus-visible</span><strong>, nie</strong> <span class="dok-mono">:focus</span></td><td class="dok-td-luzna">pierścień pojawia się przy klawiaturze, nie po kliknięciu myszą — bez tego projektanci zaczynają usuwać obrys</td></tr>
               <tr><td class="dn-dane">6</td><td><strong>Audyt w jednym miejscu</strong></td><td class="dok-td-luzna">recenzja dostępności sprawdza jedną regułę zamiast przeglądać cały arkusz</td></tr>
             </tbody>
@@ -1466,7 +1466,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
         <blockquote class="dok-cytat">
           Jedna odpowiedzialność = jeden plik, arkusz ≤ 300 linii (podział per komponent),
           komponenty sięgają wyłącznie po żetony semantyczne.
-          <em>— regulamin budowy przywołany w HANDOFF.md</em>
+          <em>— regulamin budowy przywołany w opracowaniu o przekazaniu, ruchu i dostępności</em>
         </blockquote>
         <p>
           <span class="dok-mono">komponenty.css</span> ma <strong>1207 linii</strong> — czterokrotność progu.
@@ -1581,7 +1581,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
               <tr>
                 <td><strong>Widoczność i wymiar</strong></td>
                 <td class="dok-mono">.hidden · .w-full · .truncate</td>
-                <td class="dok-td-luzna"><span class="dok-mono">.hidden</span> bywa protezą blokady — ADL-017 mówi, że element niegotowy nie znika, tylko komunikuje. Szerokość i przycięcie to sprawa kontekstu, w którym komponent stoi.</td>
+                <td class="dok-td-luzna"><span class="dok-mono">.hidden</span> bywa protezą blokady — zasada zero blokad mówi, że element niegotowy nie znika, tylko komunikuje. Szerokość i przycięcie to sprawa kontekstu, w którym komponent stoi.</td>
               </tr>
             </tbody>
           </table>
@@ -1651,7 +1651,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
 
         <h3>Pięć dopuszczonych użyć prymitywu w komponentach</h3>
         <p>
-          Zasada KANON rozdz. 2 mówi: <em>komponent sięga wyłącznie po żetony semantyczne, nigdy po prymitywy</em>.
+          Zasada kontrakt systemu projektowego mówi: <em>komponent sięga wyłącznie po żetony semantyczne, nigdy po prymitywy</em>.
           Arkusz łamie ją <strong>pięć razy</strong> — i każde złamanie ma tę samą przyczynę:
           <strong>tło jest stałe w obu motywach, więc tekst na nim też musi być stały.</strong>
         </p>
@@ -1954,7 +1954,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
           </div>
           <div class="dok-demo-stopka">
             Stan listy nie jest nigdzie zapisywany — służy do jednorazowego przejścia przeglądu.
-            Brama odbioru wizualnego: galeria <span class="dok-mono">06-okna/komponenty.html</span> (HANDOFF rozdz. 3).
+            Brama odbioru wizualnego: galeria <span class="dok-mono">06-okna/komponenty.html</span> (opracowanie o przekazaniu, ruchu i dostępności).
           </div>
         </div>
       </section>
@@ -1964,7 +1964,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
         <h2><span class="dok-nr">15</span> Decyzje projektowe</h2>
         <p>
           Rozstrzygnięcia podjęte <strong>ponad literalny zapis dokumentacji źródłowej</strong>, wraz z podstawą
-          i uzasadnieniem. Każde jest zgodne z KANON i katalogiem komponentów.
+          i uzasadnieniem. Każde jest zgodne z kontraktem systemu projektowego i katalogiem komponentów.
         </p>
         <div class="dok-siatka dok-siatka--2" id="lista-decyzji"></div>
       </section>
@@ -1995,10 +1995,10 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
                 <tr><td class="dok-mono">zasoby/css/fundament.css</td><td class="dok-td-luzna">156 linii — pełny wykaz reguł sekcji 05, wzorzec fokusu, jedenaście klas użytkowych, wyjątek <span class="dok-mono">::selection</span></td></tr>
                 <tr><td class="dok-mono">zasoby/css/komponenty.css</td><td class="dok-td-luzna">1207 linii — granice sekcji do podziału, pomiar stanów, transitions, animacji, specyficzności, selektorów elementowych i odstępstw</td></tr>
                 <tr><td class="dok-mono">zasoby/zetony/zetony.css</td><td class="dok-td-luzna">czasy, wymiary, bloki <span class="dok-mono">prefers-reduced-motion</span>, <span class="dok-mono">pointer: coarse</span>, <span class="dok-mono">data-gestosc</span>, mechanizmy motywu</td></tr>
-                <tr><td class="dok-mono">WYNIK/KANON.md</td><td class="dok-td-luzna">zasady nadrzędne: zero blokad (ADL-017), stan nigdy samym kolorem, WCAG 2.1 AA na wejściu, standard techniczny prototypów, wykaz klas wiążących</td></tr>
-                <tr><td class="dok-mono">design/01-kierunek/KIERUNEK.md</td><td class="dok-td-luzna">trzy pokrętła, katalog anty-domyślnych, zasada „żeton, nie wyjątek”, monochromatyczna precyzja</td></tr>
-                <tr><td class="dok-mono">design/HANDOFF.md</td><td class="dok-td-luzna">regulamin budowy (próg 300 linii), wykaz czternastu plików docelowych, kolejność wdrożenia falami, katalog rzeczy niezmienialnych</td></tr>
-                <tr><td class="dok-mono">brief/INWENTARZ-KOMPONENTOW.md</td><td class="dok-td-luzna">wykaz 119 tokenów klasowych, rozjazd katalog ↔ implementacja, rozbieżności wartości liczbowych</td></tr>
+                <tr><td class="dok-mono">kontrakt systemu projektowego</td><td class="dok-td-luzna">zasady nadrzędne: zero blokad, stan nigdy samym kolorem, WCAG 2.1 AA na wejściu, standard techniczny prototypów, wykaz klas wiążących</td></tr>
+                <tr><td class="dok-mono">kierunek systemu projektowego</td><td class="dok-td-luzna">trzy pokrętła, katalog anty-domyślnych, zasada „żeton, nie wyjątek”, monochromatyczna precyzja</td></tr>
+                <tr><td class="dok-mono">opracowanie o przekazaniu, ruchu i dostępności</td><td class="dok-td-luzna">regulamin budowy (próg 300 linii), wykaz czternastu plików docelowych, kolejność wdrożenia falami, katalog rzeczy niezmienialnych</td></tr>
+                <tr><td class="dok-mono">inwentarz komponentów</td><td class="dok-td-luzna">wykaz 119 tokenów klasowych, rozjazd katalog ↔ implementacja, rozbieżności wartości liczbowych</td></tr>
                 <tr><td class="dok-mono">zasoby/ikony/manifest.json + svg/</td><td class="dok-td-luzna">82 ikony; wszystkie znaki na tej stronie wklejone inline z tego zestawu — zero emoji</td></tr>
               </tbody>
             </table>
@@ -2071,7 +2071,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
 <script src="../zasoby/wspolne.js"></script>
 <script>
 /* ==========================================================================
-   DANACO CONSOLE — A5 · STYLE I ARCHITEKTURA ARKUSZY
+   DANACO CONSOLE — 05 · STYLE I ARCHITEKTURA ARKUSZY
    Cały skrypt inline, bez bibliotek zewnętrznych, działa z file://
    ========================================================================== */
 (function () {
@@ -2445,7 +2445,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
       }
     }
     if (ZNANE[pelna]) {
-      wiersze.push(['sukces', 'Obecna w wykazie 119 tokenów klasowych', 'Nazwa wiążąca — nie wolno jej zmieniać (KANON rozdz. 5).']);
+      wiersze.push(['sukces', 'Obecna w wykazie 119 tokenów klasowych', 'Nazwa wiążąca — nie wolno jej zmieniać (kontrakt systemu projektowego).']);
     }
     wiersze.forEach(function (w) {
       var t = el('div', 'dn-toast dn-toast--' + (w[0] === 'sygnal' ? 'informacja' : w[0]));
@@ -2687,7 +2687,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
     },
     busy: {
       kod: ".dn-btn[aria-busy='true'] { cursor: progress; }\n.dn-btn[aria-busy='true']::after {\n  content: '';\n  width: var(--dn-wym-spinner);\n  border: 2px solid currentColor;\n  border-top-color: transparent;\n  border-radius: var(--dn-r-pill);\n  animation: dn-obrot 0.8s linear infinite;\n}",
-      opis: 'Ładowanie (0,2,1) — ADL-017: przycisk POZOSTAJE KLIKALNY. Zmienia się kursor i dochodzi wskaźnik, nie znika sprawczość.'
+      opis: 'Ładowanie (0,2,1) — Zasada zero blokad: przycisk POZOSTAJE KLIKALNY. Zmienia się kursor i dochodzi wskaźnik, nie znika sprawczość.'
     },
     invalid: {
       kod: ".dn-btn[aria-invalid='true'] {\n  border-color: var(--dn-blad-obrys);\n  color: var(--dn-blad-tekst);\n}",
@@ -2759,7 +2759,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
       if (st) {
         st.innerHTML = ukryte
           ? 'Cztery stany kroku niosą <strong>kreskę po lewej + znak w kółku + etykietę słowną</strong>. Naciśnij przycisk powyżej, żeby zobaczyć, co zostaje przy naruszeniu zasady „stan nigdy samym kolorem”. <em>(dane przykładowe z domeny produktu)</em>'
-          : 'Naruszenie: zostaje sama barwa kreski. Cztery różne wyniki weryfikacji stają się nierozróżnialne dla osoby nierozpoznającej barw i dla czytnika ekranu. <strong>To jest dokładnie ten defekt, którego zakazuje KANON rozdz. 9.</strong>';
+          : 'Naruszenie: zostaje sama barwa kreski. Cztery różne wyniki weryfikacji stają się nierozróżnialne dla osoby nierozpoznającej barw i dla czytnika ekranu. <strong>To jest dokładnie ten defekt, którego zakazuje kontrakt systemu projektowego.</strong>';
       }
     });
   }
@@ -2849,7 +2849,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
         var b = btnBusy.getAttribute('aria-busy') === 'true';
         btnBusy.setAttribute('aria-busy', b ? 'false' : 'true');
         btnBusy.textContent = b ? 'Uruchom proces' : 'Uruchamianie…';
-        meldunek(b ? 'Zakończono — przycisk był klikalny przez cały czas' : 'aria-busy = true · przycisk POZOSTAJE klikalny (ADL-017)');
+        meldunek(b ? 'Zakończono — przycisk był klikalny przez cały czas' : 'aria-busy = true · przycisk POZOSTAJE klikalny (zasada zero blokad)');
       }
     });
   }
@@ -3087,7 +3087,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
     ['Wartość szesnastkowa wprost', '1 wystąpienie (linia 163)', 'odstepstwa', 'Wartość poza żetonem nie zmieni się przy przełączeniu motywu ani przy korekcie palety; omija pomiar kontrastu.', 'var(--dn-*)'],
     ['Czysta czerń', '0', 'czyste', 'Zabija głębię i wywołuje halację na OLED; skala kończy się na najciemniejszym prymitywie.', '--dn-szary-950 (tło) / --dn-szary-900 (tekst)'],
     ['Prymityw w komponencie', '5 uzasadnionych + 1 nieuzasadnione', 'odstepstwa', 'Prymityw nie przełącza się z motywem — komponent traci zdolność reakcji.', 'żeton semantyczny; prymityw wyłącznie na powierzchni stałej'],
-    ['disabled / aria-disabled jako brama', '0', 'czyste', 'ADL-017: domyślne zachowanie systemu to wykonanie polecenia; wyszarzony przycisk nie mówi, czego brakuje.', 'przycisk klikalny + komunikat po naciśnięciu albo opis obok'],
+    ['disabled / aria-disabled jako brama', '0', 'czyste', 'Zasada zero blokad: domyślne zachowanie systemu to wykonanie polecenia; wyszarzony przycisk nie mówi, czego brakuje.', 'przycisk klikalny + komunikat po naciśnięciu albo opis obok'],
     ['opacity: .5 jako wyłączenie', '0', 'czyste', 'Obejście zakazu blokad; dodatkowo psuje kontrast wszystkich warstw pod spodem.', '--dn-tekst-2 / --dn-tekst-3 dla hierarchii; plakietka dla stanu'],
     ['!important', '0 w komponentach; 4 w żetonach (ograniczony ruch)', 'czyste', 'Kończy kaskadę; jedyny sposób nadpisania to kolejny !important.', 'popraw specyficzność albo kolejność; wzorzec podwojenia klasy'],
     ['Selektor identyfikatorowy', '0', 'czyste', 'Waga (1,0,0) nie do pokonania klasą; wiąże styl z jednym wystąpieniem.', 'klasa .dn-*'],
@@ -3193,7 +3193,7 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
       ['Zero treści zastępczych: brak Lorem ipsum, zmyślonych nazwisk i metryk', false]
     ]],
     ['F. Odbiór wizualny', [
-      ['Komponent obejrzany w galerii komponenty.html — brama odbioru z HANDOFF rozdz. 3', false],
+      ['Komponent obejrzany w galerii komponenty.html — brama odbioru z opracowania o przekazaniu, ruchu i dostępności', false],
       ['Fokus widoczny na każdej kontrolce przy nawigacji klawiszem Tab', false],
       ['Wygląd sprawdzony przy pointer: coarse (emulacja dotyku)', false],
       ['Wygląd sprawdzony przy gęstości przestronnej', false],
@@ -3273,15 +3273,15 @@ nie oddaje znaczenia. W obecnym zakresie okien: zero wystąpień.</div>
   /* ============================ SEKCJA 15 ============================ */
   var DECYZJE = [
     ['D-A5-01', 'Test przynależności reguły do fundamentu', 'Nagłówek fundament.css wylicza zakres, ale nie podaje kryterium rozstrzygania przypadków spornych.', 'Bez kryterium fundament rośnie przy każdej wątpliwości; test przenosi decyzję z gustu na sprawdzalny warunek.'],
-    ['D-A5-02', 'Reguła rozstrzygająca „element czy blok”', 'KANON rozdz. 5 wylicza klasy, ale nie podaje reguły ich czytania; komponenty.css stosuje ją konsekwentnie, nie nazywając.', 'Konwencja ma wadę wrodzoną — .dn-karta-tytul i .dn-karta-sesji są lekturalnie nierozróżnialne. Reguła wywiedziona z faktycznego zapisu arkusza, nie wymyślona.'],
+    ['D-A5-02', 'Reguła rozstrzygająca „element czy blok”', 'kontrakt systemu projektowego wylicza klasy, ale nie podaje reguły ich czytania; komponenty.css stosuje ją konsekwentnie, nie nazywając.', 'Konwencja ma wadę wrodzoną — .dn-karta-tytul i .dn-karta-sesji są lekturalnie nierozróżnialne. Reguła wywiedziona z faktycznego zapisu arkusza, nie wymyślona.'],
     ['D-A5-03', 'Drabina wyboru nośnika stanu', 'Nagłówek komponenty.css wymienia siedem stanów; rozkład nośników zmierzony w pliku (ARIA 17 wystąpień, modyfikator 7).', 'Kolejność wynika z pomiaru, nie z preferencji. „ARIA przed klasą” daje zysk dostępnościowy: nie da się rozjechać wyglądu ze stanem dla czytnika ekranu.'],
     ['D-A5-04', '[data-stan] pozostaje furtką, nie wzorcem', 'Zero wystąpień [data-stan] w obu arkuszach; data-theme i data-gestosc na :root; data-przelacz-motyw bez reguły CSS.', 'Zadanie wymieniało [data-stan] wśród wzorców stanu; stan faktyczny jest inny. Odnotowano rzeczywistość i podano warunki dopuszczalności zamiast opisywać nieistniejący wzorzec.'],
-    ['D-A5-05', 'Zachowanie dwóch powtórzeń reguły fokusu', 'HANDOFF rozdz. 1: podział na pliki per komponent.', 'przycisk.css ma być czytelny i poprawny w oderwaniu od fundamentu. Zakaz rozszerzania powtórzenia na kolejne komponenty.'],
-    ['D-A5-06', 'Kolejność importu wyznaczają zależności @keyframes', 'Trzy definicje klatek w komponenty.css, sześć miejsc użycia; HANDOFF nie porusza tematu.', 'Najczęstsza pułapka podziału pliku: po rozbiciu spinner przestaje się obracać. Zależność musi być zapisana jawnie, z komentarzem.'],
+    ['D-A5-05', 'Zachowanie dwóch powtórzeń reguły fokusu', 'opracowanie o przekazaniu, ruchu i dostępności: podział na pliki per komponent.', 'przycisk.css ma być czytelny i poprawny w oderwaniu od fundamentu. Zakaz rozszerzania powtórzenia na kolejne komponenty.'],
+    ['D-A5-06', 'Kolejność importu wyznaczają zależności @keyframes', 'Trzy definicje klatek w komponenty.css, sześć miejsc użycia; opracowanie o przekazaniu, ruchu i dostępności nie porusza tematu.', 'Najczęstsza pułapka podziału pliku: po rozbiciu spinner przestaje się obracać. Zależność musi być zapisana jawnie, z komentarzem.'],
     ['D-A5-07', 'Wyjątek [data-theme] dla ::selection zostaje', 'fundament.css linie 52–53; brak żetonu roli „zaznaczenie” w zetony.css.', 'Przyczyna wyjątku jest strukturalna (brak żetonu), nie estetyczna. Nazwanie luki chroni przed powoływaniem się na wyjątek w komponentach.'],
-    ['D-A5-08', 'Reguła forced-colors do dopisania w fundamencie', 'Zero wystąpień forced-colors w pakiecie; KANON rozdz. 9: WCAG 2.1 AA jako warunek wejściowy.', 'Jedyna luka o realnym skutku: usunięcie box-shadow gasi pierścień tętna i poświatę fokusu pola. Umiejscowienie w fundamencie zgodne z zasadą „preferencje środowiska poza komponentem”.'],
-    ['D-A5-09', 'Cztery warunki przyjęcia klasy użytkowej', 'Jedenaście istniejących klas w fundamencie, zero w bibliotece; KANON rozdz. 2 i 9.', 'Dokumentacja źródłowa nie zajmuje stanowiska wobec klas użytkowych. Bez zapisanej granicy każde okno dopisze własne — i rytm 4 px przestanie obowiązywać.'],
-    ['D-A5-10', 'Podział na 14 plików z wyliczoną objętością', 'HANDOFF wymienia nazwy plików bez objętości i bez przypisania klas; granice sekcji zmierzone w komponenty.css.', 'Wykonawca potrzebuje sprawdzalnego przypisania. Suma zweryfikowana: 1189 + 18 = 1207 linii; wszystkie pliki poniżej progu 300 linii.'],
+    ['D-A5-08', 'Reguła forced-colors do dopisania w fundamencie', 'Zero wystąpień forced-colors w pakiecie; kontrakt systemu projektowego: WCAG 2.1 AA jako warunek wejściowy.', 'Jedyna luka o realnym skutku: usunięcie box-shadow gasi pierścień tętna i poświatę fokusu pola. Umiejscowienie w fundamencie zgodne z zasadą „preferencje środowiska poza komponentem”.'],
+    ['D-A5-09', 'Cztery warunki przyjęcia klasy użytkowej', 'Jedenaście istniejących klas w fundamencie, zero w bibliotece; kontrakt systemu projektowego.', 'Dokumentacja źródłowa nie zajmuje stanowiska wobec klas użytkowych. Bez zapisanej granicy każde okno dopisze własne — i rytm 4 px przestanie obowiązywać.'],
+    ['D-A5-10', 'Podział na 14 plików z wyliczoną objętością', 'opracowanie o przekazaniu, ruchu i dostępności wymienia nazwy plików bez objętości i bez przypisania klas; granice sekcji zmierzone w komponenty.css.', 'Wykonawca potrzebuje sprawdzalnego przypisania. Suma zweryfikowana: 1189 + 18 = 1207 linii; wszystkie pliki poniżej progu 300 linii.'],
     ['D-A5-11', 'Wykaz odstępstw od „zera wartości zaszytych”', 'Nagłówek komponenty.css deklaruje zero wartości zaszytych; pomiar wskazuje 27 literałów pikselowych i 1 szesnastkowy.', 'Deklaracja i stan faktyczny się rozchodzą. Milczenie oznaczałoby, że recenzja zgłasza te same pozycje przy każdym przeglądzie. Trzy pozycje oznaczono do poprawy.'],
     ['D-A5-12', 'Punkt łamania zapisuje się literałem z komentarzem', 'Żetony --dn-bp-w1…w4 istnieją; zero zapytań szerokościowych w fundamencie i bibliotece.', 'Ograniczenie techniczne CSS: własności niestandardowe nie działają w warunku @media. Bez zapisanej reguły powstałby kod pozornie poprawny, który nigdy nie zadziała.'],
     ['D-A5-13', 'Uzasadnienie kolejności importu dowodem na border-radius', 'fundament.css linia 48 i komponenty.css linia 22 — obie reguły o wadze (0,1,0).', 'Kolejność importu bywa traktowana jako konwencja. Dowód czyni ją sprawdzalną: zamiana miejscami daje widoczny defekt — przycisk zmienia kształt przy fokusie klawiaturowym.']

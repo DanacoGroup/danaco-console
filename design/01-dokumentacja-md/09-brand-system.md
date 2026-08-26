@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Produkt** | **Danaco Console** — AI Operating Environment (warstwa wizualna **v2.0**) |
-| **Warstwa funkcjonalna** | **Danaco Pilot** — Platforma AI Workspace OS (dokumentacja projektowa **v1.0**) |
+| **Warstwa funkcjonalna** | **Danaco Console** — Platforma AI Workspace OS (dokumentacja projektowa **v1.0**) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Kontakt** | support@danaco-group.pl |
@@ -14,7 +14,7 @@
 | **Odbiorcy** | Właściciel produktu · zespół projektowy · zespół wdrożeniowy · projektant zewnętrzny · autor treści interfejsu |
 | **Zakres** | pozycjonowanie · osobowość · obietnica · filary · architektura marki · elementy konstytutywne · barwa · terytoria · lista kontrolna spójności |
 | **Poza zakresem** | szczegółowa księga znaku (pole ochronne, rozmiary minimalne, zakazy) — dokument `10` · żetony i skale — dokument `02` · komponenty — dokument `04` |
-| **Źródła wiążące** | `WYNIK/KANON.md` · `design/01-kierunek/KIERUNEK.md` · pliki znaku w `WYNIK/zasoby/marka/**` · `zasoby/zetony/zetony.css` · `zasoby/zetony/kontrasty.json` · `dok/projekt-ui/**` |
+| **Źródła wiążące** | kontrakt systemu projektowego · `kierunek systemu projektowego · pliki znaku w `WYNIK/zasoby/marka/**` · `zasoby/zetony/zetony.css` · `zasoby/zetony/kontrasty.json` · `docs/**` |
 | **Dokument towarzyszący** | `WYNIK/02-dokumentacja-html/09-brand-system.html` — interaktywny przewodnik po marce |
 
 > **Zasada nadrzędna tego opracowania.** Nic, co nie ma pokrycia w dokumentacji źródłowej,
@@ -32,7 +32,7 @@
 4. [Osobowość marki — pięć cech](#4-osobowość-marki--pięć-cech)
 5. [Obietnica marki i pętla produktu w znaku „»».”](#5-obietnica-marki-i-pętla-produktu-w-znaku-)
 6. [Filary marki — cztery środowiska, cztery obietnice](#6-filary-marki--cztery-środowiska-cztery-obietnice)
-7. [Zero blokad (ADL-017) jako wartość marki](#7-zero-blokad-adl-017-jako-wartość-marki)
+7. [Zero blokad jako wartość marki](#7-zero-blokad-jako-wartość-marki)
 8. [Architektura marki](#8-architektura-marki)
 9. [Elementy konstytutywne marki](#9-elementy-konstytutywne-marki)
 10. [Kropka sygnału — element sygnaturowy](#10-kropka-sygnału--element-sygnaturowy)
@@ -55,7 +55,7 @@
 > jeden chłodny sygnał; z ciążeniem ku własnemu systemowi „instrumentu pomiarowego":
 > zwarta gęstość, dane krojem mono, zero dekoracji bez funkcji.**
 
-Zdanie pochodzi z `KIERUNEK.md`, rozdz. 1, i jest w tym pakiecie **kontraktem**:
+Zdanie pochodzi z kierunku systemu projektowego, i jest w tym pakiecie **kontraktem**:
 każda decyzja marki musi się z niego wyprowadzać. Dokument, który da się z tego zdania
 wyprowadzić, jest zgodny z marką. Dokument, którego się nie da — nie jest.
 
@@ -78,7 +78,7 @@ wizualnego i wszystkich tekstów interfejsu.
 ### 1.3. Cztery dowody, które interfejs składa bez słów
 
 Pozycjonowanie nie jest deklaracją w stopce — jest **udowadniane układem**.
-Cztery dowody, wyprowadzone z architektury platformy (`KANON.md`, rozdz. 6–7):
+Cztery dowody, wyprowadzone z architektury platformy (kontrakt systemu projektowego):
 
 | # | Dowód | Nośnik w interfejsie |
 |---|---|---|
@@ -90,7 +90,7 @@ Cztery dowody, wyprowadzone z architektury platformy (`KANON.md`, rozdz. 6–7):
 ### 1.4. Czym marka nie jest — mapa odróżnień
 
 Pozycjonowanie definiuje się także przez **odrzucone odruchy**. Katalog anty-domyślnych
-(`KIERUNEK.md`, rozdz. 4) jest częścią pozycjonowania marki, nie tylko regulaminem CSS:
+(kierunek systemu projektowego) jest częścią pozycjonowania marki, nie tylko regulaminem CSS:
 
 ```
    ODRZUCONY ODRUCH                    POZYCJA MARKI
@@ -98,7 +98,7 @@ Pozycjonowanie definiuje się także przez **odrzucone odruchy**. Katalog anty-d
    fioletowy gradient „AI"      ──►    monochrom + jeden błękit sygnałowy
    Inter + slate-900            ──►    Plex Sans + czysto neutralna skala
    trzy równe karty funkcji     ──►    strefy o malejącej masie
-   wyszarzone przyciski-bramy   ──►    ZERO BLOKAD (ADL-017)
+   wyszarzone przyciski-bramy   ──►    ZERO BLOKAD
    stan samym kolorem           ──►    zawsze ikona albo etykieta
    emoji jako ikony             ──►    wyłącznie SVG z zestawu
    glassmorfizm wszędzie        ──►    powierzchnie kryjące
@@ -131,14 +131,14 @@ i o różnym zakresie. **Nie są to dwa produkty ani dwie marki.**
 
 | Warstwa | Nazwa w dokumentacji | Wersja | Data | Co rozstrzyga |
 |---|---|---|---|---|
-| **Funkcjonalna** | **Danaco Pilot** — Platforma AI Workspace OS | v1.0 | 2026-08-06 | środowiska, moduły, okna operacyjne, przepływ, role, mechanika kolejek, katalog komponentów, zasada zero blokad |
+| **Funkcjonalna** | **Danaco Console** — Platforma AI Workspace OS | v1.0 | 2026-08-06 | środowiska, moduły, okna operacyjne, przepływ, role, mechanika kolejek, katalog komponentów, zasada zero blokad |
 | **Wizualna** | **Danaco Console** — AI Operating Environment | v2.0 | 2026-08-11 | znak, barwa, typografia, żetony, gęstość, ruch, ikonografia, ton wizualny |
 
 ```
    ┌──────────────────────────────────────────────────────────────────┐
    │  DANACO PILOT  ·  warstwa funkcjonalna  ·  v1.0  ·  2026-08-06   │
    │  co system robi:  4 środowiska · 15 modułów · okna operacyjne ·  │
-   │  przepływ E1–E12 · role MultitaskingAI · ADL-017 zero blokad     │
+   │  przepływ okien platformy · role MultitaskingAI · zasada zero blokad     │
    └───────────────────────────────┬──────────────────────────────────┘
                                    │  obowiązuje nadal w całości
                                    ▼
@@ -152,11 +152,9 @@ i o różnym zakresie. **Nie są to dwa produkty ani dwie marki.**
 
 ### 2.3. Zasada nazewnicza [WIĄŻĄCE]
 
-1. Produkt nazywamy **Danaco Console**.
-2. Nazwa **Danaco Pilot** występuje wyłącznie tam, gdzie cytujemy dokumentację
-   funkcjonalną v1.0 — i wtedy jako **nazwa warstwy funkcjonalnej**, nie jako
-   alternatywna nazwa produktu.
-3. **Zakaz mieszania obu nazw w jednym zdaniu bez wyjaśnienia relacji.**
+1. Produkt nazywa się **Danaco Console** — w każdej warstwie i w każdym opracowaniu.
+2. **Zakaz nazw alternatywnych i roboczych.** Obie warstwy, funkcjonalna i wizualna,
+   noszą tę samą nazwę produktu; różni je wyłącznie numer i data wydania.
 4. Nazwy własne środowisk, modułów, okien i ról pozostają **w brzmieniu
    dokumentacji** (`Studio Editor`, `Workflow Builder`, `Chat Window`,
    `Coordinator`, `Permissions Center`) — zakaz tłumaczenia i parafrazowania.
@@ -167,8 +165,8 @@ i o różnym zakresie. **Nie są to dwa produkty ani dwie marki.**
 Warstwa wizualna v2.0 **zastępuje w całości** poprzednią warstwę wizualną —
 parę granat + złoto, godło „tarcza z belką wagi" i parę krojów Cormorant
 Garamond + Inter — uznaną przez Właściciela za zastępczą i nieobowiązującą
-(`KIERUNEK.md`, nagłówek „Zastępuje"). Poprzedni przewodnik marki
-(`system-wizualny/pakiet/PRZEWODNIK-MARKI.md`, v1.0) zachowuje wartość
+(kierunek systemu projektowego nagłówek „Zastępuje"). Poprzedni przewodnik marki
+(poprzednie wydanie przewodnika marki, v1.0) zachowuje wartość
 **wyłącznie historyczną i funkcjonalną** (opis relacji do rodziny Danaco);
 jego wartości wizualne nie obowiązują.
 
@@ -207,7 +205,7 @@ Instrument pomiarowy ma trzy cechy, z których wyprowadzony jest cały system:
 ### 3.2. Trzy pokrętła jako miara idei
 
 Idea „instrumentu" jest w tym pakiecie **skwantyfikowana** — nie zostawiona
-intuicji. Trzy pokrętła z `KIERUNEK.md`, rozdz. 2, są miarą marki:
+intuicji. Trzy pokrętła z kierunku systemu projektowego, są miarą marki:
 
 | Pokrętło | Wartość | Co znaczy dla marki |
 |---|---|---|
@@ -237,13 +235,13 @@ Element wchodzi do systemu marki, jeżeli przechodzi wszystkie trzy:
 
 ## 4. Osobowość marki — pięć cech
 
-Każda z pięciu cech jest **wyprowadzona z konkretnego rozdziału `KIERUNEK.md`**
+Każda z pięciu cech jest **wyprowadzona z konkretnego rozdziału kierunku systemu projektowego**
 i ma przypisany dowód w pliku. Cecha bez dowodu w pliku nie jest cechą marki,
 tylko przymiotnikiem.
 
 ### 4.1. Precyzyjni — nie ozdobni
 
-**Źródło:** `KIERUNEK.md` 1 („zero dekoracji bez funkcji"), 3.1 (neutralne czysto
+**Źródło:** kierunek systemu projektowego („zero dekoracji bez funkcji"), 3.1 (neutralne czysto
 neutralne), 3.6 (obrys ikon ujednolicony do **1,75** — „precyzja instrumentu").
 
 | Jesteśmy | Nie jesteśmy |
@@ -259,7 +257,7 @@ emblematów; `logo/sygnet.svg` — ścieżki grotów bez ani jednego łuku.
 
 ### 4.2. Zwarci — nie ciaśni
 
-**Źródło:** `KIERUNEK.md` 2 (`GESTOSC_WIZUALNA` 8/10), 3.7 (gęstość zwarta;
+**Źródło:** kierunek systemu projektowego (`GESTOSC_WIZUALNA` 8/10), 3.7 (gęstość zwarta;
 `pointer: coarse` → kontrolki 40 px „żeton, nie wyjątek").
 
 | Jesteśmy | Nie jesteśmy |
@@ -276,7 +274,7 @@ którykolwiek z tych dwóch warunków.
 
 ### 4.3. Sprawczy — nie hałaśliwi
 
-**Źródło:** `KIERUNEK.md` 2 (`INTENSYWNOSC_RUCHU` 3/10 — „jeden ruch znaczący:
+**Źródło:** kierunek systemu projektowego (`INTENSYWNOSC_RUCHU` 3/10 — „jeden ruch znaczący:
 tętno pracy w tle"), 3.1 („czerń działa, sygnał wskazuje"), 3.4 (tętno jako jedyny
 ruch ciągły).
 
@@ -291,9 +289,9 @@ ruch ciągły).
 
 ### 4.4. Techniczni — nie zimni
 
-**Źródło:** `KIERUNEK.md` 3.2 (Plex Sans — „doskonała czytelność w małych stopniach
+**Źródło:** kierunek systemu projektowego (Plex Sans — „doskonała czytelność w małych stopniach
 i wzorowe polskie diakrytyki"), 3.6 (nazewnictwo ikon **polskie, opisowe**),
-rozdz. 9 KANON-u (WCAG 2.1 AA jako **warunek wejściowy**, nie cel).
+rozdz. 9 kontraktu systemu projektowego (WCAG 2.1 AA jako **warunek wejściowy**, nie cel).
 
 | Jesteśmy | Nie jesteśmy |
 |---|---|
@@ -310,7 +308,7 @@ Operatora bez odpowiedzi.
 
 ### 4.5. Przewidywalni — nie nudni
 
-**Źródło:** `KIERUNEK.md` 2 (`WARIANCJA_PROJEKTOWA` 4/10 — „kokpit wymaga
+**Źródło:** kierunek systemu projektowego (`WARIANCJA_PROJEKTOWA` 4/10 — „kokpit wymaga
 przewidywalności; asymetria tylko tam, gdzie niesie hierarchię"), 3.3 (rama kokpitu
 jako stały dom godła), 3.5 (znak opowiadający pętlę produktu).
 
@@ -349,7 +347,7 @@ Obietnica ma trzy człony i każdy ma nośnik w systemie:
 |---|---|---|
 | **Wydajesz polecenie** | grot promptu „»" — sygnet, `.dn-prompt-grot`, pole wpisywania | Chat Window wspólne wszystkim modułom |
 | **Praca rusza i biegnie** | **kropka sygnału** + tętno 2,4 s | karty sesji w tle, kolejka, monitor procesu |
-| **Nic cię nie zatrzymuje** | brak stanu wyłączonego w całej bibliotece komponentów | ADL-017 — zero blokad |
+| **Nic cię nie zatrzymuje** | brak stanu wyłączonego w całej bibliotece komponentów | zasada zero blokad |
 
 ### 5.2. Znak jako zapis obietnicy
 
@@ -379,7 +377,7 @@ Sygnet **„Delegacja"** czyta się dosłownie jako trzy znaki: **„»»."**
 | **Kropka** | praca, która właśnie ruszyła | proces w tle, sesja czynna |
 
 Znak nie przedstawia litery ani przedmiotu — **przedstawia zdarzenie**.
-To rozstrzygnięcie z `KIERUNEK.md` 3.5: „znak opowiada pętlę, nie literę".
+To rozstrzygnięcie z kierunku systemu projektowego: „znak opowiada pętlę, nie literę".
 
 ### 5.3. Pętla produktu
 
@@ -421,15 +419,15 @@ tylko tym samym znakiem o zmienionej liczbie członów.
 
 Marka nie ma abstrakcyjnych filarów. Ma **cztery środowiska**, a każde jest
 obietnicą złożoną Operatorowi. Motta i opisy pochodzą z makiety Centrum dowodzenia
-(E1) oraz z `dok/projekt-ui/przeplyw/przeplyw-okien.md`, rozdz. 5 — **nie są
+(Centrum dowodzenia) oraz z `docs/interfejs-uzytkownika/przeplyw-okien.md`, rozdz. 5 — **nie są
 wymyślone na potrzeby tego dokumentu**.
 
 ### 6.1. TalkIn — „Myśl. Analizuj. Rozumiej."
 
 | Pole | Wartość |
 |---|---|
-| Motto (E1) | **Myśl. Analizuj. Rozumiej.** |
-| Opis na karcie (E1) | Wiedza, treść, dokumenty, badania i tłumaczenia. |
+| Motto | **Myśl. Analizuj. Rozumiej.** |
+| Opis na karcie | Wiedza, treść, dokumenty, badania i tłumaczenia. |
 | Opis trybu (dok. przepływu) | Wiedza, komunikacja i praca z treścią |
 | Powłoka | pasek górny · pas kart sesji · boczna nawigacja **9 modułów** · obszar roboczy |
 | Moduły | Studio · Research · Library · Translate · Browser · Assistant · Roundtable · Workspace · Agents |
@@ -440,8 +438,8 @@ wymyślone na potrzeby tego dokumentu**.
 
 | Pole | Wartość |
 |---|---|
-| Motto (E1) | **Planuj. Organizuj. Realizuj.** |
-| Opis na karcie (E1) | Projekty, procesy, automatyzacje i produkty. |
+| Motto | **Planuj. Organizuj. Realizuj.** |
+| Opis na karcie | Projekty, procesy, automatyzacje i produkty. |
 | Opis trybu (dok. przepływu) | Produktywność, organizacja i realizacja projektów |
 | Powłoka | jak wyżej · boczna nawigacja **9 modułów** |
 | Moduły | Studio · Research · Library · Browser · Roundtable · Workspace · Design · Apps · Agents |
@@ -456,8 +454,8 @@ myślowa, co „cztery środowiska jednego systemu".
 
 | Pole | Wartość |
 |---|---|
-| Motto (E1) | **Projektuj. Buduj. Rozwijaj.** |
-| Opis na karcie (E1) | Programowanie, terminale i architektura systemów. |
+| Motto | **Projektuj. Buduj. Rozwijaj.** |
+| Opis na karcie | Programowanie, terminale i architektura systemów. |
 | Opis trybu (dok. przepływu) | Programowanie |
 | Powłoka | jak wyżej · boczna nawigacja **8 modułów** |
 | Moduły | Roundtable · Workspace · Design · Apps · Terminal · Developer · Diagnostics · Agents |
@@ -472,8 +470,8 @@ To jedyny emblemat, który cytuje znak nadrzędny; uzasadnienie: CodeStudio jest
 
 | Pole | Wartość |
 |---|---|
-| Motto (E1) | **Deleguj. Koordynuj. Nadzoruj.** |
-| Opis na karcie (E1) | Orkiestracja zespołów modeli i procesy autonomiczne. |
+| Motto | **Deleguj. Koordynuj. Nadzoruj.** |
+| Opis na karcie | Orkiestracja zespołów modeli i procesy autonomiczne. |
 | Opis trybu (dok. przepływu) | Orkiestracja autonomicznej pracy ciągłej |
 | Powłoka | pasek górny · pas kart sesji · **panel orkiestracji (6 sekcji)** zamiast bocznej nawigacji modułów · obszar roboczy |
 | Role zespołu | Executor 1 · Executor 2 · Coordinator · Executor 3 / Validator · Subagent Network |
@@ -501,7 +499,7 @@ kropka sygnału**. Emblemat, który ma zero kropek albo dwie, nie należy do sys
 
 ---
 
-## 7. Zero blokad (ADL-017) jako wartość marki
+## 7. Zero blokad jako wartość marki
 
 ### 7.1. Zapis zasady
 
@@ -554,7 +552,7 @@ następny krok**, nie odmawiać.
 | „Funkcja niedostępna w tym środowisku." | „Terminal działa w CodeStudio. Otworzyć CodeStudio z tą sesją?" |
 | „Czy na pewno chcesz kontynuować?" | „Usunięcie skasuje 3 pliki repozytorium sesji. Usuwam." + odwołanie |
 
-Trzy reguły języka wyprowadzone z ADL-017:
+Trzy reguły języka wyprowadzone z zasady zero blokad:
 
 1. **Nie odmawiaj — opisz warunek i drogę.** Komunikat kończy się czynnością,
    nie zakazem.
@@ -574,7 +572,7 @@ przez konfigurowalność i widoczność**. W materiałach oznacza to:
 - funkcje bezpieczeństwa opisujemy jako **narzędzia Operatora** (Permissions
   Center, punkty izolacji, Panel prowenancji), nie jako strażników produktu.
 
-### 7.4. Test zgodności z ADL-017
+### 7.4. Test zgodności z zasadą zero blokad
 
 Opracowanie jest zgodne, jeżeli w pliku:
 
@@ -626,12 +624,12 @@ niższego.
 
 | Reguła | Treść |
 |---|---|
-| **R1 · Jedna kropka** | Kropka sygnału występuje **raz** w znaku i **raz** w każdym emblemacie środowiska. W zestawie ikon interfejsu nie występuje w ogóle. |
-| **R2 · Barwy własne w górę** | Poziom 0 i poziom 3 mają **barwy własne** i nie reagują na motyw (poza wariantami przeznaczonymi na ciemne tło). Poziomy 1 i 2 dziedziczą barwę tekstu przez `currentColor`. |
-| **R3 · Siatka niżej** | Poziom 0 rysuje się na siatce **96**, poziomy 1–2 na siatce **24**. Znaku nie skaluje się do siatki ikon — poniżej 24 px wchodzi wariant uproszczony. |
-| **R4 · Emblemat nie zastępuje znaku** | Emblemat środowiska nigdy nie występuje jako godło produktu (np. w pasku górnym zamiast sygnetu). |
-| **R5 · Znak nie zastępuje ikony** | Sygnetu nie stosuje się jako ikony akcji ani jako punktora listy. |
-| **R6 · Tożsamości systemowe pochodzą ze znaku** | Ikona aplikacji i favicon są **wycinkami znaku**, nigdy osobnymi rysunkami. |
+| **Jedna kropka** | Kropka sygnału występuje **raz** w znaku i **raz** w każdym emblemacie środowiska. W zestawie ikon interfejsu nie występuje w ogóle. |
+| **Barwy własne w górę** | Poziom 0 i poziom 3 mają **barwy własne** i nie reagują na motyw (poza wariantami przeznaczonymi na ciemne tło). Poziomy 1 i 2 dziedziczą barwę tekstu przez `currentColor`. |
+| **Siatka niżej** | Poziom 0 rysuje się na siatce **96**, poziomy 1–2 na siatce **24**. Znaku nie skaluje się do siatki ikon — poniżej 24 px wchodzi wariant uproszczony. |
+| **Emblemat nie zastępuje znaku** | Emblemat środowiska nigdy nie występuje jako godło produktu (np. w pasku górnym zamiast sygnetu). |
+| **Znak nie zastępuje ikony** | Sygnetu nie stosuje się jako ikony akcji ani jako punktora listy. |
+| **Tożsamości systemowe pochodzą ze znaku** | Ikona aplikacji i favicon są **wycinkami znaku**, nigdy osobnymi rysunkami. |
 
 ### 8.3. Skąd który plik pochodzi — łańcuch pochodzenia
 
@@ -769,7 +767,7 @@ nie po żetony treści — inaczej zniknie w motywie jasnym.
 ### 10.1. Definicja
 
 **Wypełniony punkt błękitu sygnałowego oznaczający „tu biegnie praca".**
-Jedna rzecz, po której platformę się zapamięta (`KIERUNEK.md` 3.4).
+Jedna rzecz, po której platformę się zapamięta (kierunek systemu projektowego).
 
 ### 10.2. Pięć miejsc wystąpienia
 
@@ -935,12 +933,12 @@ znaczników czasu i etykiet pomocniczych — treść czytelna używa `--dn-tekst
 
 | # | Reguła |
 |---|---|
-| T1 | **Znak nie wchodzi w treść.** Sygnet występuje w ramie, w nagłówku dokumentu i w materiałach — nigdy jako element treści okna operacyjnego. |
-| T2 | **Jedno wystąpienie znaku na widok.** Sygnet i logotyp poziomy nie występują jednocześnie w jednym układzie. |
-| T3 | **Emblemat mieszka w swoim środowisku.** Emblemat TalkIn nie pojawia się w kontekście CodeStudio inaczej niż jako odnośnik do TalkIn. |
-| T4 | **Gradient tylko na terytorium C** i w dwóch wyjątkach terytorium A: awatar bez zdjęcia oraz rdzeń AOD. |
-| T5 | **Dokumentacja dziedziczy żetony bez modyfikacji.** Opracowanie nie definiuje własnych barw — wpina `zetony.css` i używa `var(--dn-*)`. |
-| T6 | **Favicon jest zawsze wariantem uproszczonym.** Dwa groty w 16 px zlewają się w plamę. |
+| 1 | **Znak nie wchodzi w treść.** Sygnet występuje w ramie, w nagłówku dokumentu i w materiałach — nigdy jako element treści okna operacyjnego. |
+| 2 | **Jedno wystąpienie znaku na widok.** Sygnet i logotyp poziomy nie występują jednocześnie w jednym układzie. |
+| 3 | **Emblemat mieszka w swoim środowisku.** Emblemat TalkIn nie pojawia się w kontekście CodeStudio inaczej niż jako odnośnik do TalkIn. |
+| 4 | **Gradient tylko na terytorium C** i w dwóch wyjątkach terytorium A: awatar bez zdjęcia oraz rdzeń AOD. |
+| 5 | **Dokumentacja dziedziczy żetony bez modyfikacji.** Opracowanie nie definiuje własnych barw — wpina `zetony.css` i używa `var(--dn-*)`. |
+| 6 | **Favicon jest zawsze wariantem uproszczonym.** Dwa groty w 16 px zlewają się w plamę. |
 
 ### 12.4. Komplet ikon dokumentu
 
@@ -1045,19 +1043,19 @@ nie wypowiada się wprost. Każde jest odwracalne i podlega akceptacji Właścic
 
 | # | Decyzja | Uzasadnienie | Alternatywa odrzucona |
 |---|---|---|---|
-| **D1** | Osobowość marki opisano **pięcioma cechami w parach „jesteśmy / nie jesteśmy"**, każda wyprowadzona z konkretnego rozdziału `KIERUNEK.md` i z dowodem w pliku | cecha bez dowodu w pliku jest nieweryfikowalna; para „jesteśmy / nie jesteśmy" czyni ją operacyjną | lista przymiotników bez odniesień |
-| **D2** | Obietnica marki sformułowana jako **trzy człony** („wydajesz polecenie — praca rusza — nic cię nie zatrzymuje"), po jednym na każdy element znaku i zasadę ADL-017 | obietnica musi mieć nośnik; trzy człony pokrywają się z trzema znakami „»»." | jedno zdanie ogólne bez odwzorowania w znaku |
-| **D3** | Obietnice czterech środowisk **wyprowadzone z ich mott i opisów w dokumentacji** (E1 + `przeplyw-okien.md`), nie ułożone na nowo | zakaz projektowania treści bez pokrycia; motta są zatwierdzone w makiecie E1 | wymyślenie haseł marketingowych dla środowisk |
-| **D4** | ADL-017 opisane w **trzech warstwach**: interfejs, język, komunikacja zewnętrzna | zasada jest wartością marki, więc musi mieć konsekwencje poza CSS-em | pozostawienie ADL-017 wyłącznie jako reguły komponentów |
-| **D5** | Architektura marki ujęta jako **cztery poziomy z regułami dziedziczenia R1–R6** | hierarchia bez reguł dziedziczenia nie rozstrzyga sporów granicznych (emblemat vs ikona, znak vs favicon) | prosta lista plików bez modelu |
-| **D6** | Rozstrzygnięto, że **zestaw ikon interfejsu nie zawiera kropki sygnału** | kropka jest zarezerwowana dla marki (poziom 0–1) i dla stanu; ikona z kropką konkurowałaby ze wskaźnikiem pracy | dopuszczenie kropki w ikonach domenowych |
-| **D7** | Odnotowano, że w plikach znaku na ciemnym tle groty mają wartość **`#F4F4F4`** (`szary-50`), a nie `#ECECEC` (`szary-100` = żeton tekstu w motywie ciemnym) | zgodnie z zasadą „znak ma barwy własne", biel znaku jest wartością marki, nie żetonem tekstu; wartość odczytana z plików źródłowych i pozostawiona bez zmian | ujednolicenie znaku do żetonu tekstu — naruszałoby zasadę barw własnych |
-| **D8** | Kropka w wariancie uproszczonym opisana przez **stały stosunek 0,30** do wysokości znaku | stosunek, a nie wartość bezwzględna, tłumaczy dlaczego oba warianty czyta się jako ten sam znak | opis wyłącznie wartościami `r 6,5` / `r 9` |
-| **D9** | Emblemat **CodeStudio** wskazano jako jedyny cytujący grot znaku nadrzędnego; **MultitaskingAI** — jako jedyny, w którym kropką jest węzeł centralny | obie cechy są faktem geometrycznym w plikach i niosą znaczenie; wymagają odnotowania, żeby nie zostały „ujednolicone" przy przyszłej edycji | pominięcie różnic jako przypadkowych |
-| **D10** | Ikona aplikacji opisana jako **zapowiedź paska górnego** (tło `#131313` = `--dn-szary-925` = `--dn-rama`) | tożsamość barwy kafla i ramy jest faktem w plikach; nazwanie jej czyni ją regułą, nie zbiegiem okoliczności | opis kafla jako „ciemne tło" |
-| **D11** | Lista kontrolna spójności podzielona na **sześć bloków z progiem 6/6** | próg binarny wymusza rozstrzygnięcie zamiast negocjacji; podział na bloki wskazuje, gdzie leży wada | jedna płaska lista bez progu |
-| **D12** | Relację Console ↔ Pilot opisano tabelą **„co zostało zastąpione"** z wyszczególnieniem trzech elementów ciągłości (kokpit, dwa motywy, zero blokad) | wersja v2.0 zastępuje warstwę wizualną, ale nie funkcjonalną — bez tego rozróżnienia czytelnik uzna całą dokumentację v1.0 za nieaktualną | wzmianka jednozdaniowa |
-| **D13** | W dokumencie **nie powtórzono** księgi znaku (pole ochronne, rozmiary minimalne, katalog zakazów) | te treści należą do opracowania `10` — powielenie groziłoby rozjechaniem się dwóch źródeł | włączenie skróconej księgi do tego pliku |
+| **1** | Osobowość marki opisano **pięcioma cechami w parach „jesteśmy / nie jesteśmy"**, każda wyprowadzona z konkretnego rozdziału kierunku systemu projektowego i z dowodem w pliku | cecha bez dowodu w pliku jest nieweryfikowalna; para „jesteśmy / nie jesteśmy" czyni ją operacyjną | lista przymiotników bez odniesień |
+| **2** | Obietnica marki sformułowana jako **trzy człony** („wydajesz polecenie — praca rusza — nic cię nie zatrzymuje"), po jednym na każdy element znaku i zasadę zasada zero blokad | obietnica musi mieć nośnik; trzy człony pokrywają się z trzema znakami „»»." | jedno zdanie ogólne bez odwzorowania w znaku |
+| **3** | Obietnice czterech środowisk **wyprowadzone z ich mott i opisów w dokumentacji** (Centrum dowodzenia + `przeplyw-okien.md`), nie ułożone na nowo | zakaz projektowania treści bez pokrycia; motta są zatwierdzone w makiecie Centrum dowodzenia | wymyślenie haseł marketingowych dla środowisk |
+| **4** | Zasada zero blokad opisana w **trzech warstwach**: interfejs, język, komunikacja zewnętrzna | zasada jest wartością marki, więc musi mieć konsekwencje poza CSS-em | pozostawienie zasady zero blokad wyłącznie jako reguły komponentów |
+| **5** | Architektura marki ujęta jako **cztery poziomy z sześcioma regułami dziedziczenia** | hierarchia bez reguł dziedziczenia nie rozstrzyga sporów granicznych (emblemat vs ikona, znak vs favicon) | prosta lista plików bez modelu |
+| **6** | Rozstrzygnięto, że **zestaw ikon interfejsu nie zawiera kropki sygnału** | kropka jest zarezerwowana dla marki (poziom 0–1) i dla stanu; ikona z kropką konkurowałaby ze wskaźnikiem pracy | dopuszczenie kropki w ikonach domenowych |
+| **7** | Odnotowano, że w plikach znaku na ciemnym tle groty mają wartość **`#F4F4F4`** (`szary-50`), a nie `#ECECEC` (`szary-100` = żeton tekstu w motywie ciemnym) | zgodnie z zasadą „znak ma barwy własne", biel znaku jest wartością marki, nie żetonem tekstu; wartość odczytana z plików źródłowych i pozostawiona bez zmian | ujednolicenie znaku do żetonu tekstu — naruszałoby zasadę barw własnych |
+| **8** | Kropka w wariancie uproszczonym opisana przez **stały stosunek 0,30** do wysokości znaku | stosunek, a nie wartość bezwzględna, tłumaczy dlaczego oba warianty czyta się jako ten sam znak | opis wyłącznie wartościami `r 6,5` / `r 9` |
+| **9** | Emblemat **CodeStudio** wskazano jako jedyny cytujący grot znaku nadrzędnego; **MultitaskingAI** — jako jedyny, w którym kropką jest węzeł centralny | obie cechy są faktem geometrycznym w plikach i niosą znaczenie; wymagają odnotowania, żeby nie zostały „ujednolicone" przy przyszłej edycji | pominięcie różnic jako przypadkowych |
+| **10** | Ikona aplikacji opisana jako **zapowiedź paska górnego** (tło `#131313` = `--dn-szary-925` = `--dn-rama`) | tożsamość barwy kafla i ramy jest faktem w plikach; nazwanie jej czyni ją regułą, nie zbiegiem okoliczności | opis kafla jako „ciemne tło" |
+| **11** | Lista kontrolna spójności podzielona na **sześć bloków z progiem 6/6** | próg binarny wymusza rozstrzygnięcie zamiast negocjacji; podział na bloki wskazuje, gdzie leży wada | jedna płaska lista bez progu |
+| **12** | Relację Console ↔ Pilot opisano tabelą **„co zostało zastąpione"** z wyszczególnieniem trzech elementów ciągłości (kokpit, dwa motywy, zero blokad) | wersja v2.0 zastępuje warstwę wizualną, ale nie funkcjonalną — bez tego rozróżnienia czytelnik uzna całą dokumentację v1.0 za nieaktualną | wzmianka jednozdaniowa |
+| **13** | W dokumencie **nie powtórzono** księgi znaku (pole ochronne, rozmiary minimalne, katalog zakazów) | te treści należą do opracowania `10` — powielenie groziłoby rozjechaniem się dwóch źródeł | włączenie skróconej księgi do tego pliku |
 
 ---
 
@@ -1138,7 +1136,7 @@ na linię bazową grotów**, dzięki czemu znak czyta się „»».".
 | **Barwy własne** | Barwy znaku niezależne od motywu; przeciwieństwo `currentColor`. |
 | **Inwersja atramentu** | Przycisk główny: czarny na jasnym, biały na ciemnym — najsilniejszy akcent bez drugiej barwy. |
 | **Sygnał** | Jedyna barwa akcentu (`#3B6FE0` i rodzina); wskazuje, nie działa. |
-| **Zero blokad (ADL-017)** | Wartość marki: domyślne zachowanie systemu to wykonanie polecenia; izolacja i uprawnienia są opcjami. |
+| **Zero blokad** | Wartość marki: domyślne zachowanie systemu to wykonanie polecenia; izolacja i uprawnienia są opcjami. |
 | **Emblemat środowiska** | Znak poziomu 1: siatka 24, obrys 1,75, `currentColor`, dokładnie jedna wypełniona kropka. |
 | **Wariant uproszczony** | Jeden grot + większa kropka; obowiązuje poniżej 24 px. |
 | **Żeton semantyczny** | Zmienna `--dn-*` o nazwie opisującej rolę; jedyny dopuszczalny sposób odwołania się do barwy w komponencie. |

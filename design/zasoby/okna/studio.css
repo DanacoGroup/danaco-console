@@ -1,0 +1,443 @@
+/* ============================================================================
+   DANACO CONSOLE — STUDIO: ZŁOŻENIE OKNA
+   ----------------------------------------------------------------------------
+   Kompetencja: złożenie okna modułu Studio — rozgraniczenie obudowy aplikacji
+   od okna roboczego, pasmo kart okna roboczego, własna wstążka narzędziowa
+   okna roboczego, szyna dokumentów sesji oraz wnętrza kart (kanwa Studio
+   Editor, wykaz różnic, repozytorium wersji, podgląd wydruku).
+
+   Wygląd komponentów pochodzi z arkuszy kompetencyjnych: bryła kart z
+   `karty-okna.css`, bryła okien z `stanowisko.css`, obudowa okna z `rama.css`.
+   Tutaj stoi wyłącznie ich złożenie w tym oknie.
+
+   Wymaga: `zetony/zetony.css`, `zetony/ruch.css`, `css/fundament.css`,
+   `css/komponenty.css`, `prototyp.css`, `stanowisko.css`, `rama.css`,
+   `karty-okna.css`, `okna-modalne.css`.
+   Mechanizm: przełączanie kart okna roboczego — `moduly/studio.html`.
+
+   Wyłącznie żetony semantyczne `--dn-*`: barwa, stopień pisma, odstęp,
+   promień, cień i czas pochodzą ze skal. Poza skalą stoją wyłącznie włos
+   kreski (1 px) i prześwit międzyikonowy (2 px) — tak samo jak w `rama.css`,
+   `komponenty.css` i `karty-okna.css`.
+   ============================================================================ */
+
+/* ══ 1 · ROZGRANICZENIE POZIOMÓW ══════════════════════════════════════════
+   Okno niesie dwie wstążki i muszą się rozejść bez czytania etykiet.
+
+   GÓRNA WSTĄŻKA — poziom aplikacji. Leży na tacy obudowy: szyna nawigacji,
+   belka tytułowa i taca pasa narzędzi noszą jedną barwę atramentu ramy
+   (`--dn-rama`), więc obudowa czyta się jako jedna ciemna bryła okalająca —
+   ta sama w obu motywach. Wstążka aplikacji jest w niej pastylką, biegnie
+   przez całą szerokość i niczego pod sobą nie zamyka.
+
+   OKNO ROBOCZE — poziom pracy. Jest bryłą wyjętą z obudowy: wcięte z obu
+   boków (taca widoczna dookoła), obrysowane, uniesione cieniem, zaokrąglone
+   u góry, z pasmem kart wrośniętym w jego górną krawędź i z własną wstążką
+   narzędziową tuż pod kartą bieżącą. Poziomy rozdziela różnica bryły
+   i wcięcie — nie sama kreska i nie sam odstęp.                             */
+
+/* Taca obudowy: pas narzędzi aplikacji dostaje barwę ramy, nie barwę tła
+   strony. Bez tego belka, taca i pasmo kart leżą na niemal jednym tonie
+   i cztery pasy poziome zlewają się w jeden. */
+.st-obudowa > .dn-narzedzia-pas {
+  background: var(--dn-rama);
+  /* Prześwit tacy pod wstążką aplikacji: obudowa ma być widoczna jako rama
+     dookoła bryły okna roboczego, nie jako kolejny pas tej samej grubości. */
+  padding-bottom: var(--dn-od-4);
+}
+
+/* ══ 2 · OKNO ROBOCZE — BRYŁA ═════════════════════════════════════════════ */
+
+.st-okno-robocze {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  /* Wcięcie z obu boków: taca obudowy zostaje widoczna dookoła bryły. */
+  margin: 0 var(--dn-od-4);
+  border: 1px solid var(--dn-obrys-mocny);
+  border-bottom: 0;
+  /* Dół bez promienia — okno wchodzi pod pasek stanu i tam się kończy. */
+  border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0;
+  /* Bryła okna niesie barwę belki nakładanej — o stopień wyżej niż taca
+     obudowy pod nią i niż pasmo kart w jej krawędzi. Porządek jasności
+     wyznacza porządek poziomów: obudowa najciemniej, pasmo kart pośrodku,
+     karta bieżąca i wstążka pracy najjaśniej. */
+  background: var(--dn-wstazka);
+  box-shadow: var(--dn-cien-3);
+  /* Rozwinięcia menu wychodzą poza obrys bryły; wysokości pilnuje `flex`. */
+  overflow: visible;
+}
+
+/* ══ 3 · PASMO KART OKNA ROBOCZEGO ════════════════════════════════════════
+   Górna krawędź bryły. Karta bieżąca zrasta się z wstążką okna pod sobą —
+   ten sam chwyt, co w pasku kart przeglądarki: karty należą do tego, co
+   pod nimi, a nie do tego, co nad nimi.                                     */
+
+.st-pasmo {
+  /* Bryła kart z `karty-okna.css`; tutaj wyłącznie osadzenie w krawędzi. */
+  border-radius: var(--dn-r-xl) var(--dn-r-xl) 0 0;
+  padding-right: var(--dn-od-1);
+}
+
+/* Znak modułu w narożniku pasma — bryła ma widoczną przynależność. */
+.st-pasmo-znak {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--dn-wym-ikonowy);
+  align-self: center;
+  color: var(--dn-sygnal);
+}
+.st-pasmo-znak svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* Wykaz kart — sama lista `role="tablist"`, bez kontrolek pasma. Kontrolki
+   stoją poza nią, inaczej rola `tablist` niesie dzieci, których nie wolno. */
+.st-karty {
+  display: flex;
+  align-items: flex-end;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.st-karty::-webkit-scrollbar { display: none; }
+
+/* Karta bieżąca — wstęga barwy sygnału przy górnej krawędzi. Stan wybrany
+   niesie bryła i wstęga, nie sam atrybut ARIA. */
+.st-karta[aria-selected='true'] {
+  box-shadow: inset 0 var(--dn-wym-wstega) 0 var(--dn-kropka);
+}
+/* Karta robocza — jedna w oknie. Tętno przy krawędzi wiodącej odróżnia ją od
+   kart okien pomocniczych bez czytania nazwy. */
+.st-karta--robocza { font-weight: var(--dn-fw-polgruba); }
+
+/* Znak zamknięcia karty jest wyłącznie wzrokowy (`aria-hidden`): sterowanie
+   w sterowaniu byłoby zagnieżdżeniem kontrolek. Tę samą czynność niesie
+   przycisk „Zamknij kartę" w belce okna pomocniczego i klawisz Delete na
+   karcie — obie drogi są dostępne z klawiatury i dla technologii wspomagającej. */
+.st-karta > .dn-karta-widoku-zamknij { cursor: pointer; }
+
+.st-pasmo-sterowanie {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex: none;
+  align-self: center;
+  padding-left: var(--dn-od-2);
+}
+.st-pasmo-sterowanie::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: var(--dn-wym-ikona-lg);
+  margin-right: var(--dn-od-1);
+  background: var(--dn-obrys);
+}
+/* Pas przywracania okien zamkniętych — wypełnia go `stanowisko.js`. */
+.st-pasmo-przywroc {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+}
+
+/* ══ 4 · WŁASNA WSTĄŻKA NARZĘDZIOWA OKNA ROBOCZEGO ════════════════════════
+   Wstążka pracy: leży wewnątrz bryły, w jednej barwie z kartą bieżącą, na
+   pełną szerokość okna i bez zaokrągleń. Wstążka aplikacji jest pastylką na
+   ciemnej tacy — te dwie nie dają się pomylić.                              */
+
+.st-wstazka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-height: var(--dn-wym-pas-kart);
+  padding: var(--dn-od-1) var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys);
+  background: var(--dn-wstazka);
+  /* Menu wstążki muszą kłaść się na treści okna, nie pod nią. */
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Tabliczka sesji — czym jest karta robocza, po lewej stronie wstążki. */
+.st-wstazka-sesja {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  min-width: 0;
+  padding: 0 var(--dn-od-2) 0 0;
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.st-wstazka-sesja svg {
+  width: var(--dn-wym-ikona);
+  height: var(--dn-wym-ikona);
+  flex: none;
+  color: var(--dn-sygnal);
+}
+
+.st-wstazka-grupa {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+}
+/* Kreska rozdziela rodziny narzędzi, nie pojedyncze przyciski. */
+.st-wstazka-grupa + .st-wstazka-grupa::before,
+.st-wstazka-sesja + .st-wstazka-grupa::before {
+  content: '';
+  align-self: center;
+  width: 1px;
+  height: var(--dn-wym-ikona-lg);
+  margin: 0 var(--dn-od-2) 0 var(--dn-od-1);
+  background: var(--dn-obrys-mocny);
+}
+.st-wstazka-odstep { flex: 1 1 auto; min-width: var(--dn-od-2); }
+
+.st-wstazka-stan {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex: none;
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.st-wstazka-stan .st-miara {
+  font-family: var(--dn-ff-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══ 5 · CIAŁO OKNA ROBOCZEGO ═════════════════════════════════════════════ */
+
+/* Ciało wchodzi w dolne narożniki bryły — przycięcie zostawia obrys czysty. */
+.st-cialo {
+  flex: 1 1 auto;
+  min-height: 0;
+  /* Wnętrze okna wraca do barwy tła roboczego: panele stanowiska mają leżeć
+     na własnym gruncie, nie na barwie wstążki. */
+  background: var(--dn-tlo);
+  overflow: hidden;
+}
+
+/* Udział kolumn stanowiska: okno komunikacji trzyma stałą, czytelną szerokość,
+   kanwa karty bieżącej bierze resztę. */
+.st-okno-robocze .sta-obszar {
+  --sta-udzial-czaty: 1fr;
+  --sta-udzial-robocza: 1.5fr;
+}
+
+/* Wewnątrz okna roboczego stoi zawsze jedna karta: siatka paneli zwija się
+   do jednej kolumny, a panele odłożone niesie atrybut `hidden`. */
+.st-okno-robocze .sta-robocza {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+/* ══ 6 · SZYNA DOKUMENTÓW SESJI ═══════════════════════════════════════════ */
+
+.st-szyna {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--dn-panel);
+  border-right: 1px solid var(--dn-obrys);
+}
+.st-szyna-naglowek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.st-szyna-naglowek .dn-btn { flex: 1 1 auto; }
+/* Nagłówek grupy dokumentów. Barwa metadanowa `--dn-tekst-3` wolno stać
+   wyłącznie pod tekstem ≥ 18,66 px półgrubym — tu tekst jest drobny, więc
+   nagłówek bierze `--dn-tekst-2`, a stopień pisma najniższy ze skali. */
+.st-szyna-grupa {
+  padding: var(--dn-od-2) var(--dn-od-2) 0;
+  font-size: var(--dn-fs-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--dn-ls-wersaliki);
+  color: var(--dn-tekst-2);
+}
+.st-szyna-lista { overflow: auto; min-height: 0; }
+/* Dokument bieżący. Znacznik `aria-current` zamiast `aria-selected`: przycisk
+   bez roli złożonej nie przyjmuje `aria-selected` (WAI-ARIA), a wykaz
+   dokumentów nie jest ani listą wyboru, ani pasmem kart. */
+.st-szyna-lista .pt-pozycja[aria-current='true'] {
+  background: var(--dn-sygnal-tlo);
+  box-shadow: inset var(--dn-wym-wstega) 0 0 var(--dn-kropka);
+}
+
+/* ══ 7 · WNĘTRZA KART — WYKAZY ════════════════════════════════════════════ */
+
+.st-panel-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  font-size: var(--dn-fs-sm);
+}
+.st-panel-wiersz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+.st-panel-wiersz .st-meta {
+  margin-left: auto;
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+/* Nota pod wierszem wykazu — drobny tekst pomocniczy. */
+.st-nota {
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.st-pole-rozciagniete { width: 100%; }
+
+/* ══ 8 · STUDIO EDITOR — KANWA DOKUMENTU ══════════════════════════════════ */
+
+.st-edytor-pasek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex-wrap: wrap;
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.st-edytor-grupa {
+  display: inline-flex;
+  gap: 2px;
+  padding-right: var(--dn-od-2);
+  border-right: 1px solid var(--dn-obrys-subtelny);
+}
+.st-edytor-odstep { flex: 1 1 auto; }
+
+.st-kanwa {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: var(--dn-od-4) var(--dn-od-6);
+  overflow: auto;
+  min-height: 0;
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst);
+}
+.st-kanwa h1 { font-size: var(--dn-fs-xl); margin: 0 0 var(--dn-od-3); }
+.st-kanwa h2 { font-size: var(--dn-fs-lg); margin: var(--dn-od-4) 0 var(--dn-od-2); }
+.st-kanwa p { margin: 0 0 var(--dn-od-3); }
+
+/* Zaznaczenie jest kontenerem odniesienia dla przybornika pływającego —
+   bez tego przybornik ląduje na treści akapitu, nie nad nią. */
+.st-zazn {
+  position: relative;
+  padding: 1px var(--dn-od-1);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-sygnal-tlo);
+  box-shadow: 0 0 0 1px var(--dn-sygnal);
+}
+.st-plyw {
+  position: absolute;
+  bottom: calc(100% + var(--dn-od-1));
+  left: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  white-space: nowrap;
+}
+.st-plyw .dn-btn { padding: 0 var(--dn-od-2); }
+
+.st-status {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-size: var(--dn-fs-xs);
+  color: var(--dn-tekst-2);
+}
+.st-status-prawa { margin-left: auto; }
+
+/* ══ 9 · WYKAZ RÓŻNIC ═════════════════════════════════════════════════════ */
+
+.st-diff-dod {
+  padding: 1px var(--dn-od-1);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-sukces-tlo);
+  color: var(--dn-tekst);
+}
+.st-diff-usu {
+  padding: 1px var(--dn-od-1);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-blad-tlo);
+  text-decoration: line-through;
+}
+.st-diff-fmt {
+  padding: 1px var(--dn-od-1);
+  border-radius: var(--dn-r-md);
+  box-shadow: inset 0 0 0 1px var(--dn-ostrzezenie-tekst);
+}
+
+/* ══ 10 · REPOZYTORIUM WERSJI ═════════════════════════════════════════════ */
+
+.st-wersja {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.st-wersja-akcje {
+  display: flex;
+  gap: var(--dn-od-1);
+  margin-top: 2px;
+}
+.st-wersja-stopka { padding: var(--dn-od-2); }
+
+/* ══ 11 · PODGLĄD WYDRUKU ═════════════════════════════════════════════════ */
+
+.st-podglad { padding: var(--dn-od-4); overflow: auto; }
+.st-kartka {
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  background: var(--dn-tlo);
+  box-shadow: var(--dn-cien-1);
+  color: var(--dn-tekst);
+}
+.st-kartka-tytul {
+  margin-bottom: var(--dn-od-3);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+}
+.st-kartka p { font-size: var(--dn-fs-sm); }
+.st-kartka-numer { color: var(--dn-tekst-2); }
+
+/* ══ 12 · PROGI ═══════════════════════════════════════════════════════════ */
+
+/* Przy wąskim oknie bryła traci wcięcie: przestrzeń idzie na pracę. */
+@media (max-width: 1200px) {
+  .st-okno-robocze { margin: 0; border-inline: 0; border-radius: 0; }
+  .st-pasmo { border-radius: 0; }
+}
+@media (max-width: 1400px) {
+  .st-wstazka-grupa--drugorzedna { display: none; }
+}

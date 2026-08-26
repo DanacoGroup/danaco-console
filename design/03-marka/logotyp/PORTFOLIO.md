@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment |
-| **Opracowanie** | B2 · Pełne portfolio logotypu — wszystkie konfiguracje i formaty |
+| **Opracowanie** | Pełne portfolio logotypu — wszystkie konfiguracje i formaty |
 | **Wersja warstwy wizualnej** | v2.0 |
 | **Status** | Deweloperski · geometria znaku zatwierdzona |
 | **Data** | 2026-08-14 |
@@ -13,7 +13,7 @@
 | **Zakres** | 102 plików: 37 × SVG · 62 × PNG · 3 × ICO |
 | **Katalog** | `WYNIK/03-marka/logotyp/` |
 | **Galeria** | `WYNIK/03-marka/portfolio-logotypu.html` |
-| **Źródło prawdy** | `WYNIK/KANON.md` rozdz. 3 · `design/01-kierunek/KIERUNEK.md` rozdz. 3.4–3.5 |
+| **Źródło prawdy** | kontrakt systemu projektowego · `kierunek systemu projektowego |
 
 > **Zasada nadrzędna tego repozytorium.** Krzywe sygnetu i wektory logotypu są
 > **zatwierdzone i nietykalne**. Wolno budować konfiguracje, warianty barwne,
@@ -100,7 +100,7 @@ przeglądarek.
 
 | Pochodzenie | Liczba | Znaczenie |
 |---|---|---|
-| **źródłowy** | 14 | plik przeniesiony **bajt w bajt** z `zasoby/marka/logo/` — wersja zatwierdzona, wymieniona w KANON rozdz. 3 |
+| **źródłowy** | 14 | plik przeniesiony **bajt w bajt** z `zasoby/marka/logo/` — wersja zatwierdzona, wymieniona w kontrakcie systemu projektowego |
 | **wytworzony** | 23 | konfiguracja złożona w tym opracowaniu z **niezmienionych** ścieżek znaku |
 
 ---
@@ -507,7 +507,7 @@ Pliki `.ico` są **wielorozmiarowe** — jeden plik zawiera trzy mapy bitowe
 | `ikona-aplikacji.ico` | 16 · 32 · 48 px | kafel zaokrąglony, pole atramentowe | skrót aplikacji na pulpicie Windows, pasek zadań |
 
 **Dlaczego wariant uproszczony w faviconie:** favicon renderuje się w 16 px —
-to dokładnie zakres, w którym KANON rozdz. 3 nakazuje wariant uproszczony.
+to dokładnie zakres, w którym kontrakt systemu projektowego nakazuje wariant uproszczony.
 Użycie pełnego sygnetu w faviconie jest **błędem wdrożeniowym**, nie kwestią
 gustu.
 
@@ -687,14 +687,14 @@ zamykającą kompozycję, nie stanem.
 | 3 | **Obracanie** | groty niosą kierunek „od koordynatora do wykonawcy"; obrót niszczy znaczenie |
 | 4 | **Przebarwianie grotów na sygnałowy błękit** | kropka jest jedynym nośnikiem sygnału; barwny grot znosi tę hierarchię |
 | 5 | **Zamiana kropki na inną barwę** (zieleń, bursztyn, czerwień) | barwy stanów należą do interfejsu, nie do godła |
-| 6 | **Gradient w znaku** | gradienty są wyłącznie ilustracyjne (KANON rozdz. 2) i nigdy nie są tłem elementu |
+| 6 | **Gradient w znaku** | gradienty są wyłącznie ilustracyjne (kontrakt systemu projektowego) i nigdy nie są tłem elementu |
 | 7 | **Poświata, cień rzucony, obrys dodatkowy** | znak jest płaski; głębia należy do warstw interfejsu |
 | 8 | **Pełny sygnet poniżej 24 px** | groty zlewają się; obowiązuje wariant uproszczony |
 | 9 | **Znak na tle o kontraście < 3 : 1** | znak przestaje być rozpoznawalny |
 | 10 | **Wstawianie znaku w ramkę, tarczę lub inne pole poza `w-kole` / `w-kwadracie`** | pole znaku jest zdefiniowane i skończone |
 | 11 | **Rekonstrukcja logotypu z zainstalowanego kroju** | pliki zawierają krzywe; skład tekstowy da inne światła i inne rozstrzelenie |
 | 12 | **Zamiana `CONSOLE` na nazwę modułu lub środowiska** | logotyp identyfikuje produkt, nie jego część |
-| 13 | **Emoji, ikona zastępcza lub tekst „logo" w miejscu znaku** | zakaz systemowy (KANON rozdz. 1) |
+| 13 | **Emoji, ikona zastępcza lub tekst „logo" w miejscu znaku** | zakaz systemowy (kontrakt systemu projektowego) |
 | 14 | **Czerń absolutna (RGB 0, 0, 0) w jakimkolwiek pliku znaku** | zakaz systemowy — atramentem jest `#181818` |
 
 ---
@@ -703,8 +703,8 @@ zamykającą kompozycję, nie stanem.
 
 ### 12.1 Skąd wzięły się wektory
 
-- **Sygnet** — ścieżki wpisane wprost z definicji zatwierdzonej (KANON rozdz. 3,
-  KIERUNEK rozdz. 3.5). Kopiowane do każdej konfiguracji **bez modyfikacji**.
+- **Sygnet** — ścieżki wpisane wprost z definicji zatwierdzonej (kontrakt systemu projektowego,
+  kierunek systemu projektowego). Kopiowane do każdej konfiguracji **bez modyfikacji**.
 - **Logotyp** — 13 ścieżek liter odczytanych z `zasoby/marka/logo/logotyp.svg`
   i przeniesionych znak w znak. Skład tekstowy krojem **nie jest stosowany**.
 - **Deskryptor** — jedyny nowy tekst w repozytorium; wektory wygenerowane
@@ -767,7 +767,7 @@ kadry[-1].save('ico/favicon.ico', format='ICO',
 Rozstrzygnięcia podjęte w tym opracowaniu tam, gdzie dokumentacja źródłowa
 nie rozstrzygała formy. Każde jest odwracalne i każde ma uzasadnienie.
 
-### D-1 · Barwa atramentu na ciemnym tle: `#ECECEC`
+### Barwa atramentu na ciemnym tle: `#ECECEC`
 
 **Rozstrzygnięcie.** Warianty wytworzone w tym opracowaniu używają `#ECECEC`
 (`--dn-szary-100`), czyli dokładnie wartości żetonu `--dn-tekst` motywu
@@ -775,7 +775,7 @@ ciemnego.
 
 **Stan zastany.** Sześć plików przeniesionych z `zasoby/marka/logo/` używa
 `#F4F4F4` (`--dn-szary-50`). Pliki te przeniesiono **bajt w bajt**, ponieważ
-są wersją zatwierdzoną wymienioną w KANON rozdz. 3 — podmiana wartości bez
+są wersją zatwierdzoną wymienioną w kontrakcie systemu projektowego — podmiana wartości bez
 decyzji Właściciela byłaby zmianą znaku.
 
 **Skutek.** Różnica jasności między `#F4F4F4` a `#ECECEC` to 3 punkty w skali
@@ -784,7 +784,7 @@ decyzji Właściciela byłaby zmianą znaku.
 źródłowych ujednolicić do `#ECECEC`, tak aby znak i tekst interfejsu miały
 w motywie ciemnym tę samą wartość.
 
-### D-2 · Medalion jako pole własne znaku, nie jako powtórzenie tła
+### Medalion jako pole własne znaku, nie jako powtórzenie tła
 
 **Rozstrzygnięcie.** `sygnet-w-kole.svg` i `sygnet-w-kwadracie.svg` mają pole
 **atramentowe** (`#131313`), mimo że nazwa nie zawiera przyrostka
@@ -797,7 +797,7 @@ systemowy). Pole w barwie tła byłoby niewidoczne i bezużyteczne. Przyrostek
 tle"**, a nie „o ciemnym wypełnieniu" — tak samo jak we wszystkich pozostałych
 konfiguracjach.
 
-### D-3 · Skala znaku w medalionach: 0,58 (koło) i 0,62 (kafel)
+### Skala znaku w medalionach: 0,58 (koło) i 0,62 (kafel)
 
 **Rozstrzygnięcie.** Znak zajmuje 46,8 % szerokości koła i 50,0 % szerokości
 kafla.
@@ -808,20 +808,20 @@ zatwierdzonego pliku `zasoby/marka/ikona-aplikacji/ikona-aplikacji.svg`
 użytkową przy tej samej średnicy, dlatego znak zmniejszono o 6,5 % —
 tak, by masa optyczna obu medalionów była równa.
 
-### D-4 · Deskryptor w IBM Plex Sans 400, w barwie tekstu drugiego rzędu
+### Deskryptor w IBM Plex Sans 400, w barwie tekstu drugiego rzędu
 
 **Rozstrzygnięcie.** `AI Operating Environment` składa się krojem interfejsu
 (IBM Plex Sans 400), w stopniu 10,5 px względem siatki znaku, w barwie
 `--dn-szary-600` (jasne tło) / `--dn-szary-400` (ciemne tło).
 
-**Uzasadnienie.** KANON rozdz. 2 przypisuje trzy kroje trzem rolom: Space
+**Uzasadnienie.** kontrakt systemu projektowego przypisuje trzy kroje trzem rolom: Space
 Grotesk to marka, Plex Mono to maszyna, Plex Sans to **treść**. Deskryptor
 jest zdaniem o produkcie, czyli treścią — nie nazwą i nie danymi.
 Hierarchię buduje **barwa**, nie stopień: obniżenie do tekstu drugiego rzędu
 podporządkowuje deskryptor logotypowi bez zmniejszania go do granicy
 czytelności.
 
-### D-5 · Kropka w wariancie do grawerowania jako pierścień
+### Kropka w wariancie do grawerowania jako pierścień
 
 **Rozstrzygnięcie.** W konfiguracji G kropka jest pierścieniem o grubości 2,5
 (sygnet) i 1,4 (kropka po `CONSOLE`); **krawędź zewnętrzna pierścienia
@@ -832,7 +832,7 @@ odróżniają kropki od grotów barwą. Pierścień przywraca to rozróżnienie
 formą, a zachowanie promienia zewnętrznego utrzymuje kompozycję i pole
 ochronne bez zmiany.
 
-### D-6 · Lockup kompaktowy w kadrze lockupu poziomego
+### Lockup kompaktowy w kadrze lockupu poziomego
 
 **Rozstrzygnięcie.** `logo-kompaktowy.svg` ma kadr 225 × 96 — identyczny
 z `logo-poziomy.svg`. Sygnet stoi w tym samym miejscu i w tej samej skali;
@@ -843,7 +843,7 @@ y = 59,90).
 **bez przeliczania układu** — znak nie przeskoczy i nie zmieni rozmiaru.
 Kompaktowość dotyczy treści (brak linii `CONSOLE`), nie kadru.
 
-### D-7 · Wyrównanie deskryptora
+### Wyrównanie deskryptora
 
 **Rozstrzygnięcie.** W układzie poziomym lewa krawędź **farby** deskryptora
 jest zrównana z lewą krawędzią farby `DANACO` (x = 77,56 w kadrze 225 × 96).
@@ -855,7 +855,7 @@ farby dawało przesunięcie 1,3 px w lewo — widoczne przy skali prezentacyjnej
 Wyrównanie liczone na skrajnych punktach krzywych jest niezależne od świateł
 bocznych kroju.
 
-### D-8 · Krycie znaku wodnego: 8 % na jasnym, 10 % na ciemnym
+### Krycie znaku wodnego: 8 % na jasnym, 10 % na ciemnym
 
 **Rozstrzygnięcie.** `sygnet-znak-wodny.svg` i `logo-poziomy-znak-wodny.svg`
 mają krycie 0,08; warianty na ciemnym — 0,10.
@@ -866,7 +866,7 @@ przyciemnienie). Podniesienie o 2 punkty procentowe wyrównuje odczuwalną
 obecność podkładu w obu motywach. Znak wodny nigdy nie przekracza 12 % —
 powyżej tej wartości konkuruje z treścią.
 
-### D-9 · PNG bez wariantów mono
+### PNG bez wariantów mono
 
 **Rozstrzygnięcie.** Rasteryzacje obejmują warianty podstawowe i `-na-ciemnym`;
 warianty `mono-*` i `do-grawerowania` pozostają wyłącznie wektorowe.
@@ -875,7 +875,7 @@ warianty `mono-*` i `do-grawerowania` pozostają wyłącznie wektorowe.
 i hafciarnie — wszyscy przyjmują wektor i wszyscy odrzucają raster.
 Rasteryzacja tych plików tworzyłaby zasób, którego użycie byłoby błędem.
 
-### D-10 · Trzy pliki ICO zamiast jednego
+### Trzy pliki ICO zamiast jednego
 
 **Rozstrzygnięcie.** Repozytorium zawiera `favicon.ico`, `favicon-na-ciemnym.ico`
 i `ikona-aplikacji.ico`.
@@ -885,7 +885,7 @@ i `ikona-aplikacji.ico`.
 powłoki o ciemnym pasku zakładek; `ikona-aplikacji.ico` to inna konfiguracja
 znaku (kafel z polem), a nie inny rozmiar tego samego pliku.
 
-### D-11 · `PORTFOLIO.md` jako jedyny spis
+### `PORTFOLIO.md` jako jedyny spis
 
 **Rozstrzygnięcie.** Repozytorium nie zawiera pliku manifestu maszynowego
 (JSON/YAML). Spisem jest ten dokument.

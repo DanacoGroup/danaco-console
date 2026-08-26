@@ -17,7 +17,7 @@
 
 ## Spis treści
 
-**CZĘŚĆ I — HANDOFF (przekazanie do wdrożenia)**
+**CZĘŚĆ I — opracowanie o przekazaniu, ruchu i dostępności (przekazanie do wdrożenia)**
 
 1. [Odbiorca, zakres, regulamin budowy](#1-odbiorca-zakres-regulamin-budowy)
 2. [Pełna tabela mapowania plików pakietu](#2-pełna-tabela-mapowania-plików-pakietu)
@@ -52,7 +52,7 @@
 
 ---
 
-# CZĘŚĆ I — HANDOFF
+# CZĘŚĆ I — opracowanie o przekazaniu, ruchu i dostępności
 
 ## 1. Odbiorca, zakres, regulamin budowy
 
@@ -64,16 +64,16 @@
 | **Projektant prowadzący** | kontrakt ruchu i kontrakt dostępności | makietami i prototypami, które przechodzą listę kontrolną rozdz. 7 i 23 |
 | **Odbierający jakość** | bramy weryfikacyjne czterech fal | porównaniem z makietami w obu motywach + przebiegiem `kontrasty.json` |
 
-**Źródło kontraktu:** `design/opracowania/design/HANDOFF.md` (v2.0, 2026-08-11), rozszerzone o realny stan pakietu `WYNIK/zasoby/` policzony plik po pliku.
+**Źródło kontraktu:** `design/opracowania/opracowanie o przekazaniu, ruchu i dostępności (v2.0, 2026-08-11), rozszerzone o realny stan pakietu `WYNIK/zasoby/` policzony plik po pliku.
 
 ### 1.2. Regulamin budowy — cztery reguły nienaruszalne
 
 | # | Reguła | Konsekwencja praktyczna |
 |---|---|---|
-| **R1** | **Jedna odpowiedzialność = jeden plik** | żeton barwy nie mieszka w pliku komponentu; komponent nie definiuje żetonu |
-| **R2** | **Arkusz ≤ 300 linii** | `komponenty.css` (1207 linii) rozpada się na 14 plików per komponent; `zetony.css` (448 linii) na 11 plików per warstwa |
-| **R3** | **Komponenty sięgają wyłącznie po żetony semantyczne** | `.dn-btn` używa `--dn-atrament`, nigdy `--dn-szary-900`; prymityw jest zakazany poza plikami motywu |
-| **R4** | **Wartości przenosi się dosłownie** | podział pliku to operacja mechaniczna — zero „przy okazji poprawiłem odcień" |
+| **1** | **Jedna odpowiedzialność = jeden plik** | żeton barwy nie mieszka w pliku komponentu; komponent nie definiuje żetonu |
+| **2** | **Arkusz ≤ 300 linii** | `komponenty.css` (1207 linii) rozpada się na 14 plików per komponent; `zetony.css` (448 linii) na 11 plików per warstwa |
+| **3** | **Komponenty sięgają wyłącznie po żetony semantyczne** | `.dn-btn` używa `--dn-atrament`, nigdy `--dn-szary-900`; prymityw jest zakazany poza plikami motywu |
+| **4** | **Wartości przenosi się dosłownie** | podział pliku to operacja mechaniczna — zero „przy okazji poprawiłem odcień" |
 
 ### 1.3. Kierunek zależności arkuszy
 
@@ -118,7 +118,7 @@ Podział `zasoby/zetony/zetony.css` (448 linii) na jedenaście arkuszy. Kolumna 
 | `motyw/semantyczne-ciemny.css` | 11 + zapas `prefers-color-scheme: dark` | role motywu ciemnego | ~90 |
 | `motyw/motyw.css` | — | **arkusz spinający** — wyłącznie `@import` w kolejności powyżej | ~15 |
 
-**Uwaga do sekcji 7 (siatka).** `HANDOFF.md` nie wymienia osobnego pliku siatki. Sekcja jest zbyt mała, by stanowić plik, i zbyt obca, by leżeć w `przestrzen.css`. Rozstrzygnięcie: osobny `siatka.css` — odnotowane w rozdz. 24.
+**Uwaga do sekcji 7 (siatka).** opracowanie o przekazaniu, ruchu i dostępności nie wymienia osobnego pliku siatki. Sekcja jest zbyt mała, by stanowić plik, i zbyt obca, by leżeć w `przestrzen.css`. Rozstrzygnięcie: osobny `siatka.css` — odnotowane w rozdz. 24.
 
 ### 2.2. Pozostałe pliki żetonów i fontów
 
@@ -139,7 +139,7 @@ Rozkład plików kroju: **IBM Plex Sans** 4 wagi × 2 podzbiory = 8 · **IBM Ple
 | `zasoby/css/fundament.css` (156 linii) | `motyw/fundament.css` | import **po** żetonach, **przed** komponentami; zawiera fokus globalny `:focus-visible` — **usunąć duplikat z dotychczasowego `motyw.css`** |
 | `zasoby/css/komponenty.css` (1207 linii) | `komponenty/` — podział na 14 arkuszy | selektory `.dn-*` **bez zmian**; nazwy plików zachowane tam, gdzie się pokrywają z istniejącymi |
 
-Podział `komponenty.css` zgodnie z progiem 300 linii (R2):
+Podział `komponenty.css` zgodnie z progiem 300 linii:
 
 | # | Plik docelowy | Klasy przenoszone | Zakres linii źródła |
 |---|---|---|---|
@@ -197,7 +197,7 @@ Pięć zmian, których nie da się wykonać wyłącznie podmianą arkuszy.
 | Kolor | `currentColor` — komponent nadaje barwę, ikona jej nie zna |
 | Renderowanie | 14 / 16 / 20 / 24 px (żetony `--dn-wym-ikona-*`) |
 
-> **Uwaga rozbieżności.** `HANDOFF.md` v2.0 podaje „82 pozycje". Zliczenie katalogu `zasoby/ikony/svg/` daje **82 pliki** — zgodność potwierdzona pomiarem, nie deklaracją.
+> **Uwaga rozbieżności.** opracowanie o przekazaniu, ruchu i dostępności podaje „82 pozycje". Zliczenie katalogu `zasoby/ikony/svg/` daje **82 pliki** — zgodność potwierdzona pomiarem, nie deklaracją.
 
 ### 3.2. `okno-komunikacji/okno.css`
 
@@ -227,7 +227,7 @@ Pięć zmian, których nie da się wykonać wyłącznie podmianą arkuszy.
 | Przełącznik | przyszłościowo `data-gestosc="przestronna"` na `<html>` — **żetony gotowe**, sekcja 13 `zetony.css` |
 | Dotyk | `pointer: coarse` podnosi wymiary automatycznie (sekcja 12) — bez reguł per komponent |
 
-### 3.5. Zero blokad (ADL-017)
+### 3.5. Zero blokad
 
 | Zakaz | Zamiast tego |
 |---|---|
@@ -323,21 +323,21 @@ Trzy konsekwencje operacyjne:
 
 | # | Zamrożone | Co się psuje przy cichej zmianie | Kto może zmienić |
 |---|---|---|---|
-| **Z1** | **Wartości żetonów** (`zetony.css` / `zetony.json` jako źródło prawdy) | rozjazd między pakietem a kodem; 33 pomiary kontrastu przestają obowiązywać | Właściciel + aktualizacja `kontrasty.json` |
-| **Z2** | **Geometria znaku i emblematów** (krzywe, nie fonty) | znak przestaje być znakiem; wersje mono i uproszczona się rozjeżdżają | Właściciel |
-| **Z3** | **Zasada jednego akcentu** — sygnał ≤ 5% ekranu, **nigdy tło sekcji** | kokpit przestaje wskazywać, gdzie biegnie praca; sygnał traci znaczenie | nikt — kontrakt kierunku |
-| **Z4** | **Pierścień fokusu** (2 px + odsunięcie 2 px, `--dn-fokus`) i **zachowanie `prefers-reduced-motion`** | wypadnięcie z WCAG 2.1 AA (2.4.7); ruch wraca użytkownikom, którzy go wyłączyli | nikt — warunek wejściowy |
-| **Z5** | **Gęstość zwarta jako domyślna** | rytm kokpitu; wszystkie makiety przestają pasować | Właściciel (przełącznik `data-gestosc` istnieje) |
+| **1** | **Wartości żetonów** (`zetony.css` / `zetony.json` jako źródło prawdy) | rozjazd między pakietem a kodem; 33 pomiary kontrastu przestają obowiązywać | Właściciel + aktualizacja `kontrasty.json` |
+| **2** | **Geometria znaku i emblematów** (krzywe, nie fonty) | znak przestaje być znakiem; wersje mono i uproszczona się rozjeżdżają | Właściciel |
+| **3** | **Zasada jednego akcentu** — sygnał ≤ 5% ekranu, **nigdy tło sekcji** | kokpit przestaje wskazywać, gdzie biegnie praca; sygnał traci znaczenie | nikt — kontrakt kierunku |
+| **4** | **Pierścień fokusu** (2 px + odsunięcie 2 px, `--dn-fokus`) i **zachowanie `prefers-reduced-motion`** | wypadnięcie z WCAG 2.1 AA (2.4.7); ruch wraca użytkownikom, którzy go wyłączyli | nikt — warunek wejściowy |
+| **5** | **Gęstość zwarta jako domyślna** | rytm kokpitu; wszystkie makiety przestają pasować | Właściciel (przełącznik `data-gestosc` istnieje) |
 
-**Dodatkowo zamrożone na mocy KANONU:**
+**Dodatkowo zamrożone na mocy kontraktu systemu projektowego:**
 
 | # | Zamrożone | Uzasadnienie |
 |---|---|---|
-| **Z6** | **Nazwy klas `.dn-*`** | wolno rozszerzać o nowe modyfikatory; **nie wolno zmieniać istniejących nazw** — są kontraktem między projektem a kodem |
-| **Z7** | **Zakaz `#000000`** | skala kończy się na `#0A0A0A`; czysta czerń zabija głębię i haluje na OLED |
-| **Z8** | **Zero blokad (ADL-017)** | decyzja rejestru; `disabled` nie wraca jako „drobne usprawnienie" |
-| **Z9** | **Nazwy własne okien i modułów** (`Studio Editor`, `Workflow Builder`, `Chat Window`, `Coordinator`, `Executor 1`…) | zakaz tłumaczenia i parafrazowania |
-| **Z10** | **Pasek górny atramentowy w obu motywach** | jedyny element nieprzełączający się z motywem — rama kokpitu |
+| **1** | **Nazwy klas `.dn-*`** | wolno rozszerzać o nowe modyfikatory; **nie wolno zmieniać istniejących nazw** — są kontraktem między projektem a kodem |
+| **2** | **Zakaz `#000000`** | skala kończy się na `#0A0A0A`; czysta czerń zabija głębię i haluje na OLED |
+| **3** | **Zero blokad** | decyzja rejestru; `disabled` nie wraca jako „drobne usprawnienie" |
+| **4** | **Nazwy własne okien i modułów** (`Studio Editor`, `Workflow Builder`, `Chat Window`, `Coordinator`, `Executor 1`…) | zakaz tłumaczenia i parafrazowania |
+| **5** | **Pasek górny atramentowy w obu motywach** | jedyny element nieprzełączający się z motywem — rama kokpitu |
 
 ---
 
@@ -489,15 +489,15 @@ Siedem pozycji. **Katalog jest zamknięty** — animacja spoza niego wymaga decy
 
 | # | Animacja | Nośnik | Czas | Własność | Informacja niesiona |
 |---|---|---|---|---|---|
-| **M1** | **Mikroreakcja kontrolki** | `.dn-btn`, `.dn-btn-ikona`, `.dn-karta--klikalna`, wiersz `.dn-tabela`, `.dn-zakladka` | `--dn-czas-1` | `background-color`, `transform: translateY(1px)` | „element jest interaktywny i przyjął moje działanie" |
-| **M2** | **Przejście barwy** | `body`, `.dn-boczna-pozycja`, `.dn-przelacznik`, `.dn-pole-kontrolka:focus` | `--dn-czas-2` | `color`, `background-color`, `border-color`, `box-shadow` | „zmienił się stan wyboru / motyw / fokus" |
-| **M3** | **Wejście i wyjście warstwy** | `.dn-modal[open]`, `.dn-toast`, `.dn-tooltip-tresc` | `--dn-czas-3` | `opacity` 0→1, `transform: translateY(8px)`→0, modal dodatkowo `scale(0.98)`→1 | „pojawiła się nowa warstwa nad treścią" |
-| **M4** | **Tętno kropki** | `.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after` | `--dn-czas-tetno` | `box-shadow` (pierścień rozchodzący się) | **„tu biegnie praca"** — jedyny ruch ciągły |
-| **M5** | **Postęp kolejki** | `.dn-postep-wartosc` | `--dn-czas-3` | `width` | „proces posunął się o zmierzoną wartość" |
-| **M6** | **Wskaźnik pracy wpisu** | `.dn-btn[aria-busy='true']::after`, `.dn-spinner` | 0,8 s `linear` | `transform: rotate()` | „operacja trwa, czas nieznany" |
-| **M7** | **Przełączenie motywu** | `body` + wszystkie powierzchnie dziedziczące | `--dn-czas-2` | `background-color`, `color` | „zmieniłem motyw — to ta sama treść" |
+| **1** | **Mikroreakcja kontrolki** | `.dn-btn`, `.dn-btn-ikona`, `.dn-karta--klikalna`, wiersz `.dn-tabela`, `.dn-zakladka` | `--dn-czas-1` | `background-color`, `transform: translateY(1px)` | „element jest interaktywny i przyjął moje działanie" |
+| **2** | **Przejście barwy** | `body`, `.dn-boczna-pozycja`, `.dn-przelacznik`, `.dn-pole-kontrolka:focus` | `--dn-czas-2` | `color`, `background-color`, `border-color`, `box-shadow` | „zmienił się stan wyboru / motyw / fokus" |
+| **3** | **Wejście i wyjście warstwy** | `.dn-modal[open]`, `.dn-toast`, `.dn-tooltip-tresc` | `--dn-czas-3` | `opacity` 0→1, `transform: translateY(8px)`→0, modal dodatkowo `scale(0.98)`→1 | „pojawiła się nowa warstwa nad treścią" |
+| **4** | **Tętno kropki** | `.dn-kropka--tetno`, `.dn-wpis--pracuje`, `.dn-aod-rdzen::after` | `--dn-czas-tetno` | `box-shadow` (pierścień rozchodzący się) | **„tu biegnie praca"** — jedyny ruch ciągły |
+| **5** | **Postęp kolejki** | `.dn-postep-wartosc` | `--dn-czas-3` | `width` | „proces posunął się o zmierzoną wartość" |
+| **6** | **Wskaźnik pracy wpisu** | `.dn-btn[aria-busy='true']::after`, `.dn-spinner` | 0,8 s `linear` | `transform: rotate()` | „operacja trwa, czas nieznany" |
+| **7** | **Przełączenie motywu** | `body` + wszystkie powierzchnie dziedziczące | `--dn-czas-2` | `background-color`, `color` | „zmieniłem motyw — to ta sama treść" |
 
-### 10.1. M4 — tętno w szczegółach
+### 10.1. Tętno kropki w szczegółach
 
 Tętno jest **elementem sygnaturowym produktu**, nie ozdobą. Występuje dokładnie w pięciu miejscach kontraktu marki:
 
@@ -511,7 +511,7 @@ Tętno jest **elementem sygnaturowym produktu**, nie ozdobą. Występuje dokład
 
 **Reguła jednego tętna.** W jednym widoku pulsuje **jedno** miejsce. Jeżeli pracują trzy sesje jednocześnie — pulsuje karta sesji aktywnej, pozostałe niosą kropkę statyczną plus liczbę w plakietce.
 
-### 10.2. M5 — kiedy postęp, kiedy spinner
+### 10.2. Postęp a wskaźnik pracy — kiedy który
 
 | Sytuacja | Komponent | Dlaczego |
 |---|---|---|
@@ -525,16 +525,16 @@ Tętno jest **elementem sygnaturowym produktu**, nie ozdobą. Występuje dokład
 
 | # | Zakazane | Dlaczego — uzasadnienie z kontraktu |
 |---|---|---|
-| **X1** | **Parallax** (warstwy przesuwające się z różną prędkością przy przewijaniu) | ruch nie niesie żadnej informacji o stanie systemu; w kokpicie z gęstością 8/10 rozbija odczyt danych; obciąża wątek kompozycji przy każdej klatce przewijania |
-| **X2** | **Scrollytelling** (treść odsłaniana i animowana wraz z przewijaniem) | wzorzec strony narracyjnej; okno robocze nie opowiada historii — pokazuje stan. Operator przewija, żeby **czytać dane**, nie żeby uruchamiać przedstawienie |
-| **X3** | **Animacje dekoracyjne** (unoszące się kształty, animowane gradienty, cząstki, „oddychające" tła) | anty-domyślne kierunku: „zero dekoracji bez funkcji"; gradient jest wyłącznie ilustracyjny i **nigdy nie jest tłem sekcji** |
-| **X4** | **Bounce / przeregulowanie** (`cubic-bezier` przekraczający 1, sprężyny, `elastic`) | system ma **jedną** krzywą `--dn-ease`; przeregulowanie sugeruje fizyczność obiektu, a kontrolki kokpitu nie są obiektami fizycznymi |
-| **X5** | **Ruch bez informacji** (animacja przy wejściu na stronę, kaskadowe pojawianie się list, animowane liczniki odliczające do wartości) | każda animacja odpowiada na pytanie „co się zmieniło?"; animowany licznik **fałszuje pomiar** — pokazuje wartości, których system nigdy nie zmierzył |
-| **X6** | **Więcej niż jeden ruch ciągły na widok** | tętno traci znaczenie „tu biegnie praca", gdy pulsuje wszystko |
-| **X7** | **Animacja wysokości i szerokości układu** (`height`, `top`, `left`, `margin` na elementach układu) | wymusza przeliczenie układu w każdej klatce (rozdz. 14); jedyne dopuszczone `width` to `.dn-postep-wartosc` wewnątrz toru o stałych wymiarach |
-| **X8** | **Migotanie** (częstotliwość powyżej 3 Hz) | kryterium WCAG 2.3.1; ryzyko napadu światłoczułego. Tętno 2,4 s = **0,42 Hz** — siedmiokrotnie poniżej progu |
-| **X9** | **Rozmycie jako efekt** (`backdrop-filter` poza nakładką modala) | anty-domyślne: „glassmorfizm wszędzie" → powierzchnie kryjące; jedyne dopuszczone rozmycie to `blur(2px)` na `.dn-modal::backdrop` |
-| **X10** | **Animowane przewijanie sterowane skryptem** (`scroll-behavior: smooth` wymuszone globalnie) | odbiera Operatorowi kontrolę nad tempem czytania; przy `prefers-reduced-motion` system wymusza `scroll-behavior: auto` |
+| **1** | **Parallax** (warstwy przesuwające się z różną prędkością przy przewijaniu) | ruch nie niesie żadnej informacji o stanie systemu; w kokpicie z gęstością 8/10 rozbija odczyt danych; obciąża wątek kompozycji przy każdej klatce przewijania |
+| **2** | **Scrollytelling** (treść odsłaniana i animowana wraz z przewijaniem) | wzorzec strony narracyjnej; okno robocze nie opowiada historii — pokazuje stan. Operator przewija, żeby **czytać dane**, nie żeby uruchamiać przedstawienie |
+| **3** | **Animacje dekoracyjne** (unoszące się kształty, animowane gradienty, cząstki, „oddychające" tła) | anty-domyślne kierunku: „zero dekoracji bez funkcji"; gradient jest wyłącznie ilustracyjny i **nigdy nie jest tłem sekcji** |
+| **4** | **Bounce / przeregulowanie** (`cubic-bezier` przekraczający 1, sprężyny, `elastic`) | system ma **jedną** krzywą `--dn-ease`; przeregulowanie sugeruje fizyczność obiektu, a kontrolki kokpitu nie są obiektami fizycznymi |
+| **5** | **Ruch bez informacji** (animacja przy wejściu na stronę, kaskadowe pojawianie się list, animowane liczniki odliczające do wartości) | każda animacja odpowiada na pytanie „co się zmieniło?"; animowany licznik **fałszuje pomiar** — pokazuje wartości, których system nigdy nie zmierzył |
+| **6** | **Więcej niż jeden ruch ciągły na widok** | tętno traci znaczenie „tu biegnie praca", gdy pulsuje wszystko |
+| **7** | **Animacja wysokości i szerokości układu** (`height`, `top`, `left`, `margin` na elementach układu) | wymusza przeliczenie układu w każdej klatce (rozdz. 14); jedyne dopuszczone `width` to `.dn-postep-wartosc` wewnątrz toru o stałych wymiarach |
+| **8** | **Migotanie** (częstotliwość powyżej 3 Hz) | kryterium WCAG 2.3.1; ryzyko napadu światłoczułego. Tętno 2,4 s = **0,42 Hz** — siedmiokrotnie poniżej progu |
+| **9** | **Rozmycie jako efekt** (`backdrop-filter` poza nakładką modala) | anty-domyślne: „glassmorfizm wszędzie" → powierzchnie kryjące; jedyne dopuszczone rozmycie to `blur(2px)` na `.dn-modal::backdrop` |
+| **10** | **Animowane przewijanie sterowane skryptem** (`scroll-behavior: smooth` wymuszone globalnie) | odbiera Operatorowi kontrolę nad tempem czytania; przy `prefers-reduced-motion` system wymusza `scroll-behavior: auto` |
 
 ---
 
@@ -542,7 +542,7 @@ Tętno jest **elementem sygnaturowym produktu**, nie ozdobą. Występuje dokład
 
 Kod poniżej jest **cytatem z biblioteki** `zasoby/css/komponenty.css` i `zasoby/zetony/zetony.css` — nie propozycją.
 
-### 12.1. Mikroreakcja kontrolki (M1)
+### 12.1. Mikroreakcja kontrolki 
 
 ```css
 .dn-btn {
@@ -556,9 +556,9 @@ Kod poniżej jest **cytatem z biblioteki** `zasoby/css/komponenty.css` i `zasoby
 .dn-btn:active { transform: translateY(1px); }
 ```
 
-**Reguła:** wylicz własności jawnie. `transition: all` animuje także własności układu i łamie X7.
+**Reguła:** wylicz własności jawnie. `transition: all` animuje także własności układu i łamie zakaz animowania wysokości i szerokości układu.
 
-### 12.2. Tętno (M4) — klatki kluczowe
+### 12.2. Tętno  — klatki kluczowe
 
 ```css
 .dn-kropka--tetno { animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite; }
@@ -571,7 +571,7 @@ Kod poniżej jest **cytatem z biblioteki** `zasoby/css/komponenty.css` i `zasoby
 
 Animowany jest **`box-shadow`**, nie `width`/`height` — pierścień rozchodzi się bez wpływu na układ sąsiadów.
 
-### 12.3. Wejście modala (M3)
+### 12.3. Wejście modala 
 
 ```css
 .dn-modal[open] { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
@@ -589,7 +589,7 @@ Nakładka:
 .dn-modal::backdrop { background: var(--dn-nakladka); backdrop-filter: blur(2px); }
 ```
 
-### 12.4. Powiadomienie (M3)
+### 12.4. Powiadomienie 
 
 ```css
 .dn-toast { animation: dn-wejscie var(--dn-czas-3) var(--dn-ease); }
@@ -597,7 +597,7 @@ Nakładka:
 
 Toast **dzieli klatki kluczowe z modalem**. Jedno wejście warstwy = jedna definicja ruchu.
 
-### 12.5. Postęp (M5)
+### 12.5. Postęp 
 
 ```css
 .dn-postep-tor      { height: 4px; background: var(--dn-powierzchnia-2); overflow: hidden; }
@@ -610,14 +610,14 @@ Toast **dzieli klatki kluczowe z modalem**. Jedno wejście warstwy = jedna defin
 
 Wartość zmienia deklarację `width` (np. z `34%` na `61%`); przejście robi CSS. Etykieta obok podaje liczbę krojem mono.
 
-### 12.6. Wskaźnik pracy (M6)
+### 12.6. Wskaźnik pracy 
 
 ```css
 .dn-spinner { animation: dn-obrot 0.8s linear infinite; }
 @keyframes dn-obrot { to { transform: rotate(360deg); } }
 ```
 
-### 12.7. Przełączenie motywu (M7)
+### 12.7. Przełączenie motywu 
 
 ```css
 body {
@@ -688,13 +688,13 @@ Skrócenie czasu do 0,01 ms wygasza ruch, ale usuwa też **informację**: kropka
 
 | Animacja | Zachowanie przy `reduce` | Nośnik informacji po zmianie |
 |---|---|---|
-| M1 mikroreakcja | zmiana natychmiastowa | barwa tła (`--dn-hover`) |
-| M2 przejście barwy | zmiana natychmiastowa | barwa docelowa |
-| M3 wejście warstwy | warstwa pojawia się bez wjazdu | obecność warstwy + cień + nakładka |
-| **M4 tętno** | **pierścień statyczny 2 px** | **kształt (pierścień)** |
-| M5 postęp | pasek skacze do wartości | liczba w etykiecie mono |
-| M6 spinner | zatrzymany po pierwszym obrocie | `aria-busy="true"` + tekst „Trwa…" |
-| M7 motyw | przełączenie natychmiastowe | nowe barwy |
+| Mikroreakcja kontrolki — mikroreakcja | zmiana natychmiastowa | barwa tła (`--dn-hover`) |
+| Przejście barwy — przejście barwy | zmiana natychmiastowa | barwa docelowa |
+| Wejście i wyjście warstwy — wejście warstwy | warstwa pojawia się bez wjazdu | obecność warstwy + cień + nakładka |
+| **Tętno kropki** | **pierścień statyczny 2 px** | **kształt (pierścień)** |
+| Postęp kolejki — postęp | pasek skacze do wartości | liczba w etykiecie mono |
+| Wskaźnik pracy wpisu — spinner | zatrzymany po pierwszym obrocie | `aria-busy="true"` + tekst „Trwa…" |
+| Przełączenie motywu — motyw | przełączenie natychmiastowe | nowe barwy |
 
 ### 13.4. Czego NIE robić
 
@@ -780,7 +780,7 @@ Stosować **wyłącznie** gdy spełnione są trzy warunki równocześnie:
 | **2.1.1** Klawiatura | A | pełna nawigacja klawiaturą we wszystkich prototypach |
 | **2.1.2** Brak pułapki klawiatury | A | pułapka wyłącznie w `<dialog>` (celowa, z wyjściem `Esc`) |
 | **2.2.1** Dostosowanie czasu | A | odliczanie „Wyślij ponownie" **informacyjne**, nie blokuje |
-| **2.2.2** Pauza, zatrzymanie, ukrycie | A | tętno = wskaźnik stanu; `prefers-reduced-motion` zastępuje je pierścieniem statycznym (rozdz. 24, D-08) |
+| **2.2.2** Pauza, zatrzymanie, ukrycie | A | tętno = wskaźnik stanu; `prefers-reduced-motion` zastępuje je pierścieniem statycznym (rozdz. 24) |
 | **2.3.1** Trzy błyski lub poniżej progu | A | tętno 0,42 Hz; brak migotania w systemie |
 | **2.4.1** Możliwość pominięcia bloków | A | odnośnik „Przejdź do treści" (`.dn-sr-only`) jako pierwszy element `<body>` |
 | **2.4.3** Kolejność fokusu | A | rozdz. 17.2 |
@@ -991,7 +991,7 @@ Kontrast liczony **algorytmem WCAG 2.1** — iloraz luminancji względnej sRGB:
 | fokus wraca do wyzwalacza po zamknięciu | natywne dla `<dialog>`; przy zamknięciu programowym — przywrócić jawnie |
 | treść pod modalem niedostępna | `::backdrop` + `inert` na tle (natywne dla `showModal()`) |
 
-**To nie jest blokada w rozumieniu ADL-017.** Nakładka ogranicza interakcję wyłącznie na czas otwarcia i zawsze udostępnia drogę zamknięcia (`Esc`, kontrolka zamknięcia, kliknięcie w nakładkę, akcja stopki).
+**To nie jest blokada w rozumieniu zasady zero blokad.** Nakładka ogranicza interakcję wyłącznie na czas otwarcia i zawsze udostępnia drogę zamknięcia (`Esc`, kontrolka zamknięcia, kliknięcie w nakładkę, akcja stopki).
 
 ### 17.4. Fokus a stany komponentów
 
@@ -1338,22 +1338,22 @@ Rozstrzygnięcia podjęte ponad dokumentację źródłową, wraz z uzasadnieniem
 
 | # | Rozstrzygnięcie | Sytuacja w źródłach | Decyzja i uzasadnienie |
 |---|---|---|---|
-| **D-01** | **`DOSTEPNOSC.md` v1.0 obowiązuje strukturą, nie wartościami** | Plik pakietu systemu wizualnego (v1.0, 2026-08-11) opisuje paletę złoto-granatową, pierścień fokusu `#C9A24B`, `--dn-tekst-3` = `#6E7A93` i dziewięć pomiarów. `KIERUNEK.md` v2.0 zastępuje całą warstwę wizualną. | Z v1.0 przenosimy **reguły**: progi WCAG, zasadę „tekst-3 tylko metadane", zasadę „stan nigdy samym kolorem", geometrię fokusu 2+2 px, globalną obsługę `prefers-reduced-motion`, zero blokad ADL-017. **Wartości barwne v1.0 są nieobowiązujące** — zastąpione żetonami v2.0. Dziewięć pomiarów v1.0 zastąpione **33 pomiarami** z `kontrasty.json`. |
-| **D-02** | **Próg systemowy 1,6 : 1 dla obrysu dekoracyjnego** | `kontrasty.json` zawiera pomiar 13 (obrys kontrolki / tło = 1,65) z polem `prog: 1.6` — wartość spoza skali WCAG. | Wprowadzono **czwarty próg systemowy** obok 4,5 / 3,0. Dotyczy wyłącznie obrysów oddzielających powierzchnie o tej samej roli, nienoszących informacji. Obrys niosący informację (błąd pola, wybór) podlega progowi 3,0. Werdykt w tabeli nie brzmi „AA", lecz „próg systemowy" — żeby nie sugerować zgodności z kryterium, którego pomiar nie dotyczy. |
-| **D-03** | **`kontrasty.json` przenosi się do `motyw/`** | `HANDOFF.md` §1 nie wymienia `kontrasty.json` w mapowaniu plików, choć §3 czyni z niego wejście bramy weryfikacyjnej. | Plik dodany do mapowania jako `motyw/kontrasty.json`. Brama wymagająca „przebiegu `kontrasty.json`" nie może działać na pliku, którego w repozytorium docelowym nie ma. |
-| **D-04** | **`motyw/siatka.css` jako dwunasty arkusz** | `HANDOFF.md` wymienia dziesięć arkuszy motywu; sekcja 7 `zetony.css` (punkty łamania, siatka) nie ma przypisania. | Utworzono `siatka.css`. Alternatywa — dołączenie do `przestrzen.css` — mieszałaby dwie odpowiedzialności (rytm wewnętrzny kontra rusztowanie strony), łamiąc regułę R1. |
-| **D-05** | **Kolejność importu wymuszona przez współdzielone klatki kluczowe** | Podział `komponenty.css` na 14 arkuszy rozdziela definicje `@keyframes` od części zastosowań (`dn-tetno`, `dn-wejscie`, `dn-obrot`). | Zapisano właściciela każdej klatki i listę zastosowań (rozdz. 2.3). Alternatywa — piętnasty arkusz `ruch-komponentow.css` — została odrzucona: klatka kluczowa animacji tętna należy do kropki sygnału, a rozdzielenie utrudniałoby czytanie komponentu. |
-| **D-06** | **Rozszerzona lista czego się nie przenosi** | `HANDOFF.md` §1 nie wymienia `wspolne.js`, `prototyp.css`, `prototyp.js`, `WZORZEC-OKNA.html` ani katalogu `logo/alternatywy/`. | Dodano rozdz. 2.5. Bez jawnego wykluczenia rusztowanie makiet trafiłoby do produktu jako „pliki z pakietu". |
-| **D-07** | **Katalog ruchu jako katalog zamknięty (7 pozycji + 10 zakazów)** | `KIERUNEK.md` podaje wartość pokrętła i wzorzec ogólny; nie wylicza animacji. | Wyprowadzono siedem pozycji dozwolonych **z realnego kodu** `komponenty.css` (każda ma nośnik i selektor) oraz dziesięć zakazów z anty-domyślnych i z fizyki renderowania. Katalog jest zamknięty: animacja spoza niego wymaga decyzji Właściciela — inaczej pokrętło 3/10 nie ma egzekwowalnej treści. |
-| **D-08** | **Tętno wobec kryterium WCAG 2.2.2 (Pauza, zatrzymanie, ukrycie)** | Kryterium wymaga mechanizmu zatrzymania dla treści ruchomej trwającej ponad 5 s. Tętno jest ciągłe. | Rozstrzygnięcie: tętno jest **wskaźnikiem stanu**, a nie ruchomą treścią prezentacyjną — informuje, że praca biegnie, i mieści się w wyjątku „ruch jest istotny dla działania". Niezależnie od tego system dostarcza mechanizm wyłączenia — `prefers-reduced-motion` z zamiennikiem statycznym (rozdz. 13.2), przy zachowaniu informacji. Częstotliwość 0,42 Hz jest siedmiokrotnie poniżej progu 2.3.1. |
-| **D-09** | **`--dn-czas-3` opisany jako 0,22 s, nie 0,24 s** | Katalog komponentów v1.0 opisuje wjazd modala jako „0,24 s (`--dn-czas-3`)"; `zetony.css` v2.0 definiuje `--dn-czas-3: 0.22s`. | Obowiązuje **wartość żetonu (0,22 s)** — żeton jest źródłem prawdy (Z1). Katalog v1.0 opisywał poprzednią generację. |
-| **D-10** | **Dwa czasy poza skalą uznane i uzasadnione** | `zetony.css` deklaruje cztery czasy, a `komponenty.css` używa dodatkowo `0.8s linear` (spinner). | Uznano jako **jedyny dopuszczony wyjątek** z uzasadnieniem (rozdz. 9.4): ruch cykliczny bez punktu docelowego wymaga krzywej liniowej. Nie tworzy się dla niego żetonu, żeby nie sugerować, że skala czasów ma pięć pozycji. |
-| **D-11** | **Skróty klawiszowe zebrane z modułów, `Ctrl/Cmd + K` jako propozycja** | Skróty rozproszone po plikach modułów. `Ctrl/Cmd + K` w znaczeniu „paleta poleceń" występuje **wyłącznie** w `propozycje-rozbudowy/`; w module Research ten sam skrót oznacza „Szybkie dodanie źródła". | Do tabeli 18.2 weszły wyłącznie skróty z dokumentacji modułów (kontrakt). Paleta poleceń środowiska pozostaje **propozycją rozbudowy** i nie jest wpisana jako obowiązująca — mimo że warstwa `--dn-z-centrum-polecen` (1300) istnieje w żetonach. |
-| **D-12** | **Kolejność tabulacji powłoki ustalona wprost** | Dokumentacja opisuje anatomię powłoki, nie kolejność fokusu. | Ustalono kolejność zgodną z układem wizualnym: pasek → karty sesji → boczna nawigacja → obszar roboczy → pas komunikacji (rozdz. 17.2). Zgodne z kryterium 2.4.3 (kolejność zachowująca sens) i z hierarchią środowisko → moduł → okno. |
-| **D-13** | **Rola `tool` mapowana na `--system` z obowiązkową plakietką** | `HANDOFF.md` §2 podaje mapowanie `tool → system` „z plakietką roli = nazwa narzędzia", nie rozstrzygając, czy plakietka jest obowiązkowa. | Plakietka roli **obowiązkowa** dla `tool`. Bez niej wpis narzędzia jest nieodróżnialny od komunikatu systemowego, co łamie zasadę „stan nigdy samym kolorem" przeniesioną na tożsamość nadawcy. |
-| **D-14** | **Trzy testy weryfikacyjne zasady „stan nigdy samym kolorem"** | Zasada jest w źródłach nienegocjowalna, ale nie ma procedury sprawdzenia. | Dodano test monochromatyczny, test opisu i test kropki (rozdz. 19.3). Zasada bez procedury sprawdzenia jest deklaracją, nie kontraktem. |
-| **D-15** | **`will-change` nieużywany, z zapisaną zasadą trzech warunków** | Biblioteka nie deklaruje `will-change`; źródła nie poruszają tematu. | Utrzymano stan zerowy i zapisano warunki wprowadzenia (rozdz. 14.3). Animowane elementy są małe; przedwczesna promocja do warstwy kompozycji kosztuje pamięć graficzną bez zysku. |
-| **D-16** | **Pary bez pomiaru wskazane jawnie** | `kontrasty.json` mierzy pary komponentowe, nie iloczyn palety; brak pomiarów na `--dn-panel` i dla barw półprzezroczystych motywu ciemnego. | Dodano rozdz. 16.6 z listą par wymagających pomiaru przed nowym zestawieniem. Milczenie o lukach czytałoby się jako komplet. |
+| **1** | **opracowanie o dostępności v1.0 obowiązuje strukturą, nie wartościami** | Plik pakietu systemu wizualnego (v1.0, 2026-08-11) opisuje paletę złoto-granatową, pierścień fokusu `#C9A24B`, `--dn-tekst-3` = `#6E7A93` i dziewięć pomiarów. kierunek systemu projektowego zastępuje całą warstwę wizualną. | Z v1.0 przenosimy **reguły**: progi WCAG, zasadę „tekst-3 tylko metadane", zasadę „stan nigdy samym kolorem", geometrię fokusu 2+2 px, globalną obsługę `prefers-reduced-motion`, zero blokad zasada zero blokad. **Wartości barwne v1.0 są nieobowiązujące** — zastąpione żetonami v2.0. Dziewięć pomiarów v1.0 zastąpione **33 pomiarami** z `kontrasty.json`. |
+| **2** | **Próg systemowy 1,6 : 1 dla obrysu dekoracyjnego** | `kontrasty.json` zawiera pomiar 13 (obrys kontrolki / tło = 1,65) z polem `prog: 1.6` — wartość spoza skali WCAG. | Wprowadzono **czwarty próg systemowy** obok 4,5 / 3,0. Dotyczy wyłącznie obrysów oddzielających powierzchnie o tej samej roli, nienoszących informacji. Obrys niosący informację (błąd pola, wybór) podlega progowi 3,0. Werdykt w tabeli nie brzmi „AA", lecz „próg systemowy" — żeby nie sugerować zgodności z kryterium, którego pomiar nie dotyczy. |
+| **3** | **`kontrasty.json` przenosi się do `motyw/`** | opracowanie o przekazaniu, ruchu i dostępności nie wymienia `kontrasty.json` w mapowaniu plików, choć §3 czyni z niego wejście bramy weryfikacyjnej. | Plik dodany do mapowania jako `motyw/kontrasty.json`. Brama wymagająca „przebiegu `kontrasty.json`" nie może działać na pliku, którego w repozytorium docelowym nie ma. |
+| **4** | **`motyw/siatka.css` jako dwunasty arkusz** | opracowanie o przekazaniu, ruchu i dostępności wymienia dziesięć arkuszy motywu; sekcja 7 `zetony.css` (punkty łamania, siatka) nie ma przypisania. | Utworzono `siatka.css`. Alternatywa — dołączenie do `przestrzen.css` — mieszałaby dwie odpowiedzialności (rytm wewnętrzny kontra rusztowanie strony), łamiąc regułę R1. |
+| **5** | **Kolejność importu wymuszona przez współdzielone klatki kluczowe** | Podział `komponenty.css` na 14 arkuszy rozdziela definicje `@keyframes` od części zastosowań (`dn-tetno`, `dn-wejscie`, `dn-obrot`). | Zapisano właściciela każdej klatki i listę zastosowań (rozdz. 2.3). Alternatywa — piętnasty arkusz `ruch-komponentow.css` — została odrzucona: klatka kluczowa animacji tętna należy do kropki sygnału, a rozdzielenie utrudniałoby czytanie komponentu. |
+| **6** | **Rozszerzona lista czego się nie przenosi** | opracowanie o przekazaniu, ruchu i dostępności nie wymienia `wspolne.js`, `prototyp.css`, `prototyp.js`, `WZORZEC-OKNA.html` ani katalogu `logo/alternatywy/`. | Dodano rozdz. 2.5. Bez jawnego wykluczenia rusztowanie makiet trafiłoby do produktu jako „pliki z pakietu". |
+| **7** | **Katalog ruchu jako katalog zamknięty (7 pozycji + 10 zakazów)** | kierunek systemu projektowego podaje wartość pokrętła i wzorzec ogólny; nie wylicza animacji. | Wyprowadzono siedem pozycji dozwolonych **z realnego kodu** `komponenty.css` (każda ma nośnik i selektor) oraz dziesięć zakazów z anty-domyślnych i z fizyki renderowania. Katalog jest zamknięty: animacja spoza niego wymaga decyzji Właściciela — inaczej pokrętło 3/10 nie ma egzekwowalnej treści. |
+| **8** | **Tętno wobec kryterium WCAG 2.2.2 (Pauza, zatrzymanie, ukrycie)** | Kryterium wymaga mechanizmu zatrzymania dla treści ruchomej trwającej ponad 5 s. Tętno jest ciągłe. | Rozstrzygnięcie: tętno jest **wskaźnikiem stanu**, a nie ruchomą treścią prezentacyjną — informuje, że praca biegnie, i mieści się w wyjątku „ruch jest istotny dla działania". Niezależnie od tego system dostarcza mechanizm wyłączenia — `prefers-reduced-motion` z zamiennikiem statycznym (rozdz. 13.2), przy zachowaniu informacji. Częstotliwość 0,42 Hz jest siedmiokrotnie poniżej progu 2.3.1. |
+| **9** | **`--dn-czas-3` opisany jako 0,22 s, nie 0,24 s** | Katalog komponentów v1.0 opisuje wjazd modala jako „0,24 s (`--dn-czas-3`)"; `zetony.css` v2.0 definiuje `--dn-czas-3: 0.22s`. | Obowiązuje **wartość żetonu (0,22 s)** — żeton jest źródłem prawdy (Z1). Katalog v1.0 opisywał poprzednią generację. |
+| **10** | **Dwa czasy poza skalą uznane i uzasadnione** | `zetony.css` deklaruje cztery czasy, a `komponenty.css` używa dodatkowo `0.8s linear` (spinner). | Uznano jako **jedyny dopuszczony wyjątek** z uzasadnieniem (rozdz. 9.4): ruch cykliczny bez punktu docelowego wymaga krzywej liniowej. Nie tworzy się dla niego żetonu, żeby nie sugerować, że skala czasów ma pięć pozycji. |
+| **11** | **Skróty klawiszowe zebrane z modułów, `Ctrl/Cmd + K` jako propozycja** | Skróty rozproszone po plikach modułów. `Ctrl/Cmd + K` w znaczeniu „paleta poleceń" występuje **wyłącznie** w `propozycje-rozbudowy/`; w module Research ten sam skrót oznacza „Szybkie dodanie źródła". | Do tabeli 18.2 weszły wyłącznie skróty z dokumentacji modułów (kontrakt). Paleta poleceń środowiska pozostaje **propozycją rozbudowy** i nie jest wpisana jako obowiązująca — mimo że warstwa `--dn-z-centrum-polecen` (1300) istnieje w żetonach. |
+| **12** | **Kolejność tabulacji powłoki ustalona wprost** | Dokumentacja opisuje anatomię powłoki, nie kolejność fokusu. | Ustalono kolejność zgodną z układem wizualnym: pasek → karty sesji → boczna nawigacja → obszar roboczy → pas komunikacji (rozdz. 17.2). Zgodne z kryterium 2.4.3 (kolejność zachowująca sens) i z hierarchią środowisko → moduł → okno. |
+| **13** | **Rola `tool` mapowana na `--system` z obowiązkową plakietką** | opracowanie o przekazaniu, ruchu i dostępności podaje mapowanie `tool → system` „z plakietką roli = nazwa narzędzia", nie rozstrzygając, czy plakietka jest obowiązkowa. | Plakietka roli **obowiązkowa** dla `tool`. Bez niej wpis narzędzia jest nieodróżnialny od komunikatu systemowego, co łamie zasadę „stan nigdy samym kolorem" przeniesioną na tożsamość nadawcy. |
+| **14** | **Trzy testy weryfikacyjne zasady „stan nigdy samym kolorem"** | Zasada jest w źródłach nienegocjowalna, ale nie ma procedury sprawdzenia. | Dodano test monochromatyczny, test opisu i test kropki (rozdz. 19.3). Zasada bez procedury sprawdzenia jest deklaracją, nie kontraktem. |
+| **15** | **`will-change` nieużywany, z zapisaną zasadą trzech warunków** | Biblioteka nie deklaruje `will-change`; źródła nie poruszają tematu. | Utrzymano stan zerowy i zapisano warunki wprowadzenia (rozdz. 14.3). Animowane elementy są małe; przedwczesna promocja do warstwy kompozycji kosztuje pamięć graficzną bez zysku. |
+| **16** | **Pary bez pomiaru wskazane jawnie** | `kontrasty.json` mierzy pary komponentowe, nie iloczyn palety; brak pomiarów na `--dn-panel` i dla barw półprzezroczystych motywu ciemnego. | Dodano rozdz. 16.6 z listą par wymagających pomiaru przed nowym zestawieniem. Milczenie o lukach czytałoby się jako komplet. |
 
 ---
 

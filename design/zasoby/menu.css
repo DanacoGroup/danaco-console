@@ -1,0 +1,55 @@
+/* MENU ROZWIJANE — komponent
+   Jedno miejsce, w którym opisany jest panel menu: bryła, szerokość, wysokość
+   i przewijanie. Położenie panelu liczy `menu.js` — arkusze miejsc (rama,
+   stanowisko, okna) nie ustawiają już `top/left/right/bottom` menu.
+
+   Szerokość wynika z najszerszego wiersza i mieści się w widełkach
+   `--menu-szer-min`/`--menu-szer-max`: krótkie menu jest węższe, menu
+   z wartościami przy wierszach rozszerza się do granicy, dalej wartość skraca
+   się wielokropkiem. Klasa `.dn-menu-szeroki` podnosi górną granicę.
+
+   Kontrakt znacznika:
+     <button data-menu="ID">                    wyzwalacz
+     <div class="sta-menu-tresc" id="ID" data-menu-tresc data-otwarte="nie">
+     .dn-menu-szeroki                           wyższa granica szerokości
+     [data-menu-kierunek="dol|prawo"]           kierunek wysuwania (domyślnie dół) */
+
+.sta-menu { position: relative; display: inline-flex; }
+
+.sta-menu-tresc {
+  --menu-szer-min: 220px;
+  --menu-szer-max: 340px;
+
+  position: absolute;
+  top: calc(100% + var(--dn-od-1));
+  left: 0;
+  z-index: var(--dn-z-tooltip);
+  box-sizing: border-box;
+  width: max-content;
+  min-width: var(--menu-szer-min);
+  max-width: min(var(--menu-szer-max), calc(100vw - 2 * var(--dn-od-2)));
+  max-height: calc(100dvh - var(--dn-wym-pasek) - var(--dn-wym-stan) - var(--dn-od-4));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--dn-od-1);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  white-space: normal;
+}
+
+/* Dwa stopnie szerokości. Menu z wartościami przy wierszach bierze stopień
+   szeroki; wiersz nigdy się nie łamie (`komponenty.css`). */
+.dn-menu-szeroki { --menu-szer-max: 420px; }
+
+.sta-menu-tresc[data-otwarte='nie'] { display: none; }
+
+/* Kotwica prawa: panel wyrównany prawą krawędzią do wyzwalacza. Znacznik
+   `data-kotwica="prawo"` niosą menu przy prawej krawędzi widoku. Gdy
+   `menu.js` jest wpięty, wylicza położenie sam i tę regułę nadpisuje. */
+.sta-menu-tresc[data-kotwica='prawo'] { left: auto; right: 0; }
+
+/* Menu z podmenu nie może być pojemnikiem przewijanym: przewijanie przycina
+   panele wysuwane w bok. */
+.sta-menu-tresc:has(.sta-podmenu) { max-height: none; overflow: visible; }

@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Produkt** | **Danaco Console** — AI Operating Environment (warstwa wizualna v2.0) · warstwa funkcjonalna: Danaco Pilot v1.0 |
+| **Produkt** | **Danaco Console** — AI Operating Environment (warstwa wizualna v2.0) · warstwa funkcjonalna v1.0 |
 | **Rodzaj** | Opracowanie merytoryczno-techniczne — warstwa układu (Design View) systemu projektowego |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
-| **Wersja** | v2.0 · opracowanie A3 (Zespół A — Fundament systemu projektowego) |
+| **Wersja** | v2.0 · fundament systemu projektowego |
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | Projektant wizualny (jak zbudować widok) · Deweloper front-end (jak zapisać układ w CSS) · Architekt informacji (jaką masę niesie która strefa) · Kontroler jakości (co sprawdzić na czterech progach) |
@@ -20,11 +20,11 @@
 1. [Taksonomia widoków platformy](#1-taksonomia-widoków-platformy)
 2. [Siatka: 12 kolumn, przerwa 24 px, treść max 1200 px](#2-siatka-12-kolumn-przerwa-24-px-treść-max-1200-px)
 3. [Rytm pionowy: 4 · 12 · 24](#3-rytm-pionowy-4--12--24)
-4. [Wzorzec układu A — powłoka środowiska](#4-wzorzec-układu-a--powłoka-środowiska)
-5. [Wzorzec układu B — obszar roboczy z pasem komunikacji](#5-wzorzec-układu-b--obszar-roboczy-z-pasem-komunikacji)
-6. [Wzorzec układu C — trzy strefy Centrum dowodzenia](#6-wzorzec-układu-c--trzy-strefy-centrum-dowodzenia)
-7. [Wzorzec układu D — asymetria koordynator–wykonawca](#7-wzorzec-układu-d--asymetria-koordynatorwykonawca)
-8. [Wzorzec układu E — panele wielokolumnowe](#8-wzorzec-układu-e--panele-wielokolumnowe)
+4. [Wzorzec układu powłoka środowiska](#4-wzorzec-układu-a--powłoka-środowiska)
+5. [Wzorzec układu obszar roboczy z pasem komunikacji](#5-wzorzec-układu-b--obszar-roboczy-z-pasem-komunikacji)
+6. [Wzorzec układu trzy strefy Centrum dowodzenia](#6-wzorzec-układu-c--trzy-strefy-centrum-dowodzenia)
+7. [Wzorzec układu asymetria koordynator–wykonawca](#7-wzorzec-układu-d--asymetria-koordynatorwykonawca)
+8. [Wzorzec układu panele wielokolumnowe](#8-wzorzec-układu-e--panele-wielokolumnowe)
 9. [Zachowanie responsywne na czterech progach](#9-zachowanie-responsywne-na-czterech-progach)
 10. [Hierarchia wizualna: masa, kontrast, pozycja, przestrzeń](#10-hierarchia-wizualna-masa-kontrast-pozycja-przestrzeń)
 11. [Puste stany, stany ładowania i stany błędu na poziomie widoku](#11-puste-stany-stany-ładowania-i-stany-błędu-na-poziomie-widoku)
@@ -46,19 +46,19 @@ Taksonomia rozstrzyga trzy rzeczy naraz: **czy obowiązuje siatka 12-kolumnowa**
 
 ### 1.2. Siedem rodzajów widoku
 
-| # | Rodzaj widoku | Okno źródłowe (KANON rozdz. 7) | Pytanie Operatora | Siatka 12 kol. | Miara treści | Wysokość |
+| # | Rodzaj widoku | Okno źródłowe (kontrakt systemu projektowego) | Pytanie Operatora | Siatka 12 kol. | Miara treści | Wysokość |
 |---|---|---|---|---|:-:|---|
-| **W1** | **Widok przejściowy** | Okno startowe (ładowania) | „Czy system żyje?” | nie | oś pionowa, blok centrowany | `100dvh`, treść centrowana |
-| **W2** | **Widok formularza** | Okno rejestracji i logowania | „Kim jestem dla systemu?” | nie | `--dn-wym-modal` (560 px) | `100dvh`, blok centrowany |
-| **W3** | **Widok rozdzielczy** | Strona główna — Centrum dowodzenia | „Dokąd idę?” | **tak** | `--dn-tresc-max` (1200 px) | przewijalna, minimum `100dvh` |
-| **W4** | **Widok powłoki środowiska** | Powłoki TalkIn · WorkSpace · CodeStudio · MultitaskingAI | „W jakim trybie pracuję?” | nie — układ sztywny | pełna szerokość okna | `100dvh`, `overflow: hidden` |
-| **W5** | **Widok operacyjny modułu** | Chat Window + okna właściwe modułowi | „Jakim narzędziem realizuję?” | nie — układ sztywny | pełna szerokość obszaru roboczego | wypełnia obszar roboczy |
-| **W6** | **Widok nakładki** | Okno Konfiguracji · Okno Ustawień · modale komponentów własnych | „Co zmieniam, nie tracąc kontekstu?” | **tak, wewnątrz nakładki** | 560 px (modal prosty) / 1200 px (nakładka dwudzielna) | `max-height` 90 % okna |
-| **W7** | **Widok funkcji globalnej** | Always On Display · Mobile | „Co się dzieje, gdy patrzę gdzie indziej?” | nie (AOD) / jedna kolumna (Mobile) | AOD: `36ch` treści · Mobile: pełna szerokość | AOD: pływający · Mobile: `100dvh` |
+| **1** | **Widok przejściowy** | Okno startowe (ładowania) | „Czy system żyje?” | nie | oś pionowa, blok centrowany | `100dvh`, treść centrowana |
+| **2** | **Widok formularza** | Okno rejestracji i logowania | „Kim jestem dla systemu?” | nie | `--dn-wym-modal` (560 px) | `100dvh`, blok centrowany |
+| **3** | **Widok rozdzielczy** | Strona główna — Centrum dowodzenia | „Dokąd idę?” | **tak** | `--dn-tresc-max` (1200 px) | przewijalna, minimum `100dvh` |
+| **4** | **Widok powłoki środowiska** | Powłoki TalkIn · WorkSpace · CodeStudio · MultitaskingAI | „W jakim trybie pracuję?” | nie — układ sztywny | pełna szerokość okna | `100dvh`, `overflow: hidden` |
+| **5** | **Widok operacyjny modułu** | Chat Window + okna właściwe modułowi | „Jakim narzędziem realizuję?” | nie — układ sztywny | pełna szerokość obszaru roboczego | wypełnia obszar roboczy |
+| **6** | **Widok nakładki** | Okno Konfiguracji · Okno Ustawień · modale komponentów własnych | „Co zmieniam, nie tracąc kontekstu?” | **tak, wewnątrz nakładki** | 560 px (modal prosty) / 1200 px (nakładka dwudzielna) | `max-height` 90 % okna |
+| **7** | **Widok funkcji globalnej** | Always On Display · Mobile | „Co się dzieje, gdy patrzę gdzie indziej?” | nie (AOD) / jedna kolumna (Mobile) | AOD: `36ch` treści · Mobile: pełna szerokość | AOD: pływający · Mobile: `100dvh` |
 
 ### 1.3. Charakterystyka każdego rodzaju
 
-**W1 · Widok przejściowy — okno startowe.**
+**Widok przejściowy — okno startowe.**
 Stan trwa od ułamka sekundy do kilku sekund. Nie ma paska górnego, nie ma paneli bocznych, nie ma siatki. Jedyna oś to pion: godło marki → wskaźnik stanu → komunikat. Trzy warianty (Łączenie · Powrót z ważnym tokenem · Błąd połączenia) różnią się **wyłącznie zawartością bloku stanu**, nigdy układem — układ musi być stały, aby przejście do stanu błędu nie wywoływało przeskoku treści.
 
 ```
@@ -75,22 +75,22 @@ Stan trwa od ułamka sekundy do kilku sekund. Nie ma paska górnego, nie ma pane
           brak paska · brak paneli · brak siatki 12-kolumnowej
 ```
 
-**W2 · Widok formularza — okno rejestracji i logowania.**
+**Widok formularza — okno rejestracji i logowania.**
 Rama okna jest kontenerem centrowanym o szerokości `--dn-wym-modal` (560 px). Trzy pod-stany (Rejestracja · Logowanie · Odzyskiwanie konta) i sześć wariantów inwentarza dzielą tę samą ramę — wymienia się wyłącznie wnętrze. Wysokość ramy jest zmienna; **pozycja pionowa ramy jest stała względem środka okna**, żeby dołożenie komunikatu błędu nie przesuwało przycisku pod kursorem.
 
-**W3 · Widok rozdzielczy — Centrum dowodzenia.**
+**Widok rozdzielczy — Centrum dowodzenia.**
 Jedyny widok platformy, w którym siatka 12-kolumnowa obowiązuje w pełnym zakresie. Trzy strefy o malejącej masie w pionie, treść ograniczona do 1200 px, przewijanie pionowe dozwolone. To „przedpokój przed strefą roboczą” — jego zadaniem jest **rozdzielenie ruchu na trzy ścieżki**, nie mieszczenie pracy.
 
-**W4 · Widok powłoki środowiska.**
+**Widok powłoki środowiska.**
 Układ sztywny, wyprowadzony wprost z żetonów wymiarów. Cztery pasy: pasek górny (48 px) → pas kart sesji (36 px) → boczna nawigacja (224 px) obok obszaru roboczego (`1fr`). Widok wypełnia okno klienckie co do piksela i **nie przewija się jako całość** — przewijają się wyłącznie wnętrza paneli.
 
-**W5 · Widok operacyjny modułu.**
-Wnętrze obszaru roboczego powłoki. Zawsze zawiera Chat Window (jedyne okno wspólne wszystkim piętnastu modułom) i od jednego do pięciu okien właściwych modułowi. Rządzi nim wzorzec B (rozdz. 5) albo — dla modułów wielopanelowych — wzorzec E (rozdz. 8).
+**Widok operacyjny modułu.**
+Wnętrze obszaru roboczego powłoki. Zawsze zawiera Chat Window (jedyne okno wspólne wszystkim piętnastu modułom) i od jednego do pięciu okien właściwych modułowi. Rządzi nim wzorzec obszaru roboczego z pasem komunikacji (rozdz. 5) albo — dla modułów wielopanelowych — wzorzec paneli wielokolumnowych (rozdz. 8).
 
-**W6 · Widok nakładki.**
+**Widok nakładki.**
 Dwie odmiany. **Modal prosty** (`.dn-modal`, do 560 px) — potwierdzenia, krótkie formularze, „Pula kont Code CLI”. **Nakładka dwudzielna** — Okno Konfiguracji i Okno Ustawień: lewa kolumna nawigacji zakresów o szerokości `--dn-wym-boczna` (224 px, ta sama miara co boczna nawigacja środowiska) plus prawa kolumna zawartości. Nakładka nigdy nie zastępuje widoku pod spodem — zamknięcie przywraca dokładnie stan sprzed otwarcia.
 
-**W7 · Widok funkcji globalnej.**
+**Widok funkcji globalnej.**
 Always On Display jest elementem pływającym (`position: fixed`, warstwa `--dn-z-aod` = 1200, zakotwiczony w prawym dolnym rogu z odsunięciem `--dn-od-5`). Nie tworzy przestrzeni roboczej i nie przeładowuje niczego pod spodem. Mobile jest widokiem jednokolumnowym progu `w1`.
 
 ### 1.4. Diagram — mapa rodzajów widoku wobec przepływu platformy
@@ -99,23 +99,23 @@ Always On Display jest elementem pływającym (`position: fixed`, warstwa `--dn-
 URUCHOMIENIE
      │
      ▼
- [W1] OKNO STARTOWE ────────────► [W2] REJESTRACJA I LOGOWANIE
+  OKNO STARTOWE ────────────►  REJESTRACJA I LOGOWANIE
      │  token ważny                     │  token wydany / „Pomiń”
      │                                  │
      └──────────────┬───────────────────┘
                     ▼
-        [W3] CENTRUM DOWODZENIA  ◄──────────────┐
+         CENTRUM DOWODZENIA  ◄──────────────┐
                     │                            │ powrót ikoną „dom”
      ┌──────────────┼───────────────────┐        │
      ▼ Strefa 1     ▼ Strefa 2          ▼ Strefa 3
-[W4] POWŁOKA    [W6] NAKŁADKA      [W6] NAKŁADKA / [W7] FUNKCJA GLOBALNA
+ POWŁOKA     NAKŁADKA       NAKŁADKA /  FUNKCJA GLOBALNA
  ŚRODOWISKA      komponentu         Konfiguracja ·  Mobile · Always On Display
      │            własnego           Ustawienia
      ▼
-[W5] WIDOK OPERACYJNY MODUŁU
+ WIDOK OPERACYJNY MODUŁU
      Chat Window + okna właściwe modułowi
      │
-     └─► [W7] Always On Display może być przywołany nad KAŻDYM z widoków W3–W6
+     └─►  Always On Display może być przywołany nad KAŻDYM z widoków rozdzielczego, powłoki, operacyjnego i nakładki
 ```
 
 ### 1.5. Reguła rozstrzygająca
@@ -123,7 +123,7 @@ URUCHOMIENIE
 > **Widok, w którym Operator czyta i wybiera, dostaje siatkę i miarę czytelności.
 > Widok, w którym Operator pracuje, dostaje całe okno i sztywny podział na piksele.**
 
-W1, W2, W3, W6 to widoki czytania i wyboru. W4, W5 to widoki pracy. W7 jest warstwą towarzyszącą i nie należy do żadnej z grup — dlatego ma własne prawo (pływanie).
+Widok przejściowy, formularza, rozdzielczy i nakładki to widoki czytania i wyboru. Widok powłoki środowiska i widok operacyjny modułu to widoki pracy. Widok funkcji globalnej jest warstwą towarzyszącą i nie należy do żadnej z grup — dlatego ma własne prawo (pływanie).
 
 ---
 
@@ -133,11 +133,11 @@ W1, W2, W3, W6 to widoki czytania i wyboru. W4, W5 to widoki pracy. W7 jest wars
 
 | Parametr | Żeton | Wartość | Źródło |
 |---|---|---|---|
-| Liczba kolumn | `--dn-siatka-kolumny` | **12** | KANON rozdz. 2 · `zetony.css` §7 |
-| Przerwa (rynna) | `--dn-siatka-przerwa` | **24 px** (`--dn-od-6`) | KANON rozdz. 2 · `zetony.css` §7 |
-| Maksymalna szerokość treści | `--dn-tresc-max` | **1200 px** | KANON rozdz. 2 · `zetony.css` §7 |
+| Liczba kolumn | `--dn-siatka-kolumny` | **12** | kontrakt systemu projektowego · `zetony.css` §7 |
+| Przerwa (rynna) | `--dn-siatka-przerwa` | **24 px** (`--dn-od-6`) | kontrakt systemu projektowego · `zetony.css` §7 |
+| Maksymalna szerokość treści | `--dn-tresc-max` | **1200 px** | kontrakt systemu projektowego · `zetony.css` §7 |
 | Margines zewnętrzny (w3/w4) | `--dn-od-6` | 24 px | wyprowadzenie z rytmu sekcji |
-| Margines zewnętrzny (w1/w2) | `--dn-od-4` | 16 px | decyzja projektowa D-07 |
+| Margines zewnętrzny (w1/w2) | `--dn-od-4` | 16 px | decyzja projektowa |
 
 ### 2.2. Arytmetyka kolumny
 
@@ -171,15 +171,15 @@ kolumna = (szerokość_treści − 11 × 24) / 12
 
 | Widok | Siatka 12 kolumn | Uzasadnienie |
 |---|:-:|---|
-| **W1** Okno startowe | **nie** | jeden blok na osi pionowej; siatka pozioma nie ma czego porządkować |
-| **W2** Logowanie | **nie** | jedna kolumna formularza o stałej mierze 560 px |
-| **W3** Centrum dowodzenia | **TAK** | trzy strefy, dwanaście punktów wejścia, treść dokumentowa |
-| **W4** Powłoka środowiska | **nie — układ sztywny** | wymiary pochodzą z żetonów (48 · 36 · 224), nie z podziału szerokości |
-| **W5** Widok operacyjny modułu | **nie — układ sztywny** | podział wynika z liczby i typologii okien modułu, nie z dwunastu kolumn |
-| **W6** Nakładka — modal prosty | **nie** | jedna kolumna, do 560 px |
-| **W6** Nakładka — Konfiguracja / Ustawienia | **TAK, wewnątrz prawej kolumny** | prawa kolumna zawartości zakresu jest treścią dokumentową |
-| **W7** Always On Display | **nie** | element pływający o szerokości wynikającej z treści (maks. 36 znaków) |
-| **W7** Mobile | **nie — jedna kolumna** | próg `w1`; każdy element zajmuje pełną szerokość |
+| **Widok przejściowy** — Okno startowe | **nie** | jeden blok na osi pionowej; siatka pozioma nie ma czego porządkować |
+| **Widok formularza** — Logowanie | **nie** | jedna kolumna formularza o stałej mierze 560 px |
+| **Widok rozdzielczy** — Centrum dowodzenia | **TAK** | trzy strefy, dwanaście punktów wejścia, treść dokumentowa |
+| **Widok powłoki środowiska** — Powłoka środowiska | **nie — układ sztywny** | wymiary pochodzą z żetonów (48 · 36 · 224), nie z podziału szerokości |
+| **Widok operacyjny modułu** — Widok operacyjny modułu | **nie — układ sztywny** | podział wynika z liczby i typologii okien modułu, nie z dwunastu kolumn |
+| **Widok nakładki** — Nakładka — modal prosty | **nie** | jedna kolumna, do 560 px |
+| **Widok nakładki** — Nakładka — Konfiguracja / Ustawienia | **TAK, wewnątrz prawej kolumny** | prawa kolumna zawartości zakresu jest treścią dokumentową |
+| **Widok funkcji globalnej** — Always On Display | **nie** | element pływający o szerokości wynikającej z treści (maks. 36 znaków) |
+| **Widok funkcji globalnej** — Mobile | **nie — jedna kolumna** | próg `w1`; każdy element zajmuje pełną szerokość |
 
 **Reguła graniczna (wiążąca):**
 
@@ -263,17 +263,25 @@ Odstęp panelu 12 px wynika wprost z pokrętła `GESTOSC_WIZUALNA = 8/10`. Przy 
 
 ---
 
-## 4. Wzorzec układu A — powłoka środowiska
+## 4. Wzorzec układu powłoka środowiska
 
 ### 4.1. Pełna specyfikacja
 
 ```css
 /* Powłoka środowiska — TalkIn · WorkSpace · CodeStudio · MultitaskingAI */
 .powloka {
-  display: grid;
-  grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) 1fr;  /* 48px 36px 1fr */
+  display: flex;              /* liczba pasów ramy i widoku bywa różna */
+  flex-direction: column;
   height: 100dvh;
 }
+.powloka > .belka        { flex: none; height: var(--dn-wym-belka); }      /* 36px */
+.powloka > .korpus       { flex: 1 1 auto; min-height: 0; display: flex; } /* szyna + prawa */
+.powloka > .stan         { flex: none; height: var(--dn-wym-stan); }       /* 28px */
+.korpus > .szyna         { flex: none; width: var(--dn-wym-szyna); }       /* 56px */
+.korpus > .prawa         { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.prawa > .narzedzia      { flex: none; height: var(--dn-wym-pasek); }      /* 48px */
+.prawa > .karty-sesji    { flex: none; height: var(--dn-wym-pas-kart); }   /* 36px */
+.prawa > .powloka-cialo  { flex: 1 1 auto; min-height: 0; }
 .powloka-cialo {
   display: grid;
   grid-template-columns: var(--dn-wym-boczna) 1fr;                      /* 224px 1fr */
@@ -283,7 +291,10 @@ Odstęp panelu 12 px wynika wprost z pokrętła `GESTOSC_WIZUALNA = 8/10`. Przy 
 
 | Pas | Wymiar | Żeton | Rola | Przewijanie |
 |---|---:|---|---|---|
-| Pasek górny | 48 px | `--dn-wym-pasek` | rama kokpitu: godło, logotyp, dom, wyszukiwanie, szybka konfiguracja sesji, Mobile, Always On Display, motyw | nie |
+| Belka tytułowa | 36 px | `--dn-wym-belka` | rama okna: znak, nazwa produktu, tytuł widoku, sterowanie oknem systemowym | brak — pas stały |
+| Szyna nawigacji | 56 px | `--dn-wym-szyna` | rama okna: menu aplikacji, cztery środowiska, moduły środowiska rozwiniętego, profil | pionowo, gdy pozycji jest więcej niż mieści wysokość |
+| Pasek stanu | 28 px | `--dn-wym-stan` | rama okna: operator, położenie, sesje czynne, motyw, obciążenie zasobów | brak — pas stały |
+| Pasek narzędzi | 48 px | `--dn-wym-pasek` | rama kokpitu: menu aplikacji, szyna, znajdowanie, zrzut, schowek, historia, przełącznik środowisk, ścieżka, wyszukiwanie, dom, odświeżenie, ustawienia, motyw, konto | poziomo, gdy okno jest ciasne |
 | Pas kart sesji | 36 px | `--dn-wym-pas-kart` | karty sesji + kontrolka „+” | poziomo, gdy kart jest więcej niż mieści pas |
 | Boczna nawigacja | 224 px | `--dn-wym-boczna` | lista modułów (9 / 9 / 8) albo Panel orkiestracji (6 sekcji) | pionowo, wewnątrz panelu |
 | Obszar roboczy | `1fr` | — | okna operacyjne modułu + Chat Window | pionowo, wewnątrz okien |
@@ -292,13 +303,15 @@ Odstęp panelu 12 px wynika wprost z pokrętła `GESTOSC_WIZUALNA = 8/10`. Przy 
 
 ```
  ╔════════════════════════════════════════════════════════════════════════╗
- ║ »». DANACO CONSOLE │ dom │ [szukaj…] │ ustawienia·telefon·AOD·motyw    ║  48 px
+ ║ »». Danaco Console                                          ─  □  ✕    ║  36 px
+ ╠════════════════════════════════════════════════════════════════════════╣
+ ║ 🔍 ⛶ 📋 │ ← →   ścieżka położenia   [szukaj] │ ⌂ ⟳ ⇤ │ ⚙ ◐               ║  48 px
  ╠════════════════════════════════════════════════════════════════════════╣
  ║ [● Studio ✕] [ Research ✕] [ + ]                                        ║  36 px
  ╠══════════════════╦═════════════════════════════════════════════════════╣
  ║ TalkIn            ║                                                     ║
  ║ ─────────────────║   OBSZAR ROBOCZY                                    ║
- ║  ▸ Studio         ║   (wzorzec B — rozdz. 5)                            ║  1fr
+ ║  ▸ Studio         ║   (wzorzec obszaru roboczego z pasem komunikacji — rozdz. 5)                            ║  1fr
  ║    Workspace      ║                                                     ║
  ║    Browser        ║                                                     ║
  ║    Research       ║                                                     ║
@@ -349,7 +362,7 @@ Nagłówek zajmuje 36 px (jeden wiersz) albo 56 px (dwa wiersze, MultitaskingAI)
 
 ---
 
-## 5. Wzorzec układu B — obszar roboczy z pasem komunikacji
+## 5. Wzorzec układu obszar roboczy z pasem komunikacji
 
 ### 5.1. Pełna specyfikacja
 
@@ -398,14 +411,14 @@ Dolny limit 320 px (`--dn-wym-pas-komunikacji`) to wartość, przy której pas k
    dolny pas  ── NIE znika; rekonfiguruje kontekst poleceń i operacji
 ```
 
-### 5.4. Odmiany wzorca B
+### 5.4. Odmiany wzorca
 
 | Odmiana | Kiedy | Podział | Uzasadnienie |
 |---|---|---|---|
-| **B1 — pionowa (domyślna)** | moduły z jednym oknem wiodącym: Studio, Research, Library, Browser, Developer, Design, Apps | `minmax(0,1fr)` / `minmax(320px,54%)` | wynik nad rozmową — kierunek czytania z góry na dół |
-| **B2 — pionowa z pasmem narzędzi** | moduły z panelem pomocniczym: Studio (Tools Panel), Research (Sources Manager) | okno modułu dzieli się poziomo `1fr / 280px` | panel pomocniczy jest wąski i stały; nie konkuruje o wysokość |
-| **B3 — zakładkowa** | próg `w2` i niżej | Chat Window i okna modułu jako `.dn-zakladki` | poniżej 320 px pas komunikacji przestaje być użyteczny |
-| **B4 — dwukolumnowa** | próg `w4` — „dwa okna komunikacji” | pas komunikacji dzieli się na dwie kolumny `1fr 1fr` | szerokie biurko pozwala prowadzić dwie rozmowy równolegle (Roundtable, MultitaskingAI) |
+| **pionowa (domyślna)** — pionowa (domyślna)** | moduły z jednym oknem wiodącym: Studio, Research, Library, Browser, Developer, Design, Apps | `minmax(0,1fr)` / `minmax(320px,54%)` | wynik nad rozmową — kierunek czytania z góry na dół |
+| **pionowa z pasmem narzędzi** — pionowa z pasmem narzędzi** | moduły z panelem pomocniczym: Studio (Tools Panel), Research (Sources Manager) | okno modułu dzieli się poziomo `1fr / 280px` | panel pomocniczy jest wąski i stały; nie konkuruje o wysokość |
+| **zakładkowa** — zakładkowa** | próg `w2` i niżej | Chat Window i okna modułu jako `.dn-zakladki` | poniżej 320 px pas komunikacji przestaje być użyteczny |
+| **dwukolumnowa** — dwukolumnowa** | próg `w4` — „dwa okna komunikacji” | pas komunikacji dzieli się na dwie kolumny `1fr 1fr` | szerokie biurko pozwala prowadzić dwie rozmowy równolegle (Roundtable, MultitaskingAI) |
 
 ### 5.5. Warunek techniczny `min-height: 0`
 
@@ -413,7 +426,7 @@ Każdy kontener siatki, w którym dziecko ma przewijać własne wnętrze, **musi
 
 ---
 
-## 6. Wzorzec układu C — trzy strefy Centrum dowodzenia
+## 6. Wzorzec układu trzy strefy Centrum dowodzenia
 
 ### 6.1. Malejąca masa jako komunikat
 
@@ -500,7 +513,7 @@ Minimum to `--dn-odstep-sekcji` (24 px). Zalecenie dla Centrum dowodzenia to **4
 
 ---
 
-## 7. Wzorzec układu D — asymetria koordynator–wykonawca
+## 7. Wzorzec układu asymetria koordynator–wykonawca
 
 ### 7.1. Rozstrzygnięcie fundamentalne
 
@@ -576,7 +589,7 @@ Subagent Network jest rozwijany **wewnątrz** karty roli Executor 1 lub Executor
 
 ---
 
-## 8. Wzorzec układu E — panele wielokolumnowe
+## 8. Wzorzec układu panele wielokolumnowe
 
 ### 8.1. Dwa moduły, jeden wzorzec
 
@@ -689,7 +702,7 @@ W Translate segment o numerze `[n]` musi leżeć **w tym samym wierszu we wszyst
 | **Boczna nawigacja / Panel orkiestracji** | 224 px, tekst + ikona | 224 px, tekst + ikona | **zwija się do 56 px** — same ikony + dymek | **znika**; wywoływana przyciskiem `menu` jako nakładka |
 | **Nagłówek panelu bocznego** | pełny (nazwa + podtytuł) | pełny | tylko emblemat środowiska | w nakładce — pełny |
 | **Obszar roboczy — okna modułu** | do 5 paneli równolegle | do 4 paneli | do 3 paneli, przewijanie poziome | 1 panel, pozostałe jako `.dn-zakladki` |
-| **Pas komunikacji (Chat Window)** | **dzieli się na dwie kolumny** (B4) | `minmax(320px, 54%)` | `minmax(320px, 54%)`, przy niedoborze → zakładki (B3) | zakładka „Rozmowa” obok zakładki „Wynik” |
+| **Pas komunikacji (Chat Window)** | **dzieli się na dwie kolumny** (odmiana dwukolumnowa) | `minmax(320px, 54%)` | `minmax(320px, 54%)`, przy niedoborze → zakładki (B3) | zakładka „Rozmowa” obok zakładki „Wynik” |
 | **Strefa 1 — karty środowisk** | 4 × 3/12 | 4 × 3/12 | 2 × 6/12 (dwa rzędy) | 1 × 12/12 (cztery rzędy) |
 | **Strefa 2 — kafle** | 4 × 3/12 | 4 × 3/12 | 2 × 6/12 | 1 × 12/12 |
 | **Strefa 3 — listwa** | 3 pozycje w wierszu | 3 pozycje w wierszu | 3 pozycje w wierszu | **zawija się** do trzech wierszy |
@@ -708,9 +721,9 @@ W Translate segment o numerze `[n]` musi leżeć **w tym samym wierszu we wszyst
 | **Przesunięcie** | element zmienia miejsce w układzie, zachowując formę | gdy kolejność czytania na wąskim ekranie jest inna niż na szerokim |
 | **Zniknięcie** | element przestaje być renderowany w tym progu | **wyłącznie** wtedy, gdy pozostaje wywoływalny innym mechanizmem (przycisk `menu`, lista rozwijana, zakładka) |
 
-**Zasada bezwzględna:** żadne zniknięcie nie może odebrać dostępu do funkcji. To bezpośrednia konsekwencja ADL-017 (zero blokad) przeniesiona na warstwę układu: element może zniknąć z widoku, nie może zniknąć z systemu.
+**Zasada bezwzględna:** żadne zniknięcie nie może odebrać dostępu do funkcji. To bezpośrednia konsekwencja zasada zero blokad przeniesiona na warstwę układu: element może zniknąć z widoku, nie może zniknąć z systemu.
 
-### 9.4. Reguła przejścia B1 → B3 (pas komunikacji na zakładki)
+### 9.4. Przejście z odmiany pionowej na zakładkową
 
 Przejście nie jest wywoływane szerokością okna, tylko **wysokością dostępną dla obszaru roboczego**:
 
@@ -718,7 +731,7 @@ Przejście nie jest wywoływane szerokością okna, tylko **wysokością dostęp
 wysokość_obszaru = wysokość_okna − 48 (pasek) − 36 (pas kart) − 24 (marginesy)
 
 jeżeli   wysokość_obszaru  <  320 (pas komunikacji) + 200 (minimum okna modułu)
-wówczas  wzorzec B1  →  wzorzec B3 (zakładki)
+wówczas  odmiana pionowa  →  odmiana zakładkowa
 ```
 
 Próg wynosi więc **628 px wysokości okna**. Poniżej tej wartości Chat Window i okno modułu dzielą tę samą powierzchnię jako dwie zakładki `.dn-zakladki`, a przełączanie między nimi nie gubi stanu żadnej z nich.
@@ -737,7 +750,7 @@ Kokpit ma cztery — i tylko cztery — narzędzia budowania hierarchii. Każde 
 
 | Narzędzie | Czym się steruje | Budżet w kokpicie | Kiedy stosować |
 |---|---|---|---|
-| **Masa** | powierzchnia, stopień pisma, krój, promień | **3 poziomy** (karty → kafle → listwa) | rozdzielanie ścieżek działania (W3) |
+| **Masa** | powierzchnia, stopień pisma, krój, promień | **3 poziomy** (karty → kafle → listwa) | rozdzielanie ścieżek działania w widoku rozdzielczym |
 | **Kontrast** | `--dn-tekst` vs `--dn-tekst-2` vs `--dn-tekst-3`; obrys vs powierzchnia | **3 poziomy tekstu + 3 obrysów** | oddzielenie treści od metadanych |
 | **Pozycja** | kolejność w pionie, przypięcie do krawędzi, warstwa z-index | **11 warstw** (żetonowe) | stałość ramy wobec zmienności treści |
 | **Przestrzeń** | 12 px / 24 px / 48 px | **3 poziomy** | grupowanie i rozdzielanie bez linii |
@@ -791,11 +804,11 @@ Linia jest w tym systemie zarezerwowana dla **granic strukturalnych** — dolna 
 
 | Widok | Jedyna asymetria | Co niesie |
 |---|---|---|
-| W3 Centrum dowodzenia | malejąca masa trzech stref | „ta ścieżka jest ważniejsza od tamtej” |
-| W4 Powłoka środowiska | boczna 224 px vs obszar `1fr` | „nawigacja jest narzędziem, praca jest celem” |
-| W5 Widok operacyjny | pas komunikacji 54 % vs okno modułu `1fr` | „rozmowa jest stała, wynik jest zmienny” |
-| W5 MultitaskingAI | plansza 58 % / 42 % | „obserwuję role, narzędzia towarzyszą” |
-| W6 Nakładka dwudzielna | nawigacja 224 px vs zawartość `1fr` | „zakres jest wyborem, ustawienia są pracą” |
+| Centrum dowodzenia | malejąca masa trzech stref | „ta ścieżka jest ważniejsza od tamtej” |
+| Powłoka środowiska | boczna 224 px vs obszar `1fr` | „nawigacja jest narzędziem, praca jest celem” |
+| Widok operacyjny | pas komunikacji 54 % vs okno modułu `1fr` | „rozmowa jest stała, wynik jest zmienny” |
+| MultitaskingAI | plansza 58 % / 42 % | „obserwuję role, narzędzia towarzyszą” |
+| Nakładka dwudzielna | nawigacja 224 px vs zawartość `1fr` | „zakres jest wyborem, ustawienia są pracą” |
 
 Drugiej asymetrii w tym samym widoku nie wprowadza się. Jeśli układ jej potrzebuje, to znaczy, że w widoku są dwa widoki.
 
@@ -828,21 +841,21 @@ Puste stany, stany ładowania i stany błędu to **stany widoku, nie komponentu*
 
 | Poziom | Zasięg | Forma | Czas typowy | Element |
 |---|---|---|---|---|
-| **L1 — mikro** | pojedyncza kontrolka | `.dn-spinner` 14 px w miejscu etykiety przycisku; przycisk pozostaje klikalny | do 1 s | przycisk „Zaloguj”, „Wyślij”, „Zapisz agenta” |
-| **L2 — panel** | jedno okno operacyjne | nakładka na ciało okna: spinner + etykieta w krojach mono; nagłówek okna pozostaje czytelny | 1–5 s | przeładowanie obszaru roboczego przy zmianie modułu |
-| **L3 — widok** | cały widok | widok przejściowy (W1): godło + spinner + komunikat stanu | zmienny | okno startowe, ponowne łączenie po utracie sieci |
+| **Zasięg mikro** — mikro** | pojedyncza kontrolka | `.dn-spinner` 14 px w miejscu etykiety przycisku; przycisk pozostaje klikalny | do 1 s | przycisk „Zaloguj”, „Wyślij”, „Zapisz agenta” |
+| **Zasięg panel** — panel** | jedno okno operacyjne | nakładka na ciało okna: spinner + etykieta w krojach mono; nagłówek okna pozostaje czytelny | 1–5 s | przeładowanie obszaru roboczego przy zmianie modułu |
+| **Zasięg widok** — widok** | cały widok | widok przejściowy: godło + spinner + komunikat stanu | zmienny | okno startowe, ponowne łączenie po utracie sieci |
 
-**Zasada nienaruszalna:** żaden stan ładowania nie odbiera klikalności. Przycisk w stanie `aria-busy="true"` zmienia kursor na `progress` i pokazuje wskaźnik, ale pozostaje aktywny. Jest to wprost konsekwencja ADL-017.
+**Zasada nienaruszalna:** żaden stan ładowania nie odbiera klikalności. Przycisk w stanie `aria-busy="true"` zmienia kursor na `progress` i pokazuje wskaźnik, ale pozostaje aktywny. Jest to wprost konsekwencja zasady zero blokad.
 
-**Zasada geometrii:** stan L2 nie zmienia wysokości okna. Nakładka jest pozycjonowana absolutnie w ciele okna, więc po zakończeniu ładowania treść wchodzi w miejsce już zarezerwowane. Przejście: `opacity` + `translateY(4px)`, czas `--dn-czas-3` (0,22 s).
+**Zasada geometrii:** stan ładowania o zasięgu panelu nie zmienia wysokości okna. Nakładka jest pozycjonowana absolutnie w ciele okna, więc po zakończeniu ładowania treść wchodzi w miejsce już zarezerwowane. Przejście: `opacity` + `translateY(4px)`, czas `--dn-czas-3` (0,22 s).
 
 ### 11.4. Stany błędu — trzy poziomy
 
 | Poziom | Zasięg | Forma | Przykład |
 |---|---|---|---|
-| **B1 — pole** | pojedyncza kontrolka | `.dn-pole-blad` pod polem: ikona `blad` + komunikat, obrys pola w `--dn-blad-tekst` | „Nieprawidłowy login lub hasło. Spróbuj ponownie.” |
-| **B2 — panel** | jedno okno operacyjne | pas komunikatu w ciele okna: `--dn-blad-tlo`, obrys lewy 2 px, ikona + treść + działanie naprawcze | „Kolejka wstrzymana — zadanie #130 oczekuje na rozstrzygnięcie” (przykładowe) |
-| **B3 — widok** | cały widok | widok przejściowy w wariancie błędu: ikona `ostrzezenie` + komunikat + kontrolka „Spróbuj ponownie” | brak połączenia z serwerem w oknie startowym |
+| **pionowa (domyślna)** — pole** | pojedyncza kontrolka | `.dn-pole-blad` pod polem: ikona `blad` + komunikat, obrys pola w `--dn-blad-tekst` | „Nieprawidłowy login lub hasło. Spróbuj ponownie.” |
+| **pionowa z pasmem narzędzi** — panel** | jedno okno operacyjne | pas komunikatu w ciele okna: `--dn-blad-tlo`, obrys lewy 2 px, ikona + treść + działanie naprawcze | „Kolejka wstrzymana — zadanie #130 oczekuje na rozstrzygnięcie” (przykładowe) |
+| **zakładkowa** — widok** | cały widok | widok przejściowy w wariancie błędu: ikona `ostrzezenie` + komunikat + kontrolka „Spróbuj ponownie” | brak połączenia z serwerem w oknie startowym |
 
 **Zasada:** stan błędu **nigdy nie usuwa treści, którą Operator już wprowadził**. Formularz logowania po błędzie pozostaje wypełniony. Pole promptu po nieudanym wysłaniu zachowuje treść. Kolejka po niepowodzeniu etapu zachowuje pozostałe etapy.
 
@@ -853,13 +866,13 @@ Puste stany, stany ładowania i stany błędu to **stany widoku, nie komponentu*
 ```
         ┌──────────────┐  wybór modułu   ┌──────────────┐  odpowiedź   ┌──────────────┐
         │  PUSTY       │ ───────────────►│  ŁADOWANIE   │ ────────────►│  WYPEŁNIONY  │
-        │ .dn-pusty-   │                 │  L2 (panel)  │              │  treść okna  │
+        │ .dn-pusty-   │                 │  panel          │              │  treść okna  │
         │  stan        │                 │              │              │              │
         └──────────────┘                 └──────┬───────┘              └──────┬───────┘
                ▲                                 │ niepowodzenie              │ zmiana modułu
                │ zamknięcie / nowa karta         ▼                            │
                │                          ┌──────────────┐                    │
-               └──────────────────────────│  BŁĄD  B2    │◄───────────────────┘
+               └──────────────────────────│  BŁĄD panel    │◄───────────────────┘
                                           │ + działanie  │
                                           │   naprawcze  │
                                           └──────────────┘
@@ -887,10 +900,10 @@ Wysokość dostępna dla obszaru roboczego = wysokość okna − 48 (pasek górn
 
 | Próg | Obszar roboczy | Pas komunikacji `minmax(320, 54%)` | Okna modułu `minmax(0,1fr)` | Wzorzec czynny |
 |---|---:|---:|---:|---|
-| `w4` | 816 px | **441 px** (54 %) | 375 px | B1 (lub B4 — dwie kolumny) |
-| `w3` | 716 px | **387 px** (54 %) | 329 px | B1 |
-| `w2` | 556 px | **320 px** (limit dolny) | 236 px | B1 na granicy |
-| `w1` | 276 px | — | — | **B3 — zakładki** (próg 628 px niespełniony) |
+| `w4` | 816 px | **441 px** (54 %) | 375 px | odmiana pionowa (lub dwukolumnowa) |
+| `w3` | 716 px | **387 px** (54 %) | 329 px | odmiana pionowa (domyślna) |
+| `w2` | 556 px | **320 px** (limit dolny) | 236 px | odmiana pionowa na granicy |
+| `w1` | 276 px | — | — | **odmiana zakładkowa** (próg 628 px niespełniony) |
 
 ### 12.3. Pojemność w wierszach tabeli / listy
 
@@ -958,41 +971,41 @@ Poniższe rozstrzygnięcia wykraczają poza literalny zapis dokumentacji źród�
 
 | # | Rozstrzygnięcie | Co mówiło źródło | Decyzja i uzasadnienie |
 |---|---|---|---|
-| **D-01** | **Taksonomia siedmiu rodzajów widoku** | Dokumentacja wymienia okna (KANON rozdz. 7), nie klasyfikuje ich wg praw układu | Wprowadzono siedem rodzajów (W1–W7) jako warstwę porządkującą **nad** istniejącym inwentarzem okien. Żadne nowe okno nie powstało — każdy rodzaj wskazuje okna już zinwentaryzowane. |
-| **D-02** | **Granica obowiązywania siatki 12-kolumnowej** | KANON podaje siatkę (12 / 24 px / 1200 px), nie wskazuje, gdzie obowiązuje | Rozstrzygnięto: siatka obowiązuje w widokach czytania i wyboru (W1–W3, W6), nie obowiązuje w widokach pracy (W4, W5). Uzasadnienie: wymiary ramy kokpitu pochodzą z żetonów (48 · 36 · 224), nie z podziału szerokości — mieszanie dwóch reżimów wymiarowania w jednym widoku produkuje wartości spoza skali 4 px. |
-| **D-03** | **Szerokość ramy widoku formularza = 560 px** | Źródło mówi „duży panel/karta `.dn-modal`-podobny, wyśrodkowany”, bez wartości | Przyjęto `--dn-wym-modal` (560 px), bo źródło samo odsyła do modala. Zero nowych wartości. |
-| **D-04** | **Szerokość nawigacji zakresów w nakładce konfiguracji = 224 px** | Źródło mówi „dwudzielny układ (nawigacja + zawartość)”, bez wymiaru | Przyjęto `--dn-wym-boczna` (224 px) — tę samą miarę co boczna nawigacja środowiska. Operator uczy się jednej szerokości nawigacji, nie dwóch. |
-| **D-05** | **Zwinięcie bocznej nawigacji na progu `w2` = 56 px** | KANON: „w2 960 (tablet — boczna zwija się do ikon)”, bez wartości | 56 px = przycisk ikonowy 32 px + 2 × 12 px odstępu panelu. Wartość w całości wyprowadzona z żetonów. |
-| **D-06** | **Liczba kolumn siatki jest niezmienna na wszystkich progach** | Źródła nie rozstrzygają zachowania siatki poniżej `w3` | Rozstrzygnięto: dwanaście kolumn i rynna 24 px obowiązują zawsze; zmienia się wyłącznie rozpiętość elementu (3/12 → 6/12 → 12/12). Jeden zestaw linii pomocniczych zamiast czterech. |
-| **D-07** | **Margines zewnętrzny 16 px na progach `w1`–`w2`** | Brak w dokumencie | Przyjęto `--dn-od-4` (16 px) zamiast `--dn-od-6` (24 px). Wartość ze skali, uzasadniona odzyskaniem 16 px szerokości użytecznej na wąskim ekranie. |
-| **D-08** | **Odstęp międzystrefowy Centrum dowodzenia = 48 px** | Źródło mówi o „malejącej masie” stref, nie podaje odstępu | Przyjęto `--dn-od-12` (48 px) — podwojony `--dn-odstep-sekcji`. Strefy są trzema niezależnymi ścieżkami, nie trzema akapitami; podwojony odstęp komunikuje niezależność bez linii. |
-| **D-09** | **Szerokość minimalna panelu w siatce równoległej = 240 px** | Źródła (Roundtable, Translate) opisują „siatkę równoległą”, bez wymiaru | 240 px to szerokość, przy której nagłówek panelu (kod języka + status + selektor tonu) mieści się w jednym wierszu. Wartość wyprowadzona z realnej zawartości nagłówka opisanej w dokumentacji modułu Translate. |
-| **D-10** | **Próg przejścia B1 → B3 = 628 px wysokości okna** | Brak w dokumencie | Wyprowadzone z żetonów: 48 + 36 + 24 + 320 + 200. Przejście wywołuje **wysokość**, nie szerokość — bo to wysokość decyduje o użyteczności pasa komunikacji. |
-| **D-11** | **Automatyczne przewijanie historii Chat Window** | Źródło mówi o strumieniu odpowiedzi na żywo, nie rozstrzyga przewijania | Rozstrzygnięto: historia przewija się automatycznie do dołu w czasie strumienia i zatrzymuje przewijanie, gdy Operator sam przewinie w górę. Wynika z rachunku pojemności (rozdz. 12.7): przy trzech widocznych wpisach bez auto-przewijania odpowiedź powstaje poza polem widzenia. |
-| **D-12** | **Katalog pustych stanów per widok** | Źródła opisują `.dn-pusty-stan` i jeden przykład („Wybierz moduł z bocznej nawigacji…”) | Rozszerzono na osiem miejsc występowania. Każdy tytuł i opis zbudowany wyłącznie z pojęć istniejących w dokumentacji (moduł, karta sesji, kolejka, uczestnik debaty, panel tłumaczenia). Zero nowych funkcji. |
-| **D-13** | **Trzy poziomy stanu ładowania (L1/L2/L3) i błędu (B1/B2/B3)** | Źródła opisują `.dn-spinner`, `.dn-pole-blad`, komunikat błędu połączenia — bez klasyfikacji zasięgu | Wprowadzono klasyfikację zasięgu, bo bez niej ta sama sytuacja bywa projektowana raz jako toast, raz jako nakładka. Formy pozostały te z biblioteki komponentów. |
-| **D-14** | **Rozbieżność źródeł: wymiary z pakietu v1.0** | `SIATKA-I-UKLAD.md` (v1.0) podaje pasek górny 56 px, przycisk 36 px, promienie 4/8/10/14/20 px, cień złoty | Rozstrzygnięto na rzecz **KANON i `zetony.css` v2.0**: pasek 48 px, kontrolka 32 px, promienie 3/6/8/10/14 px, brak cienia złotego. Pakiet v1.0 opisuje zastąpioną warstwę wizualną (granat + złoto), o czym KIERUNEK.md mówi wprost. Wartości v1.0 nie są w tym opracowaniu używane. |
-| **D-15** | **Jedna asymetria na widok** | KIERUNEK.md: `WARIANCJA_PROJEKTOWA = 4/10`, „asymetria tylko gdy niesie hierarchię” | Przełożono pokrętło na regułę operacyjną: dokładnie jedna asymetria na widok, wskazana w tabeli rozdz. 10.5. Druga asymetria oznacza, że w widoku są dwa widoki. |
-| **D-16** | **Zniknięcie elementu wymaga alternatywnego wywołania** | ADL-017 dotyczy blokad funkcjonalnych, nie układu | Rozszerzono zasadę zero blokad na warstwę układu: element może zniknąć z widoku (próg `w1`), nie może zniknąć z systemu — musi pozostać wywoływalny (`menu`, lista rozwijana, zakładka). |
-| **D-17** | **Wyrównanie segmentów w Translation Panels** | Źródło: „kliknięcie segmentu przewija wszystkie Translation Panels do odpowiadającego segmentu” | Z wymagania funkcjonalnego wyprowadzono wymóg układowy: wspólna wysokość wiersza segmentu w całej siatce paneli (siatka na poziomie kontenera paneli, nie pojedynczego panelu). |
-| **D-18** | **Wartości pojemności w rozdz. 12** | Brak w dokumencie | Wszystkie liczby są **rachunkiem** z żetonów przy jawnie podanych założeniach wysokości okna (rozdz. 12.1), nie pomiarem ani szacunkiem. Zmiana żetonu zmienia wynik — dlatego podano wzory, nie same liczby. |
+| **1** | **Taksonomia siedmiu rodzajów widoku** | Dokumentacja wymienia okna (kontrakt systemu projektowego), nie klasyfikuje ich wg praw układu | Wprowadzono siedem rodzajów widoku jako warstwę porządkującą **nad** istniejącym inwentarzem okien. Żadne nowe okno nie powstało — każdy rodzaj wskazuje okna już zinwentaryzowane. |
+| **2** | **Granica obowiązywania siatki 12-kolumnowej** | kontrakt systemu projektowego podaje siatkę (12 / 24 px / 1200 px), nie wskazuje, gdzie obowiązuje | Rozstrzygnięto: siatka obowiązuje w widokach czytania i wyboru, nie obowiązuje w widokach pracy. Uzasadnienie: wymiary ramy kokpitu pochodzą z żetonów (48 · 36 · 224), nie z podziału szerokości — mieszanie dwóch reżimów wymiarowania w jednym widoku produkuje wartości spoza skali 4 px. |
+| **3** | **Szerokość ramy widoku formularza = 560 px** | Źródło mówi „duży panel/karta `.dn-modal`-podobny, wyśrodkowany”, bez wartości | Przyjęto `--dn-wym-modal` (560 px), bo źródło samo odsyła do modala. Zero nowych wartości. |
+| **4** | **Szerokość nawigacji zakresów w nakładce konfiguracji = 224 px** | Źródło mówi „dwudzielny układ (nawigacja + zawartość)”, bez wymiaru | Przyjęto `--dn-wym-boczna` (224 px) — tę samą miarę co boczna nawigacja środowiska. Operator uczy się jednej szerokości nawigacji, nie dwóch. |
+| **5** | **Zwinięcie bocznej nawigacji na progu `w2` = 56 px** | kontrakt systemu projektowego: „w2 960 (tablet — boczna zwija się do ikon)”, bez wartości | 56 px = przycisk ikonowy 32 px + 2 × 12 px odstępu panelu. Wartość w całości wyprowadzona z żetonów. |
+| **6** | **Liczba kolumn siatki jest niezmienna na wszystkich progach** | Źródła nie rozstrzygają zachowania siatki poniżej `w3` | Rozstrzygnięto: dwanaście kolumn i rynna 24 px obowiązują zawsze; zmienia się wyłącznie rozpiętość elementu (3/12 → 6/12 → 12/12). Jeden zestaw linii pomocniczych zamiast czterech. |
+| **7** | **Margines zewnętrzny 16 px na progach `w1`–`w2`** | Brak w dokumencie | Przyjęto `--dn-od-4` (16 px) zamiast `--dn-od-6` (24 px). Wartość ze skali, uzasadniona odzyskaniem 16 px szerokości użytecznej na wąskim ekranie. |
+| **8** | **Odstęp międzystrefowy Centrum dowodzenia = 48 px** | Źródło mówi o „malejącej masie” stref, nie podaje odstępu | Przyjęto `--dn-od-12` (48 px) — podwojony `--dn-odstep-sekcji`. Strefy są trzema niezależnymi ścieżkami, nie trzema akapitami; podwojony odstęp komunikuje niezależność bez linii. |
+| **9** | **Szerokość minimalna panelu w siatce równoległej = 240 px** | Źródła (Roundtable, Translate) opisują „siatkę równoległą”, bez wymiaru | 240 px to szerokość, przy której nagłówek panelu (kod języka + status + selektor tonu) mieści się w jednym wierszu. Wartość wyprowadzona z realnej zawartości nagłówka opisanej w dokumentacji modułu Translate. |
+| **10** | **Próg przejścia z odmiany pionowej na zakładkową — 628 px wysokości okna** | Brak w dokumencie | Wyprowadzone z żetonów: 48 + 36 + 24 + 320 + 200. Przejście wywołuje **wysokość**, nie szerokość — bo to wysokość decyduje o użyteczności pasa komunikacji. |
+| **11** | **Automatyczne przewijanie historii Chat Window** | Źródło mówi o strumieniu odpowiedzi na żywo, nie rozstrzyga przewijania | Rozstrzygnięto: historia przewija się automatycznie do dołu w czasie strumienia i zatrzymuje przewijanie, gdy Operator sam przewinie w górę. Wynika z rachunku pojemności (rozdz. 12.7): przy trzech widocznych wpisach bez auto-przewijania odpowiedź powstaje poza polem widzenia. |
+| **12** | **Katalog pustych stanów per widok** | Źródła opisują `.dn-pusty-stan` i jeden przykład („Wybierz moduł z bocznej nawigacji…”) | Rozszerzono na osiem miejsc występowania. Każdy tytuł i opis zbudowany wyłącznie z pojęć istniejących w dokumentacji (moduł, karta sesji, kolejka, uczestnik debaty, panel tłumaczenia). Zero nowych funkcji. |
+| **13** | **Trzy zasięgi stanu ładowania i stanu błędu: kontrolka, panel, widok** | Źródła opisują `.dn-spinner`, `.dn-pole-blad`, komunikat błędu połączenia — bez klasyfikacji zasięgu | Wprowadzono klasyfikację zasięgu, bo bez niej ta sama sytuacja bywa projektowana raz jako toast, raz jako nakładka. Formy pozostały te z biblioteki komponentów. |
+| **14** | **Rozbieżność źródeł: wymiary z pakietu v1.0** | standard siatki i układu (v1.0) podaje pasek górny 56 px, przycisk 36 px, promienie 4/8/10/14/20 px, cień złoty | Rozstrzygnięto na rzecz **kontrakt systemu projektowego i `zetony.css` v2.0**: pasek 48 px, kontrolka 32 px, promienie 3/6/8/10/14 px, brak cienia złotego. Pakiet v1.0 opisuje zastąpioną warstwę wizualną (granat + złoto), o czym kierunek systemu projektowego mówi wprost. Wartości v1.0 nie są w tym opracowaniu używane. |
+| **15** | **Jedna asymetria na widok** | kierunek systemu projektowego: `WARIANCJA_PROJEKTOWA = 4/10`, „asymetria tylko gdy niesie hierarchię” | Przełożono pokrętło na regułę operacyjną: dokładnie jedna asymetria na widok, wskazana w tabeli rozdz. 10.5. Druga asymetria oznacza, że w widoku są dwa widoki. |
+| **16** | **Zniknięcie elementu wymaga alternatywnego wywołania** | Zasada zero blokad dotyczy blokad funkcjonalnych, nie układu | Rozszerzono zasadę zero blokad na warstwę układu: element może zniknąć z widoku (próg `w1`), nie może zniknąć z systemu — musi pozostać wywoływalny (`menu`, lista rozwijana, zakładka). |
+| **17** | **Wyrównanie segmentów w Translation Panels** | Źródło: „kliknięcie segmentu przewija wszystkie Translation Panels do odpowiadającego segmentu” | Z wymagania funkcjonalnego wyprowadzono wymóg układowy: wspólna wysokość wiersza segmentu w całej siatce paneli (siatka na poziomie kontenera paneli, nie pojedynczego panelu). |
+| **18** | **Wartości pojemności w rozdz. 12** | Brak w dokumencie | Wszystkie liczby są **rachunkiem** z żetonów przy jawnie podanych założeniach wysokości okna (rozdz. 12.1), nie pomiarem ani szacunkiem. Zmiana żetonu zmienia wynik — dlatego podano wzory, nie same liczby. |
 
 ---
 
 ## Załącznik A — katalog zbiorczy wzorców układu
 
-| Kod | Wzorzec | Zapis CSS (rdzeń) | Gdzie obowiązuje | Rozdział |
-|---|---|---|---|:-:|
-| **A** | Powłoka środowiska | `grid-template-rows: 48px 36px 1fr` + `grid-template-columns: 224px 1fr` | 4 powłoki środowisk | 4 |
-| **B1** | Obszar roboczy, podział pionowy | `grid-template-rows: minmax(0,1fr) minmax(320px,54%)` | domyślny dla 15 modułów | 5 |
-| **B2** | Obszar roboczy z pasmem narzędzi | okno modułu: `grid-template-columns: 1fr 280px` | Studio (Tools Panel), Research (Sources Manager) | 5.4 |
-| **B3** | Obszar roboczy zakładkowy | `.dn-zakladki` zamiast podziału | `w2` i niżej; okno < 628 px wysokości | 5.4 · 9.4 |
-| **B4** | Dwa okna komunikacji | pas komunikacji: `grid-template-columns: 1fr 1fr` | próg `w4` | 5.4 · 9.2 |
-| **C** | Trzy strefy malejącej masy | siatka 12 kol.: 4 × 3/12 → 4 × 3/12 → 1 × 12/12 | Centrum dowodzenia | 6 |
-| **D** | Asymetria koordynator–wykonawca | `grid-template-rows: minmax(0,58%) minmax(0,42%)`; para `1fr 1fr`; pas dolny `1.25fr 1fr` | MultitaskingAI, okna robocze ról | 7 |
-| **E** | Panele wielokolumnowe | `repeat(N, minmax(240px, 1fr))` | Roundtable (Model Panels), Translate (Translation Panels) | 8 |
-| **F** | Nakładka dwudzielna | `grid-template-columns: 224px 1fr` w `.dn-modal` do 1200 px | Okno Konfiguracji, Okno Ustawień | 1.3 · 9.2 |
-| **G** | Blok centrowany | `place-content: center`; szerokość 560 px (formularz) albo `auto` (widok przejściowy) | Okno startowe, Okno rejestracji i logowania | 1.3 |
+| Wzorzec | Zapis CSS (rdzeń) | Gdzie obowiązuje | Rozdział |
+|---|---|---|:-:|
+| **Powłoka środowiska** | rama: `36px` belka + `48px` pasek narzędzi; dalej `36px` pas kart + `1fr` ciało; kolumny `224px 1fr` | 4 powłoki środowisk | 4 |
+| **Obszar roboczy — odmiana pionowa (domyślna)** | `grid-template-rows: minmax(0,1fr) minmax(320px,54%)` | domyślny dla 15 modułów | 5 |
+| **Obszar roboczy — odmiana z pasmem narzędzi** | okno modułu: `grid-template-columns: 1fr 280px` | Studio (Tools Panel), Research (Sources Manager) | 5.4 |
+| **Obszar roboczy — odmiana zakładkowa** | `.dn-zakladki` zamiast podziału | `w2` i niżej; okno < 628 px wysokości | 5.4 · 9.4 |
+| **Obszar roboczy — odmiana dwukolumnowa** | pas komunikacji: `grid-template-columns: 1fr 1fr` | próg `w4` | 5.4 · 9.2 |
+| **Trzy strefy malejącej masy** | siatka 12 kol.: 4 × 3/12 → 4 × 3/12 → 1 × 12/12 | Centrum dowodzenia | 6 |
+| **Asymetria koordynator–wykonawca** | `grid-template-rows: minmax(0,58%) minmax(0,42%)`; para `1fr 1fr`; pas dolny `1.25fr 1fr` | MultitaskingAI, okna robocze ról | 7 |
+| **Panele wielokolumnowe** | `repeat(N, minmax(240px, 1fr))` | Roundtable (Model Panels), Translate (Translation Panels) | 8 |
+| **Nakładka dwudzielna** | `grid-template-columns: 224px 1fr` w `.dn-modal` do 1200 px | Okno Konfiguracji, Okno Ustawień | 1.3 · 9.2 |
+| **Blok centrowany** | `place-content: center`; szerokość 560 px (formularz) albo `auto` (widok przejściowy) | Okno startowe, Okno rejestracji i logowania | 1.3 |
 
 ---
 
@@ -1000,17 +1013,17 @@ Poniższe rozstrzygnięcia wykraczają poza literalny zapis dokumentacji źród�
 
 | Rozdział opracowania | Źródło wiążące |
 |---|---|
-| 1. Taksonomia widoków | KANON rozdz. 6–7 · `dok/projekt-ui/przeplyw/przeplyw-okien.md` · `brief/INWENTARZ-OKIEN.md` rozdz. 1 |
-| 2. Siatka | KANON rozdz. 2 · `zasoby/zetony/zetony.css` §7 · `system-wizualny/pakiet/SIATKA-I-UKLAD.md` (z zastrzeżeniem D-14) |
-| 3. Rytm pionowy | KANON rozdz. 2 · `zetony.css` §4, §6 |
-| 4. Powłoka środowiska | `dok/projekt-ui/przeplyw/elementy-okien.md` rozdz. 3.1–3.4, 4.1–4.4 · `design/06-okna/e2-srodowisko.html` |
+| 1. Taksonomia widoków | kontrakt systemu projektowego · `docs/interfejs-uzytkownika/przeplyw-okien.md` · inwentarz okien platformy rozdz. 1 |
+| 2. Siatka | kontrakt systemu projektowego · `zasoby/zetony/zetony.css` §7 · `system-wizualny/pakiet/standard siatki i układu |
+| 3. Rytm pionowy | kontrakt systemu projektowego · `zetony.css` §4, §6 |
+| 4. Powłoka środowiska | `docs/interfejs-uzytkownika/elementy-okien.md` rozdz. 3.1–3.4, 4.1–4.4 · `design/06-okna/e2-srodowisko.html` |
 | 5. Obszar roboczy z pasem komunikacji | `elementy-okien.md` rozdz. 3.5, 3.5.1 · `design/06-okna/e2-srodowisko.html` |
-| 6. Trzy strefy | `elementy-okien.md` rozdz. 2.2–2.5 · `INWENTARZ-OKIEN.md` rozdz. 4 · `SIATKA-I-UKLAD.md` rozdz. 8 |
-| 7. Asymetria koordynator–wykonawca | `dok/projekt-ui/srodowiska/multitaskingai.md` rozdz. 3 · `design/06-okna/e4-koordynator-wykonawca.html` · KIERUNEK.md rozdz. 4 |
-| 8. Panele wielokolumnowe | `dok/projekt-ui/moduly/roundtable.md` rozdz. 2, 3.2 · `dok/projekt-ui/moduly/translate.md` rozdz. 2, 3.3 |
-| 9. Zachowanie responsywne | KANON rozdz. 2 (punkty łamania) · `zetony.css` §7, §12 |
-| 10. Hierarchia wizualna | KIERUNEK.md rozdz. 2–4 · KANON rozdz. 1, 9 · `zasoby/zetony/kontrasty.json` |
-| 11. Puste stany, ładowanie, błąd | `elementy-okien.md` rozdz. 3.5 (Tabela 12) · `INWENTARZ-OKIEN.md` rozdz. 2.3, 5.5 · `zasoby/css/komponenty.css` (`.dn-pusty-stan`, `.dn-spinner`, `.dn-pole-blad`) |
+| 6. Trzy strefy | `elementy-okien.md` rozdz. 2.2–2.5 · inwentarz okien platformy rozdz. 4 · standard siatki i układu |
+| 7. Asymetria koordynator–wykonawca | `docs/srodowiska/multitaskingai.md` rozdz. 3 · `design/06-okna/e4-koordynator-wykonawca.html` · kierunek systemu projektowego |
+| 8. Panele wielokolumnowe | `docs/moduly/roundtable.md` rozdz. 2, 3.2 · `docs/moduly/translate.md` rozdz. 2, 3.3 |
+| 9. Zachowanie responsywne | kontrakt systemu projektowego (punkty łamania) · `zetony.css` §7, §12 |
+| 10. Hierarchia wizualna | kierunek systemu projektowego · kontrakt systemu projektowego · `zasoby/zetony/kontrasty.json` |
+| 11. Puste stany, ładowanie, błąd | `elementy-okien.md` rozdz. 3.5 (Tabela 12) · inwentarz okien platformy rozdz. 2.3, 5.5 · `zasoby/css/komponenty.css` (`.dn-pusty-stan`, `.dn-spinner`, `.dn-pole-blad`) |
 | 12. Gęstość informacji | rachunek z `zetony.css` §6–§7 przy założeniach rozdz. 12.1 |
 | 13. Decyzje projektowe | niniejsze opracowanie |
 
@@ -1018,7 +1031,7 @@ Poniższe rozstrzygnięcia wykraczają poza literalny zapis dokumentacji źród�
 
 ## Załącznik C — lista sprawdzeń układu przed oddaniem widoku
 
-- [ ] Rodzaj widoku (W1–W7) rozpoznany i zapisany w komentarzu na początku pliku
+- [ ] Rodzaj widoku rozpoznany i zapisany w komentarzu na początku pliku
 - [ ] Reżim wymiarowania zgodny z rodzajem widoku (siatka vs żeton) — bez mieszania
 - [ ] Wszystkie odstępy pochodzą ze skali `0 · 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64`
 - [ ] Wszystkie wymiary ramy pochodzą z żetonów `--dn-wym-*`

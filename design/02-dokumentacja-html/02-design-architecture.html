@@ -480,7 +480,7 @@
     </div>
     <div class="fakt">
       <p class="fakt-etykieta">Reguła 3</p>
-      <p class="fakt-wartosc" style="font-size:var(--dn-fs-lg)">W3 bez barwy</p>
+      <p class="fakt-wartosc" style="font-size:var(--dn-fs-lg)">warstwa niezależna od motywu bez barwy</p>
       <p class="fakt-opis">Wyjątek jeden: <strong>rama kokpitu</strong> — barwa stała w obu motywach.</p>
     </div>
   </div>
@@ -542,7 +542,7 @@
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
       Rozdział 2
     </span>
-    <span class="dn-etykieta-mono">HANDOFF.md §1</span>
+    <span class="dn-etykieta-mono">opracowanie o przekazaniu, ruchu i dostępności</span>
   </div>
   <h2>Architektura plików</h2>
   <p class="lead">Po lewej — <strong>pakiet design</strong> (źródło, osiem katalogów).
@@ -591,7 +591,7 @@
   <h3>2.2. Kolejność importu — kontrakt kaskady</h3>
   <code class="pre">  index.css
     ├─ 1. motyw/fonty.css           (@font-face — musi być pierwszy)
-    ├─ 2. motyw/motyw.css           (żetony: W1 → W3 → W2)
+    ├─ 2. motyw/motyw.css           (żetony: prymitywy → warstwa niezależna → semantyka)
     ├─ 3. motyw/fundament.css       (wyzerowanie, podłoże, fokus globalny)
     └─ 4. komponenty/komponenty.css (14 arkuszy per komponent)</code>
   <div class="dn-toast dn-toast--ostrzezenie" style="position:static;max-width:none;margin-bottom:var(--dn-od-4)">
@@ -612,7 +612,7 @@
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/></svg>
       Rozdział 3
     </span>
-    <span class="dn-etykieta-mono">R1 · R2 · R3</span>
+    <span class="dn-etykieta-mono">trzy reguły kierunku</span>
   </div>
   <h2>Regulamin budowy</h2>
   <p class="lead">Trzy zasady wiążące: <strong>jedna odpowiedzialność = jeden plik</strong>,
@@ -620,14 +620,14 @@
      Poniżej pełny podział obu arkuszy źródłowych ze zmierzoną objętością każdego pliku docelowego.</p>
 
   <div class="siatka siatka--3">
-    <div class="fakt"><p class="fakt-etykieta">Reguła R1</p>
+    <div class="fakt"><p class="fakt-etykieta">Reguła 1</p>
       <p class="fakt-wartosc" style="font-size:var(--dn-fs-lg)">1 = 1</p>
       <p class="fakt-opis">Jedna odpowiedzialność na plik. Arkusz nie łączy dwóch niepowiązanych komponentów.</p></div>
-    <div class="fakt"><p class="fakt-etykieta">Reguła R2</p>
+    <div class="fakt"><p class="fakt-etykieta">Reguła 2</p>
       <p class="fakt-wartosc">≤ 300</p>
       <p class="fakt-opis">Próg twardy w liniach. Przekroczenie = sygnał do dalszego podziału.</p></div>
-    <div class="fakt"><p class="fakt-etykieta">Reguła R3</p>
-      <p class="fakt-wartosc" style="font-size:var(--dn-fs-lg)">tylko W2/W3</p>
+    <div class="fakt"><p class="fakt-etykieta">Reguła 3</p>
+      <p class="fakt-wartosc" style="font-size:var(--dn-fs-lg)">tylko semantyka per motyw/warstwa niezależna od motywu</p>
       <p class="fakt-opis">Prymityw w katalogu <code class="dn-kod dn-kod--wiersz">komponenty/</code> jest błędem przeglądu kodu.</p></div>
   </div>
 
@@ -649,7 +649,7 @@
       </table>
     </div>
     <p class="demo-stopka">Suma docelowa ok. 628 linii wobec 448 linii źródła. Przyrost ok. 40 % to nagłówki
-      komentarzowe i domknięcia selektorów — koszt świadomy: R1 przed zwięzłością.</p>
+      komentarzowe i domknięcia selektorów — koszt świadomy: reguła 1 przed zwięzłością.</p>
   </div>
 
   <h3>3.2. Podział <code class="dn-kod dn-kod--wiersz">komponenty.css</code> — 1207 linii → 14 arkuszy + spinający</h3>
@@ -672,7 +672,7 @@
       </table>
     </div>
     <p class="demo-stopka">Największy arkusz: <code class="dn-kod dn-kod--wiersz">drobne.css</code> — 179 linii.
-      Żaden arkusz nie zbliża się do progu, więc podział z HANDOFF.md jest wystarczający bez rozdrabniania.</p>
+      Żaden arkusz nie zbliża się do progu, więc podział z opracowania o przekazaniu, ruchu i dostępności jest wystarczający bez rozdrabniania.</p>
   </div>
 
   <h3>3.3. Reguła dalszego podziału</h3>
@@ -697,9 +697,9 @@
       <thead><tr><th scope="col">Zakaz</th><th scope="col">Uzasadnienie</th><th scope="col">Wyjątek</th></tr></thead>
       <tbody>
         <tr><td>Wartość szesnastkowa wprost</td><td>żetony są jedynym źródłem prawdy</td><td class="dn-dane">brak</td></tr>
-        <tr><td>Prymitywy W1</td><td>łamie kontrakt warstw</td><td class="dn-dane">.dn-awatar--inteligencja</td></tr>
+        <tr><td>Prymitywy prymitywy</td><td>łamie kontrakt warstw</td><td class="dn-dane">.dn-awatar--inteligencja</td></tr>
         <tr><td><code class="dn-kod dn-kod--wiersz">!important</code></td><td>kaskada jest jednokierunkowa i wystarczająca</td><td class="dn-dane">ruch.css — reduced-motion</td></tr>
-        <tr><td>Atrybut blokujący klikalność</td><td>zasada zero blokad (ADL-017)</td><td class="dn-dane">brak</td></tr>
+        <tr><td>Atrybut blokujący klikalność</td><td>zasada zero blokad</td><td class="dn-dane">brak</td></tr>
         <tr><td>Zagnieżdżenie głębsze niż 2 poziomy</td><td>nieprzewidywalna specyficzność</td><td class="dn-dane">brak</td></tr>
         <tr><td>Media query barwna w komponencie</td><td>motyw obsługiwany wyłącznie w warstwie żetonów</td><td class="dn-dane">brak</td></tr>
         <tr><td><code class="dn-kod dn-kod--wiersz">prefers-reduced-motion</code> w komponencie</td><td>obsługa jest globalna (żetony §14)</td><td class="dn-dane">.dn-kropka — zamiana formy</td></tr>
@@ -745,8 +745,8 @@
         <tr><td class="dn-dane">data-theme="dark"</td><td>dowolna</td><td class="dn-dane">:root[data-theme='dark']</td><td>motyw ciemny</td><td class="dn-dane">dark</td></tr>
         <tr><td class="dn-dane">brak atrybutu</td><td>jasna</td><td class="dn-dane">@media(light) :root:not([data-theme])</td><td>motyw jasny</td><td class="dn-dane">light</td></tr>
         <tr><td class="dn-dane">brak atrybutu</td><td>ciemna</td><td class="dn-dane">@media(dark) :root:not([data-theme])</td><td>motyw ciemny</td><td class="dn-dane">dark</td></tr>
-        <tr><td class="dn-dane">brak atrybutu</td><td>brak deklaracji</td><td class="dn-dane">żaden blok W2 nie wchodzi</td>
-            <td><strong>W1 i W3 działają, W2 pusta</strong></td><td class="dn-dane">nieustawiony</td></tr>
+        <tr><td class="dn-dane">brak atrybutu</td><td>brak deklaracji</td><td class="dn-dane">żaden blok semantyki nie wchodzi</td>
+            <td><strong>prymitywy i warstwa niezależna od motywu działają, semantyka per motyw pusta</strong></td><td class="dn-dane">nieustawiony</td></tr>
       </tbody>
     </table>
   </div>
@@ -1070,11 +1070,11 @@
     <table class="dn-tabela">
       <thead><tr><th scope="col">Kontekst</th><th scope="col">Model siatki</th><th scope="col">Podstawa</th></tr></thead>
       <tbody>
-        <tr><td>Centrum dowodzenia — Strefa 1</td><td class="dn-dane">4 kolumny kart środowisk (→ 2 poniżej 1100 px)</td><td>makieta E1</td></tr>
-        <tr><td>Centrum dowodzenia — Strefa 2</td><td class="dn-dane">4 kolumny kafli (→ 2 poniżej 1100 px)</td><td>makieta E1</td></tr>
-        <tr><td>Centrum dowodzenia — Strefa 3</td><td class="dn-dane">listwa jednorzędowa, 3 pozycje</td><td>makieta E1</td></tr>
-        <tr><td>Powłoka środowiska</td><td class="dn-dane">var(--dn-wym-boczna) 1fr</td><td>makieta E2</td></tr>
-        <tr><td>Para koordynator–wykonawca</td><td class="dn-dane">1fr 1fr</td><td>makieta E4</td></tr>
+        <tr><td>Centrum dowodzenia — Strefa 1</td><td class="dn-dane">4 kolumny kart środowisk (→ 2 poniżej 1100 px)</td><td>makieta Centrum dowodzenia</td></tr>
+        <tr><td>Centrum dowodzenia — Strefa 2</td><td class="dn-dane">4 kolumny kafli (→ 2 poniżej 1100 px)</td><td>makieta Centrum dowodzenia</td></tr>
+        <tr><td>Centrum dowodzenia — Strefa 3</td><td class="dn-dane">listwa jednorzędowa, 3 pozycje</td><td>makieta Centrum dowodzenia</td></tr>
+        <tr><td>Powłoka środowiska</td><td class="dn-dane">var(--dn-wym-boczna) 1fr</td><td>makieta powłoki środowiska</td></tr>
+        <tr><td>Para koordynator–wykonawca</td><td class="dn-dane">1fr 1fr</td><td>makieta pary koordynator–wykonawca</td></tr>
         <tr><td>Treść dokumentowa</td><td class="dn-dane">jedna kolumna, max-width: var(--dn-tresc-max)</td><td>żeton --dn-tresc-max</td></tr>
       </tbody>
     </table>
@@ -1127,13 +1127,13 @@
         <th scope="col">Deklaracja</th><th scope="col">Źródło</th></tr></thead>
       <tbody>
         <tr><td>1 — powłoka</td><td class="dn-dane">.powloka</td>
-            <td class="dn-dane">grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) 1fr; height: 100dvh</td><td>E2, E4</td></tr>
+            <td class="dn-dane">grid-template-rows: var(--dn-wym-pasek) var(--dn-wym-pas-kart) 1fr; height: 100dvh</td><td>powłoka środowiska, para koordynator–wykonawca</td></tr>
         <tr><td>2 — ciało</td><td class="dn-dane">.cialo</td>
-            <td class="dn-dane">grid-template-columns: var(--dn-wym-boczna) 1fr; min-height: 0</td><td>E2</td></tr>
+            <td class="dn-dane">grid-template-columns: var(--dn-wym-boczna) 1fr; min-height: 0</td><td>powłoka środowiska</td></tr>
         <tr><td>3 — obszar główny</td><td class="dn-dane">.glowna</td>
-            <td class="dn-dane">grid-template-rows: minmax(0, 1fr) minmax(320px, 54%); min-width: 0; min-height: 0</td><td>E2</td></tr>
-        <tr><td>3′ — para ról (E4)</td><td class="dn-dane">.glowna / .para</td>
-            <td class="dn-dane">rows: minmax(0, 58%) minmax(0, 42%) · columns: 1fr 1fr</td><td>E4</td></tr>
+            <td class="dn-dane">grid-template-rows: minmax(0, 1fr) minmax(320px, 54%); min-width: 0; min-height: 0</td><td>powłoka środowiska</td></tr>
+        <tr><td>3′ — para ról (para koordynator–wykonawca)</td><td class="dn-dane">.glowna / .para</td>
+            <td class="dn-dane">rows: minmax(0, 58%) minmax(0, 42%) · columns: 1fr 1fr</td><td>para koordynator–wykonawca</td></tr>
       </tbody>
     </table>
   </div>
@@ -1167,7 +1167,7 @@
     przewijania)</code>
   <p class="tekst"><strong>Reguła:</strong> każdy pojemnik siatki, który ma przewijać własną treść,
      deklaruje <code class="dn-kod dn-kod--wiersz">min-height: 0</code> (oraz
-     <code class="dn-kod dn-kod--wiersz">min-width: 0</code> w osi poziomej). W makietach E2 i E4 reguła
+     <code class="dn-kod dn-kod--wiersz">min-width: 0</code> w osi poziomej). W makietach powłoki środowiska i pary koordynator–wykonawca reguła
      występuje na sześciu pojemnikach — czyli na <strong>każdym</strong> pojemniku pośrednim między
      <code class="dn-kod dn-kod--wiersz">100dvh</code> a elementem przewijanym.</p>
 
@@ -1290,12 +1290,12 @@
     </table>
   </div>
   <p class="tekst">Żeton <code class="dn-kod dn-kod--wiersz">--dn-wym-pas-komunikacji</code> (320 px) jest
-     <strong>minimum, nie wartością stałą</strong>. Makieta E2 zapisuje
+     <strong>minimum, nie wartością stałą</strong>. Makieta powłoki środowiska zapisuje
      <code class="dn-kod dn-kod--wiersz">minmax(320px, 54%)</code> — pas rośnie proporcjonalnie na wysokich
      ekranach, ale nigdy nie schodzi poniżej 320 px.</p>
 
   <h3>9.3. Dziewięciu nadawców, trzy klasy semantyczne</h3>
-  <p class="tekst">Rozstrzygnięcie L-P-28: dziewięć ról nadawców nie dostaje dziewięciu barw tła.
+  <p class="tekst">Rozstrzygnięcie projektowe: dziewięć ról nadawców nie dostaje dziewięciu barw tła.
      Dostaje trzy klasy semantyczne, a rozróżnienie w obrębie klasy niesie komplet:
      <strong>ikona medalionu + etykieta nadawcy + plakietka roli</strong>.</p>
   <div class="demo">
@@ -1436,7 +1436,7 @@
     <table class="dn-tabela">
       <thead><tr><th scope="col">Miejsce</th><th scope="col">Odstępstwo</th><th scope="col">Uzasadnienie</th></tr></thead>
       <tbody>
-        <tr><td class="dn-dane">.dn-awatar--inteligencja</td><td>używa prymitywu W1 jako barwy tekstu</td>
+        <tr><td class="dn-dane">.dn-awatar--inteligencja</td><td>używa prymitywu prymitywy jako barwy tekstu</td>
             <td>tekst na gradiencie sygnałowym, identycznym w obu motywach; brak żetonu semantycznego dla tej roli</td></tr>
         <tr><td class="dn-dane">.dn-plakietka &gt; svg · .dn-krok-znak &gt; svg</td><td>szerokość 12 px wprost</td>
             <td>stopień pośredni między żetonem ikony małej (14 px) a brakiem żetonu 12 px</td></tr>
@@ -1639,7 +1639,7 @@
       <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/></svg>
       Rozdział 13
     </span>
-    <span class="dn-etykieta-mono">HANDOFF.md §3 · §4</span>
+    <span class="dn-etykieta-mono">opracowanie o przekazaniu, ruchu i dostępności</span>
   </div>
   <h2>Bramy weryfikacyjne fal wdrożeniowych</h2>
   <p class="lead">Cztery fale, jedna brama wspólna: <strong>porównanie z makietami w obu motywach</strong>
@@ -1672,7 +1672,7 @@
         <tr><td class="dn-dane">2</td><td>Geometria znaku i emblematów (krzywe, nie fonty)</td><td>znak przestaje być odtwarzalny w skali</td></tr>
         <tr><td class="dn-dane">3</td><td>Zasada jednego akcentu (sygnał ≤ 5 % ekranu, nigdy tło sekcji)</td><td>monochrom przestaje być monochromem</td></tr>
         <tr><td class="dn-dane">4</td><td>Pierścień fokusu i zachowanie ograniczonego ruchu</td><td>naruszenie warunku wejściowego dostępności</td></tr>
-        <tr><td class="dn-dane">5</td><td>Gęstość zwarta jako domyślna</td><td>zmiana decyzji Właściciela (L-P-13)</td></tr>
+        <tr><td class="dn-dane">5</td><td>Gęstość zwarta jako domyślna</td><td>zmiana decyzji Właściciela</td></tr>
       </tbody>
     </table>
   </div>
@@ -1728,19 +1728,19 @@
         <table class="dn-tabela">
           <thead><tr><th scope="col">Zakres</th><th scope="col">Plik źródłowy</th></tr></thead>
           <tbody>
-            <tr><td>Kontrakt nadrzędny wszystkich zespołów</td><td class="dn-dane">WYNIK/KANON.md</td></tr>
+            <tr><td>Kontrakt nadrzędny wszystkich zespołów</td><td class="dn-dane">kontrakt systemu projektowego</td></tr>
             <tr><td>Wartości żetonów, 14 sekcji, 448 linii</td><td class="dn-dane">zasoby/zetony/zetony.css</td></tr>
             <tr><td>Odczyt maszynowy żetonów</td><td class="dn-dane">zasoby/zetony/zetony.json</td></tr>
             <tr><td>33 zmierzone pary kontrastu</td><td class="dn-dane">zasoby/zetony/kontrasty.json</td></tr>
             <tr><td>Warstwa zerowa nad żetonami</td><td class="dn-dane">zasoby/css/fundament.css</td></tr>
             <tr><td>Biblioteka komponentów, 119 klas, 1207 linii</td><td class="dn-dane">zasoby/css/komponenty.css</td></tr>
             <tr><td>Zasady zestawu ikon, 82 pozycje</td><td class="dn-dane">zasoby/ikony/manifest.json</td></tr>
-            <tr><td>Kierunek projektowy, pokrętła, anty-domyślne</td><td class="dn-dane">design/01-kierunek/KIERUNEK.md</td></tr>
-            <tr><td>Mapowanie wdrożeniowe, fale, bramy</td><td class="dn-dane">design/HANDOFF.md</td></tr>
-            <tr><td>Rejestr zamkniętych luk L-P-*</td><td class="dn-dane">design/README.md</td></tr>
+            <tr><td>Kierunek projektowy, pokrętła, anty-domyślne</td><td class="dn-dane">kierunek systemu projektowego</td></tr>
+            <tr><td>Mapowanie wdrożeniowe, fale, bramy</td><td class="dn-dane">opracowanie o przekazaniu, ruchu i dostępności</td></tr>
+            
             <tr><td>Makiety wzorcowe (model grid powłoki)</td><td class="dn-dane">design/06-okna/e1 · e2 · e4 · komponenty.html</td></tr>
-            <tr><td>Anatomia powłoki, Chat Window, MultitaskingAI</td><td class="dn-dane">brief/INWENTARZ-OKIEN.md</td></tr>
-            <tr><td>Selektory, wymiary, rozjazd katalog ↔ implementacja</td><td class="dn-dane">brief/INWENTARZ-KOMPONENTOW.md</td></tr>
+            <tr><td>Anatomia powłoki, Chat Window, MultitaskingAI</td><td class="dn-dane">inwentarz okien platformy</td></tr>
+            <tr><td>Selektory, wymiary, rozjazd katalog ↔ implementacja</td><td class="dn-dane">inwentarz komponentów</td></tr>
           </tbody>
         </table>
       </div>
@@ -1810,18 +1810,18 @@
   /* ---------------------------------------------------------------- DANE */
 
   var WARSTWY = [
-    { kod: 'W1', nazwa: 'Prymitywy', opis: 'surowe skale barw — zakaz użycia poza W2 i W3',
+    { kod: 'prymitywy', nazwa: 'Prymitywy', opis: 'surowe skale barw — zakaz użycia poza semantyka per motyw i warstwa niezależna od motywu',
       miejsce: 'zetony.css sekcja 1 (l. 18–58) · selektor :root',
       czyta: 'nic — to korzeń systemu',
-      czytana: 'wyłącznie przez W2 i W3',
+      czytana: 'wyłącznie przez semantyka per motyw i warstwa niezależna od motywu',
       pozycje: ['18 kroków skali szarości: --dn-szary-0 … --dn-szary-1000',
                 '8 stopni błękitu sygnałowego: --dn-sygnal-100 … --dn-sygnal-800',
                 '12 wartości stanów: zieleń, bursztyn, czerwień (po 4 stopnie)',
                 'Czysta czerń jest wyłączona ze skali — kraniec to --dn-szary-1000'] },
-    { kod: 'W2', nazwa: 'Semantyka per motyw', opis: '26 ról × 2 motywy + stany + cienie',
+    { kod: 'semantyka per motyw', nazwa: 'Semantyka per motyw', opis: '26 ról × 2 motywy + stany + cienie',
       miejsce: 'zetony.css sekcje 10–11 + blok zapasowy (l. 198–401)',
-      czyta: 'prymitywy W1',
-      czytana: 'przez komponenty W4',
+      czyta: 'prymitywy prymitywy',
+      czytana: 'przez komponenty warstwa komponentowa',
       pozycje: ['role powierzchni: --dn-tlo, --dn-powierzchnia, --dn-powierzchnia-2, --dn-panel',
                 'role tekstu: --dn-tekst, --dn-tekst-2, --dn-tekst-3, --dn-tekst-inv',
                 'role obrysu: --dn-obrys, --dn-obrys-subtelny, --dn-obrys-mocny',
@@ -1829,10 +1829,10 @@
                 'sygnał: --dn-sygnal, --dn-sygnal-wypelnienie, --dn-sygnal-tlo, --dn-kropka, --dn-fokus',
                 'stany: sukces · ostrzeżenie · błąd · informacja (tekst, tło, obrys)',
                 'cienie: 5 stopni tonowanych osobno dla każdego motywu'] },
-    { kod: 'W3', nazwa: 'Niezależne od motywu', opis: 'typografia, przestrzeń, ruch, wymiary, siatka, warstwy',
+    { kod: 'warstwa niezależna od motywu', nazwa: 'Niezależne od motywu', opis: 'typografia, przestrzeń, ruch, wymiary, siatka, warstwy',
       miejsce: 'zetony.css sekcje 2–9 oraz 12–14',
-      czyta: 'prymitywy W1 (wyłącznie rama kokpitu)',
-      czytana: 'przez komponenty W4',
+      czyta: 'prymitywy prymitywy (wyłącznie rama kokpitu)',
+      czytana: 'przez komponenty warstwa komponentowa',
       pozycje: ['rama kokpitu — 5 żetonów stałych w obu motywach (jedyna barwa w tej warstwie)',
                 'typografia — 3 kroje, 9 stopni, 4 wagi, 3 interlinie, 3 wartości tracking',
                 'przestrzeń — 11 odstępów (jednostka 4 px) i 6 promieni',
@@ -1841,9 +1841,9 @@
                 'siatka i punkty łamania — w1 640 · w2 960 · w3 1280 · w4 1600',
                 'warstwy — 11 poziomów --dn-z-*',
                 'gradienty — 2 pozycje, zakres wyłącznie ilustracyjny'] },
-    { kod: 'W4', nazwa: 'Komponenty', opis: '119 klas .dn-* w 18 sekcjach tematycznych',
+    { kod: 'warstwa komponentowa', nazwa: 'Komponenty', opis: '119 klas .dn-* w 18 sekcjach tematycznych',
       miejsce: 'komponenty.css (1207 linii)',
-      czyta: 'W2 i W3 — nigdy W1',
+      czyta: 'semantyka per motyw i warstwa niezależna od motywu — nigdy prymitywy',
       czytana: 'przez okna i prototypy',
       pozycje: ['przyciski, pola, wybór — kontrolki interakcji',
                 'karty, kafle, tabele, plakietki, kropka sygnału — nośniki danych',
@@ -1912,9 +1912,9 @@
     ['Tekst (3 stopnie) i obrysy (3 stopnie)','tak','rdzeń motywu'],
     ['Sygnał (tekst, wypełnienie, tło, obrys, kropka)','tak','inne stopnie rodziny dla różnych kontrastów'],
     ['Cienie (5 stopni)','tak','dwa komplety tonowane osobno per motyw'],
-    ['Stany: sukces · ostrzeżenie · błąd · informacja','tak','pełny komplet obu motywów (zamknięcie luki L-P-19)'],
-    ['Pasek górny (rama kokpitu)','nie','stanowisko dowodzenia ma stały dom — KIERUNEK.md 3.3'],
-    ['Godło i emblematy środowisk','nie','geometria i barwy własne znaku (HANDOFF §4)'],
+    ['Stany: sukces · ostrzeżenie · błąd · informacja','tak','pełny komplet obu motywów '],
+    ['Pasek górny (rama kokpitu)','nie','stanowisko dowodzenia ma stały dom — kierunek systemu projektowego'],
+    ['Godło i emblematy środowisk','nie','geometria i barwy własne znaku (opracowanie o przekazaniu, ruchu i dostępności)'],
     ['Gradienty','nie','zdefiniowane raz na prymitywach, zakres ilustracyjny'],
     ['Typografia, przestrzeń, wymiary, ruch, warstwy','nie','warstwa niezależna od motywu z definicji']
   ];
@@ -2230,7 +2230,7 @@
   var DRZEWO_PAKIET = [
     { n: 'design/', d: 'pakiet warstwy wizualnej v2.0', dzieci: [
       { n: '01-kierunek/', d: 'kontrakt kierunku', dzieci: [
-        { n: 'KIERUNEK.md', d: 'deklaracja, trzy pokrętła, anty-domyślne' } ] },
+        { n: 'kierunek systemu projektowego', d: 'deklaracja, trzy pokrętła, anty-domyślne' } ] },
       { n: '02-marka/', d: 'znak i zasoby marki', dzieci: [
         { n: 'logo/', d: 'sygnet · logotyp · lockupy · mono · kontrowe (+png/)' },
         { n: 'favicon/', d: 'favicon.svg/ico/png · apple-touch · manifest · snippet' },
@@ -2257,8 +2257,8 @@
         { n: 'wspolne.js', d: 'przełącznik motywu + zapas poleceń natywnych' } ] },
       { n: '07-ksiega/', d: 'księga marki + zrzuty' },
       { n: '08-grafika/', d: 'og-image · banner · tapeta · tło slajdu' },
-      { n: 'README.md', d: 'przewodnik + rejestr zamkniętych luk L-P-*' },
-      { n: 'HANDOFF.md', d: 'mapowanie wdrożeniowe, fale, bramy' }
+      { n: 'README.md', d: 'przewodnik po pakiecie' },
+      { n: 'opracowanie o przekazaniu, ruchu i dostępności', d: 'mapowanie wdrożeniowe, fale, bramy' }
     ] }
   ];
 
@@ -2278,7 +2278,7 @@
           { n: 'przestrzen.css', d: '§4 + cienie z §10/§11' },
           { n: 'ruch.css', d: '§5 + §14 (jedyne dozwolone !important)' },
           { n: 'wymiary.css', d: '§6 + §12 + §13 (obie osie gęstości razem)' },
-          { n: 'siatka.css', d: '§7 — plik dodany decyzją D-01' },
+          { n: 'siatka.css', d: '§7 — plik dodany decyzją ' },
           { n: 'warstwy.css', d: '§8 — 11 poziomów' },
           { n: 'gradienty.css', d: '§9' },
           { n: 'semantyczne-jasny.css', d: '§10 + blok zapasowy jasny' },
@@ -2431,7 +2431,7 @@
         var podpis = el('small');
         podpis.style.display = 'block';
         podpis.style.color = 'var(--dn-tekst-3)';
-        podpis.textContent = 'żeton semantyczny (W2)';
+        podpis.textContent = 'żeton semantyczny (semantyka per motyw)';
         t1.appendChild(podpis);
         k1.appendChild(t1);
         box.appendChild(k1);
@@ -2448,7 +2448,7 @@
           var p2 = el('small');
           p2.style.display = 'block';
           p2.style.color = 'var(--dn-tekst-3)';
-          p2.textContent = 'prymityw (W1) — zakaz użycia w komponencie';
+          p2.textContent = 'prymityw (prymitywy) — zakaz użycia w komponencie';
           t2.appendChild(p2);
           k2.appendChild(t2);
         } else {
@@ -2582,11 +2582,11 @@
     var etykiety = ['Studio','Workspace','Browser','Research','Agents'];
 
     var OPISY = [
-      ['&lt; w1 · poniżej 640 px','Jedno okno naraz, przełączane zakładkami. Boczna nawigacja jako szuflada nakładkowa, wywoływana ikoną. Chat Window otwiera się jako osobny widok pełnej wysokości. Wyszukiwarka paska ukryta. To zakres widoku Mobile (E11).'],
+      ['&lt; w1 · poniżej 640 px','Jedno okno naraz, przełączane zakładkami. Boczna nawigacja jako szuflada nakładkowa, wywoływana ikoną. Chat Window otwiera się jako osobny widok pełnej wysokości. Wyszukiwarka paska ukryta. To zakres widoku Mobile.'],
       ['w1 · 640–959 px','Boczna nawigacja ukryta, wywoływana ikoną. Obszar roboczy niesie okno wiodące i Chat Window jako pas dolny o minimum 320 px. Pas kart sesji przewija się poziomo.'],
-      ['w2 · 960–1279 px','Boczna nawigacja zwija się do ikon (48 px — szerokość równa wysokości paska górnego, decyzja D-08). Etykieta pozycji pojawia się w dymku. Wyszukiwarka paska skraca się do 220 px.'],
+      ['w2 · 960–1279 px','Boczna nawigacja zwija się do ikon (48 px — szerokość równa wysokości paska górnego, decyzja). Etykieta pozycji pojawia się w dymku. Wyszukiwarka paska skraca się do 220 px.'],
       ['w3 · 1280–1599 px','Pełny kokpit. Boczna nawigacja 224 px z etykietami. Okna wspomagające dostępne w zakładkach nad oknem wiodącym. Chat Window jako pas dolny 320 px albo 54 % wysokości.'],
-      ['w4 · od 1600 px','Szerokie biurko. Okna wspomagające obok wiodącego, a nie w zakładkach. Dwa pasy komunikacji obok siebie — układ pary koordynator–wykonawca (makieta E4).']
+      ['w4 · od 1600 px','Szerokie biurko. Okna wspomagające obok wiodącego, a nie w zakładkach. Dwa pasy komunikacji obok siebie — układ pary koordynator–wykonawca (makieta pary koordynator–wykonawca).']
     ];
 
     function zakres(w) {
@@ -2669,8 +2669,8 @@
 
   /* ------------------------------------- 7 · KONTRAKT KOMPONENT ↔ ŻETON */
   var MOZE = [
-    ['M1','Czytać żetony semantyczne (W2) — <code class="dn-kod dn-kod--wiersz">.dn-karta { background: var(--dn-powierzchnia) }</code>'],
-    ['M2','Czytać żetony niezależne od motywu (W3) — <code class="dn-kod dn-kod--wiersz">.dn-btn { height: var(--dn-wym-kontrolka) }</code>'],
+    ['M1','Czytać żetony semantyczne (semantyka per motyw) — <code class="dn-kod dn-kod--wiersz">.dn-karta { background: var(--dn-powierzchnia) }</code>'],
+    ['M2','Czytać żetony niezależne od motywu (warstwa niezależna od motywu) — <code class="dn-kod dn-kod--wiersz">.dn-btn { height: var(--dn-wym-kontrolka) }</code>'],
     ['M3','Czytać żetony ramy, jeśli jest komponentem ramy — <code class="dn-kod dn-kod--wiersz">.dn-btn-ikona--na-ramie</code>'],
     ['M4','Składać żetony arytmetycznie — <code class="dn-kod dn-kod--wiersz">calc(100vw − var(--dn-od-8))</code> w modalu'],
     ['M5','Definiować własne klatki kluczowe — <code class="dn-kod dn-kod--wiersz">dn-tetno</code>, <code class="dn-kod dn-kod--wiersz">dn-wejscie</code>, <code class="dn-kod dn-kod--wiersz">dn-obrot</code>'],
@@ -2678,15 +2678,15 @@
     ['M7','Wprowadzać własne wartości geometryczne bez odpowiednika w żetonach — wyłącznie z wpisem na liście wyjątków']
   ];
   var NIE = [
-    ['N1','Sięgać po prymitywy W1 — komponent przestaje przełączać się z motywem'],
-    ['N2','Wpisywać wartość barwy wprost — rozjazd z pomiarami kontrastu, niemierzalna dostępność'],
-    ['N3','Definiować własną media query barwną — dwa źródła prawdy motywu'],
-    ['N4','Definiować własną obsługę ograniczonego ruchu — podwójne wyłączenie albo pominięcie'],
-    ['N5','Odbierać klikalność atrybutem blokującym — narusza zasadę zero blokad (ADL-017)'],
-    ['N6','Komunikować stan samą barwą — stan niewidoczny dla części Operatorów'],
-    ['N7','Używać <code class="dn-kod dn-kod--wiersz">z-index</code> jako liczby — konflikt warstw nie do wyśledzenia'],
-    ['N8','Używać gradientu jako tła przycisku, karty albo sekcji — wprowadza drugą barwę do monochromu'],
-    ['N9','Używać <code class="dn-kod dn-kod--wiersz">!important</code> — nadpisanie nie do cofnięcia bez kolejnego']
+    ['Sięgać po prymitywy — komponent przestaje przełączać się z motywem'],
+    ['Wpisywać wartość barwy wprost — rozjazd z pomiarami kontrastu, niemierzalna dostępność'],
+    ['Definiować własną media query barwną — dwa źródła prawdy motywu'],
+    ['Definiować własną obsługę ograniczonego ruchu — podwójne wyłączenie albo pominięcie'],
+    ['Odbierać klikalność atrybutem blokującym — narusza zasadę zero blokad'],
+    ['Komunikować stan samą barwą — stan niewidoczny dla części Operatorów'],
+    ['Używać <code class="dn-kod dn-kod--wiersz">z-index</code> jako liczby — konflikt warstw nie do wyśledzenia'],
+    ['Używać gradientu jako tła przycisku, karty albo sekcji — wprowadza drugą barwę do monochromu'],
+    ['Używać <code class="dn-kod dn-kod--wiersz">!important</code> — nadpisanie nie do cofnięcia bez kolejnego']
   ];
   (function () {
     var a = $('#lista-moze'), b = $('#lista-nie');
@@ -2711,13 +2711,13 @@
      'Aplikacja rusza na nowej palecie; komponenty stare jeszcze działają. Stan pośredni zamierzony — pozwala odebrać barwę osobno od formy.'],
     ['Fala 2','Komponenty','komponenty/ + fundament — galeria komponentów jako wzorzec odbioru',
      'Galeria 06-okna/komponenty.html jako wzorzec odbioru wizualnego; usunięty duplikat fokusu z dotychczasowego arkusza motywu.',
-     '119 klas obecnych i renderujących się; zero atrybutów blokujących klikalność; zero prymitywów W1 poza listą wyjątków; fokus widoczny na każdej kontrolce.',
+     '119 klas obecnych i renderujących się; zero atrybutów blokujących klikalność; zero prymitywów poza listą wyjątków; fokus widoczny na każdej kontrolce.',
      'Komponenty przechodzą na nowe klasy; geometria dogania barwę wprowadzoną falą 1.'],
     ['Fala 3','Ikony i marka','ikony/, favicon, ikony aplikacji desktopowej',
      'Wykaz nazw w pliku źródeł ikon zgodny z manifestem (82 pozycje).',
      'Kompilacja przechodzi; próba użycia nazwy spoza wykazu zatrzymuje kompilację; ikony dziedziczą barwę w obu motywach; godło zachowuje barwy własne.',
      'Podmiana całego katalogu ikon — poprzedni zestaw był zastępczy. Manifest staje się źródłem prawdy nazw.'],
-    ['Fala 4','Okna','okno-komunikacji + powłoka wg makiet E1 / E2 / E4',
+    ['Fala 4','Okna','okno-komunikacji + powłoka wg makiet Centrum dowodzenia, powłoki środowiska i pary koordynator–wykonawca',
      'Usunięte lokalne zmienne własne okna komunikacji; mapowanie ról kontraktu na klasy wpisu.',
      'Pas komunikacji nie schodzi poniżej 320 px; Chat Window nie znika przy zmianie modułu; karty sesji zachowują stan; powłoka zachowuje się poprawnie na progach w1–w4.',
      'Okno komunikacji i powłoka używają wszystkich trzech poprzednich warstw naraz — dlatego są na końcu.']
@@ -2756,63 +2756,63 @@
 
   /* ------------------------------------------------ 9 · DECYZJE PROJEKTOWE */
   var DECYZJE = [
-    ['D-01','Sekcja 7 pliku żetonów bez pliku docelowego',
-     'HANDOFF.md §1 wymienia arkusze dla sekcji 1, 2, 3, 4, 5, 6, 8, 9, 10–11, 12, 13, 14 — pomija sekcję 7 (siatka i punkty łamania).',
+    ['Sekcja 7 pliku żetonów bez pliku docelowego',
+     'opracowanie o przekazaniu, ruchu i dostępności wymienia arkusze dla sekcji 1, 2, 3, 4, 5, 6, 8, 9, 10–11, 12, 13, 14 — pomija sekcję 7 (siatka i punkty łamania).',
      'Wprowadzono arkusz motyw/siatka.css.',
      'Sekcja 7 jest samodzielną odpowiedzialnością (progi + siatka + maksymalna szerokość treści); doklejenie jej do wymiary.css złamałoby regułę R1.'],
-    ['D-02','Liczba poziomów warstw',
-     'README pakietu (L-P-10) mówi o 10 poziomach; plik żetonów §8 i KANON §2 wymieniają 11.',
+    ['Liczba poziomów warstw',
+     'Wcześniejsze zestawienie podawało 10 poziomów; plik żetonów §8 i kontrakt systemu projektowego wymieniają 11.',
      'Przyjęto 11 poziomów.',
-     'Źródłem prawdy wartości jest plik żetonów (HANDOFF §4 pkt 1); README podaje liczbę omyłkowo.'],
-    ['D-03','Zawartość arkusza stany.css',
-     'HANDOFF wymienia nazwę pliku bez wskazania, które sekcje do niego trafiają.',
+     'Źródłem prawdy wartości jest plik żetonów (opracowanie o przekazaniu, ruchu i dostępności); wcześniejsze zestawienie podawało liczbę omyłkowo.'],
+    ['Zawartość arkusza stany.css',
+     'opracowanie o przekazaniu, ruchu i dostępności wymienia nazwę pliku bez wskazania, które sekcje do niego trafiają.',
      'Do stany.css trafiają: prymitywy stanów (§1, blok STANY) + żetony stanów semantycznych z §10/§11 + odpowiadające bloki zapasowe.',
-     'Stany są jedyną rodziną barw przecinającą wszystkie trzy warstwy żetonów; trzymanie ich razem jest jedyną wersją zgodną z R1.'],
-    ['D-04','Cienie w arkuszu przestrzen.css',
-     'HANDOFF zapisuje „przestrzen.css (odstępy + promienie + cienie)”, ale cienie leżą fizycznie w blokach motywów §10/§11.',
+     'Stany są jedyną rodziną barw przecinającą wszystkie trzy warstwy żetonów; trzymanie ich razem jest jedyną wersją zgodną z zasadą jednej odpowiedzialności.'],
+    ['Cienie w arkuszu przestrzen.css',
+     'opracowanie o przekazaniu, ruchu i dostępności zapisuje „przestrzen.css (odstępy + promienie + cienie)”, ale cienie leżą fizycznie w blokach motywów §10/§11.',
      'Cienie wydzielone z bloków motywów do przestrzen.css, z zachowaniem selektorów motywu.',
-     'Zgodnie z literą HANDOFF; selektor musi zostać, bo cienie są jedyną częścią tego arkusza zależną od motywu.'],
-    ['D-05','Kolejność importów w arkuszu spinającym motywu',
-     'HANDOFF mówi tylko, że arkusz spinający „importuje całość” — bez kolejności.',
+     'Zgodnie z literą opracowania o przekazaniu, ruchu i dostępności; selektor musi zostać, bo cienie są jedyną częścią tego arkusza zależną od motywu.'],
+    ['Kolejność importów w arkuszu spinającym motywu',
+     'opracowanie o przekazaniu, ruchu i dostępności mówi tylko, że arkusz spinający „importuje całość” — bez kolejności.',
      'Ustalono: prymitywy → rama → typografia → przestrzeń → ruch → wymiary → siatka → warstwy → gradienty → semantyczne-jasny → semantyczne-ciemny → stany.',
-     'W1 przed W3 przed W2; arkusz stanów ostatni, bo czyta prymitywy i musi nadpisać ewentualne wartości z bloków motywów.'],
-    ['D-06','Kolejność importów w arkuszu spinającym komponentów',
+     'prymitywy przed warstwą niezależną przed semantyką; arkusz stanów ostatni, bo czyta prymitywy i musi nadpisać ewentualne wartości z bloków motywów.'],
+    ['Kolejność importów w arkuszu spinającym komponentów',
      'Brak wskazania w dokumentacji.',
      'Kolejność zgodna z kolejnością sekcji w pliku źródłowym, nie alfabetyczna.',
      'Plik źródłowy jest kaskadą jednokierunkową; kolejność alfabetyczna mogłaby odwrócić zależność między suwakiem zakresu a przełącznikiem.'],
-    ['D-07','Zachowanie powłoki na progach w1 i w3',
+    ['Zachowanie powłoki na progach w1 i w3',
      'Dokumentacja rozstrzyga wyłącznie próg w2 („boczna zwija się do ikon”) i w4 („dwa okna komunikacji”).',
      'w1: jedno okno naraz, boczna jako szuflada, Chat Window jako osobny widok. w3: boczna 224 px z etykietami, okna wspomagające w zakładkach.',
      'Doprecyzowanie wyprowadzone z wymiarów (224 px bocznej nie mieści się poniżej w3 obok okna wiodącego) oraz z inwentarza okien (widok Mobile = zakres w1).'],
-    ['D-08','Szerokość bocznej nawigacji w stanie zwiniętym (w2)',
+    ['Szerokość bocznej nawigacji w stanie zwiniętym (w2)',
      'Brak wartości w dokumentacji.',
      'Przyjęto 48 px.',
      'Równa wysokości paska górnego — zwinięta boczna tworzy kwadrat 48 × 48 dla ikony 16 px z marginesem i zachowuje rytm rogu kompozycji.'],
-    ['D-09','Reguła min-height: 0',
-     'Brak w dokumentacji jako reguły; obecna w makietach E2 i E4 na sześciu pojemnikach.',
+    ['Reguła min-height: 0',
+     'Brak w dokumentacji jako reguły; obecna w makietach powłoki środowiska i pary koordynator–wykonawca na sześciu pojemnikach.',
      'Podniesiona do rangi reguły architektonicznej: każdy pojemnik siatki między pełną wysokością okna a elementem przewijanym deklaruje min-height: 0.',
      'Bez niej powłoka o stałej wysokości pęka przy przyroście treści; to jedyna reguła układu, której brak nie daje błędu, tylko cichą awarię kompozycji.'],
-    ['D-10','Model kompozycji okna operacyjnego',
-     'README pakietu odnotowuje pytanie otwarte M-4 („układ okien per moduł”).',
+    ['Model kompozycji okna operacyjnego',
+     'Pytanie o układ okien właściwy każdemu modułowi pozostawało otwarte.',
      'Przyjęto układ makiet: okno wiodące u góry, Chat Window na dole (min. 320 px), okna wspomagające jako zakładki (w3) albo druga kolumna (w4).',
-     'Makiety E2 i E4 są jedynym rozstrzygnięciem wizualnym w pakiecie; oznaczone jako układ dokumentacyjny do potwierdzenia decyzją Właściciela.'],
-    ['D-11','Rozbieżności wartości katalog v1.0 a żetony v2.0',
+     'Makiety powłoki środowiska i pary koordynator–wykonawca są jedynym rozstrzygnięciem wizualnym w pakiecie; oznaczone jako układ dokumentacyjny do potwierdzenia decyzją Właściciela.'],
+    ['Rozbieżności wartości katalog v1.0 a żetony v2.0',
      'Katalog v1.0 podaje pasek 56 px, przycisk ikonowy 36 px, stopień bazowy 15 px; żetony v2.0 podają 48 / 32 / 13 px.',
      'Obowiązują wartości v2.0.',
      'Pakiet v2.0 zastępuje w całości warstwę wizualną v1.0; wartości v1.0 pozostają wyłącznie jako zapis historyczny w inwentarzu.'],
-    ['D-12','Punkty łamania w warunkach zapytań mediowych',
+    ['Punkty łamania w warunkach zapytań mediowych',
      'Żetony punktów łamania istnieją, ale zmienne CSS nie są interpretowane w warunku zapytania mediowego.',
      'Progi zapisuje się liczbą; żetony pełnią rolę rejestru wartości dla dokumentacji i skryptu; zgodność sprawdza przegląd kodu.',
      'Ograniczenie języka, nie decyzja projektowa; odnotowane, by nie zostało odczytane jako niekonsekwencja.'],
-    ['D-13','Dozwolone użycie !important',
+    ['Dozwolone użycie !important',
      'Zakaz w warstwie komponentowej wobec jego obecności w pliku żetonów §14.',
      'Dozwolony wyłącznie w bloku ograniczonego ruchu w arkuszu ruch.css.',
      'Siatka bezpieczeństwa musi wygrać z każdą regułą komponentu, także przyszłą i nieprzewidzianą.'],
-    ['D-14','Odstępstwo kropki sygnału od zakazu N4',
+    ['Odstępstwo kropki sygnału od zakazu własnej obsługi ograniczonego ruchu',
      'Zakaz media query ograniczonego ruchu w komponencie wobec jej obecności w sekcji kropki.',
      'Odstępstwo utrzymane i odnotowane.',
      'Blok nie wyłącza ruchu (to robi warstwa żetonów), tylko zamienia formę — tętno na pierścień statyczny. Zamiana formy jest odpowiedzialnością komponentu.'],
-    ['D-15','Wyjątki od zakazu wartości wprost',
+    ['Wyjątki od zakazu wartości wprost',
      'Brak listy w dokumentacji.',
      'Zamknięta lista czterech wyjątków: awatar inteligencji, ikona 12 px w plakietce i znaku kroku, wypełnienie radia 8 px, kropka stanu awatara 8 px.',
      'Wyjątek bez rejestru staje się precedensem; rejestr zamienia go w decyzję.']

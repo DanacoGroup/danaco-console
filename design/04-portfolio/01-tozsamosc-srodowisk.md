@@ -1,9 +1,9 @@
-# Danaco Console — Plansza portfolio P1: Tożsamość czterech środowisk
+# Danaco Console — Plansza portfolio 01: Tożsamość czterech środowisk
 
 | | |
 |---|---|
 | **Produkt** | Danaco Console — AI Operating Environment (warstwa wizualna v2.0) |
-| **Warstwa funkcjonalna** | Danaco Pilot — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
+| **Warstwa funkcjonalna** | Danaco Console — Platforma AI Workspace OS (dokumentacja projektowa v1.0) |
 | **Producent** | Danaco Holding Group Sp. z o.o. |
 | **Twórca** | Dariusz Naharnowicz |
 | **Wersja** | v2.0 |
@@ -37,7 +37,7 @@
 
 ## 1. Czym jest ta plansza
 
-Plansza P1 pokazuje **tożsamość czterech środowisk Danaco Console w działaniu** — nie opisuje ich, lecz zestawia obok siebie tak, aby różnica była widoczna, zanim czytelnik przeczyta którykolwiek napis.
+Plansza 01 pokazuje **tożsamość czterech środowisk Danaco Console w działaniu** — nie opisuje ich, lecz zestawia obok siebie tak, aby różnica była widoczna, zanim czytelnik przeczyta którykolwiek napis.
 
 Platforma ma cztery środowiska: **TalkIn**, **WorkSpace**, **CodeStudio**, **MultitaskingAI**. Trzy pierwsze są środowiskami modułowymi — ich boczna nawigacja jest listą modułów. Czwarte nie ma modułów: zamiast bocznej nawigacji udostępnia **panel orkiestracji** o sześciu sekcjach. Ta jedna różnica strukturalna jest osią całej planszy.
 
@@ -53,18 +53,18 @@ MODUŁ           „jakie zadanie wykonuję?"       15 modułów (albo ROLA w Mu
 OKNO OPERACYJNE „jakim narzędziem realizuję?"   Chat Window (wspólne) + okna właściwe modułowi
 ```
 
-Źródło: KANON rozdz. 6 · `projekt-ui/README.md` rozdz. 2.
+Źródło: kontrakt systemu projektowego · `docs/README.md` rozdz. 2.
 
 ### 1.2. Siedem zagadnień planszy
 
 | # | Sekcja planszy | Co zestawia | Źródło |
 |---|---|---|---|
-| 1 | Karty tożsamości | emblemat, nazwa, istota, liczba i lista modułów, charakter pracy, różnica | KANON 6 · `elementy-okien.md` 2.3, 3.4 |
+| 1 | Karty tożsamości | emblemat, nazwa, istota, liczba i lista modułów, charakter pracy, różnica | kontrakt systemu projektowego · `elementy-okien.md` 2.3, 3.4 |
 | 2 | Anatomia emblematu | metafora, konstrukcja na siatce 24, położenie kropki | `03-marka/emblematy-i-ikony.md` 2.3, 3 |
 | 3 | Porównanie powłok | cztery szkielety obok siebie, wymiary z żetonów | `elementy-okien.md` 3.1, 4.2, 4.6 |
-| 4 | Macierz moduł × środowisko | 15 modułów × 4 środowiska, sprzężone podświetlanie | KANON 6 · `README.md` 5 |
+| 4 | Macierz moduł × środowisko | 15 modułów × 4 środowiska, sprzężone podświetlanie | kontrakt systemu projektowego · `README.md` 5 |
 | 5 | Ścieżka wejścia | Strefa 1 → karta → powłoka | `elementy-okien.md` 2.6 |
-| 6 | Jeden język wizualny | dlaczego jedna paleta i jeden sygnał | `KIERUNEK.md` 3.1, 3.4, 4 |
+| 6 | Jeden język wizualny | dlaczego jedna paleta i jeden sygnał | kierunek systemu projektowego 3.4, 4 |
 | 7 | Kafle strefy 1 | `.dn-karta-srodowiska` w formie realnej | `komponenty.css` · `elementy-okien.md` 2.3 |
 
 ---
@@ -343,7 +343,7 @@ Na planszy szkielety czterech powłok są wyświetlane w skali 40 % (transformac
 | 15 | Agents | Agent Builder | ● | ● | ● | rola/ekspert |
 | | **Liczba pozycji w bocznej nawigacji** | | **9** | **9** | **8** | panel orkiestracji |
 
-Źródło: KANON rozdz. 6 · `projekt-ui/README.md` rozdz. 5.
+Źródło: kontrakt systemu projektowego · `docs/README.md` rozdz. 5.
 
 ### 6.1. Podwójna rola trzech modułów
 
@@ -388,7 +388,7 @@ Czwarty kafel strefy 2 — **Agents** — prowadzi do Agent Buildera; Agents ma 
 | CodeStudio | 8 | 15 | 53 % |
 | MultitaskingAI | 0 | 15 | — (panel orkiestracji, 6 sekcji) |
 
-Wyliczenie własne z macierzy KANON rozdz. 6; udziały zaokrąglone do pełnego procenta. MultitaskingAI nie występuje w macierzy jako kolumna udostępniająca moduły — myślnik nie oznacza braku funkcji, lecz inną strukturę.
+Wyliczenie własne z macierzy kontrakt systemu projektowego; udziały zaokrąglone do pełnego procenta. MultitaskingAI nie występuje w macierzy jako kolumna udostępniająca moduły — myślnik nie oznacza braku funkcji, lecz inną strukturę.
 
 ---
 
@@ -445,7 +445,7 @@ Klik ikony „dom" w pasku górnym zamyka powłokę bieżącego środowiska i po
 | Gęstość i wymiary | **nie** | te same żetony: 48 / 36 / 224 / 32 px |
 | Pasek górny | **nie** | atramentowy w obu motywach, identyczny w czterech środowiskach |
 
-### 9.2. Uzasadnienie z KIERUNEK.md
+### 9.2. Uzasadnienie z kierunku systemu projektowego
 
 Kontrakt kierunku brzmi: platforma operacyjna — **kokpit dowodzenia** — w języku **monochromatycznej precyzji**: odcienie bieli w motywie jasnym, odcienie czerni w motywie ciemnym, **jeden chłodny sygnał**.
 
@@ -457,9 +457,9 @@ Z tego kontraktu wynikają trzy rozstrzygnięcia wiążące dla środowisk:
 
 ### 9.3. Zablokowany odruch
 
-Katalog anty-domyślnych KANON rozdz. 1 wymienia wprost: **„Dziewięć kolorów tła dla dziewięciu nadawców → trzy klasy semantyczne + ikona + etykieta + plakietka roli."** Ta sama zasada rozciąga się na środowiska: **cztery barwy dla czterech środowisk → jeden monochrom + cztery emblematy + cztery składy nawigacji.**
+Katalog anty-domyślnych kontrakt systemu projektowego wymienia wprost: **„Dziewięć kolorów tła dla dziewięciu nadawców → trzy klasy semantyczne + ikona + etykieta + plakietka roli."** Ta sama zasada rozciąga się na środowiska: **cztery barwy dla czterech środowisk → jeden monochrom + cztery emblematy + cztery składy nawigacji.**
 
-Na planszy zablokowany odruch jest zademonstrowany działającym przyciskiem „Nadaj środowisku własną barwę" — zgodnie z zasadą **zero blokad** (ADL-017) przycisk jest klikalny i odpowiada komunikatem zamiast być wyszarzony.
+Na planszy zablokowany odruch jest zademonstrowany działającym przyciskiem „Nadaj środowisku własną barwę" — zgodnie z zasadą **zero blokad** (zasada zero blokad) przycisk jest klikalny i odpowiada komunikatem zamiast być wyszarzony.
 
 ### 9.4. Typografia w tożsamości środowiska
 
@@ -517,18 +517,18 @@ Wartości liczbowe pokazane na planszy są **przykładowe** i oznaczone jako prz
 
 | # | Decyzja | Uzasadnienie | Podstawa |
 |---:|---|---|---|
-| D1 | Emblematy wklejone **inline z realnych plików**, nie odrysowane | plansza ma być surowo wierna; każdy `d=` odpowiada bajtowi w `zasoby/marka/srodowiska/*.svg` | zasada nadrzędna zespołu |
-| D2 | Szkielety powłok jako **żywy DOM w skali 40 %**, nie obrazki | proporcje pozostają prawdziwe (wymiary z żetonów), a szkielet reaguje na najechanie i klik | KANON 11.4 |
-| D3 | Macierz z **sprzężonym podświetlaniem** w obie strony | macierz jest tabelą relacji; statyczna tabela nie pokazuje, że moduł „widzi" środowiska, a środowisko „widzi" moduły | KANON 6 |
-| D4 | Znaki `●` / `○` renderowane **jako SVG**, nie jako znak typograficzny | ten sam obrys 1,75 i ta sama siatka 24 co reszta ikonografii; zakaz emoji | KANON 1, 4 |
-| D5 | Siatka 24 na emblemacie jako **przełączalna nakładka**, nie stały element | nakładka jest narzędziem analizy, nie częścią znaku; znak musi dać się obejrzeć czysto | `03-marka/emblematy-i-ikony.md` 2.4 |
-| D6 | Powiększenie kropki przez **przycięcie viewBox**, nie przez skalowanie rastra | powiększenie pozostaje wektorowe i pokazuje realne współrzędne | — |
-| D7 | „Nadaj środowisku własną barwę" jako **działający przycisk z komunikatem** | demonstracja zasady zero blokad wprost na planszy; wyszarzony przycisk byłby złamaniem ADL-017 | KANON 8 |
-| D8 | Motta środowisk krojem **mono**, nie nagłówkowym | motto jest etykietą maszynową; nazwa środowiska pozostaje jedynym miejscem dla Space Grotesk na karcie | `KIERUNEK.md` 3.2 |
-| D9 | Dane sesji w tle **oznaczone jako przykładowe** w widocznej etykiecie, nie tylko w przypisie | zakaz zmyślonych metryk; czytelnik portfolio musi wiedzieć, co jest pomiarem, a co ilustracją | KANON 10.3 |
-| D10 | Stara warstwa wizualna (granat + złoto) **nie jest cytowana** mimo obecności w dokumentacji źródłowej | `KIERUNEK.md` uznaje ją za zastępczą i nieobowiązującą; wszystkie wzmianki o „wstędze złotej" z `elementy-okien.md` czytane są jako „wstęga sygnału" | `KIERUNEK.md` metryka |
-| D11 | Pokrycie macierzy podane jako **wyliczenie własne** z jawnym oznaczeniem | liczby 60 / 60 / 53 % nie występują w dokumentacji — są arytmetyką z macierzy i muszą być tak opisane | KANON 10.5 |
-| D12 | Panel orkiestracji pokazany **w tej samej pozycji** co boczna nawigacja | dokumentacja stwierdza wprost: „inny panel, ta sama pozycja" | `elementy-okien.md` Schemat 6 |
+| 1 | Emblematy wklejone **inline z realnych plików**, nie odrysowane | plansza ma być surowo wierna; każdy `d=` odpowiada bajtowi w `zasoby/marka/srodowiska/*.svg` | zasada nadrzędna zespołu |
+| 2 | Szkielety powłok jako **żywy DOM w skali 40 %**, nie obrazki | proporcje pozostają prawdziwe (wymiary z żetonów), a szkielet reaguje na najechanie i klik | kontrakt systemu projektowego |
+| 3 | Macierz z **sprzężonym podświetlaniem** w obie strony | macierz jest tabelą relacji; statyczna tabela nie pokazuje, że moduł „widzi" środowiska, a środowisko „widzi" moduły | kontrakt systemu projektowego |
+| 4 | Znaki `●` / `○` renderowane **jako SVG**, nie jako znak typograficzny | ten sam obrys 1,75 i ta sama siatka 24 co reszta ikonografii; zakaz emoji | kontrakt systemu projektowego 4 |
+| 5 | Siatka 24 na emblemacie jako **przełączalna nakładka**, nie stały element | nakładka jest narzędziem analizy, nie częścią znaku; znak musi dać się obejrzeć czysto | `03-marka/emblematy-i-ikony.md` 2.4 |
+| 6 | Powiększenie kropki przez **przycięcie viewBox**, nie przez skalowanie rastra | powiększenie pozostaje wektorowe i pokazuje realne współrzędne | — |
+| 7 | „Nadaj środowisku własną barwę" jako **działający przycisk z komunikatem** | demonstracja zasady zero blokad wprost na planszy; wyszarzony przycisk byłby złamaniem zasady zero blokad | kontrakt systemu projektowego |
+| 8 | Motta środowisk krojem **mono**, nie nagłówkowym | motto jest etykietą maszynową; nazwa środowiska pozostaje jedynym miejscem dla Space Grotesk na karcie | kierunek systemu projektowego |
+| 9 | Dane sesji w tle **oznaczone jako przykładowe** w widocznej etykiecie, nie tylko w przypisie | zakaz zmyślonych metryk; czytelnik portfolio musi wiedzieć, co jest pomiarem, a co ilustracją | kontrakt systemu projektowego |
+| 10 | Stara warstwa wizualna (granat + złoto) **nie jest cytowana** mimo obecności w dokumentacji źródłowej | kierunek systemu projektowego uznaje ją za zastępczą i nieobowiązującą; wszystkie wzmianki o „wstędze złotej" z `elementy-okien.md` czytane są jako „wstęga sygnału" | kierunek systemu projektowego metryka |
+| 11 | Pokrycie macierzy podane jako **wyliczenie własne** z jawnym oznaczeniem | liczby 60 / 60 / 53 % nie występują w dokumentacji — są arytmetyką z macierzy i muszą być tak opisane | kontrakt systemu projektowego |
+| 12 | Panel orkiestracji pokazany **w tej samej pozycji** co boczna nawigacja | dokumentacja stwierdza wprost: „inny panel, ta sama pozycja" | `elementy-okien.md` Schemat 6 |
 
 ---
 
@@ -536,32 +536,32 @@ Wartości liczbowe pokazane na planszy są **przykładowe** i oznaczone jako prz
 
 | Zakres | Plik | Rozdziały |
 |---|---|---|
-| Jedyne źródło prawdy pakietu | `WYNIK/KANON.md` | 1, 2, 3, 4, 5, 6, 8, 9, 10, 11 |
-| Indeks projektu UI, macierz moduł × środowisko | `dok/projekt-ui/README.md` | 2, 3.5, 4, 5 |
-| Strefa 1, powłoki środowisk, panel orkiestracji | `dok/projekt-ui/przeplyw/elementy-okien.md` | 2.3, 2.4, 2.6, 3.1–3.5, 4.1–4.6 |
-| Środowisko MultitaskingAI | `dok/projekt-ui/srodowiska/multitaskingai.md` | 1.1–1.5 |
-| Kierunek projektowy | `design/opracowania/design/01-kierunek/KIERUNEK.md` | 1, 2, 3.1, 3.2, 3.4, 3.5, 3.6, 4 |
+| Jedyne źródło prawdy pakietu | kontrakt systemu projektowego | 1, 2, 3, 4, 5, 6, 8, 9, 10, 11 |
+| Indeks projektu UI, macierz moduł × środowisko | `docs/README.md` | 2, 3.5, 4, 5 |
+| Strefa 1, powłoki środowisk, panel orkiestracji | `docs/interfejs-uzytkownika/elementy-okien.md` | 2.3, 2.4, 2.6, 3.1–3.5, 4.1–4.6 |
+| Środowisko MultitaskingAI | `docs/srodowiska/multitaskingai.md` | 1.1–1.5 |
+| Kierunek projektowy | kierunek systemu projektowego | 1, 2, 3.1, 3.2, 3.4, 3.5, 3.6, 4 |
 | Konstrukcja emblematów | `WYNIK/03-marka/emblematy-i-ikony.md` | 2.3, 2.4, 3.1–3.5, 4.1–4.3 |
 | Pliki emblematów | `WYNIK/zasoby/marka/srodowiska/*.svg` | 4 pliki, odczyt bezpośredni |
 | Manifest ikon (motta środowisk) | `WYNIK/zasoby/ikony/manifest.json` | pozycje `srodowisko-*` |
 | Klasy komponentów | `WYNIK/zasoby/css/komponenty.css` | `.dn-karta-srodowiska`, `.dn-boczna`, `.dn-karty-sesji`, `.dn-pasek`, `.dn-kafel`, `.dn-listwa` |
 | Warstwa prototypu | `WYNIK/zasoby/prototyp.css`, `WYNIK/zasoby/prototyp.js` | `.pt-*`, atrybuty `data-*` |
 | Prototypy powłok | `WYNIK/05-okna/srodowiska/{talkin,workspace,codestudio,multitaskingai}.html` | — |
-| Prototyp strony głównej | `WYNIK/05-okna/przeplyw/03-centrum-dowodzenia.html` | strefa 1, 2, 3 |
+| Prototyp strony głównej | `WYNIK/05-okna/przeplyw/centrum-dowodzenia.html` | strefa 1, 2, 3 |
 
 ---
 
 ## 13. Kontrola jakości
 
 - [x] Wszystkie nazwy własne zgodne z dokumentacją — zero parafraz nazw modułów, okien, sekcji
-- [x] Zero elementów bez pokrycia w dokumentacji — każde środowisko, moduł, sekcja i okno pochodzi z KANON albo z plików źródłowych
-- [x] Liczby 9 / 9 / 8 / 6 potwierdzone w dwóch niezależnych miejscach (KANON rozdz. 6 i `elementy-okien.md` Tabela 11/16)
+- [x] Zero elementów bez pokrycia w dokumentacji — każde środowisko, moduł, sekcja i okno pochodzi z kontraktu systemu projektowego albo z plików źródłowych
+- [x] Liczby 9 / 9 / 8 / 6 potwierdzone w dwóch niezależnych miejscach (kontrakt systemu projektowego i `elementy-okien.md` Tabela 11/16)
 - [x] Współrzędne emblematów odczytane z realnych plików SVG, nie z opisu
 - [x] Wielkości plików odczytane poleceniem systemowym
 - [x] Wyliczenia własne (pokrycie, części wspólne par) oznaczone jako wyliczenia własne
 - [x] Zero wartości szesnastkowych w warstwie stylu planszy — wyłącznie `var(--dn-*)`
 - [x] Zero `#000000`
-- [x] Zero atrybutu wyłączającego kontrolkę (zasada zero blokad, ADL-017)
+- [x] Zero atrybutu wyłączającego kontrolkę (zasada zero blokad)
 - [x] Zero emoji jako ikon — wyłącznie inline SVG 24 × 24, obrys 1,75, `currentColor`
 - [x] Zero Lorem ipsum, zmyślonych nazwisk, zmyślonych metryk, fikcyjnych firm
 - [x] Dane przykładowe oznaczone jako przykładowe i zbudowane ze świata produktu

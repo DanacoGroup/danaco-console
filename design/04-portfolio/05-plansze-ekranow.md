@@ -6,13 +6,13 @@
 | **Rodzaj** | Plansza portfolio design identity |
 | **Wersja** | v2.0 · Status: Deweloperski |
 | **Zakres** | Przeglądowa galeria wszystkich klikalnych prototypów okien platformy |
-| **Źródło** | KANON.md rozdz. 7 (inwentarz okien) + katalog `05-okna/` (realne pliki) |
+| **Źródło** | kontrakt systemu projektowego (inwentarz okien) + katalog `05-okna/` (realne pliki) |
 
 ## 1. Przeznaczenie
 
 Plansza jest punktem przeglądowym całego dorobku okien: prowadzi do każdego klikalnego prototypu,
 pokazuje żywą miniaturę układu właściwą rodzinie okna i zestawia zbudowane ekrany z inwentarzem okien
-z dokumentacji (KANON rozdz. 7) w formie uczciwej tabeli pokrycia. Wszystkie liczby — liczba linii i liczba
+z dokumentacji (kontrakt systemu projektowego) w formie uczciwej tabeli pokrycia. Wszystkie liczby — liczba linii i liczba
 odwzorowanych interakcji — są odczytane z realnych plików, nie deklarowane.
 
 ## 2. Rodziny okien

@@ -6,55 +6,7 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### brama-i-droga-wejscia
-
-Dwie rzeczy w rdzeniu, obie wykryte pomiarem, obie niezależne od prototypów.
-Pierwsza jest niewykonanym rozstrzygnięciem, druga rozjazdem sprawdzianów
-z zachowaniem rdzenia.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/brama-i-droga-wejscia` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/` — wyłącznie brama kontraktu, uwierzytelnienie i sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `prowadzenie/` |
-
-**Przedmiot pierwszy — wyjątek powitania.** Pozycja 10 rejestru decyzji
-obowiązuje, a kodu nie ma: `obsluga.go` woła `sprawdzZadanieWobecKontraktu`
-bezwarunkowo, `brama_kontraktu.go` nie zna żadnego wyjątku. Zmierzone surowym
-gniazdem: `connection.hello` z pustą treścią oddaje odmowę zamiast wersji
-protokołu. Powitanie ma odpowiadać zawsze; braki pól idą do dziennika rdzenia,
-nie do treści odpowiedzi — `ConnectionHelloResponse` nie ma na nie pola.
-
-**Przedmiot drugi — trzy sprawdziany rozjechane z rdzeniem.** Zawodzą od chwili
-przejęcia. Dla `TestRejestracjaBezKontaNadawczegoOdmawiaINieZakladaKonta`
-rozstrzygnięcie jest już zapisane: pozycja 11 rejestru decyzji stanowi, że rdzeń
-ma rację, a sprawdzian opisuje zamiar porzucony. Dla dwóch pozostałych —
-`TestNieudaneNadanieListuCofaRejestracje` oraz
-`TestSkanowanieZUrzadzeniaOdmawiaNazwanie` — rozstrzygnięcia nie ma i teren ma
-je wyprowadzić pomiarem.
-
-**Przedmiot trzeci — droga bez poczty bez sprawdzianów.** Zachowanie
-rozstrzygnięte pozycją 11 stoi dziś na komentarzu i na pomiarze jednorazowym
-Prowadzącego. Pierwsza zmiana w bramce zniosłaby je bez niczyjej wiedzy.
-
-**Kryteria odbioru.**
-
-1. `connection.hello` z treścią niepełną oddaje `protocolVersion` — wykazane
-   uruchomieniem wobec żywego rdzenia, z przytoczoną odpowiedzią.
-2. Każda inna komenda dalej przechodzi przez bramę — wykazane sprawdzianem,
-   w którym komenda z brakującym polem dostaje odmowę nazywającą brak.
-3. Wyjątek obejmuje powitanie i **wyłącznie** powitanie — wykazane odczytem
-   kodu bramy, nie deklaracją.
-4. Dla każdego z trzech zawodzących sprawdzianów: pomiarem rozstrzygnięte, czy
-   myli się sprawdzian, czy rdzeń, i poprawiona ta strona, która się myli.
-   Sprawdzian zdjęty bez podanego powodu jest uchybieniem.
-5. Droga bez poczty ma sprawdziany własne: rejestracja, wejście hasłem,
-   potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika.
-6. `gotestsum ./...` — liczba niepowodzeń nie rośnie wobec stanu zastanego
-   (2022 zdane, 4 niezdane), a trzy nazwane niepowodzenia znikają albo mają
-   podany powód, dla którego zostają.
-7. Kontrakt nietknięty — wykazane sumą kontrolną `contract.json`.
-8. Rzecz wymagająca rozstrzygnięcia Właściciela wraca jako zgłoszenie.
+Żaden teren nie jest otwarty.
 
 ## Zgłoszenia oczekujące na teren
 
@@ -156,6 +108,23 @@ sprawdzian, czy rdzeń, i poprawić tę stronę, która się myli — a nie tę,
 łatwiej. Do tego założyć sprawdziany drogi bez poczty: rejestracja, wejście
 hasłem, potwierdzenie adresu po ustawieniu nadajnika, zdjęcie znacznika.
 
+### Droga SANE bez odpowiednika `bladWarstwyWia` — gotowe do otwarcia
+
+Brak urządzenia jest już nazwany. Brak samego programu `scanimage` dalej wychodzi
+odmową arsenału bez wskazania drogi obejścia, podczas gdy `bladWarstwyWia`
+(`urzadzenia_skaner.go`) dla tej samej sytuacji na Windowsie podaje
+`studio.ingest.queue.add`. Ta sama asymetria dotyczy `wykazSkanerow`: gałąź
+Windows przekłada odmowę, gałąź Linux oddaje ją surową. Operator na Linuksie bez
+`sane-utils` nie dowie się, że materiał da się wnieść inną drogą.
+
+### Sprawdzian katalogu akcji szuka nieistniejącego katalogu — gotowe do otwarcia
+
+`budowa/server/internal/store/katalog_akcji_test.go:177` szuka
+`../../../client/src/ikony/zrodla`. Katalog klienta nazywa się `budowa/klient`,
+a `budowa/client` nie istnieje w żadnej gałęzi. To jedyne niepowodzenie
+pozostałe w całym module. Do rozstrzygnięcia wraz z pierwszym terenem widoku,
+bo dotyczy źródeł ikon nowego klienta.
+
 ### Reguła odbioru wyprowadzona z pomiarów
 
 `axe.run()` sam wywołuje dwa błędy 404 (`menu.css`, `ruch.css`), bo rozwiązuje
@@ -171,6 +140,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` wyjątek powitania · `e41dd78` straże drogi bez poczty · `9a8ec0c` brak skanera | weryfikacja Prowadzącego pomiarem: bieg wymuszony `-count=1` 537 s — 2029 sprawdzianów, 1 niezdany wobec 4 zastanych; powitanie niepełne odpowiada wersją protokołu na żywym rdzeniu, `channel.add` z brakiem pola dalej odmawia; kontrakt nietknięty |
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |

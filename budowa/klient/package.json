@@ -1,0 +1,13 @@
+{
+  "name": "danaco-console-klient",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Danaco Console — klient: warstwa polaczenia i warstwa protokolu",
+  "scripts": {
+    "kontrakt": "node ../shared/gen/generate.mjs",
+    "typy": "tsc --noEmit",
+    "testy": "node src/polaczenie/warstwa-polaczenia.test.ts && node src/protokol/warstwa-protokolu.test.ts",
+    "testy-z-rdzeniem": "node src/protokol/rozmowa-z-rdzeniem.test.ts"
+  }
+}

@@ -121,6 +121,70 @@ if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').m
   zaslon();
 }
 
+/* ── Formularz uwierzytelnienia ──────────────────────────────────────────── */
+
+function wszystkie(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+  /* Odsłonięcie hasła — kontrolka zmienia typ pola i własną etykietę. */
+  wszystkie('[data-odsloniecie]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pole = document.getElementById(b.getAttribute('data-odsloniecie'));
+      if (!pole) return;
+      var odkryte = pole.type === 'text';
+      pole.type = odkryte ? 'password' : 'text';
+      b.setAttribute('aria-pressed', odkryte ? 'false' : 'true');
+      b.setAttribute('aria-label', odkryte ? 'Pokaż hasło' : 'Ukryj hasło');
+    });
+  });
+
+/* Kod potwierdzający — przejście między polami i wklejenie całości. Wiązanie
+   idzie GRUPAMI: każdy zestaw `.au-kod` rządzi się sam. Jeden wspólny wykaz
+   przeskakiwałby kursorem między oknami, a pola drugiego zestawu stały
+   niepodłączone, bo nie miały znacznika. */
+wszystkie('.au-kod').forEach(function (grupa) {
+  var polaKodu = Array.prototype.slice.call(grupa.querySelectorAll('.au-kod-pole'));
+  if (!polaKodu.length) return;
+
+  function rozsyp(tekst) {
+    var czysty = String(tekst || '').replace(/[^0-9A-Za-z]/g, '');
+    polaKodu.forEach(function (q, j) { q.value = (czysty[j] || '').toUpperCase(); });
+    polaKodu[Math.min(czysty.length, polaKodu.length - 1)].focus();
+  }
+
+  polaKodu.forEach(function (p, i) {
+    p.addEventListener('input', function () {
+      p.value = p.value.replace(/[^0-9A-Za-z]/g, '').slice(0, 1).toUpperCase();
+      if (p.value && polaKodu[i + 1]) polaKodu[i + 1].focus();
+    });
+    p.addEventListener('keydown', function (e) {
+      if (e.key === 'Backspace' && !p.value && polaKodu[i - 1]) polaKodu[i - 1].focus();
+    });
+    p.addEventListener('paste', function (e) {
+      e.preventDefault();
+      rozsyp((e.clipboardData || window.clipboardData).getData('text'));
+    });
+  });
+
+  var stopka = grupa.parentNode.querySelector('[data-wklej-kod]');
+  if (!stopka) return;
+  stopka.addEventListener('click', function () {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      if (window.dnToast) window.dnToast('Schowek niedostępny', 'Wpisz kod ręcznie w sześciu polach.', 'informacja');
+      return;
+    }
+    navigator.clipboard.readText().then(rozsyp).catch(function () {
+      if (window.dnToast) window.dnToast('Schowek niedostępny', 'Wpisz kod ręcznie w sześciu polach.', 'informacja');
+    });
+  });
+});
+
+/* Miara postępu z danej na znaczniku. Wartość jest daną, nie wyglądem, więc
+   stoi w `data-wartosc`, a szerokość ustawia mechanika. */
+var miary = document.querySelectorAll('.dn-postep-wartosc[data-wartosc]');
+for (var m = 0; m < miary.length; m++) {
+  miary[m].style.width = miary[m].dataset.wartosc + '%';
+}
+
 /* ── Zakładanie konta: sprawdzenie przed wysłaniem ───────────────────────── */
 
 /* Formularze, które ustawiają hasło. Oba sprawdzają to samo — różnią się

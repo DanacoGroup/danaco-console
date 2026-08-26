@@ -343,3 +343,128 @@ body.pt-pelny-ekran { overflow: hidden; }
   .pt-powloka { height: auto; display: block; }
   .pt-okno { break-inside: avoid; }
 }
+
+/* ── OPRAWA PODGLĄDU PRZEPŁYWU WEJŚCIA ───────────────────────────────────────
+   Scena etapów, przybornik, dziennik komunikatów, pasek postępu i fazy.
+   Nic z tego nie należy do produktu — to rusztowanie, na którym ogląda się
+   okna przepływu. Stało wcześniej w pliku podglądu; okno nie niesie wyglądu.
+   ────────────────────────────────────────────────────────────────────────── */
+
+  /* ══════════════════════════════════════════════════════════════════════════
+     RUSZTOWANIE PROTOTYPU — wyłącznie przestrzeń nazw .pt-*
+
+     Budowa okien wejściowych stoi w `zasoby/wejscie.css` (.we-*, .au-*, .pg-*).
+     Tutaj mieści się tylko to, czego w produkcie nie ma: scena trzech etapów,
+     przełączniki stanu i panel demonstracyjny uzgodnienia protokołu.
+
+     Etapy przed uwierzytelnieniem NIE wpinają `rama.css` ani `rama.js` —
+     rama aplikacji dołącza się skryptem dopiero po wydaniu tokenu, na etapie
+     przygotowania środowiska.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ── scena trzech etapów ────────────────────────────────────────────────── */
+  .pt-scena { display: flex; flex-direction: column; height: 100dvh; background: var(--dn-tlo); }
+  .pt-scena > .pt-naglowek-sceny { flex: none; }
+  .pt-etapy { flex: 1 1 auto; display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; }
+  .pt-etap[data-widok-aktywny='tak'] { display: flex; flex-direction: column; min-height: 0; }
+  .pt-etap > .pt-przybornik-lokalny { flex: none; }
+  .pt-etap-tresc { flex: 1 1 auto; min-height: 0; overflow: auto; }
+  .pt-etap-tresc:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: calc(-1 * var(--dn-wym-fokus)); }
+
+  /* Ikony w przełącznikach stanu trzymają rozmiar żetonu. */
+  .pt-przybornik-lokalny .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
+  .pt-przybornik-lokalny .pt-przybornik-prawa { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); }
+
+  /* Gniazdo ramy aplikacji — rama wchodzi tu dopiero na etapie 3.
+     `.pt-powloka` mierzy w prototypach całą wysokość okna przeglądarki;
+     tutaj stoi wewnątrz sceny etapów, więc bierze wysokość gniazda. */
+  /* `rama.css` nadaje powłoce wysokość całego okna przeglądarki regułą
+     `.pt-powloka:has(> .dn-rama-korpus)` o tej samej sile co zapis dwuklasowy;
+     stąd trzecia klasa — rama ma wypełnić gniazdo, nie ekran. */
+  .pt-etap .pt-etap-tresc .pt-powloka,
+  .pt-etap .pt-powloka:has(> .dn-rama-korpus) { height: 100%; }
+  .pt-oprawa-ramy { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; height: 100%; }
+  /* Poniżej 960 px `prototyp.css` zwęża pierwszą kolumnę korpusu do szerokości
+     zwiniętej nawigacji bocznej. Korpus etapu 3 bocznej nawigacji nie ma —
+     jedyna kolumna musi wziąć całą szerokość, inaczej okno ściska się do 32 px. */
+  @media (max-width: 960px) {
+    .pt-etap .pt-cialo--bez-bocznej { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* ── panel demonstracyjny: uzgodnienie protokołu (etap 1) ───────────────── */
+  /* Okno startowe, okno rejestracji i logowania oraz okno przygotowania
+     środowiska mają tę samą szerokość i wysokość. Panel uzgodnienia protokołu
+     leży więc pod oknem, a nie obok niego — kolumna obok zwężałaby okno
+     i psuła zgodność trzech okien wejściowych. */
+  .pt-panele--startowe { grid-template-columns: minmax(0, 1fr); }
+  .pt-panele--startowe .pt-log { max-height: 240px; }
+
+  .pt-log { min-height: 0; max-height: 100%; overflow: auto; }
+  .pt-log-wiersz { display: block; padding: 1px 0; opacity: 1; transition: opacity var(--dn-czas-2) var(--dn-ease); }
+  .pt-log-wiersz[data-ukryty='tak'] { opacity: 0; }
+  .pt-log-klucz { display: inline-block; min-width: 21ch; color: var(--dn-szary-400); }
+  .pt-log-czas { color: var(--dn-szary-400); margin-right: var(--dn-od-2); }
+
+  .pt-pas-postepu {
+    display: flex; flex-direction: column; gap: var(--dn-od-2);
+    padding: var(--dn-od-3);
+    border-top: 1px solid var(--dn-obrys-subtelny);
+    background: var(--dn-powierzchnia);
+  }
+  .pt-pas-postepu-glowa {
+    display: flex; align-items: center; gap: var(--dn-od-2);
+    font-family: var(--dn-ff-mono);
+    font-size: var(--dn-fs-xs);
+    letter-spacing: var(--dn-ls-mono-wersaliki);
+    text-transform: uppercase;
+    color: var(--dn-tekst-2);
+  }
+  .pt-pas-postepu-glowa [data-postep-licznik] { margin-left: auto; font-variant-numeric: tabular-nums; }
+
+  /* zestawienie faz cyklu połączenia */
+  /* Kolumna przebiegu: fazy u góry, dziennik w środku na całej wolnej wysokości,
+   pas postępu u dołu. */
+.pt-przebieg { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0; }
+.pt-pas-postepu .pt-nota { margin: 0; }
+
+.pt-fazy { display: flex; flex-direction: column; }
+  .pt-faza {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--dn-od-3);
+    min-height: var(--dn-wym-wiersz);
+    padding: 0 var(--dn-od-3);
+    border-bottom: 1px solid var(--dn-obrys-subtelny);
+    font-size: var(--dn-fs-base);
+    color: var(--dn-tekst-2);
+  }
+  .pt-faza-znak {
+    display: grid; place-content: center;
+    width: 20px; height: 20px;
+    border: 1px solid var(--dn-obrys-mocny);
+    border-radius: var(--dn-r-pill);
+    background: var(--dn-powierzchnia);
+    color: var(--dn-tekst-2);
+    font-family: var(--dn-ff-mono);
+    font-size: var(--dn-fs-xs);
+  }
+  .pt-faza-znak > svg { width: 12px; height: 12px; }
+  .pt-faza[data-stan-fazy='pracuje'] { color: var(--dn-tekst); }
+  .pt-faza[data-stan-fazy='pracuje'] .pt-faza-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); background: var(--dn-sygnal-tlo); }
+  .pt-faza[data-stan-fazy='gotowa'] .pt-faza-znak { border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); background: var(--dn-sukces-tlo); }
+  .pt-faza[data-stan-fazy='blad'] .pt-faza-znak { border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); background: var(--dn-blad-tlo); }
+  .pt-faza-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+
+  .pt-nota { max-width: 60ch; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
+
+  /* Nagłówki panelu „O tym opracowaniu”. Panel stoi obok treści głównej,
+     więc jego śródtytuły są drugim stopniem — po nagłówku strony i bez
+     przeskoku w dół. Krój przejmują z zapisu `.pt-o-opracowaniu-tresc h4`. */
+  .pt-o-opracowaniu-tresc h2 {
+    margin: var(--dn-od-4) 0 var(--dn-od-2);
+    font-size: var(--dn-fs-base);
+    font-weight: var(--dn-fw-polgruba);
+    color: var(--dn-tekst);
+  }
+  .pt-o-opracowaniu-tresc h2:first-child { margin-top: 0; }

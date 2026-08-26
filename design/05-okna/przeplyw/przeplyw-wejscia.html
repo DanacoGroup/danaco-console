@@ -11,121 +11,6 @@
 <link rel="stylesheet" href="../../zasoby/css/komponenty.css">
 <link rel="stylesheet" href="../../zasoby/prototyp.css">
 <link rel="stylesheet" href="../../zasoby/wejscie.css">
-<style>
-  /* ══════════════════════════════════════════════════════════════════════════
-     RUSZTOWANIE PROTOTYPU — wyłącznie przestrzeń nazw .pt-*
-
-     Budowa okien wejściowych stoi w `zasoby/wejscie.css` (.we-*, .au-*, .pg-*).
-     Tutaj mieści się tylko to, czego w produkcie nie ma: scena trzech etapów,
-     przełączniki stanu i panel demonstracyjny uzgodnienia protokołu.
-
-     Etapy przed uwierzytelnieniem NIE wpinają `rama.css` ani `rama.js` —
-     rama aplikacji dołącza się skryptem dopiero po wydaniu tokenu, na etapie
-     przygotowania środowiska.
-     ══════════════════════════════════════════════════════════════════════════ */
-
-  /* ── scena trzech etapów ────────────────────────────────────────────────── */
-  .pt-scena { display: flex; flex-direction: column; height: 100dvh; background: var(--dn-tlo); }
-  .pt-scena > .pt-naglowek-sceny { flex: none; }
-  .pt-etapy { flex: 1 1 auto; display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; }
-  .pt-etap[data-widok-aktywny='tak'] { display: flex; flex-direction: column; min-height: 0; }
-  .pt-etap > .pt-przybornik-lokalny { flex: none; }
-  .pt-etap-tresc { flex: 1 1 auto; min-height: 0; overflow: auto; }
-  .pt-etap-tresc:focus-visible { outline: var(--dn-wym-fokus) solid var(--dn-fokus); outline-offset: calc(-1 * var(--dn-wym-fokus)); }
-
-  /* Ikony w przełącznikach stanu trzymają rozmiar żetonu. */
-  .pt-przybornik-lokalny .dn-zakladka svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
-  .pt-przybornik-lokalny .pt-przybornik-prawa { margin-left: auto; display: inline-flex; gap: var(--dn-od-1); }
-
-  /* Gniazdo ramy aplikacji — rama wchodzi tu dopiero na etapie 3.
-     `.pt-powloka` mierzy w prototypach całą wysokość okna przeglądarki;
-     tutaj stoi wewnątrz sceny etapów, więc bierze wysokość gniazda. */
-  /* `rama.css` nadaje powłoce wysokość całego okna przeglądarki regułą
-     `.pt-powloka:has(> .dn-rama-korpus)` o tej samej sile co zapis dwuklasowy;
-     stąd trzecia klasa — rama ma wypełnić gniazdo, nie ekran. */
-  .pt-etap .pt-etap-tresc .pt-powloka,
-  .pt-etap .pt-powloka:has(> .dn-rama-korpus) { height: 100%; }
-  .pt-oprawa-ramy { display: grid; grid-template-rows: minmax(0, 1fr); min-height: 0; height: 100%; }
-  /* Poniżej 960 px `prototyp.css` zwęża pierwszą kolumnę korpusu do szerokości
-     zwiniętej nawigacji bocznej. Korpus etapu 3 bocznej nawigacji nie ma —
-     jedyna kolumna musi wziąć całą szerokość, inaczej okno ściska się do 32 px. */
-  @media (max-width: 960px) {
-    .pt-etap .pt-cialo--bez-bocznej { grid-template-columns: minmax(0, 1fr); }
-  }
-
-  /* ── panel demonstracyjny: uzgodnienie protokołu (etap 1) ───────────────── */
-  /* Okno startowe, okno rejestracji i logowania oraz okno przygotowania
-     środowiska mają tę samą szerokość i wysokość. Panel uzgodnienia protokołu
-     leży więc pod oknem, a nie obok niego — kolumna obok zwężałaby okno
-     i psuła zgodność trzech okien wejściowych. */
-  .pt-panele--startowe { grid-template-columns: minmax(0, 1fr); }
-  .pt-panele--startowe .pt-log { max-height: 240px; }
-
-  .pt-log { min-height: 0; max-height: 100%; overflow: auto; }
-  .pt-log-wiersz { display: block; padding: 1px 0; opacity: 1; transition: opacity var(--dn-czas-2) var(--dn-ease); }
-  .pt-log-wiersz[data-ukryty='tak'] { opacity: 0; }
-  .pt-log-klucz { display: inline-block; min-width: 21ch; color: var(--dn-szary-400); }
-  .pt-log-czas { color: var(--dn-szary-400); margin-right: var(--dn-od-2); }
-
-  .pt-pas-postepu {
-    display: flex; flex-direction: column; gap: var(--dn-od-2);
-    padding: var(--dn-od-3);
-    border-top: 1px solid var(--dn-obrys-subtelny);
-    background: var(--dn-powierzchnia);
-  }
-  .pt-pas-postepu-glowa {
-    display: flex; align-items: center; gap: var(--dn-od-2);
-    font-family: var(--dn-ff-mono);
-    font-size: var(--dn-fs-xs);
-    letter-spacing: var(--dn-ls-mono-wersaliki);
-    text-transform: uppercase;
-    color: var(--dn-tekst-2);
-  }
-  .pt-pas-postepu-glowa [data-postep-licznik] { margin-left: auto; font-variant-numeric: tabular-nums; }
-
-  /* zestawienie faz cyklu połączenia */
-  .pt-fazy { display: flex; flex-direction: column; }
-  .pt-faza {
-    display: grid;
-    grid-template-columns: 20px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--dn-od-3);
-    min-height: var(--dn-wym-wiersz);
-    padding: 0 var(--dn-od-3);
-    border-bottom: 1px solid var(--dn-obrys-subtelny);
-    font-size: var(--dn-fs-base);
-    color: var(--dn-tekst-2);
-  }
-  .pt-faza-znak {
-    display: grid; place-content: center;
-    width: 20px; height: 20px;
-    border: 1px solid var(--dn-obrys-mocny);
-    border-radius: var(--dn-r-pill);
-    background: var(--dn-powierzchnia);
-    color: var(--dn-tekst-2);
-    font-family: var(--dn-ff-mono);
-    font-size: var(--dn-fs-xs);
-  }
-  .pt-faza-znak > svg { width: 12px; height: 12px; }
-  .pt-faza[data-stan-fazy='pracuje'] { color: var(--dn-tekst); }
-  .pt-faza[data-stan-fazy='pracuje'] .pt-faza-znak { border-color: var(--dn-sygnal-obrys); color: var(--dn-sygnal); background: var(--dn-sygnal-tlo); }
-  .pt-faza[data-stan-fazy='gotowa'] .pt-faza-znak { border-color: var(--dn-sukces-obrys); color: var(--dn-sukces-tekst); background: var(--dn-sukces-tlo); }
-  .pt-faza[data-stan-fazy='blad'] .pt-faza-znak { border-color: var(--dn-blad-obrys); color: var(--dn-blad-tekst); background: var(--dn-blad-tlo); }
-  .pt-faza-meta { font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
-
-  .pt-nota { max-width: 60ch; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); line-height: var(--dn-lh-bazowy); }
-
-  /* Nagłówki panelu „O tym opracowaniu”. Panel stoi obok treści głównej,
-     więc jego śródtytuły są drugim stopniem — po nagłówku strony i bez
-     przeskoku w dół. Krój przejmują z zapisu `.pt-o-opracowaniu-tresc h4`. */
-  .pt-o-opracowaniu-tresc h2 {
-    margin: var(--dn-od-4) 0 var(--dn-od-2);
-    font-size: var(--dn-fs-base);
-    font-weight: var(--dn-fw-polgruba);
-    color: var(--dn-tekst);
-  }
-  .pt-o-opracowaniu-tresc h2:first-child { margin-top: 0; }
-</style>
 </head>
 
 <body class="pt-pelny-ekran"
@@ -148,7 +33,7 @@
   <!-- ══ WYBÓR ETAPU — rusztowanie prototypu ═══════════════════════════════ -->
   <div class="pt-przybornik-lokalny">
     <span class="pt-etykieta" id="pt-etykieta-etapu">Etap przepływu</span>
-    <div class="dn-zakladki" role="tablist" aria-labelledby="pt-etykieta-etapu" style="border-bottom: 0;">
+    <div class="dn-zakladki dn-zakladki--bez-kreski" role="tablist" aria-labelledby="pt-etykieta-etapu">
       <button class="dn-zakladka" type="button" role="tab" aria-selected="true"
               id="zak-laczenie" aria-controls="etap-laczenie"
               data-przelacz="laczenie" data-grupa="etap">
@@ -182,7 +67,7 @@
 
       <div class="pt-przybornik-lokalny">
         <span class="pt-etykieta" id="pt-etykieta-wariantu">Wariant stanu</span>
-        <div class="dn-zakladki" role="tablist" aria-labelledby="pt-etykieta-wariantu" style="border-bottom: 0;">
+        <div class="dn-zakladki dn-zakladki--bez-kreski" role="tablist" aria-labelledby="pt-etykieta-wariantu">
           <button class="dn-zakladka" type="button" role="tab" aria-selected="true"
                   id="zak-w-laczenie" aria-controls="w-laczenie"
                   data-przelacz="w-laczenie" data-grupa="wariant">
@@ -389,7 +274,7 @@
               </span>
             </div>
 
-            <div style="display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0;">
+            <div class="pt-przebieg">
               <div class="pt-fazy" aria-label="Fazy cyklu życia połączenia">
                 <div class="pt-faza" data-faza="kanal" data-stan-fazy="pracuje">
                   <span class="pt-faza-znak" aria-hidden="true">1</span>
@@ -424,10 +309,10 @@
                 </div>
                 <div class="dn-postep" id="postep-uzgodnienia">
                   <div class="dn-postep-tor">
-                    <div class="dn-postep-wartosc" style="width: 0%;"></div>
+                    <div class="dn-postep-wartosc"></div>
                   </div>
                 </div>
-                <p class="pt-nota" style="margin: 0;">
+                <p class="pt-nota">
                   Wartości w logu są przykładowe — ilustrują strukturę komunikatów
                   <span class="pt-mono">connection.hello</span> i
                   <span class="pt-mono">connection.hello.ack</span> opisaną w dokumentacji przepływu.
@@ -448,7 +333,7 @@
 
       <div class="pt-przybornik-lokalny">
         <span class="pt-etykieta" id="pt-etykieta-stanu">Stan okna</span>
-        <div class="dn-zakladki" role="tablist" aria-labelledby="pt-etykieta-stanu" style="flex-wrap: wrap; border-bottom: 0;">
+        <div class="dn-zakladki dn-zakladki--bez-kreski dn-zakladki--zawijane" role="tablist" aria-labelledby="pt-etykieta-stanu">
           <button class="dn-zakladka" type="button" role="tab" aria-selected="true" id="zak-s-logowanie" aria-controls="s-logowanie" data-przelacz="logowanie" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>1 · Logowanie</button>
           <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-blad" aria-controls="s-logowanie-blad" data-przelacz="logowanie-blad" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.6 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>2 · Logowanie — dane niezgodne</button>
           <button class="dn-zakladka" type="button" role="tab" aria-selected="false" id="zak-s-rejestracja" aria-controls="s-rejestracja" data-przelacz="rejestracja" data-grupa="stan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>3 · Rejestracja</button>
@@ -781,7 +666,7 @@
                           <div class="dn-postep">
                             <div class="dn-postep-tor" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"
                                  aria-label="Postęp przygotowania środowiska">
-                              <div class="dn-postep-wartosc" style="width: 62%"></div>
+                              <div class="dn-postep-wartosc" data-wartosc="62"></div>
                             </div>
                           </div>
                         </div>
@@ -903,470 +788,7 @@
 
 <script src="../../zasoby/wspolne.js"></script>
 <script src="../../zasoby/prototyp.js"></script>
-<script>
-/* ══════════════════════════════════════════════════════════════════════════
-   ZACHOWANIE SWOISTE TEMU PRZEPŁYWOWI
-   1 · przejścia między etapami i stanami (bez przeładowania)
-   2 · dołączenie ramy aplikacji po wydaniu tokenu (etap 3)
-   3 · symulacja cyklu uzgodnienia protokołu (etap 1)
-   4 · formularz uwierzytelnienia (etap 2)
-   ══════════════════════════════════════════════════════════════════════════ */
-(function () {
-  'use strict';
-  var D = document;
-  function wszystkie(s, k) { return Array.prototype.slice.call((k || D).querySelectorAll(s)); }
-
-  /* ── 1 · PRZEJŚCIA MIĘDZY ETAPAMI I STANAMI ─────────────────────────────
-     `data-przelacz` niesie wyłącznie zakładka (role="tab") — prototyp.js
-     ustawia na takich elementach `aria-selected`, a ten atrybut wolno nosić
-     tylko zakładce. Kontrolki wewnątrz okna prowadzą do stanu przez
-     `data-idz`, więc nie dostają cudzej roli. */
-
-  var PODPISY = {
-    laczenie: 'etap 1 · connection.hello → connection.hello.ack',
-    uwierzytelnienie: 'etap 2 · rejestracja · potwierdzenie · logowanie · odzyskiwanie',
-    przygotowanie: 'etap 3 · między uwierzytelnieniem a stroną główną'
-  };
-
-  function odswiezZakladki(grupa) {
-    /* Roving tabindex: w kolejności fokusu stoi wyłącznie zakładka wybrana,
-       między zakładkami przenoszą strzałki. prototyp.js ustawia to przy
-       starcie; po przełączeniu trzeba odświeżyć. */
-    wszystkie('[role="tablist"]').forEach(function (lista) {
-      var zakladki = wszystkie('[role="tab"]', lista);
-      if (grupa && !zakladki.some(function (z) { return z.getAttribute('data-grupa') === grupa; })) return;
-      zakladki.forEach(function (z) {
-        z.setAttribute('tabindex', z.getAttribute('aria-selected') === 'true' ? '0' : '-1');
-      });
-    });
-  }
-
-  /* Pigułki „Zaloguj się / Zarejestruj się" należą do okna, nie do rusztowania.
-     prototyp.js zeruje `aria-selected` wszystkim przełącznikom grupy „stan”,
-     a stan „dane niezgodne” czy „odzyskiwanie” nie ma własnej pigułki — bez
-     tego kroku żadna nie zostawała wskazana. Panel niesie swój wybór
-     w `data-pigulka`. */
-  function odswiezPigulki() {
-    wszystkie('[data-pigulka]').forEach(function (panel) {
-      var chce = panel.getAttribute('data-pigulka');
-      wszystkie('.dn-zakladki--pigulki [role="tab"]', panel).forEach(function (t) {
-        var akt = t.getAttribute('data-przelacz') === chce;
-        t.setAttribute('aria-selected', akt ? 'true' : 'false');
-        t.setAttribute('tabindex', akt ? '0' : '-1');
-        t.classList.toggle('dn-zakladka--wybrana', akt);
-      });
-    });
-  }
-
-  function idz(nazwa, grupa) {
-    if (!window.dnPrzelaczWidok) return;
-    window.dnPrzelaczWidok(nazwa, grupa);
-    odswiezZakladki(grupa);
-    odswiezPigulki();
-    if (grupa === 'etap') poEtapie(nazwa);
-  }
-
-  /* Szew dla mechaniki okna: przejście między etapami wywołuje się z zewnątrz
-     tak samo, jak wywołuje je kliknięcie. Skrypt okna nie zna wnętrza podglądu
-     i nie musi go znać. */
-  window.dnPrzejdz = idz;
-
-  function poEtapie(nazwa) {
-    var podpis = D.querySelector('[data-podpis-etapu]');
-    if (podpis && PODPISY[nazwa]) podpis.textContent = PODPISY[nazwa];
-    if (nazwa === 'przygotowanie') zamontujRame();
-  }
-
-  D.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-idz]');
-    if (!el) return;
-    if (el.tagName === 'A') e.preventDefault();
-    idz(el.getAttribute('data-idz'), el.getAttribute('data-idz-grupa') || null);
-  });
-
-  /* Zakładki przełącza prototyp.js; tutaj domykamy skutki uboczne. Nasłuch
-     prototypu wpina się dopiero na DOMContentLoaded, a ten skrypt wykonuje się
-     wcześniej — bez odłożenia czytalibyśmy `aria-selected` sprzed przełączenia. */
-  D.addEventListener('click', function (e) {
-    var z = e.target.closest('[data-przelacz][data-grupa]');
-    if (!z) return;
-    var grupa = z.getAttribute('data-grupa');
-    setTimeout(function () {
-      odswiezZakladki(grupa);
-      odswiezPigulki();
-      if (grupa === 'etap') poEtapie(z.getAttribute('data-przelacz'));
-    }, 0);
-  });
-
-  /* ── 2 · RAMA APLIKACJI PO WYDANIU TOKENU ───────────────────────────────
-     Etapy 1 i 2 nie wpinają `rama.css` ani `rama.js`. Rama wchodzi dopiero
-     tutaj: arkusz, powłoka (szyna, belka, wstążka, pasek stanu) i jej
-     zachowanie dołączane są skryptem, a okno przygotowania przenosi się
-     do gniazda powłoki. */
-
-  var ramaWToku = false;
-
-  function wczytajArkusz(sciezka, po) {
-    var l = D.createElement('link');
-    l.rel = 'stylesheet';
-    l.href = sciezka;
-    l.addEventListener('load', po);
-    l.addEventListener('error', po);
-    D.head.appendChild(l);
-  }
-  function wczytajSkrypt(sciezka, po) {
-    var s = D.createElement('script');
-    s.src = sciezka;
-    s.onload = po;
-    s.onerror = po;
-    D.body.appendChild(s);
-  }
-
-  function zamontujRame() {
-    if (ramaWToku || D.getElementById('dn-powloka-montaz')) return;
-    var gniazdo = D.getElementById('gniazdo-ramy');
-    var oprawa = D.getElementById('oprawa-przygotowania');
-    if (!gniazdo || !oprawa) return;
-    ramaWToku = true;
-
-    /* powloka.js czyta treść okna z <template id="dn-tresc-okna">
-       i wstawia ją między szynę nawigacji a pasek stanu. */
-    var tpl = D.createElement('template');
-    tpl.id = 'dn-tresc-okna';
-    tpl.innerHTML = oprawa.innerHTML;
-    D.body.appendChild(tpl);
-
-    var montaz = D.createElement('div');
-    montaz.className = 'pt-powloka pt-powloka--jednolita';
-    montaz.id = 'dn-powloka-montaz';
-    gniazdo.replaceChildren(montaz);
-
-    wczytajArkusz('../../zasoby/rama.css', function () {
-      wczytajArkusz('../../zasoby/okna-modalne.css', function () {
-        wczytajSkrypt('../../zasoby/powloka.js', function () {
-          wczytajSkrypt('../../zasoby/okna-modalne.js', function () {
-            wczytajSkrypt('../../zasoby/rama.js', function () {
-              if (window.dnToast) {
-                window.dnToast('Token wydany urządzeniu',
-                  'Rama aplikacji jest od tej chwili dostępna.', 'sukces');
-              }
-            });
-          });
-        });
-      });
-    });
-  }
-
-  /* ── 3 · SYMULACJA CYKLU UZGODNIENIA PROTOKOŁU (ETAP 1) ─────────────────── */
-
-  var log        = D.getElementById('log-uzgodnienia');
-  var postep     = D.getElementById('postep-uzgodnienia');
-  var pasek      = postep.querySelector('.dn-postep-wartosc');
-  var licznik    = D.querySelector('[data-postep-licznik]');
-  var btnOdtworz = D.getElementById('btn-odtworz');
-  var etykietaOdtworz = D.querySelector('[data-etykieta-odtworz]');
-  var plakietka  = D.getElementById('plakietka-stanu');
-  var fazy       = wszystkie('.pt-faza');
-
-  /* kolejność pól zgodna z rozdz. 3.1: wersja protokołu · identyfikator urządzenia · token */
-  var HELLO = [
-    { typ: 'zachęta', tekst: '» connection.hello' },
-    { typ: 'para', klucz: 'wersja protokołu',    wartosc: 'dnp/1.0' },
-    { typ: 'para', klucz: 'identyfikator urz.',  wartosc: 'urzadzenie-operatora-01' }
-  ];
-  var HELLO_OGON = [
-    { typ: 'para', klucz: 'klient',              wartosc: 'Danaco Console 2.0 · powłoka Tauri' },
-    { typ: 'para', klucz: 'kanał',               wartosc: 'WebSocket · adres z pakietu klienckiego' }
-  ];
-
-  var PRZEBIEGI = {
-    'w-laczenie': {
-      hello: [ { typ: 'para', klucz: 'token dostępu', wartosc: 'brak — pierwsze połączenie tego urządzenia' } ],
-      ack: [
-        { typ: 'zachęta', tekst: '« connection.hello.ack' },
-        { typ: 'para', klucz: 'wersja serwera',   wartosc: 'Danaco Console 2.0' },
-        { typ: 'para', klucz: 'faza wdrożenia',   wartosc: 'budowa' },
-        { typ: 'para', klucz: 'uwierzytelnienie', wartosc: 'brak ważnego tokenu' },
-        { typ: 'ok',   tekst: '  kanał otwarty — przejście do etapu 2: okno rejestracji i logowania' }
-      ],
-      stanFaz: ['gotowa', 'gotowa', 'gotowa', 'pracuje'],
-      metaFaz: ['otwarty', 'dnp/1.0', 'brak tokenu', 'etap 2'],
-      plakietka: 'kanał otwarty',
-      klasaPlakietki: 'dn-plakietka dn-plakietka--sygnal',
-      tetno: true
-    },
-    'w-token': {
-      hello: [ { typ: 'para', klucz: 'token dostępu', wartosc: 'obecny — token urządzenia' } ],
-      ack: [
-        { typ: 'zachęta', tekst: '« connection.hello.ack' },
-        { typ: 'para', klucz: 'wersja serwera',   wartosc: 'Danaco Console 2.0' },
-        { typ: 'para', klucz: 'faza wdrożenia',   wartosc: 'produkcyjna' },
-        { typ: 'para', klucz: 'uwierzytelnienie', wartosc: 'token ważny — urządzenie rozpoznane' },
-        { typ: 'para', klucz: 'zapamiętana karta', wartosc: 'brak' },
-        { typ: 'ok',   tekst: '  krok rejestracji i logowania pominięty — przejście do etapu 3' }
-      ],
-      stanFaz: ['gotowa', 'gotowa', 'gotowa', 'gotowa'],
-      metaFaz: ['otwarty', 'dnp/1.0', 'token ważny', 'etap 3'],
-      plakietka: 'urządzenie rozpoznane',
-      klasaPlakietki: 'dn-plakietka dn-plakietka--sukces',
-      tetno: false
-    },
-    'w-blad': {
-      hello: [ { typ: 'para', klucz: 'token dostępu', wartosc: 'obecny — token urządzenia' } ],
-      ack: [
-        { typ: 'blad',  tekst: '× brak odpowiedzi na connection.hello' },
-        { typ: 'para',  klucz: 'stan kanału',  wartosc: 'zamknięty' },
-        { typ: 'para',  klucz: 'przyczyna',    wartosc: 'serwer nieosiągalny / adres nieprawidłowy / przerwanie sieci' },
-        { typ: 'uwaga', tekst: '  oczekiwanie na ponowienie — automatyczne albo kontrolką „Spróbuj ponownie”' }
-      ],
-      stanFaz: ['blad', 'oczekuje', 'oczekuje', 'oczekuje'],
-      metaFaz: ['zamknięty', 'przerwane', 'brak', 'brak'],
-      plakietka: 'brak połączenia',
-      klasaPlakietki: 'dn-plakietka dn-plakietka--blad',
-      tetno: false
-    }
-  };
-
-  function wierszLogu(poz, ukryty) {
-    var w = D.createElement('span');
-    w.className = 'pt-log-wiersz';
-    if (ukryty) w.setAttribute('data-ukryty', 'tak');
-    if (poz.typ === 'para') {
-      var k = D.createElement('span');
-      k.className = 'pt-log-klucz';
-      k.textContent = '  ' + poz.klucz;
-      var v = D.createElement('span');
-      v.textContent = poz.wartosc;
-      w.appendChild(k); w.appendChild(v);
-      return w;
-    }
-    var t = D.createElement('span');
-    if (poz.typ === 'zachęta')    t.className = 'pt-znak-zachety';
-    else if (poz.typ === 'ok')    t.className = 'pt-wynik-ok';
-    else if (poz.typ === 'blad')  t.className = 'pt-wynik-blad';
-    else if (poz.typ === 'uwaga') t.className = 'pt-wynik-uwaga';
-    else                          t.className = 'pt-komentarz';
-    t.textContent = poz.tekst;
-    w.appendChild(t);
-    return w;
-  }
-
-  function zlozPrzebieg(nazwa) {
-    var p = PRZEBIEGI[nazwa] || PRZEBIEGI['w-laczenie'];
-    return HELLO.concat(p.hello).concat(HELLO_OGON).concat(p.ack);
-  }
-
-  function ustawFazy(nazwa) {
-    var p = PRZEBIEGI[nazwa] || PRZEBIEGI['w-laczenie'];
-    fazy.forEach(function (f, i) {
-      f.setAttribute('data-stan-fazy', p.stanFaz[i]);
-      var meta = f.querySelector('[data-meta-fazy]');
-      if (meta) meta.textContent = p.metaFaz[i];
-      var znak = f.querySelector('.pt-faza-znak');
-      if (!znak) return;
-      if (p.stanFaz[i] === 'gotowa') {
-        znak.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
-      } else if (p.stanFaz[i] === 'blad') {
-        znak.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
-      } else {
-        znak.textContent = String(i + 1);
-      }
-    });
-  }
-
-  function ustawPlakietke(nazwa) {
-    var p = PRZEBIEGI[nazwa] || PRZEBIEGI['w-laczenie'];
-    plakietka.className = p.klasaPlakietki;
-    plakietka.innerHTML = '';
-    if (p.tetno) {
-      var k = D.createElement('span');
-      k.className = 'pt-tetno';
-      k.setAttribute('aria-hidden', 'true');
-      plakietka.appendChild(k);
-    } else {
-      var ik = D.createElement('span');
-      ik.setAttribute('aria-hidden', 'true');
-      ik.innerHTML = p.klasaPlakietki.indexOf('blad') !== -1
-        ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
-        : '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
-      plakietka.appendChild(ik.firstChild);
-    }
-    plakietka.appendChild(D.createTextNode(' ' + p.plakietka));
-  }
-
-  function narysujLog(nazwa, ukryte) {
-    log.innerHTML = '';
-    zlozPrzebieg(nazwa).forEach(function (poz) { log.appendChild(wierszLogu(poz, ukryte)); });
-  }
-
-  function ustawPostep(wartosc) {
-    pasek.style.width = wartosc + '%';
-    if (licznik) licznik.textContent = Math.round(wartosc) + '%';
-  }
-
-  var odtwarzanie = null;
-
-  function pokazWariant(nazwa) {
-    if (odtwarzanie) return;      /* w trakcie odtwarzania log buduje sekwencja */
-    narysujLog(nazwa, false);
-    ustawFazy(nazwa);
-    ustawPlakietke(nazwa);
-    ustawPostep(nazwa === 'w-blad' ? 35 : 100);
-  }
-
-  D.addEventListener('click', function (e) {
-    var p = e.target.closest('[data-przelacz][data-grupa="wariant"]');
-    if (!p) return;
-    pokazWariant(p.getAttribute('data-przelacz'));
-  });
-
-  function zatrzymajOdtwarzanie() {
-    if (!odtwarzanie) return;
-    odtwarzanie.forEach(function (id) { clearTimeout(id); });
-    odtwarzanie = null;
-  }
-
-  function odtworz(nazwaDocelowa) {
-    zatrzymajOdtwarzanie();
-    odtwarzanie = [];
-
-    var ograniczonyRuch = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var krokCzas = ograniczonyRuch ? 40 : 150;
-
-    narysujLog(nazwaDocelowa, true);
-    ustawPostep(0);
-    fazy.forEach(function (f, i) {
-      f.setAttribute('data-stan-fazy', i === 0 ? 'pracuje' : 'oczekuje');
-      var meta = f.querySelector('[data-meta-fazy]');
-      if (meta) meta.textContent = i === 0 ? 'w toku' : 'oczekuje';
-      var znak = f.querySelector('.pt-faza-znak');
-      if (znak) znak.textContent = String(i + 1);
-    });
-    plakietka.className = 'dn-plakietka dn-plakietka--sygnal';
-    plakietka.innerHTML = '<span class="pt-tetno" aria-hidden="true"></span>';
-    plakietka.appendChild(D.createTextNode(' uzgadnianie…'));
-
-    if (etykietaOdtworz) etykietaOdtworz.textContent = 'Odtwarzam…';
-    btnOdtworz.setAttribute('aria-busy', 'true');
-
-    var wiersze = wszystkie('.pt-log-wiersz', log);
-    wiersze.forEach(function (w, i) {
-      odtwarzanie.push(setTimeout(function () {
-        w.removeAttribute('data-ukryty');
-        ustawPostep(Math.min(100, ((i + 1) / wiersze.length) * 100));
-        log.scrollTop = log.scrollHeight;
-      }, krokCzas * (i + 1)));
-    });
-
-    var czasCalosci = krokCzas * (wiersze.length + 1);
-    [0, 1, 2, 3].forEach(function (i) {
-      odtwarzanie.push(setTimeout(function () {
-        ustawFazy(nazwaDocelowa);
-        fazy.forEach(function (f, j) {
-          if (j > i) {
-            f.setAttribute('data-stan-fazy', 'oczekuje');
-            var meta = f.querySelector('[data-meta-fazy]');
-            if (meta) meta.textContent = 'oczekuje';
-            var znak = f.querySelector('.pt-faza-znak');
-            if (znak) znak.textContent = String(j + 1);
-          }
-        });
-      }, (czasCalosci / 4) * (i + 1)));
-    });
-
-    odtwarzanie.push(setTimeout(function () {
-      odtwarzanie = null;
-      if (etykietaOdtworz) etykietaOdtworz.textContent = 'Odtwórz przebieg';
-      btnOdtworz.removeAttribute('aria-busy');
-      idz(nazwaDocelowa, 'wariant');
-      pokazWariant(nazwaDocelowa);
-
-      if (!window.dnToast) return;
-      if (nazwaDocelowa === 'w-blad') {
-        window.dnToast('Błąd połączenia', 'Sprawdź połączenie sieciowe i spróbuj ponownie.', 'ostrzezenie');
-      } else if (nazwaDocelowa === 'w-token') {
-        window.dnToast('Rozpoznano zaufane urządzenie', 'Uruchomienie bez logowania.', 'sukces');
-      } else {
-        window.dnToast('Połączono z serwerem', 'Za chwilę otworzy się okno logowania.', 'informacja');
-      }
-    }, czasCalosci + 200));
-  }
-
-  btnOdtworz.addEventListener('click', function () {
-    var aktywna = D.querySelector('[data-przelacz][data-grupa="wariant"][aria-selected="true"]');
-    odtworz(aktywna ? aktywna.getAttribute('data-przelacz') : 'w-laczenie');
-  });
-
-  var btnPonow = D.getElementById('btn-ponow');
-  if (btnPonow) {
-    btnPonow.addEventListener('click', function () {
-      if (window.dnToast) {
-        window.dnToast('Ponawianie połączenia', 'Etap 1 uruchomiony od nawiązania kanału WebSocket.', 'informacja');
-      }
-      idz('w-laczenie', 'wariant');
-      odtworz('w-laczenie');
-    });
-  }
-
-  narysujLog('w-laczenie', false);
-  ustawFazy('w-laczenie');
-  ustawPlakietke('w-laczenie');
-  ustawPostep(100);
-
-  /* ── 4 · FORMULARZ UWIERZYTELNIENIA (ETAP 2) ────────────────────────────── */
-
-  /* Odsłonięcie hasła — kontrolka zmienia typ pola i własną etykietę. */
-  wszystkie('[data-odsloniecie]').forEach(function (b) {
-    b.addEventListener('click', function () {
-      var pole = D.getElementById(b.getAttribute('data-odsloniecie'));
-      if (!pole) return;
-      var odkryte = pole.type === 'text';
-      pole.type = odkryte ? 'password' : 'text';
-      b.setAttribute('aria-pressed', odkryte ? 'false' : 'true');
-      b.setAttribute('aria-label', odkryte ? 'Pokaż hasło' : 'Ukryj hasło');
-    });
-  });
-
-  /* Kod potwierdzający — przejście między polami i wklejenie całości. */
-  var pola = wszystkie('[data-kod]');
-  pola.forEach(function (p, i) {
-    p.addEventListener('input', function () {
-      p.value = p.value.replace(/[^0-9A-Za-z]/g, '').slice(0, 1).toUpperCase();
-      if (p.value && pola[i + 1]) pola[i + 1].focus();
-    });
-    p.addEventListener('keydown', function (e) {
-      if (e.key === 'Backspace' && !p.value && pola[i - 1]) pola[i - 1].focus();
-    });
-    p.addEventListener('paste', function (e) {
-      e.preventDefault();
-      var t = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9A-Za-z]/g, '');
-      pola.forEach(function (q, j) { q.value = (t[j] || '').toUpperCase(); });
-      (pola[Math.min(t.length, pola.length - 1)] || p).focus();
-    });
-  });
-
-  var btnWklej = D.querySelector('[data-wklej-kod]');
-  if (btnWklej) {
-    btnWklej.addEventListener('click', function () {
-      if (!navigator.clipboard || !navigator.clipboard.readText) {
-        if (window.dnToast) window.dnToast('Schowek niedostępny', 'Wpisz kod ręcznie w sześciu polach.', 'informacja');
-        return;
-      }
-      navigator.clipboard.readText().then(function (t) {
-        var czysty = String(t || '').replace(/[^0-9A-Za-z]/g, '');
-        pola.forEach(function (q, j) { q.value = (czysty[j] || '').toUpperCase(); });
-        if (pola.length) pola[Math.min(czysty.length, pola.length - 1)].focus();
-      }).catch(function () {
-        if (window.dnToast) window.dnToast('Schowek niedostępny', 'Wpisz kod ręcznie w sześciu polach.', 'informacja');
-      });
-    });
-  }
-
-  poEtapie('laczenie');
-  odswiezPigulki();
-})();
-</script>
-
+<script src="../../zasoby/okna/przeplyw-wejscia-podglad.js"></script>
 <script src="../../zasoby/ekran-startowy.js"></script>
 <script src="../../zasoby/okna/przeplyw-wejscia.js"></script>
 </body>

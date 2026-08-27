@@ -131,3 +131,97 @@ Pozycja, na której narzędzie ma pracować, bierze się ze wskazania w oknie
 funkcją stan.wybrane(), a nie z pola wpisywanego przy każdym przycisku. Brak
 wskazania kończy się odmową z powodem — Operator ma najpierw wybrać pozycję
 z listy.
+
+## budowa/klient-poprzedni/src/komponenty/menu-drzewo.ts
+
+Mechanizm stoi w bibliotece komponentów, a nie wewnątrz paska zlecenia, bo
+pasek jest tylko jego największym odbiorcą: takie samo menu stawiają
+nagłówki okien, panele i ekrany konfiguracji. Mechanizm zamknięty w pasku
+byłby dla nich nieosiągalny i zostałby skopiowany, a kopie rozjeżdżają się
+w szczegółach — haczyk wyboru pojawiałby się w jednym menu, a w drugim nie,
+przy jednakowym wymogu.
+
+To jest mechanizm docelowy dla sterów nastawy: dopisanie obok niego kolejnego
+mechanizmu rozwijania odtwarza dokładnie ten rozjazd, który on likwiduje.
+Trwałym wyjątkiem zostaje mechanizm menu czynności z osobnym plikiem, bo
+obsługuje menu, którego uchwyt jest ikoną, a treść wchodzi jako gotowe
+elementy, a nie ster niosący bieżącą wartość — to osobny wzorzec, nie rozjazd
+do scalenia.
+
+Mechanizm niesie sam sześć cech, których odbiorcy nie budują u siebie:
+zagnieżdżenie gałęzi bez ograniczenia głębokości; znacznik bieżącego wyboru
+na liściu i ślad tego wyboru na gałęzi, która ten liść niesie, żeby Operator
+widział wybór bez wchodzenia w gałąź; opis jako pole każdej pozycji;
+przełącznik dwustanowy wewnątrz gałęzi; grupowanie pozycji po źródle lub
+rodzinie; drogę do rejestru na dole menu. Treść wchodzi jako dane, a formę
+nadaje mechanizm; przyjmowanie gotowych elementów od odbiorcy zniosłoby
+jednolitość tych sześciu cech.
+
+Mechanizm nie wie, co jest w drzewie, i nie wykonuje wyboru — oddaje klucz
+pozycji wołającemu; nie zna kontraktu, komendy ani stanu okna. Żadna pozycja
+nie dostaje stanu wyłączonego: drzewo puste nie jest błędem, uchwyt otwiera
+się i mówi zdaniem, że wykaz jest pusty, zamiast przestać reagować.
+
+Pozycja niesie równocześnie nazwę pełną i nazwę skróconą. W wykazie płaskim
+na setki pozycji nazwa pełna musi nieść źródło, bo inaczej dwie komendy
+o tej samej nazwie z dwóch wtyczek są nie do rozróżnienia. To samo źródło
+czyni jednak wykaz nieczytelnym, gdy sto pozycji zaczyna się tym samym
+przedrostkiem — dlatego pozycja niesie obie nazwy, pełną ze źródłem i
+skróconą do samej rzeczy. Szukanie obejmuje obie nazwy i opis; trafienie
+w nazwę skróconą liczy się wyżej niż w pełną, bo to ona jest tym, czego
+Operator naprawdę szukał.
+
+Opis pozycji stoi wprost pod nazwą, a nie za dymkiem wywoływanym najechaniem,
+bo w menu o kilkudziesięciu liściach najeżdżanie na każdy liść z osobna nie
+jest drogą; dymek zostaje formą dla kontrolek stojących pojedynczo.
+
+Nazwa nastawy (na przykład „Model", „Wysiłek", „Urządzenie") nie trafia na
+ekran, bo na uchwycie stoi wartość, nie nazwa nastawy. Idzie do etykiety
+dostępności uchwytu i listy, żeby czytnik ekranu wiedział, czego dotyczy
+wartość, której nazwa sama tego nie mówi — „Opus 5" nie niesie słowa „model".
+
+Próg liczby liści, od którego drzewo stawia pole szukania, liczy liście, nie
+wszystkie pozycje: drzewo o trzech gałęziach i dwóch liściach filtra nie
+potrzebuje, drzewo o dwóch gałęziach i stu pozycjach potrzebuje go
+natychmiast. Próg, a nie stałe pole szukania, bo pole nad wykazem pięciu
+pozycji zabierałoby wiersz i nie skracałoby żadnego ruchu.
+
+Kierunek rozwinięcia wykazu nie jest preferencją wizualną. Ster stojący
+w pasku u góry okna ma pod sobą całą wysokość sceny i rozwija się w dół.
+Ster przy polu wpisywania stoi u dołu okna, a wykaz rozwinięty w dół nie
+miałby dokąd pójść — wyszedłby poza krawędź sceny.
+
+Tryb bez uchwytu obsługuje wykaz komend wywoływany ukośnikiem: wykaz ma się
+pojawić natychmiast po wpisaniu znaku, a filtrem ma być to samo pole
+wpisywania, nie osobne okienko. W tym trybie uchwyt nie wchodzi do
+dokumentu, wewnętrzne pole szukania nie powstaje wcale, a wołający steruje
+mechanizmem przez rozwinięcie, ustawienie frazy, przesunięcie wyróżnienia
+i wybór pozycji wyróżnionej. Ognisko zostaje w polu wołającego — stąd
+wyróżnienie jest wirtualne, a nie ogniskiem.
+
+Opis pokazywany tylko przy pozycji wyróżnionej to ustawienie dla wykazu na
+setki pozycji: setka opisów naraz nie jest objaśnieniem, tylko ścianą
+tekstu, przez którą nie widać już samych nazw — wtedy opis należy się jednej
+pozycji, tej, na którą Operator właśnie patrzy.
+
+Metoda ustawiająca całą zawartość naraz podaje wartość widoczną na uchwycie
+i całe drzewo. Drzewo przerysowuje się w całości, bo wykaz bywa czytany
+z rdzenia i pozycje przychodzą oraz znikają; rozwinięte gałęzie przeżywają
+przerysowanie po kluczu, żeby odświeżenie katalogu nie zwijało menu pod ręką
+Operatora.
+
+Fraza filtrująca podana z zewnątrz wchodzi do wewnętrznego pola, gdy pole
+stoi na ekranie, żeby Operator widział, czym wykaz jest przycięty. Gdy pole
+nie stoi (tryb bez uchwytu albo wykaz poniżej progu szukania), fraza i tak
+przycina wykaz — próg rozstrzyga, czy mechanizm stawia pole, a nie czy
+w ogóle umie filtrować.
+
+Przesunięcie wyróżnienia nie rusza ogniska: przy obsadzie ukośnikiem
+strzałki naciska się w polu wpisywania, więc ognisko musi w nim zostać;
+przenoszenie go na pozycję wyrwałoby Operatorowi klawiaturę spod palców
+w połowie pisania.
+
+Wybór pozycji wyróżnionej oddaje wartość fałsz, gdy nie ma czego wybrać —
+wykaz pusty albo przycięty do zera — i wtedy wołający wie, że klawisz Enter
+ma zrobić swoje zwykłe zadanie zamiast niczego. Wyróżniona gałąź nie jest
+wyborem — Enter na niej otwiera poziom.

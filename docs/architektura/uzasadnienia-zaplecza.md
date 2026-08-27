@@ -2199,3 +2199,20 @@ Rola `pomocnicze`, bo okno wspiera pracę Studio Editora, a nie prowadzi jej
 samo: pracuje na materiale wniesionym do okna, nie na treści redagowanej.
 Kategoria `narzedzia` wzorem Tools Panelu, z którym dzieli rolę w module.
 Kolejność w kategorii jest pierwszą wolną po pozycjach migracji 126.
+## budowa/server/internal/store/migracja_141_developer_punkty_przerwania.sql
+Migracja 141 — punkty przerwania okna Run & Debug modułu Developer.
+
+Punkt przerwania przeżywa sesję debugowania i musi ją przeżyć. Operator
+stawia go w marginesie Code Editora zanim cokolwiek uruchomi, a potem
+uruchamia debugowanie po raz drugi i trzeci — punkt postawiony w pamięci
+sesji zniknąłby razem z nią i trzeba by go stawiać od nowa przy każdym biegu.
+Dlatego punkt należy do okna i pliku, nie do sesji debugowania.
+
+`zweryfikowany` mówi, czy adapter DAP potwierdził, że pod tym wierszem da się
+zatrzymać. Punkt niezweryfikowany nie jest usterką: plik bywa jeszcze
+nieskompilowany, a Operator ma prawo postawić punkt zanim program powstanie.
+
+Warunek, warunek trafień i treść wpisu stoją osobnymi kolumnami, bo są
+osobnymi rodzajami punktu (BreakpointKind kontraktu) i pytanie o nie zadaje
+się osobno — sklejenie ich w jedno pole kazałoby rdzeniowi zgadywać, które
+z trzech znaczeń niesie zapisany tekst.

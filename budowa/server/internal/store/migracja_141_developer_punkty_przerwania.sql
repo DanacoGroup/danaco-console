@@ -1,19 +1,5 @@
--- Migracja 141 — punkty przerwania okna Run & Debug modułu Developer.
---
--- Punkt przerwania przeżywa sesję debugowania i musi ją przeżyć. Operator
--- stawia go w marginesie Code Editora zanim cokolwiek uruchomi, a potem
--- uruchamia debugowanie po raz drugi i trzeci — punkt postawiony w pamięci
--- sesji zniknąłby razem z nią i trzeba by go stawiać od nowa przy każdym biegu.
--- Dlatego punkt należy do okna i pliku, nie do sesji debugowania.
---
--- `zweryfikowany` mówi, czy adapter DAP potwierdził, że pod tym wierszem da się
--- zatrzymać. Punkt niezweryfikowany nie jest usterką: plik bywa jeszcze
--- nieskompilowany, a Operator ma prawo postawić punkt zanim program powstanie.
---
--- Warunek, warunek trafień i treść wpisu stoją osobnymi kolumnami, bo są
--- osobnymi rodzajami punktu (BreakpointKind kontraktu) i pytanie o nie zadaje
--- się osobno — sklejenie ich w jedno pole kazałoby rdzeniowi zgadywać, które
--- z trzech znaczeń niesie zapisany tekst.
+-- Migracja 141 zakłada tabelę punktów przerwania okna Run and Debug, wiążąc każdy punkt z oknem i plikiem oraz rozdzielając warunek, warunek trafień i treść wpisu.
+
 CREATE TABLE developer_punkt_przerwania (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     kod           TEXT    NOT NULL UNIQUE,

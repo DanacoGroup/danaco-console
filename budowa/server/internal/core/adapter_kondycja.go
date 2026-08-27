@@ -176,7 +176,7 @@ func (a *adapterKondycji) UsunSonde(ctx context.Context,
 }
 
 // WykonajSonde obsługuje health.probe.run — pomiar na żądanie. Wynik
-// zapisujemy zawsze, także przy porażce sondy, bo pomiar niezapisany byłby
+// zapisuje się zawsze, także przy porażce sondy, bo pomiar niezapisany byłby
 // pomiarem, którego dostępność nie zobaczy.
 func (a *adapterKondycji) WykonajSonde(ctx context.Context,
 	z shared.HealthProbeRunRequest) (shared.HealthProbeRunResponse, error) {
@@ -325,7 +325,7 @@ func policzDostepnosc(sonda dane.SondaKondycji, wyniki []dane.WynikSondyKondycji
 	udane, oslabione, nieudane, zdarzenia := 0, 0, 0, 0
 	var ostatniUpadek *int64
 	poprzedniUpadek := false
-	// Seria przychodzi od najnowszego; incydent liczymy od najstarszego.
+	// Seria przychodzi od najnowszego; incydent liczy się od najstarszego.
 	for numer := len(wyniki) - 1; numer >= 0; numer-- {
 		wynik := wyniki[numer]
 		switch wynik.Stan {

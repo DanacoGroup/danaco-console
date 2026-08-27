@@ -2510,3 +2510,37 @@ prawdy o tym, które strony publikacja ma.
 
 Baner nie ma stron, a wsteczna zgodność szablonu jednostronicowego nie jest tu
 ustępstwem, tylko odzwierciedleniem tego stanu rzeczy.
+
+## library.go
+
+Interfejs RepozytoriumBiblioteki deklaruje wyłącznie ten plik, w całości,
+wraz z metodami implementowanymi przez library_wersje.go i
+library_kolekcje.go. Interfejs rozdzielony na trzy pliki byłby trzema
+prawdami o jednym kontrakcie.
+
+Pole PlikBiblioteki.Sciezka niesie ścieżkę źródłową z wgrania (pole
+sourcePath). Bajty treści leżą w magazynie rdzenia i wskazuje je
+TrescOdwolanie, więc Sciezka jest zapisem prowenancji, nie drogą do treści.
+Pole nie wychodzi jako kontraktowe LibraryFile.path: to pole oznacza drogę
+wewnątrz biblioteki, nie ścieżkę systemową maszyny operatora, a klient czyta
+pierwszy człon po znaku ukośnika jako katalog nawigacji. Porządek biblioteki
+niosą kolekcje — powiązanie wiele-do-wielu, z którego jednej ścieżki nie da
+się wyprowadzić — więc pole kontraktu zostaje puste do czasu wprowadzenia
+osobnego pojęcia ścieżki w kontrakcie.
+
+Pole SciezkaRepozytorium jest rozłączne ze Sciezka: niesie drogę wewnątrz
+biblioteki (kontraktowe LibraryFile.path), którą rozporządza polecenie
+przenoszenia pliku.
+
+Kolumna Stan tabeli plik_biblioteki ma warunek CHECK, więc pusty łańcuch
+byłby odmową bazy przy każdym wgraniu, które o stanie nie rozstrzyga; funkcja
+stanZapisu podstawia wtedy wartość domyślną, a zasób wchodzi do wykazu
+czynnego.
+
+Metoda Szukaj realizuje wyszukiwanie po nazwie i po treści jedną frazą
+kontraktu, bez rozróżnienia drogi: dopasowanie nazwy działa operatorem LIKE,
+dopasowanie treści — indeksem FTS5 zasilanym przy wgraniu pliku i przy
+każdej nowej wersji. Plik niezaindeksowany albo o treści nietekstowej nie
+znika z wyszukiwania, ponieważ dopasowanie nazwy jest osobnym członem
+alternatywy, nie warunkiem dodatkowym zależnym od obecności wiersza w
+indeksie.

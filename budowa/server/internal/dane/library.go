@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: obszar plików modułu Library — definicja pliku
-// repozytorium wiedzy (tabela `plik_biblioteki`) wraz z
-// kontraktem całego obszaru. Wersje leżą w `library_wersje.go`, kolekcje
-// i etykiety w `library_kolekcje.go` — jedno repozytorium, trzy pliki wedle
-// odpowiedzialności, tak jak `dane/automations*.go`.
-//
-// Interfejs deklaruje wyłącznie ten plik, w całości — wraz z metodami, które
-// implementują pozostałe pliki obszaru. Interfejs rozdzielony na trzy pliki
-// byłby trzema prawdami o jednym kontrakcie.
+// Plik definiuje obszar plików modułu Library: wiersz tabeli plik_biblioteki
+// oraz kontrakt RepozytoriumBiblioteki, którego metody implementują także
+// pliki library_wersje.go i library_kolekcje.go.
 package dane
 
 import (
@@ -17,37 +11,19 @@ import (
 	"strings"
 )
 
-// PlikBiblioteki to wiersz tabeli `plik_biblioteki`. Kod jest identyfikatorem,
-// którym plik wychodzi kontraktem (`LibraryFile.id`).
+// PlikBiblioteki to wiersz tabeli plik_biblioteki. Kod jest identyfikatorem,
+// którym plik wychodzi kontraktem (LibraryFile.id).
 type PlikBiblioteki struct {
 	ID    int64
 	Kod   string
 	Nazwa string
-	// Sciezka to ścieżka źródłowa podana przy wgraniu w `sourcePath` — zapis
-	// tego, skąd plik przyszedł na maszynie Operatora. Bajty leżą gdzie indziej:
-	// wciąga je magazyn treści rdzenia, a wskazuje `TrescOdwolanie`
-	// (`adapter_modul_library_tresc.go`). Ta kolumna jest więc prowenancją, nie
-	// drogą do treści.
-	//
-	// Nie wychodzi z rdzenia. Pole `path` kontraktu — `LibraryFile.path`,
-	// „Sciezka w strukturze repozytorium" — to droga wewnątrz biblioteki, nie
-	// ścieżka systemowa: wypełnienie go tą kolumną wynosiłoby do klienta i do
-	// modelu katalog roboczy Operatora, a klient czyta pierwszy człon po `/`
-	// jako katalog nawigacji i zawęża wykaz `startsWith`
-	// (`client/src/moduly/library/wykaz-plikow.ts`, `stan-biblioteki.ts`).
-	// Porządek biblioteki niosą kolekcje, powiązanie wiele-do-wielu, z którego
-	// jednej ścieżki nie da się wyprowadzić. Pole kontraktu zostaje więc puste;
-	// nadanie mu treści wymaga pojęcia ścieżki w kontrakcie — zgłoszone, nie
-	// zrobione.
+	// Sciezka to ścieżka źródłowa z wgrania (sourcePath); nie wychodzi do
+	// kontraktu jako path.
 	Sciezka *string
-	// SciezkaRepozytorium to droga WEWNĄTRZ biblioteki — pole `LibraryFile.path`
-	// kontraktu, którym rozporządza `library.file.move`. Rozłączna z `Sciezka`:
-	// tamta mówi, skąd plik przyszedł na maszynie Operatora, ta — gdzie leży
-	// w porządku repozytorium (migracja 180).
+	// SciezkaRepozytorium to droga wewnątrz biblioteki (kontrakt path),
+	// rozłączna ze Sciezka.
 	SciezkaRepozytorium *string
-	// Stan rozdziela wykaz czynny od archiwum: `aktywny` albo `zarchiwizowany`
-	// (kontrakt: `LibraryFileStatus`). Archiwizacja jest przeniesieniem między
-	// stanami, nie usunięciem wiersza.
+	// Stan rozdziela wykaz czynny od archiwum: aktywny albo zarchiwizowany.
 	Stan            string
 	MimeType        *string
 	RozmiarBajtow   *int64
@@ -60,74 +36,65 @@ type PlikBiblioteki struct {
 	Zaktualizowano  string
 }
 
-// FiltrPlikow niesie zawężenia wspólne dla `library.file.list` i
-// `library.file.search`. Fraza filtru działa na nazwie pliku — `library.file.list`
-// zawęża wykaz, a nie szuka w dokumentach. Przeszukanie treści należy do
-// `Szukaj`, które dokłada do tego samego zawężenia klauzulę indeksu treści
-// (`biblioteka_indeks_tresci.go`).
+// FiltrPlikow niesie zawężenia wspólne dla library.file.list i
+// library.file.search: fraza działa na nazwie pliku, a przeszukanie treści
+// dokłada Szukaj osobną klauzulą indeksu treści.
 type FiltrPlikow struct {
 	Fraza       *string
 	Etykiety    []string
 	KolekcjaKod *string
 	ProjektID   *string
-	// Stan zawęża do zasobów czynnych albo archiwalnych. Puste znaczy „bez
-	// zawężenia" — wykaz domyślny modułu podaje tu `aktywny`, żeby kosz
-	// repozytorium naprawdę zdejmował zasób z widoku, a czynności higieny
-	// obchodziły całość.
+	// Stan zawęża wykaz do czynnych albo archiwalnych; puste znaczy bez
+	// zawężenia.
 	Stan   *string
 	Limit  int
 	Offset int
 }
 
-// RepozytoriumBiblioteki jest kontraktem obszaru Library.
+// RepozytoriumBiblioteki jest kontraktem obszaru Library: definiuje metody
+// dostępu do plików, wersji, kolekcji, etykiet, reguł, udostępnień i
+// pozostałych zasobów biblioteki.
 type RepozytoriumBiblioteki interface {
-	// --- agent A: plik biblioteki ---
+	// --- plik biblioteki ---
 	ZapiszPlik(ctx context.Context, plik PlikBiblioteki) (PlikBiblioteki, error)
 	Plik(ctx context.Context, kod string) (PlikBiblioteki, error)
 	Pliki(ctx context.Context, filtr FiltrPlikow) ([]PlikBiblioteki, int, error)
 	Szukaj(ctx context.Context, fraza string, filtr FiltrPlikow) ([]PlikBiblioteki, int, error)
-	// ZapiszIndeksTresci zasila indeks treści (FTS5) wyciągiem
-	// tekstowym pliku — bez niego `Szukaj` widzi wyłącznie nazwy
-	// (`biblioteka_indeks_tresci.go`).
+	// ZapiszIndeksTresci zasila indeks treści FTS5 wyciągiem tekstowym pliku.
 	ZapiszIndeksTresci(ctx context.Context, plikID int64, wyciag string) error
-	// OdwolaniaTresci wymienia bloby trzymane jeszcze przy życiu przez plik
-	// albo wersję — dla sprzątania magazynu (`biblioteka_odwolania.go`).
+	// OdwolaniaTresci wymienia bloby trzymane przy życiu przez plik albo
+	// wersję, do sprzątania magazynu.
 	OdwolaniaTresci(ctx context.Context) ([]string, error)
 
-	// --- agent B: wersje ---
+	// --- wersje ---
 	ZapiszWersje(ctx context.Context, plikID int64, wersja WersjaPlikuBiblioteki) (WersjaPlikuBiblioteki, error)
-	// DolozWersje dokłada wersję ORAZ przestawia na nią plik macierzysty w
-	// jednej transakcji (`library_wersje_zapis.go`) — inaczej niż `ZapiszWersje`,
-	// które samo wskaźnika bieżącej wersji nie rusza.
+	// DolozWersje dokłada wersję i przestawia na nią plik macierzysty w
+	// jednej transakcji.
 	DolozWersje(ctx context.Context, plikID int64, wersja WersjaPlikuBiblioteki) (WersjaPlikuBiblioteki, PlikBiblioteki, error)
 	Wersje(ctx context.Context, plikID int64) ([]WersjaPlikuBiblioteki, error)
 	PrzywrocWersje(ctx context.Context, plikID int64, kodWersji string) (PlikBiblioteki, error)
 
-	// --- agent C: kolekcje i etykiety ---
+	// --- kolekcje i etykiety ---
 	UtworzKolekcje(ctx context.Context, kolekcja KolekcjaBiblioteki) (KolekcjaBiblioteki, error)
 	PrzypiszDoKolekcji(ctx context.Context, kodKolekcji string, kodyPlikow []string) ([]string, error)
 	Kolekcje(ctx context.Context) ([]KolekcjaBiblioteki, error)
 	UstawEtykiety(ctx context.Context, kodPliku string, etykiety []string) ([]string, error)
 	Etykiety(ctx context.Context, plikID int64) ([]string, error)
-	// KolekcjePliku odpowiada na pytanie „do których kolekcji należy ten plik"
-	// (`LibraryFile.collectionIds`), a UstawKolekcjePliku czyni wykaz kolekcji
-	// pliku dokładnie takim, jaki podano — wraz ze zdjęciem z kolekcji spoza
-	// wykazu, czego `PrzypiszDoKolekcji` nie umie (`biblioteka_kolekcje_pliku.go`).
+	// KolekcjePliku podaje kolekcje pliku; UstawKolekcjePliku ustawia wykaz
+	// dokładnie, zdejmując zbędne.
 	KolekcjePliku(ctx context.Context, plikID int64) ([]string, error)
 	UstawKolekcjePliku(ctx context.Context, kodPliku string, kodyKolekcji []string) ([]string, error)
 
-	// --- opis zasobu i schemat metadanych (`biblioteka_opis.go`) ---
+	// --- opis zasobu i schemat metadanych ---
 	Opis(ctx context.Context, plikID int64) (OpisZasobuBiblioteki, error)
 	ZapiszOpis(ctx context.Context, plikID int64, opis OpisZasobuBiblioteki) error
 	PolaSchematu(ctx context.Context, mimeType, kolekcjaKod *string) ([]PoleSchematuBiblioteki, error)
 	ZapiszPoleSchematu(ctx context.Context, pole PoleSchematuBiblioteki) (PoleSchematuBiblioteki, error)
 	UsunPoleSchematu(ctx context.Context, kod string) (bool, error)
-	// ZasobyZPolem liczy zasoby, przy których pole niestandardowe ma już
-	// wartość — liczba wchodzi do odpowiedzi `library.schema.set`, żeby zdjęcie
-	// definicji nie wyglądało na czynność bez skutku ubocznego.
+	// ZasobyZPolem liczy zasoby mające już wartość pola niestandardowego.
 	ZasobyZPolem(ctx context.Context, kodPola string) (int, error)
 
-	// --- słownik etykiet i tezaurus (`biblioteka_slownik.go`) ---
+	// --- słownik etykiet i tezaurus ---
 	EtykietySlownika(ctx context.Context, fraza *string, tylkoNieuzywane bool,
 		limit int) ([]EtykietaSlownikaBiblioteki, int, error)
 	ZapiszEtykieteSlownika(ctx context.Context, nazwa string, barwa *string) (EtykietaSlownikaBiblioteki, error)
@@ -137,31 +104,30 @@ type RepozytoriumBiblioteki interface {
 	UstawRelacjeTezaurusa(ctx context.Context, zrodlo, cel, rodzaj string, zdejmij bool) (bool, error)
 	RelacjeTezaurusa(ctx context.Context) ([]RelacjaTezaurusaBiblioteki, error)
 
-	// --- kolekcje w postaci pełnej (`biblioteka_reguly.go`) ---
+	// --- kolekcje w postaci pełnej ---
 	KolekcjeWykaz(ctx context.Context, rodzicKod, fraza *string, limit int) ([]KolekcjaBiblioteki, int, error)
 
-	// --- reguły repozytorium (`biblioteka_reguly.go`) ---
+	// --- reguły repozytorium ---
 	ZapiszRegule(ctx context.Context, regula RegulaBiblioteki) (RegulaBiblioteki, error)
 	Regula(ctx context.Context, kod string) (RegulaBiblioteki, error)
 	Reguly(ctx context.Context, rodzaj *string, tylkoCzynne bool) ([]RegulaBiblioteki, error)
 	UsunRegule(ctx context.Context, kod string) (bool, error)
-	// PrzypiszRegula wpisuje zasoby do kolekcji ze znacznikiem pochodzenia
-	// `regula`, a OdepnijPrzypisaniaReguly zdejmuje wyłącznie te wpisy —
-	// przypisanie ręczne Operatora zostaje.
+	// PrzypiszRegula znaczy pochodzenie regula, OdepnijPrzypisaniaReguly
+	// zdejmuje te wpisy.
 	PrzypiszRegula(ctx context.Context, kodKolekcji string, kodyPlikow []string) (int, error)
 	OdepnijPrzypisaniaReguly(ctx context.Context, kodKolekcji string) (int, error)
 
-	// --- dziennik audytu (`biblioteka_audyt.go`) ---
+	// --- dziennik audytu ---
 	ZapiszWpisAudytu(ctx context.Context, wpis WpisAudytuBiblioteki) (WpisAudytuBiblioteki, error)
 	WpisyAudytu(ctx context.Context, filtr FiltrAudytuBiblioteki) ([]WpisAudytuBiblioteki, int, error)
 
-	// --- retencja i utrwalenie (`biblioteka_archiwum.go`) ---
+	// --- retencja i utrwalenie ---
 	ZapiszPolitykeRetencji(ctx context.Context, polityka PolitykaRetencjiBiblioteki) (PolitykaRetencjiBiblioteki, error)
 	PolitykiRetencji(ctx context.Context, zasieg *string) ([]PolitykaRetencjiBiblioteki, error)
 	UsunPolitykeRetencji(ctx context.Context, kod string) (bool, error)
 	ZapiszUtrwalenie(ctx context.Context, zadanie ZadanieUtrwaleniaBiblioteki) (ZadanieUtrwaleniaBiblioteki, error)
 
-	// --- udostępnienia i nasłuchy (`biblioteka_udostepnienia.go`) ---
+	// --- udostępnienia i nasłuchy ---
 	ZapiszUdostepnienie(ctx context.Context, udostepnienie UdostepnienieBiblioteki) (UdostepnienieBiblioteki, error)
 	Udostepnienia(ctx context.Context, celKod *string, tylkoCzynne bool) ([]UdostepnienieBiblioteki, error)
 	OdwolajUdostepnienie(ctx context.Context, kod string) (bool, error)
@@ -169,13 +135,13 @@ type RepozytoriumBiblioteki interface {
 	Webhooki(ctx context.Context, tylkoCzynne bool) ([]WebhookBiblioteki, error)
 	UsunWebhook(ctx context.Context, kod string) (bool, error)
 
-	// --- sugestie porządkujące (`biblioteka_sugestie.go`) ---
+	// --- sugestie porządkujące ---
 	ZapiszSugestie(ctx context.Context, sugestia SugestiaBiblioteki) (SugestiaBiblioteki, error)
 	Sugestie(ctx context.Context, plikKod *string, rodzaje []string, limit int) ([]SugestiaBiblioteki, int, error)
 	Sugestia(ctx context.Context, kod string) (SugestiaBiblioteki, error)
 	RozstrzygnijSugestie(ctx context.Context, kody []string, przyjeto bool) (int, error)
 
-	// --- cykl życia zasobu i pulpit stanu (`biblioteka_cykl.go`) ---
+	// --- cykl życia zasobu i pulpit stanu ---
 	UstawStanPlikow(ctx context.Context, kody []string, stan string) ([]PlikBiblioteki, error)
 	UstawSciezkeRepozytorium(ctx context.Context, kody []string, sciezka string) ([]PlikBiblioteki, error)
 	PrzemianujPlik(ctx context.Context, kod, nazwa string) (PlikBiblioteki, error)
@@ -276,25 +242,14 @@ func (r *repozytoriumBiblioteki) Pliki(ctx context.Context, filtr FiltrPlikow) (
 	return r.pliki(ctx, warunek, argumenty, filtr.Limit, filtr.Offset)
 }
 
-// Szukaj realizuje `library.file.search` — fraza trafia w nazwę albo w treść.
-//
-// Dwa dopasowania, jedna fraza. Żądanie kontraktu niesie jedną frazę bez
-// rozróżnienia „po nazwie" / „po treści", więc obie drogi muszą być pytane
-// naraz, a trafienie którąkolwiek jest trafieniem. Nazwę dopasowuje `LIKE`
-// (fragment dowolnego miejsca nazwy, także pół słowa), treść — indeks FTS5
-// (`warunekTresciBiblioteki`), zasilany przy wgraniu pliku i przy każdej nowej
-// wersji.
-//
-// Plik niezaindeksowany nie znika z wyszukiwania. Wiersze niezaindeksowane
-// oraz treści nietekstowe nie mają wiersza w indeksie — dopasowanie nazwy
-// działa dla nich dalej, bo jest osobnym członem alternatywy, a nie warunkiem
-// dodatkowym. Zawężenia pozostałe (projekt, kolekcja, etykiety) obowiązują
-// obie drogi tak samo.
+// Szukaj realizuje library.file.search: fraza dopasowuje nazwę operatorem
+// LIKE oraz treść przez indeks FTS5, a trafienie którejkolwiek z dwóch dróg
+// stanowi wynik wyszukiwania.
 func (r *repozytoriumBiblioteki) Szukaj(ctx context.Context, fraza string,
 	filtr FiltrPlikow) ([]PlikBiblioteki, int, error) {
 
-	// Fraza nie idzie przez `FiltrPlikow.Fraza`, bo tamten człon zawęża do
-	// nazwy; tu nazwa i treść stoją w alternatywie i muszą być jedną klauzulą.
+	// Fraza nie idzie przez FiltrPlikow.Fraza, bo tu nazwa i treść stoją w
+	// jednej alternatywie.
 	filtr.Fraza = nil
 	warunek, argumenty := warunkiFiltruPlikow(filtr)
 	warunek += ` AND (nazwa LIKE ? OR ` + warunekTresciBiblioteki + `)`
@@ -327,8 +282,8 @@ func warunkiFiltruPlikow(filtr FiltrPlikow) (string, []any) {
 		                            AND k.identyfikator_zewnetrzny = ?)`)
 		argumenty = append(argumenty, *filtr.KolekcjaKod)
 	}
-	// Plik musi nieść każdą podaną etykietę (zawężenie, nie dopasowanie
-	// dowolnej) — jedna klauzula EXISTS na etykietę.
+	// Plik musi nieść każdą podaną etykietę — osobna klauzula EXISTS na
+	// etykietę.
 	for _, etykieta := range filtr.Etykiety {
 		if etykieta == "" {
 			continue
@@ -403,7 +358,8 @@ const (
 	StanZasobuZarchiwizowany = "zarchiwizowany"
 )
 
-// odczytajPlikBiblioteki składa strukturę z jednego wiersza wyniku.
+// odczytajPlikBiblioteki składa strukturę PlikBiblioteki z jednego wiersza
+// wyniku zapytania, zamieniając kolumny nullowalne na wskaźniki opcjonalne.
 func odczytajPlikBiblioteki(wiersz skaner) (PlikBiblioteki, error) {
 	var plik PlikBiblioteki
 	var sciezka, sciezkaRepozytorium, mimeType sql.NullString

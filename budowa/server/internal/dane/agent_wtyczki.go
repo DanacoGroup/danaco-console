@@ -1,20 +1,5 @@
-// Odpowiedzialność pliku: wtyczki eksperta (tabela `agent_wtyczka`,
-// `store/migracja_073_agent_warstwy.sql`). Warstwy promptu i tożsamość własna
-// leżą w `agent_warstwy.go` — to ta sama implementacja repozytorium
-// `repozytoriumWarstwAgenta`.
-//
-// WTYCZKA NIE JEST KONEKTOREM. Konektor jest DROGĄ DO USŁUGI: wskazuje
-// most z katalogu punktów dostępu, z którego rdzeń składa `mcpServers` podawane
-// przełącznikiem `--mcp-config` (`agenci_powiazania_zapis.go:DodajKonektor`).
-// Wtyczka jest KATALOGIEM ROZSZERZEŃ POWŁOKI — nie ma adresu, poświadczenia ani
-// punktu dostępu; ma nazwę, źródło i wersję, a program dostaje ją przełącznikiem
-// `--plugin-dir`. Dlatego osobna tabela i osobne wejście repozytorium.
-//
-// KOD NADAJE REPOZYTORIUM. Konektorowi kod nadaje wołający (`core` woła
-// `nowyIdentyfikator(przedrostekKonektora)`), bo jego struktura wchodzi tu
-// w całości. Wejście wtyczki bierze wyłącznie nazwę, źródło i wersję, więc kod
-// musi powstać tutaj — składany DOKŁADNIE tak samo jak tam: przedrostek,
-// licznik w podstawie 36 i ośmiobajtowa część losowa ze źródła kryptograficznego.
+// Plik prowadzi wtyczki eksperta — katalog rozszerzeń powłoki, osobny od konektorów wskazujących usługi przez most
+// punktów dostępu; warstwy promptu i tożsamość własna eksperta leżą w agent_warstwy.go jako ta sama implementacja repozytorium.
 package dane
 
 import (
@@ -101,10 +86,8 @@ func (r *repozytoriumWarstwAgenta) DodajWtyczke(ctx context.Context, kodAgenta, 
 	return zapisana, nil
 }
 
-// UsunWtyczke odłącza wtyczkę od eksperta. Zwraca informację, czy wiersz
-// istniał — odłączenie wtyczki, której nie ma, kończy się tym samym stanem
-// i nie jest błędem. Warunek na numer eksperta pilnuje, żeby kod
-// wtyczki cudzej nie skasował wiersza spod innego eksperta.
+// UsunWtyczke odłącza wtyczkę od eksperta i zwraca informację, czy wiersz istniał; warunek na numer eksperta
+// pilnuje, żeby kod wtyczki cudzej nie skasował wiersza innego eksperta.
 func (r *repozytoriumWarstwAgenta) UsunWtyczke(ctx context.Context,
 	kodAgenta, kodWtyczki string) (bool, error) {
 
@@ -159,7 +142,7 @@ func (r *repozytoriumWarstwAgenta) Wtyczki(ctx context.Context, kodAgenta string
 	return zebrane, nil
 }
 
-// odczytajWtyczke składa strukturę z jednego wiersza wyniku.
+// odczytajWtyczke składa strukturę wtyczki eksperta wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajWtyczke(wiersz skaner) (WtyczkaAgenta, error) {
 	var wpis WtyczkaAgenta
 	var zrodlo, wersja sql.NullString
@@ -188,11 +171,7 @@ func nowyKodWtyczki() string {
 	return przedrostekWtyczki + strconv.FormatUint(kolejny, 36) + "-" + hex.EncodeToString(losowe)
 }
 
-// WtyczkiWszystkich oddaje wtyczki wszystkich ekspertów jednym zapytaniem.
-//
-// Powód ten sam co przy `WarstwyWszystkich`: wykaz ekspertów potrzebuje wtyczek
-// każdej pozycji, a pytanie po jednym daje tyle zapytań, ilu ekspertów.
-// Ekspert bez wtyczek nie dostaje wpisu — brak wtyczek jest stanem poprawnym.
+// WtyczkiWszystkich oddaje wtyczki wszystkich ekspertów jednym zapytaniem, tą samą drogą co WarstwyWszystkich; ekspert bez wtyczek nie dostaje wpisu.
 func (r *repozytoriumWarstwAgenta) WtyczkiWszystkich(
 	ctx context.Context,
 ) (map[string][]WtyczkaAgenta, error) {

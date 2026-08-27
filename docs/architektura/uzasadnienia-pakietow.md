@@ -4181,3 +4181,17 @@ nazwie; kolejność kontraktu zostaje tam, gdzie ma znaczenie — wewnątrz wyka
 pozycji.
 ## budowa/server/internal/dane/przegladarka_zestawy.go
 Skład zestawu i wątku nie jest osobną kolumną: źródło wskazuje swój zestaw kolumną grupującą, notatka swój wątek kolumną wątku, więc skład jest zapytaniem po tej kolumnie. Druga lista, czyli osobny wykaz identyfikatorów zapisany przy zestawie, rozjechałaby się z pierwszą przy pierwszym usunięciu źródła, a rozjazd nie byłby widoczny, bo obie listy wyglądałyby wiarygodnie.
+
+## budowa/server/internal/dane/agent_wtyczki.go
+
+Wtyczka nie jest konektorem. Konektor jest drogą do usługi: wskazuje most z katalogu punktów
+dostępu, z którego rdzeń składa listę serwerów MCP podawaną przełącznikiem konfiguracji.
+Wtyczka jest katalogiem rozszerzeń powłoki — nie ma adresu ani poświadczenia, ma nazwę,
+źródło i wersję, a program dostaje ją osobnym przełącznikiem katalogu wtyczek. Stąd osobna
+tabela i osobne wejście repozytorium dla obu pojęć.
+
+Kod wtyczki nadaje repozytorium, w odróżnieniu od konektora, któremu kod nadaje wołający,
+ponieważ struktura konektora wchodzi w całości od wołającego, a wejście wtyczki bierze
+wyłącznie nazwę, źródło i wersję. Kod składa się dokładnie tak samo jak dla konektora:
+przedrostek, licznik w podstawie trzydziestej szóstej i ośmiobajtowa część losowa ze źródła
+kryptograficznego.

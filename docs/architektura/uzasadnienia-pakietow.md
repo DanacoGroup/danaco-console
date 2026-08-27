@@ -4712,3 +4712,18 @@ pusty, żeby wyszukanie binarium nie miało czego znaleźć; obok binarium
 sprawdzianu, które stoi w katalogu tymczasowym budowania, serwera narzędzi
 też nie ma. Gdyby mimo to Wpis oddał ścieżkę, sprawdzian pada zamiast przejść:
 odmowy, której nie było, nie wolno uznać za odmowę zbadaną.
+
+## budowa/server/internal/narzedzia/wykaz.go
+Ani jedna nazwa narzędzia, ani jeden opis, ani jedno pole schematu nie są
+zapisane w tym pakiecie: wszystko czyta się z funkcjami i odwzorowaniem
+wytworzonymi z kontraktu. Dopisanie komendy do sekcji narzędzi kontraktu
+powiększa ten serwer bez zmiany choćby jednej linii kodu, i tak samo działa
+w drugą stronę: wykreślenie komendy odbiera modelowi narzędzie. Drugiego
+wykazu nie ma z zamysłem — wykaz własny rozjechałby się z kontraktem, gdy
+tylko kontrakt urośnie.
+
+Grupa narzędzia jest polem danych, bo te same grupy są potem gałęziami
+drzewa wyboru u Operatora i jednostką doboru narzędzi eksperta.
+
+Zasięg okna roboczego w WykazZasiegu oddaje sam wykaz kontraktu, bez
+dokładania pozycji roli.

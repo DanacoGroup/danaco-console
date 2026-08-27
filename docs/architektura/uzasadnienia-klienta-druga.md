@@ -2200,3 +2200,15 @@ Bilans czynności masowej jest sednem uczciwości tego odcinka: zamiana
 w całym dokumencie, która trafiła w blokadę, wykonuje się poza blokadą i musi
 nazwać, którą. Przemilczenie pominięcia jest zakazane, ponieważ liczba
 zmienionych miejsc równa zero bez słowa wyglądałaby jak wykonana czynność.
+
+## budowa/klient-poprzedni/src/powloka/most-katalogow.ts
+
+Most do natywnego okna wyboru katalogu jest jedynym konsumentem polecenia powłoki
+wybierz_katalog_roboczy. Okno systemu operacyjnego zwraca ścieżkę istniejącą i
+rozwiniętą, czego samo pole tekstowe nie zapewnia. Katalog wskazuje się w dwóch
+sprawach — katalog roboczy modelu oraz zakres wglądu modelu, czyli punkt dostępu
+rodzaju katalogu lokalnego — ale czynność systemu jest w obu ta sama, więc okno
+jest jedno, a sprawa zmienia wyłącznie napis w belce okna. Poza powłoką natywną
+wskazanie wraca wartością pustą tak samo jak rezygnacja z wyboru, a widok
+zostawia drogę wpisania ścieżki ręcznie. Żadna ścieżka wykonania nie rzuca
+wyjątkiem i nie odrzuca obietnicy.

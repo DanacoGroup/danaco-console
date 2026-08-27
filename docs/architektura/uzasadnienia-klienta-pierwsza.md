@@ -6413,3 +6413,25 @@ Zdania o powodzie braku obsługi nie ma tutaj ani jednego. Powód rozstrzyga si�
 
 ## budowa/klient-poprzedni/src/moduly/agents/panel-doradcy.ts
 Treść rady stoi pod etykietą rady i nie trafia do pola instrukcji eksperta sama z siebie — przeniesienie jest osobnym kliknięciem i niesie nagłówek prowenancji. Wybierany jest kanał, nie nazwa modelu: rejestr kanałów jest jedynym miejscem, w którym rdzeń wie, czym się połączyć i czyim poświadczeniem; wykaz obejmuje kanały czynne poza kanałem bazowym eksperta. Powód nie odbiera przycisku i nie może tego robić, bo platforma nie stawia bram, a niegotowość sygnalizuje się po naciśnięciu komunikatem albo opisem obok kontrolki — przycisk wygaszony zabierałby Operatorowi jedyną drogę dowiedzenia się, czego brakuje, skoro tytuł bywa niedostępny z klawiatury i milczy na urządzeniu dotykowym.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — ścieżka rysunku modelu
+Rysunek idzie jako URI danych, rdzeń materializuje go do pliku na własnym nośniku i podaje modelowi ścieżkę w treści zapytania, wraz z prośbą o sięgnięcie po nią narzędziem odczytu. Obrazu wklejonego w wiadomość model nie dostaje — kanał wywołania nie ma na to pola — więc zobaczy rysunek dopiero po otwarciu pliku.
+
+## budowa/klient-poprzedni/src/moduly/library/magazyn-biblioteki.ts
+Ster modułu docelowego stoi w dwóch oknach: w przeglądarce biblioteki jako
+czynność zbiorcza otwarcia w module źródłowym, i w podglądzie pliku jako ta
+sama czynność dla pojedynczego pliku. Wspólne pole trzyma oba okna zgodne,
+bo osobne pola pokazywałyby po zmianie dwie różne wartości. Werdykty rdzenia
+o treści plików stoją osobno od zbioru, ponieważ nie są polem kontraktu:
+plik nie niesie żadnej wartości mówiącej, czy repozytorium ma jego treść.
+Werdykt o treści znika wraz ze zmianą pliku, ponieważ dołożenie wersji,
+przywrócenie wcześniejszej i zdarzenie zmiany pliku z innego modułu
+zmieniają dokument, więc poprzednia odpowiedź rdzenia przestaje go opisywać,
+a stan nieznana jest tu bezpieczniejszy niż nieaktualna pewność. Z tego
+samego powodu znika trafienie wskaźnika znaczenia, bo fragment pochodzi
+z treści sprzed zmiany. Zawężenie wskazujące skasowany plik przestałoby
+zgadzać się z wykazem: licznik zbioru mówiłby o pozycji, której rdzeń już
+nie zna.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — wpis adnotacji w wytworach sesji
+Czynność „Dodaj do rozmowy" daje dwie rzeczy naraz: załącznik rozmowy oraz wpis w wytworach sesji. Pierwszą niesie komenda wysyłania wiadomości polem załączników, drugą komenda dodania wytworu — obie komendy kontrakt ma, więc okno pyta o ich pokrycie w rdzeniu, zamiast orzekać o braku.

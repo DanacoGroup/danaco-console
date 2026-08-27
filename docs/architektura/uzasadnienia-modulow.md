@@ -1305,3 +1305,24 @@ prowadzi się terminologię poza rdzeniem.
 Pełny standard TMX niesie nadto nagłówek z metrykami narzędzia i notami;
 rdzeń przy zapisie wypisuje nagłówek minimalny, a przy odczycie nie wymaga
 niczego ponad jednostkę tłumaczeniową, bo tyle właśnie niesie para pamięci.
+
+## budowa/server/internal/core/adapter_modul_badania_odkrycia.go
+
+Każda pozycja zwrócona przez dostawcę ląduje w bazie pod swoim kluczem: bez
+tego odrzucenie pozycji nie miałoby czego odrzucić, a liczniki diagramu
+PRISMA byłyby liczbami wymyślonymi w chwili odpytania. Zapamiętanie znaczy
+też, że pozycja już dodana do źródeł jest przy powtórnym wyszukaniu
+oznaczona identyfikatorem źródła, zamiast wchodzić drugi raz jako nowa.
+
+Wyszukiwanie chodzi po kilku dostawcach naraz. Milczenie jednego z nich
+wchodzi do wykazu dostawców, które zawiodły, a pozostali oddają swoje
+trafienia — odmowa całości przez jeden zerwany strumień byłaby karą za
+cudzą awarię.
+
+Wybór dostawców wyszukiwania: wskazanie wprost ma pierwszeństwo — Operator,
+który wskazał dostawcę, dostaje jego wyniki, nie zestaw domyślny obok nich.
+
+Partia importu wsadowego dostaje własny identyfikator, który wchodzi w pole
+pochodzenia każdego źródła z niej pozyskanego. Dzięki temu identyfikator
+partii w odpowiedzi jest wskazaniem, po którym da się odnaleźć skutek
+partii w bazie, nie numerem zadania, które nigdzie nie stoi.

@@ -4528,3 +4528,9 @@ Historia rozmowy w spisie Apps nie ma odpowiednika w Roundtable, bo tamten
 moduł prowadzi debatę wielu modeli w jednym oknie i pokazuje obok rozmowy
 jej przebieg, nie drugi komplet okien operacyjnych — historia dotyczy
 tego samego okna i niesie zapis trwały, którego przebieg debaty nie niesie.
+
+## budowa/klient-poprzedni/src/strona-glowna/zrodlo-sesji.ts
+Rozłączenie klienta nie kończy sesji ani procesów, więc strona główna musi wiedzieć, że sesja żyje i gdzie
+żyje. Odpis żywego stanu niesie środowisko, moduł i liczbę okien — sekcja nie wymyśla ani jednej liczby,
+pokazuje wyłącznie to, co oddał rdzeń. Odmowa albo odpowiedź o złym kształcie daje stan błędu z treścią
+odmowy, a nie pusty widok udający brak sesji.

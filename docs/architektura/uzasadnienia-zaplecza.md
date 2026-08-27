@@ -3039,3 +3039,14 @@ w jednym kroku.
 
 ## budowa/desktop/src-tauri/src/rdzen/nasluch.rs
 Rdzeń stoi na serwerze wdrożenia, a nie na urządzeniu Operatora, więc pytanie o łączność idzie zawsze pod wskazany serwer, nigdy pod pętlę zwrotną — pętla zwrotna dawałaby odpowiedź fałszywą niezależnie od rzeczywistego stanu rdzenia.
+## budowa/server/internal/store/migracja_195_roundtable_ocena.sql
+Migracja 195 — ocena Operatora, rubryki oceny i werdykty modeli-sędziów.
+
+Ocena Operatora i werdykt sędziego są osobnymi bytami, choć obie „oceniają".
+Różnią się autorem i skutkiem: ocena Operatora wchodzi do rankingu jako
+pojedynek rozstrzygnięty ręcznie, werdykt sędziego niesie punkty w kryteriach
+rubryki i uzasadnienie wypowiedziane przez model.
+
+Rubryka bywa wspólna dla platformy albo związana z jednym oknem. Okno puste
+znaczy rubrykę wspólną — `roundtable.rubric.list` bez wskazania okna oddaje
+wtedy same wspólne, a ze wskazaniem wspólne i te jednego okna.

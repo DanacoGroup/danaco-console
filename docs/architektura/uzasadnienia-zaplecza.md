@@ -3157,3 +3157,34 @@ Motyw jest surowym JSON-em kontraktu (`apps.theme.set` przyjmuje pole `json`,
 `apps.theme.get` oddaje je z powrotem). Rdzeń go nie rozkłada na zmienne
 stylistyczne: kształt motywu należy do systemu wizualnego produktu, nie do
 platformy, a rozłożenie go tutaj byłoby drugą prawdą o cudzym kształcie.
+## budowa/server/internal/store/migracja_208_rozszerzenia_protokol.sql
+Migracja 208 — rodzina `extension.*`, warstwa protokołu: narzędzia odkryte
+u integracji, dziennik ramek JSON-RPC, wywołania wraz z ich czasem oraz
+wyniki sprawdzeń kondycji.
+
+NARZĘDZIE JEST WIERSZEM, BO ODKRYCIE MA PRZEŻYĆ ODPOWIEDŹ. `extension.tool.list`
+ma pole `refresh`: bez niego oddaje to, co odkryto wcześniej, z nim — pyta
+serwer na nowo. Wykaz trzymany wyłącznie w pamięci znikałby przy restarcie
+rdzenia i pierwsze otwarcie konsoli po starcie zawsze musiałoby czekać na
+handshake, także wtedy, gdy serwer akurat nie odpowiada.
+
+TRZY WYKAZY PROTOKOŁU MCP W JEDNEJ TABELI. `ExtensionToolKind` niesie `tool`,
+`resource` i `prompt` — trzy wykazy `tools/list`, `resources/list`,
+`prompts/list` — a kształt wpisu jest dla nich wspólny (nazwa, opis, schemat
+wejścia, adres). Trzy tabele o tych samych kolumnach byłyby trzema prawdami
+o jednym bycie.
+
+RAMKA PROTOKOŁU JEST DZIENNIKIEM DIAGNOSTYCZNYM, NIE STANEM POŁĄCZENIA.
+`extension.protocol.log.list` czyta ją przy diagnozie błędu integracji; wiersz
+powstaje przy każdym wywołaniu narzędzia i przy każdym powitaniu, po jednym
+na kierunek, z korelacją żądania z odpowiedzią.
+
+WYWOŁANIE MA WIERSZ, BO METRYKA UŻYCIA MUSI SIĘ Z CZEGOŚ LICZYĆ.
+`extension.usage.get` oddaje liczbę wywołań, liczbę niepowodzeń i średni czas
+odpowiedzi w oknie czasu — żadnej z tych trzech wartości nie da się policzyć
+z licznika nadpisywanego w miejscu. `extension.audit.list` czyta te same
+wiersze od strony eksperta, który wywołania dokonał.
+
+KONDYCJA JEST DZIENNIKIEM SPRAWDZEŃ. `extension.health.check` dopisuje wynik
+każdego sprawdzenia; panel zdrowia Integrations Hub pokazuje najnowszy, a
+historia zostaje, bo z niej widać, kiedy integracja zaczęła się psuć.

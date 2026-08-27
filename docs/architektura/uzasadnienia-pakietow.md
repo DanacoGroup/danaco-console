@@ -5292,3 +5292,41 @@ walidacji w rdzeniu. Więzy pilnowane przez sam schemat, czyli pętla własna
 i rodzaj spoza wartości kontraktu, wracają stąd jako błąd zapisu.
 ## budowa/server/internal/dane/rozmowa_lancuch.go
 Reguła całego pliku: brakujące ogniwo łańcucha zakładamy albo zastępujemy najbliższym sensownym, zamiast odmawiać zapisu z powodu braku konfiguracji; odmowa zostaje wyłącznie tam, gdzie nie ma z czego zbudować wiersza. Moduł zastępczy jest jedynym modułem widocznym we wszystkich środowiskach udostępniających moduły, więc zastępstwo nie wprowadza okna do środowiska, w którym nie może się pojawić. Sesja istniejąca wraca bez zmian, bo czynność zapewnienia sesji jest idempotentna: karta sesji i środowisko powstają tą samą drogą co przy utrwalaniu rozmowy, osobnego łańcucha tu nie ma.
+
+## budowa/server/internal/store/zrodlo_migracji.go
+
+Wykaz plików migracji w tym katalogu niesie mniej plików, niż wskazuje najwyższy numer. Wolne numery
+nie oznaczają kroku usuniętego ani zgubionego: powstają przy pracy równoległej, gdy numer zarezerwowany
+z góry dla kroku, który ostatecznie nie wszedł, zostaje pusty. Numeru zwolnionego nie wolno użyć
+powtórnie, ponieważ bazy założone wcześniej mają już wyższą wersję schematu i krok wstawiony w lukę
+nigdy by się na nich nie wykonał.
+
+Od numeracji naprawdę wymagane są trzy własności. Jednoznaczność: dwa pliki o tym samym numerze są
+awarią startu, bo rejestr migracji ma na kolumnie wersja warunek unikalności, więc drugi krok wykonałby
+swój schemat, ale nie zostałby odnotowany. Porządek rosnący: kroki stosuje się po numerze rosnąco, więc
+kolejność plików w katalogu nie ma znaczenia. Niezmienność treści: suma kontrolna kroku już zastosowanego
+musi się zgadzać przy każdym kolejnym uruchomieniu migracji. Ciągłość numeracji nie jest wymagana.
+
+## budowa/server/internal/podagenci/narzedzia_modelu.go
+Wykaz narzędzi modelu powstaje wyłącznie z sekcji pozycji narzędzi kontraktu,
+z której generator wytwarza odwzorowanie nazw i komend narzędzi. Serwer
+narzędzi czyta ten jeden wykaz: dopisanie komendy do sekcji narzędzi kontraktu
+powiększa ten serwer bez zmiany choćby jednej linii kodu. Wpis danaco
+w konfiguracji MCP okna powstaje osobno dla każdego okna, z jego
+identyfikatorem.
+
+Wynikają z tego dwie rzeczy. Nie ma drugiego miejsca rejestracji narzędzia:
+jedyną drogą jest pozycja w sekcji narzędzi kontraktu, a plik kontraktu jest
+plikiem zakazanym dla tego pakietu, więc dopisanie pozycji idzie zgłoszeniem
+wpięcia, którego dokładną treść niesie PozycjeWpiecia. Budowanie tu własnego
+wykazu narzędzi byłoby drugą prawdą o wykazie, dlatego ten plik wyłącznie
+czyta odwzorowanie komend narzędzi i odpowiada, czy komendy rodziny
+subagent.* już w nim są.
+
+Nazwa spoza wykazu nie znika po cichu: granica uprawnień modelu oddaje
+modelowi czytelną odmowę, że komenda stoi poza wykazem narzędzi, i przesuwa
+się w chwili, w której przesunie ją kontrakt.
+
+Zdania zastosowania w PozycjeWpiecia mówią modelowi, kiedy sięgnąć po
+narzędzie, wzorem pozycji istniejących: powołanie oznacza, że podagent jest
+zadaniem w tle pod oknem wykonawcy, powoływanym w trakcie tury.

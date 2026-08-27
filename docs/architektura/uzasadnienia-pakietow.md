@@ -5765,3 +5765,31 @@ RozstrzygnijSugestie: sugestia już rozstrzygnięta nie liczy się po raz drugi 
 zapytania pilnuje tego zamiast wołającego.
 ## budowa/server/internal/dane/slownik_wymiana.go
 Tabele są dwie, bo import i eksport to różne kierunki z różną kolumną wyniku; wspólna tabela byłaby dwiema prawdami o jednym bycie. Ślad eksportu nie niesie dowodu powstania pliku: rdzeń nie ma magazynu blobów, a kontrakt oddaje wyłącznie liczbę wyeksportowanych pozycji, bez identyfikatora pliku ani rozmiaru, więc pole ścieżki niesie ścieżkę żądaną przy wywołaniu, nie ścieżkę wyniku eksportu.
+
+## budowa/server/internal/protocol/tozsamosc_zadania.go
+Kontrakt stanowi, że odpowiedź i fragmenty strumienia powtarzają identyfikator
+zadania: koperta fragmentu ma nieść ten sam identyfikator, co koperta żądania,
+które turę otworzyło. Nadawca strumienia jednak żądania nie widzi, obsługiwacz
+komendy dostaje wyłącznie rozpakowany ładunek, a identyfikator zostaje
+w żądaniu; bez tego wpisu w kontekście fragmenty tury i odpowiedź niosłyby
+różne identyfikatory.
+
+Kontekst niesie tożsamość żądania zamiast nowego parametru, bo droga
+alternatywna to poszerzenie podpisu każdej czynności domenowej o identyfikator
+żądania — sto z górą podpisów zmienionych po to, by kilka z nich go użyło.
+Kontekst niesie już zasięg wykonania i odwołanie tury, więc tożsamość żądania
+jest tu bytem tej samej klasy i wchodzi jednym wpisem, wspólnym dla wszystkich
+komend.
+
+Klucz wpisu jest typem prywatnym, żeby wykluczyć kolizję z kluczem innego
+pakietu: nikt spoza tego pakietu nie ma jak zapisać ani nadpisać tego wpisu
+inaczej niż funkcją tego pliku.
+
+Brak wpisu nie jest błędem: tura powołana poza drogą komendy nie ma żądania
+i dostaje napis pusty, a wywołujący podstawia wtedy własną tożsamość
+zastępczą i mówi o tym wprost, zamiast udawać żądanie, którego nie było.
+
+TozsamoscStrumienia istnieje po to, żeby to rozstrzygnięcie stało w jednym
+miejscu: gdyby każdy nadawca strumienia wybierał sam, obietnica jednego
+identyfikatora przez cały strumień byłaby powtarzana w kilku plikach,
+a obietnica powtórzona to obietnica, którą któryś z nich kiedyś złamie.

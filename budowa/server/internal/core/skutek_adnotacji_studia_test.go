@@ -1,3 +1,4 @@
+// Skutek modułu Studio: czy decyzja redakcyjna coś zmienia; każdy sprawdzian porównuje treść dokumentu przed decyzją i po niej, odczytaną osobnym wywołaniem.
 package core
 
 import (
@@ -8,16 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Studio: czy decyzja redakcyjna coś ZMIENIA.
-//
-// Szkoda, którą ten plik ma wykluczyć: decyzja bez skutku. Przyjęcie zmiany
-// śledzonej albo propozycji, które przestawia sam znacznik wiersza i zostawia
-// treść dokumentu nietkniętą, wraca kopertą `ok` i wygląda jak praca wykonana —
-// a Operator po otwarciu dokumentu widzi tekst sprzed decyzji. Dlatego każdy
-// sprawdzian tego pliku porównuje TREŚĆ dokumentu przed decyzją i po niej,
-// a dokument odczytuje osobnym wywołaniem.
-
-// dokumentZTrescia zakłada dokument o zadanej treści i oddaje jego opis.
+// dokumentZTrescia zakłada dokument o zadanej treści i oddaje jego opis, gotowy do decyzji redakcyjnych.
 func dokumentZTrescia(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno, tresc string) shared.StudioDocument {
 	t.Helper()
@@ -165,9 +157,7 @@ func TestDecyzjaOPropozycjiZmieniaTrescDokumentu(t *testing.T) {
 	po := "Strony ustalają zakres współpracy."
 	dokument := dokumentZTrescia(t, zmontowany, zycie, "okno-1", przed)
 
-	// Propozycja pochodzi z operacji kontekstowej; bez kanału modelu nie ma jej
-	// skąd wziąć, więc rodzina decyzji sprawdza się na propozycji nieistniejącej
-	// i na odrzuceniu — obie ścieżki są w całości po stronie rdzenia.
+	// Propozycja pochodzi z operacji kontekstowej; sprawdza się na propozycji nieistniejącej.
 	odpowiedz := wykonajKomende(t, zmontowany, zycie, shared.CommandStudioProposalDecide,
 		shared.StudioProposalDecideRequest{
 			DocumentId: dokument.Id, ProposalId: "studio-prop-nie-ma", Accept: true,
@@ -179,8 +169,7 @@ func TestDecyzjaOPropozycjiZmieniaTrescDokumentu(t *testing.T) {
 		t.Errorf("odmowa niesie kod %q, oczekiwano %q", odpowiedz.Error.Code, shared.ErrorCodeNotFound)
 	}
 
-	// Odrzucenie propozycji nieistniejącej też ma odmówić: rdzeń nie może
-	// meldować „odrzucono" bytu, którego nie widział.
+	// Odrzucenie propozycji nieistniejącej ma odmówić: rdzeń nie melduje bytu, którego nie widział.
 	odpowiedz = wykonajKomende(t, zmontowany, zycie, shared.CommandStudioProposalDecide,
 		shared.StudioProposalDecideRequest{
 			DocumentId: dokument.Id, ProposalId: "studio-prop-nie-ma", Accept: false,

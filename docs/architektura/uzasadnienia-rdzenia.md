@@ -3459,3 +3459,88 @@ odczyt zespołu okrawa skład z ekspertów zarchiwizowanych i usuniętych, więc
 ich z powrotem — tak samo jak kopia zespołu (`Skopiuj`) — dzięki czemu
 wracają do składu po przywróceniu do biblioteki, a ekspert widoczny
 i wypisany ze składu wypada normalnie.
+
+## budowa/server/internal/core/zapora_procesow_rdzenia_test.go
+
+Zapora procesów CAŁEGO rdzenia — trzecia po zaporze warsztatu dokumentu
+(`zapora_warsztatu_pdf_test.go`) i zaporze fotografii
+(`zapora_fotografii_test.go`), i pierwsza, która nie ogranicza się do jednego
+obszaru.
+
+Dlaczego powstała i czego nie powtarza: dwie starsze zapory zabraniają procesu
+w swoich obszarach, bo tam każdą pracę wykonuje w całości biblioteka Go. Tej
+reguły nie da się rozciągnąć na rdzeń bez kłamstwa: rozpoznanie pisma, archiwa,
+mowa, nagrania i silniki neuronowe nie mają biblioteki czysto-Go, więc ich
+programy są składnikiem pakietu serwera i wolno je wołać. Granicą nie jest
+„proces czy biblioteka", a: 1. czy program jest wołany JEDYNĄ dozwoloną drogą
+(`zewnetrzne.Wolaj`), która sprawdza obecność, obejmuje drzewo procesów
+i odmawia zdaniem nazywającym brak — a nie własnym `exec.Command`, który
+żadnej z tych rzeczy nie robi; 2. czy pakiet serwera ten program NIESIE, czyli
+czy stoi w wykazie zależności (`zaleznosci_zewnetrzne.go`). Program wołany bez
+wpisu w wykazie to cichy wymóg wobec wdrożenia: u Operatora funkcja odmawia,
+a przy starcie nikt nie powiedział, czego brakuje. Trzecia rzecz, której
+zapora pilnuje, jest odwrotna do dwóch pierwszych: rachunek, który JUŻ jest
+wkompilowany, nie ma prawa wrócić do procesu. Cztery czynności obrazu modelu
+(`image.inspect`, `image.transform`, `image.adjust`, `image.convert`) liczyły
+się kiedyś programem, choć biblioteka wystarcza — i właśnie dlatego ta zapora
+wymienia ich pliki po nazwie.
+
+plikiWlasnegoExecuUzasadnione: klucz jest ścieżką liczoną od `internal/`, bo
+zapora obejmuje cały ten katalog, a sama nazwa pliku nie mówi, w którym
+pakiecie wywołanie stoi. Wykaz jest ZAMKNIĘTY: dopisanie do niego pliku wymaga
+powodu tej samej wagi, co pozycje poniżej, i jest zmianą rozstrzygnięcia, nie
+porządkowaniem listy. `core/adapter_modul_extension_protokol.go`
+i `core/adapter_modul_extension_integracje.go` uruchamiają program WSKAZANY
+PRZEZ ROZSZERZENIE, a nie program produktu. `zewnetrzne.Wolaj` sprawdza
+obecność narzędzia z deklaracji rdzenia — tu deklaracji nie ma, bo program
+przychodzi z manifestu rozszerzenia. `core/adapter_modul_developer_narzedzia.go`
+pyta narzędzie o jego własną wersję ścieżką już rozwiązaną; to sonda obecności,
+nie czynność Operatora. `injection/rozruch.go` JEST drogą, do której zapora
+odsyła: `zewnetrzne.Wolaj` idzie portem `session.Uruchamiacz`, a ten port
+kończy się tutaj. Pozycja nie jest wyjątkiem od reguły, tylko jej dnem — bez
+niej reguła nie ma się o co oprzeć, a `zewnetrzne/wolanie.go` nazywa ten plik
+jedynym `exec.Command` w drzewie. `zdalne/pliki.go` przenosi plik programem
+`scp` i nie ma dziś drzwi, przez które mógłby przejść. Arsenał
+(`zewnetrzne.Wolaj`) zbiera całe wyjście do pamięci pod obowiązkową granicą
+czasu — przenosiny pliku dowolnego rozmiaru nie mają uczciwej granicy, a ich
+wyjście nie jest wynikiem do zebrania. Spawner platformy stoi po stronie
+kanału, a zależność biegnie od kanału do toru i nigdy odwrotnie
+(`zdalne/polecenie.go`), więc pakiet `zdalne` go nie zaimportuje. Pozycja stoi
+tu po to, żeby brak drzwi był widoczny zamiast niewidoczny — nagłówek
+`zdalne/zdalne.go` głosi, że pakiet procesów nie uruchamia, a ten plik je
+uruchamia.
+
+TestCzteryCzynnosciObrazuLiczaSieWkompilowane: mierzy dwie rzeczy naraz, że
+wołanie programu stoi wyłącznie w dwóch funkcjach drogi zapasowej i że każda
+z czterech czynności przechodzi przez rachunek wkompilowany. Sprawdzian liczy
+funkcje, a nie samą liczbę wystąpień, bo trzecie wołanie dopisane do
+istniejącej funkcji jest tą samą szkodą.
+
+korzenZapory: reguła jednej drogi do procesu jest regułą rdzenia, a nie regułą
+jednego pakietu: wywołanie przeniesione o katalog dalej wychodzi spod niej,
+choć szkodę robi tę samą. Zapora czytająca własny katalog nie widziałaby ani
+przenosin plików torem zdalnym, ani żadnego następnego wywołania spoza tego
+katalogu.
+
+TestRdzenUruchamiaProcesyJednaDroga: własny `exec.Command` pomija trzy rzeczy
+naraz: sprawdzenie obecności programu, bramę izolacji okna i objęcie drzewa
+procesów. Pierwsza zamienia brak programu w niezrozumiały błąd zamiast zdania
+nazywającego brak, druga wypuszcza czynność poza zasięg okna, trzecia zostawia
+sieroty po granicy czasu.
+
+TestProgramyRdzeniaStojaWWykazieZaleznosci: to jest właściwa miara gotowości
+funkcji opartej o program: nie „czy w kodzie jest exec", a „czy pakiet serwera
+to niesie i czy Operator dowie się o braku przy starcie". Program wołany bez
+wpisu w wykazie jest cichym wymogiem wobec wdrożenia — na maszynie
+deweloperskiej, gdzie ktoś doinstalował go ręcznie, wygląda jak funkcja gotowa.
+
+## budowa/server/internal/core/skutek_adnotacji_studia_test.go
+
+Szkoda, którą ten plik ma wykluczyć: decyzja bez skutku. Przyjęcie zmiany
+śledzonej albo propozycji, które przestawia sam znacznik wiersza i zostawia
+treść dokumentu nietkniętą, wraca kopertą `ok` i wygląda jak praca wykonana —
+a Operator po otwarciu dokumentu widzi tekst sprzed decyzji.
+
+`trescDokumentu` odczytuje treść dokumentu osobnym wywołaniem — to jest
+miara właściwa, bo Operator otworzy dokument ponownie, a nie przeczyta
+odpowiedź.

@@ -24,3 +24,28 @@ Podpowiedź pola wykazu czynności bierze nazwę komendy z tych samych stałych
 kontraktu z tego samego powodu — napis wpisany wprost przeżyłby zmianę nazwy
 w kontrakcie i podpowiadałby Operatorowi komendę, której rdzeń już nie zna,
 a to podpowiedź jest tym, co Operator przepisuje do pola.
+
+## budowa/klient-poprzedni/src/moduly/design/katalog-funkcji-designu.ts
+
+Katalog istnieje po to, żeby stan modułu Design dało się przeczytać, a nie
+zgadnąć. Okno pokazuje czynności, które wykonuje; katalog pokazuje komplet
+zamierzonych pozycji i przy każdej mówi jedno z trojga: którą komendą
+kontraktu jest wykonywana, że wykonuje ją samo okno bez udziału rdzenia, albo
+czego brakuje, żeby była. Pozycja bez drogi nie znika z wykazu, ponieważ
+zniknięcie byłoby ukryciem braku.
+
+Trzeci stan jest konieczny, bo dwa nie oddają prawdy o tym module. Kanwa,
+wyrównanie warstw, siatka pomocnicza, drzewo żetonów i rachunek kontrastu
+dzieją się w całości w przeglądarce i komend nie potrzebują; nazwanie ich
+brakiem kontraktu byłoby zmyśleniem długu, a nazwanie komendą — zmyśleniem
+drogi wykonania, której nie ma.
+
+Nazwy pozycji i podział na grupy nie są tłumaczone ani parafrazowane w żadnym
+miejscu, które je wyświetla — pozycję odnajduje się po pełnej nazwie własnej.
+
+Liczba pozycji katalogu nie jest zapisana nigdzie na stałe jako osobna
+wartość, tylko liczona z wykazu funkcją length w miejscu użycia, żeby napis
+nie mógł rozjechać się z rzeczywistą zawartością wykazu, który stoi obok.
+
+Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji modułu
+Design buduje z niego listę do wyświetlenia.

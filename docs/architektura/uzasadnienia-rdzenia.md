@@ -5259,3 +5259,12 @@ układu pętli.
 ## budowa/server/internal/core/handlers_queue.go
 Działanie „powtórz" nie ma limitu obiegów. Rdzeń nie zlicza prób i nie odmawia po którejś z kolei —
 przerwanie należy do użytkownika.
+
+## budowa/server/internal/core/handlers_queue_wiazania.go
+Zdarzenie rozgłasza wyłącznie wiązanie kolejki. Wiązanie zmienia kolejkę, więc idzie tym samym
+zdarzeniem zmiany kolejki, co założenie i działanie — rodzajem zmiany „zaktualizowano". Wykaz
+niczego nie zmienia i niczego nie rozgłasza; rozgłoszony jako zmiana byłby zdarzeniem bez faktu.
+
+Port kolejek bez tych dwóch czynności to co innego: kolejki są, a rdzeń nie umie ich oddać. Wtedy
+komendy zostają wpięte i odmawiają wprost błędem wewnętrznym, bo odpowiedź nieznanej komendy
+wskazywałaby na brak kolejek, a nie na usterkę montażu.

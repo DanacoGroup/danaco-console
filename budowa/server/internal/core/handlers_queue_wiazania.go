@@ -1,13 +1,5 @@
-// Wpięcie dwóch komend rodziny `queue.*` — `queue.list` i `queue.link`.
-//
-// Osobno od `handlers_queue.go`, który wpina `queue.create` i `queue.action`
-// przez port `Kolejki`. Port poniżej jest rozszerzeniem portu `Kolejki`, nie
-// drugim portem: silnik kolejek pętli sesyjnej i MultitaskingAI jest jeden.
-//
-// Zdarzenie rozgłasza wyłącznie `queue.link`. Wiązanie zmienia kolejkę, więc
-// idzie tym samym `queue.changed`, co założenie i działanie — rodzajem zmiany
-// `updated`. `queue.list` niczego nie zmienia i niczego nie rozgłasza; wykaz
-// rozgłoszony jako zmiana byłby zdarzeniem bez faktu.
+// Plik wpina dwie komendy rodziny queue.* — wykaz i wiązanie kolejek — jako rozszerzenie portu
+// Kolejki, bo silnik kolejek pętli sesyjnej i MultitaskingAI jest jeden.
 package core
 
 import (
@@ -27,13 +19,8 @@ type wiazaneKolejki interface {
 	Zwiaz(ctx context.Context, z shared.QueueLinkRequest) (shared.QueueLinkResponse, error)
 }
 
-// zarejestrujWiazaniaKolejek wpina `queue.list` i `queue.link`.
-//
-// Brak portu kolejek zostawia obie komendy nieznane — tak samo jak każdą inną
-// domenę bez portu. Port kolejek bez tych dwóch czynności to co innego:
-// kolejki są, a rdzeń nie umie ich oddać. Wtedy komendy zostają wpięte
-// i odmawiają wprost kodem `internal_error`, bo odpowiedź „nieznana komenda"
-// wskazywałaby na brak kolejek, a nie na usterkę montażu.
+// zarejestrujWiazaniaKolejek wpina komendy wykazu i wiązania kolejek. Brak portu kolejek zostawia
+// obie komendy nieznane, tak samo jak każdą inną domenę bez portu.
 func zarejestrujWiazaniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 	if r == nil || kolejki == nil {
 		return
@@ -56,7 +43,7 @@ func zarejestrujWiazaniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 		}))
 }
 
-// zarejestrujOdmoweWiazanKolejek wpina obie komendy jako odmowę montażu.
+// zarejestrujOdmoweWiazanKolejek wpina obie komendy rodziny queue.* jako odmowę usterki montażu rdzenia.
 func zarejestrujOdmoweWiazanKolejek(r *Rejestr) {
 	const powod = "kolejki: port kolejek nie niesie wykazu ani wiązania kolejki"
 

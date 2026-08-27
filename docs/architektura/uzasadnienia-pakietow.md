@@ -5277,3 +5277,16 @@ Zero w miejscu automatyki w wykazie reguł alarmowania znaczy reguły wszystkich
 
 Zakres dat w audycie pusty znaczy brak zawężenia: znacznik pusty jest leksykograficznie
 mniejszy od każdego znacznika ISO, a górna granica pusta zdejmuje warunek jawnym porównaniem.
+
+## budowa/server/internal/dane/orchestration.go
+Podmiana całego układu zależności ma sens tam, gdzie generator oddaje pełną
+definicję automatyki naraz. Tu operacja obejmuje jeden łuk: podmiana
+kompletu przy dołożeniu pojedynczego łuku przepisywałaby pozostałe wiersze,
+gubiąc ich datę utworzenia, a dwa okna pracujące równocześnie kasowałyby
+sobie zmiany nawzajem. Obie drogi sięgają tych samych wierszy tej samej
+tabeli.
+
+Repozytorium nie ocenia układu: łuk do kroku nieistniejącego i łuk
+domykający cykl zapisują się tak samo jak każdy inny — ocena należy do
+walidacji w rdzeniu. Więzy pilnowane przez sam schemat, czyli pętla własna
+i rodzaj spoza wartości kontraktu, wracają stąd jako błąd zapisu.

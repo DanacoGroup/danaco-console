@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: graf argumentów debaty — węzły, krawędzie, katalog
-// błędów logicznych i oznaczenia postawione na węzłach
-// (`store/migracja_192_roundtable_graf.sql`).
-//
-// Graf jest trwały, bo oznaczenie węzła jako kluczowego stawia Operator
-// (`roundtable.argument.pin`). Oznaczenie postawione na węźle wyliczanym w locie
-// znikałoby przy następnym odczycie razem z identyfikatorem węzła.
-//
-// Ponowna analiza zastępuje graf tury, a nie dokłada się do niego: dwa przebiegi
-// wydobycia argumentów na tym samym zapisie dałyby każdy węzeł dwa razy.
-// Oznaczenia kluczowe przechodzą przez zastąpienie po treści węzła — patrz
-// `ZastapGrafDebaty`.
+// Plik zawiera graf argumentów debaty: węzły, krawędzie, katalog błędów logicznych oraz
+// oznaczenia postawione na węzłach. Uzasadnienie trwałości grafu i zachowania oznaczeń
+// niesie rozdział roundtable_graf.go dokumentacji architektury.
 package dane
 
 import (
@@ -19,7 +10,8 @@ import (
 	"fmt"
 )
 
-// WezelDebaty to jednostka argumentacyjna wydobyta z wypowiedzi.
+// WezelDebaty odwzorowuje jednostkę argumentacyjną wydobytą z wypowiedzi uczestnika
+// debaty, wraz z aktem mowy i poziomem poparcia.
 type WezelDebaty struct {
 	Kod       string
 	Okno      string
@@ -33,7 +25,8 @@ type WezelDebaty struct {
 	Utworzono string
 }
 
-// KrawedzDebaty to relacja między dwoma węzłami grafu.
+// KrawedzDebaty odwzorowuje relację między dwoma węzłami grafu argumentów wraz z jej
+// rodzajem i pewnością wykrycia.
 type KrawedzDebaty struct {
 	Kod           string
 	Okno          string
@@ -43,8 +36,8 @@ type KrawedzDebaty struct {
 	Pewnosc       float64
 }
 
-// DefinicjaBleduDebaty to pozycja katalogu błędów wraz z tym, czy okno ją
-// wykrywa.
+// DefinicjaBleduDebaty to pozycja katalogu błędów logicznych wraz z informacją, czy
+// okno debaty ją aktualnie wykrywa.
 type DefinicjaBleduDebaty struct {
 	Kod       string
 	Nazwa     string
@@ -52,7 +45,8 @@ type DefinicjaBleduDebaty struct {
 	Wykrywany bool
 }
 
-// OznaczenieBleduDebaty to błąd logiczny rozpoznany na węźle.
+// OznaczenieBleduDebaty odwzorowuje błąd logiczny rozpoznany na węźle grafu wraz
+// z uzasadnieniem i pewnością rozpoznania.
 type OznaczenieBleduDebaty struct {
 	Kod          string
 	Okno         string
@@ -140,12 +134,9 @@ const (
 	                           ON CONFLICT(okno, kod) DO NOTHING`
 )
 
-// ZastapGrafDebaty wymienia graf okna albo jednej tury w jednej transakcji.
-//
-// Oznaczenia kluczowe przechodzą przez zastąpienie: węzeł o tej samej treści,
-// który przed przebiegiem był kluczowy, zostaje kluczowy po nim. Bez tego każde
-// ponowne wydobycie argumentów kasowałoby wybór Operatora, a wybór jest jego,
-// nie analizy.
+// ZastapGrafDebaty wymienia graf okna albo jednej tury w jednej transakcji. Oznaczenia
+// kluczowe przechodzą przez zastąpienie po treści węzła, żeby ponowne wydobycie
+// argumentów nie kasowało wyboru operatora.
 func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tura string,
 	wezly []WezelDebaty, krawedzie []KrawedzDebaty) error {
 
@@ -161,8 +152,7 @@ func (r *repozytoriumRoundtable) ZastapGrafDebaty(ctx context.Context, okno, tur
 		if _, err := wyczysc.ExecContext(ctx, okno, tura, tura); err != nil {
 			return fmt.Errorf("dane: nie można wyczyścić grafu debaty okna %q: %w", okno, err)
 		}
-		// Krawędzie idą całym oknem, bo relacja łączy węzły z różnych tur
-		// i zawężenie do tury zostawiłoby krawędzie wskazujące węzły usunięte.
+		// Krawędzie idą całym oknem, bo relacja łączy węzły z różnych tur, nie tylko z jednej.
 		if tura == "" {
 			wyczyscKrawedzie, err := r.zapytania.wTransakcji(ctx, transakcja, usunKrawedzieDebaty)
 			if err != nil {
@@ -220,7 +210,8 @@ func (r *repozytoriumRoundtable) trescKluczowychDebaty(ctx context.Context,
 	return kluczowe, nil
 }
 
-// WezelDebatyPoKodzie zwraca jeden węzeł grafu.
+// WezelDebatyPoKodzie zwraca jeden węzeł grafu wskazany kodem zewnętrznym, albo błąd
+// ErrBrakWiersza, gdy nie istnieje.
 func (r *repozytoriumRoundtable) WezelDebatyPoKodzie(ctx context.Context, kod string) (WezelDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWezelDebaty)
 	if err != nil {
@@ -236,7 +227,8 @@ func (r *repozytoriumRoundtable) WezelDebatyPoKodzie(ctx context.Context, kod st
 	return wezel, nil
 }
 
-// WezlyDebaty zwraca węzły okna, opcjonalnie zawężone do tury i do kluczowych.
+// WezlyDebaty zwraca węzły okna, opcjonalnie zawężone do wskazanej tury oraz wyłącznie
+// do węzłów oznaczonych jako kluczowe.
 func (r *repozytoriumRoundtable) WezlyDebaty(ctx context.Context, okno, tura string,
 	tylkoKluczowe bool) ([]WezelDebaty, error) {
 
@@ -265,7 +257,8 @@ func (r *repozytoriumRoundtable) WezlyDebaty(ctx context.Context, okno, tura str
 	return wezly, wiersze.Err()
 }
 
-// OznaczWezelDebaty stawia albo zdejmuje oznaczenie argumentu kluczowego.
+// OznaczWezelDebaty stawia albo zdejmuje oznaczenie argumentu kluczowego na węźle
+// wskazanym kodem zewnętrznym.
 func (r *repozytoriumRoundtable) OznaczWezelDebaty(ctx context.Context, kod string, kluczowy bool) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, oznaczWezelDebaty)
 	if err != nil {
@@ -278,7 +271,8 @@ func (r *repozytoriumRoundtable) OznaczWezelDebaty(ctx context.Context, kod stri
 	return trafienieDebaty(wynik)
 }
 
-// KrawedzieDebaty zwraca krawędzie grafu okna.
+// KrawedzieDebaty zwraca wszystkie krawędzie grafu argumentów wskazanego okna,
+// uporządkowane według kolejności zapisu.
 func (r *repozytoriumRoundtable) KrawedzieDebaty(ctx context.Context, okno string) ([]KrawedzDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKrawedzieDebaty)
 	if err != nil {
@@ -302,7 +296,8 @@ func (r *repozytoriumRoundtable) KrawedzieDebaty(ctx context.Context, okno strin
 	return krawedzie, wiersze.Err()
 }
 
-// ZapiszOznaczenieBleduDebaty dopisuje błąd logiczny rozpoznany na węźle.
+// ZapiszOznaczenieBleduDebaty dopisuje błąd logiczny rozpoznany na węźle grafu wraz
+// z jego uzasadnieniem i pewnością.
 func (r *repozytoriumRoundtable) ZapiszOznaczenieBleduDebaty(ctx context.Context,
 	oznaczenie OznaczenieBleduDebaty) error {
 
@@ -318,7 +313,8 @@ func (r *repozytoriumRoundtable) ZapiszOznaczenieBleduDebaty(ctx context.Context
 	return nil
 }
 
-// OznaczeniaBledowDebaty zwraca oznaczenia błędów postawione w oknie.
+// OznaczeniaBledowDebaty zwraca wszystkie oznaczenia błędów logicznych postawione
+// w oknie debaty, uporządkowane według zapisu.
 func (r *repozytoriumRoundtable) OznaczeniaBledowDebaty(ctx context.Context,
 	okno string) ([]OznaczenieBleduDebaty, error) {
 
@@ -399,7 +395,8 @@ func (r *repozytoriumRoundtable) UstawKatalogBledowDebaty(ctx context.Context,
 	})
 }
 
-// odczytajWezelDebaty składa węzeł z jednego wiersza wyniku.
+// odczytajWezelDebaty składa strukturę WezelDebaty z jednego wiersza wyniku zapytania,
+// niezależnie od jego źródła.
 func odczytajWezelDebaty(wiersz interface{ Scan(...any) error }) (WezelDebaty, error) {
 	var wezel WezelDebaty
 	err := wiersz.Scan(&wezel.Kod, &wezel.Okno, &wezel.Wypowiedz, &wezel.Uczestnik, &wezel.Tura,

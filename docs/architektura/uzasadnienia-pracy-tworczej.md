@@ -3042,3 +3042,24 @@ Wykaz: liczba calkowita jest inna liczba niz dlugosc wykazu i to jest
 zamierzone — kontrakt niesie total obok messages przycietych granica, zeby
 okno moglo powiedziec "pokazuje 20 z 137" bez drugiego pytania. Mylenie
 tych dwoch liczb jest usterka, nie szczegolem (wzor z design.asset.list).
+
+WEBP i AVIF dostają zdanie odmowy własne, bo ich brak ma powód, którego nie
+widać z wykazu formatów: WEBP rdzeń czyta, więc "nie znam" byłoby nieprawdą.
+
+Skala niedodatnia i skala nad granicą w sprawdzeniu skali wydania są
+pomyłką wołającego, nie awarią rdzenia.
+
+Zawartość wpisu ikony ICO jest PNG, nie mapa bitowa DIB: postać PNG
+w ikonie przyjmują wszystkie systemy od Windows Vista i wszystkie
+przeglądarki, a DIB wymagałby własnej maski przezroczystości zapisanej
+odwróconymi wierszami, czyli drugiego kodera obrazu w tym pliku.
+
+Bok ponad 256 pikseli w ikonie ICO jest odmawiany, a nie przycinany po
+cichu: pole szerokości w katalogu ikony ma jeden bajt, zero znaczy w nim
+256, więc obraz większy zapisałby się jako ikona o boku wziętym z reszty
+z dzielenia.
+
+Osadzenie obrazu w dokumencie PDF idzie tą samą biblioteką `pdfcpu`, którą
+pracuje warsztat dokumentu modułu Studio. Droga wiedzie przez PNG
+w pamięci, nie przez plik pośredni: `pdfcpu` przyjmuje strumień, a plik
+pośredni byłby trzecim miejscem, w którym ta sama treść żyje.

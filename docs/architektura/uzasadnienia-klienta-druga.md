@@ -4391,3 +4391,12 @@ Oddaje odpowiedź rdzenia po udanej komendzie, także odpowiedź "usunięto 0",
 bo to również jest odpowiedź, którą panel ma powtórzyć. Gdy odczytu jeszcze
 nie było, modal mówi to wprost i podaje liczbę widoczną jako dolną granicę
 — tę samą, którą niesie zapowiedź retencji.
+
+## budowa/klient-poprzedni/src/moduly/translate/warstwy-translate.ts
+Warstwa nie jest ozdobą opisu: rozstrzyga postać elementu przy wejściu do modułu. Warstwa pierwsza
+jest rozwinięta i pozostaje taka; warstwy druga, trzecia i czwarta stoją zwinięte, a zapowiedź nad
+nimi mówi, co jest pod spodem — zwinięte nie znaczy ukryte. Postać elementu details trzyma
+przeglądarka, więc element działa klawiaturą i ma poprawną semantykę bez ani jednego nasłuchu;
+druga kopia stanu w klasie CSS mogłaby się z atrybutem otwarcia wyłącznie rozminąć. Znacznik
+wywołania idzie z wykazu ikonografii opracowania i stoi przy nazwie, żeby droga do elementu była
+widoczna, zanim się go otworzy.

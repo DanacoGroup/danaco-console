@@ -163,3 +163,14 @@ serwerem JSON-RPC nad HTTP: odpowiada na `initialize`, `tools/list`
 i `tools/call` i zapamiętuje, co dostał. Mierzona jest droga rdzenia —
 powitanie, odkrycie, wywołanie, dziennik ramek, metryka użycia — a nie to,
 co odpowiada konkretny serwer.
+
+## budowa/server/internal/core/skutek_debaty_test.go
+
+Wzorzec szkody, którego pilnuje ten plik, wystąpił w tym produkcie: komenda
+meldowała `status: ok` z wykazem, za którym nie stał ani jeden bajt. Dlatego
+żaden sprawdzian tutaj nie kończy się na tym, że odpowiedź jest udana — każdy
+schodzi do bazy drugim połączeniem, otwartym niezależnie od rdzenia, i liczy
+wiersze albo czyta bajty z magazynu. Kanałem uczestników jest kanał echo:
+odsyła treść zapytania porcjami, tak jak zrobiłby to model, bez sieci, konta
+i klucza. Mierzona jest droga rdzenia — rejestr, tura, zapis, analiza,
+głosowanie, wydanie — a nie to, co odpowiada konkretny dostawca.

@@ -5260,3 +5260,26 @@ Browser byłby drugą prawdą o tym samym bycie.
 Stąd też jedno nazewnictwo dla jednego pojęcia: `AutomationWorkflow` jest w całym produkcie
 automatyką, `AutomationStep` krokiem, `AutomationSchedule` harmonogramem, a `AutomationExecution`
 przebiegiem. Nazwa okna Automation Studio pochodzi z opracowania modułu i pozostaje nietknięta.
+
+## budowa/klient-poprzedni/src/modele/ustawienia-bytu.ts
+
+Katalog kategorii, katalog definicji, budowa kontrolek, wskaźnik dziedziczenia i zapis
+komendą `config.set` pochodzą w całości z modułów okna konfiguracji. Drugi generator pól
+oznaczałby dwie prawdy o tej samej wartości i dwa miejsca do zmiany po dopisaniu rodzaju
+wartości do kontraktu.
+
+Wskaźnik zasięgu nanosi punkt widzenia na wybór adresu zapisu raz, przy pierwszym
+odświeżeniu pola. Formularz zbudowany dla jednego modelu, a pozostawiony po przejściu na
+inny, zapisywałby dalej pod adres poprzedniego, więc po zmianie osi panel dostaje pełne
+pokazanie, a nie samo odświeżenie.
+
+Pozycja katalogu, która nie dopuszcza wskazanej osi, nie znika z formularza: jej wskaźnik
+zasięgu poda wtedy poziomy i osie dopuszczone przez katalog, a rozstrzygnięcie
+o dopuszczalności zapisu zostaje przy rdzeniu.
+
+Okno punktów izolacji jest jedno na klienta i pamięta swój stan, więc otwarcie stąd trafia
+w ten sam egzemplarz. Pominięcie przejścia zostawiłoby w tym oknie pozycję izolacji, która
+nie prowadzi donikąd.
+
+Zapis dokonany gdzie indziej nie przerywa pracy przy polu, ponieważ zmiana stanu nanosi
+wartości na pola już zbudowane i składu katalogu nie rusza.

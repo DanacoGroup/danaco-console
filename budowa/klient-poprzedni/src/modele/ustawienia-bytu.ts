@@ -10,23 +10,9 @@ import { otworzOknoPunktowIzolacji } from '../punkty-izolacji/indeks';
 import { wskazanieKompletne, type WskazanieOsi } from './wybor-osi';
 
 /**
- * Ustawienia per model i per konto — te same pola co w oknie konfiguracji,
- * oglądane i zapisywane z punktu widzenia jednej osi.
- *
- * Katalog kategorii, katalog definicji, budowa kontrolek, wskaźnik dziedziczenia
- * i zapis `config.set` pochodzą w całości z modułów okna konfiguracji; sekcja
- * modeli dokłada wyłącznie punkt widzenia zawężony do wskazanej osi. Drugi
- * generator pól oznaczałby dwie prawdy o tej samej wartości i dwa miejsca do
- * zmiany po dopisaniu rodzaju wartości do kontraktu.
- *
- * Wskaźnik zasięgu nanosi punkt widzenia na wybór adresu zapisu raz — przy
- * pierwszym odświeżeniu pola. Formularz zbudowany dla jednego modelu, a
- * pozostawiony po przejściu na inny, zapisywałby dalej pod adres poprzedniego,
- * więc po zmianie osi panel dostaje `pokaz`, a nie samo `odswiez`.
- *
- * Pozycja katalogu, która nie dopuszcza wskazanej osi, nie znika z formularza:
- * jej wskaźnik zasięgu poda wtedy poziomy i osie dopuszczone przez katalog,
- * a rozstrzygnięcie o dopuszczalności zapisu zostaje przy rdzeniu.
+ * Ustawienia per model i per konto — te same pola co w oknie konfiguracji, oglądane
+ * i zapisywane z punktu widzenia jednej osi. Sekcja modeli dokłada wyłącznie punkt
+ * widzenia zawężony do wskazanej osi, a resztę bierze z modułów konfiguracji.
  */
 export interface UstawieniaBytu {
   /** Panel osadzany w sekcji modeli. */
@@ -42,10 +28,7 @@ export interface UstawieniaBytu {
 export function utworzUstawieniaBytu(kanal: Kanal): UstawieniaBytu {
   const stan = utworzStanKonfiguracji(kanal);
   const kategorie = utworzNawigacjeKategorii();
-  // Przejście do okna punktów izolacji idzie tą samą drogą, co z okna
-  // Konfiguracji: tamto okno jest jedno na klienta i pamięta swój stan, więc
-  // otwarcie stąd trafia w ten sam egzemplarz. Pominięcie przejścia zostawiłoby
-  // w tym oknie pozycję „Izolacja", która nie prowadzi donikąd.
+  // Przejście do okna punktów izolacji idzie tą samą drogą, co z okna Konfiguracji.
   const panel = utworzPanelKategorii(stan, () => void otworzOknoPunktowIzolacji(kanal));
 
   const podpis = document.createElement('p');
@@ -78,8 +61,7 @@ export function utworzUstawieniaBytu(kanal: Kanal): UstawieniaBytu {
 
   kategorie.naWybor((kategoria) => panel.pokaz(kategoria));
 
-  // Zmiana stanu nanosi wartości na pola już zbudowane; składu katalogu nie
-  // rusza, więc zapis dokonany gdzie indziej nie przerywa pracy przy polu.
+  // Zmiana stanu nanosi wartości na pola już zbudowane; składu katalogu nie rusza.
   stan.naZmiane(() => panel.odswiez());
 
   opisz();

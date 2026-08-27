@@ -20,37 +20,10 @@ import { utworzOknoStudio } from './okno-studio';
 import type { StanStudio } from './stan-studio';
 import { utworzWierszWersji } from './wiersz-wersji';
 
-/** Nagłówki kolumn tabeli wersji — zostają widoczne także w stanie pustym. */
+/** Nagłówki kolumn tabeli wersji: wersja, opis zmiany, czas, autor, stan i czynność — zostają widoczne w tabeli także wtedy, gdy wykaz wersji jest pusty. */
 const KOLUMNY = ['Wersja', 'Opis zmiany', 'Czas', 'Autor', 'Stan', 'Czynność'];
 
-/**
- * Historia wersji — pod przyciskiem, nie w stałej kolumnie.
- *
- * ── Powierzchnia należy do dokumentu ────────────────────────────────────────
- * Rozstrzygnięcie Właściciela, podjęte dwukrotnie: panele wchodzą na żądanie
- * i schodzą, gdy nie są używane; stała kolumna może być wyłącznie trybem do
- * wyboru. Historia wersji stała dotąd wąską kolumną na dole modułu, więc zabierała
- * miejsce także wtedy, gdy nikt do niej nie zaglądał. Teraz `element` jest
- * WĄSKIM PASKIEM ze znacznikiem wersji i przyciskiem; cała tabela otwiera się
- * nakładką nad treścią i schodzi naciśnięciem albo `Escape`.
- *
- * ── Co zostaje bez zmiany ───────────────────────────────────────────────────
- * Repozytorium narasta i **niczego nie usuwa samo**: `studio.repository.restore`
- * przywraca wersję bez usuwania wersji nowszych, więc samo cofnięcie jest
- * odwracalne. „Usuń z wykazu" jest czynnością MIEJSCOWĄ i jawną — schowaniem
- * pozycji w tym oknie, nie usunięciem wersji w rdzeniu; okno mówi to wprost, żeby
- * Operator nie sądził, że stracił wersję.
- *
- * ── Autozapis idzie osobnym szeregiem ───────────────────────────────────────
- * Zapisy samoczynne są domyślnie UKRYTE, z przełącznikiem „pokaż także zapisy
- * samoczynne". Gdyby wchodziły do jednego wykazu z wersjami nazwanymi, historia
- * zasypałaby się w kilka minut. Rozróżnienie bierze się z pola `milestone`
- * (`studio.version.label.set`) i z etykiety — drugiego pojęcia okno nie zakłada.
- *
- * ── Gałęzie ─────────────────────────────────────────────────────────────────
- * Czynności „Rozgałęź" tu nie ma decyzją Właściciela. Komendy `studio.branch.*`
- * są zbudowane i pracują dalej — po prostu nie dostają okna w tej turze.
- */
+/** Historia wersji otwiera się nakładką nad treścią na żądanie i chowa się, gdy nie jest używana; przywrócenie wersji nie usuwa wersji nowszych, więc cofnięcie jest odwracalne. */
 export interface OknoSessionRepository {
   element: HTMLElement;
   /** Odczytuje historię wersji dokumentu czynnego. */
@@ -60,15 +33,7 @@ export interface OknoSessionRepository {
   przestawWidocznosc(): void;
 }
 
-/**
- * Zaplecze czynności, których `ZrodloStudio` nie niesie.
- *
- * `ZrodloStudio` ma sześć komend i nie ma wśród nich etykietowania wersji,
- * eksportu historii ani paczki przekazania. Zaplecze jest **nieobowiązkowe**, bo
- * wołacz tego okna (`modul-studio.ts`) go dziś nie podaje, a plik ten nie należy
- * do tego odcinka prac. Bez zaplecza trzy czynności stoją jako brak NAZWANY,
- * wraz z komendą, która czeka w rdzeniu — zamiast jako przycisk, który milczy.
- */
+/** Zaplecze czynności, których ZrodloStudio nie niesie — etykietowania wersji, eksportu historii i paczki przekazania; jest nieobowiązkowe, bo dzisiejszy wołacz okna go nie podaje. */
 export interface ZapleczeHistorii {
   wykonaj(komenda: Command, zadanie: Record<string, unknown>): Promise<{
     udany: boolean;
@@ -138,8 +103,7 @@ export function utworzOknoSessionRepository(
   zawezenie.className = 'dn-pole-opis ms-repozytorium__zawezenie';
 
   const odswiezWykaz = przycisk('Odczytaj historię', 'dn-btn dn-btn--sm dn-btn--zarys');
-  // Znacznik czynności jak w pozostałych oknach modułu: nazywa ster po roli,
-  // dzięki czemu zmiana etykiety widocznej dla użytkownika niczego nie psuje.
+  // Znacznik czynności nazywa ster po roli — zmiana etykiety widocznej niczego nie psuje.
   odswiezWykaz.dataset['czynnosc'] = 'odczytaj';
   const odpowiedz = utworzWierszOdpowiedzi();
 
@@ -165,13 +129,7 @@ export function utworzOknoSessionRepository(
     ),
   );
 
-  /**
-   * Przycisk czynności, która potrzebuje zaplecza.
-   *
-   * Bez zaplecza oddaje brak NAZWANY: mówi, że komenda w rdzeniu jest, i czego
-   * brakuje po stronie klienta. Przycisk, który po naciśnięciu milczy, byłby tu
-   * gorszy od braku — Operator sądziłby, że paczka powstała.
-   */
+  /** Przycisk czynności wymagającej zaplecza — bez niego oddaje nazwany brak, nie milczenie. */
   function czynnoscZaplecza(
     nazwa: string,
     kod: string,
@@ -295,14 +253,7 @@ export function utworzOknoSessionRepository(
     await wczytaj();
   }
 
-  /**
-   * Podgląd wersji — treść wersji obok bieżącej, bez jej przywracania.
-   *
-   * Idzie tą samą drogą co porównanie (`studio.diff.compare` przez parę
-   * porównania), bo komendy „oddaj treść wersji" kontrakt nie niesie: różnica
-   * wobec bieżącej JEST podglądem tego, co ta wersja niosła, i nie wymaga
-   * zakładania drugiej drogi do rdzenia.
-   */
+  /** Podgląd wersji pokazuje różnicę wobec bieżącej — kontrakt nie niesie komendy podglądu treści. */
   function podejrzyj(wersja: StudioVersion): void {
     stan.ustawParePorownania({ odniesienie: wersja.id, porownywana: '' });
     odpowiedz.pokaz(
@@ -390,13 +341,7 @@ export function utworzOknoSessionRepository(
     });
   }
 
-  /**
-   * Odwołanie do wersji — jej identyfikator do wklejenia w pismo albo w rozmowę.
-   *
-   * Bez schowka systemowego: odwołanie idzie do wiersza odpowiedzi, skąd da się je
-   * przeczytać i zaznaczyć. Schowek ma własną rodzinę komend i własnego wykonawcę,
-   * więc drugiej drogi do niego to okno nie zakłada.
-   */
+  /** Odwołanie do wersji trafia do wiersza odpowiedzi, do przeczytania i zaznaczenia bez schowka. */
   function odwolajSie(wersja: StudioVersion): void {
     const czas = new Date(wersja.createdAt).toLocaleString('pl');
     odpowiedz.pokaz(
@@ -406,14 +351,7 @@ export function utworzOknoSessionRepository(
     );
   }
 
-  /**
-   * Wskazuje wersję jako odniesienie porównania.
-   *
-   * Strona druga zostaje pusta z zamysłem: `studio.diff.compare` czyta brak
-   * wersji porównywanej jako zgodę na porównanie z propozycją zmiany albo
-   * z wersją bieżącą. Wpisanie tam czegokolwiek na siłę odbierałoby Operatorowi
-   * najczęstszy przypadek — „ta wersja wobec tego, co mam teraz".
-   */
+  /** Wskazuje wersję jako odniesienie porównania; pole drugie puste znaczy porównanie z wersją bieżącą. */
   function wskazDoPorownania(wersja: StudioVersion): void {
     stan.ustawParePorownania({ odniesienie: wersja.id, porownywana: '' });
     odpowiedz.pokaz(
@@ -423,10 +361,7 @@ export function utworzOknoSessionRepository(
     );
   }
 
-  /**
-   * Znacznik odczytu: dokument i jego wersja bieżąca w chwili ostatniego
-   * czytania historii. Pusty łańcuch znaczy „nie czytano jeszcze nic".
-   */
+  /** Znacznik odczytu: dokument i jego wersja bieżąca w chwili ostatniego czytania historii. */
   let znacznikOdczytu = '';
 
   /** Dokument i jego wersja bieżąca — para, po której poznaje się zdezaktualizowanie wykazu. */
@@ -442,8 +377,7 @@ export function utworzOknoSessionRepository(
       rama.stan.puste('Historia bez wskazanego dokumentu', BEZ_DOKUMENTU);
       return;
     }
-    // Znacznik przestawiany przed wywołaniem: odmowa nie może wprawić odświeżania
-    // w pętlę ponowień czegoś, co rdzeń przed chwilą odrzucił.
+    // Znacznik przestawiany przed wywołaniem, by odmowa rdzenia nie wprawiła odświeżania w pętlę ponowień.
     znacznikOdczytu = znacznikDokumentu();
     rama.stan.ladowanie('Odczyt historii wersji z repozytorium sesji…');
     const wynik = await stan.zrodlo.wersje({ documentId: dokument.id });
@@ -452,9 +386,7 @@ export function utworzOknoSessionRepository(
       return;
     }
     stan.ustawWersje(wynik.wynik.versions);
-    // `ustawWersje` odświeżyło okna w fazie „ładowanie", więc stan pusty jeszcze
-    // nie zapadł. Zdejmujemy fazę i odświeżamy raz jeszcze — inaczej pusta
-    // historia kończyłaby się tabelą bez wiersza i bez jednego zdania powodu.
+    // Wywołanie ustawWersje odświeżyło okno w fazie ładowania — fazę trzeba zdjąć i odświeżyć ponownie.
     rama.stan.gotowe();
     odswiez();
   }
@@ -468,8 +400,7 @@ export function utworzOknoSessionRepository(
       rama.stan.puste('Historia bez wskazanego dokumentu', BEZ_DOKUMENTU);
       return;
     }
-    // Odczyt tylko przy otwartej nakładce: historia zamknięta nie jest powodem,
-    // żeby wołać rdzeń przy każdym naciśnięciu klawisza w dokumencie.
+    // Odczyt następuje tylko przy otwartej nakładce — zamknięta nie woła rdzenia przy każdym wpisie.
     if (!nakladka.hidden && znacznikDokumentu() !== znacznikOdczytu) {
       void wczytaj();
       return;

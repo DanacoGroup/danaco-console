@@ -842,3 +842,32 @@ i stan wyłączony, gdy rdzeń zwrócił, że nikt nie pilnuje, prowadzą do prz
 o bezpieczeństwie maszyny, więc nie mogą wyglądać tak samo. Warianty plakietki są zdefiniowane
 w bibliotece komponentów: sukces, ostrzeżenie, błąd, informacja, sygnał, rola, atrament — poza
 tym zbiorem plakietka nie dostaje żadnego wyróżnienia.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-session-repository.ts
+
+Historia wersji stała dotąd wąską kolumną na dole modułu i zabierała miejsce
+także wtedy, gdy nikt do niej nie zaglądał. Element wyzwalacza jest teraz
+wąskim paskiem ze znacznikiem liczby wersji i przyciskiem; cała tabela
+otwiera się nakładką nad treścią i schodzi naciśnięciem albo klawiszem
+Escape — powierzchnia dokumentu wraca do dokumentu, gdy historia nie jest
+używana.
+
+Repozytorium narasta i niczego nie usuwa samo: przywrócenie wersji
+przestawia treść bez usuwania wersji nowszych, więc samo cofnięcie jest
+odwracalne. „Usuń z wykazu" jest czynnością miejscową i jawną — schowaniem
+pozycji w tym oknie, nie usunięciem wersji w rdzeniu; okno mówi to wprost,
+żeby Operator nie sądził, że stracił wersję.
+
+Zapisy samoczynne są domyślnie ukryte, z przełącznikiem pokazującym też je.
+Gdyby wchodziły do jednego wykazu z wersjami nazwanymi, historia zasypałaby
+się w kilka minut. Rozróżnienie bierze się z pola oznaczającego kamień
+milowy i z etykiety wersji — drugiego pojęcia okno nie zakłada.
+
+Czynności rozgałęzienia debaty to okno dziś nie pokazuje: rodzina komend
+rozgałęzienia jest zbudowana i pracuje dalej, po prostu nie dostaje w tej
+turze własnego miejsca w interfejsie.
+
+Zaplecze czynności obejmuje etykietowanie wersji, eksport historii i paczkę
+przekazania. Bez zaplecza trzy czynności stoją jako brak nazwany wraz
+z komendą, która czeka gotowa w rdzeniu, zamiast jako przycisk milczący po
+naciśnięciu.

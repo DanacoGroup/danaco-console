@@ -1,22 +1,6 @@
-// Odpowiedzialność pliku: rodzina `monitor.*` — Process Monitor warstwy
-// wspólnej. Dwie komendy: odczyt stanu bieżącego procesów
-// (`monitor.status`) i zapis okna na ich telemetrię (`monitor.subscribe`).
-//
-// Rejestr procesów rdzenia jest w pamięci; tabeli procesów nie ma. Proces okna
-// to proces systemowy objęty uchwytem rdzenia i ginie razem z rdzeniem, więc
-// wiersz, który przeżyłby restart ze stanem `running`, opisywałby proces
-// nieistniejący. Monitor czyta ten sam rejestr, który rozgłasza
-// `progress.changed` (`telemetria.go`) — jedno źródło faktu, nie dwa.
-//
-// Gdy port nie niesie telemetrii, monitor nie ma czego czytać i odmawia kodem
-// `internal_error`, nazywając brakujący byt; pusty wykaz procesów byłby wtedy
-// odpowiedzią nieprawdziwą. Rejestr wpięty i pusty to co innego — wtedy pusty
-// wykaz jest prawdą.
-//
-// Monitor procesów jest oknem warstwy wspólnej, nie modułu (zdarzenia.go).
-// Warstwę wspólną — stronę główną, środowiska, moduły i stan okna operacyjnego
-// — obsługuje port Nawigacja, więc monitor osadza jego adapter zamiast zakładać
-// port równoległy.
+// Plik obsługuje rodzinę komend `monitor.*` na rejestrze procesów rdzenia
+// trzymanym w pamięci: odczyt stanu bieżącego (`monitor.status`) oraz zapis
+// okna na telemetrię procesów (`monitor.subscribe`).
 package core
 
 import (
@@ -34,12 +18,12 @@ import (
 // o rejestr telemetrii postępu i pamięć okien obserwujących procesy.
 type adapterMonitora struct {
 	*adapterNawigacji
-	// telemetria jest jedynym rejestrem procesów rdzenia. Zerowa znaczy odmowę
-	// z kodem `internal_error`, nie pusty wykaz.
+	// telemetria jest jedynym rejestrem procesów; zerowa znaczy odmowę,
+	// nie pusty wykaz.
 	telemetria *telemetriaPostepu
 	obserwacje *pamiecObserwatorowProcesow
-	// zegar zapamiętuje chwilę, w której rdzeń STWIERDZIŁ stan procesu, którego
-	// chwili zmiany nie zapisał nikt inny. Patrz `chwilaZmiany` niżej.
+	// zegar pamięta chwilę stwierdzenia stanu procesu, którego chwili
+	// zmiany nie zapisał nikt inny.
 	zegar *zegarOdpisowProcesow
 }
 
@@ -58,10 +42,8 @@ func (a *adapterNawigacji) ZTelemetriaProcesow(telemetria *telemetriaPostepu) *a
 // ── monitor.status ──────────────────────────────────────────────────────────
 
 // StanProcesow obsługuje `monitor.status`: oddaje stan bieżący procesów
-// spełniających warunki żądania, bez zakładania obserwacji.
-//
-// Proces wskazany wprost, którego rejestr nie zna, jest bytem nieistniejącym:
-// zamiast pustego wykazu idzie odmowa `not_found` z nazwą procesu.
+// spełniających warunki żądania, bez zakładania obserwacji. Proces wskazany
+// wprost, którego rejestr nie zna, wraca odmową `not_found` z jego nazwą.
 func (a *adapterMonitora) StanProcesow(ctx context.Context,
 	z shared.MonitorStatusRequest) (shared.MonitorStatusResponse, error) {
 
@@ -85,17 +67,8 @@ func (a *adapterMonitora) StanProcesow(ctx context.Context,
 // ── monitor.subscribe ───────────────────────────────────────────────────────
 
 // ObserwujProcesy obsługuje `monitor.subscribe`: zapisuje okno na telemetrię
-// wskazanych procesów i oddaje ich stan bieżący.
-//
-// Dwa pola żądania mówią o dwóch różnych oknach: `windowId` jest oknem
-// odbierającym telemetrię (obserwatorem), a nie sitem procesów — sitem są
-// `processIds` (pusta lista znaczy komplet) oraz `sessionId`. Tak samo
-// rozstrzyga to bliźniacza komenda `automation.execution.subscribe`.
-//
-// Żądanie bez `windowId` jest zwykłym odczytem — nie ma czego zapisać, więc
-// pole `subscribed` niesie `false`. Zdarzenie `progress.changed` i tak dociera
-// do wszystkich połączeń konta; zapis mówi rdzeniowi, które okno których
-// procesów pilnuje.
+// wskazanych procesów i oddaje ich stan bieżący. Pole `windowId` jest oknem
+// obserwatora, a nie sitem procesów — sitem są `processIds` i `sessionId`.
 func (a *adapterMonitora) ObserwujProcesy(ctx context.Context,
 	z shared.MonitorSubscribeRequest) (shared.MonitorSubscribeResponse, error) {
 
@@ -107,9 +80,8 @@ func (a *adapterMonitora) ObserwujProcesy(ctx context.Context,
 	for _, odpis := range odpisy {
 		znane[odpis.Id] = struct{}{}
 	}
-	// Obserwacja procesu, którego rejestr nie zna, jest obserwacją niczego.
-	// Rejestr telemetrii procesów nie wykreśla, więc identyfikator nieznany
-	// znaczy identyfikator nieistniejący, a nie proces właśnie domknięty.
+	// Rejestr telemetrii nie wykreśla, identyfikator nieznany znaczy
+	// nieistniejący, nie proces domknięty.
 	for _, idProcesu := range z.ProcessIds {
 		if idProcesu == "" {
 			return shared.MonitorSubscribeResponse{}, bladZadaniaMonitora(
@@ -127,16 +99,9 @@ func (a *adapterMonitora) ObserwujProcesy(ctx context.Context,
 
 // ── odczyt rejestru telemetrii ──────────────────────────────────────────────
 
-// odpisyProcesow oddaje odpis rejestru procesów. Rejestr niewpięty odmawia
-// głośno — patrz nagłówek pliku.
-//
-// Sesja procesu bywa uzupełniana z okna i dzieje się to przed sitem, nie po
-// nim. Telemetria bywa uboższa od stanu rdzenia: proces otwarty na
-// niepowodzeniu przyjęcia wiadomości zna okno, lecz nie zna jeszcze sesji
-// (`opisTury(z.WindowId, "")`, telemetria_tury.go). Sito po samym zapisie
-// telemetrii oddałoby pustkę przy procesie, który do wskazanej sesji należy.
-// Sesję okna rozstrzyga rejestr obecności — tą samą metodą, którą rozstrzyga
-// ją nasłuch telemetrii.
+// odpisyProcesow oddaje odpis rejestru procesów; rejestr niewpięty odmawia
+// głośno. Sesja bywa uzupełniana z okna przed sitem, bo telemetria bywa
+// uboższa od stanu rdzenia i sesję okna rozstrzyga rejestr obecności.
 func (a *adapterMonitora) odpisyProcesow() ([]procesPostepu, error) {
 	if a == nil || a.telemetria == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -154,12 +119,9 @@ func (a *adapterMonitora) odpisyProcesow() ([]procesPostepu, error) {
 	return odpisy, nil
 }
 
-// Odpisy oddaje odpis rejestru procesów telemetrii postępu.
-//
-// Odpis, a nie wskaźniki: proces bywa zmieniany w tej samej chwili przez wątek
-// tury albo kolejki, a czytelnik ma dostać stan spójny, nie stan w połowie
-// zmiany. Metoda mieszka w pliku monitora, bo to monitor jej potrzebuje —
-// producent telemetrii nie ma czytelników poza nim.
+// Odpisy oddaje odpis, a nie wskaźniki, rejestru procesów telemetrii
+// postępu: proces bywa zmieniany w tej samej chwili przez wątek tury albo
+// kolejki, a czytelnik ma dostać stan spójny, nie stan w połowie zmiany.
 func (t *telemetriaPostepu) Odpisy() []procesPostepu {
 	if t == nil {
 		return nil
@@ -176,7 +138,9 @@ func (t *telemetriaPostepu) Odpisy() []procesPostepu {
 	return wykaz
 }
 
-// sitoProcesow zbiera zawężenia żądania. Pole puste nie zawęża niczego.
+// sitoProcesow zbiera zawężenia żądania `monitor.status` i `monitor.subscribe`
+// nałożone na rejestr procesów. Pole puste nie zawęża niczego, a lista
+// procesów pusta znaczy zawężenie do kompletu rejestru.
 type sitoProcesow struct {
 	idProcesu string
 	idOkna    string
@@ -184,7 +148,9 @@ type sitoProcesow struct {
 	procesy   []string
 }
 
-// przepuszcza mówi, czy proces spełnia warunki żądania.
+// przepuszcza mówi, czy proces spełnia warunki żądania: identyfikator
+// procesu, identyfikator okna, identyfikator sesji oraz przynależność do
+// listy procesów wskazanej sitem.
 func (s sitoProcesow) przepuszcza(p procesPostepu) bool {
 	if s.idProcesu != "" && p.Id != s.idProcesu {
 		return false
@@ -219,9 +185,7 @@ func (a *adapterMonitora) stanyKontraktu(odpisy []procesPostepu, sito sitoProces
 		}
 		stany = append(stany, a.stanKontraktu(odpis))
 	}
-	// Najświeższa zmiana stoi pierwsza — Process Monitor czyta od góry.
-	// Identyfikator rozstrzyga remisy, żeby wykaz nie przestawiał się przy
-	// dwóch procesach zgłoszonych w tej samej milisekundzie.
+	// Najświeższa zmiana stoi pierwsza. Identyfikator rozstrzyga remisy.
 	sort.SliceStable(stany, func(i, j int) bool {
 		if stany[i].UpdatedAt != stany[j].UpdatedAt {
 			return stany[i].UpdatedAt > stany[j].UpdatedAt
@@ -261,8 +225,7 @@ func (a *adapterMonitora) stanKontraktu(p procesPostepu) shared.MonitorStatus {
 		numer := p.Etap
 		stan.StageIndex = &numer
 	}
-	// Stopnia ukończenia przy nieznanej liczbie etapów rdzeń nie zmyśla
-	// — tak samo liczy go telemetria dla `progress.changed`.
+	// Stopnia ukończenia przy nieznanej liczbie etapów rdzeń nie zmyśla.
 	if p.Etapow > 0 {
 		etapow := p.Etapow
 		stan.StageCount = &etapow
@@ -271,8 +234,7 @@ func (a *adapterMonitora) stanKontraktu(p procesPostepu) shared.MonitorStatus {
 		ukonczenie := int(stopienUkonczenia(p))
 		stan.Completion = &ukonczenie
 	}
-	// Licznik obiegów naprawczych bez granicy prowadzi rejestr biegów
-	// koordynatorów; proces okna, które biegu nie prowadzi, licznika nie ma.
+	// Licznik obiegów prowadzi rejestr biegów; okno bez biegu licznika nie ma.
 	if p.IdOkna != "" && a.biegi != nil {
 		if bieg, jest := a.biegi.Stan(p.IdOkna); jest {
 			obiegi := bieg.Loops
@@ -282,17 +244,10 @@ func (a *adapterMonitora) stanKontraktu(p procesPostepu) shared.MonitorStatus {
 	return stan
 }
 
-// chwilaZmiany oddaje chwilę ostatniej zmiany procesu w milisekundach epoki.
-//
-// Źródłem pierwszym jest pamięć czynności rejestru obecności: zapisuje ona
-// znacznik przy każdym zgłoszeniu telemetrii okna (stan_sesji_czynnosc.go),
-// więc dla procesu okna jest to dokładnie chwila ostatniej zmiany.
-//
-// Proces bez okna chwili zmiany nie ma gdzie zapisanej: telemetria trzyma etap
-// i stan, lecz nie czas, a pamięć czynności jest kluczowana oknem i proces bez
-// okna (kolejka założona przed pierwszą wiadomością) do niej nie trafia. Dla
-// takiego procesu monitor podaje chwilę, w której rdzeń stwierdził ten stan —
-// wartość będącą górnym ograniczeniem chwili zmiany, nie nią samą.
+// chwilaZmiany oddaje chwilę ostatniej zmiany procesu w milisekundach epoki,
+// czytaną z pamięci czynności rejestru obecności. Proces bez okna chwili
+// zmiany nie ma gdzie zapisanej, więc oddawana jest chwila stwierdzenia jego
+// stanu przez rdzeń.
 func (a *adapterMonitora) chwilaZmiany(p procesPostepu) int64 {
 	if p.IdOkna != "" && a.obecnosc != nil {
 		if wpis, jest := a.obecnosc.czynnosc.Okno(p.IdOkna); jest {
@@ -317,10 +272,8 @@ func (p *pamiecCzynnosci) Okno(idOkna string) (czynnoscOkna, bool) {
 // ── zegar odpisów procesów bez okna ─────────────────────────────────────────
 
 // zegarOdpisowProcesow pamięta, kiedy rdzeń po raz pierwszy stwierdził dany
-// stan procesu. Nie jest to drugi rejestr procesów: nie trzyma ani etapu, ani
-// stanu jako faktu, tylko znacznik przypięty do odcisku odpisu. Stan
-// niezmieniony znacznika nie przesuwa, więc kolejne odczyty monitora nie
-// odmładzają procesu, który stoi.
+// stan procesu; nie trzyma etapu ani stanu jako faktu, tylko znacznik
+// przypięty do odcisku odpisu. Stan niezmieniony znacznika nie przesuwa.
 type zegarOdpisowProcesow struct {
 	mu        sync.Mutex
 	znaczniki map[string]znacznikOdpisu
@@ -328,7 +281,8 @@ type zegarOdpisowProcesow struct {
 	pojemnosc int
 }
 
-// znacznikOdpisu wiąże odcisk odpisu z chwilą jego stwierdzenia.
+// znacznikOdpisu wiąże odcisk odpisu procesu z chwilą jego pierwszego
+// stwierdzenia przez zegar odpisów procesów bez okna.
 type znacznikOdpisu struct {
 	odcisk string
 	chwila time.Time
@@ -339,7 +293,8 @@ type znacznikOdpisu struct {
 // rdzenia; po przekroczeniu granicy zegar zaczyna od nowa, zamiast puchnąć.
 const pojemnoscZegaraProcesow = 4096
 
-// nowyZegarOdpisowProcesow zakłada pusty zegar.
+// nowyZegarOdpisowProcesow zakłada pusty zegar odpisów procesów bez okna,
+// ograniczony pojemnością `pojemnoscZegaraProcesow`.
 func nowyZegarOdpisowProcesow() *zegarOdpisowProcesow {
 	return &zegarOdpisowProcesow{
 		znaczniki: map[string]znacznikOdpisu{},
@@ -379,19 +334,16 @@ func odciskOdpisu(p procesPostepu) string {
 // ── pamięć okien obserwujących procesy ──────────────────────────────────────
 
 // pamiecObserwatorowProcesow wiąże okno z procesami, których telemetrię
-// obserwuje. Pusty wykaz procesów znaczy obserwację kompletu — tak mówi
-// kontrakt komendy wprost.
-//
-// Zdarzenie `progress.changed` dociera do wszystkich połączeń konta i rejestr
-// niczego w tym nie zmienia. Rejestr istnieje po to, by pole `subscribed`
-// niosło prawdę, a rdzeń wiedział, które okno których procesów pilnuje. Ten sam
-// wzorzec prowadzi `pamiecObserwatorowPrzebiegow` dla Execution Monitora.
+// obserwuje. Pusty wykaz procesów znaczy obserwację kompletu. Rejestr
+// istnieje po to, by pole `subscribed` niosło prawdę, a rdzeń wiedział,
+// które okno których procesów pilnuje.
 type pamiecObserwatorowProcesow struct {
 	mu      sync.RWMutex
 	zakresy map[string][]string
 }
 
-// nowaPamiecObserwatorowProcesow zakłada pusty rejestr obserwacji.
+// nowaPamiecObserwatorowProcesow zakłada pusty rejestr obserwacji okien nad
+// procesami, wypełniany zapisami komendy `monitor.subscribe`.
 func nowaPamiecObserwatorowProcesow() *pamiecObserwatorowProcesow {
 	return &pamiecObserwatorowProcesow{zakresy: map[string][]string{}}
 }
@@ -411,7 +363,7 @@ func (p *pamiecObserwatorowProcesow) Zapamietaj(idOkna string, procesy []string)
 }
 
 // Okna zwraca okna obserwujące wskazany proces wraz z oknami obserwującymi
-// komplet procesów.
+// komplet procesów, posortowane po identyfikatorze okna.
 func (p *pamiecObserwatorowProcesow) Okna(idProcesu string) []string {
 	if p == nil {
 		return nil
@@ -437,14 +389,15 @@ func (p *pamiecObserwatorowProcesow) Okna(idProcesu string) []string {
 
 // ── odmowy ──────────────────────────────────────────────────────────────────
 
-// bladBrakuProcesuTelemetrii składa odmowę wskazującą proces, którego rejestr
-// telemetrii nie zna.
+// bladBrakuProcesuTelemetrii składa odmowę kodem `not_found`, wskazującą
+// proces, którego rejestr telemetrii postępu nie zna.
 func bladBrakuProcesuTelemetrii(idProcesu string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"monitor procesów: proces "+idProcesu+" nie istnieje w rejestrze telemetrii postępu"))
 }
 
-// bladZadaniaMonitora składa odmowę żądania niezgodnego z kontraktem.
+// bladZadaniaMonitora składa odmowę kodem `validation_failed` dla żądania
+// niezgodnego z kontraktem komendy monitora procesów.
 func bladZadaniaMonitora(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"monitor procesów: "+powod))

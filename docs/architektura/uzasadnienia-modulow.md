@@ -2843,3 +2843,85 @@ różnymi czynnościami: dołożeniem katalogu pomocników, instalacją interpre
 i instalacją biblioteki rozpoznawania. Naruszenie izolacji daje kod odmowy
 uprawnień, tak samo jak znakuje je Terminal. Odmowa nierozpoznana schodzi na
 kod błędu wewnętrznego, bo jest przypadkiem, którego rdzeń nie przewidział.
+
+## budowa/server/internal/core/adapter_modul_monitor.go
+
+Rejestr procesów rdzenia jest w pamięci, tabeli procesów nie ma. Proces okna
+jest procesem systemowym objętym uchwytem rdzenia i ginie razem z rdzeniem,
+więc wiersz, który przeżyłby restart ze stanem `running`, opisywałby proces
+nieistniejący. Monitor czyta ten sam rejestr, który rozgłasza
+`progress.changed` w `telemetria.go` — jedno źródło faktu, nie dwa.
+
+Gdy port nie niesie telemetrii, monitor nie ma czego czytać i odmawia kodem
+`internal_error`, nazywając brakujący byt; pusty wykaz procesów byłby wtedy
+odpowiedzią nieprawdziwą. Rejestr wpięty i pusty to co innego — wtedy pusty
+wykaz jest prawdą.
+
+Monitor procesów jest oknem warstwy wspólnej, nie modułu, tak jak
+`zdarzenia.go`. Warstwę wspólną — stronę główną, środowiska, moduły i stan
+okna operacyjnego — obsługuje port Nawigacja, więc monitor osadza jego
+adapter zamiast zakładać port równoległy.
+
+Metoda `ZTelemetriaProcesow` wywołuje się po `ZObecnoscia`: chwilę ostatniego
+zgłoszenia telemetrii zna pamięć czynności rejestru obecności, a licznik
+obiegów zna rejestr biegów.
+
+Zegar odpisów procesów pamięta chwilę, w której rdzeń stwierdził stan
+procesu, którego chwili zmiany nie zapisał nikt inny; tę rolę pełni metoda
+`chwilaZmiany`.
+
+Proces wskazany wprost w `monitor.status`, którego rejestr nie zna, jest
+bytem nieistniejącym: zamiast pustego wykazu idzie odmowa `not_found` z
+nazwą procesu.
+
+Dwa pola żądania `monitor.subscribe` mówią o dwóch różnych oknach:
+`windowId` jest oknem odbierającym telemetrię, obserwatorem, a nie sitem
+procesów — sitem są `processIds` (pusta lista znaczy komplet) oraz
+`sessionId`. Tak samo rozstrzyga to bliźniacza komenda
+`automation.execution.subscribe`. Żądanie bez `windowId` jest zwykłym
+odczytem — nie ma czego zapisać, więc pole `subscribed` niesie `false`.
+Zdarzenie `progress.changed` i tak dociera do wszystkich połączeń konta;
+zapis mówi rdzeniowi, które okno których procesów pilnuje.
+
+Obserwacja procesu, którego rejestr nie zna, jest obserwacją niczego.
+Rejestr telemetrii procesów nie wykreśla, więc identyfikator nieznany
+znaczy identyfikator nieistniejący, a nie proces właśnie domknięty.
+
+Sesja procesu bywa uzupełniana z okna i dzieje się to przed sitem, nie po
+nim. Telemetria bywa uboższa od stanu rdzenia: proces otwarty na
+niepowodzeniu przyjęcia wiadomości zna okno, lecz nie zna jeszcze sesji
+(`opisTury(z.WindowId, "")` w `telemetria_tury.go`). Sito po samym zapisie
+telemetrii oddałoby pustkę przy procesie, który do wskazanej sesji należy.
+Sesję okna rozstrzyga rejestr obecności — tą samą metodą, którą rozstrzyga
+ją nasłuch telemetrii.
+
+Metoda `Odpisy` oddaje odpis, a nie wskaźniki: proces bywa zmieniany w tej
+samej chwili przez wątek tury albo kolejki, a czytelnik ma dostać stan
+spójny, nie stan w połowie zmiany. Metoda mieszka w pliku monitora, bo to
+monitor jej potrzebuje — producent telemetrii nie ma czytelników poza nim.
+
+Chwilę ostatniej zmiany procesu rozstrzyga w pierwszej kolejności pamięć
+czynności rejestru obecności: zapisuje ona znacznik przy każdym zgłoszeniu
+telemetrii okna w `stan_sesji_czynnosc.go`, więc dla procesu okna jest to
+dokładnie chwila ostatniej zmiany. Proces bez okna chwili zmiany nie ma
+gdzie zapisanej: telemetria trzyma etap i stan, lecz nie czas, a pamięć
+czynności jest kluczowana oknem i proces bez okna, na przykład kolejka
+założona przed pierwszą wiadomością, do niej nie trafia. Dla takiego procesu
+monitor podaje chwilę, w której rdzeń stwierdził ten stan — wartość będącą
+górnym ograniczeniem chwili zmiany, nie nią samą.
+
+Zegar odpisów procesów bez okna nie jest drugim rejestrem procesów: nie
+trzyma ani etapu, ani stanu jako faktu, tylko znacznik przypięty do odcisku
+odpisu. Stan niezmieniony znacznika nie przesuwa, więc kolejne odczyty
+monitora nie odmładzają procesu, który stoi. Rejestr telemetrii procesów nie
+wykreśla, więc bez granicy pojemności zegar rósłby razem z nim przez cały
+czas życia rdzenia; po przekroczeniu granicy zegar zaczyna od nowa, zamiast
+puchnąć.
+
+Pamięć okien obserwujących procesy wiąże okno z procesami, których
+telemetrię obserwuje. Pusty wykaz procesów znaczy obserwację kompletu — tak
+mówi kontrakt komendy wprost. Zdarzenie `progress.changed` dociera do
+wszystkich połączeń konta i rejestr niczego w tym nie zmienia. Rejestr
+istnieje po to, by pole `subscribed` niosło prawdę, a rdzeń wiedział, które
+okno których procesów pilnuje. Ten sam wzorzec prowadzi
+`pamiecObserwatorowPrzebiegow` dla Execution Monitora.

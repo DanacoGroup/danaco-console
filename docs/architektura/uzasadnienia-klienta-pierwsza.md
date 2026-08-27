@@ -5012,3 +5012,14 @@ okien, nie do obszaru `browser.*`, dlatego stoją w źródle osobnym wobec
 
 Rdzeń przestawia moduł okna komendą `workspace.enter`, więc oknem przeglądarki
 jest to, którego pole `moduleId` równa się kodowi modułu.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-wersji-eksperta.ts
+
+Historia i archiwum stoją osobno od `zrodlo-agentow.ts`, ponieważ odpowiadają na inne
+pytanie: biblioteka mówi, jacy eksperci są, a to źródło mówi, co się z danym ekspertem
+działo i gdzie poszedł. Trzymanie obu w jednym pliku łączyłoby dwie odpowiedzialności
+i przekraczało próg objętości pliku.
+
+Wersję wskazuje identyfikator, a nie numer, bo tak przyjmuje ją komenda
+`agent.version.restore`. Numer jest porządkiem historii, nie tożsamością wersji: po
+przywróceniu numery rosną i ten sam numer znaczyłby co innego.

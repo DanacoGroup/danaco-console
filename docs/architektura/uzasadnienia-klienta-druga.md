@@ -738,3 +738,45 @@ był dostępny, i okno je pokazuje, bo pusty wykaz uwag przy braku programu
 znaczyłby fałszywie „treść bez zastrzeżeń". Kontrola wstępna okna zostaje
 obok analizy, nie zamiast niej: sprawdza to, co da się rozstrzygnąć bez
 żadnego programu, i robi to w chwili pisania.
+
+## budowa/klient-poprzedni/src/moduly/studio/nastawy-strony.ts
+
+Kształt nastaw strony nie jest wymyślony: to `StudioPageSetup` z kontraktu,
+ten sam, który jedzie w profilu wydania i w renderze podglądu. Okno pracy
+pokazuje więc kartkę o tych samych nastawach, którymi rdzeń wyda dokument.
+Rozmiar nośnika w milimetrach stoi w tym pliku, bo kontrakt niesie samo
+oznaczenie, a nie jego wymiary; wykaz jest zamknięty i nazwany, a nośnik
+spoza wykazu bierze wymiary A4 i okno mówi o tym wprost, zamiast rysować
+kartkę o zgadniętym rozmiarze. Plik nie zna DOM: wejściem są nastawy,
+wyjściem liczby i zdania.
+
+Źródłem prawdy o wymiarach nośników jest rdzeń: komenda właściwa temu
+obszarowi oddaje szereg A, szereg B, Letter, Legal, Tabloid oraz koperty
+DL, C4, C5 i C6 wraz z wymiarami, czytając je z jednego wspólnego wykazu
+rdzenia. Okno pracy woła tę komendę przy wczytaniu dokumentu i wchłania
+odpowiedź, więc kartka rysuje się wymiarami rdzenia, a nie wymiarami
+wbudowanymi. Wykaz wbudowany stoi w tym pliku wyłącznie dlatego, że kartkę
+trzeba narysować, zanim odpowiedź rdzenia dojedzie — rysowanie w rozmiarze
+zgadniętym byłoby nieprawdą o nośniku. Poprawki wymiarów wnosi się do
+wykazu rdzenia; wpis wbudowany ma się do niego równać, a nie odwrotnie.
+Sprawdzian pokrywający ten plik pilnuje, żeby wchłonięcie naprawdę
+nadpisywało wymiary wbudowane.
+
+Rodzaj nośnika przy wchłanianiu wykazu rdzenia bierze się z pola `kind`
+odpowiedzi, gdy ta go niesie, a nie z wpisu wbudowanego — inaczej koperta
+dołożona kiedyś do wykazu rdzenia wchodziłaby do okna jako arkusz i nadruk
+koperty nie miałby się na czym wykonać.
+
+Margines na oprawę nie ma pola w kontrakcie — `StudioPageSetup` niesie
+cztery marginesy i nic poza nimi — więc oprawa żyje przez sesję okna
+i jest zgłoszona jako brak pozycji kontraktu; rysowana jest prawdziwie,
+bo pas oprawy zabiera pole pisania. Marginesy odbicia włączone znaczą, że
+margines lewy jest marginesem wewnętrznym: na stronie nieparzystej stoi po
+lewej, na parzystej po prawej — bez tego oprawa wypadałaby raz w rowku, raz
+na krawędzi.
+
+Wysokość bloku przy rozdzielaniu stron podaje wołający, bo zmierzyć ją
+potrafi wyłącznie przeglądarka, a rachunek podziału ma dać się sprawdzić
+bez niej. Blok wyższy od całej strony zostaje na stronie własnej, ponieważ
+dzielenie go w środku wymagałoby łamania wiersza wewnątrz akapitu, czego ta
+warstwa nie umie i czego nie udaje.

@@ -1231,3 +1231,9 @@ i `actorClientId` z koperty przydaje się poza tą warstwą, ponieważ
 `aplikacja/zrodlo-posuniec.ts` rozpoznaje sprawcę odciskiem okna, mając prawdę
 w kopercie. Wystawienie tego odczytu w punkcie zbiorczym zapobiega powstaniu
 drugiej, odmiennej realizacji tej samej reguły.
+
+## budowa/klient-poprzedni/src/mission-control/sekcja-aktywnosci.ts
+
+Nazwy miar w kaflach są dosłowne, ponieważ mają nie dopuścić do pomylenia wysycenia kanałów modelu z obciążeniem maszyny. Miara bez źródła w kontrakcie pokazuje kreskę i etykietę braku źródła zamiast wartości zastępczej, aby pulpit nie sugerował danych, których rdzeń nie dostarcza.
+
+Pas decyzji nie należy do tej sekcji. Sekcja udostępnia jedynie miejsce montażu pod rzędem kafli, a sam pas dokłada moduł mission-control.ts, który zna kolejność elementów pulpitu.

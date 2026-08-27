@@ -1944,3 +1944,8 @@ zostal zapytany, bo pod odwolaniem wskazanym w wierszu kanalu nie ma sekretu.
 BrakPoswiadczenia: warstwa wyzej ma odroznic 'nie ma czym wyslac' od 'wyslano
 i odbilo sie' — pierwsze naprawia sie w produkcie i ponawianie nic nie da,
 drugie bywa chwilowe. Bez typu obie klasy wygladaja jak ten sam napis.
+
+Zakładanie wersji jest wydzielone, bo trzy rodziny czynności — decyzja
+o zmianach, decyzja o propozycji, przyjęcie cyfryzacji — robią dokładnie to
+samo w trzech krokach. Trzy kopie tej sekwencji rozjechałyby się przy
+pierwszej poprawce.

@@ -3617,3 +3617,88 @@ okno wywoływałoby ten sam meldunek od nowa. Dziennikiem jest dziennik
 składacza mostów — ten sam, do którego idzie meldunek o braku binarium
 serwera narzędzi. Jedna sprawa, jedno miejsce. Dziennik niewskazany nie
 zmienia przebiegu tury; znika wyłącznie meldunek.
+
+## budowa/server/internal/core/skutek_narzedzi_obrazu_test.go
+
+Dlaczego ten sprawdzian nie pomija się przy braku programu: te cztery
+czynności liczył wcześniej program pakietu serwera i sprawdzian skutku
+wymagałby jego obecności — na maszynie bez niego świeciłby na zielono jako
+„pominięty", czyli nie mierzyłby niczego. Rachunek stoi teraz wkompilowany
+w binarium (`adapter_narzedzia_obraz_wkompilowany.go`), więc sprawdzian idzie
+zawsze i mierzy PIKSELE wyniku, a nie pola odpowiedzi. Program zostaje
+wyłącznie drogą zapasową dla AVIF-a i WEBP-a stratnego — tych dwóch wyjść ten
+plik nie mierzy, bo nie ma czym: kodera czysto-Go dla nich nie ma i dlatego
+właśnie tamta droga istnieje.
+
+## budowa/server/internal/core/kolejka_silnik.go
+
+Protokół działań: kontrakt daje sześć działań (`QueueAction`) i nie ma
+osobnego działania „zamknij pozycję werdyktem". Silnik czyta więc działania
+dosłownie tak, jak są nazwane, i posuwa pozycje po tabeli przejść
+`krokNaprzod`: `start`/`resume` to krok naprzód (oczekuje → wykonywana →
+do_weryfikacji → ukonczona); `retry` to bieg naprawczy (licznik obiegów +1,
+werdykt do_poprawy, powrót do wykonywana, bez limitu i bez warunku); `stop`
+to przerwanie (pozycja wskazana albo wszystkie czynne → anulowana); `pause`
+to wstrzymanie kolejki (pozycje zostają, gdzie były); `clear` to opróżnienie
+(pozycje czynne → anulowana, dziennik zostaje — przejrzystość zamiast
+kasowania śladu).
+
+Przyjęcie wyniku kroku wyraża się wyborem działania: krok naprzód znaczy
+przyjęcie, retry znaczy odesłanie do poprawy. Silnik nie wystawia werdyktu,
+którego nie wywołało działanie Operatora, i nie zmyśla postępu. Działanie
+wskazujące pozycję (`itemId`) dotyczy tej pozycji; bez wskazania dotyczy
+pozycji, na której kolejka stoi.
+
+Most do realnego wykonania: sam przebieg stanów nie wykonuje pracy — pozycja
+wchodząca w stan `wykonywana` musi zostać naprawdę wykonana, a jej wynik,
+nie klik Operatora, przesuwa ją dalej — powodzenie do `do_weryfikacji`,
+niepowodzenie do `bledna`, czyli do realnego stanu błędu zamiast cichego
+ukończenia. Robi to wpięty `wykonawca`. Silnik bez wykonawcy zostaje czystą
+maszyną stanów: pozycję posuwa wtedy działanie Operatora, pętli sesyjnej
+albo MultitaskingAI, tak jak przed wpięciem mostu.
+
+`ZWykonawca` zwraca silnik przez wartość, bo `silnikKolejki` trzymany jest
+w adapterze kolejek jako pole wartościowe, a nie wskaźnik — montaż podmienia
+je w miejscu.
+
+`ZUjsciemWyniku` wpina odbiorcę zebranej treści tury. Silnik nie wie, kto
+odbiera — dziś jest to wiersz podagenta (`adapter_modul_orkiestracja.go`),
+ale silnik zna wyłącznie pozycję; pozycja bez odbiorcy przechodzi bez śladu
+treści.
+
+`Zasil` zakłada zlecenia początkowe kolejki. Wykaz pusty zostawia kolejkę
+bez pozycji — to poprawny stan, nie awaria.
+
+Stan kolejki oddawany przez `Wykonaj` jest wyprowadzony z pozycji, nie
+zadeklarowany: dopóki jest co robić, kolejka pracuje; gdy nie ma — jest
+wyczerpana.
+
+`Pozycje` zwraca zlecenia kolejki. Błąd odczytu daje wykaz pusty —
+odpowiedź o kolejce nie ma znikać z powodu jednego zapytania pobocznego.
+
+`Cykl` podaje licznik obiegów pozycji, na której stoi kolejka — pole
+`Queue.Cycle` kontraktu. Kolejka wyczerpana pokazuje licznik pozycji
+ostatniej, kolejka pusta nie pokazuje żadnego.
+
+Wejście w stan `wykonywana` nie kończy kroku `krok`: pozycja jest wtedy
+naprawdę wykonywana, a jej wynik przesuwa ją dalej. Zawrócona pozycja
+`biegNaprawczy` wchodzi w `wykonywana`, więc jest wykonywana od nowa —
+powtórzenie kroku ma powtórzyć pracę, nie samo przełożyć etykietę stanu.
+
+`queue.action stop` wydane w trakcie tury zapisuje pozycji stan `anulowana`.
+Bez sprawdzenia w `domknijPoTurze` zapis nadpisałby go chwilę później stanem
+`do_weryfikacji`, jak gdyby przerwania nie było — łamiąc własny protokół
+silnika („stop · przerwanie: pozycja … → anulowana") i zamykając jedyną
+kontraktową drogę zatrzymania pracy podagenta, bo komendy `subagent.stop`
+kontrakt nie ma. Przerwanie ma pierwszeństwo przed spóźnionym werdyktem
+tury; sama treść odpowiedzi trafiła już do ujścia wyniku, więc nic z pracy
+nie ginie po cichu.
+
+Odczyt w `domknijPoTurze` idzie listą pozycji kolejki, bo repozytorium nie
+ma odczytu jednej pozycji — a dorabianie go dla tego jednego miejsca byłoby
+drugim zapytaniem o to samo. Pozycja nieodnaleziona przechodzi na zapis
+wprost: lepiej zapisać stan wynikający z tury, niż zgubić go z powodu błędu
+odczytu.
+
+`anuluj` zamyka pozycje przerwaniem. Wiersz zostaje razem z dziennikiem —
+ślad przerwanego zlecenia jest częścią przejrzystości pętli.

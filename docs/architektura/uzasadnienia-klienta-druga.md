@@ -4229,3 +4229,10 @@ w strefie komponentów jest zdaniem, którym rdzeń sam opisuje moduł; pusty op
 z tej samej klatki, co wykaz komponentów, tak samo jak w kaflu personalizowanym. Wezwanie opisuje moduł,
 a nie obiecuje czynności, której kafel nie wykonuje: jedynym jego skutkiem jest przejście do modułu — kafel
 zakładający komponent stoi osobno, w przyborniku listwy ustawień.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/katalog-izolacji.ts
+Obszar Profili składa i pokazuje ten sam zestaw kluczy, co obszary kontekstu i zakresu technicznego —
+profil jest nazwanym zestawem trzech przełączników kontekstu i ośmiu zakresów technicznych. Nazwy
+stoją w jednym miejscu, żeby profil nie nazywał klucza inaczej niż zakładka, w której Operator ten
+sam klucz przestawia. Plik trzyma wyłącznie nazewnictwo: stany przełączników przychodzą z rdzenia.
+Słownik pokrywa cały kontrakt: brak wartości zatrzymuje kompilację.

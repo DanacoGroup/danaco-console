@@ -85,7 +85,7 @@ type Ustawienia struct {
 	PortDowolny bool
 	// SciezkaGniazda to ścieżka HTTP kanału WebSocket.
 	SciezkaGniazda string
-	// KatalogKlienta wskazuje pakiet interfejsu (client/dist). Pusty albo
+	// KatalogKlienta wskazuje pakiet interfejsu (klient/dist). Pusty albo
 	// nieistniejący katalog nie wstrzymuje nasłuchu — gniazdo działa bez
 	// plików statycznych.
 	KatalogKlienta string

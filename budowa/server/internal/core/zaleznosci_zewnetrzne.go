@@ -127,6 +127,13 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "formatowanie skryptów powłoki bash w module Terminal"},
 		{Narzedzie: narzedziePowerShell,
 			Zakres: "analiza statyczna i formatowanie skryptów PowerShell w module Terminal"},
+		{Narzedzie: narzedzieNode,
+			Zakres: "orzeczenie o składni skryptu karty node w module Terminal " +
+				"(terminal.script.lint) — innego analizatora ta karta nie ma"},
+		{Narzedzie: narzedziePython,
+			Zakres: "orzeczenie o składni skryptu karty python w module Terminal " +
+				"(terminal.script.lint) na maszynie bez Ruffa — Ruff ma pierwszeństwo " +
+				"i obejmuje składnię wraz z regułami, interpreter zostaje drogą zapasową"},
 		{Narzedzie: narzedzieDocker,
 			Zakres: "karta powłoki wewnątrz kontenera w module Terminal"},
 		{Narzedzie: narzedzieKubectl,

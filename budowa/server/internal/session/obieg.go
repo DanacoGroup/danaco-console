@@ -2,39 +2,24 @@ package session
 
 import "time"
 
-// Bieg naprawczy nie ma limitu obiegów. Zamiast bramy licznikowej
-// wchodzi przejrzystość: licznik obiegów, wykrywanie braku postępu i jawny,
-// nazwany warunek zatrzymania. Zatrzymanie nigdy nie jest ciche — zawsze niesie
-// rozpoznany powód, który idzie do obserwatorów pętli.
-//
-// Powody dzielą się na dwie klasy i różnica jest maszynowa, nie opisowa. Trzy
-// zastają pracę PRZERWANĄ i bieg podejmuje z nich wyłącznie Operator
-// (`wznow`); czwarty — ukończenie z wynikiem — zastaje ją ZROBIONĄ i bieg
-// podejmuje się z niego sam, gdy praca dostanie ciąg dalszy. Po tej różnicy
-// układ złożony przez Operatora poznaje wynik zadania, nie pytając nikogo.
-
-// PowodZatrzymania nazywa przyczynę wstrzymania biegu naprawczego.
+// PowodZatrzymania nazywa przyczynę wstrzymania biegu naprawczego i rozróżnia pracę przerwaną od pracy ukończonej wynikiem, co pozwala rozstrzygnąć sposób wznowienia biegu.
 type PowodZatrzymania string
 
 const (
-	// ZatrzymanieBrakPostepu — wykonawca powtórzył się co do znaku przez tyle
-	// obiegów z rzędu, ile wynosi próg braku postępu.
+	// ZatrzymanieBrakPostepu oznacza, że wykonawca powtórzył ten sam wynik przez tyle obiegów z rzędu, ile wynosi próg braku postępu ustawiony dla biegu.
 	ZatrzymanieBrakPostepu PowodZatrzymania = "brak postępu wykonawcy"
-	// ZatrzymanieRecznie — zatrzymanie przez Operatora. Przycisk zatrzymania
-	// jest czynny w każdej chwili biegu.
+	// ZatrzymanieRecznie oznacza zatrzymanie biegu wydane bezpośrednio przez operatora, dostępne w dowolnej chwili trwania biegu naprawczego.
 	ZatrzymanieRecznie PowodZatrzymania = "zatrzymanie przez Operatora"
-	// ZatrzymanieUsterka — obiegu nie udało się rozpocząć.
+	// ZatrzymanieUsterka oznacza, że rozpoczęcie obiegu zakończyło się niepowodzeniem i bieg naprawczy nie mógł zostać podjęty.
 	ZatrzymanieUsterka PowodZatrzymania = "usterka rozpoczęcia obiegu"
-	// ZatrzymanieUkonczenie — koordynator zamknął turę wynikiem, a żadne okno
-	// wykonawcze tego koordynatora nie prowadziło wtedy tury. Jedyny powód
-	// mówiący „skończone z wynikiem"; trzy powyższe mówią „przerwane".
+	// ZatrzymanieUkonczenie oznacza, że koordynator zamknął turę wynikiem końcowym, gdy żadne okno wykonawcze nie prowadziło już tej tury, i jako jedyny powód oznacza pracę skończoną, a nie przerwaną.
 	ZatrzymanieUkonczenie PowodZatrzymania = "ukończenie z wynikiem"
 )
 
-// ProgBrakuPostepuDomyslny — ile obiegów bez zmiany stanu z rzędu kończy bieg.
+// ProgBrakuPostepuDomyslny podaje liczbę kolejnych obiegów bez zmiany stanu, po której bieg naprawczy zostaje zatrzymany domyślnie.
 const ProgBrakuPostepuDomyslny = 3
 
-// StanObiegu jest odpisem licznika jednego koordynatora.
+// StanObiegu przechowuje odpis licznika obiegów prowadzonych przez jednego koordynatora w ramach biegu naprawczego.
 type StanObiegu struct {
 	// IdKoordynatora — okno prowadzące bieg naprawczy.
 	IdKoordynatora string
@@ -44,8 +29,7 @@ type StanObiegu struct {
 	ObiegowBezPostepu int
 	// Prog — próg braku postępu obowiązujący ten bieg.
 	Prog int
-	// Zatrzymany mówi, czy bieg stanął. Powód niżej rozstrzyga, czy stanął na
-	// pracy przerwanej, czy na skończonej.
+	// Zatrzymany mówi, czy bieg stanął; powód niżej rozstrzyga przerwanie od ukończenia.
 	Zatrzymany bool
 	// Powod zatrzymania; pusty, dopóki bieg trwa.
 	Powod PowodZatrzymania
@@ -57,14 +41,13 @@ type StanObiegu struct {
 	Zaktualizowano time.Time
 }
 
-// licznikObiegow prowadzi bieg naprawczy jednego koordynatora.
+// licznikObiegow prowadzi licznik obiegów oraz rozpoznaje warunek zatrzymania biegu naprawczego jednego koordynatora.
 type licznikObiegow struct {
 	stan          StanObiegu
 	ostatniOdcisk string
 }
 
-// nowyLicznikObiegow zakłada licznik z podanym progiem braku postępu.
-// Próg niedodatni schodzi na wartość domyślną.
+// nowyLicznikObiegow zakłada licznik obiegów dla podanego koordynatora z określonym progiem braku postępu, przyjmując próg domyślny, gdy podana wartość jest niedodatnia.
 func nowyLicznikObiegow(idKoordynatora string, prog int) *licznikObiegow {
 	if prog <= 0 {
 		prog = ProgBrakuPostepuDomyslny
@@ -76,15 +59,7 @@ func nowyLicznikObiegow(idKoordynatora string, prog int) *licznikObiegow {
 	}}
 }
 
-// zanotuj zapisuje kolejny obieg i rozstrzyga, czy bieg trwa dalej.
-// Zwraca stan po zapisie oraz zgodę na rozpoczęcie obiegu.
-//
-// Bieg UKOŃCZONY podejmuje się tutaj sam, bez niczyjego potwierdzenia:
-// ukończenie jest spoczynkiem po wyniku, a nie bramą akceptacji, więc koniec
-// kolejnej tury wykonawcy — czyli praca, która dostała ciąg dalszy — rusza bieg
-// dalej. Historia obiegów i licznik braku postępu zostają nietknięte, bo to
-// wciąż ten sam bieg. Trzy pozostałe zatrzymania trzymają i podejmuje je
-// wyłącznie Operator przez `wznow`.
+// zanotuj zapisuje kolejny obieg pętli, aktualizuje licznik braku postępu na podstawie odcisku stanu i zwraca stan po zapisie wraz z zgodą na rozpoczęcie następnego obiegu.
 func (l *licznikObiegow) zanotuj(idWykonawcy, powodTury, odcisk string) (StanObiegu, bool) {
 	if l.stan.Zatrzymany && l.stan.Powod == ZatrzymanieUkonczenie {
 		l.stan.Zatrzymany = false
@@ -112,7 +87,7 @@ func (l *licznikObiegow) zanotuj(idWykonawcy, powodTury, odcisk string) (StanObi
 	return l.stan, true
 }
 
-// zatrzymaj wstrzymuje bieg z rozpoznanym powodem.
+// zatrzymaj wstrzymuje bieg naprawczy, zapisując rozpoznany powód zatrzymania oraz chwilę tej zmiany w stanie licznika.
 func (l *licznikObiegow) zatrzymaj(powod PowodZatrzymania) StanObiegu {
 	l.stan.Zatrzymany = true
 	l.stan.Powod = powod
@@ -120,9 +95,7 @@ func (l *licznikObiegow) zatrzymaj(powod PowodZatrzymania) StanObiegu {
 	return l.stan
 }
 
-// wznow podejmuje bieg wstrzymany. Historia obiegów zostaje — kasuje się
-// wyłącznie licznik braku postępu i ostatni odcisk, bo to one rozstrzygały
-// o zatrzymaniu.
+// wznow podejmuje bieg naprawczy wstrzymany wcześniej, zerując licznik braku postępu i ostatni zapamiętany odcisk stanu.
 func (l *licznikObiegow) wznow() StanObiegu {
 	l.stan.Zatrzymany = false
 	l.stan.Powod = ""
@@ -132,7 +105,7 @@ func (l *licznikObiegow) wznow() StanObiegu {
 	return l.stan
 }
 
-// Obieg opisuje jeden obieg pętli przekazywany temu, kto go wykonuje.
+// Obieg opisuje jeden obieg pętli naprawczej przekazywany oknu, które ma podjąć kolejną turę pracy koordynatora biegu.
 type Obieg struct {
 	// IdKoordynatora — okno, które ma podjąć pracę.
 	IdKoordynatora string
@@ -146,19 +119,18 @@ type Obieg struct {
 	Strumien MigawkaStrumienia
 }
 
-// UruchomienieObiegu rozpoczyna turę koordynatora. Port trzyma pętlę po jednej
-// stronie granicy: session wie kiedy zacząć obieg, warstwa rozmowy wie jak.
+// UruchomienieObiegu jest portem rozpoczynającym turę koordynatora, oddzielającym decyzję o starcie obiegu od sposobu jej wykonania.
 type UruchomienieObiegu interface {
 	RozpocznijObieg(o Obieg) error
 }
 
-// UruchomienieFunkcja pozwala podać port zwykłą funkcją.
+// UruchomienieFunkcja pozwala podać implementację portu UruchomienieObiegu zwykłą funkcją zamiast osobnego typu.
 type UruchomienieFunkcja func(o Obieg) error
 
-// RozpocznijObieg wypełnia interfejs UruchomienieObiegu.
+// RozpocznijObieg wypełnia interfejs UruchomienieObiegu, wywołując funkcję przekazaną jako implementacja portu.
 func (f UruchomienieFunkcja) RozpocznijObieg(o Obieg) error { return f(o) }
 
-// ZdarzenieObiegu jest jawnym śladem jednego obiegu — także obiegu odmówionego.
+// ZdarzenieObiegu niesie jawny ślad jednego obiegu pętli naprawczej, w tym również obiegu odmówionego z powodu zatrzymania.
 type ZdarzenieObiegu struct {
 	Stan       StanObiegu
 	Obieg      Obieg
@@ -166,13 +138,13 @@ type ZdarzenieObiegu struct {
 	Blad       error
 }
 
-// ObserwatorObiegu przyjmuje ślad obiegu: dziennik, nadajnik zdarzeń, telemetria.
+// ObserwatorObiegu jest portem przyjmującym ślad obiegu, wykorzystywanym przez dziennik zdarzeń, nadajnik powiadomień oraz telemetrię.
 type ObserwatorObiegu interface {
 	Obieg(z ZdarzenieObiegu)
 }
 
-// ObserwatorFunkcja pozwala podać obserwatora zwykłą funkcją.
+// ObserwatorFunkcja pozwala podać implementację portu ObserwatorObiegu zwykłą funkcją zamiast osobnego typu.
 type ObserwatorFunkcja func(z ZdarzenieObiegu)
 
-// Obieg wypełnia interfejs ObserwatorObiegu.
+// Obieg wypełnia interfejs ObserwatorObiegu, przekazując zdarzenie obiegu do funkcji pełniącej rolę obserwatora.
 func (f ObserwatorFunkcja) Obieg(z ZdarzenieObiegu) { f(z) }

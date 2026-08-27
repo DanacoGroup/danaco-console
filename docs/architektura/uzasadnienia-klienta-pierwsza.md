@@ -3357,3 +3357,29 @@ ostatni poziom nie miałby jak wyłączyć wszystkich.
 
 Stan pokazany po przestawieniu bierze się z odpowiedzi rdzenia: kontrolki
 odbijające samo zamówienie okna kłamałyby przy każdym takim wywołaniu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/skutek-sterowania.ts
+
+Plik odpowiada wyłącznie za przekład odpowiedzi rdzenia na zdanie dla
+czytającego. Stoi poza oknem monitora, ponieważ okno składa tabelę, a to jest
+ocena tego, co rdzeń oddał.
+
+Reguła jest jedna: porównaj zamówienie ze zleceniem, które wróciło. Odpowiedź
+niesie zlecenie po zmianie, a przekład sterowania na stan stoi w rdzeniu
+w jednej funkcji, więc sprawdzenie nie kosztuje nic i obowiązuje tak samo dla
+priorytetu, jak dla czterech przycisków panelu akcji. Zamówienie i odpowiedź
+rozchodzą się z dwóch powodów. Komenda zapisuje priorytet wyłącznie przy
+sterowaniu innym niż odczyt, a sama zmiana kolejności idzie torem odczytu
+i wraca ze zleceniem bez zmian. Wykonawca zlecenia domyka je natomiast własnym
+zapisem, a rdzeń oddaje wiersz odczytany po zapisie, więc zapis wykonawcy
+potrafi wejść między zapis sterowania a jego odczyt.
+
+Zdanie odmowy powstaje wyłącznie z rozbieżności między zamówieniem
+a odpowiedzią rdzenia. Okno nie orzeka o braku, którego rdzeń nie pokazał, tak
+samo jak nie potwierdza skutku, którego rdzeń nie oddał.
+
+Słownik stanów zamówionych jest kluczowany stałymi kontraktu, więc dopisanie
+sterowania przerwie kompilację w tym miejscu, zamiast po cichu wpaść w gałąź
+braku zamówienia. Zatwierdzenie bramy potwierdzeń puszcza zlecenie w bieg, bo
+czekało na rękę operatora, a nie na zasób; odmowa zdejmuje je z kolejki i jest
+anulowaniem z powodem, nie osobnym stanem.

@@ -33,7 +33,7 @@
   .vc-fala span:nth-child(12){ height:36px; animation-delay:.88s; }
   .vc-mik { width:96px; height:96px; border-radius:50%; border:2px solid var(--dn-sygnal); background:var(--dn-powierzchnia-2); color:var(--dn-tekst); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 0 0 6px var(--dn-sygnal-tlo); }
   .vc-mik svg { width:40px; height:40px; }
-  .vc-transkrypcja { font-size:16px; color:var(--dn-tekst); max-width:52ch; line-height:var(--dn-lh-luzny); }
+  .vc-transkrypcja { font-size:var(--dn-fs-lg); color:var(--dn-tekst); max-width:52ch; line-height:var(--dn-lh-luzny); }
   .vc-podpowiedz { font-size:var(--dn-fs-sm); color:var(--dn-tekst-3); }
   .vc-nag { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); }
   .vc-nag .dn-meta { margin-left:auto; }
@@ -44,7 +44,7 @@
   .am-karta--blad { border-left:3px solid var(--dn-blad-tekst); }
   .am-tyt { display:flex; align-items:center; gap:var(--dn-od-1); font-weight:600; font-size:var(--dn-fs-sm); }
   .am-krok { display:flex; align-items:center; gap:var(--dn-od-1); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); padding-left:var(--dn-od-2); }
-  .af-grupa { font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); margin-top:var(--dn-od-2); }
+  .af-grupa { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); margin-top:var(--dn-od-2); }
   .af-poz { display:flex; align-items:center; gap:var(--dn-od-1); font-size:var(--dn-fs-sm); }
   .af-poz .czas { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .af-poz .wynik { margin-left:auto; font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
@@ -541,7 +541,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Przytrzymaj, aby mówić — puszczenie wysyła polecenie." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>

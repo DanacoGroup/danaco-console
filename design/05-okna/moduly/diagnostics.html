@@ -17,9 +17,9 @@
   .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
   .dg-kpi { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--dn-od-2); padding:var(--dn-od-3); }
   .dg-kpi-karta { border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); padding:var(--dn-od-2) var(--dn-od-3); background:var(--dn-powierzchnia); }
-  .dg-kpi-karta .etk { font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .dg-kpi-karta .etk { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
   .dg-kpi-karta .wart { font-size:var(--dn-fs-xl); font-weight:var(--dn-fw-polgruba); font-family:var(--dn-ff-mono); color:var(--dn-tekst); }
-  .dg-sekcja { padding:var(--dn-od-1) var(--dn-od-3); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); border-top:1px solid var(--dn-obrys-subtelny); }
+  .dg-sekcja { padding:var(--dn-od-1) var(--dn-od-3); font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); border-top:1px solid var(--dn-obrys-subtelny); }
   .dg-log { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); }
   .dg-log .wiersz { display:flex; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-3); border-bottom:1px solid var(--dn-obrys-subtelny); }
   .dg-log .czas { color:var(--dn-tekst-3); flex:none; }
@@ -528,7 +528,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -595,11 +595,11 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg><b>Errors Panel</b></span><span class="sta-okno-znacznik">3 odciski</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu" style="overflow:auto">
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span><b>DeliveryTimeout</b><span class="dn-plakietka dn-plakietka--ostrzezenie dn-na-koniec">×214</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">odcisk a1f9 · smtp/pool.py:142 · pierwszy 09:19</div>
+            <div class="dn-meta">odcisk a1f9 · smtp/pool.py:142 · pierwszy 09:19</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--ostrzezenie" aria-hidden="true"></span><b>PoolSaturationWarning</b><span class="dn-plakietka dn-na-koniec">×338</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">odcisk c7d2 · smtp/pool.py:97</div>
+            <div class="dn-meta">odcisk c7d2 · smtp/pool.py:97</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span><b>RetryScheduled</b><span class="dn-plakietka dn-na-koniec">×52</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">odcisk e004 · kolejka/ponow.py:31</div>
+            <div class="dn-meta">odcisk e004 · kolejka/ponow.py:31</div>
           </div>
         </section>
 
@@ -609,11 +609,11 @@
           <div class="sta-okno-tresc dn-wykaz-modulu" style="overflow:auto">
             <div class="pt-etykieta">Rekomendacja 1 — powiązana z odciskiem a1f9</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Zwiększ pulę połączeń SMTP z 20 do 60 i dodaj limit czasu oczekiwania 5 s.</div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">źródło: smtp/pool.py:142 · doreczenia.log:10:40:03</div>
+            <div class="dn-meta">źródło: smtp/pool.py:142 · doreczenia.log:10:40:03</div>
             <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Otwórz w Code Editor</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Podgląd różnicy</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Odrzuć</button></div>
             <div class="pt-etykieta" style="margin-top:var(--dn-od-2)">Rekomendacja 2 — powiązana z odciskiem c7d2</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--ostrzezenie" aria-hidden="true"></span> Dodaj metrykę nasycenia puli i alarm progowy przy 80%.</div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">źródło: smtp/pool.py:97</div>
+            <div class="dn-meta">źródło: smtp/pool.py:97</div>
             <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w Code Editor</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Odrzuć</button></div>
           </div>
         </section>
@@ -635,7 +635,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>korelacja-wielu-komponentow</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">3 agentów · 512 tys. tok. · 6 m 02 s</div>
+            <div class="dn-meta">3 agentów · 512 tys. tok. · 6 m 02 s</div>
             <div class="dn-postep" data-postep-do="78" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> grupowanie po odcisku <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
@@ -663,7 +663,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> analityk-logów — korelacja komponentów <span class="dn-meta">2 m 30 s</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Read · doreczenia.log — 11:08<br>Bash · grep DeliveryTimeout — 11:07<br>Read · smtp/pool.py — 11:06</div>
+            <div class="dn-meta">Read · doreczenia.log — 11:08<br>Bash · grep DeliveryTimeout — 11:07<br>Read · smtp/pool.py — 11:06</div>
           </div>
         </section>
 

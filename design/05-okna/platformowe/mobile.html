@@ -117,7 +117,7 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     min-height: 52px; padding: var(--dn-od-1);
     border: 0; border-top: 2px solid transparent; background: transparent;
-    color: var(--dn-tekst-3); font-size: 10px; cursor: pointer;
+    color: var(--dn-tekst-3); font-size: var(--dn-fs-xs); cursor: pointer;
     transition: color var(--dn-czas-2) var(--dn-ease), background-color var(--dn-czas-2) var(--dn-ease);
   }
   .mo-nawigacja-poz svg { width: 20px; height: 20px; }
@@ -129,7 +129,7 @@
     display: grid; place-content: center;
     border-radius: var(--dn-r-pill);
     background: var(--dn-sygnal-wypelnienie); color: var(--dn-szary-0);
-    font-family: var(--dn-ff-mono); font-size: 10px;
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
   }
   .mo-nawigacja-poz { position: relative; }
   .mo-znacznik-nawigacji[hidden] { display: none; }
@@ -191,7 +191,7 @@
   .mo-push-akcje { grid-column: 2; display: flex; gap: var(--dn-od-1); flex-wrap: wrap; margin-top: var(--dn-od-2); }
   .mo-push-stan {
     grid-column: 2; margin-top: var(--dn-od-1);
-    font-family: var(--dn-ff-mono); font-size: 10px;
+    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
     letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase; color: var(--dn-tekst-3);
   }
 
@@ -660,7 +660,7 @@
                     </svg>
                     <span class="mo-pasek-app-tytul" id="mo-tytul-widoku">Monitor procesu</span>
                     <span class="mo-prawa">
-                      <span class="dn-plakietka dn-plakietka--sygnal" style="font-size:10px;">
+                      <span class="dn-plakietka dn-plakietka--sygnal">
                         <span class="pt-tetno" aria-hidden="true"></span> 1
                       </span>
                     </span>

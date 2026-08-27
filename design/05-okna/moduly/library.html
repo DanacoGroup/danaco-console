@@ -20,7 +20,7 @@
   .lb-zakladki button[aria-selected="true"] { background:var(--dn-atrament); color:var(--dn-tlo); border-color:var(--dn-atrament); }
   .lb-tabela { width:100%; border-collapse:collapse; font-size:var(--dn-fs-sm); }
   .lb-tabela th, .lb-tabela td { text-align:left; padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .lb-tabela th { font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .lb-tabela th { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
   .lb-tabela tbody tr:hover { background:var(--dn-powierzchnia-2); }
   .lb-mono { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 </style>
@@ -520,7 +520,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację porządkowania i tagowania.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację porządkowania i tagowania.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -606,7 +606,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6M18 6a3 3 0 0 0-3 3v6"/><circle cx="18" cy="6" r="3"/></svg><b>Versioning Panel</b></span><span class="sta-okno-znacznik">5 wersji</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> v5 — bieżąca <span class="dn-meta">model · 08-13</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">🏷 wersja wysłana do klienta</div>
+            <div class="dn-meta">🏷 wersja wysłana do klienta</div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v4 <span class="dn-meta">uzytkownik · 08-12</span></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v3 — synteza AI <span class="dn-meta">model · 08-11</span></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v2 <span class="dn-meta">uzytkownik · 08-10</span></div>
@@ -622,7 +622,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>indeksowanie-pelnotekstowe</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">OCR skanów · 7/7 dokumentów · 51 s</div>
+            <div class="dn-meta">OCR skanów · 7/7 dokumentów · 51 s</div>
             <div class="dn-postep" data-postep-do="88" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> import ZIP — rozpakowanie <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
@@ -660,7 +660,7 @@
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> tagger — sugestie etykiet <span class="dn-meta">33 s</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Read · raport-koncowy.md — 09:41<br>Index · OCR skanów — 09:40</div>
+            <div class="dn-meta">Read · raport-koncowy.md — 09:41<br>Index · OCR skanów — 09:40</div>
           </div>
         </section>
 

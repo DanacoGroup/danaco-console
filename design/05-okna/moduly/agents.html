@@ -30,7 +30,7 @@
   .ab-awatar svg { width:16px; height:16px; }
   .ab-karta-nazwa { font-weight:var(--dn-fw-polgruba); font-size:var(--dn-fs-sm); color:var(--dn-tekst); }
   .ab-karta-opis { font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); }
-  .ab-karta-meta { font-family:var(--dn-ff-mono); font-size:11px; color:var(--dn-tekst-3); }
+  .ab-karta-meta { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .ab-karta-plak { display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:2px; }
   .ab-karta-akcje { display:flex; align-items:center; gap:var(--dn-od-1); margin-top:4px; }
 
@@ -63,11 +63,11 @@
   .ab-cykl-krok { display:inline-flex; align-items:center; gap:6px; padding:6px var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-pill); background:var(--dn-powierzchnia); color:var(--dn-tekst-2); font-size:var(--dn-fs-xs); cursor:pointer; }
   .ab-cykl-krok:hover { border-color:var(--dn-sygnal-obrys); color:var(--dn-tekst); }
   .ab-cykl-krok[aria-current="step"] { border-color:var(--dn-sygnal-obrys); color:var(--dn-sygnal); background:var(--dn-sygnal-tlo); }
-  .ab-cykl-krok b { display:grid; place-content:center; width:16px; height:16px; border-radius:var(--dn-r-pill); background:var(--dn-atrament); color:var(--dn-atrament-tekst); font-family:var(--dn-ff-mono); font-size:10px; }
+  .ab-cykl-krok b { display:grid; place-content:center; width:16px; height:16px; border-radius:var(--dn-r-pill); background:var(--dn-atrament); color:var(--dn-atrament-tekst); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); }
 
   /* Podsumowanie definicji */
   .ab-sum { display:flex; flex-direction:column; gap:6px; padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-md); background:var(--dn-powierzchnia-2); }
-  .ab-sum-tytul { font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .ab-sum-tytul { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
   .ab-sum-w { display:flex; align-items:center; justify-content:space-between; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); padding:3px 0; cursor:pointer; border-radius:var(--dn-r-xs); }
   .ab-sum-w:hover { background:var(--dn-hover); }
   .ab-sum-w span:first-child { color:var(--dn-tekst-2); }
@@ -78,12 +78,12 @@
 
   /* panele konfiguracyjne — wnętrza */
   .pk { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .pk-etyk { font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .pk-etyk { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
   .pk-modele { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--dn-od-1); }
   .pk-model { display:flex; flex-direction:column; gap:2px; padding:var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia); cursor:pointer; }
   .pk-model:hover { border-color:var(--dn-sygnal-obrys); }
   .pk-model[aria-pressed="true"] { border-color:var(--dn-sygnal-obrys); background:var(--dn-sygnal-tlo); color:var(--dn-sygnal); }
-  .pk-model small { font-size:11px; color:var(--dn-tekst-3); }
+  .pk-model small { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .pk-pig { display:flex; gap:2px; padding:2px; border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia-2); width:max-content; }
   .pk-pig button { height:24px; padding:0 var(--dn-od-2); border:none; background:none; border-radius:var(--dn-r-xs); color:var(--dn-tekst-2); font-size:var(--dn-fs-xs); cursor:pointer; }
   .pk-pig button[aria-pressed="true"] { background:var(--dn-sygnal-wypelnienie); color:var(--dn-szary-0); }
@@ -94,7 +94,7 @@
   .pk-wiersz .ik svg { width:16px; height:16px; }
   .pk-wiersz .tresc { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
   .pk-wiersz .tresc .nazwa { font-weight:var(--dn-fw-polgruba); }
-  .pk-wiersz .tresc small { font-size:11px; color:var(--dn-tekst-3); }
+  .pk-wiersz .tresc small { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .pk-baner { display:flex; align-items:flex-start; gap:var(--dn-od-2); padding:var(--dn-od-2); border:1px solid var(--dn-sygnal-obrys); border-radius:var(--dn-r-sm); background:var(--dn-sygnal-tlo); font-size:var(--dn-fs-xs); color:var(--dn-tekst); }
   .pk-baner svg { width:16px; height:16px; color:var(--dn-sygnal); flex:none; }
   .pk-grupy { display:flex; flex-direction:column; gap:2px; }
@@ -106,9 +106,9 @@
   .pk-mrz .rozc { flex:1; }
   .pk-tabela { width:100%; border-collapse:collapse; font-size:var(--dn-fs-xs); }
   .pk-tabela th, .pk-tabela td { padding:6px var(--dn-od-1); text-align:left; border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .pk-tabela th { color:var(--dn-tekst-3); font-weight:var(--dn-fw-polgruba); text-transform:uppercase; font-size:10px; letter-spacing:var(--dn-ls-wersaliki); }
+  .pk-tabela th { color:var(--dn-tekst-3); font-weight:var(--dn-fw-polgruba); text-transform:uppercase; font-size:var(--dn-fs-xs); letter-spacing:var(--dn-ls-wersaliki); }
   .pk-tabela input { accent-color:var(--dn-sygnal-wypelnienie); }
-  .pk-kod { font-family:var(--dn-ff-mono); font-size:11px; line-height:1.6; color:var(--dn-tekst-2); background:var(--dn-powierzchnia-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); padding:var(--dn-od-2); white-space:pre-wrap; }
+  .pk-kod { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); line-height:1.6; color:var(--dn-tekst-2); background:var(--dn-powierzchnia-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); padding:var(--dn-od-2); white-space:pre-wrap; }
   .pk-num { width:56px; text-align:center; padding:4px; border:1px solid var(--dn-obrys-mocny); border-radius:var(--dn-r-sm); background:var(--dn-powierzchnia); color:var(--dn-tekst); font-family:var(--dn-ff-mono); }
 
   @media (max-width:1280px){ .ab { grid-template-columns:minmax(0,1fr); } }
@@ -615,7 +615,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
@@ -899,7 +899,7 @@
                     <tr><td>Serwer MCP „LexAI”</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
                   </tbody>
                 </table>
-                <p style="font-size:11px;color:var(--dn-tekst-3);margin-top:var(--dn-od-1)">Rozszerzenia niepodłączone w Connectors Manager nie pojawiają się na tej liście.</p>
+                <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Rozszerzenia niepodłączone w Connectors Manager nie pojawiają się na tej liście.</p>
               </div>
               <div class="pk-grz" id="grupa-moduly" hidden>
                 <div class="ab-grupa">
@@ -911,7 +911,7 @@
                   <label class="ab-opcja"><input type="checkbox" checked>Developer</label>
                   <label class="ab-opcja"><input type="checkbox" checked>Diagnostics</label>
                 </div>
-                <p style="font-size:11px;color:var(--dn-tekst-3);margin-top:var(--dn-od-1)">Domyślnie wszystkie moduły zaznaczone (pełny dostęp). Odznaczenie wyklucza eksperta jako wykonawcę w danym module.</p>
+                <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Domyślnie wszystkie moduły zaznaczone (pełny dostęp). Odznaczenie wyklucza eksperta jako wykonawcę w danym module.</p>
               </div>
               <div class="pk-grz" id="grupa-izolacja" hidden>
                 <div class="pk-macierz">
@@ -924,12 +924,12 @@
                   <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></svg><span class="rozc">Wykonywanie kodu</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: wykonywanie kodu" aria-pressed="false" role="switch" aria-checked="false"></button></div>
                   <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m5 3 14 9-14 9z"/></svg><span class="rozc">Serwer wykonania</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja: serwer wykonania" aria-pressed="false" role="switch" aria-checked="false"></button></div>
                 </div>
-                <p style="font-size:11px;color:var(--dn-tekst-3);margin-top:var(--dn-od-1)">0/8 zakresów włączonych — pełna operacyjna swoboda procesu.</p>
+                <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">0/8 zakresów włączonych — pełna operacyjna swoboda procesu.</p>
               </div>
               <div class="pk-grz" id="grupa-mtai" hidden>
                 <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><span class="rozc">Subagent Network</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Subagent Network" aria-pressed="true" role="switch" aria-checked="true"></button></div>
                 <div class="dn-wykaz-modulu-poz" style="margin-top:var(--dn-od-2)"><span>Liczba dozwolonych podagentów</span><input class="pk-num" type="number" min="1" max="15" value="15" aria-label="Liczba podagentów"></div>
-                <p style="font-size:11px;color:var(--dn-tekst-3);margin-top:var(--dn-od-1)">Górny limit 15 to parametr techniczny platformy.</p>
+                <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Górny limit 15 to parametr techniczny platformy.</p>
               </div>
 
               <div class="pk-etyk" style="margin-top:var(--dn-od-2)">Polityka efektywna dla tego eksperta</div>
@@ -959,7 +959,7 @@ MultitaskingAI: Subagent Network — tak, do 15 podagentów</div>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>test-połączenia-kanału-API</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
-            <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Agent Redaktor · 12 s</div>
+            <div class="dn-meta">Agent Redaktor · 12 s</div>
             <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
             <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zapis wersji w.3 <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>

@@ -55,7 +55,7 @@
 
   /* Panel lewy — 13 zakresów */
   .kf-nav { border-right:1px solid var(--dn-obrys); background:var(--dn-panel); overflow:auto; padding:var(--dn-od-2); }
-  .kf-nav-grupa-tyt { padding:var(--dn-od-2) var(--dn-od-2) var(--dn-od-1); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
+  .kf-nav-grupa-tyt { padding:var(--dn-od-2) var(--dn-od-2) var(--dn-od-1); font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
   .kf-nav-poz {
     display:flex; align-items:center; gap:var(--dn-od-2); width:100%;
     padding:var(--dn-od-2) var(--dn-od-2); margin-bottom:2px;
@@ -102,7 +102,7 @@
     border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-powierzchnia-2);
   }
   .kf-sekcja-marka {
-    font-family:var(--dn-ff-mono); font-size:10px; letter-spacing:var(--dn-ls-wersaliki);
+    font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); letter-spacing:var(--dn-ls-wersaliki);
     text-transform:uppercase; color:var(--dn-tekst-3);
     padding:2px var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm);
   }
@@ -157,7 +157,7 @@
     background:var(--dn-powierzchnia-2); font-size:var(--dn-fs-sm);
   }
   .kf-hook .kf-hook-pkt { font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
-  .kf-hook .odepnij { margin-left:auto; background:none; border:none; color:var(--dn-tekst-3); cursor:pointer; font-size:16px; line-height:1; }
+  .kf-hook .odepnij { margin-left:auto; background:none; border:none; color:var(--dn-tekst-3); cursor:pointer; font-size:var(--dn-fs-lg); line-height:1; }
   .kf-hook .odepnij:hover { color:var(--dn-tekst); }
 
   .kf-radio-grupa { display:flex; gap:var(--dn-od-1); flex-wrap:wrap; }
@@ -180,7 +180,7 @@
     display:inline-flex; align-items:center; justify-content:center;
     width:18px; height:18px; border-radius:50%;
     border:1px solid var(--dn-obrys); background:var(--dn-powierzchnia-2);
-    color:var(--dn-tekst-3); font-size:11px; font-family:var(--dn-ff-mono); cursor:help;
+    color:var(--dn-tekst-3); font-size:var(--dn-fs-xs); font-family:var(--dn-ff-mono); cursor:help;
   }
   .kf-info:hover, .kf-info:focus-visible { color:var(--dn-tekst); border-color:var(--dn-tekst-3); outline:none; }
 
@@ -193,7 +193,7 @@
   .kf-prow-meta { margin-top:var(--dn-od-2); font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-2); line-height:var(--dn-lh-luzny); }
   .kf-prow-znacznik {
     display:inline-block; margin-top:var(--dn-od-2);
-    font-family:var(--dn-ff-mono); font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki);
+    font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki);
     color:var(--dn-sygnal-mocny); background:var(--dn-sygnal-tlo);
     padding:2px var(--dn-od-2); border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm);
   }
@@ -684,7 +684,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>

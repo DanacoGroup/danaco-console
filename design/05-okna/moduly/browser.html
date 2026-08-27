@@ -23,8 +23,8 @@
   .brw-tab[aria-selected="true"] { color:var(--dn-tekst); border-color:var(--dn-obrys); background:var(--dn-powierzchnia-2); }
   .brw-plotno { flex:1; min-height:0; overflow:auto; padding:var(--dn-od-4); position:relative; line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
   .brw-obecnosc { position:absolute; top:var(--dn-od-2); right:var(--dn-od-2); }
-  .brw-strona h1 { font-size:20px; margin:0 0 var(--dn-od-2); }
-  .brw-strona h2 { font-size:15px; margin:var(--dn-od-4) 0 var(--dn-od-2); color:var(--dn-tekst-2); }
+  .brw-strona h1 { font-size:var(--dn-fs-xl); margin:0 0 var(--dn-od-2); }
+  .brw-strona h2 { font-size:var(--dn-fs-md); margin:var(--dn-od-4) 0 var(--dn-od-2); color:var(--dn-tekst-2); }
   .brw-strona p { margin:0 0 var(--dn-od-2); color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); max-width:60ch; }
   .brw-tabela { width:100%; border-collapse:collapse; font-size:var(--dn-fs-sm); margin:var(--dn-od-2) 0; }
   .brw-tabela th, .brw-tabela td { text-align:left; padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
@@ -532,7 +532,7 @@
                   <div class="sta-popover-tytul">Wysiłek — Ultra</div>
                   <input type="range" class="sta-suwak" min="0" max="4" value="4" aria-label="Wysiłek">
                   <div class="sta-suwak-opis"><span>Szybko</span><span>Mądrzej</span></div>
-                  <p style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3);margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
+                  <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-2)">Najwyższy stopień prowadzi pełną orkiestrację wieloagentową.</p>
                 </div>
               </div>
               <button class="sta-rec" type="button" aria-label="Nagrywaj" data-komunikat="Nagrywanie głosowe — przytrzymaj lub kliknij." data-komunikat-tytul="Mikrofon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>

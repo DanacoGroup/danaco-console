@@ -5335,3 +5335,41 @@ zadaniem w tle pod oknem wykonawcy, powoływanym w trakcie tury.
 
 Zero w miejscu automatyki albo harmonogramu w wykazie wyzwoleń znaczy brak zawężenia po tym
 polu.
+
+## budowa/server/internal/podagenci/rozruch.go
+Powołanie kilkunastu podagentów jednym wywołaniem puszcza tyleż działań naraz;
+każde zakłada kolejkę, dokłada pozycję, wiąże ją z wierszem i przestawia stan.
+Baza stoi w trybie WAL z limitem czekania na zajętość: zwykły zapis równoległy
+nie zawodzi, ale transakcja, która najpierw czyta, a potem pisze, zawodzi, bo
+podniesienie blokady odczytu do zapisu nie jest objęte tym limitem i wraca
+natychmiast błędem zajętości bazy. Bramka szereguje te transakcje, więc nie
+rywalizują o blokadę i nie zawodzą.
+
+Bramka obejmuje wyłącznie założenie pracy, kilka zapisów trwających
+milisekundy. Samej pracy podagenta, tury modelu trwającej sekundy albo
+minuty, nie obejmuje i obejmować nie może: podagenci mają pracować
+równolegle, a bramka rozciągnięta na turę zamieniłaby sieć kilkunastu w
+gęsiego idącą jedynkę. Wołający wchodzi w bramkę przed pierwszym zapisem
+i wychodzi z niej przed wywołaniem silnika.
+
+Drugie miejsce rozruchu nie dokłada przepustowości, dokłada rywalizację,
+czyli dokładnie to, co ta bramka usuwa; wartość liczby miejsc jest stałą, nie
+nastawą, bo nastawa bez pytania, które by ją rozstrzygało, byłaby pokrętłem
+bez skali.
+
+Liczba miejsc poniżej jedynki w NowaBramka znaczy jedno miejsce: bramka o
+zerze miejsc nie wpuściłaby nikogo nigdy, czyli byłaby zatrzymaniem platformy
+pod nazwą przepustowości.
+
+Zwolnienie miejsca w Wpusc oddaje się zawsze, także po błędzie założenia
+pracy; miejsce niezwrócone zabrałoby sieci przepustowość na stałe. Podagent
+odwołany w kolejce do bramki nie ma po co dostać miejsca, więc wynik jest
+wtedy fałszem, a zwolnienie mimo to wolno wywołać, bo nic nie robi — dzięki
+temu wołający nie musi rozgałęziać odroczonego wywołania. Bramka pusta
+wpuszcza natychmiast.
+
+## budowa/server/internal/store/zrodlo_migracji_test.go
+
+Przejazd migracji musi zatrzymać się na kroku o nazwie spoza wzorca, a nie pominąć go po cichu, ponieważ
+pominięty krok to schemat niepełny bez jednego komunikatu o błędzie. Numeru zwolnionego nie wolno użyć
+powtórnie, więc sprawdzian, który pilnowałby ciągłości numeracji, wymuszałby błąd zamiast go łapać.

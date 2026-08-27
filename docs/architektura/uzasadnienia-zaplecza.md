@@ -1770,3 +1770,80 @@ i przejmuje nazwę starej. Katalog jest słownikiem wnoszonym migracją — nie
 ma w nim danych operatora, dlatego wiersze zastępuje się kompletem
 inwentarza. Kolumna kolejności na definicji porządkuje okno w obrębie jego
 kategorii; kolejność w module należy do osobnej macierzy.
+
+## budowa/server/internal/store/migracja_073_agent_warstwy.sql
+
+Ekspert miał `kod`, `nazwa`, `opis` i jedno pole na prompt —
+`instrukcje_systemowe`. Portfolio ekspertów potrzebuje trzech rzeczy, których
+w schemacie nie było: imienia własnego, bo `nazwa` jest napisem technicznym,
+po którym idzie sortowanie wykazu (`idx_agent_nazwa`,
+`dane/agenci.go:listaAgentow`); znaku graficznego, bo kolumny na favikon nie
+było nigdzie w bazie; oraz warstw promptu, bo `injection/nakladka.go` składa
+prompt z warstw (konstytucja, profil, ekspertyza), a ekspert nie miał gdzie
+żadnej z nich zapisać, tylko jeden worek tekstu. Kontrakt
+(`shared/contract.go`) niósł już struktury `AgentLayer` i `AgentPlugin`, pola
+`Agent.displayName`, `Agent.favicon`, `Agent.layers`, `Agent.pluginIds` oraz
+cztery komendy `agent.layer.*` i `agent.plugin.*`; bez tej migracji byłyby to
+komendy bez miejsca zapisu.
+
+Migracja świadomie nie zakłada katalogu dostępnych wtyczek: kontrakt zna
+`agent.plugin.add` z nazwą, źródłem i wersją podanymi wprost, a komendy
+przeglądania katalogu rozszerzeń w rodzinie `agent.*` nie ma, więc tabela
+katalogu byłaby zapisem bez czytelnika. Nie zakłada też archiwum treści
+warstw, bo `agent.wersja` jest licznikiem, nie archiwum, i ta migracja tego
+nie zmienia. Nie zakłada wreszcie kolumny na obraz favikonu: `favikon` niesie
+odwołanie — napis, który klient umie pokazać (nazwa znaku, ścieżka,
+identyfikator zasobu) — a bajtów obrazu baza nie trzyma, tak samo jak
+biblioteka trzyma na dysku treść pliku, a w kolumnie wyłącznie odwołanie.
+
+Migracja wyłącznie dodaje: dwie kolumny z wartością domyślną i dwie tabele.
+Nie ma tu ani jednego `UPDATE`, ani jednego `DROP`, ani jednej zmiany
+istniejącej kolumny — `nazwa`, `instrukcje_systemowe`, `agent_umiejetnosc`,
+`agent_konektor` i `agent_uprawnienie` zostają takie, jakie były.
+
+`nazwa` zostaje tym, czym była: napisem technicznym, po którym biegnie
+porządek wykazu i wyszukiwanie frazą (`dane/agenci.go`). `imie_wlasne` jest
+tym, co widzi Operator, i tylko tym; gdyby imię wpisać w `nazwa`, zmiana
+imienia przestawiałaby wykaz i rozjeżdżała wyszukiwanie. Pusty napis znaczy
+„nie nadano", nie „błąd": obie kolumny są `NOT NULL DEFAULT ''`, więc każdy
+ekspert założony wcześniej dostaje je puste i pracuje dalej bez żadnej
+zmiany, a klient pokazuje wtedy `nazwa` i znak zastępczy, bo pola kontraktu
+`displayName` i `favicon` są opcjonalne właśnie po to.
+
+Warstw promptu jest dziś trzy, ale liczba trzy nie jest nigdzie przesądzona:
+`injection/nakladka.go` dopuszcza warstwę o nazwie spoza katalogu —
+`kolejnoscWarstw` zna trzy nazwy, a `pozycjaWarstwy` zwraca dla każdej innej
+`len(kolejnoscWarstw) + 1`, czyli ustawia ją na końcu zamiast odrzucić. Trzy
+stałe kolumny zamknęłyby ekspertowi drogę, którą silnik nakładki ma otwartą,
+a czwarta warstwa wymagałaby zmiany schematu. Klucz główny na parze
+(agent_id, warstwa) sprawia, że powtórzone `agent.layer.set` nadpisuje treść
+zamiast dokładać drugi wiersz tej samej warstwy — zapis warstwy jest więc
+ustaleniem stanu, a nie dopisaniem zdarzenia. `instrukcje_systemowe` zostaje
+nietknięte, bo kolumna jest w kontrakcie polem `Agent.systemPrompt` i czyta
+ją klient: kasując ją, migracja zabrałaby oknu modułu Agents treść, którą ono
+dziś pokazuje, a warstwy są bytem nowym, obok istniejącego pola. Kolumny
+`warstwa` i `tryb` przyjmują dosłownie wartości kontraktu
+(`shared.IdentityLayer`, `shared.IdentityMode`), bo kontrakt nie daje dla
+tych dwóch wyliczeń słownika przekładu bazy — tak samo jak `agent.transport`
+i `agent_konektor.rodzaj`; warunki CHECK są jedynym miejscem, w którym ten
+katalog stoi po stronie bazy, a warstwa `dane` go nie powtarza.
+
+Konektor jest drogą do usługi: wiersz `agent_konektor` wskazuje most
+z katalogu punktów dostępu, z którego rdzeń składa wpisy `mcpServers`
+podawane procesowi modelu przełącznikiem `--mcp-config`
+(`core/most_okna.go`). Wtyczka jest katalogiem rozszerzeń powłoki — nie ma
+adresu, nie ma poświadczenia, nie ma punktu dostępu; ma nazwę, źródło
+i wersję, a program dostaje ją przełącznikiem `--plugin-dir`. To dwa różne
+przełączniki i dwa różne byty: skille, konektory i pluginy są trzema bytami,
+nie dwoma. Wartość `'plugin'` w `agent_konektor.rodzaj` zostaje, bo taki był
+wcześniej jedyny sposób zapisania czegokolwiek o wtyczce — tej wartości
+migracja nie kasuje i nie przepisuje wierszy, bo kasowanie rodzaju
+wywróciłoby `core/adapter_modul_agents_zasoby.go` i zabrałoby treść
+konektorom już zapisanym. Kod jest identyfikatorem trwałym tak samo jak
+w `agent_konektor`: `id` służy powiązaniom w bazie, a `kod` wychodzi na
+zewnątrz jako `AgentPlugin.id` kontraktu, dzięki czemu `agent.plugin.remove`
+wskazuje wtyczkę kodem, a nie numerem wiersza, którego kontrakt nie zna.
+Tabela nie ma klucza na parze (agent_id, nazwa), bo ekspert może mieć dwie
+wtyczki tej samej nazwy w różnych wersjach albo z różnych źródeł, a kontrakt
+kasuje wtyczkę po `pluginId`, nie po nazwie — klucz na nazwie odbierałby tę
+możliwość bez powodu.

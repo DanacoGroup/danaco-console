@@ -5240,3 +5240,14 @@ wyłączony jest tu tym samym co nieistniejący: kanał, który Operator zgasił
 nie odpowie. Kanał samego pytającego przechodzi bez tego parametru, bo pyta
 wtedy sam siebie, a na to nie potrzeba dopuszczenia, którego druga reguła też
 nie wymaga.
+
+## budowa/server/internal/store/spojnosc_test.go
+
+Sprawdzian musi dowieść nie tylko tego, że kontrola przechodzi na bazie zdrowej, co pokazuje osobny
+sprawdzian przejazdu migracji, lecz przede wszystkim tego, że na bazie chorej nie przechodzi. Kontrola,
+która nigdy nie odmawia, jest gorsza niż jej brak, bo daje spokój, którego nie ma czym pokryć. Sierota
+w sprawdzianie naruszenia klucza obcego powstaje z połączenia obocznego z wyłączoną pragmą kluczy
+obcych — inaczej się nie da, ponieważ pula rdzenia trzyma pragmę włączoną w DSN, więc każdy zapis tą
+drogą zostałby odrzucony przy wstawianiu, czyli sprawdzian mierzyłby pragmę, a nie samą kontrolę.
+## budowa/server/internal/dane/rozmowa.go
+Utrwalany łańcuch przechodzi przez środowisko, moduł, kartę sesji, sesję i okno komunikacji aż do wiadomości. Warstwa danych nie zna pakietu sesji ani rdzenia: jedynym stykiem jest opis okna wraz z funkcją, która go podaje, a rdzeń wypełnia ją swoim rejestrem okien przy montażu. Pole niosące identyfikator okna źródłowego jest identyfikatorem rdzenia w postaci napisu, nie kluczem wiersza, bo warstwa wyższa kluczy wierszy okien nie zna, a przekład na klucz obcy wykonuje utrwalacz przez ten sam łańcuch, co dla okna samej wiadomości. Warstwa wyższa wypełnia metadane przy nadaniu wiadomości, utrwalacz przenosi wartości do kolumn tabeli, a przy odczycie odtwarza je z tych samych kolumn, tak że zapis i odczyt dają tę samą treść. Załączniki jadą w osobnej kolumnie tego samego wiersza: bez nich model wracający do rozmowy nie wiedziałby, że w niej były pliki.

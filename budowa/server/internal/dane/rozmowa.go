@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: utrwalenie rozmowy okna komunikacji — zapis wiadomości
-// Operatora i odpowiedzi modelu do tabeli `wiadomosc` oraz odczyt historii okna
-// po restarcie rdzenia. Utrwalany łańcuch: `srodowisko → modul → karta_sesji →
-// sesja → okno_komunikacji → wiadomosc`.
-//
-// Granica warstw: warstwa danych nie zna pakietu `session` ani rdzenia. Jedynym
-// stykiem jest OpisOkna wraz z funkcją, która go podaje — rdzeń wypełnia ją swoim
-// rejestrem okien przy montażu.
+// Odpowiedzialność pliku: utrwalenie rozmowy okna komunikacji, zapis wiadomości i odpowiedzi modelu oraz odczyt historii okna po restarcie.
 package dane
 
 import (
@@ -61,7 +54,7 @@ func NowyUtrwalaczRozmowy(zestaw *Zestaw, zrodlo zrodloOpisuOkna) *UtrwalaczRozm
 	return &UtrwalaczRozmowy{zestaw: zestaw, zrodlo: zrodlo, okna: map[string]int64{}}
 }
 
-// Zapisz dopisuje wiadomość na koniec historii okna.
+// Zapisz dopisuje wiadomość na koniec historii okna, nadając jej kolejny numer porządkowy w tej rozmowie.
 func (u *UtrwalaczRozmowy) Zapisz(ctx context.Context, w shared.Message) error {
 	oknoID, err := u.wierszOkna(ctx, w.WindowId)
 	if err != nil {
@@ -87,9 +80,7 @@ func (u *UtrwalaczRozmowy) Zmien(ctx context.Context, w shared.Message) error {
 	tresc := w.Content
 	wiersz.Tresc = &tresc
 	wiersz.Stan = w.Status
-	// Zużycie tokenów domyka się dopiero w podsumowaniu tury — nadchodzi w
-	// metadanych ostatniej wiadomości. Zero znaczy „nie podano" i nie może
-	// wymazać wartości zapisanej wcześniej (ZapiszWynik nadpisuje obie kolumny).
+	// Zużycie tokenów domyka się w podsumowaniu ostatniej wiadomości; zero nie wymazuje wartości.
 	meta := odczytajMetadaneWiadomosci(w.Metadata)
 	if meta.TokenyWejscia > 0 {
 		wiersz.TokenyWejscia = meta.TokenyWejscia
@@ -100,7 +91,7 @@ func (u *UtrwalaczRozmowy) Zmien(ctx context.Context, w shared.Message) error {
 	return u.zestaw.Wiadomosci.ZapiszWynik(ctx, wiersz)
 }
 
-// Historia zwraca całą zapisaną rozmowę okna, od najstarszej wiadomości.
+// Historia zwraca całą zapisaną rozmowę okna, od najstarszej wiadomości do najnowszej, w oryginalnej kolejności.
 func (u *UtrwalaczRozmowy) Historia(ctx context.Context, idOkna string) ([]shared.Message, error) {
 	oknoID, err := u.wierszOkna(ctx, idOkna)
 	if err != nil {
@@ -118,8 +109,7 @@ func (u *UtrwalaczRozmowy) Historia(ctx context.Context, idOkna string) ([]share
 	for _, wiersz := range wiersze {
 		wykaz = append(wykaz, u.wiadomoscKontraktu(ctx, wiersz, idOkna, idSesji))
 	}
-	// Bloki nietekstowe tury wracają w metadanych wiadomości — rozumowanie
-	// i narzędzia mają przeżyć restart tak samo jak tekst.
+	// Bloki nietekstowe tury wracają w metadanych wiadomości, żeby przeżyły restart jak sam tekst.
 	return u.doklejBloki(ctx, idOkna, wykaz), nil
 }
 
@@ -141,15 +131,7 @@ func (u *UtrwalaczRozmowy) identyfikatorSesjiOkna(ctx context.Context, oknoID in
 	return *sesja.IdentyfikatorZewnetrzny, nil
 }
 
-// metadaneWiadomosci to ta część obszaru `Metadata` kontraktu, której typ Message
-// nie modeluje osobnymi polami: atrybucja persony i okna źródłowego oraz zużycie
-// tokenów. Warstwa wyższa (`core/adapter_rozmowa.go`) wypełnia ją przy nadaniu,
-// utrwalacz przenosi wartości do kolumn tabeli `wiadomosc`, a przy odczycie
-// odtwarza je z kolumn — zapis i odczyt dają tę samą treść.
-//
-// OknoZrodloweId jest identyfikatorem rdzenia okna (napis), nie kluczem wiersza:
-// warstwa wyższa okien-wierszy nie zna, a przekład na klucz obcy okno_zrodlowe_id
-// robi utrwalacz przez ten sam łańcuch, co dla okna wiadomości.
+// metadaneWiadomosci to część obszaru Metadata kontraktu, której typ Message nie modeluje osobnymi polami: atrybucja i zużycie tokenów.
 type metadaneWiadomosci struct {
 	Persona        string `json:"persona,omitempty"`
 	OknoZrodloweId string `json:"sourceWindowId,omitempty"`
@@ -169,10 +151,7 @@ func odczytajMetadaneWiadomosci(surowe json.RawMessage) metadaneWiadomosci {
 	return meta
 }
 
-// wierszWiadomosci przekłada wiadomość kontraktu na wiersz tabeli: treść,
-// atrybucję i zużycie niesione w metadanych oraz wykaz załączników. Załączniki
-// jadą w kolumnie `zalaczniki` tego samego wiersza — bez nich model wracający do
-// rozmowy nie wie, że były w niej pliki.
+// wierszWiadomosci przekłada wiadomość kontraktu na wiersz tabeli: treść, atrybucję i zużycie niesione w metadanych, oraz wykaz załączników.
 func (u *UtrwalaczRozmowy) wierszWiadomosci(ctx context.Context, w shared.Message, oknoID int64) (Wiadomosc, error) {
 	if w.Id == "" {
 		return Wiadomosc{}, fmt.Errorf("dane: wiadomość bez identyfikatora nie da się utrwalić")
@@ -195,8 +174,7 @@ func (u *UtrwalaczRozmowy) wierszWiadomosci(ctx context.Context, w shared.Messag
 	wiersz.TokenyWejscia = meta.TokenyWejscia
 	wiersz.TokenyWyjscia = meta.TokenyWyjscia
 	if meta.OknoZrodloweId != "" {
-		// Nierozpoznane okno źródłowe zostawia atrybucję pustą — sama wiadomość
-		// ma trafić do bazy, brak przypisania jej nie unieważnia.
+		// Nierozpoznane okno źródłowe zostawia atrybucję pustą; sama wiadomość trafia do bazy bez przypisania.
 		if zrodloID, err := u.wierszOkna(ctx, meta.OknoZrodloweId); err == nil {
 			wiersz.OknoZrodloweID = &zrodloID
 		}
@@ -226,10 +204,7 @@ func (u *UtrwalaczRozmowy) wiadomoscKontraktu(ctx context.Context, wiersz Wiadom
 	return w
 }
 
-// zalacznikiDoKolumny składa wykaz odwołań w tablicę JSON kolumny `zalaczniki`.
-// Wykaz pusty daje NULL, a nie „[]” — kontrakt zna `attachments` jako pole
-// nieobowiązkowe, więc wiadomość bez załączników go nie ma. Niezłożony JSON nie
-// przerywa zapisu wiadomości: ginie wtedy sam wykaz, a nie cała wypowiedź.
+// zalacznikiDoKolumny składa wykaz odwołań w kolumnę JSON; wykaz pusty daje wartość pustą, nie tablicę.
 func zalacznikiDoKolumny(odwolania []string) *string {
 	if len(odwolania) == 0 {
 		return nil
@@ -280,10 +255,7 @@ func (u *UtrwalaczRozmowy) metadaneKontraktu(ctx context.Context, wiersz Wiadomo
 	return surowe
 }
 
-// identyfikatorOknaZrodlowego przekłada klucz wiersza okna źródłowego na
-// identyfikator rdzenia, którym atrybucję zna warstwa wyższa. Wiersz bez
-// identyfikatora zewnętrznego (okno założone poza rdzeniem) albo nieodczytany
-// daje pusty napis — atrybucja znika, ale reszta wiadomości nie.
+// identyfikatorOknaZrodlowego przekłada klucz wiersza okna źródłowego na identyfikator rdzenia znany warstwie wyższej.
 func (u *UtrwalaczRozmowy) identyfikatorOknaZrodlowego(ctx context.Context, oknoID int64) string {
 	okno, err := u.zestaw.Okna.Pobierz(ctx, oknoID)
 	if err != nil || okno.IdentyfikatorZewnetrzny == nil {

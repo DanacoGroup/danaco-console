@@ -14,8 +14,7 @@ type Ustawienia struct {
 	Modul string
 	// KanalModelu wskazuje wiersz rejestru kanałów.
 	KanalModelu string
-	// KatalogiRobocze są LISTĄ, nie pojedynczą wartością. Pierwszy katalog jest
-	// katalogiem uruchomienia procesu okna.
+	// KatalogiRobocze to lista; pierwszy katalog jest katalogiem uruchomienia procesu okna.
 	KatalogiRobocze []string
 	// SrodowiskoWykonania mówi, gdzie pracuje model — niezależnie od tego, gdzie
 	// stoi rdzeń.
@@ -28,22 +27,12 @@ type Ustawienia struct {
 	OknoKoordynatora string
 	// Tytul okna; pusty jest dopuszczalny.
 	Tytul string
-	// Agent jest KODEM eksperta nałożonego na kanał modelu tego okna; pusty
-	// znaczy model surowy (`store/migracja_084_agent_okna.sql`).
-	//
-	// Ekspert NIE ZASTĘPUJE kanału — kanał jest drogą do modelu, ekspert
-	// tożsamością nałożoną na tę drogę. Dlatego stoi obok `KanalModelu`,
-	// a nie zamiast niego: okno bez eksperta rusza dokładnie tak, jak ruszało
-	// przedtem, a okno z ekspertem tą samą drogą, tylko z jego warstwami,
-	// modelem i nastawami.
-	//
-	// Kod, nie identyfikator wiersza — ekspert bywa kasowany niezależnie od
-	// okien, w których pracował, a kod nierozpoznany jest faktem czytelnym:
-	// składacz nakładki nie znajduje eksperta i rusza z samą osią.
+	// Agent to kod eksperta nałożonego na kanał modelu okna; wartość pusta oznacza model surowy.
 	Agent string
 }
 
-// Okno komunikacji — byt pośredni między sesją a wiadomością.
+// Okno komunikacji jest bytem pośrednim między sesją a wiadomością i przechowuje ustawienia
+// wykonania, stan bieżący oraz znaczniki czasu utworzenia i ostatniej aktualizacji.
 type Okno struct {
 	// Id okna.
 	Id string
@@ -69,9 +58,7 @@ type Zmiana struct {
 	RolaOkna            *shared.WindowRole
 	OknoKoordynatora    *string
 	Tytul               *string
-	// Agent wskazuje eksperta okna. Wskaźnik pusty zostawia wybór bez zmiany;
-	// wskaźnik na pusty napis ZDEJMUJE eksperta i wraca do modelu surowego —
-	// tak samo, jak opisuje to kontrakt („puste zdejmuje eksperta").
+	// Agent wskazuje eksperta okna; wskaźnik pusty zostawia wybór, pusty napis zdejmuje eksperta.
 	Agent *string
 }
 
@@ -89,20 +76,7 @@ func noweOkno(idSesji string, u Ustawienia) *Okno {
 	}
 }
 
-// uzupelnijUstawienia wstawia wartości domyślne i normalizuje rolę okna wraz
-// z powiązaniem koordynatora.
-//
-// NORMALIZACJA OBEJMUJE WSZYSTKIE TRZY WYLICZENIA OKNA, NIE TYLKO ROLĘ. Wartość
-// spoza słownika kontraktu (np. `permissionMode: "default"`) trafiłaby do
-// rejestru nietknięta — rejestr żyje w pamięci i taką wartość zniesie, ale
-// wiersz `okno_komunikacji` już nie: przekład na kolumnę (`dane/wyliczenia.go`)
-// odmawia słowem „nie należy do słownika kontraktu", zapis okna pada, a dziennik
-// rozmowy schodzi CAŁYM OKNEM na bufor pamięci. Wtedy `message.list` pokazuje
-// rozmowę (bufor), a `history.load` i `history.delete` widzą pustkę (baza) —
-// okno bez wiersza nie ma też historii ani czego przyciąć retencji. Wartość
-// nieznana jest więc doprowadzana do domyślnej tak, jak robi to rola okna
-// (`rola_okna.go`): bez bramy i bez odmowy, za to z oknem, które da się
-// utrwalić. Słowniki pochodzą z kontraktu, nie z literałów tutaj.
+// Funkcja uzupelnijUstawienia wstawia wartości domyślne i normalizuje rolę okna wraz z powiązaniem koordynatora.
 func uzupelnijUstawienia(u Ustawienia) Ustawienia {
 	if _, znane := shared.WartosciBazyExecutionEnv[u.SrodowiskoWykonania]; !znane {
 		u.SrodowiskoWykonania = shared.ExecutionEnvLocal
@@ -114,16 +88,14 @@ func uzupelnijUstawienia(u Ustawienia) Ustawienia {
 	return normalizujRole(u)
 }
 
-// zastosuj nanosi wybiórczą zmianę na okno i odświeża znacznik zmiany.
+// Metoda zastosuj nanosi na okno wybiórczą zmianę przekazaną w strukturze Zmiana i odświeża znacznik czasu ostatniej aktualizacji okna.
 func (o *Okno) zastosuj(z Zmiana) {
 	u := o.Ustawienia
 	przypiszNapis(&u.Modul, z.Modul)
 	przypiszNapis(&u.KanalModelu, z.KanalModelu)
 	przypiszNapis(&u.Tytul, z.Tytul)
 	przypiszNapis(&u.OknoKoordynatora, z.OknoKoordynatora)
-	// Wskaźnik na pusty napis zdejmuje eksperta — `przypiszNapis` przenosi
-	// pustkę tak samo jak treść, więc powrót do modelu surowego jest zwykłym
-	// zapisem, a nie osobną komendą.
+	// Wskaźnik na pusty napis zdejmuje eksperta; przypiszNapis przenosi pustkę tak samo jak treść.
 	przypiszNapis(&u.Agent, z.Agent)
 	if z.KatalogiRobocze != nil {
 		u.KatalogiRobocze = z.KatalogiRobocze
@@ -141,14 +113,14 @@ func (o *Okno) zastosuj(z Zmiana) {
 	o.Zaktualizowano = time.Now().UTC()
 }
 
-// przypiszNapis nanosi wartość tekstową, o ile zmiana ją niesie.
+// Funkcja przypiszNapis nanosi na pole docelowe wartość tekstową ze wskaźnika źródłowego wyłącznie wtedy, gdy zmiana rzeczywiście ją niesie.
 func przypiszNapis(cel *string, zrodlo *string) {
 	if zrodlo != nil {
 		*cel = *zrodlo
 	}
 }
 
-// Kopia zwraca niezależny odpis okna — łącznie z listą katalogów roboczych.
+// Metoda Kopia zwraca niezależny odpis okna, obejmujący również osobną kopię listy katalogów roboczych, aby zmiana odpisu nie naruszała oryginału.
 func (o Okno) Kopia() Okno {
 	odpis := o
 	if o.KatalogiRobocze != nil {
@@ -166,7 +138,7 @@ func (o Okno) KatalogGlowny() string {
 	return o.KatalogiRobocze[0]
 }
 
-// CzyOtwarte mówi, czy okno przyjmuje pracę.
+// Metoda CzyOtwarte zwraca wartość logiczną informującą, czy okno znajduje się w stanie pozwalającym na przyjmowanie kolejnej pracy.
 func (o Okno) CzyOtwarte() bool {
 	return o.Stan == shared.WindowStatusOpen
 }

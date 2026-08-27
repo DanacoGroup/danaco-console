@@ -67,7 +67,7 @@ func sciezkaKlasTiki() (string, bool) {
 	if err != nil || len(archiwa) == 0 {
 		return "", false
 	}
-	// Nazwa archiwum niesie numer wersji, więc przy dwóch wydaniach bierzemy późniejsze.
+	// Nazwa archiwum niesie numer wersji, więc przy dwóch wydaniach bierze się późniejsze.
 	sort.Strings(archiwa)
 	czlony := []string{archiwa[len(archiwa)-1]}
 

@@ -1,15 +1,6 @@
 // Odpowiedzialność pliku: `developer.git.action` — czynności okna Git Panel
-// przełożone na wiersz polecenia gita. Uruchomienie procesu i odczyt stanu
-// repozytorium leżą w `adapter_modul_developer_git_wykonanie.go`.
-//
-// Słownik czynności jest mapą, nie drabiną warunków: nowa wartość GitActionKind
-// w kontrakcie to nowa pozycja mapy. Czynność spoza mapy zostaje odrzucona.
-//
-// Każdy wynik niesie w polu `output` dokładny wiersz polecenia, który został
-// uruchomiony, oraz stan repozytorium po czynności.
-//
-// `DeveloperGitActionRequest` nie niesie osobnego pola z odwołaniem do wersji,
-// więc `revert` i `tag` biorą swoje wskazanie z pola `branch`.
+// przełożone na wiersz polecenia gita, jako słownik mapy, nie drabina
+// warunków. Uruchomienie procesu leży w `adapter_modul_developer_git_wykonanie.go`.
 package core
 
 import (
@@ -20,15 +11,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// czynnoscGita opisuje jedną pozycję słownika czynności repozytorium.
+// czynnoscGita opisuje jedną pozycję słownika czynności repozytorium: budowę
+// argumentów, wymuszenie i przynależność do sieci.
 type czynnoscGita struct {
 	// argumenty składa wiersz polecenia gita z treści żądania.
 	argumenty func(z shared.DeveloperGitActionRequest) ([]string, error)
-	// wymuszenie mówi, czy czynność ma postać wymuszoną. Żądanie `force` dla
-	// czynności bez takiej postaci jest odrzucane, a nie po cichu pomijane.
+	// wymuszenie mówi, czy czynność ma postać wymuszoną, odrzucaną gdy jej nie ma.
 	wymuszenie bool
-	// siec znaczy czynność sięgającą do repozytorium zdalnego — dostaje dłuższą
-	// granicę czasu niż czynność lokalna.
+	// siec znaczy czynność zdalną, z dłuższą granicą czasu niż lokalna.
 	siec bool
 }
 
@@ -39,7 +29,8 @@ const (
 	granicaCzynnosciSieciowej = 5 * time.Minute
 )
 
-// czynnosciGita wiąże słownik kontraktu z wierszem polecenia.
+// czynnosciGita wiąże słownik kontraktu z wierszem polecenia, po jednej
+// pozycji na każdą wartość GitActionKind.
 var czynnosciGita = map[shared.GitActionKind]czynnoscGita{
 	shared.GitActionKindStage: {argumenty: func(z shared.DeveloperGitActionRequest) ([]string, error) {
 		if len(sciezkiZadania(z)) == 0 {
@@ -70,9 +61,8 @@ var czynnosciGita = map[shared.GitActionKind]czynnoscGita{
 			return nil, err
 		}
 		if opis == "" {
-			// Bez nowego opisu poprawiamy wyłącznie treść zatwierdzenia;
-			// `--no-edit` powstrzymuje gita przed otwarciem edytora, którego
-			// w procesie rdzenia nie ma komu obsłużyć.
+			// Bez nowego opisu treść zatwierdzenia zostaje, `--no-edit` powstrzymuje
+			// gita przed otwarciem edytora.
 			return []string{"commit", "--amend", "--no-edit"}, nil
 		}
 		return []string{"commit", "--amend", "-m", opis}, nil
@@ -128,8 +118,7 @@ var czynnosciGita = map[shared.GitActionKind]czynnoscGita{
 	shared.GitActionKindPush: {siec: true, wymuszenie: true, argumenty: func(z shared.DeveloperGitActionRequest) ([]string, error) {
 		polecenie := []string{"push"}
 		if z.Force != nil && *z.Force {
-			// `--force-with-lease` zamiast `--force`: wymuszenie nadpisuje stan
-			// zdalny znany lokalnie, a nie zmiany dosłane w międzyczasie.
+			// `--force-with-lease`: wymuszenie nadpisuje stan zdalny znany lokalnie.
 			polecenie = append(polecenie, "--force-with-lease")
 		}
 		return dolaczZdalne(polecenie, z), nil
@@ -149,7 +138,8 @@ var czynnosciGita = map[shared.GitActionKind]czynnoscGita{
 	}},
 }
 
-// CzynnoscRepozytorium obsługuje `developer.git.action`.
+// CzynnoscRepozytorium obsługuje `developer.git.action`, składając wiersz
+// polecenia gita ze słownika czynności i uruchamiając go.
 func (a *adapterDevelopera) CzynnoscRepozytorium(ctx context.Context,
 	z shared.DeveloperGitActionRequest) (shared.DeveloperGitActionResponse, error) {
 
@@ -186,7 +176,8 @@ func (a *adapterDevelopera) CzynnoscRepozytorium(ctx context.Context,
 	return shared.DeveloperGitActionResponse{Result: wynik}, nil
 }
 
-// sciezkiZadania odsiewa puste wskazania ścieżek.
+// sciezkiZadania odsiewa puste wskazania ścieżek z pola `paths` żądania,
+// przed dołączeniem ich do wiersza polecenia.
 func sciezkiZadania(z shared.DeveloperGitActionRequest) []string {
 	sciezki := make([]string, 0, len(z.Paths))
 	for _, sciezka := range z.Paths {
@@ -197,7 +188,8 @@ func sciezkiZadania(z shared.DeveloperGitActionRequest) []string {
 	return sciezki
 }
 
-// opisZatwierdzenia czyta treść zatwierdzenia; `wymagany` odmawia pustej.
+// opisZatwierdzenia czyta treść zatwierdzenia z pola `message`; `wymagany`
+// odmawia treści pustej, gdy czynność jej wymaga.
 func opisZatwierdzenia(z shared.DeveloperGitActionRequest, wymagany bool) (string, error) {
 	opis := strings.TrimSpace(wartoscTekstu(z.Message))
 	if opis == "" && wymagany {
@@ -206,21 +198,22 @@ func opisZatwierdzenia(z shared.DeveloperGitActionRequest, wymagany bool) (strin
 	return opis, nil
 }
 
-// wskazanieWersji czyta gałąź, etykietę albo zatwierdzenie z pola `branch`.
+// wskazanieWersji czyta gałąź, etykietę albo zatwierdzenie z pola `branch`,
+// odmawiając wskazania zaczynającego się od myślnika.
 func wskazanieWersji(z shared.DeveloperGitActionRequest, czynnosc string) (string, error) {
 	wersja := strings.TrimSpace(wartoscTekstu(z.Branch))
 	if wersja == "" {
 		return "", bladZadaniaDevelopera(czynnosc + " wymaga wskazania gałęzi, etykiety albo zatwierdzenia")
 	}
 	if strings.HasPrefix(wersja, "-") {
-		// Wskazanie zaczynające się od myślnika weszłoby do wiersza polecenia
-		// jako przełącznik gita, a nie jako wersja.
+		// Wskazanie od myślnika weszłoby jako przełącznik gita, nie jako wersja.
 		return "", bladZadaniaDevelopera("wskazanie " + wersja + " nie jest nazwą gałęzi ani zatwierdzenia")
 	}
 	return wersja, nil
 }
 
-// dolaczZdalne dokłada repozytorium zdalne i gałąź, gdy żądanie je podaje.
+// dolaczZdalne dokłada repozytorium zdalne i gałąź do wiersza polecenia,
+// gdy żądanie je podaje w polach `remote` i `branch`.
 func dolaczZdalne(polecenie []string, z shared.DeveloperGitActionRequest) []string {
 	zdalne := strings.TrimSpace(wartoscTekstu(z.Remote))
 	galaz := strings.TrimSpace(wartoscTekstu(z.Branch))

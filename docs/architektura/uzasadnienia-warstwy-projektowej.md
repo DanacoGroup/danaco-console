@@ -393,3 +393,26 @@ wag tekstu jest przeliczona dla tego motywu osobno, a nie odbita z jasnego:
 stopień trzeci stoi na #9E9E9E, ponieważ #7C7C7C na powierzchni #181818 daje
 tylko kontrast 4,25:1. Tekst drugoplanowy ustępuje mu miejsca na #C0C0C0,
 inaczej obie wagi zlałyby się w jedną.
+
+## budowa/klient-poprzedni/src/komponenty/pole.css
+Stan tylko do odczytu realizuje atrybut readonly. Błąd niesie atrybut
+aria-invalid oraz opis w klasie dn-pole-blad.
+
+## budowa/klient-poprzedni/src/komponenty/wybor.css
+Suwak wartości ciągłej prowadzi osobny arkusz suwak.css.
+
+## budowa/klient-poprzedni/src/komponenty/zakladki.css
+Pas kart sesji używa tej samej mechaniki co zakładki, dokładając wstęgę
+aktywności.
+
+## budowa/klient-poprzedni/src/komponenty/okno.css
+Wygląd ramy należy do biblioteki, nie do modułu — moduł dokłada swoją klasę
+tylko wtedy, gdy naprawdę ma czym, przez parametr przedrostek komponentu
+rama-okna. Barwa, obrys i cień pochodzą z klasy dn-karta — tutaj wyłącznie
+układ i odstępy, wszystkie z żetonów warstwy motyw/.
+
+## budowa/klient-poprzedni/src/komponenty/pasek.css
+Pasek sięga wyłącznie po żetony rama z pliku motyw/rama.css, które stoją poza
+blokami motywów. Tło pola wyszukiwania w pasku jest półprzezroczystą bielą
+sześcioprocentową, a nie żetonem: to warstwa na atramencie ramy, niezależna
+od motywu.

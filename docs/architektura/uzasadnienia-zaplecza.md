@@ -209,3 +209,44 @@ prezentacji i nie mnoży wartości pola rola; pozostaje pusta dla zwykłej
 wypowiedzi użytkownika i modelu. Atrybucję wypowiedzi w pętli
 koordynator-wykonawca niesie kolumna okno_zrodlowe_id: okno źródłowe zna
 własną rola_okna, więc nie jest potrzebny drugi, równoległy słownik ról.
+
+## budowa/server/internal/store/migracja_402_nastawy_przesiewu_i_obrazu.sql
+
+Klucze `wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`, `wiedza_model_obrazu`
+i `wiedza_katalog_obrazu` stoją w kodzie od czasu dołożenia przesiewu i osi obrazu
+(`wiedza/ustawienia.go`), ale wiersza w `definicja_ustawienia` nie miały. Zdolność
+mimo to działała: rozstrzyganie nastawy czyta zapis niezależnie od katalogu
+definicji (`konfig/rozstrzyganie.go`), więc wartość zapisana wprost w tabeli
+`ustawienie` dochodziła do silnika. Czego bez wiersza katalogu nie było, to drogi
+dla operatora okna konfiguracji: `config.set` odmawia klucza spoza katalogu,
+a okno wystawia wyłącznie pozycje katalogu. Cztery nastawy były więc ustawialne
+ręcznym zapisem do bazy i tylko nim.
+
+Migracji 115 się nie zmienia — jej suma kontrolna stoi w rejestrze `migracja`
+u każdego, kto rdzeń postawił, a niezgodność sumy wywraca start rdzenia
+(`store/migracje.go`). Cztery wiersze dokłada więc osobny krok, wzorem tego,
+jak migracja 401 zmieniła wartości domyślne dwóch nastaw z migracji 115.
+
+Kategoria, zasięg i oś są te same, co u czterech nastaw migracji 115, i to
+z tych samych powodów. Kategoria `wiedza`, bo to ten sam silnik. Zasięg
+wyłącznie globalny, bo wskaźnik znaczenia jest jeden na maszynę: przesiew
+układający kolejność dwoma różnymi koderami w dwóch oknach dawałby dwie
+nieporównywalne kolejności tego samego wyniku. Oś wyłącznie `platform`, bo
+katalog wag i nazwa modelu liczącego lokalnie są własnością maszyny, a nie
+konta ani kanału modelu.
+
+Wartości domyślne są kopią stałych `wiedza/ustawienia.go` co do znaku —
+`ModelPrzesiewuDomyslny`, `ModelObrazuDomyslny` i `katalogNiewskazany`. Rozjazd
+znaczyłby dwie prawdy o tym, czym rdzeń liczy, zależne od drogi wywołania:
+rozstrzygacz zasięgu oddaje wartość z tej kolumny, a stała pakietu wchodzi tam,
+gdzie rozstrzygacza nie ma (`core/adapter_modul_wiedza.go`).
+
+Oba katalogi wag zostają puste, choć wagi obu modeli leżą na maszynie
+(`/opt/danaco-modele/reranker`, `/opt/danaco-modele/clip`). Wartość niepusta
+byłaby tutaj drugą prawdą wobec stałej `katalogNiewskazany`, a `internal/wiedza/`
+leży poza terenem tej zmiany. Wskazanie wag stojących jest osobnym krokiem,
+obejmującym zarazem stałą i ten wiersz — dokładnie tak, jak migracja 401
+zrobiła to dla osadzarki.
+
+Klauzula `ON CONFLICT DO NOTHING` czyni krok idempotentnym i nieszkodliwym na
+bazie, gdzie te wiersze z jakiegoś powodu już stoją.

@@ -5796,3 +5796,9 @@ odrzucany na rzecz wzorca domyślnego: ustawienie Operatora steruje układem kat
 podstawy, nie omija samej podstawy.
 
 Identyfikator, z którego nie zostaje ani jeden znak po oczyszczeniu, dostaje nazwę zastępczą.
+
+## budowa/server/internal/core/stan_sesji_czynnosc.go
+
+W metodzie Odnotuj kolejny etap tej samej tury przesuwa wyłącznie znacznik
+czasu, a nie stan, bo inaczej każdy fragment odpowiedzi modelu rozgłaszałby
+zdarzenie o sesji, w której nic się nie zmieniło.

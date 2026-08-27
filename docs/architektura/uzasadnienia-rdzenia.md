@@ -5708,3 +5708,18 @@ w pliku transport/bramka.go.
 Znak kontekstu pracy rdzenia stawia się ręcznie, w miejscu, które wie, czym
 jest — wywiedzenie core z samego braku gniazda byłoby nieprawdziwe, bo brak
 gniazda ma więcej niż jeden powód.
+
+## budowa/server/internal/core/izolacja.go
+Rozstrzyganie należy do pakietu konfiguracji i tutaj się go nie powtarza; ten plik wyłącznie łączy
+wynik rozstrzygnięcia z postacią wykonawczą, której używają strażnicy plików, sieci, kontekstu,
+polecenia i przydziału.
+
+Podkatalog danych modelu leży wewnątrz własnego katalogu okna, więc izolacja katalogu danych nie
+wymaga drugiej podstawy.
+
+Brak rozstrzygacza daje stan wyjściowy platformy — kontekst odrębny, żaden zakres techniczny
+niewłączony — a nie odmowę wykonania.
+
+Ustalenie bez ścieżki daje obszar pusty. Obszar pusty przy izolacji włączonej jest naruszeniem
+rozstrzyganym w egzekutorze polecenia, a nie milczącym przejściem: okno bez własnego katalogu
+poszłoby do katalogu wspólnego.

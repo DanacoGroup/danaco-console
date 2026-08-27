@@ -4685,3 +4685,241 @@ stopnia ukończenia.
 Licznik obiegów nie ma granicy: numer próby to najwyższy licznik obiegów
 wśród pozycji, a progu, po którym rdzeń odmawia powtórzenia, nie ma —
 przerwanie należy do Operatora, a przycisk zatrzymania jest zawsze czynny.
+## budowa/server/internal/core/adapter_modul_library_udostepnienia.go
+
+Token udostępnienia powstaje z generatora losowości kryptograficznej
+standardowej biblioteki Go (`crypto/rand`) — nie z licznika i nie z czasu.
+Token przewidywalny byłby dostępem dla każdego, kto potrafi zgadnąć chwilę
+wystawienia odnośnika.
+
+Token jest jawny, zgodnie z zasadą jawności kluczy platformy: Operator ma móc
+odczytać wystawiony odnośnik i przekazać go powtórnie. Zawężeniem dostępu jest
+termin i odwołanie, nie nieodczytywalność.
+
+Adres odnośnika składa się ze ścieżki względnej, nie z nazwy hosta: rdzeń nie
+wie, pod jakim adresem widzi go świat — stoi za bramą, którą Operator
+konfiguruje osobno. Adres bezwzględny zmyślony przez rdzeń byłby odnośnikiem
+prowadzącym donikąd.
+## budowa/server/internal/core/adapter_modul_developer_budowanie_bieg.go
+
+Obserwator zakonczenia pracuje poza zadaniem: rozlaczenie klienta w polowie
+kompilacji nie przerywa kompilacji, wiec obserwator ma wlasna gorutyne
+i wlasny kontekst, a nie kontekst komendy.
+
+Log idzie wierszami, nie blokami. Kontrakt niesie w zdarzeniu pole
+logLine - jeden wiersz - wiec pompa skleja odczyty w pelne wiersze zamiast
+rozsylac surowe porcje odczytu. Wiersz przerwany w polowie bufora trafilby
+do Build Output jako dwa wiersze i rozbilby rozpoznawanie zgloszen
+kompilatora.
+
+czasNaDomknieciePrzebiegu: krotka z zamyslem - odpowiedz ma byc szybka,
+a stan koncowy i tak dojdzie zdarzeniem developer.build.changed.
+
+Rozgloszenie idzie przed pompami logu, bo Build Output rozpoznaje wiersze
+po identyfikatorze przebiegu, wiec gdyby pierwszy wiersz wyprzedzil
+zdarzenie created, okno odrzucaloby poczatek logu jako cudzy.
+
+pilnujBudowania: czekanie na pompy logu jest konieczne, wiersz odczytany
+po rozgloszeniu stanu koncowego dotarlby do Build Output po zamknieciu
+przebiegu i zostalby odrzucony.
+
+## budowa/server/internal/core/adapter_modul_roundtable_odsluch.go
+
+To jest zgodne z zasadą produktu: cała aplikacja z arsenałem stoi na
+serwerze, a u Operatora jest samo okno. Program `espeak-ng` jest
+zadeklarowany w sondzie zależności (`zaleznosci_zewnetrzne.go`), więc jego
+brak Operator widzi przy starcie rdzenia, a nie dopiero po naciśnięciu
+przycisku.
+
+Głos per uczestnik jest wartością `voiceByParticipant`: nazwą głosu silnika
+(na przykład „pl”, „pl+f3”). Uczestnik bez wskazanego głosu dostaje głos
+domyślny — mowa ma zabrzmieć, a nie odmówić z powodu nieuzupełnionego
+ustawienia.
+
+Nagranie jest jedno, nie po jednym na wypowiedź: odsłuch debaty ma się
+odtwarzać ciągiem, tak jak debata przebiegła.
+
+Sklejanie plików WAV bajt po bajcie dałoby nagranie, w którym po pierwszej
+wypowiedzi stoi nagłówek drugiej — czyli trzask i zerwany odczyt. Nagłówek
+zdejmuje się z każdej części, a jeden nowy zakłada na całość.
+
+## budowa/server/internal/core/adapter_modul_library_audyt.go
+
+Odnotowanie nie może wywrócić czynności. Zasób został przeniesiony do
+archiwum naprawdę — nieudany zapis do dziennika nie cofa tego przeniesienia,
+a odmowa oddana Operatorowi po wykonanej czynności byłaby odmową
+nieprawdziwą. Dziennik jest świadkiem czynności, nie jej warunkiem.
+
+Zgłoszenie nasłuchowi idzie w osobnym wątku z własną granicą czasu: odbiorca
+zewnętrzny bywa wolny albo martwy, a komenda repozytorium nie ma czekać na
+cudzy serwer. Adres jest w konfiguracji Operatora, więc rdzeń go nie
+weryfikuje poza wymogiem, że jest adresem HTTP.
+
+### sprawcaBiblioteki
+
+Bramka wiąże połączenie z sesją, ale adapter widzi samo żądanie. Gdy komenda
+przyjdzie z pętli wykonawczej modułu, sprawca zmieni się razem z drogą,
+którą przyjdzie — i wtedy będzie to zmiana jednego miejsca.
+
+### zglosNasluchom
+
+Nasłuch wybiera się po zdarzeniu: nasłuch bez tego zdarzenia w wykazie nie
+dostaje zgłoszenia, bo zapisany wykaz zdarzeń jest zgodą Operatora na to,
+co wychodzi na zewnątrz. Odczyt idzie w tle razem z wysyłką: wykaz
+nasłuchów jest zwykle pusty, a gdy nie jest — komenda nie ma czekać ani na
+bazę, ani na cudzy serwer.
+
+### wyslijZgloszenie
+
+Odbiorca ma móc rozstrzygnąć, że zgłoszenie pochodzi z tego rdzenia, a nie
+od kogokolwiek, kto zna adres.
+## budowa/server/internal/core/adapter_modul_library_cykl.go
+
+Trzy pierwsze czynnosci sa odwracalne: przeniesienie zmienia miejsce
+w strukturze, archiwizacja zdejmuje zasob z wykazu domyslnego, a
+przywrocenie oddaje go z powrotem - w kazdym przypadku wiersz, wersje,
+etykiety i kolekcje zostaja nietkniete.
+
+library.file.delete wymaga potwierdzenia wprost (confirm), zdejmuje wiersz
+zasobu wraz z jego wersjami i zostawia po sobie wpis w dzienniku audytu,
+ktory przezywa usuniety zasob (dziennik wskazuje zasob kodem, nie kluczem
+obcym). Bajty tresci nie znikaja razem z wierszem, i to jest zamierzone:
+ta sama tresc bywa wspoldzielona przez inny zasob pod ta sama suma
+kontrolna (magazyn jest adresowany trescia). Bloby osierocone zdejmuje
+obchod magazynu przy starcie rdzenia (adapter_modul_library_sprzatanie.go).
+
+Wpis audytu przy UsunZasoby powstaje PRZED usunieciem: po zdjeciu wiersza
+nazwa zasobu przestaje istniec, a dziennik ma powiedziec, co zniknelo, nie
+tylko ze cos zniknelo.
+
+Postac sciezki jest wazna, bo klient czyta pierwszy czlon jako katalog
+nawigacji i zawęza wykaz po przedrostku
+(client/src/moduly/library/wykaz-plikow.ts). Dwie zapisane sciezki
+roznace sie samym ukosnikiem bylyby dla niego dwoma roznymi katalogami.
+Czlon .. przepuszczony bylby zaproszeniem do czytania sciezki jak katalogu
+na dysku.
+## budowa/server/internal/core/adapter_modul_developer_okno.go
+
+Katalogi robocze są listą, więc wszystkie punkty tego pliku pracują na
+liście. Okno bez własnej listy spada na katalog ustalony przez
+rozstrzygacz — brak ustawienia znaczy wartość domyślną, nie odmowę.
+
+Ścieżka spoza obszaru wraca jako odmowa uprawnienia. Code Editor dostaje
+ścieżkę od klienta, więc bez tego sprawdzenia wskazanie nadrzędnych
+katalogów czytałoby dowolny plik maszyny; kod odmowy uprawnienia odróżnia
+zatrzymanie przez izolację okna od awarii odczytu.
+
+Wskazanie względne ścieżki rozstrzyga się po kolei: pierwszy katalog
+roboczy, w którym taka ścieżka istnieje, wygrywa; gdy nie istnieje
+nigdzie, zostaje pierwszy katalog listy. Dzięki temu otwarcie pliku z
+Project Tree trafia tam, skąd wyszło, a zapis nowego pliku ma jednoznaczne
+miejsce.
+
+Porównanie ścieżek idzie po znormalizowanych postaciach, a nie przez
+funkcję Rel biblioteki standardowej: na Windows rozróżnia ona wielkość
+liter, których system plików nie rozróżnia, więc dwie zapisane różną
+wielkością litery ścieżki wyglądałyby na różne obszary i sprawdzenie
+dałoby się obejść samą zmianą wielkości litery.
+
+Katalog względny jest odrzucany: obszar izolacji liczony względem
+katalogu procesu rdzenia znaczyłby co innego po każdym uruchomieniu
+serwera.
+
+Tryb planistyczny znaczy pracę planistyczną bez zmian w systemie, więc
+wyklucza zapis pliku, czynność repozytorium i uruchomienie budowania.
+Pozostałe tryby je przepuszczają: komendy modułu Developer nie mają w
+kontrakcie pola inicjatora ani rundy zgody, a żądanie przychodzi z okna
+komunikacji.
+
+Kod błędu dostępu jest inny niż przy wadzie żądania, bo naprawa jest
+inna: żądanie samo w sobie bywa poprawne, a zatrzymuje je granica
+katalogu roboczego.
+## budowa/server/internal/core/adapter_modul_developer_narzedzia.go
+
+Zasada produktu mówi, że żadna funkcja nie może zależeć od programu, którego
+nie ma. Nie znaczy to zakazu wołania programów zewnętrznych — cała aplikacja
+z arsenałem stoi na serwerze, a Operator ma okno łączące się z serwerem;
+program wywołany po stronie serwera jest częścią serwera, tak samo jak Pandoc
+czy ffmpeg. Rozstrzygnięcie w każdej rodzinie brzmiało tak samo: gdy istnieje
+biblioteka Go robiąca to samo, wybiera się bibliotekę — dlatego repozytorium
+idzie na go-git, wyszukiwanie na regexp, klient API na net/http, konsola bazy
+na database/sql, a wykaz zależności na własnych parserach manifestów. Program
+zewnętrzny wchodzi w grę tylko tam, gdzie biblioteki Go nie ma i być nie może,
+bo program jest tą wiedzą: serwer języka zna typy repozytorium (gopls),
+formatery znają styl (gofmt, goimports, prettier), analiza statyczna zna
+reguły (golangci-lint, staticcheck), debugger zna wnętrze biegnącego procesu
+(dlv), a silnik kontenerów zna kontenery.
+
+Bez osobnej komendy sprawdzającej obecność Operator dowiadywałby się o braku
+programu dopiero po naciśnięciu przycisku, osobno przy każdej funkcji.
+developer.toolchain.check odwraca kolejność: Dev Tools pyta raz i wygasza to,
+czego serwer nie wykona, zanim ktokolwiek spróbuje — ta sama wiedza, podana
+przed czynnością, a nie po jej odmowie.
+
+Powód, dla którego narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń
+nie ma dziś czym go zapytać, stoi przy serwerJezykaPliku, gdzie rozstrzyga
+się droga warstwy językowej dla plików TypeScriptu.
+## budowa/server/internal/core/adapter_modul_przegladarka.go
+
+Przeglądarka jest częścią każdego środowiska. `Nawiguj` sięga po stronę
+realnym HTTP GET-em (`przegladarka_pobieranie.go`, biblioteka standardowa)
+i wypełnia migawkę tytułem, tekstem renderowanym i HTML-em pobranej strony.
+Kontrakt `BrowserSnapshot` niesie te pola (`title`, `text`, `html`), więc
+adapter je wypełnia; puste zostaje tylko `screenshotRef`, bo zrzut ekranu
+wymaga silnika przeglądarki spoza `net/http`. Flagi
+`IncludeHtml`/`IncludeScreenshot` w `browser.snapshot.get` sterują tym, co
+migawka oddaje z tego, co ma — HTML bywa ciężki, więc wychodzi na żądanie.
+
+magazyn trzyma bajty materiału sesji: zrzutów, archiwów, odniesień monitorów
+i rejestrów sieciowych; wiersz w bazie jest wskazaniem na nie, nie ich kopią.
+
+Zasób, którego nie da się pokazać jako strony (dokument, obraz, archiwum),
+nie kończy drogi odmową "to nie strona": przeglądarka w takiej sytuacji
+pobiera plik i tak samo robi moduł. Odmowa zostaje — migawki z tego nie ma —
+ale niesie identyfikator pobrania, które naprawdę powstało i którego bajty
+leżą w magazynie.
+
+Jeden kod na wszystkie nieszczęścia pobrania strony nie wystarcza:
+`validation_failed` z `retryable:false` mówiłby o niezgodności żądania także
+wtedy, gdy żądanie było zgodne z kontraktem, a gospodarz milczał albo witryna
+oddała 503. Klient z pętlą ponowień dostawałby wtedy "nie ponawiaj" przy
+usterce z natury przemijającej.
+
+Kontrakt nie ma kodu "zasób zewnętrzny chwilowo niedostępny"; jedynym kodem
+ponawialnym, który nie kłamie o usterce rdzenia (`internal_error`), jest
+`channel_unavailable` — droga na zewnątrz jest niedostępna dla tego jednego
+wywołania.
+## budowa/server/internal/core/adapter_modul_automations_uchwyty.go
+
+queue.changed niesie kolejke i dotyczy Queue Managera oraz Mission
+Control; automation.execution.status niesie przebieg automatyki i zasila
+Execution Monitor. Sa to dwa rozne byty tej samej czynnosci, wiec
+rozglaszaja sie osobno. Trzeci nosnik - telemetria postepu
+progress.changed - wychodzi z adaptera kolejek i tu sie go nie powtarza.
+
+Osobnych komend odczytu harmonogramu, wykazu kolejek i ukladu zaleznosci
+shared/contract.json nie zna. Ich prace wykonuja komendy istniejace: uklad
+zaleznosci prowadzi automation.orchestrator.define, a stan przebiegow
+automation.execution.subscribe.
+
+rozglosPrzebieg: nieudany dobor konczy wylacznie rozgloszenie - komenda
+juz sie powiodla. Kolejka spoza automatyki przebiegu nie ma i nic nie
+rozglasza.
+
+nazwaEtapuPrzebiegu: powtorzenie kroku nazywa sie biegiem naprawczym -
+tak samo jak w telemetrii kolejki, zeby oba okna mowily o tym samym
+jednym jezyku.
+
+przebiegAutomatyki: automatyka jest komponentem wlasnym, nie bytem karty
+sesji, wiec zdarzenie idzie bez jej wskazania - Execution Monitor otwiera
+sie ze strony glownej.
+
+powiazanieAutomatyki: bytem wyzwalajacym jest harmonogram -
+automation.schedule.set zapisuje cyklicznosc i wyzwalacze, czyli jedyne
+w rdzeniu wskazanie, co ma automatyke uruchomic. Ladunek kontraktu niesie
+samo automationId, wiec mowi powiazanie tej automatyki jest inne niz bylo,
+a nie jakie. Bliski krewny, queue.link, wiaze kolejke z automatyka
+i rozglasza queue.changed, bo bytem zmienianym jest tam kolejka, nie
+automatyka. Automatyka powiazanie ma zawsze, chocby puste (harmonogram
+nieczynny, zero wyzwalaczy) - created i deleted opisywalyby byt o wlasnym
+cyklu zycia, ktorego tu nie ma.

@@ -353,6 +353,8 @@ export const LoopStopReason = {
   Manual: 'manual',
   /** Obiegu nie udalo sie rozpoczac; odpowiada session.ZatrzymanieUsterka */
   Failure: 'failure',
+  /** Zadanie skonczone z wynikiem: koordynator zamknal ture wynikiem, a zadne okno wykonawcze tego koordynatora nie prowadzilo wtedy tury. Jedyna wartosc mowiaca skonczone, a nie przerwane — po niej bieg podejmuje sie sam przy kolejnym koncu tury wykonawcy, wiec ukonczenie nie jest brama akceptacji; odpowiada session.ZatrzymanieUkonczenie */
+  Completed: 'completed',
 } as const;
 export type LoopStopReason = (typeof LoopStopReason)[keyof typeof LoopStopReason];
 

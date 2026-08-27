@@ -658,6 +658,8 @@ const (
 	LoopStopReasonManual = "manual"
 	// Obiegu nie udalo sie rozpoczac; odpowiada session.ZatrzymanieUsterka
 	LoopStopReasonFailure = "failure"
+	// Zadanie skonczone z wynikiem: koordynator zamknal ture wynikiem, a zadne okno wykonawcze tego koordynatora nie prowadzilo wtedy tury. Jedyna wartosc mowiaca skonczone, a nie przerwane — po niej bieg podejmuje sie sam przy kolejnym koncu tury wykonawcy, wiec ukonczenie nie jest brama akceptacji; odpowiada session.ZatrzymanieUkonczenie
+	LoopStopReasonCompleted = "completed"
 )
 
 // WartosciLoopStopReason zwraca komplet wartosci LoopStopReason w kolejnosci kontraktu.
@@ -666,6 +668,7 @@ func WartosciLoopStopReason() []LoopStopReason {
 		LoopStopReasonNoProgress,
 		LoopStopReasonManual,
 		LoopStopReasonFailure,
+		LoopStopReasonCompleted,
 	}
 }
 

@@ -3709,3 +3709,8 @@ tego koordynatora nie prowadzi tury, czyli wykaz tur jego toru jest pusty. Bieg 
 obiegiem się nie kończy, ponieważ nie ma czego kończyć, a zatrzymanie postawione oknu, które pętli
 jeszcze nie prowadziło, wprowadziłoby fałszywy sygnał biegu nieistniejącego. Bieg już zatrzymany
 zostaje przy swoim powodzie — ukończenie nie przykrywa przerwania.
+
+## budowa/server/internal/models/wysylka.go
+Kanał nierozpoznany kończy wyłącznie wywołanie Wyslij, którego dotyczy: użytkownik
+dostaje fragment błędu, wywołujący błąd w wyniku, a sesja, okno i kolejne próby
+pozostają czynne.

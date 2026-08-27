@@ -1,40 +1,24 @@
--- Migracja 246 — książka hostów modułu Terminal (okno Session Manager).
---
--- Do tej pory książka żyła wyłącznie w widoku klienta: wpisy ginęły przy
--- odświeżeniu strony, a jedyną drogą ich wyniesienia poza jedno posiedzenie był
--- wywóz do pliku. Wpis hosta jest jednak nastawą Operatora, nie stanem widoku —
--- ma przeżyć zamknięcie okna, zamknięcie przeglądarki i restart rdzenia.
---
--- Czego w wpisie NIE MA. Nie ma hasła, frazy klucza ani żadnego materiału
--- tajnego. Kolumna `klucz_kod` wskazuje wpis wykazu kluczy (migracja 248), a ten
--- niesie wyłącznie ŚCIEŻKĘ klucza prywatnego na maszynie rdzenia. Baza nie jest
--- sejfem i nie stanie się nim przez dołożenie kolumny.
---
--- `host_posredni_kod` wskazuje inny wiersz tej samej tabeli — host, przez który
--- idzie połączenie (ProxyJump OpenSSH). Klucz obcy jest na siebie samą i kasuje
--- się na NULL: usunięcie hosta pośredniego nie ma prawa unieważnić wpisów, które
--- przez niego szły; one wracają do połączenia bezpośredniego, a Operator to
--- widzi.
+-- Migracja 246 zakłada tabelę hostów SSH modułu Terminal, przechowującą trwałe
+-- wpisy książki adresowej niezawierające żadnego materiału tajnego.
 
 CREATE TABLE terminal_host (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,
     kod               TEXT    NOT NULL UNIQUE,
-    -- Nazwa widoczna w wykazie; klucz rozpoznania dla Operatora.
+    -- Nazwa widoczna w wykazie; klucz rozpoznania dla operatora.
     nazwa             TEXT    NOT NULL,
-    -- Adres celu w postaci `użytkownik@host` albo alias konfiguracji OpenSSH
-    -- maszyny RDZENIA — to na niej uruchamia się program `ssh`.
+    -- Adres celu: użytkownik@host albo alias konfiguracji OpenSSH maszyny rdzenia.
     cel               TEXT    NOT NULL,
-    -- Port połączenia; pusty bierze port domyślny protokołu.
+    -- Port połączenia; pusty przyjmuje port domyślny protokołu.
     port              INTEGER CHECK(port IS NULL OR port BETWEEN 1 AND 65535),
-    -- Folder porządkujący wykaz; pusty znaczy „bez folderu”.
+    -- Folder porządkujący wykaz; pusty oznacza brak folderu.
     grupa             TEXT    NOT NULL DEFAULT '',
     -- Katalog roboczy karty zakładanej z tego wpisu.
     katalog_roboczy   TEXT    NOT NULL DEFAULT '',
-    -- Wpis wykazu kluczy SSH; pusty bierze klucz domyślny konfiguracji maszyny.
+    -- Wpis wykazu kluczy SSH; pusty przyjmuje klucz domyślny konfiguracji maszyny.
     klucz_kod         TEXT,
-    -- Wpis hosta pośredniego, przez który idzie połączenie.
+    -- Wpis hosta pośredniego, przez który prowadzi połączenie.
     host_posredni_kod TEXT REFERENCES terminal_host(kod) ON DELETE SET NULL,
-    -- Notatka Operatora albo ślad pochodzenia wpisu (np. wczytanie z pliku).
+    -- Notatka operatora albo ślad pochodzenia wpisu.
     notatka           TEXT    NOT NULL DEFAULT '',
     utworzono         TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     zaktualizowano    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))

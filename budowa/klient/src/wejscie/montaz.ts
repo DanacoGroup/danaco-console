@@ -112,7 +112,7 @@ export function zamontuj(nastawy: NastawyMontazu): ZamontowaneOkno {
     obszar.replaceChildren(
       baner({ rodzaj: 'informacja', ikona: 'informacja', glowa: tytul, tresc, dane: {} }),
     );
-    // Głowa i treść to gotowy tekst, nie klucz — podmieniamy oba napisy po zbudowaniu węzła banera.
+    // Głowa i treść to gotowy tekst, nie klucz — podmieniane są oba napisy po zbudowaniu węzła banera.
     const wezel = obszar.firstElementChild;
     const glowa = wezel?.querySelector('b');
     if (glowa !== null && glowa !== undefined) glowa.textContent = tytul;
@@ -199,7 +199,7 @@ function odswiezZwloke(korzen: ParentNode, stan: StanPrzebiegu): void {
   const panel = korzen.querySelector(`[data-widok="${stan.odslona}"]`);
   const licznik = panel?.querySelector('[data-odliczanie]') as HTMLElement | null;
   if (licznik === null || licznik === undefined) return;
-  // Nastawiamy licznik wyłącznie przy wejściu w odsłonę, gdy stoi na zerze.
+  // Nastawiany jest licznik wyłącznie przy wejściu w odsłonę, gdy stoi na zerze.
   if (Number.parseInt(licznik.dataset['odliczanie'] ?? '0', 10) > 0) return;
   licznik.dataset['odliczanie'] = String(stan.zwlokaS);
 }

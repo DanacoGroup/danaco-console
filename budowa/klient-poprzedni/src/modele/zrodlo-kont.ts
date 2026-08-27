@@ -90,7 +90,7 @@ export function utworzZrodloKont(
 }
 
 /**
- * Porządek wykazu bierzemy z kolejności nadanej przez rdzeń, a przy jej braku
+ * Porządek wykazu pochodzi z kolejności nadanej przez rdzeń, a przy jej braku
  * z nazwy. Konto bez kolejności nie znika — trafia na koniec.
  */
 export function uporzadkujKonta(konta: readonly Account[]): Account[] {

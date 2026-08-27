@@ -1,20 +1,5 @@
-// Odpowiedzialność pliku: odczyt harmonogramów po ich własnym identyfikatorze
-// i odczyt wykazu wszystkich harmonogramów (tabela `harmonogram_automatyki`).
-// Zapis, odczyt po automatyce, wyzwalacze i budzik stoją
-// w `budowa/server/internal/dane/automations_harmonogram.go` i nie powtarzają
-// się tutaj.
-//
-// Drogi odczytu są dwie, bo pytający bywa różny. `automation.schedule.set` zna
-// automatykę i pyta o jej harmonogram — tamten odczyt jedzie kolumną
-// `automatyka_id`. Komenda `schedule.get` zna natomiast albo identyfikator
-// samego harmonogramu (`AutomationSchedule.id`, kolumna
-// `identyfikator_zewnetrzny`), albo nie zna żadnego wskazania i pyta o komplet.
-// Żadnej z tych dróg nie da się przejechać zapytaniem po kluczu obcym
-// automatyki, więc dochodzą tu dwa zapytania.
-//
-// Schemat niesie oba potrzebne więzy: UNIQUE na `identyfikator_zewnetrzny`
-// (odczyt po kodzie oddaje co najwyżej jeden wiersz) i UNIQUE na
-// `automatyka_id` (automatyka ma najwyżej jeden harmonogram).
+// Plik odczytuje harmonogramy automatyk po ich identyfikatorze zewnętrznym
+// oraz odczytuje pełny wykaz harmonogramów z tabeli harmonogram_automatyki.
 package dane
 
 import (
@@ -28,11 +13,8 @@ const (
 	pobierzHarmonogramPoKodzie = `SELECT ` + kolumnyHarmonogramu + ` FROM harmonogram_automatyki
 	                              WHERE identyfikator_zewnetrzny = ?`
 
-	// Sito „tylko obowiązujące" idzie do bazy, a nie do pętli w Go: wykaz bywa
-	// czytany bez żadnego zawężenia i nie ma powodu wozić do rdzenia wierszy,
-	// których pytający nie chce. Kolejność po terminie najbliższego uruchomienia
-	// (wiersze bez terminu na końcu), bo tak czyta harmonogramy człowiek —
-	// najpierw to, co ruszy najwcześniej.
+	// Warunek ograniczający wynik do harmonogramów czynnych działa w zapytaniu
+	// SQL, a wynik jest uporządkowany według terminu najbliższego uruchomienia.
 	listaHarmonogramow = `SELECT ` + kolumnyHarmonogramu + ` FROM harmonogram_automatyki
 	                      WHERE (? = 0 OR czynny = 1)
 	                      ORDER BY nastepne_uruchomienie IS NULL, nastepne_uruchomienie, id`

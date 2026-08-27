@@ -5888,3 +5888,42 @@ false, a wołający zostaje wtedy przy granicy platformy.
 kodModuluOkna zwraca "nie wiadomo", a nie odmowę, gdy katalog modułów nie
 da się odczytać, ponieważ zawężenie ma wynikać z decyzji podjętej
 świadomie, nie z nieudanego odczytu.
+
+## budowa/server/internal/core/strumien_odpowiedzi.go
+
+Numer fragmentu i znacznik końca żyją w kopercie, nie w ładunku, więc nadawca
+je nadaje: numeruje od jedynki i domyka strumień znacznikiem ostatniego.
+Ostatni fragment poznaje się dopiero wtedy, gdy nadejdzie następny fragment
+albo skończy się tura, dlatego nadawca trzyma jeden fragment w zawieszeniu.
+
+Identyfikator zadania jest niezmienny przez cały strumień: idZadania to
+identyfikator żądania, które turę otworzyło — ten sam, którym wróciła
+odpowiedź na komendę message.send. Kontrakt wymaga tego wprost: odpowiedź
+i fragmenty strumienia powtarzają identyfikator zadania. Nadawca dostaje go
+raz, przy założeniu, i nie ma metody pozwalającej go podmienić.
+
+Domknięcie jest dokładnie jedno: znacznik done wychodzi raz na turę. Pole
+domkniety zamyka nadawcę na stałe, więc ani powtórzone wywołanie Zakoncz,
+ani domknięcie awaryjne po panice nie wystawią drugiego końca tego samego
+strumienia, a fragment przyjęty po domknięciu jest odrzucany.
+
+Fragment domykający w metodzie Zakoncz niesie rodzaj final i całą treść
+odpowiedzi, a odbiorca podmienia nią tekst złożony z fragmentów — pole
+ChunkKind.final w kontrakcie, plik zlozenie-tury.ts po stronie klienta.
+Zastąpienie, a nie doklejenie, wynika stąd, że tekst złożony z fragmentów
+jest przybliżeniem: kanał może fragment powtórzyć po rotacji konta, może
+zerwać go w połowie znaku wielobajtowego, a tura zapasowa nadaje własne.
+Wersja ostateczna jest jedyną prawdą o tym, co model powiedział — tą samą,
+którą dziennik rozmowy zapisuje jako pole content wiadomości. Fragment
+błędu jest zdarzeniem domykającym, bo strumień ma jedną drogę dla
+powodzenia i niepowodzenia; wersji ostatecznej wtedy nie ma, a tekst, który
+zdążył dojść, zostaje na wpisie taki, jaki jest.
+
+Bez domknięcia pustą wersją ostateczną w turze bez znaku klient czekałby na
+znacznik końca, który nigdy nie przyjdzie, a wpis stałby w stanie strumień.
+
+Bez wyjścia awaryjnego panika zostawiałaby klienta z wpisem w stanie
+strumień do końca sesji, bez odpowiedzi i bez wyjaśnienia. Domknięcie
+zwykłe należy do metody Zakoncz, która zna przyczynę i potrafi ją nazwać;
+domknięcie awaryjne niesie fragment rodzaju błąd, którego treść mówi, co
+odmówiło, dlaczego i co z tym zrobić.

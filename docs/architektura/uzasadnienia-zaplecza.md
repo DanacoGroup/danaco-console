@@ -2883,3 +2883,12 @@ pierwszym zamknięciu karty.
 
 Okno jest kolumną tekstową, nie więzem obcym — tak samo jak w migracji 047:
 `windowId` modułu Browser jest oknem operacyjnym, nie oknem komunikacji.
+
+## budowa/server/internal/store/migracja_275_harmonogram_okna_wyzwolenia.sql
+Okno wykonania, nadzór obecności uruchomień, wyzwalacz webhook oraz historia wyzwoleń mają przeżyć restart rdzenia: trzymanie ich w pamięci procesu przestałoby ograniczać budzik po pierwszym ponownym złożeniu rdzenia, a harmonogram pokazywałby ograniczenie, które już niczego nie ogranicza. Okno wykonania jest wierszem, ponieważ jest ich wiele na harmonogram — godziny robocze poniedziałku bywają inne niż piątku. Dni tygodnia leżą jako zapis strukturalny, ponieważ kontrakt niesie je wykazem liczb ustalanym w całości.
+Nadzór obecności uruchomień i adres wejściowy webhooka są polami pojedynczymi harmonogramu, po jednym na harmonogram, bez własnego cyklu życia. Kolumna tolerancji równa zero wyłącza nadzór, zgodnie z kontraktem. Kolumna webhooka niesie odwołanie do sejfu, nigdy wartość klucza podpisu.
+
+## budowa/desktop/src-tauri/src/nastawy.rs
+Adresu serwera wdrożenia nie zna instalator i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie wie, pod jaką nazwą stoi rdzeń danego Operatora. Wiedza pojawia się przy pierwszym uruchomieniu okna i musi przetrwać jego zamknięcie, inaczej przy każdym starcie powłoka pytałaby o to samo. Zmienna środowiskowa wskazująca host rdzenia stoi wyżej niż ten plik jako narzędzie wykonawcy i środowiska serwerowego, gdzie nastawę wnosi jednostka usługi, a nie okno; kolejność warstw rozstrzyga moduł ustawień. Plik leży w katalogu danych powłoki, obok jej dziennika, bo oba pliki należą do powłoki i drugie miejsce zapisu byłoby drugim stanem do pogodzenia przy przenoszeniu profilu.
+
+Odczyt nastaw nie jest bramą i nie wstrzymuje startu okna: brak pliku, plik nieczytelny i treść niezgodna z umową dają nastawy puste, a powód nieczytelności trafia do dziennika powłoki, żeby Operator nie zobaczył ekranu pierwszego uruchomienia bez wyjaśnienia, dlaczego jego poprzednie wskazanie zniknęło. Zapis idzie przez plik przejściowy i przemianowanie, żeby przerwanie w trakcie pisania nie zostawiło pliku obciętego — wskazanie odczytane w połowie byłoby gorsze niż wskazanie nieodczytane, bo okno łączyłoby się z adresem złożonym z połowy nazwy hosta. W przeciwieństwie do odczytu, niepowodzenie zapisu jest bramą: wywołujący ma odmówić Operatorowi, a nie przyjąć wskazanie, które zniknie przy następnym starcie.

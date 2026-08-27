@@ -3443,3 +3443,33 @@ chwilą powstania. Dzięki temu klient nie potrzebuje drugiego słownika rodzaj�
 
 ## budowa/server/internal/dane/developer_warsztat.go
 Byty tego pliku nie leżą w pamięci rdzenia, bo sesja debugowania, połączenie z bazą i biegnący skan są stanem żywym z uchwytami do procesów, gasnącym razem z nimi — taki stan w bazie nie ma miejsca. W bazie leży to, co osoba pracująca w edytorze ułożyła i czego nie może stracić przy zamknięciu okna: postawiony punkt przerwania, zapisane zapytanie, opisane połączenie, wynik pomiaru.
+
+## budowa/server/cmd/danaco-narzedzia/main.go
+Poza kompozycją nie ma tu wykazów, komend ani protokołu — wszystko to mieszka
+w warstwie narzędzi rdzenia i w podpakiecie stdio. Dziennik idzie na wyjście
+diagnostyczne, bo wyjście standardowe należy w całości do protokołu MCP —
+jeden obcy wiersz na standardowym wyjściu zerwałby rozmowę z procesem modelu.
+
+Przełącznik zasięgu czyta się raz, przy uruchomieniu, z wpisu okna ułożonego
+przez rdzeń — proces modelu startuje z gotowym wykazem i nie ma czym go
+poszerzyć w trakcie rozmowy. Kod eksperta rdzeń bierze z pola ustawień agenta
+okna. Przełącznik dołożeń sesji składa strona rdzenia, stamtąd bierze się
+jego nazwa; analiza argumentów kończy proces na przełączniku nieznanym, więc
+odczyt dołożeń musi stać, zanim tamta strona zacznie argument dokładać.
+
+Brak okna nie zatrzymuje serwera: model podaje okno sam albo rdzeń odmawia.
+Cudzego okna serwer nie podstawi nigdy, więc milczenie jest tu bezpieczne;
+głośne pozostaje w dzienniku, bo wpis okna zawsze je niesie.
+
+Liczby zestawu przy starcie dotyczą zestawu przed zawężeniem, ponieważ
+gniazdo do rdzenia jest leniwe i definicji eksperta nie da się mieć w tej
+chwili — cenę zestawu eksperta melduje dobór przy pierwszym wykazie narzędzi.
+
+Cichy odrzut dołożenia bez zawężenia zostawiłby narzędzie na wykazie sesji
+bez śladu, że w tej turze nic nie zmieniło, dlatego dziennik go odnotowuje.
+
+Rozjazd dwóch przełączników zasięgu jest możliwy w obie strony. Kod eksperta
+bez zasięgu eksperta podnosi zasięg do zasięgu eksperta, z podniesieniem
+odnotowanym w dzienniku. Zasięg eksperta bez kodu eksperta nie ma o kogo
+zapytać rdzenia i schodzi do zasięgu okna, ponieważ zawężenie bez eksperta
+nie jest zawężeniem, tylko obietnicą bez pokrycia.

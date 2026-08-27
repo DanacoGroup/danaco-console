@@ -1,18 +1,9 @@
 import { MemoryLevel } from '../../../../shared/contract';
 
 /**
- * Konfiguracja pamięci eksperta — czwarty z siedmiu komponentów definicji.
- *
- * Poziomy są cztery i wybiera się je niezależnie, bo ekspert korzysta naraz
- * z kilku: pamięć globalna Operatora, pamięć projektu, pamięć karty sesji
- * i pamięć środowiska. Piątego poziomu „wyłączona” nie ma i kontrolka go nie
- * dorabia — wyłączeniem jest ZBIÓR PUSTY, czyli cztery pola odznaczone.
- * Kontrakt rozstrzyga to wprost przy `MemoryLevel`: piąta wartość obok czterech
- * poziomów pozwalałaby zapisać stan sprzeczny (`[session, disabled]`).
- *
- * Dlatego pod grupą stoi zdanie czytające stan bieżący, a nie stała: Operator
- * ma widzieć, że odznaczenie wszystkiego jest wyłączeniem pamięci, zanim
- * naciśnie zapis. Zdanie zmienia się przy każdym kliknięciu.
+ * Konfiguracja pamięci eksperta wybiera niezależnie cztery poziomy zasięgu,
+ * ponieważ ekspert korzysta z kilku naraz. Wyłączeniem pamięci jest zbiór
+ * pusty, czyli cztery pola odznaczone; piątego poziomu kontrakt nie zna.
  */
 export interface PoziomyPamieci {
   /** Grupa osadzana w formularzu tożsamości. */
@@ -23,7 +14,11 @@ export interface PoziomyPamieci {
   wybrane(): readonly MemoryLevel[];
 }
 
-/** Kolejność poziomów od najszerszego do najwęższego — tak schodzi zasięg. */
+/**
+ * Kolejność poziomów biegnie od najszerszego do najwęższego, czyli tak, jak
+ * schodzi zasięg pamięci: od pamięci wspólnej wszystkim projektom po pamięć
+ * jednej karty rozmowy. Grupa kontrolek rysuje się w tym samym porządku.
+ */
 export const KOLEJNOSC_POZIOMOW: readonly MemoryLevel[] = [
   MemoryLevel.Global,
   MemoryLevel.Project,
@@ -31,7 +26,11 @@ export const KOLEJNOSC_POZIOMOW: readonly MemoryLevel[] = [
   MemoryLevel.Session,
 ];
 
-/** Nazwy poziomów w języku Operatora. */
+/**
+ * Nazwy poziomów w języku Operatora wraz ze zdaniem o zasięgu każdego z nich.
+ * Nazwy stoją osobno od wartości kontraktu, ponieważ Operator czyta zasięg
+ * pamięci, a rdzeń przyjmuje wartości wyliczenia `MemoryLevel`.
+ */
 export const NAZWY_POZIOMOW: Record<MemoryLevel, string> = {
   [MemoryLevel.Global]: 'globalna — wspólna wszystkim projektom i oknom',
   [MemoryLevel.Project]: 'projekt — pamięć projektu, do którego należy okno',
@@ -40,16 +39,17 @@ export const NAZWY_POZIOMOW: Record<MemoryLevel, string> = {
 };
 
 /**
- * Poziomy wyjściowe nowego eksperta.
- *
- * Kontrakt nazywa stanem wyjściowym cztery poziomy — pełny dostęp — więc
- * formularz zakładania rusza z kompletem zaznaczonym. Ruszanie z pustki
- * zakładałoby eksperta bez pamięci przy każdym zapisie, w którym Operator
- * grupy nie dotknął.
+ * Poziomy wyjściowe nowego eksperta obejmują komplet czterech, ponieważ tak
+ * stan wyjściowy nazywa kontrakt. Ruszanie z pustki zakładałoby eksperta bez
+ * pamięci przy każdym zapisie, w którym Operator grupy nie dotknął.
  */
 const POZIOMY_WYJSCIOWE: readonly MemoryLevel[] = KOLEJNOSC_POZIOMOW;
 
-/** Zdanie o stanie bieżącym grupy — czyta zaznaczenia, nie zamiar. */
+/**
+ * Zdanie pod grupą czyta zaznaczenia bieżące, a nie zamiar Operatora, i zmienia
+ * się przy każdym kliknięciu. Dzięki temu Operator widzi, że odznaczenie
+ * wszystkiego jest wyłączeniem pamięci, zanim naciśnie zapis.
+ */
 function zdanieOStanie(wybrane: readonly MemoryLevel[]): string {
   if (wybrane.length === 0) {
     return (

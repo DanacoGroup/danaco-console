@@ -3311,3 +3311,34 @@ bajty %PDF- na początku pliku są definicją PDF-u, a nie poszlaką. Materiał,
 którego nagłówek nie mówi nic pewnego, oddaje pustkę, bo "nie wiem" jest
 odpowiedzią uczciwą, a zgadnięty format kończy się odmową narzędzia w połowie
 pracy albo, gorzej, treścią przeczytaną nie tym słownikiem.
+
+## budowa/server/internal/core/skutek_bezpieczenstwa_dokumentu_test.go
+
+Rodzina bezpieczeństwa jest tym miejscem, w którym meldunek `status: ok` bez
+skutku kosztuje najwięcej: Operator wysyła dokument w przekonaniu, że został
+oczyszczony albo zredagowany. Dlatego żaden sprawdzian tutaj nie kończy się
+na odpowiedzi komendy — każdy schodzi do bajtów wyniku i pyta je wprost.
+Żaden sprawdzian nie pomija się przy braku programu, bo rodzina nie
+uruchamia ani jednego procesu.
+
+`trescStronWyniku` skleja treść wszystkich stron dokumentu leżącego pod
+odwołaniem zasobu — to jest miara redakcji, bo tekst wycięty znika właśnie
+stąd, a nie z odpowiedzi komendy.
+
+`certyfikatProbny` wytwarza parę klucz–certyfikat w postaci PEM. Certyfikat
+powstaje na czas sprawdzianu, a nie leży w drzewie: klucz wniesiony do
+repozytorium byłby kluczem, który wyciekł w chwili wniesienia.
+
+Miara szyfrowania jest niezależna od odpowiedzi: dokument zaszyfrowany nie
+daje się otworzyć bez hasła i to jest jedyny dowód, że szyfrowanie naprawdę
+leży w bajtach.
+
+`TestCzyszczenieMetadanychUsuwaOpisZBajtow` wykazuje, że opis znika
+z dokumentu, a nie tylko z odpowiedzi.
+
+`TestRedakcjaWycinaTekstZTresciStrony` wykazuje, że redakcja usuwa, a nie
+zasłania: po czynności tekst nie leży już w treści strony.
+
+Sam „podpis poprawny" niczego by nie dowiódł w teście przeżycia podpisu przez
+odczyt i unieważnienia go zmianą treści — podpis, który zawsze mówi „tak",
+nie jest podpisem.

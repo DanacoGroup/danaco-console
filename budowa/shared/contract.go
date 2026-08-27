@@ -15386,7 +15386,7 @@ type KnowledgeImageHit struct {
 type SessionTool struct {
 	// Nazwa pelna ze zrodlem,na przykład anthropic-skills:skill-creator.
 	Name string `json:"name"`
-	// Nazwa skrocona — to ona jest tym, co Operator faktycznie wpisuje (rozdz. 7.2)
+	// Nazwa skrocona — to ona jest tym, co Operator faktycznie wpisuje
 	ShortName string `json:"shortName"`
 	// Opis pelnym zdaniem: po co to jest i kiedy uzyc
 	Description string `json:"description"`
@@ -23174,7 +23174,7 @@ type MessageListRequest struct {
 	WindowId string `json:"windowId"`
 	// Liczba pozycji
 	Limit *int `json:"limit,omitempty"`
-	// Identyfikator wiadomosci, przed ktora czytamy
+	// Identyfikator wiadomosci, przed ktora czyta się
 	Before *string `json:"before,omitempty"`
 }
 
@@ -23328,13 +23328,13 @@ type ConfigEffectiveGetResponse struct {
 
 // Struktura ConfigCapabilitiesGetRequest ma znaczenie: tresc zadania config.capabilities.get — Zwraca deklaracje zdolnosci adaptera dostawcy: dla kazdego pola konfiguracji sesji mowi supported, partial albo unsupported wraz z powodem.
 type ConfigCapabilitiesGetRequest struct {
-	// Kanal modelu, dla ktorego pytamy o zdolnosci; puste znaczy kanal okna
+	// Kanal modelu, dla ktorego pyta się o zdolnosci; puste znaczy kanal okna
 	ChannelId *string `json:"channelId,omitempty"`
 	// Okno rozmowy, z ktorego brany jest kanal i konto
 	WindowId *string `json:"windowId,omitempty"`
-	// Konto, dla ktorego pytamy o zdolnosci
+	// Konto, dla ktorego pyta się o zdolnosci
 	AccountId *string `json:"accountId,omitempty"`
-	// Transport, dla ktorego pytamy o zdolnosci; puste znaczy transport kanalu
+	// Transport, dla ktorego pyta się o zdolnosci; puste znaczy transport kanalu
 	Transport *ProviderTransport `json:"transport,omitempty"`
 	// Obszar; pominiety zwraca deklaracje dla kompletu obszarow
 	Area *SessionConfigArea `json:"area,omitempty"`
@@ -24074,7 +24074,7 @@ type WorkspaceContextSetRequest struct {
 	Origin *MemoryEntryOrigin `json:"origin,omitempty"`
 	// Zasieg wspoldzielenia wpisu
 	Scope *ConfigScope `json:"scope,omitempty"`
-	// Etykiety wpisu pamieci. Bez nich filtr po etykiecie z rozdz. 3.5 opracowania nie ma po czym zawezac
+	// Etykiety wpisu pamieci. Bez nich filtr po etykiecie nie ma po czym zawezac
 	Tags []string `json:"tags,omitempty"`
 }
 
@@ -26894,7 +26894,7 @@ type TerminalOutputStreamResponse struct {
 
 // Struktura TerminalOutputReadRequest ma znaczenie: tresc zadania terminal.output.read — Oddaje WYJSCIE jednego procesu terminala — stdout, stderr, kod wyjscia i stan — jako jedna odpowiedz, bez zapisywania sie na strumien.
 type TerminalOutputReadRequest struct {
-	// Proces, ktorego wyjscie czytamy; identyfikator z wyniku terminal.command.exec
+	// Proces, ktorego wyjscie czyta się; identyfikator z wyniku terminal.command.exec
 	ProcessId string `json:"processId"`
 	// Liczba ostatnich wierszy KAZDEGO ze strumieni; puste bierze komplet zapamietanych, zero — sam stan
 	Tail *int `json:"tail,omitempty"`
@@ -32470,7 +32470,7 @@ type DeveloperBuildListResponse struct {
 
 // Struktura DeveloperBuildLogGetRequest ma znaczenie: tresc zadania developer.build.log.get — Rozwija odnosnik logu przebiegu budowania.
 type DeveloperBuildLogGetRequest struct {
-	// Przebieg, ktorego log czytamy
+	// Przebieg, ktorego log czyta się
 	BuildId string `json:"buildId"`
 	// Liczba ostatnich wierszy; puste bierze komplet zapamietanych
 	Tail *int `json:"tail,omitempty"`
@@ -32490,7 +32490,7 @@ type DeveloperBuildLogGetResponse struct {
 
 // Struktura DeveloperTestResultGetRequest ma znaczenie: tresc zadania developer.test.result.get — Zwraca wynik zestawu testow przebiegu budowania.
 type DeveloperTestResultGetRequest struct {
-	// Przebieg, ktorego testy czytamy
+	// Przebieg, ktorego testy czyta się
 	BuildId string `json:"buildId"`
 	// Stan zawezajacy wykaz
 	Status *TestStatus `json:"status,omitempty"`
@@ -32512,7 +32512,7 @@ type DeveloperTestResultGetResponse struct {
 
 // Struktura DeveloperCoverageGetRequest ma znaczenie: tresc zadania developer.coverage.get — Zwraca pokrycie kodu testami dla przebiegu budowania.
 type DeveloperCoverageGetRequest struct {
-	// Przebieg, ktorego pokrycie czytamy
+	// Przebieg, ktorego pokrycie czyta się
 	BuildId string `json:"buildId"`
 	// Plik zawezajacy rozbicie
 	Path *string `json:"path,omitempty"`
@@ -33780,7 +33780,7 @@ type ResearchDiscoveryAssistResponse struct {
 
 // Struktura ResearchDiscoverySnowballRequest ma znaczenie: tresc zadania research.discovery.snowball — Rozwija graf cytowan pozycji wstecz i wprzod.
 type ResearchDiscoverySnowballRequest struct {
-	// Zrodlo badania, od ktorego rozwijamy graf
+	// Zrodlo badania, od ktorego rozwija się graf
 	SourceId *string `json:"sourceId,omitempty"`
 	// Identyfikator pozycji spoza katalogu
 	Identifier *string `json:"identifier,omitempty"`
@@ -36204,7 +36204,7 @@ type StudioPdfFormFillResponse struct {
 
 // Struktura StudioPdfExtractRequest ma znaczenie: tresc zadania studio.pdf.extract — Wyciaga z dokumentu PDF osadzone obrazy i zalaczniki jako osobne zasoby magazynu.
 type StudioPdfExtractRequest struct {
-	// Zasob PDF, z ktorego wyciagamy
+	// Zasob PDF, z ktorego wyciaga się
 	AssetId string `json:"assetId"`
 	// Czy wyciagnac obrazy; brak znaczy tak
 	Images *bool `json:"images,omitempty"`
@@ -36224,7 +36224,7 @@ type StudioPdfExtractResponse struct {
 
 // Struktura StudioPdfBookmarksSetRequest ma znaczenie: tresc zadania studio.pdf.bookmarks.set — Tworzy albo przestawia drzewo zakladek dokumentu PDF.
 type StudioPdfBookmarksSetRequest struct {
-	// Zasob PDF, ktorego zakladki ustawiamy
+	// Zasob PDF, ktorego zakladki ustawia się
 	AssetId string `json:"assetId"`
 	// Drzewo zakladek
 	Bookmarks []StudioPdfBookmark `json:"bookmarks"`
@@ -43284,7 +43284,7 @@ type DesignFontPairSuggestRequest struct {
 	WindowId string `json:"windowId"`
 	// Charakter, jaki zestawienie ma niesc
 	Mood *string `json:"mood,omitempty"`
-	// Kroj, do ktorego szukamy pary
+	// Kroj, do ktorego szuka się pary
 	BaseFont *string `json:"baseFont,omitempty"`
 	// Liczba propozycji
 	Count *int `json:"count,omitempty"`
@@ -43540,7 +43540,7 @@ type DesignPrintPreflightRequest struct {
 	BoardId *string `json:"boardId,omitempty"`
 	// Zasob badany
 	AssetId *string `json:"assetId,omitempty"`
-	// Profil, wobec ktorego mierzymy; brak bierze nastawy domyslne
+	// Profil, wobec ktorego mierzy się; brak bierze nastawy domyslne
 	ProfileId *string `json:"profileId,omitempty"`
 	// Nastawy podane wprost zamiast profilu
 	Profile *DesignPrintProfile `json:"profile,omitempty"`

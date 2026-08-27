@@ -2,11 +2,6 @@
 
 :root { --cd-maks-tresc: 100%; }
 
-.cd-strona .cd-listwa-poz { color: var(--dn-tekst-2); }
-
-.cd-strona .cd-listwa-poz:hover,
-.cd-strona .cd-listwa-poz:focus-visible { color: var(--dn-tekst); }
-
 .cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
 
 .cd-tresc:not([hidden]) {
@@ -89,20 +84,23 @@
 .cd-start[hidden] { display: none; }
 
 .cd-start,
-.cd-listwa {
+.dn-listwa {
   width: calc(50% - var(--dn-od-3) / 2);
   max-width: 100%;
 }
 
 .cd-start { flex-wrap: wrap; }
 
-.cd-listwa { min-width: 0; flex-wrap: wrap; }
+.dn-listwa { min-width: 0; flex-wrap: wrap; }
 
-.cd-listwa-poz, .cd-listwa-sep, .cd-listwa-menu { flex: none; }
+/* Pozycje i separatory listwy nie ustepuja miejsca — pas zawija sie w calosci,
+   zamiast sciskac pojedyncza pozycje. Samo rozmieszczenie: wyglad pozycji stoi
+   przy .dn-listwa-pozycja--pulpit w bibliotece. */
+.cd-strona .dn-listwa > * { flex: none; }
 
 @container plotno (max-width: 500px) {
   .cd-start,
-  .cd-listwa { width: 100%; }
+  .dn-listwa { width: 100%; }
 }
 
 .cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
@@ -149,57 +147,6 @@
   --cd-grot-srodowisko: var(--dn-od-12);
   --cd-grot-modul: calc(var(--cd-grot-srodowisko) * 0.65);
 }
-
-.cd-listwa {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--dn-od-2);
-  padding: var(--dn-od-2) var(--dn-od-3);
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-lg);
-  background: var(--dn-powierzchnia);
-}
-
-.cd-ik { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
-
-.cd-listwa-poz {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--dn-od-2);
-  padding: var(--dn-od-2) var(--dn-od-3);
-  border: 1px solid transparent;
-  border-radius: var(--dn-r-md);
-  background: transparent;
-  color: var(--dn-tekst);
-  font-family: var(--dn-ff-bazowa);
-  font-size: var(--dn-fs-sm);
-  cursor: pointer;
-  transition:
-    background-color var(--dn-czas-1) var(--dn-ease),
-    border-color var(--dn-czas-1) var(--dn-ease),
-    color var(--dn-czas-1) var(--dn-ease),
-    transform var(--dn-czas-1) var(--dn-ease);
-}
-
-.cd-listwa-poz:hover { background: var(--dn-panel); border-color: var(--dn-obrys); transform: translateY(var(--dn-podniesienie-sm)); }
-
-.cd-listwa-poz:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
-
-.cd-listwa-poz:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: calc(-1 * var(--dn-wym-fokus));
-}
-
-.cd-listwa-poz[aria-pressed='true'] { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
-
-.cd-listwa-poz > svg { transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
-
-.cd-listwa-poz:hover > svg { transform: scale(var(--dn-skala-ikony)); color: var(--dn-sygnal); }
-
-.cd-listwa-sep { width: 1px; align-self: stretch; margin: var(--dn-od-1); background: var(--dn-obrys-subtelny); }
-
-.cd-listwa-menu { position: relative; margin-left: var(--dn-od-1); }
 
 @media (max-width: 640px) {
   .cd-tresc { padding: var(--dn-od-5) var(--dn-od-3) var(--dn-od-10); }

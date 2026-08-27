@@ -98,5 +98,5 @@ i `prototyp.css`, a całą jego mechanikę niesie `okna/instalator.js`.
 | `rama.css` trzyma zapasowe położenie menu ramy | widoki bez `menu.js` muszą mieć poprawne położenie menu szyny, stopki, grupy funkcji globalnych i sterowania panelu |
 | karty okna głównego obsługuje wyłącznie `karty-okna.js` | dwa właściciele przełączania kart gasiły płótno karty bieżącej, gdy dwie karty wskazywały ten sam panel |
 | `.cd-tresc` i karty panelu deklarują `display` wyłącznie z warunkiem `:not([hidden])` | `[hidden]` z `fundament.css` niesie `!important`, więc `display` autora go nie przebije; regułę układu pisze się z `:not([hidden])`, żeby nie stosowała się do karty odłożonej |
-| wymiar znaku deklaruje przycisk (`.dn-btn`, `.dn-btn-ikona`) i pozycja listwy (`.cd-ik`) | `svg` bez zadeklarowanego wymiaru rośnie do wysokości pojemnika |
+| wymiar znaku deklaruje przycisk (`.dn-btn`, `.dn-btn-ikona`) i pozycja listwy (`.dn-ik`) | `svg` bez zadeklarowanego wymiaru rośnie do wysokości pojemnika |
 | zwijanie nadmiaru paska modułu prowadzi pomiar, nie suma szerokości | odstępy i rozdzielacze zmieniają się razem ze składem paska |

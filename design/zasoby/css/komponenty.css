@@ -967,6 +967,45 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-listwa-pozycja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
+/* Wariant pulpitowy — listwa Centrum dowodzenia. Pozycja nie jest tu drobnym
+   ustawieniem w pasku, tylko wejściem w tryb pracy, więc odpowiada na wskazanie
+   mocniej: podnosi się, dostaje obrys i powiększa znak. Stan wciśnięty niesie
+   `aria-pressed`, bo to przełącznik widoku, nie czynność jednorazowa.
+   Wariant stał wcześniej w arkuszu okna jako osobny składnik `.cd-listwa-poz`
+   i powielał całą listwę, żeby dodać jej podniesienie. */
+.dn-listwa-pozycja--pulpit {
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 1px solid transparent;
+  border-radius: var(--dn-r-md);
+  color: var(--dn-tekst);
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease),
+    color var(--dn-czas-1) var(--dn-ease),
+    transform var(--dn-czas-1) var(--dn-ease);
+}
+.dn-listwa-pozycja--pulpit:hover {
+  background: var(--dn-panel);
+  border-color: var(--dn-obrys);
+  transform: translateY(var(--dn-podniesienie-sm));
+}
+.dn-listwa-pozycja--pulpit:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }
+.dn-listwa-pozycja--pulpit:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-listwa-pozycja--pulpit[aria-pressed='true'] {
+  border-color: var(--dn-obrys-mocny);
+  background: var(--dn-panel);
+}
+.dn-listwa-pozycja--pulpit > svg {
+  transition: transform var(--dn-czas-uwyd) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-listwa-pozycja--pulpit:hover > svg {
+  transform: scale(var(--dn-skala-ikony));
+  color: var(--dn-sygnal);
+}
+
 /* ==========================================================================
    BOCZNA NAWIGACJA MODUŁÓW
    ========================================================================== */

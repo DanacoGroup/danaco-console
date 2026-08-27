@@ -1,18 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — BIBLIOTEKA KOMPONENTÓW · PUNKT ZBIORCZY
-   ----------------------------------------------------------------------------
-   Wyłącznie kompozycja — ani jednej reguły własnej. Każdy arkusz biblioteki
-   jest osiągalny stąd (zero atrap, zero plików osieroconych).
-
-   Warunek użycia: warstwa żetonów `../motyw/` (motyw.css → żetony + fundament)
-   musi zostać wczytana wcześniej. Kolejność importów jest kolejnością kaskady.
-
-   Preferencja ograniczonego ruchu jest respektowana globalnie w warstwie
-   żetonów (`../motyw/ruch.css`: czasy → 0,01 ms oraz `animation-duration` /
-   `animation-iteration-count` / `transition-duration` na `*`). Biblioteka nie
-   powtarza tej reguły — jedno źródło prawdy. Wyjątkiem jest zamiana tętna
-   kropki na pierścień statyczny (`plakietka.css`).
-   ============================================================================ */
+/* Arkusz jest punktem zbiorczym biblioteki komponentów: wyłącznie kompozycja importów, bez jednej reguły własnej, osiągalną stąd w całości. */
 
 @import './przycisk.css';
 @import './pole.css';

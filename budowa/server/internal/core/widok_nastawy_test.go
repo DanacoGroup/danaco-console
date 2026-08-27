@@ -1,3 +1,6 @@
+// Plik sprawdza nastawy widoku, różnicę postaci i schowek: nastawę spoza
+// wyliczenia kontraktu, milczącą zmianę kroju bez zmiany liter i kolejność
+// różnicy niezależną od przebiegu mapy.
 package core
 
 import (
@@ -8,17 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany nastaw widoku, różnicy postaci i schowka.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. nastawa widoku spoza wyliczenia kontraktu, którą tabela odrzuci dopiero
-//     przy zapisie — Operator dowiedziałby się o tym po fakcie;
-//  2. różnica dwóch wersji MILCZĄCA o zmianie postaci, bo litery zostały te same
-//     — Właściciel żąda wprost, żeby zmiana kroju była widoczna jako zmiana;
-//  3. wykaz różnicy w kolejności wziętej z przebiegu mapy, przez co ten sam
-//     dokument oglądany dwa razy daje dwa różne wykazy.
-
-// TestWidokNastawaPozaSlownikiemOdmawia mierzy pierwszą szkodę.
+// TestWidokNastawaPozaSlownikiemOdmawia mierzy nastawę widoku spoza wyliczenia
+// kontraktu, którą tabela odrzuciłaby dopiero przy zapisie, po fakcie.
 func TestWidokNastawaPozaSlownikiemOdmawia(t *testing.T) {
 	dozwolone := widokNazwy(shared.WartosciStudioSurfaceMode())
 	if err := widokSprawdzWartosc("tryb powierzchni", "kolumny", dozwolone); err == nil {
@@ -81,8 +75,9 @@ func TestWidokNastawyWychodzaWCalosci(t *testing.T) {
 	}
 }
 
-// TestWidokRoznicaPostaciNieMilczyOKroju mierzy drugą szkodę — sedno wymagania
-// Właściciela o różnicy liczonej także na postaci.
+// TestWidokRoznicaPostaciNieMilczyOKroju mierzy, że różnica dwóch wersji
+// dokumentu liczy się także na postaci, nie tylko na literach, a więc nazywa
+// zmianę kroju jako zmianę.
 func TestWidokRoznicaPostaciNieMilczyOKroju(t *testing.T) {
 	odniesienie := shared.StudioDocumentForm{Blocks: []shared.StudioDocumentBlock{
 		dziennikBlokDoSprawdzenia("blok", "Podstawa prawna zamówienia.", "Times"),
@@ -91,8 +86,7 @@ func TestWidokRoznicaPostaciNieMilczyOKroju(t *testing.T) {
 		dziennikBlokDoSprawdzenia("blok", "Podstawa prawna zamówienia.", "Comic Sans"),
 	}}
 
-	// Rachunek treści o tej zmianie MILCZY — i to jest właśnie powód, dla którego
-	// różnica postaci istnieje osobno.
+	// Rachunek treści milczy o zmianie kroju, dlatego różnica postaci jest osobna.
 	fragmenty := policzFragmentyRoznicy(postacTekstFormy(&odniesienie),
 		postacTekstFormy(&porownywana))
 	for _, fragment := range fragmenty {
@@ -121,7 +115,7 @@ func TestWidokRoznicaPostaciNieMilczyOKroju(t *testing.T) {
 }
 
 // TestWidokRoznicaPostaciWidziNastawyStrony mierzy, że zmiana nośnika albo
-// orientacji też nie milczy.
+// orientacji strony też nie milczy, lecz wychodzi jako osobny wpis różnicy.
 func TestWidokRoznicaPostaciWidziNastawyStrony(t *testing.T) {
 	pionowa := shared.StudioPageOrientation(shared.StudioPageOrientationPionowa)
 	pozioma := shared.StudioPageOrientation(shared.StudioPageOrientationPozioma)

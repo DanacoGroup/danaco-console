@@ -2619,3 +2619,12 @@ milczeniu, bo zlecenie nazywa to wprost ciszą zakazaną; wykaz cech pominiętyc
 oddawany jako zdanie ogólne bez liczb, po którym nie wiadomo, ile stracono;
 wydanie wsadowe wstrzymane przez jeden uszkodzony dokument; wydanie oddane
 jako udane, a bez zasobu, po którym cienka instalka mogłaby sięgnąć po plik.
+
+## budowa/server/internal/core/widok_nastawy_test.go
+
+Szkody, które ten plik ma wykluczyć: nastawa widoku spoza wyliczenia
+kontraktu, którą tabela odrzuciłaby dopiero przy zapisie, po fakcie; różnica
+dwóch wersji milcząca o zmianie postaci, gdy litery zostały te same, bo
+kontrakt wymaga wprost, żeby zmiana kroju była widoczna jako zmiana; wykaz
+różnicy w kolejności wziętej z przebiegu mapy, przez co ten sam dokument
+oglądany dwa razy dawałby dwa różne wykazy.

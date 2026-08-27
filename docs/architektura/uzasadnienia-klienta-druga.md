@@ -2963,3 +2963,6 @@ połączenia, więc tożsamości nie nadaje się tu po raz drugi. Montaż bez to
 czysto informacyjny, bez przycisku powrotu; pozostałe czynności historii — nazwa, kopia, projekt, archiwum
 i bieg sesji — idą na sam identyfikator sesji, więc wpinane są przed wyjściem po braku tożsamości: wykaz bez
 powrotu nadal daje się porządkować.
+
+## budowa/klient/src/protokol/rozmowa-z-rdzeniem.test.ts
+Bez rdzenia nasłuchującego pod adresem lokalnym nie ma czego zmierzyć. Milczenie rdzenia kończy się tu niepowodzeniem nazywającym przeszkodę, nie pominięciem: sprawdzian, który sam siebie odpuszcza przy braku rdzenia, wygląda potem tak samo jak sprawdzian zdany.

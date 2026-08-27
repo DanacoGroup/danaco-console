@@ -1,24 +1,12 @@
 /**
- * SKŁADNIK — DROGA POTWIERDZENIA Z LISTU.
- *
- * Pola po jednym znaku, odliczanie ważności i czynność poboczna. Pola
- * zaczynają PUSTE: okno pokazuje odsłonę przed wpisaniem, a nie udaje, że
- * użytkownik zdążył już coś wpisać.
- *
- * Każdy zestaw rządzi się sam — mechanika wiąże pola grupami, więc kursor nie
- * przeskakuje między odsłonami.
- *
- * Składnik zwraca WYKAZ węzłów: zestaw pól i stopka z odliczaniem są
- * rodzeństwem w kolumnie panelu.
- *
- * Liczba pól jest właściwością, nie stałą tego pliku: rozstrzyga ją długość
- * drogi potwierdzenia wydawanej przez rdzeń, a tę odczytuje się z rdzenia,
- * nie z okna.
+ * Składnik — droga potwierdzenia z listu. Pola po jednym znaku, odliczanie
+ * ważności i czynność poboczna; pola zaczynają puste, bez udawania, że coś
+ * już wpisano.
  */
 
 import { el, tekst } from '../narzedzia.ts';
 
-/** Czynność w stopce zestawu. */
+/** Czynność w stopce zestawu, rozstrzygająca, czy stoi tam przycisk wklejenia, czy odsyłacz ponowienia. */
 export type CzynnoscKodu = 'wklej' | 'ponow';
 
 export interface WlasciwosciKodu {
@@ -26,11 +14,7 @@ export interface WlasciwosciKodu {
   znakow: number;
   /** Czas ważności w sekundach — mechanika odlicza go i sama wypisuje. */
   odliczanie: number;
-  /**
-   * Wklejenie jest wygodą, więc niesie przycisk; ponowienie wysyłki jest
-   * wyjściem z sytuacji bez wyjścia, więc niesie odsyłacz — waga czynności
-   * rozstrzyga o postaci kontrolki, nie odwrotnie.
-   */
+  /** Wklejenie jest wygodą, więc niesie przycisk; ponowienie wysyłki niesie odsyłacz, nie przycisk. */
   czynnosc: CzynnoscKodu;
   /** Przedrostek identyfikatorów pól; wiąże zestaw z jedną odsłoną. */
   grupa: string;
@@ -82,12 +66,9 @@ export function poleKodu(w: WlasciwosciKodu): HTMLElement[] {
 }
 
 /**
- * Odczytuje drogę potwierdzenia z zestawu pól jednej grupy.
- *
- * Pierwszeństwo ma wartość odłożona przez wklejenie. Rdzeń wydaje drogę
- * dłuższą niż zestaw pól — zmierzone — więc wklejenie musi unieść ją w całości,
- * inaczej przycięłaby się do liczby pól i rdzeń odmówiłby drogi, która
- * przyszła listem poprawna. Wpisywanie znak po znaku zostaje bez zmiany.
+ * Odczytuje drogę potwierdzenia z zestawu pól jednej grupy. Pierwszeństwo
+ * ma wartość odłożona przez wklejenie, bo rdzeń wydaje drogę dłuższą niż
+ * zestaw pól. Wpisywanie znak po znaku zostaje bez zmiany.
  */
 export function odczytajDroge(korzen: ParentNode, grupa: string): string {
   const zestaw = korzen.querySelector(`[data-kod-grupa="${grupa}"]`);
@@ -97,7 +78,7 @@ export function odczytajDroge(korzen: ParentNode, grupa: string): string {
   return [...zestaw.querySelectorAll('input')].map((pole) => pole.value).join('');
 }
 
-/** Odkłada wklejoną drogę na grupie i rozsypuje jej początek po polach. */
+/** Odkłada wklejoną drogę na grupie i rozsypuje jej początek po polach, ustawiając skupienie na ostatnim wypełnionym polu. */
 export function przyjmijWklejenie(zestaw: HTMLElement, wklejona: string): void {
   const droga = wklejona.trim();
   zestaw.dataset['kodWklejony'] = droga;
@@ -108,7 +89,7 @@ export function przyjmijWklejenie(zestaw: HTMLElement, wklejona: string): void {
   pola[Math.min(droga.length, pola.length - 1)]?.focus();
 }
 
-/** Zdejmuje odłożone wklejenie, gdy Operator wpisuje drogę ręcznie. */
+/** Zdejmuje odłożone wklejenie, gdy Operator wpisuje drogę ręcznie, znak po znaku, bez udziału wklejenia. */
 export function zapomnijWklejenie(zestaw: HTMLElement): void {
   delete zestaw.dataset['kodWklejony'];
 }

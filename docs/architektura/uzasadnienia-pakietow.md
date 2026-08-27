@@ -4260,3 +4260,30 @@ nie stał się drugą, osobną implementacją tej samej reguły, gotową rozejś
 cichu.
 ## budowa/server/internal/dane/przekazanie_okna.go
 Interfejs kontraktu obszaru window.* deklaruje w całości wyłącznie ten plik, wraz z metodami, które implementują pozostałe pliki obszaru: więź koordynator-wykonawca oraz dziennik akcji. Interfejs rozdzielony na kilka plików byłby kilkoma prawdami o jednym kontrakcie. Identyfikator pozycji kolejki nie jest zakładany własnym zapisem w tym repozytorium: pozycję kolejki zakłada jedyny silnik kolejek, a adapter rdzenia wypełnia to pole gotowym identyfikatorem po założeniu pozycji, w tej samej transakcji co zapis zlecenia. Komplet kontekstu jest przechowywany w całości jako surowy zapis JSON: warstwa danych go nie interpretuje ani nie rozbiera na pola, tylko przechowuje i oddaje.
+
+## budowa/server/internal/narzedzia/polaczenie.go
+Serwer narzędzi jest dla rdzenia zwykłym urządzeniem, bez drugiego wejścia do
+rdzenia. Połączenie jest leniwe: proces modelu uruchamia serwery MCP na
+starcie rozmowy, więc odmowa startu przy niedostępnym rdzeniu zabrałaby
+modelowi wszystkie narzędzia na całą turę. Serwer wstaje zawsze, a gniazdo
+zestawia się przy pierwszym wywołaniu; nieudane zestawienie wraca do modelu
+treścią błędu i nie przeszkadza próbie następnej.
+
+Serwer narzędzi przedstawia się przy nawiązaniu połączenia, nie powitaniem,
+bo powitania nie wysyła: jest klientem wołającym komendy, a nie oknem
+interfejsu. Adres niesie rodzaj klienta, rolę okna i samo okno, dzięki czemu
+rdzeń wie, czy po drugiej stronie stoi klawiatura Operatora czy zwykły model
+roboczy; bez tego rdzeń widziałby wyłącznie identyfikator gniazda. To
+przedstawienie nie jest uprawnieniem — rdzeń niczego na nim nie warunkuje,
+wpisuje je do pola opisowego zdarzenia. Zasięg narzędzi rozstrzyga nadal
+wyłącznie przełącznik uruchomieniowy czytany z wpisu MCP ułożonego przez
+rdzeń, a nie ten napis tożsamości.
+
+Adres nieczytelny w zAdresemTozsamosci zostaje adresem dotychczasowym:
+gniazdo bez tożsamości jest gorsze od gniazda z tożsamością, ale
+nieporównanie lepsze od braku narzędzi przez cały czas życia procesu modelu.
+
+Gniazdo niesie także rozgłoszenia rdzenia — zdarzenia i fragmenty strumienia
+innych okien — dlatego Wykonaj rozpoznaje odpowiedź po trzech rzeczach naraz:
+identyfikatorze żądania, nazwie komendy i obecności pola stanu. Rozgłoszenie
+nie ma stanu i nosi nazwę zdarzenia, więc nie da się go wziąć za odpowiedź.

@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: gniazdo do rdzenia Danaco Console.
-//
-// Serwer narzędzi jest dla rdzenia zwykłym urządzeniem: łączy się tym samym
-// gniazdem WebSocket i tą samą kopertą kontraktu, co okno interfejsu. Drugiego
-// wejścia do rdzenia nie ma i nie powstaje tutaj.
-//
-// Połączenie jest leniwe. Proces modelu uruchamia serwery MCP na starcie
-// rozmowy, więc odmowa startu przy niedostępnym rdzeniu zabrałaby modelowi
-// wszystkie narzędzia na całą turę. Serwer wstaje zawsze, a gniazdo zestawia
-// się przy pierwszym wywołaniu; nieudane zestawienie wraca do modelu treścią
-// błędu i nie przeszkadza próbie następnej.
+// Gniazdo do rdzenia Danaco Console jest dla rdzenia zwykłym urządzeniem,
+// łączącym się tym samym gniazdem WebSocket i kopertą kontraktu, co okno
+// interfejsu; zestawia się leniwie, przy pierwszym wywołaniu.
 package narzedzia
 
 import (
@@ -33,29 +25,14 @@ type Polaczenie struct {
 	gniazdo *websocket.Conn
 }
 
-// Polacz przygotowuje gniazdo pod wskazanym adresem. Nie nawiązuje go: adres
-// bywa nieosiągalny w chwili startu procesu modelu.
-//
-// Serwer narzędzi przedstawia się przy nawiązaniu, nie powitaniem — bo
-// powitania nie wysyła: jest klientem wołającym komendy, a nie oknem
-// interfejsu. Adres niesie więc rodzaj klienta, rolę okna i samo okno
-// (`transport/tozsamosc.go`), dzięki czemu rdzeń wie, czy po drugiej stronie
-// stoi klawiatura Operatora (asystent), czy zwykły model roboczy. Bez tego
-// rdzeń widziałby wyłącznie identyfikator gniazda i obu rąk nie odróżniał.
-//
-// Przedstawienie nie jest uprawnieniem. Rdzeń niczego na nim nie warunkuje —
-// wpisuje je do pola opisowego zdarzenia. Zasięg narzędzi rozstrzyga nadal
-// wyłącznie przełącznik `--zasieg` czytany przy uruchomieniu z wpisu MCP
-// ułożonego przez rdzeń (`zasieg_roli.go`), a nie ten napis.
+// Polacz przygotowuje gniazdo pod wskazanym adresem, nie nawiązując go,
+// i dokłada do adresu parametry tożsamości opisujące klienta wobec rdzenia.
 func Polacz(adres, okno string, zasieg Zasieg) *Polaczenie {
 	return &Polaczenie{adres: zAdresemTozsamosci(adres, okno, zasieg)}
 }
 
-// zAdresemTozsamosci dokłada do adresu gniazda parametry tożsamości.
-//
-// Adres nieczytelny zostaje adresem dotychczasowym: gniazdo bez tożsamości jest
-// gorsze od gniazda z tożsamością, ale nieporównanie lepsze od braku narzędzi
-// przez cały czas życia procesu modelu.
+// zAdresemTozsamosci dokłada do adresu gniazda parametry tożsamości; adres
+// nieczytelny zostaje adresem dotychczasowym, bez tożsamości.
 func zAdresemTozsamosci(adres, okno string, zasieg Zasieg) string {
 	cel, err := url.Parse(adres)
 	if err != nil {
@@ -74,12 +51,8 @@ func zAdresemTozsamosci(adres, okno string, zasieg Zasieg) string {
 	return cel.String()
 }
 
-// Wykonaj wysyła żądanie i czeka na odpowiedź o tym samym identyfikatorze.
-//
-// Gniazdo niesie także rozgłoszenia rdzenia (zdarzenia i fragmenty strumienia
-// innych okien), dlatego odpowiedź rozpoznaje się po trzech rzeczach naraz:
-// identyfikatorze żądania, nazwie komendy i obecności pola stanu. Rozgłoszenie
-// nie ma stanu i nosi nazwę zdarzenia, więc nie da się go wziąć za odpowiedź.
+// Wykonaj wysyła żądanie i czeka na odpowiedź o tym samym identyfikatorze,
+// rozpoznawaną też po nazwie komendy i obecności pola stanu.
 func (p *Polaczenie) Wykonaj(kontekst context.Context, zadanie protocol.Koperta) (protocol.Koperta, error) {
 	p.zamek.Lock()
 	defer p.zamek.Unlock()
@@ -98,7 +71,8 @@ func (p *Polaczenie) Wykonaj(kontekst context.Context, zadanie protocol.Koperta)
 	return p.czekajNaOdpowiedz(kontekst, gniazdo, zadanie)
 }
 
-// Zamknij kończy gniazdo. Wywołanie na połączeniu nienawiązanym nic nie robi.
+// Zamknij kończy gniazdo połączenia z rdzeniem; wywołanie na połączeniu
+// nienawiązanym nic nie robi tutaj.
 func (p *Polaczenie) Zamknij() {
 	p.zamek.Lock()
 	defer p.zamek.Unlock()
@@ -109,7 +83,8 @@ func (p *Polaczenie) Zamknij() {
 	p.gniazdo = nil
 }
 
-// czekajNaOdpowiedz czyta ramki aż do odpowiedzi na to jedno żądanie.
+// czekajNaOdpowiedz czyta ramki gniazda aż do odpowiedzi na to jedno żądanie,
+// pomijając rozgłoszenia rdzenia po drodze.
 func (p *Polaczenie) czekajNaOdpowiedz(kontekst context.Context, gniazdo *websocket.Conn,
 	zadanie protocol.Koperta) (protocol.Koperta, error) {
 
@@ -128,7 +103,8 @@ func (p *Polaczenie) czekajNaOdpowiedz(kontekst context.Context, gniazdo *websoc
 	}
 }
 
-// nawiazane zwraca gniazdo czynne, zestawiając je przy pierwszym użyciu.
+// nawiazane zwraca gniazdo czynne połączenia z rdzeniem, zestawiając je przy
+// pierwszym użyciu tego połączenia.
 func (p *Polaczenie) nawiazane(kontekst context.Context) (*websocket.Conn, error) {
 	if p.gniazdo != nil {
 		return p.gniazdo, nil

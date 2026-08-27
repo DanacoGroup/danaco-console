@@ -3826,3 +3826,35 @@ pytania nie nawarstwiały się w drzewie przy każdym wierszu wykazu.
 
 ## budowa/klient/src/wejscie/skladniki/naglowek-ekranu.ts
 Głowa ekranu ma własny rytm odstępów; wyjęcie toru kroków poza nią rozstraja ten rytm.
+
+## budowa/klient-poprzedni/src/protokol/kanal.ts
+Nazwy komend i zdarzeń oraz kształty ich treści pochodzą wyłącznie z kontraktu współdzielonego:
+zmiana nazwy w pliku kontraktu przerywa kompilację klienta. Komunikat nierozpoznany nie jest
+odrzucany. Zapis i wpis do konsoli są jedyną reakcją na komunikat nierozpoznany: ani zdarzenie
+zapasowe, ani koperta o typie spoza kontraktu nie zrywa połączenia i nie blokuje sesji.
+
+## budowa/klient-poprzedni/src/protokol/koperta.ts
+Kształt koperty pochodzi w całości z kontraktu współdzielonego — plik nie definiuje własnego typu
+komunikatu i nie powiela ani jednego literału nazwy. Odpowiada wyłącznie za nadanie kopercie
+wychodzącej identyfikatora oraz czasu nadania i za odczytanie pól odpowiedzi z koperty przychodzącej.
+Obecność pola statusu odróżnia odpowiedź od zdarzenia i od fragmentu strumienia. Rzutowanie treści
+koperty jest świadome: warstwa transportu nie waliduje ładunku, a błąd kształtu dotyczy wyłącznie
+bieżącego komunikatu.
+
+## budowa/klient-poprzedni/src/protokol/ramka.ts
+Odczyt jest fail-open: ramka nieczytelna albo o kształcie niezgodnym z kopertą nie zrywa połączenia
+i nie blokuje sesji — wraca jako zdarzenie zapasowe z zachowaniem treści surowej w ładunku. Zdarzenie
+zapasowe dla ramki nierozpoznanej wskazuje kontrakt — klient nie wybiera go samodzielnie.
+
+## budowa/klient-poprzedni/src/moduly/translate/skroty-translate.ts
+Nasłuch wisi na elemencie modułu, nie na dokumencie: moduł znika z drzewa przy zejściu ze sceny
+i nasłuch znika razem z nim, a nasłuch dokumentu trzeba by odpinać osobno, więc pierwszy przeoczony
+byłby wyciekiem — to samo rozstrzygnięcie, co przy sterze kanału. Skutek uboczny tej decyzji jest
+nazwany, nie przemilczany: skrót działa, gdy ognisko stoi wewnątrz modułu, a poza modułem klawisze
+należą do powłoki. Wyszukiwarka funkcji zajmuje kombinację klawisza K za opracowaniem modułu,
+a ten sam skrót wiąże na dokumencie pole poleceń paska górnego: dopóki ognisko stoi w module,
+skrót otwiera wyszukiwarkę modułu i nie idzie dalej, poza modułem prowadzi do pola poleceń bez
+zmian, a zbieżność jest realna i pierwszeństwo ma okno, w którym operator pracuje. Dwa skróty
+pętli wykonawczej stoją w wykazie, ale moduł ich nie wiąże, bo Execution Loop Window jest oknem
+wspólnym platformy i leży poza katalogiem tego modułu — wykaz mówi to wprost, zamiast pomijać
+pozycje i sugerować, że skrótów nie ma.

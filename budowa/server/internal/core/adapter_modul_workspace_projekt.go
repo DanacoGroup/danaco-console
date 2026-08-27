@@ -1,10 +1,6 @@
-// Odpowiedzialność pliku: czynności na samym projekcie i na jego wykonawcach —
-// stan projektu, odłączenie eksperta oraz historia instrukcji systemowych.
-//
-// Tu leży również jedna rzecz wspólna całemu modułowi: odkładanie zdarzeń osi
-// czasu. Oś czasu ma pokazać, co się w projekcie działo, więc zapis zdarzenia
-// idzie w tej samej czynności, która zmienia byt — a nie z wyliczenia stanu
-// przy odczycie. Wyliczenie pokazywałoby wyłącznie to, co jeszcze istnieje.
+// Odpowiedzialność pliku: czynności na samym projekcie i na jego
+// wykonawcach — stan projektu, odłączenie eksperta oraz historia instrukcji
+// systemowych. Tu leży też odkładanie zdarzeń osi czasu, wspólne modułowi.
 package core
 
 import (
@@ -16,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// UstawStanProjektu obsługuje `workspace.project.status.set`.
+// UstawStanProjektu obsługuje `workspace.project.status.set` i odnotowuje
+// zmianę stanu na osi czasu projektu.
 func (a *adapterPrzestrzeniRoboczej) UstawStanProjektu(ctx context.Context,
 	z shared.WorkspaceProjectStatusSetRequest) (shared.WorkspaceProjectStatusSetResponse, error) {
 
@@ -73,7 +70,8 @@ func (a *adapterPrzestrzeniRoboczej) OdlaczAgenta(ctx context.Context,
 	return shared.WorkspaceAgentUnassignResponse{Unassigned: odlaczony}, nil
 }
 
-// WersjeInstrukcji obsługuje `workspace.instructions.version.list`.
+// WersjeInstrukcji obsługuje `workspace.instructions.version.list` i oddaje
+// historię instrukcji systemowych projektu.
 func (a *adapterPrzestrzeniRoboczej) WersjeInstrukcji(ctx context.Context,
 	z shared.WorkspaceInstructionsVersionListRequest) (shared.WorkspaceInstructionsVersionListResponse, error) {
 
@@ -111,10 +109,7 @@ func (a *adapterPrzestrzeniRoboczej) WersjeInstrukcji(ctx context.Context,
 }
 
 // PrzywrocInstrukcje obsługuje `workspace.instructions.version.restore`.
-//
-// Przywrócenie zakłada wersję NOWĄ o treści wersji wskazanej i zapisuje ją jako
-// obowiązującą. Historia zostaje nietknięta: „przywróć" jest czynnością
-// odnotowaną, a nie cofnięciem czasu.
+// Przywrócenie zakłada wersję NOWĄ o treści wersji wskazanej.
 func (a *adapterPrzestrzeniRoboczej) PrzywrocInstrukcje(ctx context.Context,
 	z shared.WorkspaceInstructionsVersionRestoreRequest) (shared.WorkspaceInstructionsVersionRestoreResponse, error) {
 
@@ -162,11 +157,8 @@ func (a *adapterPrzestrzeniRoboczej) PrzywrocInstrukcje(ctx context.Context,
 	}, nil
 }
 
-// odnotujZdarzenieWorkspace odkłada zdarzenie osi czasu projektu.
-//
-// Niepowodzenie zapisu zdarzenia nie przerywa czynności, która je wywołała:
-// zadanie już powstało, a brak wiersza w dzienniku jest ubytkiem zapisu, nie
-// unieważnieniem skutku. Dlatego funkcja nie oddaje błędu.
+// odnotujZdarzenieWorkspace odkłada zdarzenie osi czasu projektu;
+// niepowodzenie zapisu nie przerywa czynności wywołującej.
 func (a *adapterPrzestrzeniRoboczej) odnotujZdarzenieWorkspace(ctx context.Context, projektID int64,
 	rodzaj shared.WorkspaceActivityKind, zmiana shared.ChangeKind,
 	rodzajBytu shared.WorkspaceEntityKind, byt, opis string) {
@@ -177,7 +169,8 @@ func (a *adapterPrzestrzeniRoboczej) odnotujZdarzenieWorkspace(ctx context.Conte
 	})
 }
 
-// wersjaInstrukcjiKontraktuWorkspace przekłada wiersz historii na byt kontraktu.
+// wersjaInstrukcjiKontraktuWorkspace przekłada wiersz historii instrukcji
+// na byt kontraktu zwracany wołającemu.
 func wersjaInstrukcjiKontraktuWorkspace(w dane.WersjaInstrukcjiWorkspace) shared.WorkspaceInstructionsVersion {
 	wersja := shared.WorkspaceInstructionsVersion{
 		Id: w.Identyfikator, ProjectId: w.ProjektKod, Content: w.Tresc,

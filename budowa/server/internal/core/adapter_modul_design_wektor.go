@@ -144,7 +144,7 @@ func (a *adapterDesignu) SciezkiWektorowe(ctx context.Context,
 }
 
 // UsunSciezke usuwa ścieżkę — obsługuje `design.vector.path.remove`. Ścieżki,
-// której nie ma, nie odmawiamy: kontrakt pyta polem `removed`, czy wiersz
+// której nie ma, nie odmawia się: kontrakt pyta polem `removed`, czy wiersz
 // istniał — usunięcie czegoś, czego nie było, jest odpowiedzią, nie usterką.
 func (a *adapterDesignu) UsunSciezke(ctx context.Context,
 	z shared.DesignVectorPathRemoveRequest) (shared.DesignVectorPathRemoveResponse, error) {
@@ -544,7 +544,7 @@ func (a *adapterDesignu) UstawSymbol(ctx context.Context,
 		}
 	}
 
-	// Ścieżki wchodzące w skład symbolu sprawdzamy przed zapisem symbolu.
+	// Ścieżki wchodzące w skład symbolu sprawdza się przed zapisem symbolu.
 	czlonkowie := make([]dane.CzlonekSymbolyDesignu, 0, len(z.PathIds)+len(z.LayerIds))
 	for numer, kodSciezki := range z.PathIds {
 		wiersz, err := a.repozytorium.SciezkaWektorowaDesignuPoKodzie(ctx, strings.TrimSpace(kodSciezki))

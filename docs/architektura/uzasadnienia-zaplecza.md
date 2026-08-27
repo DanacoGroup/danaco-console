@@ -490,3 +490,36 @@ niezapisanej: bez niej wiersz bez promptu znaczyłby dwie różne rzeczy naraz.
 Odcinek wywołania (wejście modelu, użycie narzędzia, tura podagenta) niesie
 wskazanie rodzica. Dzięki temu zapytanie o jeden odcinek czyta jeden wiersz,
 zamiast rozbierać cały dokument JSON, żeby dojść do gałęzi drzewa.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_pomocnik_twarzy.py
+
+Rdzeń jest napisany w Go, a GFPGAN jest wydany jako wagi PyTorcha
+(`GFPGANv1.4.pth`). Przepisanie tej sieci do Go byłoby drugą implementacją
+cudzej architektury i rozjeżdżałoby się z wagami przy każdym kolejnym
+wydaniu modelu, więc przebieg twarzowy jest procesem obok rdzenia — tak samo
+jak liczenie wektorów znaczenia (`internal/wiedza/pomocnik_osadzen.py`) i
+rozpoznawanie mowy (`internal/mowa/pomocnik.go`). Zlecenie przychodzi
+czterema argumentami wiersza poleceń, a odpowiedź wraca jednym obiektem
+JSON na standardowym wyjściu. Diagnostyka bibliotek idzie na strumień
+diagnostyczny, bo ostrzeżenie wstawione w środek JSON-a uczyniłoby
+odpowiedź nieczytelną. Standardowego wejścia pomocnik nie dostaje, bo
+funkcja wywołania procesów zewnętrznych go nie podaje.
+
+Przebieg jest osobny, a nie wpięty w powiększanie: kontrakt `image.upscale`
+nazywa to polem `faces`, opisanym jako osobny przebieg, i tak też jest
+liczone. Najpierw Real-ESRGAN powiększa cały obraz, potem ten pomocnik
+odnajduje w wyniku twarze, odtwarza każdą z osobna w rozdzielczości
+512×512 i wkleja ją z powrotem. Wymiary wyniku pochodzą więc wyłącznie z
+powiększenia — sieć twarzowa ich nie rusza, i odpowiedź kontraktu niesie
+te same wartości szerokości i wysokości, co przebieg bez poprawki twarzy.
+
+Wybór sieci GFPGAN zamiast CodeFormer jest świadomy, nie brakiem: obok
+wag GFPGAN leży też `codeformer.pth`, ale rdzeń go nie woła, ponieważ
+CodeFormer stoi na własnej architekturze (VQGAN wraz z transformerem
+przewidującym kod słownika), której wydanie nie niesie w wagach — trzeba
+by wnieść drugi zestaw cudzego kodu obok tego, którym GFPGAN już liczy.
+
+Gdy biblioteki nie ma albo wagi są nie do wczytania, pomocnik oddaje
+odpowiedź z polem ok ustawionym na false i polem powod, po czym kończy
+pracę kodem zerowym; rdzeń zamienia to na odmowę nazywającą brak. Ślad
+stosu Pythona sam z siebie nie powiedziałby Operatorowi, czego brakuje.

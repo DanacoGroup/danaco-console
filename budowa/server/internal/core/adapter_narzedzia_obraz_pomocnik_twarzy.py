@@ -1,46 +1,11 @@
-# Pomocnik odtwarzania twarzy — jedyny kod tej rodziny liczący sieć twarzową.
-#
-# Rdzeń jest w Go, a GFPGAN wydany jest jako wagi PyTorcha (`GFPGANv1.4.pth`).
-# Przepisanie tej sieci do Go byłoby drugą implementacją cudzej architektury
-# i rozjeżdżałoby się z wagami przy każdym kolejnym wydaniu modelu, więc
-# przebieg twarzowy jest procesem obok rdzenia — tak samo jak liczenie wektorów
-# znaczenia (`internal/wiedza/pomocnik_osadzen.py`) i rozpoznawanie mowy
-# (`internal/mowa/pomocnik.go`).
-#
-# Zlecenie przychodzi czterema argumentami wiersza poleceń, a odpowiedź wraca
-# jednym obiektem JSON na standardowym wyjściu. Diagnostyka bibliotek idzie na
-# strumień diagnostyczny, bo ostrzeżenie wstawione w środek JSON-a uczyniłoby
-# odpowiedź nieczytelną. Standardowego wejścia nie ma — `zewnetrzne.Wolaj` go
-# nie podaje.
-#
-# ── Dlaczego przebieg jest OSOBNY, a nie wpięty w powiększanie ───────────────
-# Kontrakt `image.upscale` nazywa to polem `faces` opisanym jako „osobny
-# przebieg" i tak też jest liczone: najpierw Real-ESRGAN powiększa cały obraz,
-# potem ten pomocnik odnajduje w wyniku twarze, odtwarza każdą z osobna
-# w rozdzielczości 512×512 i wkleja ją z powrotem. Wymiary wyniku pochodzą więc
-# wyłącznie z powiększenia — sieć twarzowa ich nie rusza i odpowiedź kontraktu
-# niesie te same `width` i `height`, co przebieg bez poprawki.
-#
-# ── Dlaczego GFPGAN, a nie CodeFormer ───────────────────────────────────────
-# Obok `GFPGANv1.4.pth` leży `codeformer.pth`. Rdzeń go nie woła, bo CodeFormer
-# stoi na własnej architekturze (VQGAN wraz z transformerem przewidującym kod
-# słownika), której wydanie nie niesie w wagach — trzeba by wnieść drugi zestaw
-# cudzego kodu obok tego, którym GFPGAN już liczy. Jedna sieć twarzowa, którą
-# widać w treści odmowy rdzenia, jest tu wyborem świadomym, nie brakiem.
-#
-# ── Brak jest odpowiedzią, a nie wywróceniem ────────────────────────────────
-# Gdy biblioteki nie ma albo wagi są nie do wczytania, pomocnik oddaje
-# `{"ok": false, "powod": …}` i kończy pracę kodem zerowym; rdzeń zamienia to na
-# odmowę nazywającą brak. Sam ślad stosu Pythona nie powiedziałby Operatorowi,
-# czego brakuje.
+# Pomocnik odtwarza twarze siecią GFPGAN jako proces obok rdzenia Go, ponieważ wagi
+# PyTorcha nie dają się przepisać do Go bez rozjazdu z każdym wydaniem modelu.
 import json
 import sys
 
-# WAGA_ODTWORZENIA steruje udziałem sieci w wyniku i jest wartością domyślną
-# wydania GFPGAN (`gfpgan/utils.py`). Wyżej znaczy twarz gładszą i dalszą od
-# oryginału, niżej — bliższą źródłu i słabiej poprawioną. Kontrakt nie ma pola
-# na tę liczbę, więc rdzeń nie wystawia jej na zewnątrz i trzyma wartość autora
-# sieci zamiast zgadywać własną.
+# WAGA_ODTWORZENIA steruje udziałem sieci w wyniku i jest wartością domyślną wydania
+# GFPGAN. Wyżej znaczy twarz gładszą i dalszą od oryginału, niżej — bliższą źródłu
+# i słabiej poprawioną.
 WAGA_ODTWORZENIA = 0.5
 
 # ROZMIAR_TWARZY to bok kwadratu, na którym pracuje sieć. Wynika z wag: GFPGAN
@@ -80,9 +45,7 @@ def main():
     if obraz is None:
         odpowiedz({"ok": False, "powod": "nie da się odczytać obrazu wejściowego " + wejscie})
 
-    # Liczymy na procesorze bezwarunkowo — tą samą drogą, co pozostałe silniki
-    # tej rodziny. Wybór karty graficznej robiłby z jednego przebiegu dwa różne
-    # w zależności od maszyny, a wynik ma być powtarzalny.
+    # Liczymy na procesorze bezwarunkowo, żeby wynik był tą samą drogą powtarzalny na każdej maszynie.
     urzadzenie = torch.device("cpu")
 
     try:
@@ -96,9 +59,7 @@ def main():
     except Exception as blad:  # noqa: BLE001 — powód idzie do odmowy rdzenia
         odpowiedz({"ok": False, "powod": "wagi GFPGAN nie pasują do architektury: " + str(blad)})
 
-    # `upscale_factor=1`, bo powiększenie zrobił już Real-ESRGAN i pomocnik
-    # dostaje jego wynik. Każda inna wartość zmieniłaby wymiary obrazu po raz
-    # drugi, a odpowiedź kontraktu obiecuje krotność podaną w żądaniu.
+    # upscale_factor wynosi 1, bo powiększenie zrobił już Real-ESRGAN, a pomocnik pracuje na jego wyniku.
     pomocnicze = FaceRestoreHelper(
         1, face_size=ROZMIAR_TWARZY, crop_ratio=(1, 1),
         det_model="retinaface_resnet50", save_ext="png",
@@ -122,9 +83,7 @@ def main():
     pomocnicze.get_inverse_affine(None)
     zlozony = pomocnicze.paste_faces_to_input_image(upsample_img=None)
 
-    # Plik powstaje ZAWSZE, także przy zerze znalezionych twarzy. Obraz bez
-    # twarzy przechodzi wtedy nietknięty, a rdzeń oddaje wynik powiększenia —
-    # odmowa byłaby tu karą za to, że na zdjęciu nikogo nie ma.
+    # Plik wyniku powstaje zawsze, także bez znalezionych twarzy; obraz przechodzi wtedy nietknięty.
     if not cv2.imwrite(wyjscie, zlozony):
         odpowiedz({"ok": False, "powod": "nie da się zapisać wyniku pod " + wyjscie})
     odpowiedz({"ok": True, "twarze": int(znalezione)})

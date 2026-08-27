@@ -3041,3 +3041,6 @@ przez komendę wykazu modułów, i pas kart sesji, więc źródło składa się 
 wiąże się kontekst paska z wyborem modułu. Nowego odczytu z rdzenia nie ma: druga komenda wykazu
 modułów obok tej, którą zrobiła już nawigacja, byłaby drugą prawdą o jednym wykazie, a dwie prawdy
 rozjeżdżają się przy pierwszej zmianie po stronie rdzenia.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/historia.ts
+Klasa neutralna dzielona z systemem oraz ikona pozostają rozróżnione celowo: klasa mówi o randze wypowiedzi, a ikona o jej źródle, więc wynik narzędzia nosi tę samą klasę co komunikat systemowy, lecz nigdy tę samą ikonę.

@@ -5145,3 +5145,19 @@ Lista przebudowuje się przy każdej zmianie zbioru i jest to wybór świadomy:
 zmiana kolejności albo oznaczenia głównego przestawia wszystkie wiersze naraz,
 więc nanoszenie wartości na wiersze już zbudowane byłoby trudniejsze i mniej
 wierne niż zbudowanie ich od nowa z odpowiedzi rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/assistant/filtr-zlecen.ts
+
+Zawężenie wykazu zleceń liczy się w oknie, a nie w rdzeniu. Komenda
+`assistant.action.status` nie ma pola stanu w żądaniu — `adapter_modul_asystent_czynnosci.go`
+czyta po `windowId` albo po `actionId` — więc wykaz i tak przychodzi w całości,
+a odczyt na każdą zmianę pozycji listy byłby wywołaniem bez nowej treści.
+
+Grupy filtra są złożone ze stanów kontraktu, nie z własnych nazw stanów.
+Anulowane stoją osobno od nieudanych, bo anulowanie jest decyzją Operatora,
+a nie niepowodzeniem zlecenia; zlanie obu w jedną pozycję kazałoby czytać własną
+decyzję jako usterkę.
+
+Wykaz otwiera się bez zawężenia, ponieważ zlecenie zakończone chwilę wcześniej
+jest dla Operatora wchodzącego do modułu tak samo istotne jak zlecenie w toku,
+a wykaz zawężony od razu wyglądałby na pusty rdzeń.

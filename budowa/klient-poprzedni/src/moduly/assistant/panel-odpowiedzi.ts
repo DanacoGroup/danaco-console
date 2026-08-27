@@ -94,7 +94,7 @@ export function utworzPanelOdpowiedzi(
 /**
  * Zaznaczony fragment odpowiedzi albo jej całość.
  *
- * Zaznaczenie czytamy przez `getSelection`, ale nie zakładamy, że jest —
+ * Zaznaczenie pochodzi z `getSelection`, ale jego obecność nie jest pewna —
  * środowisko sprawdzianu i przeglądarka bez zaznaczenia oddają wtedy całość,
  * zamiast pustego zadania.
  */

@@ -2776,3 +2776,24 @@ użytku (kontrakt: `SegmentationRuleset` z własnym identyfikatorem i językiem)
 `srx` niesie treść pliku SRX podaną przez Operatora — standard branżowy,
 którego rdzeń nie rozkłada na własne reguły; przechowywany w całości, żeby
 eksport oddał to samo, co przyszło.
+## budowa/server/internal/store/migracja_162_jakosc_i_zatwierdzenia_tlumaczenia.sql
+Migracja 162 — trzy rzeczy jednej fasety kontroli w module Translate:
+rozszerzenie terminu słownika o stan i dziedzinę (`translate.glossary.list`),
+profile kontroli jakości (`translate.qa.profile.*`) oraz obieg zatwierdzeń
+panelu (`translate.approval.*`).
+
+Termin dostaje dwie kolumny, nie tabelę: `GlossaryTerm.status`
+i `GlossaryTerm.domain` są polami terminu, po których `glossary.list` zawęża
+wykaz. Kolumna `stan` ma wartości `GlossaryTermStatus` kontraktu wprost.
+Wiersze zastane zostają bez stanu (NULL) — Operator nigdy ich nie oznaczył,
+a wpisanie im `approved` byłoby nadaniem zgody, której nikt nie wydał.
+
+Profil kontroli jakości ma dziecko, bo `QaProfileCheck` to trójka
+(rodzaj, waga, czy włączony) na każdy z sześciu rodzajów niezgodności —
+kolumna z JSON-em byłaby wykazem, którego baza nie umie zawęzić ani sprawdzić.
+
+Zatwierdzenie jest jednocześnie zapisem historii i stanem bieżącym panelu.
+Dlatego rośnie tabela `zatwierdzenie_panelu` (kontrakt: `ApprovalRecord`
+z własnym identyfikatorem, autorem i chwilą), a panel dostaje trzy kolumny
+migawki (`TranslationPanel.approvalStage/approvedBy/approvedAt`) — inaczej
+każdy odczyt panelu musiałby dociągać ostatni wiersz obiegu.

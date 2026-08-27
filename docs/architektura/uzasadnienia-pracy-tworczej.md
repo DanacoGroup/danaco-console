@@ -36,3 +36,38 @@ Zasięgi nagłówka i stopki — domyślny, pierwszej strony i stron parzystych 
 idą osobno, bo nagłówek urzędowy bywa dla tych trzech przypadków różny.
 Zasięg pierwszej strony dokłada do sekcji przełącznik `w:titlePg`, bez
 którego dokument nagłówka pierwszej strony nie pokaże.
+
+## adapter_modul_studio_odf.go
+
+Rachunek OpenDocument stoi na tym samym drzewie węzłów co rachunek OOXML,
+bo `.odt` jest archiwum ZIP z `content.xml` i `styles.xml` w środku — ten
+sam układ, w którym postać leży w węzłach obok treści. Drugiego rozbioru
+XML rachunek nie zakłada.
+
+Trzy różnice rozstrzygają kształt tego pliku wobec OOXML. Po pierwsze,
+postać bezpośrednia nie istnieje: w ODF każde odstępstwo od stylu nazwanego
+musi być stylem automatycznym o własnej nazwie, wymienionym w
+`office:automatic-styles` — odczyt trzyma mapę stylów automatycznych,
+a zapis je wytwarza; nazwy tych stylów są nazwami technicznymi formatu
+pliku, takie same nazywa LibreOffice. Po drugie, miary idą jednostką
+zapisaną w napisie (`fo:page-width="21cm"`, `fo:font-size="12pt"`), stąd
+przeliczenie stoi w jednym miejscu rachunku. Po trzecie, nagłówek i stopka
+wiszą na stronie wzorcowej (`style:master-page`), nie na sekcji — sekcje ODF
+nie mają własnych nastaw strony w sensie, w którym mają je sekcje OOXML,
+więc dokument wniesiony z `.odt` dostaje jedną sekcję, a nie sekcje udawane.
+
+Nagłówek strony pierwszej i stron lewych wychodzą osobnymi węzłami, bo
+w pismach urzędowych te trzy przypadki bywają różne.
+
+Rodzaj archiwum (`mimetype`) musi być pierwszym składnikiem i bez kompresji,
+bo tak stanowi norma OpenDocument i tak to sprawdzają czytniki.
+
+OpenDocument zapisuje scalenie poziome komórek tabeli dwa razy: raz jako
+`table:number-columns-spanned` komórki scalającej, raz jako
+`table:covered-table-cell` na każdej z przykrytych kolumn — jest ich
+dokładnie o jedną mniej niż rozpiętość. Liczenie obu naraz dawało tabelę
+trzykolumnową jako czterokolumnową, z czwartą kolumną bez szerokości,
+niewidoczną w dokumencie. Rozbiór dlatego prowadzi licznik przykrytych
+komórek do pominięcia, a nie porównanie z granicą kolumny: po przejściu
+komórki scalającej numer kolumny stoi już za scaleniem, więc porównanie
+z granicą nie odróżnia przykrycia poziomego od pionowego.

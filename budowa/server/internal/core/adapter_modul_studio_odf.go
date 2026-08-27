@@ -1,40 +1,7 @@
-// Odpowiedzialność pliku: rachunek OpenDocument modułu Studio — odczyt `.odt`
-// i `.ott` do postaci dokumentu oraz złożenie jednego i drugiego z powrotem.
-//
-// ── Czym to liczone ─────────────────────────────────────────────────────────
-// `.odt` jest archiwum ZIP z `content.xml` i `styles.xml` w środku, więc rachunek
-// stoi na `archive/zip` i `encoding/xml` z biblioteki wzorcowej — dokładnie tak
-// samo jak rachunek OOXML, i tym samym drzewem węzłów (`ooxmlWezel`,
-// `ooxmlRozbierz`). Drugiego rozbioru XML nie zakładam: postać w ODF leży
-// w węzłach obok treści, czyli w tym samym układzie, dla którego to drzewo
-// powstało. Bez LibreOffice, bez `pandoc`, bez biblioteki obcej.
-//
-// ── Gdzie ODF różni się od OOXML i co z tego wynika ─────────────────────────
-// Trzy różnice rozstrzygają kształt tego pliku:
-//
-//  1. POSTAĆ BEZPOŚREDNIA NIE ISTNIEJE. W Wordzie pogrubienie jednego wyrazu
-//     stoi wprost przy fragmencie (`w:rPr`). W ODF każde odstępstwo od stylu
-//     nazwanego musi być STYLEM AUTOMATYCZNYM o własnej nazwie, wymienionym
-//     w `office:automatic-styles`. Dlatego odczyt trzyma mapę stylów
-//     automatycznych, a zapis je WYTWARZA. Nazwy tych stylów są nazwami
-//     technicznymi formatu pliku (tak samo nazywa je LibreOffice), a nie
-//     kodem wymyślonym dla Operatora — Operator ich nigdy nie widzi.
-//
-//  2. MIARY IDĄ JEDNOSTKĄ W NAPISIE. `fo:page-width="21cm"`,
-//     `fo:font-size="12pt"`, `fo:margin-left="0.5in"`. Przeliczenie stoi
-//     w jednym miejscu (`odfDlugoscNaMilimetry`, `odfDlugoscNaPunkty`), bo
-//     rozsypane po dwudziestu miejscach rozjeżdża się przy pierwszej poprawce.
-//
-//  3. NAGŁÓWEK I STOPKA WISZĄ NA STRONIE WZORCOWEJ. `style:master-page` wskazuje
-//     `style:page-layout` z nastawami strony i niesie `style:header` oraz
-//     `style:footer`. Sekcje ODF nie mają własnych nastaw strony w tym sensie,
-//     w którym mają je sekcje OOXML — dokument wniesiony z `.odt` dostaje więc
-//     jedną sekcję, a nie sekcje udawane. Bilans mówi to wprost.
-//
-// ── Rodzaj archiwum: `mimetype` musi być pierwszy i nieskompresowany ────────
-// Tak stanowi norma OpenDocument i tak to sprawdzają czytniki. Składanie
-// archiwum robi `wejscieZlozArchiwum`, któremu podaje się nazwę składnika
-// pierwszego właśnie z tego powodu.
+// Odpowiedzialność pliku: rachunek OpenDocument modułu Studio — odczyt
+// dokumentów `.odt` i `.ott` do wspólnej postaci dokumentu oraz złożenie tej
+// postaci z powrotem do archiwum, tym samym drzewem węzłów co rachunek
+// OOXML.
 package core
 
 import (
@@ -44,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Nazwy składników archiwum OpenDocument, których dotyka ten rachunek.
+// Nazwy składników archiwum OpenDocument, których dotyka ten rachunek:
+// rodzaj, treść, arkusz stylów, manifest i katalog nośników.
 const (
 	odfSkladnikRodzaju   = "mimetype"
 	odfSkladnikTresci    = "content.xml"
@@ -83,14 +51,15 @@ func odfDlugoscNaMilimetry(wartosc string) (float64, bool) {
 	case "pc":
 		return liczba * 12 / 72 * 25.4, true
 	case "px":
-		// Piksel ODF liczy się przy 96 punktach na cal — tak go liczy
-		// LibreOffice i tak wychodzi zgodnie z tym, co Operator widział.
+		// Piksel ODF liczy się przy 96 punktach na cal, tak samo jak liczy
+		// go LibreOffice.
 		return liczba / 96 * 25.4, true
 	}
 	return 0, false
 }
 
-// odfDlugoscNaPunkty przelicza długość ODF na punkty typograficzne.
+// odfDlugoscNaPunkty przelicza długość ODF na punkty typograficzne —
+// jednostkę, w której kontrakt platformy wyraża odstępy i stopień pisma.
 func odfDlugoscNaPunkty(wartosc string) (float64, bool) {
 	milimetry, jest := odfDlugoscNaMilimetry(wartosc)
 	if !jest {
@@ -99,7 +68,8 @@ func odfDlugoscNaPunkty(wartosc string) (float64, bool) {
 	return milimetry / 25.4 * 72, true
 }
 
-// odfRozbierzDlugosc rozdziela napis na liczbę i jednostkę.
+// odfRozbierzDlugosc rozdziela napis długości ODF na wartość liczbową
+// i jednostkę zapisaną literami, na przykład „cm" albo „pt".
 func odfRozbierzDlugosc(wartosc string) (float64, string, bool) {
 	czysta := strings.TrimSpace(strings.ToLower(wartosc))
 	if czysta == "" {
@@ -120,12 +90,14 @@ func odfRozbierzDlugosc(wartosc string) (float64, string, bool) {
 	return liczba, strings.TrimSpace(czysta[granica:]), true
 }
 
-// odfMilimetryNaZapis składa napis długości w milimetrach z jednostką.
+// odfMilimetryNaZapis składa napis długości w milimetrach z jednostką ODF,
+// z dokładnością do trzech miejsc po przecinku.
 func odfMilimetryNaZapis(milimetry float64) string {
 	return strconv.FormatFloat(milimetry, 'f', 3, 64) + "mm"
 }
 
-// odfPunktyNaZapis składa napis stopnia pisma albo odstępu w punktach.
+// odfPunktyNaZapis składa napis stopnia pisma albo odstępu w punktach,
+// z dokładnością do dwóch miejsc po przecinku.
 func odfPunktyNaZapis(punkty float64) string {
 	return strconv.FormatFloat(punkty, 'f', 2, 64) + "pt"
 }
@@ -139,27 +111,21 @@ type odfStanOdczytu struct {
 	bilans    *shared.StudioImportBalance
 	skladniki map[string][]byte
 	// styleZnaku i styleAkapitu wiążą nazwę stylu automatycznego z postacią,
-	// którą ten styl niesie. Bez tych map pogrubienie wyrazu w pliku Operatora
-	// przepadłoby, choć plik je niesie — tylko nie przy fragmencie.
+	// którą ten styl niesie.
 	styleZnaku    map[string]*shared.StudioCharacterFormat
 	styleAkapitu  map[string]*shared.StudioParagraphFormat
 	stylNadrzedny map[string]string
 	// szerokosciKolumn wiąże nazwę stylu automatycznego kolumny tabeli z jej
-	// szerokością. Bez tego tabela po wniesieniu ma szerokości zerowe, a to
-	// jest dokładnie ten wynik, który sprawdzian odcinka postaci zakazuje.
+	// szerokością w milimetrach.
 	szerokosciKolumn map[string]float64
 	biezacaSekcja    string
 	poziomListy      int
 	listaBiezaca     string
 }
 
-// wejscieCzytajOdf rozbiera `.odt` albo `.ott` na postać dokumentu, treść płaską
-// i bilans wniesienia.
-//
-// Bilans jest obowiązkowy, nie ozdobny: plik Operatora niesie rzeczy, których
-// ten rachunek nie odczytuje (pola obliczane, wykresy, ramki rysunkowe,
-// obiekty osadzone innych programów), a przemilczenie ich zamieniłoby dokument
-// okaleczony w dokument „wczytany bez uwag".
+// wejscieCzytajOdf rozbiera `.odt` albo `.ott` na postać dokumentu, treść
+// płaską i bilans wniesienia, który nazywa wprost to, czego rachunek nie
+// odczytuje, zamiast przemilczeć okaleczenie dokumentu.
 func wejscieCzytajOdf(kodDokumentu string, bajty []byte,
 	format shared.StudioImportFormat) (shared.StudioDocumentForm, string,
 	shared.StudioImportBalance, error) {
@@ -192,7 +158,7 @@ func wejscieCzytajOdf(kodDokumentu string, bajty []byte,
 	}
 
 	// Arkusz stylów wchodzi PIERWSZY: akapity odwołują się do stylów nazwą,
-	// więc nazwa stylu w bloku ma sens tylko wtedy, gdy styl już istnieje.
+	// którą styl musi już mieć.
 	if surowyStylow, jest := skladniki[odfSkladnikStylow]; jest {
 		if drzewoStylow, err := ooxmlRozbierz(surowyStylow); err == nil {
 			postac.Styles = stan.czytajStyleNazwane(drzewoStylow)
@@ -234,18 +200,18 @@ func wejscieCzytajOdf(kodDokumentu string, bajty []byte,
 	return postac, tresc, bilans, nil
 }
 
-// pomin dokłada pozycję do wykazu tego, czego rachunek nie odzyskał.
+// pomin dokłada pozycję do wykazu tego, czego rachunek nie odzyskał, wraz
+// z powodem i szczegółem, które trafiają do bilansu wniesienia dokumentu.
 func (s *odfStanOdczytu) pomin(powod, szczegol string) {
 	s.bilans.Skipped = append(s.bilans.Skipped, shared.StudioSkippedItem{
 		Reason: powod, Detail: wejscieWskaznikTekstu(szczegol),
 	})
 }
 
-// zalozSekcje zakłada jedyną sekcję dokumentu wniesionego z ODF.
-//
-// Jedna, a nie kilka: nastawy strony w ODF wiszą na stronie wzorcowej, nie na
-// sekcji, więc rozdzielenie dokumentu na sekcje o własnych nastawach byłoby
-// wymyśleniem podziału, którego plik nie niesie.
+// zalozSekcje zakłada jedyną sekcję dokumentu wniesionego z ODF. Jedna,
+// a nie kilka: nastawy strony w ODF wiszą na stronie wzorcowej, nie na
+// sekcji, a rozdzielenie dokumentu na sekcje byłoby wymyśleniem podziału,
+// którego plik nie niesie.
 func (s *odfStanOdczytu) zalozSekcje() {
 	sekcja := shared.StudioSection{
 		Id:        nowyIdentyfikator(przedrostekSekcjiStudia),
@@ -260,7 +226,8 @@ func (s *odfStanOdczytu) zalozSekcje() {
 	s.biezacaSekcja = sekcja.Id
 }
 
-// czytajCialo przechodzi ciało dokumentu blok po bloku w kolejności czytania.
+// czytajCialo przechodzi ciało dokumentu blok po bloku w kolejności czytania,
+// rozpoznając akapity, nagłówki, listy, tabele oraz węzły opakowujące treść.
 func (s *odfStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 	for _, wezel := range cialo.Dzieci {
 		switch wezel.Nazwa.Local {
@@ -273,20 +240,18 @@ func (s *odfStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 		case "table":
 			s.czytajTabele(wezel)
 		case "section", "text-box", "frame":
-			// Sekcja nazwana ODF i ramka tekstowa opakowują zwykłą treść.
-			// Schodzimy do wnętrza, zamiast pomijać — pominięcie zgubiłoby
-			// akapity, które w edytorze Operatora widać normalnie.
+			// Sekcja nazwana ODF i ramka tekstowa opakowują zwykłą treść —
+			// schodzimy do wnętrza, zamiast pomijać.
 			if wezel.Nazwa.Local == "frame" {
 				s.czytajObraz(wezel)
 			}
 			s.czytajCialo(wezel)
 		case "sequence-decls", "variable-decls", "user-field-decls":
-			// Deklaracje pól obliczanych. Wartości pól stoją w treści akapitów
-			// i tam się odczytują; sama deklaracja nie jest treścią.
+			// Deklaracje pól obliczanych; wartości pól stoją w treści
+			// akapitów i tam się odczytują.
 		case "soft-page-break":
-			// Podział strony policzony przez edytor Operatora, nie postawiony
-			// przez niego. Wniesienie go jako podziału twardego zmieniłoby
-			// dokument.
+			// Podział strony policzony przez edytor, nie postawiony ręcznie,
+			// nie wchodzi jako podział twardy.
 		default:
 			if strings.TrimSpace(wezel.Tekst) != "" {
 				s.pomin("węzeł treści, którego rachunek nie odczytuje",
@@ -296,7 +261,8 @@ func (s *odfStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 	}
 }
 
-// odfPoziomNaglowka odczytuje poziom konspektu nagłówka (`text:outline-level`).
+// odfPoziomNaglowka odczytuje poziom konspektu nagłówka z `text:outline-level`,
+// ograniczony do sześciu poziomów, z jedynką jako domyślną.
 func odfPoziomNaglowka(wezel *ooxmlWezel) int {
 	if poziom, jest := wezel.atrybutCalkowity("outline-level"); jest && poziom > 0 {
 		if poziom > 6 {
@@ -307,7 +273,8 @@ func odfPoziomNaglowka(wezel *ooxmlWezel) int {
 	return 1
 }
 
-// czytajAkapit składa blok akapitu wraz z postacią akapitu i fragmentami.
+// czytajAkapit składa blok akapitu wraz z postacią akapitu i fragmentami,
+// wiążąc go z listą bieżącą i poziomem konspektu nagłówka.
 func (s *odfStanOdczytu) czytajAkapit(wezel *ooxmlWezel, poziomNaglowka int) {
 	nazwaStylu := wezel.atrybut("style-name")
 	postacAkapitu := s.postacAkapituStylu(nazwaStylu)
@@ -342,10 +309,8 @@ func (s *odfStanOdczytu) czytajAkapit(wezel *ooxmlWezel, poziomNaglowka int) {
 }
 
 // czytajFragmenty składa fragmenty tekstu akapitu wraz z postacią znaku.
-//
 // Postać odziedziczona jedzie w dół drzewa: `text:span` w `text:span` jest
-// w ODF zwykły, a postać zewnętrzna obowiązuje wewnątrz — inaczej pogrubiony
-// akapit z jednym wyrazem w kursywie oddałby ten wyraz bez pogrubienia.
+// w ODF zwykły, a postać zewnętrzna obowiązuje wewnątrz.
 func (s *odfStanOdczytu) czytajFragmenty(wezel *ooxmlWezel,
 	odziedziczona *shared.StudioCharacterFormat) []shared.StudioDocumentRun {
 
@@ -390,10 +355,8 @@ func (s *odfStanOdczytu) czytajFragmenty(wezel *ooxmlWezel,
 		case "bookmark", "bookmark-start", "reference-mark", "reference-mark-start":
 			s.czytajZakladke(dziecko)
 		default:
-			// Pole obliczane (`text:date`, `text:page-number`, `text:variable-set`
-			// i pokrewne) niesie WARTOŚĆ w treści węzła. Wartość wchodzi do
-			// dokumentu, bo Operator ją widział; wyrażenie, które ją policzyło,
-			// idzie do wykazu pominiętych, bo tego rachunek nie odtwarza.
+			// Pole obliczane niesie WARTOŚĆ w treści węzła; wyrażenie, które
+			// ją policzyło, idzie do pominiętych.
 			if tekst := odfTekstWglab(dziecko); tekst != "" {
 				fragmenty = append(fragmenty, shared.StudioDocumentRun{
 					Text: tekst, Format: odfKopiaPostaciZnaku(odziedziczona),
@@ -411,7 +374,8 @@ func (s *odfStanOdczytu) czytajFragmenty(wezel *ooxmlWezel,
 	return fragmenty
 }
 
-// odfTekstWglab zbiera treść tekstową węzła wraz z dziećmi.
+// odfTekstWglab zbiera treść tekstową węzła wraz z dziećmi, schodząc
+// rekurencyjnie po całym poddrzewie węzła.
 func odfTekstWglab(wezel *ooxmlWezel) string {
 	var zbior strings.Builder
 	zbior.WriteString(wezel.Tekst)
@@ -441,12 +405,10 @@ func (s *odfStanOdczytu) czytajListe(wezel *ooxmlWezel) {
 	s.listaBiezaca, s.poziomListy = poprzedniaLista, poprzedniPoziom
 }
 
-// zalozListe dokłada definicję listy do postaci dokumentu.
-//
-// Rodzaj listy rozstrzyga styl listy: styl o nazwie mówiącej o numeracji daje
-// listę numerowaną, pozostałe — punktowaną. To jest odtworzenie, nie odczyt,
-// bo pełna definicja stylu listy stoi w `text:list-style`, którego szczeble
-// rachunek odczytuje wyłącznie w tym zakresie; wykaz pominiętych to mówi.
+// zalozListe dokłada definicję listy do postaci dokumentu. Rodzaj listy
+// rozstrzyga styl listy: nazwa mówiąca o numeracji daje listę numerowaną,
+// pozostałe — punktowaną. To jest odtworzenie, nie odczyt pełnej definicji
+// stylu listy.
 func (s *odfStanOdczytu) zalozListe(wezel *ooxmlWezel) string {
 	rodzaj := shared.StudioListKind(shared.StudioListKindBullet)
 	nazwaStylu := strings.ToLower(wezel.atrybut("style-name"))
@@ -464,11 +426,12 @@ func (s *odfStanOdczytu) zalozListe(wezel *ooxmlWezel) string {
 	return lista.Id
 }
 
-// przedrostekListyWejscia znakuje definicje list odczytane z pliku.
+// przedrostekListyWejscia znakuje definicje list odczytane z pliku,
+// odróżniając je od list, które powstają dopiero przy złożeniu dokumentu.
 const przedrostekListyWejscia = "studio-list-"
 
-// czytajTabele składa tabelę dokumentu wraz z komórkami, scaleniami
-// i szerokościami kolumn.
+// czytajTabele składa tabelę dokumentu wraz z komórkami, scaleniami poziomym
+// i pionowym oraz szerokościami kolumn ze stylu automatycznego.
 func (s *odfStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 	tabela := shared.StudioDocumentTable{
 		Id: nowyIdentyfikator(przedrostekTabeliStudia),
@@ -497,21 +460,8 @@ func (s *odfStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 			tabela.HeaderRows = wejscieWskaznikCalkowity(1)
 			tabela.RepeatHeader = wejscieWskaznikLogiczny(true)
 		}
-		// przykrytychDoPominiecia liczy komórki `table:covered-table-cell`, które
-		// należą do scalenia POZIOMEGO policzonego już przez rozpiętość komórki
-		// scalającej.
-		//
-		// OpenDocument zapisuje scalenie poziome DWA RAZY: raz jako
-		// `table:number-columns-spanned` komórki scalającej, raz jako
-		// `table:covered-table-cell` na każdej z przykrytych kolumn — jest ich
-		// dokładnie o jedną mniej niż rozpiętość. Liczenie obu naraz dawało
-		// tabelę trzykolumnową jako czterokolumnową, a kolumna czwarta wychodziła
-		// bez szerokości, czyli w dokumencie niewidoczna.
-		//
-		// Licznik, a nie granica kolumny: po przejściu komórki scalającej numer
-		// kolumny stoi już ZA scaleniem, więc porównanie z granicą nie odróżnia
-		// przykrycia poziomego od pionowego. Liczba przykrytych komórek do
-		// pominięcia jest jednoznaczna.
+		// przykrytychDoPominiecia liczy komórki `table:covered-table-cell`
+		// już policzone scaleniem poziomym.
 		przykrytychDoPominiecia := 0
 		for _, wezelKomorki := range wiersz.Dzieci {
 			switch wezelKomorki.Nazwa.Local {
@@ -522,11 +472,8 @@ func (s *odfStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 				if komorka.ColumnSpan != nil && *komorka.ColumnSpan > 1 {
 					rozpietosc = *komorka.ColumnSpan
 				}
-				// Kolumny przykryte scaleniem poziomym dostają własne komórki
-				// oznaczone jako scalone — tak samo, jak robi to rozbiór OOXML.
-				// Jedna umowa dla obu formatów, bo postać dokumentu jest jedna:
-				// bez tego tabela z `.odt` i ta sama tabela z `.docx` miałyby
-				// różną liczbę komórek.
+				// Kolumny przykryte scaleniem poziomym dostają komórki scalone,
+				// jak w rozbiorze OOXML.
 				for przesuniecie := 1; przesuniecie < rozpietosc; przesuniecie++ {
 					tabela.Cells = append(tabela.Cells, shared.StudioTableCell{
 						Row: numerWiersza, Column: numerKolumny + przesuniecie,
@@ -538,15 +485,12 @@ func (s *odfStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 				}
 				numerKolumny += rozpietosc
 			case "covered-table-cell":
-				// Komórka przykryta scaleniem POZIOMYM tego wiersza jest już
-				// policzona wyżej i kolumny nie zajmuje po raz drugi.
+				// Scalenie poziome tego wiersza jest już policzone wyżej.
 				if przykrytychDoPominiecia > 0 {
 					przykrytychDoPominiecia--
 					continue
 				}
-				// Zostaje przykrycie scaleniem PIONOWYM z wiersza wcześniejszego.
-				// To jest osobna kolumna i musi wejść do wykazu, bo inaczej
-				// wiersz miałby mniej komórek niż tabela kolumn.
+				// Scalenie pionowe z wiersza wcześniejszego — osobna kolumna.
 				tabela.Cells = append(tabela.Cells, shared.StudioTableCell{
 					Row: numerWiersza, Column: numerKolumny,
 					Merged: wejscieWskaznikLogiczny(true),
@@ -580,7 +524,8 @@ func (s *odfStanOdczytu) czytajTabele(wezel *ooxmlWezel) {
 	})
 }
 
-// odfWierszeTabeli wybiera wiersze tabeli wraz z wierszami nagłówka.
+// odfWierszeTabeli zbiera wiersze tabeli, schodząc rekurencyjnie przez grupy
+// wierszy nagłówka i wierszy zwykłych, do jednej listy w kolejności czytania.
 func odfWierszeTabeli(tabela *ooxmlWezel) []*ooxmlWezel {
 	wiersze := []*ooxmlWezel{}
 	for _, dziecko := range tabela.Dzieci {
@@ -594,7 +539,8 @@ func odfWierszeTabeli(tabela *ooxmlWezel) []*ooxmlWezel {
 	return wiersze
 }
 
-// odfWNaglowku mówi, czy wiersz stoi w grupie wierszy nagłówkowych.
+// odfWNaglowku mówi, czy wiersz stoi w grupie wierszy nagłówkowych tabeli,
+// przeszukując bezpośrednie dzieci węzła nagłówka po tożsamości wskaźnika.
 func odfWNaglowku(tabela, wiersz *ooxmlWezel) bool {
 	for _, dziecko := range tabela.Dzieci {
 		if dziecko.Nazwa.Local != "table-header-rows" {
@@ -609,7 +555,8 @@ func odfWNaglowku(tabela, wiersz *ooxmlWezel) bool {
 	return false
 }
 
-// czytajKomorke składa komórkę tabeli wraz z treścią i scaleniem.
+// czytajKomorke składa komórkę tabeli wraz z treścią akapitów, rozpiętością
+// scalenia poziomego i pionowego oraz postacią akapitu przypisaną komórce.
 func (s *odfStanOdczytu) czytajKomorke(wezel *ooxmlWezel,
 	wiersz, kolumna int) shared.StudioTableCell {
 
@@ -636,10 +583,8 @@ func (s *odfStanOdczytu) czytajKomorke(wezel *ooxmlWezel,
 }
 
 // czytajObraz dokłada obraz osadzony do wykazu obiektów i liczy go w bilansie.
-//
-// Bajty obrazu zostają w archiwum: odłożenie ich do magazynu zasobów wymaga
-// kontekstu żądania, którego ten rachunek nie ma. Wołający odkłada je po
-// odczycie, a tutaj powstaje obiekt wraz ze wskazaniem składnika.
+// Bajty obrazu zostają w archiwum — wołający odkłada je do magazynu zasobów
+// po odczycie, a tutaj powstaje obiekt wraz ze wskazaniem składnika archiwum.
 func (s *odfStanOdczytu) czytajObraz(wezel *ooxmlWezel) {
 	obraz := ooxmlSzukajWglabWezel(wezel, "image")
 	if obraz == nil {
@@ -701,7 +646,8 @@ func odfOpisObrazu(ramka *ooxmlWezel, sciezka string) string {
 	return "obraz ze składnika " + sciezka
 }
 
-// czytajPrzypis dokłada przypis do aparatu dokumentu.
+// czytajPrzypis dokłada przypis do aparatu dokumentu, rozstrzygając między
+// przypisem dolnym a końcowym po klasie węzła i odczytując numer oraz treść.
 func (s *odfStanOdczytu) czytajPrzypis(wezel *ooxmlWezel) {
 	rodzaj := shared.StudioApparatusKind(shared.StudioApparatusKindFootnote)
 	if strings.Contains(wezel.atrybut("note-class"), "endnote") {
@@ -720,7 +666,8 @@ func (s *odfStanOdczytu) czytajPrzypis(wezel *ooxmlWezel) {
 	s.postac.Apparatus = append(s.postac.Apparatus, element)
 }
 
-// czytajZakladke dokłada zakładkę do aparatu dokumentu.
+// czytajZakladke dokłada zakładkę do aparatu dokumentu pod jej nazwą, pomijając
+// węzeł, gdy plik niesie zakładkę bez nazwy.
 func (s *odfStanOdczytu) czytajZakladke(wezel *ooxmlWezel) {
 	nazwa := strings.TrimSpace(wezel.atrybut("name"))
 	if nazwa == "" {
@@ -733,7 +680,8 @@ func (s *odfStanOdczytu) czytajZakladke(wezel *ooxmlWezel) {
 	})
 }
 
-// czytajOdsylacz dokłada odsyłacz do aparatu dokumentu.
+// czytajOdsylacz dokłada odsyłacz do aparatu dokumentu, wiążąc adres docelowy
+// z etykietą złożoną z tekstu fragmentów, które odsyłacz obejmuje.
 func (s *odfStanOdczytu) czytajOdsylacz(wezel *ooxmlWezel,
 	fragmenty []shared.StudioDocumentRun) {
 
@@ -760,7 +708,8 @@ func (s *odfStanOdczytu) czytajOdsylacz(wezel *ooxmlWezel,
 
 // ── Style ───────────────────────────────────────────────────────────────────
 
-// czytajStyleNazwane składa arkusz stylów nazwanych z `office:styles`.
+// czytajStyleNazwane składa arkusz stylów nazwanych z `office:styles`, wraz
+// z dziedziczeniem, stylem następnym i poziomem konspektu domyślnego nagłówka.
 func (s *odfStanOdczytu) czytajStyleNazwane(drzewo *ooxmlWezel) []shared.StudioNamedStyle {
 	wykaz := drzewo.dziecko("styles")
 	if wykaz == nil {
@@ -821,7 +770,8 @@ func (s *odfStanOdczytu) czytajStyleAutomatyczne(drzewo *ooxmlWezel) {
 	}
 }
 
-// postacZnakuStylu oddaje postać znaku stylu automatycznego albo nazwanego.
+// postacZnakuStylu oddaje postać znaku stylu automatycznego albo, gdy taki styl
+// nie stoi w mapie, stylu nazwanego o tej samej nazwie.
 func (s *odfStanOdczytu) postacZnakuStylu(nazwa string) *shared.StudioCharacterFormat {
 	nazwa = strings.TrimSpace(nazwa)
 	if nazwa == "" {
@@ -838,7 +788,8 @@ func (s *odfStanOdczytu) postacZnakuStylu(nazwa string) *shared.StudioCharacterF
 	return nil
 }
 
-// postacAkapituStylu oddaje postać akapitu stylu automatycznego.
+// postacAkapituStylu oddaje kopię postaci akapitu stylu automatycznego wskazanej
+// nazwy, żeby dalsza zmiana postaci bloku nie dotknęła mapy stylów.
 func (s *odfStanOdczytu) postacAkapituStylu(nazwa string) *shared.StudioParagraphFormat {
 	nazwa = strings.TrimSpace(nazwa)
 	if nazwa == "" {
@@ -870,18 +821,19 @@ func (s *odfStanOdczytu) nazwaStyluNazwanego(nazwa string) string {
 	return ""
 }
 
-// szerokoscKolumny odczytuje szerokość kolumny tabeli ze stylu automatycznego.
+// szerokoscKolumny odczytuje szerokość kolumny tabeli ze stylu automatycznego,
+// zebraną wcześniej przy czytaniu stylów, a nie liczoną tutaj po raz drugi.
 func (s *odfStanOdczytu) szerokoscKolumny(nazwaStylu string) float64 {
 	nazwa := strings.TrimSpace(nazwaStylu)
 	if nazwa == "" {
 		return 0
 	}
-	// Szerokość kolumny stoi w `style:table-column-properties` stylu
-	// automatycznego — zebrana przy czytaniu stylów, nie liczona tutaj drugi raz.
+	// Szerokość stoi w `style:table-column-properties` stylu automatycznego.
 	return s.szerokosciKolumn[nazwa]
 }
 
-// czytajNastawyStrony odczytuje nastawy strony z układu strony wzorcowej.
+// czytajNastawyStrony odczytuje nastawy strony z pierwszego układu strony
+// stylów automatycznych: wymiary nośnika, marginesy, orientację i kolumny.
 func (s *odfStanOdczytu) czytajNastawyStrony(drzewo *ooxmlWezel) *shared.StudioPageSetup {
 	wykaz := drzewo.dziecko("automatic-styles")
 	if wykaz == nil {
@@ -937,11 +889,9 @@ func (s *odfStanOdczytu) czytajNastawyStrony(drzewo *ooxmlWezel) *shared.StudioP
 	return &nastawy
 }
 
-// czytajNaglowkiStopki odczytuje nagłówek i stopkę ze strony wzorcowej.
-//
-// ODF trzyma nagłówek strony pierwszej i stron lewych osobnymi węzłami
-// (`style:header-first`, `style:header-left`) — każdy wchodzi jako własny zasięg,
-// bo Właściciel wymaga nagłówka osobnego dla pierwszej strony i stron parzystych.
+// czytajNaglowkiStopki odczytuje nagłówek i stopkę ze strony wzorcowej. ODF
+// trzyma nagłówek strony pierwszej i stron lewych osobnymi węzłami
+// (`style:header-first`, `style:header-left`) — każdy wchodzi jako własny zasięg.
 func (s *odfStanOdczytu) czytajNaglowkiStopki() []shared.StudioHeaderFooter {
 	surowe, jest := s.skladniki[odfSkladnikStylow]
 	if !jest {
@@ -988,7 +938,8 @@ func (s *odfStanOdczytu) czytajNaglowkiStopki() []shared.StudioHeaderFooter {
 	return naglowki
 }
 
-// odfCzytajPostacZnaku składa postać znaku z `style:text-properties`.
+// odfCzytajPostacZnaku składa postać znaku z `style:text-properties`: krój,
+// stopień, wagę, kursywę, podkreślenie, przekreślenie, barwę i język.
 func odfCzytajPostacZnaku(wezel *ooxmlWezel) *shared.StudioCharacterFormat {
 	if wezel == nil {
 		return nil
@@ -1067,7 +1018,8 @@ func odfCzytajPostacZnaku(wezel *ooxmlWezel) *shared.StudioCharacterFormat {
 	return &postac
 }
 
-// odfCzytajPostacAkapitu składa postać akapitu z `style:paragraph-properties`.
+// odfCzytajPostacAkapitu składa postać akapitu z `style:paragraph-properties`:
+// wyrównanie, wcięcia, odstępy, interlinię, obramowanie i tabulatory.
 func odfCzytajPostacAkapitu(wezel *ooxmlWezel) *shared.StudioParagraphFormat {
 	if wezel == nil {
 		return nil
@@ -1187,7 +1139,8 @@ func odfCzytajTabulatory(wezel *ooxmlWezel) []shared.StudioTabStop {
 	return tabulatory
 }
 
-// odfObramowanie odczytuje obramowanie zapisane skrótem `0.5pt solid #000000`.
+// odfObramowanie odczytuje obramowanie zapisane skrótem ODF, na przykład
+// `0.5pt solid #000000`, rozdzielając człony na szerokość, odmianę i barwę.
 func odfObramowanie(wartosc string) *shared.StudioBorder {
 	czysta := strings.TrimSpace(wartosc)
 	if czysta == "" || strings.EqualFold(czysta, "none") {
@@ -1209,7 +1162,8 @@ func odfObramowanie(wartosc string) *shared.StudioBorder {
 	return &obramowanie
 }
 
-// odfRodzajStylu przekłada rodzinę stylu ODF na rodzaj stylu kontraktu.
+// odfRodzajStylu przekłada rodzinę stylu ODF (`text`, `table`, `list`) na
+// rodzaj stylu kontraktu, przyjmując akapit jako rodzaj domyślny.
 func odfRodzajStylu(rodzina string) shared.StudioStyleKind {
 	switch strings.ToLower(strings.TrimSpace(rodzina)) {
 	case "text":
@@ -1223,7 +1177,8 @@ func odfRodzajStylu(rodzina string) shared.StudioStyleKind {
 	}
 }
 
-// odfWyrownanie przekłada wyrównanie ODF na wyrównanie kontraktu.
+// odfWyrownanie przekłada wyrównanie zapisane w `fo:text-align` na wyrównanie
+// kontraktu, oddając nic, gdy wartość nie pasuje do żadnej odmiany znanej.
 func odfWyrownanie(wartosc string) *shared.StudioTextAlign {
 	switch strings.ToLower(strings.TrimSpace(wartosc)) {
 	case "start", "left":
@@ -1238,7 +1193,8 @@ func odfWyrownanie(wartosc string) *shared.StudioTextAlign {
 	return nil
 }
 
-// odfPodkreslenie przekłada odmianę podkreślenia ODF na odmianę kontraktu.
+// odfPodkreslenie przekłada odmianę podkreślenia ODF na odmianę kontraktu,
+// zwężając warianty falowane i kreskowane formatu do odmian, które kontrakt niesie.
 func odfPodkreslenie(wartosc string) *shared.StudioUnderlineStyle {
 	switch wartosc {
 	case "none":
@@ -1254,7 +1210,8 @@ func odfPodkreslenie(wartosc string) *shared.StudioUnderlineStyle {
 	}
 }
 
-// odfWskaznikNiepusty oddaje wskaźnik na napis albo nic, gdy napis jest pusty.
+// odfWskaznikNiepusty oddaje wskaźnik na napis przycięty z odstępów, albo nic,
+// gdy po przycięciu napis okazuje się pusty.
 func odfWskaznikNiepusty(wartosc string) *string {
 	czysta := strings.TrimSpace(wartosc)
 	if czysta == "" {
@@ -1263,7 +1220,8 @@ func odfWskaznikNiepusty(wartosc string) *string {
 	return &czysta
 }
 
-// odfPierwszyNiepusty oddaje pierwszy niepusty atrybut z wykazu.
+// odfPierwszyNiepusty oddaje pierwszy niepusty atrybut węzła z podanego wykazu
+// nazw, sprawdzanych po kolei, albo napis pusty, gdy żaden atrybut nie niesie treści.
 func odfPierwszyNiepusty(wezel *ooxmlWezel, nazwy ...string) string {
 	for _, nazwa := range nazwy {
 		if wartosc := strings.TrimSpace(wezel.atrybut(nazwa)); wartosc != "" {
@@ -1283,7 +1241,8 @@ func odfKopiaPostaciZnaku(postac *shared.StudioCharacterFormat) *shared.StudioCh
 	return &kopia
 }
 
-// odfZlaczPostacZnaku nakłada postać wewnętrzną na odziedziczoną.
+// odfZlaczPostacZnaku nakłada postać wewnętrzną na odziedziczoną, pole po
+// polu, tak że cecha nieustawiona wewnętrznie zostaje tą, którą niesie rodzic.
 func odfZlaczPostacZnaku(odziedziczona,
 	wewnetrzna *shared.StudioCharacterFormat) *shared.StudioCharacterFormat {
 
@@ -1339,7 +1298,8 @@ func odfZlaczPostacZnaku(odziedziczona,
 	return &zlaczona
 }
 
-// odfWezlyWglab zbiera węzły o wskazanej nazwie z całego poddrzewa.
+// odfWezlyWglab zbiera węzły o wskazanej nazwie lokalnej z całego poddrzewa
+// węzła, schodząc rekurencyjnie przez dzieci bez względu na głębokość.
 func odfWezlyWglab(wezel *ooxmlWezel, nazwa string) []*ooxmlWezel {
 	znalezione := []*ooxmlWezel{}
 	for _, dziecko := range wezel.Dzieci {
@@ -1356,10 +1316,6 @@ func odfWezlyWglab(wezel *ooxmlWezel, nazwa string) []*ooxmlWezel {
 // odfSkladacz zbiera to, co złożenie ODF musi liczyć po drodze: treść ciała,
 // style automatyczne wytworzone dla postaci bezpośredniej i wykaz cech, których
 // format nie niesie.
-//
-// Styl automatyczny musi mieć NAZWĘ, bo tak stanowi OpenDocument — postać
-// bezpośrednia w tym formacie nie istnieje. Nazwy są techniczne i Operator ich
-// nie widzi; ten sam zabieg wykonuje LibreOffice przy każdym zapisie.
 type odfSkladacz struct {
 	cialo      strings.Builder
 	styleAuto  strings.Builder
@@ -1369,7 +1325,8 @@ type odfSkladacz struct {
 	licznikTab int
 }
 
-// nazwaStyluZnaku wytwarza styl automatyczny postaci znaku i oddaje jego nazwę.
+// nazwaStyluZnaku wytwarza styl automatyczny postaci znaku i oddaje jego nazwę,
+// albo napis pusty, gdy postać nie niesie żadnej cechy do zapisania.
 func (s *odfSkladacz) nazwaStyluZnaku(postac *shared.StudioCharacterFormat) string {
 	if postac == nil {
 		return ""
@@ -1386,9 +1343,8 @@ func (s *odfSkladacz) nazwaStyluZnaku(postac *shared.StudioCharacterFormat) stri
 }
 
 // nazwaStyluAkapitu wytwarza styl automatyczny postaci akapitu i oddaje jego
-// nazwę. Styl nadrzędny to styl NAZWANY akapitu — dzięki temu zmiana stylu
-// nazwanego w edytorze Operatora dalej przestawia wszystkie akapity, które go
-// używają, mimo że każdy ma własny styl automatyczny.
+// nazwę. Styl nadrzędny to styl nazwany akapitu, dzięki czemu zmiana stylu
+// nazwanego nadal przestawia akapity, które go używają.
 func (s *odfSkladacz) nazwaStyluAkapitu(postac *shared.StudioParagraphFormat) string {
 	stylNazwany := odfNazwaStyluAkapitu(postac)
 	if postac == nil {
@@ -1424,20 +1380,16 @@ func odfNazwaStyluAkapitu(postac *shared.StudioParagraphFormat) string {
 	return ""
 }
 
-// wejscieZlozOdf składa `.odt` albo `.ott` z postaci dokumentu.
-//
-// Archiwum niesie cztery składniki: rodzaj dokumentu (`mimetype`, pierwszy
-// i nieściśnięty), manifest, treść i arkusz stylów wraz ze stroną wzorcową.
-// Mniej nie wystarcza — czytnik odmawia otwarcia archiwum bez manifestu,
-// a nastawy strony bez strony wzorcowej nie mają na czym wisieć.
+// wejscieZlozOdf składa `.odt` albo `.ott` z postaci dokumentu. Archiwum niesie
+// cztery składniki: rodzaj dokumentu, manifest, treść i arkusz stylów wraz ze
+// stroną wzorcową — czytnik odmawia otwarcia archiwum bez któregokolwiek z nich.
 func wejscieZlozOdf(postac *shared.StudioDocumentForm, tresc, tytul string,
 	szablon bool) ([]byte, []shared.StudioSkippedItem, error) {
 
 	pominiete := make([]shared.StudioSkippedItem, 0, 4)
 	bloki := postac.Blocks
 	if len(bloki) == 0 {
-		// Postaci nie ma — treść płaska staje akapitami, żeby plik nie wyszedł
-		// pusty. To jest odtworzenie, nie odczyt, i tak wychodzi w bilansie.
+		// Postaci nie ma — treść płaska staje akapitami; to jest odtworzenie.
 		zastepcza := wejsciePostacZTekstu(postac.DocumentId, tresc)
 		bloki = zastepcza.Blocks
 		if postac.Styles == nil {
@@ -1456,9 +1408,7 @@ func wejscieZlozOdf(postac *shared.StudioDocumentForm, tresc, tytul string,
 		case wejscieRodzajBlokuObiekt:
 			skladacz.zlozObiekt(postac, blok.ObjectId)
 		case wejscieRodzajBlokuPodzial:
-			// Podział strony w ODF jest cechą stylu akapitu, nie znakiem
-			// w treści — akapit pusty z rozkazem podziału jest tym, co robi
-			// każdy edytor OpenDocument.
+			// Podział strony w ODF jest cechą stylu akapitu, nie znakiem w treści.
 			skladacz.licznikA++
 			nazwa := "akapit-podzial-" + strconv.Itoa(skladacz.licznikA)
 			skladacz.styleAuto.WriteString(`<style:style style:name="` + nazwa +
@@ -1616,7 +1566,8 @@ func odfZlozTekst(tekst string) string {
 	return budowa.String()
 }
 
-// zlozTabele składa tabelę wraz z kolumnami, scaleniami i wierszem nagłówkowym.
+// zlozTabele składa tabelę wraz z kolumnami, scaleniami poziomym i pionowym
+// oraz wierszami nagłówkowymi powtarzanymi na kolejnych stronach wydruku.
 func (s *odfSkladacz) zlozTabele(postac *shared.StudioDocumentForm, kodTabeli *string) {
 	tabela := (*shared.StudioDocumentTable)(nil)
 	if kodTabeli != nil {
@@ -1709,11 +1660,9 @@ func (s *odfSkladacz) zlozTabele(postac *shared.StudioDocumentForm, kodTabeli *s
 	}
 }
 
-// zlozObiekt składa akapit obiektu osadzonego.
-//
-// Bajty obrazu leżą w magazynie zasobów rdzenia, a wpisanie ich do archiwum
-// wymagałoby odczytu magazynu, którego składacz nie ma. Obraz wychodzi więc
-// akapitem z tekstem zastępczym, a strata jest NAZWANA — nie przemilczana.
+// zlozObiekt składa akapit obiektu osadzonego. Bajty obrazu leżą w magazynie
+// zasobów rdzenia, którego składacz nie ma — obraz wychodzi akapitem z tekstem
+// zastępczym, a strata jest nazwana wprost w wykazie pominiętych.
 func (s *odfSkladacz) zlozObiekt(postac *shared.StudioDocumentForm, kodObiektu *string) {
 	obiekt := (*shared.StudioDocumentObject)(nil)
 	if kodObiektu != nil {
@@ -1745,7 +1694,8 @@ func (s *odfSkladacz) zlozObiekt(postac *shared.StudioDocumentForm, kodObiektu *
 	}
 }
 
-// odfZlozCechyZnaku składa `style:text-properties` z postaci znaku.
+// odfZlozCechyZnaku składa `style:text-properties` z postaci znaku, dodając
+// wyłącznie atrybuty pól, które postać ustawia.
 func odfZlozCechyZnaku(postac *shared.StudioCharacterFormat) string {
 	if postac == nil {
 		return ""
@@ -1814,7 +1764,8 @@ func odfZlozCechyZnaku(postac *shared.StudioCharacterFormat) string {
 	return `<style:text-properties` + atrybuty + `/>`
 }
 
-// odfZlozCechyAkapitu składa `style:paragraph-properties` z postaci akapitu.
+// odfZlozCechyAkapitu składa `style:paragraph-properties` z postaci akapitu,
+// wraz z tabulatorami zapisanymi węzłem wewnętrznym `style:tab-stops`.
 func odfZlozCechyAkapitu(postac *shared.StudioParagraphFormat) string {
 	if postac == nil {
 		return ""
@@ -1909,7 +1860,8 @@ func odfZlozCechyAkapitu(postac *shared.StudioParagraphFormat) string {
 		`</style:paragraph-properties>`
 }
 
-// odfZlozObramowanie składa skrót obramowania `0.50pt solid #000000`.
+// odfZlozObramowanie składa skrót obramowania ODF, na przykład
+// `0.50pt solid #000000`, z szerokości, odmiany i barwy obramowania.
 func odfZlozObramowanie(obramowanie *shared.StudioBorder) string {
 	if obramowanie == nil {
 		return "none"
@@ -1937,7 +1889,8 @@ func odfZlozObramowanie(obramowanie *shared.StudioBorder) string {
 	return odfPunktyNaZapis(szerokosc) + " " + odmiana + " #" + barwa
 }
 
-// odfNazwaWyrownania przekłada wyrównanie kontraktu na wyrównanie ODF.
+// odfNazwaWyrownania przekłada wyrównanie kontraktu na wartość `fo:text-align`
+// zapisu ODF, oddając „start" jako wartość domyślną.
 func odfNazwaWyrownania(wyrownanie shared.StudioTextAlign) string {
 	switch wyrownanie {
 	case shared.StudioTextAlignRight:
@@ -1951,11 +1904,9 @@ func odfNazwaWyrownania(wyrownanie shared.StudioTextAlign) string {
 	}
 }
 
-// odfZlozArkuszStylow składa arkusz stylów nazwanych.
-//
-// Dziedziczenie idzie `style:parent-style-name` — to jest sens stylu nadrzędnego
-// i to sprawia, że zmiana tekstu zasadniczego przestawia cały dokument jednym
-// ruchem także po otwarciu pliku w edytorze Operatora.
+// odfZlozArkuszStylow składa arkusz stylów nazwanych. Dziedziczenie idzie
+// `style:parent-style-name`, dzięki czemu zmiana tekstu zasadniczego przestawia
+// cały dokument jednym ruchem.
 func odfZlozArkuszStylow(arkusz []shared.StudioNamedStyle) string {
 	var budowa strings.Builder
 	for _, styl := range arkusz {
@@ -1995,7 +1946,8 @@ func odfZlozArkuszStylow(arkusz []shared.StudioNamedStyle) string {
 	return budowa.String()
 }
 
-// odfZlozUkladStrony składa układ strony z nastaw strony dokumentu.
+// odfZlozUkladStrony składa układ strony z nastaw strony dokumentu, albo
+// z nastaw domyślnych platformy, gdy dokument nastaw strony nie niesie.
 func odfZlozUkladStrony(nastawy *shared.StudioPageSetup) string {
 	if nastawy == nil {
 		domyslne := wejscieDomyslneNastawyStrony("", nil)
@@ -2044,18 +1996,15 @@ func odfZlozUkladStrony(nastawy *shared.StudioPageSetup) string {
 }
 
 // odfZlozStroneWzorcowa składa stronę wzorcową wraz z nagłówkiem i stopką.
-//
-// Nagłówek pierwszej strony i stron lewych wychodzą osobnymi węzłami — to jest
-// wprost wymaganie Właściciela: nagłówek osobny dla sekcji, pierwszej strony
-// i stron parzystych.
+// Nagłówek domyślny, pierwszej strony i stron parzystych wychodzą osobnymi
+// węzłami, każdy dla własnego zasięgu, jaki niesie postać dokumentu.
 func odfZlozStroneWzorcowa(postac *shared.StudioDocumentForm) string {
 	naglowki := []shared.StudioHeaderFooter{}
 	if len(postac.Sections) > 0 {
 		naglowki = postac.Sections[0].HeadersFooters
 	}
 	if len(naglowki) == 0 && postac.PageSetup != nil {
-		// Nastawy strony niosą nagłówek i stopkę jednym polem dla całego
-		// dokumentu — starsza droga, którą wciąż jedzie klient.
+		// Starsza droga: nastawy strony niosą nagłówek i stopkę jednym polem.
 		wpis := shared.StudioHeaderFooter{Scope: shared.StudioHeaderScopeDefault}
 		if postac.PageSetup.Header != nil && *postac.PageSetup.Header != "" {
 			wpis.HeaderText = postac.PageSetup.Header

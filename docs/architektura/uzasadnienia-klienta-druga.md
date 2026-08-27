@@ -1285,3 +1285,31 @@ zaznaczenia w widoku formatowanym na zakres znaków w treści dokumentu —
 zakres, który jedzie do rdzenia jako granice zaznaczenia. Liczenie go po
 samym tekście widocznym dałoby wartość mniejszą od prawdziwej o długość
 znaczników składni.
+
+## budowa/klient-poprzedni/src/moduly/studio/linijka-pozioma.ts
+
+Linijka chwyta margines lewy i prawy, wcięcie pierwszego wiersza, wcięcie
+lewe i prawe osobnymi znacznikami, tabulatory zakładane naciśnięciem wraz
+z rodzajem i znakiem wiodącym oraz szerokości kolumn tabeli. Każdy chwyt
+przyjmuje wartość także z klawiatury, w milimetrach albo calach, bo
+przestawianie marginesu pisma urzędowego wyłącznie myszą odcięłoby część
+Operatorów.
+
+Wcięcie pierwszego wiersza liczy się względem wcięcia lewego, bo tak zachowuje
+się linijka pakietu biurowego: przeciągnięcie wcięcia lewego zabiera pierwszy
+wiersz ze sobą. Gdyby oba wcięcia były liczone od krawędzi pola, Operator przy
+każdej zmianie wcięcia lewego poprawiałby drugie osobno.
+
+Linijka nie zmienia dokumentu i nie woła rdzenia: oddaje nastawę temu, kto ją
+zbudował, a nastawy strony i wcięcia trzyma powierzchnia. Inaczej powstałyby
+dwa źródła prawdy o marginesie, które rozjechałyby się przy pierwszym profilu
+wydania wziętym z rdzenia.
+
+Wybieracz rodzaju tabulatora pokazuje rodzaj na przycisku, żeby Operator
+wiedział, co założy, zanim naciśnie podziałkę; jedno naciśnięcie przestawia
+rodzaj następnego zakładanego tabulatora.
+
+Krawędź kolumny tabeli nie może przejść przez sąsiednią, bo kolumna
+o szerokości ujemnej nie jest kolumną. Granicą jest sąsiad odsunięty
+o najmniejsze pole, a nie sam sąsiad — dwie krawędzie w jednym miejscu dałyby
+kolumnę zerową.

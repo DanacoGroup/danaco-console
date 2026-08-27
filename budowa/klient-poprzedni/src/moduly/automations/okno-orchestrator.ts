@@ -186,7 +186,7 @@ export function utworzOknoOrchestratora(
           uklad = [...wynik.wynik.dependencies];
           return;
         }
-        // Pełny obraz czytamy ponownym odczytem układu — komenda usunięcia oddaje same zależności.
+        // Pełny obraz czytany jest ponownym odczytem układu — komenda usunięcia oddaje same zależności.
         wyslij(undefined, `Zależność ${opisZaleznosci(zaleznosc)} usunięta.`);
       });
   }
@@ -238,7 +238,7 @@ export function utworzOknoOrchestratora(
     eksportuj('mmd', 'text/plain', () => zapisMermaid(opisUkladu())));
   powierzchnia.eksportRysunku.addEventListener('click', () =>
     eksportuj('svg', 'image/svg+xml', () => {
-      // Kanwa rysuje się przy włączonym przełączniku — przed zapisem odświeżamy ją z układu.
+      // Kanwa rysuje się przy włączonym przełączniku — przed zapisem odswiezana jest ją z układu.
       graf.pokaz(opisUkladu());
       return graf.zapisWektorowy();
     }));

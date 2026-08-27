@@ -1,3 +1,8 @@
+/**
+ * Źródło komend nakładki, będące jedynym miejscem katalogu nakładki, które zna
+ * nazwy komend kontraktu i kształt ich żądań. Kontrakt niesie siedem komend
+ * rodziny nakładki i to źródło wywołuje wszystkie siedem.
+ */
 import {
   Command,
   type AodChatSendRequest,
@@ -17,18 +22,10 @@ import {
 import type { Kanal, Wynik } from '../protokol/kanal';
 
 /**
- * Źródło komend nakładki — jedyne miejsce w katalogu `aod/`, które zna nazwy
- * komend kontraktu i kształt ich żądań. Sekcje okna dostają stąd czynności,
- * nie `Command.*`, więc żadna sekcja nie powtarza opakowania kanału.
- *
- * Kontrakt niesie siedem komend `aod.*` i to źródło wywołuje wszystkie siedem.
- * `aod.voice.command` idzie bez mikrofonu: `audioRef` i `transcript` są w
- * kontrakcie polami opcjonalnymi, więc polecenie wydane samą treścią jest
- * wywołaniem pełnoprawnym. Nagrania nakładka nie wytwarza — granicę nazywa
- * `sekcja-glosu.ts`.
+ * Opakowuje wysłanie komendy kanałem w obietnicę, ponieważ kanał sam daje
+ * wyłącznie wersję z wywołaniem zwrotnym, a sekcje okna czekają na wynik
+ * składnią asynchroniczną.
  */
-
-/** Opakowuje `kanal.wyslij` w Promise — kanał sam daje wyłącznie wersję z wywołaniem zwrotnym. */
 function poslijKomende<K extends Command>(
   kanal: Kanal,
   komenda: K,
@@ -39,7 +36,11 @@ function poslijKomende<K extends Command>(
   });
 }
 
-/** Czynności nakładki widziane przez sekcje okna. */
+/**
+ * Czynności nakładki widziane przez sekcje okna. Sekcje wołają czynności,
+ * a nie stałe komend, dzięki czemu żadna z nich nie powtarza opakowania kanału
+ * ani nie zna nazw komend kontraktu.
+ */
 export interface ZrodloAod {
   /** Identyfikator sesji bieżącej albo `undefined`, gdy sesji jeszcze nie ma. */
   idSesji(): string | undefined;
@@ -62,18 +63,9 @@ export interface ZrodloAod {
 }
 
 /**
- * Buduje źródło czynności nad kanałem rdzenia.
- *
- * Żadne żądanie nie niesie `deviceId`. Rdzeń rozumie przez identyfikator
- * urządzenia numer wiersza katalogu maszyn — `adapterNakladkiAod.urzadzenieNakladki`
- * czyta go przez `strconv.ParseInt`, tym samym prawem co rodzina `accessPoint.*`.
- * Identyfikator sesji („ses_…") dostaje odmowę `validation_failed`, a
- * `kolumna-aod.ts` przerywa wczytywanie na pierwszym błędzie stanu, więc jedna zła
- * wartość zabiera całą treść nakładki.
- *
- * Pole puste rdzeń przyjmuje. Żadna komenda kontraktu nie mówi klientowi,
- * którym numerem katalogu maszyn jest ta maszyna, więc podstawienie zgadniętej
- * jedynki byłoby wartością zmyśloną.
+ * Buduje źródło czynności nad kanałem rdzenia. Żadne żądanie nie niesie
+ * identyfikatora urządzenia, ponieważ żadna komenda kontraktu nie mówi
+ * klientowi, którym numerem katalogu maszyn jest ta maszyna.
  */
 export function utworzZrodloAod(kanal: Kanal): ZrodloAod {
   const idSesji = (): string | undefined => kanal.sesja().id() || undefined;

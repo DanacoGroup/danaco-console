@@ -6619,3 +6619,26 @@ Warstwa niesie pięć narzędzi: inspektor DOM i stylów, monitor sieci z ekspor
 
 ## budowa/klient-poprzedni/src/moduly/apps/przybornik-apps.test.ts
 Pilnowane jest jedno, ale najważniejsze: czy z okna prowadzi droga do każdej komendy obszaru. Moduł ma czterdzieści jeden komend; sześć z nich prowadzą kontrolki formularzy okien architektury, warsztatu, wdrożenia i trzech odczytów, pozostałe trzydzieści pięć — narzędzia przyborników. Wykaz komend liczy się z kontraktu w czasie działania, nie z listy wpisanej w sprawdzianie: nowa komenda obszaru apps dołożona do kontraktu ma ten sprawdzian złamać, bo znaczy, że okno o niej nie wie. Drugi sprawdzian pilnuje zasady zero blokad: ani jedna kontrolka przybornika nie ma atrybutu wyłączenia — narzędzie bez pokrycia, brak okna modułu, puste pole wymagane, ma być klikalne i nazwać brak, a nie milczeć pod wyszarzonym przyciskiem.
+
+## budowa/klient-poprzedni/src/moduly/browser/narzedzia-inspekcyjne.ts — czynności bez zastępczych przycisków
+Drzewo DOM, rejestr sieciowy, konsola i emulacja urządzenia mają w rdzeniu uchwyty prowadzone protokołem narzędzi deweloperskich, a okno je wywołuje. Zastępczych przycisków bez obsługi już tu nie ma.
+
+## budowa/klient-poprzedni/src/moduly/library/okno-library-explorer.ts
+Cztery funkcje użytkownika z wiersza wykazu mają każda własną drogę do
+rdzenia: nawigacja po strukturze, wyszukiwanie w trzech trybach, otwarcie
+zasobu, gdzie wskazanie pliku przestawia cztery pozostałe okna, a otwarcie
+w module źródłowym idzie osobną komendą przekazania, oraz wgranie pliku.
+Prezentacja wykazu ma pięć postaci, wszystkie liczą się z tej samej
+odpowiedzi rdzenia i nie wysyłają ani jednej komendy. Komplet przybyły
+z innego modułu trafia do okna wiodącego, gdzie użytkownik może z nim
+cokolwiek zrobić. Przeglądarka przycina pola przed wysłaniem, a rdzeń
+biblioteki dopasowuje etykietę dosłownie, nie przycinając ani zapisu, ani
+filtru; sam mechanizm przycinania przeglądarki zdejmuje przy tym znaki,
+które rdzeń zostawia, więc etykieta zapisana z takim znakiem na brzegu jest
+z tego pola nieosiągalna, a pusty wykaz wyglądałby jak zdanie o
+repozytorium. Pusty wykaz w trybie semantycznym może znaczyć brak
+wskaźnika znaczenia, a nie brak takich plików, dlatego o powodzeniu orzeka
+faza wykazu, nie treść zdania. Przy frazie albo etykiecie w polu rdzeń
+odpowiedział o tym, o co go pytano, a nie o całym zbiorze. Katalog modułów
+obsadza ster modułu docelowego w tym oknie i w podglądzie pliku: jedna
+nastawa, więc jeden odczyt.

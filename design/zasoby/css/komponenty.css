@@ -1213,7 +1213,11 @@ label.dn-pasek-szukaj:focus-within {
    i powielał całą listwę, żeby dodać jej podniesienie. */
 .dn-listwa-pozycja--pulpit {
   padding: var(--dn-od-2) var(--dn-od-3);
-  border: 1px solid transparent;
+  /* Ramka jest widoczna w SPOCZYNKU: pozycja stoi teraz na płótnie, nie
+     w zagłębionej tacy, więc bez własnej krawędzi nie czyta się jako
+     kontrolka. `--dn-obrys` zrównałby się z tłem w motywie ciemnym
+     (17,0 na 17,0 L*), dlatego krawędź bierze obrys mocny. */
+  border: 1px solid var(--dn-obrys-mocny);
   border-radius: var(--dn-r-md);
   color: var(--dn-tekst);
   transition:
@@ -1224,7 +1228,7 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-listwa-pozycja--pulpit:hover {
   background: var(--dn-panel);
-  border-color: var(--dn-obrys);
+  border-color: var(--dn-sygnal-obrys);
   transform: translateY(var(--dn-podniesienie-sm));
 }
 .dn-listwa-pozycja--pulpit:active { transform: translateY(0) scale(var(--dn-skala-nacisk)); }

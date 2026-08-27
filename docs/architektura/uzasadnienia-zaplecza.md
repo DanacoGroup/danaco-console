@@ -697,3 +697,57 @@ Każde wstawienie kończy się `ON CONFLICT(kod) DO NOTHING`, dzięki czemu
 migracja przechodzi także na bazie, w której część wierszy już istnieje.
 Klauzula `WHERE true` przed `ON CONFLICT` jest wymogiem składni SQLite dla
 zapisu `INSERT ... SELECT` z upsertem.
+
+## budowa/server/internal/store/migracja_124_urzadzenia_powiadomien.sql
+
+Nośnik doręczenia już istnieje w warstwie transportu: rozgłoszenie serwera
+wysyła kopertę do otwartych gniazd i zwraca liczbę urządzeń, które ją
+przyjęły, a rejestr połączeń zna tożsamość każdego gniazda. Ta migracja nie
+zakłada własnego kanału transmisji — opisuje wyłącznie to, czego nośnikowi
+brakuje: kogo wołać, czym i czy doszło.
+
+Nie ma tu drugiej tabeli urządzeń. Urządzenie opisuje osobna tabela
+urzadzenie; druga tabela maszyn byłaby drugą prawdą o tym, czym operator
+dysponuje. Tabela urzadzenie_powiadomien nie opisuje maszyny — opisuje zgodę
+tej maszyny na wołanie i drogę, którą wołanie idzie. Jedna maszyna może mieć
+kilka takich dróg — pulpit i przeglądarka to dwa osobne gniazda o dwóch
+tożsamościach — więc relacja jest jeden do wielu, a nie kolumną doklejoną do
+tabeli urządzeń.
+
+Słownik kanałów jest zamknięty na to, co rdzeń dziś potrafi doręczyć: kolumna
+kanał dopuszcza jedną wartość, oznaczającą połączenie. Warunek dopuszczający
+kanał usługi zewnętrznej bez kodu, który go obsłuży, przepuściłby rejestrację,
+której żaden takt nie doręczy — wiersz stanąłby w kolejce na zawsze. Kanały
+zewnętrzne wejdą osobną migracją, razem z kodem, który je obsłuży.
+
+Klucz kanału dla kanału połączenia jest tym samym napisem, który transport
+już dziś niesie jako tożsamość klienta gniazda; migracja nie zakłada nowego
+identyfikatora urządzenia, bo byłby drugą tożsamością tego samego gniazda.
+
+Kolejka zastępuje wysyłkę wprost, bo bez tabeli powiadomienie zgłoszone przy
+zamkniętej aplikacji znika. Kolejka sprawia, że brak odbiorcy jest stanem,
+a nie ciszą: wiersz oczekujący z licznikiem prób mówi wprost, że wołanie się
+odbyło i nie było komu odpowiedzieć.
+
+Termin ważności jest obowiązkowy z rozmysłu: powiadomienie bez terminu
+wisiałoby wiecznie, a po dłuższym postoju rdzenia operator dostałby lawinę
+budzików o sprawach dawno nieaktualnych. Termin wymuszony schematem znaczy,
+że każdy wołający musi odpowiedzieć na pytanie, do kiedy dane powiadomienie
+ma sens.
+
+Rodzaj i identyfikator bytu tworzą kotwicę miękką, bez klucza obcego.
+Powiadomienie dotyczy czegoś — dziś przede wszystkim kroku wstrzymanego,
+czekającego na słowo operatora. Klucza obcego do jednej tabeli tu nie ma, bo
+powiadomienie ma z założenia dotyczyć różnych bytów — kroku, zlecenia, biegu
+automatyki — a klucz obcy zamknąłby je na jeden byt i wymusił kolumnę na
+każdy następny. Rodzaj i klucz bytu chodzą parą, a więz sprawdzający tę parę
+stoi dalej w definicji tabeli, razem z pozostałymi więzami, ponieważ SQLite
+nie pozwala wrócić do definicji kolumn po pierwszym więzie tabeli. Ceną
+takiego rozwiązania jest brak kaskady: powiadomienie o bycie usuniętym
+zostaje w kolejce i wygasa własnym terminem.
+
+Doręczenie jest osobną tabelą, bo samo dotarcie bez wskazania, do którego
+urządzenia, jest odpowiedzią nie do sprawdzenia — operator ma pulpit i telefon
+naraz. Kolumna dostarczono w tabeli powiadomień mówi, że dotarło gdziekolwiek,
+i to wystarcza kolejce do zamknięcia sprawy; tabela doręczeń mówi gdzie
+i kiedy, i to jest odpowiedź, którą można pokazać operatorowi bez zmyślania.

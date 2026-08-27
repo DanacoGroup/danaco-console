@@ -393,7 +393,7 @@ func numerWierszaBledu(wiersz string) (int, bool) {
 }
 
 // wagaUwagi przekłada wagę ShellChecka na słownik kontraktu. Wartość
-// nierozpoznana schodzi na ostrzeżenie: uwaga, której wagi nie znamy, ma być
+// nierozpoznana schodzi na ostrzeżenie: uwaga o nieznanej wadze ma być
 // widoczna, a nie przemilczana ani podniesiona do błędu.
 func wagaUwagi(poziom string) shared.TerminalLintSeverity {
 	switch strings.ToLower(strings.TrimSpace(poziom)) {

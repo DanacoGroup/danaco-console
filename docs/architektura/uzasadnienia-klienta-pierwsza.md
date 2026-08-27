@@ -3813,3 +3813,81 @@ Wypełnienie toru suwaka niesie żeton `--dn-suwak-pozycja`, czytany przez arkus
 kontrolki. Arkusz ma dla niego wartość zapasową równą połowie zakresu, więc bez
 tego ustawienia tor każdego suwaka pokazywałby połowę niezależnie od wartości
 kontrolki.
+
+## budowa/klient-poprzedni/src/moduly/browser/odczyt-migawki.ts
+
+Treść migawki pochodzi z tabeli `migawka_strony`, którą wypełnia `browser.navigate`,
+więc przeżywa przeładowanie powłoki i wymianę karty. Odczyt jest jeden i mieści się
+w tym pliku, wzorem `wykazy-zebranego`, żeby okna pytały o wynik, a nie o sposób.
+
+Odmowa `not_found` nie jest błędem okna: rdzeń odpowiada nią, dopóki w oknie nie odbyło
+się ani jedno przejście, co jest normalnym stanem okna świeżo otwartego. Zostaje wtedy
+stan `nietknieta` — podgląd pusty i zdanie o powodzie, bez stanu błędu. Każda inna odmowa
+mówi swoim powodem.
+
+Odczyt w toku jest osobnym stanem, a nie odmianą pustki. Zdania „nie ma czego pokazać"
+i „pytam" to dwie różne rady: pierwsza każe działać, druga czekać.
+
+Migawki nie kasujemy przy odmowie, ponieważ nieudany odczyt nie unieważnia strony, którą
+Operator już czyta. Migawka świeżo wchłonięta unieważnia natomiast zdanie o poprzednim
+odczycie: powód „okno nie ma jeszcze migawki" przestaje być wtedy prawdziwy.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-zaplecza.ts
+
+Komenda `channel.list` podaje rejestr kanałów modelu dla okna Model
+Configuration; moduł Agents kanałów nie zakłada, lecz wybiera spośród wierszy
+rejestru rdzenia. Komenda `config.capabilities.get` podaje deklarację zdolności
+adaptera dostawcy dla pól konfiguracji sesji, dzięki czemu okno pokazuje wprost,
+którego parametru wybrany kanał nie obsłuży, zanim Operator go wypełni. Komenda
+`access.point.list` podaje katalog mostów MCP dla okna Connectors Manager — ten
+sam katalog, z którego rdzeń składa wykaz serwerów procesu modelu. Komenda
+`identity.category.list` podaje słownik kategorii tożsamości dla Agent Buildera.
+Para komend `window.list` oraz `window.update` obsługuje tryb uprawnień
+przypisany jednemu oknu komunikacji w oknie Permissions Center.
+
+Zapytanie o zdolności obejmuje obszar modelu, ponieważ okno Model Configuration
+wypełnia wyłącznie pola modelu prowadzącego i parametrów jego wywołania. Pytanie
+o komplet obszarów przyniosłoby deklarację, której okno nie pokaże.
+
+## budowa/klient-poprzedni/src/moduly/automations/dziennik-przebiegow.ts
+
+Dziennik nie jest pełnym logiem przebiegu. Zbiera wyłącznie to, co przyszło do
+okna otwartego, więc przebieg sprzed otwarcia okna nie ma tu ani jednego wiersza.
+Pełny zapis oddaje osobna komenda logu przebiegu — okno nazywa ją pozycją paska
+akcji i mówi wprost, czy rdzeń ma dla niej uchwyt.
+
+Poziomu wiersza samo zdarzenie nie niesie. Zamiast zgadywać go z treści, dziennik
+zapamiętuje stan przebiegu z chwili wpisu; po nim idzie zawężanie i po nim widać,
+czy wiersz powstał w przebiegu, który jeszcze trwał, czy w takim, który już się
+załamał.
+
+## budowa/klient-poprzedni/src/moduly/design/pasek-postepu.ts
+
+Komenda `design.asset.generate` postępu nie zgłasza, ponieważ rdzeń nie ma czym
+wytworzyć obrazu, więc okno kreatora wycisza pasek zamiast zostawiać go w stanie
+oczekiwania.
+
+Pasek bez oczekiwanego procesu milczy: zdarzenie `progress.changed` jedzie
+z każdego strumienia rozmowy w rdzeniu, obsługiwanego w pliku
+`core/telemetria_strumienia.go`, a nie tylko z pracy tego okna. Przyjmowanie
+każdego zdarzenia pokazywałoby tu postęp pracy, której to okno nie zlecało.
+Rozstrzygnięcie własnego postępu wygląda tak: ze wskazanym procesem liczy się
+zgodność procesu, a dopóki rdzeń procesu nie nazwał, wystarczy zgodność okna.
+
+Miniatura w budowie nie jest podglądem wyniku, bo wyniku jeszcze nie ma; jest
+widocznym śladem tego, że rdzeń pracuje nad zasobem tego okna. Wygląd bierze się
+z biblioteki komponentów, więc plik nie zna ani jednej barwy.
+
+## budowa/klient-poprzedni/src/moduly/agents/edytor-eksperta.ts
+
+Edytor składa formularz tożsamości — nazwę, imię własne, favikon, opis
+i instrukcje — z edytorem warstw promptu oraz z wykazem kategorii tożsamości
+pochodzącym z katalogu rdzenia. Każda z tych rzeczy ma własne wywołania i własne
+odmowy, więc mieszka we własnym pliku; tutaj zostaje samo złożenie i przekazanie
+eksperta czynnego w dół.
+
+Katalog kategorii jest tylko do odczytu: kategorie tożsamości pochodzące
+z komendy `identity.category.list` są własnością rdzenia i edytor nie dopisuje ani
+jednej własnej. Okno pokazuje je jako kontekst, w który wchodzą warstwy eksperta,
+a nie po to, żeby je stąd zmieniać. Sam edytor nie wykonuje ani jednego wywołania
+rdzenia.

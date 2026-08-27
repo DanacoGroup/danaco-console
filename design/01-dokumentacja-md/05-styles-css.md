@@ -1144,3 +1144,9 @@ Rozstrzygnięcia podjęte ponad literalny zapis dokumentacji źródłowej, wraz 
 
 *Danaco Console — AI Operating Environment · v2.0*
 *© 2026 Danaco Holding Group Sp. z o.o. — Dariusz Naharnowicz*
+
+## Uzasadnienia reguł okien
+
+Powody, dla których reguły poszczególnych okien są takie, a nie inne, prowadzi
+[11 — uzasadnienia okien](11-uzasadnienia-okien.md). Arkusze okien niosą sam kod:
+limit gęstości komentarzy wynosi 250 znaków na 1000 wierszy.

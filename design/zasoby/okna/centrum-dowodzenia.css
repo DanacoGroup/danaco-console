@@ -28,6 +28,52 @@
 
 .dn-obszar-panel--boczny[data-strona='prawo'] { order: 9; }
 
+.cd-panel-stopka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-05);
+  margin-top: auto;
+  padding: var(--dn-od-2);
+}
+.cd-panel-stopka-poz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 0;
+  border-radius: var(--dn-r-md);
+  background: none;
+  color: var(--dn-tekst-2);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.cd-panel-stopka-poz > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-panel-stopka-poz:hover,
+.cd-panel-stopka-poz:focus-visible { background: var(--dn-hover); color: var(--dn-tekst); }
+.cd-panel-stopka-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
+}
+.cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
+.cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); }
+.cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
+
+.cd-strona {
+  --cd-tekst-opisu: color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
+}
+@supports not (color: color-mix(in oklab, red, blue)) {
+  .cd-strona { --cd-tekst-opisu: var(--dn-tekst-2); }
+}
+.cd-strona .cd-kafel-tresc .dn-kafel-opis,
+.cd-strona .cd-wlasny-rodzaj { color: var(--cd-tekst-opisu); }
+.cd-strona .cd-listwa-poz { color: var(--dn-tekst-2); }
+.cd-strona .cd-listwa-poz:hover,
+.cd-strona .cd-listwa-poz:focus-visible { color: var(--dn-tekst); }
+
 .cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
 
 .cd-tresc:not([hidden]) {
@@ -190,7 +236,7 @@
 }
 .cd-kafel .dn-kafel-ikona svg { width: var(--dn-od-8); height: var(--dn-od-8); }
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
-.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-lg); }
+.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-md); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
 .cd-strona .cd-kafel-tresc .dn-kafel-etykieta { font-weight: var(--dn-fw-normalna); }
 .cd-kafel-blok { display: flex; }
@@ -248,7 +294,7 @@
 .cd-strona .cd-kafel:hover .cd-kafel-grot .cd-grot-marki,
 .cd-strona .cd-kafel:focus-visible .cd-kafel-grot .cd-grot-marki { color: var(--dn-tekst); }
 .cd-strona .cd-kafel:hover .cd-kafel-grot .kropka,
-.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .kropka { fill: var(--dn-sygnal-500); }
+.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .kropka { fill: var(--dn-sygnal); }
 
 .cd-dodaj-pas { display: flex; }
 .cd-dodaj-pas > .dn-btn { gap: var(--dn-od-1); }
@@ -720,49 +766,3 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .cd-karta-anim,
 .cd-strona .dn-karta-srodowiska-opis,
 .cd-strona .dn-karta-srodowiska-motto { transition: opacity var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
-
-.cd-panel-stopka {
-  display: flex;
-  flex-direction: column;
-  gap: var(--dn-od-05);
-  margin-top: auto;
-  padding: var(--dn-od-2);
-}
-.cd-panel-stopka-poz {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  padding: var(--dn-od-2) var(--dn-od-3);
-  border: 0;
-  border-radius: var(--dn-r-md);
-  background: none;
-  color: var(--dn-tekst-2);
-  font: inherit;
-  font-size: var(--dn-fs-sm);
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
-}
-.cd-panel-stopka-poz > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
-.cd-panel-stopka-poz:hover,
-.cd-panel-stopka-poz:focus-visible { background: var(--dn-hover); color: var(--dn-tekst); }
-.cd-panel-stopka-poz:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
-}
-.cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
-.cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); }
-.cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
-
-.cd-strona {
-  --cd-tekst-opisu: color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
-}
-@supports not (color: color-mix(in oklab, red, blue)) {
-  .cd-strona { --cd-tekst-opisu: var(--dn-tekst-2); }
-}
-.cd-strona .cd-kafel-tresc .dn-kafel-opis,
-.cd-strona .cd-wlasny-rodzaj { color: var(--cd-tekst-opisu); }
-.cd-strona .cd-listwa-poz { color: var(--dn-tekst-2); }
-.cd-strona .cd-listwa-poz:hover,
-.cd-strona .cd-listwa-poz:focus-visible { color: var(--dn-tekst); }

@@ -1557,3 +1557,50 @@ Związek kamienia milowego z etapami ma tabelę złącznikową, nie kolumnę lis
 Kolumna `etap_kod` trzyma kod zewnętrzny etapu, a nie więz obcy: kamień milowy
 ma prawo wskazywać etap usunięty po zapisie, tak samo jak
 `plik_warsztatu_apps.komponent_id` wskazuje komponent zdjęty z architektury.
+
+## budowa/server/internal/store/migracja_015_tozsamosc_modelu.sql
+
+Tożsamość modelu jest zamieniana, nie dołączana do ustawień fabrycznych.
+Silnik nakładki niesie trzy warstwy — konstytucja, profil, ekspertyza — oraz
+dwa tryby podania promptu systemowego, zastąpienie i dołączenie. Te dwie
+tabele niosą sterowanie silnikiem, skąd bierze się treść warstw i który tryb
+obowiązuje, i ani jednego zdania promptu: treść wchodzi wyłącznie
+z konfiguracji.
+
+Kolumna warstwa przyjmuje dosłownie wartości wyliczenia kontraktu, które
+kontrakt sam wiąże ze stałymi silnika nakładki. Kontrakt nie daje dla tego
+wyliczenia osobnego słownika przekładu bazy, więc kolumna trzyma wartość
+kontraktu wprost, bez drugiego, równoległego nazewnictwa.
+
+Tryb domyślny kategorii i tryb zapisu przyjmują wartości wyliczenia trybu
+podania promptu, z wartością domyślną odpowiadającą wartości domyślnej
+klucza ustawień tożsamości. Baza nie powtarza reguły składania trybu
+nakładki: rozstrzyga ją składacz promptu w warstwie rdzenia, tak samo jak
+kolejność poziomów zasięgu rozstrzyga warstwa konfiguracji, a nie schemat.
+
+Oś przyjmuje wartości wyliczenia osi konfiguracji i mówi, dla czego treść
+obowiązuje; jest prostopadła do poziomu zasięgu. Byt osi wskazuje konkretny
+byt tej osi: identyfikator modelu dla osi modelu, identyfikator konta dla
+osi konta. Dla osi platformy byt osi jest pusty — pilnuje tego warunek
+sprawdzający, bo pusty i niepusty byt to dwa różne klucze rozstrzygania,
+a pomyłka dawałaby dwa wiersze o tym samym znaczeniu.
+
+Byt osi nie jest kluczem obcym: jedna kolumna niosłaby odwołania do dwóch
+różnych rodziców — identyfikatora modelu, który w ogóle nie ma własnej
+tabeli, bo model jest napisem w kanale modelu oraz w polu okna, i
+identyfikatora konta z tabeli kont. Klucz obcy do dwóch tabel naraz nie
+istnieje, a wybór jednej z nich zamykałby drogę drugiej osi. Spójność osi
+konta sprawdza warstwa danych przy zapisie; brak bytu osi nie wywraca
+odczytu, tylko znaczy, że dany wiersz nie obowiązuje.
+
+Kolumna odcisk treści jest skrótem kryptograficznym treści liczonym przez
+warstwę wyższą. Służy diagnostyce prowenancji i rozpoznaniu, czy nakładka
+się zmieniła — niczego nie dopuszcza i niczego nie blokuje; kolumna pusta
+jest dopuszczalna.
+
+Zaczyn katalogu kończy się klauzulą braku działania przy konflikcie kodu,
+więc migracja przechodzi także na bazie, w której część wierszy katalogu już
+jest. Obowiązkowa jest wyłącznie konstytucja — to jej odcisk niesie panel
+prowenancji jako osobny blok. Obowiązkowość jest oznaczeniem dla okna
+konfiguracji, nie bramą: brak treści nie wstrzymuje uruchomienia, wraca
+wykazem brakujących kategorii obowiązkowych.

@@ -2438,3 +2438,21 @@ Przynależność stoi po stronie źródła i notatki, nie w kolumnie zestawu:
 zestawu jest zapytaniem po kolumnie, a nie drugą listą do utrzymania.
 Kontrakt oddaje `sourceIds` i `noteIds` — rdzeń wylicza je z tej samej
 kolumny, którą zapisuje.
+## budowa/server/internal/store/migracja_182_biblioteka_reguly.sql
+Migracja 182 — moduł Library: reguły repozytorium.
+
+Jedna tabela na trzy rodzaje reguły (kolekcja inteligentna, reguła napływu,
+folder obserwowany), bo wszystkie trzy mają ten sam kształt: warunek, cel
+i przełącznik czynności. Rozdzielenie ich na trzy tabele powieliłoby warunek
+i wykaz — a `library.rule.list` pyta o wszystkie naraz, zawężając rodzajem.
+
+Warunek stoi w zapisie JSON, nie w kolumnach. Kontrakt niesie go jako `json`
+(`LibraryRule.condition`: moduł źródłowy, etykiety, rodzaj treści, zakres
+dat), a kolumna na każdy człon warunku zamieniłaby dodanie członu w migrację.
+Rozbiór warunku należy do rdzenia, który go stosuje.
+
+Przypisanie do kolekcji dostaje pochodzenie. Bez niego usunięcie reguły
+kolekcji inteligentnej nie miałoby jak odróżnić zasobu wciągniętego regułą od
+zasobu przypisanego ręką Operatora — a `library.rule.remove` z żądaniem
+`detachFiles` ma zdjąć wyłącznie te pierwsze. Przypisanie ręczne jest
+wartością domyślną, więc wiersze zastane opisują się same.

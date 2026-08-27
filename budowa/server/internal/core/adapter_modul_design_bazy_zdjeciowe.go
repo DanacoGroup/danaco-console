@@ -469,7 +469,7 @@ func pobierzNasaDesignu(ctx context.Context, klient *http.Client, _,
 	if err := odczytajJsonDostawcyDesignu(ctx, klient, adres, nil, &odpowiedz); err != nil {
 		return zasobDostawcyZdjecDesignu{}, err
 	}
-	// Wpisy są uszeregowane od największego; bierzemy pierwszy plik obrazu.
+	// Wpisy są uszeregowane od największego; bierze się pierwszy plik obrazu.
 	pelny := ""
 	for _, wpis := range odpowiedz.Collection.Items {
 		maly := strings.ToLower(wpis.Href)

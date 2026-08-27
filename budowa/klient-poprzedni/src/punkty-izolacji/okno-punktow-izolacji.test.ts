@@ -3,25 +3,7 @@ import { Command, ConfigScope, IsolationLayer } from '../../../shared/contract';
 import type { Kanal } from '../protokol/kanal';
 import { utworzOknoPunktowIzolacji } from './okno-punktow-izolacji';
 
-/**
- * Sprawdziany okna Punktów Izolacji — czynność, nie kształt pliku.
- *
- * Pilnowane są cztery rzeczy, których opracowanie żąda wprost, a które wcześniej
- * były w tym oknie zaszyte na sztywno albo rozdzielone na zakładki:
- *
- *   1. trzy panele w kolejności selektor → macierz → profil (rozdz. 6.1 Modelu
- *      konfiguracji), a nie pasek zakładek;
- *   2. objaśnienie kontekstowe `[?]` przy każdym przełączniku macierzy
- *      (rozdz. 3.3), z treścią, nie samym znakiem;
- *   3. zasięg i warstwa niesione w żądaniach `isolation.*` zamiast wpisanych
- *      w kod;
- *   4. wskazanie poziomu w selektorze przestawiające odczyt macierzy — dowód,
- *      że lewy panel steruje, a nie tylko wygląda na selektor.
- *
- * Rdzeń jest atrapą: sprawdzian pyta o zachowanie okna, nie o zachowanie
- * serwera. Odpowiedź nieznana atrapie wraca odmową — tak jak wraca z rdzenia,
- * który komendy nie zna.
- */
+/** Sprawdziany okna Punktów Izolacji — czynność okna, nie kształt pliku, wobec czterech wymagań tego widoku. */
 interface Zapis {
   komenda: string;
   zadanie: Record<string, unknown>;
@@ -81,8 +63,7 @@ describe('okno punktów izolacji', () => {
     await new Promise((gotowe) => setTimeout(gotowe, 0));
     const macierz = okno.element.querySelector('[data-panel="macierz"]');
     const dymki = macierz?.querySelectorAll('.dn-tooltip') ?? [];
-    // Osiem punktów technicznych rysuje się bez odpowiedzi rdzenia (tabela
-    // stała); kontekst dorysowuje trzy po udanym odczycie.
+    // Osiem punktów technicznych rysuje się bez odpowiedzi rdzenia; kontekst dorysowuje trzy po odczycie.
     expect(dymki.length).toBeGreaterThanOrEqual(8);
     for (const dymek of dymki) {
       expect(dymek.querySelector('button')?.getAttribute('aria-label') ?? '').not.toBe('');
@@ -103,8 +84,7 @@ describe('okno punktów izolacji', () => {
     for (const odczyt of odczyty) {
       expect(odczyt.zadanie['scope']).toBe(ConfigScope.Global);
     }
-    // Odczyt wartości obecnej idzie na warstwie czynnej okna — domyślnej,
-    // dopóki pas narzędzi jej nie przełączy.
+    // Odczyt wartości obecnej idzie na warstwie czynnej okna, domyślnej, dopóki pas jej nie przełączy.
     expect(
       odczyty.some((o) => o.zadanie['layer'] === IsolationLayer.Default),
     ).toBe(true);

@@ -3681,3 +3681,15 @@ Sprawdzian składania żądań warsztatu dokumentu pilnuje miejsca, w którym fo
 w treść kontraktu: pole puste nie trafia do żądania, a nie trafia jako pusty napis, bo pusty
 napis w polu nieobowiązkowym jest dla rdzenia wskazaniem, a nie jego brakiem, i zmienia znaczenie
 czynności — w szyfrowaniu decyduje to, czy hasło jest nakładane, czy zdejmowane.
+
+## budowa/klient-poprzedni/src/moduly/research/zaznaczenie-pozycji.ts
+Wydzielone jako osobny byt, bo dotyczy dwóch okien naraz — Sources Manager, przy wyborze wielu
+źródeł do eksportu, i Findings Panel, przy wyborze ustaleń do raportu. Zaznaczenie nie warunkuje
+klikalności: przy pustym zbiorze akcja zostaje czynna i odpowiada zdaniem opisowym, zamiast być
+wygaszona. Zbiór ogłasza swoją zmianę i dlatego konstruktor żąda wywołania zwrotnego — zbiór jest
+wspólny obu oknom, więc bez ogłoszenia drugie okno przerysowałoby się dopiero przy najbliższej
+zmianie treści badania: ta sama nastawa pokazywałaby w dwóch oknach dwie różne wartości, a wiązanie
+źródła z ustaleniem brałoby to, czego w panelu ustaleń nie widać. Wywołanie zwrotne jest więc
+obowiązkowe, nie domyślne. Ogłoszenie idzie wyłącznie po faktycznej zmianie: odbiorcą jest
+przerysowanie okien, a przerysowanie woła ograniczenie zaznaczenia — ogłoszenie bezwarunkowe
+zamknęłoby pętlę bez końca.

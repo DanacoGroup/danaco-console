@@ -215,6 +215,18 @@ func TestProgramyRdzeniaStojaWWykazieZaleznosci(t *testing.T) {
 		{"tesseract", "rozpoznanie pisma"},
 		{"ffmpeg", "zamiana formatu nagrania"},
 		{"7z", "archiwa"},
+		// Warsztat kodu: osiem programów, po które sięgają komendy modułów
+		// Developer i Terminal. Bez wpisu w wykazie sonda startowa milczałaby
+		// o ich braku, a Operator dowiadywałby się o nim dopiero z funkcji,
+		// która odmawia.
+		{"ruff", "analiza plików Pythona"},
+		{"semgrep", "poszerzenie skanu kodu o reguły semantyczne"},
+		{"ast-grep", "wyszukanie i zamiana po składni"},
+		{"jscpd", "powtórzenia w TypeScripcie i JavaScripcie"},
+		{"dupl", "powtórzenia w plikach Go"},
+		{"typos", "literówki w treści repozytorium"},
+		{"stylelint", "analiza arkuszy CSS"},
+		{"typescript-language-server", "warstwa językowa TypeScriptu"},
 	} {
 		if _, stoi := zadeklarowane[narzedzie.program]; !stoi {
 			t.Errorf("wykaz zależności nie zna programu %s (%s); ten obszar nie ma biblioteki "+

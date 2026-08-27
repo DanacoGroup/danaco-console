@@ -18,7 +18,28 @@ import (
 	"go/scanner"
 	"go/token"
 	"os"
+	"regexp"
+	"strings"
 )
+
+// odsylacz rozpoznaje komentarze wyłączone z granicy gęstości rozstrzygnięciem
+// Właściciela (pozycja 18): dyrektywy, odsyłacze i wskazania miejsc — komentarz
+// jednowierszowy niosący ścieżkę pliku (docs/…, *.go, *.md, *.sql) albo
+// zaczynający się od „Uzasadnienie:", „Patrz" lub „Zob.". Komentarz główny
+// (treść opisowa) wlicza się zawsze.
+var wzorSciezki = regexp.MustCompile(`\S+\.(go|md|sql)\b|(^|\s)docs/`)
+var wzorWskazania = regexp.MustCompile(`^(Uzasadnienie:|Patrz\b|Zob\.)`)
+
+func odsylacz(lit string) bool {
+	if !strings.HasPrefix(lit, "//") {
+		return false // komentarz blokowy zawsze wliczony
+	}
+	t := strings.TrimSpace(strings.TrimPrefix(lit, "//"))
+	if strings.HasPrefix(lit, "//go:") {
+		return true
+	}
+	return wzorSciezki.MatchString(t) || wzorWskazania.MatchString(t)
+}
 
 func main() {
 	gestosc := len(os.Args) == 3 && os.Args[1] == "-gestosc"
@@ -49,7 +70,7 @@ func main() {
 			if tok == token.EOF {
 				break
 			}
-			if tok == token.COMMENT {
+			if tok == token.COMMENT && !odsylacz(lit) {
 				znaki += len(lit)
 			}
 		}

@@ -1863,3 +1863,12 @@ Kafel dzieli kartę ze środowiskiem, o mniejszej wadze: wariant komponentu odbi
 Warstwy instrukcji stoją w osobnym pliku od okna, bo to inna odpowiedzialność: okno prowadzi zapis
 i odczyt, tu leży wyłącznie przedstawienie warstwy. Wykaz poziomów i ich nazwy pochodzą z modułu
 poziomów zasięgu.
+
+## budowa/klient-poprzedni/src/widok-sterowania/indeks.ts
+
+Katalog nie buduje ani jednej kontrolki, tylko oprawę, w której kontrolki
+katalogu stają się widoczne. Punkt wejścia klienta montuje widok dla okna
+potwierdzonego przez rdzeń, tworząc rejestr kanałów, odświeżając go i wołając
+montaż widoku sterowania z kanałem, oknem, rejestrem kanałów, panelem oraz
+akcjami paska. Widok powstaje raz na okno; rejestr kanałów raz na klienta,
+bo jest katalogiem wyboru, nie ustawieniem okna.

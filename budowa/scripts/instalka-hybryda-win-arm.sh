@@ -1,33 +1,7 @@
 #!/usr/bin/env bash
-# Instalka Danaco Console dla Windows 11 na ARM64 — złożenie pliku .exe (NSIS)
-# na Linuksie.
-#
-# Produkt ma jedną postać: hybrydę. Ta instalka wiezie SAMĄ POWŁOKĘ. Rdzeń,
-# serwer narzędzi i arsenał stoją na serwerze wdrożenia — Operator dostaje okno,
-# nie drugą kopię serca platformy. Dlatego jest cienka i dlatego nie sprawdza
-# obecności rdzenia: jego brak nie jest tu usterką, jest założeniem.
-#
-# ── Droga budowy dla ARM64 ────────────────────────────────────────────────
-# Cel to `aarch64-pc-windows-msvc`, składany przez `cargo xwin`, które pobiera
-# i trzyma zestaw nagłówków oraz bibliotek importu Microsoftu. Kompilatorem
-# krzyżowym jest `clang`, a bibliotekarzem `llvm-lib` z llvm-mingw — dlatego
-# `$LLVM_MINGW/bin` MUSI być na ścieżce tej budowy. Cel x64 ma wymaganie
-# odwrotne: idzie przez systemowe mingw-w64 i llvm-mingw na ścieżce mu
-# przeszkadza. Oba skrypty ustawiają ścieżkę same, żeby jedna budowa nie
-# psuła drugiej.
-#
-# Skrypt woła `cargo tauri bundle`, nie `build`: `build` uruchomiłby
-# beforeBuildCommand, czyli przebudowę klienta, a ta do budowy powłoki nie
-# należy. `bundle` niczego nie kompiluje — bierze gotową binarkę z `target/`.
-#
-# Nakładki konfiguracyjnej nie ma i nie jest potrzebna: `tauri.conf.json` opisuje
-# wprost produkt hybrydowy, bo innego produktu nie ma.
-#
-# Skrypt nie podpisuje instalatora — podpis Authenticode wymaga certyfikatu
-# i hosta Windows — i nie sprawdza, czy instalator się uruchamia; tego nie da
-# się sprawdzić bez maszyny z Windows na ARM64.
-#
-# Użycie: bash budowa/scripts/instalka-hybryda-win-arm.sh
+# Instalka Danaco Console dla Windows 11 na ARM64: złożenie instalatora NSIS
+# na Linuksie przez cargo xwin i clang, dla produktu hybrydowego, w którym
+# rdzeń działa na serwerze wdrożenia, a u operatora staje wyłącznie okno.
 set -euo pipefail
 
 KORZEN="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -64,24 +38,18 @@ zglos "Sprawdzenie artefaktów wejściowych"
 printf '  jest: budowa/klient/dist/index.html\n'
 
 zglos "Budowa powłoki dla $CEL"
-# `--features tauri/custom-protocol` NIE jest ozdobą — bez niej produkt jest
-# zepsuty w sposób niewidoczny. W tauri 2 `tauri::is_dev()` to dokładnie
-# `!cfg!(feature = "custom-protocol")`, a `Cargo.toml` powłoki tej cechy nie
-# włącza i `cargo build` sam jej nie doda (`cargo tauri bundle` też nie — on
-# niczego nie kompiluje). Bez cechy `zrodlo_interfejsu::ustal` zatrzymuje się
-# na `is_dev()`, NIGDY nie sprawdzając warunku „rdzeń nasłuchujący" — a dla
-# hybrydy to jedyna droga do interfejsu. Okno pokazałoby pustą stronę.
+# Budowana jest sama powłoka, bez rdzenia — jedyna binarka tego produktu.
+# Cecha tauri/custom-protocol jest obowiązkowa: bez niej gotowy plik zachowuje
+# się jak budowa deweloperska i nie szuka rdzenia na serwerze wdrożenia.
 ( cd "$POWLOKA" \
   && cargo xwin build --release --target "$CEL" \
        --features tauri/custom-protocol --cross-compiler clang )
 
 POWLOKA_EXE="$POWLOKA/target/$CEL/release/danaco-console-powloka.exe"
 [ -f "$POWLOKA_EXE" ] || padnij "cargo nie zgłosił błędu, ale binarki powłoki nie ma: $POWLOKA_EXE"
-# Cel budowy da się pomylić w wierszu poleceń, a instalka z binarką x64 w środku
-# jest dla maszyny ARM64 bezużyteczna. To jedyny sprawdzian, który tu naprawdę
-# coś znaczy, więc stoi przed złożeniem, nie tylko po nim.
-# `file` nazywa tę architekturę „ARM64", a nie „Aarch64" jak rustup — wzorzec
-# dopuszcza obie pisownie, bo to nazwa zależna od wersji `file`, nie od produktu.
+# Cel budowy da się pomylić w wierszu poleceń, a instalka z binarką dla innej
+# architektury w środku jest bezużyteczna, dlatego sprawdzian architektury
+# stoi przed złożeniem instalatora, nie dopiero po nim.
 OPIS_POWLOKI="$(file -b "$POWLOKA_EXE")"
 printf '%s' "$OPIS_POWLOKI" | grep -qi 'PE32+ executable' \
   || padnij "powłoka nie jest binarką Windows (PE32+): $OPIS_POWLOKI"
@@ -90,29 +58,16 @@ printf '%s' "$OPIS_POWLOKI" | grep -qiE 'ARM64|Aarch64' \
 printf '  architektura powłoki: %s\n' "$OPIS_POWLOKI"
 
 zglos "Zapora: osadzone zasoby interfejsu"
-# Po czym POZNAĆ, że cecha custom-protocol weszła. Nie po napisie
-# `localhost:5173`: Tauri wkompilowuje w binarkę całą konfigurację produktu,
-# więc obecność albo brak tego napisu mówi o polu `devUrl` w konfiguracji,
-# a nie o tym, która droga do interfejsu jest czynna. Zapora na ten napis
-# milczy przy pliku zepsutym — jest gorsza niż jej brak.
-#
-# Rozstrzyga obecność OSADZONYCH ZASOBÓW: wchodzą do binarki wyłącznie przy
-# czynnej cesze custom-protocol. Sondą jest nazwa pliku interfejsu z sumą treści
-# w nazwie (np. `index-Bx8zeXAO.js`) — taki napis nie ma jak trafić do binarki
-# inaczej niż przez osadzenie `klient/dist`, i zmienia się z każdą przebudową
-# klienta, dlatego czytamy go z katalogu, a nie wpisujemy tu na sztywno.
-#
-# Mylące sondy, których tu NIE używamy: `woff2` (tauri ma tablicę typów MIME,
-# jedno trafienie jest zawsze) i `index.html` (tauri obsługuje indeks katalogu,
-# trafień jest kilka) — obie zapalają się w binarce BEZ osadzonych zasobów.
+# Zapora sprawdza obecność osadzonych zasobów interfejsu, bo tylko czynna
+# cecha custom-protocol je wkompilowuje. Sondą jest nazwa pliku interfejsu
+# z sumą treści w nazwie, odczytana z katalogu, a nie wpisana na sztywno.
 SONDA="$(find "$KLIENT/dist/assets" -maxdepth 1 -name 'index-*.js' -printf '%f\n' 2>/dev/null | head -1)"
 [ -n "$SONDA" ] \
   || padnij "nie ma z czego zrobić sondy: brak budowa/klient/dist/assets/index-*.js — bez niej nie da się sprawdzić, czy zasoby są osadzone"
 printf '  sonda: %s\n' "$SONDA"
-# `strings … | grep -q` byłoby tu PUŁAPKĄ przy `set -o pipefail`: grep -q kończy
-# się na pierwszym trafieniu, `strings` dostaje SIGPIPE, a pipefail zamienia to
-# w porażkę całego potoku — zapora zapalałaby się DOKŁADNIE wtedy, gdy sonda się
-# znajdzie. Dlatego liczymy trafienia w podstawieniu polecenia.
+# Liczenie trafień w podstawieniu polecenia zamiast w potoku z grep -q omija
+# pułapkę tego trybu powłoki: grep -q kończy się na pierwszym trafieniu i sygnał
+# przerwania zamieniłby sukces sondy w porażkę całego potoku.
 LICZBA_SONDY="$(strings -a "$POWLOKA_EXE" | grep -c -- "$SONDA" || true)"
 LICZBA_ZASOBOW="$(strings -a "$POWLOKA_EXE" | grep -c '/assets/' || true)"
 printf '  trafienia sondy: %s, wystąpienia /assets/: %s\n' "$LICZBA_SONDY" "$LICZBA_ZASOBOW"
@@ -130,10 +85,9 @@ ZLOZONY="$(find "$POWLOKA/target/$CEL/release/bundle/nsis" -maxdepth 1 -name '*-
 [ -n "$ZLOZONY" ] || padnij "makensis nie zgłosił błędu, ale pliku instalatora nie ma"
 
 zglos "Odbiór — czego w środku być nie może"
-# Odbiór jest częścią budowy, nie osobnym krokiem do zapomnienia. Gdyby do
-# konfiguracji wróciły zasoby rdzenia, instalka złożyłaby się bez błędu
-# i wyszłaby stąd jako produkt pełny pod nazwą hybrydowego. Jedynym dowodem,
-# że tak nie jest, jest wykaz zawartości gotowego pliku.
+# Odbiór jest częścią budowy. Gdyby do konfiguracji wróciły zasoby rdzenia,
+# instalka złożyłaby się bez błędu i wyszłaby jako produkt pełny pod nazwą
+# hybrydowego; dowodem przeciwnym jest wykaz zawartości gotowego pliku.
 command -v 7z >/dev/null \
   || padnij "brak 7z (apt: p7zip-full) — bez wykazu zawartości nie ma dowodu, że rdzenia w instalce nie ma"
 SPIS="$(mktemp)"
@@ -172,7 +126,8 @@ printf 'ścieżka : %s\n' "$WYNIK"
 printf 'rozmiar : %s (%s bajtów)\n' "$(du -h "$WYNIK" | cut -f1)" "$(stat -c%s "$WYNIK")"
 printf 'typ     : %s\n' "$(file -b "$WYNIK")"
 printf 'suma    : %s\n' "$(sha256sum "$WYNIK" | cut -d' ' -f1)"
-# Ostatni wiersz listingu 7z kończy się słowem „files"; liczba stoi przed nim.
+# Ostatni wiersz listingu archiwum kończy się słowem oznaczającym liczbę
+# plików; sama liczba stoi w wierszu bezpośrednio przed tym słowem.
 printf 'wewnątrz: %s plików\n' "$(tail -1 "$SPIS" | awk '{print $(NF-1)}')"
 
 zglos "Czego ten skrypt NIE sprawdził"

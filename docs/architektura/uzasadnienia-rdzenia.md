@@ -4156,3 +4156,166 @@ osobnego pola na tę liczbę, więc jedzie ona parametrem — tą samą drogą c
 Drugi składacz promptu systemowego dałby drugą liczbę żetonów warstwy
 systemowej i rozjechał się z pierwszym przy pierwszej zmianie warstw —
 dlatego `tozsamosc` oddaje ten sam prompt, który pojedzie do modelu.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_wektor_slad.go
+
+Odpowiedzialność pliku: zamiana maski rastrowej na ścieżki — obrys konturu,
+upraszczanie łamanej i ścieńczanie do linii środkowej. To czysta arytmetyka na
+tablicy pikseli; wołający (`adapter_narzedzia_obraz_wektor.go`) rozstrzyga,
+skąd maska pochodzi i co z gotowymi ścieżkami zrobić.
+
+Dlaczego własna arytmetyka, a nie program zewnętrzny: zamiana rastra na
+ścieżki bywa robiona programem `potrace`. Program ten nie stoi na serwerze,
+a instalka Operatora nie niesie żadnego programu — czynność oparta na nim
+byłaby u odbiorcy odmową, a nie funkcją. Obrys konturu, upraszczanie
+Ramera-Douglasa-Peuckera i ścieńczanie Zhanga-Suena to algorytmy opisane
+i skończone; wkompilowane w binarium działają wszędzie tam, gdzie działa
+rdzeń. Wynikiem jest łamana, nie krzywa Beziera. To rozstrzygnięcie, nie brak:
+łamana po uproszczeniu opisuje kontur wiernie i przewidywalnie, a dopasowanie
+krzywych wprowadza odchylenie, którego Operator nie kontroluje żadnym polem
+kontraktu. Pole `simplify` steruje właśnie odchyleniem łamanej i mówi wprost,
+ile go wolno.
+
+kierunkiObrysu: kolejność ma znaczenie — śledzenie konturu metodą Moore'a
+chodzi po sąsiadach właśnie w tym porządku i to on rozstrzyga, że kontur
+zewnętrzny wychodzi zgodnie z ruchem wskazówek.
+
+obrysyMaski: metoda jest klasycznym śledzeniem sąsiedztwa Moore'a: znajdź
+piksel brzegowy, obejdź obszar dookoła, wróć do punktu wyjścia. Piksele już
+objęte konturem są znakowane, żeby ten sam obszar nie dał dwóch identycznych
+ścieżek. Obszary mniejsze niż `najmniejszyObszar` są pomijane: pojedyncze
+piksele szumu dałyby setki ścieżek o wielkości kropki, przez które wynik jest
+cięższy od źródła i nie do otwarcia w edytorze wektorowym.
+
+obejdzObszar: granica liczby kroków chroni przed obrazem, którego kontur
+z jakiegoś powodu nie domyka się w punkcie wyjścia: pętla bez granicy
+zawiesiłaby żądanie na zawsze, a odmowa po granicy jest odpowiedzią.
+
+scienczMaske: algorytm Zhanga-Suena zasila obrys linii środkowej
+(`centerline`): rysunek kreskowy obrysowany po konturze dałby każdą kreskę
+jako podwójną pętlę, a obrysowany po linii środkowej — jako jedną kreskę.
+Algorytm chodzi naprzemiennie dwoma podprzebiegami, aż przestanie cokolwiek
+zdejmować. Granica przebiegów chroni przed układem, który oscyluje.
+
+czyZdejmowalny: sąsiedzi liczeni są w kolejności zegarowej od północy.
+Warunki są cztery: liczba sąsiadów mieści się w 2..6 (piksel nie jest ani
+końcem, ani wnętrzem), przejść z tła do obszaru jest dokładnie jedno (zdjęcie
+nie rozerwie linii), oraz dwie pary sąsiadów zależne od podprzebiegu — to one
+na przemian ścinają obszar z dwóch przeciwnych stron, żeby linia wyszła
+pośrodku, a nie przy jednej krawędzi.
+
+## budowa/server/internal/core/adapter_narzedzia_media_argumenty.go
+
+Odpowiedzialność pliku: układanie wiersza wywołania `ffmpeg` dla pięciu
+czynności wyliczenia `MediaOperationKind` oraz dobór kontenera. Rozdział
+z `adapter_narzedzia_media_przetworzenie.go` idzie po odpowiedzialności:
+tamten plik prowadzi przebieg komendy (źródło, pomiar, binarium, zasób),
+a ten mówi wyłącznie językiem `ffmpeg`. Każda odmowa wychodzi stąd przed
+uruchomieniem programu. Nazwany brak parametru („brakuje pól startMs
+i endMs") jest dla wołającego czymś zupełnie innym niż diagnostyka binarium,
+które dostało wiersz bez sensu i odmówiło po swojemu.
+
+argumentyPrzetworzeniaMediow: `-y` stoi przy każdej czynności, bo plik
+wynikowy leży w świeżym katalogu tymczasowym i nadpisać może wyłącznie
+samego siebie; bez tego przełącznika `ffmpeg` czeka na odpowiedź człowieka,
+którego przy nim nie ma, i kończy się dopiero granicą czasu.
+
+argumentyWycieciaMediow składa wycięcie fragmentu. Brak obu granic jest
+odmową nazywającą brak. Jedna granica wystarczy i znaczy dokładnie tyle, ile
+mówi: sam `startMs` to „od tego miejsca do końca", sam `endMs` to „od
+początku do tego miejsca". To nie jest domyślanie się całości, tylko
+odczytanie tego, co wskazano. `-ss` i `-to` stoją po wejściu z zamysłem:
+przed wejściem `ffmpeg` przeskakuje do najbliższej klatki kluczowej i
+granica przesuwa się o ułamek sekundy, po wejściu jest dokładna. `-c copy`
+przepisuje strumienie bez ponownego kodowania — fragment ma być tym samym
+materiałem, tylko krótszym.
+
+argumentyDzwiekuMediow składa wyodrębnienie ścieżki dźwiękowej. `-vn`
+odrzuca obraz — to jest cała treść tej czynności. Wynik nie ma wymiarów
+i mieć ich nie będzie; kontrakt przewiduje to wprost polami opcjonalnymi.
+Strumień jest kopiowany wtedy, gdy kontener wyprowadzono z kodeka (brak
+`format`): dźwięk trafia do nośnika, który zna ten kodek, więc ponowne
+kodowanie pogorszyłoby materiał bez powodu. Przy formacie wskazanym wybór
+kodeka zostaje przy `ffmpeg`u — kopia mogłaby do wskazanego kontenera nie
+pasować, a odmowa binarium byłaby wtedy karą za spełnienie prośby
+wołającego.
+
+argumentyRozmiaruMediow składa zmianę rozdzielczości. Brak obu wymiarów jest
+odmową: „zmień rozmiar" bez podania rozmiaru nie niesie żadnego polecenia.
+Wymiar niepodany idzie jako `-2`, a nie jako liczba wyliczona samodzielnie:
+`-2` znaczy dla filtra „dobierz z proporcji źródła, zaokrąglając do liczby
+parzystej" — proporcje zostają nietknięte, a parzystość jest wymogiem
+kodeków obrazu, które próbkują chrominancję co dwa piksele i wysokości
+nieparzystej wprost odmawiają. Dźwięk jest przepisywany bez kodowania
+(`-c:a copy`): zmiana rozdzielczości dotyczy obrazu i nie ma prawa dotknąć
+ścieżki dźwiękowej.
+
+argumentyKlatkiMediow składa zrzut pojedynczej klatki. `-ss` stoi przed
+wejściem, odwrotnie niż przy wycięciu, i to jest wybór: przeskok do klatki
+kluczowej jest tu tani i szybki, a różnica ułamka sekundy nie ma znaczenia
+dla zrzutu poglądowego — przy wycięciu miałaby, bo przesuwa granice
+fragmentu. Brak `startMs` znaczy początek materiału: zrzut klatki ma sens od
+pierwszej klatki, a „pierwsza" jest wskazaniem tak samo jednoznacznym jak
+każde inne. `-frames:v 1` ogranicza wynik do jednej klatki, `-an` odrzuca
+dźwięk, którego obraz nie uniesie.
+
+kontenerDzwiekuMediow dobiera nośnik do zmierzonego kodeka dźwięku, tak żeby
+ścieżkę dało się przepisać bez ponownego kodowania. Kodek spoza wykazu
+oddaje pustkę, a wołający robi z niej odmowę proszącą o wskazanie formatu —
+bo nośnik dobrany na chybił trafił kończy się odmową samego binarium.
+
+kontenerZrodlaMediow: nazwa bywa wykazem, nie pojedynczym słowem — jeden
+zestaw procedur czyta całą rodzinę kontenerów i `ffprobe` oddaje wtedy
+wszystkie naraz („mov,mp4,m4a,3gp,3g2,mj2"). Wybór idzie po kolejności
+pierwszeństwa tego pliku, a nie po kolejności w wykazie programu: dla
+materiału MP4 wykaz zaczyna się od „mov" i wynik nosiłby rozszerzenie,
+którego nikt nie zamawiał, choć „mp4" stoi w tym samym wykazie o jedną
+pozycję dalej.
+
+## budowa/server/internal/core/zaleznosci_wykaz_wydruk.go
+
+Dziennik startu mówi Operatorowi, czego brakuje na tej maszynie — jest
+diagnozą stanu zastanego. Prowizjonowanie potrzebuje czego innego: pełnego
+wykazu pakietów do postawienia na serwerze docelowym, niezależnie od tego,
+co stoi na maszynie budującej. To ta sama wiedza (te same deklaracje
+narzędzi), ale wyprowadzona kompletnie i w postaci, którą skrypt rozbierze
+na pola.
+
+`zaleznosci_zewnetrzne.go` w nagłówku ostrzega: druga lista rozjedzie się
+z pierwszą przy pierwszej zmianie pakietu. Skrypt prowizjonowania
+(`scripts/arsenal-serwera.sh`) nie przepisuje nazw — woła binarium rdzenia
+w tym trybie i konsumuje wynik. Zmiana pola `Pakiet` w deklaracji narzędzia
+dojeżdża więc i do sondy startowej, i do prowizjonowania jednym ruchem.
+
+Silnik kontenerów jest wstrzymany i nie może zostać postawiony milcząco.
+Gdyby ten rozdział robił skrypt dopasowaniem napisów w powłoce, byłby
+drugą regułą obok deklaracji — nietypowaną, niesprawdzalną i cichą przy
+pomyłce.
+
+Silnik kontenerów rozpoznaje się po programie, nie po podpowiedzi
+instalacyjnej: w wykazie stoją dwie jego deklaracje („Docker" warsztatu
+Developera i „Docker (klient wiersza poleceń)" modułu Terminal), niosą
+różne podpowiedzi, a obie mają trafić do warstwy decyzyjnej. Pozostałe
+warstwy bierze się z treści podpowiedzi, bo ona już dziś mówi, czym program
+dociągnąć. Kolejność pytań jest istotna: podpowiedź `go install
+github.com/...` niesie adres GitHuba, a nie jest krokiem ręcznym.
+
+Wiersze komentarza wykazu zależności zaczynają się od `#` — skrypt
+konsumujący je pomija. Kolejność jest ta sama, którą ustala
+`zaleznosciZewnetrzne` (alfabetyczna po nazwie czytelnej), więc dwa kolejne
+wywołania dają ten sam wykaz.
+
+Wykaz zależności niesie z mowy tylko syntezator zapasowy (eSpeak NG), bo
+tylko on jest zwykłym programem na ścieżce. Reszta arsenału mowy to piper
+wraz z plikami głosów, biblioteka pythonowa rozpoznawania (faster-whisper)
+i wagi jej modelu — rzeczy stawiane inaczej niż pakietem dystrybucji, a bez
+nich mikrofon i odsłuch odmawiają Operatorowi tak samo. Wartości pochodzą
+ze stałych rdzenia (nazwy programów, miejsca arsenału, zmienne wskazania)
+oraz z ustawień silnika mowy (`mowa.ModelDomyslny`) — nie są tu wpisane po
+raz drugi.
+
+Plik zależności pomocnika transkrypcji jest wskazywany ścieżką wyliczoną
+z położenia skryptu, a nie wypisaną wprost:
+`pomocniki/transkrypcja/wymagania.txt` jest jedynym miejscem, w którym stoi
+nazwa i wersja biblioteki rozpoznawania, więc prowizjonowanie ma go
+zainstalować przez `-r`, zamiast powtarzać nazwę pakietu u siebie.

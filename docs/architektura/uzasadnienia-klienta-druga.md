@@ -1926,3 +1926,15 @@ bo odmowa obszaru dokumentów przychodzi kopertą ze statusem, którą korelacja
 Ścieżka pliku jest ścieżką po stronie rdzenia — klient dysku nie czyta ani nie zapisuje, tylko podaje
 wskazanie i oddaje Operatorowi odpowiedź rdzenia. Brak pola wymuszenia rozpoznania pisma znaczy, że
 rdzeń bierze warstwę tekstową dokumentu, gdy ją ma — to zachowanie domyślne kontraktu, nie wybór okna.
+
+## budowa/klient-poprzedni/src/rozmowa/metadane-konta.ts
+Kanał nadaje fragment tego rodzaju także w chwili przełączenia konta w trakcie tury, żeby rotacja była widoczna. Struktura niesie wyłącznie odwołania: kod konta, nazwę profilu, odwołanie do danych dostępowych, a treść poświadczenia nie trafia tu nigdy. Kształt odpowiada strukturze metadanych konta po stronie rdzenia.
+
+## budowa/klient-poprzedni/src/rozmowa/modul-okna.ts
+Moduł okna jest czytany z rdzenia, a nie zgadywany po stronie widoku, dwiema drogami z kontraktu. Komenda window.state.get przy złożeniu pozwala oknu zapytać, w czym pracuje, zamiast czekać na pierwszą zmianę; bez tego okno wznowione po odświeżeniu klienta stałoby na module nieustalonym mimo znanego stanu w rdzeniu. Zdarzenie window.changed w toku pracy odzwierciedla sytuację, w której polecenie przestawienia obszaru roboczego przestawia to samo okno na inny moduł zamiast je zamykać, a rdzeń rozgłasza zmianę zdarzeniem. Niepowodzenie zapytania nie jest błędem okna: moduł zostaje nieustalony, a okno pracuje na arsenale wspólnym.
+
+## budowa/klient-poprzedni/src/rozmowa/indeks.ts
+Złożenie warstwy rozmowy w punkcie wejścia sprowadza się do wywołania zamontujRozmowe wewnątrz uzgodnienia otwarcia okna, z przekazaniem sceny, kanału, identyfikatora okna oraz persony i roli okna. Nazwy komend i zdarzeń, których warstwa używa — wysłania wiadomości, zatrzymania wiadomości, fragmentu strumienia, zmiany wiadomości, zmiany okna, odczytu stanu okna oraz wykazu akcji — pochodzą wyłącznie ze wspólnego kontraktu. Okno przestawia się na moduł samo: śledzi moduł okna w rdzeniu i przy jego zmianie rekonfiguruje pasek narzędzi promptu, panel akcji i panel kontekstu, zachowując wątek rozmowy. Powłoka może też przestawić okno wprost przez metodę ustawModul zamontowanej rozmowy, gdy zna wynik polecenia wejścia w obszar roboczy.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-export-panel.ts
+Export Panel niesie dwie funkcje Operatora: eksport raportu oraz wybór formatu wyjściowego i miejsca docelowego. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności eksportu. Format wyjściowy idzie sterem nastawy: uchwyt niesie wartość bieżącą, a nie nazwę rodzajową, bo natywna lista pokazuje ją dopiero po rozwinięciu. Historia eksportów bieżącej sesji rośnie wyłącznie z odpowiedzi rdzenia, nie z zamówienia, więc wykaz mówi, co rdzeń naprawdę oddał, razem z brakiem ścieżki tam, gdzie jej nie oddał.

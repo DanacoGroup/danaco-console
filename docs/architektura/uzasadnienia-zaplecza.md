@@ -3259,3 +3259,15 @@ i role) w komplecie.
 
 ## budowa/server/internal/store/migracja_006_identyfikatory_zewnetrzne.sql
 Rdzeń posługuje się identyfikatorem tekstowym nadanym w pamięci, który wychodzi kontraktem do klienta, a wiersz bazy ma własny klucz główny liczbowy — bez trwałego odwzorowania jednego na drugie po restarcie rdzenia nie da się połączyć okna wskazanego przez klienta z jego historią. Kolumna jest dodatkiem: brak wartości oznacza wiersz założony wprost w bazie, bez odpowiednika w pamięci rdzenia, a indeks częściowy sprawia, że wiersze bez identyfikatora zewnętrznego nie kolidują ze sobą.
+## budowa/server/internal/store/migracja_221_workspace_wyciag_tekstu.sql
+Migracja 221 — wskaźnik treści plików projektu.
+
+Wiersz niesie treść wydobytą z pliku biblioteki projektu wraz ze sposobem,
+którym ją wydobyto. Treść leży tutaj, a nie w pliku obok materiału, bo
+wyszukiwanie po słowach idzie zapytaniem do bazy — jednym, nad wszystkimi
+bytami projektu naraz.
+
+Plik wskazywany jest ścieżką względną katalogu roboczego projektu — tym samym
+identyfikatorem, którym plik wychodzi z `workspace.library.list`. Warunek
+UNIQUE na parze pilnuje jednego wyciągu na plik: powtórne wydobycie
+nadpisuje, a nie dokłada drugiego zdania o tym samym pliku.

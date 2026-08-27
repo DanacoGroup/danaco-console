@@ -1,15 +1,6 @@
-// Odpowiedzialność pliku: przekład wiersza podagenta na strukturę `Subagent`
-// kontraktu, odwzorowanie stanu pozycji kolejki na `SubagentStatus` oraz kody
-// odmów rodziny `subagent.*`.
-//
-// Katalog kodów jest zamknięty: `not_found`, `validation_failed`, `conflict`,
-// `internal_error`. Rodzina podagentów używa trzech z nich; `conflict` nie
-// występuje, bo żadne z trzech żądań nie może zderzyć się ze stanem zastanym —
-// powołanie zawsze zakłada nowe wiersze, a oba odczyty niczego nie zmieniają.
-//
-// Stan podagenta powstaje z pozycji, nie obok niej. Cyklem życia zlecenia rządzi
-// jeden silnik kolejek; odwzorowanie niżej jest jedynym miejscem przekładu jego
-// słownika na wyliczenie `SubagentStatus` kontraktu.
+// Odpowiedzialność pliku: przekład wiersza podagenta na strukturę
+// `Subagent` kontraktu, odwzorowanie stanu pozycji kolejki na
+// `SubagentStatus` oraz kody odmów rodziny `subagent.*`.
 package core
 
 import (
@@ -32,11 +23,8 @@ func podagenciKontraktu(wiersze []dane.Podagent) []shared.Subagent {
 	return podagenci
 }
 
-// podagentKontraktu składa strukturę `Subagent` z wiersza tabeli.
-//
-// Pola czasu wychodzą tylko wtedy, gdy chwila naprawdę nastąpiła. Podagent
-// jeszcze nierozpoczęty nie ma czasu rozpoczęcia, a zero epoki znaczyłoby rok
-// 1970 — czyli fakt wymyślony przez rdzeń.
+// podagentKontraktu składa strukturę `Subagent` z wiersza tabeli. Pola
+// czasu wychodzą tylko wtedy, gdy chwila naprawdę nastąpiła.
 func podagentKontraktu(wiersz dane.Podagent) shared.Subagent {
 	podagent := shared.Subagent{
 		Id:       wiersz.Kod,
@@ -64,18 +52,9 @@ func podagentKontraktu(wiersz dane.Podagent) shared.Subagent {
 	return podagent
 }
 
-// stanPodagentaZPozycji odwzorowuje słownik stanów pozycji kolejki
-// (`migracja_003_kolejki.sql`) na wyliczenie `SubagentStatus` kontraktu.
-//
-// `do_weryfikacji` znaczy pracę wykonaną. Silnik wprowadza pozycję w ten stan
-// dokładnie wtedy, gdy tura się powiodła; do `ukonczona` przesuwa ją dopiero
-// przyjęcie wyniku przez Operatora. Dla panelu zadań w tle podagent jest wtedy
-// zakończony — trzymanie go w `running` do czasu kliknięcia pokazywałoby pracę,
-// której już nie ma.
-//
-// Stan nieznany zostaje „w biegu", nie „błędny". Wartość spoza słownika znaczy,
-// że pozycja jest w stanie, którego to odwzorowanie nie zna — a nie że praca się
-// nie powiodła; orzeczenie o błędzie byłoby wtedy wymyślone.
+// stanPodagentaZPozycji odwzorowuje słownik stanów pozycji kolejki na
+// wyliczenie `SubagentStatus` kontraktu. Stan nieznany zostaje „w biegu”,
+// nie „błędny”.
 func stanPodagentaZPozycji(stanPozycji string) string {
 	switch stanPozycji {
 	case stanPozycjiOczekuje, stanPozycjiPrzydzielona:

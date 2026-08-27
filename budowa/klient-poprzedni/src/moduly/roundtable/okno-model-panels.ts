@@ -21,50 +21,11 @@ import type { ZrodloArsenaluRoundtable } from './zrodlo-arsenalu';
 import { utworzWarstweTresci, utworzWykazFunkcji, utworzZestawAkcji } from './warstwy-modulu';
 import type { ZrodloRoundtable } from './zrodlo-roundtable';
 
-/**
- * Model Panels — okno wiodące modułu Roundtable: wybór uczestniczących modeli
- * i osobny panel odpowiedzi na każdy z nich, aktualizowany jednocześnie po
- * zadaniu pytania.
- *
- * Skład idzie z `stan.uczestnicy()`, nie z własnej listy. Stan subskrybuje
- * `roundtable.debate.changed` (`stan-debaty.ts`) i dokłada uczestników z
- * przyrostu tury oraz z czynności moderatora — to okno tylko czyta i rysuje.
- * Odpowiedzi rosną na żywo z `StrumienWypowiedzi` (fragmenty `stream.chunk`
- * okna debaty), a rysowanie składu wraz z odpowiedziami leży w
- * `sklad-modeli.ts`. Subskrypcji okno nie zakłada: jedna na całe złożenie stoi
- * w `indeks.ts`.
- *
- * Dwie tożsamości jednego kanału dają dwa panele. Klucz panelu to
- * `participantId`, nigdy `channelId` (tak mówi kontrakt `roundtable.model.add`).
- * `stan.wystapieniaKanalu(idKanalu)` mówi, ile razy kanał już wystąpił — od
- * drugiego wystąpienia wzwyż panel niesie `data-kanal-powtorzony='tak'`, żeby
- * dwa identyczne z pozoru panele nie wyglądały na usterkę.
- *
- * Świeżo otwarte okno nie zna składu debaty. Odczyt jest w kontrakcie —
- * `roundtable.model.list` oddaje skład, a `roundtable.debate.get` całą debatę —
- * ale to okno żadnego z nich jeszcze nie wywołuje: obsługi nie zbudowano.
- * Do tego czasu skład narasta z przyrostu zdarzenia i z `participants`
- * zwracanego przez `moderator.direct`. Stan pusty na starcie jest stanem
- * poprawnym, opisanym wprost, nie udawaną pustką.
- *
- * Kontrakt nie niesie górnego limitu instancji Model Panels i okno nie narzuca
- * własnego — skład rośnie tak, jak rośnie w rdzeniu. Ilu uczestników mieści
- * debata, mówi nota nad formularzem, a nie bramka: uczestnik ponad zwyczajowy
- * skład przechodzi przez rdzeń bez odmowy (`sufit-uczestnikow.ts`), więc
- * przycisk „Dodaj uczestnika" nie zna żadnego progu. Nota podaje, ilu
- * uczestników debata ma, czego nie liczy rdzeń ani kontrakt i gdzie leży sufit
- * gniazd sceny okien równoległych.
- */
+/** Model Panels jest oknem wiodącym modułu Roundtable: wybór uczestniczących modeli wraz z osobnym panelem odpowiedzi na każdego z nich. */
 export interface OknoModelPanels {
   element: HTMLElement;
   odswiez(): void;
-  /**
-   * Przerysowanie po fragmencie strumienia — wołane przez złożenie modułu.
-   *
-   * Idzie na każdy fragment, więc omija stan błędu i zapowiedź odczytu:
-   * inaczej zdanie „Uczestnik nie został dodany do debaty" znikałoby przy
-   * pierwszym słowie następnego mówcy.
-   */
+  /** Przerysowanie po fragmencie strumienia jest wołane przez złożenie modułu na każdy fragment. */
   odswiezGlosy(): void;
   /** Zamyka nasłuch `stan.naZmiane(...)`. */
   zamknij(): void;
@@ -88,9 +49,7 @@ export function utworzOknoModelPanels(
     przedrostek: 'dr',
   });
   const tresc = utworzStanTresci();
-  // Czynności arsenału powstają razem z powierzchnią, bo część z nich siedzi
-  // w pasku akcji, a część w zestawie warstwy trzeciej. Meldunek idzie tą samą
-  // drogą co reszta odpowiedzi okna — stanem treści, nie osobnym dymkiem.
+  // Czynności arsenału powstają razem z powierzchnią, częściowo w pasku, częściowo w warstwie trzeciej.
   const powierzchnia = zlozPowierzchnieModelPanels(rama, tresc.element, (poleZespolu) =>
     czynnosciSkladu(
       arsenal,
@@ -104,14 +63,11 @@ export function utworzOknoModelPanels(
     ),
   );
   let notaSufitu = powierzchnia.notaSufitu;
-  // Nastawy widoku żyją w oknie, bo kontrakt ich nie zna: ani anonimizacji, ani
-  // licznika odpowiedzi nie niesie żadne pole obszaru roundtable.
+  // Nastawy widoku żyją w oknie, bo kontrakt roundtable nie zna anonimizacji ani licznika odpowiedzi.
   let trybSlepy = false;
   let metryki = false;
 
-  // Nota o suficie stoi poza miejscem treści, bo `pusto(...)` i `blad(...)`
-  // czyszczą je do zera — a stan „debata nie ma jeszcze nikogo" jest właśnie tym
-  // stanem, w którym Operator pyta, ilu uczestników w ogóle wolno mu dodać.
+  // Nota o suficie stoi poza miejscem treści, bo czyszczenie treści zerowałoby ją razem ze stanem błędu.
   function odswiezSufit(): void {
     const nowa = utworzNoteSufitu(stan.uczestnicy().length);
     notaSufitu.replaceWith(nowa);
@@ -148,9 +104,7 @@ export function utworzOknoModelPanels(
     tresc.ladowanie('Dodawanie uczestnika…');
     void zrodlo.dodajModel(zadanie).then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Zdanie nie mówi „rdzeń odmówił": `sprawdzKsztalt` oddaje niepowodzenie
-        // także wtedy, gdy rdzeń odpowiedział bez pola obowiązkowego. Powód
-        // niesie treść błędu.
+        // Zdanie nie mówi wprost o odmowie rdzenia, bo powód niepowodzenia niesie treść błędu odpowiedzi.
         tresc.blad('Uczestnik nie został dodany do debaty.', wynik.blad);
         return;
       }
@@ -165,8 +119,7 @@ export function utworzOknoModelPanels(
 
   podepnijAkcjeModelPanels(powierzchnia, {
     dodajUczestnika,
-    // Etykieta niesie stan słowem, bo `aria-pressed` czyta wyłącznie technologia
-    // wspomagająca, a sama zmiana obrysu nie mówi widzącemu, co jest włączone.
+    // Etykieta niesie stan słowem, bo technologia wspomagająca nie czyta samej zmiany obrysu przycisku.
     przelaczTrybSlepy: () => {
       trybSlepy = przestaw(powierzchnia.trybSlepy);
       powierzchnia.trybSlepy.textContent = trybSlepy
@@ -188,25 +141,14 @@ export function utworzOknoModelPanels(
     rysuj();
   });
 
-  // Katalog kanałów jest wspólny dla okien Roundtable — zamawia go
-  // złożenie modułu przed montażem okien, nie każde okno z osobna. Odczyt
-  // wystarczy przeczytać ze stanu; drugie zamówienie zdublowałoby kopertę
-  // `channel.list` na starcie.
+  // Katalog kanałów zamawia złożenie modułu przed montażem okien, nie każde okno z osobna.
   odswiezWyborKanalow(powierzchnia.wyborKanalu, stan);
   rysuj();
 
   return { element: rama.element, odswiez: rysuj, odswiezGlosy, zamknij: odsubskrybuj };
 }
 
-/**
- * Zdanie potwierdzenia dodania uczestnika, składane z odpowiedzi rdzenia.
- *
- * Tożsamość, kanał i miejsce w kolejności głosu nadaje rdzeń
- * (`RoundtableParticipant.id`, `.channelId`, `.order`), więc to one wchodzą do
- * zdania — nie to, co okno wysłało. Gdy rdzeń nie zapisał podanej tożsamości,
- * okno mówi to wprost zamiast potwierdzać czynność w kształcie, którego nie
- * było.
- */
+/** Zdanie potwierdzenia dodania uczestnika składa się z odpowiedzi rdzenia, bo to rdzeń nadaje tożsamość, kanał i miejsce w kolejności głosu. */
 function zdanieDodania(
   uczestnik: RoundtableParticipant,
   zadanaPersona: string,
@@ -229,7 +171,7 @@ function zdanieDodania(
   return { zdanie: `Rdzeń dodał uczestnika: ${nazwa} — ${miejsce}.`, udane: true };
 }
 
-/** Kontrolki formularza dodania uczestnika i nastaw widoku okna. */
+/** Kontrolki formularza dodania uczestnika i nastaw widoku okna gromadzą pola oraz przyciski powierzchni. */
 interface FormularzUczestnika {
   wyborKanalu: HTMLSelectElement;
   polePersony: HTMLInputElement;
@@ -237,24 +179,13 @@ interface FormularzUczestnika {
   dodaj: HTMLButtonElement;
   trybSlepy: HTMLButtonElement;
   metryki: HTMLButtonElement;
-  /** Nota o suficie — wymieniana przy każdym rysowaniu, patrz `odswiezSufit`. */
+  /** Nota o suficie jest wymieniana nowym elementem przy każdym rysowaniu składu debaty. */
   notaSufitu: HTMLElement;
   /** Wnętrze warstwy diagnostyki kanałów — przerysowywane przy każdej zmianie. */
   diagnostyka: HTMLElement;
 }
 
-/**
- * Składa formularz dodania uczestnika i pasek akcji ramy.
- *
- * Fragment jest czystą konstrukcją — nie domyka się na stanie modułu.
- *
- * Dwie pozycje paska mają komendę w kontrakcie i nie mają jeszcze obsługi:
- * usunięcie uczestnika (`roundtable.model.remove`) oraz oznaczenie uczestnika
- * jako kluczowego (`roundtable.model.update`, pole `key`). Wyciszenia w pasku
- * nie ma wcale: jest czynnością moderatora (`ModeratorAction`), więc należy do
- * Moderator Panelu, nie do Model Panels. Pozostałe czynności uczestnika bez
- * obsługi siedzą w zestawie akcji warstwy trzeciej (`zlozZestawUczestnika`).
- */
+/** Funkcja składa formularz dodania uczestnika i pasek akcji ramy jako czystą konstrukcję niezależną od stanu modułu. */
 function zlozAkcjeModelPanels(gospodarz: HTMLElement): {
   wyborKanalu: HTMLSelectElement;
   dodaj: HTMLButtonElement;
@@ -268,25 +199,12 @@ function zlozAkcjeModelPanels(gospodarz: HTMLElement): {
   return { wyborKanalu, dodaj, poleZespolu };
 }
 
-/**
- * Zestaw akcji warstwy trzeciej — czynności uczestnika jeszcze niezbudowane.
- *
- * Pozycje siedzą w zestawie zwiniętym, a nie w pasku akcji okna: pasek zostaje
- * przy dodaniu uczestnika, czyli jedynej czynności okna, którą to okno wykonuje.
- * Siedem pozycji ma dziś komendę w kontrakcie; ósma — liczba wariantów jednej
- * persony — ma pole w uczestniku i nie ma komendy, która by je zapisała.
- */
+/** Zestaw akcji warstwy trzeciej gromadzi czynności uczestnika, które nie mają jeszcze miejsca w pasku akcji okna. */
 function zlozZestawUczestnika(czynnosci: HTMLButtonElement[]): HTMLElement {
   return utworzZestawAkcji('Zestaw akcji uczestnika', czynnosci);
 }
 
-/**
- * Przerysowanie warstwy diagnostyki kanałów.
- *
- * Diagnostyka idzie po składzie debaty, więc zmienia się z każdym dodanym
- * uczestnikiem i z każdym odczytem rejestru kanałów. Wymieniane jest wnętrze,
- * a nie cała warstwa: warstwa otwarta przez Operatora ma zostać otwarta.
- */
+/** Funkcja przerysowuje warstwę diagnostyki kanałów, wymieniając jej wnętrze przy każdej zmianie składu debaty. */
 function odswiezDiagnostyke(wnetrze: HTMLElement, stan: StanDebaty): void {
   wnetrze.replaceChildren();
   const kanaly = kanalyDebaty(stan);
@@ -320,7 +238,7 @@ function odswiezDiagnostyke(wnetrze: HTMLElement, stan: StanDebaty): void {
   wnetrze.append(granica);
 }
 
-/** Składa formularz tożsamości uczestnika (persona, prompt systemowy) i ciało ramy. */
+/** Funkcja składa formularz tożsamości uczestnika wraz z przełącznikami widoku oraz ciałem ramy okna Model Panels. */
 function zlozPowierzchnieModelPanels(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
   stanTresci: HTMLElement,
@@ -362,7 +280,7 @@ function zlozPowierzchnieModelPanels(
   };
 }
 
-/** Podpina pasek akcji i nastawy widoku do czynności okna. */
+/** Funkcja podpina pasek akcji oraz przełączniki nastaw widoku do czynności okna o nazwie Model Panels. */
 function podepnijAkcjeModelPanels(
   powierzchnia: FormularzUczestnika,
   obsluga: {

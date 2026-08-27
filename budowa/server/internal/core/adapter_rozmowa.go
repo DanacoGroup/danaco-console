@@ -176,7 +176,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 		if f.Kind == shared.ChunkKindText {
 			tresc.WriteString(models.TrescFragmentu(f))
 		}
-		// Zamknięcie tury zdejmujemy tu — po zamknięciu strumienia nie ma już do niego drogi.
+		// Zamknięcie tury zdejmuje się tu — po zamknięciu strumienia nie ma już do niego drogi.
 		if z, jest := zamkniecieZFragmentu(f.Data); jest {
 			zamkniecie = &z
 			idRozmowy = z.IdRozmowyCLI
@@ -191,7 +191,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 		return strumien.Fragment(ctx, f)
 	})
 
-	// Załączniki rozstrzygamy przed zapytaniem: bajty stają się ścieżką w treści pytania.
+	// Załączniki rozstrzyga się przed zapytaniem: bajty stają się ścieżką w treści pytania.
 	zapytanie := zapytanieKanalu(okno, pytanie, odpowiedz, rozwiazZalaczniki(a.zalaczniki, pytanie.Attachments))
 	// Pamięć rozmowy niesie wcześniejsze wypowiedzi okna dla kanału bezstanowego.
 	zapytanie.Historia = a.historiaRozmowy(okno.Id, pytanie.Id)

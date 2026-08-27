@@ -1,32 +1,9 @@
 /**
- * Narzędziownia cyfryzacji — co czym stoi i co znaczy każda odmowa.
- *
- * ── Dwa różne braki i dlaczego nie wolno ich zlewać ─────────────────────────
- * 1. **Brak pozycji kontraktu** — funkcji nie ma w produkcie i okno nie ma czym
- *    jej wywołać. To jest brak do zgłoszenia.
- * 2. **Brak składnika pakietu serwera** — funkcja jest zbudowana, a serwer,
- *    na którym stoi, jest niekompletny. To jest **usterka wdrożenia**, nie
- *    ograniczenie produktu, i tak ma być nazwana.
- *
- * Rozstrzygnięcie Właściciela: **Tesseract, 7-Zip i silnik mowy idą wraz
- * z aplikacją na serwer.** Arsenał stoi na serwerze, u Operatora jest cienka
- * instalka. Rozpoznanie tekstu i rozpakowanie archiwum NIE są więc brakiem
- * produktu — odmowa z ich powodu znaczy, że temu serwerowi brakuje składnika
- * pakietu, i odmowa ma ten składnik nazwać.
- *
- * ── Wykaz braków okna przestał istnieć ──────────────────────────────────────
- * Poprzednia postać tego pliku wyliczała osiem czynności jako „robotę do
- * wykonania w oknie", bo panel stał jeszcze na `document.text.extract`. Okno
- * prowadzi dziś rodzinę `studio.ingest.*`: silnik, zestaw języków, próg pewności,
- * czyszczenie obrazu i odtwarzanie układu idą `ingest.recognize`, poprawka
- * rozpoznanych słów `ingest.correction.set`, kolejka `ingest.queue.add`
- * i `.queue.list`, przyjęcie wyniku `ingest.item.accept`, wykaz urządzeń
- * `ingest.device.list`, a pobranie strony `ingest.url`. Zdania niżej opisują
- * więc funkcje DZIAŁAJĄCE i to, na czym stoją — bo Operator ma wiedzieć, czym
- * sterują nastawy, a nie czego brakuje.
+ * Narzędziownia cyfryzacji opisuje dwa różne braki: brak pozycji kontraktu jest brakiem produktu,
+ * a brak składnika pakietu serwera jest usterką wdrożenia — dwóch nie wolno zlewać.
  */
 
-/** Braki, które są usterką wdrożenia serwera — nie ograniczeniem produktu. */
+/** Braki, które są usterką wdrożenia serwera, na przykład brak silnika rozpoznawania pisma albo rozpakowywacza archiwów, nie ograniczeniem produktu. */
 export const SKLADNIKI_PAKIETU_SERWERA = {
   rozpoznanie:
     'Rozpoznanie tekstu liczy silnik rozpoznawania pisma, który JEST składnikiem pakietu serwera ' +

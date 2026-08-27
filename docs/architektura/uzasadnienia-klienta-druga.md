@@ -2994,3 +2994,25 @@ strumienia. Brak wartości znaczy „nie wiem", nie „błąd".
 
 ## budowa/klient/src/protokol/sesja.ts
 Kontrakt dopuszcza kopertę bez identyfikatora sesji — pole jest opcjonalne, puste dla powitania połączenia.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-zwijana.ts
+Strefa jest zbudowana na elemencie szczegółów z podsumowaniem: postać rozwinięcia trzyma przeglądarka,
+a dane strefy czytane są dopiero przy rozwinięciu. Tak samo działa archiwum sesji; ten plik uogólnia zabieg
+na całe strefy i dokłada pamięć postaci między wejściami, żeby przywołanie nie powtarzało się przy każdym
+wejściu na stronę. Strefa zwinięta nie jest strefą ukrytą: zapowiedź — nazwa, zdanie wyjaśnienia i dopisek
+z liczbą — stoi na ekranie zawsze i mówi, co jest pod spodem, więc jedno naciśnięcie otwiera treść znaną
+z opisu. Rozwinięcia nie dubluje żadna klasa stylu; jedynym jego nośnikiem jest atrybut elementu, bo druga
+kopia stanu mogłaby się z pierwszą wyłącznie rozminąć.
+
+## budowa/klient-poprzedni/src/moduly/studio/braki-cyfryzacji.ts
+Plik rozróżnia dwa różne braki, których nie wolno zlewać: brak pozycji kontraktu, czyli funkcja
+nieobecna w produkcie i okno nie ma czym jej wywołać — to brak do zgłoszenia — oraz brak
+składnika pakietu serwera, czyli funkcja zbudowana, a serwer, na którym stoi, jest niekompletny —
+to usterka wdrożenia, nie ograniczenie produktu. Ustalono, że rozpoznawanie tekstu, rozpakowywacz
+archiwów i silnik mowy idą wraz z aplikacją na serwer, więc arsenał stoi na serwerze, a u operatora
+jest tylko cienka instalka; rozpoznanie tekstu i rozpakowanie archiwum nie są więc brakiem
+produktu, a odmowa z ich powodu ma nazwać brakujący składnik pakietu serwera. Poprzednia postać
+tego pliku wyliczała osiem czynności jako robotę do wykonania w oknie, bo panel stał jeszcze na
+starszej komendzie wydobycia tekstu z dokumentu; okno prowadzi dziś całą rodzinę komend cyfryzacji
+i zdania w pliku opisują funkcje działające oraz to, na czym stoją, żeby operator wiedział, czym
+sterują nastawy, a nie czego brakuje.

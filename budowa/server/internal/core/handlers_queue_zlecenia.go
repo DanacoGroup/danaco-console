@@ -1,22 +1,4 @@
-// Wpięcie dwunastu komend rodziny `queue.*` dotyczących ZLECEŃ kolejki, jej
-// polityki, zadań martwych i głębokości w czasie.
-//
-// Osobno od `handlers_queue.go` (cykl życia kolejki) i `handlers_queue_wiazania.go`
-// (wykaz i wiązanie), bo osobny jest przedmiot: tam bytem jest kolejka, tutaj
-// zlecenie. Port jest rozszerzeniem portu `Kolejki`, nie drugim portem —
-// silnik kolejek pętli sesyjnej, MultitaskingAI i modułu Automations jest jeden.
-//
-// Rozgłoszenie idzie `queue.changed` wszędzie tam, gdzie zmienia się zawartość
-// albo polityka kolejki: Queue Manager rysuje wykaz zleceń i wskaźnik
-// głębokości z tego, co o kolejce wie, więc dołożone, zdjęte, odłożone,
-// podzielone, scalone, skierowane, rozgałęzione i uwarunkowane zlecenie czyni
-// jego obraz nieaktualnym. Trzy odczyty — wykaz zleceń, zadania martwe
-// i głębokość — nie rozgłaszają niczego.
-//
-// Rodzajem zmiany jest `updated`, nie `created`: bytem zdarzenia
-// `queue.changed` jest KOLEJKA, a kolejka przy dołożeniu zlecenia nie powstaje,
-// tylko się zmienia. `created` opisywałoby założenie samej kolejki i tak jest
-// używane w `queue.create`.
+// Plik wpina dwanaście komend rodziny queue.* dotyczących zleceń kolejki, jej polityki, zadań martwych i głębokości; rozgłoszenie idzie queue.changed rodzajem updated, nie created.
 package core
 
 import (
@@ -31,8 +13,7 @@ import (
 type zlecenioweKolejki interface {
 	Kolejki
 
-	// Kolejka oddaje kolejkę po identyfikatorze — nośnik odpowiedzi tych
-	// czynności, których wynikiem jest kolejka po zmianie.
+	// Kolejka oddaje kolejkę po identyfikatorze, nośnik odpowiedzi czynności, których wynik to kolejka.
 	Kolejka(ctx context.Context, id string) (shared.Queue, error)
 
 	DodajZlecenie(ctx context.Context, z shared.QueueItemEnqueueRequest) (shared.QueueItemEnqueueResponse, error)
@@ -49,7 +30,7 @@ type zlecenioweKolejki interface {
 	GlebokoscKolejki(ctx context.Context, z shared.QueueDepthGetRequest) (shared.QueueDepthGetResponse, error)
 }
 
-// zarejestrujZleceniaKolejek wpina dwanaście komend zleceń kolejki.
+// zarejestrujZleceniaKolejek wpina dwanaście komend zleceń kolejki do rejestru komend tego rdzenia całego.
 func zarejestrujZleceniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 	if r == nil || kolejki == nil {
 		return
@@ -76,9 +57,7 @@ func zarejestrujZleceniaKolejek(r *Rejestr, kolejki Kolejki, e *emiter) {
 	r.Zarejestruj(shared.CommandQueueItemEnqueue,
 		obsluz(func(ctx context.Context, z shared.QueueItemEnqueueRequest) (shared.QueueItemEnqueueResponse, error) {
 			w, err := zleceniowe.DodajZlecenie(ctx, z)
-			// Duplikat niczego nie zmienił, więc niczego nie rozgłasza:
-			// zdarzenie po wywołaniu odbitym idempotencją byłoby zdarzeniem
-			// bez faktu.
+			// Duplikat niczego nie zmienił: zdarzenie odbite idempotencją nie ma faktu, więc się nie rozgłasza.
 			if err == nil && !w.Duplicate {
 				rozglosKolejkeZlecenia(ctx, zleceniowe, e, z.QueueId)
 			}
@@ -132,9 +111,7 @@ func zarejestrujCzynnosciZlecen(r *Rejestr, m zlecenioweKolejki, e *emiter) {
 		obsluz(func(ctx context.Context, z shared.QueueItemRouteRequest) (shared.QueueItemRouteResponse, error) {
 			w, err := m.SkierujZlecenie(ctx, z)
 			if err == nil {
-				// Skierowanie zmienia DWIE kolejki: źródłową traci zlecenie,
-				// docelowa je zyskuje. Obie muszą się odświeżyć, więc obie
-				// dostają zdarzenie.
+				// Skierowanie zmienia dwie kolejki: źródłowa traci zlecenie, docelowa je zyskuje, obie się odświeżają.
 				rozglosKolejkeZlecenia(ctx, m, e, z.QueueId)
 				if kod := wartoscTekstu(z.TargetQueueId); kod != "" && kod != z.QueueId {
 					rozglosKolejkeZlecenia(ctx, m, e, kod)
@@ -148,9 +125,7 @@ func zarejestrujCzynnosciZlecen(r *Rejestr, m zlecenioweKolejki, e *emiter) {
 			w, err := m.RozgalezZlecenie(ctx, z)
 			if err == nil {
 				rozglosKolejkeZlecenia(ctx, m, e, z.QueueId)
-				// Tor skierowany do innej kolejki zmienia także ją — bez tego
-				// Queue Manager kolejki docelowej pokazywałby stan sprzed
-				// rozgałęzienia aż do ręcznego odświeżenia.
+				// Tor skierowany do innej kolejki zmienia także ją, inaczej Queue Manager pokazuje stan nieaktualny.
 				for _, tor := range z.Branches {
 					if kod := wartoscTekstu(tor.TargetQueueId); kod != "" && kod != z.QueueId {
 						rozglosKolejkeZlecenia(ctx, m, e, kod)
@@ -181,10 +156,7 @@ func rozglosKolejkeZlecenia(ctx context.Context, m zlecenioweKolejki, e *emiter,
 	e.kolejka(shared.ChangeKindUpdated, kolejka)
 }
 
-// zarejestrujOdmoweZlecenKolejek wpina wszystkie dwanaście komend jako odmowę
-// montażu. Powód ten sam, co przy wiązaniach kolejek: kolejki są, a rdzeń nie
-// umie oddać ich zleceń — odpowiedź „nieznana komenda" wskazywałaby na brak
-// kolejek, a nie na usterkę montażu.
+// zarejestrujOdmoweZlecenKolejek wpina wszystkie dwanaście komend jako odmowę montażu, tym samym powodem co przy wiązaniach: kolejki są, a rdzeń nie umie oddać ich zleceń.
 func zarejestrujOdmoweZlecenKolejek(r *Rejestr) {
 	const powod = "kolejki: port kolejek nie niesie zleceń ani polityki kolejki"
 

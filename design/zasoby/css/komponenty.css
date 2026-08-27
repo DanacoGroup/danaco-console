@@ -582,18 +582,14 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska:hover::before,
 .dn-karta-srodowiska[aria-current='true']::before { opacity: 1; }
 .dn-karta-srodowiska-godlo {
-  /* Wielkość wiążąca: księga znaku rozdz. 15.1 — „Strona główna, karty
-     środowisk: emblemat środowiska 24 px". Odpowiada żetonowi --dn-wym-ikona-xl
-     i utrzymuje hierarchię wobec ikony kafla strefy 2. */
   /* Element liniowy nie przyjmuje szerokości — bez tej deklaracji godło
      rozciągało się na całą kartę. */
   display: grid;
   place-content: center;
-  /* 48 px — rozstrzygnięcie Właściciela z 2026-08-20. Emblemat jest elementem
-     marki, nie ikoną interfejsu, więc nie podlega skali 14/16/20/24; pozostaje
-     większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
-     Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
-  width: 48px; height: 48px;
+  /* Emblemat jest znakiem marki, nie ikoną interfejsu, więc nie bierze skali
+     ikon. Wymiar stoi w żetonie --dn-wym-godlo-karty i tylko tam. */
+  width: var(--dn-wym-godlo-karty);
+  height: var(--dn-wym-godlo-karty);
   margin-bottom: var(--dn-od-4);
   color: var(--dn-tekst);
 }
@@ -618,15 +614,12 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   max-width: 44ch;
 }
 
-/* Karta wiodąca — środowisko podane akcentem: tytuł o stopień większy, godło
-   mniejsze (ustępuje tytułowi), bez wstęgi sygnału u góry, bo akcent niesie
-   już sama skala. Rozmieszczenie kolumnowe zostaje w oknie, bo to siatka. */
+/* Karta wiodąca — środowisko podane akcentem: tytuł o stopień większy, bez
+   wstęgi sygnału u góry, bo akcent niesie już sama skala. Rozmieszczenie
+   kolumnowe zostaje w oknie, bo to siatka. Godła wariant nie rusza: wymiar
+   emblematu jest jeden dla wszystkich kart. */
 .dn-karta-srodowiska--akcent::before { content: none; }
 .dn-karta-srodowiska--akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-4xl); }
-.dn-karta-srodowiska--akcent .dn-karta-srodowiska-godlo {
-  width: var(--dn-wym-godlo-karty);
-  height: var(--dn-wym-godlo-karty);
-}
 
 /* Warstwa tła karty — pole na znak przestrzenny przy prawej krawędzi. Karta
    trzyma tylko krycie i przejście; CO w tej warstwie stoi, wskazuje okno.

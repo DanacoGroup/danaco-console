@@ -5514,3 +5514,19 @@ bez zabierania ogniska.
 Zdanie o źródle ruchu mówi najwyżej tyle, ile niesie kontrakt: przy pewności niepełnej
 posunięcie pochodzi spoza tego połączenia i tak też jest nazwane. Rozstrzyga o tym
 nagłówek `zrodlo-posuniec.ts`.
+
+## budowa/klient-poprzedni/src/moduly/assistant/eksport-dziennika.ts
+
+Eksport dziennika nie potrzebuje komendy kontraktu: wpisy są już w oknie, a plik
+powstaje z tego, co Operator widzi na ekranie. Tę samą drogę ma eksport pamięci
+projektu w `moduly/workspace/pamiec-pozycja.ts` oraz pomocnik `pobierzPlik`
+z `modele/kontrolki-formularza-braki.ts`.
+
+Log obejmuje wpisy po zawężeniu, a nie cały zapis rdzenia. Plik ma odpowiadać
+temu, co widać: eksport szerszy niż widok kazałby zgadywać, skąd wzięły się
+wiersze, których na ekranie nie było. Nagłówek pliku nazywa dlatego zarówno
+chwilę pobrania, jak i liczbę wpisów, które do niego weszły.
+
+Nagrania log nie niesie. Wpis ma wyłącznie odnośnik `audioRef`, a kontrakt nie
+ma komendy pobrania dźwięku, więc odnośnik idzie do pliku wprost, bo jest tym,
+co rdzeń naprawdę oddał.

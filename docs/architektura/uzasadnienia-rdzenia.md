@@ -174,3 +174,23 @@ wiersze albo czyta bajty z magazynu. Kanałem uczestników jest kanał echo:
 odsyła treść zapytania porcjami, tak jak zrobiłby to model, bez sieci, konta
 i klucza. Mierzona jest droga rdzenia — rejestr, tura, zapis, analiza,
 głosowanie, wydanie — a nie to, co odpowiada konkretny dostawca.
+
+## budowa/server/internal/core/adapter_studio_bezpieczenstwo.go
+
+Rodzina bezpieczeństwa dokumentu modułu Studio — szyfrowanie, czyszczenie
+metadanych, redakcja poufności, podpis i jego weryfikacja oraz rozpoznanie
+danych wrażliwych — pracuje wyłącznie na bibliotece `pdfcpu` i na bibliotece
+standardowej Go (`crypto/x509`, `crypto/rsa`, `crypto/sha256`), bez ani
+jednego uruchomienia procesu zewnętrznego: funkcja zależna od programu,
+którego instalka nie niesie, jest u Operatora odmową, a nie funkcją, a rodzina
+bezpieczeństwa jest tym miejscem, w którym odmowa boli najbardziej, bo Operator
+dowiaduje się o niej dopiero po wysłaniu dokumentu, którego nie oczyścił.
+
+Zamalowanie prostokąta zostawia tekst pod spodem: da się go zaznaczyć,
+skopiować i odczytać wyszukiwarką — to jest redakcja pozorna. `Zredaguj`
+wycina z treści strony bloki tekstu leżące w obszarze, dopiero potem kładzie
+prostokąt, więc wynik nie zawiera już wyciętych znaków.
+
+Podpis dokumentu nazywa się wprost podpisem tego produktu, nie podpisem
+kwalifikowanym: podpis, o którym Operator sądziłby, że niesie skutek prawny
+podpisu kwalifikowanego, byłby gorszy niż brak podpisu.

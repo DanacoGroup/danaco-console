@@ -1854,3 +1854,21 @@ kontraktu z takiego zdarzenia zbuduje. Rozesłanie ładunku biegnie po kopii
 zbioru odbiorców i w bloku ochronnym, więc odbiorca zgłaszający usterkę nie
 odbiera zdarzenia pozostałym, a odpięcie w trakcie rozgłoszenia nie narusza
 przebiegu pętli.
+
+## budowa/klient-poprzedni/src/komponenty/okno-aplikacji.ts
+
+Znakowanie służy oknom, które mają wiersz w katalogu okien operacyjnych, lecz nie
+noszą ramy operacyjnej. Okno Konfiguracji i Okno Ustawień są modalami opartymi na
+elemencie `dialog`, a ich wygląd niesie klasa `dn-modal`. Strona główna jest widokiem
+pełnoekranowym. Okno Rozmowy dostaje ramę od gniazda układu równoległego
+`okna-rownolegle/gniazdo-okna.ts`. W każdym z tych przypadków nagłówek, plakietka
+roli i pas akcji z ramy operacyjnej byłyby elementem zbędnym albo powtórzonym.
+
+Przypisanie kodu wprost do zbioru danych elementu, rozsiane po tych plikach,
+dawałoby kilka miejsc, które mogą się rozejść. Funkcja nadaje przy tej samej
+okazji etykietę dostępności z tej samej nazwy, więc kod okna i treść czytana przez
+czytnik ekranu pozostają zgodne.
+
+Funkcja zwraca ten sam element i ten sam typ, ponieważ modal potrzebuje typu
+`HTMLDialogElement` do wywołania metod `showModal` oraz `close`. Zwracanie typu
+`HTMLElement` odbierałoby te metody i zmuszało wywołujących do rzutowania.

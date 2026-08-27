@@ -1,26 +1,7 @@
 // Odpowiedzialność pliku: szkic i wysyłka — dwie komendy, które coś tworzą,
-// oraz obowiązkowy ślad tej jednej, której nie da się cofnąć.
-//
-// `mail.send` jest jedyną nieodwracalną komendą rdzenia. Wszystko inne, co robi
-// platforma, zostaje na maszynie Operatora i da się odkręcić; list wysłany jest
-// u kogoś innego i nie ma komendy, która by go stamtąd zabrała.
-//
-// Bramki potwierdzenia nie ma — jest ślad, i to podwójny:
-//  1. wiersz `list_wyslany` w bazie rdzenia — zapisywany zawsze, także po
-//     nieudanym nadaniu, z treścią błędu (`dane/poczta_skrzynki_slad.go`);
-//  2. kopia listu w folderze „wysłane" skrzynki Operatora — odkładana przez
-//     pakiet `poczta` po udanym nadaniu, żeby Operator zobaczył ją tam, gdzie
-//     zawsze ogląda to, co od niego wyszło.
-//
-// Ślad nieudanej wysyłki nie zastępuje odmowy: wiersz w bazie powstaje,
-// a komenda i tak odmawia, bo nie wysłała. Powodzenie zameldowane po nieudanym
-// nadaniu kazałoby Operatorowi uznać sprawę za załatwioną.
-//
-// Szkic jest krokiem pośrednim, nie połowiczną wysyłką. `mail.draft.save`
-// odkłada odpowiedź w folderze szkiców skrzynki Operatora, nie w bazie
-// rdzenia. Operator otwiera swojego klienta poczty i widzi ją tam,
-// gdzie widziałby własną niedokończoną odpowiedź. Nic z niej nie wychodzi
-// w świat, dopóki nie padnie `mail.send`.
+// oraz obowiązkowy ślad tej jednej, której nie da się cofnąć. Bramek
+// potwierdzenia nie ma — jest ślad podwójny: wiersz w bazie i kopia w folderze
+// wysłanych skrzynki Operatora.
 package core
 
 import (
@@ -35,8 +16,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZapiszSzkic odkłada szkic odpowiedzi w skrzynce — obsługuje
-// `mail.draft.save`.
+// ZapiszSzkic odkłada szkic odpowiedzi w folderze szkiców skrzynki Operatora,
+// obsługując `mail.draft.save`; nic z niego nie wychodzi w świat.
 func (a *adapterPoczty) ZapiszSzkic(ctx context.Context,
 	z shared.MailDraftSaveRequest) (shared.MailDraftSaveResponse, error) {
 
@@ -77,9 +58,8 @@ func (a *adapterPoczty) Wyslij(ctx context.Context,
 	}
 	defer klient.Zamknij()
 
-	// Szkic wskazany wyklucza się z polami treści — tak stanowi kontrakt.
-	// Przyjęcie obu naraz zmuszałoby rdzeń do rozstrzygnięcia, które ma
-	// pierwszeństwo; wysłałby wtedy list, którego wołający nie napisał.
+	// Szkic wskazany wyklucza się z polami treści; przyjęcie obu naraz
+	// zmuszałoby do wyboru.
 	if z.DraftId != nil && strings.TrimSpace(*z.DraftId) != "" {
 		if len(z.To) > 0 || z.Subject != nil || z.Body != nil {
 			return shared.MailSendResponse{}, shared.MailMessage{}, bladWskazaniaPoczty(
@@ -102,12 +82,9 @@ func (a *adapterPoczty) Wyslij(ctx context.Context,
 	return a.nadaj(ctx, klient, skrzynka, wychodzacy)
 }
 
-// wyslijSzkic odczytuje zapisany szkic ze skrzynki i nadaje jego treść.
-//
-// Szkicu nie kasujemy po wysłaniu. Kontrakt tego nie obiecuje,
-// a skasowanie byłoby czynnością uboczną, której nikt nie zlecił; Operator
-// usunie go swoim klientem poczty, jeśli zechce. Kopia w folderze „wysłane"
-// i tak powstaje osobno, więc szkic zostaje jako ślad, a nie jako duplikat.
+// wyslijSzkic odczytuje zapisany szkic ze skrzynki i nadaje jego treść. Szkic
+// po wysłaniu nie jest kasowany: kontrakt tego nie obiecuje, a skasowanie
+// byłoby czynnością uboczną, której nikt nie zlecił.
 func (a *adapterPoczty) wyslijSzkic(ctx context.Context, klient *poczta.Klient,
 	skrzynka dane.SkrzynkaOperatora, szkic string) (shared.MailSendResponse, shared.MailMessage, error) {
 
@@ -126,23 +103,22 @@ func (a *adapterPoczty) wyslijSzkic(ctx context.Context, klient *poczta.Klient,
 	})
 }
 
-// nadaj wykonuje wysyłkę i zawsze zostawia ślad — patrz nagłówek pliku.
+// nadaj wykonuje wysyłkę i zawsze zostawia ślad, wiersz w bazie zapisywany
+// zarówno po udanym, jak i po nieudanym nadaniu.
 func (a *adapterPoczty) nadaj(ctx context.Context, klient *poczta.Klient,
 	skrzynka dane.SkrzynkaOperatora, w poczta.Wychodzacy) (shared.MailSendResponse, shared.MailMessage, error) {
 
 	identyfikator, nadano, blad := klient.Wyslij(w)
 	a.zapiszSlad(ctx, skrzynka, w, blad)
 	if blad != nil {
-		// Kod `channel_unavailable`: serwer wysyłkowy jest po drugiej stronie
-		// sieci, a odmowa bywa chwilowa — ponowienie ma sens. List nie wyszedł,
-		// więc ponowienie nie grozi wysłaniem go dwa razy.
+		// Kod `channel_unavailable`: niedostępność serwera bywa chwilowa,
+		// ponowienie ma sens.
 		return shared.MailSendResponse{}, shared.MailMessage{},
 			protocolBladPoczty(shared.ErrorCodeChannelUnavailable, blad.Error())
 	}
 
-	// Wiadomość dla zdarzenia składamy z tego, co naprawdę poszło, a nie
-	// z żądania: folder „wysłane", nadawca skrzynki, chwila nadania odczytana
-	// po powrocie z serwera.
+	// Wiadomość zdarzenia niesie folder wysłanych, nadawcę skrzynki i chwilę
+	// nadania z serwera.
 	wyslana := shared.MailMessage{
 		Id:     identyfikator,
 		Folder: poczta.FolderWyslanych,
@@ -157,12 +133,9 @@ func (a *adapterPoczty) nadaj(ctx context.Context, klient *poczta.Klient,
 	return shared.MailSendResponse{MessageId: identyfikator, SentAt: nadano.UnixMilli()}, wyslana, nil
 }
 
-// zapiszSlad utrwala fakt nadania — udanego i nieudanego.
-//
-// Niepowodzenie zapisu śladu nie unieważnia wysyłki: list już wyszedł i nie da
-// się go cofnąć, więc odmowa komendy z powodu bazy mówiłaby nieprawdę. Ślad,
-// którego nie da się zapisać, jest usterką bazy — a nie powodem, żeby
-// powiedzieć Operatorowi, że list nie poszedł.
+// zapiszSlad utrwala fakt nadania — udanego i nieudanego. Niepowodzenie zapisu
+// śladu nie unieważnia wysyłki: list już wyszedł i nie da się go cofnąć, więc
+// odmowa komendy z powodu bazy mówiłaby nieprawdę.
 func (a *adapterPoczty) zapiszSlad(ctx context.Context, skrzynka dane.SkrzynkaOperatora,
 	w poczta.Wychodzacy, blad error) {
 
@@ -221,13 +194,9 @@ func (a *adapterPoczty) zlozWychodzacy(ctx context.Context, skrzynka dane.Skrzyn
 }
 
 // zalacznikiZZasobow zamienia identyfikatory zasobów magazynu na bajty do
-// dołączenia. To droga powrotna tej samej rury, którą przyszły załączniki
-// odczytanego listu — model może więc odesłać przerobiony dokument, nie
-// wynosząc go poza rdzeń.
-//
-// Zasób wskazany, a nieznany jest odmową całej komendy. Wysłanie listu bez
-// załącznika, o który proszono, byłoby wysłaniem innego listu niż zamówiony —
-// a tego nie da się cofnąć.
+// dołączenia. Zasób wskazany, a nieznany jest odmową całej komendy: wysłanie
+// listu bez załącznika, o który proszono, byłoby wysłaniem innego listu niż
+// zamówiony.
 func (a *adapterPoczty) zalacznikiZZasobow(ctx context.Context, zasoby []string) ([]poczta.Zalacznik, error) {
 	if len(zasoby) == 0 {
 		return nil, nil
@@ -250,10 +219,8 @@ func (a *adapterPoczty) zalacznikiZZasobow(ctx context.Context, zasoby []string)
 			return nil, protocolBladPoczty(shared.ErrorCodeConflict,
 				"zasób "+kod+" nie ma treści w magazynie rdzenia — nie ma czego dołączyć")
 		}
-		// Bajty czytamy wprost ze ścieżki bloba, którą niesie `uri` zasobu:
-		// magazyn jest składem plików pod sumą sha256, a nie warstwą odczytu
-		// (`adapter_modul_library_magazyn.go` ma sam zapis). Ta sama droga, którą
-		// czyta zasoby narzędzie dokumentów.
+		// Bajty pochodzą wprost ze ścieżki bloba `uri` zasobu, tą samą drogą,
+		// co moduł dokumentów.
 		bajty, err := os.ReadFile(*zasob.URI)
 		if err != nil {
 			return nil, bladPoczty(err)
@@ -277,7 +244,8 @@ func nazwaZalacznika(zasob dane.ZasobDesignu, kod string) string {
 	return kod
 }
 
-// protocolBladPoczty składa odmowę modułu z wskazanym kodem kontraktu.
+// protocolBladPoczty składa odmowę modułu z wskazanym kodem kontraktu, znacząc
+// treść przedrostkiem nazwy modułu dla odróżnienia od odmów innych modułów.
 func protocolBladPoczty(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "moduł poczty: "+powod))
 }

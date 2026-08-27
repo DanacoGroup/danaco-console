@@ -2573,3 +2573,18 @@ kształtem znaków.
 Wyróżnienie kafla jest zastrzeżone dla miary krytycznej. Etykieta nazywa miarę
 wprost i nie bywa zastępowana samym kolorem, dzięki czemu kafel pozostaje
 czytelny bez rozróżniania barw.
+
+## budowa/klient-poprzedni/src/aplikacja/menu-operatora.ts
+
+W menu nie ma nazwy własnej, adresu, awatara ani przełączania kont, ponieważ
+platforma kont nie prowadzi: komenda `auth.register` konta nie zakłada i adresu
+poczty nie przyjmuje. Menu nie udaje więc profilu osobowego, którego pod spodem
+nie ma.
+
+Nie ma również pozycji wylogowania. Rdzeń nie odcina komend po wygaśnięciu
+sesji, więc taka pozycja mogłaby jedynie skasować zapis sesji i przeładować
+aplikację, obiecując Operatorowi skutek, którego nie osiąga.
+
+Obie pozostałe pozycje pochodzą z tego samego wykazu ustawień, co listwa strony
+głównej, i idą tą samą drogą skutku. Dwa wykazy rozjechałyby się przy pierwszej
+zmianie nazwy albo trasy pozycji.

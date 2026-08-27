@@ -5645,3 +5645,8 @@ naciśnięcia wywołującemu; nie zna ani jednej komendy, ani jednej barwy.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/wpisy-strumienia.ts
 Miejsce jest wspólne dla dwóch odbiorców: przepływ komunikatów prowadzi jedno okno sesji uzgodnione z rdzeniem przy starcie powłoki, a panel modułu prowadzi okna zakładane osobno, i obaj biorą stąd obie funkcje, więc rozpoznanie persony i pokazanie fragmentu mają jedną postać. Podpisanie wiadomości systemowej albo wyniku narzędzia kanałem modelu kazałoby plakietce kłamać przy wpisie klasy neutralnej. Rola narzędzia powinna nieść w plakietce jego nazwę, ale kontrakt tej nazwy przy wiadomości nie przenosi — do czasu, aż ją dostanie, plakietka niesie nazwę roli, a nie zmyśloną nazwę narzędzia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/plakietka-roli.ts
+Tło gniazda zostaje neutralne niezależnie od roli — kolor sygnałowy nosi
+wyłącznie powierzchnia pigułki plakietki koordynatora, nigdy tło całego
+gniazda.

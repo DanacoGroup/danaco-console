@@ -1856,3 +1856,49 @@ niesie jedną barwę, kropka nigdy nie odrywa się barwą od obrysu. Tę zasadę
 ustala księga znaku razem z arkuszem komponenty.css, a generator jej pilnuje
 programowo zamiast zdawać się na ręczne przestrzeganie przy każdym nowym
 osadzeniu.
+
+## budowa/desktop/src-tauri/src/aktualizacja/droga.rs
+
+Trzy sytuacje kończą się inaczej przy założeniu wydania: na Linuksie jako
+AppImage plik wskazany zmienną `APPIMAGE` zostaje podmieniony i powłoka wstaje
+ponownie sama; na Linuksie z pakietu `.deb` podmiana jest niemożliwa, bo
+binarka leży w `/usr/bin`, gdzie proces operatora nie ma prawa zapisu, a
+powłoka nie podnosi sobie tych praw — ta gałąź zwraca odmowę nazywającą brak
+i mówiącą operatorowi, co zrobić samemu (dpkg, strona pobrania); na Windows
+wydanie przychodzi jako instalka NSIS, którą powłoka uruchamia jako osobny
+program i schodzi jej z drogi.
+
+Podmiana idzie przez `rename`, nie przez zapis w miejsce: na Linuksie nie
+wolno nadpisać pliku wykonywalnego, który właśnie biegnie (jądro zwraca
+`ETXTBSY`), a `rename` w obrębie tego samego katalogu tego zakazu nie łamie —
+podstawia nowy i-węzeł pod starą nazwę, proces już uruchomiony dopracowuje na
+starym, który znika dopiero po jego zakończeniu. Plik roboczy pobiera się więc
+obok celu, nie do katalogu tymczasowego, bo `rename` działa wyłącznie w obrębie
+jednego systemu plików.
+
+Brak zmiennej `APPIMAGE` na Linuksie znaczy, że aplikacja pochodzi z pakietu
+systemowego (`.deb` → `/usr/bin`) albo z budowy deweloperskiej
+(`target/release`) — w obu wypadkach podmiana z wnętrza aplikacji jest
+niewłaściwa, bo pakietem zarządza `dpkg`, a budowę deweloperską nadpisuje
+`cargo`.
+
+Sprawdzenie zawartości pliku roboczego zadaje dwa pytania o brak, nigdy
+o zgodę: czy jest w nim cokolwiek i czy wygląda na plik wykonywalny Linuksa.
+Zgodna suma SHA-256 nie odpowiada na pytanie „czy to w ogóle aplikacja" —
+wykaz wydań może wskazywać wydanie na inny system albo plik pusty, a suma
+będzie się zgadzać co do znaku. Przy zakładaniu: ostatnie spojrzenie na
+zawartość dzieje się tuż przed podmianą, bo `zaloz` podmienia plik aplikacji
+nieodwracalnie i nie wierzy, że ktoś wcześniej sprawdził właściwą rzecz. Bit
+wykonywalny nadaje się dopiero po sprawdzeniu sumy, żeby plik pobrany,
+a jeszcze niesprawdzony, nie miał prawa być uruchamialny nawet przez pomyłkę.
+Instalka NSIS budowana przez Tauri przyjmuje `/S` (przebieg cichy); powłoka
+musi zejść z drogi, bo instalator nie podmieni pliku trzymanego przez biegnący
+proces, dlatego `restartuje_powloka` jest tu fałszem — aplikację z powrotem
+stawia instalator, nie powłoka.
+
+Moduł testów jest cały pod `#[cfg(not(windows))]`, bo sprawdza wyłącznie
+wariant `AppImage` i funkcję `sprawdz_zawartosc`; gałąź windowsowa nie ma tu
+testów i mieć ich nie będzie, bo sprawdzenie jej wymaga uruchomienia
+instalatora NSIS na Windowsie, a test to udający byłby atrapą. `rozpoznaj()`
+czyta zmienną środowiska, wspólną dla całego procesu testowego, więc dostęp do
+niej zamyka zamek, bez którego testy mrugałyby przy równoległym biegu.

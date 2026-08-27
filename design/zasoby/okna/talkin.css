@@ -1,0 +1,32 @@
+/* ===========================================================================
+   TalkIn — arkusz okna
+   ---------------------------------------------------------------------------
+   Norma zera (05-okna/NORMA-OKNA.md): w tym pliku stoi WYŁĄCZNIE rozmieszczenie
+   — siatka, odstęp, przewijanie, szerokość. Barwa, pismo, obramowanie, cień,
+   stan i ruch należą do biblioteki i nie mają tu prawa się pojawić.
+
+   Arkusz zastąpił blok <style> w talkin.html. Wygląd, który tam stał, w całości
+   miał już odpowiedniki w bibliotece: `.boczna*` → `.dn-boczna*`,
+   `.dok-dokument` → `.dn-tekst-ciagly--dokument`, `.dok-stan-linia` → `.dn-stan`,
+   `.dok-kafel` → `.dn-kafel--miniatura`. Nic nie zostało przeniesione „na razie".
+   =========================================================================== */
+
+/* Szyna modułów przewija się wnętrzem, nie całością — nagłówek szyny zostaje
+   widoczny, gdy wykaz dziewięciu modułów nie mieści się w wysokości okna. */
+.tk-boczna { overflow-y: visible; }
+
+/* Dokument w panelu — wyściółka czytania. Sam krój i miara wiersza idą
+   z `.dn-tekst-ciagly--dokument`. */
+.tk-dokument { padding: var(--dn-od-4); }
+
+/* Podgląd renderu zajmuje pełną szerokość panelu: to zestawienie poprawek,
+   nie kolumna tekstu do czytania ciągłego. */
+.tk-dokument--pelny { max-width: none; }
+
+/* Siatka miniatur podglądu — tyle kolumn, ile się mieści przy 120 px na kafel. */
+.tk-galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2) 0;
+}

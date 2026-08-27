@@ -649,6 +649,28 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-kafel-etykieta { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
 .dn-kafel-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
 
+/* Miniatura — kafel nieinteraktywny w siatce podglądu. Ta sama bryła co kafel
+   wiodący, tylko zwarta i ułożona w kolumnę: znak, nazwa, nota. Nie jest
+   przyciskiem, więc zdejmuje wskaźnik i przejście stanu najechania. */
+.dn-kafel--miniatura {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--dn-od-1);
+  padding: var(--dn-od-2);
+  border-color: var(--dn-obrys-subtelny);
+  border-radius: var(--dn-r-sm);
+  font-size: var(--dn-fs-xs);
+  cursor: default;
+  transition: none;
+}
+.dn-kafel--miniatura:hover { border-color: var(--dn-obrys-subtelny); background: var(--dn-panel); }
+.dn-kafel--miniatura > svg {
+  width: var(--dn-wym-ikona-xl);
+  height: var(--dn-wym-ikona-xl);
+  flex: none;
+  color: var(--dn-tekst-3);
+}
+
 /* ==========================================================================
    TABELA — zwarta, robocza
    ========================================================================== */
@@ -706,6 +728,11 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   vertical-align: top;
 }
 .dn-tabela--tresc tbody tr:last-child td { border-bottom: 0; }
+/* Kolumna liczbowa — wyrównanie do prawej i pismo maszynowe, żeby rzędy
+   wielkości stały w jednej pionowej linii. Dotąd okna robiły to atrybutem
+   `style` na każdej komórce osobno, a pismo brały z rusztowania `.pt-mono`. */
+.dn-tabela-liczba { text-align: right; font-family: var(--dn-ff-mono); font-variant-numeric: tabular-nums; }
+th.dn-tabela-liczba { text-align: right; }
 /* Podpis tabeli czyta się jak nadtytuł rozdziału, nie jak wiersz danych. */
 .dn-tabela caption {
   padding-bottom: var(--dn-od-2);
@@ -2363,6 +2390,17 @@ button.dn-link {
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 .dn-tekst-ciagly--dokument { max-width: 78ch; font-size: var(--dn-fs-base); }
+/* Wyróżnienie fragmentu — `mark` był w znaczniku bez deklaracji, więc brał
+   żółte tło przeglądarki, jedyną barwę w produkcie spoza palety. Tło idzie ROLĄ
+   `--dn-sygnal-tlo`, nie szczeblem `--dn-sygnal-100`: szczebel ma jedną wartość
+   na oba motywy i w ciemnym kładł biel pod jasne pismo. Barwa pisma dziedziczona
+   — wyróżnienie wskazuje miejsce, nie zmienia stopnia czytelności. */
+.dn-tekst-ciagly mark {
+  padding: 0 2px;
+  border-radius: var(--dn-r-xs);
+  background: var(--dn-sygnal-tlo);
+  color: inherit;
+}
 .dn-tekst-ciagly--drobny { font-size: var(--dn-fs-xs); }
 
 /* ==========================================================================

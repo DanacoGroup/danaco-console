@@ -5979,3 +5979,12 @@ gotowości kontraktu, który schemat przyjmuje od odpowiedniej migracji. Kolejka
 przez Operatora wyczerpana nie jest: nie miała czego wyczerpać, stoi czynna i czeka na zlecenia,
 którymi zasila ją pętla albo MultitaskingAI w biegu — brak zleceń daje poprawny stan, nie awarię
 i nie stan końcowy.
+
+## budowa/server/internal/core/telemetria_strumienia.go
+
+Punkt podłączenia telemetrii jest w tym pliku, a nie w adapterze rozmowy,
+z jednego powodu: strumień jest jedyną drogą, którą tura mówi o sobie
+w czasie rzeczywistym. Fragment tekstu jest kolejnym etapem, fragment
+wywołania narzędzia etapem nazwanym, a fragment ostatni domyka proces.
+Rodzaj błąd w ostatnim fragmencie oznacza turę nieudaną, bo strumień ma
+jedną drogę dla powodzenia i niepowodzenia.

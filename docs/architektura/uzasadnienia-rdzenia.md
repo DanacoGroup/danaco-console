@@ -4445,3 +4445,39 @@ Zapis nastawy idzie pierwszy, a odpowiedź mówi osobno o zapisie i osobno
 o rejestracji — kontrakt mówi to wprost i tak jest tutaj. Skrót zajęty
 przez inny program nie jest błędem zapisu — Operator zwolni go później
 i nie będzie musiał wpisywać nastawy od nowa.
+
+## budowa/server/internal/core/montaz_zrodla.go
+
+Odpowiedzialność pliku: budowniczowie rejestrów i źródeł, z których korzysta
+montaż rdzenia — rejestr kanałów modelu wraz z pulą kont rotacji, źródło
+wierszy konfiguracji spod adresu złożonego, rejestr definicji z katalogu
+ustawień oraz katalog akcji. Wszystkie są sterowane danymi: nowy kanał, nowa
+pozycja okna konfiguracji i nowa akcja to nowy wiersz, nie nowa gałąź
+w kodzie. Niepowodzenie pierwszego odczytu nigdy nie przerywa startu — rdzeń
+rusza z zawartością uboższą i odbudowuje ją przy kolejnym odczycie. Osobno od
+montaz.go, bo montaż mówi, co z czym się wiąże, a ten plik — jak powstaje
+każde źródło.
+
+Kanał główny w rejestrKanalow obsługuje oba rodzaje procesu lokalnego: „cli"
+(program code CLI) i „lokalny" (proces lokalny rozmawiający strumieniem).
+Obie fabryki dzielą jedną pulę kont — rotacja po wyczerpaniu limitu ma sens
+tylko przy wspólnej pamięci wyczerpania. Rodzaj „sdk" nie ma tu fabryki: bez
+dostawcy SDK kanał tego rodzaju nie ma jak działać, więc rejestr nie pokaże
+go jako czynnego, zamiast udawać gotowość.
+
+pulaKont: katalog kont jest źródłem pierwszym, gdy repozytorium istnieje —
+niezależnie od tego, czy na starcie ma już wpisy. Pula buduje się z bieżącego
+wykazu (może być pusty) i zawsze wpina w nią źródło oraz utrwalacz:
+wyczerpanie zapisuje się do bazy, a bieżący wykaz odczytuje się na progu tury
+przez OdświeżZeŹródła, więc konto dodane komendą account.* wchodzi do rotacji
+bez restartu — także gdy pula wystartowała pusta. Ścieżka zapasowa z dysku
+zostaje tylko dla instalacji bez katalogu kont.
+
+## budowa/server/internal/core/skutek_ukladu_orkiestracji_test.go
+
+Skutek dopełnień układu zależności obejmuje: czy bramka, grupa, kompensacja
+i spięcie z MultitaskingAI zostawiają po sobie wiersz — i czy spięcie
+naprawdę przestawia kolejki, zamiast być znacznikiem, na który nikt nie
+patrzy. Każdy sprawdzian schodzi do bazy własnym zapytaniem, bo odpowiedź
+komendy oddaje układ po zapisie i wyglądałaby tak samo, gdyby zapis nie
+doszedł.

@@ -789,3 +789,11 @@ samo pole `contentBase64`.
 Nieudany odczyt, czyli zniknięcie pliku albo odrzucenie dostępu przez
 urządzenie, wraca jako `null`, a nie wyjątkiem wywracającym widok. Wołający ma
 wtedy powiedzieć Operatorowi, że nic nie zostało wysłane.
+
+## budowa/klient-poprzedni/src/moduly/apps/rama-okna.ts
+
+Obudowa okna, na którą składają się nagłówek, plakietka roli, pas akcji i ciało, należy do komponentu ramy okna w katalogu komponenty, a znakowanie fazy do komponentu fazy okna w tym samym katalogu. Plik ramy modułu Apps splata oba byty, ponieważ rama biblioteczna nie zna cyklu życia danych, których sama nie pobiera, a pięć okien modułu ma mieć jedną przesłonę stanu zamiast pięciu wariantów tego samego rozwiązania.
+
+Przesłona stanu nie kasuje treści, tylko ją przykrywa. Powrót do fazy gotowej odsłania to, co Operator już widział, dzięki czemu nieudane odświeżenie nie zabiera wyniku poprzedniego odczytu. Wskaźnik odczytu stoi obok komunikatu, a nigdy zamiast kontrolki, więc treść okna zostaje na miejscu i pozostaje klikalna. Wspólna procedura znakowania fazy tego nie przesądza, ponieważ moduły różnią się między sobą pod tym względem.
+
+Wygląd pochodzi w całości z biblioteki komponentów z przedrostkiem dn oraz z żetonów motywu, dlatego plik nie zawiera ani jednej wartości barwy i ani jednej wartości odstępu.

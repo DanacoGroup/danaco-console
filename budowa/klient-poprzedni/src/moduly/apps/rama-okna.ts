@@ -1,22 +1,8 @@
 /**
- * Okno operacyjne modułu Apps: rama biblioteczna wraz z przesłoną stanu.
- *
- * Obudowa okna (nagłówek, plakietka roli, pas akcji, ciało) należy do
- * `komponenty/rama-okna.ts`, a znakowanie fazy do `komponenty/faza-okna.ts`.
- * Ten plik splata oba byty: rama nie zna cyklu życia danych, których nie
- * pobiera, a pięć okien modułu ma jedną przesłonę stanu, nie pięć wariantów
- * tego samego.
- *
- * Stan nie kasuje treści, tylko ją przesłania: powrót do fazy `gotowe` odsłania
- * to, co Operator już widział. Nieudane odświeżenie nie zabiera więc wyniku
- * poprzedniego.
- *
- * Wskaźnik odczytu stoi obok komunikatu, nigdy zamiast kontrolki: treść okna
- * zostaje na miejscu i pozostaje klikalna. Wspólna `oznaczFaze` tego nie
- * przesądza — moduły różnią się tu między sobą.
- *
- * Wygląd w całości z biblioteki `komponenty/` (`dn-*`) i żetonów `motyw/`;
- * plik nie zna ani jednej barwy i ani jednego odstępu.
+ * Okno operacyjne modułu Apps, czyli rama biblioteczna spleciona z przesłoną
+ * stanu. Rama wnosi nagłówek, pas akcji i ciało, a przesłona znakuje fazę
+ * odczytu wspólną dla pięciu okien modułu i przykrywa treść zamiast ją
+ * kasować.
  */
 
 import { oznaczFaze, type FazaOkna } from '../../komponenty/faza-okna';

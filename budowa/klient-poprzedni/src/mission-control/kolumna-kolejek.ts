@@ -7,23 +7,20 @@ import { utworzStanPusty } from './stan-pusty';
 import type { ZamiarKolejki } from './zdarzenia-pulpitu';
 
 /**
- * Druga z trzech kolumn pulpitu — kolejki ze sterowaniem.
- *
- * Jedna odpowiedzialność: kolejki znane ze zdarzeń `queue.changed`, każda
- * z własnym paskiem transportu (`queue.action`). Kontrakt nie niesie roli
- * kolejki, liczby zadań ani odczytu `queue.list`, więc wykaz buduje się
- * wyłącznie ze zdarzeń, a brakujące miary są wypisane jako brak źródła.
- *
- * Bieg naprawczy nie ma limitu, dlatego licznik obiegów stoi przy każdej
- * kolejce — przejrzystość zastępuje tu bramę. Sterowanie jest ręczne, żaden
- * przycisk nie jest wyszarzony; stan kolejki poznaje się po plakietce ze słowem.
+ * Kolumna kolejek jest drugą z trzech kolumn pulpitu i pokazuje kolejki znane
+ * ze zdarzeń zmiany, każdą z własnym paskiem transportu. Miary, których kontrakt
+ * nie niesie, kolumna wypisuje wprost jako brak źródła.
  */
 export interface KolumnaKolejek {
   element: HTMLElement;
   odswiez(kolejki: KolejkaPulpitu[]): void;
 }
 
-/** Buduje kolumnę kolejek ze sterowaniem. */
+/**
+ * Buduje kolumnę kolejek wraz ze sterowaniem: wykaz wierszy kolejek, stan pusty
+ * na wypadek pustego wykazu oraz odczyt przyjmujący nowy wykaz kolejek. Zamiary
+ * sterowania kolumna przekazuje podanej funkcji.
+ */
 export function utworzKolumneKolejek(
   kolejki: KolejkaPulpitu[],
   nadaj: (zamiar: ZamiarKolejki) => void,
@@ -59,7 +56,11 @@ export function utworzKolumneKolejek(
   return { element, odswiez };
 }
 
-/** Jedna kolejka: nazwa, stan, liczniki, pasek przycisków transportu. */
+/**
+ * Buduje wiersz jednej kolejki: nazwę, plakietkę stanu, liczniki okien i obiegów
+ * naprawczych oraz pasek przycisków transportu. Identyfikator i stan kolejki
+ * wiersz niesie w polach danych elementu.
+ */
 function wiersz(kolejka: KolejkaPulpitu, nadaj: (zamiar: ZamiarKolejki) => void): HTMLLIElement {
   const element = document.createElement('li');
   element.className = 'mc-kolejka';
@@ -102,7 +103,11 @@ function wiersz(kolejka: KolejkaPulpitu, nadaj: (zamiar: ZamiarKolejki) => void)
   return element;
 }
 
-/** Pojedynczy licznik z objaśnieniem w podpowiedzi. */
+/**
+ * Buduje pojedynczy licznik kolejki: widoczny tekst miary wraz z objaśnieniem
+ * podawanym w podpowiedzi elementu. Objaśnienie nazywa wielkość mierzoną oraz
+ * jej źródło.
+ */
 function licznik(tekst: string, objasnienie: string): HTMLElement {
   const element = document.createElement('span');
   element.className = 'mc-kolejka__licznik';
@@ -111,7 +116,11 @@ function licznik(tekst: string, objasnienie: string): HTMLElement {
   return element;
 }
 
-/** Klasa plakietki stanu kolejki. */
+/**
+ * Dobiera odmianę plakietki do stanu kolejki: bieg daje odmianę sukcesu,
+ * wstrzymanie odmianę ostrzeżenia, zatrzymanie odmianę błędu, a stan pozostały
+ * odmianę informacyjną.
+ */
 function klasaStanu(status: QueueStatus): string {
   switch (status) {
     case QueueStatus.Running:
@@ -125,7 +134,11 @@ function klasaStanu(status: QueueStatus): string {
   }
 }
 
-/** „1 okno", „3 okna", „7 okien". */
+/**
+ * Odmienia rzeczownik nazywający okno przez liczbę, zgodnie z regułą polskiej
+ * liczby mnogiej wraz z wyjątkiem obejmującym liczebniki od jedenastu do
+ * czternastu.
+ */
 function odmianaOkna(liczba: number): string {
   if (liczba === 1) {
     return 'okno';
@@ -136,7 +149,11 @@ function odmianaOkna(liczba: number): string {
   return mnoga ? 'okna' : 'okien';
 }
 
-/** „0 obiegów", „1 obieg", „3 obiegi", „7 obiegów". */
+/**
+ * Odmienia rzeczownik nazywający obieg przez liczbę, zgodnie z regułą polskiej
+ * liczby mnogiej wraz z wyjątkiem obejmującym liczebniki od jedenastu do
+ * czternastu.
+ */
 function odmianaObiegu(liczba: number): string {
   if (liczba === 1) {
     return 'obieg';

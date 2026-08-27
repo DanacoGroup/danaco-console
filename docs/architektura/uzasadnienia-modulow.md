@@ -2681,3 +2681,21 @@ w mianowniku, a w liczniku wylacznie z wag tych, ktorzy nie podpisali zdania
 odrebnego. Uczestnik, ktory zglosil zdanie odrebne, nie poparl stanowiska,
 lecz jego waga i tak wchodzi do mianownika rachunku, bo poparcie mierzy udzial
 w calej debacie, nie tylko wsrod uczestnikow bez zastrzezen.
+
+## adapter_modul_extension_zaufanie.go
+
+Nic w tym pliku nie stanowi bramy instalacji: żadne ostrzeżenie skanera ani
+brak podpisu nie blokuje instalacji ani włączenia rozszerzenia. Kontrola idzie
+przez stan wyjściowy i zakres uprawnień, nie przez odmowę na wejściu. Skaner
+manifestu wystawia spostrzeżenia, weryfikacja podpisu wystawia werdykt,
+nadanie uprawnień zapisuje decyzję Operatora — żadna z tych trzech dróg
+niczego nie wstrzymuje.
+
+Uprawnienie nadmiarowe liczy się, nie jest zgadywane: `extension.permission.
+list` oddaje zakresy nadane, których manifest wcale nie deklaruje. To różnica
+dwóch zbiorów leżących w bazie, a nie heurystyka.
+
+Weryfikacja podpisu liczy podpis od nowa: Ed25519 ze standardowej biblioteki
+sprawdza bajty podpisu kluczem publicznym odłożonym przy pozycji. Przepisanie
+zapamiętanego wyniku poprzedniej weryfikacji nie byłoby weryfikacją, tylko
+powtórzeniem cudzego zdania.

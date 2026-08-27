@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: biblioteka szablonów przepływów (tabele
-// `szablon_automatyki`, `parametr_szablonu_automatyki`, migracje 265-266).
-//
-// Szablon jest bytem odrębnym od automatyki, z której powstał. Automatyka
-// źródłowa bywa później zmieniona albo usunięta, a szablon ma dalej zakładać
-// automatyki o kształcie z chwili zapisu — dlatego kroki leżą tu jako migawka,
-// a klucza obcego do `automatyka` nie ma.
+// Plik prowadzi bibliotekę szablonów przepływów: szablon jest bytem odrębnym od automatyki, z której powstał,
+// i ma dalej zakładać automatyki o kształcie z chwili zapisu, dlatego kroki leżą tu jako migawka, bez klucza obcego do automatyki.
 package dane
 
 import (
@@ -14,7 +9,7 @@ import (
 	"fmt"
 )
 
-// SzablonAutomatyki to wiersz tabeli `szablon_automatyki`.
+// SzablonAutomatyki to wiersz tabeli `szablon_automatyki` niosący migawkę kroków wraz z parametrami szablonu.
 type SzablonAutomatyki struct {
 	ID             int64
 	Kod            string
@@ -105,8 +100,7 @@ func (r *repozytoriumAutomatyk) ZapiszSzablonAutomatyki(ctx context.Context,
 	return r.SzablonAutomatyki(ctx, szablon.Kod)
 }
 
-// SzablonAutomatyki zwraca szablon po kodzie. Brak wiersza wraca jako
-// ErrBrakWiersza.
+// SzablonAutomatyki zwraca szablon po jego kodzie zewnętrznym; brak wiersza wraca jako ErrBrakWiersza.
 func (r *repozytoriumAutomatyk) SzablonAutomatyki(ctx context.Context,
 	kod string) (SzablonAutomatyki, error) {
 
@@ -124,7 +118,7 @@ func (r *repozytoriumAutomatyk) SzablonAutomatyki(ctx context.Context,
 	return szablon, nil
 }
 
-// SzablonyAutomatyki zwraca bibliotekę w kolejności nazw.
+// SzablonyAutomatyki zwraca całą bibliotekę szablonów w kolejności nazw wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) SzablonyAutomatyki(ctx context.Context,
 	limit int) ([]SzablonAutomatyki, error) {
 
@@ -149,7 +143,7 @@ func (r *repozytoriumAutomatyk) SzablonyAutomatyki(ctx context.Context,
 	return lista, wiersze.Err()
 }
 
-// ParametrySzablonuAutomatyki zwraca parametry szablonu w kolejności zapisu.
+// ParametrySzablonuAutomatyki zwraca parametry szablonu w kolejności ich zapisu wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) ParametrySzablonuAutomatyki(ctx context.Context,
 	szablonID int64) ([]ParametrSzablonu, error) {
 
@@ -196,7 +190,7 @@ func szablonWTransakcji(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	return szablon, nil
 }
 
-// odczytajSzablonAutomatyki składa szablon z jednego wiersza wyniku.
+// odczytajSzablonAutomatyki składa szablon automatyki wprost z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajSzablonAutomatyki(wiersz skaner) (SzablonAutomatyki, error) {
 	var szablon SzablonAutomatyki
 	var opis sql.NullString

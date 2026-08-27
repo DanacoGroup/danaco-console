@@ -2827,3 +2827,6 @@ liczy go od nowa; nikt też nie adresuje wyniku czytelności identyfikatorem.
 
 ## budowa/server/internal/store/migracja_272_automations_punkty_wznowienia.sql
 Punkt wznowienia przebiegu musi być trwały, ponieważ służy wznowieniu po awarii, a awaria zabiera pamięć procesu. Wykaz kroków ukończonych leży jako zapis strukturalny, ponieważ czyta się go w całości i tylko w całości — wznowienie pyta, czego już nie powtarzać, a nie czy dany krok jest ukończony.
+
+## budowa/server/internal/store/migracja_273_automations_alarmy.sql
+Kanały reguły alarmowania leżą jako zapis strukturalny, ponieważ kontrakt niesie je wykazem tekstów ustalanym w całości: reguła ma kanały takie, jakie zapisano ostatnio. Rozbicie na tabelę wierszy dałoby możliwość stanu, którego kontrakt nie zna — kanału dopisanego bez przepisania reguły.

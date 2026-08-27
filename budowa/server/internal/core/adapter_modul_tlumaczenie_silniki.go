@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: silniki przekładu i przebieg pakietowy modułu
-// Translate — `translate.engine.profile.list`, `.set`, `translate.engine.compare`,
-// `translate.pivot.policy.get`, `.set` oraz `translate.batch.run`.
-//
-// `engine.compare` woła model naprawdę, kanał po kanale, i oddaje warianty
-// obok siebie. Bez wpiętego rejestru kanałów albo przy kanale nieczynnym
-// odmawia wprost — tak samo jak `target.add`; wariant pusty udawałby, że model
-// odpowiedział.
-//
-// `batch.run` wykonuje pracę, a nie zapowiada ją. Zlecenie zakłada wiersze
-// pozycji (panel × operacja) i przechodzi je po kolei: przekład woła model,
-// kontrola jakości zapisuje niezgodności, korekta zakłada ustalenia, wydanie
-// zapisuje ślad eksportu panelu. Pozycja, która się nie powiodła, zostaje
-// w stanie `error` ze szczegółem — a nie znika z kolejki.
+// Silniki przekladu i przebieg pakietowy modulu Translate: profile silnikow,
+// porownanie kanalow, polityka pivota oraz uruchomienie zlecenia pakietowego
+// translate.batch.run.
 package core
 
 import (
@@ -23,13 +12,16 @@ import (
 )
 
 const (
-	// przedrostekProfiluSilnika znakuje identyfikator profilu silnika.
+	// przedrostekProfiluSilnika znakuje identyfikator profilu silnika nadany
+	// przez rdzen przy jego zapisie.
 	przedrostekProfiluSilnika = "sil-"
-	// przedrostekZleceniaPakietu znakuje identyfikator przebiegu pakietowego.
+	// przedrostekZleceniaPakietu znakuje identyfikator przebiegu pakietowego
+	// nadany przez rdzen przy zapisie.
 	przedrostekZleceniaPakietu = "pak-"
 )
 
-// WykazProfiliSilnikow obsługuje `translate.engine.profile.list`.
+// WykazProfiliSilnikow obsluguje komende translate.engine.profile.list, oddajac
+// wykaz profili zapisanych w repozytorium.
 func (a *adapterTlumaczenia) WykazProfiliSilnikow(ctx context.Context,
 	z shared.TranslateEngineProfileListRequest) (shared.TranslateEngineProfileListResponse, error) {
 
@@ -48,7 +40,8 @@ func (a *adapterTlumaczenia) WykazProfiliSilnikow(ctx context.Context,
 	return shared.TranslateEngineProfileListResponse{Profiles: wykaz}, nil
 }
 
-// UstawProfilSilnika obsługuje `translate.engine.profile.set`.
+// UstawProfilSilnika obsluguje komende translate.engine.profile.set, zapisujaca
+// profil silnika w repozytorium.
 func (a *adapterTlumaczenia) UstawProfilSilnika(ctx context.Context,
 	z shared.TranslateEngineProfileSetRequest) (shared.TranslateEngineProfileSetResponse, error) {
 
@@ -86,7 +79,8 @@ func (a *adapterTlumaczenia) UstawProfilSilnika(ctx context.Context,
 	return shared.TranslateEngineProfileSetResponse{Profile: zlozProfilSilnika(zapisany)}, nil
 }
 
-// zlozProfilSilnika przekłada wiersz profilu na byt kontraktu.
+// zlozProfilSilnika przeklada wiersz profilu z repozytorium na byt kontraktu
+// oddawany w odpowiedzi komendy.
 func zlozProfilSilnika(profil dane.ProfilSilnika) shared.EngineProfile {
 	byt := shared.EngineProfile{
 		Id:          profil.Kod,
@@ -132,8 +126,7 @@ func (a *adapterTlumaczenia) PorownajSilniki(ctx context.Context,
 		return shared.TranslateEngineCompareResponse{}, bladNieznanegoOkna(panel.OknoKod, err)
 	}
 
-	// Trasa przekładu bierze się z polityki pivota: para języków wymieniona
-	// przez Operatora idzie przez język pośredni, a nie wprost.
+	// Trasa przekladu bierze sie z polityki pivota: jezyk pomiedzy idzie przez jezyk posredni.
 	trasa := a.trasaPrzekladu(ctx, jezykZrodlowyZadania(okno.JezykZrodlowy), panel.Jezyk)
 
 	warianty := make([]shared.EngineVariant, 0, len(z.ChannelIds))
@@ -189,15 +182,15 @@ func (a *adapterTlumaczenia) trasaPrzekladu(ctx context.Context,
 	return nil
 }
 
-// PolitykaPivota obsługuje `translate.pivot.policy.get`.
+// PolitykaPivota obsluguje komende translate.pivot.policy.get, oddajaca polityke
+// pivota zapisana dla zasiegu.
 func (a *adapterTlumaczenia) PolitykaPivota(ctx context.Context,
 	z shared.TranslatePivotPolicyGetRequest) (shared.TranslatePivotPolicyGetResponse, error) {
 
 	zasieg, zasiegID := zasiegZadania(z.Scope, z.ScopeId)
 	polityka, err := a.repozytorium.PolitykaPivotaZasiegu(ctx, zasieg, zasiegID)
 	if err != nil {
-		// Polityki nieustawionej nie udajemy odmową: pusta polityka znaczy
-		// „przekład idzie wprost", i tak właśnie moduł wtedy pracuje.
+		// Polityki nieustawionej nie udajemy odmowa: pusta polityka znaczy przeklad wprost.
 		return shared.TranslatePivotPolicyGetResponse{Policy: shared.PivotPolicy{
 			Scope: shared.ConfigScope(zasieg),
 			Pairs: []shared.PivotPair{},
@@ -206,7 +199,8 @@ func (a *adapterTlumaczenia) PolitykaPivota(ctx context.Context,
 	return shared.TranslatePivotPolicyGetResponse{Policy: zlozPolitykePivota(polityka)}, nil
 }
 
-// UstawPolitykePivota obsługuje `translate.pivot.policy.set`.
+// UstawPolitykePivota obsluguje komende translate.pivot.policy.set, zapisujaca
+// polityke pivota dla zasiegu.
 func (a *adapterTlumaczenia) UstawPolitykePivota(ctx context.Context,
 	z shared.TranslatePivotPolicySetRequest) (shared.TranslatePivotPolicySetResponse, error) {
 
@@ -245,7 +239,8 @@ func zasiegZadania(zasieg *shared.ConfigScope, zasiegID *string) (string, string
 	return nazwa, napisZeWskaznika(zasiegID)
 }
 
-// zlozPolitykePivota przekłada wiersze polityki na byt kontraktu.
+// zlozPolitykePivota przeklada wiersze polityki z repozytorium na byt kontraktu
+// oddawany w odpowiedzi.
 func zlozPolitykePivota(polityka dane.PolitykaPivota) shared.PivotPolicy {
 	pary := make([]shared.PivotPair, 0, len(polityka.Pary))
 	for _, para := range polityka.Pary {
@@ -268,7 +263,8 @@ func zlozPolitykePivota(polityka dane.PolitykaPivota) shared.PivotPolicy {
 	return byt
 }
 
-// UruchomPakiet obsługuje `translate.batch.run`.
+// UruchomPakiet obsluguje komende translate.batch.run, wykonujaca zlecenie
+// pakietowe wiersz po wierszu.
 func (a *adapterTlumaczenia) UruchomPakiet(ctx context.Context,
 	z shared.TranslateBatchRunRequest) (shared.TranslateBatchRunResponse, error) {
 

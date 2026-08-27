@@ -2366,3 +2366,18 @@ niczego nie zlecił drugi raz. Każdy pozostały brak kończy zlecenie głośno
 stanem `failed` z nazwanym powodem, zamiast zostawiać wiersz stojący
 w `queued` bez wyjaśnienia — Operator ma wtedy z czego zdecydować: dosłać
 tekst, wskazać kanał, ponowić zlecenie.
+
+## adapter_modul_tlumaczenie_silniki.go
+
+Komenda engine.compare wola model naprawde, kanal po kanale, i oddaje warianty
+obok siebie. Bez wpietego rejestru kanalow albo przy kanale nieczynnym odmawia
+wprost, tak samo jak zapis przekladu w panelu — wariant pusty udawalby, ze
+model odpowiedzial.
+
+Komenda batch.run wykonuje prace, a nie zapowiada ja. Zlecenie zaklada wiersze
+pozycji zlozonych z panelu i operacji, i przechodzi je po kolei: operacja
+przekladu woła model, kontrola jakosci zapisuje niezgodnosci, korekta zaklada
+ustalenia, a wydanie zapisuje slad eksportu panelu. Pozycja, ktora sie nie
+powiodla, zostaje w stanie bledu wraz ze szczegolem, a nie znika z kolejki —
+niepowodzenie jednej pozycji nie przewraca calego przebiegu, poniewaz pakiet
+ma dojsc do konca i pokazac, co sie udalo, a co nie.

@@ -2251,3 +2251,44 @@ katalogi.
 sciezkaZasobu: rdzen podaje droge, ktora dziala bez niego — wskazanie
 materialu sciezka widziana przez rdzen. Milczace zejscie na pusta sciezke
 dałoby odczyt pliku, ktorego nie ma, i wynik wygladajacy na prawdziwy.
+
+Indeks górny i dolny w postaci znaku wykluczają się wzajemnie — litera nie
+stoi jednocześnie nad i pod wierszem.
+
+Repozytorium modułu Studio ogłasza tabele postaci osobnym kontraktem
+(`dane.RepozytoriumPostaciStudia`), więc obszar postaci sięga po nie przez
+ten kontrakt, a nie po całe repozytorium. Brak repozytorium jest brakiem
+montażu rdzenia i mówi to wprost — nie udaje pustego dokumentu.
+
+Nastawy strony domyślne jadą z jednego miejsca, bo A4 z marginesami 25 mm
+jest nastawą pisma urzędowego dla całego modułu. Dwa wykazy domyślnych
+rozjechałyby się przy pierwszej poprawce i dokument wczytany wyglądałby
+inaczej niż założony.
+
+Cztery składacze postaci z wierszy warstwy danych trzymają jedną zasadę:
+kolumna jest prawdą, a pole JSON niesie tylko to, na co kolumny nie ma.
+Dlatego najpierw odczytywany jest zapis JSON, a potem nadpisywane są pola
+kolumnowe — inaczej nieświeży zapis w JSON-ie przebiłby to, co warstwa
+danych wie na pewno.
+## server/internal/core/adapter_modul_design_adnotacje.go
+
+Pole note warstwy niesie JEDNO zdanie bez autora i bez watku, a przy kazdym
+design.board.update jedzie z calym ukladem i wraca przepisane od nowa —
+uwaga jednej osoby znikala wiec przy pierwszym przesunieciu warstwy przez
+druga. Autor podany przez wolajacego bylby polem, w ktore da sie wpisac
+cudze nazwisko, a oznaczenia osob w watku maja znaczyc to, co znacza.
+
+UstawAdnotacje: watek rozpiety miedzy dwiema tablicami nie jest watkiem —
+druga tablica pokazywalaby odpowiedz na uwage, ktorej u siebie nie ma.
+
+Adnotacje (funkcja): watek zamyka sie adnotacja po adnotacji, a odpowiedz
+otwarta pod zamknieta uwaga jest sprawa wciaz otwarta i ma zostac widoczna.
+
+adnotacjaZWykazuDesignu: dwa odczyty po kodzie robilyby te sama prace drugi
+raz i mogly trafic na stan zmieniony w miedzyczasie.
+
+autorAdnotacjiDesignu: "nieznany" wpisany w kolumne wygladalby przy uwadze
+jak czyjs podpis.
+
+Autor zostaje ten, kto adnotacje zalozyl — zmiana tresci przez druga osobe
+nie czyni jej autorka cudzej uwagi.

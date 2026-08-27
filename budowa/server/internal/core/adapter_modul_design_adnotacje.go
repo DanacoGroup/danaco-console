@@ -1,15 +1,6 @@
 // Odpowiedzialność pliku: adnotacje kompozycji Design Board wraz z wątkami —
-// `design.annotation.set` i `design.annotation.list`. Metody stoją na
-// `*adapterDesignu` (`adapter_modul_design.go`).
-//
-// Pole `note` warstwy niesie JEDNO zdanie bez autora i bez wątku, a przy każdym
-// `design.board.update` jedzie z całym układem i wraca przepisane od nowa —
-// uwaga jednej osoby znikała więc przy pierwszym przesunięciu warstwy przez
-// drugą. Adnotacja ma własny wiersz, własny czas i własnego autora.
-//
-// Autora bierzemy z kontekstu wywołania (`sprawca`), nie z żądania. Autor
-// podany przez wołającego byłby polem, w które da się wpisać cudze nazwisko,
-// a oznaczenia osób w wątku mają znaczyć to, co znaczą.
+// design.annotation.set i design.annotation.list; adnotacja ma własny
+// wiersz, czas i autora, branego z kontekstu wywołania.
 package core
 
 import (
@@ -20,15 +11,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekAdnotacjiDesign znakuje identyfikatory zewnętrzne adnotacji.
+// przedrostekAdnotacjiDesign znakuje identyfikatory zewnętrzne adnotacji,
+// żeby dało się je odróżnić od pozostałych bytów kompozycji.
 const przedrostekAdnotacjiDesign = "adnotacja-"
 
 // UstawAdnotacje zakłada albo zmienia adnotację — obsługuje
-// `design.annotation.set`.
-//
-// Adnotacja nadrzędna musi należeć do TEJ SAMEJ kompozycji. Wątek rozpięty
-// między dwiema tablicami nie jest wątkiem: druga tablica pokazywałaby
-// odpowiedź na uwagę, której u siebie nie ma.
+// design.annotation.set; adnotacja nadrzędna musi należeć do TEJ SAMEJ
+// kompozycji.
 func (a *adapterDesignu) UstawAdnotacje(ctx context.Context,
 	z shared.DesignAnnotationSetRequest) (shared.DesignAnnotationSetResponse, error) {
 
@@ -60,8 +49,8 @@ func (a *adapterDesignu) UstawAdnotacje(ctx context.Context,
 			return shared.DesignAnnotationSetResponse{}, bladNieznanegoBytuDesignu(
 				"adnotacji " + kod + " nie ma w kompozycji " + kompozycja.Kod)
 		}
-		// Autor zostaje ten, kto adnotację założył — zmiana treści przez drugą
-		// osobę nie czyni jej autorką cudzej uwagi.
+		// Autor zostaje ten, kto adnotację założył — zmiana treści nie czyni
+		// jej autorką cudzej uwagi.
 		autor = poprzednia.Autor
 	} else {
 		autor = autorAdnotacjiDesignu(ctx)
@@ -97,11 +86,8 @@ func (a *adapterDesignu) UstawAdnotacje(ctx context.Context,
 }
 
 // Adnotacje zwraca adnotacje kompozycji wraz z wątkami — obsługuje
-// `design.annotation.list`.
-//
-// Zawężenie do wątków niezamkniętych działa po adnotacji, nie po wątku: wątek
-// zamyka się adnotacja po adnotacji, a odpowiedź otwarta pod zamkniętą uwagą
-// jest sprawą wciąż otwartą i ma zostać widoczna.
+// design.annotation.list; zawężenie do wątków niezamkniętych działa po
+// adnotacji, nie po wątku.
 func (a *adapterDesignu) Adnotacje(ctx context.Context,
 	z shared.DesignAnnotationListRequest) (shared.DesignAnnotationListResponse, error) {
 
@@ -126,9 +112,7 @@ func (a *adapterDesignu) Adnotacje(ctx context.Context,
 }
 
 // adnotacjaZWykazuDesignu odszukuje adnotację po kodzie w wykazie już
-// odczytanym. Wykaz kompozycji czytamy raz i sprawdzamy nim oba wskazania
-// (zmienianą i nadrzędną) — dwa odczyty po kodzie robiłyby tę samą pracę drugi
-// raz i mogły trafić na stan zmieniony w międzyczasie.
+// odczytanym, sprawdzanym oboma wskazaniami: zmienianym i nadrzędnym.
 func adnotacjaZWykazuDesignu(wykaz []dane.AdnotacjaDesignu, kod string) (dane.AdnotacjaDesignu, bool) {
 	for _, adnotacja := range wykaz {
 		if adnotacja.Kod == kod {
@@ -138,9 +122,8 @@ func adnotacjaZWykazuDesignu(wykaz []dane.AdnotacjaDesignu, kod string) (dane.Ad
 	return dane.AdnotacjaDesignu{}, false
 }
 
-// autorAdnotacjiDesignu bierze autora z kontekstu wywołania. Brak wskazania
-// klienta zostawia pole puste — „nieznany" wpisany w kolumnę wyglądałby przy
-// uwadze jak czyjś podpis.
+// autorAdnotacjiDesignu bierze autora z kontekstu wywołania; brak wskazania
+// klienta zostawia pole puste, żeby nie wpisywać podpisu, którego nie było.
 func autorAdnotacjiDesignu(ctx context.Context) *string {
 	_, klient := sprawca(ctx)
 	if klient == nil || strings.TrimSpace(*klient) == "" {
@@ -149,8 +132,8 @@ func autorAdnotacjiDesignu(ctx context.Context) *string {
 	return klient
 }
 
-// adnotacjaKontraktuDesignu składa `DesignAnnotation` kontraktu z wiersza
-// repozytorium.
+// adnotacjaKontraktuDesignu składa DesignAnnotation kontraktu z wiersza
+// repozytorium, w kształcie oczekiwanym przez odpowiedź komendy.
 func adnotacjaKontraktuDesignu(a dane.AdnotacjaDesignu, kodKompozycji string) shared.DesignAnnotation {
 	zamknieta := a.Zamknieta
 	return shared.DesignAnnotation{

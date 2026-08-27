@@ -1,14 +1,9 @@
--- Migracja 007 — zaczyn słowników platformy.
---
--- Łańcuch `srodowisko → modul → karta_sesji → sesja → okno_komunikacji →
--- wiadomosc` stoi na więzach klucza obcego. Bez wierszy w `srodowisko` i `modul`
--- nie da się zapisać żadnego okna komunikacji, a więc i żadnej wiadomości.
---
--- Każde wstawienie kończy się ON CONFLICT DO NOTHING, więc migracja przechodzi
--- także na bazie, w której część wierszy już jest. Klauzula `WHERE true` przed
--- ON CONFLICT jest wymogiem składni SQLite dla INSERT ... SELECT z upsertem.
+-- Migracja 007 zakłada zaczyn słowników platformy: środowiska, moduły, macierz
+-- widoczności i komplet okien operacyjnych. Wstawienia kończy klauzula ON
+-- CONFLICT DO NOTHING, więc migracja przechodzi też na bazie z częścią wierszy
+-- już zapisaną.
 
--- ── Cztery środowiska ──────────────────────────────────────────────────────────
+-- Cztery środowiska aplikacji, każde z kodem, nazwą, opisem i kolejnością wyświetlania w nawigacji bocznej.
 INSERT INTO srodowisko (kod, nazwa, opis, kolejnosc, aktywne)
 VALUES
     ('talkin',         'TalkIn',         'Wiedza, komunikacja i praca z treścią',        1, 1),
@@ -17,7 +12,7 @@ VALUES
     ('multitaskingai', 'MultitaskingAI', 'Orkiestracja autonomicznej pracy ciągłej',     4, 1)
 ON CONFLICT(kod) DO NOTHING;
 
--- ── Piętnaście modułów ─────────────────────────────────────────────────────────
+-- Piętnaście modułów aplikacji, każdy z kodem, nazwą, opisem widocznym operatorowi w interfejsie i flagą aktywności.
 INSERT INTO modul (kod, nazwa, opis, aktywny)
 VALUES
     ('studio',      'Studio',      'Praca z dokumentem: edycja, operacje kontekstowe, wersjonowanie sesji', 1),
@@ -37,10 +32,9 @@ VALUES
     ('agents',      'Agents',      'Agenci: tożsamość, model, uprawnienia, konektory',                      1)
 ON CONFLICT(kod) DO NOTHING;
 
--- ── Macierz widoczności ────────────────────────────────────────────────────────
--- Kolejność odpowiada kolejności pozycji w nawigacji bocznej. Automations nie ma
--- okna modułowego w żadnym środowisku, a MultitaskingAI nie udostępnia modułów —
--- oba są nieobecne w macierzy.
+-- Macierz widoczności modułów w środowiskach, z kolejnością pozycji w nawigacji
+-- bocznej. Automations nie ma okna modułowego w żadnym środowisku, a MultitaskingAI
+-- nie udostępnia modułów — oba są nieobecne w tej macierzy.
 WITH macierz(srodowisko_kod, modul_kod, kolejnosc) AS (
     VALUES
         ('talkin',     'studio',      0),
@@ -78,15 +72,15 @@ SELECT s.id, m.id, macierz.kolejnosc, 1
  WHERE true
 ON CONFLICT(srodowisko_id, modul_id) DO NOTHING;
 
--- ── Chat Window — okno wspólne wszystkim piętnastu modułom ─────────────────────
+-- Chat Window, okno wspólne wszystkim piętnastu modułom, jednakowo nazwane i ustawione jako pierwsze w kategorii komunikacji.
 INSERT INTO okno_operacyjne (kod, modul_id, nazwa, rola, kategoria, kolejnosc)
 SELECT m.kod || '.chat-window', m.id, 'Chat Window', 'wiodace', 'komunikacja', 0
   FROM modul m
  WHERE true
 ON CONFLICT(kod) DO NOTHING;
 
--- ── Pozostałe okna operacyjne, modułowe i globalne.
---    Pusty kod modułu oznacza okno globalne. ────────────────────────────────────
+-- Pozostałe okna operacyjne, modułowe i globalne, ustawione po kategorii i kolejności.
+-- Pusty kod modułu w tym katalogu oznacza okno globalne, niezwiązane z modułem.
 WITH katalog(kod, modul_kod, nazwa, rola, kategoria, kolejnosc) AS (
     VALUES
         ('assistant.voice-console',          'assistant',   'Voice Console',                       'wiodace',    'komunikacja',  1),

@@ -250,3 +250,18 @@ zrobiła to dla osadzarki.
 
 Klauzula `ON CONFLICT DO NOTHING` czyni krok idempotentnym i nieszkodliwym na
 bazie, gdzie te wiersze z jakiegoś powodu już stoją.
+
+## budowa/server/internal/store/migracja_007_zaczyn_slownikow.sql
+
+Łańcuch `srodowisko → modul → karta_sesji → sesja → okno_komunikacji →
+wiadomosc` stoi na więzach klucza obcego: bez wierszy w `srodowisko` i `modul`
+nie da się zapisać żadnego okna komunikacji ani żadnej wiadomości, dlatego ta
+migracja zakłada je jako pierwsza.
+
+Klauzula `WHERE true` poprzedzająca `ON CONFLICT` w zapytaniach `INSERT ...
+SELECT` jest wymogiem składni SQLite dla upsertu tej postaci, nie ozdobnikiem.
+
+Macierz widoczności modułów w środowiskach odpowiada kolejności pozycji
+w nawigacji bocznej interfejsu. Automations nie ma okna modułowego w żadnym
+środowisku, a MultitaskingAI nie udostępnia modułów — oba są w niej celowo
+nieobecne.

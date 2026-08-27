@@ -14,10 +14,12 @@
 // Czego tu celowo nie ma:
 //  1. Gałęzi „gdy silnika nie ma, przeskaluj ImageMagickiem" — rozciągnięcie
 //     oddane jako powiększenie jest atrapą, której nie widać do przybliżenia.
-//  2. Poprawiania twarzy. Pole `faces` niesie kontrakt, ale przebieg twarzowy
-//     robi osobna sieć (GFPGAN/CodeFormer), której wydanie `ncnn` tego silnika
-//     nie zawiera. Żądanie z `faces: true` kończy się więc odmową nazywającą
-//     brak, zamiast oddać obraz bez poprawki twarzy jako poprawiony.
+//  2. Poprawiania twarzy w tym samym przebiegu. Pole `faces` niesie kontrakt,
+//     ale przebieg twarzowy robi osobna sieć (GFPGAN), której wydanie `ncnn`
+//     tego silnika nie zawiera. Idzie ona drugim przebiegiem nad wynikiem
+//     powiększenia — patrz `adapter_narzedzia_obraz_model_twarze.go`. Bez niej
+//     żądanie z `faces: true` kończy się odmową nazywającą brak, zamiast oddać
+//     obraz bez poprawki twarzy jako poprawiony.
 package core
 
 import (
@@ -122,13 +124,7 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 	if err != nil {
 		return shared.ImageUpscaleResponse{}, err
 	}
-	if z.Faces != nil && *z.Faces {
-		return shared.ImageUpscaleResponse{}, bladZapleczaNiedostepnegoModeluObrazu(
-			"osobny przebieg poprawiania twarzy (faces) wymaga sieci GFPGAN, " +
-				"której wydanie ncnn silnika Real-ESRGAN nie zawiera — " +
-				"rdzeń odmawia zamiast oddać obraz bez poprawki twarzy jako poprawiony; " +
-				"naprawa: powtórzyć żądanie bez pola faces albo doinstalować gfpgan-ncnn-vulkan")
-	}
+	twarze := z.Faces != nil && *z.Faces
 	if a.wspolne == nil {
 		return shared.ImageUpscaleResponse{}, bladZapleczaModeluObrazu(
 			"zaplecze narzędzi obrazu nie jest wpięte — nie ma czym rozwiązać źródła")
@@ -142,6 +138,14 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 		modelPowiekszeniaZdjec, "64 MB",
 		"wydania realesrgan-ncnn-vulkan (katalog models)"); err != nil {
 		return shared.ImageUpscaleResponse{}, err
+	}
+	// Wagi przebiegu twarzowego sprawdzamy TERAZ, a nie po powiększeniu: sieć
+	// powiększająca liczy się minutami, a odmowa „nie ma wag GFPGAN" wydana po
+	// nich byłaby tą samą odmową za cenę całego przebiegu.
+	if twarze {
+		if err := sprawdzWagiTwarzy(katalogWagTwarzy()); err != nil {
+			return shared.ImageUpscaleResponse{}, err
+		}
 	}
 
 	pracownia, err := przygotujPracownie(zrodlo.sciezka)
@@ -169,8 +173,20 @@ func (a *adapterNarzedziObrazuModelu) Powieksz(ctx context.Context,
 	if err != nil {
 		return shared.ImageUpscaleResponse{}, err
 	}
-	zasob, _, err := a.wspolne.odlozZasob(ctx, zrodlo, z.WindowId, bajty, "png",
-		"upscale x"+strconv.Itoa(krotnosc))
+	opis := "upscale x" + strconv.Itoa(krotnosc)
+	// Odczyt wyżej idzie także wtedy, gdy zaraz nastąpi przebieg twarzowy,
+	// i nie jest pracą zbędną: rozstrzyga, czy powiększenie w ogóle zostawiło
+	// obraz. Pomocnik puszczony na plik pusty odmówiłby po starcie interpretera
+	// i wczytaniu wag, czyli o minutę później i mniej zrozumiale.
+	if twarze {
+		poprawione, ile, err := a.poprawTwarze(ctx, pracownia)
+		if err != nil {
+			return shared.ImageUpscaleResponse{}, err
+		}
+		bajty = poprawione
+		opis += opisPrzebieguTwarzy(ile)
+	}
+	zasob, _, err := a.wspolne.odlozZasob(ctx, zrodlo, z.WindowId, bajty, "png", opis)
 	if err != nil {
 		return shared.ImageUpscaleResponse{}, err
 	}

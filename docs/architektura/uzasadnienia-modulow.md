@@ -1941,3 +1941,16 @@ koniec wdrozenia takze wtedy, gdy okna nie ma juz w rejestrze, bo przebieg przez
 zamkniecie okna, a klient ma prawo zobaczyc jego wynik. W zdarzeniu tym pole Stage
 niesie wylacznie identyfikator okna, ktorego zmiana dotyczy, poniewaz nie ma tu
 etapu Product Buildera do pokazania.
+
+## budowa/server/internal/core/adapter_modul_workspace_szukanie.go
+
+Wyszukiwanie w projekcie nie zastępuje przeszukania biblioteki centralnej:
+library.file.search przeszukuje bibliotekę i wyłącznie pliki, a ta komenda
+przeszukuje jeden projekt i więcej niż pliki — zadania, notatki, wpisy pamięci
+i instrukcje. Wyszukiwanie po znaczeniu prowadzi osobna rodzina komend
+knowledge; tutaj idzie dopasowanie po słowach.
+
+Treść pliku wchodzi do wyszukiwania przez wyciąg zbudowany komendą
+workspace.library.text.extract; plik bez wyciągu jest dopasowywany po samej
+nazwie. To jest różnica widoczna dla operatora projektu, więc trafienie
+z wyciągu niesie fragment treści, a trafienie po samej nazwie — nie.

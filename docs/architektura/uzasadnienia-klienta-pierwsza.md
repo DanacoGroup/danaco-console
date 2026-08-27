@@ -2061,3 +2061,27 @@ Rozdzielenie odpowiada podziałowi punktów izolacji: moduł przeglądania wskaz
 punkty właściwe przeglądaniu, czyli dostęp sieciowy procesu sesji, kontenery
 tożsamości oraz zakres pętli, a personalizacja tych punktów odbywa się w oknie
 konfiguracji.
+
+## budowa/klient-poprzedni/src/moduly/library/zrodlo-znaczenia.ts
+
+Rodzina komend `knowledge.*` ma drugiego klienta w module Wiedza, z którego moduł Library świadomie
+nie korzysta. Powód pierwszy jest własnościowy: moduł nie sięga do plików innego modułu, ponieważ
+wiązałby swoje okna z cudzym cyklem życia. Powód drugi jest techniczny i ważniejszy: tamto źródło
+woła kanał wprost, a rodzina `knowledge.*` nie ma własnego zdarzenia odmowy, więc rdzeń bez wpiętego
+portu Wiedzy odpowiada kopertą `connection.unknown`, pozbawioną pola `status`. Library idzie zatem
+przez straż odmów, która wiąże taką odpowiedź z żądaniem po identyfikatorze i zamienia ją w zwykły
+wynik z błędem.
+
+Rodzina leży poza obszarem `library`, ale czyta dokładnie ten zbiór. Czytelnikiem zakresu `library`
+jest repozytorium modułu Library, a pole `sourceId` trafienia niesie identyfikator pliku biblioteki,
+co ustala przejściówka rdzenia `adapter_modul_wiedza_zrodla.go`. Dzięki temu trafienie daje się
+odwzorować na wiersz wykazu bez drugiego odczytu.
+
+Rozdział zdolności między rodzinami jest wiążący dla okna. Komenda `library.file.search` dopasowuje
+słowa poprzez indeks pełnotekstowy repozytorium, a `knowledge.search` dopasowuje znaczenie poprzez
+wskaźnik osadzeń. Tryb hybrydowy okna nie jest komendą kontraktu, lecz złożeniem obu odpowiedzi po
+stronie klienta.
+
+Wskaźnik osadzeń nie odświeża się przy wgraniu pliku. Rdzeń buduje go wyłącznie na żądanie
+`knowledge.index`, ponieważ osadzanie potrafi trwać minutę i sięga po wagi modelu. Przeliczenie
+wskaźnika jest więc osobną czynnością w zakładce higieny, a nie skutkiem ubocznym wgrania pliku.

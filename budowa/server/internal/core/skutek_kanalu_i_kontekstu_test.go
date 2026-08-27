@@ -34,14 +34,7 @@ func zalozOknoSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Co
 	return okno.Window.Id
 }
 
-// Skutek trzech czynności stojących na rejestrze kanałów: sprawdzenia kanału,
-// stanu jego poświadczenia, pomiaru zajętości okna kontekstu oraz powtórzenia
-// wywołania modelu.
-//
-// Wszystkie cztery mają wspólną cechę: dają się zmierzyć wyłącznie wtedy, gdy
-// po drugiej stronie naprawdę stoi kanał. Sprawdziany biorą więc kanał `echo`
-// — adapter bez sieci wkompilowany w rdzeń — i mierzą to, co po nich zostaje:
-// odpowiedź kanału, wiersz śladu, liczbę żetonów policzoną tokenizatorem.
+// Sprawdziany tego pliku biorą kanał echo, adapter bez sieci wkompilowany w rdzeń.
 
 // kanalEchoSprawdzianu zakłada kanał bez sieci i oddaje jego identyfikator.
 // Parametry niosą wielkość okna kontekstu, bo bez niej pomiar zajętości nie ma
@@ -128,8 +121,7 @@ func TestStanPoswiadczeniaNieOddajeTresci(t *testing.T) {
 	if stan.Status.Kind == nil || *stan.Status.Kind == "" {
 		t.Fatal("stan poświadczenia nie mówi, jakiego jest rodzaju")
 	}
-	// Poświadczenia nikt nie zapisał, więc `present` ma być fałszem — a nie
-	// prawdą „bo odwołanie jest wpisane".
+	// Poświadczenia nikt nie zapisał, więc present ma być fałszem.
 	if stan.Status.Present {
 		t.Fatal("rdzeń melduje ustawione poświadczenie, którego nikt nie zapisał")
 	}
@@ -186,8 +178,7 @@ func TestZajetoscKontekstuLiczySieTokenizatorem(t *testing.T) {
 		t.Fatal("pomiar nie niesie chwili wykonania")
 	}
 
-	// Sprawdzian rozstrzygający: dłuższa historia daje WIĘCEJ żetonów. Licznik
-	// zwracający stałą przeszedłby wszystkie poprzednie warunki.
+	// Sprawdzian rozstrzygający: dłuższa historia daje więcej żetonów, nie stałą.
 	poprzednie := *pomiar.Usage.HistoryTokens
 	if _, err := baza.Exec(
 		`INSERT INTO wiadomosc (okno_komunikacji_id, rola, rodzaj_tresci, stan, tresc, kolejnosc)

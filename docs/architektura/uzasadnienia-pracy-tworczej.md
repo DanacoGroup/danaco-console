@@ -718,3 +718,11 @@ operator widzi gołym okiem — krój, stopień i grubość; barwa wyróżnienia
 i język nie liczą się do podobieństwa. Wzorzec przy wyszukiwaniu samą
 postacią sprawdza wyłącznie cechy, które sam niesie: wzorzec „barwa
 czerwona" ma trafiać we wszystko czerwone, niezależnie od kroju.
+
+## budowa/server/internal/core/adapter_modul_studio_cyfryzacja.go
+
+Ingest/OCR Panel różni się od rodziny komend document.text.extract tym, że tamta jest narzędziem modelu — jedno wywołanie, jeden napis na wyjściu, brak stanu — podczas gdy panel jest stanowiskiem, na którym materiał czeka w kolejce, wraca do niej po poprawce obrazu, dostaje korektę słowa i dopiero na końcu staje się dokumentem. Dlatego kolejka ma tabelę, a wynik rozpoznania niesie słowa wraz z pewnością, bez których korekta rozpoznania nie ma czego poprawiać.
+
+Słowa i pewność oddaje sam program Tesseract wyjściem w postaci tabelarycznej: jeden wiersz na słowo, z ramką i pewnością w skali od zera do stu. Rdzeń niczego tu nie szacuje ani nie dopowiada — pewność pozycji jest średnią pewności jej słów, a gdy Tesseract nie oddał ani jednego słowa, pewności nie ma wcale i pole zostaje puste. Pusta pewność i pewność zerowa to dwie różne rzeczy.
+
+Cztery nastawy kontraktu opisują obróbkę wstępną skanu — prostowanie skosu, odszumianie, progowanie i przycinanie marginesów — i prowadzi je program unpaper, napisany dokładnie do tego zadania; rdzeń nie liczy tego sam, bo skos wykrywa się przemiataniem obrazu pod kątem, a nie jedną pętlą po pikselach. Gdy żadna z czterech nastaw nie jest włączona, unpaper w ogóle nie rusza, bo przebieg bez niczego i tak przepisałby obraz przez konwersję do postaci PNM i z powrotem, płacąc uruchomieniem procesu za wynik, o który nikt nie prosił. unpaper ma wszystkie swoje filtry włączone domyślnie, a kontrakt ma je domyślnie wyłączone, więc rdzeń wyrównuje te dwie domyślności: filtr, o który nikt nie prosił, jest wyłączany jawnie, inaczej jedna włączona nastawa włączyłaby po cichu także pozostałe. Filtr czarnej ramki, którego kontrakt nie ma wcale, jest wyłączony zawsze.

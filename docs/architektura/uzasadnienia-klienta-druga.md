@@ -2095,3 +2095,18 @@ wykaz, bo stan ładowania go opróżnia.
 
 ## budowa/klient-poprzedni/src/strona-glowna/listwa-ustawien.ts
 Segmenty listwy dzieli delikatny separator wewnątrz jednej powierzchni, więc pas czyta się jako jeden byt o kilku wejściach, a nie jako trzecia siatka kart; pozycje listwy nie mają formy kart ani kafli. Segmenty ustawień są trzy: okno konfiguracji, tryb Mobile oraz Always On Display. Czwarty segment nie jest ustawieniem — „Dodaj nowy” otwiera formularz zakładania komponentu własnego i zgłasza to osobnym wywołaniem zwrotnym, nie przez wykaz ustawień, ponieważ pozycja, która ustawieniem nie jest, nie udaje jego kodu; zakładanie komponentu należy do strefy drugiej, więc przeniesienie segmentu jest zgłoszone, a nie wykonane z tego katalogu. Waga wizualna strefy jest najniższa z trzech: segment ma wysokość kontrolki i niesie ikonę oraz nazwę, bez wezwania do działania i bez metadanych. Żadna pozycja nie jest wyszarzona ani pozbawiona klikalności.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-panel-tresci.ts
+Pięć czynności panelu — odczyt treści fragmentu, zmiana brzmienia, odczyt
+postaci, zapis postaci i wykaz pochodzenia — dotyczą jednego: treści i postaci
+dokumentu jako całości, a nie pojedynczej cechy; rozsypane po osobnych panelach
+nastaw byłyby nie do znalezienia. Zapis postaci przyjmuje treść jako pole
+opcjonalne kontraktu: brak znaczy brak zmiany treści. Przycisk zapisu odczytuje
+postać i zapisuje ją z powrotem, zakładając wersję — utrwala to, co nastawy
+strony i style zmieniły, bez dotykania treści, żeby postać przestawała ginąć
+nawet wtedy, gdy operator nie pisał.
+
+Brzmienie fragmentu ma pole wielowierszowe, ponieważ poprawa fragmentu bez
+przepisywania całości jest osią zamówienia, a fragment bywa akapitem, nie
+wyrazem; pole jednowierszowe wymuszałoby wklejanie akapitu w linijkę wysokości
+jednego wiersza.

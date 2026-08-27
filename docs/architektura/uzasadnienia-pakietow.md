@@ -4081,3 +4081,5 @@ niezależnie od okien, w których pracował, więc okno może nieść kod, któr
 biblioteka już nie ma. Taki stan wraca błędem mówiącym, ilu ekspertów rdzeń
 zna, żeby stan nieznaleziony był odróżnialny od stanu, w którym rdzeń oddał
 wykaz pusty.
+## budowa/server/internal/dane/przegladarka_notatki.go
+Kolumna wskazująca źródło zewnętrzne jest wartością tekstową, nie więzem obcym: notatka może dotyczyć całej strony, nie tylko jednego zebranego źródła, więc kolumna jest dopuszczalnie pusta bez odwołania referencyjnego. Treść notatki jest krótkim tekstem wprost, nie odwołaniem do pliku, w odróżnieniu od migawki strony, która trzyma treść obszerną osobno — notatka Operatora nią nie jest, więc kolumna niesie treść wprost.

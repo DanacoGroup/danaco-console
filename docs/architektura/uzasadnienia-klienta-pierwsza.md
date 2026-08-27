@@ -3960,3 +3960,13 @@ pokazuje kompozycję zapisaną po stronie rdzenia, a nie pustą kanwę.
 Położenie i rozmiar warstwy ustawia się jedną zmianą, ponieważ cztery liczby opisują jeden
 prostokąt. Cztery osobne wywołania rozgłosiłyby cztery stany pośrednie, w których warstwa ma
 już nowe położenie przy jeszcze starym rozmiarze.
+
+## budowa/klient-poprzedni/src/konfiguracja/pasek-punktu-widzenia.ts
+
+Wartość ustawienia nie jest jedna — zależy od tego, dla kogo zadane jest
+pytanie. Ten sam klucz może mieć inną wartość globalnie, inną w oknie
+komunikacji i jeszcze inną dla wskazanego modelu.
+
+Pasek jest wyłącznie soczewką odczytu, a nie poleceniem. Zmiana punktu widzenia
+niczego nie zapisuje; przestawia jedynie miejsce, względem którego liczone jest
+dziedziczenie, i każe polom formularza przeliczyć swoje pochodzenie od nowa.

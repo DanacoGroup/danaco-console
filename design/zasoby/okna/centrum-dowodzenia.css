@@ -128,7 +128,7 @@
 .cd-sekcja-tytul::before {
   content: '';
   display: inline-block;
-  width: 3px;
+  width: var(--dn-wym-sila);
   height: 0.9em;
   margin-right: var(--dn-od-2);
   border-radius: var(--dn-r-pill);
@@ -213,7 +213,7 @@
   height: var(--dn-wym-awatar-sm);
 }
 .cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
-.cd-kafel-tresc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 .cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-sm); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
 .cd-kafel-blok { display: flex; }
@@ -259,7 +259,7 @@
 }
 .cd-wlasny-znak { display: grid; place-content: center; flex: none; color: var(--dn-tekst-2); }
 .cd-wlasny-znak svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
-.cd-wlasny-tresc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cd-wlasny-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 .cd-wlasny-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-wlasny-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 /* Menu pozycji stoi obok przycisku, nie w nim, i ujawnia się przy wskazaniu. */

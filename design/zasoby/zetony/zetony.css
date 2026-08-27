@@ -139,6 +139,7 @@
    *  4 · PRZESTRZEŃ — jednostka bazowa 4 px [NIENEGOCJOWALNE]            *
    * ==================================================================== */
   --dn-od-0: 0;
+  --dn-od-05: 2px;  /* półstopień siatki 4 px — najciaśniejszy odstęp, np. etykieta↔opis w kaflu */
   --dn-od-1: 4px;
   --dn-od-2: 8px;
   --dn-od-3: 12px;

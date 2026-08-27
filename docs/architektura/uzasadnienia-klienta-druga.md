@@ -4439,3 +4439,14 @@ całość. Moduł nie tworzy węzłów interfejsu i nie zna klas stylu: trzy wid
 (kolumna, wykaz, panel), a treść i stan mają mieć to samo. Nazwy stanów są napisami stałymi, bo
 trafiają do atrybutu danych, w który arkusze stylu celują wprost; wyliczenie stoi tu, a nie
 w widoku, żeby zmiana napisu w jednym miejscu nie rozjechała dwóch arkuszy i trzech okien.
+
+## budowa/klient-poprzedni/src/strona-glowna/zmiana-komponentu.ts
+Zakładanie stoi obok, w osobnym pliku; tu jest to, co robi się z komponentem już założonym. Zmiana pól
+zmienia pola podane, a pominięte zostawia bez zmian — tak stanowi kontrakt; formularz wysyła więc wyłącznie
+to, co operator naprawdę zmienił, bo przesłanie wszystkich pól przy każdej zmianie nazwy nadpisywałoby opis
+i stan czynności wartościami z ekranu, który mógł być odczytany dawno. Przypisanie zapamiętuje na wierszu
+komponentu, na którym poziomie zasięgu ten komponent obowiązuje, i nic ponad to: nie przenosi bytu
+modułowego, nie nadaje uprawnień, nie włącza komponentu do żadnej pętli wykonania. Znaczenie przypisania
+nie zostało jeszcze domknięte w rdzeniu; widok mówi to wprost, zamiast obiecywać skutek, którego rdzeń nie
+wywołuje. Rdzeń przyjmuje pięć poziomów z dziewięciu: globalny, środowisko, projekt, sesja i okno; poziomy
+modułu, pary modułów, roli i aplikacji kończą się odmową sprawdzenia żądania.

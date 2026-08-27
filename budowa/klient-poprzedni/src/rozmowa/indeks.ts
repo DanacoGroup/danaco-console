@@ -1,25 +1,4 @@
-/**
- * Warstwa rozmowy okna komunikacji — interfejs katalogu.
- *
- * Powłoka sięga po rozmowę wyłącznie stąd; pozostałe pliki katalogu są
- * wewnętrzne. Złożenie w punkcie wejścia sprowadza się do dwóch wierszy:
- *
- *   rdzen.uzgodnienie.naOtwarcieOkna((okno) => {
- *     zamontujRozmowe(korzen.scena, rdzen.kanal, okno.id, {
- *       persona: opis.kanalModelu,
- *       rolaOkna: okno.windowRole,
- *     });
- *   });
- *
- * Nazwy komend i zdarzeń, których warstwa używa — `message.send`,
- * `message.stop`, `stream.chunk`, `message.changed`, `window.changed`,
- * `window.state.get`, `action.list` — pochodzą wyłącznie z `shared/contract`.
- *
- * Okno przestawia się na moduł samo: śledzi moduł okna w rdzeniu i przy jego
- * zmianie rekonfiguruje pasek narzędzi promptu, panel akcji i panel kontekstu,
- * zachowując wątek rozmowy. Powłoka może przestawić okno wprost —
- * `zamontujRozmowe(...).ustawModul(kod)` — gdy zna wynik `workspace.enter`.
- */
+/** Plik stanowi interfejs katalogu warstwy rozmowy okna komunikacji: powłoka sięga po rozmowę wyłącznie stąd, a pozostałe pliki katalogu pozostają wewnętrzne. */
 
 export { zamontujRozmowe, type OpcjeMontazu, type ZamontowanaRozmowa } from './montaz-rozmowy';
 

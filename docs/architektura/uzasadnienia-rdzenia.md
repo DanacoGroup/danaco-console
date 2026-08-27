@@ -5627,3 +5627,12 @@ rodzina nie ma: zmiana skrótu jest zmianą nastawy, a o zmianach nastaw mówi r
 Osobne zdarzenie byłoby drugą drogą tej samej wiadomości. Port niewypełniony nie rejestruje
 niczego: obie komendy odpowiedzą wtedy kodem nieznanej pozycji, a pozostałe domeny pracują bez
 zmian.
+
+## budowa/server/internal/core/handlers_zespoly.go
+Kontrakt daje zespołom wyłącznie jedno zdarzenie zmiany, więc zapisanie nowego składu, zmiana
+istniejącego i skopiowanie rozgłaszają się tą samą drogą, różniąc się wyłącznie rodzajem zmiany.
+Okno składu odświeża się z jednej subskrypcji. Rodzaj zmiany rozstrzyga żądanie, nie odpowiedź:
+zapis bez identyfikatora zakłada zespół, z identyfikatorem zmienia istniejący — odpowiedź w obu
+przypadkach niesie ten sam kształt, więc po niej samej rozróżnić się tego nie da. Odczyt nie
+rozgłasza: wykaz i wczytanie zespołu niczego nie zmieniają, więc nie mają czego ogłaszać — zdarzenie
+po odczycie byłoby zawiadomieniem o zmianie, której nie było.

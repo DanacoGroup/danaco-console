@@ -5428,3 +5428,5 @@ powtórzony nie zakłada drugiej migawki tego samego numeru.
 Publikacja jest jedna na automatykę: zdjęcie znacznika publikacji ze wszystkich wersji
 i nadanie go jednej idzie w tej samej transakcji, żeby historia nie pokazała przez chwilę
 dwóch wersji opublikowanych naraz.
+## budowa/server/internal/dane/sejf_poswiadczen.go
+Baza zna wyłącznie odwołanie, czyli nazwę wpisu w sejfie; sam sekret leży w osobnym pliku katalogu danych. Dzięki temu odczyt katalogu kont nigdy nie może wynieść sekretu, bo kolumny na niego nie ma, a mimo to poświadczenie jest trwałe, więc znacznik posiadania poświadczenia mówi prawdę: skoro odwołanie zapisano, sekret istnieje. Sejf jest celowo prosty: jeden plik JSON kluczowany bytem, pod zamkiem. To nie jest magazyn klasy zarządzania kluczami, tylko trwały schowek na sekret, którego rdzeń nie wpuszcza do bazy ani do odpowiedzi; wymianę na zewnętrzny magazyn domyka ten sam interfejs zapisu i usuwania. Byt w odczycie jest surowym kluczem wpisu, bez przedrostka odwołania: rozbiera go wołający, a sejf kluczuje bytem dokładnie tak, jak zapisał przy zapisie poświadczenia.

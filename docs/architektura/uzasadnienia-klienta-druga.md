@@ -4969,3 +4969,35 @@ udawanie takiego chwytu dawałoby nastawę, której nic nie pilnuje.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-modelu.ts
 Model rozdziela wybór na dwie grupy w jednym poziomie menu, nie w gałęzi, bo modele surowe i eksperci mieszczą się razem, a gałąź schowałaby wykaz o jeden ruch dalej. Znaczenie wyboru jest pisane raz — przedrostek eksperta, wartość zaznaczona i przekład wyboru na treść wysyłaną do rdzenia pochodzą z jednego miejsca, bo gdyby pasek składał to zlecenie po swojemu, wybór eksperta w pasku i w kolumnie sterowania znaczyłby dwie różne rzeczy. Etykieta uchwytu jest krótka: w kolumnie sterowania wiersz niesie pełny opis, a w pasku stoi sama nazwa własna, bo pasek ma zostać jednym rzędem — oba napisy składane są jednak z tych samych pól źródłowych. Kanał nieczynny zostaje na wykazie i pozostaje wybieralny, bo wyszarzenie byłoby blokadą, a o stanie kanału mówi opis pozycji.
+
+## budowa/klient-poprzedni/src/rozmowa/wykaz-po-ukosniku.ts
+Plik nie rysuje ani jednego wiersza, nie filtruje, nie szereguje i nie
+wytłuszcza. Składa dane w płaską tablicę pozycji i podaje ją mechanizmowi
+z biblioteki, który to wszystko już niesie. Wykaz po ukośniku jest jego
+kolejną obsadą, obok sterów paska zlecenia, z jedną różnicą: pracuje w trybie
+bez uchwytu, bo wyzwalaczem jest znak w polu wpisywania, a nie kliknięcie
+w przycisk. Wyzwalacz, filtr, kierunek otwarcia, przewijanie, wyróżnienie
+pierwszej pozycji i dopasowanie w środku napisu niesie mechanizm; do tego
+pliku należy jedno: pozycje ostatnio użyte bliżej wierzchu. Rejestru sięgania
+po pozycje nie ma ani w kontrakcie, ani w bibliotece, więc prowadzi go osobny
+plik rejestru ostatnio użytych. Sortowanie tego pliku jest stabilne i przy
+remisie oceny oddaje kolejność wejścia; świeżość podnosi więc pozycję wśród
+równie trafnych i ani o krok wyżej.
+
+Bez podpięcia słuchacza zmiany stanu wykazu pole wypowiedzi nie zauważyłoby
+samo, że wykaz zwinął się bez jego udziału — mechanizm zamyka się także po
+kliknięciu poza nim i po wyborze pozycji myszą. Bez tego sygnału podpowiedź
+zostawałaby pod polem, przy którym nic już nie stoi.
+
+Wybrany przy pozycji oznacza, że jest już dołożona do sesji, a nie że jest
+wyróżniona — wyróżnieniem zarządza mechanizm sam. Druga nazwa wchodzi tylko
+wtedy, gdy naprawdę jest inna niż nazwa pełna, żeby uniknąć powtórzenia
+w nawiasie. Skutek wyboru jest różny dla dwóch rodzajów wpisu w jednym
+wykazie: jedno powiększa zestaw narzędzi modelu, drugie wykonuje czynność
+aplikacji, i z samej nazwy tego nie widać.
+
+Wykonania nie udajemy: kształt żądania komendy akcji ten plik nie zna,
+a wysłanie pustej treści byłoby zgadywaniem — Operator dostaje zdanie o tym,
+co się nie stało, zamiast ciszy nieodróżnialnej od powodzenia. Bez
+pogodzenia stanu obsady ze stanem mechanizmu obsada sterowałaby dalej
+wykazem, którego na ekranie już nie ma.

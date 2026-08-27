@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: analiza zapisu debaty — `roundtable.analysis.run`,
-// `roundtable.evidence.list` oraz katalog błędów logicznych
-// (`roundtable.fallacy.catalog.get` i `...set`). Okno Argument Map & Analysis.
-//
-// ── Podział pracy między model a rdzeń ───────────────────────────────────────
-// Cztery rodzaje analizy są pracą modelu, bo wymagają rozumienia treści:
-// wydobycie argumentów, klasyfikacja aktów mowy, wykrycie błędów logicznych,
-// kontrola steelman, weryfikacja faktyczności i sygnalizacja tonu. Jeden rodzaj
-// modelu NIE wymaga: scalenie powtórzeń liczy się podobieństwem treści węzłów
-// i rdzeń robi to sam. Wołanie modelu po to, żeby porównał dwa zdania,
-// kosztowałoby wywołanie kanału za robotę, którą wykonuje arytmetyka.
-//
-// ── Co zostaje po analizie ───────────────────────────────────────────────────
-// Każdy przebieg zostawia ślad w bazie, a nie tylko w odpowiedzi komendy:
-// wydobycie argumentów zastępuje graf, klasyfikacja aktów mowy znakuje
-// wypowiedzi, wykrycie błędów stawia oznaczenia na węzłach, weryfikacja
-// faktyczności wypełnia rejestr dowodów. Odpowiedź komendy jest odczytem tego,
-// co zostało — nie jedynym miejscem, w którym wynik istnieje.
+// Pakiet obsługuje analizę zapisu debaty okna Argument Map & Analysis:
+// `roundtable.analysis.run`, `roundtable.evidence.list` oraz katalog błędów
+// logicznych komendami `roundtable.fallacy.catalog.get` i `...set`.
 package core
 
 import (
@@ -26,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki bytów analizy.
+// Przedrostki bytów analizy, którymi rdzeń znakuje ich nowo zakładane
+// identyfikatory, każdy właściwy jednemu rodzajowi bytu.
 const (
 	przedrostekWezla      = "wezel-"
 	przedrostekKrawedzi   = "kraw-"
@@ -35,13 +21,12 @@ const (
 	przedrostekOznaczenia = "oznbl-"
 )
 
-// progScaleniaWezlow — podobieństwo, od którego dwa węzły uznaje się za ten sam
-// argument wypowiedziany dwa razy. Wartość jest wysoka rozmyślnie: scalenie
-// dwóch argumentów, które tylko brzmią podobnie, zabiera z grafu jeden głos
-// i zawyża poparcie drugiego.
+// progScaleniaWezlow jest podobieństwem, od którego dwa węzły uznaje się za
+// ten sam argument wypowiedziany dwa razy; wartość jest wysoka rozmyślnie.
 const progScaleniaWezlow = 0.72
 
-// Analizuj wykonuje analizę zapisu debaty wskazanego rodzaju.
+// Analizuj wykonuje analizę zapisu debaty wskazanego rodzaju i zwraca jej
+// wynik, zostawiając ślad w bazie danych właściwy temu rodzajowi analizy.
 func (a *adapterDebaty) Analizuj(ctx context.Context,
 	z shared.RoundtableAnalysisRunRequest) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -84,12 +69,7 @@ func (a *adapterDebaty) Analizuj(ctx context.Context,
 }
 
 // wydobadzArgumenty buduje graf z jednostek argumentacyjnych wskazanych przez
-// model i zastępuje nim graf dotychczasowy.
-//
-// Model dostaje zapis z kodami wypowiedzi i ma je powtórzyć przy każdej
-// jednostce. Dzięki temu węzeł wraca do swojej wypowiedzi i do mówcy — bez tego
-// graf byłby zbiorem zdań bez autora, a Argument Map nie miałaby czego pokazać
-// w kolumnie uczestnika.
+// model i zastępuje nim graf dotychczasowy, wraz z krawędziami wewnątrz wypowiedzi.
 func (a *adapterDebaty) wydobadzArgumenty(ctx context.Context, okno, turaKod, zapis string,
 	wypowiedzi []dane.WypowiedzDebaty, kanalZadania *string) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -131,10 +111,7 @@ func (a *adapterDebaty) wydobadzArgumenty(ctx context.Context, okno, turaKod, za
 		return shared.RoundtableAnalysisRunResponse{}, odmowaAnalizyBezWyniku(kanal)
 	}
 
-	// Krawędzie powstają z relacji, którą rdzeń widzi bez modelu: węzły z tej
-	// samej wypowiedzi wspierają się nawzajem po kolei — pierwszy jest tezą,
-	// każdy następny wsparciem poprzedniego. Relacji między wypowiedziami rdzeń
-	// nie zgaduje; od tego jest kontrola steelman i wykrywanie sporu.
+	// Krawędzie powstają z relacji widocznej bez modelu: węzły wspierają się po kolei.
 	krawedzie := krawedzieWJednejWypowiedzi(okno, wezly)
 	if err := a.repozytorium.ZastapGrafDebaty(ctx, okno, turaKod, wezly, krawedzie); err != nil {
 		return shared.RoundtableAnalysisRunResponse{}, bladDebaty(err)
@@ -153,7 +130,8 @@ func (a *adapterDebaty) wydobadzArgumenty(ctx context.Context, okno, turaKod, za
 	}, nil
 }
 
-// sklasyfikujAktyMowy nadaje wypowiedziom rodzaj aktu mowy i znakuje nimi zapis.
+// sklasyfikujAktyMowy nadaje wypowiedziom rodzaj aktu mowy i znakuje nimi
+// zapis wypowiedzi, nie tylko ustalenie analizy.
 func (a *adapterDebaty) sklasyfikujAktyMowy(ctx context.Context, okno, turaKod, zapis string,
 	wypowiedzi []dane.WypowiedzDebaty, kanalZadania *string) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -179,9 +157,7 @@ func (a *adapterDebaty) sklasyfikujAktyMowy(ctx context.Context, okno, turaKod, 
 		}
 		akt := rozpoznajAktMowy(ogon)
 		if akt != "" {
-			// Znakowanie idzie do zapisu wypowiedzi, nie tylko do ustalenia:
-			// Debate Panel pokazuje etykietę przy wypowiedzi, a nie w osobnym
-			// wykazie ustaleń.
+			// Etykieta wchodzi przy samej wypowiedzi, nie w osobnym wykazie.
 			_ = a.repozytorium.OznaczWypowiedz(ctx, kodWypowiedzi, akt, -1)
 		}
 		ustalenia = append(ustalenia, dane.UstalenieDebaty{
@@ -201,12 +177,8 @@ func (a *adapterDebaty) sklasyfikujAktyMowy(ctx context.Context, okno, turaKod, 
 	return shared.RoundtableAnalysisRunResponse{Findings: ustaleniaKontraktu(ustalenia)}, nil
 }
 
-// wykryjBledy stawia oznaczenia błędów logicznych na węzłach grafu.
-//
-// Zakres wykrywania bierze się z katalogu okna: błąd wyłączony
-// (`roundtable.fallacy.catalog.set`) nie jedzie w poleceniu do modelu i nie
-// zostaje oznaczony, choćby model go nazwał. Wyłączenie, które nie wyłącza,
-// byłoby ustawieniem bez skutku.
+// wykryjBledy stawia oznaczenia błędów logicznych na węzłach grafu, w zakresie
+// wykrywania ustalonym katalogiem błędów okna.
 func (a *adapterDebaty) wykryjBledy(ctx context.Context, okno, turaKod, zapis string,
 	kanalZadania *string) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -278,9 +250,7 @@ func (a *adapterDebaty) wykryjBledy(ctx context.Context, okno, turaKod, zapis st
 		})
 	}
 	if len(ustalenia) == 0 {
-		// Brak rozpoznań jest wynikiem, nie usterką: debata bez chwytów
-		// erystycznych jest debatą poprawną. Ustalenie zbiorcze mówi to wprost,
-		// zamiast oddawać pustkę nie do odróżnienia od analizy, która nie ruszyła.
+		// Brak rozpoznań jest wynikiem, nie usterką: debata bez chwytów jest poprawna.
 		ustalenia = append(ustalenia, dane.UstalenieDebaty{
 			Kod: nowyIdentyfikator(przedrostekUstalenia), Okno: okno,
 			Rodzaj: shared.RoundtableAnalysisKindFallacy, Tura: turaKod,
@@ -301,7 +271,8 @@ func (a *adapterDebaty) wykryjBledy(ctx context.Context, okno, turaKod, zapis st
 	}, nil
 }
 
-// zweryfikujFaktycznosc wypełnia rejestr dowodów: twierdzenie, źródło, adres.
+// zweryfikujFaktycznosc wypełnia rejestr dowodów: twierdzenie, źródło i adres
+// znaleziony przy weryfikacji faktyczności węzłów grafu argumentów.
 func (a *adapterDebaty) zweryfikujFaktycznosc(ctx context.Context, okno, turaKod, zapis string,
 	wypowiedzi []dane.WypowiedzDebaty, kanalZadania *string) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -410,11 +381,8 @@ func (a *adapterDebaty) analizaOpisowa(ctx context.Context, okno, turaKod, rodza
 	return shared.RoundtableAnalysisRunResponse{Findings: ustaleniaKontraktu(ustalenia)}, nil
 }
 
-// scalPowtorzenia łączy węzły o zbliżonej treści w jeden, licząc poparcie.
-//
-// Model nie bierze w tym udziału. Podobieństwo treści jest miarą, nie sądem —
-// liczy je rdzeń, a wywołanie kanału po to samo kosztowałoby tyle, co
-// wypowiedź uczestnika, i dawałoby wynik niepowtarzalny między przebiegami.
+// scalPowtorzenia łączy węzły o zbliżonej treści w jeden, licząc poparcie;
+// podobieństwo treści liczy sam rdzeń, bez udziału modelu.
 func (a *adapterDebaty) scalPowtorzenia(ctx context.Context,
 	okno, turaKod string) (shared.RoundtableAnalysisRunResponse, error) {
 
@@ -485,7 +453,8 @@ func (a *adapterDebaty) scalPowtorzenia(ctx context.Context,
 	}, nil
 }
 
-// Dowody oddaje rejestr dowodów i cytowań.
+// Dowody oddaje `roundtable.evidence.list`: rejestr dowodów i cytowań
+// zapisanych przy weryfikacji faktyczności okna debaty.
 func (a *adapterDebaty) Dowody(ctx context.Context,
 	z shared.RoundtableEvidenceListRequest) (shared.RoundtableEvidenceListResponse, error) {
 
@@ -511,7 +480,8 @@ func (a *adapterDebaty) Dowody(ctx context.Context,
 	return shared.RoundtableEvidenceListResponse{Evidence: wykaz}, nil
 }
 
-// KatalogBledow oddaje katalog wraz z zakresem wykrywania w oknie.
+// KatalogBledow oddaje katalog błędów logicznych wraz z zakresem wykrywania
+// ustalonym dla okna, komendą `roundtable.fallacy.catalog.get`.
 func (a *adapterDebaty) KatalogBledow(ctx context.Context,
 	z shared.RoundtableFallacyCatalogGetRequest) (shared.RoundtableFallacyCatalogGetResponse, error) {
 
@@ -564,7 +534,8 @@ func (a *adapterDebaty) UstawKatalogBledow(ctx context.Context,
 	return shared.RoundtableFallacyCatalogSetResponse{Definitions: katalogKontraktu(po)}, nil
 }
 
-// katalogKontraktu przekłada katalog błędów na byty kontraktu.
+// katalogKontraktu przekłada katalog błędów logicznych okna na byty zwracane
+// kontraktem komunikacji, wraz z zakresem wykrywania.
 func katalogKontraktu(katalog []dane.DefinicjaBleduDebaty) []shared.RoundtableFallacyDefinition {
 	wykaz := make([]shared.RoundtableFallacyDefinition, 0, len(katalog))
 	for _, pozycja := range katalog {
@@ -576,7 +547,8 @@ func katalogKontraktu(katalog []dane.DefinicjaBleduDebaty) []shared.RoundtableFa
 	return wykaz
 }
 
-// ustaleniaKontraktu przekłada ustalenia analizy na byty kontraktu.
+// ustaleniaKontraktu przekłada ustalenia zapisane przy przebiegu analizy na
+// byty ustaleń zwracane kontraktem komunikacji.
 func ustaleniaKontraktu(ustalenia []dane.UstalenieDebaty) []shared.RoundtableAnalysisFinding {
 	wykaz := make([]shared.RoundtableAnalysisFinding, 0, len(ustalenia))
 	for _, ustalenie := range ustalenia {
@@ -606,7 +578,8 @@ func ustaleniaKontraktu(ustalenia []dane.UstalenieDebaty) []shared.RoundtableAna
 	return wykaz
 }
 
-// wlascicieleWypowiedziDebaty odwzorowuje kod wypowiedzi na kod jej autora.
+// Odwzorowuje kod wypowiedzi debaty na kod uczestnika, który ją wygłosił,
+// do przypisania węzłów grafu i ustaleń do właściwego mówcy.
 func wlascicieleWypowiedziDebaty(wypowiedzi []dane.WypowiedzDebaty) map[string]string {
 	wlasciciele := make(map[string]string, len(wypowiedzi))
 	for _, wypowiedz := range wypowiedzi {
@@ -615,12 +588,8 @@ func wlascicieleWypowiedziDebaty(wypowiedzi []dane.WypowiedzDebaty) map[string]s
 	return wlasciciele
 }
 
-// oddzielKodWypowiedzi zdejmuje z wiersza wiodący kod w nawiasie kwadratowym.
-//
-// Kod spoza wykazu jest odrzucany, a wiersz zostaje w całości: model, który
-// nawiasu użył do czegoś innego, nie ma prawa przypiąć ustalenia do wypowiedzi,
-// której nie ma. Wykaz pusty przepuszcza każdy kod — woła się tak wtedy, gdy
-// wołający nie ma wykazu do porównania.
+// oddzielKodWypowiedzi zdejmuje z wiersza wiodący kod w nawiasie kwadratowym,
+// odrzucając kod spoza wykazu znanych wypowiedzi.
 func oddzielKodWypowiedzi(wiersz string, znane map[string]string) (string, string) {
 	przyciety := strings.TrimSpace(wiersz)
 	if !strings.HasPrefix(przyciety, "[") {
@@ -641,11 +610,11 @@ func oddzielKodWypowiedzi(wiersz string, znane map[string]string) (string, strin
 	return kod, strings.TrimSpace(ogon)
 }
 
-// rozpoznajAktMowy szuka w tekście nazwy aktu mowy z kontraktu.
+// rozpoznajAktMowy szuka w tekście nazwy aktu mowy z listy kontraktu,
+// sprawdzając nazwy dłuższe przed ich krótszymi podciągami.
 func rozpoznajAktMowy(tekst string) string {
 	male := strings.ToLower(tekst)
-	// Kolejność ma znaczenie: „counterArgument” zawiera w sobie „argument”,
-	// więc dłuższa nazwa musi być sprawdzona pierwsza.
+	// Kolejność ma znaczenie: „counterArgument” zawiera w sobie „argument”.
 	for _, akt := range []string{
 		shared.RoundtableSpeechActCounterArgument,
 		shared.RoundtableSpeechActArgument,
@@ -661,7 +630,8 @@ func rozpoznajAktMowy(tekst string) string {
 	return ""
 }
 
-// rozpoznajBlad szuka w tekście kodu błędu z wykazu wykrywanych.
+// rozpoznajBlad szuka w tekście kodu błędu logicznego z wykazu, które to
+// okno dziś wykrywa, po katalogu błędów zapisanym przy nim.
 func rozpoznajBlad(tekst string,
 	poKodzie map[string]dane.DefinicjaBleduDebaty) (dane.DefinicjaBleduDebaty, bool) {
 
@@ -674,7 +644,8 @@ func rozpoznajBlad(tekst string,
 	return dane.DefinicjaBleduDebaty{}, false
 }
 
-// adresZeZrodla wyciąga adres sieciowy z opisu źródła, gdy w nim jest.
+// adresZeZrodla wyciąga adres sieciowy z opisu źródła twierdzenia, gdy opis
+// go niesie, do wypełnienia pola adresu w rejestrze dowodów.
 func adresZeZrodla(zrodlo string) string {
 	for _, slowo := range strings.Fields(zrodlo) {
 		if strings.HasPrefix(slowo, "http://") || strings.HasPrefix(slowo, "https://") {

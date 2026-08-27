@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: wpięcie rodziny `model.*`. Kontrakt niesie w niej
-// dziś jedną komendę — `model.channel.set`.
-//
-// Port jest rozszerzeniem portu okien, nie drugim portem. Kanał modelu obsługuje
-// okno komunikacji, a oknem w rdzeniu włada `Okna`. Rodzina `model.*`
-// weszła do kontraktu osobno i osobno się wpina — dokładnie tak, jak `memory.*`
-// wpina się osobno od `workspace.*`, jadąc na tej samej maszynerii.
-//
-// Zdarzenie jest tym samym, które rozgłasza `window.update`. Zmiana kanału jest
-// zmianą okna, więc panel sterowania odświeża się z tej jednej subskrypcji
-// `window.changed`; drugiego zdarzenia dla tego samego faktu kontrakt nie ma
-// i rdzeń go sobie nie wymyśla. Żądanie wskazujące kartę sesji dotyka wielu okien
-// naraz i rozgłasza tyle zmian, ile okien naprawdę zmieniło kanał.
+// Plik wpina rodzinę model.* — dziś jedną komendę wyboru kanału modelu, jako
+// rozszerzenie portu okien rozgłaszające zmianę tym samym zdarzeniem co
+// aktualizacja okna.
 package core
 
 import (
@@ -19,24 +9,20 @@ import (
 	"danacoconsole/shared"
 )
 
-// KanalModelu jest portem rodziny `model.*` — portem okien
-// rozszerzonym o wybór kanału modelu.
+// KanalModelu jest portem rodziny model.* — portem okien rozszerzonym
+// o wybór kanału modelu dla okna komunikacji.
 type KanalModelu interface {
 	Okna
 
-	// UstawKanalModelu obsługuje `model.channel.set`. Drugi wynik niesie okna,
-	// których kanał się zmienił — to one idą do rozgłoszenia.
+	// UstawKanalModelu obsługuje model.channel.set, zwracając okna, których
+	// kanał się zmienił.
 	UstawKanalModelu(ctx context.Context, z shared.ModelChannelSetRequest) (
 		shared.ModelChannelSetResponse, []shared.Window, error)
 }
 
-// zarejestrujKanalModelu wpina komendę rodziny `model.*`.
-//
-// Wpięcie w `Zloz` idzie przez asercję `p.Okna.(KanalModelu)` — celowo twardą,
-// wzorem rodziny `memory.*`. Gdyby port okien przestał kiedyś nieść wybór
-// kanału, rdzeń pada głośno przy montażu, zamiast po cichu zostawić komendę
-// nieznaną. Cicha nieobecność uchwytu jest usterką, którą widać dopiero na
-// uruchomionym produkcie.
+// zarejestrujKanalModelu wpina komendę rodziny model.* przez twardą asercję
+// portu okien, żeby rdzeń padł głośno przy montażu, gdyby port przestał
+// nieść wybór kanału.
 func zarejestrujKanalModelu(r *Rejestr, m KanalModelu, e *emiter) {
 	if r == nil || m == nil {
 		return

@@ -1240,3 +1240,54 @@ dostawcy przy każdej pozycji listy.
 Adres przekierowania wyniku webowego rozwija się do adresu docelowego, bo
 inaczej źródło zapisałoby adres pośrednika, który przestałby działać, gdy
 pośrednik zmieni postać odnośnika.
+
+## budowa/server/internal/core/adapter_modul_developer_wezly.go
+
+Czynności plikowe idą przez bibliotekę standardową, a wyszukiwanie przez
+wyrażenia regularne wkompilowane w rdzeń, nie przez program zewnętrzny:
+wyszukiwanie w repozytorium jest czynnością, bez której Code Editor
+przestaje być edytorem kodu, więc nie może zależeć od programu, którego
+instalka nie niesie. Każda ścieżka przechodzi przez sprowadzenie do wnętrza
+katalogu roboczego okna i odmawia, gdy z niego wychodzi — także wtedy, gdy
+wyjściem jest dowiązanie symboliczne, nie zapis `..` w napisie.
+
+Odpowiedź usunięcia węzłów nie niesie znacznika cofnięcia, i to jest stan
+świadomy: cofnięcie wymagałoby odłożenia treści usuniętych węzłów
+w magazynie rdzenia, a takiego magazynu moduł nie ma. Znacznik wypełniony
+bez pokrycia obiecywałby Operatorowi powrót, którego nikt nie wykona.
+
+Katalog niepusty schodzi przy usunięciu wyłącznie przy jawnym wskazaniu
+rekurencji: usunięcie katalogu razem z zawartością na skutek pomyłki
+w zaznaczeniu byłoby stratą, po której nie ma powrotu.
+
+Kontrakt nie niesie osobnego pola „szukaj po składni", więc rozstrzyga sam
+wzorzec, jego własną, udokumentowaną cechą: metazmienna `$NAZWA` jest
+zapisem należącym do programu składniowego i nie znaczy nic w wyszukiwaniu
+po napisie — napis `$ARG` jako napis szukany jest zapytaniem, którego nikt
+nie zadaje. Wyrażenie regularne wyłącza tę drogę bezwarunkowo, bo w nim `$`
+jest kotwicą końca wiersza, więc wzorzec zakończony tym znakiem byłby wzięty
+za składniowy wbrew temu, co wołający napisał wprost.
+
+Wiersze i kolumny programu składniowego liczą się od zera, a kontrakt od
+jedynki — przeliczenie stoi w miejscu odczytu, żeby nie rozjechało się
+między wyszukaniem a zamianą.
+
+Zamiana masowa w repozytorium dotyka wielu plików naraz i nie ma po niej
+cofnięcia, więc odpowiedź mówi wprost, czy zmiany zapisano, a wykaz zmian
+wraca także przy podglądzie bez zapisu — Operator ma zobaczyć, co się
+stanie, zanim to się stanie.
+
+Przejścia zamiany po składni są dwa i jest to rozstrzygnięcie celowe:
+pierwsze, bez zapisu, daje wykaz zmian, który wraca w odpowiedzi także przy
+zapisie. Drugie zapisuje. Wyprowadzenie wykazu z samego zapisu nie da się
+zrobić, bo przy zapisie masowym program oddaje liczbę zmian, nie ich treść.
+
+Brak programu składniowego na maszynie kończy się odmową, nie cichym
+powrotem do drogi napisu: wzorzec składniowy szukany jako zwykły napis nie
+znajdzie niczego, a zero trafień wyglądałoby jak odpowiedź prawidłowa, nie
+jak brak programu — wynik wyglądający dobrze jest groźniejszy od odmowy,
+bo nie wzywa do sprawdzenia.
+
+Wykaz pusty przy przejściu po składni jest wynikiem prawidłowym; wykaz
+nieczytelny przy niepowodzeniu programu nie jest, bo wtedy nie zmierzono
+niczego i odpowiedź ma to powiedzieć odmową, nie pustym wykazem.

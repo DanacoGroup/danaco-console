@@ -1,27 +1,5 @@
-// Moduł Apps — podgląd na żywo warstwy produktu: `apps.preview.start`
-// i `apps.preview.stop`.
-//
-// PODGLĄD JEST SERWEREM, KTÓRY NAPRAWDĘ STOI. `AppsPreviewStartResponse` niesie
-// `previewUrl` — adres, pod który Operator ma wejść. Adres wymyślony byłby
-// dokładnie tym wzorcem szkody, którego pilnują sprawdziany skutku: odpowiedzią
-// udaną, za którą nie ma niczego. Dlatego `apps.preview.start` podnosi nasłuch
-// `net/http` na pętli zwrotnej, oddaje pod nim treść plików warsztatu wskazanej
-// warstwy i zwraca adres wydany przez system operacyjny.
-//
-// PORT WYDAJE SYSTEM, NIE KONWENCJA. Nasłuch idzie na `127.0.0.1:0`, więc dwa
-// okna podglądane naraz nie walczą o ten sam numer, a rdzeń nie musi zgadywać,
-// co na tej maszynie jest wolne. Adres jest zawsze pętlą zwrotną: podgląd służy
-// Operatorowi tej maszyny, a wystawienie warsztatu na świat byłoby udostępnieniem
-// kodu produktu bez czyjejkolwiek zgody.
-//
-// SERWER NIE PRZEŻYWA RESTARTU RDZENIA i wiersz w bazie tego nie ukrywa: rejestr
-// nasłuchów żyje w pamięci, a `apps.preview.start` po restarcie podnosi nowy
-// serwer pod nowym adresem. Odtwarzanie nasłuchów przy starcie stawiałoby
-// podgląd, którego nikt w tej sesji nie zamówił.
-//
-// ZATRZYMANIE ZAMYKA NASŁUCH. `apps.preview.stop` woła `Shutdown` i dopiero po
-// jego powrocie melduje `stopped` — inaczej pole `stopped: true` znaczyłoby
-// „poprosiliśmy", a port zostawałby zajęty.
+// Moduł Apps udostępnia podgląd na żywo warstwy produktu przez adres serwera, który
+// faktycznie stoi: obsługuje `apps.preview.start` oraz `apps.preview.stop`.
 package core
 
 import (
@@ -44,7 +22,7 @@ import (
 // otwarte pobranie treści.
 const czasZamknieciaPodgladuApp = 3 * time.Second
 
-// podgladWarstwyApp to jeden stojący serwer podglądu.
+// podgladWarstwyApp to jeden stojący serwer podglądu, niosący adres, warstwę produktu i chwilę uruchomienia serwera.
 type podgladWarstwyApp struct {
 	serwer  *http.Server
 	adres   string
@@ -59,7 +37,7 @@ type rejestrPodgladowApp struct {
 	podglady map[string]*podgladWarstwyApp
 }
 
-// nowyRejestrPodgladowApp składa pusty rejestr nasłuchów.
+// nowyRejestrPodgladowApp składa pusty rejestr nasłuchów, gotowy do przechowywania podglądów okien produktu.
 func nowyRejestrPodgladowApp() *rejestrPodgladowApp {
 	return &rejestrPodgladowApp{podglady: map[string]*podgladWarstwyApp{}}
 }
@@ -105,9 +83,7 @@ func (a *adapterAplikacji) UruchomPodglad(ctx context.Context,
 		a.podglady = nowyRejestrPodgladowApp()
 	}
 
-	// Podgląd pustej warstwy jest odmową, nie serwerem oddającym pustkę:
-	// Operator ma się dowiedzieć, że nie ma czego pokazać, a nie oglądać białą
-	// stronę i zgadywać, czy to wina warsztatu, czy nasłuchu.
+	// Podgląd pustej warstwy jest odmową, nie serwerem oddającym pustą stronę.
 	pliki, err := a.plikiWarstwyApp(ctx, okno, warstwa)
 	if err != nil {
 		return shared.AppsPreviewStartResponse{}, err
@@ -119,9 +95,7 @@ func (a *adapterAplikacji) UruchomPodglad(ctx context.Context,
 				" nie ma ani jednego pliku — podgląd nie ma czego pokazać")
 	}
 
-	// Nasłuch zastany zatrzymujemy przed podniesieniem nowego: jedno okno ma
-	// jeden podgląd (kontrakt `apps.preview.stop` nie ma czym wskazać drugiego),
-	// więc drugi nasłuch byłby portem, którego nikt już nie zamknie.
+		// Nasłuch zastany zostaje zatrzymany przed podniesieniem nowego: jedno okno ma jeden podgląd.
 	a.zatrzymajNasluchPodgladuApp(okno)
 
 	nasluch, err := net.Listen("tcp", "127.0.0.1:0")
@@ -201,10 +175,8 @@ func (a *adapterAplikacji) zatrzymajNasluchPodgladuApp(okno string) *podgladWars
 	return podglad
 }
 
-// obslugaPodgladuApp składa obsługiwacza żądań serwera podglądu. Treść bierze
-// się z bazy przy każdym żądaniu, nie z migawki z chwili podniesienia: warsztat
-// zmienia się w trakcie pracy, a podgląd ma pokazywać stan bieżący („natychmiastowe
-// odświeżanie wyniku pracy równolegle z edycją" — opracowanie, Frontend Workspace).
+// obslugaPodgladuApp składa obsługiwacza żądań serwera podglądu; treść czyta z bazy przy
+// każdym żądaniu, nie z migawki z chwili podniesienia.
 func (a *adapterAplikacji) obslugaPodgladuApp(okno string,
 	warstwa shared.AppWorkspaceLayer) http.Handler {
 
@@ -233,7 +205,7 @@ func (a *adapterAplikacji) obslugaPodgladuApp(okno string,
 }
 
 // spisPodgladuApp składa stronę wejściową podglądu — spis plików warstwy wraz
-// z odnośnikami. Gdy warstwa niesie `index.html`, oddajemy jego treść wprost:
+// z odnośnikami. Gdy warstwa niesie `index.html`, oddaje jego treść wprost:
 // to jest strona produktu, a nie spis warsztatu.
 func spisPodgladuApp(okno string, warstwa shared.AppWorkspaceLayer,
 	pliki []dane.PlikWarsztatu) string {
@@ -274,7 +246,7 @@ func typTresciPodgladuApp(sciezka string) string {
 	return "text/plain; charset=utf-8"
 }
 
-// plikiWarstwyApp zwraca pliki jednej warstwy warsztatu, po ścieżce.
+// plikiWarstwyApp zwraca pliki jednej warstwy warsztatu, po ścieżce, gotowe do wysłania w treści podglądu.
 func (a *adapterAplikacji) plikiWarstwyApp(ctx context.Context, okno string,
 	warstwa shared.AppWorkspaceLayer) ([]dane.PlikWarsztatu, error) {
 

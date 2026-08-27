@@ -1988,3 +1988,8 @@ Wyłączenie przełącznika głównego wygasza wszystkie klasy naraz, zachowują
 ich ustawienia: jest osobnym kluczem, a nie zapisem wartości fałszywej do
 siedmiu kluczy klas, bo to skasowałoby wybór Operatora, a ponowne włączenie
 przywróciłoby stan domyślny zamiast poprzedniego.
+
+## budowa/server/internal/store/migracja_003_kolejki.sql
+Nagłówek tabeli dziennika akcji kolejki rozszerzono o cel przechowywanych
+wpisów, ponieważ krótkie zdanie nie mieściło się w wymaganym przedziale
+długości nagłówka, mimo że treściowo było wystarczające.

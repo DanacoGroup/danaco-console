@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: cztery czynności, które łączy to, że pracują na
-// TREŚCI dokumentu, a nie na jego postaci — `studio.batch.run` (ta sama
-// operacja na wielu dokumentach), `studio.asset.embed` (osadzenie zasobu
-// z Design), `studio.search.semantic` (wyszukiwanie znaczeniowe)
-// i `studio.diff.source` (zestawienie z materiałem wejściowym).
-//
-// ── Wsad wykonuje, a nie kolejkuje na później ───────────────────────────────
-// Kontrakt oddaje liczbę dokumentów przyjętych i wykaz odrzuconych. Gdyby
-// wsad tylko wpisywał pozycje do kolejki, obie liczby mówiłyby o zapisie do
-// tabeli, a nie o pracy: Operator dostałby „przyjęto 10" i nie dowiedziałby
-// się nigdy, że siedem z nich odmówiło. Wsad wykonuje więc operację dokument po
-// dokumencie i dopiero wynik każdego z nich rozstrzyga o liczbie — odmowa
-// jednego nie przerywa pozostałych (rozdz. 4.5 opracowania).
+// TREŚCI dokumentu, a nie na jego postaci — `studio.batch.run`,
+// `studio.asset.embed`, `studio.search.semantic` i `studio.diff.source`.
 package core
 
 import (
@@ -28,7 +18,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// UruchomWsad obsługuje `studio.batch.run`.
+// UruchomWsad obsługuje `studio.batch.run` — wykonuje seryjne polecenia
+// studia nad wskazanym oknem produktu.
 func (a *adapterStudia) UruchomWsad(ctx context.Context,
 	z shared.StudioBatchRunRequest) (shared.StudioBatchRunResponse, error) {
 
@@ -85,12 +76,8 @@ func (a *adapterStudia) UruchomWsad(ctx context.Context,
 	}, nil
 }
 
-// OsadzZasob obsługuje `studio.asset.embed`.
-//
-// Osadzenie wstawia ODWOŁANIE do zasobu, nie jego bajty: dokument Studia jest
-// tekstem, a wklejona w niego grafika byłaby drugą kopią czegoś, co już leży
-// w magazynie pod swoją sumą kontrolną. Odwołanie idzie zapisem Markdown, bo to
-// jedyna postać, którą rozumie i edytor, i wyrys podglądu, i wydanie.
+// OsadzZasob obsługuje `studio.asset.embed`. Osadzenie wstawia odwołanie do
+// zasobu, nie jego bajty, zapisem Markdown.
 func (a *adapterStudia) OsadzZasob(ctx context.Context,
 	z shared.StudioAssetEmbedRequest) (shared.StudioAssetEmbedResponse, error) {
 
@@ -120,8 +107,7 @@ func (a *adapterStudia) OsadzZasob(ctx context.Context,
 	}
 	wstawka := wstawkaZasobuStudia(zasob, z.AltText, z.Caption)
 
-	// Położenie liczy się w ZNAKACH, a nie w bajtach: dokument polski ma znaki
-	// dwubajtowe i cięcie po bajtach rozcięłoby literę na pół.
+	// Położenie liczy się w znakach, a nie w bajtach.
 	runy := []rune(tresc)
 	miejsce := len(runy)
 	if z.Position != nil {
@@ -153,8 +139,7 @@ func wstawkaZasobuStudia(zasob dane.ZasobDesignu, tekstAlternatywny, podpis *str
 	} else if zasob.Nazwa != nil && strings.TrimSpace(*zasob.Nazwa) != "" {
 		opis = *zasob.Nazwa
 	}
-	// Odwołanie w treści wskazuje ZASÓB, nie ścieżkę na dysku rdzenia: ścieżka
-	// wyniesiona do dokumentu wyszłaby z rdzenia razem z każdym wydaniem.
+	// Odwołanie w treści wskazuje zasób, nie ścieżkę na dysku rdzenia.
 	wstawka := "\n\n![" + opis + "](danaco://zasob/" + zasob.Kod + ")\n"
 	if tekst := strings.TrimSpace(wartoscTekstu(podpis)); tekst != "" {
 		wstawka += "\n" + tekst + "\n"
@@ -162,13 +147,8 @@ func wstawkaZasobuStudia(zasob dane.ZasobDesignu, tekstAlternatywny, podpis *str
 	return wstawka
 }
 
-// PorownajZeZrodlem obsługuje `studio.diff.source`.
-//
-// Materiał wejściowy wskazuje się plikiem repozytorium ALBO zasobem magazynu;
-// bez żadnego wskazania bierze się plik, z którego dokument otwarto. Materiał
-// nieodczytany oddaje `sourceResolved: false` wraz z pustym wykazem — kontrakt
-// pyta o to wprost, więc odpowiedź „nie udało się" jest odpowiedzią, a nie
-// milczeniem.
+// PorownajZeZrodlem obsługuje `studio.diff.source`. Materiał wejściowy
+// wskazuje się plikiem repozytorium albo zasobem magazynu.
 func (a *adapterStudia) PorownajZeZrodlem(ctx context.Context,
 	z shared.StudioDiffSourceRequest) (shared.StudioDiffSourceResponse, error) {
 
@@ -228,11 +208,9 @@ func (a *adapterStudia) trescMaterialuWejsciowegoStudia(ctx context.Context,
 	return tresc, true
 }
 
-// ── Wyszukiwanie znaczeniowe ────────────────────────────────────────────────
-
-// Nazwy dróg, którymi liczy się bliskość znaczeniowa. Wychodzą kontraktem
-// w polu `mode`, bo Operator ma wiedzieć, CZY pytał model, czy rdzeń policzył
-// sam — te dwie odpowiedzi znaczą co innego i mają inną wiarygodność.
+// Wyszukiwanie znaczeniowe liczy bliskość fragmentów dokumentu do zapytania,
+// modelem językowym albo rdzeniem. Nazwy dróg, którymi liczy się bliskość,
+// wychodzą kontraktem w polu `mode`.
 const (
 	drogaSemantykiModelem = "kanal-modelu"
 	drogaSemantykiMiara   = "miara-rdzenia"
@@ -242,13 +220,8 @@ const (
 // którego i tak nie zdąży przeczytać w jednym wywołaniu.
 const granicaFragmentowSemantyki = 400
 
-// WyszukajZnaczeniowo obsługuje `studio.search.semantic`.
-//
-// Droga pierwsza: kanał modelu okna, do którego dokument należy — model widzi
-// znaczenie, którego miara na słowach nie zobaczy. Droga druga: miara
-// arytmetyczna w rdzeniu, licząca zbieżność słów znaczących z wagą rzadkości.
-// Cisza zamiast wyniku jest niedopuszczalna: dokument bez kanału modelu ma
-// dostać odpowiedź gorszą, ale prawdziwą, a nie żadnej.
+// WyszukajZnaczeniowo obsługuje `studio.search.semantic`, drogą kanału modelu
+// okna albo miarą arytmetyczną w rdzeniu.
 func (a *adapterStudia) WyszukajZnaczeniowo(ctx context.Context,
 	z shared.StudioSearchSemanticRequest) (shared.StudioSearchSemanticResponse, error) {
 
@@ -305,7 +278,8 @@ func (a *adapterStudia) WyszukajZnaczeniowo(ctx context.Context,
 	return shared.StudioSearchSemanticResponse{Matches: trafienia, Mode: droga}, nil
 }
 
-// fragmentSemantykiStudia to jeden akapit treści wraz z jego położeniem.
+// fragmentSemantykiStudia to jeden akapit treści wraz z jego położeniem
+// w dokumencie źródłowym studia.
 type fragmentSemantykiStudia struct {
 	tekst   string
 	od, do_ int
@@ -343,7 +317,8 @@ func fragmentyTresciStudia(tresc string) []fragmentSemantykiStudia {
 	return fragmenty
 }
 
-// odpowiedzModeluStudia to postać, w której model oddaje ocenę fragmentów.
+// odpowiedzModeluStudia to postać, w której model językowy oddaje ocenę
+// dopasowania fragmentów zapytaniu.
 type odpowiedzModeluStudia struct {
 	Fragmenty []struct {
 		Numer int     `json:"numer"`
@@ -351,13 +326,8 @@ type odpowiedzModeluStudia struct {
 	} `json:"fragmenty"`
 }
 
-// ocenyModeluStudia pyta kanał modelu okna o bliskość każdego fragmentu.
-//
-// Zwraca `false` wszędzie tam, gdzie odpowiedzi nie dało się WZIĄĆ ZA PRAWDĘ:
-// brak rejestru kanałów, okno bez kanału, kanał milczący, odpowiedź, której nie
-// da się odczytać. Każdy z tych przypadków schodzi na miarę arytmetyczną —
-// i mówi o tym wprost polem `mode`, zamiast oddawać wynik modelu, którego nie
-// było.
+// ocenyModeluStudia pyta kanał modelu okna o bliskość każdego fragmentu,
+// wracając do miary arytmetycznej, gdy odpowiedzi nie da się wziąć za prawdę.
 func (a *adapterStudia) ocenyModeluStudia(ctx context.Context, dokument dane.DokumentStudia,
 	zapytanie string, fragmenty []fragmentSemantykiStudia) ([]float64, bool) {
 
@@ -431,9 +401,7 @@ func wytnijJsonStudia(tekst string) string {
 }
 
 // slowaNieznaczaceStudia to słowa, które w polszczyźnie występują wszędzie
-// i o bliskości znaczeniowej nie mówią nic. Wykaz jest krótki z zamysłu:
-// każde słowo wykreślone z miary jest słowem, którego Operator nie może użyć
-// w zapytaniu, więc lista długa szkodziłaby bardziej, niż pomaga.
+// i o bliskości znaczeniowej nie mówią nic.
 var slowaNieznaczaceStudia = map[string]bool{
 	"aby": true, "albo": true, "ale": true, "bez": true, "byc": true, "być": true,
 	"czy": true, "dla": true, "gdy": true, "jak": true, "jest": true, "jako": true,
@@ -444,11 +412,6 @@ var slowaNieznaczaceStudia = map[string]bool{
 
 // ocenyMiaryStudia liczy bliskość arytmetycznie: zbieżność słów znaczących
 // ważona rzadkością słowa w dokumencie.
-//
-// Słowo występujące w każdym akapicie nie odróżnia akapitów, więc waży mało;
-// słowo rzadkie waży dużo. Wynik dzieli się przez wagę całego zapytania, więc
-// mieści się w przedziale od zera do jedynki i da się porównywać między
-// dokumentami — inaczej próg `minScore` znaczyłby co innego w każdym z nich.
 func ocenyMiaryStudia(zapytanie string, fragmenty []fragmentSemantykiStudia) []float64 {
 	slowaZapytania := slowaZnaczaceStudia(zapytanie)
 	oceny := make([]float64, len(fragmenty))
@@ -492,7 +455,8 @@ func ocenyMiaryStudia(zapytanie string, fragmenty []fragmentSemantykiStudia) []f
 	return oceny
 }
 
-// slowaZnaczaceStudia rozbija tekst na słowa nadające się do porównania.
+// slowaZnaczaceStudia rozbija tekst na słowa nadające się do porównania,
+// pomijając wielkość liter i znaki niebędące literami ani cyframi.
 func slowaZnaczaceStudia(tekst string) []string {
 	slowa := []string{}
 	for _, slowo := range strings.FieldsFunc(strings.ToLower(tekst), func(znak rune) bool {

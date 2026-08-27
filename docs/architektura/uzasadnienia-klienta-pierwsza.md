@@ -4734,3 +4734,26 @@ z zaznaczenia wielokrotnego bez trafienia we właściwą warstwę.
 
 Plansza nie zna rdzenia. Ruch warstwy zmienia zapis kompozycji, a do rdzenia jedzie
 dopiero zapis całości komendą `design.board.update` — z okna, a nie z planszy.
+
+## budowa/klient-poprzedni/src/aod/wyciszenie-braki-kontraktu.ts
+
+Kontrakt niesie wyciszenie nakładki jako byt rdzenia: strukturę wyciszenia wraz
+z rodzajem, zakresem i chwilą końca, komendy odczytu i zapisu wyciszenia,
+zdarzenie rozgłaszane na pozostałe powłoki, nośnik sygnału klas zdarzeń, moduł
+przy stanie i podpowiedzi nakładki oraz kategorię ustawień z pozycją reguł
+wyciszania.
+
+Pozostaje jeden brak i leży po stronie nakładki, a nie kontraktu: wołacze tego
+okna nadal piszą do magazynu stanowiska, więc wyciszenie założone w tym oknie nie
+dojdzie do drugiej powłoki, dopóki magazyn nie zostanie przełożony na rdzeń.
+Magazyn wyciszeń jest podawany z zewnątrz właśnie po to, aby przełożenie nie
+wymagało zmiany ani jednego wołacza.
+
+Zdanie braku nazywa, czego brakuje i po czyjej stronie brak leży. Nazwy komend
+pochodzą z wyliczenia komend kontraktu, a nie z literałów, więc zmiana nazwy
+w kontrakcie zostaje wychwycona przy kompilacji. Pozycja braku, której komenda
+znosząca weszła już do wykazu komend, wypada z wykazu braków czynnych, a pozycja
+bez komendy znoszącej pozostaje, ponieważ takiego braku nie zniesie żadna komenda.
+
+Plik nie obchodzi braku: nie wysyła komendy zastępczej i nie udaje zapisu
+w rdzeniu. Wyciszenie pozostaje stanem tego okna i tak jest nazwane w menu.

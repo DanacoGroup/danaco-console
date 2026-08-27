@@ -4031,3 +4031,20 @@ i tak jest tym oknem, w którym operator właśnie pracuje.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/profil-modulu.ts
 Narzędzie paska promptu nie jest osobną komendą kontraktu — jest gotowym poleceniem wstawianym do pola wypowiedzi, które model wykonuje wywołaniem narzędzia platformy, dzięki czemu pasek nie zawiera ani jednego przycisku bez działania. Postać rozmowy modułu przyjmuje trzy wartości: zwykłe okno czatu dla większości modułów, pływający awatar z oknem dymkowym i głosem przed tekstem wyłącznie dla modułu Assistant, oraz brak rozmowy wyłącznie dla modułu Library, który jest menedżerem zasobów, nie środowiskiem pracy z modelem. Brak rozmowy nie znaczy pustki: okno trafiające na moduł bez rozmowy pokazuje operatorowi wprost, czym ten moduł jest zamiast czatu, bo pusta lista czyta się jak brak treści i jest błędem. Granica liczby okien równoległych jest ustalona wprost dla wybranych modułów — Apps i MultitaskingAI po cztery, Developer do czterech, Automations i Translate po dwa, Agents i Assistant po jednym — a pozostałe moduły dostają pełny sufit platformy. Ile okien rozmowy można otworzyć rozstrzyga zawsze funkcja, nie samo pole granicy: pole niesie granicę, funkcja niesie prawo do otwarcia.
+
+## budowa/klient-poprzedni/src/moduly/studio/dziennik-czynnosci.ts
+Dziennik odwracalny opisuje słowami trzy rzeczy, których nie wolno zgubić. Cofnięcie nakłada
+różnicę drzew, nie migawkę: praca naniesiona po cofanej czynności zostaje, a operator, który
+tego nie wie, nie odważy się cofnąć czynności ze środka dziennika, więc zdanie o tym stoi przy
+każdej czynności, nie w pomocy. Czynność będąca podstawą późniejszej odmawia cofnięcia i nazywa
+te czynności — rdzeń oddaje je w zależnościach wpisu oraz w bilansie odpowiedzi, a okno pokazuje
+powód, nie samo „nie udało się", inaczej operator zostaje z zamkniętą drogą bez wskazania, co ją
+zamknęło. Wykonawca jest nazwany: wpis niesie imię i wersję wykonawcy modelowego, więc dwóch
+agentów nie pokazuje się jako jeden model. Plik nie zna elementów strony ani rdzenia — wejściem
+są byty kontraktu, wyjściem napisy i rozstrzygnięcia, dzięki czemu sprawdza się bez stawiania
+okna. Przycisk cofnięcia czynności zablokowanej pozostaje czynny mimo zapowiedzianej odmowy,
+bo prawdę rozstrzyga rdzeń, a wykaz czynności blokujących mógł się zmienić po ostatnim odczycie.
+Bilans jest jedyną drogą, którą operator dowiaduje się o pominięciu, bo przemilczenie pominięcia
+jest w tym module zakazane wprost. Wywołanie cofnięcia bywa udane, a mimo to nic nie cofa, gdy
+rdzeń oddaje wykaz cofniętych pusty i bilans z pominięciem nazywającym zależność — okno musi to
+odróżnić od powodzenia, inaczej pokazałoby cofnięcie po czynności, która nie zeszła.

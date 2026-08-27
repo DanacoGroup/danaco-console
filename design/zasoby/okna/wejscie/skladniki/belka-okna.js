@@ -1,10 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — BELKA OKNA SYSTEMOWEGO
-
-   Okno przed uwierzytelnieniem nie ma ramy aplikacji: ani szyny nawigacji, ani
-   wstążki, ani paska stanu. Ma wyłącznie belkę — znak, tytuł i trzy kontrolki
-   okna. Znak w belce dorównuje wielkością kontrolkom, więc niesie kropkę
-   w barwie sygnału: przygaszony monochromat czytał się jak brakująca ikona.
+/* Belka okna systemowego zastępuje w oknie przed uwierzytelnieniem całą ramę aplikacji, niosąc wyłącznie znak, tytuł i trzy kontrolki okna, bez szyny nawigacji, wstążki i paska stanu.
+   Znak w belce dorównuje wielkością kontrolkom, więc niesie kropkę w barwie
+   sygnału — przygaszony monochromat czytał się jak brakująca ikona.
 
    Właściwości:
      tytul   klucz katalogu — tytuł okna w belce

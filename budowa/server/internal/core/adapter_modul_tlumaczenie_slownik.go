@@ -1,24 +1,7 @@
 // Odpowiedzialność pliku: obszar słownika modułu Translate — `UstawTerminy`
-// (`glossary.set`), `ZastosujSlownik` (`glossary.apply`) i `WystapieniaTerminow`
-// (`glossary.occurrences`) na typie `*adapterTlumaczenia`, zadeklarowanym
-// w `core/adapter_modul_tlumaczenie.go`. Ten plik nie deklaruje ani typu
-// adaptera, ani konstruktora, ani przedrostków identyfikatorów.
-//
-// Termin oznaczony `NieTlumaczyc` zostaje w podmianie nietknięty — to sens tej
-// flagi w `migracja_054_slownik_tlumaczenia.sql`.
-//
-// Słownik nie żyje wyłącznie tutaj. `glossary.apply` jest narzędziem
-// naprawczym: ujednolica terminologię treści, która już powstała. Właściwym
-// miejscem słownika jest sam przekład — terminy i zakazy Operatora wchodzą do
-// polecenia dla modelu przy `target.add`
-// (`adapter_modul_tlumaczenie_polecenia.go`), a `zastosujTerminySlownika` z tego
-// pliku przechodzi jeszcze po wyniku modelu jako siatka bezpieczeństwa. Ta sama
-// funkcja w dwóch zastosowaniach, nie dwie kopie zasady.
-//
-// Zakres obu komend bez wskazania panelu bierze się z `WszystkiePanele`
-// repozytorium: `glossary.apply` z pustym `PanelId` przechodzi po komplecie
-// paneli, a `glossary.occurrences` — które w kontrakcie niesie samo `Term` —
-// przeszukuje ten sam komplet.
+// (`glossary.set`), `ZastosujSlownik` (`glossary.apply`) i
+// `WystapieniaTerminow` (`glossary.occurrences`). Termin oznaczony
+// `NieTlumaczyc` zostaje w podmianie nietknięty.
 package core
 
 import (
@@ -31,10 +14,7 @@ import (
 )
 
 // UstawTerminy zakłada nowy termin słownika albo aktualizuje istniejący po
-// `TermId`. Obsługuje `glossary.set`. Zapis idzie przez `ZapiszTerminy`
-// (jedna transakcja, choć niesiona jest tu zawsze lista jednoelementowa) —
-// warstwa danych i tak nie ma osobnej drogi INSERT/UPDATE (`dane/slownik.go`),
-// więc adapter nie dubluje tego rozróżnienia.
+// `TermId`. Obsługuje `glossary.set`.
 func (a *adapterTlumaczenia) UstawTerminy(ctx context.Context,
 	z shared.TranslateGlossarySetRequest) (shared.TranslateGlossarySetResponse, error) {
 
@@ -117,10 +97,8 @@ func (a *adapterTlumaczenia) paneleDoZastosowania(ctx context.Context,
 	return []dane.PanelTlumaczenia{panel}, nil
 }
 
-// zastosujWPanelu podmienia terminy w jednym panelu i oddaje liczbę faktycznie
-// podmienionych wystąpień. Panel bez treści w bazie daje zero — treść żyjąca
-// wyłącznie poza bazą (`TrescOdwolanie`) nie jest czytana, bo adapter nie sięga
-// po pliki spoza repozytorium.
+// zastosujWPanelu podmienia terminy w jednym panelu i oddaje liczbę
+// faktycznie podmienionych wystąpień. Panel bez treści w bazie daje zero.
 func (a *adapterTlumaczenia) zastosujWPanelu(ctx context.Context,
 	panel dane.PanelTlumaczenia, terminy []dane.TerminSlownika) (int, error) {
 
@@ -138,10 +116,7 @@ func (a *adapterTlumaczenia) zastosujWPanelu(ctx context.Context,
 }
 
 // zastosujTerminySlownika podmienia w treści każdy termin słownika na jego
-// odpowiednik docelowy — z wyjątkiem terminów oznaczonych `NieTlumaczyc`,
-// które zostają nietknięte. Oddaje
-// zmienioną treść i liczbę faktycznie podmienionych wystąpień, żeby
-// `ChangedCount` mówił prawdę o skutku, nie o liczbie terminów w słowniku.
+// odpowiednik docelowy, z wyjątkiem terminów oznaczonych `NieTlumaczyc`.
 func zastosujTerminySlownika(tresc string, terminy []dane.TerminSlownika) (string, int) {
 	zmienione := 0
 	for _, termin := range terminy {
@@ -158,15 +133,8 @@ func zastosujTerminySlownika(tresc string, terminy []dane.TerminSlownika) (strin
 	return tresc, zmienione
 }
 
-// WystapieniaTerminow liczy wystąpienia terminu w locie, bez własnej tabeli
-// (`migracja_054_slownik_tlumaczenia.sql`). Obsługuje `glossary.occurrences`.
-//
-// Zakresem są wszystkie panele: kontrakt nie niesie wskazania okna ani panelu,
-// a słownik jest jeden na instalację, więc jedynym uczciwym odczytaniem jest
-// przeszukanie kompletu paneli.
-//
-// Otoczenie wystąpienia to wycinek treści wokół trafienia — kontrakt chce
-// „wystąpień wraz z otoczeniem", a nie samych pozycji.
+// WystapieniaTerminow liczy wystąpienia terminu w locie, bez własnej
+// tabeli. Obsługuje `glossary.occurrences` i przeszukuje komplet paneli.
 func (a *adapterTlumaczenia) WystapieniaTerminow(ctx context.Context,
 	z shared.TranslateGlossaryOccurrencesRequest) (shared.TranslateGlossaryOccurrencesResponse, error) {
 
@@ -214,7 +182,8 @@ func otoczeniaTerminu(tresc, termin string) []string {
 	}
 }
 
-// zlozTerminSlownika przekłada wiersz słownika na kontraktowy `GlossaryTerm`.
+// zlozTerminSlownika przekłada wiersz słownika na kontraktowy `GlossaryTerm`,
+// w tym stan i dziedzinę doszłe migracją 162.
 func zlozTerminSlownika(termin dane.TerminSlownika) shared.GlossaryTerm {
 	var nieTlumaczyc *bool
 	if termin.NieTlumaczyc {
@@ -229,9 +198,8 @@ func zlozTerminSlownika(termin dane.TerminSlownika) shared.GlossaryTerm {
 		DoNotTranslate: nieTlumaczyc,
 		Note:           termin.Uwaga,
 		UpdatedAt:      termin.Zaktualizowano,
-		// Dziedzina i stan doszły z migracją 162 pod `translate.glossary.list`.
-		// Termin, którego nikt nie oznaczył, wychodzi bez stanu — brak oznaczenia
-		// nie jest stanem `candidate` ani żadnym innym.
+		// Dziedzina i stan doszły z migracją 162; termin bez oznaczenia wychodzi
+		// bez stanu.
 		Domain: termin.Dziedzina,
 	}
 	if termin.Stan != nil && strings.TrimSpace(*termin.Stan) != "" {

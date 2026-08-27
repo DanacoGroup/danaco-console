@@ -2930,3 +2930,19 @@ tym wywołaniem. Kolejność jest treścią: rozmowa zdąży się wyczyścić i 
 powód, zanim okna modułu przerysują się na nowego eksperta. Odwrotna kolejność
 pokazywałaby przez moment czat poprzedniego eksperta w oknach już opisanych
 nazwą następnego.
+
+## budowa/klient-poprzedni/src/moduly/library/panel-akcji.ts
+
+Panel nie jest zaszytym wykazem: pozycje przychodzą z katalogu rdzenia komendą
+`action.list` o zasięgu modułu, a każda niesie własny kod, którym wykonuje ją
+`window.action`. Zaszycie pozycji po stronie klienta byłoby drugą kopią
+katalogu, rozjeżdżającą się z rdzeniem przy każdej zmianie po jego stronie.
+
+Czynności, którym kontrakt nie przypisał komendy — eksport, archiwizacja, kosz,
+wykrywanie duplikatów, udostępnienie odnośnikiem oraz porównanie — stoją obok
+jako przyciski klikalne. Naciśnięcie takiego przycisku nic nie wysyła i nazywa
+brak, zamiast zostawiać Operatora przy kontrolce wygaszonej albo milczącej.
+
+Powodzenie wywołania oznacza wynik akcji, a nie samo przyjęcie zgłoszenia:
+akcję, której rdzeń nie wykonuje, rdzeń odrzuca wprost kodem `conflict` wraz
+z kodem komendy do wywołania, a panel pokazuje tę odmowę.

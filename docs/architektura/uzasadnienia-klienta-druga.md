@@ -1086,3 +1086,12 @@ razem — strony z warstwą tekstową i bez niej, tabele rozpoznane
 i nierozpoznane, obrazy osadzone i pominięte. PDF ze samych skanów kieruje
 na rozpoznanie tekstu, a panel mówi to wprost, zamiast oddać pustą kartkę
 jako gotowy dokument.
+
+## budowa/klient-poprzedni/src/moduly/workspace/hub-planowania.ts
+
+Cztery widoki huba planowania dzielą jeden zbiór zadań. Przełącznik widoku nie zmienia danych,
+tylko pytanie zadawane rdzeniowi: lista pyta o wykaz zadań, tablica o stan tablicy kanban, oś
+czasu o harmonogram, kalendarz o wpisy kalendarza. Zadanie zmienione w jednym widoku jest tym
+samym zadaniem w pozostałych trzech, bo drugiego zapisu zadania w module nie ma. Zadanie
+wskazane w wykazie staje się przedmiotem czynności paska akcji; wskazanie idzie polem, a nie
+stanem ukrytym, żeby było widać, czego dotyczy usunięcie, zanim się je naciśnie.

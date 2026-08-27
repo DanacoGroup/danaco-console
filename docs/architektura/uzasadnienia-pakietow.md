@@ -3279,3 +3279,12 @@ zapasową wyłącznie dla wiersza bez kodu.
 
 ## budowa/server/internal/dane/design_zasoby.go
 Zasoby oddają liczbę wszystkich wyników oddzielnie od stronicowanej listy: zapytanie liczące i zapytanie stronicujące stosują ten sam zestaw warunków WHERE, żeby panel pokazał licznik bez rozjazdu wobec przyciętej listy. Filtr po etykietach jest koniunkcją — zasób musi nieść wszystkie wskazane etykiety naraz, nie choć jedną, dlatego zapytanie wymaga pełnego zestawu przez HAVING COUNT(DISTINCT etykieta) równe liczbie etykiet filtra. Etykiety zasobu są wymianą całego zestawu, nie dokładaniem różnicy: usunięcie zastanych i wstawienie nadesłanych zachodzi w jednej transakcji, żeby zasób nie pozostał przejściowo bez etykiet przy błędzie w trakcie operacji. Usunięcie zasobu idzie po identyfikatorze zewnętrznym; powiązane etykiety znikają kaskadowo przez klucz obcy z ON DELETE CASCADE, a warstwy kompozycji wskazujące ten zasób pozostają nietknięte, ponieważ ich kolumna wskazująca zasób nie niesie klucza obcego.
+## budowa/server/internal/dane/poczta_wyzwalacze.go
+Odczyt idzie osobnym interfejsem, nie dopiskiem do repozytorium automatyk ogólnego przeznaczenia, z tego samego
+powodu co pętla wykonawcza automatyk: interfejs mieszka razem z definicją automatyki, a rdzeń sięga po repozytorium
+wyzwalaczy poczty asercją typu na repozytorium automatyk.
+
+Jest to jedna tabela, ale drugie pytanie względem zapisu harmonogramu. Wiersze wyzwalaczy zapisuje wyłącznie warstwa
+harmonogramu automatyk; tutaj leży odczyt odwrotny — od skrzynki do automatyki — którego moduł planujący nigdy
+nie zadaje. Wyrażenie gwiazdki i wyrażenie puste znaczą obie „każda skrzynka", a droga kontraktu zapisuje gwiazdkę,
+ponieważ ustawienie harmonogramu pomija wyzwalacze z wyrażeniem pustym.

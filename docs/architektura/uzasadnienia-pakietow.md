@@ -4777,3 +4777,26 @@ numeru wersji — porządek historii daje sortowanie malejące po dacie
 utworzenia i identyfikatorze. Rdzeń, który chce nazwać wersję jej
 kolejnością, bierze ją z odczytu wersji; ten zapis niczego nie numeruje, bo
 numer nie jest tu bytem trwałym.
+
+## budowa/server/internal/narzedzia/zasieg_eksperta.go
+Zasięg eksperta to podzbiór wykazu kontraktu wskazany przez definicję eksperta,
+a nie wykaz okna; dwa pozostałe zasięgi wynikają z roli okna i tylko dokładają.
+Zawężenie jest potrzebne, bo pełny wykaz kontraktu złożony w kształt tools/list
+waży rzędu dziesiątek tysięcy żetonów zjadanych, zanim padnie pierwsze słowo
+zadania; przy nadmiarze narzędzia docierają do modelu bez opisów, model widzi
+same nazwy i po nie nie sięga.
+
+Kod eksperta przychodzi przełącznikiem uruchomieniowym, czytanym raz przy
+starcie, z wpisu danaco ułożonego przez rdzeń. Model nie ma czym o zasięg
+poprosić ani go poszerzyć: nie ma narzędzia zmieniającego zasięg, a wpis
+powstaje zanim proces modelu wystartuje. Rdzeń bierze kod eksperta z tego
+samego pola ustawień okna, które nakłada eksperta na okno.
+
+Zasięg eksperta spada zawsze na model roboczy, nigdy na asystenta klawiatury
+Operatora: okno eksperta jest ręką modelu wykonującego zlecenie, nie ręką
+Operatora.
+
+Kod pusty w ArgumentyEksperta nie daje żadnych argumentów, ani nazwy zasięgu:
+zasięg eksperta bez eksperta nie jest zasięgiem węższym, tylko zasięgiem bez
+treści; wpis z samą nazwą roli kazałby serwerowi meldować brak przy każdym
+odczycie wykazu zamiast po prostu pracować w zasięgu okna.

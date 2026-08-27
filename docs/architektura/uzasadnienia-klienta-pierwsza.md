@@ -885,3 +885,12 @@ o wymiarze `--dn-wym-ikona-sm` i narożniku `--dn-r-pill` ze wskaźnikiem myszy
 `help`, natomiast biblioteczna klasa `dn-btn-ikona` opisuje kwadrat o boku
 trzydziestu dwóch pikseli. Przekazanie klas parametrem pozwala zachować obie
 postacie bez rozgałęziania fabryki.
+
+## budowa/klient-poprzedni/src/dostepy/elementy-karty.ts
+
+Elementy kart sekcji dostępów powstają w jednym miejscu, żeby karta punktu,
+wiersz nadania i obszar dodawania katalogu miały spójny wygląd. Plik nie zna
+barw, odstępów ani reguł widoku: całość wyglądu niosą klasy biblioteki
+`komponenty/` oraz klasa modyfikująca podana przez wywołującego. Plakietka
+znaku przyjmuje klasę biblioteki i klasę miejsca osobno, ponieważ pierwsza
+opisuje wygląd, a druga położenie w układzie karty.

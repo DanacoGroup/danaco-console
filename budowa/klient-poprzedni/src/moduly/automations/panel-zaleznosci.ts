@@ -7,26 +7,19 @@ import { przyciskAkcji as przycisk, pole, wybor } from '../../modele/kontrolki-f
 import type { ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Panel zależności układu — wejście do rodziny `orchestration.*`. Okno
- * Orchestratora zapisuje układ w całości komendą
- * `automation.orchestrator.define`; ta rodzina mówi o tym samym grafie inaczej:
- * czyta go bez zapisu (`dependency.list`), zmienia pojedynczą krawędź
- * (`dependency.set`) i sprawdza układ bez dotykania go (`validate`).
- *
- * Zależności są panelem, a nie osobnym oknem, bo rejestr okien operacyjnych
- * rdzenia nie ma dla nich kodu; panel wchodzi w pas narzędzi kontekstowych
- * Orchestratora.
- *
- * Rdzeń przyjmuje także krawędź tworzącą cykl i oddaje zastrzeżenia w wyniku,
- * więc niepowodzenie czynności znaczy co innego niż niepoprawny układ. Panel
- * trzyma te dwa zdania osobno: czynność udała się albo nie, a układ jest
- * poprawny albo ma zastrzeżenia.
+ * Panel zależności układu udostępnia odczyt listy krawędzi grafu automatyki,
+ * zapis pojedynczej zależności między krokami oraz sprawdzenie spójności
+ * całego układu bez zapisu zmian.
  */
 export interface PanelZaleznosci {
   element: HTMLElement;
 }
 
-/** Rodzaje krawędzi — ten sam wykaz co w oknie Orchestratora. */
+/**
+ * Rodzaje krawędzi zależności między krokami automatyki: sekwencyjna wymaga
+ * zakończenia poprzednika, równoległa dopuszcza jednoczesne wykonanie,
+ * warunkowa zależy od wyniku poprzedniego kroku.
+ */
 const RODZAJE: ReadonlyArray<[string, string]> = [
   [AutomationDependencyKind.Sequential, 'sekwencyjna'],
   [AutomationDependencyKind.Parallel, 'równoległa'],
@@ -143,8 +136,7 @@ export function utworzPanelZaleznosci(
       return;
     }
     pokazKrawedzie(wynik.wynik.dependencies);
-    // Powodzenie czynności i ocena układu to dwa osobne zdania — ocena dochodzi
-    // za potwierdzeniem zapisu, nie zamiast niego.
+    // Powodzenie czynności i ocena układu to osobne zdania w odpowiedzi.
     powiedz(
       `Zależność ${od} → ${doo} zapisana. ${zdanieOUkladzie(wynik.wynik.valid, wynik.wynik.issues)}`,
       true,

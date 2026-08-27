@@ -5885,3 +5885,13 @@ ostrzeżenia byłoby tej samej rodziny co pusty wykaz przy odmowie odczytu.
 Kod odmowy w polu errorCode ma pierwszeństwo przed kontekstem zapisu, bo
 odmowa komendy jest faktem o samym błędzie, a nie o okolicznościach jego
 zapisu.
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-zaleznosci.ts
+Panel należy do rodziny komend `orchestration.*`: okno Orchestratora zapisuje cały układ komendą
+`automation.orchestrator.define`, natomiast ta rodzina działa na tym samym grafie w sposób bardziej
+szczegółowy — odczyt bez zapisu (`dependency.list`), zmiana pojedynczej krawędzi (`dependency.set`)
+i sprawdzenie układu (`validate`). Zależności są panelem, a nie osobnym oknem, ponieważ rejestr okien
+operacyjnych rdzenia nie przewiduje dla nich wpisu; panel wchodzi w pas narzędzi kontekstowych
+Orchestratora. Rdzeń przyjmuje również krawędź tworzącą cykl i zwraca zastrzeżenia w wyniku, więc
+niepowodzenie czynności zapisu jest odrębne od oceny poprawności układu — stąd rozdzielenie komunikatu
+o powodzeniu czynności od zdania opisującego zastrzeżenia układu.

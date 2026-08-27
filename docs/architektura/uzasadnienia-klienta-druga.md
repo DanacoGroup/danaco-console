@@ -4850,3 +4850,6 @@ wyłącznie jedną komendę zbiorczego wyjścia i żadnej z tamtych nie powiela.
 Sprawdzian pilnuje czterech rzeczy stanowiących o odbiorze: że obie czynności mają drogę z okna, że
 zmiana wysyła wyłącznie pola dotknięte, bo pominięte zostają w rdzeniu bez zmian, że okno mówi, z czym
 wiąże, zanim zwiąże, i że powtórzone przypisanie nie udaje czynności, której rdzeń nie wykonał.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-mikrofonu.ts
+Komponent ma dwa uchwyty w jednym pudełku: przycisk nagrywania i uchwyt drzewa. Nagrywanie jest czynnością, a wybór mikrofonu nastawą; gest przytrzymania zajmuje naciśnięcie przycisku, a uchwyt menu otwiera się kliknięciem — jeden przycisk pełniący obie role zaczynałby nagranie przy każdym otwarciu wykazu. Drzewo ma dwa poziomy: gałąź „Mikrofon” niesie wykaz urządzeń, a przełącznik „Przytrzymaj, aby nagrać” stoi poziom wyżej, bo dotyczy gestu, nie sprzętu. Mikrofonu bez silnika nie stawia się wcale — sprawdzenie dostępności jest pytaniem zadanym zanim cokolwiek powstanie, stąd obietnica w wyniku i wartość pusta zamiast steru; wyszarzona ikona albo ikona odmawiająca po naciśnięciu obiecywałaby zdolność, której nie ma, a krótszy pasek niczego nie obiecuje.

@@ -464,3 +464,23 @@ ten sam składnik.
   .st-pasmo-przywroc              .st-wstazka-odstep              .st-panel-wiersz                .st-pole-rozciagniete
   .st-edytor-odstep               .st-wersja-akcje                .st-wersja-stopka               .st-podglad
 ```
+
+---
+
+## Dług dokumentacji — wielkość emblematu karty środowiska
+
+Jedna rola, cztery wartości w czterech miejscach:
+
+| źródło | wartość |
+|---|---|
+| księga znaku, rozdz. 15.1 | 24 px |
+| komentarz w `komponenty.css` przy `.dn-karta-srodowiska-godlo` | 48 px, „rozstrzygnięcie Właściciela z 2026-08-20" |
+| wariant `.dn-karta-srodowiska--akcent` — to, co się rysowało | 32 px |
+| stan po przeglądzie z 27.08.2026 (`--dn-wym-godlo-karty`) | **54 px** |
+
+Wiążąca jest wartość ostatnia: żeton `--dn-wym-godlo-karty` w `zetony/zetony.css`.
+Trzy pozostałe zapisy pozostają nieuzgodnione — Właściciel rozstrzygnął samą
+wielkość, bez porządkowania księgi znaku. Do domknięcia przy pracy nad księgą:
+zdanie „emblemat pozostaje większy od ikony kafla strefy 2, co utrzymuje
+hierarchię stref" **przestało obowiązywać** — od 27.08.2026 oba znaki mają
+z rozstrzygnięcia Właściciela ten sam wymiar, a strefy różni masa kafla.

@@ -19,22 +19,8 @@ import {
 import type { ZrodloProwenancji } from './prowenancja-zrodlo';
 
 /**
- * Wydanie śladu wywołań — `provenance.trace.export`.
- *
- * Ślad wywołania modelu jest zapisem pracy modelu na materiale Operatora:
- * niesie prompt, odpowiedź, koszt i czas. Droga wydania mówi więc, CO plik
- * poniesie, ZANIM plik powstanie, i powtarza to po jego powstaniu wraz z tym,
- * co rdzeń naprawdę oddał — bo o redakcji danych wrażliwych rozstrzyga rdzeń
- * ustawieniem, nie okno.
- *
- * Treść promptu i odpowiedzi jest w kontrakcie domyślnie WYŁĄCZONA
- * (`includeContent`; brak znaczy „nie”), więc przełącznik startuje wyłączony
- * i jego zdanie mówi, co jego włączenie wynosi z instalacji. Odwrotna wartość
- * początkowa wynosiłaby treść rozmów poza rdzeń przez samo naciśnięcie
- * przycisku.
- *
- * Plik oddaje przeglądarka, a nie rdzeń: treść wydania przychodzi w odpowiedzi
- * i nie ma po co wracać do rdzenia po drugie zapisanie tego samego.
+ * Interfejs wydania śladu wywołań mówi z góry, co plik poniesie, i po jego
+ * powstaniu potwierdza to na podstawie tego, co rdzeń rzeczywiście oddał.
  */
 export interface WydanieSladu {
   /** Kontrolki paska: format, treść i przycisk wydania. */
@@ -43,7 +29,7 @@ export interface WydanieSladu {
   zapowiedz(): string;
 }
 
-/** Zakres wydania podawany przez zakładkę — te same filtry, które dały wykaz. */
+/** Zakres wydania podawany przez zakładkę: te same filtry wywołań i przedziału czasu, które złożyły się na bieżący wykaz. */
 export interface ZakresWydania {
   /** Wywołania wskazane wprost; puste znaczy „cały zakres czasu”. */
   wywolania: readonly string[];
@@ -110,8 +96,7 @@ export function utworzWydanieSladu(
       }
       const oddane = wynik.wynik;
       if (oddane.callCount === 0) {
-        // Zero wywołań w wydaniu nie jest odmową i nie jest plikiem: pusty plik
-        // zapisany na dysk Operatora udawałby ślad, którego nie ma.
+        // Zero wywołań w wydaniu nie jest odmową ani plikiem: pusty plik udawałby ślad, którego nie ma.
         poWydaniu(
           'Rdzeń przyjął żądanie i objął wydaniem ZERO wywołań — w tym zakresie nie ma czego ' +
             'wydać, więc plik nie powstał.',
@@ -150,7 +135,7 @@ export function utworzWydanieSladu(
   return { element, zapowiedz };
 }
 
-/** Nazwa pliku mówi, co niesie i z kiedy jest. */
+/** Nazwa pliku wydania złożona z rozszerzenia formatu i znacznika czasu, tak aby sama nazwa mówiła, co plik niesie i z kiedy jest. */
 function nazwaPliku(format: TelemetryFormat): string {
   const stempel = new Date().toISOString().replace(/[:.]/gu, '-');
   return `slad-wywolan-modelu-${stempel}.${ROZSZERZENIE_WYDANIA[format]}`;

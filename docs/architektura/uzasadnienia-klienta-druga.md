@@ -2434,3 +2434,7 @@ rdzenia wraca własnymi słowami rdzenia.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/nagrywanie.ts
 Kolejność preferencji rodzaju treści: silnik transkrypcji przyjmuje zapisy `.wav .ogg .m4a .webm`, a `audio/webm` stoi pierwszy, bo w oknie osadzonym opartym o technologię Chromium bywa jedynym wspieranym zapisem; kodek dobiera się tam, gdzie przeglądarka go wymaga do rozstrzygnięcia, a wpis bez kodeka stoi zaraz za nim jako zapasowy. Zwrócony rodzaj treści nie wraca na podstawie samej preferencji — pusty napis, gdy żadna pozycja wykazu nie przechodzi, oznacza wybór własny nagrywarki, odczytany dopiero po fakcie, aby napis rodzaju nie stał się atrapą podpisu pod bajtami, których nie użył. Wspólne zdanie odmowy dla braku zgody i braku sprzętu kazałoby szukać przyczyny po omacku — pierwsza jest decyzją cofalną w ustawieniach przeglądarki, druga stanem sprzętu naprawianym kablem.
+
+## budowa/klient/src/polaczenie/gniazdo.ts
+Gniazdo, które błędem kończy samo nawiązywanie, zamyka się bez niczyjej pomocy i ogłasza to zdarzeniem close; wywołanie close na takim gnieździe wywołuje kolejny błąd i wpada w nawrót bez końca — stąd zamknięcie na błędzie dotyczy wyłącznie gniazda już otwartego.
+Ponawianie jest bezterminowe, więc bez zaniechania na żądanie wołającego proces klienta nie miałby jak dojść do końca: zaplanowana próba trzymałaby go przy życiu, a każde zamknięcie gniazda planowałoby następną. Zaniechanie dotyczy połączenia, nie treści, która czeka na wysłanie.

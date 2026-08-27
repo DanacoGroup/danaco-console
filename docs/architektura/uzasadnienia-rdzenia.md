@@ -6281,3 +6281,22 @@ idzie przełącznikiem --system-prompt. Podanie jej wtedy przez
 --append-system-prompt zostawiłoby prompt fabryczny nietknięty, czyli
 wykonałoby odwrotność żądania tej kategorii. Nakładka złożona z samych
 kategorii dołączających jedzie trybem dopisania.
+
+## budowa/server/internal/core/tozsamosc_wybor.go
+
+Reguła pierwszeństwa osi (konto bije model, model bije platformę) płynie
+z kontraktu: struktura Account niesie pole defaultModel, czyli to konto
+wskazuje model, którym pracuje, a nie model konto. Oś konta jest więc
+bytem węższym — jedno konto obsługuje jeden zestaw modeli, jeden model
+bywa obsługiwany przez wiele kont. Do tego konto jest nośnikiem
+uwierzytelnienia i katalogu konfiguracji kanału głównego (zmienna
+CLAUDE_CONFIG_DIR per okno), czyli tym bytem, przy którym zakłada się
+odrębną tożsamość roboczą. Porządek osi powtarza zasadę „węższy wygrywa",
+tyle że na osi prostopadłej do poziomu zasięgu.
+
+Brak zapisu to co innego niż zapis pusty. Wygrywa zapis czynny osi
+najwęższej, także wtedy, gdy jego treść jest pusta — to jedyna droga, żeby
+wyciszyć kategorię dla jednego konta, nie ruszając platformy. Jest to ta
+sama zasada, którą stosuje rezolwer konfiguracji: brak wiersza znaczy „nie
+ustawiono", wiersz z wartością pustą znaczy „ustawiono pustą". Zapis
+nieczynny jest jak brak wiersza — przepuszcza oś szerszą.

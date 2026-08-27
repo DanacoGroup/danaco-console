@@ -3578,3 +3578,30 @@ pomocniczych. Dwie kopie dawałyby na tę samą frazę różne wyniki.
 
 Etykieta zasobu nie niesie stanu, więc wchodzi plakietką bazową. Barwna odmiana
 plakietki pozostaje zarezerwowana dla plakietek znaczących stan.
+
+## budowa/klient-poprzedni/src/moduly/automations/stan-automatyki.ts
+
+Pięć okien modułu pracuje nad tą samą automatyką: Workflow Builder buduje jej kroki,
+Orchestrator układa między nimi zależności, Scheduler nadaje jej cykliczność, Queue
+Manager uruchamia jej kolejkę, a Execution Monitor pokazuje jej przebiegi. Wskazanie
+trzymane osobno w każdym oknie rozjeżdżałoby się przy pierwszej zmianie automatyki.
+
+Kolejka bieżąca stoi obok automatyki, ponieważ Queue Manager musi wiedzieć, którą
+kolejkę posuwa, a Execution Monitor — po której przyszedł stan przebiegu. Kolejka jest
+bytem silnika kolejek, a nie definicji, więc nie należy do struktury `AutomationWorkflow`
+i nie da się jej z niej odczytać.
+
+Stan przebiegu przychodzi także z pracy innego okna albo innego urządzenia tego konta.
+Gdy dotyczy automatyki bieżącej, definicja trzymana w oknie jest już nieaktualna
+i okna odczytują ją ponownie.
+
+## budowa/klient-poprzedni/src/moduly/apps/formularz-komponentu.ts
+
+Identyfikator komponentu składa się z jego nazwy, o czym mówi objaśnienie pola. Kontrakt
+wymaga pola `id` w każdym komponencie żądania, a rdzeń nadaje własne oznaczenie dopiero
+w odpowiedzi. Identyfikator roboczy jest więc kluczem zależności wewnątrz jednego zapisu,
+a nie obietnicą trwałości.
+
+Rodzaj komponentu wybiera się rozwijaniem z biblioteki przez obsadę `wybor-z-menu.ts`,
+a nie kontrolką natywną przeglądarki, żeby wykaz rodzajów wyglądał tak samo jak pozostałe
+wykazy wyboru w oknie.

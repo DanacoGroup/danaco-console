@@ -3432,3 +3432,14 @@ maszyny zamiast odpowiedzi udanej, po której proces dalej zajmuje procesor.
 ## budowa/server/internal/models/konto.go
 Kanał nadaje fragment MetadaneKonta także w chwili przełączenia konta w trakcie sesji — rotacja konta
 ma być widoczna wołającemu, nie milcząca.
+## budowa/server/internal/dane/rozmowa_bloki.go
+Typ wiadomości niesie pole pojemne metadanych w postaci surowego JSON; bloki wracają w nim pod własnym kluczem,
+obok atrybucji i zużycia, które warstwa danych rozmowy składa z osobnych kolumn. Klient odtwarza z nich tok
+rozumowania, narzędzia i pochodzenie wpisu tą samą logiką, którą składa turę żywą po stronie interfejsu.
+
+Kształt bloku w metadanych powtarza kształt fragmentu strumienia zdarzeń po nazwach pól kontraktu, z dodaną
+chwilą powstania. Dzięki temu klient nie potrzebuje drugiego słownika rodzajów bloku ani drugiego czytnika
+ładunku — czyta bloki zapisane i bloki strumieniowe tym samym kodem.
+
+## budowa/server/internal/dane/developer_warsztat.go
+Byty tego pliku nie leżą w pamięci rdzenia, bo sesja debugowania, połączenie z bazą i biegnący skan są stanem żywym z uchwytami do procesów, gasnącym razem z nimi — taki stan w bazie nie ma miejsca. W bazie leży to, co osoba pracująca w edytorze ułożyła i czego nie może stracić przy zamknięciu okna: postawiony punkt przerwania, zapisane zapytanie, opisane połączenie, wynik pomiaru.

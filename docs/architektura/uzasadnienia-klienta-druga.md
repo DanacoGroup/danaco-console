@@ -2243,3 +2243,7 @@ traci klikalności, zmienia się wyłącznie to, która warstwa zajmuje miejsce.
 Uchwyt pozostaje czynny w każdym stanie. Stan szuflady jest ogłaszany
 magistralą, więc uchwyt paska górnego i uchwyt panelu pokazują tę samą
 prawdę, zamiast każdy swoją.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-research-workspace.ts
+Zakres badania zapisuje komenda ustawienia przestrzeni roboczej, niosąca zakres i etapy; zapis kończy się odpowiedzią rdzenia albo jego odmową, nigdy ciszą. Nawigacja do pozostałych okien modułu jest przeniesieniem ogniska wewnątrz przestrzeni modułu: okna stoją obok siebie, nie w osobnych trasach, więc nie woła rdzenia.
+Wskazanie etapu prowadzi wzrok do okna właściwego temu krokowi pracy. Przypisanie źródła do etapu ma już pole w żądaniu katalogowania, ale samo źródło oddawane przez rdzeń go nie niesie, więc okno nie ma po czym zawężać i mówi to wprost, zamiast udawać filtr.

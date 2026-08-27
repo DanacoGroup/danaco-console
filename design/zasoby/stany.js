@@ -1,8 +1,5 @@
-/* ============================================================================
-   DANACO CONSOLE — STAN ZBIORCZY
-   ----------------------------------------------------------------------------
-   Kompetencja: kolejność stanów i wyliczanie stanu zbiorczego pozycji
-   nadrzędnej. Arkusz `stany.css` rysuje stan, ten plik go wylicza.
+/* Stan zbiorczy porządkuje kolejność stanów pozycji i wylicza stan zbiorczy pozycji nadrzędnej na podstawie stanów jej bezpośrednich potomków.
+   Arkusz `stany.css` rysuje stan, ten plik go wylicza.
 
    Kolejność: blad › reakcja › praca › zakonczone › brak.
 

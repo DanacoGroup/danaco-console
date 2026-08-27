@@ -1,4 +1,4 @@
-// Danaco Console — wspólna warstwa makiet: motyw + zapas dla poleceń natywnych.
+// Wspólna warstwa makiet Danaco Console łączy przełącznik motywu z zapasowym mechanizmem obsługi poleceń natywnych, gdy system operacyjny ich nie dostarcza.
 (function () {
   var r = document.documentElement;
   function ustaw(motyw) {

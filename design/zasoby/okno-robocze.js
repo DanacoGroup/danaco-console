@@ -1,8 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO ROBOCZE
-   ----------------------------------------------------------------------------
-   Kompetencja: maksymalizacja okna roboczego (przycisk pasma, skrót, Esc,
-   pamięć stanu per okno) oraz przełączniki izolacji przy zakładaniu okna.
+/* Okno robocze obsługuje maksymalizację przez przycisk pasma, skrót klawiszowy i klawisz Escape, z pamięcią stanu dla każdego okna oraz przełącznikami izolacji.
 
    Wymaga: `prototyp.js` (`dnToast`, `dnOglos`), `okno-robocze.css`,
    `izolacja.css`.

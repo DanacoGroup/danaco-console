@@ -2552,3 +2552,20 @@ powiedziany wprost, nie blokada kontrolki.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/transkrypcja-nagrania.ts
 Zatrzymanie na dostarczeniu i odmowa transkrypcji dają ten sam stan nieprzetworzony, bo skutek dla użytkownika jest jeden: tekstu nie ma. Powód jest jednak inny i inna jest naprawa — w pierwszym przypadku brakuje komendy w kontrakcie, w drugim rdzeń miał nagranie i go nie przerobił, dlatego oba zdania odmowy pozostają rozdzielone. Obietnica wyniku nie jest odrzucana: odmowa wraca jako wynik ze stanem nieprzetworzonym, nie jako wyjątek, więc widok nie zakłada przechwytywania błędu, a nieudane dyktowanie nie wywraca okna. Dźwięk nie opuszcza maszyny użytkownika inną drogą niż przez dostarczenie — ogniwo transkrypcji pilnuje tej granicy samodzielnie.
+
+## budowa/klient-poprzedni/src/moduly/workspace/zrodlo-workspace.ts
+Obszar workspace liczy w kontrakcie więcej komend, niż plik wystawia: zadania,
+tablica, harmonogram, kalendarz, notatki, graf wiedzy, oś czasu i komentarze
+mają nazwy, lecz nie mają jeszcze obsługi w rdzeniu ani okien w tym module.
+Nieobecność w tym pliku znaczy "niezbudowane", nie "nieistniejące w
+kontrakcie" — o pokryciu każdej z nich orzeka źródło braków kontraktu,
+pytając rdzeń o jego własny wykaz. Brak wartości domyślnej zamiast wyniku
+błędu w całym pliku jest zamierzony: okna modułu mają obowiązkowy stan
+błędu i mają odróżnić brak danych od nieudanego zapytania.
+
+Usunięcie wpisu pamięci jest osobną rodziną komend niż zapis i odczyt
+instrukcji, choć dotyczy tego samego bytu: kasuje wpis założony zapisem
+instrukcji, po czym znika on z odczytu pamięci projektu. Odczyt pamięci w
+zasięgu karty sesji nie jest drugim źródłem prawdy dla pamięci projektu —
+pyta o to, co widzi karta sesji przy włączonych poziomach, a poziomy
+przestawia osobna komenda przełączania pamięci.

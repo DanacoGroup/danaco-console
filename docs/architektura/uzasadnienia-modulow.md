@@ -5886,3 +5886,147 @@ karta zamknięta ma historię wyjścia, więc jej wskazanie nie jest błędem.
 ogonZadania czyta liczbę wierszy ogona. Brak wskazania daje ogon domyślny,
 zero — ogon pusty (żądanie samego zapisu na strumień), a liczba większa od
 pojemności dziennika schodzi do tej pojemności.
+## budowa/server/internal/core/adapter_modul_library_wersje.go
+
+library.version.add jest jedyną drogą, którą historia pliku rośnie: wgranie
+pliku (library.file.upload) zawsze nadaje nowy kod pliku, więc dwa wgrania
+dają dwa osobne pliki po jednej wersji każdy, a nie dwie wersje jednego
+pliku. Nieznany plik w DolozWersje jest odmową, nie cichym powodzeniem:
+dołożenie wersji do pliku, którego nie ma, nie może skończyć się utworzeniem
+czegokolwiek.
+
+trescNowejWersji: żądanie z treścią albo ze ścieżką jedzie tą samą drogą co
+wgranie pliku — bajty lądują w magazynie treści rdzenia, a ścieżka bloba
+staje się odwołaniem, niezależnie od tego, czy przyszły base64, czy zostały
+wciągnięte spod sourcePath. Rozmiar i suma kontrolna są liczone w obu
+drogach, bo wersja bez sumy nie daje się sprawdzić — dzięki temu historia
+jest odtwarzalna, każda wersja z treścią ma własne, zamrożone bajty na
+nośniku, których nie ruszy zmiana pliku źródłowego. Wersja pusta przy
+przywróceniu wymazałaby plikowi odwołanie do treści, więc oznaczenie
+kamienia milowego niszczyłoby zasób, który miało utrwalić. Nieudany zapis
+treści jest odmową dołożenia wersji: wiersz historii powstaje dopiero po
+utrwaleniu bajtów, inaczej Versioning Panel pokazywałby wersję, do której
+nie ma czego przywrócić.
+
+etykietaWersji: numer jest policzony z wierszy leżących w bazie, bo schemat
+biblioteki (store/migracja_045_biblioteka.sql) świadomie nie ma kolumny
+numeru — wersja jest bytem, nie licznikiem — więc kolejność jest wyłącznie
+widokiem chwili zapisu. Bez tej etykiety Versioning Panel pokazywałby surowy
+kod wers-..., po którym nie widać, która wersja jest która. Nieudany odczyt
+historii zostawia etykietę pustą — brak nazwy jest lepszy niż nazwa policzona
+z niczego.
+
+PrzywrocWersje: kod wersji jest szukany wyłącznie w obrębie wskazanego
+pliku (dane/library_wersje.go, wersjaDoPrzywrocenia) — repozytorium samo
+zwraca błąd braku wiersza, gdy Operator poda wersję z innego pliku, więc
+adapter nie musi tego sprawdzać osobno.
+## budowa/server/internal/core/adapter_modul_przegladarka_wykazy.go
+
+Okno nieznane to odmowa, okno puste to wynik. Wykaz pusty jest prawidlowa
+odpowiedzia: okno przegladania istnieje, tylko nic w nim jeszcze nie
+zebrano. Okno, ktorego modul nigdy nie widzial, dostaje not_found - gdyby
+oddac na nie pusta tablice, literowka w identyfikatorze okna wygladalaby
+dokladnie tak samo jak uczciwie pusta szuflada, a Operator szukalby braku
+danych zamiast braku okna. Znaczenie znane rozstrzyga dane.OknoZnane
+i jego naglowek.
+
+Limit zerowy znaczy wykaz pelny, nie pusty. Kontrakt daje limit jako pole
+nieobowiazkowe; jego brak to nie ograniczaj, nie oddaj nic - przeklad
+robi granicaWykazu warstwy danych.
+
+## budowa/server/internal/core/adapter_modul_workspace_instrukcje.go
+
+Instrukcje są ustawieniem ośmiu poziomów zasięgu, więc zapisują się do
+tabeli `ustawienie` pod kluczem `workspace.instrukcje`, a warstwę
+obowiązującą wskazuje pakiet `internal/konfig` — ten sam, który rozstrzyga
+resztę konfiguracji. Drugiej tabeli instrukcji i drugiego porządku poziomów
+nie ma.
+
+Kontrakt daje Instructions Panel wyłącznie komendę zapisu, dlatego jej
+wynik niesie warstwę obowiązującą, a nie echo żądania: zapis na poziomie
+projektu bywa przykryty zapisem karty sesji albo okna, a panel ma pokazać
+treść, poziom i byt poziomu, które obowiązują po zapisie.
+
+### instrukcjeObowiazujace
+
+Bez uwzględnienia bytu poziomu węższego rozstrzyganie przeszłoby obok
+warstwy właśnie zapisanej i panel pokazałby jako obowiązującą warstwę
+szerszą.
+
+### ZapiszInstrukcje — historia
+
+Wersja nieodłożona w chwili zmiany nie da się odtworzyć później z niczego.
+Niepowodzenie odłożenia nie unieważnia zapisu, który już osiadł — dlatego
+wynik nie wraca odmową.
+## budowa/server/internal/core/adapter_modul_roundtable_wywolanie.go
+
+Różnica wobec zapisu głosu uczestnika jest istotna i nie jest kosmetyczna:
+tamten zapisuje wypowiedź w turze i strumieniuje ją do Model Panels, bo
+uczestnik właśnie mówi. Tutaj model pracuje nad zapisem, a nie w debacie.
+
+Rdzeń nie dopisuje do odpowiedzi modelu ani jednego słowa i nie zgaduje, co
+model miał na myśli. Odpowiedź, której nie da się odczytać jako wykazu,
+zostaje jednym ustaleniem o treści dokładnie takiej, jaką model wypowiedział.
+To nie jest obejście: ustalenie analizy jest cudzym zdaniem, a rdzeń jest tu
+wyłącznie tym, kto je zapisał.
+
+Kanał, który zawiódł w wywolajModelDebaty, wraca błędem — cisza podana dalej
+jako pusta odpowiedź wyglądałaby jak analiza, która niczego nie znalazła.
+
+Debata bez składu nie ma kanału domyślnego w kanalAnalizy i odmawia wprost,
+zamiast sięgać po dowolny kanał z rejestru — analiza wykonana kanałem,
+którego Operator do tej debaty nie dopuścił, byłaby wyborem rdzenia za niego.
+
+Rdzeń w wierszeOdpowiedzi zdejmuje sam znacznik pozycji wykazu, bo jest
+znakiem formatowania, a nie treścią — reszta wiersza zostaje słowo w słowo.
+Odpowiedź, w której nie da się rozpoznać wykazu, wraca jako jedna pozycja
+o treści całej odpowiedzi: model powiedział jedną rzecz, więc jest jedno
+ustalenie.
+## budowa/server/internal/core/adapter_modul_auth_sekret.go
+
+Sejf poświadczeń jest schowkiem, nie funkcją skrótu: kładzie napis i
+oddaje napis, bo poświadczenie kanału modelu musi wyjść z powrotem w
+postaci użytecznej. Hasło bramki jest czymś odwrotnym — nie ma prawa
+wyjść ani jawnie, ani odwracalnie. Postać zapisu składa ten plik
+wyłącznie z biblioteki standardowej Go: PBKDF2 z RFC 8018 w wydaniu
+standardowym Go 1.24, funkcję skrótu pod HMAC, generator soli i tokenu
+oraz porównanie w czasie stałym.
+
+Argon2id byłby doborem lepszym, ale mieszka poza biblioteką standardową,
+której zależności rdzeń nie zaciąga.
+
+Zapis jest samoopisujący: napis kładziony w sejfie niesie nazwę funkcji,
+liczbę obrotów, sól i skrót. Dzięki temu podniesienie liczby obrotów albo
+zmiana funkcji nie unieważnia haseł już ustawionych — sprawdzenie czyta
+parametry z zapisu, a nie ze stałej.
+
+Zapis o innej nazwie funkcji nie jest odrzucany po cichu — sprawdzenie
+odmawia wprost, bo cisza znaczyłaby, że hasło się nie zgadza tam, gdzie
+prawdą jest, że zapisu nie rozumie.
+
+Przy identyfikatorach komunikatów, gdzie wystarcza licznik, brak
+losowości przechodzi dalej — przy tokenie sesji bramki nie.
+## budowa/server/internal/core/adapter_modul_terminal_monitor.go
+
+Wykaz ma dwa zrodla, bo proces zyje w dwoch miejscach: proces czynny
+prowadzi rejestr w pamieci (tylko on ma uchwyt do drzewa potomstwa),
+a przebieg zakonczony zostaje w dzienniku bazy. Bez rejestru zniknelyby
+procesy wlasnie uruchomione, bez dziennika - przebiegi sprzed restartu.
+
+procesZDziennika odpowiada na zakonczenie procesu, ktorego nie ma juz
+w rejestrze: siega do dziennika i zwraca konflikt ze stanem koncowym
+zamiast komunikatu o braku procesu.
+
+## budowa/server/internal/core/adapter_modul_macierz.go
+
+Odwzorowanie „moduł → środowiska, w których jest widoczny” czytają
+`home.enter`, `environment.list`, `environment.enter` i `module.list`,
+czyli każde wejście do pracy.
+
+Adapter zwraca błąd zwykły, nie protokolarny. Nie obsługuje żadnej komendy —
+jego czytelnikiem jest nawigacja, która sama zamienia błąd na odpowiedź
+protokołu.
+
+Zwrócenie pustki zamiast błędu w `sprawdzKatalog` skasowałoby całą boczną
+nawigację bez wyjaśnienia: pusta macierz znaczy „żaden moduł nie stoi
+w nawigacji”, a macierz nieodczytana znaczy błąd złożenia rdzenia.

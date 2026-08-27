@@ -13,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// oknoWykonania zwraca okno komunikacji, w którym pracuje karta.
+// oknoWykonania zwraca okno komunikacji modułu Terminal, w którym właśnie
+// pracuje karta wskazana wywołaniem.
 func (a *adapterTerminala) oknoWykonania(oknoKod string) (session.Okno, error) {
 	if a.okna == nil {
 		return session.Okno{}, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
@@ -41,7 +42,8 @@ func (a *adapterTerminala) sesjaOkna(oknoKod string) string {
 	return okno.IdSesji
 }
 
-// obszarOkna składa obszar własny okna z ustalonego katalogu roboczego.
+// obszarOkna składa obszar własny okna terminala z ustalonego katalogu
+// roboczego jego własnej powłoki.
 func (a *adapterTerminala) obszarOkna(okno session.Okno) session.Obszar {
 	if a.katalog == nil {
 		return session.Obszar{IdOkna: okno.Id}
@@ -86,12 +88,14 @@ func protocolBladTerminala(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "moduł Terminal: "+powod))
 }
 
-// bladZadaniaTerminala znakuje wadę żądania kodem kontraktu.
+// bladZadaniaTerminala znakuje wadę żądania kodem kontraktu, oddzielając ją od
+// usterki wewnętrznej rdzenia.
 func bladZadaniaTerminala(powod string) error {
 	return protocolBladTerminala(shared.ErrorCodeValidationFailed, powod)
 }
 
-// bladBrakuProcesu odmawia czynności na procesie, którego rdzeń nie zna.
+// bladBrakuProcesu odmawia czynności na procesie, którego rdzeń już nie zna,
+// kodem kontraktu `not_found`.
 func bladBrakuProcesu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Terminal: proces "+kod+" nie występuje ani w rejestrze rdzenia, ani w dzienniku"))

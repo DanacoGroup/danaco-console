@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: obszar kompozycji Design Board (`design.board.update`)
 // modułu Design — przekład kontraktu na `dane.KompozycjaDesignu` /
-// `dane.WarstwaKompozycji` i z powrotem. Typ adaptera `adapterDesignu` i jego
-// konstruktor deklaruje `adapter_modul_design.go`; ten plik dokłada wyłącznie
-// metody obszaru kompozycji.
-//
-// Zapis jest zawsze pełny, jedną ścieżką. `design.board.update`
-// nadsyła całą listę warstw na nowo — kontrakt (`DesignBoardUpdateRequest.Layers`)
-// nie zna trybu częściowej zmiany. Adapter nie dogaduje różnicy względem stanu
-// zastanego; warstwa danych (`ZapiszKompozycje`) usuwa i wstawia komplet od
-// nowa w jednej transakcji. Brak `BoardId` zakłada kompozycję nową — adapter
-// nadaje wtedy nowy identyfikator zewnętrzny przed wywołaniem repozytorium,
-// bo repozytorium samo zna wyłącznie „załóż albo nadpisz” po tym identyfikatorze.
-//
-// Zasób warstwy wskazuje identyfikatorem zewnętrznym, nie kluczem obcym.
-// Warstwa może wskazywać zasób spoza Assets Panelu w chwili zapisu — kolumna
-// `warstwa_kompozycji_design.zasob_id` jest w `migracja_048_design.sql` typu
-// TEXT — więc adapter nie sprawdza istnienia zasobu przed zapisem.
+// `dane.WarstwaKompozycji` i z powrotem.
 package core
 
 import (
@@ -65,20 +50,8 @@ func (a *adapterDesignu) ZapiszKompozycje(ctx context.Context,
 }
 
 // Kompozycje zwraca kompozycje okna wraz z warstwami — obsługuje
-// `design.board.list`.
-//
-// Odczyt jest drugą stroną zapisu: kod kompozycji nadaje adapter przy pierwszym
-// `design.board.update` (`plansza-…`), więc bez tej komendy Operator po
-// odświeżeniu okna nie miałby ani planszy, ani czym o nią zapytać, a kolejny
-// zapis zakładałby kompozycję nową obok zastanej.
-//
-// `Total` jest długością wykazu, bo wykaz jest pełny. Żądanie nie niesie
-// limitu, a repozytorium nie przycina (patrz `dane/design_kompozycje.go`) —
-// gdyby te dwie liczby miały prawo się różnić, byłaby to strona, a nie komplet.
-//
-// Kompozycja bez warstw zostaje w wykazie. Płótno wyczyszczone jest stanem
-// poprawnym, a pominięcie takiej kompozycji ukryłoby przed Operatorem
-// planszę, którą sam założył.
+// `design.board.list`. `Total` jest długością wykazu, bo wykaz jest pełny;
+// kompozycja bez warstw zostaje w wykazie.
 func (a *adapterDesignu) Kompozycje(ctx context.Context,
 	z shared.DesignBoardListRequest) (shared.DesignBoardListResponse, error) {
 
@@ -93,10 +66,8 @@ func (a *adapterDesignu) Kompozycje(ctx context.Context,
 	}
 	kompozycje := make([]shared.DesignBoard, 0, len(wiersze))
 	for _, wiersz := range wiersze {
-		// Warstwy idą osobnym odczytem na kompozycję — tak samo, jak składa je
-		// `ZapiszKompozycje` (`zlozBoard`), bo schemat `migracja_048_design.sql`
-		// trzyma je w osobnej tabeli. Jedno okno niesie jednostki plansz, więc pętla
-		// odczytów jest tu tańsza niż złączenie rozklejane potem w pamięci.
+		// Warstwy idą osobnym odczytem na kompozycję, tak samo, jak składa je
+		// `ZapiszKompozycje`.
 		board, err := a.zlozBoard(ctx, wiersz)
 		if err != nil {
 			return shared.DesignBoardListResponse{}, bladDesignu(err)
@@ -107,10 +78,8 @@ func (a *adapterDesignu) Kompozycje(ctx context.Context,
 }
 
 // przelozWarstwyDoZapisu przekłada warstwy kontraktu na wiersze warstwy
-// danych. Warstwa bez `Id` (Operator dokłada nową warstwę do istniejącej
-// kompozycji) dostaje identyfikator tu, bo repozytorium wymaga kodu przed
-// zapisem — kolejność w wykazie kontraktu jest kolejnością renderowania,
-// więc brak `Order` odziedzicza pozycję w liście.
+// danych. Warstwa bez `Id` dostaje identyfikator tu, bo repozytorium wymaga
+// kodu przed zapisem.
 func przelozWarstwyDoZapisu(warstwyZadania []shared.DesignBoardLayer) []dane.WarstwaKompozycji {
 	warstwy := make([]dane.WarstwaKompozycji, 0, len(warstwyZadania))
 	for numer, warstwa := range warstwyZadania {

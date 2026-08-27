@@ -1,11 +1,7 @@
 // Odpowiedzialność pliku: moduł Studio — otwieranie i zapis dokumentu Studio
 // Editor. Operacje kontekstowe Tools Panel i porównania Diff/Grep Panel stoją
-// w osobnym pliku adaptera.
-//
-// Jedna droga zapisu: `document.save` jest jedynym miejscem, które zapisuje
-// treść dokumentu — `document.open` tylko czyta albo zakłada wiersz pusty.
-// Dwie ścieżki zapisu tej samej treści byłyby dwiema prawdami o tym samym
-// bycie.
+// w osobnym pliku adaptera. Jedyną drogą zapisu treści dokumentu jest
+// `document.save`.
 package core
 
 import (
@@ -33,65 +29,35 @@ const (
 // plików na tym samym typie; typ i konstruktor deklaruje wyłącznie ten plik.
 type adapterStudia struct {
 	repozytorium dane.RepozytoriumStudia
-	// kanaly i okna dają Studiu silnik modelu — ten sam rejestr, którym jedzie
-	// okno rozmowy i moduł Roundtable. Bez nich operacja kontekstowa odmawia
-	// wprost zamiast udawać pracę.
+	// kanaly i okna dają Studiu silnik modelu, bez którego operacja odmawia.
 	kanaly *models.Rejestr
 	okna   *session.Rejestr
-	// uruchamiacz, rozstrzygacz i katalog dają Studiu dostęp do arsenału
-	// programów zewnętrznych — rozpoznania pisma, zamiany formatów, pakowania.
-	// Ten sam komplet trzech zależności, którym jedzie adapter narzędzi
-	// dokumentu; rodzina cyfryzacji bez niego nie ma czym wystartować procesu.
+	// uruchamiacz, rozstrzygacz i katalog dają dostęp do programów zewnętrznych.
 	uruchamiacz  session.Uruchamiacz
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// zasoby i magazyn dają Studiu jedyną drogę do bajtów: magazyn trzyma
-	// treść pod sumą kontrolną, repozytorium Designu — wiersz, po którym
-	// Assets Panel i Preview Window widzą wynik. Bez tej pary wydanie archiwum,
-	// wyrys strony i osadzenie grafiki nie mają gdzie odłożyć tego, co zrobiły,
-	// a odczyt zasobu nie ma skąd wziąć materiału.
+	// zasoby i magazyn dają Studiu jedyną drogę do bajtów wyników.
 	zasoby  dane.RepozytoriumDesignu
 	magazyn *magazynTresciBiblioteki
-	// biblioteka służy jednej czynności: porównaniu dokumentu roboczego
-	// z materiałem wejściowym (`studio.diff.source`). Studio nie zarządza
-	// biblioteką i niczego w niej nie zapisuje — czyta odwołanie do treści
-	// pliku i tyle.
+	// biblioteka służy porównaniu dokumentu z materiałem `studio.diff.source`.
 	biblioteka dane.RepozytoriumBiblioteki
 }
 
-// nowyAdapterStudia wiąże port z repozytorium modułu.
+// nowyAdapterStudia zakłada adapter portu Studio i wiąże go z repozytorium
+// modułu, jedyną zależnością wymaganą konstruktorem.
 func nowyAdapterStudia(repozytorium dane.RepozytoriumStudia) *adapterStudia {
 	return &adapterStudia{repozytorium: repozytorium}
 }
 
-// ZKanalami podaje Studiu rejestr kanałów modelu i rejestr okien.
-//
-// Bez tych rejestrów operacja kontekstowa — sedno modułu Studio — odmawia
-// kodem `channel_unavailable`, bo nie ma czym wywołać modelu. Podaje się tu
-// ten sam rejestr, którym jedzie okno rozmowy i moduł Roundtable.
-//
-// Rejestr okien jest potrzebny, bo kanał modelu należy do okna: Studio pracuje
-// w imieniu okna komunikacji i ma sięgnąć po ten kanał, który Operator ustawił
-// temu oknu, a nie po żaden własny.
+// ZKanalami podaje Studiu rejestr kanałów modelu i rejestr okien, ten sam,
+// którym jedzie okno rozmowy i moduł Roundtable.
 func (a *adapterStudia) ZKanalami(kanaly *models.Rejestr, okna *session.Rejestr) *adapterStudia {
 	a.kanaly, a.okna = kanaly, okna
 	return a
 }
 
-// ZNarzedziami podaje Studiu komplet, bez którego nie da się uruchomić programu
-// zewnętrznego: uruchamiacz procesów, rozstrzygacz zasięgu izolacji i ustalacz
-// katalogu roboczego.
-//
-// Trzy zależności, nie jedna, bo każda odpowiada za co innego i żadnej nie da
-// się wyprowadzić z pozostałych: uruchamiacz startuje proces, rozstrzygacz mówi,
-// jakie zasady obowiązują okno, a katalog wskazuje obszar, w którym proces wolno
-// puścić. Ten sam komplet bierze adapter narzędzi dokumentu (`ZIzolacja`) —
-// nazwa jest tu inna, bo Studio bierze wszystkie trzy naraz, a tamten adapter
-// dostaje uruchamiacz konstruktorem.
-//
-// Zależność jest opcjonalna na tych samych zasadach co rejestr kanałów: bez
-// niej czynności sięgające po arsenał odmawiają zdaniem nazywającym brak,
-// a reszta modułu pracuje dalej.
+// ZNarzedziami podaje Studiu komplet potrzebny programowi zewnętrznemu:
+// uruchamiacz procesów, rozstrzygacz zasięgu izolacji i katalog roboczy.
 func (a *adapterStudia) ZNarzedziami(uruchamiacz session.Uruchamiacz,
 	rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterStudia {
 
@@ -99,16 +65,8 @@ func (a *adapterStudia) ZNarzedziami(uruchamiacz session.Uruchamiacz,
 	return a
 }
 
-// ZZasobami podaje Studiu magazyn bajtów wyników i repozytorium zasobów.
-//
-// Katalog danych jest ten sam, nad którym stoi magazyn zasobów Designu —
-// wynik wydania Studia i wynik warsztatu PDF mają leżeć w jednym miejscu, bo
-// jedno i drugie jest zasobem tej samej platformy, a dwa magazyny znaczyłyby
-// dwa katalogi, z których jeden prędzej czy później zostałby przy kopii.
-//
-// Zależność jest opcjonalna na tych samych zasadach co rejestr kanałów: bez
-// niej czynności wydania, wyrysu i osadzenia odmawiają zdaniem nazywającym
-// brak, a reszta modułu pracuje dalej.
+// ZZasobami podaje Studiu magazyn bajtów wyników i repozytorium zasobów,
+// nad tym samym katalogiem danych, nad którym stoi magazyn zasobów Designu.
 func (a *adapterStudia) ZZasobami(zasoby dane.RepozytoriumDesignu, katalogDanych string) *adapterStudia {
 	a.zasoby = zasoby
 	if magazyn := magazynZasobowDesignu(katalogDanych); magazyn != nil {
@@ -125,12 +83,7 @@ func (a *adapterStudia) ZBiblioteka(biblioteka dane.RepozytoriumBiblioteki) *ada
 }
 
 // OtworzDokument wczytuje dokument istniejący (po `documentId`) albo zakłada
-// nowy. Wskazanie pliku repozytorium zapamiętuje odwołanie, ale treści z
-// Library nie doczytuje — to zrobiłoby z adaptera Studio klienta modułu
-// Library, którego konstruktor nie zna (jedna zależność: RepozytoriumStudia).
-// Ścieżka urządzenia (`path`) jest lokalna dla klienta; rdzeń nie ma dostępu
-// do systemu plików Operatora, więc dokument otwiera się bez treści, a
-// pierwszy `document.save` ją dostarcza.
+// nowy, bez treści — treść wymaga pierwszego wywołania `document.save`.
 func (a *adapterStudia) OtworzDokument(ctx context.Context,
 	z shared.StudioDocumentOpenRequest) (shared.StudioDocumentOpenResponse, error) {
 
@@ -160,16 +113,7 @@ func (a *adapterStudia) OtworzDokument(ctx context.Context,
 }
 
 // ZapiszDokument zapisuje treść dokumentu i, gdy Operator o to poprosi,
-// zakłada wersję w repozytorium sesji.
-//
-// Wskaźnik wersji bieżącej przestawia ten adapter, nie warstwa danych:
-// `dane.ZapiszWersje` zostawia `wersja_biezaca_id` nietknięty (patrz komentarz
-// w `studio_wersje.go`) i oddaje wywołującemu decyzję, kiedy nowa wersja staje
-// się bieżącą. Tutaj `document.save` z `createVersion=true` zakłada wersję po
-// to, żeby Operator dalej edytował od niej, więc od razu staje się bieżącą
-// (drugie wywołanie `ZapiszDokument` z nowym `WersjaBiezacaKod`). Inaczej niż
-// w `PrzywrocWersje` (`studio_wersje.go`), gdzie bieżącą staje się wersja
-// wskazana przez Operatora, a nie najświeższa zapisana.
+// zakłada wersję w repozytorium sesji, przestawiając wskaźnik wersji bieżącej.
 func (a *adapterStudia) ZapiszDokument(ctx context.Context,
 	z shared.StudioDocumentSaveRequest) (shared.StudioDocumentSaveResponse, error) {
 
@@ -181,11 +125,7 @@ func (a *adapterStudia) ZapiszDokument(ctx context.Context,
 		return shared.StudioDocumentSaveResponse{}, bladNieznanegoDokumentu(z.DocumentId, err)
 	}
 
-	// Postać dokumentu przyjeżdża polem `form` i jest utrwalana PRZED zapisem
-	// treści — utrwalenie postaci składa treść z bloków i wpisuje ją do
-	// wiersza, więc treść z żądania musi wejść po nim, a nie przed. Brak pola
-	// znaczy „bez zmiany postaci", nie „postać na zero": zwykły zapis treści
-	// nie ma prawa zetrzeć arkusza stylów ani tabel.
+	// Postać z pola `form` jest utrwalana przed zapisem treści.
 	if len(z.Form) > 0 {
 		zPostacia, err := a.wejsciePrzyjmijPostacZapisu(ctx, istniejacy, z.Form)
 		if err != nil {
@@ -260,10 +200,7 @@ func (a *adapterStudia) zlozWersje(wiersz dane.WersjaDokumentu) shared.StudioVer
 		BranchId:    wiersz.GalazKod,
 		ProposalId:  wiersz.PropozycjaKod,
 	}
-	// Autor wychodzi kontraktem WYŁĄCZNIE wtedy, gdy wiersz go niesie. Wersje
-	// założone przed dobudową autora nie mają, a podstawienie tu Operatora
-	// zamieniłoby brak wiedzy w twierdzenie — i to twierdzenie fałszywe dla
-	// każdej wersji, którą naprawdę zapisał model.
+	// Autor wychodzi kontraktem wyłącznie wtedy, gdy wiersz go niesie.
 	if wiersz.Autor != nil && *wiersz.Autor != "" {
 		autor := shared.StudioAuthor(*wiersz.Autor)
 		wersja.Author = &autor
@@ -271,7 +208,8 @@ func (a *adapterStudia) zlozWersje(wiersz dane.WersjaDokumentu) shared.StudioVer
 	return wersja
 }
 
-// bladStudio znakuje usterkę wewnętrzną kodem kontraktu (wzór: `bladAutomatyki`).
+// bladStudio znakuje usterkę wewnętrzną modułu kodem kontraktu, wzorem
+// funkcji `bladAutomatyki` z modułu Automations.
 func bladStudio(err error) error {
 	if err == nil {
 		return nil
@@ -279,13 +217,15 @@ func bladStudio(err error) error {
 	return protocol.JakoError(protocol.BladZeZrodla(shared.ErrorCodeInternalError, err))
 }
 
-// bladWskazaniaStudio nazywa brak danych w żądaniu — błąd Operatora, nie rdzenia.
+// bladWskazaniaStudio nazywa brak danych wymaganych w żądaniu — jest to
+// błąd żądania Operatora, a nie usterka rdzenia platformy.
 func bladWskazaniaStudio(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"moduł Studio: "+powod))
 }
 
-// bladNieznanegoDokumentu odróżnia „dokumentu nie ma” od „odczyt się nie powiódł”.
+// bladNieznanegoDokumentu odróżnia stan „dokumentu nie ma” od stanu
+// „odczyt dokumentu się nie powiódł”, niosącego przyczynę usterki.
 func bladNieznanegoDokumentu(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

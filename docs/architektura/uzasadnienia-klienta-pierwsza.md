@@ -3928,3 +3928,22 @@ nie posiada, więc pole bytu znika w całości, zamiast stać wygaszone.
 Słownik nazw osi pochodzi z warstwy konfiguracji, ponieważ oś rozstrzygania jest
 jedna dla całego systemu i nie może być nazywana odmiennie w poszczególnych
 oknach.
+
+## budowa/klient-poprzedni/src/modele/wykaz-kont.ts
+
+Wiersz wykazu podaje cztery rzeczy naraz: nazwę konta, jego rodzaj, dostawcę oraz
+stan wyrażony plakietkami. Plakietka poświadczenia jest jedyną informacją
+o poświadczeniu, jaką klient ma prawo pokazać, ponieważ kontrakt nie zwraca jego
+treści żadną komendą. Wykaz podaje więc wyłącznie to, czy poświadczenie zostało
+zapisane.
+
+Wiersz konta nieczynnego nie jest wygaszony ani pozbawiony reakcji na kliknięcie.
+Nieczynność jest stanem danych, a nie blokadą interfejsu: w takie konto trzeba
+móc wejść, aby je z powrotem uruchomić.
+
+Pusty rejestr nie daje pustego prostokąta. Zdanie opisu dobiera się do fazy
+odczytu, ponieważ ten sam pusty wykaz znaczy co innego w trakcie zapytania do
+rdzenia, co innego po odmowie rdzenia, a co innego wtedy, gdy rdzeń odpowiedział
+i rejestr rzeczywiście nie zawiera konta spełniającego warunek wykazu. Jedno
+zdanie na wszystkie trzy przypadki nie rozstrzygałoby, czy czekać, czy działać.
+Widok pozostaje przy tym czynny.

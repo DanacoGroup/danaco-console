@@ -1,16 +1,5 @@
 // Odpowiedzialność pliku: zasoby eksperta — umiejętności (Skills Manager),
 // konektory (Connectors Manager) i uprawnienia (Permissions Center).
-//
-// Konektor rodzaju `mcp` wskazuje istniejący most. Rdzeń ma jeden katalog
-// serwerów MCP — tabelę `punkt_dostepu`, z której `most_okna.go` składa wpisy
-// `mcpServers` procesu modelu. Konektor eksperta nie kopiuje adresu ani
-// poświadczenia mostu, tylko niesie wskazanie jego kodu, dzięki czemu zmiana
-// adresu maszyny w oknie konfiguracji dosięga także ekspertów.
-//
-// Uprawnienie jest konfiguracją możliwości, nie bramą: odebranie uprawnienia
-// zapisuje wiersz `przyznane = 0` i nic więcej — rdzeń nie odmawia z jego
-// powodu żadnej komendy. Stanem wyjściowym eksperta jest pełny dostęp
-// operacyjny, zakładany przy jego założeniu.
 package core
 
 import (
@@ -21,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// DodajUmiejetnosc przypisuje ekspertowi umiejętność (`agent.skill.add`).
+// DodajUmiejetnosc przypisuje ekspertowi umiejętność, obsługując komendę agent.skill.add kontraktu Agents.
 func (a *adapterAgentow) DodajUmiejetnosc(ctx context.Context,
 	z shared.AgentSkillAddRequest) (shared.AgentSkillAddResponse, error) {
 
@@ -39,7 +28,7 @@ func (a *adapterAgentow) DodajUmiejetnosc(ctx context.Context,
 	return shared.AgentSkillAddResponse{Agent: ekspertKontraktu(zapisany)}, nil
 }
 
-// DodajKonektor podłącza ekspertowi konektor, wtyczkę albo serwer MCP.
+// DodajKonektor podłącza ekspertowi konektor, wtyczkę albo serwer MCP wskazany żądaniem komendy kontraktu.
 func (a *adapterAgentow) DodajKonektor(ctx context.Context,
 	z shared.AgentConnectorAddRequest) (shared.AgentConnectorAddResponse, error) {
 
@@ -74,7 +63,7 @@ func (a *adapterAgentow) DodajKonektor(ctx context.Context,
 	return shared.AgentConnectorAddResponse{Connector: konektorKontraktu(zapisany, kodPunktu)}, nil
 }
 
-// UstawUprawnienie przyznaje albo odbiera uprawnienie w jednej z czterech grup.
+// UstawUprawnienie przyznaje albo odbiera uprawnienie eksperta w jednej z czterech grup zakresu kontraktu.
 func (a *adapterAgentow) UstawUprawnienie(ctx context.Context,
 	z shared.AgentPermissionSetRequest) (shared.AgentPermissionSetResponse, error) {
 
@@ -95,9 +84,8 @@ func (a *adapterAgentow) UstawUprawnienie(ctx context.Context,
 }
 
 // punktMostu przekłada kod punktu dostępu na numer wiersza. Konektor rodzaju
-// `mcp` bez wskazania mostu jest odrzucany: sam adres serwera MCP nie ma gdzie
-// zamieszkać poza katalogiem punktów, więc przyjęcie takiego konektora byłoby
-// przyjęciem wpisu, którego proces modelu nigdy nie zobaczy.
+// mcp bez wskazania mostu jest odrzucany, bo adres serwera nie ma gdzie
+// zamieszkać poza katalogiem punktów dostępu.
 func (a *adapterAgentow) punktMostu(ctx context.Context,
 	rodzaj shared.AgentConnectorKind, kod string) (*int64, error) {
 

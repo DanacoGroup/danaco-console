@@ -94,7 +94,7 @@ func (a *adapterStudia) wykazSkanerow(ctx context.Context) ([]shared.StudioInput
 		wyjscie, err := a.wolajUrzadzenie(ctx, narzedzieSkanera, []string{"-L"},
 			granicaWykazuUrzadzen)
 		if err != nil {
-			return nil, err
+			return nil, bladWarstwySane(err)
 		}
 		return odczytajUrzadzenia(string(wyjscie)), nil
 	case systemWindows:
@@ -279,6 +279,13 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 // Pytanie idzie WYŁĄCZNIE po nieudanym skanie, więc droga udana nie płaci za nie
 // ani jednym wywołaniem.
 func (a *adapterStudia) odmowaSkanuSane(ctx context.Context, pierwotna error) error {
+	// Brak samego programu rozstrzyga się bez pytania o wykaz: wykaz idzie tym
+	// samym programem, więc pytanie nie ma prawa się powieść — a odmowa ma być
+	// ta sama, którą droga WIA daje przy braku `pwsh` (`bladWarstwyWia`).
+	var brak *zewnetrzne.BrakNarzedzia
+	if errors.As(pierwotna, &brak) {
+		return bladWarstwySane(pierwotna)
+	}
 	urzadzenia, blad := a.wykazSkanerow(ctx)
 	if blad != nil || len(urzadzenia) > 0 {
 		return pierwotna
@@ -476,6 +483,25 @@ func odmowaWia(rozpoznanie string) error {
 	}
 }
 
+// bladWarstwySane dokłada do odmowy arsenału zdanie o tym, CZEGO ta droga
+// wymaga — to samo, co `bladWarstwyWia` robi dla drogi Windows, bo stan maszyny
+// jest ten sam: nie ma czym skanować. Sam brak `scanimage` opisuje
+// `zewnetrzne.BrakNarzedzia` poprawnie, ale nie mówi, że bez niego nie ma na
+// Linuksie skanera wcale — ani że materiał da się wnieść do kolejki inną drogą.
+func bladWarstwySane(err error) error {
+	var brak *zewnetrzne.BrakNarzedzia
+	if errors.As(err, &brak) {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
+			"moduł Studio: skanowanie na Linuksie idzie warstwą SANE, a rdzeń sięga po "+
+				"nią programem `scanimage` — tego programu na tej maszynie nie ma. Bez "+
+				"niego rdzeń nie ma ŻADNEJ drogi do skanera na Linuksie (WIA na tym "+
+				"systemie nie istnieje). Naprawa: zainstalować "+brak.Narzedzie.Pakiet+
+				". Droga, która działa bez tego: zeskanuj materiał programem systemu "+
+				"i dołóż plik komendą `studio.ingest.queue.add`."))
+	}
+	return err
+}
+
 // bladWarstwyWia dokłada do odmowy arsenału zdanie o tym, CZEGO ta droga
 // wymaga. Sam brak `pwsh` opisuje `zewnetrzne.BrakNarzedzia` poprawnie, ale nie
 // mówi, że bez niego nie ma na Windowsie skanera wcale — a to jest wiadomość,
@@ -514,6 +540,15 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n,
 		argumenty, "", granica)
 	if err != nil {
+		// Brak programu wychodzi stąd surowy, bo przekład arsenału buduje błąd
+		// protokołu bez łańcucha i gałąź drogi (`bladWarstwySane`,
+		// `bladWarstwyWia`) nie rozpoznałaby już, że to brak — a to gałąź zna
+		// zdanie o skanowaniu wraz z drogą obejścia. Każde miejsce wołania
+		// warstwy przekłada brak u siebie, więc surowy typ nie wychodzi wyżej.
+		var brak *zewnetrzne.BrakNarzedzia
+		if errors.As(err, &brak) {
+			return wynik.Wyjscie, err
+		}
 		return wynik.Wyjscie, bladArsenaluStudia(err)
 	}
 	return wynik.Wyjscie, nil

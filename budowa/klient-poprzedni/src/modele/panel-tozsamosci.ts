@@ -44,7 +44,11 @@ export function utworzPanelTozsamosci(stan: StanTozsamosci): PanelTozsamosci {
   return { element, odswiez };
 }
 
-/** Zdanie w pasku panelu, objaśniające rolę kategorii zasad. */
+/**
+ * Zdanie w pasku panelu: nazywa pochodzenie kategorii z katalogu rdzenia oraz
+ * skutek zapisu, czyli złożenie nakładki systemowej wskazanej osi, o którego
+ * zasięgu rozstrzyga tryb podania promptu.
+ */
 function wyjasnienie(): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dm-panel__wyjasnienie';

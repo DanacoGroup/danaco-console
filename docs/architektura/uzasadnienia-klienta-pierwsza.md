@@ -1271,3 +1271,10 @@ zmian modelu dopasowują więc po zawartości napisu, a wersja o sprawcy
 nienazwanym wchodzi wyłącznie do pozycji obejmującej wszystkie wersje.
 Zgadywanie po stronie okna kazałoby takiej wersji trafić do jednej z dwóch grup
 bez podstawy.
+
+## budowa/klient-poprzedni/src/moduly/library/sterowanie-widoku.ts
+
+Stopień obrotu i krotność powiększenia trafiają do zbioru danych elementu, a cały
+wygląd wynikający z tych wartości bierze się z arkusza stylów modułu. Plik widoku
+nie zna zatem żadnej wartości wizualnej: nie podaje wymiarów, odstępów ani barw,
+a zmiana wyglądu obrotu i powiększenia odbywa się wyłącznie w arkuszu.

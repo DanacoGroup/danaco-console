@@ -6182,3 +6182,9 @@ znaczyłoby, że jednym polem formularza można skasować prompt systemowy
 platformy, a ten ma obowiązywać zawsze. Rozbieżność między tym, co
 formularz pozwala zapisać, a tym, co zmienia wynik, jest znana: zdjęcie
 kolumny albo nadanie jej innego znaczenia to osobna zmiana.
+
+## budowa/server/internal/core/montaz_terminal.go
+Krok jest osobną funkcją, nie wierszem montażu, bo ma własną regułę niepowodzenia: nieudane
+przygotowanie nie zatrzymuje startu rdzenia. Moduł rusza wtedy z pustym stanem żywym, a Operator
+dostaje wiadomość w dzienniku — terminal bez historii jest gorszy od terminala z historią, lecz
+nieuruchomiony serwer jest gorszy od obu.

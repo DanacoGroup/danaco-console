@@ -1276,12 +1276,15 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
 
   function ustawObecnosc(obecna) {
     warstwa.setAttribute('data-obecna', obecna ? 'tak' : 'nie');
-    przelaczWarstwe.setAttribute('aria-pressed', obecna ? 'true' : 'false');
+    if (przelaczWarstwe) przelaczWarstwe.setAttribute('aria-pressed', obecna ? 'true' : 'false');
     przywolaj.setAttribute('data-widoczne', obecna ? 'nie' : 'tak');
     if (!obecna) dymek.setAttribute('data-otwarty', 'nie');
     mowa(obecna ? 'Always On Display przywołany.' : 'Always On Display ukryty przez użytkownika.');
   }
-  przelaczWarstwe.addEventListener('click', function () {
+  /* Kontrolka chowająca warstwę nie stoi w tym oknie — przywołanie owszem.
+     Wiązanie jest warunkowe, bo bez niego wyjątek przerywał całą obsługę okna
+     i żaden mechanizm poniżej się nie uruchamiał. */
+  if (przelaczWarstwe) przelaczWarstwe.addEventListener('click', function () {
     var obecna = warstwa.getAttribute('data-obecna') === 'tak';
     ustawObecnosc(!obecna);
     toast(obecna ? 'Always On Display ukryty' : 'Always On Display przywołany',

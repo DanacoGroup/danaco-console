@@ -1271,3 +1271,50 @@ wykonawcza sięga do zapory blokad przez rejestr, a nie wywołaniem adaptera
 wprost: pętla omijająca rejestr przepisałaby zablokowany fragment, a
 sprawdzian oparty tylko na kopercie odpowiedzi by tego nie zobaczył, bo
 zadanie skończyłoby się jako gotowe.
+
+## budowa/server/internal/core/adapter_narzedzia_dokument_tekst.go
+
+Pole `usedOcr` odpowiedzi mówi modelowi, czy wolno mu zacytować zwrócony
+tekst jako fakt. Wartość fałszywa znaczy, że tekst pochodzi z warstwy
+tekstowej dokumentu — to te same znaki, które wpisał autor, więc cyfra „0”
+nie zamieni się w literę „O”, a kwota nie zgubi przecinka, i model może
+cytować dosłownie. Wartość prawdziwa znaczy, że tekst odczytano z pikseli:
+rozpoznanie pisma myli znaki podobne, gubi kolumny i wymyśla spacje, więc
+model ma traktować taki tekst jak relację świadka i przy cytowaniu zaznaczyć,
+skąd treść pochodzi. Wartość `usedOcr` wynika wyłącznie z tego, która droga
+dała treść, nigdy z długości odczytanego tekstu. Dlatego dla PDF-u kolejność
+jest jedna i nieodwracalna: najpierw warstwa tekstowa, dopiero po jej braku
+albo na wyraźne żądanie Operatora rasteryzacja i rozpoznanie pisma. Kolejność
+odwrotna byłaby szybsza do napisania i kłamliwa w skutkach — dokument
+z doskonałą warstwą tekstową wracałby jako odczyt z pikseli, a model bez
+potrzeby przestałby ufać własnemu materiałowi. Skan bez warstwy tekstowej, na
+maszynie bez Tesseracta, jest dokumentem, którego rdzeń nie umie przeczytać:
+wraca odmowa nazywająca ten brak, nie pusty tekst z `usedOcr: false`, bo
+pusty tekst znaczy, że dokument jest pusty, a to jest zdanie o dokumencie,
+nie o rdzeniu.
+
+Słownik `formatyDokumentu` zna dziewięć formatów i wymienia to, co rdzeń
+umie zamieniać; odczyt jest czymś innym niż zamiana, więc materiał spoza tej
+dziewiątki — arkusz, prezentacja, wiadomość poczty, plik biurowy — idzie do
+Apache Tiki, biblioteki, której zadaniem jest rozpoznanie rodzaju pliku
+i wydobycie z niego tekstu. Tika nie wypiera żadnej z istniejących dróg:
+format znany słownikowi jedzie drogą znaną słownikowi, bo Pandoc i poppler
+znają jego strukturę lepiej.
+
+Apache Tika nie jest plikiem wykonywalnym — jest archiwum Javy, które
+uruchamia maszyna wirtualna. Rdzeń rozdziela więc rozpoznanie programu od
+rozpoznania archiwum, tak samo jak przy silniku mowy, gdzie osobno stoi
+binarium programu, a osobno plik głosu. Programem jest `java`, i jego
+dotyczy deklaracja narzędzia oraz sonda obecności — ścieżka wyszukiwania
+systemu odpowiada na pytanie o niego wprost. Archiwum `tika-app-*.jar` wraz
+z bibliotekami wydania programem nie jest, więc sonda obecności nie ma o co
+je zapytać: jego brak jest osobną odmową z osobną naprawą, bo naprawa
+„zainstalować Javę” niczego by tu nie załatwiła. Wersja archiwum nie jest
+wpisana w kod, ponieważ numer wydania niesie nazwa pliku — numer wpisany na
+stałe rozjechałby się z pierwszą aktualizacją Tiki i objawił odmową u
+Operatora. Katalogi bibliotek dokładają się do ścieżki klas dlatego, że
+wydania Tiki bywają dwojakie: archiwum samowystarczalne, niosące zależności
+w sobie, albo archiwum cienkie obok katalogu `lib`. Rdzeń nie zgaduje, które
+ma przed sobą — dokłada każdy katalog `lib`, jaki stoi w katalogu wydania,
+a gdy nie stoi żaden, ścieżka klas zostaje samym archiwum i wydanie
+samowystarczalne rusza tak samo.

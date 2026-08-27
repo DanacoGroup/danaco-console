@@ -1,37 +1,6 @@
-// Moduł Apps — Publisher Panel: pakowanie produktu, manifest, walidacja
-// zgodności z kontraktem rozszerzenia, podpis i publikacja do prywatnego
-// rejestru organizacji.
-//
-// Obsługiwane komendy: `apps.package.build`, `apps.package.manifest.save`,
-// `apps.package.validate`, `apps.package.sign`, `apps.package.publish`.
-//
-// PAKIET JEST ARCHIWUM NA DYSKU. `apps.package.build` bierze artefakt budowania
-// (wskazany albo ostatni z udanego wdrożenia), rozpakowuje go i składa nowe
-// archiwum wraz z plikiem `manifest.json`, po czym kładzie je w magazynie treści
-// rdzenia. Wiersz pakietu wskazuje ten plik, jego rozmiar i sumę kontrolną.
-// Pakiet bez bajtów byłby wzorcem szkody, którego pilnują sprawdziany skutku.
-//
-// ARCHIWUM SKŁADAJĄ BIBLIOTEKI WKOMPILOWANE. `zip` i `tar.gz` — oba formaty
-// kontraktu — robi biblioteka standardowa Go (`archive/zip`, `archive/tar`,
-// `compress/gzip`). Żadnego programu z zewnątrz, więc pakowanie działa na
-// instalce niosącej sam rdzeń.
-//
-// PODPIS JEST PRAWDZIWYM PODPISEM Ed25519. `crypto/ed25519` ze standardowej
-// biblioteki podpisuje sumę SHA-256 archiwum; podpis jest od razu weryfikowany
-// kluczem publicznym, więc pole `verified` mówi o sprawdzeniu, które naprawdę
-// przeszło, a nie o zamiarze.
-//
-// KLUCZ WYDAWCY NIE PRZECHODZI PRZEZ KONTRAKT. Żądanie niesie `signingKeyRef` —
-// klucz jawny warstwy sekretów — i nic więcej. Materiał klucza leży w sejfie
-// poświadczeń rdzenia; odwołanie użyte po raz pierwszy zakłada tam nowy klucz
-// wydawcy, bo inaczej Operator nie miałby jak podpisać pierwszego pakietu, a
-// żądanie od niego treści klucza wniosłoby sekret do kontraktu i do dziennika.
-//
-// PUBLIKACJA NIE ZAKŁADA DRUGIEGO REJESTRU. Prywatny rejestr organizacji to ta
-// sama tabela `rozszerzenie`, którą prowadzi rodzina `extension.*` (migracja
-// 070) — opracowanie mówi wprost, że pozycja opublikowana „pojawia się w App
-// Catalog obok pozycji Danaco Plugin". Drugi rejestr obok tamtego byłby drugą
-// prawdą o katalogu.
+// Pakiet obsługuje rodzinę komend `apps.package.*`: budowę pakietu z artefaktu
+// wdrożenia, zapis manifestu, walidację zgodności z kontraktem rozszerzenia,
+// podpis Ed25519 i publikację pozycji w rejestrze rozszerzeń organizacji.
 package core
 
 import (
@@ -60,22 +29,25 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekPakietuApp znakuje identyfikatory pakietów rozszerzenia.
+// przedrostekPakietuApp znakuje identyfikatory pakietów rozszerzenia, wraz
+// z którymi rdzeń zakłada wiersz pakietu w repozytorium modułu Apps.
 const przedrostekPakietuApp = "pak-"
 
-// nazwaManifestuWPakiecieApp jest nazwą, pod którą manifest ląduje w archiwum.
+// nazwaManifestuWPakiecieApp jest nazwą, pod którą manifest pakietu ląduje
+// w archiwum obok reszty wpisów przeniesionych z artefaktu wdrożenia.
 const nazwaManifestuWPakiecieApp = "manifest.json"
 
-// wzorzecWersjiSemantycznejApp sprawdza wersję manifestu. Kontrakt nazywa pole
-// wprost „wersja semantyczna", więc walidator ma prawo tego wymagać — ale jako
-// zastrzeżenia, nie bramy (patrz `SprawdzPakiet`).
+// wzorzecWersjiSemantycznejApp sprawdza wersję manifestu wobec postaci, którą
+// kontrakt nazywa wprost wersją semantyczną: liczba główna, poboczna i łatka.
 var wzorzecWersjiSemantycznejApp = regexp.MustCompile(
 	`^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$`)
 
-// wzorzecIdentyfikatoraPakietuApp sprawdza tożsamość rozszerzenia.
+// wzorzecIdentyfikatoraPakietuApp sprawdza tożsamość rozszerzenia: małe litery,
+// cyfry, kropkę, myślnik i podkreślenie, zaczynając od litery albo cyfry.
 var wzorzecIdentyfikatoraPakietuApp = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]*$`)
 
-// Kody zastrzeżeń walidatora pakietu.
+// Kody zastrzeżeń, którymi walidator pakietu oznacza niezgodność z kontraktem
+// rozszerzenia — każdy kod odpowiada jednemu rodzajowi zastrzeżenia.
 const (
 	kodPakietuBezManifestuApp   = "packageWithoutManifest"
 	kodPakietuTozsamoscApp      = "manifestIdentifierInvalid"
@@ -88,7 +60,8 @@ const (
 	kodPakietuZaleznoscPustaApp = "manifestDependencyEmpty"
 )
 
-// ZbudujPakiet obsługuje `apps.package.build`.
+// ZbudujPakiet obsługuje `apps.package.build`: rozpakowuje artefakt wdrożenia
+// i składa z niego nowe archiwum wraz z manifestem, odłożone w magazynie treści.
 func (a *adapterAplikacji) ZbudujPakiet(ctx context.Context,
 	z shared.AppsPackageBuildRequest) (shared.AppsPackageBuildResponse, error) {
 
@@ -117,9 +90,7 @@ func (a *adapterAplikacji) ZbudujPakiet(ctx context.Context,
 	}
 
 	kod := nowyIdentyfikator(przedrostekPakietuApp)
-	// Manifest zaczyna od tożsamości, którą rdzeń naprawdę zna: kodu pakietu
-	// i nazwy produktu okna. Reszta pól czeka na `apps.package.manifest.save` —
-	// wymyślenie ich tutaj byłoby wpisaniem Operatorowi treści, której nie podał.
+	// Manifest zaczyna od tożsamości znanej rdzeniowi: kodu pakietu i nazwy produktu.
 	manifest := shared.AppPackageManifest{
 		Identifier: kod,
 		Name:       kod,
@@ -166,9 +137,8 @@ func (a *adapterAplikacji) ZbudujPakiet(ctx context.Context,
 }
 
 // ZapiszManifestPakietu obsługuje `apps.package.manifest.save`. Brak
-// `packageId` zakłada pakiet nowy — Publisher Panel potrafi zacząć od manifestu,
-// zanim cokolwiek zostanie spakowane; taki pakiet nie ma jeszcze archiwum
-// i walidator powie o tym wprost.
+// `packageId` zakłada pakiet nowy — manifest może powstać, zanim cokolwiek
+// zostanie spakowane; taki pakiet jeszcze bez archiwum wykaże to walidacja.
 func (a *adapterAplikacji) ZapiszManifestPakietu(ctx context.Context,
 	z shared.AppsPackageManifestSaveRequest) (shared.AppsPackageManifestSaveResponse, error) {
 
@@ -200,8 +170,8 @@ func (a *adapterAplikacji) ZapiszManifestPakietu(ctx context.Context,
 	return shared.AppsPackageManifestSaveResponse{Package: pakiet}, nil
 }
 
-// SprawdzPakiet obsługuje `apps.package.validate`. Zastrzeżenia są ostrzeżeniami,
-// nie bramą: opracowanie mówi wprost, że „ostrzeżenia nie wstrzymują publikacji".
+// SprawdzPakiet obsługuje `apps.package.validate`. Zastrzeżenia zwrócone
+// walidacją są ostrzeżeniami, nie bramą — nie wstrzymują dalszej publikacji.
 func (a *adapterAplikacji) SprawdzPakiet(ctx context.Context,
 	z shared.AppsPackageValidateRequest) (shared.AppsPackageValidateResponse, error) {
 
@@ -224,7 +194,9 @@ func (a *adapterAplikacji) SprawdzPakiet(ctx context.Context,
 	}, nil
 }
 
-// PodpiszPakiet obsługuje `apps.package.sign` — patrz czoło pliku.
+// PodpiszPakiet obsługuje `apps.package.sign`: liczy sumę kontrolną archiwum,
+// podpisuje ją kluczem wydawcy Ed25519 z sejfu poświadczeń i od razu weryfikuje
+// podpis kluczem publicznym, zanim odda wynik.
 func (a *adapterAplikacji) PodpiszPakiet(ctx context.Context,
 	z shared.AppsPackageSignRequest) (shared.AppsPackageSignResponse, error) {
 
@@ -271,8 +243,7 @@ func (a *adapterAplikacji) PodpiszPakiet(ctx context.Context,
 		return shared.AppsPackageSignResponse{}, bladAplikacji(
 			fmt.Errorf("moduł Apps: klucz wydawcy %q nie ma części publicznej", odwolanieKlucza))
 	}
-	// Weryfikacja natychmiast po podpisie: pole `verified` ma mówić o sprawdzeniu,
-	// które przeszło, a nie o tym, że podpis powstał.
+	// Weryfikacja podpisu następuje od razu po jego złożeniu.
 	potwierdzony := ed25519.Verify(publiczny, suma[:], podpis)
 
 	sumaTekstem := hex.EncodeToString(suma[:])
@@ -292,9 +263,7 @@ func (a *adapterAplikacji) PodpiszPakiet(ctx context.Context,
 		sygnatura.TrustLevel = shared.ExtensionTrustLevel(shared.ExtensionTrustLevelUnverifiedPersonal)
 	}
 
-	// Sam podpis idzie do wiersza wraz z jego postacią bajtową: bez niej
-	// `extension.signature.verify` nie miałby czego sprawdzić przy pozycji,
-	// która z tego pakietu powstanie.
+	// Podpis wchodzi do wiersza wraz z postacią bajtową, do ponownej weryfikacji.
 	zapisany := sygnaturaZPodpisemApp(sygnatura, podpis, publiczny)
 	tresc, err := json.Marshal(zapisany)
 	if err != nil {
@@ -312,7 +281,9 @@ func (a *adapterAplikacji) PodpiszPakiet(ctx context.Context,
 	return shared.AppsPackageSignResponse{Signature: sygnatura}, nil
 }
 
-// OpublikujPakiet obsługuje `apps.package.publish` — patrz czoło pliku.
+// OpublikujPakiet obsługuje `apps.package.publish`: zapisuje pakiet jako
+// pozycję prywatnego rejestru organizacji, tej samej tabeli rozszerzeń, którą
+// prowadzi rodzina komend `extension.*`.
 func (a *adapterAplikacji) OpublikujPakiet(ctx context.Context,
 	z shared.AppsPackagePublishRequest) (shared.AppsPackagePublishResponse, error) {
 
@@ -354,9 +325,7 @@ func (a *adapterAplikacji) OpublikujPakiet(ctx context.Context,
 	}
 
 	teraz := time.Now().UTC().UnixMilli()
-	// Konfiguracja pozycji niesie to, co odróżnia ją od pozycji instalowanej
-	// ręcznie: pakiet, z którego powstała, jego archiwum i widoczność nadaną
-	// przy publikacji. Nie ma tu ani jednego pola wymyślonego.
+	// Konfiguracja niesie wyłącznie pola odróżniające pozycję od instalowanej ręcznie.
 	konfiguracja, err := json.Marshal(map[string]any{
 		"appsPackageId":  kod,
 		"appsWindowId":   okno,
@@ -380,10 +349,7 @@ func (a *adapterAplikacji) OpublikujPakiet(ctx context.Context,
 	}); err != nil {
 		return shared.AppsPackagePublishResponse{}, bladAplikacji(err)
 	}
-	// Podpis pakietu przechodzi na pozycję katalogu wraz z materiałem do jego
-	// ponownego sprawdzenia. Bez tego `extension.signature.verify` nie miałby
-	// czego weryfikować przy pozycji, która właśnie z tego pakietu powstała —
-	// a przepisanie samego werdyktu nie byłoby weryfikacją.
+	// Podpis pakietu przechodzi na pozycję wraz z materiałem do ponownej weryfikacji.
 	if err := a.przeniesPodpisNaPozycje(ctx, wiersz, pozycja.Id, teraz); err != nil {
 		return shared.AppsPackagePublishResponse{}, err
 	}
@@ -394,9 +360,9 @@ func (a *adapterAplikacji) OpublikujPakiet(ctx context.Context,
 }
 
 // wpiszPozycjeKataloguApp zakłada albo odświeża pozycję katalogu powstałą
-// z manifestu. Pozycja o tym samym kodzie jest tą samą pozycją w nowszym
-// wydaniu — kod manifestu jest „stały między wydaniami", więc druga publikacja
-// podnosi wersję zamiast zakładać bliźniaka.
+// z manifestu: pozycja o tym samym kodzie manifestu jest tą samą pozycją
+// w nowszym wydaniu, więc druga publikacja podnosi wersję zamiast zakładać
+// bliźniaka.
 func (a *adapterAplikacji) wpiszPozycjeKataloguApp(ctx context.Context,
 	manifest shared.AppPackageManifest, konfiguracja []byte, teraz int64) (shared.Extension, error) {
 
@@ -432,9 +398,7 @@ func (a *adapterAplikacji) wpiszPozycjeKataloguApp(ctx context.Context,
 		Opis:          opis,
 		Wersja:        &wersja,
 		Zainstalowane: true,
-		// Pozycja wchodzi wyłączona, tak samo jak każda pozycja spoza zestawu
-		// wbudowanego: włącza ją świadoma decyzja Operatora po przejrzeniu
-		// uprawnień, nie sam fakt, że ktoś w organizacji ją opublikował.
+		// Pozycja z publikacji wchodzi wyłączona, jak każda pozycja spoza zestawu wbudowanego.
 		Wlaczone:          false,
 		ZrodloPochodzenia: shared.ExtensionOriginPersonal,
 		Konfiguracja:      string(konfiguracja),
@@ -446,20 +410,15 @@ func (a *adapterAplikacji) wpiszPozycjeKataloguApp(ctx context.Context,
 	return rozszerzenieKontraktu(zalozona), nil
 }
 
-// przeniesPodpisNaPozycje odkłada przy pozycji katalogu wersję manifestu oraz —
-// gdy pakiet jest podpisany — materiał podpisu do jego ponownego sprawdzenia.
-// Pakiet niepodpisany nie zostawia podpisu i to jest prawda, którą skaner
-// manifestu potem pokazuje.
+// przeniesPodpisNaPozycje odkłada przy pozycji katalogu wersję manifestu oraz,
+// gdy pakiet jest podpisany, materiał podpisu do jego ponownej weryfikacji.
 func (a *adapterAplikacji) przeniesPodpisNaPozycje(ctx context.Context, wiersz dane.PakietApp,
 	pozycjaKod string, teraz int64) error {
 
 	if a.katalogRozszerzen == nil {
 		return nil
 	}
-	// Wersja manifestu wchodzi do rejestru wersji pozycji ZAWSZE — także przy
-	// pakiecie niepodpisanym. Bez niej `extension.version.rollback` nie miałby
-	// dokąd wrócić po drugim wydaniu, a `extension.update.check` nie miałby
-	// czego z czym zestawić.
+	// Wersja manifestu wchodzi do rejestru wersji pozycji zawsze, także przy pakiecie niepodpisanym.
 	if manifest, err := manifestPakietuApp(wiersz); err == nil && manifest != nil {
 		_ = a.katalogRozszerzen.ZapiszWersjeRozszerzenia(ctx, dane.WersjaRozszerzenia{
 			RozszerzenieKod: pozycjaKod, Wersja: manifest.Version,
@@ -522,9 +481,8 @@ func (a *adapterAplikacji) artefaktPakowaniaApp(ctx context.Context, okno string
 }
 
 // wpisyArtefaktuApp rozpakowuje archiwum artefaktu do par ścieżka→treść.
-// Artefakt składa silnik wdrożenia jako archiwum `zip` (patrz
-// `adapter_modul_aplikacje_wdrozenie_bieg.go`), więc pakowanie nie zgaduje jego
-// postaci.
+// Silnik wdrożenia składa artefakt zawsze jako archiwum `zip`, więc pakowanie
+// czyta tę postać wprost, bez zgadywania formatu.
 func (a *adapterAplikacji) wpisyArtefaktuApp(artefakt dane.ArtefaktApp) (map[string][]byte, error) {
 	bajty, err := os.ReadFile(sciezkaWMagazynieApp(a.katalogDanych, artefakt.Sciezka))
 	if err != nil {
@@ -555,7 +513,8 @@ func (a *adapterAplikacji) wpisyArtefaktuApp(artefakt dane.ArtefaktApp) (map[str
 	return wpisy, nil
 }
 
-// zlozArchiwumPakietuApp składa archiwum w żądanym formacie wraz z manifestem.
+// zlozArchiwumPakietuApp składa archiwum w żądanym formacie wraz z manifestem,
+// zastępując ewentualny manifest z wpisów artefaktu manifestem zbudowanym.
 func zlozArchiwumPakietuApp(format shared.AppPackageFormat, wpisy map[string][]byte,
 	manifest shared.AppPackageManifest) ([]byte, error) {
 
@@ -570,8 +529,7 @@ func zlozArchiwumPakietuApp(format shared.AppPackageFormat, wpisy map[string][]b
 		}
 		pelne[nazwa] = bajty
 	}
-	// Kolejność wpisów jest ustalona: archiwum tej samej treści ma mieć tę samą
-	// sumę kontrolną, a mapa Go przechodzi się w kolejności losowej.
+	// Kolejność wpisów jest ustalona, aby ta sama treść dawała tę samą sumę kontrolną.
 	nazwy := make([]string, 0, len(pelne))
 	for nazwa := range pelne {
 		nazwy = append(nazwy, nazwa)
@@ -587,7 +545,8 @@ func zlozArchiwumPakietuApp(format shared.AppPackageFormat, wpisy map[string][]b
 	return nil, fmt.Errorf("moduł Apps: nieobsłużony format pakietu %q", format)
 }
 
-// archiwumZipApp składa archiwum zip.
+// archiwumZipApp składa listę wpisów w archiwum formatu `zip`, zapisując je
+// w kolejności podanej listy nazw.
 func archiwumZipApp(nazwy []string, wpisy map[string][]byte) ([]byte, error) {
 	var bufor bytes.Buffer
 	zapis := zip.NewWriter(&bufor)
@@ -606,7 +565,8 @@ func archiwumZipApp(nazwy []string, wpisy map[string][]byte) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// archiwumTarGzApp składa archiwum tar.gz.
+// archiwumTarGzApp składa listę wpisów w archiwum formatu `tar.gz`, zapisując
+// je w kolejności podanej listy nazw.
 func archiwumTarGzApp(nazwy []string, wpisy map[string][]byte) ([]byte, error) {
 	var bufor bytes.Buffer
 	kompresja := gzip.NewWriter(&bufor)
@@ -632,7 +592,8 @@ func archiwumTarGzApp(nazwy []string, wpisy map[string][]byte) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// zastrzezeniaPakietuApp jest walidatorem zgodności z kontraktem rozszerzenia.
+// zastrzezeniaPakietuApp jest walidatorem zgodności pakietu z kontraktem
+// rozszerzenia, oddającym wykaz zastrzeżeń wagi błędu, ostrzeżenia i informacji.
 func zastrzezeniaPakietuApp(wiersz dane.PakietApp) []shared.AppValidationIssue {
 	zastrzezenia := []shared.AppValidationIssue{}
 	if wiersz.Sciezka == nil || *wiersz.Sciezka == "" {
@@ -700,9 +661,7 @@ func zastrzezeniaPakietuApp(wiersz dane.PakietApp) []shared.AppValidationIssue {
 			Message:  "manifest niesie zależność bez nazwy",
 		})
 	}
-	// Uprawnienie bez wskazania bytu jest uprawnieniem na wszystko: „sieć" bez
-	// domeny albo „zapis plików" bez korzenia katalogu. Skaner manifestu ma
-	// o tym ostrzec — sygnał, nie brama (opracowanie, rozdz. 7.3).
+	// Uprawnienie bez wskazania bytu jest uprawnieniem na wszystko; skaner o tym ostrzega.
 	for _, uprawnienie := range manifest.Permissions {
 		if uprawnienie.Target != nil && strings.TrimSpace(*uprawnienie.Target) != "" {
 			continue
@@ -717,7 +676,8 @@ func zastrzezeniaPakietuApp(wiersz dane.PakietApp) []shared.AppValidationIssue {
 	return zastrzezenia
 }
 
-// pakietOknaApp odczytuje pakiet i sprawdza, że należy do okna żądania.
+// pakietOknaApp odczytuje pakiet po kodzie i sprawdza, że należy do okna
+// produktu, z którego przyszło żądanie.
 func (a *adapterAplikacji) pakietOknaApp(ctx context.Context, okno, kod string) (dane.PakietApp, error) {
 	wiersz, err := a.repozytorium.PakietApp(ctx, kod)
 	if err != nil {
@@ -744,7 +704,8 @@ func manifestPakietuApp(wiersz dane.PakietApp) (*shared.AppPackageManifest, erro
 	return &manifest, nil
 }
 
-// pakietKontraktuApp przekłada wiersz pakietu na kształt kontraktu.
+// pakietKontraktuApp przekłada wiersz pakietu z bazy danych na kształt
+// pakietu zwracany kontraktem komunikacji, wraz z odczytanym manifestem.
 func pakietKontraktuApp(wiersz dane.PakietApp) (shared.AppPackage, error) {
 	manifest, err := manifestPakietuApp(wiersz)
 	if err != nil {
@@ -769,8 +730,8 @@ func pakietKontraktuApp(wiersz dane.PakietApp) (shared.AppPackage, error) {
 }
 
 // kluczWydawcyApp wydaje klucz prywatny spod klucza jawnego. Odwołanie użyte po
-// raz pierwszy zakłada klucz nowy (czoło pliku); sejf trzyma ziarno w postaci
-// base64, bo przechowuje napisy.
+// raz pierwszy zakłada klucz wydawcy nowy; sejf trzyma jego ziarno w postaci
+// base64, bo przechowuje wyłącznie napisy.
 func (a *adapterAplikacji) kluczWydawcyApp(ctx context.Context, odwolanie string) (ed25519.PrivateKey, error) {
 	const bytWSejfie = "apps.package.signingKey:"
 	if zapisane, jest := a.sejf.Odczytaj(ctx, bytWSejfie+odwolanie); jest && zapisane != "" {
@@ -822,7 +783,8 @@ func sygnaturaZPodpisemApp(sygnatura shared.ExtensionSignature,
 	return zapis
 }
 
-// sciezkaWMagazynieApp składa ścieżkę na dysku z odwołania magazynu.
+// sciezkaWMagazynieApp składa ścieżkę na dysku z odwołania magazynu treści,
+// dopisując katalog danych, gdy odwołanie nie jest ścieżką bezwzględną.
 func sciezkaWMagazynieApp(katalogDanych, odwolanie string) string {
 	if filepath.IsAbs(odwolanie) {
 		return odwolanie
@@ -830,7 +792,8 @@ func sciezkaWMagazynieApp(katalogDanych, odwolanie string) string {
 	return filepath.Join(katalogDanych, filepath.FromSlash(odwolanie))
 }
 
-// widocznoscPakietuApp rozstrzyga brak wskazania widoczności.
+// widocznoscPakietuApp rozstrzyga brak wskazania widoczności na widoczność
+// domyślną, którą kontrakt nazywa widocznością w obrębie organizacji.
 func widocznoscPakietuApp(wskazanie *shared.AppPackageVisibility) string {
 	if wskazanie == nil {
 		return shared.AppPackageVisibilityOrganization
@@ -838,13 +801,15 @@ func widocznoscPakietuApp(wskazanie *shared.AppPackageVisibility) string {
 	return string(*wskazanie)
 }
 
-// wartoscLogicznaApp oddaje wskaźnik na wartość logiczną.
+// wartoscLogicznaApp oddaje wskaźnik na kopię podanej wartości logicznej, do
+// pól kontraktu zapisu, które przyjmują wskaźnik zamiast wartości wprost.
 func wartoscLogicznaApp(wartosc bool) *bool {
 	kopia := wartosc
 	return &kopia
 }
 
-// sprawdzFormatPakietuApp dopuszcza wyłącznie formaty kontraktu.
+// sprawdzFormatPakietuApp dopuszcza wyłącznie formaty pakietu wymienione
+// w kontrakcie komunikacji: `zip` albo `targz`.
 func sprawdzFormatPakietuApp(format shared.AppPackageFormat) error {
 	switch format {
 	case shared.AppPackageFormatZip, shared.AppPackageFormatTargz:
@@ -854,7 +819,8 @@ func sprawdzFormatPakietuApp(format shared.AppPackageFormat) error {
 		" — dopuszczalne: zip, targz")
 }
 
-// sprawdzWidocznoscPakietuApp dopuszcza wyłącznie widoczności kontraktu.
+// sprawdzWidocznoscPakietuApp dopuszcza wyłącznie widoczności wymienione
+// w kontrakcie komunikacji: organizacyjną albo ograniczoną.
 func sprawdzWidocznoscPakietuApp(widocznosc shared.AppPackageVisibility) error {
 	switch widocznosc {
 	case shared.AppPackageVisibilityOrganization, shared.AppPackageVisibilityRestricted:
@@ -864,7 +830,8 @@ func sprawdzWidocznoscPakietuApp(widocznosc shared.AppPackageVisibility) error {
 		strconv.Quote(string(widocznosc)) + " — dopuszczalne: organization, restricted")
 }
 
-// sprawdzRodzajRozszerzeniaPakietuApp dopuszcza wyłącznie rodzaje kontraktu.
+// sprawdzRodzajRozszerzeniaPakietuApp dopuszcza wyłącznie rodzaje rozszerzenia
+// wymienione w kontrakcie komunikacji: mcp, plugin, api albo skill.
 func sprawdzRodzajRozszerzeniaPakietuApp(rodzaj shared.ExtensionKind) error {
 	switch rodzaj {
 	case shared.ExtensionKindMcp, shared.ExtensionKindPlugin,

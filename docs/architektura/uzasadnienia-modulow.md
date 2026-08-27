@@ -308,3 +308,70 @@ rdzeń nie scala pozycji samodzielnie.
 Liczba odcinków transkrypcji liczy się z akapitów transkryptu, ponieważ
 kontrakt pyta o liczbę odcinków, nie o liczbę znaków, i wartość musi być
 policzona, nie wpisana na sztywno.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_pakiety.go
+
+Pakiet jest archiwum na dysku: budowanie pakietu bierze artefakt budowania
+(wskazany albo ostatni z udanego wdrożenia), rozpakowuje go i składa nowe
+archiwum wraz z manifestem, po czym kładzie je w magazynie treści rdzenia.
+Wiersz pakietu wskazuje ten plik, jego rozmiar i sumę kontrolną — pakiet bez
+zapisanych bajtów byłby wzorcem szkody, którego pilnują sprawdziany skutku.
+
+Archiwa zip i tar.gz składają biblioteki wkompilowane w binarium (pakiety
+`archive/zip`, `archive/tar`, `compress/gzip` biblioteki standardowej), bez
+wołania programu zewnętrznego — pakowanie działa na instalacji niosącej sam
+rdzeń.
+
+Podpis pakietu jest prawdziwym podpisem Ed25519: pakiet `crypto/ed25519`
+biblioteki standardowej podpisuje sumę kontrolną archiwum, a podpis jest od
+razu weryfikowany kluczem publicznym, więc pole potwierdzenia mówi
+o sprawdzeniu, które naprawdę przeszło, nie o samym zamiarze podpisania.
+
+Klucz wydawcy nie przechodzi przez kontrakt: żądanie niesie wyłącznie
+odwołanie do klucza w warstwie sekretów. Materiał klucza leży w sejfie
+poświadczeń rdzenia; odwołanie użyte po raz pierwszy zakłada tam nowy klucz
+wydawcy, ponieważ inaczej nie dałoby się podpisać pierwszego pakietu bez
+żądania treści klucza wprost, co wniosłoby sekret do kontraktu i do
+dziennika.
+
+Publikacja nie zakłada drugiego rejestru: prywatny rejestr organizacji to ta
+sama tabela, którą prowadzi rodzina komend rozszerzeń — pozycja opublikowana
+trafia do tego samego katalogu obok pozycji zainstalowanych wprost. Osobny
+rejestr obok tamtego byłby drugą prawdą o tym samym katalogu.
+
+Manifest pakietu przy budowaniu zaczyna od tożsamości, którą rdzeń naprawdę
+zna — kodu pakietu i nazwy produktu okna; resztę pól wypełnia dopiero zapis
+manifestu osobną komendą, ponieważ wymyślenie ich przy budowaniu byłoby
+wpisaniem treści, której nikt nie podał.
+
+Weryfikacja podpisu następuje natychmiast po jego złożeniu, aby pole
+potwierdzenia mówiło o sprawdzeniu, które przeszło, a nie o samym fakcie, że
+podpis powstał. Sam podpis idzie do wiersza wraz z jego postacią bajtową —
+bez niej ponowna weryfikacja nie miałaby czego sprawdzić przy pozycji, która
+z tego pakietu powstanie.
+
+Konfiguracja pozycji katalogu powstałej z publikacji niesie wyłącznie to, co
+odróżnia ją od pozycji instalowanej ręcznie: pakiet, z którego powstała,
+jego archiwum i widoczność nadaną przy publikacji — bez pola wymyślonego.
+Podpis pakietu przechodzi na pozycję katalogu wraz z materiałem do jego
+ponownego sprawdzenia, ponieważ przepisanie samego werdyktu nie byłoby
+weryfikacją.
+
+Pozycja katalogu założona z publikacji wchodzi wyłączona, tak samo jak
+każda pozycja spoza zestawu wbudowanego: włącza ją świadoma decyzja po
+przejrzeniu uprawnień, nie sam fakt publikacji w organizacji.
+
+Wersja manifestu wchodzi do rejestru wersji pozycji zawsze, także przy
+pakiecie niepodpisanym — bez tego wpisu cofnięcie wersji nie miałoby dokąd
+wrócić po drugim wydaniu, a sprawdzenie aktualizacji nie miałoby czego
+z czym zestawić. Pakiet niepodpisany po prostu nie zostawia podpisu na
+pozycji, i to jest prawda, którą walidator manifestu potem pokazuje.
+
+Kolejność wpisów archiwum jest ustalona alfabetycznie, aby archiwum tej
+samej treści miało tę samą sumę kontrolną — mapa Go przechodzi się
+w kolejności losowej.
+
+Uprawnienie zadeklarowane w manifeście bez wskazania bytu jest uprawnieniem
+na wszystko: uprawnienie sieciowe bez domeny albo zapis plików bez korzenia
+katalogu. Walidator manifestu ma o tym ostrzec jako sygnał, nie jako bramę
+wstrzymującą publikację.

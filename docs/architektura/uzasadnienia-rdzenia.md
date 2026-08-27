@@ -6438,3 +6438,14 @@ Drugiego mechanizmu nastaw tu nie ma: jedno wywołanie tego samego rozstrzygacza
 każde inne ustawienie platformy, po klucze z tego samego rejestru definicji. Bez pamięci
 podręcznej: list idzie rzadko, a nastawa poprawiona po nieudanej próbie ma obowiązywać przy próbie
 następnej, nie po restarcie.
+
+## budowa/server/internal/core/tura_oslona_test.go
+
+Miarą naprawy jest to, że korzystający z interfejsu traci jedną odpowiedź
+zamiast całej pracy. Sprawdzian wypada niepomyślnie przez padnięcie całego
+przebiegu, gdy osłona zniknie — i tak ma być: to jest dokładnie ta szkoda,
+przed którą stoi.
+
+Tor tury jest wywoływany wprost w tym sprawdzianie, a nie drogą Wyslij,
+która wymaga kanału modelu i wpisu rozmowy, bo badana jest osłona, a nie
+droga dojścia do niej.

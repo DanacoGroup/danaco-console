@@ -726,3 +726,19 @@ wyciszenie wstrzymuje wyłącznie ujawnienie sygnału operatorowi, nie jego
 zapis. Odpowiedź `aod.signal.report` i odpowiedź `aod.signal.list` nazywają
 wprost, które wyciszenie wstrzymało dany sygnał, żeby brak sygnału w oknie
 nie wyglądał na jego brak w rzeczywistości.
+
+## budowa/server/internal/core/adapter_modul_badania_uchwyty.go
+
+Plik wiąże jedną funkcją komplet komend portu Badania z rejestrem rdzenia,
+niezależnie od tego, który z dziesięciu plików adaptera modułu Research je
+wypełnia — ten sam wzór stosuje wpięcie komend modułu Library.
+
+Rozgłaszane są wyłącznie działania, które naprawdę opisuje jedno z czterech
+zdarzeń zmiany kontraktu: raportu, źródła, ustalenia i monitora. Działanie
+bez odpowiadającego mu zdarzenia w kontrakcie nie wprowadza zastępczego
+zdarzenia własnego.
+
+Trzy drogi wnoszące źródło — dodanie, przechwycenie strony i import —
+rozgłaszają to samo zdarzenie zmiany źródła z rodzajem „utworzono”, żeby okno
+katalogu zobaczyło nową pozycję bez odpytywania; usunięcie rozgłasza to
+zdarzenie z samym wskazaniem zdjętej pozycji, bo pełny byt już nie istnieje.

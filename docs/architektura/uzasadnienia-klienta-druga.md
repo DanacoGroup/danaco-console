@@ -2780,3 +2780,6 @@ blokadę częściowo oddaje bilans akcji wraz z nazwą blokady zamiast milczeć 
 fragmentu nazywa wykonawcę i czas zajęcia zamiast wracać pustą odpowiedzią; zasięg obejmujący
 właściciela pisma jest opisany jako ustawienie jawne, bo blokada domyślnie jest skierowana
 przeciw modelowi, nie przeciw właścicielowi pisma.
+
+## budowa/klient/src/protokol/korelacja.ts
+Rejestr nie wprowadza limitu czasu ani limitu żądań oczekujących: zerwanie połączenia nie kończy pracy rdzenia nad poleceniem.

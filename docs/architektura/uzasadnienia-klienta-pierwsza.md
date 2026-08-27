@@ -529,3 +529,22 @@ własnej subskrypcji zdarzenia odmowy.
 
 Wynik odmowy jest zwykłym `Wynik` z polem `blad`, dzięki czemu okno pokazuje go tak samo jak każdą
 inną odmowę rdzenia i nie potrzebuje osobnej gałęzi widoku.
+
+## budowa/klient-poprzedni/src/moduly/design/modal-kreatora.ts
+
+Cztery drogi zamknięcia są równorzędne i wszystkie obowiązkowe. Dwie z nich są
+własnością natywnego elementu `dialog`: klawisz Escape obsługuje przeglądarka,
+a kliknięcie w nakładkę rozpoznaje się po tym, że celem zdarzenia jest sam
+element dialogu, a nie jego wnętrze — wnętrze przykrywa dialog w całości, więc
+kliknięcie w treść nigdy nie dochodzi do elementu nadrzędnego. Ten sam wzorzec
+niesie `konfiguracja/okno-konfiguracji.ts`.
+
+Przycisk główny stopki zachowuje klikalność zawsze, także przy brakach w polach
+i w czasie ładowania. Powtórzone naciśnięcie rozstrzyga logika akcji, a nie
+odebranie klikalności kontrolce: kontrolka nieklikalna nie mówi Operatorowi,
+czego brakuje, więc blokada należy do warstwy, która zna powód.
+
+Wywołanie `showModal` daje nakładkę, umieszczenie na stosie okien i obsługę
+klawisza Escape. W środowisku, które tej metody nie ma, powłoka otwiera okno
+zwykłym ustawieniem stanu otwarcia, ponieważ okno ma się pokazać niezależnie od
+dostępności metody.

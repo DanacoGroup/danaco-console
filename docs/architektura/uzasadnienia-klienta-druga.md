@@ -2407,3 +2407,12 @@ Plik nie rysuje interfejsu — nie tworzy ikony, menu ani paska i nie zna klas C
 Warstwa połączenia zna wyłącznie miejsce nasłuchu rdzenia. Wyboru adresu nie dokonuje sama — wskazuje go wołający, bo to on wie, czy rdzeń stoi na tej samej maszynie, czy pod adresem podanym przez powłokę.
 Nasłuch bez wskazania adresu wiąże się z pętlą zwrotną, więc to jest adres, pod którym rdzeń stoi, dopóki nikt nie wskazał inaczej.
 Przekład adresu HTTP rozstrzyga schemat i ścieżkę gniazda; gdy adres nie jest adresem HTTP, wołający rozstrzyga, czy sięgnąć po pętlę zwrotną, czy odmówić. Ścieżka gniazda jest własnością tej warstwy, więc przekład mieszka tutaj, a nie u tego, kto adres HTTP zdobył.
+
+## budowa/klient-poprzedni/src/moduly/research/pasek-etapow.ts
+Etapy przychodzą polem `stages` odpowiedzi `research.workspace.set` i wcześniej nigdzie się nie
+pokazywały: okno wiodące przyjmowało je w polu tekstowym i odsyłało do rdzenia, a Operator nie
+widział, co rdzeń naprawdę zapisał. Pasek celowo nie pokazuje stanu etapu w postaci „ukończony,
+bieżący, nierozpoczęty" wraz z checklistą, bo kontrakt niesie etapy jako zwykły wykaz napisów bez
+pola na stan — znaczek ukończenia postawiony tutaj byłby danymi zmyślonymi. Wskazanie etapu jest
+nastawą widoku i tylko nią: rdzeń nie ma gdzie zapisać, na którym etapie stoi badanie, więc po
+ponownym wejściu do modułu wskazanie zaczyna od zera, a okno tego nie ukrywa.

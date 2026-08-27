@@ -2346,3 +2346,15 @@ bez rodzica — sprzątanie w kodzie pominęłoby je przy pierwszym błędzie.
 Ten sam adres w tym samym oknie nie zakłada drugiej subskrypcji: warunek
 UNIQUE(okno, url) czyni z ponownego wywołania `browser.feed.subscribe`
 odświeżenie zastanego kanału, a nie jego duplikat.
+## budowa/server/internal/store/migracja_174_kolejka_czytania.sql
+Migracja 174 — kolejka czytania (`browser.readlist.*`).
+
+Kolejka czytania jest odłożeniem strony na później wraz z przypomnieniem
+(opracowanie modułu, rozdz. 2.2). Pozycja przeczytana nie znika z tabeli:
+`browser.readlist.remove` z polem `markRead` oddaje pozycję, a nie sam fakt
+usunięcia — kolejka ma pamiętać, co już przeczytano, żeby ta sama strona nie
+wracała jako nowa.
+
+Przypomnienie jest chwilą, nie flagą: kontrakt niesie `remindAt` jako czas
+w milisekundach epoki, więc kolumna trzyma znacznik ISO 8601 tej chwili,
+a jego brak znaczy „bez przypomnienia".

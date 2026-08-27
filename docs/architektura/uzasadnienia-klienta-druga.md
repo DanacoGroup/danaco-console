@@ -933,3 +933,26 @@ Licznik wypisuje czas we wszystkich odsłonach, także ukrytych — inaczej był
 pusty przez sekundę po pokazaniu odsłony. Ubywa natomiast tylko licznik
 widoczny: czas schodzący za plecami doprowadziłby do tego, że użytkownik
 zastaje zero, choć odsłonę zobaczył przed chwilą.
+
+## budowa/klient-poprzedni/src/moduly/studio/dziennik-panel.ts
+
+Historia wersji ma swoje okno, a zmiany śledzone swoje miejsce w treści. Ten
+panel dokłada to, czego ani jedno, ani drugie nie ma: dziennik czynności
+z cofnięciem pojedynczym i nie po kolei wraz z ponowieniem, przy czym
+zależności wypisane przy wpisie oznaczają, że odmowa nie jest zaskoczeniem;
+zmiany modelu z licznikiem, skakaniem i cofnięciem wszystkiego albo tylko
+odhaczonych, z zachowaniem pracy Operatora; różnicę postaci dwóch wersji wraz
+z przeniesieniem pojedynczego fragmentu do stanu bieżącego; oraz schowek
+dokumentu — odłożenie i wklejenie fragmentu drogą rdzenia, która sprawdza
+blokady i odkłada wpis dziennika, więc wklejenie da się cofnąć pojedynczo.
+
+Panel woła rdzeń sam, bo każda z tych czynności oddaje bilans, a bilans jest
+treścią dla Operatora, nie wartością pośrednią: co przeszło, co stanęło
+i przez którą blokadę. Przepuszczanie go przez okno nadrzędne kosztowałoby
+jedno przełożenie na każdej z dziesięciu dróg, a bilans musi trafić na widok
+w całości. Skutek czynności — nową treść i postać — panel oddaje oknu
+wywołaniem zwrotnym, bo powierzchnia dokumentu jest po jego stronie.
+
+Panel nie zna treści dokumentu ani zaznaczenia: bierze je z kontekstu, który
+podaje okno. Dzięki temu ten sam panel obsługuje dokument w zakładce i drugi
+w podziale powierzchni.

@@ -1,17 +1,11 @@
 /**
- * SKŁADNIK — TOR TRZECH KROKÓW ODZYSKIWANIA.
- *
- * Adres → potwierdzenie → nowe hasło. Stan niosą dwie dane: `data-biezacy`
- * i `data-zrobiony`. Znak kroku zrobionego rysuje arkusz przez `::after` —
- * numer ustępuje ptaszkowi, więc stan nie stoi na samej barwie (WCAG 1.4.1).
- * Wstawianie tu rysunku dublowałoby ten sam znak.
- *
- * Strzałki między krokami są rysunkiem, nie treścią — czytnik ekranu je pomija.
+ * Składnik — tor trzech kroków odzyskiwania: adres, potwierdzenie, nowe
+ * hasło. Stan niosą dwie dane, a znak kroku zrobionego rysuje arkusz stylu.
  */
 
 import { el, wykaz, type Dziecko } from '../narzedzia.ts';
 
-/** Znak rozdzielający kroki; rysunek, nie treść. */
+/** Znak rozdzielający kroki na torze; jest rysunkiem, nie treścią, pomijanym całkowicie przez czytnik ekranu. */
 const STRZALKA = '→';
 
 export interface WlasciwosciKrokow {

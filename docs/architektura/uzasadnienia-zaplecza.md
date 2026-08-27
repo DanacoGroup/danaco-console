@@ -1735,3 +1735,24 @@ pyta zmienną pierwszą, a okno dostaje warstwę w odpowiedzi
 
 Odczyt nastaw zapisanych po zamku zatrutym panika daje nastawy puste, nie
 panikę samą, ponieważ odczyt nastawy nie jest wart przerwania pracy okna.
+
+## budowa/pomocniki/transkrypcja/transkrypcja.py
+
+Ograniczenia wpisane w konstrukcję pomocnika: nagranie nie opuszcza maszyny,
+bo nie ma tu wywołania sieciowego ani importu biblioteki obsługującej sieć;
+praca odbywa się wyłącznie na procesorze, z ustawieniami wpisanymi na stałe
+w warstwie silnika — wolniej, ale jednakowo na każdej maszynie; tryb
+sprawdzenia wersji niczego nie pobiera, tylko patrzy na dysk, żeby sprawdzenie
+gotowości nie mogło zająć maszyny na kilka minut ani ściągnąć wag bez
+pytania; brak silnika i brak modelu są dwiema osobnymi odpowiedziami
+z dwiema osobnymi naprawami, nie jednym wspólnym niepowodzeniem.
+
+Na standardowe wyjście idzie wyłącznie dokument JSON, bo rdzeń parsuje ten
+strumień; ostrzeżenia, ślady wyjątków i komunikaty bibliotek idą na
+standardowe wyjście błędów, ponieważ pojedynczy dodatkowy wiersz na
+standardowym wyjściu psuje odczyt po stronie rdzenia.
+
+Ładowanie modelu przy sprawdzeniu gotowości zostaje jako droga zapasowa dla
+nietypowych układów katalogów, gdy pliku modelu nie widać wprost na dysku;
+wyjątek z tej próby trafia do pola powodu odpowiedzi, nie na wyjście jako
+ślad stosu.

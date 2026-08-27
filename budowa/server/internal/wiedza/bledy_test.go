@@ -1,15 +1,6 @@
-// Sprawdziany odmowy wskaźnika znaczenia.
-//
-// Mierzą jedną rzecz: że brak biblioteki, brak interpretera i wagi, na których
-// nie da się postawić silnika, kończą się ODMOWĄ NAZYWAJĄCĄ BRAK, a nie usterką
-// wewnętrzną. Różnica jest cała po stronie czytelnika: usterka wewnętrzna mówi
-// „coś się zepsuło" i zachęca do ponowienia, które da to samo, a odmowa mówi,
-// czego nie ma, ile to waży i co zrobić, żeby było.
-//
-// Uruchomienie idzie drogą produkcyjną — `Silnik` → `zewnetrzne.Wolaj` →
-// `injection.UruchamiaczOkien` — a nie własnym startem procesu. Sprawdzian
-// omijający tę drogę mierzyłby skrypt, a nie zachowanie rdzenia, i przespałby
-// każdą zmianę w bramie izolacji albo w rozpoznawaniu braku narzędzia.
+// Sprawdziany odmowy wskaźnika znaczenia; mierzą, że brak biblioteki, brak
+// interpretera i wagi kończą się ODMOWĄ NAZYWAJĄCĄ BRAK, a nie usterką
+// wewnętrzną.
 package wiedza
 
 import (
@@ -28,9 +19,8 @@ import (
 )
 
 // zasiegSprawdzianu oddaje trójkę uruchomienia procesu w zasięgu platformy —
-// tę samą, którą składa adapter rdzenia. Zasady puste znaczą izolację
-// wyłączoną, co jest tu właściwe: sprawdzian mierzy odmowę silnika, a nie bramę
-// izolacji, która ma własne sprawdziany.
+// tę samą, którą składa adapter rdzenia; zasady puste znaczą izolację
+// wyłączoną.
 func zasiegSprawdzianu() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
@@ -38,15 +28,15 @@ func zasiegSprawdzianu() (session.Okno, session.Zasady, session.Obszar) {
 	return okno, session.Zasady{}, session.Obszar{}
 }
 
-// silnikSprawdzianu składa silnik na prawdziwym uruchamiaczu procesów.
+// silnikSprawdzianu składa silnik na prawdziwym uruchamiaczu procesów,
+// tym samym, który mierzy sprawdziany odmowy w tym pakiecie.
 func silnikSprawdzianu(t *testing.T, u Ustawienia) *Silnik {
 	t.Helper()
 	return NowySilnik(injection.UruchamiaczOkien(), t.TempDir()).ZUstawieniami(u)
 }
 
-// brakZOdmowy wyłuskuje typowany brak albo przerywa sprawdzian. Błąd, który
-// brakiem nie jest, znaczy dokładnie to, czego te sprawdziany pilnują: rdzeń
-// oddał usterkę tam, gdzie miał nazwać brak.
+// brakZOdmowy wyłuskuje typowany brak albo przerywa sprawdzian; błąd, który
+// brakiem nie jest, znaczy, że rdzeń oddał usterkę zamiast nazwać brak.
 func brakZOdmowy(t *testing.T, err error) *BrakSilnika {
 	t.Helper()
 	if err == nil {
@@ -61,9 +51,6 @@ func brakZOdmowy(t *testing.T, err error) *BrakSilnika {
 
 // TestBrakInterpreteraNazywaBrakINaprawe pilnuje, że nieobecny interpreter
 // kończy się brakiem nazwanym, a nie komunikatem systemu o nieznanym pliku.
-//
-// Nazwa programu jest tu celowo taka, jakiej nikt nie zainstaluje: sprawdzian
-// ma mierzyć brak, a nie to, co akurat stoi na maszynie.
 func TestBrakInterpreteraNazywaBrakINaprawe(t *testing.T) {
 	ustawienia := UstawieniaDomyslne()
 	ustawienia.Program = "danaco-interpreter-ktorego-nie-ma"
@@ -79,18 +66,9 @@ func TestBrakInterpreteraNazywaBrakINaprawe(t *testing.T) {
 	sprawdzTrzyCzlonyOdmowy(t, nazwany.Error())
 }
 
-// TestWagiBezOpisuKsztaltuDajaBrakNazwany pilnuje, że katalog, w którym leży
-// plik wag bez deklaracji kształtu modelu, kończy się brakiem nazwanym.
-//
-// Ta droga jest tą, którą wskaźnik chodzi na wdrożeniu: nastawa
-// `wiedza_katalog_modeli` wskazuje katalog z gotowym modelem, a pomocnik czyta
-// przy nim sposób składania tokenów, normalizację i wymiar. Katalog bez tych
-// deklaracji jest brakiem, bo zgadnięcie ich dałoby wektory, które są liczbami
-// i nie znaczą nic.
-//
-// Maszyna bez biblioteki osadzeń odpowie na to samo zlecenie brakiem
-// biblioteki — wcześniejszym w kolejności i równie nazwanym. Sprawdzian
-// przyjmuje oba, bo mierzy KLASĘ odpowiedzi, nie stan maszyny.
+// TestWagiBezOpisuKsztaltuDajaBrakNazwany pilnuje, że katalog, w którym
+// leży plik wag bez deklaracji kształtu modelu, kończy się brakiem
+// nazwanym.
 func TestWagiBezOpisuKsztaltuDajaBrakNazwany(t *testing.T) {
 	if _, err := exec.LookPath(interpreterPreferowany); err != nil {
 		t.Skip("nie ma interpretera " + interpreterPreferowany +
@@ -102,8 +80,7 @@ func TestWagiBezOpisuKsztaltuDajaBrakNazwany(t *testing.T) {
 		t.Fatalf("nie można przygotować katalogu wag: %v", err)
 	}
 	// Treść pliku nie ma znaczenia: pomocnik odmawia po odczycie deklaracji,
-	// zanim dojdzie do wczytania samych wag. Plik pusty przeszedłby jednak
-	// sprawdzenie obecności, nie będąc wagami, więc niesie kilka bajtów.
+	// przed wczytaniem wag.
 	if err := os.WriteFile(filepath.Join(katalogWag, "onnx", "model.onnx"),
 		[]byte("nie-sa-to-wagi"), 0o600); err != nil {
 		t.Fatalf("nie można położyć pliku wag: %v", err)
@@ -125,13 +102,9 @@ func TestWagiBezOpisuKsztaltuDajaBrakNazwany(t *testing.T) {
 	sprawdzTrzyCzlonyOdmowy(t, nazwany.Error())
 }
 
-// TestOdmowaNazywaBrakWagePrzyczyneINaprawe przechodzi wszystkie cztery rodzaje
-// braku i pilnuje, że każdy z nich składa zdanie o trzech członach.
-//
-// Sprawdzian jest tabelą, a nie czterema funkcjami, bo mierzy jedną regułę
-// w czterech miejscach: rodzaj dopisany bez własnego zdania trafi w gałąź
-// domyślną i wyjdzie z niej zdaniem „silnik nie odpowiedział zrozumiale", które
-// nie mówi ani czego brak, ani co zrobić.
+// TestOdmowaNazywaBrakWagePrzyczyneINaprawe przechodzi wszystkie cztery
+// rodzaje braku i pilnuje, że każdy z nich składa zdanie o trzech
+// członach.
 func TestOdmowaNazywaBrakWagePrzyczyneINaprawe(t *testing.T) {
 	const model = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
@@ -168,13 +141,8 @@ func TestOdmowaNazywaBrakWagePrzyczyneINaprawe(t *testing.T) {
 }
 
 // TestOdpowiedzPomocnikaZamieniaSieWNazwanyBrak pilnuje, że rodzaje braku
-// wypisywane przez pomocnika i rozpoznawane przez rdzeń są tymi samymi napisami.
-//
-// Rozjazd o jedną literę nie psuje niczego widocznie: brak przechodzi przez
-// `odczytaj` jako brak nierozpoznany i wychodzi z niego zdaniem „silnik osadzeń
-// nie odpowiedział zrozumiale", czyli odmową gorszą od tej, którą pomocnik już
-// napisał. Sprawdzian czyta napisy ze SKRYPTU, a nie powtarza ich za stałymi,
-// bo powtórzenie mierzyłoby samo siebie.
+// wypisywane przez pomocnika i rozpoznawane przez rdzeń są tymi samymi
+// napisami.
 func TestOdpowiedzPomocnikaZamieniaSieWNazwanyBrak(t *testing.T) {
 	for _, rodzaj := range []string{brakBiblioteki, brakModelu, brakWagStojacych} {
 		if !strings.Contains(skryptPomocnika, `"`+rodzaj+`"`) {
@@ -199,9 +167,8 @@ func TestOdpowiedzPomocnikaZamieniaSieWNazwanyBrak(t *testing.T) {
 }
 
 // TestOdpowiedzNieczytelnaJestUsterkaANieBrakiem pilnuje granicy w drugą
-// stronę. Brak pomocnik umie nazwać sam, więc odpowiedź, której nie da się
-// przeczytać, znaczy, że na wyjście pisało coś innego niż on — i to jest
-// usterka do zgłoszenia, nie brak do dociągnięcia.
+// stronę: brak pomocnik umie nazwać sam, a odpowiedź nieczytelna to
+// usterka.
 func TestOdpowiedzNieczytelnaJestUsterkaANieBrakiem(t *testing.T) {
 	silnik := NowySilnik(nil, t.TempDir())
 	_, err := silnik.odczytaj(zewnetrzne.Wynik{
@@ -222,8 +189,7 @@ func TestOdpowiedzNieczytelnaJestUsterkaANieBrakiem(t *testing.T) {
 }
 
 // sprawdzTrzyCzlonyOdmowy pilnuje kształtu zdania odmowy: nazwa wskaźnika,
-// wyjaśnienie, dlaczego rdzeń nie zejdzie po cichu na wyszukiwanie po słowach,
-// oraz droga naprawy.
+// wyjaśnienie braku i droga naprawy, w kolejności czytelnej dla Operatora.
 func sprawdzTrzyCzlonyOdmowy(t *testing.T, zdanie string) {
 	t.Helper()
 	for _, czlon := range []string{"wskaźnik znaczenia: ", "po ZNACZENIU", "naprawa: "} {

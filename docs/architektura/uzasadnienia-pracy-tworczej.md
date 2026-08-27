@@ -2780,3 +2780,44 @@ zasób, którego bajty leżą utrwalone.
 pełny, brak praw do katalogu danych, ścieżka źródłowa nieczytelna, magazyn
 niewpięty; komenda odmawia w całości, bo zasób, którego bajtów nie ma
 nigdzie, nie ma prawa trafić do panelu jako wniesiony.
+## server/internal/wiedza/bledy_test.go
+
+Roznica jest cala po stronie czytelnika: usterka wewnetrzna mowi "cos sie
+zepsulo" i zacheca do ponowienia, ktore da to samo, a odmowa mowi, czego
+nie ma, ile to wazy i co zrobic, zeby bylo. Uruchomienie idzie droga
+produkcyjna — Silnik, zewnetrzne.Wolaj, injection.UruchamiaczOkien — a nie
+wlasnym startem procesu. Sprawdzian omijajacy te droge mierzylby skrypt,
+a nie zachowanie rdzenia, i przespalby kazda zmiane w bramie izolacji albo
+w rozpoznawaniu braku narzedzia.
+
+zasiegSprawdzianu: mierzy odmowe silnika, a nie brame izolacji, ktora ma
+wlasne sprawdziany.
+
+TestBrakInterpreteraNazywaBrakINaprawe: nazwa programu jest tu celowo taka,
+jakiej nikt nie zainstaluje — sprawdzian ma mierzyc brak, a nie to, co
+akurat stoi na maszynie.
+
+TestWagiBezOpisuKsztaltuDajaBrakNazwany: ta droga jest ta, ktora wskaznik
+chodzi na wdrozeniu — nastawa wiedza_katalog_modeli wskazuje katalog
+z gotowym modelem, a pomocnik czyta przy nim sposob skladania tokenow,
+normalizacje i wymiar. Katalog bez tych deklaracji jest brakiem, bo
+zgadniecie ich daloby wektory, ktore sa liczbami i nie znacza nic. Maszyna
+bez biblioteki osadzen odpowie na to samo zlecenie brakiem biblioteki —
+wczesniejszym w kolejnosci i rownie nazwanym. Sprawdzian przyjmuje oba, bo
+mierzy KLASE odpowiedzi, nie stan maszyny.
+
+Plik pusty przeszedlby sprawdzenie obecnosci, nie bedac wagami, wiec niesie
+kilka bajtow.
+
+TestOdmowaNazywaBrakWagePrzyczyneINaprawe: sprawdzian jest tabela, a nie
+czterema funkcjami, bo mierzy jedna regule w czterech miejscach: rodzaj
+dopisany bez wlasnego zdania trafi w galaz domyslna i wyjdzie z niej
+zdaniem "silnik nie odpowiedzial zrozumiale", ktore nie mowi ani czego
+brak, ani co zrobic.
+
+TestOdpowiedzPomocnikaZamieniaSieWNazwanyBrak: rozjazd o jedna litere nie
+psuje niczego widocznie — brak przechodzi przez odczytaj jako brak
+nierozpoznany i wychodzi z niego zdaniem "silnik osadzen nie odpowiedzial
+zrozumiale", czyli odmowa gorsza od tej, ktora pomocnik juz napisal.
+Sprawdzian czyta napisy ze SKRYPTU, a nie powtarza ich za stalymi, bo
+powtorzenie mierzyloby samo siebie.

@@ -500,3 +500,7 @@ powierzchni — bez tej deklaracji historia dostałaby barwę karty zamiast
 papieru roboczego. Monitor wykonania niesie pasek postępu w wariancie
 rozciągniętym oraz przycisk zatrzymania. W wariancie zwartym monitora nie
 ma, więc dół okna niesie własną kreskę górną zamiast kreski monitora.
+
+## budowa/klient-poprzedni/src/rozmowa/blok.css
+Blok prowenancji jest jedynym miejscem, w którym warstwa rozmowy sięga po
+tło akcentu — powierzchnia drobna i zwinięta domyślnie.

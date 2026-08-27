@@ -57,7 +57,7 @@ export function utworzPanelKont(stan: StanKont): PanelKont {
   });
 
   noweKonto.addEventListener('click', () => {
-    // Wybór zdejmujemy zawsze, także gdy już go nie ma, aby formularz wrócił do stanu czystego.
+    // Wybór schodzi zawsze, także gdy już go nie ma, aby formularz wrócił do stanu czystego.
     wypelnione = null;
     formularz.pokaz(null);
     stan.wybierz(null);

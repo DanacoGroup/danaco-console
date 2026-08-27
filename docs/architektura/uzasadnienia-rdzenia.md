@@ -3925,7 +3925,7 @@ rozstrzyga o nim dziedzina. Bez tego sprawdzenia pusty rodzaj kanału dojeżdża
 do więzu schematu i wracał treścią zapytania SQL.
 
 TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu pilnuje jedynego
-wyjątku spod bramy (wpis rejestru decyzji o wyjatku spod bramy). Czym się to łamie: brama
+wyjątku spod bramy (wpis rejestru decyzji). Czym się to łamie: brama
 objęła `connection.hello`, którego trzy pola kontrakt oznacza jako wymagane.
 Klient sprzed wprowadzenia pola `clientId` dostawał więc odmowę zamiast wersji
 protokołu — a powitanie jest jedynym miejscem, z którego klient tę wersję

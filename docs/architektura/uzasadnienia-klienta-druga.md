@@ -2819,3 +2819,6 @@ Rozpoznawanie nadawcy łączy rolę wiadomości z kontraktu, która zna cztery
 wartości, z rolą okna rozdzielającą wypowiedź modelu na koordynatora
 i wykonawcę pętli. Rola systemowa oznacza wypowiedź warstwy automatycznej
 platformy, a nie żadnego z ośmiu pozostałych nadawców.
+
+## budowa/klient/src/protokol/ksztalt-odpowiedzi.ts
+Rzutowanie jest obietnicą kompilatora, nie rdzenia — rdzeń starszej wersji albo pośrednik może przysłać treść bez pola obowiązkowego, a wołający dostałby wartość niezdefiniowaną w miejscu, w którym typ obiecuje wartość. Sprawdzian zamienia taką odpowiedź w niepowodzenie wywołania z wpisem do dziennika i błędem walidacji.

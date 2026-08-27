@@ -1,16 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — TOŻSAMOŚĆ MODELU · EDYTOR I PODGLĄD ZŁOŻONEGO PROMPTU
-   ----------------------------------------------------------------------------
-   Arkusz opisuje wnętrze dwóch obszarów sekcji modeli: edytora kategorii zasad
-   oraz podglądu nakładki obowiązującej. Ramę i wykazy prowadzi `modele.css`,
-   który ten plik wciąga.
-
-   Tryb ZASTĄP zdejmuje prompt fabryczny w całości, więc jego ostrzeżenie stoi
-   w bursztynie, na pełnej szerokości i na stałe. Tryb DOŁĄCZ dostaje barwę
-   informacyjną.
-
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`.
-   ============================================================================ */
+/* Arkusz opisuje wnętrze dwóch obszarów sekcji modeli: edytor kategorii zasad oraz podgląd nakładki obowiązującej w złożonym poleceniu. */
 
 /* --- Edytor kategorii zasad --------------------------------------------- */
 

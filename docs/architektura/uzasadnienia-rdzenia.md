@@ -1162,3 +1162,18 @@ jeden stan maszyny: warstwa skanera jest, a urządzenia nie ma; oba warunki
 sprawdzają się przed pomiarem, bo maszyna bez programu skanującego i maszyna
 z podłączonym skanerem prowadzą tę czynność innymi drogami, więc pomiar
 wykonany w niewłaściwym miejscu mierzyłby coś innego i meldował to jako wynik.
+
+## budowa/server/internal/core/skutek_narzedzi_tresci_pisanej_test.go
+
+Ten plik mierzy skutek sześciu programów treści pisanej: składu PDF-u,
+odczytu formatu spoza słownika rdzenia, korekty językowej dwoma silnikami
+pisowni, analizy prozy i obróbki wstępnej skanu. Żaden sprawdzian tego pliku
+nie kończy się na kopercie udanej, bo programy zewnętrzne mają w tym
+produkcie własną odmianę szkody „ok przy pustym wyniku”: każdy z nich
+potrafi skończyć się kodem zero i nie zrobić nic — typst zapisze PDF bez
+treści, Tika odda pustkę dla rodzaju pliku, którego nie zna, vale bez
+konfiguracji zamelduje jeden „błąd wykonania” zamiast ustaleń, a unpaper
+przepisze obraz bez żadnego filtru. Dlatego każdy sprawdzian pyta o skutek:
+czy w PDF-ie da się odczytać zdanie, które do niego weszło, czy ustalenie
+niesie rodzaj i propozycję, czy tekst rozpoznany ze skanu niesie słowa
+materiału.

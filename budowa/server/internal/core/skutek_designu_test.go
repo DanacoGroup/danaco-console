@@ -256,7 +256,7 @@ func TestWydanieZasobuDesignuSkladaJpegIkoneIDokument(t *testing.T) {
 		bajtyIkony[2] != 1 || bajtyIkony[3] != 0 {
 		t.Fatalf("wydanie ico nie ma nagłówka ikony (%d bajtów)", len(bajtyIkony))
 	}
-	// Zawartość wpisu leży od bajtu 22 i jest obrazem PNG — rozkładamy ją,
+	// Zawartość wpisu leży od bajtu 22 i jest obrazem PNG — rozklada się ją,
 	// zamiast wierzyć nagłówkowi.
 	if _, err := png.Decode(bytes.NewReader(bajtyIkony[22:])); err != nil {
 		t.Errorf("zawartość ikony nie rozkłada się jako obraz: %v", err)
@@ -322,7 +322,7 @@ func TestWydaniePartiaDesignuNiesieBilansZamiastCiszy(t *testing.T) {
 	if wynik.Rejected[0].Reason == "" {
 		t.Error("odrzucenie w partii nie niesie powodu")
 	}
-	// Każde wydanie rozkładamy z powrotem: partia melduje cztery pliki, więc
+	// Każde wydanie rozklada się z powrotem: partia melduje cztery pliki, więc
 	// cztery mają być obrazami.
 	for _, plik := range wynik.Files {
 		szerokosc, wysokosc := wymiaryWydaniaDesignu(t, plik.ContentBase64)

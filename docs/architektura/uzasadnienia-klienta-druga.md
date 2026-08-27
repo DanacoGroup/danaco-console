@@ -791,3 +791,28 @@ czym pracować, i dowiadywać się o tym dopiero z odmowy.
 
 Nazwy pól są nazwami kontraktu i jadą do rdzenia bez zmiany; etykiety są
 zdaniem Operatora i z nazwami się nie pokrywają.
+
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-kontroli-studio.ts
+
+Źródło pracy niesie zmiany śledzone, profile wydania, podgląd, szablony
+i komentarze — to czynności redakcji. To źródło niesie czynności kontroli nad
+tym, co się z dokumentem stało i czego modelowi nie wolno: odwracalny dziennik
+czynności z cofnięciem pojedynczym i ponowieniem; wszystko, co zrobił model,
+wraz z licznikiem, skakaniem i cofnięciem z zachowaniem pracy Operatora;
+różnicę postaci dwóch wersji i przeniesienie pojedynczego fragmentu do stanu
+bieżącego; zapis samoczynny osobnym szeregiem, kopie zapasowe i powrót do
+wersji założycielskiej; znakowanie fragmentu w rdzeniu wraz z rodzajami
+znaczników własnych Operatora; blokadę fragmentu obowiązującą w rdzeniu;
+zajęcie fragmentu przez wykonawcę wraz z nastawami pracy kilku wykonawców
+naraz; oraz schowek dokumentu, który sprawdza blokady i odkłada wpis
+dziennika, więc wklejenie da się cofnąć pojedynczo.
+
+Każde wywołanie idzie drogą odporną na odmowę: komenda bez uchwytu w rdzeniu
+wraca kopertą bez pola stanu, której korelacja nie rozstrzyga, więc zwykłe
+wywołanie zostawiłoby okno w ładowaniu bez końca. Droga odporna zamienia taki
+brak na zwykłe niepowodzenie nazywające komendę, żeby okno mogło pokazać
+Operatorowi, po czyjej stronie jest brak.
+
+Źródło nie ma stanu i nie buduje elementu — sprawdza kształt odpowiedzi
+i oddaje ją oknu. Nazwy metod noszą wspólny przedrostek, więc suma
+z pozostałymi źródłami modułu nie ma kolizji nazw.

@@ -3873,3 +3873,90 @@ tekst pod nowa nazwa formatu, co bywa wlasciwe (markdown oznaczony jako
 tekst czysty). Zamiana tresci miedzy formatami nalezy do obszaru
 dokumentow i idzie osobna komenda — tutaj bylaby druga droga do tej samej
 czynnosci.
+
+## budowa/server/internal/zewnetrzne/wolanie.go
+
+Produkt daje modelowi arsenał czynności — obraz, dźwięk, dokument, archiwum
+— a większość z nich to opakowanie dojrzałego programu, nie pisanie go od
+nowa w Go. Bez pakietu zewnetrzne każda rodzina narzędzi zbudowałaby własne
+uruchamianie procesu, własny limit czasu i własne sprzątanie potomstwa —
+cztery prawdy o jednej rzeczy, a przy czwartej ktoś zapomniałby ubić drzewo.
+
+Sekwencja pakietu jest przepisana z `mowa/uruchomienie.go`. W całym drzewie
+stoi dokładnie jedno exec.Command (`injection/rozruch.go`); wszystko inne
+idzie portem `session.Uruchamiacz`, przez tę samą bramę izolacji okna i to
+samo obejmowanie potomstwa. Każde odstępstwo od tej sekwencji jest
+wyciekiem procesu albo uchwytu — a binarium przetwarzające film rozgałęzia
+wątki tak samo jak dekoder mowy.
+
+Pakiet zewnetrzne nie rozpoznaje formatów, nie czyta obrazów i nie
+tłumaczy komunikatów ImageMagicka na polski. Rozpoznanie należy do
+rodziny narzędzi, która zna kształt odpowiedzi swojego programu.
+
+Pole Pakiet wchodzi do treści odmowy, żeby Operator nie musiał szukać, czym
+dociągnąć brakujące narzędzie.
+
+Wyjście i diagnostyka Wynik są dwoma strumieniami, tak samo jak w silniku
+mowy: na wyjściu stoi wynik pracy (bywa nim binarna treść obrazu), na
+diagnostyce ostrzeżenia programu. Sklejenie ich wstawiłoby ostrzeżenie
+w środek pliku PNG.
+
+Rodzina narzędzi ma odróżnić BrakNarzedzia, żeby powiedzieć Operatorowi,
+co dociągnąć.
+
+Limit czasu w Wolaj jest obowiązkowy — tak samo jak w silniku mowy.
+Transkodowanie filmu bez granicy potrafi zająć maszynę na godziny,
+a program, który utknął na uszkodzonym pliku, nie kończy się nigdy. Limit
+niedodatni jest odmową, nie brakiem granicy: wołający, który granicy nie
+podał, o niej zapomniał.
+
+Silnik mowy dziedziczy środowisko, bo interpreter Pythona musi odnaleźć
+własne biblioteki; narzędzia arsenału nie mają powodu widzieć zmiennych
+rdzenia. Gdy okno ma włączony punkt izolacji środowiska, brama niżej i tak
+rozstrzyga — ale domyślna wartość ma być węższa, nie szersza.
+
+## budowa/server/internal/core/adapter_modul_design_kolekcje.go
+
+Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`).
+
+Kolekcja jest bytem osobnym od etykiety. Etykieta jest słowem, kolekcja ma
+nazwę, opis i porządek — powód rozdziału stoi w nagłówku migracji 230.
+
+Przypisanie jest dokładką albo odjęciem, nigdy zastąpieniem. Zasoby wchodzące
+do kolekcji sprawdza się przed zapisem: kolekcja pełna kodów, za którymi nie
+stoi żaden zasób, byłaby dokładnie tym rodzajem koperty, który ten moduł już
+raz oddał — wykazem bez treści. Zasób nieznany jest więc odmową całej
+komendy, nie cichym pominięciem, bo `changed` nie ma pola na „ten nie wszedł".
+
+`ZalozKolekcje`: kontrakt mówi wprost, że panel dostaje identyfikator,
+znacznik czasu i licznik zasobów takie, jakie naprawdę zostały zapisane.
+
+`PrzypiszDoKolekcji`: przy zdejmowaniu zasób z kolekcji bywa już usunięty
+z Assets Panelu, a odmowa zdjęcia go zamknęłaby Operatorowi jedyną drogę do
+posprzątania kolekcji.
+
+`kolekcjaKontraktuDesignu`: `AssetCount` i długość wykazu są tu zwykle równe,
+ale prawdą o kolekcji jest ta z bazy, a nie ta z tego, co akurat udało się
+wczytać.
+
+Program dołożony do pakietu leży poza ścieżką wyszukiwania systemu i po
+samej nazwie nie wystartowałby, więc do uruchomienia idzie ścieżka
+odnaleziona.
+
+Proces bez uchwytu drzewa, zostawiony tak, znaczyłby sierotę poza
+rejestrem rdzenia.
+
+Pompy w zbierz ruszają przed czekaniem: bufor potoku ma kilkadziesiąt
+kilobajtów, program piszący obraz na wyjście zablokowałby się na zapisie,
+a rdzeń czekałby na koniec procesu, który czeka na rdzeń. Zakleszczenie
+kończy się dopiero granicą czasu i wygląda jak zawieszone narzędzie.
+
+Odbiór z obu pomp po zakończeniu i bezwarunkowo, także przy przerwaniu:
+gorutyny zostałyby inaczej zawieszone na zapisie do kanału.
+
+Plik obrazu urwany w połowie jest gorszy niż jego brak, dlatego wynik
+przerwany nie wraca jako udany.
+
+Bez opisu diagnostyki Operator czyta tylko, że narzędzie zakończyło się
+niepowodzeniem, i nie wie nic więcej. Pierwsze zdanie programu prawie
+zawsze niesie powód, a reszta jest śladem stosu.

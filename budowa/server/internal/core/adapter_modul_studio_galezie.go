@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: gałęzie dokumentu Studia (rodzina F4–F5 opracowania)
-// oraz odwołanie do wersji (J5) — `studio.branch.create`, `studio.branch.list`,
-// `studio.branch.merge`, `studio.version.reference.create`. Metody dopisują się
-// na `adapterStudia` zadeklarowanym w `adapter_modul_studio.go`.
-//
-// ── Gałąź nie jest kopią dokumentu ──────────────────────────────────────────
-// Rozgałęzienie zakłada WIERSZ gałęzi i JEDNĄ wersję startową na niej, a nie
-// drugi dokument. Drugi dokument oderwałby wariant od historii, z której
-// wyrósł: nie dałoby się już powiedzieć, od czego wariant odszedł, a scalanie
-// nie miałoby wspólnego przodka, na którym stoi cała ta rodzina.
-//
-// ── Scalanie oddaje konflikt, a nie rozstrzyga go domysłem ──────────────────
-// Trójstronne porównanie (przodek, gałąź scalana, gałąź docelowa) rozstrzyga
-// samo tam, gdzie zmieniła jedna strona. Tam, gdzie zmieniły obie i zmieniły
-// inaczej, rdzeń NIE wybiera. Wybór „bierzemy docelową" byłby cichym
-// skasowaniem cudzej redakcji — dlatego konflikt wraca kontraktem i czeka na
-// rozstrzygnięcie Operatora.
+// Plik obsługuje gałęzie dokumentu Studia oraz odwołania do wersji: zakładanie
+// gałęzi, wykaz gałęzi, scalanie trójstronne gałęzi i tworzenie odwołania do
+// wersji w obrębie platformy.
 package core
 
 import (
@@ -29,12 +15,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZalozGalaz obsługuje `studio.branch.create`.
-//
-// Wersja startowa zostaje punktem odniesienia gałęzi na stałe — to ona będzie
-// wspólnym przodkiem przy scalaniu. Obok niej powstaje pierwsza wersja gałęzi
-// z treścią przepisaną z punktu startowego: bez niej gałąź świeżo założona nie
-// miałaby czoła, a `document.save` dopisywałby wersje do pnia zamiast do niej.
+// ZalozGalaz obsługuje żądanie studio.branch.create: zakłada gałąź z wersją
+// startową jako wspólnym przodkiem scalania i zapisuje pierwszą wersję gałęzi
+// jako treść bieżącą dokumentu.
 func (a *adapterStudia) ZalozGalaz(ctx context.Context,
 	z shared.StudioBranchCreateRequest) (shared.StudioBranchCreateResponse, error) {
 
@@ -83,10 +66,8 @@ func (a *adapterStudia) ZalozGalaz(ctx context.Context,
 		return shared.StudioBranchCreateResponse{}, bladStudio(err)
 	}
 
-	// Gałąź świeżo założona staje się treścią bieżącą edytora — tak opisuje to
-	// przycisk „Rozgałęź" w opracowaniu (rozdz. 3.6): tworzy gałąź I OTWIERA ją
-	// jako bieżącą treść. Gałąź, która powstaje niewidoczna, byłaby gałęzią,
-	// o której Operator dowiaduje się dopiero z wykazu.
+	// Świeżo założona gałąź staje się treścią bieżącą edytora zamiast pozostawać
+	// niewidoczną.
 	dokument.Tresc = &tresc
 	dokument.TrescOdwolanie = nil
 	dokument.WersjaBiezacaKod = &czolo.Kod
@@ -101,7 +82,9 @@ func (a *adapterStudia) ZalozGalaz(ctx context.Context,
 	}, nil
 }
 
-// Galezie obsługuje `studio.branch.list`.
+// Galezie obsługuje żądanie studio.branch.list: czyta dokument wskazany
+// identyfikatorem i zwraca wykaz jego gałęzi złożony z warstwy danych do
+// postaci kontraktu.
 func (a *adapterStudia) Galezie(ctx context.Context,
 	z shared.StudioBranchListRequest) (shared.StudioBranchListResponse, error) {
 
@@ -124,12 +107,9 @@ func (a *adapterStudia) Galezie(ctx context.Context,
 	return shared.StudioBranchListResponse{Branches: galezie}, nil
 }
 
-// ScalGalezie obsługuje `studio.branch.merge`.
-//
-// Wspólnym przodkiem jest wersja startowa gałęzi SCALANEJ: od niej wariant
-// odszedł, więc to ona mówi, co w każdej z dwóch treści jest zmianą, a co
-// stanem zastanym. Bez przodka porównanie dwóch czół dałoby konflikt na każdym
-// fragmencie, który zmieniła tylko jedna strona.
+// ScalGalezie obsługuje żądanie studio.branch.merge: scala dwie gałęzie
+// porównaniem trójstronnym względem wersji startowej gałęzi scalanej jako
+// wspólnego przodka.
 func (a *adapterStudia) ScalGalezie(ctx context.Context,
 	z shared.StudioBranchMergeRequest) (shared.StudioBranchMergeResponse, error) {
 
@@ -208,11 +188,9 @@ func (a *adapterStudia) ScalGalezie(ctx context.Context,
 	return shared.StudioBranchMergeResponse{Merged: true, Document: &zlozony}, nil
 }
 
-// UtworzOdwolanieWersji obsługuje `studio.version.reference.create`.
-//
-// Odwołanie jest adresem W OBRĘBIE PLATFORMY, nie odnośnikiem sieciowym: rdzeń
-// nie wystawia treści dokumentu na zewnątrz i nie ma jak zapewnić, że adres
-// wyprowadzony na świat byłby czytelny wyłącznie dla uprawnionych.
+// UtworzOdwolanieWersji obsługuje żądanie studio.version.reference.create:
+// zapisuje odwołanie do wskazanej wersji i składa jego adres w obrębie
+// platformy.
 func (a *adapterStudia) UtworzOdwolanieWersji(ctx context.Context,
 	z shared.StudioVersionReferenceCreateRequest) (shared.StudioVersionReferenceCreateResponse, error) {
 
@@ -251,14 +229,15 @@ func (a *adapterStudia) UtworzOdwolanieWersji(ctx context.Context,
 	}, nil
 }
 
-// adresOdwolaniaStudia składa adres wersji w obrębie platformy. Niesie oba
-// człony — dokument i wersję — bo odbiorca odwołania ma otworzyć dokument
-// USTAWIONY na tej wersji, a nie szukać, do którego dokumentu wersja należy.
+// adresOdwolaniaStudia składa adres wersji w obrębie platformy z kodu
+// dokumentu, kodu wersji i kodu odwołania, aby odbiorca otworzył dokument
+// ustawiony na tej wersji.
 func adresOdwolaniaStudia(kodDokumentu, kodWersji, kodOdwolania string) string {
 	return "danaco://studio/" + kodDokumentu + "/wersja/" + kodWersji + "?odwolanie=" + kodOdwolania
 }
 
-// galazStudia czyta gałąź i odróżnia jej brak od usterki odczytu.
+// galazStudia czyta gałąź wskazaną kodem i odróżnia brak gałęzi w warstwie
+// danych od usterki samego odczytu, zwracając odpowiedni błąd kontraktu.
 func (a *adapterStudia) galazStudia(ctx context.Context, kod string) (dane.GalazStudia, error) {
 	galaz, err := a.repozytorium.Galaz(ctx, strings.TrimSpace(kod))
 	if err == nil {
@@ -271,8 +250,8 @@ func (a *adapterStudia) galazStudia(ctx context.Context, kod string) (dane.Galaz
 	return dane.GalazStudia{}, bladStudio(err)
 }
 
-// trescCzolaGalezi oddaje treść wersji bieżącej gałęzi; gałąź bez czoła czyta
-// się treścią swojego punktu startowego.
+// trescCzolaGalezi oddaje treść wersji bieżącej gałęzi; gałąź bez zapisanego
+// czoła oddaje treść swojego punktu startowego.
 func (a *adapterStudia) trescCzolaGalezi(ctx context.Context, galaz dane.GalazStudia) (string, error) {
 	kod := galaz.WersjaStartowaID
 	if galaz.WersjaBiezacaID != nil && strings.TrimSpace(*galaz.WersjaBiezacaID) != "" {
@@ -281,7 +260,8 @@ func (a *adapterStudia) trescCzolaGalezi(ctx context.Context, galaz dane.GalazSt
 	return a.trescWersjiPoKodzie(ctx, kod)
 }
 
-// trescWersjiPoKodzie czyta treść wersji wskazanej kodem.
+// trescWersjiPoKodzie czyta wersję wskazaną kodem i oddaje jej treść po
+// rozwiązaniu ewentualnego odwołania do treści innej wersji.
 func (a *adapterStudia) trescWersjiPoKodzie(ctx context.Context, kod string) (string, error) {
 	wersja, err := a.repozytorium.Wersja(ctx, kod)
 	if err != nil {
@@ -290,7 +270,8 @@ func (a *adapterStudia) trescWersjiPoKodzie(ctx context.Context, kod string) (st
 	return a.trescZOdwolania(wersja.Tresc, wersja.TrescOdwolanie)
 }
 
-// zlozGalazStudia składa gałąź kontraktu z wiersza warstwy danych.
+// zlozGalazStudia składa gałąź kontraktu z wiersza warstwy danych, przenosząc
+// kod, nazwę, wersję startową, wersję bieżącą i znacznik scalenia.
 func zlozGalazStudia(wiersz dane.GalazStudia) shared.StudioBranch {
 	return shared.StudioBranch{
 		Id:            wiersz.Kod,
@@ -303,11 +284,9 @@ func zlozGalazStudia(wiersz dane.GalazStudia) shared.StudioBranch {
 	}
 }
 
-// ── Scalanie trójstronne ────────────────────────────────────────────────────
-
-// wynikScaleniaStudia niesie albo treść scaloną, albo komplet konfliktów.
-// Nigdy oba naraz: treść złożona z konfliktem nierozstrzygniętym byłaby treścią,
-// w której jeden z wariantów przepadł bez śladu.
+// wynikScaleniaStudia niesie albo treść scaloną, albo komplet konfliktów
+// scalania — nigdy oba naraz, bo treść z nierozstrzygniętym konfliktem gubi
+// wariant.
 type wynikScaleniaStudia struct {
 	tresc     string
 	konflikty []shared.StudioMergeConflict
@@ -318,13 +297,14 @@ type wynikScaleniaStudia struct {
 type edycjaScaleniaStudia struct {
 	od, do int
 	tresc  []string
-	// zeScalanej odróżnia stronę zmiany. Konflikt powstaje wtedy i tylko wtedy,
-	// gdy ten sam zakres przodka ruszyły OBIE strony — jedna strona zmieniająca
-	// dwa sąsiadujące fragmenty konfliktem nie jest.
+	// zeScalanej odróżnia stronę zmiany; konflikt powstaje, gdy zakres przodka
+	// zmieniły obie strony naraz.
 	zeScalanej bool
 }
 
-// scalTrojstronnieStudia składa treść z przodka i dwóch wariantów.
+// scalTrojstronnieStudia składa treść wynikową z przodka i dwóch wariantów
+// gałęzi metodą porównania trójstronnego, zwracając konflikty tam, gdzie obie
+// strony zmieniły ten sam zakres inaczej.
 func scalTrojstronnieStudia(przodek, scalana, docelowa string,
 	rozstrzygniecia []shared.StudioMergeResolution) wynikScaleniaStudia {
 
@@ -374,8 +354,8 @@ func scalTrojstronnieStudia(przodek, scalana, docelowa string,
 
 		obieStrony := obieStronyWGrupieStudia(grupa)
 		if !obieStrony || trescScalanej == trescDocelowej {
-			// Zmieniła jedna strona albo obie zmieniły tak samo — nie ma czego
-			// rozstrzygać, więc rdzeń bierze zmianę bez pytania.
+			// Zmieniła jedna strona albo obie zmieniły tak samo, więc rdzeń bierze
+			// zmianę bez pytania.
 			if obieStrony || grupa[0].zeScalanej {
 				wynik = append(wynik, podzielNaWiersze(trescScalanej)...)
 			} else {
@@ -411,8 +391,8 @@ func scalTrojstronnieStudia(przodek, scalana, docelowa string,
 	return wynikScaleniaStudia{tresc: strings.Join(wynik, "\n")}
 }
 
-// obieStronyWGrupieStudia mówi, czy w grupie nakładających się zmian są obie
-// strony scalenia.
+// obieStronyWGrupieStudia mówi, czy w grupie nakładających się zmian znalazły
+// się obie strony scalenia, czy tylko jedna.
 func obieStronyWGrupieStudia(grupa []edycjaScaleniaStudia) bool {
 	scalana, docelowa := false, false
 	for _, e := range grupa {
@@ -448,10 +428,9 @@ func zastosujGrupeStudia(przodek []string, grupa []edycjaScaleniaStudia,
 	return strings.Join(wynik, "\n")
 }
 
-// trescRozstrzygnieciaStudia oddaje treść wybraną przez Operatora. Strona
-// „obie" zestawia warianty jeden pod drugim, bo to jedyne złożenie, które
-// niczego nie gubi; strona „własna" bez treści zachowuje się jak wybór gałęzi
-// docelowej, bo pusta treść własna nie jest rozstrzygnięciem.
+// trescRozstrzygnieciaStudia oddaje treść wybraną rozstrzygnięciem: stronę
+// scalaną, stronę docelową, obie zestawione jedna pod drugą albo treść własną
+// z rozstrzygnięcia.
 func trescRozstrzygnieciaStudia(r shared.StudioMergeResolution, scalana, docelowa string) string {
 	switch r.Side {
 	case shared.StudioMergeSideScalana:
@@ -469,8 +448,8 @@ func trescRozstrzygnieciaStudia(r shared.StudioMergeResolution, scalana, docelow
 }
 
 // przesunieciaWierszyStudia liczy przesunięcia znakowe początków wierszy wraz
-// z przesunięciem końca treści. Konflikt kontraktu podaje zakres w ZNAKACH, bo
-// Diff Panel zaznacza go w treści, a nie w numerach wierszy.
+// z przesunięciem końca treści, ponieważ konflikt kontraktu podaje zakres
+// w znakach.
 func przesunieciaWierszyStudia(wiersze []string) []int {
 	przesuniecia := make([]int, len(wiersze)+1)
 	suma := 0
@@ -485,34 +464,26 @@ func przesunieciaWierszyStudia(wiersze []string) []int {
 	return przesuniecia
 }
 
-// ── Bloki zmiany między dwiema treściami ────────────────────────────────────
-
-// blokZmianyStudia to jeden ciągły fragment, w którym treść B odbiega od A.
+// blokZmianyStudia to jeden ciągły fragment wierszy, w którym treść drugiego
+// wariantu odbiega od treści pierwszego.
 type blokZmianyStudia struct {
 	odA, doA int
 	trescB   []string
 }
 
-// granicaTablicyScaleniaStudia chroni pamięć przed porównaniem, które nie
-// mieści się w rozsądku: tablica podobieństwa rośnie iloczynem długości.
-// Powyżej tej granicy porównanie schodzi na przycinanie wspólnego przedrostka
-// i sufiksu — mniej dokładne, ale rozstrzygalne i skończone.
+// granicaTablicyScaleniaStudia ogranicza rozmiar tablicy podobieństwa wierszy,
+// powyżej którego porównanie przechodzi na przycinanie wspólnego przedrostka
+// i sufiksu.
 const granicaTablicyScaleniaStudia = 4_000_000
 
-// blokiZmianyStudia wyznacza fragmenty, którymi B różni się od A.
-//
-// Podstawą jest najdłuższy wspólny podciąg wierszy: to on mówi, co zostało
-// nietknięte, a wszystko pomiędzy dwoma kolejnymi wspólnymi wierszami jest
-// jednym blokiem zmiany. Dla scalania trójstronnego to rozstrzygnięcie jest
-// konieczne — przycinanie przedrostka i sufiksu (którym jedzie
-// `studio.diff.compare`) dałoby JEDEN wielki blok na całą treść, a wtedy każde
-// scalenie dwóch redakcji tego samego dokumentu byłoby konfliktem.
+// blokiZmianyStudia wyznacza fragmenty, którymi drugi wariant różni się od
+// pierwszego, na podstawie najdłuższego wspólnego podciągu wierszy obu treści.
 func blokiZmianyStudia(a, b []string) []blokZmianyStudia {
 	if len(a)*len(b) > granicaTablicyScaleniaStudia {
 		return blokiZPrzycieciaStudia(a, b)
 	}
 
-	// Tablica długości wspólnego podciągu — klasyczne wypełnianie od końca.
+	// Tablica długości wspólnego podciągu wypełniana od końca treści.
 	dlugosci := make([][]int, len(a)+1)
 	for i := range dlugosci {
 		dlugosci[i] = make([]int, len(b)+1)

@@ -1745,3 +1745,68 @@ wszystkie warianty miały jeden wspólny wiersz promptu w historii — kontrakt
 history.list czyta prompty okna i kanał, którym poszły. Niepowodzenie zapisu
 promptu nie przerywa generowania, bo prowenancja jest wiedzą o zasobie, a nie
 samym zasobem.
+
+## budowa/server/internal/core/adapter_modul_studio_podglad.go
+
+Plik obsługuje komendy `studio.preview.render` oraz `studio.diff.visual`.
+Silnik wyrysu stoi w `adapter_studio_wyrys.go`; ten plik odpowiada wyłącznie
+za to, skąd wziąć treść, jakimi nastawami ją wyrysować i gdzie odłożyć wynik.
+
+Podgląd oddaje strony, nie tekst. Kontrakt obu komend mówi o zasobach:
+`pageAssetIds` i `overlayAssetIds`. Podgląd ma pokazać układ — typografię,
+paginację, nagłówek i stopkę — a nie ten sam tekst, który operator widzi
+w edytorze. Strona wychodzi więc obrazem, bo obraz jest jedyną postacią,
+w której układ da się zobaczyć bez drugiego silnika składu po stronie okna.
+
+Format docelowy komendy WyrenderujPodglad rozstrzyga o postaci wyniku
+dwustopniowo: strony powstają zawsze jako obrazy, a przy formacie `pdf`
+z tych samych stron składa się dodatkowo dokument. Dwa różne silniki —
+jeden dla podglądu, drugi dla wydania — dawałyby dwa różne układy, a wtedy
+podgląd przestaje być podglądem.
+
+Komenda PorownajWizualnie idzie po wyrysie obu wersji, nie po ich tekście:
+sedno tej czynności jest w tym, żeby zobaczyć zmianę, której różnica
+tekstowa nie widzi — przesunięcie akapitu na następną stronę, zmianę
+łamania, przestawienie nagłówka. Obie strony rysuje ten sam silnik tymi
+samymi nastawami, więc różnica pikseli jest różnicą treści, a nie różnicą
+sposobu rysowania.
+
+Funkcja geometriaDokumentuStudia oddaje geometrię wyrysu wyliczoną z nastaw
+strony dokumentu, a nie ze stałej A4. Postać dokumentu nieczytelna albo
+niezapisana daje geometrię domyślną, a nie odmowę: podgląd dokumentu, który
+nastaw strony jeszcze nie ma, jest normalną drogą, a nie usterką. Nastawy
+sekcji ta droga bierze przez nastawy dokumentu, na które sekcja pierwsza
+się nakłada. Dokument o sekcjach różnych nośników wychodzi w wyrysie jednym
+rozmiarem — wyrys składa jeden ciąg kartek i drugiego rozmiaru w tym samym
+ciągu nie umie. Rachunek stron aparatu liczy za to sekcja po sekcji, bo
+numer strony musi być prawdziwy nawet wtedy, gdy obraz kartki jest
+przybliżeniem.
+
+## adapter_modul_studio_galezie.go
+
+Rozgałęzienie zakłada wiersz gałęzi i jedną wersję startową na niej, a nie
+drugi dokument. Drugi dokument oderwałby wariant od historii, z której wyrósł:
+nie dałoby się powiedzieć, od czego wariant odszedł, a scalanie nie miałoby
+wspólnego przodka, na którym stoi cała rodzina operacji gałęzi.
+
+Scalanie trójstronne rozstrzyga samo tam, gdzie zmieniła jedna strona. Tam,
+gdzie zmieniły obie i zmieniły inaczej, rdzeń nie wybiera — wybór strony
+docelowej byłby cichym skasowaniem cudzej redakcji, dlatego konflikt wraca
+kontraktem i czeka na rozstrzygnięcie w interfejsie.
+
+Wspólnym przodkiem scalania jest wersja startowa gałęzi scalanej: od niej
+wariant odszedł, więc to ona mówi, co w każdej z dwóch treści jest zmianą,
+a co stanem zastanym. Bez przodka porównanie dwóch czół dałoby konflikt na
+każdym fragmencie, który zmieniła tylko jedna strona.
+
+Odwołanie do wersji jest adresem w obrębie platformy, nie odnośnikiem
+sieciowym: rdzeń nie wystawia treści dokumentu na zewnątrz i nie ma jak
+zapewnić, że adres wyprowadzony na świat byłby czytelny wyłącznie dla
+uprawnionych.
+
+Porównanie bloków zmiany opiera się na najdłuższym wspólnym podciągu wierszy,
+a nie na przycinaniu wspólnego przedrostka i sufiksu, ponieważ przycinanie
+dałoby jeden wielki blok na całą treść — wtedy każde scalenie dwóch redakcji
+tego samego dokumentu kończyłoby się konfliktem. Przycinanie zostaje jedynie
+drogą zapasową dla treści zbyt długich na tablicę podobieństwa, której rozmiar
+rośnie iloczynem długości porównywanych wierszy.

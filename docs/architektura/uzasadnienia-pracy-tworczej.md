@@ -4536,3 +4536,59 @@ tylko pracą, której nie ma (od pytania jest Gotowy).
 w odpowiedzi, a Python bez tego przełącznika koduje wyjście według
 ustawień regionalnych systemu — na polskim Windowsie stroną 1250, w której
 JSON rozpada się na krzaki.
+
+## budowa/server/internal/wiedza/pomocnik.go
+
+Silnik mowy szuka swojego pomocnika w katalogu pomocniki/ obok binarium
+i płaci za to odmową na każdym wdrożeniu, w którym ktoś przeniósł samo
+binarium. Skrypt pomocnika osadzeń jedzie w binarium przez go:embed — tak
+samo jak migracje schematu (store/zrodlo_migracji.go) — żeby wdrożenie nie
+zależało od obecności plików obok programu.
+
+Pomocnik wykłada się do katalogu danych, nie do katalogu tymczasowego. Ten
+sam katalog niesie bazę, sejf poświadczeń i magazyn treści biblioteki —
+pomocnik przeżywa restart rdzenia tak jak one, a Operator ma go gdzie
+obejrzeć, zanim pozwoli mu ruszyć. Zapis jest atomowy (plik tymczasowy
+w katalogu docelowym, potem przemianowanie), bo skrypt obcięty w połowie
+wystartowałby i wywrócił się komunikatem o składni, którego nikt nie
+powiąże z przerwanym zapisem.
+
+Start procesu należy wyłącznie do zewnetrzne.Wolaj. exec.LookPath nie
+uruchamia procesu, a jedynie przegląda ścieżkę wyszukiwania systemu.
+
+Ten plik niczego nie uruchamia poza exec.LookPath, które nie uruchamia
+procesu, a jedynie przegląda ścieżkę wyszukiwania systemu.
+
+Każdy pomocnik leży pod własną nazwą w tym samym katalogu: jeden plik
+o zmiennej treści nie dałby się obejrzeć przed uruchomieniem, a właśnie po
+to katalog danych jest miejscem wyłożenia.
+
+Skrypt pomocnika jest bytem wtórnym wobec binarium, więc po podmianie
+rdzenia na nowsze wydanie na dysku ma leżeć wersja z tego binarium. Koszt
+to zapis kilku kilobajtów raz na żądanie indeksowania.
+
+Druga droga wykładania pomocnika byłaby drugą prawdą o tym, gdzie Operator
+ma szukać kodu, który rdzeń uruchamia na jego maszynie.
+
+Droga wołania procesu w zewnetrzne/wolanie.go nie podaje mu standardowego
+wejścia, dlatego zapiszZlecenie odkłada treść w pliku i oddaje funkcję
+sprzątającą — wołający kasuje plik defer-em, także na ścieżce błędu, żeby
+katalog zleceń nie rósł o jeden plik na każde żądanie.
+
+Wskazanie interpretera Operatora idzie wprost i bez sprawdzania na dysku,
+bo może być nazwą do rozwinięcia przez system albo dowiązaniem środowiska
+wirtualnego, a odmowa na podstawie własnego sprawdzenia unieważniałaby
+ustawienie. Gdy wskazania nie ma, szuka się python3, a gdy i tego nie ma —
+zostaje python; ta ostatnia wartość jest zgadywana i odmowa przyjdzie
+dopiero z uruchomienia, bo tylko ono zna prawdę o wykonywalności.
+
+Brak wskazania katalogu wag znaczy podkatalog katalogu danych rdzenia,
+a nie katalog domyślny biblioteki. Różnica jest istotna: biblioteka
+domyślnie pisze do katalogu pamięci podręcznej użytkownika, a droga
+wołania procesu nie dziedziczy środowiska, więc pomocnik nie zna nawet
+HOME i wagi wylądowałyby w miejscu zależnym od tego, gdzie akurat stoi
+rdzeń.
+
+Biblioteka wykłada wagi modelu stojącego wprost w katalogu wskazanym, więc
+dwa modele w jednym katalogu byłyby dwoma plikami model.safetensors
+w tym samym miejscu — czyli jednym z nich nadpisanym przez drugi.

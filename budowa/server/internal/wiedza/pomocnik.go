@@ -1,25 +1,6 @@
 // Odpowiedzialność pliku: wyłożenie pomocnika osadzeń na dysk i wskazanie
-// interpretera, który go uruchomi.
-//
-// Skrypt jest wkompilowany w binarium, a nie szukany obok niego. Silnik mowy
-// szuka swojego pomocnika w katalogu `pomocniki/` obok binarium (patrz
-// `mowa/pomocnik.go`) i płaci za to odmową na każdym wdrożeniu, w którym ktoś
-// przeniósł samo binarium. Tutaj skrypt jedzie w binarium przez `go:embed` —
-// tak samo jak migracje schematu (`store/zrodlo_migracji.go`) — i wykłada się
-// na dysk przy pierwszym użyciu. Powód jest ten sam co tam: wdrożenie nie ma
-// zależeć od obecności plików obok programu.
-//
-// Wykładany jest do katalogu danych, nie do katalogu tymczasowego. Ten sam
-// katalog niesie bazę, sejf poświadczeń i magazyn treści biblioteki — pomocnik
-// przeżywa restart rdzenia tak jak one, a Operator ma go gdzie obejrzeć, zanim
-// pozwoli mu ruszyć. Zapis jest atomowy (plik tymczasowy w katalogu docelowym,
-// potem przemianowanie), bo skrypt obcięty w połowie wystartowałby i wywrócił
-// się komunikatem o składni, którego nikt nie powiąże z przerwanym zapisem.
-//
-// Ten plik niczego nie uruchamia. Start procesu należy wyłącznie do
-// `zewnetrzne.Wolaj`. Jedynym wyjątkiem jest `exec.LookPath`, które
-// nie uruchamia procesu, a jedynie przegląda ścieżkę wyszukiwania systemu —
-// dokładnie tak, jak robi to `mowa/pomocnik.go`.
+// interpretera, który go uruchomi. Skrypt jest wkompilowany w binarium przez
+// `go:embed`, a nie szukany obok niego.
 package wiedza
 
 import (
@@ -30,46 +11,46 @@ import (
 	"path/filepath"
 )
 
-// skryptPomocnika — treść pomocnika wkompilowana w binarium.
-//
+// skryptPomocnika — treść pomocnika osadzeń wkompilowana w binarium przez
+// dyrektywę embed poniżej, gotowa do wyłożenia na dysk przy uruchomieniu.
 //go:embed pomocnik_osadzen.py
 var skryptPomocnika string
 
-// skryptPrzesiewu — treść pomocnika przesiewu wkompilowana w binarium.
-//
+// skryptPrzesiewu — treść pomocnika przesiewu wkompilowana w binarium
+// przez dyrektywę embed poniżej, gotowa do wyłożenia na dysk.
 //go:embed pomocnik_przesiewu.py
 var skryptPrzesiewu string
 
-// skryptObrazu — treść pomocnika osi obrazu wkompilowana w binarium.
-//
+// skryptObrazu — treść pomocnika osi obrazu wkompilowana w binarium przez
+// dyrektywę embed poniżej, gotowa do wyłożenia na dysk przy uruchomieniu.
 //go:embed pomocnik_obrazu.py
 var skryptObrazu string
 
 const (
-	// nazwaSkryptu jest nazwą pliku wyłożonego na dysk.
+	// nazwaSkryptu jest nazwą pliku pomocnika osadzeń wyłożonego na dysk,
+	// pod którą go odnajduje interpreter przy uruchomieniu.
 	nazwaSkryptu = "pomocnik_osadzen.py"
 	// nazwaSkryptuPrzesiewu i nazwaSkryptuObrazu są nazwami plików dwóch
-	// pozostałych pomocników. Każdy leży pod własną nazwą w tym samym katalogu:
-	// jeden plik o zmiennej treści nie dałby się obejrzeć przed uruchomieniem,
-	// a właśnie po to katalog danych jest miejscem wyłożenia.
+	// pozostałych pomocników, leżących pod własną nazwą w tym samym katalogu.
 	nazwaSkryptuPrzesiewu = "pomocnik_przesiewu.py"
 	nazwaSkryptuObrazu    = "pomocnik_obrazu.py"
-	// podkatalogWiedzy oddziela rzeczy wskaźnika od reszty katalogu danych.
+	// podkatalogWiedzy oddziela rzeczy wskaźnika znaczenia od reszty katalogu
+	// danych rdzenia, bazy i magazynu biblioteki.
 	podkatalogWiedzy = "wiedza"
-	// podkatalogModeli mieści wagi pobrane przez bibliotekę.
+	// podkatalogModeli mieści wagi modelu pobrane przez bibliotekę osadzeń,
+	// osobno od skryptów pomocników.
 	podkatalogModeli = "modele"
-	// podkatalogZlecen mieści pliki zleceń pomocnika. Osobny poziom, bo są to
-	// byty ULOTNE — kasowane zaraz po uruchomieniu — i nie mają leżeć obok
-	// skryptu ani obok wag.
+	// podkatalogZlecen mieści pliki zleceń pomocnika, byty ulotne, kasowane
+	// zaraz po uruchomieniu, nie leżące obok skryptu ani wag.
 	podkatalogZlecen = "zlecenia"
 
 	// prawaKatalogu i prawaPliku: treść Operatora należy do Operatora, który
-	// uruchomił rdzeń — tak samo jak magazyn biblioteki.
+	// uruchomił rdzeń, tak samo jak magazyn biblioteki.
 	prawaKatalogu = 0o700
 	prawaPliku    = 0o600
 
 	// interpreterPreferowany — trójka jawnie, bo goła nazwa `python` na wielu
-	// systemach wciąż wskazuje wydanie drugie.
+	// systemach wciąż wskazuje wydanie drugie języka.
 	interpreterPreferowany = "python3"
 	// interpreterZapasowy wchodzi tam, gdzie `python3` nie istnieje jako osobne
 	// polecenie (typowo Windows i część obrazów kontenerowych).
@@ -77,19 +58,14 @@ const (
 )
 
 // wylozSkrypt zapisuje pomocnika pod katalogiem danych i oddaje jego ścieżkę.
-//
-// Zapis powtarza się przy każdym wywołaniu, a nie tylko przy pierwszym: skrypt
-// jest bytem wtórnym wobec binarium, więc po podmianie rdzenia na nowsze
-// wydanie na dysku ma leżeć wersja z tego binarium. Koszt to zapis kilku
-// kilobajtów raz na żądanie indeksowania.
+// Zapis powtarza się przy każdym wywołaniu, nie tylko przy pierwszym.
 func wylozSkrypt(katalogDanych string) (string, error) {
 	return wylozPomocnika(katalogDanych, nazwaSkryptu, skryptPomocnika)
 }
 
 // wylozPomocnika wykłada jeden wkompilowany skrypt pod jego własną nazwą.
 // Trzej pomocnicy pakietu — osadzenia, przesiew i oś obrazu — jadą tą samą
-// drogą: druga droga wykładania byłaby drugą prawdą o tym, gdzie Operator ma
-// szukać kodu, który rdzeń uruchamia na jego maszynie.
+// drogą.
 func wylozPomocnika(katalogDanych, nazwa, tresc string) (string, error) {
 	katalog := filepath.Join(katalogDanych, podkatalogWiedzy)
 	if err := os.MkdirAll(katalog, prawaKatalogu); err != nil {
@@ -123,9 +99,7 @@ func wylozPomocnika(katalogDanych, nazwa, tresc string) (string, error) {
 }
 
 // zapiszZlecenie odkłada treść zlecenia w pliku, bo droga wołania procesu nie
-// podaje mu standardowego wejścia (`zewnetrzne/wolanie.go`). Oddaje ścieżkę
-// i funkcję sprzątającą — wołający kasuje plik `defer`-em, także na ścieżce
-// błędu, żeby katalog zleceń nie rósł o jeden plik na każde żądanie.
+// podaje mu standardowego wejścia. Oddaje ścieżkę i funkcję sprzątającą.
 func zapiszZlecenie(katalogDanych string, tresc []byte) (string, func(), error) {
 	katalog := filepath.Join(katalogDanych, podkatalogWiedzy, podkatalogZlecen)
 	if err := os.MkdirAll(katalog, prawaKatalogu); err != nil {
@@ -149,14 +123,8 @@ func zapiszZlecenie(katalogDanych string, tresc []byte) (string, func(), error) 
 	return nazwa, sprzatanie, nil
 }
 
-// odnajdzInterpreter rozstrzyga, który program uruchomi skrypt.
-//
-// Wskazanie Operatora bierzemy wprost i bez sprawdzania na dysku — świadomie,
-// bo może być nazwą do rozwinięcia przez system albo dowiązaniem środowiska
-// wirtualnego, a odmowa na podstawie własnego sprawdzenia unieważniałaby
-// ustawienie. Gdy wskazania nie ma, szukamy `python3`, a gdy i tego nie ma —
-// zostaje `python`; ta ostatnia wartość jest zgadywana i odmowa przyjdzie
-// dopiero z uruchomienia, bo tylko ono zna prawdę o wykonywalności.
+// odnajdzInterpreter rozstrzyga, który program uruchomi skrypt. Wskazanie
+// Operatora idzie wprost i bez sprawdzania na dysku, świadomie.
 func odnajdzInterpreter(program string) string {
 	if program != "" {
 		return program
@@ -167,13 +135,8 @@ func odnajdzInterpreter(program string) string {
 	return interpreterZapasowy
 }
 
-// katalogWag rozstrzyga, gdzie leżą pobrane wagi modelu.
-//
-// Wskazanie Operatora ma pierwszeństwo; jego brak znaczy podkatalog katalogu
-// danych rdzenia, a nie katalog domyślny biblioteki. Różnica jest istotna:
-// biblioteka domyślnie pisze do katalogu pamięci podręcznej użytkownika, a droga
-// wołania procesu nie dziedziczy środowiska, więc pomocnik nie zna nawet `HOME`
-// i wagi wylądowałyby w miejscu zależnym od tego, gdzie akurat stoi rdzeń.
+// katalogWag rozstrzyga, gdzie leżą pobrane wagi modelu. Wskazanie Operatora
+// ma pierwszeństwo; jego brak znaczy podkatalog katalogu danych rdzenia.
 func katalogWag(katalogDanych, wskazanie string) string {
 	if wskazanie != "" {
 		return wskazanie
@@ -181,12 +144,8 @@ func katalogWag(katalogDanych, wskazanie string) string {
 	return filepath.Join(katalogDanych, podkatalogWiedzy, podkatalogModeli)
 }
 
-// katalogWagOsobny rozstrzyga, gdzie leżą wagi modelu innego niż osadzenia.
-//
-// Osobny podkatalog na model, a nie wspólny worek: biblioteka wykłada wagi
-// modelu stojącego wprost w katalogu wskazanym, więc dwa modele w jednym
-// katalogu byłyby dwoma plikami `model.safetensors` w tym samym miejscu —
-// czyli jednym z nich nadpisanym przez drugi.
+// katalogWagOsobny rozstrzyga, gdzie leżą wagi modelu innego niż osadzenia,
+// w osobnym podkatalogu, nie wspólnym worku.
 func katalogWagOsobny(katalogDanych, wskazanie, podkatalog string) string {
 	if wskazanie != "" {
 		return wskazanie

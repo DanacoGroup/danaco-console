@@ -504,3 +504,11 @@ ma, więc dół okna niesie własną kreskę górną zamiast kreski monitora.
 ## budowa/klient-poprzedni/src/rozmowa/blok.css
 Blok prowenancji jest jedynym miejscem, w którym warstwa rozmowy sięga po
 tło akcentu — powierzchnia drobna i zwinięta domyślnie.
+
+## budowa/klient-poprzedni/src/ladowanie/ladowanie.css
+Bryła jest prawdziwą bryłą przestrzeni CSS, nie obrazkiem udającym
+trójwymiar ani płótnem WebGL, ponieważ sześć ścian i jeden obrót to
+dwadzieścia wierszy arkusza, a WebGL wnosi zależność, warstwę sterowników
+i ryzyko ekranu, który u odbiorcy nie wstanie. Scena stoi pod żetonem
+warstwy bramki, a nad wszystkim innym: przesłona logowania schodzi dopiero
+wtedy, gdy scena już stoi, więc żaden ekran nie mignie pomiędzy nimi.

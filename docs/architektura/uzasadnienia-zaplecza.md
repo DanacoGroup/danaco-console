@@ -2641,3 +2641,10 @@ osobnego wiersza trzeba by przeszukiwać treść wszystkich stron projektu.
 
 Odnośnik do strony jeszcze niezałożonej ma pustą kolumnę `notatka_docelowa`.
 To jest stan poprawny wiki, nie usterka: nazwa czeka na stronę.
+## budowa/server/internal/store/migracja_220_workspace_tablica_wizualna.sql
+Migracja 220 — tablica wizualna projektu (płótno, mapa myśli).
+
+Scena leży jednym zapisem JSON i rdzeń jej nie rozbiera. Kształt sceny —
+kartki, strzałki, grupy, osadzenia — należy do widoku, który ją rysuje;
+rozbiór na wiersze związałby schemat bazy z rysunkiem interfejsu i każda
+zmiana kształtu kartki byłaby migracją.

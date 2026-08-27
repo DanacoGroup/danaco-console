@@ -1,57 +1,7 @@
 // Odpowiedzialność pliku: podstawa odcinka kontroli pracy modułu Studio —
-// kontrakt warstwy danych (tabele migracji 363-366 i 370 oraz kolumny szeregu
-// wersji z 367), zdjęcie go z repozytorium rzutowaniem dwuwartościowym,
-// rozstrzygnięcie CZYJA RĘKA wykonuje czynność, oraz treści odmów wspólne dla
-// całego odcinka.
-//
-// ── Dlaczego własny, węższy kontrakt danych ─────────────────────────────────
-// `dane.RepozytoriumStudia` deklaruje `dane/studio.go` w całości i dopisanie
-// tam metod byłoby wejściem w plik cudzego odcinka. Rdzeń bierze więc dokładnie
-// te metody, których używa, i bierze je rzutowaniem DWUWARTOŚCIOWYM: rdzeń
-// złożony z repozytorium bez tych tabel pracuje dalej w pozostałych czynnościach
-// Studia, a brak nazywa się wprost, zamiast wywracać proces przy montażu. Ten
-// sam wzór trzyma odcinek postaci dokumentu (`adapter_modul_studio_postac_dane.go`)
-// i wyposażenie Terminala.
-//
-// ── JEDNA PRAWDA O TYM, KTO WOŁA — i dlaczego ta ─────────────────────────────
-// Blokada fragmentu, podświetlenie zmian wykonawcy i bilans spięcia stoją na
-// jednym pytaniu: czy tę komendę zawołał Operator, czy wykonawca. Kontrakt daje
-// dwie drogi odpowiedzi i trzeba było wybrać jedną zasadę składania ich razem:
-//
-//	(a) FAKT GNIAZDA — `transport.Tozsamosc.Narzedzia()`. Serwer narzędzi modelu
-//	    przedstawia się przy nawiązaniu gniazda; okno interfejsu Operatora nigdy
-//	    tak nie wygląda. Tego model nie układa sobie sam w treści żądania.
-//	(b) POLE ŻĄDANIA — `author`, `agentId`, `agentName`, `subagentId`. Tylko ta
-//	    droga potrafi POWIEDZIEĆ, KTÓRY z wielu wykonawców pracuje: agentów
-//	    Operator zakłada w module Agents dowolnie wielu i gniazdo ich nie zna.
-//
-// Zasada: **wykonawcą jest ten, kogo wskazuje SZERSZY z dwóch sygnałów.**
-// Operatorem czynność jest wtedy i tylko wtedy, gdy MILCZĄ OBA — gniazdo nie
-// jest serwerem narzędzi i żądanie nie podpisuje się wykonawcą. Wystarczy jeden
-// sygnał, żeby czynność była czynnością wykonawcy.
-//
-// Dlaczego nie którykolwiek z nich osobno:
-//   - samo pole żądania byłoby zaporą, którą model omija POMINIĘCIEM pola —
-//     a Właściciel nazwał to wprost usterką do naprawy, nie ograniczeniem;
-//   - samo gniazdo nie umie rozdzielić dwóch agentów pracujących naraz, więc
-//     przełącznik podświetlenia pokazywałby obu jako jednego.
-//
-// Tożsamość agenta (kod, nazwa, wersja, podagent) bierze się WYŁĄCZNIE z pola
-// żądania, bo gniazdo jej nie niesie. Zmiana bez wskazanego agenta zostaje
-// poprawna — dokumenty i wiersze sprzed dobudowy tego pola nie mają i odmowa
-// przy nich byłaby karą za wiek wiersza.
-//
-// Granica tej zasady, nazwana wprost, bo jest realna: `Rodzaj=narzedzia` jedzie
-// parametrem nawiązania gniazda, a nagłówek `transport/tozsamosc.go` stanowi, że
-// tożsamość połączenia jest OPISEM i nie ma być zaporą. Zasada „szerszy wygrywa"
-// stoi po właściwej stronie tego zastrzeżenia: opis wzięty tu pod uwagę może
-// czynność wyłącznie ZAWĘZIĆ w prawach (uczynić ją czynnością wykonawcy), nigdy
-// jej praw nie rozszerza. Podrobienie tego parametru w drugą stronę — zatajenie
-// go — nie otwiera niczego, dopóki żądanie podpisuje się wykonawcą; nie otwiera
-// też niczego, gdy oba sygnały milczą, bo wtedy rdzeń NIE MA po czym rozpoznać
-// wykonawcy i to jest brak wiedzy rdzenia, nie luka tej zasady. Kres domknięcia
-// leży w wiązaniu tożsamości serwera narzędzi przy jego starcie, nie w tym
-// pliku — i tak jest zgłoszony.
+// kontrakt warstwy danych (migracje 363-366 i 370, kolumny wersji z 367),
+// rzutowanie repozytorium, rozstrzygnięcie wykonawcy czynności oraz odmowy
+// wspólne dla odcinka.
 package core
 
 import (
@@ -201,9 +151,8 @@ func (a *adapterStudia) kontrolaSkladnica() (KontrolaPracyStudia, error) {
 // kontrolaWykonawca jest rozstrzygnięciem, czyja ręka wykonuje czynność, wraz
 // z tożsamością wykonawcy na tyle dokładną, na ile żądanie ją podało.
 type kontrolaWykonawca struct {
-	// Rodzaj jest grubym rozróżnieniem człowiek-wykonawca. Zostaje wyliczeniem
-	// kontraktu i nie rośnie: agentów jest dowolnie wielu, więc tożsamością jest
-	// kod agenta, a nie kolejna wartość wyliczenia.
+	// Rodzaj jest grubym rozróżnieniem człowiek-wykonawca; tożsamością wielu
+	// agentów jest kod agenta.
 	Rodzaj       shared.StudioAuthor
 	AgentKod     *string
 	AgentNazwa   *string
@@ -214,7 +163,8 @@ type kontrolaWykonawca struct {
 	KanalID      *string
 }
 
-// czyWykonawca mówi, czy czynność jest czynnością wykonawcy, a nie Operatora.
+// czyWykonawca mówi, czy czynność jest czynnością wykonawcy, a nie operatora,
+// na podstawie rodzaju zapisanego w rozstrzygnięciu.
 func (w kontrolaWykonawca) czyWykonawca() bool {
 	return w.Rodzaj == shared.StudioAuthorModel
 }
@@ -241,7 +191,8 @@ func (w kontrolaWykonawca) nazwaWykonawcy() string {
 	return "model"
 }
 
-// jakoAktor przekłada rozstrzygnięcie na strukturę kontraktu.
+// jakoAktor przekłada rozstrzygnięcie wykonawcy na strukturę kontraktu, niosącą
+// rodzaj, tożsamość agenta oraz identyfikatory sesji, okna i kanału.
 func (w kontrolaWykonawca) jakoAktor() shared.StudioActor {
 	return shared.StudioActor{
 		Kind: w.Rodzaj, AgentId: w.AgentKod, AgentName: w.AgentNazwa,
@@ -260,14 +211,13 @@ type kontrolaPodpisZadania struct {
 }
 
 // kontrolaRozpoznajWykonawce składa rozstrzygnięcie z faktu gniazda i z podpisu
-// żądania wedle zasady „szerszy wygrywa" opisanej w nagłówku pliku.
+// żądania wedle zasady, że wykonawcą jest ten, kogo wskazuje szerszy z dwóch
+// sygnałów; operatorem czynność jest wtedy i tylko wtedy, gdy milczą oba.
 func kontrolaRozpoznajWykonawce(ctx context.Context, podpis kontrolaPodpisZadania) kontrolaWykonawca {
 	wykonawca := kontrolaWykonawca{Rodzaj: shared.StudioAuthorUzytkownik}
 
-	// (a) Fakt gniazda. Serwer narzędzi modelu przedstawia się przy nawiązaniu;
-	// okno interfejsu Operatora nigdy tak nie wygląda. Rola klawiatury jest tu
-	// wykonawcą tak samo jak model roboczy: obie ręce jadą drogą narzędzi i obie
-	// nie są ręką Operatora w edytorze.
+	// Fakt gniazda: serwer narzędzi przedstawia się przy nawiązaniu; okno
+	// operatora tak nie wygląda.
 	tozsamosc := tozsamoscZKontekstu(ctx)
 	if tozsamosc.Narzedzia() {
 		wykonawca.Rodzaj = shared.StudioAuthorModel
@@ -277,9 +227,7 @@ func kontrolaRozpoznajWykonawce(ctx context.Context, podpis kontrolaPodpisZadani
 		}
 	}
 
-	// (b) Podpis żądania. Podnosi do wykonawcy, nigdy nie obniża do Operatora:
-	// `author=uzytkownik` w żądaniu przyszłym z gniazda narzędzi jest
-	// twierdzeniem modelu o sobie, a nie faktem, więc go nie przyjmujemy.
+	// Podpis żądania podnosi do wykonawcy, nigdy nie obniża do operatora.
 	if podpis.Author != nil && *podpis.Author == shared.StudioAuthorModel {
 		wykonawca.Rodzaj = shared.StudioAuthorModel
 	}
@@ -290,8 +238,6 @@ func kontrolaRozpoznajWykonawce(ctx context.Context, podpis kontrolaPodpisZadani
 	}
 
 	// Tożsamość agenta wchodzi wyłącznie z żądania — gniazdo jej nie niesie.
-	// Wchodzi także wtedy, gdy rodzaj wyszedł z gniazda: podpis mówi wtedy,
-	// KTÓRY z wielu wykonawców to był.
 	wykonawca.AgentKod = kontrolaWskaznikNiepusty(podpis.AgentId)
 	wykonawca.AgentNazwa = kontrolaWskaznikNiepusty(podpis.AgentName)
 	wykonawca.PodagentKod = kontrolaWskaznikNiepusty(podpis.SubagentId)
@@ -305,28 +251,17 @@ func kontrolaRozpoznajWykonawce(ctx context.Context, podpis kontrolaPodpisZadani
 // z zewnątrz pakietu i tożsamość wykonawcy byłaby podrabialna.
 type kluczWykonawcyStudia struct{}
 
-// kontrolaZapiszWykonawce wkłada rozpoznanego wykonawcę do kontekstu.
-//
-// ── Dlaczego kontekstem, a nie parametrem ───────────────────────────────────
-// Tożsamość wykonawcy niesie ŻĄDANIE (`agentId`, `agentName`, `subagentId`) —
-// kontrakt ma te pola przy każdej komendzie Studia, która niesie `author`.
-// Czynności postaci dokumentu jest trzydzieści osiem i wszystkie kończą jedną
-// drogą: `postacZakoncz`. Przełożenie podpisu przez trzydzieści osiem sygnatur
-// znaczyłoby trzydzieści osiem miejsc do pominięcia przez pomyłkę, a każde
-// pominięcie to zmiana podpisana „nienazwanym" — dokładnie ten sam rachunek,
-// którym zapora blokad stanęła w rejestrze, a nie w obsługiwaczach.
-//
-// Kontekst jedzie tu więc jednym wpięciem w rejestrze (`podpisWykonawcyStudia`)
-// i obejmuje także komendy, których jeszcze nikt nie napisał.
+// kontrolaZapiszWykonawce wkłada rozpoznanego wykonawcę do kontekstu wywołania,
+// skąd czynności odcinka postaci dokumentu czytają go jedną drogą zamiast przez
+// parametr każdej sygnatury.
 func kontrolaZapiszWykonawce(ctx context.Context, wykonawca kontrolaWykonawca) context.Context {
 	return context.WithValue(ctx, kluczWykonawcyStudia{}, wykonawca)
 }
 
-// kontrolaWykonawcaZKontekstu czyta podpis wykonawcy z kontekstu wywołania.
-//
-// Brak podpisu NIE jest usterką: tą drogą idą wywołania spoza rejestru — pętla
-// wykonawcza, sprzątanie, sprawdziany wołające adapter wprost. Wołający dostaje
-// wtedy fałsz i rozstrzyga sam, kim jest wykonawca.
+// kontrolaWykonawcaZKontekstu czyta podpis wykonawcy z kontekstu wywołania. Brak
+// podpisu nie jest usterką: tą drogą idą wywołania spoza rejestru — pętla
+// wykonawcza, sprzątanie i sprawdziany; wołający wtedy rozstrzyga sam, kim jest
+// wykonawca.
 func kontrolaWykonawcaZKontekstu(ctx context.Context) (kontrolaWykonawca, bool) {
 	if ctx == nil {
 		return kontrolaWykonawca{}, false
@@ -335,7 +270,8 @@ func kontrolaWykonawcaZKontekstu(ctx context.Context) (kontrolaWykonawca, bool) 
 	return wykonawca, jest
 }
 
-// kontrolaTekstNiepusty mówi, czy wskaźnik niesie napis o treści.
+// kontrolaTekstNiepusty mówi, czy wskaźnik niesie napis o treści, odróżniając
+// wskaźnik pusty i wskaźnik do napisu pustego od napisu niepustego.
 func kontrolaTekstNiepusty(wskazanie *string) bool {
 	return wskazanie != nil && *wskazanie != ""
 }
@@ -351,7 +287,8 @@ func kontrolaWskaznikNiepusty(wskazanie *string) *string {
 
 // ── Wspólne przekłady odcinka ───────────────────────────────────────────────
 
-// kontrolaWskaznikLiczby przenosi liczbę bazy do pola opcjonalnego kontraktu.
+// kontrolaWskaznikLiczby przenosi liczbę bazy typu int64 do pola opcjonalnego
+// kontraktu typu int, oddając brak wartości jako wskaźnik pusty.
 func kontrolaWskaznikLiczby(wartosc *int64) *int {
 	if wartosc == nil {
 		return nil
@@ -360,7 +297,8 @@ func kontrolaWskaznikLiczby(wartosc *int64) *int {
 	return &liczba
 }
 
-// kontrolaWskaznikTekstu przenosi napis do pola opcjonalnego kontraktu.
+// kontrolaWskaznikTekstu przenosi napis do pola opcjonalnego kontraktu, oddając
+// napis pusty jako wskaźnik pusty, nie jako pusty napis.
 func kontrolaWskaznikTekstu(wartosc string) *string {
 	if wartosc == "" {
 		return nil
@@ -368,7 +306,8 @@ func kontrolaWskaznikTekstu(wartosc string) *string {
 	return &wartosc
 }
 
-// kontrolaLiczbaZWskaznika przenosi liczbę kontraktu do kolumny bazy.
+// kontrolaLiczbaZWskaznika przenosi liczbę opcjonalną z kontraktu typu int do
+// kolumny bazy typu int64, zachowując brak wartości jako wskaźnik pusty.
 func kontrolaLiczbaZWskaznika(wartosc *int) *int64 {
 	if wartosc == nil {
 		return nil
@@ -378,12 +317,8 @@ func kontrolaLiczbaZWskaznika(wartosc *int) *int64 {
 }
 
 // kontrolaZakresWTresci przycina zakres żądania do granic treści liczonych
-// w ZNAKACH, nie w bajtach.
-//
-// W znakach, bo tak nazywa je kontrakt („poczatek fragmentu w znakach") i bo
-// cięcie po bajtach rozcinałoby polskie litery dwubajtowe: blokada założona
-// w tekście z „ą" chroniłaby wtedy pół znaku, a bilans mówiłby o zakresie,
-// którego w treści nie ma.
+// w znakach, nie w bajtach, ponieważ kontrakt nazywa początek fragmentu
+// w znakach, a cięcie po bajtach rozcinałoby polskie litery dwubajtowe.
 func kontrolaZakresWTresci(znaki []rune, od, do int) (int, int, bool) {
 	if od < 0 {
 		od = 0
@@ -397,13 +332,9 @@ func kontrolaZakresWTresci(znaki []rune, od, do int) (int, int, bool) {
 	return od, do, true
 }
 
-// kontrolaZakresyStykaja mówi, czy dwa zakresy półotwarte [odA, doA) i [odB, doB)
-// mają część wspólną.
-//
-// Zakres pusty (od == do) jest punktem wstawienia i styka się z blokadą, w której
-// środku leży: wpis w środek zablokowanego cytatu jest zmianą tego cytatu, choć
-// nie usuwa ani jednej litery. Punkt na samej krawędzi blokady nie styka się —
-// dopisanie ZA zablokowanym fragmentem go nie rusza.
+// kontrolaZakresyStykaja mówi, czy dwa zakresy półotwarte mają część wspólną;
+// zakres pusty jest punktem wstawienia i styka się z blokadą, w której środku
+// leży.
 func kontrolaZakresyStykaja(odA, doA, odB, doB int) bool {
 	if odA == doA {
 		return odA > odB && odA < doB
@@ -416,18 +347,16 @@ func kontrolaZakresyStykaja(odA, doA, odB, doB int) bool {
 
 // ── Odmowy odcinka ──────────────────────────────────────────────────────────
 
-// kontrolaBladZaplecza nazywa brak po stronie montażu rdzenia.
+// kontrolaBladZaplecza nazywa brak po stronie montażu rdzenia, na przykład
+// repozytorium podane bez tabel kontroli pracy modułu Studio.
 func kontrolaBladZaplecza(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"moduł Studio, kontrola pracy: "+powod))
 }
 
-// kontrolaBladBlokady jest ODMOWĄ NAZWANĄ: mówi, który fragment i jaka blokada
-// zatrzymały czynność.
-//
-// Cicha bezczynność byłaby tu najgorszą możliwą odpowiedzią — Operator myślałby,
-// że model wykonał polecenie. Dlatego treść odmowy niesie nazwę blokady, jej
-// powód i zakres znaków, a nie samo „nie wolno".
+// kontrolaBladBlokady jest odmową nazwaną: mówi, który fragment i jaka blokada
+// zatrzymały czynność, niosąc nazwę blokady, jej powód i zakres znaków zamiast
+// samego zakazu.
 func kontrolaBladBlokady(blokada dane.BlokadaFragmentuStudia, wykonawca string) error {
 	tresc := "moduł Studio: " + wykonawca + " nie może zmienić fragmentu od znaku " +
 		strconv.FormatInt(blokada.ZakresOd, 10) + " do " +
@@ -441,7 +370,8 @@ func kontrolaBladBlokady(blokada dane.BlokadaFragmentuStudia, wykonawca string) 
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodePermissionDenied, tresc))
 }
 
-// kontrolaBladZajecia jest odmową nazywającą wykonawcę, który trzyma fragment.
+// kontrolaBladZajecia jest odmową nazywającą wykonawcę, który trzyma fragment
+// zajęty, wraz z zakresem znaków i chwilą wygaśnięcia zajęcia.
 func kontrolaBladZajecia(zajecie dane.ZajecieFragmentuStudia, trzymajacy string) error {
 	tresc := "moduł Studio: fragment od znaku " +
 		strconv.FormatInt(zajecie.ZakresOd, 10) + " do " +

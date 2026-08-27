@@ -156,3 +156,11 @@ nie przesuwa.
 Reguły śladu posunięć asystenta niosą wyłącznie kontrast i znaczenie stanu,
 bez nowej ikonografii ani wariantów wizualnych, ponieważ warstwa wizualna
 całego komponentu jest tymczasowa.
+
+## design/zasoby/przedsionek.css
+Animacja wejścia stref korzysta z trybu `backwards`, nie `both`, ponieważ element z czynną animacją krycia albo przesunięcia staje się kontekstem nakładania. Przy trybie `both` panel rozwinięty w danej strefie schodził pod strefę stojącą niżej w dokumencie — usterka zmierzona na wykazie zapisanych automatyk pod listwą ustawień. Przy `backwards` klatka początkowa działa tylko na czas opóźnienia i ruchu, a po jego zakończeniu element wraca do zwykłego stanu, więc kontekst nakładania znika razem z animacją.
+
+## budowa/klient-poprzedni/src/dostepy/dodanie-katalogu.css
+Arkusz wciąga plik punkty-dostepu.css, ponieważ dodanie katalogu kończy wykaz
+punktów dostępu i stoi pod nim w tej samej sekcji. Barw własnych tu nie ma —
+wyłącznie żetony warstwy motyw/ — ani żadnej reguły wygaszającej kontrolkę.

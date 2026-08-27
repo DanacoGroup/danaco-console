@@ -5088,3 +5088,29 @@ w kroku dobudowy rdzenia. Wykaz sam się sprząta: gdy migracja modułu założy
 niepomyślnie z powodu wiersza, który został, a wpis znika wtedy razem z powodem, dla którego powstał.
 ## budowa/server/internal/dane/roundtable_tury.go
 Numer tury nadaje baza, nie rdzeń: numer powstaje jako największy dotychczasowy w tym oknie plus jeden, wewnątrz transakcji zakładającej wiersz. Gdyby liczył go rdzeń, dwie tury uruchomione w tej samej chwili z dwóch urządzeń tego samego konta dostałyby ten sam numer, a więź jednoznaczności okna i numeru odrzuciłaby drugą. Zero w granicy liczby wypowiedzi znaczy bez granicy, więc jedno przygotowane zapytanie obsługuje zarówno wykaz pełny, jak i wykaz przycięty. Podniesienie numeru redakcji razem z treścią przy zastąpieniu wypowiedzi wynika z tego, że regeneracja jest zastąpieniem, a nie dopisaniem, więc licznik redakcji jest jedynym śladem, że treść się zmieniła. Wskazanie tury nieistniejącej przy dopisywaniu wypowiedzi nie dopisuje niczego i wraca jako ErrBrakWiersza, bo cichy zapis do nieistniejącej tury ukrywałby błąd wołającego. Zapis całej debaty w porządku tur i wypowiedzi istnieje, bo bez niego każda analiza całej debaty czytałaby tury osobno i składała je ręcznie w kolejności.
+
+## budowa/server/internal/podagenci/doradca.go
+Pojęcie doradcy trzyma się na trzech własnościach. Jawność rady: Rada niesie
+treść wraz z kanałem i modelem doradcy, a Jawnie składa z nich blok do
+pokazania; rada nigdy nie wraca samym napisem treści, bo wpleciona w wynik
+agenta wyglądałaby na jego własną odpowiedź. Ślad w prowenancji: jedzie
+istniejącą drogą rdzenia, a dziennik doradcy zapisuje ten sam opis wywołania
+obok pytania i rady, drugiej prowenancji nie ma. Konsultacja, nie delegacja:
+metoda Wiazaca oddaje zawsze fałsz, a rama pytania mówi to doradcy wprost,
+odpowiedzialność za wynik zostaje przy agencie pytającym.
+
+Kto może być doradcą, rozstrzygają dane, nie kod: czynny wiersz rejestru
+kanałów z parametrem doradca i liczbową siłą. Jak daleko wolno sięgnąć,
+rozstrzyga sufit siły opisany w doborze doradcy; model z własnej inicjatywy
+w górę nie sięga.
+
+Wskazanego doradcy jako osobnego pola tu nie ma, bo Operator dziś nie ma czym
+takiego wskazania przyjąć, a takie pole znosiłoby sufit przy każdej
+konsultacji i kłamało o powodzie doboru; prośba o silniejszego bez wskazania
+Operatora kończy się odmową, nie podmianą.
+
+skrotKonsultacji: doradca i chwila wchodzą do skrótu, bo skrót zdarzenia
+konsultacji ma dać się zestawić z jednym wierszem dziennika konsultacji
+doradcy; bez nich dwie konsultacje o tym samym pytaniu u dwóch różnych
+doradców miałyby skrót identyczny, więc jedyna wartość niosąca treść rady
+w zdarzeniu nie wskazywałaby niczego jednoznacznie.

@@ -71,3 +71,58 @@ niewidoczną w dokumencie. Rozbiór dlatego prowadzi licznik przykrytych
 komórek do pominięcia, a nie porównanie z granicą kolumny: po przejściu
 komórki scalającej numer kolumny stoi już za scaleniem, więc porównanie
 z granicą nie odróżnia przykrycia poziomego od pionowego.
+
+## adapter_modul_studio_uchwyty.go
+
+Metody portu Studio leżą w wielu plikach adaptera (nastawy, postać, aparat,
+katalogi, gałęzie, wydanie i inne) — ten plik jest jedynym miejscem, które
+wpina je razem do rejestru komend.
+
+Zdarzenie `studio.document.changed` rozgłasza się wyłącznie tam, gdzie treść
+widoczna w oknie pracy z dokumentem naprawdę się zmienia, a odpowiedź komendy
+tej zmienionej treści nie niesie już sama. Stąd trzy grupy zachowań w pliku:
+
+- Operacja kontekstowa, zapis, przywrócenie wersji, założenie gałęzi (gdy
+  zostaje otwarta jako treść bieżąca), scalenie zakończone powodzeniem oraz
+  osadzenie zasobu zmieniają treść i jej odpowiedź nie niesie — rozgłaszają
+  zmianę, doczytując dokument przez `document.open` tam, gdzie trzeba.
+- Czynności postaci dokumentu (formatowanie, strona, listy, tabele, obiekty,
+  aparat, pola) oddają postać po zmianie wprost w odpowiedzi, więc zdarzenia
+  nie rozgłaszają — okno ma już to, czym miałoby się odświeżyć. Wyjątek jest
+  jeden: zapis postaci oddaje także dokument wraz z wersją, więc rozgłasza
+  zmianę tak jak zwykły zapis, bo po nim odświeżają się także wykazy i historia.
+- Odczyty, wykazy i nastawy nie ruszają treści i zdarzenia nie mają. Kolejka
+  wczytywania i jej odczyt, rozpoznanie oraz korekta rozgłaszają odrębne
+  zdarzenie stanu pozycji, nie zdarzenie dokumentu — dopiero przyjęcie pozycji
+  zakłada dokument i rozgłasza zmianę dokumentu. Schowek zdarzenia nie
+  rozgłasza, mimo że wycięcie i wklejenie zmieniają treść: kontrakt tych
+  odpowiedzi dokumentu nie niesie, a doczytanie go drugą drogą tylko po to,
+  żeby rozgłosić zmianę, kosztowałoby dwa odczyty na każde wklejenie — okno
+  odświeża się postacią, którą odpowiedź już niesie.
+- Kontrola pracy (dziennik, zmiany modelu, znakowanie, autozapis, kopie
+  zapasowe, zajęcia wykonawców) rozgłasza zmianę dokumentu tylko tam, gdzie
+  czynność podmienia treść widoczną w oknie i oddaje dokument w odpowiedzi:
+  cofnięcie i ponowienie czynności, cofnięcie zmian modelu, rozstrzygnięcie
+  znakowania i propozycji, przeniesienie fragmentu różnicy, przywrócenie
+  kopii i powrót do wersji założycielskiej.
+
+Podpis wykonawcy wpina się w rejestrze, a nie w każdym obsługiwaczu z osobna,
+z tego samego powodu, dla którego zapora blokad stoi w drzwiach, a nie przy
+każdym stoliku: tożsamość wykonawcy niesie żądanie, ale droga wyjścia
+czynności postaci tego żądania nie widzi. Rozłożenie podpisu po trzydziestu
+ośmiu sygnaturach czynności postaci znaczyłoby trzydzieści osiem miejsc do
+pominięcia przez pomyłkę — a pominięcie nie byłoby widoczne: zmiana
+zapisałaby się dalej, tylko podpisana błędnym autorem. Owinięcie rejestru
+obejmuje jednym warunkiem wszystkie te komendy, także te jeszcze nienapisane.
+
+Czynności postaci dokumentu rozstrzygają autora z pola żądania, bo tak
+stanowi kontrakt platformy. Wykonawca, który tego pola nie poda, zostałby
+zapisany jako autor domyślny, a jego zmiana nie odłożyłaby się jako zmiana
+śledzona i nie dałoby się jej podświetlić przełącznikiem pracy modelu —
+to jest usterka do naprawy, nie ograniczenie do zgłoszenia. Naprawa stoi
+w rejestrze, nie w trzydziestu ośmiu czynnościach postaci: gdy fakt gniazda
+mówi, że woła wykonawca, wpięcie dopisuje autora modelu do ładunku, zanim
+ładunek zobaczy obsługiwacz. Stempel idzie wyłącznie w jedną stronę — podnosi
+autora domyślnego do wykonawcy, nigdy odwrotnie — bo żądanie, które samo
+podaje się za wykonawcę, jest twierdzeniem modelu o sobie, nie faktem
+gniazda serwera narzędzi.

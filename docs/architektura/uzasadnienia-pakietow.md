@@ -3120,3 +3120,13 @@ drzewa zestarzałoby się razem z wersją biblioteki, a sprawdzian oparty na rep
 produktu mierzyłby przypadek, ponieważ jego stan zmienia się przy każdej pracy. Żaden
 sprawdzian nie pomija się przy braku programu git w środowisku uruchomieniowym: pakiet nie
 uruchamia ani jednego procesu zewnętrznego.
+
+## biblioteka_reguly.go
+
+Kolekcje mają tu drugie wejście obok `library_kolekcje.go` i to nie jest powielenie: tamten plik
+odpowiada za założenie kolekcji i przypisanie zasobów, ten za odczyt kolekcji jako bytu opisanego
+(rodzic, reguła, licznik). Podział idzie po pytaniu, nie po tabeli.
+
+Reguła nie wykonuje się sama. Warstwa danych przechowuje warunek i wskazuje kolekcję docelową;
+przeliczenie, czyli zamiana warunku na wykaz zasobów, należy do rdzenia, bo to on zna znaczenie
+członów warunku.

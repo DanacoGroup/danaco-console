@@ -3241,3 +3241,14 @@ Sprawdziany mierzą to, czego nie da się zobaczyć po stronie wołającego: ksz
 
 ## budowa/server/internal/dane/tozsamosc_wyliczenia.go
 Kontrakt daje słownik przekładu bazy wyłącznie dla rodzaju konta. Dla warstwy, trybu i osi tożsamości takiego słownika nie ma, bo kolumny trzymają wartości kontraktu wprost — drugie nazewnictwo byłoby drugim źródłem prawdy. Plik nie tłumaczy więc nazw: sprawdza, czy wartość kolumny należy do zbioru kontraktu, i uzupełnia wartość domyślną tam, gdzie wartości nie podano.
+## budowa/server/internal/dane/poczta_skrzynki_slad.go
+Ślad wysyłki powstaje bezwarunkowo, ponieważ wysłanie listu jest jedyną czynnością tego modułu, której skutek
+wychodzi poza system i której nie da się cofnąć. Zapis jest jawny, trwały i niezależny od tego, czy okno rozmowy
+jeszcze istnieje — pozwala odtworzyć, co wyszło ze skrzynki i kiedy.
+
+Wysyłka nieudana także jest wierszem tabeli: kolumna powodzenia niesie wartość fałszywą razem z treścią błędu.
+Reguła sprawdzająca schematu pilnuje zgodności obu kolumn — wysyłka udana nie może nieść błędu, nieudana musi go
+nieść. Dziennik zawierający same powodzenia sugerowałby błędnie, że wszystko doszło do adresata.
+
+Treść listu trafia do śladu w całości, ale bajty załączników nie: leżą w osobnym magazynie pod sumą kontrolną,
+a ślad wskazuje je wyłącznie nazwami umieszczonymi w treści.

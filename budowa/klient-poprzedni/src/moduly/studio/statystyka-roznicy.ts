@@ -1,49 +1,30 @@
 import { DiffHunkKind, type StudioDiffHunk } from '../../../../shared/contract';
 
-/**
- * Statystyka i filtr różnicy — rachunek na tym, co rdzeń już oddał.
- *
- * Opracowanie żąda od Diff/Grep Panelu paska statystyki („+48 słów · −12 słów ·
- * 3 zmiany") oraz filtrowania różnic po rodzaju. Kontrakt nie niesie komendy
- * liczącej statystykę i nie musi: `studio.diff.compare` oddaje fragmenty wraz
- * z treścią przed i po, więc liczby wynikają z odpowiedzi, którą panel już ma.
- * Drugie wywołanie po te same liczby byłoby pytaniem o coś, co leży na stole.
- *
- * Plik nie zna DOM: wejściem są fragmenty kontraktu, wyjściem liczby i wykaz
- * przefiltrowany. Dzięki temu rachunek sprawdza się bez stawiania okna.
- */
-
-/** Liczby opisujące różnicę dwóch stron porównania. */
+/** Liczby opisujące różnicę dwóch stron porównania: liczba fragmentów dodanych, usuniętych i zmienionych, oraz słowa i znaki dodane i usunięte. */
 export interface StatystykaRoznicy {
   fragmenty: number;
   dodane: number;
   usuniete: number;
   zmienione: number;
-  /** Słowa dopisane — z fragmentów dodanych i ze strony „po" fragmentów zmienionych. */
+  /** Słowa dopisane z fragmentów dodanych i strony po dla zmienionych. */
   slowaDodane: number;
-  /** Słowa zdjęte — z fragmentów usuniętych i ze strony „przed" fragmentów zmienionych. */
+  /** Słowa zdjęte z fragmentów usuniętych i strony przed dla zmienionych. */
   slowaUsuniete: number;
   znakiDodane: number;
   znakiUsuniete: number;
 }
 
-/** Wartość filtru wykazu różnic. */
+/** Wartość filtru wykazu różnic w panelu porównania; wskazuje jeden rodzaj fragmentu różnicy albo brak filtrowania i pokazanie wszystkich rodzajów. */
 export type FiltrRoznicy = 'wszystkie' | DiffHunkKind;
 
-/** Liczba słów w napisie; pusty napis nie ma ani jednego. */
+/** Liczy słowa w napisie rozdzielone dowolną sekwencją białych znaków; napis pusty albo złożony z samych odstępów nie ma ani jednego słowa. */
 function slowa(tresc: string): number {
   return tresc.split(/\s+/u).filter((slowo) => slowo !== '').length;
 }
 
 /**
- * Liczy statystykę z fragmentów oddanych przez rdzeń.
- *
- * Fragment zmieniony liczy się do obu stron naraz — jego treść „przed" jest
- * ubytkiem, a „po" przyrostem. Liczenie go tylko raz zaniżałoby obie liczby
- * i pasek mówiłby o mniejszej zmianie, niż zaszła.
- *
- * Fragment kontekstowy nie liczy się do żadnej strony: rdzeń podaje go dla
- * czytelności, a nie jako zmianę.
+ * Liczy statystykę z fragmentów oddanych przez rdzeń; fragment zmieniony liczy
+ * się do obu stron naraz, a fragment kontekstowy nie liczy się do żadnej.
  */
 export function policzRoznice(fragmenty: readonly StudioDiffHunk[]): StatystykaRoznicy {
   const wynik: StatystykaRoznicy = {
@@ -77,7 +58,7 @@ export function policzRoznice(fragmenty: readonly StudioDiffHunk[]): StatystykaR
   return wynik;
 }
 
-/** Zawęża wykaz fragmentów do jednego rodzaju; `wszystkie` niczego nie odsiewa. */
+/** Zawęża wykaz fragmentów różnicy do jednego wskazanego rodzaju; wartość `wszystkie` niczego nie odsiewa i oddaje wykaz w całości. */
 export function przefiltrujRoznice(
   fragmenty: readonly StudioDiffHunk[],
   filtr: FiltrRoznicy,
@@ -86,7 +67,7 @@ export function przefiltrujRoznice(
   return fragmenty.filter((fragment) => fragment.kind === filtr);
 }
 
-/** Zdanie paska statystyki — jedno miejsce składania tych liczb w napis. */
+/** Buduje zdanie paska statystyki różnicy z liczby fragmentów, słów i znaków dodanych oraz usuniętych; jest jedynym miejscem składania tych liczb w napis. */
 export function opiszStatystyke(statystyka: StatystykaRoznicy): string {
   if (statystyka.fragmenty === 0) return 'Rdzeń nie oddał ani jednego fragmentu różnicy.';
   return (

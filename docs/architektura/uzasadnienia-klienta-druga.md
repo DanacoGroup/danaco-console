@@ -1837,3 +1837,21 @@ z własną nakładką, stającymi nad menu, więc nie ma czego chować. Wyróżn
 ostrzegawcze jest wyłącznie barwą wiersza, nie blokadą: czynność usuwająca
 zapis bez odwrotu idzie czerwienią, ale wiersz pozostaje tak samo klikalny jak
 każdy inny.
+
+## budowa/klient-poprzedni/src/rozmowa/historia-z-rdzenia.ts
+Komenda message.list daje wiadomości leżące w bazie, więc odświeżenie okna albo powrót do sesji pokazuje wątek, a nie pustkę. Wpisy odtworzone są domknięte: pochodzą z zapisu, nie ze strumienia, więc nie mają tury w biegu ani fragmentów do doliczenia. Wywołujący dostaje dwie drogi, przyjmij na sukces także z pustą tablicą, i zglosNiepowodzenie na odmowę z gotowym zdaniem złożonym z powodu koperty, i ma obsłużyć obie. Odmowa rdzenia i historia naprawdę pusta muszą wyglądać na ekranie inaczej.
+
+Treść wpisu bierze się z pola content; wiadomość przerwana albo błędna wraca z treścią, którą zdążyła zebrać, bo pokazanie jej jest uczciwsze niż ukrycie tury, która się odbyła. Stan wpisu bierze się z pola status wiadomości, nie z samego faktu zapisu: tura przerwana i tura zamknięta błędem mają po odświeżeniu okna wyglądać tak samo jak w chwili, w której się odbyły.
+
+Odczyt wykazu blocks jest tolerancyjny wzorem odczytu fragmentu: brak obszaru, obszar cudzego kształtu albo pozycja bez rodzaju dają mniej bloków, bo historia ma się wyświetlić, a nie zniknąć od nieczytelnej pozycji.
+
+Wypowiedź operatora nie ma stanu tury: jest tym, co napisał, i nie może wrócić z zapisu jako zamknięta bez odpowiedzi, nawet gdyby zapis był pusty.
+
+## budowa/klient-poprzedni/src/moduly/studio/statystyka-roznicy.ts
+Panel różnic i wyszukiwania żąda paska statystyki oraz filtrowania różnic po
+rodzaju. Kontrakt nie niesie osobnej komendy liczącej statystykę, ponieważ
+porównanie stron oddaje fragmenty wraz z treścią przed i po, więc liczby
+wynikają z odpowiedzi, którą panel już ma; drugie wywołanie po te same liczby
+byłoby pytaniem o coś, co leży na stole. Moduł nie zna struktury dokumentu:
+wejściem są fragmenty kontraktu, wyjściem liczby i wykaz przefiltrowany,
+dzięki czemu rachunek sprawdza się bez stawiania okna.

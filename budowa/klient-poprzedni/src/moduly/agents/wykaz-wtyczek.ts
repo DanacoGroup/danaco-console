@@ -3,22 +3,7 @@ import { opisOdmowy } from '../../komponenty/odmowa';
 import { poleTekstowe, przycisk, utworzWierszOdpowiedzi } from '../../modele/kontrolki-formularza';
 import type { StanAgentow } from './stan-agentow';
 
-/**
- * Wykaz wtyczek eksperta — byt odrębny od konektora.
- *
- * Konektor jest drogą do usługi: serwerem MCP wskazanym punktem dostępu,
- * podawanym powłoce przez `--mcp-config`. Wtyczka jest katalogiem rozszerzeń
- * powłoki: zbiorem poleceń, zaczepów i umiejętności wgrywanym przez
- * `--plugin-dir`. Kontrakt rozdziela oba byty (`AgentPlugin`,
- * `Agent.pluginIds`, `agent.plugin.add`, `agent.plugin.remove`), więc
- * rozdziela je i okno.
- *
- * `Agent.pluginIds` niesie same identyfikatory, dlatego nazwę, wersję i źródło
- * wiersz bierze z `agent.plugin.list`. Identyfikator zostaje w podpowiedzi
- * wiersza, bo to nim posługuje się czynność odłączenia. Gdy odczyt definicji
- * odmówi albo jeszcze nie wrócił, wiersze pokazują same identyfikatory —
- * uboższa treść nie jest awarią i nie odbiera przycisku odłączenia.
- */
+/** Wykaz wtyczek eksperta pokazuje katalog rozszerzeń powłoki wgrywanych przez katalog wtyczki, jako byt odrębny od konektora będącego drogą do serwera usługi. */
 export interface WykazWtyczek {
   element: HTMLElement;
   /** Nanosi wtyczki eksperta czynnego; `null` znaczy brak eksperta. */
@@ -98,9 +83,7 @@ export function utworzWykazWtyczek(stan: StanAgentow): WykazWtyczek {
       return;
     }
     const wtyczka = wynik.wynik.plugin;
-    // Formularz czyścimy w całości: źródło poprzedniej wtyczki czekałoby w polu
-    // i poszłoby do rdzenia przy następnym podłączeniu, także przy innym
-    // ekspercie.
+    // Formularz czyścimy w całości, by źródło poprzedniej wtyczki nie trafiło do rdzenia.
     nazwa.kontrolka.value = '';
     zrodlo.kontrolka.value = '';
     wersja.kontrolka.value = '';
@@ -160,13 +143,7 @@ export function utworzWykazWtyczek(stan: StanAgentow): WykazWtyczek {
     },
   };
 
-  /**
-   * Dobiera definicje wtyczek eksperta i przerysowuje wykaz.
-   *
-   * Odpowiedź przedawniona nie nadpisuje świeższej: między wysłaniem a powrotem
-   * Operator może wybrać innego eksperta, a wtedy wykaz pokazywałby cudze
-   * wtyczki pod właściwymi kodami.
-   */
+  /** Dobiera definicje wtyczek eksperta i odrzuca odpowiedź przedawnioną wobec zmiany wyboru. */
   async function wczytajDefinicje(idEksperta: string): Promise<void> {
     const wynik = await stan.zrodlo.wtyczki(idEksperta);
     if (!wynik.udany || wynik.wynik === undefined) return;
@@ -190,8 +167,7 @@ function wiersz(
 
   const etykieta = document.createElement('span');
   etykieta.className = 'da-wtyczki__kod';
-  // Bez definicji zostaje sam identyfikator. Napis zastępczy w rodzaju
-  // „(bez nazwy)" udawałby, że rdzeń odpowiedział.
+  // Bez definicji zostaje sam identyfikator; napis zastępczy udawałby, że rdzeń odpowiedział.
   etykieta.textContent =
     definicja === undefined
       ? kod

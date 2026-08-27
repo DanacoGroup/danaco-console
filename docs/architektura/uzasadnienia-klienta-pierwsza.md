@@ -1038,3 +1038,30 @@ a warstwa składająca rozstrzyga, gdzie go postawić.
 
 Kod `library` odpowiada kolumnie `modul.kod` w rdzeniu, a wpis do rejestru
 modułów wiąże widok z modułem właśnie po tym kodzie.
+
+## budowa/klient-poprzedni/src/moduly/agents/zlecenia-agentow.ts
+
+Okno pracuje polami formularza: napisami z kontrolek i wartościami list wyboru.
+Kontrakt pracuje polami opcjonalnymi, których pusta wartość ma znaczyć „nie
+podano", a nie „podano pustkę". Struktury zleceń są granicą między jednym
+a drugim: pole puste zostaje w oknie, a do rdzenia idzie żądanie bez niego.
+
+Poziomy pamięci jadą zawsze, także jako zbiór pusty. Kontrakt rozstrzyga to
+wprost: pominięcie pola znaczy „bez zmiany", a lista pusta znaczy „pamięć
+wyłączona w całości" — i jest jedynym zapisem wyłączenia, ponieważ `MemoryLevel`
+piątej wartości nie ma. Gdyby okno pomijało pole przy wszystkich poziomach
+odznaczonych, Operator odznaczyłby cztery pola i nie wyłączyłby niczego.
+
+Odstępstwo od globalnego promptu systemowego jest wartością logiczną, a nie
+wartością `IdentityMode`, ponieważ dwie wartości pola `Agent.mode` nie są
+równorzędne. Prompt systemowy ustawiany globalnie w oknie konfiguracji
+obowiązuje domyślnie, a moduł Agents daje albo instrukcję dopisywaną do niego
+(stan domyślny, wartość fałszywa), albo jawne odstępstwo (wartość prawdziwa), po
+którym instrukcja eksperta staje się promptem systemowym. Przekład na pole
+`mode` wykonuje `zrodlo-agentow.ts`, na granicy formularza i kontraktu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/wiersz-pamieci.ts
+
+Wiersz pamięci nie prowadzi żadnego wywołania samodzielnie: zamiar oddaje oknu, które prowadzi wywołania rodziny memory. Ta sama granica obowiązuje wiersz zlecenia w pliku wiersz-zlecenia.ts, dzięki czemu oba wiersze pozostają wymiennymi elementami wykazu, a odpowiedzialność za wywołania skupia się w oknie.
+
+Wpis o pochodzeniu model jest propozycją czekającą na decyzję Operatora. Przyjęcie zapisuje tę samą treść z pochodzeniem operator, a odrzucenie usuwa wpis. Rozróżnienie pochodzenia należy do kontraktu przez typ MemoryEntryOrigin, a nie do okna: bez niego pamięć zapisana przez model byłaby nie do odróżnienia od ustalenia wprowadzonego przez Operatora.

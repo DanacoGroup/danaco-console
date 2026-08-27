@@ -3245,3 +3245,40 @@ wymaga identyfikatora okna.
 Jedna atrapa dla całego modułu zastępuje atrapę przepisywaną w każdym sprawdzianie z osobna:
 rozjazd z umową `ZrodloDeveloper` przerywa wtedy kompilację, zamiast rozjeżdżać sprawdziany
 po cichu. Plik służy wyłącznie sprawdzianom tego modułu i nie jest wciągany przez żadne okno.
+
+## budowa/klient-poprzedni/src/moduly/developer/stan-developer.ts
+
+Cztery okna modułu pracują nad tym samym repozytorium: drzewo projektu wskazuje
+plik, edytor kodu go otwiera i zapisuje, panel repozytorium podstawia ścieżkę
+wskazaną do pola czynności i sam wskazuje ścieżki ze swojego wyniku, a okno
+wyniku budowania wskazuje pliki ze zgłoszeń przebiegu. Gdyby każde okno trzymało
+własną ścieżkę i własny korzeń, wskazanie pliku w drzewie nie dotarłoby do
+edytora.
+
+Identyfikator okna modułu należy do stanu wspólnego, ponieważ kontrakt wymaga go
+w każdej komendzie obszaru, a okna mają go podawać identycznie. Rozbieżność
+rozdzieliłaby ich pracę między dwa katalogi robocze rdzenia.
+
+Stan nie wywołuje komend w zastępstwie okien: przechowuje wybór i rozgłasza
+zmianę, a odczyt i zapis pozostają w oknach, ponieważ tylko one prowadzą stan
+ładowania i obsługę odmowy.
+
+Ostatni plik oddany przez rdzeń nie jest tym samym co ścieżka wskazana:
+wskazanie biegnie natychmiast po wskazaniu węzła w drzewie, a plik przychodzi
+dopiero odpowiedzią rdzenia. Zgodność obu rozstrzyga porównanie ścieżki pliku ze
+ścieżką wskazaną i dlatego plik niesie własną ścieżkę. Edytor kodu czerpie stąd
+identyfikator wersji sprzed zapisu, a drzewo projektu odróżnia węzeł wskazany od
+węzła wczytanego do edytora.
+
+Treść pliku pochodząca z rdzenia nie jest treścią pola edycji. Pole bywa
+zmienione i niezapisane, a rdzeń po zapisie nie zawsze odsyła treść, więc
+znacznik czystości pola należy do edytora kodu.
+
+Wskazanie nowej ścieżki nie zeruje pliku: plik niesie własną ścieżkę, więc nie
+sposób pomylić go ze wskazaniem, a wyzerowanie usunęłoby jedyną wiedzę o tym, co
+leży w polu edytora.
+
+Przyrost budowania przychodzi także z pracy innego okna tego konta, dlatego stan
+przyjmuje wyłącznie przyrost dotyczący własnego okna modułu. Budowanie tworzy
+pliki, więc po nim drzewo i plik w edytorze bywają nieaktualne i wymagają
+ponownego odczytu.

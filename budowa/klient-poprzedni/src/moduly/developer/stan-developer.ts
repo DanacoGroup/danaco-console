@@ -3,46 +3,18 @@ import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { ZrodloDeveloper } from './zrodlo-developer';
 
 /**
- * Stan wspólny modułu Developer — jedna prawda dla czterech okien.
- *
- * Cztery okna pracują nad tym samym repozytorium: Project Tree wskazuje plik,
- * Code Editor go otwiera i zapisuje, Git Panel podstawia ścieżkę wskazaną do
- * pola czynności i sam wskazuje ścieżki ze swojego wyniku, a Build Output
- * wskazuje pliki ze zgłoszeń przebiegu. Gdyby każde okno trzymało własną
- * ścieżkę i własny korzeń, wskazanie pliku w drzewie nie dotarłoby do edytora.
- *
- * `windowId` stoi tutaj, bo kontrakt wymaga go we wszystkich pięciu komendach
- * obszaru, a okna mają go podać identycznie — inaczej rdzeń rozdzieliłby ich
- * pracę między dwa katalogi robocze.
- *
- * Stan nie wywołuje komend za okna: trzyma wybór i rozgłasza zmianę, a odczyt
- * i zapis należą do okien, bo tylko one mają stan ładowania i odmowy.
+ * Stan wspólny modułu Developer jest jedyną prawdą dla czterech okien pracujących
+ * nad tym samym repozytorium. Przechowuje okno modułu, ścieżkę wskazaną, ostatni
+ * plik oddany przez rdzeń oraz korzeń drzewa i rozgłasza każdą ich zmianę.
  */
 export interface StanDevelopera {
   /** Okno modułu wymagane w każdej z pięciu komend obszaru. */
   okno(): string;
   /** Ścieżka wskazana; pusta znaczy „nie wskazano”. */
   sciezka(): string;
-  /**
-   * Ostatni plik oddany przez rdzeń — wraz z jego własną ścieżką.
-   *
-   * To nie to samo co `sciezka()`: wskazanie biegnie natychmiast po kliknięciu
-   * w drzewie, a plik przychodzi dopiero odpowiedzią rdzenia. Zgodność obu
-   * sprawdza się porównaniem `plik()?.path` ze `sciezka()` — i po to plik
-   * niesie własną ścieżkę.
-   *
-   * Czytają to Code Editor (rozstrzyga, czy w polu leży już wskazany plik,
-   * i bierze stąd `versionId` sprzed zapisu) oraz Project Tree (odróżnia węzeł
-   * wskazany od węzła wczytanego do edytora).
-   */
+  /** Ostatni plik oddany przez rdzeń wraz z własną ścieżką; nie jest wskazaniem. */
   plik(): DeveloperFile | null;
-  /**
-   * Treść pliku oddanego przez rdzeń — pusta, dopóki rdzeń jej nie podał.
-   *
-   * To nie jest treść pola edycji. Pole bywa zmienione i niezapisane, a rdzeń
-   * po zapisie potrafi nie odesłać treści wcale; znacznik czystości pola należy
-   * więc do Code Editora i stoi tam, nie tutaj.
-   */
+  /** Treść pliku oddanego przez rdzeń; pusta do odpowiedzi, nie treść pola edycji. */
   tresc(): string;
   /** Wskazanie pliku bez jego treści — czynność Project Tree. */
   wskazPlik(sciezka: string): void;
@@ -58,7 +30,10 @@ export interface StanDevelopera {
   zamknij(): void;
 }
 
-/** Zależności stanu: okno modułu oraz wskazania otwierane od razu. */
+/**
+ * Zależności stanu: okno modułu wymagane w każdej komendzie obszaru oraz
+ * wskazania ścieżki i korzenia, którymi stan otwiera pracę zaraz po utworzeniu.
+ */
 export interface OpcjeStanuDevelopera {
   okno: string;
   sciezka?: string;
@@ -79,10 +54,7 @@ export function utworzStanDevelopera(
     for (const sluchacz of [...sluchacze]) sluchacz();
   }
 
-  // Przyrost budowania przychodzi także z pracy innego okna tego konta. Liczy
-  // się wyłącznie przyrost dotyczący tego okna modułu: budowanie generuje pliki,
-  // więc drzewo i plik w edytorze mogą być nieaktualne i okna mają się odczytać
-  // ponownie.
+  // Liczy się wyłącznie przyrost budowania dotyczący tego okna modułu.
   const odsubskrybujBudowanie = zrodlo.naZmianeBudowania((tresc) => {
     if (tresc.build.windowId !== idOkna) return;
     powiadom();
@@ -101,10 +73,7 @@ export function utworzStanDevelopera(
       const przyciety = sciezka.trim();
       if (przyciety === sciezkaBiezaca) return;
       sciezkaBiezaca = przyciety;
-      // Plik zostaje, zmienia się samo wskazanie. Plik niesie własną `path`,
-      // więc pomylić go ze wskazaniem nie sposób, a wyzerowanie kasowałoby
-      // jedyną wiedzę o tym, co leży w polu edytora. Czytelnik pokazujący treść
-      // porównuje `plik()?.path` ze `sciezka()`.
+      // Plik zostaje, zmienia się samo wskazanie; plik niesie własną ścieżkę.
       powiadom();
     },
 

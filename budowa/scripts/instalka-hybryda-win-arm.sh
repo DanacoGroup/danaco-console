@@ -32,7 +32,7 @@ printf '  jest: cel %s\n' "$CEL"
 
 zglos "Sprawdzenie artefaktów wejściowych"
 # Powłoka niesie własne okno, więc zbudowany klient jest jej jedynym artefaktem
-# wejściowym. Rdzenia nie sprawdzamy — w tej instalce go nie ma.
+# wejściowym. Rdzenia nie jest sprawdzany — w tej instalce go nie ma.
 [ -e "$KLIENT/dist/index.html" ] \
   || padnij "brak artefaktu: budowa/klient/dist/index.html (zbuduj: npm run budowanie w budowa/klient)"
 printf '  jest: budowa/klient/dist/index.html\n'

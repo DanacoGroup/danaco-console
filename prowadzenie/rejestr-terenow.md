@@ -159,6 +159,40 @@ przeczytaj je, zanim cokolwiek zmienisz.
 
 ## Zgłoszenia oczekujące na teren
 
+### Wagi mowy stoja poza katalogiem modeli
+
+Teren `nastawy-wdrozenia` slusznie **nie zalozyl** trzeciej nastawy. Zgloszenie
+podawalo `/opt/danaco-modele/mowa`, a takiego katalogu na maszynie nie ma -
+sprawdzone przez wykonawce i potwierdzone przez Prowadzacego. **641 MB wag mowy**,
+w tym `models--Systran--faster-whisper-small`, stoi w `~/.cache/huggingface`.
+
+Nastawa wskazujaca katalog nieistniejacy sprowadzilaby silnik mowy do pobierania
+od nowa, czyli **pogorszyla stan**. Domkniecie wymaga terenu obejmujacego zarazem
+przeniesienie wag na dysku i `internal/mowa/ustawienia.go`, ktory lezal poza
+wykazem tamtego terenu.
+
+### Sprawdziany rdzenia sa na granicy domyslnego limitu czasu
+
+Pakiet `internal/core` przekracza domyslne 10 minut `go test`: bieg bez
+`-timeout` konczy sie zrzutem gorutyn po 600 s, nie wynikiem. Zmierzone:
+`FAIL danacoconsole/server/internal/core 600.053s` przy 978 sprawdzianach.
+
+**Skutek:** kto uruchomi sprawdziany dokladnie tak, jak podaje przekazanie,
+dostanie niepowodzenie zamiast pomiaru. Obowiazujaca postac polecenia to odtad
+`gotestsum -- -count=1 -timeout 40m ./...`. Rozbicie pakietu `core` albo
+skrocenie najwolniejszych sprawdzianow jest osobna praca.
+
+### Sciezka wag na wdrozeniu - obawa rozstrzygnieta pozycja 8
+
+Wykonawca zglosil, ze `/opt/danaco-modele/embedder` jako wartosc domyslna jest
+wlasnoscia tej maszyny, a jedyna postacia produktu jest hybryda Windows 11.
+
+**Obawa znika.** Pozycja 8 stanowi, ze w hybrydzie **rdzen stoi na serwerze
+Danaco**, a u Operatora staje samo okno. Rdzen nigdy nie biegnie na Windowsie,
+wiec sciezka linuksowa jest sciezka serwera wdrozenia i jest poprawna. Nastawa
+pozostaje bez rozgalezienia po systemie.
+
+
 ### Strona pobierania obiecuje warianty zniesione pozycja 8
 
 Wykaz wydan sprowadzono do dwoch postaci hybrydowych, tresci strony wokol niego

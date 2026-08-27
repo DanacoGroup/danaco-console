@@ -6505,3 +6505,6 @@ osadzonych idzie osobnym przyciskiem, bo otwiera bajty zasobu, co jest
 kosztem, którego przegląd wykazu nie potrzebuje. Formularz Dublin Core
 scala domyślnie: pole zostawione puste zostaje bez zmiany, a pole
 wyczyszczone jawnie kasuje wartość, dokładnie tak, jak mówi kontrakt.
+
+## budowa/klient-poprzedni/src/moduly/apps/braki-kontraktu.ts
+Panele akcji okien Apps wymieniają więcej czynności, niż obszar apps niesie komend; czynność bez komendy zostaje widoczna i klikalna, a naciśnięcie mówi, czego brakuje. Powód składa się z wykazu komend kontraktu przy składaniu okna, więc dopisanie komendy do kontraktu przepisuje zdanie samo. Wobec bliźniaczego pliku modułu Diagnostics dochodzą tu dwie rzeczy: pozycja znika sama, gdy wskazana komenda wejdzie do kontraktu, a wskazanie cudzej drogi jest sprawdzane — zdanie o komendzie z innego obszaru pada wyłącznie wtedy, gdy ta komenda stoi w wykazie, w przeciwnym razie zdanie mówi o jej zniknięciu. Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje — brak jest po stronie kontraktu i tylko o kontrakcie zdanie mówi. Pełny powód dla jednej pozycji jest wyeksportowany, bo ta sama treść idzie do dymka, do tytułu i do opisu dostępności przycisku, a sprawdzian sięga po nią bez budowania dokumentu. Które pozycje są jeszcze brakiem jest wyeksportowane, żeby dało się to sprawdzić bez DOM.

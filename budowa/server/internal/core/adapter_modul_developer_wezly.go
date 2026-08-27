@@ -16,9 +16,12 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+	"time"
 
 	"danacoconsole/server/internal/repozytorium"
 	"danacoconsole/server/internal/session"
@@ -199,12 +202,18 @@ func (a *adapterDevelopera) PrzeniesWezly(_ context.Context,
 }
 
 // SzukajWRepozytorium przeszukuje repozytorium katalogu roboczego okna.
-func (a *adapterDevelopera) SzukajWRepozytorium(_ context.Context,
+//
+// Wzorzec z metazmienną idzie drogą składni (`ast-grep`), reszta — drogą napisu.
+// Rozstrzygnięcie stoi przy `wzorzecPoSkladni`.
+func (a *adapterDevelopera) SzukajWRepozytorium(ctx context.Context,
 	z shared.DeveloperGrepSearchRequest) (shared.DeveloperGrepSearchResponse, error) {
 
-	_, korzen, err := a.korzenRoboczyOkna(z.WindowId)
+	okno, korzen, err := a.korzenRoboczyOkna(z.WindowId)
 	if err != nil {
 		return shared.DeveloperGrepSearchResponse{}, err
+	}
+	if wzorzecPoSkladni(z.Pattern, z.Regex) {
+		return a.szukajPoSkladni(ctx, okno, korzen, z)
 	}
 	zadanie := repozytorium.ZadanieSzukania{
 		Wzorzec: z.Pattern, Wlacz: z.Include, Wylacz: z.Exclude,
@@ -233,7 +242,9 @@ func (a *adapterDevelopera) SzukajWRepozytorium(_ context.Context,
 // Zamiana masowa dotyka wielu plików naraz i nie ma po niej „Cofnij", więc
 // odpowiedź mówi wprost, czy zmiany zapisano, a wykaz zmian wraca także przy
 // podglądzie — Operator ma zobaczyć, co się stanie, zanim to się stanie.
-func (a *adapterDevelopera) ZamienWRepozytorium(_ context.Context,
+//
+// Wzorzec z metazmienną idzie drogą składni, tą samą, co wyszukanie.
+func (a *adapterDevelopera) ZamienWRepozytorium(ctx context.Context,
 	z shared.DeveloperGrepReplaceRequest) (shared.DeveloperGrepReplaceResponse, error) {
 
 	okno, korzen, err := a.korzenRoboczyOkna(z.WindowId)
@@ -245,6 +256,9 @@ func (a *adapterDevelopera) ZamienWRepozytorium(_ context.Context,
 		if err := sprawdzZmianeSystemu(okno.TrybUprawnien, "zamiana w repozytorium"); err != nil {
 			return shared.DeveloperGrepReplaceResponse{}, err
 		}
+	}
+	if wzorzecPoSkladni(z.Pattern, z.Regex) {
+		return a.zamienPoSkladni(ctx, okno, korzen, z, podglad)
 	}
 
 	zadanie := repozytorium.ZadanieZamiany{
@@ -260,4 +274,232 @@ func (a *adapterDevelopera) ZamienWRepozytorium(_ context.Context,
 	return shared.DeveloperGrepReplaceResponse{
 		Edits: zmiany, ChangedPaths: zmienione, Applied: zapisano,
 	}, nil
+}
+
+// ── Droga składni ───────────────────────────────────────────────────────────
+
+// czasSzukaniaPoSkladni jest granicą jednego przejścia po repozytorium.
+// Rozbiór składni jest droższy od dopasowania napisu, a repozytorium bywa duże.
+const czasSzukaniaPoSkladni = 120 * time.Second
+
+// metazmiennaWzorca rozpoznaje metazmienną `ast-grep`: `$` wraz z nazwą pisaną
+// wersalikami, cyframi i podkreśleniem, zaczynającą się od wersalika albo
+// podkreślenia.
+var metazmiennaWzorca = regexp.MustCompile(`\$[A-Z_][A-Z0-9_]*`)
+
+// wzorzecPoSkladni orzeka, czy wzorzec ma iść drogą składni zamiast drogi napisu.
+//
+// ── Dlaczego rozstrzyga metazmienna, a nie osobne pole ──────────────────────
+// Kontrakt nie niesie pola „szukaj po składni" i niniejsza praca kontraktu nie
+// zmienia. Rozstrzyga więc sam wzorzec, i to jego własną, udokumentowaną cechą:
+// metazmienna `$NAZWA` jest zapisem należącym do `ast-grep` i nie znaczy nic
+// w wyszukiwaniu po napisie — napis `$ARG` jako napis szukany jest zapytaniem,
+// którego nikt nie zadaje.
+//
+// Wyrażenie regularne wyłącza tę drogę BEZWARUNKOWO: w wyrażeniu `$` jest kotwicą
+// końca wiersza, więc wzorzec `foo$` byłby wzięty za składniowy wbrew temu, co
+// wołający napisał wprost.
+func wzorzecPoSkladni(wzorzec string, wyrazenie *bool) bool {
+	if wyrazenie != nil && *wyrazenie {
+		return false
+	}
+	return metazmiennaWzorca.MatchString(wzorzec)
+}
+
+// trafienieSkladni jest kształtem jednego trafienia `ast-grep run --json`.
+//
+// Wiersze i kolumny `ast-grep` liczy od zera, a kontrakt od jedynki — przeliczenie
+// stoi w miejscu odczytu, żeby nie rozjechało się między wyszukaniem a zamianą.
+type trafienieSkladni struct {
+	Plik    string `json:"file"`
+	Wiersze string `json:"lines"`
+	Zakres  struct {
+		Poczatek struct {
+			Wiersz  int `json:"line"`
+			Kolumna int `json:"column"`
+		} `json:"start"`
+		Koniec struct {
+			Wiersz  int `json:"line"`
+			Kolumna int `json:"column"`
+		} `json:"end"`
+	} `json:"range"`
+	Zamiana string `json:"replacement"`
+}
+
+// argumentySkladni składa wspólną część wywołania: wzorzec oraz zawężenia
+// wskazane przez wołającego.
+//
+// `include` i `exclude` kontraktu są wzorcami glob i idą jednym parametrem
+// `--globs`, w którym wyłączenie znakuje się wykrzyknikiem — tak, jak robi to
+// `.gitignore`.
+func argumentySkladni(wzorzec string, wlacz, wylacz []string) []string {
+	argumenty := []string{"run", "--pattern", wzorzec, "--json=compact"}
+	for _, glob := range wlacz {
+		if tresc := strings.TrimSpace(glob); tresc != "" {
+			argumenty = append(argumenty, "--globs", tresc)
+		}
+	}
+	for _, glob := range wylacz {
+		if tresc := strings.TrimSpace(glob); tresc != "" {
+			argumenty = append(argumenty, "--globs", "!"+tresc)
+		}
+	}
+	return argumenty
+}
+
+// odmowaBrakuSkladni nazywa brak programu wraz z drogą naprawy i obejściem.
+//
+// Odmowa, a nie cichy powrót do drogi napisu: wzorzec składniowy szukany jako
+// napis nie znajdzie niczego, a zero trafień wyglądałoby jak odpowiedź. Wynik
+// wyglądający dobrze jest groźniejszy od odmowy, bo nie wzywa do sprawdzenia.
+func odmowaBrakuSkladni() error {
+	return bladZasobuDevelopera(
+		"serwer nie ma programu " + narzedzieAstGrep.Nazwa + " (" +
+			narzedzieAstGrep.Program + "), a wzorzec z metazmienną `$NAZWA` " +
+			"jest wzorcem składni i po napisie się nie znajdzie; naprawa: " +
+			narzedzieAstGrep.Pakiet + ". Droga, która działa bez tego programu: " +
+			"wzorzec bez metazmiennej albo wyrażenie regularne (`regex: true`)")
+}
+
+// szukajPoSkladni przeprowadza wyszukanie wzorca po składni.
+func (a *adapterDevelopera) szukajPoSkladni(ctx context.Context, okno session.Okno,
+	korzen string, z shared.DeveloperGrepSearchRequest) (shared.DeveloperGrepSearchResponse, error) {
+
+	trafienia, err := a.przejdzPoSkladni(ctx, okno, korzen,
+		append(argumentySkladni(z.Pattern, z.Include, z.Exclude), "."))
+	if err != nil {
+		return shared.DeveloperGrepSearchResponse{}, err
+	}
+
+	wykaz := make([]shared.DeveloperGrepMatch, 0, len(trafienia))
+	for _, trafienie := range trafienia {
+		wykaz = append(wykaz, shared.DeveloperGrepMatch{
+			Path:   sciezkaWzgledemKorzenia(trafienie.Plik, korzen),
+			Line:   trafienie.Zakres.Poczatek.Wiersz + 1,
+			Column: wskaznikLiczby(trafienie.Zakres.Poczatek.Kolumna + 1),
+			Text:   trafienie.Wiersze,
+		})
+	}
+
+	wszystkich := len(wykaz)
+	przyciete := false
+	if z.Limit != nil && *z.Limit > 0 && len(wykaz) > *z.Limit {
+		wykaz, przyciete = wykaz[:*z.Limit], true
+	}
+	return shared.DeveloperGrepSearchResponse{
+		Matches: wykaz, Total: &wszystkich, Truncated: przyciete,
+	}, nil
+}
+
+// zamienPoSkladni przeprowadza zamianę wzorca po składni.
+//
+// Przejścia są dwa i jest to rozstrzygnięcie: pierwsze — bez zapisu — daje wykaz
+// zmian, który wraca w odpowiedzi także przy zapisie, bo Operator ma zobaczyć,
+// co się stało. Drugie zapisuje. Wyprowadzenie wykazu z samego zapisu nie da się
+// zrobić: przy `--update-all` program oddaje liczbę zmian, a nie ich treść.
+func (a *adapterDevelopera) zamienPoSkladni(ctx context.Context, okno session.Okno,
+	korzen string, z shared.DeveloperGrepReplaceRequest,
+	podglad bool) (shared.DeveloperGrepReplaceResponse, error) {
+
+	wspolne := append(argumentySkladni(z.Pattern, nil, nil),
+		"--rewrite", z.Replacement)
+	cele := celeZamianySkladni(z.Paths)
+
+	trafienia, err := a.przejdzPoSkladni(ctx, okno, korzen, append(wspolne, cele...))
+	if err != nil {
+		return shared.DeveloperGrepReplaceResponse{}, err
+	}
+
+	zmiany := make([]shared.DeveloperTextEdit, 0, len(trafienia))
+	widziane := map[string]bool{}
+	zmienione := make([]string, 0, 4)
+	for _, trafienie := range trafienia {
+		sciezka := sciezkaWzgledemKorzenia(trafienie.Plik, korzen)
+		zmiany = append(zmiany, shared.DeveloperTextEdit{
+			Path:        sciezka,
+			StartLine:   trafienie.Zakres.Poczatek.Wiersz + 1,
+			StartColumn: wskaznikLiczby(trafienie.Zakres.Poczatek.Kolumna + 1),
+			EndLine:     trafienie.Zakres.Koniec.Wiersz + 1,
+			EndColumn:   wskaznikLiczby(trafienie.Zakres.Koniec.Kolumna + 1),
+			NewText:     trafienie.Zamiana,
+		})
+		if !widziane[sciezka] {
+			widziane[sciezka] = true
+			zmienione = append(zmienione, sciezka)
+		}
+	}
+
+	if podglad || len(zmiany) == 0 {
+		return shared.DeveloperGrepReplaceResponse{
+			Edits: zmiany, ChangedPaths: zmienione, Applied: false,
+		}, nil
+	}
+
+	// Zapis nie oddaje trafień, więc wykaz JSON schodzi z wywołania: program
+	// odmawia postawienia obu parametrów naraz.
+	zapis := append(usunWykazJson(wspolne), "--update-all")
+	zapis = append(zapis, cele...)
+	if _, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieAstGrep, zapis,
+		korzen, czasSzukaniaPoSkladni); err != nil {
+		if brakNarzedziaWarsztatu(err) {
+			return shared.DeveloperGrepReplaceResponse{}, odmowaBrakuSkladni()
+		}
+		return shared.DeveloperGrepReplaceResponse{}, bladWykonaniaDevelopera(
+			"zamiana po składni odmówiła: " + err.Error())
+	}
+	return shared.DeveloperGrepReplaceResponse{
+		Edits: zmiany, ChangedPaths: zmienione, Applied: true,
+	}, nil
+}
+
+// celeZamianySkladni składa wskazania plików; puste żądanie obejmuje całe drzewo.
+func celeZamianySkladni(sciezki []string) []string {
+	cele := make([]string, 0, len(sciezki))
+	for _, sciezka := range sciezki {
+		if tresc := strings.TrimSpace(sciezka); tresc != "" {
+			cele = append(cele, tresc)
+		}
+	}
+	if len(cele) == 0 {
+		return []string{"."}
+	}
+	return cele
+}
+
+// usunWykazJson zdejmuje z wywołania parametr wykazu JSON.
+func usunWykazJson(argumenty []string) []string {
+	bez := make([]string, 0, len(argumenty))
+	for _, argument := range argumenty {
+		if strings.HasPrefix(argument, "--json") {
+			continue
+		}
+		bez = append(bez, argument)
+	}
+	return bez
+}
+
+// przejdzPoSkladni uruchamia program i odczytuje wykaz trafień.
+//
+// Wykaz pusty jest wynikiem; wykaz nieczytelny przy niepowodzeniu programu NIE
+// jest — wtedy nie zmierzono niczego i odpowiedź ma to powiedzieć odmową.
+func (a *adapterDevelopera) przejdzPoSkladni(ctx context.Context, okno session.Okno,
+	korzen string, argumenty []string) ([]trafienieSkladni, error) {
+
+	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieAstGrep, argumenty,
+		korzen, czasSzukaniaPoSkladni)
+	if brakNarzedziaWarsztatu(err) {
+		return nil, odmowaBrakuSkladni()
+	}
+	var trafienia []trafienieSkladni
+	tresc := strings.TrimSpace(string(wynik.Wyjscie))
+	if rozbior := json.Unmarshal([]byte(tresc), &trafienia); rozbior != nil {
+		if err != nil {
+			return nil, bladWykonaniaDevelopera(
+				"przejście po składni odmówiło: " + skrocDiagnostyke(wynik.Diagnostyka, err))
+		}
+		return nil, bladWykonaniaDevelopera(
+			"program " + narzedzieAstGrep.Program + " oddał odpowiedź, której nie da się " +
+				"odczytać jako wykazu trafień: " + rozbior.Error())
+	}
+	return trafienia, nil
 }

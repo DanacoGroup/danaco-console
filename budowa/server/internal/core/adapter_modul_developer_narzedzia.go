@@ -63,6 +63,27 @@ var (
 		Nazwa: "ESLint", Program: "eslint", Pakiet: "npm i -g eslint"}
 	narzedzieSilnikaKontenerow = zewnetrzne.Narzedzie{
 		Nazwa: "Docker", Program: "docker", Pakiet: "docker.io albo podman"}
+	narzedzieRuff = zewnetrzne.Narzedzie{
+		Nazwa: "Ruff", Program: "ruff", Pakiet: "pip install ruff"}
+	narzedzieSemgrep = zewnetrzne.Narzedzie{
+		Nazwa: "Semgrep", Program: "semgrep", Pakiet: "pip install semgrep"}
+	narzedzieAstGrep = zewnetrzne.Narzedzie{
+		Nazwa: "ast-grep", Program: "ast-grep", Pakiet: "npm i -g @ast-grep/cli"}
+	narzedzieJscpd = zewnetrzne.Narzedzie{
+		Nazwa: "jscpd", Program: "jscpd", Pakiet: "npm i -g jscpd"}
+	narzedzieDupl = zewnetrzne.Narzedzie{
+		Nazwa: "dupl", Program: "dupl",
+		Pakiet: "go install github.com/mibk/dupl@latest"}
+	narzedzieTypos = zewnetrzne.Narzedzie{
+		Nazwa: "typos", Program: "typos", Pakiet: "cargo install typos-cli"}
+	narzedzieStylelint = zewnetrzne.Narzedzie{
+		Nazwa: "Stylelint", Program: "stylelint", Pakiet: "npm i -g stylelint"}
+	// narzedzieSerweraTypeScript jest zadeklarowane, lecz rdzeń nie ma dziś
+	// czym go zapytać — powód stoi przy `serwerJezykaPliku`, gdzie rozstrzyga
+	// się droga warstwy językowej dla plików TypeScriptu.
+	narzedzieSerweraTypeScript = zewnetrzne.Narzedzie{
+		Nazwa: "serwer języka TypeScript", Program: "typescript-language-server",
+		Pakiet: "npm i -g typescript-language-server typescript"}
 )
 
 // narzedziaWarsztatuDevelopera oddaje komplet programów warsztatu w kolejności
@@ -70,15 +91,23 @@ var (
 // wykaz — Dev Tools ma się różnić wtedy, gdy zmienił się stan serwera.
 func narzedziaWarsztatuDevelopera() []zewnetrzne.Narzedzie {
 	return []zewnetrzne.Narzedzie{
+		narzedzieAstGrep,
 		narzedzieDelve,
+		narzedzieDupl,
 		narzedzieEslint,
 		narzedzieGofmt,
 		narzedzieGoimports,
 		narzedzieGolangciLint,
 		narzedzieGopls,
+		narzedzieJscpd,
 		narzedziePrettier,
+		narzedzieRuff,
+		narzedzieSemgrep,
+		narzedzieSerweraTypeScript,
 		narzedzieSilnikaKontenerow,
 		narzedzieStaticcheck,
+		narzedzieStylelint,
+		narzedzieTypos,
 	}
 }
 

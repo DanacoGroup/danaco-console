@@ -659,3 +659,78 @@ func doczekajPliku(sciezka string, najdluzej time.Duration) bool {
 	}
 	return false
 }
+
+// TestAnalizaSkryptuPythonaIdzieRuffem sprawdza, że karta `python` dostaje
+// analizę REGUŁ, a nie samo orzeczenie o składni.
+//
+// Treść jest składniowo poprawna, więc orzeczenie o składni oddałoby pusty wykaz
+// uwag — czyli zdanie „treść bez zastrzeżeń" o treści, która zastrzeżenia ma.
+// Sprawdzian mierzy więc konkretną regułę (`F401`, import nieużywany), a nie
+// samą liczbę uwag.
+func TestAnalizaSkryptuPythonaIdzieRuffem(t *testing.T) {
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	prawda := true
+	var wynik shared.TerminalScriptLintResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalScriptLint,
+		shared.TerminalScriptLintRequest{
+			Content: "import os, sys\ndef f( x ):\n    return x\n",
+			Shell:   shared.TerminalShellPython,
+			Format:  &prawda,
+		}, &wynik)
+
+	if !wynik.AnalyzerAvailable {
+		t.Skipf("program analizy Pythona nie stoi na tej maszynie (%s) — "+
+			"analizy nie ma czym zmierzyć", wynik.Analyzer)
+	}
+	if !strings.Contains(strings.ToLower(wynik.Analyzer), narzedzieRuff.Program) {
+		t.Skipf("analizę Pythona prowadzi tu %s, a nie %s — reguł nie ma czym zmierzyć",
+			wynik.Analyzer, narzedzieRuff.Nazwa)
+	}
+
+	if len(wynik.Findings) == 0 {
+		t.Fatal("analiza treści z nieużywanymi importami oddała pusty wykaz uwag, " +
+			"czyli zameldowała treść bez zastrzeżeń")
+	}
+	regulaZnaleziona := false
+	for _, uwaga := range wynik.Findings {
+		if uwaga.Line <= 0 {
+			t.Errorf("uwaga bez numeru wiersza jest uwagą, której nie da się wskazać: %#v", uwaga)
+		}
+		if uwaga.Rule != nil && *uwaga.Rule == "F401" {
+			regulaZnaleziona = true
+		}
+	}
+	if !regulaZnaleziona {
+		t.Errorf("analiza nie zgłosiła nieużywanego importu (F401): %#v", wynik.Findings)
+	}
+
+	// Formatowanie ma oddać treść RÓŻNĄ od wejściowej — inaczej pole obiecuje
+	// pracę, której nie wykonano.
+	if wynik.Formatted == nil || strings.TrimSpace(*wynik.Formatted) == "" {
+		t.Fatal("prośba o formatowanie nie oddała treści sformatowanej")
+	}
+	if strings.Contains(*wynik.Formatted, "def f( x ):") {
+		t.Errorf("treść oddana jako sformatowana została nietknięta:\n%s", *wynik.Formatted)
+	}
+}
+
+// TestAnalizaSkryptuPythonaZgłaszaBladSkladni pilnuje, że przejście na analizę
+// regułami nie odebrało orzeczenia o składni: błąd składni ma wracać dalej.
+func TestAnalizaSkryptuPythonaZglaszaBladSkladni(t *testing.T) {
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	var wynik shared.TerminalScriptLintResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalScriptLint,
+		shared.TerminalScriptLintRequest{
+			Content: "def f(\n",
+			Shell:   shared.TerminalShellPython,
+		}, &wynik)
+
+	if !wynik.AnalyzerAvailable {
+		t.Skipf("program analizy Pythona nie stoi na tej maszynie (%s)", wynik.Analyzer)
+	}
+	if len(wynik.Findings) == 0 {
+		t.Fatal("analiza treści o zepsutej składni oddała pusty wykaz uwag")
+	}
+}

@@ -36,11 +36,13 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"danacoconsole/server/internal/dane"
 	"danacoconsole/server/internal/repozytorium"
+	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
 )
 
@@ -436,7 +438,7 @@ func (a *adapterDevelopera) UruchomSkan(ctx context.Context,
 			"nie można założyć przebiegu skanowania: " + err.Error())
 	}
 
-	znaleziska, err := a.przeprowadzSkan(korzenie[0], kod, rodzaje, z.Paths)
+	znaleziska, err := a.przeprowadzSkan(ctx, okno, korzenie[0], kod, rodzaje, z.Paths)
 	stan := shared.BuildStatus(shared.BuildStatusSucceeded)
 	if err != nil {
 		stan = shared.BuildStatusFailed
@@ -493,19 +495,28 @@ func rodzajeSkanu(zadane []shared.ScanKind) []shared.ScanKind {
 }
 
 // przeprowadzSkan wykonuje wskazane rodzaje skanu w katalogu roboczym.
-func (a *adapterDevelopera) przeprowadzSkan(korzen, skanKod string,
-	rodzaje []shared.ScanKind, sciezki []string) ([]daneZnaleziska, error) {
+func (a *adapterDevelopera) przeprowadzSkan(ctx context.Context, okno session.Okno,
+	korzen, skanKod string, rodzaje []shared.ScanKind,
+	sciezki []string) ([]daneZnaleziska, error) {
 
 	znaleziska := make([]daneZnaleziska, 0, 32)
 	trescioweRodzaje := false
+	skanKodu := false
 	for _, rodzaj := range rodzaje {
 		switch rodzaj {
-		case shared.ScanKindSecrets, shared.ScanKindCode:
+		case shared.ScanKindSecrets:
 			trescioweRodzaje = true
+		case shared.ScanKindCode:
+			trescioweRodzaje = true
+			skanKodu = true
 		case shared.ScanKindDependencies, shared.ScanKindLicenses:
 			znaleziska = append(znaleziska,
 				znaleziskaZManifestu(korzen, skanKod, rodzaj)...)
 		}
+	}
+	if skanKodu {
+		znaleziska = append(znaleziska,
+			a.znaleziskaProgramow(ctx, okno, korzen, skanKod, sciezki)...)
 	}
 	if !trescioweRodzaje {
 		return znaleziska, nil
@@ -797,4 +808,257 @@ func filtrZnaleziskZadania(z shared.DeveloperScanResultListRequest) dane.FiltrZn
 		filtr.Limit = *z.Limit
 	}
 	return filtr
+}
+
+// ── Skan kodu programami warsztatu ──────────────────────────────────────────
+//
+// Reguły wyrażeń regularnych wyżej pracują zawsze i bez niczego spoza rdzenia —
+// to jest droga podstawowa i ona rozstrzyga, że skan kodu w ogóle coś zmierzył.
+// Programy niżej ją POSZERZAJĄ: `semgrep` orzeka po składni tam, gdzie wyrażenie
+// regularne widzi tylko wiersz, a `jscpd` i `dupl` znajdują powtórzony fragment,
+// którego żadna reguła wierszowa nie zobaczy.
+//
+// Program nieobecny na maszynie nie psuje skanu i nie zmienia jego stanu: skan
+// oddaje wtedy to, co zmierzyła droga podstawowa. Każde znalezisko niesie nazwę
+// reguły, więc widać, co je wystawiło.
+
+// czasProgramuSkanu jest granicą jednego przejścia programu po repozytorium.
+const czasProgramuSkanu = 180 * time.Second
+
+// Progu powtórzenia rdzeń NIE narzuca: każdy z obu programów ma własny i to on
+// obowiązuje. Próg mówi, od ilu żetonów zbieżność jest powtórzeniem, a nie
+// przypadkiem — jest więc rozstrzygnięciem o tym, co w danym języku jest
+// powieleniem kodu. Wartość wpisana tutaj byłaby wartością wziętą znikąd
+// i cichym nadpisaniem tego, co program o swoim języku wie.
+
+// konfiguracjeSemgrepa wylicza nazwy, pod którymi Semgrep szuka zestawu reguł
+// w korzeniu repozytorium.
+var konfiguracjeSemgrepa = []string{
+	".semgrep.yml", ".semgrep.yaml", "semgrep.yml", "semgrep.yaml", ".semgrep",
+}
+
+// znaleziskaProgramow zbiera spostrzeżenia programów poszerzających skan kodu.
+func (a *adapterDevelopera) znaleziskaProgramow(ctx context.Context, okno session.Okno,
+	korzen, skanKod string, sciezki []string) []daneZnaleziska {
+
+	znaleziska := make([]daneZnaleziska, 0, 8)
+	znaleziska = append(znaleziska,
+		a.znaleziskaSemgrepa(ctx, okno, korzen, skanKod, sciezki)...)
+	znaleziska = append(znaleziska,
+		a.znaleziskaPowtorzenTypeScriptu(ctx, okno, korzen, skanKod)...)
+	znaleziska = append(znaleziska,
+		a.znaleziskaPowtorzenGo(ctx, okno, korzen, skanKod)...)
+	return znaleziska
+}
+
+// wyjscieSemgrepa jest kształtem odpowiedzi `semgrep --json`.
+type wyjscieSemgrepa struct {
+	Results []struct {
+		CheckId string `json:"check_id"`
+		Path    string `json:"path"`
+		Start   struct {
+			Line int `json:"line"`
+		} `json:"start"`
+		Extra struct {
+			Message  string `json:"message"`
+			Severity string `json:"severity"`
+		} `json:"extra"`
+	} `json:"results"`
+}
+
+// znaleziskaSemgrepa przeprowadza skan semantyczny zestawem reguł repozytorium.
+//
+// ── Dlaczego zestaw repozytorium, a nie zestaw z rejestru ───────────────────
+// Zestaw z rejestru (`--config=p/…`, `--config=auto`) pobiera się przez sieć przy
+// każdym przebiegu. Ten moduł ma na to rozstrzygnięcie zapisane wyżej przy skanie
+// zależności: serwer bywa odcięty od sieci, a skan, który przy braku sieci milczy,
+// mówiłby „nic nie znaleziono" tam, gdzie nie szukał. Reguły są przy tym
+// rozstrzygnięciem o tym, co w danym repozytorium jest podatnością — a tego rdzeń
+// za Operatora nie orzeka. Repozytorium bez własnego zestawu nie jest więc
+// skanowane semantycznie i żadne znalezisko nie twierdzi inaczej.
+func (a *adapterDevelopera) znaleziskaSemgrepa(ctx context.Context, okno session.Okno,
+	korzen, skanKod string, sciezki []string) []daneZnaleziska {
+
+	if !repozytoriumNiesieKonfiguracje(korzen, konfiguracjeSemgrepa) {
+		return nil
+	}
+	argumenty := []string{"scan", "--json", "--quiet", "--metrics=off",
+		"--disable-version-check", "--config", "."}
+	for _, sciezka := range sciezki {
+		if tresc := strings.TrimSpace(sciezka); tresc != "" {
+			argumenty = append(argumenty, tresc)
+		}
+	}
+
+	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieSemgrep, argumenty,
+		korzen, czasProgramuSkanu)
+	if err != nil && len(wynik.Wyjscie) == 0 {
+		return nil
+	}
+	var odpowiedz wyjscieSemgrepa
+	if json.Unmarshal([]byte(strings.TrimSpace(string(wynik.Wyjscie))), &odpowiedz) != nil {
+		return nil
+	}
+
+	znaleziska := make([]daneZnaleziska, 0, len(odpowiedz.Results))
+	for _, uwaga := range odpowiedz.Results {
+		wiersz := int64(uwaga.Start.Line)
+		znaleziska = append(znaleziska, daneZnaleziska{
+			kod:     nowyIdentyfikator(przedrostekZnaleziska),
+			skanKod: skanKod,
+			rodzaj:  shared.ScanKindCode,
+			waga:    wagaSemgrepa(uwaga.Extra.Severity),
+			tytul:   uwaga.CheckId,
+			opis:    uwaga.Extra.Message,
+			sciezka: sciezkaWzgledemKorzenia(uwaga.Path, korzen),
+			wiersz:  &wiersz,
+			regula:  uwaga.CheckId,
+		})
+	}
+	return znaleziska
+}
+
+// wagaSemgrepa przekłada wagę Semgrepa na wagę kontraktu. Waga nierozpoznana
+// zostaje ostrzeżeniem — rdzeń nie podnosi wagi, której program tak nie nazwał.
+func wagaSemgrepa(waga string) shared.ProblemSeverity {
+	switch strings.ToUpper(strings.TrimSpace(waga)) {
+	case "ERROR":
+		return shared.ProblemSeverityError
+	case "INFO":
+		return shared.ProblemSeverityInfo
+	default:
+		return shared.ProblemSeverityWarning
+	}
+}
+
+// wyjsciePowtorzen jest kształtem raportu `jscpd --reporters json`.
+type wyjsciePowtorzen struct {
+	Duplicates []struct {
+		Format    string `json:"format"`
+		Lines     int    `json:"lines"`
+		FirstFile struct {
+			Name  string `json:"name"`
+			Start int    `json:"start"`
+			End   int    `json:"end"`
+		} `json:"firstFile"`
+		SecondFile struct {
+			Name  string `json:"name"`
+			Start int    `json:"start"`
+			End   int    `json:"end"`
+		} `json:"secondFile"`
+	} `json:"duplicates"`
+}
+
+// znaleziskaPowtorzenTypeScriptu szuka powtórzonych fragmentów w TS i JS.
+//
+// Raport idzie do katalogu tymczasowego maszyny rdzenia, bo program pisze go do
+// pliku, a nie na wyjście. Katalog znika po odczycie — repozytorium Operatora nie
+// ma prawa dostać pliku, o który nikt nie prosił.
+func (a *adapterDevelopera) znaleziskaPowtorzenTypeScriptu(ctx context.Context,
+	okno session.Okno, korzen, skanKod string) []daneZnaleziska {
+
+	katalog, err := os.MkdirTemp("", "danaco-powtorzenia-*")
+	if err != nil {
+		return nil
+	}
+	defer func() { _ = os.RemoveAll(katalog) }()
+
+	// Zawężenie do TypeScriptu i JavaScriptu jest podziałem pracy, nie
+	// oszczędnością: powtórzenia w plikach Go liczy `dupl` niżej, a oba programy
+	// puszczone na ten sam plik zgłosiłyby to samo powtórzenie dwa razy.
+	_, wolanie := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieJscpd, []string{
+		"--reporters", "json", "--output", katalog, "--silent",
+		"--format", "typescript,javascript,jsx,tsx", ".",
+	}, korzen, czasProgramuSkanu)
+
+	bajty, odczyt := os.ReadFile(filepath.Join(katalog, "jscpd-report.json"))
+	if odczyt != nil {
+		// Raportu nie ma — program albo go nie stworzył, albo go nie ma na
+		// maszynie. W obu razach droga podstawowa skanu zmierzyła swoje.
+		_ = wolanie
+		return nil
+	}
+	var raport wyjsciePowtorzen
+	if json.Unmarshal(bajty, &raport) != nil {
+		return nil
+	}
+
+	znaleziska := make([]daneZnaleziska, 0, len(raport.Duplicates))
+	for _, powtorzenie := range raport.Duplicates {
+		wiersz := int64(powtorzenie.FirstFile.Start)
+		znaleziska = append(znaleziska, daneZnaleziska{
+			kod:     nowyIdentyfikator(przedrostekZnaleziska),
+			skanKod: skanKod,
+			rodzaj:  shared.ScanKindCode,
+			waga:    shared.ProblemSeverityInfo,
+			tytul:   "powtórzony fragment " + strconv.Itoa(powtorzenie.Lines) + " wierszy",
+			opis: "ten sam fragment stoi w " + powtorzenie.FirstFile.Name + ":" +
+				strconv.Itoa(powtorzenie.FirstFile.Start) + " oraz w " +
+				powtorzenie.SecondFile.Name + ":" +
+				strconv.Itoa(powtorzenie.SecondFile.Start),
+			sciezka: sciezkaWzgledemKorzenia(powtorzenie.FirstFile.Name, korzen),
+			wiersz:  &wiersz,
+			regula:  narzedzieJscpd.Program,
+		})
+	}
+	return znaleziska
+}
+
+// wzorzecPowtorzeniaGo rozbiera wiersz `dupl -plumbing`:
+// `plik:od-do: duplicate of plik:od-do`.
+var wzorzecPowtorzeniaGo = regexp.MustCompile(
+	`^(.+):(\d+)-(\d+): duplicate of (.+):(\d+)-(\d+)$`)
+
+// znaleziskaPowtorzenGo szuka powtórzonych fragmentów w plikach Go.
+//
+// Para powtórzeń wraca z programu dwukrotnie — raz z każdej strony — więc
+// zapisywana jest jedna strona pary: wykaz z tym samym fragmentem dwa razy
+// mówiłby o dwóch spostrzeżeniach tam, gdzie jest jedno.
+func (a *adapterDevelopera) znaleziskaPowtorzenGo(ctx context.Context, okno session.Okno,
+	korzen, skanKod string) []daneZnaleziska {
+
+	wynik, err := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieDupl,
+		[]string{"-plumbing", "."}, korzen, czasProgramuSkanu)
+	if err != nil && len(wynik.Wyjscie) == 0 {
+		return nil
+	}
+
+	znaleziska := make([]daneZnaleziska, 0, 8)
+	widziane := map[string]bool{}
+	for _, wiersz := range strings.Split(string(wynik.Wyjscie), "\n") {
+		czesci := wzorzecPowtorzeniaGo.FindStringSubmatch(strings.TrimSpace(wiersz))
+		if czesci == nil {
+			continue
+		}
+		para := czesci[1] + ":" + czesci[2] + "|" + czesci[4] + ":" + czesci[5]
+		odwrotna := czesci[4] + ":" + czesci[5] + "|" + czesci[1] + ":" + czesci[2]
+		if widziane[para] || widziane[odwrotna] {
+			continue
+		}
+		widziane[para] = true
+
+		poczatek, blad := strconv.Atoi(czesci[2])
+		if blad != nil {
+			continue
+		}
+		koniec, blad := strconv.Atoi(czesci[3])
+		if blad != nil {
+			continue
+		}
+		numer := int64(poczatek)
+		znaleziska = append(znaleziska, daneZnaleziska{
+			kod:     nowyIdentyfikator(przedrostekZnaleziska),
+			skanKod: skanKod,
+			rodzaj:  shared.ScanKindCode,
+			waga:    shared.ProblemSeverityInfo,
+			tytul: "powtórzony fragment " + strconv.Itoa(koniec-poczatek+1) +
+				" wierszy",
+			opis: "ten sam fragment stoi w " + czesci[1] + ":" + czesci[2] +
+				" oraz w " + czesci[4] + ":" + czesci[5],
+			sciezka: sciezkaWzgledemKorzenia(czesci[1], korzen),
+			wiersz:  &numer,
+			regula:  narzedzieDupl.Program,
+		})
+	}
+	return znaleziska
 }

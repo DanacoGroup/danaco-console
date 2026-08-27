@@ -2913,3 +2913,19 @@ Ramka nieczytelna albo o kształcie niezgodnym z kopertą nie blokuje sesji — 
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/wynik-dyktowania.ts
 Cisza jest prawidłowym wynikiem pomiaru: nagranie, w którym nie padło słowo, przeszło przez silnik tak samo jak nagranie z pełną wypowiedzią, dlatego stan bez mowy ma własny stan i własne zdanie zamiast być zlewany z odmową, co pokazywałoby awarię tam, gdzie jej nie ma, i rozmywałoby odmowę prawdziwą — brak modelu, brak silnika rozpoznawania albo brak drogi dostarczenia nagrania. Pole powodu wypełnia się tylko przy stanie nieprzetworzonym; przy dwóch pozostałych stanach pomiar się odbył i nie ma czego uzasadniać. Zdanie dla stanu bez mowy nazywa fakt, że nagranie przetworzono, a mowy w nim nie było, bez słowa błąd i bez wezwania do ponownego nagrania, bo cisza nie jest usterką.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-glossary-manager.ts
+Kontrakt nie ma komendy odczytu glosariusza — w obszarze translate nie występuje ani lista, ani
+pobranie pojedynczego terminu. Okno pokazuje więc wyłącznie terminy zapisane w tej sesji i mówi
+o tym wprost w stanie pustym; wykaz zmyślony albo pusta lista podana jako „glosariusz jest pusty"
+byłyby atrapą. Wyszukiwanie działa na tym, co okno ma, czyli na terminach zapisanych w tej sesji,
+i nie udaje, że przeszukuje bazę — przesiewa wykaz widoczny obok. Przerysowanie odbudowuje wykaz
+terminów, ale nie rusza fazy trwającej ani fazy błędu — te zdejmuje czynność, która je postawiła
+(zapis terminu, odczyt wystąpień); inaczej zapis, który napełnia wykaz w środku własnego wywołania,
+kasowałby sobie zapowiedź tego wywołania.
+Wykaz pusty przy pokazaniu wystąpień jest wynikiem, nie pustką okna: rdzeń odpowiedział i nie
+znalazł terminu, a odmowa czyści wykaz i mówi wprost, że wystąpień nie sprawdzono — te dwa stany
+nie mogą wyglądać tak samo. Zdanie nazywa termin, którego rdzeń szukał, biorąc go z pola term
+odpowiedzi, a nie z żądania: zdanie zbudowane z żądania przypisywałoby rdzeniowi przeszukanie
+o zakresie, którego okno nie widziało, a rozbieżność echa jest odmową, bo znaczy, że szukano
+czegoś innego.

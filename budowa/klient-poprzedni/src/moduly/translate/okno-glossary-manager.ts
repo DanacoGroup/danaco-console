@@ -18,14 +18,8 @@ import { rozbieznoscOdpowiedzi } from './zgodnosc-odpowiedzi';
 import type { ZrodloGlosariusza } from './zrodlo-glosariusza';
 
 /**
- * Glossary Manager — okno **zarządca** modułu Translate
- * (`translate.glossary-manager`).
- *
- * Kontrakt nie ma komendy odczytu glosariusza — w obszarze `translate` nie
- * występuje ani `translate.glossary.list`, ani `.get`. Okno pokazuje więc
- * wyłącznie terminy zapisane w tej sesji i mówi o tym wprost w stanie pustym;
- * wykaz zmyślony albo pusta lista podana jako „glosariusz jest pusty" byłyby
- * atrapą.
+ * Glossary Manager to okno zarządca modułu Translate; kontrakt nie ma komendy odczytu glosariusza,
+ * więc okno pokazuje wyłącznie terminy zapisane w tej sesji.
  */
 export interface OknoGlossaryManager {
   element: HTMLElement;
@@ -67,9 +61,7 @@ export function utworzOknoGlossaryManager(stan: StanTranslate): OknoGlossaryMana
 
   const wymiana = utworzWymianeGlosariusza(stan.glosariusz, odpowiedz);
 
-  // Wyszukiwanie działa na tym, co okno ma: na terminach zapisanych w tej sesji.
-  // Kontrakt nie ma komendy odczytu glosariusza, więc pole nie pyta rdzenia
-  // i nie udaje, że przeszukuje bazę — przesiewa wykaz widoczny obok.
+  // Wyszukiwanie działa na terminach tej sesji: kontrakt nie ma komendy odczytu glosariusza.
   const szukaj = poleTekstowe({
     etykieta: 'Szukaj w terminach zapisanych w tej sesji',
     podpowiedz: 'termin źródłowy, odpowiednik albo język',
@@ -93,12 +85,7 @@ export function utworzOknoGlossaryManager(stan: StanTranslate): OknoGlossaryMana
   element.dataset['okno'] = 'glossary-manager';
   element.append(naglowekOkna('Glossary Manager', 'zarządca'), okno.element);
 
-  /**
-   * Przerysowanie odbudowuje wykaz terminów, ale nie rusza fazy trwającej ani
-   * fazy błędu — te zdejmuje czynność, która je postawiła (zapis terminu,
-   * odczyt wystąpień). Inaczej zapis, który napełnia wykaz w środku własnego
-   * wywołania, kasowałby sobie zapowiedź tego wywołania.
-   */
+  /** Przerysowanie odbudowuje wykaz, ale nie rusza fazy trwającej ani błędu, zdjętych przez ich czynność. */
   function odswiez(): void {
     const szukane = szukaj.kontrolka.value.trim().toLowerCase();
     const terminy = [...zapisane.values()].filter((termin) => pasujeTermin(termin, szukane));
@@ -113,8 +100,7 @@ export function utworzOknoGlossaryManager(stan: StanTranslate): OknoGlossaryMana
       ),
     );
     if (okno.faza() === 'ladowanie' || okno.faza() === 'blad') return;
-    // Dwie pustki są tu różne i nie wolno ich zlać: baza bez ani jednego wpisu
-    // to stan pierwszego użycia, a zawężenie bez trafienia to wynik szukania.
+    // Dwie pustki są różne: baza bez wpisu to pierwsze użycie, zawężenie bez trafienia to wynik szukania.
     if (zapisane.size === 0) {
       okno.puste(PUSTE.glosariusz);
       return;
@@ -135,14 +121,14 @@ export function utworzOknoGlossaryManager(stan: StanTranslate): OknoGlossaryMana
   return { element, odswiez };
 }
 
-/** Dopasowanie terminu do zawężenia — środkiem źródła, odpowiednika i języka. */
+/** Dopasowanie terminu do zawężenia szuka trafienia środkiem trzech pól: źródła, odpowiednika i języka terminu w bazie sesji. */
 function pasujeTermin(termin: GlossaryTerm, szukane: string): boolean {
   if (szukane === '') return true;
   const stog = `${termin.source} ${termin.target ?? ''} ${termin.language} ${termin.note ?? ''}`;
   return stog.toLowerCase().includes(szukane);
 }
 
-/** Warstwa druga: filtr dziedziny — kategoria, której termin w kontrakcie nie ma. */
+/** Warstwa druga niesie filtr dziedziny — kategorię, której termin w kontrakcie nie ma, więc bazy nie da się zawęzić do dziedziny wprost. */
 function filtrDziedziny(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 2,
@@ -154,7 +140,7 @@ function filtrDziedziny(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa trzecia: menu bazy — czynności zbiorcze poza wymianą plikową. */
+/** Warstwa trzecia mieści menu bazy: czynności zbiorcze poza wymianą plikową, dla których kontrakt rdzenia nie ma osobnej komendy. */
 function menuBazy(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 3,
@@ -172,7 +158,7 @@ function menuBazy(): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa czwarta: reguły wymuszania terminologii w silnikach przekładu. */
+/** Warstwa czwarta niesie reguły wymuszania terminologii w silnikach przekładu, wskazujące sposób wstrzyknięcia odpowiednika z bazy. */
 function regulyWymuszania(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 4,
@@ -187,17 +173,8 @@ function regulyWymuszania(): HTMLElement {
 }
 
 /**
- * „Pokaż wystąpienia" — `translate.glossary.occurrences`.
- *
- * Wykaz pusty jest tu wynikiem, nie pustką okna: rdzeń odpowiedział i nie
- * znalazł terminu. Odmowa czyści wykaz i mówi wprost, że wystąpień nie
- * sprawdzono — te dwa stany nie mogą wyglądać tak samo.
- *
- * Zdanie nazywa termin, którego rdzeń szukał: bierze go z pola `term`
- * odpowiedzi (`TranslateGlossaryOccurrencesResponse`), a nie z żądania. Zdanie
- * zbudowane z żądania przypisywałoby rdzeniowi przeszukanie o zakresie, którego
- * okno nie widziało; rozbieżność echa jest odmową, bo znaczy, że szukano czegoś
- * innego.
+ * Pokazanie wystąpień terminu komendą translate.glossary.occurrences zwraca wykaz pusty jako
+ * wynik szukania, odróżniany od odmowy niesprawdzenia.
  */
 async function pokazWystapienia(
   zrodlo: ZrodloGlosariusza,

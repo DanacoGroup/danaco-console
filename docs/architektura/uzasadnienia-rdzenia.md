@@ -5599,3 +5599,12 @@ Powód jest ten sam co przy pamięci projektu: rodzina liczy trzynaście komend 
 portu wspólnego zrobiłoby z niego wykaz wszystkiego, co moduł umie, zamiast wykazu tego, czym jest
 projekt. Zdarzeniem modułu jest jedno zdarzenie zmiany projektu — każda zmiana planu rozgłasza się
 projektem. Okna huba odświeżają się z tej jednej subskrypcji, a nie z trzynastu.
+
+## budowa/server/internal/core/skutek_terminala_wstrzymanie_test.go
+
+Plik jest osobny, bo osobna jest jego platforma: wstrzymanie drzewa procesów
+mają systemy uniksowe, a Windows nie ma dla obcego procesu odpowiednika,
+zgodnie z plikiem session/wstrzymanie_windows.go. Sprawdzian pyta o skutek
+w systemie, nie w rdzeniu: czyta stan procesu z /proc/<pid>/stat, gdzie
+litera T znaczy zatrzymany sygnałem. Uwierzenie polu supported w odpowiedzi
+byłoby uwierzeniem mierzonemu, że zrobił to, co miał zrobić.

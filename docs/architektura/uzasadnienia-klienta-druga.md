@@ -4176,3 +4176,15 @@ mapowania używa kolumna paneli sceny okien równoległych. Pozycja nazwana w
 rejestrze zbudowaną, dla której nie ma wytwórni, jest rozjazdem między
 spisem a kodem, stąd wpis w dzienniku zdarzeń zamiast cichej wartości
 pustej udającej, że pozycji w spisie nie ma.
+
+## budowa/klient-poprzedni/src/moduly/studio/filtr-historii.ts
+Filtr po autorze jest już wykonalny: wersja niesie pole autora oraz znacznik kluczowości, więc
+rozdzielenie zmian operatora od zmian modelu ma po czym przebiegać. Pole autora jest
+nieobowiązkowe — wersje założone przed jego wprowadzeniem autora nie niosą, a filtr autora nie
+odsiewa ich po cichu, tylko trzyma w wykazie z autorem pustym, bo odsianie ich byłoby ukryciem
+historii przed operatorem. Autozapis idzie osobnym szeregiem: zapis samoczynny poznaje się po
+tym, że nie jest wersją kluczową i nie ma etykiety własnej, a obie te cechy nadaje wyłącznie
+operator — rozróżnienie stoi na osobnej komendzie nadania etykiety. Zapytanie puste o autora
+przepuszcza wszystko, a wersja bez zapisanego autora przechodzi wyłącznie przy zapytaniu pustym,
+bo przy szukaniu konkretnego autora nie wolno jej ani oddać, ani o niej zapomnieć, dlatego okno
+pokazuje liczbę zawężenia obok wykazu.

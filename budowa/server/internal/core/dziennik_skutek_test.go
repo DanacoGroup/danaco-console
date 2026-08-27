@@ -363,7 +363,7 @@ func TestZmianyModeluCofniecieWybranychNieRuszaReszty(t *testing.T) {
 			len(zestawienie.Summary.Changes))
 	}
 
-	// Cofamy JEDNĄ — tę, która dotyczy akapitu trzeciego.
+	// Cofa się JEDNĄ — tę, która dotyczy akapitu trzeciego.
 	var wybrana string
 	for _, zmiana := range zestawienie.Summary.Changes {
 		if zmiana.After != nil && strings.Contains(*zmiana.After, "trzeci") {

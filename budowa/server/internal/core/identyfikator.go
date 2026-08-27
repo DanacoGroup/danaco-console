@@ -20,13 +20,12 @@ var licznikZdarzen atomic.Uint64
 // gdy klient wysyła treść bez własnego identyfikatora.
 const przedrostekWiadomosci = "msg-"
 
-// identyfikatorZdarzenia nadaje identyfikator komunikatu wychodzącego od
-// rdzenia.
+// identyfikatorZdarzenia nadaje identyfikator komunikatu wychodzącego od rdzenia tej platformy dla klienta.
 func identyfikatorZdarzenia() string {
 	return nowyIdentyfikator(przedrostekZdarzenia)
 }
 
-// identyfikatorWiadomosci nadaje identyfikator wiadomości okna.
+// identyfikatorWiadomosci nadaje identyfikator wiadomości okna komunikacji rdzenia tej platformy konta.
 func identyfikatorWiadomosci() string {
 	return nowyIdentyfikator(przedrostekWiadomosci)
 }

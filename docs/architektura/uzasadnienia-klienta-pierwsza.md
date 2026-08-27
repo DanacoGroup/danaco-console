@@ -2598,3 +2598,16 @@ kontraktu mierzy `braki-kontraktu.ts`.
 Kontrakt nie ma komendy utrwalającej werdykt oceny jako stan: `monitor.status`
 czyta stan procesów i niczego nie zapisuje. Ocena analityka jest poleceniem dla
 koordynatora, dlatego zgłoszenie niezgodności idzie zwykłym `message.send`.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zrodlo-zespolow.ts
+
+Zespół i ekspert stoją w jednym źródle, ponieważ zespół kontraktu jest wyłącznie
+wykazem identyfikatorów ekspertów. Widok zespołu odcięty od wykazu ekspertów
+pokazywałby Operatorowi ciąg identyfikatorów bez nazw, więc obie rodziny komend
+obsługuje to samo źródło.
+
+Zespół nie ma pola ról ani powiązania z kolejkami: komenda zapisu przyjmuje
+nazwę, opis i skład, i nic poza tym. Gotowy układ ról, powiązań i kolejek daje
+się zatem zapisać wyłącznie jako skład, a reszta nie ma w kontrakcie gdzie
+zamieszkać. Sekcja mówi o tym Operatorowi wprost, zamiast wpychać te dane w opis
+zespołu, gdzie żaden odbiorca by ich nie odczytał.

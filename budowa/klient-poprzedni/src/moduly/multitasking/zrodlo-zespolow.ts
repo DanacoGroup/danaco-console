@@ -18,16 +18,9 @@ import { wywolaj } from '../../protokol/wywolanie';
 
 /**
  * Źródło sekcji zespołów panelu orkiestracji — jedyne miejsce modułu, które zna
- * nazwy rodziny `team.*` oraz `agent.list`.
- *
- * Zespół i ekspert stoją w jednym źródle, bo zespół kontraktu jest wyłącznie
- * wykazem identyfikatorów ekspertów (`Team.agentIds`): widok zespołu bez wykazu
- * ekspertów pokazywałby ciąg identyfikatorów bez nazw.
- *
- * Zespół nie ma pola ról ani powiązania z kolejkami — `team.save` przyjmuje
- * nazwę, opis i skład, i nic poza tym. Preset ról, powiązań i kolejek daje się
- * więc zapisać wyłącznie jako skład; reszta nie ma gdzie zamieszkać i sekcja
- * mówi o tym wprost, zamiast wpychać ją w opis.
+ * nazwy rodziny `team.*` oraz komendy `agent.list`. Zespół i ekspert stoją
+ * w jednym źródle, ponieważ zespół kontraktu jest wyłącznie wykazem
+ * identyfikatorów ekspertów.
  */
 export interface ZrodloZespolow {
   /** `team.list` — zespoły zapisane przez Operatora, w kolejności nazwy. */

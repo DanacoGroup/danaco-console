@@ -5551,3 +5551,18 @@ powołaną pracę. Sierot brak jest odpowiedzią poprawną i najczęstszą: rdze
 zamknięty porządnie zostawia wszystkich w stanie końcowym.
 ## budowa/server/internal/dane/sesje.go
 Sesje w koszu nie wchodzą do wykazu sesji żywych: widzi je wyłącznie repozytorium kosza, a odczyt po identyfikatorze ich nie kryje, bo po nim odbywa się przywrócenie i czyszczenie. Usunięcie sesji przez tę warstwę kasuje sesję wraz z oknami i wiadomościami kaskadą schematu bazy, ale jest to prymityw warstwy danych: torem produktu jest kosz, gdzie polecenie usunięcia stawia znacznik, a fizyczne skasowanie wykonuje czyszczenie po terminie, bo tylko ono sprząta też bloki wiadomości.
+
+## budowa/server/internal/protocol/fragment.go
+Numeru fragmentu ani znacznika końca w typie Chunk nie ma: kontrakt umieszcza
+je w kopercie, polami sekwencji i zakończenia, wstawiane przy złożeniu koperty
+fragmentu i odczytywane przy odczycie numeru i ostatniego fragmentu.
+
+Odbiorca zastępuje tekstem wersji ostatecznej tekst złożony z fragmentów
+tekstowych, zamiast dopisywać go na końcu; rodzaj wersji ostatecznej odróżnia
+całość od ciągu dalszego, a fragment pakuje się kopertą ze znacznikiem końca,
+jako zdarzenie domykające strumień.
+
+ChunkBledu niesie błąd techniczny wywołania, a przyczyna jedzie i jako treść
+nietekstowa, i jako tekst dla użytkownika; fragment kończy strumień, więc
+wywołujący pakuje go kopertą z ostatnim równym prawda, choć sesja i konto
+pozostają przy tym czynne.

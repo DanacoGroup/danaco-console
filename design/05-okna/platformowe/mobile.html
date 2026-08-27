@@ -675,7 +675,7 @@
                     </span>
                   </div>
 
-                  <!-- POWIADOMIENIE PUSH INTERWENCJI (rozdz. 7.6, 11.5) -->
+                  <!-- Powiadomienie push interwencji -->
                   <div class="mo-push" id="mo-push" data-widoczne="nie" role="alert">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                     <div>
@@ -951,7 +951,7 @@
             <!-- ══ PULPIT SEKWENCJI I DOKUMENTACJA ══════════════════════════ -->
             <div class="mo-panel">
 
-              <!-- SEKWENCJA INTERWENCJI ZDALNEJ (rozdz. 11.5) -->
+              <!-- Sekwencja interwencji zdalnej -->
               <div class="mo-blok">
                 <div class="mo-blok-tytul">
                   <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172"/><path d="m18.586 13.414-5.172 5.172"/><path d="M6 12h12"/><circle cx="12" cy="20" r="2"/><circle cx="12" cy="4" r="2"/><circle cx="20" cy="12" r="2"/><circle cx="4" cy="12" r="2"/></svg>
@@ -1021,7 +1021,7 @@ zatwierdź  wstrzymaj    zmodyfikuj     przejmij bezpośrednie
 proces wznawia się (resume) z zastosowaną decyzją</pre>
               </div>
 
-              <!-- WSPÓŁDZIAŁANIE Z AOD (rozdz. 2.4) -->
+              <!-- Współdziałanie z AOD -->
               <div class="mo-blok">
                 <div class="mo-blok-tytul">
                   <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
@@ -1045,7 +1045,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
                 <p class="mo-opis">Praca w trybie 24/7/365 z natury przebiega poza stałą obecnością użytkownika przy stanowisku roboczym. Funkcja Mobile udostępnia w takim przypadku kanał zatwierdzania, wstrzymywania i modyfikowania uruchomionych procesów z dowolnego miejsca — mechanizm komplementarny wobec Always On Display działającego w trybie operatora (rozdz. 7.5).</p>
               </div>
 
-              <!-- ELEMENTY INTERFEJSU MOBILE (rozdz. 7.6, elementy-okien 2.5, 3.2) -->
+              <!-- Elementy interfejsu Mobile -->
               <div class="mo-blok">
                 <div class="mo-blok-tytul">
                   <svg class="mo-ik" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
@@ -1263,7 +1263,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
     b.addEventListener('click', function () { idzDoWidoku(b.getAttribute('data-mob-idz')); });
   });
 
-  /* ── 2 · POWIADOMIENIE PUSH (rozdz. 7.6) ───────────────────────────────── */
+  /* ── 2 · POWIADOMIENIE PUSH ────────────────────────────────────────────── */
   function pokazPush() {
     push.setAttribute('data-widoczne', 'tak');
     q('#mo-push-stan').textContent = 'stan: wysłane';
@@ -1297,7 +1297,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
     pl.innerHTML = (tetno ? '<span class="pt-tetno" aria-hidden="true"></span> ' : '') + tekst;
   }
 
-  /* ── 4 · SEKWENCJA INTERWENCJI ZDALNEJ (rozdz. 11.5) ───────────────────── */
+  /* ── 4 · SEKWENCJA INTERWENCJI ZDALNEJ ─────────────────────────────────── */
   function ustawKrok(numer) {
     krokBiezacy = numer;
     qa('.mo-krok').forEach(function (k) {
@@ -1390,7 +1390,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
     }, 1800);
   });
 
-  /* ── 5 · CZTERY DROGI INTERWENCJI (rozdz. 11.5) ────────────────────────── */
+  /* ── 5 · CZTERY DROGI INTERWENCJI ──────────────────────────────────────── */
   function interwencja(przycisk, etykietaPracy, opisWyniku, poWykonaniu) {
     var et = q('[data-etykieta]', przycisk);
     var pierwotna = et.textContent;
@@ -1458,7 +1458,7 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
       });
   });
 
-  /* ── 6 · PAROWANIE URZĄDZENIA (ustawienia.md rozdz. 6.2) ───────────────── */
+  /* ── 6 · PAROWANIE URZĄDZENIA ───────────────────────────────────────────── */
   var zaslona = q('#mo-zaslona-parowanie');
   function stanNiesparowany(wlacz) {
     zaslona.setAttribute('data-widoczna', wlacz ? 'tak' : 'nie');

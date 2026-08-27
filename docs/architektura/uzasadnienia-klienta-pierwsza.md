@@ -4669,3 +4669,27 @@ znaczników czasu rozpoczęcia i zakończenia. Miary kosztu — tokeny i wywoła
 modelu — składa widok (`widok-przebiegow.ts`), ponieważ ich pola są
 nieobowiązkowe, a suma wymaga podania obok siebie liczby przebiegów, które je
 wypełniły.
+
+## budowa/klient-poprzedni/src/dostepy/komunikat-czynnosci.ts
+
+Każde naciśnięcie kontrolki w sekcji dostępów kończy się zdaniem przy tej
+kontrolce, bo po milczeniu widoku Operator nie wie, czy model ma już dostęp,
+czy jeszcze nie. Powodzenie mówi, co się stało, niepowodzenie powtarza treść
+odpowiedzi rdzenia.
+
+Odmowa własna widoku ma kształt wyniku komendy, więc odmowa wystawiona bez
+wysyłki — na przykład brak okna rozmowy — wygląda dla widoku jak odmowa rdzenia
+i tą samą drogą trafia do zdania przy kontrolce. Widok nie potrzebuje przez to
+drugiej ścieżki obsługi.
+
+## budowa/klient-poprzedni/src/mission-control/mission-control.ts
+
+Pulpit powołuje sekcje w ustalonej kolejności: aktywność modeli wraz z pasem
+decyzji, czyli eskalacją koordynatora; operacje modeli, czyli kanały i koszt;
+matrycę sesji wraz z pasem relacji, pokazującą procesy biegnące równolegle;
+sekcję zakładania pracy jeszcze nierozpoczętej; oraz trzy kolumny procesów,
+kolejek i zespołu.
+
+Pasek działań słucha nadajników pulpitu na własną rękę, żeby każde działanie
+miało widoczny skutek niezależnie od tego, czy ktokolwiek podpiął odbiorcę
+zewnętrznego.

@@ -27,15 +27,9 @@ import type {
 } from './zdarzenia-pulpitu';
 
 /**
- * Pulpit operacyjny Mission Control — złożenie sekcji.
- *
- * Jedna odpowiedzialność: kompozycja. Plik nie rysuje treści — buduje nadajniki,
- * powołuje sekcje w ustalonej kolejności i spina odświeżanie:
- *   • Aktywność AI z pasem decyzji — eskalacja koordynatora,
- *   • Operacje AI — kanały modelu i koszt,
- *   • Matryca sesji z pasem relacji — procesy biegnące równolegle,
- *   • Utwórz — wejście do pracy jeszcze nierozpoczętej,
- *   • trzy kolumny — procesy, kolejki, zespół.
+ * Pulpit operacyjny Mission Control: złożenie sekcji. Plik odpowiada wyłącznie
+ * za kompozycję — buduje nadajniki, powołuje sekcje w ustalonej kolejności
+ * i spina ich odświeżanie, a treści sekcji sam nie rysuje.
  */
 export interface MissionControl {
   /** Element montowany w powłoce. */
@@ -55,12 +49,9 @@ export interface MissionControl {
 }
 
 /**
- * Buduje pulpit operacyjny.
- *
- * Komplet danych jest wymagany i pochodzi ze źródła pulpitu (`zrodlo-pulpitu`),
- * które buduje go wyłącznie z odczytów i zdarzeń rdzenia. Komplet sprzed
- * pierwszego odczytu daje `pustyKomplet()` — stan oczekiwania bez wartości
- * zastępczych.
+ * Buduje pulpit operacyjny z kompletu danych złożonego przez źródło pulpitu
+ * z odczytów i zdarzeń rdzenia. Komplet sprzed pierwszego odczytu daje stan
+ * oczekiwania, więc pulpit nie stawia wartości zastępczych.
  */
 export function utworzMissionControl(dane: DanePulpitu): MissionControl {
   const wejscia = utworzNadajnik<WejscieDoSesji>('wejście do sesji');
@@ -104,8 +95,7 @@ export function utworzMissionControl(dane: DanePulpitu): MissionControl {
     dzialania.element,
   );
 
-  // Pasek działań słucha własnych nadajników, żeby każde działanie pulpitu
-  // miało widoczny skutek niezależnie od odbiorców zewnętrznych.
+  // Pasek dzialan slucha wlasnych nadajnikow, niezaleznie od odbiorcow z zewnatrz.
   const wlasne: Odpiecie[] = [
     wejscia.sluchaj((wejscie) => dzialania.zapisz(opiszWejscie(wejscie))),
     kolejki.sluchaj((zamiar) => dzialania.zapisz(opiszZamiarKolejki(zamiar))),

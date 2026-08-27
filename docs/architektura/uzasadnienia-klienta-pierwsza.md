@@ -6154,3 +6154,17 @@ odświeżeniu wykazu.
 
 ## budowa/klient-poprzedni/src/moduly/agents/panel-zakresow-narzedzi.ts
 Panel stoi w oknie Permissions Center mimo że dotyczy profilu asystenta, a nie eksperta, ponieważ to jedyne miejsce, w którym Operator ustala zakres działania wykonawcy w jego imieniu. Zakres jest nastawą, nie bramką wbudowaną: pozycja bez wiersza pozostaje dostępna bez granicy wywołań, a platforma niczego nie zawęża z góry — zawężenie zapisane w panelu rdzeń odczytuje przed każdym wywołaniem narzędzia i na jego podstawie odmawia, a kolumna zużycia pokazuje, ile z granicy zostało.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/okno-observability-tools.ts
+Kontrakt niesie z całej diagnostyki jedną rodzinę komend wraz ze zdarzeniem
+postępu, więc każda zakładka bez pokrycia nie znika ze sceny: znika dopiero
+funkcja, o której nikt nie wie, że jej nie ma, a powód każdego braku składa
+się z wykazu komend kontraktu przy składaniu okna. Widoczność zakładek wiąże
+się z ustawieniami obszaru diagnostyki, których rdzeń dziś nie zna ani
+jednego, więc okno pokazuje wszystkie pięć zakładek zamiast ukrywać jedną na
+podstawie wartości zmyślonej. Prowenancja wchodzi osobnym źródłem, bo rodzina
+jej komend, wraz z oceną wywołania i wydaniem śladu, nie należy do portu
+diagnostyki, a bez tego źródła zakładka nazywa własny brak po stronie
+złożenia modułu. Reguła alertu zbudowana wyłącznie w oknie żyłaby do
+zamknięcia karty i nie zadziałałaby, gdy przeglądający nie patrzy — czyli
+dokładnie wtedy, gdy alert ma sens.

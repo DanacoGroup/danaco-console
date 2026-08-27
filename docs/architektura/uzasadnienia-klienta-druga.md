@@ -2391,3 +2391,11 @@ do dokumentu, wychodzi z porównania dwóch zbiorów, które rdzeń oddał.
 Plik pozostaje wyłącznie kompozycją: gniazdo, kanał, sesja, tożsamość, przebieg i montaż. Etap i odsłonę rozstrzyga przebieg, węzły stawia montaż — plik wejścia nie rozgałęzia drogi ani nie dotyka dokumentu poza wskazaniem korzenia montażowi.
 Magazyn tokenu bramki zostaje domyślny, czyli w pamięci procesu. Magazyn trwały należy do powłoki i żadne źródło go dziś nie wskazuje; magazyn udający trwałość obiecywałby rozpoznanie urządzenia, którego nie ma.
 Rdzeń wystawia pakiet interfejsu obok gniazda, więc dokument wczytany po HTTP przyszedł z rdzenia i to jego adres jest adresem gniazda. Dokument wczytany inaczej — z pliku albo z protokołu powłoki — pochodzenia nie niesie.
+
+## budowa/klient-poprzedni/src/moduly/translate/kontrolki-translate.ts
+Dymek jest budowany lokalnie, a nie brany z biblioteki komponentów, ponieważ nosi klasy arkusza
+stylów modułu tłumaczeń, podczas gdy wersja biblioteczna wymaga klas układu, których ten arkusz
+nie udostępnia, co dałoby dymek bez pozycjonowania. Dymek pokazuje się na najechaniu albo na
+skupieniu klawiaturowym, bez klikania i bez osobnego zamykania; znak jest przyciskiem, więc jego
+naciśnięcie przenosi ognisko i zwraca odpowiedź głosową, a treść dymku leży w opisie dostępności,
+więc dymek nie potrzebuje identyfikatora i nie koliduje między oknami.

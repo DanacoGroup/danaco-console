@@ -6,6 +6,87 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### zdolnosc-wyszukiwania
+
+**Buduje dwie nowe zdolności produktu** na modelach, które stoją odłogiem.
+Umocowanie: pozycja 17 rejestru decyzji. **Jedyny teren tej tury z prawem zmiany
+kontraktu.**
+
+| | |
+|---|---|
+| **Gałąź** | `teren/zdolnosc-wyszukiwania` z `main` |
+| **Wykaz plików** | `budowa/shared/contract.json`, `budowa/server/internal/wiedza/`, `budowa/server/internal/core/adapter_modul_wiedza*.go` oraz adaptery obszaru `knowledge`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `internal/core/adapter_rozmowa_*`, `adapter_przejecie_sterowania.go`, `zgodnosc_kontraktu_test.go`, `blokady_skutek_test.go` (teren `usterki-rdzenia`), `internal/store/` migracje nastaw (teren `nastawy-wdrozenia`) |
+
+**Przedmiot pierwszy — przesiew wyników.** `knowledge.search` dostaje pole
+`rerank` wraz z liczbą kandydatów. Wyszukanie robi wtedy dwa przebiegi: kosinus
+wektorów zbiera kandydatów, krzyżowy koder układa je ponownie. Model:
+`/opt/danaco-modele/reranker` (bge-reranker-v2-m3, 2,2 GB, `safetensors`).
+
+**Przedmiot drugi — oś obrazu.** Nowa komenda wyszukania obrazu zdaniem. Model:
+`/opt/danaco-modele/clip` (CLIP ViT-L/14, 1,6 GB, `safetensors`).
+
+**Zmiana kontraktu obwarowana.** Wolno **dołożyć**; nie wolno zmienić ani usunąć
+niczego istniejącego — żadnej komendy, pola, wartości wyliczenia ani opisu.
+Suma zastana: `b7d0436880d878e78576`.
+
+**Kryteria odbioru.**
+
+1. `knowledge.search` z przesiewem oddaje wynik **inaczej uszeregowany** niż bez
+   przesiewu, na tej samej treści i tym samym zapytaniu — z przytoczonymi obiema
+   odpowiedziami. Sam fakt odpowiedzi nie jest wykazaniem; przesiew ma **coś
+   zmienić** i masz pokazać co.
+2. Wyszukanie obrazu zdaniem oddaje **trafienie**, nie pustkę — z przytoczonym
+   żądaniem, odpowiedzią i wskazaniem, który obraz wrócił i dlaczego.
+3. Wagi z `/opt/danaco-modele` są **użyte** — wykazane tak, żeby widać było brak
+   pobrania drugiej kopii; sonda dodatnia ma dowodzić, że twój instrument pobranie
+   w ogóle wykryje.
+4. Brak modelu albo biblioteki daje odmowę **nazywającą brak i drogę naprawy**,
+   nie błąd wewnętrzny — wykazane sprawdzianem.
+5. Kontrakt ruszony **wyłącznie dodaniami** — wykazane porównaniem z sumą zastaną,
+   z wykazem tego, co przybyło. Generator daje wynik bajtowo powtarzalny w dwóch
+   przebiegach; klient przechodzi `tsc --noEmit`.
+6. Nowe komendy przechodzą **bramę kontraktu**: treść niepełna dostaje odmowę
+   nazywającą brakujące pola, treść pełna przechodzi — obie przytoczone.
+7. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec 2106 zdanych,
+   17 pominiętych, zero niezdanych.
+
+### odtwarzanie-twarzy
+
+**Buduje zdolność, na którą kontrakt już czeka.** `image.upscale` ma pole
+`faces: bool`; rdzeń odmawia dziś, bo silnika nie ma. Zmiana kontraktu
+**niepotrzebna**.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/odtwarzanie-twarzy` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go` oraz pozostałe `adapter_narzedzia_obraz_*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `internal/wiedza/`, **cały obszar `design.*`** (zapora fotografii) |
+
+**Stan zmierzony.** `/opt/danaco-modele/twarze` niesie `GFPGANv1.4.pth`
+i `codeformer.pth`. Rdzeń szuka programu `gfpgan-ncnn-vulkan`, którego **na
+maszynie nie ma**; stoi `realesrgan-ncnn-vulkan`, ale jego wydanie sieci
+twarzowej nie niesie. Wagi `.pth` żądają stosu, którego rdzeń nie woła.
+
+**Instalowanie dozwolone w tym terenie**, na tych samych zasadach co
+`zaplecze-modeli`: wyjątek nazwany, wygasa z terenem, wszystko postawione trafia
+do raportu wraz z wagą na dysku. Wybór drogi — wydanie `ncnn` niosące sieć
+twarzową albo pomocnik pythonowy na stojących wagach — jest Twój i **uzasadniasz
+go w raporcie**.
+
+**Kryteria odbioru.**
+
+1. `image.upscale` z `faces: true` oddaje obraz **różny** od tego samego
+   powiększenia z `faces: false` — z przytoczonymi obiema odpowiedziami i miarą
+   różnicy. Sam brak odmowy nie jest wykazaniem.
+2. Wynik jest **prawdziwym obrazem** — format i rozmiar przytoczone.
+3. Brak silnika dalej daje odmowę nazywającą brak i drogę naprawy.
+4. Wagi z `/opt/danaco-modele/twarze` użyte albo **wprost napisane, dlaczego
+   rdzeń sięga po inne**.
+5. Zapora fotografii przechodzi; `gotestsum -- -count=1 ./...` — zero
+   niepowodzeń. Kontrakt nietknięty — wykazane sumą.
+6. Wykaz wszystkiego, co postawione na maszynie, wraz z wagą.
+
 ### usterki-rdzenia
 
 Trzy usterki wykryte pomiarem w poprzedniej turze, wszystkie poza zakresem terenów,

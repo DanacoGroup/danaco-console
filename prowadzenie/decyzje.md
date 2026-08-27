@@ -1166,6 +1166,44 @@ pionowym** i opisuje to, co działa. Wejdą razem z resztą etapu 2.
 
 ---
 
+## 17. Wyszukiwanie po znaczeniu dostaje przesiew i oś obrazu
+
+**Data:** 2026-08-27 · **Stan:** **do ratyfikacji** · **Proponuje:** Prowadzący
+
+**Stan.** Na maszynie stoją trzy modele, po które rdzeń nie ma jak sięgnąć:
+reranker 2,2 GB, CLIP 1,6 GB, model twarzy 692 MB. Razem **4,5 GB leżące
+odłogiem** — nie dlatego, że nie działają, tylko dlatego, że kontrakt nie ma
+komend, którymi się je woła.
+
+Obszar `knowledge` ma dziś dwie komendy: `index` i `search`. Wyszukanie kończy
+się na podobieństwie wektorów — pierwszy przebieg. Krzyżowy koder to **drugi
+przebieg po pierwszym**: bierze kilkadziesiąt kandydatów i układa je ponownie,
+czytając zapytanie razem z każdym fragmentem. Dziś nie ma gdzie go włożyć.
+
+**Propozycja — dwie zdolności, obie w obszarze `knowledge`:**
+
+| Zdolność | Kształt | Czym stoi |
+|---|---|---|
+| **przesiew wyników** | pole `rerank` w `knowledge.search` wraz z liczbą kandydatów do przesiania | bge-reranker-v2-m3, 2,2 GB |
+| **wyszukanie obrazu po znaczeniu** | osobna komenda; zapytanie zdaniem, wynik obrazami z magazynu | CLIP ViT-L/14, 1,6 GB |
+
+**Rozstrzygnięcie, które przyjmuję do czasu Twojego.** Obie wchodzą. Powód:
+obszar `knowledge` już obiecuje wyszukiwanie „po znaczeniu, nie po słowach", a
+kosinus wektorów jest najsłabszą postacią tej obietnicy — przesiew jest jej
+dokończeniem, nie nowym kierunkiem. Oś obrazu jest kierunkiem nowym i to
+przyznaję wprost: dziś `knowledge` indeksuje wyłącznie tekst.
+
+**Model twarzy nie wymaga zmiany kontraktu.** `image.upscale` **ma już pole
+`faces`**; brakuje wyłącznie silnika. Wagi stoją jako `.pth`, a wydanie `ncnn`,
+którego rdzeń dziś szuka, sieci twarzowej nie niesie. To praca inżynierska,
+nie rozstrzygnięcie zakresu.
+
+**Gdybyś odmówił** — zdjęcie jest tanie, obie zdolności wchodzą jednym terenem
+i nic innego się na nich nie opiera.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

@@ -2364,3 +2364,44 @@ o zapadłej już decyzji zdąży wyjść. Wołający, który nie odda `Wyslij` a
 
 Zapytanie `Nalezne` porządkuje wynik tak, że bez tego kolejka pilna stałaby za
 zwykłą, która akurat weszła pierwsza, i priorytet nie znaczyłby nic.
+
+## budowa/server/internal/dane/studio_postac_dokumentu.go
+
+Plik deklaruje kontrakt obszaru postaci — drzewa postaci, arkusza stylów, sekcji
+oraz obiektów, aparatu i pól, które leżą w pliku sąsiednim `studio_postac_obiekty.go`
+— jeden kontrakt w jednym miejscu, wzorem `studio.go`. Interfejs
+`RepozytoriumPostaciStudia` wchodzi do `RepozytoriumStudia` przez zagnieżdżenie,
+bo Studio ma jedno repozytorium, nie dwa, więc adapter modułu dostaje postać tą
+samą zależnością, którą dostaje dokument.
+
+Drzewo postaci idzie jednym zapisem, a style i sekcje nie: po drzewie się nie
+pyta, drzewo się czyta i zapisuje całe; po stylu i po sekcji się pyta („ile
+miejsc używa tego stylu", „która sekcja obejmuje ten znak"), więc mają wiersze.
+Wszystkie nazwy pomocnicze tego pliku niosą przedrostek `postac`, bo przestrzeń
+nazw pakietu `dane` jest dzielona z innymi plikami modułu.
+
+`PostacJSON` w `PostacDokumentuStudia` niesie drzewo postaci w kształcie
+kontraktowego `StudioDocumentForm` — bloki, fragmenty o jednolitej postaci
+znaku, tabele, listy.
+
+Blokady fragmentów, dziennik czynności, znakowanie, kopie zapasowe, nastawy
+pracy, zajęcia fragmentów i spięcia wykonawców stoją nad tymi samymi tabelami,
+ale ich metody deklarują pliki `studio_kontrola_pracy.go` i
+`studio_znakowanie_wykonawcy.go`. Interfejs tego pliku ich nie zawiera i nie
+zakłada drugich metod nad tymi samymi tabelami: dwa zestawy metod nad jedną
+tabelą byłyby dwiema prawdami o tym samym wierszu.
+
+Numer porządkowy postaci przy nadpisaniu rośnie po stronie bazy, nie
+wywołującego: gdyby liczył go rdzeń, dwa zapisy z tym samym numerem byłyby
+możliwe i okno nie miałoby po czym poznać, że trzyma stan przestarzały.
+
+`PostacDokumentu`: brak wiersza wraca jako `ErrBrakWiersza`, ponieważ dokument
+bez zapisanej postaci jest normalnym stanem — dokumenty sprzed wprowadzenia
+postaci go nie mają, a rdzeń podstawia wtedy postać domyślną. Zamiana braku na
+pustą postać odebrałaby rdzeniowi możliwość odróżnienia stanu „nie ma jeszcze"
+od stanu „jest i jest puste".
+
+`StyleDziedziczace` służy jednej rzeczy: zmiana stylu nadrzędnego ma przestawić
+wszystkie miejsca, które go używają, także te, które używają go pośrednio przez
+styl potomny. Bez tego zapytania rdzeń musiałby czytać cały arkusz i składać
+drzewo dziedziczenia przy każdej zmianie.

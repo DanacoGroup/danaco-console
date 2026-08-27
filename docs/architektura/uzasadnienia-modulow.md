@@ -1460,3 +1460,25 @@ Zapis wyniku przebiegu bez testów nie zakłada ani jednego wiersza: zapisanie
 pustego pomiaru pokazywałoby w oknie Build Output podsumowanie zerowych
 testów tam, gdzie testów nikt nie uruchamiał, co nie jest tym samym, co
 informacja, że testy przeszły.
+
+## adapter_modul_library_slownik.go
+
+Etykieta ma tu tożsamość, której `library.tag.set` jej nie daje: barwę, czas
+założenia i istnienie niezależne od tego, czy nosi ją jakikolwiek zasób. Dzięki
+temu okno Tags & Collections pokazuje słownik, a nie próbkę zebraną z odczytanej
+strony wykazu.
+
+Wywóz tezaurusa idzie w SKOS/RDF w trzech serializacjach i powstaje w rdzeniu,
+bo relacje leżą w bazie i klient nie ma ich skąd wziąć. Zapis składa się
+z tekstu, bez programu zewnętrznego: RDF w postaci Turtle, RDF/XML i JSON-LD
+to formaty tekstowe o znanym kształcie.
+
+Łączenie etykiet jest zmianą nazwy wykonaną wielokrotnie: zasób noszący
+etykietę źródłową dostaje docelową, a źródłowa znika ze słownika. Etykieta
+wskazana jako źródłowa i docelowa naraz jest pomijana — wchłonięcie siebie
+samej zdjęłoby etykietę z zasobów bez powodu.
+
+Relacja tezaurusa zapisuje się w jednym kierunku, tym wskazanym przez
+Operatora. Odwrotność wyprowadza odczyt — pojęcie nadrzędne czytane od drugiej
+strony jest podrzędnym — a zapis obu kierunków dałby dwa wiersze mówiące
+to samo i rozjazd przy zdjęciu jednego z nich.

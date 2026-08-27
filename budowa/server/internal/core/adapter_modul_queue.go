@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: dwie komendy rodziny `queue.*` — `queue.list` (wykaz
-// kolejek jednego silnika pętli sesyjnej i MultitaskingAI) oraz `queue.link`
-// (wiązanie kolejki z oknami, ekspertem, projektem albo automatyką).
-//
-// To rozszerzenie adaptera, nie drugi adapter. Metody wiszą na `adapterKolejek`
-// z `adapter_kolejki.go`, więc jadą tym samym repozytorium, tym samym silnikiem
-// wykonania i tym samym przekładem kolejki na kontrakt, co `queue.create`
-// i `queue.action`. Drugiego silnika kolejek nie ma nigdzie.
-//
-// Okna kolejki mają dwa źródła: okna podane przy `queue.create` leżą w pamięci
-// powiązań rdzenia (`pamiec_sesji_kolejek.go`), a okna podane przy `queue.link`
-// w tabeli `powiazanie_kolejki`. Kolejka kontraktu oddaje sumę obu — inaczej po
-// ponownym uruchomieniu rdzenia okna z `queue.create` znikałyby bez śladu,
-// a okna z `queue.link` nie byłyby widoczne w ogóle.
+// Odpowiedzialność pliku: dwie komendy rodziny queue.* — queue.list, wykaz kolejek silnika pętli sesyjnej, oraz queue.link, wiązanie kolejki z bytami.
 package core
 
 import (
@@ -23,13 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// repozytoriumWiazanKolejek to rozszerzenie repozytorium kolejek o czynności,
-// których `queue.create` i `queue.action` nie potrzebowały: wykaz kolejek,
-// sprawdzenie istnienia i powiązania kolejki.
-//
-// Interfejs stoi po stronie czytelnika. Deklaracja mieszka tutaj, a nie
-// w `dane.RepozytoriumKolejek`, bo wymagają jej wyłącznie dwie komendy tej
-// rodziny; port kolejek tych czynności nie zna i nie musi.
+// repozytoriumWiazanKolejek to rozszerzenie repozytorium kolejek o wykaz kolejek, sprawdzenie istnienia i powiązania, potrzebne wyłącznie tej rodzinie komend.
 type repozytoriumWiazanKolejek interface {
 	ListaKolejek(ctx context.Context, stan *shared.QueueStatus) ([]dane.Kolejka, error)
 	CzyKolejkaIstnieje(ctx context.Context, id int64) (bool, error)
@@ -51,22 +32,7 @@ func (a *adapterKolejek) wiazania() (repozytoriumWiazanKolejek, error) {
 
 // ── queue.list ───────────────────────────────────────────────────────────────
 
-// Wykaz zwraca kolejki spełniające warunki żądania.
-//
-// Stan zawęża w bazie, sesja i okno — w rdzeniu. Stan jest kolumną, więc sito
-// idzie do SQL. Sesja kolejki bywa znana wyłącznie z pamięci powiązań (kolejka
-// założona przed pierwszą utrwaloną wiadomością sesji nie ma czym wypełnić
-// `kolejka.sesja_id`), a okna leżą w dwóch źródłach opisanych w nagłówku pliku
-// — sito po nich składa się więc na kolejce kontraktu, po przekładzie. Sito
-// w SQL milczałoby o kolejkach, które warunek spełniają.
-//
-// Żądanie bez ani jednego warunku jest zgodne z kontraktem: wszystkie trzy pola
-// są opcjonalne, więc oddajemy wszystkie kolejki, a nie odmowę.
-//
-// Pusty wykaz nie jest odmową. Sesja bez kolejek to prawdziwa odpowiedź „zero
-// kolejek", nie „nie ma takiej sesji" — sesja żyje w pamięci nadzorcy i bywa
-// bez wiersza w bazie, więc rdzeń nie ma jak odróżnić sesji nieistniejącej od
-// sesji bez kolejek i nie udaje, że ma.
+// Wykaz zwraca kolejki spełniające warunki żądania: stan zawężony w bazie, sesję i okno zawężone po przekładzie na kolejkę kontraktu. Pusty wykaz jest prawdziwą odpowiedzią, nie odmową.
 func (a *adapterKolejek) Wykaz(ctx context.Context,
 	z shared.QueueListRequest) (shared.QueueListResponse, error) {
 
@@ -97,7 +63,7 @@ func (a *adapterKolejek) Wykaz(ctx context.Context,
 	return shared.QueueListResponse{Queues: kolejki}, nil
 }
 
-// niesieOkno mówi, czy kolejka obsługuje wskazane okno.
+// niesieOkno mówi, czy kolejka obsługuje wskazane okno, sprawdzając oba źródła okien powiązanych z kolejką.
 func niesieOkno(okna []string, szukane string) bool {
 	for _, okno := range okna {
 		if okno == szukane {
@@ -109,21 +75,7 @@ func niesieOkno(okna []string, szukane string) bool {
 
 // ── queue.link ───────────────────────────────────────────────────────────────
 
-// Zwiaz wiąże kolejkę z oknami, ekspertem, projektem albo automatyką.
-//
-// Żądanie bez ani jednego bytu jest odmawiane. Cztery pola wiązania są
-// opcjonalne z osobna, ale wszystkie naraz puste znaczą żądanie bez treści:
-// odpowiedź „kolejka po powiązaniu" byłaby wtedy kolejką po niczym, czyli ciszą
-// udającą skutek. Kod odmowy to `validation_failed`.
-//
-// Powiązania się dokładają. Kontrakt zna wyłącznie wiązanie — komendy
-// rozwiązującej nie ma, więc `queue.link` niczego nie zdejmuje. Powiązanie
-// powtórzone nie jest drugim faktem i nie jest błędem; zapis je pomija.
-//
-// Istnienia bytu wiązanego rdzeń tu nie sprawdza. Adapter kolejek nie ma
-// dostępu do repozytoriów ekspertów, projektów ani automatyk, a kolejka nie
-// może zależeć od tego, czy inny moduł zdążył się utrwalić. Zapisany zostaje
-// identyfikator w kształcie, w jakim przyszedł.
+// Zwiaz wiąże kolejkę z oknami, ekspertem, projektem albo automatyką. Żądanie bez żadnego bytu jest odmawiane, a powiązania wyłącznie się dokładają.
 func (a *adapterKolejek) Zwiaz(ctx context.Context,
 	z shared.QueueLinkRequest) (shared.QueueLinkResponse, error) {
 
@@ -221,7 +173,7 @@ func bladBrakuKolejki(identyfikator string) error {
 		"kolejki: kolejka "+identyfikator+" nie istnieje"))
 }
 
-// bladMontazuKolejek składa odmowę usterki montażu obszaru kolejek.
+// bladMontazuKolejek składa odmowę usterki montażu obszaru kolejek, spójną z pozostałymi odmowami adaptera.
 func bladMontazuKolejek(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError, powod))
 }

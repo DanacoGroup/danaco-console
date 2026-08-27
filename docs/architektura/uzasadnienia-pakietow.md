@@ -5941,3 +5941,33 @@ połączenie wyłącznie przez interfejs Ujscie, czyli identyfikator, konto i wy
 Chwila bieżąca jest w opisie metody Tozsamosc istotna: identyfikator klienta dochodzi dopiero
 z powitaniem, więc żądanie wcześniejsze widzi tożsamość uboższą. To jest prawda o stanie, a nie brak do
 naprawienia — rdzeń zamilknie wtedy o sprawcy zdarzenia zamiast go zmyślić.
+
+## budowa/server/internal/repozytorium/roznica.go
+Wynik różnicy wychodzi fragmentami zgodnymi z kontraktem, nie tekstem unified
+diff, bo klient koloruje wiersze i przypina do nich uwagi przeglądu, więc
+potrzebuje wierszy rozpoznanych po rodzaju, a nie napisu z myślnikiem na
+początku.
+
+Porównanie dwóch odwołań w paryPorownania nie sięga po katalog roboczy, bo
+obie strony pochodzą z magazynu obiektów repozytorium.
+
+Pliki niezmienione odpadają w paryDwochOdwolan przy zestawianiu drzew, a nie
+przy liczeniu różnicy, inaczej odpowiedź niosłaby tysiąc pustych wpisów dla
+repozytorium, w którym zmienił się jeden plik.
+
+Licznik wszystkich zatwierdzeń w Historia rośnie także po osiągnięciu
+granicy wyniku, bo odpowiedź niesie, ile zatwierdzeń jest w sumie, nie ile
+pokazano; bez tego klient nie ma jak napisać, że pokazano część z całości.
+
+## budowa/server/internal/dane/design_fotografia.go
+
+Łańcuch edycji nie dubluje wariantów zasobu: że wariant powstał ze źródła, mówi już kolumna
+wariantu zasobu; odczyt łańcucha idzie po zasobie wynikowym, więc każdy krok da się nazwać
+i powtórzyć.
+
+Czynność zawsze wstawia nowy wiersz: łańcuch edycji jest historią, a historia się nie
+nadpisuje — ta sama czynność puszczona dwa razy na tym samym zasobie to dwa osobne ogniwa.
+
+Zapytanie o czynność źródłową zasobu oddaje wykaz, choć wiersz jest najwyżej jeden: ten sam
+zasób mógłby teoretycznie powstać dwiema drogami, a odczyt ma pokazać stan bazy, nie
+założenie o niej.

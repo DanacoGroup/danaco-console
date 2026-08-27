@@ -1,28 +1,6 @@
 // Odpowiedzialność pliku: rachunek barwy modułu Design — rozpoznanie zapisu
 // wejściowego, przeliczenie między przestrzeniami i współczynnik kontrastu
-// wedle WCAG 2.1. Czynności kontraktu stoją w `adapter_modul_design_kolor.go`
-// i `_kolor_obraz.go`; tutaj leży sam rachunek, żeby miał jedno miejsce i jedną
-// prawdę.
-//
-// ── Rachunek jest wkompilowany, nie wołany ──────────────────────────────────
-// Konwersje przestrzeni percepcyjnych i harmonie idą przez
-// `lucasb-eyer/go-colorful`, bibliotekę Go wkompilowaną w binarium. Programu
-// zewnętrznego do przekształceń obrazu w tej drodze nie ma i mieć nie będzie:
-// funkcja zależna od programu spoza instalki jest u Operatora odmową, nie
-// funkcją.
-//
-// ── Luminancja liczy się wzorem WCAG, nie „jasnością" z biblioteki ──────────
-// Współczynnik kontrastu WCAG 2.1 stoi na luminancji względnej liczonej ze
-// składowych sRGB po zdjęciu gamma (`LinearRgb`), z wagami 0.2126 / 0.7152 /
-// 0.0722. Jasność Lab (`L*`) jest inną wielkością i dałaby inne liczby — para
-// czerni na bieli ma dawać dokładnie 21, bo taki jest kres tej skali, i po tej
-// liczbie sprawdzian poznaje, że rachunek jest ten, o który chodzi.
-//
-// ── CMYK jest przeliczeniem wprost, i mówimy to wprost ──────────────────────
-// Przeliczenie RGB → CMYK bez profilu ICC jest przeliczeniem naiwnym: oddaje
-// wartości, których drukarnia użyje jako punktu wyjścia, a nie barwę
-// rozdzieloną pod konkretną maszynę. Rdzeń nie udaje, że zna profil, którego
-// nie dostał — pole `cmyk` niesie przeliczenie wprost i tyle.
+// wedle WCAG 2.1. Czynności kontraktu stoją w `adapter_modul_design_kolor.go`.
 package core
 
 import (
@@ -38,12 +16,8 @@ import (
 )
 
 // barwyNazwaneDesignu to próbki nazwane rozpoznawane przy wejściu i oddawane
-// w polu `name`, gdy barwa trafia w nie dokładnie.
-//
-// Wykaz jest krótki z zamysłu: to są nazwy, które mają w produkcie znaczenie
-// (barwy podstawowe CSS poziomu 1 plus czerń, biel i szarości). Wciągnięcie
-// pełnej listy X11 dałoby nazwy w rodzaju „papayawhip", których nikt w module
-// nie wpisze, a każda z nich musiałaby być tu utrzymywana.
+// w polu `name`, gdy barwa trafia w nie dokładnie. Wykaz jest krótki z zamysłu:
+// niesie barwy podstawowe CSS poziomu 1 plus czerń, biel i szarości.
 var barwyNazwaneDesignu = map[string]string{
 	"black":   "#000000",
 	"white":   "#ffffff",
@@ -67,12 +41,9 @@ var barwyNazwaneDesignu = map[string]string{
 	"orange":  "#ffa500",
 }
 
-// rozpoznajBarweDesignu przekłada dowolny zapis barwy na kolor biblioteki.
-//
-// Rozpoznaje: `#rgb`, `#rrggbb`, `rgb(...)`, `hsl(...)`, `lab(...)`,
-// `cmyk(...)` oraz próbkę nazwaną. Zapis nierozpoznany jest ODMOWĄ, nie barwą
-// domyślną: podstawienie czerni za tekst, którego rdzeń nie zrozumiał, dałoby
-// paletę zbudowaną wokół barwy, której nikt nie wskazał.
+// rozpoznajBarweDesignu przekłada dowolny zapis barwy na kolor biblioteki:
+// `#rgb`, `#rrggbb`, `rgb(...)`, `hsl(...)`, `lab(...)`, `cmyk(...)` oraz
+// próbkę nazwaną. Zapis nierozpoznany jest odmową, nie barwą domyślną.
 func rozpoznajBarweDesignu(zapis string) (colorful.Color, error) {
 	tekst := strings.ToLower(strings.TrimSpace(zapis))
 	if tekst == "" {
@@ -93,8 +64,7 @@ func rozpoznajBarweDesignu(zapis string) (colorful.Color, error) {
 		}
 		return barwaZPrzestrzeniDesignu(przestrzen, liczby)
 	}
-	// Zapis szesnastkowy bez krzyżyka jest częstym skrótem Operatora i tak samo
-	// jednoznacznym — rozpoznajemy go, zamiast odmawiać za znak.
+	// Zapis szesnastkowy bez krzyżyka jest częstym i jednoznacznym skrótem.
 	if len(tekst) == 3 || len(tekst) == 6 {
 		if _, err := strconv.ParseUint(tekst, 16, 32); err == nil {
 			return rozpoznajBarweSzesnastkowoDesignu("#" + tekst)
@@ -121,9 +91,7 @@ func rozpoznajBarweSzesnastkowoDesignu(tekst string) (colorful.Color, error) {
 }
 
 // liczbyZapisuBarwyDesignu rozkłada wnętrze nawiasu na liczby. Rozdzielnikiem
-// bywa przecinek albo spacja (składnia CSS Color 4), a odsetek zamienia się na
-// ułamek od razu — inaczej `hsl(210, 50%, 40%)` i `hsl(210 0.5 0.4)` znaczyłyby
-// co innego, choć to ten sam zapis.
+// bywa przecinek albo spacja, a odsetek zamienia się na ułamek od razu.
 func liczbyZapisuBarwyDesignu(wnetrze string) ([]float64, error) {
 	pola := strings.FieldsFunc(wnetrze, func(znak rune) bool {
 		return znak == ',' || znak == ' ' || znak == '/' || znak == '\t'
@@ -148,16 +116,14 @@ func liczbyZapisuBarwyDesignu(wnetrze string) ([]float64, error) {
 }
 
 // barwaZPrzestrzeniDesignu składa kolor z liczb odczytanych dla wskazanej
-// przestrzeni.
+// przestrzeni: rgb, hsl, lab albo cmyk, każda swoją drogą przeliczenia.
 func barwaZPrzestrzeniDesignu(przestrzen string, liczby []float64) (colorful.Color, error) {
 	switch przestrzen {
 	case "rgb", "rgba":
 		if len(liczby) < 3 {
 			return colorful.Color{}, fmt.Errorf("zapis rgb() wymaga trzech składowych")
 		}
-		// Składowe rgb() bywają podane jako 0–255 albo jako odsetek zamieniony
-		// wyżej na ułamek. Rozróżnia je kres: wartość powyżej jedynki nie może
-		// być ułamkiem sRGB.
+		// Składowe rgb() bywają podane jako 0-255 albo jako ułamek już zamieniony.
 		skala := 255.0
 		if liczby[0] <= 1 && liczby[1] <= 1 && liczby[2] <= 1 {
 			skala = 1.0
@@ -177,8 +143,7 @@ func barwaZPrzestrzeniDesignu(przestrzen string, liczby []float64) (colorful.Col
 		if len(liczby) < 3 {
 			return colorful.Color{}, fmt.Errorf("zapis lab() wymaga trzech składowych")
 		}
-		// L* w zapisie CSS idzie 0–100, a biblioteka liczy go 0–1. Ułamek
-		// podany wprost też jest tu poprawny i wchodzi bez skalowania.
+		// L* w zapisie CSS idzie 0-100, a biblioteka liczy go 0-1.
 		jasnosc := liczby[0]
 		if jasnosc > 1 {
 			jasnosc /= 100
@@ -193,8 +158,8 @@ func barwaZPrzestrzeniDesignu(przestrzen string, liczby []float64) (colorful.Col
 	return colorful.Color{}, fmt.Errorf("przestrzeń %q nie jest znana rdzeniowi", przestrzen)
 }
 
-// barwaZCmykDesignu przelicza CMYK na sRGB wprost — bez profilu ICC, bo żadnego
-// nie dostaliśmy (nagłówek pliku).
+// barwaZCmykDesignu przelicza CMYK na sRGB wprost, bez profilu ICC, którego
+// rdzeń nie zna, przyjmując składowe w zakresie 0-1 albo 0-100.
 func barwaZCmykDesignu(c, m, y, k float64) colorful.Color {
 	if c > 1 || m > 1 || y > 1 || k > 1 {
 		c, m, y, k = c/100, m/100, y/100, k/100
@@ -206,7 +171,8 @@ func barwaZCmykDesignu(c, m, y, k float64) colorful.Color {
 	}
 }
 
-// cmykBarwyDesignu przelicza sRGB na CMYK wprost i oddaje zapis tekstowy.
+// cmykBarwyDesignu przelicza sRGB na CMYK wprost, bez profilu ICC, i oddaje
+// zapis tekstowy do pola `cmyk`.
 func cmykBarwyDesignu(barwa colorful.Color) string {
 	k := 1 - math.Max(barwa.R, math.Max(barwa.G, barwa.B))
 	if k >= 1 {
@@ -232,9 +198,7 @@ func barwaKontraktuDesignu(barwa colorful.Color) shared.DesignColorValue {
 		Lab:  fmt.Sprintf("lab(%.1f%% %.1f %.1f)", jasnosc*100, a*100, b*100),
 		Cmyk: cmykBarwyDesignu(czysta),
 	}
-	// Nazwa wchodzi wyłącznie przy trafieniu dokładnym. Nazwa „najbliższa"
-	// mówiłaby o barwie, której w żądaniu nie było — a pole jest niewymagane
-	// właśnie po to, żeby brak nazwy dało się powiedzieć wprost.
+	// Nazwa wchodzi wyłącznie przy trafieniu dokładnym, nie przy najbliższym.
 	for nazwa, hex := range barwyNazwaneDesignu {
 		if hex == zapis.Hex {
 			wartosc := nazwa
@@ -245,13 +209,9 @@ func barwaKontraktuDesignu(barwa colorful.Color) shared.DesignColorValue {
 	return zapis
 }
 
-// barwaRgbaDesignu przekłada barwę na składowe z kanałem krycia — postać, którą
-// przyjmują biblioteki wyrysu (`image/draw`, `tdewolff/canvas`).
-//
-// Składowe są PRZEMNOŻONE przez krycie, bo `color.RGBA` biblioteki standardowej
-// jest formatem z krycim wmnożonym. Wartości niepomnożone dawałyby przy kryciu
-// częściowym barwę jaśniejszą, niż wskazano, i wyrys nie zgadzałby się
-// z podglądem w oknie.
+// barwaRgbaDesignu przekłada barwę na składowe z kanałem krycia, przemnożone
+// przez krycie, bo `color.RGBA` biblioteki standardowej jest formatem z krycim
+// wmnożonym — postać, którą przyjmują biblioteki wyrysu.
 func barwaRgbaDesignu(barwa colorful.Color, krycie *float64) color.RGBA {
 	czysta := barwa.Clamped()
 	kanal := 1.0
@@ -285,13 +245,14 @@ func kontrastWcagDesignu(pierwszy, drugi colorful.Color) float64 {
 	return (jasniejszy + 0.05) / (ciemniejszy + 0.05)
 }
 
-// progiKontrastuDesignu to progi WCAG 2.1 dla tekstu zwykłego i dużego.
+// progiKontrastuDesignu to progi WCAG 2.1 dla tekstu zwykłego i dużego,
+// używane przy ocenie pary barw.
 const (
 	progKontrastuAA       = 4.5
 	progKontrastuAAA      = 7.0
 	progKontrastuDuzegoAA = 3.0
 	// Tekst duży wedle WCAG: od 18 punktów (24 px) albo od 14 punktów (18.66 px)
-	// przy pogrubieniu.
+	// przy pogrubieniu, licząc rozmiar w pikselach ekranowych.
 	rozmiarTekstuDuzegoDesignu       = 24.0
 	rozmiarTekstuDuzegoPogrubionego  = 18.66
 	miejscaPoPrzecinkuKontrastuWcag  = 2
@@ -299,14 +260,8 @@ const (
 )
 
 // wynikKontrastuDesignu składa `DesignContrastResult` dla pary barw wraz
-// z oceną progów.
-//
-// `passesLargeAA` liczy się zawsze, a nie tylko wtedy, gdy wołający podał
-// rozmiar pisma: pole odpowiada na pytanie „czy ta para nadaje się na nagłówek",
-// które ma sens także bez wskazania rozmiaru. Rozmiar i pogrubienie
-// rozstrzygają natomiast o `passesAA` — para na 4.0 jest zgodna dla tekstu
-// dużego i niezgodna dla zwykłego, więc jedna odpowiedź na oba przypadki
-// byłaby nieprawdziwa dla jednego z nich.
+// z oceną progów. `passesLargeAA` liczy się zawsze, `passesAA` zależy od
+// rozmiaru i pogrubienia podanego wołaniem.
 func wynikKontrastuDesignu(pierwszyZapis, drugiZapis string, pierwszy, drugi colorful.Color,
 	rozmiar *float64, pogrubienie *bool) shared.DesignContrastResult {
 
@@ -344,7 +299,8 @@ func czyTekstDuzyDesignu(rozmiar *float64, pogrubienie *bool) bool {
 	return *rozmiar >= rozmiarTekstuDuzegoDesignu
 }
 
-// przytnijUlamekDesignu wprowadza wartość w przedział 0–1.
+// przytnijUlamekDesignu wprowadza wartość w przedział 0-1, do składowych barwy
+// przy przycinaniu na granicach zakresu sRGB.
 func przytnijUlamekDesignu(wartosc float64) float64 {
 	if wartosc < 0 {
 		return 0
@@ -355,7 +311,8 @@ func przytnijUlamekDesignu(wartosc float64) float64 {
 	return wartosc
 }
 
-// znormalizujKatDesignu wprowadza kąt odcienia w przedział 0–360.
+// znormalizujKatDesignu wprowadza kąt odcienia w przedział 0-360 stopni,
+// zwijając wartości spoza zakresu modulo pełnego obrotu.
 func znormalizujKatDesignu(kat float64) float64 {
 	wynik := math.Mod(kat, 360)
 	if wynik < 0 {
@@ -364,7 +321,8 @@ func znormalizujKatDesignu(kat float64) float64 {
 	return wynik
 }
 
-// zaokraglijSkladowaDesignu przekłada ułamek sRGB na całkowitą składową 0–255.
+// zaokraglijSkladowaDesignu przekłada ułamek sRGB na całkowitą składową 0-255,
+// do zapisu w `color.RGBA`.
 func zaokraglijSkladowaDesignu(wartosc float64) int {
 	return int(math.Round(przytnijUlamekDesignu(wartosc) * 255))
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// naruszenieKluczaObcego opisuje jeden wiersz wyniku PRAGMA foreign_key_check.
+// naruszenieKluczaObcego opisuje jeden wiersz wyniku zapytania sprawdzającego więzy kluczy obcych bazy.
 type naruszenieKluczaObcego struct {
 	Tabela        string
 	Wiersz        int64
@@ -37,7 +37,7 @@ func (b *Baza) SprawdzSpojnosc() error {
 	return nil
 }
 
-// sprawdzIntegralnosc wykonuje PRAGMA integrity_check i oczekuje wyniku „ok”.
+// Metoda sprawdzIntegralnosc wykonuje kontrolę integralności pliku bazy i oczekuje wyniku pozytywnego.
 func (b *Baza) sprawdzIntegralnosc() error {
 	wynik, err := b.PragmaTekstowa("integrity_check")
 	if err != nil {

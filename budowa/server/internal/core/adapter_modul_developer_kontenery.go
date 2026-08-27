@@ -720,7 +720,7 @@ func rozbierzPrzypisaniePortu(zapis string) (nat.Port, string, error) {
 	case 2:
 		return nat.Port(czesci[1] + "/" + protokol), czesci[0], nil
 	case 3:
-		// Zapis z adresem gospodarza niesie adres, który tu pomijamy.
+		// Zapis z adresem gospodarza niesie adres, który tu jest pomijany.
 		return nat.Port(czesci[2] + "/" + protokol), czesci[1], nil
 	default:
 		return "", "", errors.New("nieczytelne przypisanie portu: " + zapis)

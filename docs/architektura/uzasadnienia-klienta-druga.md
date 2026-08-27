@@ -5100,3 +5100,16 @@ w przeglądarce i w rdzeniu nie są tożsame: jedna strona nie zdejmuje znaku, k
 i odwrotnie — gdyby rozbieżność padła na taki znak, dwa cytaty wyglądałyby w oknie identycznie,
 a operator zobaczyłby zarzut bez różnicy, dlatego każdy znak sterujący, formatujący i odstęp inny
 niż zwykła spacja wychodzi jako kod znaku.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/czynnosci-sesji-menu.ts
+Sekcja jest doklejana jako druga sekcja menu nagłówka okna rozmowy; kreska
+nad sekcją rysuje się po stronie menu paneli i tylko wtedy, gdy sekcja
+niepusta. Kolejność wierszy jest stała: otwarcie w nowym oknie, zmiana
+nazwy, widok transkryptu, archiwizacja, usunięcie — pozycja bez pokrycia w
+rdzeniu nie powstaje w ogóle, więc nie ma tu wiersza wygaszonego.
+Identyfikator sesji czytany jest z kanału przy każdym pytaniu, nie raz przy
+montażu, bo gniazdo powstaje przed uzgodnieniem z rdzeniem i sesji wtedy
+jeszcze nie ma. Skróty klawiaturowe sekcji łapie nasłuch tej sekcji i
+działają tylko, dopóki menu jest rozwinięte — skrótu globalnego nie
+rejestrujemy, żeby te same litery wpisane w polu wypowiedzi mogły dalej
+pisać litery.

@@ -2095,3 +2095,48 @@ diagnostyce, `-y` odpowiada twierdząco na pytania programu, bo proces bez
 terminala nie ma komu odpowiadać i czekałby do granicy czasu, a `--`
 zamyka listę przełączników — bez niego plik nazwany `-sdel` zostałby
 wzięty za polecenie, a nie za nazwę.
+
+## handlers_historia.go
+
+Plik wpina trzy komendy, nie cztery: zdarzenie zmiany historii stoi w dziale
+zdarzeń kontraktu i niesie ładunek, nie parę żądanie-wynik, więc do rejestru
+komend nie wchodzi. Historia nie jest nowym bytem — pozycją historii jest
+wypowiedź okna, wiersz istniejącej tabeli wiadomości; rodzina komend historii
+daje jej drugi widok, od najnowszej, kursorem czasu, z możliwością
+skasowania, a nie drugą tabelę, i wypełnia ją to samo repozytorium co widok
+zwykły. Nowa tabela wchodziłaby wyłącznie pod zasadę przechowywania, bo tego
+bytu w schemacie nie było wcale.
+
+Retencja jest egzekwowana, nie tylko zapisana: zasada zapisana, której nikt
+nie stosuje, byłaby atrapą — Operator widziałby nastawę i rosnącą historię
+naraz. Egzekucja ma dwa miejsca wpięcia, oba na drodze, którą rdzeń i tak
+przechodzi: zapis zasady egzekwuje ją zaraz po zapisaniu na wszystkich
+oknach zakresu, więc nastawa działa od chwili ustawienia, a nie od
+następnego restartu; wczytanie historii egzekwuje ją przed oddaniem wykazu
+na czytanym oknie, więc wykaz nigdy nie pokazuje pozycji, która zasadzie już
+nie podlega. Czego te dwa miejsca nie dają: okno, którego nikt nie czyta
+i na którym nikt nie przestawia zasady, nie zostanie przycięte samo,
+ponieważ przemiatania okresowego ani przy starcie rdzenia tu nie ma —
+wpięcie takiego przemiatania siedzi poza tym pakietem.
+
+Przy czyszczeniu wielu pozycji zdarzenie zmiany nie niesie pojedynczej
+pozycji: kontrakt daje to pole jako niewymagane właśnie na ten przypadek,
+bo po skasowaniu setki wypowiedzi nie ma jednej pozycji „po zmianie",
+a wysyłanie stu zdarzeń zamieniłoby odświeżenie wykazu w burzę. Idzie jedno
+zdarzenie z identyfikatorem okna i rodzajem zmiany „usunięto" — okno
+przeładowuje wykaz w całości.
+
+Wczytanie wykazu nie przerywa się, gdy egzekucja zasady zawiedzie: Operator
+ma dostać historię, jaka jest, zamiast odmowy odczytu, ponieważ
+niepowodzenie egzekucji zabiera tylko tę jedną czynność, nie całą komendę.
+Pole rozmiaru całej historii w odpowiedzi wykazu panel podstawia pod
+ostrzeżenie „ile zniknie" przy czyszczeniu, a kasowanie bez wskazania
+pozycji usuwa okno w całości — liczba zawężona kursorem malałaby przy
+każdym dociągnięciu strony i obiecywałaby utratę mniejszą niż rzeczywistą.
+
+Zapis zasady przechowywania na zakres, którego byt nie istnieje w bazie,
+jest nastawą bez skutku: egzekucja na zakresie okna nie pyta bazy o
+istnienie okna, więc zasada zapisana na nieistniejące okno albo sesję
+leżałaby w tabeli i nie przycięłaby nigdy niczego, a Operator miałby na nią
+potwierdzenie powodzenia. Odmowa w tym miejscu nazywa brak bytu w bazie,
+a nie zakaz zapisu zasady.

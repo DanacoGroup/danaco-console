@@ -249,3 +249,22 @@ Wklejenie sposobem „zachowaj postać źródła” różni się od sposobu „s
 postać”: gdy wpis schowka nie przenosi postaci źródła, oba sposoby dają ten
 sam wynik, więc sam fakt powodzenia wklejenia niczego nie dowodzi — dowodem
 jest wytłuszczenie fragmentu źródłowego widoczne w miejscu wklejenia.
+
+## budowa/server/internal/core/skutek_warsztatow_designu_test.go
+
+Sprawdziany warsztatów wektora, kroju ikonowego, schematu, makiety i barwy
+modułu Design mierzą liczbę wynikową operacji zamiast samego faktu odpowiedzi
+bez błędu: operacja logiczna jest mierzona współrzędnymi węzłów i przynależnością
+punktów płaszczyzny do kształtu, krój ikonowy liczbą glifów odczytaną z pliku
+TTF czytnikiem krojów wraz z liczbą krzywych w konturach, schemat liczbą ścieżek
+w dokumencie SVG, barwa współczynnikiem kontrastu przeliczonym niezależnie
+wzorem WCAG oraz kątami odcieni harmonii, układ makiety położeniami warstw
+odczytanymi z bazy po zapisie, a odszumienie tym, czy krawędź pozostaje krawędzią,
+a płaski obszar wygładzeniem.
+
+Pierwsze uruchomienie tego zestawu wykryło defekt tabeli `maxp` składanego
+kroju: tabela miała 36 bajtów wobec 32 wymaganych przez format, więc żaden
+czytnik krojów nie wczytywał pliku, choć rdzeń oddawał go bez odmowy. Sprawdzian
+oparty wyłącznie na fakcie udanej odpowiedzi komendy nie wykrywa takich usterek,
+ponieważ operacja oddająca pierwszy kształt zamiast sumy, krój bez glifów albo
+schemat wychodzący pustym płótnem są dla niego odpowiedziami udanymi.

@@ -4865,3 +4865,25 @@ Format domyślny to zip, ponieważ otwiera się dwukrotnym kliknięciem w każdy
 Sprawdzenia ścieżki są dwa, bo są dwa sposoby ucieczki z katalogu roboczego okna. Ścieżka bezwzględna omija katalog wprost. Ścieżka względna wychodzi z niego członem wskazującym katalog nadrzędny, i tego nie widać po samym napisie, dlatego liczona jest ścieżka oczyszczona i sprawdzane, czy nadal leży wewnątrz katalogu.
 
 Brak binarium zewnętrznego dostaje inny kod niż niepowodzenie programu: brak narzędzia Operator usuwa jedną instalacją, a wywrócenie się programu jest usterką przetwarzania.
+
+## budowa/server/internal/core/handlers_krok_zlecenia.go
+Kontrakt nie niesie dziś żadnej komendy dotyczącej pozycji kolejki ani jej
+struktury, więc rejestracja pyta kontrakt o każdą nazwę komendy rodziny
+queue.step.* i wpina uchwyt wyłącznie wtedy, gdy nazwa do kontraktu należy.
+Dopóki kontrakt tych nazw nie niesie, klient wołający komendę wstrzymania
+kroku dostaje odpowiedź komendy nieznanej — rdzeń nie ogłasza zdolności, które
+kontrakt nie opisuje; po wniesieniu komend do kontraktu uchwyty wpinają się
+bez zmiany tego pliku, bo warunek rejestracji zadaje to samo pytanie, co
+sprawdzian zgodności rejestru z kontraktem. Literały nazw komend stoją tu
+wyjątkowo jako klucz wyszukania w kontrakcie, a nie jako deklaracja komendy;
+po wniesieniu komend do kontraktu mają ustąpić stałym kontraktu, a struktury
+pliku mają stać się aliasami typów kontraktu.
+
+Krok widziany z zewnątrz niesie stan pracy i stan sterowania jako dwa odrębne
+pola, bo są to dwa różne fakty — gdzie krok stoi w pracy i czego oczekuje od
+człowieka; sklejenie ich w jedno pole zmusiłoby do wyboru, który z faktów
+zataić. Odpowiedź komendy decyzji o kroku niesie osobno fakt doręczenia
+decyzji wykonawcy kroku, bo bez tego pola brak efektu decyzji trzeba by
+odgadywać. Port sterowania krokiem bez wpięcia w kolejkach nie jest odmową:
+dopóki kontrakt nazw komend nie niesie, odmowa dotyczyłaby komendy, której
+i tak nikt nie może zawołać.

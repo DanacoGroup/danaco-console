@@ -6058,3 +6058,5 @@ rdzeń potrzebuje rozgłośni transportu, transport potrzebuje rdzenia do obsłu
 nie importuje pakietu drugiego. Reguła bez blokad domyślnych mówi, że brak nastawy nie wstrzymuje
 pracy, ale niekompletna para plików TLS nastawą nie jest, tylko połową wskazania — praca otwartym
 tekstem przy wskazanym certyfikacie byłaby cichym zejściem poniżej tego, o co poprosił operator maszyny.
+## budowa/server/internal/dane/studio_praca_zmiany.go
+Repozytorium sąsiedni zna zmianę śledzoną sprzed dobudowy: rodzaj, autora grubym rozróżnieniem człowiek-model, zakres, brzmienie przed i po, decyzję. Kolumny tożsamości agenta, podagenta oraz postaci przed i po zmianie dołożyła późniejsza migracja i pyta o nie wyłącznie ten odcinek, bo przełącznik pokazujący wszystko, co zrobił model, musi rozdzielić dwóch agentów pracujących naraz, a nie pokazać obu jako jednego. Dopisanie ich do pliku sąsiedniego byłoby wejściem w plik cudzego odcinka; osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia zmiany śledzonej, bo tabela jest jedna, wiersz zakłada zapis zmiany śledzonej, a te kolumny stempluje się na wierszu już istniejącym.

@@ -2713,3 +2713,22 @@ Ponowna analiza zastępuje graf tury, a nie dokłada się do niego: dwa przebieg
 wydobycia argumentów na tym samym zapisie dałyby każdy węzeł dwa razy. Funkcja
 ZastapGrafDebaty przenosi oznaczenia kluczowe po treści węzła, żeby zastąpienie grafu
 nie zgubiło wyboru operatora.
+
+## budowa/server/internal/dane/design_wektor.go
+
+Zapis ścieżki jest zawsze pełny. Kontrakt DesignVectorPathSetRequest.Nodes
+nadsyła komplet węzłów przy każdej zmianie — zmiana jednego węzła idzie tą samą
+drogą co narysowanie ścieżki od zera. Repozytorium nie dogaduje różnicy
+względem kształtu zastanego: zna wyłącznie „załóż albo nadpisz" po
+identyfikatorze zewnętrznym, wzorem ZapiszZestawZetonowDesignu.
+
+Węzły, wypełnienie i obrys jadą zapisem JSON w kolumnie. Powód stoi w nagłówku
+migracji 316: żadne zapytanie nie pyta o pojedynczy węzeł, a wiersz na węzeł
+znaczyłby kasowanie i wstawianie kilkudziesięciu wierszy przy każdym drgnięciu
+pióra. Warstwa danych nie zagląda w treść tego zapisu — składa go i rozkłada
+adapter, bo to on zna kontrakt.
+
+Symbol i jego członkowie: definicja symbolu jest wykazem ścieżek i warstw,
+który podmienia się w całości. Liczba członków jest tym, co rdzeń oddaje jako
+liczbę miejsc, do których zmiana doszła — liczbą wierszy naprawdę zapisanych,
+nie obietnicą.

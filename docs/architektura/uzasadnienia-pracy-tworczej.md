@@ -915,3 +915,49 @@ Tożsamością bloku przy przenoszeniu postaci jest jego identyfikator: blok,
 którego wersja źródłowa nie zna, zostaje w postaci bieżącej. Zgadywanie
 odpowiedniości bloków po innej cesze byłoby gorsze niż nieprzeniesienie
 postaci, ponieważ nałożyłoby krój obcego akapitu na istniejącą treść.
+
+## adapter_modul_design_wektor.go
+
+Kształt zakładany przez `design.vector.shape.add` wchodzi do bazy od razu jako
+komplet węzłów ścieżki z uchwytami, a nie jako prostokąt czy elipsa osobnym
+bytem do późniejszej zamiany w ścieżkę: byt pośredni wymagałby komendy „zamień
+w ścieżkę”, której kontrakt nie ma, i dawałby na kompozycji dwa rodzaje
+kształtu różniące się tym, czego z nimi wolno zrobić.
+
+Operacja logiczna (`ZlozSciezkiLogicznie`) liczy sumę, różnicę, część wspólną
+i wykluczenie przez bibliotekę `tdewolff/canvas`, a wynik wraca do bazy znowu
+jako węzły, nie jako gotowy zapis SVG — ścieżka po operacji ma dać się ciągnąć
+piórem dalej, inaczej pierwsza suma dwóch kół kończyłaby edycję kształtu.
+Ścieżki źródłowe usunięte po operacji (`keepSources` bez wskazania) wracają w
+`removedPathIds`: pole puste tam, gdzie ścieżki zniknęły, byłoby ciszą, a okno
+pokazywałoby kształty, których w bazie już nie ma.
+
+Zamiana tekstu w kontury (`TekstNaSciezce`) jest nieodwracalna dla wyniku:
+kontury nie wiedzą, że były literami, więc literówki w nich już nie da się
+poprawić. Ścieżka nośna wskazana przez wywołującego rozstrzyga też o początku
+tekstu — bierze się z jej pierwszego węzła.
+
+`UsunSciezke` odmawia wyłącznie wtedy, gdy zapis się nie powiedzie: ścieżki,
+której nie ma, nie traktuje jak usterki, bo kontrakt pyta polem `removed`, czy
+wiersz istniał, nie czy polecenie bazy się udało.
+
+`OczyscSciezki`: ubytek bajtów w `savedBytes` jest pomiarem, nie oszacowaniem —
+rdzeń mierzy długość zapisu przed przycięciem precyzji i po nim, więc wartość
+ujemna (zapis dłuższy, bo zastana precyzja była wyższa) jest tu prawdą
+rachunku, nie usterką.
+
+`WydajWektor`: wydanie wektorowe zostaje wektorem — rasteryzacja odebrałaby mu
+jedyną własność, dla której jest wektorem. SVG składa dokument tekstowy w tym
+samym pliku, PDF i EPS biblioteka `tdewolff/canvas` wkompilowana w binarium.
+PDF i EPS mierzą stronę w punktach typograficznych i liczą oś Y od dołu, a
+kompozycja liczy Y od góry — stąd odbicie kształtów przy wydaniu, bez którego
+dokument wyszedłby lustrzanym odbiciem tego, co widać na kompozycji.
+
+`stylWydaniaWektoraDesignu`: ścieżka bez wypełnienia i bez obrysu dostaje obrys
+włoskowy, bo kształt bez żadnego z dwóch byłby w wydaniu niewidoczny, a plik,
+w którym nie widać niczego, wygląda identycznie jak plik uszkodzony.
+
+`uporzadkujBilansDesignu` oddaje nil dla wykazu pustego, żeby pole
+niewymagane kontraktu nie weszło do odpowiedzi wcale, a dla wykazu niepustego
+ustala stałą kolejność, żeby dwa wywołania tej samej komendy nie różniły się
+porządkiem zastrzeżeń.

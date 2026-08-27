@@ -539,3 +539,26 @@ po bibliotece. Blob nie ma rozszerzenia — jego nazwą jest suma sha256 — wi�
 format bierze się z kolumny wiersza, a nie ze ścieżki; zasób bez formatu i
 bez wskazania w żądaniu jest odmową, bo zgadnięty format wygląda w wyniku
 identycznie jak rozpoznany i nie da się ich odróżnić.
+
+## skutek_terminala_test.go
+
+Różnica wobec sprawdzianu koperty jest tu istotą rzeczy: odpowiedź komendy ze
+stanem udanym i pustym wynikiem jest odpowiedzią udaną i zarazem kłamiącą, bo
+klient czyta odpowiedź, nie komentarz w kodzie. Każdy sprawdzian tego pliku
+mierzy więc świat niezależnie od odpowiedzi rdzenia: wpis książki hostów,
+pozycję biblioteki i jej wersje — własnym zapytaniem SQL do bazy, nie ponownym
+pytaniem tej samej komendy; klucz SSH — plikiem na dysku, jego prawami
+i tym, czy biblioteka kliencka potrafi go odczytać; odczyt pliku — treścią,
+którą sprawdzian sam wcześniej zapisał; wstrzymanie procesu — stanem procesu
+w systemie, nie polem odpowiedzi; obserwację plików — plikiem, który powstał,
+bo wyzwolone polecenie naprawdę się wykonało; tunel — stanem końcowym procesu
+ssh odczytanym z bazy.
+
+Test karty powłoki urządzeniowej pilnuje szkody, która byłaby cicha w
+najgorszy możliwy sposób. Rdzeń nauczył się czterech powłok sięgających poza
+jego maszynę — kontenera, poda, konsoli szeregowej i sesji Telnet — a warunek
+kolumny powłoka w schemacie bazy przez pewien czas wymieniał inny zestaw
+wartości niż kod. Karta takiego rodzaju powstawała wtedy w pamięci
+i działała, ale jej zapis odbijał się od warunku bazy po cichu, bez wywrócenia
+czynności — karta znikała po restarcie rdzenia, nic tego nie zapowiadając.
+Dlatego sprawdzian mierzy wiersz w bazie, nie samą odpowiedź komendy.

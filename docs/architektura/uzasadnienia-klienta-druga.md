@@ -4289,3 +4289,11 @@ rozjechałoby obie listy.
 Tok rozumowania stoi osobno, bo rdzeń nie liczy go do treści wypowiedzi — sumuje wyłącznie
 fragmenty tekstu. Doklejony do zdania dałby na żywo wypowiedź inną niż ta, którą za chwilę utrwali
 rdzeń.
+
+## budowa/klient-poprzedni/src/moduly/studio/indeks.ts
+Moduł sam mówi, którym jest modułem, więc rozjazd między nazwą w rejestrze a rzeczywistością
+jest niemożliwy. Moduł nie osadza się sam w dokumencie i nie zna powłoki: oddaje element,
+a warstwa składająca decyduje, gdzie go postawić, dzięki czemu te same okna wchodzą i w obszar
+roboczy powłoki, i w stanowisko sprawdzianu. Zamknięcie modułu odpina subskrypcję zmiany
+dokumentu; pole jest w umowie rejestru modułów nieobowiązkowe, woła je dziś stanowisko
+sprawdzianu, a powłoka zawoła je, gdy dostanie granicę życia widoku.

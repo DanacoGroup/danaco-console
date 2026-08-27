@@ -1891,3 +1891,14 @@ staje się przez to niemożliwy.
 
 Moduł nie zna powłoki: oddaje element, a warstwa składająca rozstrzyga, gdzie go
 postawić i czy wpisać go do rejestru modułów.
+
+## budowa/klient-poprzedni/src/aplikacja/arkusze-stylow.ts
+
+Żetony motywu dają barwy, typografię, przestrzeń i ruch, a biblioteka `.dn-*`
+stoi na nich. Arkusz `powloka.css` sprowadza zmienne widoku okna do żetonów
+motywu, więc idzie po arkuszu tego widoku, a `aplikacja.css` osadza reguły
+w obszarze roboczym powłoki i dlatego jest ostatni.
+
+Arkusz kompletu sterowania `sterowanie/sterowanie.css` wciąga sam moduł panelu.
+Trafia przez to do pakietu za tym wykazem, jako ostatni styl widoku, i w wykazie
+nie figuruje.

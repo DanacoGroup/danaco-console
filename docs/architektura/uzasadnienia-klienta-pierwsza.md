@@ -6077,3 +6077,50 @@ i jest poprawna, więc każdy jej krok byłby wtedy zgłoszony bez powodu. Rachu
 przeglądem w głąb ze znacznikiem odwiedzin: krok napotkany powtórnie na tej samej ścieżce zamyka
 cykl, a kroki cyklu wracają kompletem, bo sygnalizacja stoi przy każdym z nich, a nie przy jednym
 wybranym.
+
+## budowa/klient-poprzedni/src/aktualizacja/most-aktualizacji.ts
+Przeglądarka nie podmieni pliku wykonywalnego i nie uruchomi aplikacji ponownie;
+potrafi to wyłącznie powłoka natywna, bo to ona stawia proces i zna swoje
+miejsce na dysku. Interfejs rozpoznaje, że jest co zakładać, i przekazuje
+żądanie. Suma kontrolna idzie w żądaniu, bo powłoka ma odmówić założenia pliku,
+którego suma się nie zgadza — interfejs nigdy nie woła aktualizacji bez sumy
+z wykazu wydań. Poza powłoką natywną i przy powłoce, która polecenia nie zna,
+wynikiem jest nazwana odmowa, nie wyjątek i nie cisza.
+
+Wykaz poleceń powłoki tego polecenia jeszcze nie zawiera, więc zapytanie o drogę
+oddaje `null` — powłoka nie mówi — a baner nie obiecuje wtedy restartu.
+Dołożenie polecenia po stronie powłoki niczego tu nie łamie: odpowiedź zaczyna
+przychodzić, zdanie banera robi się dokładniejsze. Podobnie zdarzenie postępu:
+powłoka go jeszcze nie rozgłasza, pętla pobrania liczy bajty, ale ich nie
+wysyła; nasłuch stoi założony, żeby dołożenie rozgłoszenia po stronie powłoki
+było jedyną potrzebną zmianą.
+
+Odpowiedź o przebiegu dociera przed restartem: powłoka odkłada ponowne
+uruchomienie, żeby baner zdążył powiedzieć „udało się”. Bez tej zwłoki okno
+ginęłoby przed odebraniem odpowiedzi i wyglądałoby to jak awaria.
+
+Odmowa niesie osobno kod i zdanie, bo to dwie różne rzeczy dla dwóch różnych
+odbiorców: zdanie czyta Operator, kod czyta baner. Bez kodu każda odmowa
+wyglądałaby na trwałą, także brak łączności, który minie za minutę. Kody odmów
+przemijających opisują brak, który może wrócić; reszta kodów opisuje brak
+trwały, więc baner zostaje przy przeczytanym powodzie aż do następnego obiegu
+pytania.
+
+Sama obecność powłoki nie wystarcza za odpowiedź o drodze aktualizacji: na
+kopii z pakietu instalacyjnego powłoka jest, ale podmiany nie wykona. `null`
+znaczy „powłoka nie mówi”, a nie „nie da się” — wywołujący ma wtedy milczeć
+o restarcie, a nie zgadywać w którąkolwiek stronę.
+
+Pole całości pobrania bywa puste, i to nie jest brak danych do załatania:
+serwer nie musi podać nagłówka długości treści, wtedy znana jest wyłącznie
+liczba bajtów już pobranych, a widok pokazuje licznik megabajtów zamiast
+wymyślonego udziału procentowego.
+
+Obietnica założenia wydania rozstrzyga się wyłącznie odmową: przy powodzeniu
+powłoka zamyka proces i nikt na wynik nie czeka, bo nie ma już czego czekać.
+Wywołujący kod musi zakładać, że może się nie doczekać odpowiedzi.
+
+Wyjątek bez kształtu odmowy oznacza powłokę, która polecenia nie zna, albo
+przerwany kanał komunikacji z powłoką; dostaje osobny kod zamiast zgadywanego
+kodu powłoki. Zdanie odmowy układa powłoka, nie interfejs: tylko ona wie, czy
+zabrakło łączności, prawa zapisu, czy zgodności sumy kontrolnej.

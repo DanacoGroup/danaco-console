@@ -1,10 +1,8 @@
-/* ============================================================================
-   PODGLĄD EKRANU STARTOWEGO — oprawa, nie sam ekran
+/* Arkusz stylów podglądu ekranu startowego zestawia trzy kadry znaku marki w różnej wielkości oraz na różnym tle, niezależnie od produktu.
 
    Trzy kadry obok siebie, żeby ocenić znak w wielkości powłoki, w połowie tej
    wielkości i na tle udającym pulpit. Ani jedna reguła stąd nie należy do
-   produktu — ekran startowy w produkcie nie ma oprawy.
-   ============================================================================ */
+   produktu — ekran startowy w produkcie nie ma oprawy. */
 
 .es-podglad {
   margin: 0;

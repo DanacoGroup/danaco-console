@@ -4265,3 +4265,123 @@ rozglasza terminal.process.changed, podpina ja obslugiwacz.
 
 OtworzKarte: karta bez okna nie ma ani trybu uprawnien, ani obszaru
 izolacji, a wiec nie da sie jej pozniej wykonac.
+## budowa/server/internal/core/adapter_modul_poczta.go
+
+Aplikacja nie ma własnego serwera poczty — używa skrzynki, którą Operator już
+ma skonfigurowaną na urządzeniu albo w chmurze. Rdzeń jest więc klientem
+cudzej skrzynki i nikim więcej: nie stawia serwera, nie zakłada kont
+pocztowych, nie pośredniczy przez żadną infrastrukturę Danaco i nie trzyma
+cudzej poczty u siebie. Podpina skrzynkę, którą Operator już ma, i rozmawia
+z nią jej protokołem.
+
+Hasło albo token przychodzi polem `secret` żądania `mail.account.add`
+i natychmiast ląduje w sejfie poświadczeń — tym samym, którym jadą konta
+i punkty dostępu. Baza dostaje odwołanie ("sejf:poczta:<kod>"), nigdy sekret;
+kolumny na sekret nie ma w schemacie w ogóle. Do dziennika sekret nie trafia,
+bo ten moduł nie loguje niczego. Do odpowiedzi komendy nie trafia, bo
+`MailAccount` w kontrakcie nie ma pola, w które dałoby się go włożyć.
+
+Brak skrzynki, brak poświadczenia i brak łączności to trzy różne rzeczy,
+z których każdą Operator naprawia inaczej: pierwszą podpięciem skrzynki,
+drugą podaniem hasła, trzecią zajrzeniem do sieci albo do dostawcy. Jedno
+wspólne "poczta niedostępna" kazałoby mu zgadywać, którą.
+
+Magazyn załączników znajduje repozytorium Designu, to samo, do którego pisze
+`design.asset.upload`. Drugiego magazynu zasobów rdzeń nie ma i mieć nie
+będzie: załącznik listu wciągnięty osobną drogą byłby zasobem, którego
+narzędzia obrazu i dokumentów nie widzą.
+
+Kod `channel_unavailable` przy niepowodzeniu połączenia, nie `internal_error`:
+skrzynka jest po drugiej stronie sieci i jej niedostępność bywa chwilowa,
+więc odmowa jest ponawialna (`shared.KodyPonawialne`). Rdzeń nie zawinił
+i nic tu nie naprawi — a klient, który ponowi za minutę, ma szansę trafić.
+
+Sekret dobrany dla nastaw połączenia żyje tylko do końca komendy. Brak
+sekretu nie jest tu błędem: `poczta.Polacz` nazwie go drugą z trzech odmów —
+brakiem poświadczenia, odróżnionym od braku skrzynki i braku łączności.
+## budowa/server/internal/core/adapter_modul_asystent_profil.go
+
+Profil niesie warstwę promptu, która mówi modelowi, że jest klawiaturą
+Operatora, a nie autorem. To ona rozstrzyga, czy model sięgnie po
+narzędzia platformy, czy odpisze tekstem we własnym oknie. Bez niej
+asystent zachowuje się jak zwykły czat, dlatego warstwa ma byt trwały, a
+nie żyje w polu żądania, które ginie razem z odpowiedzią na komendę.
+
+Warstwa profilu ląduje w nakładce zapytania, dokładnie tam, gdzie rozmowa
+kładzie warstwy osi tożsamości i warstwy eksperta. Druga droga do promptu
+znaczyłaby dwie prawdy o tym, co model naprawdę dostał.
+
+Profil dopisuje, nigdy nie zastępuje — tak samo jak ekspert. Prompt
+wbudowany programu kanału zostaje w mocy, a profil dokłada do niego
+paczkę treści. Profil nie ma żadnej drogi, którą mógłby prompt platformy
+zdjąć.
+
+Syntezy mowy tu nie ma. Kolumna głosu syntezy niesie nastawę głosu
+odczytu, ale rdzeń syntezy nie wykonuje — nastawa jest odkładana i
+czytana, a nie udawana wywołaniem, którego nikt nie spełnia.
+
+Kolejność rozstrzygania profilu zlecenia jest ustaleniem, nie wygodą:
+profil wskazany przez żądanie ma pierwszeństwo, bo Operator powiedział
+wprost, którym profilem pracuje; profil domyślny jest kolejny, bo okno
+asystenta ma ruszać bez wybierania profilu przy każdym poleceniu; brak
+obu nie jest usterką.
+
+Brak profilu nie wstrzymuje pracy. Instalacja świeża nie ma ani jednego
+wiersza profilu, bo komenda zakładająca profil nie ma na to kontraktu.
+Gdyby brak warstwy odmawiał tury, asystent nie ruszyłby na takiej
+instalacji w ogóle. Zlecenie idzie więc bez warstwy, a fakt zostaje
+nazwany wpisem dziennika, zamiast zniknąć.
+
+Wskazanie na profil, którego nie ma, kończy się tak samo jak brak
+wskazania: bez warstwy i z nazwanym powodem. Zerwanie zlecenia byłoby tu
+karą za nastawę okna, na którą Operator w tej komendzie nie ma wpływu.
+
+Warstwa promptu profilu idzie do warstwy profilu nakładki, a nie do
+konstytucji ani do ekspertyzy. Zdanie opisujące rolę klawiatury Operatora
+opisuje rolę, w której model ma wystąpić; konstytucja jest warstwą
+platformy, nie profilu jednego okna, a ekspertyza jest wiedzą zadaniową.
+Włożenie tego zdania w konstytucję postawiłoby nastawę jednego okna wyżej
+niż zasady całej platformy.
+
+Dokładanie treści warstwy, a nie podstawianie jej, znaczy, że dołożenie
+osi tożsamości w przyszłości nie skasuje warstwy profilu po cichu.
+
+Nastawy poza promptem — kanał, zasięg urządzenia i zasięg pracy — są
+nastawą zasięgu, nie bramką: profil mówi, dokąd sięga praca, a nie czego
+zabrania. Nakładane są tylko wtedy, gdy profil naprawdę coś w danej
+sprawie mówi: pole puste znaczy brak zdania profilu i wtedy zostaje
+nastawa okna. Bez tego strażnika profil bez wskazanego kanału zabrałby
+turze jedyny kanał, jaki miała.
+
+Sprawdzenie profilu wskazanego przez żądanie jest konieczne: kolumna ma
+klucz obcy do tabeli profili, a więzy obce są na połączeniu włączone —
+kod nieznany wywróciłby cały zapis polecenia usterką więzów, czyli
+błędem wewnętrznym bez powodu czytelnego dla Operatora. Sprawdzenie
+wcześniejsze pozwala nazwać powód.
+
+To odmowa, a nie ciche pominięcie: brak profilu w ogóle pracy nie
+wstrzymuje, ale wskazanie profilu, którego nie ma, jest czym innym —
+Operator powiedział wprost, którą warstwą promptu ma pracować model.
+Ciche pominięcie puściłoby turę z warstwą profilu domyślnego albo bez
+żadnej, meldując wykonanie polecenia, którego nikt nie wydał.
+
+Kontrakt nie ma pola na powód braku warstwy profilu: pole wyniku akcji
+jest miejscem na odpowiedź modelu — dopisanie tam zdania rdzenia
+zmieszałoby dwa głosy w jednym polu i zafałszowało wynik tury. Dziennik
+aktywności jest tą samą rozmową, w której stoi polecenie i wynik, więc
+Operator czyta powód dokładnie tam, gdzie patrzy — i zostaje mu ślad po
+zleceniu, a nie sam komunikat, który znika.
+
+## budowa/server/internal/core/adapter_modul_workspace_projekt.go
+
+Oś czasu ma pokazać, co się w projekcie działo, więc zapis zdarzenia idzie
+w tej samej czynności, która zmienia byt — a nie z wyliczenia stanu przy
+odczycie. Wyliczenie pokazywałoby wyłącznie to, co jeszcze istnieje.
+
+Historia po przywróceniu instrukcji zostaje nietknięta: „przywróć” jest
+czynnością odnotowaną, a nie cofnięciem czasu.
+
+Niepowodzenie zapisu zdarzenia osi czasu nie przerywa czynności, która je
+wywołała: zadanie już powstało, a brak wiersza w dzienniku jest ubytkiem
+zapisu, nie unieważnieniem skutku. Dlatego funkcja `odnotujZdarzenieWorkspace`
+nie oddaje błędu.

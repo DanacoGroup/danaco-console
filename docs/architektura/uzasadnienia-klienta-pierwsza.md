@@ -6722,3 +6722,15 @@ Płótno adnotacji jest rodzeństwem podglądu strony, nie jego dzieckiem, więc
 
 ## budowa/klient-poprzedni/src/moduly/assistant/edytor-makra.ts
 Makro asystenta nie ma własnego magazynu w kontrakcie i opracowanie modułu prowadzi je tam, gdzie magazyn jest — przekazanie powtarzalnego makra lub rutyny do modułu Automations przyciskiem wysyłki. Kroki wpisuje się w JSON, bo dokładnie taki kształt niesie kontrakt; sprawdzenie jest tu, a nie w rdzeniu, z jednego powodu — błąd składni ma się nazwać przy polu, w którym powstał, zanim cokolwiek pojedzie do rdzenia. Sprawdzian pilnuje wyłącznie tego, co kontrakt uznaje za wymagane, identyfikatora kroku i jego rodzaju, reszty pól nie zgaduje; formatu YAML edytor nie przyjmuje i nie udaje, że przyjmuje. Pól opcjonalnych rozbiór kroków nie egzekwuje: rozstrzyga o nich rdzeń, a klient, który by je narzucił, odmawiałby definicji poprawnych.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — panel rodzin
+Rodziny prowadzone przez rdzeń obejmują karty, grupy kart, przestrzenie robocze, zakładki, przewinięcie, zrzut i narzędzia inspekcyjne.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — ponowienie po odmowie
+Ponowienie odczytujące tylko stan okna zostawiałoby operatora z komunikatem, którego nie da się zdjąć czynnością, którą mu podano — więc ponowienie sięga po stan okna i po treść strony naraz.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — kolejność trzech stanów
+Odwrotna kolejność kazałaby operatorowi czytać „jest pusto" w chwili, w której odczyt jeszcze trwa.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-rutyn.ts
+Rutyna jest w kontrakcie automatyką z harmonogramem: odczyt wykazu automatyk mówi, jakie automatyki są, odczyt harmonogramu mówi, kiedy biegną, a zapis harmonogramu nadaje im cykliczność; osobnego bytu rutyny asystenta kontrakt nie ma i okno go nie zakłada. Wyzwalaczy zdarzeniowych okno nie ustawia: automatyka niesie cztery ich rodzaje, ale każdy wymaga wyrażenia właściwego dla swojego rodzaju — adres wywołania zdalnego, ścieżka pliku, warunek na wyniku modelu — a ich redakcja należy do modułu Automations, którego Workflow Builder jest miejscem budowy procesów. Assistant, zgodnie z granicą tematyczną modułu, inicjuje i nadzoruje pojedyncze zlecenia, a nie projektuje pełnych procesów.

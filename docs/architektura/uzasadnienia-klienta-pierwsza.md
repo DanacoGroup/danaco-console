@@ -3798,3 +3798,18 @@ dopisania mówi o tym wprost, żeby okno nie meldowało dopisania, którego nie 
 Każda zmiana zbioru jest ogłaszana. Źródło dodane w panelu źródeł ma się pojawić w wyborze
 powiązania notatki w tej samej chwili; bez ogłoszenia drugie okno zobaczyłoby je dopiero przy
 własnym odświeżeniu, a Operator dostałby wybór bez pozycji, którą właśnie zapisał.
+
+## budowa/klient-poprzedni/src/moduly/design/suwaki-promptu.ts
+
+Parametry generowania podaje suwak, a nie pole liczbowe, ponieważ każdy z trzech
+parametrów ma w kontrakcie zakres zamknięty albo naturalny: pole `creativity`
+przyjmuje wartości od zera do jedności, pole `variants` jest liczbą wariantów
+jednego zlecenia, a pole `seed` liczbą całkowitą powtarzającą wynik. Odczyt
+wartości stoi obok suwaka, ponieważ ziarno trzeba umieć przepisać, żeby powtórzyć
+wynik generowania.
+
+Wypełnienie toru suwaka niesie żeton `--dn-suwak-pozycja`, czytany przez arkusz
+`komponenty/suwak.css`. Żeton jest ustawiany przy każdej zmianie wartości
+kontrolki. Arkusz ma dla niego wartość zapasową równą połowie zakresu, więc bez
+tego ustawienia tor każdego suwaka pokazywałby połowę niezależnie od wartości
+kontrolki.

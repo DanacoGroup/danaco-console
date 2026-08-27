@@ -3781,3 +3781,12 @@ instancją nad jednym plikiem; montaż ustawia go raz na starcie, zanim serwer
 zacznie obsługiwać żądania, więc odczyty idą już po zapisie. Klucz zapisany
 komendą account.* jest tym samym, który kanał API odczytuje przy wysyłce,
 ponieważ obie strony sięgają po ten sam sejf wpięty przy montażu.
+
+## budowa/server/internal/session/petla_test.go
+
+Sprawdziany warunku ukończenia biegu koordynator-wykonawca mierzą to, co pętla naprawdę dostaje przez
+zgłoszenie ZakonczTure, i wykluczają dwie szkody: bieg, po którym nie da się maszynowo odróżnić pracy
+skończonej od przerwanej, gdyż trzy powody zatrzymania mówią „przerwane" i żaden nie mówił „skończone
+z wynikiem"; oraz ukończenie zamienione w bramkę akceptacji, czyli bieg, który po ukończeniu czeka na
+potwierdzenie zamiast podjąć pracę zgłoszoną później. Rdzeń nie ma osobnego wyliczenia stanu tury —
+tura jest wpisem w wykazie biegów warstwy rozmowy, a pętla dowiaduje się o jej końcu jednym zgłoszeniem.

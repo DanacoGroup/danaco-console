@@ -8,18 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Warunek ukończenia biegu koordynator–wykonawca.
-//
-// Rdzeń nie ma wyliczenia stanu tury: tura jest wpisem w wykazie biegów warstwy
-// rozmowy, a pętla dowiaduje się o jej końcu jednym zgłoszeniem — ZakonczTure.
-// Sprawdziany poniżej mierzą więc to, co pętla naprawdę dostaje, i wykluczają
-// dwie szkody:
-//
-//  1. bieg, po którym nie da się MASZYNOWO odróżnić pracy skończonej od
-//     przerwanej — trzy powody zatrzymania mówią „przerwane", żaden nie mówił
-//     „skończone z wynikiem";
-//  2. ukończenie zamienione w BRAMKĘ AKCEPTACJI — bieg, który po ukończeniu
-//     czeka na czyjeś potwierdzenie, zamiast podjąć pracę zgłoszoną później.
+// Warunek ukończenia biegu koordynator-wykonawca mierzy to, co pętla naprawdę dostaje.
 
 // stanowiskoPetli jest pętlą wraz z oknami jednego biegu i śladem tego, co
 // pętla zrobiła: obiegami oddanymi portowi rozpoczynania i zdarzeniami
@@ -34,8 +23,7 @@ type stanowiskoPetli struct {
 	usterka error
 }
 
-// noweStanowisko składa nadzorcę, sesję, okno koordynatora, okno wykonawcze
-// i pętlę nad nimi.
+// Funkcja noweStanowisko składa nadzorcę, sesję, okno koordynatora, okno wykonawcze i pętlę nad nimi na potrzeby sprawdzianu.
 func noweStanowisko(t *testing.T) *stanowiskoPetli {
 	t.Helper()
 
@@ -68,25 +56,20 @@ func noweStanowisko(t *testing.T) *stanowiskoPetli {
 	return s
 }
 
-// koniecTuryWykonawcy zgłasza koniec tury okna wykonawczego — drogą, którą
-// zgłasza go warstwa rozmowy.
+// Metoda koniecTuryWykonawcy zgłasza koniec tury okna wykonawczego drogą, którą zgłasza go warstwa rozmowy.
 func (s *stanowiskoPetli) koniecTuryWykonawcy() bool {
 	return s.petla.ZakonczTure(s.wykonawca, PowodWynik)
 }
 
-// koniecTuryKoordynatora zgłasza koniec tury okna koordynatora z podanym
-// powodem.
+// Metoda koniecTuryKoordynatora zgłasza koniec tury okna koordynatora z podanym powodem zatrzymania albo ukończenia.
 func (s *stanowiskoPetli) koniecTuryKoordynatora(powod string) bool {
 	return s.petla.ZakonczTure(s.koordynator, powod)
 }
 
-// stan oddaje odpis licznika biegu koordynatora.
+// Metoda stan oddaje odpis licznika biegu koordynatora prowadzonego przez to stanowisko sprawdzianu jednostkowego.
 func (s *stanowiskoPetli) stan() StanObiegu { return s.petla.Stan(s.koordynator) }
 
-// TestUkonczenieZamykaBiegPoTurzeKoordynatoraZakonczonejWynikiem wykazuje
-// warunek ukończenia w całości: bieg trwa, koordynator zamyka turę wynikiem,
-// żadne okno wykonawcze tury nie prowadzi — i dopiero wtedy bieg staje powodem
-// mówiącym „skończone z wynikiem".
+// TestUkonczenieZamykaBiegPoTurzeKoordynatoraZakonczonejWynikiem wykazuje warunek ukończenia biegu w całości, na turze koordynatora zamkniętej wynikiem.
 func TestUkonczenieZamykaBiegPoTurzeKoordynatoraZakonczonejWynikiem(t *testing.T) {
 	s := noweStanowisko(t)
 
@@ -115,8 +98,7 @@ func TestUkonczenieZamykaBiegPoTurzeKoordynatoraZakonczonejWynikiem(t *testing.T
 		t.Errorf("ukończenie zgubiło licznik obiegów: %d", po.Obiegow)
 	}
 
-	// Ukończenie idzie do obserwatorów, a nie zostaje w liczniku — kontrolka
-	// Operatora i dziennik rdzenia czytają je tą samą drogą, co zatrzymania.
+	// Ukończenie idzie do obserwatorów, a nie zostaje w liczniku, czytane tą samą drogą co zatrzymania.
 	ostatni := s.slady[len(s.slady)-1]
 	if ostatni.Stan.Powod != ZatrzymanieUkonczenie {
 		t.Errorf("obserwator nie dostał ukończenia; ostatni ślad niesie powód %q",
@@ -127,16 +109,12 @@ func TestUkonczenieZamykaBiegPoTurzeKoordynatoraZakonczonejWynikiem(t *testing.T
 	}
 }
 
-// TestTuraWykonawcyWBieguWstrzymujeUkonczenie wykazuje drugi człon warunku:
-// koordynator skończył turę wynikiem, ale okno wykonawcze PROWADZI turę, więc
-// bieg nie jest ukończony. Ukończenie ogłoszone nad pracującym wykonawcą
-// odcięłoby jego wynik od układu.
+// TestTuraWykonawcyWBieguWstrzymujeUkonczenie wykazuje, że tura wykonawcy prowadzona w biegu wstrzymuje ukończenie mimo tury koordynatora zamkniętej wynikiem.
 func TestTuraWykonawcyWBieguWstrzymujeUkonczenie(t *testing.T) {
 	s := noweStanowisko(t)
 	s.koniecTuryWykonawcy()
 
-	// Fragment wykonawcy jest zgłoszeniem tury: pętla dowiaduje się z niego, że
-	// okno wykonawcze pracuje.
+	// Fragment wykonawcy jest zgłoszeniem tury: pętla dowiaduje się z niego, że okno wykonawcze pracuje.
 	s.petla.ObserwujFragment(protocol.ChunkTekstu(s.wykonawca, "wiadomosc-1", "liczę"))
 
 	if s.koniecTuryKoordynatora(PowodWynik) {
@@ -146,8 +124,7 @@ func TestTuraWykonawcyWBieguWstrzymujeUkonczenie(t *testing.T) {
 		t.Fatalf("bieg stanął mimo tury wykonawcy: powód %q", stan.Powod)
 	}
 
-	// Koniec tury wykonawcy zdejmuje jego turę i wybudza koordynatora; dopiero
-	// po niej ta sama tura koordynatora kończy bieg.
+	// Koniec tury wykonawcy zdejmuje jego turę i wybudza koordynatora, dopiero potem tura kończy bieg.
 	s.koniecTuryWykonawcy()
 	if !s.koniecTuryKoordynatora(PowodWynik) {
 		t.Fatal("bieg nie został ukończony po zamknięciu tury wykonawcy")
@@ -196,10 +173,7 @@ func TestTuraKoordynatoraPrzedPierwszymObiegiemNieKonczyBiegu(t *testing.T) {
 	}
 }
 
-// TestUkonczenieNieJestBramkaAkceptacji wykazuje kryterium najostrzejsze: bieg
-// ukończony PODEJMUJE SIĘ SAM, gdy praca dostaje ciąg dalszy. Nikt niczego nie
-// potwierdza i nikt nie woła wznowienia — inaczej ukończenie byłoby bramą,
-// a zasada zero blokad mówi, że bramy nie ma.
+// TestUkonczenieNieJestBramkaAkceptacji wykazuje, że bieg ukończony podejmuje się sam, gdy praca dostaje ciąg dalszy, bez potwierdzenia i bez wznowienia.
 func TestUkonczenieNieJestBramkaAkceptacji(t *testing.T) {
 	s := noweStanowisko(t)
 	s.koniecTuryWykonawcy()
@@ -210,8 +184,7 @@ func TestUkonczenieNieJestBramkaAkceptacji(t *testing.T) {
 	}
 	obiegowPoUkonczeniu := len(s.obiegi)
 
-	// Praca ma ciąg dalszy: kolejna tura wykonawcy kończy się i wybudza
-	// koordynatora. Żadnego wznowienia po drodze nie ma.
+	// Praca ma ciąg dalszy: kolejna tura wykonawcy kończy się i wybudza koordynatora bez wznowienia.
 	if !s.koniecTuryWykonawcy() {
 		t.Fatal("koniec tury wykonawcy po ukończeniu nie wybudził koordynatora")
 	}
@@ -229,10 +202,7 @@ func TestUkonczenieNieJestBramkaAkceptacji(t *testing.T) {
 	}
 }
 
-// TestTrzyZatrzymaniaCzekajaNaOperatoraAUkonczenieNie jest sprawdzianem
-// RÓŻNICY: cztery powody wchodzą tą samą drogą, ale zachowują się inaczej.
-// Trzy zatrzymania zastają pracę przerwaną i bieg podejmuje z nich wyłącznie
-// Operator; ukończenie zastaje ją zrobioną i podejmuje się samo.
+// TestTrzyZatrzymaniaCzekajaNaOperatoraAUkonczenieNie wykazuje różnicę zachowań: trzy powody zatrzymania czekają na Operatora, a ukończenie podejmuje się samo.
 func TestTrzyZatrzymaniaCzekajaNaOperatoraAUkonczenieNie(t *testing.T) {
 	t.Run("zatrzymanie przez Operatora", func(t *testing.T) {
 		s := noweStanowisko(t)
@@ -246,8 +216,7 @@ func TestTrzyZatrzymaniaCzekajaNaOperatoraAUkonczenieNie(t *testing.T) {
 
 	t.Run("brak postępu wykonawcy", func(t *testing.T) {
 		s := noweStanowisko(t)
-		// Wykonawca powtarza się co do znaku: strumień jest pusty przy każdym
-		// obiegu, więc odcisk odcinka jest wciąż ten sam.
+		// Wykonawca powtarza się co do znaku: strumień jest pusty przy obiegu, odcisk pozostaje ten sam.
 		for obieg := 0; obieg <= ProgBrakuPostepuDomyslny; obieg++ {
 			s.koniecTuryWykonawcy()
 		}

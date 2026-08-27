@@ -3111,3 +3111,12 @@ zewnętrzny, inaczej niż zmiana śledzona, która bez dokumentu nie znaczy nic.
 Kontrakt repozytorium mówi nazwami dziedziny, na przykład zapisz operację, a
 nie nazwą tabeli podanej parametrem: wołający nie ma rozstrzygać, w której
 tabeli byt mieszka. Opis tabeli zostaje szczegółem tego pliku.
+
+## budowa/server/internal/repozytorium/skutek_repozytorium_test.go
+
+Materiał każdego sprawdzianu powstaje w samym pliku: repozytorium zakładane na czas
+sprawdzianu, z zatwierdzeniami wytworzonymi tą samą biblioteką. Repozytorium wniesione do
+drzewa zestarzałoby się razem z wersją biblioteki, a sprawdzian oparty na repozytorium
+produktu mierzyłby przypadek, ponieważ jego stan zmienia się przy każdej pracy. Żaden
+sprawdzian nie pomija się przy braku programu git w środowisku uruchomieniowym: pakiet nie
+uruchamia ani jednego procesu zewnętrznego.

@@ -6686,3 +6686,18 @@ tam wersje żyją w toku sesji, tu w repozytorium biblioteki, i narastają przy
 zmianie dokumentu w dowolnym module, także przy zmianie wykonanej przez
 model, dlatego panel odświeża się także zdarzeniem zmiany pliku, a nie
 wyłącznie własnym działaniem.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — zdanie stanu pustego
+Obie części zdania są konieczne. Sam opis okna nie mówi, czy przeszkodą jest brak sesji, brak okna przeglądarki czy tylko brak przejścia; sam powód z rdzenia nie mówi, czym okno jest ani jak je zapełnić. Bez okna przeglądarki nie ma o co pytać o migawkę, więc zdanie o migawce opisywałoby wtedy skutek zamiast przyczyny — operator ma dostać powód braku okna, bo to on rozstrzyga, co da się zrobić dalej.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — wskaźnik obecności
+Wskaźnik mówi o migawce i o chwili jej pobrania, a nie o samej „obecności" bez pokrycia. Bez migawki mówi wprost, że model nie ma na czym pracować.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts
+Okno składa gotowe części: formularz nawigacji, podgląd strony, pasek zaznaczenia, pasek dolny i panel wyodrębnień. Trzy czynności operatora: nawigacja do strony przez formularz, przewijanie i zaznaczenie fragmentu przez podgląd. Nawigacja idzie do rdzenia; przewijanie ma komendę, której okno jeszcze nie wywołuje, a zaznaczenie dzieje się wyłącznie w kliencie i komendy nie potrzebuje. Odmowa rdzenia jest treścią okna, nie jego awarią. Każda komenda obszaru przeglądania może odmówić — okno pokazuje wtedy powód odmowy i mówi wprost, co odczytało naprawdę, zamiast pustego prostokąta.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — kolejność warstwy adnotacji
+Przełącznik nie może wskazywać czegoś, czego jeszcze nie ma. Zwrotne wywołanie zmiany trybu domyka pętlę: tryb zamknięty pływającym paskiem gasi przycisk paska dolnego.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-narzedzi.ts
+Wykaz pochodzi z jednego katalogu, w którym rdzeń trzyma narzędzia, umiejętności i komendy akcji naraz; kontrakt rozróżnia je polem rodzaju i przedrostkiem źródła, nie osobną rodziną komend, więc osobna zakładka złożona z tej samej komendy byłaby drugim widokiem jednego wykazu, udającym drugie źródło. Zawężenie liczy rdzeń, nie okno: katalog liczy setki pozycji, a żądanie przyjmuje tekst, rodzaj, grupę i granicę wykazu, bo filtrowanie po stronie klienta wymagałoby ściągnięcia całości przy każdym naciśnięciu klawisza. Dołożenie idzie do karty sesji i żyje w jej stanie, definicji eksperta nie rusza; pole odpowiedzi katalogu mówi, co jest dołożone już teraz, więc przycisk wiersza nazywa czynność zgodnie ze stanem, który rdzeń oddał, a nie ze stanem zapamiętanym po ostatnim kliknięciu. Zakresu uprawnień i limitu wywołań pozycji okno nie udaje — nazywa brak.

@@ -2732,3 +2732,10 @@ Symbol i jego członkowie: definicja symbolu jest wykazem ścieżek i warstw,
 który podmienia się w całości. Liczba członków jest tym, co rdzeń oddaje jako
 liczbę miejsc, do których zmiana doszła — liczbą wierszy naprawdę zapisanych,
 nie obietnicą.
+
+## aplikacje_srodowiska.go
+
+Zmienna środowiskowa niesie wartość jawną albo odwołanie do sekretu, nigdy obie naraz.
+Warunek CHECK schematu pilnuje tego po raz drugi, a warstwa dane odrzuca obie wartości
+podane jednocześnie, żeby literówka wołającego wracała czytelnym powodem, a nie treścią
+błędu SQL.

@@ -5001,3 +5001,29 @@ a wysłanie pustej treści byłoby zgadywaniem — Operator dostaje zdanie o tym
 co się nie stało, zamiast ciszy nieodróżnialnej od powodzenia. Bez
 pogodzenia stanu obsady ze stanem mechanizmu obsada sterowałaby dalej
 wykazem, którego na ekranie już nie ma.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-braku.ts
+Dwie sekcje okna ustawień, konta operatora i powiadomień, mówią tę samą rzecz: czego w rdzeniu nie ma
+i dlaczego kontrolki tu nie ma. Wspólna wytwórnia trzyma ten kształt w jednym miejscu, zamiast w dwóch
+odmianach. Kontrolka wyłączona byłaby tu gorsza niż jej brak: stan wyłączony należy się elementowi, który
+w danym miejscu nie ma sensu, a nie zapowiedzi czegoś, czego nie ma. Zaślepka mówi wkrótce — ta sekcja
+mówi, co dokładnie sprawdzono i gdzie, z nazwami plików rdzenia i migracji, żeby dało się to zweryfikować;
+zdanie fałszywe albo nieaktualne waży tu więcej niż jego brak, bo operator czyta je jako wiedzę o stanie
+produktu.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-konta-modeli.ts
+Rodzina komend kont modeli jest obsłużona w komplecie w warstwie modeli: panel kont, wykaz kont, źródło
+kont. Drugi formularz do tych samych komend byłby drugim oknem do tych samych danych rdzenia, a te
+rozjechałyby się przy pierwszej zmianie. Sekcja bez pól nie jest brakiem do uzupełnienia, tylko podziałem
+odpowiedzialności. Sekcja istnieje, bo projekt okna ją wymienia: operator, który jej tu nie znajdzie,
+szukałby jej dalej w tym oknie, a jedno zdanie z drogą jest krótsze niż to szukanie i uczciwsze niż
+milczenie.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-konto.ts
+Konto istnieje: rejestracja zakłada jedyną encję właściciela z loginem, adresem e-mail uwierzytelniającym,
+stanem potwierdzenia i datą utworzenia. Sekcja nie ma jednak czym go pokazać, bo brakuje komendy odczytu
+profilu — komenda rejestracji konto zapisuje, komenda weryfikacji oddaje sesję, ale żadna komenda nie
+zwraca loginu ani adresu. Pole bez komendy odczytu byłoby puste, więc pól tu nie ma do czasu, aż rodzina
+odczytu profilu wejdzie do kontraktu. Rodzina kont modeli nie jest tym, czego tu brakuje: opisuje konta
+modeli, nie konto operatora, i jest obsłużona w warstwie modeli; sekcja kont modeli niżej w rejestrze
+odsyła właśnie tam.

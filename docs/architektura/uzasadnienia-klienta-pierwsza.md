@@ -1128,3 +1128,18 @@ powiadomieniami i awatarem. Grupa akcji tras nie zakłada więc drugiego paska,
 lecz dokłada się do grupy akcji paska istniejącego, przy jego prawej krawędzi,
 przed akcjami samej powłoki. Grupa niesie tylko to, czego pasek powłoki nie ma:
 oznaczenie trasy bieżącej i stan łączności z rdzeniem.
+
+## budowa/klient-poprzedni/src/modele/zrodlo-modeli.ts
+
+Kontrakt nie ma komendy `model.list`, ponieważ model nie jest bytem
+rejestrowanym, tylko wartością danych, którą niesie kanał modelu
+(`Channel.model`) albo konto (`Account.defaultModel`). Wykaz identyfikatorów
+powstaje ze złożenia tych dwóch źródeł.
+
+Wykaz służy wyłącznie jako podpowiedź do pola tekstowego. Model jeszcze
+nieużywany wpisuje się identyfikatorem wprost, ponieważ pole nie jest listą
+zamkniętą.
+
+Rejestr kanałów, który nie dotarł, daje podpowiedź pustą, a nie pusty formularz.
+Adresowanie osi modelu działa wtedy dalej, a nieudany odczyt zostaje odnotowany
+w dzienniku przeglądarki zamiast zatrzymywać pracę.

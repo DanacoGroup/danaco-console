@@ -150,3 +150,16 @@ Funkcja pomocnicza `zycieZGniazdemDesignu` podstawia tożsamość połączenia,
 bo uprząż woła rdzeń z pominięciem gniazda, a zgłoszenie obecności bez
 rozpoznanego klienta jest odmawiane — inaczej sprawdzian mierzyłby wywołanie,
 które w produkcie nie zachodzi.
+
+## budowa/server/internal/core/skutek_katalogu_rozszerzen_test.go
+
+Sprawdziany rodziny `extension.*` nie kończą się na tym, że odpowiedź jest
+udana — ten sam wzorzec szkody, którego pilnuje sprawdzian modułu Developer,
+grozi kopertą `ok` bez pokrycia. Każdy sprawdzian tego pliku schodzi niżej:
+do bazy drugim połączeniem i liczy wiersze, do pliku w magazynie treści
+i czyta bajty, albo do serwera protokołu podniesionego przez sprawdzian, który
+wie, o co go naprawdę zapytano. Serwer MCP sprawdzianu jest prawdziwym
+serwerem JSON-RPC nad HTTP: odpowiada na `initialize`, `tools/list`
+i `tools/call` i zapamiętuje, co dostał. Mierzona jest droga rdzenia —
+powitanie, odkrycie, wywołanie, dziennik ramek, metryka użycia — a nie to,
+co odpowiada konkretny serwer.

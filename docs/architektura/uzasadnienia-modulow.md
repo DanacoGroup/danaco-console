@@ -1356,3 +1356,47 @@ obszaru jakości, tak samo jak ustalenia badania nie są polem źródła badania
 Kod okna w bycie kontraktu panelu jest kodem zewnętrznym, doczytanym
 złączeniem w warstwie danych, nie numerem wiersza wewnętrznego, bo numer
 wiersza nie zaadresowałby po stronie klienta żadnego okna.
+
+## budowa/server/internal/core/adapter_modul_isolation_profile.go
+
+Profil jest szablonem: wartość obowiązująca leży w tabeli ustawień
+i wyłącznie stamtąd czyta ją rozstrzygacz, więc zapisanie profilu nie zmienia
+izolacji — skutek daje dopiero przypisanie profilu, które przepisuje jego
+przełączniki pod wskazany adres. Punkt nieujęty w profilu zostaje wtedy
+nietknięty: obowiązuje to, co na poziomie stoi, a w ostateczności wartość
+domyślna. Profil bez ani jednego przełącznika jest odmawiany, bo przypisanie
+nie zmieniłoby żadnej wartości, a odpowiedź niosłaby politykę wyliczoną tak
+samo jak przed wywołaniem — potwierdzenie czynności, której nie było.
+
+Usunięcie profilu nie cofa wartości już przepisanych: przełączniki, które
+przypisanie wniosło do poziomu, są odtąd wartościami tego poziomu i cofa je
+osobne ustawienie kontekstowe albo techniczne. Profil, którego nie ma, wraca
+odmową nieznalezienia, a nie odpowiedzią mówiącą, że nic nie usunięto.
+
+Wybór warstwy zmienia wyłącznie sam wybór, utrwalony osobno od wartości
+izolacji, więc panel otwarty ponownie pokazuje warstwę zapisaną poprzednio,
+a żadna wartość izolacji się nie zmienia. Wybór warstwy należy do bytu, dla
+którego zapadł, więc żądanie bez karty sesji ani okna komunikacji wraca
+odmową: wiersz bez bytu nie zostałby odczytany.
+
+Podgląd polityki niczego nie zapisuje: liczy politykę po ośmiu poziomach
+zasięgu i oddaje ją wraz ze wskazaniem, skąd wartości pochodzą. Poziom
+wskazany wprost obowiązuje bez zmian; pominięty znaczy poziom najwęższy
+z bytów podanych w żądaniu, czyli okno komunikacji przed kartą sesji,
+a przy braku obu — poziom globalny. Warstwa wskazana wprost obowiązuje bez
+zmian; pominięta znaczy warstwę zapisaną wcześniej dla tego bytu, a przy
+braku zapisu — warstwę domyślną platformy.
+
+Liczenie polityki obowiązującej rozstrzyga pakiet konfiguracji, nie ten
+plik: tu składany jest wyłącznie kontekst, czyli byt na właściwym poziomie,
+a wynik przekładany na kształt kontraktu. Błąd odczytu kończy podgląd
+odmową, mimo że pakiet konfiguracji oddaje politykę mimo błędu źródła dla
+samego wykonania — podgląd ma odpowiadać na pytanie, co obowiązuje, więc
+pokazanie wartości domyślnych jako obowiązujących, gdy zapisów nie udało się
+odczytać, byłoby odpowiedzią nieprawdziwą.
+
+Kontrakt ma na pochodzenie polityki jedno pole, a każdy z jedenastu punktów
+bywa zapisany na innym poziomie, więc poziom wraca tylko wtedy, gdy
+wszystkie zapisane punkty pochodzą z tego samego poziomu — przy polityce
+złożonej z kilku poziomów pole zostaje puste, bo jedna nazwa byłaby
+wskazaniem nieprawdziwym dla pozostałych punktów.

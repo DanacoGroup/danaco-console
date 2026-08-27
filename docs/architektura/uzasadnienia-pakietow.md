@@ -3345,3 +3345,13 @@ wykonania przez uchwyt podany w punkcie wejścia; sam nie otwiera bazy, bo
 właścicielem jedynej puli połączeń procesu jest kompozycja. Bez tego wpięcia
 każda droga toru odmawia z powodu jego braku; z nim odmowy zostają tylko tam,
 gdzie brakuje wskazania hosta albo zgody na maszynę.
+
+## budowa/server/internal/session/obieg.go
+Bieg naprawczy nie ma limitu obiegów. Zamiast bramy licznikowej wchodzi przejrzystość:
+licznik obiegów, wykrywanie braku postępu i jawny, nazwany warunek zatrzymania.
+Zatrzymanie nigdy nie jest ciche, zawsze niesie rozpoznany powód przekazywany
+obserwatorom pętli. Powody dzielą się na dwie klasy rozstrzygane maszynowo, nie
+opisowo: trzy zastają pracę przerwaną i bieg podejmuje z nich wyłącznie operator
+poleceniem wznowienia; czwarty, ukończenie z wynikiem, zastaje pracę zrobioną
+i bieg podejmuje się z niego sam, gdy praca dostanie ciąg dalszy. Dzięki tej
+różnicy układ złożony przez operatora poznaje wynik zadania bez pytania.

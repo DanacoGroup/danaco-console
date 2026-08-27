@@ -3612,3 +3612,14 @@ Wywołujący pakietu ProwenancjaZapytania dokłada jedynie to, co zna sam adapte
 
 Pole PlikUstawien niesie nazwę pola JSON „settings", taką samą jak w kanale głównym. Pole Ustawienia
 nosi osobną nazwę pola JSON „callSettings", by nie kolidować ze szkieletowym „settings".
+
+## budowa/server/internal/transport/wykonanie.go
+Funkcja stosuje dwa zachowania odporne na awarię: gdy rdzeń nie jest podłączony,
+żądanie dostaje zdarzenie nieznanej komendy z kontraktu, a połączenie żyje
+dalej; gdy obsługa się załamie, wraca odpowiedź z kodem błędu wewnętrznego
+zamiast przerwania procesu, a kolejne żądania są przyjmowane. Straż bramki nie
+jest odporna w ten sposób i ma pierwszeństwo przed obydwoma zachowaniami: poza
+pętlą zwrotną żądanie z gniazda, które nie przedstawiło tokenu, nie dochodzi do
+rdzenia i wraca odmowa braku uwierzytelnienia; na pętli zwrotnej straż jest
+wyłączona. Odpowiedź na komunikat niepoprawny strukturalnie różni się od
+odpowiedzi na nieznaną komendę kodem błędu walidacji.

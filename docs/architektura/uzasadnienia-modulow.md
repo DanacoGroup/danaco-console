@@ -778,3 +778,24 @@ Rachunek dziesięciu do potęgi w krzywej oczekiwania Elo liczy się szeregiem
 wykładniczym 10^x = e^(x·ln10), zbieżnym do wystarczającej dokładności po
 kilkunastu wyrazach, bo argument jest tu zawsze mały — różnica punktacji
 dzielona przez czterysta.
+
+## budowa/server/internal/core/adapter_modul_developer_debug.go
+
+Punkt przerwania jest trwały i należy do okna: Operator stawia go w marginesie
+edytora, zanim cokolwiek uruchomi, i oczekuje go zastać przy drugim i trzecim
+biegu. Dlatego leży w bazie danych i przeżywa sesję.
+
+Sesja debugowania jest żywa: ma uchwyt do procesu adaptera i do procesu
+debugowanego, i kończy się razem z nimi. Nie ma jej w bazie, ponieważ wiersz
+opisujący sesję, do której rdzeń stracił uchwyt, byłby wpisem o czymś, czego
+już nie ma. Ta sama zasada rządzi przebiegami budowania.
+
+Adapter dowiaduje się o punktach przerwania raz, między komendą inicjalizacji
+a domknięciem konfiguracji, ponieważ tak wymaga protokół. Sesja startująca
+bierze więc komplet punktów okna z bazy i podaje je adapterowi plik po pliku;
+punkt postawiony później dosyła się do sesji czynnej tą samą drogą.
+
+Nasłuch zakłada rdzeń, a adapter dzwoni do niego adresem klienta. Odwrotna
+kolejność wymagałaby odczytania portu z wyjścia adaptera, czyli rozbioru
+tekstu spoza protokołu. Port wybiera jądro systemu, więc dwie sesje naraz nie
+zderzą się o ten sam numer.

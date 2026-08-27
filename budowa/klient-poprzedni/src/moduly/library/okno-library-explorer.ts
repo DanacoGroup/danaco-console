@@ -15,23 +15,9 @@ import { BEZ_KOMENDY_EXPLORER } from './etykiety-biblioteki';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Library Explorer — okno wiodące modułu (`library.library-explorer`).
- *
- * Cztery funkcje Operatora z wiersza wykazu, każda z własną drogą do rdzenia:
- * nawigacja po strukturze (`library.file.list`), wyszukiwanie w trzech trybach
- * (`library.file.search` po słowach, `knowledge.search` po znaczeniu, hybryda
- * złożona z obu w oknie), otwarcie zasobu (wskazanie pliku przestawia cztery
- * pozostałe okna, a otwarcie w module źródłowym idzie `context.transfer`) oraz
- * wgranie pliku (`library.file.upload`).
- *
- * Prezentacja wykazu ma pięć postaci — siatka miniatur jako domyślna oraz
- * lista, galeria, oś czasu i mapa spod przełącznika widoku. Wszystkie liczą się
- * z tej samej odpowiedzi rdzenia i nie wysyłają ani jednej komendy
- * (`widoki-wykazu.ts`).
- *
- * Okno jest źródłem zaznaczenia dla całego modułu: File Preview, Versioning
- * Panel, Tags & Collections oraz Metadata & Archive Panel nie mają własnego
- * wejścia — biorą plik czynny i zaznaczenie stąd, przez wspólny stan.
+ * Library Explorer jest oknem wiodącym modułu: nawigacja, wyszukiwanie w trzech
+ * trybach, otwarcie zasobu i wgranie pliku, wraz z pięcioma postaciami
+ * prezentacji tego samego wykazu i wspólnym zaznaczeniem dla pozostałych okien.
  */
 export interface OknoExplorer {
   element: HTMLElement;
@@ -66,9 +52,7 @@ export function utworzOknoExplorer(
   const panel: PanelAkcji = utworzPanelAkcji(otoczenie, stan, BEZ_KOMENDY_EXPLORER);
   const odpowiedz = utworzWierszOdpowiedzi();
   const wgranie = utworzWgraniePliku(stan, odpowiedz.pokaz);
-  // Odbiór przekazania stoi w oknie wiodącym, bo to ono prowadzi wykaz plików
-  // i zaznaczenie — komplet przybyły z innego modułu trafia tam, gdzie Operator
-  // może z nim cokolwiek zrobić.
+  // Odbiór przekazania stoi w oknie wiodącym, bo to ono prowadzi wykaz plików i zaznaczenie.
   const odbior: OdbiorPrzekazania = utworzOdbiorPrzekazania(stan, otoczenie);
 
   const fraza = poleTekstowe({
@@ -81,15 +65,7 @@ export function utworzOknoExplorer(
     podpowiedz: 'np. umowy',
   });
 
-  /**
-   * Mówi, że okno wysłało co innego, niż Operator napisał.
-   *
-   * Okno przycina pola przed wysłaniem, a rdzeń Library dopasowuje etykietę
-   * dosłownie — nie przycina ani zapisu, ani filtru. `trim()` przeglądarki
-   * zdejmuje przy tym znaki, które rdzeń zostawia (U+00A0, U+FEFF), więc
-   * etykieta zapisana z takim znakiem na brzegu jest z tego pola nieosiągalna,
-   * a pusty wykaz wyglądałby jak zdanie o repozytorium.
-   */
+  // Mówi, że okno wysłało co innego, niż wpisano: przeglądarka przycina pola, rdzeń dopasuje dosłownie.
   function ostrzezOPrzycieciu(): void {
     const zmienione: string[] = [];
     if (fraza.kontrolka.value.trim() !== fraza.kontrolka.value) {
@@ -126,10 +102,7 @@ export function utworzOknoExplorer(
       return;
     }
     ostrzezOPrzycieciu();
-    // Zdanie o drodze wyniku jest tu obowiązkowe: trzy tryby dają wyniki
-    // nieporównywalne, a pusty wykaz w trybie semantycznym może znaczyć „nie ma
-    // wskaźnika znaczenia", a nie „nie ma takich plików". O powodzeniu orzeka
-    // faza wykazu, nie treść zdania — zdanie mówi to samo o odmowie i o wyniku.
+    // Zdanie o drodze wyniku jest obowiązkowe, bo trzy tryby dają wyniki nieporównywalne między sobą.
     const zdanie = await stan.szukaj(fraza.kontrolka.value);
     odpowiedz.pokaz(zdanie, stan.faza() !== 'blad');
   }
@@ -177,10 +150,7 @@ export function utworzOknoExplorer(
       return;
     }
     if (stan.pliki().length === 0) {
-      // Pusty wykaz zawężony to nie puste repozytorium. Zdanie „rdzeń nie ma
-      // ani jednego pliku" należy się wyłącznie odczytowi bez zawężenia; przy
-      // frazie albo etykiecie w polu rdzeń odpowiedział o tym, o co go pytano,
-      // a nie o całym zbiorze.
+      // Pusty wykaz zawężony to nie puste repozytorium: brak plików należy się odczytowi bez zawężenia.
       const zawezenia: string[] = [];
       if (fraza.kontrolka.value.trim() !== '') zawezenia.push(`fraza „${fraza.kontrolka.value.trim()}"`);
       if (etykieta.kontrolka.value.trim() !== '') {
@@ -200,9 +170,7 @@ export function utworzOknoExplorer(
       );
       return;
     }
-    // Wykaz niepusty, a widocznych pozycji brak — zawęziło je okno, nie rdzeń.
-    // Zdanie nazywa oba możliwe zawężenia, bo składają się koniunkcyjnie
-    // i Operator ma wiedzieć, które z nich zdjąć.
+    // Wykaz niepusty, a widocznych pozycji brak — zawęziło je okno; zdanie nazywa oba możliwe zawężenia.
     if (stan.widoczne().length === 0) {
       const zawezenia: string[] = [];
       const wskazane = stan.zawezenie();
@@ -215,8 +183,7 @@ export function utworzOknoExplorer(
       );
       return;
     }
-    // Widok bez czego pokazać to nie wykaz bez plików: galeria bez obrazów
-    // i mapa bez współrzędnych orzekają o widoku, nie o repozytorium.
+    // Widok bez czego pokazać to nie wykaz bez plików: galeria i mapa orzekają o widoku.
     if (brakWidoku !== '') {
       okno.puste(`Widok „${nazwaWidoku(stan.widok())}" bez pozycji`, brakWidoku);
       return;
@@ -229,9 +196,7 @@ export function utworzOknoExplorer(
     odswiez,
 
     async wczytaj() {
-      // Trzy odczyty niezależne, więc idą razem, a odmowa jednego nie gasi
-      // pozostałych. Katalog modułów obsadza ster modułu docelowego
-      // w tym oknie i w File Preview — jedna nastawa, więc jeden odczyt.
+      // Trzy odczyty niezależne idą razem, a odmowa jednego nie gasi pozostałych.
       await Promise.all([
         stan.odczytaj(fraza.kontrolka.value, etykieta.kontrolka.value),
         panel.wczytaj(),

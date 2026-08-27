@@ -16,24 +16,9 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Komendy, którymi Automation Studio prowadzi scenariusze przeglądania.
- *
- * Obszar `browser.*` nie niesie ani jednej komendy makra: kontrakt trzyma
- * powtarzalne przebiegi w jednym miejscu — jako automatyki platformy
- * (`AutomationWorkflow`). Scenariusz nagrany przy przeglądaniu jest właśnie
- * taką automatyką, więc okno zapisuje go tą samą drogą, którą czyta go moduł
- * Automations. Drugi, własny magazyn scenariuszy w module Browser byłby drugą
- * prawdą o tym samym bycie.
- *
- * Stąd też jedno nazewnictwo dla jednego pojęcia: `AutomationWorkflow` jest
- * w całym produkcie **automatyką**, `AutomationStep` — **krokiem**,
- * `AutomationSchedule` — **harmonogramem**, `AutomationExecution` —
- * **przebiegiem**. Nazwa okna (Automation Studio) pochodzi z opracowania
- * modułu i pozostaje nietknięta.
- *
- * Plik jest warstwą wywołań wraz ze sprawdzianem kształtu odpowiedzi: bez
- * stanu i bez elementów widoku. Żadne wywołanie nie rzuca wyjątkiem —
- * niepowodzenie wraca polem `blad` wyniku.
+ * Komendy, którymi Automation Studio prowadzi scenariusze przeglądania. Plik jest
+ * warstwą wywołań wraz ze sprawdzianem kształtu odpowiedzi: bez stanu i bez elementów
+ * widoku. Żadne wywołanie nie rzuca wyjątkiem — niepowodzenie wraca polem `blad`.
  */
 export interface ZrodloAutomatyk {
   /** `automation.workflow.list` — automatyki Operatora. */

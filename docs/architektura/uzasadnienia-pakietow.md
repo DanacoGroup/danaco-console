@@ -3006,3 +3006,11 @@ wszystkich zleceń kolejki nie, dlatego funkcja zwraca oba osobno.
 Odcinek głębokości kolejki wraca z zapytania jako numer, więc chwilę
 odtwarza się mnożeniem numeru przez długość odcinka — tak powstaje początek
 odcinka w sekundach epoki.
+
+## aplikacje_wytwory.go
+
+Cztery byty tego pliku — podgląd, motyw, dziennik i artefakty — łączy to, że
+każdy wskazuje coś poza bazą: adres stojącego serwera, wiersz dziennika
+wytworzony przez pracę, plik archiwum w magazynie treści rdzenia. Wiersz bez
+tego czegoś byłby meldunkiem bez skutku, dlatego zapisuje go wyłącznie kod,
+który ten skutek właśnie wywołał.

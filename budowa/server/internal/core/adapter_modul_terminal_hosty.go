@@ -1,16 +1,6 @@
-// Komendy `terminal.host.save`, `terminal.host.list` i `terminal.host.remove` —
-// książka hostów okna Session Manager.
-//
-// ── Czego brakowało ─────────────────────────────────────────────────────────
-// Książka żyła w widoku klienta: ginęła przy odświeżeniu strony, a jedyną drogą
-// wyniesienia jej poza jedno posiedzenie był wywóz do pliku. Wpis hosta jest
-// nastawą Operatora, nie stanem widoku — ma przeżyć zamknięcie okna i restart
-// rdzenia (migracja 246).
-//
-// ── Czego wpis nie niesie ───────────────────────────────────────────────────
-// Ani hasła, ani frazy klucza. Pole `keyId` wskazuje wpis WYKAZU KLUCZY, a ten
-// niesie ścieżkę pliku na maszynie rdzenia. Materiał klucza nie przechodzi przez
-// łącze ani przez bazę w żadną stronę.
+// Komendy `terminal.host.save`, `terminal.host.list` i `terminal.host.remove`
+// — książka hostów okna Session Manager. Wpis hosta jest nastawą Operatora,
+// nie stanem widoku — ma przeżyć zamknięcie okna i restart rdzenia.
 package core
 
 import (
@@ -23,10 +13,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekHosta znakuje identyfikator wpisu książki hostów.
+// przedrostekHosta znakuje identyfikator wpisu książki hostów okna Session
+// Managera terminala rdzenia.
 const przedrostekHosta = "thost-"
 
-// ZapiszHosta obsługuje `terminal.host.save`.
+// ZapiszHosta obsługuje `terminal.host.save`, zapisując albo zmieniając wpis
+// w książce hostów okna terminala.
 func (a *adapterTerminala) ZapiszHosta(ctx context.Context,
 	z shared.TerminalHostSaveRequest) (shared.TerminalHostSaveResponse, error) {
 
@@ -53,10 +45,8 @@ func (a *adapterTerminala) ZapiszHosta(ctx context.Context,
 		if !errors.Is(err, dane.ErrBrakWiersza) {
 			return shared.TerminalHostSaveResponse{}, err
 		}
-		// Wpis wskazany identyfikatorem, którego nie ma, POWSTAJE pod tym
-		// identyfikatorem zamiast kończyć się odmową: klient, który zapamiętał
-		// wpis sprzed czyszczenia bazy, ma go odtworzyć bez zmiany wskazań, na
-		// które powołują się jego karty i tunele.
+		// Wpis wskazany identyfikatorem, którego nie ma, powstaje pod tym
+		// identyfikatorem.
 		powstal = true
 	}
 
@@ -77,8 +67,7 @@ func (a *adapterTerminala) ZapiszHosta(ctx context.Context,
 	if err := dziennik.ZapiszHosta(ctx, wiersz); err != nil {
 		return shared.TerminalHostSaveResponse{}, err
 	}
-	// Odczyt po zapisie, a nie odbicie żądania: znaczniki czasu nadaje baza,
-	// a odpowiedź ma nieść wpis w brzmieniu, w jakim naprawdę leży w dzienniku.
+	// Odczyt po zapisie, a nie odbicie żądania: znaczniki czasu nadaje baza.
 	zapisany, err := dziennik.Host(ctx, kod)
 	if err != nil {
 		return shared.TerminalHostSaveResponse{}, err
@@ -86,7 +75,8 @@ func (a *adapterTerminala) ZapiszHosta(ctx context.Context,
 	return shared.TerminalHostSaveResponse{Host: hostKontraktu(zapisany), Created: powstal}, nil
 }
 
-// WykazHostow obsługuje `terminal.host.list`.
+// WykazHostow obsługuje `terminal.host.list`, oddając całą książkę hostów okna
+// wskazanego w żądaniu komendy.
 func (a *adapterTerminala) WykazHostow(ctx context.Context,
 	z shared.TerminalHostListRequest) (shared.TerminalHostListResponse, error) {
 
@@ -132,7 +122,8 @@ func (a *adapterTerminala) UsunHosta(ctx context.Context,
 	return shared.TerminalHostRemoveResponse{Removed: usuniety}, nil
 }
 
-// hostKontraktu przekłada wiersz książki hostów na byt kontraktu.
+// hostKontraktu przekłada wiersz książki hostów z bazy danych na byt kontraktu
+// widoczny oknu Session Manager.
 func hostKontraktu(w dane.HostTerminala) shared.TerminalHost {
 	wpis := shared.TerminalHost{
 		Id:         w.Kod,
@@ -151,12 +142,8 @@ func hostKontraktu(w dane.HostTerminala) shared.TerminalHost {
 }
 
 // dziennikWyposazenia oddaje repozytorium modułu albo odmowę nazywającą powód.
-//
-// Wyposażenie Terminala — książka hostów, biblioteka, klucze, tunele
-// i obserwacje — jest z natury trwałe: jego wartość polega na tym, że przeżywa
-// posiedzenie. Rdzeń bez dziennika nie ma go gdzie trzymać, więc odpowiada
-// odmową zamiast pustym wykazem: pusty wykaz znaczyłby „nic nie zapisano",
-// a prawdą jest „nie ma gdzie zapisywać".
+// Wyposażenie Terminala jest z natury trwałe: jego wartość polega na tym, że
+// przeżywa posiedzenie.
 func (a *adapterTerminala) dziennikWyposazenia() (dane.RepozytoriumTerminala, error) {
 	if a.repozytorium == nil {
 		return nil, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,

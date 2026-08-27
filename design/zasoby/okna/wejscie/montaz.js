@@ -1,7 +1,4 @@
-/* ============================================================================
-   PRZEPŁYW WEJŚCIA — montaż okien
-
-   Składa dwa okna ze składników i wstawia je w miejsca wskazane w podglądzie:
+/* Montaż okien przepływu wejścia składa dwa okna ze składników i wstawia je w miejsca wskazane znacznikami data-wejscie-okno w podglądzie strony.
 
        <div data-wejscie-okno="uruchomienie"></div>
        <div data-wejscie-okno="dostep"></div>

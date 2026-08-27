@@ -371,3 +371,104 @@ dowodzi, że rdzeń nie wrócił do produktu hybrydowego przy zmianie
 konfiguracji. Ostatnia zapora bada binarkę wypakowaną z instalatora, a nie
 tę z katalogu docelowego, bo tylko wypakowana binarka jest tym, co dostanie
 operator.
+
+## budowa/server/internal/store/migracja_074_petla.sql
+
+Migracja dokłada do pętli wykonawczej automatyki trzy brakujące elementy: krok
+rodzaju `model` nie umiał wskazać agenta z portfolio, obsada od jednego do
+czterech uczestników z podziałem na role nie miała gdzie się zapisać, a bieg
+zawieszony i czekający na reakcję ze świata nie miał odrębnego stanu od zwykłej
+pauzy. Pauza jest w schemacie od dawna: krok rodzaju `wait` czeka określony czas
+i idzie dalej, a stan `paused` czeka na operatora — w obu wypadkach wiadomo,
+kiedy bieg ruszy. Wybudzenie czeka na reakcję świata, która może przyjść za
+godzinę, za trzy dni albo nigdy, i stąd trzy wymagania: bieg musi przetrwać
+restart rdzenia (stan żyje w tabeli `oczekiwanie_biegu`, nie w pamięci procesu),
+musi istnieć wiązanie między biegiem a sygnałem, na który czeka (inny byt niż
+`wyzwalacz_automatyki`, który uruchamia automatykę od początku), i musi być
+rozstrzygnięte, co się dzieje, gdy reakcja nie przyjdzie — stąd `termin`
+i `po_terminie` jako pola obowiązkowe. Żaden z tych bytów niczego operatorowi
+nie zabrania: brak wiersza obsady oznacza bieg na modelu wskazanym w kroku, brak
+wiersza oczekiwania oznacza, że bieg na nic nie czeka.
+
+Wartości roli obsady (`koordynator`, `wykonawca`, `samodzielne`) są przepisane
+z bazy wyliczenia `WindowRole` kontraktu (pole `baza` przy
+`coordinator`/`executor`/`standalone`), tak jak rozstrzyga to klient
+w `okna-rownolegle/role-domyslne.ts` — własny słownik ról obok kontraktowego
+rozjeżdżałby się z nim przy pierwszej zmianie. Komunikacja między uczestnikami
+obsady wykracza poza tę migrację: wymaga nowej rodziny komend kontraktu, którą
+rozstrzyga osobny pakiet.
+
+Tabela `agent_kroku_automatyki` nie dokłada kolumny do `krok_automatyki`, bo
+`ZapiszKroki` (`dane/automations_kroki.go`) przy każdym zapisie z Workflow
+Buildera kasuje i wstawia na nowo komplet kroków, wymieniając tylko osiem
+kolumn, które zna — dziewiątej by nie przepisał i cicho zdejmował agentów
+z kroków. Wiązanie idzie więc tą samą drogą co `zaleznosc_kroku_automatyki`:
+przez identyfikator kroku zewnętrzny (TEXT), nie przez klucz liczbowy, bo
+wiersze kroków bywają podmieniane w całości. `ON DELETE CASCADE` po stronie
+agenta zabiera wyłącznie wiązanie, nigdy krok — krok bez wiązania wraca do
+zachowania sprzed niego, czyli biegnie na modelu z `parametry`. Wiersz
+wiązania, który zostaje po skasowaniu kroku z definicji, nigdy nie jest
+odczytany i znika kaskadą przy skasowaniu całej automatyki; sprzątanie takich
+osieroconych wiązań należałoby do zapisu kroków, nie do schematu.
+
+Granica czterech miejsc obsady jest specyfikacją, nie techniczną barierą: klient
+dziś liczy wykonawców do dwóch i szuka analityka wśród okien samodzielnych.
+Więz `CHECK(miejsce BETWEEN 1 AND 4)` razem z `UNIQUE(automatyka_id, miejsce)`
+trzyma tę granicę jedną liczbą w jednym więzie, bez licznika w kodzie i bez
+wyzwalacza. Więz `CHECK(agent_id IS NOT NULL OR model IS NOT NULL)` nie
+pozwala zapisać puste miejsce, które w wykazie wyglądałoby tak samo jak miejsce
+wypełnione.
+
+Tabela `przebieg_automatyki` idzie przez przebudowę (kopia z poprawionym
+więzem, przepisanie wierszy, podmiana nazwy, odtworzenie indeksów), bo SQLite
+nie zna polecenia zdejmującego więz CHECK. Przebudowa obejmuje wyłącznie tę
+tabelę: żaden klucz obcy na nią nie wskazuje, więc `DROP TABLE` nie zdejmuje
+żadnych dzieci. Stan `oczekuje` dokłada się do sześciu istniejących bez ruszania
+pozostałych, więc żaden zapisany wcześniej bieg nie zmienia stanu ani nie
+znika. Kontrakt tego stanu jeszcze nie niesie — `AutomationExecutionStatus`
+zna sześć wartości — ale schemat idzie pierwszy, bo bez miejsca w bazie bieg
+czekający nie przetrwałby restartu.
+
+Tabela `oczekiwanie_biegu` odpowiada na inne pytanie niż wyzwalacz: wyzwalacz
+rozstrzyga, kiedy zacząć nowy bieg, oczekiwanie — na co czeka bieg już
+rozpoczęty i od którego kroku ma ruszyć dalej. Pole `po_terminie` ma trzy
+wartości, z których każda jest świadomą decyzją: `wznow` (domyślne, termin
+minął — ruszaj dalej, jakby sygnał przyszedł, bo produkt ma pracować dalej,
+a nie stawać), `ponow` (wykonaj krok oczekiwania jeszcze raz, `proba` rośnie)
+i `przerwij` (zakończ bieg stanem `stopped` z jawnym powodem). Termin pusty
+(`termin IS NULL`) jest wyborem operatora — czekaj bez końca — i taki wiersz
+nie trafia do budzika terminów, więc nic nie kosztuje. Indeks częściowy UNIQUE
+po `przebieg_id` z warunkiem `wybudzono IS NULL` wymusza jedno czynne
+oczekiwanie na bieg naraz: oczekiwania zamknięte zostają w tabeli jako ślad.
+
+## budowa/server/internal/store/migracja_370_studio_petla_i_agenci.sql
+
+Oba narzędzia — pętla wykonawcza i praca dwóch agentów naraz — są domyślnie
+wyłączone i włączane jawnym, odwracalnym ustawieniem Operatora. Nastaw nie ma
+w tym schemacie z zamysłu: idą zasięgami rodziny `config.*`, która ma własny
+magazyn. Drugiego magazynu ustawień Studio migracja nie zakłada, ponieważ
+inaczej Operator wyłączyłby pętlę w jednym miejscu, a ona chodziłaby dalej
+wedle drugiego.
+
+Zlecenie dokumentowe rozłożone na zadania musi przetrwać przeładowanie rdzenia
+i zamknięcie okna: pętla wykonawcza chodzi obiegami, a obieg drugi ma wiedzieć,
+co zrobił obieg pierwszy. Rozkład trzymany w pamięci procesu znaczyłby, że
+każde przeładowanie zaczyna pracę od nowa na dokumencie, który już jest w pół
+przerobiony, dlatego rozkład zlecenia jest bytem trwałym.
+
+Przy dwóch agentach naraz zadanie w biegu bez wskazania wykonawcy nie mówi
+niczego: nie wiadomo, czy stoi, czy ktoś nad nim pracuje, ani kogo zapytać
+o wynik. Tożsamością wykonawcy jest kod agenta z modułu Agents, tak samo jak
+przy zmianie śledzonej, dlatego zadanie niesie wykonawcę, a nie tylko stan.
+
+Wykonawca ubity w pół pracy nie może trzymać zajętego fragmentu dokumentu na
+zawsze — drugi agent stałby bezczynnie, a Operator nie wiedziałby, dlaczego.
+Stąd kolumna `wygasa`: zajęcie bez odnowienia przestaje obowiązywać samo, jako
+zapora przed zakleszczeniem, a nie jako rozjemca sporu.
+
+Dwóch wykonawców zmieniających ten sam fragment dokumentu nie może dać
+dokumentu, w którym jeden nadpisał drugiego bez śladu. Rdzeń nie orzeka, kto
+ma rację — zapisuje wiersz spięcia z prawdą o tym, co się stało: czyja zmiana
+weszła, czyja została odłożona i dlaczego. Odłożone brzmienie zostaje w
+wierszu, więc nie przepada: Operator może je wnieść sam albo znaleźć jako
+propozycję na marginesie.

@@ -1232,3 +1232,42 @@ odczytaniu odpowiedzi komendy. Każdy schodzi własnym zapytaniem SQL do tabel
 `sonda_kondycji`, `wynik_sondy_kondycji`, `regula_alertu`
 i `wyzwolenie_alertu` i sprawdza, czy za odpowiedzią stoi wiersz — a w
 wierszu wartość, której nikt nie wpisał z ręki.
+
+## skutek_petli_wykonawczej_test.go
+
+Sprawdziany tego pliku mierzą skutek pętli wykonawczej modułu Studio, czyli
+stan, który zostaje po komendzie, a nie kopertę odpowiedzi: stan zadań
+odczytany osobnym wywołaniem `studio.plan.get`, bilans przebiegu i powód
+odmowy. Każdy sprawdzian wyklucza jedną konkretną szkodę, którą ten produkt
+już poniósł: plan zameldowany jako uruchomiony, który nie wykonał ani jednego
+zadania i nie powiedział o tym ani słowa; pętlę puszczoną przy wyłączonej
+nastawie, która albo cicho nic nie robi, albo melduje powodzenie, którego nie
+ma; wsad na wielu dokumentach, meldujący jedną liczbą przyjętych i milczący
+o losie każdego dokumentu osobno; zadanie pominięte przez blokadę fragmentu,
+o którym operator nie dowiaduje się z kolejki, bo powód został przemilczany;
+oraz zatrzymanie, po którym zadanie w biegu znika, zamiast zostać opisane
+jako przerwane.
+
+`TestPetlaPrzyWylaczonejNastawieOdmawiaNazywajacBrak` sprawdza dwie miary
+naraz, bo pojedyncza dałaby się obejść: powód odmowy pokazuje operatorowi,
+czego brakuje, a stan zadań odczytany osobnym wywołaniem pokazuje, że pętla
+naprawdę nie tknęła kolejki. Odpowiedź „started: false” przy zadaniach
+przestawionych na „done” byłaby kłamstwem w drugą stronę.
+
+`TestPetlaUruchomionaWykonujeZadaniaAlboNazywaBrak` prowadzi zadanie rodzaju
+`export` rodziną wydania, która wykonuje się do skutku, oraz zadania treści
+kanałem modelu, którego stanowisko sprawdzianu nie ma; to czyni je miarą
+najostrzejszą, bo pętla ma je zamknąć stanem `failed` z powodem nazywającym
+brak, a nie zameldować gotowość.
+
+`TestZatrzymaniePetliZostawiaSladPrzerwaniaINiegubiPracy` sprawdza to samo
+zatrzymanie od strony pracy już wykonanej: zatrzymanie, które kasowałoby
+zadania domknięte przed nim, byłoby gorsze niż brak zatrzymania, bo operator
+naciskający przerwanie traciłby to, co pętla zrobiła dobrze przed komendą
+przerwania.
+
+`TestBlokadaFragmentuWidocznaWKolejceZadan` sprawdza przy okazji, że pętla
+wykonawcza sięga do zapory blokad przez rejestr, a nie wywołaniem adaptera
+wprost: pętla omijająca rejestr przepisałaby zablokowany fragment, a
+sprawdzian oparty tylko na kopercie odpowiedzi by tego nie zobaczył, bo
+zadanie skończyłoby się jako gotowe.

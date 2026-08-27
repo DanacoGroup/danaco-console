@@ -701,3 +701,19 @@ powód.
 Cztery obszary sekcji odpowiadają czterem pytaniom o ten sam model: konta rozstrzygają, czym prowadzone jest połączenie, ustawienia osi rozstrzygają, jak model ma działać, tożsamość rozstrzyga, kim model ma być, a podgląd promptu pokazuje, co ostatecznie trafia do modelu. Wszystkie cztery obszary mówią względem tej samej osi, dlatego trzyma je jedna sekcja, a nie cztery osobne sekcje.
 
 Przełącznik nie porzuca obszaru, z którego Operator wychodzi. Element obszaru zostaje w drzewie dokumentu i jedynie przestaje być widoczny, dzięki czemu tekst wpisany w edytorze tożsamości przeżywa zajrzenie do obszaru kont i powraca w niezmienionej postaci.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/kontrolki.ts
+
+Przycisk, pole, wybór, wykaz i pozycja wykazu pochodzą z pliku
+`modele/kontrolki-formularza.ts`, a moduł bierze je stamtąd zamiast trzymać
+własne kopie. Wiersz klucz–wartość odpowiednika tam nie ma: niosą go wyłącznie
+okna ról, gdzie zastępuje tabelę stanu — więź wykonawcy z koordynatorem,
+licznik obiegów oraz powód zatrzymania biegu.
+
+Wygląd w całości pochodzi z arkusza rodziny `dm-`, przez co plik nie zna ani
+jednej barwy i ani jednego odstępu. Przedrostek klas stoi jedną stałą, bo
+arkusz rodziny należy do modułu, a trzy wykazy okien ról muszą wskazywać ten
+sam arkusz.
+
+Wysokość pól redakcyjnych jest wspólna dla trzech okien ról, ponieważ kreator
+promptu, polecenie wykonawcy i uzasadnienie oceny stoją obok siebie na scenie.

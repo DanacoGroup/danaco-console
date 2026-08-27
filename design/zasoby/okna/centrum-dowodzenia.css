@@ -206,15 +206,19 @@
   align-items: center;
   gap: var(--dn-od-3);
   width: 100%;
-  padding: var(--dn-od-3);
+  /* Kafel komponentu stoi o połowę wyżej niż stopień biblioteczny; nośnikiem
+     wzrostu jest wyściółka, bo treść ma zostać wyśrodkowana w polu. */
+  padding: var(--dn-od-6);
 }
 .cd-kafel .dn-kafel-ikona {
-  width: var(--dn-wym-awatar-sm);
-  height: var(--dn-wym-awatar-sm);
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
 }
-.cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-awatar-lg); height: var(--dn-wym-awatar-lg); }
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
-.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-sm); }
+/* Tytuł rośnie razem z kaflem; skala nie ma stopnia 19–20 px, więc 13 px
+   przechodzi na najbliższy stopień w górę. Opis zostaje na 13 px. */
+.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-xl); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
 .cd-kafel-blok { display: flex; }
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
@@ -647,8 +651,8 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   color: var(--dn-tekst-2);
 }
 .cd-strona .cd-kafel .dn-kafel-ikona svg {
-  width: var(--dn-wym-awatar-sm);
-  height: var(--dn-wym-awatar-sm);
+  width: var(--dn-wym-awatar-lg);
+  height: var(--dn-wym-awatar-lg);
 }
 
 /* Kreska przy „+” równo z krawędzią ostatniej karty.
@@ -755,67 +759,91 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 /* === agent-2: dymki i przewijanie === */
 
 /* ==========================================================================
-   DYMEK WSTĄŻKI OKNA — poza obrysem panelu
+   DYMEK — kotwiczony do prostokąta wyzwalacza
    --------------------------------------------------------------------------
-   Dymek warstwy wspólnej stoi bezwzględnie względem przycisku, więc należy do
-   pola przycinania panelu, a panele okien przycinają zawartość (`overflow:
-   hidden` na `.dn-obszar-panel`). Przy skrajnym przycisku wstążki połowa
-   napisu zostawała za krawędzią okna, a sam dymek — wiszący pod wstążką —
-   podnosił zasięg przewijania wstążki z 38 do 61 px.
-   Umocowanie do okna widoku wyjmuje dymek i z przycinania panelu, i z pola
-   przewijania wstążki. Położenie niesie miejsce spoczynkowe wewnątrz
-   przycisku: przycisk ikonowy jest polem zginanym wyśrodkowanym w obu osiach,
-   więc `align-self` sadza dymek przy jego dolnej krawędzi, a przesunięcie
-   o własną wysokość stawia go pod przyciskiem. Skok o pół stopnia przy
-   ujawnieniu zostaje.
+   Dymek warstwy wspólnej stoi bezwzględnie względem wyzwalacza, więc należy do
+   pola przycinania panelu, a panele okien przycinają zawartość. Przy skrajnym
+   przycisku połowa napisu zostawała za krawędzią okna, a sam dymek podnosił
+   zasięg przewijania wstążki z 38 do 61 px i dawał jej poziomy pasek.
+
+   Umocowanie do okna widoku wyjmuje dymek z obu tych pól. Położenia nie da się
+   przy tym wziąć z układu — `position: fixed` z `inset: auto` czyta miejsce
+   spoczynkowe, które w każdym pojemniku wypada inaczej, przez co dymek odjeżdżał
+   od ikony. Współrzędne podaje więc mechanizm okna w `--cd-dymek-x` i
+   `--cd-dymek-y`, liczone z prostokąta wyzwalacza i przyciśnięte do widoku.
    ========================================================================== */
-.cd-strona .dn-obszar-pasek .dn-etykietka::after {
+/* Umocowanie do okna widoku obowiązuje wyłącznie na wyzwalaczu bieżącym.
+   Zmienne własne dziedziczą się w dół drzewa, więc bez tego zawężenia dymek
+   dziecka brałby współrzędne przodka i lądował po drugiej stronie okna. */
+.cd-strona [data-etykietka][data-dymek='tak']::after {
   position: fixed;
   inset: auto;
-  align-self: flex-end;
-  transform: translateY(calc(100% + var(--dn-od-1) - var(--dn-od-05)));
+  left: var(--cd-dymek-x);
+  top: var(--cd-dymek-y);
+  transform: translate(-50%, var(--dn-od-05));
 }
-.cd-strona .dn-obszar-pasek .dn-etykietka:hover::after,
-.cd-strona .dn-obszar-pasek .dn-etykietka:focus-visible::after {
-  transform: translateY(calc(100% + var(--dn-od-1)));
-}
-/* Grupa sterowania stoi przy prawej krawędzi wstążki, a wstążka okna roboczego
-   dochodzi do krawędzi ekranu — dymek wyśrodkowany na ostatnim przycisku
-   wychodziłby poza widok. Kotwiczy się prawym bokiem przycisku: przesunięcie
-   w lewo o połowę własnej szerokości, oddane wstecz o połowę szerokości
-   przycisku wstążki. */
-.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka::after {
-  transform: translate(calc(var(--dn-od-4) - 50%), calc(100% + var(--dn-od-1) - var(--dn-od-05)));
-}
-.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:hover::after,
-.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:focus-visible::after {
-  transform: translate(calc(var(--dn-od-4) - 50%), calc(100% + var(--dn-od-1)));
-}
-
-/* ==========================================================================
-   DYMEK CZYNNOŚCI W TREŚCI OKIEN — w polu treści
-   --------------------------------------------------------------------------
-   Wyzwalacz czynności stoi przy prawej krawędzi wiersza sesji i projektu,
-   kafla komponentu własnego oraz wiersza pierwszego wejścia. Dymek
-   wyśrodkowany na nim sięgał poza pole treści — 32 px w lewym oknie, 27 px
-   w oknie roboczym — i to on, nie sama treść, dawał obu polom poziomy pasek
-   przesuwania. Kotwiczy się prawym bokiem wyzwalacza, tak samo jak dymki
-   skrajnych grup paska narzędzi w warstwie wspólnej.
-   ========================================================================== */
-.cd-strona .dn-obszar-pozycja-menu .dn-etykietka::after,
-.cd-strona .cd-wlasny-menu .dn-etykietka::after,
-.cd-strona .cd-start .dn-etykietka::after {
-  left: auto;
-  right: 0;
-  transform: translateY(calc(-1 * var(--dn-od-05)));
-}
-.cd-strona .dn-obszar-pozycja-menu .dn-etykietka:hover::after,
-.cd-strona .cd-wlasny-menu .dn-etykietka:hover::after,
-.cd-strona .cd-start .dn-etykietka:hover::after,
-.cd-strona .dn-obszar-pozycja-menu .dn-etykietka:focus-visible::after,
-.cd-strona .cd-wlasny-menu .dn-etykietka:focus-visible::after,
-.cd-strona .cd-start .dn-etykietka:focus-visible::after {
-  transform: translateY(0);
+.cd-strona [data-etykietka][data-dymek='tak']:hover::after,
+.cd-strona [data-etykietka][data-dymek='tak']:focus-visible::after {
+  transform: translate(-50%, 0);
 }
 
 /* === koniec agent-2 === */
+
+/* === agent-5: animacje kafli środowisk i pas narzędzi === */
+
+/* ── Warstwa animacji karty środowiska ────────────────────────────────────
+   Godło zostaje na swoim miejscu; animacja jest tłem karty, nie elementem
+   układu. Pole animacji zajmuje prawe 40 % szerokości karty na pełnej jej
+   wysokości, a sama animacja stoi w tym polu pośrodku — w pionie i w poziomie.
+   Rozmiar animacji liczy się od szerokości pola (`cqw`), więc karta zwęża się
+   razem z płótnem, a animacja nadal mieści się w polu.
+   Karta przycina zawartość do własnego łuku narożnika: przy `overflow: visible`
+   animacja wylewałaby się poza narożniki i poza obrys karty. */
+.cd-strona .cd-siatka-srodowisk > .dn-karta-srodowiska { overflow: hidden; }
+
+.cd-karta-anim {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 40%;
+  display: grid;
+  place-items: center;
+  z-index: 0;
+  /* Animacja jest tłem pod tekstem: przygaszenie trzyma kontrast tytułu, opisu
+     i etykiety „Wejdź" ponad progiem WCAG AA także w najjaśniejszej klatce
+     pętli. Wartość wynika z pomiaru najjaśniejszego piksela pod tekstem. */
+  opacity: 0.11;
+  pointer-events: none;
+  container-type: inline-size;
+}
+.cd-karta-anim .d3-anim { --d3-size: 82cqw; }
+
+/* Treść karty leży o stopień wyżej niż warstwa animacji. */
+.cd-karta-akcent > :not(.cd-karta-anim) { position: relative; z-index: 1; }
+
+/* ── Narzędzia karty bieżącej na wstążce okna ─────────────────────────────
+   Pod pasmem kart stoi jeden rząd narzędzi. Osobnego pasa modułu nad wstążką
+   nie ma: narzędzia karty bieżącej weszły do wstążki okna roboczego i noszą
+   jej miarę — przycisk 32 px, znak 18 px, kreska rozdzielająca 18 px.
+   Klasa `dn-pasek-okna` została na grupie wyłącznie jako zaczep mechanizmu
+   (`pasek-okna.js`): to on gasi narzędzia na karcie Centrum dowodzenia, która
+   jest pulpitem okna, a nie modułem, i zwija nadmiar pod „…" przy zwężeniu.
+   Deklaracje pasa — własne tło, kreska domykająca, wysokość i wyściółka —
+   są tu wygaszone, bo grupa nie jest już pasem. */
+.cd-strona .dn-obszar-pasek .dn-pasek-okna {
+  /* Grupa bierze wolne miejsce wstążki: mechanizm zwijania mierzy zapas
+     względem jej prawej krawędzi, więc bez rozciągnięcia zwinąłby wszystko. */
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border-bottom: 0;
+  background: transparent;
+  gap: var(--dn-od-1);
+}
+/* Przycisk „…" stoi zaraz za ostatnim narzędziem, nie przy prawej krawędzi
+   wstążki — inaczej rozdzielałby narzędzia od menu widoku. */
+.cd-strona .dn-obszar-pasek .dn-pasek-okna-odstep { display: none; }
+.cd-strona .dn-obszar-pasek .dn-pasek-okna-nadmiar { margin-left: 0; }
+.cd-strona .dn-obszar-pasek .dn-pasek-okna-rozdzielacz { height: var(--dn-wym-ikona); }
+/* === koniec agent-5 === */

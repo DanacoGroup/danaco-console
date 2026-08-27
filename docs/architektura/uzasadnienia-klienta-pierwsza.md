@@ -5419,3 +5419,22 @@ Zdanie po wyodrębnieniu bierze się ze skutku dopisania, a nie z samego
 naciśnięcia: fragment już wyodrębniony nie wchodzi do wykazu po raz drugi,
 a zdanie o dopisaniu byłoby wtedy potwierdzeniem czynności, która się nie
 odbyła.
+
+## budowa/klient-poprzedni/src/moduly/agents/katalog-narzedzi.ts
+
+Katalog jest jedynym miejscem w kliencie, które wie, z czego składa się wyposażenie
+eksperta. Źródłem jest stała `NARZEDZIA_MODELU` z `shared/contract.ts`.
+
+Grupą jest obszar nazwy komendy, czyli człon przed pierwszym separatorem obszaru: komenda
+`agent.list` należy do grupy `agent`. Własny wykaz wiążący narzędzie z grupą byłby drugą
+prawdą, rozjeżdżającą się przy pierwszym narzędziu dopisanym do kontraktu. Tę samą regułę
+stosuje `grupaKomendy` w `server/internal/narzedzia/grupa.go`, a porządek alfabetyczny
+grup ustala tam `Grupy`.
+
+Kod z pól `Agent.skillIds` oraz `Agent.connectorIds` czyta się dwiema drogami: jako nazwę
+narzędzia, wskazującą jedną pozycję, albo jako nazwę grupy, wskazującą wszystkie pozycje
+obszaru. Rozstrzyga o tym `server/internal/narzedzia/ekspert_wykaz.go`.
+
+Narzędzia wskazane kodami idą w kolejności katalogu, a nie kodów: dwa kody wskazujące tę
+samą pozycję, czyli nazwa narzędzia i jego grupa naraz, dają ją raz. Tak samo przesiewa
+`przesiej` w `ekspert_wykaz.go`.

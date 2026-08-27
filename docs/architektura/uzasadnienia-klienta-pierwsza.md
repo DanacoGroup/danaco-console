@@ -4624,3 +4624,17 @@ pracy, obok „Zapisz plik” — bez niego Operator widziałby ostrzeżenie bez
 wyjściowego. Nazwy operacji nie stoją przy pasku akcji — mają jedno źródło
 w `akcje-kanoniczne.ts`, żeby przycisk i komenda dołożona później mówiły
 o operacji tym samym słowem.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/wskazanie-analityka.ts
+
+Wyliczenie `WindowRole` nie ma czwartej wartości. Results Analyzer jest oknem
+roli `standalone`, a odróżnia go wyłącznie wskazanie zapisane w ustawieniach
+sesji. Dopisanie czwartej roli po stronie klienta rozjechałoby wykaz ról z bazą
+rdzenia.
+
+Klucz `multitasking.analityk` nie stoi w katalogu ustawień rdzenia, czyli
+w tabeli `definicja_ustawienia`, więc komenda `config.set` odpowiada odmową
+`validation_failed`, a wskazanie nie przeżywa odświeżenia. Zapis jest z tego
+powodu sprawdzany, a odmowa trafia do zdania oddawanego wołającemu; wartość
+oddana inna niż wysłana również jest nazwana wprost, ponieważ wskazanie trzyma
+wtedy sam widok.

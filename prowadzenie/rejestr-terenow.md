@@ -6,88 +6,6 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### zaplecze-modeli
-
-**Szesnaście gigabajtów wag stoi na maszynie i nie ma czym się uruchomić.**
-Zmierzone: nie ma `torch`, `transformers`, `sentence-transformers`, `fastembed`,
-`kokoro` ani `segment_anything`. Stoją wyłącznie `onnxruntime` i `ctranslate2`.
-Skutek najcięższy: **własny silnik wiedzy rdzenia nie działa** — `knowledge.index`
-woła `internal/wiedza/pomocnik_osadzen.py`, a ten żąda `fastembed`.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/zaplecze-modeli` z `main` |
-| **Wykaz plików** | `budowa/server/internal/wiedza/`, `budowa/server/internal/core/adapter_modul_mowa*.go`, `adapter_narzedzia_obraz_model_silniki.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/` (kontrakt zmienia wyłącznie teren `pomiar-stron`), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery dokumentów, obrazu i przeglądarki |
-
-| Model | Waga | Format | Komenda, która po niego sięgnie |
-|---|---|---|---|
-| embedder (XLMRoberta, wymiar 1024) | 4,3 GB | `pytorch_model.bin` + ONNX | `knowledge.index`, `knowledge.search` |
-| reranker | 2,2 GB | `safetensors` | brak komendy — **zgłoś, nie dokładaj** |
-| CLIP | 1,6 GB | `safetensors` | brak komendy — zgłoś |
-| twarze | 692 MB | `.pth` | brak komendy — zgłoś |
-| Kokoro | 340 MB | 55 × `.bin`/`.pth`, **54 głosy, ani jednego polskiego** | `speech.*` — rozstrzygnij, czy wart deklaracji |
-| ESRGAN | 128 MB | `.pth` | `image.upscale` — **program `realesrgan-ncnn-vulkan` już stoi i rdzeń go zna** |
-| MobileSAM | 39 MB | `.pth` | `design.photo.select.object` **jest już zrobione w Go**, a zapora Design zabrania wołania procesu w tej rodzinie |
-
-**Instalowanie jest tu dozwolone — wyjątkowo i wyłącznie w tym terenie.**
-Właściciel polecił, żeby aplikacja miała wszystkie narzędzia czynne. Zaplecze
-modeli stoi w hybrydzie **na serwerze wdrożenia**, nie u Operatora, więc
-instalacja na maszynie budowlanej jest instalacją tego serwera. Każdą pozycję,
-którą postawisz, wypisujesz w raporcie wraz z wagą na dysku.
-
-**Kontraktu nie zmieniasz.** Model bez komendy w kontrakcie wraca zgłoszeniem
-wraz z propozycją obszaru — nie dokładasz komend, bo kontrakt należy w tej turze
-do innego terenu.
-
-**Kryteria odbioru.**
-
-1. `knowledge.index` i `knowledge.search` **działają** — wykazane uruchomieniem
-   na prawdziwej treści, z przytoczonym żądaniem i odpowiedzią rdzenia.
-2. Dla każdego z siedmiu modeli: albo działa i jest wykazany uruchomieniem, albo
-   ma podany powód, dla którego dziś nie może, wraz z tym, czego brakuje.
-3. Wagi, które stoją w `/opt/danaco-modele`, są **użyte** albo jest wprost
-   napisane, dlaczego rdzeń sięga po inne — pobranie drugiej kopii tego samego
-   modelu jest uchybieniem, chyba że podasz powód.
-4. Brak biblioteki albo wag daje odmowę **nazywającą brak i drogę naprawy**, nie
-   błąd wewnętrzny — wykazane sprawdzianem.
-5. `gotestsum -- -count=1 ./...` — zero niepowodzeń, wobec stanu zastanego
-   2041 zdanych, 17 pominiętych, zero niezdanych.
-6. Kontrakt nietknięty — wykazane sumą kontrolną.
-7. Wykaz wszystkiego, co postawiłeś na maszynie, wraz z wagą — w raporcie.
-
-### pomiar-stron
-
-Cztery programy mierzące stronę i punkt końcowy. **Ten teren jako jedyny zmienia
-kontrakt** — obszary istnieją i już mierzą stronę trzema sondami, ale osi
-wydajności, dostępności i obciążenia nie mają.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/pomiar-stron` z `main` |
-| **Wykaz plików** | `budowa/shared/contract.json`, `budowa/server/internal/core/adapter_modul_przegladarka_*.go`, `adapter_modul_apps_*.go`, `adapter_modul_developer_api*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery dokumentów i obrazu |
-
-| Narzędzie | Obszar | Czego brakuje w kontrakcie |
-|---|---|---|
-| **pa11y** | `browser` (47 komend) | audyt WCAG na otwartej karcie, z wykazem naruszeń i wskazaniem węzła DOM. `design.color.accessibility.audit` bada **paletę**, nie stronę |
-| **Lighthouse** | `apps` (41 komend) | audyt wydajności zwracający Core Web Vitals. `apps.deployment.health.get` oddaje dostępność, nie pomiar |
-| **k6** albo **autocannon** | `developer` (50 komend) | przebieg obciążeniowy wraz z kształtem wyniku — percentyle, przepustowość. `developer.api.request` strzela **jednym** żądaniem |
-
-**Zmiana kontraktu jest tu dozwolona i obwarowana.** Kontrakt nie był tknięty od
-przejęcia — suma `2cbb843d33f4531b05cd` stoi od pierwszego dnia. Wolno Ci
-**dołożyć** komendy, struktury i wyliczenia. **Nie wolno** zmienić ani usunąć
-niczego istniejącego: żadnej komendy, żadnego pola, żadnej wartości wyliczenia.
-Generator z `budowa/shared/gen` wytwarza z kontraktu **oba** artefakty —
-`contract.go` i `contract.ts` — i musi po Twojej zmianie dawać wynik bajtowo
-powtarzalny w dwóch przebiegach.
-
-**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
-Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
-(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
-`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
-rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
-
 ### sprawdziany-drogi-wejscia
 
 Trzy sprawdziany w `skutek_wydania_studia_test.go` rozjechały się z rdzeniem
@@ -158,6 +76,58 @@ Windows przekłada odmowę, gałąź Linux oddaje ją surową.
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
+
+### Kontrakt ruszył pierwszy raz od przejęcia
+
+Do 27.08.2026 kontrakt stał nietknięty pod sumą `2cbb843d33f4531b05cd` — teren
+`pomiar-stron` dołożył trzy osie pomiaru strony i suma wynosi dziś
+`334705bd88c2efc13779` przy **1080 komendach** wobec 1077 zastanych. Zmiana
+przeszła kontrolę porównaniem strukturalnym: nic istniejącego nie ubyło ani się
+nie zmieniło. Odtąd sprawdzian nietykalności kontraktu odnosi się do sumy
+bieżącej, nie do sumy z pierwszego dnia; kolejny teren, który kontrakt dokłada,
+podaje w rejestrze sumę zastaną i sumę po sobie.
+
+### Wdrożenie musi założyć trzy nastawy, inaczej stojące wagi leżą odłogiem
+
+Ustalenie terenu `zaplecze-modeli`, zmierzone na żywym rdzeniu. Silnik wiedzy
+działa na wagach z `/opt/danaco-modele/embedder`, ale **dopiero po nastawach** —
+wartości domyślne rdzenia wskazują co innego i wdrożenie pobierze drugi model
+zamiast użyć stojących 4,3 GB.
+
+| Nastawa | Wartość | Bez niej |
+|---|---|---|
+| `wiedza_model` | `BAAI/bge-m3` | rdzeń sięga po `mpnet` z migracji 115 |
+| `wiedza_katalog_modeli` | `/opt/danaco-modele/embedder` | wagi pobierane na nowo do katalogu danych |
+| `mowa_katalog_modeli` | `/opt/danaco-modele/mowa` | wagi mowy stoją w pamięci podręcznej konta, które uruchomiło rdzeń |
+
+Wag mowy dotyczy osobne ustalenie: 464 MB modelu `faster-whisper-small` stoi
+dziś w pamięci podręcznej pod katalogiem domowym, bo `mowa/ustawienia.go` przy
+pustej nastawie zostawia miejsce bibliotece, podczas gdy `wiedza/pomocnik.go`
+przy pustej nastawie **przypina** wagi do katalogu danych rdzenia — droga
+wołania procesu nie dziedziczy środowiska, więc pomocnik nie zna nawet `HOME`.
+Skutek: czyszczenie pamięci podręcznej kasuje działającą funkcję bez śladu
+w produkcie, a wagi są przywiązane do konta uruchamiającego. Rozstrzygnięcie
+przyjęte: przenieść wagi do `/opt/danaco-modele/mowa` i wskazać je nastawą.
+
+Do rozstrzygnięcia zostaje jedno: czy zrównać obie rodziny w kodzie, żeby pusta
+nastawa mowy znaczyła to samo co pusta nastawa wiedzy. To zmiana zachowania
+domyślnego wraz z migracją — `migracja_075_mowa.sql` niesie dziś wartość pustą
+zgodną ze stałą co do znaku, więc ruszenie samej stałej stworzyłoby dwie prawdy.
+
+### Trzy modele bez komendy w kontrakcie
+
+Ustalenie terenu `zaplecze-modeli`. Wagi stoją, komend nie ma — rejestr zabronił
+ich dokładania, bo kontrakt należał w tej turze do innego terenu.
+
+| Model | Waga | Propozycja obszaru |
+|---|---|---|
+| reranker (bge-reranker-v2-m3) | 2,2 GB | `knowledge` — przełącznik `rerank` w `knowledge.search` albo osobna `knowledge.rerank` |
+| CLIP | 1,6 GB | `library` albo `knowledge` — wyszukiwanie obrazów po znaczeniu |
+| twarze (GFPGAN, codeformer) | 692 MB | pole `faces` w `image.upscale` **już istnieje**; brakuje silnika: wydanie ncnn nie niesie sieci twarzowej, a wagi `.pth` żądają stosu torch, którego rdzeń nie woła. Odmowa nazywa dziś brak `gfpgan-ncnn-vulkan` |
+
+Osobno rozstrzygnięte i zamknięte: **Kokoro nie jest wart deklaracji** — 54 głosy,
+żadnego polskiego (`pf`/`pm` to portugalski), a piper z `pl_PL-darkman-medium`
+działa i rdzeń go zna.
 
 ### Trzy narzędzia treści pisanej bez legalnego miejsca wpięcia
 
@@ -370,6 +340,14 @@ Przechodzi w biegu odniesienia 2041 zdanych, zero niezdanych.
 `@import` względem adresu dokumentu, a nie arkusza. Konsola przed wstrzyknięciem
 axe jest pusta. Tych dwóch wpisów nie liczy się jako brudnej konsoli.
 
+Czas dostępu do pliku nie dowodzi, że pliku nie czytano. Drzewo stoi na `ext4`
+zamontowanym z `relatime`, gdzie jądro odświeża czas dostępu wyłącznie wtedy,
+gdy poprzedni jest starszy od czasu zmiany albo starszy niż doba. Odczyt pliku,
+którego czas dostępu jest już późniejszy od czasu zmiany, **nie zostawia
+śladu** — niezmieniony czas dostępu jest tam brakiem pomiaru, nie dowodem
+nietknięcia. Wyszło to przy sporze o sprawstwo pobrania wag mowy: wykonawca
+podał czas dostępu jako dowód, a instrument z założenia milczał.
+
 Pomiar w przeglądarce wymaga jawnego ustawienia `PLAYWRIGHT_BROWSERS_PATH` na
 `/opt/ms-playwright` w poleceniu, a nie polegania na środowisku powłoki — powłoka
 uruchomiona przed ustawieniem zmiennej jej nie widzi i pobiera przeglądarki
@@ -384,6 +362,8 @@ po raz drugi.
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
+| `pomiar-stron` | `teren/pomiar-stron` | `607a3d8` kontrakt · `4191c4b` trzy osie pomiaru · `6b189e7` sprawdziany | kontrola osobnej sesji: kontrakt porównany strukturalnie, nie liniowo — zero sekcji zmienionych, żaden istniejący element nietknięty bajtowo, dodane 3 komendy, 6 struktur, 3 wyliczenia; generator powtórzony dwa razy, sumy zgodne; oś obciążenia zmierzona niezależnie własnym klientem kanału — 102 666 żądań wobec 102 669 na liczniku serwera sprawdzianu; osiem sprawdzianów zdanych, żaden pominięty. Scalone `73e9aad` |
+| `zaplecze-modeli` | `teren/zaplecze-modeli` | `090acd6` silnik osadzeń na wagach stojących | kontrola osobnej sesji: teren zwrócony za niepełny wykaz postawionego, po uzupełnieniu przyjęty; kontroler powtórzył pomiar osadzeń niezależnie i przy odciętej sieci (`HF_HUB_OFFLINE=1`) — wymiar 1024, normy 1,000000, cos(kot,kot) 0,8348 wobec 0,2863–0,3353 dla par odległych; wagi `/opt` czytane, nie pobierane po raz drugi; kontrakt nietknięty. Scalone `ba82cb6` |
 | `obraz-i-diagramy` | `teren/obraz-i-diagramy` | `f7fab06` dogniecenie zapisu i metadane osadzone | kontrola osobnej sesji własnym biegiem: osiem zapór zdanych nietkniętych, 33 sprawdziany zdane w realnych czasach z przytoczonymi rozmiarami przed i po (PNG 3322→2456 B, JPEG 45399→39623 B, model barw paleta dowodzi wejścia pngquanta); sprawdziany maszyny bez programu wytwarzają ją naprawdę (`t.Setenv` na pusty katalog); kontrakt nietknięty; zero śladu mmdc w rdzeniu. Scalone `5b98585` |
 | `dokumenty-i-tekst` | `teren/dokumenty-i-tekst` | `ea05603` sześć programów treści pisanej · `aa695e6` poprawka nazwy po zwrocie | kontrola osobnej sesji: teren zwrócony za martwą nazwę `zasiegSyntezy` w komentarzu, po poprawce przyjęty; własny bieg kontrolera 14 zdanych, zero pominiętych; sprawdziany mierzą skutek — PDF czytany drugą komendą i innym programem, korekta aż po treść panelu w bazie, OCR dwoma przebiegami, brak programu wywołany `t.Setenv`; wybory hunspell i typst zweryfikowane uruchomieniem; kontrakt nietknięty. Scalone `43d05f6` |
 | `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |

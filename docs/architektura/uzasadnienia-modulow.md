@@ -5453,3 +5453,39 @@ wtedy, a nie to, co widać dziś.
 Rekomendacja niesie wskazanie kodu błędu i jego priorytetu. Rdzeń podaje sam
 fakt i jego wagę, bez treści poprawki: rozpoznanie przyczyny odbywa się
 w oknie Diagnostics.
+## budowa/server/internal/core/adapter_modul_przegladarka_zbiory.go
+
+Warstwa danych oddaje znacznik czasu jako surowy tekst bazy, a kontrakt
+chce milisekund epoki. Przekład czasu bazy stoi w jednym miejscu dla
+całego rdzenia, nie jako własna kopia w każdym module.
+
+Notatka bez źródła jest dozwolona: pole źródła w żądaniu jest
+opcjonalne, bo notatka Operatora może dotyczyć całej strony, nie tylko
+zebranego źródła. Adapter nie dogląda istnienia źródła przy zapisie
+notatki — kolumna nie niesie więzu obcego, więc i port go nie udaje.
+
+Brak samego pola w treści żądania odsiewa brama kontraktu; tutaj
+rozstrzyga się wyłącznie wartość pusta, bo tylko dziedzina wie, że pusty
+adres źródłem nie jest.
+
+## budowa/server/internal/core/adapter_modul_orkiestracja_przeklad.go
+
+Katalog kodów jest zamknięty: `not_found`, `validation_failed`, `conflict`,
+`internal_error`. Rodzina podagentów używa trzech z nich; `conflict` nie
+występuje, bo żadne z trzech żądań nie może zderzyć się ze stanem zastanym —
+powołanie zawsze zakłada nowe wiersze, a oba odczyty niczego nie zmieniają.
+
+Stan podagenta powstaje z pozycji, nie obok niej. Cyklem życia zlecenia
+rządzi jeden silnik kolejek; odwzorowanie niżej jest jedynym miejscem
+przekładu jego słownika na wyliczenie `SubagentStatus` kontraktu.
+
+Zero epoki w polach czasu znaczyłoby rok 1970 — czyli fakt wymyślony przez
+rdzeń, więc pola czasu wychodzą tylko wtedy, gdy chwila naprawdę nastąpiła.
+
+`do_weryfikacji` znaczy pracę wykonaną. Silnik wprowadza pozycję w ten stan
+dokładnie wtedy, gdy tura się powiodła; do `ukonczona` przesuwa ją dopiero
+przyjęcie wyniku przez Operatora. Dla panelu zadań w tle podagent jest wtedy
+zakończony — trzymanie go w `running` do czasu kliknięcia pokazywałoby
+pracę, której już nie ma. Wartość spoza słownika znaczy, że pozycja jest
+w stanie, którego to odwzorowanie nie zna — a nie że praca się nie
+powiodła; orzeczenie o błędzie byłoby wtedy wymyślone.

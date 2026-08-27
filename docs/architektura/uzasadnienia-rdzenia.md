@@ -1221,3 +1221,14 @@ tryb siódmy, bo to on jest wskazówką do instalacji. Nazwa podpolecenia
 (na przykład `identify`) wchodzi na początek argumentów tylko wtedy, gdy
 wołany jest plik `magick`; wersja szósta ma na to osobne binarium
 i podpolecenia nie rozumie.
+
+## budowa/server/internal/core/skutek_kondycji_i_alertow_test.go
+
+Rodziny kondycji i alertów mają najostrzejszy warunek prawdziwości w całym
+produkcie: komenda zdrowia, która oddaje stan sprawności nie zmierzywszy
+niczego, jest gorsza niż jej brak — to fasada, przez którą awaria przechodzi
+niezauważona. Dlatego żaden sprawdzian w tym pliku nie kończy się na
+odczytaniu odpowiedzi komendy. Każdy schodzi własnym zapytaniem SQL do tabel
+`sonda_kondycji`, `wynik_sondy_kondycji`, `regula_alertu`
+i `wyzwolenie_alertu` i sprawdza, czy za odpowiedzią stoi wiersz — a w
+wierszu wartość, której nikt nie wpisał z ręki.

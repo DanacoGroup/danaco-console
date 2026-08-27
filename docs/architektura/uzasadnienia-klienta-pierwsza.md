@@ -1725,3 +1725,20 @@ nazywa tę okoliczność wprost, zamiast udawać brak procesów.
 
 Stan procesu jest wypisany słowem obok paska postępu. Barwa paska wspiera odczyt, ale go nie
 zastępuje, dzięki czemu wykaz pozostaje czytelny bez rozróżniania barw.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/powierzchnia-sekcji.ts
+
+Sekcje panelu — Zespoły, Kolejki, Orkiestracja, Harmonogram i Monitor — mają ten sam
+szkielet. Kolejność i widoczność podsekcji prowadzi wzorzec powłoki
+`powloka/sekcje-panelu.ts` przez komendy `panel.sections.*`; ten plik wzorzec woła
+i sam niczego nie przestawia.
+
+Komendy `panel.sections.*` adresują parę okna i panelu, a panel orkiestracji należy do
+środowiska, nie do okna. Adresem zostaje więc okno, przy którym sekcja pracuje: okno
+koordynatora, a gdy obsada go nie ma — pierwsze okno sesji; bez żadnego okna układ
+zostaje miejscowy. Brak zapisanego układu znaczy układ domyślny, więc odmowa
+`panel.sections.get` zostawia sekcję kompletną.
+
+Identyfikatorem panelu jest klucz sekcji, ten sam, którym boczna nawigacja wskazuje
+sekcję. Napis składany z tytułu rozjechałby się przy pierwszej zmianie tytułu, a układ
+zapisany w rdzeniu przestałby mieć odpowiednik na ekranie.

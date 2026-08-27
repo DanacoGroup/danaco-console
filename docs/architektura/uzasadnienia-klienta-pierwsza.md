@@ -1902,3 +1902,13 @@ w obszarze roboczym powłoki i dlatego jest ostatni.
 Arkusz kompletu sterowania `sterowanie/sterowanie.css` wciąga sam moduł panelu.
 Trafia przez to do pakietu za tym wykazem, jako ostatni styl widoku, i w wykazie
 nie figuruje.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/stany-okna.ts
+
+Rozłączność stanu błędu i stanu pustki waży w tym module szczególnie. Port
+diagnostyki jest w rdzeniu odbiorcą odmów wykonania komend, więc okno błędów
+pokazujące po nieudanym odczycie pusty wykaz ukrywałoby odmowy dwa razy: cudze
+i swoją własną.
+
+Pustka bywa tu zaś stanem poprawnym, ponieważ instalacja bez ani jednego błędu
+w zadanym zakresie czasu nie jest usterką.

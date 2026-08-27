@@ -1690,3 +1690,29 @@ powiedzieć, że drzewa nie udało się odczytać.
 Pustka bywa w tym module stanem poprawnym: repozytorium bez zmian do
 zatwierdzenia nie jest usterką, więc pusty wykaz nie może być pokazywany jako
 niepowodzenie.
+
+## budowa/klient-poprzedni/src/aod/sekcja-rozmowy.ts
+
+Ognisko okien zna rdzeń i mogło się ono zmienić między odczytem stanu a wysyłką,
+więc sekcja nie podstawia w pole `windowId` okna odczytanego wcześniej. Puste pole
+oznacza wprost „okno ogniskowane w chwili przyjęcia wiadomości". Odpowiedź niesie
+`messageId` oraz `windowId` okna, które wiadomość przyjęło, i meldunek pokazuje oba.
+
+Przycisk wysyłki pozostaje czynny także przy pustym polu treści. Pustą treść ocenia
+rdzeń i to on zwraca odmowę `validation_failed`; blokada po stronie nakładki
+rozdzielałaby ocenę wiadomości na dwa miejsca.
+
+## budowa/klient-poprzedni/src/dostepy/okno-dostepow.ts
+
+Sekcja dostępów sama nie zakłada, gdzie zostanie osadzona: oddaje element. Rama
+okna jest jednak potrzebna od razu, ponieważ pierwszym gospodarzem sekcji jest
+listwa ustawień Centrum dowodzenia, a ta otwiera widoki jako okna modalne, tak
+samo jak okno konfiguracji.
+
+Okno stoi na natywnym elemencie okna dialogowego, więc warstwę tła, stos okien
+i zamknięcie klawiszem ucieczki daje przeglądarka, a nie własna nakładka. Wygląd
+bierze z biblioteki komponentów, z klasy okna modalnego, więc plik nie zna ani
+jednej barwy.
+
+Okno otwiera się natychmiast, przed odpowiedzią rdzenia, a wykazy dojeżdżają do
+niego odpowiedzią.

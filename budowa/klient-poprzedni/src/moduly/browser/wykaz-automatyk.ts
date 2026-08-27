@@ -1,3 +1,9 @@
+/**
+ * Wykazy Automation Studio: karty kroków scenariusza, wiersze automatyk oraz
+ * trzy stany obowiązkowe wykazu. Plik odpowiada za postać wykazu na ekranie;
+ * okno składa formularz i prowadzi rozmowę z rdzeniem, a tutaj jej wynik
+ * staje się wierszem.
+ */
 import type {
   AutomationExecution,
   AutomationStep,
@@ -7,15 +13,10 @@ import { KLASA_PRZYCISKU, przyciskCzynnosci } from './przyciski-browser';
 import type { StanOkna } from './stan-okna';
 
 /**
- * Wykazy Automation Studio: karty kroków scenariusza, wiersze automatyk oraz
- * trzy stany obowiązkowe wykazu.
- *
- * Jedna odpowiedzialność: postać wykazu na ekranie. Okno składa formularz
- * i prowadzi rozmowę z rdzeniem, ten plik zamienia jej wynik w wiersze — tak
- * samo jak `wiersz-zrodla.ts` i `wiersz-notatki.ts` w panelach pomocniczych.
+ * Karty kroków scenariusza jako odczyt widoku tekstowego, a nie drugi zbiór
+ * kroków. Każda karta niesie rodzaj kroku, jego komendę oraz nazwę, gdy krok
+ * nazwę posiada.
  */
-
-/** Karty kroków — odczyt widoku tekstowego, nie drugi zbiór kroków. */
 export function wierszeKrokow(kroki: readonly AutomationStep[]): HTMLElement[] {
   return kroki.map((krok) => {
     const element = document.createElement('li');
@@ -28,7 +29,11 @@ export function wierszeKrokow(kroki: readonly AutomationStep[]): HTMLElement[] {
   });
 }
 
-/** Jedna automatyka wykazu wraz ze zdaniem o jej przebiegach. */
+/**
+ * Jedna automatyka wykazu wraz ze zdaniem o jej przebiegach: nazwa, liczba
+ * kroków, znacznik czynności oraz przycisk wczytujący automatykę do
+ * formularza okna.
+ */
 export function wierszAutomatyki(
   automatyka: AutomationWorkflow,
   oPrzebiegach: string,
@@ -49,14 +54,22 @@ export function wierszAutomatyki(
   return element;
 }
 
-/** Zdanie o przebiegach automatyki — stan najświeższego wraz z ich liczbą. */
+/**
+ * Zdanie o przebiegach automatyki: liczba przebiegów oraz stan najświeższego
+ * z nich, wybranego po znaczniku rozpoczęcia. Pusty zbiór daje zdanie o braku
+ * przebiegów.
+ */
 export function zdanieOPrzebiegach(przebiegi: readonly AutomationExecution[]): string {
   const najnowszy = [...przebiegi].sort((jeden, drugi) => drugi.startedAt - jeden.startedAt)[0];
   if (najnowszy === undefined) return 'bez przebiegów';
   return `przebiegów ${przebiegi.length}, ostatni: ${najnowszy.status}`;
 }
 
-/** Stan wykazu widziany przez okno w chwili przerysowania. */
+/**
+ * Stan wykazu widziany przez okno w chwili przerysowania: znacznik trwającego
+ * odczytu, powód odmowy ostatniego odczytu oraz liczba wierszy stojących na
+ * ekranie.
+ */
 export interface StanWykazuAutomatyk {
   wOdczycie: boolean;
   /** Powód odmowy ostatniego odczytu; pusty napis znaczy „bez uwag". */

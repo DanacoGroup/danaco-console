@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: obszar Assistant — definicja zlecenia asystenta
-// (tabela `zlecenie_asystenta`, `store/migracja_050_asystent.sql`) wraz
-// z kontraktem całego obszaru.
-// Dziennik działań leży w `asystent_dziennik.go`, przyjęcie polecenia w
-// `asystent_polecenia.go` — jedno repozytorium, trzy pliki wedle
-// odpowiedzialności, tak jak `dane/library.go` i `dane/automations*.go`.
-//
-// INTERFEJS DEKLARUJE WYŁĄCZNIE TEN PLIK, w całości — wraz z metodami, które
-// implementują pozostałe pliki obszaru. Interfejs rozdzielony na trzy pliki
-// byłby trzema prawdami o jednym kontrakcie.
-//
-// CZAS JEST LICZBĄ, NIE NAPISEM. `utworzono`/`zaktualizowano` niosą milisekundy
-// epoki wprost (kolumna INTEGER) — bez przekładu przez `strftime`, jak
-// w modułach trzymających czas tekstem.
+// Plik prowadzi obszar Assistant: definicję zlecenia asystenta wraz z kontraktem całego obszaru; dziennik działań
+// leży w asystent_dziennik.go, przyjęcie polecenia w asystent_polecenia.go, a interfejs w całości deklaruje wyłącznie ten plik.
 package dane
 
 import (
@@ -22,10 +10,7 @@ import (
 	"time"
 )
 
-// ZlecenieAsystenta to wiersz tabeli `zlecenie_asystenta`. Kod jest
-// identyfikatorem, którym zlecenie wychodzi kontraktem (`AssistantAction.id`).
-// Wartości `Stan` i `Droga` są wartościami kontraktu wprost (queued/running/
-// paused/done/failed/cancelled — voice/text), bez tłumaczenia.
+// ZlecenieAsystenta to wiersz tabeli `zlecenie_asystenta`; kod jest identyfikatorem, którym zlecenie wychodzi kontraktem, a stan i droga są wartościami kontraktu wprost.
 type ZlecenieAsystenta struct {
 	ID           int64
 	Kod          string
@@ -37,36 +22,22 @@ type ZlecenieAsystenta struct {
 	LiczbaEtapow *int64
 	Priorytet    *int64
 	Wynik        *string
-	// ProfilKod wskazuje profil asystenta, którym polecenie zostało wydane
-	// (`store/migracja_117_profil_asystenta.sql`). NIE jest ozdobą wiersza:
-	// wykonawca zlecenia biegnie
-	// gorutyną długo po tym, jak komenda `assistant.voice.command` już
-	// odpowiedziała, więc czyta warunki tury z BAZY, nie z żądania.
-	// Profil trzymany tylko w pamięci procesu nie przetrwałby ani odpowiedzi na
-	// komendę, ani restartu rdzenia w trakcie zlecenia. NULL znaczy zlecenie
-	// bez profilu — tura idzie wtedy bez warstwy promptu.
+	// ProfilKod wskazuje profil asystenta, którym wydano polecenie; pusty znaczy zlecenie bez profilu.
 	ProfilKod      *string
 	Utworzono      int64
 	Zaktualizowano int64
 }
 
-// RepozytoriumAsystenta jest kontraktem obszaru Assistant.
+// RepozytoriumAsystenta jest kontraktem obszaru Assistant: zlecenia, dziennik działań i przyjęcie polecenia.
 type RepozytoriumAsystenta interface {
 	// --- agent A: zlecenie ---
 	ZapiszZlecenie(ctx context.Context, zlecenie ZlecenieAsystenta) (ZlecenieAsystenta, error)
 	Zlecenie(ctx context.Context, kod string) (ZlecenieAsystenta, error)
 	Zlecenia(ctx context.Context, okno string) ([]ZlecenieAsystenta, error)
 	UstawStanZlecenia(ctx context.Context, kod, stan string) (ZlecenieAsystenta, error)
-	// UstawPriorytetZlecenia zmienia kolejność obsługi zlecenia w Actions
-	// Monitor. Osobna metoda, bo `assistant.action.status` pozwala zmienić sam
-	// priorytet BEZ zmiany stanu — sterowanie stanem i sterowanie kolejnością
-	// to dwie różne czynności Operatora.
+	// UstawPriorytetZlecenia zmienia kolejność obsługi zlecenia, osobno od zmiany stanu zlecenia.
 	UstawPriorytetZlecenia(ctx context.Context, kod string, priorytet int64) (ZlecenieAsystenta, error)
-	// ZakonczZlecenie domyka zlecenie po wykonaniu: ustawia stan końcowy
-	// (done/failed) i wynik w JEDNYM zapisie, żeby Actions Monitor nie zobaczył
-	// stanu bez wyniku ani wyniku bez stanu. Zasila wykonawcę zleceń
-	// (`core/adapter_modul_asystent_wykonawca.go`); kod nieznany wraca jako
-	// ErrBrakWiersza — domknięcie bytu, którego nie ma, byłoby cichą zgodą.
+	// ZakonczZlecenie domyka zlecenie po wykonaniu, ustawiając stan końcowy i wynik jednym zapisem.
 	ZakonczZlecenie(ctx context.Context, kod, stan, wynik string) (ZlecenieAsystenta, error)
 
 	// --- agent B: dziennik ---
@@ -80,10 +51,7 @@ type RepozytoriumAsystenta interface {
 	PrzyjmijPolecenie(ctx context.Context, zlecenie ZlecenieAsystenta,
 		wpis WpisDziennikaAsystenta) (ZlecenieAsystenta, WpisDziennikaAsystenta, error)
 
-	// --- profil asystenta (`store/migracja_117_profil_asystenta.sql`, `asystent_profil.go`) ---
-	// Sam odczyt: zakładania, wykazu ani wskazania domyślnego nie ma, bo nie ma
-	// komendy kontraktu, która by je wołała (`assistant.profile.*` nie istnieje).
-	// Metoda bez wołającego byłaby drogą, której nikt nie przechodzi.
+	// Dalej stoi odczyt profilu asystenta: zakładania i wykazu tu nie ma, bo żadna komenda ich nie woła.
 	Profil(ctx context.Context, kod string) (ProfilAsystenta, error)
 	ProfilDomyslny(ctx context.Context) (ProfilAsystenta, error)
 }
@@ -180,7 +148,7 @@ func (r *repozytoriumAsystenta) Zlecenie(ctx context.Context, kod string) (Zlece
 	return zlecenie, nil
 }
 
-// Zlecenia zwraca wszystkie zlecenia okna, od najświeższej zmiany.
+// Zlecenia zwraca wszystkie zlecenia okna, od najświeższej zmiany, wraz z ich bieżącym stanem i priorytetem.
 func (r *repozytoriumAsystenta) Zlecenia(ctx context.Context, okno string) ([]ZlecenieAsystenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZleceniaOkna)
 	if err != nil {
@@ -228,12 +196,7 @@ func (r *repozytoriumAsystenta) UstawStanZlecenia(ctx context.Context, kod, stan
 	return r.Zlecenie(ctx, kod)
 }
 
-// UstawPriorytetZlecenia zmienia priorytet zlecenia po kodzie zewnętrznym.
-// Osobno od stanu, bo `assistant.action.status` pozwala zmienić sam priorytet
-// bez zmiany stanu.
-//
-// Kod nieznany wraca jako ErrBrakWiersza — cicha zgoda na zmianę priorytetu
-// bytu, którego nie ma, byłaby potwierdzeniem czynności, która się nie odbyła.
+// UstawPriorytetZlecenia zmienia priorytet zlecenia po kodzie zewnętrznym, osobno od stanu; kod nieznany wraca jako ErrBrakWiersza.
 func (r *repozytoriumAsystenta) UstawPriorytetZlecenia(ctx context.Context,
 	kod string, priorytet int64) (ZlecenieAsystenta, error) {
 
@@ -255,13 +218,7 @@ func (r *repozytoriumAsystenta) UstawPriorytetZlecenia(ctx context.Context,
 	return r.Zlecenie(ctx, kod)
 }
 
-// ZakonczZlecenie ustawia stan końcowy i wynik zlecenia jednym zapisem. Wywołuje
-// je wykonawca po turze modelu: `done` z odpowiedzią albo `failed` z powodem.
-// Oba pola idą razem, bo pochodzą z jednego zdarzenia (zakończenia tury) — dwa
-// osobne UPDATE-y pokazałyby przez chwilę stan bez pasującego wyniku.
-//
-// Kod nieznany wraca jako ErrBrakWiersza — domknięcie zlecenia, którego nie ma,
-// nie może wyglądać jak sukces (spójnie z UstawStanZlecenia).
+// ZakonczZlecenie ustawia stan końcowy i wynik zlecenia jednym zapisem, wywoływane przez wykonawcę po turze modelu; kod nieznany wraca jako ErrBrakWiersza.
 func (r *repozytoriumAsystenta) ZakonczZlecenie(ctx context.Context, kod, stan, wynik string) (ZlecenieAsystenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zakonczZlecenieAsystenta)
 	if err != nil {
@@ -281,7 +238,7 @@ func (r *repozytoriumAsystenta) ZakonczZlecenie(ctx context.Context, kod, stan, 
 	return r.Zlecenie(ctx, kod)
 }
 
-// odczytajZlecenieAsystenta składa strukturę z jednego wiersza wyniku.
+// odczytajZlecenieAsystenta składa strukturę zlecenia wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajZlecenieAsystenta(wiersz skaner) (ZlecenieAsystenta, error) {
 	var zlecenie ZlecenieAsystenta
 	var tytul, wynik, profil sql.NullString

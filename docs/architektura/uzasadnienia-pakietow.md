@@ -4549,3 +4549,42 @@ limit czasu zajętości. Skromny limit połączeń trzyma pulę w ryzach, a bezc
 ciepłe, żeby dziennik zapisu wyprzedzającego nie był otwierany i zamykany bez końca.
 ## budowa/server/internal/dane/roundtable.go
 Repozytorium nie rozmawia z modelem: wywołanie kanałów uczestników prowadzi rdzeń przez rejestr kanałów, a tutaj leży wyłącznie to, co po debacie zostaje, czyli kto brał w niej udział, o co pytano i co odpowiedziano. Obszar Roundtable urósł ponad jeden plik, więc kontrakt składa się z części: rdzeń debaty stoi w tym pliku, a zdolności dobudowane późniejszymi migracjami leżą we własnych plikach i wchodzą do kontraktu przez zanurzenie, dając jedno repozytorium, jeden kontrakt i tyle plików, ile odpowiedzialności. Rozpoznanie zapisu, który nic nie zmienił, jest osobne od rozpoznania w warstwie sesji, bo tamto miejsce opisuje wiersz numerem klucza głównego i zwraca błąd opisowy, a obszar Roundtable rozpoznaje brak bytu przez porównanie z błędem braku wiersza, dzięki czemu rdzeń oddaje wtedy kod nieznalezienia zamiast usterki wewnętrznej.
+
+## budowa/server/internal/dane/konto_wlasciciela.go
+Konto jest jedno i pilnuje tego schemat warunkiem równości identyfikatora
+jedynce. Repozytorium nie powtarza tej reguły w kodzie: drugi zapis odbija
+się o bazę, a nie o sprawdzenie, które ktoś kiedyś usunie.
+
+Hasła tu nie ma. Tożsamością konta są login i adres e-mail; skrót hasła
+leży w sejfie poświadczeń, a wiersz metody uwierzytelnienia niesie do niego
+odwołanie.
+
+W tabeli dróg potwierdzenia leży skrót drogi, nigdy sama droga. Kopia bazy
+nie daje więc możliwości potwierdzenia cudzej tożsamości — ze skrótu nie
+odtworzy się materiału, który poszedł listem.
+
+Rejestracja jest wykonalna raz, więc konto zostawione po nieudanym nadaniu
+listu byłoby platformą nie do otwarcia: wejść nie ma czym, bo adresu nikt
+nie potwierdził, a założyć drugi raz nie wolno.
+
+Droga nieznana i droga wygasła to dwa różne stany, rozstrzygane przez
+warstwę wyżej. Bez sprawdzenia skutku zamknięcia dwa równoległe żądania
+z tą samą drogą oba uznałyby ją za ważną.
+
+## budowa/server/internal/dane/asystent.go
+
+Czas w tabeli zlecenia jest liczbą, nie napisem: kolumny czasu niosą milisekundy epoki wprost
+jako liczbę całkowitą, bez przekładu przez funkcję formatującą, w odróżnieniu od modułów
+trzymających czas tekstem.
+
+ProfilKod nie jest ozdobą wiersza: wykonawca zlecenia biegnie procesem długo po tym, jak
+komenda głosowa już odpowiedziała, więc czyta warunki tury z bazy, nie z żądania — profil
+trzymany tylko w pamięci procesu nie przetrwałby ani odpowiedzi na komendę, ani restartu
+rdzenia w trakcie zlecenia.
+
+Priorytet zlecenia i stan zlecenia to dwie różne czynności Operatora, sterowane osobnymi
+metodami, bo zmiana priorytetu nie pociąga za sobą zmiany stanu.
+
+ZakonczZlecenie ustawia stan końcowy i wynik jednym zapisem, żeby okno monitorujące zlecenia
+nie zobaczyło przez chwilę stanu bez pasującego wyniku ani wyniku bez stanu — oba pola
+pochodzą z jednego zdarzenia, zakończenia tury modelu.

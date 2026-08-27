@@ -6,41 +6,6 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### nastawy-zdolnosci-i-mowy
-
-Dwie zdolnosci dzialaja, ale Operator nie ustawi ich z okna konfiguracji, bo
-klucze nie maja wierszy w katalogu ustawien. Osobno: 641 MB wag mowy lezy
-w pamieci podrecznej zamiast w katalogu modeli.
-
-| | |
-|---|---|
-| **Galaz** | `teren/nastawy-zdolnosci-i-mowy` z `main` |
-| **Wykaz plikow** | migracje nastaw w `budowa/server/internal/store/`, `budowa/server/internal/mowa/`, sprawdziany tych pakietow |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/server/internal/wiedza/`, `budowa/server/internal/core/` |
-
-**Pierwsze.** Cztery klucze — `wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`,
-`wiedza_model_obrazu`, `wiedza_katalog_obrazu` — maja wartosci domyslne w kodzie,
-ale **nie maja wierszy `definicja_ustawienia`**. `config.set` odmawia klucza spoza
-katalogu, wiec okno konfiguracji ich nie wystawi. Wzor: cztery wiersze migracji 115.
-
-**Drugie.** Zgloszenie „Wagi mowy stoja poza katalogiem modeli": 641 MB, w tym
-`models--Systran--faster-whisper-small`, stoi w `~/.cache/huggingface`, a nastawa
-`mowa_katalog_modeli` jest pusta. Poprzedni teren slusznie nie zalozyl nastawy
-wskazujacej katalog nieistniejacy — to wymaga zarazem przeniesienia wag i zmiany
-`mowa/ustawienia.go`, czyli tego terenu.
-
-**Kryteria odbioru.**
-
-1. Cztery klucze zdolnosci wyszukiwania widoczne w katalogu ustawien — wykazane
-   uruchomieniem `config.set` na kazdym z nich, z przytoczona odpowiedzia.
-2. Silnik mowy uzywa wag **stojacych na dysku**, bez pobrania — wykazane
-   uruchomieniem transkrypcji, **z sonda dodatnia** dowodzaca, ze instrument
-   pobranie wykryje.
-3. Istniejacych migracji **nie ruszono** — wykazane `git diff`.
-4. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
-   — zero niepowodzen wobec stanu zastanego.
-5. Kontrakt nietkniety — wykazane suma kontrolna.
-
 ### uprzaz-komend-neuronowych
 
 Generyczna uprzaz sprawdzianow urywa kazda komende liczaca modelem, wiec zadnej
@@ -155,6 +120,40 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 
 ## Zgłoszenia oczekujące na teren
+
+### Przesiew i os obrazu pobraly drugie kopie wag — 5,2 GB
+
+Teren `nastawy-zdolnosci-i-mowy` zglosil to jako ryzyko. Prowadzacy zmierzyl,
+ze **to juz sie stalo**:
+
+| W pamieci podrecznej Huba | Na dysku |
+|---|---|
+| `models--BAAI--bge-reranker-v2-m3` **3,6 GB** | `/opt/danaco-modele/reranker` 2,2 GB |
+| `models--openai--clip-vit-large-patch14` **1,6 GB** | `/opt/danaco-modele/clip` 1,6 GB |
+
+**Przyczyna:** stale `katalogNiewskazany` w `internal/wiedza/ustawienia.go` sa
+puste, a migracja 402 zalozyla wartosci domyslne **rowne im co do znaku** —
+swiadomie, zeby nie stworzyc dwoch prawd. Pusta wartosc znaczy dla biblioteki
+„uzyj pamieci podrecznej", wiec pobiera.
+
+To ten sam stan, ktory dla osadzarki naprawila migracja 401, wskazujac
+`/opt/danaco-modele/embedder`. Domkniecie wymaga terenu obejmujacego **zarazem**
+stala w `internal/wiedza/` i wiersz katalogu w migracji — rozdzielenie ich
+stworzyloby dwie prawdy.
+
+Po domknieciu: 5,2 GB w `~/.cache/huggingface` staje sie zbedne.
+
+### Transkrypcja pyta siec o metadane przy kazdym przebiegu
+
+`silnik.transkrybuj` (`budowa/pomocniki/transkrypcja/silnik.py`) wola
+`WhisperModel(..., download_root=...)` **bez `local_files_only=True`**, choc
+droga `--wersja` ten argument ma. Zmierzone: **13 polaczen poza DNS** do
+huggingface.co przy zerowym pobraniu wag; z `HF_HUB_OFFLINE=1` przebieg jest
+identyczny i bezsieciowy.
+
+**Skutek:** maszyna bez sieci doklada opoznienie i ryzyko odmowy tam, gdzie
+wszystko lezy na dysku.
+
 
 ### Warstwa `obowiazkowa-apt` wykazu zaleznosci niesie proze
 
@@ -827,6 +826,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `nastawy-zdolnosci-i-mowy` | `teren/nastawy-zdolnosci-i-mowy` | `61abba2`, `97c6fc2` | weryfikacja Prowadzacego wlasnym pomiarem: cztery klucze przyjmowane przez `config.set`, zastanych migracji **nie ruszono** (same nowe 402 i 403), wagi mowy przeniesione — 464 MB w `/opt/danaco-modele/mowa`, `model.bin` rozwiazuje sie; sonda dodatnia wykonawcy: **486 MB pobrania przy pustym katalogu wobec zera przy pelnym** |
 | `arsenal-wdrozenia` | `teren/arsenal-wdrozenia` | `541cdce` | weryfikacja Prowadzacego wlasnym pomiarem: odpis wykazu wyciagniety ze skryptu ma **55 pozycji, zgodnych z rdzeniem** co do warstwy, programu, pakietu i nazwy (bylo 30); `bash -n` i `shellcheck` czysto; zakres 2 pliki |
 | `zdolnosc-wyszukiwania` | `teren/zdolnosc-wyszukiwania` | `5d02014` | weryfikacja Prowadzacego wlasnym pomiarem: kontrakt ruszony **wylacznie dodaniami** — stare pola `knowledge.search` sa prefiksem nowych, opis bez zmiany, zero usuniec; generator powtarzalny w dwoch przebiegach; oba sprawdziany zdolnosci **uruchomione z `DANACO_MODELE` i zdane** — przesiew zmienil kolejnosc, os obrazu trafila w kolo |
 | `okno-przygotowania` | `teren/okno-przygotowania` | `fbb405d` | weryfikacja Prowadzacego wlasnym pomiarem: martwy przycisk **zniknal** (0 trafien przy 2 kontrolnych na nowa czynnosc), 27/27 sprawdzianow przebiegu, 7/7 katalogu tresci, `tsc` bez bledu; zrzuty obejrzane — postep dobiega 100%, odslona nieudana ma droge naprzod |

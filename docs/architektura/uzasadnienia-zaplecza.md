@@ -2456,3 +2456,19 @@ kolekcji inteligentnej nie miałoby jak odróżnić zasobu wciągniętego reguł
 zasobu przypisanego ręką Operatora — a `library.rule.remove` z żądaniem
 `detachFiles` ma zdjąć wyłącznie te pierwsze. Przypisanie ręczne jest
 wartością domyślną, więc wiersze zastane opisują się same.
+## budowa/server/internal/store/migracja_185_biblioteka_udostepnienia_webhooki.sql
+Migracja 185 — moduł Library: udostępnienia odnośnikiem i nasłuchy zewnętrzne.
+
+Token udostępnienia leży w kolumnie jawnie, nie jako skrót. To jest wybór
+zgodny z zasadą jawności kluczy platformy: Operator ma móc odczytać wystawiony
+odnośnik i przekazać go powtórnie, a nie wystawiać nowy, bo pierwszy da się
+wyłącznie sprawdzić. Zawężeniem dostępu jest termin i odwołanie, nie
+nieodczytywalność.
+
+Odwołanie udostępnienia jest znacznikiem czasu, nie skasowaniem wiersza:
+„odnośnik przestaje działać, wpis zostaje w dzienniku audytu" — wiersz
+odwołany świadczy, że odnośnik istniał.
+
+Nasłuch i jego zdarzenia stoją w dwóch tabelach, bo zdarzenie jest wartością
+z wykazu, a nie tekstem: warunek CHECK po stronie wiersza zdarzenia wychwytuje
+literówkę przy zapisie, czego lista sklejona w jednej kolumnie zrobić nie może.

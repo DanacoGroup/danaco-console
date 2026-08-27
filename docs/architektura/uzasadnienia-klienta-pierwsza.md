@@ -3336,3 +3336,24 @@ Każde zawężenie ustawione w tym panelu jest zawężeniem egzekwowanym: rdzeń
 czyta te zapisy przy nakładaniu eksperta na okno i przy powołaniu podagentów,
 i na ich podstawie odmawia. Panel mówi o tym Operatorowi wprost, żeby żaden
 suwak nie został wzięty za ozdobę.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-kontekstow.ts
+
+Kontrakt niesie jeden mechanizm przełączania pamięci w trakcie pracy: komenda
+`memory.toggle` ustala, które poziomy zasięgu karta sesji widzi i czy zapis
+pamięci jest czynny. To jest kontekst, który rzeczywiście da się przełączyć,
+i tak też okno go nazywa.
+
+Nazwanych zestawów pamięci okno nie udaje. Kontrakt nie ma bytu, w którym taki
+zestaw miałby zamieszkać: obszar `memory.*` zna wpis oraz poziom zasięgu, a nie
+nazwany profil pamięci. Brak nazywa przycisk obok, zamiast pola, którego rdzeń
+nie zapisze.
+
+Przestawienie idzie jednym wywołaniem obejmującym oba pola naraz. Rdzeń
+odczytuje pole `levels` jako stan po przestawieniu, a pusta lista zostawia
+poziomy bez zmian, więc wysyłanie samego jednego przełącznika zamieniałoby
+resztę wykazu w brak zmian przy każdym kliknięciu, a Operator odznaczający
+ostatni poziom nie miałby jak wyłączyć wszystkich.
+
+Stan pokazany po przestawieniu bierze się z odpowiedzi rdzenia: kontrolki
+odbijające samo zamówienie okna kłamałyby przy każdym takim wywołaniu.

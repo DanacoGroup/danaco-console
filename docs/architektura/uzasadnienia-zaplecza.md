@@ -2665,3 +2665,6 @@ tak samo jak strona wiki składa hierarchię wskazaniem strony nadrzędnej.
 Przywołania znakiem małpy leżą kolumną obok treści: rozpoznaje się je raz,
 przy zapisie, bo panel powiadomień pyta o nie częściej, niż komentarz się
 zmienia.
+
+## budowa/server/internal/store/migracja_266_automations_parametry_szablonu.sql
+Parametr szablonu przepływu jest wierszem, a nie polem zapisu strukturalnego szablonu, ponieważ formularz wpięcia buduje się z niego pole po polu, a zastosowanie szablonu musi umieć nazwać parametr, dla którego nie podano wartości.

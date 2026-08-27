@@ -461,3 +461,16 @@ wiersz tabeli i szuka w każdej wartości materiału wysłanego listem, żeby ko
 dołożona kiedyś obok `skrot` nie przeszła pomiaru pytającego wyłącznie o `skrot`.
 Gdyby materiał z listu leżał w tabeli jawnie, kopia bazy wystarczyłaby do
 potwierdzenia cudzej tożsamości i ustawienia hasła do konta.
+
+## skutek_warsztatu_tlumaczenia_test.go
+
+Wzorzec szkody, którego pilnują sprawdziany tego pliku, ma w tym produkcie
+precedens: komenda meldowała odpowiedź udaną z pustym wynikiem, a za
+odpowiedzią nie leżało nic. Dlatego żaden sprawdzian tutaj nie kończy się na
+udanej odpowiedzi. Każdy schodzi niżej, do jednego z dwóch miejsc, w których
+skutek albo jest, albo go nie ma: do bazy — drugim, niezależnym połączeniem do
+tego samego pliku SQLite, zapytaniem SQL wprost, z pominięciem całej warstwy
+adapterów — albo na dysk — otwarciem pliku, który komenda miała wytworzyć,
+i odczytaniem jego treści, nie samego istnienia. Żaden sprawdzian nie woła
+modelu ani programu zewnętrznego, więc wszystkie wypadają tak samo u odbiorcy,
+jak na maszynie budującej.

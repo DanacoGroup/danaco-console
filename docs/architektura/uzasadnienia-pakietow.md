@@ -5010,3 +5010,5 @@ stan czynny albo wstrzymany, nigdy zakończony ani archiwalny. Kolejka idzie
 tą samą miarą: czynna jest bezczynna, pracująca i wstrzymana, końcowe są
 zatrzymana i wyczerpana. Okno komunikacji zna dwa stany, więc liczą się
 wiersze w stanie otwartym.
+## budowa/server/internal/dane/roundtable_stanowisko.go
+Stanowisko powstaje ze złożenia wypowiedzi tury, więc odczyt bez nowej wypowiedzi daje treść tę samą, a podbijanie wersji przy każdym otwarciu okna zamieniłoby licznik wersji w licznik odczytów. Bez warunku broniącego redakcji Operatora pierwsze otwarcie panelu stanowiska po redakcji wracałoby do zapisu tur i kasowało pracę Operatora. Redakcja Operatora podnosi wersję zawsze, także wtedy, gdy treść wyszła ta sama, bo zapisanie tej samej treści jest czynnością zamierzoną, nie powtórzeniem bez skutku.

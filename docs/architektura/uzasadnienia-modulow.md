@@ -1415,3 +1415,24 @@ Zero w kolumnie granicy podagentów znaczy wyłączony i jest jedynym zapisem
 wyłączenia: włączenie bez podanej granicy przywraca piętnaście, maksimum
 techniczne platformy tego samego rzędu wielkości, jakie zna uruchomienie
 podagenta.
+
+## adapter_modul_aplikacje_srodowiska.go
+
+Kontrakt nie ma komendy zakładającej środowisko wdrożeniowe — `AppEnvironment`
+wychodzi wyłącznie z `apps.environment.list` — a selektor środowiska Deployment
+Panelu musi mieć co pokazać w oknie świeżo otwartym. Wykaz zakłada więc
+brakujące wiersze dla trzech wartości `AppDeployEnvironment` i oddaje je wraz
+z tym, co Operator zdążył im nadać. Zakładanie jest operacją UPSERT
+nietykającą domeny, więc kolejne wywołanie wykazu nie kasuje adresu nadanego
+między jednym wywołaniem a drugim.
+
+`AppsDeploymentDomainSetResponse` niesie pole `verified`; jedyną uczciwą jego
+treścią jest wynik rozwiązania nazwy przez system. Nazwa nierozwiązywalna nie
+jest odmową — domena bywa nadawana, zanim wpisy DNS się rozejdą — ale
+`verified: false` mówi Operatorowi wprost, że jeszcze nie działa.
+
+`apps.deployment.health.get` sprawdza produkt naprawdę: gdy środowisko ma
+domenę albo w oknie stoi podgląd, idzie tam zapytanie HTTP; gdy nie ma dokąd
+pójść, dostępność wynika ze stanu ostatniego przebiegu wdrożenia. Każde
+sprawdzenie dopisuje wiersz do dziennika kondycji, a udział dostępności liczy
+się z tych wierszy, zamiast być liczbą wziętą znikąd.

@@ -3355,3 +3355,6 @@ opisowo: trzy zastają pracę przerwaną i bieg podejmuje z nich wyłącznie ope
 poleceniem wznowienia; czwarty, ukończenie z wynikiem, zastaje pracę zrobioną
 i bieg podejmuje się z niego sam, gdy praca dostanie ciąg dalszy. Dzięki tej
 różnicy układ złożony przez operatora poznaje wynik zadania bez pytania.
+
+## budowa/server/internal/dane/urzadzenia.go (uzupełnienie)
+ZapewnijBiezace zakłada albo odświeża wiersz maszyny, na której działa rdzeń, i przenosi na nią oznaczenie maszyny bieżącej. Wywołanie powtórzone tymi samymi znamionami nie tworzy drugiego wiersza.

@@ -4913,3 +4913,19 @@ chroni odpowiednio przed nazwą, która z kontraktu wypadła, i przed podwójną
 pozycją tego samego narzędzia, gdyby kontrakt kiedyś wciągnął tę komendę do
 wykazu sam; oba warunki liczy ta sama funkcja, którą posługuje się odmowa —
 jedno źródło rozstrzygnięcia, co stoi poza wykazem.
+
+## budowa/server/internal/store/nastawy_przesiewu_i_mowy_test.go
+
+Bez wiersza w katalogu ustawień zdolność dalej działa, ponieważ rozstrzyganie nastawy czyta zapis
+niezależnie od katalogu definicji, ale zapis ustawienia odmawia klucza spoza katalogu, a okno
+konfiguracji wystawia wyłącznie pozycje katalogu. Brak wiersza znaczy więc dokładnie tyle: nastawa jest
+ustawialna wyłącznie ręcznym zapisem do bazy. Sprawdzian pilnuje jednego i drugiego naraz — że wiersz
+jest i że jego wartość domyślna mówi to samo, co stała pakietu, z którego liczy silnik.
+
+Wartość domyślną odbiorca dostaje z bazy przez rozstrzygacz zasięgu, a stała pakietu mowa wchodzi tam,
+gdzie rozstrzygacza nie ma. Rozjazd daje dwie odpowiedzi na pytanie, gdzie leżą wagi, zależne od drogi
+wywołania, a rozpoznać go można dopiero po tym, że transkrypcja pobiera drugą kopię wag zamiast
+wystartować. Katalog pusty oznacza wtedy, że widoczność wag zależy od tego, na czyim koncie stoi
+proces, więc wartość pusta jest tu regresją, a nie wyborem.
+## budowa/server/internal/dane/roundtable_sklad.go
+Zespół jest kopią składu, nie odwołaniem do niego: skład okna zmienia się po zapisaniu zespołu, bo uczestnicy dochodzą, wypadają i zmieniają rolę, a zespół ma zostać taki, jaki był w chwili zapisu. Odwołanie do wierszy składu zamiast kopii dałoby zespół, który wnosi do nowego okna stan cudzego okna z bieżącej chwili zamiast stanu zapamiętanego. Zmiana tożsamości uczestnika nie dotyka wyciszenia ani kolejności, bo obie te własności są czynnościami moderatora, a zapis tożsamości opisuje wyłącznie samego uczestnika. Usunięcie uczestnika ze składu nie usuwa jego wypowiedzi: zapis tury nie ma prawa się zmienić dlatego, że mówca wypadł ze składu. Zapis zespołu utrwala go razem ze składem w jednej transakcji, bo zespół z połową składu byłby układem, którego nikt nie zapisywał.

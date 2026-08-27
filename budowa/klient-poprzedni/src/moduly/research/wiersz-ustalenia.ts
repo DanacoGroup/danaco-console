@@ -2,12 +2,8 @@ import { ResearchFindingStatus, type ResearchFinding } from '../../../../shared/
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Jedna pozycja wykazu ustaleń Findings Panel.
- *
- * Jedna odpowiedzialność: przełożenie bytu `ResearchFinding` na wiersz wraz
- * z jego stanem, powiązanymi źródłami i dwiema drogami działania — zaznaczeniem
- * do raportu oraz wciągnięciem do formularza (funkcja operatora „edycja",
- * która w kontrakcie jest polem `findingId` tej samej komendy zapisu).
+ * Jedna pozycja wykazu ustaleń Findings Panel: byt ustalenia przełożony na wiersz z jego
+ * stanem, powiązanymi źródłami i dwiema drogami działania.
  */
 export interface UchwytyWiersza {
   /** Przestawia zaznaczenie ustalenia do raportu. */
@@ -49,7 +45,7 @@ export function utworzWierszUstalenia(
   return element;
 }
 
-/** Źródła powiązane z ustaleniem — druga strona wiązania źródło↔ustalenie. */
+/** Źródła powiązane z ustaleniem, jako druga strona wiązania między źródłem a ustaleniem, wypisane w treści wiersza. */
 function powiazania(ustalenie: ResearchFinding): HTMLElement {
   const element = document.createElement('span');
   element.className = 'mr-wykaz__meta';

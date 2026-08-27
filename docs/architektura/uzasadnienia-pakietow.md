@@ -2672,3 +2672,11 @@ nieodwracalna i żadna nie pyta Operatora. Sprawdzian mierzy dwie rzeczy
 naraz: że każda droga kasuje to, co ma kasować, i że żadna nie tyka niczego
 poza tym. Druga część jest ważniejsza, ponieważ nadmiarowe skasowanie nie
 zgłasza się błędem, tylko brakiem danych, który łatwo przeoczyć.
+
+## budowa/server/internal/konfig/rozgloszenie_test.go
+
+Bez drogi na żywo Operator zmienia nastawę i nic się nie dzieje, dopóki czegoś
+nie przeładuje. Z nią dzieje się dokładnie tyle, ile trzeba: zapis na poziomie
+szerszym nie budzi nikogo, kto ma wartość z węższego. Ta druga połowa jest
+ważniejsza od pierwszej, bo doręczenie nadmiarowe nie wygląda na błąd —
+wygląda na odświeżenie.

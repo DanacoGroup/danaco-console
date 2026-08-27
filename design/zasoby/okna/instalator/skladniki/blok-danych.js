@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — BLOK DANYCH
-   ----------------------------------------------------------------------------
+/* Składnik bloku danych przedstawia wiersze złożone z nazwy i odczytu w jednolitym układzie, właściwym tabliczce znamionowej instalacji.
+
    Tabliczka znamionowa: wiersze „nazwa — odczyt" w jednym rytmie. Nazwa
    i odczyt idą tym samym pismem i w tej samej barwie; rozdziela je wyłącznie
    położenie, bo są jednym wierszem jednej tabliczki, nie dwiema rangami.
@@ -8,8 +7,7 @@
    Właściwości:
      naglowek   klucz katalogu — nagłówek bloku (opcjonalny)
      wiersze    tablica { etykieta, wartosc, dane } — łańcuchy albo klucze
-     dane       atrybuty `data-*` na wierszu, do podmiany odczytu w czasie pracy
-   ============================================================================ */
+     dane       atrybuty `data-*` na wierszu, do podmiany odczytu w czasie pracy */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

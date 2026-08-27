@@ -2821,3 +2821,103 @@ nierozpoznany i wychodzi z niego zdaniem "silnik osadzen nie odpowiedzial
 zrozumiale", czyli odmowa gorsza od tej, ktora pomocnik juz napisal.
 Sprawdzian czyta napisy ze SKRYPTU, a nie powtarza ich za stalymi, bo
 powtorzenie mierzyloby samo siebie.
+
+## budowa/server/internal/core/adapter_modul_design_barwy.go
+
+Rachunek barwy jest wkompilowany, nie wołany. Konwersje przestrzeni
+percepcyjnych i harmonie idą przez `lucasb-eyer/go-colorful`, bibliotekę Go
+wkompilowaną w binarium. Programu zewnętrznego do przekształceń obrazu w tej
+drodze nie ma i mieć nie będzie: funkcja zależna od programu spoza instalki
+jest u Operatora odmową, nie funkcją.
+
+Luminancja liczy się wzorem WCAG, nie jasnością z biblioteki. Współczynnik
+kontrastu WCAG 2.1 stoi na luminancji względnej liczonej ze składowych sRGB
+po zdjęciu gamma (`LinearRgb`), z wagami 0.2126 / 0.7152 / 0.0722. Jasność
+Lab (`L*`) jest inną wielkością i dałaby inne liczby — para czerni na bieli
+ma dawać dokładnie 21, bo taki jest kres tej skali, i po tej liczbie
+sprawdzian poznaje, że rachunek jest ten, o który chodzi.
+
+CMYK jest przeliczeniem wprost. Przeliczenie RGB do CMYK bez profilu ICC
+jest przeliczeniem naiwnym: oddaje wartości, których drukarnia użyje jako
+punktu wyjścia, a nie barwę rozdzieloną pod konkretną maszynę. Rdzeń nie
+udaje, że zna profil, którego nie dostał — pole `cmyk` niesie przeliczenie
+wprost i tyle.
+
+## budowa/server/internal/core/adapter_modul_design_druk_wspolne.go
+
+Nośnik jest wiedzą rdzenia, nie zgadywanką okna: wykaz rozmiarów stoi
+w miejscu wspólnym całego rdzenia (`nosniki_druku_wspolne.go`), a ten plik go
+przekłada na pola kontraktu Designu. Czytają go trzy czynności: wykaz
+nośników, wykaz profili (pole `paperSizes`) i wydanie do druku, gdy profil
+wskazuje nośnik nazwą. Drugi wykaz — czy to w tym pliku, czy w kliencie —
+rozjechałby się przy pierwszej poprawce i Operator dostałby A3 o wymiarach A4.
+
+Profil ICC podaje, co serwer ma, a nie co warto by mieć: `design.print.profile.list`
+niesie `iccProfiles` — wykaz profili leżących na tej maszynie. Gdy nie ma ani
+jednego, wykaz jest pusty i to jest odpowiedź: wydanie w CMYK powie wtedy
+wprost, że idzie bez osadzonego profilu, zamiast zamilczeć brak. Rdzeń nie
+rozkłada profili ICC i nie przelicza barw przez nie — do tego trzeba
+biblioteki, której instalka nie niesie; niesie natomiast prawdę o tym, czy
+profil w ogóle jest.
+
+Zasób z bajtów wytworzonych przez rdzeń: kafle, wykresy, schematy, makiety
+produktowe i wydania do druku wracają jako zasoby magazynu, nie jako base64
+w odpowiedzi. Droga jest ta sama, co przy wniesieniu: najpierw bajty
+w magazynie pod sumą kontrolną, potem wiersz. Wiersz bez bajtów byłby
+kafelkiem, za którym nie ma nic.
+
+Wykaz nośników w `nosnikiDruku` jest funkcją, nie zmienną: wykaz wspólny jest
+źródłem, a to jest jego przekład na pola kontraktu. Zmienna pakietowa
+składana raz przy starcie byłaby trzecią kopią tych samych liczb.
+
+Wykaz nośników modułu Design był kiedyś osobny od wykazu wspólnego rdzenia
+i rozjeżdżał się z nim naprawdę — koperta DL miała w Designie wymiar wkładki,
+nie koperty, a wizytówka stała położona wbrew zdaniu nad wykazem. Wykaz stoi
+odtąd w miejscu wspólnym, bo dwa wykazy przy pierwszej poprawce dają
+Operatorowi jeden rozmiar o wymiarach drugiego. Przestawienie wniosło
+Designowi pięć pozycji, których jego wykaz nie miał: B4, B5 oraz koperty C4,
+C5 i C6.
+
+Wiersz zasobu w `zalozZasobZBajtowDesignu` przed bajtami byłby kafelkiem, za
+którym nie ma nic — dokładnie ta szkoda, którą ten moduł ma w swojej
+historii.
+
+Wykaz nazwanych barw jest krótki z zamysłu: wciągnięcie pełnej listy X11
+dałoby nazwy w rodzaju "papayawhip", których nikt w module nie wpisze,
+a każda z nich musiałaby być tu utrzymywana.
+
+Zapis barwy nierozpoznany jest odmową, nie barwą domyślną: podstawienie
+czerni za tekst, którego rdzeń nie zrozumiał, dałoby paletę zbudowaną wokół
+barwy, której nikt nie wskazał.
+
+Zapis szesnastkowy barwy bez krzyżyka jest częstym skrótem Operatora i tak
+samo jednoznacznym, więc rozpoznanie idzie po nim, zamiast odmawiać za znak.
+## server/internal/wiedza/skladnica.go
+
+Druga baza obok pierwszej to drugi plik do przeniesienia, drugi do kopii
+zapasowej i drugi, ktory da sie zgubic osobno. Wektor jest bytem wtornym,
+odtwarzalnym z tresci jednym przebiegiem knowledge.index, wiec jego utrata
+kosztuje czas procesora, a nie wiedze Operatora. Tak samo wtorny jest
+indeks FTS5 tresci biblioteki i lezy w tej samej bazie. Baza nadal nie
+przechowuje pliku: bajty tresci leza w magazynie biblioteki pod suma
+sha256, a tu lezy wektor i fragment tekstu, z ktorego go policzono.
+Fragment jest w tabeli, bo kontrakt kaze oddac w trafieniu text, a
+odtwarzanie go przy kazdym zapytaniu znaczyloby otwieranie plikow
+zrodlowych i ponowne dzielenie ich na fragmenty. Skladnica mowi wlasnymi
+typami, nie typami kontraktu: pakiet wiedza nie zna kontraktu, przeklad na
+shared.KnowledgeHit nalezy do adaptera rdzenia.
+
+Zapisz: fragmenty jednego dokumentu wniesione polowicznie dalyby wskaznik,
+ktory o tym dokumencie wie, ale zna go do polowy — a Operator nie ma jak
+tego zobaczyc: zapytanie o druga polowe wroci puste tak samo, jak wraca
+dla dokumentu nieindeksowanego. Dlatego przerwanie w srodku cofa calosc.
+Powtorne indeksowanie nadpisuje, a nie doklada — warunek jednoznacznosci
+(zakres, kod zrodla, kolejnosc, model) czyni z zapisu upsert, wiec
+dokument zmieniony i zaindeksowany ponownie ma tyle fragmentow, ile ma
+tresci, a nie sume wszystkich swoich wersji.
+
+Pozycje: Operator, ktory zmienil ustawienie modelu, ma w tabeli wektory
+z dwoch przestrzeni; porownanie pytania z wektorem cudzego modelu daje
+liczbe, ktora wyglada jak trafnosc i nia nie jest. Stare wiersze zostaja
+w tabeli swiadomie — wracaja do uzytku, gdy Operator wroci do poprzedniego
+modelu, a rebuild je czysci.

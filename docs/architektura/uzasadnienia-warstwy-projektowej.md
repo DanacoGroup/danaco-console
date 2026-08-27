@@ -442,3 +442,8 @@ rola assistant na klasę dn-wpis--inteligencja, rola system na klasę
 dn-wpis--system, rola tool na klasę dn-wpis--system wraz z plakietką roli
 niosącą nazwę narzędzia. Wpis w trakcie pracy dokłada klasę
 dn-wpis--pracuje; klatki nazwane dn-tetno definiuje plakietka.css.
+
+## budowa/klient-poprzedni/src/motyw/podglad-zetonow.html
+Strona działa bez rdzenia, kanału kontraktu i sesji, więc nie mówi nic
+o działaniu produktu ani o tym, czy dany żeton jest przez aplikację
+rzeczywiście używany.

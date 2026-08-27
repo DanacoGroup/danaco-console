@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: obszar automatyk modułu Automations — definicja
-// automatyki (tabela `automatyka`, migracja 039) wraz z kontraktem całego
-// obszaru. Kroki i zależności leżą w `automations_kroki.go`, harmonogram
-// w `automations_harmonogram.go`, przebiegi w `automations_przebiegi.go`,
-// a czynności na pozycjach kolejki w `automations_kolejka.go` — jedno
-// repozytorium, pięć plików wedle odpowiedzialności.
-//
-// Silnika kolejek tu nie ma. Wykonaniem kroków zajmuje się repozytorium kolejek
-// (`kolejki.go`, `pozycje_kolejki.go`) i tylko ono. To repozytorium opisuje
-// definicję automatyki i zapis jej przebiegu.
+// Plik prowadzi obszar automatyk modułu Automations: definicję automatyki wraz z kontraktem obszaru; kroki, harmonogram,
+// przebiegi i kolejka leżą w osobnych plikach jednego repozytorium, a silnika wykonania kroków tu nie ma.
 package dane
 
 import (
@@ -28,8 +20,7 @@ type Automatyka struct {
 	Wersja         int
 	Utworzono      string
 	Zaktualizowano string
-	// WersjaOpublikowana puste znaczy „rozdziału wersji nie wprowadzono” —
-	// wykonywana produkcyjnie jest wtedy wersja bieżąca, a nie wersja zerowa.
+	// WersjaOpublikowana pusta znaczy brak rozdziału wersji; wykonywana produkcyjnie jest wersja bieżąca.
 	WersjaOpublikowana *int
 	Udostepniona       bool
 	BudzetPrzebiegu    int
@@ -37,7 +28,7 @@ type Automatyka struct {
 	RegulaBudzetu      *string
 }
 
-// RepozytoriumAutomatyk jest kontraktem obszaru Automations.
+// RepozytoriumAutomatyk jest kontraktem obszaru Automations: definicje, kroki, harmonogram i przebiegi automatyk.
 type RepozytoriumAutomatyk interface {
 	ZapiszAutomatyke(ctx context.Context, automatyka Automatyka) (Automatyka, error)
 	Automatyka(ctx context.Context, kod string) (Automatyka, error)
@@ -64,8 +55,7 @@ type RepozytoriumAutomatyk interface {
 	UstawKolejnoscPozycji(ctx context.Context, pozycjaID int64, kolejnosc int) error
 	PrzeniesPozycje(ctx context.Context, pozycjaID, kolejkaDocelowaID int64) error
 
-	// Historia wersji definicji, publikacja, udostępnienie i budżety czasu
-	// (`automations_wersje.go`, migracje 260 i 267).
+	// Historia wersji definicji, publikacja, udostępnienie i budżety czasu automatyki, w osobnym pliku.
 	ZapiszWersjeAutomatyki(ctx context.Context, wersja WersjaAutomatyki) error
 	WersjeAutomatyki(ctx context.Context, automatykaID int64, limit int) ([]WersjaAutomatyki, error)
 	WersjaAutomatykiNumer(ctx context.Context, automatykaID int64, numer int) (WersjaAutomatyki, error)
@@ -93,8 +83,7 @@ type RepozytoriumAutomatyk interface {
 	SzablonyAutomatyki(ctx context.Context, limit int) ([]SzablonAutomatyki, error)
 	ParametrySzablonuAutomatyki(ctx context.Context, szablonID int64) ([]ParametrSzablonu, error)
 
-	// Trwały zapis przebiegu: log, kroki wraz z ładunkami, punkty wznowienia
-	// (`automations_dziennik_przebiegu.go`, migracje 270-272).
+	// Trwały zapis przebiegu automatyki: log, kroki wraz z ładunkami, punkty wznowienia, w osobnym pliku.
 	DopiszLogPrzebiegu(ctx context.Context, wpis WpisLoguPrzebiegu) error
 	LogPrzebiegu(ctx context.Context, przebiegID int64, poziom, krokKod string,
 		limit int) ([]WpisLoguPrzebiegu, error)
@@ -105,8 +94,7 @@ type RepozytoriumAutomatyk interface {
 	PunktyWznowienia(ctx context.Context, przebiegID int64) ([]PunktWznowienia, error)
 	PunktWznowieniaPoKodzie(ctx context.Context, kod string) (PunktWznowienia, error)
 
-	// Reguły alarmowania, skarbiec referencji i dziennik audytu
-	// (`automations_nadzor.go`, migracje 273-274).
+	// Reguły alarmowania, skarbiec referencji i dziennik audytu automatyki, w osobnym pliku repozytorium.
 	ZapiszRegulealarmowania(ctx context.Context, regula RegulaAlarmowania) (RegulaAlarmowania, error)
 	RegulyAlarmowania(ctx context.Context, automatykaID int64) ([]RegulaAlarmowania, error)
 	ZapiszPoswiadczenieAutomatyki(ctx context.Context, poswiadczenie PoswiadczenieAutomatyki) error
@@ -117,9 +105,7 @@ type RepozytoriumAutomatyk interface {
 	AudytAutomatyki(ctx context.Context, automatykaID int64, od, do string,
 		limit int) ([]WpisAudytuAutomatyki, error)
 
-	// Harmonogram po własnym identyfikatorze, okna wykonania, nadzór obecności
-	// uruchomień i historia wyzwoleń (`schedule.go`,
-	// `automations_okna_wykonania.go`, migracja 275).
+	// Harmonogram po własnym identyfikatorze, okna wykonania, nadzór obecności i historia wyzwoleń.
 	HarmonogramPoKodzie(ctx context.Context, kod string) (Harmonogram, error)
 	Harmonogramy(ctx context.Context, tylkoCzynne bool) ([]Harmonogram, error)
 	ZapiszOknaWykonania(ctx context.Context, harmonogramID int64, okna []OknoWykonania) error
@@ -256,7 +242,7 @@ func (r *repozytoriumAutomatyk) Automatyki(ctx context.Context,
 	return lista, nil
 }
 
-// odczytajAutomatyke składa strukturę z jednego wiersza wyniku.
+// odczytajAutomatyke składa strukturę automatyki wprost z jednego wiersza wyniku zapytania do bazy SQL.
 func odczytajAutomatyke(wiersz skaner) (Automatyka, error) {
 	var automatyka Automatyka
 	var opis, regula sql.NullString

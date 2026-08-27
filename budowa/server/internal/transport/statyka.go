@@ -13,7 +13,7 @@ import (
 // widoku nie ma odpowiednika w pakiecie klienta.
 const plikWejsciowy = "index.html"
 
-// uchwytStatyki serwuje pakiet interfejsu z katalogu (client/dist).
+// uchwytStatyki serwuje pakiet interfejsu z katalogu (klient/dist).
 //
 // Fail-open: katalog niewskazany albo jeszcze niezbudowany nie
 // wstrzymuje nasłuchu ani kanału WebSocket — żądanie pliku dostaje wtedy

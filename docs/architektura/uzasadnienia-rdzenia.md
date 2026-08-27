@@ -5255,3 +5255,7 @@ zobaczyłby rozjazd bez przyczyny.
 Przy zmianie okna docelowego rola okna pozostaje nietknięta, ponieważ rola
 wiąże okno z koordynatorem pętli, a przekazanie kontekstu nie jest zmianą
 układu pętli.
+
+## budowa/server/internal/core/handlers_queue.go
+Działanie „powtórz" nie ma limitu obiegów. Rdzeń nie zlicza prób i nie odmawia po którejś z kolei —
+przerwanie należy do użytkownika.

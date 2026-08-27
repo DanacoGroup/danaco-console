@@ -4249,3 +4249,6 @@ nieobowiązkowe: gdy warsztat nie jest zamontowany, galeria działa wyłącznie 
 zakładania dokumentu, a gdy jest zamontowany, miniatura dostaje przejście do niego, bo szablon
 zmienia się tam, nie w galerii. Kategoria szablonu jest fabryczna albo własna, bo innego podziału
 kontrakt nie niesie, a wymyślanie działów na podstawie nazw byłoby porządkiem zgadniętym.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/profile-wiedza.ts
+Roundtable nie podaje własnej liczby okien, ponieważ wpisanie tu wartości dublowałoby sufit sceny albo z nim kolidowało — wiążącym ograniczeniem pozostaje zawsze sufit platformy. Dymek Assistant mówi wprost, że kanału głosowego nie ma, zamiast milcząco zejść na tekst, ponieważ kontrakt i rdzeń nie niosą mowy.

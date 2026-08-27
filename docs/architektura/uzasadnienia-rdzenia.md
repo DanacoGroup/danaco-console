@@ -4481,3 +4481,47 @@ naprawdę przestawia kolejki, zamiast być znacznikiem, na który nikt nie
 patrzy. Każdy sprawdzian schodzi do bazy własnym zapytaniem, bo odpowiedź
 komendy oddaje układ po zapisie i wyglądałaby tak samo, gdyby zapis nie
 doszedł.
+
+nazwaKontaZKatalogu: kontrakt identyfikuje konto liczbą (`Account.id` = klucz
+główny wiersza), a pula rotacji kodem (`konto.nazwa`) — wskazanie z obszaru
+account konfiguracji sesji i z kolumny `kanal_modelu.konto_id` przychodzi
+więc w innym słowniku niż ten, którym mówi pula. Wskazanie nieliczbowe jedzie
+dosłownie: Operator mógł wpisać nazwę wprost.
+
+## budowa/server/internal/core/pola_skutek_test.go
+
+Skutek pól dokumentu: czy pole wchodzi policzone, czy pole obliczane liczy
+naprawdę i czy pole bez czego policzyć mówi to wprost. Szkody, które ten plik
+ma wykluczyć: 1. pole wstawione z pustą wartością i odpowiedzią „wstawiono" —
+Operator widziałby w dokumencie puste miejsce; 2. pole obliczane liczone
+w kliencie, a w rdzeniu udawane; 3. właściwość dokumentu, której rdzeń nie
+zna, przyjęta w ciszy; 4. wzór daty przyjmowany układem odniesienia
+biblioteki, którego Operator nie wpisze.
+
+## budowa/server/internal/core/handlers_queue_zlecenia.go
+
+Ten plik stoi osobno od `handlers_queue.go` (cykl życia kolejki) i
+`handlers_queue_wiazania.go` (wykaz i wiązanie), bo osobny jest przedmiot:
+tam bytem jest kolejka, tutaj zlecenie. Port jest rozszerzeniem portu
+`Kolejki`, nie drugim portem — silnik kolejek pętli sesyjnej, MultitaskingAI
+i modułu Automations jest jeden.
+
+Rozgłoszenie idzie `queue.changed` wszędzie tam, gdzie zmienia się
+zawartość albo polityka kolejki: Queue Manager rysuje wykaz zleceń
+i wskaźnik głębokości z tego, co o kolejce wie, więc dołożone, zdjęte,
+odłożone, podzielone, scalone, skierowane, rozgałęzione i uwarunkowane
+zlecenie czyni jego obraz nieaktualnym. Trzy odczyty — wykaz zleceń,
+zadania martwe i głębokość — nie rozgłaszają niczego.
+
+Rodzajem zmiany jest `updated`, nie `created`: bytem zdarzenia
+`queue.changed` jest kolejka, a kolejka przy dołożeniu zlecenia nie
+powstaje, tylko się zmienia. `created` opisywałoby założenie samej kolejki
+i tak jest używane w `queue.create`.
+
+`zarejestrujCzynnosciZlecen` wpina sześć czynności, których wynikiem jest
+zlecenie (albo ich wykaz), a nie kolejka — rozgłoszenie dobiera więc kolejkę
+osobno, po identyfikatorze z żądania.
+
+`rozglosKolejkeZlecenia` dobiera kolejkę po identyfikatorze i rozgłasza jej
+zmianę. Nieudany dobór kończy wyłącznie rozgłoszenie — komenda już się
+powiodła i odmawianie jej z powodu zdarzenia byłoby odwróceniem porządku.

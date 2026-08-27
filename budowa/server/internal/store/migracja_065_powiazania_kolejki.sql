@@ -1,26 +1,5 @@
--- Migracja 065 — powiązania kolejki (komenda `queue.link`).
---
--- Kontrakt niesie komendę `queue.link`: „Wiaze kolejke z oknami, ekspertem,
--- projektem albo automatyka". Sam schemat kolejki zna jedno wiązanie poza sesją
--- — kolumnę `kolejka.okno_koordynatora_id` wskazującą jedno okno komunikacji.
--- Kontrakt mówi o `windowIds` w liczbie mnogiej i o trzech dalszych bytach, dla
--- których w tabeli `kolejka` nie ma kolumny.
---
--- Wiązania niesie jedna tabela, a nie cztery kolumny w `kolejka`: kolumny
--- obsłużyłyby po jednym bycie każdego rodzaju, a kontrakt niesie wykaz okien.
--- Tabela wiążąca obsługuje wszystkie cztery rodzaje jednym kształtem i nie
--- wymaga zmiany schematu przy piątym.
---
--- `byt` jest tekstem, a nie kluczem obcym, bo kontrakt niesie identyfikatory
--- zewnętrzne: `windowIds` to identyfikatory okien kontraktu (nie
--- `okno_komunikacji.id`), `agentId` to kod eksperta, `projectId` — kod projektu,
--- `workflowId` — identyfikator automatyki. Cztery klucze obce wymagałyby
--- czterech rozwiązań identyfikatora w chwili zapisu i odmawiałyby powiązania
--- z bytem, który nie ma jeszcze wiersza. Kasowanie kolejki zabiera powiązania
--- kaskadą, bo to one wiszą na kolejce, nie odwrotnie.
---
--- Kolumna `kolejka.okno_koordynatora_id` zostaje nietknięta: opisuje okno
--- koordynatora pętli, a nie okna obsługiwane przez kolejkę.
+-- Migracja zakłada tabelę powiązań kolejki z oknami, ekspertem, projektem albo
+-- automatyką, wspólną dla wszystkich czterech rodzajów bytu.
 
 CREATE TABLE powiazanie_kolejki (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,

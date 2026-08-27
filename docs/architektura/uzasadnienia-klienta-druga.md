@@ -5198,3 +5198,6 @@ z pamięcią, a zanim wrócił, okno przestawiło się na moduł bez pamięci
 sesyjnej — nie wchodzi do wątku, bo przywróciłaby wątek dopiero co zdjęty na
 oczach Operatora, ale pominięcie zostaje nazwane, żeby nie wyglądało jak
 zgubienie odpowiedzi rdzenia.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-nastawy.ts
+Ster nastawy nie jest drugim mechanizmem menu: rozwijanie, haczyk, opisy, gałęzie, grupy, pole szukania i stopka należą do biblioteki menu-drzewa, a ten plik bierze ten mechanizm gotowy — istnieje, bo mechanizm drzewa nie wykonuje wyboru, tylko oddaje klucz wołającemu. Bez tej obudowy ten sam kawałek — czyszczenie zdania odmowy, sygnalizacja zajętości podczas wysyłki, wyświetlenie błędu i powrót do stanu potwierdzonego — stałby osobno w każdym sterze. Wyróżnienie idzie wyłącznie z migawki stanu: ster nie zapisuje wyboru u siebie, tylko po wysyłce woła odświeżenie u wołającego, a ten czyta stan potwierdzony przez rdzeń, dzięki czemu nieudana zmiana nie zostawia mylącej etykiety na uchwycie. Ster nie traci klikalności ani na czas wysyłki, ani po odmowie — sygnalizacja zajętości mówi o pracy, nie odbiera możliwości działania. Treść pusta zdania pod uchwytem chowa je z układu, więc ster bez zdania nie zostawia pustego pasa w rzędzie.

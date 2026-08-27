@@ -1,9 +1,4 @@
-// Odpowiedzialność pliku: przegląd startowy zleceń asystenta — jedna czynność,
-// wykonywana raz przy montażu rdzenia: domknięcie zleceń zastanych w stanie
-// `running`. Wykonawca zleceń (`adapter_modul_asystent_wykonawca.go`) prowadzi
-// zlecenia biegnące teraz; ten plik zajmuje się wyłącznie spadkiem po procesie,
-// który już nie żyje. Osobna odpowiedzialność, osobny plik, ten sam
-// typ `adapterAsystenta`.
+// Plik obsługuje przegląd startowy zleceń asystenta: jedną czynność wykonywaną raz przy montażu rdzenia, domykającą zlecenia zastane w stanie `running` po procesie, który już nie żyje.
 package core
 
 import (
@@ -12,17 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZDomknieciemZastanych przegląda zlecenia zastane w stanie `running` i domyka
-// je powodem nazwanym.
-//
-// Rdzeń zatrzymany w połowie tury zostawia zlecenie w `running`, a wykonawca
-// wchodzi wyłącznie drogą świeżego polecenia, `retry` albo `resume` — bez tego
-// przeglądu Actions Monitor pokazywałby wiersz „w toku" bez wyniku i bez powodu
-// na zawsze. Tura tamtego zlecenia nie istnieje, bo umarła z procesem, więc
-// uczciwym stanem jest `failed` z powodem, a nie dalsze udawanie pracy.
-//
-// Przegląd idzie gorutyną, bo montaż nie ma czekać na obejście wszystkich okien;
-// bez nadzorcy sesji albo kontekstu życia nie ma czego przeglądać.
+// ZDomknieciemZastanych przegląda zlecenia zastane w stanie `running` i domyka je powodem nazwanym. Rdzeń zatrzymany w połowie tury zostawia zlecenie w `running`; uczciwym stanem jest wtedy `failed` z powodem, nie dalsze udawanie pracy.
 func (a *adapterAsystenta) ZDomknieciemZastanych() *adapterAsystenta {
 	if a.nadzorca == nil || a.zycie == nil {
 		return a

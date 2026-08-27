@@ -31,10 +31,6 @@
   .dok-kafel { border:1px solid var(--dn-obrys-subtelny); border-radius:var(--dn-r-sm); padding:var(--dn-od-2); font-size:var(--dn-fs-xs); display:flex; flex-direction:column; gap:var(--dn-od-1); }
   .dok-kafel svg { width:24px; height:24px; color:var(--dn-tekst-3); }
 </style>
-<style data-fix-cialo>
-/* Poprawka: TalkIn ma trzy rejony — nawigacja modułów + lista rozmów + stanowisko */
-.sta-cialo { grid-template-columns: 200px var(--dn-wym-boczna) minmax(0, 1fr) !important; }
-</style>
 </head>
 
 <body class="pt-pelny-ekran"
@@ -362,7 +358,7 @@
   </div>
 
   <!-- ══ CIAŁO ══ -->
-  <div class="sta-cialo">
+  <div class="sta-cialo sta-cialo--trzy-rejony">
 
     <!-- BOCZNA NAWIGACJA MODUŁÓW TalkIn (9) -->
     <nav class="boczna" aria-label="Moduły środowiska TalkIn">

@@ -173,6 +173,7 @@
   --dn-wym-pas-kart: 36px;         /* pas kart sesji */
   --dn-wym-wiersz: 36px;           /* wiersz tabeli / listy */
   --dn-wym-boczna: 224px;          /* boczna nawigacja modułów */
+  --dn-wym-moduly: 200px;          /* rejon nazw modułów, gdy stoi obok bocznej */
   --dn-wym-pas-komunikacji: 320px; /* wysokość pasa komunikacji (powłoka środowiska) */
   --dn-wym-modal: 560px;           /* maksymalna szerokość modala */
   --dn-wym-toast-min: 280px;

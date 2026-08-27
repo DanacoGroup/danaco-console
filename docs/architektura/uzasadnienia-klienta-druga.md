@@ -5757,3 +5757,18 @@ Pytanie o pustą turę dotyczy wszystkich warstw wpisu, nie samego tekstu: tura,
 która oddała sam tok rozumowania albo samo wywołanie narzędzia, coś
 przyniosła. Pusta jest dopiero taka, po której na ekranie nie zostaje nic
 prócz nagłówka.
+
+## budowa/klient-poprzedni/src/ustawienia/most-motywu.ts
+Przy podłączeniu most czyta wartość z katalogu i stosuje wynik; subskrybuje zmianę i stosuje ją, także tę
+wykonaną w drugim oknie albo na drugim urządzeniu, bo rdzeń rozgłasza zdarzenie do obu połączeń, również
+do tego, które zapisało; nasłuchuje zdarzenia motywu, więc przełącznik paska jest drugim sterem tej samej
+nastawy, a jego kliknięcie idzie zapisem do rdzenia; wartość pusta znaczy preferencję systemu i zostaje
+trzecim stanem, bo katalog rdzenia go ma — most jej nie spłaszcza do jasnego. Zapis lokalny zostaje, choć
+prawdą jest rdzeń: okno rysuje się, zanim rdzeń odpowie na pierwszy odczyt, a bez niego każde uruchomienie
+zaczynałoby się mignięciem motywu preferowanego przez system; most zapisuje lokalnie każdą wartość
+potwierdzoną przez rdzeń — to odbicie prawdy, nie druga prawda, bo zapis lokalny nigdy nie jedzie z
+powrotem do rdzenia jako nastawa. Dwa mosty na tym samym kanale byłyby dwoma właścicielami jednej nastawy
+i odbiłyby sobie nawzajem każde zdarzenie, więc podpięcie mostu oddaje most już podpięty, gdy kanał się
+zgadza. Klucz nastawy motywu jest jedyną rzeczą z katalogu zaszytą w tym pliku — etykiet, opcji, poziomów
+i rodzaju kontrolki most nie zna, czyta je z definicji katalogu; nazwę klucza znać musi, bo most z
+definicji dotyczy jednej nastawy.

@@ -3128,3 +3128,17 @@ własny kod wartości, żeby było widać, co przyszło z rdzenia. Ta sama zasad
 obowiązuje kontrolkę wyboru: napis pusty znaczy brak ograniczenia, a napis
 spoza kontraktu również, ponieważ zawężenie wykazu do wartości, której rdzeń nie
 zna, dałoby wykaz pusty bez powodu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/stan-probny.ts
+
+Sprawdzianów modułu są dwa — stany okien oraz wykonywanie pracy — a atrapa stanu modułu jest
+jedna. Skopiowana do obu plików rozjeżdżałaby się przy każdym nowym polu interfejsu i jeden
+ze sprawdzianów badałby wtedy stan, którego moduł już nie ma.
+
+Plik nie należy do produktu: sięgają po niego wyłącznie pliki sprawdzianów, więc punkt wejścia
+aplikacji go nie wciąga.
+
+Atrapa nie sięga do rdzenia i nie udaje, że sięga: każda droga wywołania rzuca wyjątkiem,
+dopóki sprawdzian jej nie obsadzi. Sprawdzian, który przypadkiem wywoła komendę, dostaje przez
+to błąd, a nie ciszę. Dotyczy to również trzech źródeł dobudowanych obok rdzenia modułu —
+atrapa oddająca pustą odpowiedź udawałaby wynik, którego nie ma.

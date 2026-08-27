@@ -317,7 +317,7 @@ func TestWyciszenieNakladkiZostawiaWierszIWstrzymujeSygnal(t *testing.T) {
 
 // TestWyciszenieCzasoweMaKoniecIObowiazujeWszedzie wykazuje dwie rzeczy naraz:
 // wyciszenie czasowe bez chwili końca jest odmawiane, a wyciszenie czasowe
-// obejmuje sygnał każdej klasy — tak mówi kolumna „Zakres" rozdz. 3.5.
+// obejmuje sygnał każdej klasy.
 func TestWyciszenieCzasoweMaKoniecIObowiazujeWszedzie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

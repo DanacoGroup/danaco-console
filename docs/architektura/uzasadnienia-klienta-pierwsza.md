@@ -6807,3 +6807,6 @@ kontraktu, która czyta magazyn zapisany przy przeniesieniu kontekstu; bez
 niej przybycie przekazania jest dla modułu nieme. Zdarzenie przybycia nie
 rozgłasza zmiany pliku i nie zakłada pliku w repozytorium — rozgłasza
 wyłącznie zmianę okna z oknem docelowym.
+
+## budowa/klient-poprzedni/src/moduly/assistant/pasek-polecenia.ts
+Mikrofon nie jest wygaszony, choć kontrakt nie ma przesyłu dźwięku: naciśnięcie odpowiada zdaniem mówiącym, czego brakuje, i prowadzi ognisko do pola transkrypcji; rozpoznanie mowy jest warstwą wejścia, nie drugą drogą rozmowy — po transkrypcji treść wchodzi tam, gdzie weszłaby wpisana ręcznie. Wybudzenie stoi osobno od mikrofonu, bo to dwie różne czynności: mikrofon nagrywa jedno polecenie i wysyła je do rozpoznania, a wybudzenie prowadzi nasłuch ciągły i frazę, na którą asystent reaguje — sklejone w jedną kontrolkę dałyby jeden przycisk o dwóch znaczeniach.

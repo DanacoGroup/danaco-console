@@ -1,11 +1,6 @@
 // Komenda `terminal.command.exec` — uruchomienie jednego polecenia w karcie
-// terminala. Plik prowadzi trzy bramy: kartę, uprawnienie okna i izolację;
-// sam bieg procesu leży w `adapter_modul_terminal_bieg.go`.
-//
-// Proces przeżywa rozłączenie klienta: gniazdo WebSocket może paść w połowie
-// kompilacji, a kompilacja ma dobiec końca. Dlatego obserwator zakończenia
-// pracuje we własnej gorutynie i własnym kontekście, a nie w kontekście
-// komendy.
+// terminala. Plik prowadzi trzy bramy: kartę, uprawnienie okna i izolację.
+// Proces przeżywa rozłączenie klienta, obserwowany we własnej gorutynie.
 package core
 
 import (
@@ -31,7 +26,8 @@ const czasNaDomkniecie = 750 * time.Millisecond
 // zostało przerwane wartością domyślną.
 const granicaCzasuDomyslna = 0
 
-// WykonajPolecenie obsługuje `terminal.command.exec`.
+// WykonajPolecenie obsługuje `terminal.command.exec`, uruchamiając polecenie
+// w karcie terminala przez trzy bramy: kartę, uprawnienie i izolację.
 func (a *adapterTerminala) WykonajPolecenie(ctx context.Context,
 	z shared.TerminalCommandExecRequest) (shared.TerminalCommandExecResponse, error) {
 
@@ -64,7 +60,8 @@ func (a *adapterTerminala) WykonajPolecenie(ctx context.Context,
 	return shared.TerminalCommandExecResponse{Process: procesKontraktu(proces)}, nil
 }
 
-// kartaZadania odnajduje kartę wskazaną w żądaniu.
+// kartaZadania odnajduje kartę wskazaną w żądaniu, po jej identyfikatorze,
+// odmawiając wprost, gdy karty nie ma.
 func (a *adapterTerminala) kartaZadania(idKarty string) (*kartaTerminala, error) {
 	kod := strings.TrimSpace(idKarty)
 	if kod == "" {

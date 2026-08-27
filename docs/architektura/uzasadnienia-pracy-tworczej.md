@@ -418,3 +418,11 @@ ligaturą, z apostrofem albo z cyfrą. Siła porównania sortowania jest
 drugorzędna: różnica wielkości liter nie decyduje o kolejności, a różnica znaku
 diakrytycznego decyduje, bo „laska" i „łaska" są dwoma różnymi wyrazami i mają
 stanąć osobno.
+
+## budowa/server/internal/core/adapter_modul_design_makiety_zrzut.go
+
+Obie komendy tego pliku oddają ramkę i warstwy, nie plik graficzny, bo makieta ma być czymś, w czym Operator pracuje dalej, a obrazu ekranu nie da się przesunąć piórem. Rozkład na sekcje liczy rdzeń własną regułą; kanał modelu wchodzi wyłącznie tam, gdzie dodaje wiedzę, przy rozpisaniu opisu na nazwy sekcji. Bez wskazanego kanału rdzeń rozkłada opis regułą, która rozdziela go na części i rozpoznaje nazwy sekcji typowe dla makiet ekranów; wynik jest zawsze, na każdej maszynie i bez konta u zewnętrznego dostawcy. Ze wskazanym kanałem rdzeń pyta model o rozpisanie tego samego opisu, a odpowiedź nieczytelna albo błąd kanału nie kończy komendy, bo makieta ma powstać niezależnie.
+
+Komenda design.mockup.import rozkłada zrzut na obszary rachunkiem własnym na pikselach: barwa tła z obwodu obrazu, progowanie odstępstwa od tła, spójne bloki, prostokąty otaczające. Treść napisów czyta program tesseract, składnik pakietu serwera wołany tą samą drogą, co w warsztacie Studia i w module Translate; czytnika liter w czystym Go nie ma, więc plik ma nazwany wyjątek zapory izolacji na własne wywołanie programu zewnętrznego.
+
+Pole recognizeText domyślnie znaczy tak, a układ makiety nie ma prawa zależeć od odczytu liter. Gdy pole podano wprost jako prawdziwe, brak programu jest odmową nazwaną, nie pustym odczytem udającym, że napisów nie było. Gdy pole jest pominięte, obowiązuje domyślne włączenie, ale odczyt jest dodatkiem do układu: brak programu daje wtedy makietę z układem, a każda linia tekstu niesie w adnotacji zdanie o tym, że treści nie odczytano i dlaczego. Obszary, których rdzeń nie rozłożył na elementy, wracają w polu unrecognizedRegions jako bilans zamiast ciszy.

@@ -1396,3 +1396,82 @@ wrócić z archiwum dokładnie w tym stanie czynności, w którym go
 archiwizowano, a `aktywny` niesie już inne znaczenie (`enabledOnly`
 kontraktu). Definicja i historia zostają nietknięte — archiwizacja nie usuwa
 ani jednego wiersza.
+
+## budowa/server/internal/store/migracja_361_studio_postac_dokumentu.sql
+
+Do tej pory rdzeń znał z dokumentu `documentId`, `content` i `title`. Model był
+wobec dokumentu ślepy na jego postać: widział tekst, nie widział kroju,
+wcięcia, tabeli ani obrazu — więc nie mógł ich ani przeczytać, ani zmienić.
+Postać przestaje być stanem klienckim i staje się wierszem w bazie; zapis
+dokumentu przenosi ją razem z treścią, zamiast ją gubić.
+
+Drzewo dokumentu (sekcje → bloki → fragmenty o jednolitej postaci znaku,
+z tabelami w środku) jest strukturą zagnieżdżoną, którą czyta się i zapisuje
+całą: każda czynność na postaci przelicza sąsiedztwo — zmiana wcięcia rusza
+łamanie, scalenie komórki rusza szerokości. Rozłożenie tego na wiersze
+kazałoby przy każdej czynności składać drzewo z kilkuset wierszy i pilnować
+ich kolejności, a żadne zapytanie po pojedynczym fragmencie nie jest do
+niczego potrzebne. Dlatego `postac_json` niesie drzewo jednym zapisem.
+
+Styl nazwany i sekcja to co innego i dlatego mają wiersze. Po stylu się pyta:
+„ile miejsc go używa", „które style dziedziczą po tym", „usuń styl i przenieś
+jego miejsca użycia". Sprawdzian odbioru mierzy wprost, że zmiana stylu
+przestawiła wszystkie miejsca użycia — a to jest pytanie do bazy, nie do
+drzewa. Sekcja niesie własne nastawy strony i własne nagłówki, po których pyta
+podgląd wydruku i wydanie do PDF.
+
+Nazwa stylu jest jego jedynym identyfikatorem w obrębie dokumentu — tak samo
+jak w pakiecie biurowym — dlatego warunek UNIQUE stoi na parze (dokument,
+nazwa), a nie na osobnym kluczu. `styl_nadrzedny` trzyma nazwą, nie kluczem
+wiersza: dziedziczenie ma przetrwać przejęcie arkusza stylów z szablonu, gdzie
+klucze wierszy są inne, a nazwy te same.
+
+Nagłówki i stopki sekcji idą jednym zapisem JSON, bo są wykazem najwyżej
+trzech pozycji (strony zwykłe, pierwsza strona, strony parzyste) i nikt nie
+pyta o nie osobno — pyta o nie sekcja, w całości.
+
+Kolumna `wersja_postaci` rośnie z każdym zapisem. Służy dwóm rzeczom: oknu,
+żeby wiedziało, czy trzyma stan świeży, i dziennikowi czynności, żeby cofnięcie
+wiedziało, na jakim stanie postaci czynność stała.
+
+## budowa/server/internal/store/migracja_049_badania.sql
+
+Źródło badania nie jest odciskiem odwiedzonej strony przeglądarki: tamten
+cykl życia zaczyna się od nawigacji i kończy z kartą, a źródło badania
+zaczyna się od decyzji operatora, że dane źródło wchodzi do badania, i niesie
+własną, ręczną ocenę wiarygodności, której odcisk strony nie ma i mieć nie
+może — to inna prawda o innym momencie. Stąd tabela źródeł badania jest
+osobna, bez więzu do tabeli źródeł przeglądarki.
+
+Identyfikator pliku biblioteki jest tekstem bez więzu obcego. Plik biblioteki
+żyje w osobnym module, budowanym równolegle — więz obcy do niego wiązałby
+kolejność migracji, której ta migracja nie kontroluje, i wymagałby, żeby
+wiersz pliku biblioteki istniał już w chwili katalogowania źródła. Kontrakt
+dopuszcza źródło bez pliku repozytorium — źródło może być samym adresem albo
+notatką — więc kolumna tekstowa dopuszczająca wartość pustą bez sztywnego
+więzu jest właściwym wyborem, nie ustępstwem.
+
+Treść ustalenia i sekcji raportu bywa krótką notatką albo długim akapitem
+przeniesionym z dokumentu — para kolumn obsługuje oba przypadki bez osobnej
+ścieżki dla długiej treści. Inne moduły trwałości używają samego odwołania
+do treści, bo tam treść zawsze jest plikiem; tu treść bywa krótkim zdaniem
+wpisanym wprost przez operatora, więc krótka ścieżka musi zostać dostępna.
+
+Eksport raportu jest bytem trwałym, nie czynnością bez śladu: identyfikator
+pliku biblioteki, ścieżka i rozmiar w bajtach są trzema faktami o wyniku,
+które muszą przeżyć samo wywołanie komendy, inaczej operator traci
+możliwość odpowiedzieć na pytanie, czy i dokąd dany raport już
+wyeksportował, bez ponownego eksportu. Panel raportu pokazuje historię
+eksportów obok wersji raportu, więc ślad ma własną tabelę, osobną od tabeli
+raportów — dwa eksporty tego samego raportu do różnych formatów to dwa
+wiersze, nie nadpisanie jednego.
+
+Przestrzeń badania jest bytem własnym bez okna, tak jak definicja
+automatyzacji: żądanie ustawienia przestrzeni nie niesie identyfikatora
+okna ani identyfikatora rozbudowywanego bytu, bo zakres i etapy badania są
+jedną, bieżącą definicją całego modułu, nie stanem karty — tak jak zapis
+definicji automatyzacji nadpisuje jej pola, nie mnoży wierszy.
+
+Powiązanie ustalenia ze źródłem i powiązanie sekcji z ustaleniem mają własne
+tabele złącznikowe, po wzorze innych relacji wiele do wielu w tej samej
+warstwie trwałości.

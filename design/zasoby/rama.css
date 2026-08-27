@@ -81,7 +81,11 @@
   cursor: pointer;
   transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
 }
-.dn-belka-btn svg { width: 12px; height: 12px; }
+/* Glif przycisku okna w wielkości przyjętej dla przycisków podpisu Windows —
+   10 px rysunku przy grubości kreski jak w Segoe Fluent. Skala 24→16 daje
+   kreskę 1,17 px, wyrazistą tak jak systemowe minimalizuj/maksymalizuj/zamknij;
+   przy 12 px kreska schodziła do 0,88 px i znak czytał się cienko i drobno. */
+.dn-belka-btn svg { width: 16px; height: 16px; }
 .dn-belka-btn:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
 .dn-belka-btn:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);

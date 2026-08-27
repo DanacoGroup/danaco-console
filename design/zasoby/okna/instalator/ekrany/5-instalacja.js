@@ -1,12 +1,10 @@
-/* ============================================================================
-   EKRAN 5 — INSTALACJA
-   ----------------------------------------------------------------------------
+/* Ekran piąty kreatora instalacji pokazuje przebieg kopiowania plików programu wraz z miarą postępu całości oraz bieżącego etapu.
+
    Krok bez wyboru: jedyną czynnością operatora jest przerwanie, a na krok 6
    instalator przechodzi sam. Miara nad torem jest miarą CAŁOŚCI i tak jest
    podpisana; numer etapu i licznik etapowy stoją razem w pasku szczegółów.
 
-   Trzy odsłony — przebieg, wycofywanie, błąd — niesie `data-odslona`.
-   ============================================================================ */
+   Trzy odsłony — przebieg, wycofywanie, błąd — niesie `data-odslona`. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

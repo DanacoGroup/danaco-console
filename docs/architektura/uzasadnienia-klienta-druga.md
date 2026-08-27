@@ -5214,3 +5214,11 @@ Odmowę zdjęcia metody orzeka rdzeń; okno jej nie uprzedza. Drogi odzyskania h
 nie ma — rdzeń poczty nie wysyła. Zdarzenie zmiany bramki niesie powód zmiany i komplet metod po niej;
 pole metod jest w kontrakcie opcjonalne, więc gdy go brak, słuchacz dostaje sam powód, bo podstawianie
 w to miejsce wykazu poprzedniego byłoby zgadywaniem za rdzeń.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-paneli.ts
+Panele różnią się tylko identyfikatorem, który wchodzi do żądania; gdyby każda instancja
+zakładała własne źródło, subskrypcja zmiany tłumaczenia powstałaby wielokrotnie i tyle samo razy
+przyszłaby ta sama zmiana. Odmowa jednego panelu zostaje w tym panelu: źródło niczego nie ucisza
+i nie przerywa pozostałym instancjom pracy.
+Rdzeń przycina wskazanie kanału i pustego traktuje jak brak, ale wysyłanie pustej wartości
+nazwałoby wskazaniem coś, czego operator nie wskazał.

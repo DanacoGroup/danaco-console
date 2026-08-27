@@ -763,3 +763,19 @@ a zbiór pusty daje jedną pozycję obejmującą cały zbiór.
 Formę prezentacji rozstrzyga widok wybrany w oknie i zbudowany w module widoków
 wykazu. Wykaz nie zna żadnej z pięciu form: składa katalogi, oddaje zbiór
 widoczny i osadza to, co widok zbudował.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/plan-etapow.ts
+
+Etap planu jest kolejką, a nie osobnym bytem klienta: drugiego rejestru etapów po stronie
+okna nie ma, więc wykaz odświeża wyłącznie zdarzenie `queue.changed` przychodzące z rdzenia.
+
+Kontrolka zależności etapów pozostaje widoczna i nieczynna. Komenda
+`orchestration.dependency.set` wiąże kroki układów automatyk polami `fromStepId` oraz
+`toStepId`, a etap tego planu jest kolejką, nie krokiem automatyki. Powód nieczynności bierze
+się z wykazu komend oddanego przez rdzeń, nie ze stałej wpisanej w kodzie okna.
+
+Potwierdzenie założenia etapu składa się z pól odpowiedzi rdzenia, nie z pól żądania:
+przycięta nazwa albo nieprzyjęte okna wykonawców mają być dla Operatora widoczne.
+
+Wiersz etapu bieżącego niesie plakietkę zamiast wygaszonego przycisku, a kontrolka wyboru
+pojawia się wyłącznie w wierszach, w których jest co wybrać.

@@ -421,3 +421,121 @@ migawka części repozytorium nie byłaby migawką. Zasób bez odczytanej treśc
 nie wywraca wywozu paczki: wchodzi do indeksu jako pozycja bez bajtów, żeby
 paczka mówiła prawdę o stanie repozytorium, zamiast pomijać milczeniem to,
 czego nie udało się odczytać.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_korekta_silniki.go
+
+Trzy silniki zewnętrzne korekty uzupełniają reguły wbudowane komendy, które
+są mechaniczne i przez to sprawdzalne: to samo wywołanie na tej samej treści
+daje te same ustalenia o tych samych identyfikatorach, więc zastosowanie
+poprawki ma co adresować. Wywołanie modelu tej własności nie ma i dlatego
+w tym miejscu nie wchodzi. LanguageTool prowadzi całość — gramatykę,
+ortografię, interpunkcję, typografię i styl, każdą regułą nazwaną i z
+propozycją poprawki — i jest drogą pierwszą, bo jako jedyny widzi zdanie,
+nie samo słowo. Hunspell prowadzi samą ortografię i wchodzi wyłącznie wtedy,
+gdy LanguageToola nie ma: uruchomione razem podwoiłyby każdą literówkę,
+ponieważ ortografię LanguageToola liczy ta sama rodzina słowników
+morfologicznych. Jest to ten sam układ pierwszeństwa, co program `piper`
+przed `espeak-ng` przy syntezie mowy tego modułu. Vale prowadzi styl prozy —
+powtórzenia i terminy — obok LanguageToola, nie zamiast niego: mierzy tekst
+jako całość, a nie zdanie, i nie ma z tamtym wspólnych reguł.
+
+Wybór padł na hunspella, nie na `enchant-2`: `enchant-2` jest pośrednikiem,
+nie słownikiem — na maszynie budowy wypisuje trzech dostawców i dla polskiej
+treści oddaje wynik znak w znak taki sam jak hunspell wołany wprost, bo woła
+właśnie jego. Pośrednik dokłada warstwę, która nie mówi, który dostawca
+odpowiedział, oraz zestaw modułów wtyczkowych do spakowania obok programu.
+Hunspell jest jednym plikiem wykonywalnym z plikami słownika obok, czyli
+układem, który pakowanie produktu niesie wprost, a jego słowniki są tymi
+samymi plikami, które ma już LibreOffice stojący w wykazie zależności.
+
+LanguageTool umie chodzić jako usługa długożyjąca, ale rdzeń tej drogi nie
+ma: jedyna brama do procesu prowadzi uruchomienie od startu do końca,
+z obowiązkową granicą czasu i ubiciem całego drzewa procesów, czyli robi
+dokładnie to, czego usłudze długożyjącej robić nie wolno. Wiersz poleceń
+działa dziś i idzie tą samą bramą, co każdy inny program rdzenia.
+
+Ustalenie zewnętrznego silnika niesie w polu propozycji całą treść panelu
+po poprawce, tak samo jak przy regułach wbudowanych, ponieważ zastosowanie
+poprawki wstawia ją w miejsce całej treści, nie w miejsce samego słowa.
+
+Silnik nieobecny na maszynie nie jest odmową komendy: jego brak jest stanem
+maszyny, o którym sonda startowa powiedziała przy uruchomieniu rdzenia,
+a komenda oddaje to, co da się zmierzyć pozostałymi silnikami i regułami
+wbudowanymi. Silnik obecny, który zawiódł w trakcie czynności, jest czymś
+innym i wraca odmową, bo cisza w jego miejscu byłaby brakiem pomiaru
+podanym jako brak zastrzeżeń. Oba silniki pisowni pracują tylko wtedy, gdy
+język panelu da się sprowadzić do oznaczenia rozpoznawanego przez słownik —
+Vale pracuje niezależnie od tego rozstrzygnięcia, bo mierzy powtórzenia
+i terminy, które widać bez słownika.
+
+Położenie zgłoszenia, którego nie da się potwierdzić w treści panelu, jest
+brakiem pomiaru, nie ustaleniem: wstawienie poprawki pod zgadniętym numerem
+znaku popsułoby panel w miejscu wybranym przypadkiem.
+
+Przekład kategorii reguły LanguageToola na rodzaj kontroli kontraktu idzie
+po kategorii, polu wyjścia programu, a nie po treści komunikatu, który jest
+zdaniem w języku naturalnym i zmieni się przy pierwszym poprawionym
+tłumaczeniu reguł programu. Kategoria nierozpoznana wraca jako rodzaj
+gramatyczny — najszerszy z rodzajów kontraktu — zamiast być pominięciem:
+ustalenie i tak dochodzi do odbiorcy, bo zgubione byłoby stratą, a źle
+nazwane jest wciąż prawdziwe.
+
+LanguageTool wagi ustalenia nie podaje, a kontrakt jej wymaga, więc rdzeń
+rozstrzyga sam jedną zasadą: błędem jest to, co jest faktem o słowie — słowa
+nie ma w słowniku — a ostrzeżeniem to, co jest orzeczeniem reguły o zdaniu.
+Ta sama zasada dzieli reguły wbudowane komendy, gdzie odstęp przed
+przecinkiem jest błędem, a cudzysłów prosty jedynie wskazówką.
+
+Rozpoznanie języka panelu jest trzystopniowe. Napis o kształcie oznaczenia
+języka idzie do programu bez zmiany, ponieważ rdzeń nie ma i nie powinien
+mieć własnej tabeli języków LanguageToola: program zna ich kilkadziesiąt,
+wykaz zmienia się z wydaniami, a oznaczenie nieznane program odrzuca sam,
+wymieniając wszystkie, które zna — rdzeń sprawdza więc kształt napisu, nie
+przynależność do wykazu. Nazwa własna języka sprowadza się do oznaczenia
+podstawowego, bez odmiany krajowej, bo na przykład „angielski" nie mówi, czy
+chodzi o pisownię brytyjską czy amerykańską, a te różnią się tysiącami słów —
+dopisanie odmiany byłoby rozstrzygnięciem podjętym za użytkownika zamiast
+przez niego. Napis, który nie jest ani oznaczeniem, ani znaną nazwą, nie
+idzie do programu wcale: wysłany na chybił trafił dałby korektę treści
+regułami niewłaściwego języka, a wynik wyglądałby jak korekta, będąc
+zmyśleniem.
+
+Kod wyjścia wywołania `hunspell -D` nie rozstrzyga niczego i nie jest
+czytany: ten tryb diagnostyczny kończy się kodem błędu zawsze, także wtedy,
+gdy wypisał komplet słowników. Odpowiedzią na pytanie, co program ma, jest
+sam wykaz, nie kod wyjścia; wykaz pusty jest jedynym stanem, który znaczy,
+że nie ma czym mierzyć. Dobór słownika hunspella rozstrzyga pytaniem
+o rzeczywisty stan maszyny, nie tabelą wpisaną w kod: `hunspell -D` wypisuje
+słowniki, które na tej maszynie stoją, i to jest jedyna prawda o tym, co
+program otworzy — tabela języków w rdzeniu byłaby drugą, konkurencyjną
+prawdą. Oznaczenie bez kraju dopasowuje się do słownika po samym języku
+wyłącznie wtedy, gdy kandydat jest dokładnie jeden: dwóch kandydatów rdzeń
+nie ma prawa rozstrzygnąć sam, bo `en_US` i `en_GB` różnią się pisownią
+tysięcy słów.
+
+Podmiana proponowana przez hunspella wchodzi wyłącznie przy jednym
+wystąpieniu słowa w treści panelu: hunspell podaje przesunięcie względem
+wiersza, nie całej treści, więc przy drugim wystąpieniu rdzeń nie wie,
+o które chodzi, i wtedy ustalenie idzie bez propozycji.
+
+Konfiguracja Vale wyłącza kontrolę pisowni tego programu rozstrzygnięciem,
+nie przeoczeniem: jej słownik jest wyłącznie angielski i na treści w innym
+języku zgłaszałby każde słowo jako błąd, podczas gdy ortografię w tej
+komendzie prowadzą LanguageTool i hunspell, oba ze słownikiem języka panelu.
+Wywołanie Vale idzie z opcją, która zdejmuje z programu kod wyjścia
+niezerowy przy znalezionych zastrzeżeniach — bez niej każdy udany pomiar
+wracałby przez arsenał serwerowy jako niepowodzenie programu, czyli
+znaleziona usterka tekstu wyglądałaby jak usterka rdzenia. Kolejność
+wyjścia programu Vale jest kolejnością mapy plików w pamięci, więc porządek
+ustaleń nie byłby powtarzalny między wywołaniami bez sortowania jawnego.
+
+Katalog roboczy wywołania programu korekty jest podany wprost, nie
+zostawiony samej bramie wywołania procesu: Vale szuka swojej konfiguracji
+w katalogu, z którego ruszył, więc uruchomienie gdzie indziej kończyłoby
+się błędem braku konfiguracji, choć plik konfiguracji leży przygotowany.
+
+Wycięty fragment treści potwierdza, że wskazanie programu zewnętrznego
+mieści się w granicach treści panelu — potwierdzenie jest tu warunkiem, nie
+ostrożnością, bo numer znaku podany przez program zewnętrzny liczy się
+w jego własnej jednostce, a wstawienie poprawki pod numerem niesprawdzonym
+popsułoby treść panelu w miejscu wybranym przypadkiem.

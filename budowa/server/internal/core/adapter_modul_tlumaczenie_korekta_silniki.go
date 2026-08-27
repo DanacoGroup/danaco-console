@@ -1,49 +1,6 @@
-// Odpowiedzialność pliku: silniki zewnętrzne korekty językowej modułu Translate
-// — trzy programy, po które sięga `translate.proofread.run`, wraz z przekładem
-// ich wyjścia na ustalenia kontraktu. Samą komendę prowadzi
-// `adapter_modul_tlumaczenie_korekta.go`; ten plik odpowiada wyłącznie na
-// pytanie „co jeszcze widać w tej treści i czym to zmierzono".
-//
-// ── Dlaczego programy, a nie model ──────────────────────────────────────────
-// Reguły wbudowane komendy są mechaniczne i przez to sprawdzalne: to samo
-// wywołanie na tej samej treści daje te same ustalenia o tych samych
-// identyfikatorach, więc `proofread.apply` ma co zastosować. Trzy programy
-// poniżej mają dokładnie tę własność — są słownikami i regułami, nie zgadywaniem
-// — i dlatego wchodzą tu, gdzie wywołanie modelu wejść nie może.
-//
-// ── Podział pracy między trzema ─────────────────────────────────────────────
-//   - LANGUAGETOOL prowadzi całość: gramatykę, ortografię, interpunkcję,
-//     typografię i styl, każdą regułą nazwaną i z propozycją poprawki. Jest
-//     drogą pierwszą, bo jako jedyny widzi zdanie, a nie samo słowo.
-//   - HUNSPELL prowadzi samą ortografię i wchodzi WYŁĄCZNIE wtedy, gdy
-//     LanguageToola nie ma. Uruchomione razem podwoiłyby każdą literówkę:
-//     ortografię LanguageToola liczy ta sama rodzina słowników morfologicznych.
-//     To jest ten sam układ pierwszeństwa, co `piper` przed `espeak-ng` przy
-//     syntezie mowy i Ruff przed interpreterem Pythona w module Terminal.
-//   - VALE prowadzi styl prozy: powtórzenia i terminy. Wchodzi obok
-//     LanguageToola, nie zamiast — mierzy tekst jako całość, a nie zdanie,
-//     i nie ma z tamtym wspólnych reguł.
-//
-// ── Wybór hunspella, nie enchanta ───────────────────────────────────────────
-// `enchant-2` jest pośrednikiem, nie słownikiem: na maszynie budowy wypisuje
-// trzech dostawców (hunspell, aspell, hspell) i dla polskiej treści oddaje
-// wynik znak w znak taki sam jak hunspell wołany wprost — bo woła właśnie jego.
-// Pośrednik dokłada dwie rzeczy i obie są kosztem: warstwę, która nie mówi,
-// który dostawca odpowiedział, oraz zestaw modułów wtyczkowych do spakowania
-// obok programu. Hunspell jest jednym plikiem wykonywalnym z plikami słownika
-// obok, czyli układem, który pakowanie produktu (`pomocniki/<program>`) niesie
-// wprost, a jego słowniki są tymi samymi plikami, które ma już LibreOffice
-// stojący w wykazie zależności.
-//
-// ── Dlaczego wiersz poleceń, a nie serwer LanguageToola ─────────────────────
-// LanguageTool umie chodzić jako usługa i wtedy nie płaci startem maszyny
-// wirtualnej przy każdym wywołaniu. Rdzeń tej drogi dziś nie ma: jedyna brama
-// do procesu (`zewnetrzne.Wolaj`) prowadzi uruchomienie OD startu DO końca,
-// z obowiązkową granicą czasu i ubiciem całego drzewa procesów — czyli robi
-// dokładnie to, czego usłudze długożyjącej robić nie wolno. Do tego usługa
-// potrzebowałaby portu, a maszyna wdrożenia ma porty zajęte przez rzeczy
-// niezwiązane z produktem. Wiersz poleceń działa dziś i idzie tą samą bramą,
-// co każdy inny program rdzenia.
+// Pakiet obsługuje silniki zewnętrzne korekty językowej modułu Translate:
+// LanguageTool, hunspell i Vale, po które sięga `translate.proofread.run`,
+// wraz z przekładem ich wyjścia na ustalenia kontraktu tej komendy.
 package core
 
 import (
@@ -64,9 +21,7 @@ import (
 
 const (
 	// granicaKorektyJezykowej obejmuje start maszyny wirtualnej Javy wraz
-	// z wczytaniem reguł i słownika morfologicznego języka. Na maszynie budowy
-	// całość mieści się w kilku sekundach; granica zostawia zapas na maszynę
-	// wolniejszą i pierwszy przebieg bez rozgrzanej pamięci podręcznej plików.
+	// z wczytaniem reguł i słownika morfologicznego LanguageToola.
 	granicaKorektyJezykowej = 3 * time.Minute
 	// granicaKorektyPisowni jest krótsza, bo hunspell i vale są programami
 	// natywnymi bez własnego środowiska uruchomieniowego.
@@ -82,11 +37,8 @@ const (
 	// które z trzech uruchamiamy.
 	archiwumLanguageToola = "languagetool-commandline.jar"
 
-	// nazwaKonfiguracjiVale jest nazwą pliku, bez którego vale nie rusza:
-	// program nie ma wbudowanego zestawu reguł i przy braku konfiguracji kończy
-	// się błędem `E100`. Rdzeń zakłada ją sam w katalogu roboczym czynności —
-	// treść panelu nie leży w żadnym repozytorium, więc konfiguracji nie ma skąd
-	// wziąć.
+	// nazwaKonfiguracjiVale jest nazwą pliku, bez którego program vale nie
+	// rusza; rdzeń zakłada go sam w katalogu roboczym czynności.
 	nazwaKonfiguracjiVale = ".vale.ini"
 
 	// nazwaTresciKorekty jest nazwą pliku, którym treść panelu jedzie do
@@ -114,15 +66,14 @@ var narzedzieHunspella = zewnetrzne.Narzedzie{
 	Pakiet:  "hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)",
 }
 
-// narzedzieVale opisuje analizator prozy.
+// narzedzieVale opisuje analizator prozy wołany jednym plikiem wykonywalnym,
+// bez zależności zewnętrznych do zainstalowania osobno.
 var narzedzieVale = zewnetrzne.Narzedzie{
 	Nazwa: "vale", Program: "vale", Pakiet: "vale (jeden plik wykonywalny z wydania projektu)",
 }
 
-// ustalenieSilnika niesie jedno ustalenie zewnętrznego silnika w postaci, którą
-// komenda odkłada w bazie. Propozycja jest CAŁĄ treścią panelu po poprawce —
-// tak samo jak przy regułach wbudowanych, bo `proofread.apply` wstawia ją
-// w miejsce treści, a nie w miejsce słowa.
+// ustalenieSilnika niesie jedno ustalenie zewnętrznego silnika w postaci,
+// którą komenda odkłada w bazie danych czynności korekty.
 type ustalenieSilnika struct {
 	rodzaj     shared.ProofreadCheckKind
 	waga       shared.ProofreadSeverity
@@ -131,26 +82,16 @@ type ustalenieSilnika struct {
 	propozycja string
 }
 
-// ustaleniaSilnikow zbiera ustalenia wszystkich silników, które na tej maszynie
-// stoją.
-//
-// Silnik nieobecny NIE JEST tu odmową: jego brak jest stanem maszyny, o którym
-// sonda startowa powiedziała Operatorowi przy uruchomieniu rdzenia, a komenda
-// ma oddać to, co da się zmierzyć. Silnik obecny, który zawiódł, jest czymś
-// innym — to zdarzenie w trakcie czynności i wraca odmową, bo cisza w jego
-// miejscu byłaby brakiem pomiaru podanym jako brak zastrzeżeń.
+// ustaleniaSilnikow zbiera ustalenia wszystkich silników zewnętrznych, które
+// na tej maszynie stoją; silnik nieobecny nie jest odmową czynności.
 func (a *adapterTlumaczenia) ustaleniaSilnikow(ctx context.Context,
 	jezyk, tresc string) ([]ustalenieSilnika, error) {
 
 	if a.uruchamiacz == nil {
 		// Rdzeń złożony bez warstwy kanału nie ma czym wystartować programu.
-		// Reguły wbudowane komendy pracują dalej — to jest mniej niż pełnia,
-		// ale nie brama postawiona przed resztą.
 		return nil, nil
 	}
-	// Słownik jest słownikiem JEDNEGO języka, więc oba silniki pisowni pracują
-	// tylko wtedy, gdy język panelu da się nazwać oznaczeniem. Vale pracuje
-	// niezależnie: mierzy powtórzenia i terminy, a te widać bez słownika.
+	// Oba silniki pisowni pracują tylko wtedy, gdy język panelu ma oznaczenie.
 	oznaczenie := jezykKorekty(jezyk)
 	stoiLanguageTool := oznaczenie != "" &&
 		zewnetrzne.Stoi(narzedzieLanguageToola) && archiwumKorekty() != ""
@@ -219,7 +160,8 @@ type odpowiedzLanguageToola struct {
 	} `json:"matches"`
 }
 
-// korektaLanguageToolem przeprowadza jeden przebieg i przekłada jego wynik.
+// korektaLanguageToolem przeprowadza jeden przebieg programu LanguageTool
+// i przekłada jego wynik JSON na ustalenia silnika.
 func (a *adapterTlumaczenia) korektaLanguageToolem(ctx context.Context,
 	katalog, plikTresci, jezyk, tresc string) ([]ustalenieSilnika, error) {
 
@@ -242,9 +184,7 @@ func (a *adapterTlumaczenia) korektaLanguageToolem(ctx context.Context,
 	for _, trafienie := range odpowiedz.Matches {
 		fragment, jest := fragmentTresci(znaki, trafienie.Offset, trafienie.Length)
 		if !jest {
-			// Położenie, którego nie da się potwierdzić w treści, jest brakiem
-			// pomiaru, nie ustaleniem: wstawienie poprawki pod zgadniętym
-			// numerem znaku popsułoby panel.
+			// Położenie, którego nie da się potwierdzić w treści, jest brakiem pomiaru.
 			continue
 		}
 		propozycja := ""
@@ -264,16 +204,8 @@ func (a *adapterTlumaczenia) korektaLanguageToolem(ctx context.Context,
 	return ustalenia, nil
 }
 
-// rodzajKorektyLanguageToola przekłada kategorię reguły na rodzaj kontroli
-// kontraktu.
-//
-// Przekład idzie po KATEGORII, a nie po treści komunikatu: kategoria jest
-// polem wyjścia programu, komunikat jest zdaniem po polsku, które zmieni się
-// przy pierwszym poprawionym tłumaczeniu reguł. Kategoria nierozpoznana wraca
-// jako gramatyka — to najszerszy z ośmiu rodzajów kontraktu i ten sam, którym
-// reguły wbudowane komendy znakują powtórzone słowo. Kategoria nierozpoznana
-// nie jest przy tym pominięciem: ustalenie i tak dochodzi do Operatora, bo
-// zgubione byłoby stratą, a źle nazwane jest wciąż prawdziwe.
+// rodzajKorektyLanguageToola przekłada kategorię reguły programu na rodzaj
+// kontroli kontraktu; kategoria nierozpoznana wraca jako rodzaj gramatyczny.
 func rodzajKorektyLanguageToola(kategoria string) shared.ProofreadCheckKind {
 	switch strings.ToUpper(strings.TrimSpace(kategoria)) {
 	case "TYPOS":
@@ -289,12 +221,8 @@ func rodzajKorektyLanguageToola(kategoria string) shared.ProofreadCheckKind {
 	}
 }
 
-// wagaKorektyLanguageToola nadaje ustaleniu wagę. LanguageTool wagi nie podaje,
-// a kontrakt jej wymaga, więc rdzeń rozstrzyga sam i robi to jedną zasadą:
-// błędem jest to, co jest faktem o słowie (słowa nie ma w słowniku),
-// ostrzeżeniem to, co jest orzeczeniem reguły o zdaniu. Ta sama zasada dzieli
-// reguły wbudowane komendy — odstęp przed przecinkiem jest tam błędem, a
-// cudzysłów prosty wskazówką.
+// wagaKorektyLanguageToola nadaje ustaleniu wagę, której program sam nie
+// podaje: błędem jest fakt o słowie, ostrzeżeniem — orzeczenie o zdaniu.
 func wagaKorektyLanguageToola(rodzajZgloszenia string) shared.ProofreadSeverity {
 	if strings.EqualFold(strings.TrimSpace(rodzajZgloszenia), "misspelling") {
 		return shared.ProofreadSeverityError
@@ -323,26 +251,7 @@ func archiwumKorekty() string {
 }
 
 // jezykKorekty sprowadza język panelu do oznaczenia, którym da się zawołać
-// słownik. Pustka znaczy „tego języka rdzeń nie umie nazwać" — nie „domyślny".
-//
-// Kontrakt trzyma język panelu jako napis dowolny („Jezyk docelowy"), więc
-// stoją w nim i oznaczenia (`pl`, `en-GB`), i nazwy własne („angielski").
-// Rozstrzygnięcie jest trzystopniowe i każdy stopień ma powód:
-//
-//  1. Napis o KSZTAŁCIE oznaczenia języka idzie do programu bez zmiany. Rdzeń
-//     nie ma i nie ma prawa mieć tabeli języków LanguageToola — program zna ich
-//     sześćdziesiąt kilka, wykaz zmienia się z wydaniami, a oznaczenie
-//     nieznane program odrzuca sam, wymieniając wszystkie, które zna. Sprawdzamy
-//     więc KSZTAŁT, a nie przynależność do wykazu.
-//  2. Nazwa własna języka sprowadza się do oznaczenia PODSTAWOWEGO, bez odmiany
-//     krajowej. „Angielski" nie mówi, czy chodzi o pisownię brytyjską, czy
-//     amerykańską, a te różnią się tysiącami słów — dopisanie odmiany byłoby
-//     rozstrzygnięciem za Operatora. Zestaw nazw jest ten sam, który rdzeń
-//     rozpoznaje przy wskazaniu języka rozpoznania pisma
-//     (`jezykRozpoznaniaDokumentu`).
-//  3. Napis, który nie jest ani oznaczeniem, ani znaną nazwą, nie idzie
-//     nigdzie. Wysłany na chybił trafił dałby korektę polskiego panelu regułami
-//     innego języka — wynik wyglądałby jak korekta i byłby zmyśleniem.
+// słownik. Pustka znaczy, że rdzeń tego języka nie umie nazwać, nie „domyślny".
 func jezykKorekty(jezyk string) string {
 	nazwa := strings.TrimSpace(jezyk)
 	if czyOznaczenieJezyka(nazwa) {
@@ -358,9 +267,8 @@ func jezykKorekty(jezyk string) string {
 }
 
 // czyOznaczenieJezyka orzeka o kształcie: dwie albo trzy litery, po nich
-// dowolna liczba członów po myślniku (`pl`, `pl-PL`, `de-DE-x-simple-language`).
-// To jest kształt oznaczeń, których używa LanguageTool i którymi opisuje się
-// język w BCP-47.
+// dowolna liczba członów po myślniku (`pl`, `pl-PL`, `de-DE-x-simple-language`),
+// czyli kształcie oznaczeń, którego oczekuje LanguageTool.
 func czyOznaczenieJezyka(napis string) bool {
 	if napis == "" {
 		return false
@@ -388,11 +296,8 @@ func czyOznaczenieJezyka(napis string) bool {
 
 // ── hunspell ────────────────────────────────────────────────────────────────
 
-// korektaHunspellem sprawdza ortografię treści panelu.
-//
-// Wyjście idzie w postaci ispellowej: wiersz `& słowo licz przesunięcie: a, b,
-// c` niesie słowo spoza słownika wraz z propozycjami, wiersz `#` to słowo
-// spoza słownika bez propozycji, a `*`, `+` i `-` znaczą słowo znane.
+// korektaHunspellem sprawdza ortografię treści panelu i przekłada wyjście
+// w postaci ispellowej programu na ustalenia silnika.
 func (a *adapterTlumaczenia) korektaHunspellem(ctx context.Context,
 	katalog, plikTresci, jezyk, tresc string) ([]ustalenieSilnika, error) {
 
@@ -415,11 +320,7 @@ func (a *adapterTlumaczenia) korektaHunspellem(ctx context.Context,
 		}
 		propozycja := ""
 		if len(propozycje) > 0 && strings.Count(tresc, slowo) == 1 {
-			// Podmiana wchodzi WYŁĄCZNIE przy jednym wystąpieniu słowa.
-			// Hunspell podaje przesunięcie względem wiersza, a nie treści, więc
-			// przy drugim wystąpieniu rdzeń nie wie, o które chodzi — i wtedy
-			// ustalenie idzie bez propozycji, bo kontrakt mówi wprost, że jej
-			// brak znaczy „korekta jej nie podała".
+			// Podmiana wchodzi wyłącznie przy jednym wystąpieniu słowa w treści.
 			propozycja = strings.Replace(tresc, slowo, propozycje[0], 1)
 		}
 		ustalenia = append(ustalenia, ustalenieSilnika{
@@ -433,7 +334,8 @@ func (a *adapterTlumaczenia) korektaHunspellem(ctx context.Context,
 	return ustalenia, nil
 }
 
-// niepoprawneSlowoHunspella czyta jeden wiersz wyjścia ispellowego.
+// niepoprawneSlowoHunspella czyta jeden wiersz wyjścia ispellowego programu
+// i oddaje słowo spoza słownika wraz z propozycjami, gdy takie niesie.
 func niepoprawneSlowoHunspella(wiersz string) (string, []string, bool) {
 	tresc := strings.TrimRight(wiersz, "\r")
 	switch {
@@ -464,14 +366,8 @@ func niepoprawneSlowoHunspella(wiersz string) (string, []string, bool) {
 	}
 }
 
-// slownikHunspella dobiera nazwę słownika do języka panelu.
-//
-// Rozstrzyga PYTANIEM O STAN, nie tabelą w kodzie: `hunspell -D` wypisuje
-// słowniki, które na tej maszynie stoją, i to jest jedyna prawda o tym, co
-// program otworzy. Tabela języków w rdzeniu byłaby drugą prawdą — a przy
-// oznaczeniu bez kraju (`pl` zamiast `pl_PL`) i tak nie miałaby czego wybrać.
-// Ta sama droga rozstrzyga brak skanera (`odmowaSkanuSane`): pytanie o wykaz,
-// a nie czytanie diagnostyki obcego programu.
+// slownikHunspella dobiera nazwę słownika do języka panelu pytaniem o stan
+// maszyny (`hunspell -D`), nie tabelą wpisaną w kod rdzenia.
 func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 	katalog, jezyk string) (string, error) {
 
@@ -481,9 +377,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 			"słownika ortograficznego")
 	}
 
-	// Pusty plik jako materiał: `-D` wypisuje wykaz i kończy pracę, ale bez
-	// wskazania pliku czekałby na wejście, którego port uruchamiacza nie
-	// wystawia.
+	// Plik pusty jest materiałem: bez wskazania pliku `-D` czekałby na wejście.
 	pusty := filepath.Join(katalog, "wykaz-slownikow.txt")
 	if err := os.WriteFile(pusty, nil, 0o600); err != nil {
 		return "", bladKorektyZewnetrznej("nie można założyć pliku pomocniczego: " + err.Error())
@@ -492,12 +386,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 	wynik, blad := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		narzedzieHunspella, []string{"-D", pusty}, katalog, granicaKorektyPisowni)
 
-	// Kod wyjścia tego wywołania NIE ROZSTRZYGA i nie jest tu czytany: `-D` jest
-	// trybem diagnostycznym, który kończy się kodem 1 zawsze — także wtedy, gdy
-	// wypisał komplet słowników. Odpowiedzią na pytanie „co ten program ma" jest
-	// sam wykaz, a nie kod wyjścia; wykaz pusty jest jedynym stanem, który
-	// znaczy „nie ma czym mierzyć". Diagnostyka pierwotna wchodzi wtedy do
-	// odmowy, żeby powód nie zginął.
+	// Kod wyjścia tego wywołania nie rozstrzyga niczego i nie jest tu czytany.
 	dostepne := slownikiZWykazu(wynik.Diagnostyka)
 	if len(dostepne) == 0 {
 		powod := "hunspell stoi na tej maszynie, ale nie wypisał ani jednego słownika; " +
@@ -512,10 +401,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 			return nazwa, nil
 		}
 	}
-	// Oznaczenie bez kraju dopasowujemy do słownika po samym języku — ale
-	// wyłącznie wtedy, gdy kandydat jest DOKŁADNIE JEDEN. Dwa kandydaty to
-	// wybór, którego rdzeń nie ma prawa dokonać za Operatora: `en_US` i `en_GB`
-	// różnią się pisownią tysięcy słów.
+	// Oznaczenie bez kraju dopasowuje się po samym języku, wyłącznie gdy kandydat jest jeden.
 	podstawa, _, _ := strings.Cut(oznaczenie, "_")
 	pasujace := []string{}
 	for _, nazwa := range dostepne {
@@ -547,9 +433,7 @@ func slownikiZWykazu(wykaz string) []string {
 		case strings.HasPrefix(tresc, "AVAILABLE DICTIONARIES"):
 			wSekcji = true
 		case strings.HasSuffix(tresc, ":"):
-			// Każdy następny nagłówek sekcji kończy wykaz — po nim idzie
-			// „LOADED DICTIONARY" wraz ze ścieżkami plików `.aff` i `.dic`,
-			// które nazwami słowników nie są.
+			// Każdy następny nagłówek sekcji kończy wykaz nazw słowników.
 			wSekcji = false
 		case wSekcji && tresc != "":
 			nazwy = append(nazwy, filepath.Base(tresc))
@@ -560,7 +444,8 @@ func slownikiZWykazu(wykaz string) []string {
 
 // ── vale ────────────────────────────────────────────────────────────────────
 
-// zgloszenieVale opisuje odczytywaną część wyjścia `--output=JSON`.
+// zgloszenieVale opisuje odczytywaną część wyjścia wywołania z opcją
+// `--output=JSON`: sprawdzenie, komunikat, dopasowanie i wiersz.
 type zgloszenieVale struct {
 	Check   string `json:"Check"`
 	Message string `json:"Message"`
@@ -569,17 +454,11 @@ type zgloszenieVale struct {
 }
 
 // konfiguracjaVale jest treścią pliku `.vale.ini` zakładanego na jedno
-// wywołanie.
-//
-// Zestaw reguł jest wbudowany w program (`Vale`) — powtórzenia i terminy — więc
-// czynność nie wymaga żadnego pakietu stylów z sieci. Kontrola pisowni tego
-// zestawu jest WYŁĄCZONA i to jest rozstrzygnięcie, nie przeoczenie:
-// `Vale.Spelling` ma słownik wyłącznie angielski i na polskim panelu zgłasza
-// każde polskie słowo jako błąd. Ortografię prowadzi w tej komendzie
-// LanguageTool albo hunspell — oba ze słownikiem języka panelu.
+// wywołanie, z kontrolą pisowni programu wyłączoną rozstrzygnięciem.
 const konfiguracjaVale = "MinAlertLevel = suggestion\n\n[*]\nBasedOnStyles = Vale\nVale.Spelling = NO\n"
 
-// korektaVale mierzy prozę panelu.
+// korektaVale mierzy prozę panelu programem Vale i przekłada jego wyjście
+// JSON na ustalenia silnika, posortowane dla powtarzalności identyfikatorów.
 func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 	katalog, tresc string) ([]ustalenieSilnika, error) {
 
@@ -588,10 +467,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 		return nil, bladKorektyZewnetrznej("nie można założyć konfiguracji analizatora prozy: " +
 			err.Error())
 	}
-	// `--no-exit` zdejmuje z programu kod wyjścia niezerowy przy znalezionych
-	// zastrzeżeniach. Bez niego każdy udany pomiar wracałby przez arsenał jako
-	// niepowodzenie programu — czyli znaleziona usterka tekstu wyglądałaby jak
-	// usterka rdzenia.
+	// `--no-exit` zdejmuje z programu kod wyjścia niezerowy przy zastrzeżeniach.
 	wyjscie, err := a.wolajKorekte(ctx, katalog, narzedzieVale, []string{
 		"--no-exit", "--output=JSON", nazwaTresciKorekty,
 	}, granicaKorektyPisowni)
@@ -611,8 +487,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 	for _, zgloszenia := range wedlugPliku {
 		for _, zgloszenie := range zgloszenia {
 			if strings.EqualFold(zgloszenie.Check, "vale.spelling") {
-				// Reguła wyłączona konfiguracją; gdyby wydanie programu
-				// przestało tę nastawę honorować, ustalenia i tak tu nie wejdą.
+				// Reguła wyłączona konfiguracją nie wejdzie do ustaleń mimo to.
 				continue
 			}
 			ustalenia = append(ustalenia, ustalenieSilnika{
@@ -623,10 +498,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 			})
 		}
 	}
-	// Kolejność wyjścia programu jest kolejnością mapy plików, więc porządek
-	// ustaleń nie byłby powtarzalny między wywołaniami. Ustalenia dostają
-	// identyfikatory w kolejności, w jakiej tu stoją, a `proofread.apply`
-	// adresuje je tymi identyfikatorami.
+	// Kolejność wyjścia programu jest kolejnością mapy plików, stąd sortowanie.
 	sort.SliceStable(ustalenia, func(i, j int) bool {
 		return ustalenia[i].szczegol < ustalenia[j].szczegol
 	})
@@ -636,13 +508,7 @@ func (a *adapterTlumaczenia) korektaVale(ctx context.Context,
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
 // wolajKorekte przeprowadza jedno uruchomienie programu korekty w katalogu
-// roboczym czynności.
-//
-// Zasięg platformy składa `zasiegProgramowTlumaczenia` — ta sama trójka okno–zasady–obszar,
-// którą jedzie synteza mowy tego modułu. Katalog roboczy jest tu podany WPROST,
-// nie zostawiony bramie: vale szuka swojej konfiguracji w katalogu, z którego
-// ruszył, więc uruchomienie gdzie indziej kończyłoby się błędem braku
-// konfiguracji, choć plik leży przygotowany.
+// roboczym czynności, podanym wprost zamiast zostawionym bramie wywołania.
 func (a *adapterTlumaczenia) wolajKorekte(ctx context.Context, katalog string,
 	narzedzie zewnetrzne.Narzedzie, argumenty []string, granica time.Duration) ([]byte, error) {
 
@@ -655,13 +521,8 @@ func (a *adapterTlumaczenia) wolajKorekte(ctx context.Context, katalog string,
 	return wynik.Wyjscie, nil
 }
 
-// fragmentTresci wycina fragment treści wskazany przez program i POTWIERDZA, że
-// wskazanie mieści się w treści.
-//
-// Potwierdzenie jest tu warunkiem, nie ostrożnością: numer znaku podany przez
-// obcy program liczy się w jego własnej jednostce, a wstawienie poprawki pod
-// numerem, którego rdzeń nie sprawdził, popsułoby treść panelu w miejscu
-// wybranym przypadkiem.
+// fragmentTresci wycina fragment treści wskazany przez program zewnętrzny
+// i potwierdza, że wskazanie rzeczywiście mieści się w granicach treści.
 func fragmentTresci(znaki []rune, przesuniecie, dlugosc int) (string, bool) {
 	if przesuniecie < 0 || dlugosc <= 0 || przesuniecie+dlugosc > len(znaki) {
 		return "", false

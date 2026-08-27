@@ -6767,3 +6767,6 @@ moduł docelowy istnieje: kod nieznanego modułu wraca powodzeniem wraz
 z nowo założonym oknem, a że okno nie ma komendy sprawdzającej istnienie
 modułu, nie orzeka o tym nic i podaje kod oraz numer okna oddane przez
 rdzeń.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-wiedzy.ts
+Odczyt wyszukiwania odnajduje fragmenty po znaczeniu i oddaje je wraz ze źródłem, żeby dało się je zacytować zamiast streszczać; budowa wskaźnika buduje wskaźnik, z którego to wyszukiwanie korzysta — rozdzielenie ich na dwa pliki dałoby dwa miejsca mówiące o jednym wskaźniku. Zakładka rozstrzyga wyłącznie o tym, co jest w panelu widoczne: pamięć semantyczna pokazuje szukanie, baza wiedzy budowę wskaźnika; wspólny jest zakres, bo wskaźnik jest jeden i szuka się w tym, co się zindeksowało. Wgrywania dokumentów tu nie ma i nie powinno być: pliki wchodzą do platformy przez moduł Library, a budowa wskaźnika obejmuje nim to, co w bibliotece już leży — drugie wejście dla plików znaczyłoby dwa repozytoria.

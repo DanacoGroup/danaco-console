@@ -5889,3 +5889,24 @@ zawsze.
 Każde żądanie w metodzie przyjmij idzie osobnym biegiem, więc komenda długotrwała nie zatrzymuje
 odczytu, a komenda przerywająca dociera w trakcie jej wykonania. Odpowiedź niesie identyfikator
 żądania, więc kolejność odpowiedzi nie ma znaczenia dla korelacji.
+
+## budowa/server/internal/repozytorium/pliki.go
+Bez sprowadzenia wskazania do katalogu roboczego, wejście w rodzaju odniesień
+do katalogu nadrzędnego w nazwie pliku byłoby drogą do dowolnego miejsca na
+dysku serwera, a okno modułu Developer stoi po to, żeby pracować w jednym
+repozytorium. Sprawdzenie idzie po ścieżce rozwiniętej z dowiązań, nie po
+samym napisie: dowiązanie symboliczne wskazujące poza katalog jest tym samym
+wyjściem, tylko zapisanym inaczej.
+
+Operator, który podaje ścieżkę zagnieżdżoną w Zaloz, prosi o plik pod tą
+ścieżką, a nie o komunikat, że katalog pośredni nie istnieje; plik istniejący
+nie jest nadpisywany, bo zakładanie nie jest zapisem i nie ma prawa skasować
+cudzej treści.
+
+Węzeł, którego nie było, nie zatrzymuje czynności Usun: Operator zaznaczający
+kilkanaście plików nie ma dostawać odmowy przez jeden, który zniknął
+wcześniej, ale nie ma go też w wykazie, bo tego pliku ta czynność nie
+usunęła.
+
+Czynności plikowe działają dzięki KorzenRoboczy także tam, gdzie Operator
+jeszcze nie założył repozytorium.

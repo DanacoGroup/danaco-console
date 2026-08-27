@@ -2298,3 +2298,19 @@ Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy warstwy danych
 **NastawaPracy** — Wiersz nastaw zakłada się przy odczycie, nie przy zapisie, bo odczyt nastaw autozapisu ma oddać nastawy obowiązujące także wtedy, gdy Operator nigdy ich nie ruszał — a wtedy obowiązują wartości domyślne kolumn, i to jest odpowiedź, nie brak danych.
 
 **ZapiszSkutekAutozapisu** — Skutek zapisu odkłada się osobnym poleceniem, bo pisze go inna czynność niż nastawy: nastawy stawia Operator, skutek zapisuje sam mechanizm autozapisu. Jedno wspólne polecenie kazałoby autozapisowi przepisywać nastawy, których nie zmieniał.
+
+### budowa/server/internal/dane/studio_znakowanie_wykonawcy.go
+
+Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy części drugiej warstwy danych kontroli pracy modułu Studio.
+
+**Plik, wersje w szeregach** — `studio_wersje.go` zna wersję sprzed dobudowy: treść, etykietę, kamień milowy. Kolumny `szereg`, `postac_json` i tożsamości wykonawcy dołożyła migracja 367 i pyta o nie wyłącznie ten odcinek — wykaz historii z przełącznikiem „pokaż także zapisy samoczynne" oraz porównanie postaci dwóch wersji. Dopisanie ich do tamtego pliku byłoby wejściem w plik cudzego odcinka; osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia wersji, bo tabela jest jedna i przywraca się ją tą samą drogą.
+
+**Plik, zajęcie a blokada** — Blokada Operatora jest trwała i skierowana przeciw wykonawcom: zdejmuje ją wyłącznie Operator. Zajęcie fragmentu jest chwilowe, wygasa samo i chroni przed drugim wykonawcą. Dwa różne byty, dwie tabele — zlanie ich dałoby blokadę, która wygasa (czyli żadną), albo zajęcie, którego nikt nie zdejmie po agencie ubitym w pół pracy.
+
+**ZajecieFragmentuStudia.Wygasle** — Liczone zapytaniem SQL, nie w rdzeniu: zegar rdzenia i zegar bazy rozjadą się przy pierwszej różnicy strefy, a wtedy zajęcie trzymałoby fragment dłużej albo krócej, niż mówi jego własna kolumna `wygasa`.
+
+**wersjaZalozycielskaStudia** — Szereg autozapisu odpada z rachunku z zamysłem: gdyby pierwszy zapis samoczynny wypadł przed pierwszym zapisem Operatora, powrót do stanu pierwotnego wracałby do stanu przypadkowego, a nie do tego, co Operator założył.
+
+**ZapiszZajecieFragmentu** — Odstęp zerowy albo ujemny znaczy zajęcie bez wygasania — i takiego zajęcia rdzeń nie zakłada, bo agent ubity w pół pracy trzymałby fragment na zawsze; granicę podaje wołający.
+
+**ZapiszWersjeSzeregu** — Wskaźnika wersji bieżącej nie przestawia, tak samo jak `ZapiszWersje` z `studio_wersje.go`; decyzja, kiedy nowa wersja staje się bieżącą, należy do wołającego.

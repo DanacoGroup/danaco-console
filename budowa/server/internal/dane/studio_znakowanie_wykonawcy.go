@@ -1,24 +1,7 @@
-// Odpowiedzialność pliku: warstwa danych odcinka kontroli pracy modułu Studio,
-// część druga — znakowanie fragmentów wraz z rodzajami znaczników własnych
-// (migracja 365), zajęcia fragmentów przez wykonawców i spięcia o ten sam
-// fragment (370), oraz wersje w rozbiciu na szereg Operatora i szereg
-// autozapisu (kolumny dołożone migracją 367).
-//
-// ── Dlaczego wersje w szeregach czyta ten plik, a nie `studio_wersje.go` ─────
-// `studio_wersje.go` zna wersję sprzed dobudowy: treść, etykietę, kamień
-// milowy. Kolumny `szereg`, `postac_json` i tożsamości wykonawcy dołożyła
-// migracja 367 i pyta o nie WYŁĄCZNIE ten odcinek — wykaz historii z
-// przełącznikiem „pokaż także zapisy samoczynne" oraz porównanie POSTACI dwóch
-// wersji. Dopisanie ich do tamtego pliku byłoby wejściem w plik cudzego
-// odcinka; osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia
-// wersji, bo tabela jest jedna i przywraca się ją tą samą drogą.
-//
-// ── Dlaczego zajęcie fragmentu NIE jest blokadą ─────────────────────────────
-// Blokada Operatora jest trwała i skierowana przeciw wykonawcom: zdejmuje ją
-// wyłącznie Operator. Zajęcie fragmentu jest chwilowe, WYGASA samo i chroni
-// przed drugim wykonawcą. Dwa różne byty, dwie tabele — zlanie ich dałoby
-// blokadę, która wygasa (czyli żadną), albo zajęcie, którego nikt nie zdejmie
-// po agencie ubitym w pół pracy.
+// Odpowiedzialność pliku: warstwa danych kontroli pracy Studio, część druga —
+// znakowanie fragmentów i rodzaje znaczników (migracja 365), zajęcia
+// fragmentów i spięcia wykonawców (370) oraz wersje w szeregu Operatora
+// i autozapisu (367).
 package dane
 
 import (
@@ -52,7 +35,9 @@ type ZnakowanieStudia struct {
 	Utworzono            string
 }
 
-// RodzajZnacznikaStudia to wiersz tabeli `rodzaj_znacznika_studio`.
+// RodzajZnacznikaStudia to wiersz tabeli `rodzaj_znacznika_studio`, niosący
+// nazwę, nazwę widoczną, barwę, znamię fabryczności i liczbę użyć wśród
+// znakowań.
 type RodzajZnacznikaStudia struct {
 	Nazwa         string
 	NazwaWidoczna string
@@ -61,7 +46,8 @@ type RodzajZnacznikaStudia struct {
 	IleUzyc       int64
 }
 
-// ZajecieFragmentuStudia to wiersz tabeli `zajecie_fragmentu_studio`.
+// ZajecieFragmentuStudia to wiersz tabeli `zajecie_fragmentu_studio`, niosący
+// zakres zajętego fragmentu, tożsamość wykonawcy, stan i chwilę wygaśnięcia.
 type ZajecieFragmentuStudia struct {
 	ID              int64
 	Kod             string
@@ -76,10 +62,8 @@ type ZajecieFragmentuStudia struct {
 	ZadanieKod      *string
 	Zajeto          string
 	Wygasa          *string
-	// Wygasle mówi, czy zajęcie przeterminowało się względem zegara BAZY.
-	// Liczone w SQL, nie w rdzeniu: zegar rdzenia i zegar bazy rozjadą się przy
-	// pierwszej różnicy strefy, a wtedy zajęcie trzymałoby fragment dłużej albo
-	// krócej, niż mówi jego własna kolumna `wygasa`.
+	// Wygasle mówi, czy zajęcie przeterminowało się liczone zegarem bazy,
+	// nie zegarem rdzenia.
 	Wygasle bool
 }
 
@@ -198,7 +182,8 @@ const (
 	zrodloZajeciaStudia = ` FROM zajecie_fragmentu_studio j
 	                        JOIN dokument_studio d ON d.id = j.dokument_id`
 
-	// Czas wygaśnięcia liczy baza: `?` niesie modyfikator w postaci „+90 seconds".
+	// Czas wygaśnięcia liczy baza, nie rdzeń: parametr niesie modyfikator SQLite
+	// w postaci „+90 seconds", dodawany do bieżącej chwili bazy.
 	zajecieStudiaZapisz = `INSERT INTO zajecie_fragmentu_studio
 	                       (identyfikator_zewnetrzny, dokument_id, wykonawca_rodzaj,
 	                        wykonawca_agent_kod, wykonawca_agent_nazwa,
@@ -262,10 +247,9 @@ const (
 	wersjaSzereguPobierz = `SELECT ` + kolumnyWersjiSzeregu + zrodloWersjiSzeregu +
 		` WHERE w.identyfikator_zewnetrzny = ?`
 
-	// Wersja założycielska to NAJSTARSZY wiersz szeregu Operatora. Szereg
-	// autozapisu odpada z rachunku z zamysłem: gdyby pierwszy zapis samoczynny
-	// wypadł przed pierwszym zapisem Operatora, „powrót do stanu pierwotnego"
-	// wracałby do stanu przypadkowego, a nie do tego, co Operator założył.
+	// Wersja założycielska to najstarszy wiersz szeregu Operatora; szereg
+	// autozapisu odpada z rachunku, żeby powrót do stanu pierwotnego prowadził
+	// do stanu założonego przez Operatora, nie przypadkowego.
 	wersjaZalozycielskaStudia = `SELECT ` + kolumnyWersjiSzeregu + zrodloWersjiSzeregu +
 		` WHERE w.dokument_id = ? AND w.szereg = 'operator'
 		  ORDER BY w.utworzono ASC, w.id ASC LIMIT 1`
@@ -288,7 +272,8 @@ const (
 
 // ── Znakowanie fragmentów ───────────────────────────────────────────────────
 
-// ZapiszZnakowanie zakłada znakowanie fragmentu.
+// ZapiszZnakowanie zakłada znakowanie fragmentu, uzupełniając rodzaj autora
+// i stan wartościami domyślnymi, gdy wołający ich nie poda, i oddaje wiersz.
 func (r *repozytoriumStudia) ZapiszZnakowanie(ctx context.Context, dokumentID int64,
 	znakowanie ZnakowanieStudia) (ZnakowanieStudia, error) {
 
@@ -320,7 +305,8 @@ func (r *repozytoriumStudia) ZapiszZnakowanie(ctx context.Context, dokumentID in
 	return r.Znakowanie(ctx, znakowanie.Kod)
 }
 
-// Znakowanie oddaje znakowanie o wskazanym kodzie.
+// Znakowanie oddaje znakowanie o wskazanym kodzie zewnętrznym albo błąd
+// ErrBrakWiersza, gdy znakowanie o tym kodzie nie istnieje.
 func (r *repozytoriumStudia) Znakowanie(ctx context.Context, kod string) (ZnakowanieStudia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, znakowanieStudiaPobierz)
 	if err != nil {
@@ -336,7 +322,8 @@ func (r *repozytoriumStudia) Znakowanie(ctx context.Context, kod string) (Znakow
 	return znakowanie, nil
 }
 
-// Znakowania oddaje znakowania dokumentu w kolejności wystąpienia w treści.
+// Znakowania oddaje wszystkie znakowania wskazanego dokumentu, uporządkowane
+// według kolejności wystąpienia zakresu w treści.
 func (r *repozytoriumStudia) Znakowania(ctx context.Context,
 	dokumentID int64) ([]ZnakowanieStudia, error) {
 
@@ -364,7 +351,8 @@ func (r *repozytoriumStudia) Znakowania(ctx context.Context,
 	return lista, nil
 }
 
-// UsunZnakowanie zdejmuje znakowanie i mówi, czy było.
+// UsunZnakowanie zdejmuje znakowanie o wskazanym kodzie zewnętrznym i oddaje
+// wartość logiczną mówiącą, czy znakowanie istniało.
 func (r *repozytoriumStudia) UsunZnakowanie(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, znakowanieStudiaUsun)
 	if err != nil {
@@ -432,7 +420,8 @@ func (r *repozytoriumStudia) RodzajeZnacznika(ctx context.Context,
 	return lista, nil
 }
 
-// RodzajZnacznika oddaje jeden rodzaj znacznika, bez licznika użyć.
+// RodzajZnacznika oddaje jeden rodzaj znacznika o wskazanej nazwie, bez
+// licznika użyć, albo błąd ErrBrakWiersza, gdy rodzaj nie istnieje.
 func (r *repozytoriumStudia) RodzajZnacznika(ctx context.Context,
 	nazwa string) (RodzajZnacznikaStudia, error) {
 
@@ -451,7 +440,8 @@ func (r *repozytoriumStudia) RodzajZnacznika(ctx context.Context,
 	return rodzaj, nil
 }
 
-// ZapiszRodzajZnacznika zakłada rodzaj znacznika własnego albo zmienia zastany.
+// ZapiszRodzajZnacznika zakłada rodzaj znacznika własnego albo zmienia
+// zastany, przyjmując nazwę jako nazwę widoczną, gdy wołający jej nie poda.
 func (r *repozytoriumStudia) ZapiszRodzajZnacznika(ctx context.Context,
 	rodzaj RodzajZnacznikaStudia) (RodzajZnacznikaStudia, error) {
 
@@ -495,9 +485,8 @@ func (r *repozytoriumStudia) UsunRodzajZnacznika(ctx context.Context, nazwa stri
 // ── Zajęcia fragmentów i spięcia wykonawców ─────────────────────────────────
 
 // ZapiszZajecieFragmentu zajmuje fragment dla wykonawcy na wskazaną liczbę
-// sekund. Odstęp zerowy albo ujemny znaczy zajęcie bez wygasania — i takiego
-// zajęcia rdzeń nie zakłada, bo agent ubity w pół pracy trzymałby fragment na
-// zawsze; granicę podaje wołający.
+// sekund; odstęp zerowy albo ujemny zostaje podniesiony do jednej sekundy,
+// bo zajęcie bez wygasania trzymałoby fragment na zawsze.
 func (r *repozytoriumStudia) ZapiszZajecieFragmentu(ctx context.Context, dokumentID int64,
 	zajecie ZajecieFragmentuStudia, waznoscSekund int64) (ZajecieFragmentuStudia, error) {
 
@@ -568,7 +557,8 @@ func (r *repozytoriumStudia) ZajeciaFragmentow(ctx context.Context,
 	return lista, nil
 }
 
-// ZwolnijZajecieFragmentu zwalnia jedno zajęcie po kodzie.
+// ZwolnijZajecieFragmentu zwalnia jedno zajęcie fragmentu po kodzie
+// zewnętrznym i oddaje wartość logiczną mówiącą, czy zajęcie istniało.
 func (r *repozytoriumStudia) ZwolnijZajecieFragmentu(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zajecieStudiaZwolnij)
 	if err != nil {
@@ -629,7 +619,9 @@ func (r *repozytoriumStudia) PrzemiecZajeciaFragmentow(ctx context.Context,
 	return zdjete, nil
 }
 
-// ZapiszSpiecieWykonawcow odkłada zapis spięcia o ten sam fragment.
+// ZapiszSpiecieWykonawcow odkłada zapis spięcia o ten sam fragment,
+// uzupełniając rodzaje stron i nastawę wartościami domyślnymi, gdy wołający
+// ich nie poda.
 func (r *repozytoriumStudia) ZapiszSpiecieWykonawcow(ctx context.Context, dokumentID int64,
 	spiecie SpiecieWykonawcowStudia) error {
 
@@ -662,7 +654,8 @@ func (r *repozytoriumStudia) ZapiszSpiecieWykonawcow(ctx context.Context, dokume
 	return nil
 }
 
-// SpieciaWykonawcow oddaje spięcia dokumentu, od najświeższego.
+// SpieciaWykonawcow oddaje wszystkie spięcia wskazanego dokumentu,
+// uporządkowane od najświeższego do najstarszego.
 func (r *repozytoriumStudia) SpieciaWykonawcow(ctx context.Context,
 	dokumentID int64) ([]SpiecieWykonawcowStudia, error) {
 
@@ -708,10 +701,9 @@ func (r *repozytoriumStudia) SpieciaWykonawcow(ctx context.Context,
 
 // ── Wersje w szeregach ──────────────────────────────────────────────────────
 
-// ZapiszWersjeSzeregu zakłada wersję we wskazanym szeregu, wraz z postacią
-// dokumentu i tożsamością wykonawcy. Wskaźnika wersji bieżącej NIE przestawia —
-// tak samo jak `ZapiszWersje` z `studio_wersje.go`; decyzja, kiedy nowa wersja
-// staje się bieżącą, należy do wołającego.
+// ZapiszWersjeSzeregu zakłada wersję we wskazanym szeregu wraz z postacią
+// dokumentu i tożsamością wykonawcy, nie przestawiając wskaźnika wersji
+// bieżącej — tę decyzję podejmuje wołający.
 func (r *repozytoriumStudia) ZapiszWersjeSzeregu(ctx context.Context, dokumentID int64,
 	wersja WersjaSzereguStudia) (WersjaSzereguStudia, error) {
 
@@ -739,7 +731,8 @@ func (r *repozytoriumStudia) ZapiszWersjeSzeregu(ctx context.Context, dokumentID
 	return r.WersjaSzeregu(ctx, wersja.Kod)
 }
 
-// WersjaSzeregu oddaje wersję wraz z szeregiem i postacią.
+// WersjaSzeregu oddaje wersję o wskazanym kodzie zewnętrznym wraz z szeregiem
+// i postacią dokumentu albo błąd ErrBrakWiersza, gdy wersja nie istnieje.
 func (r *repozytoriumStudia) WersjaSzeregu(ctx context.Context,
 	kod string) (WersjaSzereguStudia, error) {
 

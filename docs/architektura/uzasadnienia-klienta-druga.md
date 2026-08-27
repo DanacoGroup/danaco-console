@@ -2499,3 +2499,25 @@ i obserwatorami układu okien równoległych. Odmontowanie sceny przy każdym pr
 zrywałoby rozmowę w połowie zdania; ukrycie zostawia ją nietkniętą. Stan pusty nie zapowiada modułu,
 którego nie ma — nazywa go i pisze wprost, że jego okna operacyjne nie zostały zbudowane, wymieniając
 katalog kodów wzięty z rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/workspace/zarzadca-agentow.ts
+Wykaz ekspertów przypisanych do projektu pochodzi z zestawienia pulpitu, ponieważ
+kontrakt nie udostępnia oddzielnej komendy odczytu przypisań modułu Workspace.
+Uprawnienia są konfiguracją możliwości, nie kontrolą dostępu — cztery grupy
+zakresu ustawia komenda modułu Agents, a ich stan przychodzi w polu uprawnień
+agenta, którego okno samo nie wylicza. O przypisaniu do projektu rozstrzyga
+wyłącznie rdzeń: dopóki pulpit nie został odczytany, okno nie zgaduje
+przypisań i nie przedstawia nieodczytanego pulpitu jako projektu bez
+ekspertów.
+
+Zawężenie wykazu ekspertów pracuje wyłącznie na bibliotece już odczytanej.
+Zawężenie do przypisanych nie udaje pustego wykazu przy niewiedzy rdzenia —
+nazywa brakującą przesłankę. Plakietka licznika gaśnie razem z wykazem, bo
+licznik sprzed odmowy dotyczyłby biblioteki, której okno nie zdołało
+odczytać. Po zapisie przypisania okno przyjmuje odpowiedź rdzenia zamiast
+nieaktualnego zestawienia pulpitu, żeby wykaz pod potwierdzeniem nie
+zaprzeczał samemu potwierdzeniu. Powód wyświetlany przy skoku do modułu
+Agents pochodzi z odpowiedzi rdzenia, a znacznik przeniesienia — z okna
+otwartego przez rdzeń, nie ze stałej wpisanej w wywołanie. Skasowanie
+zestawienia pulpitu wraca stan przypisań do „nie wiadomo”, a nie do zera,
+bo o przypisaniach nowego projektu nikt jeszcze nie pytał.

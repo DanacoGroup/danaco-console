@@ -375,3 +375,12 @@ Sygnał karty środowiska to wstęga górna o wysokości 2 pikseli, sterowana
 na rodzinie dn-karta--akcent i dn-strona__karta, nie na klasie karty zwykłej;
 kafel komponentu buduje strona-glowna/kafel-komponentu.ts na rodzinie
 dn-karta, nie na rodzinie kafla.
+
+## budowa/klient-poprzedni/src/motyw/motyw.css
+Mechanizm motywu: atrybut data-theme ustawiony na wartość light albo dark
+jest wyborem jawnym; brak atrybutu rozstrzyga zapytanie
+prefers-color-scheme. Oba motywy są równoprawne — przełączenie motywu
+zmienia wyłącznie wartości żetonów, nie reguły komponentów. Właściwość
+color-scheme ustawiają arkusze semantyczne, osobno dla każdego motywu.
+Gęstość zwarta jest domyślna; wariant przestronny czeka pod atrybutem
+data-gestosc="przestronna".

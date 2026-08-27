@@ -1,24 +1,5 @@
-// Postać, w jakiej bramka trzyma hasło i PIN, oraz wytworzenie tokenu sesji
-// bramki.
-//
-// Sejf poświadczeń (`dane.SejfPlikowy`) jest schowkiem, nie funkcją skrótu:
-// kładzie napis i oddaje napis, bo poświadczenie kanału modelu (klucz API) musi
-// wyjść z powrotem w postaci użytecznej. Hasło bramki jest czymś odwrotnym —
-// nie ma prawa wyjść ani jawnie, ani odwracalnie. Postać zapisu składa więc ten
-// plik, wyłącznie z biblioteki standardowej Go:
-//
-//	crypto/pbkdf2   — PBKDF2 z RFC 8018, w wydaniu standardowym Go 1.24+;
-//	crypto/sha256   — funkcja skrótu pod HMAC;
-//	crypto/rand     — sól i token;
-//	crypto/subtle   — porównanie w czasie stałym.
-//
-// Argon2id byłby doborem lepszym, ale mieszka w `golang.org/x/crypto`, którego
-// `go.mod` rdzenia nie zaciąga.
-//
-// Zapis jest samoopisujący: napis kładziony w sejfie niesie nazwę funkcji,
-// liczbę obrotów, sól i skrót. Dzięki temu podniesienie liczby obrotów albo
-// zmiana funkcji nie unieważnia haseł już ustawionych — sprawdzenie czyta
-// parametry z zapisu, a nie ze stałej.
+// Postać, w jakiej bramka trzyma hasło i PIN, wyłącznie biblioteką standardową Go, oraz
+// wytworzenie tokenu sesji bramki, samoopisującym zapisem niosącym parametry wyprowadzenia.
 package core
 
 import (
@@ -34,25 +15,18 @@ import (
 )
 
 const (
-	// nazwaFunkcjiSkrotu znakuje postać zapisu. Zapis o innej nazwie nie jest
-	// odrzucany po cichu — sprawdzenie odmawia wprost, bo cisza znaczyłaby
-	// „hasło się nie zgadza" tam, gdzie prawdą jest „zapisu nie rozumiem".
+	// nazwaFunkcjiSkrotu znakuje postać zapisu; zapis o innej nazwie sprawdzenie odmawia wprost, nie po cichu.
 	nazwaFunkcjiSkrotu = "pbkdf2-sha256"
-	// obrotySkrotu — koszt wyprowadzenia. Wartość z zalecenia OWASP dla
-	// PBKDF2-HMAC-SHA256 (2023): 600 000 obrotów.
+	// obrotySkrotu to koszt wyprowadzenia, wartość z zalecenia OWASP dla PBKDF2-HMAC-SHA256 z roku dwa tysiące dwudziestego trzeciego.
 	obrotySkrotu = 600_000
-	// dlugoscSoli i dlugoscSkrotu w bajtach; sól z RFC 8018 wymaga co najmniej
-	// ośmiu, bierzemy szesnaście.
+	// dlugoscSoli i dlugoscSkrotu w bajtach; sól zgodna z RFC 8018 wymaga co najmniej ośmiu bajtów długości zapisu.
 	dlugoscSoli   = 16
 	dlugoscSkrotu = 32
-	// dlugoscTokenu w bajtach. Token jest poświadczeniem na okaziciela, więc
-	// jego jedyną obroną jest entropia — 256 bitów ze źródła kryptograficznego.
+	// dlugoscTokenu w bajtach; token jest poświadczeniem na okaziciela, jego jedyną obroną jest entropia losowości.
 	dlugoscTokenu = 32
 )
 
-// zapisSekretu składa postać, w której sekret trafia do sejfu. Sekretu w tej
-// postaci nie da się odwrócić: wraca z niej wyłącznie odpowiedź „zgadza się
-// albo nie".
+// zapisSekretu składa postać, w której sekret trafia do sejfu; nie da się jej odwrócić do napisu jawnego.
 func zapisSekretu(sekret string) (string, error) {
 	sol := make([]byte, dlugoscSoli)
 	if _, err := rand.Read(sol); err != nil {
@@ -70,9 +44,8 @@ func zapisSekretu(sekret string) (string, error) {
 	}, "$"), nil
 }
 
-// sekretZgadzaSie sprawdza sekret względem zapisu z sejfu. Parametry bierze
-// z zapisu, nie ze stałych — hasło ustawione przy niższej liczbie obrotów ma
-// dalej działać. Zapis nieczytelny daje błąd, nie ciche „nie zgadza się".
+// sekretZgadzaSie sprawdza sekret względem zapisu z sejfu; parametry bierze z zapisu, nie
+// ze stałych, bo hasło ustawione przy niższej liczbie obrotów ma dalej działać.
 func sekretZgadzaSie(zapis, sekret string) (bool, error) {
 	czesci := strings.Split(zapis, "$")
 	if len(czesci) != 4 || czesci[0] != nazwaFunkcjiSkrotu {
@@ -94,15 +67,12 @@ func sekretZgadzaSie(zapis, sekret string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("core: bramka: nie można wyprowadzić skrótu hasła: %w", err)
 	}
-	// Porównanie w czasie stałym: różnica czasu odpowiedzi zdradzałaby, ile
-	// pierwszych bajtów zgadło się przy próbie.
+	// Porównanie w czasie stałym: różnica czasu odpowiedzi zdradzałaby dopasowane bajty.
 	return subtle.ConstantTimeCompare(wyliczony, oczekiwany) == 1, nil
 }
 
-// nowyTokenBramki wytwarza token sesji. Awaria źródła losowości kończy
-// czynność błędem: token przewidywalny byłby wpuszczeniem obcego do bramki.
-// Przy identyfikatorach komunikatów, gdzie wystarcza licznik, brak losowości
-// przechodzi dalej — tu nie.
+// nowyTokenBramki wytwarza token sesji; awaria źródła losowości kończy czynność błędem,
+// bo token przewidywalny byłby wpuszczeniem obcego do bramki.
 func nowyTokenBramki() (string, error) {
 	surowy := make([]byte, dlugoscTokenu)
 	if _, err := rand.Read(surowy); err != nil {
@@ -111,10 +81,8 @@ func nowyTokenBramki() (string, error) {
 	return base64.RawURLEncoding.EncodeToString(surowy), nil
 }
 
-// skrotTokenu zamienia token na jego rozpoznanie w bazie. Token pochodzi ze
-// źródła kryptograficznego, więc materiału do zgadywania nie ma i skrót bez
-// soli oraz bez rozciągania wystarcza — inaczej niż przy haśle, które wymyśla
-// człowiek.
+// skrotTokenu zamienia token na jego rozpoznanie w bazie; token pochodzi ze źródła
+// kryptograficznego, więc skrót bez soli i rozciągania wystarcza, inaczej niż przy haśle.
 func skrotTokenu(token string) string {
 	suma := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(suma[:])

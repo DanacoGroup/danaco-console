@@ -13,7 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Wiadomosc to wiersz tabeli `wiadomosc`.
+// Wiadomosc to wiersz tabeli wiadomosc, niosący treść i metadane jednej
+// pozycji historii okna komunikacji.
 type Wiadomosc struct {
 	ID             int64
 	OknoID         int64
@@ -26,21 +27,18 @@ type Wiadomosc struct {
 	TrescOdwolanie *string
 	TokenyWejscia  int
 	TokenyWyjscia  int
-	// IdentyfikatorZewnetrzny wiąże wiersz z wiadomością rdzenia, którą klient
-	// zna pod identyfikatorem tekstowym. Po nim odnajduje się wiersz odpowiedzi
-	// modelu, gdy strumień się domyka.
+	// IdentyfikatorZewnetrzny wiąże wiersz z wiadomością rdzenia, znaną
+	// klientowi identyfikatorem.
 	IdentyfikatorZewnetrzny *string
 	Kolejnosc               int
 	Utworzono               string
-	// Zalaczniki niesie wykaz odwołań do załączników w postaci tablicy JSON
-	// napisów — dokładnie tak, jak brzmi pole `attachments` kontraktu.
-	// Wskaźnik pusty znaczy NULL w kolumnie, czyli „baza nic
-	// o załącznikach tej wiadomości nie wie”; to nie to samo co pusta tablica,
-	// która znaczy „sprawdzone: nie było żadnych”.
+	// Zalaczniki niesie tablicę JSON odwołań; nil znaczy brak rozpoznania,
+	// nie pustą tablicę.
 	Zalaczniki *string
 }
 
-// RepozytoriumWiadomosci jest kontraktem obszaru wiadomości.
+// RepozytoriumWiadomosci jest kontraktem obszaru wiadomości: zapis, odczyt
+// historii okna i zmianę stanu.
 type RepozytoriumWiadomosci interface {
 	Dopisz(ctx context.Context, wiadomosc Wiadomosc) (int64, error)
 	ListaOkna(ctx context.Context, oknoID int64, limit int) ([]Wiadomosc, error)
@@ -88,7 +86,8 @@ func noweRepozytoriumWiadomosci(z *zapytania) *repozytoriumWiadomosci {
 	return &repozytoriumWiadomosci{zapytania: z}
 }
 
-// Dopisz dokłada wiadomość na koniec historii okna i zwraca jej identyfikator.
+// Dopisz dokłada wiadomość na koniec historii okna i zwraca jej identyfikator
+// wiersza, nadając kolejny numer kolejności.
 func (r *repozytoriumWiadomosci) Dopisz(ctx context.Context, wiadomosc Wiadomosc) (int64, error) {
 	rola, err := rolaWiadomosciNaBaze(wiadomosc.Rola)
 	if err != nil {
@@ -118,7 +117,8 @@ func (r *repozytoriumWiadomosci) Dopisz(ctx context.Context, wiadomosc Wiadomosc
 	return wynik.LastInsertId()
 }
 
-// PoIdentyfikatorze zwraca wiadomość po identyfikatorze nadanym przez rdzeń.
+// PoIdentyfikatorze zwraca wiadomość po identyfikatorze zewnętrznym nadanym
+// przez rdzeń, którym klient rozpoznaje wiersz.
 func (r *repozytoriumWiadomosci) PoIdentyfikatorze(ctx context.Context, identyfikator string) (Wiadomosc, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, wiadomoscPoIdentyfikatorze)
 	if err != nil {
@@ -131,7 +131,8 @@ func (r *repozytoriumWiadomosci) PoIdentyfikatorze(ctx context.Context, identyfi
 	return wiadomosc, err
 }
 
-// ListaOkna zwraca historię jednego okna. Limit 0 oznacza całą historię.
+// ListaOkna zwraca historię jednego okna komunikacji w kolejności zapisu.
+// Limit 0 oznacza całą historię.
 func (r *repozytoriumWiadomosci) ListaOkna(ctx context.Context, oknoID int64, limit int) ([]Wiadomosc, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaWiadomosciOkna)
 	if err != nil {
@@ -157,7 +158,8 @@ func (r *repozytoriumWiadomosci) ListaOkna(ctx context.Context, oknoID int64, li
 	return lista, nil
 }
 
-// ZapiszWynik utrwala treść po zakończeniu strumienia wraz ze zużyciem tokenów.
+// ZapiszWynik utrwala treść wiadomości po zakończeniu strumienia modelu wraz
+// ze zużyciem tokenów wejścia i wyjścia.
 func (r *repozytoriumWiadomosci) ZapiszWynik(ctx context.Context, wiadomosc Wiadomosc) error {
 	rodzaj, err := rodzajTresciNaBaze(wiadomosc.RodzajTresci)
 	if err != nil {
@@ -198,7 +200,8 @@ func (r *repozytoriumWiadomosci) ZmienStan(ctx context.Context, id int64, stan s
 	return sprawdzTrafienie(wynik, "wiadomosc", id)
 }
 
-// odczytajWiadomosc składa strukturę z jednego wiersza wyniku.
+// odczytajWiadomosc składa strukturę wiadomości z jednego wiersza wyniku
+// zapytania, tłumacząc rolę, rodzaj treści i stan.
 func odczytajWiadomosc(wiersz skaner) (Wiadomosc, error) {
 	var wiadomosc Wiadomosc
 	var persona, tresc, odwolanie, identyfikator, zalaczniki sql.NullString

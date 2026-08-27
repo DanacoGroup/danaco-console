@@ -1,16 +1,7 @@
 // Obszar kolekcji i etykiet modułu Library: `UstawEtykiety`, `UtworzKolekcje`
-// i `PrzypiszDoKolekcji` na typie `*adapterBiblioteki`, zadeklarowanym
-// w `adapter_modul_library.go`.
-//
-// `library.tag.set` niesie `collectionIds` jako komplet kolekcji pliku po
-// zmianie, dokładnie tak jak `tags` niesie komplet etykiet. Obie połowy komendy
-// mają więc semantykę wymiany, opartą o `UstawKolekcjePliku`
-// (`dane/biblioteka_kolekcje_pliku.go`), a nie o dokładanie.
-//
-// Składanie `LibraryFile` należy do `a.zloz`. Ten obszar nie dubluje przekładu
-// wiersza na kontrakt i nie dopisuje `CollectionIds` z żądania: `a.zloz` czyta
-// przynależność z bazy, więc odpowiedź opisuje stan zapisany, a nie treść
-// żądania.
+// i `PrzypiszDoKolekcji` na typie `*adapterBiblioteki`. Obie połowy komendy
+// `library.tag.set` mają semantykę wymiany, opartą o `UstawKolekcjePliku`, a
+// nie o dokładanie.
 package core
 
 import (
@@ -67,19 +58,12 @@ func (a *adapterBiblioteki) UstawEtykiety(ctx context.Context,
 	if z.FileId == "" {
 		return shared.LibraryTagSetResponse{}, bladWskazaniaBiblioteki("komenda bez wskazania pliku")
 	}
-	// Plik sprawdzany wprost i najpierw: `UstawKolekcjePliku` odmawia tym samym
-	// ErrBrakWiersza dla pliku nieznanego co dla kolekcji nieznanej, więc bez
-	// tego sprawdzenia literówka w kodzie pliku wracałaby jako „kolekcja nie
-	// istnieje" — odmowa opisująca nie ten brak, co trzeba.
+	// Plik sprawdzany wprost i najpierw, żeby literówka w kodzie nie wracała jako
+	// odmowa kolekcji.
 	if _, err := a.plik(ctx, z.FileId); err != nil {
 		return shared.LibraryTagSetResponse{}, err
 	}
-	// Kolekcje idą pierwsze, bo to one mogą odmówić: kolekcja nieznana wywraca
-	// całą komendę, a gdyby etykiety podmieniły się przed tą odmową, połowa
-	// zmiany zostałaby utrwalona mimo błędu. Kolejność zastępuje tu transakcję
-	// obejmującą obie tabele.
-	//
-	// Wykaz pusty też jest ustawieniem — zdejmuje plik ze wszystkich kolekcji.
+	// Kolekcje idą pierwsze, bo mogą odmówić i wykaz pusty jest ustawieniem.
 	if _, err := a.repozytorium.UstawKolekcjePliku(ctx, z.FileId, z.CollectionIds); err != nil {
 		return shared.LibraryTagSetResponse{}, bladNieznanejKolekcji(wykazKolekcji(z.CollectionIds), err)
 	}
@@ -98,10 +82,8 @@ func (a *adapterBiblioteki) UstawEtykiety(ctx context.Context,
 	return shared.LibraryTagSetResponse{File: plik}, nil
 }
 
-// wykazKolekcji nazywa w odmowie cały wskazany wykaz kolekcji. Warstwa danych
-// ustawia komplet jednym zapisem i odmawia całości przy pierwszym nieznanym
-// kodzie, nie oddając przy tym, który kod zawiódł — adapter podaje więc wykaz
-// zamiast wskazywać kod wybrany dowolnie.
+// wykazKolekcji nazywa w odmowie cały wskazany wykaz kolekcji, bo warstwa
+// danych nie oddaje, który kod zawiódł przy pierwszym nieznanym.
 func wykazKolekcji(kody []string) string {
 	if len(kody) == 0 {
 		return "(wykaz pusty)"
@@ -109,10 +91,8 @@ func wykazKolekcji(kody []string) string {
 	return strings.Join(kody, ", ")
 }
 
-// bladNieznanejKolekcji odróżnia „kolekcji nie ma" od „odczyt się nie
-// powiódł" — jedyny błąd swoisty temu obszarowi. Pozostałe (usterka wewnętrzna,
-// brak wskazania, plik nieznany) składa `adapter_modul_library.go`
-// (`bladBiblioteki`, `bladWskazaniaBiblioteki`, `bladNieznanegoPlikuBiblioteki`).
+// bladNieznanejKolekcji odróżnia "kolekcji nie ma" od "odczyt się nie powiódł"
+// — jedyny błąd swoisty temu obszarowi kolekcji i etykiet.
 func bladNieznanejKolekcji(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

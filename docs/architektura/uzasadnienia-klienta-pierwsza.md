@@ -335,3 +335,12 @@ mówi więc to, co odpowiedź naprawdę niesie, i nie orzeka, że kroki weszły.
 Priorytet zlecenia jedzie przy działaniu „wstrzymaj”, bo jest polem żądania,
 nie osobnym działaniem silnika, a wstrzymanie jest działaniem odwracalnym
 jednym naciśnięciem „Wznów”.
+
+## budowa/klient-poprzedni/src/moduly/library/zrodlo-zarzadu.ts
+
+Zarząd repozytorium jest wydzielony ze `zrodlo-biblioteki.ts` wzdłuż
+odpowiedzialności: tamten plik prowadzi wykaz i podgląd, ten niesie czynności
+zarządcze warstw trzeciej i czwartej modułu biblioteki (opis zasobu, słownik
+etykiet, tezaurus, reguły, higienę, cykl życia, utrwalenie, udostępnienia
+i sugestie). Kształt pozostaje jeden — `ZrodloBiblioteki` — więc okna nadal
+widzą jedno źródło.

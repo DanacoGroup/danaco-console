@@ -3797,3 +3797,29 @@ licznik rośnie i jest widoczny, ale sam nie zatrzymuje pracy.
 
 `przerwij` kończy bieg, zostawiając powód. Komunikat nazywa sygnał i krok —
 bez tego Operator zobaczyłby bieg przerwany bez przyczyny.
+
+## budowa/server/internal/core/handlers_extension.go
+
+Schemat katalogu rozszerzeń leży w
+`store/migracja_070_katalog_rozszerzen.sql`. Rodzina niesie pięć komend:
+`extension.list`, `extension.install`, `extension.configure`,
+`extension.toggle` i `extension.uninstall`. Pozycja `extension.unknown`
+o tym przedrostku jest odpowiedzią na komendę nieznaną obszaru, a nie
+komendą: nie ma pary żądanie/wynik i nie rejestruje się jej w rejestrze
+komend.
+
+Rozgłoszenie `extension.changed` jest wpięte po stronie adaptera:
+`adapter_modul_extension_rozgloszenie.go` niesie dokładkę `ZRozgloszeniem`,
+a cztery komendy wołają ją po udanym zapisie — `extension.install`
+(`created`, także przy przywróceniu pozycji odinstalowanej),
+`extension.configure` i `extension.toggle` (`updated`), `extension.uninstall`
+(`deleted`). `extension.list` nie rozgłasza niczego. Gdy port złożono bez
+nadajnika (`montaz_porty.go`), `a.rozgloszenie` jest nilem i cztery wywołania
+milkną.
+
+Port niewypełniony nie rejestruje niczego: komendy odpowiadają wtedy
+`extension.unknown`, a pozostałe domeny pracują bez zmian.
+
+Jeden port na całą rodzinę: pięć komend obsługuje jeden byt — pozycję
+katalogu — i jedną maszynerię. Osobny port „instalacji" obok portu
+„katalogu" byłby dwiema prawdami o jednej tabeli.

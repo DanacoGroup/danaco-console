@@ -23,7 +23,7 @@ function komendyObszaru(obszar: string): readonly string[] {
  * Zdanie powodu dla kontrolki bez pokrycia w kontrakcie; obszar bez komend
  * i obszar z komendami dają dwa różne zdania.
  * @param czegoByTrzeba czynność, której kontrolka miała dokonać.
- * @param obszar przedrostek komend, w którym takiej komendy szukamy.
+ * @param obszar przedrostek komend, w którym takiej komendy się szuka.
  */
 export function powodBezKomendy(czegoByTrzeba: string, obszar = 'developer'): string {
   const komendy = komendyObszaru(obszar);

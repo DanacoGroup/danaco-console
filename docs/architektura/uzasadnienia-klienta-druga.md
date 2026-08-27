@@ -2521,3 +2521,6 @@ Agents pochodzi z odpowiedzi rdzenia, a znacznik przeniesienia — z okna
 otwartego przez rdzeń, nie ze stałej wpisanej w wywołanie. Skasowanie
 zestawienia pulpitu wraca stan przypisań do „nie wiadomo”, a nie do zera,
 bo o przypisaniach nowego projektu nikt jeszcze nie pytał.
+
+## budowa/klient/src/polaczenie/stan-polaczenia.ts
+Ramka wpisana przy rozłączeniu trafia do kolejki wychodzącej i idzie do rdzenia po wznowieniu połączenia.

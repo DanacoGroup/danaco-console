@@ -1492,3 +1492,23 @@ zapisu.
 Opis poświadczenia należy do pola, a nie do widoku: kontrakt nie zwraca poświadczenia
 żadną komendą, więc pole konta, które poświadczenie ma, i tak wygląda na puste. Opis
 jest jedynym miejscem, w którym ten stan zostaje nazwany.
+
+## budowa/klient-poprzedni/src/moduly/browser/pozycje-pokrycia.ts
+
+Powód nieczynnej pozycji rozstrzyga byt wspólny wszystkich modułów, stojący
+w pliku `moduly/pokrycie-komend.ts`. Byt pyta rdzeń o wykaz jego komend
+powitaniem `connection.hello` i rozróżnia trzy stany: kontrakt danej komendy
+nie zna, kontrakt ją zna, lecz rdzeń nie ma uchwytu, albo rdzeń ma uchwyt,
+a okno jeszcze go nie wywołuje. Zdanie wpisane w moduł na sztywno mówiłoby
+nieprawdę od chwili, w której rdzeń dostanie obsługę, i nic nie wymuszałoby
+jego zdjęcia, ponieważ nic nie łączyłoby go z rdzeniem.
+
+Przycisk nieczynnej pozycji nie jest wygaszony i nie milczy: naciśnięcie daje
+dymek z powodem oraz wiersz odpowiedzi okna, a żądanie do rdzenia nie wychodzi
+i nic nie udaje wykonania. Znaczniki `data-brak-komendy` oraz `data-pokrycie`
+niesie kontrolka biblioteczna i po nich sięgają sprawdziany produktu.
+
+Powód jest czytany z atrybutu `title` dopiero przy naciśnięciu, tak samo jak
+robi to dymek kontrolki. Byt przerysowuje ten atrybut po każdej zmianie wykazu,
+więc domknięcie na treści z chwili budowy podawałoby stan odczytu w toku długo
+po odpowiedzi rdzenia.

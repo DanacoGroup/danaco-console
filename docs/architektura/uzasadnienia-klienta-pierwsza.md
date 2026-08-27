@@ -2625,3 +2625,7 @@ próba nie jest brana za powodzenie.
 
 Stan pusty rejestru niesie sam wykaz kont, ponieważ mówi o zawartości rejestru,
 a nie o przebiegu odczytu.
+
+## budowa/klient-poprzedni/src/moduly/browser/wykaz-automatyk.ts
+
+Podział odpowiedzialności jest tu taki sam jak w panelach pomocniczych modułu przeglądarki, czyli w plikach wiersz-zrodla.ts oraz wiersz-notatki.ts. Okno składa formularz i prowadzi rozmowę z rdzeniem, a moduł wykazu zamienia wynik tej rozmowy w wiersze widoczne na ekranie. Dzięki temu postać wykazu można zmienić bez dotykania obsługi komend.

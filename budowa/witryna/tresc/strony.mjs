@@ -111,10 +111,10 @@ ${zrzuty([
   <div class="dc-uwaga">
     <p><strong>Produkt jest w budowie.</strong> Rdzeń i interfejs działają. Wydanie
     <strong>1.0.0</strong> z dnia 18.08.2026 jest zbudowane i <strong>da się je stąd
-    pobrać</strong>: instalki Windows (x64 i ARM64), pakiety Linuksa oraz postać natywną
-    pełną wraz z sumami kontrolnymi wykłada strona <a href="pobierz.html">Pobierz</a>.
-    Czego jeszcze nie ma: instalki <strong>natywnej pełnej dla Windows</strong> — ta się
-    buduje i na stronie „Pobierz" stoi jako miejsce nazwane wprost, bez przycisku.
+    pobrać</strong>: instalki Windows w dwóch architekturach — <strong>x64</strong>
+    i <strong>ARM64</strong> — wraz z sumami kontrolnymi wykłada strona
+    <a href="pobierz.html">Pobierz</a>. Osobno stoi tam pakiet serwera wdrożenia dla
+    administratora: instalka niesie samo okno, a rdzeń pracuje na serwerze.
     Pobieranie jest <strong>chronione hasłem</strong> i na razie zastrzeżone — strona
     „Pobierz" mówi o tym przed przyciskami, żeby okienko z hasłem nie wyglądało na usterkę.
     Ta witryna mówi o stanie faktycznym, nie o zamierzonym.</p>
@@ -287,23 +287,24 @@ ${zrzuty([
     tresc: `  <h1>Wymagania</h1>
 
   <h2>System</h2>
-  <p>Wydania powstają dla <strong>Windows</strong> (x64 oraz ARM64) i dla <strong>Linuksa</strong>
-  (x86-64) — w obu wypadkach jako stanowisko Operatora, nie tylko jako serwer. Linux dostaje
-  dwie postacie pliku: <code>.AppImage</code> do uruchomienia bez zakładania czegokolwiek
-  w systemie oraz pakiet <code>.deb</code> dla menedżera pakietów.</p>
+  <p>Stanowiskiem Operatora jest <strong>Windows 11</strong> — jedyna platforma produktu.
+  Jedyny wybór, jaki zostaje pobierającemu, to architektura: <strong>x64</strong> dla
+  procesorów Intel i AMD albo <strong>ARM64</strong>. Windows 10, Linux i macOS nie są
+  obsługiwane. <strong>WebView2</strong> jest składnikiem Windows 11, więc instalka go nie
+  niesie i nie zakłada.</p>
 
-  <h2>Postać hybrydowa a natywna pełna</h2>
-  <p>Ta sama aplikacja wydawana jest w dwóch postaciach i to one rozstrzygają, czego jeszcze
-  potrzeba. <strong>Hybryda</strong> to samo okno — rdzeń stoi na serwerze wdrożenia, więc
-  bez tego serwera okno nie ma z czym rozmawiać. <strong>Natywna pełna</strong> niesie rdzeń
-  w sobie i nie potrzebuje niczego po drugiej stronie. Pakiet serwera wdrożenia jest osobną
-  pozycją dla administratora — wykłada go strona <a href="pobierz.html">Pobierz</a>.</p>
+  <h2>Serwer wdrożenia</h2>
+  <p>Instalka niesie samo okno wraz z powłoką — <strong>rdzenia w niej nie ma</strong>.
+  Rdzeń i całe zaplecze stoją na serwerze wdrożenia, więc bez działającego serwera okno nie
+  ma z czym rozmawiać, a praca bez łączności z nim nie jest przewidziana. Pakiet serwera
+  zakłada administrator raz na maszynie serwerowej; jest osobną pozycją na stronie
+  <a href="pobierz.html">Pobierz</a>.</p>
 
   <h2>Sprzęt</h2>
   <table>
     <tbody>
       <tr><td>Pamięć</td><td>8 GB wystarcza; 16 GB przy kilku oknach równoległych i dyktowaniu.</td></tr>
-      <tr><td>Dysk</td><td>Około 1 GB na aplikację; historia i pliki robocze rosną z pracą.</td></tr>
+      <tr><td>Dysk</td><td>Około 250 MB na aplikację — zaplecze zostaje na serwerze wdrożenia.</td></tr>
       <tr><td>Sieć</td><td>Potrzebna wyłącznie do modeli działających zdalnie oraz do aktualizacji.</td></tr>
     </tbody>
   </table>
@@ -335,15 +336,13 @@ ${zrzuty([
   <p class="lead">Od pobrania do pierwszej rozmowy — pięć czynności.</p>
 
   <h2>1. Instalacja</h2>
-  <p>Pobierz plik ze strony <a href="pobierz.html">Pobierz</a> i uruchom go. Wybierz postać
-  <strong>natywną pełną</strong>, jeśli pracujesz sam na jednym komputerze — zakłada aplikację
-  wraz z rdzeniem i osobnego serwera stawiać nie trzeba. Postać <strong>hybrydowa</strong>
-  niesie samo okno i wymaga serwera wdrożenia po drugiej stronie; strona „Pobierz" opisuje
-  tę różnicę przy każdej pozycji.</p>
+  <p>Pobierz plik ze strony <a href="pobierz.html">Pobierz</a> i uruchom go. Wybierz pozycję
+  pasującą do architektury twojej maszyny: <strong>x64</strong> dla procesora Intel albo AMD,
+  <strong>ARM64</strong> dla procesora ARM. Instalka niesie samo okno — po drugiej stronie
+  musi stać serwer wdrożenia, założony przez administratora z osobnej pozycji na stronie
+  „Pobierz".</p>
   <p><strong>Pobieranie jest dziś chronione hasłem</strong> — na czas wyłączności dostęp ma
-  jedna osoba, a poświadczenie wydaje producent. Kanał stoi na adresie tymczasowym
-  z certyfikatem podpisanym samym sobą, więc przeglądarka pokaże ostrzeżenie o nieznanym
-  wydawcy. W sprawie dostępu:
+  jedna osoba, a poświadczenie wydaje producent. W sprawie dostępu:
   <a href="mailto:support@danaco-group.pl">support@danaco-group.pl</a>.</p>
 
 ${zrzuty([

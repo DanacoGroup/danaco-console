@@ -1,7 +1,13 @@
+/**
+ * Prowenancja rady doradcy: zapis tego, kto zapytał, kogo i co doradca
+ * odpowiedział. Plik składa z rady zdanie nagłówkowe i zdanie o drodze przez
+ * rdzeń, a przy treści stawia etykietę odróżniającą radę od odpowiedzi
+ * eksperta.
+ */
+
 import { MessageStatus } from '../../../../shared/contract';
 import type { RadaDoradcy } from './zrodlo-doradcy';
 
-/** Prowenancja rady doradcy, czyli zapis tego, kto zapytał, kogo i co doradca odpowiedział. */
 
 /**
  * Jedna pozycja wykazu konsultacji: rada doradcy wraz ze zdaniem nagłówkowym

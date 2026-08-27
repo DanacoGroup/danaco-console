@@ -4488,3 +4488,51 @@ wysyłkę udaną. Obie postaci są w obiegu naraz: koperta IMAP oddaje
 identyfikator goły (Naglowek.Watek), a nagłówek listu i człowiek piszą go
 w nawiasach — bezNawiasowKatowych przyjmuje jedno i drugie, zamiast
 wymagać właściwej postaci od wołającego.
+
+## budowa/server/internal/wiedza/silnik.go
+
+Osadzenia liczy się w dwóch chwilach — przy budowaniu wskaźnika
+(knowledge.index) i przy zapytaniu (knowledge.search) — i musi je liczyć
+ten sam model tym samym sposobem. Wektor dokumentu policzony jednym
+modelem, a wektor pytania drugim, dają iloczyn skalarny, który jest liczbą
+i nawet wygląda sensownie, a nie znaczy nic.
+
+Proces silnika startuje wyłącznie przez zewnetrzne.Wolaj: w całym
+produkcie stoi dokładnie jedno exec.Command, a każde uruchomienie idzie tą
+samą bramą izolacji okna i tym samym obejmowaniem potomstwa. Proces
+Pythona liczący na wielu wątkach bez objęcia drzewem zostawiałby sieroty
+po każdym przekroczeniu czasu.
+
+Każde wołanie silnika wczytuje model od nowa: prawie cały czas zlecenia to
+start procesu i wczytanie wag (rząd gigabajta) do pamięci, a nie samo
+porównanie wektorów. Proces rezydentny skróciłby zapytanie, ale wymaga
+dwukierunkowej rozmowy z procesem żyjącym między żądaniami, a
+zewnetrzne.Wolaj prowadzi rozmowę jednorazową i jest jedyną dozwoloną
+drogą startu procesu.
+
+Granica czasu silnika jest dwojaka. Pierwsze uruchomienie pobiera wagi
+modelu, więc granica budowania wskaźnika jest liczona w minutach;
+zapytanie ma wagi już na dysku i granica jest liczona w sekundach. Jedna
+wspólna granica byłaby albo za krótka na pobranie, albo tak długa, że
+zawieszone zapytanie wyglądałoby na pracujące.
+
+Dwie drogi do tej samej wartości ustawień silnika byłyby dwiema prawdami,
+dlatego ustawienia trzymane są w silniku, a nie odczytywane przy każdym
+zleceniu.
+
+Sprawdzenie Gotowy idzie przed budowaniem wskaźnika i przed zapytaniem, bo
+odmowa "nie ma czym" jest dla Operatora czymś innym niż "liczyło i się
+wywróciło". Pomocnik przygotowuje model i wraca, więc przy pierwszym razie
+pobierze też wagi.
+
+Osadzanie partiami, nie wszystko naraz: wykaz kilkudziesięciu tysięcy
+fragmentów w jednym pliku zlecenia zająłby pomocnikowi pamięć
+proporcjonalną do całej biblioteki. Kolejność wektorów odpowiada
+kolejności tekstów i to jest warunek — wołający wiąże je pozycją, nie
+treścią. Wykaz pusty do osadzenia nie jest pytaniem o gotowość silnika,
+tylko pracą, której nie ma (od pytania jest Gotowy).
+
+`-X utf8` w wołaniu silnika idzie zawsze: pomocnik oddaje polski tekst
+w odpowiedzi, a Python bez tego przełącznika koduje wyjście według
+ustawień regionalnych systemu — na polskim Windowsie stroną 1250, w której
+JSON rozpada się na krzaki.

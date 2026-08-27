@@ -4929,3 +4929,20 @@ wystartować. Katalog pusty oznacza wtedy, że widoczność wag zależy od tego,
 proces, więc wartość pusta jest tu regresją, a nie wyborem.
 ## budowa/server/internal/dane/roundtable_sklad.go
 Zespół jest kopią składu, nie odwołaniem do niego: skład okna zmienia się po zapisaniu zespołu, bo uczestnicy dochodzą, wypadają i zmieniają rolę, a zespół ma zostać taki, jaki był w chwili zapisu. Odwołanie do wierszy składu zamiast kopii dałoby zespół, który wnosi do nowego okna stan cudzego okna z bieżącej chwili zamiast stanu zapamiętanego. Zmiana tożsamości uczestnika nie dotyka wyciszenia ani kolejności, bo obie te własności są czynnościami moderatora, a zapis tożsamości opisuje wyłącznie samego uczestnika. Usunięcie uczestnika ze składu nie usuwa jego wypowiedzi: zapis tury nie ma prawa się zmienić dlatego, że mówca wypadł ze składu. Zapis zespołu utrwala go razem ze składem w jednej transakcji, bo zespół z połową składu byłby układem, którego nikt nie zapisywał.
+
+## budowa/server/internal/dane/moduly.go
+Wiersze wnosi zaczyn schematu — repozytorium ich nie zakłada.
+
+Rodzaj modułu przybiera jedną z czterech wartości: środowisko robocze
+(czat, narzędzia, okna pomocnicze), kompozytor (wytwórnia elementów
+używanych w innych modułach), repozytorium plików (menedżer zasobów bez AI)
+albo sekcja konfiguracyjna. Pole jest wskaźnikiem, nie napisem: brak wartości
+znaczy „rodzaju nie ustalono" i jest odróżnialny od każdej z czterech
+wartości. Kolumna nie ma warunku sprawdzającego — silnik bazy nie umie go
+dołożyć zmianą schematu po fakcie — więc zbioru wartości pilnuje treść
+migracji, nie schemat.
+
+Fakt konfigurowalności na stronie głównej jest niezależny od rodzaju
+modułu: modułów, które go niosą, nie łączy jeden rodzaj i nie dałoby się
+ich z rodzaju wyprowadzić. Na zewnątrz wychodzi jako pole kontraktu
+przekładane warstwą nawigacji.

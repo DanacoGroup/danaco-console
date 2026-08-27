@@ -1,12 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — PRZENOSZENIE POZYCJI W PASIE
-   ----------------------------------------------------------------------------
-   Widoczna strona gestu zmiany kolejności: kreska miejsca upuszczenia i wygląd
-   pozycji trzymanej w ręce. Mechanikę prowadzi `przeciaganie-kolejnosci.ts`.
-
-   Przedrostek `dnp` jest przedrostkiem obszaru, nie modułu — gest nie należy do
-   żadnego pojedynczego okna.
-   ============================================================================ */
+/* Przenoszenie pozycji w pasie pokazuje kreskę miejsca upuszczenia i wygląd pozycji trzymanej w ręce; mechanikę gestu prowadzi osobny skrypt modułu. */
 
 /* Kreska miejsca upuszczenia mówi, gdzie pozycja stanie, zanim przycisk
    zostanie puszczony. Bez niej gest nie daje żadnej zapowiedzi wyniku. */

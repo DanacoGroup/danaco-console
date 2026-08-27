@@ -3946,3 +3946,17 @@ modułu, treść komunikatu, nośnik ikony i spinnera oraz pozostawienie treści
 
 ## budowa/klient/src/wejscie/skladniki/kolumna-tozsamosci.ts
 Kolumna nie jest planszą marki — jest strefą okna, więc powierzchnia różni się od panelu treści odcieniem, nie kontrastem. Nota wydawcy nie należy do tego składnika: stoi w wierszu pasa działań, niżej niż kolumna, i jest jedna dla całego okna. W odsłonie przygotowania zamiast zdań stoi pole animacji powłok: na tym etapie użytkownik już nie wybiera programu, tylko czeka, aż się złoży.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/okno-podglad-bash.ts
+Jedno wywołanie zapisu na zbiorcze wyjście robi dwie rzeczy naraz: zapisuje
+okno na wyjście wszystkich otwartych kart terminala i oddaje ogon historii;
+nowe wiersze dochodzą potem zdarzeniem strumienia z identyfikatorem tego
+okna. Trzy stany dostają trzy różne zdania: odmowa rdzenia pokazuje stan
+błędu z treścią odmowy, nigdy pustą listę, bo brak odpowiedzi to co innego
+niż brak danych; ogon pusty oznacza udany odczyt bez wierszy, co po
+restarcie rdzenia jest prawdą o nim, a nie ukrytą stratą, bo dziennik
+wyjścia jest pierścieniem w pamięci żyjącym jeden bieg rdzenia; zapis
+niedoszły oznacza, że historia wróciła, ale okno nie jest zapisane na żywo,
+bo żądanie poszło bez identyfikatora okna. Widok trzyma ograniczoną liczbę
+ostatnich wierszy, bo okno pomocnicze nie jest drugą konsolą, a ucięcie jest
+oznaczone, nie zamaskowane.

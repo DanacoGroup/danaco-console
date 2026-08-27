@@ -6782,3 +6782,6 @@ komendy, a straż zamienia je w wynik z błędem nazywającym żądany typ.
 Wartość nazwy nieobjęta sprawdzianem kształtu potrafi dojść jako brak
 wartości i wpisać się w zdanie potwierdzające jako nazwa kolekcji, dlatego
 nazwa wchodzi do samego sprawdzianu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-wybudzenia.ts
+Rdzeń stoi na serwerze i mikrofonu tej maszyny nie widzi: nasłuch jest umową między oknem a rdzeniem — okno nagrywa u siebie, wysyła odcinki wraz z identyfikatorem okna, a rdzeń ogłasza, co w nich usłyszał, zdarzeniem częściowego rozpoznania oraz zdarzeniem wykrycia frazy wybudzającej; panel mówi to wprost, zamiast rysować mikrofon sugerujący, że rdzeń słucha sam. Odczyt stanu wykonalności oddaje niedostępność wraz z powodem, gdy wybudzenia nie da się wykonać, a panel powtarza powód i nie stawia przycisku obiecującego czynność, której nie ma czym wykonać.

@@ -1,23 +1,8 @@
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Pasek etapów badania — wykaz kroków w kolejności, w jakiej zapisał je rdzeń.
- *
- * Etapy przychodzą polem `stages` odpowiedzi `research.workspace.set` i do tej
- * pory nigdzie się nie pokazywały: okno wiodące przyjmowało je w polu tekstowym
- * i odsyłało do rdzenia, a Operator nie widział, co rdzeń naprawdę zapisał.
- * Pasek pokazuje wykaz oddany, nie wpisany — dlatego stoi obok pola redakcji,
- * a nie zamiast niego.
- *
- * **Czego pasek NIE pokazuje i dlaczego.** Opracowanie modułu (rozdz. 3.3)
- * przewiduje przy etapie stan „ukończony · bieżący · nierozpoczęty" wraz
- * z checklistą. Kontrakt niesie etapy jako zwykły wykaz napisów — pola na stan
- * etapu nie ma żadnego. Znaczek ukończenia postawiony tutaj byłby danymi
- * zmyślonymi, więc pasek go nie stawia i mówi wprost, czego brakuje.
- *
- * Wskazanie etapu jest nastawą widoku i tylko nią: rdzeń nie ma gdzie zapisać,
- * na którym etapie stoi badanie, więc po ponownym wejściu do modułu wskazanie
- * zaczyna od zera. Okno tego nie ukrywa.
+ * Panel etapów badania wymienia kroki w kolejności, w jakiej zapisał je rdzeń, obok pola
+ * redakcji zakresu, nie zamiast niego.
  */
 export interface PasekEtapow {
   element: HTMLElement;
@@ -77,12 +62,8 @@ export function utworzPasekEtapow(naWskazanie: (etap: string) => void): PasekEta
 }
 
 /**
- * Jeden etap paska.
- *
- * Numer pozycji jest jedyną informacją porządkową, jaką kontrakt naprawdę
- * niesie — kolejnością w wykazie — więc to on stoi przy nazwie zamiast znaczka
- * stanu. Wskazanie niesie plakietkę z etykietą słowną obok wyróżnienia
- * graficznego: stan nigdy nie zależy od samej barwy.
+ * Jeden etap paska przedstawiony numerem pozycji zamiast znaczka stanu oraz plakietką ze słowną
+ * etykietą przy wskazaniu, nigdy samą barwą.
  */
 function pozycjaEtapu(
   etap: string,

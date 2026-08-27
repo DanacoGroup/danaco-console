@@ -5312,3 +5312,9 @@ Trzy pozostałe komendy — historia wyzwoleń, adres webhooka i odczyt harmonog
 zmieniają i niczego nie rozgłaszają. Uruchomienie wsteczne rozgłasza to samo zdarzenie zmiany
 powiązania, a nie stan przebiegu: zakłada wiele przebiegów naraz, a każdy z nich rozgłasza swój
 stan sam, drogą kolejki.
+
+## budowa/server/internal/core/rejestr.go
+
+Komenda spoza zbioru rzeczywiście obsługiwanych dostaje odpowiedź
+„*.unknown" zamiast błędu zrywającego — dotyczy to również komendy, która
+jest w kontrakcie, lecz nie ma jeszcze obsługiwacza.

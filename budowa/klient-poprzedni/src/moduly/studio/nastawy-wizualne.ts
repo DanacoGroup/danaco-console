@@ -1,27 +1,9 @@
 import type { RodzajBloku } from './zapis-formatowany';
 
-/**
- * Nastawy wizualne treści — krój, stopień, interlinia, wcięcia, odstępy
- * akapitowe, wyrównanie i barwa.
- *
- * ── Czego kontrakt nie niesie ───────────────────────────────────────────────
- * `StudioDocument` ma treść, tytuł, format i wersję. Pola stylów nie ma i nie ma
- * komendy, którą styl dojechałby do rdzenia: `studio.document.save` przyjmuje
- * `documentId`, `content`, `title` i `createVersion`. Nastawy z tego pliku żyją
- * więc PRZEZ SESJĘ OKNA i giną z jej zamknięciem — okno mówi to Operatorowi
- * wprost, zamiast udawać zapis, którego nie ma. Trwałe jest wyłącznie to, co
- * jest składnią treści (styl nazwany bloku, pogrubienie, kursywa, podkreślenie,
- * przekreślenie, lista, tabela, podział strony) oraz nastawy strony, bo te mają
- * w kontrakcie `StudioPageSetup` i profil wydania.
- *
- * Plik nie zna okna: oddaje wartości i zdania, a przypięcie ich do elementu
- * należy do powierzchni dokumentu.
- */
-
-/** Wyrównanie akapitu. */
+/** Wyrównanie akapitu dokumentu, jedna z nastaw wizualnych treści obok kroju, stopnia, interlinii i barwy: do lewej, do środka, do prawej albo obustronnie. */
 export type Wyrownanie = 'lewo' | 'srodek' | 'prawo' | 'obustronne';
 
-/** Kroje oferowane w oknie — nazwy rodzin obecnych w motywie i w systemie. */
+/** Kroje pisma oferowane w oknie, nazwy rodzin obecnych w motywie interfejsu oraz w systemie operacyjnym. */
 export const KROJE: readonly { wartosc: string; etykieta: string }[] = [
   { wartosc: 'var(--dn-ff-tekst)', etykieta: 'Krój tekstowy motywu' },
   { wartosc: 'var(--dn-ff-naglowek)', etykieta: 'Krój nagłówkowy motywu' },
@@ -31,10 +13,10 @@ export const KROJE: readonly { wartosc: string; etykieta: string }[] = [
   { wartosc: '"Times New Roman", serif', etykieta: 'Times New Roman' },
 ];
 
-/** Stopnie pisma w punktach typograficznych. */
+/** Stopnie pisma dostępne operatorowi do wyboru w punktach typograficznych, od najmniejszego do największego. */
 export const STOPNIE: readonly number[] = [8, 9, 10, 11, 12, 14, 16, 18, 24, 36];
 
-/** Nastawy wizualne całego dokumentu. */
+/** Nastawy wizualne całego dokumentu: krój, stopień pisma, interlinia, wcięcie pierwszego wiersza i odstęp akapitowy. */
 export interface NastawyWizualne {
   krój: string;
   /** Stopień pisma w punktach typograficznych. */
@@ -47,14 +29,14 @@ export interface NastawyWizualne {
   odstepMm: number;
 }
 
-/** Nastawy akapitu — te, które Operator daje pojedynczemu blokowi. */
+/** Nastawy akapitu, które operator daje pojedynczemu blokowi treści: wyrównanie tekstu oraz barwa pisma. */
 export interface NastawyAkapitu {
   wyrownanie: Wyrownanie;
   /** Barwa pisma; puste znaczy „barwa tekstu motywu". */
   barwa: string;
 }
 
-/** Nastawy domyślne: krój tekstowy motywu, 11 punktów, interlinia 1,5. */
+/** Nastawy domyślne dokumentu: krój tekstowy motywu, jedenaście punktów wielkości i interlinia półtorej. */
 export function domyslneNastawy(): NastawyWizualne {
   return {
     krój: 'var(--dn-ff-tekst)',
@@ -65,7 +47,7 @@ export function domyslneNastawy(): NastawyWizualne {
   };
 }
 
-/** Zdanie o nastawach wizualnych dla paska stanu. */
+/** Zdanie opisujące bieżące nastawy wizualne całego dokumentu, wyświetlane operatorowi w pasku statusu. */
 export function opiszNastawy(nastawy: NastawyWizualne): string {
   const krój = KROJE.find((pozycja) => pozycja.wartosc === nastawy.krój)?.etykieta ?? nastawy.krój;
   return (
@@ -74,7 +56,7 @@ export function opiszNastawy(nastawy: NastawyWizualne): string {
   );
 }
 
-/** Powód, dla którego nastawy wizualne nie dojeżdżają do rdzenia. */
+/** Powód, dla którego nastawy wizualne dokumentu nie dojeżdżają do rdzenia i żyją wyłącznie przez sesję okna. */
 export const POWOD_NIETRWALOSCI =
   'Krój, stopień, interlinia, wcięcie, odstęp akapitowy, wyrównanie i barwa są nastawami WIDOKU ' +
   'i żyją przez tę sesję okna. Kontrakt nie ma pola stylu w dokumencie ani komendy, którą styl ' +
@@ -83,14 +65,7 @@ export const POWOD_NIETRWALOSCI =
   'kursywa, podkreślenie, przekreślenie, listy, tabela i podział strony. Nastawy strony trwają ' +
   'osobno — mają w kontrakcie StudioPageSetup i profil wydania.';
 
-/**
- * Nastawy akapitów trzymane numerem bloku.
- *
- * Numer bloku, a nie odwołanie do elementu: elementy powstają od nowa przy
- * każdym wyrysie, więc odwołanie przeżyłoby jedno przerysowanie. Numer przeżywa
- * wyrys, a przy zmianie liczby bloków nastawa schodzi z bloku, którego już nie
- * ma — i o tym też okno mówi wprost.
- */
+/** Nastawy akapitów dokumentu trzymane numerem bloku, a nie odwołaniem do jego elementu na stronie dokumentu. */
 export interface NastawyAkapitow {
   /** Nastawy bloku o wskazanym numerze; blok bez nastawy bierze wartości domyślne. */
   dla(numer: number): NastawyAkapitu;
@@ -123,13 +98,7 @@ export function utworzNastawyAkapitow(): NastawyAkapitow {
   };
 }
 
-/**
- * Style nazwane, którym stopień pisma nadaje sam wyrys, a nie nastawa.
- *
- * Nagłówek ma być większy od tekstu zasadniczego niezależnie od stopnia
- * wybranego dla treści — to jest sedno stylu nazwanego. Krotność stoi tutaj,
- * a nie w arkuszu, bo arkusz nie zna stopnia wybranego przez Operatora.
- */
+/** Style nazwane, którym stopień pisma nadaje sam wyrys dokumentu, a nie nastawa wybrana przez operatora. */
 export function krotnoscStopnia(rodzaj: RodzajBloku): number {
   if (rodzaj === 'naglowek-1') return 1.8;
   if (rodzaj === 'naglowek-2') return 1.45;

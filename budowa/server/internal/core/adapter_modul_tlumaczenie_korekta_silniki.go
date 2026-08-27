@@ -34,7 +34,7 @@ const (
 	katalogLanguageToolaTypowy = "/opt/languagetool"
 	// archiwumLanguageToola to nazwa archiwum wiersza poleceń. Wydanie niesie
 	// obok niego archiwum serwera i archiwum biblioteki — nazwa rozstrzyga,
-	// które z trzech uruchamiamy.
+	// które z trzech jest uruchamiane.
 	archiwumLanguageToola = "languagetool-commandline.jar"
 
 	// nazwaKonfiguracjiVale jest nazwą pliku, bez którego program vale nie
@@ -423,7 +423,7 @@ func (a *adapterTlumaczenia) slownikHunspella(ctx context.Context,
 }
 
 // slownikiZWykazu czyta nazwy słowników z wykazu `hunspell -D`. Wykaz idzie
-// diagnostyką programu, a nie wyjściem — stąd czytamy go osobno.
+// diagnostyką programu, a nie wyjściem — stąd jest czytany osobno.
 func slownikiZWykazu(wykaz string) []string {
 	nazwy := []string{}
 	wSekcji := false

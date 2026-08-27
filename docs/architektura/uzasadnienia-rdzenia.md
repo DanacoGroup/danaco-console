@@ -682,3 +682,278 @@ Rodziny zależne od sieci (odkrywanie, rozstrzyganie identyfikatorów) i od
 modelu (streszczenie, weryfikacja, operacje kontekstowe) nie wchodzą tutaj
 świadomie: ich skutek zależy od świata poza tą maszyną, a sprawdzian ma
 mierzyć rdzeń, nie łącze. Wchodzi za to wszystko, co rdzeń robi sam.
+
+## budowa/server/internal/core/montaz_porty.go
+
+`skladPortow` niesie komplet bytów, z których powstają porty rdzenia, w postaci
+struktury zamiast dwudziestu pozycyjnych argumentów: przy wywołaniu pozycyjnym
+o tylu polach każda zmiana kolejności byłaby cichą pomyłką nie do wyłapania
+przez kontrolę typów, bo połowa tych pól ma ten sam typ. Pole `aplikacje` trzeba
+zwalniać osobno, bo `apps.preview.start` podnosi nasłuch HTTP, który bez
+zamknięcia przeżyłby zatrzymanie rdzenia i zostawił zajęty port. Pole
+`dolozenia` i pole `zakresyNarzedzi` niosą adaptery współdzielone z zestawem
+narzędzi tury — jeden byt na dwóch czytelników w obu przypadkach.
+
+W `nastawyNadajnika` szyfrowanie jest włączone, dopóki Operator jawnie go nie
+zdejmie: wartość domyślna ma chronić, a nie ułatwiać. Zejście do rozmowy
+otwartym tekstem ma sens wyłącznie dla przekaźnika na tej samej maszynie
+i wymaga jawnego zapisu.
+
+`zlozPorty` przekłada zestaw bytów na porty kontraktu; rozdział względem
+`Zmontuj` idzie po odpowiedzialności — `Zmontuj` składa byty i wiąże je ze
+sobą, a ta funkcja wyłącznie przekłada je na porty. Katalog danych rdzenia jest
+odczytywany raz i przekazywany do obu składów trzymających stan poza bazą:
+sejfu poświadczeń i magazynu treści biblioteki. Wartość niesie przełącznik
+`-dane` albo zmienną `DANACO_KATALOG_DANYCH`; przy braku wskazania
+`konfiguracja.Domyslna()` wstawia katalog domyślny, a konstruktory adapterów
+wołane bez tej wartości stoją na `konfiguracja.KatalogDanychDomyslny()` — więc
+pominięcie jej rozdzieliłoby stan rdzenia między katalog wskazany a domyślny.
+
+Jeden sejf poświadczeń obsługuje konta i punkty dostępu, zbudowany nad
+skonfigurowanym katalogiem danych, a nie domyślnym: jedna instancja pod jednym
+zamkiem, bo dwa sejfy nad tym samym plikiem ścigałyby się o zapis. Ten sam sejf
+idzie do warstwy modeli — kanał API rozwiązuje odwołanie „sejf:<byt>" przez
+uchwyt pakietowy `models.UstawSejfPoswiadczen`, bo kanały powstają fabryką
+z samego wiersza rejestru i nie mają jak dostać sejfu argumentem; montaż jest
+jedyny w procesie i biegnie przed obsługą pierwszego żądania, więc zapis
+uchwytu wyprzedza wszystkie odczyty.
+
+Katalog akcji i adapter przenoszenia kontekstu powstają przed literałem portów,
+bo mają po dwóch czytelników: własny port niżej i nakładkę AOD, gdzie
+podpowiedzi biorą się z katalogu akcji, a `aod.context.get` z magazynu kompletu
+okna — druga instancja każdego z nich byłaby drugą prawdą o tym samym bycie.
+Centrum powiadomień powstaje przed literałem portów z tego samego powodu: ma
+dwóch czytelników, port `CentrumPowiadomien` i drogę wewnętrzną `Zglos`, którą
+rdzeń wnosi do rejestru zdarzenia, gdy coś zaszło; nastawy idą tym samym
+adapterem ustawień, co konto nadawcze, bo o tym, czy klasa zdarzenia w ogóle
+powiadamia, rozstrzyga sekcja „Powiadomienia". Adapter Asystenta powstaje
+wcześniej analogicznie: port `Asystent` i nakładka AOD wołają ten sam moduł,
+a składacz mostów idzie ten sam, co do rozmowy, bo wykaz narzędzi jest jeden —
+bez `ZMostami` tura zlecenia idzie bez wpisu serwera narzędzi w konfiguracji
+MCP, a model prowadzący zlecenie nie ma ani jednego narzędzia kontraktu.
+Nakładka AOD dostaje te same byty, którymi jedzie reszta rdzenia: port rozmowy,
+moduł Assistant, katalog akcji, magazyn kompletu kontekstu okna i katalog
+urządzeń — bez kompletu wpięć komendy rodziny `aod.*` odmawiają mimo
+rejestracji.
+
+Jeden adapter okien zasila dwa porty, Okna i Role, bo obie rodziny komend
+muszą czytać okno tym samym kompletem wpięć: adapter zbudowany bez `ZWieziami`
+ma `wiezie == nil`, więc `dolozWiezi` (adapter_okna.go) kończy się na pierwszym
+warunku i `role.list` nie widzi więzi koordynator–wykonawca zapisanej w bazie.
+Warsztat PDF stoi w zmiennej, bo bierze go także port bezpieczeństwa — dwa
+adaptery na jednym magazynie zasobów, a nie dwa magazyny.
+
+Kondycja mierzy adres, gniazdo, program i kanał modelu — stąd trzy zależności
+ponad magazyn sond: uruchamiacz procesów jako sonda programowa, izolacja wraz
+z katalogiem roboczym tą samą drogą, co każde inne wołanie arsenału, oraz
+rejestr kanałów jako sonda wywołania modelu. Alerty liczą miary z magazynów,
+o których warstwa alertu nie ma prawa wiedzieć sama: ślad wywołań modelu,
+dziennik błędów i nastawa pułapu kosztu — bez któregokolwiek reguła na tej
+mierze nie powstanie, adapter odmawia jej zapisu zamiast milczeć przy
+ewaluacji. Wywoływacz trzyma nastawę skrótu w konfiguracji, tam gdzie mieszka
+każde inne ustawienie, i czyta deklaracje zdolności klientów, żeby nie
+obiecywać skrótu, którego nie ma kto przechwycić. Zajętość okna kontekstu
+liczy się z treści, która naprawdę pojedzie do modelu: prompt systemowy
+z portu tożsamości, historia rozmowy okna i wpisy pamięci okna; granicę okna
+podaje parametr kanału. Kanały biorą sejf poświadczeń wyłącznie dla
+`channel.credential.status` i widzą z niego sam odczyt, bo stan poświadczenia
+jest pytaniem, czy coś pod odwołaniem leży, a nie prośbą o treść. Warstwa
+mobilna jest rozszerzeniem monitora, nie osobnym portem: rodzina `mobile.*`
+czyta procesy z tego samego rejestru telemetrii, którym jedzie
+`monitor.status` — bez tego ogniwa asercja portu w `handlers_mobile.go` nie
+przechodzi i wszystkie trzy komendy odmawiają, choć adapter jest napisany.
+
+Moduł Workspace bierze instrukcje warstwowe z rozstrzygacza jednego na całą
+platformę, a bibliotekę projektu z tego samego ustalacza katalogu roboczego,
+którym jedzie sesja. Wydobycie treści pliku projektu idzie tym samym
+warsztatem, co `document.text.extract`: warstwa tekstowa dokumentu, a po jej
+braku rozpoznanie pisma — drugiego czytnika dokumentów w rdzeniu nie ma.
+Kolejność ogniw budowy adaptera nie jest dowolna: `ZPamiecia` oddaje adapter
+opakowany o rodzinę `memory.*` i musi stać ostatnie, bo ogniwo dopięte po nim
+oddawałoby adapter wewnętrzny i port straciłby pamięć — rdzeń nie miałby wtedy
+pięciu komend `memory.*`. `ZWylaczeniami` idzie po `ZPamiecia` z tego samego
+powodu: inna kolejność zostawiłaby rodzinę `memory.disable.*` bez magazynu.
+
+Ślad wywołań i rozliczenie zużycia stoją na jednym magazynie — dwa porty,
+jedno repozytorium; Prowenancja bierze ponadto rejestr kanałów wyłącznie dla
+powtórzenia wywołania (`provenance.call.replay`), które jest nowym wywołaniem
+kanału, a nie odczytem śladu. Warsztat PDF nie bierze uruchamiacza procesów
+ani zasad izolacji, bo pracuje biblioteką wkompilowaną w rdzeń i nie startuje
+ani jednego procesu potomnego; bezpieczeństwo dokumentu sięga po ten sam
+warsztat, bo materiał wchodzi tą samą drogą, oraz po repozytorium Studia, bo
+rozpoznanie danych wrażliwych czyta treść dokumentu, a nie zasób magazynu.
+
+Porty Developer i Debata muszą być wypełnione oba: strażniki
+`if d == nil { return }` w `zarejestrujDevelopera` i `zarejestrujDebate`
+wychodzą przed rejestracją, więc port pusty daje odpowiedź `*.unknown` na
+komendy, których klient ma komplet. Debata dostaje ponadto katalog danych pod
+magazyn wydanych transkryptów, grafów i nagrań oraz arsenał pod dwie czynności
+wymagające programu serwerowego: zamianę transkryptu na dokument biurowy
+(Pandoc) i odsłuch debaty silnikiem mowy — reszta modułu, analiza i głosowanie,
+nie startuje ani jednego procesu. Moduł Automations buduje definicje, a
+wykonuje je tym samym adapterem kolejek, którym jedzie domena kolejek, bo
+silnik jest jeden; instancja powstaje w złożeniu modułów (montaz_moduly.go),
+bo dzieli budzik harmonogramu — gdyby port i budzik miały osobne adaptery,
+przypięcia obserwatorów przebiegów rozjechałyby się na dwie mapy.
+
+Biblioteka, Studio, Przeglądarka i Design dostają wyłącznie swoje repozytoria
+i nie dzielą stanu. Biblioteka bierze ponadto katalog danych, ten sam, nad
+którym stoi sejf poświadczeń, bo baza trzyma wyłącznie odwołanie do treści
+i bajty wgranych plików muszą leżeć tam, gdzie reszta stanu rdzenia; arsenał
+i rejestr kanałów są jej potrzebne w dwóch miejscach, pomiar czasu trwania
+nagrania przy odczycie metadanych osadzonych oraz klasyfikacja wsadowa. Studio
+dzieli rejestr kanałów z oknem rozmowy i modułem Roundtable, bo drugiego
+silnika modelu nie ma nigdzie, a magazyn zasobów jest ten sam, którym jedzie
+warsztat PDF i moduł Design — archiwum historii, paczka redakcyjna i strony
+podglądu są zasobami tej samej platformy i leżą w jednym miejscu; repozytorium
+Library wchodzi wyłącznie do odczytu, bo `studio.diff.source` zestawia
+dokument roboczy z materiałem wejściowym. Przeglądarka dostaje ponad własne
+repozytorium katalog danych — magazyn bajtów zrzutów, archiwów i rejestrów
+sieciowych, ten sam korzeń co magazyn biblioteki i zasobów Designu — oraz
+uruchamiacz procesów wraz z izolacją dla silnika Chromium prowadzonego
+protokołem CDP, i nic więcej: moduł nie zna innych modułów.
+
+Design bierze rejestr kanałów tym samym sposobem co Roundtable i Studio: most
+do modelu dla pracy tekstowej, budowy promptu i opisu zasobu — rdzeń nie
+generuje obrazów, rejestr służy wyłącznie operacjom słownym modułu. Design
+dostaje ponadto katalog danych, ten sam, którym jadą sejf poświadczeń
+i magazyn biblioteki, bo `design.asset.upload` trzyma bajty zasobów poza bazą;
+sejf, ten sam co Konta i PunktyDostepu, bo klucze darmowych baz zdjęciowych
+(`design.stock.*`) leżą w nim pod bytem `design.stock.<dostawca>` i moduł
+wyłącznie je czyta; oraz drogę odczytu pisma (`ZOdczytemPisma`) — uruchamiacz
+i bramę izolacji dla jednej czynności, `design.mockup.import`, która czyta
+treść napisów ze zrzutu programem pakietu serwera, bo czytnika liter w czystym
+Go nie ma. Reszta modułu procesów nie startuje i pilnuje tego zapora.
+
+Assistant dostaje wykonawcę zleceń: rejestr kanałów jako droga modelu,
+nadzorcę sesji jako okno zlecenia i nadajnik z kontekstem życia dla strumienia
+tury i `assistant.action.changed` — bez nich zlecenie zostaje `queued` zamiast
+się wykonać; rozpoznanie mowy (`ZMowa`) idzie tym samym adapterem, który
+wypełnia port `Mowa`, bo silnik jest jeden.
+
+Apps dostaje rejestr okien, bo wdrożenie bez istniejącego okna nie ma
+przestrzeni roboczej, z której miałoby cokolwiek wziąć — bez rejestru komenda
+zakłada przebieg dla okna, którego nie ma, i kończy go powodem o pustym
+warsztacie zamiast o braku okna. Apps dostaje ponadto katalog danych, magazyn
+bajtów eksportu, artefaktów i pakietów oraz sejf, z którego bierze się klucz
+wydawcy, i rejestr pozycji katalogu — `apps.package.publish` publikuje do
+tego rejestru, nie do drugiego obok niego. Komponenty własne dostają swój
+rejestr oraz trzy magazyny modułowe, w których `component.create` zakłada byt
+docelowy: projekty, ekspertów i automatyki; czwartego, profili asystenta,
+platforma nie ma, więc rodzaj `assistant` odmawia z powodem, zamiast zakładać
+kafel wskazujący na nic.
+
+Translate dostaje rejestr kanałów jako most do modelu, którym tłumaczenie
+faktycznie woła kanał zamiast zakładać puste panele; wybór kanału niesie już
+żądanie kontraktu (pole `channelId`), a kanał wskazany, nieznany albo
+nieczynny kończy się odmową nazwaną, nie cichym zejściem na kanał domyślny.
+`ZSynteza` wpina silnik syntezy mowy dla `translate.speech.synthesize`: ten
+sam uruchamiacz i te same dwa źródła izolacji, którymi jadą Terminal,
+Developer i silnik rozpoznawania mowy, plus katalog danych rdzenia jako
+miejsce na nagrania — ten sam, który dostają sejf poświadczeń i magazyn
+treści biblioteki. `ZWytworami` wpina drogę `translate.artifact.publish`:
+repozytorium biblioteki jako wiersz pliku i katalog danych rdzenia jako
+magazyn bajtów pod sumą kontrolną — bez niej wytwór nie miałby gdzie leżeć ani
+czym się zgłosić reszcie platformy, więc sama ta komenda odmawia nazywając
+brak.
+
+Przekazanie okna zakłada pozycję kolejki, więc bierze ten sam adapter kolejek,
+którym jedzie domena kolejek i moduł Automations, bo silnik jest jeden — bez
+niego `window.handoff` odmawia wprost. Cztery repozytoria wchodzą, bo
+przekazanie okna domyka lukę między kontraktem a schematem: kontrakt niesie
+identyfikatory zewnętrzne sesji i okien, a schemat wiąże klucze wewnętrzne
+i słowniki modułów oraz kanałów — bez tych czterech repozytoriów adapter nie
+umiałby ani odnaleźć okna wskazanego przez klienta, ani oddać okna w kształcie
+kontraktu.
+
+Sejf Uwierzytelnienia jest tym samym co Konta i PunktyDostepu — jedna
+instancja pod jednym zamkiem, bez tego ogniwa sekret bramki nie ma gdzie
+leżeć i logowanie odmawia zawsze. Wiązanie z kontem właściciela niesie login,
+adres uwierzytelniający i drogi potwierdzenia, bez tego ogniwa rejestracja
+odmawia, bo konta nie ma gdzie zapisać. Nadajnik jest kontem nadawczym
+platformy, nie skrzynką Operatora — nim idą dwa listy systemowe, potwierdzenie
+adresu i droga odzyskania konta; nastawy idą tym samym adapterem ustawień,
+którym idzie każda inna nastawa platformy, więc konto nadawcze zapisane
+w oknie Konfiguracji przesłania to ze startu i pomyłkę w adresie serwera
+poczty naprawia się bez zatrzymywania rdzenia. Urządzenia stoją na tym samym
+repozytorium, bo urządzeniem konta jest to, które weszło przez bramkę — wykaz
+bierze się z sesji bramki.
+
+Katalog rozszerzeń — warstwa danych wystawia go metodą, nie polem
+(dane/extension.go), bo rejestr nie trzyma stanu poza wskaźnikiem na wspólną
+pamięć zapytań; tak samo role okien, sekcje paneli i skrzynki poczty niżej.
+Katalog dostępu i biblioteka ekspertów idą razem z rozgłoszeniem, bo bez nich
+adapter odmawia `internal_error` każdemu żądaniu niosącemu `accessPointId`
+albo `agentId`, a wskazanie puste przechodzi; katalog danych wchodzi tą samą
+drogą, co do modułu Apps, bo paczka przesłana instalacją Personal i dziennik
+piaskownicy są bajtami na dysku. Role okien bierze cały zestaw, nie samo
+repozytorium, bo adapter musi dosięgnąć także przekazań (więź koordynatora)
+i adresów okien — stoi na tym samym adapterze okien, który wypełnia port
+Okna, bo drugi byłby drugą prawdą o oknie. Historia rozmowy okna bierze
+jedno repozytorium, swoje: okien ani sesji nie dobiera, wiąże je zapytanie po
+identyfikatorze kontraktowym, a drugi czytelnik tych samych wierszy byłby
+drugą prawdą o wypowiedzi.
+
+Podagenci biorą komplet wiązań z jednego miejsca
+(adapter_modul_orkiestracja_zlozenie.go: zlozPodagentow): repozytorium
+podagentów i okien, biegi orkiestracji, ten sam adapter kolejek co domena
+kolejek i Automations oraz ocenę żywotności z rejestru procesów sesji; montaż
+nie zna pakietu `podagenci`, wiedzę o nim trzyma adapter, który jako jedyny go
+używa. Zespoły biorą własne repozytorium oraz dziennik rdzenia, ten sam,
+którym mówi reszta montażu — skład, z którego wypadł ekspert usunięty albo
+zarchiwizowany, wraca do klienta krótszy, bo kontrakt nie ma pola, którym
+dałoby się o tym powiedzieć. Historia i archiwum eksperta biorą trzy
+repozytoria: dwa widoki wersji oraz bibliotekę ekspertów, która służy
+wyłącznie oddaniu eksperta w kształcie kontraktu po zmianie wersji. Zakres
+działania eksperta bierze pięć źródeł: własne repozytorium zakresu,
+bibliotekę dla kształtu kontraktu po zmianie, historię wersji dla podglądu
+migawki, katalog modułów dla sprawdzenia wskazania i katalog punktów dostępu
+dla konfiguracji instancji konektora — rozstrzygacz dokłada dziedziczenie
+izolacji do polityki efektywnej, ten sam, którym jedzie okno konfiguracji
+punktów izolacji. Zakresy narzędzi stoją na własnym repozytorium i na
+katalogu profili asystenta — profil pusty w żądaniu bierze profil domyślny.
+
+Silnik mowy powstaje w złożeniu modułów (montaz_moduly.go), bo dzieli
+uruchamiacz procesów i oba źródła izolacji z Terminalem i Developerem, a tę
+samą instancję bierze moduł Assistant — drugi silnik byłby drugą prawdą o tym,
+czy platforma rozpoznaje mowę. Wskaźnik znaczenia stoi na tym samym
+uruchamiaczu i tych samych dwóch źródłach izolacji, co Terminal, Developer
+i silnik mowy, bo pomocnik osadzeń jest procesem drzewa jak każdy inny;
+katalog danych jedzie ten sam, którym jadą sejf, magazyn biblioteki i zasoby
+Designu, bo tam wykłada się pomocnik i tam lądują wagi modelu. Składnica
+wektorów bierze `*sql.DB` z montażu, tak samo jak dziennik transkrypcji
+i dziennik doradcy, bo `dane.Zestaw` uchwytu bazy nie wystawia — stan trzyma
+tabela `fragment_wiedzy`; źródła treści idą przez repozytoria modułu Library
+i historii, bo drugiej drogi do tych wierszy nie ma.
+
+Narzędzia obrazu, media, dokumenty i archiwum dzielą jedną trójkę zależności:
+repozytorium Designu, bo wynik każdej z tych czynności jest zasobem tej samej
+platformy; katalog danych jako magazyn bajtów wyniku, ten sam, którym jadą
+sejf, magazyn biblioteki i zasoby Designu; oraz arsenał wpięty tym samym
+uruchamiaczem i tymi samymi dwoma źródłami izolacji, co Terminal, Developer
+i silniki mowy. Narzędzia dokumentowe biorą repozytorium Designu wyłącznie do
+odczytu, żeby rozwiązać `assetId` żądania na bajty. Silniki neuronowe obrazu
+(`image.upscale`, `image.background.remove`) stoją na tym samym zapleczu, co
+rodzina `image.*`: zaplecze jest bezstanowe, więc druga instancja niczego nie
+rozdwaja, dokładają się do niego wyłącznie wagi sieci i granice czasu liczone
+w minutach. Narzędzia archiwum biorą katalog roboczy podwójnie: raz jako
+obszar wołania `7z`, raz jako jedyny układ odniesienia dla ścieżek żądania —
+bez niego `archive.*` nie miałyby względem czego rozstrzygać `targetPath`.
+
+Poczta bierze repozytorium skrzynek wystawione metodą (dane/poczta_skrzynki.go)
+oraz trzy dalsze wiązania będące tymi samymi bytami, którymi jedzie reszta
+rdzenia: ten sam sejf poświadczeń co konta, punkty dostępu i bramka, bo
+poświadczenie skrzynki nie ma innej drogi niż sejf; ten sam katalog danych,
+co magazyn biblioteki i zasoby Designu; i to samo repozytorium Designu, do
+którego pisze `design.asset.upload`, bo załącznik listu wciągnięty osobną
+drogą byłby zasobem, którego arsenał obrazu i dokumentów nie widzi.
+
+Doraźne dołożenia sesji: adapter powstaje w montażu (montaz.go), bo ten sam
+byt wnosi dołożenia do zestawu narzędzi tury — port oddaje je Operatorowi,
+składacz tury oddaje je modelowi, a prawda ma być jedna. Trzy wiązania niesie
+już konstruktor: dołożenia sesji (migracja 122), wykaz sesji, bo dołożenie
+żyje w stanie sesji i bez przekładu identyfikatora kontraktowego nie ma gdzie
+usiąść, oraz katalog rozszerzeń, z którego bierze się druga połowa wykazu po
+ukośniku. Doradca powstaje w złożeniu modułów (montaz_moduly.go) razem z mową:
+stoi na tym samym rejestrze kanałów, którym jedzie okno rozmowy, i na
+dzienniku bazy.

@@ -6,6 +6,48 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### centrum-poprawki
+
+**Prototyp centrum dowodzenia po serii poprawek Właściciela.** Teren prowadzi
+wygląd i mechanikę okna `centrum-dowodzenia.html` — separatory pasa kart,
+kotwiczenie dymków, wstążki okien, kafle środowisk i modułów, animacje kafli
+oraz obrys w barwie znaku. Praca toczy się poprawka po poprawce, na wskazanie
+Właściciela ze zrzutu ekranu.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/centrum-poprawki` z `main` |
+| **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css` |
+| **Poza terenem** | `design/zasoby/zetony/` — bez zgody Właściciela nie rusza się palety ani skali; `design/zasoby/rama.css`, `karty-okna.css`, `panel-sesji.css` i pozostała warstwa wspólna; wszystkie okna poza centrum dowodzenia; `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `shared/` |
+
+**Warstwa wspólna jest poza terenem, a mimo to została tknięta.** Rewizje
+`9e73f37` i `aa8820e` zmieniły `zasoby/rama.css`: uniesienie przycisku wstążki
+przeszło z `transform` na `top`, a glif przycisku okna z 12 na 16 px. Pierwsza
+zmiana była konieczna — `transform` czyni z przodka blok odniesienia dla
+potomków umocowanych do okna widoku, przez co dymek etykiety tracił kotwicę.
+Obie obejmują wszystkie okna aplikacji i **wymagają kontroli poza tym terenem**.
+
+**Kryteria odbioru**
+
+- Każda poprawka zamknięta pomiarem w przeglądarce, nie deklaracją; wartość
+  przed i po podana w raporcie.
+- Zero błędów konsoli i zero odpowiedzi 4xx przy załadowaniu okna.
+- Wysokości kafli i kart równe w obrębie strefy; opis kafla bez przypadkowego
+  łamania wiersza.
+- Dymek każdego wyzwalacza mieści się w widoku i stoi pod swoim przyciskiem.
+- Wyłącznie żetony `--dn-*`; barwy, odstępy i rozmiary wpisane wprost wyłącznie
+  tam, gdzie Właściciel rozstrzygnął inaczej (barwy animacji kafli środowisk).
+- Kontrolę przeprowadza sesja inna niż wykonawcza.
+
+**Nierozstrzygnięte, przeniesione poza teren**
+
+- Punkty łamania siatki środowisk stoją na 1180 i 860 px, poza skalą
+  `--dn-bp-*` (640 / 960 / 1280 / 1600). Pochodzą sprzed tego terenu.
+- Rozstrzygnięcie o obrysie w barwie znaku żyje jako `--cd-obrys-marki`
+  w arkuszu jednego okna; przy rozszerzeniu na pozostałe okna należy do palety.
+- `design/01-dokumentacja-md/` nie nadąża za wykonaniem.
+
+
 ### zaplecze-modeli
 
 **Szesnaście gigabajtów wag stoi na maszynie i nie ma czym się uruchomić.**

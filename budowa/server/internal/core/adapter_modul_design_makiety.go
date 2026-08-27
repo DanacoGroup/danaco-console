@@ -1,28 +1,6 @@
-// Odpowiedzialność pliku: warsztat makiety modułu Design — ramki
-// (`design.frame.*`), układ automatyczny (`design.layout.auto`), więzy
-// responsywne (`design.constraint.set`), siatki (`design.grid.set`), komponenty
-// (`design.component.*`) i prototyp (`design.prototype.*`). Makieta ze zrzutu
-// i makieta z opisu leżą w `adapter_modul_design_makiety_zrzut.go`; metody stoją
-// na `*adapterDesignu` (`adapter_modul_design.go`).
-//
-// ── Ramka jest EKRANEM, kompozycja PŁÓTNEM ──────────────────────────────────
-// To ramka wyznacza obszar wydania i to jej rozmiar zmienia się przy sprawdzaniu
-// układu na innym urządzeniu. Warstwa należy najwyżej do jednej ramki (UNIQUE na
-// kodzie warstwy, migracja 317) — warstwa w dwóch ramkach naraz musiałaby przy
-// `design.frame.resize.apply` przyjąć dwa różne położenia.
-//
-// ── Więz przelicza się RACHUNKIEM, nie zapowiedzią ──────────────────────────
-// `design.frame.resize.apply` liczy nowe położenia warstw z kotwic i oddaje
-// warstwy PO przeliczeniu, odczytane z bazy. Warstwa bez więzu zostaje tam,
-// gdzie była — brak więzu jest rozstrzygnięciem Operatora, nie luką do
-// wypełnienia domysłem.
-//
-// ── Bilans zamiast ciszy ────────────────────────────────────────────────────
-// `design.prototype.get` niesie `unreachableFrameIds`: ramki, do których nie
-// prowadzi żadne połączenie. Prototyp z ramką osieroconą wygląda w oknie jak
-// prototyp kompletny, a przy przejściu okazuje się, że tam nie da się dojść.
-// `design.constraint.set` niesie `changed` — liczbę więzi NAPRAWDĘ zmienionych,
-// nie liczbę nadesłanych.
+// Odpowiedzialność pliku: warsztat makiety modułu Design — ramki, układ
+// automatyczny, więzy responsywne, siatki, komponenty i prototyp; metody
+// stoją na `*adapterDesignu`.
 package core
 
 import (
@@ -36,24 +14,24 @@ import (
 )
 
 const (
-	// Przedrostki identyfikatorów bytów warsztatu makiety.
+	// Przedrostki identyfikatorów bytów warsztatu makiety: ramka, komponent
+	// i połączenie prototypu dzielą wspólną przestrzeń kodów, odróżnioną tym
+	// przedrostkiem od pozostałych bytów kompozycji.
 	przedrostekRamkiDesign      = "ramka-"
 	przedrostekKomponentuDesign = "komponent-"
 	przedrostekPolaczeniaDesign = "przejscie-"
 
 	// domyslnaSzerokoscRamkiDesignu i domyslnaWysokoscRamkiDesignu wchodzą
 	// wyłącznie wtedy, gdy Operator nie podał ani wymiarów, ani nastawy
-	// urządzenia. Nie jest to format wybrany — jest to jedyna para liczb, jaką da
-	// się podać, gdy żądanie nie mówi o rozmiarze niczego.
+	// urządzenia — jest to jedyna para liczb, jaką da się podać, gdy żądanie
+	// nie mówi o rozmiarze niczego.
 	domyslnaSzerokoscRamkiDesignu = 1440.0
 	domyslnaWysokoscRamkiDesignu  = 1024.0
 )
 
-// nastawyUrzadzenDesignu to rozmiary ekranów znane rdzeniowi. Wykaz stoi tutaj,
-// w jednym miejscu, i czytają go dwie czynności: zakładanie ramki (wypełnienie
-// wymiarów z nazwy nastawy) i wykaz ramek (pole `devicePresets`). Drugi wykaz
-// w kliencie rozjechałby się przy pierwszej poprawce i Operator dostałby ramkę
-// telefonu o wymiarach tabletu.
+// nastawyUrzadzenDesignu to rozmiary ekranów znane rdzeniowi, czytane przez
+// zakładanie ramki i przez wykaz ramek, żeby oba miejsca zgadzały się co do
+// wymiarów jednej nastawy.
 var nastawyUrzadzenDesignu = []struct {
 	Nazwa     string
 	Szerokosc float64
@@ -70,8 +48,8 @@ var nastawyUrzadzenDesignu = []struct {
 	{"zegarek", 184, 224},
 }
 
-// nastawaUrzadzeniaDesignu odnajduje nastawę po nazwie bez względu na wielkość
-// liter.
+// nastawaUrzadzeniaDesignu odnajduje nastawę urządzenia po nazwie bez względu
+// na wielkość liter i oddaje jej szerokość oraz wysokość w pikselach.
 func nastawaUrzadzeniaDesignu(nazwa string) (float64, float64, bool) {
 	szukana := strings.ToLower(strings.TrimSpace(nazwa))
 	for _, nastawa := range nastawyUrzadzenDesignu {
@@ -92,8 +70,8 @@ func nazwyNastawUrzadzenDesignu() []string {
 	return nazwy
 }
 
-// UstawRamke zakłada ramkę albo nadpisuje zastaną — obsługuje
-// `design.frame.set`.
+// UstawRamke zakłada ramkę na kompozycji albo nadpisuje ramkę zastaną tego
+// samego kodu — obsługuje `design.frame.set`.
 func (a *adapterDesignu) UstawRamke(ctx context.Context,
 	z shared.DesignFrameSetRequest) (shared.DesignFrameSetResponse, error) {
 
@@ -116,9 +94,8 @@ func (a *adapterDesignu) UstawRamke(ctx context.Context,
 		return shared.DesignFrameSetResponse{}, bladNieznanejKompozycjiDesignu(z.BoardId, err)
 	}
 
-	// Nastawa urządzenia wypełnia wymiary, których żądanie nie podało. Wskazanie
-	// wprost bije nastawę: Operator, który podał 1200×628, chce tych liczb,
-	// nawet jeśli obok wskazał nastawę.
+	// Wskazanie wymiaru wprost bije nastawę urządzenia: jawna liczba wygrywa
+	// z nazwą nastawy.
 	szerokosc, wysokosc := 0.0, 0.0
 	if z.DevicePreset != nil && strings.TrimSpace(*z.DevicePreset) != "" {
 		nastawaSzerokosc, nastawaWysokosc, znana := nastawaUrzadzeniaDesignu(*z.DevicePreset)
@@ -148,9 +125,8 @@ func (a *adapterDesignu) UstawRamke(ctx context.Context,
 				"ramka %s leży na innej kompozycji niż %s — komenda design.frame.set nie przenosi "+
 					"ramek między planszami", kod, kompozycja.Kod))
 		}
-		// Zmiana ramki zastanej bez podania wymiarów zostawia jej wymiary
-		// dotychczasowe: żądanie zmieniające samą nazwę nie ma prawa przestawić
-		// ekranu na rozmiar domyślny.
+		// Zmiana ramki bez podanych wymiarów zostawia wymiary dotychczasowe,
+		// nie domyślne.
 		if szerokosc <= 0 {
 			szerokosc = zastana.Szerokosc
 		}
@@ -218,12 +194,8 @@ func (a *adapterDesignu) Ramki(ctx context.Context,
 	}, nil
 }
 
-// UsunRamke usuwa ramkę i zwalnia jej warstwy — obsługuje
-// `design.frame.remove`.
-//
-// Warstwy zwolnione wracają w `releasedLayerIds`. Usunięcie ramki nie usuwa
-// warstw: warstwa jest bytem kompozycji, ramka tylko ją grupowała. Cisza o tym,
-// co się z warstwami stało, kazałaby oknu zgadywać, czy ich szukać dalej.
+// UsunRamke usuwa ramkę i zwalnia jej warstwy do `releasedLayerIds`, nie
+// usuwając ich z kompozycji — obsługuje `design.frame.remove`.
 func (a *adapterDesignu) UsunRamke(ctx context.Context,
 	z shared.DesignFrameRemoveRequest) (shared.DesignFrameRemoveResponse, error) {
 
@@ -235,8 +207,8 @@ func (a *adapterDesignu) UsunRamke(ctx context.Context,
 	ramka, err := a.repozytorium.RamkaDesignuPoKodzie(ctx, kod)
 	if err != nil {
 		if czyBrakZasobuDesignu(err) {
-			// Ramki, której nie ma, nie odmawiamy — kontrakt pyta polem `removed`,
-			// czy wiersz istniał, tak samo jak przy usunięciu zasobu.
+			// Ramki, której nie ma, nie odmawiamy — pole `removed` mówi, czy
+			// wiersz istniał.
 			return shared.DesignFrameRemoveResponse{Removed: false}, nil
 		}
 		return shared.DesignFrameRemoveResponse{}, bladDesignu(err)
@@ -256,12 +228,9 @@ func (a *adapterDesignu) UsunRamke(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// UlozAutomatycznie przelicza położenia warstw ramki układem automatycznym —
-// obsługuje `design.layout.auto`.
-//
-// Warstwy wchodzą w kolejności wskazanej żądaniem; brak wskazania bierze
-// warstwy przypisane do ramki w ich kolejności. Wynik jest ZAPISANY, nie
-// policzony na boku: układ automatyczny jest zmianą kompozycji, a nie podglądem.
+// UlozAutomatycznie przelicza i zapisuje położenia warstw ramki układem
+// automatycznym, biorąc kolejność wskazaną żądaniem albo kolejność
+// przypisania do ramki — obsługuje `design.layout.auto`.
 func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 	z shared.DesignLayoutAutoRequest) (shared.DesignLayoutAutoResponse, error) {
 
@@ -309,8 +278,8 @@ func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 			return shared.DesignLayoutAutoResponse{}, bladDesignu(err)
 		}
 	}
-	// Nastawy układu zapisujemy przy ramce, żeby kolejna zmiana rozmiaru mogła je
-	// wziąć bez powtarzania żądania.
+	// Nastawy układu zapisujemy przy ramce, żeby zmiana rozmiaru mogła je wziąć
+	// bez powtórnego żądania.
 	ukladZapis, err := zapisJsonDesignu(&z.Layout)
 	if err != nil {
 		return shared.DesignLayoutAutoResponse{}, bladWydaniaDesignu(err.Error())
@@ -320,8 +289,8 @@ func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 		return shared.DesignLayoutAutoResponse{}, bladDesignu(err)
 	}
 
-	// Warstwy oddajemy odczytane Z BAZY, nie policzone w pamięci: odpowiedź ma
-	// mówić o stanie po zapisie, a nie o zamiarze.
+	// Warstwy oddajemy odczytane z bazy, nie policzone w pamięci, żeby mówić
+	// o stanie po zapisie.
 	odczytane := make([]shared.DesignBoardLayer, 0, len(warstwy))
 	for _, warstwa := range warstwy {
 		swieza, err := a.repozytorium.WarstwaKompozycjiDesignuPoKodzie(ctx, warstwa.Kod)
@@ -336,11 +305,8 @@ func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 }
 
 // ulozWarstwyDesignu liczy położenia warstw w układzie automatycznym i oddaje
-// wymiary treści po ułożeniu. Warstwy zmienia w miejscu.
-//
-// Warstwa bez wymiarów nie dostaje wymiarów zmyślonych: jej rozmiar zostaje
-// pusty, a układ traktuje ją jako zerową. Dopisanie jej „domyślnych" 100×100
-// przesunęłoby wszystko poniżej o liczbę, której nikt nie wskazał.
+// wymiary treści po ułożeniu, zmieniając warstwy w miejscu; warstwa bez
+// wymiarów zostaje zerowa, nie dostaje wymiaru zmyślonego.
 func ulozWarstwyDesignu(ramka dane.RamkaDesignu, uklad shared.DesignAutoLayout,
 	warstwy []dane.WarstwaKompozycji) (float64, float64) {
 
@@ -351,8 +317,8 @@ func ulozWarstwyDesignu(ramka dane.RamkaDesignu, uklad shared.DesignAutoLayout,
 	gora, prawo, dol, lewo := odstepyWewnetrzneDesignu(uklad)
 	poziomo := uklad.Direction == shared.DesignLayoutDirectionHorizontal
 
-	// Rozciągnięcie w poprzek kierunku układa warstwy na całą szerokość (albo
-	// wysokość) ramki pomniejszoną o odstępy wewnętrzne.
+	// Rozciągnięcie w poprzek kierunku układa warstwy na wymiar ramki
+	// pomniejszony o odstępy wewnętrzne.
 	poprzeczna := ramka.Wysokosc - gora - dol
 	if poziomo {
 		poprzeczna = ramka.Wysokosc - gora - dol
@@ -423,7 +389,7 @@ func odstepyWewnetrzneDesignu(uklad shared.DesignAutoLayout) (float64, float64, 
 }
 
 // wyrownaniePoprzeczneDesignu liczy odsunięcie warstwy w poprzek kierunku
-// układania.
+// układania, według wyrównania początku, środka albo końca.
 func wyrownaniePoprzeczneDesignu(wyrownanie *shared.DesignLayoutAlign,
 	dostepne, wlasne float64) float64 {
 
@@ -439,8 +405,8 @@ func wyrownaniePoprzeczneDesignu(wyrownanie *shared.DesignLayoutAlign,
 	return 0
 }
 
-// UstawWiezy zapisuje więzy responsywne warstw ramki — obsługuje
-// `design.constraint.set`.
+// UstawWiezy zapisuje więzy responsywne warstw ramki i oddaje liczbę więzi
+// rzeczywiście zmienionych — obsługuje `design.constraint.set`.
 func (a *adapterDesignu) UstawWiezy(ctx context.Context,
 	z shared.DesignConstraintSetRequest) (shared.DesignConstraintSetResponse, error) {
 
@@ -475,9 +441,8 @@ func (a *adapterDesignu) UstawWiezy(ctx context.Context,
 		return shared.DesignConstraintSetResponse{}, bladNieznanejRamkiDesignu(z.FrameId, err)
 	}
 
-	// Stan zastany odczytujemy PRZED zapisem, bo `changed` pyta o zmianę, a nie
-	// o liczbę wierszy w żądaniu. Więz nadesłany identyczny z zastanym nie jest
-	// zmianą i nie ma prawa być tak zaraportowany.
+	// Stan zastany odczytujemy przed zapisem: `changed` liczy zmiany
+	// rzeczywiste, nie wiersze żądania.
 	zastane, err := a.repozytorium.WiezyRamkiDesignu(ctx, ramka.ID)
 	if err != nil {
 		return shared.DesignConstraintSetResponse{}, bladDesignu(err)
@@ -505,8 +470,8 @@ func (a *adapterDesignu) UstawWiezy(ctx context.Context,
 		return shared.DesignConstraintSetResponse{}, bladDesignu(err)
 	}
 
-	// Odpowiedź niesie więzy odczytane z bazy — komplet obowiązujący ramkę, nie
-	// echo żądania: żądanie bywa częściowe, a okno ma pokazać stan całej ramki.
+	// Odpowiedź niesie więzy odczytane z bazy, komplet obowiązujący ramkę, nie
+	// echo żądania częściowego.
 	po, err := a.repozytorium.WiezyRamkiDesignu(ctx, ramka.ID)
 	if err != nil {
 		return shared.DesignConstraintSetResponse{}, bladDesignu(err)
@@ -516,7 +481,8 @@ func (a *adapterDesignu) UstawWiezy(ctx context.Context,
 	}, nil
 }
 
-// wiezyKontraktuDesignu przekłada więzy warstwy danych na więzy kontraktu.
+// wiezyKontraktuDesignu przekłada wykaz więzów warstwy z postaci danych na
+// wykaz więzów kontraktu API modułu Design.
 func wiezyKontraktuDesignu(wiezy []dane.WiezRamkiDesignu) []shared.DesignConstraint {
 	lista := make([]shared.DesignConstraint, 0, len(wiezy))
 	for _, wiez := range wiezy {
@@ -567,10 +533,8 @@ func (a *adapterDesignu) ZmienRozmiarRamki(ctx context.Context,
 		warstwa, err := a.repozytorium.WarstwaKompozycjiDesignuPoKodzie(ctx, kod)
 		if err != nil {
 			if czyBrakZasobuDesignu(err) {
-				// Warstwa zniknęła z kompozycji, a przynależność do ramki została:
-				// pomijamy ją, bo nie ma czego przeliczyć. Odmowa całej komendy
-				// z powodu jednej zgubionej warstwy odebrałaby Operatorowi
-				// przeliczenie pozostałych.
+				// Warstwa zniknęła z kompozycji: pomijamy ją, żeby nie blokować
+				// przeliczenia pozostałych warstw.
 				continue
 			}
 			return shared.DesignFrameResizeApplyResponse{}, bladDesignu(err)
@@ -591,9 +555,8 @@ func (a *adapterDesignu) ZmienRozmiarRamki(ctx context.Context,
 	}
 
 	ramka.Szerokosc, ramka.Wysokosc = z.Width, z.Height
-	// Nastawa urządzenia przestaje obowiązywać po zmianie rozmiaru na ręczny:
-	// ramka o wymiarach 500×800 z nastawą „telefon" (390×844) kłamałaby o tym,
-	// jaki ekran przedstawia.
+	// Nastawa urządzenia przestaje obowiązywać po ręcznej zmianie rozmiaru,
+	// by ramka nie kłamała.
 	if ramka.NastawaUrzadzenia != nil {
 		if szerokosc, wysokosc, znana := nastawaUrzadzeniaDesignu(*ramka.NastawaUrzadzenia); znana &&
 			(szerokosc != z.Width || wysokosc != z.Height) {
@@ -613,14 +576,8 @@ func (a *adapterDesignu) ZmienRozmiarRamki(ctx context.Context,
 	}, nil
 }
 
-// przeliczWarstweWiezemDesignu liczy nowe położenie i rozmiar warstwy po zmianie
-// rozmiaru ramki, wedle jej kotwic.
-//
-//	start    — trzyma odległość od krawędzi początkowej (lewej, górnej);
-//	end      — trzyma odległość od krawędzi końcowej;
-//	center   — trzyma środek warstwy w środku ramki;
-//	stretch  — trzyma OBIE odległości, więc warstwa rośnie razem z ramką;
-//	scale    — skaluje położenie i rozmiar proporcjonalnie.
+// przeliczWarstweWiezemDesignu liczy nowe położenie i rozmiar warstwy po
+// zmianie rozmiaru ramki, według jej kotwicy poziomej i pionowej.
 func przeliczWarstweWiezemDesignu(warstwa *dane.WarstwaKompozycji, wiez dane.WiezRamkiDesignu,
 	staraSzerokosc, staraWysokosc, nowaSzerokosc, nowaWysokosc float64) {
 
@@ -675,8 +632,8 @@ func przeliczOsWiezemDesignu(polozenie, rozmiar *float64, kotwica shared.DesignC
 	return polozenie, rozmiar
 }
 
-// UstawSiatke zapisuje siatkę układu — ramki albo całej kompozycji. Obsługuje
-// `design.grid.set`.
+// UstawSiatke zapisuje siatkę układu, ramki albo całej kompozycji, jedną
+// nastawą — obsługuje `design.grid.set`.
 func (a *adapterDesignu) UstawSiatke(ctx context.Context,
 	z shared.DesignGridSetRequest) (shared.DesignGridSetResponse, error) {
 
@@ -739,7 +696,8 @@ func sprawdzSiatkeDesignu(siatka shared.DesignGrid) error {
 	return nil
 }
 
-// sprawdzUkladDesignu odrzuca nastawy układu spoza kontraktu PRZED zapisem.
+// sprawdzUkladDesignu odrzuca nastawy układu automatycznego spoza kontraktu,
+// zanim zapiszemy je do ramki.
 func sprawdzUkladDesignu(komenda string, uklad shared.DesignAutoLayout) error {
 	if err := sprawdzWyliczenieDesignu(komenda, "layout.direction", uklad.Direction,
 		shared.WartosciDesignLayoutDirection()); err != nil {
@@ -758,13 +716,9 @@ func sprawdzUkladDesignu(komenda string, uklad shared.DesignAutoLayout) error {
 	return nil
 }
 
-// ZapiszKomponent utrwala komponent wraz z wariantami — obsługuje
+// ZapiszKomponent utrwala komponent wraz z wariantami i oddaje w
+// `propagatedTo` liczbę instancji odczytaną z bazy po zapisie — obsługuje
 // `design.component.save`.
-//
-// `propagatedTo` niesie liczbę instancji ODCZYTANĄ z bazy po zapisie: zmiana
-// komponentu dochodzi do wszystkich jego instancji, bo instancja wskazuje
-// komponent kluczem obcym i czyta z niego warianty. Liczba z żądania byłaby
-// obietnicą, a nie skutkiem.
 func (a *adapterDesignu) ZapiszKomponent(ctx context.Context,
 	z shared.DesignComponentSaveRequest) (shared.DesignComponentSaveResponse, error) {
 
@@ -798,9 +752,8 @@ func (a *adapterDesignu) ZapiszKomponent(ctx context.Context,
 		}
 	}
 
-	// Zestaw żetonów wskazany a nieznany jest odmową: komponent czerpiący
-	// wartości z zestawu, którego nie ma, po pierwszym wyrysie pokazałby barwy
-	// wzięte znikąd.
+	// Zestaw żetonów wskazany a nieznany jest odmową, żeby komponent nie
+	// czerpał barw znikąd.
 	if z.TokenSetId != nil && strings.TrimSpace(*z.TokenSetId) != "" {
 		if _, err := a.repozytorium.ZestawZetonowDesignuPoKodzie(ctx,
 			strings.TrimSpace(*z.TokenSetId)); err != nil {
@@ -832,7 +785,8 @@ func (a *adapterDesignu) ZapiszKomponent(ctx context.Context,
 	}, nil
 }
 
-// Komponenty zwraca komponenty okna — obsługuje `design.component.list`.
+// Komponenty zwraca komponenty okna, wszystkie albo jeden wskazany kodem —
+// obsługuje `design.component.list`.
 func (a *adapterDesignu) Komponenty(ctx context.Context,
 	z shared.DesignComponentListRequest) (shared.DesignComponentListResponse, error) {
 
@@ -902,8 +856,7 @@ func (a *adapterDesignu) DolozInstancjeKomponentu(ctx context.Context,
 		wariant = warianty[0].Name
 	}
 
-	// Ramka wskazana a nieznana jest odmową; ramka z innej kompozycji też —
-	// instancja w ramce spoza planszy nie miałaby gdzie stanąć.
+	// Ramka wskazana a nieznana jest odmową, tak samo ramka z innej kompozycji.
 	var ramka *dane.RamkaDesignu
 	if z.FrameId != nil && strings.TrimSpace(*z.FrameId) != "" {
 		wiersz, err := a.repozytorium.RamkaDesignuPoKodzie(ctx, strings.TrimSpace(*z.FrameId))
@@ -952,7 +905,7 @@ func (a *adapterDesignu) DolozInstancjeKomponentu(ctx context.Context,
 	}
 
 	// Komponent odczytujemy po zapisie instancji, żeby `instanceCount` niósł
-	// liczbę po dołożeniu, a nie przed.
+	// liczbę po dołożeniu.
 	po, err := a.repozytorium.KomponentDesignuPoKodzie(ctx, komponent.Kod)
 	if err != nil {
 		return shared.DesignComponentInstanceAddResponse{}, bladDesignu(err)
@@ -990,8 +943,8 @@ func (a *adapterDesignu) UstawPolaczeniePrototypu(ctx context.Context,
 	if err != nil {
 		return shared.DesignPrototypeLinkSetResponse{}, bladNieznanejKompozycjiDesignu(z.BoardId, err)
 	}
-	// Obie ramki sprawdzamy PRZED zapisem: przejście do ramki, której nie ma,
-	// wyglądałoby w oknie jak przejście gotowe i padłoby dopiero przy kliknięciu.
+	// Obie ramki sprawdzamy przed zapisem, żeby przejście do brakującej nie
+	// wyglądało jak gotowe.
 	for pole, kod := range map[string]string{
 		"fromFrameId": strings.TrimSpace(z.FromFrameId),
 		"toFrameId":   strings.TrimSpace(z.ToFrameId),
@@ -1101,12 +1054,9 @@ func (a *adapterDesignu) Prototyp(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// ramkiNieosiagalneDesignu oddaje ramki, do których nie da się dojść.
-//
-// Przy wskazanej ramce początkowej rachunek jest przejściem po grafie od niej:
-// nieosiągalna jest ramka, do której nie prowadzi ŻADNA droga, a nie tylko ta
-// bez połączenia wchodzącego. Bez wskazania początku nieosiągalna jest ramka bez
-// ani jednego połączenia wchodzącego — bo nie wiadomo, skąd Operator zaczyna.
+// ramkiNieosiagalneDesignu oddaje ramki, do których nie da się dojść:
+// przejściem po grafie od ramki początkowej, albo, bez niej, ramki bez
+// połączenia wchodzącego.
 func ramkiNieosiagalneDesignu(ramki []dane.RamkaDesignu,
 	polaczenia []dane.PolaczeniePrototypuDesignu, poczatkowa string) []string {
 
@@ -1125,7 +1075,7 @@ func ramkiNieosiagalneDesignu(ramki []dane.RamkaDesignu,
 			}
 		}
 		// Wszystkie ramki bez połączeń to prototyp jeszcze niezbudowany, nie
-		// prototyp zepsuty — wykaz obejmujący wszystko nie niesie wiedzy.
+		// zepsuty.
 		if len(osierocone) == len(ramki) {
 			return nil
 		}
@@ -1159,8 +1109,8 @@ func ramkiNieosiagalneDesignu(ramki []dane.RamkaDesignu,
 	return nieosiagalne
 }
 
-// UsunPolaczeniePrototypu usuwa przejście — obsługuje
-// `design.prototype.link.remove`.
+// UsunPolaczeniePrototypu usuwa przejście prototypu po jego kodzie —
+// obsługuje `design.prototype.link.remove`.
 func (a *adapterDesignu) UsunPolaczeniePrototypu(ctx context.Context,
 	z shared.DesignPrototypeLinkRemoveRequest) (shared.DesignPrototypeLinkRemoveResponse, error) {
 
@@ -1175,7 +1125,8 @@ func (a *adapterDesignu) UsunPolaczeniePrototypu(ctx context.Context,
 	return shared.DesignPrototypeLinkRemoveResponse{Removed: usuniete}, nil
 }
 
-// ramkaKontraktuDesignu składa `DesignFrame` kontraktu z wiersza ramki.
+// ramkaKontraktuDesignu składa `DesignFrame` kontraktu z wiersza ramki, wraz
+// z jej siatką i układem, jeśli je ma.
 func ramkaKontraktuDesignu(kompozycja string, wiersz dane.RamkaDesignu) shared.DesignFrame {
 	ramka := shared.DesignFrame{
 		Id: wiersz.Kod, BoardId: kompozycja, Name: wiersz.Nazwa,
@@ -1197,7 +1148,8 @@ func ramkaKontraktuDesignu(kompozycja string, wiersz dane.RamkaDesignu) shared.D
 	return ramka
 }
 
-// komponentKontraktuDesignu składa `DesignComponent` kontraktu z wiersza.
+// komponentKontraktuDesignu składa `DesignComponent` kontraktu z wiersza
+// komponentu wraz z jego wariantami.
 func komponentKontraktuDesignu(wiersz dane.KomponentDesignu) shared.DesignComponent {
 	liczba := wiersz.Liczba
 	return shared.DesignComponent{
@@ -1221,7 +1173,8 @@ func wariantyKomponentuDesignu(wiersz dane.KomponentDesignu) []shared.DesignComp
 	return warianty
 }
 
-// polaczenieKontraktuDesignu składa `DesignPrototypeLink` kontraktu z wiersza.
+// polaczenieKontraktuDesignu składa `DesignPrototypeLink` kontraktu z wiersza
+// połączenia prototypu ramek.
 func polaczenieKontraktuDesignu(wiersz dane.PolaczeniePrototypuDesignu) shared.DesignPrototypeLink {
 	polaczenie := shared.DesignPrototypeLink{
 		Id: wiersz.Kod, FromFrameId: wiersz.RamkaOdKod, ToFrameId: wiersz.RamkaDoKod,
@@ -1294,7 +1247,8 @@ func (a *adapterDesignu) KompozycjaZdarzenia(ctx context.Context,
 	return kompozycja, true
 }
 
-// KompozycjaRamkiZdarzenia odczytuje kompozycję, do której należy ramka.
+// KompozycjaRamkiZdarzenia odczytuje kompozycję, do której należy wskazana
+// ramka, na potrzeby szyny zdarzeń.
 func (a *adapterDesignu) KompozycjaRamkiZdarzenia(ctx context.Context,
 	ramka string) (shared.DesignBoard, bool) {
 

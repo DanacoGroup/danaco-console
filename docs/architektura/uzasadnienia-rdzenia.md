@@ -407,3 +407,57 @@ o powodzeniu.
 Czynność wyciągania obrazów i załączników oddaje liczbę wyciągniętą, nie
 zapowiedzianą: dokument bez obrazów oddaje zero i to jest odpowiedź
 prawdziwa, nie niepowodzenie.
+
+## budowa/server/internal/core/skutek_wejscia_test.go
+
+Sprawdziany drogi wejścia do aplikacji mierzą skutek trwały w bazie i w skrzynce,
+nigdy samą odpowiedź udaną komendy — odpowiedź udana nie jest dowodem niczego,
+bo pole stanu potrafi nieść wartość pozytywną przy zapisie, który się nie udał.
+
+Droga rejestracji bez konta nadawczego, czyli bez ustawionego nadajnika poczty,
+przechodzi zgodnie z rejestrem decyzji: poczta jest potrzebna do pisania do
+innych ludzi, a nie do postawienia bramki na własnym urządzeniu, a nadajnik
+ustawia się w oknie Konfiguracji, czyli już za tą bramką. Czwórka sprawdzianów
+tej drogi mierzy kolejno: że rejestracja bez poczty zakłada konto i stawia
+w sejfie znacznik pamiętający brak adresu nadawczego; że samo hasło otwiera
+bramkę mimo braku potwierdzenia adresu, bo znacznik zdejmuje wyłącznie ten jeden
+warunek wejścia; że ustawienie nadajnika po rejestracji nie potwierdza adresu
+samo z siebie, skoro potwierdza go wyłącznie droga przepisana z listu, a listu
+na tej instalce nie było; oraz że znacznik istnieje tylko po tej stronie
+granicy, gdzie listu nie było — na drodze z pocztą działającą nie ma prawa
+powstać ani przed potwierdzeniem adresu, ani po nim, bo inaczej wyjątek
+pierwszego uruchomienia zamieniłby się w trwałe obejście bramki.
+
+Sprawdzian jednorazowości rejestracji mierzy też, czego druga próba nie robi:
+nie podmienia konta, nie zakłada drugiej kotwicy hasła i nie wysyła drugiego
+listu; kod odmowy `conflict` pozwala klientowi odróżnić konto już istniejące od
+awarii wartej ponowienia.
+
+Sprawdzian jednorazowości drogi potwierdzenia mierzy obie jej połowy: droga
+z listu wpuszcza raz i przy drugiej próbie odmawia, a druga połowa mierzona jest
+na drodze odzyskania konta, ponieważ powtórzone `auth.verify` odbija się o stan
+konta już potwierdzonego zanim dojdzie do sprawdzenia samej drogi, więc nie
+dowodzi, że zamknięcie wiersza drogi w ogóle działa — jedynym zabezpieczeniem
+drugiego użycia drogi odzyskania jest zamknięcie jej wiersza w bazie.
+
+Pole `cel` rozdziela drogę weryfikacji od drogi odzyskania, choć obie wyglądają
+tak samo i leżą w jednej tabeli: bez tego rozdziału droga wysłana na prośbę
+o nowe hasło potwierdzałaby adres, a droga wysłana przy rejestracji ustawiałaby
+hasło. Sprawdzian dowodzi też, że próba użycia drogi poza jej czynnością nie
+zużywa jej — odrzucenie i spalenie naraz byłoby gorsze od samej odmowy.
+
+Odpowiedź `auth.recover` nie może być wyrocznią: komenda jest osiągalna przed
+zalogowaniem, więc pyta ją każdy, a odpowiedź różniąca się choćby jednym bajtem
+zdradzałaby pytającemu, czy dany adres ma konto właściciela. Dla adresu obcego
+list nie wychodzi wcale, bo wysłany szedłby do osoby, która o nic nie prosiła.
+
+Wykaz urządzeń oznacza urządzenie bieżące wyłącznie po tożsamości połączenia
+przekazanej w kontekście gniazda, nigdy przez zgadywanie po ostatnim wejściu —
+inaczej wskazywałby cudzą maszynę jako własną, a Operator odebrałby dostęp nie
+tej sesji, co trzeba.
+
+Sprawdzian trwałości drogi potwierdzenia nie ufa nazwom kolumn: czyta cały
+wiersz tabeli i szuka w każdej wartości materiału wysłanego listem, żeby kolumna
+dołożona kiedyś obok `skrot` nie przeszła pomiaru pytającego wyłącznie o `skrot`.
+Gdyby materiał z listu leżał w tabeli jawnie, kopia bazy wystarczyłaby do
+potwierdzenia cudzej tożsamości i ustawienia hasła do konta.

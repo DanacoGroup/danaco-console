@@ -1,3 +1,5 @@
+// Sprawdziany drogi wejścia do aplikacji mierzą skutek trwały w bazie i w
+// skrzynce, a nie samą odpowiedź udaną komendy.
 package core
 
 import (
@@ -11,37 +13,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany drogi wejścia do aplikacji.
-//
-// Mierzony jest SKUTEK, nie koperta. Odpowiedź udana nie jest dowodem niczego —
-// w tym produkcie zdarzało się `status: ok` przy pustym wyniku. Dowodem jest
-// wiersz w bazie, list w skrzynce i to, że wywołanie następne zachowuje się
-// inaczej niż pierwsze.
-
 // ── rejestracja ──────────────────────────────────────────────────────────────
 
 // ── droga bez poczty ─────────────────────────────────────────────────────────
-//
-// Cztery sprawdziany poniżej trzymają drogę pierwszego uruchomienia na maszynie,
-// która konta nadawczego nie ma. Rejestr decyzji rozstrzyga ją pozycją 11:
-// rejestracja bez poczty PRZECHODZI, bo poczta jest potrzebna do pisania do
-// innych ludzi, a nie do postawienia bramki na własnym urządzeniu — a nadajnik
-// ustawia się w oknie Konfiguracji, czyli za tą bramką.
-//
-// Do tej pory droga stała wyłącznie na komentarzu w rdzeniu i na pomiarze
-// jednorazowym, więc pierwsza zmiana w bramce zniosłaby ją bez niczyjej wiedzy.
 
-// TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik pilnuje pierwszego kroku:
-// konto powstaje, a platforma zapamiętuje, że listu nie było komu nadać.
-//
-// Mierzony jest skutek trwały, nie koperta. `registered: true` wygląda tak samo
-// przy koncie zapisanym i przy zapisie, który się nie udał, więc dowodem jest
-// wiersz konta, kotwica hasła i wpis w sejfie.
-//
-// `pendingVerification` idzie FAŁSZEM, choć adres potwierdzenia nie ma:
-// kontrakt wiąże prawdę tego pola z faktem nadania listu, a tu żaden list nie
-// wyszedł. Trzeciego stanu — „konto jest, adres niepotwierdzony, listu nie
-// wysłano" — kontrakt nie ma i to pole go nie udaje.
+// Cztery sprawdziany poniżej trzymają drogę pierwszego uruchomienia na maszynie
+// bez konta nadawczego.
+
+// TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik mierzy skutek trwały
+// rejestracji bez poczty: wiersz konta, kotwicę hasła i wpis w sejfie, nie samo
+// pole `registered`.
 func TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaBrak)
 
@@ -73,9 +54,8 @@ func TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik(t *testing.T) {
 		`SELECT COUNT(*) FROM metoda_uwierzytelnienia WHERE kotwica = 1`); ile != 1 {
 		t.Errorf("kotwic hasła w bazie: %d, oczekiwana 1 — bez niej bramki nie otworzy nic", ile)
 	}
-	// Droga potwierdzenia NIE powstaje: zapisuje ją dopiero czynność nadania
-	// listu, a ta się tu nie wykonuje. Skrót zapisany bez listu byłby drogą,
-	// której nie zna nikt.
+	// Droga potwierdzenia nie powstaje bez czynności nadania listu, która się
+	// tu nie wykonuje.
 	if ile := liczbaWierszy(t, u, `SELECT COUNT(*) FROM potwierdzenie_tozsamosci`); ile != 0 {
 		t.Errorf("po rejestracji bez poczty leży %d dróg potwierdzenia, oczekiwane 0", ile)
 	}
@@ -95,16 +75,9 @@ func TestRejestracjaBezPocztyZakladaKontoIStawiaZnacznik(t *testing.T) {
 	}
 }
 
-// TestBezPocztyBramkeOtwieraSamoHaslo pilnuje drugiego kroku: konto założone bez
-// listu naprawdę wpuszcza.
-//
-// To jest cały cel znacznika. Bramkę zamyka brak potwierdzenia adresu (straż
-// pierwsza w `usterki_wejscia_test.go`), a na świeżej instalce potwierdzenia nie
-// ma skąd wziąć — więc bez tego wyjątku pierwszy Operator zostawałby przed
-// platformą na zawsze: listu nie ma, bo nie było czym nadać, a drugiej
-// rejestracji nie ma, bo wykonuje się raz.
-//
-// Dowodem jest token sesji i wiersz w `sesja_bramki`, nie samo `ok`.
+// TestBezPocztyBramkeOtwieraSamoHaslo pilnuje, że konto założone bez listu
+// naprawdę wpuszcza: dowodem jest token sesji i wiersz w `sesja_bramki`, nie
+// samo pole `ok`.
 func TestBezPocztyBramkeOtwieraSamoHaslo(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaBrak)
 
@@ -130,9 +103,8 @@ func TestBezPocztyBramkeOtwieraSamoHaslo(t *testing.T) {
 		`SELECT COUNT(*) FROM sesja_bramki WHERE uniewazniono IS NULL`); ile != 1 {
 		t.Errorf("po wejściu hasłem czynnych sesji w bazie: %d, oczekiwana 1", ile)
 	}
-	// Wejście niczego nie udaje: adres dalej jest niepotwierdzony, a znacznik
-	// dalej stoi. Zdjęcie któregokolwiek z nich przy wejściu znaczyłoby, że
-	// platforma uznała adres za sprawdzony, choć nikt go nie sprawdził.
+	// Wejście niczego nie udaje: adres pozostaje niepotwierdzony, a znacznik
+	// bramki nadal stoi.
 	if ile := liczbaWierszy(t, u,
 		`SELECT COUNT(*) FROM konto_wlasciciela WHERE potwierdzone = 0`); ile != 1 {
 		t.Errorf("po wejściu hasłem kont niepotwierdzonych: %d, oczekiwane 1", ile)
@@ -141,8 +113,8 @@ func TestBezPocztyBramkeOtwieraSamoHaslo(t *testing.T) {
 		t.Error("wejście hasłem zdjęło znacznik bramki bez poczty — następne wejście" +
 			" odbije się o brak potwierdzenia")
 	}
-	// Hasło nie pasujące ma dalej odmawiać: wyjątek zdejmuje warunek
-	// potwierdzenia adresu i tylko ten jeden.
+	// Złe hasło ma dalej odmawiać: wyjątek zdejmuje wyłącznie warunek
+	// potwierdzenia adresu.
 	blad := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthLogin,
 		shared.AuthLoginRequest{
 			Method: shared.AuthMethodKindPassword,
@@ -155,17 +127,8 @@ func TestBezPocztyBramkeOtwieraSamoHaslo(t *testing.T) {
 	}
 }
 
-// TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu pilnuje trzeciego kroku:
-// ustawienie nadajnika w oknie Konfiguracji NIE potwierdza adresu samo z siebie.
-//
-// Adres pozostaje niepotwierdzony, bo potwierdza go wyłącznie droga przepisana
-// z listu, a listu na tej instalce nie było. Rejestracja wykonuje się raz, więc
-// drugi list z drogą weryfikacji nie wyjdzie; droga z odzyskania konta jest
-// wydana do innej czynności i `auth.verify` jej nie przyjmuje.
-//
-// Sprawdzian utrwala stan, w którym po ustawieniu poczty Operator nie ma czym
-// potwierdzić adresu. Wejście hasłem działa dalej, ale odzyskanie konta listem
-// stoi na adresie, którego nikt nie sprawdził.
+// TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu pilnuje, że ustawienie
+// nadajnika w oknie Konfiguracji nie potwierdza adresu samo z siebie.
 func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaBrak)
 
@@ -177,8 +140,8 @@ func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 			Password: hasloPierwsze,
 		}, &rejestracja)
 
-	// Nadajnik pojawia się PO rejestracji — tą samą drogą, którą ustawia go
-	// Operator: komendą konfiguracji, zza bramki.
+	// Nadajnik pojawia się po rejestracji tą samą drogą, którą ustawia go
+	// Operator: komendą konfiguracji.
 	odbiornik := podnieOdbiornikSMTP(t)
 	ustawNadajnik(t, u, odbiornik)
 
@@ -194,8 +157,8 @@ func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 			powtorka.Code, shared.ErrorCodeConflict)
 	}
 
-	// Odzyskanie konta list wysyła — nadajnik już działa — ale droga z niego
-	// jest wydana do ustawienia hasła, nie do potwierdzenia adresu.
+	// Odzyskanie konta list wysyła, ale droga z niego jest wydana do ustawienia
+	// hasła, nie potwierdzenia.
 	var odzyskanie shared.AuthRecoverResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
 		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
@@ -232,18 +195,9 @@ func TestBezPocztyPotwierdzenieAdresuCzekaNaDrogeZListu(t *testing.T) {
 	}
 }
 
-// TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo pilnuje czwartego kroku:
-// granicy istnienia znacznika po obu jej stronach.
-//
-// Znacznik zdejmuje potwierdzenie adresu (`auth.verify`) i cofnięcie
-// rejestracji — obie chwile, w których przestaje być prawdą. Sprawdzian mierzy
-// drogę Z POCZTĄ, bo tylko ona daje drogę potwierdzenia przepisaną z listu:
-// znacznik nie ma tam prawa powstać ani przed potwierdzeniem, ani po nim.
-//
-// Ta strona granicy jest ważniejsza od drugiej. Znacznik postawiony tam, gdzie
-// list doszedł, zdejmowałby warunek potwierdzenia adresu na instalce, która ten
-// adres potwierdzić potrafi — czyli zamieniałby wyjątek pierwszego uruchomienia
-// w trwałe obejście bramki.
+// TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo pilnuje granicy istnienia
+// znacznika bramki: na drodze z pocztą znacznik nie powstaje ani przed
+// potwierdzeniem adresu, ani po nim.
 func TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 
@@ -270,14 +224,9 @@ func TestZnacznikBezPocztyStoiTylkoTamGdzieListuNieBylo(t *testing.T) {
 	}
 }
 
-// TestRejestracjaNieZakladaSesji pilnuje, że rejestracja nie wpuszcza.
-//
-// Gdyby wpuszczała, potwierdzenie adresu byłoby ozdobą: konto działałoby bez
-// niego, a adres — jedyna droga odzyskania dostępu — zostawałby niesprawdzony aż
-// do dnia, w którym trzeba nim odzyskać konto.
-//
-// Dowodem jest brak wiersza w `sesja_bramki`, a nie brak pola w odpowiedzi:
-// sesja założona i przemilczana w kopercie byłaby sesją tak samo ważną.
+// TestRejestracjaNieZakladaSesjiIOddajePendingVerification pilnuje, że
+// rejestracja nie wpuszcza: dowodem jest brak wiersza w `sesja_bramki`, a nie
+// brak pola w odpowiedzi.
 func TestRejestracjaNieZakladaSesjiIOddajePendingVerification(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 
@@ -316,14 +265,9 @@ func TestRejestracjaNieZakladaSesjiIOddajePendingVerification(t *testing.T) {
 	}
 }
 
-// TestDrugaRejestracjaOdmawiaKodemConflict pilnuje jednorazowości rejestracji.
-//
-// Powtórzone żądanie jest próbą podmiany hasła bez znajomości starego — od tego
-// jest odzyskanie konta. Odmowa musi być nazwana kodem `conflict`, bo tylko
-// wtedy klient odróżni „konto już jest" od awarii wartej ponowienia.
-//
-// Sprawdzian mierzy też, czego druga rejestracja NIE zrobiła: nie podmieniła
-// konta, nie założyła drugiej kotwicy i nie wysłała drugiego listu.
+// TestDrugaRejestracjaOdmawiaKodemConflict pilnuje jednorazowości rejestracji:
+// powtórzone żądanie odmawia kodem `conflict` i nie zmienia konta, kotwicy ani
+// listów.
 func TestDrugaRejestracjaOdmawiaKodemConflict(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	zarejestrujWlasciciela(t, u)
@@ -358,11 +302,8 @@ func TestDrugaRejestracjaOdmawiaKodemConflict(t *testing.T) {
 
 // ── potwierdzenie adresu ─────────────────────────────────────────────────────
 
-// TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia sprawdza obie
-// połowy jednorazowości: droga wpuszcza raz i tylko raz.
-//
-// Droga wpuszczająca dwa razy jest drogą wpuszczającą każdego, kto zajrzy do
-// skrzynki później — list zostaje w niej na zawsze.
+// TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia sprawdza
+// jednorazowość drogi z listu: wpuszcza raz, a powtórzone użycie odmawia.
 func TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	droga := zarejestrujWlasciciela(t, u)
@@ -405,12 +346,8 @@ func TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia(t *testing.T) {
 			" droga zużyta wydała drugi token", ile)
 	}
 
-	// Druga połowa jednorazowości, mierzona na drodze odzyskania.
-	//
-	// Powtórzone `auth.verify` odbija się o stan konta („adres jest już
-	// potwierdzony") ZANIM dojdzie do drogi, więc samo w sobie nie dowodzi, że
-	// zamknięcie drogi działa. Odzyskanie konta takiej zapory przed sobą nie ma:
-	// jedynym, co zatrzymuje drugie użycie, jest zamknięcie wiersza drogi.
+	// Druga połowa jednorazowości mierzona na drodze odzyskania, bez zapory
+	// stanu konta przed drogą.
 	var odzyskanie shared.AuthRecoverResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthRecover,
 		shared.AuthRecoverRequest{Email: adresSprawdzianu}, &odzyskanie)
@@ -439,16 +376,9 @@ func TestPotwierdzenieDrogaZListuWydajeSesjeAPowtorzenieOdmawia(t *testing.T) {
 	}
 }
 
-// TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji pilnuje pola `cel`.
-//
-// Obie drogi wyglądają tak samo i leżą w jednej tabeli. Bez rozdziału po celu
-// droga wysłana na prośbę o nowe hasło potwierdzałaby adres, a droga wysłana
-// przy rejestracji ustawiałaby hasło — czyli list o jednej treści wykonywałby
-// czynność, o którą nikt nie prosił.
-//
-// Sprawdzian idzie w obie strony i kończy dowodem, że próba użycia drogi nie
-// w swojej czynności jej NIE zużyła: droga odrzucona i zarazem spalona byłaby
-// gorsza od samej odmowy.
+// TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji pilnuje pola `cel`:
+// droga wydana do odzyskania nie potwierdza adresu, a droga weryfikacji nie
+// ustawia hasła.
 func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	drogaWeryfikacji := zarejestrujWlasciciela(t, u)
@@ -501,16 +431,9 @@ func TestDrogaWydanaDoOdzyskaniaNieDzialaJakoDrogaWeryfikacji(t *testing.T) {
 
 // ── odzyskanie konta ─────────────────────────────────────────────────────────
 
-// TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu pilnuje, żeby
-// `auth.recover` nie była wyrocznią.
-//
-// Komenda jest osiągalna przed zalogowaniem, więc pyta ją każdy. Odpowiedź
-// różniąca się choć jednym bajtem mówiłaby pytającemu, jaki adres ma Operator —
-// a to jest połowa materiału potrzebnego do podszycia się pod niego.
-//
-// Druga połowa sprawdzianu jest ważniejsza od pierwszej: dla adresu obcego list
-// NIE wychodzi. Wysłany szedłby do osoby, która o nic nie prosiła, a rachunek za
-// nadania płaciłby Operator.
+// TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu pilnuje, że
+// `auth.recover` odpowiada identycznie dla adresu własnego i obcego oraz nie
+// wysyła listu do adresu obcego.
 func TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	zarejestrujWlasciciela(t, u)
@@ -561,15 +484,8 @@ func TestOdzyskanieDlaAdresuObcegoOdpowiadaTakSamoINieWysylaListu(t *testing.T) 
 }
 
 // TestUstawienieNowegoHaslaUniewazniaTokenyWydaneWczesniej pilnuje, że
-// odzyskanie konta naprawdę odbiera dostęp.
-//
-// Odzyskanie zaczyna się od podejrzenia, że dostęp ma ktoś jeszcze. Zostawienie
-// mu ważnego tokenu czyniłoby zmianę hasła pozorną — wchodziłby dalej, bez hasła
-// i bez śladu.
-//
-// Mierzone są trzy skutki, bo `changed: true` nie dowodzi żadnego z nich: token
-// wydany wcześniej ma być unieważniony w bazie, stare hasło ma przestać otwierać
-// bramkę, a nowe ma ją otwierać.
+// odzyskanie konta unieważnia token wydany wcześniej, zamyka stare hasło i
+// otwiera bramkę nowym.
 func TestUstawienieNowegoHaslaUniewazniaTokenyWydaneWczesniej(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	drogaWeryfikacji := zarejestrujWlasciciela(t, u)
@@ -637,15 +553,9 @@ func TestUstawienieNowegoHaslaUniewazniaTokenyWydaneWczesniej(t *testing.T) {
 
 // ── wykaz urządzeń ───────────────────────────────────────────────────────────
 
-// TestWykazUrzadzenOznaczaUrzadzenieBiezace pilnuje pola `current`.
-//
-// Wiersz własnej maszyny wygląda w wykazie tak samo jak każdy inny. Bez
-// oznaczenia Operator odbiera dostęp sobie i traci go w tej samej chwili —
-// a rozstrzygnąć to może wyłącznie rdzeń: klient zna identyfikator, który sam
-// nadał, ale nie wie, którą sesją stoi jego połączenie.
-//
-// Sprawdzian wchodzi tą samą drogą, co gniazdo: tożsamością połączenia
-// w kontekście. Bez niej pomiar nie dotykałby badanego przypadku.
+// TestWykazUrzadzenOznaczaUrzadzenieBiezace pilnuje pola `current`: wykaz
+// oznacza bieżące urządzenie po tożsamości połączenia, a bez niej nie oznacza
+// żadnego.
 func TestWykazUrzadzenOznaczaUrzadzenieBiezace(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	droga := zarejestrujWlasciciela(t, u)
@@ -659,8 +569,8 @@ func TestWykazUrzadzenOznaczaUrzadzenieBiezace(t *testing.T) {
 		DeviceId: wskaznik("maszyna-tutejsza"),
 	}, &potwierdzenie)
 
-	// Druga maszyna: sesja bramki założona wprost, bo drugiego potwierdzenia
-	// adresu już nie będzie, a wykaz urządzeń bierze się z sesji.
+	// Druga maszyna: sesja bramki założona wprost, bo wykaz urządzeń bierze się
+	// z sesji.
 	teraz := potwierdzenie.Session.ExpiresAt
 	if _, err := u.rdzen.dane.Uwierzytelnienie.ZalozSesjeBramki(u.zycie, dane.SesjaBramki{
 		SkrotTokenu:   skrotTokenu("token-maszyny-obcej"),
@@ -692,9 +602,8 @@ func TestWykazUrzadzenOznaczaUrzadzenieBiezace(t *testing.T) {
 			" Operator odebrałby dostęp nie tej maszynie", biezace[0], "maszyna-tutejsza")
 	}
 
-	// Żądanie spoza gniazda: rdzeń nie wie, które urządzenie jest bieżące,
-	// i wtedy nie oznacza ŻADNEGO. Zgadywanie po ostatnim wejściu wskazałoby
-	// cudzą maszynę jako własną.
+	// Żądanie spoza gniazda: rdzeń nie zna bieżącego urządzenia i nie oznacza
+	// żadnego.
 	var wykazBezGniazda shared.DeviceListResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandDeviceList,
 		shared.DeviceListRequest{}, &wykazBezGniazda)
@@ -707,16 +616,8 @@ func TestWykazUrzadzenOznaczaUrzadzenieBiezace(t *testing.T) {
 
 // ── trwałość drogi ───────────────────────────────────────────────────────────
 
-// TestDrogaPotwierdzeniaLezyWBazieWylacznieJakoSkrot pilnuje obietnicy, na
-// której stoi cała wartość wysyłania drogi listem.
-//
-// Gdyby materiał z listu leżał w tabeli, kopia bazy pozwalałaby potwierdzić cudzą
-// tożsamość i ustawić hasło do konta — czyli byłaby wejściem do platformy, a nie
-// zbiorem danych.
-//
-// Sprawdzian nie ufa nazwom kolumn: czyta CAŁY wiersz i szuka materiału z listu
-// w każdej wartości. Kolumna dołożona kiedyś obok `skrot` przechodziłaby pomiar
-// pytający wyłącznie o `skrot`.
+// TestDrogaPotwierdzeniaLezyWBazieWylacznieJakoSkrot pilnuje, że materiał drogi
+// z listu leży w bazie wyłącznie jako skrót, czytany z każdej kolumny wiersza.
 func TestDrogaPotwierdzeniaLezyWBazieWylacznieJakoSkrot(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	droga := zarejestrujWlasciciela(t, u)
@@ -772,13 +673,8 @@ func TestDrogaPotwierdzeniaLezyWBazieWylacznieJakoSkrot(t *testing.T) {
 	}
 }
 
-// TestListRejestracyjnyNiesieDrogeINieNiesieHasla czyta to, co naprawdę poszło
-// w świat.
-//
-// List jest jedynym miejscem, w którym materiał potwierdzenia istnieje jawnie,
-// i jedynym, którego rdzeń po nadaniu już nie kontroluje. Dwa warunki muszą być
-// spełnione naraz: droga MA tam być, bo bez niej list jest bezużyteczny,
-// a hasła TAM BYĆ NIE MOŻE — platforma nie zna go jawnie i nie ma prawa odsyłać.
+// TestListRejestracyjnyNiesieDrogeINieNiesieHasla czyta treść wysłanego listu:
+// droga potwierdzenia ma tam być, a hasło Operatora — nie.
 func TestListRejestracyjnyNiesieDrogeINieNiesieHasla(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	droga := zarejestrujWlasciciela(t, u)
@@ -802,8 +698,8 @@ func TestListRejestracyjnyNiesieDrogeINieNiesieHasla(t *testing.T) {
 			" i nie ma prawa go odsyłać; dokument:\n%s", list.Dokument)
 	}
 
-	// Droga z listu ma być TĄ drogą, nie dowolnym napisem w treści: dowodem jest
-	// wiersz bazy rozpoznający jej skrót.
+	// Droga z listu ma być tą drogą, nie dowolnym napisem: dowodem jest wiersz
+	// bazy jej skrótu.
 	if ile := liczbaWierszy(t, u,
 		`SELECT COUNT(*) FROM potwierdzenie_tozsamosci WHERE skrot = ? AND cel = ?`,
 		skrotTokenu(droga), dane.CelWeryfikacja); ile != 1 {

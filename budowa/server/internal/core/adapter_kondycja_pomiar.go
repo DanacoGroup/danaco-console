@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: sam pomiar — co właściwie mierzy każdy z pięciu
-// rodzajów sondy kondycji. Definicje, seria i dostępność leżą
-// w `adapter_kondycja.go`.
-//
-// ── Każdy rodzaj mierzy coś naprawdę ────────────────────────────────────────
-//   - `http`      — wysyła żądanie pod adres i patrzy na kod odpowiedzi.
-//   - `tcp`       — otwiera połączenie z gniazdem i patrzy, czy się otworzyło.
-//   - `internal`  — dotyka wnętrza rdzenia: bazy stanu albo jego własnej
-//     pamięci. To NIE jest „zwróć w porządku": baza odpytana jest bazą, która
-//     odpowiedziała, a jej czas obiegu jest zmierzoną liczbą.
-//   - `command`   — uruchamia program i patrzy na jego kod wyjścia.
-//   - `modelCall` — wysyła krótkie zapytanie kanałem modelu i czeka na
-//     odpowiedź.
-//
-// ── Czego tu nie ma ─────────────────────────────────────────────────────────
-// Gałęzi „nie umiem zmierzyć, więc `up`". Każdy powód, dla którego pomiar się
-// nie odbył — brak uruchamiacza, brak rejestru kanałów, nieznany cel sondy
-// wewnętrznej — kończy się stanem `unknown` wraz ze zdaniem mówiącym, czego
-// brakuje. `unknown` znaczy „nie wiem" i tylko tak wygląda w wykazie; `up`
-// znaczyłoby „sprawdziłem i jest dobrze", a nikt nie sprawdzał.
+// Plik niesie sam pomiar sondy kondycji: co mierzy każdy z pięciu rodzajów — http, tcp, internal, command i modelCall; definicje, seria i dostępność leżą w adapter_kondycja.go.
 package core
 
 import (
@@ -38,9 +19,9 @@ import (
 )
 
 const (
-	// celSondyWewnetrznejBaza mierzy czas obiegu magazynu stanu rdzenia.
+	// celSondyWewnetrznejBaza mierzy czas obiegu magazynu stanu rdzenia, wykonując prawdziwe zapytanie do bazy.
 	celSondyWewnetrznejBaza = "database"
-	// celSondyWewnetrznejWykonanie mierzy stan samego procesu rdzenia.
+	// celSondyWewnetrznejWykonanie mierzy stan samego procesu rdzenia, czytając jego liczniki wykonania w danej chwili.
 	celSondyWewnetrznejWykonanie = "runtime"
 
 	// progOslabieniaSondy — odpowiedź wolniejsza niż połowa limitu czasu jest
@@ -48,7 +29,7 @@ const (
 	// pośredni: `degraded` liczy się w dostępności jako połowa udanego.
 	progOslabieniaSondy = 0.5
 
-	// granicaSondyProgramu domyka czas jednego uruchomienia programu sondy.
+	// granicaSondyProgramu domyka czas jednego uruchomienia programu sondy, licząc od startu procesu do jego zakończenia.
 	granicaSondyProgramu = 60 * time.Second
 
 	// trescSondySilnika jest zapytaniem sondy `modelCall`. Krótkie z zamysłu:
@@ -57,11 +38,7 @@ const (
 	trescSondySilnika = "ping"
 )
 
-// zmierz wykonuje jeden pomiar wskazanej sondy i oddaje jego wynik.
-//
-// Wynik zawsze niesie chwilę pomiaru i zawsze niesie stan. Metoda nie zwraca
-// błędu, bo niepowodzenie pomiaru JEST wynikiem pomiaru — sonda, która
-// zawiodła, ma zostawić po sobie wiersz, a nie odmowę.
+// zmierz wykonuje jeden pomiar wskazanej sondy i oddaje jego wynik; metoda nie zwraca błędu, bo niepowodzenie pomiaru jest wynikiem pomiaru.
 func (a *adapterKondycji) zmierz(ctx context.Context, sonda dane.SondaKondycji) dane.WynikSondyKondycji {
 	limit := limitCzasuSondy(sonda)
 	pomiar, odwolaj := context.WithTimeout(ctx, limit)
@@ -92,7 +69,7 @@ func (a *adapterKondycji) zmierz(ctx context.Context, sonda dane.SondaKondycji) 
 	return wynik
 }
 
-// limitCzasuSondy rozstrzyga granicę czasu jednego przebiegu.
+// limitCzasuSondy rozstrzyga granicę czasu jednego przebiegu sondy wskazanego rodzaju, czytając ją z konfiguracji.
 func limitCzasuSondy(sonda dane.SondaKondycji) time.Duration {
 	if sonda.LimitCzasuMs == nil || *sonda.LimitCzasuMs <= 0 {
 		return domyslnyLimitCzasuSondy
@@ -134,11 +111,7 @@ func oslabPrzyPowolnejOdpowiedzi(wynik *dane.WynikSondyKondycji, czas int64, lim
 	wynik.Szczegol = &opis
 }
 
-// zmierzHttp wysyła żądanie pod adres sondy.
-//
-// Klient jest budowany na jeden przebieg i nie chodzi za przekierowaniami dalej
-// niż pięć razy: sonda ma zmierzyć adres, który podał Operator, a nie zwiedzić
-// łańcuch przekierowań do cudzej strony błędu.
+// zmierzHttp wysyła żądanie pod adres sondy; klient jest budowany na jeden przebieg i nie chodzi za przekierowaniami dalej niż pięć razy.
 func (a *adapterKondycji) zmierzHttp(ctx context.Context, sonda dane.SondaKondycji,
 	limit time.Duration, wynik *dane.WynikSondyKondycji) {
 
@@ -196,7 +169,7 @@ func (a *adapterKondycji) zmierzHttp(ctx context.Context, sonda dane.SondaKondyc
 			", a sonda oczekiwała "+strconv.FormatInt(oczekiwany, 10))
 }
 
-// zmierzGniazdo otwiera połączenie z gniazdem sondy.
+// zmierzGniazdo otwiera połączenie z gniazdem sondy i patrzy, czy się w ogóle udało je otworzyć na czas.
 func zmierzGniazdo(sonda dane.SondaKondycji, limit time.Duration, wynik *dane.WynikSondyKondycji) {
 	adres := strings.TrimSpace(sonda.Cel)
 	if !strings.Contains(adres, ":") {
@@ -214,12 +187,7 @@ func zmierzGniazdo(sonda dane.SondaKondycji, limit time.Duration, wynik *dane.Wy
 	ustawStanSondy(wynik, shared.HealthProbeStatusUp, "gniazdo przyjęło połączenie")
 }
 
-// zmierzWnetrze mierzy sam rdzeń.
-//
-// Dwa cele, oba mierzalne: `database` odpytuje bazę stanu (i to jest prawdziwe
-// zapytanie, nie sprawdzenie wskaźnika), `runtime` czyta liczniki procesu.
-// Cel spoza tych dwóch kończy się stanem „nie wiem" wraz z wykazem znanych —
-// zgadywanie, o co Operatorowi chodziło, dałoby pomiar czegoś innego niż prosił.
+// zmierzWnetrze mierzy sam rdzeń: database odpytuje bazę stanu prawdziwym zapytaniem, runtime czyta liczniki procesu, a cel spoza tych dwóch kończy się stanem nie wiem.
 func (a *adapterKondycji) zmierzWnetrze(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 
@@ -251,12 +219,7 @@ func (a *adapterKondycji) zmierzWnetrze(ctx context.Context, sonda dane.SondaKon
 	}
 }
 
-// zmierzProgram uruchamia program sondy i patrzy na jego kod wyjścia.
-//
-// Program idzie tą samą drogą co każde inne wołanie arsenału
-// (`zewnetrzne.Wolaj`): przez port uruchamiacza, bramę izolacji i objęcie
-// drzewa procesów. Własnego `exec.Command` tu nie ma — proces uruchomiony obok
-// tej drogi wypada spod nadzoru i zostaje po nim uchwyt.
+// zmierzProgram uruchamia program sondy i patrzy na jego kod wyjścia, idąc tą samą drogą co każde inne wołanie arsenału: przez port uruchamiacza i bramę izolacji.
 func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 
@@ -288,7 +251,7 @@ func (a *adapterKondycji) zmierzProgram(ctx context.Context, sonda dane.SondaKon
 		"program „"+czesci[0]+"” zakończył się powodzeniem")
 }
 
-// zmierzKanal wysyła krótkie zapytanie kanałem modelu.
+// zmierzKanal wysyła krótkie zapytanie kanałem modelu i czeka na jego odpowiedź w granicy czasu sondy.
 func (a *adapterKondycji) zmierzKanal(ctx context.Context, sonda dane.SondaKondycji,
 	wynik *dane.WynikSondyKondycji) {
 

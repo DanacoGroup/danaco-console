@@ -1683,3 +1683,34 @@ formatów nie da się napisać od nowa uczciwiej niż dojrzałym programem, któ
 stoi na serwerze razem z rdzeniem. Plik XLSX powstaje w tym module wprost,
 biblioteką archiwizującą wkompilowaną w rdzeń: arkusz jest spakowanym
 dokumentem XML, a nie składem, więc osobny program go nie wymaga.
+
+## budowa/server/internal/core/adapter_modul_library.go
+
+Wyszukiwanie `library.file.search` dopasowuje frazę do nazwy pliku albo do
+jego treści, tę drugą przez indeks pełnotekstowy zasilany przy każdym zapisie
+treści. Bajty leżą poza bazą, indeks jest ich odtwarzalnym wyciągiem
+tekstowym; dopasowanie jest trafieniem w słowo, nie w znaczenie. Wykaz
+`library.file.list` zawęża wynik po nazwie i nie szuka w dokumentach.
+
+Katalog danych magazynu treści jest przy konstrukcji adaptera domyślny;
+katalog obowiązujący na uruchomieniu zna wyłącznie montaż i podaje go osobnym
+wywołaniem przy składaniu portu. Wartość domyślna stoi w konstruktorze dla
+wywołania bez montażu, żeby konstruktor nigdy nie oddał adaptera bez
+magazynu. Sprzątanie magazynu treści wypada przy tym samym wywołaniu, w
+jedynej chwili startu rdzenia, w której moduł zna już swój prawdziwy katalog
+danych i jeszcze nie obsługuje żadnej komendy; sprzątanie idzie synchronicznie,
+bo obchód katalogu jest tani wobec odtworzenia stanu, a rdzeń przyjmujący
+wgrania w trakcie przemiatania widziałby wykaz żywych odwołań sprzed nich.
+
+Obie drogi wgrania pliku prowadzą do jednego magazynu: treść przysłana base64
+i treść wciągnięta spod ścieżki źródłowej lądują w magazynie treści rdzenia,
+a odwołaniem jest ścieżka bloba. Ścieżka źródłowa zostaje przy pliku w
+osobnej kolumnie jako prowenancja — mówi, skąd plik przyszedł, i nie jest
+wskaźnikiem na treść żywą, którą ktoś z zewnątrz mógłby nadpisać po wgraniu.
+
+Kolekcje pliku czyta się z bazy, nie z żądania, żeby każda odpowiedź niosąca
+plik mówiła tę samą przynależność, niezależnie od drogi, którą przyszła.
+Ścieżka WEWNĄTRZ repozytorium, którą nadaje przenoszenie pliku, jest polem
+osobnym od ścieżki źródłowej z maszyny Operatora: ta druga z rdzenia nie
+wychodzi, bo wyniosłaby na zewnątrz układ cudzego dysku wraz z nazwami
+katalogów.

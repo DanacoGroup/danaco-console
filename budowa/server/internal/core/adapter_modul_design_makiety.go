@@ -207,7 +207,7 @@ func (a *adapterDesignu) UsunRamke(ctx context.Context,
 	ramka, err := a.repozytorium.RamkaDesignuPoKodzie(ctx, kod)
 	if err != nil {
 		if czyBrakZasobuDesignu(err) {
-			// Ramki, której nie ma, nie odmawiamy — pole `removed` mówi, czy
+			// Ramki, której nie ma, nie odmawia się — pole `removed` mówi, czy
 			// wiersz istniał.
 			return shared.DesignFrameRemoveResponse{Removed: false}, nil
 		}
@@ -278,7 +278,7 @@ func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 			return shared.DesignLayoutAutoResponse{}, bladDesignu(err)
 		}
 	}
-	// Nastawy układu zapisujemy przy ramce, żeby zmiana rozmiaru mogła je wziąć
+	// Nastawy układu zapisuje się przy ramce, żeby zmiana rozmiaru mogła je wziąć
 	// bez powtórnego żądania.
 	ukladZapis, err := zapisJsonDesignu(&z.Layout)
 	if err != nil {
@@ -289,7 +289,7 @@ func (a *adapterDesignu) UlozAutomatycznie(ctx context.Context,
 		return shared.DesignLayoutAutoResponse{}, bladDesignu(err)
 	}
 
-	// Warstwy oddajemy odczytane z bazy, nie policzone w pamięci, żeby mówić
+	// Warstwy oddaje się odczytane z bazy, nie policzone w pamięci, żeby mówić
 	// o stanie po zapisie.
 	odczytane := make([]shared.DesignBoardLayer, 0, len(warstwy))
 	for _, warstwa := range warstwy {
@@ -441,7 +441,7 @@ func (a *adapterDesignu) UstawWiezy(ctx context.Context,
 		return shared.DesignConstraintSetResponse{}, bladNieznanejRamkiDesignu(z.FrameId, err)
 	}
 
-	// Stan zastany odczytujemy przed zapisem: `changed` liczy zmiany
+	// Stan zastany odczytuje się przed zapisem: `changed` liczy zmiany
 	// rzeczywiste, nie wiersze żądania.
 	zastane, err := a.repozytorium.WiezyRamkiDesignu(ctx, ramka.ID)
 	if err != nil {
@@ -533,7 +533,7 @@ func (a *adapterDesignu) ZmienRozmiarRamki(ctx context.Context,
 		warstwa, err := a.repozytorium.WarstwaKompozycjiDesignuPoKodzie(ctx, kod)
 		if err != nil {
 			if czyBrakZasobuDesignu(err) {
-				// Warstwa zniknęła z kompozycji: pomijamy ją, żeby nie blokować
+				// Warstwa zniknęła z kompozycji: pomija się ją, żeby nie blokować
 				// przeliczenia pozostałych warstw.
 				continue
 			}
@@ -697,7 +697,7 @@ func sprawdzSiatkeDesignu(siatka shared.DesignGrid) error {
 }
 
 // sprawdzUkladDesignu odrzuca nastawy układu automatycznego spoza kontraktu,
-// zanim zapiszemy je do ramki.
+// zanim zapisze się je do ramki.
 func sprawdzUkladDesignu(komenda string, uklad shared.DesignAutoLayout) error {
 	if err := sprawdzWyliczenieDesignu(komenda, "layout.direction", uklad.Direction,
 		shared.WartosciDesignLayoutDirection()); err != nil {
@@ -904,7 +904,7 @@ func (a *adapterDesignu) DolozInstancjeKomponentu(ctx context.Context,
 		}
 	}
 
-	// Komponent odczytujemy po zapisie instancji, żeby `instanceCount` niósł
+	// Komponent odczytuje się po zapisie instancji, żeby `instanceCount` niósł
 	// liczbę po dołożeniu.
 	po, err := a.repozytorium.KomponentDesignuPoKodzie(ctx, komponent.Kod)
 	if err != nil {
@@ -943,7 +943,7 @@ func (a *adapterDesignu) UstawPolaczeniePrototypu(ctx context.Context,
 	if err != nil {
 		return shared.DesignPrototypeLinkSetResponse{}, bladNieznanejKompozycjiDesignu(z.BoardId, err)
 	}
-	// Obie ramki sprawdzamy przed zapisem, żeby przejście do brakującej nie
+	// Obie ramki sprawdza się przed zapisem, żeby przejście do brakującej nie
 	// wyglądało jak gotowe.
 	for pole, kod := range map[string]string{
 		"fromFrameId": strings.TrimSpace(z.FromFrameId),

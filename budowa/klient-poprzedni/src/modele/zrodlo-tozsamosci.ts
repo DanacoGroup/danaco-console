@@ -19,19 +19,9 @@ import { wywolaj } from '../protokol/wywolanie';
 import { pierwszenstwoWarstwy } from './warstwy-tozsamosci';
 
 /**
- * Zasady i tożsamość modelu widziane przez klienta — pięć komend obszaru
- * `identity.*` oraz zdarzenie `identity.changed`.
- *
- * Kategorie są danymi, nie kodem: konstytucja, profil roli, ekspertyza, zasady
- * bezpieczeństwa i zasady harnessu przychodzą komendą `identity.category.list`
- * wraz z warstwą, porządkiem, obowiązkowością i trybem proponowanym. Dopisanie
- * kategorii to nowy wiersz katalogu, nie zmiana kodu klienta.
- *
- * Nakładka obowiązująca jest odczytem rdzenia, nie sklejeniem w kliencie:
- * klient nie składa promptu z treści kategorii własnym porządkiem, tylko pyta
- * `identity.effective.get` i pokazuje to, co pojedzie do modelu. Drugie
- * składanie po stronie widoku dałoby podgląd rozjeżdżający się z rdzeniem przy
- * pierwszej zmianie reguł.
+ * Źródło tożsamości modelu udostępnia klientowi pięć komend obszaru
+ * `identity.*` oraz zdarzenie `identity.changed`. Katalog kategorii przychodzi
+ * z rdzenia jako dane, a nakładkę obowiązującą składa rdzeń, nie widok.
  */
 export interface ZrodloTozsamosci {
   /** `identity.category.list` — katalog kategorii zasad. */

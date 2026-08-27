@@ -2186,3 +2186,81 @@ nie wadą żądania i nie usterką rdzenia; kod jest ponawialny, po instalacji
 Terminalu i silniku mowy. Pozostałe usterki — granica czasu, wywrócenie
 binarium, brak uruchamiacza — trafiają na `internal_error`, bo treść niesie
 już to, co program powiedział o sobie sam.
+
+## budowa/server/internal/core/skutek_pracy_z_dokumentem_test.go
+
+Plik mierzy skutek okna pracy z dokumentem: czy dwie zmiany rdzenia
+rzeczywiście coś robią. Sprawdziany wykluczają trzy rodzaje szkody. Pierwsza
+to przyjęcie wskazanych fragmentów propozycji, które podmienia treść całą,
+podczas gdy Operator wybrał tylko fragment drugi. Druga to zakres zmiany
+śledzonej liczony w bajtach, podczas gdy dokument polski niesie litery
+dwubajtowe, które taki rachunek rozcinałby w środku. Trzecia to nastawy
+suwaków i polecenie Operatora, które nie dojeżdżają do modelu, przez co
+suwak przestawiałby pole bez skutku.
+
+Operacja kontekstowa jest mierzona od końca do końca, jednym przebiegiem, nie
+po częściach: złożenie polecenia dla modelu i rachunek zakresu mogą być
+poprawne osobno, a droga między nimi mimo to zerwana — wynik modelu może nie
+dojść do treści, zmiana śledzona może się nie odłożyć, wersja może nie
+powstać. Kontrakt obiecuje, że po operacji kontekstowej w dokumencie stoi
+zmiana oznaczona autorstwem modelu, i to jest twierdzenie o skutku, nie
+o samym rachunku. Miarę umożliwia kanał `echo`: odsyła treść zapytania i nie
+sięga do sieci ani do żadnego programu zewnętrznego, jest wkompilowany
+w rdzeń. Wynik operacji jest więc znany z góry — jest nim polecenie złożone
+przez `trescOperacjiStudia`, a w nim wiersz „Czynnosc: <pozycja rejestru>",
+który mógł przyjść wyłącznie od modelu.
+
+Sprawdzian porównania bez wskazania stron pilnuje granicy, na której
+`studio.diff.compare` meldował powodzenie kopertą pustą. Koperta pusta ze
+stanem `ok` mówi oknu, że porównanie przebiegło i nie ma czego pokazać,
+a rdzeń nie porównał niczego: fragmenty różnicy potrzebują dwóch stron,
+a wzorzec potrzebuje strony, po której ma szukać. Odmowa nazywająca brakujące
+pole jest jedyną odpowiedzią prawdziwą — po pustej kopercie okno nie ma jak
+odróżnić zgodność wersji od braku wskazania, co z czym porównać.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_model.go
+
+`image.upscale` i `image.background.remove` są osobną rodziną od czynności
+`image.*`, bo obie zmyślają szczegół, którego w źródle nie ma — piksele
+między pikselami przy powiększeniu, granicę obiektu i tła przy wycięciu —
+i obie potrzebują do tego sieci neuronowej z wagami na dysku. Wspólny
+z rodziną `image.*` zostaje mechanizm: rozwiązanie pary wskazania zasobu
+albo ścieżki na plik do odczytu, zasięg izolacji dla wołania binarium
+i odłożenie bajtów wyniku w magazynie zasobów Designu; ten mechanizm rodzina
+modelu bierze przez zaplecze wspólne, a nie kopiuje go, żeby druga kopia
+reguły nie rozjechała się z pierwszą.
+
+Bez silnika na maszynie ta rodzina odmawia, nazywając brak, zamiast
+podstawiać przybliżenie: proste rozciągnięcie obrazu oddałoby wynik dwa razy
+większy i ani o szczegół bogatszy, a brak silnika wycinającego tło nie może
+oddać obrazu bez zmian podanego jako wycięty.
+
+Wagi modelu leżą obok silnika i nie ściągają się w trakcie żądania. Silnik
+wycinający tło przy pierwszym uruchomieniu potrafi pobrać model sam, a wtedy
+około sto siedemdziesiąt sześć megabajtów wchodzi w czas jednego żądania,
+którego granica jest liczona na przetwarzanie, nie na łącze; przy wolnym
+łączu albo braku sieci żądanie urywa się w połowie pobierania i wygląda jak
+usterka silnika. Wagi rdzeń sprawdza więc przed uruchomieniem, a przy ich
+braku odmawia, podając, gdzie mają leżeć i ile ważą.
+
+Ścieżka wag zależy od systemu, bo wagi są składnikiem pakietu, a pakiet jest
+inny na serwerze i inny w wersji natywnej Windows: na Linuksie arsenał
+serwera stawia je pod stałą ścieżką systemową, w wersji natywnej Windows
+jadą obok rdzenia w katalogu programów pomocniczych, więc ścieżkę
+bezwzględną rdzeń liczy dopiero w czasie pracy, względem pliku
+wykonywalnego. Ścieżka zaszyta po linuksowemu odmawiałaby na Windowsie,
+zanim doszłoby do wołania silnika, choćby wagi były w paczce.
+
+Pliki pośrednie w katalogu przebiegu są konieczne, choć rodzina `image.*`
+bierze wynik ImageMagicka ze standardowego wyjścia: żaden z dwóch silników
+modelu nie umie pisać obrazu na wyjście, oba żądają ścieżki wyniku. Katalog
+własny na przebieg nie miesza równoległych żądań i znika jednym usunięciem
+niezależnie od tego, czy silnik się udał. Źródło wchodzi do katalogu
+przebiegu dowiązaniem, nie kopią: blob zasobu leży pod swoją sumą kontrolną
+i bywa wielkim plikiem, więc kopiowanie go tylko po to, żeby zmienić nazwę,
+dawałoby drugi egzemplarz zdjęcia przy każdym żądaniu. Oba silniki
+rozpoznają format po zawartości, a nie po rozszerzeniu, więc nazwa pliku
+wejściowego jest tylko uchwytem, nie deklaracją formatu. Kopia zamiast
+dowiązania jest drogą zapasową na wypadek, gdy dowiązanie się nie uda —
+magazyn na innym nośniku niż katalog tymczasowy albo system plików bez
+dowiązań.

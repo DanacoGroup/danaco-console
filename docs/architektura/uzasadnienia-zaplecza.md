@@ -1475,3 +1475,85 @@ definicji automatyzacji nadpisuje jej pola, nie mnoży wierszy.
 Powiązanie ustalenia ze źródłem i powiązanie sekcji z ustaleniem mają własne
 tabele złącznikowe, po wzorze innych relacji wiele do wielu w tej samej
 warstwie trwałości.
+
+## budowa/server/internal/store/migracja_075_mowa.sql
+
+Schemat daje silnikowi mowy dwie rzeczy, których w bazie nie było: sterowanie
+i ślad. Silnik jest lokalny i liczy na procesorze — dźwięk nie wychodzi
+z maszyny operatora, rozpoznanie robi proces Pythona uruchamiany obok rdzenia
+na tej samej maszynie, bez wywołania sieciowego. Dlatego migracja nie niesie
+ani kolumny na klucz API, ani na adres usługi, ani na konto dostawcy — nie ma
+dostawcy — ani kolumny na wybór urządzenia liczącego, bo silnik chodzi zawsze
+na procesorze. Nagranie jest ścieżką, nie bajtami: rdzeń bajtów nie kopiuje,
+otwiera plik w miejscu, tak samo jak biblioteka trzyma treść pliku na dysku;
+kolumna BLOB urosłaby o rząd wielkości ponad wszystko inne w tym pliku, a kopia
+dźwięku obok oryginału byłaby drugą prawdą o tym samym nagraniu. Czas jest
+liczbą, a zegar jeden: kolumna `utworzono` niesie milisekundy epoki podane
+przez wołającego, nie wyrażeniem `strftime` bazy, bo baza z własnym „teraz"
+byłaby drugim zegarem obok zegara rdzenia.
+
+Sterowanie silnikiem idzie czterema wpisami katalogu ustawień, nie stałymi
+kodu: ścieżka interpretera, rozmiar modelu, język i katalog pobrania stają się
+sterowalne od zaraz przez komendy `config.set`/`config.get` już wpięte
+w rdzeń, zamiast czekać na wydanie binarium przy każdej zmianie. Kategoria
+`mowa` jest nowa, nie dopisana do `modele`, bo `modele` opisuje kanał modelu
+odpowiadającego operatorowi, a silnik mowy niczego nie odpowiada i nie dzieli
+z kanałem modelu ani dostawcy, ani nakładu, ani konta. Oś jest wyłącznie
+`platform`: rozmiar modelu i ścieżka Pythona są własnością maszyny operatora,
+nie zależą od modelu odpowiadającego ani od konta. `mowa_program`
+i `mowa_katalog_modeli` opisują jedną instalację na maszynie i stoją na
+poziomie `globalny`; `mowa_model` i `mowa_jezyk` opisują pojedyncze zlecenie
+i są ustawialne na wszystkich ośmiu poziomach. Wartość pusta ma znaczenie
+własne (interpreter na ścieżce systemowej, katalog domyślny biblioteki), nie
+jest brakiem danych, dlatego katalog nie niesie tu wpisów `wymagane`.
+
+Dziennik transkrypcji zapisuje odmowy razem z powodzeniami: transkrypcja
+nieudana jest zdarzeniem, o które operator zapyta jako pierwsze, a odmowa bez
+śladu nie daje się zdiagnozować. Kolumna `stan` niesie trzy wartości —
+`gotowa`, `bez_mowy`, `odmowa` — bo nagranie ciszy albo szumu nie jest ani
+sukcesem ze znakow=0, ani odmową, skoro niczego nie odmówiono; stan nazywa tę
+sytuację wprost. Więz CHECK wiąże stan z kolumną `powod` w obie strony, żeby
+w bazie nie dało się zapisać odmowy bez wyjaśnienia. `trwanie_ms` to długość
+nagrania, nie czas przetwarzania, który migracja świadomie pomija — byłby
+miarą maszyny i chwili, nie faktem o nagraniu. `okno_id` dopuszcza NULL i nie
+jest kluczem obcym, bo transkrypcję wołają też ścieżki spoza okna komunikacji
+(kolejka wykonawcy asystenta), a odmowa zapisu śladu z powodu nieznanego okna
+kasowałaby dowód zdarzenia, które się wydarzyło.
+
+Indeks `idx_transkrypcja_wykaz` biegnie kolumnami dokładnie w porządku
+zapytania wykazu z `mowa/dziennik.go` (`okno_id` zawęża, `utworzono, id`
+porządkują), więc przy wskazanym oknie SQLite czyta indeks wstecz zamiast
+sortować wynik; kolumny `stan` w indeksie nie ma celowo, bo stanęłaby między
+zawężeniem a porządkiem i zepsułaby porządek.
+
+## budowa/server/internal/store/migracja_200_apps_produkt.sql
+
+Produkt jest jeden na okno, nie wiele. Kontrakt daje `apps.product.get`
+z żądaniem niosącym samo `windowId` i wynikiem o jednym polu `product`,
+a `apps.product.save` nie ma pola `productId` — nie ma czym wskazać drugiego
+produktu tego samego okna. Bez warunku UNIQUE dwa zapisy z rzędu zakładałyby
+dwa wiersze, a odczyt musiałby zgadywać, który z nich jest produktem okna.
+
+Platformy docelowe leżą w jednej kolumnie tekstowej rozdzielonej znakiem nowej
+linii, tym samym wzorcem co `architektura_apps.zastrzezenia_walidacji`
+(migracja 051). Nikt nie filtruje ani nie sortuje po pojedynczej platformie:
+`AppProduct.platforms` wychodzi zawsze w komplecie razem z produktem.
+
+Etap ma własną tabelę, nie kolumnę produktu. `apps.stage.save` zmienia etap po
+jego identyfikatorze, `apps.stage.list` zawęża po stanie, a
+`AppMilestone.stageIds` wiąże kamień milowy z etapami — każda z tych trzech
+dróg wymaga wiersza na etap. Etap należy do okna, nie do produktu: żądanie
+`apps.stage.list` niesie `windowId`, a nie identyfikator produktu, więc okno
+bez zapisanego produktu ma prawo mieć etapy.
+
+Kolejność etapu jest kolumną, nie porządkiem wstawiania. Tracker etapów rysuje
+oś w kolejności zadanej przez operatora (`AppStage.order`), a ta zmienia się
+bez zakładania wierszy na nowo.
+
+Związek kamienia milowego z etapami ma tabelę złącznikową, nie kolumnę listy.
+`apps.milestone.save` nadsyła `stageIds` w komplecie przy każdym zapisie
+(kontrakt nie ma trybu częściowej zmiany), więc zapis wymienia wiersze związku
+„usuń, wstaw od nowa" — jedna prawda o krawędzi, nie kopia w dwóch miejscach.
+Kolumna `etap_kod` trzyma kod zewnętrzny etapu, a nie więz obcy: kamień milowy
+ma prawo wskazywać etap usunięty po zapisie, tak samo jak
+`plik_warsztatu_apps.komponent_id` wskazuje komponent zdjęty z architektury.

@@ -1662,3 +1662,47 @@ oraz ryzyko rozejścia się kopii przy duplikacji w dwóch modułach. Redakcja s
 trzy wątki w jedno zdanie nazywające zawartość i wspólność dla modułów Developer
 i Diagnostics, zachowując wymienione elementy obszaru bez warstwy uzasadniającej wybór
 lokalizacji pliku w drzewie źródeł.
+
+## budowa/klient-poprzedni/src/moduly/research/indeks.ts
+Powłoka zna stąd jedną rzecz — opis modułu. Kod modułu stoi wewnątrz opisu, bo moduł sam mówi, którym jest modułem, więc rozjazd między nazwą w rejestrze a rzeczywistością staje się niemożliwy. Moduł nie osadza się sam w dokumencie i nie zna powłoki: oddaje element, a warstwa składająca decyduje, gdzie go postawić, dzięki czemu te same okna wchodzą i w obszar roboczy powłoki, i w stanowisko sprawdzianu. Funkcja zamknięcia podpina rozłączenie modułu, bez którego subskrypcja stanu badania i kreator raportu żyłyby dalej po zejściu modułu ze sceny; pole jest w opisie widoku modułu opcjonalne, więc kompilator braku nie zgłosi.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uchwyt-szerokosci.ts
+Obsługa klawiaturą jest obowiązkowa, ponieważ uchwyt osiągalny wyłącznie
+wskaźnikiem odcinałby od jedynego sposobu ustawienia szerokości kolumny; stąd
+rola separatora, indeks tabulacji, strzałki, Home/End i pełny komplet
+atrybutów wartości ARIA. Uchwyt nie zna paneli ani rozmowy — oddaje wołającemu
+jedną liczbę w pikselach bez własnych założeń, a przycięcie do minimów
+wykonuje osobny moduł odpowiedzialny za szerokości gniazda. Uchwyt stoi po
+lewej stronie sterowanej kolumny zgodnie z układem gniazda: rozmowa, uchwyt,
+panele. Ruch w lewo poszerza kolumnę, ruch w prawo ją zwęża; strzałki
+klawiatury podążają tą samą logiką kierunku, żeby obsługa ręką i klawiaturą
+dawały ten sam skutek. Krok strzałki wynosi wielokrotność czterech pikseli
+siatki interfejsu — krok jednopikselowy wymagałby wielokrotnego naciskania
+strzałki, a stupikselowy uniemożliwiałby dojście do wartości osiąganej
+wskaźnikiem bez wysiłku.
+
+## budowa/klient-poprzedni/src/moduly/studio/stan-studio.ts
+Pięć okien modułu Studio — edytor, panel narzędzi, panel różnic i wyszukiwania,
+podgląd oraz repozytorium sesji — pracuje na tym samym dokumencie czynnym.
+Gdyby każde okno prowadziło własną kopię, przywrócenie wersji w repozytorium
+nie przestawiłoby treści edytora, a różnica dotyczyłaby innego dokumentu niż
+podgląd. Poza własnym działaniem okien jedynym źródłem odświeżenia stanu jest
+zdarzenie zmiany dokumentu — zmiana dokonana w innym oknie albo na innym
+urządzeniu konta dociera nim, bez odpytywania w pętli.
+
+Zakres wysyłany do rdzenia operacją kontekstową bierze wskaźnik panelu, pasek
+zaznaczenia edytora i żądanie operacji z tej samej drogi, żeby istniała jedna
+nastawa i jedna prawda o niej. Powodu odmowy ostatniej operacji kontekstowej
+pytają okna stojące obok panelu narzędzi, żeby brak propozycji po odmowie nie
+wyglądał u nich jak sytuacja sprzed pierwszej operacji.
+
+Parę wersji do porównania wskazuje repozytorium sesji przyciskiem porównania
+przy wersji, a czyta panel różnic przy składaniu żądania; nastawa jest jedna
+i idzie przez stan współdzielony, ponieważ dotyczy dwóch okien naraz.
+
+Migawkę pól dokumentu czynnego bierze okno pracy przy przełączaniu zakładek:
+dwa dokumenty naraz mają niezależne zaznaczenie, bufor i propozycję, a stan
+modułu prowadzi jeden dokument czynny. Migawka jest jedyną drogą do tego —
+druga kopia stanu modułu rozjechałaby się z nim przy pierwszym zdarzeniu
+rdzenia. Nadejście wyniku operacji unieważnia odmowę poprzednią, ponieważ
+komunikat o odmowie i komunikat o wyniku nie mogą stać obok siebie prawdziwe.

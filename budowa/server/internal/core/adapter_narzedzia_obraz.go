@@ -202,7 +202,7 @@ func (a *adapterNarzedziObrazu) wybierzProgram(zapasowy string) string {
 	if zapasowy != "" && zewnetrzne.Stoi(narzedzieImageMagick(zapasowy)) {
 		return zapasowy
 	}
-	// Nic nie stoi — oddajemy nazwę trybu siódmego, żeby odmowa niosła
+	// Nic nie stoi — oddaje się nazwę trybu siódmego, żeby odmowa niosła
 	// właściwą wskazówkę instalacyjną.
 	return "magick"
 }

@@ -199,7 +199,7 @@ export function utworzOknoWyszukiwaniaZnaczenia(
           `Wskaźnik przebudowany: wniesiono ${wynik.wynik.wniesione}, we wskaźniku ${wynik.wynik.wszystkich} pozycji${model}.`,
           true,
         );
-        // Po przebudowie wskaźnika powtarzamy ostatnie pytanie sami, bo po to wskaźnik przebudowano.
+        // Po przebudowie wskaźnika ostatnie pytanie jest powtarzane, bo po to wskaźnik przebudowano.
         if (ostatniePytanie !== '') szukajTeraz();
       });
   }

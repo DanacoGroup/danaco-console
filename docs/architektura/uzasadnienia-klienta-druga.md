@@ -3245,3 +3245,6 @@ Wykaz trafień w wyszukiwaniu zostaje na widoku, bo jest wynikiem szukania, a ni
 modułu, więc zmiana panelu w innym oknie nie ma go kasować; wykaz pusty jest wynikiem, nie pustką
 okna — rdzeń odpowiedział i dopasowania nie znalazł, a odmowa czyści wykaz, bo trafienia sprzed
 odmowy dotyczyłyby innego zapytania niż to, które właśnie zawiodło.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/opis-okna.ts
+Moduł i kanał modelu w opisie początkowym zostają puste, ponieważ pierwsza pozycja wykazu znanych modułów jest kodem środowiska, nie modułu, a pierwsza pozycja wykazu rodzajów kanału jest rodzajem kanału, nie kodem wiersza rejestru — podstawienie którejkolwiek wartości wskazywałoby moduł spoza katalogu i kanał, którego rejestr nie zna, więc pierwsza wypowiedź wracałaby odmową. Widok nie zna rejestru rdzenia w chwili zakładania okna, dlatego moduł i kanał podstawia dopiero pierwszy kanał czynny.

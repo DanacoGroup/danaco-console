@@ -5,12 +5,7 @@ import {
 } from '../../../shared/contract';
 
 /**
- * Opis okna komunikacji.
- *
- * Okno jest bytem pośrednim między sesją a wiadomością i niesie własny moduł,
- * kanał modelu, katalogi robocze, środowisko wykonania, tryb uprawnień oraz
- * rolę. Zasięg wykonania jest parametrem okna, nie właściwością wdrożenia.
- * Wartości pól pochodzą z kontraktu — okno nie prowadzi własnego katalogu nazw.
+ * Opis okna komunikacji jest bytem pośrednim między sesją a wiadomością, niosącym moduł, kanał modelu, katalogi robocze, środowisko wykonania, tryb uprawnień oraz rolę, przy czym wartości pól pochodzą z kontraktu.
  */
 export interface OpisOkna {
   /** Projekt, w którego kontekście pracuje okno. */
@@ -32,16 +27,7 @@ export interface OpisOkna {
 }
 
 /**
- * Opis początkowy okna.
- *
- * Brak ustawienia oznacza wartość domyślną, nie blokadę uruchomienia. Domyślnie:
- * wykonanie na urządzeniu operatora, tryb uprawnień ręczny, okno samodzielne.
- *
- * Moduł i kanał modelu zostają puste. `KnownModuleIds[0]` to kod środowiska, nie
- * modułu, a `KnownChannelKinds[0]` to rodzaj kanału, nie kod wiersza rejestru —
- * podstawienie któregokolwiek wskazywałoby moduł spoza katalogu i kanał, którego
- * rejestr nie ma, więc pierwsza wypowiedź wracałaby odmową. Widok nie zna
- * rejestru rdzenia w chwili zakładania okna; pierwszy kanał czynny podstawia rdzeń.
+ * Opis początkowy okna zakłada wykonanie na urządzeniu operatora, tryb uprawnień ręczny i okno samodzielne, z pustym modułem i kanałem modelu do chwili podstawienia ich przez pierwszy kanał czynny w rejestrze rdzenia.
  */
 export function opisPoczatkowy(): OpisOkna {
   return {
@@ -56,12 +42,12 @@ export function opisPoczatkowy(): OpisOkna {
   };
 }
 
-/** Wartość z konfiguracji budowania albo wartość domyślna. */
+/** Wartość z konfiguracji budowania używana przez okno, a w razie jej braku zastosowana zostaje wartość domyślna. */
 function ustawienie(wartosc: unknown, domyslna: string): string {
   return typeof wartosc === 'string' && wartosc.length > 0 ? wartosc : domyslna;
 }
 
-/** Katalogi robocze zapisane w konfiguracji jako lista rozdzielona średnikiem. */
+/** Katalogi robocze przekazane oknu, zapisane w konfiguracji budowania jako lista ścieżek rozdzielona średnikiem. */
 function katalogiRobocze(wartosc: unknown): string[] {
   if (typeof wartosc !== 'string') return [];
   return wartosc

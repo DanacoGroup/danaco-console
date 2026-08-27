@@ -3542,3 +3542,26 @@ w polu, więc warunek „ukośnik stoi na początku treści" da się sprawdzić 
 treści, a nie zgadywać z klawisza (martwe klawisze, wklejenie, IME). Ukośnik
 w środku zdania nie otwiera niczego — ścieżka w rodzaju `/home/ubuntu` wpisana
 w wypowiedź jest tekstem, nie komendą.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/nastawa-retencji.ts
+Rdzeń zasadę retencji egzekwuje, nie tylko zapisuje: przemiata pozycje przy
+swoim starcie, przy każdym odczycie historii oraz zaraz po zapisie zasady,
+więc po zapisie pozycje przestają istnieć naprawdę, a nie tylko formalnie.
+Zapowiedź skutku nie jest bramką — nie ma pytania o potwierdzenie, przycisk
+zapisu jest czynny zawsze, a zapowiedź daje wiedzę, nie zgodę. Oba progi
+puste znaczą brak ograniczenia i tak zdejmuje się zasadę z zakresu, bo
+kontrakt nie ma osobnej komendy kasującej — dwie drogi do jednego skutku
+byłyby dwiema prawdami o retencji.
+
+Rdzeń przyjmuje zakresy okna, sesji i globalny, przy czym dwa pierwsze
+wymagają wskazania bytu. Okno panel zna od gospodarza, sesji nie zna z
+własnych opcji — sesja pada wyłącznie we wczytanych pozycjach historii,
+więc zakres sesji wchodzi do wyboru dopiero wtedy, gdy panel tę sesję
+zobaczył; pozycja obiecująca zakres, którego nie ma czym wypełnić, byłaby
+atrapą.
+
+Panel widzi tylko stronę wykazu, nie całą historię okna, a rdzeń liczy próg
+liczby pozycji na całości, dlatego zapowiedź jest dolnym oszacowaniem —
+pozycji poza zasadą będzie co najmniej tyle, ile panel widzi. Kolejność
+pozycji jest kolejnością odczytu historii od najnowszej, więc numer pozycji
+w tablicy jest jej numerem od najnowszej i to on wchodzi w próg.

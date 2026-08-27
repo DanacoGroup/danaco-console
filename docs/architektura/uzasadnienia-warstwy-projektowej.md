@@ -520,3 +520,13 @@ nie ma. Barwy pochodzą z żetonów motywu, więc oba motywy są obsłużone bez
 osobnych reguł. Szerokość modalu usunięcia jest liczona tym samym wzorem co
 pozostałe modale, więc na wąskim oknie zachowuje się jak każdy modal
 produktu.
+
+## budowa/klient-poprzedni/src/mission-control/mission-control.css
+Kolejność importów odpowiada kolejności sekcji na ekranie: pulpit.css niesie
+ramę, czoło, kafle liczb, pas decyzji i pas działań; matryca.css niesie
+kanały modelu, matrycę sesji, pas Relacje i rząd Utwórz; kolumny.css niesie
+procesy w tle, kolejki i zespół agentów; stany-pulpitu.css niesie stany
+puste i braki źródła w kontrakcie. Warunkiem użycia jest wcześniejsze
+wczytanie warstwy żetonów oraz biblioteki komponentów, co zapewnia plik
+aplikacja/arkusze-stylow.ts. Arkusz wciąga moduł mission-control.ts, więc
+trafia do pakietu razem z pulpitem i nie wymaga wpisu w cudzym wykazie.

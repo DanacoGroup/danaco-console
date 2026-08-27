@@ -543,3 +543,21 @@ Panel nie woła rdzenia i nie zna dokumentu ani zaznaczenia. Składa treść
 żądania z pól bez identyfikatora dokumentu i bez zakresu — zakres dokłada
 warstwa wyżej z bieżącego zaznaczenia, bo ona jedna wie, co Operator
 zaznaczył.
+
+## budowa/klient-poprzedni/src/moduly/studio/wstazka-pracy.ts
+
+Czynności wstążki stoją zebrane wedle rodzaju pracy, wzorem pakietu biurowego,
+zamiast jednego paska ze stoma czynnościami naraz: taki pasek byłby wykazem,
+po którym Operator szuka wzrokiem, a zakładka mówi wprost, gdzie czego szukać,
+i nazwana grupa — dlaczego te czynności stoją razem.
+
+„Asystent" jest osobną zakładką wstążki, nie pozycją w menu: niesie suwaki
+koncepcyjne, wykaz operacji z pliku kategorii operacji i decyzję o wyniku.
+Wykaz operacji nie powstaje w tym module od nowa — pochodzi z tego samego
+pliku, co wykaz Tools Panelu, żeby obie powierzchnie pokazywały ten sam zestaw.
+
+Wstążka nie woła rdzenia i nie zna stanu modułu. Buduje kontrolki i zgłasza
+naciśnięcia oknu przez czynności wstążki, a złożone kawałki — formularz
+wczytania, panel znajdź/zamień, pola różnicy — przyjmuje gotowe jako gniazda.
+Dzięki temu jedno miejsce trzyma układ wstążki, a inne prowadzi rozmowę
+z rdzeniem.

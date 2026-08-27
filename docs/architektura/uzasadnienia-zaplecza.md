@@ -2329,3 +2329,20 @@ monitorów mówi o rozmiarze pilnowanej treści bez sięgania po plik.
 Stan sprawdzenia (`pending`, `unchanged`, `changed`, `failed`) jest kolumną,
 a nie wyliczeniem z dat: sprawdzenie nieudane (`failed`) też jest
 sprawdzeniem, ma swój czas i nie wolno go pomylić z „bez zmian".
+## budowa/server/internal/store/migracja_173_kanaly_przegladania.sql
+Migracja 173 — kanały RSS/Atom/JSON Feed i ich wpisy (`browser.feed.*`).
+
+Wpis kanału jest bytem osobnym, nie polem kanału: ma własny adres, własny
+czas publikacji i własne oznaczenie przeczytania, a wykaz `browser.feed.list`
+pyta o kanały z wpisami albo o same kanały (`includeEntries`). Wpisy zapisane
+kolumną JSON w wierszu kanału nie dałyby się oznaczyć pojedynczo bez
+przepisywania całej kolumny przy każdym przeczytanym wpisie.
+
+Wpis ma więz obcy do kanału z kasowaniem kaskadowym, bo kontrakt mówi wprost:
+`browser.feed.remove` zdejmuje subskrypcję „wraz z jej wpisami". Kaskada
+w schemacie jest tu jedyną gwarancją, że zdjęcie kanału nie zostawia wpisów
+bez rodzica — sprzątanie w kodzie pominęłoby je przy pierwszym błędzie.
+
+Ten sam adres w tym samym oknie nie zakłada drugiej subskrypcji: warunek
+UNIQUE(okno, url) czyni z ponownego wywołania `browser.feed.subscribe`
+odświeżenie zastanego kanału, a nie jego duplikat.

@@ -2370,3 +2370,16 @@ i `aod.suggestion` dojeżdżają do otwartej kolumny odpowiedzią, a czynności
 `aod.voice.command` jadą z sekcji na żądanie. Warstwa niezaczepiona w powłoce
 osadza się w korzeniu dokumentu, ponieważ pozycja „Always On Display" listwy
 ustawień ma otwierać powierzchnię, a nie odmawiać z powodu kolejności montażu.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/braki-kontraktu.ts
+
+Plik `shared/contract.ts` niesie wykaz `KOMENDY`, czyli komendy kontraktu dostępne
+w czasie działania, wytwarzane z pliku `contract.json`. Zdanie o powodzie powstaje
+z odczytu tego wykazu przy składaniu okna. Zdanie wpisane na stałe przestałoby być
+prawdziwe w dniu dopisania komendy do kontraktu i nikt by tego nie zauważył.
+
+Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje; jest to pytanie osobne.
+Brak jest tu brakiem po stronie kontraktu i wyłącznie o kontrakcie zdanie mówi.
+
+Treść czynności podaje okno wywołujące, ponieważ to okno zna przeznaczenie danej
+pozycji inwentarza kontrolek.

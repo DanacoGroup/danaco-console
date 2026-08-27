@@ -49,13 +49,13 @@ done
 
 echo
 echo "══ Czy klient się buduje"
-if (cd "$BUDOWA/client" && npx tsc --noEmit >/dev/null 2>&1); then
+if (cd "$BUDOWA/klient" && npx tsc --noEmit >/dev/null 2>&1); then
   echo "  ✓ kontrola typów przechodzi"
 else
   echo "  ✗ kontrola typów NIE przechodzi — okno może nie odzwierciedlać kodu"
 fi
 
-if (cd "$BUDOWA/client" && npm run build >/tmp/pokaz-build.txt 2>&1); then
+if (cd "$BUDOWA/klient" && npm run budowanie >/tmp/pokaz-build.txt 2>&1); then
   rozmiar=$(grep -oE 'index-[A-Za-z0-9_-]+\.js *[0-9.]+ kB' /tmp/pokaz-build.txt | head -1 || echo '?')
   echo "  ✓ pakiet zbudowany: $rozmiar"
 else
@@ -72,7 +72,7 @@ echo "══ Uruchamiam podgląd"
 if netstat -ano 2>/dev/null | grep -q ":$PORT_KLIENTA .*LISTENING"; then
   echo "  serwer klienta już działa na $PORT_KLIENTA"
 else
-  ( cd "$BUDOWA/client" && start //B cmd //c "npm run dev > %TEMP%\\pokaz-vite.txt 2>&1" ) >/dev/null 2>&1
+  ( cd "$BUDOWA/klient" && start //B cmd //c "npm run dev > %TEMP%\\pokaz-vite.txt 2>&1" ) >/dev/null 2>&1
   for _ in 1 2 3 4 5 6 7 8; do
     netstat -ano 2>/dev/null | grep -q ":$PORT_KLIENTA .*LISTENING" && break
     sleep 1

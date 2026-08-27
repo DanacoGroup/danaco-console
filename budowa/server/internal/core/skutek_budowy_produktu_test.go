@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
 )
 
@@ -1252,5 +1253,84 @@ func TestPakowanieBezArtefaktuOdmawiaZPowodem(t *testing.T) {
 	}
 	if !strings.Contains(odmowa.Message, "artefakt") {
 		t.Fatalf("odmowa nie nazywa braku: %q", odmowa.Message)
+	}
+}
+
+// ── Audyt wydajności strony produktu ────────────────────────────────────────
+
+// TestAudytWydajnosciOddajeMiaryCoreWebVitals mierzy stronę stojącą naprawdę
+// i sprawdza treść wyniku, nie kopertę: miary Core Web Vitals mają nieść
+// wartości zmierzone, a ocena mieścić się w skali setnej. Ten sprawdzian —
+// wyjątkiem od zasady pliku — pomija się bez programu pomiarowego, bo audyt
+// wydajności z założenia idzie programem, a nie biblioteką wkompilowaną;
+// odmowę przy jego braku mierzy sprawdzian osobny.
+func TestAudytWydajnosciOddajeMiaryCoreWebVitals(t *testing.T) {
+	if !chromiumStoi() {
+		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
+	}
+	if !zewnetrzne.Stoi(narzedzieLighthouse) {
+		t.Skip("na tej maszynie nie ma programu Lighthouse — wydajności nie ma czym zmierzyć")
+	}
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	okno := oknoModuluSprawdzianu(t, zmontowany, zycie)
+
+	serwer := serwerTresci(t, `<html><head><title>Strona pomiaru wydajności</title></head>
+		<body><h1>Treść mierzona</h1><p>Strona stoi i odpowiada.</p></body></html>`)
+
+	var wynik shared.AppsPerformanceAuditResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandAppsPerformanceAudit,
+		shared.AppsPerformanceAuditRequest{WindowId: okno, Url: serwer.URL}, &wynik)
+
+	audyt := wynik.Audit
+	if audyt.PerformanceScore < 0 || audyt.PerformanceScore > 100 {
+		t.Fatalf("ocena wydajności poza skalą setną: %d", audyt.PerformanceScore)
+	}
+	if len(audyt.Metrics) == 0 {
+		t.Fatal("audyt bez ani jednej miary nie jest pomiarem")
+	}
+	najwiekszeWymalowanie := false
+	for _, miara := range audyt.Metrics {
+		if miara.Id == "largest-contentful-paint" && miara.Value > 0 {
+			najwiekszeWymalowanie = true
+		}
+		if miara.Unit == "" {
+			t.Fatalf("miara %s bez jednostki nie mówi, w czym jest wartość", miara.Id)
+		}
+	}
+	if !najwiekszeWymalowanie {
+		t.Fatalf("wynik nie niesie największego wymalowania treści z wartością dodatnią: %+v",
+			audyt.Metrics)
+	}
+	if audyt.FormFactor != shared.AppPerformanceFormFactorDesktop {
+		t.Fatalf("audyt bez wskazania postaci miał iść postacią desktop, poszedł %q",
+			audyt.FormFactor)
+	}
+	if audyt.ToolVersion == "" {
+		t.Fatal("wynik bez wersji programu nie daje się porównać z wynikiem sprzed miesiąca")
+	}
+	if audyt.FinishedAt < audyt.StartedAt {
+		t.Fatalf("audyt skończył się przed rozpoczęciem: %d < %d",
+			audyt.FinishedAt, audyt.StartedAt)
+	}
+}
+
+// TestAudytWydajnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy zwęża ścieżkę
+// wyszukiwania do katalogu pustego i mierzy odmowę: ma nazwać brakujący program
+// oraz pakiet, którego instalacja brak usuwa — a nie wyjść usterką wewnętrzną.
+func TestAudytWydajnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy(t *testing.T) {
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	okno := oknoModuluSprawdzianu(t, zmontowany, zycie)
+	t.Setenv("PATH", t.TempDir())
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandAppsPerformanceAudit,
+		shared.AppsPerformanceAuditRequest{WindowId: okno, Url: "http://127.0.0.1:9/"})
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("brak programu wrócił kodem %q", odmowa.Code)
+	}
+	if !strings.Contains(odmowa.Message, narzedzieLighthouse.Program) {
+		t.Fatalf("odmowa nie nazywa brakującego programu: %q", odmowa.Message)
+	}
+	if !strings.Contains(odmowa.Message, narzedzieLighthouse.Pakiet) {
+		t.Fatalf("odmowa nie podaje drogi naprawy: %q", odmowa.Message)
 	}
 }

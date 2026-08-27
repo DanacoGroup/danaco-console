@@ -70,6 +70,7 @@ type Przegladarka interface {
 
 	// Narzędzia inspekcyjne i praca na stronie uruchomionej.
 	ZbadajDrzewo(ctx context.Context, z shared.BrowserDomInspectRequest) (shared.BrowserDomInspectResponse, error)
+	ZbadajDostepnosc(ctx context.Context, z shared.BrowserAccessibilityAuditRequest) (shared.BrowserAccessibilityAuditResponse, error)
 	RejestrSieciowy(ctx context.Context, z shared.BrowserNetworkHarRequest) (shared.BrowserNetworkHarResponse, error)
 	OdczytajKonsole(ctx context.Context, z shared.BrowserConsoleReadRequest) (shared.BrowserConsoleReadResponse, error)
 	EmulujUrzadzenie(ctx context.Context, z shared.BrowserDeviceEmulateRequest) (shared.BrowserDeviceEmulateResponse, error)
@@ -177,6 +178,9 @@ func zarejestrujPrzegladarke(r *Rejestr, m Przegladarka, e *emiter) {
 	// więc rozgłaszają `browser.page.changed` z powodem `interaction` — to nie
 	// jest przejście pod nowy adres, tylko zmiana stanu strony już otwartej.
 	r.Zarejestruj(shared.CommandBrowserDomInspect, obsluz(m.ZbadajDrzewo))
+	// Audyt dostępności zdarzenia nie rozgłasza: czyta stronę i niczego w niej
+	// nie zmienia, tak samo jak drzewo elementów, konsola i rejestr sieciowy.
+	r.Zarejestruj(shared.CommandBrowserAccessibilityAudit, obsluz(m.ZbadajDostepnosc))
 	r.Zarejestruj(shared.CommandBrowserNetworkHar, obsluz(m.RejestrSieciowy))
 	r.Zarejestruj(shared.CommandBrowserConsoleRead, obsluz(m.OdczytajKonsole))
 	r.Zarejestruj(shared.CommandBrowserDeviceEmulate,

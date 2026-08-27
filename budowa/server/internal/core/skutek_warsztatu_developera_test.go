@@ -32,6 +32,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -1667,5 +1668,126 @@ func TestSkutekSkanuSemgrepem(t *testing.T) {
 	if znaleziska == 0 {
 		t.Fatalf("reguła repozytorium nie dała ani jednego znaleziska (przebieg %s)",
 			skan.Scan.Id)
+	}
+}
+
+// ── Przebieg obciążeniowy punktu końcowego ──────────────────────────────────
+
+// TestPrzebiegObciazeniowyOddajeRozkladCzasowIPrzepustowosc obciąża punkt
+// końcowy stojący naprawdę i mierzy skutek NIEZALEŻNIE od odpowiedzi: serwer
+// sprawdzianu liczy żądania, które do niego doszły. Wynik mówiący o tysiącach
+// żądań przy liczniku serwera na zerze byłby przebiegiem zmyślonym.
+func TestPrzebiegObciazeniowyOddajeRozkladCzasowIPrzepustowosc(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieAutocannon) {
+		t.Skip("na tej maszynie nie ma programu autocannon — punktu nie ma czym obciążyć")
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	var doszlo atomic.Int64
+	serwer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		doszlo.Add(1)
+		_, _ = w.Write([]byte("odpowiedź punktu sprawdzianu"))
+	}))
+	t.Cleanup(serwer.Close)
+
+	odpowiedz, err := warsztat.adapter.WykonajPrzebiegObciazeniowy(context.Background(),
+		shared.DeveloperApiLoadRunRequest{
+			WindowId:        warsztat.okno.Id,
+			Url:             serwer.URL,
+			Connections:     wskaznik(2),
+			DurationSeconds: wskaznik(1),
+		})
+	if err != nil {
+		t.Fatalf("przebieg obciążeniowy odmówił: %v", err)
+	}
+
+	przebieg := odpowiedz.Run
+	if przebieg.RequestsTotal <= 0 {
+		t.Fatalf("przebieg bez ani jednej odpowiedzi nie jest wynikiem: %+v", przebieg)
+	}
+	if doszlo.Load() == 0 {
+		t.Fatalf("wynik mówi o %d żądaniach, a do serwera sprawdzianu nie doszło ani jedno",
+			przebieg.RequestsTotal)
+	}
+	if przebieg.RequestsPerSecond <= 0 {
+		t.Fatalf("przebieg z odpowiedziami ma nieść przepustowość dodatnią: %+v", przebieg)
+	}
+	rozklad := przebieg.Latency
+	if rozklad.P50Ms > rozklad.P90Ms || rozklad.P90Ms > rozklad.P99Ms {
+		t.Fatalf("percentyle czasu odpowiedzi nie rosną: p50=%v p90=%v p99=%v",
+			rozklad.P50Ms, rozklad.P90Ms, rozklad.P99Ms)
+	}
+	if rozklad.MaxMs < rozklad.MinMs {
+		t.Fatalf("czas najdłuższy krótszy od najkrótszego: %+v", rozklad)
+	}
+	udane := int64(0)
+	for _, wpis := range przebieg.StatusCounts {
+		if wpis.Status == http.StatusOK {
+			udane = wpis.Count
+		}
+	}
+	if udane == 0 {
+		t.Fatalf("rozbicie po kodach stanu nie niesie odpowiedzi 200: %+v", przebieg.StatusCounts)
+	}
+	if przebieg.ToolVersion == "" {
+		t.Fatal("wynik bez wersji programu nie daje się porównać z wynikiem sprzed miesiąca")
+	}
+}
+
+// TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer jest wymierzony
+// we wzorzec szkody z ustroju budowy: „zero żądań na sekundę" o usłudze,
+// której nie ma, czyta się jak usługa skrajnie wolna — czyli jak pomiar,
+// którego nikt nie wykonał. Punkt gaśnie przed przebiegiem; odmowa ma nazwać
+// liczbę błędów, a nie oddać wynik złożony z zer.
+func TestPrzebiegObciazeniowyMilczacegoPunktuOdmawiaZamiastZer(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieAutocannon) {
+		t.Skip("na tej maszynie nie ma programu autocannon — punktu nie ma czym obciążyć")
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	// Adres po zamkniętym serwerze: port był przed chwilą wolny do nasłuchu,
+	// więc wskazuje maszynę własną i nie trafi w cudzą usługę.
+	serwer := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	adres := serwer.URL
+	serwer.Close()
+
+	_, err := warsztat.adapter.WykonajPrzebiegObciazeniowy(context.Background(),
+		shared.DeveloperApiLoadRunRequest{
+			WindowId:        warsztat.okno.Id,
+			Url:             adres,
+			Connections:     wskaznik(2),
+			DurationSeconds: wskaznik(1),
+		})
+	if err == nil {
+		t.Fatal("przebieg bez ani jednej odpowiedzi wrócił jako wynik zamiast odmowy")
+	}
+	if !strings.Contains(err.Error(), "ani jednej odpowiedzi") {
+		t.Fatalf("odmowa nie mówi, że nie było czego zmierzyć: %v", err)
+	}
+}
+
+// TestPrzebiegObciazeniowyBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy zwęża
+// ścieżkę wyszukiwania do katalogu pustego i mierzy odmowę: ma nazwać brakujący
+// program oraz pakiet, którego instalacja brak usuwa.
+func TestPrzebiegObciazeniowyBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy(t *testing.T) {
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	t.Setenv("PATH", t.TempDir())
+
+	_, err := warsztat.adapter.WykonajPrzebiegObciazeniowy(context.Background(),
+		shared.DeveloperApiLoadRunRequest{
+			WindowId: warsztat.okno.Id,
+			Url:      "http://127.0.0.1:9/",
+		})
+	if err == nil {
+		t.Fatal("brak programu wrócił powodzeniem zamiast odmowy")
+	}
+	if !strings.Contains(err.Error(), narzedzieAutocannon.Program) {
+		t.Fatalf("odmowa nie nazywa brakującego programu: %v", err)
+	}
+	if !strings.Contains(err.Error(), narzedzieAutocannon.Pakiet) {
+		t.Fatalf("odmowa nie podaje drogi naprawy: %v", err)
 	}
 }

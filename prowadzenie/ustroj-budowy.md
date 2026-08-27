@@ -88,6 +88,11 @@ Reguły obowiązujące każdą sesję:
 - Komunikat rewizji: tryb oznajmujący, jedno zdanie, do 70 znaków.
 - Zmiana wykraczająca poza teren wraca do Prowadzącego jako zgłoszenie.
 - Drzewo robocze po zamknięciu terenu jest usuwane — `git worktree remove`.
+  **Przed usunięciem sprawdza się, czy nic w nim nie biegnie.** Drzewo zdjęte spod
+  działającego pomiaru unieważnia ten pomiar bez ostrzeżenia: bieg kończy się
+  wtedy serią niepowodzeń `no such file or directory`, które wyglądają jak usterki
+  kodu. Zdarzyło się to Prowadzącemu przy zamykaniu terenu `nastawy-wdrozenia` —
+  osiem fałszywych niepowodzeń w biegu, który do tej chwili był czysty.
 
 ## 5. Bramki
 
@@ -99,6 +104,13 @@ sprawdzalnym, nie deklaracją.
 Otwiera ją Prowadzący. Warunki: teren ma nazwę, wykaz plików i kryteria odbioru;
 wykaz plików nie przecina się z żadnym terenem otwartym; gałąź bazowa jest
 wskazana.
+
+**Teren ruszający kontrakt otwiera się wyłącznie na podstawie pozycji rejestru
+decyzji.** Kontrakt jest produktem — każda komenda to zdolność, którą platforma
+odtąd obiecuje — więc dołożenie komendy jest rozstrzygnięciem o zakresie, a to
+należy do Właściciela. Prawo zmiany kontraktu nie jest prawem Prowadzącego do
+nadania. Warunek wprowadzony po tym, jak teren `pomiar-stron` dołożył trzy
+zdolności bez takiej podstawy (pozycja 16 rejestru decyzji).
 
 ### 5.2 Bramka wyjścia terenu
 
@@ -131,6 +143,12 @@ Poniższe reguły obowiązują bezwarunkowo i nie podlegają ocenie sytuacyjnej.
   wersji nie należą do repozytorium.
 - **Bez kroniki w treści.** Dokument i komentarz opisują stan obecny oraz jego
   uzasadnienie. Przebieg prac przechowuje historia rewizji.
+- **Komentarz w granicy 250 znaków na 1000 wierszy — bezwzględnie.** Pliki z kodem
+  nie służą do prowadzenia dyskusji: komentarz stwierdza regułę obowiązującą, nie
+  waży wariantów i nie prowadzi wykładu. Uzasadnienie dłuższe niż zdanie idzie do
+  `docs/` (kod) albo `design/01-dokumentacja-md/` (warstwa projektowa), a plik
+  niesie zdanie i odsyłacz. Rozstrzygnięcie Właściciela, pozycja 18 rejestru
+  decyzji. **Granica jest kryterium odbioru każdego terenu.**
 - **Bez zapisu stanu przejściowego w dokumencie trwałym.** Ostrzeżenie w rodzaju
   „ten plik jest niesprawny", „nie czerp stąd ustaleń", „czeka na poprawę" nie
   należy do dokumentu prowadzenia. Stan przejściowy mija, a zapis zostaje —

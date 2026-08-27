@@ -730,6 +730,10 @@
         {
           "wartosc": "failure",
           "opis": "Obiegu nie udalo sie rozpoczac; odpowiada session.ZatrzymanieUsterka"
+        },
+        {
+          "wartosc": "completed",
+          "opis": "Zadanie skonczone z wynikiem: koordynator zamknal ture wynikiem, a zadne okno wykonawcze tego koordynatora nie prowadzilo wtedy tury. Jedyna wartosc mowiaca skonczone, a nie przerwane — po niej bieg podejmuje sie sam przy kolejnym koncu tury wykonawcy, wiec ukonczenie nie jest brama akceptacji; odpowiada session.ZatrzymanieUkonczenie"
         }
       ]
     },
@@ -8704,6 +8708,56 @@
           "opis": "Rejestr centrum oraz powiadomienie wypychane na sparowane urzadzenie"
         }
       ]
+    },
+    {
+      "nazwa": "BrowserAccessibilityLevel",
+      "opis": "Waga zgloszenia audytu dostepnosci strony",
+      "wartosci": [
+        {
+          "wartosc": "error",
+          "opis": "Naruszenie normy"
+        },
+        {
+          "wartosc": "warning",
+          "opis": "Ostrzezenie wymagajace oceny czlowieka"
+        },
+        {
+          "wartosc": "notice",
+          "opis": "Uwaga do sprawdzenia recznego"
+        }
+      ]
+    },
+    {
+      "nazwa": "BrowserAccessibilityStandard",
+      "opis": "Norma, wedlug ktorej badana jest dostepnosc strony",
+      "wartosci": [
+        {
+          "wartosc": "wcag2a",
+          "opis": "WCAG 2 poziom A"
+        },
+        {
+          "wartosc": "wcag2aa",
+          "opis": "WCAG 2 poziom AA"
+        },
+        {
+          "wartosc": "wcag2aaa",
+          "opis": "WCAG 2 poziom AAA"
+        }
+      ]
+    },
+    {
+      "nazwa": "AppPerformanceFormFactor",
+      "opis": "Postac urzadzenia, wedlug ktorej liczona jest ocena wydajnosci",
+      "wartosci": [
+        {
+          "wartosc": "mobile",
+          "opis": "Telefon"
+        },
+        {
+          "wartosc": "desktop",
+          "opis": "Biurko"
+        }
+      ]
     }
   ],
   "struktury": [
@@ -16186,6 +16240,36 @@
           "typ": "KnowledgeScope",
           "wymagane": true,
           "opis": "Z ktorego zakresu pochodzi"
+        }
+      ]
+    },
+    {
+      "nazwa": "KnowledgeImageHit",
+      "opis": "Obraz odnaleziony zdaniem opisujacym jego tresc. Osobna struktura od KnowledgeHit, bo obraz nie ma fragmentu tekstu do zacytowania — wskazaniem jest sam plik",
+      "pola": [
+        {
+          "nazwa": "source",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nazwa pliku obrazu w bibliotece"
+        },
+        {
+          "nazwa": "sourceId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Identyfikator zrodla, ktorym da sie po obraz siegnac"
+        },
+        {
+          "nazwa": "mimeType",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Rodzaj obrazu zapisany przy pliku biblioteki"
+        },
+        {
+          "nazwa": "score",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Trafnosc w setnych — 100 znaczy najblizszy mozliwy"
         }
       ]
     },
@@ -35456,6 +35540,300 @@
           "opis": "Chwila wystapienia zdarzenia, znacznik milisekund"
         }
       ]
+    },
+    {
+      "nazwa": "BrowserAccessibilityIssue",
+      "opis": "Zgloszenie audytu dostepnosci wraz ze wskazaniem wezla DOM",
+      "pola": [
+        {
+          "nazwa": "code",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Kod reguly normy, ktora zgloszenie narusza"
+        },
+        {
+          "nazwa": "level",
+          "typ": "BrowserAccessibilityLevel",
+          "wymagane": true,
+          "opis": "Waga zgloszenia"
+        },
+        {
+          "nazwa": "message",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Tresc zgloszenia podana przez program audytujacy"
+        },
+        {
+          "nazwa": "selector",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Selektor CSS wskazujacy wezel DOM, ktorego zgloszenie dotyczy"
+        },
+        {
+          "nazwa": "context",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Fragment zrodla wezla, na ktorym zgloszenie powstalo"
+        },
+        {
+          "nazwa": "runner",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Silnik regul, ktory zgloszenie wykryl"
+        }
+      ]
+    },
+    {
+      "nazwa": "AppPerformanceAudit",
+      "opis": "Wynik audytu wydajnosci strony wraz z miarami Core Web Vitals",
+      "pola": [
+        {
+          "nazwa": "url",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres, pod ktory audyt naprawde wszedl"
+        },
+        {
+          "nazwa": "formFactor",
+          "typ": "AppPerformanceFormFactor",
+          "wymagane": true,
+          "opis": "Postac urzadzenia, wedlug ktorej liczono ocene"
+        },
+        {
+          "nazwa": "performanceScore",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Ocena wydajnosci w skali 0-100"
+        },
+        {
+          "nazwa": "metrics",
+          "typ": "AppPerformanceMetric[]",
+          "wymagane": true,
+          "opis": "Miary Core Web Vitals w kolejnosci ustalonej"
+        },
+        {
+          "nazwa": "toolVersion",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Wersja programu, ktory pomiar wykonal"
+        },
+        {
+          "nazwa": "startedAt",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Czas rozpoczecia audytu w milisekundach epoki"
+        },
+        {
+          "nazwa": "finishedAt",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Czas zakonczenia audytu w milisekundach epoki"
+        }
+      ]
+    },
+    {
+      "nazwa": "AppPerformanceMetric",
+      "opis": "Jedna miara wydajnosci strony wraz z wartoscia zmierzona",
+      "pola": [
+        {
+          "nazwa": "id",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Identyfikator miary nadany przez program pomiarowy"
+        },
+        {
+          "nazwa": "title",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Nazwa miary"
+        },
+        {
+          "nazwa": "value",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Wartosc zmierzona"
+        },
+        {
+          "nazwa": "unit",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Jednostka wartosci podana przez program pomiarowy"
+        },
+        {
+          "nazwa": "score",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Ocena miary w skali 0-100; brak znaczy miare bez oceny"
+        },
+        {
+          "nazwa": "displayValue",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Wartosc w postaci pokazywanej Operatorowi"
+        }
+      ]
+    },
+    {
+      "nazwa": "ApiLoadRun",
+      "opis": "Przebieg obciazeniowy punktu koncowego wraz z ksztaltem wyniku",
+      "pola": [
+        {
+          "nazwa": "url",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres, ktory obciazono"
+        },
+        {
+          "nazwa": "method",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Metoda zapytania"
+        },
+        {
+          "nazwa": "connections",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba polaczen rownoleglych"
+        },
+        {
+          "nazwa": "durationSeconds",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Zmierzony czas trwania przebiegu w sekundach"
+        },
+        {
+          "nazwa": "requestsTotal",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Liczba zadan, na ktore przyszla odpowiedz"
+        },
+        {
+          "nazwa": "requestsPerSecond",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Przepustowosc w zadaniach na sekunde"
+        },
+        {
+          "nazwa": "bytesPerSecond",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Przepustowosc w bajtach na sekunde"
+        },
+        {
+          "nazwa": "latency",
+          "typ": "ApiLoadLatency",
+          "wymagane": true,
+          "opis": "Rozklad czasu odpowiedzi"
+        },
+        {
+          "nazwa": "statusCounts",
+          "typ": "ApiLoadStatusCount[]",
+          "wymagane": true,
+          "opis": "Liczba odpowiedzi wedlug kodu stanu, rosnaco po kodzie"
+        },
+        {
+          "nazwa": "non2xx",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Liczba odpowiedzi spoza klasy 2xx"
+        },
+        {
+          "nazwa": "errors",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Liczba zadan, ktore nie doszly do skutku"
+        },
+        {
+          "nazwa": "timeouts",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Liczba zadan przerwanych granica czasu"
+        },
+        {
+          "nazwa": "toolVersion",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Wersja programu, ktory przebieg wykonal"
+        },
+        {
+          "nazwa": "startedAt",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Czas rozpoczecia przebiegu w milisekundach epoki"
+        },
+        {
+          "nazwa": "finishedAt",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Czas zakonczenia przebiegu w milisekundach epoki"
+        }
+      ]
+    },
+    {
+      "nazwa": "ApiLoadLatency",
+      "opis": "Rozklad czasu odpowiedzi przebiegu obciazeniowego w milisekundach",
+      "pola": [
+        {
+          "nazwa": "averageMs",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Czas sredni"
+        },
+        {
+          "nazwa": "stddevMs",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Odchylenie standardowe czasu"
+        },
+        {
+          "nazwa": "minMs",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Czas najkrotszy"
+        },
+        {
+          "nazwa": "maxMs",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Czas najdluzszy"
+        },
+        {
+          "nazwa": "p50Ms",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Mediana czasu"
+        },
+        {
+          "nazwa": "p90Ms",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Percentyl 90 czasu"
+        },
+        {
+          "nazwa": "p99Ms",
+          "typ": "float",
+          "wymagane": true,
+          "opis": "Percentyl 99 czasu"
+        }
+      ]
+    },
+    {
+      "nazwa": "ApiLoadStatusCount",
+      "opis": "Liczba odpowiedzi przebiegu obciazeniowego o jednym kodzie stanu",
+      "pola": [
+        {
+          "nazwa": "status",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Kod stanu odpowiedzi"
+        },
+        {
+          "nazwa": "count",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Liczba odpowiedzi o tym kodzie"
+        }
+      ]
     }
   ],
   "obszary": [
@@ -47380,6 +47758,18 @@
           "typ": "string",
           "wymagane": false,
           "opis": "Projekt, ktorego wiedze przeszukac po znaczeniu"
+        },
+        {
+          "nazwa": "rerank",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze"
+        },
+        {
+          "nazwa": "rerankCandidates",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic"
         }
       ],
       "wynik": [
@@ -47394,6 +47784,62 @@
           "typ": "int",
           "wymagane": true,
           "opis": "Liczba fragmentow spelniajacych warunki"
+        },
+        {
+          "nazwa": "reranked",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy kolejnosc ulozyl przesiew. Bez tego pola nie da sie odroznic odpowiedzi przesianej od odpowiedzi z samego pierwszego przebiegu, a `score` w obu ma ten sam ksztalt"
+        }
+      ]
+    },
+    {
+      "typ": "knowledge.image.search",
+      "opis": "Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora",
+      "zadanie": [
+        {
+          "nazwa": "query",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Zdanie opisujace szukany obraz"
+        },
+        {
+          "nazwa": "limit",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Gorna granica liczby obrazow"
+        },
+        {
+          "nazwa": "projectId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Projekt, ktorego obrazy przeszukac"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "results",
+          "typ": "KnowledgeImageHit[]",
+          "wymagane": true,
+          "opis": "Obrazy od najtrafniejszego"
+        },
+        {
+          "nazwa": "total",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba obrazow spelniajacych warunki"
+        },
+        {
+          "nazwa": "examined",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Ile obrazow biblioteki weszlo do porownania. Wynik pusty przy zerze znaczy brak obrazow, a nie brak trafienia — dwie rozne odpowiedzi, ktorych bez tej liczby nie da sie rozroznic"
+        },
+        {
+          "nazwa": "model",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Model osi obrazu, ktorym liczono podobienstwo"
         }
       ]
     },
@@ -83392,6 +83838,198 @@
           "opis": "Liczba zdarzen nowych po zmianie"
         }
       ]
+    },
+    {
+      "typ": "browser.accessibility.audit",
+      "opis": "Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM",
+      "zadanie": [
+        {
+          "nazwa": "windowId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Okno przegladarki"
+        },
+        {
+          "nazwa": "tabId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Karta przegladania; pusta znaczy karte czynna"
+        },
+        {
+          "nazwa": "standard",
+          "typ": "BrowserAccessibilityStandard",
+          "wymagane": false,
+          "opis": "Norma audytu; pusta znaczy wcag2aa"
+        },
+        {
+          "nazwa": "includeWarnings",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy dolaczyc ostrzezenia obok naruszen"
+        },
+        {
+          "nazwa": "includeNotices",
+          "typ": "bool",
+          "wymagane": false,
+          "opis": "Czy dolaczyc uwagi do sprawdzenia recznego"
+        },
+        {
+          "nazwa": "timeoutMs",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Gorna granica czasu audytu w milisekundach"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "issues",
+          "typ": "BrowserAccessibilityIssue[]",
+          "wymagane": true,
+          "opis": "Zgloszenia w kolejnosci podanej przez program audytujacy"
+        },
+        {
+          "nazwa": "standard",
+          "typ": "BrowserAccessibilityStandard",
+          "wymagane": true,
+          "opis": "Norma, wedlug ktorej strone zbadano"
+        },
+        {
+          "nazwa": "url",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres strony, ktora zmierzono"
+        },
+        {
+          "nazwa": "errorCount",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba naruszen"
+        },
+        {
+          "nazwa": "warningCount",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba ostrzezen; zero, gdy ostrzezen nie zamowiono"
+        },
+        {
+          "nazwa": "noticeCount",
+          "typ": "int",
+          "wymagane": true,
+          "opis": "Liczba uwag; zero, gdy uwag nie zamowiono"
+        },
+        {
+          "nazwa": "toolVersion",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Wersja programu, ktory audyt wykonal"
+        },
+        {
+          "nazwa": "auditedAt",
+          "typ": "int64",
+          "wymagane": true,
+          "opis": "Czas audytu w milisekundach epoki"
+        }
+      ]
+    },
+    {
+      "typ": "apps.performance.audit",
+      "opis": "Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals",
+      "zadanie": [
+        {
+          "nazwa": "windowId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Okno modulu Apps"
+        },
+        {
+          "nazwa": "url",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres mierzonej strony"
+        },
+        {
+          "nazwa": "formFactor",
+          "typ": "AppPerformanceFormFactor",
+          "wymagane": false,
+          "opis": "Postac urzadzenia; pusta znaczy desktop"
+        },
+        {
+          "nazwa": "timeoutMs",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Gorna granica czasu audytu w milisekundach"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "audit",
+          "typ": "AppPerformanceAudit",
+          "wymagane": true,
+          "opis": "Wynik audytu"
+        }
+      ]
+    },
+    {
+      "typ": "developer.api.load.run",
+      "opis": "Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc",
+      "zadanie": [
+        {
+          "nazwa": "windowId",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Okno modulu Developer"
+        },
+        {
+          "nazwa": "url",
+          "typ": "string",
+          "wymagane": true,
+          "opis": "Adres punktu koncowego"
+        },
+        {
+          "nazwa": "method",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Metoda zapytania; pusta znaczy GET"
+        },
+        {
+          "nazwa": "headers",
+          "typ": "json",
+          "wymagane": false,
+          "opis": "Naglowki zapytania"
+        },
+        {
+          "nazwa": "body",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Tresc zapytania"
+        },
+        {
+          "nazwa": "connections",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Liczba polaczen rownoleglych; brak bierze wartosc domyslna rdzenia"
+        },
+        {
+          "nazwa": "durationSeconds",
+          "typ": "int",
+          "wymagane": false,
+          "opis": "Czas trwania przebiegu w sekundach; brak bierze wartosc domyslna rdzenia"
+        },
+        {
+          "nazwa": "environmentId",
+          "typ": "string",
+          "wymagane": false,
+          "opis": "Srodowisko podstawiajace zmienne postaci placeholder"
+        }
+      ],
+      "wynik": [
+        {
+          "nazwa": "run",
+          "typ": "ApiLoadRun",
+          "wymagane": true,
+          "opis": "Przebieg obciazeniowy wraz z wynikiem pomiaru"
+        }
+      ]
     }
   ],
   "zdarzenia": [
@@ -86112,6 +86750,10 @@
       {
         "komenda": "knowledge.search",
         "zastosowanie": "Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo"
+      },
+      {
+        "komenda": "knowledge.image.search",
+        "zastosowanie": "Uzyj, gdy Operator pyta o obraz, ktorego nazwy nie pamieta — opisz zdaniem, co ma byc na obrazie, zamiast zgadywac nazwe pliku"
       },
       {
         "komenda": "session.tool.list",

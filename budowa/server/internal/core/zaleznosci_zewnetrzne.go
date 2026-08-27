@@ -54,6 +54,32 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "rozpoznanie pisma ze skanu i zdjęcia kartki"},
 		{Narzedzie: narzedzieLibreOffice,
 			Zakres: "zamiana formatów biurowych, których nie czyta Pandoc"},
+		{Narzedzie: narzedzieTypst,
+			Zakres: "skład dokumentu do PDF-u w komendzie document.convert dla materiału, " +
+				"którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta " +
+				"droga wraca do wersji zapasowej przez HTML i LibreOffice"},
+		// Tika i LanguageTool to programy Javy, więc obie pozycje wskazują ten sam
+		// plik wykonywalny (`java`) i stoją w wykazie OSOBNO. Nie jest to
+		// powtórzenie: pozycja wykazu odpowiada na pytanie „co przestaje działać
+		// i co z tym zrobić", a odpowiedzi są tu dwie różne — brak Javy zabiera
+		// naraz odczyt plików i korektę językową, czyli dwa zakresy w dwóch
+		// modułach. Wiersz na zakres jest tym, po co ten wykaz istnieje.
+		{Narzedzie: narzedzieTiki,
+			Zakres: "odczyt treści pliku w formacie spoza słownika rdzenia " +
+				"(document.text.extract) — arkusz, prezentacja, wiadomość poczty"},
+		{Narzedzie: narzedzieLanguageToola,
+			Zakres: "gramatyka, ortografia, interpunkcja, typografia i styl w korekcie " +
+				"językowej modułu Translate (translate.proofread.run)"},
+		{Narzedzie: narzedzieHunspella,
+			Zakres: "ortografia w korekcie językowej modułu Translate na maszynie bez " +
+				"LanguageToola — LanguageTool ma pierwszeństwo i obejmuje pisownię wraz " +
+				"z gramatyką, słownik zostaje drogą zapasową"},
+		{Narzedzie: narzedzieVale,
+			Zakres: "styl prozy w korekcie językowej modułu Translate — powtórzenia " +
+				"i terminy, zestawem reguł wbudowanym w program"},
+		{Narzedzie: narzedzieCzyszczeniaSkanu,
+			Zakres: "prostowanie skosu, odszumianie, progowanie i przycinanie marginesów " +
+				"skanu przed rozpoznaniem pisma (studio.ingest.recognize)"},
 		{Narzedzie: narzedzieFfprobe,
 			Zakres: "rozpoznanie zawartości nagrania dźwiękowego i filmowego"},
 		{Narzedzie: narzedzieFfmpeg,
@@ -62,6 +88,10 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "pakowanie i wydobycie zawartości archiwum"},
 		{Narzedzie: narzedziePowiekszenia(),
 			Zakres: "powiększanie obrazu w module Design"},
+		{Narzedzie: narzedzieOdtwarzaniaTwarzy(),
+			Zakres: "osobny przebieg poprawiania twarzy przy powiększaniu obrazu " +
+				"(image.upscale z faces: true) — bez niego powiększanie pracuje dalej, " +
+				"a żądanie z tym polem odmawia zamiast oddać obraz bez poprawki twarzy"},
 		{Narzedzie: narzedzieImageMagick("magick"),
 			Zakres: "zapis obrazu w AVIF oraz w WEBP stratnym, a także pomiar pliku AVIF " +
 				"(image.convert, image.inspect) — pozostałe czynności rodziny image.* " +
@@ -70,6 +100,23 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "wycinanie tła obrazu oraz rozkład obrazu na warstwy " +
 				"(image.background.remove, image.layers.split) — obie czynności " +
 				"stoją na tej samej sieci segmentującej i znikają razem z nią"},
+		{Narzedzie: narzedzieOptipng(),
+			Zakres: "dogniecenie zapisu PNG przy zamianie formatu (image.convert) — " +
+				"bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem"},
+		{Narzedzie: narzedzieJpegoptim(),
+			Zakres: "dogniecenie zapisu JPEG przy zamianie formatu (image.convert) — " +
+				"bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem"},
+		{Narzedzie: narzedziePngquant(),
+			Zakres: "sprowadzenie PNG do palety przy zamianie formatu na zapis stratny " +
+				"(image.convert z lossless: false) — przy zapisie bezstratnym nie jest wołany"},
+		{Narzedzie: narzedzieCwebp(),
+			Zakres: "dogniecenie zapisu WEBP bezstratnego przy zamianie formatu " +
+				"(image.convert) — bez tego programu obraz zapisuje się koderem " +
+				"wkompilowanym; zapis stratny idzie inną drogą i nie jest dogniatany"},
+		{Narzedzie: narzedzieMetadanychBiblioteki,
+			Zakres: "odczyt metadanych IPTC, XMP i ID3 osadzonych w zasobie " +
+				"(library.metadata.get z includeTechnical) — EXIF i GPS czyta czytnik " +
+				"wkompilowany i te pola zostają także bez tego programu"},
 		{Narzedzie: narzedzieSyntezyMowy,
 			Zakres: "odsłuch przebiegu debaty syntezą mowy w module Roundtable"},
 		{Narzedzie: narzedzieGofmt,
@@ -144,7 +191,22 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "karta sesji Telnet do urządzenia sieciowego w module Terminal"},
 		{Narzedzie: narzedzieChromium(),
 			Zakres: "zrzuty stron, drzewo DOM, konsola, rejestr sieciowy, " +
-				"emulacja urządzenia i przewijanie w module Browser"},
+				"emulacja urządzenia i przewijanie w module Browser, a także strona " +
+				"otwierana przez audyt dostępności i audyt wydajności — te dwa dostają " +
+				"tę samą przeglądarkę, zamiast pobierać własną"},
+		{Narzedzie: narzedziePa11y,
+			Zakres: "audyt dostępności bieżącej strony okna wobec normy WCAG " +
+				"(browser.accessibility.audit) — reguły normy są cudzą wiedzą i rdzeń " +
+				"ich nie przepisuje"},
+		{Narzedzie: narzedzieLighthouse,
+			Zakres: "audyt wydajności strony produktu wraz z Core Web Vitals " +
+				"(apps.performance.audit) — miary powstają w przeglądarce po wykonaniu " +
+				"skryptów, więc rdzeń nie policzy ich własnym pobraniem"},
+		{Narzedzie: narzedzieAutocannon,
+			Zakres: "przebieg obciążeniowy punktu końcowego wraz z percentylami czasu " +
+				"odpowiedzi i przepustowością (developer.api.load.run) — " +
+				"developer.api.request strzela jednym żądaniem i rozkładu nie ma z czego " +
+				"policzyć"},
 	}
 	for i := range wykaz {
 		wykaz[i].Stoi = zewnetrzne.Stoi(wykaz[i].Narzedzie)

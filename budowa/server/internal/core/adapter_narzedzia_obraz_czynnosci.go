@@ -18,6 +18,14 @@
 // dokładnie to samo, co rachunek wkompilowany — inaczej ten sam wniosek modelu
 // dałby dwa różne skutki w zależności od formatu pliku.
 //
+// ── Dogniecenie zapisu należy do konwersji ──────────────────────────────────
+// `image.convert` obiecuje w odpowiedzi `savedBytes`, więc po zakodowaniu obrazu
+// schodzi jeszcze z długości strumienia programem dogniatającym
+// (`adapter_narzedzia_obraz_kompresja.go`). Ten krok NIE ODMAWIA: przy braku
+// programu oddaje bajty bez zmiany, więc zapis udaje się tak samo na maszynie,
+// która żadnego z nich nie niesie. Trzy pozostałe czynności go nie wołają —
+// zmieniają treść obrazu, a nie sam jego zapis.
+//
 // Każda wartość `ImageTransformKind` i `ImageAdjustKind` ma własną gałąź,
 // a wartość spoza wyliczenia kończy się odmową nazywającą ją wprost. Gałąź
 // domyślna „rób nic" oddałaby zasób identyczny ze źródłem jako rzekomy skutek
@@ -69,6 +77,12 @@ type czynnoscObrazu struct {
 	jakosc      *int
 	bezstratnie *bool
 	nazwa       string
+	// kompresuj włącza dogniecenie zapisu programem
+	// (`adapter_narzedzia_obraz_kompresja.go`). Niesie je sama konwersja, bo
+	// tylko ona obiecuje w odpowiedzi zysk na rozmiarze (`savedBytes`).
+	// Przekształcenie i poprawka oddają obraz o innej treści i pytanie
+	// „o ile mniejszy" nie ma przy nich sensu.
+	kompresuj bool
 }
 
 // Zbadaj obsługuje `image.inspect` — czynność czytającą. Niczego nie zmienia:
@@ -226,6 +240,7 @@ func (a *adapterNarzedziObrazu) Przekonwertuj(ctx context.Context,
 		jakosc:      z.Quality,
 		bezstratnie: z.Lossless,
 		nazwa:       "convert:" + format,
+		kompresuj:   true,
 	})
 	if err != nil {
 		return shared.ImageConvertResponse{}, err
@@ -261,6 +276,11 @@ func (a *adapterNarzedziObrazu) przetworz(ctx context.Context, zrodlo zrodloObra
 		if err != nil {
 			return shared.DesignAsset{}, 0, err
 		}
+	}
+	if czynnosc.kompresuj {
+		// Krok bez odmowy: przy braku programu dogniatającego oddaje te same
+		// bajty, więc zapis udaje się tak samo na maszynie, która go nie ma.
+		bajty = a.dogniecZapisObrazu(ctx, bajty, format, czynnosc.bezstratnie)
 	}
 	return a.odlozZasob(ctx, zrodlo, oknoZadane, bajty, format, czynnosc.nazwa)
 }

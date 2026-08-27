@@ -5,25 +5,9 @@ import { czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { tozsamoscKlienta } from '../../protokol/tozsamosc-klienta';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Komendy, których okna ról MultitaskingAI potrzebują, wraz z odpowiedzią
- * uruchomionego rdzenia na pytanie, czy je obsługuje.
- *
- * Zdanie o pokryciu bierze się z rdzenia, nie ze stałej: powitanie
- * `connection.hello` oddaje w polu `commands` wykaz komend zarejestrowanych po
- * montażu — obsługiwanych naprawdę, a nie tylko wypisanych w kontrakcie
- * (`handlers_connection.go`). Moduł pyta o niego raz przy montażu i układa
- * z odpowiedzi zdanie każdej nieczynnej kontrolki, więc gdy rdzeń domknie
- * kolejną komendę, zdanie zmienia się samo (wzór: `moduly/katalog-okien.ts`).
- *
- * Stany są trzy, nie dwa: dopóki rdzeń nie odpowiedział, kontrolka nie orzeka
- * o braku, a odmowa powitania też nie jest orzeczeniem braku.
- *
- * Kontrolka bez pokrycia nie znika i nie udaje, że działa — zostaje widoczna,
- * nieczynna i niesie powód wprost, żeby brak pozostał widoczny w oknie.
- */
+// Komendy okien ról wraz z odpowiedzią rdzenia, czy je obsługuje; zdanie bierze się z rdzenia.
 
-/** Komenda wymagana przez okno roli wraz z jej przeznaczeniem. */
+/** Komenda wymagana przez okno roli wraz z jej przeznaczeniem, czyli tym, co ta komenda miała umożliwić. */
 export interface KomendaRoli {
   /** Nazwa komendy w kontrakcie. */
   komenda: string;
@@ -42,7 +26,7 @@ export const WYMAGANE: readonly KomendaRoli[] = [
   { komenda: 'monitor.status', przeznaczenie: 'zbiorczy stan ról i werdykt oceny wyniku' },
 ];
 
-/** Nazwa komendy wraz z przeznaczeniem; nieznana zostaje samą nazwą. */
+/** Nazwa komendy wraz z przeznaczeniem opisanym w wykazie wymaganych; nieznana komenda zostaje samą nazwą. */
 function opisKomendy(nazwa: string): string {
   const znana = WYMAGANE.find((pozycja) => pozycja.komenda === nazwa);
   return znana === undefined ? nazwa : `${znana.komenda} (${znana.przeznaczenie})`;
@@ -70,12 +54,7 @@ export function utworzWykazKomendRdzenia(kanal: Kanal): WykazKomendRdzenia {
   /** Kontrolki i wykazy, które trzeba przerysować po odpowiedzi rdzenia. */
   const zalezne: Array<() => void> = [];
 
-  /**
-   * Zdanie o pokryciu jednej komendy — trzy stany, bo trzeci naprawdę istnieje.
-   *
-   * Rdzeń, którego nie zapytano albo który odmówił odpowiedzi, nie orzekł
-   * o braku niczego. Okno nie ma prawa zamienić tej ciszy w oskarżenie.
-   */
+  // Zdanie o pokryciu jednej komendy ma trzy stany: rdzeń nieodpytany albo odmówił nie orzeka o braku.
   function zdanieOKomendzie(nazwa: string): string {
     if (odmowa !== '') {
       return `Rdzeń nie oddał wykazu komend (${odmowa}) — o pokryciu komendy ${opisKomendy(nazwa)} nic nie wiadomo.`;
@@ -138,8 +117,7 @@ export function utworzWykazKomendRdzenia(kanal: Kanal): WykazKomendRdzenia {
       element.append(lista);
 
       function przerysuj(): void {
-        // Nagłówek nie liczy braków przed odpowiedzią rdzenia — licznik przy
-        // nieznanym wykazie byłby orzeczeniem z ciszy.
+        // Nagłówek nie liczy braków przed odpowiedzią rdzenia; licznik byłby orzeczeniem z ciszy.
         const niepokryte =
           komendyRdzenia === null
             ? null

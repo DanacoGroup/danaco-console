@@ -6810,3 +6810,13 @@ wyłącznie zmianę okna z oknem docelowym.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/pasek-polecenia.ts
 Mikrofon nie jest wygaszony, choć kontrakt nie ma przesyłu dźwięku: naciśnięcie odpowiada zdaniem mówiącym, czego brakuje, i prowadzi ognisko do pola transkrypcji; rozpoznanie mowy jest warstwą wejścia, nie drugą drogą rozmowy — po transkrypcji treść wchodzi tam, gdzie weszłaby wpisana ręcznie. Wybudzenie stoi osobno od mikrofonu, bo to dwie różne czynności: mikrofon nagrywa jedno polecenie i wysyła je do rozpoznania, a wybudzenie prowadzi nasłuch ciągły i frazę, na którą asystent reaguje — sklejone w jedną kontrolkę dałyby jeden przycisk o dwóch znaczeniach.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/braki-kontraktu.ts
+Powitanie rdzenia oddaje wykaz komend zarejestrowanych po montażu,
+obsługiwanych naprawdę, a nie tylko wypisanych w kontrakcie. Moduł pyta o to
+raz przy montażu i układa z odpowiedzi zdanie każdej nieczynnej kontrolki,
+więc gdy rdzeń domknie kolejną komendę, zdanie zmienia się samo. Stany są
+trzy, nie dwa: dopóki rdzeń nie odpowiedział, kontrolka nie orzeka o braku,
+a odmowa powitania też nie jest orzeczeniem braku. Kontrolka bez pokrycia
+nie znika i nie udaje, że działa — zostaje widoczna, nieczynna i niesie
+powód wprost, żeby brak pozostał widoczny w oknie.

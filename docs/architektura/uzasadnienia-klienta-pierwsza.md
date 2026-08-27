@@ -6701,3 +6701,18 @@ Przełącznik nie może wskazywać czegoś, czego jeszcze nie ma. Zwrotne wywoł
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-narzedzi.ts
 Wykaz pochodzi z jednego katalogu, w którym rdzeń trzyma narzędzia, umiejętności i komendy akcji naraz; kontrakt rozróżnia je polem rodzaju i przedrostkiem źródła, nie osobną rodziną komend, więc osobna zakładka złożona z tej samej komendy byłaby drugim widokiem jednego wykazu, udającym drugie źródło. Zawężenie liczy rdzeń, nie okno: katalog liczy setki pozycji, a żądanie przyjmuje tekst, rodzaj, grupę i granicę wykazu, bo filtrowanie po stronie klienta wymagałoby ściągnięcia całości przy każdym naciśnięciu klawisza. Dołożenie idzie do karty sesji i żyje w jej stanie, definicji eksperta nie rusza; pole odpowiedzi katalogu mówi, co jest dołożone już teraz, więc przycisk wiersza nazywa czynność zgodnie ze stanem, który rdzeń oddał, a nie ze stanem zapamiętanym po ostatnim kliknięciu. Zakresu uprawnień i limitu wywołań pozycji okno nie udaje — nazywa brak.
+
+## budowa/klient-poprzedni/src/moduly/library/stan-biblioteki.ts
+Gdyby każde z pięciu okien prowadziło własny wykaz, etykieta trafiłaby na
+inny plik niż ten pokazany w podglądzie, a panel wersji pokazywałby historię
+trzeciego, dlatego zależności wykazu mieszkają w stanie, nie w oknach. Forma
+prezentacji wykazu i tryb wyszukiwania też mieszkają tu: wybór widoku
+zmienia to, co użytkownik widzi w przeglądarce, a tryb rozstrzyga, którą
+komendą pójdzie następne szukanie, więc obie wartości muszą przeżyć
+przerysowanie okna. Poza własnym działaniem stan odświeża wyłącznie
+zdarzenie zmiany pliku: artefakt wytworzony w innym module dociera przez to
+zdarzenie, a stan wciąga go tak samo jak własne wgranie, bez odpytywania
+w pętli.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — treść wskaźnika obecności
+Stan wskaźnika obecności niesie napis, nie samą barwę, bo model widzi dokładnie treść migawki i dokładnie z tej chwili jej pobrania.

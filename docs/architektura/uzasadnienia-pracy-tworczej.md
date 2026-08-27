@@ -3960,3 +3960,48 @@ przerwany nie wraca jako udany.
 Bez opisu diagnostyki Operator czyta tylko, że narzędzie zakończyło się
 niepowodzeniem, i nie wie nic więcej. Pierwsze zdanie programu prawie
 zawsze niesie powód, a reszta jest śladem stosu.
+## server/internal/core/adapter_modul_studio_blokady.go
+
+Wymaganie rozstrzygajace Wlasciciela. Model wola komendy rdzenia tak samo
+jak klient, wiec blokada pilnowana wylacznie przez okno jest pozorna —
+ominalby ja bez wysilku. Sprawdzenie stoi wiec na drodze KAZDEJ komendy
+zmieniajacej dokument (adapter_modul_studio_blokady_zapora.go), a nie
+w poszczegolnych obslugiwaczach: obslugiwaczy zmieniajacych dokument jest
+w Studiu ponad setka i pisanych przez czterech wykonawcow, a zapora wpieta
+w rejestr obejmuje tez te, ktorych jeszcze nie ma. Zderzenie zmiany
+z blokada nie ma odpowiedzi "wolno / nie wolno", ma trzy: CALOSC
+W BLOKADZIE daje odmowe NAZWANA (ktory fragment i jaka blokada — cicha
+bezczynnosc bylaby najgorsza mozliwa odpowiedzia, bo Operator myslalby, ze
+model wykonal polecenie); CZESC W BLOKADZIE — zmiana wchodzi POZA blokada,
+a odpowiedz niesie BILANS (co zmienione, co pominiete i przez ktora
+blokade — odmowa calosci bylaby tu nieproporcjonalna, a przemilczenie
+pominiecia zakazane); POZA BLOKADA — zmiana wchodzi bez slowa. Blokada
+jest skierowana przeciw wykonawcom, nie przeciw wlascicielowi dokumentu:
+Operator zmienia fragment zablokowany BEZ przeszkod. Blokada dzialajaca
+takze na Operatora jest osobnym, jawnym ustawieniem (scope = everyone),
+a nie zachowaniem domyslnym. Zdejmuje blokade WYLACZNIE Operator.
+Wykonawca, ktory uzna, ze fragment wymaga zmiany, zaklada propozycje na
+marginesie (studio.markup.add o rodzaju suggestion) — i tyle. Dlatego
+studio.lock.remove nie stoi tez w wykazie narzedzi modelu. Blokada wisi
+przy DOKUMENCIE, nie przy wersji, wiec przywrocenie wczesniejszej wersji
+jej nie gubi — i to jest caly mechanizm, bez ani jednej linii kodu
+w drodze przywracania. Zakresy nadazaja za trescia przez
+PrzesunBlokadyFragmentow.
+
+blokadaNaZakresie: wykaz trzech blokad w tresci bledu nie pomaga bardziej
+niz jedna, a wykaz pelny Operator ma w studio.lock.list.
+
+blokadaUzgodnijTresc: uzgodnienie musi rozdzielic "ten fragment zmiany
+wolno" od "tego nie wolno", a do tego trzeba miejsc, w ktorych zmiane da
+sie PRZERWAC. Wiersz jest takim miejscem od poczatku: policzFragmentyRoznicy
+liczy roznice wierszami, a studio.diff.hunk.apply wierszami przenosi
+fragmenty. Znak bylby miejscem gestszym, ale uzgodnienie znakami
+wymagaloby dopasowania klasy LCS, ktorego rdzen nie ma. Gdy strony maja
+TYLE SAMO wierszy w srodku, wiersze daja sie sparowac jeden do jednego
+i uzgodnienie jest dokladne: wiersz trafiony blokada zostaje zastany,
+pozostale wchodza. Gdy liczba wierszy sie rozni, sparowac ich nie sposob
+bez zgadywania, KTORY wiersz odpowiada ktoremu. Wtedy srodek jest jedna
+caloscia: styka sie z blokada — nie wchodzi w ogole i wraca pominieciem;
+nie styka — wchodzi w calosci. Zgadywanie parowania byloby tu gorsze niz
+odmowa, bo wstawiloby tresc w srodek zablokowanego cytatu i nazwalo to
+bilansem.

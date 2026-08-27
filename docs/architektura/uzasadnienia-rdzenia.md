@@ -5437,3 +5437,10 @@ w której konto zależy od konfiguracji, która zależy od konta.
 
 W kontekstKonfiguracjiSesji pole puste znaczy, że poziom albo oś nie dotyczy
 tego wywołania i jest pomijana przy rozstrzyganiu.
+
+## budowa/server/internal/core/handlers_tozsamosc.go
+Silnik nakładki rozdziela tryb zastąpienia od trybu dopisania, a jego test wymusza ten rozdział.
+Wartością domyślną klucza rozstrzygającego tryb podania nakładki jest tryb zastąpienia.
+
+Zdarzenie niesie treść, bo okno konfiguracji otwarte na drugim urządzeniu ma ją pokazać bez
+dopytywania. Nie jest to sekret: prompt systemowy jest zasadą pracy modelu, nie poświadczeniem.

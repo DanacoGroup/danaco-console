@@ -1035,3 +1035,12 @@ pola kontraktu bywa wpisana z pamięci; w tym pliku każde pole stoi raz.
 Nazwy pól są nazwami kontraktu, bo to one jadą do rdzenia. Etykiety są
 zdaniem Operatora i z nazwami się nie pokrywają — Operator czyta „zakres
 stron", a rdzeń dostaje pole `pages`.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-znakowania.test.ts
+
+Sprawdziany odcinka znakowania, asystenta, schowka i osadzenia mierzą rzeczy, które da się
+zmierzyć bez stawiania okna, i tylko te, w których pomyłka jest cicha: rozróżnienie trzech
+bytów marginesu, zawężenie wykazu znakowań, kolejność czynności pływaka liczoną z użycia,
+zaporę przed pokazaniem tej samej operacji dwa razy w katalogu oraz zapis pochodzenia. Czego
+tu nie ma — sprawdzianu, że przycisk wywołuje komendę — jest tak samo istotne: sprawdzian
+takiego kształtu mierzyłby atrapę, którą sam stawia, a nie skutek na dokumencie.

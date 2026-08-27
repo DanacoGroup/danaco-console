@@ -36,21 +36,11 @@ import {
   utworzWykazPochodzen,
 } from './osadzenie-pochodzenie';
 
-/**
- * Sprawdziany odcinka znakowania, asystenta, schowka i osadzenia.
- *
- * Mierzą rzeczy, które da się zmierzyć bez stawiania okna, i tylko te, w których
- * pomyłka jest cicha: rozróżnienie trzech bytów marginesu, zawężenie wykazu
- * znakowań, kolejność czynności pływaka liczona z użycia, zapora przed
- * pokazaniem tej samej operacji dwa razy w katalogu oraz zapis pochodzenia.
- *
- * Czego tu NIE ma: sprawdzianu, że przycisk wywołuje komendę. Sprawdzian takiego
- * kształtu mierzy atrapę, którą sam stawia, a nie skutek na dokumencie.
- */
+// Sprawdziany odcinka znakowania, asystenta, schowka i osadzenia mierzą skutek widoczny w dokumencie.
 
 /* ── Materiał sprawdzianów ─────────────────────────────────────────────────── */
 
-/** Komentarz o wskazanym autorze, zakresie i stanie wątku. */
+/** Komentarz o wskazanym autorze, zakresie i stanie wątku buduje pozycję znakowania gotową do sprawdzianu wykazu. */
 function przybornikKomentarz(
   kod: string,
   autor: StudioAuthor,
@@ -69,7 +59,7 @@ function przybornikKomentarz(
   };
 }
 
-/** Zmiana śledzona oczekująca decyzji. */
+/** Zmiana śledzona oczekująca decyzji niesie autora, zakres i treść przed oraz po zmianie w dokumencie. */
 function przybornikZmiana(kod: string, autor: StudioAuthor, poczatek: number): StudioTrackedChange {
   return {
     id: kod,
@@ -85,7 +75,7 @@ function przybornikZmiana(kod: string, autor: StudioAuthor, poczatek: number): S
   };
 }
 
-/** Adnotacja przy fragmencie różnicy. */
+/** Adnotacja przy fragmencie różnicy niesie numer fragmentu, autora i treść uwagi do sprawdzianu wykazu. */
 function przybornikAdnotacja(kod: string, numerFragmentu: number): StudioAnnotation {
   return {
     id: kod,
@@ -115,8 +105,7 @@ describe('wykaz znakowań', () => {
     expect(przybornikPolicz(pozycje, RodzajZnakowania.Zmiana)).toBe(1);
     expect(przybornikPolicz(pozycje, RodzajZnakowania.Adnotacja)).toBe(1);
 
-    // Propozycja niesie brzmienie i NIE jest w treści; zmiana śledzona JEST.
-    // Rozróżnienie musi zostać widoczne w podstawie pozycji, nie tylko w nazwie.
+    // Propozycja niesie brzmienie i nie jest w treści; zmiana śledzona jest — widać to w podstawie.
     const propozycja = pozycje.find((pozycja) => pozycja.rodzaj === RodzajZnakowania.Propozycja);
     const zmiana = pozycje.find((pozycja) => pozycja.rodzaj === RodzajZnakowania.Zmiana);
     expect(propozycja?.tresc).toBe('nowe brzmienie');
@@ -138,8 +127,7 @@ describe('wykaz znakowań', () => {
     });
 
     expect(pozycje.map((pozycja) => pozycja.kod)).toEqual(['bliski', 'daleki', 'adnotacja-1']);
-    // Adnotacja wisi przy numerze fragmentu różnicy, nie przy znaku treści —
-    // udawany zakres wskazywałby niewłaściwe miejsce.
+    // Adnotacja wisi przy numerze fragmentu różnicy, nie przy znaku treści dokumentu.
     expect(pozycje[2]?.zakres).toBeNull();
   });
 
@@ -390,7 +378,7 @@ describe('katalog operacji jako jeden wykaz', () => {
   });
 });
 
-/** Klucze wszystkich liści drzewa menu, na dowolnej głębokości. */
+/** Funkcja zbiera klucze wszystkich liści drzewa menu na dowolnej głębokości jego zagnieżdżenia wyboru. */
 function przybornikPoliczLiscie(drzewo: readonly unknown[]): string[] {
   const klucze: string[] = [];
   for (const pozycja of drzewo) {

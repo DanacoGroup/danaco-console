@@ -3060,3 +3060,6 @@ powody odmów idą po nazwie panelu, żeby wiadomo było który. Zastrzeżenia w
 ostatniego kliknięcia, tylko odbiciem tego, co rdzeń trzyma przy panelach: kontrola zapisuje je
 w panelu, a panel wraca do modułu zdarzeniem zmiany, dzięki czemu wykaz jest prawdziwy także wtedy,
 gdy kontrolę uruchomiono z paska narzędzi pojedynczego panelu.
+
+## budowa/klient/src/protokol/warstwa-protokolu.test.ts
+Mierzone są trzy rzeczy: koperta i ramka w obie strony, wiązanie odpowiedzi z żądaniem oraz odbiór zdarzeń — wszystkich, jakie zna kontrakt, bo warstwa nie wybiera spośród nich i żadnego nie wyróżnia nazwą wpisaną w kod.

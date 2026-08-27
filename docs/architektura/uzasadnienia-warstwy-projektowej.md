@@ -561,3 +561,10 @@ zmiany mechanizmu i bez ruszania biblioteki.
 ## budowa/klient-poprzedni/src/mission-control/matryca.css
 Wartości pochodzą wyłącznie z żetonów warstwy motyw/: bez zapisów
 szesnastkowych i bez odstępów spoza skali czterech pikseli.
+
+## budowa/klient-poprzedni/src/mission-control/pulpit.css
+Wartości pochodzą wyłącznie z żetonów warstwy motyw/ i klas biblioteki
+komponenty/: arkusz nie zawiera barwy szesnastkowej ani odstępu spoza skali
+czterech pikseli. Akcent złoty ogranicza się do wstęgi pasa decyzji i cienia
+przycisku wezwania; nigdzie nie wypełnia powierzchni. Arkusz nie zawiera
+reguły disabled ani żadnej innej reguły wygaszającej.

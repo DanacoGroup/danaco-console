@@ -6613,3 +6613,9 @@ z czynnościami zbiorczymi Explorera, a poniższe gałęzie kończą odświeżan
 wcześnie przy braku wskazania i przy pliku niezmienionym; postawiony niżej,
 ster pokazywałby wartość sprzed tamtej zmiany i przeniesienie poszłoby gdzie
 indziej, niż mówi.
+
+## budowa/klient-poprzedni/src/moduly/browser/narzedzia-inspekcyjne.ts
+Warstwa niesie pięć narzędzi: inspektor DOM i stylów, monitor sieci z eksportem HAR, konsolę strony, emulację urządzeń oraz podgląd źródła i różnic. Dwa ostatnie panel wykonuje sam z migawki: źródło strony przychodzi z polem zawierającym HTML, a porównanie zestawia dwie migawki tego samego okna. Trzy pierwsze wraz z emulacją mają własne komendy prowadzone protokołem narzędzi deweloperskich i stoją tu jako pozycje pytające rdzeń o pokrycie — ich powód bierze się z odczytu wykazu komend, nie z napisu w module. Porównanie zestawia wiersze treści, a nie znaki: pełny algorytm różnicowy należy do rdzenia, a okno ma powiedzieć, czy i o ile strona się zmieniła, oraz w którym wierszu zaczyna się różnica.
+
+## budowa/klient-poprzedni/src/moduly/apps/przybornik-apps.test.ts
+Pilnowane jest jedno, ale najważniejsze: czy z okna prowadzi droga do każdej komendy obszaru. Moduł ma czterdzieści jeden komend; sześć z nich prowadzą kontrolki formularzy okien architektury, warsztatu, wdrożenia i trzech odczytów, pozostałe trzydzieści pięć — narzędzia przyborników. Wykaz komend liczy się z kontraktu w czasie działania, nie z listy wpisanej w sprawdzianie: nowa komenda obszaru apps dołożona do kontraktu ma ten sprawdzian złamać, bo znaczy, że okno o niej nie wie. Drugi sprawdzian pilnuje zasady zero blokad: ani jedna kontrolka przybornika nie ma atrybutu wyłączenia — narzędzie bez pokrycia, brak okna modułu, puste pole wymagane, ma być klikalne i nazwać brak, a nie milczeć pod wyszarzonym przyciskiem.

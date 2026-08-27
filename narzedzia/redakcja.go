@@ -30,8 +30,30 @@ var wyrazeniaZakazane = []struct {
 }{
 	{"odeslanie", regexp.MustCompile(`(?i)\S*\.md\b|(^|[\s(])(docs|prowadzenie)/|\b(patrz|zob\.|uzasadnienie:|szczeg[oó]{1}[lł]y w|opisan[eo] w|wi[eę]cej w)\b`)},
 	{"oznaczenie", regexp.MustCompile(`\b[A-Z]{1,5}-\d{1,3}\b|(?i)\b(pozycja|dopowiedzenie)\s+\w*\d`)},
-	{"odwolanie-osobowe", regexp.MustCompile(`(?i)\b(w[lł]a[sś]cicie|prowadz[aą]c)\w*`)},
+	{"odwolanie-osobowe", regexp.MustCompile(`(?i)(w[lł]a[sś]cicie\p{L}*\s+(produktu|budowy)|prowadz[aą]c\p{L}*\s+budow\p{L}*|(decyzj|ustaleni|polecen|wskaz[oa]|[zż]yczeni|pro[sś]b|zgod)\p{L}*\s+(w[lł]a[sś]cicie|prowadz[aą]c)\p{L}*|(w[lł]a[sś]cicie|prowadz[aą]c)\p{L}*\s+(rozstrzyg|zdecydow|postanowi|poleci|wskaza|[zż][aą]da|chce|oczekuj|przyj[aą]|uzna|kaza|wymaga|ustali)\p{L}*)`)},
 	{"skrot", regexp.MustCompile(`(?i)(^|\s)(np\.|tj\.|itp\.|itd\.|m\.in\.|tzn\.|tzw\.|ok\.|ww\.)`)},
+}
+
+// oznaczeniaZakotwiczone wylicza przedrostki oznaczeń pochodzących z norm,
+// algorytmów i protokołów zewnętrznych. Takie oznaczenie jest treścią techniczną,
+// więc nie podlega zakazowi oznaczeń złożonych z liter i cyfr.
+var oznaczeniaZakotwiczone = map[string]bool{
+	"SHA": true, "UTF": true, "RFC": true, "ISO": true, "AES": true, "RSA": true,
+	"TLS": true, "SSL": true, "HTTP": true, "IEEE": true, "ANSI": true, "WCAG": true,
+	"HMAC": true, "PBKDF": true, "MD": true, "CRC": true, "BLAKE": true, "ARGON": true,
+	"JPEG": true, "PNG": true, "MP": true, "AV": true, "H": true, "GPT": true,
+	"CSS": true, "ES": true, "SQL": true, "API": true, "USB": true, "PCI": true,
+}
+
+// zakotwiczone rozstrzyga, czy trafienie zakazu oznaczeń wskazuje normę albo
+// algorytm zewnętrzny. Litery przed łącznikiem porównuje z wykazem przedrostków,
+// ponieważ część liczbowa oznaczenia normy jest dowolna.
+func zakotwiczone(trafienie string) bool {
+	czesci := strings.SplitN(trafienie, "-", 2)
+	if len(czesci) != 2 {
+		return false
+	}
+	return oznaczeniaZakotwiczone[strings.ToUpper(czesci[0])]
 }
 
 type komentarz struct {
@@ -157,7 +179,11 @@ func wypiszJezyk(sciezka string, tresc []byte) {
 			if z.nazwa == "odeslanie" && dokument(sciezka) {
 				continue
 			}
-			if m := z.wzorem.FindString(k.tresc); m != "" {
+			m := z.wzorem.FindString(k.tresc)
+			if m != "" && z.nazwa == "oznaczenie" && zakotwiczone(m) {
+				continue
+			}
+			if m != "" {
 				naruszen++
 				fmt.Printf("%s\t%d\t%s\t%s\n", sciezka, k.wiersz, z.nazwa, strings.TrimSpace(m))
 			}

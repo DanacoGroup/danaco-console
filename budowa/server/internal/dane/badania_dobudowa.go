@@ -1,16 +1,7 @@
 // Odpowiedzialność pliku: dobudowa obszaru Research po stronie danych —
 // deklaracja kontraktu `RepozytoriumBadanDobudowa` w całości oraz obsługa
-// bytów krążących wokół ŹRÓDŁA: katalogowania (etykiety, kolekcje, pytania),
-// załączników, treści do lektury, streszczenia, tabel i usuwania.
-//
-// Ustalenia i ich otoczenie leżą w `badania_dobudowa_ustalenia.go`, odkrywanie
-// i przestrzeń w `badania_dobudowa_odkrycia.go`, raport i eksport
-// w `badania_dobudowa_raport.go`. Wszystkie cztery pliki niosą metody tego
-// samego `*repozytoriumBadan`, tak jak trzy pliki zastane.
-//
-// Kontrakt dobudowy jest jednym interfejsem wpiętym do `RepozytoriumBadan`
-// przez osadzenie: jedna deklaracja, jedno miejsce do przeczytania, a plik
-// `badania.go` nie rośnie o siedemdziesiąt sygnatur, których nie implementuje.
+// bytów krążących wokół źródła: katalogowania, załączników, treści do
+// lektury, streszczenia, tabel i usuwania.
 package dane
 
 import (
@@ -41,22 +32,24 @@ type LekturaZrodlaBadania struct {
 	CslJson     *string
 }
 
-// TrescZrodlaBadania to tekst wydobyty ze źródła wraz z jego cechami — patrz nagłówek
-// migracji 150 o tym, czemu leży przy źródle, a nie w tabeli własnej.
+// TrescZrodlaBadania to tekst wydobyty ze źródła wraz z jego cechami, zapisany
+// przy źródle zgodnie z migracją 150, a nie w tabeli własnej.
 type TrescZrodlaBadania struct {
 	Tekst         *string
 	Stron         *int64
 	WarstwaTekstu bool
 }
 
-// WycofanieZrodlaBadania to flaga integralności pozycji (Retraction Watch).
+// WycofanieZrodlaBadania to flaga integralności pozycji źródła — stan, adres
+// dowodu i chwila ostatniego sprawdzenia względem rejestru Retraction Watch.
 type WycofanieZrodlaBadania struct {
 	Stan       string
 	Adres      *string
 	Sprawdzono string
 }
 
-// ZalacznikZrodlaBadania to wiersz `zalacznik_zrodla_badania`.
+// ZalacznikZrodlaBadania to wiersz `zalacznik_zrodla_badania`, niosący rodzaj
+// załącznika, wskazanie pliku biblioteki albo ścieżki i rozmiar w bajtach.
 type ZalacznikZrodlaBadania struct {
 	Kod              string
 	ZrodloKod        string
@@ -76,7 +69,8 @@ type StreszczenieZrodlaBadania struct {
 	Wnioski     []string
 }
 
-// TabelaZrodlaBadania to wiersz `tabela_zrodla_badania`.
+// TabelaZrodlaBadania to wiersz `tabela_zrodla_badania`, niosący podpis,
+// nagłówki kolumn, treść wierszy tekstem i stronę, na której tabela wystąpiła.
 type TabelaZrodlaBadania struct {
 	Kod       string
 	ZrodloKod string
@@ -86,8 +80,8 @@ type TabelaZrodlaBadania struct {
 	Strona    *int64
 }
 
-// RepozytoriumBadanDobudowa jest kontraktem dobudowy obszaru Research.
-// Osadzone w `RepozytoriumBadan` (patrz `badania.go`).
+// RepozytoriumBadanDobudowa jest kontraktem dobudowy obszaru Research,
+// osadzonym w `RepozytoriumBadan` zdefiniowanym w `badania.go`.
 type RepozytoriumBadanDobudowa interface {
 	// ── źródła: katalogowanie, lektura, treść, załączniki ──
 	UstawKatalogZrodla(ctx context.Context, kodZrodla string, katalog KatalogZrodlaBadania) error
@@ -174,7 +168,8 @@ type RepozytoriumBadanDobudowa interface {
 
 // ── Pomocniki obszaru ──────────────────────────────────────────────────────
 
-// wykonaj przepuszcza jedno polecenie zmieniające przez pamięć zapytań.
+// wykonajBadania przepuszcza jedno polecenie zmieniające przez pamięć
+// przygotowanych zapytań, opakowując błąd wykonania komunikatem obszaru badań.
 func (r *repozytoriumBadan) wykonajBadania(ctx context.Context, sqlTekst string, argumenty ...any) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, sqlTekst)
 	if err != nil {
@@ -186,7 +181,8 @@ func (r *repozytoriumBadan) wykonajBadania(ctx context.Context, sqlTekst string,
 	return nil
 }
 
-// pytaj otwiera odczyt wielowierszowy przez pamięć zapytań.
+// pytajBadania otwiera odczyt wielowierszowy przez pamięć przygotowanych
+// zapytań, opakowując błąd odczytu komunikatem obszaru badań.
 func (r *repozytoriumBadan) pytajBadania(ctx context.Context, sqlTekst string, argumenty ...any) (*sql.Rows, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, sqlTekst)
 	if err != nil {
@@ -199,7 +195,8 @@ func (r *repozytoriumBadan) pytajBadania(ctx context.Context, sqlTekst string, a
 	return wiersze, nil
 }
 
-// idZrodla oddaje klucz główny źródła o podanym kodzie zewnętrznym.
+// idZrodla oddaje klucz główny źródła o podanym kodzie zewnętrznym albo błąd
+// ErrBrakWiersza, gdy źródło o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) idZrodla(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM zrodlo_badania WHERE identyfikator_zewnetrzny = ?`)
 	if err != nil {
@@ -216,7 +213,8 @@ func (r *repozytoriumBadan) idZrodla(ctx context.Context, kod string) (int64, er
 	return id, nil
 }
 
-// idUstalenia oddaje klucz główny ustalenia o podanym kodzie zewnętrznym.
+// idUstalenia oddaje klucz główny ustalenia o podanym kodzie zewnętrznym albo
+// błąd ErrBrakWiersza, gdy ustalenie o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) idUstalenia(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM ustalenie_badania WHERE identyfikator_zewnetrzny = ?`)
 	if err != nil {
@@ -233,7 +231,8 @@ func (r *repozytoriumBadan) idUstalenia(ctx context.Context, kod string) (int64,
 	return id, nil
 }
 
-// idRaportu oddaje klucz główny raportu o podanym kodzie zewnętrznym.
+// idRaportu oddaje klucz główny raportu o podanym kodzie zewnętrznym albo
+// błąd ErrBrakWiersza, gdy raport o tym kodzie nie istnieje.
 func (r *repozytoriumBadan) idRaportu(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, `SELECT id FROM raport_badania WHERE identyfikator_zewnetrzny = ?`)
 	if err != nil {
@@ -261,7 +260,7 @@ func wartoscCalkowitaBadania(wartosc bool) int64 {
 
 // listaJakoBadania serializuje listę napisów do kolumny tekstowej. Lista bez
 // tożsamości własnej (tezy, nagłówki, tytuły sekcji szablonu) nie zasługuje na
-// tabelę podrzędną — patrz nagłówek migracji 150.
+// tabelę podrzędną, zgodnie z migracją 150.
 func listaJakoBadania(wartosci []string) string {
 	if wartosci == nil {
 		wartosci = []string{}
@@ -287,7 +286,8 @@ func listaZBadania(tekst string) []string {
 	return lista
 }
 
-// napisyZWierszyBadania zbiera jedną kolumnę tekstową w listę.
+// napisyZWierszyBadania zbiera jedną kolumnę tekstową kolejnych wierszy
+// odczytu w listę napisów i zamyka przekazany zestaw wierszy.
 func napisyZWierszyBadania(wiersze *sql.Rows) ([]string, error) {
 	defer wiersze.Close()
 	lista := []string{}
@@ -356,7 +356,9 @@ func (r *repozytoriumBadan) UstawKatalogZrodla(ctx context.Context, kodZrodla st
 	})
 }
 
-// KatalogZrodlaBadania oddaje etykiety, kolekcje i pytania źródła.
+// KatalogZrodlaBadania oddaje etykiety, kolekcje i pytania badawcze
+// wskazanego źródła, każdą listę osobnym zapytaniem uporządkowanym
+// alfabetycznie.
 func (r *repozytoriumBadan) KatalogZrodlaBadania(ctx context.Context, kodZrodla string) (KatalogZrodlaBadania, error) {
 	id, err := r.idZrodla(ctx, kodZrodla)
 	if err != nil {
@@ -404,7 +406,8 @@ func (r *repozytoriumBadan) UstawLektureZrodla(ctx context.Context, kodZrodla st
 		tekstDoKolumny(lektura.Identyfikat), tekstDoKolumny(lektura.CslJson), kodZrodla)
 }
 
-// LekturaZrodlaBadania oddaje cechy nadane źródłu w toku pracy.
+// LekturaZrodlaBadania oddaje cechy nadane źródłu w toku pracy: stan lektury,
+// etap badania, identyfikator zewnętrzny pozycji i metadane CSL.
 func (r *repozytoriumBadan) LekturaZrodlaBadania(ctx context.Context, kodZrodla string) (LekturaZrodlaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
 		`SELECT stan_lektury, etap_indeks, identyfikator, csl_json
@@ -443,7 +446,8 @@ func (r *repozytoriumBadan) UstawTrescZrodla(ctx context.Context, kodZrodla stri
 		wartoscCalkowitaBadania(tresc.WarstwaTekstu), kodZrodla)
 }
 
-// TrescZrodlaBadania oddaje tekst wydobyty ze źródła.
+// TrescZrodlaBadania oddaje tekst wydobyty ze źródła wraz z liczbą stron
+// i informacją, czy dokument miał warstwę tekstową.
 func (r *repozytoriumBadan) TrescZrodlaBadania(ctx context.Context, kodZrodla string) (TrescZrodlaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
 		`SELECT tresc, stron, warstwa_tekstu FROM zrodlo_badania WHERE identyfikator_zewnetrzny = ?`)
@@ -467,7 +471,8 @@ func (r *repozytoriumBadan) TrescZrodlaBadania(ctx context.Context, kodZrodla st
 	return tresc, nil
 }
 
-// UstawWycofanieZrodla zapisuje wynik sprawdzenia integralności pozycji.
+// UstawWycofanieZrodla zapisuje wynik sprawdzenia integralności pozycji wraz
+// z adresem dowodu, znacząc chwilę sprawdzenia zegarem bazy.
 func (r *repozytoriumBadan) UstawWycofanieZrodla(ctx context.Context, kodZrodla string,
 	flaga WycofanieZrodlaBadania) error {
 
@@ -481,7 +486,8 @@ func (r *repozytoriumBadan) UstawWycofanieZrodla(ctx context.Context, kodZrodla 
 		flaga.Stan, tekstDoKolumny(flaga.Adres), kodZrodla)
 }
 
-// WycofanieZrodlaBadania oddaje ostatni wynik sprawdzenia integralności pozycji.
+// WycofanieZrodlaBadania oddaje ostatni wynik sprawdzenia integralności
+// pozycji wraz z adresem dowodu i chwilą sprawdzenia.
 func (r *repozytoriumBadan) WycofanieZrodlaBadania(ctx context.Context, kodZrodla string) (WycofanieZrodlaBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
 		`SELECT wycofanie_stan, wycofanie_adres, wycofanie_sprawdzono
@@ -587,7 +593,8 @@ func (r *repozytoriumBadan) PrzeniesUstaleniaZrodel(ctx context.Context, kodyZro
 
 // ── Załączniki źródła ──────────────────────────────────────────────────────
 
-// ZapiszZalacznik zakłada wiersz załącznika albo nadpisuje zastany.
+// ZapiszZalacznik zakłada wiersz załącznika o wskazanym kodzie zewnętrznym
+// albo nadpisuje zastany i oddaje zapisany wiersz.
 func (r *repozytoriumBadan) ZapiszZalacznik(ctx context.Context,
 	zalacznik ZalacznikZrodlaBadania) (ZalacznikZrodlaBadania, error) {
 
@@ -620,7 +627,8 @@ func (r *repozytoriumBadan) ZapiszZalacznik(ctx context.Context,
 	return ZalacznikZrodlaBadania{}, ErrBrakWiersza
 }
 
-// Zalaczniki oddaje załączniki źródła od najświeższego.
+// Zalaczniki oddaje wszystkie załączniki wskazanego źródła, uporządkowane od
+// najświeższego do najstarszego.
 func (r *repozytoriumBadan) Zalaczniki(ctx context.Context, kodZrodla string) ([]ZalacznikZrodlaBadania, error) {
 	id, err := r.idZrodla(ctx, kodZrodla)
 	if err != nil {
@@ -652,7 +660,8 @@ func (r *repozytoriumBadan) Zalaczniki(ctx context.Context, kodZrodla string) ([
 
 // ── Streszczenie i tabele źródła ───────────────────────────────────────────
 
-// ZapiszStreszczenieZrodla utrwala streszczenie źródła złożone przez model.
+// ZapiszStreszczenieZrodla utrwala streszczenie źródła złożone przez model,
+// zakładając wiersz albo nadpisując zastane streszczenie tego źródła.
 func (r *repozytoriumBadan) ZapiszStreszczenieZrodla(ctx context.Context, kodZrodla string,
 	s StreszczenieZrodlaBadania) error {
 
@@ -670,7 +679,8 @@ func (r *repozytoriumBadan) ZapiszStreszczenieZrodla(ctx context.Context, kodZro
 		tekstDoKolumny(s.Metodologia), listaJakoBadania(s.Wnioski))
 }
 
-// StreszczenieZrodlaBadania oddaje streszczenie źródła; brak wiersza to ErrBrakWiersza.
+// StreszczenieZrodlaBadania oddaje streszczenie źródła wraz z tezami
+// i wnioskami; brak wiersza oddaje błąd ErrBrakWiersza.
 func (r *repozytoriumBadan) StreszczenieZrodlaBadania(ctx context.Context, kodZrodla string) (StreszczenieZrodlaBadania, error) {
 	id, err := r.idZrodla(ctx, kodZrodla)
 	if err != nil {
@@ -696,7 +706,8 @@ func (r *repozytoriumBadan) StreszczenieZrodlaBadania(ctx context.Context, kodZr
 	}, nil
 }
 
-// ZapiszTabeleZrodla utrwala tabele wydobyte ze źródła.
+// ZapiszTabeleZrodla utrwala tabele wydobyte ze źródła, zakładając wiersz
+// każdej tabeli albo nadpisując zastaną o tym samym kodzie.
 func (r *repozytoriumBadan) ZapiszTabeleZrodla(ctx context.Context, tabele []TabelaZrodlaBadania) error {
 	for _, tabela := range tabele {
 		id, err := r.idZrodla(ctx, tabela.ZrodloKod)
@@ -718,7 +729,8 @@ func (r *repozytoriumBadan) ZapiszTabeleZrodla(ctx context.Context, tabele []Tab
 	return nil
 }
 
-// TabeleZrodla oddaje tabele wydobyte ze źródła.
+// TabeleZrodla oddaje wszystkie tabele wydobyte ze wskazanego źródła,
+// uporządkowane według kolejności zapisu.
 func (r *repozytoriumBadan) TabeleZrodla(ctx context.Context, kodZrodla string) ([]TabelaZrodlaBadania, error) {
 	id, err := r.idZrodla(ctx, kodZrodla)
 	if err != nil {

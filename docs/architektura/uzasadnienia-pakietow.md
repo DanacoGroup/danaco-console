@@ -2314,3 +2314,9 @@ Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy części drugi
 **ZapiszZajecieFragmentu** — Odstęp zerowy albo ujemny znaczy zajęcie bez wygasania — i takiego zajęcia rdzeń nie zakłada, bo agent ubity w pół pracy trzymałby fragment na zawsze; granicę podaje wołający.
 
 **ZapiszWersjeSzeregu** — Wskaźnika wersji bieżącej nie przestawia, tak samo jak `ZapiszWersje` z `studio_wersje.go`; decyzja, kiedy nowa wersja staje się bieżącą, należy do wołającego.
+
+### budowa/server/internal/dane/badania_dobudowa.go
+
+Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy dobudowy obszaru Research po stronie danych.
+
+**Plik** — Ustalenia i ich otoczenie leżą w `badania_dobudowa_ustalenia.go`, odkrywanie i przestrzeń w `badania_dobudowa_odkrycia.go`, raport i eksport w `badania_dobudowa_raport.go`. Wszystkie cztery pliki niosą metody tego samego `*repozytoriumBadan`, tak jak trzy pliki zastane. Kontrakt dobudowy jest jednym interfejsem wpiętym do `RepozytoriumBadan` przez osadzenie: jedna deklaracja, jedno miejsce do przeczytania, a plik `badania.go` nie rośnie o siedemdziesiąt sygnatur, których nie implementuje.

@@ -4767,3 +4767,15 @@ Rdzeń nie odmawia zamknięcia tury już zamkniętej — oddaje ją bez zmiany, 
 odróżnić zamknięcia od potwierdzenia stanu zastanego. Stan sprzed wywołania też nie jest świadkiem
 pewnym, bo po zamknięciu potrafi jeszcze przyjść rozgłoszenie z turą oznaczoną jako otwarta,
 dlatego czasownik „zamknął" pada wyłącznie tam, gdzie stan sprzed wywołania mówił coś innego.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/zrodlo-historii.ts
+Widok panelu nie zna ani jednej nazwy komendy — dostaje cztery funkcje i
+tyle. Zdarzenie zmiany historii nie jest czwartą komendą: rdzeń rozgłasza
+je po każdym skasowaniu, także po tym z zasady przechowywania nadanej w
+innym oknie i po przemiataniu przy starcie rdzenia, więc bez tej subskrypcji
+panel pokazywałby pozycje, których w bazie już nie ma. Pole pozycji zdarzenia
+jest niewymagane, bo po czyszczeniu zbiorczym żadna pojedyncza pozycja nie
+istnieje i panel przeładowuje wtedy wykaz w całości. Źródło nie trzyma
+stanu, nie zna okna i nie rozstrzyga, czy zasada ma sens — to należy do
+panelu i do rdzenia; zdarzeń po oknie nie filtruje, bo filtr wymaga
+znajomości okna gospodarza, która jest w panelu.

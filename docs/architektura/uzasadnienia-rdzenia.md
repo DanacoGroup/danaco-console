@@ -1541,3 +1541,16 @@ przestanie działać.
 Sprawdziany odmowy wag celowo nie żądają wag: brak silnika ma być
 odpowiedzią nazywającą brak na każdej maszynie, więc mierzy się go tam,
 gdzie modelu nie ma z samego założenia.
+
+## budowa/server/internal/core/izolacja_test.go
+
+Straż transportu sprawdza wyłącznie to, czy gniazdo w ogóle weszło. Straż
+dostępu opisana tym plikiem pilnuje granicy drugiej i odrębnej: co wolno
+oknu, które już weszło. Nadanie żyje per okno, niesie tryb dostępu i zawęża
+się do korzeni punktu — pomyłka w którymkolwiek z tych trzech elementów
+oddaje procesowi modelu katalog albo maszynę, których operator mu nie dał.
+
+Zakres wyłączony przepuszcza wszystko celowo: pełny dostęp w ramach uprawnień
+operatora jest stanem wyjściowym platformy. Z tego powodu każdy sprawdzian
+w pliku włącza zakres wprost, zamiast liczyć na wartość domyślną — sprawdzian
+zapomniany o tym mierzyłby ciszę zamiast granicy.

@@ -285,7 +285,7 @@ func (a *adapterDesignu) UstawGradient(ctx context.Context,
 				"stopień numer %d gradientu w położeniu %v: położenie stopnia idzie od 0 do 1",
 				numer+1, stopien.Offset))
 		}
-		// Barwę zapisujemy sprowadzoną do zapisu szesnastkowego: „red” i
+		// Barwę zapisuje się sprowadzoną do zapisu szesnastkowego: „red” i
 		// „#ff0000” są tą samą barwą.
 
 		// Wykaz mieszający zapisy zmuszałby czytelnika do ponownego rozpoznania

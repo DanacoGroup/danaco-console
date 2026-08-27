@@ -5474,3 +5474,11 @@ domkniętej tury, bez wywołań narzędzi i bez błędu — bo taki wpis zostawi
 ekranie samą ramkę z godziną. Trzy pozostałe tryby nie chowają niczego.
 Funkcja nie usuwa wpisu z pamięci okna ani z listy; ukrycie jest odwracalne
 powrotem do innego trybu.
+
+## budowa/klient-poprzedni/src/moduly/workspace/biblioteka-projektu.ts
+Okno jest odpowiednikiem Library Explorer ograniczonym do zakresu projektu, ale okno odrębne, nie
+ten sam byt. Trzy komendy należą do modułu Library, nie do Workspace: wgranie, wersje i etykieta
+zbiorcza idą wprost do rdzenia, który ma dla nich uchwyty; odmowa, merytoryczna albo awaryjna,
+trafia do stanu błędu okna zamiast do przycisku, który milczy. Udostępnienie do modułu
+zewnętrznego idzie przenoszeniem kontekstu: zaznaczone pliki jadą wraz z projektem do modułu
+docelowego jedną komendą.

@@ -7,34 +7,14 @@ import { utworzPanelZestawow, type PanelZestawow } from './panel-zestawow';
 import type { StanAssistant } from './stan-assistant';
 import type { ZrodloPamieci } from './zrodlo-pamieci';
 
-/** Kod okna operacyjnego modułu; rdzeń nie ma go dziś w katalogu okien. */
+/** Kod okna operacyjnego modułu; rdzeń nie ma go dziś w katalogu okien. Wartość trafia do atrybutu danych sekcji okna i służy odszukaniu okna w drzewie dokumentu. */
 export const KOD_OKNA = 'memory-context-manager';
 
 /**
- * Memory & Context Manager — okno zarządcy pamięci i kontekstów modułu
- * Assistant.
- *
- * Okno zamyka obszar pamięci modułu i realizuje zasadę jawności: pamięć
- * asystenta jest w całości widoczna, edytowalna i usuwalna przez Operatora.
- * Cztery zakładki odpowiadają czterem obszarom opracowania modułu — fakty,
- * pamięć semantyczna, konteksty i baza wiedzy.
- *
- * Plik odpowiada wyłącznie za skład okna. Wywołania kontraktu mieszkają
- * w `zrodlo-pamieci.ts`, a każda zakładka ma własny plik obszaru: ustalenia
- * w `panel-faktow.ts`, wskaźnik znaczenia w `panel-wiedzy.ts`, poziomy pamięci
- * karty sesji w `panel-kontekstow.ts`.
- *
- * Fazy odczytu nie ma na poziomie okna, tylko w obszarach. Cztery zakładki
- * czytają cztery różne byty i wołają je w różnych chwilach — jedna faza dla
- * całego okna kazałaby odmowie odczytu pamięci przesłonić zakładkę wskaźnika,
- * która o tej odmowie nic nie wie.
- *
- * Piąta zakładka — „Zestawy i retencja" — zamyka trzy obszary, które kontrakt
- * niesie w całości: nazwane konteksty pamięci (`memory.context.*`), zasady
- * retencji i wygaszania (`memory.retention.*`) oraz miernik okna kontekstu
- * (`context.usage.get`). Miernik pokazuje liczbę policzoną tokenizatorem
- * rdzenia wraz z nazwą słownika, którym policzono — a gdy pomiar jest
- * niewykonalny, sam powód.
+ * Okno zarządcy pamięci i kontekstów modułu Assistant. Składa pięć zakładek:
+ * fakty, pamięć semantyczna, konteksty, baza wiedzy oraz zestawy i retencja.
+ * Odpowiada wyłącznie za skład okna; wywołania kontraktu i fazę odczytu niesie
+ * każdy obszar osobno.
  */
 export interface OknoMemoryContextManager {
   element: HTMLElement;

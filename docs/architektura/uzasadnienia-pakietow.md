@@ -5981,3 +5981,14 @@ lecz zbiorem połączeń przeszukiwanym po koncie. Konto połączenia zmienia si
 rejestr nie kopiuje go do własnego indeksu, tylko odczytuje wprost z połączenia przy każdym zapytaniu.
 Metoda wszystkie zwraca kopię zbioru połączeń, nie samo odwzorowanie, ponieważ wysyłka idzie poza
 blokadą, więc rozłączenie w trakcie rozgłoszenia niczego nie zakleszcza.
+
+## budowa/server/internal/dane/design_gradienty.go
+
+Wskazanie ścieżki albo warstwy pominięte zapisuje się pustym napisem, nie wartością pustą
+bazy: silnik bazy liczy dwie wartości puste za różne w indeksie unikalnym, więc gradient
+całej kompozycji zakładany dwa razy powstałby dwa razy zamiast nadpisać się raz.
+
+Identyfikator zewnętrzny gradientu nadaje wołający i służy wyłącznie temu, żeby gradient
+nowy dostał własną nazwę; rozstrzyga cel zapisu, nie identyfikator — gradient wysłany drugi
+raz na tę samą warstwę nadpisuje ten, który tam stoi, choćby przyszedł z nowym
+identyfikatorem.

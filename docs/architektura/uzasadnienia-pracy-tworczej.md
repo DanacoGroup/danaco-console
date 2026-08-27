@@ -2443,3 +2443,46 @@ powstała.
 Strony wracają w odpowiedzi, żeby okno publikacji wiedziało, ile stron
 zostało — bez tego Operator dostawałby jedną kompozycję i nie miałby po czym
 poznać, że publikacja ma jeszcze dwadzieścia trzy.
+## server/internal/mowa/uruchomienie.go
+
+Pomocnik startuje tym samym uruchamiaczem, co okno rozmowy, terminal i git:
+w calym drzewie jest dokladnie jedno exec.Command (injection/rozruch.go).
+Dzieki temu pomocnik przechodzi przez te sama brame izolacji okna i przez
+to samo obejmowanie potomstwa, co pozostale procesy — a proces Pythona,
+ktory rozgalezia wlasne watki dekodera, bez objecia drzewem zostawialby
+sieroty. Sekwencja jest ta sama, co w core/adapter_modul_terminal_bieg.go
+i core/adapter_modul_developer_git_wykonanie.go: straznik nil, sprawdzenie
+izolacji, UruchomProces, PrzejmijDrzewo(pid), defer Zwolnij, pompy obu
+strumieni, select na Czekaj/timer/ctx.Done, Ubij calego drzewa przy
+przekroczeniu. Odstepstwo od niej konczy sie wyciekiem procesu albo
+uchwytu. Plik nie rozstrzyga, czy transkrypcja sie udala — oddaje wyjscie
+i diagnostyke takie, jakie przyszly.
+
+Wynik: sklejenie strumieni wstawilyby ostrzezenie biblioteki w srodek
+przepisanego zdania, a rozpoznanie braku silnika (BrakSilnika) stracilyby
+jedyne miejsce, w ktorym go widac.
+
+Uruchom: zasady i obszar sa w sygnaturze, bo session.SprawdzPolecenie
+innego ksztaltu nie ma, a bez bramy izolacji pomocnik startowalby jako
+jedyny proces w drzewie poza katalogiem roboczym okna. Limit niedodatni to
+odmowa, nie "bez granicy": domyslenie granicy za wolajacego ukryloby brak
+wskazania az do pierwszego zawieszonego procesu na maszynie Operatora.
+
+Punkt izolacji srodowiska: gdy okno ma go wlaczony, brama nizej to
+odrzuci — i tak ma byc: rozstrzyga ustawienie Operatora, nie ten plik.
+
+zbierz: pompy ruszaja przed czekaniem, nie po nim. Bufor potoku ma
+kilkadziesiat kilobajtow; pomocnik piszacy dluzsza transkrypcje
+zablokowalby sie na zapisie, a rdzen czekalby na koniec procesu, ktory
+czeka na rdzen — zakleszczenie, ktore konczy sie dopiero granica czasu
+i wyglada jak zawieszony silnik.
+
+Odbior z obu pomp: gorutyny zostalyby inaczej zawieszone na zapisie do
+kanalu, a to wyciek na kazde przekroczenie granicy.
+
+Diagnostyka jedzie razem z odmowa, bo zwykle stoi w niej jedyne zdanie
+mowiace, na czym pomocnik utknal.
+
+czytajCalosc: przyrostowe zdarzenia bylyby tu kosztem bez odbiorcy. Przy
+bledzie odczytu zwracane jest to, co zdazylo przyjsc — niepelna
+transkrypcja niesie wiecej niz pusty wynik.

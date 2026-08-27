@@ -5273,3 +5273,42 @@ wskazywałaby na brak kolejek, a nie na usterkę montażu.
 Zmiana roli rozgłasza się dwoma zdarzeniami i każde ma innego odbiorcę: zmiana okna odświeża okno
 w wykazie Mission Control, zmiana roli niesie samo nadanie wraz z więzią koordynatora — tego
 drugiego panel ról nie złoży z pierwszego, bo okno nie niesie wcielenia roli.
+
+## budowa/server/internal/core/rdzen.go
+
+Pole niepowodzenia rdzenia: brak podłączonego obserwatora nie zmienia
+zachowania rdzenia, znika wyłącznie zapis odmowy w module Diagnostics.
+
+Pole straży zakresów narzędzi trzyma zakres zapisany dla profilu asystenta
+w pliku handlers_narzedzia_zakresy.go. Niewpięta straż nie zmienia niczego:
+stanem wyjściowym platformy jest pełny dostęp bez granicy, a zawężenia po
+prostu wtedy nie ma.
+
+Pole więzi połączeń jest opisane w pliku wiez_polaczenia.go; wartość zerowa
+znosi się sama, bo wszystkie metody więzi przyjmują odbiornik zerowy.
+
+WykonajZadanie to droga, którą wchodzi transport po samodzielnym odkodowaniu
+koperty. Rozpoznanie warstwy niższej opiera się na całym kontrakcie, a rdzeń
+obsługuje tylko to, co ma wpięte, dlatego komenda bez obsługiwacza jest tu
+rozpoznawana ponownie — inaczej odpowiedź „*.unknown" wróciłaby pod nazwą
+komendy zamiast pod nazwą zdarzenia obszaru.
+
+zDziennikiemRdzenia wprowadza kontekst z dziennikiem raz, w jedynym gardle
+każdego żądania, więc warstwy niższe nie muszą sobie go podawać ręcznie.
+
+odmowaZakresu pyta straż wyłącznie o rękę modelu. Zakres opisuje, jak szeroko
+działa asystent w imieniu Operatora, a nie co wolno samemu Operatorowi —
+zasada opisana w pliku sprawca.go. Praca własna rdzenia i połączenie, które
+się nie przywitało, też przechodzą, bo zawężenie nałożone na przemiatanie
+zatrzymywałoby platformę bez decyzji Operatora.
+
+## budowa/server/internal/core/handlers_schedule.go
+Odczyt niczego nie rozgłasza: komenda odczytu harmonogramu nie zmienia stanu, więc nie dostaje
+emitera i nie wysyła zdarzenia. Zmianę harmonogramu niesie komenda ustawienia harmonogramu
+automatyki i to ona odpowiada za rozgłoszenie — zdarzenie po odczycie byłoby szumem, na który okna
+reagowałyby odświeżeniem bez powodu.
+
+Trzy pozostałe komendy — historia wyzwoleń, adres webhooka i odczyt harmonogramów — niczego nie
+zmieniają i niczego nie rozgłaszają. Uruchomienie wsteczne rozgłasza to samo zdarzenie zmiany
+powiązania, a nie stan przebiegu: zakłada wiele przebiegów naraz, a każdy z nich rozgłasza swój
+stan sam, drogą kolejki.

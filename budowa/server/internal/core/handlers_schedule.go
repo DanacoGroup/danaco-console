@@ -1,14 +1,5 @@
-// Wpięcie sześciu komend rodziny `schedule.*`.
-//
-// Osobno od `adapter_modul_automations_uchwyty.go`, który wpina komendy
-// obszaru `automation.*`, choć obie rodziny jadą na tej samej maszynerii
-// harmonogramu. Port poniżej jest rozszerzeniem portu Automatyki, nie drugim
-// portem: harmonogram ma w rdzeniu jednego właściciela.
-//
-// Odczyt niczego nie rozgłasza. `schedule.get` nie zmienia stanu, więc nie
-// dostaje emitera i nie wysyła zdarzenia. Zmianę harmonogramu niesie
-// `automation.schedule.set` i to ona odpowiada za rozgłoszenie — zdarzenie po
-// odczycie byłoby szumem, na który okna reagowałyby odświeżeniem bez powodu.
+// Plik wpina sześć komend rodziny schedule.* jako rozszerzenie portu Automatyki, bo harmonogram
+// ma w rdzeniu jednego właściciela wspólnego z obszarem automation.*.
 package core
 
 import (
@@ -41,17 +32,8 @@ type HarmonogramyNadzoru interface {
 	AdresWebhooka(ctx context.Context, z shared.ScheduleWebhookEndpointGetRequest) (shared.ScheduleWebhookEndpointGetResponse, error)
 }
 
-// zarejestrujHarmonogramy wpina sześć komend rodziny `schedule.*`.
-//
-// Zmiana harmonogramu rozgłasza `automation.link.changed`, tak samo jak
-// `automation.schedule.set`: bytem wyzwalającym automatykę jest harmonogram,
-// więc jego zmiana czyni obraz Schedulera nieaktualnym. Trzy pozostałe —
-// historia wyzwoleń, adres webhooka i odczyt harmonogramów — niczego nie
-// zmieniają i niczego nie rozgłaszają.
-//
-// Uruchomienie wsteczne rozgłasza `automation.link.changed`, a nie stan
-// przebiegu: zakłada wiele przebiegów naraz, a każdy z nich rozgłasza swój stan
-// sam, drogą kolejki (`odnotujPrzebieg`).
+// zarejestrujHarmonogramy wpina sześć komend rodziny schedule.*. Zmiana harmonogramu rozgłasza
+// zdarzenie zmiany powiązania automatyki, bo harmonogram jest bytem wyzwalającym automatykę.
 func zarejestrujHarmonogramy(r *Rejestr, m Harmonogramy, e *emiter) {
 	if r == nil || m == nil {
 		return

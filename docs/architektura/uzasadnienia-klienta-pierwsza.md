@@ -2180,3 +2180,10 @@ kafla wypełnia to samo pole polecenia.
 Trzy odczyty składania okna idą równolegle, ponieważ katalog akcji, katalog narzędzi
 i wykaz rutyn dotyczą trzech różnych rodzin komend i żaden nie warunkuje pozostałych.
 Każdy nazywa swoje niepowodzenie w swoim obszarze.
+
+## budowa/klient-poprzedni/src/aplikacja/akcje-ustawien.ts
+
+Pozycja listwy pozbawiona własnego widoku pozostaje klikalna, a jej naciśnięcie
+mówi wprost, że ekran jeszcze nie powstał, zamiast otwierać atrapę. Powierzchnia
+Always On Display nie ma odrębnego okna i wchodzi jako rozszerzenie boczne,
+dlatego jej pozycja prowadzi do powierzchni interakcji, a nie do okna.

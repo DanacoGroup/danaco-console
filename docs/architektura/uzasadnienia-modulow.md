@@ -557,3 +557,42 @@ warunkiem, żeby detektor w ogóle zadziałał.
 
 Sprzeczność raz rozstrzygnięta nie wraca jako nowa przy kolejnym wykryciu:
 wykrycie ma pokazywać rozbieżności wciąż otwarte, nie budzić te już zamknięte.
+
+## budowa/server/internal/core/adapter_modul_developer_kontenery.go
+
+Rozmowa z silnikiem kontenerów idzie biblioteką klienta Dockera wkompilowaną
+w rdzeń, przez gniazdo silnika — ta sama zasada, co przy repozytorium, gdzie
+rdzeń używa biblioteki `go-git` zamiast programu `git`: rdzeń nie startuje
+procesu potomnego i nie zależy od tego, czy ktoś doinstalował klienta wiersza
+poleceń. Podman wystawia to samo API OCI pod własnym gniazdem, więc obsługuje
+się go tą samą drogą, wskazanym zmienną środowiskową gniazda silnika.
+
+Biblioteka rozmawia z silnikiem, a silnika nie da się wkompilować: gdy na
+serwerze nie ma ani Dockera, ani Podmana, odpowiedź wykazu kontenerów
+przychodzi z polem dostępności silnika ustawionym na fałsz i pustym wykazem —
+mówi jawnie o braku, zamiast udawać, że kontenerów po prostu nie ma.
+Instalacja silnika po stronie serwera jest zmianą ciężką, poza zakresem tego
+modułu.
+
+Plik `docker-compose.yml` czyta i wykonuje rdzeń sam: rozbiera opis usług,
+zakłada sieć stosu i startuje kontenery przez to samo API klienta. Obsługiwany
+jest zakres używany w oknie — obraz, polecenie, zmienne, porty, wolumeny,
+zależności — a nie każda konstrukcja, jaką format Compose zna; konstrukcja
+nieznana wraca zdaniem nazywającym ją po nazwie, nie cichym pominięciem.
+
+Silnik przeplata wyjście i diagnostykę kontenera jednym strumieniem,
+znakując każdą porcję ośmiobajtowym nagłówkiem multipleksowania: bajtem
+strumienia, trzema zerowymi i czterobajtową długością. Bez zdjęcia tych
+nagłówków log w oknie miałby co kilkadziesiąt znaków wtrącone znaki
+sterujące.
+
+Silnik przyjmuje kontekst budowania obrazu wyłącznie jako strumień archiwum
+tar — nie ma drogi wskazania mu katalogu, bo gniazdo silnika bywa po drugiej
+stronie sieci. Pakowanie idzie strumieniem przez potok, nie do pliku
+tymczasowego: kontekst dużego repozytorium ma setki megabajtów, a plik
+tymczasowy tej wielkości zostawałby na dysku serwera po każdym nieudanym
+budowaniu. Reguły `.dockerignore` są brane pod uwagę, bo bez nich do obrazu
+wchodziłby katalog `.git` i wszystko, co repozytorium ma z założenia poza
+obrazem. Dowiązania i pliki urządzeń zostają poza archiwum kontekstu, bo
+kontekst budowania jest zbiorem plików zwykłych i katalogów, a dowiązanie
+wskazujące poza katalog wyprowadziłoby budowanie z jego obszaru.

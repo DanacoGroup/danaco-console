@@ -130,7 +130,7 @@ func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
 		return
 	}
 
-	// Program oddaje tablicę o jednym elemencie na plik — pytamy o jeden plik.
+	// Program oddaje tablicę o jednym elemencie na plik — pytanie dotyczy jednego pliku.
 	var odpowiedz []map[string]json.RawMessage
 	if err := json.Unmarshal(wynik.Wyjscie, &odpowiedz); err != nil || len(odpowiedz) == 0 {
 		return

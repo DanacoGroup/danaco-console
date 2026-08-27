@@ -3442,3 +3442,261 @@ byty są sobie bliskie.
 Graf przycięty granicą wielkości oddaje `truncated: true`. Bez tego pola
 obraz częściowy wyglądałby na kompletny obraz projektu, a Operator
 wnioskowałby o brakach powiązań z braku miejsca w odpowiedzi.
+
+## budowa/server/internal/core/adapter_modul_orkiestracja.go
+
+Podagent jest zadaniem w tle, którego tożsamością jest pozycja kolejki.
+Wynikają z tego trzy rzeczy: powołanie nie uruchamia drugiego silnika — praca
+idzie przez `adapterKolejek.Wykonaj`, tym samym silnikiem co pętla sesyjna
+i Automations; powołanie nie czeka na wynik, stąd goroutine; stan przeżywa
+restart rdzenia, bo stanem podagenta jest wiersz, nie pole struktury w
+pamięci. Każdy podagent dostaje własną kolejkę, nie jedną wspólną: silnik
+posuwa pierwszą czynną pozycję kolejki, więc piętnastu podagentów w jednej
+kolejce jechałoby gęsiego. Granica piętnastu przycina, nie odmawia.
+
+### rodzajKolejkiPodagenta
+
+Więz CHECK kolumny `kolejka.rodzaj` (`store/migracja_003_kolejki.sql`
+i `store/migracja_016_stan_kolejki_wyczerpana.sql`) dopuszcza wyłącznie
+'sesyjna' i 'multitasking'; wartość spoza tego słownika kończyłaby każde
+powołanie odmową bazy. Od kolejki etapu odróżnia ją nazwa równa
+identyfikatorowi podagenta oraz okno koordynatora — po nazwie odnajduje ją
+panel przy zatrzymaniu (`queue.list` → `queue.action` stop).
+
+### Powolaj
+
+Drogą przewidzianą jest wywołanie narzędzia `danaco_subagent_spawn` w trakcie
+tury: serwer narzędzi (`server/internal/narzedzia`) uzupełnia wtedy
+`windowId` oknem rozmowy, z którego wywołanie przyszło. Wpis dziennika mówi
+raz na proces, czy ta droga jest w kontrakcie wpięta
+(`podagenci/narzedzia_modelu.go`).
+
+### Powolaj — zakres eksperta
+
+Ekspert z wyłączonym Subagent Network nie powołuje ani jednego podagenta,
+a jego granica przycina żądanie mocniej niż granica platformy — zapis,
+którego nikt by tu nie przeczytał, byłby suwakiem bez skutku
+(`straz_eksperta.go`).
+
+### Powolaj — oznaczenie prowadzenia
+
+Podagent nieoznaczony, a już pracujący, zostałby zamknięty jako sierota przy
+najbliższym starcie. Błąd oznaczenia nie przerywa powołania, zostawia jedynie
+ślad w dzienniku.
+
+### Powolaj — rozgłoszenie
+
+Rozgłoszenie idzie przed puszczeniem pracy w tle, żeby panel zobaczył
+podagenta `pending`, zanim praca przestawi go na `running` — inaczej dwa
+zdarzenia mogłyby dojść w kolejności odwrotnej do faktów.
+
+### puscWTle — nadzór
+
+Nadzór mówi o procesie orkiestratora, czyli okna, które powołało. Proces
+samej pozycji podagenta nie ma wpisu w rejestrze procesów
+(`podagenci/zywotnosc.go`).
+
+### puscWTle — kontekst
+
+Kontekst własny na podagenta daje `subagent.stop` uchwyt do jednej pracy.
+Wisi na życiu rdzenia, więc zatrzymanie rdzenia nadal zabiera wszystkich,
+a odwołanie pojedyncze zabiera wyłącznie tego jednego
+(`adapter_modul_orkiestracja_zatrzymanie.go`). Odwołanie zwalnia się zawsze:
+inaczej praca zakończona zostawiałaby po sobie kontekst bez odbiorcy, a wykaz
+prac rósłby z każdym powołaniem.
+
+### wykonaj
+
+Gdyby rdzeń padł pomiędzy zapisem pozycji a wejściem w stan `running`,
+zostaje podagent `pending` z gotową pozycją, czyli praca do podjęcia;
+odwrotna kolejność zostawiałaby podagenta „w biegu" bez pozycji, która ten
+bieg niesie.
+
+### przepiszStanPozycji
+
+Dlatego stan bierze się stąd, gdzie naprawdę powstał.
+## budowa/server/internal/core/adapter_modul_agents_warstwy.go
+
+Adapter agentów składa się w montaz_porty.go bez ogniwa .ZWarstwami(...), więc
+pole warstwy bywa nil; każda z czterech komend odmawia wtedy, nazywając komendę,
+powód i miejsce wpięcia, zamiast panikować albo udawać zapis. Komendy
+agent.list i agent.create nie przechodzą tędy — jadą dalej ekspertKontraktu
+i przy warstwy == nil oddają eksperta bez warstw i bez wtyczek. Nazwy warstw
+sprawdzane są wobec wartości kontraktu (shared.IdentityLayer, shared.IdentityMode)
+przed zapisem, żeby powodem odmowy było zdanie po polsku, a nie naruszony
+warunek CHECK.
+
+Tożsamość osi (identity.document.set) tryb wybiera i domyślnie zastępuje, bo
+jest konfiguracją platformy, a nie warstwą nałożoną na pojedyncze wywołanie.
+Wartość musi pochodzić z kontraktu, nie z silnika nakładki: kolumna
+agent_warstwa.tryb ma warunek CHECK na ZASTAP albo DOLACZ, a stała silnika
+injection.TrybDopisz jest napisem "dopisz"; przekład między jednym a drugim
+robi trybSilnika.
+
+Ekspert bez wtyczek oddaje tablicę pustą — brak wtyczek jest poprawnym stanem,
+a nie awarią odczytu; odmowa idzie wyłącznie wtedy, gdy eksperta o wskazanym
+kodzie nie ma w katalogu. Odczyt tożsamości pełnej nie odmawia z powodu
+niewpiętego katalogu warstw: czytać nie ma czego, a to inny przypadek niż
+zapis, który nigdzie nie trafia.
+
+Osobna czynność repozytorium zapisu tożsamości dotyka wyłącznie kolumn
+imie_wlasne i favikon, zamiast zmieniać drogę, którą jadą wszystkie pozostałe
+pola. Pominięte pole nie jest polem pustym: nil zostawia wartość zastaną,
+pusty napis czyści ją i zostaje zapisany. Zlanie obu w jedno kasowałoby imię
+przy każdej zmianie samego opisu. Brak wpiętego repozytorium nie jest tu
+odmową — ekspert bez imienia własnego jest ekspertem, bo tożsamość niesie
+pole nazwa.
+
+Zbieranie tożsamości wykazu idzie dwoma zapytaniami na wywołanie, nie dwa na
+eksperta: odczyt po jednym dałby przy stu ekspertach dwieście zapytań na jedno
+otwarcie biblioteki. Wzorzec ten sam co dolaczPowiazania w warstwie danych.
+Błąd odczytu nie wywraca wykazu — ekspert, którego warstw nie udało się
+odczytać, wchodzi do wykazu bez warstw, tak samo jak ekspert, który ich nie
+ma; wykaz ekspertów ma się pokazać także wtedy, gdy tożsamość jest chwilowo
+nieczytelna.
+
+Pominięte pole trybu nałożenia zostawia wartość zastaną — nil nie znaczy
+powrotu do domyślnego trybu; raz oznaczone odstępstwo nie ma prawa zniknąć
+przy zmianie samego opisu eksperta. Wartość spoza katalogu odrzuca warunek
+CHECK na kolumnie; drugiej listy dopuszczonych trybów tu nie ma. Brak
+wpiętego repozytorium nie jest tu odmową: ekspert bez zapisanego trybu
+dopisuje się do promptu globalnego.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_model.go
+
+Metody stoja na wspolnym *adapterTlumaczenia, ktorego typ, konstruktor
+i przedrostki deklaruje adapter_modul_tlumaczenie.go. Droga modelu (przeklad
+panelu, rozpoznanie jezyka) to jedna odpowiedzialnosc wolana z trzech komend
+(target.add, backtranslation.run, source.detect), wiec lezy w jednym pliku
+i ma jeden opis granicy: brak kanalu jest odmowa wprost, nigdy pustym
+napisem udajacym przeklad.
+
+Kanal wskazuje Operator polem channelId, a rozstrzyga to kanalZadania: brak
+wskazania to kanal domyslny czynny; wskazanie kanalu czynnego i gotowego
+idzie tym kanalem; wskazanie kanalu nieznanego albo nieczynnego to odmowa
+nazwana. Ciche zejscie na kanal domyslny wypelniloby panel przekladem
+modelu, ktorego Operator nie wybral, i nic by o tym nie powiedzialo.
+
+ZWyjsciem: wpiecie robi zarejestrujTlumaczenie (ten sam emiter, ktory
+dostaja pozostale moduly w kompozycja.go), wiec montaz portow nie musi znac
+tej zaleznosci. Nadajnik niepodlaczony nie jest bledem: rdzen tlumaczy takze
+wtedy, gdy nikt nie sluchaz zdarzen - emiter.wyslij sam odsiewa pusty
+nadajnik.
+
+kanalZadania: odmowy sa trzy i kazda mowi o czym innym - kanal nieznany,
+kanal znany lecz wylaczony, kanal wlaczony lecz bez zbudowanego adaptera.
+Naprawia sie je trzema roznymi ruchami (poprawic identyfikator, wlaczyc
+kanal, poprawic konfiguracje), wiec kazda ma wlasne zdanie. Kanal gotowy
+znaczy to samo co w Rejestr.Kontrakt(true): wiersz czynny z zbudowanym
+adapterem. Wiersz aktywny=1 bez adaptera odmowi przy pierwszej turze, wiec
+lepiej powiedziec to teraz niz w polowie przekladu.
+
+domyslnyKanalModelu: pierwszy wiersz rejestru czynny i gotowy do pracy,
+wzor adapter_kolejki.go: rozwiazKanalPozycji. Brak rejestru albo brak
+czynnego kanalu znaczy nie ma czym wolac modelu.
+
+przetlumaczModelem: slownik Operatora wchodzi dwa razy - raz do tresci
+polecenia (poleceniePrzekladu dostaje wiazania), raz po odpowiedzi modelu
+jako mechaniczna podmiana terminow zostawionych w brzmieniu zrodlowym
+(zastosujTerminySlownika, ta sama funkcja co w glossary.apply). Uzasadnienie
+obu drog niesie naglowek adapter_modul_tlumaczenie_polecenia.go. Nieudany
+odczyt slownika odmawia calego przekladu. Ton panelu tez idzie do polecenia,
+inaczej kolumna ton (panel.tone.set) bylaby zapisem bez skutku.
+
+Siatka bezpieczenstwa slownika: podmiana terminow nietykalnych byloby
+zlamaniem zakazu Operatora, a nie jego pilnowaniem. Liczba podmian nie idzie
+nigdzie dalej: kontrakt target.add nie ma pola na taka liczbe, a
+ChangedCount nalezy do glossary.apply, nie do przekladu.
+
+przetlumaczZwrotnieModelem: slownik tu nie wchodzi (powod przy
+polecenieTlumaczeniaZwrotnego), bo kontrola wiernosci, ktora sama naprawia
+terminologie, niczego nie kontroluje.
+
+rozglosZmianePanelu: nadajnik niepodlaczony jest odsiewany w emiter.wyslij,
+a nil-emiter w jego odbiorniku nil, wiec wywolanie jest bezpieczne bez
+wpietej szyny.
+
+## budowa/server/internal/core/adapter_modul_agents_przeklad.go
+
+Identyfikatorem kontraktu jest kod wiersza: pole Agent.id niesie agent.kod,
+nie numer wiersza. Numer żyje wyłącznie wewnątrz bazy i do klienta nie
+wychodzi, bo przy przeniesieniu bazy przestałby się zgadzać.
+
+Piąta wartość poziomu pamięci pozwoliłaby przysłać zestaw sprzeczny
+("session","disabled"); zbiór pusty tego wyrazić nie umie, dlatego
+wyłączenie pamięci jest zbiorem pustym, a nie piątą wartością.
+
+Widocznosc nierozpoznana czyta się jako global, bo ekspert, którego
+widoczności nikt nie rozpoznaje, ma się pokazać, a nie zniknąć z biblioteki.
+Katalogu wartości tu nie ma — pilnuje go warunek CHECK w bazie.
+
+Tryb pusty warstwy promptu zostaje pominięty — kontrakt opisuje tryb
+domyślny brakiem wartości, nie napisem. Wartość trybu nałożenia spoza
+katalogu czyta się jako dołączenie, bo baza pilnuje warunku CHECK, a funkcja
+trybKontraktu jest drugą siatką, nie drugim katalogiem wartości.
+
+Punkt dostępu konektora wychodzi kodem trwałym, tym samym, którym posługują
+się komendy access.point.* i nadania okna rozmowy.
+
+Ekspert niesie wskazania wtyczek, a nie ich treść — pełna struktura wtyczki
+wraca wynikiem agent.plugin.add, dokładnie jak konektor przy
+agent.connector.add.
+
+Tryb nałożenia oddawany zawsze, także gdy jest domyślny: okno ma pokazać, że
+ekspert dopisuje się do promptu globalnego, a pominięcie pola zostawiłoby
+domysł zamiast odpowiedzi. Ta sama zasada dotyczy poziomów pamięci i modułów
+zastosowania — pominięcie pola zostawiłoby domysł zamiast odpowiedzi.
+## budowa/server/internal/core/adapter_modul_library_metadane.go
+
+Opis stoi w tabeli towarzyszącej zasobowi, a nie w kolumnach wykazu:
+piętnaście pól Dublin Core obciążałoby każdy odczyt Library Explorera, który
+opisu nie pokazuje.
+
+Zapis scala domyślnie, podmienia na żądanie. Różnica jest widoczna wprost:
+przy scalaniu pole pominięte w żądaniu zostaje takie, jakie było, a pole
+przysłane puste jest kasowane — bo inaczej Operator nie miałby jak wyczyścić
+raz wpisanej wartości. Przy podmianie opis staje się dokładnie tym, co
+przyszło.
+
+Pola niestandardowe są mapą kod-wartość i przechodzą przez surowy zapis JSON
+kontraktu. Rdzeń ich nie tłumaczy na kolumny: definicja pola należy do
+Operatora, więc kolumna na pole znaczyłaby migrację przy każdym polu.
+
+Metadane osadzone w pliku (EXIF, IPTC, XMP, ID3) czyta się z bajtów, więc
+wchodzą wyłącznie na wyraźne żądanie — tak mówi kontrakt i tak działa ten
+odczyt: bez żądania technicznego bajty zasobu nie są w ogóle otwierane.
+
+Liczba zasobów z wartością pola liczy się przed zdjęciem definicji: po
+usunięciu wartości zostają przy zasobach, więc liczba mówiłaby to samo, ale
+kolejność ma znaczenie przy zakładaniu — Operator ma zobaczyć, ile zasobów
+pole zastanie już wypełnione.
+
+Pole przysłane puste kasuje wartość, pole pominięte przy scalaniu ją
+zostawia — dlatego przekład idzie po wskaźnikach, a nie po wartościach:
+brak wartości znaczy nieodnoszenie się do pola, pusty łańcuch znaczy chęć
+jego wyczyszczenia.
+
+Scalanie pól niestandardowych idzie po kluczach: klucz przysłany z wartością
+pustą znika, klucz pominięty zostaje. Przy podmianie mapa staje się
+dokładnie tą przysłaną.
+
+Odczyt opisu jest dostępem do zasobu — dziennik audytu ma odpowiadać na
+pytanie kto to oglądał, więc zaglądanie też zostawia ślad.
+
+Zapis zastany nieczytelny nie może zablokować zapisu nowego: wartość
+uszkodzona ustępuje wartości przysłanej.
+
+## budowa/server/internal/core/adapter_modul_przegladarka_monitory.go
+
+Założenie monitora POBIERA stronę i odkłada jej treść jako odniesienie;
+sprawdzenie pobiera ją ponownie i zestawia obie treści wiersz po wierszu.
+Monitor bez odniesienia oddawałby zawsze „bez zmian” albo zawsze „zmiana” —
+jedno i drugie jest meldunkiem bez pomiaru, a to wzorzec szkody, którego ten
+produkt już raz doświadczył.
+
+`BrowserContentDiff` niesie liczbę wierszy dodanych, usuniętych, numer
+pierwszego wiersza różnicy i przyrost znaków. Wszystkie cztery liczone są
+z dwóch treści, nie z niczego.
+
+Próg zmiany odsiewa drgania. Strona z zegarem albo licznikiem odwiedzin różni
+się przy każdym pobraniu; próg podany w znakach mówi, od jakiej różnicy zmiana
+jest zmianą. Bez progu każdy taki monitor alarmowałby co godzinę.

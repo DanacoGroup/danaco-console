@@ -3667,3 +3667,17 @@ Wykaz rad obejmuje obszary czynności nakładki — przypięcie, odpięcie, rozm
 głos, podpowiedzi, stan i kontekst — oraz obszary kolejki decyzji: procesy,
 wstrzymanie, konfigurację i przejęcie. Dla kodu odmowy bez osobnego zdania
 podawana jest rada domyślna.
+
+## budowa/klient-poprzedni/src/moduly/agents/zasieg-okien.ts
+
+Najwęższym poziomem zasięgu uprawnień jest okno komunikacji i tryb uprawnień
+żyje właśnie tam: pole `Window.permissionMode` niesie wartość przełącznika
+`--permission-mode` kanału głównego, a zmienia je komenda `window.update`.
+
+Ta część nie powiela ani okna izolacji, ani panelu sterowania: wykaz pokazuje
+stan wszystkich okien sesji naraz, czego żadne z nich nie robi.
+
+Lista wyboru pokazuje tryb okna, a nie wybór wskazany przez Operatora.
+Przeglądarka przestawia listę natychmiast, a zapis idzie dopiero po niej, więc
+po odmowie rdzenia lista stałaby na wartości, której okno nie ma. Dlatego każda
+odmowa cofa listę do trybu ostatnio potwierdzonego przez rdzeń.

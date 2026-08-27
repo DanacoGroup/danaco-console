@@ -5,19 +5,9 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
 /**
- * Zasięg per okno — dolna część Permissions Center.
- *
- * Najwęższym poziomem zasięgu uprawnień jest okno komunikacji i tryb uprawnień
- * żyje właśnie tam: pole `Window.permissionMode` niesie wartość przełącznika
- * `--permission-mode` kanału głównego, a zmienia je `window.update`.
- *
- * Część ta nie powiela ani okna izolacji, ani panelu sterowania: wykaz pokazuje
- * stan wszystkich okien sesji naraz, czego żadne z nich nie robi.
- *
- * Lista wyboru pokazuje tryb okna, nie wybór wskazany przez Operatora.
- * Przeglądarka przestawia listę natychmiast, a zapis idzie dopiero po niej, więc
- * po odmowie rdzenia lista stałaby na wartości, której okno nie ma. Dlatego
- * każda odmowa cofa listę do trybu ostatnio potwierdzonego przez rdzeń.
+ * Zasięg uprawnień w podziale na okna komunikacji pokazuje stan wszystkich
+ * okien sesji naraz. Tryb okna niesie pole `Window.permissionMode`, a zmienia
+ * je komenda `window.update`; każda odmowa cofa listę wyboru do trybu okna.
  */
 export interface ZasiegOkien {
   element: HTMLElement;
@@ -25,7 +15,11 @@ export interface ZasiegOkien {
   wczytaj(idSesji: string): Promise<void>;
 }
 
-/** Nazwy trybów uprawnień okna wraz z ich znaczeniem — słownik kontraktu. */
+/**
+ * Nazwy trybów uprawnień okna wraz ze zdaniem o znaczeniu każdego z nich.
+ * Wykaz obejmuje komplet wartości wyliczenia `PermissionMode`, ponieważ lista
+ * wyboru ma podać Operatorowi każdy tryb, który rdzeń przyjmie.
+ */
 const OPISY_TRYBOW: Record<PermissionMode, string> = {
   [PermissionMode.Manual]: 'pytanie o zgodę przed każdą zmianą',
   [PermissionMode.AcceptEdits]: 'automatyczna zgoda na zmiany plików',
@@ -35,7 +29,11 @@ const OPISY_TRYBOW: Record<PermissionMode, string> = {
   [PermissionMode.BypassPermissions]: 'pominięcie kontroli uprawnień',
 };
 
-/** Etykieta okna komunikacji w wykazie zasięgu. */
+/**
+ * Etykieta okna komunikacji w wykazie zasięgu składa się z identyfikatora
+ * modułu oraz tytułu okna, a przy tytule pustym — z identyfikatora okna. Okno
+ * bez tytułu pozostaje wtedy rozpoznawalne zamiast zlewać się z pozostałymi.
+ */
 function etykietaOkna(okno: Window): string {
   const tytul = (okno.title ?? '').trim();
   return tytul === '' ? `${okno.moduleId} · ${okno.id}` : `${okno.moduleId} · ${tytul}`;

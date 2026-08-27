@@ -1626,3 +1626,73 @@ podrzędną migawki: migawkę zakłada wyzwalacz, a wyzwalacz nie umie wstawić
 wielu wierszy z podzapytania w jednym kroku bez pętli, której SQLite nie ma.
 Napis jest tu zapisem migawkowym — nikt go nie zapytuje po wartości, tylko
 odczytuje w całości razem z wersją.
+
+## budowa/scripts/pakiet-serwera.sh
+
+Zgodnie z modelem wdrożenia całość platformy stoi na serwerze, a u operatora
+zostaje cienkie okno. Ten pakiet jest więc sercem platformy, nie oknem
+klienta, i dlatego nie idzie bundlerem Tauri, tylko dpkg-deb po własnym
+drzewie katalogów.
+
+Pakiet niesie: rdzeń zbudowany natywnie na Linuksa; serwer narzędzi modelu,
+którego rdzeń szuka obok siebie na dysku, stąd oba pliki w jednym katalogu
+i stąd katalog roboczy jednostki systemd; pakiet interfejsu, który rdzeń
+serwuje klientom; cztery dokumenty produktu — README, instalacja
+i konfiguracja, instrukcja, licencja; jednostkę systemd z kontem usługi,
+katalogiem danych, restartem i portem nasłuchu; pomocników pythonowych
+wołanych przez rdzeń, którego prowizjonowanie bierze stamtąd plik wymagań
+środowiska rozpoznawania mowy; oraz skrypt prowizjonowania arsenału na
+serwerze.
+
+Skrypt nie stawia arsenału i nie przepisuje jego wykazu. Wykaz zależności
+rdzenia stoi w jednym rejestrze deklaracji wraz z deklaracjami w adapterach,
+a rdzeń wypisuje go sam poleceniem wykazu zależności. Pole zależności
+w pliku kontrolnym pakietu niesie tę część rejestru, którą ma dystrybucja;
+resztą zajmuje się skrypt arsenału, wskazany operatorowi przez skrypt
+poinstalacyjny.
+
+Wywołanie bez przełącznika buduje wszystko i składa pakiet; przełącznik
+pominięcia budowy składa pakiet z tego, co już zbudowane. Zmienna wersji
+pakietu domyślnie pochodzi z pliku kontrolnego, a zmienna katalogu wydania
+wskazuje, gdzie odłożyć wynik.
+
+## budowa/server/internal/wiedza/pomocnik_osadzen.py
+
+Rdzeń jest w Go, a modele osadzeń są wydawane jako wagi ONNX obsługiwane
+bibliotekami Pythona; przepisanie inferencji transformera do Go byłoby drugą
+implementacją tej samej rzeczy, rozjeżdżającą się z wagami przy każdym wydaniu
+modelu, więc liczenie wektorów jest procesem obok rdzenia — tak samo jak
+rozpoznawanie mowy (`mowa/pomocnik.go`). Zlecenie przychodzi ścieżką pliku JSON
+w argumencie, odpowiedź wraca jednym obiektem JSON na standardowym wyjściu;
+rdzeń woła procesy wyłącznie przez `zewnetrzne/wolanie.go`, a ta droga nie
+podaje procesowi standardowego wejścia i nie dziedziczy środowiska, dlatego
+diagnostyka biblioteki idzie na strumień diagnostyczny, żeby nie zaśmiecić
+odpowiedzi JSON.
+
+Bez dziedziczenia środowiska nie ma `HOME` ani `HF_HOME`, więc biblioteka nie
+zna swojego katalogu pamięci podręcznej — rdzeń podaje katalog modeli wprost
+w zleceniu, pod katalogiem danych rdzenia, tam gdzie baza i magazyn biblioteki,
+więc model pobrany raz zostaje na dysku. Katalog modeli bywa dwiema różnymi
+rzeczami: pusty jest miejscem, do którego biblioteka dopiero pobierze wagi,
+a katalog, w którym model już leży, jest samym modelem — biblioteka dostaje go
+wprost i nie pobiera nic drugi raz. Rozstrzyga obecność pliku ONNX, jedynych
+tu wag.
+
+Modelu stojącego biblioteka nie umie opisać sama: jej wykaz obejmuje wyłącznie
+wydania, które sama publikuje, a dla każdego innego nie wie, jak złożyć tokeny
+w wektor ani czy wynik normalizować. Pomocnik te trzy rzeczy odczytuje
+z deklaracji leżących przy wagach (`modules.json`, `config.json` warstwy
+łączącej) zamiast zgadywać je — zgadnięcie dałoby wektory bez znaczenia,
+a rozpoznać to dałoby się dopiero po jakości wyszukiwania, czyli za późno.
+
+Brak jest odpowiedzią, a nie wywróceniem programu: gdy biblioteki nie ma albo
+wag nie da się pobrać, pomocnik oddaje `{"ok": false, "brak": …}` z nazwą
+braku i wagą modelu do dociągnięcia, a kod wyjścia zostaje zerowy — rdzeń
+zamienia to na odmowę nazywającą brak, bo ślad stosu Pythona nie powiedziałby,
+ile waży to, czego nie ma.
+
+Rozmieszczenie plików modelu stojącego w `UKLADY_WAG` odpowiada temu, które
+zapisuje `sentence-transformers` przy eksporcie i które ma repozytorium,
+z którego biblioteka pobiera własne wagi: model ONNX pod `onnx/model.onnx`,
+opis obok niego w korzeniu; eksport pojedynczy zostawia sam plik ONNX
+w korzeniu.

@@ -11,59 +11,16 @@ import {
 } from '../strona-glowna/pozycje-ustawien';
 import { wykonajZaczep, type OdbiorcaZdania, type ZaczepyPaska } from './zaczepy-paska';
 
-/**
- * Menu profilu Operatora w pasku powłoki środowiska: siedem pozycji w trzech
- * grupach oraz stopka.
- *
- *   Tożsamość i dostęp
- *     Modele, konta i tożsamość     → `modele`
- *     Dostępy i katalog roboczy     → `dostepy`
- *     Punkty izolacji               → `punkty-izolacji`
- *     Ustawienia (hasło, wejście)   → `ustawienia`
- *   Widok
- *     Motyw ciemny                  → `PrzelacznikMenu`, nastawa dwustanowa
- *   Obecność globalna
- *     Always On Display             → `aod`
- *     Mobile                        → `mobile`
- *   Stopka
- *     Okno konfiguracji             → `konfiguracja`
- *
- * Pozycje nie są nowym wykazem: powstają z `POZYCJE_USTAWIEN`, z którego żyje
- * także listwa strony głównej, menu aplikacji i menu Operatora
- * (`aplikacja/menu-operatora.ts`). Tutaj leży wyłącznie podział na grupy oraz
- * to, że `konfiguracja` idzie do stopki — stopka jest drogą do rejestru, czyli
- * miejscem rzeczy pełniejszej niż pozycje nad nią. Zmiana nazwy albo ikony
- * w tamtym wykazie zmienia to menu sama.
- *
- * Mechanizm jest w całości z biblioteki: `komponenty/menu-drzewo` niesie
- * grupowanie (`GrupaMenu`), nastawę dwustanową (`PrzelacznikMenu`), stopkę,
- * znacznik wyboru i wędrówkę klawiaturą.
- *
- * Awatar jest uchwytem i niesie wartość: stoją na nim inicjały, a nie napis
- * rodzajowy „Profil". Znak „O" nie jest inicjałem człowieka — to pierwsza
- * litera słowa „Operator", jedynej nazwy, jaką produkt zna.
- *
- * Motyw ma jedną prawdę: przełącznik w menu i przycisk w pasku czytają
- * `motyw/motywObowiazujacy()` i nasłuchują `ZDARZENIE_MOTYWU`, więc zmiana
- * w jednym miejscu przerysowuje drugie.
- *
- * Nie ma tu konta, adresu, przełączania tożsamości ani „Wyloguj": platforma
- * kont osobowych nie prowadzi (kontrakt przy `auth.register`: „Konta NIE
- * zaklada i adresu e-mail nie przyjmuje: bramka jest jedna, Operator
- * bezimienny"), a po zalogowaniu nie ma bram. Zdanie granicy stoi na ekranie,
- * w stopce, tym samym brzmieniem co w `aplikacja/menu-operatora.ts`.
- */
-
-/** Klucz przełącznika motywu; nie jest kodem ustawienia i nie może się z nim zderzyć. */
+/** Klucz przełącznika motywu w menu profilu jest odrębny od kodów pozycji ustawień i nie koliduje z żadnym z nich w drzewie menu. */
 export const KLUCZ_MOTYWU = 'widok:motyw-ciemny';
 
-/** Napis na uchwycie, gdy nazwa Operatora nie daje ani jednej litery. */
+/** Napis widoczny na uchwycie menu, gdy imię i nazwisko Operatora nie dostarczają ani jednej litery do zbudowania inicjałów. */
 const ZNAK_ZASTEPCZY = 'O';
 
-/** Kod pozycji, która idzie do stopki jako droga do rejestru. */
+/** Kod pozycji ustawień, która trafia do stopki menu profilu jako droga prowadząca do pełnego rejestru ustawień aplikacji. */
 const KOD_STOPKI: KodUstawienia = 'konfiguracja';
 
-/** Podział pozycji na grupy. Kolejność grup i kolejność w grupie — jak tu. */
+/** Podział pozycji ustawień na grupy wyświetlane w menu profilu. Kolejność grup oraz kolejność pozycji wewnątrz każdej grupy odpowiada porządkowi zapisanemu w tej strukturze. */
 const GRUPY: readonly { nazwa: string; kody: readonly KodUstawienia[] }[] = [
   {
     nazwa: 'Tożsamość i dostęp',
@@ -75,11 +32,12 @@ const GRUPY: readonly { nazwa: string; kody: readonly KodUstawienia[] }[] = [
   },
 ];
 
-/** Zdanie granicy — dlaczego nie ma tu konta ani wylogowania. */
+/** Zdanie graniczne wyjaśniające, dlaczego menu profilu nie zawiera konta ani polecenia wylogowania z aplikacji. */
 const ZDANIE_GRANICY =
   'Platforma nie prowadzi kont ani profili osobowych — bramka jest jedna, '
   + 'a Operator bezimienny. Nie ma tu „Wyloguj": po zalogowaniu nie ma bram.';
 
+/** Uchwyt menu profilu Operatora wraz z metodą jego zamknięcia, zwracany po zbudowaniu menu i montowany w pasku powłoki środowiska. */
 export interface MenuProfilu {
   /** Uchwyt wraz z menu; montowany w grupie akcji paska. */
   element: HTMLElement;
@@ -87,26 +45,23 @@ export interface MenuProfilu {
   zamknij(): void;
 }
 
+/** Opcje przekazywane przy budowie menu profilu — podpis Operatora, czynności paska sterujące wyborem oraz miejsce, gdzie trafia zdanie komunikatu. */
 export interface OpcjeMenuProfilu {
   /** Podpis Operatora — źródło inicjałów na uchwycie. */
   operator: string;
-  /**
-   * Czynności paska. Czytane w chwili WYBORU pozycji, nie przy budowie menu —
-   * zaczep bywa podłączony po montażu powłoki (`zaczepy-paska.ts`).
-   */
+  /** Czynności paska czytane przy wyborze pozycji, bo zaczep bywa podłączony dopiero po montażu powłoki. */
   zaczepy?: ZaczepyPaska;
   /** Gdzie postawić zdanie, gdy drogi nie podano. Bez odbiorcy zdanie przepada. */
   naKomunikat?: OdbiorcaZdania;
 }
 
+/** Buduje menu profilu Operatora w pasku powłoki wraz z obsługą wyboru pozycji, przełącznika motywu oraz zamknięcia po zdjęciu nasłuchów. */
 export function utworzMenuProfilu(opcje: OpcjeMenuProfilu): MenuProfilu {
   const pozycjaKonfiguracji = POZYCJE_USTAWIEN.find((p) => p.kod === KOD_STOPKI);
 
   const menu: MenuDrzewo = utworzMenuDrzewo({
     nastawa: 'Operator',
-    // Pole szukania nad ośmioma pozycjami zabrałoby wiersz i nie skróciło
-    // ani jednego ruchu. Próg biblioteki (12 liści) i tak by go nie postawił;
-    // zapis jawny mówi, że to wybór, a nie przypadek.
+    // Pole szukania jest zbędne przy tej liczbie pozycji: próg biblioteki i tak by go nie pokazał.
     progSzukania: Number.POSITIVE_INFINITY,
     naWybor: (klucz) => wykonaj(klucz),
     ...(pozycjaKonfiguracji === undefined
@@ -130,8 +85,7 @@ export function utworzMenuProfilu(opcje: OpcjeMenuProfilu): MenuProfilu {
 
   function wykonaj(klucz: string): void {
     if (klucz === KLUCZ_MOTYWU) {
-      // Przełączenie rozgłasza ZDARZENIE_MOTYWU, a nasłuch niżej przerysowuje
-      // menu. Stanu motywu ten plik nie trzyma — jedna prawda o nastawie.
+      // Przełączenie rozgłasza zdarzenie motywu, a nasłuch niżej przerysowuje menu.
       przelaczMotyw();
       return;
     }
@@ -147,9 +101,7 @@ export function utworzMenuProfilu(opcje: OpcjeMenuProfilu): MenuProfilu {
       nazwa: pozycja.nazwa,
       opis: pozycja.wyjasnienie,
       ikona: pozycja.ikona,
-      // Żadna pozycja nie jest nastawą jednokrotną — wszystkie otwierają okno.
-      // Haczyk zostaje pusty i to jest prawda: menu nie pamięta „ostatnio
-      // otwartego okna" i nie ma czego zaznaczyć.
+      // Żadna pozycja nie jest nastawą jednokrotną, więc znacznik wyboru zostaje pusty.
       wybrany: false,
     };
   }
@@ -165,8 +117,7 @@ export function utworzMenuProfilu(opcje: OpcjeMenuProfilu): MenuProfilu {
       grupy.push({ rodzaj: 'grupa', nazwa: grupa.nazwa, dzieci });
     }
 
-    // Grupa „Widok" stoi między tożsamością a obecnością i ma dokładnie jedną
-    // pozycję — nastawę, nie wejście do okna. Dlatego składa się osobno.
+    // Grupa „Widok" ma jedną nastawę zamiast wejścia do okna, więc składa się osobno.
     const ciemny = motywObowiazujacy() === 'dark';
     grupy.splice(1, 0, {
       rodzaj: 'grupa',
@@ -212,8 +163,8 @@ export function utworzMenuProfilu(opcje: OpcjeMenuProfilu): MenuProfilu {
 }
 
 /**
- * Do dwóch pierwszych liter członów nazwy Operatora. Pusty wynik zastępuje
- * `ZNAK_ZASTEPCZY`.
+ * Wyznacza inicjały z dwóch pierwszych liter kolejnych członów nazwy Operatora. Pusty wynik
+ * zastępuje stały znak zastępczy przechowywany w stałej modułu.
  */
 function inicjaly(operator: string): string {
   const znaki = operator

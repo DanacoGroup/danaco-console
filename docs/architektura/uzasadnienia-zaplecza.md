@@ -2084,3 +2084,13 @@ Kolumna rodzaju zasobu dopuszczała warunkiem CHECK tylko trzy wartości, a rdze
 
 ## budowa/server/internal/store/migracja_116_skrzynka_operatora.sql
 Aplikacja nie ma własnego serwera poczty i używa skrzynki, którą Operator ma już skonfigurowaną na urządzeniu albo w chmurze, więc migracja nie zakłada żadnej nowej tabeli opisującej pocztę, tylko dopowiada, jak rdzeń łączy się z cudzą skrzynką. Druga tabela na skrzynkę Operatora byłaby drugą prawdą o tym, do czego rdzeń się loguje, ponieważ rodzina poczty widziałaby jedne skrzynki, a wyzwalacz automatyk rodzaju poczty drugie, dlatego migracja dokłada sześć kolumn do bytu, który już istnieje. Protokół staje się polem, ponieważ odbiór może iść przez IMAP, JMAP albo POP3, więc przestał być stałą; domyślną wartością jest IMAP, zgodnie z tym, czego oczekuje kontrakt przy braku wskazania. Źródło nastaw zapisuje fakt o pochodzeniu wartości — czy wpisał je Operator, czy odczytano je z klienta poczty na urządzeniu, czy pochodzą z chmury — ponieważ bez tej kolumny podpowiedź odczytana automatycznie wyglądałaby po zapisie identycznie jak nastawy wpisane ręcznie, a to są dwie różne rzeczy co do aktualności. Szyfrowanie jest dwiema kolumnami, bo odbiór i wysyłka jadą osobnymi gniazdami do osobnych serwerów z osobnymi ustawieniami szyfrowania, więc jedna wspólna kolumna zmuszałaby do zgadywania trybu z numeru portu. Domyślność rozstrzyga za Operatora, gdy komenda nie wskazała konkretnej skrzynki wprost, a indeks częściowy pilnuje, że domyślna skrzynka jest co najwyżej jedna.
+
+## narzedzia/nowy-teren.sh
+Wieloakapitowy nagłówek złożono w jedno zdanie o przyczynie i skutku otwarcia
+terenu; przykład wywołania usunięto z nagłówka, bo powtarza treść komunikatu
+błędu widocznego przy niepoprawnym wywołaniu skryptu.
+
+## narzedzia/przygotuj-drzewo.sh
+Nagłówek pliku scalono w jedno zdanie łączące cel i wywołującego; osobny
+komentarz przed pętlą dowiązań rozwinięto o wzmiankę, że dowiązanie dotyczy
+każdego pakietu z osobna, bo krótszy zapis nie mieścił się w wymaganej długości.

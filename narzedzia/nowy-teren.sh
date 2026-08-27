@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-# Otwarcie terenu: gałąź, osobne drzewo robocze i wspólne pamięci podręczne.
-#
-# Sesja nie pracuje w drzewie głównym, bo równoległe sesje nadpisywałyby sobie
-# pliki. Każdy teren dostaje własne drzewo robocze Git w ~/robocze/<nazwa>,
-# wskazujące ten sam katalog .git — historia jest wspólna, pliki rozdzielone.
-#
-# Użycie: bash narzedzia/nowy-teren.sh <nazwa> <galaz-bazowa>
+# Otwarcie terenu tworzy nowe drzewo robocze Git na osobnej gałęzi, dzielące ten sam katalog repozytorium, aby równoległe sesje nie nadpisywały sobie plików.
 
 set -euo pipefail
 

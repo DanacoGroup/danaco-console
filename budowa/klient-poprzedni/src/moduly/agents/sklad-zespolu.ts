@@ -1,17 +1,10 @@
 import type { Agent } from '../../../../shared/contract';
 
 /**
- * Skład zespołu — wybór ekspertów biblioteki, w kolejności zaznaczania.
- *
- * Kolejność jest treścią, nie porządkiem wyświetlania: pole `agentIds` niesie
- * ekspertów w kolejności nadanej przez Operatora. Składanie tablicy przez
- * przejście po bibliotece brałoby kolejność z wykazu ekspertów, więc zespół
- * wracałby po zapisie w innym porządku niż złożony — wybór trzyma zatem własną
- * listę i dopisuje na jej koniec.
- *
- * Zespół wczytany może wskazywać eksperta spoza bieżącego wykazu: zarchiwizowanego
- * albo odciętego frazą zawężającą. Taki wpis zostaje w składzie i pokazuje się
- * wierszem nazywającym brak, żeby ponowny zapis nie okroił zespołu po cichu.
+ * Skład zespołu — wybór ekspertów biblioteki w kolejności zaznaczania.
+ * Kolejność jest treścią pola `agentIds`, a nie porządkiem wyświetlania, więc
+ * wybór trzyma własną listę i dopisuje na jej koniec zamiast składać tablicę
+ * przejściem po bibliotece.
  */
 export interface SkladZespolu {
   element: HTMLElement;

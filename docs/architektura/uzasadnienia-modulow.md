@@ -2925,3 +2925,18 @@ wszystkich połączeń konta i rejestr niczego w tym nie zmienia. Rejestr
 istnieje po to, by pole `subscribed` niosło prawdę, a rdzeń wiedział, które
 okno których procesów pilnuje. Ten sam wzorzec prowadzi
 `pamiecObserwatorowPrzebiegow` dla Execution Monitora.
+
+## budowa/server/internal/core/adapter_modul_workspace_notatki.go
+
+Odnośniki liczy zapis strony, nie jej odczyt. Przy każdym zapisie strony
+rdzeń wyjmuje z treści odnośniki zapisane wzorem podwójnego nawiasu
+kwadratowego i zapisuje je wierszami. Panel „co linkuje tutaj" pyta wtedy
+jednym zapytaniem, zamiast przeszukiwać treść wszystkich stron projektu przy
+każdym otwarciu. Odnośnik do strony jeszcze niezałożonej jest stanem
+poprawnym wiki: nazwa czeka na stronę i domyka się sama w chwili jej
+założenia. Dlatego zapis oddaje wykaz brakujących nazw — Operator ma widzieć,
+które nazwy jeszcze nie mają strony, a nie odkrywać to po kliknięciu w martwy
+odnośnik.
+
+Usunięcie strony bez znacznika usunięcia stron podrzędnych przenosi je pod
+stronę nadrzędną usuwanej — wiki nie gubi wtedy gałęzi razem z jej korzeniem.

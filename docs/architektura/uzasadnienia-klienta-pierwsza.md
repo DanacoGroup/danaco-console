@@ -5944,3 +5944,54 @@ czynnością operatora w oknie wykazu. Pole `executionParams` kontrakt opisuje j
 kształt sprawdzany jest jawnie zamiast rzutowany: przekazanie z modułu, który ułoży komplet inaczej,
 zostaje pominięte zamiast trafić do okna jako scenariusz bez kroków. Okna zamknięte są pomijane przy
 odczycie, ponieważ przekazanie do okna zamkniętego jest przekazaniem odbytym i zakończonym.
+
+## budowa/klient-poprzedni/src/aktualizacja/baner-aktualizacji.ts
+Pas nie zadaje pytania potwierdzającego przed założeniem wydania: kliknięcie jest
+zgodą, a jedynym miejscem, gdzie produkt o cokolwiek pyta, zostaje logowanie. Pas
+pojawia się wyłącznie wtedy, gdy jest co zakładać — brak sieci, brak wydań
+i wydanie nie nowsze od zainstalowanego znaczą to samo: baneru nie ma. Sam
+z siebie nic nie aktualizuje, dopóki nikt nie kliknie.
+
+Odmowa zostaje na widoku: gdy powłoka nie zdoła założyć wydania, baner nie znika,
+tylko zamienia się w zdanie mówiące, co poszło nie tak i co z tym zrobić. Zdanie
+zachęty rozstrzyga powłoka, a nie samo rozpoznanie środowiska, ponieważ na kopii
+z pakietu instalacyjnego powłoka odmawia podmiany zaraz po kliknięciu — pas
+obiecuje wtedy tylko to, co wiadomo na pewno.
+
+Tor postępu rysuje się wyłącznie przy znanej całości pobrania. Gdy powłoka poda
+same bajty, jest sam licznik megabajtów bez toru; gdy nie poda nic, pas pokazuje
+upływ czasu od kliknięcia jako jedyną liczbę, którą zna, zamiast rysować pasek
+udający procenty.
+
+Obudowa trzyma pas i przycisk wykazu jako rodzeństwo, nie zagnieżdżenie:
+zagnieżdżenie przycisku wykazu w banerze byłoby niepoprawnym znacznikiem
+i pułapką dla czytnika ekranu, bo jedno kliknięcie trafiałoby w dwa sterowniki
+naraz.
+
+Odmowa trwała wyłącza pas na stałe, ponieważ powtórzone kliknięcie dałoby tę samą
+odmowę co do słowa. Odmowa przemijająca (brak łączności, przerwane pobieranie)
+pozostawia pas klikalnym, bo ponowienie jest jedyną sensowną czynnością. Droga
+niedostępna rozpoznana przed pobraniem dostaje inny znak niż odmowa, ponieważ
+nic się jeszcze nie zaczęło; powłoka z góry mówi, że tej kopii nie podmieni, więc
+żaden bajt nie idzie po nic.
+
+Obieg pytania o wydania pomija czynność trwającą albo już zakończoną, żeby nie
+nadpisać widoku pracy albo wyniku zachętą. Drugie sprawdzenie stanu po czekaniu
+na odpowiedź o drodze chroni przed tym samym: między pytaniem o wykaz a pytaniem
+o drogę mija czas sieciowy, w trakcie którego zakładanie mogło już ruszyć.
+
+Zapora wejścia w zakładaniu wydania dopuszcza jedną aktualizację naraz, bo druga
+pisałaby w ten sam plik roboczy obok aplikacji; powłoka ma tę samą zaporę
+u siebie, ale rozstrzygnięcie po stronie pasa oszczędza migającego stanu pracy,
+po którym natychmiast przychodzi odmowa. Nasłuch postępu działa wyłącznie na
+czas jednego przebiegu pobierania, a zdarzenie spóźnione albo dotyczące już
+zdjętego banera nie ma prawa go wskrzesić.
+
+Zdanie powodzenia po założeniu wydania układa powłoka, bo to ona wie, co się
+stało z plikiem i z rdzeniem w tle; powłoka odkłada też sam restart, więc jest
+chwila na pokazanie tego zdania. Chronologia wydań rozwija się dopiero na
+żądanie, żeby nie pytać kanału bez potrzeby, a zwinięcie jej nie kasuje stanu.
+
+Poza powłoką natywną baner nie ma czynności do wykonania po kliknięciu, bo
+podmiana pliku i restart są własnością powłoki — pytanie kanału wydań byłoby
+wtedy ruchem w sieć po nic.

@@ -2606,3 +2606,61 @@ którego rdzeń nie ma, i to nie jest powód odmowy: wykaz ma nieść taki klucz
 a program ssh odczyta go sam przy połączeniu. Odcisk bierze się wtedy z klucza
 publicznego — z pliku obok albo z części publicznej, którą niesie sam błąd
 odczytu.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_wydajnosc.go
+
+Moduł umiał dotąd powiedzieć o wdrożonym produkcie jedno: czy odpowiada
+(apps.deployment.health.get — dostępność, czas nieprzerwanego działania,
+wynik ostatniego sprawdzenia kondycji). To jest odpowiedź na pytanie, czy
+produkt stoi, nie na pytanie, jak szybko się otwiera; produkt odpowiadający
+w cztery sekundy jest dostępny w stu procentach i nie do użycia.
+
+Core Web Vitals nie są czasem odpowiedzi serwera: największe wymalowanie
+treści i przesunięcia układu powstają w przeglądarce, po wykonaniu skryptów,
+a ich wartość zależy od emulacji urządzenia i dławienia sieci. Rdzeń, który
+mierzyłby to własnym klientem HTTP, oddałby czas pobrania dokumentu i nazwał
+go wydajnością strony — liczbę prawdziwą, odpowiadającą na inne pytanie.
+
+Program pomiarowy mówi o nieodbytym pomiarze wprost: przebieg, w którym
+strona się nie wczytała, niesie w odpowiedzi pole runtimeError wraz z kodem
+powodu i nie niesie ocen. Rdzeń czyta to pole przed czymkolwiek innym — bez
+tego odczytu odpowiedź o produkcie, którego pod adresem nie ma, składałaby
+się z samych zer i wyglądałaby jak strona wolna, a nie jak strona
+niezmierzona.
+
+Audyt trwa kilkanaście sekund przy stronie zdrowej i nie kończy się nigdy
+przy stronie, która nie przestaje się wczytywać. Granica idzie do programu
+przez opcję --max-wait-for-load i osobno do arsenału, z zapasem — pierwszy
+mija program, więc przekroczenie nazywa ten, kto wie, na co czekał.
+
+Deklaracja narzedzieLighthouse stoi przy miejscu użycia; wykaz zależności
+odwołuje się do niej, zamiast powtarzać nazwę programu po raz drugi.
+
+Kolejność miar w miaryWydajnosciStrony jest ustalona, żeby dwa kolejne audyty
+tej samej strony dawały wykaz w tym samym porządku — wynik ma się różnić
+wtedy, gdy zmieniła się strona, a nie wtedy, gdy inaczej ułożyła się mapa
+odpowiedzi programu. Wykaz obejmuje Core Web Vitals wraz z miarami, z których
+te się liczą; miara dopisana tu bez pokrycia w odpowiedzi programu wyszłaby
+z audytu jako zero, dlatego brak miary w odpowiedzi pomija się, zamiast
+wypełniać wartością zastępczą.
+
+Postać biurkowa ma w programie własną nastawę zbiorczą, ponieważ sama opcja
+--form-factor zmienia sposób liczenia oceny, lecz zostawia emulację
+i dławienie telefonu, więc bez tej nastawy wynik byłby oceną biurka
+policzoną na warunkach telefonu.
+
+Program kończy się kodem niezerowym także wtedy, gdy pomiar się nie odbył,
+a powód opisał w odpowiedzi. Odpowiedź czytamy więc przed rozpatrzeniem
+odmowy arsenału, inaczej sytuacja, w której strony nie ma pod danym adresem,
+wyszłaby jako zwykłe zakończenie programu niepowodzeniem.
+
+Miara, której program nie policzył, nie wchodzi z wartością zero, ponieważ
+zero jest w tych miarach wynikiem najlepszym z możliwych.
+
+Zaokrąglenie oceny programu w dół dałoby 99 dla strony ocenionej idealnie,
+więc wSkaliStu zaokrągla do najbliższej liczby całkowitej.
+
+Brak programu jest brakiem, który operator serwera usuwa jedną instalacją,
+a przekroczenie granicy czasu jest przekroczeniem, nie awarią. Obie sytuacje
+bez tego rozróżnienia wychodziłyby jako internal_error, mówiące czytającemu
+coś nieprawdziwego o tym, co się stało.

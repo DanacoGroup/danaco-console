@@ -3265,3 +3265,14 @@ całą trwałość wraz z bazą.
 Kontekst wchodzi parametrem metody Narzedzia, ponieważ w zasięgu eksperta
 złożenie wykazu narzędzi pyta rdzeń o jego definicję. Wykaz nie jest więc
 czynnością czysto obliczeniową i nie ma prawa przeżyć zatrzymania procesu.
+
+## budowa/server/internal/models/definicja.go
+Rejestr kanałów powstaje z wierszy tabeli kanal_modelu w czasie działania aplikacji, więc nowy kanał
+znaczy nowy wiersz danych, nie nowy typ w kodzie. Pole PoswiadczenieOdwolanie jest odwołaniem do
+danych dostępowych — nazwą zmiennej środowiskowej albo pozycji magazynu; sekret nie jest
+przechowywany ani w bazie, ani w repozytorium.
+
+Metoda identyfikatorKontraktu musi zwracać kod kanału, nie numer wiersza. Rejestr indeksuje kanał pod
+obydwoma kluczami, więc odczyt działa tak czy inaczej — ale warstwa danych zna wyłącznie kod, więc
+numer wiersza dałby klientowi identyfikator, którym nie da się nic zrobić. Numer wiersza jest wartością
+zapasową wyłącznie dla wiersza bez kodu.

@@ -4693,3 +4693,19 @@ kolejek i zespołu.
 Pasek działań słucha nadajników pulpitu na własną rękę, żeby każde działanie
 miało widoczny skutek niezależnie od tego, czy ktokolwiek podpiął odbiorcę
 zewnętrznego.
+
+## budowa/klient-poprzedni/src/moduly/browser/stan-okna.ts
+
+Stany są rozdzielone, ponieważ brak zapytania, zapytanie w toku i odmowa rdzenia to trzy
+różne sytuacje. Zlanie ich w jedno kazałoby Operatorowi zgadywać, czy czekać, czy działać;
+ten sam podział prowadzi `dostepy/stany-odczytu.ts`.
+
+Nieudane odświeżenie zostawia to, co Operator już widział, a ponowienie odczytu nie
+zdejmuje komunikatu błędu. Treść znika wyłącznie na czas odczytu.
+
+Nazwa fazy i jej znakowanie pochodzą z `komponenty/faza-okna`. Wartość trafia do atrybutu
+`data-faza`, po którym sięgają arkusze stylów i sprawdziany; własny zestaw nazw w module
+znaczyłby, że ten sam stan okna nazywa się gdzie indziej inaczej.
+
+Między złożeniem okna a pierwszym odświeżeniem Operator widzi zdanie, które i tak
+zobaczyłby przy pustym wyniku.

@@ -1,8 +1,8 @@
 //! Ikona powłoki w zasobniku systemowym.
 //!
-//! Zasobnik jest miejscem, w którym powłoka żyje po zamknięciu okna: rdzeń
-//! pracuje, procesy sesji biegną, a Operator ma dostęp do okna, wyboru
-//! katalogu, stanu rdzenia i jawnego zatrzymania.
+//! Zasobnik jest miejscem, w którym powłoka żyje po zamknięciu okna: praca
+//! toczy się dalej w rdzeniu na serwerze wdrożenia, a Operator ma stąd dostęp
+//! do okna, wyboru katalogu i stanu rdzenia.
 
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
@@ -40,7 +40,6 @@ fn zbuduj_menu(aplikacja: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
     let pokaz = pozycja(aplikacja, menu_zasobnika::POKAZ, "Pokaż okno")?;
     let katalog = pozycja(aplikacja, menu_zasobnika::KATALOG, "Wskaż katalog roboczy…")?;
     let stan = pozycja(aplikacja, menu_zasobnika::STAN, "Stan rdzenia")?;
-    let zatrzymaj = pozycja(aplikacja, menu_zasobnika::ZATRZYMAJ, "Zatrzymaj rdzeń")?;
     let zakoncz = pozycja(aplikacja, menu_zasobnika::ZAKONCZ, "Zakończ powłokę")?;
     let kreska_gorna = PredefinedMenuItem::separator(aplikacja)?;
     let kreska_dolna = PredefinedMenuItem::separator(aplikacja)?;
@@ -51,7 +50,6 @@ fn zbuduj_menu(aplikacja: &AppHandle) -> tauri::Result<Menu<tauri::Wry>> {
             &katalog,
             &kreska_gorna,
             &stan,
-            &zatrzymaj,
             &kreska_dolna,
             &zakoncz,
         ],

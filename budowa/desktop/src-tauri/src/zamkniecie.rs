@@ -1,8 +1,9 @@
 //! Zachowanie powłoki przy zamknięciu okna.
 //!
-//! Zamknięcie okna nie kończy biegnących procesów sesji: okno jest widokiem,
-//! nie właścicielem pracy. Zamknięcie chowa je do zasobnika — rdzeń pracuje
-//! dalej, procesy sesji biegną, a ponowne otwarcie wraca do tej samej pracy.
+//! Zamknięcie okna nie kończy pracy sesji: okno jest widokiem, nie właścicielem
+//! pracy. Praca toczy się w rdzeniu na serwerze wdrożenia i biegnie dalej bez
+//! względu na to, czy okno stoi otwarte. Zamknięcie chowa je więc do zasobnika,
+//! a ponowne otwarcie wraca do tej samej sesji.
 //!
 //! To nie jest blokada: przycisk zamknięcia działa natychmiast i bez pytania,
 //! zmienia się wyłącznie skutek.
@@ -19,8 +20,8 @@ pub fn obsluz(okno: &WebviewWindow, zdarzenie: &WindowEvent) {
     }
 }
 
-/// Kończy powłokę, pozostawiając rdzeń i procesy sesji przy pracy.
-/// Zatrzymanie rdzenia jest osobnym, jawnym poleceniem z zasobnika.
+/// Kończy powłokę. Praca na serwerze wdrożenia toczy się dalej — powłoka nie ma
+/// nad nią władzy i nie próbuje jej wygaszać.
 pub fn zakoncz_powloke(aplikacja: &AppHandle) {
     if let Some(okno) = aplikacja.get_webview_window(okno::ETYKIETA) {
         let _ = okno.hide();

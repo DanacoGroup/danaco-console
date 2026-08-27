@@ -1,6 +1,0 @@
-#!/bin/sh
-# Przed usunięciem pakietu — dowiązania z /usr/bin nie należą do listy plików
-# pakietu (robi je postinst), więc dpkg ich nie sprzątnie sam.
-set -e
-rm -f /usr/bin/rdzen /usr/bin/danaco-console-rdzen /usr/bin/danaco-console-arsenal
-exit 0

@@ -1,46 +1,42 @@
-//! Wskazanie rdzenia — czynność Operatora „gdzie stoi mój rdzeń".
+//! Wskazanie rdzenia — czynność Operatora „na którym serwerze stoi mój rdzeń".
 //!
-//! Po co ta czynność istnieje. Instalator nie zna adresu serwera i znać go nie
-//! może; wie go wyłącznie Operator i mówi go przy pierwszym uruchomieniu okna.
-//! Do tej pory jedyną drogą wskazania była zmienna środowiska — droga wykonawcy,
-//! nie Operatora — więc powłoka z pudełka zawsze stawiała rdzeń na maszynie
-//! Operatora, czyli tam, gdzie nie ma arsenału programów przetwarzających.
+//! Po co ta czynność istnieje. Rdzeń stoi na serwerze wdrożenia, a instalator
+//! adresu tego serwera nie zna i znać go nie może: w chwili rozpakowania plików
+//! nikt jeszcze nie wie, pod jaką nazwą stoi rdzeń tego Operatora. Wie to sam
+//! Operator i mówi to przy pierwszym uruchomieniu okna. Drugą drogą wskazania
+//! jest zmienna środowiska — droga wykonawcy i jednostki usługi, nie Operatora.
 //!
-//! Trzy rzeczy dzieją się tutaj i tylko tutaj:
+//! Dwie rzeczy dzieją się tutaj i tylko tutaj:
 //!
 //!   1. rozbiór wskazania na host i port (jedno pole w oknie, jedno rozumienie
 //!      po obu stronach granicy procesu),
 //!   2. próba połączenia PRZED zapisem — wskazanie nieosiągalne nie zostaje
-//!      przyjęte, bo zapisane zamieniłoby okno w ekran milczący po każdym starcie,
-//!   3. wprowadzenie wskazania w życie w tym uruchomieniu: rdzeń lokalny staje,
-//!      rdzeń zdalny zostaje rozpoznany, a proces postawiony przy poprzednim
-//!      wskazaniu jest zatrzymywany (`UchwytRdzenia::przejmij`).
+//!      przyjęte, bo zapisane zamieniłoby okno w ekran milczący po każdym starcie.
 //!
-//! Czego tu nie ma: wyboru, skąd ładuje się strona interfejsu. To osobna nastawa
-//! (`DANACO_ADRES_INTERFEJSU`, `zrodlo_interfejsu.rs`) i osobny skutek.
+//! Czego tu nie ma: wyboru „rdzeń na tym urządzeniu". Produkt występuje wyłącznie
+//! jako hybryda, więc rdzenia na urządzeniu Operatora nie ma, a powłoka nie ma
+//! czym go postawić.
 
 use serde::Serialize;
 
-use crate::rdzen::{uruchomienie, UchwytRdzenia};
-use crate::ustawienia::{Ustawienia, HOST_DOMYSLNY};
+use crate::rdzen::nasluch;
+use crate::ustawienia::Ustawienia;
 
 /// Stan wskazania oddawany interfejsowi.
 #[derive(Clone, Debug, Serialize)]
 pub struct Wskazanie {
-    /// Host rdzenia obowiązujący.
-    pub host: String,
-    /// Port rdzenia obowiązujący.
+    /// Serwer wdrożenia, na którym stoi rdzeń; brak, dopóki nie wskazano.
+    /// Okno wstawia go z powrotem do pola, żeby Operator poprawiał to, co napisał.
+    pub host: Option<String>,
+    /// Port nasłuchu rdzenia obowiązujący.
     pub port: u16,
-    /// Adres HTTP rdzenia obowiązujący — złożony z hosta i portu.
-    pub adres: String,
-    /// Czy wskazanie zostało złożone (w oknie albo zmienną środowiska). Fałsz
-    /// znaczy pierwsze uruchomienie i jest dla okna sygnałem, że ma zapytać.
-    pub zlozone: bool,
-    /// Czy rdzeń stoi na tym urządzeniu.
-    pub rdzen_lokalny: bool,
+    /// Adres HTTP złożony z hosta i portu — gotowa postać dla warstwy połączenia
+    /// (`klient/src/polaczenie/adres-rdzenia.ts`), która sama adresu nie składa.
+    pub adres: Option<String>,
     /// Warstwa, z której pochodzi wskazanie: `brak`, `nastawy`, `srodowisko`.
-    /// Wskazania ze zmiennej środowiska okno nie nadpisze — ma o tym powiedzieć,
-    /// zamiast przyjmować zapis bez skutku.
+    /// `brak` znaczy pierwsze uruchomienie i jest dla okna sygnałem, że ma
+    /// zapytać. Wskazania ze zmiennej środowiska okno nie nadpisze — ma o tym
+    /// powiedzieć, zamiast przyjmować zapis bez skutku.
     pub warstwa: String,
 }
 
@@ -48,7 +44,7 @@ pub struct Wskazanie {
 #[derive(Clone, Debug, Serialize)]
 pub struct Odmowa {
     /// Kod powodu: `wskazanie-puste`, `port-niepoprawny`, `rdzen-nieosiagalny`,
-    /// `zapis-nieudany`, `rdzen-nie-wstal`.
+    /// `zapis-nieudany`.
     pub powod: String,
     /// Zdanie dla Operatora: co się stało i co może zrobić.
     pub zdanie: String,
@@ -66,86 +62,27 @@ impl Odmowa {
 
 /// Zwraca wskazanie obowiązujące w tej chwili.
 pub fn biezace(ustawienia: &Ustawienia) -> Wskazanie {
+    let wskazane = ustawienia.wskazanie();
     Wskazanie {
-        host: ustawienia.host(),
+        host: wskazane.as_ref().map(|w| w.host.clone()),
         port: ustawienia.port(),
-        adres: ustawienia.adres_rdzenia_http(),
-        zlozone: ustawienia.wskazanie_zlozone(),
-        rdzen_lokalny: ustawienia.rdzen_lokalny(),
+        adres: wskazane.as_ref().map(|w| w.adres_http()),
         warstwa: ustawienia.warstwa_wskazania().nazwa().to_string(),
     }
 }
 
-/// Przyjmuje wskazanie Operatora: sprawdza, zapisuje trwale i wprowadza w życie.
+/// Przyjmuje wskazanie Operatora: sprawdza łączność i zapisuje je trwale.
 ///
-/// `adres` przychodzi z okna w postaci, w jakiej Operator go napisał: nazwa hosta
-/// albo `host:port`, z przedrostkiem `http://` albo bez. Wskazanie puste znaczy
-/// rdzeń na tym urządzeniu — okno wysyła je, gdy Operator wybierze pracę lokalną.
+/// `adres` przychodzi z okna w postaci, w jakiej Operator go napisał: nazwa
+/// serwera albo `serwer:port`, z przedrostkiem `http://` albo bez.
 ///
-/// Kolejność jest wiążąca: najpierw próba połączenia (dla wariantu lokalnego —
-/// postawienie rdzenia), potem zapis. Zapis przed próbą utrwalałby wskazanie,
-/// które nie działa, a Operator zobaczyłby skutek dopiero przy następnym starcie.
-pub fn wskaz(
-    ustawienia: &Ustawienia,
-    uchwyt: &UchwytRdzenia,
-    adres: &str,
-    lokalnie: bool,
-) -> Result<Wskazanie, Odmowa> {
-    let (host, port) = if lokalnie {
-        (HOST_DOMYSLNY.to_string(), ustawienia.port())
-    } else {
-        rozbierz(adres, ustawienia.port())?
-    };
+/// Kolejność jest wiążąca: najpierw próba połączenia, potem zapis. Zapis przed
+/// próbą utrwalałby wskazanie, które nie działa, a Operator zobaczyłby skutek
+/// dopiero przy następnym starcie.
+pub fn wskaz(ustawienia: &Ustawienia, adres: &str) -> Result<Wskazanie, Odmowa> {
+    let (host, port) = rozbierz(adres, ustawienia.port())?;
 
-    if host == HOST_DOMYSLNY {
-        return wskaz_lokalnie(ustawienia, uchwyt, port);
-    }
-    wskaz_zdalnie(ustawienia, uchwyt, &host, port)
-}
-
-/// Wskazanie rdzenia na tym urządzeniu: zapis, potem postawienie procesu.
-///
-/// Tu zapis idzie PRZED postawieniem, odwrotnie niż w wariancie zdalnym, i ma to
-/// powód: rdzeń stawia się z ustawień obowiązujących, więc port ze wskazania musi
-/// już w nich siedzieć. Rdzeń, który nie wstał, kończy się odmową — ale wskazanie
-/// zostaje zapisane, bo wybór miejsca pracy jest trafny także wtedy, gdy binarki
-/// nie znaleziono; Operator dostaje w zdaniu powód z opisu przebiegu.
-fn wskaz_lokalnie(
-    ustawienia: &Ustawienia,
-    uchwyt: &UchwytRdzenia,
-    port: u16,
-) -> Result<Wskazanie, Odmowa> {
-    ustawienia
-        .zapisz_wskazanie(HOST_DOMYSLNY, port)
-        .map_err(|zdanie| Odmowa::nowa("zapis-nieudany", zdanie))?;
-
-    let zawiazanie = uruchomienie::zawiaz_lokalnie(ustawienia);
-    let pracuje = zawiazanie.opis.pracuje;
-    let opis_przebiegu = zawiazanie.opis.opis.clone();
-    uchwyt.przejmij(
-        zawiazanie.port,
-        zawiazanie.host,
-        zawiazanie.opis,
-        zawiazanie.dziecko,
-    );
-
-    if !pracuje {
-        return Err(Odmowa::nowa(
-            "rdzen-nie-wstal",
-            format!("Rdzeń na tym urządzeniu nie odpowiedział. {opis_przebiegu}"),
-        ));
-    }
-    Ok(biezace(ustawienia))
-}
-
-/// Wskazanie rdzenia na serwerze: próba połączenia, potem zapis.
-fn wskaz_zdalnie(
-    ustawienia: &Ustawienia,
-    uchwyt: &UchwytRdzenia,
-    host: &str,
-    port: u16,
-) -> Result<Wskazanie, Odmowa> {
-    if !crate::rdzen::nasluch::odpowiada_pod(host, port) {
+    if !nasluch::odpowiada_pod(&host, port) {
         return Err(Odmowa::nowa(
             "rdzen-nieosiagalny",
             format!(
@@ -156,16 +93,9 @@ fn wskaz_zdalnie(
     }
 
     ustawienia
-        .zapisz_wskazanie(host, port)
+        .zapisz_wskazanie(&host, port)
         .map_err(|zdanie| Odmowa::nowa("zapis-nieudany", zdanie))?;
 
-    let zawiazanie = uruchomienie::zawiaz_zdalnie(ustawienia);
-    uchwyt.przejmij(
-        zawiazanie.port,
-        zawiazanie.host,
-        zawiazanie.opis,
-        zawiazanie.dziecko,
-    );
     Ok(biezace(ustawienia))
 }
 
@@ -174,7 +104,7 @@ fn wskaz_zdalnie(
 /// Przyjmuje `serwer`, `serwer:17870`, `http://serwer:17870` oraz adres IPv6
 /// w nawiasach (`[::1]:17870`), bo Operator wpisuje to, co ma zapisane, a nie to,
 /// co wygodne dla rozbioru. Brak portu znaczy port obowiązujący — ten sam, na
-/// którym stoi rdzeń domyślnie.
+/// którym rdzeń nasłuchuje domyślnie.
 fn rozbierz(adres: &str, port_obowiazujacy: u16) -> Result<(String, u16), Odmowa> {
     let bez_przedrostka = adres
         .trim()
@@ -185,9 +115,7 @@ fn rozbierz(adres: &str, port_obowiazujacy: u16) -> Result<(String, u16), Odmowa
     if bez_przedrostka.is_empty() {
         return Err(Odmowa::nowa(
             "wskazanie-puste",
-            "Podaj nazwę serwera, na którym stoi rdzeń, albo wybierz pracę z rdzeniem na tym \
-             urządzeniu."
-                .to_string(),
+            "Podaj nazwę serwera wdrożenia, na którym stoi rdzeń.".to_string(),
         ));
     }
 
@@ -208,9 +136,7 @@ fn rozbierz(adres: &str, port_obowiazujacy: u16) -> Result<(String, u16), Odmowa
     }
 
     match bez_przedrostka.rsplit_once(':') {
-        Some((host, tekst)) if !host.contains(':') => {
-            Ok((host.to_string(), port_z_tekstu(tekst)?))
-        }
+        Some((host, tekst)) if !host.contains(':') => Ok((host.to_string(), port_z_tekstu(tekst)?)),
         // Więcej niż jeden dwukropek bez nawiasów to adres IPv6 podany bez nich —
         // portu w nim nie ma, cała treść jest hostem.
         Some(_) => Ok((bez_przedrostka.to_string(), port_obowiazujacy)),

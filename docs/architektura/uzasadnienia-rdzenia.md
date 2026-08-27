@@ -4887,3 +4887,14 @@ decyzji wykonawcy kroku, bo bez tego pola brak efektu decyzji trzeba by
 odgadywać. Port sterowania krokiem bez wpięcia w kolejkach nie jest odmową:
 dopóki kontrakt nazw komend nie niesie, odmowa dotyczyłaby komendy, której
 i tak nikt nie może zawołać.
+
+## budowa/server/internal/core/handlers_macierz.go
+Kontrakt nie definiuje ani jednej komendy macierzy, więc nie ma czego wpiąć;
+rejestracja nazwy spoza kontraktu byłaby ogłoszeniem zdolności, której
+kontrakt nie opisuje. Macierz dociera do klienta wyłącznie jako pola bytów
+nawigacji obsługiwane przez plik nawigacji. Port istnieje, bo macierz ma
+w rdzeniu czytelnika — nawigację — a ta bierze odwzorowanie stąd zamiast
+sięgać po repozytorium wprost; odwzorowanie modułu na środowiska, w których
+jest widoczny, ma dzięki temu jedno miejsce, a gdy komendy macierzy powstaną
+w kontrakcie, będzie już co zarejestrować. Moduł nieobecny w wyniku metody
+odwzorowania nie ma okna modułowego w żadnym środowisku.

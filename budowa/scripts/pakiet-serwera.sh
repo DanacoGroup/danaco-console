@@ -16,6 +16,9 @@
 #   klient/dist         — pakiet interfejsu, który rdzeń serwuje klientom,
 #   cztery dokumenty    — README, instalacja i konfiguracja, instrukcja, licencja,
 #   jednostkę systemd   — konto usługi, katalog danych, restart, port 17870,
+#   pomocniki/          — pomocniki pythonowe wołane przez rdzeń; rdzeń szuka ich
+#                         obok siebie, a prowizjonowanie bierze stamtąd plik
+#                         wymagań środowiska rozpoznawania mowy,
 #   scripts/arsenal-serwera.sh — skrypt prowizjonowania arsenału na serwerze.
 #
 # ── Czego ten skrypt NIE robi ─────────────────────────────────────────────────
@@ -117,6 +120,19 @@ if [ -r "$SKRYPTY/arsenal-serwera.sh" ]; then
 		"$ROBOCZY/opt/danaco-console/scripts/arsenal-serwera.sh"
 else
 	printf 'UWAGA: brak scripts/arsenal-serwera.sh — pakiet pójdzie bez skryptu arsenału\n' >&2
+fi
+
+# Pomocniki pythonowe wołane przez rdzeń. Rdzeń szuka ich OBOK SIEBIE — tak samo
+# jak serwera narzędzi — i tą samą drogą wskazuje je prowizjonowaniu
+# (`danaco-console --wykaz-mowy`, klucz rozpoznanie.pomocnik-szukano). Bez nich
+# `arsenal-serwera.sh postaw` nie ma z czego zbudować środowiska rozpoznawania
+# mowy: plik wymagań przychodzi właśnie stąd, a nie z treści skryptu.
+if [ -d "$BUDOWA/pomocniki" ]; then
+	cp -a "$BUDOWA/pomocniki" "$ROBOCZY/opt/danaco-console/pomocniki"
+	find "$ROBOCZY/opt/danaco-console/pomocniki" -type d -exec chmod 0755 {} +
+	find "$ROBOCZY/opt/danaco-console/pomocniki" -type f -exec chmod 0644 {} +
+else
+	padnij "nie ma katalogu pomocników: $BUDOWA/pomocniki — bez niego pakiet nie postawi mowy"
 fi
 
 # Cztery dokumenty produktu z korzenia repozytorium.

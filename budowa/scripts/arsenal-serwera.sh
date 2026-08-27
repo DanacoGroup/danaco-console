@@ -67,6 +67,18 @@
 #   decyzyjna       — silnik kontenerów (docker/podman). Właściciel WSTRZYMAŁ go
 #                     świadomie. Skrypt go NIE stawia i mówi o tym wprost;
 #                     postawienie wymaga wyraźnego DANACO_SILNIK_KONTENEROW=tak.
+#   zaplecze wiedzy — poza wykazem zależności: środowisko pythonowe z fastembed
+#                     (silnik wiedzy), torch i transformers (przesiew
+#                     wyszukiwania) oraz pillow (oś obrazu). Rdzeń woła je
+#                     INTERPRETEREM wskazanym ustawieniem `wiedza_program`, a nie
+#                     nazwą programu, więc `--wykaz-zaleznosci` ich nie wypisuje
+#                     i sonda startowa ich nie mierzy — brak widać dopiero
+#                     odmową `knowledge.search`.
+#   twarze          — poza wykazem stoi też środowisko pomocnika odtwarzania
+#                     twarzy: torch, torchvision, facexlib oraz architektura
+#                     GFPGAN, wystawione opakowaniem /usr/local/bin/danaco-twarze
+#                     (samo opakowanie JEST w wykazie, jako `danaco-twarze`),
+#                     wraz z trzema zestawami wag w /opt/danaco-modele/twarze.
 #   arsenał mowy    — poza wykazem zależności stoi jeszcze: piper wraz z plikami
 #                     głosów `.onnx`, biblioteka pythonowa rozpoznawania
 #                     (faster-whisper z pomocniki/transkrypcja/wymagania.txt,
@@ -122,6 +134,11 @@
 #   DANACO_WYKAZ_MOWY_PLIK=/ścieżka/mowa.tsv— gotowy wykaz mowy
 #   DANACO_KATALOG_MODELI=/ścieżka          — katalog wag modelu mowy
 #   DANACO_SRODOWISKO_MOWY=/ścieżka         — środowisko pythonowe rozpoznawania
+#   DANACO_SRODOWISKO_WIEDZY=/ścieżka       — środowisko pythonowe wiedzy
+#   DANACO_SRODOWISKO_TWARZY=/ścieżka       — środowisko pythonowe pomocnika twarzy
+#   DANACO_KATALOG_WAG_TWARZY=/ścieżka      — katalog trzech zestawów wag twarzy
+#   DANACO_OPAKOWANIE_TWARZY=/ścieżka       — plik opakowania danaco-twarze
+#   DANACO_INDEKS_TORCH=adres               — składnica kół PyTorcha (domyślnie CPU)
 #   DANACO_BEZ_WAG_MOWY=1                   — pomiń pobranie wag (instalacja bez sieci)
 #   DANACO_SILNIK_KONTENEROW=tak            — postaw też WSTRZYMANY silnik kontenerów
 #
@@ -146,6 +163,40 @@ GOBIN_ARSENALU="${DANACO_GOBIN:-/usr/local/bin}"
 KATALOG_MODELI="${DANACO_KATALOG_MODELI:-/opt/danaco-arsenal/modele-mowy}"
 SRODOWISKO_MOWY="${DANACO_SRODOWISKO_MOWY:-/opt/danaco-arsenal/mowa}"
 
+# ── Zaplecze pythonowe poza wykazem zależności ────────────────────────────────
+# Rdzeń woła te dwa środowiska interpreterem, a nie nazwą programu, więc
+# `--wykaz-zaleznosci` ich nie wypisuje — a bez nich cztery zakresy odmawiają:
+#   wiedza  — `knowledge.index`, `knowledge.search` (fastembed), przesiew
+#             wyszukiwania (torch, transformers) i oś obrazu (dodatkowo pillow);
+#             nazwy bibliotek stoją w deklaracjach narzędzi pomocników
+#             (server/internal/wiedza/{silnik,przesiew,obraz}.go) i w opisie
+#             naprawy (wiedza/bledy.go), skąd są tu przepisane.
+#   twarze  — `image.upscale` z `faces: true`; skład środowiska stoi w polu
+#             `Pakiet` deklaracji `narzedzieOdtwarzaniaTwarzy`, a katalog wag
+#             w stałej `katalogWagTwarzyLinux`.
+# Ścieżki są te same, które niosą opakowania stojące na maszynie wdrożenia
+# (/usr/local/bin/danaco-twarze wskazuje /opt/danaco/silniki/twarze/bin/python),
+# żeby prowizjonowanie i stan zastany mówiły o jednym miejscu.
+SRODOWISKO_WIEDZY="${DANACO_SRODOWISKO_WIEDZY:-/opt/danaco/silniki/wiedza}"
+SRODOWISKO_TWARZY="${DANACO_SRODOWISKO_TWARZY:-/opt/danaco/silniki/twarze}"
+KATALOG_WAG_TWARZY="${DANACO_KATALOG_WAG_TWARZY:-/opt/danaco-modele/twarze}"
+OPAKOWANIE_TWARZY="${DANACO_OPAKOWANIE_TWARZY:-/usr/local/bin/danaco-twarze}"
+
+# Nazwy plików wag przebiegu twarzowego. Przepisane ze stałych rdzenia
+# (adapter_narzedzia_obraz_model_twarze.go: wagiOdtwarzaniaTwarzy,
+# wagiWykrywaniaTwarzy, wagiPodzialuTwarzy) — rdzeń sprawdza obecność tych trzech
+# plików przed startem pomocnika i bez któregokolwiek odmawia.
+WAGI_ODTWARZANIA="GFPGANv1.4.pth"
+WAGI_WYKRYWANIA="detection_Resnet50_Final.pth"
+WAGI_PODZIALU="parsing_parsenet.pth"
+
+# INDEKS_TORCH — składnica kół PyTorcha liczących na procesorze. Wdrożenie jest
+# CPU-only (pomocnik twarzy i pomocniki wiedzy ładują modele na `cpu`), a koła
+# z indeksu domyślnego ciągną warstwę CUDA — kilka gigabajtów, których nic tu nie
+# uruchomi. Wydania stojące na maszynie wdrożenia noszą znacznik `+cpu`
+# (torch 2.13.0+cpu, torchvision 0.28.0+cpu), czyli pochodzą właśnie stąd.
+INDEKS_TORCH="${DANACO_INDEKS_TORCH:-https://download.pytorch.org/whl/cpu}"
+
 # PAKIETY_POZA_WYKAZEM — pakiety apt, których w wykazie zależności NIE MA, a bez
 # których arsenał serwera jest niekompletny. Każdy ma tu powód, bo pakiet bez
 # powodu jest pakietem do wyrzucenia przy następnym czytaniu:
@@ -165,8 +216,12 @@ PAKIETY_POZA_WYKAZEM="python3 python3-venv python3-pip nodejs npm sane-utils"
 #     warstwa <TAB> program <TAB> pakiet <TAB> stoi <TAB> nazwa <TAB> zakres
 # Używany tylko wtedy, gdy nie ma czym zapytać rdzenia (patrz nagłówek). Kolumna
 # `stoi` niesie tu `?`, bo odpis nie jest pomiarem — obecność mierzy `command -v`
-# w trybie sprawdz. Zakres skrócony do jednego zdania; pełne zdania stoją
-# w deklaracjach (server/internal/core/zaleznosci_zewnetrzne.go).
+# w trybie sprawdz.
+#
+# Odpis powstaje ZRZUTEM, nie przepisaniem ręcznym: wiersze poniżej są wyjściem
+# `danaco-console --wykaz-zaleznosci` wklejonym w całości. Ręczne skracanie
+# zakresu rozjeżdżało odpis z rejestrem przy każdej dołożonej deklaracji —
+# odpis niósł 30 pozycji, gdy rejestr niósł już 55.
 #
 # Pakiety są przepisane z pól `Pakiet` deklaracji i tylko stamtąd. W szczególności
 # 7-Zip idzie z pakietu `7zip`, NIE z `p7zip-full`: tego drugiego w dystrybucji
@@ -174,37 +229,62 @@ PAKIETY_POZA_WYKAZEM="python3 python3-venv python3-pip nodejs npm sane-utils"
 # mówi to wprost).
 czytajWykazAwaryjny() {
 	# Rozdzielenie pól tabulatorem: $'\t' w literałach poniżej.
-	cat <<-WYKAZ
-		obowiazkowa-apt	pandoc	pandoc	?	Pandoc	zamiana formatów dokumentu (Studio, Translate, Library)
-		obowiazkowa-apt	pdftotext	poppler-utils	?	poppler (pdftotext)	odczyt warstwy tekstowej PDF
-		obowiazkowa-apt	pdftoppm	poppler-utils	?	poppler (pdftoppm)	rasteryzacja stron PDF przed OCR
-		obowiazkowa-apt	tesseract	tesseract-ocr tesseract-ocr-pol	?	Tesseract OCR	rozpoznanie pisma ze skanu i zdjęcia
-		obowiazkowa-apt	libreoffice	libreoffice	?	LibreOffice	formaty biurowe, których nie czyta Pandoc
-		obowiazkowa-apt	ffprobe	ffmpeg	?	ffprobe	rozpoznanie zawartości nagrania
+	cat <<-'WYKAZ'
+		obowiazkowa-apt	7z	7zip	?	7-Zip	pakowanie i wydobycie zawartości archiwum
+		obowiazkowa-apt	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika w /opt/tika albo w katalogu wskazanym zmienną DANACO_TIKA	?	Apache Tika (uruchamiana środowiskiem Javy)	odczyt treści pliku w formacie spoza słownika rdzenia (document.text.extract) — arkusz, prezentacja, wiadomość poczty
+		obowiazkowa-apt	chromium-browser	chromium-browser	?	Chromium	zrzuty stron, drzewo DOM, konsola, rejestr sieciowy, emulacja urządzenia i przewijanie w module Browser, a także strona otwierana przez audyt dostępności i audyt wydajności — te dwa dostają tę samą przeglądarkę, zamiast pobierać własną
+		warsztat-go	dlv	go install github.com/go-delve/delve/cmd/dlv@latest	?	Delve	debugowanie krokowe programów Go w oknie Run & Debug
+		decyzyjna	docker	docker.io albo podman	?	Docker	wykaz kontenerów i obrazów, budowanie obrazu i uruchomienie stosu w zakładce Containers
+		decyzyjna	docker	docker.io	?	Docker (klient wiersza poleceń)	karta powłoki wewnątrz kontenera w module Terminal
+		warsztat-npm	eslint	npm i -g eslint	?	ESLint	analiza statyczna kodu TypeScript i JavaScript
+		obowiazkowa-apt	exiftool	libimage-exiftool-perl	?	ExifTool	odczyt metadanych IPTC, XMP i ID3 osadzonych w zasobie (library.metadata.get z includeTechnical) — EXIF i GPS czyta czytnik wkompilowany i te pola zostają także bez tego programu
+		model-recznie	danaco-twarze	torch, torchvision i facexlib w osobnym środowisku pythonowym wraz z architekturą GFPGAN (gfpganv1_clean_arch, stylegan2_clean_arch z wydania github.com/TencentARC/GFPGAN), wystawione opakowaniem /usr/local/bin/danaco-twarze; wagi w /opt/danaco-modele/twarze	?	GFPGAN (pomocnik pythonowy)	osobny przebieg poprawiania twarzy przy powiększaniu obrazu (image.upscale z faces: true) — bez niego powiększanie pracuje dalej, a żądanie z tym polem odmawia zamiast oddać obraz bez poprawki twarzy
+		obowiazkowa-apt	magick	imagemagick	?	ImageMagick	zapis obrazu w AVIF oraz w WEBP stratnym, a także pomiar pliku AVIF (image.convert, image.inspect) — pozostałe czynności rodziny image.* liczy biblioteka wkompilowana i przy braku tego programu pracują dalej
+		obowiazkowa-apt	java	środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem LanguageToola w /opt/languagetool albo w katalogu wskazanym zmienną DANACO_LANGUAGETOOL	?	LanguageTool (uruchamiany środowiskiem Javy)	gramatyka, ortografia, interpunkcja, typografia i styl w korekcie językowej modułu Translate (translate.proofread.run)
+		obowiazkowa-apt	libreoffice	libreoffice	?	LibreOffice	zamiana formatów biurowych, których nie czyta Pandoc
+		warsztat-npm	lighthouse	npm i -g lighthouse	?	Lighthouse	audyt wydajności strony produktu wraz z Core Web Vitals (apps.performance.audit) — miary powstają w przeglądarce po wykonaniu skryptów, więc rdzeń nie policzy ich własnym pobraniem
+		obowiazkowa-apt	node	nodejs	?	Node.js	orzeczenie o składni skryptu karty node w module Terminal (terminal.script.lint) — innego analizatora ta karta nie ma
+		obowiazkowa-apt	ssh	openssh-client	?	OpenSSH	powłoka zdalna, odczyt pliku na maszynie karty i przekierowania portów w module Terminal
+		obowiazkowa-apt	optipng	optipng	?	OptiPNG	dogniecenie zapisu PNG przy zamianie formatu (image.convert) — bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem
+		warsztat-npm	pa11y	npm i -g pa11y	?	Pa11y	audyt dostępności bieżącej strony okna wobec normy WCAG (browser.accessibility.audit) — reguły normy są cudzą wiedzą i rdzeń ich nie przepisuje
+		obowiazkowa-apt	pandoc	pandoc	?	Pandoc	zamiana formatów dokumentu w modułach Studio, Translate i Library
+		snap	pwsh	powershell (snap) wraz z modułem PSScriptAnalyzer	?	PowerShell z modułem PSScriptAnalyzer	analiza statyczna i formatowanie skryptów PowerShell w module Terminal
+		warsztat-npm	prettier	npm i -g prettier	?	Prettier	formatowanie plików TypeScript, JavaScript, CSS, Markdown i YAML
+		obowiazkowa-apt	python3	python3	?	Python	orzeczenie o składni skryptu karty python w module Terminal (terminal.script.lint) na maszynie bez Ruffa — Ruff ma pierwszeństwo i obejmuje składnię wraz z regułami, interpreter zostaje drogą zapasową
+		model-recznie	realesrgan-ncnn-vulkan	wydanie realesrgan-ncnn-vulkan z github.com/xinntao/Real-ESRGAN/releases rozpakowane do /usr/local/bin wraz z modelami w /usr/local/share/realesrgan-ncnn-vulkan/models, oraz mesa-vulkan-drivers dla liczenia na procesorze	?	Real-ESRGAN (ncnn)	powiększanie obrazu w module Design
+		obowiazkowa-apt	ruff	pip install ruff	?	Ruff	analiza statyczna plików Pythona w module Developer oraz analiza i formatowanie treści skryptu karty python w module Terminal
+		obowiazkowa-apt	semgrep	pip install semgrep	?	Semgrep	poszerzenie skanu kodu w module Developer o reguły semantyczne — wyłącznie w repozytorium niosącym własny zestaw reguł, bo zestaw z rejestru wymagałby sieci
+		obowiazkowa-apt	shellcheck	shellcheck	?	ShellCheck	analiza statyczna skryptów powłoki bash w module Terminal
+		warsztat-npm	stylelint	npm i -g stylelint	?	Stylelint	analiza statyczna arkuszy CSS w module Developer — wyłącznie w repozytorium niosącym własną konfigurację Stylelinta, bo program nie ma wbudowanego zestawu reguł
+		obowiazkowa-apt	telnet	telnet	?	Telnet (klient)	karta sesji Telnet do urządzenia sieciowego w module Terminal
+		obowiazkowa-apt	tesseract	tesseract-ocr tesseract-ocr-pol	?	Tesseract OCR	rozpoznanie pisma ze skanu i zdjęcia kartki
+		warsztat-npm	ast-grep	npm i -g @ast-grep/cli	?	ast-grep	wyszukanie i zamiana po składni w module Developer — wzorzec z metazmienną (`$NAZWA`) idzie tą drogą zamiast po napisie
+		warsztat-npm	autocannon	npm i -g autocannon	?	autocannon	przebieg obciążeniowy punktu końcowego wraz z percentylami czasu odpowiedzi i przepustowością (developer.api.load.run) — developer.api.request strzela jednym żądaniem i rozkładu nie ma z czego policzyć
+		obowiazkowa-apt	cwebp	webp	?	cwebp	dogniecenie zapisu WEBP bezstratnego przy zamianie formatu (image.convert) — bez tego programu obraz zapisuje się koderem wkompilowanym; zapis stratny idzie inną drogą i nie jest dogniatany
+		warsztat-go	dupl	go install github.com/mibk/dupl@latest	?	dupl	wykrywanie powtórzonych fragmentów w plikach Go podczas skanu kodu w module Developer
+		obowiazkowa-apt	espeak-ng	espeak-ng	?	eSpeak NG	odsłuch przebiegu debaty syntezą mowy w module Roundtable
 		obowiazkowa-apt	ffmpeg	ffmpeg	?	ffmpeg	zamiana formatu nagrania
-		obowiazkowa-apt	7z	7zip	?	7-Zip	pakowanie i wydobycie archiwum
-		obowiazkowa-apt	magick	imagemagick	?	ImageMagick	zapis obrazu w AVIF i WEBP stratnym, pomiar AVIF
-		obowiazkowa-apt	espeak-ng	espeak-ng	?	eSpeak NG	odsłuch debaty syntezą mowy (Roundtable)
-		obowiazkowa-apt	gofmt	golang	?	gofmt	formatowanie plików Go (Developer)
-		obowiazkowa-apt	ssh	openssh-client	?	OpenSSH	powłoka zdalna i przekierowania portów (Terminal)
-		obowiazkowa-apt	shellcheck	shellcheck	?	ShellCheck	analiza statyczna skryptów bash
-		obowiazkowa-apt	shfmt	shfmt	?	shfmt	formatowanie skryptów bash
-		obowiazkowa-apt	picocom	picocom	?	picocom	konsola portu szeregowego
-		obowiazkowa-apt	telnet	telnet	?	Telnet (klient)	sesja Telnet do urządzenia sieciowego
-		obowiazkowa-apt	chromium-browser	chromium-browser	?	Chromium	zrzuty stron, DOM, konsola, rejestr sieciowy (Browser)
-		warsztat-go	goimports	go install golang.org/x/tools/cmd/goimports@latest	?	goimports	formatowanie Go wraz z porządkowaniem importów
-		warsztat-go	gopls	go install golang.org/x/tools/gopls@latest	?	gopls	przejście do definicji i refaktoryzacje semantyczne
-		warsztat-go	golangci-lint	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest	?	golangci-lint	analiza statyczna repozytorium Go
-		warsztat-go	staticcheck	go install honnef.co/go/tools/cmd/staticcheck@latest	?	staticcheck	pogłębiona analiza statyczna Go
-		warsztat-go	dlv	go install github.com/go-delve/delve/cmd/dlv@latest	?	Delve	debugowanie krokowe Go (Run & Debug)
-		warsztat-npm	prettier	npm i -g prettier	?	Prettier	formatowanie TS, JS, CSS, Markdown, YAML
-		warsztat-npm	eslint	npm i -g eslint	?	ESLint	analiza statyczna TS i JS
-		snap	pwsh	powershell (snap) wraz z modułem PSScriptAnalyzer	?	PowerShell z modułem PSScriptAnalyzer	analiza i formatowanie skryptów PowerShell
-		snap	kubectl	kubectl (snap)	?	kubectl	karta powłoki wewnątrz poda (Terminal)
-		model-recznie	realesrgan-ncnn-vulkan	wydanie realesrgan-ncnn-vulkan z github.com/xinntao/Real-ESRGAN/releases rozpakowane do /usr/local/bin wraz z modelami w /usr/local/share/realesrgan-ncnn-vulkan/models, oraz mesa-vulkan-drivers dla liczenia na procesorze	?	Real-ESRGAN (ncnn)	powiększanie obrazu (Design)
-		model-recznie	rembg	rembg[cli] w osobnym środowisku pythonowym, wystawiony opakowaniem /usr/local/bin/rembg ustawiającym U2NET_HOME=/usr/local/share/rembg-modele	?	rembg (U²-Net / ONNX Runtime)	wycinanie tła i rozkład obrazu na warstwy
-		decyzyjna	docker	docker.io albo podman	?	Docker	wykaz kontenerów, budowanie obrazu, stos (Containers)
-		decyzyjna	docker	docker.io	?	Docker (klient wiersza poleceń)	powłoka wewnątrz kontenera (Terminal)
+		obowiazkowa-apt	ffprobe	ffmpeg	?	ffprobe	rozpoznanie zawartości nagrania dźwiękowego i filmowego
+		obowiazkowa-apt	gofmt	golang	?	gofmt	formatowanie plików Go w module Developer
+		warsztat-go	goimports	go install golang.org/x/tools/cmd/goimports@latest	?	goimports	formatowanie plików Go wraz z porządkowaniem importów
+		warsztat-go	golangci-lint	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest	?	golangci-lint	analiza statyczna repozytorium Go w module Developer
+		warsztat-go	gopls	go install golang.org/x/tools/gopls@latest	?	gopls	przejście do definicji, wystąpienia symbolu i refaktoryzacje semantyczne w module Developer
+		obowiazkowa-apt	hunspell	hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)	?	hunspell	ortografia w korekcie językowej modułu Translate na maszynie bez LanguageToola — LanguageTool ma pierwszeństwo i obejmuje pisownię wraz z gramatyką, słownik zostaje drogą zapasową
+		obowiazkowa-apt	jpegoptim	jpegoptim	?	jpegoptim	dogniecenie zapisu JPEG przy zamianie formatu (image.convert) — bez tego programu obraz zapisuje się tak samo, tylko dłuższym strumieniem
+		warsztat-npm	jscpd	npm i -g jscpd	?	jscpd	wykrywanie powtórzonych fragmentów w plikach TypeScriptu i JavaScriptu podczas skanu kodu w module Developer
+		snap	kubectl	kubectl (snap)	?	kubectl	karta powłoki wewnątrz poda w module Terminal
+		obowiazkowa-apt	picocom	picocom	?	picocom	karta konsoli portu szeregowego w module Terminal
+		obowiazkowa-apt	pngquant	pngquant	?	pngquant	sprowadzenie PNG do palety przy zamianie formatu na zapis stratny (image.convert z lossless: false) — przy zapisie bezstratnym nie jest wołany
+		obowiazkowa-apt	pdftoppm	poppler-utils	?	poppler (pdftoppm)	rasteryzacja stron PDF przed rozpoznaniem pisma
+		obowiazkowa-apt	pdftotext	poppler-utils	?	poppler (pdftotext)	odczyt warstwy tekstowej dokumentu PDF
+		model-recznie	rembg	rembg[cli] w osobnym środowisku pythonowym, wystawiony opakowaniem /usr/local/bin/rembg ustawiającym U2NET_HOME=/usr/local/share/rembg-modele	?	rembg (U²-Net / ONNX Runtime)	wycinanie tła obrazu oraz rozkład obrazu na warstwy (image.background.remove, image.layers.split) — obie czynności stoją na tej samej sieci segmentującej i znikają razem z nią
+		warsztat-npm	typescript-language-server	npm i -g typescript-language-server typescript	?	serwer języka TypeScript	przejście do definicji, wystąpienia symbolu i refaktoryzacje semantyczne plików TypeScriptu w module Developer
+		obowiazkowa-apt	shfmt	shfmt	?	shfmt	formatowanie skryptów powłoki bash w module Terminal
+		warsztat-go	staticcheck	go install honnef.co/go/tools/cmd/staticcheck@latest	?	staticcheck	pogłębiona analiza statyczna kodu Go
+		warsztat-go	typos	cargo install typos-cli	?	typos	wykrywanie literówek w identyfikatorach i treści plików repozytorium w module Developer
+		obowiazkowa-apt	typst	typst (jeden plik wykonywalny z wydania projektu)	?	typst	skład dokumentu do PDF-u w komendzie document.convert dla materiału, którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta droga wraca do wersji zapasowej przez HTML i LibreOffice
+		obowiazkowa-apt	unpaper	unpaper	?	unpaper	prostowanie skosu, odszumianie, progowanie i przycinanie marginesów skanu przed rozpoznaniem pisma (studio.ingest.recognize)
+		obowiazkowa-apt	vale	vale (jeden plik wykonywalny z wydania projektu)	?	vale	styl prozy w korekcie językowej modułu Translate — powtórzenia i terminy, zestawem reguł wbudowanym w program
 	WYKAZ
 }
 
@@ -279,12 +359,74 @@ wartoscMowy() {
 	printf '%s\n' "$WYKAZ_MOWY" | awk -F'\t' -v k="$1" '$1==k {print $2; exit}'
 }
 
+# ── Rozbiór pola `Pakiet` warstwy obowiązkowej ────────────────────────────────
+# Warstwę liczy rdzeń, ale do warstwy `obowiazkowa-apt` wpada dziś WSZYSTKO, co
+# nie pasowało do pozostałych reguł — także podpowiedzi pisane zdaniem:
+#     „środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika…"
+#     „hunspell wraz ze słownikiem języka (hunspell-pl, hunspell-en-us)"
+#     „typst (jeden plik wykonywalny z wydania projektu)"
+#     „pip install ruff"
+# Rozbicie takiego pola na spacjach dawało `apt-get install -y … uruchomieniowe
+# Javy (default-jre) wraz z wydaniem …` — apt padał na pierwszym takim tokenie,
+# a `set -e` zabijał cały przebieg PRZED warstwą Go, npm, snap i mową. Skrypt nie
+# stawiał więc nawet tego, co umiał postawić.
+#
+# Dlatego pole rozbieramy z rozpoznaniem postaci, a nie na ślepo:
+#   • same tokeny w kształcie nazwy pakietu   → warstwa apt,
+#   • `pip install …`                         → warstwa pip (polecenie rdzenia
+#                                               wykonane dosłownie),
+#   • cokolwiek innego                        → KROK RĘCZNY z podpowiedzią
+#                                               przepisaną co do znaku.
+# Skrypt niczego tu nie zgaduje: pole, którego nie rozpoznał, drukuje w całości
+# zamiast wykonywać jego fragment.
+
+# nazwyPakietow oddaje 0, gdy całe pole składa się z nazw pakietów dystrybucji.
+# Kształt nazwy: mała litera albo cyfra, dalej litery, cyfry, kropka, plus, minus
+# (polityka nazw Debiana).
+polePakietowe() {
+	printf '%s\n' "$1" | grep -Eq '^[a-z0-9][a-z0-9.+-]*( [a-z0-9][a-z0-9.+-]*)*$'
+}
+
+# poleAptDoInstalacji oddaje pola warstwy obowiązkowej nadające się dla apt.
+polaWarstwyObowiazkowej() {
+	printf '%s\n' "$1" | awk -F'\t' '$1=="obowiazkowa-apt" {print $3}'
+}
+
 # pakietyApt zbiera tokeny warstwy obowiązkowej w kolejności pierwszego
 # wystąpienia, bez powtórzeń — poppler-utils i ffmpeg padają w wykazie dwukrotnie
 # (pdftotext i pdftoppm, ffmpeg i ffprobe), a apt ma je dostać raz.
 pakietyApt() {
-	printf '%s\n' "$1" | awk -F'\t' '$1=="obowiazkowa-apt" {print $3}' |
+	local pole
+	while IFS= read -r pole; do
+		# Pytanie o `pip install` idzie PRZED pytaniem o kształt: „pip install
+		# ruff" składa się z trzech tokenów w kształcie nazwy pakietu i bez tego
+		# pytania trafiłoby do apt jako trzy pakiety, z których dwa nie istnieją.
+		case "$pole" in "pip install "*) continue ;; esac
+		polePakietowe "$pole" && printf '%s\n' "$pole"
+	done < <(polaWarstwyObowiazkowej "$1") |
 		tr ' ' '\n' | awk 'NF && !widziane[$0]++'
+}
+
+# pakietyPip oddaje nazwy pakietów z pól `pip install …`, bez powtórzeń.
+pakietyPip() {
+	local pole
+	while IFS= read -r pole; do
+		case "$pole" in
+		"pip install "*) printf '%s\n' "${pole#pip install }" ;;
+		esac
+	done < <(polaWarstwyObowiazkowej "$1") |
+		tr ' ' '\n' | awk 'NF && !widziane[$0]++'
+}
+
+# podpowiedziOpisowe drukuje pozycje warstwy obowiązkowej, których pola skrypt
+# nie rozpoznał jako polecenia — jako kroki ręczne, treścią pola.
+podpowiedziOpisowe() {
+	printf '%s\n' "$1" | awk -F'\t' '$1=="obowiazkowa-apt" {print $2"\t"$5"\t"$3}' |
+		while IFS=$'\t' read -r program nazwa pole; do
+			polePakietowe "$pole" && continue
+			case "$pole" in "pip install "*) continue ;; esac
+			printf '  %-30s [%s]\n      %s\n' "$nazwa" "$program" "$pole"
+		done
 }
 
 # wypiszWarstwe drukuje pozycje jednej warstwy: nazwa czytelna, program, pakiet.
@@ -315,6 +457,16 @@ trybPlan() {
 	printf '  (interpreter i venv mowy, nośnik warsztatu npm dla Prettiera i ESLinta,\n'
 	printf '  warstwa SANE (program scanimage) cyfryzacji Studia — powody stoją przy\n'
 	printf '  PAKIETY_POZA_WYKAZEM w tym skrypcie)\n'
+	local pip
+	pip="$(pakietyPip "$wykaz" | tr '\n' ' ')"
+	[ -z "${pip// /}" ] || printf '\n  pip install %s   (tak brzmi podpowiedź rdzenia)\n' "$pip"
+	printf '\n  KROKI RĘCZNE tej warstwy — pola, których skrypt nie wykona za Operatora:\n'
+	podpowiedziOpisowe "$wykaz"
+
+	zglos "WIEDZA — biblioteki pythonowe silnika wiedzy, przesiewu i osi obrazu"
+	planWiedzy
+	zglos "TWARZE — pomocnik odtwarzania twarzy (danaco-twarze)"
+	planTwarzy
 
 	zglos "WARSZTAT Go — moduł Developer pracuje na serwerze [$(policzWarstwe "$wykaz" warsztat-go)]"
 	wypiszWarstwe "$wykaz" warsztat-go
@@ -369,6 +521,143 @@ planMowy() {
 	printf '            pomiń pobranie: DANACO_BEZ_WAG_MOWY=1 (pierwsze użycie mikrofonu czeka wtedy na sieć)\n'
 }
 
+# ── Zaplecze wiedzy ───────────────────────────────────────────────────────────
+planWiedzy() {
+	printf '  środowisko pythonowe: %s\n' "$SRODOWISKO_WIEDZY"
+	printf '    pip install --index-url %s torch torchvision\n' "$INDEKS_TORCH"
+	printf '    pip install fastembed transformers pillow\n'
+	printf '  rdzeniowi wskazać interpreter ustawieniem wiedza_program = %s/bin/python\n' \
+		"$SRODOWISKO_WIEDZY"
+	printf '  WAGI MODELI nie idą tędy — rdzeń szuka ich w katalogach ustawień\n'
+	printf '    wiedza_katalog_modeli, wiedza_model_przesiewu i wiedza_model_obrazu\n'
+	printf '    (domyślnie pod /opt/danaco-modele); pobranie jest krokiem osobnym\n'
+}
+
+postawWiedze() {
+	command -v python3 >/dev/null 2>&1 || {
+		printf '  UWAGA: brak python3 — zaplecze wiedzy pominięte\n'
+		return
+	}
+	zbudujSrodowisko "$SRODOWISKO_WIEDZY" || return
+	# Dwa wywołania, nie jedno: torch i torchvision mają przyjść z indeksu
+	# procesorowego, a fastembed i transformers z indeksu domyślnego. Jedno
+	# wywołanie z `--index-url` szukałoby tam wszystkiego i nie znalazło.
+	"$SRODOWISKO_WIEDZY/bin/pip" install --index-url "$INDEKS_TORCH" torch torchvision ||
+		printf '  UWAGA: instalacja torch/torchvision nie powiodła się\n'
+	"$SRODOWISKO_WIEDZY/bin/pip" install fastembed transformers pillow ||
+		printf '  UWAGA: instalacja fastembed/transformers/pillow nie powiodła się\n'
+	printf '  rdzeniowi wskazać interpreter ustawieniem wiedza_program = %s/bin/python\n' \
+		"$SRODOWISKO_WIEDZY"
+}
+
+# ── Pomocnik odtwarzania twarzy ───────────────────────────────────────────────
+planTwarzy() {
+	printf '  środowisko pythonowe: %s\n' "$SRODOWISKO_TWARZY"
+	printf '    pip install --index-url %s torch torchvision\n' "$INDEKS_TORCH"
+	printf '    pip install facexlib\n'
+	printf '  opakowanie: %s (rdzeń woła je, nie plik z wnętrza środowiska)\n' "$OPAKOWANIE_TWARZY"
+	printf '  wagi w %s:\n' "$KATALOG_WAG_TWARZY"
+	printf '    %-30s pobiera facexlib własnym pobieraczem\n' "$WAGI_WYKRYWANIA"
+	printf '    %-30s pobiera facexlib własnym pobieraczem\n' "$WAGI_PODZIALU"
+	printf '    %-30s KROK RĘCZNY — wydanie github.com/TencentARC/GFPGAN\n' "$WAGI_ODTWARZANIA"
+	printf '  KROK RĘCZNY: architektura GFPGAN (gfpganv1_clean_arch, stylegan2_clean_arch\n'
+	printf '    z tego samego wydania) ma stanąć w site-packages środowiska jako pakiet\n'
+	printf '    gfpgan_clean — pomocnik importuje tę nazwę. Adresu pobrania rdzeń nie\n'
+	printf '    podaje, więc skrypt go nie zgaduje.\n'
+}
+
+postawTwarze() {
+	command -v python3 >/dev/null 2>&1 || {
+		printf '  UWAGA: brak python3 — pomocnik twarzy pominięty\n'
+		return
+	}
+	zbudujSrodowisko "$SRODOWISKO_TWARZY" || return
+	"$SRODOWISKO_TWARZY/bin/pip" install --index-url "$INDEKS_TORCH" torch torchvision ||
+		printf '  UWAGA: instalacja torch/torchvision nie powiodła się\n'
+	"$SRODOWISKO_TWARZY/bin/pip" install facexlib ||
+		printf '  UWAGA: instalacja facexlib nie powiodła się\n'
+
+	# Opakowanie zapisujemy zawsze tą samą treścią, przez plik tymczasowy
+	# i przemianowanie: drugi przebieg ma zostawić plik nieodróżnialny od
+	# pierwszego, a przerwany zapis nie ma zostawić opakowania obciętego.
+	# Zmienne środowiska są w nim nazwane, bo `zewnetrzne.Wolaj` nie dziedziczy
+	# środowiska rdzenia — biblioteki nie znałyby nawet HOME.
+	mkdir -p "$(dirname "$OPAKOWANIE_TWARZY")"
+	cat >"$OPAKOWANIE_TWARZY.czesciowy" <<-OPAKOWANIE
+		#!/bin/sh
+		# Rdzeń woła pomocnika twarzy bez dziedziczenia środowiska, więc katalog
+		# domowy i pamięć podręczna bibliotek są nazwane tutaj. Skrypt pomocnika
+		# jest wkompilowany w rdzeń i przychodzi pierwszym argumentem.
+		export HOME=/tmp
+		export XDG_CACHE_HOME=/tmp
+		export OMP_NUM_THREADS=4
+		exec $SRODOWISKO_TWARZY/bin/python "\$@"
+	OPAKOWANIE
+	chmod 0755 "$OPAKOWANIE_TWARZY.czesciowy"
+	mv -f "$OPAKOWANIE_TWARZY.czesciowy" "$OPAKOWANIE_TWARZY"
+	printf '  opakowanie: %s\n' "$OPAKOWANIE_TWARZY"
+
+	pobierzWagiTwarzy
+}
+
+# pobierzWagiTwarzy ściąga dwa zestawy wag POBIERACZEM SAMEJ BIBLIOTEKI. Adresów
+# wydań nie wpisujemy tutaj: facexlib zna je sam, a druga kopia adresu rozjechałaby
+# się z biblioteką przy jej następnym wydaniu. Wagi samej sieci odtwarzającej
+# (GFPGANv1.4.pth) tą drogą nie idą — facexlib ich nie zna, a adresu wydania rdzeń
+# nie podaje.
+pobierzWagiTwarzy() {
+	mkdir -p "$KATALOG_WAG_TWARZY"
+	if [ -f "$KATALOG_WAG_TWARZY/$WAGI_WYKRYWANIA" ] &&
+		[ -f "$KATALOG_WAG_TWARZY/$WAGI_PODZIALU" ]; then
+		printf '  wagi wykrywacza i podziału twarzy już leżą w %s — nie pobieram\n' \
+			"$KATALOG_WAG_TWARZY"
+	elif "$SRODOWISKO_TWARZY/bin/python" - "$KATALOG_WAG_TWARZY" <<-'PYTHON'; then
+		import sys
+		from facexlib.utils.face_restoration_helper import FaceRestoreHelper
+
+		# Te same trzy parametry, którymi składa go pomocnik przy przebiegu
+		# (adapter_narzedzia_obraz_pomocnik_twarzy.py): wykrywacz, katalog wag
+		# i `use_parse`. Bez `use_parse` ParseNet nie zostałby pobrany, a rdzeń
+		# sprawdza obecność jego wag przed startem pomocnika i bez nich odmawia.
+		FaceRestoreHelper(1, det_model="retinaface_resnet50", device="cpu",
+		                  use_parse=True, model_rootpath=sys.argv[1])
+	PYTHON
+		printf '  wagi wykrywacza i podziału pobrane do %s\n' "$KATALOG_WAG_TWARZY"
+	else
+		printf '  UWAGA: pobranie wag facexlib nie powiodło się — przebieg twarzowy odmówi\n'
+	fi
+	if [ -f "$KATALOG_WAG_TWARZY/$WAGI_ODTWARZANIA" ]; then
+		printf '  %s stoi\n' "$WAGI_ODTWARZANIA"
+	else
+		printf '  KROK RĘCZNY: %s (333 MB) z wydania github.com/TencentARC/GFPGAN do %s\n' \
+			"$WAGI_ODTWARZANIA" "$KATALOG_WAG_TWARZY"
+	fi
+	printf '  KROK RĘCZNY: architektura gfpgan_clean w site-packages %s\n' "$SRODOWISKO_TWARZY"
+}
+
+# zbudujSrodowisko stawia środowisko pythonowe albo zostawia stojące nietknięte.
+# `python3 -m venv` na katalogu z gotowym środowiskiem nie kasuje bibliotek, ale
+# sprawdzenie mówi wprost, który przebieg co zrobił — a drugi przebieg ma o sobie
+# mówić „stoi", nie „stawiam".
+zbudujSrodowisko() {
+	local katalog="$1"
+	if [ -x "$katalog/bin/pip" ]; then
+		printf '  środowisko stoi: %s\n' "$katalog"
+		return 0
+	fi
+	printf '  stawiam środowisko: %s\n' "$katalog"
+	python3 -m venv "$katalog" 2>/dev/null || {
+		printf '  UWAGA: venv nie powstał w %s (brak python3-venv?)\n' "$katalog"
+		return 1
+	}
+	"$katalog/bin/pip" install --upgrade pip >/dev/null 2>&1 || true
+	[ -x "$katalog/bin/pip" ] || {
+		printf '  UWAGA: w %s nie ma pip\n' "$katalog"
+		return 1
+	}
+	return 0
+}
+
 # ── Sprawdzenie ───────────────────────────────────────────────────────────────
 # Nic nie instaluje i nie wymaga roota. Wykaz programów bierze z tego samego
 # źródła, z którego biorą go plan i postaw (wykaz rdzenia albo wykaz awaryjny) —
@@ -410,6 +699,49 @@ trybSprawdz() {
 		else
 			brakow=$((brakow + 1))
 			printf '  %-24s → BRAK    ← %s\n' "$program" "$PAKIETY_POZA_WYKAZEM"
+		fi
+	done
+
+	# Zaplecze pythonowe wiedzy i twarzy: rdzeń woła je interpreterem, więc
+	# `command -v` nie jest tu miarą — mierzymy import biblioteki w środowisku,
+	# bo dokładnie to robi pomocnik przy pierwszym uruchomieniu. Brak wchodzi do
+	# kodu wyjścia: bez tych bibliotek cztery zakresy odmawiają.
+	zglos "Zaplecze wiedzy — biblioteki pythonowe"
+	local biblioteka
+	for biblioteka in fastembed torch transformers PIL; do
+		if [ -x "$SRODOWISKO_WIEDZY/bin/python" ] &&
+			"$SRODOWISKO_WIEDZY/bin/python" -c "import $biblioteka" >/dev/null 2>&1; then
+			printf '  %-24s → jest    w %s\n' "$biblioteka" "$SRODOWISKO_WIEDZY"
+		else
+			brakow=$((brakow + 1))
+			printf '  %-24s → BRAK    w %s\n' "$biblioteka" "$SRODOWISKO_WIEDZY"
+		fi
+	done
+
+	zglos "Pomocnik odtwarzania twarzy"
+	if obecny danaco-twarze; then
+		printf '  %-24s → jest\n' "danaco-twarze"
+	else
+		brakow=$((brakow + 1))
+		printf '  %-24s → BRAK    ← opakowanie %s\n' "danaco-twarze" "$OPAKOWANIE_TWARZY"
+	fi
+	for biblioteka in torch torchvision facexlib gfpgan_clean; do
+		if [ -x "$SRODOWISKO_TWARZY/bin/python" ] &&
+			"$SRODOWISKO_TWARZY/bin/python" -c "import $biblioteka" >/dev/null 2>&1; then
+			printf '  %-24s → jest    w %s\n' "$biblioteka" "$SRODOWISKO_TWARZY"
+		else
+			brakow=$((brakow + 1))
+			printf '  %-24s → BRAK    w %s\n' "$biblioteka" "$SRODOWISKO_TWARZY"
+		fi
+	done
+	local waga
+	for waga in "$WAGI_ODTWARZANIA" "$WAGI_WYKRYWANIA" "$WAGI_PODZIALU"; do
+		if [ -f "$KATALOG_WAG_TWARZY/$waga" ]; then
+			printf '  %-30s → jest    %s\n' "$waga" \
+				"$(du -h "$KATALOG_WAG_TWARZY/$waga" 2>/dev/null | cut -f1)"
+		else
+			brakow=$((brakow + 1))
+			printf '  %-30s → BRAK    w %s\n' "$waga" "$KATALOG_WAG_TWARZY"
 		fi
 	done
 
@@ -461,6 +793,22 @@ trybPostaw() {
 	# shellcheck disable=SC2086
 	apt-get install -y $apt $PAKIETY_POZA_WYKAZEM
 
+	local pip
+	pip="$(pakietyPip "$wykaz" | tr '\n' ' ')"
+	if [ -n "${pip// /}" ]; then
+		printf '  pip install %s\n' "$pip"
+		# --break-system-packages: dystrybucja oznacza swojego Pythona jako
+		# zarządzany zewnętrznie i bez tego odmawia. Te pozycje mają stanąć na
+		# ścieżce systemu, a nie w środowisku osobnym — rdzeń woła je nazwą
+		# programu (`ruff`, `semgrep`), nie interpreterem.
+		# shellcheck disable=SC2086
+		python3 -m pip install --break-system-packages $pip ||
+			printf '  UWAGA: instalacja pipem nie powiodła się: %s\n' "$pip"
+	fi
+
+	printf '\n  KROKI RĘCZNE warstwy obowiązkowej — skrypt ich nie wykonuje:\n'
+	podpowiedziOpisowe "$wykaz"
+
 	zglos "Warstwa warsztatu Go"
 	if command -v go >/dev/null 2>&1; then
 		# GOBIN kierujemy do /usr/local/bin, bo domyślne ~/go/bin należy do roota
@@ -469,6 +817,18 @@ trybPostaw() {
 		# programu: sonda woła `command -v`, nie zgaduje katalogów.
 		printf '%s\n' "$wykaz" | awk -F'\t' '$1=="warsztat-go" {print $3}' |
 			while read -r polecenie; do
+				# Do tej warstwy wpada dziś także `cargo install typos-cli`: reguła
+				# warstwy w rdzeniu pyta o podnapis „go install", a ten stoi wewnątrz
+				# „cargo install". Wykonanie tego pod GOBIN-em nic by nie postawiło,
+				# więc polecenie nie zaczynające się od `go install` drukujemy jako
+				# krok ręczny zamiast je uruchamiać.
+				case "$polecenie" in
+				"go install "*) ;;
+				*)
+					printf '  KROK RĘCZNY (nie jest poleceniem Go): %s\n' "$polecenie"
+					continue
+					;;
+				esac
 				printf '  GOBIN=%s %s\n' "$GOBIN_ARSENALU" "$polecenie"
 				(
 					export GOBIN="$GOBIN_ARSENALU"
@@ -506,6 +866,12 @@ trybPostaw() {
 
 	zglos "Arsenał mowy"
 	postawMowe
+
+	zglos "Zaplecze wiedzy (fastembed, torch, transformers, pillow)"
+	postawWiedze
+
+	zglos "Pomocnik odtwarzania twarzy (danaco-twarze)"
+	postawTwarze
 
 	zglos "MODELE/SILNIKI — kroki ręczne (nieautomatyzowane)"
 	wypiszWarstwe "$wykaz" model-recznie

@@ -1067,3 +1067,37 @@ Reguła odcięcia punktu jest przepisana z egzekutora co do znaku: wymiar
 kontekstu zostaje odrębny, dopóki nie zapisano wprost współdzielenia,
 a zakres techniczny jest włączony wyłącznie wtedy, gdy zapisano wprost
 włączenie.
+
+## budowa/server/internal/core/adapter_modul_badania.go
+
+Typ adaptera i konstruktor stoją w tym pliku, a nie w plikach raportu
+i eksportu tego samego modułu, bo wszystkie metody wiszą na tym samym typie
+adaptera, tak jak warstwa danych rozkłada jedno repozytorium modułu na kilka
+plików wedle odpowiedzialności. Deklaracja typu w dwóch miejscach byłaby
+dwiema prawdami o jednym bycie.
+
+Rdzeń nie ocenia wiarygodności źródła sam: komenda dodania źródła zapisuje
+ocenę dokładnie taką, jaką podało żądanie, nie wylicza jej z adresu ani
+z treści i nie sięga do sieci po źródło. Brak oceny w żądaniu zostaje pusty,
+a warstwa danych nadaje mu wtedy wartość domyślną oznaczającą źródło
+niezweryfikowane — brak oceny nie udaje oceny wyliczonej.
+
+Odwołania do bajtów, które wychodzą z portów modułu, są ścieżkami
+względnymi wobec korzenia magazynów rdzenia — to granica kontraktu: rdzeń
+nie wypuszcza ścieżek bezwzględnych z dysku operatora. Odczyt pliku modułu
+sprowadza więc wskazanie względne do tego korzenia przed otwarciem.
+
+Żądania modułu Research nie niosą identyfikatora kanału modelu, więc operacje
+słowne — streszczanie źródła, porównanie źródeł, redakcja sekcji raportu —
+biorą domyślnie pierwszy czynny kanał rejestru, ten sam, który komenda
+wykazu kanałów pokazuje jako gotowy. Brak wpiętego rejestru albo brak
+czynnego kanału kończy się odmową wprost, nigdy streszczeniem złożonym bez
+udziału modelu.
+
+Kod źródła nieistniejącego, wskazany przy zapisie ustalenia, jest pomijany
+po stronie warstwy danych, nie wywraca całego zapisu; odpowiedź komendy
+niesie komplet źródeł naprawdę powiązanych, nie powtórzenie żądania.
+
+Ślad prowenancji ustalenia zaczyna się przy jego powstaniu, nie przy
+pierwszej zmianie, żeby historia ustalenia nie zaczynała się od drugiego
+zdarzenia.

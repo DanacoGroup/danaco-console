@@ -1,36 +1,29 @@
+/**
+ * Zapowiedź zdjęcia adnotacji: jedno ostrzeżenie przed czynnością nieodwracalną.
+ * Zdjęcie usuwa cytat, komentarz i kotwicę pozycji, a rdzeń nie ma komendy
+ * przywracającej, więc czynność wymaga drugiego naciśnięcia tego samego chwytu.
+ */
 import type { ResearchAnnotation } from '../../../../shared/contract';
 
 /**
- * Zapowiedź zdjęcia adnotacji — jedno ostrzeżenie przed czynnością
- * nieodwracalną.
- *
- * `research.annotation.remove` usuwa podświetlenie albo notatkę Operatora
- * i rdzeń nie ma komendy, która by je przywróciła: adnotacja niesie cytat,
- * komentarz i kotwicę pozycji, a po zdjęciu nie ma z czego ich odtworzyć.
- * Dlatego czynność mówi to PRZED wykonaniem i wymaga drugiego naciśnięcia tego
- * samego chwytu.
- *
- * Uzbrojenie jest wiedzą modułu, nie okna: adnotacja wskazana w Reading View
- * i chwyt naciśnięty w panelu akcji tego samego okna dotyczą jednego badania,
- * a moduł prowadzi jedno badanie na sesję (`stan-badania.ts`). Osobne
- * uzbrojenie per okno pozwoliłoby uzbroić w jednym oknie, a zdjąć w drugim —
- * czyli bez ostrzeżenia tam, gdzie Operator naciska.
- *
- * Zapowiedź nie jest okienkiem dialogowym i nie odbiera klikalności: pierwsze
- * naciśnięcie oddaje zdanie odmowy z powodem, drugie wykonuje. Adnotacja
- * wskazana inna niż uzbrojona uzbraja od nowa — Operator nigdy nie zdejmie
- * czegoś, o czym nie został ostrzeżony imiennie.
+ * Adnotacja uzbrojona do zdjęcia; puste znaczy, że nic nie jest uzbrojone.
+ * Wartość jest jedna na moduł, ponieważ moduł prowadzi jedno badanie na sesję.
  */
-
-/** Adnotacja uzbrojona do zdjęcia; puste znaczy „nic nie jest uzbrojone”. */
 let uzbrojona = '';
 
-/** Czy ta adnotacja została już zapowiedziana i czeka na drugie naciśnięcie. */
+/**
+ * Czy ta adnotacja została już zapowiedziana i czeka na drugie naciśnięcie.
+ * Wskazanie innej adnotacji odpowiedzi twierdzącej nie da, więc ostrzeżenie
+ * zaczyna się od nowa.
+ */
 export function czyUzbrojona(idAdnotacji: string): boolean {
   return uzbrojona !== '' && uzbrojona === idAdnotacji;
 }
 
-/** Uzbraja adnotację i oddaje zdanie zapowiedzi dla okna. */
+/**
+ * Uzbraja adnotację i oddaje zdanie zapowiedzi dla okna. Zdanie nazywa adnotację
+ * rodzajem, cytatem i czasem, żeby ostrzeżenie było imienne.
+ */
 export function uzbrojZdjecie(adnotacja: ResearchAnnotation): string {
   uzbrojona = adnotacja.id;
   return (
@@ -40,7 +33,10 @@ export function uzbrojZdjecie(adnotacja: ResearchAnnotation): string {
   );
 }
 
-/** Rozbraja po wykonaniu albo po zmianie wskazania. */
+/**
+ * Rozbraja po wykonaniu albo po zmianie wskazania. Czyści jedyną wartość
+ * uzbrojenia, więc kolejne naciśnięcie chwytu znowu zapowiada, zamiast zdejmować.
+ */
 export function rozbrojZdjecie(): void {
   uzbrojona = '';
 }
@@ -63,7 +59,10 @@ export function opisAdnotacji(adnotacja: ResearchAnnotation): string {
   return czesci.join(', ');
 }
 
-/** Najnowsza adnotacja wykazu; `null`, gdy wykaz jest pusty. */
+/**
+ * Najnowsza adnotacja wykazu; `null`, gdy wykaz jest pusty. Porównuje czas
+ * utworzenia, więc kolejność wierszy oddana przez rdzeń nie ma znaczenia.
+ */
 export function najnowszaAdnotacja(
   adnotacje: readonly ResearchAnnotation[],
 ): ResearchAnnotation | null {
@@ -74,7 +73,10 @@ export function najnowszaAdnotacja(
   return najnowsza;
 }
 
-/** Skrót długiego napisu; granica jest w oknie, więc nie obcina po cichu. */
+/**
+ * Skrót długiego napisu; granica jest w oknie, więc nie obcina po cichu: dopisuje
+ * liczbę znaków napisu pełnego.
+ */
 function skrot(tekst: string): string {
   return tekst.length <= 120 ? tekst : `${tekst.slice(0, 120)}… (${String(tekst.length)} znaków)`;
 }

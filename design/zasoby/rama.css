@@ -432,15 +432,20 @@
   transition:
     background-color var(--dn-czas-1) var(--dn-ease),
     color var(--dn-czas-1) var(--dn-ease),
-    transform var(--dn-czas-1) var(--dn-ease);
+    top var(--dn-czas-1) var(--dn-ease);
 }
 .dn-nrz-btn svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+/* Uniesienie idzie `top`, nie `transform`: `transform` czyni z przycisku blok
+   odniesienia dla `position: fixed`, a dymek etykiety jest umocowany do okna
+   właśnie przez `fixed` — z transformem liczyłby współrzędne od rogu przycisku
+   i lądował w innym miejscu okna. Przycisk stoi na `position: relative`, więc
+   `top` unosi go bez tworzenia bloku odniesienia. */
 .dn-nrz-btn:hover {
   background: var(--dn-hover);
   color: var(--dn-tekst);
-  transform: translateY(-1px);
+  top: -1px;
 }
-.dn-nrz-btn:active { transform: translateY(0); }
+.dn-nrz-btn:active { top: 0; }
 .dn-nrz-btn:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
   outline-offset: var(--dn-wym-fokus-odsuniecie);

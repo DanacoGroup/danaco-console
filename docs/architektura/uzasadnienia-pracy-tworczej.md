@@ -1530,3 +1530,26 @@ Badanie dostępności zestawu żetonów mierzy pary, nie pojedyncze żetony: bie
 wszystkie pary barwnych żetonów zestawu i mierzy kontrast każdej. Odpowiedź
 niesie liczbę par sprawdzonych, liczbę spełniających próg i wykaz łamiących
 go — bilans, nie samo stwierdzenie, że są problemy.
+
+## adapter_modul_studio_znakowanie.go
+
+Trzy byty tego pliku nie wolno zlać, bo rdzeń je odróżnia w danych tak, jak
+mają być odróżnione w oknie: wyróżnienie (`highlight`) jest cechą postaci
+dokumentu — barwa tła fragmentu idzie tą samą drogą co reszta formatowania,
+czyli w runy drzewa postaci, a wiersz znakowania jest tylko wykazem do
+przejścia, nie drugim miejscem, w którym trzymana jest barwa. Znacznik
+(`mark`) jest nazwą własną Operatora i treści dokumentu nie rusza. Propozycja
+(`suggestion`) jest brzmieniem proponowanym, stojącym na marginesie: nie jest
+zmianą śledzoną, bo tamta jest już w treści, i nie jest komentarzem, bo tamten
+nie niesie brzmienia — wchodzi do treści dopiero decyzją Operatora, a wtedy
+odkłada się jako zmiana śledzona jej autora.
+
+Blokadę fragmentu zdejmuje wyłącznie Operator. Wykonawca, który uzna, że
+fragment wymaga zmiany, zakłada propozycję zamiast wnosić zmianę wprost —
+dlatego założenie propozycji na fragmencie zablokowanym jest dozwolone,
+a wniesienie jej do treści już nie: decyzja należy do Operatora, a blokada
+o zasięgu modelu nie wiąże jego decyzji.
+
+Przy rozstrzyganiu propozycji zakresy liczone są w treści sprzed decyzji,
+więc rozstrzyganie idzie od końca dokumentu — przyjęcie od początku
+przesuwałoby zakresy propozycji jeszcze nierozpatrzonych.

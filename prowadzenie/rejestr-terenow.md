@@ -105,34 +105,6 @@ udawac postep, ktorego nie ma.
 6. Wykazane **przejsciem w przegladarce** wobec zywego rdzenia, ze droga wejscia
    dalej przechodzi od konca do konca. Zrzuty ekranu w katalogu tymczasowym.
 
-### witryna-pobierania
-
-Wykaz wydan sprowadzono do dwoch postaci hybrydowych, tresc strony wokol niego
-dalej obiecuje szesc.
-
-| | |
-|---|---|
-| **Galaz** | `teren/witryna-pobierania` z `main` |
-| **Wykaz plikow** | `budowa/witryna/tresc/` |
-| **Poza terenem** | `budowa/witryna/wydania.json`, `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/` |
-
-`strony.mjs:114,116,292,295,339` i `pobierz.mjs:331,427,435,445,475` niosa
-rozdzial o wyborze miedzy hybryda a postacia natywna, pakiety Linuksa, instrukcje
-sumy kontrolnej dla AppImage oraz zdanie o braku instalki natywnej dla Windows.
-Wszystkie te postaci **zniosla pozycja 8** rejestru decyzji - przeczytaj ja.
-
-**Kryteria odbioru.**
-
-1. Zero wzmianek o postaci natywnej, pakietach Linuksa i AppImage - wykazane
-   przeszukaniem **z sonda dodatnia** dowodzaca, ze wzorzec cokolwiek lapie.
-2. Tresc strony zgadza sie z `wydania.json` co do liczby i nazw postaci -
-   wykazane zestawieniem obu.
-3. Instrukcja sumy kontrolnej dotyczy postaci, ktore naprawde sa wystawione.
-4. Zdanie o tym, czego jeszcze nie ma, mowi prawde wobec pozycji 8 albo znika.
-5. Jesli witryna daje sie zbudowac albo obejrzec - wykazane uruchomieniem.
-   Jesli nie daje - napisane wprost, czego brakuje.
-
-
 ### zdolnosc-wyszukiwania
 
 **Buduje dwie nowe zdolności produktu** na modelach, które stoją odłogiem.
@@ -215,6 +187,22 @@ go w raporcie**.
 6. Wykaz wszystkiego, co postawione na maszynie, wraz z wagą.
 
 ## Zgłoszenia oczekujące na teren
+
+### Materialy wizerunkowe moga niesc ta sama obietnice szesciu postaci
+
+Teren `witryna-pobierania` sprowadzil tresc stron do dwoch postaci hybrydowych,
+ale `budowa/witryna/portfolio/` oraz material `DO-WGRANIA-DANACO-GROUP` wskazany
+w `wydania.json` jako strona wizerunkowa lezaly poza jego wykazem plikow.
+Do sprawdzenia, czy nie powtarzaja zniesionych wariantow.
+
+### Rozpoznanie systemu po stronie klienta moze miec galaz linuksowa
+
+`budowa/witryna/tresc/pobierz.mjs` powoluje sie w komentarzach na
+`client/src/aktualizacja/wykaz-wydan.ts` jako na druga strone tej samej reguly.
+Teren zdjal galaz linuksowa ze skryptu rozpoznania na stronie, ale pliku klienta
+nie tknal - lezal poza wykazem. Jesli klient dalej rozpoznaje Linuksa, strona
+i baner w aplikacji mowia dwie rozne rzeczy o tej samej maszynie.
+
 
 ### Cala rodzina komend `control.*` nie jest zmontowana
 
@@ -692,6 +680,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `witryna-pobierania` | `teren/witryna-pobierania` | `6ffe74f` | weryfikacja Prowadzacego wlasnym pomiarem: w tresci stron zostalo **jedno trafienie** wzorca zniesionych postaci i jest nim zdanie odmawiajace wprost z pozycji 8; sonda dodatnia tego samego wzorca daje 4 trafienia w `wydania.json` i 0 w `zloz.mjs`, wiec rozroznia; witryna sklada sie - 10 stron |
 | `usterki-rdzenia` | `teren/usterki-rdzenia` | trzy rewizje | weryfikacja Prowadzacego pomiarem: sprawdzian `TestTuraZamknietaBledemNieOglaszaUkonczenia` **padl na kodzie sprzed naprawy** z wlasciwym zdaniem i przeszedl po przywroceniu; zakres wylacznie `internal/core`; kontrakt nietkniety |
 | `nastawy-wdrozenia` | `teren/nastawy-wdrozenia` | `678ff3e` | weryfikacja Prowadzacego pomiarem: 4 pliki w zakresie, migracja 115 nietknieta, nowa migracja 401; sonda dodatnia wykonawcy pokazala **206 polaczen i 1,1 GB pobrania przed naprawa wobec zera po niej** |
 | `powloka-i-wydanie` | `teren/powloka-i-wydanie` | `13b947b`, `8d99ae4` | weryfikacja Prowadzacego pomiarem: wykaz wydan sprowadzony do dwoch postaci hybrydowych (0 trafien wzorca natywna/AppImage przy 10 kontrolnych); sprawdzian wiazacy adres padl po wprowadzonym rozjezdzie i przeszedl po cofnieciu; 25 sprawdzianow powloki zdanych |

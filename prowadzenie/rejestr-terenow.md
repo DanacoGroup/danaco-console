@@ -150,6 +150,19 @@ Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zak
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
 
+### Rejestr rozjechany na gałęzi centrum poprawek — rozstrzygnięcie przy scaleniu
+
+Gałąź `teren/centrum-poprawki` niesie dwie rewizje dotykające tego pliku —
+`6361df8` i `31e37de` — założone tam omyłkowo przez poprzedniego Prowadzącego,
+bo drzewo główne stoi przełączone na tę gałąź. Ich treść przeniesiono na `main`
+jako `a52fa05` i `ea0c673`, ale na gałęzi zostały. Od tamtej pory `main`
+przerobił ten plik mocno: pięć terenów zamkniętych, zgłoszenia i reguły odbioru.
+
+**Przy scaleniu gałęzi designu konflikt w tym pliku rozstrzyga się na rzecz
+`main`.** Wersja z gałęzi cofnęłaby zamknięcia terenów i zgłoszenia z pomiarów,
+a wyglądałoby to na zwykłe scalenie. Praca w `design/` scala się normalnie —
+rozstrzygnięcie dotyczy wyłącznie `prowadzenie/rejestr-terenow.md`.
+
 ### Kontrakt ruszył pierwszy raz od przejęcia
 
 Do 27.08.2026 kontrakt stał nietknięty pod sumą `2cbb843d33f4531b05cd` — teren

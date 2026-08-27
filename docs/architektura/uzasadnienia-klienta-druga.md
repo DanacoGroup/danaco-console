@@ -2138,3 +2138,21 @@ bajty na base64 jest już gotowy, bo kodowanie bajtów jest jedyną częścią t
 drogi możliwą do zbudowania bez zmiany kontraktu; kodowanie idzie porcjami,
 ponieważ przekazanie wszystkich bajtów naraz przekracza limit argumentów
 wywołania na nagraniu dłuższym niż kilka sekund.
+
+## budowa/klient-poprzedni/src/rozmowa/montaz-rozmowy.ts
+Pominięcie polityki pamięci rozmowy dla kodu modułu oznacza, że każdy moduł pracuje z pamięcią.
+
+Montaż nie buduje paska zlecenia i nie zagląda do jego środka: przepuszcza element do widoku nietknięty. Buduje go warstwa mająca komplet sterowania okna; podgląd rozmowy go nie ma i pomija.
+
+Przestawienie widoku transkryptu nie jest nigdy odrzucane i nigdy nie kosztuje rundy do rdzenia: powłoka podaje kod trybu i dostaje przerysowany zapis, nie musząc znać ani wpisów, ani warstw.
+
+Funkcja osadzająca rozmowę okna w dokumencie odpowiada za jedno: powiązanie warstwy rozmowy z jej widokiem i wstawienie całości w kontener. To jest punkt styku warstwy rozmowy z powłoką, która nie musi znać ani widoku, ani kontraktu. Moduł okna jest śledzony, nie zakładany: okno pyta rdzeń o swój moduł i słucha zmian, więc przestawienie modułu wykonane gdziekolwiek indziej przestawia to okno samo. Powłoka może też przestawić okno wprost przez metodę ustawModul, gdy zna wynik komendy wcześniej. Ognisko ląduje na polu wypowiedzi od razu po złożeniu.
+
+Odwrotna kolejność złożenia śledzenia modułu i rozmowy dałaby okno modułu bez pamięci sesyjnej, które odtwarza wątek z rdzenia, zanim się dowie, że nie miało prawa go odtworzyć.
+
+Wykaz po ukośniku jest jedyną drogą doraźnego dostępu do narzędzia, więc nie może zależeć od tego, którym oknem operator akurat pracuje.
+
+Wybór narzędzia z tego okna melduje się sam z odpowiedzi komendy; poszerzenie zestawu spoza okna przychodzi wyłącznie zdarzeniem dołożenia narzędzia sesji. Powód niepodpięcia nasłuchu nie idzie do wątku przy montażu: gdy zdarzenia nie ma w wygenerowanym kontrakcie, ten sam brak melduje się zdaniem w chwili sięgnięcia po wykaz, więc powtarzanie go przy otwarciu każdego okna byłoby hałasem.
+
+## budowa/klient-poprzedni/src/strona-glowna/macierz-modulow.ts
+Dane macierzy niesie odczyt środowisk z rdzenia z dołączonymi modułami: każde środowisko ma pole kodów modułów widocznych w jego bocznej nawigacji, w kolejności wyświetlania, a osobnego zapytania o macierz nie ma. Macierz niczego nie blokuje — zanim rdzeń odpowie, i gdy moduł nie stoi w żadnym środowisku, odczyt środowiska modułu zwraca brak wartości, co znaczy „nie wiem, dokąd", a nie „nie wolno"; co z tym zrobić, rozstrzyga miejsce wyboru. Środowisko początkowe to pierwsza karta według kolejności z rdzenia, a przed pierwszą odpowiedzią rdzenia — pierwszy kod z kontraktu, bez nazwy wpisanej ręcznie, ponieważ to ten sam wykaz źródłowy, z którego żyje strefa pierwsza. Kafel prowadzący gdziekolwiek jest lepszy niż kafel, który nagle przestał wiedzieć, dlatego odmowa rdzenia i cisza nie kasują macierzy już poznanej. Remis w przypisaniu modułu do środowiska bierze się stąd, że moduł bywa widoczny w kilku środowiskach naraz, a kontrakt nie niesie środowiska macierzystego — reguła liczy się z danych, bez kodu wpisanego na sztywno.

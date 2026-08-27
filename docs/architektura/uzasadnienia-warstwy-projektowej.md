@@ -482,3 +482,21 @@ samym, przy którym system nazywa zwinięcie bocznej nawigacji do ikon.
 Wartość stoi tu liczbą, ponieważ zapytanie medialne nie czyta zmiennych
 własnych; żeton progu w arkuszu wymiarów pozostaje jej jedynym źródłem
 i musi się z nią zgadzać.
+
+## budowa/klient-poprzedni/src/komponenty/rozmowa.css
+Klasa dn-rozmowa nie jest klasą dn-okno z pliku okno.css: dn-okno to rama
+okna operacyjnego modułu z pionem i gniazdami akcji, a dn-rozmowa to
+pięciowierszowa siatka rozmowy. Obudowa nie nosi cienia, inaczej niż karta —
+okno rozmowy stoi wewnątrz środowiska i uniesienia nie deklaruje; kto go
+potrzebuje, dokłada kartę na rodzicu. Wnętrze wierszy niosą osobne arkusze:
+wpis.css dla historii, postep.css dla monitora, drobne.css dla pola
+wpisywania i przybornika.
+
+Pasek nagłówka tożsamości przewija się bez widocznego suwaka, ponieważ pola
+tożsamości nigdy się nie łamią. Panel kontekstu nie ma własnego tła, bo
+kontekst należy do powierzchni okna, nie do panelu. Tło historii jest
+zadeklarowane wprost jako żeton tła, ponieważ obudowa wyżej ustawia żeton
+powierzchni — bez tej deklaracji historia dostałaby barwę karty zamiast
+papieru roboczego. Monitor wykonania niesie pasek postępu w wariancie
+rozciągniętym oraz przycisk zatrzymania. W wariancie zwartym monitora nie
+ma, więc dół okna niesie własną kreskę górną zamiast kreski monitora.

@@ -2114,3 +2114,8 @@ Pole adnotacji w warstwie kompozycji niosło jedno zdanie bez autora, bez czasu 
 
 ## budowa/server/internal/store/migracja_235_design_zestawy_zetonow.sql
 Motyw produktu jest własnością powłoki i rdzeń go nie nadpisuje. Zestaw żetonów jest bytem obok motywu: operator zakłada go, wczytuje z zapisu zewnętrznego, wydaje do kodu i porównuje z motywem obowiązującym; bez własnej tabeli panel czytałby żetony z motywu i nie miałby ich gdzie odłożyć, przez co każda praca nad systemem projektowym kończyłaby się z zamknięciem karty. Żeton jest wierszem, a nie polem zapisu strukturalnego, ponieważ wydanie do arkuszy stylów i języków programowania idzie żeton po żetonie, a odsyłacz roli rozstrzyga się po nazwie roli w obrębie zestawu; para zestawu i nazwy roli jest kluczem głównym bez osobnego surogatu, ponieważ dwie wartości tej samej roli w jednym zestawie tworzyłyby sprzeczny system. Motyw jest kolumną zestawu, a nie żetonu, ponieważ oba motywy są równoprawne i niosą własne wartości tych samych ról — motyw jasny i ciemny stanowią więc dwa osobne zestawy, a nie jeden z podwójnymi wierszami.
+
+## budowa/desktop/src-tauri/build.rs
+Opis funkcji ogłaszającej zależność budowy złożono w jedno zdanie łączące
+przyczynę i skutek; komentarz o katalogu zasobów skrócono poniżej stu znaków,
+zachowując istotę: bez zejścia w assets/ zmiana zasobów nie wznawia budowy.

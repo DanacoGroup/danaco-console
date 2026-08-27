@@ -1,19 +1,5 @@
-// Wpięcie dwudziestu jeden komend obszaru `terminal.*` spoza rdzenia
-// wykonawczego modułu: cyklu życia karty, odczytu pliku, wstrzymania procesu,
-// książki hostów, biblioteki skryptów, wykazu kluczy, tuneli i obserwacji.
-//
-// Port jest ROZSZERZENIEM, nie drugim portem — tak samo jak wyjście
-// (`handlers_terminal_wyjscie.go`): osadza `Terminal`, bo wyposażenie modułu ma
-// tego samego właściciela co karty i procesy, a adapter wypełniający jeden
-// wypełnia wszystkie.
-//
-// Żadna z tych komend nie rozgłasza własnego zdarzenia i nie jest to
-// przeoczenie: kontrakt daje modułowi jedno zdarzenie — `terminal.process.changed`
-// — i dotyczy ono procesu. Zmiany, które procesu dotyczą (wstrzymanie,
-// zakończenie procesów zamykanej karty, wyzwolenie obserwacji), idą tym
-// zdarzeniem z adaptera. Zmiany wpisu książki hostów czy pozycji biblioteki nie
-// mają w kontrakcie zdarzenia, więc klient odświeża wykaz po własnym zapisie —
-// zamiast dostawać rozgłoszenie nazwą, której kontrakt nie zna.
+// Plik wpina dwadzieścia jeden komend obszaru terminal.* spoza rdzenia wykonawczego modułu: cyklu
+// życia karty, książki hostów, biblioteki skryptów, kluczy, tuneli i obserwacji plików.
 package core
 
 import (
@@ -22,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// WyposazenieTerminala jest portem wyposażenia modułu Terminal.
+// WyposazenieTerminala jest portem wyposażenia modułu Terminal poza rdzeniem wykonawczym procesu powłoki.
 type WyposazenieTerminala interface {
 	Terminal
 
@@ -60,10 +46,10 @@ type WyposazenieTerminala interface {
 	WykazObserwacji(ctx context.Context, z shared.TerminalWatchListRequest) (shared.TerminalWatchListResponse, error)
 }
 
-// Zgodność adaptera z portem wyposażenia sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem wyposażenia sprawdzana jest przy kompilacji, bez próby wykonania kodu rdzenia.
 var _ WyposazenieTerminala = (*adapterTerminala)(nil)
 
-// zarejestrujWyposazenieTerminala wpina wszystkie komendy wyposażenia modułu.
+// zarejestrujWyposazenieTerminala wpina wszystkie komendy wyposażenia modułu Terminal w rejestrze rdzenia.
 func zarejestrujWyposazenieTerminala(r *Rejestr, w WyposazenieTerminala) {
 	if r == nil || w == nil {
 		return

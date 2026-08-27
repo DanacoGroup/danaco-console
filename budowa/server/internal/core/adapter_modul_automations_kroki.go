@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: przekład kroków automatyki między kontraktem
-// a warstwą danych oraz utrzymanie układu zależności przy zapisie definicji
-// (okno Workflow Builder).
-//
-// Zależność ma jedno źródło. Kontrakt niesie ten sam łuk grafu dwa razy:
-// polem `AutomationStep.dependsOn` i strukturą `AutomationDependency` komendy
-// orkiestratora. Prawdą jest tabela `zaleznosc_kroku_automatyki`, a `dependsOn`
-// powstaje z niej przy odczycie — drugiego zapisu tej samej rzeczy nie ma.
-//
-// Zapis definicji nie kasuje pracy orkiestratora. Workflow Builder oddaje kroki,
-// nie układ. Gdyby zapis podmieniał zależności na same `dependsOn`, ręcznie
-// ustawione łuki równoległe i warunkowe znikałyby przy każdym zapisie nazwy
-// kroku. Zapis scala więc dwa zbiory: zastane łuki, których oba końce nadal
-// istnieją, oraz łuki wynikające z `dependsOn`.
+// Odpowiedzialność pliku: przekład kroków automatyki między kontraktem a warstwą danych oraz utrzymanie układu zależności przy zapisie definicji w Workflow Builder.
 package core
 
 import (
@@ -23,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// zapiszKroki podmienia kroki automatyki i uzgadnia z nimi układ zależności.
+// zapiszKroki podmienia kroki automatyki i uzgadnia z nimi układ zależności, scalając zastane łuki z tymi wynikającymi z dependsOn.
 func (a *adapterAutomatyk) zapiszKroki(ctx context.Context, automatykaID int64,
 	kroki []shared.AutomationStep) error {
 
@@ -42,9 +29,7 @@ func (a *adapterAutomatyk) zapiszKroki(ctx context.Context, automatykaID int64,
 		scalZaleznosci(zastane, kroki, wiersze))
 }
 
-// wierszKroku przekłada krok kontraktu na wiersz. Krok bez identyfikatora
-// dostaje go od rdzenia — Workflow Builder pozwala dołożyć krok, zanim Operator
-// go nazwie, a bez identyfikatora nie dałoby się ustalić zależności.
+// wierszKroku przekłada krok kontraktu na wiersz; krok bez identyfikatora dostaje go od rdzenia przy zapisie.
 func wierszKroku(krok shared.AutomationStep, numer int) dane.KrokAutomatyki {
 	kod := krok.Id
 	if kod == "" {
@@ -66,20 +51,14 @@ func wierszKroku(krok shared.AutomationStep, numer int) dane.KrokAutomatyki {
 		parametry := string(krok.Params)
 		wiersz.Parametry = &parametry
 	}
-	// Odwołania do skarbca zapisują się wraz z krokiem. Bez nich
-	// `automation.secret.remove` nie miałby jak nazwać kroków, które straciły
-	// pokrycie — skarbiec zdejmowałby klucz w ciszy, a Operator dowiadywałby
-	// się o skutku dopiero z nieudanego przebiegu.
+	// Odwołania do skarbca zapisują się wraz z krokiem: usunięcie sekretu poznaje utratę pokrycia.
 	if len(krok.SecretRefs) > 0 {
 		wiersz.OdwolaniaSekretow = zapisStrukturalny(krok.SecretRefs)
 	}
 	return wiersz
 }
 
-// scalZaleznosci składa układ po zapisie kroków: zastane łuki o obu końcach
-// nadal istniejących plus łuki wynikające z `dependsOn`. Łuk zastany zachowuje
-// swój rodzaj — sekwencyjność wynikająca z `dependsOn` nie nadpisuje ustawienia
-// równoległego ani warunkowego wprowadzonego w Orchestratorze.
+// scalZaleznosci składa układ po zapisie kroków: zastane łuki o obu końcach nadal istniejących plus łuki wynikające z dependsOn, zachowując rodzaj łuku zastanego.
 func scalZaleznosci(zastane []dane.ZaleznoscKroku, kroki []shared.AutomationStep,
 	wiersze []dane.KrokAutomatyki) []dane.ZaleznoscKroku {
 
@@ -113,11 +92,10 @@ func scalZaleznosci(zastane []dane.ZaleznoscKroku, kroki []shared.AutomationStep
 	return wynik
 }
 
-// kluczLuku znakuje parę kroków, żeby ten sam łuk nie wszedł do układu dwa razy.
+// kluczLuku znakuje parę kroków, żeby ten sam łuk nie wszedł do układu zależności dwukrotnie w zapisie.
 func kluczLuku(z, do string) string { return z + "\x00" + do }
 
-// krokiKontraktu składa kroki automatyki wraz z polem `dependsOn` odtworzonym
-// z układu zależności.
+// krokiKontraktu składa kroki automatyki wraz z polem dependsOn odtworzonym z układu zależności zapisanego w bazie.
 func (a *adapterAutomatyk) krokiKontraktu(ctx context.Context, automatykaID int64) ([]shared.AutomationStep, error) {
 	wiersze, err := a.repozytorium.Kroki(ctx, automatykaID)
 	if err != nil {
@@ -131,10 +109,7 @@ func (a *adapterAutomatyk) krokiKontraktu(ctx context.Context, automatykaID int6
 	for _, zaleznosc := range zaleznosci {
 		poprzednicy[zaleznosc.KrokDo] = append(poprzednicy[zaleznosc.KrokDo], zaleznosc.KrokZ)
 	}
-	// Notatka kroku leży w adnotacjach kanwy, nie w wierszu kroku: zapis
-	// definicji podmienia wiersze kroków w całości, więc kolumna kasowałaby się
-	// przy każdej zmianie nazwy. Nieudany odczyt adnotacji zostawia kroki bez
-	// notatek zamiast wywracać odczyt definicji.
+	// Notatka kroku leży w adnotacjach kanwy, nie w wierszu: zapis podmienia wiersze w całości.
 	notatki := map[string]*string{}
 	if adnotacje, err := a.repozytorium.AdnotacjeKrokow(ctx, automatykaID); err == nil {
 		for _, adnotacja := range adnotacje {
@@ -150,7 +125,7 @@ func (a *adapterAutomatyk) krokiKontraktu(ctx context.Context, automatykaID int6
 	return kroki, nil
 }
 
-// krokKontraktu przekłada wiersz kroku na krok kontraktu.
+// krokKontraktu przekłada wiersz kroku automatyki na krok kontraktu wymiany z klientem Workflow Builder.
 func krokKontraktu(wiersz dane.KrokAutomatyki, poprzednicy []string) shared.AutomationStep {
 	kolejnosc := wiersz.Kolejnosc
 	krok := shared.AutomationStep{

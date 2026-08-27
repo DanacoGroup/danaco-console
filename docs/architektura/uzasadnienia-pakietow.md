@@ -4258,3 +4258,5 @@ Filtr do zasięgu celowo nie stoi w zapytaniu SQL: wybór akcji jednego bytu poz
 wyłącznie rejestr akcji w rdzeniu na wierszach już odczytanych, żeby bliźniaczy filtr w SQL
 nie stał się drugą, osobną implementacją tej samej reguły, gotową rozejść się z pierwszą po
 cichu.
+## budowa/server/internal/dane/przekazanie_okna.go
+Interfejs kontraktu obszaru window.* deklaruje w całości wyłącznie ten plik, wraz z metodami, które implementują pozostałe pliki obszaru: więź koordynator-wykonawca oraz dziennik akcji. Interfejs rozdzielony na kilka plików byłby kilkoma prawdami o jednym kontrakcie. Identyfikator pozycji kolejki nie jest zakładany własnym zapisem w tym repozytorium: pozycję kolejki zakłada jedyny silnik kolejek, a adapter rdzenia wypełnia to pole gotowym identyfikatorem po założeniu pozycji, w tej samej transakcji co zapis zlecenia. Komplet kontekstu jest przechowywany w całości jako surowy zapis JSON: warstwa danych go nie interpretuje ani nie rozbiera na pola, tylko przechowuje i oddaje.

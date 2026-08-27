@@ -14,7 +14,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-studio-design` z `main` |
-| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go` oraz `adapter_modul_design_*.go` |
+| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go` oraz `adapter_modul_design_*.go` oraz nowy `docs/architektura/uzasadnienia-studio-design.md` |
 | **Skala** | 92 plikow, 641 tys. znakow komentarza |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-moduly`, `komentarz-rdzen`, `komentarz-pakiety` |
 
@@ -25,9 +25,11 @@ Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakres
 
 **Kryteria odbioru.**
 
-1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
-   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
-   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+1. **Kod nietkniety** — dla kazdego zmienionego pliku strumien tokenow bez
+   komentarzy (`narzedzia/zrodlo-bez-komentarzy.go`) bajtowo identyczny przed
+   i po, a wykaz dyrektyw (`grep -n '^[[:space:]]*//go:'`) tozsamy. Binarium
+   dowodem NIE jest — zmierzone 27.08: jedna dodana linia komentarza zmienia
+   binarium, bo numery wierszy funkcji wchodza do tablic sladow stosu.
 2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
    pomiarem calego zakresu, z podaniem liczby plikow przed i po.
 3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
@@ -46,7 +48,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-moduly` z `main` |
-| **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` |
+| **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` oraz nowy `docs/architektura/uzasadnienia-modulow.md` |
 | **Skala** | 260 plikow, 990 tys. znakow komentarza |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-rdzen`, `komentarz-pakiety` |
 
@@ -57,9 +59,11 @@ Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakres
 
 **Kryteria odbioru.**
 
-1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
-   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
-   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+1. **Kod nietkniety** — dla kazdego zmienionego pliku strumien tokenow bez
+   komentarzy (`narzedzia/zrodlo-bez-komentarzy.go`) bajtowo identyczny przed
+   i po, a wykaz dyrektyw (`grep -n '^[[:space:]]*//go:'`) tozsamy. Binarium
+   dowodem NIE jest — zmierzone 27.08: jedna dodana linia komentarza zmienia
+   binarium, bo numery wierszy funkcji wchodza do tablic sladow stosu.
 2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
    pomiarem calego zakresu, z podaniem liczby plikow przed i po.
 3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
@@ -78,7 +82,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-rdzen` z `main` |
-| **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` |
+| **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` oraz nowy `docs/architektura/uzasadnienia-rdzenia.md` |
 | **Skala** | 364 plikow, 1160 tys. znakow komentarza |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-pakiety` |
 
@@ -89,9 +93,11 @@ Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakres
 
 **Kryteria odbioru.**
 
-1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
-   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
-   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+1. **Kod nietkniety** — dla kazdego zmienionego pliku strumien tokenow bez
+   komentarzy (`narzedzia/zrodlo-bez-komentarzy.go`) bajtowo identyczny przed
+   i po, a wykaz dyrektyw (`grep -n '^[[:space:]]*//go:'`) tozsamy. Binarium
+   dowodem NIE jest — zmierzone 27.08: jedna dodana linia komentarza zmienia
+   binarium, bo numery wierszy funkcji wchodza do tablic sladow stosu.
 2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
    pomiarem calego zakresu, z podaniem liczby plikow przed i po.
 3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
@@ -110,7 +116,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-pakiety` z `main` |
-| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietem `core` |
+| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietem `core` oraz nowy `docs/architektura/uzasadnienia-pakietow.md` |
 | **Skala** | 457 plikow, 1114 tys. znakow komentarza |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-rdzen` |
 
@@ -121,9 +127,11 @@ Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakres
 
 **Kryteria odbioru.**
 
-1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
-   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
-   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+1. **Kod nietkniety** — dla kazdego zmienionego pliku strumien tokenow bez
+   komentarzy (`narzedzia/zrodlo-bez-komentarzy.go`) bajtowo identyczny przed
+   i po, a wykaz dyrektyw (`grep -n '^[[:space:]]*//go:'`) tozsamy. Binarium
+   dowodem NIE jest — zmierzone 27.08: jedna dodana linia komentarza zmienia
+   binarium, bo numery wierszy funkcji wchodza do tablic sladow stosu.
 2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
    pomiarem calego zakresu, z podaniem liczby plikow przed i po.
 3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik

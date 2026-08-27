@@ -5758,3 +5758,8 @@ stałych wytworzonych do pakietu shared, wywołaniem budującym rejestr z pełny
 wykazem komend kontraktu. Dzięki temu warstwa protokołu pozostaje wolna od
 powielonych literałów, a zbiór nazw znanych rdzeniowi zmienia się wyłącznie
 razem z kontraktem.
+
+## budowa/server/internal/dane/biblioteka_sugestie.go
+
+RozstrzygnijSugestie: sugestia już rozstrzygnięta nie liczy się po raz drugi — warunek
+zapytania pilnuje tego zamiast wołającego.

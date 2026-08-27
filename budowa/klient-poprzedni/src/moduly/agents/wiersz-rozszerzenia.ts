@@ -1,27 +1,28 @@
+/**
+ * Jeden wiersz katalogu rozszerzeń wraz z akcjami, które da się na nim wykonać.
+ * Wiersz odpowiada wyłącznie za postać pozycji katalogu: nie woła rdzenia, tylko
+ * zgłasza czynność oknu, a okno prowadzi wywołanie i pokazuje odpowiedź.
+ */
+
 import { ExtensionKind, type Extension } from '../../../../shared/contract';
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Jeden wiersz katalogu rozszerzeń wraz z akcjami, które da się na nim wykonać.
- *
- * Wiersz odpowiada wyłącznie za postać pozycji katalogu: nie woła rdzenia
- * i nie wie, co się stanie po naciśnięciu — zgłasza czynność oknu, a okno
- * prowadzi wywołanie i pokazuje odpowiedź.
- *
- * Zestaw akcji wynika ze stanu pozycji. Pozycja niezainstalowana ma jedną
- * drogę — instalację; przełączenia i odinstalowania rdzeń by odmówił. Pozycja
- * zainstalowana dostaje przełącznik (`extension.toggle` — włącza bez
- * odinstalowania) oraz odinstalowanie.
+ * Czynność zgłaszana oknu z wiersza katalogu. Wiersz nazywa zamiar, a wybór
+ * komendy rodziny `extension.*` i obsługa odpowiedzi należą do okna, które
+ * jako jedyne trzyma kanał do rdzenia.
  */
-
-/** Czynność zgłaszana oknu z wiersza katalogu. */
 export type CzynnoscRozszerzenia = 'instaluj' | 'przelacz' | 'odinstaluj';
 
 export interface ObslugaWiersza {
   (czynnosc: CzynnoscRozszerzenia, pozycja: Extension): void;
 }
 
-/** Nazwy rodzajów po polsku — kontrakt niesie kody angielskie (README 5.7). */
+/**
+ * Nazwy rodzajów rozszerzeń po polsku, bo kontrakt niesie kody angielskie.
+ * Wykaz obejmuje wszystkie pozycje wyliczenia `ExtensionKind`, więc dołożenie
+ * rodzaju w kontrakcie wymusza uzupełnienie nazwy przy kompilacji.
+ */
 const NAZWA_RODZAJU: Record<ExtensionKind, string> = {
   [ExtensionKind.Mcp]: 'serwer MCP',
   [ExtensionKind.Plugin]: 'wtyczka',
@@ -29,7 +30,11 @@ const NAZWA_RODZAJU: Record<ExtensionKind, string> = {
   [ExtensionKind.Skill]: 'umiejętność',
 };
 
-/** Czytelna nazwa rodzaju; kod nieznany zostaje kodem, zamiast zniknąć. */
+/**
+ * Czytelna nazwa rodzaju; kod nieznany zostaje kodem, zamiast zniknąć z wiersza.
+ * Rdzeń w nowszej wersji może oddać rodzaj, którego ten klient jeszcze nie zna,
+ * a pozycja bez nazwy rodzaju wyglądałaby na uszkodzoną.
+ */
 export function nazwaRodzaju(rodzaj: ExtensionKind): string {
   return NAZWA_RODZAJU[rodzaj] ?? rodzaj;
 }
@@ -73,7 +78,11 @@ export function utworzWierszRozszerzenia(
   return element;
 }
 
-/** Stan pozycji jednym zdaniem — trzy postaci, nie dwie: włączone ≠ zainstalowane. */
+/**
+ * Stan pozycji jednym zdaniem — trzy postaci, nie dwie: pozycja włączona to co
+ * innego niż zainstalowana. Rozszerzenie zainstalowane i wyłączone zostaje
+ * w katalogu, więc wiersz musi je odróżnić od nieobecnego.
+ */
 function opisStanu(pozycja: Extension): string {
   if (!pozycja.installed) return 'niezainstalowane';
   return pozycja.enabled ? 'włączone' : 'wyłączone';

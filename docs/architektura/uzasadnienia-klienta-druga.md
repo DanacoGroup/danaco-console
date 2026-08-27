@@ -3063,3 +3063,16 @@ gdy kontrolę uruchomiono z paska narzędzi pojedynczego panelu.
 
 ## budowa/klient/src/protokol/warstwa-protokolu.test.ts
 Mierzone są trzy rzeczy: koperta i ramka w obie strony, wiązanie odpowiedzi z żądaniem oraz odbiór zdarzeń — wszystkich, jakie zna kontrakt, bo warstwa nie wybiera spośród nich i żadnego nie wyróżnia nazwą wpisaną w kod.
+
+## budowa/klient-poprzedni/src/moduly/research/stan-okna-badania.ts
+Rdzeń odpowiada na każde wywołanie, także odmową, a odmowa ma być widoczna tam, gdzie ją wywołano,
+nie wyłącznie w konsoli. Forma stanu pustego ma trzy części: ikona, tytuł, opis. Wariantów stylu nie
+ma — różnicuje wyłącznie treść, a ikona jest treścią, nie wariantem. Stan początkowy mówi, że okno
+jeszcze nie pytało rdzenia; meldunek o pustce rdzenia postawiony przed jego odpowiedzią byłby
+zmyśleniem. Nazwa fazy i jej znakowanie pochodzą ze wspólnej biblioteki komponentów: wartość trafia
+do atrybutu danych, po którym sięgają arkusze i sprawdziany, więc własny zestaw wartości w module
+oznaczałby ten sam stan pod inną nazwą niż w oknach sąsiadów. W tym module zostaje wyłącznie to,
+czym Research różni się świadomie: wskaźnik odczytu i chowanie treści na czas ładowania. Stan nie
+kasuje treści, tylko ją przesłania — nieudane odświeżenie zostawia to, co już było widoczne,
+a powrót do stanu gotowego odsłania treść nietkniętą. Ładowanie niesie wskaźnik obok opisu, nigdy
+samodzielnie na pełnym ekranie.

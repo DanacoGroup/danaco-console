@@ -3891,3 +3891,25 @@ z komendy `identity.category.list` są własnością rdzenia i edytor nie dopisu
 jednej własnej. Okno pokazuje je jako kontekst, w który wchodzą warstwy eksperta,
 a nie po to, żeby je stąd zmieniać. Sam edytor nie wykonuje ani jednego wywołania
 rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/library/formularz-kolekcji.ts
+
+Utworzenie kolekcji oraz przypisanie do niej zasobu to dwie z trzech funkcji
+Operatora w oknie kolekcji i znaczników. Kolekcja jest swobodna, a nie regułowa:
+komenda `library.collection.create` przyjmuje nazwę i opis, a reguły składającej
+kolekcję samoczynnie kontrakt nie niesie. Wariant regułowy stoi więc w panelu
+akcji jako czynność nazwana wprost, bez drogi wykonania.
+
+Przypisanie działa na zaznaczeniu wykazu plików modułu: okno nie ma własnego
+wykazu, ponieważ wykaz jest jeden na cały moduł.
+
+Zdanie przy nazwie pustej mówi o oknie, a nie o rdzeniu. Rdzeń odmawia wyłącznie
+nazwy pustej; nazwę złożoną z samego znacznika kolejności bajtów, z samej spacji
+nierozdzielającej albo z samych spaczy zwykłych przyjmuje i oddaje co do znaku.
+Każdą z nich przycięcie po stronie przeglądarki zamienia w pustkę, więc okno jej
+nie wyśle i może powiedzieć tylko tyle, że samo nic nie wysłało.
+
+Nazwa pokazana po założeniu pochodzi z odpowiedzi, a rozbieżność wobec wpisanej
+jest wypowiedziana: rdzeń zapisuje nazwę dosłownie, więc różnica może wziąć się
+wyłącznie z przycięcia po stronie okna, a Operator ma o niej wiedzieć, zanim
+zacznie tej kolekcji szukać po tym, co napisał.

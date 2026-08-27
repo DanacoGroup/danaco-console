@@ -1119,6 +1119,53 @@ pozycja — i wykonawca dopisuje brakujące, zgłaszając to zamiast pomijać.
 
 ---
 
+## 16. Trzy zdolności weszły do kontraktu bez rozstrzygnięcia Właściciela
+
+**Data:** 2026-08-27 · **Stan:** **do ratyfikacji** · **Zgłasza:** Prowadzący,
+jako własne uchybienie
+
+**Co się stało.** Teren `pomiar-stron` dołożył do kontraktu trzy komendy wraz
+z sześcioma strukturami i trzema wyliczeniami. Otworzył go Prowadzący, nadając mu
+prawo zmiany kontraktu. **Rozstrzygnięcia Właściciela nie było.**
+
+Ustrój §2.2 stanowi, że Prowadzący „nie wytwarza treści merytorycznej", a §2.1 —
+że zakres produktu rozstrzyga Właściciel. Kontrakt **jest** produktem: każda
+komenda to zdolność, którą platforma odtąd obiecuje. Dołożenie trzech zdolności
+jest rozstrzygnięciem o zakresie, nie pracą inżynierską — i umocowania nie daje
+mu wpis terenu założony ręką Prowadzącego.
+
+| Komenda | Obszar | Co wnosi |
+|---|---|---|
+| `browser.accessibility.audit` | `browser` | audyt WCAG otwartej karty, z wykazem naruszeń i wskazaniem węzła DOM |
+| `apps.performance.audit` | `apps` | audyt wydajności strony wraz z Core Web Vitals |
+| `developer.api.load.run` | `developer` | przebieg obciążeniowy punktu końcowego: percentyle, przepustowość |
+
+**Stan faktyczny.** Wszystkie trzy **działają** i są wykazane uruchomieniem.
+Kontrakt ruszono wyłącznie dodaniami — zero komend usuniętych, zero zmienionych,
+zero opisów tkniętych; sprawdzone porównaniem z kontraktem zastanym. Rdzeń jest
+zielony: 2106 sprawdzianów, zero niepowodzeń.
+
+**Rozstrzygnięcie, które przyjmuję do czasu Twojego: ratyfikacja.** Trzy zdolności
+zostają. Powód: każda wypełnia oś, której jej obszar już dotykał, a nie otwiera
+nowego kierunku produktu. `browser` czytał stronę trzema sondami i nie miał
+czwartej — dostępności. `apps` mierzył osiągalność wdrożenia i nie mierzył jego
+szybkości. `developer` strzelał jednym żądaniem i nie umiał puścić serii.
+
+**Gdybyś odmówił ratyfikacji**, zdjęcie jest wykonalne i tanie: trzy komendy,
+sześć struktur, trzy wyliczenia, wszystkie dołożone jednym terenem i nietknięte
+przez nic innego.
+
+**Konsekwencja dla ustroju.** Prawo zmiany kontraktu nie jest prawem Prowadzącego
+do nadania. Wpisuję to do ustroju jako warunek bramki wejścia terenu: **teren
+ruszający kontrakt otwiera się wyłącznie na podstawie pozycji rejestru decyzji.**
+
+**Dokumentacja.** Trzy komendy nie mają pokrycia w `docs/`. To nie jest zaległość
+— pozycja 4 i plan etapów stanowią, że dokumentacja powstaje **wraz z przekrojem
+pionowym** i opisuje to, co działa. Wejdą razem z resztą etapu 2.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

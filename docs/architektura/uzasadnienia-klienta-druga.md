@@ -5713,3 +5713,32 @@ prowadzi osobna rodzina komend wiedzy i nie ma go tutaj, żeby okno nie obiecywa
 tam, gdzie dostaje dopasowanie po słowach.
 Okno liczy nazwy odnośników przed zapisem, żeby pokazać operatorowi, do czego strona linkuje,
 zanim rdzeń odpowie.
+
+## budowa/klient-poprzedni/src/powloka/srodowiska.ts
+Plik nie jest katalogiem modułów: środowiska, moduły i macierz widoczności są sterowane danymi
+i przychodzą komendami wejścia do środowiska oraz wykazu modułów. Nie ma tu ani jednej nazwy modułu,
+ani jednego wiersza macierzy. Zostały dwie rzeczy, których kontrakt nie niesie: ikony pozycji, bo
+moduł kontraktu nie ma pola ikony — rysunek jest zasobem pakietu wizualnego, nie wierszem tabeli, więc
+mapa wiąże kod modułu z nazwą ikony zestawu, a kod nieznany dostaje ikonę zastępczą zamiast pustego
+miejsca; oraz sekcje panelu orkiestracji, bo dla środowiska o nawigacji orkiestracyjnej kontrakt
+zwraca pusty wykaz modułów, ponieważ sekcje panelu modułami nie są. Nie ma ich skąd wziąć z rdzenia,
+więc stoją tutaj — a że żadna nie ma modułu, żadna nie ma też zbudowanego widoku operacyjnego. Wykaz
+kluczy sekcji stoi osobno i publicznie, bo znać go musi zarówno boczna nawigacja, jak i moduł
+MultitaskingAI, żeby zbudować powierzchnię sekcji. Dwa wykazy rozjechałyby się przy pierwszej zmianie
+kolejności, a rozjazd objawiłby się pozycją nawigacji bez treści. Kolejność i widoczność podlegają
+konfiguracji: układ podsekcji trzyma rdzeń, a brak ustawienia znaczy wartość domyślną, a nie
+niedostępność sekcji. Kod spoza mapy ikon nie jest błędem — dostaje ikonę zastępczą, bo nowy moduł to
+nowy wiersz w bazie, nie zmiana kodu klienta. Moduł jako pozycja wykazu jest funkcją publiczną, bo
+pozycję buduje się także poza wykazem środowiska: moduł bez wiersza widoczności w macierzy nie stoi
+w bocznej nawigacji, a mimo to daje się otworzyć — kafel komponentu własnego na stronie głównej sięga
+po niego wprost do katalogu wykazu modułów i składa pozycję tą samą funkcją. Drugiego przekładu
+modułu na pozycję nie ma.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/identyfikatory.ts
+Identyfikator gniazda jest stały przez całe życie układu — rola, model i
+katalogi zmieniają się w oknie, ale gniazdo pozostaje tym samym miejscem
+na scenie, dzięki czemu komendy nadania roli i pokazania przekazania
+przyjmują wprost identyfikator, bez pośrednictwa indeksu tablicy. Górna
+granica liczby okien wynosi cztery, bo tyle liczy obsada multitaskingu:
+koordynator, dwóch wykonawców i analityk — mniejszy sufit nie mieściłby
+pełnej pętli, bo analityk nie miałby gdzie stanąć obok pary, którą ocenia.

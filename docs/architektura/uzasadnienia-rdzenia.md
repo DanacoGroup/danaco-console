@@ -5214,3 +5214,15 @@ ekranu stałej obecności.
 Powtórzenie wywołania czekało na warstwę, która kanały prowadzi, i wchodzi razem z nią: adapter
 bierze ten sam rejestr kanałów, którym jedzie okno rozmowy. Rejestr niewpięty daje odmowę nazywającą
 brak, a nie pusty uchwyt udający zdolność.
+
+## budowa/server/internal/core/przenoszenie_magazyn.go
+
+Komplet kontekstu nie ma własnej tabeli, bo nie ma jej też żaden z jego
+składników: dokument, agent i źródło wiedzy są w kontrakcie identyfikatorami,
+a schemat bazy ich nie zna. Magazyn kładzie więc komplet tam, gdzie okno już
+ma swój stan trwały — na najwęższym poziomie zasięgu konfiguracji, pod jednym
+kluczem i w rodzaju `json`. Ta sama droga czyni komplet czytelnym dla klienta
+zwykłym odczytem konfiguracji na poziomie okna, bez drugiej komendy i bez
+drugiego magazynu. Pamięć procesu działa jako bufor: odpowiada bez odpytywania
+bazy i przejmuje magazyn, gdy zapis albo odczyt trwałości zawiedzie, ponieważ
+awaria trwałości nie ma prawa odmówić przeniesienia kontekstu.

@@ -7,22 +7,8 @@ import {
 
 /**
  * Pliki warsztatu obu warstw — wszystko, co moduł wie o zawartości warsztatów.
- *
- * Zawartość warsztatu przychodzi dwiema drogami: `apps.workspace.list` daje
- * wykaz z bazy, a `apps.workspace.changed` — zmianę zaszłą gdziekolwiek indziej.
- * Ten plik jest jednym miejscem, w którym oba źródła się spotykają, żeby okna
- * nie prowadziły dwóch rozjeżdżających się wykazów tego samego warsztatu.
- *
- * Tożsamością pliku jest para (warstwa, ścieżka), nie sama ścieżka. Klucz
- * naturalny warsztatu to okno, warstwa i ścieżka, a okno rozstrzyga się na
- * poziomie całego modułu — zostają więc dwa człony. Zbiór trzymany jedną listą
- * po samej ścieżce zlewałby `src/main.ts` frontendu z `src/main.ts` backendu
- * w jeden wiersz i pokazywał treść nie tego pliku, co trzeba.
- *
- * Ścieżki nie przycinamy przy porównaniu. Rdzeń zapisuje ją co do znaku, więc
- * dwie ścieżki różniące się znakiem niewidocznym są dla niego dwoma plikami —
- * i tak samo muszą być tutaj. Zrównanie ich w kliencie kazałoby zbiorowi
- * nadpisać wpis, którego rdzeń nie tknął.
+ * Jedno miejsce spotkania odczytu `apps.workspace.list` i zdarzenia
+ * `apps.workspace.changed`, żeby okna nie prowadziły dwóch rozjeżdżających się wykazów.
  */
 export interface WarsztatPlikow {
   /** Pliki jednej warstwy; kolejność z odpowiedzi rdzenia, dopiski na końcu. */
@@ -60,15 +46,13 @@ export function utworzWarsztatPlikow(): WarsztatPlikow {
 
     wchlonWykaz(warstwa, pliki) {
       // Zastępuje, nie dokłada: odpowiedź rdzenia jest pełnym stanem warstwy
-      // w chwili odczytu, więc scalanie zostawiłoby w wykazie plik, który
-      // w bazie już nie istnieje — a wykaz miałby wtedy wiersz bez pokrycia.
+      // w chwili odczytu.
       wedlugWarstwy.set(warstwa, [...pliki]);
       czytane.add(warstwa);
     },
 
     wchlonZdarzenie(tresc) {
-      // Zdarzenie o zmianie bez pola pliku nie niesie nic, co dałoby się
-      // wstawić — mijamy je zamiast zakładać wiersz z pustki.
+      // Zdarzenie bez pola pliku nie niesie nic, co dałoby się wstawić.
       if (tresc.file === undefined) return;
       if (tresc.change === ChangeKind.Deleted) {
         const biezace = wedlugWarstwy.get(tresc.layer) ?? [];

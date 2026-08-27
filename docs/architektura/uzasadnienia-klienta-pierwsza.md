@@ -4938,3 +4938,23 @@ uchwyt `browser.screenshot.capture`.
 
 Zdanie o cytacie ma się opierać na wierszu, który wrócił z rdzenia, a nie na tym, że okno
 cytat wysłało; dlatego zamówienie spisane jest raz i to samo idzie w obie strony.
+
+## budowa/klient-poprzedni/src/moduly/apps/warsztat-plikow.ts
+
+Zawartość warsztatu przychodzi dwiema drogami: `apps.workspace.list` daje wykaz z bazy,
+a zdarzenie `apps.workspace.changed` — zmianę zaszłą gdziekolwiek indziej. Ten plik jest
+jednym miejscem, w którym oba źródła się spotykają.
+
+Tożsamością pliku jest para złożona z warstwy i ścieżki, a nie sama ścieżka. Klucz naturalny
+warsztatu to okno, warstwa i ścieżka, przy czym okno rozstrzyga się na poziomie całego modułu,
+więc zostają dwa człony. Zbiór trzymany jedną listą po samej ścieżce zlewałby `src/main.ts`
+warstwy przedniej z `src/main.ts` warstwy zaplecza w jeden wiersz i pokazywał treść nie tego
+pliku, co trzeba.
+
+Ścieżek nie przycinamy przy porównaniu. Rdzeń zapisuje ścieżkę co do znaku, więc dwie ścieżki
+różniące się znakiem niewidocznym są dla niego dwoma plikami i tak samo muszą być tutaj.
+Zrównanie ich w kliencie kazałoby zbiorowi nadpisać wpis, którego rdzeń nie tknął.
+
+Wchłonięcie wykazu zastępuje warstwę, a nie dokłada do niej. Odpowiedź rdzenia jest pełnym
+stanem warstwy w chwili odczytu, więc scalanie zostawiłoby w wykazie plik, który w bazie już
+nie istnieje. Zdarzenie o zmianie bez pola pliku jest mijane, zamiast zakładać wiersz z pustki.

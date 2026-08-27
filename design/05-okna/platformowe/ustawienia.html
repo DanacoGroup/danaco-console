@@ -1202,7 +1202,7 @@
     p.addEventListener('click', function () {
       var wl = p.getAttribute('aria-checked') === 'true';
       if (wl && liczbaAktywnych() === 1) {
-        /* nie blokujemy — sygnalizujemy ostrzeżeniem (zasada zerowych blokad) */
+        /* blokada nie działa — sygnalizuje się ostrzeżeniem (zasada zerowych blokad) */
         if (ostrz) { ostrz.hidden = false; }
         toast('Ostatnia aktywna metoda', 'Wyłączasz jedyną aktywną metodę logowania. To nie jest blokowane, lecz zalecane jest wcześniejsze włączenie innej metody.', 'ostrzezenie', 4200);
       }

@@ -3676,3 +3676,8 @@ WartosciBazyChunkKind i nie trafiają do bazy, której ograniczenie CHECK dopusz
 wyłącznie rodzaje treści rozmowy. Rodzaje treści rozmowy nie mają tu drugiej
 nazwy: bierze się je wprost ze współdzielonego kontraktu, a odwzorowanie na
 kolumnę bazy wykonuje pakiet dane.
+
+## budowa/server/internal/models/sciezka_tresci.go
+Odczyt wartości ścieżką z dokumentu JSON pozwala adapterowi sieciowemu nie znać
+kształtu odpowiedzi żadnego dostawcy: kształt jest parametrem wiersza rejestru,
+nie warunkiem zapisanym w kodzie.

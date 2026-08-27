@@ -1652,3 +1652,26 @@ bez tych pól jak zestaw kompletny.
 `design.font.preview` mówi polem `available`, czy rdzeń krój ma. Podgląd
 złożony krojem zastępczym wygląda identycznie jak prawdziwy, a wybrana
 wtedy typografia nie jest tą, którą zobaczy się u siebie.
+
+## adapter_modul_design_uchwyty.go
+
+Komenda `design.asset.tag.set` domyka lukę odczytu: `design.asset.list` zawęża
+wykaz zasobów polem `tags`, a bez tej komendy nie byłoby czym etykiet nadać.
+
+Zdarzenie `design.asset.created` ma dwóch nadawców: generowanie i wniesienie
+zasobu. Obie drogi odkładają bajty w magazynie rdzenia pod sumą kontrolną,
+zanim powstanie wiersz zasobu, a odmowa nie rozgłasza niczego, ponieważ
+opakowanie milczy przy błędzie — droga bez bajtów jest więc też drogą bez
+zdarzenia.
+
+`UsunZasob` oddaje trzy wartości jako jedyna metoda portu Design: odpowiedź
+kontraktu niesie samo pole `removed`, a zdarzenie `design.asset.deleted` musi
+nieść cały usunięty zasób, bo po usunięciu wiersza z bazy nie ma go już skąd
+odczytać — adapter podaje go obok odpowiedzi. Rozgłoszenie z wnętrza adaptera
+byłoby drugą drogą do szyny zdarzeń, skoro emiter należy do rejestru, a nie do
+modułu.
+
+Metody odczytu kompozycji dla szyny zdarzeń oddają brak wiersza jako wartość
+`false`, a nie jako błąd: zmiana kompozycji już się udała w chwili odczytu,
+więc niepowodzenie odczytu ma zamknąć usta szynie zdarzeń, a nie unieważnić
+wykonaną komendę.

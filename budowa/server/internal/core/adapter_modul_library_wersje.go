@@ -1,12 +1,7 @@
 // Odpowiedzialność pliku: wersje pliku repozytorium wiedzy po stronie rdzenia —
-// `library.version.add`, `library.version.list` i `library.version.restore`,
+// library.version.add, library.version.list i library.version.restore,
 // zasilające Versioning Panel. Sam plik i wyszukiwanie mieszkają
-// w `adapter_modul_library.go`.
-//
-// `version.add` jest jedyną drogą, którą historia pliku rośnie: wgranie pliku
-// (`library.file.upload`) zawsze nadaje nowy kod pliku (`nowyIdentyfikator`,
-// `Wgraj`), więc dwa wgrania dają dwa osobne pliki po jednej wersji każdy,
-// a nie dwie wersje jednego pliku.
+// w adapter_modul_library.go.
 package core
 
 import (
@@ -17,14 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// DolozWersje obsługuje `library.version.add`. Dokłada wiersz historii i tym
-// samym ruchem przestawia na niego plik macierzysty (jedna transakcja,
-// `dane/library_wersje_zapis.go`), bo kontrakt obiecuje w odpowiedzi oba byty
-// naraz — wersję i plik po dołożeniu.
-//
-// Nieznany plik jest odmową, nie cichym powodzeniem: dołożenie wersji do pliku,
-// którego nie ma, nie może skończyć się utworzeniem czegokolwiek — `a.plik`
-// nazywa brak kodem `not_found`, a puste wskazanie kodem walidacji.
+// DolozWersje obsługuje library.version.add. Dokłada wiersz historii i tym
+// samym ruchem przestawia na niego plik macierzysty w jednej transakcji, bo
+// kontrakt obiecuje w odpowiedzi oba byty naraz.
 func (a *adapterBiblioteki) DolozWersje(ctx context.Context,
 	z shared.LibraryVersionAddRequest) (shared.LibraryVersionAddResponse, error) {
 
@@ -45,10 +35,7 @@ func (a *adapterBiblioteki) DolozWersje(ctx context.Context,
 	if err != nil {
 		return shared.LibraryVersionAddResponse{}, bladBiblioteki(err)
 	}
-	// Nowa wersja jest od tej chwili treścią bieżącą pliku, więc indeks treści
-	// musi opisywać ją, a nie treść poprzednią — inaczej wyszukiwanie po treści
-	// oddawałoby trafienia w słowa, których w pliku już nie ma
-	// (`adapter_modul_library_indeks.go`).
+	// Nowa wersja jest od tej chwili treścią bieżącą pliku, więc indeks musi opisywać ją, nie poprzednią.
 	a.zaindeksujTresc(ctx, po)
 	kontrakt, err := a.zloz(ctx, po)
 	if err != nil {
@@ -59,25 +46,9 @@ func (a *adapterBiblioteki) DolozWersje(ctx context.Context,
 	}, nil
 }
 
-// trescNowejWersji rozstrzyga, co wersja niesie jako swoją treść.
-//
-// Żądanie z treścią albo ze ścieżką jedzie tą samą drogą co wgranie pliku
-// (`trescWgrania`, `adapter_modul_library_tresc.go`): bajty lądują w magazynie
-// treści rdzenia, a ścieżka bloba staje się odwołaniem — niezależnie od tego,
-// czy przyszły base64, czy zostały wciągnięte spod `sourcePath`. Rozmiar i suma
-// kontrolna są liczone w obu drogach, bo wersja bez sumy nie daje się sprawdzić.
-// Dzięki temu historia jest odtwarzalna: każda wersja z treścią ma własne,
-// zamrożone bajty na nośniku, których nie ruszy zmiana pliku źródłowego.
-//
-// Żądanie bez treści i bez ścieżki jest znacznikiem na treści bieżącej —
-// kamieniem milowym z kontraktu (`LibraryVersionAddRequest.label`). Taka wersja
-// bierze miarę i odwołanie z pliku macierzystego, zamiast wstawić pustkę:
-// wersja pusta przy przywróceniu wymazałaby plikowi odwołanie do treści, więc
-// „oznaczenie kamienia milowego" niszczyłoby zasób, który miało utrwalić.
-//
-// Nieudany zapis treści jest odmową dołożenia wersji: wiersz historii powstaje
-// dopiero po utrwaleniu bajtów, inaczej Versioning Panel pokazywałby wersję, do
-// której nie ma czego przywrócić.
+// trescNowejWersji rozstrzyga, co wersja niesie jako swoją treść. Żądanie bez
+// treści i bez ścieżki jest znacznikiem na treści bieżącej — kamieniem
+// milowym, biorącym miarę i odwołanie z pliku macierzystego.
 func (a *adapterBiblioteki) trescNowejWersji(plik dane.PlikBiblioteki,
 	z shared.LibraryVersionAddRequest) (dane.WersjaPlikuBiblioteki, error) {
 
@@ -103,15 +74,9 @@ func bezWartosci(pole *string) bool {
 }
 
 // etykietaWersji oddaje etykietę żądania, a przy jej braku nazywa wersję jej
-// kolejnością w historii pliku („wersja 3").
-//
-// To nie jest dana zmyślona: numer jest policzony z wierszy leżących w bazie.
-// Schemat biblioteki (`store/migracja_045_biblioteka.sql`) świadomie nie ma
-// kolumny numeru — wersja jest bytem, nie licznikiem — więc kolejność jest
-// wyłącznie widokiem chwili zapisu. Bez tej etykiety Versioning Panel
-// pokazywałby surowy kod `wers-…`, po którym nie widać, która wersja jest
-// która. Nieudany odczyt historii zostawia etykietę pustą — brak nazwy jest
-// lepszy niż nazwa policzona z niczego.
+// kolejnością w historii pliku. Numer jest policzony z wierszy w bazie, bo
+// schemat biblioteki świadomie nie ma kolumny numeru — wersja jest bytem,
+// nie licznikiem.
 func (a *adapterBiblioteki) etykietaWersji(ctx context.Context,
 	plik dane.PlikBiblioteki, zadana *string) *string {
 
@@ -159,7 +124,7 @@ func ograniczWersje(wiersze []dane.WersjaPlikuBiblioteki, limit *int) []dane.Wer
 	return wiersze[:*limit]
 }
 
-// wersjaKontraktu składa wersję kontraktu z wiersza repozytorium.
+// wersjaKontraktu składa wersję kontraktu z wiersza repozytorium historii pliku wraz z kodem pliku macierzystego.
 func wersjaKontraktu(kodPliku string, wiersz dane.WersjaPlikuBiblioteki) shared.LibraryVersion {
 	return shared.LibraryVersion{
 		Id: wiersz.Kod, FileId: kodPliku, Label: wiersz.Etykieta, Author: wiersz.Autor,
@@ -168,11 +133,9 @@ func wersjaKontraktu(kodPliku string, wiersz dane.WersjaPlikuBiblioteki) shared.
 	}
 }
 
-// PrzywrocWersje obsługuje `library.version.restore`. Kod wersji jest szukany
-// wyłącznie w obrębie wskazanego pliku (`dane/library_wersje.go`,
-// `wersjaDoPrzywrocenia`) — repozytorium sam zwraca błąd braku wiersza, gdy
-// Operator poda wersję z innego pliku, więc adapter nie musi tego sprawdzać
-// osobno.
+// PrzywrocWersje obsługuje library.version.restore. Kod wersji jest szukany
+// wyłącznie w obrębie wskazanego pliku — repozytorium samo zwraca błąd braku
+// wiersza, gdy Operator poda wersję z innego pliku.
 func (a *adapterBiblioteki) PrzywrocWersje(ctx context.Context,
 	z shared.LibraryVersionRestoreRequest) (shared.LibraryVersionRestoreResponse, error) {
 
@@ -188,8 +151,7 @@ func (a *adapterBiblioteki) PrzywrocWersje(ctx context.Context,
 	if err != nil {
 		return shared.LibraryVersionRestoreResponse{}, bladNieznanegoPlikuBiblioteki(z.VersionId, err)
 	}
-	// Przywrócenie zmienia treść bieżącą tak samo jak dołożenie wersji, więc
-	// indeks idzie za nią tą samą drogą.
+	// Przywrócenie zmienia treść bieżącą tak samo jak dołożenie wersji, indeks idzie tą samą drogą.
 	a.zaindeksujTresc(ctx, po)
 	kontrakt, err := a.zloz(ctx, po)
 	if err != nil {

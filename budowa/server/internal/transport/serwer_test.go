@@ -17,11 +17,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany warstwy nasłuchu idą przez prawdziwe gniazdo, nie przez atrapę
-// biblioteki. Powód jest jeden: wszystko, co w tej warstwie potrafi zawieść,
-// zawodzi na styku dwóch pętli, gniazda i rejestru połączeń — czyli dokładnie
-// tam, gdzie atrapa niczego by nie odwzorowała. Serwer wstaje na porcie
-// wskazanym przez system, więc sprawdziany idą równolegle i nie biją się o port.
+// Sprawdziany warstwy nasłuchu idą przez prawdziwe gniazdo, nie przez atrapę biblioteki.
 
 // rdzenAtrapa jest realizacją interfejsu Rdzen po stronie sprawdzianu. Transport
 // nie zna rdzenia — zna wyłącznie ten interfejs — więc atrapa jest tu bytem
@@ -60,8 +56,7 @@ func (r *rdzenAtrapa) zdarzeniaPolaczen() (int, int) {
 	return len(r.przylaczone), len(r.odlaczone)
 }
 
-// podnies uruchamia serwer na porcie wskazanym przez system i zwraca go wraz
-// z adresem gniazda.
+// podnies uruchamia serwer sprawdzianu na porcie wskazanym przez system i zwraca go wraz z adresem gniazda nasłuchu.
 func podnies(t *testing.T, rdzen Rdzen) (*Serwer, string) {
 	t.Helper()
 
@@ -85,7 +80,7 @@ func podnies(t *testing.T, rdzen Rdzen) (*Serwer, string) {
 	return serwer, "ws://" + serwer.Adres() + SciezkaGniazdaDomyslna
 }
 
-// polacz nawiązuje gniazdo klienta. Konto puste zostawia konto domyślne.
+// polacz nawiązuje gniazdo klienta pod wskazanym adresem. Konto puste zostawia konto domyślne serwera.
 func polacz(t *testing.T, adres, konto string) *websocket.Conn {
 	t.Helper()
 
@@ -105,7 +100,7 @@ func polacz(t *testing.T, adres, konto string) *websocket.Conn {
 	return gniazdo
 }
 
-// wyslij podaje kopertę do gniazda.
+// wyslij koduje kopertę kontraktu i podaje ją do gniazda klienta w ramach jednego wywołania sprawdzianu.
 func wyslij(t *testing.T, gniazdo *websocket.Conn, k protocol.Koperta) {
 	t.Helper()
 	dane, err := protocol.Zakoduj(k)
@@ -119,7 +114,7 @@ func wyslij(t *testing.T, gniazdo *websocket.Conn, k protocol.Koperta) {
 	}
 }
 
-// odbierz czyta jedną kopertę z gniazda.
+// odbierz czyta jedną kopertę z gniazda klienta i dekoduje ją do postaci kontraktu przed jej zwrotem sprawdzianowi.
 func odbierz(t *testing.T, gniazdo *websocket.Conn) protocol.Koperta {
 	t.Helper()
 	ctx, przerwij := context.WithTimeout(context.Background(), 5*time.Second)
@@ -156,10 +151,9 @@ func TestOdpowiedzWracaZTymSamymIdentyfikatorem(t *testing.T) {
 	}
 }
 
-// TestStrumienIdzieJednymIdentyfikatoremIWKolejnosci przechodzi całą turę
-// strumieniową: rdzeń odsyła fragmenty przez ujście, a odpowiedź na komendę nie
-// idzie wcale (koperta pustego typu). Sprawdzane jest to, z czego klient składa
-// treść — jeden identyfikator, numery rosnące od jedynki, jedno domknięcie.
+// TestStrumienIdzieJednymIdentyfikatoremIWKolejnosci przechodzi turę strumieniową:
+// rdzeń odsyła fragmenty przez ujście, a odpowiedź na komendę nie idzie wcale.
+// Sprawdza jeden identyfikator, rosnące numery i jedno domknięcie.
 func TestStrumienIdzieJednymIdentyfikatoremIWKolejnosci(t *testing.T) {
 	const fragmentow = 5
 
@@ -213,10 +207,9 @@ func TestStrumienIdzieJednymIdentyfikatoremIWKolejnosci(t *testing.T) {
 	}
 }
 
-// TestRozgloszenieNieWychodziPozaKonto jest sprawdzianem wycieku między kontami.
-// Rozgłoszenie jest jedyną drogą synchronizacji wielourządzeniowej, więc pomyłka
-// w doborze odbiorców oddaje treść jednego konta urządzeniom drugiego —
-// a to jest awaria, której nie widać ani w odpowiedzi, ani w dzienniku.
+// TestRozgloszenieNieWychodziPozaKonto sprawdza wyciek między kontami. Rozgłoszenie
+// jest jedyną drogą synchronizacji wielourządzeniowej, więc pomyłka w doborze
+// odbiorców oddaje treść jednego konta urządzeniom drugiego.
 func TestRozgloszenieNieWychodziPozaKonto(t *testing.T) {
 	serwer, adres := podnies(t, &rdzenAtrapa{})
 
@@ -244,9 +237,7 @@ func TestRozgloszenieNieWychodziPozaKonto(t *testing.T) {
 		}
 	}
 
-	// Urządzenie obcego konta nie ma dostać niczego. Krótki termin odczytu jest
-	// tu miarą ciszy: gdyby zdarzenie wyciekło, byłoby już w kolejce, bo
-	// rozgłoszenie do dwóch pozostałych już się odbyło.
+	// Urządzenie obcego konta nie ma dostać niczego; krótki termin odczytu jest tu miarą ciszy.
 	ctx, przerwij := context.WithTimeout(context.Background(), 300*time.Millisecond)
 	defer przerwij()
 	if _, dane, err := obce.Read(ctx); err == nil {
@@ -310,8 +301,7 @@ func TestRozlaczenieWTrakcieStrumieniaNieZostawiaSieroty(t *testing.T) {
 				if err != nil {
 					break
 				}
-				// Błąd wysyłki do urządzenia, które odeszło, jest błędem tego
-				// jednego wywołania — pętla ma go znieść, a nie wywrócić rdzeń.
+				// Błąd wysyłki do urządzenia, które odeszło, jest błędem jednego wywołania, a nie awarią rdzenia.
 				_ = u.Wyslij(koperta)
 			}
 			return protocol.Koperta{}
@@ -360,9 +350,8 @@ func TestRamkaNieczytelnaNieZrywaPolaczenia(t *testing.T) {
 	}
 }
 
-// TestZalamanieObslugiWracaKodemZamiastZabicProcesu sprawdza zachowanie
-// fail-open opisane w wykonaniu: usterka obsługiwacza kończy jedno wywołanie,
-// a nie proces rdzenia.
+// TestZalamanieObslugiWracaKodemZamiastZabicProcesu sprawdza zachowanie fail-open:
+// usterka obsługiwacza kończy jedno wywołanie, a nie proces rdzenia.
 func TestZalamanieObslugiWracaKodemZamiastZabicProcesu(t *testing.T) {
 	rdzen := &rdzenAtrapa{
 		obsluga: func(_ context.Context, z protocol.Request, _ Ujscie) protocol.Koperta {
@@ -389,15 +378,9 @@ func TestZalamanieObslugiWracaKodemZamiastZabicProcesu(t *testing.T) {
 	}
 }
 
-// TestRdzenNiepodlaczonyOddajeOdmoweZamiastCiszy sprawdza drugie zachowanie
-// fail-open: połączenie nawiązane przed podłączeniem rdzenia żyje, a jego
-// komendy dostają odpowiedź zamiast ciszy.
-//
-// Typ odpowiedzi jest tu typem komendy, nie zdarzeniem `*.unknown`: komenda
-// kontraktowa została rozpoznana przez rejestr transportu, więc odmowa wraca pod
-// jej własną nazwą. Zdarzenie obszaru dostaje wyłącznie typ spoza kontraktu.
-// Dla klienta rozstrzyga i tak stan wraz z kodem, po których wie, że rdzeń
-// uchwytu nie ma.
+// TestRdzenNiepodlaczonyOddajeOdmoweZamiastCiszy sprawdza drugie zachowanie fail-open:
+// połączenie nawiązane przed podłączeniem rdzenia żyje, a jego komendy dostają
+// odpowiedź zamiast ciszy.
 func TestRdzenNiepodlaczonyOddajeOdmoweZamiastCiszy(t *testing.T) {
 	serwer, adres := podnies(t, nil)
 	gniazdo := polacz(t, adres, "")
@@ -422,8 +405,7 @@ func TestRdzenNiepodlaczonyOddajeOdmoweZamiastCiszy(t *testing.T) {
 		t.Errorf("typ spoza kontraktu dostał %q", spoza.Type)
 	}
 
-	// Po podłączeniu rdzenia to samo połączenie ma zacząć być obsługiwane —
-	// rdzeń pobierany jest przy obsłudze komunikatu, nie przy nawiązaniu.
+	// Po podłączeniu rdzenia połączenie zaczyna być obsługiwane: rdzeń jest pobierany przy komunikacie.
 	serwer.PodlaczRdzen(&rdzenAtrapa{})
 	wyslij(t, gniazdo, protocol.Koperta{Type: shared.CommandSessionList, Id: "po-rdzeniu"})
 	dalsza := odbierz(t, gniazdo)
@@ -512,10 +494,9 @@ func TestNiekompletnaParaTlsNieWstaje(t *testing.T) {
 	}
 }
 
-// poczekajNaPolaczenia czeka, aż rejestr osiągnie oczekiwany rozmiar.
-// Rejestracja i wykreślenie idą w biegu obsługi gniazda, więc odczyt natychmiast
-// po nawiązaniu bywa o krok wcześniejszy — czekanie na stan, a nie usypianie na
-// stałą, znosi tę zależność od chwili.
+// poczekajNaPolaczenia czeka, aż rejestr osiągnie oczekiwany rozmiar. Rejestracja
+// i wykreślenie idą w biegu obsługi gniazda, więc czekanie na stan zamiast stałej
+// przerwy znosi zależność od chwili odczytu.
 func poczekajNaPolaczenia(t *testing.T, serwer *Serwer, oczekiwane int) {
 	t.Helper()
 

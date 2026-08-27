@@ -3566,3 +3566,16 @@ Projekt zakłada się przy pierwszym wejściu do niego: kontrakt nie ma komendy 
 
 ## budowa/server/internal/dane/developer_warsztat_zapis.go
 Zapisy zbiorcze znalezisk skanu, wyników testów i pokrycia idą jedną transakcją i zaczynają się od usunięcia poprzedniego pomiaru, ponieważ pomiar jest stanem z jednej chwili, nie przyrostem: dopisanie drugiego przebiegu do pierwszego dałoby wykaz, w którym ten sam test stoi dwa razy z dwoma różnymi wynikami, bez sposobu rozstrzygnięcia, który wynik jest aktualny.
+
+## budowa/server/internal/zdalne/nadajnik_powiadomien.go
+Pakiet opisuje kształt nadajnika, którego potrzebuje, i nie bierze interfejsu
+z pakietu transportu ani z rdzenia, podobnie jak rdzeń opisuje u siebie własny
+port nadajnika zamiast importować pakiet transportu. Port nie niesie koperty:
+nośnik rozgłoszenia przyjmuje kopertę z typem komunikatu z kontraktu, a kontrakt
+nie ma dziś ani jednego zdarzenia powiadomienia, więc zbudowanie koperty z typem
+spoza kontraktu wysłałoby komunikat, którego klient nie zna. Dlatego port bierze
+sam fakt do przekazania, a złożenie koperty należy do strony znającej kontrakt,
+czyli adaptera w rdzeniu wpiętego po wniesieniu zdarzenia powiadomienia. Ten
+pakiet prowadzi kolejkę i rozstrzyga, co i kiedy ma polecieć, a nie rozstrzyga,
+jakim napisem się to nazywa na łączu. Ponowienie doręczenia kosztuje jeden takt,
+natomiast nieprawdziwy zapis stanu doręczenia w bazie kosztuje zaufanie do kanału.

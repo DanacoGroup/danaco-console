@@ -682,3 +682,19 @@ Rozmiar pisma i schemat barw stawiane są na węźle modułu, a nie na węźle
 okna: pismo konsoli ma być jedno w całym module, bo podgląd wyjścia
 w monitorze procesów niesie ten sam strumień co ogon karty. Węzeł modułu
 bierze się z drzewa, bo okno nie zna swojego gospodarza w chwili budowy.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-warsztatu-translate.ts
+
+Warsztat modułu translate jest jednym źródłem dla wszystkich rodzin komend, które nie mieszczą
+się w czterech oknach pierwotnych: pamięci jako bytu widocznego dla operatora, segmentacji,
+terminologii, korekty i spójności, profili kontroli jakości, obiegu zatwierdzeń, dokumentów,
+lokalizacji oprogramowania, napisów i dubbingu, silników, polityki pivota, przebiegu
+pakietowego oraz wymiany zewnętrznej. Jedno źródło zamiast jednego pliku na okno wynika
+z tego, że wszystkie te komendy idą tą samą drogą wywołania i różnią się wyłącznie nazwą
+i ładunkiem; rozbicie ich na dwanaście plików dałoby dwanaście kopii tej samej obudowy, z których
+każda musiałaby osobno pamiętać o odmowie komendy nieznanej.
+
+Sprawdzian kształtu towarzyszy każdej komendzie i nie jest formalnością: odróżnia rdzeń, który
+odpowiedział wynikiem, od rdzenia, który odpowiedział pustą kopertą. Okno przyjmujące pustą
+kopertę jako wynik pokazałoby pustkę jako skutek, czyli dokładnie tę szkodę, przed którą stoi
+cały moduł.

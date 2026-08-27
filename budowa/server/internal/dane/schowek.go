@@ -1,14 +1,4 @@
-// Odpowiedzialność pliku: historia schowka Operatora (tabela `wpis_schowka`,
-// migracja 292) — rodzina `clipboard.*`.
-//
-// Rdzeń NIE czyta schowka maszyny Operatora i ta warstwa niczego takiego nie
-// udaje. Treść przychodzi z okna, które ją skopiowało, a wraca do okna, które
-// ma ją wkleić. Repozytorium daje historii trwałość — to cała jego rola.
-//
-// Powtórzenie treści nie mnoży wierszy: odcisk treści ma warunek UNIQUE, więc
-// drugi zapis tej samej treści podnosi wiersz zastany na czoło wykazu jednym
-// zapytaniem, bez odczytu-i-zapisu, który dwa okna kopiujące naraz umiałyby
-// rozjechać.
+// Odpowiedzialność pliku: historia schowka Operatora, rodzina komend clipboard.*; rdzeń nie czyta schowka maszyny, daje tylko trwałość.
 package dane
 
 import (
@@ -19,7 +9,7 @@ import (
 	"strings"
 )
 
-// WpisSchowka to wiersz tabeli `wpis_schowka`.
+// WpisSchowka to wiersz tabeli wpis_schowka, niosący treść, postać i przypięcie jednego wpisu historii.
 type WpisSchowka struct {
 	Kod           string
 	Rodzaj        string
@@ -32,19 +22,11 @@ type WpisSchowka struct {
 	OknoZrodlowe  *string
 	Utworzono     int64
 	Uzyto         *int64
-	// PostacJSON niesie POSTAĆ fragmentu odłożonego do schowka — krój, stopień,
-	// wyróżnienia, postać akapitu (migracja 390). Wpisu bez postaci nie wolno
-	// czytać jako wpisu o postaci pustej: puste znaczy „nie wiadomo, jaka była
-	// postać źródła", więc wklejenie „zachowaj postać źródła" ma wtedy powiedzieć
-	// wprost, że zachowuje postać miejsca.
-	//
-	// Postać NIE wchodzi do rachunku odcisku i to jest zamysł: odcisk odpowiada
-	// na pytanie „czy tę samą TREŚĆ już odłożono", a ten sam akapit skopiowany
-	// dwa razy — raz z wytłuszczeniem, raz bez — ma zostać jednym wpisem historii.
+	// PostacJSON niesie postać fragmentu odłożonego do schowka, nie wchodzi do rachunku odcisku treści.
 	PostacJSON *string
 }
 
-// SitoSchowka zawęża odczyt historii.
+// SitoSchowka zawęża odczyt całej historii schowka do wpisów spełniających wskazane kryteria tego filtru.
 type SitoSchowka struct {
 	Fraza        string
 	Rodzaj       string
@@ -53,7 +35,7 @@ type SitoSchowka struct {
 	Przesuniecie int
 }
 
-// RepozytoriumSchowka jest kontraktem historii schowka.
+// RepozytoriumSchowka jest kontraktem historii schowka Operatora wraz z przypinaniem i usuwaniem wpisów.
 type RepozytoriumSchowka interface {
 	DopiszWpisSchowka(ctx context.Context, wpis WpisSchowka) (WpisSchowka, bool, error)
 	WpisySchowka(ctx context.Context, sito SitoSchowka) ([]WpisSchowka, int, error)
@@ -66,10 +48,7 @@ const (
 	                       rozmiar_bajtow, przypiety, wrazliwy, okno_zrodlowe, utworzono, uzyto,
 	                       postac_json`
 
-	// Postać odłożona PONOWNIE nadpisuje zastaną, a postać niepodana jej nie
-	// zabiera (`COALESCE`): powtórne skopiowanie tego samego akapitu podnosi wpis
-	// na czoło wykazu i przynosi postać świeższą, a skopiowanie tej samej treści
-	// drogą, która postaci nie zna, nie ma prawa postaci zastanej wymazać.
+	// Postać odłożona ponownie nadpisuje zastaną, a postać niepodana jej nie zabiera przy tym samym zapisie.
 	wstawWpisSchowka = `INSERT INTO wpis_schowka (` + kolumnyWpisuSchowka + `)
 	                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	                    ON CONFLICT(odcisk) DO UPDATE SET
@@ -95,7 +74,7 @@ type repozytoriumSchowka struct {
 	db        *sql.DB
 }
 
-// noweRepozytoriumSchowka zakłada historię schowka nad bazą zestawu.
+// noweRepozytoriumSchowka zakłada historię schowka nad wspólną bazą zestawu, gotową do zapisu i odczytu.
 func noweRepozytoriumSchowka(z *zapytania, db *sql.DB) *repozytoriumSchowka {
 	return &repozytoriumSchowka{zapytania: z, db: db}
 }
@@ -148,7 +127,7 @@ func (r *repozytoriumSchowka) DopiszWpisSchowka(ctx context.Context,
 	return zapisany, bylo, err
 }
 
-// WpisySchowka zwraca historię: przypięte na czele, potem od najnowszego.
+// WpisySchowka zwraca historię schowka: przypięte wpisy na czele, potem pozostałe od najnowszego wpisu.
 func (r *repozytoriumSchowka) WpisySchowka(ctx context.Context,
 	sito SitoSchowka) ([]WpisSchowka, int, error) {
 
@@ -204,7 +183,7 @@ func (r *repozytoriumSchowka) WpisySchowka(ctx context.Context,
 	return lista, wszystkich, nil
 }
 
-// PrzypnijWpisSchowka przypina wpis albo zdejmuje przypięcie.
+// PrzypnijWpisSchowka przypina wskazany wpis historii schowka albo zdejmuje jego wcześniejsze przypięcie.
 func (r *repozytoriumSchowka) PrzypnijWpisSchowka(ctx context.Context, kod string,
 	przypiety bool) (WpisSchowka, error) {
 
@@ -266,7 +245,7 @@ func (r *repozytoriumSchowka) UsunWpisySchowka(ctx context.Context, kod string,
 	return int(usuniete), nil
 }
 
-// odczytajWpisSchowka przekłada wiersz na wpis historii.
+// odczytajWpisSchowka przekłada wiersz tabeli na wpis historii schowka Operatora, kolumna po kolumnie.
 func odczytajWpisSchowka(s skaner) (WpisSchowka, error) {
 	var wpis WpisSchowka
 	var zajawka, okno, postac sql.NullString

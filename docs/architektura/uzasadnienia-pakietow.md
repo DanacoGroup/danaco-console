@@ -5373,3 +5373,17 @@ wpuszcza natychmiast.
 Przejazd migracji musi zatrzymać się na kroku o nazwie spoza wzorca, a nie pominąć go po cichu, ponieważ
 pominięty krok to schemat niepełny bez jednego komunikatu o błędzie. Numeru zwolnionego nie wolno użyć
 powtórnie, więc sprawdzian, który pilnowałby ciągłości numeracji, wymuszałby błąd zamiast go łapać.
+
+## budowa/server/internal/dane/okna.go
+Kod eksperta, nie identyfikator wiersza — ekspert bywa kasowany niezależnie
+od okien, w których pracował.
+
+Bez identyfikatora zewnętrznego po restarcie rdzenia nie da się połączyć
+okna wskazanego przez klienta z jego historią.
+
+Zapis rozmowy jest wołany po każdej turze, bo program wiersza poleceń może
+nadać identyfikator dopiero w trakcie pierwszej wymiany. Zapis pustego
+napisu jest dozwolony i znaczy rozpoczęcie następnej tury od nowa —
+na przykład po przeniesieniu kontekstu.
+## budowa/server/internal/dane/schowek.go
+Rdzeń nie czyta schowka maszyny Operatora i ta warstwa niczego takiego nie udaje: treść przychodzi z okna, które ją skopiowało, a wraca do okna, które ma ją wkleić, więc repozytorium daje historii wyłącznie trwałość. Powtórzenie treści nie mnoży wierszy: odcisk treści ma warunek jednoznaczności, więc drugi zapis tej samej treści podnosi wiersz zastany na czoło wykazu jednym zapytaniem, bez odczytu i zapisu, który dwa okna kopiujące naraz umiałyby rozjechać. Wpisu bez zapisanej postaci nie wolno czytać jako wpisu o postaci pustej: puste znaczy, że nie wiadomo, jaka była postać źródła, więc wklejenie z poleceniem zachowania postaci źródła ma wtedy zachować postać miejsca docelowego. Postać fragmentu nie wchodzi do rachunku odcisku, bo odcisk odpowiada na pytanie, czy tę samą treść już odłożono, a ten sam akapit skopiowany dwa razy w różnym wyróżnieniu ma zostać jednym wpisem historii.

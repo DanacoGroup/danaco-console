@@ -3034,3 +3034,18 @@ globalny najszerszy i przegrywa z każdym innym.
 
 Oś mówi, dla czego wartość obowiązuje: dla platformy, dla wskazanego modelu albo dla
 wskazanego konta. Oś pominięta we wpisie znaczy `platform`.
+
+## budowa/klient-poprzedni/src/moduly/library/wiersz-wersji.ts
+
+Osiągalność treści bierze się z odpowiedzi rdzenia opracowanej w `dostepnosc-tresci.ts`,
+a nie z obecności sumy kontrolnej w opisie wersji. Pole `checksum` bywa obecne przy wersji,
+której treści rdzeń nie oddaje, i nieobecne przy wersji, którą oddaje w całości, więc jako
+przesłanka osiągalności myli.
+
+Odpowiedź rdzenia dotyczy treści, którą dokument niesie jako bieżącą, dlatego werdykt siada
+wyłącznie na wierszu bieżącym: kontrakt nie ma komendy pytającej o treść wersji niebieżącej.
+Wiersz niebieżący nie jest zatem „nieznany" z braku odpowiedzi — po prostu nie był pytany.
+
+Werdykt `brak` znaczy, że nie ma do czego wracać. Werdykt `odmowa` znaczy, że rdzeń treści
+nie oddał, ale też o niej nie orzekł, więc nie odbiera przycisku przywrócenia. Werdykt
+`odwolanie` znaczy wskazanie miejsca zamiast bajtów.

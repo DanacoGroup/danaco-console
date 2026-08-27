@@ -1437,3 +1437,18 @@ danych wiersza.
 Okno Frontend Workspace i okno Backend Workspace korzystają z tego samego zbioru komponentów pochodzącego z Architecture Designera i różnią się wyłącznie tym, które rodzaje komponentów do nich należą. Dlatego oba okna składa jeden moduł wykazu, sparametryzowany warstwą warsztatu.
 
 Przypisanie rodzaju komponentu do warstwy jest wyborem klienta, a nie kontraktu. Ani typ AppWorkspaceLayer, ani typ AppComponentKind nie łączą tych dwóch zbiorów, więc podział został wypisany wprost w stałej RODZAJE_WARSTWY, aby stał w jednym miejscu i nie rozchodził się po oknach.
+
+## budowa/klient-poprzedni/src/moduly/browser/warstwy-widocznosci.ts
+
+Ujawnianie nie jest bramą. Element zwinięty nie jest zablokowany — jest schowany, a każda
+jego czynność zostaje osiągalna wyzwalaczem albo skrótem. Dlatego skrót warstwy czwartej
+działa również wtedy, gdy tryb administracyjny jest wyłączony: tryb decyduje o obecności
+wyzwalacza w pasku, nie o dostępie do funkcji.
+
+Skrót podpina się do elementu modułu, a nie do dokumentu. W powłoce stoi obok siebie kilka
+modułów, a nasłuch założony na dokumencie odpowiadałby także na klawisze wciśnięte w cudzym
+oknie. Skrót działa więc wtedy, gdy fokus stoi wewnątrz modułu. Powłoka gospodarza może
+przechwycić kombinację przed stroną — wtedy pozostaje wyzwalacz w pasku.
+
+Licznik pozycji rozszerzenia jest polem pominiętym, gdy rozszerzenie niczego nie zlicza.
+Wartość zero jest nieodróżnialna od braku licznika, więc pominięcie niesie własne znaczenie.

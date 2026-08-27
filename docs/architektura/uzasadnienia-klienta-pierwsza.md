@@ -797,3 +797,18 @@ Obudowa okna, na którą składają się nagłówek, plakietka roli, pas akcji i
 Przesłona stanu nie kasuje treści, tylko ją przykrywa. Powrót do fazy gotowej odsłania to, co Operator już widział, dzięki czemu nieudane odświeżenie nie zabiera wyniku poprzedniego odczytu. Wskaźnik odczytu stoi obok komunikatu, a nigdy zamiast kontrolki, więc treść okna zostaje na miejscu i pozostaje klikalna. Wspólna procedura znakowania fazy tego nie przesądza, ponieważ moduły różnią się między sobą pod tym względem.
 
 Wygląd pochodzi w całości z biblioteki komponentów z przedrostkiem dn oraz z żetonów motywu, dlatego plik nie zawiera ani jednej wartości barwy i ani jednej wartości odstępu.
+
+## budowa/klient-poprzedni/src/aplikacja/widok-pulpitu.ts
+
+Pulpit operacyjny stoi obok strony głównej, a nie zamiast niej. Centrum
+dowodzenia jest wejściem przy rozpoczynaniu pracy, pulpit — przy powrocie
+do pracy już rozpoczętej, a obydwa pozostają dostępne z przełącznika widoków.
+
+Dane pulpitu pochodzą z rdzenia. Źródło pulpitu odpytuje `session.list`,
+`window.list` oraz `channel.list`, a następnie subskrybuje zdarzenia
+`session.changed`, `window.changed`, `queue.changed` i `progress.changed`.
+Do pierwszego odczytu pulpit pokazuje stany puste, ponieważ liczby wymyślonej
+nie poda.
+
+Zamiary Operatora idą do rdzenia tym samym kanałem, którym przyszły dane:
+`session.open` oraz `queue.action` przechodzą kanałem kontraktu.

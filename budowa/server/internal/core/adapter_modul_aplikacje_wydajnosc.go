@@ -111,7 +111,7 @@ func (a *adapterAplikacji) ZmierzWydajnosc(ctx context.Context,
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, oknoProcesu, zasady, obszar,
 		narzedzieLighthouse, argumenty, obszar.KatalogRoboczy, granicaArsenalu)
 	trwanie := time.Since(poczatek)
-	// Odpowiedź programu czytamy przed rozpatrzeniem jego odmowy zakończenia.
+	// Odpowiedź programu jest czytana przed rozpatrzeniem jego odmowy zakończenia.
 	raport, bladOdczytu := odczytajRaportWydajnosci(wynik.Wyjscie)
 	if bladOdczytu != nil {
 		if err != nil {

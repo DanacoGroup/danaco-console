@@ -1,14 +1,8 @@
 import type { PanelJezyka } from './panel-jezyka';
 
 /**
- * Widok porównawczy dwóch paneli.
- *
- * Czynność czysto miejscowa: zestawienie niczego nie liczy i o nic nie pyta
- * rdzenia, pokazuje obok siebie tekst źródłowy i treści dwóch paneli, które
- * Operator sam wskazał.
- *
- * Panele są dokładnie dwa; przy innej liczbie wskazań zestawienie mówi wprost,
- * czego oczekuje, zamiast pokazać cokolwiek.
+ * Widok porównawczy dokładnie dwóch paneli wskazanych przez Operatora, pokazujący
+ * obok siebie tekst źródłowy i treści obu paneli bez odpytywania rdzenia.
  */
 export interface PorownaniePaneli {
   element: HTMLElement;

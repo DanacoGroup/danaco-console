@@ -2628,3 +2628,17 @@ dwóch wersji milcząca o zmianie postaci, gdy litery zostały te same, bo
 kontrakt wymaga wprost, żeby zmiana kroju była widoczna jako zmiana; wykaz
 różnicy w kolejności wziętej z przebiegu mapy, przez co ten sam dokument
 oglądany dwa razy dawałby dwa różne wykazy.
+
+## budowa/server/internal/core/zaleznosci_wykaz_wydruk_test.go
+
+Deklaracja pakietu bez podpowiedzi jest legalna, choć wykaz zależności pilnuje
+osobno, żeby jej nie było.
+
+Wstrzymanie silnika kontenerów dotyczy obu jego deklaracji: warsztatu
+Developera i modułu Terminal — obie muszą trafić do warstwy decyzyjnej.
+
+Zwykły start rdzenia nie może wpaść w tryb wykazu mimo rozpoznawania obu
+postaci znacznika (pojedynczego i podwójnego minusa).
+
+Gdyby reguła rozpoznawania podpowiedzi pytała najpierw o adres GitHuba,
+golangci-lint stałby się krokiem ręcznym zamiast wchodzić z podpowiedzi.

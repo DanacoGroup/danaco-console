@@ -1,17 +1,7 @@
-// Tożsamość własna eksperta: warstwy jego promptu (`agent.layer.set`,
-// `agent.layer.remove`) i jego wtyczki (`agent.plugin.add`,
-// `agent.plugin.remove`) — cztery czynności portu WarstwyEksperta.
-//
-// Repozytorium warstw jest opcjonalne. Adapter agentów składa się w
-// `montaz_porty.go` bez ogniwa `.ZWarstwami(...)`, więc pole `warstwy` bywa
-// `nil`; każda z czterech komend odmawia wtedy, nazywając komendę, powód
-// i miejsce wpięcia, zamiast panikować albo udawać zapis.
-//
-// `agent.list` i `agent.create` nie przechodzą tędy — jadą dalej
-// `ekspertKontraktu` i przy `warstwy == nil` oddają eksperta bez warstw
-// i bez wtyczek. Nazwy warstw sprawdzane są wobec wartości kontraktu
-// (`shared.IdentityLayer`, `shared.IdentityMode`) przed zapisem, żeby powodem
-// odmowy było zdanie po polsku, a nie naruszony warunek CHECK.
+// Tożsamość własna eksperta: warstwy jego promptu (agent.layer.set,
+// agent.layer.remove) i jego wtyczki (agent.plugin.add, agent.plugin.remove)
+// — cztery czynności portu WarstwyEksperta. Repozytorium warstw jest
+// opcjonalne.
 package core
 
 import (
@@ -49,16 +39,8 @@ func (a *adapterAgentow) UstawWarstwe(ctx context.Context,
 	if err := sprawdzWarstweEksperta(z.Layer); err != nil {
 		return shared.AgentLayerSetResponse{}, err
 	}
-	// Trybu warstwy eksperta się nie wybiera. Warstwa jest instrukcją DOPISYWANĄ
-	// do promptu systemowego, nie jego zamiennikiem, więc kontrakt nie ma dla
-	// niej pola `mode` — tryb jest tu stałą, nie parametrem. Tożsamość osi
-	// (`identity.document.set`) tryb wybiera i domyślnie zastępuje, bo jest
-	// konfiguracją platformy, a nie warstwą nałożoną na pojedyncze wywołanie.
-	//
-	// Wartość musi pochodzić z kontraktu, nie z silnika nakładki: kolumna
-	// `agent_warstwa.tryb` ma warunek CHECK na `ZASTAP` albo `DOLACZ`, a stała
-	// silnika `injection.TrybDopisz` jest napisem `"dopisz"`. Przekład między
-	// jednym a drugim robi `trybSilnika`.
+	// Trybu warstwy się nie wybiera — jest instrukcją dopisywaną do promptu,
+	// nie zamiennikiem.
 	const tryb = string(shared.IdentityModeDOLACZ)
 
 	aktywna := true
@@ -139,13 +121,9 @@ func (a *adapterAgentow) UsunWtyczke(ctx context.Context,
 	return shared.AgentPluginRemoveResponse{Agent: ekspert}, nil
 }
 
-// WykazWtyczek oddaje wtyczki eksperta wraz z definicją (`agent.plugin.list`).
-// Osobna komenda jest potrzebna, bo `Agent.pluginIds` niesie same
-// identyfikatory — bez nazwy nadanej wtyczce, bez źródła i bez wersji.
-//
-// Ekspert bez wtyczek oddaje tablicę pustą: brak wtyczek jest poprawnym stanem,
-// a nie awarią odczytu. Odmowa idzie wyłącznie wtedy, gdy eksperta o wskazanym
-// kodzie nie ma w katalogu.
+// WykazWtyczek oddaje wtyczki eksperta wraz z definicją (agent.plugin.list).
+// Osobna komenda, bo Agent.pluginIds niesie same identyfikatory, bez nazwy,
+// źródła i wersji.
 func (a *adapterAgentow) WykazWtyczek(ctx context.Context,
 	z shared.AgentPluginListRequest) (shared.AgentPluginListResponse, error) {
 
@@ -168,9 +146,8 @@ func (a *adapterAgentow) WykazWtyczek(ctx context.Context,
 }
 
 // EkspertPelny oddaje eksperta wraz z warstwami i wtyczkami. Bez wpiętego
-// repozytorium warstw oddaje dokładnie to, co `Pobierz` — eksperta bez warstw
-// i bez wtyczek. Odczyt nie odmawia z powodu niewpiętego katalogu: czytać nie ma
-// czego, a to inny przypadek niż zapis, który nigdzie nie trafia.
+// repozytorium warstw oddaje to samo, co Pobierz — eksperta bez warstw i bez
+// wtyczek.
 func (a *adapterAgentow) EkspertPelny(ctx context.Context, idEksperta string) (shared.Agent, error) {
 	ekspert, err := a.Pobierz(ctx, idEksperta)
 	if err != nil {
@@ -192,7 +169,8 @@ func (a *adapterAgentow) EkspertPelny(ctx context.Context, idEksperta string) (s
 	return ekspert, nil
 }
 
-// sprawdzWarstweEksperta pilnuje, żeby nazwa warstwy należała do kontraktu.
+// sprawdzWarstweEksperta pilnuje, żeby nazwa warstwy należała do kontraktu
+// tożsamości modelu i platformy.
 func sprawdzWarstweEksperta(warstwa shared.IdentityLayer) error {
 	if _, jest := warstwyTozsamosci[warstwa]; jest {
 		return nil
@@ -201,10 +179,8 @@ func sprawdzWarstweEksperta(warstwa shared.IdentityLayer) error {
 		" nie należy do kontraktu; dopuszczalne są constitution, profile i expertise")
 }
 
-// bladBrakuWarstwEksperta odmawia komendy warstw, nazywając komendę, powód —
-// niewpięte repozytorium — i miejsce, w którym brak się usuwa. Milczenie
-// udawałoby zapis, a panika przewracałaby proces z powodu brakującej linii
-// montażu.
+// bladBrakuWarstwEksperta odmawia komendy warstw, nazywając komendę, powód
+// i miejsce, w którym brak repozytorium się usuwa.
 func bladBrakuWarstwEksperta(komenda shared.MessageType) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"rdzeń: komenda "+string(komenda)+" odmawia wykonania, ponieważ repozytorium warstw "+
@@ -213,18 +189,8 @@ func bladBrakuWarstwEksperta(komenda shared.MessageType) error {
 			"dopisując ogniwo .ZWarstwami(s.repozytoria.WarstwyAgenta)"))
 }
 
-// zapiszTozsamosc utrwala imię własne i favikon eksperta.
-//
-// Osobna droga zapisu, bo zapytanie `aktualizujAgenta` nie zna kolumn
-// `imie_wlasne` i `favikon`; osobna czynność repozytorium dotyka wyłącznie tych
-// dwóch kolumn, zamiast zmieniać drogę, którą jadą wszystkie pozostałe pola.
-//
-// Pominięte pole nie jest polem pustym: `nil` zostawia wartość zastaną, pusty
-// napis czyści ją i zostaje zapisany. Zlanie obu w jedno kasowałoby imię przy
-// każdej zmianie samego opisu.
-//
-// Brak wpiętego repozytorium nie jest tu odmową — ekspert bez imienia własnego
-// jest ekspertem, bo tożsamość niesie pole `nazwa`.
+// zapiszTozsamosc utrwala imię własne i favikon eksperta. Osobna droga zapisu,
+// bo aktualizujAgenta nie zna kolumn imie_wlasne i favikon.
 func (a *adapterAgentow) zapiszTozsamosc(
 	ctx context.Context, kod string, imie, favikon *string,
 ) error {
@@ -253,15 +219,7 @@ func (a *adapterAgentow) zapiszTozsamosc(
 }
 
 // tozsamosciWykazu zbiera warstwy i wtyczki wszystkich ekspertów pod wykaz.
-//
-// Dwa zapytania na wywołanie, nie dwa na eksperta: odczyt po jednym dałby przy
-// stu ekspertach dwieście zapytań na jedno otwarcie biblioteki. Wzorzec ten sam
-// co `dolaczPowiazania` w warstwie danych.
-//
-// Błąd odczytu nie wywraca wykazu — ekspert, którego warstw nie udało się
-// odczytać, wchodzi do wykazu bez warstw, tak samo jak ekspert, który ich nie
-// ma. Wykaz ekspertów ma się pokazać także wtedy, gdy tożsamość jest chwilowo
-// nieczytelna.
+// Dwa zapytania na wywołanie, nie dwa na eksperta.
 func (a *adapterAgentow) tozsamosciWykazu(
 	ctx context.Context,
 ) (map[string][]dane.WarstwaAgenta, map[string][]dane.WtyczkaAgenta) {
@@ -279,18 +237,8 @@ func (a *adapterAgentow) tozsamosciWykazu(
 	return warstwy, wtyczki
 }
 
-// zapiszTrybNakladki utrwala tryb nałożenia instrukcji eksperta (`Agent.mode`).
-//
-// Tą samą drogą co tożsamość własna i z tego samego powodu: `aktualizujAgenta`
-// nie zna kolumny `tryb_nakladki`.
-//
-// Pominięte pole zostawia wartość zastaną — `nil` nie znaczy powrotu do
-// domyślnego trybu; raz oznaczone odstępstwo nie ma prawa zniknąć przy zmianie
-// samego opisu eksperta. Wartość spoza katalogu odrzuca warunek CHECK na
-// kolumnie; drugiej listy dopuszczonych trybów tu nie ma.
-//
-// Brak wpiętego repozytorium nie jest tu odmową: ekspert bez zapisanego trybu
-// dopisuje się do promptu globalnego.
+// zapiszTrybNakladki utrwala tryb nałożenia instrukcji eksperta (Agent.mode)
+// tą samą drogą co tożsamość własna eksperta.
 func (a *adapterAgentow) zapiszTrybNakladki(
 	ctx context.Context, kod string, tryb *shared.IdentityMode,
 ) error {

@@ -1824,3 +1824,24 @@ zszywania.
 Stan nie jest tu przechowywany: obie kontrolki czytają i przestawiają
 `StanObecnosci` z pliku `tryb-obecnosci.ts`, a rysują się z powrotem jego
 powiadomieniem. Dzięki temu skrót klawiszowy i menu nigdy się nie rozjeżdżają.
+
+## budowa/klient-poprzedni/src/moduly/apps/filtr-katalogu.ts
+
+Filtrowanie idzie po stronie klienta, a nie w żądaniu, ponieważ komenda `extension.list`
+zawęża wyłącznie rodzajem i stanem zainstalowania. Pozostałych faset — źródła, stanu
+włączenia i tekstu — kontrakt w żądaniu nie ma, a cztery odczyty po jednym na fasetę dałyby
+cztery migawki z czterech różnych chwil.
+
+Zakres szukania jest ograniczony i okno musi to powiedzieć: przeszukiwane są nazwa, kod
+i opis, bo tyle niesie pozycja katalogu. Szukanie po udostępnianych narzędziach
+i znacznikach stoi w wykazie braków kontraktu, zamiast udawać, że pusty wynik znaczy brak
+takiego rozszerzenia.
+
+Porównanie tekstu idzie bez rozróżnienia wielkości liter, ale bez normalizacji znaków
+diakrytycznych. Napisy różniące się wyłącznie znakami diakrytycznymi zostają dwoma różnymi
+napisami, bo zrównanie ich w oknie kazałoby mu twierdzić coś o dopasowaniu, czego rdzeń
+przy własnym szukaniu nie potwierdzi.
+
+Zdanie podsumowujące wykaz jest konieczne, ponieważ pusty wykaz przy czynnym filtrze czyta
+się jak pusty rejestr. Zdanie wymienia zakres szukania, bo tekst nieznaleziony w opisie bywa
+nazwą narzędzia, której pozycja katalogu nie niesie.

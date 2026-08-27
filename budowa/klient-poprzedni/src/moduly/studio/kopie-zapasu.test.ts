@@ -17,15 +17,7 @@ import {
   kopieZgloszeniePoZamknieciu,
 } from './kopie-zapasu';
 
-/**
- * Sprawdziany autozapisu i kopii — mierzą UCZCIWOŚĆ ZAPISU.
- *
- * Wskaźnik „zapisano" pokazany po nieudanym zapisie jest najgorszym możliwym
- * błędem tego modułu: Operator zamknie okno i straci pracę. Sprawdzian mierzy to
- * na zapisie NIEUDANYM, nie tylko na udanym — tak, jak żąda zlecenie.
- */
-
-/** Nastawy autozapisu z niepowodzeniem ostatniego zapisu. */
+/** Buduje nastawy autozapisu odzwierciedlające niepowodzenie ostatniej próby zapisu wraz z jego powodem. */
 function nastawyPoNiepowodzeniu(): StudioAutosaveSettings {
   return {
     enabled: true,
@@ -36,7 +28,7 @@ function nastawyPoNiepowodzeniu(): StudioAutosaveSettings {
   };
 }
 
-/** Kopia zapasowa o wskazanym czasie i stanie zmian niezapisanych. */
+/** Buduje kopię zapasową dokumentu o wskazanym czasie utworzenia i stanie zmian jeszcze niezapisanych w wersji. */
 function kopia(
   kod: string,
   czas: number,

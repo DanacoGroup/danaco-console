@@ -4643,3 +4643,8 @@ poszły naraz. Stan pozycji nie jest już liczony w oknie: przychodzi z rdzenia 
 pięciostanowa — oczekuje, przetwarzanie, gotowa, ponowienie z powodu pewności poniżej progu,
 odmowa — a ponowienie jest stanem osobnym, bo pozycja nie jest ani gotowa, ani odmówiona, tylko
 wraca do rozpoznania.
+
+## budowa/klient-poprzedni/src/moduly/studio/kopie-zapasu.test.ts
+Sprawdziany autozapisu i kopii mierzą uczciwość zapisu: wskaźnik „zapisano" pokazany po
+nieudanym zapisie byłby najgorszym możliwym błędem tego modułu, bo operator zamknąłby okno
+i stracił pracę, dlatego sprawdzian mierzy zachowanie na zapisie nieudanym, nie tylko na udanym.

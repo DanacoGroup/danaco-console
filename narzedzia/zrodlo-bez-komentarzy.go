@@ -22,12 +22,14 @@ import (
 	"strings"
 )
 
-// Z granicy wyłączone są wyłącznie dyrektywy (`//go:`). Powołania na pliki
-// w komentarzach są zakazane w całości (dopowiedzenie szóste pozycji 18) —
-// wzorzec powołania wykrywa ścieżki i nazwy plików, a tryb -gestosc liczy je
-// osobno jako POWOLANIA; plik z powołaniem nie przechodzi niezależnie od
-// gęstości.
-var wzorPowolania = regexp.MustCompile(`\S+\.(go|md|sql|json|js|ts|css|html|py|rs|sh|yml|yaml|toml|txt|csv|xml|svg)\b|(^|\s)(docs|design|prowadzenie|narzedzia|budowa)/`)
+// Z granicy wyłączone są dyrektywy (`//go:`). Zakazane jest odsyłanie
+// czytelnika do opracowań — dokumentów wyjaśniających i zwrotów kierujących
+// gdzie indziej. Nazywanie artefaktów technicznych, z którymi kod pracuje
+// (biblioteka, arkusz stylu, program, migracja, plik nastaw, plik źródłowy),
+// jest treścią i zakazu nie narusza. Tryb -gestosc liczy odesłania osobno
+// jako POWOLANIA; plik z odesłaniem nie przechodzi niezależnie od gęstości.
+var wzorOpracowania = regexp.MustCompile(`\S*\.md\b|(^|\s)(docs|prowadzenie)/`)
+var wzorOdeslania = regexp.MustCompile(`(?i)(^|\s)(patrz|zob\.|uzasadnienie:|szczegoly w|szczegóły w|opisane w|opisano w|wiecej w|więcej w)\b`)
 
 func dyrektywa(lit string) bool {
 	return strings.HasPrefix(lit, "//go:")
@@ -41,7 +43,7 @@ func powolanie(lit string) bool {
 	if strings.HasPrefix(t, "//") {
 		t = strings.TrimPrefix(t, "//")
 	}
-	return wzorPowolania.MatchString(t)
+	return wzorOpracowania.MatchString(t) || wzorOdeslania.MatchString(t)
 }
 
 func main() {

@@ -5739,3 +5739,16 @@ leży poza zasięgiem rdzenia i wymaga środków systemu operacyjnego.
 
 Zawężenie korzeni nadania do korzeni punktu robi funkcja korzeni nadania — reguła zawężenia ma
 w drzewie jedno miejsce.
+
+## budowa/server/internal/core/stan_obiegu_rejestr.go
+
+Rejestr biegów nie prowadzi biegu, nie zatrzymuje go i nie liczy obiegów —
+to robi wyłącznie pętla pakietu sesji, wywoływana przy wejściu na stronę
+główną, przy stanie okna i przy telemetrii postępu. Rejestr wypełnia
+interfejs session.ObserwatorObiegu, więc wpina się w pętlę tą samą drogą,
+którą wpina się ślad dziennika.
+
+Sprzątanie w metodzie Zachowaj idzie od strony okien żywych, a nie od
+zdarzenia zamknięcia okna, bo rejestr biegów nie ma prawa trzymać okna przy
+życiu dłużej niż rejestr nadzorcy. Wykaz pusty niczego nie kasuje, ponieważ
+brak wiedzy o oknach nie jest wiedzą o ich zamknięciu.

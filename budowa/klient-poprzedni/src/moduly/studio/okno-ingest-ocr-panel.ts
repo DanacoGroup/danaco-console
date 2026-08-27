@@ -27,36 +27,10 @@ import {
 } from './zrodlo-materialu-studio';
 import type { ZrodloWstawienStudio } from './zrodlo-wstawien-studio';
 
-/** Nagłówki kolumn kolejki — zostają widoczne także w stanie pustym. */
+/** Nagłówki kolumn kolejki cyfryzacji: wskazanie, rodzaj, stan, wynik rdzenia i czynność — zostają widoczne w tabeli nawet, gdy kolejka jest pusta. */
 const KOLUMNY = ['Wskazanie', 'Rodzaj', 'Stan', 'Wynik rdzenia', 'Czynność'];
 
-/**
- * Narzędziownia cyfryzacji — kolejka RDZENIA, rozpoznanie ze sterowaniem,
- * poprawka słów i przyjęcie wyniku jako dokumentu.
- *
- * ── Co się zmieniło ─────────────────────────────────────────────────────────
- * Panel stał na `document.text.extract`: jedno wydobycie na wywołanie, jeden
- * język, bez silnika, bez progu pewności, z kolejką prowadzoną w oknie i ginącą
- * z jego odświeżeniem. Prowadzi teraz rodzinę `studio.ingest.*` — sześć komend:
- * kolejka po stronie rdzenia (`queue.add`, `queue.list`), rozpoznanie z pełnym
- * sterowaniem (`recognize`), poprawka rozpoznanego słowa przed przyjęciem
- * (`correction.set`), przyjęcie wyniku jako dokumentu wraz z pierwszą wersją
- * (`item.accept`) i wykaz urządzeń wejściowych (`device.list`).
- *
- * ── Poprawianie słów idzie dwiema powierzchniami ────────────────────────────
- * Wymaganie wprost: poprawianie wymaga pracy na obrazie obok tekstu, nie ciasnego
- * paska. Panel stawia obok siebie wykaz słów wraz z ich położeniem na stronie
- * i pewnością rozpoznania oraz warstwę tekstową pozycji. Obrazu skanu tu NIE MA
- * i panel mówi to wprost: komendy pobierającej bajty zasobu do przeglądarki
- * kontrakt nie niesie, więc położenie słowa jest podane liczbami — strona,
- * odsunięcie i rozmiar pola — a nie zaznaczone na obrazku.
- *
- * ── Powierzchnia należy do dokumentu ────────────────────────────────────────
- * Narzędziownia nie jest stałą kolumną: wchodzi przyciskiem jako nakładka
- * i schodzi. Kolejka z wieloma pozycjami potrzebuje miejsca na wykaz, więc
- * dostaje nakładkę, a nie pasek, który zabierałby szerokość także wtedy, gdy
- * nikt nic nie cyfryzuje.
- */
+/** Narzędziownia cyfryzacji: kolejka rdzenia, rozpoznanie ze sterowaniem, poprawka słów przed przyjęciem i przyjęcie wyniku jako dokumentu. */
 export interface OknoIngestOcrPanel {
   element: HTMLElement;
   odswiez(): void;
@@ -148,11 +122,7 @@ export function utworzOknoIngestOcrPanel(
 
   /* ── Zaplecze ──────────────────────────────────────────────────────────── */
 
-  /**
-   * Zaplecze czynności powstaje wyłącznie wtedy, gdy źródło rodziny
-   * `studio.ingest.*` naprawdę jest. Zamiast udawać wywołanie, panel nazywa brak
-   * montażu — i nazywa go jako brak montażu, nie jako brak funkcji rdzenia.
-   */
+  /** Zaplecze czynności powstaje tylko, gdy źródło rodziny ingest jest podane; inaczej brak montażu. */
   function zaplecze(): ZapleczeCyfryzacji | null {
     if (wstawienia === undefined) {
       odpowiedz.pokaz(BEZ_ZRODLA_INGEST, false);
@@ -183,14 +153,7 @@ export function utworzOknoIngestOcrPanel(
     };
   }
 
-  /**
-   * Poprawka obrazu wykonana OSOBNO, przed rozpoznaniem.
-   *
-   * Czyszczenie w ramach samego rozpoznania idzie nastawami (`deskew`, `denoise`,
-   * `binarize`, `trimMargins`) i nie zakłada nowego zasobu. Ta droga zostaje, bo
-   * oddaje NOWY zasób pod sumą kontrolną, więc Operator może obejrzeć skutek
-   * i wskazać go jako materiał kolejnej pozycji — źródło zostaje nietknięte.
-   */
+  /** Poprawka obrazu wykonana osobno, przed rozpoznaniem, oddaje nowy zasób i zostawia źródło nietknięte. */
   async function przygotuj(
     nazwa: string,
     wykonaj: (wskazanie: WskazanieObrazu) => Promise<Wynik<{ idZasobu: string }>>,
@@ -209,9 +172,7 @@ export function utworzOknoIngestOcrPanel(
     rama.stan.gotowe();
     const zapleczeCzynnosci = zaplecze();
     if (zapleczeCzynnosci === null) return;
-    // Obraz poprawiony wchodzi do kolejki jako POZYCJA NOWA, a nie podmienia
-    // pozycji istniejącej: pozycja rdzenia niesie swój wynik rozpoznania i jego
-    // ciche przestawienie na inny materiał byłoby podmianą dowodu.
+    // Obraz poprawiony wchodzi do kolejki jako pozycja nowa, nie podmienia pozycji istniejącej.
     await dolozMaterial(zapleczeCzynnosci, wynik.wynik.idZasobu, true);
     odpowiedz.pokaz(
       `${nazwa}: rdzeń oddał NOWY zasób ${wynik.wynik.idZasobu} i wszedł on do kolejki jako pozycja ` +
@@ -441,8 +402,7 @@ export function utworzOknoIngestOcrPanel(
     const pozycja = document.createElement('li');
     pozycja.dataset['slowo'] = String(slowo.index);
     pozycja.dataset['poprawione'] = String(slowo.corrected === true);
-    // Pewność niżej niż połowa jest treścią, nie barwą: znacznik idzie do danych,
-    // żeby wykaz dał się przejść także bez odczytu koloru.
+    // Pewność niżej niż połowa jest treścią, nie barwą — znacznik idzie do danych wiersza.
     pozycja.dataset['niepewne'] = String(slowo.confidence < 0.5);
     pozycja.append(opis, poprawka, zapisz);
     return pozycja;
@@ -463,8 +423,7 @@ export function utworzOknoIngestOcrPanel(
     podglad.dataset['pozycja'] = pozycja === null ? '' : pozycja.id;
     opiszWyzwalacz();
 
-    // Odczyt w toku i odmowa rdzenia są stanami trwałymi: odświeżenie wywołane
-    // zmianą w innym oknie nie może ich zdjąć.
+    // Odczyt w toku i odmowa rdzenia są stanami trwałymi — odświeżenie z innego okna ich nie zdejmuje.
     if (rama.stan.faza() === 'ladowanie' || rama.stan.faza() === 'blad') return;
     if (liczby.wszystkie === 0) {
       rama.stan.puste('Kolejka wczytywania bez pozycji', BEZ_POZYCJI);
@@ -473,10 +432,7 @@ export function utworzOknoIngestOcrPanel(
     rama.stan.gotowe();
   }
 
-  // Zamiana formatu dokumentu ma dziś własną drogę w rodzinie `studio.*`, więc
-  // źródło obszaru `document` zostaje w umowie wytwórni dla zgodności montażu,
-  // ale narzędziownia niczego nim już nie woła. Wskazanie tego wprost jest
-  // uczciwsze niż milczące ignorowanie argumentu.
+  // Źródło obszaru document zostaje w umowie wytwórni dla montażu, choć narzędziownia go nie woła.
   void dokumenty;
 
   odswiez();

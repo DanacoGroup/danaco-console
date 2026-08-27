@@ -883,3 +883,24 @@ nie przeżyje zapisu i jest usterką, nie uproszczeniem.
 Druga rzecz mierzona wprost: pole puste znaczy „nie ruszaj tej cechy", a nie
 zero. Bez tego każde naciśnięcie przycisku zerowałoby nastawy, których Operator
 nie tknął.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-ingest-ocr-panel.ts
+
+Panel stał na jednym wywołaniu wydobycia tekstu: jeden język, bez silnika,
+bez progu pewności, z kolejką prowadzoną w oknie i ginącą z jego
+odświeżeniem. Prowadzi teraz rodzinę komend cyfryzacji: kolejkę po stronie
+rdzenia, rozpoznanie z pełnym sterowaniem, poprawkę rozpoznanego słowa przed
+przyjęciem, przyjęcie wyniku jako dokumentu wraz z pierwszą wersją i wykaz
+urządzeń wejściowych.
+
+Poprawianie słów wymaga pracy na obrazie obok tekstu, nie ciasnego paska:
+panel stawia obok siebie wykaz słów wraz z ich położeniem na stronie
+i pewnością rozpoznania oraz warstwę tekstową pozycji. Obrazu skanu tu nie
+ma i panel mówi to wprost — komendy pobierającej bajty zasobu do
+przeglądarki kontrakt nie niesie, więc położenie słowa jest podane liczbami,
+a nie zaznaczone na obrazku.
+
+Narzędziownia nie jest stałą kolumną: wchodzi przyciskiem jako nakładka
+i schodzi. Kolejka z wieloma pozycjami potrzebuje miejsca na wykaz, więc
+dostaje nakładkę, a nie pasek, który zabierałby szerokość także wtedy, gdy
+nikt nic nie cyfryzuje.

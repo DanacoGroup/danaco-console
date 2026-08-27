@@ -2423,3 +2423,9 @@ przy zmianie kształtu żądania.
 Rola przekazana w wywołaniu nadpisuje rolę zapisaną w opisie okna, ponieważ
 o roli okna na scenie rozstrzyga jego miejsce w figurze koordynator–wykonawca,
 a nie konfiguracja budowania pakietu.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/format-zadan.ts
+
+Zapis liczb i czasów stoi w osobnym pliku, ponieważ reguła zapisu czasu trwania jest potrzebna w trzech miejscach naraz: w wierszu podsumowania przepływu, w kolumnie czasu w tabeli agentów oraz w liczniku pozycji zwiniętych. Trzy kopie tej samej reguły rozjechałyby się przy pierwszej poprawce.
+
+Podagent bez znacznika startu otrzymuje brak, a nie czas zerowy. Zero znaczyłoby, że praca ruszyła i nie trwała ani chwili, co jest twierdzeniem innym niż brak pomiaru.

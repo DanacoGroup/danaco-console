@@ -2742,3 +2742,20 @@ co aktualnie stoi w polach kreatora — od tego jest osobny przycisk uruchomieni
 nie wysłało jeszcze niczego samo, bo przebieg zaczęło inne okno tego konta, powtarza samo
 zadanie z migawki rdzenia i mówi wprost, że parametrów zadania nie zna, ponieważ
 `DeveloperBuild` ich nie niesie.
+
+## budowa/klient-poprzedni/src/moduly/design/zrodlo-warsztatow-designu.ts
+
+Metoda `wykonaj` jest jedną drogą na siedemdziesiąt pięć komend, ponieważ
+wszystkie idą tak samo: nazwa komendy ze stałych kontraktu oraz treść żądania
+złożona z formularza. Nazwa nigdy nie jest napisem wpisanym wprost — przychodzi
+z katalogu czynności `czynnosci-warsztatow-designu.ts`, a ten bierze ją ze
+stałych kontraktu.
+
+Kształt żądania sprawdza rdzeń i odsyła odmowę walidacji wraz z nazwą pola.
+Klient tego nie zastępuje: kontrakt rozstrzyga po stronie rdzenia, a drugie
+sprawdzenie po stronie okna byłoby drugą prawdą o tym, co wolno wysłać,
+i rozjechałoby się z pierwszą przy najbliższej zmianie kontraktu.
+
+Materiał pochodzi z jednego magazynu zasobów, czytanego komendą
+`design.asset.list` — tego samego, z którego czyta Assets Panel. Drugi wykaz
+materiału byłby drugim miejscem, w którym ta sama treść żyje.

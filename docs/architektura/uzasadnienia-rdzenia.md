@@ -2140,3 +2140,49 @@ istnienie okna, więc zasada zapisana na nieistniejące okno albo sesję
 leżałaby w tabeli i nie przycięłaby nigdy niczego, a Operator miałby na nią
 potwierdzenie powodzenia. Odmowa w tym miejscu nazywa brak bytu w bazie,
 a nie zakaz zapisu zasady.
+
+## budowa/server/internal/core/adapter_narzedzia_media.go
+
+Dwie komendy modelu, `media.inspect` i `media.transcode`, stoją na tym samym
+źródle bajtów, tym samym zasięgu izolacji, tym samym wołaniu binarium i tym
+samym magazynie wyniku. Pomiar (`ffprobe`) leży w
+`adapter_narzedzia_media_pomiar.go`, przetworzenie (`ffmpeg`) w
+`adapter_narzedzia_media_przetworzenie.go`, wpięcie komend w
+`handlers_narzedzia_media.go`. Film i dźwięk są materiałem, którego model nie
+zmierzy ani nie przetworzy bez cudzego programu; kontrakt wpisuje obie komendy
+jako narzędzia modelu (`danaco_media_inspect`, `danaco_media_transcode`), więc
+ich wołaczem jest model w turze, a nie panel okna.
+
+Binarium wołane jest jedną drogą — `zewnetrzne.Wolaj`. Własnego
+`exec.Command` w tym pliku nie ma i być nie może: tamta droga idzie przez
+port `session.Uruchamiacz`, bramę izolacji okna i objęcie drzewa procesów.
+Ostatnie jest tu ważniejsze niż gdziekolwiek: `ffmpeg` rozgałęzia wątki
+dekodera i filtrów, a przerwane transkodowanie bez objęcia drzewa zostawia na
+maszynie operatora procesy mielące film w nieskończoność. `ffmpeg` pisze do
+pliku w katalogu tymczasowym, a stamtąd bajty wciąga magazyn zasobów pod sumę
+sha256 — ten sam magazyn, którym jedzie `design.asset.upload`
+(`adapter_modul_design_wgranie.go`). Przetworzenie „w miejscu" byłoby
+zniszczeniem materiału operatora przy pierwszej pomyłce w parametrach.
+
+Rodzaj zasobu wyprowadzony przez `odlozWynikMediow` nie jest przybliżeniem.
+Kontrakt zna `video`, `audio`, `document` i `archive`, warunek CHECK kolumny
+je dopuszcza (`migracja_113_rodzaje_zasobow_arsenalu.sql`), a rodzaj
+wyprowadza z formatu wyniku wspólna tablica arsenału. Ma to znaczenie właśnie
+w tej rodzinie: `media.transcode` z czynnością `frame` daje obraz,
+a `extractAudio` — dźwięk, choć komenda jest ta sama.
+
+`zasiegNarzedziMediow` rozstrzyga pusty `konfig.Kontekst{}` jako poprawny
+adres najszerszego z poziomów zasięgu, a nie podstawienie pustych struktur po
+cichu — gdy operator włączy punkt izolacji globalnie, brama zadziała tu tak
+samo jak dla Terminala. Powód jest ten sam co przy silniku mowy
+(`adapter_modul_mowa.go`).
+
+`bladNarzedziMediow` rozróżnia trzy przypadki. Brak narzędzia
+(`*zewnetrzne.BrakNarzedzia`) trafia na `channel_unavailable`, bo jest
+brakiem po stronie instalacji, który operator usuwa jedną komendą pakietu —
+nie wadą żądania i nie usterką rdzenia; kod jest ponawialny, po instalacji
+`ffmpeg` to samo żądanie przechodzi bez zmiany. Naruszenie punktu izolacji
+(`session.ErrIzolacja`) trafia na `permission_denied`, tak samo jak przy
+Terminalu i silniku mowy. Pozostałe usterki — granica czasu, wywrócenie
+binarium, brak uruchamiacza — trafiają na `internal_error`, bo treść niesie
+już to, co program powiedział o sobie sam.

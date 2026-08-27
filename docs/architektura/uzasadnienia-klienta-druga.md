@@ -2722,3 +2722,9 @@ tym oknie. Liczby są liczbami okna, nie rdzenia: rdzeń oddaje liczbę pozycji 
 źródła i to jest jego prawda o segmentach, a słowa i znaki liczy okno z tekstu, który ma przed
 sobą, bo kontrakt takiej komendy nie ma. Analizy względem pamięci tłumaczeń ani wyceny nie ma tu
 wcale, ponieważ nie ma z czego ich złożyć, a okno tego nie zastępuje szacunkiem.
+
+## budowa/klient-poprzedni/src/strona-glowna/naglowek-strony.ts
+Trójka napisów pochodzi z makiety Centrum dowodzenia i ze schematu strony w warstwie projektowej. Znaku marki
+nagłówek nie powtarza: godło i nazwa produktu stoją już w pasku górnym, a strona ma nad strefami tytuł czytany,
+nie drugi sygnet. Stopień tytułu jest niższy od stopnia tytułów kart środowisk z rozmysłu: środkiem ciężkości
+strony pozostaje strefa pierwsza, nie napis nad nią.

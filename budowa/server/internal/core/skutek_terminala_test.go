@@ -1,3 +1,6 @@
+// Sprawdziany tego pliku mierzą skutek modułu Terminal niezależnie od
+// odpowiedzi komendy: własnym zapytaniem do bazy, stanem pliku na dysku albo
+// stanem procesu w systemie.
 package core
 
 import (
@@ -15,29 +18,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany SKUTKU modułu Terminal.
-//
-// Różnica wobec sprawdzianu koperty jest tu istotą rzeczy. Koperta ze stanem
-// `ok` i pustym wynikiem jest kopertą udaną i zarazem kłamiącą — a klient czyta
-// kopertę, nie komentarz w kodzie. Każdy sprawdzian poniżej mierzy więc świat
-// NIEZALEŻNIE od odpowiedzi rdzenia:
-//
-//   - wpis książki hostów, pozycja biblioteki i jej wersje — WŁASNYM zapytaniem
-//     SQL do bazy, nie ponownym pytaniem tej samej komendy;
-//   - klucz SSH — plikiem na dysku, jego prawami i tym, czy `x/crypto/ssh`
-//     potrafi go odczytać;
-//   - odczyt pliku — treścią, którą sprawdzian sam wcześniej zapisał;
-//   - wstrzymanie procesu — stanem procesu w `/proc`, czyli u systemu, a nie
-//     w polu odpowiedzi;
-//   - obserwacja plików — PLIKIEM, który powstał, bo wyzwolone polecenie
-//     naprawdę się wykonało;
-//   - tunel — stanem końcowym procesu `ssh` odczytanym z bazy.
-
 // oknoTerminalaSprawdzianu zakłada sesję i okno, w którym pracują karty
 // sprawdzianu, i oddaje identyfikator okna wraz z jego katalogiem roboczym.
-//
-// Okno jest tu nieodzowne, nie ozdobne: z niego biorą się tryb uprawnień
-// i obszar izolacji, a moduł odmawia każdej czynności oknu, którego nie zna.
 func oknoTerminalaSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	katalogRoboczy string) string {
 
@@ -54,8 +36,8 @@ func oknoTerminalaSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie contex
 		ModelChannelId: "kanal-sprawdzianu",
 		WorkingDirs:    []string{katalogRoboczy},
 		ExecutionEnv:   shared.ExecutionEnvLocal,
-		// Tryb `auto` przepuszcza uruchomienie procesu zleconego przez Operatora
-		// i przez model — sprawdzian mierzy skutek czynności, nie bramę.
+		// Tryb auto przepuszcza proces zlecony z warsztatu i przez model — mierzy
+		// się skutek, nie bramę.
 		PermissionMode: shared.PermissionModeAuto,
 		WindowRole:     shared.WindowRoleStandalone,
 	}, &okno)
@@ -63,7 +45,8 @@ func oknoTerminalaSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie contex
 	return okno.Window.Id
 }
 
-// kartaSprawdzianu otwiera kartę powłoki bash w podanym katalogu.
+// kartaSprawdzianu otwiera kartę powłoki bash w podanym katalogu, komendą,
+// którą sprawdziany terminala wykorzystują wielokrotnie.
 func kartaSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	oknoKod, katalog string) string {
 
@@ -81,11 +64,8 @@ func kartaSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Contex
 	return karta.Session.Id
 }
 
-// bazaSprawdzianuTerminala otwiera WŁASNE połączenie z plikiem bazy rdzenia.
-//
-// Własne, a nie uchwyt rdzenia — i to jest sedno sprawdzianu skutku: pomiar ma
-// iść drogą, której mierzony kod nie kontroluje. Zapytanie zadane tym
-// połączeniem widzi to, co naprawdę zostało zatwierdzone w pliku.
+// bazaSprawdzianuTerminala otwiera własne połączenie z plikiem bazy rdzenia,
+// drogą, której mierzony kod nie kontroluje.
 func bazaSprawdzianuTerminala(t *testing.T, katalog string) *sql.DB {
 	t.Helper()
 	baza, err := sql.Open("sqlite", filepath.Join(katalog, "dane.sqlite"))
@@ -97,9 +77,7 @@ func bazaSprawdzianuTerminala(t *testing.T, katalog string) *sql.DB {
 }
 
 // TestKsiazkaHostowZostajeWBazie sprawdza, że zapis wpisu naprawdę odkłada
-// wiersz, a usunięcie naprawdę go zdejmuje. Pomiar idzie własnym zapytaniem do
-// tabeli `terminal_host` — pytanie komendy `terminal.host.list` o skutek komendy
-// `terminal.host.save` mierzyłoby zgodność rdzenia z samym sobą.
+// wiersz w tabeli terminal_host, a usunięcie naprawdę go zdejmuje.
 func TestKsiazkaHostowZostajeWBazie(t *testing.T) {
 	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuTerminala(t, katalogDanych)
@@ -197,8 +175,7 @@ func TestBibliotekaSkryptowTrzymaWersje(t *testing.T) {
 			druga.Created, druga.Script.Version)
 	}
 
-	// Pomiar niezależny: obie wersje mają leżeć w tabeli wersji, każda ze swoją
-	// treścią. Sam numer w odpowiedzi nie dowodzi, że poprzednia treść przetrwała.
+	// Pomiar niezależny: obie wersje mają leżeć w tabeli, każda ze swoją treścią.
 	wiersze, err := baza.Query(
 		`SELECT wersja, tresc FROM terminal_skrypt_wersja WHERE skrypt_kod = ? ORDER BY wersja`,
 		pierwsza.Script.Id)
@@ -279,8 +256,7 @@ func TestKluczSSHPowstajeNaDysku(t *testing.T) {
 			wytworzony.Key.Fingerprint, odcisk)
 	}
 
-	// Wpis książki hostów wskazujący ten klucz ma po zdjęciu klucza wrócić do
-	// klucza domyślnego — i ma zostać wymieniony w odpowiedzi.
+	// Wpis wskazujący ten klucz ma po zdjęciu klucza wrócić do klucza domyślnego.
 	var host shared.TerminalHostSaveResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalHostSave,
 		shared.TerminalHostSaveRequest{Host: shared.TerminalHost{
@@ -347,8 +323,8 @@ func TestOdczytPlikuOddajeTrescZDysku(t *testing.T) {
 		t.Error("odczyt przycięty ogonem nie zameldował przycięcia")
 	}
 
-	// Plik, którego nie ma, ma dać odmowę nazwaną, a nie pustą treść: pusty
-	// napis znaczyłby „plik jest pusty”, czyli nieprawdę.
+	// Plik, którego nie ma, ma dać odmowę nazwaną, nie pustą treść znaczącą brak
+	// treści.
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandTerminalFileRead,
 		shared.TerminalFileReadRequest{SessionId: kartaKod, Path: "nie-ma-takiego.txt"})
 	if odmowa.Code != shared.ErrorCodeNotFound {
@@ -450,8 +426,7 @@ func TestAnalizaSkryptuWidziBladIFormatuje(t *testing.T) {
 		t.Error("prośba o formatowanie nie oddała treści sformatowanej")
 	}
 
-	// Powłoka bez analizatora ma powiedzieć to WPROST, a nie oddać pusty wykaz
-	// uwag, który czyta się jak brak zastrzeżeń.
+	// Powłoka bez analizatora ma powiedzieć to wprost, nie oddać pusty wykaz uwag.
 	var bezAnalizatora shared.TerminalScriptLintResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalScriptLint,
 		shared.TerminalScriptLintRequest{Content: "dir", Shell: shared.TerminalShellCmd},
@@ -465,9 +440,8 @@ func TestAnalizaSkryptuWidziBladIFormatuje(t *testing.T) {
 }
 
 // TestObserwacjaUruchamiaPolecenieNaZmianie jest sprawdzianem skutku
-// najostrzejszym w tym pliku: mierzy PLIK, który powstał, bo obserwacja naprawdę
-// wyzwoliła polecenie, które naprawdę się wykonało. Wpis w bazie o wyzwoleniu
-// jest tu sprawdzeniem drugim, nie pierwszym.
+// najostrzejszym w tym pliku: mierzy plik, który powstał, bo obserwacja
+// naprawdę wyzwoliła polecenie, które naprawdę się wykonało.
 func TestObserwacjaUruchamiaPolecenieNaZmianie(t *testing.T) {
 	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuTerminala(t, katalogDanych)
@@ -494,8 +468,8 @@ func TestObserwacjaUruchamiaPolecenieNaZmianie(t *testing.T) {
 		t.Fatalf("obserwacja po założeniu ma stan %q", zalozona.Watch.Status)
 	}
 
-	// Zmiana musi nastąpić PO pierwszym przeglądzie, bo pierwszy przegląd
-	// wyłącznie zapamiętuje stan zastany.
+	// Zmiana musi nastąpić po pierwszym przeglądzie, który zapamiętuje stan
+	// zastany.
 	time.Sleep(odstepPrzegladu + 200*time.Millisecond)
 	if err := os.WriteFile(zrodlo, []byte("po zmianie, dłuższa treść\n"), 0o644); err != nil {
 		t.Fatalf("nie można zmienić pliku obserwowanego: %v", err)
@@ -539,10 +513,8 @@ func TestObserwacjaUruchamiaPolecenieNaZmianie(t *testing.T) {
 }
 
 // TestTunelNiedostepnegoCeluKonczySieNiepowodzeniem sprawdza, że stan tunelu
-// bierze się z PROCESU, a nie z zapisu: `ssh` do celu, którego nie ma, kończy
-// się, a rdzeń zapisuje `failed` wraz z powodem. Tunel udany wymagałby serwera
-// SSH, którego sprawdzian nie stawia — ale to właśnie ta ścieżka rozstrzyga,
-// czy rdzeń w ogóle patrzy na wynik procesu.
+// bierze się z procesu, a nie z zapisu: ssh do celu, którego nie ma, kończy się,
+// a rdzeń zapisuje stan „failed” wraz z powodem.
 func TestTunelNiedostepnegoCeluKonczySieNiepowodzeniem(t *testing.T) {
 	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuTerminala(t, katalogDanych)
@@ -551,8 +523,7 @@ func TestTunelNiedostepnegoCeluKonczySieNiepowodzeniem(t *testing.T) {
 
 	cel := "operator@127.0.0.1"
 	portDocelowy := 80
-	// Port 1 na pętli zwrotnej nie ma nasłuchu, więc połączenie SSH odpada
-	// natychmiast — bez czekania na czas sieci.
+	// Port 1 na pętli zwrotnej nie ma nasłuchu, więc SSH odpada natychmiast.
 	portCelu := 1
 	var otwarty shared.TerminalTunnelOpenResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandTerminalTunnelOpen,
@@ -597,15 +568,9 @@ func TestTunelNiedostepnegoCeluKonczySieNiepowodzeniem(t *testing.T) {
 	}
 }
 
-// TestKartaPowlokiUrzadzeniowejMaWierszWBazie pilnuje szkody, która byłaby cicha
-// w najgorszy możliwy sposób.
-//
-// Rdzeń nauczył się czterech powłok sięgających poza jego maszynę — kontenera,
-// poda, konsoli szeregowej i sesji Telnet — a warunek CHECK kolumny `powloka`
-// wymieniał sześć wartości z migracji 041. Karta takiego rodzaju powstawała
-// wtedy w pamięci i DZIAŁAŁA, ale jej zapis odbijał się od warunku, a zapis
-// karty z zamysłu nie wywraca czynności. Skutek: karta znika po restarcie
-// rdzenia i nic tego nie zapowiada. Sprawdzian mierzy więc WIERSZ, nie odpowiedź.
+// TestKartaPowlokiUrzadzeniowejMaWierszWBazie sprawdza, że karta powłoki
+// urządzeniowej — kontenera, poda, konsoli szeregowej albo sesji Telnet —
+// dostaje wiersz w bazie, nie tylko odpowiedź komendy.
 func TestKartaPowlokiUrzadzeniowejMaWierszWBazie(t *testing.T) {
 	zmontowany, zycie, katalogDanych := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuTerminala(t, katalogDanych)
@@ -648,7 +613,8 @@ func TestKartaPowlokiUrzadzeniowejMaWierszWBazie(t *testing.T) {
 	}
 }
 
-// doczekajPliku czeka na pojawienie się pliku nie dłużej niż podany czas.
+// doczekajPliku czeka na pojawienie się pliku nie dłużej niż podany czas,
+// odpytując system co sto milisekund.
 func doczekajPliku(sciezka string, najdluzej time.Duration) bool {
 	koniec := time.Now().Add(najdluzej)
 	for time.Now().Before(koniec) {
@@ -660,13 +626,9 @@ func doczekajPliku(sciezka string, najdluzej time.Duration) bool {
 	return false
 }
 
-// TestAnalizaSkryptuPythonaIdzieRuffem sprawdza, że karta `python` dostaje
-// analizę REGUŁ, a nie samo orzeczenie o składni.
-//
-// Treść jest składniowo poprawna, więc orzeczenie o składni oddałoby pusty wykaz
-// uwag — czyli zdanie „treść bez zastrzeżeń" o treści, która zastrzeżenia ma.
-// Sprawdzian mierzy więc konkretną regułę (`F401`, import nieużywany), a nie
-// samą liczbę uwag.
+// TestAnalizaSkryptuPythonaIdzieRuffem sprawdza, że karta python dostaje
+// analizę reguł, a nie samo orzeczenie o składni: mierzy konkretną regułę
+// zgłoszenia, nie samą liczbę uwag.
 func TestAnalizaSkryptuPythonaIdzieRuffem(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

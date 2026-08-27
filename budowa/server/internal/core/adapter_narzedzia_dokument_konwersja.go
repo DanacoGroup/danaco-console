@@ -143,7 +143,7 @@ func (a *adapterNarzedziDokumentu) doPdf(ctx context.Context, katalogPracy strin
 		return "", err
 	}
 
-	// LibreOffice nazywa wynik po materiale, więc szukamy pliku po fakcie zamiast zgadywać nazwę.
+	// LibreOffice nazywa wynik po materiale, więc szuka się pliku po fakcie zamiast zgadywać nazwę.
 	nazwa := strings.TrimSuffix(filepath.Base(material), filepath.Ext(material)) + ".pdf"
 	plik := filepath.Join(wyjscie, nazwa)
 	if _, err := os.Stat(plik); err != nil {

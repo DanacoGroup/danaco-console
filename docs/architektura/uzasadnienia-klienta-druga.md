@@ -1720,3 +1720,12 @@ Odpowiedź na Zatrzymaj bez tury dotyczy przypadku, w którym rdzeń oddaje pole
 
 ## budowa/klient-poprzedni/src/strona-glowna/czynnosci-sesji.ts
 Plik nie zna kanału ani kontraktu — wykonanie czynności podaje wpięcie. Warunki dostępności czynności stoją w tym pliku, a nie w karcie czy w menu, ponieważ karta buduje wiersz, menu buduje przyciski, i żadne z nich nie rozstrzyga, czy na przykład wznowienie sesji czynnej ma sens; jedno miejsce daje jedną odpowiedź i jedno miejsce do poprawienia, gdy rdzeń zmieni stany sesji. Brak czynności zdejmuje przycisk z menu, zamiast go wyszarzać, ponieważ przycisk widoczny, którego naciśnięcie nic nie robi, jest atrapą — wiersz bez czynności pozostaje czysto informacyjny. Zatrzymanie tur ma sens wyłącznie przy turze w biegu, bo zero okien strumieniujących znaczy, że komenda nie miałaby czego zatrzymać. Wznowienie dotyczy sesji, która nie biegnie — wstrzymanej albo zakończonej — ponieważ sesja czynna nie ma czego wznawiać.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/uwaga-podgladu.ts
+Komunikat jest blokiem pełnej szerokości rodzica, oznaczonym wyłącznie cienką
+kreską po lewej krawędzi, bez tła i obwódki, żeby nie czytał się jako druga
+karta. Forma stoi w arkuszu stylów tego widoku pod nazwą własną, ponieważ
+biblioteka współdzielona nie niesie gotowej klasy komunikatu blokowego.
+Komunikat pozostaje widoczny na scenie, dopóki nie ustanie jego przyczyna —
+brak komendy przekazania w kontrakcie — dzięki czemu odpowiada na pytanie
+o brak działania także po czasie.

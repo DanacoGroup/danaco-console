@@ -39,6 +39,8 @@
   .ab-nazwa-inline { font-family:var(--dn-ff-naglowek); font-size:var(--dn-fs-lg); font-weight:var(--dn-fw-polgruba); color:var(--dn-tekst); background:none; border:1px solid transparent; border-radius:var(--dn-r-sm); padding:2px var(--dn-od-1); }
   .ab-nazwa-inline:hover, .ab-nazwa-inline:focus { border-color:var(--dn-obrys-mocny); outline:none; }
   .ab-zapis { display:inline-flex; align-items:center; gap:4px; font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); margin-left:auto; }
+  /* Zawijak niesie rolę listy zakładek; układ pasa zostaje bez zmian. */
+  .ab-zakl-tory { display:flex; gap:2px; flex-wrap:wrap; min-width:0; }
 
   .ab-zakl { display:flex; gap:2px; flex-wrap:wrap; border-bottom:1px solid var(--dn-obrys-subtelny); padding-bottom:2px; }
   .ab-zakl button { display:inline-flex; align-items:center; gap:4px; height:28px; padding:0 var(--dn-od-2); border:none; background:none; border-radius:var(--dn-r-sm); color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); cursor:pointer; }
@@ -654,9 +656,11 @@
 
           <div class="sta-okno-tresc">
             <!-- pasek widoków Biblioteka / Edytor -->
-            <div class="ab-zakl" role="tablist" aria-label="Widok Agent Builder" style="padding:var(--dn-od-1) var(--dn-od-2)">
-              <button type="button" role="tab" aria-selected="false" data-widok="widok-biblioteka"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7"/><rect x="14" y="4" width="7" height="7"/><rect x="3" y="13" width="7" height="7"/></svg>Biblioteka ekspertów</button>
-              <button type="button" role="tab" aria-selected="true" data-widok="widok-edytor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edytor</button>
+            <div class="ab-zakl" style="padding:var(--dn-od-1) var(--dn-od-2)">
+              <div class="ab-zakl-tory" role="tablist" aria-label="Widok Agent Builder">
+                <button type="button" role="tab" aria-selected="false" data-widok="widok-biblioteka"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7"/><rect x="14" y="4" width="7" height="7"/><rect x="3" y="13" width="7" height="7"/></svg>Biblioteka ekspertów</button>
+                <button type="button" role="tab" aria-selected="true" data-widok="widok-edytor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edytor</button>
+              </div>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="margin-left:auto" data-nowy-ekspert><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nowy ekspert</button>
             </div>
 
@@ -897,8 +901,8 @@
                 <table class="pk-tabela">
                   <thead><tr><th>Rozszerzenie</th><th>odczyt</th><th>zapis</th><th>akcja</th></tr></thead>
                   <tbody>
-                    <tr><td>Repozytorium kodu</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
-                    <tr><td>Serwer MCP „LexAI”</td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td><td><input type="checkbox" checked></td></tr>
+                    <tr><td>Repozytorium kodu</td><td><input type="checkbox" aria-label="Repozytorium kodu — odczyt" checked></td><td><input type="checkbox" aria-label="Repozytorium kodu — zapis" checked></td><td><input type="checkbox" aria-label="Repozytorium kodu — akcja" checked></td></tr>
+                    <tr><td>Serwer MCP „LexAI”</td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — odczyt" checked></td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — zapis" checked></td><td><input type="checkbox" aria-label="Serwer MCP „LexAI” — akcja" checked></td></tr>
                   </tbody>
                 </table>
                 <p class="dn-tekst-ciagly dn-tekst-ciagly--drobny" style="margin-top:var(--dn-od-1)">Rozszerzenia niepodłączone w Connectors Manager nie pojawiają się na tej liście.</p>

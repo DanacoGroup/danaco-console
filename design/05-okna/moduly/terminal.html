@@ -17,6 +17,8 @@
 
   /* Terminal Tabs — okno wiodące */
   .tt-korpus { display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; }
+  /* Zawijak niesie rolę listy zakładek; układ pasa zostaje bez zmian. */
+  .tt-karty-tory { display:flex; align-items:center; gap:2px; min-width:0; }
   .tt-karty { display:flex; align-items:center; gap:2px; padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); background:var(--dn-panel); overflow-x:auto; scrollbar-width:none; }
   .tt-karty::-webkit-scrollbar { display:none; }
   .tt-karta { display:inline-flex; align-items:center; gap:var(--dn-od-1); flex:none; height:26px; padding:0 var(--dn-od-2); border:1px solid transparent; border-radius:var(--dn-r-sm); background:none; color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); cursor:pointer; white-space:nowrap; }
@@ -611,12 +613,14 @@
 
           <div class="sta-okno-tresc tt-korpus">
             <!-- pasek kart powłok -->
-            <div class="tt-karty" role="tablist" aria-label="Karty powłok">
-              <button class="tt-karta" role="tab" aria-selected="true" type="button" data-powloka="PS C:\danaco-console\api>"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span>PowerShell<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@host:~/api$"><span class="pt-tetno" aria-hidden="true"></span>Bash<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="C:\danaco-console\api>"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>CMD<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="(.venv) $"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>Python (venv)<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
-              <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@build-01:~$"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span>SSH: build-01<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+            <div class="tt-karty">
+              <div class="tt-karty-tory" role="tablist" aria-label="Karty powłok">
+                <button class="tt-karta" role="tab" aria-selected="true" type="button" data-powloka="PS C:\danaco-console\api>"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span>PowerShell<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@host:~/api$"><span class="pt-tetno" aria-hidden="true"></span>Bash<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="C:\danaco-console\api>"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>CMD<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="(.venv) $"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span>Python (venv)<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+                <button class="tt-karta" role="tab" aria-selected="false" type="button" data-powloka="operator@build-01:~$"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span>SSH: build-01<span class="x" role="button" aria-label="Zamknij kartę">×</span></button>
+              </div>
               <button class="tt-ntool" type="button" aria-label="Nowa karta powłoki" data-komunikat="Wybór powłoki: PowerShell · CMD · Bash · Node.js · Python · SSH." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
             </div>
 

@@ -5671,3 +5671,8 @@ pozycji, nie trzy: rejestracja jest dwukrokowa, bo to weryfikacja wydaje token, 
 odzyskanie konta jest dwukrokowe, a przedłużenie sesji dotyczy tokenu, który gniazda nie związał — każda
 z nich pada z gniazda jeszcze nieprzedstawionego, i bez każdej z nich któraś droga wejścia jest zamknięta
 na głucho.
+
+## budowa/server/internal/protocol/koperta_test.go
+Sprawdziany koperty mierzą dokładnie to, co kontrakt obiecuje klientowi:
+komunikat niepoprawny strukturalnie jest czymś innym niż komenda nieznana,
+a to, co poszło na drut, wraca z drutu bez zmiany.

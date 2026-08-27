@@ -2002,3 +2002,49 @@ tlumaczy. Odmowa bez powodu zostawilaby Operatora z "nie da sie" bez
 zdania, co z tym zrobic.
 
 powodZUruchomienia: samo "nie mozna uruchomic" nie wskazuje naprawy.
+
+## budowa/server/internal/core/adapter_modul_studio_wsad.go
+
+Wsad wykonuje operację, a nie kolejkuje ją na później: kontrakt oddaje liczbę
+dokumentów przyjętych i wykaz odrzuconych. Gdyby wsad tylko wpisywał pozycje do
+kolejki, obie liczby mówiłyby o zapisie do tabeli, a nie o pracy — Operator
+dostałby „przyjęto 10" i nie dowiedziałby się nigdy, że siedem z nich odmówiło.
+Wsad wykonuje więc operację dokument po dokumencie i dopiero wynik każdego
+z nich rozstrzyga o liczbie — odmowa jednego nie przerywa pozostałych.
+
+Osadzenie zasobu w `OsadzZasob` wstawia odwołanie do zasobu, nie jego bajty:
+dokument Studia jest tekstem, a wklejona w niego grafika byłaby drugą kopią
+czegoś, co już leży w magazynie pod swoją sumą kontrolną. Odwołanie idzie
+zapisem Markdown, bo to jedyna postać, którą rozumie i edytor, i wyrys
+podglądu, i wydanie.
+
+Zestawienie ze źródłem w `PorownajZeZrodlem` bez żadnego wskazania materiału
+wejściowego bierze plik, z którego dokument otwarto. Materiał nieodczytany
+oddaje `sourceResolved: false` wraz z pustym wykazem — kontrakt pyta o to
+wprost, więc odpowiedź „nie udało się" jest odpowiedzią, a nie milczeniem.
+
+Wyszukiwanie znaczeniowe idzie dwiema drogami: kanałem modelu okna, do którego
+dokument należy — model widzi znaczenie, którego miara na słowach nie zobaczy
+— albo miarą arytmetyczną w rdzeniu, liczącą zbieżność słów znaczących z wagą
+rzadkości. Cisza zamiast wyniku jest niedopuszczalna: dokument bez kanału
+modelu ma dostać odpowiedź gorszą, ale prawdziwą, a nie żadnej. Nazwy dróg,
+którymi liczy się bliskość znaczeniowa, wychodzą kontraktem w polu `mode`, bo
+Operator ma wiedzieć, czy pytał model, czy rdzeń policzył sam — te dwie
+odpowiedzi znaczą co innego i mają inną wiarygodność.
+
+Funkcja `ocenyModeluStudia` zwraca `false` wszędzie tam, gdzie odpowiedzi nie
+dało się wziąć za prawdę: brak rejestru kanałów, okno bez kanału, kanał
+milczący, odpowiedź, której nie da się odczytać. Każdy z tych przypadków
+schodzi na miarę arytmetyczną i mówi o tym wprost polem `mode`, zamiast
+oddawać wynik modelu, którego nie było.
+
+Wykaz w `slowaNieznaczaceStudia` jest krótki z zamysłu: każde słowo wykreślone
+z miary jest słowem, którego Operator nie może użyć w zapytaniu, więc lista
+długa szkodziłaby bardziej, niż pomaga.
+
+W `ocenyMiaryStudia` słowo występujące w każdym akapicie nie odróżnia
+akapitów, więc waży mało; słowo rzadkie waży dużo. Wynik dzieli się przez wagę
+całego zapytania, więc mieści się w przedziale od zera do jedynki i da się
+porównywać między dokumentami — inaczej próg `minScore` znaczyłby co innego
+w każdym z nich.
+

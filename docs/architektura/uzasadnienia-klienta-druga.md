@@ -2281,3 +2281,36 @@ komplet uprawnień z pola odpowiedzi, tak jak podał go rdzeń. Uprawnienie ma t
 grupa, o której rdzeń nie powiedział nic, nie jest ani przyznana, ani odebrana, i tak też jest
 wypisana. Grupa bez odpowiedzi rdzenia daje przy naciśnięciu żądanie przyznania; wykaz odrysowuje
 okno dopiero z odpowiedzi rdzenia na zmianę uprawnienia.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/role-domyslne.ts
+Pierwotny nagłówek wykładał regułę doboru ról względem obsady pętli multitaskingu
+wierszami przykładów dla jednego, dwóch, trzech i czterech okien oraz zastrzeżenie
+o nadpisywaniu roli ustawionej ręcznie. Redakcja zostawiła w nagłówku samo działanie
+funkcji, a wyliczenie obsady i relację z ręcznym nadaniem roli pozostawiono kodowi
+i nazwom stałych, które już je wyrażają.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/skroty-paneli.ts
+Nagłówek opisywał osobno pochodzenie zestawu skrótów, powód pomijania pozycji
+nieotwieralnych, budowę dymka z nazwą i skrótem, powód niekorzystania z komponentu
+`.dn-tooltip`, brak nasłuchu klawiszy oraz źródło znacznika nowości. Redakcja
+scaliła te wątki do jednego zdania nazywającego złożenie i miejsce wyświetlania
+rzędu skrótów, a szczegóły konstrukcyjne pozostały czytelne w samym kodzie modułu.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/pustka-relacji.ts
+Nagłówek uzasadniał brak znikania pasa przy pustej relacji względem mylącego
+komunikatu dla Operatora oraz zastrzegał jeden wariant stanu pustego w bibliotece.
+Redakcja pozostawiła samo działanie modułu, a uzasadnienie wyboru komunikatu
+przeniesiono poza komentarz w kodzie.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/opis-gniazda.ts
+Nagłówek tłumaczył pośrednią pozycję okna między sesją a wiadomością oraz zasadę
+kopiowania zamiast współdzielenia ustawień między oknami. Redakcja zostawiła
+zwięzły opis działania funkcji, a rozważania o zasięgu ustawień przeniesiono
+poza komentarz w kodzie.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/objasnienie-ukladu.ts
+Nagłówek opisywał zasadę obecności objaśnienia przy każdym elemencie konfiguracji,
+sposób działania komponentu `.dn-tooltip` przy najechaniu i ognisku oraz podział
+odpowiedzialności między biblioterkę chmurki a widok rysujący znak zapytania.
+Redakcja scaliła te wątki w jedno zdanie nazywające działanie modułu, a podział
+odpowiedzialności między warstwami pozostał czytelny w strukturze kodu.

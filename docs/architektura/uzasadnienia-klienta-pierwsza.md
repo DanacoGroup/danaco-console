@@ -1555,3 +1555,32 @@ Pole `zamknij` podpina `rozlacz()` złożenia modułu. Bez niego subskrypcje sta
 `apps.build.changed` oraz `progress.changed`, a wraz z nimi subskrypcje okien
 pomocniczych, żyją dalej po zejściu modułu ze sceny. Pole `zamknij` jest
 w typie `WidokModulu` opcjonalne, więc kompilator jego braku nie zgłosi.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zrodlo-podagentow.ts
+
+Źródło jest jednym z trzech źródeł modułu, obok `zrodlo-biegu.ts` niosącego bieg
+pracy i `zrodlo-okien.ts` niosącego obsadę ról. Stoi osobno od biegu pracy,
+ponieważ bieg porusza oknami ról — tura, przekazanie, kolejka etapu, telemetria
+— a podagent jest bytem pod oknem wykonawcy, o którym kontrakt nie rozstrzyga,
+czy jest oknem, procesem, czy pozycją kolejki.
+
+Telemetria zostaje w biegu pracy: panel bierze `monitor.status` ze źródła biegu,
+które tę komendę już niesie. Drugie wywołanie tej samej komendy w drugim źródle
+byłoby kopią bez powodu.
+
+Powołanie oddaje podagentów tak, jak założył je rdzeń, a nie tak, jak prosił
+formularz: liczba powołanych pochodzi z odpowiedzi, ponieważ rdzeń ma prawo
+powołać ich mniej, a górna granica piętnastu należy do rdzenia, nie do widoku.
+Zawężenie wykazu po stanie również wykonuje rdzeń — żądanie niesie pole
+`status`, więc sito po stronie klienta byłoby drugim, rozjeżdżającym się sitem.
+
+Zebranie wyników oddaje komplet podagentów wraz z polem `complete`, którego
+panel nie zgaduje ze stanów pojedynczych podagentów, tylko bierze z odpowiedzi.
+Zdarzenie zmiany stanu rdzeń rozgłasza przy powołaniu, wejściu w bieg,
+zakończeniu i zatrzymaniu, więc wykaz nadąża bez ręcznego odpytywania.
+
+Zatrzymanie idzie komendą `subagent.stop` wprost, a nie obejściem przez
+`queue.action` na kolejce o nazwie podagenta: podagent powołany bez wpiętej
+kolejki nie miałby wtedy czego zatrzymać. Odpowiedź rozróżnia `stopped` od
+`notRunning`, ponieważ podagent już zakończony nie jest błędem, tylko innym
+stanem, o którym panel mówi osobno.

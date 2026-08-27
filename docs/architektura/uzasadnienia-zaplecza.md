@@ -2677,3 +2677,21 @@ Katalogi robocze są listą na oknie komunikacji, a ich wskazanie musi być czyn
 
 ## budowa/server/internal/store/migracja_268_kolejka_zlecenia.sql
 Tabela pozycji kolejki wprowadzona wcześniej opisuje etap pętli koordynator-wykonawca: tytuł, treść zlecenia, werdykt weryfikacji, licznik obiegów. Zlecenie kolejki jest bytem odrębnym, niosącym ładunek strukturalny, priorytet, termin wykonania, klucz idempotencji i warunek przetworzenia — wtłoczenie jednego w drugie kazałoby kolumnie tytułu nieść ładunek, a kolumnie werdyktu weryfikacji stan zlecenia o innym słowniku. Klucz idempotencji jest unikatowy w obrębie jednej kolejki, nie globalnie, ponieważ ten sam klucz w dwóch kolejkach opisuje dwa różne zlecenia dwóch różnych torów. Zlecenie martwe zachowuje kolejkę źródłową, ponieważ odczyt zleceń martwych bez wskazania kolejki oddaje zadania martwe wszystkich kolejek naraz, więc rozdzielenie ich na osobną tabelę odebrałoby im pochodzenie.
+## budowa/server/internal/store/migracja_126_okna_modulow_dobudowane.sql
+Migracja 126 — okna dobudowane modułom wchodzą do katalogu rdzenia.
+
+Siedem modułów buduje okna, których katalog rdzenia nie zna, więc `module.list`
+zaniża zakres modułu: klient stawia okno, a rdzeń o nim nie wie i pas uczciwości
+modułu melduje kod „poza katalogiem". Migracja domyka ten rozjazd — definicje
+idą do `okno_operacyjne`, przypięcia do `okno_operacyjne_modul`, tak jak
+ustaliły to migracje 030 i 031.
+
+Rola i kategoria każdego okna są dobrane wzorem pozycji już obecnych w katalogu:
+okno prowadzące pracę operatora jest `wiodace`, okno pokazujące przebieg jest
+`monitor`, okno rządzące zbiorem jest `zarzadca`, okno wspierające inne jest
+`pomocnicze`, a okno prowadzące przez tworzenie bytu jest `kreator`.
+Kolejność definicji jest pierwszą wolną w obrębie kategorii.
+
+Kolejność w module jest dopisaniem na koniec, nie przestawieniem. Okna zastane
+zostają na swoich miejscach: zmiana porządku wyświetlania należy do projektu
+interfejsu, nie do migracji domykającej katalog.

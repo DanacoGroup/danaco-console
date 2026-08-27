@@ -163,7 +163,7 @@ export function utworzOknoConnectorsManager(
       return;
     }
     const konektor = wynik.wynik.connector;
-    // Formularz czyścimy w całości: zostawiona konfiguracja poszłaby do rdzenia przy podłączeniu.
+    // Formularz czyszczony jest w całości: zostawiona konfiguracja poszłaby do rdzenia przy podłączeniu.
     nazwa.kontrolka.value = '';
     konfiguracja.kontrolka.value = '';
     await stan.odswiez();
@@ -175,7 +175,7 @@ export function utworzOknoConnectorsManager(
 
   podlacz.addEventListener('click', () => void podlaczenie());
 
-  /** Ekspert, którego konektory stoją w oknie — po nim poznajemy zmianę wyboru. */
+  /** Ekspert, którego konektory stoją w oknie — po nim poznaje się zmianę wyboru. */
   let pokazany = '';
 
   function odswiez(): void {

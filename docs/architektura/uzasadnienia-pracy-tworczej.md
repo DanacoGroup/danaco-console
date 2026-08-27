@@ -3116,3 +3116,115 @@ sciezkiZDokumentuSvgDesignu: rdzen czyta SCIEZKI, bo tylko z nich sklada
 sie kontur ikony w pakiecie i w kroju. Dokument z prostokatami i okregami
 zamiast sciezek oddaje wykaz pusty, a wolajacy nazywa to wprost — cichy
 pakiet z pustymi glifami bylby plikiem, w ktorym nie widac nic.
+
+Konto Thunderbirda zapisuje się kluczami `mail.account.accountN.identities`
+i `.server`, wskazującymi serwer (`mail.server.serverM.hostname`)
+i tożsamość (`mail.identity.idK.useremail`). Serwer bez tożsamości też
+wchodzi do wyniku rozpoznania — host i port są tym, czego Operator
+najbardziej nie chce przepisywać.
+
+## budowa/server/internal/wiedza/ustawienia.go
+
+Klucze osadzarki są przepisane z migracji 115, a nie wymyślone w tym pliku.
+Prawdą o nazwie ustawienia jest wiersz `definicja_ustawienia.klucz` ze
+`store/migracja_115_wskaznik_znaczenia.sql`; cztery stałe osadzarki są jego
+kopią co do znaku. Prawdą o wartości domyślnej jest ta sama kolumna po
+nadpisaniu migracją 401.
+
+Klucze przesiewu i osi obrazu idą tym samym wzorem nazw i tą samą drogą
+odczytu — rozstrzyganie nastawy czyta zapis niezależnie od katalogu definicji
+(`konfig/rozstrzyganie.go`), a wiersz katalogu, który wystawia je oknu
+konfiguracji, zakłada migracja nastaw.
+
+Katalog nie odmawia nieznanego klucza, więc literówka przechodzi bez błędu
+i ustawienie po prostu nic nie robi (ten sam warunek pilnuje nagłówek
+`mowa/ustawienia.go`).
+
+`KluczKatalogModeli`: katalog wag rozpoznaje się w `Silnik.katalogWag`.
+
+Wartości domyślne dziś pochodzą z `migracja_401_nastawy_wag_stojacych.sql`,
+która nadpisuje wartości założone migracją 115. Rozjazd znaczyłby dwie prawdy
+o tym, co zobaczy Operator, który niczego nie ustawił, i dlatego pilnuje go
+sprawdzian `TestNastawyWiedzyWskazujaWagiStojace`
+(`store/nastawy_wiedzy_test.go`). Wartość z bazy ma pierwszeństwo przed
+stałą: rozstrzygacz zasięgu oddaje `definicja_ustawienia.wartosc_domyslna`
+jako rozstrzygnięcie o pochodzeniu „domyślna", więc stałe wchodzą wyłącznie
+tam, gdzie rozstrzygacza nie ma wcale (`core/adapter_modul_wiedza.go`).
+
+`KatalogModeliDomyslny`: pusta wartość znaczy „pobierz wagi od nowa do
+katalogu danych" (rozpoznanie w `katalogWag`, `pomocnik.go`), a wagi modelu
+domyślnego już stoją: 4,3 GB w `/opt/danaco-modele/embedder`, z czego 2,2 GB
+to wydanie ONNX, którym liczy pomocnik. Wdrożenie ma wystartować bez czynności
+po instalacji, a nie pobrać drugą kopię tego, co leży na dysku. Katalog,
+w którym wag nie ma, pomocnik traktuje jak pamięć podręczną i zachowuje się
+dokładnie tak jak przy wartości pustej.
+
+`ModelDomyslny`: nazwa jest nazwą wag, które leżą w `KatalogModeliDomyslny` —
+wydanie ONNX modelu `BAAI/bge-m3`, transformer XLM-R o wymiarze wektora 1024,
+składanie tokenów po pierwszym z nich i normalizacja wyniku — wszystko
+odczytane z deklaracji leżących przy wagach, a nie przyjęte z góry
+(`pomocnik_osadzen.py`). Wykaz własny biblioteki fastembed tej nazwy nie zna
+i znać nie musi: model stojący opisuje się deklaracjami, a nie wykazem
+wydawcy. Wektory dwóch modeli leżą w dwóch nieporównywalnych przestrzeniach
+(`migracja_115_wskaznik_znaczenia.sql`); po zmianie modelu wskaźnik trzeba
+przebudować.
+
+`WagaModeluMb`: wartość jest rozmiarem wydania ONNX modelu domyślnego, czyli
+tego, po co pomocnik sięga, gdy wag na dysku nie zastanie.
+
+`dlugoscFragmentuDomyslna`: uzasadnienie liczby stoi w `fragmenty.go`.
+
+`ModelPrzesiewuDomyslny`: wielojęzyczność, z tego samego powodu, dla którego
+wielojęzyczna jest osadzarka — wiedza Operatora jest po polsku. Koder
+jednojęzyczny oceniałby polskie fragmenty przez podobieństwo do angielskiego
+pytania, czyli układałby kolejność gorzej niż pierwszy przebieg.
+
+`oknoPrzesiewuTokenow`: fragment wskaźnika ma rząd 700 znaków, więc ucięcie
+zdarza się wyłącznie przy fragmentach z ustawienia podniesionego do granicy.
+
+`ModelObrazuDomyslny`: wydanie duże, nie podstawowe, bo oś obrazu wchodzi na
+żądanie i liczy się raz na zapytanie, więc rozstrzyga trafność, a nie czas.
+
+`Ustawienia` to struktura, a nie mapa, żeby literówka w kluczu rozstrzygała
+się przy kompilacji, a nie przy uruchomieniu.
+
+`Nanies`: klucz nieznany jest pomijany bez błędu, bo konfiguracja poziomu,
+z którego pary przychodzą, niesie ustawienia zupełnie innych warstw produktu.
+Wartość niepoprawna wraca na domyślną z tego samego powodu, dla którego robi
+to silnik mowy — przerwanie budowy wskaźnika z powodu literówki w liczbie
+byłoby odmową gorszą od sprowadzenia do wartości domyślnej.
+
+`liczbaLubDomyslna` czyta liczbę własnym odczytem zamiast `strconv`, bo
+granice sprawdza się i tak: wartość spoza przedziału sensownego dla okna
+modelu jest tym samym co wartość nieczytelna — obie znaczą „Operator nie
+podał liczby, którą da się użyć".
+
+Profil Thunderbirda z wieloma tożsamościami jest rzadki, a wybór między
+nimi należy do Operatora, nie do rdzenia: podpowiedź ma mu skrócić pisanie,
+nie podjąć za niego decyzji.
+
+Hasła w .muttrc bywają jawne (set imap_pass=) i odczyt je pomija: sekret
+leżący w pliku możliwym do odczytania nadal nie jest czymś, co rdzeń
+zabiera do siebie.
+## server/internal/core/adapter_modul_studio_widok.go
+
+Zasada Wlasciciela: gdzie da sie zrobic dwojako i obie drogi maja sens,
+wybor nalezy do Operatora i jest JAWNYM, ODWRACALNYM ustawieniem — nie
+rozstrzygnieciem wykonawcy zapisanym w kodzie. Ustawienie zyjace wylacznie
+w kliencie przepada przy zamknieciu okna, wiec "przelaczenie trybu niczego
+nie gubi" nie byloby prawda po ponownym otwarciu Studia. Skala widoku jest
+pamietana PRZY DOKUMENCIE (Wlasciciel wymienia to wprost), a tryb
+powierzchni — przy oknie. Wiersz bez dokumentu jest nastawa okna, wiersz
+z dokumentem nastawa tego dokumentu; dwie tabele znaczylyby dwa odczyty
+przy kazdym otwarciu okna i pytanie, ktora wygrywa. Ten sam wiersz niesie
+nastawy autozapisu (adapter_modul_studio_autozapis.go) — inne kolumny,
+inne polecenie zapisu. Jedno polecenie na obie grupy kazaloby widokowi
+przepisywac nastawy autozapisu, ktorych nie zmienial.
+
+UstawWidok: wartosci spoza wyliczen kontraktu wracaja odmowa nazywajaca,
+co wolno — tabela i tak ich nie przyjmie, a odmowa nazwana mowi to przed
+zapisem, nie po nim.
+
+widokNastawa: wiersz zaklada NastawaPracy — jedna droga zakladania dla
+obu grup kolumn. Druga rozjechalaby sie przy pierwszej zmianie wartosci
+domyslnej.

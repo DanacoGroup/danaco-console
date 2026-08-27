@@ -1428,3 +1428,19 @@ z wstrzymania czynnego, więc dopóki epizod nie jest jeszcze zastosowany,
 znaczniki decyzji zostają w odpowiedzi, żeby Operator zobaczył, co się
 właśnie stało; po zastosowaniu epizod jest już historią i krok wraca pod
 stan swojej pracy.
+
+## budowa/server/internal/core/skutek_automatyzacji_test.go
+
+Żaden sprawdzian tego pliku nie kończy się na tym, że odpowiedź komendy jest
+udana. Każdy schodzi do bazy własnym zapytaniem SQL i mierzy niezależnie, bo
+odpowiedź komendy oddaje na przykład automatykę z etykietami i wyglądałaby
+dokładnie tak samo, gdyby zapis do tabeli towarzyszącej nie doszedł. Wzorzec
+szkody, którego pilnuje ten plik, ma w produkcie precedens: komenda meldowała
+powodzenie z wykazem, za którym nie było ani jednego bajtu w bazie.
+
+Sprawdzian skarbca i audytu mierzy dwie rzeczy naraz. Pierwsza: czy w bazie
+nie ma wartości poświadczenia — kolumny na nią nie ma, więc sprawdzian
+przeszukuje cały wiersz, i gdyby ktoś dołożył kolumnę i zapisał w niej sekret,
+ten sprawdzian by upadł. Druga: czy dziennik audytu zapełnia się sam, przy
+okazji czynności, bo audyt, który trzeba jawnie zawołać, jest audytem,
+o którym się zapomina.

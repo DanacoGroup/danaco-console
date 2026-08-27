@@ -1,3 +1,5 @@
+// Plik mierzy skutek dobudowy modułu Automations: czy za odpowiedzią komendy
+// w bazie rzeczywiście leży wiersz, niezależnie od treści samej odpowiedzi.
 package core
 
 import (
@@ -8,16 +10,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek dobudowy modułu Automations: czy za odpowiedzią komendy leży wiersz.
-//
-// Żaden sprawdzian tutaj nie kończy się na tym, że odpowiedź jest udana. Każdy
-// schodzi do bazy WŁASNYM zapytaniem SQL i mierzy niezależnie — bo odpowiedź
-// `automation.workflow.tag.set` oddaje automatykę z etykietami i wyglądałaby
-// dokładnie tak samo, gdyby zapis do tabeli `etykieta_automatyki` nie doszedł.
-//
-// Wzorzec szkody, którego pilnuje ten plik, ma w produkcie precedens: komenda
-// meldowała `status: ok` z wykazem, za którym nie było ani jednego bajtu.
 
 // automatykaSprawdzianuDobudowy zakłada automatykę o trzech krokach i oddaje
 // jej kod wraz z kluczem wiersza — sprawdziany schodzą do bazy po kluczu.
@@ -65,9 +57,7 @@ func TestSkutekWersjiDefinicjiWBazie(t *testing.T) {
 			"pokazywałby historię, której w bazie nie ma", migawek)
 	}
 
-	// Drugi zapis podnosi wersję, więc migawek ma być dwie, a nie jedna
-	// nadpisana: porównanie dwóch wersji nie ma z czego powstać, gdy historia
-	// trzyma wyłącznie stan ostatni.
+	// Drugi zapis podnosi wersję, więc migawek ma być dwie, nie jedna nadpisana.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationWorkflowSave,
 		shared.AutomationWorkflowSaveRequest{
 			WorkflowId: wskaznik(kod), Name: "Raport tygodniowy",
@@ -132,7 +122,7 @@ func TestSkutekPrzywroceniaWersjiWBazie(t *testing.T) {
 	}
 }
 
-// liczbaKrokowWBazie liczy kroki automatyki własnym zapytaniem.
+// liczbaKrokowWBazie liczy kroki automatyki własnym zapytaniem SQL, niezależnie od odpowiedzi komendy.
 func liczbaKrokowWBazie(t *testing.T, baza *sql.DB, automatykaID int64) int {
 	t.Helper()
 
@@ -175,8 +165,7 @@ func TestSkutekEtykietPublikacjiIUdostepnieniaWBazie(t *testing.T) {
 		t.Fatalf("w bazie stoją etykiety %v, oczekiwano [raport tygodniowy]", etykiety)
 	}
 
-	// Wykaz pusty ma je ZDJĄĆ, a nie zostawić: kontrakt mówi „wykaz pusty
-	// zdejmuje wszystkie”, więc zapis dokładający byłby zapisem innej komendy.
+	// Wykaz pusty ma zdjąć wszystkie etykiety, nie zostawić poprzednich.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationWorkflowTagSet,
 		shared.AutomationWorkflowTagSetRequest{WorkflowId: kod, Tags: []string{}}, nil)
 	var pozostalo int
@@ -216,8 +205,7 @@ func TestSkutekEtykietPublikacjiIUdostepnieniaWBazie(t *testing.T) {
 		t.Fatalf("budżety w bazie to %d/%d, oczekiwano 900/120", budzetPrzebiegu, budzetKroku)
 	}
 
-	// Wersja opublikowana ma wyjść kontraktem jako wersja WYKONYWANA — inaczej
-	// okno pokazywałoby numer roboczej przy automatyce wykonującej wcześniejszą.
+	// Wersja opublikowana ma wyjść kontraktem jako wersja wykonywana, nie robocza.
 	var wykaz shared.AutomationWorkflowListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationWorkflowList,
 		shared.AutomationWorkflowListRequest{}, &wykaz)
@@ -273,8 +261,7 @@ func TestSkutekZmiennychNotatkiIUkladuWBazie(t *testing.T) {
 	if zmiennych != 2 || mapowan != 2 {
 		t.Fatalf("w bazie stoją %d zmienne i %d mapowania, oczekiwano 2 i 2", zmiennych, mapowan)
 	}
-	// Zastrzeżenia mają nazwać jedno mapowanie do kroku nieistniejącego i jedną
-	// zmienną nieużywaną — zapis pozostaje możliwy, ostrzeżenie ma paść.
+	// Zastrzeżenia nazywają mapowanie do kroku nieistniejącego i zmienną nieużywaną.
 	if len(zapis.Issues) < 2 {
 		t.Fatalf("zapis oddał %d zastrzeżeń, oczekiwano co najmniej dwóch: %v",
 			len(zapis.Issues), zapis.Issues)
@@ -313,8 +300,7 @@ func TestSkutekZmiennychNotatkiIUkladuWBazie(t *testing.T) {
 		t.Fatalf("w bazie stoi położenie %d/%d, oczekiwano 40/120", x, y)
 	}
 
-	// Zapis definicji podmienia kroki w całości. Adnotacja ma to PRZEŻYĆ —
-	// inaczej Operator zastawałby kanwę ułożoną od nowa po każdej zmianie nazwy.
+	// Zapis definicji podmienia kroki w całości, a adnotacja ma to przeżyć nietknięta.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationWorkflowSave,
 		shared.AutomationWorkflowSaveRequest{
 			WorkflowId: wskaznik(kod), Name: "Zmienne",
@@ -371,8 +357,7 @@ func TestSkutekSzablonuPrzeplywuWBazie(t *testing.T) {
 		t.Fatalf("szablon zapisał %d kroków, oczekiwano 3", len(kroki))
 	}
 
-	// Zastosowanie bez wartości parametru ma ZAŁOŻYĆ automatykę i nazwać brak,
-	// a nie odmówić — tak mówi kontrakt.
+	// Zastosowanie bez wartości parametru zakłada automatykę i nazywa brak, nie odmawia.
 	var zastosowanie shared.AutomationTemplateApplyResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationTemplateApply,
 		shared.AutomationTemplateApplyRequest{
@@ -393,14 +378,8 @@ func TestSkutekSzablonuPrzeplywuWBazie(t *testing.T) {
 	}
 }
 
-// TestSkutekSkarbcaIAudytuWBazie mierzy dwie rzeczy naraz i obie są zaporami.
-//
-// Pierwsza: czy w bazie NIE MA wartości poświadczenia. Kolumny na nią nie ma,
-// więc sprawdzian przeszukuje CAŁY wiersz — gdyby ktoś dołożył kolumnę i zapisał
-// w niej sekret, ten sprawdzian upadnie.
-//
-// Druga: czy dziennik audytu zapełnia się sam, przy okazji czynności. Audyt,
-// który trzeba jawnie zawołać, jest audytem, o którym się zapomina.
+// TestSkutekSkarbcaIAudytuWBazie mierzy, czy wiersz poświadczenia w bazie nie
+// niesie jego wartości i czy dziennik audytu zapełnia się sam, przy okazji czynności.
 func TestSkutekSkarbcaIAudytuWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaZakresuSprawdzianu(t, katalog)
@@ -468,8 +447,7 @@ func TestSkutekSkarbcaIAudytuWBazie(t *testing.T) {
 			"wstrzymywane przywołaniami")
 	}
 
-	// Dziennik audytu ma nieść ślad zapisu definicji, zapisu poświadczenia
-	// i jego usunięcia. Sprawdzian liczy w BAZIE, nie w odpowiedzi komendy.
+	// Dziennik audytu ma nieść ślad trzech czynności; sprawdzian liczy w bazie.
 	var wpisow int
 	if err := baza.QueryRow(`SELECT COUNT(*) FROM wpis_audytu_automatyki`).Scan(&wpisow); err != nil {
 		t.Fatalf("nie można policzyć wpisów audytu: %v", err)

@@ -488,3 +488,18 @@ zgubiłaby wszystkie trzy powody.
 
 Złożenie powierzchni rejestru procesów jest konstrukcją czystą: nie domyka się na stanie okna ani
 na rdzeniu, więc dała się wyjąć bez przenoszenia zależności.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zrodlo-arsenalu.ts
+
+Rozdział komend modułu Roundtable na dwa pliki idzie po roli, nie po
+wielkości. Cztery komendy źródła debaty prowadzą samą debatę: dodają
+uczestnika, otwierają turę, moderują ją i czytają stanowisko. Komendy tego
+pliku pracują nad zapisem debaty — czytają go, analizują, oceniają, wydają.
+Okno rozmowy może stać wyłącznie na komendach źródła debaty; rozszerzenia
+boczne stoją na komendach tego pliku.
+
+Każda czynność oddaje typ Wynik, nie samą treść, i każda sprawdza kształt
+odpowiedzi. Powód jest ten sam co w źródle debaty: obszar odmawia z powodów
+zwyczajnych — kanał uczestnika bywa nieczynny, głosowanie bywa zamknięte —
+a okno musi odróżnić brak treści od nieudanego zapytania, więc żaden
+odczyt nie zastępuje braku odpowiedzi pustą wartością domyślną.

@@ -1,25 +1,6 @@
 // Odpowiedzialność pliku: klient protokołu debugowania (DAP) — ramkowanie
-// komunikatów, korelacja odpowiedzi z żądaniami i odbiór zdarzeń adaptera.
-//
-// ── Dlaczego DAP, a nie własne API debuggera ────────────────────────────────
-// Opracowanie modułu (rozdz. 7.5) wskazuje DAP jako warstwę wspólną: `delve`
-// dla Go, `debugpy` dla Pythona, `js-debug` dla Node, `lldb` dla C. Rozmowa
-// z każdym z nich po jego własnym API oznaczałaby cztery różne implementacje
-// tej samej pięciu czynności — a Run & Debug ma jedno okno i jeden zestaw
-// przycisków, niezależnie od języka.
-//
-// ── Ramkowanie ──────────────────────────────────────────────────────────────
-// DAP jedzie po strumieniu bajtów, więc komunikat ma nagłówek
-// `Content-Length: N`, pustą linię i N bajtów treści JSON. To jest to samo
-// ramkowanie, którego używa LSP. Bez niego dwa komunikaty wysłane po sobie
-// zlałyby się w jeden nieczytelny dokument.
-//
-// ── Korelacja ───────────────────────────────────────────────────────────────
-// Adapter odpowiada w dowolnej kolejności i wtrąca między odpowiedzi zdarzenia
-// (`stopped`, `terminated`, `output`), więc czekanie na „następny komunikat”
-// byłoby czekaniem na cokolwiek. Każde żądanie dostaje numer kolejny, a odbiornik
-// rozdziela przychodzące komunikaty: odpowiedź trafia do kanału czekającego na
-// ten numer, zdarzenie — do obserwatora sesji.
+// komunikatów nagłówkiem `Content-Length`, korelacja odpowiedzi z żądaniami
+// numerem kolejnym i odbiór zdarzeń adaptera osobnym kanałem.
 package core
 
 import (
@@ -38,7 +19,8 @@ import (
 // bez końca na adapterze, który przestał odpowiadać.
 const czasOdpowiedziDap = 30 * time.Second
 
-// komunikatDap jest wspólnym kształtem żądania, odpowiedzi i zdarzenia.
+// komunikatDap jest wspólnym kształtem żądania, odpowiedzi i zdarzenia
+// protokołu DAP, ramkowanym nagłówkiem długości treści.
 type komunikatDap struct {
 	Seq        int             `json:"seq"`
 	Type       string          `json:"type"`
@@ -51,7 +33,8 @@ type komunikatDap struct {
 	Body       json.RawMessage `json:"body,omitempty"`
 }
 
-// klientDap prowadzi jedną rozmowę z adapterem debugowania.
+// klientDap prowadzi jedną rozmowę z adapterem debugowania jednego języka,
+// korelując odpowiedzi numerem kolejnym żądania.
 type klientDap struct {
 	wejscie io.WriteCloser
 
@@ -60,13 +43,12 @@ type klientDap struct {
 	czekajacy map[int]chan komunikatDap
 	zamkniety bool
 
-	// zdarzenia oddaje komunikaty niezwiązane z żadnym żądaniem. Kanał jest
-	// buforowany, bo adapter wysyła zdarzenia szybciej, niż sesja je czyta,
-	// a zablokowany odbiornik wstrzymałby także odpowiedzi.
+	// zdarzenia oddaje komunikaty niezwiązane z żadnym żądaniem, buforowane.
 	zdarzenia chan komunikatDap
 }
 
-// nowyKlientDap zakłada klienta nad strumieniami procesu adaptera.
+// nowyKlientDap zakłada klienta nad strumieniami procesu adaptera i startuje
+// gorutynę odbiorczą jego komunikatów.
 func nowyKlientDap(wejscie io.WriteCloser, wyjscie io.Reader) *klientDap {
 	klient := &klientDap{
 		wejscie:   wejscie,
@@ -77,7 +59,8 @@ func nowyKlientDap(wejscie io.WriteCloser, wyjscie io.Reader) *klientDap {
 	return klient
 }
 
-// odbieraj czyta komunikaty adaptera i rozdziela je na odpowiedzi i zdarzenia.
+// odbieraj czyta komunikaty adaptera i rozdziela je na odpowiedzi i zdarzenia,
+// aż do zamknięcia strumienia albo błędu odczytu.
 func (k *klientDap) odbieraj(wyjscie io.Reader) {
 	defer k.zamknijCzekajacych()
 	if wyjscie == nil {
@@ -93,9 +76,7 @@ func (k *klientDap) odbieraj(wyjscie io.Reader) {
 			select {
 			case k.zdarzenia <- komunikat:
 			default:
-				// Kanał pełny znaczy obserwatora, który nie nadąża. Zdarzenie
-				// przepada, a rozmowa idzie dalej: zablokowanie odbiornika
-				// zatrzymałoby także odpowiedzi na żądania.
+				// Kanał pełny znaczy obserwatora bez nadążania: zdarzenie przepada.
 			}
 			continue
 		}
@@ -112,7 +93,8 @@ func (k *klientDap) odbieraj(wyjscie io.Reader) {
 	}
 }
 
-// czytajKomunikatDap czyta jeden komunikat wraz z jego nagłówkiem długości.
+// czytajKomunikatDap czyta jeden komunikat wraz z jego nagłówkiem długości,
+// z bufora strumienia wyjściowego adaptera.
 func czytajKomunikatDap(czytnik *bufio.Reader) (komunikatDap, error) {
 	dlugosc := 0
 	for {
@@ -200,7 +182,8 @@ func (k *klientDap) Wolaj(komenda string, argumenty any) (json.RawMessage, error
 	}
 }
 
-// wyslij zapisuje komunikat wraz z nagłówkiem długości.
+// wyslij zapisuje komunikat wraz z nagłówkiem długości do strumienia
+// wejściowego procesu adaptera, pod zamkiem wykluczającym równoległy zapis.
 func (k *klientDap) wyslij(komunikat komunikatDap) error {
 	bajty, err := json.Marshal(komunikat)
 	if err != nil {
@@ -216,10 +199,12 @@ func (k *klientDap) wyslij(komunikat komunikatDap) error {
 	return nil
 }
 
-// Zdarzenia oddaje kanał zdarzeń adaptera.
+// Zdarzenia oddaje kanał zdarzeń adaptera, niezwiązanych z żadnym żądaniem,
+// bezpośrednio dla obserwatora sesji.
 func (k *klientDap) Zdarzenia() <-chan komunikatDap { return k.zdarzenia }
 
-// Zamknij kończy rozmowę i zwalnia czekających.
+// Zamknij kończy rozmowę i zwalnia wszystkich czekających na odpowiedź,
+// zamykając strumień wejściowy procesu.
 func (k *klientDap) Zamknij() {
 	k.mu.Lock()
 	if k.zamkniety {

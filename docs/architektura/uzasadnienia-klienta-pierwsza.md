@@ -483,3 +483,22 @@ okno przypadkowe.
 Pusty prompt systemowy jest odpowiedzią, nie brakiem odpowiedzi: znaczy, że ani
 oś, ani ekspert nie wnoszą treści systemowej. Pole zostaje wtedy widoczne wraz
 z takim zdaniem, zamiast się schować i sugerować, że odczyt się nie odbył.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-warsztatu-kodu.ts
+
+Czynności warsztatu stoją w osobnym oknie zamiast w pasku pływającym nad
+zaznaczeniem, ponieważ pole edycji Code Editora jest zwykłym obszarem tekstu
+bez modelu dokumentu — zaznaczenie znika przy pierwszym kliknięciu poza nim.
+Okno podaje ten sam zestaw czynności w postaci, która nie potrzebuje żywego
+zaznaczenia: plik bierze się ze stanu modułu, a zaznaczenie wpisuje się
+jawnie w polu formularza.
+
+Refaktoryzacja i operacje kontekstowe modelu wracają jako podgląd zmiany, nie
+jako zapis na dysk. Zapis jest osobnym rozstrzygnięciem Operatora, bo to
+jedyna chwila, w której da się pracę modelu odrzucić przed jej utrwaleniem.
+
+Nawigacja po symbolach i analiza statyczna niosą w odpowiedzi jawne pole
+mówiące, czy serwer języka i program analizy statycznej były osiągalne. Okno
+rozróżnia stan, w którym wystąpień nie ma, od stanu, w którym nie było czym
+ich szukać — pierwszy naprawia się w kodzie, drugi instalacją programu po
+stronie serwera.

@@ -1,42 +1,13 @@
--- Migracja 180 — moduł Library: cykl życia zasobu, jego miejsce w strukturze
--- repozytorium oraz opis w schemacie Dublin Core wraz z polami niestandardowymi.
---
--- Trzy braki naraz, bo wszystkie trzy dotyczą jednego bytu — zasobu:
---
---   1. `stan` rozdziela wykaz czynny od archiwum. Kosz repozytorium
---      (`library.file.archive` / `library.file.restore`) jest przeniesieniem
---      między stanami, nie usunięciem wiersza: zasób zarchiwizowany zachowuje
---      wersje, etykiety i kolekcje, więc przywrócenie oddaje go w całości.
---      Usunięcie trwałe (`library.file.delete`) zdejmuje wiersz i wtedy dopiero
---      kaskada zabiera wersje.
---   2. `sciezka_repozytorium` jest drogą WEWNĄTRZ biblioteki
---      (`LibraryFile.path`), rozłączną z kolumną `sciezka`, która niesie
---      ścieżkę źródłową z maszyny Operatora i z rdzenia nie wychodzi
---      (`dane/library.go`). Bez osobnej kolumny `library.file.move` nie miałby
---      dokąd przenieść zasobu, a wypełnienie pola kontraktu ścieżką źródłową
---      wyniosłoby do klienta układ cudzego dysku.
---   3. Opis Dublin Core mieszka w tabeli towarzyszącej, nie w kolumnach
---      `plik_biblioteki`: piętnaście pól opisowych obciążałoby każdy odczyt
---      wykazu, a wykaz opisu nie pokazuje. Jeden wiersz opisu na jeden zasób —
---      klucz główny jest kluczem obcym.
---
--- Pola niestandardowe stoją dwutorowo, bo są dwiema różnymi rzeczami:
--- DEFINICJA pola należy do repozytorium (`pole_schematu_biblioteki`,
--- `library.schema.set`), a WARTOŚĆ pola do zasobu (kolumna
--- `pola_niestandardowe` opisu, mapa kod→wartość w zapisie JSON). Rozdział ten
--- ma skutek wprost w kontrakcie: zdjęcie definicji nie kasuje wartości
--- zapisanych przy zasobach i wartości wracają, gdy pole zostanie założone
--- ponownie.
+-- Migracja 180 rozszerza plik_biblioteki o stan cyklu życia i ścieżkę wewnątrz repozytorium, zakłada opis zasobu w schemacie Dublin Core oraz definicje pól niestandardowych metadanych.
 
--- ── Cykl życia zasobu i jego miejsce w strukturze ──────────────────────────
+-- Rozszerza tabelę plik_biblioteki o kolumny stanu cyklu życia i ścieżki wewnątrz repozytorium wraz z indeksami wykazu czynnego i wyszukiwania duplikatów.
 ALTER TABLE plik_biblioteki
     ADD COLUMN stan TEXT NOT NULL DEFAULT 'aktywny'
         CHECK(stan IN ('aktywny','zarchiwizowany'));
 
 ALTER TABLE plik_biblioteki ADD COLUMN sciezka_repozytorium TEXT;
 
--- Wykaz domyślny pokazuje zasoby czynne, więc stan wchodzi do indeksu przed
--- porządkiem czasu.
+-- Wykaz domyślny pokazuje zasoby czynne, więc kolumna stanu wchodzi do indeksu przed porządkiem czasu aktualizacji wiersza.
 CREATE INDEX idx_plik_biblioteki_stan ON plik_biblioteki(stan, zaktualizowano DESC);
 CREATE INDEX idx_plik_biblioteki_sciezka_repozytorium
     ON plik_biblioteki(sciezka_repozytorium);
@@ -44,7 +15,7 @@ CREATE INDEX idx_plik_biblioteki_sciezka_repozytorium
 -- byłoby przejściem po całym repozytorium przy każdym skanowaniu.
 CREATE INDEX idx_plik_biblioteki_suma ON plik_biblioteki(suma_kontrolna);
 
--- ── Opis zasobu — Dublin Core i pola niestandardowe ────────────────────────
+-- Zakłada tabelę opis_zasobu_biblioteki niosącą opis zasobu w schemacie Dublin Core wraz z mapą pól niestandardowych w zapisie JSON.
 CREATE TABLE opis_zasobu_biblioteki (
     plik_id              INTEGER PRIMARY KEY
                          REFERENCES plik_biblioteki(id) ON DELETE CASCADE,
@@ -63,13 +34,12 @@ CREATE TABLE opis_zasobu_biblioteki (
     powiazanie           TEXT,
     zakres               TEXT,
     prawa                TEXT,
-    -- Mapa kod pola → wartość w zapisie JSON. Kolumna na pole byłaby schematem
-    -- zmienianym migracją przy każdym polu założonym przez Operatora.
+    -- Mapa kod pola i wartość w JSON, bez kolumny na pole zmienianej migracją przy każdym polu Operatora.
     pola_niestandardowe  TEXT,
     zaktualizowano       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
 
--- ── Definicja pola niestandardowego schematu metadanych ────────────────────
+-- Zakłada tabelę pole_schematu_biblioteki niosącą definicję pola niestandardowego metadanych wraz z jego zawężeniem stosowalności.
 CREATE TABLE pole_schematu_biblioteki (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     kod            TEXT    NOT NULL UNIQUE,
@@ -77,8 +47,7 @@ CREATE TABLE pole_schematu_biblioteki (
     rodzaj         TEXT    NOT NULL
                    CHECK(rodzaj IN ('tekst','liczba','data','logiczna','lista')),
     wymagane       INTEGER NOT NULL DEFAULT 0 CHECK(wymagane IN (0,1)),
-    -- Zawężenia stosowalności pola: rodzaj treści i kolekcja. Puste znaczy
-    -- „wszystkie" — brak wartości jest tu wartością domyślną, nie brakiem.
+    -- Zawężenia stosowalności pola: rodzaj treści i kolekcja; pustka jest wartością domyślną.
     mime_type      TEXT,
     kolekcja_kod   TEXT,
     -- Słownik dopuszczalnych wartości pola rodzaju `lista`, zapis JSON.

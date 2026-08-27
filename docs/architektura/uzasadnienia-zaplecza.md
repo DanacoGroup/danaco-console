@@ -2892,3 +2892,33 @@ Nadzór obecności uruchomień i adres wejściowy webhooka są polami pojedynczy
 Adresu serwera wdrożenia nie zna instalator i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie wie, pod jaką nazwą stoi rdzeń danego Operatora. Wiedza pojawia się przy pierwszym uruchomieniu okna i musi przetrwać jego zamknięcie, inaczej przy każdym starcie powłoka pytałaby o to samo. Zmienna środowiskowa wskazująca host rdzenia stoi wyżej niż ten plik jako narzędzie wykonawcy i środowiska serwerowego, gdzie nastawę wnosi jednostka usługi, a nie okno; kolejność warstw rozstrzyga moduł ustawień. Plik leży w katalogu danych powłoki, obok jej dziennika, bo oba pliki należą do powłoki i drugie miejsce zapisu byłoby drugim stanem do pogodzenia przy przenoszeniu profilu.
 
 Odczyt nastaw nie jest bramą i nie wstrzymuje startu okna: brak pliku, plik nieczytelny i treść niezgodna z umową dają nastawy puste, a powód nieczytelności trafia do dziennika powłoki, żeby Operator nie zobaczył ekranu pierwszego uruchomienia bez wyjaśnienia, dlaczego jego poprzednie wskazanie zniknęło. Zapis idzie przez plik przejściowy i przemianowanie, żeby przerwanie w trakcie pisania nie zostawiło pliku obciętego — wskazanie odczytane w połowie byłoby gorsze niż wskazanie nieodczytane, bo okno łączyłoby się z adresem złożonym z połowy nazwy hosta. W przeciwieństwie do odczytu, niepowodzenie zapisu jest bramą: wywołujący ma odmówić Operatorowi, a nie przyjąć wskazanie, które zniknie przy następnym starcie.
+## budowa/server/internal/store/migracja_180_biblioteka_zasob_opis.sql
+Migracja 180 — moduł Library: cykl życia zasobu, jego miejsce w strukturze
+repozytorium oraz opis w schemacie Dublin Core wraz z polami niestandardowymi.
+
+Trzy braki naraz, bo wszystkie trzy dotyczą jednego bytu — zasobu:
+
+  1. `stan` rozdziela wykaz czynny od archiwum. Kosz repozytorium
+     (`library.file.archive` / `library.file.restore`) jest przeniesieniem
+     między stanami, nie usunięciem wiersza: zasób zarchiwizowany zachowuje
+     wersje, etykiety i kolekcje, więc przywrócenie oddaje go w całości.
+     Usunięcie trwałe (`library.file.delete`) zdejmuje wiersz i wtedy dopiero
+     kaskada zabiera wersje.
+  2. `sciezka_repozytorium` jest drogą WEWNĄTRZ biblioteki
+     (`LibraryFile.path`), rozłączną z kolumną `sciezka`, która niesie
+     ścieżkę źródłową z maszyny Operatora i z rdzenia nie wychodzi
+     (`dane/library.go`). Bez osobnej kolumny `library.file.move` nie miałby
+     dokąd przenieść zasobu, a wypełnienie pola kontraktu ścieżką źródłową
+     wyniosłoby do klienta układ cudzego dysku.
+  3. Opis Dublin Core mieszka w tabeli towarzyszącej, nie w kolumnach
+     `plik_biblioteki`: piętnaście pól opisowych obciążałoby każdy odczyt
+     wykazu, a wykaz opisu nie pokazuje. Jeden wiersz opisu na jeden zasób —
+     klucz główny jest kluczem obcym.
+
+Pola niestandardowe stoją dwutorowo, bo są dwiema różnymi rzeczami:
+DEFINICJA pola należy do repozytorium (`pole_schematu_biblioteki`,
+`library.schema.set`), a WARTOŚĆ pola do zasobu (kolumna
+`pola_niestandardowe` opisu, mapa kod→wartość w zapisie JSON). Rozdział ten
+ma skutek wprost w kontrakcie: zdjęcie definicji nie kasuje wartości
+zapisanych przy zasobach i wartości wracają, gdy pole zostanie założone
+ponownie.

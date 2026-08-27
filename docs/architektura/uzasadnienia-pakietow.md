@@ -3185,3 +3185,8 @@ all, ponieważ brak rozpoznanego ustawienia ma dawać pracę, nie odmowę.
 
 ## budowa/server/internal/dane/tlumaczenie_tresc.go
 Ton jest kolumną panelu, nie osobnym bytem: żądanie ustawienia tonu pisze przez metodę tego pliku, bo pole ton mieszka w tabeli panel_tlumaczenia (migracja_053_tlumaczenie.sql). Każda z czterech metod przy nieznanym kodzie panelu wraca ErrBrakWiersza, ponieważ cicha zgoda na zmianę bytu, którego nie ma, byłaby potwierdzeniem czynności, która się nie odbyła — każda metoda sprawdza liczbę wierszy dotkniętych zapisem. Czas jest liczbą milisekund epoki, wzorem reszty modułu Translate. UstawTlumaczenie przyjmuje treść i odwołanie jako wskaźniki: pusta wartość zostawia kolumnę bez zmiany, bo zgłoszenie korekty może nieść samą treść krótką albo samo odwołanie do pliku, zależnie od rozmiaru tekstu.
+
+## budowa/server/cmd/danaco-console/uruchomienie/tor.go
+Gdy pole Wejscie pozostaje nieustawione, tor wykonawczy kończy pracę od razu,
+nie zrywając przy tym toru interfejsu — proces roli łączącej oba tory ma dalej
+obsługiwać interfejs mimo braku podłączonego wejścia.

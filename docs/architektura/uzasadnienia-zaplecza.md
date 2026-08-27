@@ -2488,3 +2488,15 @@ propozycja.
 Decyzja zostaje przy wierszu (`stan`), zamiast kasować go przy odrzuceniu:
 sugestia odrzucona ma nie wracać przy kolejnym przebiegu klasyfikacji, więc
 rdzeń musi wiedzieć, że raz już padła i została odsunięta.
+## budowa/server/internal/store/migracja_193_roundtable_analiza.sql
+Migracja 193 — ustalenia analizy i rejestr dowodów.
+
+Ustalenie analizy zostaje w zapisie, bo `roundtable.analysis.run` kosztuje
+wywołanie kanału modelu. Odczyt wyniku bez powtórnego wywołania jest tu
+warunkiem użyteczności: transkrypt z ustaleniami (`includeAnalysis`) wydaje
+się długo po tym, jak analiza przebiegła.
+
+Rejestr dowodów jest osobny od ustaleń, bo ma inne pytanie: nie „co model
+rozpoznał", tylko „czym poparto twierdzenie". Kolumna `poparte` niesie
+odpowiedź, a brak źródła przy `poparte = 0` jest właśnie tym, co
+`unsupportedOnly` wyciąga na wierzch.

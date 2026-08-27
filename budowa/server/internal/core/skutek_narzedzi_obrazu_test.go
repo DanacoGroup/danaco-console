@@ -335,6 +335,34 @@ func TestPomiarNiepodanegoObrazuOdmawiaNazywajacBrak(t *testing.T) {
 	}
 }
 
+// TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak mierzy kształt odmowy na
+// jedynej drodze rodziny, która NIE MA rachunku wkompilowanego: AVIF powstaje
+// wyłącznie programem pakietu serwera, więc jego brak ma wyjść zdaniem
+// nazywającym program i drogę naprawy — nie błędem wewnętrznym.
+//
+// Pustą ścieżką wyszukiwania sprawdzian czyni z tej maszyny maszynę bez
+// programu, więc odmowę mierzy każdy bieg, nie tylko bieg na cienkiej instalce.
+func TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak(t *testing.T) {
+	t.Setenv("PATH", t.TempDir())
+
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+
+	bialy := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+	zrodlo := wniesObraz(t, zmontowany, zycie, obrazJednolity(t, 16, 16, bialy), "źródło")
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandImageConvert,
+		shared.ImageConvertRequest{
+			WindowId: wskaznik("okno-sprawdzianu"),
+			AssetId:  wskaznik(zrodlo),
+			Format:   "avif",
+		})
+	// Trzy człony odmowy: co (program po nazwie), skąd wiadomo (nie ma na tej
+	// maszynie), jak naprawić (pakiet do zainstalowania).
+	odmowaNazywa(t, odmowa, shared.ErrorCodeChannelUnavailable,
+		"ImageMagick", "nie ma na tej maszynie", "naprawa: zainstalować pakiet imagemagick")
+	t.Logf("odmowa: %s", odmowa.Message)
+}
+
 // rozpoznajFormatPlikuSprawdzianu czyta nagłówek pliku wynikowego.
 func rozpoznajFormatPlikuSprawdzianu(sciezka string) (image.Config, string, error) {
 	plik, err := os.Open(sciezka)

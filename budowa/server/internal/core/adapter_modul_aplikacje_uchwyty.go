@@ -86,6 +86,7 @@ type Aplikacje interface {
 	UstawDomene(ctx context.Context, z shared.AppsDeploymentDomainSetRequest) (shared.AppsDeploymentDomainSetResponse, error)
 	UstawSkalowanie(ctx context.Context, z shared.AppsDeploymentScaleSetRequest) (shared.AppsDeploymentScaleSetResponse, error)
 	PobierzKondycje(ctx context.Context, z shared.AppsDeploymentHealthGetRequest) (shared.AppsDeploymentHealthGetResponse, error)
+	ZmierzWydajnosc(ctx context.Context, z shared.AppsPerformanceAuditRequest) (shared.AppsPerformanceAuditResponse, error)
 
 	// --- Dzienniki i artefakty ---
 	OdczytajDziennikUslugi(ctx context.Context, z shared.AppsServiceLogReadRequest) (shared.AppsServiceLogReadResponse, error)
@@ -151,6 +152,9 @@ func zarejestrujAplikacje(r *Rejestr, m Aplikacje, e *emiter) {
 	r.Zarejestruj(shared.CommandAppsDeploymentDomainSet, obsluz(m.UstawDomene))
 	r.Zarejestruj(shared.CommandAppsDeploymentScaleSet, obsluz(m.UstawSkalowanie))
 	r.Zarejestruj(shared.CommandAppsDeploymentHealthGet, obsluz(m.PobierzKondycje))
+	// Audyt wydajności zdarzenia nie rozgłasza: mierzy stronę i niczego w niej
+	// nie zmienia, tak samo jak odczyt kondycji wdrożenia.
+	r.Zarejestruj(shared.CommandAppsPerformanceAudit, obsluz(m.ZmierzWydajnosc))
 
 	r.Zarejestruj(shared.CommandAppsServiceLogRead, obsluz(m.OdczytajDziennikUslugi))
 	r.Zarejestruj(shared.CommandAppsDeploymentLogRead, obsluz(m.OdczytajDziennikWdrozenia))

@@ -1,6 +1,6 @@
 // Moduł Library — metadane osadzone w pliku: rodzaj treści rozpoznany
 // z zawartości, wymiary obrazu, liczba stron dokumentu, czas trwania nagrania
-// oraz EXIF wraz ze współrzędnymi GPS.
+// oraz EXIF wraz ze współrzędnymi GPS, IPTC, XMP i ID3.
 //
 // Odczyt wchodzi wyłącznie na wyraźne żądanie (`includeTechnical`), bo otwiera
 // bajty zasobu — przy wykazie kilkuset plików byłby to koszt, którego wykaz nie
@@ -14,7 +14,10 @@
 //   - EXIF i GPS — z własnego czytnika niżej: to kilkadziesiąt wierszy pracy na
 //     strukturze TIFF, a nie powód, żeby wciągać zależność,
 //   - czas trwania nagrania — z `ffprobe`, który stoi na serwerze razem
-//     z rdzeniem i jest wołany jedyną dozwoloną drogą (`zewnetrzne.Wolaj`).
+//     z rdzeniem i jest wołany jedyną dozwoloną drogą (`zewnetrzne.Wolaj`),
+//   - IPTC, XMP i ID3 — z `exiftool`, tą samą drogą. Te trzy nie są jedną
+//     strukturą jak EXIF, więc czytnik własny nie wchodzi w rachubę; powód
+//     stoi przy `dopiszMetadaneOsadzone`.
 //
 // Współrzędne GPS są jedynym źródłem widoku mapy w Library Explorer — bez nich
 // widok nie ma czego nanieść, więc czytnik EXIF ma je wprost, a nie „kiedyś".
@@ -59,6 +62,17 @@ var narzedziePomiaruBiblioteki = zewnetrzne.Narzedzie{
 	Nazwa: "ffprobe", Program: "ffprobe", Pakiet: "ffmpeg",
 }
 
+// granicaOdczytuMetadanych — program czyta nagłówki i segmenty metadanych,
+// nie treść zasobu, więc granica jest krótka. Plik, który każe mu czytać dłużej,
+// jest plikiem uszkodzonym, a nie zasobem o bogatym opisie.
+const granicaOdczytuMetadanych = 20 * time.Second
+
+// narzedzieMetadanychBiblioteki opisuje binarium czytające IPTC, XMP i ID3.
+// Jego brak jest brakiem trzech pól opisu, a nie odmową całego odczytu.
+var narzedzieMetadanychBiblioteki = zewnetrzne.Narzedzie{
+	Nazwa: "ExifTool", Program: "exiftool", Pakiet: "libimage-exiftool-perl",
+}
+
 // metadaneTechniczne czyta metadane osadzone w bajtach zasobu.
 //
 // Odczyt nie odmawia: zasób bez treści pod odwołaniem, format nieznany czy
@@ -99,7 +113,93 @@ func (a *adapterBiblioteki) metadaneTechniczne(zasob dane.PlikBiblioteki) *share
 	if czas := a.zmierzCzasTrwania(*zasob.TrescOdwolanie, rodzaj); czas != nil {
 		techniczne.DurationMs = czas
 	}
+	a.dopiszMetadaneOsadzone(*zasob.TrescOdwolanie, techniczne)
 	return techniczne
+}
+
+// dopiszMetadaneOsadzone wypełnia trzy pola kontraktu, których czytnik wyżej nie
+// umie przeczytać: IPTC, XMP i ID3.
+//
+// ── Dlaczego programem, skoro EXIF czyta czytnik własny ─────────────────────
+// EXIF jest jedną strukturą TIFF i mieści się w kilkudziesięciu wierszach — to
+// jest powód, dla którego stoi wyżej jako kod. Pozostałe trzy nie są jedną
+// strukturą: IPTC jest zapisem rekordowym w segmencie APP13, XMP drzewem RDF/XML
+// osadzanym inaczej w każdym formacie kontenera, ID3 dwiema niezgodnymi
+// rodzinami wersji. Napisanie ich od nowa byłoby przepisaniem cudzej pracy
+// wieloletniej, a nie kilkudziesięcioma wierszami — i właśnie takiego przypadku
+// dotyczy druga połowa reguły produktu: nie ma biblioteki, program jest
+// składnikiem pakietu serwera.
+//
+// ── Poszerzenie, nie warunek ────────────────────────────────────────────────
+// Odczyt opisu nie odmawia z żadnego powodu (patrz `metadaneTechniczne`) i ta
+// droga tego nie zmienia: brak programu, plik bez tych metadanych albo
+// odpowiedź, której nie da się rozebrać, zostawiają pola puste. Opis zasobu
+// jest wtedy węższy, a nie błędny — dokładnie tak, jak przy braku `ffprobe`.
+func (a *adapterBiblioteki) dopiszMetadaneOsadzone(sciezka string,
+	techniczne *shared.LibraryTechnicalMetadata) {
+
+	if a.uruchamiacz == nil || !zewnetrzne.Stoi(narzedzieMetadanychBiblioteki) {
+		return
+	}
+	ctx, przerwij := context.WithTimeout(context.Background(), granicaOdczytuMetadanych)
+	defer przerwij()
+
+	okno := session.Okno{Ustawienia: session.Ustawienia{
+		SrodowiskoWykonania: shared.ExecutionEnvCore,
+	}}
+	zasady := session.Zasady{}
+	if a.rozstrzygacz != nil {
+		zasady = ZasadyIzolacji(a.rozstrzygacz, konfig.Kontekst{})
+	}
+	obszar := session.Obszar{}
+	if a.katalog != nil {
+		obszar = ObszarOkna(a.katalog.Ustal(konfig.Kontekst{}, ""), "")
+	}
+
+	// `-g1` grupuje wynik rodziną pierwszą, więc odpowiedź sama mówi, do
+	// którego pola kontraktu należy każdy wpis. Bez grupowania trzeba by wołać
+	// program trzy razy albo zgadywać przynależność po nazwie znacznika.
+	// `-n` wyłącza upiększanie wartości: pole ma nieść to, co stoi w pliku.
+	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
+		narzedzieMetadanychBiblioteki, []string{
+			"-json", "-n", "-g1", "-IPTC:all", "-XMP:all", "-ID3:all", sciezka,
+		}, "", granicaOdczytuMetadanych)
+	if err != nil {
+		return
+	}
+
+	// Program oddaje tablicę o jednym elemencie na plik — pytamy o jeden plik.
+	var odpowiedz []map[string]json.RawMessage
+	if err := json.Unmarshal(wynik.Wyjscie, &odpowiedz); err != nil || len(odpowiedz) == 0 {
+		return
+	}
+	iptc, xmp, id3 := map[string]json.RawMessage{}, map[string]json.RawMessage{}, map[string]json.RawMessage{}
+	for grupa, wpisy := range odpowiedz[0] {
+		// Nazwy grup rodziny pierwszej niosą wariant zapisu w przyrostku
+		// (`XMP-dc`, `ID3v2_4`), a kontrakt ma po jednym polu na rodzinę —
+		// dlatego rozstrzyga przedrostek, a warianty scalają się w jedno pole.
+		switch {
+		case strings.HasPrefix(grupa, "IPTC"):
+			iptc[grupa] = wpisy
+		case strings.HasPrefix(grupa, "XMP"):
+			xmp[grupa] = wpisy
+		case strings.HasPrefix(grupa, "ID3"):
+			id3[grupa] = wpisy
+		}
+	}
+	for _, pole := range []struct {
+		wpisy map[string]json.RawMessage
+		cel   *json.RawMessage
+	}{
+		{iptc, &techniczne.Iptc}, {xmp, &techniczne.Xmp}, {id3, &techniczne.Id3},
+	} {
+		if len(pole.wpisy) == 0 {
+			continue
+		}
+		if zapis, err := json.Marshal(pole.wpisy); err == nil {
+			*pole.cel = zapis
+		}
+	}
 }
 
 // zmierzCzasTrwania woła `ffprobe` dla materiału dźwiękowego i filmowego.

@@ -15,10 +15,16 @@ import (
 // powodyBiegu wiążą nazwany powód zatrzymania pakietu sesji z wyliczeniem
 // kontraktu. Katalog wartości należy w całości do kontraktu — rdzeń żadnej nie
 // dopisuje.
+//
+// Cztery wartości dzielą się na dwie klasy i to jest właśnie rozróżnienie
+// maszynowe, po którym układ poznaje wynik pracy: `noProgress`, `manual`
+// i `failure` zastają zadanie PRZERWANE, `completed` — SKOŃCZONE z wynikiem.
+// Pole `stopReason` biegu jest jedynym miejscem, w którym rdzeń tę różnicę mówi.
 var powodyBiegu = map[session.PowodZatrzymania]shared.LoopStopReason{
 	session.ZatrzymanieBrakPostepu: shared.LoopStopReasonNoProgress,
 	session.ZatrzymanieRecznie:     shared.LoopStopReasonManual,
 	session.ZatrzymanieUsterka:     shared.LoopStopReasonFailure,
+	session.ZatrzymanieUkonczenie:  shared.LoopStopReasonCompleted,
 }
 
 // biegKontraktu przekłada odpis licznika obiegów na stan biegu kontraktu.

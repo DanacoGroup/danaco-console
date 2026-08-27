@@ -17,17 +17,40 @@ const (
 	brakBiblioteki = "biblioteka"
 	// brakModelu — biblioteka stoi, ale wag modelu nie da się przygotować.
 	brakModelu = "model"
+	// brakWagStojacych — w katalogu wskazanym nastawą model LEŻY, ale nie da się
+	// na nim postawić silnika. Osobny rodzaj od `brakModelu`, bo naprawa jest
+	// odwrotna: tam trzeba wagi ściągnąć, tu są już na dysku i odesłanie po nie
+	// kierowałoby Operatora po to, co ma.
+	brakWagStojacych = "wagi"
 	// BrakInterpretera — nie udało się uruchomić samego Pythona.
 	BrakInterpretera = "interpreter"
+)
+
+// Silniki pakietu. Wartość pusta znaczy silnik osadzeń — pierwszy i jedyny
+// przez cały czas, gdy pakiet miał jeden model, więc odmowy składane bez tego
+// pola mówią dalej to samo, co mówiły.
+const (
+	// SilnikDlaPrzesiewu — krzyżowy koder drugiego przebiegu (`przesiew.go`).
+	SilnikDlaPrzesiewu = "przesiew"
+	// SilnikDlaObrazu — model dwuwieżowy osi obrazu (`obraz.go`).
+	SilnikDlaObrazu = "obraz"
 )
 
 // BrakSilnika mówi, że wskaźnika znaczenia nie ma czym zbudować ani przeszukać.
 //
 // Osobny typ, tak samo jak `zewnetrzne.BrakNarzedzia`: brak usuwa się jedną
-// instalacją, więc adapter rozpoznaje ten typ i oddaje go jako odmowę
-// nieponawialną, a nie jako usterkę wewnętrzną zachęcającą klienta do ponowień.
+// instalacją, więc adapter rozpoznaje ten typ i znakuje go jako niedostępność
+// zaplecza (`adapter_modul_wiedza.go`), a nie jako usterkę wewnętrzną. Różnica
+// jest cała w treści, którą czytelnik dostaje: usterka wewnętrzna nie mówi ani
+// czego brak, ani ile to waży, ani co zainstalować.
 type BrakSilnika struct {
-	// Rodzaj — jedna z trzech stałych wyżej.
+	// Silnik — który z trzech silników pakietu odmówił. Puste znaczy silnik
+	// osadzeń. Pole rozstrzyga o TREŚCI odmowy, nie o jej kodzie: brakuje trzech
+	// różnych bibliotek, trzech różnych kompletów wag i wskazuje się trzy różne
+	// ustawienia, a odmowa odsyłająca po `fastembed` w miejscu, w którym brakuje
+	// krzyżowego kodera, kierowałaby Operatora po rzecz, którą już ma.
+	Silnik string
+	// Rodzaj — jedna ze stałych wyżej.
 	Rodzaj string
 	// Model — nazwa modelu, którego dotyczy brak.
 	Model string
@@ -46,15 +69,36 @@ func (b *BrakSilnika) Error() string {
 	if b.Powod != "" {
 		zdanie.WriteString("; pomocnik powiedział: " + skroc(b.Powod, 400))
 	}
-	zdanie.WriteString("; wyszukiwania po ZNACZENIU nie da się wykonać bez silnika, " +
-		"a rdzeń nie zejdzie po cichu na wyszukiwanie po SŁOWACH — " +
-		"model dostałby trafienia po literach w miejscu, w którym prosił o trafienia po sensie")
+	zdanie.WriteString(b.opisSkutku())
 	zdanie.WriteString("; naprawa: " + b.opisNaprawy())
 	return zdanie.String()
 }
 
+// opisSkutku mówi, czego wobec tego nie będzie — i dlaczego rdzeń nie podstawia
+// w to miejsce niczego innego.
+func (b *BrakSilnika) opisSkutku() string {
+	switch b.Silnik {
+	case SilnikDlaPrzesiewu:
+		return "; przesiewu nie da się wykonać bez krzyżowego kodera, " +
+			"a rdzeń nie odda po cichu kolejności z pierwszego przebiegu — " +
+			"wołający prosił o kolejność ułożoną NA NOWO i dostałby tę samą, " +
+			"którą miał bez pytania"
+	case SilnikDlaObrazu:
+		return "; osi obrazu nie da się wykonać bez modelu wiążącego obraz ze zdaniem, " +
+			"a rdzeń nie zejdzie po cichu na dopasowanie NAZW plików — " +
+			"wołający prosił o to, co na obrazie widać, a nie o to, jak plik nazwano"
+	default:
+		return "; wyszukiwania po ZNACZENIU nie da się wykonać bez silnika, " +
+			"a rdzeń nie zejdzie po cichu na wyszukiwanie po SŁOWACH — " +
+			"model dostałby trafienia po literach w miejscu, w którym prosił o trafienia po sensie"
+	}
+}
+
 // opisBraku nazywa brak wraz z wagą tego, czego nie ma.
 func (b *BrakSilnika) opisBraku() string {
+	if b.Silnik != "" {
+		return b.opisBrakuDolozonego()
+	}
 	switch b.Rodzaj {
 	case brakBiblioteki:
 		return "na tej maszynie nie ma biblioteki osadzeń `fastembed` " +
@@ -63,6 +107,9 @@ func (b *BrakSilnika) opisBraku() string {
 	case brakModelu:
 		return "biblioteka osadzeń stoi, ale wag modelu " + b.Model +
 			" nie ma na dysku i nie dało się ich przygotować (" + b.opisWagi() + " do pobrania)"
+	case brakWagStojacych:
+		return "w katalogu wskazanym ustawieniem `" + KluczKatalogModeli + "` leżą wagi, " +
+			"ale nie da się na nich postawić silnika modelu " + b.Model
 	case BrakInterpretera:
 		return "nie ma czym uruchomić pomocnika osadzeń — interpreter Pythona " +
 			"nie wystartował"
@@ -83,17 +130,128 @@ func (b *BrakSilnika) opisWagi() string {
 	return "około " + liczba(b.WagaMb) + " MB"
 }
 
+// opisBrakuDolozonego nazywa brak dwóch silników dołożonych do osadzarki.
+// Jedna droga dla obu, bo różnią się wyłącznie nazwą zdolności i wykazem
+// bibliotek — a te podaje `opisZdolnosci` i `opisPakietow`.
+func (b *BrakSilnika) opisBrakuDolozonego() string {
+	switch b.Rodzaj {
+	case brakBiblioteki:
+		return "na tej maszynie nie ma bibliotek, którymi liczy się " + b.opisZdolnosci() +
+			" (" + b.opisPakietow() + " to około 900 MB pobrania, a wagi modelu " +
+			b.Model + " " + b.opisWagi() + ")"
+	case brakModelu:
+		return "biblioteki stoją, ale wag modelu " + b.Model + " potrzebnych do " +
+			b.opisZdolnosci() + " nie ma na dysku i nie dało się ich przygotować (" +
+			b.opisWagi() + " do pobrania)"
+	case brakWagStojacych:
+		return "w katalogu wskazanym ustawieniem `" + b.kluczKatalogu() + "` leżą wagi, " +
+			"ale nie da się na nich postawić modelu " + b.Model
+	case BrakInterpretera:
+		return "nie ma czym uruchomić pomocnika liczącego " + b.opisZdolnosci() +
+			" — interpreter Pythona nie wystartował"
+	default:
+		return "silnik liczący " + b.opisZdolnosci() + " nie odpowiedział zrozumiale"
+	}
+}
+
+// opisZdolnosci nazywa rzecz, której Operator nie dostanie — dopełniaczem, bo
+// wchodzi w środek zdania.
+func (b *BrakSilnika) opisZdolnosci() string {
+	if b.Silnik == SilnikDlaObrazu {
+		return "oś obrazu"
+	}
+	return "przesiew wyników"
+}
+
+// opisPakietow wymienia biblioteki, których brakuje — nazwami, którymi się je
+// instaluje, a nie opisowo.
+func (b *BrakSilnika) opisPakietow() string {
+	if b.Silnik == SilnikDlaObrazu {
+		return "`torch`, `transformers` i `pillow`"
+	}
+	return "`torch` i `transformers`"
+}
+
+// kluczKatalogu oddaje nazwę ustawienia wskazującego katalog wag tego silnika.
+func (b *BrakSilnika) kluczKatalogu() string {
+	switch b.Silnik {
+	case SilnikDlaPrzesiewu:
+		return KluczKatalogPrzesiewu
+	case SilnikDlaObrazu:
+		return KluczKatalogObrazu
+	default:
+		return KluczKatalogModeli
+	}
+}
+
+// kluczModelu oddaje nazwę ustawienia wskazującego model tego silnika.
+func (b *BrakSilnika) kluczModelu() string {
+	switch b.Silnik {
+	case SilnikDlaPrzesiewu:
+		return KluczModelPrzesiewu
+	case SilnikDlaObrazu:
+		return KluczModelObrazu
+	default:
+		return KluczModel
+	}
+}
+
 // opisNaprawy mówi, co dokładnie zrobić — z nazwą pakietu i nazwą ustawienia.
 func (b *BrakSilnika) opisNaprawy() string {
+	if b.Silnik != "" {
+		return b.opisNaprawyDolozonej()
+	}
 	switch b.Rodzaj {
 	case brakModelu:
 		return "dać maszynie dostęp do sieci przy pierwszym budowaniu wskaźnika " +
 			"albo przenieść pobrane wagi do katalogu ustawienia `" + KluczKatalogModeli + "`"
+	case brakWagStojacych:
+		return "uzupełnić przy wagach to, czego pomocnik nie znalazł (powód wyżej nazywa " +
+			"plik) — wykaz warstw modelu `modules.json` wraz z opisem warstwy łączącej " +
+			"tokeny w jeden wektor niosą sposób łączenia, normalizację i wymiar, których " +
+			"pomocnik nie zgaduje; albo wskazać ustawieniem `" + KluczKatalogModeli +
+			"` katalog pusty i pozwolić bibliotece pobrać własne wydanie modelu `" +
+			KluczModel + "`"
 	default:
 		return "zainstalować bibliotekę poleceniem `python3 -m pip install fastembed` " +
 			"w interpreterze wskazanym ustawieniem `" + KluczProgram + "` " +
 			"(pusta wartość znaczy `python3` ze ścieżki wyszukiwania systemu)"
 	}
+}
+
+// opisNaprawyDolozonej mówi, co zrobić, żeby dołożony silnik ruszył.
+//
+// Trzy drogi, bo trzy różne przyczyny: brak wag na dysku usuwa pobranie, wagi
+// leżące a nieczytelne — wskazanie innego katalogu albo innego wydania modelu,
+// a brak bibliotek — jedna instalacja w interpreterze, który już wskazano
+// ustawieniem osadzarki (interpreter jest w pakiecie jeden, więc i ustawienie
+// jest jedno).
+func (b *BrakSilnika) opisNaprawyDolozonej() string {
+	switch b.Rodzaj {
+	case brakModelu:
+		return "dać maszynie dostęp do sieci przy pierwszym użyciu albo przenieść " +
+			"pobrane wagi do katalogu ustawienia `" + b.kluczKatalogu() + "`"
+	case brakWagStojacych:
+		return "sprawdzić, czy w katalogu ustawienia `" + b.kluczKatalogu() +
+			"` leży komplet wydania modelu `" + b.kluczModelu() + "` — plik wag " +
+			"`model.safetensors` wraz z ustrojem `config.json` i opisem podziału na " +
+			"tokeny; albo wskazać tym ustawieniem katalog pusty i pozwolić bibliotece " +
+			"pobrać wydanie własne"
+	default:
+		return "zainstalować biblioteki poleceniem `python3 -m pip install " +
+			b.pakietyDoInstalacji() + "` w interpreterze wskazanym ustawieniem `" +
+			KluczProgram + "` (pusta wartość znaczy `python3` ze ścieżki wyszukiwania " +
+			"systemu)"
+	}
+}
+
+// pakietyDoInstalacji wymienia pakiety w postaci, w której idą do polecenia
+// instalacji — bez znaków wyróżnienia, bo wchodzą do polecenia, nie do zdania.
+func (b *BrakSilnika) pakietyDoInstalacji() string {
+	if b.Silnik == SilnikDlaObrazu {
+		return "torch transformers pillow"
+	}
+	return "torch transformers"
 }
 
 // liczba wypisuje liczbę całkowitą bez sięgania po strconv — pakiet i tak nie

@@ -30,13 +30,16 @@ const (
 	KluczModel = "mowa_model"
 	// KluczJezyk — kod języka rozpoznawania.
 	KluczJezyk = "mowa_jezyk"
-	// KluczKatalogModeli — katalog pobrania modeli. Pusty znaczy „katalog
-	// domyślny biblioteki silnika".
+	// KluczKatalogModeli — katalog wag modelu. Pusty znaczy „pamięć podręczna
+	// biblioteki w katalogu domowym konta" — patrz KatalogModeliDomyslny.
 	KluczKatalogModeli = "mowa_katalog_modeli"
 )
 
 // Wartości domyślne. Odpowiadają kolumnie
-// `definicja_ustawienia.wartosc_domyslna` w `migracja_075_mowa.sql`. Brak
+// `definicja_ustawienia.wartosc_domyslna` — trzy pierwsze tej z
+// `migracja_075_mowa.sql`, katalog wag tej z
+// `migracja_403_nastawa_wag_mowy.sql`, która nadpisuje wartość założoną
+// migracją 075. Brak
 // wiersza w tabeli `ustawienie` znaczy właśnie tę wartość, więc rozjazd
 // między tymi stałymi a migracją oznaczałby dwie różne prawdy o tym, co
 // zobaczy Operator, który niczego nie ustawił.
@@ -47,8 +50,22 @@ const (
 	ModelDomyslny = "small"
 	// jezykDomyslny to polski — produkt jest polskojęzyczny.
 	jezykDomyslny = "pl"
-	// katalogModeliDomyslny jest pusty — patrz KluczKatalogModeli.
-	katalogModeliDomyslny = ""
+	// KatalogModeliDomyslny — katalog wag rozłożonych na maszynie obok rdzenia,
+	// w układzie pamięci podręcznej Huba (`models--Systran--faster-whisper-*`),
+	// bo pomocnik przekazuje tę ścieżkę bibliotece jako `download_root`
+	// i takiego układu w niej szuka (`pomocniki/transkrypcja/silnik.py`).
+	//
+	// Wartość niepusta, bo pusta znaczy „pamięć podręczna biblioteki w katalogu
+	// domowym konta, które uruchomiło rdzeń" — a wtedy widoczność wag zależy od
+	// tego, na czyim koncie stoi proces: usługa systemowa albo konto serwisowe
+	// ma inny katalog domowy i tych samych wag nie widzi, więc pobiera drugą
+	// kopię. Wagi stoją: 464 MB w `/opt/danaco-modele/mowa`, obok wag
+	// pozostałych zdolności liczących lokalnie.
+	//
+	// Katalog, w którym wag nie ma, pomocnik traktuje jak miejsce pobrania,
+	// czyli zachowuje się dokładnie tak jak przy wartości pustej — wskazanie
+	// ścieżki nieistniejącej nie jest odmową.
+	KatalogModeliDomyslny = "/opt/danaco-modele/mowa"
 )
 
 // rozmiaryModelu wylicza dopuszczalne rozmiary modelu w kolejności rosnącej
@@ -71,7 +88,7 @@ type Ustawienia struct {
 	Model string
 	// Jezyk — kod języka rozpoznawania.
 	Jezyk string
-	// KatalogModeli — katalog pobrania modeli; pusty znaczy katalog biblioteki.
+	// KatalogModeli — katalog wag; pusty znaczy pamięć podręczną biblioteki.
 	KatalogModeli string
 }
 
@@ -83,7 +100,7 @@ func UstawieniaDomyslne() Ustawienia {
 		Program:       programDomyslny,
 		Model:         ModelDomyslny,
 		Jezyk:         jezykDomyslny,
-		KatalogModeli: katalogModeliDomyslny,
+		KatalogModeli: KatalogModeliDomyslny,
 	}
 }
 
@@ -107,7 +124,7 @@ func Nanies(u Ustawienia, klucz string, wartosc any) Ustawienia {
 	case KluczJezyk:
 		u.Jezyk = tekstUstawienia(wartosc, jezykDomyslny)
 	case KluczKatalogModeli:
-		u.KatalogModeli = tekstUstawienia(wartosc, katalogModeliDomyslny)
+		u.KatalogModeli = tekstUstawienia(wartosc, KatalogModeliDomyslny)
 	}
 	return u
 }

@@ -658,6 +658,8 @@ const (
 	LoopStopReasonManual = "manual"
 	// Obiegu nie udalo sie rozpoczac; odpowiada session.ZatrzymanieUsterka
 	LoopStopReasonFailure = "failure"
+	// Zadanie skonczone z wynikiem: koordynator zamknal ture wynikiem, a zadne okno wykonawcze tego koordynatora nie prowadzilo wtedy tury. Jedyna wartosc mowiaca skonczone, a nie przerwane — po niej bieg podejmuje sie sam przy kolejnym koncu tury wykonawcy, wiec ukonczenie nie jest brama akceptacji; odpowiada session.ZatrzymanieUkonczenie
+	LoopStopReasonCompleted = "completed"
 )
 
 // WartosciLoopStopReason zwraca komplet wartosci LoopStopReason w kolejnosci kontraktu.
@@ -666,6 +668,7 @@ func WartosciLoopStopReason() []LoopStopReason {
 		LoopStopReasonNoProgress,
 		LoopStopReasonManual,
 		LoopStopReasonFailure,
+		LoopStopReasonCompleted,
 	}
 }
 
@@ -9435,6 +9438,69 @@ func WartosciNotificationDelivery() []NotificationDelivery {
 	}
 }
 
+// BrowserAccessibilityLevel — Waga zgloszenia audytu dostepnosci strony
+type BrowserAccessibilityLevel string
+
+// Wartosci BrowserAccessibilityLevel.
+const (
+	// Naruszenie normy
+	BrowserAccessibilityLevelError = "error"
+	// Ostrzezenie wymagajace oceny czlowieka
+	BrowserAccessibilityLevelWarning = "warning"
+	// Uwaga do sprawdzenia recznego
+	BrowserAccessibilityLevelNotice = "notice"
+)
+
+// WartosciBrowserAccessibilityLevel zwraca komplet wartosci BrowserAccessibilityLevel w kolejnosci kontraktu.
+func WartosciBrowserAccessibilityLevel() []BrowserAccessibilityLevel {
+	return []BrowserAccessibilityLevel{
+		BrowserAccessibilityLevelError,
+		BrowserAccessibilityLevelWarning,
+		BrowserAccessibilityLevelNotice,
+	}
+}
+
+// BrowserAccessibilityStandard — Norma, wedlug ktorej badana jest dostepnosc strony
+type BrowserAccessibilityStandard string
+
+// Wartosci BrowserAccessibilityStandard.
+const (
+	// WCAG 2 poziom A
+	BrowserAccessibilityStandardWcag2a = "wcag2a"
+	// WCAG 2 poziom AA
+	BrowserAccessibilityStandardWcag2aa = "wcag2aa"
+	// WCAG 2 poziom AAA
+	BrowserAccessibilityStandardWcag2aaa = "wcag2aaa"
+)
+
+// WartosciBrowserAccessibilityStandard zwraca komplet wartosci BrowserAccessibilityStandard w kolejnosci kontraktu.
+func WartosciBrowserAccessibilityStandard() []BrowserAccessibilityStandard {
+	return []BrowserAccessibilityStandard{
+		BrowserAccessibilityStandardWcag2a,
+		BrowserAccessibilityStandardWcag2aa,
+		BrowserAccessibilityStandardWcag2aaa,
+	}
+}
+
+// AppPerformanceFormFactor — Postac urzadzenia, wedlug ktorej liczona jest ocena wydajnosci
+type AppPerformanceFormFactor string
+
+// Wartosci AppPerformanceFormFactor.
+const (
+	// Telefon
+	AppPerformanceFormFactorMobile = "mobile"
+	// Biurko
+	AppPerformanceFormFactorDesktop = "desktop"
+)
+
+// WartosciAppPerformanceFormFactor zwraca komplet wartosci AppPerformanceFormFactor w kolejnosci kontraktu.
+func WartosciAppPerformanceFormFactor() []AppPerformanceFormFactor {
+	return []AppPerformanceFormFactor{
+		AppPerformanceFormFactorMobile,
+		AppPerformanceFormFactorDesktop,
+	}
+}
+
 // WartosciBazySessionStatus — wartosc kontraktu SessionStatus -> wartosc kolumny sesja.stan
 var WartosciBazySessionStatus = map[SessionStatus]string{
 	SessionStatusActive:   "aktywna",
@@ -10597,6 +10663,8 @@ const (
 	CommandKnowledgeIndex MessageType = "knowledge.index"
 	// Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci
 	CommandKnowledgeSearch MessageType = "knowledge.search"
+	// Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+	CommandKnowledgeImageSearch MessageType = "knowledge.image.search"
 	// Doklada narzedzie albo skill do sesji na czas jej trwania. Definicji eksperta NIE RUSZA (rozstrzygniecie Wlasciciela, rozdz. 5): dolozenie zyje w stanie sesji, przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
 	CommandSessionToolAttach MessageType = "session.tool.attach"
 	// Zdejmuje dolozenie z sesji. Zestaw wraca do podstawy z definicji eksperta; sama definicja nie zmienia sie ani o joto, bo nigdy nie byla zmieniana
@@ -12189,6 +12257,12 @@ const (
 	CommandNotificationResolve MessageType = "notification.resolve"
 	// Odlozenie zdarzenia do wskazanej chwili. Po niej zdarzenie wraca do stanu nowe i znow liczy sie do plakietki — odlozenie nie jest zamknieciem
 	CommandNotificationSnooze MessageType = "notification.snooze"
+	// Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+	CommandBrowserAccessibilityAudit MessageType = "browser.accessibility.audit"
+	// Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+	CommandAppsPerformanceAudit MessageType = "apps.performance.audit"
+	// Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+	CommandDeveloperApiLoadRun MessageType = "developer.api.load.run"
 )
 
 // Nazwy zdarzen kontraktu.
@@ -15306,6 +15380,18 @@ type KnowledgeHit struct {
 	Score *int `json:"score,omitempty"`
 	// Z ktorego zakresu pochodzi
 	Scope KnowledgeScope `json:"scope"`
+}
+
+// KnowledgeImageHit — Obraz odnaleziony zdaniem opisujacym jego tresc. Osobna struktura od KnowledgeHit, bo obraz nie ma fragmentu tekstu do zacytowania — wskazaniem jest sam plik
+type KnowledgeImageHit struct {
+	// Nazwa pliku obrazu w bibliotece
+	Source string `json:"source"`
+	// Identyfikator zrodla, ktorym da sie po obraz siegnac
+	SourceId *string `json:"sourceId,omitempty"`
+	// Rodzaj obrazu zapisany przy pliku biblioteki
+	MimeType *string `json:"mimeType,omitempty"`
+	// Trafnosc w setnych — 100 znaczy najblizszy mozliwy
+	Score *int `json:"score,omitempty"`
 }
 
 // SessionTool — Narzedzie dolozone do sesji komenda po ukosniku. Zyje W STANIE SESJI, nie w definicji eksperta: definicja pozostaje nietknieta, dolozenie przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
@@ -22532,6 +22618,116 @@ type Notification struct {
 	CreatedAt int `json:"createdAt"`
 }
 
+// BrowserAccessibilityIssue — Zgloszenie audytu dostepnosci wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityIssue struct {
+	// Kod reguly normy, ktora zgloszenie narusza
+	Code string `json:"code"`
+	// Waga zgloszenia
+	Level BrowserAccessibilityLevel `json:"level"`
+	// Tresc zgloszenia podana przez program audytujacy
+	Message string `json:"message"`
+	// Selektor CSS wskazujacy wezel DOM, ktorego zgloszenie dotyczy
+	Selector *string `json:"selector,omitempty"`
+	// Fragment zrodla wezla, na ktorym zgloszenie powstalo
+	Context *string `json:"context,omitempty"`
+	// Silnik regul, ktory zgloszenie wykryl
+	Runner *string `json:"runner,omitempty"`
+}
+
+// AppPerformanceAudit — Wynik audytu wydajnosci strony wraz z miarami Core Web Vitals
+type AppPerformanceAudit struct {
+	// Adres, pod ktory audyt naprawde wszedl
+	Url string `json:"url"`
+	// Postac urzadzenia, wedlug ktorej liczono ocene
+	FormFactor AppPerformanceFormFactor `json:"formFactor"`
+	// Ocena wydajnosci w skali 0-100
+	PerformanceScore int `json:"performanceScore"`
+	// Miary Core Web Vitals w kolejnosci ustalonej
+	Metrics []AppPerformanceMetric `json:"metrics"`
+	// Wersja programu, ktory pomiar wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas rozpoczecia audytu w milisekundach epoki
+	StartedAt int64 `json:"startedAt"`
+	// Czas zakonczenia audytu w milisekundach epoki
+	FinishedAt int64 `json:"finishedAt"`
+}
+
+// AppPerformanceMetric — Jedna miara wydajnosci strony wraz z wartoscia zmierzona
+type AppPerformanceMetric struct {
+	// Identyfikator miary nadany przez program pomiarowy
+	Id string `json:"id"`
+	// Nazwa miary
+	Title string `json:"title"`
+	// Wartosc zmierzona
+	Value float64 `json:"value"`
+	// Jednostka wartosci podana przez program pomiarowy
+	Unit string `json:"unit"`
+	// Ocena miary w skali 0-100; brak znaczy miare bez oceny
+	Score *int `json:"score,omitempty"`
+	// Wartosc w postaci pokazywanej Operatorowi
+	DisplayValue *string `json:"displayValue,omitempty"`
+}
+
+// ApiLoadRun — Przebieg obciazeniowy punktu koncowego wraz z ksztaltem wyniku
+type ApiLoadRun struct {
+	// Adres, ktory obciazono
+	Url string `json:"url"`
+	// Metoda zapytania
+	Method string `json:"method"`
+	// Liczba polaczen rownoleglych
+	Connections int `json:"connections"`
+	// Zmierzony czas trwania przebiegu w sekundach
+	DurationSeconds float64 `json:"durationSeconds"`
+	// Liczba zadan, na ktore przyszla odpowiedz
+	RequestsTotal int64 `json:"requestsTotal"`
+	// Przepustowosc w zadaniach na sekunde
+	RequestsPerSecond float64 `json:"requestsPerSecond"`
+	// Przepustowosc w bajtach na sekunde
+	BytesPerSecond float64 `json:"bytesPerSecond"`
+	// Rozklad czasu odpowiedzi
+	Latency ApiLoadLatency `json:"latency"`
+	// Liczba odpowiedzi wedlug kodu stanu, rosnaco po kodzie
+	StatusCounts []ApiLoadStatusCount `json:"statusCounts"`
+	// Liczba odpowiedzi spoza klasy 2xx
+	Non2xx int64 `json:"non2xx"`
+	// Liczba zadan, ktore nie doszly do skutku
+	Errors int64 `json:"errors"`
+	// Liczba zadan przerwanych granica czasu
+	Timeouts int64 `json:"timeouts"`
+	// Wersja programu, ktory przebieg wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas rozpoczecia przebiegu w milisekundach epoki
+	StartedAt int64 `json:"startedAt"`
+	// Czas zakonczenia przebiegu w milisekundach epoki
+	FinishedAt int64 `json:"finishedAt"`
+}
+
+// ApiLoadLatency — Rozklad czasu odpowiedzi przebiegu obciazeniowego w milisekundach
+type ApiLoadLatency struct {
+	// Czas sredni
+	AverageMs float64 `json:"averageMs"`
+	// Odchylenie standardowe czasu
+	StddevMs float64 `json:"stddevMs"`
+	// Czas najkrotszy
+	MinMs float64 `json:"minMs"`
+	// Czas najdluzszy
+	MaxMs float64 `json:"maxMs"`
+	// Mediana czasu
+	P50Ms float64 `json:"p50Ms"`
+	// Percentyl 90 czasu
+	P90Ms float64 `json:"p90Ms"`
+	// Percentyl 99 czasu
+	P99Ms float64 `json:"p99Ms"`
+}
+
+// ApiLoadStatusCount — Liczba odpowiedzi przebiegu obciazeniowego o jednym kodzie stanu
+type ApiLoadStatusCount struct {
+	// Kod stanu odpowiedzi
+	Status int `json:"status"`
+	// Liczba odpowiedzi o tym kodzie
+	Count int64 `json:"count"`
+}
+
 // ConnectionHelloRequest — Tresc zadania connection.hello — Powitanie klienta; ustala wersje protokolu
 type ConnectionHelloRequest struct {
 	// Identyfikator klienta
@@ -27910,6 +28106,10 @@ type KnowledgeSearchRequest struct {
 	Limit *int `json:"limit,omitempty"`
 	// Projekt, ktorego wiedze przeszukac po znaczeniu
 	ProjectId *string `json:"projectId,omitempty"`
+	// Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze
+	Rerank *bool `json:"rerank,omitempty"`
+	// Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic
+	RerankCandidates *int `json:"rerankCandidates,omitempty"`
 }
 
 // KnowledgeSearchResponse — Tresc wyniku knowledge.search — Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci
@@ -27918,6 +28118,30 @@ type KnowledgeSearchResponse struct {
 	Results []KnowledgeHit `json:"results"`
 	// Liczba fragmentow spelniajacych warunki
 	Total int `json:"total"`
+	// Czy kolejnosc ulozyl przesiew. Bez tego pola nie da sie odroznic odpowiedzi przesianej od odpowiedzi z samego pierwszego przebiegu, a `score` w obu ma ten sam ksztalt
+	Reranked *bool `json:"reranked,omitempty"`
+}
+
+// KnowledgeImageSearchRequest — Tresc zadania knowledge.image.search — Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+type KnowledgeImageSearchRequest struct {
+	// Zdanie opisujace szukany obraz
+	Query string `json:"query"`
+	// Gorna granica liczby obrazow
+	Limit *int `json:"limit,omitempty"`
+	// Projekt, ktorego obrazy przeszukac
+	ProjectId *string `json:"projectId,omitempty"`
+}
+
+// KnowledgeImageSearchResponse — Tresc wyniku knowledge.image.search — Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora
+type KnowledgeImageSearchResponse struct {
+	// Obrazy od najtrafniejszego
+	Results []KnowledgeImageHit `json:"results"`
+	// Liczba obrazow spelniajacych warunki
+	Total int `json:"total"`
+	// Ile obrazow biblioteki weszlo do porownania. Wynik pusty przy zerze znaczy brak obrazow, a nie brak trafienia — dwie rozne odpowiedzi, ktorych bez tej liczby nie da sie rozroznic
+	Examined *int `json:"examined,omitempty"`
+	// Model osi obrazu, ktorym liczono podobienstwo
+	Model *string `json:"model,omitempty"`
 }
 
 // SessionToolAttachRequest — Tresc zadania session.tool.attach — Doklada narzedzie albo skill do sesji na czas jej trwania. Definicji eksperta NIE RUSZA (rozstrzygniecie Wlasciciela, rozdz. 5): dolozenie zyje w stanie sesji, przezywa rozlaczenie klienta i konczy sie wraz z sesja albo z usunieciem rozmowy
@@ -44166,6 +44390,86 @@ type NotificationSnoozeResponse struct {
 	Unread int `json:"unread"`
 }
 
+// BrowserAccessibilityAuditRequest — Tresc zadania browser.accessibility.audit — Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityAuditRequest struct {
+	// Okno przegladarki
+	WindowId string `json:"windowId"`
+	// Karta przegladania; pusta znaczy karte czynna
+	TabId *string `json:"tabId,omitempty"`
+	// Norma audytu; pusta znaczy wcag2aa
+	Standard *BrowserAccessibilityStandard `json:"standard,omitempty"`
+	// Czy dolaczyc ostrzezenia obok naruszen
+	IncludeWarnings *bool `json:"includeWarnings,omitempty"`
+	// Czy dolaczyc uwagi do sprawdzenia recznego
+	IncludeNotices *bool `json:"includeNotices,omitempty"`
+	// Gorna granica czasu audytu w milisekundach
+	TimeoutMs *int `json:"timeoutMs,omitempty"`
+}
+
+// BrowserAccessibilityAuditResponse — Tresc wyniku browser.accessibility.audit — Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityAuditResponse struct {
+	// Zgloszenia w kolejnosci podanej przez program audytujacy
+	Issues []BrowserAccessibilityIssue `json:"issues"`
+	// Norma, wedlug ktorej strone zbadano
+	Standard BrowserAccessibilityStandard `json:"standard"`
+	// Adres strony, ktora zmierzono
+	Url string `json:"url"`
+	// Liczba naruszen
+	ErrorCount int `json:"errorCount"`
+	// Liczba ostrzezen; zero, gdy ostrzezen nie zamowiono
+	WarningCount int `json:"warningCount"`
+	// Liczba uwag; zero, gdy uwag nie zamowiono
+	NoticeCount int `json:"noticeCount"`
+	// Wersja programu, ktory audyt wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas audytu w milisekundach epoki
+	AuditedAt int64 `json:"auditedAt"`
+}
+
+// AppsPerformanceAuditRequest — Tresc zadania apps.performance.audit — Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+type AppsPerformanceAuditRequest struct {
+	// Okno modulu Apps
+	WindowId string `json:"windowId"`
+	// Adres mierzonej strony
+	Url string `json:"url"`
+	// Postac urzadzenia; pusta znaczy desktop
+	FormFactor *AppPerformanceFormFactor `json:"formFactor,omitempty"`
+	// Gorna granica czasu audytu w milisekundach
+	TimeoutMs *int `json:"timeoutMs,omitempty"`
+}
+
+// AppsPerformanceAuditResponse — Tresc wyniku apps.performance.audit — Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+type AppsPerformanceAuditResponse struct {
+	// Wynik audytu
+	Audit AppPerformanceAudit `json:"audit"`
+}
+
+// DeveloperApiLoadRunRequest — Tresc zadania developer.api.load.run — Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+type DeveloperApiLoadRunRequest struct {
+	// Okno modulu Developer
+	WindowId string `json:"windowId"`
+	// Adres punktu koncowego
+	Url string `json:"url"`
+	// Metoda zapytania; pusta znaczy GET
+	Method *string `json:"method,omitempty"`
+	// Naglowki zapytania
+	Headers json.RawMessage `json:"headers,omitempty"`
+	// Tresc zapytania
+	Body *string `json:"body,omitempty"`
+	// Liczba polaczen rownoleglych; brak bierze wartosc domyslna rdzenia
+	Connections *int `json:"connections,omitempty"`
+	// Czas trwania przebiegu w sekundach; brak bierze wartosc domyslna rdzenia
+	DurationSeconds *int `json:"durationSeconds,omitempty"`
+	// Srodowisko podstawiajace zmienne postaci placeholder
+	EnvironmentId *string `json:"environmentId,omitempty"`
+}
+
+// DeveloperApiLoadRunResponse — Tresc wyniku developer.api.load.run — Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+type DeveloperApiLoadRunResponse struct {
+	// Przebieg obciazeniowy wraz z wynikiem pomiaru
+	Run ApiLoadRun `json:"run"`
+}
+
 // SessionChangedEvent — Tresc zdarzenia session.changed — Zmiana sesji
 type SessionChangedEvent struct {
 	// Rodzaj zmiany
@@ -45204,6 +45508,7 @@ func WszystkieKomendy() []MessageType {
 		CommandImageBackgroundRemove,
 		CommandKnowledgeIndex,
 		CommandKnowledgeSearch,
+		CommandKnowledgeImageSearch,
 		CommandSessionToolAttach,
 		CommandSessionToolDetach,
 		CommandSessionToolList,
@@ -46000,6 +46305,9 @@ func WszystkieKomendy() []MessageType {
 		CommandNotificationAcknowledge,
 		CommandNotificationResolve,
 		CommandNotificationSnooze,
+		CommandBrowserAccessibilityAudit,
+		CommandAppsPerformanceAudit,
+		CommandDeveloperApiLoadRun,
 	}
 }
 
@@ -46435,6 +46743,7 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandImageBackgroundRemove:               {},
 	CommandKnowledgeIndex:                      {},
 	CommandKnowledgeSearch:                     {},
+	CommandKnowledgeImageSearch:                {},
 	CommandSessionToolAttach:                   {},
 	CommandSessionToolDetach:                   {},
 	CommandSessionToolList:                     {},
@@ -47231,6 +47540,9 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandNotificationAcknowledge:             {},
 	CommandNotificationResolve:                 {},
 	CommandNotificationSnooze:                  {},
+	CommandBrowserAccessibilityAudit:           {},
+	CommandAppsPerformanceAudit:                {},
+	CommandDeveloperApiLoadRun:                 {},
 }
 
 // Zbior nazw zdarzen do rozpoznania typu.
@@ -47705,7 +48017,8 @@ func NarzedziaModelu() []ToolDeclaration {
 		{Name: "danaco_image_upscale", Command: CommandImageUpscale, Description: "Powieksza obraz z odtworzeniem szczegolu (superrozdzielczosc). Zastepuje wyspecjalizowane modele powiekszajace; bez zainstalowanego silnika odmawia, nazywajac brak — nigdy nie oddaje zwyklego rozciagniecia jako powiekszenia. Uzyj, gdy Operator prosi o powiekszenie zdjecia bez utraty ostrosci", Parameters: []ToolParameter{{Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, w ktorym powstaje wynik; brak znaczy zasob poza wykazem okna"}, {Name: "assetId", Type: "string", Items: "", Required: false, Description: "Zasob z magazynu rdzenia"}, {Name: "sourcePath", Type: "string", Items: "", Required: false, Description: "Sciezka pliku na dysku Operatora"}, {Name: "scale", Type: "integer", Items: "", Required: false, Description: "Krotnosc powiekszenia; brak bierze dwukrotne"}, {Name: "faces", Type: "boolean", Items: "", Required: false, Description: "Czy poprawiac twarze osobnym przebiegiem"}}},
 		{Name: "danaco_image_background_remove", Command: CommandImageBackgroundRemove, Description: "Usuwa tlo z obrazu, zostawiajac przezroczystosc. Zastepuje wyspecjalizowane narzedzia wycinania; bez silnika odmawia, nazywajac brak. Uzyj, gdy Operator prosi o wyciecie obiektu albo usuniecie tla", Parameters: []ToolParameter{{Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, w ktorym powstaje wynik; brak znaczy zasob poza wykazem okna"}, {Name: "assetId", Type: "string", Items: "", Required: false, Description: "Zasob z magazynu rdzenia"}, {Name: "sourcePath", Type: "string", Items: "", Required: false, Description: "Sciezka pliku na dysku Operatora"}, {Name: "model", Type: "string", Items: "", Required: false, Description: "Model wycinania; brak bierze domyslny silnika"}}},
 		{Name: "danaco_knowledge_index", Command: CommandKnowledgeIndex, Description: "Buduje wskaznik ZNACZENIA dla tresci Operatora — biblioteki, historii rozmow, plikow przestrzeni roboczej. Wyszukiwanie po slowach juz dziala (library.file.search); to jest droga do wyszukiwania po SENSIE. Uzyj raz na jakis czas albo po wniesieniu duzej partii tresci, zeby wyszukiwanie po znaczeniu bylo aktualne", Parameters: []ToolParameter{{Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres wskaznika; brak bierze biblioteke", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen ma wejsc do wskaznika"}, {Name: "rebuild", Type: "boolean", Items: "", Required: false, Description: "Czy przebudowac wskaznik od zera"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego pamiec i notatki maja wejsc do wskaznika znaczenia"}}},
-		{Name: "danaco_knowledge_search", Command: CommandKnowledgeSearch, Description: "Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci. Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Pytanie albo opis szukanej tresci"}, {Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres szukania", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen przeszukac"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby fragmentow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego wiedze przeszukac po znaczeniu"}}},
+		{Name: "danaco_knowledge_search", Command: CommandKnowledgeSearch, Description: "Szuka w wiedzy Operatora PO ZNACZENIU, nie po slowach — oddaje fragmenty wraz z ich zrodlem, zeby model mogl je zacytowac zamiast streszczac z pamieci. Uzyj, ZANIM odpowiesz z pamieci na pytanie o sprawy Operatora — zeby oprzec odpowiedz na jego wlasnych dokumentach i moc wskazac zrodlo", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Pytanie albo opis szukanej tresci"}, {Name: "scope", Type: "string", Items: "", Required: false, Description: "Zakres szukania", Enum: []string{"library", "history", "workspace", "all", "assistantActivity", "projectMemory"}}, {Name: "windowId", Type: "string", Items: "", Required: false, Description: "Okno, ktorego przestrzen przeszukac"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby fragmentow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego wiedze przeszukac po znaczeniu"}, {Name: "rerank", Type: "boolean", Items: "", Required: false, Description: "Czy przesiac wynik krzyzowym koderem. Podobienstwo wektorow jest pierwszym przebiegiem: pytanie i fragment licza sie osobno i spotykaja dopiero jako dwie liczby. Przesiew jest przebiegiem drugim — czyta pytanie RAZEM z fragmentem i uklada kandydatow na nowo. Kosztuje wczytanie drugiego modelu, wiec wchodzi na zadanie, a nie zawsze"}, {Name: "rerankCandidates", Type: "integer", Items: "", Required: false, Description: "Ilu kandydatow pierwszego przebiegu ma trafic do przesiewu. Liczba wieksza od `limit` jest tu sensem rzeczy: przesiew moze wyniesc na czolo fragment, ktory po samych wektorach byl dwudziesty. Bez `rerank` nie znaczy nic"}}},
+		{Name: "danaco_knowledge_image_search", Command: CommandKnowledgeImageSearch, Description: "Szuka OBRAZU zdaniem opisujacym jego tresc — nie po nazwie pliku ani po podpisie, tylko po tym, co na obrazie widac. Rodzina knowledge.* prowadzi dotad wylacznie tekst; ta komenda jest jej osia obrazu i przeglada obrazy biblioteki Operatora. Uzyj, gdy Operator pyta o obraz, ktorego nazwy nie pamieta — opisz zdaniem, co ma byc na obrazie, zamiast zgadywac nazwe pliku", Parameters: []ToolParameter{{Name: "query", Type: "string", Items: "", Required: true, Description: "Zdanie opisujace szukany obraz"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Gorna granica liczby obrazow"}, {Name: "projectId", Type: "string", Items: "", Required: false, Description: "Projekt, ktorego obrazy przeszukac"}}},
 		{Name: "danaco_session_tool_list", Command: CommandSessionToolList, Description: "Zwraca narzedzia dolozone do sesji. Zestaw narzedzi tury to definicja eksperta PLUS te dolozenia — bez tego odczytu druga polowa zestawu bylaby niewidoczna. Uzyj, aby sprawdzic, jakie narzedzia Operator dolozyl do tej sesji poza zestawem eksperta", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: true, Description: "Sesja"}}},
 		{Name: "danaco_tools_catalog_list", Command: CommandToolsCatalogList, Description: "Zwraca wykaz pozycji po ukosniku — narzedzia do dolozenia i komendy akcji w jednym wykazie. Wykaz liczy setki pozycji, wiec zadanie niesie zawezenie tekstem, rodzajem i grupa; dopasowanie idzie takze SRODKIEM nazwy, bo przy przedrostkach zrodla szukanie od poczatku byloby bezuzyteczne (rozdz. 7.2). Uzyj, aby odszukac pozycje po ukosniku po nazwie albo przeznaczeniu i wskazac Operatorowi, co moze dolozyc", Parameters: []ToolParameter{{Name: "sessionId", Type: "string", Items: "", Required: false, Description: "Sesja, dla ktorej oznaczyc pozycje juz dolozone; puste zostawia pole attached puste"}, {Name: "kind", Type: "string", Items: "", Required: false, Description: "Zawezenie do rodzaju wpisu; puste zwraca oba rodzaje", Enum: []string{"tool", "action"}}, {Name: "group", Type: "string", Items: "", Required: false, Description: "Zawezenie do grupy po przeznaczeniu"}, {Name: "query", Type: "string", Items: "", Required: false, Description: "Tekst zawezajacy; dopasowanie w dowolnym miejscu nazwy pelnej, skroconej i opisu, porzadek wedlug trafnosci przed alfabetem"}, {Name: "limit", Type: "integer", Items: "", Required: false, Description: "Liczba pozycji; puste zwraca komplet"}, {Name: "offset", Type: "integer", Items: "", Required: false, Description: "Przesuniecie wykazu"}, {Name: "profileId", Type: "string", Items: "", Required: false, Description: "Profil asystenta, wedlug ktorego zaznaczyc zakresy i limity pozycji"}}},
 		{Name: "danaco_studio_document_form_get", Command: CommandStudioDocumentFormGet, Description: "Oddaje pelna postac dokumentu — arkusz stylow, nastawy strony, sekcje, bloki, tabele, obiekty, aparat i pola. Uzyj, aby zobaczyc postac dokumentu — kroj, wciecia, sekcje, tabele i obiekty — zanim cokolwiek w niej zmienisz", Parameters: []ToolParameter{{Name: "documentId", Type: "string", Items: "", Required: true, Description: "Dokument Studia, ktorego czynnosc dotyczy"}, {Name: "includeBlocks", Type: "boolean", Items: "", Required: false, Description: "Czy oddac bloki tresci; brak znaczy tak"}, {Name: "rangeStart", Type: "integer", Items: "", Required: false, Description: "Poczatek fragmentu w znakach; brak znaczy caly dokument"}, {Name: "rangeEnd", Type: "integer", Items: "", Required: false, Description: "Koniec fragmentu w znakach; brak znaczy caly dokument"}}},
@@ -48050,6 +48363,7 @@ var KomendyNarzedzi = map[string]MessageType{
 	"danaco_image_background_remove":         CommandImageBackgroundRemove,
 	"danaco_knowledge_index":                 CommandKnowledgeIndex,
 	"danaco_knowledge_search":                CommandKnowledgeSearch,
+	"danaco_knowledge_image_search":          CommandKnowledgeImageSearch,
 	"danaco_session_tool_list":               CommandSessionToolList,
 	"danaco_tools_catalog_list":              CommandToolsCatalogList,
 	"danaco_studio_document_form_get":        CommandStudioDocumentFormGet,

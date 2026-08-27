@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: etykiety automatyki (tabela `etykieta_automatyki`,
-// migracja 261), zmienne przepływu i mapowanie danych między krokami (tabele
-// `zmienna_automatyki`, `mapowanie_danych_automatyki`, migracje 262-263) oraz
-// adnotacje kroków — notatka i położenie węzła na kanwie (tabela
-// `adnotacja_kroku_automatyki`, migracja 264).
-//
-// Wszystko tutaj kluczuje się KODEM kroku, nie kluczem wiersza `krok_automatyki`.
-// Powód jest jeden i ten sam: zapis definicji podmienia wiersze kroków
-// w całości, więc odwołanie do wiersza kasowałoby układ kanwy i mapowania przy
-// każdej zmianie nazwy kroku.
+// Plik prowadzi etykiety automatyki, zmienne przepływu i mapowanie danych między krokami oraz adnotacje kroków —
+// notatkę i położenie węzła na kanwie; wszystko tutaj kluczuje się kodem kroku, nie kluczem wiersza kroku automatyki.
 package dane
 
 import (
@@ -26,8 +18,7 @@ type ZmiennaAutomatyki struct {
 	Kolejnosc        int
 }
 
-// MapowanieDanych to jeden łuk przepływu danych: wyjście kroku na wejście kroku
-// następnego.
+// MapowanieDanych to jeden łuk przepływu danych: wyjście kroku na wejście kroku następnego w automatyce.
 type MapowanieDanych struct {
 	KrokZ     string
 	SciezkaZ  string
@@ -37,7 +28,7 @@ type MapowanieDanych struct {
 	Kolejnosc int
 }
 
-// AdnotacjaKroku to notatka opisowa i położenie węzła kroku na kanwie.
+// AdnotacjaKroku to notatka opisowa oraz położenie węzła kroku automatyki na kanwie edytora wizualnego.
 type AdnotacjaKroku struct {
 	KrokKod string
 	Notatka *string
@@ -119,7 +110,7 @@ func (r *repozytoriumAutomatyk) UstawEtykietyAutomatyki(ctx context.Context,
 	})
 }
 
-// EtykietyAutomatyki zwraca etykiety w porządku alfabetycznym.
+// EtykietyAutomatyki zwraca wszystkie etykiety automatyki w porządku alfabetycznym wprost z bazy danych.
 func (r *repozytoriumAutomatyk) EtykietyAutomatyki(ctx context.Context,
 	automatykaID int64) ([]string, error) {
 
@@ -144,7 +135,7 @@ func (r *repozytoriumAutomatyk) EtykietyAutomatyki(ctx context.Context,
 	return etykiety, wiersze.Err()
 }
 
-// ZapiszZmienneAutomatyki podmienia komplet zmiennych przepływu.
+// ZapiszZmienneAutomatyki podmienia cały komplet zmiennych przepływu automatyki w jednej transakcji bazy.
 func (r *repozytoriumAutomatyk) ZapiszZmienneAutomatyki(ctx context.Context,
 	automatykaID int64, zmienne []ZmiennaAutomatyki) error {
 
@@ -169,7 +160,7 @@ func (r *repozytoriumAutomatyk) ZapiszZmienneAutomatyki(ctx context.Context,
 	})
 }
 
-// ZmienneAutomatyki zwraca zmienne w kolejności zapisu.
+// ZmienneAutomatyki zwraca wszystkie zmienne przepływu automatyki w kolejności ich zapisu do bazy danych.
 func (r *repozytoriumAutomatyk) ZmienneAutomatyki(ctx context.Context,
 	automatykaID int64) ([]ZmiennaAutomatyki, error) {
 
@@ -198,7 +189,7 @@ func (r *repozytoriumAutomatyk) ZmienneAutomatyki(ctx context.Context,
 	return zmienne, wiersze.Err()
 }
 
-// ZapiszMapowaniaAutomatyki podmienia komplet mapowań danych.
+// ZapiszMapowaniaAutomatyki podmienia cały komplet mapowań danych automatyki w jednej transakcji bazy.
 func (r *repozytoriumAutomatyk) ZapiszMapowaniaAutomatyki(ctx context.Context,
 	automatykaID int64, mapowania []MapowanieDanych) error {
 
@@ -222,7 +213,7 @@ func (r *repozytoriumAutomatyk) ZapiszMapowaniaAutomatyki(ctx context.Context,
 	})
 }
 
-// MapowaniaAutomatyki zwraca mapowania w kolejności zapisu.
+// MapowaniaAutomatyki zwraca wszystkie mapowania danych automatyki w kolejności ich zapisu do bazy danych.
 func (r *repozytoriumAutomatyk) MapowaniaAutomatyki(ctx context.Context,
 	automatykaID int64) ([]MapowanieDanych, error) {
 
@@ -250,7 +241,7 @@ func (r *repozytoriumAutomatyk) MapowaniaAutomatyki(ctx context.Context,
 	return mapowania, wiersze.Err()
 }
 
-// UstawNotatkeKroku zapisuje notatkę opisową przy kroku; treść pusta zdejmuje ją.
+// UstawNotatkeKroku zapisuje notatkę opisową przy kroku automatyki; treść pusta zdejmuje ją z tego kroku.
 func (r *repozytoriumAutomatyk) UstawNotatkeKroku(ctx context.Context, automatykaID int64,
 	krokKod string, notatka *string) error {
 
@@ -285,7 +276,7 @@ func (r *repozytoriumAutomatyk) ZapiszPolozeniaKrokow(ctx context.Context, autom
 	})
 }
 
-// AdnotacjeKrokow zwraca notatki i położenia węzłów automatyki.
+// AdnotacjeKrokow zwraca wszystkie notatki oraz położenia węzłów kroków automatyki na jej kanwie edytora.
 func (r *repozytoriumAutomatyk) AdnotacjeKrokow(ctx context.Context,
 	automatykaID int64) ([]AdnotacjaKroku, error) {
 

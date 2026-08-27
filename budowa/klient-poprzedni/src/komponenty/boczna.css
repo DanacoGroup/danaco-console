@@ -1,10 +1,4 @@
-/* ============================================================================
-   Boczna nawigacja modułów.
-
-   Pozycja bieżąca niesie `aria-current='page'`. Znacznik aktywności to krótka
-   kreska sygnału przy krawędzi — nie pełna wstęga i nie tło sekcji
-   (zasada jednego akcentu: sygnał ≤ 5% ekranu).
-   ============================================================================ */
+/* Arkusz opisuje boczną nawigację modułów, w której pozycja bieżąca niesie aria-current, a aktywność sygnalizuje kreska przy krawędzi, nie pełna wstęga. */
 
 .dn-boczna {
   width: var(--dn-wym-boczna);
@@ -42,7 +36,7 @@
   background: var(--dn-sygnal-tlo);
   color: var(--dn-tekst);
 }
-/* znacznik aktywności — krótka kreska sygnału zamiast pełnej wstęgi */
+/* Znacznik aktywności to krótka kreska sygnału przy krawędzi pozycji, zamiast pełnej wstęgi, zgodnie z zasadą jednego akcentu na ekranie. */
 .dn-boczna-pozycja[aria-current='page']::before {
   content: '';
   position: absolute;

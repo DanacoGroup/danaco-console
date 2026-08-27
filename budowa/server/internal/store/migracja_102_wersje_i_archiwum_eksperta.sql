@@ -1,43 +1,9 @@
--- Migracja 102 — historia wersji eksperta i archiwum zamiast usunięcia
--- (moduł Agents).
---
--- Historia wersji dostaje trwały nośnik, bo dostają go też komendy, które ją
--- czytają i zapisują (`agent.version.list`, `agent.version.restore`,
--- `agent.archive`, `agent.restore`, `agent.archive.list`). Bez tej tabeli
--- historia żyła tylko w zdarzeniach `agent.changed` widzianych w toku sesji,
--- a `agent.delete` kasował eksperta wraz z całą przeszłością.
---
--- Migawka, nie różnica. Wiersz `agent_wersja` niesie pełną treść tożsamości
--- eksperta w danej wersji, a nie zapis zmiany. Różnicę („co się zmieniło")
--- wylicza warstwa `dane` przy odczycie, porównując sąsiednie migawki. Zapis
--- różnicowy wymagałby odtwarzania stanu przez złożenie całej historii — jedna
--- luka w łańcuchu i przywrócenie oddaje eksperta, którego nigdy nie było.
---
--- Migawkę zakłada wyzwalacz bazy, nie kod: tożsamość eksperta zapisują trzy
--- różne drogi (`Dodaj` i `Aktualizuj` w dane/agenci_zapis.go oraz
--- `ZapiszTozsamosc`/`UstawTrybNakladki` repozytorium warstw). Historia oparta
--- o jedną z nich byłaby dziurawa, a każda nowa droga zapisu cicho by ją omijała.
--- Wyzwalacz widzi każdą z nich i każdą przyszłą.
---
--- Jeden wiersz na numer wersji. Klucz na parze (agent_id, numer) wraz
--- z `ON CONFLICT DO UPDATE` sprawia, że zapisy niepodnoszące licznika (imię
--- własne, favikon, tryb nakładki) uzupełniają migawkę wersji bieżącej zamiast
--- mnożyć wiersze. Historia ma tyle pozycji, ile wersji widział Operator.
---
--- Kolumna `autor` niesie napis, nie klucz obcy do konta: wyzwalacz nie ma
--- dostępu do sesji ani do konta wywołującego, a produkt jest jednoosobowy
--- (Operator). Wartość domyślna 'operator'; przywrócenie wpisuje w to miejsce
--- 'restore', bo wtedy powód powstania wersji jest znany warstwie `dane`.
---
--- Archiwum jest znacznikiem, jak kosz sesji. Osobna kolumna `zarchiwizowano_o`,
--- a nie wartość `aktywny`: ekspert ma wrócić z archiwum dokładnie w tym stanie
--- czynności, w którym go archiwizowano, a `aktywny` niesie już inne znaczenie
--- (`enabledOnly` kontraktu). Definicja i historia zostają nietknięte —
--- archiwizacja nie usuwa ani jednego wiersza.
+-- Migracja 102 zakłada historię wersji tożsamości eksperta oraz archiwizację
+-- zamiast usunięcia w module Agents.
 
 -- ── Archiwum eksperta ─────────────────────────────────────────────────────────
--- NULL znaczy „ekspert czynny". Format znacznika ISO 8601 UTC — ten sam co
--- `agent.utworzono` i `sesja.usunieto_o`.
+-- NULL znaczy ekspert czynny; format znacznika ISO 8601 UTC jest tym samym
+-- co w pozostałych znacznikach czasu platformy.
 ALTER TABLE agent ADD COLUMN zarchiwizowano_o TEXT;
 
 -- Stan czynności sprzed archiwizacji. Przywrócenie oddaje eksperta takim,
@@ -48,6 +14,8 @@ CREATE INDEX idx_agent_archiwum ON agent (zarchiwizowano_o)
     WHERE zarchiwizowano_o IS NOT NULL;
 
 -- ── Historia wersji tożsamości ────────────────────────────────────────────────
+-- Historia wersji tożsamości powstaje wyzwalaczem bazy przy każdym założeniu
+-- i każdej zmianie eksperta.
 CREATE TABLE agent_wersja (
     id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     agent_id             INTEGER NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
@@ -73,13 +41,13 @@ CREATE TABLE agent_wersja (
     UNIQUE (agent_id, numer)
 );
 
--- Historia czytana jest zawsze dla jednego eksperta, od najnowszej wersji.
+-- Historia czytana jest zawsze dla jednego eksperta, od najnowszej wersji,
+-- więc indeks porządkuje wiersze malejąco po numerze wersji.
 CREATE INDEX idx_agent_wersja_historia ON agent_wersja (agent_id, numer DESC);
 
 -- ── Migawka stanu zastanego ───────────────────────────────────────────────────
--- Eksperci założeni przed tą migracją dostają jedną migawkę: swoją wersję
--- bieżącą. Historii sprzed migracji nikt nie zapisał i nie da się jej zmyślić —
--- wykaz zaczyna się w tym punkcie i mówi o tym wprost polem `powod`.
+-- Eksperci założeni przed tą migracją dostają jedną migawkę stanu bieżącego
+-- jako początek historii wersji.
 INSERT INTO agent_wersja
     (agent_id, numer, nazwa, opis, instrukcje_systemowe, kanal_kod, model, transport,
      parametry_json, imie_wlasne, favikon, ustawienia_json, tryb_nakladki, aktywny,
@@ -90,6 +58,8 @@ SELECT id, wersja, nazwa, opis, instrukcje_systemowe, kanal_kod, model, transpor
 FROM agent;
 
 -- ── Wyzwalacze zakładające migawki ────────────────────────────────────────────
+-- Wyzwalacz widzi każdą drogę zapisu tożsamości eksperta i każdą przyszłą,
+-- więc historia nie zależy od tego, który kod dokonał zmiany.
 CREATE TRIGGER agent_wersja_po_zalozeniu
 AFTER INSERT ON agent
 BEGIN

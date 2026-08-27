@@ -4,29 +4,20 @@ import { czasOdcinka, odmienAgentow, zapiszCzasOdcinka } from './format-zadan';
 import { ODZNAKA, StanPrzeplywu, type Przeplyw } from './zadania-w-tle';
 import { wierszEtapu, type TelemetriaOkien } from './wskaznik-etapu';
 
-/**
- * Karta jednego przepływu zadań w tle: nazwa z odznaką stanu, wiersz
- * podsumowania, wiersz etapu i tabela agentów.
- *
- * Kolumny „Tok." (żetony) i „Narz." (wywołania narzędzi) stoją puste: struktura
- * `Subagent` w kontrakcie nie niesie ani licznika żetonów, ani licznika
- * wywołań narzędzi. Komórki dostają znak braku wraz z powodem zamiast zera,
- * które czytałoby się jako wykonany pomiar. Z tego samego powodu wiersz
- * podsumowania nie sumuje żetonów.
- */
+// Karta przepływu zadań w tle łączy nagłówek, podsumowanie, wiersz etapu i tabelę agentów.
 
-/** Powód pustej kolumny żetonów — jedno zdanie na cały panel. */
+/** Powód pustej kolumny żetonów — jedno zdanie na cały panel, powtarzane przy każdej komórce bez pokrycia. */
 export const BRAK_ZETONOW =
   'Kontrakt nie niesie liczby żetonów: struktura Subagent nie ma takiego pola, więc rdzeń tej liczby nie oddaje. Zero byłoby pomiarem, którego nikt nie wykonał.';
 
-/** Powód pustej kolumny wywołań narzędzi. */
+/** Powód pustej kolumny wywołań narzędzi — jedno zdanie na cały panel, powtarzane przy każdej z komórek. */
 export const BRAK_NARZEDZI =
   'Kontrakt nie niesie liczby wywołań narzędzi: struktura Subagent nie ma takiego pola, więc rdzeń tej liczby nie oddaje.';
 
-/** Znak stawiany w komórce bez pokrycia w kontrakcie. */
+/** Znak stawiany w komórce bez pokrycia w kontrakcie, zamiast liczby, której rdzeń nie ma jak policzyć. */
 const BEZ_POKRYCIA = '—';
 
-/** Odznaki stanu wiążą się z wariantami plakietki biblioteki `dn-*`. */
+/** Odznaki stanu wiążą się z wariantami plakietki biblioteki, po jednym wariancie na każdy stan przepływu. */
 const WARIANT_ODZNAKI: Readonly<Record<StanPrzeplywu, string>> = {
   [StanPrzeplywu.Oczekuje]: 'dn-plakietka',
   [StanPrzeplywu.WToku]: 'dn-plakietka dn-plakietka--sygnal',
@@ -35,12 +26,12 @@ const WARIANT_ODZNAKI: Readonly<Record<StanPrzeplywu, string>> = {
   [StanPrzeplywu.Zatrzymane]: 'dn-plakietka dn-plakietka--ostrzezenie',
 };
 
-/** Czynności karty; zbieranie wyników woła `subagent.result.collect`. */
+/** Czynności karty; zbieranie wyników woła komendę zbierania wyników podagentów wykonawcy tego przepływu. */
 export interface CzynnosciKarty {
   zbierz(przeplyw: Przeplyw): void;
 }
 
-/** Buduje kartę przepływu gotową do wstawienia w wykaz panelu. */
+/** Buduje kartę przepływu gotową do wstawienia w wykaz panelu, złożoną z czterech osobnych elementów podrzędnych. */
 export function kartaPrzeplywu(
   przeplyw: Przeplyw,
   telemetria: TelemetriaOkien,
@@ -62,11 +53,8 @@ export function kartaPrzeplywu(
 }
 
 /**
- * Nazwa przepływu, odznaka stanu i zbieranie wyników.
- *
- * Przycisk zbierania pozostaje czynny także dla przepływu w toku: komenda
- * `subagent.result.collect` niesie pole `waitForAll`, więc zbieranie przed
- * końcem pracy jest czynnością przewidzianą przez kontrakt.
+ * Nazwa przepływu, odznaka stanu i zbieranie wyników: przycisk zbierania
+ * pozostaje czynny nawet dla przepływu w toku, bo kontrakt to przewiduje.
  */
 function naglowek(przeplyw: Przeplyw, czynnosci: CzynnosciKarty): HTMLElement {
   const nazwa = document.createElement('strong');
@@ -114,7 +102,7 @@ function podsumowanie(przeplyw: Przeplyw): HTMLElement {
   return element;
 }
 
-/** Kropka rozdzielająca człony podsumowania; sam znak należy do widoku. */
+/** Kropka rozdzielająca człony podsumowania; sam znak należy do widoku, nie do treści czytanej przez czytnik ekranu. */
 function rozdzielnik(): HTMLElement {
   const element = document.createElement('span');
   element.className = 'dm-rozdzielnik';
@@ -123,7 +111,7 @@ function rozdzielnik(): HTMLElement {
   return element;
 }
 
-/** Tabela agentów przepływu: Agent · Tok. · Narz. · Czas. */
+/** Tabela agentów przepływu: kolumny agenta, żetonów, wywołań narzędzi i czasu trwania pracy każdego podagenta. */
 function tabelaAgentow(podagenci: readonly Subagent[], teraz: number): HTMLElement {
   const tabela = document.createElement('table');
   tabela.className = 'dn-tabela dm-agenci';
@@ -145,7 +133,7 @@ function tabelaAgentow(podagenci: readonly Subagent[], teraz: number): HTMLEleme
   return tabela;
 }
 
-/** Komórka nagłówka; kolumna bez pokrycia niesie powód trzema drogami. */
+/** Komórka nagłówka; kolumna bez pokrycia w kontrakcie niesie powód trzema drogami: tytułem, opisem i atrybutem. */
 function komorkaGlowy(napis: string, powod: string): HTMLTableCellElement {
   const komorka = document.createElement('th');
   komorka.scope = 'col';
@@ -158,7 +146,7 @@ function komorkaGlowy(napis: string, powod: string): HTMLTableCellElement {
   return komorka;
 }
 
-/** Wiersz jednego podagenta. */
+/** Wiersz jednego podagenta przepływu wraz z jego stanem, czasem trwania i identyfikującym go znacznikiem danych. */
 function wierszAgenta(podagent: Subagent, teraz: number): HTMLTableRowElement {
   const wiersz = document.createElement('tr');
   wiersz.dataset['podagent'] = podagent.id;
@@ -179,7 +167,7 @@ function wierszAgenta(podagent: Subagent, teraz: number): HTMLTableRowElement {
   return wiersz;
 }
 
-/** Komórka danych; bez pokrycia niesie powód, a nie liczbę. */
+/** Komórka danych; bez pokrycia niesie powód, a nie liczbę, którą ktoś mógłby pomylić z wykonanym pomiarem. */
 function komorka(napis: string, powod: string): HTMLTableCellElement {
   const element = document.createElement('td');
   element.className = 'dn-dane';

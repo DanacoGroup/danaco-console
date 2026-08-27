@@ -6,53 +6,93 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### nazwy-po-przebudowie-klienta
+### dokumenty-i-tekst
 
-Trzy pozostałości po nazwie klienta sprzed przebudowy. Wszystkie mają jedną
-przyczynę: rdzeń zna katalog `client`, a klient nazywa się `klient`. Jedna z nich
-sprawia, że **rdzeń domyślnie nie oddaje okna** — to najcięższy skutek.
+Siedem programów do treści pisanej. Wszystkie stoją na maszynie, komendy, które
+po nie sięgną, **już są w kontrakcie**. Rdzeń w jednym miejscu nazywa brak
+wprost: `adapter_narzedzia_dokument_formaty.go:62` — „brak silnika składu".
 
 | | |
 |---|---|
-| **Gałąź** | `teren/nazwy-po-przebudowie-klienta` z `main` |
-| **Wykaz plików** | `budowa/server/internal/konfiguracja/katalog_klienta.go`, `budowa/server/internal/store/katalog_akcji_test.go` oraz pliki, które te dwa wskazują |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
+| **Gałąź** | `teren/dokumenty-i-tekst` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/adapter_modul_tlumaczenie_*.go`, `adapter_narzedzia_dokument_*.go`, `adapter_modul_studio_*ingest*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery obrazu i przeglądarki |
 
-**Przedmiot pierwszy — rdzeń nie znajduje pakietu okna.**
-`konfiguracja/katalog_klienta.go` niesie `katalogKlientaZrodlo = "client"`, więc
-bez przełącznika `-klient` rdzeń szuka `client/dist`, a pakiet stoi
-w `budowa/klient/dist`. Skutek zmierzony w terenie `okno-do-uruchomienia`: rdzeń
-uruchomiony domyślnie odpowiada odmową pakietu zamiast oknem.
+| Narzędzie | Komenda | Uwaga |
+|---|---|---|
+| **Apache Tika** `/opt/tika` | `document.text.extract`, `library.metadata.get`, `studio.document.import.file` | Java 25 stoi |
+| **LanguageTool** `/opt/languagetool` | `translate.proofread.run`, `translate.quality.check` | dziś korekta idzie wyrażeniami regularnymi |
+| **hunspell / enchant-2** | to samo | pisownia; uzasadnij wybór jednego |
+| **xelatex** albo **typst** | `document.convert` → PDF | **wybierz jedno i uzasadnij**; TeX to ~1 GB, typst to jeden plik |
+| **vale** | `translate.qa.profile.set` | styl prozy wedle profilu |
+| **unpaper** | `studio.ingest.recognize`, `research.source.ocr` | czyszczenie skanu **przed** Tesseractem |
 
-**Przedmiot drugi — jedyne czerwone w rdzeniu.**
-`TestKatalogAkcjiNieZmyslaIkon` czyta nazwy ikon z `client/src/ikony/zrodla`.
-Katalogu nie ma i **nie będzie**: nowy klient nie ma jeszcze zestawu ikon, bo ten
-wchodzi wraz z ramą aplikacji. Sprawdzian pilnuje rzeczy prawdziwej — pozycja
-katalogu wskazująca ikonę spoza zestawu daje w oknie kontrolkę bez znaku — więc
-**nie znika**. Ma pomijać się z nazwanym powodem i nazwanym warunkiem powrotu,
-albo mierzyć zestaw tam, gdzie ten naprawdę stanie.
+**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
+Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
+(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
+`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
+rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
 
-**Przedmiot trzeci — sonda zapory nie widzi programów spoza wykazu.**
-`narzedziePython` i `narzedzieNode` są wołane przez `terminal.script.lint`, ale
-nie stoją w wykazie zależności, choć zapora głosi zasadę „program wołany bez
-wpisu w wykazie to cichy wymóg wobec wdrożenia". Osobno: zapora czyta wyłącznie
-`internal/core`, więc nie widzi `internal/zdalne/pliki.go:68` (SCP) ani żadnego
-następnego wywołania spoza tego katalogu.
+### obraz-i-diagramy
 
-**Kryteria odbioru.**
+Sześć programów do obrazu. Komendy istnieją. Rdzeń **wypuszcza źródło Mermaid**
+(`AppExportFormatMermaid`), ale nie umie go narysować.
 
-1. Rdzeń uruchomiony **bez przełącznika** oddaje pakiet z `budowa/klient/dist` —
-   wykazane uruchomieniem i przytoczoną odpowiedzią na żądanie strony głównej.
-2. `gotestsum -- -count=1 ./...` kończy się **zerem niepowodzeń** wobec 1
-   zastanego (2041 zdanych, 16 pominiętych, 1 niezdany).
-3. Sprawdzian ikon **nie jest usunięty**. Jeżeli pomijany — powód i warunek
-   powrotu stoją w jego treści, a pominięcie widać w wyniku biegu.
-4. Wykaz zależności obejmuje Pythona i Node — sonda startowa je widzi.
-5. Zapora procesów obejmuje całe `internal/`, nie sam `internal/core` — wykazane
-   sprawdzianem, który zawodzi po dołożeniu wywołania poza `core`.
-6. Kontrakt nietknięty — wykazane sumą kontrolną.
-7. Rzecz wymagająca rozstrzygnięcia wraca zgłoszeniem wraz z przyjętym
-   rozstrzygnięciem.
+| | |
+|---|---|
+| **Gałąź** | `teren/obraz-i-diagramy` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/adapter_narzedzia_obraz_*.go`, `adapter_modul_biblioteka_*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, **cały obszar `design.*` rdzenia**, adaptery dokumentów i przeglądarki |
+
+| Narzędzie | Komenda |
+|---|---|
+| **mermaid-cli** (`mmdc`) | `design.diagram.render`, `apps.architecture.export` — **sprawdź zaporę fotografii, zanim tkniesz cokolwiek w `design.*`** |
+| **optipng, jpegoptim, pngquant, cwebp** | `image.convert` — kompresja, której biblioteka wkompilowana nie robi |
+| **exiftool** | `library.metadata.get`, `media.inspect` — **nie** `design.photo.metadata.get` ani `studio.security.metadata.strip`, te leżą za zaporami |
+
+**Zapora fotografii jest napisana grubo — na wystąpienie nazwy silnika w treści
+pliku.** `zapora_fotografii_test.go` zabrania w obszarze Design nazw `vips`,
+`imagemagick`, `potrace`, `inkscape`, `fontforge`, `fonttools`, `graphicsmagick`.
+Sprawdź uruchomieniem, czy przepuści `mmdc` i kompresory, **zanim** na tym
+oprzesz pracę. Jeśli nie przepuści — to zgłoszenie, nie powód do jej zmiany.
+
+**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
+Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
+(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
+`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
+rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
+
+### pomiar-stron
+
+Cztery programy mierzące stronę i punkt końcowy. **Ten teren jako jedyny zmienia
+kontrakt** — obszary istnieją i już mierzą stronę trzema sondami, ale osi
+wydajności, dostępności i obciążenia nie mają.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/pomiar-stron` z `main` |
+| **Wykaz plików** | `budowa/shared/contract.json`, `budowa/server/internal/core/adapter_modul_przegladarka_*.go`, `adapter_modul_apps_*.go`, `adapter_modul_developer_api*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery dokumentów i obrazu |
+
+| Narzędzie | Obszar | Czego brakuje w kontrakcie |
+|---|---|---|
+| **pa11y** | `browser` (47 komend) | audyt WCAG na otwartej karcie, z wykazem naruszeń i wskazaniem węzła DOM. `design.color.accessibility.audit` bada **paletę**, nie stronę |
+| **Lighthouse** | `apps` (41 komend) | audyt wydajności zwracający Core Web Vitals. `apps.deployment.health.get` oddaje dostępność, nie pomiar |
+| **k6** albo **autocannon** | `developer` (50 komend) | przebieg obciążeniowy wraz z kształtem wyniku — percentyle, przepustowość. `developer.api.request` strzela **jednym** żądaniem |
+
+**Zmiana kontraktu jest tu dozwolona i obwarowana.** Kontrakt nie był tknięty od
+przejęcia — suma `2cbb843d33f4531b05cd` stoi od pierwszego dnia. Wolno Ci
+**dołożyć** komendy, struktury i wyliczenia. **Nie wolno** zmienić ani usunąć
+niczego istniejącego: żadnej komendy, żadnego pola, żadnej wartości wyliczenia.
+Generator z `budowa/shared/gen` wytwarza z kontraktu **oba** artefakty —
+`contract.go` i `contract.ts` — i musi po Twojej zmianie dawać wynik bajtowo
+powtarzalny w dwóch przebiegach.
+
+**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
+Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
+(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
+`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
+rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
 
 ## Zgłoszenia oczekujące na teren
 

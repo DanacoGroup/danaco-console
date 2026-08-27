@@ -3484,3 +3484,18 @@ kontrakt nie niesie, więc okno mówi to wprost przy potwierdzeniu, zamiast pozw
 zakłada okno modułu docelowego i oddaje potwierdzenie przeniesienia. Odmowa zostaje w pasie
 stanu, powodzenie w wierszu odpowiedzi, a wskaźnik odczytu zapala się wyłącznie na czas
 rzeczywistego wywołania, żeby warunek sprawdzany przed wysłaniem żądania nie udawał wywołania.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-komponentow.ts
+Nazwa strefy pochodzi z warstwy projektowej, bez parafrazy. Siatka niesie dwa rodzaje kafli: pierwsze
+pochodzą z modułów, które rdzeń oznaczył jako nastawiane na stronie głównej, z czwórką zastaną do pierwszej
+odpowiedzi z kontraktu; za nimi stoją kafle personalizowane, po jednym na komponent zbudowany i nazwany
+przez operatora. Żadna z dwóch liczb nie jest z góry znana, więc siatka przyjmuje oba wykazy osobno
+i przerysowuje się, gdy rdzeń odpowie. Waga wizualna strefy jest niższa niż strefy pierwszej: mniejsza
+powierzchnia, mniejszy promień, mniejsza ikona, etykieta krojem bazowym półgrubym, bez wstęgi i bez cienia
+sygnału w spoczynku. Strefa bez ani jednego wejścia byłaby regresem widocznym na ekranie, a pusta odpowiedź
+bywa też odpowiedzią bazy bez wykonanych migracji; operator, który nic jeszcze nie zbudował, widzi same
+kafle modułów. Zwinięcie wykonane ręcznie zostaje zapamiętane pod kluczem strefy, żeby zwinięcie z urzędu
+nie ukrywało jej przed operatorem. Druga siatka z własnym podpisem wydłużałaby stronę o dwa pasy i spychała
+sesje w tle oraz archiwum poniżej pierwszego ekranu; rodzaj kafla rozpoznaje się po wezwaniu wobec nazwy
+własnej. Po odpowiedzi rdzenia na wykaz modułów rozstrzyga rdzeń. Utworzenie komponentu jest czynnością
+wykonywaną po obejrzeniu tego, co już stoi.

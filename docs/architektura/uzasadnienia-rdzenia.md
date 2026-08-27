@@ -6006,3 +6006,9 @@ wyniku należy do wiersza, który go pokazuje.
 
 Powodzenie tury znaczy pracę wykonaną; błąd kanału albo brak drogi wykonania znaczy niepowodzenie,
 które silnik pokaże jako stan błędny.
+
+## budowa/server/internal/core/telemetria_tury.go
+
+Owinięcie portu rozmowy telemetrią, a nie druga implementacja rozmowy, jest
+też jedynym sposobem, żeby producent telemetrii nie musiał być wpleciony
+w każdy obsługiwacz rozmowy z osobna.

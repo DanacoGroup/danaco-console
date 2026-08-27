@@ -10,22 +10,8 @@ import { utworzZrodloWyszukiwania } from './wyszukiwanie-globalne';
 import type { ZaczepyPaska } from './zaczepy-paska';
 
 /**
- * Powłoka środowiska — rama, w której mieszka wszystko inne.
- *
- * Jedna odpowiedzialność: złożenie czterech pasów w jeden układ i związanie
- * ich zdarzeniami. Żaden pas nie zna pozostałych; wiedzę o ich współpracy
- * trzyma wyłącznie ten plik.
- *
- * Układ czterech pasów:
- *   1. pasek górny 48 px na atramencie ramy — jedyny pas nieprzełączający się
- *      z motywem,
- *   2. poziome karty sesji o mechanice zakładek,
- *   3. pionowa, stała nawigacja modułów środowiska,
- *   4. obszar roboczy wypełniany przez inne widoki.
- *
- * Wybór modułu przeładowuje kartę sesji: tytuł karty czynnej równa się nazwie
- * otwartego modułu, kontekst paska pokazuje parę środowisko · moduł,
- * a obszar roboczy zapowiada moduł, którego okna wejdą w jego miejsce.
+ * Powłoka środowiska — rama, w której mieszka wszystko inne: cztery pasy złożone w jeden wspólny
+ * układ pracy.
  */
 export interface Powloka {
   /** Element powłoki; montuje go warstwa składająca aplikację. */
@@ -40,28 +26,9 @@ export interface Powloka {
   obszar: ObszarRoboczy;
   /** Przestawia powłokę na inne środowisko wraz z jego wykazem modułów. */
   ustawSrodowisko(klucz: KluczSrodowiska): void;
-  /**
-   * Podaje pasku czynności, których powłoka nie zna — otwieranie okien
-   * platformy (Always On Display, Mobile, Modele, Konfiguracja…).
-   *
-   * Osobna metoda, a nie pole w `OpcjePowloki`, z tego samego powodu co
-   * `nawigacja.podlaczZrodlo`: powłoka powstaje zanim istnieje połączenie
-   * z rdzeniem, a czynności bez kanału podać się nie da. Wywołanie jest jedną
-   * linijką dokładaną w widoku trasy i niczego w nim nie przestawia.
-   *
-   * Bez wywołania nic się nie psuje: przyciski obecności, pozycje menu profilu
-   * i wyniki wyszukiwania zostają klikalne i mówią, że to pasek nie dostał
-   * drogi — nie że okien nie ma (`zaczepy-paska.ts`).
-   */
+  /** Podaje pasku czynności, których powłoka nie zna — otwieranie okien platformy poza kontraktem sesji. */
   podlaczZaczepy(zaczepy: ZaczepyPaska): void;
-  /**
-   * Zdejmuje nasłuchy dokumentu założone przez pasek (skrót Ctrl+K, zmiana
-   * motywu, zwijanie menu po kliku poza nim).
-   *
-   * Powłoka aplikacji żyje tyle, co okno, więc w produkcie wywołanie nie
-   * zachodzi ani razu — ale nasłuch na `document` bez drogi zdjęcia jest
-   * wyciekiem, gdy powłoka powstaje wielokrotnie (podgląd, sprawdziany).
-   */
+  /** Zdejmuje nasłuchy dokumentu założone przez pasek — skrót Ctrl+K, zmianę motywu, zwijanie menu. */
   zamknij(): void;
   /** Zdarzenie: wybór karty sesji. */
   naWyborKarty(sluchacz: SluchaczKarty): void;
@@ -73,7 +40,7 @@ export interface Powloka {
   naWyborModulu(sluchacz: SluchaczModulu): void;
 }
 
-/** Ustawienia powłoki. Wszystkie mają wartość przyjmowaną domyślnie. */
+/** Ustawienia powłoki środowiska Danaco Console, wszystkie mają wartość przyjmowaną domyślnie, gdy ich nie podano. */
 export interface OpcjePowloki {
   /** Nazwa produktu na pasku górnym. */
   produkt?: string;
@@ -90,29 +57,15 @@ export function utworzPowloke(opcje: OpcjePowloki = {}): Powloka {
   const nawigacja = utworzNawigacjeModulow();
   const obszar = utworzObszarRoboczy();
 
-  // Karta zakładana przyciskiem ＋ bierze tytuł z modułu wybranego w nawigacji —
-  // tytuł karty jest nazwą otwartego modułu, nie napisem zastępczym.
+  // Karta zakładana przyciskiem ＋ bierze tytuł z modułu wybranego w nawigacji, nie napis zastępczy.
   const karty = utworzKartySesji({
     tytulNowej: () => nawigacja.wybrana()?.nazwa ?? 'Nowa sesja',
   });
 
-  /**
-   * Czynności paska. Obiekt powstaje pusty i wypełnia go `podlaczZaczepy` —
-   * kontrolki czytają z niego dopiero przy naciśnięciu (`zaczepy-paska.ts`).
-   */
+  /** Czynności paska: obiekt powstaje pusty, a kontrolki czytają z niego dopiero przy naciśnięciu. */
   const zaczepy: ZaczepyPaska = {};
 
-  /**
-   * Materiał wyszukiwania bierze się z tego, co powłoka już ma.
-   *
-   * To jedyne miejsce widzące naraz boczną nawigację (wykaz modułów pobrany
-   * przez `module.list`) i pas kart sesji, więc źródło składa się tutaj — tak
-   * samo jak tutaj wiąże się kontekst paska z wyborem modułu.
-   *
-   * Nowego odczytu z rdzenia nie ma: drugi `module.list` obok tego, który
-   * zrobiła już nawigacja, byłby drugą prawdą o jednym wykazie, a dwie prawdy
-   * rozjeżdżają się przy pierwszej zmianie po stronie rdzenia.
-   */
+  /** Materiał wyszukiwania bierze się z tego, co powłoka już ma: nawigacji bocznej i pasa kart sesji. */
   const zrodloWyszukiwania = utworzZrodloWyszukiwania({
     srodowisko: () => nawigacja.srodowisko(),
     karty: () => karty.wykaz(),
@@ -142,18 +95,15 @@ export function utworzPowloke(opcje: OpcjePowloki = {}): Powloka {
     obszar.zapowiedz(pozycja, dane);
   });
 
-  // Wybór karty sesji przywraca w obszarze zapowiedź modułu tej karty; póki
-  // widoki modułów nie są osadzone, obszar pokazuje moduł wskazany nawigacją.
+  // Wybór karty sesji przywraca w obszarze zapowiedź modułu tej karty, dopóki widoki nie są osadzone.
   karty.naWybor((karta: KartaSesji) => {
     element.dataset.karta = karta.id;
   });
 
-  // Powłoka otwiera się z jedną kartą sesji. Tytułu nie nadaje się tutaj:
-  // nada go za chwilę wybór modułu, bo tytuł karty jest nazwą modułu.
+  // Powłoka otwiera się z jedną kartą sesji; tytuł nada za chwilę wybór modułu, jako nazwę modułu.
   karty.dodaj('Sesja');
 
-  // Wykaz modułów i wszystkie związania ustawiają się dopiero teraz, gdy
-  // słuchacze są już podpięci — wywołanie z konstruktora nawigacji ich nie miało.
+  // Wykaz modułów i wszystkie związania ustawiają się dopiero teraz, gdy słuchacze są już podpięci.
   nawigacja.pokaz(opcje.srodowisko ?? SRODOWISKO_DOMYSLNE);
   pasek.ustawPowiadomienia(0);
 
@@ -169,8 +119,7 @@ export function utworzPowloke(opcje: OpcjePowloki = {}): Powloka {
     zamknij: () => pasek.zamknij(),
 
     podlaczZaczepy(nowe) {
-      // Podmieniana jest zawartość, nie odniesienie: kontrolki paska trzymają ten
-      // sam obiekt od montażu i czytają z niego przy każdym naciśnięciu.
+      // Podmieniana jest zawartość, nie odniesienie: kontrolki paska trzymają ten sam obiekt od montażu.
       Object.assign(zaczepy, nowe);
     },
 

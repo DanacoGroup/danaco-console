@@ -3016,3 +3016,28 @@ tego pliku wyliczała osiem czynności jako robotę do wykonania w oknie, bo pan
 starszej komendzie wydobycia tekstu z dokumentu; okno prowadzi dziś całą rodzinę komend cyfryzacji
 i zdania w pliku opisują funkcje działające oraz to, na czym stoją, żeby operator wiedział, czym
 sterują nastawy, a nie czego brakuje.
+
+## budowa/klient-poprzedni/src/powloka/powloka.ts
+Jedna odpowiedzialność: złożenie czterech pasów w jeden układ i związanie ich zdarzeniami. Żaden pas
+nie zna pozostałych; wiedzę o ich współpracy trzyma wyłącznie ten plik. Układ czterech pasów: pasek
+górny 48 px na atramencie ramy — jedyny pas nieprzełączający się z motywem, poziome karty sesji
+o mechanice zakładek, pionowa stała nawigacja modułów środowiska, obszar roboczy wypełniany przez
+inne widoki. Wybór modułu przeładowuje kartę sesji: tytuł karty czynnej równa się nazwie otwartego
+modułu, kontekst paska pokazuje parę środowisko-moduł, a obszar roboczy zapowiada moduł, którego
+okna wejdą w jego miejsce.
+
+Metoda podłączania zaczepów jest osobną metodą, a nie polem opcji powłoki, z tego samego powodu co
+podłączenie źródła nawigacji: powłoka powstaje zanim istnieje połączenie z rdzeniem, a czynności bez
+kanału podać się nie da. Wywołanie jest jedną linijką dokładaną w widoku trasy i niczego w nim nie
+przestawia. Bez wywołania nic się nie psuje: przyciski obecności, pozycje menu profilu i wyniki
+wyszukiwania zostają klikalne i mówią, że to pasek nie dostał drogi — nie że okien nie ma.
+
+Powłoka aplikacji żyje tyle, co okno, więc w produkcie zamknięcie nie zachodzi ani razu — ale nasłuch
+na dokumencie bez drogi zdjęcia jest wyciekiem, gdy powłoka powstaje wielokrotnie, jak w podglądzie
+i w sprawdzianach.
+
+Materiał wyszukiwania: to jedyne miejsce widzące naraz boczną nawigację, z wykazem modułów pobranym
+przez komendę wykazu modułów, i pas kart sesji, więc źródło składa się tutaj — tak samo jak tutaj
+wiąże się kontekst paska z wyborem modułu. Nowego odczytu z rdzenia nie ma: druga komenda wykazu
+modułów obok tej, którą zrobiła już nawigacja, byłaby drugą prawdą o jednym wykazie, a dwie prawdy
+rozjeżdżają się przy pierwszej zmianie po stronie rdzenia.

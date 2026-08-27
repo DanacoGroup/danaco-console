@@ -1,10 +1,7 @@
-// Odpowiedzialność pliku: przypisanie eksperta do projektu — okno Agent Manager
-// modułu Workspace.
-//
-// Ekspert mieszka w module Agents, przypisanie w module Workspace. Tożsamość,
-// model bazowy, umiejętności i uprawnienia eksperta prowadzi biblioteka
-// ekspertów (`agent.*`). Tutaj zapisuje się wyłącznie fakt, że ekspert
-// pracuje w projekcie, w jakiej roli i czy jest domyślnym wykonawcą zadań.
+// Odpowiedzialność pliku: przypisanie eksperta do projektu — okno Agent
+// Manager modułu Workspace. Ekspert mieszka w module Agents, przypisanie w
+// module Workspace. Tutaj zapisuje się wyłącznie fakt, że ekspert pracuje w
+// projekcie.
 package core
 
 import (
@@ -45,7 +42,8 @@ func (a *adapterPrzestrzeniRoboczej) PrzypiszAgenta(ctx context.Context,
 	}, nil
 }
 
-// przypisanieKontraktu przekłada wiersz przypisania na byt kontraktu.
+// przypisanieKontraktu przekłada wiersz przypisania eksperta z bazy na byt
+// kontraktu widoczny w oknie.
 func przypisanieKontraktu(idProjektu string, p dane.PrzypisanieAgenta) shared.WorkspaceAgentAssignment {
 	domyslny := p.DomyslnyWykonawca
 	return shared.WorkspaceAgentAssignment{

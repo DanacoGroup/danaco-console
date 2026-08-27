@@ -1,27 +1,11 @@
 import type { NazwaIkony } from '../ikony/ikony';
 
 /**
- * Ikona pozycji spisu okien pomocniczych.
- *
- * Jedno wiązanie kodu pozycji z ikoną obsługuje oba miejsca nagłówka rozmowy:
- * wykaz w menu `⋮` i rząd skrótów złożony z samych ikon. Rozdzielenie ich dałoby
- * tej samej pozycji dwa różne rysunki w jednym nagłówku.
- *
- * Ikonę dobiera się pod czynność, nie pod wygląd narzędzia — `podglad-bash`
- * bierze `monitor`, bo pozycja jest podglądem pracy idącej w tle, a nie drugim
- * terminalem.
- *
- * O tym, które pozycje wolno otworzyć, rozstrzyga
- * `okna-pomocnicze/wytwornia-paneli.ts`. Pozycja spoza wykazu nie jest błędem
- * i nie zostaje bez rysunku: dostaje `karta-okna`, bo każda z nich jest oknem
- * obok rozmowy.
+ * Ikona pozycji spisu okien pomocniczych łączy kod pozycji z ikoną zestawu obsługującą oba miejsca nagłówka rozmowy — wykaz menu i rząd skrótów — dobraną pod czynność, nie pod wygląd narzędzia.
  */
-
-/** Wiązanie kodu pozycji z ikoną zestawu. */
 const IKONY: Readonly<Record<string, NazwaIkony>> = {
   'podglad-bash': 'monitor',
-  // Czynnością panelu jest sięgnięcie wstecz po zapis rozmowy, nie oglądanie
-  // czegokolwiek na żywo — stąd „historia", a nie „monitor" ani „lista".
+  // Czynnością panelu jest sięgnięcie wstecz po zapis rozmowy, nie oglądanie czegokolwiek na żywo.
   'historia-rozmowy': 'historia',
   'terminal': 'terminal',
   'przebieg-debaty': 'debata',
@@ -32,7 +16,7 @@ const IKONY: Readonly<Record<string, NazwaIkony>> = {
   'pliki-srodowiska': 'plik',
 };
 
-/** Ikona pozycji; pozycja spoza wykazu dostaje znak okna, nie pustkę. */
+/** Ikona pozycji spisu okien pomocniczych; pozycja spoza wykazu dostaje znak okna, nie pustkę wizualną. */
 export function ikonaPanelu(kod: string): NazwaIkony {
   return IKONY[kod] ?? 'karta-okna';
 }

@@ -5686,3 +5686,23 @@ rachunku kształtu tu nie ma i nie będzie. Rodzaj obiektu niesie też wartość
 odmawia jej nazwanym powodem, bo rachunku wykresu po stronie studia nie ma — odmowa stoi w oknie
 przed próbą i kieruje do modułu projektowania, bo pokazanie kontrolki kończącej się odmową
 rdzenia byłoby obietnicą bez pokrycia.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-voting-evaluation.ts
+Okno nie prowadzi głosowania i nie udaje, że je prowadzi — ale powód zmienił się co do istoty.
+Kontrakt niesie dziś pełną rodzinę głosowania wraz z metodą agregacji, progiem kworum i wynikiem,
+a także rubryki, sędziów, ranking, macierz decyzyjną i kalibrację. Brakuje ich obsługi: żadnej
+z tych komend to okno jeszcze nie wywołuje. Suwak, gwiazdki albo przycisk uruchomienia głosowania
+postawione bez obsługi zbierałyby wybór Operatora, który nie dociera nigdzie i znika wraz
+z odświeżeniem okna — czyli byłyby pozorem czynności. Okno pokazuje zamiast tego jedyną wielkość,
+którą samo umie zmierzyć: udział uczestników w turze bieżącej — ile razy i jak obszernie każdy się
+odezwał, kto milczy, kto jest wyciszony i jakie ma miejsce w kolejności głosu. Nazwa wielkości mówi,
+czym ona jest: udziałem, nie rankingiem i nie kworum. Wyliczenia siedzą w pliku zestawienia
+udziału. Subskrypcji strumienia okno nie zakłada — jedna na całe złożenie stoi w indeksie modułu.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/ikony-paneli.ts
+Rozdzielenie ikony wykazu menu od ikony rzędu skrótów dałoby tej samej
+pozycji dwa różne rysunki w jednym nagłówku, dlatego jedno wiązanie kodu
+pozycji z ikoną obsługuje oba miejsca naraz. O tym, które pozycje wolno
+otworzyć, rozstrzyga wytwórnia paneli okien pomocniczych — pozycja spoza
+wykazu nie jest błędem i nie zostaje bez rysunku, tylko dostaje ikonę
+karty okna, bo każda z nich jest oknem obok rozmowy.

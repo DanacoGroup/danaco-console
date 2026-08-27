@@ -6874,3 +6874,6 @@ polecenia. Funkcja powtarza więc żądanie nadania roli zaraz po założeniu
 okna i mówi w zdaniu wprost, że więź poszła drugim żądaniem; wołający
 sprawdza obsadę odczytaną już po założeniu okna, więc gdy rdzeń więź
 utrwali, drugie żądanie nie idzie wcale.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-kontekstow.ts
+Kontekst jest zestawem wskazań, nie właścicielem treści: usunięcie kontekstu kasuje wskazanie, a wpisy pamięci zostają, i okno mówi to wprost przy kasowaniu, żeby Operator nie bał się posprzątać zestawów roboczych. Zasada retencji obejmuje zapisy kolejne i nie rusza wstecz wpisów zastanych; odpowiedź niesie policzoną liczbę wpisów, których zasada dotknie przy najbliższym wygaszaniu — liczbę wierszy, nie oszacowanie. Pomiar zajętości okna kontekstu bywa niewykonalny, gdy kanał nie zadeklarował wielkości okna; to jest odpowiedź, nie awaria — pole dostępności niesie fałsz wraz z powodem, a okno pokazuje powód zamiast paska wobec granicy, której nikt nie ustalił.

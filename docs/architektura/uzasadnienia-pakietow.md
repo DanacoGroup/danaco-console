@@ -4197,3 +4197,64 @@ przedrostek, licznik w podstawie trzydziestej szóstej i ośmiobajtowa część 
 kryptograficznego.
 ## budowa/server/internal/dane/przegladarka_zrodla.go
 Tabela zrodlo_przegladania nie jest tabelą zrodlo_badania modułu badawczego: źródło przeglądania jest odciskiem strony zebranym w toku przeglądania i zawsze powiązanym z oknem operacyjnym, a źródło badawcze ocenia wiarygodność zasobu i niesie inny kształt danych. Różne kształty i różne cykle życia uzasadniają osobną tabelę zamiast współdzielenia jednej struktury.
+
+## budowa/server/internal/narzedzia/licznik.go
+Sama liczba pozycji nie mówi Operatorowi nic; liczba bajtów i rząd żetonów okna
+kontekstu mówi wszystko, bo limit, w który się uderza, jest limitem okna
+kontekstu liczonym w żetonach, nie w narzędziach. Licznik podający wyłącznie
+pozycje kazałby Operatorowi przeliczać je w głowie na koszt, czyli o
+przekroczeniu dowiedziałby się dopiero z cichej degradacji.
+
+Bajty mają być bajtami tej samej odpowiedzi, którą dostanie model, inaczej
+pomiar jest oszacowaniem podanym jako pomiar. Trzy pola, z których protokół
+składa odpowiedź tools/list, stoją w jednym miejscu w tym pliku; warstwa
+protokołu bierze je stąd, zamiast składać drugi raz po swojemu. Pakiet nadal
+nie zna ramki JSON-RPC ani metod, zna wyłącznie kształt danych jednej pozycji,
+i to jest cena za to, że pomiar nie kłamie.
+
+Licznik oddaje bajty, bo bajty umie policzyć dokładnie. Przelicznika na żetony
+tu nie ma: zależy od tokenizatora kanału modelu, którego ten proces nie zna,
+a liczba podana jako dokładna, wyprowadzona z założenia, byłaby drugą prawdą.
+Rząd wielkości podaje się w zdaniu dziennika, nie w polu struktury.
+
+## budowa/server/internal/dane/kanaly.go
+Baza przechowuje wyłącznie odwołanie do danych dostępowych — nazwę wpisu
+w magazynie sekretów, nigdy klucza. Repozytorium nie ma żadnej metody
+zapisującej treść sekretu, a parametry kanału są sprawdzane jako poprawny
+dokument JSON.
+
+## budowa/server/internal/dane/karty_sesji.go
+Repozytorium ma metodę zapewniającą istnienie karty: warstwa wyższa zapisuje
+sesję, a karta ma powstać po drodze, nie zablokować zapisu.
+
+## budowa/server/internal/dane/katalog_definicji.go
+Pozycja katalogu odpowiada strukturze definicji ustawienia kontraktu —
+klient buduje z niej pole formularza i nie zna ani jednego klucza z osobna.
+Zbiory poboczne (opcje, zasięgi, osie) czytane są trzema zapytaniami zbiorczo
+i dokładane do pozycji w pamięci; zapytania per pozycja nie ma.
+
+## budowa/server/internal/dane/katalog_ustawien.go
+Katalog jest sterowany danymi: nowa pozycja okna konfiguracji to nowy
+wiersz, nie nowa gałąź w kodzie. Wzorcem jest rejestr kanałów modelu
+i katalog akcji — repozytorium wyłącznie czyta wiersze, a rozstrzyganie
+wartości należy do warstwy konfiguracji. Brak wiersza w katalogu nie jest
+awarią: rezolwer schodzi wtedy na rejestr wbudowany rdzenia i pracuje dalej.
+
+Rodzaje liczbowe, logiczne i złożone idą surowo, jeżeli są poprawnym
+zapisem JSON; wszystko pozostałe idzie napisem. Funkcja nigdy nie zawodzi —
+wartość nieczytelna trafia do kontraktu jako napis, nie jako błąd.
+
+## budowa/server/internal/dane/kolejki.go
+Zmiana stanu dotyka stanu i dziennika akcji, więc idzie w transakcji.
+Zlecenia kolejki obsługuje osobny plik repozytorium pozycji kolejki.
+
+Rachunek liczby kolejek czynnych stoi w tym repozytorium, bo tabelę kolejek
+prowadzi ono i drugiego czytelnika mieć nie będzie; ciało metody leży
+w pliku warstwy mobilnej.
+
+## budowa/server/internal/dane/akcje.go
+
+Filtr do zasięgu celowo nie stoi w zapytaniu SQL: wybór akcji jednego bytu poziomu rozstrzyga
+wyłącznie rejestr akcji w rdzeniu na wierszach już odczytanych, żeby bliźniaczy filtr w SQL
+nie stał się drugą, osobną implementacją tej samej reguły, gotową rozejść się z pierwszą po
+cichu.

@@ -1,13 +1,6 @@
-// Obszar szablonów materiału (tabele `szablon_materialu_design`
-// i `warstwa_szablonu_materialu_design`, migracja 336) — część
-// `RepozytoriumDesignu` zadeklarowanego w `design.go`. Szablony promptu leżą
-// w `design_szablony.go` i są innym bytem; powód rozdziału stoi w nagłówku
-// migracji 336.
-//
-// Zapis jest zawsze pełny, wzorem `ZapiszKompozycje`: `design.template.save`
-// nadsyła komplet warstw, więc repozytorium usuwa warstwy szablonu i wstawia
-// przysłane od nowa w jednej transakcji. Inaczej warstwa zdjęta w oknie
-// zostawałaby w bazie i szablon rozchodziłby się z tym, co Operator widzi.
+// Obszar szablonów materiału: tabele `szablon_materialu_design`
+// i `warstwa_szablonu_materialu_design`, część `RepozytoriumDesignu`
+// z `design.go`. Szablony promptu leżą w `design_szablony.go` i są innym bytem.
 package dane
 
 import (
@@ -17,7 +10,9 @@ import (
 	"fmt"
 )
 
-// SzablonMaterialuDesignu to wiersz tabeli `szablon_materialu_design`.
+// SzablonMaterialuDesignu to wiersz tabeli `szablon_materialu_design`:
+// opisuje jeden szablon materiału przypisany do okna, wraz z rozmiarem
+// i opisem.
 type SzablonMaterialuDesignu struct {
 	ID             int64
 	Kod            string
@@ -196,7 +191,8 @@ func (r *repozytoriumDesignu) SzablonyMaterialuDesignu(ctx context.Context,
 	return lista, nil
 }
 
-// WarstwySzablonuMaterialuDesignu zwraca warstwy szablonu w kolejności wyrysu.
+// WarstwySzablonuMaterialuDesignu zwraca warstwy szablonu w kolejności
+// wyrysu, tej samej, w jakiej zostały zapisane przy tworzeniu szablonu.
 func (r *repozytoriumDesignu) WarstwySzablonuMaterialuDesignu(ctx context.Context,
 	szablonID int64) ([]WarstwaKompozycji, error) {
 
@@ -239,7 +235,8 @@ func (r *repozytoriumDesignu) WarstwySzablonuMaterialuDesignu(ctx context.Contex
 	return lista, nil
 }
 
-// odczytajSzablonMaterialuDesignu składa strukturę z jednego wiersza wyniku.
+// odczytajSzablonMaterialuDesignu składa strukturę SzablonMaterialuDesignu
+// z jednego wiersza wyniku zapytania SQL.
 func odczytajSzablonMaterialuDesignu(wiersz skaner) (SzablonMaterialuDesignu, error) {
 	var szablon SzablonMaterialuDesignu
 	var opis sql.NullString
@@ -253,13 +250,9 @@ func odczytajSzablonMaterialuDesignu(wiersz skaner) (SzablonMaterialuDesignu, er
 }
 
 // StronaSzablonuMaterialuDesignu to wiersz tabeli
-// `strona_szablonu_materialu_design` (migracja 339) — jedna strona publikacji
-// wielostronicowej.
-//
-// Szablon bez ani jednej strony jest szablonem JEDNOSTRONICOWYM i jego warstwy
-// leżą tam, gdzie leżały (`warstwa_szablonu_materialu_design`). Baner nie ma
-// stron i wsteczna zgodność nie jest tu ustępstwem, tylko prawdą — powód stoi
-// w nagłówku migracji 339.
+// `strona_szablonu_materialu_design`: jedna strona publikacji
+// wielostronicowej. Szablon bez stron jest jednostronicowy, a jego warstwy
+// leżą w `warstwa_szablonu_materialu_design`.
 type StronaSzablonuMaterialuDesignu struct {
 	ID        int64
 	Kod       string
@@ -285,11 +278,9 @@ const (
 	                                      szerokosc, wysokosc, kolejnosc, zablokowana, adnotacja)
 	                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	// Kolumna `strona_id` wchodzi w miejsce kompozycji, a `utworzono` dokłada się
-	// z chwili odczytu: wspólny odczytywacz warstwy (`odczytajWarstweKompozycjiDesignu`)
-	// żąda dwunastu wartości i to on jest jedną prawdą o tym, jak warstwa
-	// przechodzi z bazy do struktury. Drugi odczytywacz dla stron rozjechałby się
-	// z pierwszym przy pierwszej nowej kolumnie warstwy.
+	// Kolumna `strona_id` wchodzi w miejsce kompozycji; odczyt warstwy dzieli
+	// wspólny odczytywacz z warstwami kompozycji, więc dokłada pustą wartość
+	// `utworzono`, by dopasować liczbę kolumn.
 	listaWarstwStronySzablonuDesignu = `SELECT id, identyfikator_zewnetrzny, strona_id, zasob_id,
 	                                           x, y, szerokosc, wysokosc, kolejnosc, zablokowana,
 	                                           adnotacja, '' AS utworzono
@@ -298,13 +289,8 @@ const (
 )
 
 // ZapiszStronySzablonuMaterialuDesignu podmienia komplet stron szablonu wraz
-// z ich warstwami.
-//
-// Zapis jest pełny, jedną transakcją — usuń i wstaw od nowa. Ten sam rozstrzyg
-// i ten sam powód, co przy warstwach kompozycji: żądanie nadsyła komplet stron,
-// a dogadywanie różnicy względem stanu zastanego dawałoby dwie prawdy o tym,
-// które strony publikacja ma. Kasowanie kaskadowe zdejmuje przy okazji warstwy
-// stron usuniętych.
+// z ich warstwami w jednej transakcji: usuwa zastane strony i wstawia
+// przysłane od nowa, a kasowanie kaskadowe zdejmuje warstwy stron usuniętych.
 func (r *repozytoriumDesignu) ZapiszStronySzablonuMaterialuDesignu(ctx context.Context,
 	szablonID int64, strony []StronaSzablonuMaterialuDesignu,
 	warstwy map[string][]WarstwaKompozycji) error {
@@ -355,7 +341,8 @@ func (r *repozytoriumDesignu) ZapiszStronySzablonuMaterialuDesignu(ctx context.C
 	return nil
 }
 
-// StronySzablonuMaterialuDesignu oddaje strony szablonu w kolejności numerów.
+// StronySzablonuMaterialuDesignu oddaje strony szablonu w kolejności numerów,
+// zgodnie z porządkiem publikacji wielostronicowej.
 func (r *repozytoriumDesignu) StronySzablonuMaterialuDesignu(ctx context.Context,
 	szablonID int64) ([]StronaSzablonuMaterialuDesignu, error) {
 
@@ -387,8 +374,8 @@ func (r *repozytoriumDesignu) StronySzablonuMaterialuDesignu(ctx context.Context
 	return strony, nil
 }
 
-// WarstwyStronySzablonuMaterialuDesignu oddaje warstwy jednej strony w kolejności
-// wyrysu.
+// WarstwyStronySzablonuMaterialuDesignu oddaje warstwy jednej strony
+// w kolejności wyrysu, tej samej co przy warstwach szablonu.
 func (r *repozytoriumDesignu) WarstwyStronySzablonuMaterialuDesignu(ctx context.Context,
 	stronaID int64) ([]WarstwaKompozycji, error) {
 

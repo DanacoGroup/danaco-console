@@ -2484,3 +2484,29 @@ kontrakt oznacza accessPointId jako niewymagane w install i configure, ale nie
 daje sposobu na jawne odpięcie. Pominięcie pola znaczy więc brak zmiany,
 a nie wyczyszczenie — zgadywanie drugiego znaczenia kasowałoby wskazanie mostu
 bez żądania.
+
+## isolation.go
+
+Plik nie przechowuje wartości poszczególnych punktów izolacji — jedenaście punktów
+izolacji leży w tabeli ustawienie i czyta je repozytorium konfiguracji
+(konfiguracja.go, ustawienia_osi.go); ten plik drugiego dostępu do tych samych
+wierszy nie zakłada. Tutaj leży profil jako nazwany szablon przełączników,
+przypisanie profilu do poziomu oraz warstwa wybrana przez operatora.
+
+Słownik poziomów zasięgu czyta komenda isolation.scope.list: nazwa poziomu i jego
+miejsce w kolejności rozstrzygania stoją w bazie i idą stąd do operatora, zamiast
+być drugi raz spisane w rdzeniu. Kolejność rozstrzygania nadal należy do pakietu
+internal/konfig — tutaj czytany jest opis poziomu, nie reguła.
+
+## budowa/server/internal/dane/design_szablony_materialu.go
+
+Zapis szablonu i jego warstw jest zawsze pełny, wzorem ZapiszKompozycje:
+żądanie design.template.save nadsyła komplet warstw, więc repozytorium usuwa
+warstwy szablonu i wstawia przysłane od nowa w jednej transakcji. Inaczej
+warstwa zdjęta w oknie zostawałaby w bazie i szablon rozchodziłby się z tym,
+co Operator widzi. Ten sam rozstrzyg dotyczy stron szablonu: żądanie nadsyła
+komplet stron, a dogadywanie różnicy względem stanu zastanego dawałoby dwie
+prawdy o tym, które strony publikacja ma.
+
+Baner nie ma stron, a wsteczna zgodność szablonu jednostronicowego nie jest tu
+ustępstwem, tylko odzwierciedleniem tego stanu rzeczy.

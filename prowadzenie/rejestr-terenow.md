@@ -41,35 +41,6 @@ wskazujacej katalog nieistniejacy — to wymaga zarazem przeniesienia wag i zmia
    — zero niepowodzen wobec stanu zastanego.
 5. Kontrakt nietkniety — wykazane suma kontrolna.
 
-### arsenal-wdrozenia
-
-Rdzen wola programy, ktorych skrypt prowizjonowania serwera nie stawia. Na
-maszynie Operatora te komendy odmowia mimo poprawnego kodu.
-
-| | |
-|---|---|
-| **Galaz** | `teren/arsenal-wdrozenia` z `main` |
-| **Wykaz plikow** | `budowa/scripts/arsenal-serwera.sh`, `budowa/scripts/pakiet-serwera.sh` |
-| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `budowa/desktop/`, `budowa/witryna/`, `design/`, `prowadzenie/` |
-
-**Przedmiot.** Arsenal stawia dzis `realesrgan-ncnn-vulkan` i `rembg`. Rdzen wola
-ponadto `danaco-twarze` (pomocnik odtwarzania twarzy wraz ze srodowiskiem
-pythonowym i dwoma zestawami wag), a zdolnosci wyszukiwania — stos `torch`
-i `transformers`. Wykaz zaleznosci rdzenia niesie pelne podpowiedzi instalacyjne;
-`prowadzenie/srodowisko-maszyny.md` sekcja 4a podaje, co i ile wazy.
-
-**Kryteria odbioru.**
-
-1. Skrypt stawia wszystko, po co rdzen siega — wykazane zestawieniem wykazu
-   zaleznosci rdzenia wobec tego, co skrypt instaluje, **pozycja po pozycji**.
-2. Skrypt jest **odtwarzalny**: dwa przebiegi na tym samym stanie dają ten sam
-   wynik, a przebieg na stanie juz postawionym niczego nie psuje.
-3. Kazda pozycja ma podana wage i zrodlo; suma wag zgadza sie z sekcja 4a
-   dokumentu srodowiska.
-4. Skrypt **nie jest uruchamiany** na tej maszynie w calosci — sprawdzasz go
-   odczytem i sondami czastkowymi, i **mowisz wprost**, czego nie da sie
-   sprawdzic bez czystego serwera.
-
 ### uprzaz-komend-neuronowych
 
 Generyczna uprzaz sprawdzianow urywa kazda komende liczaca modelem, wiec zadnej
@@ -184,6 +155,35 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 
 ## Zgłoszenia oczekujące na teren
+
+### Warstwa `obowiazkowa-apt` wykazu zaleznosci niesie proze
+
+`WarstwaZaleznosci` w `zaleznosci_wykaz_wydruk.go` traktuje `default` jako apt,
+wiec do tej warstwy wpadaja podpowiedzi zdaniem: „srodowisko uruchomieniowe Javy
+(default-jre) wraz z...", „pip install ruff" i trzy inne.
+
+**Skutek zmierzony przez teren `arsenal-wdrozenia`:** rozbicie tego pola na
+spacjach dawalo `apt-get install -y ... uruchomieniowe Javy (default-jre) ...`,
+apt padal, a `set -e` zabijal przebieg **przed** warstwami Go, npm, snap i mowy.
+Skrypt prowizjonowania serwera nie dochodzil do konca **od dawna**.
+
+Teren obszedl to rozpoznawaniem postaci pola. Wlasciwa naprawa — osobna warstwa
+w rdzeniu dla podpowiedzi zdaniem — lezy w `internal/core`.
+
+### `cargo install` klasyfikowany jako warsztat Go
+
+Regula klasyfikacji pyta o podnapis `go install`, a ten stoi wewnatrz
+`cargo install typos-cli`. Pozycja wpada do warstwy `warsztat-go` i bylaby
+wykonana poleceniem `go install`. Teren obszedl to warunkiem na poczatek
+lancucha; naprawa reguly nalezy do rdzenia.
+
+### Pakiet `.deb` serwera nie niosl pomocnikow mowy
+
+Rdzen szuka pomocnikow obok siebie (potwierdzone `--wykaz-mowy`, klucz
+`rozpoznanie.pomocnik-szukano`), a `pakiet-serwera.sh` katalogu `pomocniki/`
+do pakietu nie wkladal. **Warstwy mowy nie dalo sie postawic na serwerze nigdy.**
+Teren to naprawil: brak `pomocniki/` jest teraz odmowa zlozenia pakietu.
+
 
 ### Dokumentacja zetonow rozjechana z arkuszem o caly stopien
 
@@ -827,6 +827,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `arsenal-wdrozenia` | `teren/arsenal-wdrozenia` | `541cdce` | weryfikacja Prowadzacego wlasnym pomiarem: odpis wykazu wyciagniety ze skryptu ma **55 pozycji, zgodnych z rdzeniem** co do warstwy, programu, pakietu i nazwy (bylo 30); `bash -n` i `shellcheck` czysto; zakres 2 pliki |
 | `zdolnosc-wyszukiwania` | `teren/zdolnosc-wyszukiwania` | `5d02014` | weryfikacja Prowadzacego wlasnym pomiarem: kontrakt ruszony **wylacznie dodaniami** — stare pola `knowledge.search` sa prefiksem nowych, opis bez zmiany, zero usuniec; generator powtarzalny w dwoch przebiegach; oba sprawdziany zdolnosci **uruchomione z `DANACO_MODELE` i zdane** — przesiew zmienil kolejnosc, os obrazu trafila w kolo |
 | `okno-przygotowania` | `teren/okno-przygotowania` | `fbb405d` | weryfikacja Prowadzacego wlasnym pomiarem: martwy przycisk **zniknal** (0 trafien przy 2 kontrolnych na nowa czynnosc), 27/27 sprawdzianow przebiegu, 7/7 katalogu tresci, `tsc` bez bledu; zrzuty obejrzane — postep dobiega 100%, odslona nieudana ma droge naprzod |
 | `odtwarzanie-twarzy` | `teren/odtwarzanie-twarzy` | `9cc5ccf` | weryfikacja Prowadzacego wlasnym pomiarem: **RMSE 1301,37** miedzy wynikiem `faces:false` a `faces:true`, roznica zlokalizowana na twarzy; wycinek obejrzany — zeby, wargi i faktura skory wyraznie odtworzone; zakres 5 plikow w `internal/core`; kontrakt nietkniety; wagi `GFPGANv1.4.pth` wczytane `strict=True`, 285 kluczy |

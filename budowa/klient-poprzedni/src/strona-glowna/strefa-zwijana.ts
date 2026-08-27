@@ -1,31 +1,12 @@
 import { czyRozwiniete, zapamietajZwiniecie } from './pamiec-zwiniecia';
 
-/**
- * Strefa przywoływana — zapowiedź stoi zawsze, treść dopiero na życzenie.
- *
- * Buduje `<details>` z `<summary>`: postać rozwinięcia trzyma przeglądarka,
- * a dane strefy czytane są dopiero przy rozwinięciu. Tak samo działa archiwum
- * sesji (`strefa-archiwum.ts`); ten plik uogólnia zabieg na całe strefy
- * i dokłada pamięć postaci między wejściami, żeby przywołanie nie powtarzało
- * się przy każdym wejściu na stronę.
- *
- * Strefa zwinięta nie jest strefą ukrytą: zapowiedź — nazwa, zdanie
- * wyjaśnienia i dopisek z liczbą — stoi na ekranie zawsze i mówi, co jest pod
- * spodem, więc jedno naciśnięcie otwiera treść znaną z opisu.
- *
- * Rozwinięcia nie dubluje żadna klasa CSS; jedynym jego nośnikiem jest atrybut
- * `open`, bo druga kopia stanu mogłaby się z pierwszą wyłącznie rozminąć.
- */
-
+/** Strefa przywoływana trzyma zapowiedź na ekranie zawsze i czyta dane treści dopiero przy rozwinięciu, pamiętając jego postać między wejściami. */
 export interface OpisStrefyZwijanej {
   /** Etykieta wersalikowa — nazwa strefy. */
   etykieta: string;
   /** Jedno zdanie: po co strefa stoi na ekranie. */
   wyjasnienie: string;
-  /**
-   * Klucz pamięci postaci, stały między wejściami i między wydaniami.
-   * Zmiana klucza znaczy „zacznij od domyślnej", więc zmienia się go świadomie.
-   */
+  /** Klucz pamięci postaci, stały między wejściami; jego zmiana znaczy „zacznij od domyślnej". */
   klucz: string;
   /** Postać przed pierwszym rozstrzygnięciem Operatora. */
   domyslnieRozwiniete: boolean;
@@ -36,10 +17,7 @@ export interface StrefaZwijana {
   element: HTMLDetailsElement;
   /** Miejsce na treść strefy — rysowane niezależnie od postaci. */
   cialo: HTMLElement;
-  /**
-   * Dopisek zapowiedzi — liczba pod spodem, żeby zwinięcie nie było ślepe.
-   * Napis pusty zdejmuje dopisek zamiast zostawiać puste miejsce.
-   */
+  /** Dopisek zapowiedzi z liczbą pod spodem; napis pusty zdejmuje dopisek zamiast zostawić puste miejsce. */
   ustawDopisek(tekst: string): void;
   /** Podpina odbiorcę zmiany postaci; wywoływany także przy przywołaniu. */
   naZmianePostaci(sluchacz: (rozwiniete: boolean) => void): void;
@@ -61,8 +39,7 @@ export function utworzStrefeZwijana(opis: OpisStrefyZwijanej): StrefaZwijana {
   napis.className = 'dn-etykieta-wersalikowa dn-strona__etykieta-strefy';
   napis.textContent = opis.etykieta;
 
-  // Dopisek stoi w wierszu etykiety, nie pod wyjaśnieniem: to on niesie liczbę,
-  // dla której Operator zdecyduje, czy strefę w ogóle rozwijać.
+  // Dopisek stoi w wierszu etykiety: on niesie liczbę rozstrzygającą o rozwinięciu.
   const dopisek = document.createElement('span');
   dopisek.className = 'dn-strona__dopisek-strefy';
   dopisek.hidden = true;

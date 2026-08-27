@@ -3062,3 +3062,6 @@ sama persona w dwóch oknach jedną.
 Zakres i algorytm wchodzą do klucza jednoznaczności, bo ta sama tożsamość ma
 odrębną punktację w rankingu środowiska i w rankingu jednego okna, a Elo
 i Glicko liczą się inaczej i nie wolno ich sumować.
+
+## budowa/desktop/src-tauri/src/rdzen/stan.rs
+Stanu rdzenia nie ma czego przechowywać między wywołaniami: rdzeń stoi na serwerze wdrożenia, więc powłoka nie zna jego procesu, nie zna chwili jego startu i nie ma nad nim władzy — wie wyłącznie, pod jakim adresem go szukać i czy ten adres w tej chwili odpowiada. Opis nie jest odczytywany z kopii spod zamka, bo taka kopia rozjeżdżałaby się ze wskazaniem złożonym w oknie. Rozpoznanie pyta serwer wskazany, nigdy pętlę zwrotną: pytanie pętli zwrotnej dawałoby fałsz niezależnie od rzeczywistego stanu rdzenia, a serwer nierozwiązywalny daje odpowiedź ujemną, nie panikę.

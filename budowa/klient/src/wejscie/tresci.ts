@@ -275,22 +275,13 @@ export const tresci = {
       'Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs',
     nadtytul: 'Uruchomienie',
     tytul: 'Przygotowanie środowiska pracy',
-    lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji, kontekst projektów i kanały modeli.',
+    lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji otwarte przy poprzednim zamknięciu.',
     obszarEtapow: 'Postęp przygotowania środowiska pracy',
-    etapy: [
-      'Uwierzytelnienie',
-      'Profil Operatora i uprawnienia',
-      'Przywracanie sesji z poprzedniej pracy',
-      'Kanały modeli i konektory',
-      'Magistrala kontekstu i pamięć projektów',
-    ],
+    etapy: ['Uwierzytelnienie', 'Przywracanie sesji z poprzedniej pracy'],
     miary: {
       rozpoznane: 'urządzenie rozpoznane',
-      uprawnienia: '{ile} uprawnień',
       karty: '{odtworzone} z {wszystkie} kart',
       oczekuje: 'oczekuje',
-      moduly: '{ile} modułów',
-      srodowisko: '{nazwa}',
     },
     postep: {
       etykieta: 'Przywracanie sesji',
@@ -311,7 +302,6 @@ export const tresci = {
     potwierdzHaslo: 'Potwierdź nowe hasło',
     potwierdzDroge: 'Potwierdź drogę',
     wrocDoLogowania: 'Wróć do logowania',
-    pominPrzywracanie: 'Pomiń przywracanie sesji',
     przerwijIWyloguj: 'Przerwij i wyloguj',
   },
 
@@ -381,10 +371,6 @@ export const tresci = {
     kodPonowiony: {
       tytul: 'Droga potwierdzenia wysłana ponownie',
       tresc: 'Nowa droga wysłana na adres konta. Poprzednia przestała obowiązywać.',
-    },
-    pominiecie: {
-      tytul: 'Pominięcie przywracania',
-      tresc: 'Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji.',
     },
     schowek: {
       tytul: 'Schowek niedostępny',

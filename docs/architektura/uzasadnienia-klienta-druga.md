@@ -4400,3 +4400,29 @@ przeglądarka, więc element działa klawiaturą i ma poprawną semantykę bez a
 druga kopia stanu w klasie CSS mogłaby się z atrybutem otwarcia wyłącznie rozminąć. Znacznik
 wywołania idzie z wykazu ikonografii opracowania i stoi przy nazwie, żeby droga do elementu była
 widoczna, zanim się go otworzy.
+
+## budowa/klient-poprzedni/src/rozmowa/ulotnosc.ts
+Źródłem ulotności jest profil modułu, nie wykaz kodów prowadzony w tym pliku.
+Ulotność to dwa czyszczenia, nie jedno: zamknięcie okna, po którym rozmowa nie
+wraca, bo historia nie jest odtwarzana z rdzenia, oraz zmiana kontekstu
+roboczego, na przykład zmiana testowanego eksperta. Oba muszą być widoczne:
+czat, który po cichu gubi wątek, czyta się jak awaria aplikacji. Dlatego
+polityka niesie gotowe zdania, nie samą wartość logiczną, a rozmowa wypisuje
+je w oknie.
+
+Zasięg ulotności kończy się na kliencie: rdzeń dopisuje każdą wiadomość
+Operatora i każdą odpowiedź modelu do dziennika rozmowy niezależnie od trybu
+okna, kontrakt nie ma komendy kasowania wiadomości, a zamknięcie okna zmienia
+tylko jego stan, nie usuwa wierszy. Bez pamięci sesyjnej znaczy więc: klient
+nie odtwarza i nie pokazuje, a rdzeń zapis trzyma. Okno mówi o tym Operatorowi
+wprost.
+
+Kontekst roboczy jest portem ogólnym: warstwa rozmowy nie zna ani modułu
+Agents, ani pojęcia eksperta. Wie tylko, że kontekst ma klucz, a zmiana klucza
+kończy dotychczasową rozmowę.
+
+Polityka modułu bierze regułę z jego profilu, żeby nie prowadzić drugiej listy
+modułów bez pamięci, która rozjechałaby się z profilem przy jego zmianie.
+Kontekst roboczy podaje warstwa składająca, bo tylko ona zna moduły. Moduł bez
+pamięci sesyjnej i bez podanego kontekstu jest wciąż ulotny — traci rozmowę
+przy zamknięciu okna — mówi tylko o jednym czyszczeniu zamiast dwóch.

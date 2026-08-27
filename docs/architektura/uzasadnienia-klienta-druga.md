@@ -3298,3 +3298,21 @@ bo zrównanie obu czynności odebrałoby możliwość wstawienia fragmentu i odr
 Kolumna tożsamości niesie tu animację powłok zamiast wykazu zdań: na tym etapie użytkownik nie wybiera już programu, tylko czeka, aż się złoży.
 Wykaz niesie wyłącznie etapy, dla których droga wejścia ma komendę, więc postęp dobiega stu procent — pasek stojący w połowie na zawsze czytałoby się jak zawieszenie programu.
 Pas działań daje dwie czynności. Ponowienie stoi wyłącznie przy etapie nieudanym: przy przebiegu udanym nie ma czego ponawiać, a kontrolka bez skutku jest gorsza od jej braku. Widoczność nastawia montaż, bo tylko on widzi stan. Czynności pomijającej przywracanie tu nie ma — przywracanie dzieje się w rdzeniu jednym wywołaniem, a kontrakt nie zna komendy, która by je odwołała.
+
+## budowa/klient-poprzedni/src/motyw/znaczenia-stanow.ts
+Granica wiedzy pliku: katalog mówi, jak stan ma być pokazany, nie mówi, jaki
+stan jest — to rozstrzyga kontrakt współdzielony. Stan „do weryfikacji” nie
+ma odpowiednika w kontrakcie i siedzi na tej samej rodzinie barw co stan
+„wstrzymany”, dlatego bez ikony i etykiety byłyby na ekranie nierozróżnialne.
+
+Stan „anulowany” kontrakt zna, tyle że pod innym wyliczeniem używanym przez
+moduł Assistant, który prowadzi własny wykaz plakietek różniący się od tego
+katalogu — dołożenie tu drugiego zapisu bez usunięcia tamtego dałoby trzecią
+prawdę zamiast jednej. Stany „do weryfikacji” i „przyjęty” nie mają
+odpowiednika, bo pozycja kolejki niesie wyłącznie stan kolejki, a postęp
+osobny stan postępu.
+
+Klasa wariantu kropki: praca trwająca bierze tętno, nie barwę rodziny, bo
+tętno jest jedynym ruchem ciągłym interfejsu i jest zastrzeżone dla pracy w
+tle. Przy preferencji ograniczonego ruchu tętno zamiera, a jego znaczenie
+przejmuje pierścień statyczny, również zapisany w arkuszu stylów.

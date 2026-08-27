@@ -10,17 +10,7 @@ import { ID_GNIAZD } from './identyfikatory';
 import { rolaDomyslna } from './role-domyslne';
 
 /**
- * Figura rozmowy modułu — ile okien scena prowadzi w tym module i w jakich
- * rolach.
- *
- * Jedna odpowiedzialność: przełożenie profilu modułu
- * (`okno-komunikacji/profil-modulu.ts`) na to, co układ okien równoległych umie
- * pokazać — liczbę gniazd i ich role. Własnego zdania o modułach ten plik nie
- * ma: liczba pochodzi z profilu, role z `role-domyslne.ts`, a sufit
- * z `identyfikatory.ts`.
- *
- * Liczbę okien bierzemy funkcją `liczbaOkienRozmowy`, nie polem `granicaOkien`:
- * funkcja oddaje zero dla modułu bez rozmowy, a pole niesie dla niego jedynkę.
+ * Figura rozmowy modułu przekłada profil modułu na to, co układ okien równoległych umie pokazać — liczbę gniazd i ich role, bez własnego zdania o samych modułach.
  */
 export interface FiguraModulu extends FiguraDoNapisu {
   /** Kod modułu, dla którego figura powstała; pusty = moduł jeszcze nieustalony. */
@@ -30,15 +20,7 @@ export interface FiguraModulu extends FiguraDoNapisu {
 }
 
 /**
- * Moduły, dla których dwa okna rozmowy są ustaloną parą koordynator–wykonawca.
- *
- * Ról ten wykaz nie nadaje — `rolaDomyslna` i tak daje przy dwóch oknach
- * koordynatora i wykonawcę. Mówi wyłącznie tyle, że dla wymienionego modułu
- * para jest jego właściwością, a nie domyślną figurą silnika, którą Operator
- * może przestawić. Moduł, dla którego role okien nie są ustalone, tu nie stoi.
- *
- * Miejsce docelowe tego wykazu to profil modułu — pole z rolami okien; profil
- * dziś takiego pola nie ma.
+ * Moduły, dla których dwa okna rozmowy są ustaloną parą koordynator-wykonawca, nie domyślną figurą silnika, którą Operator mógłby przestawić.
  */
 const MODULY_PARY: readonly string[] = ['automations'];
 
@@ -61,9 +43,7 @@ export function figuraModulu(kod: string): FiguraModulu {
     paraKoordynatorWykonawca: MODULY_PARY.includes(profil.kod) && liczbaOkien === 2,
   };
 
-  // Kod pusty znaczy „rdzeń jeszcze nie nazwał modułu okna" — i tak to brzmi.
-  // Zdanie o module złożone z profilu wspólnego mówiłoby o module, którego
-  // nikt nie wskazał, a pełny sufit podawałoby za jego właściwość.
+  // Kod pusty znaczy, że rdzeń jeszcze nie nazwał modułu okna, więc zdanie mówi to wprost.
   const zdanie = profil.kod.length > 0 ? zdanieFiguryModulu(opis) : ZDANIE_MODUL_NIEUSTALONY;
 
   return { ...opis, kod: profil.kod, zdanie };

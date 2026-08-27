@@ -7,45 +7,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// Silnik wykonania kolejki: zlecenie powstaje, przechodzi stany i kończy się
-// wynikiem. Jeden silnik obsługuje pętlę sesyjną i MultitaskingAI;
-// drugiego przebiegu stanów nie ma nigdzie indziej.
-//
-// Protokół działań. Kontrakt daje sześć działań (QueueAction) i nie ma osobnego
-// działania „zamknij pozycję werdyktem". Silnik czyta więc działania dosłownie
-// tak, jak są nazwane, i posuwa pozycje po tabeli przejść `krokNaprzod`:
-//
-//	start · resume  krok naprzód: oczekuje → wykonywana → do_weryfikacji → ukonczona
-//	retry           bieg naprawczy: licznik obiegów +1, werdykt do_poprawy,
-//	                powrót do wykonywana; bez limitu i bez warunku
-//	stop            przerwanie: pozycja wskazana albo wszystkie czynne → anulowana
-//	pause           wstrzymanie kolejki; pozycje zostają, gdzie były
-//	clear           opróżnienie: pozycje czynne → anulowana, dziennik zostaje
-//	                (przejrzystość zamiast kasowania śladu)
-//
-// Przyjęcie wyniku kroku wyraża się wyborem działania: krok naprzód znaczy
-// przyjęcie, retry znaczy odesłanie do poprawy. Silnik nie wystawia werdyktu,
-// którego nie wywołało działanie Operatora, i nie zmyśla postępu.
-//
-// Działanie wskazujące pozycję (`itemId`) dotyczy tej pozycji; bez wskazania
-// dotyczy pozycji, na której kolejka stoi.
-//
-// Most do realnego wykonania. Sam przebieg stanów nie wykonuje pracy — pozycja
-// wchodząca w stan `wykonywana` musi zostać naprawdę wykonana, a jej wynik, nie
-// klik Operatora, przesuwa ją dalej: powodzenie do `do_weryfikacji`,
-// niepowodzenie do `bledna`, czyli do realnego stanu błędu zamiast cichego
-// ukończenia. Robi to wpięty `wykonawca`. Silnik bez wykonawcy zostaje czystą
-// maszyną stanów: pozycję posuwa wtedy działanie Operatora, pętli sesyjnej albo
-// MultitaskingAI, tak jak przed wpięciem mostu.
+// Silnik wykonania kolejki: zlecenie powstaje, przechodzi stany i kończy się wynikiem. Jeden silnik obsługuje pętlę sesyjną i MultitaskingAI; drugiego przebiegu stanów nie ma nigdzie indziej.
 type silnikKolejki struct {
 	repozytorium dane.RepozytoriumKolejek
-	// wykonawca uruchamia realną pracę pozycji wchodzącej w stan wykonywana.
-	// Pusty zostawia silnik przy samym przebiegu stanów.
+	// wykonawca uruchamia pracę pozycji wchodzącej w stan wykonywana; pusty zostawia silnik przy stanach.
 	wykonawca wykonawcaKroku
-	// ujscieWyniku odbiera zebraną treść odpowiedzi tury pozycji.
-	// Puste znaczy: treść płynie wyłącznie strumieniem. Ujście dostaje
-	// treść także przy pozycji przerwanej w locie — praca, która się odbyła,
-	// zostaje widoczna, a nie wymazana.
+	// ujscieWyniku odbiera zebraną treść odpowiedzi tury; puste znaczy, że płynie wyłącznie strumieniem.
 	ujscieWyniku func(ctx context.Context, pozycjaID int64, tresc string)
 }
 
@@ -123,7 +90,7 @@ func (s silnikKolejki) Cykl(pozycje []dane.Pozycja) *int {
 	return &obieg
 }
 
-// zastosuj przeprowadza pozycje przez działanie.
+// zastosuj przeprowadza pozycje przez działanie, jedną po drugiej, aż do wyczerpania całego wykazu kolejki.
 func (s silnikKolejki) zastosuj(ctx context.Context, dzialanie shared.QueueAction,
 	pozycje []dane.Pozycja, idPozycji *string) error {
 
@@ -142,11 +109,7 @@ func (s silnikKolejki) zastosuj(ctx context.Context, dzialanie shared.QueueActio
 	return nil
 }
 
-// krok posuwa pozycję o jeden stan naprzód. Brak pozycji do podjęcia nie jest
-// błędem — kolejka pusta albo wyczerpana po prostu nie ma czego posunąć.
-//
-// Wejście w stan `wykonywana` nie kończy kroku: pozycja jest wtedy naprawdę
-// wykonywana, a jej wynik przesuwa ją dalej.
+// krok posuwa pozycję o jeden stan naprzód; brak pozycji do podjęcia nie jest błędem, bo kolejka pusta albo wyczerpana po prostu nie ma czego posunąć.
 func (s silnikKolejki) krok(ctx context.Context, pozycja *dane.Pozycja) error {
 	if pozycja == nil {
 		return nil
@@ -165,10 +128,7 @@ func (s silnikKolejki) krok(ctx context.Context, pozycja *dane.Pozycja) error {
 	return nil
 }
 
-// biegNaprawczy podnosi licznik obiegów i zawraca pozycję do wykonania.
-// Licznik rośnie bez progu, a odmowy nie ma na żadnym obiegu.
-// Zawrócona pozycja wchodzi w `wykonywana`, więc jest wykonywana od nowa —
-// powtórzenie kroku ma powtórzyć pracę, nie samo przełożyć etykietę stanu.
+// biegNaprawczy podnosi licznik obiegów i zawraca pozycję do wykonania; licznik rośnie bez progu, a odmowy nie ma na żadnym obiegu.
 func (s silnikKolejki) biegNaprawczy(ctx context.Context, pozycja *dane.Pozycja) error {
 	if pozycja == nil {
 		return nil
@@ -184,10 +144,7 @@ func (s silnikKolejki) biegNaprawczy(ctx context.Context, pozycja *dane.Pozycja)
 	return s.wykonaj(ctx, *pozycja)
 }
 
-// wykonaj uruchamia realną pracę pozycji, która właśnie weszła w stan
-// wykonywana, i przesuwa jej stan według wyniku. Silnik bez wpiętego wykonawcy
-// nie ma czym wykonać kroku — zostawia pozycję w `wykonywana`, a dalej posuwa ją
-// działanie Operatora, pętli albo MultitaskingAI.
+// wykonaj uruchamia realną pracę pozycji, która właśnie weszła w stan wykonywana, i przesuwa jej stan według wyniku; silnik bez wpiętego wykonawcy zostawia pozycję w wykonywana.
 func (s silnikKolejki) wykonaj(ctx context.Context, pozycja dane.Pozycja) error {
 	if s.wykonawca == nil {
 		return nil
@@ -197,31 +154,14 @@ func (s silnikKolejki) wykonaj(ctx context.Context, pozycja dane.Pozycja) error 
 		s.ujscieWyniku(ctx, pozycja.ID, tresc)
 	}
 	if err != nil {
-		// Niepowodzenie wykonania jest realnym stanem błędu, nie cichym
-		// ukończeniem. Pozycję da się ponowić biegiem naprawczym.
+		// Niepowodzenie wykonania jest stanem błędu, nie ukończeniem; da się ponowić biegiem naprawczym.
 		return s.domknijPoTurze(ctx, pozycja, stanPozycjiBledna)
 	}
-	// Praca się zakończyła; wynik czeka na weryfikację. Do `ukonczona` pozycję
-	// przesuwa dopiero przyjęcie wyniku — krok naprzód po weryfikacji.
+	// Praca się zakończyła; wynik czeka na weryfikację, do ukonczona przesuwa go dopiero przyjęcie wyniku.
 	return s.domknijPoTurze(ctx, pozycja, stanPozycjiDoWeryfikacji)
 }
 
-// domknijPoTurze zapisuje stan pozycji wynikający z tury — chyba że pozycja
-// w międzyczasie weszła w stan końcowy.
-//
-// Tura pozycji biegnie synchronicznie wewnątrz `Wykonaj`, a `queue.action stop`
-// wydane w trakcie tury zapisuje pozycji stan `anulowana`. Bez tego sprawdzenia
-// zapis poniżej nadpisałby go chwilę później stanem `do_weryfikacji`, jak gdyby
-// przerwania nie było — łamiąc własny protokół silnika („stop · przerwanie:
-// pozycja … → anulowana") i zamykając jedyną kontraktową drogę zatrzymania
-// pracy podagenta, bo komendy `subagent.stop` kontrakt nie ma. Przerwanie ma
-// pierwszeństwo przed spóźnionym werdyktem tury; sama treść odpowiedzi trafiła
-// już do ujścia wyniku, więc nic z pracy nie ginie po cichu.
-//
-// Odczyt idzie listą pozycji kolejki, bo repozytorium nie ma odczytu jednej
-// pozycji — a dorabianie go dla tego jednego miejsca byłoby drugim zapytaniem
-// o to samo. Pozycja nieodnaleziona przechodzi na zapis wprost:
-// lepiej zapisać stan wynikający z tury, niż zgubić go z powodu błędu odczytu.
+// domknijPoTurze zapisuje stan pozycji wynikający z tury, chyba że pozycja w międzyczasie weszła w stan końcowy; queue.action stop wydane w trakcie tury ma pierwszeństwo przed spóźnionym werdyktem.
 func (s silnikKolejki) domknijPoTurze(ctx context.Context, pozycja dane.Pozycja, stan string) error {
 	pozycje, err := s.repozytorium.ListaPozycji(ctx, pozycja.KolejkaID)
 	if err == nil {

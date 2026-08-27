@@ -3565,3 +3565,51 @@ liczby pozycji na całości, dlatego zapowiedź jest dolnym oszacowaniem —
 pozycji poza zasadą będzie co najmniej tyle, ile panel widzi. Kolejność
 pozycji jest kolejnością odczytu historii od najnowszej, więc numer pozycji
 w tablicy jest jej numerem od najnowszej i to on wchodzi w próg.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/efektywna-punkt-widzenia.ts
+Podgląd polityki bez podanego punktu widzenia schodzi w rdzeniu po kolejce zasięg, okno, sesja,
+poziom globalny aż do poziomu globalnego, więc oddałby politykę całej platformy pod nazwą
+efektywna. Panel podaje punkt odniesienia jawnie: identyfikator sesji z kanału, warstwę z pasa
+narzędzi okna, zasięg i identyfikator zasięgu z selektora zasięgu w panelu lewym, a identyfikator
+okna z pola wypełnianego przez Operatora — okno otwiera się z listwy Ustawień i nie jest związane
+z żadnym oknem komunikacji, więc kanał niesie wyłącznie sesję. Poziomu ten panel nie wybiera po raz
+drugi. Podgląd ma pokazywać wynik dziedziczenia aż do poziomu wskazanego w selektorze zasięgu, jak
+opisuje rozdział 6.4 Modelu konfiguracji; własna lista poziomów kazałaby czytać politykę innego
+poziomu niż ten, na którym Operator właśnie przestawia macierz.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/stan-zasiegu.ts
+Stan jest wspólny dla całego okna z tego samego powodu, dla którego wspólna jest warstwa: poziom
+rozstrzyga, który zapis czyta i pisze macierz izolacji, dokąd trafia przypisanie profilu i czego
+dotyczy podgląd polityki efektywnej. Osobny selektor w każdym z tych miejsc pokazywałby obok siebie
+wartości z trzech różnych poziomów pod jedną nazwą izolacja. Poziom globalny jest warstwą bazową
+i jedynym, który nie potrzebuje bytu — każdy węższy wskazuje byt: kod środowiska, identyfikator
+projektu, sesji, nazwę roli. Byt pusty przy poziomie węższym nie jest błędem klienta: żądanie idzie
+bez pola identyfikatora zasięgu, a odmowę — jeżeli rdzeń bytu wymaga — nazywa on sam. Plik nie woła
+rdzenia i nie buduje ani jednego elementu widoku. Selektor stoi w panelu zasięgu, czytelnicy —
+w obszarach.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/sterowanie-warstwa.ts
+Kontrolka stoi w ramie okna, a nie w obszarze, bo warstwa rozstrzyga, który zapis czyta i pisze
+każdy obszar tego okna: kontekst, zakres techniczny, przypisanie profilu i podgląd polityki
+efektywnej. Schowana w jednej zakładce byłaby ustawieniem czterech pozostałych, którego z nich nie
+widać — dlatego stoi nad paskiem zakładek, tak samo widoczna z każdego obszaru. Warstwa czynna okna
+zmienia się dopiero po odpowiedzi rdzenia na komendę ustawienia warstwy — nigdy przed nią i nigdy na
+samą wartość wybraną w liście. Gdy rdzeń odmawia, lista wraca do warstwy poprzedniej: pokazywanie
+wyboru, którego rdzeń nie przyjął, mówiłoby nieprawdę o stanie maszyny. Lista nigdy nie dostaje
+znacznika zablokowania i nie pyta o potwierdzenie — warstwa nie jest kłódką na Operatorze, tylko
+wskazaniem, na którym podkładzie pracuje. Odmowa jest meldowana zdaniem trzyczęściowym: co się nie
+udało, dlaczego, treścią wprost z rdzenia, i czym Operator to zmieni.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-pracy.ts
+Widok okna pracy z dokumentem odpowiada za układ i stany, a ten plik za skutek naciśnięcia,
+tak samo jak w czynnościach Studio Editora, tyle że tutaj dochodzą czynności, których
+poprzednie okna nie miały: operacja z poleceniem własnym i nastawami suwaków, decyzja
+o zmianach śledzonych, śledzenie, komentarze, szablony i profile wydania — odmowa zostaje
+w pasie stanu, powodzenie w wierszu odpowiedzi, tak samo jak w pozostałych czynnościach
+modułu. Zakres operacji kontekstowej bierze się ze stanu modułu tą samą drogą, którą liczą
+go czynności narzędzi, bo nastawa zakresu jest jedna na moduł; polecenie i nastawy suwaków
+jadą polem parametrów, które rdzeń dokłada do treści polecenia dla modelu, a wynik rdzeń
+wpisuje do dokumentu jako zmianę śledzoną autorstwa modelu i rozgłasza zmianę dokumentu,
+więc okno nie podmienia treści samo. Decyzja o propozycji bez odwołania w rdzeniu zapada
+w tym oknie tak samo jak przed scaleniem okien Studio Editora, bo odmowa w tym miejscu
+odebrałaby operatorowi decyzję, którą wolno mu podjąć.

@@ -4817,3 +4817,5 @@ Wartość wskazania okna innego rodzaju niż napis w brakWskazaniaOkna zostaje
 nietknięta, bo jest wskazaniem wadliwym, a orzekanie o kształcie treści
 żądania należy do rdzenia, nie do rozdzielni; podmiana takiej wartości na
 własne okno ukryłaby pomyłkę modelu.
+## budowa/server/internal/dane/roundtable_konsensus.go
+Wersja stanowiska jest wpisem, nie licznikiem: licznik w kolumnie wersji tabeli stanowiska mówi, ile redakcji było, ale porównać dwie redakcje da się dopiero wtedy, gdy każda z nich została zapisana osobno. Powtórny zapis tej samej wersji nie jest błędem: stanowisko odczytywane wielokrotnie bez zmiany treści nie podbija licznika, więc wersja bieżąca pozostaje spójna z ostatnim zapisanym wpisem.

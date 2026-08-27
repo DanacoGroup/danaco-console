@@ -40,10 +40,8 @@ func (a *adapterStudia) Wersje(ctx context.Context,
 }
 
 // PrzywrocWersje przywraca treść wcześniejszej wersji jako bieżącą, bez
-// usuwania wersji nowszych. Transakcja `dane.PrzywrocWersje` sama przestawia
-// `wersja_biezaca_id` na wersję wskazaną w żądaniu; w przeciwieństwie do
-// `ZapiszDokument` z `createVersion=true` adapter nie dopisuje tu drugiego
-// zapisu, bo wersja docelowa jest podana wprost.
+// usuwania wersji nowszych; transakcja `dane.PrzywrocWersje` przestawia
+// `wersja_biezaca_id` na wersję wskazaną w żądaniu.
 func (a *adapterStudia) PrzywrocWersje(ctx context.Context,
 	z shared.StudioRepositoryRestoreRequest) (shared.StudioRepositoryRestoreResponse, error) {
 

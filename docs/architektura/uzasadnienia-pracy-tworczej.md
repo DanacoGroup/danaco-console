@@ -1810,3 +1810,44 @@ dałoby jeden wielki blok na całą treść — wtedy każde scalenie dwóch red
 tego samego dokumentu kończyłoby się konfliktem. Przycinanie zostaje jedynie
 drogą zapasową dla treści zbyt długich na tablicę podobieństwa, której rozmiar
 rośnie iloczynem długości porównywanych wierszy.
+
+## budowa/server/internal/core/adapter_modul_studio_adnotacje.go
+
+Decyzja zmienia treść dokumentu, a nie tylko znacznik. Zmiana śledzona
+i propozycja zmiany są bytami tymczasowymi: istnieją po to, żeby ktoś je
+przyjął albo odrzucił. Decyzja, która przestawia sam stan wiersza i zostawia
+treść dokumentu nietkniętą, byłaby decyzją bez skutku — Operator zobaczyłby
+„przyjęto", a w dokumencie dalej stałby tekst sprzed zmiany. Dlatego obie
+drogi kończą się zapisem treści i założeniem wersji.
+
+Zmiany stosuje się od końca. Każda zmiana niesie zakres znaków liczony
+w treści sprzed decyzji. Zastosowana od początku przesuwałaby zakresy zmian
+jeszcze nierozpatrzonych o różnicę długości, więc druga zmiana trafiłaby
+w niewłaściwe miejsce. Od końca — przesunięcie dotyczy wyłącznie tego, co już
+rozpatrzono.
+
+## budowa/server/internal/core/adapter_modul_design_zetony.go
+
+Wydanie zestawu do kodu leży w `adapter_modul_design_zetony_wydanie.go`. Metody
+pliku stoją na `*adapterDesignu` (`adapter_modul_design.go`).
+
+Rdzeń nie nadpisuje motywu produktu: motyw jest własnością powłoki, a zestaw
+żetonów jest bytem obok niego. Operator go zakłada, wczytuje z zapisu
+zewnętrznego i wydaje do kodu, a produkt dalej wygląda tak, jak wygląda. Import
+oddaje przy okazji bilans ról, których system produktu nie zna — bilans zamiast
+ciszy.
+
+Rola nieznana wchodzi do zestawu i jest wymieniona: odrzucenie takiej roli
+byłoby zgubieniem pracy Operatora, który wczytuje system projektowy klienta,
+a ten ma własne nazwy. Przemilczenie jej byłoby obietnicą, że wszystko pasuje.
+Rola więc wchodzi, a jej nazwa wraca w `unknownNames`.
+
+Autor komentarza bierze się z żądania i z faktu gniazda uruchomieniowego, nie
+z zaszytej wartości. Model zakłada komentarz podpisany jako `model` tą drogą
+i tylko tą; autor zaszyty jako Operator kazałby przełącznikowi pokazującemu
+wszystko, co zrobił model, przemilczeć każdy komentarz modelu.
+## server/internal/core/adapter_modul_studio_wersje.go
+
+PrzywrocWersje: w przeciwienstwie do ZapiszDokument z createVersion=true,
+adapter nie dopisuje tu drugiego zapisu, bo wersja docelowa jest podana
+wprost.

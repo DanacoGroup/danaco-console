@@ -2530,3 +2530,25 @@ Okna Workspace wołają komendy sąsiednich modułów wprost, zamiast trzymać
 własne odpowiedniki tych samych czynności. Plik stoi osobno od głównego
 źródła modułu Workspace, ponieważ niesie inną odpowiedzialność: tamten plik
 opisuje obszar własny modułu, ten — jego sąsiedztwo.
+
+## budowa/klient-poprzedni/src/powloka/pasek-gorny.ts
+Akcje mieszkają w pliku akcje-paska.ts, wyszukiwanie w pliku wyszukiwanie-globalne.ts (materiał)
+i w pliku wykaz-wynikow.ts (obsada menu). Pole poleceń szuka w otwartym środowisku, jego modułach,
+kodach okien operacyjnych, kartach sesji i ustawieniach platformy; przede wszystkim nie przeszukuje
+treści, bo kontrakt nie ma komendy wyszukiwania globalnego. Wykonania polecenia pole nie udaje: Enter
+bez trafienia mówi wprost, że centrum poleceń nie jest zbudowane. Podpowiedź „Ctrl K" nie jest ozdobą
+— skrót naprawdę prowadzi ognisko do pola. Powłoka ma drugi pasek o innym składzie, w pliku
+aplikacja/pasek-aplikacji.ts (Centrum dowodzenia i Mission Control), który niesie menu aplikacji
+i menu Operatora, a nie ma pola wyszukiwania ani dzwonka.
+
+Pominięte źródło materiału wyszukiwania znaczy „ten pasek nie ma czego przeszukać" i pole mówi to
+wprost przy zatwierdzeniu, zamiast pokazywać pusty wykaz udający wyniki. Powłoka podaje źródło sama,
+więc w produkcie ta gałąź nie zachodzi — zostaje dla podglądu i dla sprawdzianów.
+
+Strzałki w wykazie wyników przesuwają wyróżnienie wirtualne mechanizmu, a nie ognisko; przeniesienie
+go na pozycję wyrwałoby Operatorowi klawiaturę spod palców w połowie pisania. Bez źródła materiału
+pole zostaje czynne, a Enter mówi, że centrum poleceń nie jest zbudowane — to brak materiału
+powiedziany wprost, nie blokada kontrolki.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/transkrypcja-nagrania.ts
+Zatrzymanie na dostarczeniu i odmowa transkrypcji dają ten sam stan nieprzetworzony, bo skutek dla użytkownika jest jeden: tekstu nie ma. Powód jest jednak inny i inna jest naprawa — w pierwszym przypadku brakuje komendy w kontrakcie, w drugim rdzeń miał nagranie i go nie przerobił, dlatego oba zdania odmowy pozostają rozdzielone. Obietnica wyniku nie jest odrzucana: odmowa wraca jako wynik ze stanem nieprzetworzonym, nie jako wyjątek, więc widok nie zakłada przechwytywania błędu, a nieudane dyktowanie nie wywraca okna. Dźwięk nie opuszcza maszyny użytkownika inną drogą niż przez dostarczenie — ogniwo transkrypcji pilnuje tej granicy samodzielnie.

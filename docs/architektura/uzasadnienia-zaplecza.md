@@ -107,3 +107,45 @@ wspólne dla całej platformy — nie należą do okna. Zakres wykrywania
 (`roundtable.fallacy.catalog.set`) należy do okna, więc leży w osobnej tabeli
 wiążącej kod błędu z oknem; bez tego rozdziału wyłączenie błędu w jednym oknie
 wyłączałoby go wszystkim.
+
+## budowa/server/internal/store/migracja_051_aplikacje.sql
+
+Warsztat modułu Apps trzyma treść pliku warstwy frontendu i backendu produktu,
+a nie stan projektu. Kontrakt `apps.workspace.update` niesie `Layer`
+(frontend/backend), `Path`, `Content` i opcjonalny `ComponentId` — kształt
+zgodny z zapisem pliku edytora w module Developer (`developer_wersja_pliku`),
+odmienny od tabeli `projekt`, która trzyma nazwę, opis i stan, bez treści
+pliku. Współdzielenie jednej tabeli `projekt` obciążałoby każdy jej wiersz
+kolumnami treści pliku, których większość wierszy nigdy nie użyje, dlatego
+warsztat Apps ma własną tabelę budowaną na wzór `developer_wersja_pliku`.
+Commity kodu produktu idą wspólną komendą `developer.git.action`, poza
+zasięgiem tej migracji.
+
+Plik warsztatu trzyma jeden wiersz na parę (okno, warstwa, ścieżka), nie
+historię wersji: kontrakt `AppsWorkspaceUpdateRequest` nie niesie odpowiednika
+`createVersion` z modułu Developer, więc `apps.workspace.update` jest zwykłym
+nadpisaniem stanu bieżącego, a tabela odzwierciedla to wprost przez UPSERT po
+kluczu (okno, warstwa, ścieżka), bez osobnej tabeli-dziennika.
+
+Architektura trzyma komponenty jako tabelę własną, nie jako zapis w kolumnie
+JSON, ponieważ `AppComponent` niesie pola, po których trzeba filtrować
+i wiązać przy odczycie: `Kind` wchodzi do walidacji układu, a `DependsOn`
+tworzy graf zależności; parsowanie JSON przy każdym odczycie byłoby kosztem
+walidacji układu (`AppArchitecture.ValidationIssues`) i zapytań o zależność.
+`apps.architecture.define` nadsyła całą listę komponentów na nowo (kontrakt:
+`Components []AppComponent`, bez trybu częściowej zmiany), więc zapis jest
+zawsze usunięciem komponentów architektury i wstawieniem przysłanych od nowa.
+Zależność między komponentami ma z tego samego powodu własną tabelę
+złącznikową: `AppComponent.DependsOn []string` jest listą identyfikatorów
+zewnętrznych innych komponentów tej samej architektury.
+
+Dziennik wdrożeń powtarza wzór `developer_budowanie`, ponieważ
+`apps.deployment.run` i `developer.build.run` mają identyczny kształt zadania:
+zlecenie z zewnętrznym kodem, oknem, czasem startu i końca, stanem i śladem
+tekstowym. Rdzeń niczego nie wdraża naprawdę — tabela niesie wyłącznie ślad
+zlecenia (środowisko, strategia, wersja, notatki, adres po wdrożeniu,
+odnośnik do logu) i jego stan, a sam przebieg prowadzi rdzeń w pamięci.
+`RollbackToDeploymentId` i `RolledBackFromId` są parą pól tego samego łuku,
+więc jedna kolumna samoodwołania wystarcza, bo odczyt idzie zawsze od strony
+cofnięcia. Log wdrożenia jest odwołaniem, nie treścią w bazie: kontrakt niesie
+`LogRef *string`, więc kolumna `log_odwolanie` przechowuje ten odnośnik wprost.

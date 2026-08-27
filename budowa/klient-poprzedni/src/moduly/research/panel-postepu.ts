@@ -4,39 +4,15 @@ import { KODY_OKIEN } from './kody-okien';
 import type { StanBadania } from './stan-badania';
 
 /**
- * Panel postępu badania — liczbowy przegląd stanu, policzony z tego, co rdzeń
- * potwierdził.
- *
- * Każdy licznik powstaje z pamięci modułu, a pamięć niesie wyłącznie odpowiedzi
- * rdzenia z tego połączenia. Żadna z tych liczb nie jest oszacowaniem: „źródeł
- * 14" znaczy czternaście źródeł, które rdzeń skatalogował i oddał.
- *
- * **Czego panel NIE liczy i dlaczego.** Opracowanie modułu (rozdz. 3.3)
- * przewiduje w tym miejscu pokrycie pytań badawczych źródłami oraz podział
- * źródeł na przeczytane i nieprzeczytane. Obie rzeczy mają już w kontrakcie
- * swoje komendy, a mimo to policzyć ich dziś nie sposób — z dwóch różnych
- * powodów, więc warto je rozróżnić:
- *
- * - **pokrycie pytań** czeka wyłącznie na uchwyt w rdzeniu; kształt odpowiedzi
- *   jest rozstrzygnięty i licznik dojdzie razem z uchwytem;
- * - **stan lektury** ma pole w ŻĄDANIU zapisu źródła, ale `ResearchSource`,
- *   które rdzeń oddaje, tego pola nie niesie. Wartość da się więc wysłać,
- *   a nie da się jej odczytać z powrotem — i tego uchwyt sam nie naprawi,
- *   dopóki byt źródła nie dostanie pola.
- *
- * Procent policzony z danych, których nie ma, byłby metryką zmyśloną, więc
- * panel go nie pokazuje i mówi, czego brakuje.
- *
- * Pokrycie ustaleń jest natomiast policzalne i policzone: sekcje raportu niosą
- * pole `findingIds`, więc „ile z zebranych ustaleń weszło do dokumentu" wychodzi
- * z porównania dwóch zbiorów, które rdzeń oddał.
+ * Panel postępu badania liczy wyłącznie to, co rdzeń potwierdził i oddał w tym połączeniu,
+ * i jawnie nazywa metryki, których dziś policzyć nie sposób.
  */
 export interface PanelPostepu {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Jeden licznik panelu: co liczy, ile wyszło i do którego okna prowadzi. */
+/** Jeden licznik panelu opisuje nazwę pomiaru, wyliczoną wartość tekstową oraz kod okna, do którego kliknięcie prowadzi. */
 interface Licznik {
   nazwa: string;
   wartosc: string;
@@ -76,15 +52,14 @@ export function utworzPanelPostepu(
   };
 }
 
-/** Komplet liczników policzonych ze stanu badania. */
+/** Komplet liczników panelu, policzony ze stanu badania przekazanego przez pamięć modułu, gotowy do wyrenderowania jako pozycje. */
 function liczniki(stan: StanBadania): Licznik[] {
   const zrodla = stan.zrodla();
   const ustalenia = stan.ustalenia();
   const raport = stan.raport();
   const sekcje = raport?.sections ?? [];
 
-  // Ustalenia, które weszły do dokumentu — liczone po zbiorze `findingIds`
-  // sekcji, a nie po ich liczbie: to samo ustalenie może zasilać dwie sekcje.
+  // Ustalenia w dokumencie liczone po zbiorze `findingIds` sekcji, nie po ich liczbie.
   const wRaporcie = new Set<string>();
   for (const sekcja of sekcje) {
     for (const ustalenie of sekcja.findingIds ?? []) wRaporcie.add(ustalenie);
@@ -108,7 +83,7 @@ function liczniki(stan: StanBadania): Licznik[] {
   ];
 }
 
-/** Ustalenia w stanie rozstrzygniętym — jedyne rozróżnienie stanu, jakie kontrakt ma. */
+/** Liczba ustaleń w stanie rozstrzygniętym, jedynym rozróżnieniu statusu ustalenia, jakie kontrakt dziś przewiduje. */
 function rozstrzygniete(stan: StanBadania): number {
   return stan
     .ustalenia()
@@ -127,7 +102,7 @@ function pokrycie(objete: number, wszystkie: number): string {
   return `${String(objete)} z ${String(wszystkie)} (${String(procent)}%)`;
 }
 
-/** Jeden licznik jako kontrolka prowadząca do okna, które go wypełnia. */
+/** Jeden licznik przedstawiony jako kontrolka, której kliknięcie przechodzi do okna wypełniającego dany licznik danymi. */
 function pozycja(licznik: Licznik, przejdz: (kodOkna: string) => void): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mr-postep__pozycja';

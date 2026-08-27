@@ -1,28 +1,8 @@
 import type { ResearchReport, ResearchReportSection } from '../../../../shared/contract';
 
 /**
- * Zdanie o skutku złożenia raportu — nazwane raportem, który wrócił, a nie
- * żądaniem, które okno wysłało.
- *
- * Wydzielone z `czynnosci-raportu.ts`, bo tamten plik prowadzi czynność, a to
- * jest przekład odpowiedzi `research.report.build` na zdanie dla Operatora —
- * dwie rzeczy zmieniane z różnych powodów. Wzór rodziny:
- * `assistant/skutek-sterowania.ts`.
- *
- * Znaku „to nie model" w odpowiedzi nie ma. Sekcja niesie komplet pól
- * kontraktu i nic ponad to (`id, title, content, findingIds, order`), a rdzeń
- * zbiera z kanału same fragmenty `text` (`core/adapter_modul_badania.go`,
- * `zapytajModel`) — komunikat procesu kanału i zdanie modelu docierają więc tą
- * samą drogą, jako ta sama treść. Rozpoznanie po napisie jest zakazane, bo
- * napis się zmienia: okno nie orzeka, że streszczenie jest komunikatem błędu,
- * tylko mówi, czego nie wie, i każe przeczytać treść przed wydaniem raportu.
- *
- * Znak, który odróżnia naprawdę: sekcja, której identyfikatora okno nie
- * wysłało, jest sekcją napisaną przez rdzeń — kryterium bierze się
- * z odpowiedzi, a nie z brzmienia tytułu. Druga rozbieżność widoczna
- * z odpowiedzi: przy podanym polu `sections` rdzeń odkłada `findingIds` na
- * bok, więc zaznaczenie ustaleń przepada bez śladu — i to okno ogłasza
- * odmową, nie przemilcza.
+ * Zdanie o skutku złożenia raportu jest nazwane raportem, który wrócił od rdzenia, a nie
+ * żądaniem, które okno wysłało do złożenia.
  */
 export interface SkutekZlozenia {
   zdanie: string;
@@ -56,18 +36,14 @@ export function opisZlozenia(
 }
 
 /**
- * Tytuł nazwany tak, jak go rdzeń zapisał.
- *
- * Tytuł pusty nazywamy pustym. Cudzysłów bez treści wygląda na usterkę
- * wypisywania, a jest wiernym oddaniem tego, co wróciło: pole `title` puste nie
- * idzie do rdzenia, więc raport został bez nazwy. Klient jej nie dopowiada za
- * Operatora.
+ * Tytuł raportu nazwany tak, jak go rdzeń zapisał; tytuł pusty nazywany jest wprost pustym,
+ * bo pole title puste nie idzie do rdzenia.
  */
 function nazwaRaportu(raport: ResearchReport): string {
   return raport.title.trim() === '' ? 'raport bez tytułu' : `raport „${raport.title}"`;
 }
 
-/** Sekcje redakcji sprawdzone w raporcie, który wrócił — nie w tym, co wysłano. */
+/** Sekcje redakcji sprawdzone w raporcie, który rdzeń oddał po złożeniu — nie w tych, które okno do złożenia wysłało. */
 function skutekSekcji(
   oddane: readonly ResearchReportSection[],
   zamowione: readonly ResearchReportSection[],
@@ -123,19 +99,8 @@ function skutekUstalen(
 }
 
 /**
- * Sekcje, których treści Operator nie napisał — poznane po identyfikatorze,
- * którego okno nie wysyłało, a nie po brzmieniu tytułu.
- *
- * Tu stoi jedyne uczciwe zdanie o streszczeniu: rdzeń wziął treść z kanału
- * modelu, a odpowiedź nie niesie znaku, czy jest to redakcja modelu, czy
- * komunikat procesu kanału (patrz nagłówek pliku). Okno nie zgaduje po napisie
- * i nie potwierdza autorstwa, którego rdzeń nie oddał.
- *
- * Granica tego znaku: zdanie pada wyłącznie przy złożeniu, w którym sekcja
- * przyszła z rdzenia po raz pierwszy. Kolejne złożenie wysyła ją już
- * z redakcji kreatora — pod tym samym identyfikatorem, bo `wczytaj` przejmuje
- * sekcje potwierdzone — więc kryterium przestaje ją wskazywać i słusznie:
- * Operator miał ją wtedy przed sobą w polach edycji.
+ * Sekcje, których treści Operator nie napisał, poznane po identyfikatorze, którego okno nie
+ * wysyłało, a nie po brzmieniu tytułu; rdzeń nie oddaje znaku autorstwa treści kanału modelu.
  */
 function skutekAutorstwa(
   oddane: readonly ResearchReportSection[],

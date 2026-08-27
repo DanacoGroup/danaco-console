@@ -2876,3 +2876,26 @@ a odmowa zajęcia nazywa wykonawcę i czas. Zmiana obejmująca blokadę części
 blokadą i oddaje bilans: co przeszło, co pominięte i przez którą blokadę, bo przemilczenie pominięcia
 jest zakazane, choć odmowa całości zmiany byłaby nieproporcjonalna. Plik nie zna elementów strony
 ani wywołań rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/research/skutek-zlozenia.ts
+Wydzielone z pliku `czynnosci-raportu.ts`, bo tamten plik prowadzi czynność, a ten jest przekładem
+odpowiedzi `research.report.build` na zdanie dla Operatora — dwie rzeczy zmieniane z różnych
+powodów, na wzór pliku `assistant/skutek-sterowania.ts`. Znaku „to nie model" w odpowiedzi nie ma:
+sekcja niesie komplet pól kontraktu i nic ponad to (`id, title, content, findingIds, order`),
+a rdzeń zbiera z kanału same fragmenty tekstu (w `core/adapter_modul_badania.go`, funkcja
+`zapytajModel`) — komunikat procesu kanału i zdanie modelu docierają więc tą samą drogą, jako ta
+sama treść. Rozpoznanie po napisie jest zakazane, bo napis się zmienia: okno nie orzeka, że
+streszczenie jest komunikatem błędu, tylko mówi, czego nie wie, i każe przeczytać treść przed
+wydaniem raportu. Znak, który odróżnia naprawdę: sekcja, której identyfikatora okno nie wysłało,
+jest sekcją napisaną przez rdzeń — kryterium bierze się z odpowiedzi, a nie z brzmienia tytułu.
+Druga rozbieżność widoczna z odpowiedzi: przy podanym polu `sections` rdzeń odkłada `findingIds`
+na bok, więc zaznaczenie ustaleń przepada bez śladu, a okno ogłasza to odmową, nie przemilcza.
+
+Tytuł pusty nazywany jest wprost pustym — cudzysłów bez treści wygląda na usterkę wypisywania,
+a jest wiernym oddaniem tego, co wróciło, bo pole title puste nie idzie do rdzenia i raport
+został bez nazwy; klient jej nie dopowiada za Operatora.
+
+Rozpoznanie sekcji napisanej przez rdzeń bez udziału Operatora ma granicę: zdanie pada wyłącznie
+przy złożeniu, w którym sekcja przyszła z rdzenia po raz pierwszy. Kolejne złożenie wysyła ją już
+z redakcji kreatora, pod tym samym identyfikatorem, bo wczytanie przejmuje sekcje potwierdzone —
+więc kryterium przestaje ją wskazywać i słusznie: Operator miał ją wtedy przed sobą w polach edycji.

@@ -6847,3 +6847,9 @@ w kontrakcie nie niesie ani licznika żetonów, ani licznika wywołań
 narzędzi. Komórki dostają znak braku wraz z powodem zamiast zera, które
 czytałoby się jako wykonany pomiar, i z tego samego powodu wiersz
 podsumowania nie sumuje żetonów.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-sources-panel.ts — wypis bibliografii
+Bibliografia wklejana ze schowka i bibliografia wczytywana do menedżera to dwa różne zastosowania tej samej treści, a rozdzielenie ich na dwie czynności kazałoby operatorowi wybierać, zanim zobaczy wynik.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-assistant.ts
+Plik odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem kształtu odpowiedzi; źródło nie ma własnego stanu i nie buduje ani jednego elementu — stan zleceń mieszka osobno, żeby trzy okna modułu patrzyły na jeden zbiór, a nie na trzy kopie. Żadne wywołanie nie rzuca wyjątkiem: niepowodzenie wraca polem błędu wyniku, a okno pokazuje je w swoim stanie błędu; tą samą drogą wraca odmowa merytoryczna rdzenia i koperta drogi bez uchwytu, więc okno nazywa je wprost zamiast udawać wykonanie. Wyróżnienie ma gdzie zamieszkać po stronie rdzenia, więc okno go nie udaje — powód bez znacznika byłby notatką do wpisu, którego nikt nie wyróżnił. Słuchacz zdarzenia dostaje kopertę, bo koperta niesie sesję okna zlecenia; bez niej zlecenie założone w innym oknie tej samej sesji byłoby nie do odróżnienia od zlecenia cudzej sesji.

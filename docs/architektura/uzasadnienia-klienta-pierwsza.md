@@ -3142,3 +3142,12 @@ Atrapa nie sięga do rdzenia i nie udaje, że sięga: każda droga wywołania rz
 dopóki sprawdzian jej nie obsadzi. Sprawdzian, który przypadkiem wywoła komendę, dostaje przez
 to błąd, a nie ciszę. Dotyczy to również trzech źródeł dobudowanych obok rdzenia modułu —
 atrapa oddająca pustą odpowiedź udawałaby wynik, którego nie ma.
+
+## budowa/klient-poprzedni/src/moduly/agents/pola-zalezne.ts
+
+Adapter dostawcy deklaruje dla każdego pola obszaru `model`, czy obsłuży je w całości,
+częściowo, czy wcale, i podaje powód. Okno pokazuje tę deklarację wprost, więc widać,
+że kanał wiersza poleceń zignoruje `samplingTemperature`, zanim wartość zostanie wpisana.
+
+Wykaz zbudowany z deklaracji, a nie z listy wpisanej w kodzie, nadąża za dostawcą:
+nowa wersja jego programu zmienia zestaw pól bez wydania nowego klienta.

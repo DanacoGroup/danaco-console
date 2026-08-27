@@ -19,6 +19,11 @@
 
 .cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
 
+/* Cztery kafle w rzędzie. Szerokość kafla wiąże stopień nazwy: przy 289 px
+   kafla układ poziomy (znak | treść | grot) oddaje nazwie 144 px po odjęciu
+   wyściółki 48, znaku 40, grotu 33 i dwóch luk 24 px. „Automations" zajmuje
+   128 px na stopniu 21 — zapas 16 px. Na stopniu 24 (148 px) nie wchodzi,
+   dlatego nazwa modułu stoi niżej niż nazwa środowiska. */
 .cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .cd-kafel {
@@ -35,12 +40,13 @@
 
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
-/* Grot kafla stoi w prawym dolnym narożniku — kafel jest kolumną, więc
-   czynność dosuwa się do dna i do prawej krawędzi. */
+/* Grot dosuwa się do prawej krawędzi kafla i odsuwa od treści pełnym stopniem
+   siatki: bez tego zapasu nazwa modułu i grot czytały się jako jedno pasmo. */
 .cd-kafel-grot {
   display: flex;
   align-items: center;
-  margin: auto 0 0 auto;
+  margin-left: auto;
+  padding-left: var(--dn-od-4);
   flex: none;
 }
 

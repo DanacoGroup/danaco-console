@@ -149,3 +149,37 @@ odnośnik do logu) i jego stan, a sam przebieg prowadzi rdzeń w pamięci.
 więc jedna kolumna samoodwołania wystarcza, bo odczyt idzie zawsze od strony
 cofnięcia. Log wdrożenia jest odwołaniem, nie treścią w bazie: kontrakt niesie
 `LogRef *string`, więc kolumna `log_odwolanie` przechowuje ten odnośnik wprost.
+
+## budowa/server/internal/store/migracja_013_punkty_dostepu.sql
+
+Punkt dostępu nie jest środowiskiem: kolumna środowisko pozostaje profilem
+widoczności modułów w bocznej nawigacji, więc dopisanie maszyny do tamtej
+tabeli rozbiłoby nawigację platformy, a niniejsza migracja tamtej tabeli nie
+dotyka. Punkt dostępu nie jest też katalogiem roboczym modelu: katalog
+roboczy to ustawienie kluczy katalog.roboczy.podstawa i
+katalog.roboczy.wzorzec_sesji, mówiące, gdzie model zostawia własne pliki,
+podczas gdy punkt dostępu mówi, do czego model ma wgląd — model może czytać
+jeden katalog, a pliki zostawiać w zupełnie innym miejscu instalacji,
+ponieważ są to dwa niezależne ustawienia.
+
+Odwzorowany most MCP nosi nazwę mcp-danaco-pulpit-console. Skrypt
+uruchamiający bierze tryb z argumentu albo ze zmiennej środowiskowej
+DANACO_MOST_TRYB; brak obu oznacza tryb odczytu. Proces mostu ogranicza
+działanie do korzeni podanych zmienną środowiskową rozdzielonych
+dwukropkiem; poza te korzenie most nie wychodzi, a w trybie odczytu
+narzędzia zapisu nie są ogłaszane w wykazie narzędzi.
+
+Kolumny rodzaj, tryb_domyslny, tryb i stan niosą wartości kontraktu wprost:
+mcpBridge, localDirectory, read, write, unknown, reachable, unreachable.
+Kontrakt nie deklaruje przy tych wyliczeniach pola baza, w odróżnieniu od
+wyliczenia rodzaju konta, które to pole ma. Własny przekład polsko-angielski
+w warstwie trwałości byłby drugim źródłem przekładu obok pliku kontraktu.
+
+Słowa odczyt i zapis są słowami argumentu uruchamiającego dany most, nie
+wartościami wyliczenia platformy. Są własnością konkretnego mostu, więc leżą
+w danych tabeli argument_trybu_mostu, nie w kodzie: inny most może żądać
+innych słów, a to oznacza nowy wiersz danych, nie nową gałąź kodu.
+
+Kolumna identyfikator_zewnetrzny nadania dostępu niesie identyfikator
+tekstowy rdzenia; wartość pusta oznacza nadanie założone wprost w bazie
+danych, bez odpowiednika w pamięci rdzenia.

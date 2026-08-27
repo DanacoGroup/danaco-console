@@ -1,19 +1,4 @@
-// Odpowiedzialność pliku: pamięć tłumaczeń (Translation Memory, tabela
-// `pamiec_tlumaczen`) modułu Translate. Zasila `translate.memory.suggest`.
-//
-// Pamięć gromadzi się z zatwierdzonych par segmentów, nie z odczytu paneli na
-// żywo. `ZapiszPamiec` dokłada wiersz — nie czyta bieżącej treści panelu
-// w edycji; to wywołujący rozstrzyga, kiedy para segmentów jest zatwierdzona
-// i warta zapamiętania.
-//
-// Dopasowanie jest przybliżone tylko na tyle, na ile pozwala baza. Kontrakt
-// (`TranslateMemorySuggestRequest`) chce dopasowania po podobieństwie, nie po
-// równości, a SQLite bez rozszerzenia (FTS5 albo funkcji trigramowej) nie ma
-// wbudowanej miary podobieństwa napisów. `Podpowiedzi` wykonuje więc `LIKE`
-// z frazą otoczoną znakami `%`, czyli dopasowanie podciągu segmentu źródłowego
-// — nie dopasowanie znaczeniowe ani odległość edycyjną.
-//
-// Czas jest liczbą (ms epoki), wzorem `dane/asystent.go` i `dane/tlumaczenie.go`.
+// Odpowiedzialność pliku: pamięć tłumaczeń modułu Translate, gromadzona z zatwierdzonych par segmentów, nie z odczytu paneli na żywo.
 package dane
 
 import (
@@ -22,9 +7,7 @@ import (
 	"time"
 )
 
-// WpisPamieciTlumaczen to wiersz tabeli `pamiec_tlumaczen` — zatwierdzona
-// para (segment źródłowy, segment docelowy) w obrębie języka i panelu, z
-// którego pochodzi zatwierdzenie.
+// WpisPamieciTlumaczen to wiersz tabeli pamiec_tlumaczen: zatwierdzona para segmentu źródłowego i docelowego w obrębie języka i panelu.
 type WpisPamieciTlumaczen struct {
 	ID              int64
 	Kod             string
@@ -44,20 +27,13 @@ const (
 	                          segment_zrodlowy, segment_docelowy, utworzono)
 	                         VALUES (?, ?, ?, ?, ?, ?)`
 
-	// Zawężenie po (jezyk, segment_zrodlowy LIKE ?) korzysta z indeksu
-	// idx_pamiec_tlumaczen_jezyk_segment na kolumnie jezyk —
-	// SQLite wykorzystuje prefiks indeksu złożonego nawet gdy druga kolumna
-	// idzie przez LIKE, bo warunek na jezyk jest równością. Najnowsze
-	// zatwierdzenia na przodzie — świeższa podpowiedź jest zwykle trafniejsza.
+	// Zawężenie po języku i segmencie źródłowym korzysta z indeksu złożonego; najnowsze zatwierdzenia idą na przodzie wykazu podpowiedzi.
 	podpowiedziPamieciTlumaczen = `SELECT ` + kolumnyPamieciTlumaczen + ` FROM pamiec_tlumaczen
 	                               WHERE jezyk = ? AND segment_zrodlowy LIKE ?
 	                               ORDER BY utworzono DESC, id DESC LIMIT ?`
 )
 
-// ZapiszPamiec dokłada wiersz pamięci tłumaczeń dla zatwierdzonej pary
-// segmentów. Nie nadpisuje istniejących wpisów (brak ON CONFLICT) — TM z
-// definicji gromadzi historię zatwierdzeń, kolejne zatwierdzenie tego samego
-// segmentu to nowy fakt, nie korekta poprzedniego.
+// ZapiszPamiec dokłada wiersz pamięci tłumaczeń dla zatwierdzonej pary segmentów, nie nadpisując wpisów istniejących.
 func (r *repozytoriumTlumaczen) ZapiszPamiec(ctx context.Context, panelID int64, wpis WpisPamieciTlumaczen) (WpisPamieciTlumaczen, error) {
 	if wpis.Kod == "" || panelID == 0 {
 		return WpisPamieciTlumaczen{}, fmt.Errorf("dane: wpis pamięci tłumaczeń bez identyfikatora albo bez panelu")
@@ -85,11 +61,7 @@ func (r *repozytoriumTlumaczen) ZapiszPamiec(ctx context.Context, panelID int64,
 	}, nil
 }
 
-// Podpowiedzi szuka wpisów pamięci tłumaczeń danego języka, których segment
-// źródłowy zawiera frazę — patrz uwaga u góry pliku o ograniczeniu dopasowania
-// przybliżonego do LIKE po podciągu. Pusta lista (nie błąd) oznacza brak
-// dopasowań — `translate.memory.suggest` ma zwrócić pustą listę podpowiedzi,
-// nie ErrBrakWiersza, bo brak podpowiedzi nie jest usterką zapytania.
+// Podpowiedzi szuka wpisów pamięci danego języka, których segment źródłowy zawiera frazę, dopasowaniem przybliżonym po podciągu.
 func (r *repozytoriumTlumaczen) Podpowiedzi(ctx context.Context, jezyk, fraza string, limit int) ([]WpisPamieciTlumaczen, error) {
 	if jezyk == "" {
 		return nil, fmt.Errorf("dane: podpowiedzi pamięci tłumaczeń bez języka")
@@ -121,7 +93,7 @@ func (r *repozytoriumTlumaczen) Podpowiedzi(ctx context.Context, jezyk, fraza st
 	return lista, nil
 }
 
-// odczytajWpisPamieciTlumaczen składa strukturę z jednego wiersza wyniku.
+// odczytajWpisPamieciTlumaczen składa strukturę wpisu z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajWpisPamieciTlumaczen(wiersz skaner) (WpisPamieciTlumaczen, error) {
 	var wpis WpisPamieciTlumaczen
 	err := wiersz.Scan(&wpis.ID, &wpis.Kod, &wpis.PanelID, &wpis.Jezyk,

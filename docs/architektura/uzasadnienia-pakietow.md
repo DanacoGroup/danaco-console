@@ -4083,3 +4083,26 @@ zna, żeby stan nieznaleziony był odróżnialny od stanu, w którym rdzeń odda
 wykaz pusty.
 ## budowa/server/internal/dane/przegladarka_notatki.go
 Kolumna wskazująca źródło zewnętrzne jest wartością tekstową, nie więzem obcym: notatka może dotyczyć całej strony, nie tylko jednego zebranego źródła, więc kolumna jest dopuszczalnie pusta bez odwołania referencyjnego. Treść notatki jest krótkim tekstem wprost, nie odwołaniem do pliku, w odróżnieniu od migawki strony, która trzyma treść obszerną osobno — notatka Operatora nią nie jest, więc kolumna niesie treść wprost.
+
+## budowa/server/internal/dane/historia_retencja.go
+Osobny plik obok pliku pozycji historii dzieli dwie odpowiedzialności: tam
+żyje pozycja historii — wiersz wiadomości czytany i kasowany na wskazanie
+operatora; tu żyje nastawa, która kasuje sama, bez wskazania. Zasady się nie
+sumują. Obowiązuje jedna — najbliższa oknu (okno, potem sesja, potem
+globalna). Suma dawałaby wynik, którego operator nie przewidziałby z żadnego
+pojedynczego ekranu.
+
+Byt zakresu, którego nie ma, nie da się później przyciąć niczym, więc zasada
+zapisana dla nieistniejącego okna albo sesji byłaby nastawą bez skutku.
+
+Rozstrzygnięcie zasady idzie po kolejności okno, sesja, globalna, z granicą
+jednego wiersza, więc wiersz pusty zakresu węższego przesłaniałby zasadę
+szerszą, a jedyna komenda ustawiania retencji nie ma czym takiego wiersza
+skasować. Zdjęcie wiersza sprawia, że brak wiersza znaczy „ten zakres nic nie
+postanawia", a nie „trzymaj zero" — pytanie o zasadę spada wtedy na zakres
+szerszy, dokładnie jak przed pierwszym zapisem.
+
+Zakres globalny bytu nie wskazuje i jest zawsze prawdziwy — tnie wszystkie
+okna. Fałsz nie jest błędem odczytu: to stan, który woła o odmowę po stronie
+komendy, bo zasada zapisana dla nieistniejącego okna albo sesji nigdy
+niczego nie przytnie.

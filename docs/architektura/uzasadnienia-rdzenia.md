@@ -5047,3 +5047,15 @@ archiwum wytworzone przez komendę spakowania jest zasobem modułu projektowania
 i to jego rodzina zdarzeń o zasobach mówi. Port niewypełniony nie rejestruje
 niczego — obie komendy odpowiedzą wtedy komendą nieznaną, a pozostałe domeny
 pracują bez zmian; rdzeń niczym nie warunkuje startu.
+
+## budowa/server/internal/core/handlers_narzedzia_dokument.go
+Adapter wraz z rozstrzygnięciami, skąd biorą się zasady i obszar uruchomienia,
+którym binarium jedzie która droga i dlaczego znacznik użycia rozpoznawania
+znaków mówi prawdę, leży w plikach adaptera narzędzi dokumentu. Są to
+narzędzia modelu, nie panel właściciela konta — model wykonuje je sam w
+trakcie tury, dlatego żadna nie niesie okna i żadna niczego nie rozgłasza.
+Rodzina nie ma zdarzeń: kontrakt nie zna zdarzenia zmiany dokumentu, więc port
+nie bierze nadajnika, bo zdarzenie spoza kontraktu dałoby klientowi nazwę,
+której nie zna nikt poza rdzeniem. Port niewypełniony nie rejestruje niczego:
+obie komendy odpowiedzą wtedy komendą nieznaną, a pozostałe domeny pracują
+bez zmian.

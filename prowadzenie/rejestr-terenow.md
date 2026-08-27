@@ -15,8 +15,10 @@ z niej wylaczone (dopowiedzenie Wlasciciela w pozycji 18; wciela je
 instrument). Granica jest schodkowa, nie proporcjonalna: 250 znakow na plik,
 od dwoch tysiecy wierszy 250 za kazdy pelny tysiac (dopowiedzenie trzecie
 pozycji 18; instrument wciela). Kazdy plik po pracy zaczyna sie naglowkiem: pelne zdanie
-odpowiedzialnosci pliku + odsylacz (dopowiedzenie czwarte pozycji 18);
-plik niemy to uchybienie zwracajace porcje. Zakaz skrotow upychajacych tresc — wylacznie pelne zdania
+odpowiedzialnosci pliku (dopowiedzenie czwarte pozycji 18); plik niemy to
+uchybienie zwracajace porcje. Odsylaczy do docs domyslnie NIE MA — konwencja
+mapowania zapisana raz w CLAUDE.md (dopowiedzenie piate); odsylacze zastane
+zdejmuje sie w toku prac. Zakaz skrotow upychajacych tresc — wylacznie pelne zdania
 i pelne slowa, w kodzie i w docs (dopowiedzenie drugie pozycji 18).
 Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
 zacommitowany, W-GRANICY i tokeny tozsame z baza `285f4bf`; DO ZROBIENIA =

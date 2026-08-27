@@ -1,9 +1,4 @@
-// Odpowiedzialność pliku: głosowania debaty — otwarcie, warianty i oddane głosy
-// (`store/migracja_194_roundtable_glosowanie.sql`).
-//
-// Wyniku agregacji tu nie ma i być nie może: liczy go rdzeń z głosów przy
-// każdym odczycie, bo głos może dojść po pierwszym wyliczeniu. Repozytorium
-// oddaje materiał — głosowanie, warianty, głosy — a nie wnioski z niego.
+// Odpowiedzialność pliku: głosowania debaty, czyli otwarcie, warianty i oddane głosy; wyniku agregacji tu nie ma, liczy go rdzeń przy odczycie.
 package dane
 
 import (
@@ -14,7 +9,7 @@ import (
 	"strings"
 )
 
-// GlosowanieDebaty to wiersz tabeli `debata_glosowanie`.
+// GlosowanieDebaty to wiersz tabeli debata_glosowanie, niosący stan i metodę agregacji tego głosowania.
 type GlosowanieDebaty struct {
 	Kod        string
 	Okno       string
@@ -27,7 +22,7 @@ type GlosowanieDebaty struct {
 	Zamknieto  *string
 }
 
-// WariantDebaty to jeden wariant poddany pod głosowanie.
+// WariantDebaty to jeden wariant poddany pod głosowanie, wraz z jego treścią i kolejnością jego podania.
 type WariantDebaty struct {
 	Kod        string
 	Glosowanie string
@@ -48,8 +43,7 @@ type GlosDebaty struct {
 	Oddano     string
 }
 
-// RepozytoriumDebatyGlosowan jest częścią kontraktu obszaru odpowiadającą za
-// głosowania.
+// RepozytoriumDebatyGlosowan jest częścią kontraktu całego obszaru Roundtable odpowiadającą za głosowania.
 type RepozytoriumDebatyGlosowan interface {
 	ZalozGlosowanieDebaty(ctx context.Context, glosowanie GlosowanieDebaty,
 		warianty []WariantDebaty) (GlosowanieDebaty, error)
@@ -142,7 +136,7 @@ func (r *repozytoriumRoundtable) ZalozGlosowanieDebaty(ctx context.Context,
 	return r.GlosowanieDebatyPoKodzie(ctx, glosowanie.Kod)
 }
 
-// GlosowanieDebatyPoKodzie zwraca głosowanie po identyfikatorze.
+// GlosowanieDebatyPoKodzie zwraca głosowanie po jego identyfikatorze zewnętrznym, wraz z jego wariantami.
 func (r *repozytoriumRoundtable) GlosowanieDebatyPoKodzie(ctx context.Context,
 	kod string) (GlosowanieDebaty, error) {
 
@@ -153,7 +147,7 @@ func (r *repozytoriumRoundtable) GlosowanieDebatyPoKodzie(ctx context.Context,
 	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, kod))
 }
 
-// OstatnieGlosowanieDebaty zwraca ostatnio otwarte głosowanie okna.
+// OstatnieGlosowanieDebaty zwraca ostatnio otwarte głosowanie danego okna operacyjnego tej samej debaty.
 func (r *repozytoriumRoundtable) OstatnieGlosowanieDebaty(ctx context.Context,
 	okno string) (GlosowanieDebaty, error) {
 
@@ -164,7 +158,7 @@ func (r *repozytoriumRoundtable) OstatnieGlosowanieDebaty(ctx context.Context,
 	return odczytajGlosowanieDebaty(polecenie.QueryRowContext(ctx, okno))
 }
 
-// WariantyDebaty zwraca warianty głosowania w kolejności ich podania.
+// WariantyDebaty zwraca warianty tego głosowania w kolejności ich podania przy otwarciu tego głosowania.
 func (r *repozytoriumRoundtable) WariantyDebaty(ctx context.Context,
 	glosowanie string) ([]WariantDebaty, error) {
 
@@ -190,7 +184,7 @@ func (r *repozytoriumRoundtable) WariantyDebaty(ctx context.Context,
 	return warianty, wiersze.Err()
 }
 
-// OddajGlosDebaty zapisuje głos i oddaje go po zapisie.
+// OddajGlosDebaty zapisuje głos danego uczestnika tej debaty i oddaje ten sam głos odczytany po zapisie.
 func (r *repozytoriumRoundtable) OddajGlosDebaty(ctx context.Context,
 	glos GlosDebaty) (GlosDebaty, error) {
 
@@ -215,7 +209,7 @@ func (r *repozytoriumRoundtable) OddajGlosDebaty(ctx context.Context,
 	return zapisany, nil
 }
 
-// GlosyDebaty zwraca wszystkie głosy oddane w głosowaniu.
+// GlosyDebaty zwraca wszystkie głosy oddane w danym głosowaniu tej samej debaty, w kolejności ich oddania.
 func (r *repozytoriumRoundtable) GlosyDebaty(ctx context.Context,
 	glosowanie string) ([]GlosDebaty, error) {
 
@@ -240,7 +234,7 @@ func (r *repozytoriumRoundtable) GlosyDebaty(ctx context.Context,
 	return glosy, wiersze.Err()
 }
 
-// UstawStanGlosowaniaDebaty zamyka głosowanie albo znakuje je remisem.
+// UstawStanGlosowaniaDebaty zamyka wskazane głosowanie danego okna albo znakuje je jako zakończone remisem.
 func (r *repozytoriumRoundtable) UstawStanGlosowaniaDebaty(ctx context.Context,
 	kod, stan string, zamknieto *string) error {
 
@@ -255,7 +249,7 @@ func (r *repozytoriumRoundtable) UstawStanGlosowaniaDebaty(ctx context.Context,
 	return trafienieDebaty(wynik)
 }
 
-// odczytajGlosowanieDebaty składa głosowanie z jednego wiersza wyniku.
+// odczytajGlosowanieDebaty składa głosowanie debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajGlosowanieDebaty(wiersz interface{ Scan(...any) error }) (GlosowanieDebaty, error) {
 	var glosowanie GlosowanieDebaty
 	var uprawnieni string
@@ -272,7 +266,7 @@ func odczytajGlosowanieDebaty(wiersz interface{ Scan(...any) error }) (Glosowani
 	return glosowanie, nil
 }
 
-// odczytajGlosDebaty składa głos z jednego wiersza wyniku.
+// odczytajGlosDebaty składa oddany głos debaty z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajGlosDebaty(wiersz interface{ Scan(...any) error }) (GlosDebaty, error) {
 	var glos GlosDebaty
 	var aprobaty, ranking string

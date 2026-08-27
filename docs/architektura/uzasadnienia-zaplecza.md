@@ -850,3 +850,39 @@ nieobowiązkowym dokumentem obsługuje oba przypadki: wiersz bez dokumentu
 jest nastawą okna, wiersz z dokumentem nastawą tego dokumentu. Dwie tabele
 znaczyłyby dwa odczyty przy każdym otwarciu okna i pytanie, która z nich
 wygrywa.
+
+## budowa/desktop/src-tauri/src/aktualizacja/mod.rs
+
+Przedmiotem aktualizacji jest wyłącznie plik powłoki na urządzeniu operatora.
+Rdzeń stoi na serwerze wdrożenia i jest utrzymywany tam, więc ten przebieg go
+nie dotyka: niczego mu nie podmienia i niczego nie wygasza.
+
+Droga nie idzie przez wtyczkę aktualizacji Tauri: wtyczka nie występuje
+w konfiguracji powłoki. Wymaga własnego podpisu minisign, czyli pary kluczy
+wydawcy, i narzuca własny kształt pliku wykazu wydań, podczas gdy wykazem
+wydań jest istniejący plik serwisu, ten sam, z którego strona pobierania
+bierze chronologię. Zamiast tego droga używa HTTPS po plik i sumy SHA-256
+z wykazu: suma wiąże plik z wykazem tak samo jak podpis, a wykaz przychodzi
+po HTTPS z domeny wydawcy. Przejście na podpis dotknie jednego pliku
+odpowiedzialnego za pobranie; reszta przebiegu zostaje bez zmiany.
+
+Zwłoka przed restartem nie jest blokadą: nic nie pyta i niczego nie
+wstrzymuje, daje tylko odpowiedzi polecenia czas dolecieć do banera, zanim
+okno zniknie — restart natychmiastowy wyglądałby wtedy jak awaria.
+
+Zapora wyłączności chroni przed sytuacją, w której dwa równoległe wywołania
+otwierają ten sam plik roboczy obok aplikacji, piszą w niego przeplotem
+i każde liczy sumę kontrolną z własnego strumienia, a nie z tego, co
+ostatecznie leży na dysku — suma zgadzałaby się wtedy dla pliku, którego
+w tej postaci nie ma, po czym oba przebiegi próbowałyby podmienić plik
+aplikacji. Straż zwalniająca zaporę działa również przy błędzie i panice,
+inaczej jedno niepowodzenie zamykałoby aktualizacje do końca życia procesu.
+Funkcja zajmująca wyłączność jest wydzielona osobno, żeby dało się ją
+sprawdzić bez stawiania okna, a zwracana straż jest oznaczona jako
+wymagająca użycia, ponieważ jej natychmiastowe upuszczenie zwalnia zaporę
+i przywraca usterkę, przed którą funkcja stoi.
+
+Restart obrazu przenośnego sięga po zmienną środowiskową wskazującą bieżący
+obraz, a nie po ścieżkę bieżącego pliku wykonywalnego, która wskazywałaby
+chwilowo podmontowany obraz starego wydania; dzięki temu po podmianie wstaje
+wydanie nowe.

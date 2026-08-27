@@ -1,9 +1,4 @@
-// Odpowiedzialność pliku: ustalenia analizy debaty i rejestr dowodów
-// (`store/migracja_193_roundtable_analiza.sql`).
-//
-// Ustalenie zostaje w zapisie, bo analiza kosztuje wywołanie kanału modelu.
-// Odczyt po fakcie — na przykład przy wydaniu transkryptu z ustaleniami — nie
-// ma prawa wołać modelu po raz drugi po to samo.
+// Odpowiedzialność pliku: ustalenia analizy debaty i rejestr dowodów, zapisywane trwale, bo analiza kosztuje wywołanie kanału modelu.
 package dane
 
 import (
@@ -12,7 +7,7 @@ import (
 	"fmt"
 )
 
-// UstalenieDebaty to jedno ustalenie analizy zapisu debaty.
+// UstalenieDebaty to jedno ustalenie analizy zapisu debaty, wraz z rodzajem analizy i turą, której dotyczy.
 type UstalenieDebaty struct {
 	Kod       string
 	Okno      string
@@ -114,7 +109,7 @@ func (r *repozytoriumRoundtable) ZastapUstaleniaDebaty(ctx context.Context,
 	})
 }
 
-// UstaleniaDebaty zwraca ustalenia okna; rodzaj i tura puste nie zawężają.
+// UstaleniaDebaty zwraca ustalenia analizy okna; rodzaj analizy i tura puste nie zawężają wyniku odczytu.
 func (r *repozytoriumRoundtable) UstaleniaDebaty(ctx context.Context,
 	okno, rodzaj, tura string) ([]UstalenieDebaty, error) {
 
@@ -141,7 +136,7 @@ func (r *repozytoriumRoundtable) UstaleniaDebaty(ctx context.Context,
 	return ustalenia, wiersze.Err()
 }
 
-// ZastapDowodyDebaty wymienia rejestr dowodów okna albo jednej tury.
+// ZastapDowodyDebaty wymienia cały rejestr dowodów okna albo jednej wskazanej tury tej debaty operacyjnej.
 func (r *repozytoriumRoundtable) ZastapDowodyDebaty(ctx context.Context,
 	okno, tura string, dowody []DowodDebaty) error {
 

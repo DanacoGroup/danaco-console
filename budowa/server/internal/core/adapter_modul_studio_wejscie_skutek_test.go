@@ -13,28 +13,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany skutku wejścia modułu Studio: uczciwość konwersji PDF, osobność
-// kopii dokumentu i przeżywalność postaci przy zapisie.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. konwersja PDF meldująca powodzenie i oddająca dokument okaleczony bez
-//     ani jednego słowa o tym, czego nie odzyskała;
-//  2. PDF ze samych skanów przepuszczony jako „skonwertowany" — czyli dokument
-//     pusty podany jako gotowy do pracy;
-//  3. kopia dokumentu będąca drugim odwołaniem do tego samego bytu, po której
-//     poprawka w kopii zmienia oryginał;
-//  4. `studio.document.save` gubiący postać dokumentu — ta sama dziura, przez
-//     którą model był wobec dokumentu ślepy.
+// Sprawdziany skutku wejścia Studio: uczciwość konwersji PDF, osobność kopii
+// i przeżywalność postaci.
 
 // ── Uprząż ──────────────────────────────────────────────────────────────────
 
 // wejsciePdfZWarstwaTekstowa składa PDF o wskazanej liczbie stron, w którym
-// KAŻDA strona niesie warstwę tekstową.
-//
-// Materiał powstaje `pdfcpu` — tą samą biblioteką, którą rdzeń go czyta.
-// To jest świadome i nazwane: mierzona jest uczciwość bilansu konwersji, a nie
-// zgodność dwóch bibliotek PDF między sobą. Tekst jest zapisany wprost jako
-// operator pokazania tekstu, więc warstwa tekstowa jest tu prawdziwa.
+// każda strona niesie warstwę tekstową, złożony biblioteką pdfcpu, tą samą,
+// którą rdzeń go czyta.
 func wejsciePdfZWarstwaTekstowa(t *testing.T, strony int) []byte {
 	t.Helper()
 
@@ -60,8 +46,8 @@ func wejsciePdfZWarstwaTekstowa(t *testing.T, strony int) []byte {
 	return dokument.Bytes()
 }
 
-// wejsciePdfSamychSkanow składa PDF, w którym żadna strona warstwy tekstowej nie
-// ma — strony niosą wyłącznie obraz, jak skan pisma z faksu.
+// wejsciePdfSamychSkanow składa PDF, w którym żadna strona warstwy tekstowej
+// nie ma — strony niosą wyłącznie obraz, jak skan pisma z faksu.
 func wejsciePdfSamychSkanow(t *testing.T, strony int) []byte {
 	t.Helper()
 
@@ -91,7 +77,8 @@ func wejsciePdfSamychSkanow(t *testing.T, strony int) []byte {
 	return dokument.Bytes()
 }
 
-// wejscieWniesPdf kieruje bajty PDF-a przez `studio.document.import.pdf`.
+// wejscieWniesPdf kieruje bajty PDF-a przez komendę studio.document.import.pdf
+// i oddaje odpowiedź wniesienia gotową do sprawdzenia.
 func wejscieWniesPdf(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno string, bajty []byte) shared.StudioDocumentImportPdfResponse {
 
@@ -108,22 +95,17 @@ func wejscieWniesPdf(t *testing.T, zmontowany *Zmontowany, zycie context.Context
 
 // ── Punkt pierwszy: bilans konwersji PDF ────────────────────────────────────
 
-// TestKonwersjaPdfOddajeBilansOdzyskania wykazuje, że konwersja PDF nie oddaje
-// kaleki jako gotowego dokumentu.
-//
-// PDF nie niesie struktury akapitu ani tabeli wprost — odzyskanie jest
-// ODTWORZENIEM, nie odczytem. Miara: bilans musi nieść policzone strony,
-// policzone strony z warstwą tekstową i bez niej, oraz zdanie o stanie wyniku.
-// Liczba stron w bilansie jest porównywana z liczbą policzoną w pliku
-// biblioteką, a nie brana na słowo.
+// TestKonwersjaPdfOddajeBilansOdzyskania wykazuje, że konwersja PDF nie
+// oddaje kaleki jako gotowego dokumentu: bilans niesie policzone strony,
+// w tym z warstwą tekstową i bez niej, oraz zdanie o stanie wyniku.
 func TestKonwersjaPdfOddajeBilansOdzyskania(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
 	const stronMaterialu = 3
 	bajty := wejsciePdfZWarstwaTekstowa(t, stronMaterialu)
 
-	// Niezależny pomiar liczby stron: to, co bilans twierdzi, musi zgadzać się
-	// z tym, co w pliku naprawdę jest.
+	// Niezależny pomiar liczby stron: bilans musi zgadzać się z tym, co
+	// w pliku naprawdę jest.
 	stronWPliku, err := api.PageCount(bytes.NewReader(bajty), nastawyPdf())
 	if err != nil {
 		t.Fatalf("materiał próbny nie jest poprawnym PDF-em: %v", err)
@@ -193,14 +175,9 @@ func TestKonwersjaPdfOddajeBilansOdzyskania(t *testing.T) {
 	}
 }
 
-// TestKonwersjaPdfSamychSkanowKierujeNaRozpoznanie wykazuje, że PDF bez warstwy
-// tekstowej NIE jest udawany jako skonwertowany.
-//
-// To jest wymaganie rozstrzygające: dokument pusty oddany jako „gotowy do
-// pracy" byłby najgorszą możliwą odpowiedzią, bo Operator zaczął by pisać
-// w pliku, który treści nie ma. Miara: bilans zaznacza potrzebę rozpoznania
-// pisma ORAZ odpowiedź wskazuje pozycję kolejki rozpoznania — nazwana droga
-// dalsza, nie sama odmowa.
+// TestKonwersjaPdfSamychSkanowKierujeNaRozpoznanie wykazuje, że PDF bez
+// warstwy tekstowej nie jest udawany jako skonwertowany: bilans zaznacza
+// potrzebę rozpoznania pisma, a odpowiedź wskazuje pozycję kolejki.
 func TestKonwersjaPdfSamychSkanowKierujeNaRozpoznanie(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 
@@ -221,7 +198,7 @@ func TestKonwersjaPdfSamychSkanowKierujeNaRozpoznanie(t *testing.T) {
 		t.Errorf("bilans mówi o %d stronach bez warstwy tekstowej, a skan ma %d",
 			wartoscCalkowita(bilans.PagesWithoutText), stronSkanu)
 	}
-	// Droga dalsza ma być WSKAZANA, nie domyślona przez Operatora.
+	// Droga dalsza ma być wskazana wprost, nie domyślona.
 	if wniesiony.IngestItemId == nil || strings.TrimSpace(*wniesiony.IngestItemId) == "" {
 		t.Error("PDF ze samych skanów nie dostał pozycji kolejki rozpoznania pisma — " +
 			"Operator zostaje bez drogi dalszej")
@@ -246,7 +223,8 @@ func TestKonwersjaPdfSamychSkanowKierujeNaRozpoznanie(t *testing.T) {
 	}
 }
 
-// poczatekTekstu przycina treść do wielkości czytelnej w dzienniku sprawdzianu.
+// poczatekTekstu przycina treść do wielkości czytelnej w dzienniku
+// sprawdzianu, dodając wielokropek, gdy tnie.
 func poczatekTekstu(tekst string) string {
 	const granica = 200
 	if len(tekst) <= granica {
@@ -258,12 +236,8 @@ func poczatekTekstu(tekst string) string {
 // ── Punkt drugi: kopia jest osobnym bytem ───────────────────────────────────
 
 // TestKopiaDokumentuJestOsobnymBytem wykazuje, że kopia jest osobnym
-// dokumentem, a nie drugim odwołaniem do tego samego.
-//
-// Miara jest ta, którą wskazał Właściciel: ZMIANA W KOPII NIE RUSZA ORYGINAŁU.
-// Sprawdzane są obie warstwy — treść i postać — bo kopia dzieląca postać
-// z oryginałem jest tak samo zepsuta jak kopia dzieląca treść, tylko trudniej
-// to zauważyć.
+// dokumentem, a nie drugim odwołaniem do tego samego: zmiana w kopii nie
+// rusza oryginału, sprawdzana na treści i na postaci.
 func TestKopiaDokumentuJestOsobnymBytem(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-kopii"
@@ -342,10 +316,8 @@ func TestKopiaDokumentuJestOsobnymBytem(t *testing.T) {
 }
 
 // TestKopiaBezHistoriiIZHistoriaSaJawnymWyborem wykazuje, że przeniesienie
-// historii wersji jest JAWNYM wyborem Operatora, a nie zachowaniem zaszytym.
-//
-// Liczba przeniesionych wersji wychodzi kontraktem, więc sprawdzian mierzy ją,
-// a nie samo powodzenie komendy.
+// historii wersji jest jawnym wyborem przy kopiowaniu, a nie zachowaniem
+// zaszytym na stałe.
 func TestKopiaBezHistoriiIZHistoriaSaJawnymWyborem(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-kopii-historii"
@@ -409,14 +381,9 @@ func TestKopiaBezHistoriiIZHistoriaSaJawnymWyborem(t *testing.T) {
 
 // ── Punkt trzeci: zapis przenosi postać ─────────────────────────────────────
 
-// TestZapisPrzenosiPostacDokumentu wykazuje, że `studio.document.save` przenosi
-// POSTAĆ, a nie samą treść.
-//
-// To jest dziura, od której zaczęło się całe zlecenie: komenda przyjmowała
-// `documentId`, `content` i `title`, więc postać przy każdym zapisie ginęła
-// i model był wobec dokumentu ślepy. Miara: postać podana polem `form`
-// odczytana PONOWNIE, osobnym wywołaniem, musi być ta sama — arkusz stylów,
-// nastawy strony, tabela i styl akapitu.
+// TestZapisPrzenosiPostacDokumentu wykazuje, że zapis dokumentu przenosi
+// postać, a nie samą treść: postać podana polem form wraca niezmieniona przy
+// odczycie ponownym, osobnym wywołaniem.
 func TestZapisPrzenosiPostacDokumentu(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-zapisu-postaci"
@@ -541,15 +508,14 @@ func TestZapisPrzenosiPostacDokumentu(t *testing.T) {
 		t.Error("postać znaku nie przeżyła zapisu — fragment stracił wytłuszczenie")
 	}
 
-	// Numer porządkowy postaci ma rosnąć: dwa zapisy tej samej postaci nie mogą
-	// wyjść z tym samym numerem, bo wtedy nie da się rozstrzygnąć kolejności.
+	// Numer porządkowy postaci ma rosnąć: dwa zapisy nie mogą wyjść z tym
+	// samym numerem.
 	if poZapisie.Revision == nil {
 		t.Error("postać po zapisie nie niesie numeru porządkowego")
 	}
 
-	// ── Zapis bez pola `form` NIE MA PRAWA zetrzeć postaci ──────────────────
-	// To jest druga połowa tej samej szkody: kontrakt mówi, że brak pola znaczy
-	// „bez zmiany postaci", a nie „postać na zero".
+	// ── Zapis bez pola form nie ma prawa zetrzeć postaci: brak pola znaczy
+	// bez zmiany postaci.
 	var drugiZapis shared.StudioDocumentSaveResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioDocumentSave,
 		shared.StudioDocumentSaveRequest{

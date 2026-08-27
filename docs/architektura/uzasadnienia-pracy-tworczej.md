@@ -637,3 +637,46 @@ nagłówek dostawałby stopień tekstu zasadniczego, a zmiana stylu nagłówkowe
 nie ruszałaby ani jednej litery. Warstwa bliższa fragmentowi ma pierwszeństwo:
 pogrubienie zdjęte ręcznie z jednego słowa nagłówka zostaje zdjęte, choć styl
 nagłówka pogrubia.
+
+## adapter_modul_studio_wejscie_skutek_test.go
+
+Ten plik sprawdza trzy szkody, które moduł wejścia i zapisu ma wykluczyć.
+Pierwsza: konwersja PDF meldująca powodzenie i oddająca dokument okaleczony
+bez ani jednego słowa o tym, czego nie odzyskała, albo PDF ze samych skanów
+przepuszczony jako skonwertowany, czyli dokument pusty podany jako gotowy do
+pracy. Druga: kopia dokumentu będąca drugim odwołaniem do tego samego bytu,
+po której poprawka w kopii zmienia oryginał. Trzecia: zapis dokumentu gubiący
+postać dokumentu, przez co praca modelu nad postacią stawała się niewidoczna
+dla rdzenia po zapisie.
+
+Materiał próbny PDF powstaje biblioteką pdfcpu, tą samą, którą rdzeń go
+czyta. To jest świadome: mierzona jest uczciwość bilansu konwersji, a nie
+zgodność dwóch bibliotek PDF między sobą. Tekst materiału jest zapisany
+wprost jako operator pokazania tekstu, więc warstwa tekstowa jest w nim
+prawdziwa, a nie pozorna.
+
+Bilans konwersji PDF musi nieść policzone strony, w tym rozbicie na strony
+z warstwą tekstową i bez niej, oraz zdanie o stanie wyniku, bo PDF nie niesie
+struktury akapitu ani tabeli wprost — odzyskanie jest odtworzeniem, nie
+odczytem. Liczba stron w bilansie jest porównywana z liczbą policzoną w pliku
+niezależną biblioteką, a nie brana na słowo. PDF bez warstwy tekstowej,
+złożony wyłącznie ze skanów, nie może zostać udawany jako skonwertowany:
+dokument pusty oddany jako gotowy do pracy byłby najgorszą możliwą
+odpowiedzią, bo dalsza praca zaczęłaby się na pliku bez treści. Bilans
+zaznacza wtedy potrzebę rozpoznania pisma, a odpowiedź wskazuje pozycję
+kolejki rozpoznania, nazwaną drogą dalszą zamiast samej odmowy.
+
+Miara osobności kopii sprawdza obie warstwy dokumentu, treść i postać, bo
+kopia dzieląca postać z oryginałem jest tak samo zepsuta jak kopia dzieląca
+treść, tylko trudniej to zauważyć. Przeniesienie historii wersji przy
+kopiowaniu jest wyborem jawnym, nie zachowaniem zaszytym na stałe, a liczba
+przeniesionych wersji wychodzi kontraktem, więc sprawdzian mierzy tę liczbę,
+nie samo powodzenie komendy.
+
+Zapis dokumentu ma przenosić postać, nie samą treść: komenda zapisu
+przyjmowała pola treści dokumentu bez pola postaci, więc postać przy każdym
+zapisie ginęła, a praca nad nią stawała się niewidoczna po stronie rdzenia.
+Miara sprawdza postać podaną polem form, odczytaną ponownie osobnym
+wywołaniem — arkusz stylów, nastawy strony, tabelę i styl akapitu — a zapis
+bez pola form nie ma prawa zetrzeć postaci zastanej, bo brak pola znaczy
+brak zmiany postaci, nie postać wyzerowaną.

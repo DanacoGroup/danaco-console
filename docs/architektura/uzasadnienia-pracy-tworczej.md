@@ -1675,3 +1675,73 @@ Metody odczytu kompozycji dla szyny zdarzeń oddają brak wiersza jako wartość
 `false`, a nie jako błąd: zmiana kompozycji już się udała w chwili odczytu,
 więc niepowodzenie odczytu ma zamknąć usta szynie zdarzeń, a nie unieważnić
 wykonaną komendę.
+
+## budowa/server/internal/mowa/dziennik.go
+
+Plik powiela kształt repozytoriów pakietu `dane` (blok stałych ze składanym SQL,
+typ wiersza, filtr, interfejs repozytorium, asercja `var _`, odczyt wiersza przez
+interfejs skanera), ale stoi w pakiecie `mowa` i bierze `*sql.DB` wprost. Stąd
+własny interfejs skanera: odpowiednik `dane.skaner` jest nieeksportowany i nie
+da się go użyć spoza pakietu `dane`.
+
+Dziennik nie ma własnego zegara — czas przychodzi z góry w polu `Utworzono`
+wpisu, a baza go nie wstawia. Jeden zegar na jedno zdarzenie: drugi
+rozjeżdżałby ślad z chwilą zapisu.
+
+Dziennik zapisuje także odmowy: `Zapisz` przyjmuje wpis o stanie `odmowa`
+i jest to jego zwykłe użycie, bo powód odmowy jest pierwszą informacją
+potrzebną, gdy nic się nie przepisało. Więz spójności stanu z powodem pilnuje
+CHECK tabeli `transkrypcja`, a sprawdzenia w pliku odrzucają niespójny wpis
+wcześniej, żeby wołający dostał zdanie po polsku zamiast komunikatu sterownika
+bazy danych.
+
+Zapytanie listaTranskrypcji obsługuje oba warianty żądania: puste zawężenie
+okna wyłącza pierwszy warunek. Ze wskazanym oknem porządek biegnie indeksem
+idx_transkrypcja_wykaz (okno_id, utworzono, id) czytanym wstecz, więc
+„najnowsze najpierw” nie kosztuje sortowania wyniku (EXPLAIN QUERY PLAN:
+SEARCH ... USING COVERING INDEX, bez kroku ORDER BY). Bez wskazania okna
+sortowanie zostaje — to zapytanie diagnostyczne przez cały dziennik, a nie
+widok otwierany przy każdym zleceniu. Kolumna `id` w porządku rozstrzyga
+wpisy z tej samej milisekundy, żeby kolejność była stała między wywołaniami.
+
+Funkcja sprawdzWpis odrzuca wpisy, których baza i tak by nie przyjęła — po to,
+żeby wołający dostał zdanie po polsku zamiast komunikatu o naruszonym CHECK-u.
+Zdublowaniem więzu to nie jest: baza pozostaje ostatecznym strażnikiem, bo
+pisać do niej może też przyszła ścieżka, która tej funkcji nie wywoła.
+
+Funkcja napisDoKolumny przekłada napis pusty na NULL. Kolumny `okno_id`
+i `powod` dopuszczają pustkę, a pustka ta coś znaczy — zlecenie spoza okna
+oraz brak odmowy. Napis pusty zapisany wprost udawałby wartość podaną,
+a przy `powod` naruszałby CHECK tabeli `transkrypcja`.
+
+## adapter_modul_design_generowanie.go
+
+Wiersz zasobu powstaje wyłącznie po utrwaleniu bajtów w magazynie: ciąg biegnie
+od złożenia polecenia, przez wywołanie kanału obrazowego, odłożenie bajtów pod
+sumą sha256, pomiar formatu i wymiarów z nagłówka utrwalonego pliku, aż po
+założenie wiersza z uri, format, width, height. Kafelek w panelu zasobów, za
+którym nic nie leży, byłby kłamstwem koperty.
+
+Każdy brak kończy komendę odmową nazywającą brak, nigdy obrazem zastępczym:
+brak kanału obrazowego, kanał nieczynny, kanał tekstowy zamiast obrazowego,
+brak poświadczenia, odpowiedź bez obrazu, bajty nie do pobrania. Nie ma drogi,
+którą wracałby status ok bez treści. Wykaz braków w odmowie niesie tylko braki
+danego wywołania, obok gotowej treści polecenia.
+
+Adres zamiast bajtów też ląduje w magazynie. Dostawcy zgodni z OpenAI Images
+oddają b64_json albo url, a url bywa domyślny; odsyłacz dostawcy wygasa, więc
+zapisanie go wprost jako uri zasobu dałoby zasób, który po godzinie przestaje
+mieć treść. Bajty spod adresu wciąga rdzeń od razu i dopiero one idą do
+magazynu; niepowodzenie pobrania jest odmową, nie zasobem bez treści.
+
+Wariant nieudany przerywa całość generowania. Gdyby drugi wariant padł, a
+pierwszy został, odpowiedź niosłaby mniej zasobów, niż zamówiono, bez słowa o
+tym, czemu — kontrakt nie ma pola na wynik częściowy. Zasoby, które zdążyły
+powstać, zostają w bazie i w magazynie, bo ich bajty są prawdziwe i kasowanie
+ich byłoby niszczeniem cudzej treści z powodu, który jej nie dotyczy.
+
+Prompt utrwala się raz na całe wywołanie, przed pierwszym wariantem, żeby
+wszystkie warianty miały jeden wspólny wiersz promptu w historii — kontrakt
+history.list czyta prompty okna i kanał, którym poszły. Niepowodzenie zapisu
+promptu nie przerywa generowania, bo prowenancja jest wiedzą o zasobie, a nie
+samym zasobem.

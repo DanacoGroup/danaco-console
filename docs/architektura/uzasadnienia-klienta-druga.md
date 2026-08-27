@@ -3335,3 +3335,15 @@ i bez jego granic dostałoby odmowę walidacji. Operacja kontekstowa wraca odpow
 także wtedy, gdy kanał modelu oddał zamiast wyniku swój własny komunikat — rdzeń tego nie
 odróżnia, bo dostał zwykły tekst — dlatego zdanie o wyniku mówi wprost, ile treści przyszło
 i że przyjęcie podmieni nią dokument, zamiast zgadywać po samej treści.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/budzet-rozmowy.ts
+Budżet stoi przy oknach pomocniczych, bo pas pomocniczych podaje obie połowy
+naraz: ile okien rozmowy moduł prowadzi i gdzie leży jego ciężar. Liczbę
+oddaje funkcja, nie samo pole granicy: pole niesie granicę, funkcja — prawo
+do otwarcia, więc dla modułu bez rozmowy pole daje jeden, a funkcja zero, co
+zapobiega obiecywaniu Operatorowi czatu w module, który go nie prowadzi.
+Liczba początkowa pochodzi z tej samej stałej minimalnej, z której korzysta
+silnik okien równoległych, żeby obie wartości nie rozjechały się przy jego
+zmianie. Granicy zapisanej w profilu nie da się w czasie działania odróżnić
+od stałej oznaczającej brak granicy, więc zdanie o budżecie podaje samą
+liczbę i nic nie orzeka o jej pochodzeniu.

@@ -1,9 +1,7 @@
 /**
- * Umiejscowienie rdzenia: ścieżka gniazda i port nasłuchu.
- *
- * Warstwa połączenia zna jedno: gdzie nasłuchuje rdzeń. Wyboru adresu nie
- * dokonuje — wskazuje go wołający, bo to on wie, czy rdzeń stoi na tej samej
- * maszynie, czy pod adresem podanym przez powłokę.
+ * Umiejscowienie rdzenia: ścieżka gniazda i port nasłuchu. Warstwa połączenia
+ * zna jedno, gdzie nasłuchuje rdzeń — adres wskazuje wołający, zależnie od
+ * tego, czy rdzeń stoi na tej maszynie, czy pod adresem podanym przez powłokę.
  */
 
 /**
@@ -22,22 +20,17 @@ const PORT_RDZENIA_LOKALNEGO = 17870;
 
 /**
  * Adres gniazda rdzenia nasłuchującego na pętli zwrotnej tej samej maszyny.
- *
- * Nasłuch bez wskazania Operatora wiąże się z pętlą zwrotną
- * (`adresDomyslny` w `server/internal/transport/ustawienia.go`), więc to jest
- * adres, pod którym rdzeń stoi, dopóki nikt nie wskazał inaczej.
+ * Nasłuch bez wskazania adresu wiąże się z pętlą zwrotną — to adres, pod
+ * którym rdzeń stoi, dopóki nikt nie wskazał inaczej.
  */
 export function adresRdzeniaLokalnego(port: number = PORT_RDZENIA_LOKALNEGO): string {
   return `ws://127.0.0.1:${port}${SCIEZKA_GNIAZDA}`;
 }
 
 /**
- * Przekłada adres HTTP rdzenia na adres gniazda: `http://host:port` →
- * `ws://host:port/ws`. Zwraca `null`, gdy adres nie jest adresem HTTP —
- * wołający rozstrzyga wtedy, czy sięgnąć po pętlę zwrotną, czy odmówić.
- *
- * Ścieżka gniazda jest własnością tej warstwy, więc przekład mieszka tutaj,
- * a nie u tego, kto adres HTTP zdobył.
+ * Przekłada adres HTTP rdzenia na adres gniazda, zamieniając schemat i
+ * ścieżkę. Zwraca `null`, gdy adres nie jest adresem HTTP. Przekład mieszka
+ * w tej warstwie, bo ścieżka gniazda jest jej własnością.
  */
 export function adresGniazdaRdzenia(adresHttp: string): string | null {
   try {

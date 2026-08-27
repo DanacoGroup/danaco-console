@@ -2402,3 +2402,8 @@ więc dymek nie potrzebuje identyfikatora i nie koliduje między oknami.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/dyktowanie.ts
 Plik nie rysuje interfejsu — nie tworzy ikony, menu ani paska i nie zna klas CSS; ikona mikrofonu, wykaz urządzeń i przełącznik przytrzymania należą do obszaru paska poleceń, inaczej powstałyby dwa mikrofony w interfejsie. Dostępność jest pytaniem zadawanym przed narysowaniem ikony, nie odpowiedzią po naciśnięciu: mikrofon, którego nie ma czym obsłużyć, nie pojawia się wcale, a wyszarzony albo odmawiający po kliknięciu mikrofon byłby bramą zamiast krótszym paskiem.
+
+## budowa/klient/src/polaczenie/adres-rdzenia.ts
+Warstwa połączenia zna wyłącznie miejsce nasłuchu rdzenia. Wyboru adresu nie dokonuje sama — wskazuje go wołający, bo to on wie, czy rdzeń stoi na tej samej maszynie, czy pod adresem podanym przez powłokę.
+Nasłuch bez wskazania adresu wiąże się z pętlą zwrotną, więc to jest adres, pod którym rdzeń stoi, dopóki nikt nie wskazał inaczej.
+Przekład adresu HTTP rozstrzyga schemat i ścieżkę gniazda; gdy adres nie jest adresem HTTP, wołający rozstrzyga, czy sięgnąć po pętlę zwrotną, czy odmówić. Ścieżka gniazda jest własnością tej warstwy, więc przekład mieszka tutaj, a nie u tego, kto adres HTTP zdobył.

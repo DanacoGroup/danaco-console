@@ -1,12 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — RAMA KOKPITU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: żetony ramy kokpitu — paska górnego i jego części.
-
-   Rama jest stała w obu motywach: pasek górny pozostaje atramentowy również
-   w motywie jasnym, bo jest obudową narzędzia, nie treścią. Dlatego jej żetony
-   żyją poza blokami motywów i nie przełączają się.
-   ============================================================================ */
+/* Żetony ramy kokpitu opisują pasek górny i jego części; rama pozostaje stała w obu motywach, ponieważ jest obudową narzędzia, a nie treścią dokumentu. */
 
 :root {
   --dn-rama: var(--dn-szary-925);          /* #131313 — płaszczyzna paska */

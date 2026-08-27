@@ -5378,3 +5378,20 @@ terminala. Składa go adapter strumienia terminala.
 Rozgłoszeń po wykonaniu komendy i zabiciu procesu nie ma tutaj z zamysłem: zdarzenie nadaje
 adapter, bo tylko on wie, kiedy proces naprawdę zmienił stan. Podwójne rozgłoszenie z obsługiwacza
 dałoby monitorowi procesów ten sam wiersz dwa razy.
+
+## budowa/server/internal/core/sesja_konfiguracja.go
+
+Obszar jest jednostką zapisu konfiguracji sesji. Komendy config.session.*
+biorą wykaz obszarów, nie wykaz pól, więc jeden obszar odpowiada dokładnie
+jednemu wierszowi tabeli ustawienie pod adresem złożonym z poziomu zasięgu
+i osi. Dzięki temu obszar zapisany na poziomie węższym przykrywa obszar
+poziomu szerszego w całości, a obszar spoza wykazu obszarów pozostaje
+nietknięty.
+
+Wykaz obszarów nie jest listą stałych w kodzie — powstaje z nazw pól
+kontraktu shared.SessionConfig. Dopisanie obszaru do kontraktu wystarcza:
+rdzeń pozna go bez zmiany ani jednej gałęzi kodu. Kolejność obszarów jest
+kolejnością pól kontraktu, więc to samo wejście daje ten sam wynik przy
+każdym wywołaniu. Rozbiór i złożenie konfiguracji idą przez kodowanie JSON
+kontraktu, a nie przez ręczne przypisania pól, więc drugiego opisu obszarów
+w rdzeniu nie ma.

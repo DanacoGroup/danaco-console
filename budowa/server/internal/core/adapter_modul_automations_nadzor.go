@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: pięć czynności rodziny `schedule.*` należących do
-// okna Scheduler — okna wykonania, uruchomienie wsteczne, historia wyzwoleń,
-// nadzór obecności uruchomień i adres wejściowy wyzwalacza webhook.
-//
-// Wszystkie pięć zapisują stan DO BAZY, bo wszystkie pięć muszą obowiązywać po
-// ponownym złożeniu rdzenia. Okno wykonania trzymane w pamięci procesu
-// przestałoby ograniczać budzik po pierwszym restarcie, a Scheduler pokazywałby
-// ograniczenie, które już niczego nie ogranicza. Klucz podpisu webhooka
-// w pamięci unieważniałby każde wywołanie przychodzące po restarcie.
-//
-// Klucz podpisu leży w sejfie, nie w bazie i nie w odpowiedzi. Kontrakt oddaje
-// `signatureSecretRef` — „referencja klucza podpisu w skarbcu; nigdy sama
-// wartość”. Wymiana klucza (`rotateSecret`) zapisuje w sejfie wartość nową
-// i oddaje referencję nową; starej nie da się odczytać ani przez tę komendę,
-// ani przez żadną inną.
+// Pięć czynności rodziny schedule.* zapisują stan do bazy, bo muszą obowiązywać
+// po ponownym złożeniu rdzenia. Klucz podpisu webhooka leży w sejfie; kontrakt
+// oddaje wyłącznie referencję klucza, nigdy samą wartość.
 package core
 
 import (
@@ -35,7 +23,8 @@ const oknoDeduplikacjiDomyslne = 300
 // Kontrakt zna pole `maxRuns`; ta granica obowiązuje, gdy Operator go nie podał.
 const granicaPrzebiegowWstecznych = 100
 
-// UstawOknaWykonania zapisuje przedziały czasu, w których uruchomienie następuje.
+// UstawOknaWykonania zapisuje przedziały czasu, w których uruchomienie
+// automatyki może następować zgodnie z jej harmonogramem.
 func (a *adapterAutomatyk) UstawOknaWykonania(ctx context.Context,
 	z shared.ScheduleWindowSetRequest) (shared.ScheduleWindowSetResponse, error) {
 
@@ -121,9 +110,8 @@ func terminyWsteczne(harmonogram dane.Harmonogram, wyzwalacze []dane.WyzwalaczAu
 	chwila := time.UnixMilli(odMilisekund).UTC()
 	koniec := time.UnixMilli(doMilisekund).UTC()
 	for len(terminy) < granica {
-		// Harmonogram wyłączony też ma terminy przeszłe: uruchomienie wsteczne
-		// jest jawnym poleceniem Operatora, a nie pracą budzika, więc stan
-		// przełącznika cykliczności go nie wstrzymuje.
+		// Harmonogram wyłączony też ma terminy przeszłe: przebieg wsteczny jest
+		// poleceniem, nie pracą budzika.
 		znacznik := chwilaNastepnegoUruchomienia(harmonogram.Cron, wyzwalacze, true, chwila)
 		if znacznik == nil {
 			break
@@ -154,7 +142,8 @@ func (a *adapterAutomatyk) chwileWyzwolen(ctx context.Context,
 	return zaszle, nil
 }
 
-// HistoriaWyzwolen oddaje rzeczywiste momenty wyzwolenia wraz z przyczyną.
+// HistoriaWyzwolen oddaje rzeczywiste momenty wyzwolenia automatyki wraz
+// z przyczyną każdego zarejestrowanego wyzwolenia.
 func (a *adapterAutomatyk) HistoriaWyzwolen(ctx context.Context,
 	z shared.ScheduleTriggerHistoryRequest) (shared.ScheduleTriggerHistoryResponse, error) {
 

@@ -9,23 +9,8 @@ import {
 import type { StanAgentow } from './stan-agentow';
 
 /**
- * Edytor trzech warstw promptu eksperta — konstytucja, profil roli, ekspertyza.
- *
- * Warstwy są uporządkowane wg krytyczności: konstytucja stoi najwyżej,
- * ekspertyza najniżej. Kolejność rozstrzyga, co wygrywa przy sprzeczności
- * między warstwami, więc stoi przy każdej warstwie liczbą i zdaniem, a nie
- * w domyśle wynikającym z porządku pól na ekranie. Nakładkę składa rdzeń
- * (`server/internal/injection/nakladka.go`), a kontrakt niesie `AgentLayer`
- * i cztery komendy `agent.layer.*`.
- *
- * Warstwa nie ma własnego trybu, bo dopisanie do globalnego promptu systemowego
- * albo jego zastąpienie dotyczy instrukcji eksperta jako całości: przełącznik
- * stoi raz, przy tożsamości (`formularz-tozsamosci.ts`). Dlatego `AgentLayer`
- * i `agent.layer.set` pola `mode` nie mają, a `Agent.mode` ma. W miejscu
- * przełącznika stoi przy każdej warstwie zdanie czytające tryb eksperta czynnego.
- *
- * Edytor nie dotyka `Agent.systemPrompt` — to pole płaskie zapisuje formularz
- * tożsamości komendą `agent.update`.
+ * Edytor trzech warstw promptu eksperta — konstytucja, profil roli, ekspertyza — porządkuje je
+ * wg krytyczności, bo kolejność rozstrzyga, co wygrywa przy sprzeczności między warstwami.
  */
 export interface WarstwyPromptu {
   element: HTMLElement;
@@ -33,14 +18,17 @@ export interface WarstwyPromptu {
   ustaw(ekspert: Agent | null): void;
 }
 
-/** Kolejność warstw wg krytyczności — konstytucja najwyżej. */
+/**
+ * Kolejność warstw wg krytyczności, konstytucja najwyżej, rozstrzyga, co wygrywa przy
+ * sprzeczności treści między warstwami eksperta.
+ */
 export const KOLEJNOSC_WARSTW: readonly IdentityLayer[] = [
   IdentityLayer.Constitution,
   IdentityLayer.Profile,
   IdentityLayer.Expertise,
 ];
 
-/** Nazwy warstw w języku Operatora. */
+/** Nazwy warstw w języku Operatora, pokazywane przy każdej warstwie zamiast wewnętrznych kodów kontraktu. */
 export const NAZWY_WARSTW: Record<IdentityLayer, string> = {
   [IdentityLayer.Constitution]: 'konstytucja',
   [IdentityLayer.Profile]: 'profil roli',
@@ -64,7 +52,10 @@ export function czyZastepuje(ekspert: Agent | null): boolean {
   return ekspert?.mode === IdentityMode.ZASTAP;
 }
 
-/** Zdanie przy panelu: stan domyślny oraz droga odstąpienia od niego. */
+/**
+ * Zdanie przy panelu nazywa stan domyślny dopisania do promptu globalnego oraz drogę
+ * odstąpienia od niego przy tożsamości eksperta.
+ */
 const DROGA_DO_MODELU =
   'Domyślnie warstwy eksperta DOPISUJĄ się do globalnego promptu systemowego ' +
   'z okna konfiguracji i ustawień na stronie głównej — globalny obowiązuje pierwszy. ' +
@@ -120,7 +111,7 @@ export function utworzWarstwyPromptu(stan: StanAgentow): WarstwyPromptu {
   };
 }
 
-/** Jedna warstwa: treść, czynność oraz zapis i usunięcie. */
+/** Jedna warstwa niesie treść, czynność oraz czynności zapisu i usunięcia tej treści dla eksperta czynnego. */
 interface CzescWarstwy {
   element: HTMLElement;
   ustaw(ekspert: Agent | null): void;
@@ -220,8 +211,7 @@ function utworzWarstwe(
       czynna.kontrolka.checked = zapisana?.enabled ?? true;
       const zastepuje = czyZastepuje(ekspert);
       droga.textContent = DROGA_WARSTWY[zastepuje ? 'zastapienie' : 'dopisanie'];
-      // Odstępstwo ma wagę wizualną także tutaj — ten sam znacznik `data-`,
-      // którym rządzi arkusz sekcji modeli (`modele/tozsamosc.css`).
+      // Odstępstwo ma wagę wizualną także tutaj — ten sam znacznik rządzi arkuszem sekcji modeli.
       droga.dataset['zastapienie'] = String(zastepuje);
       stanZapisu.textContent =
         ekspert === null

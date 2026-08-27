@@ -2,20 +2,7 @@ package session
 
 import "io"
 
-// UchwytProcesu jest uchwytem procesu już uruchomionego. Uruchamianie procesu
-// ma w drzewie jedno miejsce — warstwę kanału (internal/injection), bo tylko ona
-// zna wiersz poleceń, rotację kont i kształt strumienia.
-//
-// Pakiet session nie buduje ani nie startuje procesu — także procesu okna
-// komunikacji. Bierze uchwyt procesu gotowego i dokłada to, co należy do sesji:
-// objęcie całego drzewa potomstwa jednym uchwytem systemowym (przejecie.go)
-// oraz pętlę koordynator–wykonawca (petla.go).
-//
-// Interfejs zostaje w tym pakiecie, choć sam session po niego nie sięga:
-// definiuje go strona znająca kształt uruchomienia okna (Okno, Polecenie, drzewo
-// potomstwa), a wypełnia warstwa kanału. Sięgają po niego moduły Terminal
-// i Developer w rdzeniu — one uruchamiają procesy okna i one obejmują je
-// drzewem.
+// UchwytProcesu jest uchwytem procesu już uruchomionego przez warstwę kanału, a pakiet session dokłada do niego objęcie drzewa potomstwa i pętlę koordynator-wykonawca.
 type UchwytProcesu interface {
 	// Pid — identyfikator systemowy uruchomionego procesu.
 	Pid() int
@@ -27,13 +14,11 @@ type UchwytProcesu interface {
 	Diagnostyka() io.Reader
 	// Czekaj czeka na zakończenie procesu i zwraca wynik zakończenia.
 	Czekaj() error
-	// Ubij kończy sam proces. Sesja sięga po to wyłącznie wtedy, gdy procesu nie
-	// udało się objąć drzewem — uchwytu nie wolno oddać, zostawiając sierotę.
+	// Ubij kończy proces; sesja sięga po to, gdy nie udało się objąć drzewem, by nie zostawić sieroty.
 	Ubij() error
 }
 
-// Uruchamiacz startuje proces okna według podanego polecenia. Implementuje go
-// warstwa kanału modelu; pakiet session zna wyłącznie ten interfejs.
+// Uruchamiacz startuje proces okna według podanego polecenia, jest implementowany przez warstwę kanału modelu, a pakiet session zna wyłącznie ten interfejs.
 type Uruchamiacz interface {
 	UruchomProces(o Okno, p Polecenie) (UchwytProcesu, error)
 }

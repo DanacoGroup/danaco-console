@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .lb-pasek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); flex-wrap:wrap; border-bottom:1px solid var(--dn-obrys-subtelny); }
   .lb-zakladki { display:flex; gap:var(--dn-od-1); }
   .lb-zakladki button { border:1px solid var(--dn-obrys); background:transparent; color:var(--dn-tekst-2); border-radius:var(--dn-r-lg); padding:var(--dn-od-1) var(--dn-od-2); font-size:var(--dn-fs-xs); cursor:pointer; }
@@ -361,8 +354,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa kolekcja</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -383,16 +376,16 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Kolekcje</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Kolekcje</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-pozycja-tytul">Wszystkie materiały</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Raporty Research</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zasoby Design</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Dokumenty Studio</span></button>
-        <div class="szyna-grupa">Kolekcje inteligentne</div>
+        <div class="dn-etyk-mono">Kolekcje inteligentne</div>
         <button class="pt-pozycja" type="button"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Wygenerowane przez AI (auto)</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Do przeglądu — bez etykiet</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kosz · Zapisane wyszukiwania · Duplikaty</span></button>
       </div>
     </nav>
@@ -573,10 +566,10 @@
         <!-- Tags & Collections -->
         <section class="sta-okno" id="panel-tags" data-nazwa="Tags &amp; Collections">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><b>Tags &amp; Collections</b></span><span class="sta-okno-znacznik">37</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Kolekcje inteligentne</div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Wygenerowane przez AI <span class="meta">412</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Research + rynek X <span class="meta">7</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Wygenerowane przez AI <span class="dn-meta">412</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Research + rynek X <span class="dn-meta">7</span></div>
             <div class="pt-etykieta" style="margin-top:var(--dn-od-1)">Słownik etykiet</div>
             <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap">
               <span class="dn-plakietka">rynek · 41</span>
@@ -591,7 +584,7 @@
         <!-- File Preview -->
         <section class="sta-okno" id="panel-preview" data-nazwa="File Preview">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg><b>File Preview</b></span><span class="sta-okno-znacznik">raport-koncowy.md</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Dopasuj</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Powiększ</button>
@@ -611,12 +604,12 @@
         <!-- Versioning Panel -->
         <section class="sta-okno" id="panel-versioning" data-nazwa="Versioning Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 9v6M18 6a3 3 0 0 0-3 3v6"/><circle cx="18" cy="6" r="3"/></svg><b>Versioning Panel</b></span><span class="sta-okno-znacznik">5 wersji</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> v5 — bieżąca <span class="meta">model · 08-13</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> v5 — bieżąca <span class="dn-meta">model · 08-13</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">🏷 wersja wysłana do klienta</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v4 <span class="meta">uzytkownik · 08-12</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v3 — synteza AI <span class="meta">model · 08-11</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v2 <span class="meta">uzytkownik · 08-10</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v4 <span class="dn-meta">uzytkownik · 08-12</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v3 — synteza AI <span class="dn-meta">model · 08-11</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> v2 <span class="dn-meta">uzytkownik · 08-10</span></div>
             <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap;margin-top:var(--dn-od-1)">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Porównaj v4 ↔ v5</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Przywróć wersję</button>
@@ -627,46 +620,46 @@
         <!-- Zadania w tle -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>indeksowanie-pelnotekstowe</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>indeksowanie-pelnotekstowe</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">OCR skanów · 7/7 dokumentów · 51 s</div>
             <div class="dn-postep" data-postep-do="88" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> import ZIP — rozpakowanie <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> import ZIP — rozpakowanie <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <!-- Artefakty (ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">mapa-kolekcji.json <span class="meta">12 kB</span></div>
-            <div class="panel-wiersz">raport-duplikatow.md <span class="meta">4 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">mapa-kolekcji.json <span class="dn-meta">12 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">raport-duplikatow.md <span class="dn-meta">4 kB</span></div>
           </div>
         </section>
 
         <!-- Pliki (ukryty) -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">raport-koncowy.md <span class="meta">48 kB</span></div>
-            <div class="panel-wiersz">prezentacja-zarzad.pdf <span class="meta">1,4 MB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">raport-koncowy.md <span class="dn-meta">48 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">prezentacja-zarzad.pdf <span class="dn-meta">1,4 MB</span></div>
           </div>
         </section>
 
         <!-- Kolejka (ukryty) -->
         <section class="sta-okno" id="panel-kolejka" data-nazwa="Kolejka" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><b>Kolejka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">Zastosuj etykietę „magazynowanie-energii” <span class="dn-plakietka dn-plakietka--sygnal meta">AKTYWNE</span></div>
-            <div class="panel-wiersz">Scal niemal-duplikaty v/v2 <span class="meta">po nr 1</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">Zastosuj etykietę „magazynowanie-energii” <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">AKTYWNE</span></div>
+            <div class="dn-wykaz-modulu-poz">Scal niemal-duplikaty v/v2 <span class="dn-meta">po nr 1</span></div>
           </div>
         </section>
 
         <!-- Subagenci (ukryty) -->
         <section class="sta-okno" id="panel-subagenci" data-nazwa="Subagenci i aktywność" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> tagger — sugestie etykiet <span class="meta">33 s</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> tagger — sugestie etykiet <span class="dn-meta">33 s</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Read · raport-koncowy.md — 09:41<br>Index · OCR skanów — 09:40</div>
           </div>
         </section>
@@ -683,9 +676,9 @@
         <!-- Przeglądarka (ukryty) -->
         <section class="sta-okno" id="panel-przegladarka" data-nazwa="Przeglądarka" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><b>Przeglądarka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Podgląd udostępnionego linku…" aria-label="Adres"></label>
-            <div class="panel-wiersz">link do prezentacja-zarzad.pdf <span class="meta">wygasa 7 dni</span></div>
+            <div class="dn-wykaz-modulu-poz">link do prezentacja-zarzad.pdf <span class="dn-meta">wygasa 7 dni</span></div>
             <div class="lb-mono">Udostępnianie skonfigurowane · dostęp tylko do odczytu</div>
           </div>
         </section>

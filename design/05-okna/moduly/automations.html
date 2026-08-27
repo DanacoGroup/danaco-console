@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 
   /* strefa robocza: okno wiodące na całą szerokość + panele w siatce */
   .au-robocza { grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-rows:minmax(140px,auto); }
@@ -387,8 +380,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Zbuduj automatykę</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -409,16 +402,16 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Workspace</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Workspace</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Raport tygodniowy sprzedaży</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Cykliczny raport projektu Q3</span></button>
-        <div class="szyna-grupa">Developer</div>
+        <div class="dn-etyk-mono">Developer</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Testy po zatwierdzeniu — repo</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie po zatwierdzeniu</span></button>
-        <div class="szyna-grupa">Research</div>
+        <div class="dn-etyk-mono">Research</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Odświeżenie źródeł Research</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Automatyki · Harmonogramy · Kolejki · Przebiegi · Logi</span></button>
       </div>
     </nav>
@@ -623,15 +616,15 @@
         <!-- Scheduler -->
         <section class="sta-okno" id="panel-scheduler" data-nazwa="Scheduler">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg><b>Scheduler</b></span><span class="sta-okno-znacznik"><span class="dn-plakietka dn-plakietka--sukces">aktywny</span></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="dn-radio"><input type="radio" name="cykl" id="c1"><label for="c1">codziennie</label></span></div>
-            <div class="panel-wiersz"><span class="dn-radio"><input type="radio" name="cykl" id="c2" checked><label for="c2">co tydzień</label></span> <span class="meta">poniedziałek 07:00</span></div>
-            <div class="panel-wiersz"><span class="dn-radio"><input type="radio" name="cykl" id="c3"><label for="c3">co miesiąc</label></span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-radio"><input type="radio" name="cykl" id="c1"><label for="c1">codziennie</label></span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-radio"><input type="radio" name="cykl" id="c2" checked><label for="c2">co tydzień</label></span> <span class="dn-meta">poniedziałek 07:00</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-radio"><input type="radio" name="cykl" id="c3"><label for="c3">co miesiąc</label></span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-2)">cron: 0 7 * * 1 · strefa: CET</div>
             <div class="pt-etykieta">Najbliższe uruchomienia</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-17 07:00 <span class="meta">za 3 dni</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-24 07:00 <span class="meta">za 10 dni</span></div>
-            <div class="panel-wiersz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Wyzwalacz zdarzeniowy</button> <span class="dn-przelacznik" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" style="margin-left:auto"></span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-17 07:00 <span class="dn-meta">za 3 dni</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> 2026-08-24 07:00 <span class="dn-meta">za 10 dni</span></div>
+            <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Wyzwalacz zdarzeniowy</button> <span class="dn-przelacznik" data-przelacznik role="switch" aria-checked="true" aria-pressed="true" style="margin-left:auto"></span></div>
           </div>
         </section>
 
@@ -658,7 +651,7 @@
             <div class="au-zadanie"><span class="nr">#1</span><span>Pobierz dane <span class="dn-plakietka dn-plakietka--sygnal"><span class="pt-tetno" aria-hidden="true"></span> w toku</span></span><span class="au-akcje-mini"><button class="dn-btn dn-btn--zarys" type="button">route</button><button class="dn-btn dn-btn--zarys" type="button">delay</button></span></div>
             <div class="au-zadanie"><span class="nr">#2</span><span>Waliduj wynik <span class="dn-plakietka">oczekuje</span></span><span class="au-akcje-mini"><button class="dn-btn dn-btn--zarys" type="button">enqueue ↑</button><button class="dn-btn dn-btn--zarys" type="button">split</button></span></div>
             <div class="au-zadanie"><span class="nr">#3</span><span>Wyślij raport <span class="dn-plakietka dn-plakietka--blad"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg> błąd</span></span><span class="au-akcje-mini"><button class="dn-btn dn-btn--zarys" type="button">retry</button><button class="dn-btn dn-btn--zarys" type="button">branch</button></span></div>
-            <div class="panel-wiersz"><span class="pt-etykieta">Głębokość kolejki (7 dni)</span><span class="meta">akcje: enqueue · dequeue · delay · retry · pause · resume · split · merge · route · branch · condition</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-etykieta">Głębokość kolejki (7 dni)</span><span class="dn-meta">akcje: enqueue · dequeue · delay · retry · pause · resume · split · merge · route · branch · condition</span></div>
             <div class="au-hist" aria-hidden="true"><span style="height:8px"></span><span style="height:14px"></span><span style="height:22px"></span><span style="height:9px"></span><span style="height:30px"></span><span style="height:14px"></span><span style="height:8px"></span></div>
           </div>
         </section>
@@ -672,7 +665,7 @@
               <div class="au-przebieg"><span class="dn-kropka dn-kropka--blad" aria-hidden="true"></span><span>2026-07-27 07:00</span><span class="czas">0m 48s</span><span class="dn-plakietka dn-plakietka--blad">błąd</span></div>
               <div class="au-przebieg"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span><span>2026-07-20 07:00</span><span class="czas">2m 09s</span><span class="dn-plakietka dn-plakietka--sukces">sukces</span></div>
             </div>
-            <div class="panel-wiersz" style="margin-top:var(--dn-od-2)"><span class="pt-etykieta">Wskaźnik powodzenia (8 tyg.)</span><span class="meta">87%</span></div>
+            <div class="dn-wykaz-modulu-poz" style="margin-top:var(--dn-od-2)"><span class="pt-etykieta">Wskaźnik powodzenia (8 tyg.)</span><span class="dn-meta">87%</span></div>
             <div class="au-hist" aria-hidden="true"><span style="height:26px"></span><span style="height:28px"></span><span style="height:30px"></span><span style="height:9px"></span><span style="height:28px"></span><span style="height:30px"></span><span style="height:27px"></span><span style="height:29px"></span></div>
             <div class="au-narzedzia" style="border:none;padding:var(--dn-od-2) 0 0"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Ponów</button><button class="dn-btn dn-btn--niebezpieczny dn-btn--sm" type="button" data-komunikat="Bez aktywnego przebiegu: brak przebiegu do przerwania. Z przebiegiem w toku: zatrzymanie natychmiastowe z dostępnym „Cofnij”." data-komunikat-tytul="Przerwij przebieg">Przerwij</button><span class="sta-chip" style="margin-left:auto">przy błędzie → Mobile</span></div>
           </div>
@@ -681,33 +674,33 @@
         <!-- Zadania w tle -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">3</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>symulacja-raport-tyg</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>symulacja-raport-tyg</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="dn-postep" data-postep-do="75" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> testy-po-zatwierdzeniu <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--ostrzezenie" aria-hidden="true"></span> odświeżenie-źródeł <span class="dn-plakietka dn-plakietka--ostrzezenie meta">retry 1/3</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> testy-po-zatwierdzeniu <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--ostrzezenie" aria-hidden="true"></span> odświeżenie-źródeł <span class="dn-plakietka dn-plakietka--ostrzezenie dn-na-koniec">retry 1/3</span></div>
           </div>
         </section>
 
         <!-- Plan (ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Budowa automatyki „Raport tygodniowy sprzedaży”</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Projekt kroków w Workflow Builder <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zależności w Orchestratorze <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Harmonogram w Scheduler <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zapis i wpięcie do Workspace <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Projekt kroków w Workflow Builder <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zależności w Orchestratorze <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Harmonogram w Scheduler <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zapis i wpięcie do Workspace <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Artefakty (ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">raport-tyg-sprzedazy.json <span class="meta">definicja · 14,2 kB</span></div>
-            <div class="panel-wiersz">mapa_zaleznosci.png <span class="meta">88 kB</span></div>
-            <div class="panel-wiersz">log_przebiegu_2026-07-27.txt <span class="meta">6,1 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">raport-tyg-sprzedazy.json <span class="dn-meta">definicja · 14,2 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">mapa_zaleznosci.png <span class="dn-meta">88 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">log_przebiegu_2026-07-27.txt <span class="dn-meta">6,1 kB</span></div>
           </div>
         </section>
 

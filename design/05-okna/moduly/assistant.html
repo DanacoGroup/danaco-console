@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   /* Voice Console — okno robocze wiodące */
   .vc-plotno { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--dn-od-4); padding:var(--dn-od-6) var(--dn-od-4); text-align:center; }
   .vc-fala { display:flex; align-items:center; justify-content:center; gap:4px; height:96px; }
@@ -43,7 +36,7 @@
   .vc-transkrypcja { font-size:16px; color:var(--dn-tekst); max-width:52ch; line-height:var(--dn-lh-luzny); }
   .vc-podpowiedz { font-size:var(--dn-fs-sm); color:var(--dn-tekst-3); }
   .vc-nag { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); }
-  .vc-nag .meta { margin-left:auto; }
+  .vc-nag .dn-meta { margin-left:auto; }
   .vc-akcje { display:flex; flex-wrap:wrap; gap:var(--dn-od-1); padding:var(--dn-od-2); border-top:1px solid var(--dn-obrys-subtelny); align-items:center; }
   .vc-akcje .etyk { font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); margin-right:var(--dn-od-1); }
   /* Actions Monitor / Activity Feed */
@@ -386,8 +379,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -407,15 +400,15 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Asystent biurowy</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Asystent biurowy</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Asystent biurowy — dzień pracy</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zlecenia głosowe — poczta</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kalendarz i spotkania</span></button>
-        <div class="szyna-grupa">Asystent osobisty</div>
+        <div class="dn-etyk-mono">Asystent osobisty</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Asystent osobisty — planowanie</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Notatki w ruchu</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Profile · Sesje · Uprawnienia · Nagrania</span></button>
       </div>
     </nav>
@@ -589,7 +582,7 @@
           <div class="vc-nag">
             <span>Profil: <b>Asystent biurowy</b></span>
             <span>Język: <b>PL</b></span>
-            <span class="meta dn-plakietka dn-plakietka--informacja">wysoka pewność rozpoznania</span>
+            <span class="dn-na-koniec dn-plakietka dn-plakietka--informacja">wysoka pewność rozpoznania</span>
           </div>
           <div class="sta-okno-tresc vc-plotno">
             <div class="vc-fala" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
@@ -617,20 +610,20 @@
                 <button class="sta-menu-poz" role="menuitemradio" aria-checked="false"><span class="ptaszek">✓</span>Wszystkie</button>
               </div></div>
             <button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="am-karta">
-              <div class="am-tyt"><span class="pt-tetno" aria-hidden="true"></span> „umów spotkanie z zespołem” <span class="meta">krok 2/3</span></div>
+              <div class="am-tyt"><span class="pt-tetno" aria-hidden="true"></span> „umów spotkanie z zespołem” <span class="dn-meta">krok 2/3</span></div>
               <div class="am-krok"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> znaleziono wolny termin ✓</div>
               <div class="am-krok"><span class="pt-tetno" aria-hidden="true"></span> wysyłanie zaproszeń…</div>
               <div class="dn-postep" data-postep-do="66" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
               <div class="sta-chip-rzad"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">⏸ Wstrzymaj</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">✕ Anuluj</button></div>
             </div>
             <div class="am-karta">
-              <div class="am-tyt"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> „podsumuj pocztę z dziś” <span class="meta">zakończone 09:41</span></div>
+              <div class="am-tyt"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> „podsumuj pocztę z dziś” <span class="dn-meta">zakończone 09:41</span></div>
               <div class="sta-chip-rzad"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Pokaż wynik</button></div>
             </div>
             <div class="am-karta am-karta--blad">
-              <div class="am-tyt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dn-blad-tekst)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> „zarezerwuj salę konferencyjną” <span class="meta">krok nieudany</span></div>
+              <div class="am-tyt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dn-blad-tekst)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg> „zarezerwuj salę konferencyjną” <span class="dn-meta">krok nieudany</span></div>
               <div class="am-krok">przyczyna: brak dostępnych sal</div>
               <div class="sta-chip-rzad"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Ponów</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Szczegóły</button></div>
             </div>
@@ -640,7 +633,7 @@
         <!-- Activity Feed -->
         <section class="sta-okno" id="panel-activity" data-nazwa="Activity Feed">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Activity Feed</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj" style="margin-bottom:var(--dn-od-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Szukaj w historii działań…" aria-label="Szukaj w historii"></label>
             <div class="af-grupa">Dziś</div>
             <div class="af-poz"><span class="czas">09:41</span> „podsumuj pocztę z dziś” <span class="wynik">6 wiad.</span></div>
@@ -656,42 +649,42 @@
         <!-- Zadania w tle (ukryty) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>realizacja-zlecenia-spotkanie</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>realizacja-zlecenia-spotkanie</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="dn-postep" data-postep-do="66" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> podsumowanie poczty <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> podsumowanie poczty <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <!-- Artefakty (ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">notatka_spotkanie.docx <span class="meta">14 kB</span></div>
-            <div class="panel-wiersz">dziennik_aktywnosci.log <span class="meta">9,8 kB</span></div>
-            <div class="panel-wiersz">nagranie_polecenie.wav <span class="meta">312 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">notatka_spotkanie.docx <span class="dn-meta">14 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">dziennik_aktywnosci.log <span class="dn-meta">9,8 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">nagranie_polecenie.wav <span class="dn-meta">312 kB</span></div>
           </div>
         </section>
 
         <!-- Plan (ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">1 / 3</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: umów spotkanie z zespołem</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Znalezienie wolnego terminu <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Wysłanie zaproszeń <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Potwierdzenie głosowe <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Znalezienie wolnego terminu <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Wysłanie zaproszeń <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Potwierdzenie głosowe <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Pliki (ukryty) -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj" style="margin-bottom:var(--dn-od-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Filtruj pliki…" aria-label="Filtruj"></label>
-            <div class="panel-wiersz">notatka_spotkanie.docx <span class="meta">14 kB</span></div>
-            <div class="panel-wiersz">dziennik_aktywnosci.log <span class="meta">9,8 kB</span></div>
-            <div class="panel-wiersz">profil_asystenta.json <span class="meta">2,4 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">notatka_spotkanie.docx <span class="dn-meta">14 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">dziennik_aktywnosci.log <span class="dn-meta">9,8 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">profil_asystenta.json <span class="dn-meta">2,4 kB</span></div>
           </div>
         </section>
 

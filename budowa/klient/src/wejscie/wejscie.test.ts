@@ -1,13 +1,6 @@
 /**
- * DROGA WEJŚCIA — przebieg trzech etapów.
- *
- * Sprawdzian prowadzi przebieg, nie okno: przebieg nie dotyka dokumentu, więc
- * każda odsłona — także odsłona błędu połączenia i odsłona zwłoki nałożonej
- * przez rdzeń — jest tu osiągalna naprawdę, a nie tylko opisana. Rozmowę z rdzeniem
- * uruchomionym mierzy osobny sprawdzian, który rdzenia wymaga.
- *
- * Rdzeń jest tu zastąpiony, a nie udawany: sprawdzane jest zachowanie okna
- * wobec odpowiedzi kontraktu, nie sama treść odpowiedzi.
+ * Droga wejścia — przebieg trzech etapów. Sprawdzian prowadzi przebieg, nie
+ * okno, i zastępuje rdzeń, sprawdzając zachowanie wobec odpowiedzi kontraktu.
  */
 
 import {
@@ -38,10 +31,10 @@ import {
 
 /* ── Rdzeń zastępczy ─────────────────────────────────────────────────────── */
 
-/** Odpowiedź rdzenia na jedną komendę: treść albo odmowa. */
+/** Odpowiedź rdzenia zastępczego na jedną komendę: treść wyniku albo odmowa w kształcie, jaki niesie kontrakt. */
 type Odpowiedz = { tresc: unknown } | { blad: ErrorInfo };
 
-/** Transport, którego stanem i odpowiedziami rządzi sprawdzian. */
+/** Transport, którego stanem połączenia i odpowiedziami na komendy rządzi sprawdzian, zamiast prawdziwego gniazda sieciowego. */
 interface RdzenZastepczy extends Transport {
   /** Ustawia odpowiedź na kolejne wywołania danej komendy. */
   odpowiadaj(komenda: string, odpowiedz: Odpowiedz): void;
@@ -87,8 +80,7 @@ function utworzRdzenZastepczy(): RdzenZastepczy {
     const oddajTeraz = (): void => {
       for (const sluchacz of [...sluchaczeRamek]) sluchacz(JSON.stringify(zwrot));
     };
-    // Rdzeń prawdziwy nakłada zwłokę PRZED odpowiedzią; rdzeń zastępczy robi
-    // to samo, bo inaczej nie dałoby się zmierzyć tego, co okno ma zmierzyć.
+    // Rdzeń prawdziwy nakłada zwłokę przed odpowiedzią; rdzeń zastępczy robi to samo.
     if (zwlokaMs > 0) setTimeout(oddajTeraz, zwlokaMs);
     else oddajTeraz();
   }
@@ -132,7 +124,7 @@ function utworzRdzenZastepczy(): RdzenZastepczy {
   };
 }
 
-/** Powitanie odpowiadające wersją zgodną; `zwiazane` daje token urządzenia. */
+/** Powitanie rdzenia odpowiadające wersją protokołu zgodną z klientem; parametr `zwiazane` daje w odpowiedzi token urządzenia. */
 function powitanie(zwiazane: boolean): Odpowiedz {
   return {
     tresc: {
@@ -144,10 +136,10 @@ function powitanie(zwiazane: boolean): Odpowiedz {
   };
 }
 
-/** Sesja bramki w kształcie kontraktu. */
+/** Sesja bramki uwierzytelniania w kształcie, jaki po zalogowaniu oddaje kontrakt: token oraz chwila wygaśnięcia. */
 const SESJA = { tresc: { session: { token: 'token-sprawdzianu', expiresAt: 0 } } };
 
-/** Środowisko i jego moduły w kształcie kontraktu. */
+/** Środowiska i moduły dostępne Operatorowi w kształcie, jaki po wejściu oddaje kontrakt, wraz z kolejnością nawigacji. */
 const SRODOWISKA: Odpowiedz = {
   tresc: {
     environments: [
@@ -167,7 +159,7 @@ const WEJSCIE: Odpowiedz = {
 
 const KLIENT: TozsamoscKlienta = { id: 'klient-sprawdzianu', wersja: '1.0.0' };
 
-/** Przebieg z rdzeniem zastępczym doprowadzony do wskazanego etapu. */
+/** Przebieg z rdzeniem zastępczym doprowadzony do stanu początkowego, gotowy do dalszego prowadzenia przez kolejne etapy sprawdzianu. */
 function zaloz(): { przebieg: Przebieg; rdzen: RdzenZastepczy } {
   const rdzen = utworzRdzenZastepczy();
   const przebieg = utworzPrzebieg({
@@ -181,7 +173,7 @@ function zaloz(): { przebieg: Przebieg; rdzen: RdzenZastepczy } {
   return { przebieg, rdzen };
 }
 
-/** Doprowadza przebieg do etapu dostępu, czyli za powitanie bez tokenu. */
+/** Doprowadza przebieg do etapu dostępu, czyli do stanu zaraz za powitaniem rdzenia bez tokenu urządzenia. */
 async function doDostepu(): Promise<{ przebieg: Przebieg; rdzen: RdzenZastepczy }> {
   const { przebieg, rdzen } = zaloz();
   rdzen.odpowiadaj(Command.ConnectionHello, powitanie(false));
@@ -364,8 +356,7 @@ await bieg('droga wejścia — przebieg', {
       odsloniete.every((odslona) => odslona === 'logowanie-blad'),
       `ósma próba została odmówiona progiem: ${odsloniete.join(', ')}`,
     );
-    // Po ośmiu nieudanych próbach hasło poprawne wpuszcza — tak stanowi
-    // kontrakt i tak zachowuje się rdzeń, zmierzone uruchomieniem.
+    // Po ośmiu nieudanych próbach hasło poprawne wpuszcza — tak stanowi kontrakt.
     rdzen.odpowiadaj(Command.AuthLogin, SESJA);
     await przebieg.zaloguj({ login: 'operator', haslo: HASLO_MOCNE });
     rowne(przebieg.stan().etap, 'przygotowanie', 'etap po haśle poprawnym');

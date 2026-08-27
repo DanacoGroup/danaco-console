@@ -698,3 +698,10 @@ Sprawdzian kształtu towarzyszy każdej komendzie i nie jest formalnością: odr
 odpowiedział wynikiem, od rdzenia, który odpowiedział pustą kopertą. Okno przyjmujące pustą
 kopertę jako wynik pokazałoby pustkę jako skutek, czyli dokładnie tę szkodę, przed którą stoi
 cały moduł.
+
+## budowa/klient/src/wejscie/wejscie.test.ts
+
+Sprawdzian obejmuje przebieg bez rdzenia uruchomionego: każda odsłona, w tym
+odsłona błędu połączenia i odsłona zwłoki nałożonej przez rdzeń, jest tu
+osiągalna naprawdę, a nie tylko opisana. Rozmowę z rdzeniem naprawdę
+uruchomionym mierzy osobny sprawdzian, który rdzenia wymaga.

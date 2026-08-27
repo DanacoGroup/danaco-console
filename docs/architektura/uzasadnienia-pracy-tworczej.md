@@ -4290,3 +4290,33 @@ Wskaźnik jest jeden na maszynę i wszystkie jego zlecenia jadą tym samym
 zasięgiem platformy; podawanie trójki przy każdym wołaniu sugerowałoby,
 że wolno ją zmieniać między fragmentami jednego dokumentu, a wtedy część
 wskaźnika powstawałaby pod inną izolacją niż reszta.
+
+## budowa/server/internal/core/adapter_modul_design_etykiety.go
+
+Nadawanie etykiet jest jednym wypełnieniem portu, plik osobny wedle
+odpowiedzialności, tak jak adapter_modul_design_kompozycje.go.
+
+Komenda domyka drogę zapisu etykiet: design.asset.list zawęża wykaz polem
+tags, a warstwa danych niesie UstawEtykietyZasobu, więc brakowało wyłącznie
+przejścia komenda, uchwyt, baza. Własnej migracji ta komenda nie potrzebuje.
+
+Odmowa nadania etykiet należy się wyłącznie zasobowi, którego rdzeń nie
+zna — pomylenie tych przypadków odebrałoby Operatorowi jedyny sposób
+odetykietowania zasobu, więc pustka nie jest tu sprawdzana ani odrzucana.
+
+Zasób nie zostaje przejściowo bez etykiet, gdy zapis padnie w połowie, bo
+podmiana etykiet idzie jedną transakcją warstwy danych.
+
+Warstwa danych pomija wartości puste i zwraca zestaw uporządkowany, więc
+odesłanie z.Tags wprost mówiłoby o stanie, którego w bazie nie ma. Drugi
+odczyt etykiet jest ceną prawdy o skutku.
+
+PromptId w podmianie etykiet zostaje pusty z tego samego powodu, co przy
+Zasoby: repozytorium nie ma przekładu klucza wiersza promptu na kod
+kontraktu — pole nie jest zgadywane.
+
+czyBrakZasobuDesignu woła się z design.asset.remove, dla którego brak
+zasobu jest odpowiedzią (removed: false), a nie odmową.
+
+Semantyka podmiany etykiet, nie dokładania, jest zapisana w kontrakcie.
+Odpowiedź niesie etykiety odczytane z bazy, nie echo żądania.

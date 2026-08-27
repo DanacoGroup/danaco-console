@@ -2822,3 +2822,39 @@ platformy, a nie żadnego z ośmiu pozostałych nadawców.
 
 ## budowa/klient/src/protokol/ksztalt-odpowiedzi.ts
 Rzutowanie jest obietnicą kompilatora, nie rdzenia — rdzeń starszej wersji albo pośrednik może przysłać treść bez pola obowiązkowego, a wołający dostałby wartość niezdefiniowaną w miejscu, w którym typ obiecuje wartość. Sprawdzian zamienia taką odpowiedź w niepowodzenie wywołania z wpisem do dziennika i błędem walidacji.
+
+## budowa/klient-poprzedni/src/powloka/potwierdzenie-usuniecia.ts
+Nazwy komendy ten plik nie zna — wysyłkę dostaje z zewnątrz, więc daje się poddać próbie bez rdzenia.
+Operator widzi stratę, zanim kliknie. Kontrakt żąda pola `confirm`, a rdzeń bez niego odmawia
+wykonania. Potwierdzenie ma więc treść, a nie samo pytanie „czy jesteś pewien": modal wypisuje tytuły
+wskazanych sesji i mówi wprost, że zapis ginie razem z wiadomościami, oknami i artefaktami. Okno stoi
+na natywnym elemencie dialogowym, wzorem okna pytania o nazwę ze strony głównej, więc warstwa tła,
+pułapka ogniska i Escape należą do przeglądarki. Escape w trakcie wywołania jest wstrzymany: rdzeń już
+usuwa sesje, więc zamknięcie okna nie odwołałoby niczego, a Operator zostałby bez odpowiedzi. Trzy
+stany obowiązkowe stoją na jednym pasie fazy okna z biblioteki komponentów: stan ładowania w czasie
+wywołania, stan pusty gdy rdzeń nie usunął niczego, stan błędu przy odmowie — z kodem i treścią
+rdzenia z opisu odmowy. Odmowa nie zamyka modalu: przycisk czynności znika, zostaje samo „Zamknij",
+więc nie da się wziąć odmowy za skutek.
+
+Oddaje rozliczenie rdzenia, gdy komenda przeszła — także rozliczenie, w którym nic nie zginęło, bo to
+też jest odpowiedź rdzenia i pas kart ma ją powtórzyć. Oddaje `null`, gdy Operator odmówił
+potwierdzenia albo gdy rdzeń odmówił wykonania; treść odmowy została wtedy pokazana w modalu.
+Obietnica rozstrzyga się z odpowiedzią rdzenia, nie z zamknięciem okna. Modal zostaje otwarty do
+przeczytania skutku, ale pas kart ma odpowiedź natychmiast — wiązanie rozstrzygnięcia z zamknięciem
+okna kazałoby pasowi milczeć tak długo, jak długo Operator czyta.
+
+Przed powtórzeniem czynności broni strażnik stanu w toku w obsłudze kliknięcia, a przed zamknięciem
+okna ten sam strażnik w funkcji zdejmującej okno, więc znacznik zablokowania kontrolki nie dokładałby
+ochrony — dokładałby ciszę. Zamiast tego przycisk odpowiada zdaniem, dlaczego w tej chwili nie ma czego
+zrobić. Powód idzie dwiema drogami: tytułem pod kursorem i opisem dostępności dla czytnika ekranu.
+
+Zdanie o bezskuteczności kliknięcia idzie do akapitu skutku oznaczonego rolą stanu, więc czytnik
+ekranu ogłasza je od razu, a pas stanu dalej trzyma fazę ładowania. Milczenie byłoby tu gorsze od
+blokady: Operator wziąłby brak reakcji za zawieszenie.
+
+## budowa/klient-poprzedni/src/strona-glowna/wpiecie-modulow.ts
+Zapytanie o wykaz modułów oddaje komplet modułów platformy wraz z polem zawężenia widoczności, którego
+pustka znaczy, że moduł jest dostępny wyłącznie ze strony głównej. Gdy rdzeń nie odpowie, strefa zostaje
+ukryta zamiast stać z nagłówkiem nad pustką: brak odpowiedzi nie jest wykazem pustym. Przejście idzie
+z samym kodem modułu, bez środowiska — moduł w żadnym nie stoi, więc powłoka otwiera go z pominięciem
+macierzy widoczności.

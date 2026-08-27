@@ -2,25 +2,15 @@ import './usuniecie-sesji.css';
 
 import { utworzDymekObjasnienia } from '../komponenty/dymek';
 
-/**
- * Powierzchnia potwierdzenia usunięcia sesji — same węzły, bez przebiegu.
- *
- * Jedna odpowiedzialność: zbudować modal, który mówi, co zginie. Kolejność
- * czynności, wywołanie rdzenia i stany należą do `potwierdzenie-usuniecia.ts`;
- * ten plik nie zna ani komendy, ani kanału.
- *
- * Ramę niesie biblioteka: `.dn-modal`, `.dn-modal-naglowek`, `.dn-modal-cialo`
- * i `.dn-modal-stopka` pochodzą z `komponenty/nakladka.css`, pas stanu
- * z `.dn-pusty-stan`, a znak [?] z `komponenty/dymek`.
- */
+// Powierzchnia potwierdzenia usunięcia sesji — same węzły widoku, bez przebiegu czynności.
 
-/** Sesja wskazana do usunięcia: identyfikator rdzenia i tytuł widziany w pasie. */
+/** Sesja wskazana do usunięcia: identyfikator sesji w rdzeniu oraz jej tytuł widziany w pasie kart sesji. */
 export interface WskazanieUsuniecia {
   id: string;
   tytul: string;
 }
 
-/** Części modalu, po które sięga przebieg czynności. */
+/** Części modalu potwierdzenia, po które sięga przebieg całej czynności trwałego usunięcia sesji rdzenia. */
 export interface RamaUsuniecia {
   modal: HTMLDialogElement;
   /** Pas trzech stanów obowiązkowych; jego widocznością rządzi `oznaczFaze`. */
@@ -32,16 +22,14 @@ export interface RamaUsuniecia {
   anuluj: HTMLButtonElement;
 }
 
-// Oba zdania opisują kosz sesji (`migracja_097_kosz_sesji.sql`): usunięcie
-// zdejmuje sesję z historii od ręki, ale zapis kasuje się trwale dopiero po
-// terminie kosza rdzenia (30 dni).
+// Oba zdania opisują kosz sesji: usunięcie zdejmuje sesję z historii, a zapis kasuje się trwale po 30 dniach.
 const OBJASNIENIE =
   'Usunięcie zdejmuje sesję z historii wraz z wiadomościami, oknami i artefaktami; rdzeń kasuje jej zapis trwale po 30 dniach w koszu. Zamknięcie karty tylko zmienia stan sesji, a archiwizacja pozwala ją przywrócić od ręki.';
 
 const OSTRZEZENIE =
   'Wskazane sesje znikają z historii, a ich zapis — wiadomości, okna komunikacji i artefakty — rdzeń kasuje trwale po 30 dniach w koszu. Katalogu roboczego na dysku ta czynność nie dotyczy.';
 
-/** Wykaz tego, co zginie — jedna pozycja na wskazanie, tytułem, nie numerem. */
+/** Wykaz tego, co zginie przy usunięciu — jedna pozycja na każde wskazanie, podpisana tytułem, nie numerem. */
 function zlozWykaz(wskazania: readonly WskazanieUsuniecia[]): HTMLElement {
   const wykaz = document.createElement('ul');
   wykaz.className = 'dn-usuwanie__wykaz';
@@ -55,7 +43,7 @@ function zlozWykaz(wskazania: readonly WskazanieUsuniecia[]): HTMLElement {
   return wykaz;
 }
 
-/** Nagłówek z objaśnieniem [?] — czynność mówi o sobie, zanim padnie klik. */
+/** Nagłówek modalu z objaśnieniem pod znakiem zapytania — czynność mówi o sobie, zanim padnie kliknięcie. */
 function zlozNaglowek(ile: number): HTMLElement {
   const naglowek = document.createElement('div');
   naglowek.className = 'dn-modal-naglowek';
@@ -66,7 +54,7 @@ function zlozNaglowek(ile: number): HTMLElement {
   return naglowek;
 }
 
-/** Ciało modalu: wykaz strat, ostrzeżenie, pas stanów i akapit skutku. */
+/** Ciało modalu potwierdzenia: wykaz strat, ostrzeżenie, pas stanów obowiązkowych oraz akapit ze skutkiem. */
 function zlozCialo(wskazania: readonly WskazanieUsuniecia[]): {
   cialo: HTMLElement;
   ostrzezenie: HTMLElement;
@@ -122,7 +110,7 @@ function zlozStopke(): {
   return { stopka, anuluj, usun };
 }
 
-/** Budowa modalu; osadzenie w dokumencie i pokazanie należy do przebiegu. */
+/** Budowa modalu potwierdzenia usunięcia; osadzenie w dokumencie i pokazanie należy do przebiegu czynności. */
 export function zlozRameUsuniecia(wskazania: readonly WskazanieUsuniecia[]): RamaUsuniecia {
   const modal = document.createElement('dialog');
   modal.className = 'dn-modal dn-usuwanie';

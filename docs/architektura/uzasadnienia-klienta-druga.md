@@ -3095,3 +3095,13 @@ rozstrzyga wtedy zapytanie o preferencję systemu, a zmiana tej preferencji
 działa na żywo. Żaden błąd pamięci trwałej nie zatrzymuje uruchomienia —
 wybór degraduje się do preferencji systemu, nigdy do blokady. Oba motywy są
 równoprawne, żaden nie jest wartością domyślną produktu.
+
+## budowa/klient-poprzedni/src/powloka/rama-usuniecia.ts
+Jedna odpowiedzialność: zbudować modal, który mówi, co zginie. Kolejność czynności, wywołanie
+rdzenia i stany należą do warstwy przebiegu potwierdzenia; ten plik nie zna ani komendy, ani kanału.
+Ramę niesie biblioteka komponentów: klasy modalu, nagłówka, ciała i stopki pochodzą z arkusza
+nakładki, pas stanu z arkusza pustego stanu, a znak zapytania z komponentu dymka objaśnienia.
+
+## budowa/klient-poprzedni/src/moduly/research/wiersz-ustalenia.ts
+Wiersz niesie dwie drogi działania: zaznaczenie do raportu oraz wciągnięcie do formularza, czyli
+funkcję operatora „edycja", która w kontrakcie jest polem findingId tej samej komendy zapisu.

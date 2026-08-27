@@ -16,13 +16,11 @@ import type { ZrodloNarzedzi } from './zrodlo-narzedzi';
 export const KOD_OKNA = 'command-tools-hub';
 
 /**
- * Command & Tools Hub — okno zarządcy szybkich akcji, narzędzi i rutyn modułu
- * Assistant. Cztery pierwsze zakładki stoją nad rzeczywistymi komendami
- * kontraktu: akcje, makra, narzędzia wraz z protokołem MCP oraz rutyny.
+ * Command & Tools Hub — okno zarządcy szybkich akcji, narzędzi i rutyn
+ * modułu Assistant o pięciu zakładkach.
 Piąta zakładka — „Skróty i schowek" — stoi nad trzema rodzinami, które
- * kontrakt niesie w całości: trwałą historią schowka, słownikiem skrótów
- * rozwijanych we wszystkich polach platformy oraz skrótem globalnym
- * wywoływacza. Skład okna jest jedyną odpowiedzialnością tego pliku.
+ * kontrakt niesie w całości — historią schowka, słownikiem skrótów
+ * rozwijanych w polach oraz skrótem wywoływacza.
  */
 export interface OknoCommandToolsHub {
   element: HTMLElement;

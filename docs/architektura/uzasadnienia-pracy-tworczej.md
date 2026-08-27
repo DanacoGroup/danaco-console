@@ -3228,3 +3228,141 @@ zapisem, nie po nim.
 widokNastawa: wiersz zaklada NastawaPracy — jedna droga zakladania dla
 obu grup kolumn. Druga rozjechalaby sie przy pierwszej zmianie wartosci
 domyslnej.
+
+## budowa/server/internal/poczta/poczta.go
+
+Wybór bibliotek pakietu poczta:
+
+Odbiór idzie biblioteką `github.com/emersion/go-imap/v2` (z `go-sasl` jako
+zależnością). IMAP-a nie ma w bibliotece standardowej Go. Własny parser
+protokołu musiałby unieść literały (`{123}` z kontynuacją serwera), zbiory
+sekwencji i UID-ów, rekurencyjny BODYSTRUCTURE, odpowiedzi niezamówione
+przychodzące w środku cudzej komendy, kodowanie modified-UTF-7 w nazwach
+folderów oraz rozbieżności IMAP4rev1 wobec rev2. Wybrana biblioteka ma
+klienta i serwer w jednym drzewie, więc jest testowana z obu stron, i mówi
+obydwoma wydaniami protokołu. Cena wyboru: gałąź v2 jest rozwojowa
+(v2.0.0-beta.8). Gałąź v1 jest zamrożona, a jej API oddaje wyniki kanałami,
+co przy wzorcu jedno wywołanie, jedna odpowiedź wymusza gorszą obsługę
+błędów. POP3, którym jedzie starsza poczta rdzenia (`dane/poczta.go`), nie
+zna folderów, szkiców ani oznaczeń i nie umie APPEND, więc
+`mail.folder.list`, `mail.draft.save` i `mail.message.flag` nie miałyby
+czym zadziałać.
+
+Rozbiór i składanie MIME idzie biblioteką `github.com/emersion/go-message`
+(z `.../mail`). `net/mail` z biblioteki standardowej czyta nagłówki i na
+tym kończy: nie schodzi w zagnieżdżony `multipart/*`, nie odkodowuje
+`Content-Transfer-Encoding`, nie rozpoznaje `Content-Disposition`. Ręczny
+rozbiór przez `mime/multipart` i `mime/quotedprintable` byłby
+przepisaniem tej samej rekursji, a `go-message` i tak wchodzi jako
+zależność `go-imap/v2`.
+
+Wysyłka idzie biblioteką standardową `net/smtp`, bez nowej zależności.
+Klient SMTP to EHLO, STARTTLS, AUTH oraz MAIL/RCPT/DATA i stdlib robi
+komplet; `github.com/emersion/go-smtp` wnosi ponad to serwer SMTP, którego
+ten pakiet nie buduje.
+
+Pakiet poczta nie zna bazy, sejfu ani kontraktu i nie loguje niczego.
+Sekret dostaje argumentem, trzyma go w polu i oddaje wyłącznie serwerowi,
+do którego się loguje. Przekład na typy kontraktu robi adapter rdzenia.
+
+## budowa/server/internal/wiedza/przesiew.go
+
+Dwa przebiegi, nie jeden lepszy: osadzarka liczy wektor pytania i wektor
+fragmentu osobno, więc wektory fragmentów wolno policzyć raz i trzymać
+w bazie — cała biblioteka Operatora jest przejrzana jednym iloczynem
+skalarnym na wiersz. Krzyżowy koder tego nie umie: czyta pytanie razem
+z fragmentem, więc jego oceny nie da się policzyć zawczasu, bo pytania jeszcze
+nie ma. Przejrzenie nim całego wskaźnika znaczyłoby przebieg transformera na
+każdym fragmencie biblioteki, czyli minuty na zapytanie. Podział pracy jest
+stąd: tani przebieg zbiera kilkudziesięciu kandydatów, drogi układa ich
+kolejność.
+
+Silnik nie ma dostępu do składnicy i nie zna kontraktu — dostaje pytanie
+i teksty, oddaje po jednej ocenie na tekst. Wybór kandydatów, przycięcie do
+`limit` i przekład na trafienia należą do wołającego, tak samo jak przy
+osadzarce.
+
+Proces startuje wyłącznie przez `zewnetrzne.Wolaj` i wczytuje wagi na każde
+wołanie — powód stoi w nagłówku `silnik.go` i jest tu ten sam. Granica czasu
+jest jedna, bo przesiew ma jedną chwilę użycia: zapytanie. Jest szersza od
+granicy osadzenia pytania, bo pierwsze uruchomienie może pobierać wagi.
+
+`KandydaciDomyslni`: pięćdziesiąt to tyle, ile koder ocenia w kilku
+sekundach, a jednocześnie na tyle więcej od dziesięciu oddawanych fragmentów,
+żeby przesiew miał co przestawić.
+
+`Gotowy`: wołający sięga po nie przed zebraniem kandydatów, żeby nie
+przeglądać wskaźnika po to, by zaraz odmówić.
+
+`Przesiej`: dwa fragmenty bywają identyczne co do znaku, a pochodzić z dwóch
+różnych dokumentów. Liczba ocen różna od liczby tekstów jest usterką
+pomocnika, nie wynikiem gorszym, więc kończy się odmową zamiast rankingiem
+przesuniętym o jedną pozycję. Wykaz pusty oddaje wykaz pusty bez uruchamiania
+procesu: „przesiej nic" nie jest pytaniem o gotowość (od tego jest `Gotowy`).
+
+`-X utf8` idzie zawsze — powód ten sam co w silniku osadzeń: pomocnik oddaje
+polski tekst, a Python bez tego przełącznika koduje wyjście według ustawień
+regionalnych systemu.
+
+`GranicaKandydatowZadania`: wołający, który prosi o dziesięć fragmentów
+i pięciu kandydatów, dostaje pięć — przesiew nie ma prawa dołożyć do
+odpowiedzi fragmentu, którego pierwszy przebieg nie wybrał.
+
+`PoPrzesiewie`: kosinus wektorów i prawdopodobieństwo dopasowania pary nie
+leżą w jednej skali, a przesiew istnieje właśnie po to, żeby zdanie kodera
+było ostateczne. Sortowanie stabilne — dwa kandydaty o równej ocenie
+zachowują kolejność pierwszego przebiegu, więc to samo pytanie zadane dwa
+razy daje tę samą odpowiedź.
+
+Pakiet poczta nie nasłuchuje na żadnym porcie, nie zakłada kont, nie
+kolejkuje poczty i nie pośredniczy przez żadną infrastrukturę Danaco.
+
+Kontrakt poczty zna trzy wartości protokołu (imap, jmap, pop3). Stałej na
+JMAP w pakiecie poczta nie ma, bo nie miałaby ani jednego wołacza
+i wyglądałaby w kodzie jak zdolność wpięta. Skrzynkę opisaną JMAP-em
+`Polacz` odrzuca zdaniem nazywającym brak wprost.
+
+Pole SzyfrujOdbior/SzyfrujWysylke rozstrzyga je raz, przy podpięciu, adapter
+rdzenia (`core/adapter_modul_poczta.go`), żeby prawda o tym, jak rdzeń
+rozmawia z tą skrzynką, leżała w jednym miejscu i przeżywała restart.
+
+WeryfikujTLS zapisuje się w kolumnie `tls_weryfikacja`, nie jest tylną
+furtką.
+## server/internal/core/adapter_modul_design_kroje.go
+
+Czytaja to design.font.preview, design.font.glyphs.get,
+design.font.pair.suggest, design.vector.text.path i wydania drukarskie.
+Kroje sa dwojakie i roznia sie tym, czego Operator moze byc pewien: kroje
+WKOMPILOWANE w binarium (rodzina Go z golang.org/x/image/font/gofont) sa
+zawsze, na kazdej maszynie, bo leza w pliku wykonywalnym serwera; kroje
+SERWERA — pliki .ttf/.otf lezace w katalogach krojow tej maszyny —
+odczytywane, nie doinstalowywane. Pole available kontraktu mowi prawde
+o tym rozroznieniu. Kroju, ktorego nie ma, rdzen nie podstawia innym:
+podglad zlozony krojem zastepczym wyglada identycznie jak podglad
+prawdziwy i Operator wybralby typografie, ktorej u siebie nie zobaczy.
+Kontury glifow czyta golang.org/x/image/font/sfnt — biblioteka Go
+wkompilowana w binarium, rozkladajaca zarowno kontury TrueType, jak
+i PostScript (CFF). Programy do przegladania i rozkladania krojow tu nie
+wchodza: instalka Operatora ich nie niesie.
+
+przegladajKrojeSerweraDesignu: otwarcie stu plikow tylko po nazwe
+kosztowaloby tyle, co zlozenie stu podgladow. Nazwa z tablicy wchodzi
+dopiero przy wczytaniu jednego kroju. Katalog nieistniejacy nie jest
+awaria: na maszynie bez pakietu krojow go po prostu nie ma, a kroje
+wkompilowane zostaja.
+
+kluczKrojuDesignu: Operator wpisuje "Go Mono", "go-mono" i "GoMono" majac
+na mysli ten sam kroj, a odmowa za znak rozdzielajacy byłaby odmowa za
+zapis poprawny.
+
+sciezkaTekstuDesignu: os Y rosnie w dol — tak samo jak w kompozycji Design
+Board — wiec kontur nie jest tu nigdzie odwracany i tekst nie wychodzi do
+gory nogami.
+
+glifyKrojuDesignu: kontur wchodzi do odpowiedzi, bo bez niego wykaz glifow
+bylby wykazem liczb. Znak, ktorego kroj nie ma, nie wchodzi do wykazu
+w ogole: kontrakt pyta o glify KROJU, a nie o zakres, ktorego Operator sie
+spodziewal.
+
+szerokoscTekstuDesignu: pomiar ma sie udac nawet dla tekstu z jednym
+znakiem spoza kroju, bo sluzy do ulozenia podgladu, nie do wydania.

@@ -2524,3 +2524,9 @@ bo o przypisaniach nowego projektu nikt jeszcze nie pytał.
 
 ## budowa/klient/src/polaczenie/stan-polaczenia.ts
 Ramka wpisana przy rozłączeniu trafia do kolejki wychodzącej i idzie do rdzenia po wznowieniu połączenia.
+
+## budowa/klient-poprzedni/src/moduly/workspace/zrodlo-sasiadow.ts
+Okna Workspace wołają komendy sąsiednich modułów wprost, zamiast trzymać
+własne odpowiedniki tych samych czynności. Plik stoi osobno od głównego
+źródła modułu Workspace, ponieważ niesie inną odpowiedzialność: tamten plik
+opisuje obszar własny modułu, ten — jego sąsiedztwo.

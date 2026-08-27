@@ -1186,3 +1186,18 @@ niesie, a którego nie wolno złożyć po stronie klienta z wartości domyślnyc
 
 W obu przypadkach warstwa wystawia komunikat mówiący wprost, czego brakuje, zamiast
 wysyłać komendę niekompletną albo milczeć.
+
+## budowa/klient-poprzedni/src/mission-control/etykiety-pulpitu.ts
+
+Plik ma jedną odpowiedzialność: przekłada wartości kontraktu na słowo widoczne
+dla Operatora. Widok nie zna literałów kontraktu i o nazwę pyta wyłącznie tutaj,
+dzięki czemu zmiana słownictwa pulpitu nie sięga do samych widoków.
+
+Każdy słownik jest rekordem zupełnym po dziedzinie swojego typu. Dopisanie
+wartości do kontraktu przerywa więc kompilację tego pliku, i jest to skutek
+zamierzony: nowy stan ma dostać polską nazwę, zamiast wypaść z widoku po cichu
+albo pokazać się Operatorowi surowym literałem kontraktu.
+
+Etykieta braku źródła zastępuje liczbę wszędzie tam, gdzie kontrakt miary dziś
+nie niesie. Pulpit nie pokazuje wartości wymyślonej — brak źródła danych jest
+nazywany wprost.

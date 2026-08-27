@@ -2611,3 +2611,11 @@ alfę.
 Gałąź domyślna „mieszaj zwykle" w funkcjaMieszania oddałaby złożenie, które
 wygląda poprawnie i nie jest tym, o co proszono, dlatego tryb spoza wyliczenia
 kontraktu kończy się odmową nazywającą go wprost.
+
+## budowa/server/internal/core/wydanie_formatu_test.go
+
+Szkody, które ten plik ma wykluczyć: wydanie do formatu txt gubiące tabelę w
+milczeniu, bo zlecenie nazywa to wprost ciszą zakazaną; wykaz cech pominiętych
+oddawany jako zdanie ogólne bez liczb, po którym nie wiadomo, ile stracono;
+wydanie wsadowe wstrzymane przez jeden uszkodzony dokument; wydanie oddane
+jako udane, a bez zasobu, po którym cienka instalka mogłaby sięgnąć po plik.

@@ -4088,3 +4088,28 @@ w chwili wywołania, zdaniem samego kanału: rozróżnia ono brak odwołania od
 odwołania bez wartości w sejfie, czego ten moduł nie widzi. Powielenie
 tego sprawdzenia tutaj dałoby dwie prawdy o poświadczeniach i uboższą
 treść odmowy.
+
+kanalObrazowyZadania oddaje wiersz kanału, nie sam identyfikator, bo
+wołający wypisuje identyfikator kanału w treściach odmów.
+
+Pierwszy kanał obrazowy znaczy: pierwszy w kolejności wykazu rejestru,
+czynny i mający zbudowany adapter; wiersz włączony bez adaptera pomija się
+milcząco przy szukaniu domyślnego, bo Operator o niego nie prosił
+i odmówiłby przy pierwszej turze.
+
+Wykaz kanałów niesie także wiersze nieczynne, więc da się odróżnić "nie ma
+takiego kanału" od "jest, ale wyłączony". Gdyby szukać wyłącznie wśród
+czynnych, obie sytuacje zlałyby się w jedną odmowę i Operator nie
+wiedziałby, czy pomylił identyfikator, czy zapomniał włączyć kanał.
+
+Kanał tekstowy włączony jest tą samą pomyłką, co kanał tekstowy wyłączony
+— włączanie go niczego nie naprawi, więc zdanie o czynności wysłałoby
+Operatora w złą stronę.
+
+Brak domyślnego kanału obrazowego nie jest brakiem produktu: adapter
+obrazowy w rdzeniu jest, magazyn jest, pole channelId w kontrakcie jest.
+Dlatego zdanie odmowy mówi, jak taki kanał założyć, zamiast opisywać
+granicę rdzenia.
+
+Wykaz kanałów niesie też wiersze nieczynne, więc da się odróżnić brak
+kanału od kanału wyłączonego.

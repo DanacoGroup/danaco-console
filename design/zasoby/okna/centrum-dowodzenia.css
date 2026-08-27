@@ -18,6 +18,36 @@
 
 :root { --cd-maks-tresc: 100%; }
 
+/* ── Włos marki ────────────────────────────────────────────────────────────
+   Wstążki i okna obrysowuje cienka linia w barwie znaku. Pełne `--dn-sygnal-500`
+   na każdej krawędzi krzyczy, więc barwa znaku jest mieszana z dotychczasowym
+   obrysem: zostaje niebieski włos, nie niebieska ramka. Karta bieżąca bierze tę
+   samą barwę na tło, w stopniu jeszcze słabszym — ma się wyróżniać, nie świecić.
+   Mieszanie idzie w oklab, więc oba motywy dostają ten sam stopień odejścia od
+   szarości, nie ten sam procent kanału. */
+.cd-strona {
+  --cd-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) 46%, var(--dn-obrys-mocny));
+  --cd-tlo-karty-biezacej: color-mix(in oklab, var(--dn-sygnal-500) 13%, var(--dn-wstazka));
+}
+@supports not (color: color-mix(in oklab, red, blue)) {
+  .cd-strona {
+    --cd-obrys-marki: var(--dn-sygnal-800);
+    --cd-tlo-karty-biezacej: var(--dn-wstazka);
+  }
+}
+
+/* Wstążka główna nie miała obrysu — dostaje włos marki, wewnątrz obecnej bryły,
+   więc jej wysokość nie drgnie. */
+.cd-strona .dn-narzedzia { border: 1px solid var(--cd-obrys-marki); }
+/* Trzy okna obszaru roboczego: boczne, robocze i samouczek. */
+.cd-strona .dn-obszar-panel { border: 1px solid var(--cd-obrys-marki); }
+/* Belka samouczka trzyma włos na trzech krawędziach; lewa zostaje sygnałowa,
+   bo niesie wagę wiersza pierwszego wejścia. */
+.cd-strona .cd-start { border-color: var(--cd-obrys-marki); border-left-color: var(--dn-sygnal-500); }
+
+.cd-strona .dn-karta-widoku[aria-selected='true'],
+.cd-strona .dn-karta-sesji[aria-selected='true'] { background: var(--cd-tlo-karty-biezacej); }
+
 /* ── Położenie panelu bocznego ────────────────────────────────────────────
    Panel sesji stoi domyślnie po lewej. Menu panelu przenosi go na prawą stronę
    okna — obszar roboczy jest zginany w rzędzie, więc kolejność wystarczy
@@ -596,7 +626,7 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   /* Wstążka nie jest osobną powierzchnią — ma tło okna, a wyodrębnia ją
      wyłącznie cienka ramka. Barwa `--dn-obrys` w motywie ciemnym równa się
      barwie wnętrza okna (#272A30), więc ramka na niej byłaby niewidoczna. */
-  border: 1px solid var(--dn-obrys-mocny);
+  border: 1px solid var(--cd-obrys-marki);
   background: transparent;
   gap: var(--dn-od-1);
   height: 40px;

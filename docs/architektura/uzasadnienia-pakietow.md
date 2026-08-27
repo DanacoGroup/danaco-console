@@ -3623,3 +3623,8 @@ pętlą zwrotną żądanie z gniazda, które nie przedstawiło tokenu, nie docho
 rdzenia i wraca odmowa braku uwierzytelnienia; na pętli zwrotnej straż jest
 wyłączona. Odpowiedź na komunikat niepoprawny strukturalnie różni się od
 odpowiedzi na nieznaną komendę kodem błędu walidacji.
+
+## budowa/server/internal/dane/diagnostics_analiza.go
+Analiza i jej rekomendacje zapisują się razem albo wcale. Rekomendacja bez
+analizy nie ma faktu, z którego wynika, a analiza z połową rekomendacji
+kłamie o tym, co z niej wypadło. Jedna transakcja zamyka obie możliwości.

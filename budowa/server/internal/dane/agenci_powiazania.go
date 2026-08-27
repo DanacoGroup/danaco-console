@@ -1,9 +1,5 @@
-// Odpowiedzialność pliku: odczyt powiązań eksperta — umiejętności, konektorów
-// i uprawnień — oraz dołączenie ich do wierszy biblioteki. Zapis powiązania leży
-// w `agenci_powiazania_zapis.go`.
-//
-// Cztery tabele podrzędne czytamy raz na wywołanie i grupujemy po numerze
-// eksperta, zamiast pytać o nie osobno dla każdego wiersza wykazu.
+// Plik odczytuje powiązania eksperta — umiejętności, konektory, uprawnienia i poziomy pamięci — z czterech
+// tabel podrzędnych w jednym przebiegu i dołącza je do wierszy biblioteki; zapis powiązań prowadzi agenci_powiazania_zapis.go.
 package dane
 
 import (
@@ -68,7 +64,7 @@ func (r *repozytoriumAgentow) dolaczPowiazania(ctx context.Context, agenci []Age
 	return nil
 }
 
-// napisyPowiazane czyta tabelę podrzędną o kształcie (agent_id, kod).
+// napisyPowiazane czyta tabelę podrzędną o kształcie (agent_id, kod) i grupuje wartości po numerze eksperta w jednym zapytaniu.
 func (r *repozytoriumAgentow) napisyPowiazane(ctx context.Context,
 	zapytanie, obszar string) (map[int64][]string, error) {
 
@@ -94,7 +90,7 @@ func (r *repozytoriumAgentow) napisyPowiazane(ctx context.Context,
 	return zebrane, wiersze.Err()
 }
 
-// uprawnienia czyta cztery grupy zakresu wszystkich ekspertów.
+// uprawnienia czyta cztery grupy zakresu wszystkich ekspertów jednym zapytaniem i grupuje wyniki po numerze eksperta.
 func (r *repozytoriumAgentow) uprawnienia(ctx context.Context) (map[int64][]UprawnienieAgenta, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, uprawnieniaAgentow)
 	if err != nil {

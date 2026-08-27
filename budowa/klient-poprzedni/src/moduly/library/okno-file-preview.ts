@@ -16,25 +16,15 @@ import { przeniesZasoby } from './zapisy-zbiorcze';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * File Preview — okno pomocnicze modułu (`library.file-preview`).
- *
- * Okno nie ma własnego wejścia: aktywuje się po wybraniu pliku w Library
- * Explorer. Bez wskazania stoi w stanie pustym i nie pyta rdzenia o nic.
- *
- * Robi dwie rzeczy: pokazuje zawartość bez opuszczania modułu
- * (`library.file.preview`, ze stronicowaniem) i przenosi plik do edycji we
- * właściwym module (`context.transfer`).
- *
- * „Zamknij" nie woła `window.close` — ta komenda zamyka okno komunikacji sesji,
- * a nie panel podglądu. Zamknięcie zdejmuje wskazanie pliku, a dymek okna mówi
- * dlaczego.
+ * Okno File Preview aktywuje się po wybraniu pliku w Library Explorer: pokazuje
+ * zawartość ze stronicowaniem i przenosi plik do edycji we właściwym module.
  */
 export interface OknoPodgladu {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Obudowa okna: nazwa i rola z wykazu okien operacyjnych oraz objaśnienie [?]. */
+/** Obudowa okna: nazwa i rola z wykazu okien operacyjnych oraz objaśnienie dostępne pod znakiem zapytania. */
 function utworzRame(): RamaOkna {
   return utworzRameOkna({
     kod: 'file-preview',
@@ -78,11 +68,7 @@ export function utworzOknoPodgladu(
     if (plik === null) return;
     okno.ladowanie(`Rdzeń przygotowuje podgląd pliku „${plik.name}" (strona ${strona}).`);
     const wynik = await stan.zrodlo.podglad(plik.id, strona);
-    // Ta odpowiedź jest jedynym świadkiem tego, czy repozytorium ma treść pliku
-    // (`dostepnosc-tresci.ts`), więc okno odkłada ją do wspólnego stanu. Dzięki
-    // temu wiersz w Library Explorerze mówi o braku treści bez drugiego
-    // wywołania. Werdykt bierze sam podgląd, nie powodzenie komendy: rdzeń
-    // odpowiada „ok" także wtedy, gdy zamiast treści oddaje odnośnik do niej.
+    // Ta odpowiedź jest jedynym świadkiem dostępności treści, więc okno ją odkłada do wspólnego stanu.
     stan.zapiszTresc(plik.id, werdyktZPodgladu(wynik.udany ? wynik.wynik?.preview : undefined, wynik.blad));
     if (!wynik.udany || wynik.wynik === undefined) {
       okno.blad(opisOdmowy('Podgląd pliku', wynik.blad?.code, wynik.blad?.message));
@@ -94,11 +80,7 @@ export function utworzOknoPodgladu(
     pasek.ustawStrone(
       podglad.pageCount === undefined ? `Strona ${strona}.` : `Strona ${strona} z ${podglad.pageCount}.`,
     );
-    // Odmowa i pustka to dwie różne rzeczy. Rdzeń odpowiedział, podgląd jest
-    // tekstowy i nie ma w nim ani jednego znaku — gałąź `okno.blad` należy się
-    // wyłącznie odpowiedzi, której rdzeń nie dał. Bez tej gałęzi okno
-    // przechodziłoby w stan gotowy i pokazywało pusty prostokąt, po którym nie
-    // da się rozpoznać, czy plik jest pusty, czy podgląd się nie udał.
+    // Odmowa i pustka to dwie różne rzeczy: błąd należy się wyłącznie odpowiedzi, której rdzeń nie dał.
     if (podglad.kind === LibraryPreviewKind.Text && (podglad.text ?? '') === '') {
       okno.puste(
         'Strona bez ani jednego znaku',
@@ -148,11 +130,7 @@ export function utworzOknoPodgladu(
     element: rama.element,
 
     odswiez() {
-      // Ster idzie pierwszy, przed każdym wyjściem z funkcji. Nastawę modułu
-      // docelowego zmienia także drugie okno (czynności zbiorcze Explorera),
-      // a poniższe gałęzie kończą odświeżanie wcześnie — przy braku wskazania
-      // i przy pliku niezmienionym. Postawiony niżej, ster pokazywałby wartość
-      // sprzed tamtej zmiany i przeniesienie poszłoby gdzie indziej, niż mówi.
+      // Ster idzie pierwszy, przed każdym wyjściem z funkcji, bo dalsze gałęzie kończą odświeżanie wcześnie.
       modul.odswiez();
       const plik = stan.czynny();
       if (plik === null) {

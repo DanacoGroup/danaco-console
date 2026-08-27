@@ -1,19 +1,4 @@
-/* ============================================================================
-   ASYSTENT PŁYWAJĄCY — favikon i okno dymkowe
-   ----------------------------------------------------------------------------
-   Ani jednej barwy zapisanej wprost: wszystkie wartości pochodzą z żetonów
-   motywu, więc oba motywy działają bez drugiego zestawu reguł.
-
-   Warstwa. Komponent nie wymyśla własnego z-index (`motyw/warstwy.css`).
-   Bierze `--dn-z-modal`, a nie `--dn-z-aod`: AOD jest osobnym bytem kontraktu
-   (`aod.voice.command`) i niezbudowaną kontrolką paska górnego, więc zajęcie
-   jego warstwy zapowiadałoby zderzenie. Warstwa jest niższa od
-   `--dn-z-powiadomienie`, bo odmowy tego dymka jadą powiadomieniem i mają być
-   widoczne ponad nim.
-
-   POŁOŻENIE. `position: fixed` względem okna dokumentu, prawy dolny róg —
-   poza obszarem roboczym powłoki, więc zmiana modułu niczego tu nie przesuwa.
-   ============================================================================ */
+/* Arkusz opisuje wyłącznie wygląd favikonu i okna dymkowego pływającego asystenta, budowany w całości z żetonów motywu, bez własnych barw. */
 
 .ap-warstwa {
   position: fixed;
@@ -31,8 +16,7 @@
   pointer-events: auto;
 }
 
-/* ── Favikon ─────────────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje wygląd okrągłego przycisku favikonu, który otwiera i zamyka dymek pływającego asystenta w prawym dolnym rogu okna. */
 .ap-favikon {
   position: relative;
   display: grid;
@@ -56,8 +40,7 @@
 
 .ap-favikon__znak { display: grid; place-content: center; }
 
-/* Znacznik kanału głosowego. Kształt niesie znaczenie obok barwy — stan nigdy
-   nie opiera się na samej barwie. */
+/* Znacznik kanału głosowego niesie znaczenie kształtem obok barwy, ponieważ stan nigdy nie opiera się na samej barwie. */
 .ap-favikon__kropka {
   position: absolute;
   right: -2px;
@@ -83,8 +66,7 @@
   color: var(--dn-sukces-tekst);
 }
 
-/* ── Dymek ───────────────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje wygląd dymku pokazującego treść pływającego asystenta po otwarciu favikonu w prawym dolnym rogu okna. */
 .ap-dymek {
   display: flex;
   flex-direction: column;
@@ -112,7 +94,7 @@
 .ap-dymek__tytul { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ap-dymek__podtytul { font-size: var(--dn-fs-xs); color: var(--dn-tekst-3); }
 
-/* Pas prawdy o głosie — stoi zawsze, w obu odpowiedziach. */
+/* Pas prawdy o głosie stoi zawsze widoczny w obu rodzajach odpowiedzi dymku, niezależnie od tego, czy odpowiedź jest potwierdzeniem, czy odmową. */
 .ap-dymek__glos {
   display: block;
   width: 100%;
@@ -136,7 +118,7 @@
   color: var(--dn-sukces-tekst);
 }
 
-/* Rozbieżność między profilem a widokiem — zwykle ukryta, bo zwykle jej nie ma. */
+/* Rozbieżność między profilem a widokiem jest zwykle ukryta w interfejsie, bo w praktyce zwykle takiej rozbieżności nie ma. */
 .ap-dymek__profil {
   margin: 0;
   padding: var(--dn-od-2) var(--dn-od-3);
@@ -164,8 +146,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* Okno nieustalone to nie usterka — dopóki rdzeń nie odpowiedział, zdanie
-   jest informacją. Odmowa i brak okna są wyróżnione, bo wstrzymują wysyłkę. */
+/* Okno nieustalone nie jest usterką, tylko informacją o tym, że rdzeń jeszcze nie odpowiedział; odmowa i brak okna są dodatkowo wyróżnione, bo wstrzymują wysyłkę. */
 .ap-dymek__okno[data-stan='odmowa'],
 .ap-dymek__okno[data-stan='brak-okna'] {
   background: var(--dn-ostrzezenie-tlo);
@@ -195,8 +176,7 @@
   resize: vertical;
 }
 
-/* Mikrofon nie jest wygaszany. Kreska ukośna mówi „niezbudowany",
-   a przycisk zostaje klikalny i odpowiada powodem. */
+/* Mikrofon nie jest wygaszany: kreska ukośna oznacza stan niezbudowany, a przycisk pozostaje klikalny i odpowiada podaniem powodu. */
 .ap-dymek__mikrofon { position: relative; }
 
 .ap-dymek__mikrofon[data-dziala='false'] { color: var(--dn-tekst-3); }
@@ -213,8 +193,7 @@
   transform: rotate(-45deg);
 }
 
-/* ── Wiersze rozmowy ─────────────────────────────────────────────────────── */
-
+/* Sekcja opisuje wygląd pojedynczych wierszy rozmowy umieszczonych wewnątrz dymku pływającego asystenta. */
 .ap-wypowiedz {
   display: flex;
   flex-direction: column;
@@ -259,8 +238,7 @@
 
 .ap-wypowiedz[data-rodzaj='rdzen'] .ap-wypowiedz__tresc { color: var(--dn-tekst-2); }
 
-/* Odmowa nie wygląda ani jak pustka, ani jak zwykły wpis. Operator ma z niej
-   odczytać, że coś się nie stało — i dlaczego. */
+/* Odmowa nie wygląda ani jak pustka, ani jak zwykły wpis, dzięki czemu operator odczytuje z niej, że coś się nie stało, i dlaczego. */
 .ap-wypowiedz[data-rodzaj='odmowa'] {
   max-width: 100%;
   background: var(--dn-blad-tlo);
@@ -270,12 +248,9 @@
 .ap-wypowiedz[data-rodzaj='odmowa'] .ap-wypowiedz__kto,
 .ap-wypowiedz[data-rodzaj='odmowa'] .ap-wypowiedz__tresc { color: var(--dn-blad-tekst); }
 
-/* ── Ślad posunięć asystenta ─────────────────────────────────────────────────
-   Poniższe reguły niosą wyłącznie kontrast i znaczenie stanu — żadnej nowej
-   ikonografii ani wariantów wizualnych, bo warstwa wizualna jest tymczasowa. */
+/* Ślad posunięć asystenta niesie tylko kontrast i znaczenie stanu, bez nowej ikonografii. */
 
-/* Znak pracy — kształt obok kropki głosu, po przeciwnej stronie przycisku,
-   żeby dwa różne stany nigdy nie zlały się w jeden znacznik. */
+/* Znak pracy stoi kształtem obok kropki głosu, po przeciwnej stronie przycisku, żeby dwa różne stany nigdy nie zlały się w jeden znacznik. */
 .ap-favikon__praca {
   position: absolute;
   left: -2px;
@@ -293,12 +268,10 @@
   box-shadow: 0 0 0 2px var(--dn-panel);
 }
 
-/* Obrys przycisku niesie pracę drugi raz — dla kogoś, kto patrzy na favikon
-   kątem oka i nie zauważy znacznika 16 px. */
+/* Obrys przycisku niesie informację o pracy drugi raz, dla operatora, który spogląda kątem oka i mógłby nie zauważyć znacznika o wysokości 16 pikseli. */
 .ap-favikon[data-pracuje='tak'] { box-shadow: var(--dn-cien-sygnal); }
 
-/* Licznik nieprzeczytanych posunięć: liczba, nie kropka. „Coś się stało"
-   i „stało się sześć rzeczy" to dla Operatora dwie różne wiadomości. */
+/* Licznik nieprzeczytanych posunięć pokazuje liczbę, nie samą kropkę, ponieważ jedno zdarzenie i sześć zdarzeń to dla operatora dwie różne wiadomości. */
 .ap-favikon__licznik {
   position: absolute;
   top: -4px;
@@ -317,7 +290,7 @@
   line-height: 1;
 }
 
-/* Wskaźnik pracy w dymku — to samo zdanie, co na favikonie, rozwinięte. */
+/* Wskaźnik pracy w dymku niesie to samo znaczenie co wskaźnik na favikonie, tyle że w formie rozwiniętej odpowiedniej dla większej powierzchni. */
 .ap-dymek__praca {
   margin: 0;
   padding: var(--dn-od-2) var(--dn-od-3);
@@ -332,8 +305,7 @@
   font-weight: var(--dn-fw-gruba);
 }
 
-/* Posunięcie nie jest wypowiedzią i nie ma wyglądać jak wypowiedź: asystent
-   nic nie powiedział, tylko coś w aplikacji zrobił. */
+/* Posunięcie nie jest wypowiedzią i celowo nie wygląda jak wypowiedź, ponieważ asystent nic nie powiedział, tylko wykonał działanie w aplikacji. */
 .ap-wypowiedz[data-rodzaj='posuniecie'] {
   max-width: 100%;
   align-self: stretch;

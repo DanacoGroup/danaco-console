@@ -142,3 +142,17 @@ spinner i dymek. Okno pracy z dokumentem ma własny arkusz. Kontrolki
 formularza modułu pochodzą z arkusza kontrolek formularza modeli, więc moduł
 wciąga też arkusz wspólny modeli — inaczej pola formularza byłyby bez oprawy
 wizualnej.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/asystent-plywajacy.css
+Komponent nie wymyśla własnego z-index, tylko bierze żeton `--dn-z-modal`
+z pliku motyw/warstwy.css, a nie `--dn-z-aod`: kanał AOD jest osobnym bytem
+kontraktu (aod.voice.command) i niezbudowaną kontrolką paska górnego, więc
+zajęcie jego warstwy zapowiadałoby zderzenie. Warstwa jest niższa od
+`--dn-z-powiadomienie`, bo odmowy tego dymka jadą powiadomieniem i mają być
+widoczne ponad nim. Położenie jest stałe względem okna dokumentu, w prawym
+dolnym rogu, poza obszarem roboczym powłoki, więc zmiana modułu niczego tu
+nie przesuwa.
+
+Reguły śladu posunięć asystenta niosą wyłącznie kontrast i znaczenie stanu,
+bez nowej ikonografii ani wariantów wizualnych, ponieważ warstwa wizualna
+całego komponentu jest tymczasowa.

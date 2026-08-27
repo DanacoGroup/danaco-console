@@ -5088,3 +5088,15 @@ dokąd pójść; zamiast niego stoi zdanie mówiące, czego brakuje.
 Rejestr sekcji w warstwie sekcji, nie katalog rdzenia, więc rama nie potrzebuje odczytu ani fazy ładowania
 na swoim poziomie. Jedyna rzecz, którą okno pamięta między otwarciami, to sekcja, na której operator
 skończył: tak samo jak okno konfiguracji, które nie wraca do pierwszej kategorii przy każdym otwarciu.
+
+## budowa/klient-poprzedni/src/moduly/translate/zgodnosc-odpowiedzi.ts
+Zdanie o skutku buduje się z odpowiedzi, a nie z żądania: okno wie, co wysłało, i wie, co rdzeń
+oddał, więc porównanie jest darmowe, a zdanie zbudowane z żądania mówiłoby prawdę tylko tak długo,
+jak długo rdzeń zapisuje dokładnie to, o co go poproszono. Rozbieżność jest odmową, nie uwagą na
+marginesie: gdy rdzeń oddał co innego, niż zamówiono, okno nie potwierdza czynności, mówi wprost,
+co wysłało i co wróciło, a przy zgodności zdanie potwierdza normalnie, bo o braku, którego rdzeń
+nie pokazał, okno nie orzeka. Znaki niewidoczne wychodzą kodem, bo przycinanie białych znaków
+w przeglądarce i w rdzeniu nie są tożsame: jedna strona nie zdejmuje znaku, który zdejmuje druga,
+i odwrotnie — gdyby rozbieżność padła na taki znak, dwa cytaty wyglądałyby w oknie identycznie,
+a operator zobaczyłby zarzut bez różnicy, dlatego każdy znak sterujący, formatujący i odstęp inny
+niż zwykła spacja wychodzi jako kod znaku.

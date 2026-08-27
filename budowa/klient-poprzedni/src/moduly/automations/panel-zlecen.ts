@@ -1,17 +1,4 @@
-/**
- * Panel Queue Managera — dwanaście czynności rodziny `queue.*` dotyczących
- * ZLECEŃ kolejki, jej polityki, zadań martwych i głębokości w czasie.
- *
- * Okno Queue Managera pokazywało dotąd kolejkę jako całość i mówiło wprost, że
- * wykazu zleceń rdzeń nie oddaje. Ten panel jest odpowiedzią na to zdanie:
- * `queue.item.list` oddaje zlecenia wraz z ładunkiem, próbami i terminem,
- * `queue.depth.get` — obciążenie w czasie, a jedenaście pozostałych czynności
- * posuwa pojedyncze zlecenie.
- *
- * Kolejka bierze się ze stanu modułu, a pole jej wskazania zostaje: Operator
- * bywa w Queue Managerze przy kolejce innej niż bieżąca automatyka, na przykład
- * kierując zlecenie do kolejki przeglądu ręcznego.
- */
+/** Panel dopełnia Queue Managera dwunastoma czynnościami rodziny komend kolejki: zleceniami, polityką, zadaniami martwymi i głębokością w czasie. */
 import { QueueAction, QueueItemStatus, QueueScope } from '../../../../shared/contract';
 import { pole, poleLiczbowe, poleTresci, wybor } from '../../modele/kontrolki-formularza';
 import {
@@ -25,23 +12,23 @@ import {
 import type { StanAutomatyki } from './stan-automatyki';
 import type { ZrodloAutomations } from './zrodlo-automations';
 
-/** Panel dopełniający Queue Managera. */
+/** Interfejs opisuje panel dopełniający Queue Managera: element gotowy do osadzenia w oknie obok wykazu kolejek. */
 export interface PanelZlecen {
   element: HTMLElement;
 }
 
-/** Stany zlecenia w wykazie zawężenia; pusta wartość znaczy „wszystkie”. */
+/** Stała wylicza stany zlecenia w wykazie zawężenia wraz z pozycją pustą, która znaczy wszystkie stany naraz. */
 const STANY_ZLECENIA: ReadonlyArray<readonly [string, string]> = [
   ['', 'wszystkie stany'],
   ...Object.values(QueueItemStatus).map((stan): readonly [string, string] => [stan, stan]),
 ];
 
-/** Działania silnika kolejek wprost z wyliczenia kontraktu — wykaz zupełny. */
+/** Stała wylicza działania silnika kolejek wprost z wyliczenia kontraktu, tworząc wykaz zupełny bez pominięć. */
 const DZIALANIA_SILNIKA: ReadonlyArray<readonly [string, string]> = Object.values(
   QueueAction,
 ).map((czynnosc): readonly [string, string] => [czynnosc, czynnosc]);
 
-/** Zasięgi kolejki wprost z wyliczenia kontraktu. */
+/** Stała wylicza zasięgi kolejki wprost z wyliczenia kontraktu, gotowe do wskazania w polu wyboru panelu. */
 const ZASIEGI: ReadonlyArray<readonly [string, string]> = Object.values(QueueScope).map(
   (zasieg): readonly [string, string] => [zasieg, zasieg],
 );
@@ -120,11 +107,7 @@ export function utworzPanelZlecen(
     return odczytany;
   }
 
-  // Działanie na kolejce SAMEJ — bez wskazania automatyki. Queue Manager musi
-  // umieć posunąć także kolejkę, która żadnej automatyki nie wykonuje: kolejkę
-  // przeglądu ręcznego, do której skierowano zlecenie po błędzie, albo kolejkę
-  // pętli sesyjnej. `automation.queue.action` wymagałby tu automatyki, której
-  // taka kolejka nie ma.
+  // Działanie na kolejce działa bez wskazania automatyki: obejmuje też kolejkę przeglądu ręcznego.
   const dzialanie = panel.dodajPole(
     'Działanie na kolejce',
     wybor('Działanie na kolejce', DZIALANIA_SILNIKA),

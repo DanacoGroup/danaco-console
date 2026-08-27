@@ -1,15 +1,15 @@
-# Wykaz biblioteki — 429 składników
+# Wykaz biblioteki — 431 składników
 
 Warstwa wspólna to trzynaście arkuszy. Okno składa się WYŁĄCZNIE z tych klas.
 Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundament.css, komponenty.css.
 
-## fundament.css — 9
+## fundament.css — 10
 ```
-.dn-dane .dn-etykieta-mono .dn-etykieta-wersalikowa .dn-kbd .dn-kod .dn-kod--wiersz .dn-separator
-.dn-separator--pionowy .dn-sr-only 
+.dn-dane .dn-etykieta-mono .dn-etykieta-wersalikowa .dn-kbd .dn-kod .dn-kod--schemat
+.dn-kod--wiersz .dn-separator .dn-separator--pionowy .dn-sr-only
 ```
 
-## komponenty.css — 244
+## komponenty.css — 245
 ```
 .dn-akcje .dn-akcje--poboczne .dn-akcje-tekst .dn-akcje-tekst--blad .dn-alert .dn-alert--blad
 .dn-alert--info .dn-alert--ostrzezenie .dn-alert--sukces .dn-alert--wstega .dn-alert-tresc .dn-alert-tytul
@@ -41,17 +41,17 @@ Arkusze do wpięcia w oknie wejściowym: fonty.css, zetony.css, ruch.css, fundam
 .dn-przewijane .dn-przewijane-suwak .dn-przewijane-szyna .dn-przybornik .dn-pusty-stan .dn-pusty-stan-opis
 .dn-pusty-stan-tytul .dn-radio .dn-scena .dn-scena--gora .dn-sila .dn-sila-odcinek
 .dn-sila-opis .dn-sila-tor .dn-spinner .dn-spis-tresci .dn-suwak .dn-szukaj
-.dn-szyna-modulu .dn-szyna-modulu-glowa .dn-szyna-modulu-lista .dn-tabela .dn-tabela-ikona-tekst .dn-tekst-ciagly
-.dn-tekst-ciagly--dokument .dn-tekst-ciagly--drobny .dn-tekst-ciagly--osadzony .dn-toast .dn-toast--blad .dn-toast--informacja
-.dn-toast--ostrzezenie .dn-toast--sukces .dn-toast-tresc .dn-toast-tytul .dn-toasty .dn-tooltip
-.dn-tooltip-tresc .dn-tor-krokow .dn-tor-krokow--na-ramie .dn-tor-krokow--pionowy .dn-tor-krokow-nr .dn-tor-krokow-poz
-.dn-tor-krokow-strzalka .dn-tozsamosc .dn-tozsamosc-poz .dn-tozsamosc-stopka .dn-tytul-okna .dn-tytul-okna--na-ramie
-.dn-tytul-okna--sm .dn-tytul-ze-znakiem .dn-tytul-znak .dn-tytul-znak--ostrzezenie .dn-tytul-znak--sukces .dn-uwydatnij
-.dn-wejscie-kaskada .dn-wpis .dn-wpis--czlowiek .dn-wpis--inteligencja .dn-wpis--pracuje .dn-wpis--system
-.dn-wpis-godzina .dn-wpis-medalion .dn-wpis-nadawca .dn-wpis-tozsamosc .dn-wpis-tresc .dn-wybor
-.dn-wybor--blokowy .dn-wybor--pole .dn-wybor-nazwa .dn-wybor-opis .dn-wykaz-cichy .dn-wykaz-modulu
-.dn-wykaz-modulu-poz .dn-zakladka .dn-zakladki .dn-zakladki--bez-kreski .dn-zakladki--pigulki .dn-zakladki--wybor
-.dn-zakladki--zawijane .dn-zestawienie .dn-zestawienie--cichy .dn-zestawienie-pole
+.dn-szyna-modulu .dn-szyna-modulu-glowa .dn-szyna-modulu-lista .dn-tabela .dn-tabela--tresc .dn-tabela-ikona-tekst
+.dn-tekst-ciagly .dn-tekst-ciagly--dokument .dn-tekst-ciagly--drobny .dn-tekst-ciagly--osadzony .dn-toast .dn-toast--blad
+.dn-toast--informacja .dn-toast--ostrzezenie .dn-toast--sukces .dn-toast-tresc .dn-toast-tytul .dn-toasty
+.dn-tooltip .dn-tooltip-tresc .dn-tor-krokow .dn-tor-krokow--na-ramie .dn-tor-krokow--pionowy .dn-tor-krokow-nr
+.dn-tor-krokow-poz .dn-tor-krokow-strzalka .dn-tozsamosc .dn-tozsamosc-poz .dn-tozsamosc-stopka .dn-tytul-okna
+.dn-tytul-okna--na-ramie .dn-tytul-okna--sm .dn-tytul-ze-znakiem .dn-tytul-znak .dn-tytul-znak--ostrzezenie .dn-tytul-znak--sukces
+.dn-uwydatnij .dn-wejscie-kaskada .dn-wpis .dn-wpis--czlowiek .dn-wpis--inteligencja .dn-wpis--pracuje
+.dn-wpis--system .dn-wpis-godzina .dn-wpis-medalion .dn-wpis-nadawca .dn-wpis-tozsamosc .dn-wpis-tresc
+.dn-wybor .dn-wybor--blokowy .dn-wybor--pole .dn-wybor-nazwa .dn-wybor-opis .dn-wykaz-cichy
+.dn-wykaz-modulu .dn-wykaz-modulu-poz .dn-zakladka .dn-zakladki .dn-zakladki--bez-kreski .dn-zakladki--pigulki
+.dn-zakladki--wybor .dn-zakladki--zawijane .dn-zestawienie .dn-zestawienie--cichy .dn-zestawienie-pole
 ```
 
 ## menu.css — 1

@@ -220,36 +220,10 @@
   .iu-podpis b { color: var(--dn-tekst-2); font-weight: var(--dn-fw-srednia); }
 
   /* ── Tabela skrótów ─────────────────────────────────────────────────────── */
-  .iu-tabela { width: 100%; max-width: 92ch; border-collapse: collapse; font-size: var(--dn-fs-sm); }
-  .iu-tabela caption {
-    padding-bottom: var(--dn-od-2);
-    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
-    color: var(--dn-tekst-3); text-align: left;
-  }
-  .iu-tabela th {
-    padding: var(--dn-od-1) var(--dn-od-3);
-    border-bottom: 1px solid var(--dn-obrys);
-    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs);
-    letter-spacing: var(--dn-ls-mono-wersaliki); text-transform: uppercase;
-    color: var(--dn-tekst-3); text-align: left; font-weight: var(--dn-fw-normalna);
-  }
-  .iu-tabela td {
-    padding: var(--dn-od-2) var(--dn-od-3);
-    border-bottom: 1px solid var(--dn-obrys-subtelny);
-    color: var(--dn-tekst-2); vertical-align: top;
-  }
-  .iu-tabela tr:last-child td { border-bottom: 0; }
+  /* Szerokość tabeli to rozmieszczenie: kolumna czytania ma 92 znaki. */
+  .dn-tabela--tresc { max-width: 92ch; }
   /* Zapis kombinacji krojem maszynowym: klawisze mają się czytać jako klawisze,
      a nie jako część zdania. */
-  .iu-klawisz {
-    display: inline-block;
-    padding: 1px var(--dn-od-2);
-    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-xs);
-    background: var(--dn-powierzchnia-2);
-    font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); color: var(--dn-tekst);
-    white-space: nowrap;
-  }
 
   /* ── Rozdziały zapowiedziane jednym akapitem ────────────────────────────── */
   .iu-zapowiedz {
@@ -643,8 +617,8 @@
         <button class="iu-poz" type="button"><span class="iu-poz-nr">7</span><span class="iu-poz-nazwa">Skróty klawiszowe</span></button>
         <button class="iu-poz" type="button"><span class="iu-poz-nr">8</span><span class="iu-poz-nazwa">Instrukcja instalacji</span></button>
         <button class="iu-poz" type="button"><span class="iu-poz-nr">9</span><span class="iu-poz-nazwa">Wersja i licencja</span></button>
-        <p class="iu-spis-nota">Pełna dokumentacja platformy otwiera się klawiszem <span class="iu-klawisz">F1</span>,
-          mapa skrótów — <span class="iu-klawisz">Ctrl + /</span>.</p>
+        <p class="iu-spis-nota">Pełna dokumentacja platformy otwiera się klawiszem <span class="dn-kbd">F1</span>,
+          mapa skrótów — <span class="dn-kbd">Ctrl + /</span>.</p>
       </nav>
 
       <!-- ══ TREŚĆ ══════════════════════════════════════════════════════ -->
@@ -958,35 +932,35 @@
               przypisywania własnych. Tabela poniżej jest jego częścią zasadniczą.</p>
           </div>
 
-          <table class="iu-tabela">
+          <table class="dn-tabela dn-tabela--tresc">
             <caption>Skróty klawiszowe — wybór</caption>
             <thead>
               <tr><th scope="col">Kombinacja</th><th scope="col">Czynność</th><th scope="col">Gdzie działa</th></tr>
             </thead>
             <tbody>
-              <tr><td><span class="iu-klawisz">Ctrl + K</span></td><td>Paleta poleceń — kursor w polu wyszukiwania wstążki</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + N</span></td><td>Nowa sesja</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Shift + N</span></td><td>Nowe okno aplikacji</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + O</span></td><td>Otwórz projekt</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + S</span></td><td>Zapisz sesję</td><td>przestrzeń robocza</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + B</span></td><td>Szyna sesji — pokaż albo ukryj</td><td>przedsionek i przestrzeń robocza</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Shift + B</span></td><td>Szyna nawigacji — pokaż albo ukryj</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + F</span></td><td>Znajdź w widoku</td><td>bieżący widok</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + H</span></td><td>Znajdź i zamień</td><td>bieżący widok</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Shift + F</span></td><td>Tryb skupienia</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">F11</span></td><td>Pełny ekran</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">F5</span></td><td>Odśwież widok</td><td>bieżący widok</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Tab</span></td><td>Następna karta sesji</td><td>przestrzeń robocza</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Shift + Tab</span></td><td>Poprzednia karta sesji</td><td>przestrzeń robocza</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + Home</span></td><td>Centrum dowodzenia</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + E</span></td><td>Przedsionek środowiska</td><td>przestrzeń robocza</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + =</span> · <span class="iu-klawisz">Ctrl + -</span></td><td>Powiększ albo pomniejsz widok</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">F1</span></td><td>Dokumentacja platformy</td><td>całość aplikacji</td></tr>
-              <tr><td><span class="iu-klawisz">Ctrl + /</span></td><td>Mapa skrótów klawiszowych</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + K</span></td><td>Paleta poleceń — kursor w polu wyszukiwania wstążki</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + N</span></td><td>Nowa sesja</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Shift + N</span></td><td>Nowe okno aplikacji</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + O</span></td><td>Otwórz projekt</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + S</span></td><td>Zapisz sesję</td><td>przestrzeń robocza</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + B</span></td><td>Szyna sesji — pokaż albo ukryj</td><td>przedsionek i przestrzeń robocza</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Shift + B</span></td><td>Szyna nawigacji — pokaż albo ukryj</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + F</span></td><td>Znajdź w widoku</td><td>bieżący widok</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + H</span></td><td>Znajdź i zamień</td><td>bieżący widok</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Shift + F</span></td><td>Tryb skupienia</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">F11</span></td><td>Pełny ekran</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">F5</span></td><td>Odśwież widok</td><td>bieżący widok</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Tab</span></td><td>Następna karta sesji</td><td>przestrzeń robocza</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Shift + Tab</span></td><td>Poprzednia karta sesji</td><td>przestrzeń robocza</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + Home</span></td><td>Centrum dowodzenia</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + E</span></td><td>Przedsionek środowiska</td><td>przestrzeń robocza</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + =</span> · <span class="dn-kbd">Ctrl + -</span></td><td>Powiększ albo pomniejsz widok</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">F1</span></td><td>Dokumentacja platformy</td><td>całość aplikacji</td></tr>
+              <tr><td><span class="dn-kbd">Ctrl + /</span></td><td>Mapa skrótów klawiszowych</td><td>całość aplikacji</td></tr>
             </tbody>
           </table>
-          <p class="iu-podpis">Skróty <span class="iu-klawisz">Ctrl + F</span>,
-            <span class="iu-klawisz">F1</span> i <span class="iu-klawisz">Ctrl + /</span> działają
+          <p class="iu-podpis">Skróty <span class="dn-kbd">Ctrl + F</span>,
+            <span class="dn-kbd">F1</span> i <span class="dn-kbd">Ctrl + /</span> działają
             niezależnie od tego, czy odpowiadające im kontrolki są widoczne na wstążce, czy zwinięte
             pod rozwinięciem „Więcej”. Własne kombinacje przypisuje się w polach przypisania skrótu:
             pole pozostaje czynne również wtedy, gdy kombinacja jest już zajęta — Operator dostaje

@@ -685,6 +685,38 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-tabela tbody tr[aria-selected='true'] { background: var(--dn-sygnal-tlo); }
 .dn-tabela td.dn-dane { font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 
+/* Wariant treściowy — tabela w dokumencie, nie siatka danych. Trzy różnice
+   wynikają z jednej: komórka niesie zdanie, nie wartość. Wysokość wiersza
+   przestaje być stała (zdanie łamie się na kilka linii), tekst równa się do
+   góry (inaczej pierwsza linia komórki jednolinijkowej wisi w połowie sąsiedniej
+   wielolinijkowej), a głowa nie przykleja się do krawędzi, bo dokument przewija
+   się w całości i przyklejony nagłówek zasłaniałby treść rozdziału. */
+.dn-tabela--tresc { font-size: var(--dn-fs-sm); }
+.dn-tabela--tresc th {
+  position: static;
+  height: auto;
+  padding: var(--dn-od-1) var(--dn-od-3);
+  background: none;
+  font-weight: var(--dn-fw-normalna);
+}
+.dn-tabela--tresc td {
+  height: auto;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  color: var(--dn-tekst-2);
+  vertical-align: top;
+}
+.dn-tabela--tresc tbody tr:last-child td { border-bottom: 0; }
+/* Podpis tabeli czyta się jak nadtytuł rozdziału, nie jak wiersz danych. */
+.dn-tabela caption {
+  padding-bottom: var(--dn-od-2);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  letter-spacing: var(--dn-ls-mono-wersaliki);
+  text-transform: uppercase;
+  color: var(--dn-tekst-3);
+  text-align: left;
+}
+
 /* ==========================================================================
    ZAKŁADKI · KARTY SESJI
    ========================================================================== */

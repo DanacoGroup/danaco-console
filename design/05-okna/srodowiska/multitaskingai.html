@@ -2846,7 +2846,9 @@
   });
 
   /* ═ 14 · WYSZUKIWANIE GLOBALNE — filtruje listy otwartej sekcji ══════ */
-  var szukaj = q('.dn-pasek-szukaj');
+  /* Pole wyszukiwania niesie zaczep `data-szukaj`; `.dn-pasek-szukaj` to inny
+     składnik — pole wpisane w pasek ramy, którego to okno nie ma. */
+  var szukaj = q('[data-szukaj]');
   szukaj.addEventListener('input', function () {
     var fraza = szukaj.value.trim().toLowerCase();
     var sekcja = q('[data-grupa-widoku="sekcja"][data-widok-aktywny="tak"]');

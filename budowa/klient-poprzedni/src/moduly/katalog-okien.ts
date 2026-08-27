@@ -5,80 +5,23 @@ import type { Kanal } from '../protokol/kanal';
 import { czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Katalog okien — jedno źródło prawdy o tym, których okien operacyjnych
- * swojego katalogu moduł nie zbudował.
- *
- * Liczba wpisana w pasek uczciwości na stałe rozjeżdża się z rdzeniem po cichu:
- * katalog okien zmienia migracja rdzenia, a napis nie jest z nim niczym
- * połączony. Ten byt liczy rozjazd z odczytu, więc pasek nie orzeka o czymś,
- * czego rdzeń nie powiedział.
- *
- * Byt stoi w korzeniu `moduly/`, a nie w module, bo tę samą potrzebę ma każdy
- * moduł kontraktu; kopia na moduł dałaby tyle samo rozjeżdżających się zdań
- * o jednym stanie produktu. Bliźniakiem jest `moduly/pokrycie-komend.ts`,
- * rozstrzygający to samo o komendach.
- *
- * Prawda pochodzi z `module.list`: rdzeń oddaje w
- * `Module.operationalWindowCodes` kody okien operacyjnych otwieranych wraz
- * z modułem, odpowiednik tabeli `okno_operacyjne`. Czego moduł buduje, rdzeń
- * nie wie i wiedzieć nie może — tę połowę podaje moduł.
- *
- * Okno rozmowy nie jest oknem operacyjnym modułu: katalog rdzenia niesie
- * `chat-window` w każdym module, a montuje je scena sesji, nie rejestr
- * modułów. Wykaz, który tego nie odejmuje, przypisuje każdemu modułowi brak
- * okna, które działa.
- *
- * Rozstrzygnięcia są cztery, bo każde znaczy co innego:
- *   `nieustalone`      rdzeń jeszcze nie odpowiedział albo odmówił; cisza nie
- *                      jest orzeczeniem o braku,
- *   `modul-nieznany`   rdzeń nie wymienia tego modułu wcale — katalogu jego
- *                      okien nie ma czym sprawdzić,
- *   `katalog-pelny`    moduł buduje każde okno operacyjne swojego katalogu,
- *   `katalog-szerszy`  katalog niesie kody, których moduł nie buduje — wykaz
- *                      okien niezbudowanych, liczony, nie napisany.
- * Niezależnie od nich wychodzi `pozaKatalogiem`: kod, który moduł buduje,
- * a rdzeń mu go nie przypisuje. To nie brak modułu, tylko rozjazd z rdzeniem.
- *
- * Odczyt jest jeden na połączenie, nie jeden na moduł — moduły pytające o ten
- * sam katalog dałyby tyle samo zbędnych zapytań. Katalog leży w pamięci
- * podręcznej przypisanej do kanału (`WeakMap`): pierwsze `odczytaj()` pyta,
- * pozostałe czekają na tę samą odpowiedź. Odmowa nie zostaje w pamięci, więc
- * kolejne `odczytaj()` ponawia pytanie.
- *
- * Unieważnienie: transport ponawia połączenie pod tym samym kanałem, więc po
- * zerwaniu można trafić na rdzeń o innym katalogu. Dlatego byt nasłuchuje
- * odpowiedzi `module.list` na całym kanale — każdy odczyt, także cudzy,
- * odświeża katalog bez ani jednego zapytania stąd. Powłoka może wymusić
- * zapomnienie wprost: `zapomnijKatalogOkien(kanal)`.
- *
- * Użycie:
- *
- *   const katalog = utworzKatalogOkien(kanal, 'design',
- *     ['design-board', 'preview-window', 'assets-panel', 'prompt-builder']);
- *   pasek.append(katalog.zdanieElement('dn-pole-opis md-uczciwosc__opis'));
- *   void katalog.odczytaj();   // raz po montażu modułu
- *   // przy zamknięciu modułu: katalog.zamknij();
- */
+/** Katalog okien — jedno źródło prawdy o oknach operacyjnych, których moduł nie zbudował. */
 
-/** Zdanie wypowiadane, dopóki rdzeń nie odpowiedział. */
+/** Zdanie wypowiadane w pasku uczciwości, dopóki rdzeń nie odpowiedział na odczyt katalogu okien modułu. */
 export const KATALOG_W_ODCZYCIE = 'Katalog okien rdzenia dla tego modułu — odczyt w toku…';
 
-/** Rozstrzygnięcie o katalogu modułu; ta sama wartość idzie w `data-katalog`. */
+/** Rozstrzygnięcie o katalogu modułu wynikające z porównania z rdzeniem; ta sama wartość trafia do atrybutu przechowującego stan. */
 export type StanKataloguOkien =
   | 'nieustalone'
   | 'modul-nieznany'
   | 'katalog-pelny'
   | 'katalog-szerszy';
 
-/** Rozjazd katalogu rdzenia z oknami, które moduł naprawdę buduje. */
+/** Rozjazd katalogu okien rdzenia z oknami, które moduł naprawdę buduje, wraz z ewentualną odmową odczytu. */
 export interface RozjazdOkien {
   /** Rozstrzygnięcie zbiorcze — bez pytania o szczegóły. */
   stan: StanKataloguOkien;
-  /**
-   * Kody okien operacyjnych katalogu rdzenia bez okna rozmowy, w kolejności
-   * podanej przez rdzeń. Puste, dopóki rdzeń nie orzekł.
-   */
+  /** Kody okien operacyjnych katalogu rdzenia bez okna rozmowy, w kolejności podanej przez rdzeń. */
   wKatalogu: readonly string[];
   /** Kody katalogu, które moduł buduje. */
   zbudowane: readonly string[];
@@ -90,18 +33,13 @@ export interface RozjazdOkien {
   odmowa: string;
 }
 
-/** Katalog okien modułu wraz z paskami, które z niego biorą swoje zdanie. */
+/** Katalog okien modułu wraz z paskami uczciwości, które biorą z niego swoje zdanie o rozjeździe z rdzeniem. */
 export interface KatalogOkien {
   /** Rozjazd bez budowania czegokolwiek — dla okien liczących coś własnego. */
   rozjazd(): RozjazdOkien;
   /** Samo zdanie paska uczciwości — dla modułów budujących nośnik własny. */
   zdanie(): string;
-  /**
-   * Akapit paska uczciwości przerysowujący się po każdej zmianie katalogu.
-   *
-   * @param klasa klasa rodziny modułu; nazwy klas należą do modułu,
-   *   więc ten plik żadnej nie narzuca.
-   */
+  /** Akapit paska uczciwości przerysowujący się po każdej zmianie katalogu; klasa należy do modułu. */
   zdanieElement(klasa?: string): HTMLElement;
   /** Przerysowanie kontrolki własnej po każdej zmianie katalogu. Woła się od razu. */
   naOdczyt(przerysuj: () => void): void;
@@ -114,18 +52,14 @@ export interface KatalogOkien {
 }
 
 /**
- * Czy kod wskazuje okno rozmowy — w obu postaciach, jakie niesie rdzeń.
- *
- * Rdzeń podaje `chat-window` bez przedrostka, a dopuszcza także postać
- * `<kod modułu>.chat-window`. Obie są prawdziwe, więc sprawdzane są obie —
- * inaczej pasek wymieniałby okno rozmowy jako niezbudowane w każdym module,
- * choć okno rozmowy działa.
+ * Czy kod wskazuje okno rozmowy, w obu postaciach niesionych przez rdzeń: bez przedrostka
+ * modułu albo z przedrostkiem kodu modułu — obie postacie sprawdzane są łącznie.
  */
 export function czyOknoRozmowy(kod: string): boolean {
   return kod === 'chat-window' || kod.endsWith('.chat-window');
 }
 
-/** Odczyt katalogu okien — jeden na połączenie. */
+/** Odczyt katalogu okien wspólny całemu kanałowi połączenia — jeden odczyt na połączenie, nie na moduł. */
 interface Odczyt {
   /** Katalog po kodzie modułu; `null` = rdzeń jeszcze nie orzekł. */
   katalog: ReadonlyMap<string, readonly string[]> | null;
@@ -133,7 +67,7 @@ interface Odczyt {
   odmowa: string;
 }
 
-/** Wpis pamięci podręcznej jednego kanału. */
+/** Wpis pamięci podręcznej jednego kanału, niosący ostatni odczyt oraz zależne od niego kontrolki modułów. */
 interface WpisPamieci {
   odczyt: Odczyt;
   /** Odczyt w drodze — wszystkie moduły kanału czekają na jedną odpowiedź. */
@@ -145,14 +79,8 @@ interface WpisPamieci {
 const pamiec = new WeakMap<Kanal, WpisPamieci>();
 
 /**
- * Katalog okien jednego modułu.
- *
- * @param kanal kanał modułu; moduł nie sięga po niego sam.
- * @param kodModulu kod modułu w katalogu rdzenia — kolumna `modul.kod`, nie
- *   identyfikator wiersza i nie nazwa pozycji nawigacji.
- * @param zbudowane kody okien operacyjnych, które moduł naprawdę buduje. Tego
- *   rdzeń nie wie i wiedzieć nie może; okno rozmowy pomija się, bo montuje je
- *   scena sesji.
+ * Katalog okien jednego modułu, budowany z kanału modułu, kodu modułu w katalogu rdzenia
+ * i kodów okien operacyjnych, które moduł naprawdę buduje z pominięciem okna rozmowy.
  */
 export function utworzKatalogOkien(
   kanal: Kanal,
@@ -214,7 +142,7 @@ export function zapomnijKatalogOkien(kanal: Kanal): void {
   zapisz(wpisPamieci(kanal), { katalog: null, odmowa: '' });
 }
 
-/** Wpis kanału wraz z nasłuchem odczytów — zakładany raz na kanał. */
+/** Wpis pamięci podręcznej kanału wraz z nasłuchem cudzych odczytów katalogu — zakładany raz na cały kanał. */
 function wpisPamieci(kanal: Kanal): WpisPamieci {
   const znany = pamiec.get(kanal);
   if (znany !== undefined) return znany;
@@ -224,8 +152,7 @@ function wpisPamieci(kanal: Kanal): WpisPamieci {
     zalezni: new Set(),
   };
   pamiec.set(kanal, swiezy);
-  // Odczyt cudzy jest tą samą odpowiedzią co własny: powłoka pyta o moduły przy
-  // budowie nawigacji, więc katalog odświeża się sam, bez zapytania stąd.
+  // Odczyt cudzy jest tą samą odpowiedzią co własny: katalog odświeża się sam, bez zapytania stąd.
   kanal.naDowolny((koperta) => {
     if (koperta.type !== Command.ModuleList || koperta.status !== EnvelopeStatus.Ok) return;
     const moduly = (koperta.payload as ModuleListResponse | undefined)?.modules;
@@ -235,7 +162,7 @@ function wpisPamieci(kanal: Kanal): WpisPamieci {
   return swiezy;
 }
 
-/** Pyta rdzeń o katalog okien, jeśli nikt jeszcze nie zapytał ani nie wie. */
+/** Pyta rdzeń o katalog okien wyłącznie wtedy, gdy nikt jeszcze nie zapytał ani odpowiedzi jeszcze nie zna. */
 async function zapewnijOdczyt(kanal: Kanal): Promise<void> {
   const wspolny = wpisPamieci(kanal);
   if (wspolny.odczyt.katalog !== null) return;
@@ -248,7 +175,7 @@ async function zapewnijOdczyt(kanal: Kanal): Promise<void> {
   wspolny.wToku = null;
 }
 
-/** Jeden odczyt `module.list` i zapis jego wyniku — udanego albo odmownego. */
+/** Jeden odczyt katalogu modułów rdzenia i zapis jego wyniku we wspólnej pamięci — udanego albo odmownego. */
 async function odczytajModuly(kanal: Kanal, wspolny: WpisPamieci): Promise<void> {
   const wynik = sprawdzKsztalt(
     await wywolaj(kanal, Command.ModuleList, {}),
@@ -265,7 +192,7 @@ async function odczytajModuly(kanal: Kanal, wspolny: WpisPamieci): Promise<void>
   zapisz(wspolny, { katalog: zlozKatalog(wynik.wynik.modules), odmowa: '' });
 }
 
-/** Katalog po kodzie modułu, z odjętym oknem rozmowy. */
+/** Katalog okien operacyjnych po kodzie modułu rdzenia, z odjętym oknem rozmowy niemontowanym przez moduł. */
 function zlozKatalog(moduly: ModuleListResponse['modules']): ReadonlyMap<string, readonly string[]> {
   const katalog = new Map<string, readonly string[]>();
   for (const modul of moduly) {
@@ -274,13 +201,13 @@ function zlozKatalog(moduly: ModuleListResponse['modules']): ReadonlyMap<string,
   return katalog;
 }
 
-/** Zapis odczytu i przerysowanie wszystkich pasków wszystkich modułów. */
+/** Zapis wyniku odczytu we wspólnej pamięci i przerysowanie wszystkich pasków wszystkich zależnych modułów. */
 function zapisz(wspolny: WpisPamieci, odczyt: Odczyt): void {
   wspolny.odczyt = odczyt;
   for (const przerysuj of wspolny.zalezni) przerysuj();
 }
 
-/** Rozjazd katalogu rdzenia z oknami modułu — same kody, bez składania zdania. */
+/** Rozjazd katalogu okien rdzenia z oknami, które moduł buduje — same kody bez składania zdania czytelnego dla Operatora. */
 function zlozRozjazd(
   odczyt: Odczyt,
   kodModulu: string,
@@ -297,8 +224,7 @@ function zlozRozjazd(
   }
   const wKatalogu = odczyt.katalog.get(kodModulu);
   if (wKatalogu === undefined) {
-    // Moduł nieznany rdzeniowi: kodów budowanych nie nazywamy wtedy
-    // „poza katalogiem" — katalogu nie ma z czym porównać.
+    // Moduł nieznany rdzeniowi: kodów budowanych nie nazywamy „poza katalogiem” — nie ma z czym porównać.
     return { stan: 'modul-nieznany', ...puste, odmowa: odczyt.odmowa };
   }
   const stoiWKatalogu = new Set(wKatalogu);
@@ -354,19 +280,14 @@ function zdanieRozjazdu(rozjazd: RozjazdOkien, kodModulu: string): string {
   }
 }
 
-/** Kody okien jako część zdania, z liczbą pojedynczą i mnogą. */
+/** Kody okien operacyjnych złożone jako część zdania paska, z rozróżnieniem liczby pojedynczej i mnogiej. */
 function nazwijOkna(kody: readonly string[]): string {
   return kody.length === 1 ? `okno ${kody[0]}` : `okna ${kody.join(', ')}`;
 }
 
 /**
- * Liczba wraz z odmienionym „okno operacyjne” — rzeczownik i przymiotnik.
- *
- * Zdanie składane z samej liczby brzmi „4 okien operacyjnych", czyli
- * niepoprawnie. Polszczyzna ma tu trzy przypadki: 1 → „okno operacyjne",
- * 2–4 → „okna operacyjne", reszta → „okien operacyjnych", z wyjątkiem nastek
- * (12, 13, 14), które idą jak reszta. Odmiana stoi w jednym miejscu, bo liczba
- * i końcówka rozjeżdżają się przy przepisywaniu.
+ * Liczba wraz z odmienionym rzeczownikiem „okno operacyjne”: jeden przypadek dla liczby jeden,
+ * drugi dla dwóch do czterech z wyjątkiem nastek, trzeci dla pozostałych liczb.
  */
 function odmien(ile: number): string {
   const nastka = ile % 100;

@@ -1282,3 +1282,43 @@ dopisane w oknie do stanu, który zna drzewo postaci.
 Nazwa nośnika podana przez Operatora ma pierwszeństwo przy nastawach strony
 i nie jest sprawdzana wykazem, ponieważ wykaz nośników stoi w module Design,
 do którego ten odcinek nie sięga.
+
+## adapter_modul_design_ikony_kroj.go
+
+Krój ikonowy trzeba złożyć, nie tylko zapisać: trzeba zbudować tabele
+TrueType. Biblioteka Go, która pisze krój od zera, w tym drzewie nie ma —
+`tdewolff/font` krój czyta i przepisuje, ale złożenie go z konturów wymagałoby
+zbudowania wszystkich tych samych tabel. Zapis stoi więc w rdzeniu, w jednym
+pliku, i jest wkompilowany.
+
+Ikony katalogu są rysowane kreską (`stroke`), a glif kroju jest obszarem
+wypełnianym — kreska idzie więc przez `Path.Stroke` biblioteki
+`tdewolff/canvas`, którego obrys staje się konturem glifu. Bez tego kroku
+wszystkie glify wyszłyby jako cienkie zamknięte pętle albo jako plamy,
+zależnie od kształtu.
+
+Obrys kreski wychodzi z biblioteki jako łamana, bo `Path.Stroke` spłaszcza
+krzywe do odcinków. Łamana zapisana wprost do tabeli `glyf` dawała plik kilka
+razy większy niż potrzeba, dlatego jest tu dopasowywana z powrotem do krzywych
+kwadratowych, tych samych, którymi TrueType opisuje glif
+(`dopasujKrzyweKonturuDesignu`). Naroża są rozpoznawane i nigdy nie wchodzą
+w środek krzywej: krzywa przeciągnięta przez naroże zaokrągliłaby kształt,
+który ma zostać ostry.
+
+`dopasujKrzyweKonturuDesignu` biegnie zachłannie: od każdego wierzchołka bieg
+przedłuża się tak długo, jak cały jego ciąg mieści się w tolerancji — najpierw
+jako odcinek, a gdy odcinek nie mieści się, jako krzywa. Bieg zachłanny nie
+daje zapisu najkrótszego z możliwych, ale daje zapis kilka razy krótszy od
+łamanej, w jednym przejściu po konturze. Naroża wyznacza się z góry i bieg
+zawsze się na nich urywa — krzywa przeciągnięta przez naroże zaokrągliłaby
+kształt po obu jego stronach mimo przejścia przez sam wierzchołek. Kontur
+obraca się tak, żeby zaczynał się od naroża, inaczej naroże wypadające na
+styku końca i początku konturu zostałoby zaokrąglone.
+
+Ikony nie są literami, więc nie mają własnych punktów kodowych Unicode. Krój
+przypisuje im kolejne punkty obszaru prywatnego od U+E000 — tak robią
+wszystkie kroje ikonowe i tego oczekuje arkusz stylów, który je odczyta.
+
+Ikona, z której nie da się wyciągnąć ani jednej ścieżki, jest odmową całego
+pakietu składania kroju: krój z pustym glifem w środku wygląda jak krój
+gotowy, a w miejscu tej ikony pokazuje nic.

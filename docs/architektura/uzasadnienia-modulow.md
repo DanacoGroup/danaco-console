@@ -853,3 +853,35 @@ przypięcie, nie proces.
 
 Identyfikatorem urządzenia w kontrakcie jest numer wiersza katalogu maszyn;
 tak samo czyta go rodzina komend accessPoint.
+
+## budowa/server/internal/core/adapter_modul_przegladarka_inspekcja.go
+
+Wszystkie pięć komend tego modułu wymagają strony wykonanej, nie jej źródła:
+drzewo elementów po zbudowaniu przez skrypty, rejestr żądań, komunikaty
+konsoli, metryki emulowanego urządzenia i stan po przewinięciu istnieją
+dopiero wtedy, gdy stronę ktoś naprawdę uruchomił. Dlatego idą silnikiem
+przeglądarki, nie samym pobraniem HTTP, i dlatego odmawiają wprost, gdy
+silnika na maszynie nie ma, zamiast oddawać puste wykazy udające inspekcję.
+
+Adres strony bierze się z ostatniej migawki okna: kontrakt nie niesie w tych
+żądaniach pola adresu, tylko pyta o bieżącą stronę okna, a bieżącą stroną
+jest ta, dokąd okno ostatnio przeszło. Okno bez migawki dostaje odmowę
+`not_found`.
+
+Zapis wytworu rejestru sieciowego ląduje w magazynie modułu, a pole `harRef`
+odpowiedzi wskazuje plik, który naprawdę leży na dysku, nie sam rejestr
+osadzony w treści odpowiedzi.
+
+Przewinięcie strony jest czynnością na stronie żywej, więc idzie silnikiem,
+a jego skutek widać dopiero w migawce pobranej po przewinięciu: tekst po
+przewinięciu bywa inny niż przed nim, bo treść bywa dogrywana przy
+przewijaniu, a położenie przewinięcia jest mierzone, nie zakładane.
+
+Nastawa emulacji nazwana daje wymiary urządzenia typowe dla tej nazwy,
+nastawa `custom` bierze wymiary z pól żądania, a nastawa `reset` wraca do
+wymiarów biurka — zdjęcie emulacji też jest emulacją o znanych metrykach,
+nie brakiem odpowiedzi.
+
+Nazwa poziomu komunikatu konsoli nierozpoznana przez rdzeń spada na poziom
+`log`: komunikat ma się pokazać Operatorowi, a nie zniknąć przez nieznane
+słowo w polu poziomu zdarzenia protokołu.

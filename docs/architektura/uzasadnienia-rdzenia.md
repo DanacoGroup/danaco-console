@@ -5059,3 +5059,14 @@ nie bierze nadajnika, bo zdarzenie spoza kontraktu dałoby klientowi nazwę,
 której nie zna nikt poza rdzeniem. Port niewypełniony nie rejestruje niczego:
 obie komendy odpowiedzą wtedy komendą nieznaną, a pozostałe domeny pracują
 bez zmian.
+
+## budowa/server/internal/core/handlers_narzedzia_media.go
+Adapter wraz z rozstrzygnięciami leży w plikach adaptera narzędzi mediów,
+a jedyna droga wołania binarium leży w pakiecie wywołań zewnętrznych. Trzeciej
+komendy rodziny nie ma i rdzeń jej nie wymyśli: nazwa spoza kontraktu byłaby
+nazwą, której nie zna nikt poza rdzeniem. Rodzina nie ma zdarzeń: kontrakt
+nie zna zdarzenia zmiany mediów, więc żadna z komend niczego nie rozgłasza
+i port nie bierze nadajnika, mimo że przetworzenie zakłada zasób —
+rozgłoszenie własnego zdarzenia dałoby klientowi kopertę, której nie zna jego
+strona kontraktu. Port niewypełniony nie rejestruje niczego: obie komendy
+odpowiedzą wtedy komendą nieznaną, a pozostałe domeny pracują bez zmian.

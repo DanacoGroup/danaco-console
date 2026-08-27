@@ -1,33 +1,7 @@
 // Podział dokumentu na fragmenty, czyli na jednostki wchodzące do wskaźnika
 // i wracające w odpowiedzi jako cytat. Wektor liczony jest z fragmentu, więc
-// granica fragmentu jest granicą znaczenia.
-//
-// Jednostką podziału jest akapit, a w jego braku zdanie: akapit to myśl
-// wydzielona przez autora tekstu, natomiast cięcie co N znaków rozłupuje zdanie
-// w połowie słowa i daje cytat bezużyteczny. Tekst rozpada się najpierw na
-// akapity (pusty wiersz); akapit krótszy niż docelowa długość doklejany jest do
-// sąsiada, dopóki mieści się w granicy, bo akapit jednozdaniowy osadzony osobno
-// niesie za mało kontekstu, żeby dać się odróżnić od innego jednozdaniowego.
-// Akapit dłuższy od granicy rozpada się na zdania (kropka, wykrzyknik, pytajnik,
-// koniec wiersza), a zdanie dłuższe od granicy cięte jest po ostatniej spacji
-// przed granicą, nigdy w środku słowa.
-//
-// Każdy fragment poza pierwszym zaczyna się od ostatniego zdania fragmentu
-// poprzedniego. Bez tej zakładki zdanie stojące na styku dwóch fragmentów traci
-// połowę kontekstu po każdej stronie granicy; koszt zakładki to około jednej
-// piątej więcej wektorów.
-//
-// Granica 1100 znaków wynika z okna modelu, przy którym te liczby powstały:
-// `paraphrase-multilingual-mpnet-base-v2` obcinał wejście na 384 tokenach
-// podziału XLM-R, a polszczyzna kosztuje w nim około trzech znaków na token.
-// Fragment dłuższy niż okno zostaje obcięty po cichu, a cytat byłby wtedy
-// dłuższy niż to, co model przeczytał. Model domyślny jest dziś inny — `bge-m3`
-// przyjmuje 8192 tokeny (`max_position_embeddings` w opisie jego wag) — więc
-// okno przestało być ciasne i granica przestała być jego odwzorowaniem.
-// Zostaje jednak nietknięta, bo jest zarazem granicą cytatu: fragment jest tym,
-// co wraca Operatorowi i modelowi jako przytoczenie, a przytoczenie na kilka
-// tysięcy znaków przestaje być przytoczeniem. Docelowe 700 znaków zostawia pod
-// tą granicą zapas na zakładkę i na słowa łamane na kilka tokenów.
+// granica fragmentu jest granicą znaczenia. Jednostką podziału jest akapit,
+// a w jego braku zdanie.
 package wiedza
 
 import "strings"
@@ -36,16 +10,15 @@ const (
 	// minimalnaDlugoscFragmentu — poniżej tej granicy fragment przestaje nieść
 	// kontekst i wektory zaczynają się zlewać.
 	minimalnaDlugoscFragmentu = 200
-	// granicaFragmentu — twardy sufit długości przytoczenia (patrz nagłówek).
+	// granicaFragmentu — twardy sufit długości przytoczenia, licznik znaków
+	// tekstu cytatu wracającego Operatorowi.
 	granicaFragmentu = 1100
 )
 
 // Fragment to jedna jednostka wskaźnika: kawałek treści wraz z jego miejscem
-// w dokumencie źródłowym.
+// w dokumencie źródłowym, licznikiem kolejności i tekstem cytatu.
 type Fragment struct {
-	// Kolejnosc — numer fragmentu w dokumencie, liczony od zera. Wchodzi do
-	// tożsamości wiersza wskaźnika, żeby powtórne indeksowanie tego samego
-	// dokumentu nadpisywało fragmenty, a nie dokładało ich drugi komplet.
+	// Kolejnosc — numer fragmentu w dokumencie, liczony od zera.
 	Kolejnosc int
 	// Tresc — sam tekst fragmentu, ten, który wróci Operatorowi jako cytat.
 	Tresc string
@@ -78,7 +51,8 @@ func Podziel(tresc string, dlugosc int) []Fragment {
 	return fragmenty
 }
 
-// naCzesci składa akapity i zdania w kawałki nieprzekraczające granicy.
+// naCzesci składa akapity i zdania w kawałki nieprzekraczające granicy
+// długości fragmentu wskaźnika znaczenia.
 func naCzesci(tresc string, dlugosc int) []string {
 	czesci := []string{}
 	biezacy := strings.Builder{}
@@ -104,8 +78,7 @@ func naCzesci(tresc string, dlugosc int) []string {
 			dolacz(akapit)
 			continue
 		}
-		// Akapit dłuższy od granicy: rozkładamy go na zdania, a zdanie dłuższe
-		// od granicy — na kawałki cięte po ostatniej spacji.
+		// Akapit dłuższy od granicy rozkłada się na zdania.
 		for _, zdanie := range zdania(akapit) {
 			for len(zdanie) > dlugosc {
 				ciecie := ostatniaSpacja(zdanie, dlugosc)
@@ -121,7 +94,8 @@ func naCzesci(tresc string, dlugosc int) []string {
 	return czesci
 }
 
-// akapity rozdziela tekst pustym wierszem i odrzuca wiersze puste.
+// akapity rozdziela tekst pustym wierszem i odrzuca wiersze puste,
+// zwracając wykaz oczyszczony z bieli.
 func akapity(tresc string) []string {
 	surowe := strings.Split(strings.ReplaceAll(tresc, "\r\n", "\n"), "\n\n")
 	wynik := make([]string, 0, len(surowe))
@@ -133,12 +107,8 @@ func akapity(tresc string) []string {
 	return wynik
 }
 
-// zdania dzieli akapit na zdania po znakach kończących wypowiedzenie.
-//
-// Znak kończący zostaje przy zdaniu, bo bez kropki cytat wyglądałby na urwany.
-// Skróty pisane z kropką („ul.", „art.") rozdzielą tu zdanie w miejscu, które
-// zdaniem nie jest; skutek jest kosmetyczny — fragment o jedno zdanie krótszy —
-// a obroną byłby dopiero słownik skrótów polszczyzny utrzymywany w rdzeniu.
+// zdania dzieli akapit na zdania po znakach kończących wypowiedzenie. Znak
+// kończący zostaje przy zdaniu, bo bez kropki cytat wyglądałby na urwany.
 func zdania(akapit string) []string {
 	wynik := []string{}
 	poczatek := 0
@@ -157,11 +127,9 @@ func zdania(akapit string) []string {
 	return wynik
 }
 
-// ostatnieZdanie oddaje końcówkę kawałka przeznaczoną na zakładkę.
-// Zdanie dłuższe niż `granica` zostaje przycięte od przodu, żeby zakładka nie
-// wypełniła sobą fragmentu. Cięcie pada na pierwszej spacji za granicą liczoną
-// od końca, a gdy spacji tam nie ma — na najbliższym początku znaku UTF-8, więc
-// zakładka nie zaczyna się od rozłupanej litery.
+// ostatnieZdanie oddaje końcówkę kawałka przeznaczoną na zakładkę. Zdanie
+// dłuższe niż `granica` zostaje przycięte od przodu, żeby zakładka nie
+// wypełniła sobą fragmentu.
 func ostatnieZdanie(czesc string, granica int) string {
 	lista := zdania(czesc)
 	if len(lista) == 0 {

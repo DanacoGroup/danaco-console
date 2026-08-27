@@ -767,3 +767,75 @@ rozszerzenia.
 Wsad puszcza ten sam zestaw czynności na każdym zasobie osobno, przez te same uchwyty, którymi jadą czynności pojedyncze; nie ma tu drugiej drogi rachunku, bo gdyby wsad liczył po swojemu, wynik wsadowy różniłby się od pojedynczego. Zasób, którego nie udało się przetworzyć, wraca w bilansie polem failedAssetIds razem z powodem — wsad na stu zdjęciach, z których trzy padły, wyglądałby bez tego pola jak wsad kompletny, a brak wyszedłby na jaw dopiero przy przeglądaniu wyników.
 
 Metadane zasobu są pomiarem z pliku, nie echem wiersza bazy: odczyt czyta nagłówek pliku leżącego w magazynie, biorąc wymiary, format, model barwny, obecność kanału krycia, rozdzielczość i pola EXIF. Wiersz bazy niesie tylko to, co zmierzono przy wniesieniu, a plik może być jedyną prawdą o tym, co użytkownik naprawdę ma.
+## adapter_modul_studio_wejscie_tekst.go
+
+Rozpoznanie zapisu znaków jest tu osobną pracą, bo pliki Operatora bywają
+starsze niż UTF-8. Pismo urzędowe pisane w Windows-1250, wczytane jako
+UTF-8, daje albo błąd, albo tekst z krzaczkami w miejscu liter „ą", „ę",
+„ł" — a krzaczki są gorsze niż odmowa, bo model przeczyta je jako słowa
+i zacznie na nich pracować. Dlatego zapis znaków rozpoznaje się przed
+rozbiorem treści, a rozpoznanie wychodzi kontraktem w bilansie, żeby
+Operator wiedział, jak rdzeń odczytał jego plik.
+
+Rozpoznanie idzie bibliotekami `golang.org/x/net/html/charset`
+i `golang.org/x/text/encoding`, obiema z rodziny wzorcowej Go, już
+obecnymi w drzewie zależności. Kolejność rozstrzygania: znacznik
+kolejności bajtów, potem deklaracja w treści — nagłówek XML albo
+`meta charset` HTML — potem sprawdzenie poprawności UTF-8, a na końcu
+miara rozkładu bajtów rozstrzygająca między stronami kodowymi używanymi
+w polskich dokumentach.
+
+Wskazanie zapisu znaków przez Operatora ma pierwszeństwo nad rozpoznaniem: kto
+wie, w czym jest jego plik, wie to lepiej niż miara rozkładu bajtów; wskazanie
+nazwy nieznanej jest jednak odmową, nie cichym zejściem na UTF-8, inaczej
+Operator dostałby krzaczki i myślał, że jego wskazanie zadziałało.
+
+Rozpoznanie po rozkładzie bajtów, między stronami kodowymi jednobajtowymi,
+nie jest odczytem deklaracji, tylko zgadywaniem — dlatego wychodzi w bilansie,
+żeby Operator wiedział, że rdzeń zgadywał, a nie czytał wprost.
+
+Miara polskości jest miarą, nie dowodem, dlatego nazwa zapisu rozpoznanego
+tą miarą idzie do bilansu wniesienia, żeby Operator wiedział, że rdzeń
+zgadywał, a nie odczytał deklaracji wprost.
+
+Rozbiór markdown jest własny, wierszowy, a nie przez bibliotekę `goldmark`:
+potrzebny jest tu przekład na style nazwane i bloki dokumentu, nie na HTML,
+który `goldmark` oddaje, a przekład HTML na postać dokumentu drugą drogą
+byłby dłuższy i gubiłby to samo.
+
+Styl „kod" nie stoi w arkuszu domyślnym dokumentu, więc krój stałej
+szerokości bloku kodu idzie postacią znaku wprost — to strata nazwana
+w bilansie, nie przemilczana.
+
+Szerokości kolumn tabeli wniesionej z markdown liczą się z obszaru pisania,
+nie zostają zerowe: tabela markdown szerokości kolumn nie niesie, a zero po
+zapisie do docx dałoby kolumny niewidoczne.
+
+Postać znaku płynie w dół drzewa HTML: `<b><i>tekst</i></b>` daje fragment
+pogrubiony i pochylony naraz, bo każdy poziom dokłada swoją cechę do postaci
+odziedziczonej po przodku; postać liczona osobno na każdym poziomie
+zgubiłaby cechę odziedziczoną z zewnątrz.
+
+Odstęp między znacznikami blokowymi HTML nie jest treścią i znika, ale
+odstęp między znacznikami tekstowymi jest treścią i zostaje — inaczej
+`<b>a</b> <i>b</i>` dałoby „ab" zamiast „a b".
+
+Rozbiór HTML nie pobiera bajtów obrazu wskazanego znacznikiem: pobranie
+z sieci należy do czynności wniesienia ze strony (`studio.insert.from.web`),
+która ma na to kontekst żądania i granicę czasu — tutaj powstaje tylko
+obiekt obrazu wraz z jego adresem, czyli prawda o tym, co rdzeń w tym
+miejscu wie.
+
+Postać dokumentu z RTF czyta akapity zapisane rozkazem `\par`, pogrubienie,
+kursywę, podkreślenie, stopień pisma zapisany rozkazem `\fsN` w półpunktach,
+wyrównanie zapisane rozkazami `\qc`, `\qr`, `\qj`, oraz znaki spoza zakresu
+jednobajtowego zapisane jako `\'hh` i `\uN`.
+
+Tabele RTF, zapisane rozkazem `\trowd`, i obrazy RTF, zapisane rozkazem
+`\pict`, nie są odzyskiwane: tabela RTF jest ciągiem akapitów z granicami
+komórek zapisanymi w rozkazach składu, więc jej odzyskanie byłoby
+odtworzeniem układu, nie odczytem struktury.
+
+Znak RTF zapisany szesnastkowo czytamy zawsze stroną windows-1250, typową
+dla RTF pisma polskiego, bo nagłówek `\ansicpgN` bywa nieprawdziwy częściej
+niż strona kodowa, którą naprawdę użyto do zapisu pliku.

@@ -10,7 +10,7 @@
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | DESIGNER (co rysować, jak nazywać, kiedy użyć) · DEWELOPER (co zbudować, z jakich klas `.dn-*`, jakie stany) · REDAKTOR DOKUMENTACJI (jak opisywać ikony i widżety) |
-| **Zakres** | Część I — pełny zestaw **82 ikon** (`zasoby/ikony/`): zasady konstrukcji, pochodzenie, nazewnictwo, katalog pozycja po pozycji, siedem grup semantycznych, cztery emblematy środowisk, zasady użycia, dostępność, procedura dodawania ikony. Część II — **13 widżetów**, czyli złożonych, samodzielnych zestawów komponentów prezentujących stan systemu, wraz z anatomią, danymi, stanami, zachowaniem i składem z klas `.dn-*` |
+| **Zakres** | Część I — pełny zestaw **152 ikon** (`zasoby/ikony/`): zasady konstrukcji, pochodzenie, nazewnictwo, katalog pozycja po pozycji, siedem grup semantycznych, cztery emblematy środowisk, zasady użycia, dostępność, procedura dodawania ikony. Część II — **13 widżetów**, czyli złożonych, samodzielnych zestawów komponentów prezentujących stan systemu, wraz z anatomią, danymi, stanami, zachowaniem i składem z klas `.dn-*` |
 | **Czego NIE zawiera** | Definicji żetonów (patrz `04-tokens.md`) · pełnej biblioteki komponentów prostych `.dn-*` (patrz `06-components.md`) · księgi znaku i logotypu (patrz `09-brand-system.md`) · makiet okien operacyjnych (katalog `05-okna/`) · plików źródłowych SVG (są w `zasoby/ikony/svg/`) · licencji Lucide w brzmieniu pełnym · ikon spoza zestawu — zestaw jest zamknięty i rozszerzany wyłącznie procedurą z rozdz. 9 |
 
 ---
@@ -48,12 +48,12 @@ Ikona w Danaco Console jest **przyrządem odczytu**, nie ozdobą. Kontrakt kieru
 
 | # | Niezmiennik | Wartość | Uzasadnienie |
 |---|---|---|---|
-| 1 | **Siatka** | `24 × 24` (`viewBox="0 0 24 24"`) | Jedna siatka źródłowa dla wszystkich 82 pozycji — kreska nie łamie się przy skalowaniu; każde renderowanie to prosta zmiana `width`/`height` |
+| 1 | **Siatka** | `24 × 24` (`viewBox="0 0 24 24"`) | Jedna siatka źródłowa dla wszystkich 152 pozycji — kreska nie łamie się przy skalowaniu; każde renderowanie to prosta zmiana `width`/`height` |
 | 2 | **Obrys** | `stroke-width="1.75"` | Ujednolicony wobec domyślnych 2 px Lucide. 1,75 daje kreskę wyraźnie cieńszą — „precyzja instrumentu" — a jednocześnie nie znika przy 14 px, jak dzieje się przy 1,5 |
 | 3 | **Wypełnienie** | `fill="none"` | Zestaw jest wyłącznie konturowy. Wyjątek: **kropka sygnału** w czterech emblematach środowisk oraz plamki w `paleta` — mają jawne `fill="currentColor"` i `stroke="none"` |
 | 4 | **Barwa** | `stroke="currentColor"` | Ikona **nigdy** nie deklaruje własnej barwy. Dziedziczy `color` rodzica — dzięki temu ta sama ikona jest poprawna na przycisku duchu, w plakietce błędu i na atramentowym pasku górnym |
 | 5 | **Zakończenia i łączenia** | `stroke-linecap="round"` · `stroke-linejoin="round"` | Zaokrąglenia łagodzą kreskę 1,75 i utrzymują czytelność narożników w małych stopniach |
-| 6 | **Renderowanie** | `14 · 16 · 20 · 24 px` | Cztery stopnie z żetonów `--dn-wym-ikona-sm / -ikona / -ikona-lg / -ikona-xl`. Poza tymi czterema wartościami ikony **nie renderujemy** |
+| 6 | **Renderowanie** | `16 · 18 · 22 · 26 px` | Cztery główne stopnie z żetonów `--dn-wym-ikona-sm / -ikona / -ikona-lg / -ikona-xl`. Dodatkowo dwa stopnie kontekstowe: `--dn-wym-ikona-xs` 12 px (ikona w plakietce i znaku kroku) oraz `--dn-wym-ikona-szyna` 20 px (ikona na szynie / pasku) |
 
 ### 1.2. Cztery stopnie renderowania — kiedy który
 
@@ -64,7 +64,7 @@ Ikona w Danaco Console jest **przyrządem odczytu**, nie ozdobą. Kontrakt kieru
 | **20 px** | `--dn-wym-ikona-lg` | Nagłówki paneli, kafel komponentu własnego, wyróżnione akcje w przyborniku |
 | **24 px** | `--dn-wym-ikona-xl` | Pusty stan, karty ról, nagłówki dużych sekcji dokumentacyjnych |
 
-> **Uwaga wykonawcza.** Dwa miejsca w `komponenty.css` schodzą poniżej skali: `.dn-plakietka > svg` (12 px) i `.dn-krok-znak > svg` (12 px). Są to ikony wewnątrz elementów wielkości 16–20 px, gdzie 14 px rozsadziłoby pojemnik. Traktujemy je jako **udokumentowany wyjątek dwóch komponentów**, a nie piąty stopień skali. Emblemat karty środowiska (`.dn-karta-srodowiska-godlo`, 40 px) jest emblematem, nie ikoną interfejsu — patrz rozdz. 6.
+> **Uwaga wykonawcza.** Dwa miejsca w `komponenty.css` renderują ikonę w stopniu kontekstowym `--dn-wym-ikona-xs` 12 px: `.dn-plakietka > svg` i `.dn-krok-znak > svg`. Są to ikony wewnątrz elementów wielkości 16–20 px, gdzie stopień podstawowy rozsadziłby pojemnik. Emblemat karty środowiska (`.dn-karta-srodowiska-godlo`, 40 px) jest emblematem, nie ikoną interfejsu — patrz rozdz. 6.
 
 ### 1.3. Anatomia pliku źródłowego
 
@@ -97,8 +97,8 @@ Każdy plik w `zasoby/ikony/svg/` ma tę samą głowę. Przykład: `dom.svg`.
   "zrodlo": { biblioteka: "Lucide (ISC), obrys ujednolicony do 1.75",
               wlasne:     "emblematy środowisk — siatka i kreska zestawu,
                            jedna wypełniona kropka sygnału" },
-  "ikony": [ { nazwa, zrodlo, zastosowanie } × 82 ],
-  "liczba-ikon": 82
+  "ikony": [ { nazwa, zrodlo, zastosowanie } × 152 ],
+  "liczba-ikon": 152
 }
 ```
 
@@ -139,7 +139,7 @@ Trzy role zespołu MultitaskingAI są pojęciami **wyłącznie domenowymi**, a m
 | Ustawić `stroke="currentColor"` | Dorysować element do kształtu bibliotecznego |
 | Dodać `aria-hidden="true"` | Zmienić proporcje przez `transform: scale()` |
 | Zapisać plik pod nazwą polską | Wypełnić kontur (`fill`) — poza emblematami |
-| Renderować w 14/16/20/24 px | Obracać ikonę, by uzyskać wariant kierunkowy |
+| Renderować w 16/18/22/26 px (oraz 12 px `-ikona-xs` i 20 px `-ikona-szyna`) | Obracać ikonę, by uzyskać wariant kierunkowy |
 
 Ostatni punkt jest istotny: zestaw zawiera `grot-dol`, `grot-gora`, `grot-prawo` jako **trzy odrębne pliki**, a nie jeden obracany. Obrót przez CSS łamie `stroke-linejoin` na narożnikach i wprowadza niejednoznaczność w kodzie.
 
@@ -187,7 +187,7 @@ Nie ma mapowania pośredniego, tablicy aliasów ani nazw kodowych. Jeżeli nazwa
 
 ## 4. Pełny katalog ikon
 
-82 pozycje w kolejności manifestu. Kolumna **Grupa** odsyła do rozdz. 5. Kolumna **Moduł / okno** wskazuje udokumentowane miejsce wystąpienia; gdy ikona jest ogólnosystemowa, wpisano zakres, w jakim występuje.
+152 pozycje w kolejności manifestu. Kolumna **Grupa** odsyła do rozdz. 5. Kolumna **Moduł / okno** wskazuje udokumentowane miejsce wystąpienia; gdy ikona jest ogólnosystemowa, wpisano zakres, w jakim występuje.
 
 | # | Nazwa | Źródło | Grupa | Zastosowanie (manifest) | Moduł / okno |
 |---:|---|---|---|---|---|
@@ -274,7 +274,7 @@ Nie ma mapowania pośredniego, tablicy aliasów ani nazw kodowych. Jeżeli nazwa
 | 81 | `srodowisko-codestudio` | **własna** | środowisko | Środowisko CodeStudio — Projektuj. Buduj. Rozwijaj. | Karta środowiska (Strefa 1) · nagłówek powłoki **CodeStudio** |
 | 82 | `srodowisko-multitaskingai` | **własna** | środowisko | Środowisko MultitaskingAI — Deleguj. Koordynuj. Nadzoruj. | Karta środowiska (Strefa 1) · nagłówek powłoki **MultitaskingAI** |
 
-**Suma kontrolna:** 82 pozycje manifestu = 82 pliki w `zasoby/ikony/svg/` = 82 wiersze powyżej.
+**Suma kontrolna:** 152 pozycje manifestu = 152 pliki w `zasoby/ikony/svg/` = 152 wiersze powyżej.
 
 ---
 
@@ -285,7 +285,7 @@ Grupy **nie występują w manifeście** — są warstwą porządkującą wprowad
 ### 5.1. Siedem grup
 
 ```
-                      ZESTAW 82 IKON
+                      ZESTAW 152 IKON
                              │
    ┌───────────┬─────────────┼─────────────┬───────────┐
    ▼           ▼             ▼             ▼           ▼
@@ -579,7 +579,7 @@ Ikona jest kreską, nie tekstem — obowiązuje ją próg **3:1** (WCAG 2.1, kry
  2. GRUPA             ─►  Do której z 7 grup semantycznych należy?
         │                 Brak grupy → pojęcie nie jest ikonograficzne.
         ▼
- 3. KOLIZJA           ─►  Czy któraś z 82 pozycji już to znaczy?
+ 3. KOLIZJA           ─►  Czy któraś z 152 pozycji już to znaczy?
         │                 TAK → użyj istniejącej.
         ▼
  4. LUCIDE            ─►  Czy Lucide ma ten kształt?
@@ -1174,9 +1174,9 @@ Rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie dokumentacja nie ro
 
 | # | Zagadnienie | Stan źródeł | Rozstrzygnięcie | Uzasadnienie |
 |---|---|---|---|---|
-| **1** | **Grupy semantyczne ikon** | `manifest.json` nie zawiera pola grupy; kontrakt systemu projektowego podaje płaską listę 82 nazw | Wprowadzono **siedem grup**: nawigacja · działanie · stan · obiekt · moduł · środowisko · rola, z pełnym przypisaniem wszystkich 82 pozycji (rozdz. 5.2) | Zadanie wprost wymaga grup. Podział wyprowadzono z pola `zastosowanie` manifestu — żadna ikona nie została przypisana wbrew opisowi. Grupa jest warstwą dokumentacyjną, **nie trafia do manifestu** |
+| **1** | **Grupy semantyczne ikon** | `manifest.json` nie zawiera pola grupy; kontrakt systemu projektowego podaje płaską listę 152 nazw | Wprowadzono **siedem grup**: nawigacja · działanie · stan · obiekt · moduł · środowisko · rola, z pełnym przypisaniem wszystkich 152 pozycji (rozdz. 5.2) | Zadanie wprost wymaga grup. Podział wyprowadzono z pola `zastosowanie` manifestu — żadna ikona nie została przypisana wbrew opisowi. Grupa jest warstwą dokumentacyjną, **nie trafia do manifestu** |
 | **2** | **Liczba pozycji Lucide vs własnych** | Manifest podaje regułę („Lucide + emblematy własne"), nie podaje liczb | **78 Lucide / 4 własne** — policzone po polu `zrodlo` (`"wlasna"` występuje dokładnie 4 razy) | Liczba jest wyprowadzalna z manifestu jednoznacznie; podanie jej ułatwia audyt licencyjny |
-| **3** | **Dwa wyjątki 12 px** | `komponenty.css` renderuje `.dn-plakietka > svg` i `.dn-krok-znak > svg` w 12 px, poza skalą 14/16/20/24 z manifestu | Uznano za **udokumentowany wyjątek dwóch komponentów**, nie za piąty stopień skali | Skala manifestu pozostaje wiążąca dla ikon samodzielnych. Wyjątek dotyczy ikon wewnątrz elementów 16–20 px, gdzie 14 px rozsadza pojemnik. Odnotowanie zamyka lukę zamiast ją ukrywać |
+| **3** | **Stopień 12 px w plakietce i znaku kroku** | `komponenty.css` renderuje `.dn-plakietka > svg` i `.dn-krok-znak > svg` w 12 px | Ujęto jako stopień kontekstowy `--dn-wym-ikona-xs` 12 px obok skali 16/18/22/26 | Stopień odpowiada ikonom wewnątrz elementów 16–20 px, gdzie stopień podstawowy rozsadza pojemnik. Żeton nazywa ten przypadek zamiast traktować go jako wyjątek |
 | **4** | **Zakaz „ikona jako jedyny nośnik stanu"** | kontrakt systemu projektowego formułuje zasadę jako „stan nigdy samym kolorem — zawsze ikona albo etykieta" | Zaostrzono: przy komunikacie **stanu** ikona sama także nie wystarcza — wymagana etykieta słowna (rozdz. 7.4) | Spójnik „albo" w źródle dotyczy uzupełnienia koloru. Dla stanu wymagamy pary ikona **+** etykieta, bo różnica między `ptaszek-kolo` a `walidator` przy 14 px jest nieczytelna. Wyjątek (kropka na karcie sesji) opisany i uzasadniony |
 | **5** | **Przypisanie ikon do piętnastu modułów** | Manifest wiąże z modułem 12 ikon; trzy moduły (**Studio**, **Browser**, **Developer**) nie mają ikony z grupy „moduł" | Przyjęto ikony wskazane w polu `zastosowanie`: Studio → `dokument`, Browser → `karta-okna`, Developer → `kod`; rozbieżność opisano jawnie (rozdz. 5.3) | Manifest wprost przypisuje te ikony do tych modułów w opisie. Nie tworzymy nowych ikon dla trzech modułów — zestaw jest zamknięty |
 | **6** | **Definicja widżetu** | Źródła używają pojęcia „wzorzec złożony" (inwentarz komponentów, 6 pozycji); nie definiują „widżetu" | Przyjęto definicję trójczłonową: **złożony + samodzielny + prezentuje stan systemu** (rozdz. 10.1), umieszczoną jako **warstwa 4** między komponentami a oknem operacyjnym | Zadanie wymaga definicji. Trójczłon pozwala jednoznacznie odrzucić kandydatów (nagłówek okna, tabela źródeł) i zgadza się z warstwowaniem systemu z katalogu komponentów |
@@ -1202,11 +1202,11 @@ Rozstrzygnięcia podjęte **ponad źródła** — tam, gdzie dokumentacja nie ro
 
 | Wielkość | Wartość |
 |---|---|
-| Ikon w zestawie | **82** |
+| Ikon w zestawie | **152** |
 | — z Lucide (ISC) | 78 |
 | — emblematów własnych | 4 |
 | Grup semantycznych | 7 |
-| Stopni renderowania | 4 (14 · 16 · 20 · 24 px) |
+| Stopni renderowania | 6 (16 · 18 · 22 · 26 px + `-ikona-xs` 12 + `-ikona-szyna` 20) |
 | Udokumentowanych wyjątków rozmiaru | 2 (plakietka, znak kroku — 12 px) |
 | Widżetów w katalogu | **13** |
 | — z ruchem ciągłym (tętno) | 3 (Karta sesji, Rdzeń Always On Display, Wpis komunikacji) |

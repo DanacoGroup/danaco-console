@@ -5677,3 +5677,12 @@ pustej listy w całym pliku.
 Karta bez klucza idzie na koniec kolumny, lepiej niż na jej początek, bo świeżo dołożona karta nie
 ma prawa przeskoczyć kart już ułożonych. Sformułowanie „nic do zrobienia" nie jest tym samym co
 „wszystko zrobione", a pasek pełny w pustym projekcie byłby meldunkiem o pracy, której nie było.
+
+## budowa/klient-poprzedni/src/moduly/studio/obiekt-zrodlo.ts
+Kształt jest zapleczem modułu projektowania, który zakłada go od razu jako węzły ścieżki, a ikona
+jego biblioteką wyszukiwania — źródło obiektów przyjmuje węzeł projektu i nazwę ikony właśnie
+dlatego, że studio tylko wskazuje, co osadzić, a rysuje to moduł projektowania, więc drugiego
+rachunku kształtu tu nie ma i nie będzie. Rodzaj obiektu niesie też wartość „wykres", ale rdzeń
+odmawia jej nazwanym powodem, bo rachunku wykresu po stronie studia nie ma — odmowa stoi w oknie
+przed próbą i kieruje do modułu projektowania, bo pokazanie kontrolki kończącej się odmową
+rdzenia byłoby obietnicą bez pokrycia.

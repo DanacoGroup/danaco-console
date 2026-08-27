@@ -1954,3 +1954,40 @@ Treść pliku wchodzi do wyszukiwania przez wyciąg zbudowany komendą
 workspace.library.text.extract; plik bez wyciągu jest dopasowywany po samej
 nazwie. To jest różnica widoczna dla operatora projektu, więc trafienie
 z wyciągu niesie fragment treści, a trafienie po samej nazwie — nie.
+
+## budowa/server/internal/core/adapter_modul_workspace_pamiec_komendy.go
+
+Typ adapterPamieciPrzestrzeni osadza adapter modułu Workspace, więc niesie
+komplet jego metod i jest tym samym bytem, którym pracuje okno Context Memory.
+Deklaracja repozytoriumWpisowPamieci stoi w tym pliku, a nie przy repozytorium
+przestrzeni roboczej, ponieważ jej wymaga wyłącznie rodzina komend memory.*.
+
+Odpięcie wpisu pamięci (memory.detach) zwęża zasięg samego wpisu do poziomu
+projektu, który go niesie. Poziom szerszy niż projekt jest jedynym wiązaniem
+wpisu poza własnym projektem — to on wprowadza wpis do pamięci innych
+projektów na żądanie includeShared. Odpięcia od projektu, który wpisu nie
+niesie, nie da się wykonać tą komendą: wstrzymanie ustalenia wspólnego
+w cudzym projekcie, module, parze modułów albo karcie sesji robi osobna
+komenda memory.disable.set, która nie rusza ani zasięgu wpisu, ani jego
+treści. Żądanie odpięcia wskazujące inny projekt kończy się odmową conflict
+kierującą do tej komendy. Zdjęcie samego przypięcia (pinned) należy do
+memory.set, nie do memory.detach.
+
+Poziomy zasięgu szersze niż projekt są w kodzie wymienione wprost, ponieważ
+pierwszeństwo poziomów prowadzi baza danych (kolumna poziom_zasiegu.pierwszenstwo);
+porównanie liczbowe w kodzie Go byłoby drugą, rozjeżdżającą się kopią tego
+samego porządku.
+
+Wpis wyłączony w memory.list nie wchodzi do wykazu wpisów czynnych, ale też
+nie znika bez śladu: idzie osobnym wykazem disabledEntries wraz z zasięgiem,
+który go wyłączył, i tożsamością wyłączenia, którym operator znosi je jednym
+ruchem. Wyłączenie odsiewa się przed zastosowaniem granicy limitu i osobno od
+zawężenia zasięgu, ponieważ cisza bez podania powodu byłaby gorsza niż samo
+wyłączenie. Przy aktywnym sicie zasięgu granica limitu stosuje się dopiero na
+końcu, a nie przy odczycie z bazy — obcięcie przed sitem oddałoby mniej
+wpisów, niż prosi żądanie, i wyglądałoby błędnie na koniec wykazu.
+
+Komenda memory.set niesie pole scopeId, którego workspace.context.set nie ma:
+wskazany byt zasięgu jest brany wprost z żądania, a bez wskazania obowiązuje
+reguła okna Context Memory — bytem poziomu projektu jest sam projekt, a byt
+poziomu szerszego pozostaje pusty.

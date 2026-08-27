@@ -6,70 +6,7 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### droga-wejscia
-
-Widok drogi wejścia na gotowym fundamencie klienta. Prototyp jest przyjęty
-(pozycja 12 rejestru decyzji), rdzeń przechodzi całą drogę, warstwy połączenia
-i protokołu stoją. Nic tego terenu nie blokuje.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/droga-wejscia` z `main` |
-| **Wykaz plików** | `budowa/klient/src/wejscie/` — katalog powstaje w tym terenie |
-| **Do czytania, bez zapisu** | `design/zasoby/okna/wejscie/`, `design/05-okna/przeplyw/przeplyw-wejscia.html`, `budowa/shared/contract.json`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
-| **Poza terenem** | `budowa/server/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
-
-**Przedmiot.** Trzy etapy prototypu w działającym kliencie: łączenie z rdzeniem,
-rejestracja i logowanie wraz z odzyskaniem konta, przygotowanie środowiska.
-Odsłony niesie prototyp — nawiązywanie połączenia, przywracanie sesji, błąd
-połączenia, logowanie, wstrzymanie po pięciu próbach, założenie konta Operatora,
-potwierdzenie adresu, odzyskanie dostępu, ustawienie nowego hasła.
-
-**Kompozycji nie wymyślasz — czytasz ją z prototypu.** Pozycja 12 rejestru
-decyzji rozstrzyga, co prototyp wiąże, a co jest parametrem inżynierskim.
-
-**Kryteria odbioru.**
-
-1. Każdy z trzech etapów rozmawia z **żywym rdzeniem** — z przytoczoną
-   odpowiedzią rdzenia dla `connection.hello`, `auth.register`, `auth.login`
-   i `environment.enter`.
-2. Rejestracja obsługuje **obie gałęzie pozycji 11**: przy nadajniku
-   `pendingVerification: true` prowadzi do potwierdzenia listem, przy braku
-   nadajnika kończy się wejściem hasłem i **nazywa niepotwierdzony adres**.
-3. Tekst widoczny dla użytkownika stoi w jednym katalogu treści — poza nim zero
-   łańcuchów. Wykazane pomiarem, tak jak w prototypie.
-4. `tsc --noEmit` bez błędu, sprawdziany zdane — z przytoczonym wynikiem.
-5. Warstwy połączenia i protokołu **nietknięte** — wykazane `git diff`.
-6. Zero dotknięć DOM poza katalogiem tego terenu.
-7. Odsłony błędu i wstrzymania są osiągalne w sprawdzianie, nie tylko opisane.
-8. Rzecz wymagająca rozstrzygnięcia Właściciela wraca jako zgłoszenie.
-
-### powloka-tauri
-
-Powłoka okna dla Windows 11 w dwóch architekturach. Wariant natywny zniesiony
-(pozycja 8), więc powłoka niesie interfejs i **nie niesie rdzenia**.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/powloka-tauri` z `main` |
-| **Wykaz plików** | `budowa/desktop/` |
-| **Do czytania, bez zapisu** | `budowa/klient/`, `budowa/shared/contract.json`, `design/05-okna/platformowe/instalator.html` |
-| **Poza terenem** | `budowa/server/`, `budowa/klient/`, `budowa/shared/`, `design/`, `prowadzenie/` |
-
-**Przedmiot.** Doprowadzić powłokę do postaci budowalnej na oba cele Windows 11,
-zgodnej z hybrydą: okno, cykl życia, wskazanie serwera, brak rdzenia w pakiecie.
-
-**Kryteria odbioru.**
-
-1. Powłoka buduje się na `x86_64-pc-windows-gnu` **oraz** `aarch64-pc-windows-msvc`
-   — z przytoczonym wynikiem obu przebiegów.
-2. Pakiet **nie zawiera** rdzenia ani serwera narzędzi — wykazane wykazem
-   zawartości pakietu, nie deklaracją.
-3. Adres rdzenia pochodzi z nastawy budowania; **budowa wydaniowa nie niesie
-   adresu serwera rozwojowego** — wykazane przeszukaniem gotowego pliku.
-4. Powłoka nie stawia i nie wygasza rdzenia — w hybrydzie rdzeń stoi na serwerze.
-5. Uprawnienia powłoki odmawiają domyślnie; każde nadane ma podany powód.
-6. Rzecz wymagająca rozstrzygnięcia Właściciela wraca jako zgłoszenie.
+Żaden teren nie jest otwarty.
 
 ## Zgłoszenia oczekujące na teren
 
@@ -102,6 +39,45 @@ bez pokrycia w skali. Zdjęto surowe `gap: 2px` z `okna/centrum-dowodzenia.css`
 zgodny z profesjonalnym standardem" — skala odstępów zawiera używane wartości
 jako żetony (wzór: Tailwind `0.5`, Material). Zmiana warstwy wspólnej odnotowana
 tutaj zgodnie z ograniczeniem warstwy wspólnej z planu etapów.
+
+### Droga wejścia — braki po stronie rdzenia, ujawnione pomiarem
+
+Wszystkie pochodzą z terenu `droga-wejscia` i są zmierzone na żywym rdzeniu.
+Żaden nie wstrzymał pracy; okno podłącza je dziś do odmowy nazywającej brak.
+
+| Rzecz | Zmierzone | Skutek |
+|---|---|---|
+| brak drogi powtórnego potwierdzenia adresu | `auth.verify` z cudzą drogą → `not_authenticated`; powtórny `auth.register` → `conflict`; żadna z dziewięciu komend `auth.*` nie wydaje drogi drugi raz | Operator, do którego list nie dotarł, **nie ma wyjścia z okna** — dotyczy także instalacji **z pocztą**, nie tylko bez |
+| trzy z pięciu etapów przygotowania środowiska bez komendy | prototyp wymienia pięć; droga wejścia obsługuje dwa. „Profil i uprawnienia", „Kanały modeli", „Magistrala kontekstu" nie mają przypisanej komendy | pasek postępu zatrzymuje się na 40% — wartość prawdziwa, nie ozdobna |
+| odmowa logowania nie niesie długości zwłoki | osiem prób: 100, 350, 600, 1100, 2100, 4100, 5100, 5100 ms; `details` puste za każdym razem | okno mierzy zwłokę samo, czasem trwania próby poprzedniej |
+| magazyn tokenu bramki między uruchomieniami | `connection.hello` przyjmuje token i oddaje `authenticated: true`; gdzie token mieszka, nie rozstrzyga ani prototyp, ani kontrakt, ani rejestr | odsłona „rozpoznano zaufane urządzenie" działa dopiero po wskazaniu magazynu — należy do powłoki |
+
+### Adres serwera wdrożenia nie stoi w żadnym źródle
+
+Teren `powloka-tauri` przeszukał `budowa/`, `design/`, `docs/` i `prowadzenie/`:
+pozycja 8 nazwy serwera nie podaje, prototyp instalatora nie ma kroku adresu,
+`wydania.json` niesie wyłącznie kanał pobrań. Powłoka bierze adres ze wskazania
+Operatora albo ze zmiennej `DANACO_HOST_RDZENIA`. Czy adres ma być wkompilowany
+przy składaniu instalki — i skąd wtedy pochodzi — jest rozstrzygnięciem
+Właściciela.
+
+### Zastane usterki powłoki, ujawnione przy przejęciu
+
+| Rzecz | Stan |
+|---|---|
+| `aktualizacja/probne.rs` nie istnieje | `droga.rs:293` importuje `KatalogProbny` w siedmiu sprawdzianach; `cargo test` **nie kompiluje się od chwili przejęcia** |
+| `wykonaj_aktualizacje` pobiera spod dowolnego adresu | `pobranie.rs` sprawdza wyłącznie sumę SHA-256, też podaną przez stronę; brak przywiązania do kanału z `wydania.json` |
+| cztery z sześciu poleceń IPC bez odbiorcy | `stan_rdzenia`, `wskazanie_rdzenia`, `wybierz_katalog_roboczy`, `wykonaj_aktualizacje` — opisywały odbiorców w usuniętym `client/src/powloka/` |
+| `app.security.csp: null` | strona bez polityki treści; ułożenie wymaga interfejsu, który dopiero powstaje |
+| sześć skryptów w `budowa/scripts/` | wskazują usunięte profile nastaw, nieistniejący `budowa/client/` i wariant natywny zniesiony pozycją 8; pozycja 8 pkt 4 mówi, że mają leżeć **poza** repozytorium |
+
+### Łańcuchy widoczne poza katalogiem treści w paczce designu
+
+Właściwość, którą pozycja 12 nazywa wiążącą, jest w dwóch miejscach naruszona:
+`design/zasoby/okna/wejscie/skladniki/pole-hasla.js:55` niesie zaszyte
+`'Pokaż hasło'`, a `design/zasoby/okna/przeplyw-wejscia.js` powiela w kodzie
+`SILA_PUSTE`, `SILA_OPISY` oraz dwa napisy o schowku, które stoją już
+w katalogu. W kliencie wszystkie te napisy siedzą w katalogu treści.
 
 ### Kontrast warstwy wspólnej — gotowe do otwarcia
 

@@ -371,3 +371,21 @@ Kalendarz uruchomień czyta przebiegi bez wskazania okna, więc rdzeń nie zakł
 Schedulera obserwacji telemetrii — kalendarz jest jednorazowym zdjęciem stanu, a stała
 obserwacja przebiegów należy do Execution Monitora i ma pozostać jej jedynym odbiorcą
 w module Automations.
+
+## budowa/klient-poprzedni/src/moduly/apps/etykiety-apps.ts
+
+Teksty tego pliku stoją osobno od plików budujących elementy okien modułu Apps, na wzór
+podziału zastosowanego w `sterowanie/etykiety-sterowania.ts`. Pozycja wykazu braków niesie
+tylko to, co okno wie samo: nazwę czynności, czego by do niej trzeba (pole `czego`), nazwę
+komendy, której wejście do kontraktu znosi brak (pole `komendaZnoszaca` — pozycja znika
+wtedy z wykazu sama) oraz cudze drogi do sprawdzenia w wykazie (pole `komendyCudze`).
+Zdanie o stanie kontraktu dokłada `braki-kontraktu.ts`, czytając stałą `KOMENDY` przy
+składaniu okna.
+
+Nazwy komend proponowanych w tym pliku nie są nazwami kontraktu i nie idą na drut do
+rdzenia: pozycja z takim wskazaniem stoi w wykazie braków, a wpisanie komendy do kontraktu
+zdejmuje pozycję z wykazu samo. Nazwy stoją w jednym miejscu, żeby definicja oddana
+właścicielowi produktu i zdanie widoczne Operatorowi mówiły o tej samej komendzie. Obszar
+nazwy idzie za bytem, którego dotyczy: czynności na katalogu rozszerzeń należą do obszaru
+`extension`, bo katalog stoi poziom wyżej niż moduł, a czynności na produkcie budowanym
+w module — do obszaru `apps`.

@@ -1,15 +1,6 @@
 import type { BrakFunkcji } from './braki-kontraktu';
 
-/**
- * Teksty widoczne dla Operatora w oknach modułu Apps, trzymane osobno od
- * plików budujących elementy (wzór: `sterowanie/etykiety-sterowania.ts`).
- *
- * Pozycja wykazu braków niesie tylko to, co okno wie samo: nazwę czynności,
- * czego by do niej trzeba (`czego`), nazwę komendy, której wejście brak znosi
- * (`komendaZnoszaca` — pozycja znika wtedy z wykazu sama) i cudze drogi do
- * sprawdzenia w wykazie (`komendyCudze`). Zdanie o stanie kontraktu dokłada
- * `braki-kontraktu.ts`, czytając `KOMENDY` przy składaniu okna.
- */
+// Teksty widoczne dla Operatora w oknach modułu Apps, trzymane osobno od plików budujących elementy.
 
 /**
  * Kody okien z katalogu rdzenia (`okno_operacyjne.kod`). Kod jest bezmodułowy —
@@ -32,14 +23,8 @@ export const KODY_OKIEN = {
 
 /**
  * Kody okien strony dystrybucji i konsumpcji, których katalog rdzenia jeszcze
- * nie zna.
- *
- * Rdzeń wnosi definicje okien migracją słownikową i przypina je do modułów
- * macierzą; sześć okien tej strony nie ma tam ani wiersza definicji, ani
- * wiersza przypięcia. Okno zbudowane w kliencie działa mimo to, bo komendy
- * `extension.*` i `access.*` nie niosą pola `windowId` — katalog rozszerzeń
- * stoi poziom wyżej niż okno modułu. Wykaz stoi tutaj, żeby okno umiało
- * powiedzieć o tej granicy zamiast ją przemilczeć.
+ * nie zna, bo komendy extension.* i access.* nie niosą pola windowId —
+ * katalog rozszerzeń stoi poziom wyżej niż okno modułu.
  */
 export const OKNA_SPOZA_KATALOGU_RDZENIA: readonly string[] = [
   KODY_OKIEN.AppCatalog,
@@ -50,7 +35,7 @@ export const OKNA_SPOZA_KATALOGU_RDZENIA: readonly string[] = [
   KODY_OKIEN.PublisherPanel,
 ];
 
-/** Nazwy okien operacyjnych modułu, wyświetlane w nagłówkach. */
+/** Nazwy okien operacyjnych modułu Apps, wyświetlane w nagłówkach ekranowych okien tego modułu i katalogu. */
 export const NAZWY_OKIEN: Readonly<Record<string, string>> = {
   [KODY_OKIEN.ProductBuilder]: 'Product Builder',
   [KODY_OKIEN.ArchitectureDesigner]: 'Architecture Designer',
@@ -67,17 +52,8 @@ export const NAZWY_OKIEN: Readonly<Record<string, string>> = {
 
 /**
  * Nazwy komend zaproponowanych dla czynności opracowania, których dzisiejszy
- * kontrakt nie prowadzi.
- *
- * Nazwa proponowana nie jest nazwą kontraktu i nie idzie na drut: pozycja
- * z takim wskazaniem stoi w wykazie braków, a wpisanie komendy do kontraktu
- * zdejmuje pozycję z wykazu samo (`braki-kontraktu.ts` czyta `KOMENDY`
- * przy składaniu okna). Nazwy stoją w jednym miejscu, żeby definicja oddana
- * właścicielowi i zdanie widoczne Operatorowi mówiły o tej samej komendzie.
- *
- * Obszar nazwy idzie za bytem, którego dotyczy: czynności na katalogu
- * rozszerzeń należą do obszaru `extension`, bo katalog stoi poziom wyżej niż
- * moduł, a czynności na produkcie budowanym w module — do obszaru `apps`.
+ * kontrakt nie prowadzi; pozycja z takim wskazaniem stoi w wykazie braków,
+ * a wpisanie komendy do kontraktu zdejmuje ją z wykazu samo.
  */
 export const KOMENDY_PROPONOWANE = {
   SzukanieKatalogu: 'extension.search',
@@ -130,18 +106,15 @@ export const KOMENDY_PROPONOWANE = {
   PublikacjaPakietu: 'apps.package.publish',
 } as const;
 
-/** Zdanie stanu pustego, gdy rdzeń nie wskazał jeszcze okna modułu. */
+/** Zdanie stanu pustego, wypowiadane wtedy, gdy rdzeń jeszcze nie wskazał okna modułu Apps dla bieżącej sesji. */
 export const BEZ_OKNA_MODULU =
   'Rdzeń nie wskazał jeszcze okna modułu Apps. Każda komenda obszaru wymaga pola ' +
   'windowId, więc okno nie wysyła nic, dopóki go nie ma.';
 
 /**
- * Zdanie stanu pustego dla okien, których treść wypełnia sam strumień zdarzeń.
- *
- * Dotyczy osi etapów: etapy budowy przychodzą jedynie ramką `apps.build.changed`,
- * bo komendy ich odczytu kontrakt nie niesie. Wdrożenia, architektura i pliki
- * warsztatu mają własne komendy odczytu i mówią o swojej pustce inaczej —
- * zdaniem, które odróżnia „rdzeń nic nie ma" od „nikt nie pytał".
+ * Zdanie stanu pustego dla okien, których treść wypełnia sam strumień zdarzeń;
+ * etapy budowy przychodzą jedynie ramką apps.build.changed, bo komendy ich
+ * odczytu kontrakt nie niesie.
  */
 export const BEZ_KOMENDY_ODCZYTU =
   'Etapy budowy nie mają w kontrakcie komendy odczytu — pojawią się, gdy rdzeń ' +
@@ -331,17 +304,14 @@ export const BRAKI_DEPLOYMENT: readonly BrakFunkcji[] = [
 
 /**
  * Zdanie stanu pustego okien strony dystrybucji, zanim ktokolwiek zapytał
- * rdzeń o katalog.
- *
- * Katalog rozszerzeń stoi poziom wyżej niż okno modułu: żadna komenda obszaru
- * `extension` nie niesie pola windowId, więc pustka nie bierze się z braku okna
- * — bierze się stąd, że odczyt jeszcze nie wrócił.
+ * rdzeń o katalog; pustka nie bierze się z braku okna, tylko stąd, że odczyt
+ * jeszcze nie wrócił.
  */
 export const BEZ_ODCZYTU_KATALOGU =
   'Katalog rozszerzeń nie był jeszcze czytany z rdzenia. Naciśnij „Odczytaj katalog", ' +
   'żeby zobaczyć, co rejestr platformy zawiera.';
 
-/** Zdanie o oknie, którego katalog okien operacyjnych rdzenia jeszcze nie zna. */
+/** Zdanie o oknie, którego katalog okien operacyjnych rdzenia jeszcze nie zna z definicji tego konkretnego okna. */
 export const OKNO_SPOZA_KATALOGU =
   'Rdzeń nie ma tego okna w katalogu okien operacyjnych, więc nie postawi go w bocznej ' +
   'nawigacji ani nie policzy w wykazie okien modułu. Okno działa mimo to, bo komendy, ' +

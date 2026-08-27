@@ -5623,3 +5623,12 @@ wysłane po zerwanym łączu szłoby w próżnię — łącze jest jedno, więc
 odpowiedź w każdym nagłówku ma być ta sama. Okno bywa już otwarte w chwili
 montażu, a bywa, że dopiero powstanie, stąd oba wejścia kodu okna, nie
 jedno.
+
+## budowa/klient-poprzedni/src/moduly/studio/obiekt-panel.test.ts
+Sprawdziany warsztatu obiektów pilnują czterech rzeczy: wskazanie źródła jedzie do pola, które
+rdzeń dla tego źródła czyta — węzeł designu, zasób albo plik biblioteki — zamiast wsadzać
+wszystko w jedno pole ścieżki, co byłoby odmową walidacji przy każdym źródle poza plikiem;
+wykres jest odmową nazwaną, widoczną przed próbą i kierującą do modułu projektowania, bo rdzeń
+rachunku wykresu nie ma i okno tego nie udaje; odpowiedź o nieusunięciu jest czytana jako wynik,
+nie jako awaria, i nie zdejmuje obiektu z wykazu; brak tekstu zastępczego jest nazwany, bo
+wydanie bez obrazów inaczej nie powie, co w dokumencie stało.

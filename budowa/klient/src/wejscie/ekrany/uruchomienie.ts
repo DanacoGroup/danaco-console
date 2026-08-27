@@ -1,12 +1,7 @@
 /**
- * EKRANY OKNA URUCHOMIENIA.
- *
- * Trzy odsłony tego samego okna: łączenie, powrót z ważnym tokenem, błąd
- * połączenia. Leżą razem, bo dzielą całą oprawę — belkę, kolumnę tożsamości
- * i wykaz czterech etapów. Różni je stan etapów i to, co stoi pod wykazem.
- *
- * Łączenie i powrót z tokenem nie mają czynności głównej: przechodzą dalej
- * same, gdy rdzeń odpowie. Błąd ją ma, bo tam jest co rozstrzygnąć.
+ * Ekrany okna uruchomienia — trzy odsłony tego samego okna: łączenie, powrót
+ * z ważnym tokenem, błąd połączenia. Leżą razem, bo dzielą całą oprawę —
+ * belkę, kolumnę tożsamości i wykaz czterech etapów.
  */
 
 import { el } from '../narzedzia.ts';
@@ -17,13 +12,13 @@ import { listaEtapow } from '../skladniki/lista-etapow.ts';
 import { naglowekEkranu } from '../skladniki/naglowek-ekranu.ts';
 import { pasDzialan, type Czynnosc } from '../skladniki/pas-dzialan.ts';
 
-/** Ile sekund okno czeka, zanim samo ponowi próbę połączenia. */
+/** Ile sekund okno czeka, zanim samo ponowi próbę połączenia, licząc od chwili napotkania błędu połączenia. */
 const PONOWIENIE_S = 15;
 
-/** Klasa czynności głównej — jedynego wyjścia z odsłony. */
+/** Klasa czynności głównej — jedynego wyjścia z odsłony, nadawana przyciskowi zamykającemu tę aplikację. */
 const KLASA_GLOWNA = 'dn-btn dn-btn--sygnal';
 
-/** Czynność obecna w każdej odsłonie przed uwierzytelnieniem. */
+/** Czynność obecna w każdej odsłonie przed uwierzytelnieniem, pozwalająca zamknąć aplikację w dowolnej chwili. */
 const ZAMKNIJ: Czynnosc = { klucz: 'dzialania.zamknijAplikacje', komunikat: 'zamkniecie' };
 
 function panel(nazwa: OdslonaUruchomienia, aktywny: boolean, dzieci: HTMLElement[]): HTMLElement {
@@ -44,7 +39,7 @@ function panel(nazwa: OdslonaUruchomienia, aktywny: boolean, dzieci: HTMLElement
   );
 }
 
-/** Wykaz etapów łączenia; treść odświeża się z przebiegu, oprawa zostaje. */
+/** Wykaz etapów łączenia; treść odświeża się z przebiegu, a oprawa — belka i kolumna tożsamości — zostaje niezmienna. */
 function wykazEtapow(stany: StanEtapu[], miary: string[]): HTMLElement {
   return listaEtapow({
     nazwy: 'uruchomienie.etapy',
@@ -104,8 +99,7 @@ export function ekranUruchomienia(): HTMLElement[] {
           ['nieudane', 'oczekuje', 'oczekuje', 'oczekuje'],
         ),
       ]),
-      // Miejsce na odmowę rdzenia albo na rozjazd wersji protokołu; puste,
-      // dopóki przebieg nie ma czego w nie wstawić.
+      // Miejsce na odmowę rdzenia albo rozjazd wersji protokołu; puste, dopóki nie ma czego wstawić.
       el('div', { klasa: 'we-komunikaty', 'aria-live': 'polite', dane: { komunikaty: 'w-blad' } }),
       baner({
         rodzaj: 'ostrzezenie',

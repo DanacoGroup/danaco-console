@@ -3347,3 +3347,6 @@ silnik okien równoległych, żeby obie wartości nie rozjechały się przy jego
 zmianie. Granicy zapisanej w profilu nie da się w czasie działania odróżnić
 od stałej oznaczającej brak granicy, więc zdanie o budżecie podaje samą
 liczbę i nic nie orzeka o jej pochodzeniu.
+
+## budowa/klient/src/wejscie/ekrany/uruchomienie.ts
+Odsłony różni stan etapów i to, co stoi pod wykazem. Łączenie i powrót z tokenem nie mają czynności głównej: przechodzą dalej same, gdy rdzeń odpowie. Błąd ją ma, bo tam jest co rozstrzygnąć.

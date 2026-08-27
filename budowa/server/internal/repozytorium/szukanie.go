@@ -14,19 +14,11 @@ import (
 	"danacoconsole/shared"
 )
 
-// Wyszukiwanie i zamiana w całym repozytorium.
+// Silnikiem wyszukiwania i zamiany jest regexp biblioteki standardowej, nie
+// ripgrep; pliki ignorowane przez repozytorium są pomijane.
 //
-// Silnikiem jest `regexp` biblioteki standardowej, a nie `ripgrep`: wyszukiwanie
-// globalne jest czynnością, bez której Code Editor przestaje być edytorem kodu,
-// więc nie może zależeć od programu, którego instalka nie niesie. RE2 nie ma
-// wstecznych odwołań, i to jest jedyna różnica, którą Operator zobaczy —
-// wyrażenie z `\1` dostanie odmowę nazwaną, a nie ciche zero trafień.
-//
-// Pliki ignorowane przez repozytorium są pomijane. Wyszukiwanie, które wchodzi
-// w `node_modules` i katalog budowania, oddaje tysiące trafień w kodzie, którego
-// Operator nie pisał — i jest wtedy bezużyteczne, choć formalnie poprawne.
-
-// ZadanieSzukania opisuje, czego i gdzie szukać.
+// ZadanieSzukania opisuje, czego i gdzie szukać: wzorzec, tryb dopasowania,
+// wzorce ścieżek i granicę wyniku.
 type ZadanieSzukania struct {
 	Wzorzec            string
 	Wyrazenie          bool
@@ -36,11 +28,8 @@ type ZadanieSzukania struct {
 	Granica            int
 }
 
-// GranicaDomyslna jest górną granicą trafień, gdy żądanie jej nie podaje.
-//
-// Granica istnieje, bo odpowiedź idzie kopertą przez gniazdo: wyszukanie litery
-// „e" w dużym repozytorium dałoby zbiór, którego klient nie postawi na ekranie,
-// a rdzeń trzymałby go w pamięci w całości.
+// GranicaDomyslna jest górną granicą trafień, gdy żądanie jej nie podaje, bo
+// odpowiedź idzie kopertą przez gniazdo.
 const GranicaDomyslna = 2000
 
 // GranicaPlikuBajtow pomija pliki większe od tej granicy.
@@ -50,11 +39,8 @@ const GranicaDomyslna = 2000
 // nikomu nie służy.
 const GranicaPlikuBajtow = 4 << 20
 
-// Szukaj przechodzi repozytorium i oddaje trafienia w kolejności plików.
-//
-// Trzecia wartość mówi, czy wynik przycięto granicą; druga — ile trafień
-// znaleziono przed przycięciem. Sam wykaz przycięty bez tej liczby kazałby
-// Operatorowi zgadywać, czy zobaczył wszystko.
+// Szukaj przechodzi repozytorium i oddaje trafienia w kolejności plików, wraz
+// z liczbą trafień przed przycięciem granicą.
 func Szukaj(katalog string, zadanie ZadanieSzukania) ([]shared.DeveloperGrepMatch, int, bool, error) {
 	wzorzec, err := zlozWzorzec(zadanie.Wzorzec, zadanie.Wyrazenie, zadanie.RozrozniajWielkosc)
 	if err != nil {
@@ -98,7 +84,8 @@ func Szukaj(katalog string, zadanie ZadanieSzukania) ([]shared.DeveloperGrepMatc
 	return trafienia, wszystkich, wszystkich > len(trafienia), nil
 }
 
-// ZadanieZamiany opisuje zamianę w repozytorium.
+// ZadanieZamiany opisuje daną zamianę w tym repozytorium: wzorzec, tekst
+// zamiany, ścieżki i tryb podglądu.
 type ZadanieZamiany struct {
 	Wzorzec   string
 	Zamiana   string
@@ -107,12 +94,8 @@ type ZadanieZamiany struct {
 	Podglad   bool
 }
 
-// Zamien wykonuje zamianę wzorca w repozytorium.
-//
-// Podgląd jest stanem domyślnym pracy eksperckiej: zamiana masowa dotyka wielu
-// plików naraz i „Cofnij" po niej nie istnieje. Dlatego czynność oddaje wykaz
-// zmian razem z odpowiedzią o tym, czy je zapisała — a nie samo słowo
-// „wykonano", z którego Operator nie wyczyta, co się stało z jego kodem.
+// Zamien wykonuje zamianę wzorca w repozytorium, oddając wykaz zmian razem
+// z odpowiedzią o tym, czy je zapisała.
 func Zamien(katalog string, zadanie ZadanieZamiany) ([]shared.DeveloperTextEdit, []string, bool, error) {
 	wzorzec, err := zlozWzorzec(zadanie.Wzorzec, zadanie.Wyrazenie, true)
 	if err != nil {
@@ -144,9 +127,8 @@ func Zamien(katalog string, zadanie ZadanieZamiany) ([]shared.DeveloperTextEdit,
 			if zadanie.Wyrazenie {
 				nowy = wzorzec.ReplaceAllString(wiersz, zadanie.Zamiana)
 			} else {
-				// Wzorzec dosłowny zamienia się dosłownie: `$1` w treści
-				// wstawianej ma zostać `$1`, a nie zniknąć jako odwołanie do
-				// grupy, której w takim wzorcu nie ma.
+				// Wzorzec dosłowny zamienia się dosłownie: znacznik grupy
+				// w treści wstawianej ma zostać, nie zniknąć.
 				nowy = wzorzec.ReplaceAllLiteralString(wiersz, zadanie.Zamiana)
 			}
 			if nowy == wiersz {
@@ -213,11 +195,8 @@ func zlozWzorzec(wzorzec string, wyrazenie, rozrozniajWielkosc bool) (*regexp.Re
 	return zlozony, nil
 }
 
-// obszarSzukania oddaje korzeń przeszukania oraz regułę pomijania.
-//
-// Katalog bez repozytorium też podlega przeszukaniu: Operator otwiera w oknie
-// także katalogi, których nie wersjonuje, a odmowa wyszukiwania byłaby wtedy
-// odmową bez powodu. Reguły pomijania są wtedy puste poza katalogiem `.git`.
+// obszarSzukania oddaje korzeń przeszukania oraz regułę pomijania; katalog
+// bez repozytorium też podlega przeszukaniu.
 func obszarSzukania(katalog string) (string, gitignore.Matcher, error) {
 	korzen := katalog
 	if repo, err := Otworz(katalog); err == nil {
@@ -234,12 +213,8 @@ func obszarSzukania(katalog string) (string, gitignore.Matcher, error) {
 	return korzen, regulyPomijania(korzen), nil
 }
 
-// regulyPomijania czyta `.gitignore` korzenia repozytorium.
-//
-// Czytany jest plik korzenia, nie wszystkie pliki drzewa: to on niesie reguły
-// katalogów budowania i zależności, czyli te, których pominięcie decyduje
-// o użyteczności wyniku. Reguły podkatalogów zawężają wynik dodatkowo i ich brak
-// oznacza wyłącznie kilka trafień więcej, nigdy mniej.
+// regulyPomijania czyta plik ignorowanych ścieżek korzenia repozytorium, nie
+// wszystkich plików całego drzewa.
 func regulyPomijania(korzen string) gitignore.Matcher {
 	bajty, err := os.ReadFile(filepath.Join(korzen, ".gitignore"))
 	if err != nil {
@@ -256,14 +231,15 @@ func regulyPomijania(korzen string) gitignore.Matcher {
 	return gitignore.NewMatcher(wzorce)
 }
 
-// przejdzPliki woła obsługę dla każdego pliku tekstowego obszaru.
+// przejdzPliki woła obsługę dla każdego pliku tekstowego obszaru, pomijając
+// pliki binarne i nadmiernie duże.
 func przejdzPliki(korzen string, pomijaj gitignore.Matcher, wlacz, wylacz []string,
 	obsluz func(wzgledna, tresc string) error) error {
 
 	return filepath.WalkDir(korzen, func(sciezka string, wpis fs.DirEntry, err error) error {
 		if err != nil {
-			// Katalog bez prawa odczytu nie zatrzymuje przeszukania całości:
-			// wynik ma być niepełny o ten katalog, a nie pusty.
+			// Katalog bez prawa odczytu nie zatrzymuje przeszukania całości;
+			// wynik ma być niepełny, nie pusty.
 			if wpis != nil && wpis.IsDir() {
 				return filepath.SkipDir
 			}
@@ -307,7 +283,7 @@ func przejdzPliki(korzen string, pomijaj gitignore.Matcher, wlacz, wylacz []stri
 }
 
 // przechodziGloby rozstrzyga, czy plik mieści się we wzorcach włączających
-// i poza wyłączającymi.
+// i poza wzorcami wyłączającymi.
 func przechodziGloby(wzgledna string, wlacz, wylacz []string) bool {
 	for _, wzorzec := range wylacz {
 		if pasujeGlob(wzgledna, wzorzec) {
@@ -325,11 +301,8 @@ func przechodziGloby(wzgledna string, wlacz, wylacz []string) bool {
 	return false
 }
 
-// pasujeGlob dopasowuje wzorzec do ścieżki albo do samej nazwy pliku.
-//
-// Dopasowanie idzie dwutorowo, bo Operator pisze i `*.go`, i `server/**`.
-// `filepath.Match` nie zna `**`, więc wzorzec z podwójną gwiazdką sprowadza się
-// do przedrostka ścieżki — to jest znaczenie, którego Operator się spodziewa.
+// pasujeGlob dopasowuje wzorzec do ścieżki albo do samej nazwy pliku,
+// dwutorowo, z obsługą podwójnej gwiazdki.
 func pasujeGlob(wzgledna, wzorzec string) bool {
 	wzorzec = strings.TrimSpace(wzorzec)
 	if wzorzec == "" {
@@ -347,17 +320,9 @@ func pasujeGlob(wzgledna, wzorzec string) bool {
 	return err == nil && pasuje
 }
 
-// PlikiDoPrzejrzenia oddaje ścieżki bezwzględne plików tekstowych obszaru —
+// PlikiDoPrzejrzenia oddaje ścieżki bezwzględne plików tekstowych obszaru,
 // z poszanowaniem reguł pomijania repozytorium i z pominięciem plików
 // binarnych oraz nadmiernie dużych.
-//
-// Wystawione poza pakiet dla skanowania bezpieczeństwa i jakości: skan przechodzi
-// dokładnie ten sam zbiór plików, co wyszukiwanie, więc jedno przejście ma
-// stanowić jedną prawdę o tym, co należy do repozytorium. Skan zgłaszający
-// sekret w katalogu pobranych zależności byłby wykazem, którego nikt nie czyta.
-//
-// Wzorce włączające zawężają wynik tak samo, jak w `Szukaj`; pusty wykaz znaczy
-// całe drzewo.
 func PlikiDoPrzejrzenia(katalog string, wlacz []string) ([]string, error) {
 	korzen, pomijaj, err := obszarSzukania(katalog)
 	if err != nil {

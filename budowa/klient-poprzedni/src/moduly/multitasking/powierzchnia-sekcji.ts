@@ -6,19 +6,9 @@ import { PRZEDROSTEK } from './kontrolki';
 import { utworzStanTresci, type StanTresci } from './stany-okna';
 
 /**
- * Wspólna powierzchnia sekcji panelu orkiestracji.
- *
- * Sekcje panelu (Zespoły, Kolejki, Orkiestracja, Harmonogram, Monitor) mają ten
- * sam szkielet: nagłówek z opisem zakresu, wewnętrzny układ podsekcji i jedno
- * miejsce meldunku pod spodem. Kolejność i widoczność podsekcji prowadzi wzorzec
- * powłoki `powloka/sekcje-panelu.ts` przez `panel.sections.*`; ten plik go woła
- * i sam niczego nie przestawia.
- *
- * `panel.sections.*` adresuje parę (okno, panel), a panel orkiestracji należy do
- * środowiska, nie do okna. Adresem zostaje więc okno, przy którym sekcja pracuje:
- * okno koordynatora, a gdy obsada go nie ma — pierwsze okno sesji; bez żadnego
- * okna układ zostaje miejscowy. Brak zapisanego układu znaczy układ domyślny,
- * więc odmowa `panel.sections.get` zostawia sekcję kompletną.
+ * Wspólna powierzchnia sekcji panelu orkiestracji: nagłówek z opisem zakresu,
+ * wewnętrzny układ podsekcji i jedno miejsce meldunku pod spodem. Kolejność
+ * podsekcji prowadzi wzorzec powłoki, a ten plik go woła i nic nie przestawia.
  */
 export interface PowierzchniaSekcji {
   /** Element sekcji montowany w obszarze roboczym. */
@@ -59,10 +49,7 @@ export function utworzPowierzchnieSekcji(opcje: OpcjePowierzchni): PowierzchniaS
   zakres.className = 'dn-pole-opis';
   zakres.textContent = opcje.zakres;
 
-  // Identyfikatorem panelu jest klucz sekcji — ten sam, którym boczna nawigacja
-  // wskazuje sekcję. Napis składany z tytułu rozjechałby się przy pierwszej
-  // zmianie tytułu, a układ zapisany w rdzeniu przestałby mieć odpowiednik
-  // na ekranie.
+  // Identyfikatorem panelu jest klucz sekcji, ten sam, którym wskazuje ją nawigacja.
   const uklad = utworzSekcjePanelu({
     zrodlo: opcje.sekcje,
     panelId: `orkiestracja-${opcje.klucz}`,
@@ -86,7 +73,11 @@ export function utworzPowierzchnieSekcji(opcje: OpcjePowierzchni): PowierzchniaS
   };
 }
 
-/** Akapit stanu pustego — wspólny kształt meldunku dla wszystkich sekcji. */
+/**
+ * Akapit stanu pustego — wspólny kształt meldunku dla wszystkich sekcji panelu.
+ * Jeden kształt zamiast pięciu sprawia, że sekcja bez zawartości czyta się tak
+ * samo niezależnie od tego, która to sekcja.
+ */
 export function zdaniePuste(tresc: string): HTMLElement {
   const akapit = document.createElement('p');
   akapit.className = 'dn-pole-opis';

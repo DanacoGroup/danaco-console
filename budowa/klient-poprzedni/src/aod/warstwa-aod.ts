@@ -103,7 +103,7 @@ export function utworzWarstweAod(
   function najpilniejszy(): WpisKolejkiDecyzji | null {
     const wpisy = kolumna.kolejka.wykaz(teraz());
     if (wpisy.length === 0) return null;
-    // Wykaz idzie od najdłużej czekającego; wagę wysoką przepuszczamy przed nią.
+    // Wykaz idzie od najdłużej czekającego; wagę wysoką przepuszcza się przed nią.
     const wysoka = wpisy.find((wpis) => wpis.decyzja.wagaUjawnienia === WagaUjawnienia.Wysoka);
     return wysoka ?? wpisy[0] ?? null;
   }

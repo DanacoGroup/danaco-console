@@ -1,41 +1,7 @@
 #!/usr/bin/env bash
-# Pakiet serwera Danaco Console (.deb) — złożenie wydania dla maszyny SERWERA.
-#
-# ── Co ten skrypt pakuje i dlaczego akurat to ─────────────────────────────────
-# Model wdrożenia (rozstrzygnięcie zamknięte): całość stoi na serwerze, a
-# u Operatora zostaje cienkie okno. Ten pakiet jest więc SERCEM platformy, nie
-# oknem klienta — i dlatego nie idzie bundlerem Tauri, a dpkg-deb po własnym
-# drzewie katalogów.
-#
-# Niesie:
-#   danaco-console      — rdzeń, zbudowany natywnie na Linuksa,
-#   danaco-narzedzia    — serwer narzędzi modelu; rdzeń szuka go OBOK SIEBIE
-#                         (server/internal/narzedzia/wpiecie.go: os.Executable
-#                         → filepath.Dir → nazwa), stąd oba pliki w jednym
-#                         katalogu i stąd katalog roboczy jednostki systemd,
-#   klient/dist         — pakiet interfejsu, który rdzeń serwuje klientom,
-#   cztery dokumenty    — README, instalacja i konfiguracja, instrukcja, licencja,
-#   jednostkę systemd   — konto usługi, katalog danych, restart, port 17870,
-#   pomocniki/          — pomocniki pythonowe wołane przez rdzeń; rdzeń szuka ich
-#                         obok siebie, a prowizjonowanie bierze stamtąd plik
-#                         wymagań środowiska rozpoznawania mowy,
-#   scripts/arsenal-serwera.sh — skrypt prowizjonowania arsenału na serwerze.
-#
-# ── Czego ten skrypt NIE robi ─────────────────────────────────────────────────
-# Nie stawia arsenału i nie przepisuje jego wykazu. Wykaz zależności rdzenia stoi
-# w jednym rejestrze deklaracji (server/internal/core/zaleznosci_zewnetrzne.go
-# wraz z deklaracjami w adapterach) i rdzeń wypisuje go sam
-# (danaco-console --wykaz-zaleznosci). Pole Depends w packaging/drzewo/DEBIAN/control
-# niesie tę część rejestru, którą ma dystrybucja; resztą zajmuje się
-# scripts/arsenal-serwera.sh, wskazany Operatorowi przez postinst.
-#
-# ── Wywołanie ─────────────────────────────────────────────────────────────────
-#   scripts/pakiet-serwera.sh                 # zbuduj wszystko i złóż pakiet
-#   scripts/pakiet-serwera.sh --bez-budowy    # złóż z tego, co już zbudowane
-#
-# Zmienne:
-#   DANACO_WERSJA=1.0.0        — wersja pakietu (domyślnie z DEBIAN/control)
-#   DANACO_KATALOG_WYDANIA=…   — gdzie odłożyć wynik
+# Pakiet serwera Danaco Console jest złożeniem wydania dla maszyny serwera:
+# całość platformy stoi tam, u operatora zostaje cienkie okno, dlatego pakiet
+# idzie przez dpkg-deb, nie przez bundler Tauri.
 set -euo pipefail
 
 SKRYPTY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,7 +11,8 @@ PAKOWANIE="$BUDOWA/packaging"
 SZKIELET="$PAKOWANIE/drzewo"
 ROBOCZY="$PAKOWANIE/roboczy"
 
-# Wersji NIE podnosimy — żadne wydanie nie było w użytku.
+# Wersji nie podnosimy, bo żadne wydanie nie było jeszcze w użytku; numer
+# wersji zostaje pod kontrolą operatora wydania.
 WERSJA="${DANACO_WERSJA:-1.0.0}"
 DATA="$(date +%Y-%m-%d)"
 KATALOG_WYDANIA="${DANACO_KATALOG_WYDANIA:-$BUDOWA/wydania/$WERSJA-$DATA}"
@@ -98,12 +65,13 @@ mkdir -p "$ROBOCZY/opt/danaco-console/scripts" \
 	"$ROBOCZY/usr/share/doc/danaco-console" \
 	"$ROBOCZY/usr/bin"
 
-# Oba pliki wykonywalne w JEDNYM katalogu — inaczej rdzeń nie znajdzie serwera
-# narzędzi obok siebie.
+# Oba pliki wykonywalne stoją w jednym katalogu — inaczej rdzeń nie znajdzie
+# serwera narzędzi obok siebie na dysku.
 install -m 0755 "$PAKOWANIE/danaco-console" "$ROBOCZY/opt/danaco-console/danaco-console"
 install -m 0755 "$PAKOWANIE/danaco-narzedzia" "$ROBOCZY/opt/danaco-console/danaco-narzedzia"
 
-# Pakiet interfejsu tam, gdzie jednostka wskazuje rdzeniowi (client/dist).
+# Pakiet interfejsu trafia dokładnie tam, gdzie jednostka systemd wskazuje
+# rdzeniowi jego katalog interfejsu.
 mkdir -p "$ROBOCZY/opt/danaco-console/client"
 cp -a "$BUDOWA/klient/dist" "$ROBOCZY/opt/danaco-console/client/dist"
 find "$ROBOCZY/opt/danaco-console/client" -type d -exec chmod 0755 {} +
@@ -122,11 +90,9 @@ else
 	printf 'UWAGA: brak scripts/arsenal-serwera.sh — pakiet pójdzie bez skryptu arsenału\n' >&2
 fi
 
-# Pomocniki pythonowe wołane przez rdzeń. Rdzeń szuka ich OBOK SIEBIE — tak samo
-# jak serwera narzędzi — i tą samą drogą wskazuje je prowizjonowaniu
-# (`danaco-console --wykaz-mowy`, klucz rozpoznanie.pomocnik-szukano). Bez nich
-# `arsenal-serwera.sh postaw` nie ma z czego zbudować środowiska rozpoznawania
-# mowy: plik wymagań przychodzi właśnie stąd, a nie z treści skryptu.
+# Pomocniki pythonowe wołane przez rdzeń; rdzeń szuka ich obok siebie, tak
+# samo jak serwera narzędzi, a prowizjonowanie stamtąd bierze plik wymagań
+# środowiska rozpoznawania mowy.
 if [ -d "$BUDOWA/pomocniki" ]; then
 	cp -a "$BUDOWA/pomocniki" "$ROBOCZY/opt/danaco-console/pomocniki"
 	find "$ROBOCZY/opt/danaco-console/pomocniki" -type d -exec chmod 0755 {} +
@@ -135,7 +101,8 @@ else
 	padnij "nie ma katalogu pomocników: $BUDOWA/pomocniki — bez niego pakiet nie postawi mowy"
 fi
 
-# Cztery dokumenty produktu z korzenia repozytorium.
+# Cztery dokumenty produktu z korzenia repozytorium trafiają do pakietu jako
+# dokumentacja instalowana wraz z usługą.
 BRAK_DOKUMENTU=nie
 for dokument in README.md INSTALACJA-I-KONFIGURACJA.md INSTRUKCJA-UZYTKOWANIA.md LICENSE.md; do
 	if [ -r "$KORZEN/$dokument" ]; then
@@ -171,7 +138,8 @@ find "$ROBOCZY" -path "$ROBOCZY/DEBIAN" -prune -o -type d -exec chmod 0755 {} +
 )
 chmod 0644 "$ROBOCZY/DEBIAN/md5sums"
 
-# ── Złożenie ─────────────────────────────────────────────────────────────────
+# Złożenie pakietu odkłada gotowy plik do katalogu wydania i liczy jego sumę
+# kontrolną, gotową do odbioru.
 zglos "złożenie pakietu"
 mkdir -p "$KATALOG_WYDANIA"
 PAKIET="$KATALOG_WYDANIA/danaco-console_${WERSJA}_${ARCHITEKTURA}.deb"

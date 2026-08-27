@@ -4843,3 +4843,20 @@ Jedno zapytanie zamiast zapytania na każde środowisko: macierz jest mała,
 ale czyta ją każde wejście na stronę główną, wykaz środowisk, wejście do
 środowiska i wykaz modułów, więc wielokrotne zapytania płaciłyby się przy
 każdym wejściu operatora.
+
+## budowa/server/internal/dane/auth.go
+
+Wiersz metody uwierzytelnienia nie jest kontem — kont użytkownika platforma nie prowadzi —
+ani poświadczeniem kanału modelu, które mieszka w osobnej tabeli konta i z bramką nie ma
+związku. Skrót hasła składa rdzeń i on kładzie go w sejfie poświadczeń.
+
+Kotwica to hasło bramki: brak jej wiersza otwiera jednorazową wykonalność rejestracji.
+
+UniewaznijSesjeBramkiPoza: pusty skrót sesji własnej znaczy unieważnienie wszystkich sesji
+czynnych.
+
+UrzadzeniaKonta niesie też informację, czy urządzenie ma dziś ważny token.
+
+Urządzenie konta nie ma bytu trwałego w osobnej tabeli i nie musi go mieć: urządzeniem konta
+jest to, które kiedykolwiek weszło, a to wiedzą sesje bramki; osobna tabela urządzeń
+wymagałaby sprzątania wierszy, których nic już nie dotyczy.

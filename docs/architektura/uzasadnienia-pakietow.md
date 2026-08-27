@@ -2702,3 +2702,14 @@ przebieg nie ma prawa skasować odpowiedzi Operatora.
 RozstrzygnijUstalenieKorekty znakuje ustalenie jako zastosowane albo
 odrzucone, zapisując chwilę, nie wartość logiczną: kiedy niesie więcej niż
 czy, a czy da się z kiedy odczytać.
+
+## roundtable_graf.go
+
+Graf jest trwały, ponieważ oznaczenie węzła jako kluczowego stawia operator poleceniem
+roundtable.argument.pin. Oznaczenie postawione na węźle wyliczanym w locie znikałoby
+przy następnym odczycie razem z identyfikatorem węzła.
+
+Ponowna analiza zastępuje graf tury, a nie dokłada się do niego: dwa przebiegi
+wydobycia argumentów na tym samym zapisie dałyby każdy węzeł dwa razy. Funkcja
+ZastapGrafDebaty przenosi oznaczenia kluczowe po treści węzła, żeby zastąpienie grafu
+nie zgubiło wyboru operatora.

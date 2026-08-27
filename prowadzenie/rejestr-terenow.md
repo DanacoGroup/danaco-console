@@ -6,6 +6,79 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### warunek-ukonczenia-zadania
+
+Rdzeń zna trzy powody **zatrzymania** biegu — brak postępu, Operator, usterka
+(`LoopStopReason`, `stan_obiegu.go:18`, stałe `session.PowodZatrzymania`) —
+i żaden nie znaczy „ukończone z wynikiem". Pozycja 7 rejestru decyzji wymaga
+rozróżnienia maszynowego, a pozycja otwarta „Warunek ukończenia zadania"
+blokuje etap 2. Rozstrzygnięcie przyjęte do czasu rozstrzygnięcia Właściciela
+niesie [rejestr decyzji](decyzje.md): czwarta wartość `completed`, **bez bramki
+akceptacji** — bramka byłaby sprzeczna z zasadą zero blokad.
+
+Zakotwiczenie sprawdzone przed otwarciem: wartości `complete` nie ma w żadnym
+wyliczeniu tur, ale niesie ją `MessageStatus` (`pending`, `streaming`,
+`complete`, `stopped`, `error`). Ustalenie, czym dokładnie jest „koordynator
+skończył turę", należy do terenu i ma paść pomiarem, nie założeniem.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/warunek-ukonczenia-zadania` z `main` |
+| **Wykaz plików** | `budowa/shared/contract.json` wraz z generatami, `budowa/server/internal/core/stan_obiegu.go`, `budowa/server/internal/session/obieg.go`, `petla.go`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/server/internal/core/urzadzenia_skaner.go` i `skutek_wydania_studia_test.go` (tereny biegnące), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
+
+**Zmiana kontraktu jest dozwolona i obwarowana.** Suma zastana
+`334705bd88c2efc13779`, 1080 komend. Wolno **dołożyć** wartość wyliczenia.
+**Nie wolno** zmienić ani usunąć niczego istniejącego. Generator z
+`budowa/shared/gen` musi dawać wynik bajtowo powtarzalny w dwóch przebiegach.
+W rejestrze podajesz sumę zastaną i sumę po sobie.
+
+**Kryteria odbioru.**
+
+1. Ustalone **pomiarem**, nie założeniem, przy jakim stanie rdzenia koordynator
+   kończy turę i jak sprawdza się, że żadne okno wykonawcze tury nie prowadzi —
+   z przytoczonym miejscem w kodzie i wynikiem uruchomienia.
+2. `LoopStopReason` niesie czwartą wartość `completed`, a rdzeń ustawia ją
+   dokładnie w stanie z punktu 1 — wykazane sprawdzianem, który odróżnia
+   ukończenie od trzech zatrzymań.
+3. Bramki akceptacji nie ma — bieg po ukończeniu nie czeka na niczyje
+   potwierdzenie; wykazane sprawdzianem.
+4. Diff kontraktu zawiera wyłącznie dodania; generator bajtowo powtarzalny.
+5. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
+   podanego w raporcie, zmierzonego przed pierwszą zmianą.
+6. Rewizje obejmują wyłącznie pliki terenu.
+
+### odwolania-do-usunietych-skryptow
+
+Sześć skryptów instalek natywnych usunięto z repozytorium pozycją 8 pkt 4
+(teren `aktualizacja-powloki-i-skrypty`, rewizja `880b41f`). Rdzeń wciąż je
+przywołuje: `budowa/server/internal/narzedzia/wpiecie.go:52` w komentarzu
+i `:111` w treści odmowy — komunikat radzi Operatorowi budowę skryptem, którego
+nie ma. Odmowa, która wskazuje nieistniejącą drogę naprawy, jest gorsza od
+odmowy milczącej, bo wysyła po nic.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/odwolania-do-usunietych-skryptow` z `main` |
+| **Wykaz plików** | `budowa/server/internal/narzedzia/wpiecie.go` wraz ze sprawdzianami tego pakietu; pozostałe pliki **wyłącznie** te, które przeszukanie wskaże jako przywołujące usunięte skrypty, i wyłącznie poza plikami terenów biegnących |
+| **Poza terenem** | `budowa/shared/`, `budowa/server/internal/core/` (tereny biegnące), `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/scripts/` (skrypty żywe mają osobne zgłoszenie) |
+
+**Kryteria odbioru.**
+
+1. Przeszukanie całego repozytorium za nazwami sześciu usuniętych skryptów
+   (`instalka-natywna-win.sh`, `instalka-natywna-linux.sh`,
+   `instalka-windows.sh`, `instalka-pelna.sh`, `wydanie.sh`, `pakowanie.sh`)
+   z przytoczonym poleceniem i pełnym wykazem trafień — potwierdzone, że wzorzec
+   w ogóle łapie.
+2. Każde trafienie w rdzeniu albo poprawione, albo wypisane wraz z powodem,
+   dla którego zostaje (materiał zamknięty, dokument audytowy).
+3. Odmowa `wpiecie.go` wskazuje drogę naprawy, która **istnieje** — wykazane
+   sprawdzianem czytającym treść odmowy.
+4. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
+   podanego w raporcie.
+5. Kontrakt nietknięty — suma `334705bd88c2efc13779`.
+6. Rewizje obejmują wyłącznie pliki terenu.
+
 ### sprawdziany-drogi-wejscia
 
 Trzy sprawdziany w `skutek_wydania_studia_test.go` rozjechały się z rdzeniem

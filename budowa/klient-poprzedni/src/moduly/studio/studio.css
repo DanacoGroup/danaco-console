@@ -1,16 +1,4 @@
-/*
- * Warstwa wizualna modułu Studio.
- *
- * Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
- * z żetonów motywu, więc oba motywy obsługują się same. Klasy `dn-*`
- * (pole, przycisk, plakietka, tabela, pusty stan, spinner, dymek) wnosi
- * biblioteka komponentów; tutaj leży wyłącznie rozkład okien modułu i to, czego
- * biblioteka nie ma: pasy układu, wykaz operacji i wyrys różnicy. Okno pracy
- * z dokumentem ma własny arkusz — `studio-praca.css`.
- *
- * Kontrolki formularza modułu pochodzą z `modele/kontrolki-formularza`, więc
- * moduł wciąga też arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.
- */
+/* Warstwa wizualna modułu studia zawiera wyłącznie rozkład okien, wykaz operacji i wyrys różnicy — pozostałe elementy wnosi biblioteka komponentów i żetony motywu. */
 
 @import '../../modele/modele.css';
 @import './studio-okna.css';

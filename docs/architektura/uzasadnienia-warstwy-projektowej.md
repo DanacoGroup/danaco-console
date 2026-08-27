@@ -135,3 +135,10 @@ osobna wyspa wizualna.
 Rama i stany wspólne wszystkim pięciu oknom operacyjnym stoją w arkuszu
 wspólnym studia; ten arkusz nie zapisuje żadnej barwy wprost i korzysta
 wyłącznie ze zmiennych motywu.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio.css
+Biblioteka komponentów wnosi pole, przycisk, plakietkę, tabelę, pusty stan,
+spinner i dymek. Okno pracy z dokumentem ma własny arkusz. Kontrolki
+formularza modułu pochodzą z arkusza kontrolek formularza modeli, więc moduł
+wciąga też arkusz wspólny modeli — inaczej pola formularza byłyby bez oprawy
+wizualnej.

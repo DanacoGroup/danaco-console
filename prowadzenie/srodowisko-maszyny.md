@@ -2,8 +2,14 @@
 
 Opis maszyny, na której powstaje Danaco Console. Dokument prowadzi stan
 faktyczny — każda pozycja została sprawdzona uruchomieniem, nie odtworzona
-z pamięci. Sesja wykonawcza niczego tu nie instaluje; brakujące narzędzie jest
-zgłoszeniem do Prowadzącego.
+z pamięci.
+
+**Sesja wykonawcza niczego tu nie instaluje; brakujące narzędzie jest zgłoszeniem
+do Prowadzącego.** Wyjątek udziela się terenowi wpisem w rejestrze terenów, nazywa
+go wprost i wygasa razem z tym terenem. Udzielono go dotąd raz — terenowi
+`zaplecze-modeli`, bo Właściciel polecił, żeby aplikacja miała wszystkie narzędzia
+czynne, a 16 GB wag w `/opt/danaco-modele` nie miało czym się uruchomić. Wszystko,
+co teren postawił, stoi w sekcji 4.
 
 ## 1. Zasoby maszyny
 
@@ -64,6 +70,27 @@ i nie podlegają ponownemu pobraniu.
 | `/opt/danaco-arsenal` | 251 MB | synteza mowy wraz z głosami |
 | `/opt/danaco-ikony` | 138 MB | zbiory ikon: heroicons, lucide, phosphor, tabler |
 | `/opt/ms-playwright` | — | chromium, firefox, powłoka bezokienkowa, ffmpeg |
+
+## 4a. Narzędzia dołożone po przejęciu rdzenia
+
+Wykaz zależności rdzenia urósł z 30 pozycji przy przejęciu do 54. Poniżej to,
+czego nie wymienia sekcja 2, a na czym opierają się komendy dołożone w tej turze.
+Każda pozycja sprawdzona uruchomieniem.
+
+| Narzędzie | Skąd | Komenda, która po nie sięga |
+|---|---|---|
+| `pa11y` | npm globalne | `browser.accessibility.audit` |
+| `lighthouse` | npm globalne | `apps.performance.audit` |
+| `autocannon` | npm globalne | `developer.api.load.run` |
+| `k6` | `/usr/local/bin` | rozważony i odrzucony na rzecz `autocannon` |
+| `fastembed` 0.8.0 wraz z czterema pakietami | pip, **~434 MB** | `knowledge.index`, `knowledge.search` |
+
+`fastembed` postawił teren `zaplecze-modeli` na mocy wyjątku opisanego w nagłówku
+tego dokumentu. W modelu hybrydowym zaplecze stoi na serwerze wdrożenia, nie
+u Operatora — instalacja na maszynie budowlanej jest instalacją tego serwera.
+
+**Brak jedyny:** `typescript-language-server`. Rdzeń nazywa go w sondzie startowej
+wraz z drogą naprawy; warstwa językowa TypeScriptu przez to nie działa.
 
 ## 5. Usługi w tle
 

@@ -100,6 +100,13 @@ Otwiera ją Prowadzący. Warunki: teren ma nazwę, wykaz plików i kryteria odbi
 wykaz plików nie przecina się z żadnym terenem otwartym; gałąź bazowa jest
 wskazana.
 
+**Teren ruszający kontrakt otwiera się wyłącznie na podstawie pozycji rejestru
+decyzji.** Kontrakt jest produktem — każda komenda to zdolność, którą platforma
+odtąd obiecuje — więc dołożenie komendy jest rozstrzygnięciem o zakresie, a to
+należy do Właściciela. Prawo zmiany kontraktu nie jest prawem Prowadzącego do
+nadania. Warunek wprowadzony po tym, jak teren `pomiar-stron` dołożył trzy
+zdolności bez takiej podstawy (pozycja 16 rejestru decyzji).
+
 ### 5.2 Bramka wyjścia terenu
 
 Zamyka ją Kontroler. Warunki: wszystkie kryteria odbioru spełnione; rewizje

@@ -1606,3 +1606,55 @@ czynności. Trzecia to kopia dokumentu założona jako drugie odwołanie do tego
 samego bytu, po której zmiana w kopii rusza oryginał. Czwarta to wniesienie
 oddane jako udane, a bez zapisu pochodzenia dokumentu, po którym nie da się
 odtworzyć, na czym pismo się opiera.
+
+## budowa/server/internal/core/montaz.go
+
+Kolejność montażu w `Zmontuj` jest wymuszona zależnościami, nie upodobaniem:
+repozytoria dają źródła konfiguracji i kanałów, transport daje nadajnik
+zdarzeń, a rdzeń powstaje na końcu, bo dopiero wtedy ma czym wypełnić porty.
+Brak elementu opcjonalnego nie przerywa montażu: pusty rejestr kanałów, brak
+profili kanału głównego i brak pakietu klienta zostawiają rdzeń zdolny do
+pracy w pozostałym zakresie.
+
+Rozpoznanie maszyny bieżącej zakłada wiersz urządzenia, na którym stoi rdzeń.
+Nieudane rozpoznanie idzie do dziennika i nie przerywa montażu. Degradacja
+katalogu roboczego do lokalizacji zastępczej także idzie do dziennika, tak by
+Operator wiedział, że pracuje gdzie indziej, niż ustawił.
+
+Przejmowanie procesów powstaje przed kanałami, bo kanał wkłada haczyk do
+każdej tury, a wiązane jest po nadzorcy, bo to on ma rejestr procesów. Ta
+jedna pośredniczka domyka różnicę kolejności. Nadzorca nie dostaje tu żadnego
+wypełnienia: proces tury startuje kanał modelu własną drogą, a sesja obejmuje
+go uchwytem przez Przejmij. Drugiej drogi startu procesu nie ma.
+
+Sprzątanie startowe stanu trwałego idzie przed odtworzeniem rejestru: start
+jest jedynym momentem, w którym rdzeń i tak czyta stan trwały. Opróżnienie
+kosza sesji po terminie i przemiecenie retencji historii to dwie czynności
+jednej drogi sprzątania; kolejność jest istotna, bo sesja skasowana z kosza
+zabiera swoje okna wraz z wypowiedziami.
+
+Telemetria postępu czyta szynę zdarzeń i port rozmowy, więc powstaje przed
+rdzeniem i owija nadajnik transportu. Żywy stan sesji stoi pod telemetrią:
+producent telemetrii rozgłasza `progress.changed` wprost tym nadajnikiem,
+który dostał, więc nasłuch obecności musi być tym nadajnikiem. Tak domyka się
+łańcuch producent → szyna → odbiorca kontrolki powrotu do sesji.
+
+Doraźne dołożenia narzędzi mają dwóch czytelników: port `NarzedziaSesji`
+rdzenia (rodzina `session.tool.*` i `tools.catalog.list`) oraz składacz
+zestawu narzędzi tury, który dokłada je do wykazu eksperta
+(`adapter_rozmowa_zestaw.go`). Instancja powstaje przed składaniem portów, bo
+oba mają dostać ten sam adapter — drugi byłby drugą prawdą o tym, czym model
+w sesji dysponuje.
+
+Zakresy narzędzi mają dwóch czytelników: port `ZakresyNarzedzi` rdzenia
+(rodzina `tools.scope.*`) oraz straż, którą rdzeń pyta przed skierowaniem
+komendy ręki modelu. Jedna instancja na obie drogi — druga byłaby drugą
+prawdą o tym, co profilowi wolno. Straż zakresu eksperta wpina się w dwa
+miejsca odmowy: nałożenie eksperta na okno i powołanie podagentów
+(`straz_eksperta.go`).
+
+Wymóg logowania w `ustawieniaTransportu` ma dwa źródła i jedno pierwszeństwo.
+Wskazanie ze startu (przełącznik wiersza poleceń, zmienna środowiska) wygrywa
+zawsze. Dopiero jego brak oddaje głos nastawie poziomu `aplikacja` z tabeli
+`ustawienie`, a brak i jej — adresowi nasłuchu. To ten sam rozstrzygacz i ta
+sama tabela, którą widzi `config.get`.

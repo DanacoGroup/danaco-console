@@ -5931,3 +5931,13 @@ Komentarz i adnotacja dzielą jedną tabelę, bo dzielą wszystkie kolumny poza 
 Pola opcjonalne profilu druku niosą wskaźnik celowo: brak spadu znaczy wzięcie domyślnego
 rdzenia, a spad zerowy znaczy druk bez spadu — to dwa różne rozstrzygnięcia i dwa różne
 wyniki w drukarni.
+
+## budowa/server/internal/transport/polaczenie.go
+
+Zapis do gniazda prowadzi jedna pętla wysyłki, odczyt druga pętla odbioru; dzięki temu wysyłka z wielu
+miejsc rdzenia równocześnie nie wymaga blokady na gnieździe i nigdy nie miesza ramek. Rdzeń widzi
+połączenie wyłącznie przez interfejs Ujscie, czyli identyfikator, konto i wysyłkę koperty.
+
+Chwila bieżąca jest w opisie metody Tozsamosc istotna: identyfikator klienta dochodzi dopiero
+z powitaniem, więc żądanie wcześniejsze widzi tożsamość uboższą. To jest prawda o stanie, a nie brak do
+naprawienia — rdzeń zamilknie wtedy o sprawcy zdarzenia zamiast go zmyślić.

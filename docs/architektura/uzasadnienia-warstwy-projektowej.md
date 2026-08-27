@@ -67,3 +67,29 @@ każda barwa i każdy odstęp pochodzi z żetonów. Ruch asystenta nie jest ani
 sukcesem, ani awarią, dlatego pasek nosi barwę informacyjną: para żetonów
 `--dn-informacja-tekst` i `--dn-informacja-tlo` przechodzi tę samą kontrolę
 kontrastu co pozostałe pary motywu, a pasek nie dokłada barwy własnej.
+
+## budowa/klient-poprzedni/src/aplikacja/powloka.css
+Wskaźnik ładowania łączności korzysta ze spinnera biblioteki zmniejszonego do
+rozmiaru kropki, którą zastępuje na czas łączenia — dzięki temu plakietka nie
+rośnie i nie przeskakuje przy zmianie stanu. Kropka i spinner mają własne
+właściwości wyświetlania, dlatego ukrycie każdego z nich wymaga osobnego
+zapisu jawnego.
+
+Punkt łamania w2 (960 pikseli) stoi w zapytaniu medialnym liczbą, ponieważ
+zapytanie medialne nie odczytuje zmiennych własnych arkusza. Jedynym źródłem
+tej wartości pozostaje żeton `--dn-bp-w2` z pliku motyw/wymiary.css — liczba
+w zapytaniu musi się z nim zgadzać.
+
+Arkusz powloka.css idzie w wykazie arkuszy stylów zaraz po pliku okno.css.
+Kolejność jest konieczna: widok okna niesie własny komplet zmiennych `--dc-*`
+o barwach wpisanych na stałe, a nadpisanie ich tutaj sprawia, że okno i komplet
+sterowania zmieniają się razem z motywem, bez zmian w katalogu widoku okna.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zadania-w-tle.css
+Rodzina klas panelu ma przedrostek dm-. Plakietka stanu, tabela agentów
+i przyciski pochodzą z biblioteki wspólnej; ten arkusz zawiera wyłącznie to,
+czego biblioteka nie pokrywa: rozkład karty przepływu, wiersz etapu ze
+wskaźnikiem kropkowym oraz znacznik kolumny bez pokrycia w kontrakcie danych.
+Atrybut data-bez-pokrycia wycisza kolumnę do koloru tekstu trzeciorzędnego
+i ustawia kursor pomocy: kolumna pozostaje widoczna, a powód nieobecności
+danych pokazuje atrybut title elementu.

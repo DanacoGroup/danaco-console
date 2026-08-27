@@ -1,21 +1,6 @@
 // Odpowiedzialność pliku: moduł Diagnostics — wypełnienie portu Diagnostyka
-// komendami obszaru `diagnostics.*` oraz podłączenie źródeł faktów. Dziennik
-// leży w `adapter_modul_diagnostics_dziennik.go`, błędy w
-// `adapter_modul_diagnostics_bledy.go`, analiza wraz z rekomendacjami
-// w `adapter_modul_diagnostics_analiza.go`, przekład wierszy w
-// `adapter_modul_diagnostics_przeklad.go`.
-//
-// Moduł ma dwa źródła faktów:
-//  1. Dziennik rdzenia — adapter jest odbiorcą wyjścia `*log.Logger` rdzenia,
-//     więc każda linia, którą rdzeń zapisuje o sobie, staje się wpisem
-//     widocznym w Logs Viewer.
-//  2. Odmowy wykonania komend — dyspozytor oddaje adapterowi każdą odpowiedź
-//     błędną wraz z kodem ze słownika ErrorCode kontraktu, więc Errors Panel
-//     pokazuje błędy rzeczywistych tur i operacji.
-//
-// Adapter nie liczy obciążenia maszyny, nie sprawdza usług zewnętrznych i nie
-// ocenia stanu zdrowia systemu — rdzeń takich faktów nie wystawia. Okno pokazuje
-// w tych miejscach brak danych.
+// komendami obszaru diagnostics.* oraz podłączenie źródeł faktów: dziennik
+// rdzenia i odmowy wykonania komend.
 package core
 
 import (
@@ -28,10 +13,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem Diagnostyka sprawdzana jest przy kompilacji pakietu core rdzenia platformy.
 var _ Diagnostyka = (*adapterDiagnostyki)(nil)
 
-// Przedrostki identyfikatorów bytów modułu.
+// Przedrostki identyfikatorów bytów modułu Diagnostics, po jednym na każdy rodzaj bytu trwałego tego dziennika.
 const (
 	przedrostekWpisuDziennika = "log-"
 	przedrostekBleduDiagnozy  = "blad-"
@@ -44,30 +29,25 @@ const (
 // trzymałby w pamięci dziennik, którego i tak nikt nie zdąży odczytać.
 const pojemnoscKolejkiWpisow = 1024
 
-// adapterDiagnostyki wypełnia port Diagnostyka.
+// adapterDiagnostyki wypełnia port Diagnostyka i trzyma stan pisarza dziennika rdzenia tej platformy Danaco.
 type adapterDiagnostyki struct {
 	repozytorium dane.RepozytoriumDiagnostyki
 
-	// wpisy przyjmuje linie dziennika bez blokowania piszącego. Zapis do bazy
-	// idzie osobną goroutine, bo `log.Logger` trzyma przy zapisie własną
-	// blokadę — czekanie na dysk pod tą blokadą wstrzymywałoby cały rdzeń.
+	// wpisy przyjmuje linie dziennika bez blokowania piszącego, zapis do bazy idzie osobną goroutine.
 	wpisy chan dane.WpisDiagnostyki
-	// odrzucone liczy wpisy, których kolejka nie przyjęła. Liczba wychodzi do
-	// podsumowania analizy, żeby strata dziennika nie została przemilczana.
+	// odrzucone liczy wpisy, których kolejka nie przyjęła, do podsumowania analizy.
 	odrzucone atomic.Int64
-	// niezapisane liczy wpisy, których nie przyjęła baza. Odrębne od
-	// odrzuconych, bo przyczyna i zalecane działanie są inne.
+	// niezapisane liczy wpisy, których nie przyjęła baza, osobno od odrzuconych.
 	niezapisane atomic.Int64
 
 	zamkniecie sync.Once
 	koniec     chan struct{}
 
-	// przedrostek i flagi opisują format dziennika rdzenia. Bez nich nie da się
-	// dokładnie zdjąć z linii nagłówka, który `log.Logger` sam dołożył.
+	// przedrostek i flagi opisują format dziennika, potrzebny do zdjęcia nagłówka linii.
 	przedrostek string
 	flagi       int
 
-	// zmiana rozgłasza `diagnostics.analysis.changed`. Podpina ją obsługiwacz.
+	// zmiana rozgłasza diagnostics.analysis.changed do klientów; podpina ją obsługiwacz komend.
 	zmiana func(shared.ChangeKind, shared.DiagnosticAnalysis)
 }
 
@@ -86,7 +66,7 @@ func nowyAdapterDiagnostyki(ctx context.Context,
 	return adapter
 }
 
-// PodepnijRozgloszenie wypełnia port: adapter zapamiętuje drogę do zdarzenia.
+// PodepnijRozgloszenie wypełnia port: adapter zapamiętuje drogę do rozgłoszenia zdarzenia zmiany analizy.
 func (a *adapterDiagnostyki) PodepnijRozgloszenie(rozglos func(shared.ChangeKind, shared.DiagnosticAnalysis)) {
 	a.zmiana = rozglos
 }
@@ -101,7 +81,7 @@ func (a *adapterDiagnostyki) Zamknij() {
 	<-a.koniec
 }
 
-// bladDiagnostyki nazywa usterkę warstwy danych modułu.
+// bladDiagnostyki nazywa usterkę warstwy danych modułu kodem błędu wewnętrznego kontraktu tej platformy.
 func bladDiagnostyki(err error) error {
 	if err == nil {
 		return nil

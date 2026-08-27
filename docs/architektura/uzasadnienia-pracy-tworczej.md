@@ -1949,3 +1949,25 @@ Zakładanie wersji jest wydzielone, bo trzy rodziny czynności — decyzja
 o zmianach, decyzja o propozycji, przyjęcie cyfryzacji — robią dokładnie to
 samo w trzech krokach. Trzy kopie tej sekwencji rozjechałyby się przy
 pierwszej poprawce.
+## server/internal/mowa/nagranie.go
+
+AudioRef jest sciezka pliku na dysku Operatora, nie trescia zakodowana i nie
+identyfikatorem w skladnicy. Nagranie zostaje tam, gdzie je nagrano, a
+pomocnik otwiera je w miejscu. Przyjmowanie tresci przepuszczaloby kazde
+nagranie przez pamiec procesu i przez gniazdo, kilkadziesiat megabajtow na
+jedno zdanie, a rdzen musialby je gdzies odlozyc, czyli prowadzic druga
+skladnice plikow obok tej, ktora Operator juz ma. Plik nie otwiera
+deskryptora, nie czyta ani jednego bajtu tresci i nie sprawdza, czy plik jest
+naprawde dzwiekiem: sprawdzenie rozszerzenia jest bramka na oczywiste
+pomylki, nie rozpoznaniem formatu, bo rozpoznaje go silnik.
+
+OtworzNagranie: kolejnosc sprawdzen idzie od najtanszego do najdrozszego i od
+najbardziej ogolnego do najbardziej szczegolowego: pusty odnosnik,
+rozwiniecie sciezki, istnienie, rodzaj wpisu, rozmiar, rozszerzenie.
+Rozszerzenie sprawdzane jest ostatnie: gdy pliku nie ma, zdanie o
+nieprzyjmowanym formacie byloby odpowiedzia na niezadane pytanie.
+
+rozwinSciezke: sciezka domowa rozwijana z tyldy, bo powloka rozwija ja sama,
+a rdzen polecenia od klienta nie dostaje przez powloke; sciezka wzgledna
+liczy sie od katalogu biezacego rdzenia jako droga zapasowa dla wywolan
+recznych, klient ma przesylac sciezke bezwzgledna.

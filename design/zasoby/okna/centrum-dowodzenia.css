@@ -310,45 +310,48 @@
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
 /* ── Grot marki jako wejście ───────────────────────────────────────────────
-   Wejście do środowiska i do komponentu niesie pojedynczy grot ze znaku
-   firmowego wraz z kropką sygnału — ten sam kształt, którym otwiera się lockup.
-   Wysokość niesie zmienna, bo grot w kaflu komponentu stoi w polu o połowę
-   wyższym niż wiersz metryki kafla środowiska. */
-.cd-grot-marki {
-  width: auto;
-  height: var(--cd-grot-wys, var(--dn-od-10));
-  flex: none;
-  color: var(--dn-tekst-2);
-  transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
+   Wejście do środowiska i do modułu niesie pojedynczy grot ze znaku firmowego
+   wraz z kropką sygnału — ten sam kształt, którym otwiera się lockup.
+   Miara grota modułu jest zapisana jako ułamek miary grota środowiska, żeby
+   zależność między strefami trzymała się przy każdej zmianie tej pierwszej. */
+.cd-strona {
+  --cd-grot-srodowisko: var(--dn-od-12);
+  --cd-grot-modul: calc(var(--cd-grot-srodowisko) * 0.65);
 }
 
-/* Kafel środowiska: wejście niesie sam grot, bez obrysu i tła — tak samo jak
-   w kaflu modułu. Kontrolką zostaje, bo karta środowiska nie jest przyciskiem,
-   ale nie nosi już chromu przycisku bibliotecznego. */
-/* Grot stał 17 px od prawej i od dołu karty, czyli wciśnięty w róg; w kaflu
-   modułu odsunięcie wynosi 25 px. Margines wyrównuje obie strefy. */
+.cd-grot-marki {
+  width: auto;
+  flex: none;
+  transition: color var(--dn-czas-2) var(--dn-ease),
+              transform var(--dn-czas-2) var(--dn-ease);
+}
+/* Grot wskazuje w prawo, więc pod wskaźnikiem robi krok w tę stronę. */
+.cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
+.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki,
+.cd-strona .cd-kafel:hover .cd-grot-marki,
+.cd-strona .cd-kafel:focus-visible .cd-grot-marki {
+  transform: translateX(var(--dn-od-1));
+}
+
+/* Karta środowiska: wejście niesie sam grot, bez obrysu i tła. Kontrolką
+   zostaje, bo karta nie jest przyciskiem — bez tego nie dałoby się wejść
+   z klawiatury — ale nie nosi już chromu przycisku bibliotecznego. */
 .cd-strona .cd-wejdz--grot {
   display: flex;
   align-items: center;
-  /* Lewy margines zostaje samoczynny — to on dosuwa grot do prawej krawędzi
-     wiersza metryki; skrót `margin` go zerował i grot wracał pod tekst. */
+  /* Lewy margines samoczynny dosuwa grot do prawej krawędzi wiersza metryki;
+     skrót `margin` go zerował i grot wracał pod tekst. */
   margin: 0 var(--dn-od-2) var(--dn-od-2) auto;
   padding: 0;
   border: 0;
   background: none;
-  color: inherit;
+  color: var(--dn-tekst-2);
   cursor: pointer;
   min-width: 0;
 }
-.cd-strona .cd-wejdz--grot > .cd-grot-marki {
-  width: auto;
-  height: var(--dn-od-10);
-}
+.cd-strona .cd-wejdz--grot > .cd-grot-marki { height: var(--cd-grot-srodowisko); }
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
-.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki {
-  color: var(--dn-tekst);
-  transform: translateX(var(--dn-od-05));
-}
+.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
 /* Obwódka fokusu nie ma już obrysu przycisku, na którym mogłaby usiąść —
    siada więc na samym grocie. */
 .cd-strona .cd-wejdz--grot:focus-visible {
@@ -357,21 +360,26 @@
   border-radius: var(--dn-r-sm);
 }
 
-/* Kafel komponentu jest przyciskiem sam w sobie, więc grot stoi w nim jako
-   znak, nie kontrolka: dosuwa się do prawej krawędzi i odpowiada na najechanie
-   całym kaflem. */
+/* Kafel modułu jest przyciskiem sam w sobie, więc grot stoi w nim jako znak,
+   nie kontrolka. W spoczynku znak i kropka są bezbarwne — barwę marki bierze
+   dopiero pod wskaźnikiem; to odróżnia moduł od środowiska, gdzie kropka pali
+   się zawsze. Reguła na `.kropka` bije wpisany w znacznik atrybut `fill`,
+   bo dowolna reguła arkusza ma pierwszeństwo przed atrybutem prezentacji. */
 .cd-kafel-grot {
-  --cd-grot-wys: var(--dn-od-10);
   display: flex;
   align-items: center;
   margin-left: auto;
   flex: none;
 }
-.cd-strona .cd-kafel:hover .cd-grot-marki,
-.cd-strona .cd-kafel:focus-visible .cd-grot-marki {
-  color: var(--dn-tekst);
-  transform: translateX(var(--dn-od-05));
+.cd-strona .cd-kafel-grot .cd-grot-marki {
+  height: var(--cd-grot-modul);
+  color: var(--dn-tekst-3);
 }
+.cd-strona .cd-kafel-grot .kropka { fill: currentColor; transition: fill var(--dn-czas-2) var(--dn-ease); }
+.cd-strona .cd-kafel:hover .cd-kafel-grot .cd-grot-marki,
+.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .cd-grot-marki { color: var(--dn-tekst); }
+.cd-strona .cd-kafel:hover .cd-kafel-grot .kropka,
+.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .kropka { fill: var(--dn-sygnal-500); }
 
 /* Przycisk zakładający komponent własny stoi między strefą aplikacji a strefą
    Operatora — to on jest przejściem między jedną a drugą. */

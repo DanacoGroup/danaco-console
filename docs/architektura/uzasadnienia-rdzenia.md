@@ -2340,3 +2340,62 @@ Port modułu bez czynności dobudowy to co innego niż brak portu: moduł jest,
 a rdzeń nie umie wykonać części jego pracy. Wtedy komendy dobudowy i tak
 zostają wpięte i odmawiają wprost, bo odpowiedź „nieznana komenda"
 wskazywałaby na brak modułu, a nie na usterkę montażu.
+
+## budowa/server/internal/core/adapter_alerty.go
+
+Kontrakt nie zna komendy przeliczającej reguły osobno. Ewaluacja idzie więc
+tam, gdzie operator pyta o wynik: przy odczycie rejestru wyzwoleń komendą
+`alert.trigger.list`. Wykaz powstaje z reguł przeliczonych w chwili
+odpowiedzi, a nie z wierszy odłożonych wcześniej przez zegar, którego
+kontrakt nie zna. Alert pokazujący stan sprzed godziny jako stan bieżący
+byłby tą samą fasadą co sonda oddająca stan poprawny bez pomiaru.
+
+Komenda `alert.rule.save` odmawia zapisu reguły, której rdzeń nie umie
+zmierzyć, nazywając wprost brakującą miarę. Zapisanie takiej reguły dałoby
+operatorowi wiersz w wykazie i ciszę zamiast alertu, czyli złudzenie
+bezpieczeństwa, przed którym cała rodzina komend ma chronić.
+
+Rejestr centrum powiadomień przyjmuje wyzwolony alert jako zdarzenie klasy
+błąd, po którym operator ma sięgnąć do platformy. Bez tego wpięcia alarm
+żyłby wyłącznie w oknie otwartym w chwili wyzwolenia.
+
+Niepowodzenie ewaluacji reguł przy odczycie rejestru wyzwoleń nie przewraca
+odczytu: rejestr zastany jest wartościowszy niż odmowa odpowiedzi, a
+wyzwolenie, którego nie dało się policzyć w tej chwili, i tak nie miałoby
+wartości obserwowanej.
+
+Zdarzenie `alert.triggered` rozgłasza się bez wskazania karty sesji, ponieważ
+wyzwolenie jest bytem przekrojowym, a nie bytem jednej sesji — na wzór
+zdarzeń modułu Design dotyczących zasobów. Sprawcy zdarzenie nie niesie i
+nieść nie może, ponieważ wyzwolenie powstaje z pomiaru rdzenia, a nie z
+działania operatora, i kontrakt nie ma na sprawcę pola. Reguła jedzie razem
+z wyzwoleniem, ponieważ okno pokazujące alert musi wiedzieć, czyj to alarm i
+jakim progiem został postawiony.
+
+## budowa/server/internal/core/skutek_wersji_biblioteki_test.go
+
+Wersja, po której nie da się odtworzyć zawartości, nie jest wersją. Szkoda,
+którą ta rodzina sprawdzianów wyklucza, ma dwie postacie. Pierwsza: wersja
+wgrana ścieżką odkładała wskaźnik na cudzy plik, więc treść utrwalona
+zmieniała się sama, gdy plik na dysku został nadpisany. Druga: przywrócenie
+meldowało powodzenie, nie zmieniając tego, co widzi czytelnik treści.
+
+Dlatego żaden sprawdzian tego pliku nie kończy się na porównaniu samych
+identyfikatorów. Każdy pyta czytelnika treści, co widzi po zmianie, i
+porównuje to z sumą kontrolną bajtów, które do repozytorium naprawdę weszły.
+Podgląd jest tu miarą właściwą, nie wiersz w bazie danych.
+
+TestPrzywrocenieWersjiWracaDoJejTresciAWskaznikNaNiaWskazuje jest sprawdzianem
+wprost wymierzonym w szkodę wskaźnika i mierzy trzy rzeczy naraz, z których
+każda osobno bywała fałszywa: treść po przywróceniu, sumę kontrolną tej
+treści oraz wskazanie na wersję, o którą proszono, a nie na najnowszą.
+
+TestPrzywroceniePilnujeGranicPlikuIZostawiaTrescNietknieta pilnuje wersji
+wskazanej kodem z cudzej historii. Sprawdzenie samej odmowy nie wystarcza,
+ponieważ przepisanie treści mogłoby zajść przed nią, więc sprawdzian mierzy
+też treść po odmowie.
+
+TestWersjaZnacznikNieWymazujeTresciBiezacej pilnuje wersji bez treści,
+kamienia milowego zakładanego na tym, co w pliku jest. Wersja pusta
+zabrałaby plikowi odwołanie do treści przy przywróceniu, więc oznaczenie
+kamienia niszczyłoby zasób, który miało utrwalić.

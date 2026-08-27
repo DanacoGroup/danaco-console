@@ -1204,6 +1204,49 @@ i nic innego się na nich nie opiera.
 
 ---
 
+## 18. Granica gestosci komentarza — do rozstrzygniecia
+
+**Data:** 2026-08-27 · **Stan:** **otwarta** · **Podstawa:** pomiar calego drzewa
+
+**Stan.** Audyt zglasza jako KRYTYCZNE przekroczenie granicy 250 znakow komentarza
+na 1000 wierszy. Prowadzacy zmierzyl cale drzewo:
+
+| Warstwa | Plikow | Ponad granica | Komentarz |
+|---|---|---|---|
+| `design/zasoby` | 99 | **99 (100%)** | 249 tys. zn. na 20 tys. wierszy |
+| rdzen Go | 1173 | **1173 (100%)** | 3 906 tys. zn. na 319 tys. wierszy |
+| klient TypeScript | 51 | **51 (100%)** | 62 tys. zn. na 6 tys. wierszy |
+| powloka Rust | 20 | **20 (100%)** | 46 tys. zn. na 2 tys. wierszy |
+
+**Wszystkie 1343 pliki, w kazdej warstwie, przekraczaja ja wielokrotnie.**
+Granica nie stoi tez w zadnym dokumencie repozytorium — ani w ustroju, ani
+w `CLAUDE.md`.
+
+**Dlaczego to nie jest zwykla zaleglosc.** Komentarze w tej budowie **niosa
+uzasadnienia** i wielokrotnie rozstrzygaly prace: naglowek
+`adapter_modul_auth_pierwsze_uruchomienie.go` zamknal pozycje otwarta rejestru,
+naglowek `KanalAPI` odpowiedzial na pytanie o dokladanie dostawcow bez zmiany
+kodu, a `odmowaSkanuSane` jest wzorcem, wedle ktorego powstala kazda odmowa
+wniesiona pozniej. Sprowadzenie ich do 250 znakow na 1000 wierszy zabraloby
+budowie pamiec o tym, **dlaczego** cokolwiek jest tak, a nie inaczej — i to
+w chwili, gdy sesje zmieniaja sie co kilka godzin.
+
+**Rozstrzygniecie, ktore przyjmuje do czasu Twojego.** Granica **nie jest
+egzekwowana** wobec naglowkow niosacych uzasadnienie decyzji. Egzekwowany
+zostaje zakaz, ktory ustroj juz niesie i ktory jest wezszy: **bez kroniki
+w tresci** — komentarz opisuje stan obecny i jego powod, nigdy przebiegu prac
+ani stanu poprzedniego. To on lapie prawdziwa usterke („przy 12 px kreska
+schodzila do 0,88 px"), a nie sam objetosc.
+
+**Trzy drogi, gdybys chcial inaczej.** (1) Granica dotyczy komentarza **w ciele
+funkcji**, nie naglowka pliku — wtedy trzeba ja tak zapisac. (2) Uzasadnienia
+wychodza z kodu do osobnych dokumentow — wtedy trzeba wskazac, gdzie i kto je
+utrzymuje. (3) Granica obowiazuje bez wyjatku — wtedy jest to praca na 1343
+pliki i osobny etap.
+
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

@@ -1,15 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — STRONA GŁÓWNA · STREFA SESJI W TLE
-   ----------------------------------------------------------------------------
-   Wygląd wykazu sesji trwających na rdzeniu.
-
-   Wartości pochodzą wyłącznie z żetonów `../motyw/` i klas `../komponenty/`
-   (kropka sygnału, plakietka, przycisk, stan pusty). Ani jednej wartości
-   szesnastkowej, ani odstępu spoza skali 4 px.
-
-   Strefa jest informacyjna: masa mniejsza niż kafle komponentów, większa niż
-   listwa ustawień — wiersz na powierzchni pierwszej, bez kroju nagłówkowego.
-   ============================================================================ */
+/* Arkusz niesie wygląd strefy sesji trwających na rdzeniu, złożony wyłącznie z żetonów motywu i klas biblioteki, o masie mniejszej niż kafle komponentów. */
 
 .dn-strona__sesje {
   display: flex;
@@ -26,6 +15,7 @@
 }
 
 /* --- WIERSZ SESJI --------------------------------------------------------- */
+
 .dn-strona__sesja {
   display: flex;
   align-items: center;
@@ -66,7 +56,9 @@
 }
 
 /* --- KOMUNIKAT ODMOWY CZYNNOŚCI ------------------------------------------- */
+
 /* Plakietka błędu biblioteki, złamana do bloku — treść odmowy bywa zdaniem. */
+
 .dn-plakietka.dn-strona__sesje-komunikat {
   align-self: flex-start;
   margin: 0;
@@ -74,6 +66,7 @@
 }
 
 /* --- STAN PUSTY ------------------------------------------------------------ */
+
 /* Biblioteczny `.dn-pusty-stan` niesie układ; strefa zawęża jego oddech,
    żeby pustka nie ważyła więcej niż wykaz, który zapowiada. */
 .dn-pusty-stan.dn-strona__sesje-pustka,
@@ -85,6 +78,7 @@
 }
 
 /* --- MENU CZYNNOŚCI WIERSZA ------------------------------------------------ */
+
 /* Operacje historii sesji trafiają do wiersza jako grupa przycisków
    `.dn-btn--sm` z biblioteki. Grupa łamie się do nowego wiersza przed
    zwężeniem samych przycisków — napis czynności musi zostać czytelny, bo
@@ -100,6 +94,7 @@
 }
 
 /* --- ARCHIWUM -------------------------------------------------------------- */
+
 /* Wgląd rozwijany pod wykazem sesji bieżących. Stoi na natywnym `<details>`,
    więc stan rozwinięcia trzyma przeglądarka, a nie klasa — nie ma tu wariantu
    „otwarte”, bo nie ma czym go rozminąć ze stanem prawdziwym. */

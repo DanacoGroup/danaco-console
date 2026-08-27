@@ -1,9 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — POLE TEKSTOWE
-
-   Etykieta stoi nad kontrolką, opis pod nią. Etykieta jest elementem `label`
-   związanym identyfikatorem, nie samym tekstem obok — bez tego wskazanie
-   etykiety nie ustawia kursora w polu, a czytnik ekranu nie wie, co czyta.
+/* Pole tekstowe łączy etykietę stojącą nad kontrolką z opisem stojącym pod nią, a etykieta jest elementem label związanym identyfikatorem kontrolki, nie samym tekstem obok.
+   Bez tego związania wskazanie etykiety nie ustawia kursora w polu, a
+   czytnik ekranu nie wie, co czyta.
 
    Właściwości:
      etykieta   klucz katalogu

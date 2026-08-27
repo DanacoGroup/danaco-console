@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: wpięcie czterech komend jednolitego modelu
-// konfiguracji sesji — odczytu zapisu poziomu, zapisu obszarów, konfiguracji
-// obowiązującej oraz deklaracji zdolności adaptera dostawcy.
-//
-// To jest ta sama konfiguracja co rodzina `config.*`, nie drugi rejestr obok
-// niej: konfiguracja sesji jest innym kształtem wartości w tym samym rejestrze
-// ośmiu poziomów zasięgu i trzech osi. Dlatego port konfiguracji sesji wchodzi
-// w skład portu Ustawienia, a nie obok niego — rdzeń ma jedną bramę do
-// konfiguracji i jedno miejsce rozgłaszania `config.changed`.
-//
-// Zapis rozgłasza zmianę obszaru. Każdy dotknięty obszar wraca wpisem rezolwera
-// i idzie zdarzeniem `config.changed` — obszar zapisany jako zmieniony, obszar
-// wyczyszczony jako usunięty, bo skasowanie zapisu przywraca dziedziczenie.
-// Klient nie musi odpytywać poziomu, żeby dowiedzieć się o zmianie.
+// Plik wpina cztery komendy jednolitego modelu konfiguracji sesji: odczyt zapisu poziomu, zapis
+// obszarów, konfigurację obowiązującą oraz deklarację zdolności adaptera dostawcy.
 package core
 
 import (
@@ -24,16 +12,14 @@ import (
 // wyłącznie typami kontraktu; wiersze tabeli ustawień i wykaz obszarów leżą po
 // drugiej stronie adaptera.
 type KonfiguracjaSesji interface {
-	// OdczytajKonfiguracjeSesji zwraca obszary zapisane na wskazanym poziomie
-	// zasięgu i wskazanej osi, bez rozstrzygania dziedziczenia.
+	// OdczytajKonfiguracjeSesji zwraca obszary zapisane na wskazanym poziomie i osi, bez dziedziczenia.
 	OdczytajKonfiguracjeSesji(ctx context.Context,
 		z shared.ConfigSessionGetRequest) (shared.ConfigSessionGetResponse, error)
 	// ZapiszKonfiguracjeSesji zapisuje wskazane obszary; obszar spoza wykazu
 	// pozostaje nietknięty.
 	ZapiszKonfiguracjeSesji(ctx context.Context,
 		z shared.ConfigSessionSetRequest) (shared.ConfigSessionSetResponse, error)
-	// KonfiguracjaObowiazujaca rozstrzyga obszary po ośmiu poziomach zasięgu
-	// i trzech osiach wraz z pochodzeniem każdego obszaru.
+	// KonfiguracjaObowiazujaca rozstrzyga obszary po wszystkich poziomach i osiach z pochodzeniem.
 	KonfiguracjaObowiazujaca(ctx context.Context,
 		z shared.ConfigEffectiveGetRequest) (shared.ConfigEffectiveGetResponse, error)
 	// ZdolnosciAdaptera zwraca deklarację zdolności adaptera dostawcy.

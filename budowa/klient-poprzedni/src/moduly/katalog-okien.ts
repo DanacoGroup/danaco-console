@@ -224,7 +224,7 @@ function zlozRozjazd(
   }
   const wKatalogu = odczyt.katalog.get(kodModulu);
   if (wKatalogu === undefined) {
-    // Moduł nieznany rdzeniowi: kodów budowanych nie nazywamy „poza katalogiem” — nie ma z czym porównać.
+    // Moduł nieznany rdzeniowi: kodów budowanych nie nazywa się „poza katalogiem”: nie ma z czym porównać.
     return { stan: 'modul-nieznany', ...puste, odmowa: odczyt.odmowa };
   }
   const stoiWKatalogu = new Set(wKatalogu);

@@ -621,10 +621,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    mniejsze (ustępuje tytułowi), bez wstęgi sygnału u góry, bo akcent niesie
    już sama skala. Rozmieszczenie kolumnowe zostaje w oknie, bo to siatka. */
 .dn-karta-srodowiska--akcent::before { content: none; }
-.dn-karta-srodowiska--akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-2xl); }
+.dn-karta-srodowiska--akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-4xl); }
 .dn-karta-srodowiska--akcent .dn-karta-srodowiska-godlo {
-  width: var(--dn-od-8);
-  height: var(--dn-od-8);
+  width: var(--dn-wym-godlo-karty);
+  height: var(--dn-wym-godlo-karty);
 }
 
 /* Warstwa tła karty — pole na znak przestrzenny przy prawej krawędzi. Karta
@@ -708,19 +708,50 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 
 /* Znak bez ramki — kafel modułu podaje ikonę wprost na tle kafla. Medalion
    z obrysem zostaje tam, gdzie znak zastępuje godło (karta środowiska). */
+/* Znak bez pola — kafel modułu podaje ikonę wprost na tle kafla: bez obrysu,
+   bez wypełnienia i bez podświetlenia pola, także pod wskaźnikiem. Medalion
+   z obrysem zostaje tam, gdzie znak zastępuje godło (karta środowiska). */
 .dn-kafel-ikona--bez-ramki {
   border: 0;
   background: none;
   color: var(--dn-tekst);
 }
+/* Wymiar wspólny z emblematem karty środowiska: kafel strefy 2 czyta się
+   na równi z kartą strefy 1. Skala `svg` idzie za pojemnikiem, bo znak modułu
+   jest emblematem, nie ikoną interfejsu ze skali 14/16/20/24. */
+.dn-kafel-ikona--godlowa,
+.dn-kafel-ikona--godlowa > svg {
+  width: var(--dn-wym-godlo-karty);
+  height: var(--dn-wym-godlo-karty);
+}
 
 /* Kafel modułu — nazwa czytana jak nagłówek, nie jak etykieta: stopień wyżej
    i grubość normalna. Opis o stopień jaśniejszy od pisma, ale nad progiem. */
+/* Nazwa modułu stoi na jednym stopniu z nazwą środowiska — ten sam krój
+   nagłówkowy, stopień, grubość i barwa. Strefy różnią się masą kafla, nie
+   stopniem pisma nazwy (rozstrzygnięcie Właściciela z 27.08.2026). */
 .dn-kafel--modul .dn-kafel-etykieta {
-  font-size: var(--dn-fs-md);
-  font-weight: var(--dn-fw-normalna);
+  font-family: var(--dn-ff-naglowek);
+  font-size: var(--dn-fs-4xl);
+  font-weight: var(--dn-fw-polgruba);
+  letter-spacing: var(--dn-ls-naglowek);
+  line-height: var(--dn-lh-ciasny);
+  color: var(--dn-tekst);
 }
 .dn-kafel--modul .dn-kafel-opis { color: var(--dn-tekst-2); }
+/* Wysokość najmniejsza żetonem, nie z sumy treści: opisy czterech kafli mają
+   różną liczbę wierszy, a rząd ma stać równo niezależnie od redakcji.
+
+   Układ kolumnowy jest następstwem stopnia nazwy, nie osobnym pomysłem: przy
+   36 px nazwa modułu potrzebuje 217 px, a rząd „znak | treść | grot" zostawia
+   jej w kaflu 289 px tylko 130 px — jednowyrazowa nazwa nie ma gdzie się złamać
+   i wychodziła pod grot. W kolumnie nazwa dostaje pełne 241 px wnętrza kafla.
+   Ta sama kompozycja co karta środowiska: znak, nazwa, opis, czynność w dole. */
+.dn-kafel--modul {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: var(--dn-wym-kafel-modulu);
+}
 
 /* Wiersz — kafel zwarty do wykazu: jedna linia nazwy, druga rodzaju. Ta sama
    bryła i te same stany co kafel, mniejsza wyściółka i promień. */
@@ -766,9 +797,12 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    ========================================================================== */
 
 .dn-wejdz-grot {
-  display: flex;
-  align-items: center;
-  min-width: 0;
+  display: grid;
+  place-items: center;
+  /* Cel kliknięcia jest większy od znaku: przycisk ma być pewny pod palcem,
+     a znak marki spokojny. Znak bierze wysokość z `--dn-wym-grot-znak`. */
+  min-width: var(--dn-wym-grot);
+  min-height: var(--dn-wym-grot);
   padding: 0;
   border: 0;
   background: none;
@@ -783,7 +817,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 
 .dn-grot-marki {
   width: auto;
-  height: var(--dn-wym-grot);
+  height: var(--dn-wym-grot-znak);
   flex: none;
   transition:
     color var(--dn-czas-2) var(--dn-ease),
@@ -2253,6 +2287,14 @@ label.dn-pasek-szukaj:focus-within {
   color: var(--dn-sygnal);
   transform: scale(var(--dn-skala-ikony));
 }
+/* Znak bez ramki nie ma pola, więc nie ma czego podświetlić ani czym ruszyć:
+   pod wskaźnikiem zmienia się wyłącznie barwa samego znaku. Reguła wyżej ma
+   swoistość (0,2,0) i wygrywała z wariantem (0,1,0) — dlatego znosi się ją
+   tutaj, na tej samej swoistości i później w arkuszu. */
+.dn-kafel:hover .dn-kafel-ikona--bez-ramki {
+  background: none;
+  transform: none;
+}
 
 .dn-btn {
   transition:
@@ -2550,22 +2592,20 @@ label.dn-pasek-szukaj:focus-within {
 .dn-godlo--na-plotnie { color: var(--dn-tekst); }
 .dn-godlo--sygnal { color: var(--dn-sygnal); }
 .dn-godlo .kropka { fill: var(--dn-sygnal-500); }
-/* Tętno kropki godła — jeden wspólny puls sygnału platformy. Reguła stała
-   w arkuszach okien; gaśnie żetonem czasu przy ograniczonym ruchu. */
+/* Tętno kropki godła — jeden wspólny puls sygnału platformy, jedna kropka.
+   Dotąd stały tu DWIE reguły o sprzecznych zakresach: jedna wyłączała
+   `.kropka--konsola` z przebiegu `dn-tetno-kropki`, druga nakładała przebieg
+   `dn-tetno` na wszystkie kropki godła. Kropka biła więc dwoma przebiegami
+   naraz. Zostaje jeden przebieg i jeden zakres: kropka sygnetu. */
 .dn-godlo--tetno .kropka:not(.kropka--konsola),
 .dn-belka-marka .kropka {
-  animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
-}
-
-/* Kropka godła pulsuje jednym, ciągłym tętnem — wspólnym pulsem sygnału
-   całej platformy. W oknie wejściowym jest jedynym ruchem. */
-.dn-godlo--tetno .kropka {
   transform-box: fill-box;
   transform-origin: center;
   animation: dn-tetno var(--dn-czas-tetno) var(--dn-ease) infinite;
 }
 @media (prefers-reduced-motion: reduce) {
-  .dn-godlo--tetno .kropka { animation: none; }
+  .dn-godlo--tetno .kropka,
+  .dn-belka-marka .kropka { animation: none; }
 }
 
 /* ==========================================================================

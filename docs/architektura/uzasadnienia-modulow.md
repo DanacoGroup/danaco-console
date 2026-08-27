@@ -1867,3 +1867,27 @@ odmową nazywającą liczbę błędów. Odpowiedzi spoza klasy 2xx to co innego:
 końcowy odpowiedział, pomiar się odbył, więc wynik wychodzi wraz z licznikiem
 non2xx i rozbiciem po kodach, żeby wołający zobaczył, że mierzył ścieżkę
 błędu, a nie zgadywał.
+
+## adapter_modul_library_technika.go
+
+Rodzaj treści pochodzi z zawartości bajtów, nie z rozszerzenia pliku
+(`http.DetectContentType`). Wymiary obrazu pochodzą z nagłówka formatu
+(`image.DecodeConfig`), bez dekodowania całego obrazu do pamięci. Liczba stron
+dokumentu pochodzi z biblioteki `pdfcpu`, wkompilowanej w binarium. EXIF i GPS
+czyta własny czytnik w tym pliku, ponieważ struktura TIFF mieści się
+w kilkudziesięciu wierszach kodu i nie uzasadnia zależności zewnętrznej. Czas
+trwania nagrania czyta program `ffprobe`, stojący na serwerze razem z rdzeniem.
+Pola IPTC, XMP i ID3 czyta program `exiftool`: w odróżnieniu od EXIF nie są
+jedną strukturą — IPTC jest zapisem rekordowym w segmencie APP13, XMP drzewem
+RDF/XML osadzanym inaczej w każdym formacie kontenera, ID3 dwiema niezgodnymi
+rodzinami wersji — więc napisanie własnego czytnika byłoby powtórzeniem pracy
+wieloletniej, nieuzasadnionym przy dostępności gotowego programu.
+
+Odczyt metadanych osadzonych nie odmawia z żadnego pojedynczego powodu: brak
+narzędzia, plik bez danego rodzaju metadanych albo odpowiedź niemożliwa do
+rozebrania zostawiają odpowiednie pole puste, a opis zasobu jest wtedy węższy,
+nie błędny.
+
+Współrzędne GPS są jedynym źródłem widoku mapy w module Library — bez nich
+widok nie ma czego nanieść, więc czytnik EXIF wydobywa je zawsze, gdy są
+obecne w pliku.

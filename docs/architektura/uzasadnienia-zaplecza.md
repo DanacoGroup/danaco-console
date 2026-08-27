@@ -2358,3 +2358,20 @@ wracała jako nowa.
 Przypomnienie jest chwilą, nie flagą: kontrakt niesie `remindAt` jako czas
 w milisekundach epoki, więc kolumna trzyma znacznik ISO 8601 tej chwili,
 a jego brak znaczy „bez przypomnienia".
+## budowa/server/internal/store/migracja_175_wytwory_przegladania.sql
+Migracja 175 — wytwory sesji przeglądania i zrzuty stron
+(`browser.artifact.add`, `browser.screenshot.capture`,
+`browser.snapshot.screenshot.get`).
+
+Wytwór jest wynikiem czynności Operatora na stronie: zrzutem, archiwum,
+wyodrębnionymi danymi, adnotacją albo rejestrem sieciowym. Bajty leżą
+w magazynie treści pod sumą kontrolną, a tabela trzyma odwołanie — tak samo
+jak treść biblioteki i zasoby modułu Design. Wiersz bez odwołania nie ma
+prawa powstać: wytwór, za którym nie ma ani jednego bajtu, jest dokładnie tą
+szkodą, przed którą stoją sprawdziany skutku tego produktu.
+
+Zrzut ma własną tabelę obok wytworu, bo niesie pomiary, których wytwór nie
+zna: tryb (widok, cała strona, obszar, element), format pliku oraz wymiary
+w pikselach. Wciśnięcie ich w kolumnę JSON wytworu odebrałoby możliwość
+odczytu zrzutu po odwołaniu (`browser.snapshot.screenshot.get` pyta
+`screenshotRef` albo `snapshotId`, a nie identyfikatorem wytworu).

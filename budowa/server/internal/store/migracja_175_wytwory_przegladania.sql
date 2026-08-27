@@ -1,19 +1,5 @@
--- Migracja 175 — wytwory sesji przeglądania i zrzuty stron
--- (`browser.artifact.add`, `browser.screenshot.capture`,
--- `browser.snapshot.screenshot.get`).
---
--- Wytwór jest wynikiem czynności Operatora na stronie: zrzutem, archiwum,
--- wyodrębnionymi danymi, adnotacją albo rejestrem sieciowym. Bajty leżą
--- w magazynie treści pod sumą kontrolną, a tabela trzyma odwołanie — tak samo
--- jak treść biblioteki i zasoby modułu Design. Wiersz bez odwołania nie ma
--- prawa powstać: wytwór, za którym nie ma ani jednego bajtu, jest dokładnie tą
--- szkodą, przed którą stoją sprawdziany skutku tego produktu.
---
--- Zrzut ma własną tabelę obok wytworu, bo niesie pomiary, których wytwór nie
--- zna: tryb (widok, cała strona, obszar, element), format pliku oraz wymiary
--- w pikselach. Wciśnięcie ich w kolumnę JSON wytworu odebrałoby możliwość
--- odczytu zrzutu po odwołaniu (`browser.snapshot.screenshot.get` pyta
--- `screenshotRef` albo `snapshotId`, a nie identyfikatorem wytworu).
+-- Migracja 175 zakłada tabele wytworów sesji przeglądania oraz zrzutów stron, z odwołaniem do bajtów w magazynie treści i pomiarami zrzutu.
+
 CREATE TABLE wytwor_przegladania (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

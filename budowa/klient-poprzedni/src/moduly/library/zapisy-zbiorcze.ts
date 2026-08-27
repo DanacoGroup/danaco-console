@@ -4,11 +4,8 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Ścieżki zapisu czynności zbiorczych — osobno od odczytu i osobno od widoku.
- *
- * Każda z tych czynności ma ten sam kształt: sprawdzić warunek wstępny, wysłać
- * komendę, oddać jedno zdanie odpowiedzi. Funkcje nie dotykają dokumentu i nie
- * znają kontrolek — widok decyduje, gdzie odpowiedź pokazać.
+ * Ścieżki zapisu czynności zbiorczych, osobno od odczytu i widoku: każda
+ * sprawdza warunek wstępny, wysyła komendę i oddaje jedno zdanie odpowiedzi.
  */
 export interface OdpowiedzZapisu {
   tresc: string;
@@ -18,18 +15,9 @@ export interface OdpowiedzZapisu {
 const BEZ_ZAZNACZENIA = 'Zaznacz plik w wykazie — czynność zbiorcza działa na zaznaczeniu.';
 
 /**
- * Etykieta zbiorcza: `library.tag.set` przyjmuje komplet etykiet pliku po
- * zmianie, więc każdy plik dostaje sumę swoich dotychczasowych i nowej —
- * inaczej nadanie jednej skasowałoby pozostałe.
- *
- * Potwierdzenie bierze etykiety z odpowiedzi, nie z żądania: komplet zbudowany
- * z nieświeżej kopii wykazu kasuje etykiety, których okno nie zdążyło zobaczyć,
- * a rdzeń oddaje w tej samej odpowiedzi plik po zapisie wraz z jego etykietami.
- * Ubytek jest więc ogłaszany, nie przemilczany.
- *
- * Przycięcie po stronie okna jest wypowiedziane, bo rdzeń nie przycina wcale,
- * a `library.file.list` dopasowuje etykietę dosłownie — etykieta przycięta po
- * cichu byłaby inna niż wpisana i wykaz przestałby ją znajdować.
+ * Etykieta zbiorcza wysyła komplet etykiet pliku po zmianie, sumując
+ * dotychczasowe z nową, a potwierdzenie bierze etykiety z odpowiedzi rdzenia,
+ * nie z żądania, żeby ubytek był ogłaszany, nie przemilczany.
  */
 export async function nadajEtykieteZbiorczo(
   stan: StanBiblioteki,
@@ -92,12 +80,9 @@ export async function nadajEtykieteZbiorczo(
 }
 
 /**
- * Przypisanie zaznaczenia do kolekcji — `library.collection.assign`.
- *
- * Liczba z odpowiedzi jest porównana z liczbą zamówioną: rdzeń liczy
- * `assignedCount` z wierszy faktycznie wstawionych i pomija pliki, których nie
- * zna, a żądanie z nieznanymi kodami mimo to wraca powodzeniem. Niedobór jest
- * więc ogłaszany odmową, zamiast uchodzić za przypisanie całego zaznaczenia.
+ * Przypisanie zaznaczenia do kolekcji porównuje liczbę przypisanych z liczbą
+ * zamówioną, bo rdzeń pomija pliki, których nie zna, a żądanie z nieznanymi
+ * kodami mimo to wraca powodzeniem.
  */
 export async function przypiszZaznaczenie(
   stan: StanBiblioteki,
@@ -138,17 +123,9 @@ export async function przypiszZaznaczenie(
 }
 
 /**
- * Otwarcie zasobów w module docelowym — `context.transfer`.
- *
- * Okno źródłowe bierze się z rejestru okien komunikacji, bo kod okna
- * operacyjnego katalogu i okno komunikacji to dwa różne byty. Brak
- * okna jest powiedziany wprost, a nie zamieniony w ciche nic.
- *
- * Moduł docelowy odczytuje się z okna oddanego w odpowiedzi, nie z pola
- * formularza — tylko tam stoi moduł faktycznie nadany. Rdzeń nie sprawdza przy
- * tym, czy moduł istnieje: kod nieznanego modułu wraca powodzeniem wraz z nowo
- * założonym oknem. Okno nie ma komendy sprawdzającej istnienie modułu, więc nie
- * orzeka o tym nic — podaje kod i numer okna oddane przez rdzeń.
+ * Otwarcie zasobów w module docelowym bierze okno źródłowe z rejestru okien
+ * komunikacji i odczytuje moduł docelowy z okna oddanego w odpowiedzi, nie
+ * z pola formularza, bo tylko tam stoi moduł faktycznie nadany.
  */
 export async function przeniesZasoby(
   stan: StanBiblioteki,

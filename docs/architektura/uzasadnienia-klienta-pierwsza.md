@@ -6752,3 +6752,18 @@ którego nigdy nie było.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-schowka.ts
 Zakładka nie czyta schowka maszyny Operatora i nie udaje, że umie: schowek należy do tamtej maszyny, a rdzeń stoi na serwerze. Podział jest jawny i widoczny na ekranie — Operator wkleja skopiowaną treść w pole treści do zapamiętania, okno oddaje ją rdzeniowi, a rdzeń daje jej trwałość; powrót idzie tą samą drogą, kliknięcie wpisu kopiuje go do schowka karty przeglądarką, a nie rdzeniem. Nastawę skrótu globalnego trzyma rdzeń, klawisze przechwytuje powłoka programu okiennego; odpowiedź mówi wprost, czy rejestracji ma kto dokonać, a okno powtarza to zdanie, zamiast obiecywać skrót, który nikogo nie obudzi.
+
+## budowa/klient-poprzedni/src/moduly/library/zapisy-zbiorcze.ts
+Funkcje zapisu nie dotykają dokumentu i nie znają kontrolek — widok decyduje,
+gdzie odpowiedź pokazać. Komplet etykiet zbudowany z nieświeżej kopii wykazu
+kasowałby etykiety, których okno nie zdążyło zobaczyć, a rdzeń oddaje w tej
+samej odpowiedzi plik po zapisie wraz z jego etykietami. Przycięcie po
+stronie okna jest wypowiedziane, bo rdzeń nie przycina wcale, a wykaz
+dopasowuje etykietę dosłownie, więc etykieta przycięta po cichu byłaby inna
+niż wpisana i wykaz przestałby ją znajdować. Kod okna operacyjnego katalogu
+i okno komunikacji to dwa różne byty, a brak okna jest powiedziany wprost,
+a nie zamieniony w ciche nic. Rdzeń nie sprawdza przy przenoszeniu, czy
+moduł docelowy istnieje: kod nieznanego modułu wraca powodzeniem wraz
+z nowo założonym oknem, a że okno nie ma komendy sprawdzającej istnienie
+modułu, nie orzeka o tym nic i podaje kod oraz numer okna oddane przez
+rdzeń.

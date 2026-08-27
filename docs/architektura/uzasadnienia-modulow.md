@@ -5489,3 +5489,81 @@ zakończony — trzymanie go w `running` do czasu kliknięcia pokazywałoby
 pracę, której już nie ma. Wartość spoza słownika znaczy, że pozycja jest
 w stanie, którego to odwzorowanie nie zna — a nie że praca się nie
 powiodła; orzeczenie o błędzie byłoby wtedy wymyślone.
+
+## budowa/server/internal/core/adapter_modul_roundtable_graf.go
+
+Powód stoi przy migracji 192: oznaczenie węzła jako kluczowego stawia
+Operator, a oznaczenie na węźle wyliczanym w locie znikałoby razem z jego
+identyfikatorem przy następnym otwarciu panelu.
+
+### punktSpornyGrafu
+
+Węzeł, który wielu popiera i wielu atakuje, jest osią sporu. Węzeł bez ani
+jednego podważenia punktem spornym nie jest — nikt się z nim nie spiera —
+więc graf bez podważeń oddaje brak, a nie pierwszy węzeł z brzegu.
+
+### posortowaneKlucze
+
+Wyniki panelu mają być te same przy dwóch kolejnych odczytach, a przebieg
+po mapie w Go jest losowy z założenia.
+## budowa/server/internal/core/adapter_modul_automations_szablony.go
+
+Zastosowanie szablonu nie jest wstrzymywane brakiem wartości parametru.
+Kontrakt mówi to wprost polem `missingParameters`: automatyka powstaje,
+a brakujące parametry wracają nazwane. Tak działa reszta modułu — walidacja
+ostrzega, zapis pozostaje możliwy, bo Operator buduje proces etapami.
+
+Wartość wchodzi w miejsce przywołania `{{nazwa}}`, a przywołania bez wartości
+zostają nietknięte — automatyka zakłada się wtedy z widocznym miejscem do
+uzupełnienia, zamiast z pustką udającą uzupełnienie.
+
+## budowa/server/internal/core/adapter_modul_developer_git_odczyt.go
+
+Wszystkie sześć czynności stoi na pakiecie repozytorium, który pracuje
+biblioteką go-git wkompilowaną w binarium rdzenia. Nie startuje tu ani jeden
+proces potomny: odczyt stanu repozytorium jest czynnością, od której zaczyna
+się każda inna praca Git Panelu, więc nie może zależeć od programu, którego
+instalka nie niesie. Czynności zmieniające repozytorium — zatwierdzenie,
+pobranie, wypchnięcie — idą osobną drogą developer.git.action.
+
+Okno bywa otwarte na kilku katalogach naraz, ale repozytorium Git Panelu jest
+jedno. Wybór milczący między kilkoma repozytoriami byłby dla Operatora
+zagadką, której odpowiedź zmienia się przy każdym wywołaniu.
+
+Katalog bez repozytorium nie jest odmową StanRepozytorium: odpowiedź niesie
+isRepository: false i pusty wykaz zmian. Odmowa kazałaby Git Panelowi
+pokazać błąd tam, gdzie Operator po prostu jeszcze nie założył repozytorium.
+
+Rozbieżność GaleziRepozytorium liczy się z odwołań już pobranych, bez
+sięgania do sieci: odczyt gałęzi ma działać bez łączności, a liczba mówi
+o stanie wobec ostatniego pobrania — tak samo jak w narzędziu wierszowym.
+
+Czynność RozstrzygnijKonfliktRepozytorium zmienia plik na dysku, więc
+przechodzi przez bramę trybu uprawnień: okno w trybie planistycznym pracuje
+bez zmian w systemie.
+## budowa/server/internal/core/adapter_modul_library_odciski.go
+
+Dwa odciski, bo to dwa rozne pytania. Dla tekstu podobienstwo znaczy te
+same slowa w podobnych proporcjach - liczy je miara Jaccarda na zbiorach
+slow. Dla obrazu podobienstwo znaczy ten sam obraz mimo innej kompresji
+i rozmiaru - liczy je odcisk percepcyjny: obraz sprowadzony do siatki 8x8
+w skali szarosci i zamieniony na 64 bity wzgledem jasnosci sredniej. Dwa
+odciski roznace sie o kilka bitow pochodza z tego samego zdjecia, chocby
+plik wazyl dziesiec razy mniej.
+
+Oba liczy kod wkompilowany: dekodery obrazu ze standardowej biblioteki Go
+oraz golang.org/x/image na WebP. Ani jednego uruchomienia programu
+z zewnatrz - rozpoznanie duplikatow ma dzialac u Operatora, a nie na
+maszynie, na ktorej ktos doinstalowal ImageMagicka.
+
+## budowa/server/internal/core/adapter_modul_workspace_pamiec.go
+
+Przyjęcie propozycji przez Operatora jest ponownym zapisem tego samego
+wpisu z pochodzeniem `operator`: kontrakt nie ma osobnej komendy przyjęcia
+ani odrzucenia, a pochodzenie jest jedynym polem, które odróżnia ustalenie
+przyjęte od zaproponowanego.
+
+Zasięg wpisu jest poziomem zasięgu, nie znacznikiem. Wpis zapisany na
+poziomie szerszym niż projekt (globalny, środowisko, moduł, para modułów)
+obowiązuje wspólnie i wchodzi do pamięci innych projektów na żądanie
+`includeShared`.

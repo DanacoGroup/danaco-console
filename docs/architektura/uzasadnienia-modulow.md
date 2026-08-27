@@ -942,3 +942,20 @@ Kolejność ścieżek i metod przy imporcie z kontraktu jest ustalona sortowanie
 bo mapa Go oddaje wpisy w kolejności losowej — dwa importy tego samego pliku
 dałyby bez sortowania dwie różne kolekcje, a ich porównanie nie mówiłoby
 niczego o rzeczywistej zmianie kontraktu.
+
+## budowa/server/internal/core/adapter_modul_developer_dane.go
+
+Rodzina stoi na jednolitym dostępie do baz danych oraz na trzech sterownikach
+wkompilowanych w rdzeń: PostgreSQL, MySQL i SQLite, ten sam silnik, na którym
+stoi baza produktu. Konsola SQL otwiera się więc wszędzie tam, gdzie stoi
+rdzeń, i nie zależy od zewnętrznych klientów wiersza poleceń.
+
+Wiersz połączenia opisuje, do czego się łączyć: silnik, host, port, bazę
+i użytkownika. Hasło stoi w sejfie pod odwołaniem z opisu połączenia, tak samo
+jak klucze dostawców modeli. Kopia sekretu w drugim miejscu, którego nikt nie
+rotuje, jest usterką bezpieczeństwa, a nie wygodą.
+
+Połączenie oznaczone jako tylko do odczytu odrzuca polecenie zmieniające dane,
+zanim cokolwiek wyjdzie do silnika. Poleganie na uprawnieniach po stronie bazy
+byłoby poleganiem na nastawie, której z tego okna nie widać; konsola SQL nad
+produkcją bez tej bramy jest jedną nieuwagą od szkody.

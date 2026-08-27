@@ -1,16 +1,6 @@
-/* ============================================================================
-   MISSION CONTROL — OPERACJE, MATRYCA SESJI, RELACJE, UTWÓRZ
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: sekcje środkowe pulpitu — plakietki kanałów modelu,
-   cztery kolumny środowisk z sesjami, pas „Relacje" i rząd tworzenia.
+/* Arkusz opisuje sekcje środkowe pulpitu Mission Control: plakietki kanałów modelu, cztery kolumny środowisk z sesjami, pas Relacje i rząd tworzenia. */
 
-   Wartości pochodzą wyłącznie z żetonów `motyw/`: bez zapisów szesnastkowych
-   i bez odstępów spoza skali 4 px.
-   ============================================================================ */
-
-/* ---------------------------------------------------------------------------
-   OPERACJE AI — plakietki kanałów modelu
-   --------------------------------------------------------------------------- */
+/* Sekcja Operacje AI pokazuje plakietki kanałów modelu, wskazujące aktywność każdego kanału łączności z modelem w bieżącej sesji. */
 .mc-kanaly {
   display: grid;
   gap: var(--dn-od-4);
@@ -83,9 +73,7 @@
   text-align: right;
 }
 
-/* ---------------------------------------------------------------------------
-   MATRYCA SESJI — cztery środowiska obok siebie
-   --------------------------------------------------------------------------- */
+/* Sekcja Matryca sesji układa cztery środowiska obok siebie, pokazując stan sesji każdego z nich w jednym widoku porównawczym. */
 .mc-matryca {
   display: grid;
   gap: var(--dn-od-4);
@@ -119,7 +107,7 @@
   align-items: flex-start;
 }
 
-/* Nazwa środowiska krojem nagłówkowym — jest nagłówkiem kolumny. */
+/* Nazwa środowiska zapisana krojem nagłówkowym pełni rolę nagłówka kolumny matrycy, wyróżniającego środowisko od pozostałych. */
 .mc-kolumna__nazwa {
   margin: 0;
   font-family: var(--dn-ff-naglowek);
@@ -144,10 +132,7 @@
   gap: var(--dn-od-2);
 }
 
-/* ---------------------------------------------------------------------------
-   KAFEL SESJI — kontrolka wejścia do sesji
-   Karta jest przyciskiem, więc sprowadzamy domyślną szatę przycisku do zera.
-   --------------------------------------------------------------------------- */
+/* Kafel sesji jest kontrolką wejścia do sesji zbudowaną jako przycisk, więc sprowadza domyślną szatę przycisku do zera. */
 .mc-sesja {
   display: flex;
   flex-direction: column;
@@ -167,7 +152,7 @@
   min-width: 0;
 }
 
-/* Wskaźnik pracy w tle nie kurczy się przy długim tytule sesji. */
+/* Wskaźnik pracy w tle nie kurczy się przy długim tytule sesji, zachowując stały rozmiar niezależnie od długości tekstu obok. */
 .mc-sesja__kropka {
   flex: none;
 }
@@ -197,9 +182,7 @@
   text-transform: uppercase;
 }
 
-/* ---------------------------------------------------------------------------
-   PAS RELACJE — powiązania sesji, także między środowiskami
-   --------------------------------------------------------------------------- */
+/* Pas Relacje pokazuje powiązania sesji, również te zachodzące między różnymi środowiskami, w jednym poziomym rzędzie. */
 .mc-relacje {
   display: flex;
   align-items: flex-start;
@@ -266,9 +249,7 @@
   color: var(--dn-tekst-3);
 }
 
-/* ---------------------------------------------------------------------------
-   UTWÓRZ — rząd szybkiego tworzenia
-   --------------------------------------------------------------------------- */
+/* Rząd Utwórz niesie szybkie tworzenie nowej sesji, umieszczone na końcu matrycy jako stały punkt wejścia do nowej pracy. */
 .mc-utworz {
   display: grid;
   gap: var(--dn-od-3);

@@ -1,26 +1,7 @@
-// Odpowiedzialność pliku: cztery komendy zakładki API Client w Dev Tools —
-// `developer.api.request` (wykonanie zapytania HTTP), `developer.api.collection.save`
-// i `developer.api.collection.list` (kolekcje zapytań ze środowiskami) oraz
-// `developer.api.openapi.import` (wytworzenie kolekcji z kontraktu OpenAPI).
-//
-// ── Biblioteka, nie program ─────────────────────────────────────────────────
-// Cała rodzina stoi na bibliotekach wkompilowanych w rdzeń: `net/http` wykonuje
-// zapytanie, `getkin/kin-openapi` czyta kontrakt. Nie startuje tu ani jeden
-// proces potomny i nie ma tu żadnej zależności od programu spoza instalki —
-// wołanie `curl` dałoby to samo, tyle że zależne od tego, czy `curl` stoi.
-//
-// ── Zmienne środowiska ──────────────────────────────────────────────────────
-// Adres, nagłówki i treść przechodzą przez podstawienie `{{nazwa}}` wartościami
-// wskazanego środowiska. Bez tego kroku każde zapytanie kolekcji miałoby wpisany
-// na stałe adres jednego serwera i przeniesienie kolekcji między środowiskiem
-// przejściowym a produkcyjnym byłoby przepisywaniem jej w całości.
-//
-// ── Czego ta rodzina nie robi ───────────────────────────────────────────────
-// Nie wykonuje zapytań do adresów spoza sieci, do których serwer i tak nie ma
-// dostępu, i nie zna poświadczeń Operatora — nagłówek uwierzytelniający podaje
-// wołający albo środowisko kolekcji. Sekret wpisany w środowisko leży w bazie
-// jawnie i tak też jest opisany; miejscem na sekret jest sejf, a odwołanie do
-// niego wchodzi jako wartość nagłówka.
+// Moduł API Client obsługuje zakładkę Dev Tools komendami
+// `developer.api.request`, `developer.api.collection.save`,
+// `developer.api.collection.list` i `developer.api.openapi.import`, na
+// bibliotekach wkompilowanych w rdzeń, bez procesu potomnego.
 package core
 
 import (
@@ -41,9 +22,11 @@ import (
 )
 
 const (
-	// przedrostekKolekcjiApi znakuje identyfikator kolekcji zapytań.
+	// przedrostekKolekcjiApi znakuje identyfikator kolekcji zapytań, nadawany
+	// przy zakładaniu nowej kolekcji albo przy imporcie z kontraktu OpenAPI.
 	przedrostekKolekcjiApi = "apic-"
-	// czasZapytaniaApi jest domyślną granicą jednego zapytania HTTP.
+	// czasZapytaniaApi jest domyślną granicą czasu jednego zapytania HTTP,
+	// stosowaną, gdy żądanie nie wskazuje własnej granicy czasu.
 	czasZapytaniaApi = 30 * time.Second
 	// najdluzszeZapytanieApi jest granicą, której żądanie nie przekroczy nawet
 	// wtedy, gdy poprosi o więcej. Zapytanie wiszące pół godziny trzyma połączenie
@@ -56,7 +39,8 @@ const (
 	najwiekszaOdpowiedzApi = 8 << 20
 )
 
-// WykonajZapytanieApi obsługuje `developer.api.request`.
+// WykonajZapytanieApi obsługuje `developer.api.request` i wykonuje zapytanie
+// HTTP po podstawieniu wartości środowiska w adresie, nagłówkach i treści.
 func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	z shared.DeveloperApiRequestRequest) (shared.DeveloperApiRequestResponse, error) {
 
@@ -64,9 +48,8 @@ func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	if err != nil {
 		return shared.DeveloperApiRequestResponse{}, err
 	}
-	// Zapytanie HTTP zmienia stan po drugiej stronie sieci — POST zakłada zasób,
-	// DELETE go kasuje. Tryb planistyczny wyklucza zmiany w systemie, więc
-	// wyklucza i te.
+	// Zapytanie HTTP zmienia stan po drugiej stronie sieci, więc tryb
+	// planistyczny je wyklucza.
 	if err := sprawdzZmianeSystemu(okno.TrybUprawnien, "wykonanie zapytania HTTP"); err != nil {
 		return shared.DeveloperApiRequestResponse{}, err
 	}
@@ -113,8 +96,7 @@ func (a *adapterDevelopera) WykonajZapytanieApi(ctx context.Context,
 	naglowkiZadania(zadanie, z.Headers, z.BodyKind, podstawienia)
 
 	poczatek := time.Now()
-	// Klient jest własny, a nie domyślny: domyślny nie ma granicy czasu, a jego
-	// pula połączeń jest współdzielona z całym procesem rdzenia.
+	// Klient jest własny, nie domyślny: domyślny nie ma granicy czasu.
 	klient := &http.Client{Timeout: granica}
 	odpowiedz, err := klient.Do(zadanie)
 	if err != nil {
@@ -188,11 +170,8 @@ func splaszczNaglowki(naglowki http.Header) map[string]string {
 	return wynik
 }
 
-// podstawWSzablonie zastępuje `{{nazwa}}` wartością środowiska.
-//
-// Nazwa nieznana zostaje w tekście nietknięta. To jest wybór świadomy: puste
-// miejsce w adresie dałoby zapytanie do adresu, którego nikt nie napisał,
-// a widoczne `{{host}}` mówi Operatorowi wprost, czego środowisko nie ma.
+// podstawWSzablonie zastępuje `{{nazwa}}` wartością środowiska; nazwa
+// nieznana zostaje w tekście nietknięta, zamiast zniknąć w pustym miejscu.
 func podstawWSzablonie(tresc string, podstawienia map[string]string) string {
 	if len(podstawienia) == 0 || !strings.Contains(tresc, "{{") {
 		return tresc
@@ -203,7 +182,8 @@ func podstawWSzablonie(tresc string, podstawienia map[string]string) string {
 	return tresc
 }
 
-// podstawieniaSrodowiska składa wartości wskazanego środowiska z kolekcji okna.
+// podstawieniaSrodowiska składa wartości wskazanego środowiska z kolekcji
+// zapytań okna, przeszukując wszystkie kolekcje po nazwie środowiska.
 func (a *adapterDevelopera) podstawieniaSrodowiska(ctx context.Context, oknoKod string,
 	srodowisko *string) (map[string]string, error) {
 
@@ -231,7 +211,8 @@ func (a *adapterDevelopera) podstawieniaSrodowiska(ctx context.Context, oknoKod 
 		"żadna kolekcja okna nie ma środowiska o nazwie " + szukane)
 }
 
-// ZapiszKolekcjeApi obsługuje `developer.api.collection.save`.
+// ZapiszKolekcjeApi obsługuje `developer.api.collection.save` i zakłada
+// kolekcję zapytań nową albo zmienia zastaną, wraz ze środowiskami.
 func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 	z shared.DeveloperApiCollectionSaveRequest) (shared.DeveloperApiCollectionSaveResponse, error) {
 
@@ -281,7 +262,8 @@ func (a *adapterDevelopera) ZapiszKolekcjeApi(ctx context.Context,
 	}, nil
 }
 
-// WykazKolekcjiApi obsługuje `developer.api.collection.list`.
+// WykazKolekcjiApi obsługuje `developer.api.collection.list` i oddaje
+// kolekcje zapytań okna, z możliwością zawężenia do jednej kolekcji.
 func (a *adapterDevelopera) WykazKolekcjiApi(ctx context.Context,
 	z shared.DeveloperApiCollectionListRequest) (shared.DeveloperApiCollectionListResponse, error) {
 
@@ -306,7 +288,8 @@ func (a *adapterDevelopera) WykazKolekcjiApi(ctx context.Context,
 	return shared.DeveloperApiCollectionListResponse{Collections: kolekcje}, nil
 }
 
-// kolekcjaKontraktu przekłada wiersz bazy na kolekcję kontraktu.
+// kolekcjaKontraktu przekłada wiersz kolekcji z bazy danych na kształt
+// odpowiedzi zgodny z kontraktem, jaki widzi klient.
 func kolekcjaKontraktu(wiersz dane.KolekcjaApi) shared.ApiCollection {
 	kolekcja := shared.ApiCollection{
 		Id:        wiersz.Kod,
@@ -321,12 +304,8 @@ func kolekcjaKontraktu(wiersz dane.KolekcjaApi) shared.ApiCollection {
 	return kolekcja
 }
 
-// ImportujOpenapi obsługuje `developer.api.openapi.import`.
-//
-// Kontrakt przychodzi z pliku repozytorium albo z adresu. Plik jest drogą
-// podstawową: kontrakt leżący w repozytorium jest wersjonowany razem z kodem,
-// więc kolekcja z niego wytworzona opisuje ten sam stan usługi, co gałąź,
-// w której Operator pracuje.
+// ImportujOpenapi obsługuje `developer.api.openapi.import` i wytwarza
+// kolekcję zapytań z kontraktu, wziętego z pliku repozytorium albo z adresu.
 func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 	z shared.DeveloperApiOpenapiImportRequest) (shared.DeveloperApiOpenapiImportResponse, error) {
 
@@ -367,8 +346,7 @@ func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 		Nazwa:     nazwa,
 		Zapytania: string(tresc),
 	}
-	// Serwery kontraktu wchodzą jako środowisko o nazwie `openapi`: to z nich
-	// bierze się `{{baseUrl}}` w adresach wytworzonych zapytań.
+	// Serwery kontraktu wchodzą jako środowisko `openapi` z `{{baseUrl}}`.
 	if adres != "" {
 		srodowiska, err := json.Marshal(map[string]map[string]string{
 			"openapi": {"baseUrl": adres},
@@ -393,7 +371,8 @@ func (a *adapterDevelopera) ImportujOpenapi(ctx context.Context,
 	}, nil
 }
 
-// wczytajKontraktOpenapi bierze kontrakt z pliku repozytorium albo z adresu.
+// wczytajKontraktOpenapi bierze kontrakt OpenAPI z pliku repozytorium albo
+// z adresu wskazanego w żądaniu i zwraca też źródło, z którego przyszedł.
 func (a *adapterDevelopera) wczytajKontraktOpenapi(ctx context.Context, oknoKod string,
 	z shared.DeveloperApiOpenapiImportRequest) (*openapi3.T, string, error) {
 
@@ -452,7 +431,8 @@ func (a *adapterDevelopera) wczytajKontraktOpenapi(ctx context.Context, oknoKod 
 	return dokument, adres, nil
 }
 
-// zapytanieZKontraktu jest jednym zapytaniem kolekcji wytworzonym z kontraktu.
+// zapytanieZKontraktu jest jednym zapytaniem kolekcji wytworzonym ze ścieżki
+// kontraktu OpenAPI, gotowym do zapisu w polu `requests` kolekcji.
 type zapytanieZKontraktu struct {
 	Name    string            `json:"name"`
 	Method  string            `json:"method"`
@@ -462,11 +442,8 @@ type zapytanieZKontraktu struct {
 	Summary string            `json:"summary,omitempty"`
 }
 
-// zapytaniaZKontraktu przekłada ścieżki kontraktu na zapytania kolekcji.
-//
-// Kolejność jest ustalona (ścieżka, potem metoda), bo mapa Go oddaje wpisy
-// w kolejności losowej — dwa importy tego samego pliku dałyby dwie różne
-// kolekcje i ich porównanie nie mówiłoby niczego o zmianie kontraktu.
+// zapytaniaZKontraktu przekłada ścieżki kontraktu na zapytania kolekcji,
+// w ustalonej kolejności ścieżki, a potem metody.
 func zapytaniaZKontraktu(dokument *openapi3.T) ([]zapytanieZKontraktu, string) {
 	adres := ""
 	if dokument.Servers != nil && len(dokument.Servers) > 0 {
@@ -517,7 +494,8 @@ func zapytaniaZKontraktu(dokument *openapi3.T) ([]zapytanieZKontraktu, string) {
 	return zapytania, adres
 }
 
-// nazwaZapytaniaKontraktu dobiera czytelną nazwę pozycji kolekcji.
+// nazwaZapytaniaKontraktu dobiera czytelną nazwę pozycji kolekcji z operacji
+// kontraktu: identyfikator operacji, potem streszczenie, potem metodę i ścieżkę.
 func nazwaZapytaniaKontraktu(czynnosc *openapi3.Operation, metoda, sciezka string) string {
 	if czynnosc.OperationID != "" {
 		return czynnosc.OperationID
@@ -537,7 +515,8 @@ func tytulKontraktu(dokument *openapi3.T, zrodlo string) string {
 	return "Kontrakt " + zrodlo
 }
 
-// tekstWskazaniaDevelopera oddaje treść wskaźnika albo tekst pusty.
+// tekstWskazaniaDevelopera oddaje treść wskaźnika tekstowego albo tekst
+// pusty, gdy wskaźnik jest nieustawiony.
 func tekstWskazaniaDevelopera(wskaznik *string) string {
 	if wskaznik == nil {
 		return ""

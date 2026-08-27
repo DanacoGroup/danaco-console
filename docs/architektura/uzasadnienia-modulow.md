@@ -1140,3 +1140,42 @@ zapisywana jest jedna para całościowa zamiast zmyślonego dopasowania.
 Rdzeń nie ma magazynu blobów: eksport słownika i eksport panelu zapisują
 ślad, ale nie wytwarzają pliku — ten sam brak co w module Library i module
 Research.
+
+## budowa/server/internal/core/adapter_modul_library_higiena.go
+
+Wszystkie pięć czynności higieny repozytorium są czynnościami rdzenia, nie
+okna, z jednego powodu: sięgają po to, czego okno nie ma. Rozpoznanie
+przybliżone żąda porównania każdego zasobu z każdym, weryfikacja
+integralności — przeliczenia sumy kontrolnej z bajtów leżących na dysku,
+pulpit stanu — przejścia po całym zbiorze. Okno liczące te rzeczy z odczytanej
+strony wykazu orzekałoby tylko o próbce, nie o repozytorium.
+
+Rozpoznanie dokładne idzie po sumie kontrolnej i jest pewne. Rozpoznania
+przybliżone niosą trafność, bo to wnioski: podobieństwo treści liczy się
+odciskiem słów, podobieństwo obrazu — odciskiem percepcyjnym zbudowanym
+z obrazu zeskalowanego do siatki. Oba liczy wkompilowany kod Go; żaden nie
+woła programu z zewnątrz.
+
+Zasoby o identycznej sumie kontrolnej są pomijane przy rozpoznaniu
+przybliżonym: należą do rozpoznania dokładnego, a wystawione tu po raz drugi
+kazałyby Operatorowi rozstrzygać tę samą parę dwa razy.
+
+Zasoby wchłaniane przy scaleniu duplikatów trafiają do archiwum, nie
+znikają: scalenie bywa pomyłką, a kosz repozytorium jest odwracalny —
+usunięcie trwałe ma własną komendę i własne potwierdzenie. Kod wersji jest
+unikalny w całym repozytorium, więc wersja wchłonięta przy zachowaniu
+historii wchodzi jako nowy wpis pod własnym identyfikatorem, nie
+przeniesiona wprost — przeniesienie wprost byłoby zderzeniem kluczy.
+
+Brak treści zasobu pod odwołaniem przy weryfikacji integralności jest
+trzecim wynikiem, nie odmianą niezgodności: sumy nie ma czego porównać,
+a zasób i tak jest uszkodzony.
+
+Przebieg próbny normalizacji nazw pokazuje wynik bez zapisu: nazwa jest tym,
+po czym Operator odnajduje zasób, więc masowa zmiana bez podglądu byłaby
+zmianą w ciemno.
+
+Transliteracja znaków diakrytycznych rozkłada literę kanonicznie, zdejmuje
+znak łączący i składa z powrotem: „ą" staje się „a", a „ł" zostaje, bo nie
+jest literą ze znakiem łączącym — zamianę liter osobnych jak „ł" na „l"
+rdzeń robi osobno, wprost.

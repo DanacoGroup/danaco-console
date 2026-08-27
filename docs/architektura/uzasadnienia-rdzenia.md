@@ -5730,3 +5730,12 @@ zaczyna z pustą historią, a pamięć jednego zasięgu pozostaje niewidoczna w 
 na odrzuceniu źródła cudzego, nie na cichym pominięciu go — Operator ma wiedzieć, że tura miała
 zaciągnąć treść spoza okna. Wymiar współdzielony nie ogranicza niczego; jest jawną decyzją
 Operatora o tym, że ta sama treść zasila kilka zasięgów.
+
+## budowa/server/internal/core/izolacja_pliki.go
+Nadanie niesie także tryb, więc korzeń nadany do odczytu nie staje się korzeniem do zapisu. Straż
+egzekwuje ścieżki, po które rdzeń sięga w imieniu okna, oraz wykaz korzeni podawany procesowi
+modelu przy uruchomieniu. Nie zabroni uruchomionemu procesowi otworzyć pliku samodzielnie — to
+leży poza zasięgiem rdzenia i wymaga środków systemu operacyjnego.
+
+Zawężenie korzeni nadania do korzeni punktu robi funkcja korzeni nadania — reguła zawężenia ma
+w drzewie jedno miejsce.

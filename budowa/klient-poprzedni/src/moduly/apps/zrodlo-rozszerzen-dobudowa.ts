@@ -54,32 +54,9 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { utworzWywolanieApps, type WywolanieApps } from './odmowa-rdzenia';
 
-/**
- * Dobudowa obszaru `extension` — trzydzieści dwie komendy stojące obok pięciu,
- * od których katalog rozszerzeń zaczynał.
- *
- * Podział na dwa źródła jest podziałem obowiązków, nie rozmiaru. Pierwsze
- * (`zrodlo-rozszerzen-apps.ts`) prowadzi CYKL ŻYCIA pozycji: wykaz, instalację,
- * konfigurację, przełącznik i odinstalowanie. To — wszystko, co robi się NA
- * pozycji już stojącej: wyszukiwanie, kolekcje, wersjonowanie, rozmowę
- * protokołem, webhooki, uprawnienia, podpis i sekrety.
- *
- * Żadna z tych komend nie niesie `windowId`. Katalog rozszerzeń jest bytem
- * rdzenia stojącym poziom wyżej niż moduł — Apps jest jego operacyjnym frontem,
- * nie drugim źródłem prawdy — więc pozycji nie posiada żadne okno.
- *
- * Sprawdzian kształtu odpowiedzi pyta przy każdej komendzie o pole, którego
- * okno naprawdę używa. Pustka NIE jest tu uszkodzonym kształtem: wykaz pusty
- * i pole opcjonalne bez wartości są odpowiedziami prawdziwymi i znaczą „tego
- * jeszcze nie ma".
- *
- * Odmowa serwera integracji NIE jest odmową komendy. `extension.tool.call`
- * i `extension.sandbox.run` oddają wynik z polem `ok: false` i powodem, bo
- * inspektor ma pokazać, co odpowiedział cudzy serwer — schowanie tego w kopercie
- * błędu odebrałoby Operatorowi jedyną informację, po którą przyszedł.
- */
+// Dobudowa obszaru extension — trzydzieści dwie komendy stojące obok pięciu z cyklu życia pozycji.
 
-/** Zawężenie wyszukiwarki katalogu — pola żądania `extension.search`. */
+/** Zawężenie wyszukiwarki katalogu — pola żądania `extension.search`: fraza, rodzaj, pochodzenie, tylko zainstalowane, granica i odsunięcie. */
 export interface ZapytanieKatalogu {
   fraza: string;
   rodzaj: ExtensionKind | '';
@@ -89,7 +66,7 @@ export interface ZapytanieKatalogu {
   odsuniecie: number;
 }
 
-/** Zlecenie zapisu kolekcji kuratorskiej. */
+/** Zlecenie zapisu kolekcji kuratorskiej: identyfikator, nazwa, opis, oznaczenie barwne i wykaz pozycji kolekcji. */
 export interface ZlecenieKolekcji {
   idKolekcji: string;
   nazwa: string;
@@ -98,7 +75,7 @@ export interface ZlecenieKolekcji {
   idPozycji: readonly string[];
 }
 
-/** Zlecenie ustawienia transportu integracji. */
+/** Zlecenie ustawienia transportu integracji: identyfikator rozszerzenia, rodzaj transportu, adres, polecenie i żądanie sprawdzenia. */
 export interface ZlecenieTransportu {
   idRozszerzenia: string;
   transport: McpTransport;
@@ -107,7 +84,7 @@ export interface ZlecenieTransportu {
   sprawdz: boolean;
 }
 
-/** Zlecenie powiązania poświadczenia — do rdzenia idzie ODWOŁANIE, nie treść. */
+/** Zlecenie powiązania poświadczenia — do rdzenia idzie odwołanie, nie treść: rozszerzenie, sposób uwierzytelnienia, odwołanie i zakresy. */
 export interface ZleceniePoswiadczenia {
   idRozszerzenia: string;
   sposob: ExtensionAuthKind;
@@ -115,7 +92,7 @@ export interface ZleceniePoswiadczenia {
   zakresy: readonly string[];
 }
 
-/** Zlecenie zapisu webhooka. */
+/** Zlecenie zapisu webhooka: identyfikator, rozszerzenie, kierunek, adres, wykaz zdarzeń, odwołanie sekretu i znacznik czynności. */
 export interface ZlecenieWebhooka {
   idWebhooka: string;
   idRozszerzenia: string;
@@ -126,7 +103,7 @@ export interface ZlecenieWebhooka {
   czynny: boolean;
 }
 
-/** Zlecenie importu definicji API. */
+/** Zlecenie importu definicji API: postać zapisu, kod źródłowy, pochodzenie i treść definicji do rozpoznania. */
 export interface ZlecenieImportu {
   format: ExtensionDefinitionFormat;
   kod: string;
@@ -135,7 +112,6 @@ export interface ZlecenieImportu {
 }
 
 export interface ZrodloDobudowyRozszerzen {
-  // ── App Catalog ───────────────────────────────────────────────────────
   /** `extension.search` — trafienia po polach, które pozycja niesie. */
   szukaj(
     z: ZapytanieKatalogu,
@@ -194,7 +170,6 @@ export interface ZrodloDobudowyRozszerzen {
     czynnosc: ExtensionBulkAction,
   ): Promise<Wynik<{ affected: Extension[]; rejected: ExtensionRejection[] }>>;
 
-  // ── Integrations Hub i MCP & Connector Console ────────────────────────
   /** `extension.transport.set` — transport rozmowy z serwerem integracji. */
   ustawTransport(
     z: ZlecenieTransportu,
@@ -258,7 +233,6 @@ export interface ZrodloDobudowyRozszerzen {
     granica: number,
   ): Promise<Wynik<{ entries: ExtensionAuditEntry[]; total: number }>>;
 
-  // ── Permissions & Trust Center ────────────────────────────────────────
   /** `extension.permission.list` — deklaracje, nadania i nadmiar. */
   uprawnienia(idRozszerzenia: string): Promise<
     Wynik<{
@@ -352,8 +326,7 @@ export function utworzZrodloDobudowyRozszerzen(kanal: Kanal): ZrodloDobudowyRozs
           enable: wlacz,
         }),
         Command.ExtensionCollectionApply,
-        // Odrzucenia są częścią wyniku, nie odmową: zestaw ma zrobić tyle, ile
-        // się da, i powiedzieć, czego nie dało się zrobić.
+        // Odrzucenia są częścią wyniku, nie odmową: zestaw robi, ile się da, i mówi, czego nie zrobił.
         (tresc) => czyTablica(tresc.applied) && czyTablica(tresc.rejected),
       );
     },
@@ -395,8 +368,7 @@ export function utworzZrodloDobudowyRozszerzen(kanal: Kanal): ZrodloDobudowyRozs
 
     async przypnijWersje(idRozszerzenia, wersja) {
       const zadanie: ExtensionVersionPinRequest = { extensionId: idRozszerzenia };
-      // Pole pominięte zdejmuje przypięcie — kontrakt mówi to wprost, więc
-      // pusty łańcuch NIE jedzie na drut jako wartość.
+      // Pole pominięte zdejmuje przypięcie, więc pusty łańcuch nie jedzie na drut jako wartość.
       if (wersja !== '') zadanie.version = wersja;
       return sprawdzKsztalt(
         await wywolaj(Command.ExtensionVersionPin, zadanie),
@@ -466,8 +438,7 @@ export function utworzZrodloDobudowyRozszerzen(kanal: Kanal): ZrodloDobudowyRozs
       const zadanie: ExtensionCredentialBindRequest = {
         extensionId: z.idRozszerzenia,
         authKind: z.sposob,
-        // Do rdzenia idzie ODWOŁANIE, nigdy treść poświadczenia: wprowadzenie
-        // hasła, tokenu czy klucza zostaje po stronie Operatora.
+        // Do rdzenia idzie odwołanie, nigdy treść poświadczenia — hasło zostaje po stronie Operatora.
         credentialRef: z.odwolanie,
       };
       if (z.zakresy.length > 0) zadanie.scopes = [...z.zakresy];
@@ -498,8 +469,7 @@ export function utworzZrodloDobudowyRozszerzen(kanal: Kanal): ZrodloDobudowyRozs
       return sprawdzKsztalt(
         await wywolaj(Command.ExtensionToolCall, zadanie),
         Command.ExtensionToolCall,
-        // Niepowodzenie serwera jest odpowiedzią udaną z polem `ok: false` —
-        // patrz czoło pliku.
+        // Niepowodzenie serwera integracji jest odpowiedzią udaną z polem ok:false, nie odmową komendy.
         (tresc) => typeof tresc.ok === 'boolean',
       );
     },

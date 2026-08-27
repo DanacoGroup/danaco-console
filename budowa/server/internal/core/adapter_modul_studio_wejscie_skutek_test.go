@@ -286,7 +286,7 @@ func TestKopiaDokumentuJestOsobnymBytem(t *testing.T) {
 			DocumentId: kopia.Document.Id, Content: trescKopii,
 		}, &zapisanaKopia)
 
-	// Postać kopii też się zmienia — zdejmujemy wytłuszczenie.
+	// Postać kopii też się zmienia — zdejmuje się wytłuszczenie.
 	var zdjeta shared.StudioFormatCharacterSetResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioFormatCharacterSet,
 		shared.StudioFormatCharacterSetRequest{

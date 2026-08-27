@@ -1,18 +1,4 @@
-/* ============================================================================
-   KREATOR INSTALACJI — katalog treści
-
-   Jedyne miejsce z tekstem widocznym dla użytkownika. Klucze idą hierarchicznie:
-   obszar → element. Plik przekazuje się tłumaczowi bez dostępu do kodu — nie ma
-   tu znaczników ani logiki.
-
-   Wartości z {nawiasami} to miejsca na dane podstawiane w czasie działania;
-   ich nazw nie tłumaczy się.
-
-   Dlaczego skrypt, a nie plik `.json`: okno bywa otwierane wprost z dysku,
-   a przeglądarka blokuje wtedy pobieranie plików towarzyszących. Zawartość
-   pozostaje czystym JSON-em — klucze w cudzysłowach, bez przecinka po ostatniej
-   pozycji — więc narzędzia tłumaczy czytają ją tak samo.
-   ============================================================================ */
+/* Katalog treści kreatora instalacji zawiera wyłącznie tekst widoczny dla użytkownika w kluczach hierarchicznych od obszaru do elementu, zapisany jako czysty JSON w skrypcie, bo okno bywa otwierane wprost z dysku. */
 window.DanacoKreator = window.DanacoKreator || {};
 window.DanacoKreator.tresci = {
   "_opis": "Katalog łańcuchów kreatora instalacji Danaco Console. Jedyne miejsce z tekstem widocznym dla użytkownika. Klucze idą hierarchicznie: obszar → element. Plik przekazuje się tłumaczowi bez dostępu do kodu — nie ma tu znaczników ani logiki. Wartości z {nawiasami} to miejsca na dane podstawiane w czasie działania; ich nazw nie tłumaczy się.",

@@ -6,18 +6,9 @@ import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloBiegu } from './zrodlo-biegu';
 
 /**
- * Panel planu etapów Coordinator Chat — podział pracy na kolejki jednego
- * silnika.
- *
- * Etap planu jest kolejką: `queue.create` przyjmuje nazwę etapu i okna
- * wykonawców w polu `windowIds`. Drugiego rejestru etapów po stronie klienta
- * nie ma — wykaz odświeża `queue.changed`.
- *
- * Kontrolka zależności etapów pozostaje widoczna i nieczynna. Komenda
- * `orchestration.dependency.set` wiąże kroki układów automatyk
- * (`fromStepId`/`toStepId`), a etap tego planu jest kolejką, nie krokiem
- * automatyki. Powód nieczynności bierze się z wykazu komend oddanego przez
- * rdzeń, nie ze stałej w kodzie.
+ * Panel planu etapów koordynatora dzieli pracę na kolejki jednego silnika. Etap
+ * zakłada komenda `queue.create` z nazwą oraz oknami wykonawców w polu
+ * `windowIds`, a wykaz odświeża zdarzenie `queue.changed`.
  */
 export interface PlanEtapow {
   element: HTMLElement;
@@ -78,8 +69,7 @@ export function utworzPlanEtapow(opcje: OpcjePlanu): PlanEtapow {
     nazwa.value = '';
     const zalozony = wynik.wynik;
     stan.zapiszKolejke(zalozony);
-    // Nazwa, stan i wykaz okien pochodzą z odpowiedzi rdzenia, nie z żądania:
-    // przycięta nazwa albo nieprzyjęte okna wykonawców mają być widoczne.
+    // Nazwa, stan i wykaz okien pochodzą z odpowiedzi rdzenia, a nie z wysłanego żądania.
     opcje.potwierdz(
       `Rdzeń założył kolejkę etapu „${zalozony.name ?? zalozony.id}" (${zalozony.id}) w stanie ${zalozony.status}, okien wykonawców: ${zalozony.windowIds?.length ?? 0} z ${okna.length}.`,
       true,
@@ -100,12 +90,7 @@ export function utworzPlanEtapow(opcje: OpcjePlanu): PlanEtapow {
     for (const etap of etapy) lista.append(wierszEtapu(etap, etap.id === biezaca?.id));
   }
 
-  /**
-   * Wiersz etapu: nazwa, stan kolejki, licznik obiegów i wybór etapu bieżącego.
-   *
-   * Etap bieżący niesie plakietkę zamiast wygaszonego przycisku; kontrolka
-   * wyboru pojawia się wyłącznie w wierszach, w których jest co wybrać.
-   */
+  /** Wiersz etapu: nazwa, stan kolejki, licznik obiegów i wybór etapu bieżącego. */
   function wierszEtapu(etap: Queue, biezacy: boolean): HTMLElement {
     const { element: wiersz, akcje } = pozycjaWykazu(
       etap.name ?? etap.id,
@@ -132,7 +117,10 @@ export function utworzPlanEtapow(opcje: OpcjePlanu): PlanEtapow {
   return { element, odswiez };
 }
 
-/** Treść odmowy wraz z kodem kontraktu. */
+/**
+ * Składa treść odmowy rdzenia: podaje komunikat oraz kod błędu z pola `ErrorInfo`
+ * kontraktu, a przy odmowie bez opisu mówi wprost, że rdzeń przyczyny nie podał.
+ */
 function powod(blad?: ErrorInfo): string {
   if (blad === undefined) return 'Rdzeń nie podał przyczyny.';
   return `Powód: ${blad.message} (kod ${blad.code}).`;

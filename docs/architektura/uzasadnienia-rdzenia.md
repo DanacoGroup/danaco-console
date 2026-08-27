@@ -2575,3 +2575,39 @@ Pole `final` odpowiedzi `speech.listen.partial` jest prawdą, bo odcinek
 został rozpoznany w całości: rdzeń dostaje gotowy kawałek nagrania, a nie
 strumień w locie. Fałsz obiecywałby oknu poprawkę tego tekstu, która nigdy
 nie przyjdzie.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_zlozenie.go
+
+Cała czynność stoi na bibliotekach image, image/png, image/jpeg i
+golang.org/x/image/draw, wkompilowanych w binarium rdzenia. Nie startuje tu ani
+jeden proces potomny: złożenie dwóch rastrów to przejście po pikselach, a nie
+praca, do której potrzeba silnika zewnętrznego jak ImageMagick — takie wołanie
+odebrałoby komendzie prawo do działania na maszynie, która go nie ma, bez
+żadnego zysku. Jedna komenda zamyka cztery funkcje opracowania: znak wodny,
+branding wsadowy, osadzenie w ramce urządzenia i warstwy rastrowe, bo
+wszystkie cztery potrzebują dokładnie tego samego — obrazu położonego na
+obrazie. Wynik jest zawsze PNG, bo podstawa bywa fotografią bez kanału alfa,
+ale nakładka z przezroczystością wnosi go do wyniku; zapis w JPEG-u zamieniłby
+przezroczystość na czarny albo biały prostokąt, a PNG nie traci jakości przy
+powtórnym składaniu, którym jest właśnie branding wsadowy.
+
+Nakładka wychodząca poza obszar podstawy nie jest odmową: znak wodny
+wypuszczony za krawędź jest przycinany, tak jak przycięłaby go każda inna
+warstwa graficzna. Odmowa kazałaby Operatorowi liczyć piksele, zamiast
+przesunąć nakładkę.
+
+Przeskalowanie nakładki jeden do jednego byłoby przepróbkowaniem bez powodu, a
+każde przepróbkowanie kosztuje ostrość obrazu. Filtr CatmullRom jest brany
+zarówno przy pomniejszaniu, jak i powiększaniu, ponieważ znak wodny
+pomniejszany najbliższym sąsiadem rozsypuje się na schodki widoczne gołym
+okiem.
+
+Mieszanie „prawie zwykłe" byłoby trybem, którego nazwa mówi co innego niż
+skutek, dlatego zmieszajNakladke rysuje własną pętlą. Praca na barwie już
+przemnożonej przez alfę dałaby mnożenie ciemniejsze przy każdej
+półprzezroczystości, dlatego barwy liczone są bez wstępnego mnożenia przez
+alfę.
+
+Gałąź domyślna „mieszaj zwykle" w funkcjaMieszania oddałaby złożenie, które
+wygląda poprawnie i nie jest tym, o co proszono, dlatego tryb spoza wyliczenia
+kontraktu kończy się odmową nazywającą go wprost.

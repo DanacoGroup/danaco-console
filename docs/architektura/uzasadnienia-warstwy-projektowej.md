@@ -22,3 +22,38 @@ bezpośredniej edycji — zmiana wchodzi w źródle i przechodzi przez generator
 ponownie. Treść stoi w skrypcie, a nie w osobnym pliku do pobrania, ponieważ
 okno bywa otwierane wprost z dysku, a przeglądarka blokuje wówczas pobieranie
 plików towarzyszących.
+
+## design/animacje/danaco-splash-3d.html
+
+Plik zawiera ekran startowy trójwymiarowy, wyświetlany jako nakładka pomiędzy
+uruchomieniem aplikacji a pojawieniem się jej właściwego widoku. Udostępnia
+trzy warianty animacji w jednym pliku, wybierane parametrem adresu `v`:
+
+- wariant `a`, „Złożenie rdzenia" — cząstki składają stos warstw platformy,
+  stos zapada się w jeden moduł tworzący znak marki, moduł rozszerza się
+  w kadr aplikacji;
+- wariant `b`, „Rozkładanie interfejsu" — panele konsoli rozkładają się
+  przestrzennie na wzór origami i układają w szkielet docelowego widoku;
+- wariant `c`, „Przelot do rdzenia" — przelot kamery przez bramy kolejnych
+  etapów startu (moduły, środowisko, klucze, sesja) aż do rdzenia.
+
+Cykl odtwarzania przebiega przez fazy: wprowadzenie (budowa sceny), oczekiwanie
+w pętli na gotowość aplikacji, zakończenie (odsłonięcie widoku docelowego)
+i wywołanie zakończenia.
+
+Osadzenie w powłoce aplikacji (Electron albo aplikacja jednostronicowa) odbywa
+się przez umieszczenie elementu przykrywającego cały widok, wewnątrz którego
+osadza się ramkę wskazującą ten plik z parametrem wariantu. Obiekt sterujący
+udostępniany przez ramkę pozwala: rozpocząć odtwarzanie ze wskazanym wariantem
+i minimalnym czasem trwania, ustawić opisowy podpis bieżącego etapu, wskazać
+numer podświetlonej bramy dla wariantu przelotu, zgłosić gotowość aplikacji
+rozpoczynającą odsłonięcie widoku docelowego oraz wymusić natychmiastowe
+przejście do odsłonięcia. Zawartość pliku można też osadzić bezpośrednio
+w oknie aplikacji, bez pośredniczącej ramki.
+
+Parametry adresu obsługiwane przez plik: wybór wariantu, włączenie panelu
+demonstracyjnego, włączenie pętli podglądu, czas w milisekundach do
+automatycznego zgłoszenia gotowości oraz wyłączenie tła.
+
+Ekran nie korzysta z zależności zewnętrznych: rysowanie odbywa się na płótnie
+dwuwymiarowym z własną projekcją przestrzenną.

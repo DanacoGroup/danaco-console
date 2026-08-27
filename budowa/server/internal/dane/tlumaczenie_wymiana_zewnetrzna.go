@@ -213,7 +213,7 @@ type ParaPivota struct {
 }
 
 // PolitykaPivotaZasiegu oddaje politykę zasięgu wraz z parami. Brak wiersza
-// wraca jako ErrBrakWiersza — polityki nieustawionej nie udajemy pustą.
+// wraca jako ErrBrakWiersza — polityki nieustawionej nie udaje się pustą.
 func (r *repozytoriumTlumaczen) PolitykaPivotaZasiegu(ctx context.Context,
 	zasieg, zasiegID string) (PolitykaPivota, error) {
 

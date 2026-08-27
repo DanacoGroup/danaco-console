@@ -1081,6 +1081,17 @@ th.dn-tabela-liczba { text-align: right; }
   overflow-x: auto;
   scrollbar-width: none;
 }
+
+/* Same zakładki, bez czynności pasa. Roli `tablist` nie wolno nałożyć na cały pas:
+   lista zakładek może zawierać wyłącznie zakładki, a w pasie stoi jeszcze przycisk
+   nowej karty i pole przywracania. Czytnik ekranu dostawał wtedy widżet zakładek
+   z dwoma elementami, które zakładkami nie są, i gubił liczbę kart. */
+.dn-karty-sesji-tory {
+  display: flex;
+  align-items: stretch;
+  gap: var(--dn-od-1);
+  min-width: 0;
+}
 .dn-karta-sesji {
   position: relative;
   display: inline-flex;

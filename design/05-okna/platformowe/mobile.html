@@ -122,7 +122,7 @@
   }
   .mo-nawigacja-poz svg { width: 20px; height: 20px; }
   .mo-nawigacja-poz:hover { color: var(--dn-tekst-2); background: var(--dn-hover); }
-  .mo-nawigacja-poz[aria-selected='true'] { color: var(--dn-sygnal); border-top-color: var(--dn-kropka); background: var(--dn-sygnal-tlo); }
+  .mo-nawigacja-poz[aria-current] { color: var(--dn-sygnal); border-top-color: var(--dn-kropka); background: var(--dn-sygnal-tlo); }
   .mo-znacznik-nawigacji {
     position: absolute; top: 4px; right: 22%;
     min-width: 16px; height: 16px; padding: 0 4px;
@@ -914,19 +914,19 @@
 
                   <!-- DOLNA NAWIGACJA MOBILNA -->
                   <nav class="mo-nawigacja" aria-label="Widoki mobilne">
-                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="true" data-mob="mob-monitor" data-tytul="Monitor procesu">
+                    <button class="mo-nawigacja-poz" type="button" aria-current="page" data-mob="mob-monitor" data-tytul="Monitor procesu">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
                       <span>Monitor</span>
                     </button>
-                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-sesje" data-tytul="Lista sesji">
+                    <button class="mo-nawigacja-poz" type="button" data-mob="mob-sesje" data-tytul="Lista sesji">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/></svg>
                       <span>Sesje</span>
                     </button>
-                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-interwencja" data-tytul="Szybka interwencja">
+                    <button class="mo-nawigacja-poz" type="button" data-mob="mob-interwencja" data-tytul="Szybka interwencja">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>
                       <span>Interwencja</span>
                     </button>
-                    <button class="mo-nawigacja-poz" type="button" role="tab" aria-selected="false" data-mob="mob-powiadomienia" data-tytul="Powiadomienia">
+                    <button class="mo-nawigacja-poz" type="button" data-mob="mob-powiadomienia" data-tytul="Powiadomienia">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
                       <span>Powiadomienia</span>
                       <span class="mo-znacznik-nawigacji" id="mo-znacznik" hidden>1</span>
@@ -1229,7 +1229,9 @@ proces wznawia się (resume) z zastosowaną decyzją</pre>
     window.dnPrzelaczWidok(nazwa, 'mob');
     qa('.mo-nawigacja-poz').forEach(function (p) {
       var w = p.getAttribute('data-mob') === nazwa;
-      p.setAttribute('aria-selected', w ? 'true' : 'false');
+      /* Pasek dolny jest nawigacją, nie listą zakładek — nie prowadzi paneli
+         o roli `tabpanel`, więc pozycję bieżącą znaczy `aria-current`. */
+      if (w) { p.setAttribute('aria-current', 'page'); } else { p.removeAttribute('aria-current'); }
       if (w) q('#mo-tytul-widoku').textContent = p.getAttribute('data-tytul');
     });
     if (nazwa === 'mob-powiadomienia' || nazwa === 'mob-interwencja') {

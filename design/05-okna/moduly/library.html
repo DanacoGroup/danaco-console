@@ -342,10 +342,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Repozytorium główne — porządki Q3</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Project Library — wdrożenie klienta A</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Archiwum raportów 2025</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>Repozytorium główne — porządki Q3</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Project Library — wdrożenie klienta A</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Archiwum raportów 2025</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta otwiera wybór przestrzeni repozytorium." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -378,7 +380,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">Kolekcje</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-pozycja-tytul">Wszystkie materiały</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-pozycja-tytul">Wszystkie materiały</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Raporty Research</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zasoby Design</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Dokumenty Studio</span></button>
@@ -486,9 +488,9 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Odwołaj się do pliku @</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">pdf-viewer</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Studio Editor</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">pdf-viewer</span><button class="dn-przelacznik" aria-label="pdf-viewer" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Studio Editor</span><button class="dn-przelacznik" aria-label="Studio Editor" data-przelacznik role="switch" aria-checked="false"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco analiza danych</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
@@ -500,7 +502,7 @@
                   <div class="sta-popover-tytul">Mikrofon</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Domyślny — Zestaw nagłowny</span><span class="ptaszek" style="color:var(--dn-sygnal)">✓</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Mikrofon USB</span></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" data-przelacznik aria-pressed="false" role="switch" aria-checked="false"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Przytrzymaj, aby nagrać</span><button class="dn-przelacznik" aria-label="Przytrzymaj, aby nagrać" data-przelacznik role="switch" aria-checked="false"></button></div>
                 </div>
               </div>
               <span class="rozciag"></span>

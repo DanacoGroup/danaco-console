@@ -372,10 +372,12 @@
 
 
   <!-- ══ PAS KART SESJI ══ -->
-  <div class="dn-karty-sesji" role="tablist" aria-label="Karty sesji">
-    <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>danaco-console/api — powłoki</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Wdrożenie build-01 (SSH)</span></button>
-    <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Zestaw testów — regresja</span></button>
+  <div class="dn-karty-sesji">
+    <div class="dn-karty-sesji-tory" role="tablist" aria-label="Karty sesji">
+      <button class="dn-karta-sesji" role="tab" aria-selected="true" type="button"><span class="pt-tetno" aria-hidden="true"></span><span>danaco-console/api — powłoki</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Wdrożenie build-01 (SSH)</span></button>
+      <button class="dn-karta-sesji" role="tab" aria-selected="false" type="button"><span>Zestaw testów — regresja</span></button>
+    </div>
     <button class="dn-btn-ikona" type="button" aria-label="Nowa karta" data-komunikat="Nowa karta sesji otwiera wybór katalogu roboczego." data-komunikat-tytul="Nowa karta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
     <span data-przywroc-pas style="display:inline-flex;gap:var(--dn-od-1);align-items:center;margin-left:var(--dn-od-2)"></span>
   </div>
@@ -407,7 +409,7 @@
       </div>
       <div class="dn-szyna-modulu-lista">
         <div class="dn-etyk-mono">danaco-console/api</div>
-        <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Powłoki — PowerShell · Bash · Python</span></button>
+        <button class="pt-pozycja" type="button" aria-current="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Powłoki — PowerShell · Bash · Python</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Budowanie usług</span></button>
         <div class="dn-etyk-mono">Hosty zdalne</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie build-01 (SSH)</span></button>
@@ -460,9 +462,9 @@
               <div class="sta-konfig-pole"><label>Zakres pamięci</label><span class="pt-mono">karta sesji</span></div>
             </details>
             <details class="sta-konfig-sekcja"><summary>Izolacja techniczna procesu</summary>
-              <div class="sta-konfig-pole"><label>Katalog roboczy sesji</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja katalogu roboczego" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-              <div class="sta-konfig-pole"><label>Dostęp sieciowy</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja dostępu sieciowego" aria-pressed="false" role="switch" aria-checked="false"></button></div>
-              <div class="sta-konfig-pole"><label>Konto i token per sesja</label><button class="dn-przelacznik" data-przelacznik data-etykieta="Izolacja konta i tokenu" aria-pressed="false" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Katalog roboczy sesji</label><button class="dn-przelacznik" aria-label="Izolacja katalogu roboczego" data-przelacznik data-etykieta="Izolacja katalogu roboczego" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Dostęp sieciowy</label><button class="dn-przelacznik" aria-label="Izolacja dostępu sieciowego" data-przelacznik data-etykieta="Izolacja dostępu sieciowego" role="switch" aria-checked="false"></button></div>
+              <div class="sta-konfig-pole"><label>Konto i token per sesja</label><button class="dn-przelacznik" aria-label="Izolacja konta i tokenu" data-przelacznik data-etykieta="Izolacja konta i tokenu" role="switch" aria-checked="false"></button></div>
             </details>
           </div>
 
@@ -522,8 +524,8 @@
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Dołącz plik logu</span><span class="pt-mono">Ctrl+U</span></div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Polecenia ukośnikowe</span><span class="pt-mono">/</span></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Konektory</div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">runpod</span><button class="dn-przelacznik" data-przelacznik aria-pressed="true" role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Desktop Commander</span><button class="dn-przelacznik" aria-label="Desktop Commander" data-przelacznik role="switch" aria-checked="true"></button></div>
+                  <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">runpod</span><button class="dn-przelacznik" aria-label="runpod" data-przelacznik role="switch" aria-checked="true"></button></div>
                   <div class="sta-popover-tytul" style="margin-top:var(--dn-od-2)">Wtyczki</div>
                   <div class="sta-popover-wiersz"><span class="sta-popover-etykieta">Danaco inżynieria</span></div>
                 </div>

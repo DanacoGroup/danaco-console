@@ -60,8 +60,12 @@
     }
     var przelacznik = e.target.closest('[data-przelacznik]');
     if (przelacznik && !przelacznik.hasAttribute('data-popover')) {
-      var on = przelacznik.getAttribute('aria-pressed') === 'true';
-      przelacznik.setAttribute('aria-pressed', on ? 'false' : 'true');
+      /* Rola `switch` niesie stan atrybutem `aria-checked`; przycisk bez tej roli
+         pozostaje przełącznikiem dwustanowym i niesie go `aria-pressed`. Trzymanie
+         obu naraz jest niepoprawne — `aria-pressed` nie jest dozwolone przy `switch`. */
+      var stanem = przelacznik.getAttribute('role') === 'switch' ? 'aria-checked' : 'aria-pressed';
+      var on = przelacznik.getAttribute(stanem) === 'true';
+      przelacznik.setAttribute(stanem, on ? 'false' : 'true');
       var ety = przelacznik.getAttribute('data-etykieta');
       if (ety) toast(ety + (on ? ' — wyłączone' : ' — włączone'), 'Ustawienie tego okna', on ? 'informacja' : 'sukces');
       return;

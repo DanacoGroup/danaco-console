@@ -1608,3 +1608,28 @@ z oknem.
 Czas ważności idzie z odpowiedzi rdzenia (`expiresAt`), nie ze stałej klienta —
 długość życia sesji zna wyłącznie rdzeń. Data pełna pojawia się tylko wtedy,
 gdy wygaśnięcie wypada innego dnia; w dniu bieżącym wystarcza godzina.
+
+## budowa/klient-poprzedni/src/rozmowa/blok-zwijany.ts
+Zwinięcie bloku opiera się na natywnym zachowaniu przeglądarki dla elementów details i summary, dzięki czemu blok działa klawiaturą, ma poprawną semantykę dla technologii wspomagających i nie wymaga obsługiwaczy zdarzeń. Brak treści bloku prowadzi do jego ukrycia, a nie wyszarzenia.
+
+Sterowanie rozwinięciem z zewnątrz jest wołane wyłącznie przy zmianie trybu widoku, nigdy przy odświeżeniu treści: blok przestawiony ręcznie pozostaje w stanie, w jakim go zostawiono, także gdy w trakcie tury przychodzą kolejne fragmenty.
+
+## budowa/klient-poprzedni/src/moduly/studio/stan-okna-studio.ts
+Rozróżnienie czterech faz jest treścią: stan sprzed pierwszego wywołania, stan
+w trakcie wywołania i stan odmowy rdzenia są osobnymi fazami, ponieważ zlanie
+ich zmusza czytającego do zgadywania, czy czekać, czy działać. W Studio różnica
+jest ostra, bo rdzeń oddaje tu i treść, i pustkę, i odmowę: otwarcie dokumentu
+ze ścieżką oddaje dokument pusty, wykaz repozytorium przed pierwszym zapisem
+oddaje wykaz pusty, porównanie różnic bez wskazanej strony oddaje pustkę,
+a otwarcie nieznanego dokumentu odmawia kodem błędu. Pusty widok bez powodu
+byłby nie do odróżnienia od żadnej z tych czterech sytuacji.
+
+Komunikat nie kasuje treści, tylko ją przesłania; wyjątkiem jest faza
+ładowania, w której treść ustępuje miejsca wskaźnikowi odczytu. Stan pusty ma
+jedną formę złożoną ze znaku, tytułu i opisu; znak dochodzi z zestawu ikon,
+a nie z własnego rysunku, bo forma stanu pustego wariantów stylu nie ma.
+
+Zestaw faz i ich znakowanie pochodzą ze wspólnego modułu faz okna: ta sama
+nazwa fazy trafia do atrybutu danych w każdym module, więc wspólny selektor
+i wspólny sprawdzian mają się o co oprzeć. W tym module zostaje wyłącznie to,
+czym Studio różni się świadomie: wskaźnik odczytu i chowanie treści.

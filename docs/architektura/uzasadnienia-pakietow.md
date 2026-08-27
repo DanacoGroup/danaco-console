@@ -4333,3 +4333,13 @@ większej niż jeden pilnuje zarazem sygnału do grupy i sygnału bezpośrednieg
 się w sygnał do procesu init albo w rozgłoszenie do wszystkich procesów systemu.
 ## budowa/server/internal/dane/przekazanie_okna_wiez.go
 Więź koordynator-wykonawca nie ma własnej tabeli: mieszka w kolumnie tabeli okien wskazującej okno koordynatora, do której kontrakt odwołuje się wprost. Ten plik dokłada do repozytorium przekazań drogę zapisu i odczytu tej kolumny z poziomu identyfikatora zewnętrznego okna, podczas gdy repozytorium okien czyta i pisze tę kolumnę wyłącznie jako część pełnego wiersza okna po identyfikatorze wewnętrznym, a widok zarządzania oknami operuje na identyfikatorach zewnętrznych pojedynczej więzi, nie całego okna. Cicha zgoda na więź z oknem, którego nie ma, dałaby potwierdzenie relacji, która w rzeczywistości nie powstała, dlatego obie strony więzi są rozwiązywane na identyfikatory wewnętrzne przed zapisem, a nie podzapytaniem w poleceniu aktualizacji, które ciche niedopasowanie zamieniłoby w wartość pustą.
+
+## budowa/server/internal/dane/konta.go
+Wzorcem jest rejestr kanałów modelu. Odczyt katalogu nie wynosi odwołania do
+poświadczenia. Zapytania tego pliku zwracają wyłącznie znacznik obecności
+poświadczenia; samo odwołanie ma jedną, jawnie nazwaną drogę wyjścia w pliku
+zapisu kont, a sekretu nie ma w bazie w ogóle.
+
+Katalog rozstrzyga, które konta wolno wziąć do rotacji i w jakiej kolejności.
+Kiedy przejść na następne konto, rozstrzyga pula rotacji warstwy iniekcji —
+repozytorium nie powiela tamtej logiki.

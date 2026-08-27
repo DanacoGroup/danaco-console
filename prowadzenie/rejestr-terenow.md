@@ -45,11 +45,8 @@ Obie obejmują wszystkie okna aplikacji i **wymagają kontroli poza tym terenem*
   `--dn-bp-*` (640 / 960 / 1280 / 1600). Pochodzą sprzed tego terenu.
 - Rozstrzygnięcie o obrysie w barwie znaku żyje jako `--cd-obrys-marki`
   w arkuszu jednego okna; przy rozszerzeniu na pozostałe okna należy do palety.
-- Płótno okna deklaruje `container-type: inline-size` i nazwę `plotno`, ale
-  układ przełącza dziesięć zapytań `@media`, ani jedno `@container`. Okno mierzy
-  szerokość ekranu, choć panel samouczka zwęża płótno o 320 px; wyrównuje to
-  osobny warunek `body:has(#panel-samouczek:not([hidden]))`. Przejście na
-  zapytania pojemnika rozstrzyga się poza tym terenem.
+- Wyściółka `.cd-tresc` przełącza się progiem ekranu (640 px), bo element nie
+  może odpytywać własnego pojemnika. Pozostałe punkty łamania idą za płótnem.
 - Trzy wiersze dokumentu okna mają 23 252, 20 198 i 10 108 znaków — znacznik bez
   łamania jest nieczytelny w przeglądzie i w różnicy rewizji.
 - Stopka lewego okna sięga kanału wydań `pobierz.danaco-group.pl`, zgodnego

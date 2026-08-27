@@ -6734,3 +6734,18 @@ Odwrotna kolejność kazałaby operatorowi czytać „jest pusto" w chwili, w kt
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-rutyn.ts
 Rutyna jest w kontrakcie automatyką z harmonogramem: odczyt wykazu automatyk mówi, jakie automatyki są, odczyt harmonogramu mówi, kiedy biegną, a zapis harmonogramu nadaje im cykliczność; osobnego bytu rutyny asystenta kontrakt nie ma i okno go nie zakłada. Wyzwalaczy zdarzeniowych okno nie ustawia: automatyka niesie cztery ich rodzaje, ale każdy wymaga wyrażenia właściwego dla swojego rodzaju — adres wywołania zdalnego, ścieżka pliku, warunek na wyniku modelu — a ich redakcja należy do modułu Automations, którego Workflow Builder jest miejscem budowy procesów. Assistant, zgodnie z granicą tematyczną modułu, inicjuje i nadzoruje pojedyncze zlecenia, a nie projektuje pełnych procesów.
+
+## budowa/klient-poprzedni/src/moduly/library/widoki-wykazu.ts
+Widok, który nie ma czego pokazać mimo niepustego wykazu, oddaje zdanie
+w polu braku zamiast pustego prostokąta, bo galeria bez obrazów i
+repozytorium bez plików to dwa różne stany. Wciągnięcie pliku bez pola
+rodzaju treści do galerii na wszelki wypadek stawiałoby w niej dokumenty.
+Znacznik czasu dodania w kontrakcie jest liczbą milisekund epoki,
+a przeglądarka zna strefę czasową przeglądającego, więc doba jest jednostką
+najmniejszą, którą da się nazwać bez ustawienia strefy. Widok mapy opiera
+się na geolokalizacji z metadanych EXIF, której kontrakt dziś nie niesie
+w żadnej postaci, a pozycja usunięta z przełącznika wyglądałaby na widok,
+którego nigdy nie było.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-browser-window.ts — pustka a odmowa
+Rdzeń nie ma jeszcze migawki tego okna" jest stanem pustym; nieudany odczyt treści strony jest odmową i ma się nią przedstawić.

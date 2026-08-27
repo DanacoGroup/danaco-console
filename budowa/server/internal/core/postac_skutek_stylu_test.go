@@ -10,32 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek trzech wymagań odbioru, których nie mierzył żaden inny plik:
-//
-//  1. zmiana stylu nazwanego przestawia WSZYSTKIE miejsca, które go używają —
-//     to jest cały sens stylu nazwanego i Właściciel wymienia ten pomiar wprost;
-//  2. zastosowanie postaci do fragmentu zmienia WYŁĄCZNIE ten fragment — osią
-//     zlecenia jest praca na fragmentach, więc rozlanie się postaci na sąsiedni
-//     akapit jest tu szkodą, nie niedogodnością;
-//  3. czynność wywołana JAKO NARZĘDZIE MODELU odkłada zmianę śledzoną autora
-//     `model`, a nie autora `uzytkownik` — bez tego przełącznik „pokaż wszystko,
-//     co zrobił model" nie ma czego podświetlić.
-//
-// ── Skąd brana jest miara ────────────────────────────────────────────────────
-// Nie z odpowiedzi czynności. Odpowiedź pisze ten sam kod, który zmieniał
-// dokument, więc potwierdzałaby samą siebie. Miara idzie dwiema drogami
-// niezależnymi:
-//   - DRUGIM POŁĄCZENIEM do pliku bazy, własnym zapytaniem SQL (`postacWiersz*`)
-//     — pytanie brzmi „czy to naprawdę leży w bazie";
-//   - OSOBNYM wywołaniem komendy odczytu (`studio.format.character.get`,
-//     `studio.style.list`) — pytanie brzmi „czy Operator, który otworzy dokument
-//     ponownie, zobaczy to samo".
-//
-// Wszystkie czynności idą przez REJESTR (`wykonajUdana`), a nie po adapterze:
-// narzędzie modelu jedzie dokładnie tą drogą, więc pomiar autora `model` mierzy
-// wtedy tę drogę, którą naprawdę pojedzie model.
-
-// postacOknoSprawdzianuStylu jest oknem, w którego imieniu idą żądania tego pliku.
+// postacOknoSprawdzianuStylu jest oknem, w którego imieniu idą żądania tego
+// pliku — wszystkie czynności i odczyty dzielą jedną tożsamość okna.
 const postacOknoSprawdzianuStylu = "okno-postac-styl"
 
 // postacTrescSprawdzianu to trzy akapity o różnej długości. Trzy, nie dwa: przy
@@ -49,7 +25,9 @@ var postacTrescSprawdzianu = strings.Join([]string{
 	"Rozdział trzeci",
 }, "\n")
 
-// postacWierszStylu odczytuje wiersz arkusza stylów DRUGIM połączeniem do bazy.
+// postacWierszStylu odczytuje wiersz arkusza stylów drugim połączeniem do
+// bazy, niezależnym od rdzenia, i oddaje osobno postać znaku oraz postać
+// akapitu.
 func postacWierszStylu(t *testing.T, oboczne *sql.DB, dokument, nazwa string) (string, string) {
 	t.Helper()
 
@@ -65,7 +43,8 @@ func postacWierszStylu(t *testing.T, oboczne *sql.DB, dokument, nazwa string) (s
 	return znak.String, akapit.String
 }
 
-// postacWierszDrzewa odczytuje drzewo postaci DRUGIM połączeniem do bazy.
+// postacWierszDrzewa odczytuje drzewo postaci dokumentu drugim połączeniem do
+// bazy i rozbiera zapisany zapis JSON z powrotem na strukturę kontraktu.
 func postacWierszDrzewa(t *testing.T, oboczne *sql.DB, dokument string) shared.StudioDocumentForm {
 	t.Helper()
 
@@ -84,7 +63,8 @@ func postacWierszDrzewa(t *testing.T, oboczne *sql.DB, dokument string) shared.S
 	return forma
 }
 
-// postacZmianySledzoneWBazie odczytuje autorów zmian śledzonych własnym SQL.
+// postacZmianySledzoneWBazie odczytuje autorów zmian śledzonych własnym
+// zapytaniem SQL, w kolejności wpisu, z pominięciem odpowiedzi komendy rdzenia.
 func postacZmianySledzoneWBazie(t *testing.T, oboczne *sql.DB, dokument string) []string {
 	t.Helper()
 
@@ -130,7 +110,8 @@ func postacZakresAkapitu(t *testing.T, tresc string, numer int) (int, int) {
 	return 0, 0
 }
 
-// postacStopienZnaku odczytuje stopień pisma OSOBNYM wywołaniem odczytu postaci.
+// postacStopienZnaku odczytuje stopień pisma osobnym wywołaniem odczytu
+// postaci, a nie z odpowiedzi czynności, która ten stopień ustawiła.
 func postacStopienZnaku(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	dokument string, od, do int) float64 {
 	t.Helper()
@@ -146,13 +127,9 @@ func postacStopienZnaku(t *testing.T, zmontowany *Zmontowany, zycie context.Cont
 	return *odczyt.Character.FontSizePt
 }
 
-// TestPostacStyluPrzestawiaWszystkieMiejscaUzycia mierzy sens stylu nazwanego.
-//
-// Trzy akapity dostają ten sam styl własny, potem styl zmienia stopień pisma.
-// Wymaganie: wszystkie trzy miejsca mają stopień nowy — i to BEZ kopiowania
-// postaci na fragmenty, co sprawdzian mierzy osobno, zaglądając do drzewa
-// w bazie: gdyby stosowanie stylu kopiowało jego postać, fragmenty niosłyby
-// stopień własny i zmiana stylu nie ruszyłaby ani jednego z nich.
+// TestPostacStyluPrzestawiaWszystkieMiejscaUzycia wykazuje, że zmiana stopnia
+// pisma w stylu nazwanym przestawia stopień we wszystkich trzech akapitach,
+// które go używają, bez kopiowania postaci stylu na fragmenty.
 func TestPostacStyluPrzestawiaWszystkieMiejscaUzycia(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	oboczne := polaczenieOboczneStudia(t, katalog)
@@ -205,8 +182,8 @@ func TestPostacStyluPrzestawiaWszystkieMiejscaUzycia(t *testing.T) {
 		}
 	}
 
-	// Akapit, który stylu nie używa, ma zostać nietknięty — inaczej „wszystkie
-	// miejsca użycia" znaczyłoby „cały dokument".
+	// Akapit bez tego stylu ma zostać nietknięty — „wszystkie miejsca użycia”
+	// to nie „cały dokument”.
 	odTresci, doTresci := postacZakresAkapitu(t, postacTrescSprawdzianu, 1)
 	if stopien := postacStopienZnaku(t, zmontowany, zycie, dokument, odTresci, doTresci); stopien == 22 {
 		t.Errorf("akapit treści zasadniczej dostał stopień 22, choć stylu %q nie używa",
@@ -222,15 +199,15 @@ func TestPostacStyluPrzestawiaWszystkieMiejscaUzycia(t *testing.T) {
 	if postacStylu.FontSizePt == nil || *postacStylu.FontSizePt != 22 {
 		t.Errorf("wiersz stylu w bazie niesie stopień %v, oczekiwano 22", postacStylu.FontSizePt)
 	}
-	// Pogrubienie z zapisu pierwszego ma przeżyć zapis drugi: zmiana jednego
-	// pola nie jest podmianą całej postaci stylu.
+	// Pogrubienie z zapisu pierwszego ma przeżyć zapis drugi, bo zmiana pola
+	// nie podmienia całej postaci.
 	if postacStylu.Bold == nil || !*postacStylu.Bold {
 		t.Errorf("zmiana stopnia zdjęła pogrubienie stylu — zapis stylu podmienia " +
 			"całą postać, zamiast wnosić do niej wskazane pola")
 	}
 
-	// Miara niezależna druga: w drzewie postaci fragmenty NIE niosą stopnia.
-	// To jest dowód, że styl działa odwołaniem, a nie kopią.
+	// Fragmenty w drzewie postaci nie niosą stopnia pisma — dowód, że styl
+	// działa odwołaniem, a nie kopią.
 	forma := postacWierszDrzewa(t, oboczne, dokument)
 	for _, blok := range forma.Blocks {
 		if blok.Paragraph == nil || blok.Paragraph.StyleName == nil ||
@@ -324,8 +301,8 @@ func TestPostacFragmentuZmieniaWylacznieFragment(t *testing.T) {
 			pierwszyPogrubiony, ostatniPogrubiony, od, do)
 	}
 
-	// Miara druga: osobne wywołania odczytu postaci. Znak przed zaznaczeniem
-	// i znak po nim NIE mogą być pogrubione.
+	// Znak przed zaznaczeniem i znak po nim nie mogą być pogrubione, mierzone
+	// osobnym odczytem postaci.
 	postacPogrubienieZakresu := func(poczatek, koniec int) *bool {
 		t.Helper()
 		var odczyt shared.StudioFormatCharacterGetResponse
@@ -360,14 +337,10 @@ func TestPostacFragmentuZmieniaWylacznieFragment(t *testing.T) {
 	}
 }
 
-// TestPostacNarzedziaModeluOdkladaAutoraModel mierzy wymaganie rozstrzygające
-// przełącznika „pokaż wszystko, co zrobił model".
-//
-// Ta sama czynność idzie dwa razy: raz jako czynność modelu, raz jako czynność
-// Operatora przy włączonym śledzeniu. Wymaganie: pierwsza odkłada się w bazie
-// jako zmiana autora `model`, druga jako zmiana autora `uzytkownik`. Zmiana
-// POSTACI, nie treści — bo zmiana kroju bez zmiany liter nie może być
-// niewidzialna.
+// TestPostacNarzedziaModeluOdkladaAutoraModel mierzy przełącznik „pokaż
+// wszystko, co zrobił model”: ta sama czynność jako narzędzie modelu odkłada
+// w bazie zmianę autora `model`, a przy śledzeniu Operatora — zmianę autora
+// `uzytkownik`.
 func TestPostacNarzedziaModeluOdkladaAutoraModel(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	oboczne := polaczenieOboczneStudia(t, katalog)
@@ -425,8 +398,8 @@ func TestPostacNarzedziaModeluOdkladaAutoraModel(t *testing.T) {
 			"być zaszyty", autorzy[1], shared.StudioAuthorUzytkownik)
 	}
 
-	// Wykaz zmian śledzonych ma oddawać autora tą samą drogą, którą czyta go
-	// okno — inaczej przełącznik nie miałby po czym filtrować.
+	// Wykaz zmian śledzonych ma oddawać autora tą drogą, którą czyta go okno,
+	// dla filtrowania.
 	var wykaz shared.StudioTrackingListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioTrackingList,
 		shared.StudioTrackingListRequest{DocumentId: dokument}, &wykaz)
@@ -442,19 +415,10 @@ func TestPostacNarzedziaModeluOdkladaAutoraModel(t *testing.T) {
 	}
 }
 
-// TestPostacZmianaNosnikaPrzeliczaUkladIOddajeBilans mierzy wymaganie
-// Właściciela CAŁĄ DROGĄ KOMENDY, a nie samym rachunkiem pomocniczym.
-//
-// Dokument dostaje tabelę szeroką na trzy kolumny po sto milimetrów, złożoną na
-// A3 poziomej. Potem nośnik schodzi na A5 pionową. Wymagania dwa i oba
-// obowiązkowe:
-//
-//  1. odpowiedź oddaje BILANS nazywający tabelę, która się nie zmieściła —
-//     cisza po zmianie nośnika jest tu szkodą, bo Operator wydrukowałby dokument
-//     z obciętą tabelą;
-//  2. układ zostaje PRZELICZONY, a nie obcięty: szerokości kolumn odczytane
-//     OSOBNYM wywołaniem wykazu tabel mieszczą się w nowym nośniku i żadna nie
-//     jest zerowa.
+// TestPostacZmianaNosnikaPrzeliczaUkladIOddajeBilans mierzy przeliczenie
+// układu tabeli po zmianie nośnika: tabela na A3 poziomej po zejściu na A5
+// pionową dostaje przeliczone szerokości kolumn i bilans nazywający tabelę,
+// która się nie zmieściła.
 func TestPostacZmianaNosnikaPrzeliczaUkladIOddajeBilans(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	oboczne := polaczenieOboczneStudia(t, katalog)
@@ -510,14 +474,14 @@ func TestPostacZmianaNosnikaPrzeliczaUkladIOddajeBilans(t *testing.T) {
 		t.Errorf("nastawy strony niosą orientację %v, oczekiwano pionowej",
 			nastawy.PageSetup.Orientation)
 	}
-	// Pole `widthMm` niesie wymiar wyłącznie dla nośnika własnego — tak stanowi
-	// kontrakt — więc dla A5 wolno mu być puste. Gdy jest, ma się zgadzać.
+	// Pole `widthMm` niesie wymiar wyłącznie dla nośnika własnego, więc dla A5
+	// wolno mu być puste.
 	if nastawy.PageSetup.WidthMm != nil && *nastawy.PageSetup.WidthMm > 149 {
 		t.Errorf("nastawy niosą szerokość %v mm, a A5 pionowa ma 148 mm",
 			*nastawy.PageSetup.WidthMm)
 	}
-	// Wymiar nośnika nazwanego czyta się z wykazu nośników — jednego dla całego
-	// rdzenia, nie z drugiego wykazu Studia.
+	// Wymiar nośnika nazwanego czyta się z jednego wykazu nośników rdzenia,
+	// nie z osobnego wykazu Studia.
 	var nosniki shared.StudioPagePaperListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioPagePaperList,
 		shared.StudioPagePaperListRequest{}, &nosniki)
@@ -531,8 +495,8 @@ func TestPostacZmianaNosnikaPrzeliczaUkladIOddajeBilans(t *testing.T) {
 		t.Fatalf("wykaz nośników podaje dla A5 szerokość %v mm, oczekiwano 148", szerokoscA5)
 	}
 
-	// Miara niezależna druga: wykaz tabel. Szerokości przeliczone, nie zerowe
-	// i nie szersze od nowego nośnika.
+	// Wykaz tabel niesie szerokości przeliczone: żadna nie jest zerowa ani
+	// szersza od nowego nośnika.
 	var wykaz shared.StudioTableListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioTableList,
 		shared.StudioTableListRequest{DocumentId: dokument, TableId: &tabela}, &wykaz)

@@ -94,3 +94,16 @@ obcych w tabelach pozostałych; odtworzenie indeksów pod nazwami z
 Słownik stanów pozycji kolejki pozostaje bez zmiany: siedem wartości z
 `migracja_003_kolejki.sql` wystarcza silnikowi wykonania na pełny cykl życia
 zlecenia. Migracja naprawia więz stanu kolejki, nie rozszerza model danych.
+
+## budowa/server/internal/store/migracja_192_roundtable_graf.sql
+
+Graf argumentów jest trwały, a nie liczony przy każdym odczycie, ponieważ węzeł
+da się oznaczyć jako kluczowy (`roundtable.argument.pin`). Oznaczenie postawione
+na węźle wyliczanym w locie znikałoby przy następnym odczycie, bo węzeł
+dostawałby wtedy nowy identyfikator.
+
+Katalog błędów logicznych jest dwuwarstwowy. Definicje wnosi migracja i są
+wspólne dla całej platformy — nie należą do okna. Zakres wykrywania
+(`roundtable.fallacy.catalog.set`) należy do okna, więc leży w osobnej tabeli
+wiążącej kod błędu z oknem; bez tego rozdziału wyłączenie błędu w jednym oknie
+wyłączałoby go wszystkim.

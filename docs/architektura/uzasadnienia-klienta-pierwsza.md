@@ -2097,3 +2097,16 @@ Wartości motywu ani żadnej barwy ten plik nie zna — całą pracę wykonuje w
 `motyw/`, a tutaj zostaje wyłącznie obsługa kontrolek. Zmiana preferencji systemu
 przy braku wyboru własnego dochodzi tą samą drogą zdarzenia co przełączenie
 ręczne, więc kontrolka nadąża bez przeładowania okna.
+
+## budowa/klient-poprzedni/src/konfiguracja/kontrolki-wyboru.ts
+
+Definicja nastawy bez podanych opcji nie daje pustego ekranu bez wyjaśnienia: obie listy
+niosą wtedy ostrzeżenie przy polu, a lista jednokrotna zostaje przy samej pozycji pustej.
+Operator widzi wtedy, że wartości nie podał katalog nastaw, a nie że kontrolka się nie
+zbudowała.
+
+## budowa/klient-poprzedni/src/moduly/library/pasek-kontekstu.ts
+
+Okno komunikacji wybierane jest po oznaczeniu modułu, a nie z brzegu wykazu, ponieważ komenda wykazu okien oddaje okna wszystkich modułów sesji. Sięgnięcie po pierwsze okno z wykazu wysyłałoby kontekst cudzego okna, dlatego pasek szuka okna należącego do modułu Library.
+
+Okno komunikacji jest zarazem oknem źródłowym przeniesienia kontekstu, więc jego brak pasek opisuje wprost, zamiast podstawiać okno innego modułu. Tytuł okna pasek pokazuje razem z liczbą wiadomości, natomiast moduł okna i tryb uprawnień zostają w panelu sterowania okna, a tytuł powtórzony jest już w karcie sesji.

@@ -2699,3 +2699,21 @@ Weryfikacja podpisu liczy podpis od nowa: Ed25519 ze standardowej biblioteki
 sprawdza bajty podpisu kluczem publicznym odłożonym przy pozycji. Przepisanie
 zapamiętanego wyniku poprzedniej weryfikacji nie byłoby weryfikacją, tylko
 powtórzeniem cudzego zdania.
+
+## budowa/server/internal/core/adapter_modul_extension_protokol.go
+
+Klient protokołu Model Context Protocol jest wkompilowany, nie pożyczony:
+protokół to JSON-RPC 2.0 nad jednym z trzech transportów — procesem lokalnym
+przez stdio, strumieniem zdarzeń SSE albo zwykłym HTTP. Wszystkie trzy
+obsługuje biblioteka standardowa Go, więc rdzeń rozmawia z serwerem sam, bez
+ani jednego programu obok instalki.
+
+Program serwera należy do operatora, nie do platformy: transport stdio
+uruchamia polecenie, które operator sam wpisał przy podłączaniu rozszerzenia.
+To nie jest zależność rdzenia od cudzego programu — to jest cudzy program,
+który operator świadomie podłączył, i którego brak wraca nazwaną odmową,
+a nie awarią platformy.
+
+Każda ramka rozmowy idzie do dziennika: żądanie i odpowiedź zapisują się wraz
+z korelacją, więc wykaz dziennika protokołu pokazuje rozmowę, która naprawdę
+się odbyła, a diagnoza błędu integracji ma z czego wyjść.

@@ -3563,3 +3563,6 @@ nie zależał od tego, czy ten indeks przetrwał każdą przyszłą zmianę sche
 
 ## budowa/server/internal/dane/workspace.go
 Projekt zakłada się przy pierwszym wejściu do niego: kontrakt nie ma komendy zakładającej projekt osobno, a widok pulpitu projektu ma odpowiedzieć, nie odmówić — brak wiersza jest więc stanem początkowym, nie błędem.
+
+## budowa/server/internal/dane/developer_warsztat_zapis.go
+Zapisy zbiorcze znalezisk skanu, wyników testów i pokrycia idą jedną transakcją i zaczynają się od usunięcia poprzedniego pomiaru, ponieważ pomiar jest stanem z jednej chwili, nie przyrostem: dopisanie drugiego przebiegu do pierwszego dałoby wykaz, w którym ten sam test stoi dwa razy z dwoma różnymi wynikami, bez sposobu rozstrzygnięcia, który wynik jest aktualny.

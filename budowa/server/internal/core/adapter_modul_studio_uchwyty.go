@@ -252,8 +252,8 @@ func zarejestrujStudio(r *Rejestr, m Studio, e *emiter) {
 	r.Zarejestruj(shared.CommandStudioDocumentOpen, obsluz(m.OtworzDokument))
 	r.Zarejestruj(shared.CommandStudioDiffCompare, obsluz(m.Porownaj))
 
-	// Operacja kontekstowa zmienia treść dokumentu; czytamy ją przez document.open
-	// i rozgłaszamy zmianę.
+	// Operacja kontekstowa zmienia treść dokumentu; czyta się przez document.open
+	// i rozgłasza się zmianę.
 	r.Zarejestruj(shared.CommandStudioContextualOp,
 		obsluz(func(ctx context.Context, z shared.StudioContextualOpRequest) (shared.StudioContextualOpResponse, error) {
 			odpowiedz, err := m.OperacjaKontekstowa(ctx, z)

@@ -3498,3 +3498,14 @@ Zdarzenie `progress.changed` dochodzi do wszystkich połączeń konta niezależn
 tego, czy komenda `monitor.subscribe` zapisała okno; zapis mówi rdzeniowi
 wyłącznie, które okno których procesów pilnuje. Dlatego wykaz zmienia się na żywo
 także wtedy, gdy pole zapisu niesie wartość fałszywą.
+
+## budowa/klient-poprzedni/src/mission-control/pas-relacji.ts
+
+Kontrakt nie niesie odczytu powiązań między sesjami. Komplet danych pulpitu podaje
+w tym miejscu `null`, a pas mówi o braku źródła. Jest to co innego niż pusty wykaz:
+zdanie „brak powiązań" byłoby twierdzeniem, którego nie da się odczytać z rdzenia,
+więc pas rozdziela oba stany i nazywa je osobnymi zdaniami.
+
+Znak relacji jest podwójny — strzałka `⇄` albo `→` oraz słowo w podpowiedzi i w treści
+czytanej. Kierunek powiązania nie zależy wtedy od samego kształtu znaku, który dla
+odczytu ekranowego jest niedostępny.

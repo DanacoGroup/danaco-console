@@ -6539,3 +6539,21 @@ wywołania: gdyby uchwyt wypadł, okno powie to z pomiaru, a nie z komentarza.
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-mcp-connector-console.ts
 Okno stoi w całości na czynnościach, których kontrakt nie prowadzi, i jest zbudowane właśnie po to, żeby ten brak był widoczny i policzony: kontrolki są obecne, klikalne i nazywają brakującą komendę, żadna nie jest wygaszona i żadna nie udaje wykonania. Powód każdej kontrolki bierze się z bytu pokrycia komend, a nie z napisu wpisanego tutaj — byt pyta rdzeń o wykaz jego komend i sam przerysowuje zdanie, więc w dniu, w którym rdzeń dostanie uchwyt dla którejś z tych komend, kontrolka powie to sama, bez tknięcia tego pliku; to ważne, bo brak jest stanem przejściowym, komendy są zaprojektowane do natychmiastowej implementacji. Formularz argumentów jest jednym polem tekstowym, nie polami wyprowadzonymi ze schematu, bo schemat przychodzi z odkrycia narzędzi, którego nie ma — pola zmyślone ze zgadniętego schematu wyglądałyby na wiedzę o serwerze, której okno nie ma. Okno otwiera się na pozycji wskazanej w Integrations Hubie; inspektor bez wskazanej integracji nie ma czego inspekcjonować i mówi to wprost.
+
+## budowa/klient-poprzedni/src/moduly/library/odbior-przekazania.ts
+Przekazanie zakłada w rdzeniu okno modułu i rozgłasza wyłącznie zmianę okna;
+pliku w repozytorium nie zakłada, więc zmiana pliku po przekazaniu nie
+przychodzi, a bez tej subskrypcji przybycie kompletu byłoby dla modułu nieme.
+Zdarzenie zmiany okna niesie okno, nie powód jego zmiany, a biblioteka ma
+także okno, w imieniu którego moduł sam działa. Przekazanie rozpoznają dwa
+warunki: okno jest inne niż okno modułu, a okno modułu jest już znane —
+dopóki pasek kontekstu nie odczytał własnego okna, moduł milczy; oraz rdzeń
+ma dla tego okna komplet z dokumentami, bo okno, którego nikt nie
+przekazywał, oddaje komplet bez dokumentów. Identyfikatory z kompletu są
+identyfikatorami dokumentów modułu nadawcy i biblioteka może ich nie znać,
+więc przycisk odświeża wykaz i mówi wprost, czy rdzeń ma pod tym
+identyfikatorem plik: gdy ma, wskazuje go jako plik czynny, a podgląd,
+wersje i etykiety przestawiają się razem; gdy nie ma, nazywa to brakiem
+zamiast pokazać pustą pozycję. Powtórne naciśnięcie przycisku w trakcie
+odczytu mówi, co się właśnie dzieje, zamiast wysyłać drugie żądanie o to
+samo.

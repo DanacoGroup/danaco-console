@@ -6,27 +6,9 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import { KOD_MODULU, type ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Odbiór przekazania kontekstu z innego modułu.
- *
- * Przekazanie (`context.transfer`) zakłada w rdzeniu okno modułu Library
- * i rozgłasza wyłącznie `window.changed`; pliku w repozytorium nie zakłada,
- * więc `library.file.changed` po przekazaniu nie przychodzi. Bez tej
- * subskrypcji przybycie kompletu byłoby dla modułu nieme.
- *
- * Zdarzenie `window.changed` niesie okno, nie powód jego zmiany, a `moduleId`
- * biblioteki ma także okno, w imieniu którego moduł sam działa (przestawia je
- * `workspace.enter`). Przekazanie rozpoznają więc dwa warunki:
- *   1. okno jest inne niż okno modułu (`stan.idOkna()`), a okno modułu jest już
- *      znane — dopóki pasek kontekstu nie odczytał własnego okna, nie ma czego
- *      porównywać i moduł milczy;
- *   2. rdzeń ma dla tego okna komplet z dokumentami — okno, którego nikt nie
- *      przekazywał, oddaje komplet bez `documentIds`.
- *
- * Identyfikatory z kompletu są identyfikatorami dokumentów modułu nadawcy
- * i biblioteka może ich nie znać. Przycisk odświeża więc wykaz i mówi wprost,
- * czy rdzeń ma pod tym identyfikatorem plik: gdy ma — wskazuje go jako plik
- * czynny (podgląd, wersje i etykiety przestawiają się razem), gdy nie ma —
- * nazywa to brakiem, zamiast pokazać pustą pozycję.
+ * Odbiór przekazania kontekstu z innego modułu subskrybuje zmianę okna, bo
+ * przekazanie zakłada okno bez pliku w repozytorium, i rozpoznaje przybycie po
+ * innym oknie z kompletem dokumentów.
  */
 export interface OdbiorPrzekazania {
   element: HTMLElement;
@@ -34,7 +16,7 @@ export interface OdbiorPrzekazania {
   rozlacz(): void;
 }
 
-/** Zdanie o przybyciu kompletu — osobno od widoku, żeby dało się je sprawdzić. */
+/** Zdanie o przybyciu kompletu — osobno od widoku, żeby dało się je sprawdzić niezależnie od stanu przycisku. */
 export function zdanieOPrzybyciu(okno: Window, dokumenty: readonly string[]): string {
   const nazwa = okno.title === undefined || okno.title === '' ? okno.id : `${okno.title} (${okno.id})`;
   return (
@@ -72,13 +54,7 @@ export function utworzOdbiorPrzekazania(
     wskaz.hidden = !zPrzyciskiem;
   }
 
-  /**
-   * Znacznik trwającego odczytu — zamiast wygaszenia przycisku.
-   *
-   * Odczyt w toku nie jest powodem do odebrania kontrolki: przycisk zostaje
-   * w pełni klikalny, a powtórne naciśnięcie mówi, co się właśnie dzieje,
-   * zamiast wysyłać drugie żądanie o to samo.
-   */
+  // Odczyt w toku nie jest powodem do odebrania kontrolki: przycisk zostaje w pełni klikalny.
   let odczytTrwa = false;
 
   wskaz.addEventListener('click', () => {
@@ -126,9 +102,7 @@ export function utworzOdbiorPrzekazania(
     void (async () => {
       const komplet = await otoczenie.komplet(okno.id);
       if (!komplet.udany || komplet.wynik === undefined) {
-        // Odmowa odczytu treści to nie brak przekazania. Okno modułu Library
-        // powstało bez udziału Operatora, więc mówimy i o nim, i o powodzie,
-        // dla którego treść kompletu została nieodczytana.
+        // Odmowa odczytu treści to nie brak przekazania: mówimy o oknie i o powodzie nieodczytania kompletu.
         pokaz(
           `Rdzeń założył okno ${okno.id} modułu ${okno.moduleId}, ale treści kompletu nie ` +
             `oddał. ${opisOdmowy('Odczyt kompletu okna', komplet.blad?.code, komplet.blad?.message)}`,
@@ -138,9 +112,7 @@ export function utworzOdbiorPrzekazania(
         return;
       }
       const przyniesione = komplet.wynik.context.documentIds ?? [];
-      // Komplet bez dokumentów ma także okno, którego nikt nie przekazywał,
-      // więc to nie jest przybycie i nie ma o nim zdania — inaczej moduł
-      // ogłaszałby przekazanie po każdym cudzym oknie.
+      // Komplet bez dokumentów ma też okno nieprzekazywane, więc nie ma o nim zdania przybycia.
       if (przyniesione.length === 0) return;
       dokumenty = przyniesione;
       pokaz(zdanieOPrzybyciu(okno, przyniesione), 'przybylo', true);

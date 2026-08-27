@@ -855,3 +855,21 @@ nie składa promptu z treści kategorii własnym porządkiem, tylko pyta
 `identity.effective.get` i pokazuje to, co trafi do modelu. Drugie składanie po
 stronie widoku dałoby podgląd rozjeżdżający się z rdzeniem przy pierwszej
 zmianie reguł.
+
+## budowa/klient-poprzedni/src/moduly/design/symulacja-widzenia.ts
+
+Zakres symulacji jest tu ważniejszy niż sam rachunek: obejmuje ona próbki
+żetonów, a nie obrazy modułu. Obrazu nie ma czym pobrać, ponieważ pole odsyłacza
+zasobu niesie ścieżkę w systemie plików rdzenia, więc nałożenie symulacji na
+zasób wizualny nie ma dziś drogi wykonania i panel tego nie udaje.
+
+Rachunek jest przybliżeniem i tak jest nazwany. Macierze odwzorowują trzy
+dichromazje wprost w przestrzeni sRGB, bez przejścia przez przestrzeń
+długofalową, co jest uproszczeniem przyjętym w narzędziach projektowych.
+Wystarcza ono, żeby zobaczyć, które dwie barwy systemu zlewają się w jedną,
+i nie wystarcza do orzeczenia medycznego. Panel mówi to Operatorowi wprost,
+ponieważ różnica między podglądem a badaniem jest tutaj istotna.
+
+Granica zlania jest odległością w składowych sRGB — miarą zgrubną, dobraną tak,
+żeby wskazywała pary wymagające obejrzenia przez człowieka, a nie żeby
+rozstrzygała za niego.

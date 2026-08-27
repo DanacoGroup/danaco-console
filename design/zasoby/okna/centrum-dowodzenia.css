@@ -546,10 +546,11 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   background: transparent;
   gap: var(--dn-od-1);
   height: 40px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  /* Wstążka nie jest polem przewijania: pole przewijania zamyka dymki
+     przycisków w pasie własnej wysokości i daje wstążce pionowy pasek
+     przesuwania. Komplet przycisków lewego okna zajmuje 238 px i mieści się
+     w domyślnej szerokości okna (280 px). */
 }
-.cd-strona .dn-obszar-pasek::-webkit-scrollbar { display: none; }
 .cd-strona .dn-obszar-pasek .dn-obszar-sterowanie { margin-left: auto; display: flex; align-items: center; gap: var(--dn-od-1); }
 .cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
 /* Przycisk wstążki okna jest węższy niż na wstążce głównej — okno boczne ma
@@ -634,18 +635,20 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   .cd-strona .dn-obszar-panel--boczny { transition: none; }
 }
 
-/* Płytka pod znakiem komponentu stoi o stopień NAD kaflem, nie pod nim.
-   Kafel leży na `--dn-panel`, a `.dn-kafel-ikona` z warstwy wspólnej idzie na
-   `--dn-powierzchnia` — w motywie ciemnym to stopień niżej w skali szarości
-   (#16181D pod #1E2126), więc płytka wychodziła czarną łatką. Obrys szedł na
-   `--dn-obrys`, w tym motywie równy barwie wstążki obok, i też nic nie wnosił.
-   `--dn-wstazka` to najbliższy stopień nad `--dn-panel` w obu motywach
-   (ciemny #272A30, jasny #FFFFFF), `--dn-obrys-mocny` daje płytce krawędź.
-   Wymiar niesie `.cd-kafel .dn-kafel-ikona` wyżej: płytka 24 px, znak 18 px. */
+/* Znak komponentu stoi bez płytki i bez ramki — samo godło.
+   `.dn-kafel-ikona` z warstwy wspólnej niesie tło `--dn-powierzchnia` i obrys
+   `--dn-obrys`; oba są tu zdejmowane. Pojemnik zachowuje swoją szerokość 24 px
+   z `.cd-kafel .dn-kafel-ikona` wyżej, żeby odstęp od brzegu kafla i od tekstu
+   pozostał nietknięty, a znak wypełnia go w całości — po zdjęciu płytki znak
+   18 px czytałby się jako pomniejszony. */
 .cd-strona .cd-kafel .dn-kafel-ikona {
-  border-color: var(--dn-obrys-mocny);
-  background: var(--dn-wstazka);
+  border: 0;
+  background: none;
   color: var(--dn-tekst-2);
+}
+.cd-strona .cd-kafel .dn-kafel-ikona svg {
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
 }
 
 /* Kreska przy „+” równo z krawędzią ostatniej karty.
@@ -748,3 +751,71 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   height: var(--dn-wym-ikona);
 }
 /* === koniec agent-3 === */
+
+/* === agent-2: dymki i przewijanie === */
+
+/* ==========================================================================
+   DYMEK WSTĄŻKI OKNA — poza obrysem panelu
+   --------------------------------------------------------------------------
+   Dymek warstwy wspólnej stoi bezwzględnie względem przycisku, więc należy do
+   pola przycinania panelu, a panele okien przycinają zawartość (`overflow:
+   hidden` na `.dn-obszar-panel`). Przy skrajnym przycisku wstążki połowa
+   napisu zostawała za krawędzią okna, a sam dymek — wiszący pod wstążką —
+   podnosił zasięg przewijania wstążki z 38 do 61 px.
+   Umocowanie do okna widoku wyjmuje dymek i z przycinania panelu, i z pola
+   przewijania wstążki. Położenie niesie miejsce spoczynkowe wewnątrz
+   przycisku: przycisk ikonowy jest polem zginanym wyśrodkowanym w obu osiach,
+   więc `align-self` sadza dymek przy jego dolnej krawędzi, a przesunięcie
+   o własną wysokość stawia go pod przyciskiem. Skok o pół stopnia przy
+   ujawnieniu zostaje.
+   ========================================================================== */
+.cd-strona .dn-obszar-pasek .dn-etykietka::after {
+  position: fixed;
+  inset: auto;
+  align-self: flex-end;
+  transform: translateY(calc(100% + var(--dn-od-1) - var(--dn-od-05)));
+}
+.cd-strona .dn-obszar-pasek .dn-etykietka:hover::after,
+.cd-strona .dn-obszar-pasek .dn-etykietka:focus-visible::after {
+  transform: translateY(calc(100% + var(--dn-od-1)));
+}
+/* Grupa sterowania stoi przy prawej krawędzi wstążki, a wstążka okna roboczego
+   dochodzi do krawędzi ekranu — dymek wyśrodkowany na ostatnim przycisku
+   wychodziłby poza widok. Kotwiczy się prawym bokiem przycisku: przesunięcie
+   w lewo o połowę własnej szerokości, oddane wstecz o połowę szerokości
+   przycisku wstążki. */
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka::after {
+  transform: translate(calc(var(--dn-od-4) - 50%), calc(100% + var(--dn-od-1) - var(--dn-od-05)));
+}
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:hover::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka:focus-visible::after {
+  transform: translate(calc(var(--dn-od-4) - 50%), calc(100% + var(--dn-od-1)));
+}
+
+/* ==========================================================================
+   DYMEK CZYNNOŚCI W TREŚCI OKIEN — w polu treści
+   --------------------------------------------------------------------------
+   Wyzwalacz czynności stoi przy prawej krawędzi wiersza sesji i projektu,
+   kafla komponentu własnego oraz wiersza pierwszego wejścia. Dymek
+   wyśrodkowany na nim sięgał poza pole treści — 32 px w lewym oknie, 27 px
+   w oknie roboczym — i to on, nie sama treść, dawał obu polom poziomy pasek
+   przesuwania. Kotwiczy się prawym bokiem wyzwalacza, tak samo jak dymki
+   skrajnych grup paska narzędzi w warstwie wspólnej.
+   ========================================================================== */
+.cd-strona .dn-obszar-pozycja-menu .dn-etykietka::after,
+.cd-strona .cd-wlasny-menu .dn-etykietka::after,
+.cd-strona .cd-start .dn-etykietka::after {
+  left: auto;
+  right: 0;
+  transform: translateY(calc(-1 * var(--dn-od-05)));
+}
+.cd-strona .dn-obszar-pozycja-menu .dn-etykietka:hover::after,
+.cd-strona .cd-wlasny-menu .dn-etykietka:hover::after,
+.cd-strona .cd-start .dn-etykietka:hover::after,
+.cd-strona .dn-obszar-pozycja-menu .dn-etykietka:focus-visible::after,
+.cd-strona .cd-wlasny-menu .dn-etykietka:focus-visible::after,
+.cd-strona .cd-start .dn-etykietka:focus-visible::after {
+  transform: translateY(0);
+}
+
+/* === koniec agent-2 === */

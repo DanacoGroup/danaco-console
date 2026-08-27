@@ -5530,3 +5530,23 @@ chwilę pobrania, jak i liczbę wpisów, które do niego weszły.
 Nagrania log nie niesie. Wpis ma wyłącznie odnośnik `audioRef`, a kontrakt nie
 ma komendy pobrania dźwięku, więc odnośnik idzie do pliku wprost, bo jest tym,
 co rdzeń naprawdę oddał.
+
+## budowa/klient-poprzedni/src/moduly/automations/eksport-grafu.ts
+
+Opracowanie wymienia cztery postacie zapisu mapy; trzy z nich powstają po stronie okna,
+ponieważ treść jest już tutaj: zapis wektorowy bierze się wprost z kanwy budowanej
+w `graf-krokow.ts`, a zapisy DOT i Mermaid składa ten plik.
+
+Czwarta postać, mapa rastrowa, wymagałaby przerysowania kanwy na płótno i zostaje poza
+oknem. Postać wektorowa niesie to samo, a otwiera się w każdej przeglądarce.
+
+Żadna z tych postaci nie potrzebuje komendy kontraktu i mieć jej nie musi.
+
+Kroki ścieżki krytycznej dostają w zapisie DOT grupę własną, a nie barwę wpisaną wprost:
+barwa należy do narzędzia rysującego, a nie do treści mapy.
+
+## budowa/klient-poprzedni/src/moduly/developer/warsztat-drogi.test.ts
+
+Sprawdziany pilnują, że przycisk, który niczego nie woła, nie wygląda tak samo jak przycisk działający — usterka tego rodzaju widać dopiero u Operatora. Sprawdziany naciskają kontrolki okien i pytają, czy z każdej rodziny komend naprawdę wyszło wywołanie, nie o to, czy okno się narysowało.
+
+Sprawdziany nie badają treści rdzenia — od tego są sprawdziany skutku po stronie serwera, które schodzą do bazy i na dysk. Tutaj mierzy się jedno: czy droga istnieje i czy okno mówi prawdę, gdy rdzeń odpowiada brakiem narzędzia.

@@ -1,8 +1,4 @@
-// Odpowiedzialność pliku: moduł Translate — dobór syntezatora i odnalezienie
-// głosu, czyli odpowiedź na pytanie „czym przeczytamy ten panel i jakim
-// głosem". Samo uruchomienie, plik wyjściowy i przekład odmów na kody kontraktu
-// należą do adapter_modul_tlumaczenie_mowa_silnik.go, którego nagłówek opisuje
-// pierwszeństwo pipera przed espeakiem i kolejność źródeł ścieżek.
+// Plik obsługuje moduł Translate: dobór syntezatora i odnalezienie głosu dla panelu. Uruchomienie, plik wyjściowy i przekład odmów należą do adapter_modul_tlumaczenie_mowa_silnik.go.
 package core
 
 import (
@@ -13,12 +9,7 @@ import (
 	"danacoconsole/server/internal/zewnetrzne"
 )
 
-// dobierzSyntezator rozstrzyga, którym silnikiem czytamy — piper, gdy da się,
-// espeak, gdy trzeba, odmowa dwuczłonowa, gdy nie da się żadnym.
-//
-// Piper ma dwa warunki, nie jeden: binarium stojące bez głosu dla języka panelu
-// nie jest silnikiem gotowym do pracy. Zejście na espeaka daje wtedy nagranie
-// gorszym głosem, a użyty silnik widać w nazwie pliku, która niesie `espeak-ng`.
+// dobierzSyntezator rozstrzyga, którym silnikiem czytać: piper, gdy się da, espeak, gdy trzeba, odmowa dwuczłonowa, gdy nie da się żadnym. Piper ma dwa warunki: binarium stojące bez głosu dla języka panelu nie jest silnikiem gotowym do pracy.
 func dobierzSyntezator(jezyk string) (wyborSyntezatora, error) {
 	piper := zewnetrzne.Narzedzie{
 		Nazwa:   "piper (synteza mowy)",
@@ -51,9 +42,7 @@ func dobierzSyntezator(jezyk string) (wyborSyntezatora, error) {
 		return wyborSyntezatora{silnik: silnikEspeak, narzedzie: espeak, glos: jezyk}, nil
 	}
 
-	// Odmowa wymienia obie przyczyny. Podanie samej drugiej wskazywałoby
-	// instalację espeaka, choć dołożenie głosu pipera bywa bliższe i daje
-	// głos lepszy.
+	// Odmowa wymienia obie przyczyny; sama druga wskazywałaby espeaka, choć głos pipera bywa bliższy.
 	return wyborSyntezatora{}, bladBrakuSyntezatora(
 		"nie ma czym zsyntezować mowy — żaden z dwóch silników nie jest gotowy. " +
 			"Piper (głos dobry): " + powodPipera + ". " +
@@ -61,9 +50,7 @@ func dobierzSyntezator(jezyk string) (wyborSyntezatora, error) {
 			" (wskazanie: zmienna " + zmiennaEspeaka + " albo nazwa espeak-ng w PATH; naprawa: apt install espeak-ng)")
 }
 
-// programPipera wskazuje binarium pipera: ścieżka ze zmiennej środowiska, potem
-// goła nazwa w PATH, na końcu miejsce typowe arsenału. Ścieżkę ze zmiennej
-// bierzemy wprost i bez sprawdzania na dysku — o wykonywalności rozstrzyga `Stoi`.
+// programPipera wskazuje binarium pipera: ścieżka ze zmiennej środowiska, potem goła nazwa w PATH, na końcu miejsce typowe arsenału. Ścieżkę ze zmiennej bierze się wprost i bez sprawdzania na dysku — o wykonywalności rozstrzyga `Stoi`.
 func programPipera() string {
 	if wskazane := strings.TrimSpace(os.Getenv(zmiennaPipera)); wskazane != "" {
 		return wskazane
@@ -84,8 +71,7 @@ func programEspeaka() string {
 	return silnikEspeak
 }
 
-// katalogGlosow wskazuje katalog z plikami `.onnx` — ze zmiennej środowiska
-// albo katalog arsenału.
+// katalogGlosow wskazuje katalog z plikami `.onnx` — ze zmiennej środowiska albo katalog arsenału syntezy mowy.
 func katalogGlosow() string {
 	if wskazany := strings.TrimSpace(os.Getenv(zmiennaGlosowPiper)); wskazany != "" {
 		return wskazany
@@ -93,18 +79,7 @@ func katalogGlosow() string {
 	return glosyPiperaArsenalu
 }
 
-// glosPipera odnajduje plik głosu dla języka panelu.
-//
-// Dopasowanie idzie po przedrostku nazwy pliku, zgodnie ze zwyczajem
-// nazewniczym głosów pipera: `pl_PL-darkman-medium.onnx`,
-// `en_US-lessac-medium.onnx`. Język panelu skracamy do członu przed `_` albo `-`
-// (`pl-PL` → `pl`) i szukamy pliku, którego nazwa zaczyna się od tego członu
-// zakończonego `_` albo `-`. Warunek zakończenia jest istotny: bez niego `pl`
-// dopasowałoby `pl…` w dowolnym dłuższym kodzie języka, dając lektora mówiącego
-// w innym języku.
-//
-// Katalog nieczytelny nie jest odmową, tylko brakiem głosu — dobór silnika ma
-// się skończyć wyborem albo odmową dwuczłonową, a katalogu głosów może nie być.
+// glosPipera odnajduje plik głosu dla języka panelu po przedrostku nazwy pliku według zwyczaju nazewniczego pipera. Język skraca się do członu przed separatorem. Katalog nieczytelny nie jest odmową, tylko brakiem głosu.
 func glosPipera(jezyk string) (string, bool) {
 	katalog := katalogGlosow()
 	skrot := skrotJezyka(jezyk)

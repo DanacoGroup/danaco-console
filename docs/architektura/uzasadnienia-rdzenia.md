@@ -5497,3 +5497,17 @@ Port, który więzi nie przyjmie, po prostu nie oznaczy bieżącego urządzenia;
 
 Wykaz do zdarzenia bierze się z tego samego źródła co odpowiedź wykazu urządzeń — pozostałe ekrany
 dostają stan po zmianie, a nie polecenie odpytania jeszcze raz.
+
+## budowa/server/internal/core/skutek_materialu_z_biblioteki_test.go
+
+Opis pola assetId w kontrakcie obiecuje w dziewięciu komendach zasób
+z magazynu rdzenia, Design albo Library. Rozwiązywanie identyfikatora miało
+iść przez oba magazyny: repozytorium zasobów designu oraz magazyn plików
+biblioteki, tak żeby narzędzie dokumentu mogło wydobyć tekst z pliku
+biblioteki i zamienić jego format, niezależnie od tego, z którego magazynu
+zasób pochodzi.
+
+Sprawdzian mierzy skutek, nie samą kopertę odpowiedzi: wnosi plik do
+biblioteki, po czym pyta narzędzie dokumentu o jego treść i porównuje ją
+z tym, co naprawdę weszło. Odpowiedź udana z pustym tekstem byłaby tą samą
+szkodą co odmowa.

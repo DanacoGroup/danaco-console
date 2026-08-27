@@ -617,6 +617,63 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   max-width: 44ch;
 }
 
+/* Karta wiodąca — środowisko podane akcentem: tytuł o stopień większy, godło
+   mniejsze (ustępuje tytułowi), bez wstęgi sygnału u góry, bo akcent niesie
+   już sama skala. Rozmieszczenie kolumnowe zostaje w oknie, bo to siatka. */
+.dn-karta-srodowiska--akcent::before { content: none; }
+.dn-karta-srodowiska--akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-2xl); }
+.dn-karta-srodowiska--akcent .dn-karta-srodowiska-godlo {
+  width: var(--dn-od-8);
+  height: var(--dn-od-8);
+}
+
+/* Warstwa tła karty — pole na znak przestrzenny przy prawej krawędzi. Karta
+   trzyma tylko krycie i przejście; CO w tej warstwie stoi, wskazuje okno.
+   W spoczynku znak jest tłem (11%), przy wskazaniu wychodzi na wierzch (50%) —
+   nadal pod pismem, bo `pointer-events` i warstwa go tam trzymają. */
+.dn-karta-tlo {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: grid;
+  place-items: center;
+  z-index: 0;
+  opacity: 0.11;
+  pointer-events: none;
+  container-type: inline-size;
+  transition: opacity var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover > .dn-karta-tlo,
+.dn-karta-srodowiska:focus-within > .dn-karta-tlo { opacity: 0.5; }
+/* Treść karty stoi nad warstwą tła. */
+.dn-karta-srodowiska > :not(.dn-karta-tlo) { position: relative; z-index: 1; }
+
+/* Najechanie na kartę podnosi jej własny opis i motto do pełnej barwy pisma:
+   karta wskazana czyta się w całości, nie tylko tytułem. Reguła stała
+   w arkuszu Centrum dowodzenia — należy do rodziny, nie do okna. */
+.dn-karta-srodowiska-opis,
+.dn-karta-srodowiska-motto {
+  transition: color var(--dn-czas-2) var(--dn-ease);
+}
+.dn-karta-srodowiska:hover .dn-karta-srodowiska-opis,
+.dn-karta-srodowiska:hover .dn-karta-srodowiska-motto,
+.dn-karta-srodowiska:focus-within .dn-karta-srodowiska-opis,
+.dn-karta-srodowiska:focus-within .dn-karta-srodowiska-motto { color: var(--dn-tekst); }
+
+/* Stopka karty — nota maszynowa nad dolną krawędzią, odcięta kreską. Rola
+   powtarzała się w oknach jako `.cd-karta-meta`; czynność dosuwa okno siatką. */
+.dn-karta-stopka {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  margin-top: var(--dn-od-4);
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  /* Stopień 12 px na panelu nie przechodzi 4,5 : 1 na `--dn-tekst-3`. */
+  color: var(--dn-tekst-2);
+}
+
 /* KAFEL KOMPONENTU WŁASNEGO (Centrum dowodzenia, strefa 2) — budowanie, krój bazowy */
 .dn-kafel {
   display: flex;
@@ -648,6 +705,112 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 }
 .dn-kafel-etykieta { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
 .dn-kafel-opis { font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+
+/* Znak bez ramki — kafel modułu podaje ikonę wprost na tle kafla. Medalion
+   z obrysem zostaje tam, gdzie znak zastępuje godło (karta środowiska). */
+.dn-kafel-ikona--bez-ramki {
+  border: 0;
+  background: none;
+  color: var(--dn-tekst);
+}
+
+/* Kafel modułu — nazwa czytana jak nagłówek, nie jak etykieta: stopień wyżej
+   i grubość normalna. Opis o stopień jaśniejszy od pisma, ale nad progiem. */
+.dn-kafel--modul .dn-kafel-etykieta {
+  font-size: var(--dn-fs-md);
+  font-weight: var(--dn-fw-normalna);
+}
+.dn-kafel--modul .dn-kafel-opis { color: var(--dn-tekst-2); }
+
+/* Wiersz — kafel zwarty do wykazu: jedna linia nazwy, druga rodzaju. Ta sama
+   bryła i te same stany co kafel, mniejsza wyściółka i promień. */
+.dn-kafel--wiersz {
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  font-size: var(--dn-fs-sm);
+  transition:
+    background-color var(--dn-czas-1) var(--dn-ease),
+    border-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-kafel--wiersz:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
+.dn-kafel--wiersz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(-1 * var(--dn-wym-fokus));
+}
+.dn-kafel-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dn-kafel-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-opis); }
+/* Znak wiersza — ikona przy nazwie, bez medalionu. Ustępuje pismu o stopień,
+   bo nazywa rodzaj pozycji, a nie ją samą. */
+.dn-kafel-znak {
+  display: grid;
+  place-content: center;
+  flex: none;
+  color: var(--dn-tekst-2);
+}
+.dn-kafel-znak > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+
+/* ==========================================================================
+   GROT WEJŚCIA — znak marki jako czynność „wejdź"
+   --------------------------------------------------------------------------
+   Rodzina stała w arkuszu Centrum dowodzenia jako `.cd-wejdz--grot`
+   i `.cd-grot-marki`, w dwóch skalach i z ośmioma regułami stanów. Grot nie
+   jest ikoną interfejsu — jest znakiem marki, więc nie podlega skali ikon;
+   wysokość bierze żeton `--dn-wym-grot`.
+
+   Ruch: grot przesuwa się o jeden stopień siatki w stronę, w którą prowadzi,
+   a kropka marki zapala się sygnałem. Reakcja idzie zarówno z najechania na
+   sam grot, jak i z najechania na kartę albo kafel, w którym stoi — dlatego
+   stany są wypisane dla rodzica z biblioteki, nie dla klasy okna.
+   ========================================================================== */
+
+.dn-wejdz-grot {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--dn-tekst-2);
+  cursor: pointer;
+}
+.dn-wejdz-grot:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
+  border-radius: var(--dn-r-sm);
+}
+
+.dn-grot-marki {
+  width: auto;
+  height: var(--dn-wym-grot);
+  flex: none;
+  transition:
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease);
+}
+.dn-grot-marki--sm { height: var(--dn-wym-grot-sm); color: var(--dn-tekst-2); }
+/* Kropka marki: na karcie zostaje sygnałem (atrybut `fill` w znaczniku),
+   w grocie zwartym idzie barwą pisma, bo grot jest tam znacznikiem czynności,
+   nie znakiem marki. Reguła ogólna gasiła kropkę na kartach — CSS wygrywa
+   z atrybutem prezentacji. */
+.dn-grot-marki { transition:
+    color var(--dn-czas-2) var(--dn-ease),
+    transform var(--dn-czas-2) var(--dn-ease); }
+.dn-grot-marki--sm .kropka { fill: currentColor; transition: fill var(--dn-czas-2) var(--dn-ease); }
+
+/* Zapalenie grotu — z niego samego, z karty środowiska i z kafla. */
+.dn-wejdz-grot:hover .dn-grot-marki,
+.dn-wejdz-grot:focus-visible .dn-grot-marki,
+.dn-karta-srodowiska:hover .dn-grot-marki,
+.dn-karta-srodowiska:focus-within .dn-grot-marki,
+.dn-kafel:hover .dn-grot-marki,
+.dn-kafel:focus-visible .dn-grot-marki {
+  color: var(--dn-tekst);
+  transform: translateX(var(--dn-od-1));
+}
+.dn-kafel:hover .dn-grot-marki--sm .kropka,
+.dn-kafel:focus-visible .dn-grot-marki--sm .kropka { fill: var(--dn-sygnal); }
 
 /* Miniatura — kafel nieinteraktywny w siatce podglądu. Ta sama bryła co kafel
    wiodący, tylko zwarta i ułożona w kolumnę: znak, nazwa, nota. Nie jest
@@ -1588,6 +1751,14 @@ label.dn-pasek-szukaj:focus-within {
   color: var(--dn-tekst-3);
 }
 .dn-pusty-stan > svg { width: 28px; height: 28px; }
+/* Zwarty — stan pusty wewnątrz siatki, nie na całym płótnie: znak mniejszy,
+   opis o stopień mocniejszy, bo stoi bliżej treści. */
+.dn-pusty-stan--zwarty > svg {
+  width: var(--dn-wym-ikona-xl);
+  height: var(--dn-wym-ikona-xl);
+  color: var(--dn-tekst-2);
+}
+.dn-pusty-stan--zwarty .dn-pusty-stan-opis { color: var(--dn-tekst-2); }
 .dn-pusty-stan-tytul {
   font-family: var(--dn-ff-naglowek);
   font-size: var(--dn-fs-lg);
@@ -1721,6 +1892,22 @@ label.dn-pasek-szukaj:focus-within {
 .dn-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; }
 /* Znak w barwie sygnalu — podpowiedz, wskazanie, znacznik pierwszego wejscia. */
 .dn-ik--sygnal { color: var(--dn-sygnal); }
+/* Cichy — przycisk ikonowy, który czeka: widoczny, ale ustępujący, dopóki
+   nie najedzie się na jego kartę albo na niego samego. Okna malowały to
+   własnymi regułami po jednej na każde miejsce użycia. */
+.dn-btn-ikona--cichy { color: var(--dn-tekst-2); }
+.dn-btn-ikona--cichy:hover,
+.dn-btn-ikona--cichy:focus-visible { color: var(--dn-tekst); }
+
+/* Czynność ujawniana najechaniem — stoi w dokumencie zawsze, widoczna staje się
+   przy najechaniu na swój wiersz albo przy wejściu w niego klawiaturą. Wzorzec
+   powtarzał się w oknach po jednej regule na każde miejsce użycia. */
+.dn-na-najechanie { opacity: 0; transition: opacity var(--dn-czas-1) var(--dn-ease); }
+:hover > .dn-na-najechanie,
+:focus-within > .dn-na-najechanie,
+.dn-na-najechanie:focus-within { opacity: 1; }
+:hover > .dn-btn-ikona--cichy,
+:focus-within > .dn-btn-ikona--cichy { color: var(--dn-tekst); }
 
 /* Wiersz menu z czynnością dodatkową: pozycja i jej zamknięcie stoją obok
    siebie jako rodzeństwo — przycisk w przycisku jest niepoprawnym dokumentem. */

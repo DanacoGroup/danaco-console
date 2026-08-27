@@ -1,43 +1,23 @@
 /* Powody: 01-dokumentacja-md/11-uzasadnienia-okien.md */
 
-.cd-strona .cd-kafel-tresc .dn-kafel-opis,
-.cd-strona .cd-wlasny-rodzaj { color: var(--dn-tekst-opis); }
-
 .cd-siatka-srodowisk { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
 .cd-karta-akcent { min-height: 0; display: flex; flex-direction: column; padding: var(--dn-od-4); }
 
-.cd-karta-akcent .dn-karta-srodowiska-tytul { font-size: var(--dn-fs-2xl); }
-
-.cd-karta-akcent .dn-karta-srodowiska-godlo { width: var(--dn-od-8); height: var(--dn-od-8); }
-
 .cd-karta-akcent .cd-metryka-czlon { display: block; }
 
-.cd-karta-akcent::before { content: none; }
+.cd-karta-akcent > .cd-karta-godlo svg { width: 100%; height: 100%; }
 
-.cd-karta-akcent > .cd-karta-meta { margin-top: auto; }
-
-.cd-karta-godlo svg { width: 100%; height: 100%; }
-
-.cd-karta-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-2);
-  margin-top: var(--dn-od-4);
-  padding-top: var(--dn-od-3);
-  border-top: 1px solid var(--dn-obrys-subtelny);
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
-}
+/* Stopka karty wiodącej dosuwa się do dna kafla — sama karta jest kolumną. */
+.dn-karta-srodowiska--akcent > .dn-karta-stopka { margin-top: auto; }
 
 .cd-karta-meta .cd-wejdz { margin-left: auto; }
 
+/* Grot wejścia na karcie stoi w prawym dolnym narożniku, odsunięty od krawędzi
+   o jeden stopień siatki. Rozmieszczenie karty, nie własność grotu. */
+.cd-strona .dn-wejdz-grot { margin: 0 var(--dn-od-2) var(--dn-od-2) auto; }
+
 .cd-karta-menu { position: absolute; top: var(--dn-od-3); right: var(--dn-od-3); z-index: 2; }
-
-.cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
-
-.dn-karta-srodowiska:hover .cd-karta-menu > .dn-btn-ikona { color: var(--dn-tekst); }
 
 .cd-siatka-kafli { display: grid; gap: var(--dn-od-3); grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
@@ -58,52 +38,9 @@
 
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 
-.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-md); }
-
-.cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
-
-.cd-strona .cd-kafel-tresc .dn-kafel-etykieta { font-weight: var(--dn-fw-normalna); }
-
 .cd-kafel-blok { display: flex; }
 
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
-
-.cd-grot-marki {
-  width: auto;
-  flex: none;
-  transition: color var(--dn-czas-2) var(--dn-ease),
-              transform var(--dn-czas-2) var(--dn-ease);
-}
-
-.cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
-.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki,
-.cd-strona .cd-kafel:hover .cd-grot-marki,
-.cd-strona .cd-kafel:focus-visible .cd-grot-marki {
-  transform: translateX(var(--dn-od-1));
-}
-
-.cd-strona .cd-wejdz--grot {
-  display: flex;
-  align-items: center;
-    margin: 0 var(--dn-od-2) var(--dn-od-2) auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--dn-tekst-2);
-  cursor: pointer;
-  min-width: 0;
-}
-
-.cd-strona .cd-wejdz--grot > .cd-grot-marki { height: var(--cd-grot-srodowisko); }
-
-.cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
-.cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
-
-.cd-strona .cd-wejdz--grot:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: var(--dn-wym-fokus-odsuniecie);
-  border-radius: var(--dn-r-sm);
-}
 
 .cd-kafel-grot {
   display: flex;
@@ -111,19 +48,6 @@
   margin-left: auto;
   flex: none;
 }
-
-.cd-strona .cd-kafel-grot .cd-grot-marki {
-  height: var(--cd-grot-modul);
-  color: var(--dn-tekst-3);
-}
-
-.cd-strona .cd-kafel-grot .kropka { fill: currentColor; transition: fill var(--dn-czas-2) var(--dn-ease); }
-
-.cd-strona .cd-kafel:hover .cd-kafel-grot .cd-grot-marki,
-.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .cd-grot-marki { color: var(--dn-tekst); }
-
-.cd-strona .cd-kafel:hover .cd-kafel-grot .kropka,
-.cd-strona .cd-kafel:focus-visible .cd-kafel-grot .kropka { fill: var(--dn-sygnal); }
 
 .cd-dodaj-pas { display: flex; }
 
@@ -133,47 +57,11 @@
 
 .cd-sekcja-menu { align-self: center; }
 
-.cd-sekcja-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
-
 .cd-siatka-wlasnych { display: grid; gap: var(--dn-od-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 .cd-wlasny { position: relative; display: flex; }
 
-.cd-wlasny-poz {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: var(--dn-od-2) var(--dn-od-3);
-  padding-right: calc(var(--dn-od-3) + var(--dn-wym-ikonowy));
-  border: 1px solid var(--dn-obrys);
-  border-radius: var(--dn-r-md);
-  background: var(--dn-powierzchnia);
-  color: var(--dn-tekst);
-  font-family: var(--dn-ff-bazowa);
-  font-size: var(--dn-fs-sm);
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease);
-}
-
-.cd-wlasny-poz:hover { border-color: var(--dn-obrys-mocny); background: var(--dn-panel); }
-
-.cd-wlasny-poz:focus-visible {
-  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
-  outline-offset: calc(-1 * var(--dn-wym-fokus));
-}
-
-.cd-wlasny-znak { display: grid; place-content: center; flex: none; color: var(--dn-tekst-2); }
-
-.cd-wlasny-znak svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
-
 .cd-wlasny-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
-
-.cd-wlasny-nazwa { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.cd-wlasny-rodzaj { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
 
 .cd-wlasny-menu {
   position: absolute;
@@ -182,24 +70,13 @@
   right: var(--dn-od-2);
   display: flex;
   align-items: center;
-  opacity: 0;
-  transition: opacity var(--dn-czas-1) var(--dn-ease);
 }
-
-.cd-wlasny:hover > .cd-wlasny-menu,
-.cd-wlasny:focus-within > .cd-wlasny-menu { opacity: 1; }
-
-.cd-wlasny-menu > .dn-btn-ikona { color: var(--dn-tekst-2); }
 
 .cd-wlasne-pusto { display: none; }
 
 .cd-siatka-wlasnych:empty { display: none; }
 
 .cd-siatka-wlasnych:empty + .cd-wlasne-pusto { display: flex; }
-
-.cd-wlasne-pusto > svg { width: var(--dn-wym-ikona-xl); height: var(--dn-wym-ikona-xl); color: var(--dn-tekst-3); }
-
-.cd-wlasne-pusto .dn-pusty-stan-opis { color: var(--dn-tekst-2); }
 
 @container plotno (max-width: 820px) {
   .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -209,12 +86,6 @@
   .cd-siatka-srodowisk, .cd-siatka-kafli, .cd-siatka-wlasnych { grid-template-columns: minmax(0, 1fr); }
 }
 
-.cd-strona .cd-kafel .dn-kafel-ikona {
-  border: 0;
-  background: none;
-  color: var(--dn-tekst);
-}
-
 .cd-strona .cd-kafel .dn-kafel-ikona svg {
   width: var(--dn-od-8);
   height: var(--dn-od-8);
@@ -222,34 +93,8 @@
 
 .cd-strona .cd-siatka-srodowisk > .dn-karta-srodowiska { overflow: hidden; }
 
-.cd-karta-anim {
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 40%;
-  display: grid;
-  place-items: center;
-  z-index: 0;
-    opacity: 0.11;
-  pointer-events: none;
-  container-type: inline-size;
-}
+/* Pole znaku zajmuje prawe 40% karty, a znak w nim 82% szerokości pola —
+   to proporcja tej karty, nie własność warstwy. */
+.cd-karta-anim { width: 40%; }
 
 .cd-karta-anim .d3-anim { --d3-size: 82cqw; }
-
-.cd-karta-akcent > :not(.cd-karta-anim) { position: relative; z-index: 1; }
-
-.cd-strona .dn-karta-srodowiska:hover .cd-karta-anim,
-.cd-strona .dn-karta-srodowiska:focus-within .cd-karta-anim {
-  opacity: 0.5;
-}
-
-.cd-strona .dn-karta-srodowiska:hover .dn-karta-srodowiska-opis,
-.cd-strona .dn-karta-srodowiska:hover .dn-karta-srodowiska-motto,
-.cd-strona .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-opis,
-.cd-strona .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-motto {
-  color: var(--dn-tekst);
-}
-
-.cd-strona .cd-karta-anim,
-.cd-strona .dn-karta-srodowiska-opis,
-.cd-strona .dn-karta-srodowiska-motto { transition: opacity var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }

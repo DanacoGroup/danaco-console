@@ -1,22 +1,6 @@
 // Odpowiedzialność pliku: wysyłka — jedyna czynność rdzenia, której skutek
-// wychodzi poza maszynę Operatora i której nie da się cofnąć.
-//
-// Pakiet niczego nie pyta o zgodę: wysyła, gdy dostanie polecenie, i zostawia
-// ślad w dwóch miejscach, bo każde odpowiada na inne pytanie:
-//  1. kopia w folderze `Sent` skrzynki Operatora — odpowiada na pytanie „co
-//     wyszło z mojej skrzynki". Operator widzi ją w swoim kliencie poczty,
-//     obok listów wysłanych własnoręcznie.
-//  2. wiersz `list_wyslany` w bazie rdzenia — odpowiada na pytanie „co wysłała
-//     platforma i czy się udało". Zapisuje go adapter rdzenia
-//     (`adapter_modul_poczta_wysylka.go`), także dla wysyłki nieudanej.
-//
-// Kopia w `Sent` idzie po udanym nadaniu, nigdy przed. List leżący w „wysłane",
-// który nigdy nie wyszedł, byłby dowodem czynności, której nie było. Odwrotnie —
-// nieudane odłożenie kopii po udanym nadaniu nie unieważnia nadania i nie jest
-// odmową komendy: listu i tak nie da się cofnąć, więc odpowiedź musi mówić, że
-// wyszedł.
-//
-// SMTP jedzie biblioteką standardową — uzasadnienie w nagłówku `poczta.go`.
+// wychodzi poza maszynę Operatora i której nie da się cofnąć. Kopia w `Sent`
+// idzie po udanym nadaniu, nigdy przed.
 package poczta
 
 import (
@@ -36,10 +20,8 @@ import (
 const limitRozmowySMTP = 60 * time.Second
 
 // Wyslij nadaje list i oddaje jego identyfikator wraz z chwilą nadania.
-//
-// Identyfikator pochodzi z nagłówka `Message-ID` złożonego dokumentu, a nie jest
-// wymyślony po fakcie: to jedyna wartość, po której da się ten list rozpoznać
-// u odbiorcy i w folderze wysłanych.
+// Identyfikator pochodzi z nagłówka `Message-ID` złożonego dokumentu, nie
+// jest wymyślony po fakcie.
 func (k *Klient) Wyslij(w Wychodzacy) (string, time.Time, error) {
 	adresaci := append(append([]string{}, oczyszczone(w.Do)...), oczyszczone(w.Kopia)...)
 	if len(adresaci) == 0 {
@@ -61,8 +43,7 @@ func (k *Klient) Wyslij(w Wychodzacy) (string, time.Time, error) {
 	}
 	nadano := time.Now()
 
-	// Kopia do „wysłane" — po nadaniu, patrz nagłówek pliku. Znacznik \Seen,
-	// bo listu, który sam wysłałeś, nie czyta się jako nowego.
+	// Kopia do wysłanych idzie po nadaniu, ze znacznikiem Seen.
 	if folder, err := k.odnajdzFolder(imap.MailboxAttrSent, FolderWyslanych); err == nil {
 		_, _ = k.dolozDoFolderu(folder, dokument, []imap.Flag{imap.FlagSeen})
 	}
@@ -70,15 +51,11 @@ func (k *Klient) Wyslij(w Wychodzacy) (string, time.Time, error) {
 }
 
 // nadaj prowadzi całą rozmowę SMTP: połączenie, STARTTLS, uwierzytelnienie,
-// koperta i treść.
-//
-// Uwierzytelnienie jest warunkowe. Serwer wysyłkowy dostawcy zawsze go żąda, ale
-// serwer stojący na tej samej maszynie (albo przekaźnik w sieci Operatora)
-// często nie ogłasza AUTH wcale. Wpychanie mu wtedy poświadczenia kończy się
-// odmową serwera przy komendzie, która bez AUTH przeszłaby.
+// koperta i treść. Uwierzytelnienie jest warunkowe, bo nie każdy serwer
+// ogłasza AUTH.
 func (k *Klient) nadaj(adresaci []string, dokument []byte) error {
-	// net.JoinHostPort, a nie sklejenie z dwukropkiem: adres IPv6 sam niesie
-	// dwukropki, więc "::1:587" byłoby adresem, którego nie da się rozebrać.
+	// net.JoinHostPort, a nie sklejenie z dwukropkiem, bo adres IPv6 sam
+	// niesie dwukropki.
 	adres := net.JoinHostPort(k.nastawy.HostWysylki,
 		strconv.Itoa(port(k.nastawy.PortWysylki, k.nastawy.SzyfrujWysylke, 465, 587)))
 	ustawienia := &tls.Config{
@@ -107,9 +84,7 @@ func (k *Klient) nadaj(adresaci []string, dokument []byte) error {
 	}
 	defer func() { _ = rozmowa.Close() }()
 
-	// STARTTLS podnosi połączenie nieszyfrowane do szyfrowanego. Robimy to
-	// tylko wtedy, gdy serwer je ogłasza — wymuszanie go na serwerze, który go
-	// nie ma, zerwałoby rozmowę zamiast zabezpieczyć ją mocniej.
+	// STARTTLS podnosi połączenie do szyfrowanego tylko, gdy serwer je ogłasza.
 	if !k.nastawy.SzyfrujWysylke {
 		if jest, _ := rozmowa.Extension("STARTTLS"); jest {
 			if err := rozmowa.StartTLS(ustawienia); err != nil {
@@ -139,20 +114,15 @@ func (k *Klient) nadaj(adresaci []string, dokument []byte) error {
 	if _, err := strumien.Write(dokument); err != nil {
 		return fmt.Errorf("serwer poczty wychodzącej %s przerwał przyjmowanie treści: %w", adres, err)
 	}
-	// Tu list wychodzi w świat: domknięcie strumienia jest kropką po `DATA`,
-	// po której serwer bierze list na siebie — od tej chwili nie da się go cofnąć.
+	// Tu list wychodzi w świat: domknięcie strumienia jest kropką po `DATA`.
 	if err := strumien.Close(); err != nil {
 		return fmt.Errorf("serwer poczty wychodzącej %s nie potwierdził przyjęcia listu: %w", adres, err)
 	}
 	return rozmowa.Quit()
 }
 
-// sposobUwierzytelnienia wybiera mechanizm SASL zgodny z tym, co ogłosił serwer.
-//
-// CRAM-MD5 pierwszy, PLAIN drugi — bo CRAM nie posyła hasła przez łącze wcale,
-// a PLAIN posyła je wprost i biblioteka standardowa dopuszcza go wyłącznie po
-// TLS-ie (albo na pętli zwrotnej). Dzięki temu hasło Operatora nie wyjdzie
-// nieszyfrowanym łączem.
+// sposobUwierzytelnienia wybiera mechanizm SASL zgodny z tym, co ogłosił
+// serwer. CRAM-MD5 pierwszy, PLAIN drugi, bo CRAM nie posyła hasła wcale.
 func sposobUwierzytelnienia(k *Klient, mechanizmy string) smtp.Auth {
 	uzytkownik := k.nastawy.Uzytkownik
 	if strings.TrimSpace(uzytkownik) == "" {
@@ -179,7 +149,8 @@ func identyfikatorDokumentu(dokument []byte) string {
 	return ""
 }
 
-// oczyszczone odsiewa adresy puste — pusty odbiorca zerwałby komendę RCPT.
+// oczyszczone odsiewa adresy puste z wykazu, tak dla „do", jak dla „kopia" —
+// pusty odbiorca zerwałby komendę RCPT serwera poczty wychodzącej w rozmowie.
 func oczyszczone(lista []string) []string {
 	wynik := make([]string, 0, len(lista))
 	for _, a := range lista {

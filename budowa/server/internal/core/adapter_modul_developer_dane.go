@@ -1,26 +1,7 @@
-// Odpowiedzialność pliku: pięć komend zakładki Data Console w Dev Tools —
-// `developer.data.connection.set`, `developer.data.connection.list`,
-// `developer.data.schema.get`, `developer.data.query.run`
-// i `developer.data.migration.run`.
-//
-// ── Sterowniki wkompilowane, nie klienty wiersza poleceń ────────────────────
-// Rodzina stoi na `database/sql` i trzech sterownikach wkompilowanych w rdzeń:
-// `pgx` (PostgreSQL), `go-sql-driver/mysql` (MySQL) i `modernc.org/sqlite`
-// (SQLite, ten sam, na którym stoi baza produktu). Konsola SQL otwiera się więc
-// wszędzie tam, gdzie stoi rdzeń, i nie zależy od tego, czy ktoś doinstalował
-// `psql` albo `mysql`.
-//
-// ── Hasło nie leży w tej tabeli ─────────────────────────────────────────────
-// Wiersz połączenia opisuje, DO CZEGO się łączyć: silnik, host, port, bazę
-// i użytkownika. Hasło stoi w sejfie pod odwołaniem z pola `credentialRef` —
-// tak samo jak klucze dostawców modeli. Kopia sekretu w drugim miejscu, którego
-// nikt nie rotuje, jest usterką bezpieczeństwa, a nie wygodą.
-//
-// ── Tylko do odczytu znaczy odmowę w rdzeniu ────────────────────────────────
-// Połączenie oznaczone jako tylko do odczytu odrzuca polecenie zmieniające dane
-// ZANIM cokolwiek wyjdzie do silnika. Poleganie na uprawnieniach po stronie bazy
-// byłoby poleganiem na nastawie, której Operator z tego okna nie widzi; konsola
-// SQL nad produkcją bez tej bramy jest jedną nieuwagą od szkody.
+// Rodzina obsługuje pięć komend zakładki Data Console: opis połączenia, wykaz
+// połączeń, schemat, zapytanie SQL i migrację. Sterowniki PostgreSQL, MySQL
+// i SQLite są wkompilowane w rdzeń. Hasło nie leży w wierszu połączenia,
+// wyłącznie odwołanie do sejfu.
 package core
 
 import (
@@ -45,9 +26,11 @@ import (
 )
 
 const (
-	// przedrostekPolaczeniaDanych znakuje identyfikator połączenia bazodanowego.
+	// przedrostekPolaczeniaDanych znakuje identyfikator połączenia bazodanowego
+	// w dzienniku zdarzeń rdzenia.
 	przedrostekPolaczeniaDanych = "conn-"
-	// czasZapytaniaDanych jest granicą jednego polecenia SQL.
+	// czasZapytaniaDanych jest granicą czasową jednego polecenia SQL wysyłanego
+	// do silnika bazy danych połączenia.
 	czasZapytaniaDanych = 60 * time.Second
 	// najwiecejWierszyWyniku jest granicą siatki wyników. Konsola pokazuje
 	// próbkę, a nie eksport: milion wierszy wciągniętych do pamięci rdzenia
@@ -55,7 +38,8 @@ const (
 	najwiecejWierszyWyniku = 1000
 )
 
-// UstawPolaczenieDanych obsługuje `developer.data.connection.set`.
+// UstawPolaczenieDanych obsługuje `developer.data.connection.set`, zapisując
+// albo uaktualniając opis połączenia.
 func (a *adapterDevelopera) UstawPolaczenieDanych(ctx context.Context,
 	z shared.DeveloperDataConnectionSetRequest) (shared.DeveloperDataConnectionSetResponse, error) {
 
@@ -81,9 +65,8 @@ func (a *adapterDevelopera) UstawPolaczenieDanych(ctx context.Context,
 		return shared.DeveloperDataConnectionSetResponse{}, bladZadaniaDevelopera(
 			"nieznany silnik bazy danych: " + string(z.Engine))
 	}
-	// Baza SQLite jest PLIKIEM, więc jej wskazanie przechodzi przez tę samą
-	// bramę obszaru, co każdy inny plik modułu. Bez tego sprawdzenia opis
-	// połączenia byłby drogą do odczytu dowolnego pliku maszyny.
+	// Baza SQLite jest plikiem, więc jej wskazanie przechodzi przez bramę
+	// obszaru jak każdy inny plik.
 	if z.Engine == shared.DataEngineSqlite {
 		sciezka, err := sciezkaWObszarze(a.korzenieOkna(okno), baza, plikIstnieje)
 		if err != nil {
@@ -126,7 +109,8 @@ func (a *adapterDevelopera) UstawPolaczenieDanych(ctx context.Context,
 	}, nil
 }
 
-// WykazPolaczenDanych obsługuje `developer.data.connection.list`.
+// WykazPolaczenDanych obsługuje `developer.data.connection.list`, oddając
+// opisy połączeń bez haseł okna.
 func (a *adapterDevelopera) WykazPolaczenDanych(ctx context.Context,
 	z shared.DeveloperDataConnectionListRequest) (shared.DeveloperDataConnectionListResponse, error) {
 
@@ -170,7 +154,8 @@ func polaczenieKontraktu(wiersz dane.PolaczenieDanych) shared.DataConnection {
 	return opis
 }
 
-// znanySilnikDanych mówi, czy rdzeń ma wkompilowany sterownik tego silnika.
+// znanySilnikDanych mówi, czy rdzeń ma wkompilowany sterownik silnika
+// wskazanego w opisie tego połączenia.
 func znanySilnikDanych(silnik shared.DataEngine) bool {
 	switch silnik {
 	case shared.DataEnginePostgres, shared.DataEngineMysql, shared.DataEngineSqlite:
@@ -180,12 +165,9 @@ func znanySilnikDanych(silnik shared.DataEngine) bool {
 	}
 }
 
-// SchematDanych obsługuje `developer.data.schema.get`.
-//
-// Drzewo schematu składa się z węzłów o ścieżkach `baza/schemat/tabela/kolumna`.
-// Głębokość zawęża odczyt: przeglądarka rozwija drzewo gałąź po gałęzi, a wykaz
-// kolumn wszystkich tabel dużej bazy to dziesiątki tysięcy wierszy, których
-// nikt naraz nie ogląda.
+// SchematDanych obsługuje `developer.data.schema.get`. Drzewo schematu składa
+// się z węzłów o ścieżkach baza/schemat/tabela/kolumna. Głębokość zawęża
+// odczyt, bo wykaz kolumn wszystkich tabel dużej bazy liczy tysiące wierszy.
 func (a *adapterDevelopera) SchematDanych(ctx context.Context,
 	z shared.DeveloperDataSchemaGetRequest) (shared.DeveloperDataSchemaGetResponse, error) {
 
@@ -262,10 +244,8 @@ func wezlySchematu(ctx context.Context, baza *sql.DB, polaczenie dane.Polaczenie
 }
 
 // zapytanieOSchemat składa odczyt katalogu systemowego wskazanego silnika.
-//
-// Wskazanie tabeli wchodzi PARAMETREM, nie sklejaniem tekstu: nazwa tabeli
-// przychodzi od klienta, a nazwa wklejona do treści polecenia jest wstrzyknięciem
-// SQL niezależnie od tego, jak niewinnie wygląda.
+// Wskazanie tabeli wchodzi parametrem, nie sklejaniem tekstu, ponieważ nazwa
+// wklejona do treści polecenia jest wstrzyknięciem SQL.
 func zapytanieOSchemat(silnik shared.DataEngine, wskazanie string) (string, []any) {
 	switch silnik {
 	case shared.DataEnginePostgres:
@@ -281,9 +261,8 @@ func zapytanieOSchemat(silnik shared.DataEngine, wskazanie string) (string, []an
 		          AND (? = '' OR table_name = ?)
 		        ORDER BY table_name, ordinal_position`, []any{wskazanie, wskazanie}
 	default:
-		// SQLite nie ma `information_schema`, lecz ma tabelę `pragma_table_info`
-		// dającą się złączyć z wykazem obiektów — to jest ten sam odczyt
-		// wyrażony środkami tego silnika.
+		// SQLite nie ma information_schema, lecz tabelę pragma_table_info
+		// dającą ten odczyt środkami silnika.
 		return `SELECT m.name, p.name, p.type,
 		               CASE WHEN p."notnull" = 0 THEN 'YES' ELSE 'NO' END
 		        FROM sqlite_master m
@@ -294,7 +273,8 @@ func zapytanieOSchemat(silnik shared.DataEngine, wskazanie string) (string, []an
 	}
 }
 
-// WykonajZapytanieDanych obsługuje `developer.data.query.run`.
+// WykonajZapytanieDanych obsługuje `developer.data.query.run`, odmawiając
+// poleceń zmieniających na połączeniu tylko do odczytu.
 func (a *adapterDevelopera) WykonajZapytanieDanych(ctx context.Context,
 	z shared.DeveloperDataQueryRunRequest) (shared.DeveloperDataQueryRunResponse, error) {
 
@@ -340,11 +320,9 @@ func (a *adapterDevelopera) WykonajZapytanieDanych(ctx context.Context,
 	return shared.DeveloperDataQueryRunResponse{Result: wynik}, nil
 }
 
-// poleceniZmieniajace rozpoznaje polecenie zmieniające dane albo schemat.
-//
-// Rozpoznanie idzie po pierwszym słowie, bo to ono rozstrzyga o rodzaju
-// polecenia w każdym z trzech silników. Słowo nieznane traktujemy jak
-// zmieniające: brama ma się mylić w stronę odmowy, a nie w stronę szkody.
+// poleceniZmieniajace rozpoznaje polecenie zmieniające dane albo schemat po
+// pierwszym słowie. Słowo nieznane traktuje się jak zmieniające, bo brama ma
+// się mylić w stronę odmowy, nie w stronę szkody.
 func poleceniZmieniajace(polecenie string) bool {
 	pola := strings.Fields(strings.ToUpper(polecenie))
 	if len(pola) == 0 {
@@ -358,7 +336,8 @@ func poleceniZmieniajace(polecenie string) bool {
 	}
 }
 
-// przedrostekPlanu dobiera polecenie planu zapytania właściwe silnikowi.
+// przedrostekPlanu dobiera polecenie planu zapytania właściwe silnikowi
+// bazy danych tego połączenia klienta.
 func przedrostekPlanu(silnik shared.DataEngine) string {
 	switch silnik {
 	case shared.DataEnginePostgres:
@@ -371,11 +350,8 @@ func przedrostekPlanu(silnik shared.DataEngine) string {
 }
 
 // wykonajPolecenieDanych wykonuje polecenie i składa wynik kontraktu.
-//
-// Polecenie zmieniające idzie w transakcji, gdy żądanie o to prosi. Transakcja
-// jest tu wyborem wołającego, a nie domyślnym zachowaniem: konsola SQL bywa
-// używana do poleceń, których silnik w transakcji nie przyjmie (część poleceń
-// DDL), a wymuszona transakcja odmawiałaby ich bez powodu.
+// Polecenie zmieniające idzie w transakcji, gdy żądanie o to prosi, ponieważ
+// część poleceń DDL nie działa w wymuszonej transakcji.
 func wykonajPolecenieDanych(ctx context.Context, baza *sql.DB, polecenie string,
 	zmieniajace, wTransakcji bool, limit int) (shared.DataQueryResult, error) {
 
@@ -410,7 +386,8 @@ func wykonajPolecenieDanych(ctx context.Context, baza *sql.DB, polecenie string,
 	return wynikOdczytu(wiersze, limit)
 }
 
-// wynikPolecenia składa odpowiedź dla polecenia zmieniającego.
+// wynikPolecenia składa odpowiedź kontraktu dla polecenia zmieniającego dane
+// silnika bazy danych połączenia.
 func wynikPolecenia(wynik sql.Result) shared.DataQueryResult {
 	odpowiedz := shared.DataQueryResult{
 		Columns: []string{},
@@ -423,12 +400,9 @@ func wynikPolecenia(wynik sql.Result) shared.DataQueryResult {
 	return odpowiedz
 }
 
-// wynikOdczytu składa siatkę wyników wraz z informacją o przycięciu.
-//
-// Wartości idą do JSON jako tekst albo `null`. Rzutowanie ich na liczby
-// i wartości logiczne po stronie rdzenia gubiłoby precyzję typów, których
-// JavaScript i tak nie ma (`numeric` Postgresa, `bigint` MySQL-a) — a siatka
-// pokazuje wartość, nie liczy na niej.
+// wynikOdczytu składa siatkę wyników wraz z informacją o przycięciu. Wartości
+// idą do JSON jako tekst, ponieważ rzutowanie ich na liczby po stronie rdzenia
+// gubiłoby precyzję typów silnika.
 func wynikOdczytu(wiersze *sql.Rows, limit int) (shared.DataQueryResult, error) {
 	kolumny, err := wiersze.Columns()
 	if err != nil {
@@ -472,7 +446,8 @@ func wynikOdczytu(wiersze *sql.Rows, limit int) (shared.DataQueryResult, error) 
 	}, nil
 }
 
-// wartoscKomorki sprowadza wartość silnika do postaci nadającej się do JSON.
+// wartoscKomorki sprowadza wartość zwróconą przez silnik bazy danych do
+// postaci nadającej się do zapisu w JSON.
 func wartoscKomorki(komorka any) any {
 	switch wartosc := komorka.(type) {
 	case nil:
@@ -488,12 +463,9 @@ func wartoscKomorki(komorka any) any {
 	}
 }
 
-// UruchomMigracjeDanych obsługuje `developer.data.migration.run`.
-//
-// Migracje są plikami `.sql` repozytorium, a nie bytami bazy produktu. Rdzeń
-// prowadzi je własnym rejestrem (`danaco_migracja`) w bazie docelowej: bez
-// rejestru „uruchom migracje” znaczyłoby „uruchom je wszystkie od nowa”, a to
-// przy drugim wywołaniu zawodzi na pierwszej tabeli, która już istnieje.
+// UruchomMigracjeDanych obsługuje `developer.data.migration.run`. Migracje są
+// plikami repozytorium, a rdzeń prowadzi własny rejestr zastosowanych kroków
+// w bazie docelowej, by uruchomienie nie powtarzało już zastosowanych.
 func (a *adapterDevelopera) UruchomMigracjeDanych(ctx context.Context,
 	z shared.DeveloperDataMigrationRunRequest) (shared.DeveloperDataMigrationRunResponse, error) {
 
@@ -577,7 +549,8 @@ func (a *adapterDevelopera) UruchomMigracjeDanych(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// krokiMigracji zbiera pliki `.sql` katalogu migracji repozytorium.
+// krokiMigracji zbiera pliki migracji z katalogu repozytorium wskazanego
+// w żądaniu albo katalogu domyślnego migracji.
 func (a *adapterDevelopera) krokiMigracji(oknoKod string, cel *string) ([]string, string, error) {
 	wskazanie := strings.TrimSpace(tekstWskazaniaDevelopera(cel))
 	if wskazanie == "" {
@@ -607,9 +580,8 @@ func (a *adapterDevelopera) krokiMigracji(oknoKod string, cel *string) ([]string
 		return nil, "", bladZasobuDevelopera(
 			"katalog " + wskazanie + " nie zawiera ani jednego pliku .sql")
 	}
-	// Kolejność jest alfabetyczna, bo taką narzucają nazwy z numerem wiodącym.
-	// Kolejność katalogu systemu plików bywa dowolna, a migracje wykonane
-	// w dowolnej kolejności nie są migracjami.
+	// Kolejność jest alfabetyczna, bo taką narzucają nazwy z numerem wiodącym,
+	// nie porządek katalogu.
 	sort.Strings(kroki)
 	return kroki, katalog, nil
 }
@@ -631,8 +603,8 @@ func zastosowaneMigracjeDocelowe(ctx context.Context, baza *sql.DB,
 	}
 	wiersze, err := baza.QueryContext(ctx, `SELECT nazwa FROM `+nazwaRejestruMigracjiDocelowej)
 	if err != nil {
-		// Brak rejestru przy próbie znaczy bazę, w której nic jeszcze nie
-		// zastosowano — to stan zwykły, nie usterka.
+		// Brak rejestru przy próbie znaczy bazę bez żadnej zastosowanej
+		// migracji — stan zwykły, nie usterka.
 		if proba {
 			return map[string]bool{}, nil
 		}
@@ -681,12 +653,8 @@ func znakParametru(baza *sql.DB) string {
 	return "?"
 }
 
-// otworzPolaczenieDanych otwiera połączenie opisane wierszem bazy.
-//
-// Połączenie otwiera się na czas jednej komendy i zamyka po niej. Pula trzymana
-// między komendami wymagałaby własnego rejestru, własnego zamykania przy
-// zniknięciu okna i własnego sprzątania po restarcie rdzenia — trzech
-// mechanizmów, których jedno zapytanie konsoli SQL nie potrzebuje.
+// otworzPolaczenieDanych otwiera połączenie opisane wierszem bazy na czas
+// jednej komendy i zamyka je po niej, bez trzymania puli między komendami.
 func (a *adapterDevelopera) otworzPolaczenieDanych(ctx context.Context,
 	kod string) (dane.PolaczenieDanych, *sql.DB, error) {
 
@@ -718,8 +686,8 @@ func (a *adapterDevelopera) otworzPolaczenieDanych(ctx context.Context,
 		return dane.PolaczenieDanych{}, nil, bladWykonaniaDevelopera(
 			"nie można otworzyć połączenia " + polaczenie.Nazwa + ": " + err.Error())
 	}
-	// `sql.Open` niczego jeszcze nie łączy — dopiero zapytanie. Sprawdzamy więc
-	// łączność od razu, żeby odmowa niosła zdanie o połączeniu, a nie o zapytaniu.
+	// sql.Open niczego jeszcze nie łączy; sprawdzenie łączności od razu daje
+	// odmowę o połączeniu.
 	kontekst, przerwij := context.WithTimeout(ctx, 10*time.Second)
 	defer przerwij()
 	if err := baza.PingContext(kontekst); err != nil {
@@ -731,10 +699,8 @@ func (a *adapterDevelopera) otworzPolaczenieDanych(ctx context.Context,
 }
 
 // adresPolaczeniaDanych składa odwołanie sterownika z opisu połączenia.
-//
-// Hasło dołącza się z sejfu pod odwołaniem `Poswiadczenie`. Połączenie bez
-// odwołania jedzie bez hasła — bywa to poprawne (SQLite, uwierzytelnienie
-// gniazdem systemowym) i nie ma powodu odmawiać z góry.
+// Hasło dołącza się z sejfu pod odwołaniem, a połączenie bez odwołania jedzie
+// bez hasła, co bywa poprawne przy SQLite.
 func adresPolaczeniaDanych(polaczenie dane.PolaczenieDanych) (string, string, error) {
 	haslo := ""
 	if polaczenie.Poswiadczenie != nil && strings.TrimSpace(*polaczenie.Poswiadczenie) != "" {
@@ -784,7 +750,8 @@ func adresPolaczeniaDanych(polaczenie dane.PolaczenieDanych) (string, string, er
 	}
 }
 
-// uwierzytelnienieAdresu składa część `użytkownik:hasło@` odwołania.
+// uwierzytelnienieAdresu składa część odwołania z użytkownikiem i hasłem
+// dla adresu połączenia z bazą danych.
 func uwierzytelnienieAdresu(uzytkownik, haslo string) string {
 	if uzytkownik == "" {
 		return ""

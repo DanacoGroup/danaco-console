@@ -2626,3 +2626,14 @@ przejdzie, a jeżeli nie — odmówi rdzeń.
 
 ## budowa/klient/src/polaczenie/zrodlo-zdarzen.ts
 Zamiast importu kanału obserwator opisuje dokładnie to, czego potrzebuje: subskrypcję zdarzenia po nazwie z kontraktu i podgląd całego ruchu. Kanał spełnia ten opis kształtem, bez dodatkowej deklaracji — jeden byt odpowiada jednemu modułowi.
+
+## budowa/klient-poprzedni/src/moduly/studio/agenci-obsada.ts
+Strona okna pętli pokazuje dwa wykazy o tej samej pracy kilku wykonawców nad jednym dokumentem:
+obsadę, czyli który wykonawca zajął który fragment, w jakim jest stanie i kiedy jego zajęcie
+wygasa, oraz spięcia, czyli co się stało, gdy dwóch wykonawców sięgnęło po ten sam fragment —
+czyja zmiana weszła, czyja została odłożona i wedle jakiej nastawy. Odłożone brzmienie nie
+przepada: pole ze zmianą, która nie weszła, jest sednem tego widoku, nie ozdobą, bo praca
+wykonawcy odłożona bez pokazania jej operatorowi byłaby pracą wyrzuconą po cichu. Brzmienie stoi
+więc wprost do przeczytania, wraz z czynnością „Przyjmij brzmienie", która wnosi je do dokumentu
+decyzją operatora. Gdzie rdzeń odłożył brzmienie jako propozycję albo zmianę śledzoną, widok
+odsyła do niej po identyfikatorze, bo dwóch kopii tego samego brzmienia nie zakłada.

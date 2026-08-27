@@ -4,30 +4,7 @@ import type {
 } from '../../../../shared/contract';
 import { opisWykonawcy, przycisk } from './zadania-wykaz';
 
-/**
- * Praca kilku wykonawców nad jednym dokumentem — strona okna pętli.
- *
- * Dwa wykazy, obie prawdy o tym samym dokumencie:
- *
- * 1. **Obsada** (`studio.agents.slots.list`) — który wykonawca zajął który
- *    fragment, w jakim jest stanie i kiedy jego zajęcie wygasa. Operator ma
- *    widzieć, kto pracuje nad czym, zanim zacznie pisać w tym samym akapicie.
- *
- * 2. **Spięcia** (`studio.agents.conflicts.list`) — co się stało, gdy dwóch
- *    sięgnęło po ten sam fragment: czyja zmiana weszła, czyja została odłożona
- *    i wedle jakiej nastawy.
- *
- * ── Odłożone brzmienie NIE PRZEPADA ─────────────────────────────────────────
- * `StudioAgentConflict.deferredText` niesie brzmienie, które nie weszło. To jest
- * sedno tego widoku, nie ozdoba: praca wykonawcy odłożona bez pokazania jej
- * Operatorowi byłaby pracą wyrzuconą po cichu. Brzmienie stoi więc wprost do
- * przeczytania, wraz z czynnością „Przyjmij brzmienie", która wnosi je do
- * dokumentu decyzją Operatora. Gdzie rdzeń odłożył brzmienie jako propozycję
- * albo zmianę śledzoną, widok odsyła do niej po identyfikatorze — dwóch kopii
- * tego samego brzmienia nie zakłada.
- */
-
-/** Czynności obsady sięgające poza ten widok. */
+/** Czynności obsady sięgające poza ten widok: wniesienie odłożonego brzmienia do dokumentu i otwarcie fragmentu spięcia w oknie pracy z dokumentem. */
 export interface CzynnosciObsady {
   /** Wnosi odłożone brzmienie do dokumentu decyzją Operatora. */
   przyjmijBrzmienie(spiecie: StudioAgentConflict): void;
@@ -40,7 +17,7 @@ export interface WidokObsady {
   odswiez(obsada: readonly StudioAgentSlot[], spiecia: readonly StudioAgentConflict[]): void;
 }
 
-/** Nazwa stanu wykonawcy dla Operatora. */
+/** Nazwa stanu wykonawcy pokazywana operatorowi: bez zajętego fragmentu, w pracy, czeka na fragment, po spięciu albo odstawiony. */
 const NAZWA_STANU_WYKONAWCY: Record<string, string> = {
   idle: 'bez zajętego fragmentu',
   working: 'pracuje',
@@ -49,7 +26,7 @@ const NAZWA_STANU_WYKONAWCY: Record<string, string> = {
   stopped: 'odstawiony',
 };
 
-/** Nazwa nastawy, wedle której spięcie rozstrzygnięto. */
+/** Nazwa nastawy, wedle której rozstrzygnięto spięcie o fragment między dwoma wykonawcami sięgającymi po ten sam fragment dokumentu. */
 const NAZWA_NASTAWY: Record<string, string> = {
   refuse: 'odmowa drugiemu',
   queue: 'odłożenie zmiany drugiego',
@@ -121,9 +98,7 @@ export function utworzWidokObsady(czynnosci: CzynnosciObsady): WidokObsady {
       zadanie.textContent = `W imieniu zadania: ${zajecie.taskId}`;
       pozycja.append(zadanie);
     }
-    // Czas wygaśnięcia zajęcia jest treścią, nie szczegółem technicznym:
-    // wykonawca ubity w pół pracy nie ma trzymać fragmentu na zawsze, a Operator
-    // ma widzieć, do kiedy fragment jest zajęty.
+    // Czas wygaśnięcia zajęcia jest treścią: operator ma widzieć, do kiedy fragment jest zajęty.
     if (zajecie.expiresAt !== undefined) {
       const wygasa = document.createElement('p');
       wygasa.className = 'dn-tekst-3';
@@ -178,9 +153,7 @@ export function utworzWidokObsady(czynnosci: CzynnosciObsady): WidokObsady {
         );
       }
     } else if (spiecie.deferredChangeId !== undefined || spiecie.deferredMarkupId !== undefined) {
-      // Rdzeń odłożył brzmienie jako zmianę śledzoną albo propozycję na
-      // marginesie. Widok odsyła do niej po identyfikatorze zamiast wyświetlać
-      // drugą kopię tekstu, którego prawdą jest tamten byt.
+      // Rdzeń odłożył brzmienie jako zmianę śledzoną albo propozycję, widok odsyła po identyfikatorze.
       const odeslanie = document.createElement('p');
       odeslanie.className = 'dn-tekst-3';
       const kod = spiecie.deferredChangeId ?? spiecie.deferredMarkupId ?? '';

@@ -2463,3 +2463,11 @@ a wygaśnięciu towarzyszy komunikat mówiący, że punkt pozostał nietknięty.
 W drzewie obecne są definicje typów zarówno przeglądarki, jak i środowiska Node,
 dlatego typ zegara bierze się z wyniku samej funkcji `setTimeout`, a nie z typu
 liczbowego.
+
+## budowa/klient-poprzedni/src/moduly/apps/kanwa-komponentow.ts
+
+Linia zależności jest nazwana, a nie narysowana. Kontrakt niesie zależność jako
+wykaz identyfikatorów komponentów, bez współrzędnych i bez kierunku przepływu,
+więc rysunek strzałek wymagałby danych, których w kontrakcie nie ma. Kafel podaje
+zależność nazwami komponentów, a identyfikator wskazujący komponent spoza kanwy
+zostaje w treści wprost, żeby niespójność układu była widoczna zamiast zniknąć.

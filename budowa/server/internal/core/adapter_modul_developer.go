@@ -1,22 +1,4 @@
-// Odpowiedzialność pliku: moduł Developer — wypełnienie portu Developer pięcioma
-// komendami obszaru `developer.*`. Obszar okna i sprawdzenie ścieżek leżą
-// w `_okno.go`, praca z plikiem w `_plik.go`, drzewo w `_drzewo.go`,
-// repozytorium w `_git.go` i `_git_wykonanie.go`, budowanie w `_budowanie.go`
-// i `_budowanie_bieg.go`, ewidencja przebiegów w `_rejestr.go`, a przekład na
-// kontrakt w `_przeklad.go`.
-//
-// Przed każdą zmianą stoją dwie bramy, w tej kolejności:
-//  1. tryb uprawnień okna — czy wolno w ogóle zmienić stan systemu
-//     (PermissionMode, `_okno.go`); tryb `plan` wyklucza zapis pliku,
-//     czynność repozytorium i uruchomienie budowania;
-//  2. obszar okna — czy ścieżka mieści się w katalogach roboczych okna
-//     (`_okno.go`), a przy uruchomieniu procesu dodatkowo egzekutor izolacji
-//     (session.SprawdzPolecenie nad zasadami z `izolacja.go`).
-//
-// Rdzeń nie buduje własnego `exec.Cmd`: git i zadanie budowania startuje ten sam
-// port session.Uruchamiacz, którym jedzie okno rozmowy i moduł Terminal —
-// Terminal jest warstwą wykonawczą budowania, instalacji zależności
-// i uruchamiania.
+// Moduł Developer wypełnia port Developer pięciu komendami obszaru `developer.*` wraz z pracą na pliku, drzewie, repozytorium i budowaniem, rozdzielonymi po plikach pomocniczych.
 package core
 
 import (
@@ -30,43 +12,36 @@ import (
 	"danacoconsole/shared"
 )
 
-// Zgodność adaptera z portem sprawdzana jest przy kompilacji.
+// Zgodność adaptera z portem sprawdzana jest przy kompilacji, wprost przez pustą asercję interfejsu Developer.
 var _ Developer = (*adapterDevelopera)(nil)
 
 const (
-	// przedrostekBudowania znakuje identyfikator przebiegu budowania.
+	// przedrostekBudowania znakuje identyfikator przebiegu budowania nadawany przez rdzen przy jego zalozeniu w bazie danych.
 	przedrostekBudowania = "build-"
-	// przedrostekWersjiPliku znakuje migawkę treści pliku założoną przy zapisie.
+	// przedrostekWersjiPliku znakuje migawkę treści pliku założoną przy zapisie do repozytorium wersji plikow.
 	przedrostekWersjiPliku = "fver-"
 )
 
-// adapterDevelopera wypełnia port Developer.
+// adapterDevelopera wypełnia port Developer, niosąc repozytorium, rejestr biegów i zależności wpinane osobno.
 type adapterDevelopera struct {
 	repozytorium dane.RepozytoriumDevelopera
 	rejestr      *rejestrBudowan
-	// sesjeDebugowania trzyma biegi debuggera czynne w tej chwili. Stan żywy,
-	// nie zapis: sesja ma uchwyt do procesu adaptera i gaśnie razem z nim.
+	// sesjeDebugowania trzyma biegi debuggera czynne w tej chwili; gaśnie razem z adapterem.
 	sesjeDebugowania *rejestrSesjiDebugowania
-	// okna daje tryb uprawnień okna, jego sesję i listę katalogów roboczych.
-	// Bez niego moduł nie tknie ani jednego pliku: nie wiedziałby, w jakim
-	// obszarze wolno mu pracować, a praca „gdziekolwiek" nie jest pracą
-	// w warunkach niepełnych danych, tylko wyjściem poza izolację okna.
+	// okna daje tryb uprawnień okna, sesję i listę katalogów roboczych; bez niego moduł nie tknie pliku.
 	okna *session.Rejestr
 	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu.
 	uruchamiacz session.Uruchamiacz
-	// rozstrzygacz i katalog składają zasady izolacji obowiązujące w oknie oraz
-	// katalog zastępczy dla okna bez własnej listy katalogów roboczych.
+	// rozstrzygacz i katalog składają zasady izolacji obowiązujące w oknie oraz katalog zastępczy.
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// kanaly są rejestrem kanałów modelu — jedyną drogą operacji kontekstowych
-	// (`developer.contextual.op`). Bez niego moduł działa w całości poza tą
-	// jedną rodziną, która odpowiada wtedy odmową nazywającą brak.
+	// kanaly są rejestrem kanałów modelu, jedyną drogą operacji kontekstowych (`developer.contextual.op`).
 	kanaly *models.Rejestr
 	// przyrost rozgłasza `developer.build.changed`. Podpina go obsługiwacz.
 	przyrost func(shared.ChangeKind, shared.DeveloperBuild, string)
 }
 
-// nowyAdapterDevelopera wiąże port z rejestrem okien i uruchamiaczem procesów.
+// nowyAdapterDevelopera wiąże port z rejestrem okien i uruchamiaczem procesów, oddając adapter gotowy do dalszego wpięcia zależności.
 func nowyAdapterDevelopera(okna *session.Rejestr, uruchamiacz session.Uruchamiacz) *adapterDevelopera {
 	return &adapterDevelopera{
 		rejestr:          nowyRejestrBudowan(),
@@ -76,11 +51,7 @@ func nowyAdapterDevelopera(okna *session.Rejestr, uruchamiacz session.Uruchamiac
 	}
 }
 
-// ZTrwaloscia podpina wersje plików i dziennik budowań
-// (`migracja_042_developer.sql`). Bez
-// niego moduł pracuje w pamięci jednego biegu rdzenia: zapis pliku
-// nadal działa, lecz `createVersion` nie ma gdzie założyć migawki i zapis
-// odpowiada odmową zamiast cicho gubić wersję.
+// ZTrwaloscia podpina wersje plików i dziennik budowań (`migracja_042_developer.sql`). Bez niego moduł pracuje w pamięci jednego biegu rdzenia i `createVersion` odpowiada odmową zamiast cicho gubić wersję.
 func (a *adapterDevelopera) ZTrwaloscia(repozytorium dane.RepozytoriumDevelopera) *adapterDevelopera {
 	a.repozytorium = repozytorium
 	return a
@@ -100,11 +71,7 @@ func (a *adapterDevelopera) ZKanalami(kanaly *models.Rejestr) *adapterDevelopera
 	return a
 }
 
-// Przygotuj osierocą przebiegi budowania, do których rdzeń stracił uchwyt przy
-// restarcie. Wywołuje się to raz, przy montażu.
-//
-// Bez tego kroku Build Output pokazywałby przebieg oznaczony jako trwający,
-// którego nikt już nie prowadzi i którego nie da się przerwać.
+// Przygotuj osierocą przebiegi budowania, do których rdzeń stracił uchwyt przy restarcie. Wywołuje się raz, przy montażu. Bez tego kroku Build Output pokazywałby przebieg, którego nie da się przerwać.
 func (a *adapterDevelopera) Przygotuj(ctx context.Context) error {
 	if a.repozytorium == nil {
 		return nil

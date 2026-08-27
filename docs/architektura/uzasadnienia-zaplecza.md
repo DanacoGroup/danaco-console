@@ -1696,3 +1696,42 @@ zapisuje `sentence-transformers` przy eksporcie i które ma repozytorium,
 z którego biblioteka pobiera własne wagi: model ONNX pod `onnx/model.onnx`,
 opis obok niego w korzeniu; eksport pojedynczy zostawia sam plik ONNX
 w korzeniu.
+
+## budowa/desktop/src-tauri/src/ustawienia.rs
+
+Wskazanie hosta rdzenia zna dwie warstwy, od słabszej: nastawy zapisane
+trwale (`nastawy.rs`), potem zmienna środowiska. Trzeciej warstwy — wartości
+domyślnej hosta — nie ma i nie może być: rdzeń stoi na serwerze wdrożenia,
+a jego nazwy nie zna ani powłoka, ani instalator. Brak obu warstw znaczy więc
+„wskazania nie złożono", a nie „rdzeń stoi tu obok". Nazwy `DANACO_PORT`
+i `DANACO_KATALOG_DANYCH` są własnością rdzenia
+(`server/internal/konfiguracja/srodowisko.go`); powłoka je wyłącznie czyta.
+
+Zmienna stoi nad plikiem nastaw, ponieważ plik niesie wskazanie Operatora
+złożone w oknie i ma przetrwać zamknięcie okna, a zmienna niesie wskazanie
+tego, kto stawia proces — wykonawcy przy budowie, jednostki usługi na
+serwerze — i musi brać górę, bo inaczej plik z jednej maszyny sterowałby
+uruchomieniem na drugiej po skopiowaniu profilu.
+
+Nazwa warstwy wchodzi do odpowiedzi polecenia `wskazanie_rdzenia`, żeby okno
+mogło powiedzieć Operatorowi, dlaczego pola nie da się zmienić: wskazanie ze
+zmiennej środowiska jest silniejsze od zapisu w oknie.
+
+Warstwa środowiska jest ustalona raz, przy starcie procesu. Warstwa nastaw
+żyje dalej — Operator składa wskazanie w oknie już po starcie — więc siedzi
+za zamkiem i jest wspólna dla wszystkich kopii ustawień (`Arc`). Bez tego
+polecenie `adres_rdzenia` odpowiadałoby starym adresem do końca pracy
+procesu, a interfejs łączyłby się nie tam, gdzie Operator wskazał.
+
+Pole `wskazanie` zwraca `None` przy pierwszym uruchomieniu po instalacji:
+powłoka nie zgaduje wtedy żadnego adresu, bo każdy zgadnięty byłby adresem
+cudzym albo pustym. Zapis wskazania sprawdza kolejność wiążącą — najpierw
+próba połączenia, potem zapis — i zwraca zdanie o niepowodzeniu, gdy zapis
+się nie udał, bo wskazanie nieutrwalone nie zostaje przyjęte: zniknęłoby
+przy następnym starcie i Operator dowiedziałby się o tym dopiero wtedy.
+Wskazanie ze zmiennej środowiska nie znika przez ten zapis: `wskazanie()`
+pyta zmienną pierwszą, a okno dostaje warstwę w odpowiedzi
+(`warstwa_wskazania`) i wie, że zapis nie rozstrzyga.
+
+Odczyt nastaw zapisanych po zamku zatrutym panika daje nastawy puste, nie
+panikę samą, ponieważ odczyt nastawy nie jest wart przerwania pracy okna.

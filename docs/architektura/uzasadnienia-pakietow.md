@@ -3518,3 +3518,21 @@ tam per wątek, czego uchwyt obejmujący całe drzewo nie zna. Kontrakt komendy
 wstrzymania ma dlatego osobne pole wsparcia platformy, a nie tylko odpowiedź
 udaną albo nieudaną, bo brak wsparcia systemu to co innego niż niepowodzenie.
 Rozstrzygnięcie stoi w plikach zależnych od platformy, tak samo jak ubicie.
+## budowa/server/internal/dane/przejecie_sterowania.go
+Ślad przejęcia sterowania leży w istniejącym dzienniku akcji okna, bez osobnej tabeli, ponieważ przejęcie
+sterowania jest akcją wykonaną na oknie, a te mają już jeden wspólny dziennik. Kolumna nazywająca akcję jest
+w tej tabeli wolnym tekstem, bez ograniczenia sprawdzającego i bez klucza obcego do katalogu akcji, więc oba
+rodzaje wpisu mieszczą się w niej bez zmiany schematu — druga tabela na to samo zdarzenie byłaby drugą prawdą
+o jednym fakcie.
+
+Plik dokłada wyłącznie odczyt zawężony do tych dwóch rodzajów wpisu, zapis idzie istniejącą funkcją zapisu akcji.
+Odczyt musi być osobny, ponieważ ogólny odczyt dziennika akcji okna oddaje dziennik w całości i z limitem: okno
+z dużą liczbą zwykłych akcji zepchnęłoby przejęcia poza limit, czyli historia sterowania milczałaby dokładnie
+tam, gdzie jest najbardziej potrzebna.
+
+Parametry i wynik zostają surowe, tak samo jak w sąsiednim pliku dziennika akcji okna: kształt obu kolumn zależy
+od rodzaju akcji, którego warstwa danych nie zna. Ten plik ich nie rozbiera — oddaje wpis w tej samej postaci,
+co dziennik akcji, a rozbiór wykonuje warstwa wyższa.
+
+Wąski kontrakt odczytu śladu sterowania pozwala warstwie wyższej sięgnąć po tę jedną metodę asercją typu, bez
+dopisywania linii do szerokiego kontraktu obszaru okien.

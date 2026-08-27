@@ -827,6 +827,24 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   transform: translate(-50%, 0);
 }
 
+/* Skrajne grupy narzędzi przypinają dymek krawędzią grupy — `left: 0` w grupie
+   pierwszej, `right: 0` w ostatniej — selektorem o swoistości wyższej niż
+   kotwica, bo z `:first-child` i `:last-child`. Dymek dostawał przez to
+   współrzędną z mechanizmu i krawędź z biblioteki naraz: pierwszy przycisk
+   wstążki stawiał etykietę przy brzegu ekranu, pod szyną nawigacji. */
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']::after {
+  left: var(--cd-dymek-x);
+  right: auto;
+  transform: translate(-50%, var(--dn-od-05));
+}
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']:hover::after,
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']:focus-visible::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']:hover::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
 /* Dymek bez współrzędnych nie ma prawa się pokazać. Warstwa wspólna ujawnia go
    samym najechaniem, a współrzędne nadaje mechanizm okna — między jednym
    a drugim jest szczelina: gdy wyzwalacz pojawia się pod nieruchomym

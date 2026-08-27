@@ -530,3 +530,10 @@ puste i braki źródła w kontrakcie. Warunkiem użycia jest wcześniejsze
 wczytanie warstwy żetonów oraz biblioteki komponentów, co zapewnia plik
 aplikacja/arkusze-stylow.ts. Arkusz wciąga moduł mission-control.ts, więc
 trafia do pakietu razem z pulpitem i nie wymaga wpisu w cudzym wykazie.
+
+## budowa/klient-poprzedni/src/powloka/karty-sesji.css
+Wygląd zakładki wraz z podkreśleniem karty czynnej pochodzi z biblioteki
+komponentów, tak jak karty rozciągnięte na całą wysokość pasa, żeby
+podkreślenie legło dokładnie na jego kresce. Biblioteka niesie pasek ramy
+o wysokości 48 pikseli na atramencie marki; pas kart stoi na powierzchni
+pracy i jest od niego niższy.

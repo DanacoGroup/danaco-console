@@ -18,33 +18,13 @@ import type { Kanal, Wynik } from '../../protokol/kanal';
 import { czyLiczba, czyLogiczna, czyObiekt, czyTekst, sprawdzKsztalt } from '../../protokol/ksztalt-odpowiedzi';
 import { wywolaj } from '../../protokol/wywolanie';
 
-/**
- * Sześć komend mowy dobudowanych obok transkrypcji oraz dwa zdarzenia nasłuchu
- * ciągłego.
- *
- * Do niedawna okno nie miało czym wysłać nagrania z mikrofonu: `speech.transcribe`
- * przyjmuje `audioRef`, czyli ŚCIEŻKĘ PLIKU na maszynie silnika, a nagranie
- * z mikrofonu karty istnieje wyłącznie jako `Blob` w pamięci. `speech.audio.upload`
- * jest brakującym ogniwem — przyjmuje bajty i oddaje odnośnik, którym posługują
- * się `speech.transcribe` oraz `assistant.voice.command`. Ta sama komenda
- * otwiera dyktowanie w oknie komunikacji.
- *
- * Odsłuch (`speech.audio.fetch`) jest drogą powrotną: bajty wracają do karty,
- * która je wysłała, i wyłącznie dla odnośników, które rdzeń sam wystawił.
- *
- * Nasłuch ciągły nie jest otwarciem cudzego mikrofonu i nikt tu tego nie udaje.
- * Okno nagrywa u siebie, wysyła odcinki `speech.audio.upload` wraz z `windowId`,
- * a rdzeń ogłasza, co w nich usłyszał: `speech.listen.partial` z tekstem oraz
- * `speech.wake.detected`, gdy padła fraza wybudzająca.
- *
- * Żadne wywołanie nie rzuca wyjątkiem — niepowodzenie wraca polem `blad`.
- */
+/** Sześć komend mowy dobudowanych obok transkrypcji oraz dwa zdarzenia nasłuchu ciągłego. */
 
-/** Nagranie przyjmowane przez rdzeń: bajty wraz z typem treści. */
+/** Nagranie przyjmowane przez rdzeń niesie bajty wraz z typem treści, na przykład audio/webm albo audio/wav. */
 export interface NagranieDoWyslania {
   /** Bajty nagrania w postaci base64, bez przedrostka schematu danych. */
   base64: string;
-  /** Typ treści, np. `audio/webm` albo `audio/wav`. */
+  /** Typ treści, na przykład `audio/webm` albo `audio/wav`. */
   typTresci: string;
   /** Okno, z którego nagranie wyszło; puste zostawia je bez przypisania. */
   idOkna?: string;
@@ -54,7 +34,7 @@ export interface NagranieDoWyslania {
   zachowaj?: boolean;
 }
 
-/** Nastawa wybudzania zapisywana wybiórczo — pola pominięte zostają bez zmian. */
+/** Nastawa wybudzania zapisywana wybiórczo, niosąca frazę, tryb, próg i odszumianie; pola pominięte zostają bez zmian. */
 export interface NastawaWybudzania {
   fraza?: string;
   tryb?: SpeechWakeSetRequest['mode'];

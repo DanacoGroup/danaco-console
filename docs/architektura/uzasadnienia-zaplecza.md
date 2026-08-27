@@ -3002,3 +3002,10 @@ Zespół (`roundtable.team.save`) jest kopią składu, nie odwołaniem do niego.
 Skład okna zmienia się po zapisaniu zespołu, a zespół ma zostać taki, jaki
 był w chwili zapisu — inaczej „wnieś zespół" wnosiłoby stan bieżący cudzego
 okna zamiast zapamiętanego układu.
+
+## budowa/desktop/src-tauri/src/polecenia.rs
+Powłoka udostępnia interfejsowi wyłącznie polecenia, których przeglądarka wykonać nie może: reszta pracy idzie kanałem WebSocket kontraktu, więc powłoka nie tworzy drugiej drogi sterowania platformą. Zatrzymania ani postawienia rdzenia tu nie ma i nie będzie: rdzeń stoi na serwerze wdrożenia, powłoka go nie niesie i nie ma nad nim władzy.
+
+Polecenie wyboru katalogu obsługuje jednym poleceniem oba zastosowania interfejsu — wskazanie katalogu roboczego i dodanie katalogu jako punktu dostępu — bo czynność systemu operacyjnego jest ta sama, a różni je wyłącznie napis w belce podany przez wywołującego. Interfejs nie ma jak wyliczyć adresu HTTP rdzenia z lokalizacji dokumentu, bo strona pochodzi z pakietu wkompilowanego w powłokę — polecenie zwracające adres jest jedyną drogą, którą warstwa połączenia interfejsu poznaje ten adres. Okno pyta o stan wskazania rdzenia przed złożeniem aplikacji: odpowiedź bez wskazania znaczy pierwsze uruchomienie po instalacji, wtedy staje ekran wskazania, bo instalator adresu serwera wdrożenia nie zna i znać go nie może. Wskazanie serwera jest jedynym poleceniem powłoki zmieniającym jej stan trwały, bo dotyczy pliku nastaw na dysku, którego przeglądarka dotknąć nie może.
+
+Polecenie aktualizacji pobiera adres i sumę kontrolną z wykazu wydań czytanego przez interfejs po HTTPS; powłoka wykazu nie czyta i wersji nie porównuje, bo do tego wystarczy przeglądarka, a powłoka robi dwie rzeczy niemożliwe ze strony: pisze po dysku pod plikiem aplikacji i stawia proces na nowo. Praca idzie wątkiem roboczym, bo pobranie wydania to dziesiątki megabajtów — na wątku głównym okno stałoby zamrożone przez cały czas ściągania, a baner aktualizacji nie zdążyłby się nawet przerysować.

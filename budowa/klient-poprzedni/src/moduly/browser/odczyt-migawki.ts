@@ -59,7 +59,7 @@ export function utworzOdczytMigawki(zrodlo: ZrodloBrowser, oglos: () => void): O
         przyjmij('gotowa', '');
         return;
       }
-      // Migawki nie kasujemy przy odmowie: nieudany odczyt nie unieważnia
+      // Migawka nie znika przy odmowie: nieudany odczyt nie unieważnia
       // strony, którą Operator już czyta.
       if (wynik.blad?.code === ErrorCode.NotFound) {
         przyjmij(

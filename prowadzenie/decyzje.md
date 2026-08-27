@@ -1257,6 +1257,16 @@ pelnym zdaniem odpowiedzialnosci pliku i odsylaczem do uzasadnien w docs.
 Plik niemy (sam odsylacz bez zdania albo nic) jest uchybieniem zwracajacym
 porcje. Zdanie wlicza sie do granicy, odsylacz nie.
 
+**Dopowiedzenie piate Wlasciciela (27.08, po poludniu).** Odsylacze do docs
+NIE sa obowiazkowe i domyslnie ich nie ma — to zbedna komplikacja i lancuszek:
+mapowanie jest mechaniczne (sekcja w `docs/architektura/uzasadnienia-*.md`
+nazywa sie sciezka pliku), wiec konwencje zapisuje sie RAZ, w przewodniku
+wykonawcy i w naglowkach plikow uzasadnien, nie w kazdym pliku kodu.
+Naglowek pliku to samo pelne zdanie odpowiedzialnosci. Wskazanie miejsca
+pozostaje dopuszczalne wyjatkowo, gdy miejsce jest nieoczywiste (inny plik,
+norma, decyzja) — nadal poza granica. Odsylacze postawione przed tym
+dopowiedzeniem zdejmuje sie w toku tych samych prac.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

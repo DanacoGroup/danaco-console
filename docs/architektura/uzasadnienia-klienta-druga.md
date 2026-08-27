@@ -4154,3 +4154,25 @@ Diagnostics nie ma okna telemetrii, ponieważ nie jest ustalone, co miałoby ono
 
 ## budowa/klient/src/wejscie/skladniki/pas-dzialan.ts
 Pas urwany na granicy kolumny tożsamości czyta się jak niedokończony rysunek — stąd domyka okno przez całą jego szerokość. Czynności zbierają się przy prawej krawędzi, bo tam ręka szuka ich w każdym oknie tej rodziny, a gdy zostaje jedna, nie zawisa samotnie po lewej.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/pas-pomocniczych.ts
+Pas nie jest drugim złożeniem modułu: nie tworzy stanu modułu, nie zna
+komend obszaru inżynierskiego i nie dotyka okien operacyjnych, składając
+wyłącznie gotowe okna pomocnicze oraz spis pozostałych pozycji. Zamknięcie
+jest obowiązkowe, bo okno podglądu trzyma subskrypcję strumienia wyjścia,
+która bez tego wywołania zostaje żywa po zejściu pasa ze sceny.
+
+Nie każdy moduł zna swoje okno przy montażu: część modułów montuje się od
+razu z oknem sesji, a inne poznają okno dopiero z późniejszego wykazu okien.
+Panele powstają na nowo przy zmianie okna, bo biorą je przy powołaniu — tą
+samą drogą co kolumna paneli sceny okien równoległych: stare panele są
+zamykane wraz z subskrypcjami rdzenia, nowe budowane z oknem właściwym.
+Podanie tego samego okna drugi raz nie robi nic, bo przebudowa panelu już
+pytającego o właściwe okno byłaby zerwaniem strumienia bez powodu.
+
+Mapowanie kodu pozycji na wytwórnię stoi poza pasem, więc pas nie zna ani
+jednego kodu, a dołożenie panelu nie wymaga jego edycji — tego samego
+mapowania używa kolumna paneli sceny okien równoległych. Pozycja nazwana w
+rejestrze zbudowaną, dla której nie ma wytwórni, jest rozjazdem między
+spisem a kodem, stąd wpis w dzienniku zdarzeń zamiast cichej wartości
+pustej udającej, że pozycji w spisie nie ma.

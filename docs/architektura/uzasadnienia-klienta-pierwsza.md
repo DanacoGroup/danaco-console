@@ -4104,3 +4104,25 @@ ognisko do jego okna.
 
 Oś nie udaje stanu etapu. Stan przychodzi zdarzeniem `apps.build.changed`
 i rysuje go osobny wykaz okna.
+
+## budowa/klient-poprzedni/src/moduly/library/wiersz-pliku.ts
+
+O braku treści wiersz mówi wyłącznie wtedy, gdy rdzeń sam ją orzekł, czyli przy werdykcie
+`brak` z pliku `dostepnosc-tresci.ts`, i powtarza jego powód. Plik, o który nikt jeszcze
+nie pytał, nie dostaje żadnego znaku.
+
+Odmowa podglądu nie jest orzeczeniem o treści. Rdzeń odmawia kodem `not_found`, gdy pliku
+nie ma, oraz kodem `internal_error`, gdy nośnik nie oddał treści spod odwołania. Oba są
+zdaniem o pliku i o nośniku, a nie o zawartości repozytorium, więc odmowa dostaje własne
+zdanie: powód rdzenia bez dopisanego zarzutu.
+
+Werdykt `odmowa` powtarza sam powód i mówi, że treść pozostaje nieznana. Werdykt
+`odwolanie` mówi, że rdzeń wskazał miejsce treści, a jej samej nie podał. Werdykty
+`nieznana` oraz `osiagalna` nie dają zdania: pierwsza nie ma czego powiedzieć, druga
+niczego nie zarzuca.
+
+Metryka nie jest świadkiem treści: brak pola `versionId` czy `checksum` niczego o niej nie
+orzeka i w drugą stronę tak samo. Świadkiem jest odpowiedź rdzenia.
+
+Fragment, na którym oparło się dopasowanie po znaczeniu, stoi przy wierszu, ponieważ bez
+niego trafność jest liczbą bez podstawy do sprawdzenia.

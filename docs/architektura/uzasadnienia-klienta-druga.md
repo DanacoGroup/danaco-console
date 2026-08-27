@@ -956,3 +956,73 @@ wywołaniem zwrotnym, bo powierzchnia dokumentu jest po jego stronie.
 Panel nie zna treści dokumentu ani zaznaczenia: bierze je z kontekstu, który
 podaje okno. Dzięki temu ten sam panel obsługuje dokument w zakładce i drugi
 w podziale powierzchni.
+
+## budowa/klient-poprzedni/src/uwierzytelnienie/zrodlo-auth.ts
+
+Źródło komend bramki jest jedynym miejscem znającym nazwy komend kontraktu rodziny auth i kształt
+ich żądań. Ekran logowania woła cztery z siedmiu komend tej rodziny: wejście, rejestrację,
+przedłużenie tokenu — tyle, ile trzeba, żeby wejść — oraz zmianę hasła, bo ta nie wymaga
+zalogowania i stoi za odnośnikiem resetu hasła. Dodanie i usunięcie metody należą do czynności
+ustawień wykonywanych po zalogowaniu. Potwierdzenie rejestracji nie jest wołane stąd, bo uchwytu
+w rdzeniu nie ma; wywołanie wróciłoby kopertą nieznaną i niczym więcej. Odpowiedź niesie typ
+koperty, nie tylko wynik, ponieważ rdzeń odpowiada na komendę bez uchwytu kopertą nieznaną
+z tym samym kodem, którym wejście odmawia przy bramce nieustawionej — te dwie odmowy znaczą co
+innego, więc wysyłka oddaje typ koperty odpowiedzi razem z treścią.
+
+Metoda wejścia widziana przez operatora ogranicza się do hasła i PIN-u, bo tyle rdzeń dziś
+naprawdę otwiera; metoda logowania systemu operacyjnego odmawia z powodu pochodzenia dokumentu,
+nie z braku kodu, więc nie jest tu metodą — segment wyszarzony byłby bramą, a segment czynny
+kłamstwem.
+
+Powitanie połączenia jest podsłuchane z koperty przechodzącej przez kanał, nie wysyłane osobno,
+ponieważ powitanie i tak leci przy każdym nawiązaniu połączenia, a subskrypcja staje przy
+składaniu źródła, zanim gniazdo się otworzy, więc odpowiedź nie ma jak przepaść. Gdy powitanie
+nie wróci w zadanym czasie, wynikiem jest powitanie puste, czyli rdzeń nie wie, i ekran schodzi
+na sondę zamiast czekać bez końca; czas oczekiwania zerowy znaczy, że trzeba wziąć to, co już
+jest.
+
+Sonda PIN-u idzie tą samą drogą co sonda hasła i z tego samego powodu: kontrakt nie ma komendy
+odczytu metod, a segment PIN-u nie ma prawa stanąć na ekranie, jeżeli nie ma czego otworzyć.
+Rdzeń szuka metody po parze rodzaj i urządzenie, zanim spojrzy na sekret, więc żądanie bez
+sekretu odpowiada wprost: brak wyniku znaczy, że PIN-u tu nie ma, a niepowodzenie walidacji
+znaczy, że PIN jest i zabrakło tylko sekretu. Sonda nie podnosi dławika prób, bo zwłokę
+zwiększa wyłącznie sekret niezgodny, a tu sekretu nie ma.
+
+Wejście przez bramkę hasłem albo PIN-em niesie do rdzenia także przełącznik przedłużenia sesji,
+nie tylko do magazynu przeglądarki, bo bez tego zaznaczenie przedłużałoby wyłącznie życie zapisu
+lokalnego, a sesja gasłaby po dobie roboczej.
+
+Rejestracja zakłada jedyne konto właściciela przy pierwszym uruchomieniu i nie zakłada sesji.
+Konto powstaje niepotwierdzone, a token dostępu wydaje dopiero potwierdzenie po drodze przysłanej
+listem, dlatego odpowiedź rejestracji nie niesie sesji i ekran przechodzi wtedy do kroku
+potwierdzenia.
+
+Prośba o drogę odzyskania konta idzie na adres uwierzytelniający, a odpowiedź jest zawsze taka
+sama niezależnie od tego, czy adres pasuje do konta — ekran nie ma z czego wywnioskować, czy
+konto istnieje, i tak ma być.
+
+Zmiana hasła ze znanym hasłem dotychczasowym należy do ekranu wejścia, choć wygląda na czynność
+ustawień: sprawdza wyłącznie zgodność hasła dotychczasowego z zapisem bramki i nie pyta o sesję.
+Zmiana jest więc wykonalna przed zalogowaniem i odnośnik resetu hasła ma co wywołać. Odzyskaniem
+hasła zapomnianego to nie jest, bo takiej drogi kontrakt nie ma.
+
+Wysyłka jednej komendy odczytuje całą kopertę odpowiedzi. Subskrypcja staje przed wysłaniem,
+a dopasowanie idzie po identyfikatorze żądania, dokładnie tak jak koreluje kanał, więc między
+subskrypcją a wysyłką nie ma okna, w którym odpowiedź mogłaby przepaść. Transport kolejkuje
+ramki do chwili otwarcia połączenia, więc wywołanie przed nawiązaniem łączności czeka, zamiast
+przepaść.
+
+Sonda stanu bramki wysyła wejście metodą hasła bez sekretu, bo kontrakt nie ma osobnej komendy
+odczytu stanu, a ekran musi wiedzieć, czy pokazać wejście, czy pierwsze ustawienie hasła. Adapter
+bramki najpierw szuka kotwicy, a dopiero potem patrzy na sekret, więc odmowa mówi wprost: brak
+wyniku znaczy, że hasło bramki nie istnieje i bramki jeszcze nie ustawiono, a niepowodzenie
+walidacji znaczy, że kotwica jest i zabrakło tylko sekretu. Sonda jest drogą zapasową, nie
+pierwszą: odpowiedź na to samo pytanie niesie powitanie, które nie wyprowadza stanu z odmowy
+i nie przechodzi przez dławik prób; sonda zostaje na wypadek milczenia rdzenia, bo pole puste
+znaczy, że rdzeń nie wie, a wtedy trzeba zapytać inaczej, nie zgadnąć. Sonda niczego nie zmienia
+w rdzeniu i nie niesie żadnego sekretu.
+
+Identyfikator urządzenia idzie tylko przy PIN-ie, bo metoda hasła kontraktu go nie wymaga —
+hasło otwiera bramkę z każdej maszyny, a PIN jest właściwy maszynie i bez identyfikatora rdzeń
+odmawia wprost. Tożsamość klienta z powitania urządzeniem nie jest, bo nadaje się ją na czas
+uruchomienia, więc PIN chodzi po zapisie trwałym urządzenia.

@@ -3028,3 +3028,184 @@ repozytorium po zmianie. Jest to metoda emitera per moduł, wzorowana na
 `przebiegAutomatyki`, zadeklarowana w tym pliku, ponieważ to obszar Library
 nazywa własne zdarzenie. Plik nie jest bytem karty sesji, więc zdarzenie
 idzie bez jej wskazania, a Library Explorer odświeża się ze strony głównej.
+## budowa/server/internal/core/adapter_modul_badania_cytowania.go
+
+Style są wkompilowane, nie doczytywane. Repozytorium CSL liczy około dwóch
+i pół tysiąca plików XML i procesor, który je czyta, jest biblioteką
+JavaScriptu. Oparcie cytowań o taki procesor znaczyłoby, że u Operatora,
+który nie doinstalował środowiska JS, cytowanie nie działa wcale — a
+cytowanie jest w module badawczym czynnością codzienną, nie ozdobą. Dlatego
+pięć stylów najczęściej wymaganych (APA, MLA, Chicago, IEEE, Vancouver) jest
+złożonych tutaj, w Go, i działa od pierwszego uruchomienia. Styl własny
+Operatora dokłada się obok jako nazwany wariant.
+
+Kontrola kompletności mówi, czego brak. `research.citation.check` nie mówi
+„metadane niekompletne". Mówi, które pole brakuje przy którym źródle i skąd
+da się je uzupełnić — bo to jest jedyna postać tej informacji, z którą
+Operator może cokolwiek zrobić.
+## budowa/server/internal/core/adapter_modul_orkiestracja_uklad.go
+
+Cztery komendy pliku dopełniają układ zależności: `orchestration.gate.set`,
+`orchestration.group.set`, `orchestration.compensation.set` i
+`orchestration.multitasking.link`. Jadą tą samą maszynerią co
+`adapter_modul_orchestration.go`: układ zależności ma w rdzeniu jednego
+właściciela, więc metody stoją na adapterze modułu Automations, a nie na
+własnym adapterze obok.
+
+Łuk nie wyraża wszystkiego, co układ musi umieć powiedzieć. Bramka mówi, KIEDY
+tory scalają się w jednym kroku — łuk mówi tylko, że się schodzą. Grupa mówi,
+że zbiór kroków biegnie razem — łuk wiąże parami. Kompensacja mówi, co zrobić,
+gdy przebieg pękł w pół — łuk o błędzie nie mówi nic.
+
+Spięcie z MultitaskingAI nie jest znacznikiem. Silnik kolejek jest w rdzeniu
+jeden i drugiego nie ma; środowisko MultitaskingAI odróżnia się od pętli
+sesyjnej tym, czyim koordynatorem kolejka jest prowadzona i jakiego jest
+rodzaju. Spięcie przestawia właśnie to na kolejkach automatyki, rozłączenie
+zdejmuje. Zapis bez tego skutku byłby polem, które Operator przestawia, a
+system ignoruje.
+## budowa/server/internal/core/adapter_modul_przegladarka_pobrania.go
+
+Pobranie naprawdę ściąga plik. Ponowienie (retry) idzie po treść spod adresu
+pobrania i odkłada ją w magazynie modułu, a postęp w wierszu jest liczbą
+bajtów, które na dysku leżą — nie deklaracją. Wstrzymanie i wznowienie
+zmieniają stan kolejki, przerwanie ją kończy, zdjęcie usuwa wpis.
+
+Makro zapisuje kroki w kształcie kontraktu (AutomationStep), tym samym,
+którym jedzie moduł Automations. Dzięki temu przekazanie scenariusza do
+Automations jest przełożeniem wiersza, a nie tłumaczeniem jednego kształtu na
+drugi.
+
+Granice Wykonawcy mają wartość domyślną w kodzie, nie w schemacie. Brak
+wiersza znaczy granice domyślne rdzenia i tak też odpowiada odczyt — zamiast
+odmawiać, że nikt jeszcze niczego nie ustawił.
+
+Funkcja odlozPobranie ściąga zasób, którego nie da się pokazać jako strony,
+i zakłada dla niego wiersz w menedżerze pobrań. Oddaje odmowę komendy
+browser.navigate — bo migawki strony z tego nie ma — ale odmowa nazywa skutek,
+który naprawdę zaszedł: pobranie o podanym identyfikatorze, z bajtami leżącymi
+w magazynie. To jest jedyna droga, którą pobrania powstają, i jest to droga
+naturalna: w przeglądarce plik pobiera się przez wejście pod jego adres,
+a nie osobnym poleceniem dodaj pobranie — takiego kontrakt zresztą nie niesie.
+
+### UstawBramke (adapter_modul_orkiestracja_uklad.go)
+
+Ocena nie blokuje zapisu — tak samo jak przy `orchestration.dependency.set`.
+Bramka na kroku, którego jeszcze nie ma, zapisuje się, a zastrzeżenie wraca
+w odpowiedzi: Workflow Builder buduje układ krok po kroku i odmowa kazałaby
+Operatorowi układać go w jedynej dopuszczonej kolejności.
+
+### oknoRoliSpiecia (adapter_modul_orkiestracja_uklad.go)
+
+Rola środowiska MultitaskingAI jest rolą nadaną oknu (`role.assign`), więc
+wskazanie roli jest wskazaniem okna. Rola nierozpoznana wraca odmową: spięcie
+z rolą, której nie ma, nie spięłoby niczego, a odpowiedź brzmiałaby udanie.
+## budowa/server/internal/core/adapter_modul_roundtable_graf_wydanie.go
+
+Wszystkie szesc formatow (DOT, GraphML, Argdown, AIF, SVG, PNG) sklada rdzen
+sam, bez ani jednego programu z zewnatrz. Cztery pierwsze sa formatami
+tekstowymi i pisze sie je wprost. SVG jest dokumentem XML, wiec tez. PNG
+powstaje rysowaniem po mapie bitowej biblioteka standardowa - rasteryzator
+zewnetrzny bylby zaleznoscia, ktorej instalka nie niesie, po to, zeby narysowac
+prostokaty i podpisy. Uklad jest kolumnowy i wynika z tresci: wezly stoja
+w kolumnach wedlug aktu mowy (teza, argument, kontrargument), wiec czytelnik
+widzi strukture sporu, zanim przeczyta chocby jedno zdanie.
+
+Format AIF: wezel tresci ma typ I (information), a relacja typ zalezny od jej
+rodzaju - wsparcie RA (rule application), podwazenie CA (conflict application),
+przeformulowanie MA (preference/restatement). Podzial pochodzi z samego
+standardu AIF, nie jest oznaczeniem wprowadzonym w tym kodzie.
+
+## budowa/server/internal/core/adapter_modul_auth_metody.go
+
+Hasło jest kotwicą bramki i ta zasada przechodzi przez cały plik.
+`auth.method.add` hasła nie zakłada (kotwica powstaje przy `auth.register`),
+`auth.method.remove` hasła nie zdejmuje, a `auth.password.reset` zmienia je
+wyłącznie ze znajomością hasła bieżącego — drogi odzyskania listem nie ma,
+bo rdzeń poczty nie wysyła.
+
+### ZalozMetodeWejscia
+
+Rodzaj `password` odmawia, bo kotwicę zakłada `auth.register`. Rodzaj `hello`
+odmawia, bo rdzeń go nie obsługuje — jawną odmową, nie cichym pominięciem. PIN
+na urządzeniu, które PIN już ma, odmawia `conflict` zamiast dokładać drugi:
+baza trzyma parę (urządzenie, rodzaj) jako jednoznaczną, a zmiana PIN-u to
+zdjęcie starego i założenie nowego, czyli dwie jawne decyzje Operatora.
+## budowa/server/internal/core/adapter_modul_workspace_zadania.go
+
+Zmiana zadania jest łatą, nie podmianą: `workspace.task.update` zmienia
+wyłącznie pola podane w żądaniu. Pole pominięte zostaje bez zmiany, bo okno
+wysyła jedno pole na jedną czynność Operatora (zmiana stanu, przypisanie
+wykonawcy, przesunięcie terminu), a podmiana całego zadania kasowałaby przy
+każdej z nich to, czego akurat nie było na ekranie.
+
+Przesunięcie następników po zmianie terminu zadania idzie wszerz z licznikiem
+odwiedzin, żeby zależność zapętlona (gdyby powstała inną drogą niż komenda)
+nie zawiesiła zapisu.
+
+Klient ma z czego zdjąć pozycję z wykazu pobrań, zamiast zgadywać, która
+zniknęła, bo odpowiedź komendy download.control niesie to, co zostało zdjęte.
+
+Odczyt granic Wykonawcy oddaje wraz z brakiem wiersza wskazanie zasięgu, do
+którego granice domyślne rdzenia się odnoszą.
+
+Żądanie bez wskazania okna ani sesji dotyczy całej aplikacji — najszerszego
+z dziewięciu poziomów zasięgu, tego, który ustępuje każdemu węższemu.
+
+Rok pozyskania nie jest rokiem wydania i tak jest traktowany: wchodzi
+wyłącznie jako data dostępu do zasobu sieciowego, a przy pozycji
+recenzowanej zostaje brakiem, który zgłosi kontrola.
+
+Źródła niecytowane w raporcie: wykaz literatury, której nikt nie użył, jest
+drugą połową kontroli kompletności — pierwszą są braki metadanych.
+
+### Zamek zmiany metody (ZalozMetodeWejscia, ZdejmijMetodeWejscia)
+
+Sprawdzenie „wolno” i samo założenie idą pod jednym zamkiem: inaczej dwa
+równoległe żądania na to samo urządzenie przechodzą oba sprawdzenie, a drugie
+rozbija się dopiero o indeks bazy.
+
+Metoda szybkiego wejścia bez kotwicy byłaby jedynym wejściem do platformy
+i dałaby się zdjąć razem z urządzeniem — bramka zostałaby wtedy bez hasła.
+
+Sekret bez właściciela byłby śmieciem w sejfie; niepowodzenie sprzątania
+nie cofa zdjęcia metody, bo wiersza już nie ma.
+
+### ZmienHasloBramki
+
+Żądanie tej komendy tokenu nie niesie, więc sesję wołającego wskazuje więź
+gniazda z sesją zawiązana w `wiez_polaczenia.go`. Połączenie niezwiązane
+z żadną sesją traci wszystkie: skrót pusty znaczy „nie wiadomo, kto woła”,
+a wtedy oszczędzenie którejkolwiek sesji byłoby zgadywaniem.
+
+Sprawdzenie hasła bieżącego i podmiana sekretu idą pod jednym zamkiem.
+Rozdzielone przepuszczają dwie równoległe zmiany, obie potwierdzone
+`changed: true`, po których bramkę otwiera tylko jedno z dwóch nowych haseł:
+drugi zapis nadpisuje pierwszy w sejfie, a Operator dostaje potwierdzenie
+hasła, którym nie wejdzie.
+
+### podmienSekret
+
+Sejf nadpisuje wpis bytu i oddaje to samo odwołanie, więc zapis do bazy jest
+tu asekuracją na wypadek, gdyby magazyn kiedyś zmienił postać odwołania —
+nie drugą prawdą.
+
+### PrzedluzSesjeBramki
+
+Sesja bierze się wtedy z więzi tego gniazda (`wiez_polaczenia.go`), nigdy
+z domysłu „jedyna czynna” — inaczej przedłużałoby się cudze wejście.
+Połączenie niezwiązane — bieg wewnętrzny albo gniazdo, które nie przedstawiło
+tokenu — dostaje odmowę opisującą właśnie ten brak.
+
+Rdzeń trzyma wyłącznie skrót tokenu, więc odtworzyć tokenu nie może, a wpisanie
+tam skrótu byłoby oddaniem klientowi napisu, którym nie da się wejść. Wołający,
+który tokenu nie podał, ma go u siebie; z odpowiedzi bierze nowy czas
+wygaśnięcia.
+
+### trwanieSesji
+
+Wynik przełącznika „nie wyloguj mnie” zostaje zapisany przy wierszu sesji
+i odczytany z powrotem przy odnowieniu, zamiast brać stałą. Bez tego każde
+`auth.token.refresh` — a klient woła je przy każdym uruchomieniu
+(`client/src/uwierzytelnienie/ekran-logowania.ts`) — ścinałoby sesję roczną
+do dwunastu godzin. Wiersz bez zapisanego trwania niesie zero i dostaje
+trwanie podstawowe.

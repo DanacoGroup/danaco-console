@@ -5031,3 +5031,18 @@ Błąd pola nie kasuje formularza: alert liniowy staje pod polem, pole pozostaje
 Wypełnienie formularza treścią istniejącej notatki oddaje fałsz, gdy źródła notatki nie ma już w wykazie okna. Ster wraca wtedy do pozycji bez powiązania, a okno ma o czym powiedzieć. Ciche przełknięcie tej różnicy zamieniłoby zapis w notatkę o innym powiązaniu niż pierwowzór.
 
 Wybór źródła i modułu docelowego prowadzą dwa stery zamiast dwóch natywnych list wyboru: nastawa stoi na uchwycie, a mechanizm rozwijania jest jeden dla całego produktu (`komponenty/menu-drzewo.ts`). Podpis pozostaje przy każdym sterze, ponieważ oba stoją w rzędzie pól formularza, gdzie sama wartość nie mówi, czego dotyczy.
+
+## budowa/klient-poprzedni/src/moduly/assistant/selektor-profilu.ts
+
+Osobnej rodziny komend `assistant.profile.*` kontrakt nie ma i mieć nie musi: rodzaj
+komponentu nazywa się w wyliczeniu `ComponentKind` wprost profilem asystenta, więc wykaz
+profili jest zawężonym odczytem `component.list`.
+
+Do rdzenia jedzie `Component.targetId`, a nie `Component.id`. Rdzeń rozstrzyga `profileId`
+po kolumnie `profil_asystenta.identyfikator_zewnetrzny`, a bytem docelowym komponentu jest
+właśnie ten kod. Wysłanie identyfikatora kafla byłoby wskazaniem profilu, którego rdzeń nie
+zna — zlecenie poszłoby wtedy bez warstwy profilu i nikt by się o tym nie dowiedział.
+
+Komponent bez bytu docelowego zostaje w wykazie i mówi o tym w swojej nazwie. Wybranie go
+nie wstawia niczego do pola, bo nie ma czego wstawić; ukrycie takiego wiersza zataiłoby fakt,
+że kafel profilu stoi w strefie 2 bez profilu pod spodem.

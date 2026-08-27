@@ -3239,3 +3239,9 @@ po kodzie środowiska nie daje wyniku.
 
 Moduł Diagnostics montuje się od razu, ponieważ większość jego komend nie
 wymaga identyfikatora okna.
+
+## budowa/klient-poprzedni/src/moduly/developer/zrodlo-probne.ts
+
+Jedna atrapa dla całego modułu zastępuje atrapę przepisywaną w każdym sprawdzianie z osobna:
+rozjazd z umową `ZrodloDeveloper` przerywa wtedy kompilację, zamiast rozjeżdżać sprawdziany
+po cichu. Plik służy wyłącznie sprawdzianom tego modułu i nie jest wciągany przez żadne okno.

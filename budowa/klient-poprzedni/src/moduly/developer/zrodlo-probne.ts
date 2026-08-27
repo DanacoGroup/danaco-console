@@ -18,13 +18,9 @@ import {
 import type { ZrodloDeveloper } from './zrodlo-developer';
 
 /**
- * Źródło próbne modułu Developer — rdzeń zastąpiony zapisem żądań i gotowymi
- * odpowiedziami.
- *
- * Jedna atrapa dla całego modułu zamiast atrapy przepisywanej w każdym sprawdzianie:
- * rozjazd z umową `ZrodloDeveloper` przerywa wtedy kompilację, zamiast rozjeżdżać
- * sprawdziany po cichu. Plik służy wyłącznie sprawdzianom `*.test.ts` tego modułu
- * i nie jest importowany przez żadne okno.
+ * Źródło próbne modułu Developer zastępuje rdzeń zapisem wysłanych żądań oraz
+ * gotowymi odpowiedziami podstawianymi przez sprawdzian. Umowa `ZrodloDeveloper`
+ * obowiązuje je tak samo jak źródło produktowe.
  */
 export interface ZrodloProbne extends ZrodloDeveloper {
   /** Żądania, które okna naprawdę wysłały — w kolejności wysłania. */
@@ -47,14 +43,22 @@ export interface ZrodloProbne extends ZrodloDeveloper {
   wyslijZdarzenieBudowania(zdarzenie: DeveloperBuildChangedEvent): void;
 }
 
-/** Plik gotowy do podstawienia; `updatedAt` jest wymagane przez kontrakt. */
+/**
+ * Składa plik gotowy do podstawienia oknu. Pole `updatedAt` jest wymagane przez
+ * kontrakt, więc stoi na stałej chwili, a oznaczenie wersji wchodzi wyłącznie
+ * wtedy, gdy sprawdzian je poda.
+ */
 export function plikProbny(path: string, content: string, versionId?: string): DeveloperFile {
   const plik: DeveloperFile = { path, content, updatedAt: 1_755_000_000_000 };
   if (versionId !== undefined) plik.versionId = versionId;
   return plik;
 }
 
-/** Węzeł drzewa; `parentPath` pominięty znaczy „węzeł korzenia”. */
+/**
+ * Składa węzeł drzewa plików o wskazanej ścieżce, nazwie i rodzaju. Pominięta
+ * ścieżka rodzica znaczy węzeł korzenia, więc pole wchodzi do węzła dopiero po
+ * podaniu wartości.
+ */
 export function wezelProbny(
   path: string,
   name: string,
@@ -66,7 +70,11 @@ export function wezelProbny(
   return wezel;
 }
 
-/** Przebieg budowania w stanie trwającym, o ile sprawdzian nie powie inaczej. */
+/**
+ * Składa przebieg budowania w stanie trwającym, o ile sprawdzian nie poda stanu
+ * innego. Okno i chwila rozpoczęcia stoją na stałych wartościach, ponieważ
+ * sprawdziany badają stan przebiegu, a nie jego pochodzenie.
+ */
 export function przebiegProbny(
   id: string,
   task: string,

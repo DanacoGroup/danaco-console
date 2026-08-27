@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: zapis wyposażenia modułu Terminal — wpisów książki
-// hostów, pozycji biblioteki skryptów wraz z ich wersjami, kluczy SSH, tuneli
-// i obserwacji plików.
-//
-// Usunięcie oddaje PRAWDĘ O SKUTKU (`bool`), a nie samo „nie było błędu”.
-// Kontrakt komend `terminal.host.remove`, `terminal.script.remove`
-// i `terminal.key.remove` mówi wprost: fałsz znaczy, że wpisu nie było, i nie
-// jest błędem. Bez policzenia zmienionych wierszy rdzeń nie miałby czym tego
-// rozróżnić i odpowiadałby prawdą zawsze.
+// Plik utrzymuje zapis wyposażenia modułu Terminal: wpisów książki hostów,
+// pozycji biblioteki skryptów wraz z ich wersjami, kluczy SSH, tuneli i obserwacji plików.
 package dane
 
 import (
@@ -128,7 +121,7 @@ const (
 	                              WHERE stan = 'active'`
 )
 
-// ZapiszHosta zakłada wpis książki hostów albo podmienia istniejący.
+// ZapiszHosta zakłada wpis książki hostów po jego kodzie albo podmienia istniejący wpis danymi żądania.
 func (r *repozytoriumTerminala) ZapiszHosta(ctx context.Context, host HostTerminala) error {
 	if host.Kod == "" || host.Nazwa == "" || host.Cel == "" {
 		return fmt.Errorf("dane: wpis hosta bez identyfikatora, nazwy albo adresu celu")
@@ -145,7 +138,7 @@ func (r *repozytoriumTerminala) ZapiszHosta(ctx context.Context, host HostTermin
 	return nil
 }
 
-// UsunHosta zdejmuje wpis książki hostów. Fałsz znaczy, że wpisu nie było.
+// UsunHosta zdejmuje wpis książki hostów po kodzie. Fałsz znaczy, że takiego wpisu nie było w książce.
 func (r *repozytoriumTerminala) UsunHosta(ctx context.Context, kod string) (bool, error) {
 	return r.usunWpisTerminala(ctx, usunHostaTerminala, kod, "wpisu hosta")
 }
@@ -185,12 +178,8 @@ func (r *repozytoriumTerminala) OdepnijKlucz(ctx context.Context, kluczKod strin
 	return kody, nil
 }
 
-// ZapiszSkrypt zakłada pozycję biblioteki albo dokłada jej kolejną wersję.
-//
-// Numer wersji nadaje baza wyrażeniem `wersja + 1` wykonanym w transakcji wraz
-// z wpisem wersji. Odczytanie numeru osobnym zapytaniem przed zapisem dałoby
-// dwóm równoległym zapisom ten sam numer, a warunek UNIQUE na parze
-// (pozycja, wersja) odrzuciłby drugi z nich.
+// ZapiszSkrypt zakłada pozycję biblioteki albo dokłada jej kolejną wersję. Numer
+// wersji nadaje baza wyrażeniem wersja + 1 wykonanym w tej samej transakcji.
 func (r *repozytoriumTerminala) ZapiszSkrypt(ctx context.Context,
 	skrypt SkryptTerminala) (int64, bool, error) {
 
@@ -244,7 +233,7 @@ func (r *repozytoriumTerminala) UsunSkrypt(ctx context.Context, kod string) (boo
 	return r.usunWpisTerminala(ctx, usunSkryptTerminala, kod, "pozycji biblioteki")
 }
 
-// ZapiszKlucz wciąga klucz do wykazu albo odświeża jego wpis.
+// ZapiszKlucz wciąga klucz SSH do wykazu kluczy terminala albo odświeża jego wpis po jego kodzie klucza.
 func (r *repozytoriumTerminala) ZapiszKlucz(ctx context.Context, klucz KluczTerminala) error {
 	if klucz.Kod == "" || klucz.Nazwa == "" || klucz.Sciezka == "" {
 		return fmt.Errorf("dane: wpis klucza bez identyfikatora, nazwy albo ścieżki")
@@ -266,7 +255,7 @@ func (r *repozytoriumTerminala) UsunKlucz(ctx context.Context, kod string) (bool
 	return r.usunWpisTerminala(ctx, usunKluczTerminala, kod, "klucza")
 }
 
-// ZapiszTunel zakłada wiersz tunelu albo odświeża jego stan.
+// ZapiszTunel zakłada wiersz tunelu terminala albo odświeża jego stan po kodzie tego wskazanego tunelu.
 func (r *repozytoriumTerminala) ZapiszTunel(ctx context.Context, tunel TunelTerminala) error {
 	if tunel.Kod == "" || tunel.OknoKod == "" {
 		return fmt.Errorf("dane: tunel bez identyfikatora albo okna")
@@ -287,7 +276,7 @@ func (r *repozytoriumTerminala) ZapiszTunel(ctx context.Context, tunel TunelTerm
 	return nil
 }
 
-// ZmienStanTunelu przestawia stan tunelu wraz z powodem.
+// ZmienStanTunelu przestawia stan tunelu wraz z powodem zmiany oraz znacznikiem chwili jego zamknięcia.
 func (r *repozytoriumTerminala) ZmienStanTunelu(ctx context.Context, kod string,
 	stan shared.TerminalTunnelStatus, powod string, zamkniety bool) error {
 
@@ -308,12 +297,12 @@ func (r *repozytoriumTerminala) ZmienStanTunelu(ctx context.Context, kod string,
 	return nil
 }
 
-// OsierocTunele przestawia tunele poprzedniego biegu rdzenia na `inactive`.
+// OsierocTunele przestawia wszystkie tunele poprzedniego biegu rdzenia na stan inactive po ponownym starcie.
 func (r *repozytoriumTerminala) OsierocTunele(ctx context.Context) (int64, error) {
 	return r.osierocWpisyTerminala(ctx, osierocTuneleTerminala, "tuneli")
 }
 
-// ZapiszObserwacje zakłada obserwację plików albo odświeża jej wpis.
+// ZapiszObserwacje zakłada obserwację plików terminala albo odświeża jej wpis po kodzie tej obserwacji.
 func (r *repozytoriumTerminala) ZapiszObserwacje(ctx context.Context, obserwacja ObserwacjaTerminala) error {
 	if obserwacja.Kod == "" || obserwacja.KartaKod == "" {
 		return fmt.Errorf("dane: obserwacja bez identyfikatora albo karty")
@@ -334,7 +323,7 @@ func (r *repozytoriumTerminala) ZapiszObserwacje(ctx context.Context, obserwacja
 	return nil
 }
 
-// ZmienStanObserwacji przestawia stan obserwacji wraz z powodem.
+// ZmienStanObserwacji przestawia stan obserwacji plików terminala wraz z podanym powodem tej samej zmiany.
 func (r *repozytoriumTerminala) ZmienStanObserwacji(ctx context.Context, kod string,
 	stan shared.TerminalWatchStatus, powod string) error {
 
@@ -351,7 +340,7 @@ func (r *repozytoriumTerminala) ZmienStanObserwacji(ctx context.Context, kod str
 	return nil
 }
 
-// OdnotujWyzwolenie podnosi licznik wyzwoleń obserwacji.
+// OdnotujWyzwolenie podnosi licznik wyzwoleń obserwacji plików i zapisuje chwilę ostatniego wyzwolenia.
 func (r *repozytoriumTerminala) OdnotujWyzwolenie(ctx context.Context, kod string) error {
 	if kod == "" {
 		return fmt.Errorf("dane: odnotowanie wyzwolenia bez identyfikatora obserwacji")
@@ -366,12 +355,12 @@ func (r *repozytoriumTerminala) OdnotujWyzwolenie(ctx context.Context, kod strin
 	return nil
 }
 
-// OsierocObserwacje przestawia obserwacje poprzedniego biegu rdzenia na `stopped`.
+// OsierocObserwacje przestawia obserwacje poprzedniego biegu rdzenia na stan stopped po ponownym starcie.
 func (r *repozytoriumTerminala) OsierocObserwacje(ctx context.Context) (int64, error) {
 	return r.osierocWpisyTerminala(ctx, osierocObserwacjeTerminala, "obserwacji")
 }
 
-// usunWpisTerminala wykonuje kasowanie po kodzie i oddaje prawdę o skutku.
+// usunWpisTerminala wykonuje kasowanie po kodzie i oddaje prawdę o skutku: czy wiersz naprawdę zniknął.
 func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
 	zapytanie, kod, czego string) (bool, error) {
 
@@ -393,7 +382,7 @@ func (r *repozytoriumTerminala) usunWpisTerminala(ctx context.Context,
 	return usuniete > 0, nil
 }
 
-// osierocWpisyTerminala wykonuje jedno osierocenie i oddaje liczbę wierszy.
+// osierocWpisyTerminala wykonuje jedno osierocenie zapytaniem i oddaje liczbę wierszy, których dotknęło.
 func (r *repozytoriumTerminala) osierocWpisyTerminala(ctx context.Context,
 	zapytanie, czego string) (int64, error) {
 

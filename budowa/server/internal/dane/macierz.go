@@ -1,13 +1,6 @@
 // Odpowiedzialność pliku: odczyt macierzy widoczności modułów w środowiskach
-// (tabela `srodowisko_modul`). Macierz jest konfiguracją: wiersz mówi, czy
-// moduł stoi w bocznej nawigacji danego środowiska i na którym miejscu.
-// Wiersze wnoszą migracje schematu — repozytorium ich nie zakłada.
-//
-// Osobny byt obok `RepozytoriumModulow`: tamto repozytorium czyta moduły,
-// a macierzy używa wyłącznie jako filtra (`ListaSrodowiska`). Tu bytem jest sam
-// wiersz macierzy — z parą kodów, kolejnością i widocznością — którego tamten
-// kształt nie umie oddać. To nie druga prawda o module: jedna tabela, dwa różne
-// pytania.
+// (tabela `srodowisko_modul`). Macierz jest konfiguracją: wiersz mówi, czy moduł stoi w bocznej nawigacji
+// danego środowiska i na którym miejscu.
 package dane
 
 import (
@@ -15,35 +8,22 @@ import (
 	"fmt"
 )
 
-// WierszMacierzy to jeden wiersz tabeli `srodowisko_modul` wraz z kodami obu
-// stron pary. Kody wchodzą tu razem z identyfikatorami, bo czytelnik macierzy
-// prawie zawsze potrzebuje kodu, a nie numeru wiersza — a drugie zapytanie po
-// słownik byłoby powrotem do pętli N+1, którą ten byt właśnie znosi.
+// WierszMacierzy to jeden wiersz tabeli `srodowisko_modul` wraz z kodami obu stron pary środowiska i modułu.
 type WierszMacierzy struct {
 	SrodowiskoID  int64
 	SrodowiskoKod string
 	ModulID       int64
 	ModulKod      string
-	// Kolejnosc to pozycja modułu w bocznej nawigacji środowiska. Dla pary
-	// niewidocznej nie niesie treści — pozycji poza wykazem nie ma.
+	// Kolejnosc to pozycja modułu w bocznej nawigacji środowiska; dla pary niewidocznej nie niesie treści.
 	Kolejnosc int64
 	Widoczny  bool
 }
 
-// RepozytoriumMacierzy jest kontraktem odczytu macierzy widoczności.
-//
-// Zapisu tu nie ma świadomie. Kontrakt platformy nie definiuje ani jednej
-// komendy zmieniającej macierz, więc metoda zapisu nie miałaby drogi wywołania
-// — a byt bez drogi wywołania jest atrapą. Gdy komenda powstanie, pisarz
-// dopisze się do tego samego interfejsu.
+// RepozytoriumMacierzy jest kontraktem odczytu macierzy widoczności modułów; zapisu tu nie ma świadomie.
 type RepozytoriumMacierzy interface {
-	// Pelna zwraca wszystkie wiersze macierzy — widoczne i niewidoczne —
-	// w kolejności kart środowisk, a wewnątrz środowiska w kolejności nawigacji.
+	// Pelna zwraca wszystkie wiersze macierzy — widoczne i niewidoczne — w kolejności nawigacji środowisk.
 	Pelna(ctx context.Context) ([]WierszMacierzy, error)
-	// KodySrodowiskModulow zwraca odwzorowanie `modul.id` → kody środowisk,
-	// w których moduł jest WIDOCZNY, w kolejności kart środowisk. Moduł
-	// nieobecny w wyniku nie ma okna modułowego w żadnym środowisku — jest
-	// dostępny wyłącznie ze strony głównej.
+	// KodySrodowiskModulow zwraca odwzorowanie modułu na kody środowisk, w których jest widoczny.
 	KodySrodowiskModulow(ctx context.Context) (map[int64][]string, error)
 }
 
@@ -54,10 +34,8 @@ const (
 	                      JOIN srodowisko s ON s.id = sm.srodowisko_id
 	                      JOIN modul m      ON m.id = sm.modul_id`
 
-	// Porządek środowisk jest ten sam, co w `listaSrodowisk` (kolejnosc, kod),
-	// a wewnątrz środowiska ten sam, co w `listaModulowSrodowiska`
-	// (sm.kolejnosc, m.kod). Dzięki temu jedno złączenie oddaje dokładnie ten
-	// wynik, który dawała pętla po środowiskach — co do zawartości i kolejności.
+	// Porządek środowisk jest ten sam, co przy odczycie środowisk, a wewnątrz środowiska ten sam, co przy
+	// odczycie modułów środowiska.
 	porzadekMacierzy = ` ORDER BY s.kolejnosc, s.kod, sm.kolejnosc, m.kod`
 
 	pelnaMacierz = `SELECT ` + kolumnyMacierzy + zlaczenieMacierzy + porzadekMacierzy
@@ -74,16 +52,12 @@ func noweRepozytoriumMacierzy(z *zapytania) *repozytoriumMacierzy {
 	return &repozytoriumMacierzy{zapytania: z}
 }
 
-// Pelna zwraca komplet wierszy macierzy.
+// Pelna zwraca komplet wierszy macierzy widoczności modułów we wszystkich środowiskach całej platformy.
 func (r *repozytoriumMacierzy) Pelna(ctx context.Context) ([]WierszMacierzy, error) {
 	return r.wykaz(ctx, pelnaMacierz, "macierzy widoczności")
 }
 
-// KodySrodowiskModulow składa odwzorowanie moduł → kody środowisk widocznych.
-//
-// Jedno zapytanie zamiast zapytania na każde środowisko: macierz jest mała,
-// ale czyta ją każde `home.enter`, `environment.list`, `environment.enter`
-// i `module.list`, więc N+1 płaciło się przy każdym wejściu Operatora.
+// KodySrodowiskModulow składa odwzorowanie modułu na kody środowisk, w których jest widoczny, jednym zapytaniem.
 func (r *repozytoriumMacierzy) KodySrodowiskModulow(ctx context.Context) (map[int64][]string, error) {
 	wiersze, err := r.wykaz(ctx, widocznaMacierz, "widocznej macierzy")
 	if err != nil {
@@ -96,7 +70,7 @@ func (r *repozytoriumMacierzy) KodySrodowiskModulow(ctx context.Context) (map[in
 	return kody, nil
 }
 
-// wykaz wykonuje zapytanie zwracające wiele wierszy macierzy.
+// wykaz wykonuje zapytanie do bazy danych zwracające wiele wierszy macierzy widoczności modułów platformy.
 func (r *repozytoriumMacierzy) wykaz(ctx context.Context, zapytanie, opis string) ([]WierszMacierzy, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
 	if err != nil {
@@ -122,7 +96,7 @@ func (r *repozytoriumMacierzy) wykaz(ctx context.Context, zapytanie, opis string
 	return lista, nil
 }
 
-// odczytajWierszMacierzy składa strukturę z jednego wiersza wyniku.
+// odczytajWierszMacierzy składa pełną strukturę wiersza macierzy z jednego wyniku zapytania do bazy danych.
 func odczytajWierszMacierzy(wiersz skaner) (WierszMacierzy, error) {
 	var para WierszMacierzy
 	var widoczny int

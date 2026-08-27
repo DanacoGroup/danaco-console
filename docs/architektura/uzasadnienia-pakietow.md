@@ -4819,3 +4819,27 @@ nietknięta, bo jest wskazaniem wadliwym, a orzekanie o kształcie treści
 własne okno ukryłaby pomyłkę modelu.
 ## budowa/server/internal/dane/roundtable_konsensus.go
 Wersja stanowiska jest wpisem, nie licznikiem: licznik w kolumnie wersji tabeli stanowiska mówi, ile redakcji było, ale porównać dwie redakcje da się dopiero wtedy, gdy każda z nich została zapisana osobno. Powtórny zapis tej samej wersji nie jest błędem: stanowisko odczytywane wielokrotnie bez zmiany treści nie podbija licznika, więc wersja bieżąca pozostaje spójna z ostatnim zapisanym wpisem.
+
+## budowa/server/internal/dane/macierz.go
+Wiersze wnoszą migracje schematu — repozytorium ich nie zakłada. To osobny
+byt obok repozytorium modułów: tamto repozytorium czyta moduły, a macierzy
+używa wyłącznie jako filtra. Tu bytem jest sam wiersz macierzy — z parą
+kodów, kolejnością i widocznością — którego tamten kształt nie umie oddać.
+To nie druga prawda o module: jedna tabela, dwa różne pytania.
+
+Kody wchodzą do wiersza macierzy razem z identyfikatorami, bo czytelnik
+macierzy prawie zawsze potrzebuje kodu, a nie numeru wiersza — a drugie
+zapytanie po słownik byłoby powrotem do pętli wielokrotnych zapytań, którą
+ten byt właśnie znosi.
+
+Zapisu w tym repozytorium nie ma świadomie. Kontrakt platformy nie
+definiuje ani jednej komendy zmieniającej macierz, więc metoda zapisu nie
+miałaby drogi wywołania — a byt bez drogi wywołania jest atrapą.
+
+Moduł nieobecny w wyniku odczytu widocznych kodów środowisk nie ma okna
+modułowego w żadnym środowisku — jest dostępny wyłącznie ze strony głównej.
+
+Jedno zapytanie zamiast zapytania na każde środowisko: macierz jest mała,
+ale czyta ją każde wejście na stronę główną, wykaz środowisk, wejście do
+środowiska i wykaz modułów, więc wielokrotne zapytania płaciłyby się przy
+każdym wejściu operatora.

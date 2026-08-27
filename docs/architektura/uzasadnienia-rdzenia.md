@@ -2315,3 +2315,28 @@ człony, a nie napisem: `strings.Contains(sciezka, "..")` odmówiłby
 uczciwemu plikowi `wersja..txt`, a przepuściłby postacie nieprzewidziane
 jako napis. Człon jest jednostką, w której ścieżka naprawdę się
 rozstrzyga.
+
+## handlers_automations_dobudowa.go
+
+Plik jest osobny od wpięcia rdzenia modułu Automations, bo osobna jest
+odpowiedzialność: rdzeń modułu wpina definicję, harmonogram, kolejkę,
+zależności i przebiegi, a ten plik — panele i szuflady okien operacyjnych,
+którymi Operator sięga po wersje, szablony, logi, ładunki, alarmy, sekrety
+i audyt. Port jest jeden, bo moduł jest jeden — rozszerza port rdzenia
+modułu, nie stoi obok niego.
+
+Rozgłasza się tylko to, co zmienia byt widziany przez inne okno. Zapis
+definicji, publikacja, udostępnienie, etykiety i przywrócenie wersji
+zmieniają automatykę, więc idą zdarzeniem zmiany powiązania automatyki —
+tym samym, którym idzie zmiana harmonogramu. Odczyty (wykaz wersji,
+porównanie, log, kroki, ładunek, audyt, wykaz szablonów, wykaz reguł, wykaz
+sekretów) nie rozgłaszają niczego, bo zdarzenie po odczycie byłoby szumem,
+na który okna reagowałyby odświeżeniem bez powodu. Wznowienie i odtworzenie
+przebiegu rozgłaszają stan przebiegu, ponieważ obie zmieniają to, co
+pokazuje Execution Monitor, i robią to przez ten sam nośnik, którym idzie
+działanie na kolejce.
+
+Port modułu bez czynności dobudowy to co innego niż brak portu: moduł jest,
+a rdzeń nie umie wykonać części jego pracy. Wtedy komendy dobudowy i tak
+zostają wpięte i odmawiają wprost, bo odpowiedź „nieznana komenda"
+wskazywałaby na brak modułu, a nie na usterkę montażu.

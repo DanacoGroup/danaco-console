@@ -316,7 +316,7 @@
    wyższym niż wiersz metryki kafla środowiska. */
 .cd-grot-marki {
   width: auto;
-  height: var(--cd-grot-wys, var(--dn-od-6));
+  height: var(--cd-grot-wys, var(--dn-od-10));
   flex: none;
   color: var(--dn-tekst-2);
   transition: color var(--dn-czas-2) var(--dn-ease), transform var(--dn-czas-2) var(--dn-ease);
@@ -325,9 +325,14 @@
 /* Kafel środowiska: wejście niesie sam grot, bez obrysu i tła — tak samo jak
    w kaflu modułu. Kontrolką zostaje, bo karta środowiska nie jest przyciskiem,
    ale nie nosi już chromu przycisku bibliotecznego. */
+/* Grot stał 17 px od prawej i od dołu karty, czyli wciśnięty w róg; w kaflu
+   modułu odsunięcie wynosi 25 px. Margines wyrównuje obie strefy. */
 .cd-strona .cd-wejdz--grot {
   display: flex;
   align-items: center;
+  /* Lewy margines zostaje samoczynny — to on dosuwa grot do prawej krawędzi
+     wiersza metryki; skrót `margin` go zerował i grot wracał pod tekst. */
+  margin: 0 var(--dn-od-2) var(--dn-od-2) auto;
   padding: 0;
   border: 0;
   background: none;
@@ -337,7 +342,7 @@
 }
 .cd-strona .cd-wejdz--grot > .cd-grot-marki {
   width: auto;
-  height: var(--dn-od-8);
+  height: var(--dn-od-10);
 }
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
 .cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki {
@@ -356,7 +361,7 @@
    znak, nie kontrolka: dosuwa się do prawej krawędzi i odpowiada na najechanie
    całym kaflem. */
 .cd-kafel-grot {
-  --cd-grot-wys: var(--dn-od-8);
+  --cd-grot-wys: var(--dn-od-10);
   display: flex;
   align-items: center;
   margin-left: auto;

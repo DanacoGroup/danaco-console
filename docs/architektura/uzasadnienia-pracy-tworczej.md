@@ -1553,3 +1553,27 @@ o zasięgu modelu nie wiąże jego decyzji.
 Przy rozstrzyganiu propozycji zakresy liczone są w treści sprzed decyzji,
 więc rozstrzyganie idzie od końca dokumentu — przyjęcie od początku
 przesuwałoby zakresy propozycji jeszcze nierozpatrzonych.
+
+## adapter_modul_studio_szablony_pism.go
+
+Szablon niesie naraz cztery rzeczy — arkusz stylów, nastawy strony, nagłówek
+i stopkę oraz pola do wypełnienia — nie samą treść. Zapis szablonu z dokumentu
+bierze całą postać dokumentu, nie tylko jego treść; wniesienie z pliku
+przejmuje wszystkie te rzeczy, bo czyta plik tym samym rachunkiem, którym
+czyta się dokument; dokument zakładany z szablonu dostaje tę postać
+podstawioną, a nie domyślną platformy; blokady wzorcowe idą razem, bo fragment
+wzorcowy pisma ma zostać wzorcowy.
+
+Szablon fabryczny nie jest do usunięcia: odmowa nazywa powód wprost, wzorem
+`studio.operation.delete`, który robi to samo dla operacji fabrycznych. Cicha
+bezczynność albo `deleted: false` bez zdania byłyby tu odpowiedzią, po której
+nie dałoby się poznać, że szablon zszedł.
+
+Pola szablonu leżą w `szablon_studio.pola_json`, jednym miejscem — tak stanowi
+migracja 367 i tak je czyta `studio.template.apply`. Własna tabela pól dałaby
+dwa miejsca prawdy: `apply` czytałby jedno, warsztat drugie, a rozjazd
+wyszedłby przy pierwszym szablonie założonym starą drogą.
+
+Wypełnianie szablonu (`WypelnijSzablon`) jest czynnością dostępną także
+modelowi AI — dlatego autor czynności wchodzi do dziennika, a czynność modelu
+odkłada się jako jego, tym samym rachunkiem autorstwa co czynność człowieka.

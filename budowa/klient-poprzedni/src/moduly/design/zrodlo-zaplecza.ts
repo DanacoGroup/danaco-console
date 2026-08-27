@@ -15,24 +15,9 @@ import { czyLiczba, czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Zaplecze modułu Design — wywołania czterech cudzych obszarów kontraktu,
- * z których moduł korzysta, a których nie prowadzi.
- *
- *   `window.list` / `window.state.get`
- *        — okno modułu i jego stan; komenda wspólna każdemu oknu operacyjnemu.
- *   `channel.list`
- *        — rejestr kanałów modelu. Najbliższy istniejący odpowiednik „wyboru
- *          silnika generującego" z panelu akcji Prompt Buildera; pole `engine`
- *          promptu przyjmuje identyfikator kanału.
- *   `module.list` / `context.transfer`
- *        — katalog modułów rdzenia i jedyna zbudowana droga przekazania
- *          międzymodułowego. Nią idzie „Wyślij do modułu docelowego"
- *          z Assets Panel. Wykaz modułów docelowych bierze się z rdzenia,
- *          nigdy z kopii katalogu po stronie klienta.
- *   `progress.changed`
- *        — telemetria postępu. Generowanie zasobu nim nie jedzie:
- *          `design.asset.generate` wraca w jednej turze, bez pola `processId`,
- *          i nie wysyła po drodze żadnego `progress.changed`.
+ * Zaplecze modułu Design — wywołania czterech cudzych obszarów kontraktu, z których
+ * moduł korzysta, a których nie prowadzi: okien i ich stanu, rejestru kanałów
+ * modelu, katalogu modułów wraz z przekazaniem kontekstu oraz telemetrii postępu.
  */
 export interface ZrodloZaplecza {
   okna(idSesji: string): Promise<Wynik<{ windows: Window[] }>>;
@@ -44,7 +29,11 @@ export interface ZrodloZaplecza {
   naPostep(sluchacz: (tresc: ProgressChangedEvent) => void): Odsubskrybuj;
 }
 
-/** Zlecenie przekazania kompletu kontekstu do modułu docelowego. */
+/**
+ * Zlecenie przekazania kompletu kontekstu do modułu docelowego. Niesie okno
+ * źródłowe i kod modułu docelowego, bo przekazanie idzie zawsze z konkretnego
+ * okna, a nie z modułu jako całości.
+ */
 export interface ZleceniePrzekazania {
   idOknaZrodlowego: string;
   kodModuluDocelowego: string;

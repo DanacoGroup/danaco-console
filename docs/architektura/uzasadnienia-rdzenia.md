@@ -4922,3 +4922,17 @@ a klient musi dostać potwierdzenie od razu. Komenda zatrzymania odpowiada
 zawsze, niezależnie od stanu pętli — przycisk zatrzymania jest czynny bez
 względu na to, czy było co zatrzymywać; gdy nie było, wynik niesie znacznik
 zatrzymania równy fałsz, a nie błąd.
+## budowa/server/internal/core/obsluga.go
+Powtarzalna praca dyspozycji dzieje się w jednym miejscu: odczytanie ładunku w kształcie żądania kontraktu, wywołanie czynności domeny, zamiana wyniku albo błędu na odpowiedź protokołu. Dzięki temu pliki obsługi komend zawierają wyłącznie wiązanie nazwy kontraktu z czynnością, bez powielonej obsługi błędów. Typ żądania i typ wyniku pochodzą z pakietu kontraktu, więc zmiana kontraktu przerywa kompilację obsługiwacza zamiast rozjeżdżać się z nim po cichu.
+
+Zgodność z kontraktem sprawdza się po odczytaniu ładunku i przed czynnością domeny, ponieważ odczyt orzeka o kształcie treści, a sprawdzenie zgodności o jej zawartości. Bez tego sprawdzenia czynność domeny dostawała żądanie niepełne i uzupełniała brak wartością domyślną, meldując powodzenie. Kontekst niesie tę operację, bo przepuszczenie żądania mimo braków zostawia wpis w dzienniku rdzenia, a dziennik jedzie właśnie kontekstem.
+
+Tożsamość żądania jedzie kontekstem, bo ładunek jej nie niesie: pole identyfikatora mieszka w kopercie, a czynność domeny dostaje wyłącznie rozpakowaną treść. Bez tego wpisu nadawca strumienia nie miałby czym powtórzyć identyfikatora zadania w kopertach odpowiedzi strumieniowej, choć kontrakt każe mu go powtarzać.
+
+## budowa/server/internal/core/odtworzenie_stanu.go
+Rejestr nadzorcy jest pamięcią jednego uruchomienia rdzenia. Bez odtworzenia stanu z bazy rozmowa sprzed restartu wraca wyłącznie historią wiadomości, a sam byt sesji i okna znika — klient trzyma identyfikator, pod którym nie ma już czego wskazać. Odtworzenie wnosi sesje i okna z bazy pod tymi samymi identyfikatorami zewnętrznymi, więc komendy powiązania sesji, odczytu stanu okna i wysyłki wiadomości trafiają w te same byty. Odtworzenie nie startuje procesów okien: proces ginie wraz z rdzeniem, a okno wraca jako byt bez procesu — rejestr procesów zgłosi wtedy stan oczekujący, a pierwsza tura uruchomi proces zwykłą drogą.
+
+Odtworzenie sesji po identyfikatorze rdzenia obsługuje też powrót sesji z kosza: usunięcie zdejmuje sesję z rejestru żywego, a wykaz startowy sesji ładowany z bazy przy rozruchu jej wtedy nie widzi, więc przywrócenie musi wnieść ją do rejestru samodzielnie, tą samą drogą, którą wnosi start rdzenia.
+
+## budowa/server/internal/core/okna_utrwalone.go
+Rejestr nadzorcy zna wyłącznie okna bieżącego uruchomienia rdzenia. Po jego restarcie okna wskazane przez klienta istnieją już tylko wierszami w bazie, i wtedy ten odczyt odpowiada na pytanie o okna otwarte przed restartem. Wiersz niesie klucze obce, kontrakt niesie kody, więc przekład dokłada słowniki modułów i kanałów modelu.

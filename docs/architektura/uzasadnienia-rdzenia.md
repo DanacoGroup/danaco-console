@@ -5836,3 +5836,17 @@ telemetria stanu okna jest dodatkiem do pracy rdzenia, nie jej warunkiem.
 Znak sprawcy przy rozgłoszeniu zmiany sesji stawia się wprost, bo w tym
 miejscu nie ma ani gniazda, ani żądania, a brak gniazda sam z siebie
 znaczy nie wiadomo, a nie rdzeń — zasada opisana w pliku sprawca.go.
+
+## budowa/server/internal/core/stan_sesji_zrodla.go
+
+Osadzenie sesji i nadania dostępu okien są wąskimi portami, a nie całym
+zestawem repozytoriów, ponieważ kontrolka powrotu do sesji potrzebuje
+dwóch odpowiedzi — w którym środowisku sesja stoi i co dane okno widzi —
+a nie dostępu do bazy. Dzięki temu składacz obecności da się sprawdzić bez
+SQL, a warstwa danych pozostaje po swojej stronie granicy. Brak źródła nie
+unieważnia odpisu: sesja bez rozpoznanego środowiska i okno bez nadań są
+poprawnym stanem, w którym kontrolka pokazuje mniej.
+
+Słownik środowisk, przez który KodSrodowiska szuka karty sesji, ma tyle
+wierszy, ile profili widoczności modułów — to garść wierszy zasianych
+migracją, a nie zbiór rosnący z bieżącą pracą w interfejsie.

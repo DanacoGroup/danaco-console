@@ -2683,3 +2683,18 @@ Nazywa przyczynę braku karty w pasie oraz treść odpowiedzi rdzenia na czynno�
 Stan przed pierwszym odczytem rozróżnia „jeszcze nie pytałem" od „rdzeń nic nie ma": twierdzenie
 o zawartości rdzenia postawione bez jego odpowiedzi byłoby zgadywaniem, więc moduł nazywa wprost,
 że jeszcze nie zapytał, zamiast domniemywać pustkę.
+
+## budowa/klient-poprzedni/src/moduly/translate/narzedzia-panelu.ts
+Narzędzia są wydzielone z panelu, bo panel odpowiada za treść tłumaczenia i jej korektę, a to jest
+pasek czynności wykonywanych na tej treści, przy czym każde narzędzie ma własną komendę kontraktu.
+Wynik narzędzia nie przesłania panelu: kontrola jakości, tłumaczenie zwrotne i podpowiedź pamięci
+pokazują się w wierszu odpowiedzi pod paskiem, żeby dało się je z panelem porównać. Ster kanału
+stoi przy pasku, bo dotyczy jednej z jego czynności — pole kanału tłumaczenia zwrotnego jest
+jedynym polem kanału w tym pasku, pozostałe pięć komend modelu nie wywołuje albo woła go bez
+wskazania, więc podpis steru nazywa czynność wprost, zamiast udawać nastawę całego panelu.
+Treść tłumaczenia jest potrzebna tłumaczeniu zwrotnemu, ponieważ rdzeń bywa, że oddaje w kolumnie
+zwrotnej dokładnie tę treść, a wtedy przekładu odwrotnego nie było i sprawozdanie ma to powiedzieć
+wprost. Po przerysowaniu paska pole tonu panelu niesie tę samą wartość, którą pokazuje nagłówek
+panelu. Ta sama zasada rządzi polem tłumaczenia w pliku panel-jezyka.ts: kontrolka, w której
+operator właśnie pisze, należy do niego, dopóki jej nie odda, a zdarzenie zmiany tłumaczenia,
+przychodzące w środku pisania, nie może podmienić wpisywanego tonu.

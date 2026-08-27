@@ -4031,3 +4031,53 @@ Pętla zwrotna jest wyborem, nie skrótem: serwer narzędzi stoi zawsze na tej
 samej maszynie co proces modelu, który go uruchomił, a proces modelu stoi
 przy rdzeniu, który go zrodził. Adres inny niż pętla zwrotna byłby wtedy
 zgadywaniem — Operator wskazuje go przełącznikiem, gdy układ jest inny.
+
+## budowa/server/internal/session/rejestr_procesow.go
+
+Rejestr nie uruchamia procesów i nie zna drogi ich uruchomienia. Proces tury startuje warstwa kanału,
+a do rejestru trafia przez metodę Przejmij, objęty uchwytem drzewa i gotowy do zatrzymania. Jest to
+jedyna droga wpisu do tego rejestru: bez przejęcia zamknięcie okna nie zatrzymałoby tego, co model
+uruchomił. Przejęcie zakłada Job Object na Windows albo grupę procesów na systemach uniksowych, dzięki
+czemu ubicie okna kończy także wnuki procesu, bez narzędzia taskkill i bez zależności od narzędzi
+systemu. Niepowodzenie przejęcia nie przerywa tury: proces biegnie i odpowiada, tylko jego potomstwo
+nie jest objęte uchwytem.
+
+Dogląd uruchomiony po wstawieniu wpisu do mapy jest jedyną drogą obserwacji, więc pokrywa każdy wpis,
+i żaden proces kończący się sam nie zostaje w rejestrze jako biegnący. Gorutyna doglądu nie sięga po
+blokadę rejestru, więc jej start pod zamkiem niczego nie blokuje.
+
+## budowa/server/internal/narzedzia/ekspert_definicja.go
+Serwer narzędzi jest dla rdzenia zwykłym urządzeniem: ta sama koperta, to samo
+gniazdo, co okno interfejsu. Drugiego wejścia do danych eksperta tu nie ma
+i nie powstaje — sięgnięcie po sterownik bazy z procesu modelu byłoby
+obejściem rdzenia, a nie skrótem.
+
+Kontrakt nie ma osobnej komendy do odczytu jednego eksperta, a żądanie wykazu
+agentów nie filtruje po identyfikatorze. Wykaz jest więc pobierany w całości
+i dopasowywany po identyfikatorze eksperta; gdyby komenda odczytu pojedynczego
+eksperta kiedyś powstała, funkcja OdczytajEksperta jest jedynym miejscem do
+zmiany.
+
+Gniazdo do rdzenia zestawia się przy pierwszym użyciu: proces modelu uruchamia
+serwery MCP na starcie rozmowy, a rdzeń bywa wtedy jeszcze niegotowy.
+Definicji nie da się więc mieć w chwili startu procesu, dlatego czyta się ją
+przy pierwszym żądaniu tools/list.
+
+Pola Umiejetnosci i Konektory typu DefinicjaEksperta odpowiadają polom kontraktu
+niosącym umiejętności i konektory eksperta, przeniesionym bez zmiany znaczenia;
+reszta eksperta — warstwy, model, uprawnienia — do doboru narzędzi nie należy
+i nie jest tu kopiowana.
+
+Kody wraca jedną listą, bo dobór narzędzi nie rozróżnia pochodzenia kodu:
+rozpoznanie idzie po tym, czy kod nazywa narzędzie albo grupę, a nie po tym,
+w którym polu eksperta go zapisano.
+
+Rozstrzygnięcie, co zrobić z niewiedzą o eksperckim wyposażeniu, należy do
+składania wykazu, nie do OdczytajEksperta — tutaj jest wyłącznie odczyt
+i wyłącznie prawda o tym, co rdzeń powiedział.
+
+Kod eksperta nieznany rdzeniowi jest faktem, nie pustką: ekspert bywa kasowany
+niezależnie od okien, w których pracował, więc okno może nieść kod, którego
+biblioteka już nie ma. Taki stan wraca błędem mówiącym, ilu ekspertów rdzeń
+zna, żeby stan nieznaleziony był odróżnialny od stanu, w którym rdzeń oddał
+wykaz pusty.

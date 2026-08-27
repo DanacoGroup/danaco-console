@@ -2955,3 +2955,38 @@ wprost (transport stdio z programem albo sse/http z adresem). Wiązania
 wskazujące punkt dostępu (`AccessPointId`) pomija: ich adres i poświadczenie
 żyją w rejestrze punktów dostępu, którego ta droga nie rozstrzyga — jadą one
 drogą nadań okna (mosty).
+
+## budowa/server/internal/core/zaleznosci_zewnetrzne.go
+
+Plik niesie jeden wykaz programów spoza instalki, których rdzeń używa, wraz
+z sondą sprawdzającą ich obecność przy starcie. `zewnetrzne.Wolaj` sprawdza
+obecność programu przed uruchomieniem i odmawia zdaniem nazywającym brak
+(`zewnetrzne.BrakNarzedzia`) — to jest właściwe zachowanie w chwili
+czynności, ale za późne jako informacja: Operator dowiaduje się o braku
+dopiero po naciśnięciu przycisku, osobno dla każdej funkcji, i nie ma skąd
+wiedzieć, ile jeszcze takich niespodzianek przed nim. Sonda startowa odwraca
+kolejność — rdzeń mówi na wejściu, czym dysponuje i czego mu brak, jednym
+wykazem; to jest ta sama wiedza, ale podana zanim zawiedzie czynność.
+
+Każde narzędzie jest zadeklarowane tam, gdzie jest używane — Pandoc przy
+dokumentach, ffmpeg przy nagraniach, Tesseract przy rozpoznaniu pisma. Wykaz
+bierze te deklaracje, zamiast wypisywać nazwy po raz drugi: druga lista
+rozjechałaby się z pierwszą przy pierwszej zmianie pakietu i Operator
+czytałby podpowiedź instalacyjną prowadzącą donikąd.
+
+Kolejność wykazu `zaleznosciZewnetrzne` jest ustalona, żeby dziennik startu
+miał się różnić wtedy, gdy zmienił się stan maszyny, a nie wtedy, gdy inaczej
+ułożyła się mapa.
+
+Tika i LanguageTool to programy Javy, więc obie pozycje wskazują ten sam plik
+wykonywalny (`java`) i stoją w wykazie osobno. Nie jest to powtórzenie:
+pozycja wykazu odpowiada na pytanie „co przestaje działać i co z tym zrobić",
+a odpowiedzi są tu dwie różne — brak Javy zabiera naraz odczyt plików
+i korektę językową, czyli dwa zakresy w dwóch modułach. Wiersz na zakres jest
+tym, po co ten wykaz istnieje.
+
+Wiersz zbiorczy `zglosZaleznosci` idzie zawsze — także wtedy, gdy nie brakuje
+niczego, bo „wszystkie obecne" jest informacją, nie ciszą. Każdy brak
+dostaje własny wiersz z zakresem, który przestaje działać, i podpowiedzią
+instalacyjną: Operator ma po starcie wiedzieć, czego nie zrobi, zanim
+spróbuje.

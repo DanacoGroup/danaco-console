@@ -126,3 +126,40 @@ mówi, że woła wykonawca, wpięcie dopisuje autora modelu do ładunku, zanim
 autora domyślnego do wykonawcy, nigdy odwrotnie — bo żądanie, które samo
 podaje się za wykonawcę, jest twierdzeniem modelu o sobie, nie faktem
 gniazda serwera narzędzi.
+
+## adapter_modul_studio_wydanie_formatu.go
+
+Format uboższy niż dokument jest sytuacją normalną, przemilczenie straty nie
+jest — każde wydanie oddaje wykaz cech pominiętych pozycję po pozycji, z nazwą
+cechy i jej rozmiarem policzonym z postaci dokumentu, a nie zdaniem ogólnym.
+Rachunek stoi bez programu zewnętrznego: txt, md, html i rtf idą rachunkiem
+własnym tego pliku, docx i odt przez złożenie OOXML i ODF, a pdf biblioteką
+`pdfcpu` przez profil wydania. Bajty wyniku idą do magazynu zasobów rdzenia;
+ścieżka na maszynie serwera, gdy operator ją wskazał, jest drogą dodatkową,
+nie zamiast — instalka cienka sięga po wynik zasobem, nie po ścieżce serwera.
+
+Wyróżnienie tła (znakowanie sesji pracy modelu i operatora) schodzi z postaci
+przed złożeniem pliku, jednakowo dla każdego formatu: pismo wysłane na
+zewnątrz nie ma wyjść w plamach roboczych, tak jak nie ma wynieść komentarzy
+z marginesu. Zdjęcie idzie na kopii postaci wydania, nie w bazie, więc dokument
+zastany zostaje ze znakowaniem nietkniętym, a zdjęcie jest nazwane w bilansie.
+Styl nazwany z wyróżnieniem zostaje nietknięty, bo to postanowienie o wyglądzie
+dokumentu, a nie znakowanie sesji — zdejmowanie go byłoby zmianą, o którą nikt
+nie prosił. Ten sam podział — kopia na czas wydania, baza nietknięta — obowiązuje
+przy narzuceniu postaci szablonu: szablon podmienia arkusz stylów, nastawy
+strony, nagłówek i stopkę na czas wydania, a nie treść ani zapis w bazie.
+
+Przypis dolny wychodzi do pliku tekstowego czy markdown wykazem na końcu, bo
+w tych formatach nie ma gdzie postawić odsyłacza w miejscu — ale przypis, który
+stał pod stroną przy swoim zdaniu, i przypis na końcu pliku to nie ta sama
+cecha: znika powiązanie z miejscem i numeracja odświeżalna, więc strata jest
+nazwana z liczbą po rodzaju elementu aparatu (przypisy, spisy, odsyłacze,
+podpisy), a nie jednym workiem.
+
+RTF wchodzi do wykazu formatów wykonalnych rachunkiem własnym: format tekstowy
+o prostej gramaturze, w którym rachunek niesie postać znaku, akapit, wyrównanie
+i tabelę; obrazy osadzone i aparat odświeżalny wychodzą w wykazie pominiętych.
+
+Profil wydania PDF niesie nastawy paginacji i stopki; profil niewskazany nie
+jest odmową — dokument wychodzi z paginacją i stopką domyślną, a bilans mówi
+wprost, że profilu nie było.

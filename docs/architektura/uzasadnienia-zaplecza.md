@@ -1045,3 +1045,35 @@ który już istnieje. Ponad pozycję kolejki ten wiersz niesie to, czego
 pozycja nie wie: kto ją wykonuje w rozumieniu obsady, pod jakim biegiem
 biegnie i ile kosztowała — żetony, narzędzia i czas są polami, bo pokazuje
 je panel zadań w tle, a struktura kontraktowa podagenta ich nie niesie.
+
+## budowa/desktop/src-tauri/src/wskazanie.rs
+
+Rdzeń stoi na serwerze wdrożenia, a instalator adresu tego serwera nie zna
+i znać go nie może: w chwili rozpakowania plików nikt jeszcze nie wie, pod
+jaką nazwą stoi rdzeń danego Operatora. Wie to sam Operator i podaje adres
+przy pierwszym uruchomieniu okna; drugą drogą wskazania jest zmienna
+środowiska, właściwa wykonawcy i jednostce usługi, nie Operatorowi. Produkt
+występuje wyłącznie jako hybryda, więc wybór „rdzeń na tym urządzeniu" nie
+istnieje: rdzenia na urządzeniu Operatora nie ma, a powłoka nie ma czym go
+postawić.
+
+Pole `host` wraca do pola okna po zapisie, żeby Operator poprawiał to, co
+napisał, zamiast pisać wskazanie od nowa. Pole `adres` odpowiada postaci
+oczekiwanej przez warstwę połączenia klienta (`klient/src/polaczenie/adres-
+rdzenia.ts`), która samego adresu nie składa. Warstwa `brak` oznacza pierwsze
+uruchomienie i jest dla okna sygnałem, że ma zapytać Operatora o adres;
+wskazania pochodzącego ze zmiennej środowiska okno nie nadpisuje zapisem —
+ma o tym poinformować, zamiast przyjmować zapis bez skutku.
+
+Kolejność działań w `wskaz` jest wiążąca: najpierw próba połączenia, potem
+zapis. Zapis przed próbą utrwaliłby wskazanie, które nie działa, a Operator
+zobaczyłby skutek dopiero przy następnym starcie, gdy okno zamieniłoby się
+w ekran milczący. `adres` przychodzi z okna w postaci, w jakiej Operator go
+napisał: nazwa serwera albo `serwer:port`, z przedrostkiem `http://` albo bez.
+
+Rozbiór wskazania przyjmuje `serwer`, `serwer:17870`, `http://serwer:17870`
+oraz adres IPv6 w nawiasach (`[::1]:17870`), bo Operator wpisuje to, co ma
+zapisane, a nie to, co wygodne dla rozbioru. Brak podanego portu znaczy port
+obowiązujący — ten sam, na którym rdzeń nasłuchuje domyślnie. Więcej niż
+jeden dwukropek poza nawiasami jest adresem IPv6 podanym bez nich: portu
+w takim zapisie nie ma, cała treść jest hostem.

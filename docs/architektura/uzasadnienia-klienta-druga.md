@@ -4891,3 +4891,35 @@ bo sama strona danych nie pobiera. Strona zgłasza wybór środowiska, a skutek 
 stronę zamontowała — przejście przez stronę główną ma być świadome i widoczne. Wykaz środowisk aktualizuje
 się, którąkolwiek drogą wykaz przyszedł, tak by zasilenie kart bez zasilenia wykazu nie dało się tu
 napisać.
+
+## budowa/klient-poprzedni/src/rozmowa/zrodlo-wykazu-ukosnika.ts
+Typ funkcyjny oddający pozycje i powód jest w tym repozytorium wzorcem
+zastanym: panel akcji modułu bierze pozycje tak samo i z tego samego powodu —
+wykaz pusty bez powodu jest atrapą, wykaz pusty z powodem jest stanem
+opisanym. Pozycją jest wprost typ z kontraktu, a nie własny kształt: drugi
+model dawałby dwie prawdy o tym, czym jest pozycja wykazu.
+
+Wybór pozycji rodzaju narzędzia oddaje zdanie dla Operatora i to, czy
+dołożenie weszło. Zdanie idzie do wątku rozmowy: model dostał narzędzie,
+którego nie miał, więc musi to być widoczne — tak samo jak niepowodzenie, bo
+cisza po wyborze byłaby nieodróżnialna od powodzenia.
+
+Wykaz idzie w komplecie, bez zawężania po stronie rdzenia, bo filtrowanie ma
+działać od pierwszego znaku, a runda do rdzenia na każde uderzenie w klawisz
+tego nie daje. Zawężanie, porządek według trafności i wytłuszczenie trafień
+niesie mechanizm z biblioteki, któremu wykaz jest podawany w całości.
+Identyfikator sesji idzie, gdy sesja stoi — wtedy rdzeń oznacza pozycje już
+dołożone i Operator nie dokłada po raz drugi tego, co ma.
+
+Powtórzenie dołożenia nie jest błędem: kontrakt oddaje informację
+o wcześniejszym dołożeniu i to pole jest czytane wprost, więc sięgnięcie po
+narzędzie już dołożone daje zdanie o tym, a nie drugi wpis. Sprawca dołożenia
+przez komendę po ukośniku zapisuje się w danych wprost, choć kontrakt
+przyjmuje tę wartość także milczeniem.
+
+Zestaw narzędzi sesji poszerza także asystent działający za Operatora, nie
+tylko wybór z tego okna — bez nasłuchu zdarzenia takie dołożenie byłoby
+niewidoczne. Nazwy dołożeń zameldowanych przez odpowiedź komendy z tego okna
+stoją w małym zbiorze sesyjnym, bo tylko ten plik widzi obie drogi wejścia tej
+samej wiadomości: odpowiedź komendy i rozgłoszone zdarzenie. Bez niego
+Operator, który dołożył narzędzie sam, przeczytałby o tym w wątku dwa razy.

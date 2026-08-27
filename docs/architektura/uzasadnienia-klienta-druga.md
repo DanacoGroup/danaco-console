@@ -780,3 +780,14 @@ potrafi wyłącznie przeglądarka, a rachunek podziału ma dać się sprawdzić
 bez niej. Blok wyższy od całej strony zostaje na stronie własnej, ponieważ
 dzielenie go w środku wymagałoby łamania wiersza wewnątrz akapitu, czego ta
 warstwa nie umie i czego nie udaje.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-redakcji.ts
+
+Katalog jest osobny od katalogu czynności warsztatu, choć typy dzieli. Powód
+leży w materiale, na którym te dwa zbiory pracują: warsztat bierze dokument
+PDF z magazynu okna, redakcja bierze dokument Studia wczytany w edytorze.
+Jeden wspólny wykaz kazałby Operatorowi wybierać czynność, która nie ma na
+czym pracować, i dowiadywać się o tym dopiero z odmowy.
+
+Nazwy pól są nazwami kontraktu i jadą do rdzenia bez zmiany; etykiety są
+zdaniem Operatora i z nazwami się nie pokrywają.

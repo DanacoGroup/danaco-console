@@ -2608,3 +2608,21 @@ pozostałych panelach dałaby materiał niespójny co do zmiennych, czyli dokła
 szuka kontrola jakości. Wykaz zamian towarzyszy wynikowi zawsze, ponieważ przekład zapisu jest
 zmianą niewidoczną w treści na pierwszy rzut oka, a od niej zależy podstawienie wartości w gotowym
 produkcie.
+
+## budowa/klient-poprzedni/src/rozmowa/nadanie-i-przerwanie.ts
+Nadanie wiadomości i przerwanie tury rozmawiają z rdzeniem komendami message.send
+i message.stop. Wysłanie w trakcie odpowiedzi samo prosi o przerwanie, więc obie
+czynności są od siebie zależne i stoją w jednym pliku. Warstwa nie zna widoku —
+dostaje wyłącznie haczyki: co ogłosić, jak zgłosić błąd, jak przestawić stan.
+Dzięki temu ta sama logika obsługuje okno komunikacji i podgląd.
+
+Przerwanie jest jawne: message.send skierowany do okna, które odpowiada, odmawia
+kodem conflict zamiast skasować odpowiedź w połowie zdania, więc przerwanie
+jedzie osobną komendą. Para komend idzie sekwencyjnie, nie równolegle — nadane
+naraz dotarłyby w kolejności niegwarantowanej, a wysłanie, które wyprzedziło
+zatrzymanie, trafiłoby na okno nadal zajęte i odmówiło. Nieudane zatrzymanie nie
+wstrzymuje wysłania: jeżeli tura zdążyła tymczasem dobiec końca sama, wysłanie
+przejdzie, a jeżeli nie — odmówi rdzeń.
+
+## budowa/klient/src/polaczenie/zrodlo-zdarzen.ts
+Zamiast importu kanału obserwator opisuje dokładnie to, czego potrzebuje: subskrypcję zdarzenia po nazwie z kontraktu i podgląd całego ruchu. Kanał spełnia ten opis kształtem, bez dodatkowej deklaracji — jeden byt odpowiada jednemu modułowi.

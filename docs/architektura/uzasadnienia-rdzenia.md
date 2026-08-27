@@ -2037,3 +2037,61 @@ Czwarta to usunięcie ostatniego wiersza albo kolumny, po którym zostaje
 tabela o zerowej siatce. Miara jest brana osobnym wywołaniem wykazu tabel,
 a nie z odpowiedzi czynności, ponieważ Operator otworzy dokument ponownie,
 a nie przeczyta odpowiedź komendy.
+
+## budowa/server/internal/core/adapter_narzedzia_archiwum_pakowanie.go
+
+`sourcePath` rozstrzygamy względem katalogu okna. Pakowanie wygląda na
+czynność czytającą, więc ścieżka bezwzględna zdawałaby się nieszkodliwa —
+nie jest. Wynikiem `archive.pack` jest zasób w magazynie rdzenia, a zasób
+model potrafi odczytać i rozpakować; przyjęcie ścieżki bezwzględnej dałoby
+więc drogę: spakuj `~/.ssh`, odłóż jako zasób, rozpakuj u siebie — czyli
+wyniesienie dowolnego pliku maszyny Operatora do materiału, którym model
+dysponuje. Katalog roboczy okna jest jedynym miejscem, o którym produkt
+umówił się z Operatorem, że model tam sięga, i pakowanie tej umowy nie
+łamie.
+
+Zasoby idą przez rusztowanie, a nie wprost do `7z`, bo blob magazynu
+nazywa się swoją sumą kontrolną: podanie blobów `7z` wprost dałoby
+archiwum, w którym pliki nazywają się ciągiem szesnastkowym, a Operator
+dostałby nazwy, z których żadna nic nie znaczy. Rusztowanie jest
+katalogiem tymczasowym, w którym każdy blob dostaje swoją nazwę czytelną
+z wiersza zasobu; dopiero ono trafia do `7z`.
+
+W `Spakuj` liczbę `entries` liczymy z tego, co w archiwum naprawdę jest,
+a nie z tego, ile pozycji kazano spakować — liczba wzięta z żądania
+byłaby w odpowiedzi nieodróżnialna od policzonej, a rozjechałaby się
+z prawdą przy każdym pliku, którego `7z` nie wziął.
+
+W `zrodloPakowania` zasoby mają pierwszeństwo przed ścieżką, tak samo
+i z tego samego powodu co w rodzinie obrazu: treść zasobu leży już pod
+sumą kontrolną i nie zmieni się między wskazaniem a odczytem, a plik na
+dysku jest treścią żywą. Żądanie bez jednego i drugiego jest odmową —
+podstawienie katalogu roboczego, skoro model nic nie podał, byłoby
+zgadywaniem przedmiotu czynności, a spakowanie całego katalogu zamiast
+dwóch plików jest pomyłką kosztowną.
+
+W `rusztowanieZasobow` kopiujemy, a nie dowiązujemy: dowiązanie do bloba
+oszczędziłoby bajty, ale `7z` zapisałby wtedy do archiwum dowiązanie albo
+poszedł za nim zależnie od przełącznika, a przy rozpakowaniu ta sama
+rodzina dowiązania odmawia — archiwum, którego własny produkt nie umie
+otworzyć, byłoby rozjazdem wewnątrz jednej rodziny.
+
+W `nazwaZasobuWArchiwum` nazwa zasobu pochodzi od Operatora i mogłaby
+nieść ścieżkę, a archiwum z pozycją `../coś` odmówiłaby własna rodzina
+przy rozpakowaniu; dwa zasoby o tej samej nazwie nadpisałyby się nawzajem
+w rusztowaniu i jeden zniknąłby bez słowa, stąd numerowanie kolizji.
+
+W `zbudujArchiwum` dla `tar.gz` są dwa różne pliki i dwa wywołania: `tar`
+jest archiwum dwuwarstwowym, `tar` niesie pozycje, `gzip` opakowuje
+całość jednym strumieniem, więc `7z l` na gotowym `.tar.gz` pokazuje
+jedną pozycję — zawinięty plik `.tar` — a nie zawartość. Spis czytamy
+zatem z warstwy `tar`, zanim ją zawiniemy. Dwa wywołania zamiast potoku,
+bo `zewnetrzne.Wolaj` prowadzi jeden proces — i dobrze, bo potok dwóch
+programów miałby dwa kody wyjścia i jedną odpowiedź o powodzeniu.
+
+W `wolajPakowanie` przełączniki są wybrane, nie przepisane: `-bd` zdejmuje
+pasek postępu, bo w strumieniu bez terminala byłby śmieciem w
+diagnostyce, `-y` odpowiada twierdząco na pytania programu, bo proces bez
+terminala nie ma komu odpowiadać i czekałby do granicy czasu, a `--`
+zamyka listę przełączników — bez niego plik nazwany `-sdel` zostałby
+wzięty za polecenie, a nie za nazwę.

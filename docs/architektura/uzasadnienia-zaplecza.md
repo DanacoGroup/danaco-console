@@ -265,3 +265,34 @@ Macierz widoczności modułów w środowiskach odpowiada kolejności pozycji
 w nawigacji bocznej interfejsu. Automations nie ma okna modułowego w żadnym
 środowisku, a MultitaskingAI nie udostępnia modułów — oba są w niej celowo
 nieobecne.
+
+## budowa/server/internal/wiedza/pomocnik_obrazu.py
+
+Model osi obrazu jest dwuwieżowy: ma osobną wieżę dla obrazu i osobną dla
+tekstu, a obie kończą w jednej przestrzeni, w której iloczyn skalarny znaczy,
+że dane zdanie opisuje dany obraz. Osadzarki tekstu nie da się tu użyć, bo
+jej wektor leży w przestrzeni, w której obrazu nie ma i nigdy nie było, a
+porównanie dałoby liczbę bez związku z czymkolwiek.
+
+Obrazy przychodzą do pomocnika ścieżkami plików, nie bajtami. Bajty
+biblioteki leżą w magazynie treści rdzenia i tamtą ścieżką czyta je podgląd
+modułu Library; przepisanie ich do zlecenia oznaczałoby drugi komplet
+obrazów w pliku JSON, rosnący w megabajtach na każde zapytanie. Droga
+rozmowy z rdzeniem jest ta sama co u pomocnika osadzeń i u pomocnika
+przesiewu: zlecenie ścieżką pliku JSON w argumencie, odpowiedź jednym
+obiektem JSON na standardowym wyjściu, diagnostyka biblioteki na strumieniu
+diagnostycznym.
+
+Katalog modeli bywa dwiema rzeczami i pomocnik je rozróżnia tak samo jak
+pomocnik osadzeń: pusty katalog jest miejscem na wagi, a katalog z wagami
+jest samym modelem, i wtedy pobieranie z sieci jest wyłączone. Rozstrzyga
+o tym obecność pliku wag modelu stojącego w katalogu. Katalog pobrania jest
+podawany bibliotece jawnie, bo bez zmiennej środowiskowej HOME biblioteka
+nie zna swojego domyślnego katalogu pamięci podręcznej, a katalog docelowy
+wag jest ustawieniem, które kontroluje Operator.
+
+Obraz nieczytelny nie przerywa całego zapytania: jeden plik uszkodzony albo
+w postaci, której biblioteka obrazu nie otwiera, nie ma prawa odebrać
+odpowiedzi o pozostałych obrazach. Taka pozycja dostaje ocenę zerową i
+wraca w wykazie pominiętych, żeby rdzeń wiedział, że nie porównał
+wszystkiego, o co prosił.

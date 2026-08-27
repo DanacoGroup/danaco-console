@@ -4084,3 +4084,49 @@ Próg sekund milczenia strumienia jest wysoki, bo model bywa cichy, kiedy
 rozumuje — alarm po kilku sekundach byłby fałszywy. Po upływie progu przyczyna
 (zerwane łącze, martwy proces kanału, długie rozumowanie) nie ma znaczenia:
 Operator dostaje opis ciszy zamiast niezmiennego napisu „Wysyłanie…".
+
+## budowa/klient-poprzedni/src/moduly/roundtable/braki-kontraktu.ts
+Napis orzekający na stałe, czego kontrakt nie ma, przestaje być prawdą w dniu powstania komendy
+i nikt go wtedy nie zdejmuje. Ten moduł przeszedł dokładnie przez taki dzień: obszar roundtable
+niósł cztery komendy, a po scaleniu kontraktu niesie ich czterdzieści sześć — zdania mówiące, że
+nie wykonuje danej czynności żadna komenda obszaru, stały się wtedy nieprawdą co do czterdziestu
+dwóch czynności naraz. Stąd podział na dwa powody, nie jeden: powód braku obsługi dotyczy komendy,
+która JEST w kontrakcie, a okno jej nie wywołuje — nazwa komendy przychodzi jako wartość
+wyliczeniowa, nie napisem, więc zmiana nazwy w kontrakcie przerywa kompilację zamiast zostawiać
+w dymku napis o komendzie, której już nie ma; powód braku czynności dotyczy sytuacji, w której
+czynności nie da się wskazać jedną komendą, bo kontrakt nie ma jej w ogóle albo brakuje pola, nie
+komendy. Czego ten plik nie wie: czy rdzeń ma obsługiwacz danej komendy — kontrakt nie daje takiego
+odczytu, bo nie ma komendy wyliczającej komendy obsługiwane, jedynie okna modułu. Rdzeń odpowiadający
+odmową nieznanej komendy na komendę obecną w wykazie jest z tego miejsca nierozpoznawalny;
+rozpoznaje go dopiero odmowa po naciśnięciu, dlatego zdania mówią o obsłudze niezbudowanej,
+a nie orzekają, gdzie dokładnie jej brakuje.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/komenda.ts
+Kanał przyjmuje wywołanie zwrotne, a obszary tego okna czytają po kilka komend po kolei — splot
+wywołań zwrotnych w takim ciągu jest nieczytelny. Wszystkie obszary okna wołają więc stąd, zamiast
+powtarzać u siebie ten sam opakowujący zapis. Typowanie zostaje pełne: parametr generyczny wiąże
+żądanie z odpowiedzią wprost z kontraktu, więc pomyłka w kształcie żądania przerywa kompilację
+klienta zamiast wracać odmową rdzenia w czasie działania. Odmowa nie jest wyjątkiem: obietnica
+spełnia się zawsze, także gdy rdzeń odmówił. Odmowa siedzi w polu powodzenia i w polu błędu, żeby
+wywołujący rozstrzygnął ją zdaniem dla Operatora, a nie obsługą wyjątku, którą łatwo pominąć.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/indeks.ts
+Reszta aplikacji zna stąd jedną czynność otwarcia okna Punktów Izolacji przez podanie kanału rdzenia.
+Okno jest jedno na klienta i żyje między otwarciami — powtórne otwarcie wraca do obszaru, na którym
+Operator skończył, tak jak Okno Konfiguracji, którego ten plik jest wierną kopią wzorca. Kanał
+podajemy przy pierwszym otwarciu. Wywołanie z innym kanałem — po ponownym połączeniu z rdzeniem —
+buduje okno na nowo, żeby komendy izolacji nie szły przez transport, którego już nie ma.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/stan-warstwy.ts
+Warstwy są dwie, ale nie są dwoma trybami do wyboru. Warstwa domyślna to warstwa bazowa platformy:
+obowiązuje przy każdej nowej sesji, karcie, roli, projekcie i oknie. Warstwa sesji nakłada się na
+bazową bez jej zmiany i wygasa z zamknięciem karty sesji — to podkład i naklejka na nim, nie dwa
+osobne magazyny. Warstwa jest stanem wspólnym, a nie polem jednego obszaru, bo dotyczy każdego
+odczytu i każdego zapisu izolacji: kontekstu, zakresu technicznego, przypisania profilu i podglądu
+polityki. Gdyby siedziała w jednej zakładce, pozostałe pytałyby rdzeń o coś innego, niż widać na
+pasku — dlatego jej kontrolka jest w narzędziach ramy okna, a stan tutaj. Ten plik nie woła rdzenia.
+Przełączenie warstwy w rdzeniu należy do pliku sterowania warstwą; tutaj zostaje wyłącznie to, co
+okno wie o warstwie po odpowiedzi rdzenia, i powiadomienie obszarów o zmianie.
+
+## budowa/klient/src/wejscie/skladniki/miernik-sily.ts
+Warunek niespełniony niesie puste kółko, spełniony ptaszka; ptaszek w każdym stanie czytałby się jako zrobione, a barwa jako jedyna różnica łamałaby wymaganie kontrastu. Miernik wiąże się z polem przez atrybut danych, nie przez sąsiedztwo w drzewie — sąsiedztwo bywa różne w różnych oknach i cicho się rozjeżdża. Regułę oceny niesie przebieg; miernik jej nie powtarza.

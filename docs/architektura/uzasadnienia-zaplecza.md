@@ -914,3 +914,33 @@ Pusty kod tury w tabeli `debata_stanowisko` znaczy „stanowisko całej debaty�
 Wartość pusta zamiast NULL jest tu wyborem świadomym: w SQLite dwa NULL-e są
 różne, więc więz UNIQUE(okno, tura) na kolumnie dopuszczającej NULL nie
 powstrzymałby powielenia stanowiska całej debaty.
+
+## budowa/server/internal/store/migracja_166_silniki_wymiana_tlumaczenia.sql
+
+Profil silnika wskazuje kanały modelu wykazem, więc kanały mają tabelę
+dziecka: wykaz w jednej kolumnie nie dałby się złączyć z tabelą kanałów
+modelu ani zawęzić zapytaniem o profile używające danego kanału. Kolejność
+w wykazie jest znacząca, bo pierwszy kanał jest kanałem pierwszego wyboru,
+stąd osobna kolumna kolejności.
+
+Polityka pivota jest jedna na zasięg konfiguracji, a pary języków są jej
+dzieckiem. Para mówi, że przekład z języka źródłowego na język celu idzie
+przez trzeci, pośredniczący język; język domyślny jest pivotem dla par,
+których nikt jawnie nie wymienił.
+
+Pakiet przekazania ma stan, bo jego cykl życia jest realny: złożony,
+przekazany, zwrot przyjęty. Przyjęcie zwrotu przestawia ten sam wiersz,
+zamiast zakładać drugi — inaczej nie dałoby się jednoznacznie odpowiedzieć,
+czy materiał wrócił.
+
+Przebieg pakietowy ma własną kolejkę, nie kolejkę modułu Automations:
+uruchomienie przebiegu oddaje identyfikator kolejki, po którym okno
+Translate pyta o postęp, a pozycje tej kolejki niosą operacje własne
+modułu — przekład, kontrolę jakości, korektę, wydanie. Wpięcie w cudzą
+kolejkę związałoby ten moduł z modułem, który daje się wyłączyć
+niezależnie.
+
+Most do dokumentu jest wiązaniem dwustronnym: okno Translate wie, z
+którego dokumentu wzięło materiał, a wysyłka wyniku wie, dokąd go
+odesłać. Bez takiego wiersza wysyłka wyniku musiałaby dostać wskazanie
+dokumentu drugi raz, czego kontrakt nie przewiduje.

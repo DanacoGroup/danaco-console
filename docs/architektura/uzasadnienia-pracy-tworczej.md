@@ -726,3 +726,38 @@ Ingest/OCR Panel różni się od rodziny komend document.text.extract tym, że t
 Słowa i pewność oddaje sam program Tesseract wyjściem w postaci tabelarycznej: jeden wiersz na słowo, z ramką i pewnością w skali od zera do stu. Rdzeń niczego tu nie szacuje ani nie dopowiada — pewność pozycji jest średnią pewności jej słów, a gdy Tesseract nie oddał ani jednego słowa, pewności nie ma wcale i pole zostaje puste. Pusta pewność i pewność zerowa to dwie różne rzeczy.
 
 Cztery nastawy kontraktu opisują obróbkę wstępną skanu — prostowanie skosu, odszumianie, progowanie i przycinanie marginesów — i prowadzi je program unpaper, napisany dokładnie do tego zadania; rdzeń nie liczy tego sam, bo skos wykrywa się przemiataniem obrazu pod kątem, a nie jedną pętlą po pikselach. Gdy żadna z czterech nastaw nie jest włączona, unpaper w ogóle nie rusza, bo przebieg bez niczego i tak przepisałby obraz przez konwersję do postaci PNM i z powrotem, płacąc uruchomieniem procesu za wynik, o który nikt nie prosił. unpaper ma wszystkie swoje filtry włączone domyślnie, a kontrakt ma je domyślnie wyłączone, więc rdzeń wyrównuje te dwie domyślności: filtr, o który nikt nie prosił, jest wyłączany jawnie, inaczej jedna włączona nastawa włączyłaby po cichu także pozostałe. Filtr czarnej ramki, którego kontrakt nie ma wcale, jest wyłączony zawsze.
+
+## adapter_modul_studio_wejscie_dane.go
+
+Droga zapisu postaci stoi w adapter_modul_studio_postac.go, a ten plik ją
+woła, dokładając jedno: wiersze, których zapis obszaru postaci świadomie
+z drzewa wycina — arkusz stylów, sekcje, obiekty i pola. Wycina je, bo dla
+dokumentu już istniejącego one w bazie stoją i drzewo nie ma być ich drugą
+prawdą. Dokument wnoszony z pliku albo kopiowany jest przypadkiem odwrotnym:
+wierszy jeszcze nie ma, a postać przyszła z zewnątrz. Gdyby ten odcinek
+zapisał samo drzewo, dokument po ponownym wczytaniu tracił arkusz stylów
+wniesiony z docx, czyli dokładnie tę cichą stratę, którą utrwalenie postaci
+ma wykluczyć. Styl fabryczny dokumentu zapisuje się jako fabryczny wtedy
+i tylko wtedy, gdy tak przyszedł: arkusz wniesiony z docx jest arkuszem
+dokumentu, nie arkuszem platformy, i ma dać się zmienić bez odmowy o stylu
+fabrycznym.
+
+Kontrakt warstwy danych tego odcinka jest węższy niż cały interfejs
+repozytorium Studia celowo: repozytorium deklaruje się w całości w jednym
+pliku, a dopisanie tam metod byłoby wejściem w plik cudzego odcinka. Rdzeń
+bierze więc dokładnie te metody, których używa, rzutowaniem dwuwartościowym
+— brak nazywa się wprost, zamiast wywracać montaż rdzenia. Ten sam wzór
+trzyma odcinek kontroli pracy.
+
+Granica wielkości pliku wejściowego chroni rdzeń przed plikiem, którego
+rozbiór wypełniłby pamięć procesu: sto dwadzieścia osiem megabajtów mieści
+dokument z setkami obrazów. Kolejność dróg do bajtów materiału jest
+rozstrzygnięciem, nie przypadkiem: bajty podane wprost są najpewniejsze, bo
+zostały wysłane właśnie teraz, potem zasób rdzenia, potem plik Biblioteki,
+a ścieżka na końcu, bo jest ścieżką na maszynie serwera, nie na maszynie
+wołającego.
+
+Nazwa pliku ma znaczenie poza samym rozpoznaniem formatu: plik
+umowa najmu.docx ma zostać dokumentem o nazwie „umowa najmu", nie
+dokumentem bez nazwy, dlatego nazwa dokumentu wyjmuje się z nazwy pliku bez
+rozszerzenia.

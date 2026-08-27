@@ -5941,3 +5941,16 @@ znak zamiast nazwać dwuznaczność.
 Wykazu zasad autozamiany ten plik celowo nie mierzy: wykaz stoi w bazie,
 wprowadzony migracjami 368 i 371, nie w kodzie rdzenia, więc sprawdzianem
 na niego jest sprawdzian migracji, a nie sprawdzian pakietu rdzenia.
+
+## budowa/server/internal/core/telemetria.go
+
+Zdarzenie progress.changed niesie identyfikator procesu, etap bieżący,
+liczbę etapów, stopień ukończenia i stan — dokładnie tak, jak opisuje
+kontrakt. Punkty pracy zgłaszają się same: tura przez owinięcie portu
+rozmowy i nadajnika, w plikach telemetria_tury.go i
+telemetria_strumienia.go, a kolejka przez adapter kolejek. Brak nadajnika
+nie jest błędem — rdzeń pracuje także wtedy, gdy nikt nie słucha zdarzeń.
+
+Powtórne domknięcie procesu już zamkniętego nie rozgłasza niczego, bo
+inaczej zatrzymana tura zgłaszałaby najpierw zatrzymanie, a zaraz potem
+niepowodzenie strumienia.

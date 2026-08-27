@@ -2857,3 +2857,18 @@ Pakiet nie zna kontraktu komend, zna wyłącznie kształt danych. Stąd nie wych
 jedna odmowa protokołu: pakiet oddaje wynik albo błąd Go, a nazwanie go operatorowi
 należy do adaptera. Dzięki temu ten sam silnik obsługuje Git Panel, margines zmian
 w edytorze i przegląd różnicy przed scaleniem, nie ucząc się o żadnym z nich.
+
+## budowa/server/internal/dane/badania_raport.go
+
+Ten plik jest trzecią częścią RepozytoriumBadan zadeklarowanego w badania.go;
+źródła leżą tam, ustalenia w badania_ustalenia.go.
+
+Zapis raportu jest zawsze pełny, po wzorze ZapiszKompozycje: komplet sekcji
+jest usuwany i wstawiany od nowa w jednej transakcji, bo research.report.build
+nie zna trybu częściowej zmiany. Przestrzeń badania jest jednowierszowa, bo
+kontrakt research.workspace.set nie niesie identyfikatora — UstawPrzestrzen
+nadpisuje jedyny wiersz o id = 1. Tabela pusta w Przestrzen wraca jako zakres
+i lista puste, nie jako błąd: to stan startowy.
+
+Kolumna Cel doszła migracją 150 — do niej eksport zawsze szedł do pobrania,
+bo innego celu kontrakt wtedy nie miał.

@@ -4014,3 +4014,114 @@ nazwy stoją jako zapis decyzji ich autorów. Poszerzenie tej zapory na cały
 rdzeń wymagałoby przepisania cudzych plików — a to jest osobna praca
 i osobna zgoda. Zapora obszaru Design jest warunkiem, który ten obszar
 spełnia w całości i który da się utrzymać.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_model_twarze.go
+
+Osobny przebieg poprawiania twarzy w `image.upscale` — pole `faces` kontraktu.
+Powiększanie samo stoi w `adapter_narzedzia_obraz_model_silniki.go` i to ono
+woła ten plik; wspólne zaplecze (pracownia, wołanie binarium, odmowy) —
+w `adapter_narzedzia_obraz_model.go`.
+
+Dlaczego pomocnik pythonowy, a nie wydanie ncnn: reszta tej rodziny to binaria
+`ncnn` bez Pythona i bez Torcha, więc pomocnik pythonowy jest tu wyłomem
+i wymaga powodu. Sieć twarzowa wydana jest jako wagi PyTorcha
+(`GFPGANv1.4.pth`), a wydania `ncnn` tej sieci nie publikuje jej autor —
+chodzące po sieci przeróbki niosą wagi przeliczone przez osoby trzecie, więc
+rdzeń liczyłby nie tym modelem, który leży na dysku, tylko czyjąś kopią
+o nieustalonym pochodzeniu. Pomocnik na wagach stojących liczy dokładnie tym,
+co Operator ma u siebie, i tą samą drogą, co wektory znaczenia
+(`internal/wiedza/pomocnik_osadzen.py`).
+
+Dlaczego przebieg jest drugi, a nie jeden wspólny: kolejność jest zamierzona —
+najpierw Real-ESRGAN powiększa CAŁY obraz, potem pomocnik odnajduje twarze
+w wyniku i podmienia same wycinki. Dzięki temu wymiary odpowiedzi pochodzą
+wyłącznie z powiększenia, a `faces: false` i `faces: true` różnią się
+dokładnie tym, co obiecuje opis pola — twarzami, nie rozmiarem.
+
+Czego tu celowo nie ma: gałęzi „gdy pomocnika nie ma, oddaj samo
+powiększenie". Obraz bez poprawki twarzy podany jako poprawiony jest tą samą
+atrapą, co rozciągnięcie podane jako powiększenie — rdzeń odmawia, nazywając
+brak i drogę naprawy.
+
+skryptPomocnikaTwarzy: skrypt jedzie w binarium, a nie leży obok niego,
+z tego samego powodu, co pomocnik osadzeń — wdrożenie, w którym ktoś
+przeniósł samo binarium, ma działać. Wykładany jest do katalogu jednego
+przebiegu (`pracowniaObrazu`), bo znika razem z nim.
+
+granicaOdtwarzaniaTwarzy: bez karty graficznej jedna twarz liczy się na
+procesorze kilka sekund, a zdjęcie grupowe niesie ich kilkanaście; do tego
+dochodzi start interpretera i wczytanie trzech zestawów wag. Dziesięć minut
+znaczy „coś stanęło", a nie „to długo trwa".
+
+katalogWagTwarzyLinux: odbiega od `/usr/local/share/<silnik>`, którym idą
+wagi powiększania i wycinania tła, bo te wagi nie są składnikiem pakietu
+żadnego programu — są wydaniem modelu pobieranym osobno.
+
+wagiWykrywaniaTwarzy: bez niego nie ma czego odtwarzać: sieć twarzowa pracuje
+na wycinku wyrównanym do pięciu punktów charakterystycznych, a te punkty
+wskazuje właśnie ten model.
+
+wagiPodzialuTwarzy: z niej powstaje maska wklejenia — bez maski wycinek
+wraca do obrazu prostokątem o widocznej krawędzi.
+
+narzedzieOdtwarzaniaTwarzy: wołamy opakowanie `/usr/local/bin/danaco-twarze`,
+a nie plik z wnętrza środowiska pythonowego — tak samo jak przy `rembg`.
+`zewnetrzne.Wolaj` nie dziedziczy środowiska rdzenia, a biblioteki pomocnika
+szukają katalogu pamięci podręcznej i katalogu domowego; opakowanie ustawia
+je samo, więc pomocnik jest samowystarczalny niezależnie od tego, kto go woła.
+
+katalogWagTwarzy: zależy od systemu z tego samego powodu, co katalogi wag
+powiększania i wycinania tła: na Linuksie drzewo modeli stoi pod `/opt`,
+a w wydaniu natywnym Windows jedzie obok rdzenia w `pomocniki/`.
+
+sprawdzWagiTwarzy: sprawdzane są wszystkie naraz, bo przebieg potrzebuje
+każdego z nich, a odmowa po dwóch minutach startu interpretera z powodu
+trzeciego pliku byłaby czasem straconym. Katalog przychodzi argumentem,
+a nie jest brany ze stałej, żeby sprawdzian mógł zmierzyć samą odmowę na
+katalogu bez wag.
+
+wylozPomocnikaTwarzy: zapis idzie przez plik tymczasowy i przemianowanie, bo
+skrypt obcięty w połowie wystartowałby i wywrócił się komunikatem o składni,
+którego nikt nie powiąże z przerwanym zapisem.
+
+poprawTwarze: wejściem jest plik wyniku Real-ESRGAN-a, a nie źródło żądania —
+przebieg twarzowy pracuje na tym, co powiększenie już wytworzyło. Wyjście
+idzie do osobnego pliku w tej samej pracowni, żeby wynik powiększenia został
+nietknięty na wypadek odmowy pomocnika.
+
+opisPrzebieguTwarzy: liczba jest zmierzona przez pomocnika, a nie założona —
+zdjęcie bez rozpoznanej twarzy przechodzi przebieg nietknięte i opis ma to
+mówić wprost.
+
+## budowa/server/internal/core/adapter_prowenancja_powtorzenie.go
+
+Cztery pozostałe komendy rodziny są odczytem śladu: nie ruszają kanału, nie
+kosztują ani grosza i nie zmieniają niczego. Powtórzenie jest czymś innym —
+jest nowym wywołaniem kanału modelu, z własnym kosztem i własnym wierszem
+w śladzie. Dlatego wchodzi razem z warstwą, która kanały prowadzi.
+
+Wiersz powtórzenia jest zwykłym wierszem prowenancji: wskazuje pierwowzór
+jako rodzica, więc drzewo śladu pokazuje, że jedno wzięło się z drugiego.
+Powtórzenie ukryte przed śladem byłoby wywołaniem, za które ktoś zapłacił,
+a którego rozliczenie nie widzi.
+
+Rdzeń nie powtórzy wywołania, którego treści nie zapisano. Ślad bywa
+prowadzony bez treści (`TrescZapisana` fałszywe) albo zredagowany, i wtedy
+nie ma czego wysłać po raz drugi. Odpowiedź mówi to wprost polem
+`contentAvailable`, zamiast wysyłać pusty prompt i zestawiać jego odpowiedź
+z pierwowzorem jak gdyby nigdy nic.
+
+`ZKanalami` wpina rejestr kanałów — jedyną drogę, którą rdzeń wykonuje
+wywołanie modelu. Zależność opcjonalna: bez niej cztery komendy odczytu
+pracują bez zmian, a powtórzenie odmawia, nazywając brak.
+
+Stan zapisany z ręki odbiłby się od warunku kolumny i zamienił udane
+powtórzenie w awarię zapisu — dlatego stan idzie przez odwzorowanie
+kontraktu, tak samo jak czyta go `stanKontraktuWywolania`.
+
+`zasiegiPowtorzenia` odtwarza kontekst pierwowzoru, żeby powtórzenie poszło
+tam, gdzie poszło oryginalne wywołanie. Zasięg wzięty z powietrza dałby
+wywołanie z innymi parametrami wykonania, czyli nieporównywalne.
+
+`modelPowtorzenia` rozstrzyga model zapisywany w śladzie powtórzenia:
+wskazany w żądaniu, a w jego braku model pierwowzoru.

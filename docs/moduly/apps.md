@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Apps Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
+
 # Danaco Console — Moduł Apps — dokument projektowy
 
 | | |
@@ -539,7 +541,7 @@ Każda ukryta funkcja jest osiągalna jednym kliknięciem, jednym skrótem klawi
 | Dziennik cyklu życia | Chronologia zdarzeń instalacji, aktualizacji, włączeń, wyłączeń i cofnięć wersji per rozszerzenie | 3 | Menu `⋮` wiersza |
 | Tryb administracyjny rejestru | Operacje zbiorcze na rejestrze i podgląd zapisu kanonicznego | 4 | Tryb administracyjny; polecenie języka naturalnego |
 
-**Zachowanie i stany:** każda zmiana stanu włączenia jest rozgłaszana na wszystkie urządzenia sesji (`architektura/kontrakty-komunikacji.md`, rozdz. 1).
+**Zachowanie i stany:** każda zmiana stanu włączenia jest rozgłaszana na wszystkie urządzenia sesji (rozdz. 1).
 
 ```
  Makieta — Installed Apps Manager (stan spoczynku)
@@ -1178,4 +1180,5 @@ Zgodnie z Modelem konfiguracji (warstwy: aplikacja, proces, akcja, sesja) i zasa
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

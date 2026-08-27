@@ -5515,3 +5515,37 @@ wywołanie późniejsze zamknęłoby pracę powołaną przez ten sam rdzeń, gdy
 oznaczenie prowadzenia jeszcze nie doszło. Trwałość pusta znosi się sama:
 rdzeń bez repozytorium podagentów startuje, a nie odmawia startu, po prostu
 nie ma czego sprzątać.
+
+## budowa/server/internal/dane/orkiestracja_podagenci_zywotnosc.go
+Osobny plik, a nie dopisek do pliku trwałości powołania: tamten plik
+odpowiada za trwałość powołania, stanu i wyniku — byt, który ma restart
+przeżyć. Tutaj stoi rzecz przeciwna: praca, która restartu przeżyć nie
+może, bo żyje w procesie modelu. Dwie odpowiedzialności, dwa pliki.
+
+Skąd się biorą sieroty: podagent w stanie oczekującym albo działającym
+opisuje pracę, którą ktoś wykonuje. Wykonawcą jest proces modelu wystawiony
+przez rdzeń, więc rdzeń ubity zabiera go ze sobą, a wiersz zostaje z zapisem
+nieprawdziwym. Rozstrzyga o tym znacznik uruchomienia: wiersz niezakończony
+prowadzony przez uruchomienie inne niż bieżące jest sierotą, bo jego
+wykonawcy nie ma.
+
+Zamknięcie, nie wskrzeszenie: sierota idzie w stan zakończony błędem
+z powodem osierocenia, a nie z powrotem w stan oczekujący. Powtórne
+puszczenie pracy byłoby decyzją, której nikt nie podjął — operator ma
+zobaczyć, co się urwało, i powołać na nowo sam. Wynik już zebrany zostaje:
+podagent, który zdążył coś oddać przed awarią, oddaje to nadal.
+
+Wykaz podagentów pusty przy oznaczaniu prowadzenia nie jest błędem.
+
+Zamknięcie sierot woła się raz, przy starcie rdzenia, zanim jakikolwiek
+podagent zostanie powołany, i oddaje wykaz zamkniętych do meldunku, bo
+cicha zmiana stanu na wykazie operatora byłaby zmianą niewidoczną.
+
+Tym samym powodem, co przy powołaniu podagentów: połowa powołania
+oznaczona, a połowa nie, dałaby przy następnym starcie sieroty z podagentów
+właśnie pracujących.
+
+Odczyt i zapis zamknięcia sierot idą w jednej transakcji, bo między nimi
+nie ma prawa wejść powołanie nowego podagenta — zamknęłoby się dopiero co
+powołaną pracę. Sierot brak jest odpowiedzią poprawną i najczęstszą: rdzeń
+zamknięty porządnie zostawia wszystkich w stanie końcowym.

@@ -2046,3 +2046,19 @@ Kopia przed sortowaniem w funkcji porządkującej jest konieczna: wykaz pochodzi
 Kontrakt nie ma komendy odczytu glosariusza jako wykazu, choć edycja glosariusza wymaga wczytania.
 Źródło nie zmyśla wykazu: okno pokazuje wyłącznie terminy zapisane w bieżącej sesji i mówi wprost,
 czego brakuje.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/zrodlo-lacznosci.ts
+Doprowadzenie stanu łącza do sceny okien równoległych ma jedną odpowiedzialność:
+zamianę subskrypcji transportu na strumień odczytów, które układ rozsyła do
+nagłówków gniazd. Nic tu nie jest źródłem prawdy — prawdą jest sam transport,
+a ten plik wyłącznie go odpytuje. Licznik kolejki musi być prawdziwy, a nie
+zamrożony: transport ogłasza połączenie przed opróżnieniem kolejki, więc odczyt
+zrobiony w chwili zmiany stanu zamarzałby na wartości sprzed wysłania, dlatego
+po połączeniu odczyt dobija się cyklicznie, aż kolejka spadnie do zera. Tę samą
+rachubę prowadzi niezależnie pasek górny aplikacji — nie jako druga prawda,
+tylko jako drugi pytający tego samego transportu, ponieważ wspólnego miejsca
+dla tej logiki nie ma: pasek zwraca gotowy element, nie strumień odczytów.
+Interfejs transportu wystawia sześć podstawowych metod, a numer próby
+i zaplanowane ponowienie trzyma prywatnie gniazdo połączenia, więc dojście do
+przebiegu ponowienia sprawdza obecność metod jawnie i jednorazowo, zamiast
+zakładać ją na sztywno w miejscu wywołania.

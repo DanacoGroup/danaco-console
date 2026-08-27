@@ -2212,3 +2212,11 @@ jest jedno, a sprawa zmienia wyłącznie napis w belce okna. Poza powłoką naty
 wskazanie wraca wartością pustą tak samo jak rezygnacja z wyboru, a widok
 zostawia drogę wpisania ścieżki ręcznie. Żadna ścieżka wykonania nie rzuca
 wyjątkiem i nie odrzuca obietnicy.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/podglad-ukladu.ts
+Komentarz przy tworzeniu układu odsyłał czytelnika do typu `OpcjeGniazda` zamiast podać
+wprost powód pustych gniazd. Redakcja usunęła odesłanie i przeniosła wyjaśnienie
+bezpośrednio nad instrukcję, której dotyczy, jako pełne zdanie: brak rdzenia i osadzonej
+rozmowy w tym stanowisku podglądu skutkuje pustymi gniazdami układu przy każdym
+uruchomieniu. Komentarz nad złożeniem obszaru skrócono do jednego zdania nazywającego
+elementy kompozycji bez wyliczenia wtórnego wobec kodu importów.

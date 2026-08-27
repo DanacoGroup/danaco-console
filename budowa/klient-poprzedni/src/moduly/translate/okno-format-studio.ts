@@ -24,32 +24,15 @@ import { oznaczWarstwe, utworzRozwiniecie } from './warstwy-translate';
 import type { ZrodloDokumentuTranslate } from './zrodlo-dokumentu-translate';
 
 /**
- * Format Studio — okno robocze modułu Translate, otwierane przy pracy
- * z dokumentem.
- *
- * Okno stoi na styku dwóch obszarów kontraktu i tylko dlatego ma czym pracować:
- * dokument wchodzi komendami obszaru `document` (wydobycie tekstu wraz
- * z rozpoznaniem pisma oraz zamiana formatu), a wychodzi komendą eksportu
- * panelu z obszaru `translate`. Obieg jest więc realny na obu końcach, ale nie
- * jest obiegiem zamkniętym: wydobycie oddaje sam tekst, więc styl, tabela
- * i osadzenie dokumentu wejściowego nie mają jak przetrwać przekładu. Okno mówi
- * to przy wyniku, zamiast obiecywać wierność formatu.
- *
- * Podgląd jest warstwą tekstową, nie renderem strony: kontrakt nie ma komendy
- * rysującej dokument ani porównującej jego układ, więc porównania układów okno
- * nie pokazuje i nie udaje.
- *
- * Tekst wydobyty z dokumentu wchodzi do pola Source Panel, ale nie zapisuje się
- * sam. Zapis źródła jest czynnością Operatora i uruchamia aktualizację
- * wszystkich paneli — wykonanie go bez naciśnięcia byłoby przekładem
- * zamówionym przez okno, nie przez człowieka.
+ * Format Studio to okno robocze modułu Translate otwierane przy pracy z dokumentem; wydobywa
+ * tekst i zamienia format po stronie rdzenia, a eksportuje panel osobną komendą obszaru translate.
  */
 export interface OknoFormatStudio {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Formaty zamiany dokumentu wymienione w opisie komendy kontraktu. */
+/** Formaty zamiany dokumentu wymienione w opisie komendy kontraktu document.convert, prezentowane operatorowi jako lista wyboru formatu docelowego pliku. */
 const FORMATY_DOKUMENTU: readonly string[] = [
   'markdown',
   'html',
@@ -204,12 +187,8 @@ function pasek(...przyciski: readonly HTMLElement[]): HTMLElement {
 }
 
 /**
- * `document.text.extract` — jedyne wejście modułu od strony pliku.
- *
- * Zdanie o wyniku rozróżnia dwie drogi, którymi tekst mógł powstać, bo różnią
- * się pewnością: warstwa tekstowa dokumentu jest odczytem, rozpoznanie pisma
- * jest odgadnięciem z pikseli. Odpowiedź mówi, która droga zaszła, i okno tego
- * nie zaciera.
+ * Wydobycie tekstu z dokumentu jest jedynym wejściem modułu od strony pliku; odpowiedź rozróżnia
+ * odczyt z warstwy tekstowej od rozpoznania pisma.
  */
 async function wydobadzTekst(
   dokument: ZrodloDokumentuTranslate,
@@ -258,7 +237,7 @@ async function wydobadzTekst(
   );
 }
 
-/** `document.convert` — zamiana formatu dokumentu po stronie rdzenia. */
+/** Komenda document.convert zamienia format dokumentu po stronie rdzenia, bez przenoszenia stylu, tabel ani osadzeń dokumentu wejściowego do wyniku. */
 async function zamienFormat(
   dokument: ZrodloDokumentuTranslate,
   sciezkaPliku: string,
@@ -292,7 +271,7 @@ async function zamienFormat(
   );
 }
 
-/** `translate.panel.export` — wydanie panelu w formacie pliku. */
+/** Komenda translate.panel.export wydaje treść panelu tłumaczenia w wybranym formacie pliku, gotowym do zapisania poza oknem modułu. */
 async function wydajPanel(
   stan: StanTranslate,
   idPanelu: string,
@@ -314,7 +293,7 @@ async function wydajPanel(
   odpowiedz.pokaz(sprawozdanie.tresc, sprawozdanie.powodzenie);
 }
 
-/** Warstwa trzecia: operacje dokumentu, których kontrakt nie niesie. */
+/** Warstwa trzecia mieści operacje dokumentu, których kontrakt rdzenia nie niesie: detekcję układu, porównanie układów i obieg zasobów lokalizacyjnych. */
 function menuDokumentu(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 3,
@@ -332,11 +311,8 @@ function menuDokumentu(): HTMLElement {
 }
 
 /**
- * Warstwa czwarta: pseudolokalizacja.
- *
- * Jedyna funkcja warstwy czwartej tego okna, którą da się wykonać bez rdzenia,
- * bo jest przekształceniem znaków, a nie zapytaniem o cokolwiek. Wynik stoi
- * w oknie do przeniesienia ręcznego i mówi o sobie, że nigdzie się nie zapisał.
+ * Pseudolokalizacja jest jedyną funkcją warstwy czwartej wykonywaną bez rdzenia, bo przekształca
+ * znaki lokalnie, a wynik trzeba przenieść do źródła ręcznie.
  */
 function pseudolokalizacja(stan: StanTranslate, okno: StanOkna): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
@@ -364,9 +340,7 @@ function pseudolokalizacja(stan: StanTranslate, okno: StanOkna): HTMLElement {
     const przeksztalcony = pseudolokalizuj(stan.tekstZrodlowy(), Number(wydluzenie.kontrolka.value));
     wynik.textContent = przeksztalcony.tekst;
     zdanie.textContent = zdanieOPseudolokalizacji(przeksztalcony);
-    // Czynność jest miejscowa i nie pyta rdzenia, więc nie stawia okna
-    // w ładowaniu; zdejmuje natomiast komunikat poprzedniej odmowy, bo od tej
-    // chwili okno pokazuje wynik, a nie powód niewykonania.
+    // Czynność jest miejscowa, nie pyta rdzenia, więc nie stawia okna w ładowaniu, tylko zdejmuje odmowę.
     if (okno.faza() === 'blad') okno.gotowe();
   });
 
@@ -374,7 +348,7 @@ function pseudolokalizacja(stan: StanTranslate, okno: StanOkna): HTMLElement {
   return rozwiniecie.element;
 }
 
-/** Warstwa czwarta: reguły liczby mnogiej i rodzaju — bez komendy w kontrakcie. */
+/** Warstwa czwarta niesie reguły liczby mnogiej i rodzaju języka docelowego, dla których kontrakt rdzenia nie ma osobnej komendy wykonania. */
 function regulyGramatyczne(): HTMLElement {
   const rozwiniecie = utworzRozwiniecie({
     warstwa: 4,

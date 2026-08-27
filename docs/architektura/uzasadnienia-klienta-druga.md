@@ -2783,3 +2783,21 @@ przeciw modelowi, nie przeciw właścicielowi pisma.
 
 ## budowa/klient/src/protokol/korelacja.ts
 Rejestr nie wprowadza limitu czasu ani limitu żądań oczekujących: zerwanie połączenia nie kończy pracy rdzenia nad poleceniem.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-format-studio.ts
+Okno stoi na styku dwóch obszarów kontraktu i tylko dlatego ma czym pracować: dokument wchodzi
+komendami obszaru document — wydobycie tekstu wraz z rozpoznaniem pisma oraz zamiana formatu —
+a wychodzi komendą eksportu panelu z obszaru translate. Obieg jest więc realny na obu końcach, ale
+nie jest obiegiem zamkniętym: wydobycie oddaje sam tekst, więc styl, tabela i osadzenie dokumentu
+wejściowego nie mają jak przetrwać przekładu, a okno mówi to przy wyniku, zamiast obiecywać
+wierność formatu. Podgląd jest warstwą tekstową, nie renderem strony: kontrakt nie ma komendy
+rysującej dokument ani porównującej jego układ, więc porównania układów okno nie pokazuje i nie
+udaje. Tekst wydobyty z dokumentu wchodzi do pola Source Panel, ale nie zapisuje się sam — zapis
+źródła jest czynnością operatora i uruchamia aktualizację wszystkich paneli, a wykonanie go bez
+naciśnięcia byłoby przekładem zamówionym przez okno, nie przez człowieka.
+Zdanie o wyniku wydobycia tekstu rozróżnia dwie drogi, którymi tekst mógł powstać, bo różnią się
+pewnością: warstwa tekstowa dokumentu jest odczytem, rozpoznanie pisma jest odgadnięciem z
+pikseli, a odpowiedź mówi, która droga zaszła, i okno tego nie zaciera.
+Czynność zdejmowania poprzedniej odmowy jest miejscowa i nie pyta rdzenia, więc nie stawia okna
+w ładowaniu, tylko zdejmuje komunikat poprzedniej odmowy, bo od tej chwili okno pokazuje wynik,
+a nie powód niewykonania.

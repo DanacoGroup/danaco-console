@@ -24,24 +24,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek modułu Apps: czy za odpowiedzią stoi zapis, plik albo stojący serwer.
-//
-// Wzorzec szkody, którego pilnuje ten plik, wystąpił w tym produkcie: moduł
-// Design meldował `status: ok` z wykazem zasobów, za którymi nie było ani
-// jednego bajtu. Dlatego żaden sprawdzian tutaj nie kończy się na tym, że
-// odpowiedź jest udana. Każdy schodzi niżej niż koperta:
-//   - do bazy DRUGIM połączeniem, otwartym niezależnie od rdzenia, i liczy
-//     wiersze albo czyta wartości kolumn,
-//   - do pliku w magazynie treści, otwiera go i sprawdza, czy to naprawdę jest
-//     archiwum, obraz albo dokument, za który się podaje,
-//   - do sieci, wołając adres, który rdzeń wypuścił jako `previewUrl`.
-//
-// Sprawdziany nie pomijają się przy braku żadnego programu: cały moduł pracuje
-// bibliotekami wkompilowanymi w rdzeń — `archive/zip`, `image/png`,
-// `crypto/ed25519`, `net/http` — więc mierzą to, co ma stać u Operatora na
-// cienkiej instalce.
-
-// oknoSprawdzianuApps — okno, w którym stoją wszystkie sprawdziany tego pliku.
+// oknoSprawdzianuApps nazywa okno modułu Apps, w którym stoją wszystkie sprawdziany
+// tego pliku i wobec którego liczą się wiersze w bazie.
 const oknoSprawdzianuApps = "apps.product-builder/sprawdzian"
 
 // bazaSprawdzianuApps otwiera drugie połączenie z bazą rdzenia. To ono jest
@@ -58,7 +42,8 @@ func bazaSprawdzianuApps(t *testing.T, katalog string) *sql.DB {
 	return baza
 }
 
-// wierszyApps liczy wiersze spełniające warunek — jedna miara na wszystkie tabele.
+// wierszyApps liczy w bazie wiersze spełniające podane zapytanie i argumenty —
+// jedna miara wspólna dla wszystkich tabel modułu Apps.
 func wierszyApps(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) int {
 	t.Helper()
 
@@ -69,7 +54,8 @@ func wierszyApps(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any)
 	return ile
 }
 
-// tekstZBazyApps odczytuje jedną wartość tekstową.
+// tekstZBazyApps odczytuje z bazy jedną wartość tekstową dla podanego zapytania
+// i argumentów, mierząc stan zapisany przez rdzeń.
 func tekstZBazyApps(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...any) string {
 	t.Helper()
 
@@ -80,14 +66,8 @@ func tekstZBazyApps(t *testing.T, baza *sql.DB, zapytanie string, argumenty ...a
 	return wartosc
 }
 
-// oknoModuluSprawdzianu zakłada sesję i okno modułu Apps, i oddaje jego
-// identyfikator.
-//
-// Prawdziwe okno jest tu nieodzowne przy wdrożeniu: `apps.deployment.run` bierze
-// treść z przestrzeni roboczej okna i odmawia oknu, którego rdzeń nie zna.
-// Pozostałe komendy obszaru okna w rejestrze nie wymagają — pracują na wierszach
-// znakowanych jego identyfikatorem — więc reszta sprawdzianów posługuje się
-// nazwą stałą i mierzy to samo taniej.
+// oknoModuluSprawdzianu zakłada sesję i okno modułu Apps i oddaje jego
+// identyfikator; prawdziwe okno jest tu nieodzowne dla sprawdzianów wdrożenia.
 func oknoModuluSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context) string {
 	t.Helper()
 
@@ -108,7 +88,8 @@ func oknoModuluSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.C
 	return okno.Window.Id
 }
 
-// zapiszPlikWarsztatuSprawdzianu kładzie plik w warstwie warsztatu okna.
+// zapiszPlikWarsztatuSprawdzianu kładzie plik z podaną treścią w warstwie
+// warsztatu okna sprawdzianu, pod wskazaną ścieżką.
 func zapiszPlikWarsztatuSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	warstwa shared.AppWorkspaceLayer, sciezka, tresc string) {
 	t.Helper()
@@ -129,7 +110,8 @@ func zapiszPlikWarsztatuOkna(t *testing.T, zmontowany *Zmontowany, zycie context
 		}, &wynik)
 }
 
-// zdefiniujUkladSprawdzianu zapisuje architekturę o wskazanych komponentach.
+// zdefiniujUkladSprawdzianu zapisuje architekturę produktu o wskazanych
+// komponentach i oddaje zapisany układ architektury.
 func zdefiniujUkladSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	komponenty []shared.AppComponent) shared.AppArchitecture {
 	t.Helper()
@@ -322,7 +304,8 @@ func TestPowiazaniaProduktuLiczaRzeczywistyStan(t *testing.T) {
 	}
 }
 
-// czyPowiazanieCzynneApps odczytuje stan jednego powiązania z wykazu.
+// czyPowiazanieCzynneApps odczytuje z wykazu powiązań stan jednego powiązania
+// modułu wskazanego kodem i oddaje jego dostępność.
 func czyPowiazanieCzynneApps(powiazania []shared.AppProductLink, kod string) bool {
 	for _, powiazanie := range powiazania {
 		if powiazanie.ModuleCode == kod {
@@ -499,8 +482,8 @@ func TestEksportUkladuDajePlikWKazdymFormacie(t *testing.T) {
 			}
 		}},
 		{shared.AppExportFormatPng, func(t *testing.T, bajty []byte) {
-			// Najtwardsza miara: dekoder PNG czyta nagłówek i piksele. Napis
-			// udający obraz przeszedłby sprawdzenie rozmiaru, ale nie to.
+			// Najtwardsza miara: dekoder PNG czyta nagłówek i piksele, czego
+			// napis udający obraz nie przejdzie.
 			obraz, err := png.Decode(bytes.NewReader(bajty))
 			if err != nil {
 				t.Fatalf("plik png nie jest obrazem: %v", err)
@@ -632,7 +615,8 @@ func TestTrasyCzytaneSaZPlikowWarstwyInterfejsu(t *testing.T) {
 	}
 }
 
-// TestMotywZostajeWBazieIWracaTenSam wykazuje przechowanie surowego JSON-a.
+// TestMotywZostajeWBazieIWracaTenSam wykazuje przechowanie surowego JSON-a
+// motywu: zapisana treść wraca z odczytu niezmieniona.
 func TestMotywZostajeWBazieIWracaTenSam(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuApps(t, katalog)
@@ -660,7 +644,7 @@ func TestMotywZostajeWBazieIWracaTenSam(t *testing.T) {
 	}
 
 	// Motyw pusty jest odmową, nie zapisem pustki: kontrakt ma pole jako
-	// wymagane, a zapis `{}` skasowałby Operatorowi motyw bez jego żądania.
+	// wymagane.
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandAppsThemeSet,
 		shared.AppsThemeSetRequest{WindowId: oknoSprawdzianuApps})
 	if odmowa.Code != shared.ErrorCodeValidationFailed {
@@ -818,7 +802,8 @@ func TestSchematCzytanyJestZPolecenCreateTable(t *testing.T) {
 
 // ── Deployment Panel ────────────────────────────────────────────────────────
 
-// TestSrodowiskaZmienneISkalowanieZostajaWBazie wykazuje trwałość nastaw panelu.
+// TestSrodowiskaZmienneISkalowanieZostajaWBazie wykazuje trwałość nastaw panelu
+// wdrożenia: środowisk, zmiennych i skalowania.
 func TestSrodowiskaZmienneISkalowanieZostajaWBazie(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianuApps(t, katalog)
@@ -955,9 +940,8 @@ func TestKondycjaMierzyProduktIZapisujeSprawdzenie(t *testing.T) {
 // ── Wdrożenie, artefakt, dziennik ───────────────────────────────────────────
 
 // przeprowadzWdrozenieSprawdzianu uruchamia wdrożenie i czeka, aż silnik
-// wykonania dobiegnie. Czekanie idzie po bazie, nie po zegarze: przebieg biegnie
-// w gorutynie rdzenia, a uśpienie na stałą liczbę milisekund byłoby sprawdzianem
-// szybkości maszyny, nie skutku.
+// wykonania dobiegnie, odpytując bazę zamiast zegara, żeby nie mierzyć
+// szybkości maszyny.
 func przeprowadzWdrozenieSprawdzianu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	baza *sql.DB, okno string) string {
 	t.Helper()
@@ -1160,7 +1144,7 @@ func TestPakowaniePodpisIPublikacjaDajaPlikPodpisIPozycje(t *testing.T) {
 	}
 
 	// Najtwardsza miara podpisu: sprawdzian sam weryfikuje go kluczem
-	// publicznym odłożonym w wierszu — nie wierzy polu `verified`.
+	// publicznym z wiersza.
 	surowy := tekstZBazyApps(t, baza,
 		`SELECT IFNULL(podpis,'') FROM pakiet_apps WHERE identyfikator_zewnetrzny = ?`,
 		pakiet.Package.Id)
@@ -1260,10 +1244,7 @@ func TestPakowanieBezArtefaktuOdmawiaZPowodem(t *testing.T) {
 
 // TestAudytWydajnosciOddajeMiaryCoreWebVitals mierzy stronę stojącą naprawdę
 // i sprawdza treść wyniku, nie kopertę: miary Core Web Vitals mają nieść
-// wartości zmierzone, a ocena mieścić się w skali setnej. Ten sprawdzian —
-// wyjątkiem od zasady pliku — pomija się bez programu pomiarowego, bo audyt
-// wydajności z założenia idzie programem, a nie biblioteką wkompilowaną;
-// odmowę przy jego braku mierzy sprawdzian osobny.
+// wartości zmierzone, a ocena mieścić się w skali setnej.
 func TestAudytWydajnosciOddajeMiaryCoreWebVitals(t *testing.T) {
 	if !chromiumStoi() {
 		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")

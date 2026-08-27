@@ -1465,3 +1465,9 @@ Nazwa produktu jest stała, a nazwa projektu przychodzi z opisu okna, czyli
 z konfiguracji budowania utrwalonej w `okno-komunikacji/opis-okna.ts`. Blok
 godła nie jest kontrolką i nią nie udaje: nie prowadzi nigdzie i nie zmienia
 kursora na wskazujący.
+
+## budowa/klient-poprzedni/src/ladowanie/indeks.ts
+
+Poza punktem wejścia katalog nie wystawia niczego. Arkusz stylu sceny i postać
+jej bryły pozostają sprawą wewnętrzną, więc zmiana układu ekranu wejścia nie
+sięga warstw, które scenę stawiają.

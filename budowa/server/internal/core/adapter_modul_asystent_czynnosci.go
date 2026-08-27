@@ -60,7 +60,7 @@ func (a *adapterAsystenta) steruj(ctx context.Context,
 		return shared.AssistantActionStatusResponse{}, err
 	}
 
-	// Stan sprzed zapisu czytamy zawsze — resume i sterowanie zamkniętego
+	// Stan sprzed zapisu jest czytany zawsze — resume i sterowanie zamkniętego
 	// zlecenia zależą od niego.
 	przed, err := a.repozytorium.Zlecenie(ctx, *z.ActionId)
 	if err != nil {

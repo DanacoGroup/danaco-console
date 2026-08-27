@@ -3605,3 +3605,21 @@ a nie obietnicą trwałości.
 Rodzaj komponentu wybiera się rozwijaniem z biblioteki przez obsadę `wybor-z-menu.ts`,
 a nie kontrolką natywną przeglądarki, żeby wykaz rodzajów wyglądał tak samo jak pozostałe
 wykazy wyboru w oknie.
+
+## budowa/klient-poprzedni/src/dostepy/indeks.ts
+
+Reszta aplikacji zna z tego katalogu jedną czynność — `otworzOknoDostepow`,
+wołaną z kanałem rdzenia i identyfikatorem okna rozmowy. Gospodarz, który ma
+własny obszar na ekranie i nie chce okna modalnego, bierze zamiast tego samą
+sekcję przez `utworzSekcjeDostepow` i osadza jej element u siebie; czynność
+`ustawOkno` wiąże ją wtedy z oknem rozmowy.
+
+Okno jest jedno na klienta i żyje między otwarciami, tak samo jak okno
+konfiguracji. Powtórne otwarcie wraca do stanu, na którym się skończyło, i nie
+gubi subskrypcji zdarzeń `access.*.changed`. Wywołanie z innym kanałem, po
+ponownym połączeniu z rdzeniem, buduje okno od nowa, żeby komendy nie szły przez
+transport, którego już nie ma.
+
+Nadanie dostępu żyje w obrębie okna, więc identyfikator okna podaje się przy
+otwarciu. Otwarcie bez niego jest poprawne: wykaz punktów i katalog roboczy nie
+zależą od okna, a w miejscu nadań sekcja mówi, na co czeka.

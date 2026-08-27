@@ -1,20 +1,5 @@
-// Odpowiedzialność pliku: rodzina `alert.*` — reguły wyzwalania, rejestr
-// wyzwoleń i ich potwierdzanie. Sam pomiar miar leży
-// w `adapter_alerty_miara.go`; port i wpięcie w `handlers_alerty.go`.
-//
-// ── Kiedy reguły są ewaluowane ──────────────────────────────────────────────
-// Kontrakt nie ma komendy „przelicz reguły". Ewaluacja idzie więc tam, gdzie
-// Operator pyta o wynik: przy odczycie rejestru wyzwoleń (`alert.trigger.list`).
-// Wykaz powstaje z reguł przeliczonych W CHWILI ODPOWIEDZI, a nie z wierszy
-// odłożonych kiedyś przez zegar, którego kontrakt nie zna. Alert, który
-// pokazuje stan sprzed godziny jako stan bieżący, jest tą samą fasadą, co
-// sonda oddająca „w porządku" bez pomiaru.
-//
-// ── Reguła, która nigdy by się nie wyzwoliła, nie powstaje ──────────────────
-// `alert.rule.save` odmawia miary, której rdzeń nie umie zmierzyć, nazywając
-// ją wprost. Zapisanie takiej reguły dałoby Operatorowi wiersz w wykazie
-// i ciszę zamiast alertu — czyli dokładnie to złudzenie bezpieczeństwa, przed
-// którym rodzina ma chronić.
+// Plik realizuje rodzinę adapterów `alert.*`: zapis i odczyt reguł wyzwalania
+// oraz rejestru wyzwoleń kontraktu, wraz z potwierdzaniem pojedynczego wyzwolenia.
 package core
 
 import (
@@ -40,33 +25,28 @@ const (
 	domyslnyZakresWyzwolen = 24 * time.Hour
 )
 
-// adapterAlertow wypełnia port `Alerty`.
-//
-// Cztery źródła pomiaru ponad własny magazyn: ślad wywołań modelu (koszt,
-// żetony, opóźnienie, udział niepowodzeń), dziennik błędów (liczba błędów),
-// rozstrzygacz konfiguracji (pułap kosztu dla miary budżetu) oraz nadajnik
-// zdarzeń, którym wyzwolenie dociera do okien. Brak któregokolwiek nie psuje
-// montażu: psuje te miary, które z niego liczą — i te miary adapter wtedy
-// odrzuca przy zapisie reguły, zamiast milczeć w trakcie ewaluacji.
+// adapterAlertow wypełnia port `Alerty`, licząc miary reguł z czterech źródeł
+// ponad własny magazyn: śladu wywołań modelu, dziennika błędów, rozstrzygacza
+// konfiguracji oraz nadajnika zdarzeń, którym wyzwolenie dociera do okien.
 type adapterAlertow struct {
 	repozytorium dane.RepozytoriumAlertow
 	prowenancja  dane.RepozytoriumProwenancji
 	diagnostyka  dane.RepozytoriumDiagnostyki
 	rozstrzygacz *konfig.Rozstrzygacz
 	nadajnik     *emiter
-	// centrum jest rejestrem centrum powiadomień. Wyzwolony alert jest
-	// zdarzeniem klasy `blad` — zdarzeniem, po którym Operator ma sięgnąć do
-	// platformy. Bez tego wpięcia alarm żyłby wyłącznie w oknie otwartym
-	// w chwili wyzwolenia.
+	// centrum jest rejestrem powiadomień, w którym wyzwolony alert zapisuje
+	// się jako zdarzenie klasy błąd.
 	centrum *adapterCentrumPowiadomien
 }
 
-// nowyAdapterAlertow wiąże port z magazynem reguł.
+// nowyAdapterAlertow wiąże port z magazynem reguł alertów, pozostawiając
+// pozostałe źródła pomiaru i nadajnik zdarzeń do wpięcia osobnymi wywołaniami.
 func nowyAdapterAlertow(repozytorium dane.RepozytoriumAlertow) *adapterAlertow {
 	return &adapterAlertow{repozytorium: repozytorium}
 }
 
-// ZeZrodlamiMiar wpina magazyny, z których liczą się miary reguł.
+// ZeZrodlamiMiar wpina magazyny prowenancji, diagnostyki i rozstrzygacza
+// konfiguracji, z których liczą się miary progów zapisanych reguł.
 func (a *adapterAlertow) ZeZrodlamiMiar(prowenancja dane.RepozytoriumProwenancji,
 	diagnostyka dane.RepozytoriumDiagnostyki, rozstrzygacz *konfig.Rozstrzygacz) *adapterAlertow {
 
@@ -76,7 +56,8 @@ func (a *adapterAlertow) ZeZrodlamiMiar(prowenancja dane.RepozytoriumProwenancji
 	return a
 }
 
-// ZWyjsciem wpina nadajnik, którym idzie zdarzenie `alert.triggered`.
+// ZWyjsciem wpina nadajnik, którym idzie do okien zdarzenie `alert.triggered`
+// po każdym wyzwoleniu reguły.
 func (a *adapterAlertow) ZWyjsciem(e *emiter) *adapterAlertow {
 	a.nadajnik = e
 	return a
@@ -89,7 +70,8 @@ func (a *adapterAlertow) ZCentrumPowiadomien(c *adapterCentrumPowiadomien) *adap
 	return a
 }
 
-// ZapiszRegule obsługuje `alert.rule.save`.
+// ZapiszRegule obsługuje `alert.rule.save`, sprawdzając rodzaj, miarę, okno
+// czasu i kanały dostarczenia reguły przed zapisem w magazynie.
 func (a *adapterAlertow) ZapiszRegule(ctx context.Context,
 	z shared.AlertRuleSaveRequest) (shared.AlertRuleSaveResponse, error) {
 
@@ -159,7 +141,8 @@ func (a *adapterAlertow) ZapiszRegule(ctx context.Context,
 	return shared.AlertRuleSaveResponse{Rule: regulaKontraktu(zapisana), Created: powstala}, nil
 }
 
-// WykazRegul obsługuje `alert.rule.list`.
+// WykazRegul obsługuje `alert.rule.list`, filtrując reguły po rodzaju,
+// mierze i stanie czynności zgodnie z żądaniem operatora.
 func (a *adapterAlertow) WykazRegul(ctx context.Context,
 	z shared.AlertRuleListRequest) (shared.AlertRuleListResponse, error) {
 
@@ -186,7 +169,8 @@ func (a *adapterAlertow) WykazRegul(ctx context.Context,
 	return shared.AlertRuleListResponse{Rules: wykaz, Total: &liczba}, nil
 }
 
-// UsunRegule obsługuje `alert.rule.remove`.
+// UsunRegule obsługuje `alert.rule.remove`, usuwając regułę razem z jej
+// wyzwoleniami i zwracając liczbę usuniętych wierszy rejestru.
 func (a *adapterAlertow) UsunRegule(ctx context.Context,
 	z shared.AlertRuleRemoveRequest) (shared.AlertRuleRemoveResponse, error) {
 
@@ -203,13 +187,9 @@ func (a *adapterAlertow) UsunRegule(ctx context.Context,
 	return shared.AlertRuleRemoveResponse{RuleId: z.RuleId, RemovedTriggers: usunietych}, nil
 }
 
-// WykazWyzwolen obsługuje `alert.trigger.list`.
-//
-// Przed odczytem rejestru reguły są przeliczane na bieżących pomiarach. Dzięki
-// temu wykaz jest stanem produktu TERAZ, a nie zapisem sprzed nieokreślonego
-// czasu. Niepowodzenie ewaluacji nie przewraca odczytu: rejestr zastany jest
-// wartościowszy niż odmowa, a wyzwolenie, którego nie dało się policzyć, i tak
-// nie miałoby wartości obserwowanej.
+// WykazWyzwolen obsługuje `alert.trigger.list`. Przed odczytem rejestru
+// reguły są przeliczane na bieżących pomiarach, więc wykaz jest stanem
+// produktu w chwili odpowiedzi, a nie zapisem sprzed nieokreślonego czasu.
 func (a *adapterAlertow) WykazWyzwolen(ctx context.Context,
 	z shared.AlertTriggerListRequest) (shared.AlertTriggerListResponse, error) {
 
@@ -244,7 +224,8 @@ func (a *adapterAlertow) WykazWyzwolen(ctx context.Context,
 	}, nil
 }
 
-// PotwierdzWyzwolenie obsługuje `alert.trigger.acknowledge`.
+// PotwierdzWyzwolenie obsługuje `alert.trigger.acknowledge`, zapisując czas
+// i treść potwierdzenia przy wskazanym wyzwoleniu rejestru.
 func (a *adapterAlertow) PotwierdzWyzwolenie(ctx context.Context,
 	z shared.AlertTriggerAcknowledgeRequest) (shared.AlertTriggerAcknowledgeResponse, error) {
 
@@ -264,7 +245,8 @@ func (a *adapterAlertow) PotwierdzWyzwolenie(ctx context.Context,
 	return shared.AlertTriggerAcknowledgeResponse{Trigger: wyzwolenieKontraktu(wyzwolenie)}, nil
 }
 
-// regulaKontraktu przekłada wiersz na regułę kontraktu.
+// regulaKontraktu przekłada wiersz magazynu na regułę kontraktu, przenosząc
+// porównanie i zasięg tylko wtedy, gdy wiersz je niesie.
 func regulaKontraktu(r dane.RegulaAlertu) shared.AlertRule {
 	licznik := r.LiczbaWyzwolen
 	regula := shared.AlertRule{
@@ -289,7 +271,8 @@ func regulaKontraktu(r dane.RegulaAlertu) shared.AlertRule {
 	return regula
 }
 
-// wyzwolenieKontraktu przekłada wiersz rejestru na wyzwolenie kontraktu.
+// wyzwolenieKontraktu przekłada wiersz rejestru wyzwoleń na wyzwolenie
+// kontraktu wraz z dekodowaniem kanałów, którymi zostało dostarczone.
 func wyzwolenieKontraktu(w dane.WyzwolenieAlertu) shared.AlertTrigger {
 	return shared.AlertTrigger{
 		Id: w.Kod, RuleId: w.RegulaKod, RuleName: w.RegulaNazwa,
@@ -303,7 +286,7 @@ func wyzwolenieKontraktu(w dane.WyzwolenieAlertu) shared.AlertTrigger {
 }
 
 // zapisKanalowAlertu składa wykaz dróg dostarczenia w zapis strukturalny
-// kolumny.
+// kolumny, oddając pustą tablicę, gdy reguła nie ma żadnego kanału.
 func zapisKanalowAlertu(kanaly []shared.AlertChannel) string {
 	if len(kanaly) == 0 {
 		return "[]"
@@ -329,7 +312,8 @@ func odczytKanalowAlertu(zapis string) []shared.AlertChannel {
 	return kanaly
 }
 
-// sprawdzRodzajReguly odbija rodzaj spoza wyliczenia kontraktu.
+// sprawdzRodzajReguly odbija rodzaj spoza wyliczenia kontraktu, nazywając
+// w komunikacie błędu rodzaje, które rdzeń rozpoznaje.
 func sprawdzRodzajReguly(rodzaj shared.AlertRuleKind) error {
 	switch rodzaj {
 	case shared.AlertRuleKindThreshold, shared.AlertRuleKindAnomaly,
@@ -341,7 +325,8 @@ func sprawdzRodzajReguly(rodzaj shared.AlertRuleKind) error {
 	}
 }
 
-// sprawdzKanalAlertu odbija drogę dostarczenia spoza wyliczenia kontraktu.
+// sprawdzKanalAlertu odbija drogę dostarczenia spoza wyliczenia kontraktu,
+// nazywając w komunikacie błędu drogi, które rdzeń rozpoznaje.
 func sprawdzKanalAlertu(kanal shared.AlertChannel) error {
 	switch kanal {
 	case shared.AlertChannelApp, shared.AlertChannelAlwaysOnDisplay,
@@ -353,49 +338,49 @@ func sprawdzKanalAlertu(kanal shared.AlertChannel) error {
 	}
 }
 
-// terazWMilisekundachAlertow oddaje bieżącą chwilę w milisekundach epoki.
+// terazWMilisekundachAlertow oddaje bieżącą chwilę w milisekundach epoki,
+// wartość zapisywaną przy tworzeniu i potwierdzaniu wierszy alertów.
 func terazWMilisekundachAlertow() int64 {
 	return time.Now().UnixMilli()
 }
 
 // zapisLiczbyMiary składa czytelny zapis wartości obserwowanej do treści
-// komunikatu wyzwolenia.
+// komunikatu wyzwolenia, bez notacji wykładniczej właściwej zapisowi binarnemu.
 func zapisLiczbyMiary(wartosc float64) string {
 	return strconv.FormatFloat(wartosc, 'f', -1, 64)
 }
 
-// bladZapleczaAlertow nazywa brak magazynu reguł po stronie rdzenia.
+// bladZapleczaAlertow nazywa brak magazynu reguł po stronie rdzenia, stan
+// świadczący o niepełnym złożeniu adaptera przy starcie serwera.
 func bladZapleczaAlertow() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"alerty: rdzeń nie ma wpiętego magazynu reguł — naprawa: podpiąć "+
 			"repozytorium alertów przy składaniu rdzenia"))
 }
 
-// bladWskazaniaAlertu nazywa niepoprawne żądanie.
+// bladWskazaniaAlertu nazywa niepoprawne żądanie operatora, przenosząc powód
+// odmowy wprost do treści komunikatu błędu.
 func bladWskazaniaAlertu(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed, "alerty: "+powod))
 }
 
-// bladNieznanejRegulyAlertu nazywa wskazanie reguły, której nie ma.
+// bladNieznanejRegulyAlertu nazywa wskazanie reguły, której magazyn nie ma
+// pod podanym identyfikatorem.
 func bladNieznanejRegulyAlertu(kod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"alerty: nie ma reguły o identyfikatorze "+strings.TrimSpace(kod)))
 }
 
-// bladMagazynuAlertow nazywa niepowodzenie zapisu albo odczytu.
+// bladMagazynuAlertow nazywa niepowodzenie zapisu albo odczytu magazynu reguł
+// i wyzwoleń, przenosząc jego treść do komunikatu błędu rdzenia.
 func bladMagazynuAlertow(err error) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"alerty: "+err.Error()))
 }
 
-// wyzwolenieAlertu rozgłasza `alert.triggered`. Wyzwolenie jest bytem
-// przekrojowym, nie bytem jednej sesji, więc zdarzenie idzie bez wskazania
-// karty — wzorem zdarzeń modułu Design o zasobach.
-//
-// Sprawcy zdarzenie nie niesie i nieść nie może: wyzwolenie powstaje z pomiaru
-// rdzenia, a nie z czyjegoś kliknięcia. Kontrakt też nie ma na nie pola.
-// Reguła jedzie razem z wyzwoleniem, bo okno pokazujące alert musi wiedzieć,
-// czyj to alarm i jakim progiem był postawiony.
+// wyzwolenieAlertu rozgłasza `alert.triggered` bez wskazania karty sesji,
+// ponieważ wyzwolenie jest bytem przekrojowym, a nie bytem jednej sesji, i
+// niesie razem z sobą regułę, której próg został przekroczony.
 func (e *emiter) wyzwolenieAlertu(wyzwolenie shared.AlertTrigger, regula shared.AlertRule) {
 	e.wyslij(shared.EventAlertTriggered, "", shared.AlertTriggeredEvent{
 		Trigger: wyzwolenie, Rule: regula,

@@ -1508,3 +1508,25 @@ z wyzerowanym wskaźnikiem niezapisanych zmian, zamiast nadpisać istniejący,
 Przywrócenie kopii do nowego dokumentu jest osobną drogą, bo przywracanie samo
 nie ma kasować tego, co jest: Operator, który po awarii nie jest pewien, która
 wersja jest lepsza, ma dostać obie.
+
+## budowa/server/internal/core/adapter_modul_design_kolor.go
+
+Czynności czytające piksele leżą w `adapter_modul_design_kolor_obraz.go`; sam
+rachunek barwy leży w `adapter_modul_design_barwy.go`. Ten plik niesie
+czynności kontraktu, które liczą bez dotykania obrazu.
+
+Harmonia jest rachunkiem na kole barw, nie tablicą gotowych palet: dopełnienie,
+triada, tetrada i analogia to obroty odcienia o ustalony kąt. Rachunek idzie w
+przestrzeni HCL biblioteki `go-colorful`, nie w HSL, ponieważ HCL jest
+percepcyjnie równomierna — dwie barwy o tym samym odcieniu i jasności
+wyglądają na równie jasne, a nie tylko mają równe liczby. Paleta zbudowana w
+HSL dałaby żółć jaskrawą i błękit przygaszony przy identycznych nastawach.
+
+Zapis barwy, którego rdzeń nie zrozumiał, jest odmową, nigdy podstawieniem
+czerni domyślnej: paleta zbudowana wokół czerni podstawionej za nieczytelne
+wejście wyglądałaby w oknie jak paleta poprawna.
+
+Badanie dostępności zestawu żetonów mierzy pary, nie pojedyncze żetony: bierze
+wszystkie pary barwnych żetonów zestawu i mierzy kontrast każdej. Odpowiedź
+niesie liczbę par sprawdzonych, liczbę spełniających próg i wykaz łamiących
+go — bilans, nie samo stwierdzenie, że są problemy.

@@ -2429,3 +2429,17 @@ a nie konfiguracja budowania pakietu.
 Zapis liczb i czasów stoi w osobnym pliku, ponieważ reguła zapisu czasu trwania jest potrzebna w trzech miejscach naraz: w wierszu podsumowania przepływu, w kolumnie czasu w tabeli agentów oraz w liczniku pozycji zwiniętych. Trzy kopie tej samej reguły rozjechałyby się przy pierwszej poprawce.
 
 Podagent bez znacznika startu otrzymuje brak, a nie czas zerowy. Zero znaczyłoby, że praca ruszyła i nie trwała ani chwili, co jest twierdzeniem innym niż brak pomiaru.
+
+## budowa/klient-poprzedni/src/moduly/browser/wiersz-zrodla.ts
+
+Każda akcja wiersza jest naciskalna — również usunięcie, którego kontrakt nie
+niesie. Przycisk odpowiada wtedy nazwaniem brakującej komendy, zamiast znikać
+albo gasnąć, ponieważ kontrolka wygaszona bez wyjaśnienia nie mówi, czego
+brakuje.
+
+Wiersz nie usuwa pozycji z widoku na własną rękę. Zniknięcie pozycji bez zapisu
+w rdzeniu byłoby udawaniem wykonania czynności, która się nie odbyła.
+
+Wykaz źródeł, formularz dodania oraz przekazanie do modułu Research mieszkają
+w oknie modułu, a nie w wierszu. Wiersz odpowiada wyłącznie za własną treść
+i za wywołanie czynności podanych w `AkcjeZrodla`.

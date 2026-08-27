@@ -2430,3 +2430,14 @@ oddawałoby zestaw okrojony i nikt by się o tym nie dowiedział.
 Zapytanie wykazu kart zawęża do przestrzeni tym samym idiomem co reszta
 wykazów modułu — pusty tekst wyłącza warunek, więc plan zapytania jest jeden,
 niezależnie od tego, czy przestrzeń jest podana.
+
+## budowa/server/internal/dane/extension_zaufanie.go
+
+Żaden wiersz tej warstwy niczego nie blokuje: uprawnienie jest zapisem tego, co
+manifest deklaruje i co Operator nadał, podpis jest zapisem wyniku weryfikacji,
+a referencja sekretu przechowuje klucz jawny, nigdy treść poświadczenia.
+
+Funkcja ZapiszUprawnieniaRozszerzenia wymienia komplet uprawnień jednej strony
+zamiast dokładać wiersze do istniejących: manifest, który przestał deklarować
+uprawnienie, ma przestać je pokazywać, a nadanie zdjęte przez Operatora ma
+zniknąć z tabeli, a nie pozostać w niej jako nieaktualny wiersz.

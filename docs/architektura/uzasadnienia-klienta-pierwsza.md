@@ -4982,3 +4982,21 @@ proszono, i musi być odmową, a nie milczeniem.
 Panel obsady odpowiada za scenę; czym rola jest nadawana i skąd bierze się zdanie o skutku, rozstrzyga moduł nadania ról, który woła komendę nadania roli oraz komendę zmiany wcielenia. Okno powstaje na wzór okna istniejącego: założenie okna wymaga kanału modelu, katalogów roboczych, zasięgu wykonania i trybu uprawnień, więc klient bierze te pola z okna, które w sesji już stoi. Sesja bez ani jednego okna nie daje wzorca i panel mówi to wprost, zamiast wysyłać żądanie skazane na odmowę. Panel ma własne miejsce stanu treści i nie oddaje meldunków wywołaniu zwrotnemu sceny, ponieważ inaczej odmowy rdzenia przepadałyby w ciszy.
 
 Wykaz okien obcych wychodzi nieosadzony: jest jedną z sekcji panelu, a o tym, gdzie sekcja stoi i czy jest zwinięta, rozstrzyga układ z rdzenia. Osadzenie go na sztywno byłoby drugą prawdą o kolejności.
+
+## budowa/klient-poprzedni/src/moduly/design/zrodlo-zaplecza.ts
+
+Komendy `window.list` i `window.state.get` dają okno modułu i jego stan; są wspólne
+każdemu oknu operacyjnemu.
+
+Komenda `channel.list` daje rejestr kanałów modelu. Jest najbliższym istniejącym
+odpowiednikiem wyboru silnika generującego z panelu akcji Prompt Buildera, bo pole
+`engine` promptu przyjmuje identyfikator kanału.
+
+Komendy `module.list` i `context.transfer` dają katalog modułów rdzenia oraz jedyną
+zbudowaną drogę przekazania międzymodułowego; nią idzie wysłanie zasobu do modułu
+docelowego z Assets Panel. Wykaz modułów docelowych bierze się z rdzenia, nigdy z kopii
+katalogu po stronie klienta.
+
+Zdarzenie `progress.changed` niesie telemetrię postępu. Generowanie zasobu nim nie jedzie:
+komenda `design.asset.generate` wraca w jednej turze, bez pola `processId`, i nie wysyła
+po drodze żadnego `progress.changed`.

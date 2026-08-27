@@ -4395,3 +4395,20 @@ trzyma te komendy poza wykazem kontraktu. Okno docelowe model wskazuje
 jawnie, albo rdzeń odmawia.
 ## budowa/server/internal/dane/queue.go
 Obszar kolejek ma jedno repozytorium rozłożone na dwa pliki wyłącznie dla objętości: ten plik dokłada wykaz kolejek i powiązania obok komend zakładania i akcji obsłużonych w pliku sąsiednim, na tym samym typie repozytorium, nad tą samą bazą i z tym samym dziennikiem akcji. Zawężenia wykazu po sesji i po oknie nie ma celowo: sesja kolejki bywa znana wyłącznie z pamięci powiązań rdzenia, a okna obsługiwane przez kolejkę leżą w tabeli powiązań albo w tej samej pamięci, więc sito po obu tych bytach składa się w rdzeniu, na kolejce kontraktu — sito w zapytaniu SQL milczałoby o kolejkach, które warunek spełniają. Powiązania kolejki dokładają się, nie zastępują: kontrakt zna wyłącznie wiązanie, komendy rozwiązującej nie ma, więc zapis, który cicho zdejmowałby wcześniejsze powiązania, robiłby czynność, o którą nikt nie prosił. Powtórzone powiązanie jest tym samym faktem, a nie drugim, więc kolizja z więzem jednoznaczności nie jest tu błędem, tylko brakiem zmiany.
+
+## budowa/server/internal/session/ubicie_windows.go
+
+Proces okna wraz z całym potomstwem należy do jednego zadania systemowego, więc jedno wywołanie jądra
+kończy całe drzewo naraz, zamiast zewnętrznego narzędzia kończącego procesy — bez zależności od narzędzi
+zewnętrznych systemu. Uchwyt zadania trzyma zamek: metoda ubij, wywoływana przez obserwatora albo przy
+zamknięciu okna, czyta go wtedy, gdy metoda zwolnij, wywoływana przez obserwatora zakończenia procesu,
+może go właśnie oddawać; bez zamka byłby to wyścig o pole zadanie. Pole pid to identyfikator procesu
+okna utrwalony w chwili przejęcia. Dogląd posługuje się tym polem, a nie identyfikatorem z os.Process,
+ponieważ zwolnienie zeruje go na wartość minus jeden, więc czytanie go z gorutyny doglądu byłoby
+wyścigiem danych z ubiciem idącym równolegle. Pole zapisuje się raz, w metodzie przejmij, zanim
+struktura wyjdzie poza jedną gorutynę, i tylko czyta się je później.
+
+Metoda czekaj otwiera własny uchwyt synchronizujący, żeby nie ruszać uchwytu trzymanego przez
+os.Process, który oddaje metoda zwolnij; nieudane otwarcie oznacza, że proces już zniknął. Metoda
+posługuje się zapamiętanym identyfikatorem procesu, a nie identyfikatorem z os.Process, z tego samego
+powodu co dogląd: zwolnienie zeruje go na wartość minus jeden.

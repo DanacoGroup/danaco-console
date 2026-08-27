@@ -5427,3 +5427,19 @@ z odpowiedzi i sprawdza skutek w wykazie zasobów.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-uprawnien.ts
 Wartości trybu odpowiadają dosłownie przełącznikowi trybu uprawnień kanału głównego i pochodzą z wyliczenia kontraktu — pasek nie prowadzi własnego katalogu trybów, tak samo jak nie prowadzi go kolumna sterowania. Żadna pozycja nie jest ukryta ani wyszarzona, w tym pominięcie kontroli uprawnień: jedyną kontrolą dostępu jest uwierzytelnianie, a interfejs nie stawia blokad — skutek wyboru mówi opis pozycji, bo to jest właściwe miejsce na ostrzeżenie, nie odebranie kliknięcia.
+
+## budowa/klient-poprzedni/src/moduly/studio/modul-studio.ts
+Studio Editor, kanwa tekstowa, Preview Window i Diff/Grep Panel pracowały wcześniej nad tą samą
+treścią w czterech miejscach, a przy dwóch dokumentach dawało to sześć okien; zeszły się w okno
+pracy z dokumentem, gdzie treść z formatowaniem na kartce, podgląd wydania i różnica są trybami
+jej widoku, a wynik modelu jest zmianą oznaczoną w miejscu — kanwa tekstowa przestała istnieć,
+bo wynik operacji kontekstowej wchodzi wprost do dokumentu. Panel cyfryzacji stoi najwyżej
+w układzie, bo cyfryzacja poprzedza redakcję: dopiero jego wynik daje oknu pracy treść, gdy
+materiałem wejściowym jest skan. Okno pracy jest wiodące i stoi obok panelu narzędzi niosącego
+pełny wykaz operacji; warsztat dokumentu i redakcja pracują na materiale wniesionym do okna,
+więc stoją niżej, a repozytorium sesji zamyka układ, bo dotyczy całej sesji, nie bieżącej
+czynności. Trzy źródła modułu sięgają poza obszar studia, bo obszar ten nie niesie ani
+cyfryzacji, ani zamiany formatu, ani przygotowania obrazu — kontrakt dzieli się po rodzajach
+czynności, nie po modułach. Stan studia jest jeden na cały moduł, więc przywrócenie wersji
+w repozytorium przestawia treść edytora i podgląd naraz, a odczyty idą równolegle i nie gaszą
+się nawzajem.

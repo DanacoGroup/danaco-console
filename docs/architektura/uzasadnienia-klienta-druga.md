@@ -3960,3 +3960,6 @@ niedoszły oznacza, że historia wróciła, ale okno nie jest zapisane na żywo,
 bo żądanie poszło bez identyfikatora okna. Widok trzyma ograniczoną liczbę
 ostatnich wierszy, bo okno pomocnicze nie jest drugą konsolą, a ucięcie jest
 oznaczone, nie zamaskowane.
+
+## budowa/klient/src/wejscie/skladniki/kroki-odzyskiwania.ts
+Numer ustępuje ptaszkowi po zrobieniu kroku, więc stan nie stoi na samej barwie — wymaganie kontrastu spełnione jest przez kształt, nie tylko przez kolor. Wstawianie tu osobnego rysunku dublowałoby ten sam znak. Strzałki między krokami są rysunkiem, nie treścią — czytnik ekranu je pomija.

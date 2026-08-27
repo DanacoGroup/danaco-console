@@ -4941,3 +4941,20 @@ Powiązanie kolejki z sesją i oknami mieszka w pamięci procesu, a nie w bazie 
 
 ## budowa/server/internal/core/pokrycie_kontraktu_test.go
 Pokrycie kontraktu liczono wcześniej czytaniem źródeł wyrażeniem dopasowującym wywołania rejestracji komend, a ta miara myliła się w obie strony: komendy wpinane przez parametr, a nie literałem nazwy, wyrażenie omijało, więc wychodziły z pomiaru jako komendy bez obsługi, choć rdzeń od dawna na nie odpowiada; a wywołanie rejestracji w gałęzi kodu, do której montaż nigdy nie dochodzi, pomiar liczył jako pokrycie. Rejestr zna prawdę, bo to on rozstrzyga, czy komenda dostanie uchwyt, czy odpowiedź o nieznanej komendzie, więc sprawdzian pyta jego, a nie źródeł.
+
+## budowa/server/internal/core/handlers_mobile.go
+Warstwa mobilna pyta o stan warstwy wspólnej — sesje, okna, procesy, kolejki —
+a tę obsługuje port nawigacji; rejestr telemetrii postępu ma w rdzeniu jednego
+właściciela. Wzorem jest rozszerzenie monitora, które tą samą drogą rozszerza
+ten sam port, oraz rozszerzenie pamięci modułu przestrzeni roboczej. Brak
+portu nie jest ciszą, tak samo jak w monitorze: obsługiwacze rejestrują się
+zawsze, a port, który nie niesie warstwy mobilnej, odpowiada błędem
+wewnętrznym z nazwą brakującego bytu, żeby właściciel instalacji zobaczył, że
+warstwa mobilna nie jest wpięta, a nie pusty wykaz procesów i wyzerowany stan
+platformy. Rodzina komend mobilnych nie rozgłasza zdarzeń, mimo że kontrakt
+zna zdarzenie zmiany procesu mobilnego, bo proces mobilny jest procesem
+telemetrii postępu, a telemetria ma jednego producenta zdarzeń. Rozgłaszanie
+z tego pliku dałoby zdarzenie wyłącznie po zmianie zleconej z telefonu,
+a milczałoby przy zmianie zleconej z pulpitu — drugą, niepełną prawdę
+o procesie; dlatego rejestracja warstwy mobilnej nie przyjmuje nadajnika
+zdarzeń.

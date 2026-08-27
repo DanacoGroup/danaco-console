@@ -5248,3 +5248,15 @@ którą klient już ma: kontrakt nie ma komendy wyodrębniania danych ze strony,
 a migawka jest jedyną treścią, którą moduł dostał od rdzenia. To z niej
 wyjmowane są trzy rodzaje danych i dlatego panel nie podstawia żadnego pola,
 dopóki migawka nie przyjdzie.
+
+## budowa/klient-poprzedni/src/moduly/browser/zrodlo-automatyk.ts
+
+Obszar `browser.*` nie niesie ani jednej komendy makra. Kontrakt trzyma powtarzalne
+przebiegi w jednym miejscu — jako automatyki platformy opisane strukturą `AutomationWorkflow`.
+Scenariusz nagrany przy przeglądaniu jest właśnie taką automatyką, więc okno zapisuje go tą
+samą drogą, którą czyta go moduł Automations. Drugi, własny magazyn scenariuszy w module
+Browser byłby drugą prawdą o tym samym bycie.
+
+Stąd też jedno nazewnictwo dla jednego pojęcia: `AutomationWorkflow` jest w całym produkcie
+automatyką, `AutomationStep` krokiem, `AutomationSchedule` harmonogramem, a `AutomationExecution`
+przebiegiem. Nazwa okna Automation Studio pochodzi z opracowania modułu i pozostaje nietknięta.

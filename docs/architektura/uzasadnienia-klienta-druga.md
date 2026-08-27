@@ -4668,3 +4668,18 @@ nastawiona zasada nie utrzyma, są oznaczone, a nie ukryte ani wygaszone —
 nastawa retencji ma pokazać skutek zasady przed jej zapisem, więc wiersz
 oznaczony nadal da się przeczytać i zaznaczyć. Wykaz nie zna żadnej komendy
 i nie wie, skąd pozycje przyszły: dostaje tablicę, oddaje identyfikatory.
+
+## budowa/klient-poprzedni/src/moduly/translate/wywolanie-translate.ts
+Rdzeń odpowiada na komendę, której nie obsługuje, kopertą zdarzenia nieznanej komendy. Koperta
+niesie identyfikator żądania, ale nie niesie pola statusu, więc korelacja klienta nie rozpoznaje
+jej jako odpowiedzi, a zwykłe wywołanie czekałoby na nią bez końca, pozostawiając okno w stanie
+ładowania na zawsze. Dlatego wywołanie nasłuchuje zdarzenia nieznanej komendy równolegle
+z odpowiedzią i rozstrzyga się na tym, co przyjdzie pierwsze; odmowa wraca nazwana, bo pole
+żądanego typu niesie typ z rdzenia, więc okno mówi wprost, której komendy rdzeń nie zna, zamiast
+pokazać pustą listę jako wynik. To nie jest druga droga do rdzenia: wysyłka idzie tym samym
+kanałem wysyłki, a nazwa komendy pochodzi wyłącznie ze stałych kontraktu, więc obietnica nigdy nie
+jest odrzucana. Pole błędu jest wypełnione także przy odmowie, więc widok, który zna tylko zwykły
+wynik, zachowuje się poprawnie. Gdy pola identyfikatora żądania zabrakło — starszy rdzeń albo
+pośrednik — zostaje dopasowanie po żądanym typie: mylna zbieżność jest mniej szkodliwa niż okno
+czekające bez końca. Rzeczą, której nie ma, jest tutaj uchwyt komendy, a zdanie błędu nazywa typ
+wprost, więc operator nie musi znać kodu, żeby zrozumieć odmowę.

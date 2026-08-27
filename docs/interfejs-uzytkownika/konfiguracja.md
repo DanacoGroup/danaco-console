@@ -1,5 +1,3 @@
-*Dokument specyfikuje okno Konfiguracji Danaco Console: nakładkę i wywołanie modelu, panel prowenancji, konfigurację kanałów oraz warstw widoczności.*
-
 # Danaco Console — Okno Konfiguracji
 
 | | |
@@ -682,7 +680,7 @@ Interfejs Danaco Console ujawnia funkcje stopniowo: funkcja niepotrzebna do real
 
 Niniejsza sekcja jest miejscem rozstrzygającym dla trybu administracyjnego całej platformy: ustala jedną drogę wejścia, jeden model uprawnień, postać znacznika stanu oraz przejścia stanu. `architektura/model-konfiguracji.md` (rozdz. 7.4) podaje klucze konfiguracji trybu, `architektura/bezpieczenstwo-i-uwierzytelnianie.md` (rozdz. 14.2) — model uprawnień i rejestrację w dzienniku audytu.
 
-**Droga wejścia.** Tryb administracyjny wywołuje się wyłącznie z palety poleceń (`Ctrl/Cmd + K`, rozdz. 15.8), pozycją „Tryb administracyjny”. Okno konfiguracji nie zawiera przełącznika trybu — prezentuje znacznik stanu trybu oraz rejestr wejść. Pozycja palety jest widoczna wyłącznie dla roli, której konfiguracja obejmuje warstwę 4.
+**Droga wejścia.** Tryb administracyjny wywołuje się wyłącznie z palety poleceń (`Ctrl/Cmd + K`, `interfejs-uzytkownika/katalog-komponentow.md`, rozdz. 15.8), pozycją „Tryb administracyjny”. Okno konfiguracji nie zawiera przełącznika trybu — prezentuje znacznik stanu trybu oraz rejestr wejść. Pozycja palety jest widoczna wyłącznie dla roli, której konfiguracja obejmuje warstwę 4.
 
 **Model uprawnień.**
 
@@ -1580,5 +1578,4 @@ Zestaw ikon zgodny z zestawem 47 ikon systemu wizualnego (rozdz. 7.2 Systemu wiz
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

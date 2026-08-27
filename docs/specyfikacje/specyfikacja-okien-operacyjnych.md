@@ -1,5 +1,3 @@
-*Dokument specyfikuje anatomię i katalog okien operacyjnych Danaco Console: elementy, warstwy widoczności oraz stany.*
-
 # Danaco Console — Specyfikacja okien operacyjnych
 
 | | |
@@ -1025,5 +1023,4 @@ Poniższa tabela odnotowuje okna występujące w więcej niż jednym miejscu kat
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

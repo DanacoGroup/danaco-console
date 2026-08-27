@@ -1,5 +1,3 @@
-*Dokument specyfikuje interfejs modułu Apps Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
-
 # Danaco Console — Moduł Apps — dokument projektowy
 
 | | |
@@ -23,7 +21,7 @@
 | **Odbiorcy dokumentu** | Designer (co, gdzie, w jakiej formie, do czego), Deweloper (co zbudować) |
 | **Stos techniczny odniesienia** | Rdzeń serwera: Go (rejestr rozszerzeń, procesy sesji, sterowanie MCP i konektorami). Kanał sterujący: WebSocket (`extension.list` / `extension.install` / `extension.toggle`, `config.get` / `config.set`) |
 | **Zasada nadrzędna** | Pełna kompozycyjność i pełna konfigurowalność; zero blokad w UI; klucze jawne; kontrola przez stan wyjściowy i zakres uprawnień, nie przez blokadę; domyślne zachowanie = wykonanie |
-| **Źródło faktów** | Koncepcja platformy (rozdz. 4.4–4.6, 8, 9.14, 11.3, 11.9) · Specyfikacja modułów (4.14) · Specyfikacja okien operacyjnych (6.14) · Specyfikacja agentów · Rozszerzenia · Kontrakty komunikacji (rozdz. 1, 5.9) · Model danych (rozdz. 9) · Architektura (rozdz. 9, 12) · System wizualny · Model konfiguracji |
+| **Źródło faktów** | architektura/koncepcja-platformy.md (rozdz. 4.4–4.6, 8, 9.14, 11.3, 11.9), specyfikacje/specyfikacja-modulow.md (4.14), specyfikacje/specyfikacja-okien-operacyjnych.md (6.14), specyfikacje/specyfikacja-agentow.md, architektura/rozszerzenia.md, architektura/kontrakty-komunikacji.md (rozdz. 1, 5.9), architektura/model-danych.md (rozdz. 9), architektura/architektura.md (rozdz. 9, 12), interfejs-uzytkownika/system-wizualny.md, architektura/model-konfiguracji.md |
 
 ---
 
@@ -53,7 +51,7 @@ Moduł spina w **jeden, ciągły proces** wszystkie etapy powstawania produktu c
 
 ### 1.3. Rola modułu — dwie strony jednego cyklu życia oprogramowania
 
-Moduł Apps obejmuje pełen cykl życia oprogramowania na platformie. Jego pierwsza strona to **budowa produktu** — od Architecture Designer, przez Frontend Workspace i Backend Workspace, po Deployment Panel. Druga, komplementarna strona to **dystrybucja i konsumpcja aplikacji oraz rozszerzeń** — katalog, instalacja, uprawnienia i integracje zewnętrzne. Moduł jest **operacyjnym frontem warstwy rozszerzeń platformy** i zastępuje dziesiątki osobnych programów w obszarze katalogu aplikacji i rozszerzeń, instalacji, uprawnień oraz integracji zewnętrznych (serwery MCP, konektory).
+Moduł Apps obejmuje pełen cykl życia oprogramowania na platformie. Jego pierwsza strona to **budowa produktu** — od Architecture Designer, przez Frontend Workspace i Backend Workspace, po Deployment Panel. Druga, komplementarna strona to **dystrybucja i konsumpcja aplikacji oraz rozszerzeń** — katalog, instalacja, uprawnienia i integracje zewnętrzne. Moduł jest **operacyjnym frontem warstwy rozszerzeń platformy** (`architektura/architektura.md`, rozdz. 12; `architektura/rozszerzenia.md`) i zastępuje dziesiątki osobnych programów w obszarze katalogu aplikacji i rozszerzeń, instalacji, uprawnień oraz integracji zewnętrznych (serwery MCP, konektory).
 
 ```
  ═══════════════════════════════════════════════════════════════════════════
@@ -83,13 +81,13 @@ Strona dystrybucji i konsumpcji pokrywa sześć obszarów:
 
 | Poza granicą | Gdzie to należy |
 |---|---|
-| Trwały, kanoniczny rejestr rozszerzeń i jego rozgłaszanie | Rejestr żyje w rdzeniu serwera i sekcji „rozszerzenia" **okna konfiguracji**; Apps jest jego operacyjnym frontem, nie drugim źródłem prawdy |
-| Podłączenie rozszerzenia jako wykonawcy zadań agenta | Moduł **Agents** — Skills Manager, Connectors Manager, Permissions Center; Apps przygotowuje i testuje, Agents konsumuje |
-| Definicja profili izolacji technicznej (macierz, poziomy zasięgu) | Okno **punktów izolacji**; Apps prezentuje i stosuje zakresy, nie definiuje macierzy |
+| Trwały, kanoniczny rejestr rozszerzeń i jego rozgłaszanie | Rejestr żyje w rdzeniu serwera i sekcji „rozszerzenia" **okna konfiguracji** (`architektura/rozszerzenia.md`, rozdz. 7); Apps jest jego operacyjnym frontem, nie drugim źródłem prawdy |
+| Podłączenie rozszerzenia jako wykonawcy zadań agenta | Moduł **Agents** — Skills Manager, Connectors Manager, Permissions Center (`architektura/rozszerzenia.md`, rozdz. 6); Apps przygotowuje i testuje, Agents konsumuje |
+| Definicja profili izolacji technicznej (macierz, poziomy zasięgu) | Okno **punktów izolacji** (`architektura/model-konfiguracji.md`; `architektura/koncepcja-platformy.md`, rozdz. 4.4–4.6); Apps prezentuje i stosuje zakresy, nie definiuje macierzy |
 | Właściwe środowisko programistyczne rozszerzenia | Moduł **Developer** / środowisko **CodeStudio**; Apps udostępnia pakowanie i manifest, nie IDE |
 | Orkiestracja wieloagentowa uruchomień rozszerzeń | Środowisko **MultitaskingAI**; Apps dostarcza integracje, orkiestruje je MultitaskingAI |
 
-Granica jest wykonawcza, nie licencyjna: powiązania są jawne i konfigurowalne. Zgodnie z rozdziałem 8 dokumentu Rozszerzenia, moduł **nie wprowadza twardej blokady instalacji** — kontrola odbywa się przez stan wyjściowy (Personal = wyłączone) oraz przez zakres uprawnień nadawany przy podłączeniu.
+Granica jest wykonawcza, nie licencyjna: powiązania są jawne i konfigurowalne. Zgodnie z rozdziałem 8 `architektura/rozszerzenia.md`, moduł **nie wprowadza twardej blokady instalacji** — kontrola odbywa się przez stan wyjściowy (Personal = wyłączone) oraz przez zakres uprawnień nadawany przy podłączeniu.
 
 ### 1.5. Charakter pracy
 
@@ -203,9 +201,7 @@ Każda ukryta funkcja jest osiągalna jednym kliknięciem, jednym skrótem klawi
 | Konfiguracja konektora z opisu | Polecenie języka naturalnego przekładane na wstępną konfigurację konektora przedstawianą do zatwierdzenia | 4 | Polecenie języka naturalnego |
 | Diagnoza błędu integracji | Odczyt logu JSON-RPC lub błędu konektora, wskazanie przyczyny i kroku naprawy | 4 | Polecenie języka naturalnego |
 
-**Zachowanie i stany:**
-
-okno rekonfiguruje się do kontekstu okna aktualnie otwartego w obszarze roboczym. Stan „oczekuje na wynik równoległy" — gdy polecenie dotyczy jednocześnie frontendu i backendu, widoczne są dwa niezależne wskaźniki postępu.
+**Zachowanie i stany:** okno rekonfiguruje się do kontekstu okna aktualnie otwartego w obszarze roboczym. Stan „oczekuje na wynik równoległy" — gdy polecenie dotyczy jednocześnie frontendu i backendu, widoczne są dwa niezależne wskaźniki postępu.
 
 ```
  Makieta — Chat Window w module Apps (stan spoczynku)
@@ -246,9 +242,7 @@ okno rekonfiguruje się do kontekstu okna aktualnie otwartego w obszarze roboczy
 | Korekta zlecenia w toku | Zmiana zakresu zlecenia bez przerywania pętli | 3 | Menu `Operacje ▼` |
 | Log przebiegu pętli | Pełny zapis komunikatów sterujących do diagnostyki | 4 | Polecenie języka naturalnego w Chat Window; skrót klawiszowy |
 
-**Zachowanie i stany:**
-
-okno otwiera się jako kolumna sąsiadująca z Chat Window w chwili przyjęcia zlecenia przez Koordynatora. Stany pętli: planowanie, wykonanie, kontrola, ponowienie, zakończenie. Stan „ponowienie" oznaczany jest przy zadaniu, którego kontrola jakości zwróciła zastrzeżenie.
+**Zachowanie i stany:** okno otwiera się jako kolumna sąsiadująca z Chat Window w chwili przyjęcia zlecenia przez Koordynatora. Stany pętli: planowanie, wykonanie, kontrola, ponowienie, zakończenie. Stan „ponowienie" oznaczany jest przy zadaniu, którego kontrola jakości zwróciła zastrzeżenie.
 
 ```
  Makieta — Execution Loop Window (stan spoczynku)
@@ -280,7 +274,7 @@ okno otwiera się jako kolumna sąsiadująca z Chat Window w chwili przyjęcia z
 | Narzędzie | Funkcja | Warstwa | Sposób wywołania |
 |---|---|---|---|
 | Śledzenie etapów | Tracker etapów: architektura → frontend i backend (równolegle) → wdrożenie, z oznaczeniem etapu bieżącego | 1 | Widoczny stale |
-| Nawigacja do pozostałych okien | Kafle z dostępem do Architecture Designer, Frontend Workspace, Backend Workspace, Deployment Panel, App Catalog, Integrations Hub z licznikiem otwartych spraw | 1 | Widoczne stale |
+| Nawigacja do pozostałych okien | Kafle prowadzące do Architecture Designer, Frontend Workspace, Backend Workspace, Deployment Panel, App Catalog, Integrations Hub z licznikiem otwartych spraw | 1 | Widoczne stale |
 | Panel kondycji projektu | Zbiorczy wskaźnik stanu produktu: liczba otwartych zadań, błędów budowania, ostatnie wdrożenie | 1 | Widoczny stale |
 | Metadane produktu | Nazwa, opis, platformy docelowe (webowa, mobilna, desktopowa), repozytorium źródłowe | 2 | Znacznik kontekstowy produktu |
 | Przegląd przypisania wykonawców | Widok, które etapy realizuje użytkownik, a które Executor 1 i Executor 2 środowiska MultitaskingAI | 2 | Znacznik `Wykonawcy ▼` |
@@ -290,9 +284,7 @@ okno otwiera się jako kolumna sąsiadująca z Chat Window w chwili przyjęcia z
 | Dziennik wydań | Lista kolejnych wersji produktu wraz z notatkami wydania | 3 | Menu `Operacje ▼` |
 | Widok całościowej osi czasu | Chronologia zdarzeń projektu — zmiany architektury, zatwierdzenia zmian, wdrożenia — w jednym zestawieniu | 3 | Menu `Operacje ▼` |
 
-**Zachowanie i stany:**
-
-punkt wejścia integrujący pozostałe okna modułu, otwierany po wybraniu produktu. Stan „projekt nowy" — zachęta do rozpoczęcia od Architecture Designer.
+**Zachowanie i stany:** punkt wejścia integrujący pozostałe okna modułu, otwierany po wybraniu produktu. Stan „projekt nowy" — zachęta do rozpoczęcia od Architecture Designer.
 
 ```
  Makieta — Product Builder (stan spoczynku)
@@ -338,9 +330,7 @@ punkt wejścia integrujący pozostałe okna modułu, otwierany po wybraniu produ
 | Adnotacje | Notatki projektowe przypięte do komponentów lub połączeń | 3 | Menu kontekstowe węzła |
 | Eksport diagramu | Zapis jako obraz lub dokument do dokumentacji technicznej | 3 | Menu `Operacje ▼` |
 
-**Zachowanie i stany:**
-
-stanowi punkt wyjścia procesu — poprzedza pracę w Frontend Workspace i Backend Workspace. Stan „architektura zatwierdzona" odsłania zadania pochodne w Product Builderze, bez ograniczania dalszej edycji.
+**Zachowanie i stany:** stanowi punkt wyjścia procesu — poprzedza pracę w Frontend Workspace i Backend Workspace. Stan „architektura zatwierdzona" odsłania zadania pochodne w Product Builderze, bez ograniczania dalszej edycji.
 
 ```
  Makieta — Architecture Designer (stan spoczynku)
@@ -384,9 +374,7 @@ stanowi punkt wyjścia procesu — poprzedza pracę w Frontend Workspace i Backe
 | Integracja z Git Panel | Współdzielone z modułem Developer zarządzanie zmianami i historią zatwierdzeń warstwy frontendowej | 3 | Menu `Operacje ▼` |
 | Integracja z Terminal | Uruchamianie poleceń budowania i narzędzi wiersza poleceń bez opuszczania okna | 3 | Menu `Operacje ▼`; skrót klawiszowy |
 
-**Zachowanie i stany:**
-
-korzysta z zasobów wizualnych z Assets Panel modułu Design; praca prowadzona równolegle z Backend Workspace. Stan „konflikt scalania" sygnalizowany w Git Panel.
+**Zachowanie i stany:** korzysta z zasobów wizualnych z Assets Panel modułu Design; praca prowadzona równolegle z Backend Workspace. Stan „konflikt scalania" sygnalizowany w Git Panel.
 
 ```
  Makieta — Frontend Workspace (stan spoczynku)
@@ -426,9 +414,7 @@ korzysta z zasobów wizualnych z Assets Panel modułu Design; praca prowadzona r
 | Powiązanie z kolejkami | Przejście do zadań w tle powiązanych z modułem Automations | 3 | Menu `Operacje ▼` |
 | Integracja z Terminal | Uruchamianie poleceń serwerowych i migracji bez opuszczania okna | 3 | Menu `Operacje ▼`; skrót klawiszowy |
 
-**Zachowanie i stany:**
-
-praca prowadzona równolegle z Frontend Workspace. Stan „usługa zatrzymana" sygnalizowany na mapie zależności usług.
+**Zachowanie i stany:** praca prowadzona równolegle z Frontend Workspace. Stan „usługa zatrzymana" sygnalizowany na mapie zależności usług.
 
 ```
  Makieta — Backend Workspace (stan spoczynku)
@@ -472,9 +458,7 @@ praca prowadzona równolegle z Frontend Workspace. Stan „usługa zatrzymana" s
 | Ustawienia skalowania | Liczba instancji usługi i reguły automatycznego skalowania | 4 | Tryb administracyjny; polecenie języka naturalnego |
 | Powiązanie z Automations | Wpięcie wdrożenia jako kroku automatyki wyzwalanego zdarzeniem | 4 | Konfiguracja powiązania komponentu |
 
-**Zachowanie i stany:**
-
-aktywny po zakończeniu prac w Frontend Workspace i Backend Workspace. Stany wdrożenia: przygotowywane, w toku, zakończone sukcesem, zakończone błędem, wycofane.
+**Zachowanie i stany:** aktywny po zakończeniu prac w Frontend Workspace i Backend Workspace. Stany wdrożenia: przygotowywane, w toku, zakończone sukcesem, zakończone błędem, wycofane.
 
 ```
  Makieta — Deployment Panel (stan spoczynku)
@@ -514,9 +498,7 @@ aktywny po zakończeniu prac w Frontend Workspace i Backend Workspace. Stany wdr
 | Rekomendacje Wykonawcy | Wskazanie rozszerzeń pod opisane zadanie wraz z uzasadnieniem wyboru | 3 | Menu `Operacje ▼`; polecenie w Chat Window |
 | Prywatny rejestr organizacji | Wewnętrzny katalog rozszerzeń zbudowanych i opublikowanych w organizacji, prezentowany obok Danaco Plugin | 3 | Znacznik źródła w pasku kontekstu |
 
-**Zachowanie i stany:**
-
-punkt wejścia strony dystrybucji i konsumpcji. Stan pozycji: dostępna, zainstalowana wyłączona, zainstalowana włączona, dostępna aktualizacja.
+**Zachowanie i stany:** punkt wejścia strony dystrybucji i konsumpcji. Stan pozycji: dostępna, zainstalowana wyłączona, zainstalowana włączona, dostępna aktualizacja.
 
 ```
  Makieta — App Catalog (stan spoczynku)
@@ -557,9 +539,7 @@ punkt wejścia strony dystrybucji i konsumpcji. Stan pozycji: dostępna, zainsta
 | Dziennik cyklu życia | Chronologia zdarzeń instalacji, aktualizacji, włączeń, wyłączeń i cofnięć wersji per rozszerzenie | 3 | Menu `⋮` wiersza |
 | Tryb administracyjny rejestru | Operacje zbiorcze na rejestrze i podgląd zapisu kanonicznego | 4 | Tryb administracyjny; polecenie języka naturalnego |
 
-**Zachowanie i stany:**
-
-każda zmiana stanu włączenia jest rozgłaszana na wszystkie urządzenia sesji (rozdz. 1).
+**Zachowanie i stany:** każda zmiana stanu włączenia jest rozgłaszana na wszystkie urządzenia sesji (`architektura/kontrakty-komunikacji.md`, rozdz. 1).
 
 ```
  Makieta — Installed Apps Manager (stan spoczynku)
@@ -941,7 +921,7 @@ App Catalog — rozszerzenie dostępne obok Danaco Plugin
 | Stan pracy nad frontendem | Frontend Workspace | Kod, komponenty, zasoby wizualne |
 | Stan pracy nad backendem | Backend Workspace | Kod usług, schemat danych, konfiguracja |
 | Status wdrożenia | Deployment Panel | Historia, logi, stan produkcyjny |
-| Rejestr rozszerzeń | App Catalog, Installed Apps Manager | Sześcioatrybutowy model encji Rozszerzenie: Identyfikator, Nazwa, Źródło, Stan włączenia, Konfiguracja, Lokalizacja |
+| Rejestr rozszerzeń | App Catalog, Installed Apps Manager | Sześcioatrybutowy model encji Rozszerzenie: Identyfikator, Nazwa, Źródło, Stan włączenia, Konfiguracja, Lokalizacja (`architektura/model-danych.md`, rozdz. 9) |
 | Zakresy uprawnień i wynik weryfikacji podpisu | Permissions & Trust Center | Manifest uprawnień, podpis, pochodzenie |
 | Definicje narzędzi i schematy MCP | Integrations Hub, MCP & Connector Console | `tools`, `resources`, `prompts` wraz ze schematami argumentów |
 
@@ -995,51 +975,51 @@ Powiązania nie są aktywne domyślnie: praca w module Apps działa w pełni sam
 
 ## 7. Katalog funkcji i narzędzi
 
-Każda pozycja katalogu podaje nazwę funkcji, jej działanie oraz zależności techniczne — biblioteki, formaty i protokoły. Wszystkie funkcje respektują jednolity kontrakt rozszerzenia i sześcioatrybutowy model encji Rozszerzenie.
+Każda pozycja katalogu podaje nazwę funkcji, jej działanie oraz zależności techniczne — biblioteki, formaty i protokoły. Wszystkie funkcje respektują jednolity kontrakt rozszerzenia (`architektura/rozszerzenia.md`, rozdz. 3) i sześcioatrybutowy model encji Rozszerzenie (`architektura/model-danych.md`, rozdz. 9).
 
 ### 7.1. Katalog rozszerzeń
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Katalog rozszerzeń** | Jeden widok wszystkich rozszerzeń rejestru — wtyczki, umiejętności, konektory, serwery MCP — z obu źródeł, z kartą pozycji (opis, wersja, źródło, stan) | `extension.list` (WebSocket); render karty `.dn-karta`; encja Rozszerzenie |
+| **Katalog rozszerzeń** | Jeden widok wszystkich rozszerzeń rejestru — wtyczki, umiejętności, konektory, serwery MCP — z obu źródeł, z kartą pozycji (opis, wersja, źródło, stan) | `extension.list` (WebSocket); render karty `.dn-karta`; encja Rozszerzenie (`architektura/model-danych.md`, rozdz. 9) |
 | **Wyszukiwarka pełnotekstowa katalogu** | Szukanie po nazwie, opisie, kategorii, udostępnianych narzędziach i znacznikach, z podpowiedziami | Indeks pełnotekstowy Go (`blevesearch/bleve`); metadane manifestu |
 | **Filtry i fasety** | Zawężanie po rodzaju, źródle, stanie włączenia, transporcie MCP, dostawcy konektora i poziomie uprawnień | Fasety nad indeksem `bleve`; schemat kategorii |
 | **Kuratorskie kolekcje i zestawy** | Nazwane, oznaczone kolorem zestawy rozszerzeń instalowane i aktywowane grupowo | Definicja kolekcji `JSON`; wsad grupowy do `extension.toggle` |
 | **Karta szczegółów rozszerzenia** | Pełna metryka: opis, wersja, dziennik zmian, wykaz udostępnianych narzędzi i zasobów, wymagane uprawnienia, zależności, pochodzenie i podpis | Manifest rozszerzenia (`JSON`/`YAML`); podpis (rozdz. 7.3) |
 | **Zestawienie porównawcze rozszerzeń** | Zestawienie 2–4 rozszerzeń tego samego rodzaju w tabeli cech | Diff metadanych; `sergi/go-diff` dla różnic opisu |
-| **Rekomendacje Wykonawcy** | Wskazanie rozszerzeń pod opisane zadanie wraz z uzasadnieniem wyboru | `kanal_modelu`; kontekst katalogu; walidacja dopasowania do uprawnień |
+| **Rekomendacje Wykonawcy** | Wskazanie rozszerzeń pod opisane zadanie wraz z uzasadnieniem wyboru | `kanal_modelu` (`architektura/integracja-modeli.md`); kontekst katalogu; walidacja dopasowania do uprawnień |
 | **Prywatny rejestr organizacji** | Wewnętrzny katalog rozszerzeń zbudowanych i opublikowanych w organizacji, prezentowany obok Danaco Plugin | Rejestr serwera (Go); artefakty pakietów (rozdz. 7.7) |
 
 ### 7.2. Instalacja i cykl życia
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Instalacja Personal** | Wskazanie pliku lub pakietu → przesłanie kanałem WebSocket → zapis w katalogu użytkownika i rejestracja encji → potwierdzenie; nowo zainstalowane rozszerzenie pozostaje wyłączone | `extension.install`; przesył WebSocket; katalog użytkownika na serwerze |
-| **Przełącznik stanu włączenia** | Natychmiastowe, odwracalne włączenie i wyłączenie bez restartu serwera; wyłączenie nie usuwa pozycji z rejestru | `extension.toggle`; rozgłoszenie zmiany do wszystkich urządzeń |
+| **Instalacja Personal** | Wskazanie pliku lub pakietu → przesłanie kanałem WebSocket → zapis w katalogu użytkownika i rejestracja encji → potwierdzenie; nowo zainstalowane rozszerzenie pozostaje wyłączone | `extension.install` (`architektura/rozszerzenia.md`, rozdz. 5.1); przesył WebSocket; katalog użytkownika na serwerze |
+| **Przełącznik stanu włączenia** | Natychmiastowe, odwracalne włączenie i wyłączenie bez restartu serwera; wyłączenie nie usuwa pozycji z rejestru | `extension.toggle`; rozgłoszenie zmiany do wszystkich urządzeń (`architektura/kontrakty-komunikacji.md`, rozdz. 1) |
 | **Menedżer wersji** | Śledzenie wersji zainstalowanych rozszerzeń, oznaczanie dostępnych aktualizacji, przypinanie wersji | Wersjonowanie semantyczne (`Masterminds/semver`); porównanie z rejestrem |
 | **Aktualizacja** | Danaco Plugin — wraz z pakietem serwera; Personal — ponowne przesłanie pod tym samym identyfikatorem, z zachowaniem konfiguracji i stanu włączenia | `extension.install` (ponowne); zachowanie atrybutów Konfiguracja i Stan włączenia |
 | **Cofnięcie do wcześniejszej wersji** | Powrót do poprzednio zainstalowanej wersji rozszerzenia Personal, wykonywany od razu; ustawienie `extension.rollback.confirm` włącza potwierdzenie, a po wykonaniu dostępne jest cofnięcie samej operacji | Przechowywanie poprzednich artefaktów; wzorzec spójny z Deployment Panel |
 | **Instalacja masowa z manifestu zestawu** | Zainstalowanie i skonfigurowanie całego zestawu rozszerzeń z jednego pliku definicji, odtwarzające środowisko | Manifest zestawu `YAML`/`JSON`; kolejka `extension.install` |
 | **Import i eksport konfiguracji rozszerzeń** | Wyeksportowanie stanu i konfiguracji zestawu rozszerzeń oraz odtworzenie na innym serwerze lub instancji | `config.get` / `config.set`; format eksportu `JSON`, bez sekretów w jawnym eksporcie |
-| **Dziennik cyklu życia** | Chronologia zdarzeń instalacji, aktualizacji, włączeń, wyłączeń i cofnięć wersji per rozszerzenie | Log jako `artefakt`; znaczniki czasu zdarzeń |
+| **Dziennik cyklu życia** | Chronologia zdarzeń instalacji, aktualizacji, włączeń, wyłączeń i cofnięć wersji per rozszerzenie | Log jako `artefakt` (`architektura/model-danych.md`, Zał. F); znaczniki czasu zdarzeń |
 
 ### 7.3. Uprawnienia, zaufanie i sandbox
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Podgląd wymaganych uprawnień** | Przed włączeniem prezentuje deklarowany zakres dostępu (sieć, odczyt i zapis plików) czytelnie, z objaśnieniem `[?]` każdego uprawnienia | Manifest uprawnień rozszerzenia; zakresy izolacji |
-| **Przegląd i nadanie zakresu uprawnień** | Ustala, do jakich zasobów rozszerzenie podłączone do agenta ma dostęp, spójnie z Permissions Center modułu Agents | Permissions Center; zakresy sieć i pliki |
+| **Podgląd wymaganych uprawnień** | Przed włączeniem prezentuje deklarowany zakres dostępu (sieć, odczyt i zapis plików) czytelnie, z objaśnieniem `[?]` każdego uprawnienia | Manifest uprawnień rozszerzenia; zakresy izolacji (`architektura/architektura.md`, rozdz. 9) |
+| **Przegląd i nadanie zakresu uprawnień** | Ustala, do jakich zasobów rozszerzenie podłączone do agenta ma dostęp, spójnie z Permissions Center modułu Agents | Permissions Center (`architektura/rozszerzenia.md`, rozdz. 6, 8); zakresy sieć i pliki |
 | **Sandbox wykonania rozszerzenia** | Uruchomienie kodu rozszerzenia w izolowanym środowisku o ograniczonym dostępie, spójnie z profilem izolacji roli | Izolacja procesów Go; runtime WASM (`tetratelabs/wazero`); `hashicorp/go-plugin` (proces potomny gRPC) |
-| **Weryfikacja podpisu i pochodzenia** | Sprawdzenie podpisu cyfrowego i sumy kontrolnej pakietu, oznaczenie źródła: Danaco Plugin, zweryfikowany wydawca, niezweryfikowany Personal | Podpis Ed25519 (`crypto/ed25519`); sumy `SHA256` |
-| **Podgląd macierzy izolacji rozszerzenia** | Prezentacja, jak rozszerzenie mieści się w profilu izolacji roli agenta na poziomie zasięgu „Rola", bez odrębnej konfiguracji per rozszerzenie | Okno punktów izolacji; poziom zasięgu „Rola" |
-| **Audyt uprawnień i użycia** | Zestawienie, które rozszerzenia mają jakie uprawnienia, kiedy i przez którego agenta były użyte; wykrycie uprawnień nadmiarowych | Log użycia (`artefakt`); korelacja z agentami |
+| **Weryfikacja podpisu i pochodzenia** | Sprawdzenie podpisu cyfrowego i sumy kontrolnej pakietu, oznaczenie źródła: Danaco Plugin, zweryfikowany wydawca, niezweryfikowany Personal | Podpis Ed25519 (`crypto/ed25519`); sumy `SHA-256` |
+| **Podgląd macierzy izolacji rozszerzenia** | Prezentacja, jak rozszerzenie mieści się w profilu izolacji roli agenta na poziomie zasięgu „Rola", bez odrębnej konfiguracji per rozszerzenie | Okno punktów izolacji (`architektura/model-konfiguracji.md`); poziom zasięgu „Rola" (`architektura/koncepcja-platformy.md`, rozdz. 4.5) |
+| **Audyt uprawnień i użycia** | Zestawienie, które rozszerzenia mają jakie uprawnienia, kiedy i przez którego agenta były użyte; wykrycie uprawnień nadmiarowych | Log użycia (`artefakt`); korelacja z agentami (`specyfikacje/specyfikacja-agentow.md`) |
 | **Skaner manifestu** | Ostrzeżenie o szerokich uprawnieniach, nieznanym wydawcy lub braku podpisu — sygnał, nie brama | Reguły heurystyczne nad manifestem; plakietka `.dn-plakietka--stan` |
 
 ### 7.4. Serwery MCP (Model Context Protocol)
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Rejestr serwerów MCP** | Dodanie serwera MCP (adres, transport, dane dostępowe) jako rozszerzenia rodzaju „serwer MCP"; lista wraz z jego stanem | Konfiguracja MCP jako atrybut Konfiguracja encji; Connectors Manager |
+| **Rejestr serwerów MCP** | Dodanie serwera MCP (adres, transport, dane dostępowe) jako rozszerzenia rodzaju „serwer MCP"; lista wraz z jego stanem | Konfiguracja MCP jako atrybut Konfiguracja encji (`architektura/model-danych.md`, rozdz. 9); Connectors Manager (`architektura/rozszerzenia.md`, rozdz. 6) |
 | **Obsługa transportów** | Podłączenie przez stdio (proces lokalny), SSE oraz Streamable HTTP; wybór i test transportu | Klient MCP w Go (`modelcontextprotocol/go-sdk`, `mark3labs/mcp-go`); JSON-RPC 2.0 |
 | **Odkrywanie narzędzi, zasobów i promptów** | Pobranie listy `tools`, `resources` i `prompts` udostępnianych przez serwer wraz ze schematami wejścia | Handshake MCP (`initialize`, `tools/list`, `resources/list`, `prompts/list`); `JSON Schema` |
 | **Inspektor MCP** | Interaktywny podgląd definicji narzędzia (nazwa, opis, schemat argumentów) i próbne wywołanie z podglądem odpowiedzi surowej i sformatowanej | `tools/call` JSON-RPC; walidacja argumentów `santhosh-tekuri/jsonschema`; render odpowiedzi |
@@ -1052,7 +1032,7 @@ Każda pozycja katalogu podaje nazwę funkcji, jej działanie oraz zależności 
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Katalog konektorów** | Lista konektorów do zewnętrznych systemów i usług (repozytoria, systemy biznesowe, usługi sieciowe) z obu źródeł | Rejestr rozszerzeń; rodzaj „konektor" |
+| **Katalog konektorów** | Lista konektorów do zewnętrznych systemów i usług (repozytoria, systemy biznesowe, usługi sieciowe) z obu źródeł | Rejestr rozszerzeń; rodzaj „konektor" (`architektura/rozszerzenia.md`, rozdz. 1) |
 | **Kreator uwierzytelniania** | Prowadzone ustanowienie połączenia: OAuth2 (przekierowanie zgody), klucz API, token, Basic — z kluczami jawnymi w warstwie sekretów | `golang.org/x/oauth2`; warstwa sekretów platformy; wprowadzanie danych logowania po stronie Operatora |
 | **Test połączenia** | Wywołanie próbne konektora z raportem statusu, kodu i czasu odpowiedzi | Klient HTTP (`net/http`); parser odpowiedzi; raport `.dn-tabela` |
 | **Import definicji z OpenAPI i GraphQL** | Zbudowanie konektora z opisu API (OpenAPI 3, schemat GraphQL) wraz z automatycznym wykryciem operacji | `getkin/kin-openapi`; introspekcja GraphQL; mapowanie operacji |
@@ -1065,22 +1045,22 @@ Każda pozycja katalogu podaje nazwę funkcji, jej działanie oraz zależności 
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Menedżer wtyczek** | Zarządzanie wtyczkami dostarczającymi nowe funkcje, narzędzia i akcje modułom oraz agentom; podgląd udostępnianych narzędzi | Rodzaj „wtyczka"; Skills Manager (Agents) |
-| **Menedżer umiejętności** | Katalog umiejętności — zdefiniowanych sposobów wykonania zadań — z zakresem zastosowania edytowalnym w konfiguracji | Rodzaj „umiejętność"; atrybut Konfiguracja = zakres zastosowania |
+| **Menedżer wtyczek** | Zarządzanie wtyczkami dostarczającymi nowe funkcje, narzędzia i akcje modułom oraz agentom; podgląd udostępnianych narzędzi | Rodzaj „wtyczka" (`architektura/rozszerzenia.md`, rozdz. 1); Skills Manager (Agents) |
+| **Menedżer umiejętności** | Katalog umiejętności — zdefiniowanych sposobów wykonania zadań — z zakresem zastosowania edytowalnym w konfiguracji | Rodzaj „umiejętność"; atrybut Konfiguracja = zakres zastosowania (`architektura/model-danych.md`, rozdz. 9) |
 | **Podgląd narzędzi udostępnianych przez wtyczkę** | Rozwinięcie, jakie konkretne narzędzia i akcje wtyczka wnosi i z jakimi parametrami | Manifest wtyczki; schematy narzędzi `JSON Schema` |
 | **Piaskownica testu umiejętności** | Uruchomienie umiejętności lub wtyczki na przykładowym wejściu bez podłączania do agenta produkcyjnego | Sandbox (rozdz. 7.3); `kanal_modelu` do próbnego przebiegu |
-| **Powiązanie z rolą MultitaskingAI** | Wskazanie, które umiejętności i wtyczki wchodzą w skład profilu roli (Executor, Validator) | Profil roli; poziom zasięgu „Rola" |
+| **Powiązanie z rolą MultitaskingAI** | Wskazanie, które umiejętności i wtyczki wchodzą w skład profilu roli (Executor, Validator) | Profil roli (`srodowiska/multitaskingai.md`, rozdz. 13); poziom zasięgu „Rola" |
 
 ### 7.7. Publikacja, pakowanie i wydawanie
 
 | Funkcja | Co robi | Zależności |
 |---|---|---|
-| **Kreator pakietu rozszerzenia** | Zapakowanie produktu zbudowanego w module lub artefaktu w dystrybuowalne rozszerzenie z manifestem | Archiwum `zip`/`tar.gz`; manifest `JSON`/`YAML`; walidacja pól kontraktu |
+| **Kreator pakietu rozszerzenia** | Zapakowanie produktu zbudowanego w module lub artefaktu w dystrybuowalne rozszerzenie z manifestem | Archiwum `zip`/`tar.gz`; manifest `JSON`/`YAML`; walidacja pól kontraktu (`architektura/rozszerzenia.md`, rozdz. 3) |
 | **Edytor manifestu** | Uzupełnienie tożsamości (identyfikator, nazwa, wersja), deklaracji narzędzi, wymaganych uprawnień i zależności | Schemat manifestu; objaśnienia `[?]`; semver (`Masterminds/semver`) |
-| **Podpisywanie pakietu** | Nadanie podpisu i sumy kontrolnej wydawcy przed publikacją do prywatnego rejestru | Ed25519 (`crypto/ed25519`); `SHA256`; klucz wydawcy w warstwie sekretów |
+| **Podpisywanie pakietu** | Nadanie podpisu i sumy kontrolnej wydawcy przed publikacją do prywatnego rejestru | Ed25519 (`crypto/ed25519`); `SHA-256`; klucz wydawcy w warstwie sekretów |
 | **Publikacja do prywatnego rejestru** | Umieszczenie rozszerzenia w wewnętrznym rejestrze organizacji, dostępnym w katalogu obok Danaco Plugin | Rejestr serwera (Go); artefakt pakietu; wersjonowanie |
 | **Dziennik wydań** | Notatki kolejnych wersji rozszerzenia powiązane z pakietami | Format `Markdown`; powiązanie z semver |
-| **Walidator zgodności z kontraktem** | Sprawdzenie, czy pakiet spełnia jednolity kontrakt (tożsamość, stan, zakres) przed publikacją; ostrzeżenia nieblokujące | Reguły kontraktu; raport walidacji |
+| **Walidator zgodności z kontraktem** | Sprawdzenie, czy pakiet spełnia jednolity kontrakt (tożsamość, stan, zakres) przed publikacją; ostrzeżenia nieblokujące | Reguły kontraktu (`architektura/rozszerzenia.md`, rozdz. 3); raport walidacji |
 
 ### 7.8. Obserwowalność, koszt i zdrowie integracji
 
@@ -1098,7 +1078,7 @@ Każda pozycja katalogu podaje nazwę funkcji, jej działanie oraz zależności 
 |---|---|---|
 | **Rejestr referencji sekretów** | Przechowywanie odwołań (kluczy jawnych) do danych dostępowych konektorów i serwerów MCP w warstwie sekretów platformy | Warstwa sekretów platformy; klucze jawne; atrybut Konfiguracja encji |
 | **Rotacja i ważność danych dostępowych** | Przypomnienie o wygaśnięciu tokenów OAuth i planowa rotacja kluczy | Znaczniki ważności; harmonogram (Go cron); `golang.org/x/oauth2` (odświeżanie tokenu) |
-| **Zakres współdzielenia sekretu** | Ustalenie, które rozszerzenia i role mają dostęp do danej referencji sekretu | Poziomy zasięgu; Permissions Center |
+| **Zakres współdzielenia sekretu** | Ustalenie, które rozszerzenia i role mają dostęp do danej referencji sekretu | Poziomy zasięgu (`architektura/koncepcja-platformy.md`, rozdz. 4.5); Permissions Center |
 
 Moduł operuje na referencjach do sekretów; faktyczne wprowadzenie hasła, tokenu czy danych karty pozostaje po stronie Operatora lub dedykowanego menedżera. Rozszerzenia nie wykonują samodzielnie płatności ani przelewów.
 
@@ -1122,7 +1102,7 @@ Moduł operuje na referencjach do sekretów; faktyczne wprowadzenie hasła, toke
 | Konektory — definicje API | OpenAPI i GraphQL | `getkin/kin-openapi`; introspekcja GraphQL |
 | Webhooki | Weryfikacja podpisu | `crypto/hmac`; endpoint serwera |
 | Sandbox rozszerzeń | Izolacja wykonania | `tetratelabs/wazero` (WASM), `hashicorp/go-plugin` (gRPC), izolacja procesów |
-| Podpis i pochodzenie | Integralność pakietu | `crypto/ed25519`, `SHA256` |
+| Podpis i pochodzenie | Integralność pakietu | `crypto/ed25519`, `SHA-256` |
 | Pakowanie i wersje | Dystrybucja | `zip`, `tar.gz`, manifest `JSON`/`YAML`, semver (`Masterminds/semver`) |
 | Katalog i wyszukiwanie | Indeks pełnotekstowy | `blevesearch/bleve` |
 | Różnice metadanych | Porównania pozycji katalogu | `sergi/go-diff` |
@@ -1132,7 +1112,7 @@ Moduł operuje na referencjach do sekretów; faktyczne wprowadzenie hasła, toke
 
 ## 8. Punkty sterowania z okna konfiguracji
 
-Zgodnie z Modelem konfiguracji (warstwy: aplikacja, proces, akcja, sesja) i zasadą „brak ustawienia = wartość domyślna = wykonanie", Operator personalizuje moduł Apps bez blokad. Rejestr rozszerzeń pozostaje kanonicznie w sekcji „rozszerzenia" okna konfiguracji; poniższe punkty rozciągają jego sterowanie na moduł.
+Zgodnie z Modelem konfiguracji (warstwy: aplikacja, proces, akcja, sesja) i zasadą „brak ustawienia = wartość domyślna = wykonanie", Operator personalizuje moduł Apps bez blokad. Rejestr rozszerzeń pozostaje kanonicznie w sekcji „rozszerzenia" okna konfiguracji (`architektura/rozszerzenia.md`, rozdz. 7); poniższe punkty rozciągają jego sterowanie na moduł.
 
 | Zakres | Co Operator personalizuje | Warstwa / miejsce |
 |---|---|---|
@@ -1140,7 +1120,7 @@ Zgodnie z Modelem konfiguracji (warstwy: aplikacja, proces, akcja, sesja) i zasa
 | **Pętla wykonawcza modułu** | Zakres zadań dekomponowanych automatycznie, próg ponowienia zadania, zestaw kontroli jakości uruchamianych po zadaniu (budowanie, testy punktów końcowych, walidacja architektury, walidacja manifestu) | Procesy / akcje |
 | **Warstwy widoczności** | Przypisanie funkcji do warstw 2–4 dla roli użytkownika, zestaw znaczników kontekstowych paska modułu, widoczność funkcji eksperckich | Aplikacja / konfiguracja roli |
 | **Źródła katalogu** | Widoczność Danaco Plugin i Personal, włączenie prywatnego rejestru organizacji, kuratorowane listy serwerów MCP | Aplikacja |
-| **Polityka instalacji Personal** | Stan wyjściowy nowych rozszerzeń (wyłączone), potwierdzenie przy instalacji | Aplikacja |
+| **Polityka instalacji Personal** | Stan wyjściowy nowych rozszerzeń (wyłączone), potwierdzenie przy instalacji | Aplikacja (`architektura/rozszerzenia.md`, rozdz. 5.2, 8) |
 | **Aktualizacje i wersje** | Automatyczne sprawdzanie aktualizacji, przypinanie wersji, ustawienie `extension.rollback.confirm` | Procesy / akcje |
 | **Wdrożenia** | Domyślne środowisko, domyślna strategia wprowadzenia nowej wersji, ustawienie `deployment.rollback.confirm`, reguły skalowania | Procesy / akcje |
 | **Zaufanie i podpisy** | Wymagany poziom podpisu do oznaczenia „zweryfikowane", reguły skanera manifestu (progi ostrzeżeń, nieblokujące) | Aplikacja / izolacja |
@@ -1198,5 +1178,4 @@ Zgodnie z Modelem konfiguracji (warstwy: aplikacja, proces, akcja, sesja) i zasa
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

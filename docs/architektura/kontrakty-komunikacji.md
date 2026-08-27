@@ -1,5 +1,3 @@
-*Dokument specyfikuje kontrakty komunikacji Danaco Console: kanały, komunikaty, format WebSocket/JSON oraz reguły wymiany danych.*
-
 # Danaco Console — Kontrakty komunikacji
 
 | | |
@@ -124,13 +122,11 @@ Etap 3 rozstrzyga różnicę wynikającą z rozdziału 7 koncepcji: aplikacja ni
 
 ```json
 // Klient → Serwer, etap 2
-
 { "type": "connection.hello", "id": "h-1", "payload": {
     "protocolVersion": "1.0.0", "deviceId": "dev-8841", "token": "•••" },
   "timestamp": "2026-08-06T09:00:00Z" }
 
 // Serwer → Klient, etap 2
-
 { "type": "response", "id": "h-1", "status": "ok", "payload": {
     "protocolVersion": "1.0.0", "serverVersion": "0.4.2",
     "deploymentPhase": "build", "authenticated": true },
@@ -234,11 +230,9 @@ Strona główna jest centrum dowodzenia, do którego klient trafia po etapie pow
 
 ```json
 // Klient → Serwer
-
 { "type": "home.enter", "id": "c-1", "payload": {}, "timestamp": "2026-08-06T09:00:05Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-1", "status": "ok", "payload": {
     "zone1Environments": [ /* rozdz. 6.1 */ ],
     "zone2Components": [ /* rozdz. 6.2 */ ],
@@ -310,12 +304,10 @@ Obszar roboczy każdego modułu układany jest wyłącznie pionowo, w kolumnach 
 
 ```json
 // Klient → Serwer
-
 { "type": "module.list", "id": "c-2", "payload": { "environmentId": "codestudio" },
   "timestamp": "2026-08-06T09:01:00Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-2", "status": "ok", "payload": {
     "modules": ["workspace", "roundtable", "design", "terminal", "developer",
                 "diagnostics", "apps", "agents"] },
@@ -347,13 +339,11 @@ Zasada jednego kliknięcia obowiązuje w kontrakcie wprost: każda funkcja warst
 
 ```json
 // Klient → Serwer — odczyt profilu warstw dla roli użytkownika
-
 { "type": "layer.profile.get", "id": "c-60", "payload": {
     "sessionId": "s-501", "roleId": "operator" },
   "timestamp": "2026-08-06T09:20:00Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-60", "status": "ok", "payload": {
     "roleId": "operator",
     "layer1": ["chatWindow", "executionLoopWindow", "contextBar", "moduleNav"],
@@ -363,7 +353,6 @@ Zasada jednego kliknięcia obowiązuje w kontrakcie wprost: każda funkcja warst
   "timestamp": "2026-08-06T09:20:00Z" }
 
 // Klient → Serwer — wywołanie funkcji warstwy 4 poleceniem języka naturalnego
-
 { "type": "layer.function.invoke", "id": "c-61", "payload": {
     "sessionId": "s-501", "naturalCommand": "otwórz diagnostykę niskiego poziomu",
     "invocation": "naturalLanguage" },
@@ -426,44 +415,37 @@ Chat Window jest głównym oknem komunikacji i podstawowym mechanizmem sterowani
 
 ```json
 // Klient → Serwer — przesłanie polecenia
-
 { "type": "message.send", "id": "c-9", "payload": {
     "sessionId": "s-501", "windowId": "chat", "content": "Podsumuj ten dokument." },
   "timestamp": "2026-08-06T09:05:00Z" }
 
 // Serwer → Klient — otwarcie strumienia odpowiedzi
-
 { "type": "response", "id": "c-9", "status": "ok",
   "payload": { "streamId": "c-9" }, "timestamp": "2026-08-06T09:05:00Z" }
 
 // Serwer → Klient — fragmenty strumienia
-
 { "type": "stream.chunk", "id": "c-9", "seq": 1, "done": false,
   "payload": { "delta": "Dokument opisuje" }, "timestamp": "2026-08-06T09:05:01Z" }
 { "type": "stream.chunk", "id": "c-9", "seq": 2, "done": true,
   "payload": { "delta": " trzy główne wnioski." }, "timestamp": "2026-08-06T09:05:03Z" }
 
 // Serwer → Klient — żądanie zatwierdzenia działania
-
 { "type": "message.approval.request", "id": "e-9110", "payload": {
     "sessionId": "s-501", "approvalId": "ap-4",
     "action": "developer.file.save", "impact": "Nadpisanie 3 plików w repozytorium." },
   "timestamp": "2026-08-06T09:05:20Z" }
 
 // Klient → Serwer — zatwierdzenie działania
-
 { "type": "message.approve", "id": "c-10", "payload": {
     "approvalId": "ap-4", "decision": "approve" },
   "timestamp": "2026-08-06T09:05:25Z" }
 
 // Klient → Serwer — żądanie wyjaśnienia wyniku
-
 { "type": "message.explain", "id": "c-11", "payload": {
     "messageId": "m-882", "aspect": "sources" },
   "timestamp": "2026-08-06T09:06:00Z" }
 
 // Klient → Serwer — zmiana kontekstu pracy
-
 { "type": "chat.context.set", "id": "c-12", "payload": {
     "sessionId": "s-501", "moduleId": "diagnostics", "modelId": "fable-5",
     "executorId": "agt-14" },
@@ -533,19 +515,16 @@ Execution Loop Window prezentuje pętlę wykonawczą: przyjęte zlecenie i jego 
 
 ```json
 // Klient → Serwer — subskrypcja okna pętli wykonawczej
-
 { "type": "loop.subscribe", "id": "c-50", "payload": { "sessionId": "s-620" },
   "timestamp": "2026-08-06T09:15:00Z" }
 
 // Serwer → Klient — przyjęcie zlecenia przez Koordynatora
-
 { "type": "loop.order.accept", "id": "e-7001", "payload": {
     "orderId": "ord-12", "sessionId": "s-620", "source": "chat",
     "objective": "Przygotuj moduł raportowania wraz z testami." },
   "timestamp": "2026-08-06T09:15:02Z" }
 
 // Serwer → Klient — dekompozycja na zadania
-
 { "type": "loop.order.decompose", "id": "e-7002", "payload": {
     "orderId": "ord-12", "tasks": [
       { "taskId": "t-1", "title": "Model danych raportu", "dependsOn": [],
@@ -555,49 +534,42 @@ Execution Loop Window prezentuje pętlę wykonawczą: przyjęte zlecenie i jego 
   "timestamp": "2026-08-06T09:15:03Z" }
 
 // Serwer → Klient — przydział zadania Wykonawcy
-
 { "type": "loop.task.assign", "id": "e-7003", "payload": {
     "taskId": "t-1", "executorId": "agt-14", "role": "executor1",
     "inputs": { "projectId": "prj-3" } },
   "timestamp": "2026-08-06T09:15:04Z" }
 
 // Serwer → Klient — zgłoszenie postępu
-
 { "type": "loop.task.progress", "id": "e-7004", "payload": {
     "taskId": "t-1", "progress": 60, "stage": "implementacja",
     "note": "Schemat encji ukończony." },
   "timestamp": "2026-08-06T09:16:00Z" }
 
 // Serwer → Klient — zwrot wyniku
-
 { "type": "loop.task.result", "id": "e-7005", "payload": {
     "taskId": "t-1", "status": "succeeded", "artifacts": ["schema.sql"],
     "summary": "Model danych raportu gotowy." },
   "timestamp": "2026-08-06T09:17:00Z" }
 
 // Serwer → Klient — wynik kontroli jakości
-
 { "type": "loop.quality.result", "id": "e-7006", "payload": {
     "taskId": "t-1", "verdict": "rejected", "reviewerId": "agt-21",
     "findings": ["Brak indeksu na kolumnie okresu raportowego."] },
   "timestamp": "2026-08-06T09:17:30Z" }
 
 // Serwer → Klient — decyzja o ponowieniu
-
 { "type": "loop.task.retry", "id": "e-7007", "payload": {
     "taskId": "t-1", "attempt": 2, "reason": "Uwagi kontroli jakości",
     "inputs": { "projectId": "prj-3", "addIndex": "period" } },
   "timestamp": "2026-08-06T09:17:35Z" }
 
 // Klient → Serwer — sterowanie przebiegiem: korekta zlecenia
-
 { "type": "loop.control", "id": "c-51", "payload": {
     "orderId": "ord-12", "action": "amend",
     "objective": "Przygotuj moduł raportowania wraz z testami i eksportem CSV." },
   "timestamp": "2026-08-06T09:18:00Z" }
 
 // Serwer → Klient — zamknięcie zlecenia
-
 { "type": "loop.order.close", "id": "e-7008", "payload": {
     "orderId": "ord-12", "outcome": "completed",
     "deliverables": ["schema.sql", "tests/", "export_csv.py"], "duration": "PT42M" },
@@ -1032,13 +1004,11 @@ Stanem wyjściowym, zwracanym przez `isolation.policy.preview` przy braku jakieg
 
 ```json
 // Klient → Serwer — podgląd polityki efektywnej dla pary modułów Studio–Translate
-
 { "type": "isolation.policy.preview", "id": "c-40", "payload": {
     "scope": "modulePair", "scopeId": "studio+translate" },
   "timestamp": "2026-08-06T09:20:00Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-40", "status": "ok", "payload": {
     "context": { "history": "separate", "memory": "separate", "context": "shared" },
     "technical": { "workingDirectory": "off", "processEnvironment": "off",
@@ -1253,29 +1223,24 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
 
 ```json
 // 1. Klient → Serwer — strona główna
-
 { "type": "home.enter", "id": "c-1", "payload": {}, "timestamp": "2026-08-06T09:00:05Z" }
 
 // 2. Klient → Serwer — wybór karty środowiska w strefie 1
-
 { "type": "environment.enter", "id": "c-2", "payload": { "environmentId": "codestudio" },
   "timestamp": "2026-08-06T09:00:10Z" }
 
 // 3. Klient → Serwer — wybór modułu z bocznej nawigacji
-
 { "type": "workspace.enter", "id": "c-3", "payload": {
     "environmentId": "codestudio", "moduleId": "developer" },
   "timestamp": "2026-08-06T09:00:15Z" }
 
 // 4. Serwer → Klient — nowa karta sesji z układem okien
-
 { "type": "response", "id": "c-3", "status": "ok", "payload": {
     "sessionId": "s-501", "environmentId": "codestudio", "moduleId": "developer",
     "windows": ["chat", "codeEditor", "projectTree", "gitPanel", "buildOutput"] },
   "timestamp": "2026-08-06T09:00:15Z" }
 
 // 5. Serwer → Klient — rozgłoszenie do pozostałych urządzeń konta
-
 { "type": "session.changed", "id": "e-9001", "payload": {
     "sessionId": "s-501", "action": "created" },
   "timestamp": "2026-08-06T09:00:15Z" }
@@ -1285,19 +1250,16 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
 
 ```json
 // Klient → Serwer — strefa 2, utworzenie automatyki
-
 { "type": "component.create", "id": "c-20", "payload": {
     "kind": "automation", "name": "Cotygodniowy raport sprzedaży",
     "workflow": { "trigger": "schedule", "cron": "0 7 * * MON" } },
   "timestamp": "2026-08-06T09:10:00Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-20", "status": "ok",
   "payload": { "componentId": "cmp-77" }, "timestamp": "2026-08-06T09:10:00Z" }
 
 // Klient → Serwer — wpięcie automatyki w sesji modułu Developer
-
 { "type": "component.assign", "id": "c-21", "payload": {
     "componentId": "cmp-77", "sessionId": "s-501" },
   "timestamp": "2026-08-06T09:10:05Z" }
@@ -1307,20 +1269,17 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
 
 ```json
 // Klient → Serwer
-
 { "type": "role.assign", "id": "c-30", "payload": {
     "sessionId": "s-620", "role": "executor1", "agentId": "agt-14" },
   "timestamp": "2026-08-06T09:15:00Z" }
 
 // Klient → Serwer — uruchomienie podagentów
-
 { "type": "subagent.spawn", "id": "c-31", "payload": {
     "sessionId": "s-620", "parentRole": "executor1",
     "specializations": ["Agent UI", "Agent Backend", "Agent API"] },
   "timestamp": "2026-08-06T09:15:10Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-31", "status": "ok", "payload": {
     "subagentIds": ["sub-1", "sub-2", "sub-3"] },
   "timestamp": "2026-08-06T09:15:10Z" }
@@ -1330,26 +1289,22 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
 
 ```json
 // 1. Klient → Serwer — polecenie Użytkownika w kanale pierwszym
-
 { "type": "message.send", "id": "c-70", "payload": {
     "sessionId": "s-620", "windowId": "chat",
     "content": "Przygotuj moduł raportowania wraz z testami." },
   "timestamp": "2026-08-06T09:15:00Z" }
 
 // 2. Klient → Serwer — subskrypcja okna pętli wykonawczej
-
 { "type": "loop.subscribe", "id": "c-71", "payload": { "sessionId": "s-620" },
   "timestamp": "2026-08-06T09:15:01Z" }
 
 // 3. Serwer → Klient — Koordynator przyjmuje zlecenie
-
 { "type": "loop.order.accept", "id": "e-7001", "payload": {
     "orderId": "ord-12", "sessionId": "s-620", "source": "chat",
     "objective": "Przygotuj moduł raportowania wraz z testami." },
   "timestamp": "2026-08-06T09:15:02Z" }
 
 // 4. Klient → Serwer — wstrzymanie i wznowienie przebiegu
-
 { "type": "loop.control", "id": "c-72", "payload": {
     "orderId": "ord-12", "action": "pause" },
   "timestamp": "2026-08-06T09:30:00Z" }
@@ -1358,7 +1313,6 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
   "timestamp": "2026-08-06T09:34:00Z" }
 
 // 5. Serwer → Klient — zamknięcie zlecenia
-
 { "type": "loop.order.close", "id": "e-7008", "payload": {
     "orderId": "ord-12", "outcome": "completed",
     "deliverables": ["schema.sql", "tests/"], "duration": "PT42M" },
@@ -1369,12 +1323,10 @@ Zestawienie porządkuje polecenia (klient → serwer) opisane w rozdziałach 2�
 
 ```json
 // Klient → Serwer
-
 { "type": "session.create", "id": "c-40", "payload": { "environmentId": "talkin" },
   "timestamp": "2026-08-06T09:18:00Z" }
 
 // Serwer → Klient
-
 { "type": "response", "id": "c-40", "status": "error",
   "error": { "code": "validation_failed",
     "message": "Pole 'moduleId' jest wymagane do utworzenia karty sesji.",
@@ -1512,5 +1464,4 @@ Odpowiedź na `message.send` niesie w ładunku pole `streamId`, równe `id` pole
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

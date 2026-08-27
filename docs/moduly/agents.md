@@ -1,5 +1,3 @@
-*Dokument specyfikuje interfejs modułu Agents Danaco Console: okna, makiety, elementy, warstwy widoczności, stany i punkty sterowania.*
-
 # Moduł Agents — dokumentacja projektowa
 
 | | |
@@ -34,7 +32,7 @@ Moduł Agents udostępnia sześć okien operacyjnych (Koncepcja platformy, rozdz
 
 **Agent jako Wykonawca.** W architekturze platformy agent (ekspert) występuje w roli **Wykonawcy** — AI, agenta lub systemu wykonawczego realizującego zadania. Moduł Agents jest miejscem, w którym Wykonawca powstaje i jest konfigurowany. Wykonawca komunikuje się z Użytkownikiem przez **Chat Window** (kanał Użytkownik ↔ Wykonawca) oraz z **Koordynatorem** — komponentem orkiestrującym platformy — przez **Execution Loop Window** (kanał Koordynator ↔ Wykonawca). Relacje te opisuje rozdz. 1.4, a udział Wykonawcy w pętli wykonawczej — rozdz. 10.4.
 
-**Rozgraniczenie wobec dokumentu systemowego.** Model agentów — definicja agenta jako komponentu własnego, siedem komponentów definicji, role agenta w środowiskach, cykl życia agenta, pełny przebieg pętli wykonawczej, model danych i kontrakty komunikacji agenta ma odrębny dokument systemowy. Niniejszy dokument opisuje wyłącznie **interfejs modułu Agents**: okna, ich makiety, elementy, warstwy widoczności, stany oraz punkty sterowania z okna konfiguracji. Ustalenia modelowe nie są tu powtarzane, lecz przywoływane odesłaniem do właściwego rozdziału dokumentu systemowego.
+**Rozgraniczenie wobec dokumentu systemowego.** Model agentów — definicja agenta jako komponentu własnego, siedem komponentów definicji, role agenta w środowiskach, cykl życia agenta, pełny przebieg pętli wykonawczej, model danych i kontrakty komunikacji agenta — opisuje `specyfikacje/specyfikacja-agentow.md`. Niniejszy dokument opisuje wyłącznie **interfejs modułu Agents**: okna, ich makiety, elementy, warstwy widoczności, stany oraz punkty sterowania z okna konfiguracji. Ustalenia modelowe nie są tu powtarzane, lecz przywoływane odesłaniem do właściwego rozdziału dokumentu systemowego.
 
 **Warstwy widoczności.** Każdy element interfejsu opisany w niniejszym dokumencie należy do dokładnie jednej z czterech warstw widoczności platformy. Katalogi elementów rozdz. 2, 5–9 podają warstwę i sposób wywołania każdego elementu; makiety rysowane są w stanie spoczynku interfejsu — widoczne są wyłącznie elementy warstwy 1 oraz zwinięte wyzwalacze warstw 2–3. Zasadę i zestawienie warstw dla modułu Agents zawiera rozdz. 2.5.
 
@@ -1156,5 +1154,4 @@ EKSPERT                                                          okno / zakładk
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

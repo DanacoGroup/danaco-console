@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: zakładki okna przeglądarki — `browser.bookmark.add`,
-// `.list`, `.remove`.
-//
-// Zakładka jest czynnością świadomą Operatora, w odróżnieniu od źródła, które
-// narasta samo w toku przeglądania. Dlatego ma folder, etykiety i własną
-// notatkę, a jej wykaz przeszukuje się po adresie, tytule i notatce naraz —
-// Operator pamięta jedno z trojga i nie wie które.
+// Plik obsługuje zakładki okna przeglądarki: `browser.bookmark.add`, `.list`, `.remove`. Zakładka jest czynnością świadomą Operatora, w odróżnieniu od źródła, które narasta samo w toku przeglądania.
 package core
 
 import (
@@ -15,7 +9,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// DodajZakladke obsługuje `browser.bookmark.add`.
+// DodajZakladke obsługuje `browser.bookmark.add`, zakładając wiersz zakładki wraz z folderem, etykietami i notatką.
 func (a *adapterPrzegladarki) DodajZakladke(ctx context.Context,
 	z shared.BrowserBookmarkAddRequest) (shared.BrowserBookmarkAddResponse, error) {
 
@@ -39,7 +33,7 @@ func (a *adapterPrzegladarki) DodajZakladke(ctx context.Context,
 	return shared.BrowserBookmarkAddResponse{Bookmark: zakladkaKontraktu(zapisana)}, nil
 }
 
-// WykazZakladek obsługuje `browser.bookmark.list`.
+// WykazZakladek obsługuje `browser.bookmark.list`, przeszukując zakładki po adresie, tytule i notatce naraz.
 func (a *adapterPrzegladarki) WykazZakladek(ctx context.Context,
 	z shared.BrowserBookmarkListRequest) (shared.BrowserBookmarkListResponse, error) {
 
@@ -59,7 +53,7 @@ func (a *adapterPrzegladarki) WykazZakladek(ctx context.Context,
 	return shared.BrowserBookmarkListResponse{Bookmarks: zakladki}, nil
 }
 
-// UsunZakladke obsługuje `browser.bookmark.remove`.
+// UsunZakladke obsługuje `browser.bookmark.remove`, zdejmując wiersz zakładki wskazany identyfikatorem żądania.
 func (a *adapterPrzegladarki) UsunZakladke(ctx context.Context,
 	z shared.BrowserBookmarkRemoveRequest) (shared.BrowserBookmarkRemoveResponse, error) {
 
@@ -77,7 +71,7 @@ func (a *adapterPrzegladarki) UsunZakladke(ctx context.Context,
 	return shared.BrowserBookmarkRemoveResponse{Removed: true}, nil
 }
 
-// zakladkaKontraktu przekłada wiersz zakładki na byt kontraktu.
+// zakladkaKontraktu przekłada wiersz zakładki odczytany z repozytorium na byt kontraktu odpowiedzi okna.
 func zakladkaKontraktu(w dane.ZakladkaPrzegladania) shared.BrowserBookmark {
 	zakladka := shared.BrowserBookmark{
 		Id:        w.Kod,

@@ -3477,3 +3477,14 @@ nie jest zawężeniem, tylko obietnicą bez pokrycia.
 ## budowa/server/internal/transport/rozgloszenie.go
 Synchronizacja wielourządzeniowa nie ma własnego protokołu: nośnikiem jest
 zdarzenie właściwe zmienionemu obszarowi, rozgłoszone drogą rozgłoszenia kopert.
+
+## budowa/server/internal/dane/asystent_polecenia.go
+Polecenie przyjęte bez śladu w dzienniku, gdzie zlecenie jest, a rozmowa nie
+ma pierwszej linii, albo ślad bez zlecenia, gdzie wpis wisi na kodzie, którego
+zlecenie nigdy nie powstało, jest stanem połowicznym — stąd zapis w jednej
+transakcji, tym samym wzorem co przy zapisie kompozycji i zapisie kroków
+gdzie indziej w module. Ten plik nie rozpoznaje mowy: żądanie niesie odnośnik
+do nagranego już pliku albo tekst poprawiony przez operatora, a zapis idzie
+dosłownie do odpowiednich kolumn. Brak obu jest błędem żądania, nie pustym
+zapisem, ponieważ kolumna treści jest wymagana — wpis dziennika bez treści
+nie opisuje niczego, co się wydarzyło.

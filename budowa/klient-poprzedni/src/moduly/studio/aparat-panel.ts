@@ -419,7 +419,7 @@ export function utworzAparatPanel(stan: StanStudio, zrodlo: AparatZrodlo): Apara
           `${nieswieze} — spis treści albo numeracja rozjechały się z dokumentem, więc to, co ` +
           'widać na kartce, nie zgadza się z jego treścią.';
     stanSwiezosci.dataset['nieswieze'] = String(nieswieze);
-    // Licznik na przycisku przeliczamy przy każdym przerysowaniu, bo wykaz przychodzi z rdzenia później.
+    // Licznik na przycisku przelicza się przy przerysowaniu, bo wykaz przychodzi z rdzenia później.
     opiszWyzwalacz(nieswieze);
 
     if (elementy.length === 0) {

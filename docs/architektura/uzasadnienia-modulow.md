@@ -621,3 +621,54 @@ Dobór fragmentów korpusu najbliższych pytaniu idzie po pokryciu słów
 pytania: bez magazynu wektorów jest to miara uboższa, ale prawdziwa — mierzy
 treść, która rzeczywiście leży w korpusie, a nie podobieństwo obiecane przez
 usługę, której instalacja nie niesie.
+
+## budowa/server/internal/core/adapter_modul_roundtable_analiza.go
+
+Cztery rodzaje analizy debaty są pracą modelu, bo wymagają rozumienia
+treści: wydobycie argumentów, klasyfikacja aktów mowy, wykrycie błędów
+logicznych, kontrola steelman, weryfikacja faktyczności i sygnalizacja tonu.
+Jeden rodzaj modelu nie wymaga: scalenie powtórzeń liczy się podobieństwem
+treści węzłów, a rdzeń robi to sam — wołanie modelu, żeby porównał dwa
+zdania, kosztowałoby wywołanie kanału za robotę, którą wykonuje arytmetyka,
+i dawałoby wynik niepowtarzalny między przebiegami.
+
+Każdy przebieg analizy zostawia ślad w bazie, nie tylko w odpowiedzi
+komendy: wydobycie argumentów zastępuje graf, klasyfikacja aktów mowy
+znakuje wypowiedzi, wykrycie błędów stawia oznaczenia na węzłach, weryfikacja
+faktyczności wypełnia rejestr dowodów. Odpowiedź komendy jest odczytem tego,
+co zostało zapisane, nie jedynym miejscem, w którym wynik istnieje.
+
+Próg scalenia węzłów jest wysoki rozmyślnie: scalenie dwóch argumentów,
+które tylko brzmią podobnie, zabiera z grafu jeden głos i zawyża poparcie
+drugiego.
+
+Model dostaje zapis debaty z kodami wypowiedzi i ma je powtórzyć przy
+każdej wydobytej jednostce argumentacyjnej. Dzięki temu węzeł grafu wraca do
+swojej wypowiedzi i do mówcy — bez tego graf byłby zbiorem zdań bez autora,
+a okno analizy nie miałoby czego pokazać w kolumnie uczestnika.
+
+Krawędzie grafu argumentów powstają też z relacji, którą rdzeń widzi bez
+modelu: węzły z tej samej wypowiedzi wspierają się nawzajem po kolei —
+pierwszy jest tezą, każdy następny wsparciem poprzedniego. Relacji między
+wypowiedziami różnych uczestników rdzeń nie zgaduje; od tego jest kontrola
+steelman i wykrywanie sporu.
+
+Znakowanie aktu mowy idzie do zapisu wypowiedzi, nie tylko do osobnego
+ustalenia, ponieważ okno debaty pokazuje etykietę przy samej wypowiedzi,
+nie w osobnym wykazie.
+
+Zakres wykrywania błędów logicznych bierze się z katalogu okna: błąd
+wyłączony w katalogu nie jedzie w poleceniu do modelu i nie zostaje
+oznaczony, choćby model go i tak nazwał — wyłączenie, które nie wyłącza,
+byłoby ustawieniem bez skutku.
+
+Brak rozpoznanych błędów logicznych jest wynikiem analizy, nie usterką:
+debata bez chwytów erystycznych jest debatą poprawną. Ustalenie zbiorcze
+mówi to wprost, zamiast oddawać pustkę nie do odróżnienia od analizy, która
+nie ruszyła.
+
+Kod wypowiedzi wiodący wiersz w nawiasie kwadratowym jest odrzucany, gdy
+nie należy do wykazu znanych wypowiedzi, a reszta wiersza zostaje w całości:
+model, który nawiasu użył do czegoś innego, nie ma prawa przypiąć ustalenia
+do wypowiedzi, której nie ma. Wykaz pusty przepuszcza każdy kod, bo woła się
+tak wtedy, gdy wołający nie ma wykazu, z którym by porównywał.

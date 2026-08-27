@@ -2021,3 +2021,31 @@ zamiast napisu wymyślonego po stronie klienta, którego rdzeń nie rozpozna.
 Liczba podagentów nie ma źródła w kontrakcie. Wiersz mówi to wprost, zamiast pokazać
 wartość zastępczą, ponieważ liczba zmyślona wygląda tak samo jak odczytana i wprowadza
 w błąd przy ocenie obciążenia zespołu.
+
+## budowa/klient-poprzedni/src/aplikacja/pasek-aplikacji.ts
+
+Pasek ma jedną odpowiedzialność: złożenie elementów paska. Stoi nad widokami,
+które własnego paska nie mają — Centrum dowodzenia oraz Mission Control.
+Powłoka środowiska ma pasek własny w `powloka/pasek-gorny.ts` i drugiego nie
+dostaje; przełącznik tras oraz przełącznik motywu wchodzą wtedy w jej grupę
+akcji.
+
+Motyw jest przełączalny z każdego widoku, ponieważ pasek niesie ten sam
+przełącznik, którego używa powłoka. Wartości motywu ani żadnej barwy pasek nie
+zna — całą pracę wykonuje warstwa `motyw/`.
+
+Poza godłem, przełącznikiem tras i motywem pasek niesie menu aplikacji przy
+godle, ikonę ustawień oraz menu Operatora w grupie akcji. Są to te same wejścia,
+które ma powłoka środowiska w `powloka/akcje-paska.ts`, żeby produkt zachowywał
+się jednakowo na każdej trasie. Żadne z nich nie zakłada nowej czynności ani nie
+woła komendy spoza wykazu: pozycje są te same, co w listwie strony głównej,
+a skutek jeden i wspólny — wykaz skutków stoi w `akcje-ustawien.ts`.
+
+Trasy stoją w grupie akcji, a nie osobno pośrodku paska: znaki tras i kontrolki
+platformy tworzą jeden rząd ikon przy prawej krawędzi, rozdzielony kreską, więc
+pasek ma dwie grupy zamiast trzech.
+
+Ikona ustawień jest skrótem, a nie drugą drogą: otwiera dokładnie tę pozycję,
+którą listwa strony głównej niesie pod kodem `konfiguracja`, przez ten sam wykaz
+skutków. Stoi w pasku, ponieważ ustawienia platformy wykonuje się z każdego
+miejsca, a listwa widoczna jest wyłącznie na stronie głównej.

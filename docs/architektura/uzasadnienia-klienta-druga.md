@@ -96,3 +96,65 @@ zaznaczenia stoi tam, gdzie stan modułu ostatnio go widział.
 Malarz formatów kopiuje postać akapitu, nie treść, więc nie jedzie schowkiem
 rdzenia: rodzina poleceń `clipboard.*` niesie treść i rodzaj wpisu, a nie
 arkusz nastaw akapitu, dlatego postać czyta się z nastaw akapitu okna.
+
+## budowa/klient-poprzedni/src/moduly/studio/powierzchnia-dokumentu.ts
+
+Powierzchnia niesie zaznaczenie do rdzenia jako zakres znaków treści w zapisie
+markdown, bo tak liczy je komenda kontekstowa operacji, a kursor po
+przerysowaniu wraca na miejsce w tekście widocznym bloku, bo tam Operator go
+widział; dwie miary służą dwóm różnym odbiorcom i zlanie ich przesuwałoby
+kursor o długość znaczników markdown. Podział na kartki jest prawdziwy —
+liczą go wysokości bloków zmierzone przez przeglądarkę, nie licznik znaków —
+bo blok, który nie mieści się na kartce, ma zejść na następną tak, jak zejdzie
+w wydaniu. Rdzeń liczy własną paginację osobno, silnikiem swojego składu,
+i oddaje ją obrazami stron; podgląd wydania sięga po te obrazy dopiero, gdy
+rdzeń je odda, a do tego czasu pokazuje kartki liczone tutaj i mówi to wprost
+paskiem stanu, żeby wyrys nieaktualny nie uchodził za wynik ostateczny.
+
+Kartka rdzenia wchodzi obrazem w zapisie `data:`, bo pole `uri` zasobu
+magazynu jest ścieżką w systemie plików rdzenia, niedostępną przeglądarce;
+bajty przychodzą odpowiedzią komendy pobrania treści zasobu i stąd zapis
+`data:`, bez jednego żądania do sieci. Kartki rdzenia tracą aktualność w
+chwili zmiany treści, więc wykaz pusty zdejmuje wyrys rdzenia i wraca do
+kartek liczonych w oknie — pokazywanie starego wyrysu jako podglądu treści
+bieżącej byłoby nieprawdą o dokumencie.
+
+Magazyn nastaw widoku rozróżnia argument pominięty od podanego jako `null`:
+pominięty daje magazyn tego urządzenia, `null` znaczy „bez zapisu" — nastawy
+działają przez sesję i nikt nie obiecuje, że przeżyją zamknięcie. Nastawy
+strony przestawione chwytem linijki albo paskiem widoku idą do osobnego
+wykazu nadpisań, nie tylko do nastaw bieżących, bo okno pcha własną kopię
+całych nastaw strony przy każdej swojej zmianie; bez wykazu nadpisań ta kopia
+zabierałaby Operatorowi to, co właśnie ustawił chwytem. Gdy okno pcha nowe
+nastawy, wygrywa wyłącznie to pole, które okno naprawdę zmieniło — nadpisanie
+zostaje, dopóki wartość okna się od niego nie różni.
+
+Nastawa gotowa skali liczy się z pola widoku zmierzonego w chwili wywołania,
+bo tylko wymiar zmierzony teraz jest prawdziwy; nastawa nieznana albo pole
+jeszcze nieosadzone nie zmienia nic, bo skala zgadnięta byłaby gorsza od
+nastawy niewykonanej. Wydruk bierze te kartki, które Operator widzi w
+podglądzie, nie drugi wyrys ani surowy tekst źródłowy, więc przed drukiem
+powierzchnia schodzi do trybu wydania, oznacza strony poza zakresem druku i
+zdejmuje adiustację, gdy Operator drukuje pismo do wysłania — wszystkie trzy
+kroki wraca po zamknięciu okna drukarki.
+
+Decyzja o zmianie śledzonej stoi w miejscu zmiany, w treści, a nie w osobnym
+oknie, bo Operator rozstrzyga tam, gdzie patrzy; pasek zatwierdzenia pod
+blokiem używa tej samej drogi decyzji co znaczniki w treści i wykaz w
+okienku recenzowania, nie jest trzecim miejscem decyzji. Kotwica komentarza
+jest znakiem w treści, nie wpisem w wykazie, bo komentarz przypięty do
+fragmentu ma pokazywać, do którego — komentarz bez zakresu kotwicy nie
+dostaje, bo dotyczy dokumentu, a nie miejsca w nim. Panele okna stoją nad
+powierzchnią jako nakładka, bo powierzchnia należy do dokumentu — stałe
+kolumny zostają trybem do wyboru, a znacznik układu idzie na wspólnego
+przodka powierzchni i paneli, ponieważ to on rozkłada kolumny.
+
+Krawędzie kolumn tabeli mierzy powierzchnia z wyrysu, nie zgaduje z liczby
+kolumn, bo tabela ustawia szerokości wedle treści komórek, więc krawędź na
+linijce ma stać tam, gdzie naprawdę stoi krawędź komórki; krawędź ostatniej
+komórki jest krawędzią całej tabeli, nie granicą między kolumnami, więc nie
+podlega chwytowi przesunięcia. Położenie punktu w zapisie treści liczy się
+sumą zapisów bloków poprzedzających i zapisem bloku bieżącego do miejsca
+kliknięcia — tak samo, jak treść dokumentu jedzie do rdzenia — a punkt poza
+treścią oddaje `null`, nie zero, bo zero jest położeniem prawdziwym i pomyłka
+tutaj wysłałaby operację na początek dokumentu.

@@ -1142,3 +1142,23 @@ Wydobycie tekstu renderowanego biblioteką standardową, bez zależności
 `x/net/html`, nie jest pełnym silnikiem renderującym — to uczciwe wydobycie
 treści czytelnej dla modelu: usunięcie bloków skryptów i stylów, zdjęcie
 pozostałych znaczników, odkodowanie encji i zbicie odstępów.
+
+## skutek_wydania_studia_test.go
+
+Sprawdzian zgodności z kontraktem pyta, czy odpowiedź jest odpowiedzią; ten
+plik pyta o co innego i tylko o to: czy za odpowiedzią coś zostało. Dlatego
+archiwum jest tu rozpakowywane i czytane wpis po wpisie, a nie liczone z pola
+odpowiedzi, które komenda wypełnia sama; wyrys strony jest dekodowany
+z powrotem jako obraz, bo plik nazwany „png" i plik będący obrazem to dwie
+różne rzeczy; gałąź i odwołanie do wersji są odczytywane drugim, niezależnym
+połączeniem do pliku bazy — rdzeń, który melduje zapis, a wiersza nie
+zakłada, przechodzi każdy sprawdzian pytający sam siebie.
+
+Test skanowania z urządzenia sprawdza, że nazwanie braku niesie trzy rzeczy
+naraz: czym rdzeń szukał, po czyjej stronie leży brak — maszyna odbiorcy, nie
+usterka rdzenia — i jaka droga działa mimo niego. Odmowa bez tych trzech
+członów zostawia odbiorcę tam, gdzie zostawiał go pusty wykaz. Mierzony jest
+jeden stan maszyny: warstwa skanera jest, a urządzenia nie ma; oba warunki
+sprawdzają się przed pomiarem, bo maszyna bez programu skanującego i maszyna
+z podłączonym skanerem prowadzą tę czynność innymi drogami, więc pomiar
+wykonany w niewłaściwym miejscu mierzyłby coś innego i meldował to jako wynik.

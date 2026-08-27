@@ -44,7 +44,7 @@ czterowarstwowy, w którym **kierunek zależności jest jednokierunkowy i nieodw
 
 ```
    ┌───────────────────────────────────────────────────────────────────────┐
-   │  WARSTWA KOMPONENTOWA          komponenty.css · 119 klas .dn-*    │
+   │  WARSTWA KOMPONENTOWA          komponenty.css · 244 klasy .dn-*   │
    │      .dn-btn · .dn-pole · .dn-karta · .dn-wpis · .dn-modal …           │
    │      wolno czytać: semantykę i warstwę niezależną        ·  ZAKAZ czytania: prymitywów               │
    └───────────────────────────────▲───────────────────────────────────────┘
@@ -73,7 +73,7 @@ czterowarstwowy, w którym **kierunek zależności jest jednokierunkowy i nieodw
 | **1** | Prymitywy | sekcja 1 (l. 18–58) | `:root` | 18 kroków szarości, 8 stopni sygnału, 12 wartości stanów | wyłącznie semantyka i warstwa niezależna od motywu |
 | **2** | Semantyka per motyw | sekcje 10–11 + blok zapasowy (l. 198–401) | `:root[data-theme='light' \| 'dark']`, `@media (prefers-color-scheme)` | 26 ról semantycznych × 2 motywy, 4 rodziny stanów × 2 motywy, 5 cieni × 2 motywy | warstwa komponentowa |
 | **3** | Niezależne od motywu | sekcje 2–9 oraz 12–14 (l. 60–195, 403–448) | `:root`, `@media (pointer: coarse)`, `:root[data-gestosc]`, `@media (prefers-reduced-motion)` | rama kokpitu, typografia, przestrzeń, ruch, wymiary, siatka i łamanie, warstwy, gradienty | warstwa komponentowa |
-| **4** | Komponenty | `komponenty.css` (1207 linii) | klasy `.dn-*` | 119 tokenów klasowych w 18 sekcjach tematycznych | okna i prototypy |
+| **4** | Komponenty | `komponenty.css` (2823 linie) | klasy `.dn-*` | 244 tokeny klasowe w 38 sekcjach tematycznych | okna i prototypy |
 
 ### 1.3. Reguła kierunku — trzy zdania wiążące
 
@@ -108,28 +108,11 @@ W `komponenty.css` realizuje to `.dn-btn-ikona--na-ramie` (l. 159–165) oraz
 | Przyciski ikonowe paska | `.dn-btn-ikona--na-ramie` | `--dn-rama-tekst-2`, `--dn-rama-hover`, `--dn-rama-tekst` |
 | Plakietka środowiska na pasku | `.dn-plakietka--rola` (nadpisanie ramowe) | `--dn-rama-hover`, `--dn-rama-tekst` |
 
-### 1.5. Warstwa komponentowa — 18 sekcji tematycznych
+### 1.5. Warstwa komponentowa — podział na sekcje
 
-| # | Sekcja `komponenty.css` | Linie | Liczba linii | Klasy bazowe |
-|---|---|---:|---:|---|
-| 1 | Przycisk | 11–164 | 154 | `.dn-btn`, `.dn-btn-ikona` |
-| 2 | Pole formularza | 166–233 | 68 | `.dn-pole`, `.dn-szukaj` |
-| 3 | Wybór: pole wyboru · przełącznik · radio | 235–333 | 99 | `.dn-wybor`, `.dn-check`, `.dn-radio`, `.dn-przelacznik`, `.dn-suwak` |
-| 4 | Kropka sygnału | 335–360 | 26 | `.dn-kropka` |
-| 5 | Plakietka — stany i role | 362–393 | 32 | `.dn-plakietka` |
-| 6 | Karta | 395–523 | 129 | `.dn-karta`, `.dn-karta-srodowiska`, `.dn-kafel` |
-| 7 | Tabela | 525–559 | 35 | `.dn-tabela` |
-| 8 | Zakładki · karty sesji | 561–637 | 77 | `.dn-zakladki`, `.dn-zakladka`, `.dn-karty-sesji`, `.dn-karta-sesji` |
-| 9 | Rama kokpitu — pasek + listwa | 639–718 | 80 | `.dn-pasek`, `.dn-listwa` |
-| 10 | Boczna nawigacja modułów | 720–771 | 52 | `.dn-boczna` |
-| 11 | Wpis okna komunikacji | 773–862 | 90 | `.dn-wpis` |
-| 12 | Monitor wykonania · kolejka kroków | 864–945 | 82 | `.dn-postep`, `.dn-kolejka`, `.dn-krok` |
-| 13 | Modal · nakładka | 947–987 | 41 | `.dn-modal` |
-| 14 | Powiadomienie | 989–1024 | 36 | `.dn-toasty`, `.dn-toast` |
-| 15 | Dymek objaśnienia | 1026–1058 | 33 | `.dn-tooltip` |
-| 16 | Awatar · spinner · pusty stan | 1060–1121 | 62 | `.dn-awatar`, `.dn-spinner`, `.dn-pusty-stan` |
-| 17 | Pole wpisywania promptu | 1123–1169 | 47 | `.dn-prompt`, `.dn-przybornik` |
-| 18 | Always On Display | 1171–1207 | 37 | `.dn-aod` |
+Podział na sekcje niesie sam arkusz `zasoby/css/komponenty.css` — 38 nagłówków
+sekcji; nie powielamy tu zakresów wierszy, bo rozjeżdżają się przy każdej zmianie.
+Arkusz jest źródłem prawdy podziału tematycznego 244 klas `.dn-*`.
 
 ---
 
@@ -139,38 +122,39 @@ W `komponenty.css` realizuje to `.dn-btn-ikona--na-ramie` (l. 159–165) oraz
 
 ```
 design/
-├── 01-kierunek/
-│   └── kierunek systemu projektowego            kontrakt kierunku, trzy pokrętła, anty-domyślne
-├── 02-marka/
-│   ├── logo/                  sygnet · logotyp · lockupy · mono · kontrowe (+png/)
-│   ├── favicon/               favicon.svg/ico/png · apple-touch · manifest · snippet
-│   ├── ikona-aplikacji/       kafel SVG + PNG 180/192/512/1024 + wariant maskowalny
-│   └── srodowiska/            4 emblematy: TalkIn · WorkSpace · CodeStudio · MultitaskingAI
-├── 03-zetony/
-│   ├── zetony.css             448 linii · 14 sekcji · źródło prawdy wartości
-│   ├── zetony.json            odczyt maszynowy (te same wartości)
-│   ├── kontrasty.json         33 zmierzone pary WCAG + paleta odniesienia
-│   ├── fonty.css              @font-face z unicode-range (latin + latin-ext)
-│   └── fonty/                 pliki .woff2 + licencje OFL 1.1
-├── 04-css/
-│   ├── fundament.css          157 linii · warstwa zerowa nad żetonami
-│   ├── komponenty.css         1264 linii · biblioteka klas .dn-*
-│   ├── rama.css               298 linii · belka tytułowa i pasek narzędzi okna
-│   ├── stanowisko.css         374 linii · układ wielookienny przestrzeni roboczej
-│   ├── przedsionek.css        309 linii · widok wejściowy środowiska
-│   └── prototyp.css           341 linii · warstwa poglądowa prototypów
-├── 05-ikony/
-│   ├── svg/                   82 pliki SVG (siatka 24, obrys 1,75)
-│   ├── manifest.json          82 wpisy: nazwa · źródło · zastosowanie
-│   └── ikony.html             galeria przeglądowa
-├── 06-okna/                   makiety okien · komponenty.html · wspolne.js
-├── 07-ksiega/                 ksiega-marki.html + zrzuty/
-├── 08-grafika/                og-image · banner-linkedin · tapeta-2560 · tlo-slajdu
-├── README.md                  przewodnik po pakiecie + rejestr zamkniętych luk
-└── opracowanie o przekazaniu, ruchu i dostępności                 mapowanie wdrożeniowe na budowa/client
+├── 01-dokumentacja-md/        opracowania merytoryczno-techniczne (ten dokument)
+├── 02-dokumentacja-html/      te same opracowania w postaci przeglądowej HTML
+├── 03-marka/                  znak: sygnet · logotyp · lockupy · favicon · emblematy środowisk
+├── 04-portfolio/              grafika portfelowa: og-image · bannery · tapety · tła slajdów
+├── 05-okna/                   makiety i prototypy okien etapu 1
+└── zasoby/                    warstwa techniczna pakietu
+    ├── zetony/
+    │   ├── zetony.css         561 linii · źródło prawdy wartości żetonów
+    │   ├── zetony.json        odczyt maszynowy (wyrównywany do CSS)
+    │   ├── kontrasty.json     zmierzone pary WCAG + paleta odniesienia
+    │   ├── ruch.css           globalna obsługa prefers-reduced-motion
+    │   ├── fonty.css          @font-face z unicode-range (latin + latin-ext)
+    │   └── fonty/             pliki .woff2 + licencje OFL 1.1
+    ├── css/
+    │   ├── fundament.css      162 linie · warstwa zerowa nad żetonami
+    │   └── komponenty.css     2823 linie · biblioteka klas .dn-*
+    ├── rama.css               1906 linii · belka tytułowa i pasek narzędzi okna
+    ├── stanowisko.css         427 linii · układ wielookienny przestrzeni roboczej
+    ├── przedsionek.css        401 linii · widok wejściowy środowiska
+    ├── prototyp.css           470 linii · warstwa poglądowa prototypów
+    ├── ikony/
+    │   ├── svg/               152 pliki SVG (siatka 24, obrys 1,75)
+    │   └── manifest.json      152 wpisy: nazwa · źródło · zastosowanie
+    ├── marka/                 sygnet · logotyp · lockupy · emblematy środowisk
+    └── okna/                  zasoby wspólne makiet okien
 ```
 
 ### 2.2. Zależności między katalogami pakietu
+
+> Nazwy węzłów poniżej to warstwy techniczne pakietu, dziś skonsolidowane pod
+> `zasoby/` (`zetony` → `zasoby/zetony`, `css` → `zasoby/css`, `ikony` →
+> `zasoby/ikony`, `marka` → `03-marka`/`zasoby/marka`, `okna` → `05-okna`).
+> Diagram niesie **kierunek zależności**, nie ścieżki katalogów z rozdz. 2.1.
 
 ```
   01-kierunek  ────────────────────────────────────────────────┐
@@ -215,7 +199,7 @@ budowa/client/
     │   ├── gradienty.css            zetony.css §9
     │   ├── semantyczne-jasny.css    zetony.css §10 + blok zapasowy „light"
     │   ├── semantyczne-ciemny.css   zetony.css §11 + blok zapasowy „dark"
-    │   ├── fundament.css            04-css/fundament.css bez zmian
+    │   ├── fundament.css            zasoby/css/fundament.css bez zmian
     │   ├── zetony.json              podmiana w całości
     │   └── fonty.css + fonty/       @font-face + .woff2 + licencje
     ├── komponenty/
@@ -224,8 +208,8 @@ budowa/client/
     │   ├── postep.css · nakladka.css · powiadomienie.css · drobne.css
     │   └── komponenty.css           arkusz spinający — importuje powyższe
     ├── ikony/
-    │   ├── svg/                     82 pliki — PODMIANA CAŁEGO KATALOGU
-    │   ├── manifest.json            nowy plik (82 pozycje)
+    │   ├── svg/                     152 pliki — PODMIANA CAŁEGO KATALOGU
+    │   ├── manifest.json            nowy plik (152 pozycje)
     │   ├── zrodla-ikon.ts           wykaz nazw — literówka zatrzymuje kompilację
     │   └── ikony.ts                 komponent renderujący
     └── zasoby/
@@ -236,17 +220,17 @@ budowa/client/
 
 | Pakiet design | Cel w `budowa/client` | Charakter operacji |
 |---|---|---|
-| `03-zetony/zetony.css` | `src/motyw/*.css` (13 plików) | podział wg regulaminu, wartości przenoszone **dosłownie** |
-| `03-zetony/zetony.json` | `src/motyw/zetony.json` | podmiana w całości |
-| `03-zetony/fonty.css` + `fonty/*.woff2` | `src/motyw/fonty.css` + `src/motyw/fonty/` | przeniesienie 1:1 z licencjami OFL |
-| `04-css/fundament.css` | `src/motyw/fundament.css` | import po żetonach, przed komponentami; **usunąć duplikat fokusu** z dotychczasowego `motyw.css` |
-| `04-css/komponenty.css` | `src/komponenty/*.css` (14 plików) | podział per komponent; selektory `.dn-*` bez zmian |
-| `05-ikony/svg/*.svg` | `src/ikony/svg/` | **podmiana całego katalogu** — poprzedni zestaw był zastępczy |
-| `05-ikony/manifest.json` | `src/ikony/manifest.json` | nowy plik |
-| `02-marka/logo/sygnet*.svg`, `logotyp*.svg` | `src/ikony/svg/` (sygnet jako `logo-danaco.svg`) **oraz** `src/zasoby/marka/` | duplikat świadomy: kompatybilność importów + katalog marki |
-| `02-marka/favicon/*` | `client/public/` | snippet `<head>` gotowy w `naglowek-snippet.html` |
-| `02-marka/ikona-aplikacji/*` | `desktop/` (Tauri: 32, 128, 128@2x z `ikona-1024.png`) + `client/public/` (PWA) | wariant maskowalny dla manifestu |
-| `02-marka/srodowiska/*.svg` | `src/ikony/svg/` | emblematy używane przez Centrum dowodzenia i pasek ramy |
+| `zasoby/zetony/zetony.css` | `src/motyw/*.css` (13 plików) | podział wg regulaminu, wartości przenoszone **dosłownie** |
+| `zasoby/zetony/zetony.json` | `src/motyw/zetony.json` | podmiana w całości |
+| `zasoby/zetony/fonty.css` + `fonty/*.woff2` | `src/motyw/fonty.css` + `src/motyw/fonty/` | przeniesienie 1:1 z licencjami OFL |
+| `zasoby/css/fundament.css` | `src/motyw/fundament.css` | import po żetonach, przed komponentami; **usunąć duplikat fokusu** z dotychczasowego `motyw.css` |
+| `zasoby/css/komponenty.css` | `src/komponenty/*.css` (14 plików) | podział per komponent; selektory `.dn-*` bez zmian |
+| `zasoby/ikony/svg/*.svg` | `src/ikony/svg/` | **podmiana całego katalogu** — poprzedni zestaw był zastępczy |
+| `zasoby/ikony/manifest.json` | `src/ikony/manifest.json` | nowy plik |
+| `03-marka/logo/sygnet*.svg`, `logotyp*.svg` | `src/ikony/svg/` (sygnet jako `logo-danaco.svg`) **oraz** `src/zasoby/marka/` | duplikat świadomy: kompatybilność importów + katalog marki |
+| `03-marka/favicon/*` | `client/public/` | snippet `<head>` gotowy w `naglowek-snippet.html` |
+| `03-marka/ikona-aplikacji/*` | `desktop/` (Tauri: 32, 128, 128@2x z `ikona-1024.png`) + `client/public/` (PWA) | wariant maskowalny dla manifestu |
+| `03-marka/srodowiska/*.svg` | `src/ikony/svg/` | emblematy używane przez Centrum dowodzenia i pasek ramy |
 
 ### 2.5. Kolejność importu — kontrakt kaskady
 
@@ -288,7 +272,11 @@ To jedyny błąd tej architektury, którego kompilator nie zgłasza.
 | 2 | **Arkusz ≤ 300 linii** | próg twardy; przekroczenie = sygnał do dalszego podziału |
 | 3 | **Komponent sięga wyłącznie po żetony semantyczne** | przegląd kodu: wystąpienie `--dn-szary-*` / `--dn-sygnal-[0-9]` w `komponenty/` jest błędem |
 
-### 3.2. Podział `zetony.css` (448 linii → 13 arkuszy + arkusz spinający)
+### 3.2. Podział `zetony.css` (561 linii → 13 arkuszy + arkusz spinający)
+
+> Zakresy wierszy w tabeli poniżej opisują **plan podziału na źródle sprzed
+> przebudowy**; obowiązujący arkusz `zasoby/zetony/zetony.css` ma 561 linii —
+> wartości czytaj z arkusza, nie z tych zakresów.
 
 | Arkusz docelowy | Sekcje źródłowe | Linie źródła | Szacowana objętość | Zawartość |
 |---|---|---|---:|---|
@@ -306,11 +294,15 @@ To jedyny błąd tej architektury, którego kompilator nie zgłasza.
 | `semantyczne-ciemny.css` | §11 (bez stanów i cieni) + blok zapasowy „dark" | 265–301, 364–382 | ~90 | 26 ról semantycznych motywu ciemnego |
 | `motyw.css` | — (nowy) | — | ~25 | wyłącznie `@import` w ustalonej kolejności + nagłówek |
 
-**Suma docelowa:** ~628 linii wobec 448 linii źródła. Przyrost ≈ 40% to nagłówki
+**Suma docelowa:** przyrost względem źródła to nagłówki
 komentarzowe i domknięcia selektorów, które w pliku scalonym występowały raz.
 Przyrost jest kosztem świadomym i zapisanym: jedna odpowiedzialność przed zwięzłością.
 
-### 3.3. Podział `komponenty.css` (1207 linii → 14 arkuszy + arkusz spinający)
+### 3.3. Podział `komponenty.css` (2823 linie → arkusze per komponent + arkusz spinający)
+
+> Zakresy wierszy w tabeli poniżej opisują **plan podziału na źródle sprzed
+> przebudowy**; obowiązujący arkusz `zasoby/css/komponenty.css` ma 2823 linie
+> i 38 sekcji — podziału na sekcje szukaj w samym arkuszu, nie w tych zakresach.
 
 | Arkusz docelowy | Sekcje źródłowe | Linie źródła | Linii | Klasy przenoszone |
 |---|---|---:|---:|---|
@@ -1007,7 +999,7 @@ rozdziale — nie wolno dodać wartości wprost bez odnotowania.
 | Stopnie renderowania | 14 · 16 · 20 · 24 px | `manifest.json` → `zasady.renderowanie` |
 | Biblioteka źródłowa | Lucide (ISC), obrys ujednolicony do 1,75 | `manifest.json` → `zrodlo.biblioteka` |
 | Ikony własne | emblematy środowisk — ta sama siatka i kreska, jedna wypełniona kropka sygnału | `manifest.json` → `zrodlo.wlasne` |
-| Liczba pozycji | **82** | `manifest.json` → `liczba-ikon`; zgodna z liczbą plików w `svg/` |
+| Liczba pozycji | **152** | `manifest.json` → `liczba-ikon`; zgodna z liczbą plików w `svg/` |
 
 ### 11.2. Dlaczego `currentColor` jest decyzją architektoniczną
 
@@ -1036,12 +1028,12 @@ Nazwy plików i wpisów manifestu są polskie i opisują **pojęcie**, nie kszta
 `walidator` (nie „tarcza z ptaszkiem"). To celowe: literówka w nazwie opisowej
 jest wychwytywalna przy czytaniu kodu, literówka w nazwie kształtu — nie.
 
-Pełny wykaz 82 nazw znajduje się w kontrakcie systemu projektowego i w `manifest.json`.
+Pełny wykaz 152 nazw znajduje się w kontrakcie systemu projektowego i w `manifest.json`.
 
 ### 11.4. Manifest jako źródło prawdy
 
 ```
-   manifest.json  (82 pozycje: nazwa · zrodlo · zastosowanie)
+   manifest.json  (152 pozycje: nazwa · zrodlo · zastosowanie)
         │
         │  generuje / weryfikuje
         ▼
@@ -1053,7 +1045,7 @@ Pełny wykaz 82 nazw znajduje się w kontrakcie systemu projektowego i w `manife
 ```
 
 opracowanie o przekazaniu, ruchu i dostępności zapisuje wprost: *„Literówka ma dalej zatrzymywać kompilację."*
-Mechanizm: `zrodla-ikon.ts` deklaruje typ unii złożony z 82 dosłownych nazw;
+Mechanizm: `zrodla-ikon.ts` deklaruje typ unii złożony z 152 dosłownych nazw;
 `ikony.ts` przyjmuje wyłącznie ten typ. Nazwa spoza wykazu nie jest błędem
 w czasie działania (brakująca ikona), tylko **błędem kompilacji**.
 
@@ -1218,8 +1210,8 @@ Dwa człony bramy są rozłączne i oba obowiązkowe:
 | Fala | Zakres | Brama specyficzna | Kryterium przejścia |
 |---|---|---|---|
 | **1 — żetony** | `motyw/` (13 arkuszy + spinający) | wartości przeniesione **dosłownie** z `zetony.css`; żaden arkusz > 300 linii; kolejność importów zgodna z rozdz. 2.5 | wszystkie 33 pary `kontrasty.json` z `ok: true`; oba motywy renderują się na nowej palecie; brak wartości szesnastkowej poza `motyw/prymitywy.css` i `motyw/stany.css` |
-| **2 — komponenty** | `komponenty/` (14 arkuszy) + `fundament.css` | galeria `06-okna/komponenty.html` jako wzorzec odbioru wizualnego; usunięty duplikat fokusu z dotychczasowego `motyw.css` | 119 klas `.dn-*` obecnych i renderujących się; zero wystąpień `disabled`; zero prymitywów poza listą wyjątków (rozdz. 10.5); fokus widoczny na każdej kontrolce |
-| **3 — ikony i marka** | `ikony/svg/` (podmiana całego katalogu), `manifest.json`, favicon, ikony Tauri | wykaz nazw w `zrodla-ikon.ts` zgodny z manifestem (82 pozycje) | kompilacja przechodzi; próba użycia nazwy spoza wykazu **zatrzymuje kompilację**; ikony dziedziczą barwę przez `currentColor` w obu motywach; godło zachowuje barwy własne |
+| **2 — komponenty** | `komponenty/` (14 arkuszy) + `fundament.css` | galeria `06-okna/komponenty.html` jako wzorzec odbioru wizualnego; usunięty duplikat fokusu z dotychczasowego `motyw.css` | 244 klasy `.dn-*` obecne i renderujące się; zero wystąpień `disabled`; zero prymitywów poza listą wyjątków (rozdz. 10.5); fokus widoczny na każdej kontrolce |
+| **3 — ikony i marka** | `ikony/svg/` (podmiana całego katalogu), `manifest.json`, favicon, ikony Tauri | wykaz nazw w `zrodla-ikon.ts` zgodny z manifestem (152 pozycje) | kompilacja przechodzi; próba użycia nazwy spoza wykazu **zatrzymuje kompilację**; ikony dziedziczą barwę przez `currentColor` w obu motywach; godło zachowuje barwy własne |
 | **4 — okna** | `okno-komunikacji/` + powłoka wg makiet Centrum dowodzenia, powłoki środowiska i pary koordynator–wykonawca | usunięte lokalne `--dc-*`; mapowanie ról kontraktu na klasy `.dn-wpis--*` | pas komunikacji nie schodzi poniżej 320 px; Chat Window nie znika przy zmianie modułu; karty sesji zachowują stan; powłoka zachowuje się poprawnie na progach w1–w4 |
 
 ### 13.4. Czego nie wolno zmienić po cichu (opracowanie o przekazaniu, ruchu i dostępności)
@@ -1284,7 +1276,7 @@ Rozstrzygnięcia podjęte ponad dokumentację źródłową — wraz z uzasadnien
 
 1. System ma cztery warstwy: prymitywy, semantykę per motyw, warstwę niezależną od motywu i warstwę komponentową — zależność biegnie tylko w górę.
 2. Rama kokpitu jest jedynym elementem barwnym poza osią motywu i dlatego mieszka w warstwie niezależnej od motywu.
-3. Pakiet design ma osiem katalogów; katalog docelowy `budowa/client/src` ma trzy: `motyw/`, `komponenty/`, `ikony/` — plus `zasoby/marka/`.
+3. Pakiet design ma pięć katalogów treści (`01-dokumentacja-md/`, `02-dokumentacja-html/`, `03-marka/`, `04-portfolio/`, `05-okna/`) i katalog `zasoby/` z warstwą techniczną; katalog docelowy `budowa/client/src` ma trzy: `motyw/`, `komponenty/`, `ikony/` — plus `zasoby/marka/`.
 4. Regulamin budowy to trzy zasady: jedna odpowiedzialność na plik, arkusz ≤ 300 linii, komponent czyta wyłącznie semantykę.
 5. Motyw działa na trzech elementach — `data-theme`, `prefers-color-scheme`, `color-scheme` — a powielenie wartości w bloku zapasowym jest świadome i objęte kontraktem utrzymaniowym.
 6. Gęstość ma dwie osie: automatyczną (`pointer: coarse`) i jawną (`data-gestosc`), obie realizowane żetonem, nie wyjątkiem w komponencie.

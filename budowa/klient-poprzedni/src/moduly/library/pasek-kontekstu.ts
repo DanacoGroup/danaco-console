@@ -3,12 +3,9 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import { KOD_MODULU, type ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Pasek kontekstu modułu — okno komunikacji, w którego imieniu moduł działa.
- *
- * Okno bierze się po `moduleId`, nie z brzegu wykazu: `window.list` oddaje okna
- * wszystkich modułów sesji, więc `windows[0]` wysyłałoby kontekst cudzego okna.
- * Okno komunikacji jest zarazem oknem źródłowym przenoszenia kontekstu, dlatego
- * jego brak pasek opisuje wprost, zamiast podstawiać okno innego modułu.
+ * Pasek kontekstu modułu Library, czyli zdanie o oknie komunikacji, w którego
+ * imieniu moduł działa. Okno wybierane jest po oznaczeniu modułu, a jego brak
+ * pasek opisuje wprost, zamiast podstawiać okno cudzego modułu.
  */
 export interface PasekKontekstu {
   element: HTMLElement;
@@ -41,8 +38,7 @@ export function utworzPasekKontekstu(
       if (wlasne === undefined) {
         stan.ustawOkno('');
         element.dataset['kontekst'] = 'brak';
-        // Liczba okien wchodzi w treść, bo odróżnia pustą odpowiedź rdzenia od
-        // odpowiedzi, w której okna modułu po prostu nie ma.
+        // Liczba okien odróżnia pustą odpowiedź rdzenia od odpowiedzi bez okna modułu.
         element.textContent =
           wykaz.length === 0
             ? 'Rdzeń nie ma ani jednego okna komunikacji tej sesji — przeniesienie kontekstu ' +
@@ -61,8 +57,7 @@ export function utworzPasekKontekstu(
       }
       const okno = wynik.wynik.window;
       element.dataset['kontekst'] = 'gotowy';
-      // Moduł okna i tryb uprawnień stoją w panelu „Sterowanie okna", a tytuł
-      // okna w karcie sesji — pasek ich nie powtarza.
+      // Moduł okna i tryb uprawnień stoją w panelu sterowania okna, więc pasek ich nie powtarza.
       element.textContent =
         `Okno kontekstu: ${okno.title ?? okno.id} · wiadomości ${wynik.wynik.messageCount}.`;
     },

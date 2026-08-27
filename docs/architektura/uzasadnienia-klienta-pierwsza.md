@@ -4757,3 +4757,16 @@ bez komendy znoszącej pozostaje, ponieważ takiego braku nie zniesie żadna kom
 
 Plik nie obchodzi braku: nie wysyła komendy zastępczej i nie udaje zapisu
 w rdzeniu. Wyciszenie pozostaje stanem tego okna i tak jest nazwane w menu.
+
+## budowa/klient-poprzedni/src/dostepy/stany-odczytu.ts
+
+Pusty wykaz punktów dostępu znaczy co innego, gdy rdzeń jeszcze nie
+odpowiedział, co innego, gdy odmówił, i co innego, gdy rejestr jest pusty.
+Zlanie tych przypadków w jeden kazałoby zgadywać, czy czekać, czy działać,
+dlatego pas stanów rozróżnia je osobnymi fazami odczytu.
+
+Przycisk ponowienia wyzwala odczyt i zostawia komunikat na miejscu, dopóki
+sytuacja nie ustanie; sekcja pozostaje przez cały ten czas czynna.
+
+Biblioteka `komponenty/` nie ma jeszcze reguł komunikatu blokowego, więc
+komunikat stoi na klasie komunikatu tej sekcji.

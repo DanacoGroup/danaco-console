@@ -1,18 +1,9 @@
 import type { FazaOdczytu, StanDostepow } from './stan-dostepow';
 
 /**
- * Pas stanów odczytu sekcji dostępów: wskaźnik ładowania i komunikat błędu.
- * Stan pusty niesie sam wykaz, bo mówi o wykazie, nie o odczycie.
- *
- * Pusty wykaz punktów znaczy co innego, gdy rdzeń jeszcze nie odpowiedział, co
- * innego, gdy odmówił, i co innego, gdy rejestr jest pusty. Zlanie tych
- * przypadków w jeden kazałoby Operatorowi zgadywać, czy czekać, czy działać.
- *
- * „Spróbuj ponownie" wyzwala odczyt i zostawia komunikat na miejscu, dopóki
- * sytuacja nie ustanie; sekcja pozostaje przez cały czas czynna.
- *
- * Biblioteka `komponenty/` nie ma jeszcze reguł komunikatu blokowego, więc
- * komunikat stoi na klasie komunikatu tej sekcji.
+ * Pas stanów odczytu sekcji dostępów: wskaźnik ładowania oraz komunikat błędu
+ * z ponowieniem. Stan pusty niesie sam wykaz, ponieważ mówi o zawartości
+ * wykazu, a nie o przebiegu odczytu.
  */
 export interface StanyOdczytu {
   /** Pas stanów osadzany pod nagłówkiem sekcji. */

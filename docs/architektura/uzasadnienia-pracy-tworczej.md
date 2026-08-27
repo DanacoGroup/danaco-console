@@ -1577,3 +1577,25 @@ wyszedłby przy pierwszym szablonie założonym starą drogą.
 Wypełnianie szablonu (`WypelnijSzablon`) jest czynnością dostępną także
 modelowi AI — dlatego autor czynności wchodzi do dziennika, a czynność modelu
 odkłada się jako jego, tym samym rachunkiem autorstwa co czynność człowieka.
+
+## adapter_modul_design_wykresy.go
+
+Wykres bierze serie danych, nie obraz: kontrakt żąda serii liczb, żeby wykres
+dawał się przerysować po zmianie liczb. Gdyby komenda przyjmowała obraz,
+zmiana jednej wartości wymagałaby narysowania wykresu od nowa poza produktem,
+a rdzeń byłby tylko miejscem, w którym ten obraz leży.
+
+Wykres i schemat powstają raz, jako płótno biblioteki `tdewolff/canvas`,
+a potem wychodzą albo jako SVG (wydawca `renderers/svg`), albo jako PNG
+(rasteryzator `renderers/rasterizer`). Dwie osobne drogi rysowania dałyby dwa
+wykresy różniące się szczegółami zależnie od formatu, mimo że mają być tym
+samym wykresem.
+
+Podpisy są konturami, nie elementem tekstowym: napisy jadą przez
+`sciezkaTekstuDesignu`, jako kontury glifów kroju wkompilowanego. Element
+`<text>` w SVG pokazałby podpisy wyłącznie tam, gdzie ten krój jest
+zainstalowany, a wykres ma być plikiem przenośnym.
+
+`design.diagram.render` niesie `unplacedNodeIds` — węzły, których układ nie
+umieścił. Schemat z połową węzłów wygląda bez tego pola jak schemat kompletny,
+dlatego bilans nazywa brak wprost zamiast milczeć o nim.

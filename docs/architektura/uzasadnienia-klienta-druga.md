@@ -1044,3 +1044,19 @@ bytów marginesu, zawężenie wykazu znakowań, kolejność czynności pływaka 
 zaporę przed pokazaniem tej samej operacji dwa razy w katalogu oraz zapis pochodzenia. Czego
 tu nie ma — sprawdzianu, że przycisk wywołuje komendę — jest tak samo istotne: sprawdzian
 takiego kształtu mierzyłby atrapę, którą sam stawia, a nie skutek na dokumencie.
+
+## budowa/klient-poprzedni/src/moduly/studio/tabela-panel.ts
+
+Siatka jest wejściem pierwszym, a pola liczbowe stoją obok jako droga druga —
+dla tabeli większej niż siatka i dla pracy z klawiatury. Oba wejścia prowadzą
+do tej samej komendy wstawienia, więc nie ma dwóch zachowań.
+
+Każda czynność tabeli oddaje bilans i panel go wypisuje zawsze, nie tylko przy
+pominięciu. Scalenie komórek w zablokowanym fragmencie wraca odpowiedzią
+pomyślną z pominięciem w bilansie — bez wypisania bilansu wyglądałoby to na
+scalenie wykonane. Wpis dziennika idzie do tego samego zdania, bo bez niego
+Operator nie wie, co ma cofnąć.
+
+Panel nie liczy sam ani szerokości kolumn, ani wyniku sortowania, ani zamiany
+tekstu na tabelę. Wszystko to robi rdzeń; panel składa żądanie, czyta tabelę
+z odpowiedzi i pokazuje szerokości policzone, a nie założone.

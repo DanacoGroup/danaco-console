@@ -29,7 +29,7 @@ type Pozycja struct {
 	Zaktualizowano     string
 }
 
-// domyslnyStanPozycji odpowiada wartości domyślnej kolumny w schemacie.
+// domyslnyStanPozycji odpowiada wartości domyślnej kolumny stanu w schemacie tabeli pozycja_kolejki, ustawianej przy zapisie.
 const domyslnyStanPozycji = "oczekuje"
 
 const (
@@ -58,7 +58,7 @@ const (
 	                       WHERE kolejka_id = ? ORDER BY kolejnosc, id`
 )
 
-// DodajPozycje dokłada zlecenie na koniec kolejki i odnotowuje je w dzienniku.
+// DodajPozycje dokłada zlecenie na koniec kolejki, nadając mu kolejny numer, i odnotowuje je w dzienniku.
 func (r *repozytoriumKolejek) DodajPozycje(ctx context.Context, pozycja Pozycja) (int64, error) {
 	stan := pozycja.Stan
 	if stan == "" {
@@ -90,7 +90,7 @@ func (r *repozytoriumKolejek) DodajPozycje(ctx context.Context, pozycja Pozycja)
 	return id, nil
 }
 
-// ZmienStanPozycji zapisuje stan zlecenia i werdykt weryfikacji.
+// ZmienStanPozycji zapisuje stan zlecenia i werdykt weryfikacji dla wskazanej pozycji kolejki po jej przetworzeniu.
 func (r *repozytoriumKolejek) ZmienStanPozycji(ctx context.Context, id int64,
 	stan string, werdykt *string) error {
 
@@ -145,7 +145,7 @@ func (r *repozytoriumKolejek) ZwiekszObieg(ctx context.Context, pozycjaID int64)
 	return obieg, nil
 }
 
-// ListaPozycji zwraca zlecenia kolejki w zapisanej kolejności.
+// ListaPozycji zwraca zlecenia kolejki w zapisanej kolejności, od najstarszego zlecenia do najnowszego.
 func (r *repozytoriumKolejek) ListaPozycji(ctx context.Context, kolejkaID int64) ([]Pozycja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaPozycjiKolejki)
 	if err != nil {
@@ -171,7 +171,7 @@ func (r *repozytoriumKolejek) ListaPozycji(ctx context.Context, kolejkaID int64)
 	return lista, nil
 }
 
-// odczytajPozycje składa strukturę z jednego wiersza wyniku.
+// odczytajPozycje składa strukturę pozycji kolejki z jednego wiersza wyniku zapytania, kolumna po kolumnie.
 func odczytajPozycje(wiersz skaner) (Pozycja, error) {
 	var pozycja Pozycja
 	var okno sql.NullInt64

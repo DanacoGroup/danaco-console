@@ -1,3 +1,6 @@
+// Plik sprawdza skutek wejścia i wyjścia modułu Studio: czy postać dokumentu przechodzi
+// przez plik tam i z powrotem, bez straty stylu, sekcji, tabeli ani warstwy znakowania
+// sesji.
 package core
 
 import (
@@ -14,38 +17,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany skutku wejścia i wyjścia modułu Studio: czy postać dokumentu
-// przechodzi PRZEZ PLIK tam i z powrotem.
-//
-// ── Dlaczego materiał jest składany ręcznie, a nie własnym składaczem ────────
-// Gdyby plik próbny powstawał `wejscieZlozOoxml`, sprawdzian mierzyłby zgodność
-// składacza z własnym rozbiorem — czyli że rdzeń czyta to, co sam napisał.
-// Taki pomiar przechodzi także wtedy, gdy oba końce mylą się w ten sam sposób,
-// a plik jest dla Worda nieczytelny. Dlatego materiał wejściowy jest tu
-// WPISANY WPROST: archiwum ZIP ze składnikami XML w postaci, w jakiej wychodzą
-// z pakietu biurowego. Rozbiór ma zdać egzamin z cudzego pliku, nie ze swojego.
-//
-// ── Dlaczego porównanie idzie PO ODCZYCIE, nie po bajtach ───────────────────
-// Ten sam dokument da się zapisać na wiele poprawnych sposobów: inna kolejność
-// węzłów, inne nazwy stylów automatycznych, inne zaokrąglenie twipów. Bajt
-// w bajt nie zgodzi się nigdy i nie ma się zgodzić. Miarą jest to, czy po
-// wczytaniu wyniku POSTAĆ jest ta sama: nazwa stylu akapitu, orientacja
-// i marginesy sekcji, wymiary tabeli, jej wiersz nagłówkowy, scalenie komórek
-// i szerokości kolumn.
-//
-// Szkody, które ten plik ma wykluczyć:
-//  1. wczytanie `.docx`, po którym w postaci stoi sam tekst, a styl, sekcja
-//     i tabela przepadły;
-//  2. wydanie `.docx`, które zapisuje treść i gubi to, co przyszło z pliku —
-//     czyli obieg gubiący postać dokładnie tam, gdzie Właściciel go sprawdza;
-//  3. wydanie do formatu uboższego, które o stracie milczy;
-//  4. wydanie wielostronicowe oddające jedną stronę, choć odpowiedź mówi inaczej;
-//  5. plik wyjściowy niosący warstwę znakowania sesji — komentarze i wyróżnienia
-//     w piśmie wysłanym na zewnątrz.
-
 // ── Uprząż wspólna ──────────────────────────────────────────────────────────
 
-// ooxmlNaglowekXml jest nagłówkiem składnika XML archiwum biurowego.
+// ooxmlNaglowekXml jest nagłówkiem składnika XML archiwum biurowego, wspólnym dla każdego
+// pliku wpisywanego wprost do próbnego dokumentu.
 const ooxmlNaglowekXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
 
 // ooxmlZlozArchiwumProbne składa archiwum ZIP ze wskazanych składników.
@@ -86,15 +61,9 @@ func ooxmlZlozArchiwumProbne(t *testing.T, skladniki map[string]string, pierwszy
 	return bufor.Bytes()
 }
 
-// ooxmlDocxProbny składa dokument `.docx` w postaci, w jakiej wychodzi z Worda.
-//
-// Materiał niesie wszystko, co sprawdzian mierzy, i nic ponad to:
-//   - arkusz stylów z nagłówkiem poziomu pierwszego i tekstem zasadniczym,
-//   - akapit nagłówkowy o stylu `Heading1` oraz akapit zasadniczy z fragmentem
-//     wytłuszczonym (postać znaku ma przejść razem ze stylem akapitu),
-//   - tabelę dwa na trzy z wierszem nagłówkowym powtarzanym, scaleniem dwóch
-//     kolumn w wierszu drugim i jawną siatką szerokości,
-//   - sekcję poziomą A4 o marginesach 30/20/25/15 mm.
+// ooxmlDocxProbny składa dokument .docx w postaci, w jakiej wychodzi z Worda: arkusz
+// stylów, akapit nagłówkowy i zasadniczy z fragmentem wytłuszczonym, tabela ze scaleniem
+// komórek i jawną siatką szerokości, sekcja pozioma A4.
 func ooxmlDocxProbny(t *testing.T) []byte {
 	t.Helper()
 
@@ -167,14 +136,9 @@ func ooxmlDocxProbny(t *testing.T) []byte {
 	}, "")
 }
 
-// ooxmlOdtProbny składa dokument `.odt` w postaci, w jakiej wychodzi
-// z LibreOffice: `mimetype` pierwszy i nieskompresowany, treść w `content.xml`,
-// arkusz stylów i układ strony w `styles.xml`.
-//
-// Materiał niesie te same rzeczy, co próbny `.docx`, żeby oba sprawdziany
-// mierzyły to samo: nagłówek o stylu nazwanym, akapit z fragmentem
-// wytłuszczonym, tabelę trzykolumnową ze scaleniem i wierszem nagłówkowym,
-// oraz sekcję poziomą o marginesach niesymetrycznych.
+// ooxmlOdtProbny składa dokument .odt w postaci, w jakiej wychodzi z LibreOffice, z
+// mimetype pierwszym i nieskompresowanym oraz treścią w content.xml, niosąc te same cechy
+// próbne, co dokument docx.
 func ooxmlOdtProbny(t *testing.T) []byte {
 	t.Helper()
 
@@ -251,8 +215,8 @@ func ooxmlOdtProbny(t *testing.T) []byte {
 	}, odfSkladnikRodzaju)
 }
 
-// ooxmlWniesPlik wnosi bajty pliku do edytora i oddaje odpowiedź wraz
-// z bilansem.
+// ooxmlWniesPlik wnosi bajty pliku do edytora i oddaje odpowiedź wraz z bilansem cech,
+// których wydanie nie poniosło.
 func ooxmlWniesPlik(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	okno string, bajty []byte,
 	format shared.StudioImportFormat) shared.StudioDocumentImportFileResponse {
@@ -269,11 +233,9 @@ func ooxmlWniesPlik(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return wniesiony
 }
 
-// ooxmlPostacDokumentu odczytuje postać dokumentu OSOBNYM wywołaniem.
-//
-// To jest miara właściwa: postać wzięta z odpowiedzi komendy zapisującej mówi,
-// co rdzeń zamierzał zapisać, a nie co naprawdę leży w bazie. Operator otworzy
-// dokument ponownie i zobaczy to drugie.
+// ooxmlPostacDokumentu odczytuje postać dokumentu osobnym wywołaniem, bo postać wzięta z
+// odpowiedzi komendy zapisującej mówi, co rdzeń zamierzał zapisać, a nie co naprawdę leży
+// w bazie.
 func ooxmlPostacDokumentu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	kod string) shared.StudioDocumentForm {
 
@@ -315,7 +277,8 @@ func ooxmlWydajDoPliku(t *testing.T, zmontowany *Zmontowany, zycie context.Conte
 	return wydane.Result, bajty
 }
 
-// ooxmlBlokOStylu szuka bloku akapitu o wskazanym stylu nazwanym.
+// ooxmlBlokOStylu szuka bloku akapitu o wskazanym stylu nazwanym i oddaje jego treść wraz
+// z pozycją w dokumencie.
 func ooxmlBlokOStylu(postac shared.StudioDocumentForm, styl string) *shared.StudioDocumentBlock {
 	for i := range postac.Blocks {
 		blok := &postac.Blocks[i]
@@ -398,8 +361,8 @@ func ooxmlSprawdzPostacProbna(t *testing.T, postac shared.StudioDocumentForm,
 		t.Errorf("%s: orientacja pozioma przepadła — w postaci stoi %v",
 			etap, nastawy.Orientation)
 	}
-	// Marginesy niesymetryczne są tu miarą celową: gdyby rachunek podstawiał
-	// nastawę domyślną, wszystkie cztery wyszłyby równe.
+	// Marginesy niesymetryczne są tu miarą celową: rachunek z nastawą domyślną dałby
+	// cztery równe.
 	if nastawy.MarginTop == nil || *nastawy.MarginTop != 30 {
 		t.Errorf("%s: margines górny nie przeszedł — oczekiwano 30 mm, stoi %v",
 			etap, nastawy.MarginTop)
@@ -428,8 +391,8 @@ func ooxmlSprawdzPostacProbna(t *testing.T, postac shared.StudioDocumentForm,
 	if tabela.RepeatHeader == nil || !*tabela.RepeatHeader {
 		t.Errorf("%s: powtarzanie wiersza nagłówkowego przepadło", etap)
 	}
-	// Szerokości POLICZONE, nie zerowe: kolumna zerowej szerokości jest
-	// kolumną niewidoczną w pakiecie biurowym.
+	// Szerokości policzone, nie zerowe: kolumna zerowej szerokości jest kolumną
+	// niewidoczną.
 	if len(tabela.ColumnWidthsMm) != 3 {
 		t.Errorf("%s: tabela niesie %d szerokości kolumn, a ma trzy kolumny",
 			etap, len(tabela.ColumnWidthsMm))
@@ -503,8 +466,9 @@ func TestDocxPoOdczycieZachowujeStylSekcjeITabele(t *testing.T) {
 		}
 	}
 
-	// Etap trzeci: wydany plik wraca do edytora jako dokument osobny. Porównanie
-	// idzie po TEJ SAMEJ mierze, co po wczytaniu pliku wejściowego.
+	// Etap trzeci: wydany plik wraca do edytora jako dokument osobny.
+
+	// Porównanie idzie po tej samej mierze, co po wczytaniu pliku wejściowego.
 	wrocony := ooxmlWniesPlik(t, zmontowany, zycie, okno+"-powrot",
 		bajty, shared.StudioImportFormatDocx)
 	if wrocony.Document.Id == wniesiony.Document.Id {
@@ -515,15 +479,16 @@ func TestDocxPoOdczycieZachowujeStylSekcjeITabele(t *testing.T) {
 	ooxmlSprawdzPostacProbna(t, poObiegu, "po obiegu przez wydany .docx",
 		wejscieStylNaglowek1, wejscieStylTekstZasadniczy)
 
-	// Treść ma przejść w całości — postać bez treści byłaby postacią pustego
-	// dokumentu i przeszłaby każdy sprawdzian struktury.
-	//
-	// Mierzona jest treść AKAPITÓW. Treść komórek tabeli w treści płaskiej nie
-	// stoi: płaski odczyt dokumentu składa się z akapitów, a tabela jest
-	// strukturą i jej brzmienie stoi w postaci (sprawdzone wyżej, w komórkach).
-	// Znaki diakrytyczne są tu miarą osobną i celową: „dzieło" przepuszczone
-	// przez dwa archiwa i dwa rozbiory XML musi wrócić z literą „ł", a nie jako
-	// „dzielo" ani jako znak zastępczy.
+	// Treść ma przejść w całości — postać bez treści przeszłaby każdy sprawdzian
+	// struktury.
+
+	// Mierzona jest treść akapitów: treść komórek tabeli w treści płaskiej nie stoi
+	// osobno.
+
+	// Tabela jest strukturą i jej brzmienie stoi w postaci, sprawdzone wyżej w komórkach.
+
+	// Znaki diakrytyczne są tu miarą osobną: litera ł ma wrócić literą, nie znakiem
+	// zastępczym.
 	trescPoObiegu := trescDokumentu(t, zmontowany, zycie, okno+"-powrot", wrocony.Document.Id)
 	for _, oczekiwany := range []string{"Umowa o dzieło", "zakres prac", "ponizszych"} {
 		if !strings.Contains(trescPoObiegu, oczekiwany) {
@@ -544,8 +509,7 @@ func TestOdtPoOdczycieZachowujeStylSekcjeITabele(t *testing.T) {
 	wniesiony := ooxmlWniesPlik(t, zmontowany, zycie, okno,
 		ooxmlOdtProbny(t), shared.StudioImportFormatOdt)
 
-	// Styl ODF nosi nazwę własną pliku, a nie nazwę arkusza platformy — plik
-	// LibreOffice nie ma powodu nazywać stylu tak, jak nazywa go ten produkt.
+	// Styl ODF nosi nazwę własną pliku, nie nazwę arkusza platformy tego produktu.
 	poWczytaniu := ooxmlPostacDokumentu(t, zmontowany, zycie, wniesiony.Document.Id)
 	ooxmlSprawdzPostacProbna(t, poWczytaniu, "po wczytaniu .odt",
 		"Naglowek-pierwszy", "Tekst-zasadniczy")
@@ -554,9 +518,10 @@ func TestOdtPoOdczycieZachowujeStylSekcjeITabele(t *testing.T) {
 	_, bajty := ooxmlWydajDoPliku(t, zmontowany, zycie, wniesiony.Document.Id,
 		shared.StudioExportFormatOdt, sciezka, nil)
 
-	// `mimetype` musi być składnikiem PIERWSZYM i NIESKOMPRESOWANYM — tym
-	// OpenDocument rozpoznaje swoje pliki. Sprawdzenie idzie po nagłówkach
-	// archiwum, nie po treści.
+	// mimetype musi być składnikiem pierwszym i nieskompresowanym — tym OpenDocument
+	// rozpoznaje pliki.
+
+	// Sprawdzenie idzie po nagłówkach archiwum, nie po treści.
 	archiwum, err := zip.NewReader(bytes.NewReader(bajty), int64(len(bajty)))
 	if err != nil {
 		t.Fatalf("wydany .odt nie jest archiwum: %v", err)
@@ -591,24 +556,20 @@ func TestOdtPoOdczycieZachowujeStylSekcjeITabele(t *testing.T) {
 
 // ── Punkt trzeci: bilans cech pominiętych ───────────────────────────────────
 
-// TestWydanieUbozszeOddajeWykazCechPominietych wykazuje, że wydanie do formatu,
-// który czegoś nie niesie, MÓWI to wprost.
-//
-// Format uboższy niż dokument jest normalną sytuacją; przemilczenie straty nie
-// jest. Miara: dokument z tabelą o scalonych komórkach i z przypisem wydany do
-// `txt` i do `md` musi oddać wykaz niepusty, a w wykazie ma stać nazwa rzeczy,
-// która odpadła — nie samo „coś odpadło".
+// TestWydanieUbozszeOddajeWykazCechPominietych wykazuje, że wydanie do formatu, który
+// czegoś nie niesie, mówi to wprost, a w wykazie stoi nazwa rzeczy, która odpadła, a nie
+// samo stwierdzenie, że coś odpadło.
 func TestWydanieUbozszeOddajeWykazCechPominietych(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-bilansu-wydania"
 
-	// Dokument powstaje z `.docx`, żeby miał tabelę ze scaleniem naprawdę,
-	// a nie tabelę zadeklarowaną w żądaniu.
+	// Dokument powstaje z .docx, żeby miał tabelę ze scaleniem naprawdę, nie
+	// zadeklarowaną w żądaniu.
 	wniesiony := ooxmlWniesPlik(t, zmontowany, zycie, okno,
 		ooxmlDocxProbny(t), shared.StudioImportFormatDocx)
 
-	// Przypis dolny wchodzi drogą aparatu dokumentu — to jest cecha, której
-	// tekst czysty nie niesie z natury.
+	// Przypis dolny wchodzi drogą aparatu dokumentu — to cecha, której tekst czysty nie
+	// niesie.
 	var przypis shared.StudioApparatusInsertResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandStudioApparatusInsert,
 		shared.StudioApparatusInsertRequest{
@@ -674,13 +635,9 @@ func TestWydanieUbozszeOddajeWykazCechPominietych(t *testing.T) {
 
 // ── Punkt czwarty: liczba stron wydania ─────────────────────────────────────
 
-// TestWydaniePdfDajePlikOWlasciwejLiczbieStron wykazuje, że wydanie
-// wielostronicowe daje plik o właściwej liczbie stron.
-//
-// Strony LICZONE są w pliku biblioteką `pdfcpu`, a nie brane z odpowiedzi.
-// Miara jest odporna na zmianę wysokości kartki: ta sama treść wydana na A4
-// i na A5 nie może dać tej samej liczby stron, a wydanie treści na wiele stron
-// nie może dać jednej.
+// TestWydaniePdfDajePlikOWlasciwejLiczbieStron wykazuje, że wydanie wielostronicowe daje
+// plik o właściwej liczbie stron, liczonych w pliku biblioteką pdfcpu, a nie branych z
+// odpowiedzi komendy.
 func TestWydaniePdfDajePlikOWlasciwejLiczbieStron(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-stron-wydania"
@@ -707,9 +664,10 @@ func TestWydaniePdfDajePlikOWlasciwejLiczbieStron(t *testing.T) {
 			"nie zmieściłaby się na jednej kartce, więc plik jest obcięty", stron)
 	}
 
-	// Druga miara: wydanie połowy treści ma dać mniej stron. Bez tego
-	// sprawdzian przechodziłby także wtedy, gdyby rachunek zawsze dawał
-	// stałą liczbę stron większą od jednego.
+	// Druga miara: wydanie połowy treści ma dać mniej stron.
+
+	// Bez tego sprawdzian przechodziłby także wtedy, gdyby rachunek dawał stałą liczbę
+	// stron.
 	krotszy := dokumentZTrescia(t, zmontowany, zycie, okno,
 		strings.Join(akapity[:40], "\n"))
 	_, bajtyKrotsze := ooxmlWydajDoPliku(t, zmontowany, zycie, krotszy.Id,
@@ -727,18 +685,9 @@ func TestWydaniePdfDajePlikOWlasciwejLiczbieStron(t *testing.T) {
 
 // ── Punkt piąty: plik wyjściowy bez warstwy znakowania ──────────────────────
 
-// TestPlikWyjsciowyJestCzystyZWarstwyZnakowania wykazuje rozstrzygnięcie
-// Właściciela: znakowanie żyje w sesji, nie w pliku wysyłanym na zewnątrz.
-//
-// Miara jest dwustronna, bo jedna strona nie wystarcza:
-//   - w BAJTACH pliku nie ma brzmienia komentarza (gdyby był, adresat pisma
-//     przeczytałby uwagi redakcyjne);
-//   - PO ODCZYCIE pliku nie ma wyróżnienia tła (gdyby było, pismo wyszłoby
-//     w kolorowych plamach roboczych).
-//
-// Sprawdzane jest też wskazanie `includeComments`: rdzeń komentarzy do pliku
-// nie wpisuje, więc żądanie ich wydania ma być NAZWANE w wykazie cech
-// pominiętych, a nie przemilczane albo spełnione.
+// TestPlikWyjsciowyJestCzystyZWarstwyZnakowania wykazuje, że znakowanie żyje w sesji, nie
+// w pliku wysyłanym na zewnątrz: w bajtach pliku nie ma komentarza, a po odczycie pliku
+// nie ma wyróżnienia tła.
 func TestPlikWyjsciowyJestCzystyZWarstwyZnakowania(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 	okno := "okno-czystego-wydania"
@@ -767,8 +716,8 @@ func TestPlikWyjsciowyJestCzystyZWarstwyZnakowania(t *testing.T) {
 			HighlightColor: wskaznik("#FFFF00"),
 		}, &wyroznienie)
 
-	// Wyróżnienie musi naprawdę stanąć w dokumencie — inaczej sprawdzian
-	// mierzyłby brak, którego nikt nie założył.
+	// Wyróżnienie musi naprawdę stanąć w dokumencie, inaczej sprawdzian mierzyłby brak,
+	// którego nie było.
 	wDokumencie := ooxmlPostacDokumentu(t, zmontowany, zycie, wniesiony.Document.Id)
 	if !ooxmlCzyStoiWyroznienie(wDokumencie) {
 		t.Fatal("wyróżnienie nie stanęło w dokumencie — sprawdzian czystości pliku " +
@@ -821,8 +770,8 @@ func TestPlikWyjsciowyJestCzystyZWarstwyZnakowania(t *testing.T) {
 	}
 }
 
-// ooxmlCzyStoiWyroznienie rozstrzyga, czy w postaci stoi choć jeden fragment
-// z wyróżnieniem tła.
+// ooxmlCzyStoiWyroznienie rozstrzyga, czy w postaci dokumentu stoi choć jeden fragment
+// tekstu z wyróżnieniem tła.
 func ooxmlCzyStoiWyroznienie(postac shared.StudioDocumentForm) bool {
 	for i := range postac.Blocks {
 		for j := range postac.Blocks[i].Runs {

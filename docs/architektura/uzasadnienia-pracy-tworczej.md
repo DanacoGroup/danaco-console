@@ -1477,3 +1477,34 @@ Dokument bez ani jednej sekcji zapisanej oddaje sekcję jedną, obejmującą
 całą treść, bo taki dokument jest jedną sekcją, a pusty wykaz kazałby
 oknu twierdzić, że dokument nie ma strony; ta sekcja nie jest przy tym
 zakładana w bazie, bo odczyt nie ma prawa zapisywać.
+
+## adapter_modul_studio_autozapis.go
+
+Wersje nazwane i kluczowe zakłada Operator, i to jest historia jego decyzji.
+Gdyby zapisy samoczynne wchodziły do tego samego wykazu, po godzinie pracy
+historia przestałaby być historią decyzji i stałaby się dziennikiem naciśnięć
+klawisza, w którym Operator nie znalazłby własnej wersji nazwanej. Rozróżnienie
+idzie kolumną szeregu, a pojęcie wersji kluczowej nie zakłada się drugi raz:
+Studio ma je w `studio.version.label.set`.
+
+Kopia zapasowa jest osobna od wersji, bo ma przetrwać awarię procesu i awarię
+zapisu. Wersja leży w repozytorium i zakłada się ją tym samym zapisem, który
+właśnie się nie udał, więc wersja nie ochroni pracy przed nieudanym zapisem —
+kopia zakłada się niezależnie, przed próbą zapisu właściwego.
+
+Wskaźnik „zapisano” pokazany, gdy zapis się nie udał, jest najgorszym możliwym
+błędem tego modułu: Operator zamknie okno i straci pracę. Dlatego nieudany
+zapis samoczynny nie wraca odmową, która przepadłaby w dzienniku zdarzeń —
+wraca odpowiedzią niosącą `saved: false`, nazwany powód i kopię, w której
+praca została. Wiersz nastaw zapamiętuje ten skutek, więc kolejne
+`autosave.get` powie prawdę o ostatnim zapisie także wtedy, gdy okno tymczasem
+się przeładowało.
+
+Gdy zapis się udaje, kopia zapasowa przestaje nieść pracę, której w dokumencie
+już nie ma. Wiersz kopii zostaje w wykazie, ale zakłada się nowy wiersz
+z wyzerowanym wskaźnikiem niezapisanych zmian, zamiast nadpisać istniejący,
+żeby nie zatrzeć śladu, że kopia była założona przed zapisem.
+
+Przywrócenie kopii do nowego dokumentu jest osobną drogą, bo przywracanie samo
+nie ma kasować tego, co jest: Operator, który po awarii nie jest pewien, która
+wersja jest lepsza, ma dostać obie.

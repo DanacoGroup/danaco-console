@@ -2438,3 +2438,21 @@ Kolejność preferencji rodzaju treści: silnik transkrypcji przyjmuje zapisy `.
 ## budowa/klient/src/polaczenie/gniazdo.ts
 Gniazdo, które błędem kończy samo nawiązywanie, zamyka się bez niczyjej pomocy i ogłasza to zdarzeniem close; wywołanie close na takim gnieździe wywołuje kolejny błąd i wpada w nawrót bez końca — stąd zamknięcie na błędzie dotyczy wyłącznie gniazda już otwartego.
 Ponawianie jest bezterminowe, więc bez zaniechania na żądanie wołającego proces klienta nie miałby jak dojść do końca: zaplanowana próba trzymałaby go przy życiu, a każde zamknięcie gniazda planowałoby następną. Zaniechanie dotyczy połączenia, nie treści, która czeka na wysłanie.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/zestawienie-udzialu.ts
+Moduł liczy wyłącznie udział mierzalny z bieżących danych: liczbę i objętość wypowiedzi
+widocznych przez okno w turze. Głosowanie, oceny rubrykowe i ranking między sesjami mają
+osobne komendy w kontrakcie wymiany, których okno jeszcze nie wywołuje, dlatego zestawienie
+nie orzeka o quorum ani o wyniku głosowania — dopóki te komendy nie są wywoływane, liczenie
+ich skutków byłoby czynnością pozorowaną. Wypowiedź otwartą liczy się z treści widocznej
+w oknie, a nie z pola danych źródłowych, ponieważ rdzeń rozgłasza ją najpierw pustą i dopisuje
+kolejne fragmenty strumieniem — sam zapis źródłowy dawałby zero znaków przez cały czas trwania
+wypowiedzi. Wypowiedzi wcześniejsze, już utrwalone, liczą się wprost z zapisu.
+
+## budowa/klient-poprzedni/src/powloka/nieczynne-w-pasku.ts
+Zasada zera blokad zabrania wygaszania kontrolki jako sposobu powiedzenia „to jeszcze nie działa".
+Kontrolka zostaje klikalna, a z klikalności wynika obowiązek odwrotny: każde naciśnięcie musi dać
+odpowiedź. Odpowiedź mówi, co jest nieczynne i dlaczego, i niczego nie udaje. Każdy powód niżej jest
+sprawdzalny w `shared/contract.json`: jeżeli komendy nie ma, tekst mówi wprost, że jej nie ma, i nie
+zmyśla nazwy. Zdanie zaprzeczające funkcji, która istnieje, jest tak samo szkodliwe jak przycisk
+udający funkcję, której nie ma — prowadzi Operatora od okna, które by mu pomogło.

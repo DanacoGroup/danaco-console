@@ -17,7 +17,7 @@ Właściciela ze zrzutu ekranu.
 | | |
 |---|---|
 | **Gałąź** | `teren/centrum-poprawki` z `main` |
-| **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css` |
+| **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css`, `design/01-dokumentacja-md/11-uzasadnienia-okien.md` |
 | **Poza terenem** | `design/zasoby/zetony/` — bez zgody Właściciela nie rusza się palety ani skali; `design/zasoby/rama.css`, `karty-okna.css`, `panel-sesji.css` i pozostała warstwa wspólna; wszystkie okna poza centrum dowodzenia; `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `shared/` |
 
 **Warstwa wspólna jest poza terenem, a mimo to została tknięta.** Rewizje
@@ -45,7 +45,15 @@ Obie obejmują wszystkie okna aplikacji i **wymagają kontroli poza tym terenem*
   `--dn-bp-*` (640 / 960 / 1280 / 1600). Pochodzą sprzed tego terenu.
 - Rozstrzygnięcie o obrysie w barwie znaku żyje jako `--cd-obrys-marki`
   w arkuszu jednego okna; przy rozszerzeniu na pozostałe okna należy do palety.
-- `design/01-dokumentacja-md/` nie nadąża za wykonaniem.
+- Płótno okna deklaruje `container-type: inline-size` i nazwę `plotno`, ale
+  układ przełącza dziesięć zapytań `@media`, ani jedno `@container`. Okno mierzy
+  szerokość ekranu, choć panel samouczka zwęża płótno o 320 px; wyrównuje to
+  osobny warunek `body:has(#panel-samouczek:not([hidden]))`. Przejście na
+  zapytania pojemnika rozstrzyga się poza tym terenem.
+- Trzy wiersze dokumentu okna mają 23 252, 20 198 i 10 108 znaków — znacznik bez
+  łamania jest nieczytelny w przeglądzie i w różnicy rewizji.
+- Stopka lewego okna sięga kanału wydań `pobierz.danaco-group.pl`, zgodnego
+  z `wydania.json`, lecz nieopisanego w [rejestrze decyzji](decyzje.md).
 
 
 ### zaplecze-modeli

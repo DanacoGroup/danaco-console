@@ -1,26 +1,24 @@
 /* Arkusz układu okna centrum dowodzenia. Nadpisania klas biblioteki są ograniczone
    selektorem .cd-strona i nie wychodzą poza to okno. Powód każdego z nich to kompozycja
    pulpitu centrum, nie zmiana biblioteki dla innych okien: centrum obrysowuje swój obszar
-   barwą znaku (--cd-obrys-marki na .dn-narzedzia i .dn-obszar-panel), wyróżnia kartę
-   bieżącą tłem (--cd-tlo-karty-biezacej) i dostraja pasmo kart oraz pasek obszaru do pulpitu. */
+   barwą znaku (--dn-obrys-marki na .dn-narzedzia i .dn-obszar-panel), wyróżnia kartę
+   bieżącą tłem (--dn-tlo-wybrane) i dostraja pasmo kart oraz pasek obszaru do pulpitu. */
 
+/* Bez domieszki tło karty bieżącej zrównuje się z belką, więc wybór musi nieść
+   wstęga. Same barwy zapasowe stoją przy żetonach w zetony.css. */
 @supports not (color: color-mix(in oklab, red, blue)) {
-  .cd-strona {
-    --cd-obrys-marki: var(--dn-sygnal-800);
-    --cd-tlo-karty-biezacej: var(--dn-wstazka);
-  }
-    .cd-strona .dn-karta-widoku[aria-selected='true'],
+  .cd-strona .dn-karta-widoku[aria-selected='true'],
   .cd-strona .dn-karta-sesji[aria-selected='true'] {
     box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-sygnal-500);
   }
 }
 
-.cd-strona .dn-narzedzia { border: 1px solid var(--cd-obrys-marki); }
+.cd-strona .dn-narzedzia { border: 1px solid var(--dn-obrys-marki); }
 
-.cd-strona .dn-obszar-panel { border-color: var(--cd-obrys-marki); }
+.cd-strona .dn-obszar-panel { border-color: var(--dn-obrys-marki); }
 
 .cd-strona .dn-karta-widoku[aria-selected='true'],
-.cd-strona .dn-karta-sesji[aria-selected='true'] { background: var(--cd-tlo-karty-biezacej); }
+.cd-strona .dn-karta-sesji[aria-selected='true'] { background: var(--dn-tlo-wybrane); }
 
 .dn-obszar-panel--boczny[data-strona='prawo'] { order: 9; }
 
@@ -200,7 +198,7 @@
     margin: var(--dn-od-2);
   padding: 0 var(--dn-od-2);
   border-radius: var(--dn-r-lg);
-    border: 1px solid var(--cd-obrys-marki);
+    border: 1px solid var(--dn-obrys-marki);
   background: transparent;
   gap: var(--dn-od-1);
   height: var(--dn-od-10);

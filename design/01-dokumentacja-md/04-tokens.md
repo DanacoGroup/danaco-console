@@ -10,7 +10,7 @@
 | **Status** | Deweloperski |
 | **Data** | 2026-08-14 |
 | **Odbiorcy** | prowadzący system projektowy · projektanci interfejsu · zespół wdrożeniowy (front-end) · osoba odpowiedzialna za dostępność · audyt zgodności wizualnej |
-| **Zakres** | Kompletny rejestr **231 unikalnych nazw żetonów** systemu: trzy warstwy modelu, konwencja nazewnicza, 38 prymitywów barwnych, 14 żetonów ramy kokpitu, 22 żetony typografii, 17 żetonów przestrzeni, 5 żetonów ruchu, 48 żetonów wymiarów (+ dwa nadpisania kontekstowe), 7 żetonów siatki i punktów łamania, 11 warstw `z-index`, 2 gradienty, po 54 żetony semantyczne w każdym z dwóch motywów, komplet 33 pomiarów kontrastu, procedura dodania żetonu |
+| **Zakres** | Kompletny rejestr **234 unikalnych nazw żetonów** systemu: trzy warstwy modelu, konwencja nazewnicza, 38 prymitywów barwnych, 14 żetonów ramy kokpitu, 22 żetony typografii, 17 żetonów przestrzeni, 5 żetonów ruchu, 48 żetonów wymiarów (+ dwa nadpisania kontekstowe), 7 żetonów siatki i punktów łamania, 11 warstw `z-index`, 2 gradienty, 3 barwy wywodzone, po 54 żetony semantyczne w każdym z dwóch motywów, komplet 33 pomiarów kontrastu, procedura dodania żetonu |
 | **Czego NIE zawiera** | specyfikacji komponentów `.dn-*` (opracowanie osobne), makiet okien, katalogu ikon, księgi znaku, wytycznych redakcyjnych treści, wartości warstwy funkcjonalnej v1.0 (zastąpionych niniejszym pakietem) |
 
 **Źródła wiążące:** kontrakt systemu projektowego · `zasoby/zetony/zetony.css` (561 linii) · `zasoby/zetony/zetony.json` · `zasoby/zetony/kontrasty.json` (33 pomiary) · `zasoby/css/fundament.css` (162 linie) · `zasoby/css/komponenty.css` (2823 linie) · kierunek systemu projektowego · `zasoby/ikony/manifest.json` · inwentarz komponentów · inwentarz okien platformy.
@@ -71,7 +71,7 @@
    ┌───────────────────────────▼───────────────────────────────────┐
    │ WARSTWA 3 — NIEZALEŻNE OD MOTYWU                              │
    │ typografia · przestrzeń · ruch · wymiary · siatka · warstwy   │
-   │ 177 nazw · te same w obu motywach                             │
+   │ 180 nazw · te same w obu motywach                             │
    └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -93,9 +93,10 @@ Nazewnictwo warstw pochodzi z nagłówka `zetony.css`: *„1. prymitywy — suro
 | Siatka i łamanie | 7 | 4 punkty łamania + max treści + kolumny + przerwa |
 | Warstwy `z-index` | 11 | od podłogi do Centrum poleceń |
 | Gradienty | 2 | wyłącznie ilustracyjne |
-| **Razem niezależne od motywu** | **177** | deklarowane raz, w bloku `:root`; ruch wydzielony do `ruch.css` |
+| Barwy wywodzone | 3 | domieszki `color-mix`; nazwy w bazie, wartość rozstrzyga się w motywie |
+| **Razem niezależne od motywu** | **180** | deklarowane raz, w bloku `:root`; ruch wydzielony do `ruch.css` |
 | Semantyczne — na motyw | 54 | te same nazwy w blokach `:root[data-theme='light']` i `:root[data-theme='dark']` |
-| **Razem unikalnych nazw** | **231** | 177 + 54 (nazwy semantyczne są wspólne obu motywom) |
+| **Razem unikalnych nazw** | **234** | 180 + 54 (nazwy semantyczne są wspólne obu motywom) |
 
 Liczba **deklaracji** w pliku jest wyższa niż liczba nazw, ponieważ komplet semantyczny jest świadomie powielony w blokach `@media (prefers-color-scheme: …)` dla przypadku braku jawnego wyboru motywu. Komentarz w `zetony.css` nazywa to wprost: *„powielenie jest świadome (mechanizm kaskady, nie drugie źródło prawdy)"*.
 

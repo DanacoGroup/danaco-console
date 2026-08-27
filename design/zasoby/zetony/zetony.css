@@ -254,6 +254,27 @@
   --dn-grad-sygnal: linear-gradient(135deg, var(--dn-sygnal-400), var(--dn-sygnal-600));
   /* Zakres: awatary bez zdjęcia, rdzeń AOD, grafiki brandowe.
      Gradient NIGDY nie jest tłem przycisku, karty ani sekcji. */
+
+  /* ==================================================================== *
+   *  9a · BARWY WYWODZONE — proporcja stoi tutaj, nie w oknie *
+   * ==================================================================== */
+  /* Trzy role powstają z domieszki, nie z osobnego odcienia palety. Stoją
+     w bazie, a nie w blokach motywów, ponieważ ich składniki (--dn-obrys-mocny,
+     --dn-wstazka, --dn-tekst-2/3) są już zależne od motywu i rozstrzygają się
+     w miejscu użycia. Dzięki temu proporcja domieszki jest zapisana raz, a nie
+     powtórzona w czterech kontekstach motywu — i nie rozjeżdża się między nimi. */
+  --dn-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) 46%, var(--dn-obrys-mocny));
+  --dn-tlo-wybrane: color-mix(in oklab, var(--dn-sygnal-500) 13%, var(--dn-wstazka));
+  --dn-tekst-opis:  color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
+}
+
+/* Przeglądarka bez color-mix dostaje najbliższy odcień palety zamiast domieszki. */
+@supports not (color: color-mix(in oklab, red, blue)) {
+  :root {
+    --dn-obrys-marki: var(--dn-sygnal-800);
+    --dn-tlo-wybrane: var(--dn-wstazka);
+    --dn-tekst-opis: var(--dn-tekst-2);
+  }
 }
 
 /* ==========================================================================

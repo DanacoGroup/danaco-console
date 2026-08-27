@@ -329,6 +329,29 @@
     "--dn-grad-sygnal": "linear-gradient(135deg, #5C8CEC, #2457C9)",
     "_zakres": "awatary bez zdjecia, rdzen AOD, grafiki brandowe; NIGDY tla przyciskow, kart i sekcji (zamkniecie luki rozstrzygnięcie projektowe)"
   },
+  "barwy-wywodzone": {
+    "_wzor": {
+      "--dn-obrys-marki": "color-mix(in oklab, var(--dn-sygnal-500) 46%, var(--dn-obrys-mocny))",
+      "--dn-tlo-wybrane": "color-mix(in oklab, var(--dn-sygnal-500) 13%, var(--dn-wstazka))",
+      "--dn-tekst-opis": "color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2))"
+    },
+    "jasny": {
+      "--dn-obrys-marki": "#819DD5",
+      "--dn-tlo-wybrane": "#E4EDFD",
+      "--dn-tekst-opis": "#6D717A"
+    },
+    "ciemny": {
+      "--dn-obrys-marki": "#3B5487",
+      "--dn-tlo-wybrane": "#2A3345",
+      "--dn-tekst-opis": "#858992"
+    },
+    "_zapas": {
+      "--dn-obrys-marki": "var(--dn-sygnal-800)",
+      "--dn-tlo-wybrane": "var(--dn-wstazka)",
+      "--dn-tekst-opis": "var(--dn-tekst-2)"
+    },
+    "_uwaga": "Nazwy stoja w bazowym :root, nie w blokach motywow: skladniki domieszki sa juz zalezne od motywu i rozstrzygaja sie w miejscu uzycia. Wartosci zmierzone w przegladarce, oba motywy i wybor systemowy."
+  },
   "cienie": {
     "jasny": {
       "--dn-cien-1": "0 1px 2px rgba(10,10,10,0.05)",

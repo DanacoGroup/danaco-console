@@ -1912,3 +1912,12 @@ i swoją własną.
 
 Pustka bywa tu zaś stanem poprawnym, ponieważ instalacja bez ani jednego błędu
 w zadanym zakresie czasu nie jest usterką.
+
+## budowa/klient-poprzedni/src/konfiguracja/dymek-objasnienia.ts
+
+Sam dymek objaśnienia mieszka w bibliotece komponentów, a stąd jest wyłącznie
+re-eksportowany, żeby okno konfiguracji miało jedno wejście.
+
+Zdania objaśnienia są dopisywane, a nie zastępowane. Pozycja bez opisu nadal ma
+czym objaśnić swój klucz, a pozycja z opisem zyskuje to, czego opis nie mówi:
+jednostkę, poziom domyślny i wymóg ponownego uruchomienia.

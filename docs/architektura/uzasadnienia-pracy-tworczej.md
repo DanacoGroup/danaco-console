@@ -608,3 +608,32 @@ Materiał próbny wpisuje się tu wprost jako archiwum ZIP ze składnikami XML w
 Porównanie idzie po odczycie, nie po bajtach, bo ten sam dokument da się zapisać na wiele poprawnych sposobów: inna kolejność węzłów, inne nazwy stylów automatycznych, inne zaokrąglenie jednostek. Bajt w bajt nie zgodzi się nigdy i nie ma się zgodzić; miarą jest to, czy po wczytaniu wyniku postać jest ta sama — nazwa stylu akapitu, orientacja i marginesy sekcji, wymiary tabeli, jej wiersz nagłówkowy, scalenie komórek i szerokości kolumn.
 
 Plik wyklucza pięć rodzajów szkody: wczytanie dokumentu, po którym w postaci stoi sam tekst, a styl, sekcja i tabela przepadły; wydanie dokumentu, które zapisuje treść i gubi postać dokładnie w miejscu, które sprawdzian bada; wydanie do formatu uboższego, które o stracie milczy; wydanie wielostronicowe oddające jedną stronę, choć odpowiedź mówi inaczej; oraz plik wyjściowy niosący warstwę znakowania sesji, czyli komentarze i wyróżnienia w piśmie wysłanym na zewnątrz.
+
+## budowa/server/internal/core/adapter_modul_design_fotografia.go
+
+Każda czynność tego pliku zapisuje nowy zasób i wskazuje źródło polem variantOfAssetId; oryginał nie jest nigdy nadpisywany, dzięki czemu łańcuch edycji da się przejść wstecz do zdjęcia wniesionego pierwotnie, a cofnięcie nie wymaga historii operacji w pamięci okna. Obok wariantu powstaje wiersz czynności z nastawami, którymi poszła, bez którego odczyt historii pokazywałby wykaz obrazków bez słowa o tym, co je różni.
+
+Wynik wychodzi jako PNG, bezstratnie i z kanałem krycia: format stratny traciłby jakość przy każdym ogniwie łańcucha edycji i nie uniósłby przezroczystości po odcięciu tła. Format wyjścia zmienia się dopiero przy wydaniu zasobu, gdzie strata jest jednorazowa i świadoma.
+
+Cztery czynności — powiększenie, odcięcie tła, domalowanie i rozszerzenie kadru — mają dwie drogi rachunku i pole computedBy mówi, którą poszły. Gdy kanał obrazowy jest wskazany, liczy kanał i odpowiedź niesie computedBy: kanalModelu; gdy pole jest pominięte, liczy rachunek wkompilowany i odpowiedź niesie computedBy: rachunekRdzenia. Zejście na pierwszy dostępny kanał przy polu pominiętym wysyłałoby materiał do zewnętrznego dostawcy, o którego nikt nie prosił, dlatego kontrakt tych czterech pól rozstrzyga wyłącznie wskazanie, nigdy dostępność. Wymiar wyniku jest zawsze tym, który czynność obiecała, także na drodze kanału: kanał oddaje obraz o rozmiarze ze swojej nastawy, a sprowadzenie do zamówionego wymiaru wykonuje rachunek rdzenia, natomiast treść pozostaje kanału. Niepowodzenie kanału wskazanego wprost jest odmową, nie cichym zejściem na rachunek, bo wynik policzony inną drogą byłby odpowiedzią na inne żądanie.
+
+## adapter_modul_studio_style.go
+
+Zmiana stylu nazwanego przestawia wszystkie miejsca, które go używają — to nie
+jest wygoda, to jest cała jego treść: gdyby stosowanie stylu kopiowało jego
+postać na fragment, dokument o dwustu nagłówkach wymagałby dwustu poprawek.
+Dlatego fragment i akapit trzymają nazwę stylu, a nie jego postać, a postać
+skuteczna liczy się przy odczycie: styl, jego styl nadrzędny i dalej po
+łańcuchu dziedziczenia, a na końcu postać własna fragmentu, która ma
+pierwszeństwo. Bilans zmiany stylu oddaje liczbę przestawionych miejsc, żeby
+zmiana nie była czynnością, po której nie wiadomo, czy coś się stało.
+
+Postać znaku fragmentu liczy się z trzech warstw w kolejności pierwszeństwa:
+postać znaku stylu akapitu, postać znaku stylu znaku nałożonego na fragment i
+postać własna fragmentu. Styl akapitu, na przykład nagłówek poziomu pierwszego,
+niesie też postać znaku — stopień pisma i pogrubienie — tak jak w każdym
+pakiecie biurowym. Gdyby postać znaku płynęła wyłącznie ze stylu znaku,
+nagłówek dostawałby stopień tekstu zasadniczego, a zmiana stylu nagłówkowego
+nie ruszałaby ani jednej litery. Warstwa bliższa fragmentowi ma pierwszeństwo:
+pogrubienie zdjęte ręcznie z jednego słowa nagłówka zostaje zdjęte, choć styl
+nagłówka pogrubia.

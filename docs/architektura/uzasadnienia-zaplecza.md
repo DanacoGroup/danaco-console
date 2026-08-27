@@ -2824,3 +2824,6 @@ Wynik czytelności (`ReadabilityScore`) nie ma tu tabeli. Jest funkcją treści
 panelu w chwili pomiaru: liczba zdań, długość słowa, długość zdania. Wiersz
 trzeba by unieważniać przy każdej korekcie panelu, a `proofread.run` i tak
 liczy go od nowa; nikt też nie adresuje wyniku czytelności identyfikatorem.
+
+## budowa/server/internal/store/migracja_272_automations_punkty_wznowienia.sql
+Punkt wznowienia przebiegu musi być trwały, ponieważ służy wznowieniu po awarii, a awaria zabiera pamięć procesu. Wykaz kroków ukończonych leży jako zapis strukturalny, ponieważ czyta się go w całości i tylko w całości — wznowienie pyta, czego już nie powtarzać, a nie czy dany krok jest ukończony.

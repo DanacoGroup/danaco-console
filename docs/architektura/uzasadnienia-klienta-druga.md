@@ -3702,3 +3702,22 @@ odmówił — stan pusty nie udaje wtedy braku sesji. Zapowiedź niesie liczbę 
 nie ukrywa faktu, że coś trwa. Dopisek niesie liczbę sesji z migawki, nigdy liczbę wymyśloną. Montaż bez
 tożsamości klienta zostaje przy wykazie informacyjnym. Inaczej ta sama odpowiedź rdzenia pojawiałaby się
 w dwóch postaciach zależnie od tego, kto ją wywołał, gdyby menu wiersza budowało własne miejsce na treść.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/okno-historii-rozmowy.ts
+Panel nie jest drugim widokiem rozmowy: kolumna rozmowy pokazuje turę
+bieżącą rosnącą na żywo, panel pokazuje zapis trwały tego samego okna od
+pozycji najnowszej wstecz, stronicowany kursorem czasu, i nie zna komendy
+nadania wiadomości. Zamiast pytania o potwierdzenie przed czynnością stoi
+odpowiedź po niej: rdzeń oddaje liczbę usuniętych pozycji, a panel mówi ją
+wprost. Wyjątkiem jest wyczyszczenie całej historii okna — ten sam wyjątek,
+który ma kasowanie sesji, obejmujący czynność nieodwracalną i całościową;
+usunięcie pozycji wskazanych ręcznie potwierdzenia nie wymaga. Wszystkie
+przyciski są czynne zawsze — brak wskazanych pozycji nie wyszarza
+przycisku, tylko wraca zdaniem, co się stało. Gospodarz bywa bez okna
+nadanego przez rdzeń; odczyt historii wymaga wtedy czegoś, czego nie ma, i
+panel mówi to wprost zamiast pokazać pustą listę, podczas gdy nastawa
+retencji zostaje czynna, bo zakres globalny okna nie potrzebuje.
+
+Modal czyszczenia woła rdzeń sam, bo to on ma pokazać odpowiedź w chwili
+czynności — odmowa i liczba usuniętych padają tam, gdzie Operator patrzy, a
+panel powtarza je u siebie i przeładowuje wykaz.

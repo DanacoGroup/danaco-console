@@ -3430,3 +3430,15 @@ zdjęcia wykradzionego klucza, byłby skarbcem działającym przeciw właścicie
 
 Sejf kluczuje bytem, a referencja niesie przedrostek `sejf:` — rozbiera go
 wołający, bo sejf zapisał sam byt.
+
+## budowa/server/internal/core/adapter_modul_workspace_graf.go
+
+Rodzina `workspace.knowledge` prowadzi wskaźnik ZNACZENIA i odpowiada na
+pytanie „co jest podobne”. Ta rysuje sieć ODNOŚNIKÓW: kto na kogo wskazuje
+wprost — strona na stronę, komentarz na zadanie, podzadanie na zadanie
+nadrzędne. Krawędź istnieje wtedy, gdy ktoś ją napisał, a nie wtedy, gdy dwa
+byty są sobie bliskie.
+
+Graf przycięty granicą wielkości oddaje `truncated: true`. Bez tego pola
+obraz częściowy wyglądałby na kompletny obraz projektu, a Operator
+wnioskowałby o brakach powiązań z braku miejsca w odpowiedzi.

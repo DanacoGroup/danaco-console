@@ -5114,3 +5114,8 @@ konsultacji ma dać się zestawić z jednym wierszem dziennika konsultacji
 doradcy; bez nich dwie konsultacje o tym samym pytaniu u dwóch różnych
 doradców miałyby skrót identyczny, więc jedyna wartość niosąca treść rady
 w zdarzeniu nie wskazywałaby niczego jednoznacznie.
+
+## budowa/server/internal/dane/automations_harmonogram.go
+
+Pole odwołania podpisu niesie wyłącznie referencję klucza HMAC w sejfie poświadczeń, nigdy
+jego wartość.

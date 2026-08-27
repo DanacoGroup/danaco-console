@@ -92,6 +92,32 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 
 ## Zgłoszenia oczekujące na teren
 
+### Dokumentacja zetonow rozjechana z arkuszem o caly stopien
+
+Audyt wskazal jedna pozycje. Pomiar Prowadzacego pokazal, ze rozjazd jest
+**systematyczny**: z dziewieciu zetonow rozmiaru pisma **szesc** rozni sie
+miedzy `design/zasoby/zetony/zetony.css` a `design/01-dokumentacja-md/04-tokens.md`,
+i wszystkie o **dokladnie 1 px** — arkusz jest wiekszy.
+
+| Zeton | Arkusz | Dokumentacja |
+|---|---|---|
+| `--dn-fs-xs` | 12 px | 11 px |
+| `--dn-fs-sm` | 13 px | 12 px |
+| `--dn-fs-base` | 14 px | 13 px |
+| `--dn-fs-md` | 15 px | 14 px |
+| `--dn-fs-lg` | 17 px | 16 px |
+| `--dn-fs-xl` | 21 px | 20 px |
+
+To nie jest literowka w jednym wierszu, tylko **cala skala podniesiona o stopien**
+w arkuszu i nieodnotowana w dokumencie. Skutek: kazdy, kto siegnie po wartosc do
+`04-tokens.md` — sesja, audyt, wykonawca — dostanie liczbe o 1 px mniejsza od
+prawdziwej i uzna zgodne uzycie zetonu za usterke.
+
+**Obowiazuje arkusz.** `zasoby/zetony/zetony.css` jest zrodlem prawdy o wartosci
+zetonu; dokumentacja jest jego opisem i to ona wymaga wyrownania. Do sprawdzenia
+przy tej okazji, czy tak samo nie rozjechaly sie odstepy, promienie i cienie.
+
+
 ### Sprawdziany zdolnosci modelowych pomijaja sie bez `DANACO_MODELE`
 
 Dwa sprawdziany, ktore **jako jedyne dowodza, ze przesiew i os obrazu dzialaja**,

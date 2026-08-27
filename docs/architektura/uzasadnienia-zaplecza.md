@@ -604,3 +604,11 @@ pole obliczane liczą się z układu i z właściwości dokumentu, a nie z
 nagłówków. Odświeżenie pól i odświeżenie aparatu są dwiema czynnościami o
 różnym koszcie i różnej porze — pola odświeżają się przy każdym podglądzie,
 a elementy aparatu dopiero na żądanie.
+
+## budowa/server/internal/store/migracja_001_fundament.sql
+
+Migracja przyjmuje spójne konwencje dla całego modelu danych: nazwy tabel
+i kolumn po polsku w zapisie snake_case, klucz główny jako
+`INTEGER PRIMARY KEY AUTOINCREMENT`, daty jako `TEXT` w formacie ISO 8601,
+wartości logiczne jako `INTEGER` z ograniczeniem `CHECK(... IN (0,1))`
+i wyliczenia jako `TEXT` z ograniczeniem `CHECK`.

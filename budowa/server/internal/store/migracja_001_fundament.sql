@@ -1,9 +1,9 @@
--- Migracja 001 — fundament modelu danych Danaco Console.
--- Konwencje: nazwy po polsku snake_case, klucz główny INTEGER PRIMARY KEY AUTOINCREMENT,
--- daty jako TEXT ISO 8601, boolean jako INTEGER CHECK(... IN (0,1)), enum jako TEXT CHECK.
--- Sekrety nigdy nie trafiają do bazy — wyłącznie odwołania w kolumnach *_odwolanie.
+-- Migracja 001 zakłada fundament modelu danych Danaco Console; sekrety nigdy
+-- nie trafiają do bazy, a kolumny odwołania niosą wyłącznie wskazanie na nie.
 
 -- ── Konta kanałów modelu (rotacja kont Code CLI oraz API) ──────────────
+-- Rotacja pozwala rozkładać wywołania modelu między kontami bez zmiany
+-- konfiguracji klienta.
 CREATE TABLE konto (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     nazwa                  TEXT    NOT NULL UNIQUE,
@@ -18,6 +18,8 @@ CREATE TABLE konto (
 );
 
 -- ── Urządzenia z zainstalowanym klientem i agentem lokalnym ──────────
+-- Wiersz łączy sprzęt z historią połączeń i zaufaniem nadanym przez
+-- Operatora.
 CREATE TABLE urzadzenie (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     nazwa                  TEXT    NOT NULL,
@@ -30,6 +32,8 @@ CREATE TABLE urzadzenie (
 );
 
 -- ── Połączenia WebSocket klienta z rdzeniem ──────────────────────────
+-- Wiersz trzyma jedno połączenie od nawiązania do zamknięcia lub zerwania
+-- łącza.
 CREATE TABLE polaczenie (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     urzadzenie_id          INTEGER NOT NULL REFERENCES urzadzenie(id) ON DELETE CASCADE,
@@ -45,6 +49,7 @@ CREATE INDEX idx_polaczenie_urzadzenie ON polaczenie(urzadzenie_id);
 CREATE INDEX idx_polaczenie_konto ON polaczenie(konto_id);
 
 -- ── Środowiska produktu: TalkIn, WorkSpace, CodeStudio, MultitaskingAI ─────────
+-- Każdy kod środowiska jest zamkniętą wartością wyliczeniową rdzenia.
 CREATE TABLE srodowisko (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                    TEXT    NOT NULL UNIQUE
@@ -56,6 +61,8 @@ CREATE TABLE srodowisko (
 );
 
 -- ── Moduły (jednostki funkcjonalne osadzane w środowiskach) ────────────────────
+-- Moduł istnieje niezależnie od środowiska; osadzenie opisuje osobna tabela
+-- złącznikowa.
 CREATE TABLE modul (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                    TEXT    NOT NULL UNIQUE,
@@ -66,6 +73,8 @@ CREATE TABLE modul (
 );
 
 -- ── Osadzenie modułu w środowisku (macierz widoczności) ────────────────────────
+-- Wiersz określa, czy dany moduł jest widoczny w danym środowisku i w jakiej
+-- kolejności.
 CREATE TABLE srodowisko_modul (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     srodowisko_id          INTEGER NOT NULL REFERENCES srodowisko(id) ON DELETE CASCADE,
@@ -77,6 +86,7 @@ CREATE TABLE srodowisko_modul (
 CREATE INDEX idx_srodowisko_modul_modul ON srodowisko_modul(modul_id);
 
 -- ── Otwarty rejestr kanałów modelu sterowany danymi ─────────
+-- Nowy dostawca lub model wchodzi wierszem danych, bez zmiany kodu rdzenia.
 CREATE TABLE kanal_modelu (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     kod                    TEXT    NOT NULL UNIQUE,
@@ -132,6 +142,8 @@ CREATE TABLE ustawienie (
 CREATE INDEX idx_ustawienie_klucz ON ustawienie(klucz);
 
 -- ── Karta sesji — kontener sesji w obrębie środowiska ──────────────────────────
+-- Karta grupuje sesje należące do tego samego wątku pracy w jednym
+-- środowisku.
 CREATE TABLE karta_sesji (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,
     srodowisko_id          INTEGER NOT NULL REFERENCES srodowisko(id) ON DELETE CASCADE,

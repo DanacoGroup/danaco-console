@@ -1882,3 +1882,12 @@ co jest tu wymienione.
 Widok wykazu wydań wychodzi stąd osobno od banera. Baner przywołuje go
 przyciskiem, ale widok jest gotowy do osadzenia także w stałym miejscu, więc
 jedno użycie nie przesądza o drugim.
+
+## budowa/klient-poprzedni/src/moduly/assistant/indeks.ts
+
+Kod modułu stoi wewnątrz opisu modułu, więc moduł sam mówi, którym jest modułem.
+Rozjazd między nazwą zapisaną w `aplikacja/rejestr-modulow.ts` a rzeczywistością
+staje się przez to niemożliwy.
+
+Moduł nie zna powłoki: oddaje element, a warstwa składająca rozstrzyga, gdzie go
+postawić i czy wpisać go do rejestru modułów.

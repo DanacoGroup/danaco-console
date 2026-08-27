@@ -292,7 +292,7 @@ func TestCzyszczenieKoszaTykaWylacznieWiersziPoTerminie(t *testing.T) {
 		}
 	}
 
-	// Pierwszej sesji cofamy znacznik: wiersz leży w koszu dłużej niż termin.
+	// Pierwszej sesji cofa się znacznik: wiersz leży w koszu dłużej niż termin.
 	dawno := time.Now().UTC().AddDate(0, 0, -30).Format("2006-01-02T15:04:05.000Z")
 	if _, err := drzewo.baza.DB.Exec("UPDATE sesja SET usunieto_o = ? WHERE id = ?",
 		dawno, drzewo.sesjaID); err != nil {

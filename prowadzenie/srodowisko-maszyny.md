@@ -89,6 +89,16 @@ Każda pozycja sprawdzona uruchomieniem.
 tego dokumentu. W modelu hybrydowym zaplecze stoi na serwerze wdrożenia, nie
 u Operatora — instalacja na maszynie budowlanej jest instalacją tego serwera.
 
+**Srodowisko odtwarzania twarzy — postawione przez teren `odtwarzanie-twarzy`**,
+na tym samym wyjatku:
+
+| Rzecz | Waga |
+|---|---|
+| `/opt/danaco/silniki/twarze` — srodowisko pythonowe (torch, torchvision, facexlib, opencv, numpy, scipy) | **1,6 GB** |
+| `/usr/local/bin/danaco-twarze` — opakowanie wolane przez rdzen | 402 B |
+| `detection_Resnet50_Final.pth` (RetinaFace) w `/opt/danaco-modele/twarze/` | 104 MB |
+| `parsing_parsenet.pth` (ParseNet) tamze | 82 MB |
+
 **Stos modeli PyTorch — postawiony przez teren `zdolnosc-wyszukiwania`**, na tym
 samym wyjatku co `fastembed`. Instalacja `pip --user --break-system-packages`,
 bo system jest `externally-managed`:

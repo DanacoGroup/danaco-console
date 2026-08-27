@@ -1126,3 +1126,28 @@ klawiatury: pisze przedmioty tych samych punktów — katalog roboczy, katalogi
 dodatkowe, środowisko, uruchomienie, narzędzia, uprawnienia i konto —
 przełączników izolacji jednak nie rusza, więc egzekutor zostaje na miejscu
 i granicy nie przekracza.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-warsztatu-dokumentu.ts
+
+Wstążka jest kontekstowa: wchodzi po naciśnięciu przycisku, a grupa Ochrona
+wstążki okna pracy woła przeniesienie ogniska do niej; wchodzi też
+samoczynnie, gdy dokument w pracy jest PDF-em. Nie zajmuje miejsca, kiedy
+Operator nad PDF-em nie pracuje.
+
+Grupy Strony, Nakładanie, Treść, Bezpieczeństwo i Narzędziownia cyfryzacji
+zawężają wykaz czynności do swojego obszaru, a formularz pod nimi jest
+jeden: wybór czynności przestawia pola. Piętnaście osobnych formularzy
+dałoby wstążkę trudną do przejrzenia i do utrzymania. Pola pochodzą
+z katalogu czynności warsztatu, więc nazwa pola kontraktu stoi w drzewie
+raz.
+
+Materiał wchodzi z magazynu okna i wynik do niego wraca. Żadna czynność nie
+zmienia materiału w miejscu — okno mówi to przy polu materiału, bo Operator
+ma wiedzieć, że pomyłka nie kosztuje go dokumentu źródłowego. Odpowiedź
+jest opisana skutkiem, nie słowem gotowe: liczbą stron, liczbą części,
+identyfikatorem nowego zasobu.
+
+Kolejność grup wstążki jest kolejnością pracy nad plikiem: najpierw strony,
+potem to, co się na nich kładzie, potem treść, na końcu bezpieczeństwo
+przed wysyłką. Narzędziownia cyfryzacji stoi grupą osobną, bo pracuje przed
+dokumentem — na materiale, z którego dokument powstaje.

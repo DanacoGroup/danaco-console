@@ -21,59 +21,23 @@ import { utworzOknoStudio } from './okno-studio';
 import type { StanStudio } from './stan-studio';
 import type { ZrodloWarsztatuDokumentu } from './zrodlo-warsztatu-dokumentu';
 
-/**
- * Wstążka PDF — zakładka KONTEKSTOWA rodzin `studio.pdf.*` i `studio.security.*`.
- *
- * ── Kontekstowa znaczy: domyślnie ukryta ────────────────────────────────────
- * Rozstrzygnięcie Właściciela. Wstążka wchodzi po naciśnięciu przycisku (grupa
- * „Ochrona" wstążki okna pracy woła `przenieOgnisko`), a także SAMOCZYNNIE, gdy
- * dokument w pracy jest PDF-em. Nie zajmuje miejsca, kiedy Operator nad PDF-em nie
- * pracuje — powierzchnia należy do dokumentu.
- *
- * ── Pięć grup, jeden formularz ──────────────────────────────────────────────
- * Grupy — Strony, Nakładanie, Treść, Bezpieczeństwo, Narzędziownia cyfryzacji —
- * zawężają wykaz czynności do swojego obszaru, a formularz pod nimi jest jeden:
- * wybór czynności przestawia pola. Piętnaście osobnych formularzy dałoby wstążkę,
- * której Operator nie przejrzy, a wykonawca nie utrzyma. Pola pochodzą z katalogu
- * `czynnosci-warsztatu`, więc nazwa pola kontraktu stoi w drzewie raz.
- *
- * Materiał wchodzi z magazynu okna i wynik do niego wraca. Żadna czynność nie
- * zmienia materiału w miejscu — okno mówi to przy polu materiału, bo Operator
- * ma wiedzieć, że pomyłka nie kosztuje go dokumentu źródłowego.
- *
- * Odpowiedź jest opisana skutkiem, nie słowem „gotowe": liczba stron, liczba
- * części, identyfikator nowego zasobu. Meldunek bez liczby nie odróżnia
- * czynności wykonanej od czynności przyjętej.
- */
+/** Wstążka PDF — zakładka kontekstowa rodzin studio.pdf.* i studio.security.*, domyślnie ukryta i wchodząca na żądanie albo samoczynnie przy dokumencie PDF. */
 export interface OknoWarsztatuDokumentu {
   element: HTMLElement;
   /** Wczytuje wykaz materiału z magazynu okna. */
   wczytaj(): Promise<void>;
-  /**
-   * Przenosi ognisko do okna — woła to grupa „Ochrona" wstążki okna pracy.
-   *
-   * Czynności ochrony (szyfrowanie, podpis, weryfikacja, redakcja, zdjęcie
-   * metadanych, wykrycie danych wrażliwych) mają tu swoje formularze parametrów.
-   * Drugi ich formularz na wstążce rozjechałby się z tym przy pierwszej zmianie
-   * pola, więc wstążka wskazuje to okno, zamiast powtarzać jego pracę.
-   */
+  // Przenosi ognisko do okna — woła to grupa Ochrona wstążki okna pracy.
   przenieOgnisko(): void;
   odswiez(): void;
 }
 
-/** Kontrolka pola wraz z odczytem jej wartości. */
+/** Kontrolka pola wraz z odczytem jej wartości — element widoczny w formularzu i funkcja zwracająca wpisaną albo wybraną wartość jako tekst. */
 export interface KontrolkaPola {
   element: HTMLElement;
   odczytaj(): string;
 }
 
-/**
- * Buduje kontrolkę pola czynności i sposób odczytu jej wartości.
- *
- * Wyeksportowana, bo bierze ją także okno redakcji dokumentu: oba okna składają
- * formularz z katalogu opisanego tymi samymi typami, więc druga kopia tego
- * przełącznika rozjechałaby się z pierwszą przy pierwszym nowym rodzaju pola.
- */
+/** Buduje kontrolkę pola czynności i sposób odczytu jej wartości — wyeksportowana, bo korzysta z niej także okno redakcji dokumentu. */
 export function utworzKontrolke(pole: PoleCzynnosci, zasoby: readonly DesignAsset[]): KontrolkaPola {
   const opis = {
     etykieta: pole.etykieta,
@@ -111,9 +75,7 @@ export function utworzKontrolke(pole: PoleCzynnosci, zasoby: readonly DesignAsse
       return { element: kontrolka.element, odczytaj: () => kontrolka.kontrolka.value };
     }
     case 'zasoby': {
-      // Wielokrotny wybór zamiast listy pojedynczej: scalanie bierze materiały
-      // w kolejności zaznaczenia, a wpisywanie identyfikatorów z ręki byłoby
-      // przepisywaniem sum kontrolnych.
+      // Wielokrotny wybór zamiast listy pojedynczej — scalanie bierze materiały w kolejności zaznaczenia.
       const kontrolka = poleWyboru(opis, pozycjeZasobow(zasoby));
       kontrolka.kontrolka.multiple = true;
       kontrolka.kontrolka.size = 5;
@@ -132,7 +94,7 @@ export function utworzKontrolke(pole: PoleCzynnosci, zasoby: readonly DesignAsse
   }
 }
 
-/** Pozycje listy materiału: nazwa zasobu wraz z jego formatem. */
+/** Pozycje listy materiału: nazwa zasobu wraz z jego formatem, gotowe do pokazania w polu wyboru czynności. */
 function pozycjeZasobow(zasoby: readonly DesignAsset[]): PozycjaWyboru[] {
   return zasoby.map((zasob) => ({
     wartosc: zasob.id,
@@ -140,7 +102,7 @@ function pozycjeZasobow(zasoby: readonly DesignAsset[]): PozycjaWyboru[] {
   }));
 }
 
-/** Grupa wstążki PDF wraz z czynnościami, które do niej należą. */
+/** Grupa wstążki PDF wraz z czynnościami, które do niej należą: kod, nazwa widoczna, opis oraz komendy rdzenia zawężające wykaz czynności. */
 export interface GrupaWstazkiPdf {
   kod: string;
   nazwa: string;
@@ -148,14 +110,7 @@ export interface GrupaWstazkiPdf {
   komendy: readonly Command[];
 }
 
-/**
- * Grupy wstążki PDF, wedle wykazu Właściciela.
- *
- * Kolejność jest kolejnością pracy nad plikiem: najpierw strony, potem to, co się
- * na nich kładzie, potem treść, na końcu bezpieczeństwo przed wysyłką.
- * Narzędziownia cyfryzacji stoi grupą osobną, bo pracuje PRZED dokumentem — na
- * materiale, z którego dokument powstaje.
- */
+/** Grupy wstążki PDF w kolejności pracy nad plikiem: strony, nakładanie, treść i bezpieczeństwo przed wysyłką. */
 export const GRUPY_WSTAZKI_PDF: readonly GrupaWstazkiPdf[] = [
   {
     kod: 'strony',
@@ -202,7 +157,7 @@ export const GRUPY_WSTAZKI_PDF: readonly GrupaWstazkiPdf[] = [
   },
 ];
 
-/** Kod grupy narzędziowni cyfryzacji — jej treść przychodzi gniazdem. */
+/** Kod grupy narzędziowni cyfryzacji — jej treść przychodzi gniazdem przekazanym z zewnątrz, nie wykazem czynności katalogu. */
 const GRUPA_CYFRYZACJI = 'cyfryzacja';
 
 export function utworzOknoWarsztatuDokumentu(
@@ -261,13 +216,7 @@ export function utworzOknoWarsztatuDokumentu(
     przyciskiGrup.set(grupa.kod, przyciskGrupy);
   }
 
-  /**
-   * Gniazdo narzędziowni cyfryzacji.
-   *
-   * Panel cyfryzacji jest osobnym oknem modułu i buduje go inny wołacz, więc
-   * wstążka bierze jego element gniazdem, a nie zakłada drugiego. Bez gniazda
-   * grupa mówi wprost, gdzie narzędziownia stoi — zamiast pokazywać pustkę.
-   */
+  /** Gniazdo narzędziowni cyfryzacji — panel buduje inny wołacz, wstążka bierze jego element gniazdem. */
   const gniazdoGrupy = document.createElement('div');
   gniazdoGrupy.className = 'ms-pdf__gniazdo';
   if (gniazdoCyfryzacji !== undefined) {
@@ -407,8 +356,7 @@ export function utworzOknoWarsztatuDokumentu(
     kontrolki = new Map();
     const wiersze: HTMLElement[] = [];
     for (const pole of czynnosc.pola) {
-      // Materiał czynności to dokument; pieczęć i certyfikat sięgają po wszystkie
-      // zasoby okna, bo obraz ani certyfikat dokumentem nie są.
+      // Materiał czynności to dokument; pieczęć i certyfikat sięgają po wszystkie zasoby okna.
       const zrodloPozycji = pole.kod === 'assetId' || pole.kod === 'assetIds' ? dokumenty : wszystkie;
       const kontrolka = utworzKontrolke(pole, zrodloPozycji);
       kontrolki.set(pole.kod, kontrolka);
@@ -445,9 +393,7 @@ export function utworzOknoWarsztatuDokumentu(
     }
     odpowiedz.pokaz(`${czynnosc.nazwa}: ${opiszSkutek(wynik.wynik)}`, true);
     rama.stan.gotowe();
-    // Wynik jest nowym zasobem magazynu, więc wykaz materiału zestarzał się
-    // dokładnie w tej chwili. Odczyt idzie od razu, żeby następna czynność
-    // widziała to, co przed chwilą powstało.
+    // Wynik jest nowym zasobem magazynu — wykaz materiału zestarzał się, więc odczyt idzie od razu.
     await wczytaj();
   }
 
@@ -477,14 +423,11 @@ export function utworzOknoWarsztatuDokumentu(
   }
 
   function odswiez(): void {
-    // Wstążka kontekstowa wchodzi sama, gdy dokument w pracy jest PDF-em — ale
-    // nie wraca po tym, jak Operator zamknął ją ręcznie. Nastawa Operatora waży
-    // więcej niż domysł okna.
+    // Wstążka wchodzi sama przy PDF-ie, ale nie wraca po ręcznym zamknięciu przez Operatora.
     if (dokumentJestPdf() && nakladka.hidden && !zamknietaRecznie) przestawWstazke(true);
     if (rama.stan.faza() === 'ladowanie') return;
     if (dokumenty.length === 0) {
-      // Nazwa stanu mówi, czego brakuje: czynności są czynne, brakuje wyłącznie
-      // materiału, na którym mają pracować.
+      // Nazwa stanu mówi, czego brakuje: czynności są czynne, brakuje materiału do pracy.
       rama.stan.puste(
         'Wstążka PDF bez materiału',
         'Czynności pracują na dokumentach PDF wniesionych do okna. Wnieś dokument — ' +
@@ -509,13 +452,7 @@ export function utworzOknoWarsztatuDokumentu(
     element: powloka,
     wczytaj,
 
-    /**
-     * Otwiera wstążkę i przenosi do niej ognisko.
-     *
-     * Woła to grupa „Ochrona" wstążki okna pracy. Otwarcie jest tu częścią
-     * czynności: przeniesienie ogniska do panelu schowanego byłoby przeniesieniem
-     * w nic.
-     */
+    // Otwiera wstążkę i przenosi do niej ognisko — otwarcie jest częścią tej czynności.
     przenieOgnisko() {
       przestawWstazke(true);
       rama.element.dataset['ognisko'] = 'tak';

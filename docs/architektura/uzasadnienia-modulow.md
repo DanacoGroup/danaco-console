@@ -970,3 +970,54 @@ raportu, nie tylko jawne żądanie zapisu.
 Porównanie wersji liczy się z migawek odczytanych z bazy, nie ze stanu
 w pamięci procesu: porównanie po restarcie rdzenia daje ten sam wynik co przed
 restartem.
+
+## budowa/server/internal/core/adapter_modul_mobile.go
+
+Proces tej rodziny nie jest tym samym bytem, co proces terminala: pole stanu
+procesu mobilnego niesie słownik telemetrii postępu, podczas gdy stan procesu
+terminala niesie własny, odrębny słownik. Proces mobilny jest więc wpisem
+rejestru telemetrii postępu, tym samym, który pokazuje Process Monitor
+warstwy wspólnej — plik jest fasadą nad tym rejestrem, nie osobnym magazynem
+ani osobną tabelą.
+
+Adapter mobilny osadza adapter monitora zamiast zakładać port równoległy nad
+tym samym rejestrem i dokłada dwa porty czynności, których warstwa wspólna
+sama nie ma: rozmowę, czyli zatrzymanie tury okna, oraz kolejki, czyli
+działania na kolejce.
+
+Sterowanie procesem nie ma własnego silnika: proces kolejki idzie tą samą
+drogą, co działanie kolejki, a tura okna tą samą, co zatrzymanie wiadomości,
+razem z ich telemetrią i rozgłoszeniami. Gdyby warstwa mobilna zatrzymywała
+turę własnym wywołaniem, stan procesu zmieniłby się bez zdarzenia postępu
+i pulpit pokazywałby proces w biegu, którego już nie ma.
+
+Czego rdzeń nie umie, tego ta rodzina nie udaje: tura okna nie ma w rdzeniu
+ani wstrzymania, ani wznowienia, ani ponownego uruchomienia, więc takie
+sterowanie odmawia głośno zamiast oddać proces rzekomo już po sterowaniu.
+Modyfikacja zlecenia zmienia jego treść, a żądanie sterowania niesie
+wyłącznie proces, sterowanie i urządzenie, więc korekta treści zlecenia
+odmawia i wskazuje drogę, którą treść naprawdę się poprawia: polecenie
+w oknie rozmowy.
+
+Trzy przełożenia sterowania kolejki są jednoznaczne, bo oba słowniki nazywają
+tę samą czynność. Ponowne uruchomienie idzie na start pozycji, nie na
+ponowienie, bo ponowienie dotyczy jednej pozycji kolejki, a sterowanie
+mobilne dotyczy procesu jako całości. Zatwierdzenie idzie na wznowienie i nie
+jest to przełożenie na skróty: krok naprzód znaczy przyjęcie wyniku, tak jak
+nazywa to protokół silnika kolejki, a pozycja czekająca na weryfikację
+przechodzi tym krokiem do stanu ukończonej z werdyktem przyjęcia — czyli
+zatwierdzenie ma skutek zapisany, nie samą etykietę odpowiedzi.
+
+Zatwierdzenia tura okna nie ma i nie jest to przeoczenie: punktu decyzyjnego
+kontrakt dla niej nie zna, bo zatwierdzać można wyłącznie tam, gdzie stan
+czekający naprawdę stoi zapisany, czyli w pozycji kolejki. Tura, która nie
+biegła, jest sporem stanu, nie powodzeniem, więc odpowiedź mobilna, która nie
+ma pola mówiącego wprost, że nic się nie zatrzymało, mówi prawdę odmową.
+
+Pole nazwy procesu mobilnego jest wymagane, więc musi nieść coś prawdziwego:
+rejestr telemetrii zna nazwę etapu, nie nazwę procesu, a etap w polu nazwy
+byłby podaniem jednej rzeczy za drugą, więc nazwą procesu jest nazwa bytu,
+którego dotyczy — tytuł okna albo nazwa kolejki, a bez nazwy własnej opis
+wskazujący byt jednoznacznie. Pola chwili uruchomienia nie ma i nie jest to
+przeoczenie: rejestr telemetrii nie znakuje procesów chwilą startu, zna
+wyłącznie stan i etap, a pole jest opcjonalne kontraktem.

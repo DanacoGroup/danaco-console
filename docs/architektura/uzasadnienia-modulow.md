@@ -1595,3 +1595,17 @@ daje kod odmowy uprawnień, tak samo jak znakuje je moduł Terminal, żeby dwie
 reguły dla jednej bramy nie rozjechały się; każda pozostała odmowa dostaje kod
 błędu wewnętrznego jako najostrzejszy z zamysłem, bo nieznana odmowa jest
 przypadkiem, którego rdzeń nie przewidział.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_napisy.go
+
+Cztery formaty napisów kontraktu czyta i pisze ten rdzeń sam: SRT i WebVTT są
+tekstowe, TTML jest zapisem XML, a EBU STL jest zapisem dwójkowym o stałej
+ramce, złożonym z bloku nagłówkowego GSI liczącego tysiąc dwadzieścia
+cztery bajty oraz bloków tekstowych TTI po sto dwadzieścia osiem bajtów.
+Wszystkie cztery formaty rozbiera się i składa bibliotekami wkompilowanymi
+w rdzeń, bez wywołania programu zewnętrznego.
+
+Kwestie napisów są trwałe, zapisane w osobnej tabeli, ponieważ sprawdzenie
+taktowania napisów i złożenie scenariusza dubbingu nie miałyby czego mierzyć
+bez zapisanego przebiegu: taktowanie jest własnością materiału, a nie tekstu
+panelu, więc musi przeżyć poza pojedynczym wywołaniem eksportu.

@@ -5036,3 +5036,14 @@ Dekodery są rejestrowane importem pobocznym: PNG, JPEG i GIF stoją w bibliotec
 Zdjęcie przemnożenia jest konieczne, nie kosmetyczne: kolor w bibliotece standardowej oddaje składowe już przemnożone przez alfę, a tryby mieszania są zdefiniowane na barwie własnej piksela. Mnożenie barw przemnożonych dałoby wynik ciemniejszy przy każdej półprzezroczystości, błąd niewidoczny na krawędziach, a wyraźny na dużej płaszczyźnie znaku wodnego.
 
 Przycięcie składowej do zakresu jest konieczne, bo tryby mieszania screen i overlay potrafią wyjść nieznacznie poza jedynkę na zaokrągleniach.
+
+## budowa/server/internal/core/handlers_narzedzia_archiwum.go
+Adapter leży w osobnym pliku adaptera narzędzi archiwum; pakowanie
+i rozpakowanie leżą w plikach czynności, a wyrok o zawartości archiwum leży
+w pliku spisu. Trzecia pozycja o przedrostku archive, odpowiedź komendy
+nieznanej obszaru, nie jest komendą: nie ma pary żądanie-wynik i w rejestrze
+komend się nie zjawia. Rodzina nie ma zdarzeń, więc port nie bierze nadajnika:
+archiwum wytworzone przez komendę spakowania jest zasobem modułu projektowania
+i to jego rodzina zdarzeń o zasobach mówi. Port niewypełniony nie rejestruje
+niczego — obie komendy odpowiedzą wtedy komendą nieznaną, a pozostałe domeny
+pracują bez zmian; rdzeń niczym nie warunkuje startu.

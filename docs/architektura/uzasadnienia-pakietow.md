@@ -2845,3 +2845,15 @@ definicji; operacja UPSERT ustawia to w klauzuli ON CONFLICT. Numer wersji
 zapisywany w historii czytany jest z wiersza po UPSERT-cie, ponieważ to on
 go podniósł — wartość policzona osobno rozjechałaby się z bazą przy dwóch
 zapisach naraz.
+
+## stan.go
+
+Cały pakiet stoi na bibliotece go-git wkompilowanej w binarium rdzenia. Nie ma tu ani
+jednego uruchomienia procesu i mieć nie będzie: funkcja zależna od programu, którego
+instalka nie niesie, jest u odbiorcy odmową, a nie funkcją. Odczyt stanu repozytorium
+ma działać zawsze, bo od niego zaczyna się każda inna czynność okna Git Panel.
+
+Pakiet nie zna kontraktu komend, zna wyłącznie kształt danych. Stąd nie wychodzi ani
+jedna odmowa protokołu: pakiet oddaje wynik albo błąd Go, a nazwanie go operatorowi
+należy do adaptera. Dzięki temu ten sam silnik obsługuje Git Panel, margines zmian
+w edytorze i przegląd różnicy przed scaleniem, nie ucząc się o żadnym z nich.

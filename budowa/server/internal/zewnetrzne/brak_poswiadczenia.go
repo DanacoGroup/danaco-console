@@ -1,11 +1,5 @@
-// Odmowa, która pada zanim żądanie wyjdzie w sieć — gdy kanał nie ma czym się
-// uwierzytelnić.
-//
-// Plik stoi osobno od `uwierzytelnienie.go`, bo to odmowa innej klasy. Tam
-// dostawca coś odpowiedział i trzeba tę odpowiedź przetłumaczyć; tutaj nikt nie
-// został zapytany, bo pod odwołaniem wskazanym w wierszu kanału nie ma sekretu.
-// Zdanie odmowy ma nazwać brak i drogę jego uzupełnienia, bo sam komunikat
-// „poświadczenia nie ma" nie mówi Operatorowi, co zrobić.
+// Odmowa, która pada zanim żądanie wyjdzie w sieć, gdy kanał nie ma czym się
+// uwierzytelnić; nazywa brak i drogę jego uzupełnienia.
 package zewnetrzne
 
 import "strings"
@@ -14,22 +8,22 @@ import "strings"
 // własną drogę naprawy — kilka różnych usterek pod jednym zdaniem zostawia
 // Operatora ze zgadywaniem.
 const (
-	// PowodSejfNiewpiety — wiersz wskazuje sejf, a rdzeń złożono bez sejfu.
-	// To usterka montażu, nie nastawa Operatora.
+	// PowodSejfNiewpiety — wiersz wskazuje sejf poświadczeń, a rdzeń złożono bez
+	// wpiętego sejfu do warstwy modeli.
 	PowodSejfNiewpiety = "sejf-niewpiety"
-	// PowodBrakWpisu — sejf stoi, ale wpisu o tej nazwie w nim nie ma.
+	// PowodBrakWpisu — sejf poświadczeń stoi, ale wpisu o tej nazwie w nim brak
+	// wśród zapisanych sekretów.
 	PowodBrakWpisu = "brak-wpisu"
-	// PowodPustyWpis — wpis jest, lecz pusty; sekret zgubiono po drodze.
+	// PowodPustyWpis — wpis w sejfie poświadczeń jest, lecz pusty; sekret
+	// zgubiono gdzieś po drodze zapisu.
 	PowodPustyWpis = "pusty-wpis"
-	// PowodPustaZmienna — zmienna środowiskowa nieustawiona albo pusta.
+	// PowodPustaZmienna — zmienna środowiskowa wskazana odwołaniem jest
+	// nieustawiona albo pusta w otoczeniu.
 	PowodPustaZmienna = "pusta-zmienna"
 )
 
-// BrakPoswiadczenia mówi, że kanał nie miał czym się uwierzytelnić — i dlaczego.
-//
-// Osobny typ, bo warstwa wyżej ma odróżnić „nie ma czym wysłać" od „wysłano
-// i odbiło się": pierwsze naprawia się w produkcie i ponawianie nic nie da,
-// drugie bywa chwilowe. Bez typu obie klasy wyglądają jak ten sam napis.
+// BrakPoswiadczenia mówi, że kanał nie miał czym się uwierzytelnić i dlaczego;
+// osobny typ odróżnia ten brak od odmowy dostawcy, która bywa chwilowa.
 type BrakPoswiadczenia struct {
 	// Kanal jest kodem kanału z wiersza rejestru.
 	Kanal string
@@ -40,7 +34,8 @@ type BrakPoswiadczenia struct {
 }
 
 // NowyBrakPoswiadczenia składa odmowę z kodu kanału, odwołania i rozpoznanego
-// powodu.
+// powodu; odwołanie przechodzi przez RozpoznajPoswiadczenie, które ustala
+// jego rodzaj.
 func NowyBrakPoswiadczenia(kanal, odwolanie, powod string) *BrakPoswiadczenia {
 	return &BrakPoswiadczenia{
 		Kanal:         strings.TrimSpace(kanal),
@@ -60,7 +55,8 @@ func (b *BrakPoswiadczenia) Error() string {
 	return "kanał " + b.Kanal + ": " + b.opisBraku() + "; " + b.naprawaBraku()
 }
 
-// opisBraku nazywa sam brak.
+// opisBraku nazywa sam brak, dobierając zdanie do rozpoznanego Powodu; każda
+// gałąź switch opisuje inną usterkę źródła sekretu.
 func (b *BrakPoswiadczenia) opisBraku() string {
 	switch b.Powod {
 	case PowodSejfNiewpiety:

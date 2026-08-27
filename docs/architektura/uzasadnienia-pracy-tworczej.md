@@ -1851,3 +1851,96 @@ wszystko, co zrobił model, przemilczeć każdy komentarz modelu.
 PrzywrocWersje: w przeciwienstwie do ZapiszDokument z createVersion=true,
 adapter nie dopisuje tu drugiego zapisu, bo wersja docelowa jest podana
 wprost.
+
+Wykaz w `roleSystemuWizualnegoDesignu` jest kopią wykazu z panelu żetonów po
+stronie klienta i jest to cena świadoma: kontrakt nie niesie bytu „rola
+systemu wizualnego", więc wspólnego źródła dla obu stron nie ma. Skutek
+rozjazdu jest ograniczony z zamysłu: wykaz służy wyłącznie do wypełnienia
+`unknownNames` przy imporcie, a rola spoza niego i tak wchodzi do zestawu.
+Rozjazd daje więc bilans zbyt obszerny, nigdy zgubiony żeton.
+
+Rodzaj żetonu spoza kontraktu w `ZapiszZestawZetonow` jest odmową wołającemu,
+nie odbiciem od schematu: tabela `zeton_design` świadomie nie ma warunku CHECK
+(nagłówek migracji 235), więc sprawdzenie stoi w kodzie i wymienia rodzaje
+dopuszczalne.
+
+Postać zapisu w `WczytajZestawZetonow` rozpoznaje rdzeń, gdy wołający jej nie
+wskazał. Rozpoznanie idzie po treści, nie po nazwie: zapis zaczynający się
+nawiasem klamrowym jest JSON-em niezależnie od tego, jak nazywał się plik
+u Operatora.
+
+Rdzeń w `rozlozZapisZetonowDesignu` czyta zapis JSON wzorem W3C Design Tokens.
+Postać spoza JSON-a i zmiennych CSS jest odmową wymieniającą postacie czytane
+— zgadywanie dałoby zestaw złożony z przypadkowych napisów.
+
+W `rodzajZetonuZWartosciDesignu` rodzaj wychodzący jako miara przy niepewności
+jest najczęstszym rodzajem w systemach projektowych i jedynym, który nie
+obiecuje niczego szczególnego.
+
+Stan śledzenia po przełączeniu czyta się z bazy, a nie oddaje wprost tego,
+o co poproszono w żądaniu: odpowiedź ma mówić, jak jest po zapisie,
+a nie powtarzać żądanie.
+
+Decyzja o zmianie śledzonej: przyjęcie usunięcia zdejmuje tekst, odrzucenie
+go przywraca. Wersję zakłada się domyślnie, bo decyzja redakcyjna jest
+punktem, do którego wypada wrócić.
+
+Autor wersji zakładanej po decyzji bierze się z gniazda, które decyzję
+podjęło. Autor zaszyty jako Operator kazałby historii twierdzić, że wersję
+założył Operator także wtedy, gdy zmiany rozstrzygnął wykonawca drogą
+narzędzi.
+
+Odrzucenie propozycji zostawia dokument bez zmiany i wersji nie zakłada —
+nie ma czego utrwalać.
+
+Fragmenty liczy `policzFragmentyRoznicy` — ten sam rachunek, który panel
+różnic pokazuje Operatorowi, więc numer fragmentu w żądaniu znaczy dokładnie
+ten fragment, który Operator widział. Drugi rachunek fragmentów, wykonany na
+potrzeby samej decyzji, mógłby ponumerować je inaczej.
+
+Podział i złożenie idą wierszami, bo wierszami liczą się fragmenty: fragment
+pominięty oddaje wiersze strony bazowej, fragment wskazany — wiersze strony
+docelowej, fragment dodany i pominięty nie oddaje ani jednego wiersza. Wykaz
+numerów spoza rachunku jest odmową, nie ciszą: przyjęcie fragmentu siódmego
+w różnicy o trzech fragmentach byłoby przyjęciem czegoś, czego nie ma,
+a odpowiedź pomyślna kazałaby czytać to jako wykonane.
+
+## budowa/server/internal/core/adapter_modul_design_zetony_wydanie.go
+
+Zapis i odczyt zestawów leży w `adapter_modul_design_zetony.go`.
+
+Wszystkie postacie składa Go napisami: CSS, SCSS, konfiguracja Tailwind, moduł
+JavaScript, zasoby Swift i Kotlin powstają w rdzeniu przez sklejenie napisów.
+Nie ma tu ani jednego uruchomienia programu z zewnątrz i mieć nie będzie —
+postać, której nie da się złożyć bez cudzego programu, byłaby u Operatora
+odmową, a nie funkcją.
+
+Wydanie do modułu jest zasobem, nie obietnicą. Wskazanie modułu docelowego nie
+kończy się polem `delivered: true` postawionym z góry. Treść ląduje w
+magazynie rdzenia pod sumą swojej zawartości i dostaje wiersz zasobu — ten sam
+magazyn obsługuje rodziny `design.*`, `document.*`, `media.*` i `archive.*`,
+więc moduł docelowy sięga po nią identyfikatorem zasobu
+(`design.asset.content.get`). `delivered` mówi wtedy prawdę: bajty leżą i mają
+adres. Niepowodzenie zapisu jest odmową całej komendy, nie polem
+`delivered: false` postawionym obok treści oddanej wołającemu — bo Operator
+zamawiał wydanie do modułu.
+
+Rozstrzygnięcie zmiany śledzonej jest symetryczne i dlatego da się je zapisać
+w czterech wierszach: przyjęcie wstawienia i odrzucenie usunięcia zostawiają
+treść „po", odrzucenie wstawienia i przyjęcie usunięcia zostawiają treść
+„przed". Zakres liczy się w znakach, tak jak nazywa go kontrakt (poczatek
+zmiany w znakach). Cięcie po bajtach rozcinałoby polskie litery dwubajtowe
+i zmiana przyjęta w tekście z znakiem „ą" wstawiałaby treść w środek znaku.
+
+Zakres zmiany śledzonej spoza treści znaczy, że dokument zmienił się od czasu
+zarejestrowania zmiany. Nowego miejsca nie zgaduje się — decyzja zapisuje się
+w wierszu, a treść zostaje nietknięta.
+## server/internal/zewnetrzne/brak_poswiadczenia.go
+
+Plik stoi osobno od uwierzytelnienie.go, bo to odmowa innej klasy: tam
+dostawca odpowiedzial i trzeba te odpowiedz przetlumaczyc, tutaj nikt nie
+zostal zapytany, bo pod odwolaniem wskazanym w wierszu kanalu nie ma sekretu.
+
+BrakPoswiadczenia: warstwa wyzej ma odroznic 'nie ma czym wyslac' od 'wyslano
+i odbilo sie' — pierwsze naprawia sie w produkcie i ponawianie nic nie da,
+drugie bywa chwilowe. Bez typu obie klasy wygladaja jak ten sam napis.

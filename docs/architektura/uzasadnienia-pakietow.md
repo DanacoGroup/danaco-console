@@ -2811,3 +2811,37 @@ TestNajwezszyZapisWygrywa jest sprawdzianem, dla którego ten plik powstał.
 Reguła schodzenia w górę jest jedyną drogą, którą Operator odzyskuje ustawienie
 szersze po skasowaniu węższego — pomyłka na którymkolwiek szczeblu zostawia go
 z wartością, której nigdzie nie zapisał.
+
+## aplikacje.go
+
+Interfejs RepozytoriumAplikacji stoi w całości w tym pliku, wraz z metodami,
+które implementują pozostałe pliki obszaru Apps. Interfejs rozdzielony na
+trzy pliki byłby trzema prawdami o jednym kontrakcie.
+
+Pole ArchitekturaApp.RoznicaWersji odkłada je metoda ZapiszArchitekture w
+wierszu tabeli wersja_architektury_apps. Odczyt architektury tego pola nie
+wypełnia, ponieważ historia ma własny odczyt WersjeArchitekturyApp, a pole
+wypełniane w obie strony sugerowałoby, że wiersz bieżący pamięta, czym
+różnił się od poprzednika.
+
+Metoda ArchitekturaOkna czyta po oknie, ponieważ klient po odświeżeniu zna
+wyłącznie okno, a kodu architektury nadanego przy pierwszym zapisie już nie
+pamięta. Indeks na oknie i znaczniku czasu malejąco sprawia, że odczyt
+najświeższej definicji nie skanuje tabeli.
+
+Metoda PlikWarsztatu zwraca jeden plik po kluczu naturalnym, ponieważ zapis
+zmiany musi powiedzieć, czy plik powstał, czy został zmieniony, a operacja
+UPSERT sama tego nie mówi — obie kolumny czasu mają osobne wartości
+domyślne, więc porównanie znaczników byłoby zgadywaniem.
+
+Metoda Wdrozenia liczy wszystkie wdrożenia spełniające warunki osobnym
+zapytaniem COUNT, nie długością zwróconej strony — inaczej łączna liczba
+przy limicie mniejszym niż dziennik kłamałaby o rozmiarze historii.
+
+Metoda ZapiszArchitekture nadsyła całą listę komponentów i zależności na
+nowo, bez trybu częściowej zmiany — zapis jest więc zawsze usunięciem
+zastanych wierszy i wstawieniem od nowa. Wersja rośnie przy każdym zapisie
+definicji; operacja UPSERT ustawia to w klauzuli ON CONFLICT. Numer wersji
+zapisywany w historii czytany jest z wiersza po UPSERT-cie, ponieważ to on
+go podniósł — wartość policzona osobno rozjechałaby się z bazą przy dwóch
+zapisach naraz.

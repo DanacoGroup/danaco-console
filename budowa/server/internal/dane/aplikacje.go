@@ -1,13 +1,6 @@
-// Odpowiedzialność pliku: architektura produktu i jej komponenty (tabele
-// `architektura_apps`, `komponent_architektury_apps`, `zaleznosc_komponentu_apps`)
-// wraz z kontraktem całego obszaru Apps. Warsztat leży w
-// `aplikacje_warsztat.go`, wdrożenia w `aplikacje_wdrozenia.go` — jedno
-// repozytorium, trzy pliki wedle odpowiedzialności, tak jak
-// `dane/automations*.go` i `dane/library*.go`.
-//
-// Interfejs stoi w całości w tym pliku — wraz z metodami, które implementują
-// pozostałe pliki obszaru. Interfejs rozdzielony na trzy pliki byłby trzema
-// prawdami o jednym kontrakcie.
+// Plik definiuje architekturę produktu i jej komponenty: kontrakt
+// RepozytoriumAplikacji obszaru Apps, wspólny z aplikacje_warsztat.go i
+// aplikacje_wdrozenia.go.
 package dane
 
 import (
@@ -31,12 +24,8 @@ type ArchitekturaApp struct {
 	ZastrzezeniaWalidacji []string
 	Utworzono             string
 	Zaktualizowano        string
-	// RoznicaWersji jest polem WYŁĄCZNIE zapisu: zdanie o różnicy wobec wersji
-	// poprzedniej, które `ZapiszArchitekture` odkłada w wierszu historii
-	// (`wersja_architektury_apps`, migracja 201). Odczyt architektury go nie
-	// wypełnia — historia ma własny odczyt (`WersjeArchitekturyApp`), a pole
-	// wypełniane w obie strony sugerowałoby, że wiersz bieżący pamięta, czym
-	// różnił się od poprzednika.
+	// RoznicaWersji jest polem wyłącznie zapisu: różnica wobec poprzedniej
+	// wersji idzie do historii.
 	RoznicaWersji *string
 }
 
@@ -60,15 +49,15 @@ type ZaleznoscKomponentu struct {
 	KomponentDo string
 }
 
-// RepozytoriumAplikacji jest kontraktem obszaru Apps.
+// RepozytoriumAplikacji jest kontraktem obszaru Apps: architektura,
+// warsztat, wdrożenia, produkt, środowiska i pozostałe zasoby modułu.
 type RepozytoriumAplikacji interface {
 	// --- architektura ---
 	ZapiszArchitekture(ctx context.Context, architektura ArchitekturaApp,
 		komponenty []KomponentArchitektury, zaleznosci []ZaleznoscKomponentu) (ArchitekturaApp, error)
 	Architektura(ctx context.Context, kod string) (ArchitekturaApp, error)
-	// ArchitekturaOkna zwraca architekturę okna dla `apps.architecture.get` —
-	// odczyt idzie po oknie, bo klient po odświeżeniu zna wyłącznie okno, a
-	// kodu architektury (nadanego przy pierwszym zapisie) już nie pamięta.
+	// ArchitekturaOkna zwraca architekturę okna dla apps.architecture.get,
+	// po oknie, nie po kodzie.
 	ArchitekturaOkna(ctx context.Context, okno string) (ArchitekturaApp, error)
 	Komponenty(ctx context.Context, architekturaID int64) ([]KomponentArchitektury, error)
 	ZaleznosciKomponentow(ctx context.Context, architekturaID int64) ([]ZaleznoscKomponentu, error)
@@ -76,20 +65,16 @@ type RepozytoriumAplikacji interface {
 	// --- warsztat ---
 	ZapiszPlikWarsztatu(ctx context.Context, plik PlikWarsztatu) (PlikWarsztatu, error)
 	PlikiWarsztatu(ctx context.Context, okno string) ([]PlikWarsztatu, error)
-	// PlikWarsztatu zwraca jeden plik po kluczu naturalnym. Potrzebny przy
-	// zapisie: `apps.workspace.changed` musi powiedzieć, czy plik powstał, czy
-	// został zmieniony, a UPSERT sam tego nie mówi — obie kolumny czasu mają
-	// osobne wartości domyślne, więc porównanie znaczników byłoby zgadywaniem.
+	// PlikWarsztatu zwraca jeden plik po kluczu naturalnym, do rozróżnienia
+	// powstania od zmiany pliku.
 	PlikWarsztatu(ctx context.Context, okno string, warstwa shared.AppWorkspaceLayer,
 		sciezka string) (PlikWarsztatu, error)
 
 	// --- wdrożenia ---
 	ZapiszWdrozenie(ctx context.Context, wdrozenie WdrozenieApp) (WdrozenieApp, error)
 	Wdrozenie(ctx context.Context, kod string) (WdrozenieApp, error)
-	// Wdrozenia zwraca stronę wdrożeń okna oraz liczbę wszystkich wdrożeń
-	// spełniających te same warunki (okno + ewentualne środowisko). Liczba jest
-	// wynikiem osobnego COUNT-a, nie długością strony — inaczej `total` przy
-	// `limit` mniejszym niż dziennik kłamałby o rozmiarze historii.
+	// Wdrozenia zwraca stronę wdrożeń okna oraz liczbę wszystkich
+	// spełniających te same warunki.
 	Wdrozenia(ctx context.Context, okno string, srodowisko *shared.AppDeployEnvironment,
 		limit int) ([]WdrozenieApp, int, error)
 
@@ -145,12 +130,8 @@ const (
 	pobierzArchitektureApp = `SELECT ` + kolumnyArchitekturyApp + ` FROM architektura_apps
 	                          WHERE identyfikator_zewnetrzny = ?`
 
-	// Okno bierze architekturę najświeższą. Kontrakt oddaje w
-	// `apps.architecture.get` jedną architekturę (`Architecture *AppArchitecture`),
-	// a `apps.architecture.define` bez `architectureId` zakłada za każdym razem
-	// nową — w oknie może więc leżeć więcej niż jedna. Ostatnio zapisana jest tą,
-	// którą pokazuje panel; indeks `idx_architektura_apps_okno` prowadzi po oknie
-	// i znaczniku czasu malejąco, więc odczyt nie skanuje tabeli.
+	// Okno bierze architekturę najświeższą: w oknie może leżeć więcej niż
+	// jedna definicja, a ostatnio zapisana jest tą, którą pokazuje panel.
 	pobierzArchitektureOknaApp = `SELECT ` + kolumnyArchitekturyApp + ` FROM architektura_apps
 	                          WHERE okno = ?
 	                          ORDER BY zaktualizowano DESC, id DESC
@@ -199,11 +180,8 @@ func noweRepozytoriumAplikacji(z *zapytania, db *sql.DB) *repozytoriumAplikacji 
 }
 
 // ZapiszArchitekture zapisuje definicję architektury oraz wymienia komplet
-// jej komponentów i zależności w jednej transakcji. `apps.architecture.define`
-// nadsyła całą listę na nowo, bez trybu częściowej zmiany — zapis jest więc
-// zawsze „usuń, wstaw od nowa" (wzorzec `ZapiszKroki` z `automations_kroki.go`).
-// Wersja rośnie przy każdym zapisie definicji tak jak `automatyka.wersja` —
-// UPSERT ustawia to w klauzuli ON CONFLICT.
+// jej komponentów i zależności w jednej transakcji, usuwając zastane i
+// wstawiając od nowa.
 func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architektura ArchitekturaApp,
 	komponenty []KomponentArchitektury, zaleznosci []ZaleznoscKomponentu) (ArchitekturaApp, error) {
 
@@ -282,11 +260,8 @@ func (r *repozytoriumAplikacji) ZapiszArchitekture(ctx context.Context, architek
 			}
 		}
 
-		// Wiersz historii idzie tą samą transakcją, co wymiana komponentów.
-		// Numer wersji czytamy z wiersza PO UPSERT-cie, bo to on go podniósł —
-		// wartość policzona w Go rozjechałaby się z bazą przy dwóch zapisach
-		// naraz. Liczba komponentów jest liczbą właśnie wstawionych: to ona
-		// opisuje tę wersję, a nie stan sprzed wymiany.
+		// Wiersz historii idzie tą samą transakcją co wymiana komponentów i
+		// niesie ich liczbę po zapisie.
 		var wersjaPoZapisie int
 		wiersz = transakcja.QueryRowContext(ctx,
 			`SELECT wersja FROM architektura_apps WHERE id = ?`, architekturaID)
@@ -327,11 +302,9 @@ func (r *repozytoriumAplikacji) Architektura(ctx context.Context, kod string) (A
 	return architektura, nil
 }
 
-// ArchitekturaOkna zwraca najświeższą architekturę okna (patrz komentarz przy
-// `pobierzArchitektureOknaApp`). Okno bez ani jednej architektury wraca jako
-// ErrBrakWiersza — to NIE jest usterka: adapter przekłada ten brak na puste
-// pole `architecture` w odpowiedzi, bo „nic jeszcze nie zdefiniowano" jest
-// stanem normalnym świeżego okna, a nie odmową.
+// ArchitekturaOkna zwraca najświeższą architekturę okna. Okno bez ani
+// jednej architektury wraca jako ErrBrakWiersza, co jest stanem normalnym
+// świeżego okna.
 func (r *repozytoriumAplikacji) ArchitekturaOkna(ctx context.Context, okno string) (ArchitekturaApp, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzArchitektureOknaApp)
 	if err != nil {
@@ -347,7 +320,8 @@ func (r *repozytoriumAplikacji) ArchitekturaOkna(ctx context.Context, okno strin
 	return architektura, nil
 }
 
-// Komponenty zwraca komponenty architektury w kolejności zapisu.
+// Komponenty zwraca komponenty architektury w kolejności zapisu, od
+// pierwszego wstawionego do ostatniego.
 func (r *repozytoriumAplikacji) Komponenty(ctx context.Context, architekturaID int64) ([]KomponentArchitektury, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKomponentowArchitektury)
 	if err != nil {
@@ -379,7 +353,8 @@ func (r *repozytoriumAplikacji) Komponenty(ctx context.Context, architekturaID i
 	return lista, nil
 }
 
-// ZaleznosciKomponentow zwraca graf zależności między komponentami architektury.
+// ZaleznosciKomponentow zwraca graf zależności między komponentami
+// architektury jako listę łuków źródło-cel.
 func (r *repozytoriumAplikacji) ZaleznosciKomponentow(ctx context.Context, architekturaID int64) ([]ZaleznoscKomponentu, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZaleznosciKomponentow)
 	if err != nil {
@@ -405,7 +380,8 @@ func (r *repozytoriumAplikacji) ZaleznosciKomponentow(ctx context.Context, archi
 	return lista, nil
 }
 
-// odczytajArchitektureApp składa strukturę z jednego wiersza wyniku.
+// odczytajArchitektureApp składa strukturę ArchitekturaApp z jednego wiersza
+// wyniku zapytania, zamieniając kolumny nullowalne na wskaźniki.
 func odczytajArchitektureApp(wiersz skaner) (ArchitekturaApp, error) {
 	var architektura ArchitekturaApp
 	var nazwa, zastrzezenia sql.NullString
@@ -430,7 +406,8 @@ func listaDoKolumny(wartosci []string) any {
 	return strings.Join(wartosci, "\n")
 }
 
-// listaZKolumny odwraca `listaDoKolumny`.
+// listaZKolumny odwraca listaDoKolumny, rozdzielając zapisany tekst z
+// powrotem na listę zastrzeżeń walidacji.
 func listaZKolumny(kolumna sql.NullString) []string {
 	if !kolumna.Valid || kolumna.String == "" {
 		return nil

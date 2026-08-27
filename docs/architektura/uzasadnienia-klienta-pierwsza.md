@@ -5895,3 +5895,52 @@ operacyjnych rdzenia nie przewiduje dla nich wpisu; panel wchodzi w pas narzędz
 Orchestratora. Rdzeń przyjmuje również krawędź tworzącą cykl i zwraca zastrzeżenia w wyniku, więc
 niepowodzenie czynności zapisu jest odrębne od oceny poprawności układu — stąd rozdzielenie komunikatu
 o powodzeniu czynności od zdania opisującego zastrzeżenia układu.
+
+## budowa/klient-poprzedni/src/moduly/agents/licznik-narzedzi.ts
+Nadmiar narzędzi degraduje wywołanie po cichu: docierają do modelu bez opisów, więc
+model po nie nie sięga, a nic tego nie zgłasza. Liczba pochodzi z jednego wyliczenia
+(policz) obsadzonego w trzech oknach modułu — Agent Builder, Skills Manager, Connectors
+Manager — więc przypisanie umiejętności w jednym oknie przestawia liczbę w pozostałych.
+Wtyczki nie wchodzą do liczby: server/internal/narzedzia/ekspert_definicja.go bierze
+do doboru narzędzi wyłącznie Agent.SkillIds i Agent.ConnectorIds, a wtyczka jedzie
+katalogiem rozszerzeń powłoki (--plugin-dir), nie wykazem tools/list. Serwer narzędzi
+przesiewa nie wykaz kontraktu, lecz wykaz okna — kontrakt powiększony o pozycje
+dokładane przez rolę okna (WykazZasiegu w zasieg_roli.go). Licznik zna sam kontrakt,
+bo klient nie wie, w jakiej roli okno eksperta zostanie otwarte: kod wskazujący
+narzędzie roli zostanie policzony jako nierozpoznany, choć rdzeń go rozpozna. Liczba
+jest dolnym oszacowaniem dla okien roli asystenta i dokładna dla okien roboczych.
+Progu znaczeniowego nie ma i licznik go nie udaje — nie maluje pasma zielony/bursztyn/
+czerwony po zmyślonych wartościach. Bursztyn zapala się wyłącznie przy stanie
+wyprowadzonym ze złożenia wykazu eksperta: gdy zawężenie nie weszło i model dostanie
+wykaz w całości.
+
+Funkcja policz rozstrzyga trzy przypadki, każdy osobnym zdaniem, bo znaczą co innego:
+kodów nie ma — zawężenia nie ma czym wykonać, idzie wykaz w całości; kody są, ale żaden
+nie nazywa narzędzia ani grupy — jak wyżej, tyle że z winy kodów, więc zdanie wymienia
+je z nazwy; rozpoznano co najmniej jeden kod — wykaz zawężony, liczba jest doborem.
+
+Widok licznika: stan nigdy nie jest samym kolorem, bursztyn niesie zdanie i znacznik
+stanu, bo żeton barwy nie zwalnia komponentu z etykiety tekstowej. Atrybut aria-live
+ogłasza zmianę liczby, bo liczba zmienia się wskutek czynności wykonanej w innym oknie
+modułu.
+
+Zdanie uwagi łączy trzy rzeczy naraz, bez wchodzenia w drugie okno: powód braku
+zawężenia, gdy jest, kody nierozpoznane, gdy są, i wtyczki, gdy są — te ostatnie
+z zaznaczeniem, że jadą inną drogą niż wykaz narzędzi. Na końcu zawsze zastrzeżenie,
+że licznik nie orzeka, czy liczba jest bezpieczna.
+
+## budowa/klient-poprzedni/src/moduly/automations/przyjecie-przekazania.ts
+Rodzina komend `automation.*` jest jedynym magazynem scenariuszy w platformie — moduły Browser,
+Assistant i Terminal nie mają własnego magazynu i oddają scenariusze tutaj. Do magazynu prowadzą
+dwie drogi: zapis wprost komendą `automation.workflow.save`, którym idzie rutyna Assistanta oraz
+scenariusz zapisany z okna Browsera, trafiający do wykazu automatyk od razu; oraz przeniesienie
+kompletu komendą `context.transfer`, którym Browser oddaje scenariusz do modułu docelowego. Rdzeń
+zakłada wtedy okno modułu Automations, a przeniesiony komplet trafia do konfiguracji sesji tego
+okna, do obszaru kontekstu rozmowy, pod polem `transferredContext`. Ten plik obsługuje drugą drogę
+od strony odczytu: wykaz okien zawężony do modułu, a dla każdego okna konfiguracja obowiązująca
+zawężona do obszaru kontekstu rozmowy. Plik niczego nie zapisuje i niczego nie przyjmuje sam —
+przeniesiony komplet jest propozycją, a zapis do magazynu automatyk pozostaje osobną, jawną
+czynnością operatora w oknie wykazu. Pole `executionParams` kontrakt opisuje jako `json`, więc
+kształt sprawdzany jest jawnie zamiast rzutowany: przekazanie z modułu, który ułoży komplet inaczej,
+zostaje pominięte zamiast trafić do okna jako scenariusz bez kroków. Okna zamknięte są pomijane przy
+odczycie, ponieważ przekazanie do okna zamkniętego jest przekazaniem odbytym i zakończonym.

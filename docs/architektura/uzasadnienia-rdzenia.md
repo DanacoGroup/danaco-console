@@ -2441,3 +2441,49 @@ odbiera warsztatowi podstawę. Pole wymagane bez wartości usunięte z treści
 sprawia, że pismo wygląda na kompletne, choć nie jest. Wypełnienie pól
 zamianą w napisie treści gubi postać wzorcową pisma — kroje, wcięcia
 i granice akapitów.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_wektor.go
+
+Komenda `image.vectorize` rozstrzyga, co obrysować, w jednym z trzech trybów.
+Tryb `outline` odpowiada na pytanie, gdzie kończy się kształt: obraz sprowadza
+się do dwóch wartości progiem jasności, a obrysowywany jest obszar ciemny —
+tryb właściwy logotypowi, pieczęci, znakowi. Tryb `posterize` odpowiada na
+pytanie, z ilu płaszczyzn barwnych składa się obraz: barwy skupiają się w
+tylu grupach, ile mówi pole `colors`, a każda grupa jest obrysowywana osobno
+— tryb właściwy ilustracji. Tryb `centerline` odpowiada na pytanie, którędy
+biegnie kreska: obszar zostaje ścieńczony do linii o grubości piksela i
+obrysowany jako kreska — tryb właściwy rysunkowi technicznemu i pismu
+odręcznemu, gdzie obrys konturu dałby każdą kreskę jako podwójną pętlę.
+
+Wynik komendy jest zasobem SVG, nie obrazem rastrowym. Idzie do tego samego
+magazynu, co każdy inny wytwór rodziny `image.*`, z formatem `svg`. Rdzeń nie
+mierzy przy nim wymiarów: dekoder obrazu rastrowego nie rozumie formatu SVG,
+a wpisanie tam wymiarów źródła podałoby liczby, których nikt nie zmierzył na
+wyniku. Wymiary niosą atrybuty samego dokumentu SVG.
+
+Granica pola obrazu poddawanego obrysowi wynika z kosztu: obrys przechodzi
+po każdym pikselu i po każdym jego sąsiedzie, więc koszt rośnie liniowo z
+polem, a pamięć maski jest dodatkowa; powyżej szesnastu megapikseli wynik
+miałby więcej wierzchołków niż źródło pikseli.
+
+Barwy trybu `posterize` skupia się metodą k-średnich na próbce pikseli, a nie
+na komplecie: dla obrazu megapikselowego przejście po wszystkich pikselach w
+każdej iteracji kosztuje sekundy, a środki skupień z próbki co dziesiąty
+piksel wychodzą praktycznie takie same. Płaszczyzny idą od najciemniejszej,
+ponieważ w dokumencie SVG ścieżka późniejsza zasłania wcześniejszą, a
+płaszczyzna jasna bywa tłem dla ciemnej.
+
+Środki startowe skupień k-średnich rozkłada się równomiernie po osi jasności
+próbki, nie losowo: losowy start dawałby dwa różne wyniki dla dwóch wywołań
+na tym samym obrazie, a wektoryzacja ma być powtarzalna.
+
+Wartość tolerancji upraszczania przekłada procent kontraktu na odchylenie w
+pikselach: sto procent to odchylenie o osiem pikseli, przy którym z litery
+zostaje czworobok, a zero znaczy brak upraszczania — łamana zostaje taka, jak
+wyszła z obrysu.
+
+Atrybut `shape-rendering="geometricPrecision"` dokumentu SVG mówi
+przeglądarce, żeby nie zaokrąglała wierzchołków do siatki pikseli, bez czego
+uproszczona łamana wygląda w podglądzie na bardziej postrzępioną, niż jest.
+Zapis współrzędnej pomija zbędne zera, ponieważ dokument SVG z setkami
+tysięcy wierzchołków rośnie o megabajty na samych ogonach dziesiętnych.

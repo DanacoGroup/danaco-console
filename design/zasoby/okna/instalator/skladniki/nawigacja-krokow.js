@@ -1,15 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — NAWIGACJA KROKÓW
-   ----------------------------------------------------------------------------
-   Pionowy wykaz kroków kreatora w kolumnie bocznej. Pokazuje, gdzie stoi
-   przepływ i co go czeka. Pozycja niesie stan atrybutem `data-stan`, nie klasą
-   — stan jest daną, nie odmianą składnika.
-
-   Właściwości:
-     klucz      klucz katalogu z tablicą nazw kroków
-     biezacy    numer kroku bieżącego (1..n)
-     naKrok     wywołanie zwrotne (numer) — pozycja jest klikalna, gdy podane
-   ============================================================================ */
+/* Pionowy wykaz kroków kreatora w kolumnie bocznej pokazuje, gdzie stoi przepływ i co go czeka, a pozycja niesie stan atrybutem data-stan, ponieważ stan jest daną, a nie odmianą składnika. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

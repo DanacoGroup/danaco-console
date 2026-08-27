@@ -10,21 +10,9 @@ import { WIERSZE_POLA } from './kontrolki';
 import type { ZrodloPodagentow } from './zrodlo-podagentow';
 import './formularz-powolania.css';
 
-/**
- * Formularz powołania podagenta w panelu Subagent Network — woła `subagent.spawn`.
- *
- * Formularz nie zgaduje za rdzeń: górną granicę powołania niesie kontrakt (pole
- * `count`), więc pole liczbowe ją pokazuje, ale zdanie potwierdzenia liczy
- * podagentów z odpowiedzi rdzenia, nie z tego, o ilu prosił formularz.
- *
- * Odmowa jest nazwana: wiersz odpowiedzi niesie treść i kod wprost z rdzenia
- * oraz zdanie o tym, co można z tym zrobić.
- *
- * Formularz stawia wyłącznie pola, które kontrakt zna: `windowId`, `task`,
- * `name`, `count` i `modelChannelId`.
- */
+// Formularz powołania podagenta woła subagent.spawn; granicę i pola bierze wyłącznie z kontraktu.
 
-/** Górna granica podagentów jednego powołania (kontrakt, `subagent.spawn`). */
+/** Górna granica podagentów jednego powołania, ustalona wprost przez kontrakt komendy powołania podagenta. */
 export const GRANICA_POWOLANIA = 15;
 
 export interface FormularzPowolania {
@@ -144,7 +132,7 @@ function zlozZadanie(
   return tresc;
 }
 
-/** Liczba powołań z pola; `null` znaczy wartość spoza przedziału kontraktu. */
+/** Liczba powołań odczytana z pola formularza; wartość spoza przedziału kontraktu zwraca pustą wartość. */
 function liczbaPowolan(zapis: string): number | null {
   const przycieta = zapis.trim();
   if (przycieta === '') return 1;

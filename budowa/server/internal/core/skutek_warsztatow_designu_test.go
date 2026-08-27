@@ -404,7 +404,7 @@ func TestUkladAutomatycznyStawiaWarstwyWZmierzonychMiejscach(t *testing.T) {
 		t.Errorf("wysokość treści po ułożeniu to %v, a 10+5+20+5+30 daje 70", uklad.ContentHeight)
 	}
 
-	// Pomiar niezależny: stan po zapisie czytamy drugą komendą, nie z odpowiedzi
+	// Pomiar niezależny: stan po zapisie czyta się drugą komendą, nie z odpowiedzi
 	// układu.
 	var wykaz shared.DesignBoardListResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandDesignBoardList,

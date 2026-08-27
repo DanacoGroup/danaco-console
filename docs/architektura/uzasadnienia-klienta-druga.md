@@ -1855,3 +1855,11 @@ wynikają z odpowiedzi, którą panel już ma; drugie wywołanie po te same licz
 byłoby pytaniem o coś, co leży na stole. Moduł nie zna struktury dokumentu:
 wejściem są fragmenty kontraktu, wyjściem liczby i wykaz przefiltrowany,
 dzięki czemu rachunek sprawdza się bez stawiania okna.
+
+## budowa/klient-poprzedni/src/strona-glowna/kafel-komponentu.ts
+Kafel dzieli kartę ze środowiskiem, o mniejszej wadze: wariant komponentu odbiera wstęgę i cień sygnału w spoczynku, zmniejsza skalę ikony i zapisuje etykietę krojem bazowym półgrubym, nie nagłówkowym. Różnica krojów niesie znaczenie: krój nagłówkowy oznacza wejście do środowiska, bazowy oznacza zbudowanie komponentu, dlatego kafel nie dostaje klasy akcentu, którą nosi karta środowiska. Wiersz pusty metadanych wyglądałby jak metadane, których nie odczytano, dlatego kafel rodzaju wiersza w ogóle nie dostaje. Czas formatuje widok, bo rdzeń nie zna strefy czasowej Operatora; data pojawia się dopiero, gdy zmiana wypadła innego dnia, a w dniu bieżącym wystarcza sama godzina.
+
+## budowa/klient-poprzedni/src/moduly/workspace/warstwy-instrukcji.ts
+Warstwy instrukcji stoją w osobnym pliku od okna, bo to inna odpowiedzialność: okno prowadzi zapis
+i odczyt, tu leży wyłącznie przedstawienie warstwy. Wykaz poziomów i ich nazwy pochodzą z modułu
+poziomów zasięgu.

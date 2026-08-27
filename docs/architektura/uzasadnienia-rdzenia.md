@@ -5608,3 +5608,13 @@ zgodnie z plikiem session/wstrzymanie_windows.go. Sprawdzian pyta o skutek
 w systemie, nie w rdzeniu: czyta stan procesu z /proc/<pid>/stat, gdzie
 litera T znaczy zatrzymany sygnałem. Uwierzenie polu supported w odpowiedzi
 byłoby uwierzeniem mierzonemu, że zrobił to, co miał zrobić.
+
+## budowa/server/internal/core/skutek_zakresow_narzedzi_test.go
+
+Sprawdzenie, że zakres realnie powstrzymuje wywołanie, jest sednem tego
+sprawdzianu: zakres zapisany, którego rdzeń nie czyta przy wykonaniu, byłby
+tylko suwakiem w oknie — wyłączenie pozycji w interfejsie nie przeszkadzałoby
+modelowi wywołać jej dalej.
+
+Pozycja bez wiersza zakresu przechodzi, ponieważ platforma niczego nie
+zawęża z góry — zawężenie powstaje wyłącznie z zapisanego zakresu.

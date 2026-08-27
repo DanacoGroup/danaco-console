@@ -674,3 +674,26 @@ pytanie o los treści, bo bez tego nie da się odróżnić wyłączenia od
 usunięcia — treść zostaje. Żadna z pozycji nie wymaga restartu: pamięć czyta
 rozstrzygacz przy każdym złożeniu kontekstu, a reguły wyciszania — nakładka
 przy każdym otwarciu menu.
+
+## budowa/server/internal/store/migracja_009_zaczyn_akcji.sql
+
+Wiersze pochodzą z `shared/contract.json`, z sekcji `komendy` (nazwa komendy,
+opis, pola obowiązkowe żądania) oraz z sekcji `narzedzia`. Zaczyn obejmuje te
+komendy, które kontrakt wskazuje jako sterowanie platformą; poza wykazem
+zostają `connection.hello` i `session.bind`, ponieważ są czynnościami warstwy
+połączenia klienta, nie akcjami panelu. Osobno wchodzi pasek narzędzi promptu
+każdego modułu: każdy moduł niesie okno rozmowy, a jego pasek promptu niesie
+wysłanie polecenia, zatrzymanie odpowiedzi i historię poleceń. Akcja
+wskazująca komendę spoza kontraktu byłaby pozycją, której nie da się wywołać,
+więc do zaczynu nie wchodzi — takie akcje dochodzą wierszami, bez zmiany kodu,
+gdy ich komendy wejdą do kontraktu.
+
+Poziom zasięgu akcji jest wyprowadzony z bytu, na którym komenda działa:
+`environment.enter` działa na środowisku, komendy sesji i kolejek na karcie
+sesji, komendy okna na oknie komunikacji, komendy wiadomości na oknie czatu
+modułu, a pozostałe na całej platformie.
+
+Każde wstawienie kończy się `ON CONFLICT(kod) DO NOTHING`, dzięki czemu
+migracja przechodzi także na bazie, w której część wierszy już istnieje.
+Klauzula `WHERE true` przed `ON CONFLICT` jest wymogiem składni SQLite dla
+zapisu `INSERT ... SELECT` z upsertem.

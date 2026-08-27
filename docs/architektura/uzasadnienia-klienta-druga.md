@@ -4297,3 +4297,25 @@ a warstwa składająca decyduje, gdzie go postawić, dzięki czemu te same okna 
 roboczy powłoki, i w stanowisko sprawdzianu. Zamknięcie modułu odpina subskrypcję zmiany
 dokumentu; pole jest w umowie rejestru modułów nieobowiązkowe, woła je dziś stanowisko
 sprawdzianu, a powłoka zawoła je, gdy dostanie granicę życia widoku.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-kontekst.ts
+Trzy punkty to historia wymiany, pamięć długoterminowa i bieżący stan roboczy. Każdy przyjmuje jedną
+z dwóch wartości, odrębna albo współdzielona, z domyślną odrębna: rdzeń startuje z pełną izolacją,
+współdzielenie jest zawsze decyzją Operatora, nigdy stanem narzuconym. Treść wyjaśnień odrębna albo
+współdzielona przy każdym kluczu jest przepisana z definicji tego samego pliku rdzenia — jedno źródło
+prawdy, żeby zdanie widziane przez Operatora nie rozjechało się z tym, co egzekwuje maszyneria. Obszar
+woła komendy odczytu i zapisu kontekstu wprost; wysłanie komendy jest opakowane w obietnicę, a odmowa
+rozstrzygana opisem odmowy. Poziom zasięgu i warstwa nie są tu zaszyte: oba przychodzą ze stanu
+wspólnego okna. Zaszycie ich znaczyłoby, że selektor zasięgu w lewym panelu i wybór warstwy w pasie
+narzędzi pokazują jedno, a odczyt idzie po drugie. Wartość obecna ma trzy stany, celowo nierysowane
+identycznie: zapisana — odczyt na warstwie czynnej powiódł się, Operator świadomie rozstrzygnął tę
+wartość na tym zasięgu i tej warstwie; domyślna — odczyt warstwy czynnej zwrócił brak zasobu, zapisu
+Operatora nie ma, więc widok pokazuje wartość domyślną platformy jawnie oznaczoną jako domyślna, a nie
+jako świadomy zapis; nieodczytana — odczyt zwrócił inną odmowę niż brak zasobu, to nie jest informacja
+o stanie maszyny, tylko brak informacji, i tak też jest nazwana. Żaden z tych stanów nie jest rysowany
+jako sukces i nie ma tu zapisu optymistycznego: widok zmienia się dopiero po odpowiedzi rdzenia, nigdy
+przed nią. Wybór nowej wartości i przycisk zapisu zostają zawsze czynne; odmowa rdzenia jest meldowana
+zdaniem, nie blokadą kontrolki.
+
+## budowa/klient/src/wejscie/skladniki/zakladki-pigulki.ts
+Pigułka w pełnym wypełnieniu czyta się jak przycisk działania, a to kontrolka wskazująca położenie, stąd stan wybrany niesie podświetlenie. Odzyskiwanie dostępu nie jest trzecią drogą — jest wyjściem z logowania, więc w zakładkach zostaje wtedy zaznaczone logowanie.

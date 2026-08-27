@@ -3079,3 +3079,6 @@ składa się już z zapisu: od redakcji stanowisko należy do Operatora.
 Wersje leżą osobno, bo `roundtable.consensus.version.list` ma oddać kolejne
 redakcje do porównania. Licznik w kolumnie `wersja` mówi, ile ich było;
 porównać da się dopiero wtedy, gdy każda została.
+
+## budowa/desktop/src-tauri/src/zamkniecie.rs
+Zamknięcie okna nie kończy pracy sesji: praca toczy się w rdzeniu na serwerze wdrożenia i biegnie dalej bez względu na to, czy okno stoi otwarte, więc ponowne otwarcie wraca do tej samej sesji. To nie jest blokada: przycisk zamknięcia działa natychmiast i bez pytania, zmienia się wyłącznie skutek.

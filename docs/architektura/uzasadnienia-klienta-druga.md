@@ -443,3 +443,48 @@ a przepisaniem drogi zostawiałoby Operatora przed formularzem wejścia bez
 żadnej drogi dalej, ponieważ rejestracja odmawia wtedy kodem `conflict`,
 a logowanie oczekiwaniem na potwierdzenie adresu. To samo dotyczy listu
 odczytanego na innej maszynie.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-process-monitor.ts
+
+Okno Process Monitor pokazuje na żywo rejestr procesów rdzenia terminala, w tym proces
+zainicjowany poleceniem sztucznej inteligencji, zgodnie z rejestrem procesów rdzenia serwera.
+Aktualizacja na żywo znaczy ze zdarzeń: okno odczytuje wykaz przy wejściu i na wyraźne żądanie,
+a każdą późniejszą zmianę przynosi zdarzenie rdzenia. Odpytywanie w pętli dałoby ten sam obraz
+drożej i z opóźnieniem, a przy stu procesach zalałoby gniazdo. Filtr stanu i inicjatora jedzie do
+rdzenia parametrem komendy, bo tak stanowi kontrakt i tak wynik jest spójny z dziennikiem rdzenia;
+grupowanie jest wyłącznie porządkiem wyświetlania i zostaje w oknie. Wyjście na żywo idzie do
+wspólnego bufora konsoli wyjścia, ale bufor żyje jedno połączenie: po rozłączeniu i ponownym
+podłączeniu ma zero fragmentów, choć rdzeń wciąż oddaje pełną treść. Osobny przycisk pozycji pyta
+o wyjście procesu wprost i pokazuje je przy pozycji, a nie w buforze, więc żaden wiersz nie
+wchodzi do konsoli dwa razy.
+
+Okno nie ma dziś ani jednej pozycji bez pokrycia w rdzeniu: wstrzymanie procesu było ostatnią
+i już stoi przy wierszu wykazu.
+
+Wstrzymanie albo wznowienie procesu w rdzeniu niesie pole odpowiedzi mówiące, czy system maszyny
+rdzenia w ogóle zna wstrzymanie obcego drzewa procesów. Fałsz tego pola znaczy, że proces został
+nietknięty, ponieważ platforma tego nie umie — co jest czymś innym niż niepowodzenie czynności.
+Okno mówi to wprost, zamiast pokazywać powodzenie przy procesie, który dalej zajmuje procesor.
+
+Czas oczekiwania rdzenia na domknięcie procesu przed odczytem wyjścia wynosi trzy sekundy.
+Kontrakt dopuszcza sześćdziesiąt tysięcy milisekund, ale czekanie zajmuje zadanie gniazda,
+a minuta bez odpowiedzi wygląda jak zawieszone okno. Trzy sekundy wystarczają, aby polecenie
+krótkie zdążyło się domknąć i oddało komplet wraz z kodem wyjścia; polecenie długie i tak odda
+wyjście dotychczasowe ze stanem biegnącym, bo czekanie nie jest warunkiem odpowiedzi, a kto chce
+zobaczyć resztę, odczytuje ponownie.
+
+Zwinięcie podglądu wyjścia nie pyta rdzenia: drugie kliknięcie zdejmuje treść z widoku i mówi to
+wprost, inaczej nie dałoby się odróżnić zwinięcia od odczytu, który wrócił pusty.
+
+Zdanie potwierdzenia odczytu wyjścia mierzy treść, nie sam fakt odpowiedzi. Wyjście puste jest
+przebiegiem udanym, bo polecenie mogło nic nie wypisać, ale różni się od wyjścia niepustego —
+inaczej potwierdzenie znaczyłoby to samo w obu przypadkach. Rozjazd stanu też idzie wprost: wykaz
+w oknie jest kopią wcześniejszego odczytu, a odpowiedź na odczyt przychodzi z tej chwili, więc gdy
+się różnią, świeższa jest odpowiedź.
+
+Odmowa rdzenia przy braku wyjścia procesu idzie dosłownie, ponieważ sama nazywa dokładny powód:
+czy proces nigdy nie ruszył, wypadł z historii, czy rdzeń był uruchomiony ponownie. Parafraza
+zgubiłaby wszystkie trzy powody.
+
+Złożenie powierzchni rejestru procesów jest konstrukcją czystą: nie domyka się na stanie okna ani
+na rdzeniu, więc dała się wyjąć bez przenoszenia zależności.

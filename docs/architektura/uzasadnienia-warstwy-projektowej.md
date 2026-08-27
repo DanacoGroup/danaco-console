@@ -542,3 +542,18 @@ pracy i jest od niego niższy.
 Arkusz nie ma reguły disabled ani wygaszającej: przyciski transportu
 wyglądają tak samo w każdym stanie kolejki, a stan niesie osobna plakietka
 ze słowem opisującym stan.
+
+## budowa/klient-poprzedni/src/powloka/pasek-gorny.css
+Wysokość 48 pikseli, tło ramy i barwa treści przychodzą z klasy biblioteki
+komponentów. Arkusz sięga wyłącznie po żetony motywu i klasy biblioteki;
+klasy, których biblioteka nie niesie — kontekst pracy, rozdzielacz i uchwyt
+profilu — stoją tutaj pod nazwą własną widoku. Pasek jest atramentowy w obu
+motywach: każda kontrolka, która na nim staje, ubiera się żetonami ramy, nie
+żetonami treści; wyjątkiem są nakładki opadające pod pasek (wykaz wyników,
+panel menu profilu), bo te leżą już na powierzchni pracy i przełączają się
+z motywem razem z nią. Uchwyt menu profilu buduje skrypt menu profilu
+mechanizmem biblioteki menu drzewa, który normalnie ubiera go żetonami
+treści; na powierzchni pracy to jest właściwe, ale na atramencie ramy uchwyt
+był jedyną rzeczą w pasku przełączającą się z motywem, więc w motywie jasnym
+stawał się jasnym kafelkiem z ciemnym napisem — stąd żetony ramy tutaj, bez
+zmiany mechanizmu i bez ruszania biblioteki.

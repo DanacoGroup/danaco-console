@@ -6200,3 +6200,13 @@ w wykazie, ponieważ wywołanie z podagentem ma odcinki zagnieżdżone i płaska
 lista zgubiłaby to, kto kogo wywołał. Wspólny zapis braku zlałby wyłączony
 zapis treści z pustą odpowiedzią modelu, dlatego okno rozróżnia te dwa stany
 osobnym zdaniem.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja-wydanie.ts
+Treść promptu i odpowiedzi jest w kontrakcie domyślnie wyłączona, więc
+przełącznik startuje wyłączony i jego zdanie mówi, co jego włączenie wynosi
+z instalacji; wartość początkowa odwrotna wynosiłaby treść rozmów poza rdzeń
+przez samo naciśnięcie przycisku. Plik oddaje przeglądarka, a nie rdzeń, bo
+treść wydania przychodzi w odpowiedzi i nie ma po co wracać do rdzenia po
+drugie zapisanie tego samego. Rdzeń ma prawo wydać w innym formacie niż
+poproszono i ma prawo zredagować treść; jedno i drugie musi być widoczne
+w zdaniu o pliku, bo od tego zależy, czym plik wolno się posłużyć.

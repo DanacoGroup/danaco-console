@@ -1,3 +1,5 @@
+*Dokument specyfikuje przepływ okien Danaco Console: od uruchomienia aplikacji, przez logowanie, do okna roboczego strony głównej.*
+
 # Danaco Console — Przepływ okien: od uruchomienia aplikacji do okna roboczego
 
 | | |
@@ -1133,11 +1135,11 @@ Magistrala przechowuje referencje do artefaktów, nie ich kopie. Przekazanie nie
 | Odłożenie i pobranie artefaktu | 3 | Menu kontekstowe artefaktu, przeciągnięcie |
 | Reguły kierowania artefaktów | 4 | Okno konfiguracji, polecenie języka naturalnego w Chat Window, paleta poleceń `Ctrl/Cmd + K` |
 
-**Zasięg.** Zasięg magistrali jest wartością ustawienia konfiguracyjnego i przyjmuje jeden z poziomów zasięgu opisanych w `architektura/izolacja-i-zaleznosci.md` (rozdz. 6): sesja, projekt albo środowisko. Przy zasięgu „sesja” magistrala obejmuje moduły jednej karty sesji; przy zasięgu „projekt” — wszystkie karty grupy projektu; przy zasięgu „środowisko” — wszystkie karty środowiska. Zasięg globalny nie występuje: artefakt nie przechodzi między środowiskami magistralą, lecz przez moduł Library.
+**Zasięg.** Zasięg magistrali jest wartością ustawienia konfiguracyjnego i przyjmuje jeden z poziomów zasięgu (rozdz. 6): sesja, projekt albo środowisko. Przy zasięgu „sesja” magistrala obejmuje moduły jednej karty sesji; przy zasięgu „projekt” — wszystkie karty grupy projektu; przy zasięgu „środowisko” — wszystkie karty środowiska. Zasięg globalny nie występuje: artefakt nie przechodzi między środowiskami magistralą, lecz przez moduł Library.
 
-**Relacja do modułu Library.** Magistrala jest przepływem roboczym o ograniczonej trwałości, moduł Library (`moduly/library.md`) jest repozytorium trwałym. Artefakt odłożony do magistrali pozostaje w niej przez okres wskazany ustawieniem retencji; przeniesienie do Library jest jawnym działaniem Użytkownika i jedyną drogą trwałego zachowania artefaktu oraz jedyną drogą jego przeniesienia między środowiskami.
+**Relacja do modułu Library.** Magistrala jest przepływem roboczym o ograniczonej trwałości, moduł Library jest repozytorium trwałym. Artefakt odłożony do magistrali pozostaje w niej przez okres wskazany ustawieniem retencji; przeniesienie do Library jest jawnym działaniem Użytkownika i jedyną drogą trwałego zachowania artefaktu oraz jedyną drogą jego przeniesienia między środowiskami.
 
-**Relacja do punktów izolacji.** Magistrala respektuje reguły izolacji kontekstu obowiązujące parę modułów i zasięg bieżącej karty (`architektura/izolacja-i-zaleznosci.md`, rozdz. 4, 6, 9). Reguła izolacji kontekstu ustawiona dla pary modułów rozstrzyga, czy artefakt odłożony w module źródłowym jest widoczny w module docelowym; przekazanie niezgodne z regułą nie następuje, a magistrala prezentuje przy pozycji opis obowiązującej reguły wraz z odnośnikiem do okna konfiguracji punktów izolacji (rozdz. 10 tamże).
+**Relacja do punktów izolacji.** Magistrala respektuje reguły izolacji kontekstu obowiązujące parę modułów i zasięg bieżącej karty (rozdz. 4, 6, 9). Reguła izolacji kontekstu ustawiona dla pary modułów rozstrzyga, czy artefakt odłożony w module źródłowym jest widoczny w module docelowym; przekazanie niezgodne z regułą nie następuje, a magistrala prezentuje przy pozycji opis obowiązującej reguły wraz z odnośnikiem do okna konfiguracji punktów izolacji (rozdz. 10 tamże).
 
 **Relacja do encji artefaktu w modelu danych.** Pozycja magistrali odwołuje się do wiersza `artefakt` (`architektura/model-danych.md`, rozdz. 16.1) przez jego identyfikator, zachowując moduł pochodzenia i kartę sesji odłożenia. Kolekcje i etykiety artefaktu (rozdz. 16.3–16.5) pozostają niezmienione — magistrala ich nie tworzy i nie modyfikuje.
 
@@ -1313,8 +1315,9 @@ Zestawienie porządkowe: dla każdego ekranu/okna głównego przepływu — co g
 
 ---
 
-*Koniec dokumentu. Danaco Console — Przepływ okien: od uruchomienia aplikacji do okna roboczego, wersja 2.0.*
+*Koniec dokumentu — Przepływ okien, wersja 2.0.*
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

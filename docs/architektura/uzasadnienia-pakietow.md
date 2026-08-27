@@ -2795,3 +2795,19 @@ Funkcja noweRepozytoriumDesignu przyjmuje parametr bazy danych osobno,
 ponieważ obszar kompozycji prowadzi zapis pełnej listy warstw w transakcji
 (usuń i wstaw od nowa), której zapis promptu nie potrzebuje — mieści się w
 jednym poleceniu.
+
+## budowa/server/internal/konfig/rozstrzyganie_test.go
+
+Rozstrzygacz zasięgu jest jedyną logiką pakietu, w której błąd nie wywraca
+niczego. Ustawienie rozstrzygnięte o jeden poziom za szeroko przecieka między
+sesjami Operatora, a widać to dopiero po fakcie — po zachowaniu modelu, nie po
+komunikacie. Reguła ma dwa piętra: POZIOM rozstrzyga pierwszy, OŚ dopiero
+w ramach poziomu. Odwrócenie tego znaczyłoby, że wybór konta unieważnia decyzję
+podjętą wprost w oknie komunikacji — czyli odbiera Operatorowi sterowanie
+zamiast je rozszerzać. Kompilacja tej reguły nie pilnuje, bo obie drogi
+zwracają wartość tego samego typu.
+
+TestNajwezszyZapisWygrywa jest sprawdzianem, dla którego ten plik powstał.
+Reguła schodzenia w górę jest jedyną drogą, którą Operator odzyskuje ustawienie
+szersze po skasowaniu węższego — pomyłka na którymkolwiek szczeblu zostawia go
+z wartością, której nigdzie nie zapisał.

@@ -2662,3 +2662,13 @@ a właśnie tego rodzina health zabrania.
 Zapis wyniku podnosi jednocześnie odbicie w definicji (pola ostatni_stan
 i ostatni_przebieg) w jednej transakcji, żeby wykaz sond nie pokazywał stanu innego
 niż ostatni wiersz serii.
+
+## trwalosc_niszczaca_test.go
+
+Rdzeń wykonuje trzy drogi kasujące dane przy każdym starcie: kaskada
+schematu zabiera okna i wiadomości razem z sesją, kosz kasuje trwale po
+terminie, a retencja przycina historię sama. Każda z nich jest
+nieodwracalna i żadna nie pyta Operatora. Sprawdzian mierzy dwie rzeczy
+naraz: że każda droga kasuje to, co ma kasować, i że żadna nie tyka niczego
+poza tym. Druga część jest ważniejsza, ponieważ nadmiarowe skasowanie nie
+zgłasza się błędem, tylko brakiem danych, który łatwo przeoczyć.

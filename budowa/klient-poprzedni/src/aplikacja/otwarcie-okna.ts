@@ -3,7 +3,11 @@ import type { OpisOkna } from '../okno-komunikacji/opis-okna';
 import { zamowienieOkna } from '../okno-komunikacji/zamowienie-okna';
 import type { Kanal } from '../protokol/kanal';
 
-/** Wynik zamówienia okna: rdzeń otworzył okno albo podał przyczynę odmowy. */
+/**
+ * Wynik zamówienia okna: rdzeń otworzył okno albo podał przyczynę odmowy.
+ * Oba pola są rozłączne, więc odbiorca rozstrzyga powodzenie po polu okna,
+ * a treść odmowy czyta z pola błędu.
+ */
 export interface OdpowiedzNaZamowienie {
   /** Okno otwarte przez rdzeń; `null`, gdy komenda się nie powiodła. */
   okno: Window | null;
@@ -12,21 +16,10 @@ export interface OdpowiedzNaZamowienie {
 }
 
 /**
- * Zamówienie kolejnego okna komunikacji w rdzeniu.
- *
- * Jedna odpowiedzialność: wysłanie komendy `window.create` dla okna innego
- * niż uzgodnione przy nawiązaniu połączenia. Pierwsze okno otwiera
- * uzgodnienie (`protokol/uzgodnienie`); drugie i trzecie powstają dopiero
- * wtedy, gdy Operator wprowadza je na scenę, i przechodzą tą samą drogą
- * kontraktu — mają własny identyfikator, własną historię i własne ustawienia.
- *
- * Nazwa komendy i kształt żądania pochodzą z `shared/contract`;
- * przekładem opisu okna na treść żądania zajmuje się `zamowienieOkna`, więc
- * ten plik nie zna ani jednej nazwy pola kontraktu.
- *
- * Rola nadpisuje rolę z opisu, bo o roli okna na scenie rozstrzyga jego
- * miejsce w figurze koordynator–wykonawca, a nie konfiguracja
- * budowania.
+ * Zamówienie kolejnego okna komunikacji w rdzeniu: wysyła komendę
+ * `window.create` dla okna innego niż uzgodnione przy nawiązaniu połączenia.
+ * Rola nadpisuje rolę z opisu okna, ponieważ rozstrzyga o niej miejsce okna
+ * w figurze koordynator–wykonawca.
  */
 export function zamowOknoRdzenia(
   kanal: Kanal,

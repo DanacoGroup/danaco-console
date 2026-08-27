@@ -2407,3 +2407,19 @@ ma i skąd tekst pochodzi.
 Kształt pola `details` jest sprawdzany, a nie zakładany: kontrakt opisuje je jako
 `unknown`, więc rzutowanie na własny typ byłoby obietnicą bez pokrycia. Brak pola
 albo pole innego kształtu daje pusty wynik, nie wyjątek.
+
+## budowa/klient-poprzedni/src/aplikacja/otwarcie-okna.ts
+
+Pierwsze okno komunikacji otwiera uzgodnienie połączenia, prowadzone w pliku
+`protokol/uzgodnienie`. Kolejne okna powstają dopiero wtedy, gdy Operator
+wprowadza je na scenę, i przechodzą tą samą drogą kontraktu: mają własny
+identyfikator, własną historię oraz własne ustawienia.
+
+Nazwa komendy i kształt żądania pochodzą z pliku `shared/contract`, a przekład
+opisu okna na treść żądania wykonuje `zamowienieOkna`. Dzięki temu plik
+zamówienia nie zna ani jednej nazwy pola kontraktu i nie rozjeżdża się z nim
+przy zmianie kształtu żądania.
+
+Rola przekazana w wywołaniu nadpisuje rolę zapisaną w opisie okna, ponieważ
+o roli okna na scenie rozstrzyga jego miejsce w figurze koordynator–wykonawca,
+a nie konfiguracja budowania pakietu.

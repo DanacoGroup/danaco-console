@@ -4,28 +4,7 @@ import type { PozycjaMenu } from './menu-paneli';
 import './menu.css';
 
 /**
- * Rząd ikon-skrótów stojący przy `⋮` w nagłówku okna rozmowy.
- *
- * Zestaw skrótów przychodzi z zewnątrz w `pozycje`; ten moduł go nie wybiera.
- * Skrót powstaje wyłącznie dla pozycji otwieralnej — skrót do panelu, którego
- * nie ma czym zbudować, byłby atrapą. Gdy żadna pozycja nie jest otwieralna,
- * rząd zostaje pusty i nie zajmuje miejsca (`:empty` w `menu.css`); brak jest
- * nazwany w zdaniu pod wykazem menu, a nie udawany martwą ikoną.
- *
- * Dymek niesie nazwę i skrót w jednym wierszu — „Terminal  Ctrl+`" — przez
- * `title` i `aria-label`. Komponent `.dn-tooltip` z `komponenty/drobne.css`
- * wymaga własnego elementu treści wewnątrz przycisku i chmurki pozycjonowanej
- * nad nim, co w rzędzie ikon nagłówka kolidowałoby z listą menu na tej samej
- * warstwie; dymek przeglądarki wystarcza i nie dokłada warstwy.
- *
- * Skrót klawiaturowy jest tu wyłącznie napisem — nic w tym module nie nasłuchuje
- * klawiszy.
- *
- * Znacznik „coś nowego" zapala się tylko na żądanie z zewnątrz (`znacznik`);
- * moduł nie ma własnego źródła sygnału.
- *
- * Moduł nie zna kolumny paneli i nie otwiera niczego sam — woła `naWybor`. Stan
- * „otwarty" czyta z zewnątrz, żeby rząd i menu pokazywały ten sam stan.
+ * Moduł buduje rząd przycisków skrótów do paneli pomocniczych, wyświetlanych w nagłówku okna rozmowy wraz z podpowiedzią nazwy i skrótu klawiaturowego.
  */
 export interface OpcjeSkrotow {
   pozycje: readonly PozycjaMenu[];

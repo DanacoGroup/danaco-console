@@ -3428,3 +3428,7 @@ uniksowych. Dlatego czynność zgłasza się jako niewspierana, zamiast robić c
 podobnego: kontrakt komendy zgłoszenia wstrzymania ma na to osobne pole,
 a proces zostaje nietknięty, więc operator dostaje prawdę o możliwościach
 maszyny zamiast odpowiedzi udanej, po której proces dalej zajmuje procesor.
+
+## budowa/server/internal/models/konto.go
+Kanał nadaje fragment MetadaneKonta także w chwili przełączenia konta w trakcie sesji — rotacja konta
+ma być widoczna wołającemu, nie milcząca.

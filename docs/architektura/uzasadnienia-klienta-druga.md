@@ -4062,3 +4062,25 @@ pokazuje gospodarz pasa pomocniczych.
 
 ## budowa/klient/src/wejscie/skladniki/metody-logowania.ts
 Pusta lista dróg pobocznych nie mówi, że są jakieś, a lista z wygaszonymi pozycjami mówi, co można włączyć w ustawieniach. Składnik zwraca wykaz węzłów, nie jeden węzeł: etykieta i siatka metod są rodzeństwem w kolumnie panelu. Opakowanie ich w pudełko wprowadziłoby dodatkowy poziom, przez który odstęp kolumny liczyłby się raz zamiast dwa.
+
+## budowa/klient-poprzedni/src/rozmowa/prowenancja.ts
+Rdzeń nadaje prowenancję pierwszym fragmentem strumienia, przed jakąkolwiek
+treścią odpowiedzi, także wtedy, gdy proces kanału w ogóle nie wystartuje.
+Kształt odpowiada strukturze `injection.Prowenancja` po stronie rdzenia; nazwy
+pól po stronie sieci są angielskie, po stronie modułu polskie. Prowenancja jest
+wyłącznie opisem wywołania — niczego nie dopuszcza ani nie wstrzymuje.
+
+Pola kodu kanału, adaptera, adresu i środowiska wykonania są dodatkowe wobec
+pól procesu: serwer emituje je tylko dla kanałów bez własnego procesu (sieć,
+echo), a dla kanału głównego uruchamianego lokalnie zostają puste.
+
+## budowa/klient-poprzedni/src/rozmowa/stan-rozmowy.ts
+Stan wysyłania jest jawny, ponieważ Operator ma widzieć, że tura biegnie,
+zanim przyjdzie pierwszy znak odpowiedzi. Nie jest bramką: przycisk
+zatrzymania pozostaje czynny w każdym stanie, a pole wpisywania nigdy nie jest
+wyszarzane.
+
+Próg sekund milczenia strumienia jest wysoki, bo model bywa cichy, kiedy
+rozumuje — alarm po kilku sekundach byłby fałszywy. Po upływie progu przyczyna
+(zerwane łącze, martwy proces kanału, długie rozumowanie) nie ma znaczenia:
+Operator dostaje opis ciszy zamiast niezmiennego napisu „Wysyłanie…".

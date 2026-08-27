@@ -2853,3 +2853,26 @@ Zapowiedź nie jest okienkiem dialogowym i nie odbiera klikalności: pierwsze
 naciśnięcie oddaje zdanie odmowy z powodem, drugie wykonuje. Adnotacja wskazana
 inna niż uzbrojona uzbraja od nowa, więc zdjęciu zawsze towarzyszy ostrzeżenie
 nazywające rzecz zdejmowaną.
+
+## budowa/klient-poprzedni/src/modele/sekcja-modeli.ts
+
+Oś wskazania jest wspólna dla całej sekcji. Ustawienia bytu, tożsamość i podgląd
+promptu mówią o tym samym bycie: wskazanym modelu albo wskazanym koncie. Trzy
+osobne wybory osi w trzech panelach dałyby trzy rozbieżne wskazania, dlatego
+pasek osi jest jeden i stoi nad zakładkami.
+
+Wykaz kont zasila wybór osi: konta znane rdzeniowi stają się podpowiedziami bytu
+osi `account`, a identyfikatory modeli składa osobne źródło z rejestru kanałów
+oraz z modeli domyślnych kont. Podpowiedź nie zamyka pola — byt spoza wykazu
+wolno wpisać wprost. Sekcja otwiera się przed odpowiedzią rdzenia, a każdy
+z czterech obszarów ma własny komunikat na wypadek braku danych i żaden nie
+blokuje pozostałych.
+
+Identyfikatory modeli trwają między odczytami, ponieważ pochodzą z rejestru
+kanałów czytanego osobną komendą. Zmiana rejestru kont odświeża podpowiedzi kont
+i zostawia modele bez zmian: podanie pustej listy skasowałoby podpowiedź bez
+powodu.
+
+Odczyt sekcji nie rozsyła osi ponownie. Oś zmienia wyłącznie pasek u góry,
+a jego zmiana już ją rozesłała; powtórzenie rozesłania przy odczycie kazałoby
+rdzeniowi przeczytać te same zapisy i tę samą nakładkę drugi raz pod rząd.

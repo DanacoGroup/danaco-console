@@ -1,13 +1,6 @@
-// Odpowiedzialność pliku: udostępnienia odnośnikiem (`udostepnienie_biblioteki`)
-// i nasłuchy zewnętrzne (`webhook_biblioteki` wraz z tabelą zdarzeń) — migracja 185.
-//
-// Odwołanie udostępnienia jest znacznikiem czasu w kolumnie `odwolano`, nie
-// skasowaniem wiersza: odnośnik ma przestać działać, a ślad po nim zostać.
-// Odczyt „wyłącznie czynne" pyta więc o brak znacznika i o termin jeszcze
-// nieminiony — dwie rzeczy, nie jedna.
-//
-// Zdarzenia nasłuchu stoją w tabeli towarzyszącej, więc zapis nasłuchu podmienia
-// je w całości: żądanie kontraktu niesie komplet zdarzeń, nie różnicę.
+// Plik niesie udostępnienia odnośnikiem i nasłuchy zewnętrzne wraz z ich
+// zdarzeniami. Odwołanie udostępnienia zapisuje znacznik czasu zamiast kasować
+// wiersz. Zapis nasłuchu podmienia komplet jego zdarzeń, nie tylko różnicę.
 package dane
 
 import (
@@ -18,7 +11,8 @@ import (
 	"strings"
 )
 
-// UdostepnienieBiblioteki to wiersz tabeli `udostepnienie_biblioteki`.
+// UdostepnienieBiblioteki to wiersz udostępnienia odnośnikiem: token dostępu,
+// zasięg, cel, termin wygaśnięcia oraz znacznik ewentualnego odwołania.
 type UdostepnienieBiblioteki struct {
 	ID        int64
 	Kod       string
@@ -30,7 +24,8 @@ type UdostepnienieBiblioteki struct {
 	Utworzono string
 }
 
-// WebhookBiblioteki to wiersz tabeli `webhook_biblioteki` wraz z jego zdarzeniami.
+// WebhookBiblioteki to wiersz nasłuchu zewnętrznego wraz z jego zdarzeniami:
+// adres docelowy, sekret podpisu, znacznik czynności i ostatnie zgłoszenie.
 type WebhookBiblioteki struct {
 	ID                 int64
 	Kod                string
@@ -85,7 +80,8 @@ const (
 	                                  WHERE webhook_id = ? ORDER BY zdarzenie`
 )
 
-// ZapiszUdostepnienie wystawia odnośnik wraz z tokenem.
+// ZapiszUdostepnienie wystawia odnośnik wraz z tokenem i oddaje zapisany wiersz.
+// Kod albo token puste są odrzucane jako błąd.
 func (r *repozytoriumBiblioteki) ZapiszUdostepnienie(ctx context.Context,
 	udostepnienie UdostepnienieBiblioteki) (UdostepnienieBiblioteki, error) {
 
@@ -114,7 +110,8 @@ func (r *repozytoriumBiblioteki) ZapiszUdostepnienie(ctx context.Context,
 	return zapisane, nil
 }
 
-// Udostepnienia zwraca udostępnienia od najnowszego.
+// Udostepnienia zwraca udostępnienia od najnowszego, opcjonalnie zawężone
+// do jednego celu i do wierszy wciąż czynnych.
 func (r *repozytoriumBiblioteki) Udostepnienia(ctx context.Context, celKod *string,
 	tylkoCzynne bool) ([]UdostepnienieBiblioteki, error) {
 
@@ -125,8 +122,7 @@ func (r *repozytoriumBiblioteki) Udostepnienia(ctx context.Context, celKod *stri
 		argumenty = append(argumenty, *celKod)
 	}
 	if tylkoCzynne {
-		// Czynne znaczy nieodwołane i nieprzeterminowane — odnośnik po terminie
-		// jest równie martwy co odwołany.
+		// Czynne znaczy nieodwołane i nieprzeterminowane.
 		warunki = append(warunki, `odwolano IS NULL AND
 		                           (wygasa IS NULL OR wygasa > strftime('%Y-%m-%dT%H:%M:%fZ','now'))`)
 	}
@@ -171,7 +167,8 @@ func (r *repozytoriumBiblioteki) OdwolajUdostepnienie(ctx context.Context, kod s
 	return zmienione > 0, nil
 }
 
-// ZapiszWebhook zakłada nasłuch albo zmienia zastany wraz z kompletem zdarzeń.
+// ZapiszWebhook zakłada nasłuch albo zmienia zastany wraz z kompletem zdarzeń;
+// kod bez adresu jest odrzucany jako błąd.
 func (r *repozytoriumBiblioteki) ZapiszWebhook(ctx context.Context,
 	webhook WebhookBiblioteki) (WebhookBiblioteki, error) {
 
@@ -227,7 +224,8 @@ func (r *repozytoriumBiblioteki) ZapiszWebhook(ctx context.Context,
 	return r.webhookPoKodzie(ctx, webhook.Kod)
 }
 
-// Webhooki zwraca nasłuchy od najnowszego wraz z ich zdarzeniami.
+// Webhooki zwraca nasłuchy od najnowszego wraz z ich zdarzeniami, opcjonalnie
+// zawężone do wierszy czynnych.
 func (r *repozytoriumBiblioteki) Webhooki(ctx context.Context, tylkoCzynne bool) ([]WebhookBiblioteki, error) {
 	warunek := "1 = 1"
 	if tylkoCzynne {
@@ -263,7 +261,8 @@ func (r *repozytoriumBiblioteki) Webhooki(ctx context.Context, tylkoCzynne bool)
 	return lista, nil
 }
 
-// UsunWebhook zdejmuje nasłuch wraz z jego zdarzeniami (kaskada schematu).
+// UsunWebhook zdejmuje nasłuch wraz z jego zdarzeniami przez kaskadę schematu
+// i oddaje fałsz, gdy nasłuch o podanym kodzie nie istniał.
 func (r *repozytoriumBiblioteki) UsunWebhook(ctx context.Context, kod string) (bool, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunWebhookBiblioteki)
 	if err != nil {
@@ -280,7 +279,8 @@ func (r *repozytoriumBiblioteki) UsunWebhook(ctx context.Context, kod string) (b
 	return zdjete > 0, nil
 }
 
-// webhookPoKodzie odczytuje nasłuch wraz ze zdarzeniami.
+// webhookPoKodzie odczytuje nasłuch wraz ze zdarzeniami po kodzie zewnętrznym,
+// oddając ErrBrakWiersza, gdy nasłuch nie istnieje.
 func (r *repozytoriumBiblioteki) webhookPoKodzie(ctx context.Context, kod string) (WebhookBiblioteki, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzWebhookBiblioteki)
 	if err != nil {
@@ -301,7 +301,8 @@ func (r *repozytoriumBiblioteki) webhookPoKodzie(ctx context.Context, kod string
 	return webhook, nil
 }
 
-// zdarzeniaWebhooka odczytuje zdarzenia jednego nasłuchu.
+// zdarzeniaWebhooka odczytuje zdarzenia jednego nasłuchu, uporządkowane
+// alfabetycznie po nazwie zdarzenia.
 func (r *repozytoriumBiblioteki) zdarzeniaWebhooka(ctx context.Context, webhookID int64) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaZdarzenWebhookaBiblioteki)
 	if err != nil {
@@ -327,7 +328,8 @@ func (r *repozytoriumBiblioteki) zdarzeniaWebhooka(ctx context.Context, webhookI
 	return lista, nil
 }
 
-// odczytajUdostepnienieBiblioteki składa udostępnienie z jednego wiersza wyniku.
+// odczytajUdostepnienieBiblioteki składa udostępnienie z jednego wiersza
+// wyniku, w kolejności kolumn kolumnyUdostepnieniaBiblioteki.
 func odczytajUdostepnienieBiblioteki(wiersz skaner) (UdostepnienieBiblioteki, error) {
 	var udostepnienie UdostepnienieBiblioteki
 	var wygasa, odwolano sql.NullString
@@ -340,8 +342,8 @@ func odczytajUdostepnienieBiblioteki(wiersz skaner) (UdostepnienieBiblioteki, er
 	return udostepnienie, nil
 }
 
-// odczytajWebhookBiblioteki składa nasłuch z jednego wiersza wyniku; zdarzenia
-// dokłada wołający.
+// odczytajWebhookBiblioteki składa nasłuch z jednego wiersza wyniku, w kolejności
+// kolumn kolumnyWebhookaBiblioteki; zdarzenia dokłada strona wołająca.
 func odczytajWebhookBiblioteki(wiersz skaner) (WebhookBiblioteki, error) {
 	var webhook WebhookBiblioteki
 	var sekret, zgloszenie sql.NullString

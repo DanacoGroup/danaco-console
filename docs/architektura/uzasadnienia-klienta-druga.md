@@ -5201,3 +5201,16 @@ zgubienie odpowiedzi rdzenia.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-nastawy.ts
 Ster nastawy nie jest drugim mechanizmem menu: rozwijanie, haczyk, opisy, gałęzie, grupy, pole szukania i stopka należą do biblioteki menu-drzewa, a ten plik bierze ten mechanizm gotowy — istnieje, bo mechanizm drzewa nie wykonuje wyboru, tylko oddaje klucz wołającemu. Bez tej obudowy ten sam kawałek — czyszczenie zdania odmowy, sygnalizacja zajętości podczas wysyłki, wyświetlenie błędu i powrót do stanu potwierdzonego — stałby osobno w każdym sterze. Wyróżnienie idzie wyłącznie z migawki stanu: ster nie zapisuje wyboru u siebie, tylko po wysyłce woła odświeżenie u wołającego, a ten czyta stan potwierdzony przez rdzeń, dzięki czemu nieudana zmiana nie zostawia mylącej etykiety na uchwycie. Ster nie traci klikalności ani na czas wysyłki, ani po odmowie — sygnalizacja zajętości mówi o pracy, nie odbiera możliwości działania. Treść pusta zdania pod uchwytem chowa je z układu, więc ster bez zdania nie zostawia pustego pasa w rzędzie.
+
+## budowa/klient-poprzedni/src/ustawienia/zrodlo-bramki.ts
+Rozdział względem źródła logowania przebiega po bramce, nie po rodzinie komend: tamto źródło woła komendy
+logowania, rejestracji i odświeżenia tokenu, czyli tyle, ile trzeba, żeby wejść. Tych dwóch komend tu nie
+ma, bo w oknie ustawień odmawiałyby zawsze: rejestracja jest wykonalna tylko raz, a bramka jest już
+założona w chwili, gdy okno da się otworzyć; logowanie jest samą bramką i po jej przejściu nie ma czego
+otwierać. Metody rozpoznawania przez system operacyjny rdzeń nie ma zbudowanej i odmawia jej założenia;
+przyjmuje hasło i kod PIN. Komendy odczytu wykazu metod kontrakt nie niesie: wykaz dociera zdarzeniem
+zmiany bramki, które rdzeń rozsyła do wszystkich gniazd, także po czynności wykonanej w innym oknie.
+Odmowę zdjęcia metody orzeka rdzeń; okno jej nie uprzedza. Drogi odzyskania hasła listem na adres e-mail
+nie ma — rdzeń poczty nie wysyła. Zdarzenie zmiany bramki niesie powód zmiany i komplet metod po niej;
+pole metod jest w kontrakcie opcjonalne, więc gdy go brak, słuchacz dostaje sam powód, bo podstawianie
+w to miejsce wykazu poprzedniego byłoby zgadywaniem za rdzeń.

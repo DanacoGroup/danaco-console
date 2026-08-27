@@ -4524,3 +4524,20 @@ wywołaniami.
 
 Warstwa wyższa sprawdza wartość kontraktu, to repozytorium sprawdza skutek
 zapisu.
+
+## budowa/server/internal/narzedzia/schemat_roli.go
+Kontrakt wylicza parametr narzędzia gotowy — typ schematu, typ elementu
+tablicy, komplet wartości wyliczenia — wyłącznie dla komend stojących
+w sekcji narzędzi generowanej z kontraktu. Komenda dołożona przez rolę okna
+z tej sekcji nie pochodzi, więc taki parametr nie istnieje i nie ma go skąd
+wziąć; źródłem staje się wygenerowana struktura żądania, nie ręczny opis, tak
+że zmiana pola w kontrakcie zmienia schemat bez dotykania tego pliku.
+
+Ta droga nie daje opisu pola, bo generator Go kładzie opis w komentarzu,
+którego odbicie nie widzi, więc pole idzie z opisem pustym. Nie daje też
+wykazu wartości wyliczenia: typ nazwany jest w Go zwykłym napisem, a rejestru
+wartości pakiet współdzielony nie wystawia, więc pole zostaje napisem, a model
+dostaje odmowę rdzenia przy wartości spoza wykazu i poprawia. Nie rozwija też
+struktury zagnieżdżonej: pole rodzaju obiektu idzie jako obiekt bez
+właściwości, bo rozwijanie w głąb urosłoby do schematu większego niż całe
+okno kontekstu, a granicy głębokości kontrakt nie stanowi.

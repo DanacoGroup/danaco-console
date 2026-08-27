@@ -19,26 +19,30 @@
 :root { --cd-maks-tresc: 100%; }
 
 /* ── Włos marki ────────────────────────────────────────────────────────────
-   Wstążki i okna obrysowuje cienka linia w barwie znaku. Pełne `--dn-sygnal-500`
-   na każdej krawędzi krzyczy, więc barwa znaku jest mieszana z dotychczasowym
-   obrysem: zostaje niebieski włos, nie niebieska ramka. Karta bieżąca bierze tę
-   samą barwę na tło, w stopniu jeszcze słabszym — ma się wyróżniać, nie świecić.
-   Mieszanie idzie w oklab, więc oba motywy dostają ten sam stopień odejścia od
-   szarości, nie ten sam procent kanału. */
+   Obrys wstążek i okien niesie barwę znaku zmieszaną z obrysem podstawowym.
+   Udział barwy znaku jest dwustopniowy: wyższy dla krawędzi, niższy dla tła
+   karty bieżącej, gdzie barwa leży pod tekstem i musi zostawić mu kontrast.
+   Mieszanie w przestrzeni oklab daje w obu motywach równy stopień odejścia od
+   szarości, czego mieszanie kanałowe nie zapewnia.
+   Wartości udziału stoją tu, a nie w `zasoby/zetony/`, bo rozstrzygnięcie
+   obejmuje jedno okno; przy rozszerzeniu na pozostałe przenieść do palety. */
 .cd-strona {
-  --cd-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) 46%, var(--dn-obrys-mocny));
-  --cd-tlo-karty-biezacej: color-mix(in oklab, var(--dn-sygnal-500) 13%, var(--dn-wstazka));
+  --cd-udzial-krawedzi: 46%;
+  --cd-udzial-tla: 13%;
+  --cd-obrys-marki: color-mix(in oklab, var(--dn-sygnal-500) var(--cd-udzial-krawedzi), var(--dn-obrys-mocny));
+  --cd-tlo-karty-biezacej: color-mix(in oklab, var(--dn-sygnal-500) var(--cd-udzial-tla), var(--dn-wstazka));
 }
 @supports not (color: color-mix(in oklab, red, blue)) {
   .cd-strona {
     --cd-obrys-marki: var(--dn-sygnal-800);
     --cd-tlo-karty-biezacej: var(--dn-wstazka);
   }
-  /* Bez mieszania barw tło karty bieżącej równa się tłu wstążki i wyróżnienie
-     przepada. Nośnikiem zostaje wtedy kreska sygnałowa u dołu karty. */
+  /* Bez mieszania barw tło karty bieżącej równa się tłu wstążki, więc nośnikiem
+     wyróżnienia jest kreska sygnałowa u dołu karty. Miarę niesie żeton wstęgi
+     aktywności karty, nie żeton siły hasła. */
   .cd-strona .dn-karta-widoku[aria-selected='true'],
   .cd-strona .dn-karta-sesji[aria-selected='true'] {
-    box-shadow: inset 0 calc(-1 * var(--dn-wym-sila)) 0 var(--dn-sygnal-500);
+    box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-sygnal-500);
   }
 }
 
@@ -180,7 +184,11 @@
 /* Pozycja i przegroda zachowują swoją miarę — bez tego rząd nie łamie się,
    tylko ściska kontrolki do nieczytelnych kikutów. */
 .cd-listwa-poz, .cd-listwa-sep, .cd-listwa-menu { flex: none; }
-/* Jedna kolumna — karta zajmuje całą szerokość, więc belka też. */
+/* Jedna kolumna — karta zajmuje całą szerokość, więc belka też.
+   Próg 860 px nie należy do skali `--dn-bp-*`; belka musi łamać się dokładnie
+   tam, gdzie łamie się siatka środowisk, a ta stoi na progach 1180 i 860 px
+   sprzed tej pracy. Przeniesienie siatki na skalę systemową rozstrzyga się
+   osobno — do tego czasu belka idzie za siatką, nie za skalą. */
 @media (max-width: 860px) {
   .cd-start,
   .cd-listwa { width: 100%; }
@@ -889,11 +897,8 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 }
 /* === koniec agent-1 === */
 
-/* Okna licują z ramą wstążki głównej.
-   Lewe okno miało `margin-left` ujemny (dosuwało je do szyny), a okno
-   samouczka `margin-right` ujemny — przez to krawędzie okien nie trafiały
-   w pion krawędzi wstążki nad nimi. Uchwyt szerokości okna ukrytego również
-   zajmował miejsce i przesuwał prawą krawędź okna roboczego. */
+/* Krawędzie okien stoją w pionie krawędzi wstążki głównej: okna nie noszą
+   marginesów ujemnych, a uchwyt szerokości okna ukrytego nie zajmuje miejsca. */
 .cd-strona .dn-obszar-panel--boczny { margin-left: 0; }
 .cd-strona .dn-obszar-panel--samouczek { margin-right: 0; }
 .cd-strona .dn-obszar-panel--samouczek[hidden] + .cd-uchwyt,

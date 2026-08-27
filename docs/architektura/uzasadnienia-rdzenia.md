@@ -3238,3 +3238,17 @@ dlatego odczyt idzie wcześniej.
 
 Mapa w Go chodzi losowo, dlatego znaneModeleWycinania wypisuje zbiór w
 kolejności stałej, żeby odmowa czytana dwa razy brzmiała tak samo.
+
+## budowa/server/internal/core/handlers_roundtable.go
+
+Cały moduł Roundtable ma jedno zdarzenie: kontrakt daje mu wyłącznie
+`roundtable.debate.changed`, więc każda zmiana debaty — otwarcie tury,
+wypowiedź uczestnika, interwencja moderatora, zamknięcie tury — rozgłasza się
+turą po zmianie, a wypowiedź dołącza jako pole opcjonalne. Cztery okna
+odświeżają się z jednej subskrypcji.
+
+Rozgłoszenie nie idzie z obsługiwacza: tura debaty trwa dłużej niż wykonanie
+komendy `roundtable.debate.start`, bo uczestnicy odpowiadają równolegle,
+każdy we własnym czasie. Zdarzenia nadaje adapter przez podpiętą drogę
+rozgłoszenia (tak samo jak w `handlers_terminal.go`); obsługiwacz nadałby
+wyłącznie stan sprzed odpowiedzi.

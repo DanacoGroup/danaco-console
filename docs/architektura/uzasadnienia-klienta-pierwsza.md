@@ -3994,3 +3994,11 @@ w nazwie klasy arkusza stylów mogłaby się z atrybutem `open` wyłącznie rozm
 Znacznik wywołania stoi przy nazwie, żeby droga do elementu była widoczna, zanim się go
 otworzy. Sam znacznik jest ozdobą uchwytu, a nie jego nazwą, więc idzie z atrybutem
 `aria-hidden`: czytnik ekranu odczyta nazwę elementu, a nie znak graficzny.
+
+## budowa/klient-poprzedni/src/mission-control/zrodlo-pulpitu.ts
+
+Źródło ma jedną odpowiedzialność: zebranie stanu z rdzenia i podawanie odbiorcy świeżego kompletu po każdej zmianie. Odczyty i zdarzenia idą wyłącznie kanałem kontraktu, a przełożenie stanu na komplet należy do `zlozenie-danych.ts`.
+
+Odczyty obejmują `session.list` wraz z obecnością, `window.list`, `channel.list` oraz `environment.list`, z którego biorą się nazwy kolumn matrycy — z rdzenia, a nie z kopii katalogu. Transport kolejkuje ramki do chwili połączenia, więc odczyt wysłany przed otwarciem gniazda dochodzi po nim i własny nasłuch stanu łącza jest zbędny.
+
+Subskrypcje obejmują `session.changed`, `window.changed`, `queue.changed` oraz `progress.changed`. Kolejki nie mają odczytu w kontrakcie, ponieważ brakuje komendy `queue.list`, więc ich stan buduje się wyłącznie ze zdarzeń. Do pierwszego zdarzenia pulpit pokazuje uczciwy stan pusty.

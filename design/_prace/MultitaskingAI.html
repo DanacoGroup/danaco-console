@@ -48,7 +48,7 @@
     border-top: 1px solid var(--dn-obrys-subtelny);
     display: flex; flex-direction: column; gap: var(--dn-od-1);
   }
-  /* panel zwinięty do samych ikon (rozdz. 6.4) */
+  /* panel zwinięty do samych ikon */
   .pt-cialo[data-panel='zwiniety'] { grid-template-columns: calc(var(--dn-wym-kontrolka) + var(--dn-od-6)) minmax(0, 1fr); }
   .pt-cialo[data-panel='zwiniety'] .dn-boczna-pozycja > span,
   .pt-cialo[data-panel='zwiniety'] .mt-panel-tytuly,
@@ -81,7 +81,7 @@
   .mt-rola-cialo { padding: var(--dn-od-3); display: flex; flex-direction: column; gap: var(--dn-od-3); }
   .mt-karta-roli--walidator .mt-rola-cialo { padding: var(--dn-od-2) var(--dn-od-3); gap: var(--dn-od-2); }
 
-  /* cel · wejście · wyjście (rozdz. 3.0) */
+  /* cel · wejście · wyjście */
   .mt-cwo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--dn-obrys-subtelny); border: 1px solid var(--dn-obrys-subtelny); border-radius: var(--dn-r-sm); overflow: hidden; }
   .mt-cwo > div { background: var(--dn-powierzchnia); padding: var(--dn-od-2); }
   .mt-karta-roli--walidator .mt-cwo > div { background: var(--dn-panel); }
@@ -121,7 +121,7 @@
   .mt-podagent { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; align-items: center; gap: var(--dn-od-2); padding: var(--dn-od-1) 0; }
   .mt-podagent-nazwa { font-size: var(--dn-fs-sm); color: var(--dn-tekst); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* pasek stanu procesu (makieta 9.3) */
+  /* pasek stanu procesu */
   .mt-pasek-stanu {
     display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap;
     padding: var(--dn-od-2) var(--dn-od-3);
@@ -2966,7 +2966,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   <!-- ══ CIAŁO: PANEL ORKIESTRACJI + OBSZAR ROBOCZY ════════════════════ -->
   <div class="pt-cialo" id="cialo" data-panel="rozwiniety">
 
-    <!-- ── PANEL ORKIESTRACJI — sześć sekcji ──────────────── -->
+    <!-- Panel orkiestracji — sześć sekcji -->
     <nav class="dn-boczna mt-panel" id="panel-orkiestracji" data-uklad="podglad" aria-label="Panel orkiestracji">
       <div class="mt-panel-naglowek">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
@@ -4333,7 +4333,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 
       </div><!-- /mt-widoki -->
 
-      <!-- ══ PASEK STANU PROCESU ═══════════════════════════ -->
+      <!-- Pasek stanu procesu -->
       <div class="mt-pasek-stanu" role="status" aria-live="polite">
         <span>Proces: <b data-pasek-proces>Zespół „Budowa aplikacji”</b></span>
         <span class="dn-separator dn-separator--pionowy" aria-hidden="true"></span>
@@ -4699,7 +4699,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   function q(s, k) { return (k || D).querySelector(s); }
   function qa(s, k) { return Array.prototype.slice.call((k || D).querySelectorAll(s)); }
 
-  /* ═ 1 · WSKAŹNIK STANU PRZEBIEGU PROCESU (rozdz. 12.1) ════════════════ */
+  /* ═ 1 · WSKAŹNIK STANU PRZEBIEGU PROCESU ════════════════════════════ */
   var IK = {
     zegar: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
     uruchom: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
@@ -4800,7 +4800,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
     if (nazwa) q('[data-okruszek-sekcja]').textContent = nazwa;
   });
 
-  /* ═ 5 · TRYBY WSPÓŁPRACY EXECUTOR 1 / EXECUTOR 2 (rozdz. 3.4) ════════ */
+  /* ═ 5 · TRYBY WSPÓŁPRACY EXECUTOR 1 / EXECUTOR 2 ════════════════════ */
   var TRYBY = {
     niezalezna: { n: 'Praca niezależna', o: 'Executor 1 i Executor 2 realizują odrębne zadania bez wzajemnej zależności; tory zbiegają się w Coordinatorze lub Executorze 3 / Validatorze. Przykład: backend i frontend budowane równolegle w module Apps.' },
     przekazywanie: { n: 'Przekazywanie wyników', o: 'Wynik pracy jednego wykonawcy stanowi wejście dla drugiego; przepływ jednokierunkowy przez route. Przykład: badania (Executor 1) przekazane do redakcji raportu (Executor 2).' },
@@ -4814,7 +4814,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
     window.dnToast('Tryb współpracy zmieniony', t.n + ' — zmiana wpływa na sposób kierowania zadań między wykonawcami.', 'informacja');
   });
 
-  /* ═ 6 · WCIELENIA EXECUTORA 3 / VALIDATORA (rozdz. 3.5) ══════════════ */
+  /* ═ 6 · WCIELENIA EXECUTORA 3 / VALIDATORA ══════════════════════════ */
   var WCIELENIA = {
     validator: 'Kontrola jakości pracy pozostałych modeli przed uznaniem etapu za zakończony',
     reviewer: 'Recenzja wyników pod kątem poprawności i kompletności',
@@ -4875,7 +4875,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
     });
   });
 
-  /* ═ 8 · SYMULACJA PRZEBIEGU — stany zadania w kolejce (rozdz. 12.3) ══ */
+  /* ═ 8 · SYMULACJA PRZEBIEGU — stany zadania w kolejce ════════════════ */
   var ZNAKI = {
     'dn-krok--pracuje': '<span class="dn-spinner" style="width:10px;height:10px;border-width:1.5px"></span>',
     'dn-krok--poprawny': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IK.ptaszek + '</svg>',

@@ -1,39 +1,6 @@
-// Odpowiedzialność pliku: ŻYWOTNOŚĆ REALNA — połączenie stanu podagenta
-// z rejestrem procesów sesji (`session.RejestrProcesow`).
-//
-// CO REJESTR POTRAFI. `RejestrProcesow.Przejmij(idOkna, pid)` obejmuje proces
-// tury uchwytem systemowym (grupa procesów na Uniksie, Job Object na Windows),
-// a dogląd (`proces.dogladaj` → `ubicie_unix.go: syscall.Kill(pid, 0)` co
-// 200 ms) utrzymuje odpowiedź `Zyje()` zgodną z prawdą systemu — nie z polem
-// w pamięci. To jest żywotność realna i ten plik z niej wyłącznie CZYTA.
-//
-// CZEGO DROGA DZIŚ NIE MA:
-//
-//  1. Tura pozycji kolejki (a praca podagenta jest pozycją kolejki) jedzie
-//     `kolejka_wykonawca.go` z PUSTYMI zasięgami:
-//     `adapter_kolejki.rozwiazKanalPozycji` zwraca `models.Zasiegi{}`,
-//     więc haczyk `przejmowanieProcesow.Haczyk("")` jest bezczynny i proces
-//     wykonujący pozycję NIGDY nie trafia do rejestru.
-//  2. Rejestr kluczuje procesy IDENTYFIKATOREM OKNA i trzyma jeden wpis na
-//     okno; `Przejmij` UBIJA wpis poprzedni. Podagentów bywa piętnastu pod
-//     jednym oknem i pracują RÓWNOLEGLE z turą własnego okna wykonawcy —
-//     zarejestrowanie ich procesów pod oknem wykonawcy ubijałoby nawzajem
-//     turę orkiestratora i tury podagentów. Brakuje klucza drobniejszego niż
-//     okno (pozycja kolejki / podagent) i tego ten pakiet NIE obchodzi bokiem,
-//     bo drugi rejestr procesów byłby drugą prawdą o procesach.
-//
-// CO WOBEC TEGO JEST POŁĄCZONE. Żywy jest mierzalnie proces ORKIESTRATORA —
-// okna wykonawcy, które podagentów powołało: jego turę startuje `message.send`,
-// zasięg okna jest wtedy wypełniony i `Przejmij` wpisuje proces do rejestru.
-// Ocena niżej mówi więc prawdę o oknie prowadzącym podagentów, a o procesie
-// samej pozycji mówi `BezWpisu` — i to zdanie jest prawdziwe, nie zastępcze.
-//
-// ŻYWOTNOŚĆ PO AWARII I PO RESTARCIE — druga połowa tego pliku. Dogląd wyżej
-// mówi o procesie rdzenia, KTÓRY STOI. Gdy rdzeń padnie, nie mówi nic i nie ma
-// komu mówić — dlatego pytanie „co się dzieje z podagentem po awarii" ma
-// odpowiedź w bazie (`store/migracja_100_zywotnosc_podagentow.sql`), nie
-// w rejestrze procesów. Znacznik
-// uruchomienia i sprzątanie sierot stoją niżej.
+// Żywotność realna łączy stan podagenta z rejestrem procesów sesji; żywy jest
+// mierzalnie proces okna wykonawcy, które podagentów powołało, nie proces
+// samej pozycji.
 package podagenci
 
 import (
@@ -52,16 +19,19 @@ import (
 type stanProcesu int
 
 const (
-	// procesBezWpisu — rejestr nie ma wpisu dla tego okna. Dla procesu pozycji
-	// podagenta jest to dziś stan JEDYNY (patrz nagłówek).
+	// procesBezWpisu — rejestr nie ma wpisu dla tego okna; dla procesu pozycji
+	// podagenta jest to dziś stan jedyny.
 	procesBezWpisu stanProcesu = iota
-	// procesZywy — proces okna jest w rejestrze i dogląd potwierdza życie.
+	// procesZywy — proces okna jest w rejestrze procesów sesji, a dogląd
+	// rejestru potwierdza życie procesu.
 	procesZywy
-	// procesZakonczony — proces okna jest w rejestrze, ale już nie pracuje.
+	// procesZakonczony — proces okna jest w rejestrze procesów sesji, ale on
+	// już nie pracuje wedle doglądu.
 	procesZakonczony
 )
 
-// Opis oddaje stan zdaniem do dziennika i meldunku — po polsku, wprost.
+// Opis oddaje stan procesu zdaniem do dziennika i meldunku dla Operatora, po
+// polsku, wprost, bez skrótów.
 func (s stanProcesu) Opis() string {
 	switch s {
 	case procesZywy:
@@ -98,36 +68,19 @@ func ZSesji(procesy *session.RejestrProcesow) OcenaProcesu {
 	}
 }
 
-// wyjasnienieOsierocenia trafia w pole `wynik` sieroty, ale WYŁĄCZNIE gdy jest
-// ono puste (COALESCE w zapytaniu): praca oddana przed awarią jest ważniejsza
-// niż wyjaśnienie, dlaczego się urwała. Zdanie jest po polsku, bo czyta je
-// Operator w panelu zadań w tle, a nie maszyna.
+// wyjasnienieOsierocenia trafia w pole wynik sieroty, ale wyłącznie gdy jest
+// ono puste, po polsku, bo czyta je Operator.
 const wyjasnienieOsierocenia = "Praca przerwana zatrzymaniem rdzenia — " +
 	"proces wykonujący zadanie nie istnieje po restarcie. Powołaj podagenta na nowo."
 
-// ZnacznikUruchomienia nadaje znacznik bieżącemu uruchomieniu rdzenia.
-//
-// SKŁADA SIĘ Z DWÓCH RZECZY, BO ŻADNA SAMA NIE WYSTARCZA: numer procesu jest
-// w systemie powtarzalny (po restarcie maszyny ten sam PID wraca), a czas sam
-// nie odróżnia dwóch rdzeni wstałych w tej samej milisekundzie. Razem są
-// jednoznaczne w praktyce, a jednoznaczności absolutnej ten znacznik nie
-// potrzebuje: rozstrzyga wyłącznie pytanie „czy to nadal ja".
-//
-// Znacznik zakłada się RAZ na proces i podaje dalej wartością — losowania po
-// drodze nie ma, więc nikt nie osieroci sam siebie.
+// ZnacznikUruchomienia nadaje znacznik bieżącemu uruchomieniu rdzenia,
+// złożony z numeru procesu i chwili startu.
 func ZnacznikUruchomienia() string {
 	return fmt.Sprintf("rdzen-%d-%s", os.Getpid(), time.Now().UTC().Format("20060102T150405.000Z"))
 }
 
 // PosprzatajPoRestarcie zamyka podagentów porzuconych przez uruchomienia
-// wcześniejsze i oddaje wykaz zamkniętych — do meldunku w dzienniku.
-//
-// WOŁA SIĘ RAZ, PRZY STARCIE, PRZED PIERWSZYM POWOŁANIEM. Wywołanie późniejsze
-// zamknęłoby pracę powołaną przez ten sam rdzeń, gdyby jej oznaczenie
-// prowadzenia jeszcze nie doszło.
-//
-// TRWAŁOŚĆ PUSTA ZNOSI SIĘ SAMA: rdzeń bez repozytorium podagentów
-// startuje, a nie odmawia startu — po prostu nie ma czego sprzątać.
+// wcześniejsze i oddaje wykaz zamkniętych.
 func PosprzatajPoRestarcie(ctx context.Context, trwalosc dane.ZywotnoscPodagentow,
 	uruchomienie string) ([]dane.Podagent, error) {
 

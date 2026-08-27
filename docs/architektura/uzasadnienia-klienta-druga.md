@@ -4010,3 +4010,21 @@ dochodziłaby do okna jako zwykły błąd i okno nie miałoby czego wypisać.
 
 ## budowa/klient/src/wejscie/skladniki/lista-etapow.ts
 Znak zostawiony z poprzedniego stanu kłamie — ptaszek przy kroku w toku mówi, że rzecz jest skończona. Jeden składnik obsługuje cztery etapy łączenia i pięć etapów przygotowania: różni je wyłącznie gałąź katalogu, z której biorą się nazwy i miary.
+
+## budowa/klient-poprzedni/src/moduly/translate/stan-translate.ts
+Odpowiedź zapisu źródła niesie od razu komplet paneli: gdyby Source Panel prowadził własną kopię
+tekstu, a Translation Panels własną kopię paneli, ta jednoczesność musiałaby być odtwarzana
+ręcznie w dwóch miejscach i rozjeżdżałaby się przy pierwszej odmowie. Identyfikator okna jest
+warunkiem wstępnym: bez niego moduł nie wysyła zapisu źródła ani dodania celu, mówi o tym wprost
+zamiast wysyłać żądanie z pustym polem i pokazywać odmowę walidacji jako własną usterkę.
+Obszar translate nie ma ani jednej komendy przyjmującej plik, więc bez źródła dokumentu moduł nie
+miałby wejścia od strony dokumentu wcale. Jeden rejestr kanałów jest na moduł, nie jeden na ster:
+sterów jest jeden plus liczba paneli, a rejestr zakładany osobno przez każdy z nich pytałby rdzeń
+wielokrotnie o ten sam wykaz. Warsztat mieści pamięć jako byt operatora, segmentację, terminologię,
+korektę, obieg, dokumenty, lokalizację, napisy, silniki i wymianę zewnętrzną.
+Parametry wykonania okna są dodatkiem informacyjnym przy niepowodzeniu odczytu stanu (zasada
+działania mimo błędu). Rejestr kanałów idzie obok kolejki komend: wykaz kanałów modelu nie zależy
+od okna i nie jest warunkiem żadnej czynności, obsadza wyłącznie ster kanału, którego pusty wybór
+jest poprawną wartością, więc czekanie na niego opóźniałoby pas kontekstu, a jego odmowa nie
+zatrzymuje modułu. Moduł okna zmienia się osobną komendą, więc okno sesji bez modułu Translate
+i tak jest tym oknem, w którym operator właśnie pracuje.

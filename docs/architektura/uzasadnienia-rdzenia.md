@@ -5972,3 +5972,10 @@ z tury okna.
 
 Telemetria liczy etapy zakończone tą samą listą stanów końcowych, którą
 silnik wykonania zamyka pozycje kolejki.
+
+## budowa/server/internal/core/kolejka_wybor.go
+Wyczerpana znaczy: kolejka zlecenia miała i nie została w niej ani jedna pozycja czynna — to stan
+gotowości kontraktu, który schemat przyjmuje od odpowiedniej migracji. Kolejka pusta uruchomiona
+przez Operatora wyczerpana nie jest: nie miała czego wyczerpać, stoi czynna i czeka na zlecenia,
+którymi zasila ją pętla albo MultitaskingAI w biegu — brak zleceń daje poprawny stan, nie awarię
+i nie stan końcowy.

@@ -4002,3 +4002,22 @@ otworzy. Sam znacznik jest ozdobą uchwytu, a nie jego nazwą, więc idzie z atr
 Odczyty obejmują `session.list` wraz z obecnością, `window.list`, `channel.list` oraz `environment.list`, z którego biorą się nazwy kolumn matrycy — z rdzenia, a nie z kopii katalogu. Transport kolejkuje ramki do chwili połączenia, więc odczyt wysłany przed otwarciem gniazda dochodzi po nim i własny nasłuch stanu łącza jest zbędny.
 
 Subskrypcje obejmują `session.changed`, `window.changed`, `queue.changed` oraz `progress.changed`. Kolejki nie mają odczytu w kontrakcie, ponieważ brakuje komendy `queue.list`, więc ich stan buduje się wyłącznie ze zdarzeń. Do pierwszego zdarzenia pulpit pokazuje uczciwy stan pusty.
+
+## budowa/klient-poprzedni/src/moduly/developer/akcje-kanoniczne.ts
+
+Ta sama operacja nazwana w dwóch miejscach inaczej rozjeżdża przycisk z komendą,
+którą wywołuje, dlatego nazwy kanoniczne mają jedno źródło. Dziewiąta operacja,
+konwersja języka, należy do paska narzędzi promptu, a nie do ośmiu operacji
+panelu akcji, i tablica zachowuje tę różnicę kolejnością pozycji.
+
+Zmiana nazwy symbolu w całym repozytorium jest czynnością rozstrzygalną i wykonuje
+ją serwer języka, który zna graf odwołań; model dałby wynik prawdopodobny zamiast
+poprawnego, i to w czynności, której poprawność da się sprawdzić. Rdzeń kieruje
+więc operację `renameSymbol` do serwera języka, a panel podaje ją tą samą komendą,
+ponieważ na pasku jest to ta sama pozycja.
+
+Próg paska nie buduje menu rozwijanego. Jedyne menu biblioteczne
+(`komponenty/menu-drzewo.ts`) jest sterem nastawy: na jego uchwycie stoi wartość
+bieżąca, a wybór liścia ją zmienia. Operacje jednorazowe wartości bieżącej nie
+mają, więc uchwyt pokazywałby napis, który niczego nie odzwierciedla — wszystkie
+dziewięć przycisków stoi wobec tego płasko.

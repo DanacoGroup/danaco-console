@@ -4476,3 +4476,17 @@ Wysycenia, kolejki, limitu ani kosztu narastającego kontrakt nie niesie, więc 
 wypisuje przy nich etykietę braku źródła zamiast liczb wymyślonych po stronie klienta.
 Liczba zmyślona wygląda tak samo jak odczytana i wprowadzałaby w błąd przy ocenie
 obciążenia kanału.
+
+## budowa/klient-poprzedni/src/moduly/assistant/siatka-akcji.ts
+
+Wykaz pozycji należy do rdzenia, tak samo jak wykaz modułów w nawigacji. Zestawu nie da
+się zmienić z okna, ponieważ kontrakt nie ma komendy zapisu biblioteki poleceń szybkich.
+Okno nazywa ten brak wprost, zamiast stawiać przycisk dostosowania, który niczego nie
+zapisze.
+
+Komenda `action.list` zasięgu modułu Assistant oddaje komendy platformy, więc opis wiersza
+jest zdaniem o komendzie, a nie treścią polecenia dla asystenta. Czym wiersz jest, mówi
+opis kafla: to katalog komend rdzenia, a nie biblioteka gotowych poleceń.
+
+Wysyłanie komendy wprost z kafla byłoby zgadywaniem ładunku, więc akcja wstawia swoją
+nazwę do pola, a polecenie wychodzi dopiero z paska.

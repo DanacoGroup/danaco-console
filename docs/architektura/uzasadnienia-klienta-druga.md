@@ -4450,3 +4450,17 @@ modułowego, nie nadaje uprawnień, nie włącza komponentu do żadnej pętli wy
 nie zostało jeszcze domknięte w rdzeniu; widok mówi to wprost, zamiast obiecywać skutek, którego rdzeń nie
 wywołuje. Rdzeń przyjmuje pięć poziomów z dziewięciu: globalny, środowisko, projekt, sesja i okno; poziomy
 modułu, pary modułów, roli i aplikacji kończą się odmową sprawdzenia żądania.
+
+## budowa/klient-poprzedni/src/moduly/studio/karty-dokumentow.ts
+Zakładki i podział powierzchni są równorzędnymi trybami pracy z dwoma dokumentami, a wybór między
+nimi jest zapamiętany. Zakładki dają większe pole pracy nad jednym pismem, bo dwie kartki obok
+siebie schodzą do rozmiaru, w którym pisma się nie czyta, podczas gdy podział pokazuje oba naraz.
+Przełączenie trybu niczego nie gubi i nie zamyka: stan każdego dokumentu siedzi w jego migawce
+niezależnie od trybu, a dokument niewidoczny zostaje otwarty i dostępny modelowi. Zakładka czynna
+jest dokumentem czynnym modułu, więc pozostałe panele pracują na tym, co operator widzi, a
+zakładka odłożona trzyma swoją migawkę: treść, zaznaczenie, propozycję i parę porównania —
+przełączenie jest podmianą migawek, nie drugą kopią stanu modułu. Źródło wstawień jest
+nieobowiązkowe, bo zakładki działają też bez niego, zakładając zakładkę bez dokumentu; gdy
+źródło jest podane, przycisk nowego dokumentu zakłada pustą stronę gotową do pisania z domyślnym
+arkuszem stylów i nastawami strony — to była jedyna droga zakładania dokumentu, której rdzeń
+wcześniej nie miał czym obsłużyć.

@@ -368,3 +368,10 @@ jednego akcentu: sygnał zajmuje nie więcej niż pięć procent ekranu.
 ## budowa/klient-poprzedni/src/motyw/fonty.css
 Pliki licencji krojów stoją w katalogu fonty. Podzbiory latin i latin-ext
 niosą pełne polskie znaki diakrytyczne.
+
+## budowa/klient-poprzedni/src/komponenty/karta.css
+Sygnał karty środowiska to wstęga górna o wysokości 2 pikseli, sterowana
+żetonem wymiaru wstęgi. Kartę środowiska buduje strona-glowna/karta-srodowiska.ts
+na rodzinie dn-karta--akcent i dn-strona__karta, nie na klasie karty zwykłej;
+kafel komponentu buduje strona-glowna/kafel-komponentu.ts na rodzinie
+dn-karta, nie na rodzinie kafla.

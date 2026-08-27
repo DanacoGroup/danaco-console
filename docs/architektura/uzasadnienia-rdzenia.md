@@ -4766,3 +4766,15 @@ Wartości doboru w kontrakcie są dwie, ale wskazanie Operatora nie ma jeszcze w
 Pole niosące identyfikator strumienia zasila identyfikator wiadomości wszystkich fragmentów kanału; bez niego fragmenty rady jechałyby do okna bez wskazania, do czego należą.
 
 Ujście konsultacji zbiera cały tekst, łącznie z blokiem jawności doklejanym przy konsultacji, ponieważ fragment domykający ma być tym, co Operator widzi w oknie po konsultacji, czyli radą wraz z podpisem, kto jej udzielił.
+
+## budowa/server/internal/core/handlers_konfiguracja_osi.go
+Oś jest prostopadła do poziomu zasięgu: poziom określa, jak wąsko obowiązuje
+wartość, od zasięgu globalnego do okna komunikacji, a oś określa, dla czego
+wartość obowiązuje — dla platformy, dla modelu albo dla konta. Osie niosą
+konfigurację odrębną dla każdego modelu i każdego konta.
+
+Adapter osi nie powtarza adaptera podstawowego ustawień, tylko go owija: droga
+osi platformy schodzi do adaptera podstawowego bez zmiany, a osobną drogę ma
+wyłącznie oś modelu i oś konta. Przekład wiersza repozytorium na wpis kontraktu
+należy w całości do pakietu konfiguracji — rdzeń nie prowadzi tu własnego
+kodowania wartości.

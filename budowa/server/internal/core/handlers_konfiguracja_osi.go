@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: zapis i odczyt konfiguracji pod adresem złożonym —
-// poziom zasięgu razem z osią rozstrzygania (pola `axis` i `axisId` żądań
-// rodziny `config.*`).
-//
-// Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość
-// (globalny → okno komunikacji), oś mówi, dla czego obowiązuje — dla platformy,
-// dla modelu albo dla konta. Osie są nośnikiem konfiguracji per model
-// i per konto.
-//
-// Adapter nie powtarza adaptera ustawień, tylko go owija: oś platformy schodzi
-// do `adapterUstawien` bez zmiany, a osobna jest wyłącznie droga osi modelu
-// i konta. Przekład wiersza na wpis kontraktu należy w całości do pakietu
-// `konfig` (`WpisKontraktu`, `ZapisZKontraktuWOsi`) — rdzeń nie ma tu własnego
-// kodowania wartości.
+// Plik obsługuje odczyt i zapis konfiguracji pod adresem złożonym z poziomu
+// zasięgu oraz osi rozstrzygania, przez port zgodny z adapterem podstawowym
+// ustawień, bez powielania kodowania wartości.
 package core
 
 import (
@@ -27,7 +16,8 @@ import (
 // rozjechały, kompilacja stanie tutaj.
 var _ Ustawienia = (*adapterUstawienOsi)(nil)
 
-// adapterUstawienOsi wypełnia port Ustawienia z obsługą osi rozstrzygania.
+// adapterUstawienOsi wypełnia port Ustawienia, dodając obsługę osi
+// rozstrzygania obok poziomu zasięgu przy odczycie i zapisie konfiguracji.
 type adapterUstawienOsi struct {
 	podstawa     *adapterUstawien
 	repozytorium dane.RepozytoriumKonfiguracjiOsi
@@ -66,11 +56,10 @@ func (a *adapterUstawienOsi) Odczytaj(ctx context.Context, z shared.ConfigGetReq
 	return shared.ConfigGetResponse{Entries: wpisyOsi(ustawienia, z.Key)}, nil
 }
 
-// Zapisz ustawia wartość pod adresem złożonym z poziomu zasięgu i osi.
+// Zapisz ustawia wartość konfiguracji pod adresem złożonym z poziomu zasięgu
+// i osi rozstrzygania, po sprawdzeniu klucza względem katalogu ustawień.
 func (a *adapterUstawienOsi) Zapisz(ctx context.Context, z shared.ConfigSetRequest) (shared.ConfigSetResponse, error) {
-	// Klucz spoza katalogu odpada tutaj, przed rozdziałem na osie — jedna brama
-	// dla obu dróg zapisu. Bez niej zapis nieznanego klucza przeszedłby bez
-	// odmowy i został w bazie martwym wierszem.
+	// Klucz spoza katalogu odpada tutaj, przed rozdziałem zapisu na osie.
 	if err := sprawdzKluczKatalogu(a.rozstrzygacz, z.Key); err != nil {
 		return shared.ConfigSetResponse{}, err
 	}
@@ -111,8 +100,8 @@ func (a *adapterUstawienOsi) Przywroc(ctx context.Context, z shared.ConfigResetR
 	return shared.ConfigResetResponse{Entries: wpisy}, nil
 }
 
-// osZadania odczytuje oś i jej byt z pól opcjonalnych żądania. Oś pominięta
-// znaczy platformę.
+// osZadania odczytuje oś rozstrzygania oraz jej byt z pól opcjonalnych
+// żądania konfiguracji; oś pominięta w żądaniu oznacza platformę.
 func osZadania(os *shared.ConfigAxis, bytOsi *string) (shared.ConfigAxis, string) {
 	if os == nil {
 		return konfig.OsPlatformy, ""
@@ -139,7 +128,8 @@ func kontekstOsi(idBytu *string, os shared.ConfigAxis, bytOsi string) konfig.Kon
 	return kontekst
 }
 
-// ustawienieZWpisu przenosi wpis pakietu konfiguracji na wiersz repozytorium.
+// ustawienieZWpisu przenosi wpis pakietu konfiguracji na wiersz repozytorium
+// ustawień, zachowując poziom zasięgu, oś oraz rodzaj wartości.
 func ustawienieZWpisu(wpis konfig.Wpis) dane.Ustawienie {
 	wartosc := wpis.Wartosc
 	return dane.Ustawienie{

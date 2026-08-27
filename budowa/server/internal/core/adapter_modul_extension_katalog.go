@@ -1,36 +1,7 @@
-// Rodzina `extension.*` — App Catalog i Installed Apps Manager: wyszukiwarka,
-// karta szczegółów, kolekcje kuratorskie, prywatny rejestr organizacji,
-// sprawdzanie aktualizacji, przesyłka paczki, wersjonowanie, instalacja
-// z manifestu zestawu, dziennik cyklu życia i operacje zbiorcze.
-//
-// Obsługiwane komendy: `extension.search`, `extension.detail.get`,
-// `extension.collection.list`, `extension.collection.save`,
-// `extension.collection.apply`, `extension.registry.list`,
-// `extension.update.check`, `extension.package.upload`, `extension.version.pin`,
-// `extension.version.rollback`, `extension.bundle.install`,
-// `extension.history.list`, `extension.admin.bulk`.
-//
-// WYSZUKIWARKA SZUKA W TYM, CO POZYCJA NIESIE. Opracowanie wymienia nazwę,
-// opis, kategorię, udostępniane narzędzia i znaczniki. Rdzeń przeszukuje więc
-// kod, nazwę i opis wiersza oraz nazwy narzędzi odkrytych u integracji —
-// wszystko, co naprawdę leży w bazie. Podpowiedzi składają się z nazw pozycji
-// i narzędzi, które trafienie zawierają, a nie z listy wpisanej w kodzie.
-//
-// PRYWATNY REJESTR ORGANIZACJI TO NIE DRUGI KATALOG. `extension.registry.list`
-// oddaje te pozycje katalogu, które POWSTAŁY Z PUBLIKACJI pakietu
-// (`apps.package.publish` zostawia w konfiguracji pozycji odwołanie do pakietu
-// i jego archiwum). Osobna tabela „rejestr" byłaby drugą prawdą o tym samym
-// zbiorze pozycji.
-//
-// AKTUALIZACJA LICZY SIĘ Z WERSJI, KTÓRE ISTNIEJĄ. `extension.update.check`
-// zestawia wersję zainstalowaną z najwyższą wersją zapisaną w
-// `wersja_rozszerzenia` — a te wiersze powstają przy publikacji pakietu i przy
-// przesłaniu paczki. Rdzeń nie pyta o aktualizacje żadnego serwera w sieci: nie
-// ma dokąd pytać, a udawanie odpowiedzi byłoby meldunkiem bez pokrycia.
-//
-// ŻADNA Z TYCH KOMEND NICZEGO NIE BLOKUJE. Operacje zbiorcze, cofnięcie wersji
-// i instalacja zestawu wykonują się od razu; pozycje, których wykonać się nie
-// dało, wracają w `rejected` z powodem, a nie w postaci przerwanego przebiegu.
+// Pakiet obsługuje rodzinę komend `extension.*` katalogu aplikacji:
+// wyszukiwarkę, kartę szczegółów, kolekcje, rejestr organizacji, sprawdzanie
+// aktualizacji, przesyłkę paczki, wersjonowanie, instalację zestawu, dziennik
+// cyklu życia i operacje zbiorcze.
 package core
 
 import (
@@ -47,7 +18,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki identyfikatorów bytów rodziny.
+// Przedrostki identyfikatorów bytów rodziny `extension.*`: kolekcji, wpisu
+// historii, paczki, webhooka, odwzorowania i ramki protokołu.
 const (
 	przedrostekKolekcjiRozszerzen  = "kolek-"
 	przedrostekHistoriiRozszerzen  = "hist-"
@@ -57,10 +29,12 @@ const (
 	przedrostekRamkiProtokolu      = "ramka-"
 )
 
-// granicaWykazuRozszerzen jest górną granicą strony przy braku wskazania.
+// granicaWykazuRozszerzen jest górną granicą liczby pozycji strony wyniku
+// wyszukiwania, stosowaną przy braku jawnego wskazania w żądaniu.
 const granicaWykazuRozszerzen = 100
 
-// Szukaj obsługuje `extension.search` — patrz czoło pliku.
+// Szukaj obsługuje komendę `extension.search`: przeszukuje pozycje katalogu
+// po nazwie, opisie, kodzie i nazwach ich narzędzi, wraz z podpowiedziami.
 func (a *adapterRozszerzen) Szukaj(ctx context.Context,
 	z shared.ExtensionSearchRequest) (shared.ExtensionSearchResponse, error) {
 
@@ -115,8 +89,7 @@ func (a *adapterRozszerzen) Szukaj(ctx context.Context,
 	}
 
 	razem := len(trafienia)
-	// Odsunięcie i granica liczone po zawężeniu: `total` opisuje zbiór
-	// spełniający warunki, nie długość oddanej strony.
+	// Odsunięcie i granica liczone po zawężeniu wyników do zapytania.
 	odsuniecie := 0
 	if z.Offset != nil && *z.Offset > 0 {
 		odsuniecie = *z.Offset
@@ -146,7 +119,8 @@ func (a *adapterRozszerzen) Szukaj(ctx context.Context,
 	}, nil
 }
 
-// pasujeDoFrazyRozszerzenia rozstrzyga trafienie po polach, które pozycja niesie.
+// pasujeDoFrazyRozszerzenia rozstrzyga trafienie po polach, które pozycja
+// niesie: kod, nazwa, rodzaj, opis oraz nazwa i opis jej narzędzi.
 func pasujeDoFrazyRozszerzenia(wiersz dane.Rozszerzenie,
 	narzedzia []dane.NarzedzieRozszerzenia, fraza string) bool {
 
@@ -162,7 +136,8 @@ func pasujeDoFrazyRozszerzenia(wiersz dane.Rozszerzenie,
 	return false
 }
 
-// PobierzSzczegol obsługuje `extension.detail.get` — pełną metrykę pozycji.
+// PobierzSzczegol obsługuje komendę `extension.detail.get`: pełną kartę
+// pozycji wraz z narzędziami, uprawnieniami, wersjami i podpisem.
 func (a *adapterRozszerzen) PobierzSzczegol(ctx context.Context,
 	z shared.ExtensionDetailGetRequest) (shared.ExtensionDetailGetResponse, error) {
 
@@ -194,8 +169,7 @@ func (a *adapterRozszerzen) PobierzSzczegol(ctx context.Context,
 		}
 		szczegol.Permissions = append(szczegol.Permissions, uprawnienieKontraktuRozszerzen(uprawnienie))
 	}
-	// Dziennik zmian składa się z wpisów wersji — jedyne miejsce, w którym
-	// rdzeń go trzyma. Wersja bez wpisu nie dokłada pustego wiersza.
+	// Dziennik zmian składa się z wpisów wersji niosących opis zmian.
 	zmiany := make([]string, 0, len(wersje))
 	for _, wersja := range wersje {
 		if wersja.DziennikZmian == nil || *wersja.DziennikZmian == "" {
@@ -214,8 +188,7 @@ func (a *adapterRozszerzen) PobierzSzczegol(ctx context.Context,
 		return shared.ExtensionDetailGetResponse{}, bladRozszerzenia(err)
 	}
 
-	// Zależności i znaczniki niesie konfiguracja pozycji — kontrakt nie ma dla
-	// nich osobnych pól żądania, a manifest pakietu odkłada je właśnie tam.
+	// Zależności i znaczniki niesie konfiguracja pozycji, nie osobne pola.
 	szczegol.Dependencies = listaZKonfiguracjiRozszerzenia(wiersz.Konfiguracja, "dependencies")
 	szczegol.Tags = listaZKonfiguracjiRozszerzenia(wiersz.Konfiguracja, "tags")
 	if adres := napisZKonfiguracjiRozszerzenia(wiersz.Konfiguracja, "homepageUrl"); adres != "" {
@@ -225,7 +198,8 @@ func (a *adapterRozszerzen) PobierzSzczegol(ctx context.Context,
 	return shared.ExtensionDetailGetResponse{Detail: szczegol}, nil
 }
 
-// WypiszKolekcje obsługuje `extension.collection.list`.
+// WypiszKolekcje obsługuje komendę `extension.collection.list`: wskazaną
+// kolekcję albo, bez wskazania, wykaz wszystkich kolekcji kuratorskich.
 func (a *adapterRozszerzen) WypiszKolekcje(ctx context.Context,
 	z shared.ExtensionCollectionListRequest) (shared.ExtensionCollectionListResponse, error) {
 
@@ -254,7 +228,8 @@ func (a *adapterRozszerzen) WypiszKolekcje(ctx context.Context,
 	return shared.ExtensionCollectionListResponse{Collections: kolekcje, Total: len(kolekcje)}, nil
 }
 
-// ZapiszKolekcje obsługuje `extension.collection.save`.
+// ZapiszKolekcje obsługuje komendę `extension.collection.save`: zakłada nową
+// kolekcję kuratorską albo zapisuje zmianę kolekcji zastanej.
 func (a *adapterRozszerzen) ZapiszKolekcje(ctx context.Context,
 	z shared.ExtensionCollectionSaveRequest) (shared.ExtensionCollectionSaveResponse, error) {
 
@@ -283,10 +258,8 @@ func (a *adapterRozszerzen) ZapiszKolekcje(ctx context.Context,
 	return shared.ExtensionCollectionSaveResponse{Collection: kolekcjaKontraktuRozszerzen(zapisana)}, nil
 }
 
-// ZastosujKolekcje obsługuje `extension.collection.apply`: przestawia stan
-// włączenia każdej pozycji kolekcji. Pozycja, której nie ma, wraca w `rejected`
-// z powodem — przebieg idzie do końca, bo grupowe działanie na zestawie ma
-// zrobić tyle, ile się da, a nie stanąć na pierwszej przeszkodzie.
+// ZastosujKolekcje obsługuje komendę `extension.collection.apply`: przestawia
+// stan włączenia każdej pozycji kolekcji, do końca wykazu bez przerywania.
 func (a *adapterRozszerzen) ZastosujKolekcje(ctx context.Context,
 	z shared.ExtensionCollectionApplyRequest) (shared.ExtensionCollectionApplyResponse, error) {
 
@@ -324,8 +297,8 @@ func (a *adapterRozszerzen) ZastosujKolekcje(ctx context.Context,
 	return shared.ExtensionCollectionApplyResponse{Applied: zastosowane, Rejected: odrzucone}, nil
 }
 
-// WypiszRejestr obsługuje `extension.registry.list` — prywatny rejestr
-// organizacji (czoło pliku).
+// WypiszRejestr obsługuje komendę `extension.registry.list`: pozycje
+// katalogu powstałe z publikacji pakietu, czyli prywatny rejestr organizacji.
 func (a *adapterRozszerzen) WypiszRejestr(ctx context.Context,
 	z shared.ExtensionRegistryListRequest) (shared.ExtensionRegistryListResponse, error) {
 
@@ -348,8 +321,7 @@ func (a *adapterRozszerzen) WypiszRejestr(ctx context.Context,
 
 	pozycje := []shared.Extension{}
 	for _, wiersz := range wiersze {
-		// Pozycja rejestru organizacji to ta, która powstała z publikacji
-		// pakietu — konfiguracja niesie wtedy odwołanie do pakietu.
+		// Pozycja rejestru to ta powstała z publikacji pakietu.
 		if napisZKonfiguracjiRozszerzenia(wiersz.Konfiguracja, "appsPackageId") == "" {
 			continue
 		}
@@ -358,16 +330,15 @@ func (a *adapterRozszerzen) WypiszRejestr(ctx context.Context,
 		}
 		pozycje = append(pozycje, rozszerzenieKontraktu(wiersz))
 	}
-	// Adres rejestru jest lokalny, bo rejestr jest lokalny: pozycje leżą w bazie
-	// tego rdzenia, a archiwa w jego magazynie treści. Adres wskazujący cudzy
-	// serwer byłby obietnicą, za którą nic nie stoi.
+	// Adres rejestru jest lokalny, bo rejestr jest lokalny.
 	return shared.ExtensionRegistryListResponse{
 		Extensions: pozycje, Total: len(pozycje),
 		RegistryUrl: wskaznikNapisuApp(korzenWytworowApp),
 	}, nil
 }
 
-// SprawdzAktualizacje obsługuje `extension.update.check` — patrz czoło pliku.
+// SprawdzAktualizacje obsługuje komendę `extension.update.check`: zestawia
+// wersję zainstalowaną z najwyższą wersją zapisaną w dzienniku wersji.
 func (a *adapterRozszerzen) SprawdzAktualizacje(ctx context.Context,
 	z shared.ExtensionUpdateCheckRequest) (shared.ExtensionUpdateCheckResponse, error) {
 
@@ -443,8 +414,7 @@ func (a *adapterRozszerzen) PrzeslijPaczke(ctx context.Context,
 	}
 
 	suma := sumaTresciApp(bajty)
-	// Suma podana w żądaniu jest sprawdzana, nie przyjmowana: przesyłka, która
-	// dojechała uszkodzona, ma się o tym dowiedzieć teraz, a nie przy instalacji.
+	// Suma podana w żądaniu jest sprawdzana, nie przyjmowana bezkrytycznie.
 	if z.ChecksumSha256 != nil && *z.ChecksumSha256 != "" &&
 		!strings.EqualFold(*z.ChecksumSha256, suma) {
 		return shared.ExtensionPackageUploadResponse{}, bladWskazaniaRozszerzenia(
@@ -479,8 +449,7 @@ func (a *adapterRozszerzen) PrzypnijWersje(ctx context.Context,
 	}
 	wersja := strings.TrimSpace(wartoscTekstu(z.Version))
 	if wersja != "" {
-		// Przypiąć da się wersję, która istnieje: przypięcie do numeru
-		// wymyślonego byłoby obietnicą, której nikt nie spełni.
+		// Przypiąć da się wyłącznie wersję, która istnieje w dzienniku.
 		wersje, err := a.rejestr.WersjeRozszerzenia(ctx, wiersz.Identyfikator)
 		if err != nil {
 			return shared.ExtensionVersionPinResponse{}, bladRozszerzenia(err)
@@ -680,7 +649,8 @@ func (a *adapterRozszerzen) ZainstalujZestaw(ctx context.Context,
 	}, nil
 }
 
-// WypiszHistorie obsługuje `extension.history.list`.
+// WypiszHistorie obsługuje komendę `extension.history.list`: wpisy dziennika
+// cyklu życia pozycji wskazanej albo, bez wskazania, wszystkich pozycji.
 func (a *adapterRozszerzen) WypiszHistorie(ctx context.Context,
 	z shared.ExtensionHistoryListRequest) (shared.ExtensionHistoryListResponse, error) {
 
@@ -782,7 +752,8 @@ func (a *adapterRozszerzen) odnotujCyklZycia(ctx context.Context, wiersz dane.Ro
 	})
 }
 
-// czynnoscWlaczenia nazywa czynność cyklu życia po stronie przełącznika.
+// czynnoscWlaczenia nazywa czynność cyklu życia po stronie przełącznika
+// włączenia: włączona albo wyłączona, zgodnie z kontraktem historii.
 func czynnoscWlaczenia(wlacz bool) shared.ExtensionLifecycleAction {
 	if wlacz {
 		return shared.ExtensionLifecycleActionEnabled
@@ -790,8 +761,8 @@ func czynnoscWlaczenia(wlacz bool) shared.ExtensionLifecycleAction {
 	return shared.ExtensionLifecycleActionDisabled
 }
 
-// wersjaAlboBrak nazywa pustkę słowem, bo pusty łańcuch w dzienniku czytałby się
-// jak brak zapisu.
+// wersjaAlboBrak nazywa pustkę słowem „zdjęte", bo pusty łańcuch w dzienniku
+// czytałby się jak brak zapisu, a nie jak zdjęcie przypięcia wersji.
 func wersjaAlboBrak(wersja string) string {
 	if wersja == "" {
 		return "zdjęte"
@@ -814,8 +785,8 @@ func czyWersjaZnana(wersje []dane.WersjaRozszerzenia, szukana, biezaca string) b
 	return false
 }
 
-// najwyzszaWersjaRozszerzenia zwraca najwyższą zarejestrowaną wersję wraz z jej
-// dziennikiem zmian.
+// najwyzszaWersjaRozszerzenia zwraca najwyższą wersję z wykazu wersji pozycji
+// wraz z jej dziennikiem zmian, porównując wersje semantycznie.
 func najwyzszaWersjaRozszerzenia(wersje []dane.WersjaRozszerzenia) (string, string) {
 	najwyzsza := ""
 	dziennik := ""
@@ -845,7 +816,8 @@ func porownajWersjeSemantyczne(pierwsza, druga string) int {
 	return strings.Compare(pierwsza, druga)
 }
 
-// czlonyWersji rozkłada wersję na trzy człony liczbowe; brak członu daje zero.
+// czlonyWersji rozkłada zapis wersji na trzy człony liczbowe, pomijając
+// przedrostek `v` i przyrostki; brak członu w zapisie daje zero.
 func czlonyWersji(wersja string) [3]int {
 	var czlony [3]int
 	rdzen, _, _ := strings.Cut(strings.TrimPrefix(wersja, "v"), "-")
@@ -875,7 +847,8 @@ func lamieZgodnoscSemantyczna(przed, po string) bool {
 	return nowe[0] == 0 && stare[1] != nowe[1]
 }
 
-// listaZKonfiguracjiRozszerzenia wyciąga wykaz napisów spod klucza konfiguracji.
+// listaZKonfiguracjiRozszerzenia wyciąga wykaz napisów spod wskazanego klucza
+// dokumentu JSON konfiguracji pozycji, albo pustkę, gdy klucza nie ma.
 func listaZKonfiguracjiRozszerzenia(konfiguracja, klucz string) []string {
 	if strings.TrimSpace(konfiguracja) == "" {
 		return nil
@@ -895,7 +868,8 @@ func listaZKonfiguracjiRozszerzenia(konfiguracja, klucz string) []string {
 	return wykaz
 }
 
-// napisZKonfiguracjiRozszerzenia wyciąga napis spod klucza konfiguracji.
+// napisZKonfiguracjiRozszerzenia wyciąga pojedynczy napis spod wskazanego
+// klucza dokumentu JSON konfiguracji pozycji, albo pustkę, gdy klucza nie ma.
 func napisZKonfiguracjiRozszerzenia(konfiguracja, klucz string) string {
 	if strings.TrimSpace(konfiguracja) == "" {
 		return ""
@@ -915,7 +889,8 @@ func napisZKonfiguracjiRozszerzenia(konfiguracja, klucz string) string {
 	return wartosc
 }
 
-// kolekcjaKontraktu przekłada wiersz kolekcji na kształt kontraktu.
+// kolekcjaKontraktu przekłada wiersz kolekcji z bazy danych na kształt
+// kolekcji zwracany kontraktem komunikacji.
 func kolekcjaKontraktuRozszerzen(wiersz dane.KolekcjaRozszerzen) shared.ExtensionCollection {
 	pozycje := wiersz.KodyPozycji
 	if pozycje == nil {
@@ -928,7 +903,8 @@ func kolekcjaKontraktuRozszerzen(wiersz dane.KolekcjaRozszerzen) shared.Extensio
 	}
 }
 
-// narzedzieKontraktu przekłada wiersz narzędzia na kształt kontraktu.
+// narzedzieKontraktu przekłada wiersz narzędzia z bazy danych na kształt
+// narzędzia zwracany kontraktem komunikacji.
 func narzedzieKontraktuRozszerzen(wiersz dane.NarzedzieRozszerzenia) shared.ExtensionToolEntry {
 	wpis := shared.ExtensionToolEntry{
 		Name: wiersz.Nazwa, Kind: shared.ExtensionToolKind(wiersz.Rodzaj),
@@ -940,7 +916,8 @@ func narzedzieKontraktuRozszerzen(wiersz dane.NarzedzieRozszerzenia) shared.Exte
 	return wpis
 }
 
-// uprawnienieKontraktu przekłada wiersz uprawnienia na kształt kontraktu.
+// uprawnienieKontraktu przekłada wiersz uprawnienia z bazy danych na kształt
+// uprawnienia zwracany kontraktem komunikacji.
 func uprawnienieKontraktuRozszerzen(wiersz dane.UprawnienieRozszerzenia) shared.ExtensionPermission {
 	uprawnienie := shared.ExtensionPermission{
 		Scope:  shared.ExtensionPermissionScope(wiersz.Zakres),
@@ -973,7 +950,8 @@ func (a *adapterRozszerzen) pozycjaRozszerzeniaZadania(ctx context.Context,
 	return wiersz, nil
 }
 
-// bladNieznanegoBytuRozszerzenia odróżnia „bytu nie ma" od usterki odczytu.
+// bladNieznanegoBytuRozszerzenia odróżnia odpowiedź „bytu nie ma" od usterki
+// odczytu, nazywając rodzaj bytu i jego kod w treści odmowy.
 func bladNieznanegoBytuRozszerzenia(nazwaBytu, kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

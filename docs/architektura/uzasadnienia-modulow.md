@@ -237,3 +237,48 @@ nie ma go na maszynie — pozostawia wynik drogi podstawowej bez zmian.
 Para powtórzeń z programu dupl wraca dwukrotnie, raz z każdej strony, więc
 zapisywana jest jedna strona pary: wykaz z tym samym fragmentem dwa razy
 mówiłby o dwóch spostrzeżeniach tam, gdzie jest jedno.
+
+## budowa/server/internal/core/adapter_modul_extension_katalog.go
+
+Wyszukiwarka szuka wyłącznie w tym, co pozycja katalogu niesie: nazwa, opis,
+kategoria, udostępniane narzędzia i znaczniki. Rdzeń przeszukuje więc kod,
+nazwę i opis wiersza oraz nazwy narzędzi odkrytych u integracji — wszystko,
+co naprawdę leży w bazie. Podpowiedzi składają się z nazw pozycji i narzędzi,
+które trafienie zawierają, a nie z listy wpisanej w kodzie.
+
+Prywatny rejestr organizacji nie jest drugim katalogiem: wykaz rejestru
+oddaje te pozycje katalogu, które powstały z publikacji pakietu — publikacja
+zostawia w konfiguracji pozycji odwołanie do pakietu i jego archiwum. Osobna
+tabela rejestru byłaby drugą prawdą o tym samym zbiorze pozycji. Adres
+rejestru jest lokalny, bo rejestr jest lokalny: pozycje leżą w bazie tego
+rdzenia, a archiwa w jego magazynie treści; adres wskazujący cudzy serwer
+byłby obietnicą, za którą nic nie stoi.
+
+Sprawdzenie aktualizacji liczy się z wersji, które istnieją: zestawia wersję
+zainstalowaną z najwyższą wersją zapisaną w tabeli wersji rozszerzenia, a te
+wiersze powstają przy publikacji pakietu i przy przesłaniu paczki. Rdzeń nie
+pyta o aktualizacje żadnego serwera w sieci — nie ma dokąd pytać, a udawanie
+odpowiedzi byłoby meldunkiem bez pokrycia.
+
+Żadna z komend tej rodziny niczego nie blokuje: operacje zbiorcze, cofnięcie
+wersji i instalacja zestawu wykonują się od razu, a pozycje, których wykonać
+się nie dało, wracają w polu odrzuceń z powodem, nie jako przerwany przebieg.
+
+Odsunięcie i granica strony wyszukiwarki liczą się po zawężeniu wyników do
+zapytania: pole całkowitej liczby opisuje zbiór spełniający warunki, nie
+długość oddanej strony.
+
+Dziennik zmian karty szczegółów składa się z wpisów wersji niosących opis —
+jedyne miejsce, w którym rdzeń go trzyma; wersja bez wpisu nie dokłada
+pustego wiersza do dziennika.
+
+Zależności i znaczniki karty szczegółów niesie konfiguracja pozycji, nie
+osobne pola żądania, ponieważ manifest pakietu odkłada je właśnie tam.
+
+Suma kontrolna podana przy przesyłce paczki jest sprawdzana, nie przyjmowana
+bezkrytycznie: przesyłka, która dojechała uszkodzona, ma się o tym dowiedzieć
+przy przesłaniu, a nie dopiero przy instalacji.
+
+Przypięcie wersji dopuszcza wyłącznie wersję, która istnieje w dzienniku
+pozycji: przypięcie do numeru wymyślonego byłoby obietnicą, której nikt nie
+spełni.

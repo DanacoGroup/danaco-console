@@ -2562,3 +2562,14 @@ Plik trzyma wyłącznie budulec panelu archiwum: wiersz wykazu wraz z kontrolką
 pozycji oraz przekład odmowy rdzenia na zdanie czytelne dla Operatora. Składanie
 panelu i jego czynności należą do `archiwum-ekspertow.ts`, dzięki czemu kontrolki
 pozostają wolne od wiedzy o przebiegu pracy panelu.
+
+## budowa/klient-poprzedni/src/mission-control/kafel-liczby.ts
+
+Liczba w kaflu idzie krojem technicznym `--dn-ff-mono`, ponieważ jest daną
+techniczną, a nie nagłówkiem. Krój szeryfowy zostaje zastrzeżony dla tytułów
+sekcji, przez co czytelnik odróżnia pomiar od nazwy części widoku samym
+kształtem znaków.
+
+Wyróżnienie kafla jest zastrzeżone dla miary krytycznej. Etykieta nazywa miarę
+wprost i nie bywa zastępowana samym kolorem, dzięki czemu kafel pozostaje
+czytelny bez rozróżniania barw.

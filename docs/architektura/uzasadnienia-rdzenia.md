@@ -281,3 +281,45 @@ i pracuje w przekonaniu, że ono obowiązuje.
 
 Z tego powodu każdy sprawdzian w tym pliku sięga do bazy własnym zapytaniem
 SQL albo mierzy odmowę wydaną przez straż eksperta, a nie sam zapis komendy.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_czynnosci.go
+
+Priorytet drogi wkompilowanej nad programem pakietu serwera wynika z jednego
+rozpoznawalnego błędu: `errBrakRachunkuGoObrazu`. Tylko on przełącza czynność
+na program; każdy inny błąd jest odmową wprost, ponieważ obraz uszkodzony ma
+zostać nazwany, a nie oddany drugiej drodze, która powie o nim to samo wolniej.
+Program wchodzi wyłącznie tam, gdzie rachunku Go nie ma wcale — AVIF bez kodera
+i dekodera w Go oraz WEBP stratny, którego `nativewebp` nie zapisuje. Składanie
+argumentów programu w `argumentyPrzeksztalcenia`, `argumentyPoprawki`
+i `argumentyKonwersji` musi umieć dokładnie to samo, co rachunek wkompilowany,
+inaczej ten sam wniosek modelu dawałby dwa różne skutki zależnie od formatu
+pliku.
+
+Dogniecenie zapisu programem dogniatającym należy wyłącznie do `image.convert`,
+ponieważ tylko ta czynność obiecuje w odpowiedzi `savedBytes`; przekształcenie
+i poprawka zmieniają treść obrazu, więc pytanie o oszczędność miejsca nie ma
+przy nich sensu. Krok dogniatania nie odmawia: przy braku programu oddaje bajty
+bez zmiany, więc zapis udaje się także na maszynie, która go nie niesie.
+
+Każda wartość `ImageTransformKind` i `ImageAdjustKind` ma własną gałąź
+w `argumentyPrzeksztalcenia` i `argumentyPoprawki`; wartość spoza wyliczenia
+kończy się odmową nazywającą ją wprost, bez gałęzi domyślnej, która oddałaby
+zasób identyczny ze źródłem jako rzekomy skutek retuszu.
+
+Brak pola `amount` w żądaniu poprawki bierze wartość domyślną operacji, a nie
+zero: zero byłoby poprawką bez skutku, a model proszący o rozjaśnienie bez
+podanej liczby dostałby obraz nieodróżnialny od źródła.
+
+`formatyDocelowe` ogranicza `image.convert` do zamkniętego zbioru formatów,
+ponieważ nazwa formatu trafia w argument programu drogi zapasowej:
+przepuszczenie dowolnego tekstu, na przykład `ephemeral:`, dałoby modelowi
+wpływ szerszy niż zamiana formatu.
+
+Format wyniku w `przetworz` równa się formatowi źródła, gdy czynność go nie
+zmienia — bez tego wymuszenia zapis nie miałby jak nazwać formatu; format
+nierozpoznany oddaje `png` jako wybór bezstratny.
+
+Odmowa rachunku wkompilowanego w `policzWkompilowanym` — kadr poza obrazem,
+operacja spoza wyliczenia — wraca wprost i kończy czynność: droga zapasowa nie
+ma jej czym naprawić, a jej uruchomienie zamieniłoby odmowę czytelną na odmowę
+programu.

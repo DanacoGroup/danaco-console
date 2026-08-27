@@ -4426,3 +4426,16 @@ modułów bez pamięci, która rozjechałaby się z profilem przy jego zmianie.
 Kontekst roboczy podaje warstwa składająca, bo tylko ona zna moduły. Moduł bez
 pamięci sesyjnej i bez podanego kontekstu jest wciąż ulotny — traci rozmowę
 przy zamknięciu okna — mówi tylko o jednym czyszczeniu zamiast dwóch.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/glos-biezacy.ts
+Rdzeń nadaje wypowiedź dwiema drogami: zdarzeniem zmiany debaty, rodzaju stworzonej z treścią
+pustą w chwili otwarcia głosu, rodzaju zaktualizowanej z treścią pełną po domknięciu strumienia,
+oraz fragmentami strumienia przez cały czas mówienia. Widok czytający wyłącznie zdarzenia pokazuje
+pustą wypowiedź aż do domknięcia strumienia, dlatego obie drogi trzeba złożyć w jedną treść.
+Świeższą treść wybiera się po długości, bo fragment strumienia nie niesie znacznika czasu, a
+znacznik czasu wypowiedzi zapisanej bywa zerem: rosnąca wygrywa, gdy jest niekrótsza; utrwalona
+wchodzi, gdy rosnącej nie ma albo urwała się krótsza — strumień zerwany w połowie, a rdzeń zapisał
+całość. Moduł nie tworzy węzłów interfejsu i nie zna klas stylu: trzy widoki rysują inaczej
+(kolumna, wykaz, panel), a treść i stan mają mieć to samo. Nazwy stanów są napisami stałymi, bo
+trafiają do atrybutu danych, w który arkusze stylu celują wprost; wyliczenie stoi tu, a nie
+w widoku, żeby zmiana napisu w jednym miejscu nie rozjechała dwóch arkuszy i trzech okien.

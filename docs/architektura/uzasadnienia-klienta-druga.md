@@ -3926,3 +3926,20 @@ pracę albo zaufanie: odmowę cofnięcia rozpoznaną jako odmowa mimo udanego wy
 nazwaną wprost zamiast schowaną za ogólnym „nie udało się", zdanie o różnicy drzew obecne przy
 każdym cofnięciu oraz liczbę zmian operatora zachowanych przy cofaniu pracy modelu. Sprawdzianu,
 że przycisk woła komendę, tu nie ma, bo taki sprawdzian mierzyłby tylko atrapę, którą sam stawia.
+
+## budowa/klient-poprzedni/src/moduly/translate/stan-okna-translate.ts
+Faza siedzi w atrybucie danych, żeby arkusz mógł odróżnić błąd od pustki bez mnożenia klas, a
+sprawdzian mógł zapytać o stan okna, nie o jego wygląd. Forma jest ta sama co w pozostałych
+modułach: ikona, tytuł, opis, treść wyśrodkowana, ze stopniami pisma i szerokością łamania z arkusza
+wspólnego, którego moduł u siebie nie nadpisuje. Ikona należy do stanu pustego i tylko do niego,
+bo arkusz modułu chowa ją w pozostałych fazach: ładowanie ma własny nośnik, błąd kreskę po lewej.
+Komunikat przesłania treść, nie kasuje jej: nieudane odświeżenie zostawia to, co już było widoczne,
+więc powrót do treści nie wymaga ponownego odczytu. Ładowanie nie chowa treści i jest to decyzja
+modułu — treścią każdego z trzech okien jest formularz, do którego operator właśnie pisze, więc
+schowanie go na czas zapisu zabrałoby z oczu to, co wpisane; kontrolka zostaje widoczna i
+edytowalna, a wskaźnik odczytu stoi obok niej, nigdy zamiast niej. Bez własnego przycisku ponowienia:
+wszystkie trzy okna stoją na zapisach wyzwalanych z formularza, więc ponowieniem jest ten sam
+przycisk, który czynność wywołał, zostający klikalny także po odmowie. Podział z bytem wspólnym
+niesie zestaw faz i znakowanie powłoki, a tutaj zostaje to, czego wspólny byt nie przesądza: klasy
+modułu, treść komunikatu, nośnik ikony i spinnera oraz pozostawienie treści widocznej na czas
+ładowania.

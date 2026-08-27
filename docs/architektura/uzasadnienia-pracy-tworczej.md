@@ -2222,3 +2222,32 @@ płótna, zapisaną wierszami (a b c / d e f).
 Krycie częściowe w makiecie produktowej idzie przez maskę jednolitą, bo
 `draw.Transformer` przyjmuje maskę w nastawach, a mnożenie składowych
 obrazu źródłowego zmieniłoby jego barwy zamiast jego przezroczystości.
+
+## budowa/server/internal/core/adapter_modul_studio_postac_pomocniki.go
+
+Postać scala się, a nie nadpisuje: czynność na postaci podaje tylko te pola,
+które zmienia. Pogrubienie ustawione nie ma prawa zdjąć kursywy, a wcięcie
+lewe nie ma prawa zdjąć wyrównania. Dlatego każde scalenie bierze pole ze
+żądania, gdy jest, a zastane, gdy nie ma, i nigdzie nie podmienia całej
+struktury. Podmiana całości byłaby tą samą szkodą, którą w oknie widać jako
+poprawę stopnia, po której znika pogrubienie.
+## server/internal/core/adapter_modul_studio_arsenal.go
+
+Rodzina cyfryzacji wola Tesseracta, wsad wola 7-Zipa. Obie potrzebuja tego
+samego: uruchamiacza, zasad izolacji obowiazujacych okno i obszaru, w ktorym
+proces ma pracowac. Gdyby kazda rodzina skladala ten komplet u siebie, jedna
+z nich predzej czy pozniej pominelaby zasady izolacji — a to jest dokladnie
+ta pomylka, ktorej punkt izolacji ma nie dopuscic. Warsztat dokumentu tedy
+NIE idzie i isc nie bedzie: studio.pdf.* oraz studio.security.* pracuja
+biblioteka wkompilowana w rdzen, bez ani jednego procesu potomnego. Pilnuje
+tego zapora zapora_warsztatu_pdf_test.go. Rdzen zlozony bez warstwy kanalu
+ma powiedziec, czego mu brakuje, i pracowac dalej w pozostalych
+czynnosciach.
+
+katalogWsadu: nazwa bierze sie z sumy nazwy archiwum, wiec rozpakowanie
+tego samego archiwum dwa razy trafia w to samo miejsce, zamiast mnozyc
+katalogi.
+
+sciezkaZasobu: rdzen podaje droge, ktora dziala bez niego — wskazanie
+materialu sciezka widziana przez rdzen. Milczace zejscie na pusta sciezke
+dałoby odczyt pliku, ktorego nie ma, i wynik wygladajacy na prawdziwy.

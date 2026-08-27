@@ -1105,3 +1105,18 @@ najpierw wywołanie rdzenia, potem kwit.
 
 Urządzenie bez pamięci trwałej pokazuje wyłącznie potwierdzenie bieżące, a po zamknięciu
 telefonu go nie ma. Taki jest stan faktyczny takiego urządzenia i okno go nie ukrywa.
+
+## budowa/klient-poprzedni/src/moduly/design/wczytanie-pliku.ts
+
+Treść pliku czyta klient, a nie rdzeń. Żądanie `design.asset.upload` zna
+wprawdzie pole `sourcePath`, lecz ścieżka każe otworzyć plik rdzeniowi, a ten
+stoi na innej maszynie niż przeglądarka, w której Operator plik wskazał.
+
+Wymiary mierzy się wyłącznie dla rastra. Wektor oraz obraz, którego przeglądarka
+nie zdekoduje, otrzymują zera znaczące brak pomiaru; oba pola wymiaru są
+w kontrakcie opcjonalne, więc zasób bez nich jest poprawny i wgranie ma się
+odbyć mimo nieudanego pomiaru.
+
+Bajty odczytuje `readAsDataURL`, ponieważ oddaje zapis base64 bez ręcznego
+przepisywania bajtów przez `btoa`, które na treści binarnej wymaga przejścia
+przez ciąg znaków jednobajtowych i zawodzi na pierwszym bajcie powyżej 0xFF.

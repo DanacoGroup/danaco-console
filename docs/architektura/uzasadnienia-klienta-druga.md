@@ -5073,3 +5073,18 @@ niesie dziś w kontrakcie znacznie więcej, niż to okno pokazuje: punkty zgody 
 odrębne, poparcie ważone oraz części zapisu decyzji. Okno rysuje treść i metrykę, bo tyle oddaje
 mu rdzeń — pozostałe pola pozostają puste do czasu zbudowania ich obsługi, a nie dlatego, że
 kontrakt ich nie ma.
+
+## budowa/klient-poprzedni/src/ustawienia/sekcja-wyglad.ts
+Motyw to ta sama nastawa, co na pasku górnym. Wiersz nie ma własnego stanu ani własnego zapisu: bierze
+most, jedynego właściciela tej nastawy po stronie klienta, i jest jego drugim sterem — pierwszym jest
+przełącznik na pasku. Zmiana tutaj przestawia pasek, zmiana na pasku przestawia ten wiersz, a zmiana
+w drugim oknie dolatuje do obu zdarzeniem zmiany konfiguracji. Opcje wyboru i ich etykiety przychodzą
+z katalogu rdzenia, nie z tego pliku. Język interfejsu jest tu miejscem nazwanym, nie kontrolką: katalog
+ustawień rdzenia nie niesie klucza języka interfejsu — jedyny klucz językowy dotyczy rozpoznawania mowy.
+Kontrakt nie ma komendy zmiany języka, a klient nie ma warstwy tłumaczeń, więc przełącznik nie miałby
+dokąd pójść; zamiast niego stoi zdanie mówiące, czego brakuje.
+
+## budowa/klient-poprzedni/src/ustawienia/stan-ustawien.ts
+Rejestr sekcji w warstwie sekcji, nie katalog rdzenia, więc rama nie potrzebuje odczytu ani fazy ładowania
+na swoim poziomie. Jedyna rzecz, którą okno pamięta między otwarciami, to sekcja, na której operator
+skończył: tak samo jak okno konfiguracji, które nie wraca do pierwszej kategorii przy każdym otwarciu.

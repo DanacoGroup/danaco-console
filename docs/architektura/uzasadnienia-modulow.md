@@ -5278,3 +5278,73 @@ wzorcem `COALESCE(?, kolumna)`).
 Skład zestawu i wątku liczy się z kolumny przynależności, nie z osobnej listy.
 Dzięki temu źródło usunięte znika ze składu samo, a nie zostaje w nim jako
 odwołanie donikąd.
+## budowa/server/internal/core/adapter_modul_roundtable_watki.go
+
+Trzy komendy tego pliku niosą trzy różne skutki na zapisie: followup zakłada
+nową turę poboczną przy turze wskazanej, z jednym adresatem; regenerate
+zastępuje tę samą wypowiedź nową treścią, z numerem redakcji o jeden wyżej;
+branch zakłada nową turę o tym samym pytaniu i formacie, wskazującą turę
+rozgałęzianą, przy czym obie gałęzie zostają w zapisie.
+
+Odpowiedź Doprecyzuj wraca po zamknięciu strumienia, bo kontrakt żąda w niej
+wypowiedzi pełnej; fragmenty jadą po drodze zdarzeniem stream.chunk, tak samo
+jak w turze ogólnej. zamknijTureWatku domyka turę poboczną, bo adresat był
+jeden i już odpowiedział — tura otwarta blokowałaby okno pod następną turę
+ogólną. Zastąpienie wypowiedzi w Powtorz, nie dopisanie: kontrakt ma numer
+redakcji wypowiedzi, a nie dwie wypowiedzi tego samego uczestnika w tej samej
+chwili.
+## budowa/server/internal/core/adapter_modul_terminal_rejestr.go
+
+Rejestr nie uruchamia procesów: startuje je port uruchamiacza wypełniony
+przez warstwę kanału, a drzewem potomstwa zarządza przejęcie drzewa
+sesji. Tutaj leży wyłącznie ewidencja: co biegnie, w której karcie, z
+czyjego polecenia i pod jakim uchwytem.
+
+Rejestr sesyjny okien obsługuje inny byt — proces kanału modelu jednego
+okna, jeden na okno. Karta terminala prowadzi wiele procesów naraz i
+żaden z nich nie jest procesem modelu, więc wpisanie ich do tamtego
+rejestru zerwałoby jego niezmiennik jednego procesu na okno.
+
+Adres powłoki zdalnej karty stoi w polu, a nie wyłącznie w zmiennej
+środowiska celu SSH, bo zmienne środowiska karty z zamysłu nie mają
+kolumny w bazie i karta zdalna odtworzona po restarcie traciłaby adres.
+
+Ścieżka klucza prywatnego wskazanego przez wpis książki hostów, pusta
+znacząca klucz domyślny konfiguracji maszyny rdzenia, niesie samą
+ścieżkę, nigdy materiał klucza — ten nie opuszcza dysku.
+
+Wskazanie celu powłok urządzeniowych obejmuje kontener, pod, klaster i
+port szeregowy; pola żyją w pamięci rdzenia tak samo jak zmienne
+środowiska karty.
+
+Stan wstrzymania drzewa procesu nie jest stanem kontraktu — proces
+wstrzymany wciąż jest w stanie działania — lecz rdzeń musi wiedzieć, w
+jakim biegu proces zostawił, żeby nie mylić wstrzymania z zakończeniem
+przy zamykaniu karty.
+
+Numer fragmentu żyje przy procesie, bo wyjście zwykłe i diagnostyczne
+czytają dwie gorutyny naraz, a kontrakt wymaga jednego ciągu numerów na
+strumień.
+
+Proces zakończony zostaje w rejestrze, bo Process Monitor filtruje wprost
+po stanach zakończenia, niepowodzenia i zatrzymania. Dziennik w bazie
+daje trwałość między uruchomieniami serwera, lecz serwer bez bazy ma
+odpowiedzieć tak samo — stąd druga, pamięciowa warstwa.
+
+Gdy wszystkie wpisy są czynne, nie ma czego przyciąć: wykreślenie procesu
+biegnącego odebrałoby jedyną drogę do jego zakończenia.
+
+## budowa/server/internal/core/adapter_modul_roundtable_stanowisko.go
+
+Rdzeń nie streszcza cudzych słów i nie dopisuje wniosku, którego nikt nie
+wypowiedział: treść stanowiska to uporządkowany zapis tur — zagadnienie,
+pytanie i wypowiedzi każdego uczestnika. Skrócenie i redakcja należą do
+Operatora, który ma na to model w pasku promptu.
+
+Kontrakt nie ma `roundtable.consensus.set`, czyli komendy zapisującej treść
+nadaną ręcznie przez Operatora. Dlatego wersja rośnie wyłącznie wtedy, gdy
+zmienił się zapis debaty.
+
+Stanowisko powstaje przy pierwszym odczycie, tak jak pulpit projektu modułu
+Workspace: bez utrwalenia nie byłoby ani stabilnego identyfikatora, ani
+licznika wersji, którego żąda panel akcji okna.

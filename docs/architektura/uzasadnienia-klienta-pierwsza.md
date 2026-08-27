@@ -4041,3 +4041,25 @@ stronie odczytu, czyli filtru wykazu. Środek wartości pozostaje nietknięty.
 Powtórzenia odpadają, ponieważ rdzeń i tak nie zapisze etykiety dwa razy: klucz
 główny tabeli `etykieta_zasobu_design` obejmuje etykietę, a odpowiedź niosłaby
 wtedy co innego niż żądanie.
+
+## budowa/klient-poprzedni/src/moduly/design/tryby-kanwy.ts
+
+Moduł zna siedem trybów narzędzia kanwy: zaznaczanie, pióro, kształt, tekst,
+pędzel z maską, retusz oraz ramkę interfejsu. Wykaz podaje wszystkie siedem,
+ponieważ ukrycie tych, których ta budowa nie wykonuje, przedstawiłoby moduł
+jako mniejszy, niż go zaprojektowano.
+
+Żaden tryb nie jest wygaszony: wybór zawsze się udaje, a pod wykazem staje
+zdanie mówiące, co tryb w tej budowie robi albo czego mu brakuje. Tryb
+zablokowany niczego nie tłumaczy, tryb wybrany wraz ze zdaniem tłumaczy
+wszystko.
+
+Dwa tryby zmieniają zachowanie kanwy. Zaznaczanie jest stanem wyjściowym
+i prowadzi wskazywanie oraz przeciąganie warstw. Ramka interfejsu kieruje pracę
+do presetów ramek przybornika, ponieważ ramka jest tu warstwą o zadanych
+wymiarach, a nie osobnym bytem.
+
+Pięć pozostałych trybów wymaga bytów, których kompozycja nie zna: ścieżki
+z węzłami, kształtu innego niż prostokąt, tekstu, maski przezroczystości oraz
+pędzla działającego na pikselach zasobu. Kompozycja niesie warstwę o położeniu,
+rozmiarze, kolejności, blokadzie i adnotacji, i tyle jedzie do rdzenia.

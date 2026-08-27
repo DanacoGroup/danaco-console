@@ -5268,3 +5268,8 @@ niczego nie zmienia i niczego nie rozgłasza; rozgłoszony jako zmiana byłby zd
 Port kolejek bez tych dwóch czynności to co innego: kolejki są, a rdzeń nie umie ich oddać. Wtedy
 komendy zostają wpięte i odmawiają wprost błędem wewnętrznym, bo odpowiedź nieznanej komendy
 wskazywałaby na brak kolejek, a nie na usterkę montażu.
+
+## budowa/server/internal/core/handlers_role.go
+Zmiana roli rozgłasza się dwoma zdarzeniami i każde ma innego odbiorcę: zmiana okna odświeża okno
+w wykazie Mission Control, zmiana roli niesie samo nadanie wraz z więzią koordynatora — tego
+drugiego panel ról nie złoży z pierwszego, bo okno nie niesie wcielenia roli.

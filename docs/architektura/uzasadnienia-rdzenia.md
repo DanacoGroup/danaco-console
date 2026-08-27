@@ -1396,3 +1396,35 @@ których rdzeń nie wykona sam: sondę `command` (uruchamiacz), sondę
 `modelCall` (rejestr kanałów) oraz drogę wspólną z wszystkimi wołaniami
 arsenału (izolacja). Brak którejkolwiek nie psuje montażu: psuje jeden
 rodzaj sondy, która wtedy oddaje `unknown` wraz z powodem.
+
+## budowa/server/internal/core/adapter_krok_zlecenia.go
+
+Krokiem jest pozycja kolejki — ten sam byt, którym operuje silnik kolejki,
+posuwany po tabeli przejść krokNaprzod. Działanie pause rodziny queue.action
+wstrzymuje całą kolejkę, a nie krok: pozycja zostaje w stanie wykonywana,
+a najbliższe resume przesuwa ją do do_weryfikacji, czyli traktuje pracę
+przerwaną jak skończoną. Sterowanie pojedynczym krokiem prowadzi do innego
+skutku — decyzja o kroku stojącym w wykonywana powoduje ponowne wykonanie
+pracy z decyzją doklejoną do treści zlecenia, zamiast potraktować przerwaną
+turę modelu jako gotową. Krok w stanie końcowym jest odmawiany na wejściu,
+i przy wstrzymaniu, i przy decyzji, bo bez obu tych warunków wznowienie
+zostawiłoby zlecenie w stanie pracy nad krokiem, który nie ma jak tego stanu
+opuścić. Metody sterowania krokiem siedzą na adapterKolejek, ponieważ muszą
+widzieć te same pozycje, ten sam silnik i tego samego wykonawcę, co
+queue.action.
+
+Wartość stanu zamkniety w wyliczeniu stanów widzianych przez Operatora jest
+konieczna, bo bez niej krok ukończony, błędny albo anulowany przedstawiałby
+się jako czekający na decyzję.
+
+Zapisanie decyzji przed jej zastosowaniem — kolumny zdecydowano_o
+i zastosowano_o — sprawia, że przerwanie rdzenia między jednym a drugim
+zostawia decyzję widoczną i czekającą na dokończenie, a nie zgubioną.
+Odrzucenie zamyka krok stanem anulowana z werdyktem odrzucone.
+
+Stan sterowania kroku wystawiany w odpowiedzi na decyzję różni się celowo od
+stanu, jaki pokazałby wykaz kroków odczytany chwilę później: liczy się
+z wstrzymania czynnego, więc dopóki epizod nie jest jeszcze zastosowany,
+znaczniki decyzji zostają w odpowiedzi, żeby Operator zobaczył, co się
+właśnie stało; po zastosowaniu epizod jest już historią i krok wraca pod
+stan swojej pracy.

@@ -3579,3 +3579,11 @@ czyli adaptera w rdzeniu wpiętego po wniesieniu zdarzenia powiadomienia. Ten
 pakiet prowadzi kolejkę i rozstrzyga, co i kiedy ma polecieć, a nie rozstrzyga,
 jakim napisem się to nazywa na łączu. Ponowienie doręczenia kosztuje jeden takt,
 natomiast nieprawdziwy zapis stanu doręczenia w bazie kosztuje zaufanie do kanału.
+## budowa/server/internal/dane/szukanie_rozmow.go
+Szukanie idzie przez dopasowanie pełnotekstowe, wycinek i porządek trafienia, nie przez porównanie tekstu.
+Tokenizator indeksu sprowadza większość znaków diakrytycznych do liter podstawowych, ale znak „ł" pozostaje
+osobną literą, więc zapytanie bez tego znaku nie trafi w słowo, które go zawiera.
+
+Fraza wyszukiwania trafia do zapytania w cudzysłowie: zapytanie jest frazą dosłowną, a nie wyrażeniem składni
+wyszukiwania pełnotekstowego. Ujęcie w cudzysłów, z podwojeniem cudzysłowów wewnętrznych, zdejmuje z frazy
+operatory składni, żeby fraza z myślnikiem albo gwiazdką nie wywracała zapytania błędem składni.

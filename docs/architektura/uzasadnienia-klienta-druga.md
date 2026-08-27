@@ -4319,3 +4319,29 @@ zdaniem, nie blokadą kontrolki.
 
 ## budowa/klient/src/wejscie/skladniki/zakladki-pigulki.ts
 Pigułka w pełnym wypełnieniu czyta się jak przycisk działania, a to kontrolka wskazująca położenie, stąd stan wybrany niesie podświetlenie. Odzyskiwanie dostępu nie jest trzecią drogą — jest wyjściem z logowania, więc w zakładkach zostaje wtedy zaznaczone logowanie.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/diagnostyka-kanalow.ts
+Diagnostyka mierzy to, co niesie rejestr kanałów rdzenia — nazwa, rodzaj, model, konto poświadczeń,
+czynność kanału — zestawione ze składem debaty. Nie sięga po telemetrię kanału, bo telemetrii
+kontrakt nie oddaje: ani czasu odpowiedzi kanału, ani liczby błędów, ani stanu połączenia.
+Rozstrzygnięcie ważne dla Operatora jest jedno: kanał uczestnika nieznany rejestrowi. Zachodzi ono
+naprawdę — uczestnika zakłada się z kanału wybranego w chwili dodania, a rejestr bywa odczytany
+później i bywa węższy, gdy kanał zniknął z rejestru rdzenia. Wtedy uczestnik zostaje w debacie,
+a jego kanał nie ma nazwy, więc panel podpisuje go identyfikatorem. Diagnostyka mówi to wprost,
+zamiast zostawiać identyfikator bez wyjaśnienia.
+
+## budowa/klient-poprzedni/src/moduly/translate/sufit-paneli.ts
+Sufit instancji Translation Panels jest opisem stanu, nie bramką: górnej granicy liczby paneli nie
+stawia nikt i plik tego nie zmienia, bo wpisanie progu z palca byłoby prawem wymyślonym po stronie
+klienta, a rdzeń i tak przyjąłby panel ponad nim. Skąd wiadomo, że granicy nie ma: migracja bazy
+nie ma więzu na liczbę wierszy panelu; żądanie dodania celu nie niesie ani jednego licznika, a
+granica maksymalnej liczby elementów nie pada w całym kontrakcie; uchwyt zapisu panelu sprawdza
+okno i język, po czym woła model i zapisuje panel bez licznika i bez odmowy przy jakiejkolwiek
+liczbie paneli okna; siatka paneli układa się jako siatka dopasowująca kolumny, więc panele
+dokładają się bez końca. Każdy panel kosztuje przy tym jedno wywołanie modelu, bo zapis panelu
+liczy przekład przed zapisem, żeby odmowa modelu nie zostawiła pustego wiersza w bazie, więc
+rachunek rośnie liniowo z liczbą paneli. Dwie liczby z tego drzewa nie są odpowiedzią na pytanie
+o granicę i nota ma je rozróżnić: sufit gniazd sceny okien równoległych, do którego cały moduł
+Translate się mieści, i osobna granica okien komunikacji profilu Translate — okno komunikacji
+a panel języka to dwa różne byty. Forma noty idzie za wzorem sufitu uczestników z innego modułu,
+a sufit sceny jest importowany, nie przepisywany, więc liczba jedzie z pliku, w którym stoi.

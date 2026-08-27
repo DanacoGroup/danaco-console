@@ -6267,3 +6267,17 @@ składacza tak samo jak pozostałe warstwy.
 Konfiguracje MCP konektorów mają osobny port, bo konektory eksperta wiążą
 się z punktami dostępu, a te prowadzi inne repozytorium. Wpięcie jest
 opcjonalne: brak mostów nie unieważnia reszty tożsamości.
+
+## budowa/server/internal/core/tozsamosc_prompt.go
+
+Porządek składania promptu wyznaczają dane: warstwa, potem kolejność
+katalogu, potem kod kategorii. Treść jest przycinana z białych znaków
+brzegowych, a spoina łącząca warstwy jest jedna i ta sama. Dzięki temu
+odcisk promptu zmienia się wtedy i tylko wtedy, gdy zmieniła się treść —
+na tym opiera się pamięć podręczna promptu po stronie kanału.
+
+Gdy choć jedna wnosząca treść kategoria żąda zastąpienia, cała nakładka
+idzie przełącznikiem --system-prompt. Podanie jej wtedy przez
+--append-system-prompt zostawiłoby prompt fabryczny nietknięty, czyli
+wykonałoby odwrotność żądania tej kategorii. Nakładka złożona z samych
+kategorii dołączających jedzie trybem dopisania.

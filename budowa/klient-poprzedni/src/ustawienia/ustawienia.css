@@ -1,14 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO USTAWIEŃ · RAMA I NAWIGACJA SEKCJI
-   ----------------------------------------------------------------------------
-   Arkusz opisuje wyłącznie ramę: okno, kolumnę nawigacji sekcji i miejsce
-   treści sekcji czynnej. Wnętrze każdej sekcji stylizuje jej własny plik —
-   ta rama nie zna ich pól.
-
-   Barwy pochodzą wyłącznie z żetonów warstwy `motyw/`. Żeton bez definicji
-   cicho spada do wartości domyślnej, więc arkusz nie wymyśla nazw spoza
-   `motyw/`.
-   ============================================================================ */
+/* Arkusz opisuje wyłącznie ramę okna ustawień, kolumnę nawigacji sekcji i miejsce treści sekcji czynnej, złożone z żetonów warstwy motywu. */
 
 /* --- Rama okna ----------------------------------------------------------- */
 
@@ -116,6 +106,7 @@
 .du-metoda__nazwa { font-weight: 600; color: var(--dn-tekst); }
 
 /* Kotwica bramki nie ma przycisku zdjęcia — plakietka mówi dlaczego. */
+
 .du-metoda__kotwica { margin-inline-start: auto; }
 
 .du-odpowiedz {
@@ -127,6 +118,7 @@
 .du-odpowiedz[data-powodzenie='false'] { color: var(--dn-blad-tekst); }
 
 /* Granica czynności — czego sekcja nie robi i dlaczego. */
+
 .du-granica {
   border-top: 1px dashed var(--dn-obrys);
   padding-top: var(--dn-od-1);
@@ -222,6 +214,7 @@
 }
 
 /* Urządzenie bieżące — kreska wzmacniająca plakietkę „to urządzenie". */
+
 .du-urzadzenie[data-biezace='true'] {
   border-inline-start: 2px solid var(--dn-sygnal);
   background: var(--dn-powierzchnia-2);
@@ -265,6 +258,7 @@
 }
 
 /* Ostrzeżenie stoi pod czynnością jako jej opis — nie jest bramą przed nią. */
+
 .du-urzadzenie__ostrzezenie {
   margin: 0;
   display: flex;

@@ -3790,3 +3790,32 @@ skończonej od przerwanej, gdyż trzy powody zatrzymania mówią „przerwane" i
 z wynikiem"; oraz ukończenie zamienione w bramkę akceptacji, czyli bieg, który po ukończeniu czeka na
 potwierdzenie zamiast podjąć pracę zgłoszoną później. Rdzeń nie ma osobnego wyliczenia stanu tury —
 tura jest wpisem w wykazie biegów warstwy rozmowy, a pętla dowiaduje się o jej końcu jednym zgłoszeniem.
+
+## budowa/server/internal/dane/dostep_punkty.go
+Punkt dostępu mówi, do czego model ma wgląd: maszyna udostępniona mostem MCP
+albo katalog lokalny wskazanego urządzenia. Nie jest środowiskiem —
+środowisko pozostaje profilem widoczności modułów w bocznej nawigacji. Nie
+jest też katalogiem roboczym modelu: ten jest osobnym ustawieniem
+(`katalog.roboczy.*`) i mówi, gdzie model zostawia własne pliki.
+
+## budowa/server/internal/dane/dostep_punkty_wiersz.go
+Adres mostu nie ma własnej kolumny — składa się go z użytkownika, hosta
+i portu. Gdyby był osobnym polem, wiersz mógłby mieć adres sprzeczny z
+własnymi danymi połączenia, a taki rozjazd nie ujawniłby się aż do nieudanego
+uruchomienia.
+
+## budowa/server/internal/dane/dostep_wyliczenia.go
+Kontrakt nie deklaruje przy wyliczeniach AccessPointKind, AccessPointStatus
+ani AccessMode pola bazy — inaczej niż przy AccountKind, które ma osobne
+słowniki wartości bazy i wartości kontraktu. Własny przekład w warstwie
+trwałości byłby drugim źródłem przekładu obok kontraktu współdzielonego.
+Zbiory wyliczeniowe tego pliku są więc sprawdzeniem przynależności, nie
+przekładem: pilnują, żeby do kolumny nie trafiła wartość spoza kontraktu.
+
+## budowa/server/internal/dane/agenci_zapis.go
+
+Uprawnienie jest konfiguracją możliwości, nie bramą: nowo założony ekspert pracuje od razu,
+a interfejs uprawnień pokazuje mu stan wyjściowy zamiast pustego formularza.
+
+widocznoscKolumny: wartość spoza katalogu widoczności odbija się o warunek CHECK kolumny
+agent.widocznosc bazy danych, więc drugi katalog dopuszczalnych wartości nie powstaje w kodzie.

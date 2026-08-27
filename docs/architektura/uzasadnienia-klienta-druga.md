@@ -816,3 +816,29 @@ Operatorowi, po czyjej stronie jest brak.
 Źródło nie ma stanu i nie buduje elementu — sprawdza kształt odpowiedzi
 i oddaje ją oknu. Nazwy metod noszą wspólny przedrostek, więc suma
 z pozostałymi źródłami modułu nie ma kolizji nazw.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-techniczny.ts
+
+Obszar zakresu technicznego niesie osiem punktów izolacji technicznej: katalog roboczy sesji,
+środowisko procesu, katalog danych modelu, dostęp sieciowy, odczyt i zapis plików, konto i token,
+model procesu oraz serwer wykonania. Wartości kluczy są zawsze domyślnie wyłączone. Różnica
+wobec obszaru kontekstu jest zasadnicza: tam wartość domyślna opisuje zakres widoczności i obie
+wartości coś znaczą, tu wyłączony nie jest słabszym wariantem ochrony. Egzekutor rdzenia bierze
+wyłącznie klucze włączone i odrzuca wykonanie, które by je naruszyło; klucz wyłączony nie jest
+sprawdzany w ogóle, więc nikt nie pilnuje tego zakresu, dopóki nie zostanie świadomie włączony.
+Stan wyjściowy platformy to pełna swoboda operacyjna, a widok nazywa ten skutek przy każdym
+z ośmiu kluczy osobno, nie tylko raz na górze, żeby przewijanie wykazu nie zgubiło ostrzeżenia.
+
+Odczyt woła komendę odczytu zakresu technicznego, a przełączenie klucza woła komendę zapisu
+z pełnym zestawem ośmiu przełączników naraz, bo kontrakt niesie cały zestaw, nie pojedynczy
+klucz. Wartość na ekranie zmienia się wyłącznie po potwierdzeniu z rdzenia: stan modułu to
+zawsze ostatnia odpowiedź odczytu albo zapisu, nigdy przewidywanie kliknięcia. Odmowa zapisu nie
+idzie do paska ogólnego obszaru, tylko do komórki zmiany wiersza klucza, którego dotyczy, aby
+było wiadomo, który z ośmiu kluczy się nie zapisał; wartość wyświetlona zostaje ta sprzed próby,
+bo rdzeń jej nie potwierdził.
+
+Plakietka wartości ma trzy stany i trzy wyglądy. Stan nieznany, gdy rdzeń nie zwrócił klucza,
+i stan wyłączony, gdy rdzeń zwrócił, że nikt nie pilnuje, prowadzą do przeciwnych wniosków
+o bezpieczeństwie maszyny, więc nie mogą wyglądać tak samo. Warianty plakietki są zdefiniowane
+w bibliotece komponentów: sukces, ostrzeżenie, błąd, informacja, sygnał, rola, atrament — poza
+tym zbiorem plakietka nie dostaje żadnego wyróżnienia.

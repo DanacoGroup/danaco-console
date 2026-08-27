@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: klient pobierania stron modułu Browser.
-// `browser.navigate` sięga po stronę realnym HTTP GET-em (biblioteka
-// standardowa `net/http`, bez zależności), z limitem czasu i rozmiaru,
-// i wydobywa z HTML-a tytuł oraz tekst renderowany, którymi wypełnia migawkę
-// (patrz nagłówek `adapter_modul_przegladarka.go`).
-//
-// Strona może milczeć, ale rdzeń nie udaje, że odpowiedziała. Błąd transportu,
-// stan nienoszący treści (4xx, 5xx, 204/205, przekierowanie bez `Location`)
-// albo treść nietekstowa wraca uczciwym błędem — migawka powstaje tylko
-// z faktycznie pobranej strony, nie z pustki podszytej pod sukces. Zrzut ekranu
-// wymaga silnika przeglądarki (poza `net/http`) i nie jest tu wypełniany.
-//
-// Rdzeń stoi na maszynie Operatora, więc adres wskazany przez model nie jedzie
-// w świat bez granic. Cztery granice, każda odmawiająca zdaniem po polsku, nie
-// ciszą i nie wyjątkiem: protokół (tylko `http`/`https` — żadnego `file:`,
-// `ftp:` ani `data:`), czas całego pobrania, rozmiar odpowiedzi i długość
-// łańcucha przekierowań. Odmowa opisuje brak („nie dało się pobrać, bo…"), a nie
-// zakaz postawiony Operatorowi.
+// Plik niesie klienta pobierania stron modułu Browser: `browser.navigate`
+// sięga po stronę HTTP GET-em i wydobywa z HTML-a tytuł oraz tekst
+// renderowany, którymi wypełnia migawkę.
 package core
 
 import (
@@ -45,8 +30,8 @@ const (
 	// skoków wystarcza każdej uczciwej witrynie (http→https, adres kanoniczny).
 	limitPrzekierowan = 5
 
-	// znacznikRdzenia przedstawia rdzeń serwerom witryn. Część z nich odrzuca
-	// żądanie bez User-Agenta.
+	// znacznikRdzenia przedstawia rdzeń serwerom witryn, z których część
+	// odrzuca żądanie bez nagłówka User-Agent.
 	znacznikRdzenia = "DanacoConsole/1.0 (+rdzen przegladarki)"
 )
 
@@ -56,17 +41,11 @@ const (
 var errZaDuzaStrona = errors.New("strona przekracza granicę rozmiaru")
 
 // errStronaNieodpowiedziala nazywa niepowodzenie transportu: gospodarz nie
-// przyjął połączenia, nazwa się nie rozwiązała, czas minął. To nie jest usterka
-// rdzenia ani niezgodność żądania z kontraktem — droga do strony chwilowo nie
-// istnieje, więc wołający ma prawo wiedzieć, że ponowienie ma sens
-// (`bladPobraniaStrony`).
+// przyjął połączenia, nazwa się nie rozwiązała, albo czas pobrania minął.
 var errStronaNieodpowiedziala = errors.New("strona nie odpowiedziała")
 
-// bladStanuStrony niesie stan HTTP odpowiedzi, której nie da się przerobić na
-// migawkę. Kod stanu jedzie osobnym polem, a nie zatopiony w zdaniu, bo to po
-// nim rozstrzyga się kod odmowy kontraktu: cudzy 404 to `not_found`, cudzy 503
-// to usterka przemijająca, a cudzy 400 to żądanie odrzucone przez witrynę.
-// Zdanie po polsku zostaje takie samo w każdym z tych przypadków.
+// bladStanuStrony niesie stan HTTP odpowiedzi, której nie da się przerobić
+// na migawkę, wraz ze zdaniem opisującym odmowę po polsku.
 type bladStanuStrony struct {
 	Kod    int
 	Zdanie string
@@ -74,20 +53,16 @@ type bladStanuStrony struct {
 
 func (b bladStanuStrony) Error() string { return b.Zdanie }
 
-// bladAdresuStrony nazywa odmowę wynikającą z samego adresu: zły protokół, brak
-// gospodarza, łańcuch przekierowań dłuższy niż granica. Wołający ma tu co
-// poprawić, więc odmowa wraca jako niezgodność żądania — i nigdy nie miesza się
-// z niepowodzeniem transportu, choć obie wychodzą tym samym `Client.Do`.
+// bladAdresuStrony nazywa odmowę wynikającą z samego adresu: zły protokół,
+// brak gospodarza albo łańcuch przekierowań dłuższy niż granica.
 type bladAdresuStrony struct {
 	Zdanie string
 }
 
 func (b bladAdresuStrony) Error() string { return b.Zdanie }
 
-// errZasobNieJestStrona nazywa zasób, którego nie da się pokazać jako strony:
-// obraz, dokument PDF, archiwum. Osobny błąd, bo to nie jest koniec drogi —
-// przeglądarka w takiej sytuacji nie pokazuje strony, tylko POBIERA plik,
-// a moduł robi dokładnie to samo (`browser.navigate` → wiersz pobrania).
+// errZasobNieJestStrona nazywa zasób, którego nie da się pokazać jako
+// stronę: obraz, dokument PDF, archiwum, i który moduł zamiast tego pobiera.
 var errZasobNieJestStrona = errors.New("zasób nie jest stroną do odczytu")
 
 // plikZeStrony niesie wynik pobrania zasobu, którego nie da się pokazać jako
@@ -176,16 +151,9 @@ type trescStrony struct {
 }
 
 // pobierzStrone pobiera stronę spod adresu przez HTTP GET i wydobywa z niej
-// tytuł oraz tekst renderowany. Limit czasu i rozmiaru chroni rdzeń przed
-// stroną, która nie kończy albo jest zbyt duża. Strona nietekstowa (obraz, PDF)
-// wraca błędem — rdzeń nie zamienia bajtów binarnych na rzekomy tekst.
+// tytuł oraz tekst renderowany, w granicach czasu i rozmiaru pobrania.
 func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
-	// Adres obcinamy raz, na wejściu, i to jest cała prawda o nim dalej. Gdyby
-	// odstępy zdejmował sam sprawdzian protokołu, a do złożenia żądania szedł
-	// łańcuch nieobcięty, adres z otaczającymi spacjami przeszedłby granicę
-	// protokołu i rozbił się dopiero o `http.NewRequestWithContext` zdaniem
-	// o „pierwszym segmencie ścieżki" — dwie prawdy o jednym adresie w jednej
-	// funkcji.
+	// Adres obcinamy raz, na wejściu, i to jest cała prawda o nim dalej.
 	adres = strings.TrimSpace(adres)
 	if err := sprawdzProtokol(adres); err != nil {
 		return trescStrony{}, err
@@ -205,15 +173,12 @@ func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
 	klient := &http.Client{Timeout: czasPobrania, CheckRedirect: pilnujPrzekierowan}
 	odpowiedz, err := klient.Do(zadanie)
 	if err != nil {
-		// `http.Client` zawija powód w `*url.Error`; rozwijamy go, żeby zdanie
-		// odmowy niosło samą przyczynę, nie powtórzony adres z prefiksem „Get".
+		// Rozwijamy `*url.Error`, żeby zdanie odmowy niosło samą przyczynę.
 		var bladOtoczki *url.Error
 		if errors.As(err, &bladOtoczki) && bladOtoczki.Err != nil {
 			err = bladOtoczki.Err
 		}
-		// Odmowa własna (`CheckRedirect`) wraca tą samą drogą co usterka
-		// transportu, ale nią nie jest: zły protokół kolejnego skoku i zbyt
-		// długi łańcuch to wada adresu, nie milczenie gospodarza.
+		// Odmowa CheckRedirect jest wadą adresu, nie milczeniem gospodarza.
 		var bladAdresu bladAdresuStrony
 		if errors.As(err, &bladAdresu) {
 			return trescStrony{}, bladAdresu
@@ -228,16 +193,14 @@ func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
 	if typ := odpowiedz.Header.Get("Content-Type"); !typTekstowy(typ) {
 		return trescStrony{}, fmt.Errorf("%w, tylko treścią typu %q", errZasobNieJestStrona, typ)
 	}
-	// Deklarowany rozmiar sprawdzamy przed czytaniem: gdy serwer sam mówi, że
-	// przysyła więcej niż granica, nie ma po co ciągnąć ani bajta.
+	// Deklarowany rozmiar sprawdzamy przed czytaniem odpowiedzi.
 	if odpowiedz.ContentLength > limitTresci {
 		return trescStrony{}, fmt.Errorf("%w (%d B przy granicy %d B)",
 			errZaDuzaStrona, odpowiedz.ContentLength, int64(limitTresci))
 	}
 
-	// Czytamy o bajt więcej niż granica: nadmiarowy bajt jest dowodem, że strona
-	// się nie zmieściła. Bez niego ucięcie byłoby nie do odróżnienia od strony,
-	// która ma dokładnie tyle treści — a wtedy migawka kłamałaby po cichu.
+	// Czytamy o bajt więcej niż granica: nadmiarowy bajt jest dowodem, że
+	// strona się nie zmieściła.
 	surowe, err := io.ReadAll(io.LimitReader(odpowiedz.Body, limitTresci+1))
 	if err != nil {
 		return trescStrony{}, fmt.Errorf("czytanie strony przerwane: %w", err)
@@ -253,19 +216,8 @@ func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
 	}, nil
 }
 
-// sprawdzStanOdpowiedzi rozstrzyga, czy z odpowiedzi o tym stanie może powstać
-// migawka strony.
-//
-// Sam warunek „poza 200–399 odmawiaj" przepuszczałby dwie odpowiedzi, które
-// treści strony nie niosą wcale:
-//   - 3xx, które dojechało aż tutaj — a dojechać może tylko wtedy, gdy klient
-//     nie miał za czym pójść, czyli gdy przekierowanie nie wskazało `Location`;
-//   - 204/205, które z definicji nie mają ciała.
-//
-// Obie skończyłyby się `ok` i migawką bez tytułu, tekstu i HTML-a, a
-// `browser.snapshot.get` oddałby tę pustkę modelowi jako bieżący stan strony,
-// zaś historia nawigacji zapisałaby przejście, którego nie było. Dlatego
-// migawkę robi wyłącznie odpowiedź 2xx niosąca treść; reszta odmawia zdaniem.
+// sprawdzStanOdpowiedzi rozstrzyga, czy z odpowiedzi o danym stanie może
+// powstać migawka strony: tylko odpowiedź 2xx niosąca treść, reszta odmawia.
 func sprawdzStanOdpowiedzi(kod int) error {
 	switch {
 	case kod == http.StatusNoContent || kod == http.StatusResetContent:
@@ -284,15 +236,11 @@ func sprawdzStanOdpowiedzi(kod int) error {
 	return nil
 }
 
-// sprawdzProtokol przepuszcza wyłącznie `http` i `https` ze wskazanym gospodarzem.
-// Rdzeń stoi na maszynie Operatora: `file:` czytałby jej dysk, `data:` niósłby
-// treść zmyśloną przez wołającego, a schemat pusty znaczy adres względny, który
-// nie prowadzi donikąd. Każdy z tych przypadków wraca zdaniem nazywającym brak
-// drogi do strony, nie zakaz.
+// sprawdzProtokol przepuszcza wyłącznie `http` i `https` ze wskazanym
+// gospodarzem, odmawiając zdaniem nazywającym brak drogi do strony.
 func sprawdzProtokol(adres string) error {
-	// Odstępy zdejmuje `pobierzStrone` na wejściu — tu adres jest już taki, jaki
-	// pojedzie do żądania (patrz komentarz tam). Drugie obcięcie w tym miejscu
-	// znaczyłoby, że sprawdzian ogląda inny łańcuch niż klient HTTP.
+	// Odstępy zdejmuje `pobierzStrone` na wejściu, więc adres tu już taki
+	// pojedzie do żądania.
 	rozlozony, err := url.Parse(adres)
 	if err != nil {
 		return bladAdresuStrony{Zdanie: "adres nie jest poprawnym adresem strony: " + err.Error()}
@@ -312,16 +260,8 @@ func sprawdzProtokol(adres string) error {
 	return nil
 }
 
-// pilnujPrzekierowan tnie łańcuch przekierowań na `limitPrzekierowan` skokach i
-// sprawdza protokół każdego kolejnego adresu — inaczej strona przepuszczona na
-// wejściu mogłaby przekierować rdzeń tam, dokąd sam by nie poszedł. Zwrócony
-// błąd wychodzi z `Client.Do`, więc obie odmowy trafiają do Operatora zdaniem.
-//
-// Granica znaczy dokładnie to, co mówi odmowa. `przebyte` niesie żądania już
-// wysłane — przy pierwszym przekierowaniu jest tam żądanie pierwotne, więc przy
-// k-tym skoku długość wynosi k. Warunek `>= 5` odrzucałby zatem skok piąty,
-// czyli przepuszczał tylko cztery, a zdanie odmowy mówi „dalej niż 5 razy".
-// Miara i zdanie muszą być tą samą prawdą, więc odmowa pada dopiero za granicą.
+// pilnujPrzekierowan tnie łańcuch przekierowań na `limitPrzekierowan` skokach
+// i sprawdza protokół każdego kolejnego adresu w łańcuchu.
 func pilnujPrzekierowan(zadanie *http.Request, przebyte []*http.Request) error {
 	if len(przebyte) > limitPrzekierowan {
 		return bladAdresuStrony{Zdanie: fmt.Sprintf(
@@ -339,12 +279,8 @@ func typTekstowy(typ string) bool {
 	if t == "" {
 		return true
 	}
-	// Kanały wchodzą tą samą drogą co strony: `browser.feed.subscribe` pobiera
-	// dokument RSS, Atom albo JSON Feed tym samym pobraniem, a serwery kanałów
-	// deklarują je własnymi typami (`application/rss+xml`, `application/atom+xml`,
-	// `application/feed+json`, `application/json`). Bez nich subskrypcja
-	// odmawiałaby zdaniem „zasób nie jest stroną do odczytu" przy dokumencie,
-	// który jest dokładnie tym, o co poprosił Operator.
+	// Kanały RSS, Atom i JSON Feed wchodzą tą samą drogą co strony i deklarują
+	// własne typy treści.
 	return strings.HasPrefix(t, "text/") ||
 		strings.HasPrefix(t, "application/xhtml+xml") ||
 		strings.HasPrefix(t, "application/xml") ||
@@ -374,10 +310,8 @@ func wydobadzTytul(html string) string {
 	return normalizujOdstepy(odkodujEncje(html[od : od+koniec]))
 }
 
-// wydobadzTekst składa tekst renderowany strony: usuwa bloki skryptów i stylów,
-// zdejmuje pozostałe znaczniki, odkodowuje encje i zbija odstępy. To nie jest
-// pełny silnik renderujący — to uczciwe wydobycie treści czytelnej dla modelu
-// biblioteką standardową (zakaz zależności `x/net/html`).
+// wydobadzTekst składa tekst renderowany strony: usuwa bloki skryptów
+// i stylów, zdejmuje pozostałe znaczniki, odkodowuje encje i zbija odstępy.
 func wydobadzTekst(html string) string {
 	bez := usunBloki(html, "script")
 	bez = usunBloki(bez, "style")

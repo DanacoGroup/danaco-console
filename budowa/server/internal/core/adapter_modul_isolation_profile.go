@@ -311,7 +311,7 @@ func (a *adapterIzolacji) politykaAdresu(ctx context.Context, adres konfig.Adres
 }
 
 // kontekstPoziomu składa kontekst rozstrzygania z jednym bytem — tym, dla
-// którego liczymy politykę. Poziomy szersze zostają puste i rozstrzyganie
+// którego liczona jest polityka. Poziomy szersze zostają puste i rozstrzyganie
 // schodzi na wartości globalne albo domyślne.
 func kontekstPoziomu(poziom shared.ConfigScope, byt string) konfig.Kontekst {
 	kontekst := konfig.Kontekst{}

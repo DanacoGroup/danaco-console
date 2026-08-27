@@ -1729,3 +1729,13 @@ biblioteka współdzielona nie niesie gotowej klasy komunikatu blokowego.
 Komunikat pozostaje widoczny na scenie, dopóki nie ustanie jego przyczyna —
 brak komendy przekazania w kontrakcie — dzięki czemu odpowiada na pytanie
 o brak działania także po czasie.
+
+## budowa/klient-poprzedni/src/moduly/research/kody-okien.ts
+Kody okien trzymane w jednym miejscu sprawiają, że dopisanie okna po stronie rdzenia rozjeżdża się z klientem widocznie, a nie w siedmiu plikach naraz. Dwa kody, discovery-panel i reading-view, nie mają jeszcze wiersza w katalogu rdzenia — migracje 030 i 031 zakładają dla modułu Research pięć okien, a opracowanie modułu wylicza siedem własnych obok dwóch wspólnych platformie. Kody stoją w brzmieniu, w jakim mają wejść do katalogu, dzięki czemu atrybut okna obu okien jest już dziś tym samym napisem, którym będzie po dobudowie rdzenia, i nawigacja wewnątrzmodułowa nie wymaga zmiany.
+Wykaz okien spoza katalogu jest zaporą, nie zgodą: okna są zbudowane i czynne, a ich kody wchodzą do katalogu akcji tak samo jak kody okien znanych. Rdzeń odmówi im na katalogu okien, zanim dojdzie do katalogu akcji, i nazywa okno operatorowi wprost, zamiast pokazywać puste miejsce. Wykaz znika, gdy migracje 030 i 031 dostaną wiersze obu okien.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-okna-translate.ts
+Komendy wykazu okien sesji i odczytu parametrów wykonania wymagają identyfikatora okna, który
+bierze się z rdzenia, nigdy z literału po stronie klienta. Idą zwykłą drogą wywołania, nie drogą
+odmowy, ponieważ rdzeń je obsługuje i odpowiedź przychodzi kopertą ze statusem, którą korelacja
+rozpoznaje.

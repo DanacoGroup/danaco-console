@@ -8,16 +8,8 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Okno operacyjne jako byt rdzenia — dwie komendy wspólne każdemu oknu.
- *
- * Komendy Source Panel i Translation Panels wymagają `windowId`: bez niego
- * moduł nie ma czym zaadresować ani `translate.source.set`, ani
- * `translate.target.add`. Identyfikator bierze się z rdzenia (`window.list`
- * sesji), nigdy z literału po stronie klienta.
- *
- * Te dwie komendy idą zwykłym `wywolaj`, nie drogą odmowy z
- * `wywolanie-translate.ts`: rdzeń je obsługuje, więc odpowiedź przychodzi
- * kopertą ze statusem i korelacja ją rozpoznaje.
+ * Dwie komendy wspólne każdemu oknu operacyjnemu jako bytowi rdzenia: wykaz
+ * okien sesji oraz odczyt parametrów wykonania jednego okna.
  */
 export interface ZrodloOknaTranslate {
   /** Okna komunikacji sesji — wśród nich okno modułu Translate. */
@@ -37,8 +29,7 @@ export function utworzZrodloOknaTranslate(kanal: Kanal): ZrodloOknaTranslate {
     },
 
     async stan(idOkna) {
-      // Konfiguracji efektywnej okna moduł nie prosi: żadne z jego okien jej
-      // nie pokazuje, a wykaz bez odbiorcy byłby ruchem na pokaz.
+      // Konfiguracji efektywnej okna moduł nie pobiera, bo żadne z jego okien jej nie pokazuje.
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.WindowStateGet, { windowId: idOkna }),
         Command.WindowStateGet,

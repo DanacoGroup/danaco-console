@@ -6134,3 +6134,51 @@ jedzie polem ustawień agenta i portu nie potrzebuje. Wołanie bezwarunkowe zami
 brak wpięcia — który adapter rozmowy umie zameldować i przeżyć — w padnięcie całego rdzenia przy
 pierwszej wysłanej wiadomości. Ta jedna gwiazdka rozstrzyga o tym, czy brak portu jest zdaniem
 w dzienniku, czy zgaszonym procesem.
+
+## budowa/server/internal/core/tozsamosc_agenta_nakladka.go
+
+Ten plik jest miejscem, w którym tożsamość eksperta wchodzi do promptu. Nie
+ma tu własnej drogi do procesu i nie może jej być: warstwy jadą dalej
+dokładnie tą samą trasą co dotąd — funkcja nakladkaOkna, struktura
+models.Nakladka, funkcja nakladkaKanaluGlownego, struktura
+injection.Nakladka, przełącznik CLI. Druga droga do promptu znaczyłaby dwie
+prawdy o tym, co model dostał, a przy sporze nie dałoby się ustalić, która
+zadziałała. Dowodem, że droga jest jedna, jest komenda config.explain.get:
+liczy prowenancję tymi samymi funkcjami, którymi jedzie tura — gdyby
+ekspert wchodził obok, podgląd pokazywałby wiersz, którego tura nigdy nie
+wykona.
+
+Skutek dopisywania warstw eksperta jest zupełny i bez wyjątku: treść osi
+zostaje nietknięta w każdej warstwie, tryb silnika idzie ku dopisaniu,
+a ekspert nie ma żadnej drogi, którą mógłby prompt globalny zdjąć.
+
+Kolejność w warstwie konstytucji jest następująca: oś (platforma, model,
+konto), potem ekspert (instrukcje systemowe), potem ekspert (konstytucja).
+Warstwa wyłączona i warstwa o pustej treści są pomijane jednakowo: ekspert,
+który nie ma nic do powiedzenia w danej warstwie, po prostu nic w niej nie
+mówi.
+
+Oś ustawiona na tryb zastąpienia traci przy ekspercie swoje żądanie
+zastąpienia, ale nie traci ani zdania treści: jej warstwy jadą dalej,
+pierwsze, a przed nimi zostaje prompt własny programu claude. Okno
+z ekspertem dostaje o jedną paczkę więcej, nie o jedną mniej. Okno bez
+eksperta zachowuje rozstrzygnięcie osi bez zmiany. To jedyne miejsce,
+w którym ekspert dotyka trybu silnika, i dotyka go w jedną stronę.
+
+Pominięcie warstwy zerowej w funkcji wnosiTresc znaczyłoby, że instrukcje
+systemowe eksperta dojeżdżają do promptu, a paczka wbudowana mimo to znika
+— dlatego liczy się ona tak samo jak trzy pozostałe warstwy.
+
+Tabela agent_warstwa przechowuje wartości kontraktu (constitution, profile,
+expertise), a struktura models.Nakladka nazywa te same warstwy po polsku —
+przekład stoi w jednym miejscu, w funkcji celWarstwy, żeby nowy rodzaj
+warstwy nie miał prawa po cichu wylądować w cudzym polu.
+
+Kolumna tryb w tabeli agent_warstwa (wprowadzona migracją
+migracja_073_agent_warstwy.sql) i pole AgentLayer.mode w kontrakcie nadal
+istnieją i nadal są zapisywane przez komendę agent.layer.set, ale na
+złożenie promptu nie mają wpływu. Honorowanie tu trybu zastąpienia
+znaczyłoby, że jednym polem formularza można skasować prompt systemowy
+platformy, a ten ma obowiązywać zawsze. Rozbieżność między tym, co
+formularz pozwala zapisać, a tym, co zmienia wynik, jest znana: zdjęcie
+kolumny albo nadanie jej innego znaczenia to osobna zmiana.

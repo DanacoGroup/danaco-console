@@ -1,19 +1,6 @@
-/**
- * Siedem kategorii operacji kontekstowych Tools Panel.
- *
- * Pozycje tego wykazu nie są wierszami rejestru akcji: `action.list` dla zasięgu
- * modułu Studio oddaje wyłącznie komendy okna komunikacji, a operacji
- * redakcyjnych w rejestrze nie ma. Komenda `studio.contextual.op` ma uchwyt
- * i wychodzi do kanału modelu okna; brakuje samych wierszy katalogu, które
- * nazwałyby poszczególne operacje. Dlatego panel pokazuje przy każdej pozycji,
- * skąd ona jest — z rejestru rdzenia albo z tego wykazu.
- *
- * Pozycja wykazu jest identyfikatorem akcji podawanym komendzie
- * `studio.contextual.op`, więc niczego nie udaje: naciśnięcie wychodzi do rdzenia
- * i wraca jego odpowiedzią albo odmową.
- */
+/** Siedem kategorii operacji kontekstowych Tools Panel, każda z identyfikatorem podawanym komendzie kontekstowej rdzenia. */
 
-/** Jedna operacja kontekstowa: identyfikator akcji i jej nazwa w panelu. */
+/** Jedna operacja kontekstowa w panelu: identyfikator akcji podawany rdzeniowi i jej nazwa widoczna w panelu. */
 export interface OperacjaKontekstowa {
   /** Identyfikator akcji podawany komendzie `studio.contextual.op`. */
   id: string;
@@ -21,14 +8,14 @@ export interface OperacjaKontekstowa {
   nazwa: string;
 }
 
-/** Kategoria panelu akcji wraz z jej operacjami. */
+/** Kategoria panelu operacji kontekstowych wraz z kodem, nazwą widoczną i wykazem należących do niej operacji. */
 export interface KategoriaOperacji {
   kod: string;
   nazwa: string;
   operacje: readonly OperacjaKontekstowa[];
 }
 
-/** Buduje operacje kategorii, nadając im identyfikatory `studio.<kategoria>.<kod>`. */
+/** Buduje operacje kategorii, nadając każdej identyfikator złożony z nazwy kategorii i kodu tej pozycji. */
 function operacje(
   kategoria: string,
   pozycje: readonly (readonly [string, string])[],
@@ -111,15 +98,7 @@ export const KATEGORIE_OPERACJI: readonly KategoriaOperacji[] = [
   },
 ];
 
-/**
- * Operacje pływaka kontekstowego, dopóki użycie nie powie własnej kolejności.
- *
- * Rozstrzygnięcie Właściciela: na wierzchu pływaka stoją czynności najczęstsze
- * **wedle użycia, nie wedle domysłu**. Użycia w chwili pierwszego uruchomienia
- * jednak nie ma, a pływak bez ani jednej czynności byłby pusty — ten wykaz jest
- * więc **stanem początkowym**, który zastępuje pierwsze użycie Operatora.
- * Kolejność liczy `przybornik-uzycie.ts`; tutaj stoi tylko punkt startu.
- */
+/** Operacje pływaka kontekstowego stanowiące stan początkowy, dopóki rzeczywiste użycie nie ustali własnej kolejności. */
 export const OPERACJE_PASKA: readonly OperacjaKontekstowa[] = [
   { id: 'studio.korekta.ortografia', nazwa: 'Korekta' },
   { id: 'studio.styl.rejestr', nazwa: 'Przepisz' },
@@ -127,19 +106,12 @@ export const OPERACJE_PASKA: readonly OperacjaKontekstowa[] = [
   { id: 'studio.styl.ton', nazwa: 'Styl' },
 ];
 
-/**
- * Wszystkie operacje wykazu w jednym ciągu — do wyszukiwania po nazwie
- * i podpowiedzi w wierszu polecenia.
- *
- * Wykaz jest jeden dla wszystkich czterech dróg: pływaka, menu pełnego, wiersza
- * polecenia i narzędzi modelu. Druga kopia rozjechałaby się z pierwszą przy
- * pierwszym dołożeniu operacji.
- */
+/** Wszystkie operacje wykazu złożone w jeden ciąg, wspólny dla pływaka, menu pełnego, wiersza polecenia i narzędzi modelu. */
 export const WSZYSTKIE_OPERACJE: readonly OperacjaKontekstowa[] = KATEGORIE_OPERACJI.flatMap(
   (kategoria) => kategoria.operacje,
 );
 
-/** Nazwa operacji wraz z kategorią; `undefined`, gdy identyfikator jest spoza wykazu. */
+/** Zwraca nazwę operacji wraz z nazwą jej kategorii; zwraca undefined, gdy identyfikator jest spoza wykazu operacji. */
 export function nazwaOperacji(idAkcji: string): string | undefined {
   for (const kategoria of KATEGORIE_OPERACJI) {
     const operacja = kategoria.operacje.find((pozycja) => pozycja.id === idAkcji);
@@ -148,20 +120,14 @@ export function nazwaOperacji(idAkcji: string): string | undefined {
   return undefined;
 }
 
-/** Kategoria, w której stoi operacja; `undefined` dla identyfikatora spoza wykazu. */
+/** Zwraca kategorię, w której stoi operacja; zwraca undefined, gdy identyfikator jest spoza wykazu operacji. */
 export function kategoriaOperacji(idAkcji: string): KategoriaOperacji | undefined {
   return KATEGORIE_OPERACJI.find((kategoria) =>
     kategoria.operacje.some((pozycja) => pozycja.id === idAkcji),
   );
 }
 
-/**
- * Operacje pasujące do frazy — dopasowanie w nazwie, w identyfikatorze
- * i w nazwie kategorii.
- *
- * Fraza pusta oddaje wykaz w całości, a nie pustkę: pole szukania niewypełnione
- * nie jest zawężeniem do zera.
- */
+/** Operacje pasujące do wpisanej frazy, dopasowane w nazwie operacji, w jej identyfikatorze albo w nazwie kategorii. */
 export function operacjePoFrazie(fraza: string): OperacjaKontekstowa[] {
   const szukane = fraza.trim().toLowerCase();
   if (szukane === '') return [...WSZYSTKIE_OPERACJE];

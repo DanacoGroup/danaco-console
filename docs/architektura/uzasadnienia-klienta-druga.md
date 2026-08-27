@@ -4544,3 +4544,19 @@ operacji; webhooka wywoływanego z zewnątrz kontrakt nie wystawia, bo nie ma ko
 odbiornik ani adresu, pod który rdzeń by uderzył. Wykaz deklaracji nie jest przepisany: pochodzi
 ze stałej kontraktu, więc dopisanie komendy do obszaru zmienia go samo, a liczba pozycji jest
 liczona, nie wpisana.
+
+## budowa/klient-poprzedni/src/moduly/studio/kategorie-operacji.ts
+Pozycje wykazu kategorii nie są wierszami rejestru akcji: rejestr dla zasięgu modułu studia
+oddaje wyłącznie komendy okna komunikacji, a operacji redakcyjnych w rejestrze nie ma, choć
+komenda operacji kontekstowej ma uchwyt i wychodzi do kanału modelu okna — brakuje tylko wierszy
+katalogu, które nazwałyby poszczególne operacje. Dlatego panel pokazuje przy każdej pozycji, skąd
+ona jest: z rejestru rdzenia albo z tego wykazu. Pozycja wykazu jest identyfikatorem akcji
+podawanym rdzeniowi, więc niczego nie udaje — naciśnięcie wychodzi do rdzenia i wraca jego
+odpowiedzią albo odmową. Operacje pływaka kontekstowego mają na wierzchu stawać czynności
+najczęstsze wedle rzeczywistego użycia, nie wedle domysłu, ale użycia w chwili pierwszego
+uruchomienia jeszcze nie ma, a pływak bez żadnej czynności byłby pusty, więc ten wykaz jest
+stanem początkowym zastępującym pierwsze użycie operatora, dopóki kolejność licząca użycie nie
+przejmie sterowania. Wykaz wszystkich operacji w jednym ciągu jest jeden dla czterech dróg —
+pływaka, menu pełnego, wiersza polecenia i narzędzi modelu — bo druga kopia rozjechałaby się
+z pierwszą przy pierwszym dołożeniu operacji. Fraza pusta w wyszukiwaniu operacji oddaje wykaz
+w całości, a nie pustkę, bo pole szukania niewypełnione nie jest zawężeniem do zera.

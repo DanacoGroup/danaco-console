@@ -6435,3 +6435,6 @@ nie zna.
 
 ## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — wpis adnotacji w wytworach sesji
 Czynność „Dodaj do rozmowy" daje dwie rzeczy naraz: załącznik rozmowy oraz wpis w wytworach sesji. Pierwszą niesie komenda wysyłania wiadomości polem załączników, drugą komenda dodania wytworu — obie komendy kontrakt ma, więc okno pyta o ich pokrycie w rdzeniu, zamiast orzekać o braku.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-agentow.ts
+Źródło nie ma własnego stanu i niczego nie pamięta — jest wyłącznie warstwą wywołań i sprawdzianu kształtu odpowiedzi; stan biblioteki ekspertów mieszka osobno, żeby pięć okien modułu patrzyło na jeden zbiór, a nie na pięć osobnych kopii. Żadne wywołanie nie rzuca wyjątkiem ani nie odrzuca obietnicy: niepowodzenie wraca polem błędu wyniku, a okno pokazuje je w swoim stanie błędu; dotyczy to także treści JSON wpisanej przez Operatora, gdzie niepoprawny zapis jest odmową wywołania, nie wyjątkiem wywracającym widok. Trybu podania zapis warstwy nie niesie, bo kontrakt go nie ma: warstwa eksperta dopisuje się do promptu systemowego jako zakres użytkownika i nigdy go nie zastępuje.

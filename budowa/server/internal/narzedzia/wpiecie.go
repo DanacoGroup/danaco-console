@@ -39,6 +39,14 @@ const (
 	PrzelacznikRdzenia = "rdzen"
 	// NazwaBinarium jest nazwą binarium serwera narzędzi.
 	NazwaBinarium = "danaco-narzedzia"
+
+	// zrodloBinarium nazywa pakiet Go, z którego binarium serwera narzędzi
+	// powstaje. Ścieżka liczona od katalogu `budowa/` — korzenia modułu.
+	zrodloBinarium = "server/cmd/danaco-narzedzia"
+	// skryptPakietu nazywa skrypt składający pakiet serwera: buduje rdzeń
+	// i serwer narzędzi, po czym stawia oba w JEDNYM katalogu, bo tam ich
+	// szuka `sciezkaProgramu`. Ścieżka liczona od katalogu `budowa/`.
+	skryptPakietu = "scripts/pakiet-serwera.sh"
 )
 
 // Wpis zwraca polecenie i argumenty wpisu `danaco` dla wskazanego okna.
@@ -48,12 +56,12 @@ const (
 // wtedy bez sterowania platformą, a nie z narzędziami mierzącymi w nikąd.
 //
 // Wynik czwarty — `powod` — niesie powód odmowy. Ścieżkę binarium oddajemy
-// dopiero po sprawdzeniu, że plik istnieje: gdy produkt zbudowano lub spakowano
-// bez serwera narzędzi (`scripts/wydanie.sh`, `scripts/pakowanie.sh`), wpis
-// `danaco` wskazywałby plik, którego nie ma, a narzędzia sterowania platformą
-// nie działałyby bez śladu. Odmowa musi być powiedziana wprost, bo brak wpisu
-// i wpis martwy wyglądają dla operatora tak samo, a naprawa jest inna:
-// dobudować wydanie, nie szukać w rozmowie.
+// dopiero po sprawdzeniu, że plik istnieje: gdy pakiet serwera złożono bez
+// serwera narzędzi (`scripts/pakiet-serwera.sh`), wpis `danaco` wskazywałby
+// plik, którego nie ma, a narzędzia sterowania platformą nie działałyby bez
+// śladu. Odmowa musi być powiedziana wprost, bo brak wpisu i wpis martwy
+// wyglądają dla operatora tak samo, a naprawa jest inna: złożyć pakiet serwera
+// od nowa, nie szukać w rozmowie.
 func Wpis(idOkna string) (polecenie string, argumenty []string, powod string, jest bool) {
 	if idOkna == "" {
 		return "", nil, "okno rozmowy bez identyfikatora — wpis nie miałby zasięgu", false
@@ -103,12 +111,16 @@ type brakBinarium struct {
 	Powod error
 }
 
-// Error mówi wprost, czego brakuje i gdzie tego szukano — bez tej wskazówki
-// meldunek w dzienniku rdzenia nie prowadzi do naprawy.
+// Error mówi wprost, czego brakuje, gdzie tego szukano i skąd to wziąć — bez
+// ostatniej części meldunek w dzienniku rdzenia nazywa brak, ale do naprawy nie
+// prowadzi. Droga wskazana tu jest jedyną, którą serwer narzędzi w produkcie
+// powstaje: instalka Operatora nie niesie ani rdzenia, ani serwera narzędzi,
+// więc oba stoją wyłącznie w pakiecie serwera.
 func (b *brakBinarium) Error() string {
 	return "brak binarium serwera narzędzi " + b.Nazwa +
 		" — nie ma go obok rdzenia ani na ścieżce wyszukiwania systemu;" +
-		" produkt zbudowano lub spakowano bez niego (scripts/wydanie.sh, scripts/pakowanie.sh)"
+		" powstaje z " + zrodloBinarium + " i ma stać w jednym katalogu z rdzeniem," +
+		" co składa " + skryptPakietu
 }
 
 // Unwrap oddaje błąd źródłowy z `exec.LookPath`.

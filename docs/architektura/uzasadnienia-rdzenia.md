@@ -3067,3 +3067,47 @@ Odróżnialność wersji szeregu autozapisu od szeregu Operatora wychodzi dziś
 zawężeniem wykazu i dwoma licznikami, bo pole szeregu w kontrakcie pozycji
 jeszcze nie istnieje — odcinek kontraktu ma je dołożyć, a sprawdzian mierzy
 stan prawdziwy, taki, jaki jest dziś zgłoszony.
+
+## budowa/server/internal/core/adapter_narzedzia_wynik.go
+
+Cztery kopie jednej reguły byłyby czterema okazjami do rozjazdu, dlatego
+reguła jest jedna: okno wyniku bierze się z nieobowiązkowego pola windowId
+żądania, a gdy go nie ma, z okna zasobu źródłowego; rodzaj zasobu rozstrzyga
+format wyniku, nie nazwa komendy, bo warunek CHECK kolumny rodzaju poszerza
+migracja 113, więc film nie musi jechać jako image, a PDF jako vector;
+odłożenie bajtów i założenie wiersza idą jedną sekwencją: zapisz do magazynu,
+złóż zasób Designu, zapisz wiersz, przełóż na kontrakt; magazynem bajtów jest
+magazyn zasobów Designu, ten sam, którym jedzie design.asset.upload, bo dwa
+składy bajtów byłyby dwiema prawdami o tym, gdzie rdzeń trzyma treść poza
+bazą.
+
+Odmowy zostają przy rodzinach: treść odmowy nazywa brak właściwy rodzinie
+("brakuje pola assetId albo sourcePath — nie ma czego zmierzyć" mówi co innego
+niż "nie ma czego spakować"), a wspólna formułka zamieniłaby cztery zdania
+mówiące na jedno milczące, dlatego wspólne funkcje przyjmują opakowywacz
+odmowy rodziny i nie znają żadnego kodu błędu z własnej głowy.
+
+Pusty wynik oknaWynikuArsenalu znaczy "bez wiersza", a nie "bez okna": kolumna
+zasob_design.okno jest NOT NULL i zapis odmawia zasobowi bez okna. Gdy nie
+wiadomo, do którego okna wynik należy, wiersz świadomie nie powstaje: bajty
+leżą w magazynie pod sumą kontrolną, model dostaje odwołanie, którym plik da
+się otworzyć, a Assets Panel nie dostaje kafelka o zmyślonej przynależności.
+Kolejność pytań jest zamierzona: najpierw pole żądania, bo model zna własny
+zasięg i podaje okno, w którym Operator na wynik czeka; potem okno zasobu
+źródłowego, odczytane z wiersza źródła, a nie wymyślone. Nazwa okna, którego
+nie ma w rejestrze okien, byłaby przynależnością zmyśloną — półka nazwana
+wygląda porządniej niż brak wiersza, ale mówi nieprawdę.
+
+Rozstrzyganie rodzaju po formacie, nie po nazwie komendy, jest istotą tablicy
+rodzajeZasobuPoFormacie: media.transcode z czynnością frame daje obraz, a z
+extractAudio dźwięk, mimo że komenda jest ta sama; document.convert do png
+daje obraz, a nie dokument. Poszerzenie tablicy rodzajów jest tańsze niż
+odmowa, bo bajty powstały i model ma prawo dostać do nich odwołanie.
+
+Kolejność "najpierw treść, potem wiersz" w odlozWynikArsenalu jest wspólna
+całemu rdzeniowi, bo wiersz wskazujący odwołanie, za którym nic nie leży,
+jest w panelu kafelkiem bez zawartości. Zasób bez wiersza jest co do bajtów
+zasobem prawdziwym: DesignAsset złożony z ręki niesie uri wskazujące blob pod
+sumą sha256, a pusty windowId jest uczciwym oświadczeniem, że wynik do żadnego
+okna nie należy — model dostaje odwołanie, Operator nie dostaje w panelu nic,
+bo o nic nie prosił.

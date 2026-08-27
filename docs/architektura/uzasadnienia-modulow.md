@@ -1101,3 +1101,42 @@ niesie komplet źródeł naprawdę powiązanych, nie powtórzenie żądania.
 Ślad prowenancji ustalenia zaczyna się przy jego powstaniu, nie przy
 pierwszej zmianie, żeby historia ustalenia nie zaczynała się od drugiego
 zdarzenia.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_uchwyty.go
+
+Port `Tlumaczenie` jest jeden, choć metody adaptera leżą w kilku plikach na
+wspólnym typie: trzy porty nad jednym repozytorium byłyby trzema prawdami
+o jednej powierzchni kontraktu.
+
+Rdzeń tłumaczy modelem, związany słownikiem operatora. Dodanie panelu
+przekłada tekst źródłowy okna na język panelu czynnym kanałem modelu; do
+polecenia wchodzą terminy słownika, zakazy tłumaczenia, ton panelu i zasady
+jakości, a wynik przechodzi mechaniczną podmianę terminów i migawkę kontroli
+jakości. Bez czynnego kanału operacja odmawia wprost. Zapis źródła sam
+wyłącznie zapisuje tekst źródłowy i zakłada okno. Tłumaczenie zwrotne też
+woła model: przekłada treść panelu z powrotem na język źródłowy okna, bez
+słownika, żeby kontrola wierności miała co kontrolować; odmawia, gdy panel
+jest pusty albo okno nie ma języka źródłowego.
+
+Rdzeń rozpoznaje język modelem: rozpoznanie źródła pyta model o język
+tekstu, a bez czynnego kanału odmawia wprost, nie zgaduje. Kanał wskazuje
+wołający polem nieobowiązkowym; jego brak bierze kanał domyślny czynny,
+a kanał wskazany, lecz nieznany albo nieczynny, kończy się nazwaną odmową
+zamiast cichego zejścia na domyślny. Rozpoznanie źródła tego pola nie ma
+i jedzie kanałem domyślnym.
+
+Rdzeń syntezuje mowę lokalnym syntezatorem, tym samym portem i przez tę samą
+bramę izolacji, co silnik rozpoznawania mowy, po czym oddaje ścieżkę
+powstałego nagrania. Brak programu, brak głosu dla języka panelu albo brak
+treści panelu kończy się odmową nazywającą brak, nie pustą ścieżką udającą
+nagranie.
+
+Pamięć tłumaczeń ma pisarza: pary segmentów, z których budowane są
+podpowiedzi, zapisują dodanie panelu po przekładzie modelu i ustawienie
+tłumaczenia po korekcie operatora. Sparowanie zdanie-do-zdania idzie
+wyłącznie przy równej liczbie segmentów po obu stronach; przy nierównej
+zapisywana jest jedna para całościowa zamiast zmyślonego dopasowania.
+
+Rdzeń nie ma magazynu blobów: eksport słownika i eksport panelu zapisują
+ślad, ale nie wytwarzają pliku — ten sam brak co w module Library i module
+Research.

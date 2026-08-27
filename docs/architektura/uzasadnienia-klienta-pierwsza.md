@@ -4638,3 +4638,20 @@ w tabeli `definicja_ustawienia`, więc komenda `config.set` odpowiada odmową
 powodu sprawdzany, a odmowa trafia do zdania oddawanego wołającemu; wartość
 oddana inna niż wysłana również jest nazwana wprost, ponieważ wskazanie trzyma
 wtedy sam widok.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/hierarchia-decyzji.ts
+
+Kontrakt niesie role okien — `WindowRole` z wartościami coordinator, executor
+i standalone — oraz podagentów rodziny `subagent.*`, ale nie niesie wykazu poziomów
+decyzji ani ich kolejności. Wykaz jest zatem opisem po stronie klienta: tłumaczy
+w sekcji Monitor, kto może przerwać kogo, i nie jest bramą. Hierarchię można
+konfigurować i pominąć, a interwencja pozostaje możliwa na dowolnym poziomie
+w dowolnej chwili.
+
+Tryby nakładki są dwa: obserwator patrzy i doradza, operator dodatkowo zatwierdza
+i wstrzymuje kroki. Przełącznik stoi w sekcji Monitor procesu.
+
+Kontrakt nie zna trybu nakładki. Struktura `AodStatus` niesie urządzenie, sesję, okno,
+procesy przypięte i licznik procesów w biegu, a komendy `aod.mode.set` nie ma wcale.
+Tryb utrwala się więc ustawieniem na poziomie sesji komendą `config.set`, a sekcja
+wypisuje tę lukę kontraktu w meldunku braków.

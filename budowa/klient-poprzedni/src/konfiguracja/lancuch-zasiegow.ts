@@ -5,18 +5,9 @@ import { czyZrodlo, type Rozstrzygniecie } from './rozstrzygniecie';
 import { nazwaZasiegu } from './zasiegi';
 
 /**
- * Podgląd polityki efektywnej z dziedziczeniem.
- *
- * Wykaz wszystkich zapisów jednego klucza, od najwęższego. Wiersz, z którego
- * pochodzi wartość obowiązująca w punkcie widzenia okna, jest oznaczony
- * sygnałem; pozostałe zapisy pozostają widoczne, bo Operator ma wiedzieć nie
- * tylko, co obowiązuje, ale i co czeka na innym poziomie.
- *
- * Ostatni wiersz należy do wartości domyślnej katalogu. Brak zapisu nie jest
- * dziurą — jest wartością domyślną i tak został nazwany.
- *
- * Każdy zapis wolno usunąć. Usunięcie nie jest niszczeniem ustawienia, tylko
- * zdjęciem nadpisania: wartość wraca do poziomu szerszego.
+ * Podgląd polityki efektywnej z dziedziczeniem: wykaz wszystkich zapisów jednego
+ * klucza, od najwęższego, wraz z wierszem wartości domyślnej katalogu. Wiersz
+ * niosący wartość obowiązującą jest oznaczony sygnałem, a każdy zapis wolno zdjąć.
  */
 export interface LancuchZasiegow {
   /** Wykaz osadzany w panelu zasięgu pola. */
@@ -43,7 +34,11 @@ export function utworzLancuchZasiegow(
   };
 }
 
-/** Wiersz jednego zapisu konfiguracji. */
+/**
+ * Wiersz jednego zapisu konfiguracji: adres poziomu, wartość, znak obowiązywania
+ * oraz przycisk zdjęcia zapisu. Zdjęcie nie niszczy ustawienia, tylko usuwa
+ * nadpisanie, więc wartość wraca z poziomu szerszego.
+ */
 function wierszWpisu(
   wpis: ConfigEntry,
   obowiazuje: boolean,
@@ -78,7 +73,11 @@ function wierszWpisu(
   return wiersz;
 }
 
-/** Wiersz wartości domyślnej katalogu — zawsze ostatni, nigdy usuwalny. */
+/**
+ * Wiersz wartości domyślnej katalogu — zawsze ostatni i nigdy usuwalny. Brak
+ * zapisu na którymkolwiek poziomie nie jest dziurą, tylko wartością domyślną,
+ * i tak został w tym wierszu nazwany.
+ */
 function wierszDomyslny(rozstrzygniecie: Rozstrzygniecie): HTMLElement {
   const wiersz = document.createElement('li');
   wiersz.className = 'dk-lancuch__wiersz dk-lancuch__wiersz--domyslna';

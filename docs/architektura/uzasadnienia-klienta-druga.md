@@ -4363,3 +4363,10 @@ zostało na dysku. Wytworem tury są więc nazwy narzędzi, które tura uruchomi
 Błąd tury nie podlega trybowi widoku transkryptu. Wpis, w którym tura padła,
 mówi o tym zawsze — schowanie błędu za ustawieniem widoku byłoby ciszą
 w miejscu, gdzie Operator musi wiedzieć, że kanał odmówił.
+
+## budowa/klient-poprzedni/src/strona-glowna/zalozenie-komponentu.ts
+Wywołanie z rodzajem profilu asystenta kończy się odmową rdzenia, bo platforma nie ma magazynu profili
+asystenta; przycisk zakładający taki profil byłby przyciskiem pewnej odmowy. Rodzaj wraca do wykazu, gdy
+rdzeń dostanie magazyn. Zakładanie z formularza jest drogą drugą, obok kafla rodzaju: naciśnięcie kafla
+nadal otwiera moduł, w którym komponent się buduje. Formularz służy operatorowi, który wie, czego chce,
+i nie potrzebuje wchodzić do modułu po nazwę.

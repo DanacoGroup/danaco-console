@@ -17,30 +17,27 @@ type adapterOkien struct {
 	nadzorca *session.Nadzorca
 	trwalosc *utrwalaczStanow
 	petla    *session.Petla
-	// przerwijTure i turaWBiegu składają łagodny krok zamykania okna
-	// (zamkniecie_okna.go). Puste znaczy zamknięcie bez karencji.
+	// przerwijTure i turaWBiegu składają krok łagodnego zamykania; puste znaczy brak karencji.
 	przerwijTure PrzerwanieTury
 	turaWBiegu   TuraWBiegu
-	// wiezie czyta z bazy więź koordynator–wykonawca. Wykaz okien składa
-	// odpowiedź z pamięci (fakty bieżące) i z bazy (fakty postanowione) —
-	// powód rozdziału opisuje `Wykaz`.
+	// wiezie czyta z bazy więź koordynator-wykonawca, składając odpowiedź z pamięci i z bazy.
 	wiezie czytelnikWiezi
 	// kanaly rozstrzyga kanał modelu okna zakładanego bez wskazania.
 	kanaly czytelnikKanalow
 	// moduly rozstrzyga moduł okna zakładanego bez wskazania.
 	moduly czytelnikModulow
-	// straz czyta zakres eksperta przy nakładaniu go na okno i odmawia, gdy
-	// Operator zawęził go tak, że ten moduł się w nim nie mieści. Pusta znaczy
-	// „nie wpięto" — i wtedy obowiązuje stan wyjściowy: pełny dostęp.
+	// straz czyta zakres eksperta przy nakładaniu na okno; pusta znaczy pełny dostęp.
 	straz StrazEksperta
 }
 
-// czytelnikModulow oddaje moduły znane katalogowi rdzenia.
+// czytelnikModulow oddaje moduły znane katalogowi rdzenia, gotowe do wyboru
+// modułu domyślnego okna zakładanego bez wskazania.
 type czytelnikModulow interface {
 	Lista(ctx context.Context) ([]dane.Modul, error)
 }
 
-// czytelnikKanalow oddaje kanały modelu znane rejestrowi.
+// czytelnikKanalow oddaje kanały modelu znane rejestrowi, gotowe do wyboru
+// kanału domyślnego okna zakładanego bez wskazania.
 type czytelnikKanalow interface {
 	Lista(ctx context.Context, tylkoAktywne bool) ([]dane.Kanal, error)
 }
@@ -51,7 +48,8 @@ type czytelnikWiezi interface {
 	Koordynator(ctx context.Context, oknoWykonawcy string) (string, error)
 }
 
-// nowyAdapterOkien wiąże port z nadzorcą.
+// nowyAdapterOkien wiąże port Okna z nadzorcą, czytelnikiem modułów
+// i czytelnikiem kanałów, gotowy do dalszego dołożenia trwałości.
 func nowyAdapterOkien(nadzorca *session.Nadzorca) *adapterOkien {
 	return &adapterOkien{nadzorca: nadzorca}
 }
@@ -80,24 +78,16 @@ func (a *adapterOkien) ZWieziami(c czytelnikWiezi) *adapterOkien {
 	return a
 }
 
-// ZKanalami wskazuje rejestr, z którego okno bierze kanał domyślny.
+// ZKanalami wskazuje rejestr, z którego okno bierze kanał domyślny, gdy
+// zakładane jest bez wskazania kanału wprost.
 func (a *adapterOkien) ZKanalami(c czytelnikKanalow) *adapterOkien {
 	a.kanaly = c
 	return a
 }
 
-// kanalDomyslny oddaje kod pierwszego czynnego kanału rejestru.
-//
-// PO CO. Klient zakładał okno z kodem kanału wziętym z WYLICZENIA RODZAJÓW
-// (`KnownChannelKinds[0]` = "cli"), a rejestr rdzenia niesie kanał o kodzie
-// `lokalny-claude` RODZAJU "cli". Każde okno świeżej instalacji wskazywało
-// więc kanał, którego nie ma, i pierwsza wypowiedź Operatora wracała odmową
-// „kanał »cli« nie istnieje w rejestrze”.
-//
-// Rdzeń zna swój rejestr i to on rozstrzyga wartość domyślną. Podstawienie
-// dotyczy WYŁĄCZNIE okna zakładanego bez wskazania: kanał wskazany wprost
-// zostaje nietknięty, także wtedy, gdy jest błędny — cicha podmiana cudzego
-// wskazania byłaby zgadywaniem zamiaru Operatora.
+// kanalDomyslny oddaje kod pierwszego czynnego kanału rejestru, dla okna
+// zakładanego bez wskazania kanału. Rdzeń zna swój rejestr i to on rozstrzyga
+// wartość domyślną — kanał wskazany wprost zostaje nietknięty, także błędny.
 func (a *adapterOkien) kanalDomyslny(ctx context.Context) string {
 	if a.kanaly == nil {
 		return ""
@@ -109,20 +99,16 @@ func (a *adapterOkien) kanalDomyslny(ctx context.Context) string {
 	return kanaly[0].Kod
 }
 
-// ZModulami wskazuje katalog, z którego okno bierze moduł domyślny.
+// ZModulami wskazuje katalog, z którego okno bierze moduł domyślny, gdy
+// zakładane jest bez wskazania modułu wprost.
 func (a *adapterOkien) ZModulami(c czytelnikModulow) *adapterOkien {
 	a.moduly = c
 	return a
 }
 
-// modulDomyslny oddaje kod pierwszego modułu katalogu.
-//
-// TA SAMA POMYŁKA CO PRZY KANALE, tylko w drugim polu. Klient zakładał okno
-// z modułem wziętym z `KnownModuleIds[0]`, a tam stoi "talkin" — kod
-// ŚRODOWISKA, nie modułu. Katalog rdzenia (migracja 031) niesie moduły
-// `studio`, `library`, `agents` i pozostałe. Okno wskazywało więc moduł,
-// którego w katalogu nie ma, a panel sterowania pokazywał „talkin (spoza
-// wykazu)”.
+// modulDomyslny oddaje kod pierwszego modułu katalogu, dla okna zakładanego
+// bez wskazania modułu. Katalog rdzenia niesie moduły studio, library, agents
+// i pozostałe.
 func (a *adapterOkien) modulDomyslny(ctx context.Context) string {
 	if a.moduly == nil {
 		return ""
@@ -134,7 +120,8 @@ func (a *adapterOkien) modulDomyslny(ctx context.Context) string {
 	return moduly[0].Kod
 }
 
-// Utworz zakłada okno komunikacji w sesji.
+// Utworz zakłada okno komunikacji w sesji, zapisując je do bazy od razu, nie
+// dopiero z pierwszą wypowiedzią.
 func (a *adapterOkien) Utworz(ctx context.Context, z shared.WindowCreateRequest) (shared.WindowCreateResponse, error) {
 	if z.ModelChannelId == "" {
 		z.ModelChannelId = a.kanalDomyslny(ctx)
@@ -146,25 +133,14 @@ func (a *adapterOkien) Utworz(ctx context.Context, z shared.WindowCreateRequest)
 	if err != nil {
 		return shared.WindowCreateResponse{}, bladSesji(err)
 	}
-	// Okno idzie do bazy OD RAZU, nie dopiero z pierwszą wypowiedzią — tak samo
-	// jak sesja (adapter_sesje.go). Uzasadnienie: adapter_okna_trwalosc.go.
+	// Okno idzie do bazy od razu, nie dopiero z pierwszą wypowiedzią, tak jak sesja.
 	a.utrwalZalozone(ctx, okno)
 	return shared.WindowCreateResponse{Window: oknoKontraktu(okno)}, nil
 }
 
 // Wykaz zwraca okna sesji albo okna wszystkich sesji, gdy sesji nie wskazano.
-//
-// Odpowiedź składa się z DWÓCH źródeł, bo okno niesie dwa różne rodzaje faktów:
-//
-//	fakt bieżący      czy proces żyje, jaki stan tury — wie o nim wyłącznie
-//	                  rejestr pamięciowy, baza nigdy nie zna go na czas
-//	fakt postanowiony moduł, model, katalogi, rola i WIĘŹ koordynator–wykonawca —
-//	                  przeżywa restart rdzenia, więc mieszka w bazie
-//
-// Więź ustanawia `window.handoff`, zapisując ją do SQLite. Dopóki wykaz czytał
-// koordynatora wyłącznie z pamięci, zaraz po udanym przekazaniu pokazywał
-// wykonawcę BEZ koordynatora, choć wiersz w bazie był poprawny: trwałość
-// działała, a żywy widok jej nie widział.
+// Odpowiedź składa się z dwóch źródeł: fakt bieżący z rejestru pamięciowego
+// i fakt postanowiony z bazy.
 func (a *adapterOkien) Wykaz(ctx context.Context, z shared.WindowListRequest) (shared.WindowListResponse, error) {
 	okna, err := a.okna(z.SessionId)
 	if err != nil {
@@ -182,17 +158,9 @@ func (a *adapterOkien) Wykaz(ctx context.Context, z shared.WindowListRequest) (s
 	return shared.WindowListResponse{Windows: lista}, nil
 }
 
-// dolozWiezi nanosi na wykaz więź koordynator–wykonawca odczytaną z bazy.
-//
-// Rozstrzygnięcie własności pola: gdy wiersz okna ISTNIEJE, baza jest źródłem
-// prawdy — także wtedy, gdy oddaje pusty napis, bo „okno samodzielne” jest
-// stanem postanowionym tak samo jak więź. Gdy wiersza NIE MA, zostaje wartość
-// z pamięci: wiersz okna powstaje leniwie, przy pierwszej wiadomości, więc okno
-// świeżo otwarte nie ma go jeszcze wcale —
-// czyszczenie więzi na tej podstawie gubiłoby informację prawdziwą.
-//
-// Bez repozytorium przekazań adapter pracuje jak dotąd, na samej pamięci:
-// trwałość jest dodatkiem, nie warunkiem pracy rdzenia.
+// dolozWiezi nanosi na wykaz więź koordynator-wykonawca odczytaną z bazy. Gdy
+// wiersz okna istnieje, baza jest źródłem prawdy, także gdy oddaje pusty
+// napis; gdy wiersza nie ma, zostaje wartość z pamięci.
 func (a *adapterOkien) dolozWiezi(ctx context.Context, lista []shared.Window) {
 	if a.wiezie == nil {
 		return
@@ -210,14 +178,8 @@ func (a *adapterOkien) dolozWiezi(ctx context.Context, lista []shared.Window) {
 	}
 }
 
-// Zmien zmienia ustawienia okna wybiórczo — pole niewskazane zostaje bez zmiany.
-//
-// Wybór eksperta idzie DALEJ NIŻ PAMIĘĆ. Rejestr nadzorcy przyjmuje go od
-// migracji 084, ale wiersz okna dostawał go wyłącznie przy zakładaniu, więc
-// zmiana eksperta w oknie już utrwalonym ginęła przy restarcie rdzenia
-// (`odtworzenie_stanu.go` odtwarza pamięć z wierszy). Zapis stoi po zmianie
-// w rejestrze, a nie przed nią: nie ma po co utrwalać wyboru, którego pakiet
-// sesji nie przyjął.
+// Zmien zmienia ustawienia okna wybiórczo — pole niewskazane zostaje bez
+// zmiany. Zapis do bazy stoi po zmianie w rejestrze nadzorcy, nie przed nią.
 func (a *adapterOkien) Zmien(ctx context.Context, z shared.WindowUpdateRequest) (shared.WindowUpdateResponse, error) {
 	okno, err := a.nadzorca.Rejestr().ZmienOkno(z.WindowId, zmianaOkna(z))
 	if err != nil {
@@ -232,8 +194,7 @@ func (a *adapterOkien) Zmien(ctx context.Context, z shared.WindowUpdateRequest) 
 // Zamknij zamyka okno i ubija jego proces wraz z drzewem potomstwa. Pozostałe
 // okna sesji pracują dalej.
 func (a *adapterOkien) Zamknij(_ context.Context, z shared.WindowCloseRequest) (shared.WindowCloseResponse, error) {
-	// Krok łagodny PRZED twardym: tura dostaje karencję na domknięcie, zanim
-	// nadzorca ubije drzewo procesu.
+	// Krok łagodny przed twardym: tura dostaje karencję, zanim nadzorca ubije proces.
 	a.domknijTureLagodnie(z.WindowId)
 	okno, err := a.nadzorca.ZamknijOkno(z.WindowId)
 	if err != nil {
@@ -246,7 +207,8 @@ func (a *adapterOkien) Zamknij(_ context.Context, z shared.WindowCloseRequest) (
 	return shared.WindowCloseResponse{Window: oknoKontraktu(okno)}, nil
 }
 
-// okna zwraca okna jednej sesji albo okna wszystkich sesji.
+// okna zwraca okna jednej sesji albo okna wszystkich sesji, gdy sesji nie
+// wskazano, jako wykaz gotowy do naniesienia więzi.
 func (a *adapterOkien) okna(idSesji *string) ([]session.Okno, error) {
 	if idSesji != nil && *idSesji != "" {
 		return a.nadzorca.Rejestr().OknaSesji(*idSesji)

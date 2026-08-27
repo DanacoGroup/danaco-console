@@ -3193,3 +3193,11 @@ obsługiwać interfejs mimo braku podłączonego wejścia.
 
 ## budowa/server/internal/dane/tozsamosc.go
 Katalog jest sterowany danymi: kilkanaście kategorii to kilkanaście wierszy, nie kilkanaście gałęzi w kodzie, wzorem katalogu akcji. Repozytorium wyłącznie czyta katalog: wiersze wnosi zaczyn migracji 015, a kolejność składania warstw rozstrzyga warstwa wyższa. Treść kategorii mieszka w osobnej tabeli dokument_tozsamosci. Zmiana katalogu jest zmianą danych migracji, nie czynnością kontraktu; treść kategorii zapisuje operator oknem konfiguracji. Porządek zwracanych kategorii jest jednoznaczny, bo składacz promptu ma dawać bajtowo ten sam wynik przy tej samej konfiguracji; kolejność warstw według krytyczności nakłada warstwa wyższa, bo to ona zna silnik nakładki.
+
+## budowa/server/cmd/danaco-narzedzia/stdio/obsluga.go
+Zatrzymanie serwera rozpoznaje się między wywołaniami. Drogą właściwą wyjścia
+serwera MCP jest zamknięcie strumienia wejścia przez proces modelu, a nie
+sygnał — sygnał dochodzi do procesu rodzica, który ten strumień zamyka.
+Wiersz nieczytelny dostaje błąd protokołu, metoda nieznana błąd metody,
+a odmowa narzędzia wynik oznaczony jako błędny; żaden z tych przypadków
+osobno nie kończy pracy serwera.

@@ -1,7 +1,6 @@
 // Odpowiedzialność pliku: dostęp do obszaru okien komunikacji. Okno
-// jest bytem pośrednim między sesją a wiadomością: niesie moduł, kanał modelu,
-// środowisko wykonania, tryb uprawnień i rolę w pętli. Zapis dotyka
-// dwóch tabel (`okno_komunikacji`, `katalog_okna`), więc idzie w transakcji.
+// jest bytem pośrednim między sesją a wiadomością: niesie moduł, kanał modelu, środowisko wykonania,
+// tryb uprawnień i rolę w pętli.
 package dane
 
 import (
@@ -13,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Okno to wiersz tabeli `okno_komunikacji` wraz z listą katalogów roboczych.
+// Okno to wiersz tabeli `okno_komunikacji` wraz z pełną listą katalogów roboczych, jakie niesie to okno.
 type Okno struct {
 	ID                  int64
 	SesjaID             int64
@@ -27,20 +26,16 @@ type Okno struct {
 	OknoKoordynatoraID  *int64
 	TrybKomunikacji     string
 	Stan                shared.WindowStatus
-	// AgentKod niesie eksperta nałożonego na kanał modelu tego okna. Pusty
-	// wskaźnik znaczy model surowy. Kod, nie identyfikator wiersza — ekspert
-	// bywa kasowany niezależnie od okien, w których pracował.
+	// AgentKod niesie eksperta nałożonego na kanał modelu tego okna; pusty wskaźnik znaczy model surowy.
 	AgentKod *string
-	// IdentyfikatorZewnetrzny wiąże wiersz z oknem rdzenia, które żyje pod
-	// identyfikatorem tekstowym. Bez niego po restarcie rdzenia nie da się
-	// połączyć okna wskazanego przez klienta z jego historią.
+	// IdentyfikatorZewnetrzny wiąże wiersz z oknem rdzenia, które żyje pod identyfikatorem tekstowym.
 	IdentyfikatorZewnetrzny *string
 	Kolejnosc               int
 	Utworzono               string
 	Zaktualizowano          string
 }
 
-// RepozytoriumOkien jest kontraktem obszaru okien dla warstw wyższych.
+// RepozytoriumOkien jest kontraktem obszaru okien komunikacji dla warstw wyższych całej tej platformy.
 type RepozytoriumOkien interface {
 	Utworz(ctx context.Context, okno Okno) (int64, error)
 	Pobierz(ctx context.Context, id int64) (Okno, error)
@@ -48,17 +43,11 @@ type RepozytoriumOkien interface {
 	ListaSesji(ctx context.Context, sesjaID int64) ([]Okno, error)
 	Aktualizuj(ctx context.Context, okno Okno) error
 	ZmienStan(ctx context.Context, id int64, stan shared.WindowStatus) error
-	// ZapiszRozmoweCLI utrwala identyfikator rozmowy nadany przez program
-	// `claude`, dzięki któremu następna tura wznawia rozmowę zamiast zaczynać
-	// od zera.
+	// ZapiszRozmoweCLI utrwala identyfikator rozmowy nadany przez program CLI modelu.
 	ZapiszRozmoweCLI(ctx context.Context, id int64, idRozmowy string) error
-	// RozmowaCLI zwraca identyfikator rozmowy okna. Pusty napis znaczy „okno
-	// nie rozmawiało jeszcze z modelem" i jest stanem poprawnym.
+	// RozmowaCLI zwraca identyfikator rozmowy okna; pusty napis znaczy okno bez rozmowy z modelem.
 	RozmowaCLI(ctx context.Context, id int64) (string, error)
-	// LiczbaOtwartych liczy okna o stanie `otwarte` — miara stanu platformy dla
-	// mobilnego centrum dowodzenia. Rachunek stoi tutaj, bo tabelę
-	// `okno_komunikacji` prowadzi to repozytorium i drugiego czytelnika mieć nie
-	// będzie; ciało metody leży w `mobile.go`.
+	// LiczbaOtwartych liczy okna komunikacji o stanie otwartym — miara stanu platformy dla dowodzenia.
 	LiczbaOtwartych(ctx context.Context) (int, error)
 }
 
@@ -113,7 +102,7 @@ func noweRepozytoriumOkien(z *zapytania, db *sql.DB) *repozytoriumOkien {
 	return &repozytoriumOkien{zapytania: z, db: db}
 }
 
-// Utworz zakłada okno wraz z jego listą katalogów roboczych — jedna transakcja.
+// Utworz zakłada nowe okno komunikacji wraz z jego listą katalogów roboczych w jednej transakcji zapisu.
 func (r *repozytoriumOkien) Utworz(ctx context.Context, okno Okno) (int64, error) {
 	wartosci, err := wartosciOkna(okno)
 	if err != nil {
@@ -144,7 +133,7 @@ func (r *repozytoriumOkien) Utworz(ctx context.Context, okno Okno) (int64, error
 	return id, nil
 }
 
-// Pobierz zwraca okno wraz z listą katalogów roboczych.
+// Pobierz zwraca okno komunikacji wraz z listą jego katalogów roboczych zapisanych w bazie danych rdzenia.
 func (r *repozytoriumOkien) Pobierz(ctx context.Context, id int64) (Okno, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzOkno)
 	if err != nil {
@@ -186,7 +175,7 @@ func (r *repozytoriumOkien) PoIdentyfikatorze(ctx context.Context, identyfikator
 	return okno, nil
 }
 
-// ListaSesji zwraca okna sesji; każde ma własny kanał i własne katalogi.
+// ListaSesji zwraca okna danej sesji rozmowy; każde ma własny kanał modelu i własne katalogi robocze okna.
 func (r *repozytoriumOkien) ListaSesji(ctx context.Context, sesjaID int64) ([]Okno, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaOkienSesji)
 	if err != nil {
@@ -219,7 +208,7 @@ func (r *repozytoriumOkien) ListaSesji(ctx context.Context, sesjaID int64) ([]Ok
 	return lista, nil
 }
 
-// Aktualizuj zapisuje parametry okna razem z listą katalogów — jedna transakcja.
+// Aktualizuj zapisuje zmienione parametry okna razem z listą jego katalogów w jednej transakcji zapisu.
 func (r *repozytoriumOkien) Aktualizuj(ctx context.Context, okno Okno) error {
 	wartosci, err := wartosciOkna(okno)
 	if err != nil {
@@ -244,7 +233,7 @@ func (r *repozytoriumOkien) Aktualizuj(ctx context.Context, okno Okno) error {
 	})
 }
 
-// ZmienStan otwiera albo zamyka okno.
+// ZmienStan otwiera albo zamyka okno komunikacji, zapisując jego nowy stan wprost w bazie danych rdzenia.
 func (r *repozytoriumOkien) ZmienStan(ctx context.Context, id int64, stan shared.WindowStatus) error {
 	kolumna, err := stanOknaNaBaze(stan)
 	if err != nil {
@@ -261,11 +250,7 @@ func (r *repozytoriumOkien) ZmienStan(ctx context.Context, id int64, stan shared
 	return sprawdzTrafienie(wynik, "okno_komunikacji", id)
 }
 
-// ZapiszRozmoweCLI utrwala identyfikator rozmowy programu `claude` przy oknie.
-//
-// Wołane po każdej turze, bo `claude` może nadać identyfikator dopiero w
-// trakcie pierwszej wymiany. Zapis pustego napisu jest dozwolony i znaczy
-// „zacznij następną turę od nowa" — na przykład po przeniesieniu kontekstu.
+// ZapiszRozmoweCLI utrwala identyfikator rozmowy programu wiersza poleceń przy danym oknie komunikacji.
 func (r *repozytoriumOkien) ZapiszRozmoweCLI(ctx context.Context, id int64, idRozmowy string) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapiszRozmoweCLI)
 	if err != nil {
@@ -278,7 +263,7 @@ func (r *repozytoriumOkien) ZapiszRozmoweCLI(ctx context.Context, id int64, idRo
 	return sprawdzTrafienie(wynik, "okno_komunikacji", id)
 }
 
-// RozmowaCLI zwraca identyfikator rozmowy okna albo pusty napis.
+// RozmowaCLI zwraca identyfikator rozmowy okna komunikacji albo pusty napis, jeśli jej jeszcze nie było.
 func (r *repozytoriumOkien) RozmowaCLI(ctx context.Context, id int64) (string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, odczytajRozmoweCLI)
 	if err != nil {

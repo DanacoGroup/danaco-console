@@ -2922,3 +2922,29 @@ DEFINICJA pola należy do repozytorium (`pole_schematu_biblioteki`,
 ma skutek wprost w kontrakcie: zdjęcie definicji nie kasuje wartości
 zapisanych przy zasobach i wartości wracają, gdy pole zostanie założone
 ponownie.
+## budowa/server/internal/store/migracja_181_biblioteka_slownik_kolekcje.sql
+Migracja 181 — moduł Library: słownik etykiet, tezaurus i hierarchia kolekcji.
+
+Etykieta była dotąd wolnym tekstem w tabeli złącznikowej
+(`etykieta_pliku_biblioteki`, migracja 045) i tym pozostaje przy zasobie.
+Słownik jest bytem NAD tym tekstem: niesie barwę, czas założenia i sam fakt
+istnienia etykiety, której dziś nie nosi żaden zasób. Bez słownika
+`library.tag.list` mógłby pokazać wyłącznie etykiety użyte, więc etykieta
+nieużywana — ta, którą komenda ma umieć wskazać i usunąć — nie istniałaby
+dla rdzenia wcale.
+
+Wpis słownika nie jest warunkiem noszenia etykiety. Zasób otagowany
+`library.tag.set` etykietą nową dostaje ją natychmiast, a wpis słownika
+powstaje przy okazji; klucz obcy w drugą stronę zamieniłby tagowanie
+w dwuetapowy obrządek i wywrócił zapis przy wyścigu dwóch wgrań.
+
+Tezaurus łączy dwie etykiety relacją modelu SKOS. Relacja jest bytem
+symetrycznym w zapisie (para nazw + rodzaj), a odwrotność wyprowadza odczyt:
+`nadrzedna` czytana od drugiej strony jest `podrzedna`, więc zapisywanie obu
+kierunków dałoby dwa wiersze mówiące to samo i rozjazd, gdy zniknie jeden.
+
+Kolekcje dostają rodzica i regułę. Rodzic daje hierarchię o dowolnej
+głębokości (`LibraryCollection.parentId`), reguła — kolekcję inteligentną
+(`LibraryCollection.ruleId`), której zawartość wynika z warunku, a nie
+z ręcznego przypisania. Kolumna reguły nie ma klucza obcego, bo tabela reguł
+powstaje krok dalej (182), a kolejność kroków jest jednokierunkowa.

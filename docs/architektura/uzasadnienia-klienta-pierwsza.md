@@ -5220,3 +5220,22 @@ z profilem, zamiast powtarzać jego treść z pamięci.
 
 Liczby okien tabliczka nie podaje, bo profil Designu niesie w tym miejscu wartość
 `GRANICA_NIEPODANA`. Pyta wyłącznie o prawo do rozmowy przez `liczbaOkienRozmowy`.
+
+## budowa/klient-poprzedni/src/moduly/automations/okno-execution-monitor.ts
+
+Przycisk zatrzymania nie ma warunku: nie jest wyszarzany ani przy przebiegu zakończonym,
+ani przy braku odczytu — odmowa rdzenia jest widoczna w stanie błędu okna. „Na żywo” znaczy
+tu ze zdarzenia, nie z odpytywania: okno słucha zdarzenia `automation.execution.status`
+i przerysowuje wiersz przebiegu, gdy zdarzenie przyjdzie, także z pracy innego okna albo
+innego urządzenia tego samego konta.
+
+Przerwanie przebiegu jest natychmiastowe, a przycisk „Cofnij” stoi przez krótki czas po
+akcji. Cofnięciem jest wznowienie tej samej kolejki — innej drogi kontrakt nie ma, bo typ
+`QueueAction` nie zna działania odwracającego zatrzymanie. Okno mówi to wprost i nie
+obiecuje przywrócenia stanu sprzed zatrzymania: wznawia kolejkę, a co z niej zostało,
+rozstrzyga rdzeń.
+
+Eksport zestawienia przebiegów istnieje w dwóch postaciach, bo służą dwóm czynnościom: opis
+w Markdown czyta człowiek, a zestawienie rozdzielane średnikiem wchodzi do arkusza. Postaci
+przenośnego dokumentu okno nie składa, bo wymagałaby biblioteki składu, której warstwa
+kliencka platformy nie ma.

@@ -5674,3 +5674,37 @@ odpala tą samą drogą, którą automatykę rusza Operator. Przesunięcie termi
 najpierw wyliczamy i zapisujemy następny termin, dopiero potem ruszamy automatykę. Dzięki temu ten
 sam harmonogram nie odpali się w kółko, gdyby odpalenie trwało dłużej niż takt zegara albo gdyby
 uruchomienie zawiodło — awaria jednego przebiegu nie zawiesza budzika.
+
+## budowa/server/internal/core/sprawca.go
+
+Rękę sprawcy rozpoznaje się po faktach gniazda, nie po treści żądania i nie
+po przedrostku napisu. Cztery rodzaje sprawcy:
+
+- operator — gniazdo, które przedstawiło się identyfikatorem klienta
+  w powitaniu i nie jest serwerem narzędzi modelu; tak wygląda okno
+  interfejsu Operatora i nic innego tak nie wygląda;
+- assistant — serwer narzędzi okna o roli klawiatury, gdzie rola przychodzi
+  z wpisu MCP ułożonego przez rdzeń dla okna modułu Assistant (funkcja
+  w pliku adapter_modul_asystent_sterowanie.go, zasięg klawiatura), więc
+  jest faktem rdzenia, nie deklaracją modelu;
+- model — serwer narzędzi każdego innego okna, czyli model roboczy;
+- core — czynność powołana przez sam rdzeń: przemiatanie, harmonogram,
+  odtworzenie stanu. Tego nie da się wyprowadzić z gniazda, bo gniazda tam
+  nie ma, więc te miejsca znaczą się same przez funkcję zSprawcaRdzenia,
+  zamiast być domyślane z pustki.
+
+Brak gniazda nie znaczy core. Poza pracą własną rdzenia bez gniazda woła się
+też z próby, z sondy stdio i z biegu wewnętrznego adaptera — nazwanie tego
+wszystkiego rdzeniem byłoby zgadywaniem. Kontrakt mówi o polu actor wprost:
+brak znaczy, że rdzeń nie potrafił tego rozstrzygnąć, więc brak jest tu
+odpowiedzią, a nie luką. Gniazdo bez identyfikatora klienta też zostaje bez
+sprawcy: połączenie, które jeszcze się nie przywitało, może być czymkolwiek.
+
+Sprawca jest opisem i niczego nie rozstrzyga o tym, czy wolno. W tym pliku
+nie ma ani jednej odmowy, a wynik nie wchodzi do żadnego warunku poza
+wypełnieniem pola zdarzenia. Strażą rdzenia zostaje bramka wejścia, opisana
+w pliku transport/bramka.go.
+
+Znak kontekstu pracy rdzenia stawia się ręcznie, w miejscu, które wie, czym
+jest — wywiedzenie core z samego braku gniazda byłoby nieprawdziwe, bo brak
+gniazda ma więcej niż jeden powód.

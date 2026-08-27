@@ -831,3 +831,13 @@ zamiast pokazywać stan cudzej kolejki.
 Każde gniazdo słucha całej magistrali zdarzeń, więc zdarzenie dotyczące innego
 okna jest pomijane. Kolejka bez wykazu okien dotyczy całej sesji i wchodzi do
 każdego gniazda tej sceny.
+
+## budowa/klient-poprzedni/src/modele/okno-modeli.ts
+
+Okno stoi na natywnym elemencie okna dialogowego: warstwę tła, stos okien
+i zamknięcie klawiszem ucieczki daje przeglądarka, a nie własna nakładka. Wygląd
+bierze z biblioteki komponentów, z klasy okna modalnego, więc plik nie ustala
+barw.
+
+Rama wyłącznie osadza sekcję. Treść i stan mieszkają w module sekcji modeli, aby
+tę samą sekcję dało się wstawić także w widok osadzony bez powielania kodu.

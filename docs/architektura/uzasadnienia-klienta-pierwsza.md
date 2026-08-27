@@ -6143,3 +6143,11 @@ i tak je opisuje.
 Parametry są w kontrakcie wartością JSON dowolnego kształtu, więc do pola idą tekstem
 sformatowanym, nie surowym rzutowaniem na napis, bo to dałoby treść nieczytelną zamiast
 tej, którą operator ma poprawić. Brak wartości daje pole puste, a nie napis „undefined".
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zrodlo-kondycji.ts
+Sonda bez ani jednego przebiegu nie ma dostępności, a rdzeń oddaje wtedy pustą
+wartość procentową; okno pokazuje tę pustkę zamiast stu procent, ponieważ brak
+pomiaru nie jest dowodem sprawności. Powtórzenie wywołania modelu nie jest
+odczytem, tylko nowym wywołaniem kanału z własnym kosztem i własnym wierszem
+śladu, dlatego okno woła je wyłącznie na jawne żądanie użytkownika, nigdy przy
+odświeżeniu wykazu.

@@ -3599,3 +3599,16 @@ ma już czego wstrzymywać, i nie jest błędem.
 
 ## budowa/server/internal/dane/diagnostics.go
 Repozytorium nie wytwarza faktów diagnostycznych: nie liczy stanu systemu, nie ocenia błędów i nie wymyśla rekomendacji, wyłącznie przenosi to, co rdzeń mu przekazał. Wzorzec dopasowania w filtrze dziennika dotyczy treści wpisu, a samo dopasowanie regularne wykonuje rdzeń, ponieważ SQLite bez rozszerzenia nie zna operatora dopasowania wyrażeń regularnych. Zapis błędu diagnostycznego rozstrzyga po odcisku: wystąpienie o odcisku już znanym podnosi licznik i przesuwa chwilę ostatniego wystąpienia, a wystąpienie o odcisku nowym zakłada nowy wiersz od zera.
+
+## budowa/server/internal/models/prowenancja.go
+Prowenancja jest przejrzystością wywołania, nie bramką — skrót nakładki służy wyłącznie diagnostyce
+i nigdy nie dopuszcza ani nie blokuje wywołania. Nazwy pól JSON szkieletu są wspólne
+z injection.Prowenancja kanału głównego; klient rozmowy parsuje wyłącznie ten jeden kształt, więc
+kanały sieciowe i echo emitują prowenancję o tych samych nazwach pól co kanał główny. Pola specyficzne
+kanałów bez procesu (kanał, adapter, adres, ustawienia wywołania, środowisko) jadą jako dodatkowe, poza
+wspólnym szkieletem, i nie kolidują z jego nazwami.
+
+Wywołujący pakietu ProwenancjaZapytania dokłada jedynie to, co zna sam adapter: argv albo adres.
+
+Pole PlikUstawien niesie nazwę pola JSON „settings", taką samą jak w kanale głównym. Pole Ustawienia
+nosi osobną nazwę pola JSON „callSettings", by nie kolidować ze szkieletowym „settings".

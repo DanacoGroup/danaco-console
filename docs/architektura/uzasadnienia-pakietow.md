@@ -5724,3 +5724,5 @@ z licznikiem użycia i pustym czasem założenia, bo istnieje mimo braku wiersza
 PrzemianujEtykiete zapisuje przez zastąpienie zamiast zwykłej aktualizacji, bo zasób noszący
 obie nazwy naraz złamałby klucz główny pary pliku i etykiety: wiersz stary ustępuje wtedy
 nowemu zamiast wywracać całą zmianę.
+## budowa/server/internal/dane/slownik_pamiec.go
+Zapis pamięci dokłada wiersz bez czytania bieżącej treści panelu w edycji: to wywołujący rozstrzyga, kiedy para segmentów jest zatwierdzona i warta zapamiętania. Dopasowanie podpowiedzi jest przybliżone tylko na tyle, na ile pozwala baza: kontrakt chce dopasowania po podobieństwie, nie po równości, a silnik bazy bez rozszerzenia nie ma wbudowanej miary podobieństwa napisów, więc wyszukiwanie podpowiedzi wykonuje dopasowanie podciągu segmentu źródłowego, nie dopasowanie znaczeniowe ani odległość edycyjną. Czas jest liczbą milisekund epoki, tym samym wzorem co w pozostałych tabelach czasowych repozytorium.

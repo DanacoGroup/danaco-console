@@ -2556,3 +2556,27 @@ Rozbiór idzie biblioteką standardową (`encoding/xml`, `encoding/json`), bo RS
 i Atom są dokumentami XML o ustalonym kształcie, a JSON Feed dokumentem JSON.
 Zewnętrzna biblioteka kanałów nie dołożyłaby tu niczego poza kolejną
 zależnością.
+
+## adapter_modul_roundtable_wydanie.go
+
+Cztery formaty transkryptu powstaja trzema drogami. Markdown i JSON skada
+rdzen wprost, bez niczego z zewnatrz. PDF powstaje biblioteka wkompilowana
+w binarium — dokument i kryptografia sa w tym produkcie wyjatkiem
+bezwzglednym od wolania programow serwerowych. DOCX powstaje Pandociem,
+poniewaz formatu biurowego nie da sie zlozyc bibliotecznie w rdzeniu,
+a Pandoc jest programem serwerowym zadeklarowanym w sondzie zaleznosci
+zewnetrznych i uzywanym juz przez modul Studio, modul Translate i modul
+Biblioteki.
+
+Pandoc zamienia transkrypt, a nie przetwarza materialu filmowego;
+przekroczenie granicy czasu na zamiane formatu znaczy plik uszkodzony albo
+proces, ktory utknal. Zamiana na DOCX przekazuje material plikiem, a nie
+strumieniem, poniewaz Pandoc rozpoznaje format wyjsciowy po rozszerzeniu
+pliku docelowego, a zapis do strumienia wymagalby wskazania formatu osobno
+i tak samo tworzylby plik posredni. Lamanie wierszy dokumentu PDF idzie po
+slowach, poniewaz lamanie w srodku slowa dawaloby zapis, ktorego nie da sie
+przeczytac ani przeszukac. Zadania modulu Roundtable niosa okno debaty,
+a nie okno sesji terminalowej, wiec zasady izolacji dla wywolan arsenalu
+biora sie z zasiegu platformy, tak samo jak w rodzinie narzedzi mediow —
+punkt izolacji wlaczony globalnie dziala tu tak samo jak dla modulu
+Terminal.

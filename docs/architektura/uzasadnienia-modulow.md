@@ -2381,3 +2381,54 @@ ustalenia, a wydanie zapisuje slad eksportu panelu. Pozycja, ktora sie nie
 powiodla, zostaje w stanie bledu wraz ze szczegolem, a nie znika z kolejki —
 niepowodzenie jednej pozycji nie przewraca calego przebiegu, poniewaz pakiet
 ma dojsc do konca i pokazac, co sie udalo, a co nie.
+
+## budowa/server/internal/core/adapter_modul_automations_wersje.go
+
+Porównanie wersji jest strukturalne, nie tekstowe. Kontrakt oddaje
+identyfikator kroku wraz z rodzajem zmiany i nazwą pola, więc różnica liczy
+się po krokach — krok dodany, krok usunięty, krok o zmienionym polu. Różnica
+tekstowa dwóch zapisów strukturalnych mówiłaby o wierszach zapisu, a nie
+o krokach procesu.
+
+Symulacja nie wywołuje niczego: przebieg próbny czyta definicję, sprawdza
+spójność każdego kroku i oddaje wynik kroku po kroku, nie ruszając ani
+kolejki, ani kanału modelu, ani żadnego interfejsu zewnętrznego, zgodnie
+z zapewnieniem kontraktu, że efekty uboczne kroków są przy symulacji
+wstrzymane. Rdzeń, który przy przebiegu próbnym wysłałby raport pocztą, byłby
+rdzeniem, któremu nie wolno ufać.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_mowa_silnik.go
+
+Metody tego pliku stoją na wspólnym `*adapterTlumaczenia` (typ i przedrostki
+deklaruje `adapter_modul_tlumaczenie.go`); `SyntezujMowe` mieszka
+w `adapter_modul_tlumaczenie_mowa.go`, a wybór głosu —
+w `adapter_modul_tlumaczenie_mowa_glos.go`.
+
+Dźwięk nie opuszcza maszyny Operatora: nie ma tu klienta HTTP ani adresu,
+a oba syntezatory są programami lokalnymi. Silniki są dwa, w tej kolejności
+pierwszeństwa: `piper` — synteza neuronowa, wchodzi pierwszy, gdy stoi
+binarium oraz jest głos dla języka panelu; głos leży na maszynie jak każde
+inne binarium arsenału, więc jest zależnością środowiska, a nie stanem
+produktu. `espeak-ng` — synteza formantowa, program jednym plikiem bez stanu
+i bez modeli, droga zapasowa, gdy pipera nie ma albo nie ma dla tego języka
+głosu.
+
+Operator ma wiedzieć, którym silnikiem słucha: głos zapasowy brzmi inaczej
+niż dobry i nie ma być mylony z usterką nagrania. Kontrakt
+(`TranslateSpeechSynthesizeResponse`) niesie same `panelId` i `path`, bez pola
+na nazwę silnika, więc nazwa silnika idzie w nazwę pliku:
+`pan-…-piper-….wav` albo `pan-…-espeak-ng-….wav`. Ta sama nazwa ląduje
+w kolumnie `nagranie_odnosnik`, więc ślad również mówi, kto czytał.
+
+Ścieżka programu i głosu bierze się z dwóch źródeł, w tej kolejności: zmienna
+środowiska (`DANACO_PIPER`, `DANACO_PIPER_GLOSY`, `DANACO_ESPEAK`) ma
+pierwszeństwo, bo arsenał jest instalowany poza produktem i bywa na każdej
+maszynie w innym miejscu; następnie wykrycie w miejscach typowych — nazwa
+goła w PATH, a przy jej braku katalog arsenału. Katalog ustawień produktu
+źródłem nie jest: wpisywałby położenie cudzego binarium do stanu produktu,
+a to jest fakt maszyny, nie nastawa Operatora.
+
+Brak głosu to inna odmowa niż brak binarium: program stoi, więc `Stoi` mówi
+„jest", a czynność i tak nie wyjdzie. Rozróżnienie widać w treści odmowy, bo
+naprawy są różne. Gdy zawiodą oba silniki, odmowa wymienia obie przyczyny
+osobno.

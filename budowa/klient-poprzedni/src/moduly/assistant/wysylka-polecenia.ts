@@ -10,19 +10,8 @@ import { ODCZYTY } from './etykiety-assistant';
 import type { StanAssistant } from './stan-assistant';
 
 /**
- * Droga polecenia z Voice Console do rdzenia i z powrotem.
- *
- * Plik odpowiada wyłącznie za wydanie polecenia i przerwanie zlecenia, które
- * z niego powstało. Stoi poza oknem, bo okno składa kontrolki, a to jest
- * rozmowa z rdzeniem.
- *
- * Polecenie idzie jednym wywołaniem `assistant.voice.command` z polem
- * `transcript`, tą samą drogą co polecenie wpisane ręcznie. Nie ma tu drugiej
- * drogi do rdzenia ani własnego modelu.
- *
- * Przerwanie dotyczy zlecenia, nie nagrania: kontrakt nie niesie strumienia
- * dźwięku, ale niesie sterowanie `cancel`. Bez zlecenia w toku przycisk mówi
- * wprost, czego po stronie audio brakuje — zamiast milczeć.
+ * Droga polecenia z Voice Console do rdzenia i z powrotem odpowiada wyłącznie za wydanie
+ * polecenia i przerwanie zlecenia, które z niego powstało.
  */
 export interface WysylkaPolecenia {
   wyslij(polecenie: TrescPolecenia): Promise<void>;
@@ -31,7 +20,7 @@ export interface WysylkaPolecenia {
   zsynchronizuj(): void;
 }
 
-/** Wartości ustawione w pasku promptu. */
+/** Wartości ustawione w pasku promptu: transkrypcja polecenia, wybrany profil i nastawa syntezy mowy odpowiedzi. */
 export interface TrescPolecenia {
   transkrypcja: string;
   profil: string;
@@ -39,14 +28,8 @@ export interface TrescPolecenia {
 }
 
 /**
- * Sposób, w jaki okno pokazuje przebieg wysyłki.
- *
- * Fazę nazywa wysyłka, nie okno: `faza` niesie wartość ze wspólnego słownika
- * `komponenty/faza-okna` — tego samego, którym mówią Actions Monitor i Activity
- * Feed. Nie jest to drugi mechanizm stanu obok `stan-okna.ts`: to ta sama
- * `FazaOkna`, wpuszczana wprost w ten sam `StanOkna`, tylko nazwana w miejscu,
- * które jako jedyne wie, co się właśnie stało. Przełącznik „trwa / nie trwa"
- * nie wystarcza, bo nie umie powiedzieć o odmowie rdzenia.
+ * Sposób, w jaki okno pokazuje przebieg wysyłki, nazwaną wysyłką, nie oknem, tym samym
+ * słownikiem fazy co inne okna.
  */
 export interface WidokWysylki {
   /** Zdanie o tym, co się właśnie dzieje albo co odpowiedział rdzeń. */
@@ -65,15 +48,12 @@ export function utworzWysylkePolecenia(
 
   return {
     async wyslij(polecenie) {
-      // Pustego pola nie meldujemy jako błędu okna: to brak w polu formularza,
-      // pokazywany przy polu, z resztą widoku nietkniętą. Okno zostaje w swoim
-      // stanie pustym, który i tak mówi wprost, co w to pole wpisać.
+      // Pustego pola nie meldujemy jako błędu okna: to brak w polu formularza, nie widoku.
       if (polecenie.transkrypcja === '') {
         widok.powiedz('Wpisz albo podyktuj treść polecenia — rdzeń odmówi pustego.', false);
         return;
       }
-      // Brak przydzielonego okna modułu jest natomiast błędem okna: polecenia
-      // nie ma dokąd wysłać i nie zmieni tego żadna treść w polu.
+      // Brak przydzielonego okna modułu jest błędem okna: polecenia nie ma dokąd wysłać.
       if (stan.idOkna() === '') {
         widok.powiedz(BRAKI.brakOkna, false);
         widok.faza('blad', BRAKI.brakOkna);
@@ -91,9 +71,7 @@ export function utworzWysylkePolecenia(
       if (!wynik.udany || wynik.wynik === undefined) {
         const powod = opisOdmowy('Wydanie polecenia', wynik.blad?.code, wynik.blad?.message);
         widok.powiedz(powod, false);
-        // Komunikat odmowy zostaje w układzie do następnego polecenia, a treść
-        // paska pozostaje pod nim widoczna, więc poprawka i ponowna wysyłka idą
-        // bez dodatkowego ruchu.
+        // Komunikat odmowy zostaje w układzie, a treść paska pozostaje widoczna pod nim.
         widok.faza('blad', powod);
         return;
       }
@@ -142,8 +120,7 @@ export function utworzWysylkePolecenia(
       ) {
         return;
       }
-      // Zlecenie zeszło z toru: nie ma już czego anulować. Przycisk zostaje
-      // klikalny i powie o tym wprost.
+      // Zlecenie zeszło z toru: nie ma już czego anulować, a przycisk powie o tym wprost.
       idPolecenia = '';
     },
   };

@@ -316,3 +316,28 @@ zrzut ekranu jest odnośnikiem zasobu, a komendy pobierającej jego bajty do
 przeglądarki kontrakt nie niesie. Panel pokazuje więc treść, którą rdzeń
 naprawdę oddaje, i nazywa wprost to, czego nie oddaje. Ramka z cudzą stroną
 wewnątrz okna byłaby drugą przeglądarką, a moduł Browser jest jeden.
+
+## budowa/klient-poprzedni/src/moduly/studio/widok-pasek-widoku.ts
+
+Panele nastaw wchodzą na żądanie i schodzą, gdy nie są używane; stała kolumna
+zabierałaby kartce szerokość na stałe, dlatego pasek jest wąskim rzędem przy
+krawędzi powierzchni, a nastawy rzadsze — układ kartek, przewijanie, jednostka
+linijki, tryb dwóch dokumentów — stoją w nakładce rozwijanej przyciskiem
+„Nastawy widoku". Nakładka stoi nad treścią i schodzi naciśnięciem, klawiszem
+Escape albo naciśnięciem poza nią, nie zabierając kartce ani milimetra
+szerokości.
+
+Nastawy widoku stoją przy powierzchni, a nie wyłącznie na wstążce, ponieważ
+dotyczą tego, na co Operator patrzy, i sięga po nie stale — skala oraz skok
+o stronę są czynnościami ciągłymi, nie wyprawą na osobną zakładkę. Wstążka
+niesie te same nastawy jako gniazdo tego samego paska, więc nie powstają dwa
+miejsca, które mogłyby się rozjechać.
+
+Szybkie drukowanie stoi w rzędzie stałym, nie w nakładce: jedno naciśnięcie
+uruchamia druk ostatnimi nastawami, bez okna nastaw, tak jak pasek szybkiego
+dostępu pakietu biurowego. Bez sterownika druku przycisk pozostaje widoczny
+i nazywa powód niedostępności zamiast milczeć.
+
+Tryb źródłowy ze znacznikami i podgląd wydruku wykluczają się: znaczniki nie
+mają paginacji, a podgląd jej wymaga. Wyłączony przełącznik mówi to wprost,
+zamiast oddawać widok, którego Operator nie zamawiał.

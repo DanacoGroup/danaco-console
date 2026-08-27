@@ -5805,3 +5805,33 @@ strumienia innych repozytoriów nie zna.
 
 Kolejność bloku w obrębie wiadomości wyliczana jest w tym samym poleceniu zapisu, wzorem
 numeracji historii okna, bez osobnego odczytu i transakcji.
+
+## budowa/server/internal/transport/nawiazanie.go
+
+Sprawdzanie pochodzenia w metodzie nawiaz nie jest bramką kontrolną: wykaz pochodzeń nie pyta, kim jest
+wołający i czego mu wolno, tylko odcina wyłącznie stronę trzecią, która namówiła przeglądarkę operatora
+maszyny, żeby otworzyła gniazdo do jego rdzenia; operator nie widzi tego nigdy, widzi to wyłącznie cudza
+strona. Klientem bywa webview powłoki, który przedstawia się rozmaitym Origin — pochodzenia własne
+obejmują schemat powłoki oraz localhost i adres pętli zwrotnej z dowolnym portem, więc powłoka wchodzi
+bez wskazywania czegokolwiek. Wystawienie pod inną domenę dopisuje ją do wykazu pochodzeń dozwolonych.
+
+Wzorce pochodzeń własnych obejmują powłokę aplikacji oraz interfejs otwarty w przeglądarce pod adresem
+pętli zwrotnej, a port bywa dowolny, ponieważ nasłuch potrafi wziąć port wskazany przez system — stąd
+gwiazdka w porcie, a nie w całym wzorcu. Pętla zwrotna ma dwa adresy, nie jeden: przeglądarka na
+maszynie z pierwszeństwem IPv6 rozwiązuje localhost na adres skrócony i podaje wtedy pochodzenie tej
+samej pętli zwrotnej, na której rdzeń nasłuchuje, a bez tych wzorców nawiązanie kończyłoby się odmową.
+Ukośniki odwrotne w tych wzorcach są konieczne, nie ozdobne: dopasowanie idzie przez dopasowanie ścieżek,
+gdzie nawias kwadratowy otwiera klasę znaków, a wzorzec z nawiasem gołym jest wzorcem wadliwym, przy
+którym biblioteka gniazda przerywa przegląd wykazu błędem — jeden zły wzorzec potrafi więc odciąć
+pochodzenia sprawdzane po nim.
+
+Wykaz pochodzeń wskazany przy wystawieniu dopisuje się do wzorców własnych, nie zastępuje ich, ponieważ
+wystawienie pod domenę nie jest powodem, żeby produkt przestał wpuszczać własną powłokę, a taki właśnie
+byłby skutek zastąpienia wykazu.
+
+Adres urządzenia w linii dziennika istnieje po to, że telemetria połączeń jedzie dziennikiem rdzenia
+i trwale trafia do wpisu diagnostycznego z czytelnikiem; adres urządzenia jest jednym z faktów, które ta
+linia ma nieść. Adres bierze się z pola żądania HTTP, nie z nagłówków przekazywania, ponieważ te podaje
+strona trzecia i można je napisać dowolnie, a dziennik ma nieść fakt gniazda, nie deklarację nadawcy.
+Brak adresu daje wpis oznaczony jako nieustalony zamiast pustego miejsca, żeby czytający widział różnicę
+między brakiem wiedzy a pominięciem.

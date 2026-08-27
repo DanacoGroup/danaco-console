@@ -5455,3 +5455,9 @@ dlatego obszary nie mają własnej tabeli.
 Obszar wskazany w polu areas żądania, dla którego żądanie nie niesie treści,
 zostaje usunięty z danego poziomu i wtedy obowiązuje poziom szerszy. Obszar
 spoza pola areas nie jest ruszany przy zapisie.
+
+## budowa/server/internal/core/handlers_tozsamosc_osie.go
+Okno wskazuje kanał modelu, a kanał identyfikator modelu i konto preferowane. Oś modelu bierze
+więc identyfikator modelu kanału, a oś konta — konto kanału. Okno bez kanału, kanał bez konta
+i okno nieznane dają osie puste: nakładka schodzi wtedy na samą oś platformy zamiast nie powstać
+wcale.

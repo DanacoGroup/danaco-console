@@ -498,13 +498,13 @@ await bieg('droga wejścia — przebieg', {
     rowne(przebieg.stan().srodowisko?.code, 'talkin', 'środowisko o kolejności pierwszej');
     rowne(przebieg.stan().moduly.length, 1, 'moduły środowiska odczytane');
     rowne(przebieg.stan().przygotowanie.stany[0], 'gotowy', 'uwierzytelnienie zakończone');
-    rowne(przebieg.stan().przygotowanie.stany[2], 'gotowy', 'przywracanie kart zakończone');
+    rowne(przebieg.stan().przygotowanie.stany[1], 'gotowy', 'przywracanie kart zakończone');
     rowne(
-      przebieg.stan().przygotowanie.stany[1],
-      'oczekuje',
-      'etap bez komendy drogi wejścia zostaje w oczekiwaniu',
+      przebieg.stan().przygotowanie.stany.length,
+      2,
+      'wykaz niesie tylko etapy, dla ktorych droga wejscia ma komende',
     );
-    rowne(przebieg.stan().przygotowanie.wartosc, 40, 'postęp liczony z etapów zakończonych');
+    rowne(przebieg.stan().przygotowanie.wartosc, 100, 'postęp dobiega końca');
   },
 
   async 'odmowa wejścia do środowiska zaznacza etap jako nieudany'() {
@@ -515,8 +515,27 @@ await bieg('droga wejścia — przebieg', {
       odmowa(ErrorCode.NotAuthenticated, 'bramka: połączenie niezwiązane z sesją'),
     );
     await przebieg.zaloguj({ login: 'operator', haslo: HASLO_MOCNE });
-    rowne(przebieg.stan().przygotowanie.stany[2], 'blad', 'etap przywracania nieudany');
+    rowne(przebieg.stan().przygotowanie.stany[1], 'blad', 'etap przywracania nieudany');
     sprawdz(przebieg.stan().usterki[0]?.odRdzenia !== undefined, 'odmowa rdzenia zachowana');
+  },
+
+  /* Ponowienie jest jedyną drogą naprzód z odsłony przygotowania po odmowie
+     rdzenia: to ta sama para komend, więc po ustaniu przyczyny odmowy etap
+     domyka się bez wychodzenia z okna. */
+  async 'ponowienie przygotowania domyka etap po ustaniu odmowy'() {
+    const { przebieg, rdzen } = await doDostepu();
+    rdzen.odpowiadaj(Command.AuthLogin, SESJA);
+    rdzen.odpowiadaj(
+      Command.EnvironmentEnter,
+      odmowa(ErrorCode.NotAuthenticated, 'bramka: połączenie niezwiązane z sesją'),
+    );
+    await przebieg.zaloguj({ login: 'operator', haslo: HASLO_MOCNE });
+    rowne(przebieg.stan().przygotowanie.stany[1], 'blad', 'etap przywracania nieudany');
+    rdzen.odpowiadaj(Command.EnvironmentEnter, WEJSCIE);
+    await przebieg.przygotujSrodowisko();
+    rowne(przebieg.stan().przygotowanie.stany[1], 'gotowy', 'etap domknięty po ponowieniu');
+    rowne(przebieg.stan().przygotowanie.wartosc, 100, 'postęp po ponowieniu');
+    rowne(przebieg.stan().usterki.length, 0, 'usterki zdjęte ponowieniem');
   },
 
   /* ── Osiągalność wszystkich odsłon ────────────────────────────────────── */

@@ -285,8 +285,15 @@ export interface Przebieg {
 const MIARY_LACZENIA = ['nawiazane', 'zgodna', 'zaufane', 'wToku'] as const;
 const MIARY_NIEUDANE = ['nieudane', 'oczekuje', 'oczekuje', 'oczekuje'] as const;
 
-/** Pięć etapów przygotowania środowiska; kolejność za prototypem. */
-const ETAPOW_PRZYGOTOWANIA = 5;
+/**
+ * Ile etapów ma przygotowanie środowiska.
+ *
+ * Tyle, ile droga wejścia potrafi zmierzyć: uwierzytelnienie i przywrócenie
+ * kart sesji. Etap bez komendy w kontrakcie nie jest etapem czekającym —
+ * jest obietnicą, której nikt nie wykona, a postęp liczony razem z nim nie
+ * dobiegłby końca nigdy.
+ */
+const ETAPOW_PRZYGOTOWANIA = 2;
 
 export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
   const { kanal, transport, klient } = zaleznosci;
@@ -669,18 +676,20 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
   /**
    * Trzeci etap: wejście do środowiska i odczytanie tego, co rdzeń odtworzył.
    *
-   * Pięć etapów wykazu pochodzi z prototypu i zostaje. Stan i miarę dostają
-   * wyłącznie te, dla których droga wejścia ma komendę: uwierzytelnienie
-   * i przywracanie kart sesji. Pozostałe trzy zostają w stanie oczekiwania,
-   * bo żadne źródło nie przypisuje im komendy — a etap oznaczony jako gotowy
-   * bez pomiaru mówiłby nieprawdę.
+   * Wykaz niesie te etapy, dla których droga wejścia ma komendę:
+   * uwierzytelnienie i przywracanie kart sesji. Etap oznaczony jako gotowy
+   * bez pomiaru mówiłby nieprawdę, a etap czekający na komendę, której nie ma,
+   * zatrzymywałby postęp na zawsze — więc wykazu nie ma dłuższego niż pomiar.
+   *
+   * Wywołanie powtórne jest ponowieniem: wykaz stanów rusza od nowa, więc
+   * odsłona po nieudanym wejściu wraca do stanu sprzed próby.
    */
   async function przygotujSrodowisko(): Promise<void> {
     const stany = nowyWykazStanow();
     const miary = nowyWykazMiar();
     stany[0] = 'gotowy';
     miary[0] = { klucz: 'rozpoznane' };
-    stany[2] = 'pracuje';
+    stany[1] = 'pracuje';
     zmien({
       etap: 'przygotowanie',
       odslona: 'przygotowanie',
@@ -691,7 +700,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     const wykaz = await doRdzenia(Command.EnvironmentList, {});
     const pierwsze = pierwszeSrodowisko(wykaz.wynik?.environments);
     if (!wykaz.udany || pierwsze === undefined) {
-      stany[2] = 'blad';
+      stany[1] = 'blad';
       zmien({
         usterki: odmowa(wykaz),
         przygotowanie: { stany, miary, wartosc: postep(stany) },
@@ -704,7 +713,7 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
       clientId: klient.id,
     });
     if (!wejscie.udany) {
-      stany[2] = 'blad';
+      stany[1] = 'blad';
       zmien({
         usterki: odmowa(wejscie),
         przygotowanie: { stany, miary, wartosc: postep(stany) },
@@ -713,15 +722,15 @@ export function utworzPrzebieg(zaleznosci: ZaleznosciPrzebiegu): Przebieg {
     }
     const odpowiedz = wejscie.wynik;
     if (odpowiedz === undefined) {
-      stany[2] = 'blad';
+      stany[1] = 'blad';
       zmien({
         usterki: [{ klucz: 'usterki.brakOdpowiedzi' }],
         przygotowanie: { stany, miary, wartosc: postep(stany) },
       });
       return;
     }
-    stany[2] = 'gotowy';
-    miary[2] = {
+    stany[1] = 'gotowy';
+    miary[1] = {
       klucz: 'karty',
       dane: { odtworzone: odpowiedz.sessions.length, wszystkie: odpowiedz.sessions.length },
     };

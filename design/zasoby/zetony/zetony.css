@@ -1,25 +1,18 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY SYSTEMU WIZUALNEGO · v2.0 (projekt od podstaw)
-   ----------------------------------------------------------------------------
-   Jedno źródło prawdy wartości wizualnych. Warstwy:
-     1. prymitywy  — surowe skale barw (ZAKAZ użycia wprost w komponentach)
-     2. semantyczne — role per motyw (data-theme="light|dark", oba równoprawne)
-     3. niezależne od motywu — typografia, przestrzeń, ruch, wymiary, warstwy
-
-   Kierunek: monochromatyczna precyzja — odcienie bieli (motyw jasny),
-   odcienie czerni (motyw ciemny), jeden błękit sygnałowy. kierunek systemu projektowego.
-
-   Kontrasty: każda para tekst/tło zmierzona — komplet w kontrasty.json.
-   Zasady nienegocjowalne: jednostka 4 px · oba motywy równoprawne ·
-   stan nigdy samym kolorem · zero blokad · WCAG 2.1 AA na wejściu.
-   ============================================================================ */
+/* Żetony systemu wizualnego są jednym źródłem prawdy wartości wizualnych, ułożonym w warstwy prymitywów, ról semantycznych motywu i wartości niezależnych od motywu.
+   Prymitywy niosą surowe skale barw, zakazane do użycia wprost w komponentach.
+   Warstwa semantyczna niesie role przypisane motywowi jasnemu i ciemnemu,
+   oba równoprawne. Kierunek systemu: monochromatyczna precyzja, odcienie
+   bieli w motywie jasnym, odcienie czerni w motywie ciemnym, jeden błękit
+   sygnałowy. Każda para tekstu i tła ma zmierzony kontrast. Zasady
+   nienegocjowalne: jednostka 4 piksele, oba motywy równoprawne, stan nigdy
+   samym kolorem, zero blokad, norma WCAG 2.1 AA na wejściu. */
 
 @import url('ruch.css');
 
 :root {
-  /* ==================================================================== *
-   *  1 · PRYMITYWY                                                       *
-   * ==================================================================== */
+  /* ====================================================================
+     1 · PRYMITYWY
+     ==================================================================== */
 
   /* --- SZAROŚĆ — czysto neutralna (równe RGB): odcienie bieli i czerni  */
   --dn-szary-0: #FFFFFF;      /* wyłącznie powierzchnie kart i tekst na atramencie */
@@ -51,7 +44,8 @@
   --dn-sygnal-700: #1D49AF;
   --dn-sygnal-800: #173A8C;
 
-  /* --- BRYŁA MODUŁU — paleta sceny przestrzennej                        */
+  /* --- BRYŁA MODUŁU — paleta sceny
+     przestrzennej */
   /* Sześcian programu składany z klocków. Bryła nie ma własnego tła i kładzie
      się wprost na powierzchni okna, więc paleta jest JEDNA dla obu motywów:
      granatowe klocki z jasnoniebieską krawędzią czytają się i na atramencie,
@@ -83,9 +77,9 @@
   --dn-czerwien-700: #C0362F; --dn-czerwien-400: #EE7168;
   --dn-czerwien-200: #F3C8C4; --dn-czerwien-100: #FCEDEB;
 
-  /* ==================================================================== *
-   *  2 · RAMA KOKPITU — stała w obu motywach (kierunek systemu projektowego)           *
-   * ==================================================================== */
+  /* ====================================================================
+     2 · RAMA KOKPITU — stała w obu motywach
+     ==================================================================== */
   --dn-rama: var(--dn-szary-925);
   --dn-rama-grafit: var(--dn-szary-850);   /* powierzchnie na atramencie ramy */
   --dn-rama-tekst: var(--dn-szary-100);
@@ -104,9 +98,9 @@
   --dn-rama-obrys: rgba(255, 255, 255, 0.10);
   --dn-rama-obrys-mocny: rgba(255, 255, 255, 0.24);  /* ramka pozycji szyny nawigacji */
 
-  /* ==================================================================== *
-   *  3 · TYPOGRAFIA — trzy role, trzy kroje                              *
-   * ==================================================================== */
+  /* ====================================================================
+     3 · TYPOGRAFIA — trzy role, trzy kroje
+     ==================================================================== */
   --dn-ff-naglowek: 'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   --dn-ff-bazowa: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --dn-ff-mono: 'IBM Plex Mono', 'Cascadia Mono', 'Consolas', monospace;
@@ -135,9 +129,9 @@
   --dn-ls-wersaliki: 0.08em;      /* etykiety wersalikowe Plex Sans */
   --dn-ls-mono-wersaliki: 0.14em; /* etykiety wersalikowe Plex Mono */
 
-  /* ==================================================================== *
-   *  4 · PRZESTRZEŃ — jednostka bazowa 4 px [NIENEGOCJOWALNE]            *
-   * ==================================================================== */
+  /* ====================================================================
+     4 · PRZESTRZEŃ — jednostka bazowa 4 px, wartość nienegocjowalna
+     ==================================================================== */
   --dn-od-0: 0;
   --dn-od-05: 2px;  /* półstopień siatki 4 px — najciaśniejszy odstęp, np. etykieta↔opis w kaflu */
   --dn-od-1: 4px;
@@ -159,9 +153,9 @@
   --dn-r-xl: 14px;     /* karty środowisk, duże powierzchnie */
   --dn-r-pill: 999px;  /* plakietki stanu, przełączniki, kropki */
 
-  /* ==================================================================== *
-   *  6 · WYMIARY — gęstość ZWARTA (kokpit)        *
-   * ==================================================================== */
+  /* ====================================================================
+     6 · WYMIARY — gęstość zwarta kokpitu
+     ==================================================================== */
   --dn-wym-kontrolka: 32px;        /* przyciski, pola, pozycje wyboru */
   --dn-wym-ikonowy: 34px;          /* przycisk ikonowy */
   --dn-wym-belka-btn: 46px;        /* przycisk sterowania oknem — szerokość wg Windows */
@@ -219,9 +213,9 @@
   --dn-odstep-panel: var(--dn-od-3);   /* wewnętrzny rytm paneli (12 px) */
   --dn-odstep-sekcji: var(--dn-od-6);  /* rytm między sekcjami (24 px) */
 
-  /* ==================================================================== *
-   *  7 · SIATKA I PUNKTY ŁAMANIA                        *
-   * ==================================================================== */
+  /* ====================================================================
+     7 · SIATKA I PUNKTY ŁAMANIA
+     ==================================================================== */
   --dn-bp-w1: 640px;    /* telefon poziomo — widok mobilny */
   --dn-bp-w2: 960px;    /* tablet — boczna nawigacja zwijana do ikon */
   --dn-bp-w3: 1280px;   /* biurko — pełny kokpit */
@@ -230,9 +224,9 @@
   --dn-siatka-kolumny: 12;
   --dn-siatka-przerwa: var(--dn-od-6);
 
-  /* ==================================================================== *
-   *  8 · WARSTWY (z-index)                       *
-   * ==================================================================== */
+  /* ====================================================================
+     8 · WARSTWY, kolejność z-index
+     ==================================================================== */
   --dn-z-podloga: 0;
   --dn-z-przybornik: 10;        /* przyklejone nagłówki tabel, przybornik */
   --dn-z-pasek: 100;            /* pasek górny (rama) */
@@ -245,9 +239,9 @@
   --dn-z-aod: 1200;             /* Always On Display */
   --dn-z-centrum-polecen: 1300; /* Command Center — zawsze najwyżej */
 
-  /* ==================================================================== *
-   *  9 · GRADIENTY; użycie wyłącznie ilustracyjne *
-   * ==================================================================== */
+  /* ====================================================================
+     9 · GRADIENTY, użycie wyłącznie ilustracyjne
+     ==================================================================== */
   --dn-grad-atrament: linear-gradient(180deg, var(--dn-szary-800), var(--dn-szary-925));
   --dn-grad-sygnal: linear-gradient(135deg, var(--dn-sygnal-400), var(--dn-sygnal-600));
   /* Zakres: awatary bez zdjęcia, rdzeń AOD, grafiki brandowe.
@@ -337,7 +331,7 @@
   --dn-cien-3: 0 8px 24px rgba(10, 10, 10, 0.12);
   --dn-cien-lg: 0 20px 48px rgba(10, 10, 10, 0.18);
   --dn-cien-sygnal: 0 0 0 3px rgba(59, 111, 224, 0.18);
-  /* cien-sygnal ZAREZERWOWANY: pierścień pola aktywnego i poświata kropki */
+  /* Żeton cień-sygnał obejmuje pierścień pola aktywnego oraz poświatę kropki, pozostając na razie zarezerwowany, nieużywany jeszcze przez żaden komponent. */
 }
 
 /* ==========================================================================
@@ -424,8 +418,8 @@
 }
 
 /* Brak jawnego wyboru — rozstrzyga preferencja systemu. Wartości muszą być
-   identyczne z blokami motywów; powielenie jest świadome (mechanizm kaskady,
-   nie drugie źródło prawdy — patrz opracowanie o przekazaniu, ruchu i dostępności). */
+   identyczne z blokami motywów; powielenie jest świadome i stanowi mechanizm
+   kaskady, nie drugie źródło prawdy. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
 
@@ -553,7 +547,3 @@
   --dn-odstep-panel: var(--dn-od-5);
   --dn-odstep-sekcji: var(--dn-od-8);
 }
-
-/* ==========================================================================
- *  14 · OGRANICZONY RUCH — globalnie, bez konfiguracji per komponent
- * ========================================================================== */

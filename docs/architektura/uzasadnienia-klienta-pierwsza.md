@@ -752,3 +752,14 @@ nie ma.
 Po pierwszym odczycie plakietka mówi o danych pochodzących z rdzenia. Pulpit nie
 zna innych źródeł: liczby albo pochodzą z odczytu rdzenia przez kanał kontraktu,
 albo nie ma ich wcale, a sekcje pokazują stany puste.
+
+## budowa/klient-poprzedni/src/moduly/library/wykaz-plikow.ts
+
+Struktura katalogów pochodzi z danych, nie z osobnego zapytania: kontrakt nie ma
+komendy katalogu folderów, niesie za to pole ścieżki każdego pliku. Wykaz
+katalogów składa się więc z pierwszych członów ścieżek zwróconych przez rdzeń,
+a zbiór pusty daje jedną pozycję obejmującą cały zbiór.
+
+Formę prezentacji rozstrzyga widok wybrany w oknie i zbudowany w module widoków
+wykazu. Wykaz nie zna żadnej z pięciu form: składa katalogi, oddaje zbiór
+widoczny i osadza to, co widok zbudował.

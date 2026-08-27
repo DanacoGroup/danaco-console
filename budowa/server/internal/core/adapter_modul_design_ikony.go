@@ -246,7 +246,7 @@ func atrybutDokumentuDesignu(dokument, nazwa string) string {
 func wspolrzednePozaSiatkaDesignu(zapis string, siatka int) int {
 	sciezka, err := canvas.ParseSVGPath(zapis)
 	if err != nil {
-		// Ścieżki nieczytelnej nie liczymy jako wychodzącej poza siatkę — to inne zastrzeżenie.
+		// Ścieżki nieczytelnej nie liczy się jako wychodzącej poza siatkę — to inne zastrzeżenie.
 		return 0
 	}
 	granice := sciezka.Bounds()
@@ -357,7 +357,7 @@ func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 
 // wyciagnijDokumentSvgDesignu wyjmuje dokument SVG z odpowiedzi modelu. Model
 // bywa rozmowny: odpowiedź niesie zdanie wstępne, blok kodu i podsumowanie.
-// Bierzemy zakres od `<svg` do `</svg>` i tylko go.
+// Brany jest zakres od `<svg` do `</svg>` i tylko go.
 func wyciagnijDokumentSvgDesignu(odpowiedz string) string {
 	poczatek := strings.Index(odpowiedz, "<svg")
 	if poczatek < 0 {
@@ -725,7 +725,7 @@ func zestawieniaKrojowRdzeniaDesignu(z shared.DesignFontPairSuggestRequest,
 			strings.Contains(maly, "medium") || strings.Contains(maly, "black"):
 			naglowkowe = append(naglowkowe, nazwa)
 		case strings.Contains(maly, "italic") || strings.Contains(maly, "oblique"):
-			// Odmiana pochyła nie jest krojem tekstu ciągłego ani nagłówka — pomijamy ją.
+			// Odmiana pochyła nie jest krojem tekstu ciągłego ani nagłówka — pomija się ją.
 		default:
 			tekstowe = append(tekstowe, nazwa)
 		}

@@ -1347,3 +1347,27 @@ dostawca nie wracał ani w wykazie, ani w bilansie dostawców nieudanych,
 a odczyt sugerował, że fraza nie ma zdjęć. Sprawdzian mierzy obie strony:
 kształt właściwy daje zasób, a wiersze bez mediów dają odmowę nazwaną wraz
 z liczbą wierszy.
+
+## skutek_fotografii_designu_test.go
+
+Sprawdziany tego pliku mierzą skutek warsztatu fotografii i części drukarskiej
+modułu Design w pikselach i w stronach, nie w kopercie odpowiedzi. Żaden
+sprawdzian nie kończy się na stwierdzeniu, że odpowiedź jest udana: każdy
+schodzi po odwołaniu zasobu do magazynu, rozkłada plik i pyta go o rzeczy,
+których koperta nie zna — ile ma pikseli, czy niesie kanał krycia i jakie ma
+w nim wartości, o ile przesunęła się średnia jasność, ile kafli powstało
+i o jakich wymiarach, ile stron ma wydany plik PDF. Powód leży w historii tego
+produktu: `design.asset.generate` meldował `status: ok` z wykazem zasobów,
+za którymi nie było ani jednego bajtu, a sprawdzian zaglądający wyłącznie
+w pole `status` uznawał to za powodzenie.
+
+Liczenie stron pliku PDF w `liczbaStronPdfSprawdzianu` jest rachunkiem
+własnym, celowo bez użycia biblioteki, którą rdzeń plik złożył: sprawdzian
+liczący tą samą biblioteką mierzyłby zgodność biblioteki z samą sobą, a błąd
+w składaniu pliku i błąd w jego odczycie zniosłyby się wzajemnie. Rozpakowanie
+strumieni jest konieczne, bo `pdfcpu` zapisuje katalog obiektów w strumieniach
+skompresowanych metodą Flate od wersji formatu PDF 1.5 wzwyż, więc napis
+`/Type /Page` nie stoi wtedy w pliku wprost; pakiet `compress/zlib` biblioteki
+standardowej wystarcza, bo to ta sama kompresja. Wzorzec bez ukośnika po
+`Page` odróżnia stronę od drzewa stron (`/Type /Pages`), które w pliku
+występuje raz.

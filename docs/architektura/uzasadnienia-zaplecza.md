@@ -2723,3 +2723,6 @@ Kolejność zero należy do obu okien wspólnych, nie do jednego. Odczyt sortuje
 zerze rozstrzyga kod: `chat-window` stoi przed `execution-loop-window`, czyli
 dokładnie tak, jak układa je każde opracowanie. Okna własne modułu zaczynają
 się od jedynki i nie są przestawiane.
+
+## budowa/desktop/src-tauri/src/main.rs
+Plik pełni wyłącznie kompozycję: brak w nim logiki, typów i obsługi zdarzeń, bo każda odpowiedzialność mieszka w osobnym module. Powłoka niesie okno wraz z wkompilowanym interfejsem i nie niesie rdzenia — rdzeń stoi na serwerze wdrożenia, więc przy starcie nie ma czego stawiać ani na co czekać, a powłoka jedynie czyta wskazanie, gdzie tego rdzenia szukać, i otwiera okno. Lista poleceń wywoływalnych z interfejsu wchodzi na listę zamkniętą: natywne okno wyboru katalogu roboczego, wskazanie serwera rdzenia oraz podmiana pliku aplikacji przy aktualizacji.

@@ -1777,3 +1777,18 @@ czynność, która się nie odbyła.
 Różnica siedzi w module, a nie w nośniku wspólnym, ponieważ ten sam nośnik
 obsługuje okna pozostałych modułów. Przedrostek klas `da` należy do arkusza
 modułu, dlatego wiązanie nośnika z przedrostkiem stoi po stronie modułu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-pamieci.ts
+
+Wzorem jest `zrodlo-assistant.ts`: żadne wywołanie nie rzuca wyjątkiem, odmowa
+wraca polem `blad` wyniku, a okno pokazuje ją w swoim stanie błędu.
+
+Komenda `memory.detach` nie jest tu wystawiona. Kontrakt oznacza znaczenie
+odpięcia jako nierozstrzygnięte, więc okno nie nadaje mu własnego sensu — tak
+samo postępuje moduł Workspace w pliku `moduly/workspace/pamiec-pozycja.ts`.
+
+Rodziny są dwie, ponieważ mówią o dwóch różnych bytach. Rodzina `memory.*`
+prowadzi ustalenia, czyli zdania, które Operator kazał zapamiętać. Rodzina
+`knowledge.*` prowadzi wskaźnik znaczenia zbudowany z treści już istniejących:
+biblioteki, historii rozmów i plików przestrzeni roboczej. Zlanie ich w jedno
+źródło zatarłoby, co jest ustaleniem, a co odnalezionym fragmentem.

@@ -3488,3 +3488,16 @@ do nagranego już pliku albo tekst poprawiony przez operatora, a zapis idzie
 dosłownie do odpowiednich kolumn. Brak obu jest błędem żądania, nie pustym
 zapisem, ponieważ kolumna treści jest wymagana — wpis dziennika bez treści
 nie opisuje niczego, co się wydarzyło.
+
+## budowa/server/internal/dane/wiadomosci.go
+Pole IdentyfikatorZewnetrzny wiąże wiersz z wiadomością rdzenia, którą klient zna pod identyfikatorem tekstowym; po nim odnajduje się wiersz odpowiedzi modelu, gdy strumień się domyka. Pole Zalaczniki niesie wykaz odwołań do załączników w postaci tablicy JSON napisów, dokładnie tak, jak brzmi pole attachments kontraktu. Wartość nil znaczy pustą kolumnę, czyli że baza nic o załącznikach tej wiadomości nie wie; to nie to samo co pusta tablica, która znaczy sprawdzone: nie było żadnych.
+
+## budowa/server/internal/session/uruchamiacz.go
+Uruchamianie procesu ma w drzewie jedno miejsce, warstwę kanału, bo tylko ona
+zna wiersz poleceń, rotację kont i kształt strumienia. Pakiet session nie
+buduje ani nie startuje procesu, także procesu okna komunikacji: bierze uchwyt
+procesu gotowego i dokłada to, co należy do sesji. Interfejs zostaje w tym
+pakiecie, choć sam session po niego nie sięga, ponieważ definiuje go strona
+znająca kształt uruchomienia okna, a wypełnia warstwa kanału; sięgają po niego
+moduły Terminal i Developer w rdzeniu, bo one uruchamiają procesy okna i one
+obejmują je drzewem.

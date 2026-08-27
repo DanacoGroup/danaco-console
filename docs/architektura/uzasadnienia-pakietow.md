@@ -4873,3 +4873,43 @@ zależny od kolejności.
 
 Ciągłość numeracji kroków migracji nie jest wymagana i nie jest sprawdzana w teście numeracji — luki
 powstają przy pracy równoległej i są z zamysłu.
+
+## budowa/server/internal/narzedzia/zasieg_roli.go
+Serwer narzędzi należy do jednego okna, a wpis danaco w konfiguracji MCP
+powstaje osobno dla każdego okna, więc zasięg narzędzi wiąże się z oknem.
+Wykaz narzędzi kontraktu nie niesie komend przestawiania konfiguracji sesji
+ani kanału modelu: model nie przestawia sobie własnego wyposażenia, co jest
+właściwe dla okna roboczego. Okno asystenta ustawia jednak konfigurację
+zlecenia i wybiera kanał modelu — nie na sobie, lecz na oknie docelowym,
+w którym ma pracować model wykonujący zlecenie.
+
+Zasięg jest funkcją roli okna, nie prośby modelu. Rozszerzenie wynika z roli
+okna zapisanej w rdzeniu i wchodzi do wpisu MCP w chwili jego składania,
+zanim proces modelu wystartuje; model nie ma czym o rozszerzenie poprosić,
+bo nie ma narzędzia zmieniającego zasięg, a przełącznik zasięgu czyta się raz,
+przy uruchomieniu serwera, z wpisu ułożonego przez rdzeń.
+
+Rozszerzenie nie tyka komend zastrzeżonych Operatorowi — punkty dostępu,
+nadania, konta, tożsamość — ani warstwy połączenia klienta; te zostają poza
+wykazem w każdym zasięgu.
+
+Wykaz rozszerzenia jest polityką, nie kopią danych kontraktu: kontrakt nie zna
+pojęcia okna asystenta, sekcja narzędzi jest listą płaską, bez wymiaru roli,
+więc nie ma w niej danych, z których dałoby się ten podzbiór wyprowadzić.
+Dlatego wykaz jest wymieniony z nazwy, opatrzony powodem i sprawdzany przy
+budowie zasięgu: nazwa, która przestanie być komendą kontraktu albo wejdzie
+do wykazu narzędzi, znika z rozszerzenia zamiast po cichu wisieć.
+
+Schemat wejścia komend roli powstaje z wygenerowanej struktury żądania, bo dla
+komendy spoza sekcji narzędzi kontrakt nie wylicza parametrów; pola mają więc
+typy, ale nie mają opisów ani wykazu wartości wyliczeń.
+
+Rozpoznawane są trzy zasięgi w RozpoznajZasieg; trzeci, ekspercki, definiuje
+osobny plik zasięgu eksperta. Zasięg węższy jest bezpiecznym domyślnym,
+a rozszerzenia nie dostaje się przez pomyłkę w napisie przełącznika.
+
+Warunek istnienia w kontrakcie i stania poza wykazem narzędzi w narzedziaRoli
+chroni odpowiednio przed nazwą, która z kontraktu wypadła, i przed podwójną
+pozycją tego samego narzędzia, gdyby kontrakt kiedyś wciągnął tę komendę do
+wykazu sam; oba warunki liczy ta sama funkcja, którą posługuje się odmowa —
+jedno źródło rozstrzygnięcia, co stoi poza wykazem.

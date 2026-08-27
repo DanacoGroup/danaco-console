@@ -1727,3 +1727,25 @@ trzy, arabski sześć. Zastosowanie form zakłada klucze wariantów, których
 język docelowy wymaga, i zdejmuje te, których nie zna, bo inaczej plik
 wyniku miałby formę, której język nie ma, i program lokalizowany nigdy by
 jej nie użył.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_warsztaty.go
+
+Trasy, punkty końcowe i schemat są odczytane z pracy, nie zapisane obok
+niej. Kontrakt nie daje komend zapisu tych bytów — trzy komendy odczytu
+stoją w rodzinie same. Nie jest to przeoczenie kontraktu, tylko jego
+rozstrzygnięcie: trasa, punkt końcowy i tabela produktu są w tym, co
+Operator napisał, a osobna tabela byłaby drugą prawdą, rozjeżdżającą się
+z kodem przy pierwszej edycji, która zapomni ją odświeżyć.
+
+Trasy czyta się z plików warstwy frontendu, z deklaracji ścieżki oraz
+z atrybutu ścieżki znacznika trasy. Punkty końcowe pochodzą z kontraktów
+API komponentów architektury, wypełnianych w panelu kontraktu API. Schemat
+pochodzi z poleceń tworzenia tabeli w plikach warstwy backendu. Każdy z tych
+trzech odczytów daje wynik pusty, gdy Operator jeszcze niczego nie napisał,
+i to jest odpowiedź prawdziwa, nie brak.
+
+Zapytanie próbne idzie po sieci naprawdę: składa żądanie pod adres
+środowiska, a gdy domeny nie ma, pod adres stojącego podglądu, i mierzy
+czas oraz kod odpowiedzi zegarem, nie zgadywaniem. Brak adresu i brak
+podglądu razem znaczy odmowę z powodem, a nie wynik powodzenia wzięty
+znikąd.

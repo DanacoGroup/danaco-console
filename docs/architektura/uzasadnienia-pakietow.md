@@ -5256,3 +5256,13 @@ Utrwalany łańcuch przechodzi przez środowisko, moduł, kartę sesji, sesję i
 Trwałość konsultacji stoi w tym pakiecie, nie w pakiecie dane, tak jak
 dziennik transkrypcji mowy: pojęcie rady nie zmienia się, gdy zmienia się
 tabela, a tabela nie zmienia się, gdy przestawia się zasady doboru doradcy.
+
+## budowa/server/internal/dane/okna_operacyjne.go
+Okno operacyjne to pozycja katalogu funkcji modułu — nie jest oknem
+komunikacji. Okno komunikacji jest bytem wykonania jednej sesji i mieszka
+w osobnej tabeli; okno operacyjne jest wpisem rejestru mówiącym, jakie okna
+robocze niesie moduł. Wiersze wnosi zaczyn schematu — repozytorium ich nie
+zakłada.
+
+Rejestr jest wykazem informacyjnym, nie bramą: moduł nieznany daje wykaz
+pusty, nie błąd.

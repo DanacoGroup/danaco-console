@@ -1,15 +1,5 @@
 // Odpowiedzialność pliku: odczyt rejestru okien operacyjnych — definicji okna
-// (tabela `okno_operacyjne`) wraz z jej przypięciem do modułu (macierz
-// `okno_operacyjne_modul`).
-//
-// Okno operacyjne to pozycja katalogu funkcji modułu — nie jest oknem
-// komunikacji. Okno komunikacji jest bytem wykonania jednej sesji i mieszka
-// w tabeli `okno_komunikacji`; okno operacyjne jest wpisem rejestru mówiącym,
-// jakie okna robocze niesie moduł. Wiersze wnosi zaczyn schematu — repozytorium
-// ich nie zakłada.
-//
-// Rejestr jest wykazem informacyjnym, nie bramą: moduł nieznany daje
-// wykaz pusty, nie błąd.
+// (tabela `okno_operacyjne`) wraz z jej przypięciem do modułu (macierz `okno_operacyjne_modul`).
 package dane
 
 import (
@@ -30,7 +20,7 @@ type oknoOperacyjne struct {
 	Aktywne   bool
 }
 
-// RepozytoriumOkienOperacyjnych jest kontraktem rejestru okien.
+// RepozytoriumOkienOperacyjnych jest kontraktem rejestru okien operacyjnych modułów całej tej platformy.
 type RepozytoriumOkienOperacyjnych interface {
 	ListaModulu(ctx context.Context, modulID int64) ([]oknoOperacyjne, error)
 	Globalne(ctx context.Context) ([]oknoOperacyjne, error)
@@ -77,7 +67,7 @@ func (r *repozytoriumOkienOperacyjnych) Globalne(ctx context.Context) ([]oknoOpe
 	return r.wykaz(ctx, listaOkienGlobalnych, "okien pozamodułowych")
 }
 
-// wykaz wykonuje zapytanie zwracające wiele wierszy rejestru.
+// wykaz wykonuje zapytanie do bazy danych zwracające wiele wierszy rejestru okien operacyjnych modułu.
 func (r *repozytoriumOkienOperacyjnych) wykaz(ctx context.Context, zapytanie, opis string,
 	argumenty ...any) ([]oknoOperacyjne, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanie)
@@ -104,7 +94,7 @@ func (r *repozytoriumOkienOperacyjnych) wykaz(ctx context.Context, zapytanie, op
 	return lista, nil
 }
 
-// odczytajOknoOperacyjne składa strukturę z jednego wiersza wyniku.
+// odczytajOknoOperacyjne składa pełną strukturę okna operacyjnego z jednego wiersza wyniku zapytania do bazy.
 func odczytajOknoOperacyjne(wiersz skaner) (oknoOperacyjne, error) {
 	var okno oknoOperacyjne
 	var aktywne int

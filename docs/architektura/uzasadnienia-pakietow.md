@@ -5176,3 +5176,18 @@ tam, gdzie było przed migracją.
 
 Notatka i położenie węzła kroku zapisują się osobno, więc każdy zapis dotyka wyłącznie
 swoich kolumn: ustawienie notatki nie przesuwa węzła, a przesunięcie węzła nie kasuje notatki.
+
+## budowa/server/internal/dane/narzedzia_zakresy.go
+Zakres jest nastawą zasięgu, nie bramką wbudowaną: brak wiersza znaczy pełny
+dostęp bez granicy, a wiersz powstaje dopiero wtedy, gdy operator coś
+przestawił. Tak samo brzmi kontrakt ustawiania zakresu narzędzia.
+
+Zużycie liczy się wierszami, nie licznikiem. Limit obowiązuje w oknie
+czasu, więc licznik narastający musiałby być zerowany przez coś, co wie,
+kiedy okno się przesunęło. Wiersze ze znacznikiem czasu odpowiadają na
+pytanie o liczbę wywołań w ostatnich sekundach jednym zapytaniem i nie
+wymagają niczego w tle. Wiersze starsze niż okno sprzątane są przy zapisie
+kolejnego — tabela nie rośnie w nieskończoność, a sprzątanie nie potrzebuje
+budzika.
+
+Kod sesji pusty przy odczycie zużycia liczy wywołania wszystkich kart.

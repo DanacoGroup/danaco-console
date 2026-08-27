@@ -1,17 +1,5 @@
 // Odpowiedzialność pliku: zakresy uprawnień i limity wywołań pozycji katalogu
-// narzędzi dla profilu asystenta (tabele `narzedzie_zakres_profilu`
-// i `narzedzie_wywolanie` z migracji 278).
-//
-// Zakres jest nastawą zasięgu, nie bramką wbudowaną: brak wiersza znaczy pełny
-// dostęp bez granicy, a wiersz powstaje dopiero wtedy, gdy Operator coś
-// przestawił. Tak samo brzmi kontrakt `tools.scope.set`.
-//
-// ZUŻYCIE LICZY SIĘ WIERSZAMI, NIE LICZNIKIEM. Limit obowiązuje w oknie czasu,
-// więc licznik narastający musiałby być zerowany przez coś, co wie, kiedy okno
-// się przesunęło. Wiersze ze znacznikiem czasu odpowiadają na pytanie „ile
-// wywołań w ostatnich N sekundach" jednym zapytaniem i nie wymagają niczego
-// w tle. Wiersze starsze niż okno sprzątane są przy zapisie kolejnego —
-// tabela nie rośnie w nieskończoność, a sprzątanie nie potrzebuje budzika.
+// narzędzi dla profilu asystenta (tabele `narzedzie_zakres_profilu` i `narzedzie_wywolanie` z migracji 278).
 package dane
 
 import (
@@ -37,13 +25,11 @@ type ZakresNarzedzia struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumZakresowNarzedzi jest kontraktem zakresów narzędzi profilu.
+// RepozytoriumZakresowNarzedzi jest kontraktem zakresów narzędzi profilu asystenta i ich bieżącego zużycia.
 type RepozytoriumZakresowNarzedzi interface {
-	// ZakresyProfilu oddaje zakresy zapisane dla profilu. Nazwa pusta zwraca
-	// komplet; podana zawęża do jednej pozycji.
+	// ZakresyProfilu oddaje zakresy zapisane dla profilu; nazwa pusta zwraca komplet zakresów.
 	ZakresyProfilu(ctx context.Context, kodProfilu, nazwaPelna string) ([]ZakresNarzedzia, error)
-	// ZuzycieProfilu oddaje liczbę wywołań w bieżącym oknie czasu, po nazwie
-	// pełnej pozycji. Kod sesji pusty liczy wywołania wszystkich kart.
+	// ZuzycieProfilu oddaje liczbę wywołań w bieżącym oknie czasu, po nazwie pełnej pozycji.
 	ZuzycieProfilu(ctx context.Context, kodProfilu, kodSesji string) (map[string]int, error)
 	// ZapiszZakresNarzedzia zakłada albo zmienia zakres i oddaje go po zapisie.
 	ZapiszZakresNarzedzia(ctx context.Context, zakres ZakresNarzedzia) (ZakresNarzedzia, error)
@@ -103,7 +89,7 @@ const (
 	                                        WHERE profil_id = ? AND nazwa_pelna = ?) || ' seconds')`
 )
 
-// repozytoriumZakresowNarzedzi obsługuje zakresy narzędzi profilu asystenta.
+// repozytoriumZakresowNarzedzi obsługuje zakresy narzędzi profilu asystenta zapisane w bazie danych rdzenia.
 type repozytoriumZakresowNarzedzi struct {
 	zapytania *zapytania
 	db        *sql.DB
@@ -111,12 +97,12 @@ type repozytoriumZakresowNarzedzi struct {
 
 var _ RepozytoriumZakresowNarzedzi = (*repozytoriumZakresowNarzedzi)(nil)
 
-// noweRepozytoriumZakresowNarzedzi wiąże zakresy narzędzi z bazą.
+// noweRepozytoriumZakresowNarzedzi wiąże zakresy narzędzi profilu z bazą danych całego tego zestawu repozytoriów.
 func noweRepozytoriumZakresowNarzedzi(z *zapytania, db *sql.DB) *repozytoriumZakresowNarzedzi {
 	return &repozytoriumZakresowNarzedzi{zapytania: z, db: db}
 }
 
-// numerProfiluZakresu przekłada kod profilu asystenta na klucz wiersza.
+// numerProfiluZakresu przekłada kod profilu asystenta na klucz jego wiersza zapisany w bazie danych rdzenia.
 func (r *repozytoriumZakresowNarzedzi) numerProfiluZakresu(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx,
 		`SELECT id FROM profil_asystenta WHERE identyfikator_zewnetrzny = ?`)
@@ -133,7 +119,7 @@ func (r *repozytoriumZakresowNarzedzi) numerProfiluZakresu(ctx context.Context, 
 	return id, nil
 }
 
-// ZakresyProfilu oddaje zakresy wraz z zużyciem limitu.
+// ZakresyProfilu oddaje zakresy narzędzi profilu wraz z ich bieżącym zużyciem ustalonego limitu wywołań.
 func (r *repozytoriumZakresowNarzedzi) ZakresyProfilu(ctx context.Context,
 	kodProfilu, nazwaPelna string) ([]ZakresNarzedzia, error) {
 
@@ -193,7 +179,7 @@ func (r *repozytoriumZakresowNarzedzi) ZuzycieProfilu(ctx context.Context,
 	return zuzycie, wiersze.Err()
 }
 
-// ZapiszZakresNarzedzia zakłada albo zmienia zakres pozycji katalogu.
+// ZapiszZakresNarzedzia zakłada albo zmienia zakres pozycji katalogu narzędzi danego profilu asystenta.
 func (r *repozytoriumZakresowNarzedzi) ZapiszZakresNarzedzia(ctx context.Context,
 	zakres ZakresNarzedzia) (ZakresNarzedzia, error) {
 

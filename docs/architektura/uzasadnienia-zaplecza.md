@@ -795,3 +795,28 @@ objął `zakres`; `slad_narzedzi` niesie ślad, jeśli wiązanie go żądało. S
 ich w jedno uniemożliwiłoby późniejsze pokazanie samej treści bez szumu.
 Wiadomość wie też, która pozycja kolejki ją wytworzyła — dzięki temu panel
 zadań w tle umie pokazać, że wynik podagenta wszedł do rozmowy, a nie zginął.
+
+## budowa/pomocniki/transkrypcja/silnik.py
+
+Moduł nie ma interfejsu wiersza poleceń i nie drukuje na standardowe
+wyjście. Rozdzielenie jest celowe: standardowe wyjście pomocnika jest
+kanałem danych dla rdzenia i musi zawierać wyłącznie jeden dokument JSON.
+Gdyby wykrywanie silnika albo ładowanie modelu miało prawo cokolwiek
+dopisać do standardowego wyjścia, rdzeń dostałby dane nieczytelne zamiast
+odpowiedzi. Dlatego moduł zawiera wyłącznie funkcje zwracające wartości,
+a o tym, co i gdzie wypisać, rozstrzyga moduł transkrypcja.py.
+
+Wykaz przyjmowanych formatów nie obejmuje wszystkiego, co potrafi
+przeczytać ffmpeg, bo pomocnik nie ma jak zagwarantować, że ffmpeg jest w
+systemie w wersji, która dany kontener otworzy. Odmowa z nazwanym wykazem
+mówi więcej niż wyjątek z wnętrza biblioteki.
+
+Sprawdzenie obecności silnika samym zajrzeniem na dysk pozwala uniknąć
+ładowania setek megabajtów do pamięci; w trybie sprawdzenia wersji to
+różnica między odpowiedzią natychmiastową a kilkusekundowym mieleniem.
+
+Odmowy braku silnika i braku modelu mają zdanie rozpoznawcze dosłowne i
+niezmienne, ponieważ rdzeń rozróżnia po treści powodu, który z dwóch
+rodzajów niegotowości zaszedł, a Operator po tym samym zdaniu trafia do
+właściwego akapitu dokumentacji instalacji; przeredagowanie zepsułoby oba
+mechanizmy naraz.

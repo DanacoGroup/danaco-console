@@ -2693,3 +2693,90 @@ ktorejkolwiek nazwy oznaczaloby, ze szkic laduje w NOWYM folderze o nazwie
 
 Folder domyslny: CREATE na folderze zastanym konczy sie bledem, ktory jest
 tu pomijany swiadomie — "juz jest" to dokladnie ten stan, o ktory chodzilo.
+
+## budowa/server/internal/core/adapter_modul_design_wgranie.go
+
+Metoda stoi na typie `*adapterDesignu` zadeklarowanym w
+`adapter_modul_design.go`; plik osobny wedle odpowiedzialności, jak
+`adapter_modul_library_tresc.go` w module Library.
+
+Drogi zasobu do modułu są dwie: wniesienie przez Operatora i generowanie
+kanałem. Obie odkładają bajty tym samym magazynem
+(`adapter_modul_design_generowanie.go`) — jeden magazyn, jedna miara formatu
+i wymiarów, żadnej drugiej prawdy.
+
+Treść zawsze ląduje w magazynie rdzenia; `sourcePath` jest źródłem bajtów, nie
+miejscem składowania. Odwołanie do cudzego pliku jest wskaźnikiem na treść
+żywą, a zasób Assets Panelu — jak wersja w bibliotece — ma być treścią
+zamrożoną: warstwa kompozycji ułożona na obrazie nie ma prawa zacząć leżeć na
+innym obrazie dlatego, że Operator posprzątał katalog pobrań. Ścieżka
+źródłowa nie jest tu nigdzie zapisywana: tabela `zasob_design` nie ma kolumny
+`sciezka`, a `uri` wskazuje blob.
+
+Magazyn jest ten sam co w bibliotece, tylko nad innym katalogiem. Typ
+`magazynTresciBiblioteki` (`adapter_modul_library_magazyn.go`) niesie
+wszystko, czego ten moduł potrzebuje — blob pod sumą sha256, zapis atomowy
+(temp w katalogu docelowym, `Sync`, `Rename`), dedup po nazwie — a drugi taki
+magazyn byłby drugą prawdą o tym, jak rdzeń trzyma bajty poza bazą. Tak samo
+pożycza go magazyn załączników rozmowy (`adapter_rozmowa_zalaczniki.go`).
+Cena jest jedna i widoczna: teksty odmów tego typu mówią „magazyn treści
+biblioteki", więc wołający ubiera je we własne zdanie modułu Design.
+
+Wymiary pochodzą z nagłówka pliku albo nie pochodzą wcale: `image.DecodeConfig`
+czyta sam nagłówek (nie rozpakowuje obrazu), więc PNG, JPEG i GIF oddają
+prawdziwe piksele za cenę kilkudziesięciu bajtów odczytu. Format spoza tej
+trójki (SVG, WEBP, plik wideo) zostawia `width` i `height` puste, bo pusto
+znaczy „nie wiem", a zgadnięta liczba wygląda w panelu identycznie jak
+zmierzona i nie da się jej odróżnić.
+
+Import pusty w rejestracji dekoderów (`image/gif`, `image/jpeg`, `image/png`)
+działa wyłącznie skutkiem ubocznym rejestracji — tak przewiduje pakiet
+`image`; bez tych trzech importów każdy zasób zostałby bez wymiarów.
+
+`przedrostekZasobuDesign` znakuje wiersze obu dróg — wniesionej i wygenerowanej
+— bo jedne i drugie są tym samym bytem: zasobem z bajtami w magazynie.
+
+`podkatalogDesignu` i `podkatalogZasobowDesignu`: osobne podkatalogi, bo
+moduły nie dzielą stanu i skasowanie zasobów Designu nie ma prawa ruszyć
+treści biblioteki.
+
+`odwolanieZasobuDesignu` oddaje postać `uri` tę samą, co dla treści biblioteki
+— powód i cena stoją w nagłówku `odwolanieMagazynu`
+(`adapter_modul_library_magazyn.go`), bo to jedna decyzja dla całego produktu,
+a nie dwie zbieżne. Baza zostaje przy ścieżce bezwzględnej. Kolumna `uri`
+wiersza `zasob_design` jest bookkeepingiem rdzenia: czytają ją narzędzia
+modelu (`adapter_narzedzia_obraz.go`, `_media.go`, `_archiwum.go`,
+`_dokument.go`) i wysyłka poczty (`adapter_modul_poczta_wysylka.go`),
+otwierając plik wprost. Przełożenie jest więc granicą kontraktu, nie zmianą
+schematu — zmiana schematu ruszyłaby pięciu czytelników i wymagała migracji,
+a wyciek dotyczy wyłącznie tego, co opuszcza rdzeń.
+
+Wiersz zasobu w `WniesZasob` powstaje dopiero po utrwaleniu treści — inaczej
+Assets Panel pokazywałby kafelek, za którym nie ma nic, a brak ujawniłby się
+dopiero przy próbie obejrzenia zasobu. Ten sam porządek co `Wgraj` w module
+Library. Etykiety idą po zapisie wiersza, bo `etykieta_zasobu_design.zasob_id`
+wskazuje klucz wiersza, którego przed zapisem nie ma. Ich niepowodzenie jest
+odmową całej komendy: zasób wniesiony z etykietami, które nie weszły,
+wypadłby z własnego filtra w panelu i wyglądałby na zgubiony.
+
+W `trescZasobu` ścieżka ma pierwszeństwo przed treścią, gdy przyszły obie:
+bajty spod ścieżki są tym, co Operator naprawdę wskazał, a base64 bywa wtedy
+podglądem złożonym przez okno (ten sam rozstrzyg co w Library). Żądanie bez
+jednego i drugiego jest odmową — inaczej niż w Library, i to świadomie: tam
+wgranie bez treści zakłada wersję-znacznik, a tu zasób wizualny bez treści
+wizualnej nie ma czego pokazać (nagłówek `adapter_modul_design.go`).
+
+Rozbiór base64 w `trescZasobu` idzie tam, a nie pomocnikiem Library
+(`trescZadania`), wyłącznie dla odmowy: tamten mówi „moduł Library" w zdaniu,
+które czytałby Operator Assets Panelu, a moduł, którego nie wołał, nie ma
+prawa być autorem jego odmowy. Rachunek jest ten sam — sha256 z bajtów, ta
+sama suma, którą magazyn robi nazwą bloba.
+
+`rozpoznajObrazZasobu`: nieudany odczyt też kończy się pustkami — wniesienie
+już się powiodło, a brak wymiarów nie jest powodem, żeby odebrać Operatorowi
+zasób, którego bajty leżą utrwalone.
+
+`bladZapisuZasobuDesignu` nazywa niepowodzenie utrwalenia bajtów: nośnik
+pełny, brak praw do katalogu danych, ścieżka źródłowa nieczytelna, magazyn
+niewpięty; komenda odmawia w całości, bo zasób, którego bajtów nie ma
+nigdzie, nie ma prawa trafić do panelu jako wniesiony.

@@ -4360,3 +4360,17 @@ odinstalowania, oraz odinstalowanie.
 
 Nazwy rodzajów rozszerzeń stoją po polsku, ponieważ kontrakt niesie kody angielskie
 wyliczenia `ExtensionKind`, a wiersz czyta człowiek.
+
+## budowa/klient-poprzedni/src/moduly/library/narzedzia-explorera.ts
+
+Przełącznik widoku i zawężenie są w całości klienckie. Tryb wyszukiwania rozstrzyga,
+którą komendą pójdzie następne szukanie: `library.file.search`, `knowledge.search` albo
+obiema naraz.
+
+Widok mapy zostaje w przełączniku mimo braku źródła współrzędnych. Pozycja usunięta
+wyglądałaby na widok, którego nigdy nie przewidziano, a pozycja wybrana mówi wprost,
+czego kontrakt nie niesie; rozstrzyga o tym `widoki-wykazu.ts`.
+
+Liczba widocznych pozycji bierze się z wykazu, a nie z długości zbioru wskazanego, ponieważ
+raport potrafi wskazać plik, którego świeży odczyt już nie zawiera, a katalog struktury
+zawęża wynik dodatkowo.

@@ -1387,3 +1387,51 @@ Kształt podstawowy powstaje od razu jako węzły ścieżki, a nie jako osobny
 byt do późniejszej zamiany: prostokąt dorysowany na kanwie ma dać się
 natychmiast ciągnąć piórem za narożnik, bez komendy zamiany na ścieżkę,
 której kontrakt nie ma i mieć nie będzie.
+
+## budowa/server/internal/core/adapter_modul_studio_dziennik.go
+
+Wpis dziennika niesie całe drzewo postaci, nie samą treść, ponieważ zmiana
+formatowania obejmująca cały dokument, na przykład kroju, nie rusza ani jednej
+litery treści — treść sprzed czynności więc jej nie odtworzy. Wpis dziennika
+niesie stan przed i stan po jako pełne drzewo postaci, a cofnięcie przywraca
+drzewo, nie napis.
+
+Cofnięcie czynności nie jest przywróceniem wersji. Przywrócenie wersji cofa
+wszystko, co po niej weszło, także pracę wykonaną później. Cofnięcie czynności
+ze środka dziennika ma zdjąć wyłącznie to, co zrobiła ta jedna czynność:
+dlatego rdzeń nie wgrywa stanu przed w miejsce dokumentu, tylko liczy różnicę
+między stanem po i stanem przed i nakłada ją odwrotnie na stan bieżący, byt
+po bycie — blok, styl, sekcja, obiekt, pole, nastawy strony. Byt, którego
+czynność nie tknęła, zostaje nietknięty.
+
+Czynność, na której stoi zależność, odmawia cofnięcia, nie cofa się po cichu.
+Tabela zależności czynności istnieje wyłącznie po to: cofnięcie czynności, na
+której stoi późniejsza, zostawiłoby dokument w stanie niespójnym, na przykład
+zdjęcie tabeli, do której później wstawiono wiersze. Odmowa nazywa zależność,
+zamiast zostawiać pytanie, dlaczego nic się nie stało.
+
+Zależność liczy się z dwóch źródeł, nie z jednego. Zależność zapisana mówi
+o powiązaniach, których z zakresu nie widać — wstawienie tabeli jest podstawą
+scalenia komórki, choć zakresy mogą się nie stykać; tę wiedzę ma czynność,
+która wpis odkładała, i ona ją zapisuje. Zależność wywiedziona z zakresu jest
+siatką pod tym: czynność późniejsza, która ruszyła ten sam fragment, stoi na
+tej wcześniejszej z samej natury rzeczy — cofnięcie wcześniejszej wgrałoby
+w to miejsce stan sprzed niej i zabrałoby ze sobą pracę późniejszą. Oba źródła
+liczą się naraz, ponieważ wykaz zależności zapisanych jest dziś niepełny,
+a niepełny wykaz sam w sobie znaczyłoby ciche cofnięcie psujące dokument;
+zależność wywiedziona z zakresu myli się w drugą stronę, odmawiając czasem
+cofnięcia bezpiecznego, ale mówi wtedy wprost, która czynność stoi na drodze
+— odmowa nazwana jest tańsza niż dokument niespójny.
+
+Rodzaj czynności dziennika i rodzaj zmiany śledzonej są dwoma osobnymi
+słownikami kontraktu, których nie wolno pomieszać. Stan wpisu dziennika jest
+wyłącznie aktywny albo cofnięty — inna wartość nie wchodzi do tabeli dziennika.
+
+Aparat dokumentu wraca przy przywracaniu bytów tak samo jak sekcja i obiekt:
+przekład bytu kontraktu na wiersz istniał w obszarze aparatu, lecz w dzienniku
+pozostawał nieużyty, więc cofnięcie czynności odtwarzało treść i postać, a spis
+treści, przypis albo bibliografia zostawały w brzmieniu bieżącym. Kotwica
+i znacznik nieświeżości elementu aparatu idą z samego elementu, nie
+z przeliczenia od nowa: cofnięcie ma przywrócić stan sprzed czynności, a nie
+policzyć aparat na nowo z treści bieżącej, co wstawiłoby numery stron, których
+w stanie sprzed czynności nie było.

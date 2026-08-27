@@ -1,12 +1,4 @@
-/* Monitor wykonania i kolejka kroków.
-
-   Postęp to wskazanie, nie działanie — wypełnienie toru niesie sygnał.
-
-   Trzy wyjścia weryfikacji kroku:
-     --poprawny    zieleń    (przeszedł)
-     --bledy       bursztyn  (błędy i licznik obiegów)
-     --wstrzymany  czerwień  (zdarzenie nieoczekiwane, kolejka wstrzymana)
-   Stan nigdy samym kolorem: znak kroku niesie zawsze ikonę albo etykietę. */
+/* Arkusz opisuje monitor wykonania i kolejkę kroków: postęp jest wskazaniem, nie działaniem, a wypełnienie toru niesie sygnał stanu kroku. */
 
 .dn-postep {
   display: flex;

@@ -4802,3 +4802,20 @@ Jedyna czynność tego obszaru, zapis wartości na wskazanej osi, nie ma pokryci
 zapisu kontekstu i zapisu zakresu technicznego niosą poziom zasięgu, byt poziomu i warstwę, ale pola
 osi w nich nie ma. To jedyne miejsce tego okna, gdzie brak jest po stronie kontraktu, a nie
 podłączenia — stoi tu więc jawny, w pełni klikalny stan braku, nie cichy brak i nie martwy przycisk.
+
+## budowa/klient-poprzedni/src/moduly/studio/kopie-zapasu.ts
+Wskaźnik „zapisano" pokazany, gdy zapis się nie udał, byłby najgorszym możliwym błędem tego
+modułu, bo operator zamknąłby okno i stracił pracę, dlatego stan zapisu niesie cztery wartości,
+nie dwie, a nieudany jest jedną z nich, wraz z powodem podanym przez rdzeń i wskazaniem, że
+treść leży w kopii zapasowej. Rozróżnienie szeregów wersji nie jest wymyślone przez okno: rdzeń
+oddaje je wprost wraz z liczbą wersji w każdym z nich, a okno czyta to pole zamiast odgadywać
+autozapis po braku etykiety. Kopia zapasowa jest zakładana przed zapisem, nie po nim, bo kopia
+po zapisie nie chroniłaby od niczego — awaria zapisu zostawiłaby dokument uszkodzony bez stanu
+sprzed, a kopie idą niezależnie od historii wersji, żeby przetrwały awarię procesu. Plik nie zna
+elementów strony ani rdzenia: wejściem są byty kontraktu, wyjściem napisy i rozstrzygnięcia.
+Zgłoszenie po nagłym zamknięciu dotyczy wyłącznie kopii najświeższej niosącej zmiany
+niezapisane, bo pytanie o wiele kopii naraz byłoby pytaniem, na które operator nie ma jak
+odpowiedzieć. Nazwa szeregu wersji jest szeregiem zapytania, nie cechą samego wiersza, bo wersja
+pola szeregu nie niesie, więc pojedyncza wersja nie mówi, z którego szeregu pochodzi — wykaz
+zawężony do jednego szeregu nazwać się daje, wykaz zbiorczy nie, i okno mówi to wprost zamiast
+zgadywać po braku etykiety.

@@ -3509,3 +3509,20 @@ więc pas rozdziela oba stany i nazywa je osobnymi zdaniami.
 Znak relacji jest podwójny — strzałka `⇄` albo `→` oraz słowo w podpowiedzi i w treści
 czytanej. Kierunek powiązania nie zależy wtedy od samego kształtu znaku, który dla
 odczytu ekranowego jest niedostępny.
+
+## budowa/klient-poprzedni/src/moduly/agents/poziomy-pamieci.ts
+
+Konfiguracja pamięci jest czwartym z siedmiu komponentów definicji eksperta.
+Poziomy są cztery i wybiera się je niezależnie, ponieważ ekspert korzysta naraz
+z kilku: pamięci globalnej Operatora, pamięci projektu, pamięci karty sesji oraz
+pamięci środowiska.
+
+Piątego poziomu oznaczającego wyłączenie nie ma i kontrolka go nie dorabia:
+wyłączeniem jest zbiór pusty, czyli cztery pola odznaczone. Kontrakt rozstrzyga
+to wprost przy wyliczeniu `MemoryLevel` — piąta wartość obok czterech poziomów
+pozwalałaby zapisać stan sprzeczny, w którym sesja jest zaznaczona równocześnie
+z wyłączeniem.
+
+Dlatego pod grupą stoi zdanie czytające stan bieżący, a nie stała treść:
+Operator ma widzieć, że odznaczenie wszystkiego jest wyłączeniem pamięci, zanim
+naciśnie zapis. Zdanie zmienia się przy każdym kliknięciu.

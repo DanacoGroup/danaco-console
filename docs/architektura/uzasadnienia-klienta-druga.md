@@ -4236,3 +4236,16 @@ profil jest nazwanym zestawem trzech przełączników kontekstu i ośmiu zakres�
 stoją w jednym miejscu, żeby profil nie nazywał klucza inaczej niż zakładka, w której Operator ten
 sam klucz przestawia. Plik trzyma wyłącznie nazewnictwo: stany przełączników przychodzą z rdzenia.
 Słownik pokrywa cały kontrakt: brak wartości zatrzymuje kompilację.
+
+## budowa/klient-poprzedni/src/moduly/studio/galeria-szablonow.ts
+Szablony pochodzą z rdzenia: wykaz szablonów oddaje pismo, umowę, raport, notatkę i ofertę wraz
+z polami do wypełnienia, a założenie dokumentu z szablonu wypełnia go wskazanymi wartościami —
+obie komendy działały już wcześniej, tylko nie miały czym się pokazać w oknie. Miniatura jest
+podglądem wyglądu złożonym z tego, co szablon o sobie mówi: nazwa, przeznaczenie, format i pola.
+Obrazka miniatury kontrakt nie niesie i rdzeń obrazów nie generuje, więc miniatura jest wyrysem
+układu — kartka z nagłówkiem nazwy i kreskami wierszy w liczbie pól, bo rysunek udający gotowe
+pismo pokazywałby wygląd, którego szablon nie obiecuje. Przejście do warsztatu szablonów jest
+nieobowiązkowe: gdy warsztat nie jest zamontowany, galeria działa wyłącznie do odczytu i
+zakładania dokumentu, a gdy jest zamontowany, miniatura dostaje przejście do niego, bo szablon
+zmienia się tam, nie w galerii. Kategoria szablonu jest fabryczna albo własna, bo innego podziału
+kontrakt nie niesie, a wymyślanie działów na podstawie nazw byłoby porządkiem zgadniętym.

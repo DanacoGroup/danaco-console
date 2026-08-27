@@ -3142,3 +3142,9 @@ swojego bytu w kontrakcie; ten sam wzorzec nosi pamięć motywu i pamięć kolej
 Pamięć przeglądarki bywa niedostępna w trybie prywatnym albo w osadzeniu w ramce: awaria odczytu albo
 zapisu zostaje przy wartości domyślnej i nie jest zgłaszana jako błąd, bo nastawa widoku nie jest powodem,
 żeby ekran nie wstał.
+
+## budowa/klient-poprzedni/src/powloka/rozliczenie-usuniecia.ts
+Każdy z dwóch wykazów rdzenia idzie osobnym zdaniem, bo sesja bez odpowiednika w historii to nie
+sesja skasowana. Odpowiedź udana z pustym wykazem usuniętych znaczy „nic nie zginęło" i tak brzmi
+jej zdanie. Sesję nazywamy tytułem karty z pasa; gdy tytułu nie ma, zdanie pokazuje sam identyfikator.
+Funkcje są czyste i nie znają DOM.

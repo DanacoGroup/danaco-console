@@ -3252,3 +3252,38 @@ komendy `roundtable.debate.start`, bo uczestnicy odpowiadają równolegle,
 każdy we własnym czasie. Zdarzenia nadaje adapter przez podpiętą drogę
 rozgłoszenia (tak samo jak w `handlers_terminal.go`); obsługiwacz nadałby
 wyłącznie stan sprzed odpowiedzi.
+
+## budowa/server/internal/core/adapter_alerty_miara.go
+
+Każda z ośmiu miar reguł alertu ma źródło i jest liczona w chwili
+odpowiedzi: `errorCount` czyta dziennik błędów rdzenia jako liczbę wpisów
+w oknie czasu; `errorRate` czyta ślad wywołań modelu jako udział wywołań
+nieudanych; `cost` sumuje koszt w oknie czasu ze śladu wywołań; `tokens`
+sumuje żetony w oknie czasu ze śladu wywołań; `callLatency` liczy średnie
+opóźnienie ważone liczbą wywołań ze śladu; `budgetPercent` porównuje koszt
+w oknie wobec pułapu kosztu z konfiguracji; `probeFailure` liczy pomiary
+kondycji nieudane w serii pomiarów; `processFailure` liczy pozycje kolejki
+rdzenia zakończone błędem. Miara, której źródła rdzeń nie ma wpiętego, jest
+odrzucana już przy zapisie reguły (`sprawdzMiareReguly`) — po to, żeby nie
+istniała reguła, która wygląda na czynną, a nigdy nie zawoła.
+
+`kluczPulapuKosztu` jest nastawą, wobec której liczy się miara budżetu. Ta
+sama nastawa wstrzymuje turę w warstwie kanału (`injection/pulap.go`) — dwa
+odczyty jednej wartości, nie dwie wartości.
+
+`wymiarZuzyciaAlertow` jest osią, po której grupuje się ślad wywołań na
+potrzeby miar. Kanał, bo każde wywołanie ma kanał; sumy po wszystkich
+wierszach dają wartość globalną, a rozbicie zostaje na przyszłe zawężenie
+reguły do zasięgu.
+
+`zmierzZeSladu` liczy jeden odczyt na miarę, nie pięć: sumy po wymiarze
+niosą komplet potrzebnych składników, a drugie zapytanie o ten sam okres
+dałoby liczby z innej chwili.
+
+`rozglosWyzwolenie` nadaje zdarzenie `alert.triggered`. Zdarzenie jest drogą
+alertu do okien — bez niego Operator dowiedziałby się o wyzwoleniu dopiero
+przy następnym otwarciu wykazu.
+
+Drugi wynik zwracany przez `zmierzMiare` mówi, czy pomiar się odbył — miara,
+której nie zmierzono, nie wyzwala niczego, bo nie ma wartości do porównania
+z progiem.

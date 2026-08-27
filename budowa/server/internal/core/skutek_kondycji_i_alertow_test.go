@@ -1,3 +1,6 @@
+// Sprawdza skutek rodzin kondycji i alertów: każdy test odczytuje bezpośrednio
+// wiersze tabel sonda_kondycji, wynik_sondy_kondycji, regula_alertu
+// i wyzwolenie_alertu, nie tylko odpowiedź komendy.
 package core
 
 import (
@@ -7,17 +10,6 @@ import (
 
 	"danacoconsole/shared"
 )
-
-// Skutek rodzin opisujących STAN PRODUKTU: kondycji i alertów.
-//
-// Te dwie rodziny mają najostrzejszy warunek prawdziwości w całym produkcie:
-// komenda zdrowia, która oddaje „w porządku" nie zmierzywszy niczego, jest
-// gorsza niż jej brak — to fasada, przez którą awaria przechodzi niezauważona.
-// Dlatego żaden sprawdzian w tym pliku nie kończy się na odczytaniu odpowiedzi.
-// Każdy schodzi WŁASNYM zapytaniem SQL do tabel `sonda_kondycji`,
-// `wynik_sondy_kondycji`, `regula_alertu` i `wyzwolenie_alertu` i sprawdza, czy
-// za odpowiedzią stoi wiersz — a w wierszu wartość, której nikt nie wpisał
-// z ręki.
 
 // TestSondaWewnetrznaZostawiaZmierzonyWiersz wykazuje, że przebieg sondy
 // naprawdę czegoś dotknął: w tabeli serii leży wiersz z niezerowym czasem
@@ -70,8 +62,6 @@ func TestSondaWewnetrznaZostawiaZmierzonyWiersz(t *testing.T) {
 		t.Fatal("wiersz serii nie ma czasu odpowiedzi — pomiar bez pomiaru")
 	}
 
-	// Odbicie w definicji ma się zgadzać z ostatnim wierszem serii; rozjazd
-	// oznaczałby, że wykaz sond pokazuje inny stan niż seria.
 	var odbicieStanu string
 	var odbicieCzasu int64
 	if err := baza.QueryRow(
@@ -80,6 +70,7 @@ func TestSondaWewnetrznaZostawiaZmierzonyWiersz(t *testing.T) {
 		Scan(&odbicieStanu, &odbicieCzasu); err != nil {
 		t.Fatalf("nie można odczytać definicji sondy: %v", err)
 	}
+	// Odbicie w definicji ma się zgadzać z ostatnim wierszem serii.
 	if odbicieStanu != stan || odbicieCzasu != wykonano {
 		t.Fatalf("wykaz sond pokazałby stan %q z chwili %d, a seria niesie %q z chwili %d",
 			odbicieStanu, odbicieCzasu, stan, wykonano)
@@ -87,11 +78,8 @@ func TestSondaWewnetrznaZostawiaZmierzonyWiersz(t *testing.T) {
 }
 
 // TestSondaGniazdaBezNasluchuJestNiesprawna wykazuje, że pomiar naprawdę
-// sięgnął sieci: port, na którym nikt nie słucha, daje stan `down`, a nie `up`.
-//
-// To jest sprawdzian PRZECIWNY do poprzedniego i dlatego konieczny: adapter,
-// który oddaje `up` niezależnie od tego, co zmierzył, przeszedłby tamten
-// sprawdzian bez trudu.
+// sięgnął sieci: port, na którym nikt nie słucha, daje stan down, a nie up.
+// Adapter, który zawsze oddaje up, przeszedłby poprzedni sprawdzian bez trudu.
 func TestSondaGniazdaBezNasluchuJestNiesprawna(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianu(t, katalog)
@@ -101,9 +89,7 @@ func TestSondaGniazdaBezNasluchuJestNiesprawna(t *testing.T) {
 		shared.HealthProbeSaveRequest{
 			Name: "gniazdo, na którym nikt nie słucha",
 			Kind: shared.HealthProbeKindTcp,
-			// Port 1 na pętli zwrotnej: numer zarezerwowany, na którym nie
-			// nasłuchuje nic — a gdyby nasłuchiwał, sprawdzian powie o tym
-			// wprost, zamiast przemilczeć.
+			// Port 1 na pętli zwrotnej: numer zarezerwowany, na którym nie nasłuchuje nic.
 			Target:     "127.0.0.1:1",
 			IntervalMs: 60_000,
 			TimeoutMs:  wskaznik(int64(1000)),
@@ -143,8 +129,7 @@ func TestDostepnoscLiczySieZSeriiPomiarow(t *testing.T) {
 			Objective: wskaznik(99.0),
 		}, &sprawna)
 
-	// Dwa przebiegi udane i jeden nieudany, dołożony wprost do serii — tak
-	// wygląda doba, w której coś się zepsuło i naprawiło.
+	// Dwa przebiegi udane i jeden nieudany, dołożony wprost do serii.
 	for numer := 0; numer < 2; numer++ {
 		wykonajUdana(t, zmontowany, zycie, shared.CommandHealthProbeRun,
 			shared.HealthProbeRunRequest{ProbeId: sprawna.Probe.Id}, nil)
@@ -171,16 +156,14 @@ func TestDostepnoscLiczySieZSeriiPomiarow(t *testing.T) {
 	if wynik.UptimePercent == nil {
 		t.Fatal("dostępność nie oddała wartości procentowej")
 	}
-	// Dwa udane na trzy pomiary: dwie trzecie. Sprawdzamy przedział, bo trzeci
-	// pomiar bywa `degraded`, gdy maszyna sprawdzianu jest obciążona — i wtedy
-	// liczy się jako połowa udanego.
+	// Dwa udane na trzy pomiary: dwie trzecie. Trzeci bywa degraded przy
+	// obciążonej maszynie sprawdzianu.
 	if *wynik.UptimePercent <= 50 || *wynik.UptimePercent >= 100 {
 		t.Fatalf("dostępność wyniosła %.2f%% — przy dwóch udanych i jednym nieudanym "+
 			"pomiarze wartość skrajna znaczy, że nikt serii nie policzył", *wynik.UptimePercent)
 	}
 
-	// Dostępność ma być liczona z serii, a nie z kolumny. Sprawdzamy to
-	// wprost: liczba pomiarów w odpowiedzi ma się zgadzać z liczbą wierszy.
+	// Dostępność liczona jest z serii, a nie z kolumny odpowiedzi.
 	var wierszy int
 	if err := baza.QueryRow(`SELECT COUNT(*) FROM wynik_sondy_kondycji WHERE sonda_kod = ?`,
 		sprawna.Probe.Id).Scan(&wierszy); err != nil {

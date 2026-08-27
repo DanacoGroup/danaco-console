@@ -5482,3 +5482,27 @@ zbiorcza idą wprost do rdzenia, który ma dla nich uchwyty; odmowa, merytoryczn
 trafia do stanu błędu okna zamiast do przycisku, który milczy. Udostępnienie do modułu
 zewnętrznego idzie przenoszeniem kontekstu: zaznaczone pliki jadą wraz z projektem do modułu
 docelowego jedną komendą.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/okno-punktow-izolacji.ts
+Dwie warstwy, żadnej drugiej ramy. Obudowa modalna jest tym samym idiomem co w oknie konfiguracji,
+dostępów i modeli. Wewnątrz ciała modalu stoi panel zbudowany przez bibliotekę ramy okna — komponent
+współdzielony z oknami operacyjnymi modułów, a nie drugi, przepisany od nowa. Plik zna cztery rzeczy:
+obudowę modalną, wybór warstwy izolacji, podział na trzy panele i miejsce montażu obszarów w każdym
+z nich. Nie zna ani jednego klucza izolacji — te dostarczają pliki obszarów przez wspólny kontrakt
+obszaru izolacji. Trzy panele, nie zakładki: selektor zasięgu po lewej, macierz izolacji pośrodku,
+profil i podgląd polityki efektywnej po prawej. Panele stoją obok siebie i są widoczne naraz, bo mówią
+o jednej rzeczy w trzech ujęciach: gdzie reguła obowiązuje, co ustawia i co z tego wynika po
+dziedziczeniu. Rozdzielone na zakładki kazałyby Operatorowi pamiętać wybór zasięgu z jednej zakładki,
+przestawiając przełącznik w drugiej. Warstwa izolacji oraz zasięg rozstrzygają, który zapis czyta
+i pisze każdy obszar. Oba są stanem wspólnym okna: warstwa stoi w pasie narzędzi ramy, zasięg
+w panelu lewym, a ich zmiana odświeża wszystkie obszary naraz — inaczej jeden panel pokazywałby
+wartości zasięgu, którego w selektorze już nie ma. Okno otwiera się natychmiast, przed jakąkolwiek
+odpowiedzią rdzenia; komendy izolacji wołają dopiero obszary, każdy własnym odczytem. Rdzeń ogłasza
+dwa zdarzenia zmiany profilu i zmiany polityki, i tutaj są one słuchane raz, dla całego okna, a nie
+osobno w każdym obszarze. Jedna subskrypcja odświeża wszystkie sześć obszarów; osobne byłyby
+rozjeżdżającymi się odczytami tej samej zmiany. Bez nich punkt przestawiony z drugiego okna albo ręką
+asystenta zostawiałby w oknie wartość nieświeżą, bez śladu i bez odświeżenia. Odświeżenie nie jest
+jedyną odpowiedzią: sama zmiana wartości pod palcami Operatora byłaby posunięciem niewidzialnym, więc
+nad obszarem staje ślad — co się zmieniło i czego to dotyczyło. Ślad nie powie, czyja ręka. Oba
+zdarzenia idą bez pól sprawcy, choć rdzeń wypełnia je w innych kopertach, więc ślad mówi „nie
+wiadomo, czyja ręka" — napis pewniejszy niż dowód byłby gorszy od jego braku.

@@ -9,57 +9,7 @@ import { utworzStanWarstwy } from './stan-warstwy';
 import { utworzStanZasiegu } from './stan-zasiegu';
 import { utworzSterowanieWarstwa } from './sterowanie-warstwa';
 
-/**
- * Okno Punktów Izolacji — okno zarządca katalogu rdzenia (`punkty-izolacji`,
- * kategoria `konfiguracja`), otwierane z listwy Ustawienia obok Okna
- * Konfiguracji, Dostępów i Modeli.
- *
- * Dwie warstwy, żadnej drugiej ramy. Obudowa modalna (`<dialog>`, tło, Esc,
- * `dn-modal`) jest tym samym idiomem co w oknie konfiguracji, dostępów
- * i modeli. Wewnątrz ciała modalu stoi panel zbudowany przez
- * `komponenty/rama-okna.ts` (tytuł, plakietka roli, przeznaczenie, pas
- * narzędzi, ciało) — biblioteczny komponent współdzielony z oknami
- * operacyjnymi modułów, a nie drugi, przepisany od nowa.
- *
- * Plik zna cztery rzeczy: obudowę modalną, wybór warstwy izolacji, podział na
- * trzy panele i miejsce montażu obszarów w każdym z nich. Nie zna ani jednego
- * klucza izolacji — te dostarczają pliki `obszar-*.ts` przez kontrakt
- * `ObszarIzolacji` z `obszary.ts`.
- *
- * Trzy panele, nie zakładki (rozdz. 6.1 Modelu konfiguracji): selektor zasięgu
- * po lewej, macierz izolacji pośrodku, profil i podgląd polityki efektywnej po
- * prawej. Panele stoją obok siebie i są widoczne naraz, bo mówią o jednej
- * rzeczy w trzech ujęciach: gdzie reguła obowiązuje, co ustawia i co z tego
- * wynika po dziedziczeniu. Rozdzielone na zakładki kazałyby Operatorowi
- * pamiętać wybór zasięgu z jednej zakładki, przestawiając przełącznik
- * w drugiej.
- *
- * Warstwa izolacji (`default` — bazowa platformy, `session` — nakładka karty
- * sesji wygasająca z jej zamknięciem) oraz zasięg (poziom i byt, `stan-zasiegu.ts`)
- * rozstrzygają, który zapis czyta i pisze każdy obszar. Oba są stanem wspólnym
- * okna: warstwa stoi w pasie narzędzi ramy, zasięg w panelu lewym, a ich zmiana
- * odświeża wszystkie obszary naraz — inaczej jeden panel pokazywałby wartości
- * zasięgu, którego w selektorze już nie ma.
- *
- * Okno otwiera się natychmiast, przed jakąkolwiek odpowiedzią rdzenia; komendy
- * `isolation.*` wołają dopiero obszary, każdy własnym odczytem.
- *
- * Rdzeń ogłasza dwa zdarzenia — `isolation.profile.changed`
- * i `isolation.policy.changed` — i tutaj są one słuchane raz, dla całego okna,
- * a nie osobno w każdym obszarze. Jedna subskrypcja odświeża wszystkie sześć
- * obszarów; osobne byłyby rozjeżdżającymi się odczytami tej samej zmiany. Bez
- * nich punkt przestawiony z drugiego okna albo ręką asystenta zostawiałby
- * w oknie wartość nieświeżą, bez śladu i bez odświeżenia.
- *
- * Odświeżenie nie jest jedyną odpowiedzią: sama zmiana wartości pod palcami
- * Operatora byłaby posunięciem niewidzialnym, więc nad obszarem staje ślad —
- * co się zmieniło i czego to dotyczyło.
- *
- * Ślad nie powie, czyja ręka. Oba zdarzenia idą bez pól
- * `actor`/`actorClientId`, choć rdzeń wypełnia je w innych kopertach
- * (`core/sprawca.go`), więc ślad mówi „nie wiadomo, czyja ręka" — napis
- * pewniejszy niż dowód byłby gorszy od jego braku.
- */
+/** Okno Punktów Izolacji — okno zarządca katalogu rdzenia, otwierane z listwy Ustawienia obok innych okien konfiguracji. */
 export interface OknoPunktowIzolacji {
   /** Element `<dialog>` osadzany w dokumencie. */
   element: HTMLDialogElement;
@@ -87,9 +37,7 @@ export function utworzOknoPunktowIzolacji(kanal: Kanal): OknoPunktowIzolacji {
   const zasieg = utworzStanZasiegu();
   const sterowanieWarstwa = utworzSterowanieWarstwa(kanal, warstwa);
 
-  // Ślad ostatniej zmiany przyszłej z rdzenia. Stoi nad obszarem, bo dotyczy
-  // każdego obszaru naraz; ukryty, dopóki nic się nie zmieniło — pusty wiersz
-  // „brak zmian" byłby szumem, a nie odpowiedzią.
+  // Ślad ostatniej zmiany przyszłej z rdzenia, ukryty, dopóki nic się nie zmieniło, bez zbędnego szumu.
   const slad = document.createElement('p');
   slad.className = 'pi-slad';
   slad.setAttribute('role', 'status');
@@ -97,9 +45,7 @@ export function utworzOknoPunktowIzolacji(kanal: Kanal): OknoPunktowIzolacji {
 
   rama.narzedzia.append(sterowanieWarstwa.element);
 
-  // Sześć obszarów montowanych naraz, po dwa na panel. Egzemplarz każdego
-  // powstaje raz na życie okna: przemontowywanie ich przy każdym odświeżeniu
-  // gubiłoby treść wpisaną w formularze profilu i pola punktu widzenia.
+  // Sześć obszarów montowanych naraz, po dwa na panel, egzemplarz każdego powstaje raz na życie okna.
   const obszary: ObszarIzolacji[] = [];
   const kolumny = PANELE_IZOLACJI.map((panel) => {
     const kolumna = zbudujKolumne(panel.tytul, panel.opis, panel.kod);
@@ -122,20 +68,11 @@ export function utworzOknoPunktowIzolacji(kanal: Kanal): OknoPunktowIzolacji {
     for (const obszar of obszary) obszar.odswiez();
   }
 
-  // Zmiana warstwy i zmiana zasięgu dotyczą każdego obszaru naraz, więc czytają
-  // od nowa wszystkie — inaczej macierz pokazywałaby wartości zasięgu albo
-  // warstwy, której w selektorze już nie ma.
+  // Zmiana warstwy i zmiana zasięgu dotyczą każdego obszaru naraz, więc czytają od nowa wszystkie razem.
   warstwa.naZmiane(() => odswiezWszystkie());
   zasieg.naZmiane(() => odswiezWszystkie());
 
-  /**
-   * Nanosi zmianę zgłoszoną przez rdzeń: ślad na wierzchu i ponowny odczyt
-   * obszaru czynnego.
-   *
-   * Odczyt idzie tylko wtedy, gdy okno jest otwarte. Zamknięte okno nie ma co
-   * odświeżać — `otworz()` montuje obszar od nowa i sam woła `odswiez()`.
-   * Ślad zostaje mimo to zapisany, żeby Operator zobaczył go przy wejściu.
-   */
+  // Nanosi zmianę zgłoszoną przez rdzeń: ślad na wierzchu i ponowny odczyt obszaru czynnego okna.
   function nanieszZmiane(zdanie: string): void {
     slad.hidden = false;
     slad.textContent =
@@ -197,7 +134,7 @@ export function utworzOknoPunktowIzolacji(kanal: Kanal): OknoPunktowIzolacji {
   };
 }
 
-/** Kolumna panelu: tytuł, zdanie o przeznaczeniu, miejsce na obszary. */
+/** Kolumna panelu okna: tytuł, zdanie o przeznaczeniu kolumny oraz miejsce na osadzone obszary izolacji. */
 function zbudujKolumne(tytul: string, opis: string, kod: string): HTMLElement {
   const naglowek = document.createElement('h3');
   naglowek.className = 'pi-panel__tytul';
@@ -215,7 +152,7 @@ function zbudujKolumne(tytul: string, opis: string, kod: string): HTMLElement {
   return element;
 }
 
-/** Obszar w panelu: podpis obszaru nad jego treścią — panel mieści po dwa. */
+/** Obszar osadzony w panelu: podpis obszaru nad jego treścią właściwą — panel mieści zawsze po dwa obszary. */
 function zbudujMiejsceObszaru(nazwa: string, opis: string, tresc: HTMLElement): HTMLElement {
   const podpis = document.createElement('h4');
   podpis.className = 'pi-obszar__tytul';
@@ -231,7 +168,7 @@ function zbudujMiejsceObszaru(nazwa: string, opis: string, tresc: HTMLElement): 
   return element;
 }
 
-/** Rodzaj zmiany po polsku — `ChangeKind` jest kontraktem, nie napisem dla Operatora. */
+/** Rodzaj zmiany po polsku, złożony z rodzaju zmiany samego kontraktu, a nie z napisu gotowego dla Operatora. */
 function slowoZmiany(zmiana: ChangeKind): string {
   switch (zmiana) {
     case ChangeKind.Created:
@@ -241,8 +178,7 @@ function slowoZmiany(zmiana: ChangeKind): string {
     case ChangeKind.Deleted:
       return 'usunięty';
     default:
-      // Rodzaj spoza wykazu nie jest powodem do milczenia: pokazujemy go
-      // dosłownie, tak jak przyszedł.
+      // Rodzaj spoza wykazu nie jest powodem do milczenia: pokazujemy go dosłownie, tak jak przyszedł.
       return `zmiana rodzaju „${String(zmiana)}"`;
   }
 }

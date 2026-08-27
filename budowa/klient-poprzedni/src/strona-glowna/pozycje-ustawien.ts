@@ -1,15 +1,6 @@
 import type { NazwaIkony } from '../ikony/ikony';
 
-/**
- * Pozycje listwy ustawień — strefa trzecia strony głównej. Wyłącznie treść
- * listwy, bez elementów i bez stylu.
- *
- * Strefa ma najniższą wagę wizualną i jest stale dostępna. Żadna pozycja nie
- * jest bramą ani przełącznikiem stanu — każda otwiera widok i każda jest
- * klikalna zawsze.
- */
-
-/** Kod pozycji ustawień przekazywany w zdarzeniu wyboru. */
+/** Pozycje listwy ustawień strefy trzeciej strony głównej niosą wyłącznie treść, bez elementów i bez stylu, każda klikalna zawsze i żadna nie jest bramą ani przełącznikiem stanu. */
 export type KodUstawienia =
   | 'konfiguracja'
   | 'dostepy'
@@ -74,27 +65,11 @@ export const POZYCJE_USTAWIEN: readonly PozycjaUstawienia[] = [
   },
 ];
 
-/**
- * Pozycja „Okno konfiguracji" wyjęta z wykazu pod skrót w pasku aplikacji.
- *
- * Wyjęta, a nie przepisana: skrót prowadzi tam, gdzie pozycja listwy. Druga
- * definicja tej samej pozycji rozjechałaby się przy pierwszej zmianie nazwy
- * albo ikony.
- */
+/** Pozycja okna konfiguracji jest wyjęta z wykazu, nie przepisana, pod skrót w pasku aplikacji, żeby druga definicja nie rozjechała się przy zmianie nazwy albo ikony. */
 export const POZYCJA_KONFIGURACJI: PozycjaUstawienia =
   POZYCJE_USTAWIEN.find((pozycja) => pozycja.kod === 'konfiguracja') ?? POZYCJE_USTAWIEN[0]!;
 
-/**
- * Kody, które wchodzą na listwę ustawień strony głównej.
- *
- * Wykaz jest zamknięty i liczy trzy pozycje, bo tyle wymienia tabela
- * „Zawartość listwy ustawień" opracowania (rozdz. 3.4): Okno konfiguracji,
- * Mobile, Always On Display. Pozostałe pozycje — uwierzytelnianie operatora,
- * punkty izolacji, dostępy oraz modele i tożsamość — są zakresami Okna
- * konfiguracji, a nie bytami obok niego; własne wejście na listwie dawałoby
- * dwie drogi do tej samej rzeczy. Pełny wykaz niesie dalej menu aplikacji
- * w pasku (`aplikacja/menu-aplikacji.ts`), gdzie hierarchii stref nie ma.
- */
+/** Kody wchodzące na listwę ustawień strony głównej są zamkniętym wykazem trzech pozycji; pozostałe pozycje są zakresami okna konfiguracji, nie osobnymi bytami obok niego. */
 export const KODY_STREFY_TRZECIEJ: readonly KodUstawienia[] = [
   'konfiguracja',
   'mobile',

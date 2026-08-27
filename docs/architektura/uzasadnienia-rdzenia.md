@@ -6457,3 +6457,19 @@ komendzie message.send i usuwanym po domknięciu strumienia. CzyTuraWBiegu
 wystawia tę wiedzę stanowi okna, w polu streaming komendy
 window.state.get. Odczyt idzie pod tym samym zamkiem co zapis, bo pytanie
 o stan może przyjść w trakcie tury, z innego połączenia tego samego konta.
+
+## budowa/server/internal/core/uprzaz_skutku_test.go
+
+Sprawdziany zgodności z kontraktem pytają, czy odpowiedź jest odpowiedzią.
+Sprawdziany skutku pytają o co innego: czy po udanej odpowiedzi w świecie
+naprawdę coś zostało — plik z bajtami, wskaźnik na właściwą treść, migawka
+niosąca całą stronę. Różnica nie jest teoretyczna: koperta ze stanem ok
+i wykazem zasobów rodzaju image bez ani jednego bajtu jest kopertą udaną
+i zarazem kłamiącą, a klient czyta kopertę, nie komentarz w kodzie.
+
+Ta uprząż montuje ten sam rdzeń co funkcja zmontujDoSprawdzenia w pliku
+uprzaz_test.go i różni się jedną rzeczą: oddaje katalog danych. Bez niego
+skutku nie da się zmierzyć — odwołania wychodzące z rdzenia (pola asset.uri,
+preview.imageRef) są ścieżkami względnymi magazynu właśnie po to, żeby nie
+wynosić układu katalogów maszyny, więc bajty spod nich znajduje się dopiero
+po złożeniu ścieżki z katalogiem danych.

@@ -21,21 +21,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Uprząż sprawdzianów skutku.
-//
-// Sprawdziany zgodności z kontraktem pytają, czy odpowiedź jest odpowiedzią.
-// Sprawdziany skutku pytają o co innego: czy po udanej odpowiedzi w świecie
-// naprawdę coś zostało — plik z bajtami, wskaźnik na właściwą treść, migawka
-// niosąca całą stronę. Różnica nie jest teoretyczna: koperta ze stanem `ok`
-// i wykazem zasobów rodzaju `image` bez ani jednego bajtu jest kopertą udaną
-// i zarazem kłamiącą, a klient czyta kopertę, nie komentarz w kodzie.
-//
-// Uprząż montuje ten sam rdzeń, co `zmontujDoSprawdzenia` (uprzaz_test.go),
-// i różni się jedną rzeczą: oddaje katalog danych. Bez niego skutku nie da się
-// zmierzyć — odwołania wychodzące z rdzenia (`asset.uri`, `preview.imageRef`)
-// są ścieżkami względnymi magazynu właśnie po to, żeby nie wynosić układu
-// katalogów maszyny, więc bajty spod nich znajduje się dopiero po złożeniu
-// ścieżki z katalogiem danych.
+// Uprząż sprawdzianów skutku pyta, czy po udanej odpowiedzi w świecie naprawdę coś zostało.
 
 // zmontujDoPomiaruSkutku składa rdzeń nad świeżą bazą i oddaje go wraz
 // z kontekstem życia oraz katalogiem danych, w którym leżą magazyny treści.
@@ -114,10 +100,7 @@ func wykonajOdmowna(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return *odpowiedz.Error
 }
 
-// poczatekLadunku przycina ładunek do wielkości, którą da się przeczytać
-// w dzienniku sprawdzianu. Ładunki niosące treść strony albo obraz idą
-// w megabajtach, a niepowodzenie ma być czytelne, nie obszerne — do rozpoznania,
-// co rdzeń oddał zamiast odmowy, wystarcza początek.
+// poczatekLadunku przycina ładunek do wielkości czytelnej w dzienniku sprawdzianu. Ładunki niosące treść strony albo obraz idą w megabajtach, a niepowodzenie ma być czytelne, więc do rozpoznania wystarcza początek.
 func poczatekLadunku(ladunek []byte) string {
 	const granica = 512
 	if len(ladunek) <= granica {
@@ -134,10 +117,7 @@ func sciezkaWMagazynie(katalogDanych, odwolanie string) string {
 	return filepath.Join(katalogDanych, filepath.FromSlash(odwolanie))
 }
 
-// bajtyPodOdwolaniem czyta treść leżącą pod odwołaniem wypuszczonym z rdzenia
-// i przerywa sprawdzian, gdy pliku nie ma albo jest pusty. Plik pusty jest tu
-// osobnym niepowodzeniem, nie odmianą braku: wiersz wskazujący plik zerowej
-// długości przechodzi każdy sprawdzian istnienia, a nie ma czego pokazać.
+// bajtyPodOdwolaniem czyta treść leżącą pod odwołaniem wypuszczonym z rdzenia i przerywa sprawdzian, gdy pliku nie ma albo jest pusty. Plik pusty jest osobnym niepowodzeniem, nie odmianą braku, bo nie ma czego pokazać.
 func bajtyPodOdwolaniem(t *testing.T, katalogDanych, odwolanie string) []byte {
 	t.Helper()
 
@@ -155,10 +135,7 @@ func bajtyPodOdwolaniem(t *testing.T, katalogDanych, odwolanie string) []byte {
 	return bajty
 }
 
-// zapiszPlikSprawdzianu kładzie treść na dysku pod wskazaną ścieżką. Służy
-// drogom, w których żądanie niesie `sourcePath` — i przypadkom, w których plik
-// źródłowy zostaje po wgraniu nadpisany, żeby sprawdzić, czy rdzeń poszedł za
-// nim, czy zamroził bajty u siebie.
+// zapiszPlikSprawdzianu kładzie treść na dysku pod wskazaną ścieżką. Służy drogom, w których żądanie niesie sourcePath, oraz sprawdzeniu, czy rdzeń poszedł za nadpisanym plikiem źródłowym, czy zamroził bajty u siebie.
 func zapiszPlikSprawdzianu(t *testing.T, sciezka string, tresc []byte) {
 	t.Helper()
 
@@ -193,7 +170,7 @@ func obrazPNG(t *testing.T, szerokosc, wysokosc int) []byte {
 	return bufor.Bytes()
 }
 
-// wBase64 koduje treść tak, jak niosą ją pola `contentBase64` kontraktu.
+// wBase64 koduje treść tak, jak niosą ją pola contentBase64 kontraktu, standardowym kodowaniem Base64.
 func wBase64(bajty []byte) string {
 	return base64.StdEncoding.EncodeToString(bajty)
 }

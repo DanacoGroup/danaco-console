@@ -2261,3 +2261,10 @@ tworzy, więc polecenie wydaje się samą transkrypcją.
 Sekcja rozmowy jest osobną drogą. Komenda `aod.chat.send` niesie zdanie do okna
 rozmowy, natomiast `aod.voice.command` kieruje polecenie do asystenta i ma własne
 pole `speak` na odpowiedź syntezą mowy.
+
+## budowa/klient-poprzedni/src/moduly/library/zrodlo-wersji.ts
+
+Podział wobec pliku `zrodlo-biblioteki.ts` biegnie wzdłuż odpowiedzialności:
+historia dokumentu należy tutaj, natomiast plik, wyszukiwanie i kolekcje należą
+tam. Kształt pozostaje jeden, `ZrodloBiblioteki`, aby okna widziały jedno źródło,
+a nie dwa.

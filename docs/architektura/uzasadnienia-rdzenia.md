@@ -5086,3 +5086,16 @@ programu zewnętrznego: pracują bibliotekami wkompilowanymi w binarium
 rdzenia, lecz stoją na tym samym porcie, co reszta rodziny, bo dzielą z nią
 wszystko poza sposobem liczenia — osobny port dałby drugą prawdę o tym, gdzie
 rdzeń odkłada bajty obrazu.
+
+## budowa/server/internal/core/handlers_narzedzia_zakresy.go
+Port jest osobny od portu narzędzi sesji: tamten opisuje dołożenie narzędzia na czas sesji i wykaz
+po ukośniku, ten zakres i limit wywołań właściwy profilowi — dwa różne pytania nad tym samym
+katalogiem. Kontrakt nie daje rodzinie komend zakresu żadnego zdarzenia, więc rdzeń go nie
+wymyśla, a okno odświeża wykaz po odpowiedzi.
+
+Straż stoi po stronie odbiorcy: pyta ją rdzeń przed skierowaniem komendy do obsługiwacza. Straż
+niewpięta nie zmienia niczego, bo stanem wyjściowym platformy jest pełny dostęp bez granicy.
+
+Pozycja bez wiersza zakresu przechodzi bez zapytania i bez rachunku, bo stanem wyjściowym jest
+pełny dostęp, a rachunek prowadzony dla wszystkich pozycji dopisywałby wiersz przy każdym
+wywołaniu narzędzia w produkcie.

@@ -1,19 +1,7 @@
-// Odpowiedzialność pliku: odczyt i zapis formatów dokumentu w module Translate.
-// Tu mieszka cała wiedza o tym, jak z pliku wyjąć akapity i jak akapity złożyć
-// z powrotem w plik.
-//
-// ── Wszystko biblioteką wkompilowaną, ani jednego programu ──────────────────
-// DOCX, PPTX, XLSX i ODT są archiwami ZIP z dokumentami XML w środku —
-// `archive/zip` i `encoding/xml` biblioteki Go czytają je bez najmniejszej
-// pomocy z zewnątrz. Markdown, HTML i tekst czyta się wprost. PDF idzie
-// `pdfcpu`, tą samą biblioteką, którą warsztat dokumentu modułu Studio, i tym
-// samym prawem: PDF w tym produkcie robią biblioteki Go, nigdy program obcy.
-//
-// Wyjątkiem jest rozpoznanie pisma. Dokument bez warstwy tekstowej (skan) nie
-// ma czego oddać żadnej bibliotece, więc `document.load` z `ocr` woła
-// Tesseracta — program arsenału serwerowego, który stoi razem z rdzeniem.
-// To jest droga wskazana zasadą produktu, a nie obejście: arsenał wolno wołać,
-// programów spoza arsenału nie wolno.
+// Odpowiedzialność pliku: odczyt i zapis formatów dokumentu w module
+// Translate. Cała wiedza o tym, jak z pliku wyjąć akapity i jak złożyć je
+// z powrotem, mieszka tutaj; formaty czyta się bibliotekami Go, bez programu
+// obcego poza rozpoznaniem pisma.
 package core
 
 import (
@@ -112,7 +100,8 @@ func segmentyZDokumentu(sciezka string,
 	return nil, 0, bladWskazaniaTlumaczenia("nieznany format dokumentu: " + string(format))
 }
 
-// segmentyZAkapitow nadaje akapitom numery i ścieżkę węzła.
+// segmentyZAkapitow nadaje akapitom kolejne numery i ścieżkę węzła w
+// strukturze dokumentu, potrzebną przy składaniu wyniku.
 func segmentyZAkapitow(akapity []string, wezel string) []dane.SegmentDokumentu {
 	segmenty := make([]dane.SegmentDokumentu, 0, len(akapity))
 	for numer, akapit := range akapity {
@@ -171,7 +160,7 @@ func tekstZHtml(tresc string) string {
 }
 
 // znacznikBlokowy mówi, czy znacznik zaczynający się w tym miejscu zamyka
-// akapit.
+// akapit, czyli jest granicą podziału tekstu.
 func znacznikBlokowy(fragment string) bool {
 	maly := strings.ToLower(fragment)
 	for _, znacznik := range []string{"<p", "</p", "<div", "</div", "<br", "<li", "</li",
@@ -210,7 +199,8 @@ func akapityZArchiwum(bajty []byte, wpis, wezel string) ([]string, error) {
 		"archiwum nie ma wpisu " + wpis + " — to nie jest dokument tego rodzaju")
 }
 
-// akapityZeSlajdow zbiera akapity ze wszystkich slajdów prezentacji.
+// akapityZeSlajdow zbiera akapity ze wszystkich slajdów prezentacji,
+// zachowując kolejność slajdów w pliku.
 func akapityZeSlajdow(bajty []byte) ([]string, error) {
 	archiwum, err := zip.NewReader(bytes.NewReader(bajty), int64(len(bajty)))
 	if err != nil {
@@ -289,9 +279,8 @@ func nazwaWezla(nazwa xml.Name) string {
 }
 
 // akapityZPdf wyjmuje tekst z warstwy tekstowej dokumentu strona po stronie
-// i oddaje liczbę stron. Rozbiór idzie po strumieniu treści rozłożonym przez
-// `pdfcpu`: operatory pokazania tekstu (`Tj`, `TJ`, `'`, `"`) niosą napisy,
-// reszta strumienia jest składem, którego tłumaczenie nie dotyczy.
+// i oddaje liczbę stron. Rozbiór idzie po strumieniu treści z `pdfcpu`:
+// operatory pokazania tekstu niosą napisy, reszta strumienia jest składem.
 func akapityZPdf(bajty []byte) ([]string, int64, error) {
 	nastawy := nastawyPdf()
 	stron, err := api.PageCount(bytes.NewReader(bajty), nastawy)
@@ -313,7 +302,8 @@ func akapityZPdf(bajty []byte) ([]string, int64, error) {
 	return akapity, int64(stron), nil
 }
 
-// tekstZeStrumieniaPdf wyjmuje napisy ze strumienia treści strony.
+// tekstZeStrumieniaPdf wyjmuje napisy ze strumienia treści strony, pomijając
+// operatory składu, których tłumaczenie nie dotyczy.
 func tekstZeStrumieniaPdf(strumien string) string {
 	var wynik strings.Builder
 	var napis strings.Builder
@@ -358,12 +348,9 @@ func tekstZeStrumieniaPdf(strumien string) string {
 }
 
 // zapiszDokumentWyniku składa plik wyniku z akapitów przekładu. Formaty
-// tekstowe powstają wprost; DOCX powstaje jako poprawne archiwum OOXML złożone
-// z dwóch plików XML — tyle wystarcza, żeby otworzył go edytor tekstu.
-//
-// Formaty, których rdzeń nie umie złożyć bez utraty układu (PDF, PPTX, XLSX,
-// ODT), są odmawiane po nazwie. Odmowa nazwana jest tu uczciwsza niż plik
-// z rozszerzeniem, którego treść nie odpowiada rozszerzeniu.
+// tekstowe powstają wprost; DOCX powstaje jako poprawne archiwum OOXML.
+// Formaty, których rdzeń nie umie złożyć bez utraty układu, są odmawiane
+// po nazwie.
 func zapiszDokumentWyniku(sciezka string, format shared.TranslationDocumentFormat,
 	akapity []string) error {
 
@@ -392,7 +379,8 @@ func zapiszDokumentWyniku(sciezka string, format shared.TranslationDocumentForma
 		"format " + string(format) + " wymagałby odtworzenia składu, którego rdzeń nie prowadzi")
 }
 
-// zapiszPlikWyniku odkłada bajty wyniku pod wskazaną ścieżką.
+// zapiszPlikWyniku odkłada bajty wyniku pod wskazaną ścieżką na dysku,
+// tworząc plik wynikowy przekładu.
 func zapiszPlikWyniku(sciezka string, bajty []byte) error {
 	if err := os.WriteFile(sciezka, bajty, 0o600); err != nil {
 		return bladPlikuTlumaczenia(sciezka, err)

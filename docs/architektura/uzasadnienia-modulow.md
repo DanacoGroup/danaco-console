@@ -2213,3 +2213,46 @@ Sprawdzenie wpięcia rejestru istnieje, ponieważ bez niego component.list
 oddałby pusty wykaz, a component.delete — deleted: false; jedno i drugie
 wyglądałoby jak stan platformy, a nie jak niezłożony port. Kod internal_error
 mówi, że żądanie jest poprawne, a wina leży po stronie montażu adaptera.
+
+## budowa/server/internal/core/adapter_modul_terminal_obserwacje.go
+
+Wyzwalacz plikowy przed tym plikiem istniał w kontrakcie wyłącznie dla
+automatyk, czyli poza powłoką terminala — nie dało się powiedzieć „po każdej
+zmianie w tym katalogu zbuduj projekt w tej karcie, w jej katalogu, jej
+powłoką i jej środowiskiem".
+
+Obserwacja rozpoznaje zmianę przeglądem po czasach modyfikacji, nie zdarzeniami
+jądra systemu plików (inotify, ReadDirectoryChangesW), bo te wymagałyby nowej
+zależności modułowej i osobnej implementacji na każdy system operacyjny.
+Przegląd oparty na bibliotece standardowej zachowuje się jednakowo wszędzie
+i jest dokładnie tak dokładny, jak trzeba: obserwacja i tak tłumi powtórzenia
+parametrem debounceMs, więc rozdzielczość poniżej progu tłumienia i tak
+zostałaby wyrzucona przez samo tłumienie. Cena takiego podejścia — przegląd
+katalogu co ustalony odstęp — jest znikoma wobec polecenia, które ten przegląd
+wyzwala.
+
+Skutkiem wyzwolenia obserwacji jest proces, nie zapis: wyzwolenie idzie tą samą
+drogą co uruchomienie polecenia z poziomu powłoki — brama trybu uprawnień
+okna, egzekutor izolacji, port uruchamiacza procesów, wpis w rejestrze
+procesów i strumień do konsoli wyjścia. Obserwacja nie jest drugą drogą
+uruchamiania procesów, jest wyzwalaczem tej jedynej.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_dokument_formaty.go
+
+DOCX, PPTX, XLSX i ODT są archiwami ZIP z dokumentami XML w środku —
+`archive/zip` i `encoding/xml` biblioteki Go czytają je bez pomocy z zewnątrz.
+Markdown, HTML i tekst czyta się wprost. PDF idzie `pdfcpu`, tą samą
+biblioteką, którą warsztat dokumentu modułu Studio: PDF w tym produkcie robią
+biblioteki Go, nigdy program obcy.
+
+Wyjątkiem jest rozpoznanie pisma. Dokument bez warstwy tekstowej (skan) nie ma
+czego oddać żadnej bibliotece, więc `document.load` z `ocr` woła Tesseracta —
+program arsenału serwerowego, który stoi razem z rdzeniem. Jest to droga
+wskazana zasadą produktu, a nie obejście: arsenał wolno wołać, programów
+spoza arsenału nie wolno.
+
+`zapiszDokumentWyniku` odmawia zapisu formatów, których rdzeń nie umie złożyć
+bez utraty układu (PDF, PPTX, XLSX, ODT). Odmowa nazwana jest tu uczciwsza niż
+plik z rozszerzeniem, którego treść nie odpowiada rozszerzeniu; DOCX powstaje
+jako poprawne archiwum OOXML złożone z dwóch plików XML — tyle wystarcza, żeby
+otworzył go edytor tekstu.

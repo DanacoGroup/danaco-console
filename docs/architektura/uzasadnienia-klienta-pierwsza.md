@@ -1927,3 +1927,11 @@ jednostkę, poziom domyślny i wymóg ponownego uruchomienia.
 Most do powłoki natywnej mieszka w katalogu `powloka/`, ponieważ dotyczy powłoki
 natywnej, a nie dostępów. Tutaj zostaje wyłącznie zapis wyniku przyjęty
 w widokach dostępów: napis pusty znaczy, że katalogu nie wskazano.
+
+## budowa/klient-poprzedni/src/dostepy/obszar-katalogu-roboczego.ts
+
+Katalog roboczy modelu jest ustawieniem niezależnym od dostępów, ponieważ obie rzeczy odpowiadają na inne pytanie. Model może mieć wgląd w cudzy katalog i niczego w nim nie zapisywać, a własne katalogi sesyjne trzymać w miejscu instalacji aplikacji. Zlanie tych dwóch ustawień w jedno kazałoby otworzyć zapis wszędzie tam, gdzie model ma wyłącznie czytać.
+
+Obszar nie jest kopią okna konfiguracji. Pokazuje dwa klucze, ponieważ bez nich sekcja dostępów byłaby niepełna: po nadaniu modelowi dostępu do katalogów następne pytanie dotyczy miejsca, w którym model będzie pisał. Pełny wybór poziomów zasięgu i osi zostaje w oknie konfiguracji, które prowadzi jedyny rachunek dziedziczenia wartości.
+
+Wczytanie danych nie czeka na rdzeń i nie blokuje osadzenia obszaru. Pola stoją od razu z wartościami domyślnymi, a odpowiedź rdzenia nanosi na nie wartości obowiązujące.

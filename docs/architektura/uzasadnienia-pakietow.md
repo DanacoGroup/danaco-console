@@ -3069,3 +3069,29 @@ wstrzymania jest częścią przejrzystości pętli.
 
 pozycjaWstrzymania odczytuje krok, którego dotyczy epizod, w tej samej
 transakcji co zapis, żeby dziennik nie wskazał innego kroku niż zapis.
+
+## budowa/server/internal/dane/aplikacje_produkt.go
+
+Interfejs RepozytoriumAplikacji oraz typ *repozytoriumAplikacji deklaruje
+aplikacje.go; ten plik dokłada mu metody, nie drugi kontrakt.
+
+Produkt jest jeden na okno, więc zapis jest UPSERT-em po kolumnie okno,
+rozstrzygnięcie zapisane na czole migracji: kod zewnętrzny nadany przy
+pierwszym zapisie zostaje, bo AppProduct.id ma być stały, a kolejne zapisy
+zmieniają metadane, nie tożsamość produktu. Etap i kamień milowy mają własne
+identyfikatory zewnętrzne, bo obie komendy zapisu potrafią wskazać byt
+zmieniany — zapis jest tam UPSERT-em po identyfikatorze.
+
+KamienMilowyApp niesie kody etapów, które się na niego składają, bo kontrakt
+oddaje kamień milowy zawsze razem z nimi — rozdzielanie tego na dwa odczyty
+byłoby pracą bez odbiorcy. ZapiszKamienMilowyApp wymienia ten związek
+w całości w jednej transakcji, bo kontrakt nadsyła stageIds bez trybu
+częściowej zmiany.
+
+UsunKamienMilowyApp zwraca prawdę, gdy wiersz naprawdę zniknął: kontrakt
+oddaje pole deleted, więc "nie było czego kasować" nie ma prawa wrócić jako
+powodzenie usunięcia.
+
+etapyKamieniOkna czyta jednym zapytaniem cały wykaz etapów okna zamiast
+jednego zapytania na każdy kamień milowy, bo wykaz kamieni ciągnąłby inaczej
+tyle zapytań, ile ma pozycji.

@@ -295,7 +295,7 @@
 .sta-pulpit {
   display: inline-flex; align-items: center; gap: var(--dn-od-1);
   padding: 2px; border: 1px solid var(--dn-rama-obrys); border-radius: var(--dn-r-sm);
-  background: rgba(255,255,255,0.04);
+  background: var(--dn-rama-tlo);
 }
 .sta-pulpit button {
   display: inline-grid; place-content: center; width: 26px; height: 24px;
@@ -332,7 +332,7 @@
 
 /* — tryby Talk / Work / Code na ramie — */
 .sta-tryby { display:inline-flex; gap:2px; padding:2px; border:1px solid var(--dn-rama-obrys);
-  border-radius:var(--dn-r-sm); background:rgba(255,255,255,.04); }
+  border-radius:var(--dn-r-sm); background:var(--dn-rama-tlo); }
 .sta-tryby button { height:24px; padding:0 var(--dn-od-3); border:none; border-radius:var(--dn-r-xs);
   background:none; color:var(--dn-rama-tekst-2); font-family:var(--dn-ff-naglowek);
   font-size:var(--dn-fs-sm); font-weight:var(--dn-fw-srednia); cursor:pointer; }

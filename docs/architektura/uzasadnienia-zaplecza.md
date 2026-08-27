@@ -183,3 +183,29 @@ innych słów, a to oznacza nowy wiersz danych, nie nową gałąź kodu.
 Kolumna identyfikator_zewnetrzny nadania dostępu niesie identyfikator
 tekstowy rdzenia; wartość pusta oznacza nadanie założone wprost w bazie
 danych, bez odpowiednika w pamięci rdzenia.
+
+## budowa/server/internal/store/migracja_002_okna.sql
+
+Wartości wyliczeniowe kolumn tego obszaru pochodzą z kontraktu —
+`shared/contract.json` jest jedynym źródłem prawdy. Kontrakt zapisuje nazwy
+po angielsku, model danych po polsku; odwzorowanie jest jeden do jednego i
+leży wyłącznie w kontrakcie, w polu `baza` przy każdej wartości wyliczenia.
+Generator wytwarza z kontraktu słowniki `WartosciBazy*` i `WartosciKontraktu*`
+w `contract.go` i `contract.ts`, a warstwa trwałości sięga po te słowniki
+zamiast wpisywać przekład u siebie. Odwzorowanie kolumn na typy kontraktu:
+`okno_komunikacji.srodowisko_wykonania` na ExecutionEnv,
+`okno_komunikacji.tryb_uprawnien` na PermissionMode,
+`okno_komunikacji.rola_okna` na WindowRole,
+`okno_komunikacji.stan` na WindowStatus,
+`proces_sesji.stan` na ProgressStatus,
+`wiadomosc.rola` na MessageRole,
+`wiadomosc.stan` na MessageStatus,
+`wiadomosc.rodzaj_tresci` na ChunkKind.
+
+Rola i persona wiadomości niosą rozróżnienie odrębne: rola mówi, czym jest
+nadawca w rozumieniu kontraktu (MessageRole, cztery wartości), persona mówi,
+w jakiej funkcji nadawca wystąpił w danej wypowiedzi. Persona jest warstwą
+prezentacji i nie mnoży wartości pola rola; pozostaje pusta dla zwykłej
+wypowiedzi użytkownika i modelu. Atrybucję wypowiedzi w pętli
+koordynator-wykonawca niesie kolumna okno_zrodlowe_id: okno źródłowe zna
+własną rola_okna, więc nie jest potrzebny drugi, równoległy słownik ról.

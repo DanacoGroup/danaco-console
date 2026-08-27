@@ -1,24 +1,9 @@
 import './uchwyt.css';
 
 /**
- * Uchwyt ręcznego ustawiania szerokości — pionowa krecha między dwiema
- * kolumnami, rozsuwana wskaźnikiem albo klawiaturą.
- *
- * Szerokość ustawia się ręcznie, każdemu oknu wewnętrznemu osobno. Nie ma
- * automatycznego zwężania i nie ma chowania pod zakładkę — nic nie znika
- * z ekranu bez ruchu ręki.
- *
- * Obsługa klawiaturą jest obowiązkowa: uchwyt osiągalny wyłącznie wskaźnikiem
- * odcinałby od jedynego sposobu ustawienia szerokości. Stąd `role="separator"`,
- * `tabIndex = 0`, strzałki, Home/End i pełny komplet `aria-value*`.
- *
- * Uchwyt nie zna paneli ani rozmowy. Oddaje wołającemu jedną liczbę w pikselach
- * i nic o niej nie zakłada; przycięcie do minimów robi `szerokosci-gniazda.ts`.
- *
- * Uchwyt stoi po lewej stronie sterowanej kolumny — tak układa gniazdo
- * `kolumnyGniazda`: rozmowa, uchwyt, panele. Ruch w lewo poszerza kolumnę, ruch
- * w prawo ją zwęża; strzałki idą tą samą logiką, żeby ręka i klawiatura nie
- * mówiły dwóch różnych rzeczy.
+ * Uchwyt ręcznego ustawiania szerokości kolumny sąsiadującej, sterowany wskaźnikiem lub
+ * klawiaturą, oznaczony rolą separatora i pełnym kompletem atrybutów dostępności ARIA
+ * opisujących bieżącą wartość.
  */
 export interface UchwytSzerokosci {
   element: HTMLElement;
@@ -26,7 +11,11 @@ export interface UchwytSzerokosci {
   ustawWartosc(px: number): void;
 }
 
-/** Zależności uchwytu. */
+/**
+ * Zależności uchwytu szerokości: etykieta dostępności, wartość początkowa, dolna
+ * granica stała oraz górna granica liczona dynamicznie w chwili ruchu wraz
+ * z powiadomieniem o zmianie.
+ */
 export interface OpcjeUchwytu {
   /** Etykieta dostępności — co ten uchwyt rozsuwa. */
   etykieta: string;
@@ -38,15 +27,15 @@ export interface OpcjeUchwytu {
 }
 
 /**
- * Krok jednego naciśnięcia strzałki, w pikselach.
- *
- * Cztery jednostki skali 4 px. Krok jednopikselowy kazałby trzymać strzałkę
- * kilkaset razy, żeby przejść przez kolumnę; krok stupikselowy nie pozwalałby
- * dojść do wartości, którą wskaźnik trafia bez wysiłku.
+ * Krok jednego naciśnięcia strzałki w pikselach, ustawiony na wielokrotność czterech
+ * pikseli siatki, żeby ruch klawiaturą pozostawał praktyczny i precyzyjny zarazem.
  */
 const KROK_PX = 16;
 
-/** Uchwyt rozsuwający sąsiadującą kolumnę; wartość oddaje w pikselach. */
+/**
+ * Tworzy uchwyt rozsuwający kolumnę sąsiadującą, obsługujący ruch wskaźnika oraz
+ * klawiatury, i oddający wołającemu bieżącą szerokość wyłącznie w pikselach.
+ */
 export function utworzUchwytSzerokosci(opcje: OpcjeUchwytu): UchwytSzerokosci {
   const element = document.createElement('div');
   element.className = 'dn-uchwyt';
@@ -76,8 +65,7 @@ export function utworzUchwytSzerokosci(opcje: OpcjeUchwytu): UchwytSzerokosci {
   function przestaw(px: number): void {
     const nowa = wGranicach(px);
     if (nowa === wartosc) {
-      // Granica osiągnięta: wartość ta sama, ale `aria-valuemax` mogła się
-      // zmienić razem ze sceną, więc opis i tak idzie na nowo.
+      // Wartość niezmieniona, ale opis odświeżany, bo górna granica mogła się zmienić.
       pokaz(nowa);
       return;
     }
@@ -85,9 +73,7 @@ export function utworzUchwytSzerokosci(opcje: OpcjeUchwytu): UchwytSzerokosci {
     opcje.naZmiane(nowa);
   }
 
-  // --- WSKAŹNIK ------------------------------------------------------------
-  // Przechwycenie wskaźnika na `pointerdown`, żeby ruch poza uchwytem nadal do
-  // niego trafiał — tak samo jak w `moduly/design/plansza-kompozycji.ts`.
+  // Przechwycenie wskaźnika na pointerdown, żeby ruch poza uchwytem nadal do niego trafiał.
   let poczatek: { x: number; wartosc: number } | null = null;
 
   element.addEventListener('pointerdown', (zdarzenie) => {
@@ -111,7 +97,6 @@ export function utworzUchwytSzerokosci(opcje: OpcjeUchwytu): UchwytSzerokosci {
   element.addEventListener('pointerup', koniecRuchu);
   element.addEventListener('pointercancel', koniecRuchu);
 
-  // --- KLAWIATURA ----------------------------------------------------------
   element.addEventListener('keydown', (zdarzenie) => {
     switch (zdarzenie.key) {
       case 'ArrowLeft':

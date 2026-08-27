@@ -4252,3 +4252,14 @@ kontrakt nie niesie, a wymyślanie działów na podstawie nazw byłoby porządki
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/profile-wiedza.ts
 Roundtable nie podaje własnej liczby okien, ponieważ wpisanie tu wartości dublowałoby sufit sceny albo z nim kolidowało — wiążącym ograniczeniem pozostaje zawsze sufit platformy. Dymek Assistant mówi wprost, że kanału głosowego nie ma, zamiast milcząco zejść na tekst, ponieważ kontrakt i rdzeń nie niosą mowy.
+
+## budowa/klient-poprzedni/src/strona-glowna/pozycje-personalizowane.ts
+Kafel rodzaju z czwórki stałej prowadzi do zbudowania nowego komponentu; kafel personalizowany wskazuje
+konkretną automatykę, eksperta czy projekt. Kafel nie jest osobnym bytem, tylko widokiem komponentu: wykaz
+przychodzi jedną komendą i nie ma osobnej komendy utworzenia kafla. Wykaz komponentów bez włączenia
+wyłączonych oddaje wyłącznie komponenty czynne, więc komponent wyłączony daje krótszą listę, a nie kafel
+wyszarzony. Kafel bez skutku byłby atrapą, a krótsza lista atrapą nie jest.
+
+## budowa/klient/src/wejscie/skladniki/pole-kodu.ts
+Każdy zestaw rządzi się sam — mechanika wiąże pola grupami, więc kursor nie przeskakuje między odsłonami. Składnik zwraca wykaz węzłów: zestaw pól i stopka z odliczaniem są rodzeństwem w kolumnie panelu. Liczba pól jest właściwością, nie stałą tego pliku: rozstrzyga ją długość drogi potwierdzenia wydawanej przez rdzeń, a tę odczytuje się z rdzenia, nie z okna.
+Rdzeń wydaje drogę dłuższą niż zestaw pól, więc wklejenie musi unieść ją w całości — inaczej przycięłaby się do liczby pól i rdzeń odmówiłby drogi, która przyszła listem poprawna.

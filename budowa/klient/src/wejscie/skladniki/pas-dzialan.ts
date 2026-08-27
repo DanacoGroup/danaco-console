@@ -1,10 +1,6 @@
 /**
- * SKŁADNIK — PAS DZIAŁAŃ.
- *
- * Domyka okno przez całą jego szerokość, pod kolumną tożsamości też. Pas
- * urwany na granicy kolumny czyta się jak niedokończony rysunek. Czynności
- * zbierają się przy prawej krawędzi — tam ręka szuka ich w każdym oknie tej
- * rodziny, a gdy zostaje jedna, nie zawisa samotnie po lewej.
+ * Składnik — pas działań. Domyka okno przez całą jego szerokość, pod kolumną
+ * tożsamości też; czynności zbierają się przy prawej krawędzi.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
@@ -33,7 +29,7 @@ export interface WlasciwosciPasa {
   czynnosci: Czynnosc[];
 }
 
-/** Klasa kontrolki pobocznej — czynność, która nie jest wyjściem z odsłony. */
+/** Klasa kontrolki pobocznej — czynność, która nie jest wyjściem z odsłony, tylko dodatkiem obok czynności głównej. */
 const KLASA_POBOCZNA = 'dn-btn dn-btn--duch dn-btn--sm';
 
 export function pasDzialan(w: WlasciwosciPasa): HTMLElement {

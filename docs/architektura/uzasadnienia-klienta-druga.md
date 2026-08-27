@@ -4151,3 +4151,6 @@ jednej klatki: kod rodzaju niesie kod, a nie napis na kaflu.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/profile-inzynieria.ts
 Diagnostics nie ma okna telemetrii, ponieważ nie jest ustalone, co miałoby ono mierzyć, a rdzeń nie prowadzi tabel połączeń ani procesów sesji potrzebnych do takiego widoku. Brak pamięci sesyjnej modułu Agents oznacza dwa czyszczenia, nie jedno: przy zamknięciu okna i przy zmianie testowanego agenta, o każdym operator jest uprzedzany, bo czat gubiący wątek po cichu wygląda jak awaria.
+
+## budowa/klient/src/wejscie/skladniki/pas-dzialan.ts
+Pas urwany na granicy kolumny tożsamości czyta się jak niedokończony rysunek — stąd domyka okno przez całą jego szerokość. Czynności zbierają się przy prawej krawędzi, bo tam ręka szuka ich w każdym oknie tej rodziny, a gdy zostaje jedna, nie zawisa samotnie po lewej.

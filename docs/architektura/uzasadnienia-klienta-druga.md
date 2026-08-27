@@ -4845,3 +4845,8 @@ wiadomości równym identyfikatorowi procesu, dlatego druga czynność tego
 źródła jest subskrypcją, a nie drugą komendą. To nie jest drugie źródło
 terminala: źródło terminala niesie komendy kart i procesów, a ten plik
 wyłącznie jedną komendę zbiorczego wyjścia i żadnej z tamtych nie powiela.
+
+## budowa/klient-poprzedni/src/strona-glowna/panel-komponentu.test.ts
+Sprawdzian pilnuje czterech rzeczy stanowiących o odbiorze: że obie czynności mają drogę z okna, że
+zmiana wysyła wyłącznie pola dotknięte, bo pominięte zostają w rdzeniu bez zmian, że okno mówi, z czym
+wiąże, zanim zwiąże, i że powtórzone przypisanie nie udaje czynności, której rdzeń nie wykonał.

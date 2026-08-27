@@ -257,7 +257,7 @@ func zaleznosciRusta(tresc string) []shared.DependencyNode {
 		wartosc := strings.TrimSpace(pole[rowne+1:])
 		wersja := strings.Trim(wartosc, `"`)
 		if strings.HasPrefix(wartosc, "{") {
-			// Z postaci rozbudowanej `{ version = "1.0", ... }` bierzemy wersję.
+			// Z postaci rozbudowanej `{ version = "1.0", ... }` brana jest wersja.
 			wersja = wersjaZTabeliCargo(wartosc)
 		}
 		if wersja == "" {

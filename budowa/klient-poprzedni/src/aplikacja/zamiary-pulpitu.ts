@@ -9,7 +9,11 @@ import type {
 import type { Kanal } from '../protokol/kanal';
 import { pokazKomunikat } from './komunikaty';
 
-/** Zależności obsługi zamiarów pulpitu. */
+/**
+ * Zależności obsługi zamiarów pulpitu: kanał, którym idą komendy kontraktu, oraz
+ * wejście przenoszące widok na środowisko wskazane przez pulpit. Obie warstwa
+ * powłoki podaje przy montażu, bo pulpit sam żadnej z nich nie tworzy.
+ */
 export interface ObslugaZamiarow {
   /** Kanał komunikatów kontraktu. */
   kanal: Kanal;
@@ -18,22 +22,9 @@ export interface ObslugaZamiarow {
 }
 
 /**
- * Skutki zamiarów zgłaszanych przez Mission Control.
- *
- * Jedna odpowiedzialność: przełożenie zamiaru na komendę kontraktu albo na
- * uczciwą odpowiedź, gdy komendy dla niego nie ma. Pulpit sam niczego nie
- * wysyła — nadaje zamiar wyrażony nazwami kontraktu, a kopertę składa ta
- * warstwa.
- *
- * Dwa zamiary nie mają dziś drogi przez kontrakt i żaden z nich nie jest
- * udawany:
- *
- *   priorytet     — brak odpowiednika w `QueueAction` i wśród komend;
- *   przekazanie   — `context.transfer` wymaga kompletu `ContextBundle`,
- *                   którego zamiar kolejki nie niesie i którego nie wolno
- *                   zmyślić po stronie klienta.
- *
- * Operator dostaje w obu przypadkach komunikat mówiący wprost, czego brakuje.
+ * Skutki zamiarów zgłaszanych przez pulpit: przełożenie zamiaru na komendę
+ * kontraktu albo na komunikat nazywający brak drogi. Pulpit nadaje zamiar
+ * nazwami kontraktu, a kopertę komendy składa dopiero ta warstwa.
  */
 export function obsluzWejscieDoSesji(obsluga: ObslugaZamiarow, wejscie: WejscieDoSesji): void {
   obsluga.kanal.wyslij(Command.SessionOpen, { sessionId: wejscie.sessionId }, (wynik) => {
@@ -92,7 +83,11 @@ export function obsluzZamiarDecyzji(zamiar: ZamiarDecyzji): void {
   });
 }
 
-/** Przyczyna niepowodzenia komendy podana przez rdzeń. */
+/**
+ * Przyczyna niepowodzenia komendy podana przez rdzeń: wiadomość rdzenia
+ * uzupełniona kodem błędu, gdy rdzeń kod dołączył. Odpowiedź bez wiadomości
+ * daje zdanie mówiące wprost, że przyczyny nie podano.
+ */
 function opisBledu(wiadomosc: string | undefined, kod: string | undefined): string {
   if (wiadomosc === undefined) return 'Rdzeń nie podał przyczyny.';
   return kod === undefined ? wiadomosc : `${wiadomosc} (${kod})`;

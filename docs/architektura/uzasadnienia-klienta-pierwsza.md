@@ -1172,3 +1172,17 @@ okna wchodzą zarówno w obszar roboczy powłoki, jak i w podgląd sprawdzianu.
 Kontekst testowanego eksperta jest wystawiony w interfejsie katalogu, ponieważ
 sięga po niego powłoka, a nie moduł. Zmianę testowanego agenta rozgłasza plik
 `aplikacja/ulotnosc-okna.ts`, na którym stoi okno rozmowy sesji.
+
+## budowa/klient-poprzedni/src/aplikacja/zamiary-pulpitu.ts
+
+Pulpit sam niczego nie wysyła: nadaje zamiar wyrażony nazwami kontraktu, a kopertę
+komendy składa dopiero ta warstwa. Dzięki temu pulpit zna wyłącznie słownik zamiarów,
+a wiedza o komendach i o ich wymaganych polach zostaje w jednym miejscu.
+
+Dwa zamiary nie mają dziś drogi przez kontrakt i żaden z nich nie jest udawany.
+Podniesienie priorytetu nie ma odpowiednika ani w `QueueAction`, ani wśród komend.
+Przekazanie kontekstu wymaga kompletu `ContextBundle`, którego zamiar kolejki nie
+niesie, a którego nie wolno złożyć po stronie klienta z wartości domyślnych.
+
+W obu przypadkach warstwa wystawia komunikat mówiący wprost, czego brakuje, zamiast
+wysyłać komendę niekompletną albo milczeć.

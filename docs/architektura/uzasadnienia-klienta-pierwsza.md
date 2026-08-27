@@ -3026,3 +3026,11 @@ stanu.
 
 Źródło nie ma własnego stanu ani nie zna okna. Wykazy trzyma `stan-rozszerzen.ts`,
 żeby cztery okna patrzyły na jeden zbiór danych.
+
+## budowa/klient-poprzedni/src/konfiguracja/zasiegi.ts
+
+Poziom zasięgu mówi, jak wąsko obowiązuje wartość: okno jest najwęższe i wygrywa,
+globalny najszerszy i przegrywa z każdym innym.
+
+Oś mówi, dla czego wartość obowiązuje: dla platformy, dla wskazanego modelu albo dla
+wskazanego konta. Oś pominięta we wpisie znaczy `platform`.

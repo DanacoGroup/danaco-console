@@ -5058,3 +5058,18 @@ i nie melduje go jako rozpoznania.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-nakladu.ts
 W pasku stoi menu, a nie suwak, ponieważ etykieta komponentu ma być bieżącą wartością, a suwak pokazuje położenie i wymaga podpisu obok siebie — suwak w kolumnie sterowania zostaje, bo to ta sama nastawa w dwóch widokach, nie dwa stany. Stopień jest napisem wyliczenia, nie liczbą, a jego wartość idzie ustawieniem poziomu okna, bo komunikat aktualizacji okna nie ma dla niej osobnego pola. Napis pusty jest pełnoprawnym stopniem, oznaczającym rozstrzygnięcie przez kanał modelu, a nie brak ustawienia, więc stoi na wykazie jak każdy inny. Klucz pusty należy w mechanizmie menu do stopki, a stopień „bez wskazania” jest napisem pustym — przedrostek klucza rozdziela jedno od drugiego.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-consensus-panel.ts
+Odczyt stanowiska bierze identyfikator tury jako pole opcjonalne: podany zawęża do jednej tury,
+pominięty obejmuje całą debatę. Okno nie zgaduje, którą chce Operator — pole „Zakres stanowiska"
+rozstrzyga to wprost, a odpowiedź mówi, czego dotyczy. Wybór „cała debata" pomija pole tury
+w żądaniu, nie wysyła go pustym napisem, bo to udawałoby żądanie tury. Brak tury bieżącej przy
+zakresie „tura" i brak treści stanowiska po udanym odczycie to dwa różne stany puste, oba poprawne.
+Odmowa odczytu jest trzecim, osobnym stanem z kodem i treścią rdzenia — puste stanowisko przy
+odmowie mówiłoby nieprawdę. Ponowny odczyt idzie na zamknięciu tury, nie przy każdej zmianie: stan
+debaty subskrybuje zdarzenie zmiany i budzi nasłuch przy każdym przyroście, więc druga subskrypcja
+zdarzenia byłaby powieleniem — okno łapie wyłącznie przejście tury w stan zamknięty. Stanowisko
+niesie dziś w kontrakcie znacznie więcej, niż to okno pokazuje: punkty zgody i sporne, zdania
+odrębne, poparcie ważone oraz części zapisu decyzji. Okno rysuje treść i metrykę, bo tyle oddaje
+mu rdzeń — pozostałe pola pozostają puste do czasu zbudowania ich obsługi, a nie dlatego, że
+kontrakt ich nie ma.

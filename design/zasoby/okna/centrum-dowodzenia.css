@@ -133,7 +133,7 @@
 
 /* Kropka sygnału tętni nieprzerwanie — wspólnym pulsem platformy, 2,4 s. Oba
    znaki okna, lockup płótna i godło belki, biją tym samym rytmem. */
-.cd-marka-lockup .kropka,
+.cd-marka-lockup .kropka:not(.kropka--konsola),
 .dn-belka-marka .kropka {
   animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
 }
@@ -198,7 +198,13 @@
   body:has(#panel-samouczek:not([hidden])) .cd-listwa { width: 100%; }
 }
 .cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
-.cd-start-tresc { flex: 1 1 auto; margin: 0; }
+/* Zdanie zajmuje tyle, ile mierzy; przycisk staje bezpośrednio za nim, w
+   odstępie spacji, a zamknięcie odsuwa się do prawej krawędzi wiersza. Odstęp
+   wiersza schodzi do miary spacji, a znak odzyskuje swój przez własny margines. */
+.cd-start { gap: var(--dn-od-1); }
+.cd-start-znak { margin-right: var(--dn-od-2); }
+.cd-start-tresc { flex: 0 1 auto; margin: 0; }
+.cd-strona .cd-start > .dn-btn-ikona { margin-left: auto; }
 .cd-start-tresc b { color: var(--dn-tekst); }
 
 /* ── Strefy wyboru ────────────────────────────────────────────────────────── */
@@ -314,6 +320,11 @@
    się jednym stopniem. Opis zostaje na 13 px. */
 .cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-2xl); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
+/* Znak modułu niesie barwę znaku środowiska — obie strefy strony głównej mają
+   ten sam stopień kontrastu. Nazwa modułu schodzi z półgrubej na zwykłą: krój
+   treści (IBM Plex Sans) czyta się przy tej samej wadze ciężej niż krój
+   nagłówkowy karty środowiska (Space Grotesk). */
+.cd-strona .cd-kafel-tresc .dn-kafel-etykieta { font-weight: var(--dn-fw-normalna); }
 .cd-kafel-blok { display: flex; }
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
@@ -825,7 +836,7 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .cd-kafel .dn-kafel-ikona {
   border: 0;
   background: none;
-  color: var(--dn-tekst-2);
+  color: var(--dn-tekst);
 }
 .cd-strona .cd-kafel .dn-kafel-ikona svg {
   width: var(--dn-od-8);
@@ -1085,3 +1096,39 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-strona .dn-karta-srodowiska-motto { transition: opacity var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease); }
 
 /* === koniec agent-5 === */
+
+
+/* ── Stopka lewego okna ────────────────────────────────────────────────────
+   Dwie pozycje poza wykazem sesji i projektów: sprawdzenie wydania na serwerze
+   oraz odsyłacz do strony wydań, otwierany w przeglądarce. Stopka stoi przy
+   dolnej krawędzi okna, poza polem przewijania obu zakładek. */
+.cd-panel-stopka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-05);
+  margin-top: auto;
+  padding: var(--dn-od-2);
+  border-top: 1px solid var(--cd-obrys-marki);
+}
+.cd-panel-stopka-poz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-3);
+  padding: var(--dn-od-2) var(--dn-od-3);
+  border: 0;
+  border-radius: var(--dn-r-md);
+  background: none;
+  color: var(--dn-tekst-2);
+  font: inherit;
+  font-size: var(--dn-fs-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dn-czas-2) var(--dn-ease), color var(--dn-czas-2) var(--dn-ease);
+}
+.cd-panel-stopka-poz > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
+.cd-panel-stopka-poz:hover,
+.cd-panel-stopka-poz:focus-visible { background: var(--dn-hover); color: var(--dn-tekst); }
+.cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
+.cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); }
+.cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }

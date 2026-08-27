@@ -384,7 +384,7 @@ func TestSkutekPrzypisanEkspertaWBazie(t *testing.T) {
 	baza := bazaZakresuSprawdzianu(t, katalog)
 	ekspert := ekspertZakresuSprawdzianu(t, zmontowany, zycie, "Ekspert projektowy")
 
-	// Przypisanie zakładamy wprost w bazie: sprawdzian mierzy tu odczyt po
+	// Przypisanie zaklada się wprost w bazie: sprawdzian mierzy tu odczyt po
 	// stronie eksperta.
 	if _, err := baza.Exec(
 		`INSERT INTO projekt (kod, nazwa) VALUES ('projekt-sprawdzianu', 'Projekt sprawdzianu')`); err != nil {

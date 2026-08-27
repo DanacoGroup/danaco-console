@@ -5124,3 +5124,10 @@ obsadza ten mechanizm danymi i nie odtwarza go u siebie. Klient nie zna ani jedn
 z góry — gdy katalog dołoży czwarty motyw, wiersz pokaże go bez zmiany tego pliku. Katalog rdzenia ma
 opcję o wartości pustej — dla motywu jest nią preferencja systemu i to trzeci pełnoprawny stan nastawy,
 nie brak wyboru.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/dziennik-wpisow.ts
+Zmiana roli okna przebudowuje widok okna komunikacji, bo rola jest częścią
+jego opisu i widnieje w jego własnym nagłówku. Sposób dokładania fragmentu
+odpowiada zachowaniu historii okna: fragment dołącza się do ostatniego
+wpisu tej samej persony, a przy zmianie persony zaczyna wpis nowy — rozjazd
+tych dwóch reguł dałby po przebudowie inną historię niż przed nią.

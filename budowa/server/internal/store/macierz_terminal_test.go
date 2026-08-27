@@ -6,20 +6,7 @@ import (
 	"testing"
 )
 
-// ZAPORA, NIE ZGODA — Terminal w CodeStudio.
-//
-// Macierz dostępności modułów w opracowaniu Właściciela
-// (`docs/architektura/koncepcja-platformy.md` rozdz. 10, wiersz „Terminal
-// (11.11) | NIE | NIE | TAK") stawia Terminal jako moduł widoczny w CodeStudio,
-// z własnymi oknami (rozdz. 11.11: Terminal Tabs, Output Console, Process
-// Monitor). Migracja 080 gasi go z `widoczny = 0` z uzasadnieniem „Terminal nie
-// jest samodzielnym modułem" — rozstrzygnięcie wykonawcy PRZECIW dostawie.
-//
-// Sprawdzian zapisuje ten rozjazd tak, żeby nie zniknął po cichu ani nie
-// pogłębił się po cichu: wypada niepomyślnie dopóki Terminal jest ukryty
-// w CodeStudio, a gdy zostanie odsłonięty zgodnie z macierzą, każe się odwrócić
-// w straż. Naprawa należy do warstwy modułów (macierz `srodowisko_modul`),
-// nie tutaj — sprawdzian pomiar utrwala, nie rozstrzyga.
+// TestTerminalUkrytyWCodeStudioWbrewMacierzy jest zaporą pilnującą rozjazdu między macierzą dostępności modułów a ukryciem modułu Terminal w CodeStudio.
 func TestTerminalUkrytyWCodeStudioWbrewMacierzy(t *testing.T) {
 	baza, err := Otworz(filepath.Join(t.TempDir(), "dane.sqlite"))
 	if err != nil {

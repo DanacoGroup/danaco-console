@@ -4727,3 +4727,13 @@ drzewa wyboru u Operatora i jednostką doboru narzędzi eksperta.
 
 Zasięg okna roboczego w WykazZasiegu oddaje sam wykaz kontraktu, bez
 dokładania pozycji roli.
+
+## budowa/server/internal/store/macierz_terminal_test.go
+
+Macierz dostępności modułów stawia moduł Terminal jako widoczny w CodeStudio, z własnymi oknami kart
+terminala, konsoli wyjścia i monitora procesów. Migracja 080 wygasza go ustawieniem niewidoczności
+z uzasadnieniem, że Terminal nie jest samodzielnym modułem — rozstrzygnięciem przeciw jego dostawie.
+Sprawdzian zapisuje ten rozjazd tak, żeby nie zniknął po cichu ani nie pogłębił się po cichu: wypada
+niepomyślnie, dopóki Terminal jest ukryty w CodeStudio, a gdy zostanie odsłonięty zgodnie z macierzą,
+każe się odwrócić w straż. Naprawa należy do warstwy modułów, do macierzy widoczności środowisko-moduł,
+nie do tego pliku — sprawdzian pomiar utrwala, nie rozstrzyga.

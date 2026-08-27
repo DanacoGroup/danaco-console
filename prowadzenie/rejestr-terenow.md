@@ -16,9 +16,12 @@ instrument). Granica jest schodkowa, nie proporcjonalna: 250 znakow na plik,
 od dwoch tysiecy wierszy 250 za kazdy pelny tysiac (dopowiedzenie trzecie
 pozycji 18; instrument wciela). Kazdy plik po pracy zaczyna sie naglowkiem: pelne zdanie
 odpowiedzialnosci pliku (dopowiedzenie czwarte pozycji 18); plik niemy to
-uchybienie zwracajace porcje. Komentarz jest kompletnym nosnikiem informacji — ZERO powolan na
-jakiekolwiek pliki (dopowiedzenie szoste; instrument liczy POWOLANIA i plik
-z powolaniem nie przechodzi); odsylacze i wskazania zastane zdejmuje sie
+uchybienie zwracajace porcje. Komentarz jest kompletnym nosnikiem informacji: zakazane sa ODESLANIA
+do opracowan (`*.md`, `docs/`, `prowadzenie/`, zwroty „Patrz", „Zob.",
+„Uzasadnienie:", „szczegoly w"), dozwolone jest NAZYWANIE artefaktow
+technicznych — bibliotek, arkuszy stylu, programow, migracji, plikow nastaw
+i plikow zrodlowych (dopowiedzenia szoste i siodme; instrument liczy
+odeslania jako POWOLANIA i plik z odeslaniem nie przechodzi); odsylacze i wskazania zastane zdejmuje sie
 w toku prac; konwencja mapowania do docs zapisana raz w CLAUDE.md. Zakaz skrotow upychajacych tresc — wylacznie pelne zdania
 i pelne slowa, w kodzie i w docs (dopowiedzenie drugie pozycji 18).
 Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =

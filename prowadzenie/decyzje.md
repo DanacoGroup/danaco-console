@@ -1282,6 +1282,20 @@ kodu podlegaja mu tak samo — powolanie na plik `.md`, `.go` czy dowolny inny
 jest uchybieniem niezaleznie od polozenia. Sciezka w literale lancuchowym to
 kod, nie komentarz, i zakazu nie narusza.
 
+**Dopowiedzenie siodme Wlasciciela (27.08, po poludniu) — sprostowanie
+szostego.** Zakaz nie obejmuje "jakiegokolwiek pliku". Rozgraniczenie biegnie
+miedzy ODESLANIEM a NAZWANIEM:
+
+| | |
+|---|---|
+| **Zakazane — odeslanie do opracowania** | dokument wyjasniajacy (`*.md`, katalogi `docs/`, `prowadzenie/`) oraz zwroty kierujace czytelnika gdzie indziej: „Patrz", „Zob.", „Uzasadnienie:", „szczegoly w", „opisane w", „wiecej w" |
+| **Dozwolone — nazwanie artefaktu** | biblioteka, arkusz stylu, program zewnetrzny, migracja, plik nastaw, plik zrodlowy — wszystko, z czym kod naprawde pracuje |
+
+Powod rozgraniczenia: nazwanie biblioteki albo arkusza stylu **jest trescia** —
+komentarz pozostaje kompletnym nosnikiem, bo mowi rzecz, a nie odsyla po nia.
+Odeslanie do opracowania jest przeciwienstwem: oznajmia, ze informacji tu nie
+ma. Instrument wciela rozgraniczenie: liczy wylacznie odeslania.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

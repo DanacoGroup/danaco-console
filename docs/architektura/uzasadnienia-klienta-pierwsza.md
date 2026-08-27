@@ -4241,3 +4241,23 @@ Przebudowa wykazu nie ogłasza wyboru. Kolumna oznacza kategorię czynną i na t
 Jedyną odpowiedzialnością pliku jest postać układu na ekranie. Żaden fragment nie woła
 rdzenia i nie zna stanu okna; jeden bierze wywołanie zwrotne usunięcia, ponieważ przycisk
 wiersza musi sięgnąć po zapis układu.
+
+## budowa/klient-poprzedni/src/moduly/design/pasek-kontekstu.ts
+
+Nad kanwą stoją znaczniki projektu, środowiska, modelu, trybu narzędzia
+i poziomu powiększenia. Znacznik kontekstowy otwiera się naciśnięciem, więc jest
+przyciskiem, a nie napisem; zdanie idzie komunikatem, ponieważ znacznik ma
+zostać pigułką, zamiast rozrastać się w akapit.
+
+Selektorów pasek nie dubluje. Wybór silnika stoi w Prompt Builderze, tryb
+narzędzia w znaczniku trybu nad kanwą, a powiększenie w przyborniku. Dwie
+kontrolki nastawiające jedną wartość rozjeżdżają się przy pierwszej zmianie
+i przestaje być wiadomo, która mówi prawdę, więc naciśnięcie znacznika nazywa
+miejsce, w którym jego selektor stoi.
+
+Znacznik środowiska jest jedynym, który nie ma czego pokazać. Moduł jest
+dostępny w dwóch środowiskach, ale które z nich jest bieżące, wie wyłącznie
+powłoka: żadna komenda obszaru środowiska nie niesie, a okno modułu w rdzeniu
+wskazuje moduł i sesję. Znacznik mówi to wprost, zamiast wpisywać nazwę wziętą
+z niczego. Wartość znacznika nie zmienia się w cyklu życia modułu, więc stoi raz
+i nie idzie w odświeżanie.

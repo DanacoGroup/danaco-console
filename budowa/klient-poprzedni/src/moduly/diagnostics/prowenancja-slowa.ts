@@ -6,21 +6,9 @@ import {
   type ModelCallTrace,
 } from '../../../../shared/contract';
 
-/**
- * Słowa prowenancji widoczne dla Operatora.
- *
- * Wartości kontraktu są angielskie i techniczne (`ok`, `otlp`, `unrated`).
- * W oknie stoi pełna nazwa polska, bo Operator czyta okno, nie kontrakt —
- * a zakaz numeracji i kodów w produkcie znaczy również zakaz pokazywania
- * wartości pola zamiast jej nazwy. Przekład jest jednostronny: do rdzenia jedzie
- * wyłącznie wartość kontraktu, nigdy napis z tego pliku.
- *
- * Wykazy są pełne wobec kontraktu i kompilator tego pilnuje: `Record` po typie
- * wartości nie skompiluje się, gdy kontrakt dołoży stan albo format, więc nowa
- * wartość nie przemknie do okna jako pusty napis.
- */
+// Słowa prowenancji tłumaczą wartości kontraktu na polskie nazwy pełnym zdaniem, nigdy odwrotnie.
 
-/** Stan wywołania — pełnym zdaniem, nie wartością pola. */
+/** Stan wywołania modelu wyrażony pełnym zdaniem po polsku, nigdy samą wartością pola kontraktu, którą czytelnik musiałby sam tłumaczyć. */
 export const STAN_WYWOLANIA: Record<ModelCallStatus, string> = {
   [ModelCallStatus.Running]: 'w biegu',
   [ModelCallStatus.Ok]: 'zakończone odpowiedzią modelu',
@@ -29,7 +17,7 @@ export const STAN_WYWOLANIA: Record<ModelCallStatus, string> = {
   [ModelCallStatus.Cancelled]: 'przerwane przez Operatora',
 };
 
-/** Ocena trafności nadawana ręcznie przez Operatora. */
+/** Ocena trafności odpowiedzi modelu nadawana ręcznie przez osobę przeglądającą ślad, nie wyliczana automatycznie przez rdzeń. */
 export const OCENA_WYWOLANIA: Record<ModelCallQuality, string> = {
   [ModelCallQuality.Unrated]: 'bez oceny',
   [ModelCallQuality.Accurate]: 'odpowiedź trafna',
@@ -37,7 +25,7 @@ export const OCENA_WYWOLANIA: Record<ModelCallQuality, string> = {
   [ModelCallQuality.Inaccurate]: 'odpowiedź nietrafna',
 };
 
-/** Rodzaj odcinka drzewa śladu: jeden odcinek to jeden krok wywołania. */
+/** Rodzaj odcinka drzewa śladu wywołania: jeden odcinek odpowiada dokładnie jednemu krokowi całego wywołania modelu. */
 export const RODZAJ_ODCINKA: Record<ModelCallSpanKind, string> = {
   [ModelCallSpanKind.Prompt]: 'złożenie i wysłanie promptu',
   [ModelCallSpanKind.Completion]: 'wytwarzanie odpowiedzi',
@@ -47,16 +35,7 @@ export const RODZAJ_ODCINKA: Record<ModelCallSpanKind, string> = {
   [ModelCallSpanKind.Cache]: 'pamięć podręczna promptu',
 };
 
-/**
- * Format wydania śladu wraz z tym, czym jest.
- *
- * Opracowanie modułu przypisuje śladom OpenTelemetry Protocol oraz JSON,
- * a JSON Lines i wartości rozdzielone przecinkiem wylicza przy dziennikach,
- * błędach i koszcie. Kontrakt przyjmuje dla śladu wszystkie cztery, więc okno
- * daje wszystkie cztery i mówi, który z nich opracowanie śladom przypisuje —
- * odjęcie formatu, który rdzeń przyjmuje, byłoby brakiem funkcji zrobionym
- * w oknie.
- */
+/** Format wydania śladu: kontrakt przyjmuje cztery formaty telemetrii i okno udostępnia wszystkie, nie odejmując żadnego. */
 export const FORMAT_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Otlp]: 'OpenTelemetry Protocol w postaci JSON — format śladu z opracowania',
   [TelemetryFormat.Json]: 'JSON platformy, bez przekładu na format zewnętrzny',
@@ -64,7 +43,7 @@ export const FORMAT_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Csv]: 'wartości rozdzielone przecinkiem — w opracowaniu format kosztu i błędów',
 };
 
-/** Rozszerzenie pliku wydania; nazwa pliku ma mówić, co w nim jest. */
+/** Rozszerzenie pliku wydania śladu dobrane tak, aby sama nazwa pliku mówiła odbiorcy, jaką treść on niesie. */
 export const ROZSZERZENIE_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Otlp]: 'json',
   [TelemetryFormat.Json]: 'json',
@@ -72,7 +51,7 @@ export const ROZSZERZENIE_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Csv]: 'csv',
 };
 
-/** Rodzaj treści pliku wydania — po nim przeglądarka wie, co dostała. */
+/** Rodzaj treści pliku wydania w zapisie MIME, po którym przeglądarka rozpoznaje, jaki plik dostała do pobrania. */
 export const RODZAJ_TRESCI_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Otlp]: 'application/json',
   [TelemetryFormat.Json]: 'application/json',
@@ -80,18 +59,12 @@ export const RODZAJ_TRESCI_WYDANIA: Record<TelemetryFormat, string> = {
   [TelemetryFormat.Csv]: 'text/csv',
 };
 
-/** Znacznik czasu w zapisie lokalnym Operatora. */
+/** Znacznik czasu wywołania modelu przeliczony na zapis w strefie i formacie lokalnym przeglądającego ślad. */
 export function czas(znacznik: number): string {
   return new Date(znacznik).toLocaleString('pl-PL');
 }
 
-/**
- * Zdanie o jednym wywołaniu złożone WYŁĄCZNIE z pól, które rdzeń oddał.
- *
- * Pole nieoddane nie staje się zerem: „koszt 0" i „kanał bez cennika" to dwa
- * różne zdania o instalacji, a wywołanie w biegu nie ma jeszcze opóźnienia ani
- * liczby tokenów i nie jest to usterka.
- */
+/** Zdanie opisujące jedno wywołanie modelu, złożone wyłącznie z pól, które rdzeń rzeczywiście oddał w odpowiedzi. */
 export function opisWywolania(wywolanie: ModelCallTrace): string {
   const czesci: string[] = [
     STAN_WYWOLANIA[wywolanie.status],
@@ -120,7 +93,7 @@ export function opisWywolania(wywolanie: ModelCallTrace): string {
   return czesci.join(' · ');
 }
 
-/** Tytuł pozycji wykazu: model i kanał, a gdy ich nie ma — powiedziane wprost. */
+/** Tytuł pozycji wykazu złożony z modelu i kanału wywołania, a gdy rdzeń któregoś z nich nie podał — powiedziane wprost. */
 export function tytulWywolania(wywolanie: ModelCallTrace): string {
   const model = wywolanie.model ?? '(modelu rdzeń nie podał)';
   const kanal = wywolanie.channelId ?? '(kanału rdzeń nie podał)';

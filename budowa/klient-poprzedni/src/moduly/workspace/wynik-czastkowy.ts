@@ -6,7 +6,7 @@
  * a nie wiedzą modułu.
  */
 
-/** Kod modułu — znakuje pliki wgrane z okien Workspace. */
+/** Kod modułu Workspace, który znakuje pliki wgrywane z okien należących do tego modułu podczas pracy nad projektem. */
 export const KOD_MODULU = 'workspace';
 
 /**

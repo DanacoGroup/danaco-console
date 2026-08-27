@@ -2187,3 +2187,36 @@ Pozycja listwy pozbawiona własnego widoku pozostaje klikalna, a jej naciśnięc
 mówi wprost, że ekran jeszcze nie powstał, zamiast otwierać atrapę. Powierzchnia
 Always On Display nie ma odrębnego okna i wchodzi jako rozszerzenie boczne,
 dlatego jej pozycja prowadzi do powierzchni interakcji, a nie do okna.
+
+## budowa/klient-poprzedni/src/aod/wyciszenie-aod.ts
+
+Wyciszenie Always On Display ma pięć rodzajów: ten plik trzyma trzy z nich jako
+stan (czasowe, kontekstowe, klasy zdarzeń); czwarty — tryb cichy — jest trybem
+obecności i mieszka w `tryb-obecnosci.ts`; piąty — wyjątek wagi krytycznej —
+nie jest wyciszeniem, tylko regułą przebijającą wszystkie pozostałe, i stoi
+w regule ujawniania. Plik nie dotyka kanału ani rdzenia: kontrakt nie niesie
+wyciszenia nakładki ani jednym polem (`grep -i wycisz shared/contract.go`
+znajduje wyłącznie wyciszenie uczestnika tury w module Roundtable i wyciszone
+wyzwolenia reguł alarmowych, nic z rodziny `aod.*`), więc stan wyciszenia
+jest dziś stanem okna. Magazyn jest podawany wołaczowi (`MagazynWyciszen`),
+nie brany z globalnej przestrzeni na sztywno — wzorem
+`moduly/studio/widok-nastawy-operatora.ts` — żeby przełożenie zapisu na
+rdzeń nie ruszyło ani jednego wołacza. Braki kontraktu nazywa wprost
+`wyciszenie-braki-kontraktu.ts`.
+
+Klasa zdarzeń każdego powodu rozpoznanego przez nakładkę przypisuje „pętlę
+wstrzymaną i przerwaną" klasie stanu pętli wykonawczej, a „kolejkę
+zatrzymaną, zadanie w stanie błędu i zadanie oczekujące dłużej niż próg" —
+klasie stanu kolejki zadań. Pozostałe cztery klasy zdarzeń nie mają dziś
+w kontrakcie nośnika sygnału (nie ma zdarzenia kontroli jakości,
+harmonogramu ani powtarzalności czynności Operatora), więc ich wyciszenie
+zapisze się i zadziała z chwilą, w której sygnał wejdzie; menu mówi to
+wprost, zamiast udawać, że wycisza coś, co i tak milczy.
+
+Sugestia opisana wobec wyciszenia niesie moduł i sesję jako pola opcjonalne,
+bo nie każda sugestia je zna: telemetria rdzenia niesie okno i sesję, modułu
+nie niesie wcale, a `AodSuggestion` kontraktu niesie samo okno. Funkcja
+rozstrzygająca, które wyciszenie obejmuje sugestię, nie zna wyjątku wagi
+krytycznej — wyjątek nie znosi wyciszenia, tylko przepuszcza sugestię
+plakietką mimo niego, a rozstrzyga to reguła ujawniania w
+`tryb-obecnosci.ts`, w jednym miejscu dla wszystkich trzech rodzajów.

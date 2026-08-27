@@ -5314,3 +5314,16 @@ Stoją tu wyłącznie napisy oprawy: nazwy i przeznaczenia paneli przychodzą
 ze spisu okien pomocniczych. Konwencja jest wspólna z etykietami układu —
 stałe wersalikowe dla napisów stałych, funkcje dla zdań składanych, polska
 odmiana rozpisana przypadkami zamiast doklejania końcówek.
+
+## budowa/klient-poprzedni/src/moduly/wiedza/zrodlo-wiedzy.ts
+Stała komendy pada wyłącznie w plikach źródłowych modułu: okno zna czynność, poszukaj albo
+przebuduj wskaźnik, a nie nazwę komendy, więc zmiana nazwy w kontrakcie przerywa kompilację
+w jednym pliku, a nie w każdym widoku z osobna. Obie komendy siedzą razem, choć robią co innego:
+szukanie jest odczytem, a przebudowa wskaźnika — przebudową, ale bez wskaźnika odczyt nie ma czego
+oddać, więc okno pokazujące wyniki potrzebuje pod ręką drogi do przebudowy, a rozdzielenie ich
+dałoby oknu dwie zależności na jedną dziedzinę. Źródło oddaje pełny wynik, nie samą treść, i nie
+ma tu ani jednej pustej tablicy jako wartości domyślnej: wyszukiwanie, które po odmowie rdzenia
+oddaje pustą tablicę, mówi „nic nie znalazłem" zamiast „nie udało się zapytać", a to są dwa różne
+zdania, z których tylko jedno jest prawdziwe. Kontrakt nie niesie zdarzenia zmiany wskaźnika
+wiedzy, więc okno nie ma się na czym zawiesić i odświeża się wyłącznie na czynność operatora —
+nasłuch stanąłby na zdarzeniu, które nigdy nie przychodzi.

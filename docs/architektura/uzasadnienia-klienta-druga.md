@@ -2863,3 +2863,16 @@ macierzy widoczności.
 Dopiero z odpowiedzi klient dowiaduje się, jaką wersję protokołu zna rdzeń i które komendy ta wersja rdzenia obsługuje. Rozstrzygnięcie, co zrobić z rozjazdem wersji, należy do warstwy wyższej — protokół oddaje odpowiedź w kształcie kontraktu.
 Wersja protokołu w żądaniu pochodzi ze stałej kontraktu, nie z literału: klient przedstawia się tą wersją, z którą został zbudowany.
 Token wiąże połączenie z sesją bramki. Jego brak nie jest błędem — rdzeń odpowiada wtedy brakiem uwierzytelnienia. Token dostarcza wołający, bo magazyn sesji bramki nie należy do warstwy protokołu.
+
+## budowa/klient-poprzedni/src/moduly/studio/blokada-fragmentow.ts
+Blokada fragmentu i zajęcie fragmentu to dwie różne rzeczy, obie utrzymywane w rdzeniu. Sprawdzenie
+blokady stoi na drodze każdej komendy zmieniającej dokument po stronie serwera, przed dotknięciem
+treści — blokada pilnowana przez okno byłaby pozorna, bo model woła komendy rdzenia tak samo jak
+klient i ominąłby ją bez wysiłku, więc okno tylko pokazuje blokady i ich skutki, nie wykonuje ich.
+Blokada jest trwała i skierowana przeciw modelowi: zdejmuje ją wyłącznie operator, a model, który
+uzna zmianę za konieczną, zakłada propozycję na marginesie. Zajęcie jest czasowe i skierowane
+przeciw drugiemu wykonawcy, żeby dwóch agentów nie pisało po tym samym akapicie — wygasa samo,
+a odmowa zajęcia nazywa wykonawcę i czas. Zmiana obejmująca blokadę częściowo wykonuje się poza
+blokadą i oddaje bilans: co przeszło, co pominięte i przez którą blokadę, bo przemilczenie pominięcia
+jest zakazane, choć odmowa całości zmiany byłaby nieproporcjonalna. Plik nie zna elementów strony
+ani wywołań rdzenia.

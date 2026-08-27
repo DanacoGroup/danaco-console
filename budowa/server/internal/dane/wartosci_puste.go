@@ -4,7 +4,8 @@ package dane
 
 import "database/sql"
 
-// tekstZKolumny zwraca wskaźnik na napis albo nil dla kolumny pustej.
+// tekstZKolumny zwraca wskaźnik na napis odczytany z kolumny opcjonalnej,
+// albo nil, gdy kolumna niesie wartość pustą.
 func tekstZKolumny(kolumna sql.NullString) *string {
 	if !kolumna.Valid {
 		return nil
@@ -13,7 +14,8 @@ func tekstZKolumny(kolumna sql.NullString) *string {
 	return &wartosc
 }
 
-// liczbaZKolumny zwraca wskaźnik na liczbę albo nil dla kolumny pustej.
+// liczbaZKolumny zwraca wskaźnik na liczbę całkowitą odczytaną z kolumny
+// opcjonalnej, albo nil, gdy kolumna niesie wartość pustą.
 func liczbaZKolumny(kolumna sql.NullInt64) *int64 {
 	if !kolumna.Valid {
 		return nil
@@ -39,7 +41,8 @@ func wartoscLogiczna(wartosc bool) *bool {
 	return &kopia
 }
 
-// tekstDoKolumny przekłada wskaźnik na argument zapytania; nil daje NULL.
+// tekstDoKolumny przekłada wskaźnik na napis na argument zapytania do bazy
+// danych; wartość nil daje kolumnę pustą.
 func tekstDoKolumny(wartosc *string) any {
 	if wartosc == nil {
 		return nil
@@ -47,7 +50,8 @@ func tekstDoKolumny(wartosc *string) any {
 	return *wartosc
 }
 
-// liczbaDoKolumny przekłada wskaźnik na argument zapytania; nil daje NULL.
+// liczbaDoKolumny przekłada wskaźnik na liczbę całkowitą na argument zapytania
+// do bazy danych; wartość nil daje kolumnę pustą.
 func liczbaDoKolumny(wartosc *int64) any {
 	if wartosc == nil {
 		return nil

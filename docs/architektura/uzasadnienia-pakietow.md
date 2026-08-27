@@ -3310,3 +3310,6 @@ gdzie kontrakt już opisuje treść binarną (`mimeType`, `contentBase64`, `uri`
 DesignAsset), żeby odbiorca składający zasób wizualny nie tłumaczył nazw po drodze. Dostawcy zgodni
 z OpenAI Images oddają albo bajty w Base64, albo odsyłacz w Adres, zależnie od `response_format` —
 fragment powtarza to, co przyszło, i niczego nie dosypuje.
+
+## budowa/server/internal/dane/design_zasoby_zmiany.go
+Obie metody wykonują jedno polecenie SQL bez transakcji, w odróżnieniu od zmiany etykiet, która składa się z dwóch poleceń i wymaga transakcji, żeby stan pośredni nie był widoczny. Usunięcie zasobu nie rusza bajtów w magazynie: blob leży pod sumą swojej zawartości, więc dwa zasoby o tej samej treści mogą dzielić jeden plik, a skasowanie pliku przy usunięciu jednego z nich odebrałoby treść drugiemu; o bajtach rozstrzyga warstwa rdzenia, tu znika sam wiersz. Ustawienie ulubionego traktuje brak wiersza do zmiany jako wynik neutralny, nie błąd, bo wołający ma klucz wiersza już po odróżnieniu zasobu nieznanego. Usunięcie zasobu opiera zwracany wynik na liczbie zmienionych wierszy, nie na powodzeniu polecenia, ponieważ usunięcie zera wierszy jest dla bazy sukcesem — powtórne usunięcie tego samego identyfikatora zwraca wynik ujemny, nie błąd.

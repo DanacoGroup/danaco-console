@@ -5973,3 +5973,11 @@ zasób mógłby teoretycznie powstać dwiema drogami, a odczyt ma pokazać stan 
 założenie o niej.
 ## budowa/server/internal/dane/studio_cyfryzacja.go
 Pozycja kolejki istnieje, zanim jakikolwiek dokument z niej powstanie, i bywa odrzucona, zanim taki dokument powstanie; wiązanie jej z dokumentem wymagałoby zakładania dokumentu pustego przy każdym wskazaniu pliku, także tym, które skończy się odmową rozpoznania. Warstwa słów rozpoznanych i bloki układu stoją tekstem w formacie JSON, bo nie są bytem samodzielnym: nie mają własnego cyklu życia, nikt się do nich nie odwołuje z zewnątrz i giną razem z pozycją, więc tabela podrzędna dałaby wyłącznie złączenie przy każdym odczycie bez żadnej korzyści w zamian.
+
+## budowa/server/internal/transport/rejestr_polaczen.go
+
+Jedno konto ma wiele urządzeń równocześnie, więc rejestr nie jest odwzorowaniem konta na połączenie,
+lecz zbiorem połączeń przeszukiwanym po koncie. Konto połączenia zmienia się w czasie jego życia, więc
+rejestr nie kopiuje go do własnego indeksu, tylko odczytuje wprost z połączenia przy każdym zapytaniu.
+Metoda wszystkie zwraca kopię zbioru połączeń, nie samo odwzorowanie, ponieważ wysyłka idzie poza
+blokadą, więc rozłączenie w trakcie rozgłoszenia niczego nie zakleszcza.

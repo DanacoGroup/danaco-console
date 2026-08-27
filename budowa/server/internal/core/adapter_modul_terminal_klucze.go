@@ -1,27 +1,6 @@
-// Komendy `terminal.key.generate`, `terminal.key.import`, `terminal.key.list`
-// i `terminal.key.remove` — wykaz kluczy SSH znanych rdzeniowi.
-//
-// ── Biblioteka wkompilowana, nie `ssh-keygen` ───────────────────────────────
-// Para kluczy powstaje w Go: `crypto/ed25519`, `crypto/rsa` i `crypto/ecdsa`
-// wytwarzają materiał, a `golang.org/x/crypto/ssh` zapisuje go w postaci OpenSSH
-// i liczy odcisk. `ssh-keygen` byłby tu programem spoza instalki wołanym po to,
-// żeby zrobić rzecz, którą biblioteka standardowa robi w kilku wierszach — a
-// wytworzenie klucza jest czynnością, bez której książka hostów przestaje mieć
-// czym się łączyć. Ta sama decyzja co przy git (go-git), PDF (pdfcpu)
-// i wyszukiwaniu (regexp).
-//
-// ── Czego rdzeń nie robi z kluczem ──────────────────────────────────────────
-// Klucz prywatny nie opuszcza dysku maszyny rdzenia w żadną stronę: wytworzenie
-// oddaje sam odcisk i klucz publiczny, wciągnięcie do wykazu bierze ŚCIEŻKĘ, nie
-// treść, a wykaz nie ma pola, w którym materiał tajny mógłby się znaleźć.
-//
-// ── Hasło klucza ────────────────────────────────────────────────────────────
-// Kontrakt każe podawać hasło ODWOŁANIEM do sejfu, nigdy treścią — i to jest
-// właściwe. Rdzeń nie ma dziś czytnika sejfu (ten sam brak, który zmienna
-// środowiska karty nazywa w `adapter_modul_terminal_powloki.go`), więc żądanie
-// z odwołaniem kończy się odmową NAZYWAJĄCĄ ten brak. Wytworzenie klucza bez
-// hasła w odpowiedzi na prośbę o klucz z hasłem byłoby cichym obniżeniem
-// ochrony — a to jest gorsze niż odmowa.
+// Plik obsługuje komendy terminal.key.generate, terminal.key.import,
+// terminal.key.list i terminal.key.remove — wykaz kluczy SSH znanych
+// rdzeniowi, wytwarzanych biblioteką standardową bez pomocy ssh-keygen.
 package core
 
 import (
@@ -43,13 +22,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekKlucza znakuje identyfikator wpisu wykazu kluczy.
+// przedrostekKlucza znakuje identyfikator wpisu wykazu kluczy, żeby kod klucza
+// dało się odróżnić od kodów innych bytów terminala na pierwszy rzut oka.
 const przedrostekKlucza = "tkey-"
 
 // katalogKluczy jest podkatalogiem katalogu danych rdzenia, w którym leżą klucze
-// wytworzone przez moduł. Osobny katalog, a nie `~/.ssh` konta procesu: klucz
-// wytworzony przez produkt ma być rozpoznawalny i usuwalny wraz z produktem,
-// a konfiguracja OpenSSH Operatora nie ma prawa zmienić się sama.
+// wytworzone przez moduł — osobnym od katalogu SSH konta procesu, bo klucz
+// produktu ma być usuwalny wraz z produktem.
 const katalogKluczy = "klucze-ssh"
 
 // dlugoscKluczaRSA jest długością klucza RSA w bitach. 3072 to dolna granica
@@ -57,7 +36,9 @@ const katalogKluczy = "klucze-ssh"
 // w produkcie na następne lata.
 const dlugoscKluczaRSA = 3072
 
-// WytworzKlucz obsługuje `terminal.key.generate`.
+// WytworzKlucz obsługuje komendę terminal.key.generate: wytwarza parę kluczy
+// wskazanego rodzaju, zapisuje ją na dysku maszyny rdzenia i wciąga wpis do
+// wykazu.
 func (a *adapterTerminala) WytworzKlucz(ctx context.Context,
 	z shared.TerminalKeyGenerateRequest) (shared.TerminalKeyGenerateResponse, error) {
 
@@ -103,8 +84,8 @@ func (a *adapterTerminala) WytworzKlucz(ctx context.Context,
 		Sciezka:    sciezka,
 	}
 	if err := dziennik.ZapiszKlucz(ctx, wiersz); err != nil {
-		// Wiersza nie ma, więc plików też nie ma prawa zostać: klucz prywatny
-		// leżący poza wykazem jest materiałem, o którym nikt już nie wie.
+		// Wiersza nie ma, więc plików też nie ma prawa zostać — byłyby materiałem,
+		// o którym nikt już nie wie.
 		_ = os.Remove(sciezka)
 		_ = os.Remove(sciezka + ".pub")
 		return shared.TerminalKeyGenerateResponse{}, err
@@ -112,11 +93,8 @@ func (a *adapterTerminala) WytworzKlucz(ctx context.Context,
 	return shared.TerminalKeyGenerateResponse{Key: kluczKontraktu(wiersz)}, nil
 }
 
-// WciagnijKlucz obsługuje `terminal.key.import`.
-//
-// Klucz wskazuje się ścieżką, więc rdzeń go CZYTA, żeby powiedzieć o nim prawdę:
-// jakiego jest rodzaju, jaki ma odcisk i czy jest chroniony hasłem. Wpis
-// przepisany z samego żądania byłby wpisem o pliku, którego nikt nie otworzył.
+// WciagnijKlucz obsługuje komendę terminal.key.import: czyta klucz wskazany
+// ścieżką, ustala jego rodzaj i odcisk, i wciąga wpis o nim do wykazu.
 func (a *adapterTerminala) WciagnijKlucz(ctx context.Context,
 	z shared.TerminalKeyImportRequest) (shared.TerminalKeyImportResponse, error) {
 
@@ -145,10 +123,8 @@ func (a *adapterTerminala) WciagnijKlucz(ctx context.Context,
 	var chroniony *ssh.PassphraseMissingError
 	switch {
 	case errors.As(err, &chroniony):
-		// Klucz chroniony hasłem czyta się tylko z hasłem, którego rdzeń nie ma.
-		// To NIE jest powód odmowy: wykaz ma nieść taki klucz, a `ssh` odczyta go
-		// sam przy połączeniu. Odcisk bierze się wtedy z klucza publicznego —
-		// z pliku obok albo z części publicznej, którą niesie sam błąd.
+		// Klucz chroniony hasłem czyta się tylko z hasłem, którego rdzeń nie ma —
+		// to nie jest powód odmowy.
 		wiersz.Haslo = true
 		wiersz.Rodzaj = shared.TerminalKeyTypeEd25519
 		if chroniony.PublicKey != nil {
@@ -182,7 +158,8 @@ func (a *adapterTerminala) WciagnijKlucz(ctx context.Context,
 	return shared.TerminalKeyImportResponse{Key: kluczKontraktu(wiersz)}, nil
 }
 
-// WykazKluczy obsługuje `terminal.key.list`.
+// WykazKluczy obsługuje komendę terminal.key.list: zwraca wykaz kluczy SSH
+// zapisanych w dzienniku wyposażenia terminala.
 func (a *adapterTerminala) WykazKluczy(ctx context.Context,
 	_ shared.TerminalKeyListRequest) (shared.TerminalKeyListResponse, error) {
 
@@ -201,11 +178,9 @@ func (a *adapterTerminala) WykazKluczy(ctx context.Context,
 	return shared.TerminalKeyListResponse{Keys: wykaz, Total: len(wykaz)}, nil
 }
 
-// UsunKlucz obsługuje `terminal.key.remove`.
-//
-// Odpięcie wpisów książki hostów idzie PRZED usunięciem klucza i idzie zawsze,
-// także wtedy, gdy plików nie usuwamy: wpis wskazujący klucz zdjęty z wykazu
-// wskazywałby na nic, a kontrakt każe te wpisy wymienić w odpowiedzi.
+// UsunKlucz obsługuje komendę terminal.key.remove: odpina wpisy książki hostów
+// wskazujące klucz, zdejmuje go z wykazu i opcjonalnie usuwa jego pliki
+// z dysku.
 func (a *adapterTerminala) UsunKlucz(ctx context.Context,
 	z shared.TerminalKeyRemoveRequest) (shared.TerminalKeyRemoveResponse, error) {
 
@@ -234,8 +209,8 @@ func (a *adapterTerminala) UsunKlucz(ctx context.Context,
 		return shared.TerminalKeyRemoveResponse{}, err
 	}
 	if z.DeleteFiles != nil && *z.DeleteFiles && wiersz.Sciezka != "" {
-		// Niepowodzenie usunięcia pliku nie wycofuje zdjęcia z wykazu: wpis już
-		// nie istnieje, a plik zostaje na dysku, gdzie Operator go widzi.
+		// Niepowodzenie usunięcia pliku nie wycofuje zdjęcia z wykazu: wpis już nie
+		// istnieje.
 		_ = os.Remove(wiersz.Sciezka)
 		_ = os.Remove(wiersz.Sciezka + ".pub")
 	}
@@ -246,7 +221,8 @@ func (a *adapterTerminala) UsunKlucz(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// paraKluczy wytwarza materiał klucza wskazanego rodzaju.
+// paraKluczy wytwarza materiał klucza wskazanego rodzaju biblioteką
+// standardową, bez wołania zewnętrznego programu ssh-keygen.
 func paraKluczy(rodzaj shared.TerminalKeyType) (any, ssh.PublicKey, error) {
 	switch rodzaj {
 	case shared.TerminalKeyTypeEd25519:
@@ -288,11 +264,8 @@ func paraKluczy(rodzaj shared.TerminalKeyType) (any, ssh.PublicKey, error) {
 }
 
 // zapiszPlikiKlucza odkłada klucz prywatny i publiczny na dysk maszyny rdzenia
-// i oddaje ścieżkę klucza prywatnego.
-//
-// Prawa pliku prywatnego to 0600 — wyłącznie konto procesu rdzenia. `ssh` sam
-// odmawia użycia klucza o prawach szerszych, więc plik zapisany inaczej byłby
-// plikiem, którym nie da się połączyć.
+// pod prawami 0600, jedynymi, przy których ssh godzi się użyć klucza, i oddaje
+// ścieżkę klucza prywatnego.
 func (a *adapterTerminala) zapiszPlikiKlucza(kod string, prywatny, publiczny []byte) (string, error) {
 	katalog := filepath.Join(a.katalogDanych, katalogKluczy)
 	if strings.TrimSpace(a.katalogDanych) == "" {
@@ -313,7 +286,8 @@ func (a *adapterTerminala) zapiszPlikiKlucza(kod string, prywatny, publiczny []b
 	return sciezka, nil
 }
 
-// trescKluczaJawnego składa wiersz klucza publicznego w postaci `authorized_keys`.
+// trescKluczaJawnego składa wiersz klucza publicznego w postaci pliku
+// authorized_keys, dołączając komentarz, gdy został podany.
 func trescKluczaJawnego(publiczny ssh.PublicKey, komentarz string) string {
 	if publiczny == nil {
 		return ""
@@ -339,7 +313,8 @@ func rodzajKluczaZTypu(typ string) shared.TerminalKeyType {
 	}
 }
 
-// kluczKontraktu przekłada wiersz wykazu kluczy na byt kontraktu.
+// kluczKontraktu przekłada wiersz wykazu kluczy z magazynu na byt kontraktu
+// TerminalSshKey do wydania w odpowiedzi.
 func kluczKontraktu(w dane.KluczTerminala) shared.TerminalSshKey {
 	return shared.TerminalSshKey{
 		Id:            w.Kod,

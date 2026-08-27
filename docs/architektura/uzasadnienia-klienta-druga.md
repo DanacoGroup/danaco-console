@@ -2907,3 +2907,6 @@ wywołanie IPC rzuca wyjątkiem tam, gdzie żadnego IPC nie ma. Pytanie stoi w o
 rdzenia nie zależał od mostu katalogów tylko po to, by je zadać; oba pytają tak samo. Brak powłoki nie
 jest błędem: sprawdzenie wykonane poza powłoką ma prawo rzucić wyjątkiem, a wtedy odpowiedzią jest
 zwyczajne „nie ma powłoki".
+
+## budowa/klient/src/protokol/ramka.ts
+Ramka nieczytelna albo o kształcie niezgodnym z kopertą nie blokuje sesji — wraca jako zdarzenie zapasowe z zachowaniem treści surowej w ładunku.

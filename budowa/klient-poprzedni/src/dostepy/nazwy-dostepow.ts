@@ -1,10 +1,13 @@
+/**
+ * Nazwy własne sekcji dostępów: wartość wyliczenia kontraktu w zdaniu po
+ * polsku. Plik nazywa rodzaj punktu, jego grupę oraz ikonę, stan wraz z klasą
+ * stylu i tryb dostępu, opisuje chwilę odczytu i składa adres punktu.
+ */
 import {
   AccessMode,
   AccessPointKind,
   AccessPointStatus,
 } from '../../../shared/contract';
-
-/** Nazwy własne sekcji dostępów: wartość wyliczenia kontraktu w zdaniu po polsku. */
 
 /**
  * Rodzaj punktu dostępu w jednym słowie, gotowym do wstawienia w kartę punktu.

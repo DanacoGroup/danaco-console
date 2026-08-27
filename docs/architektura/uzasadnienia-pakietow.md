@@ -5266,3 +5266,14 @@ zakłada.
 
 Rejestr jest wykazem informacyjnym, nie bramą: moduł nieznany daje wykaz
 pusty, nie błąd.
+
+## budowa/server/internal/dane/automations_nadzor.go
+
+Odczyt bazy nie może wynieść wartości poświadczenia, bo kolumny na wartość nie ma — nie
+dlatego, że ktoś pamiętał o filtrze przy odczycie. Wartość leży wyłącznie w sejfie plikowym
+katalogu danych, tym samym, którym jadą sekrety kont i punktów dostępu.
+
+Zero w miejscu automatyki w wykazie reguł alarmowania znaczy reguły wszystkich automatyk.
+
+Zakres dat w audycie pusty znaczy brak zawężenia: znacznik pusty jest leksykograficznie
+mniejszy od każdego znacznika ISO, a górna granica pusta zdejmuje warunek jawnym porównaniem.

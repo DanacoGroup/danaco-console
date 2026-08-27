@@ -4958,3 +4958,21 @@ Zrównanie ich w kliencie kazałoby zbiorowi nadpisać wpis, którego rdzeń nie
 Wchłonięcie wykazu zastępuje warstwę, a nie dokłada do niej. Odpowiedź rdzenia jest pełnym
 stanem warstwy w chwili odczytu, więc scalanie zostawiłoby w wykazie plik, który w bazie już
 nie istnieje. Zdarzenie o zmianie bez pola pliku jest mijane, zamiast zakładać wiersz z pustki.
+
+## budowa/klient-poprzedni/src/moduly/design/skutek-designu.ts
+
+Zdania o skutku są wydzielone z okien, ponieważ okna składają kontrolki, a to
+jest ocena odpowiedzi rdzenia. Zdanie zbudowane z tego, co okno wysłało, bywa
+prawdziwe przypadkiem i skłamie, gdy rdzeń zapisze co innego.
+
+Przy przekazaniu komenda `context.transfer` nie sprawdza katalogu modułów:
+przepisuje pole `targetModuleId` do okna docelowego bez zmiany i oddaje wartość
+prawdziwą w polu `transferred` także dla modułu, którego nie ma. Jedynym polem
+mówiącym, gdzie zasób wylądował, jest `window.moduleId` z odpowiedzi, więc zdanie
+odpowiada na oba pytania: czy przeniesienie się odbyło i dokąd.
+
+Przy zapisie kompozycji odpowiedź niesie całą kompozycję odczytaną po zapisie,
+wraz z nazwą i wykazem warstw; liczba warstw, która wróciła, jest jedyną miarą
+tego, ile ich leży w rdzeniu. Przy nadaniu etykiet zestaw zastępuje poprzedni,
+więc różnica wobec zestawu zamówionego znaczy, że zapis nie jest tym, o który
+proszono, i musi być odmową, a nie milczeniem.

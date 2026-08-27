@@ -162,10 +162,10 @@ mieć jedną nazwę.
 | `.au-odliczanie` | `.dn-meta` ⚠ | 1 |
 | `.au-opcja` | `.dn-check-etyk` | 5 |
 | `.au-sila-opis` | `.dn-pole-opis` | 1 |
-| `.cd-ik` | `.dn-ik` | 5 |
-| `.cd-listwa` | `.dn-listwa` | 1 |
-| `.cd-listwa-poz` | `.dn-listwa-pozycja` | 3 |
-| `.cd-listwa-sep` | `.dn-stan-sep` | 2 |
+| ~~`.cd-ik`~~ | `.dn-ik` — ZROBIONE | 5 |
+| ~~`.cd-listwa`~~ | `.dn-listwa` — ZROBIONE | 1 |
+| ~~`.cd-listwa-poz`~~ | `.dn-listwa-pozycja--pulpit` — ZROBIONE; podniesienie i stan `aria-pressed` weszły do biblioteki jako wariant | 3 |
+| ~~`.cd-listwa-sep`~~ | `.dn-separator--pionowy` — ZROBIONE. Nie `.dn-stan-sep`: tamten ma sztywne 14 px pod pasek stanu, a separator listwy rozciąga się na wysokość pasa | 2 |
 | `.cd-modul-sesja` | `.dn-meta` ⚠ | 1 |
 | `.cd-nauka-kroki` | `.dn-kolejka` | 1 |
 | `.cd-nauka-nota` | `.dn-dost-nota` | 1 |
@@ -255,7 +255,7 @@ mieć jedną nazwę.
 | `.cd-archiwum` | Zero wystapien w .html i .js. Caly blok (border:1px dashed var(--dn-obrys); border-radius: |
 | `.cd-archiwum-tresc` | Zero wystapien w .html i .js. Blok (padding, color:var(--dn-tekst-2), fs-sm, lh-luzny, ani |
 | `.cd-karta-menu` | Zero wystapien w atrybutach class w .html. Jedyne odwolanie w calym drzewie to selektor ob |
-| `.cd-listwa-menu` | Zero wystapien w .html i .js. Blok position:relative; margin-left:var(--dn-od-1) oraz > .d |
+| ~~`.cd-listwa-menu`~~ | ZROBIONE — skreślona z centrum-dowodzenia.css i centrum-obszar.css |
 | `.cd-nadtytul` | Zero wystapien w atrybutach class w .html i zero w .js w calym /home/ubuntu/robocze/protot |
 | `.cd-naglowek-akcje` | Zero wystapien w .html i .js. Blok display:flex; align-items:center; gap:var(--dn-od-2) ni |
 | `.cd-podtytul` | Zero wystapien w .html i .js. (Blok: margin, max-width:78ch, color:var(--dn-tekst-2), fs-b |

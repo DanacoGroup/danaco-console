@@ -73,10 +73,6 @@
   .dn-belka-marka .kropka { animation: none; }
 }
 
-.cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst-3); }
-
-.cd-listwa:hover .cd-listwa-menu > .dn-btn-ikona { color: var(--dn-tekst); }
-
 .cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
 
 .cd-archiwum > summary {

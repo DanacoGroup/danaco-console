@@ -4843,3 +4843,14 @@ Koperty serii C mają wymiary normy, a nie zaokrąglone, ponieważ norma ISO 269
 Pozycje B4 i B5 stały wcześniej wyłącznie w wykazie okna Studia, poza wykazem rdzenia, co prowadziło do odmowy rozpoznania nośnika wybranego z widocznego wykazu; obecnie należą do tego samego szeregu ISO B co B1–B3.
 
 Koperta DL ma wymiar normy ISO 269 (110 na 220 mm) zapisany pionowo; wcześniej dwa wykazy niosły dla niej różne liczby — 99 na 210 oraz 220 na 110 — dla tego samego nośnika.
+
+## budowa/server/internal/core/handlers_konta_poswiadczenia.go
+Poświadczenie wchodzi żądaniem przy koncie i przy punkcie dostępu i nie
+wychodzi nigdy: kolumny na treść sekretu nie ma w schemacie bazy w ogóle,
+a odpowiedź kontraktu niesie co najwyżej znacznik obecności poświadczenia
+albo odwołanie do niego. Zamiana sekretu na odwołanie należy do portu sejfu
+poświadczeń wypełnianego przy montażu. Gdy sejfu nie wpięto, poświadczenie
+jest odrzucane w tym samym wywołaniu — nie trafia do bazy, do dziennika ani
+do odpowiedzi, a byt powstaje bez odwołania i pracuje dalej; cicha utrata
+sekretu byłaby gorsza od jawnego braku sejfu, więc warstwa wyżej widzi to po
+pustym odwołaniu i po fałszywym znaczniku obecności poświadczenia.

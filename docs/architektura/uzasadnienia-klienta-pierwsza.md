@@ -5067,3 +5067,38 @@ stan nazywał się w całym drzewie tak samo.
 
 Okno stoi w stanie pustym przez chwilę między zbudowaniem układu a pierwszą odpowiedzią
 rdzenia i jest to wtedy jedyne zdanie, które Operator czyta.
+
+## budowa/klient-poprzedni/src/moduly/design/wejscie-rozmowy.ts
+
+Plik rozstrzyga, którędy wynik pracy prowadzonej w oknie rozmowy wchodzi na
+okno robocze modułu. Kładzeniem warstwy zajmuje się Design Board, a samą
+subskrypcją złożenie modułu.
+
+Miarą jest okno zasobu, a nie jego identyfikator. Komenda generowania zasobu
+przepisuje okno żądania na pole okna zasobu, więc zasób niesie okno, z którego
+padło zlecenie. Zdarzenie zmiany zasobu rozgłaszane jest natomiast dla każdego
+zasobu odpowiedzi, zanim odpowiedź wróci do autora żądania, więc po
+identyfikatorze rozróżnić się nie da: w chwili zdarzenia własnego generowania
+klient nie zna jeszcze identyfikatora własnego zasobu. Miara oparta na oknie
+wyścigu nie ma, a jedyną drogą zlecenia modułowi spoza jego okien jest rozmowa.
+
+Puste okno modułu miary nie psuje, ponieważ Prompt Builder bez okna modułu
+odmawia zlecenia, więc zasób, który wtedy przyszedł, na pewno nie jest jego.
+Miara nie rozstrzyga natomiast przypadku, w którym model wołałby komendę
+generowania z identyfikatorem okna tego modułu: wynik rozmowy byłby wtedy nie
+do odróżnienia od wyniku Prompt Buildera, na kanwę sam by nie wszedł
+i trafiłby do panelu zasobów.
+
+Skutek zdjęcia zasobu istnieje mimo tego, że rdzeń komendy usuwającej dziś nie
+ma. Wyliczenie zmian dopuszcza usunięcie, a pominięcie tej gałęzi kazałoby oknu
+położyć na kanwie zasób ogłoszony jako usunięty.
+
+Nasłuch wejścia rozmowy jest drugą subskrypcją tego samego zdarzenia, obok tej,
+którą prowadzi stan modułu. Rozdzielenie jest celowe: stan wciąga każdy zasób
+do wykazu zarządcy, a nasłuch odpowiada wyłącznie na pytanie o pochodzenie
+zasobu i wykazu nie zmienia. Zdarzenie zasobu z własnego okna modułu jest
+pomijane, bo melduje o nim Prompt Builder wraz ze słowem modelu.
+
+Znacznik obecności na kanwie jest sprawozdaniem okna roboczego, a nie
+zapowiedzią: zasób już dołożony do kompozycji nie jest kładziony drugi raz
+i zdanie mówi to wprost, zamiast zostawiać licznik, który podskoczył bez powodu.

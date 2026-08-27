@@ -6,6 +6,18 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+**Orkiestracja czterech terenow komentarzy — rytm zapisu i wznowienie po
+urwaniu.** Pisarz robi rewizje PO KAZDYM PLIKU (kod + przyrost docs razem);
+dziennik trwaly stoi w `~/robocze/prowadzenie/komentarze/` (pomiar bazowy,
+manifest porcji, dzienniki torow `<sektor>.jsonl` z liniami START/DONE).
+Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
+zacommitowany, W-GRANICY i tokeny tozsame z baza `285f4bf`; DO ZROBIENIA =
+PONAD granica (pomiar `narzedzia/zrodlo-bez-komentarzy.go -gestosc`);
+podejrzany po urwaniu = ostatni START bez DONE w dzienniku toru →
+`git checkout -- <plik>` i plik wraca do puli. Wznowienie: pomiar
+pozostalosci sektora → nowa orkiestracja na resztce manifestu.
+
+
 ### komentarz-studio-design
 
 Przepisanie komentarzy do standardu zawodowego wraz z domknieciem granicy
@@ -14,8 +26,8 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-studio-design` z `main` |
-| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go` oraz `adapter_modul_design_*.go` oraz nowy `docs/architektura/uzasadnienia-studio-design.md` |
-| **Skala** | 92 plikow, 641 tys. znakow komentarza |
+| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go`, `adapter_modul_design_*.go`, pakiety `internal/wiedza/`, `internal/mowa/`, `internal/poczta/`, `internal/zewnetrzne/` oraz nowy `docs/architektura/uzasadnienia-studio-design.md` |
+| **Skala** | 125 plikow, 854 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-moduly`, `komentarz-rdzen`, `komentarz-pakiety` |
 
 **Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
@@ -49,7 +61,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 |---|---|
 | **Galaz** | `teren/komentarz-moduly` z `main` |
 | **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` oraz nowy `docs/architektura/uzasadnienia-modulow.md` |
-| **Skala** | 260 plikow, 990 tys. znakow komentarza |
+| **Skala** | 262 plikow, 1072 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-rdzen`, `komentarz-pakiety` |
 
 **Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
@@ -83,7 +95,7 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 |---|---|
 | **Galaz** | `teren/komentarz-rdzen` z `main` |
 | **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` oraz nowy `docs/architektura/uzasadnienia-rdzenia.md` |
-| **Skala** | 364 plikow, 1160 tys. znakow komentarza |
+| **Skala** | 364 plikow, 1228 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-pakiety` |
 
 **Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
@@ -116,8 +128,8 @@ z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
 | | |
 |---|---|
 | **Galaz** | `teren/komentarz-pakiety` z `main` |
-| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietem `core` oraz nowy `docs/architektura/uzasadnienia-pakietow.md` |
-| **Skala** | 457 plikow, 1114 tys. znakow komentarza |
+| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietami `core`, `wiedza`, `mowa`, `poczta`, `zewnetrzne` (te niesie teren studio-design), wraz z `budowa/server/cmd/`, oraz nowy `docs/architektura/uzasadnienia-pakietow.md` |
+| **Skala** | 430 plikow, 1013 tys. znakow komentarza (pomiar instrumentem, 27.08) |
 | **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-rdzen` |
 
 **Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie

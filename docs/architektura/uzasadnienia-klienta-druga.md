@@ -5327,3 +5327,27 @@ oddaje pustą tablicę, mówi „nic nie znalazłem" zamiast „nie udało się 
 zdania, z których tylko jedno jest prawdziwe. Kontrakt nie niesie zdarzenia zmiany wskaźnika
 wiedzy, więc okno nie ma się na czym zawiesić i odświeża się wyłącznie na czynność operatora —
 nasłuch stanąłby na zdarzeniu, które nigdy nie przychodzi.
+
+## budowa/klient-poprzedni/src/ustawienia/zrodlo-urzadzen.ts
+Rozdział względem źródła bramki przebiega po przedmiocie, nie po oknie: tamto źródło prowadzi metody
+wejścia i sesję bramki, to prowadzi urządzenia. Obie rodziny spotykają się w polu identyfikatora
+urządzenia, ale odpowiadają za co innego — zdjęcie metody PIN zostawia token urządzenia nietknięty,
+a unieważnienie tokenu nie zdejmuje metod. Wykaz po zmianie przychodzi zdarzeniem, nie z odpowiedzi:
+unieważnienie oddaje wyłącznie potwierdzenie, a pełny wykaz rdzeń rozgłasza zdarzeniem do wszystkich
+połączonych urządzeń — dzięki temu unieważnienie wykonane na jednej maszynie widać natychmiast na
+pozostałych ekranach, i dlatego sekcja nie odpytuje rdzenia po każdej czynności. Rdzeń nie broni
+unieważnienia własnego tokenu; orzeczenie o skutku należy do niego, a ostrzeżenie do ekranu. Zdarzenie
+niesie pełny wykaz po zmianie oraz opcjonalnie urządzenie, którego zmiana dotyczy; pole bywa puste, tak
+przychodzi zmiana hasła, która unieważnia tokeny hurtem, i sekcja nie zgaduje za rdzeń, czego dotyczyła.
+
+## budowa/klient-poprzedni/src/ustawienia/tozsamosc-urzadzenia.ts
+Czytelnik, który wyłącznie pokazuje, czym maszyna się przedstawia, niczego nadawać nie może: samo
+obejrzenie nie jest czynnością operatora na urządzeniu. Jedna funkcja z domyślnym trybem byłaby pułapką:
+pomyłka w argumencie nadałaby tożsamość przy odczycie, stąd dwie nazwy i jedno miejsce, w którym stoi
+klucz pamięci. Sekcja urządzeń po tę wartość nie sięga: wykaz niesie pole wskazujące maszynę pytającego,
+którym rdzeń sam ją oznacza, a tożsamość z pamięci przeglądarki byłaby przy nim drugą, słabszą prawdą.
+Wartość mieszka w pamięci przeglądarki, nie w powitaniu połączenia: PIN jest właściwy urządzeniu, a
+tożsamość z powitania jest nadawana na czas uruchomienia — PIN założony wczoraj ma zostać PIN-em tej
+samej maszyny, więc wartość musi przeżyć zamknięcie okna. Pusty wynik oddania tożsamości znaczy, że
+pamięć trwała jest niedostępna — wywołanie idzie wtedy bez wymyślonego identyfikatora i to rdzeń orzeka
+odmowę, zamiast klienta zgadującego za niego.

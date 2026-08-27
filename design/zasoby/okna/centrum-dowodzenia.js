@@ -377,13 +377,27 @@
   var ostatni = null;
   var plotno = null;
 
-  /* Szerokości pseudoelementu nie da się zmierzyć, ale da się zmierzyć napis
-     krojem, którym jest złożony — to wystarcza do dociśnięcia do krawędzi. */
-  function szerokosc(el, tekst) {
+  /* Szerokości pseudoelementu nie da się odczytać wprost, ale da się złożyć:
+     napis mierzony krojem dymka plus jego wyściółka i ramka. Krój bierze się
+     z `::after`, nie z wyzwalacza — przycisk niesie własny, większy stopień
+     pisma, przez który dymek wychodził szerszy, niż jest, i docisk do krawędzi
+     odsuwał go od ikony nawet tam, gdzie mieścił się bez przesunięcia. */
+  function miara(el) {
+    var s = window.getComputedStyle(el, '::after');
+    var wyscielka = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight)
+                  + parseFloat(s.borderLeftWidth) + parseFloat(s.borderRightWidth);
+    var wysokosc = parseFloat(s.height);
+    return {
+      krój: s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily,
+      wyscielka: isFinite(wyscielka) ? wyscielka : 20,
+      wysokosc: isFinite(wysokosc) && wysokosc > 0 ? wysokosc : 26,
+    };
+  }
+
+  function szerokosc(m, tekst) {
     if (!plotno) { plotno = document.createElement('canvas').getContext('2d'); }
-    var s = window.getComputedStyle(el);
-    plotno.font = s.fontWeight + ' ' + s.fontSize + ' ' + s.fontFamily;
-    return plotno.measureText(tekst).width + 20;
+    plotno.font = m.krój;
+    return plotno.measureText(tekst).width + m.wyscielka;
   }
 
   function zdejmij(el) {
@@ -402,7 +416,8 @@
     if (ostatni && ostatni !== el) { zdejmij(ostatni); }
     ostatni = el;
 
-    var polowa = szerokosc(el, tekst) / 2;
+    var m = miara(el);
+    var polowa = szerokosc(m, tekst) / 2;
     var x = r.left + r.width / 2;
     var lewaGranica = MARGINES + polowa;
     var prawaGranica = window.innerWidth - MARGINES - polowa;
@@ -413,8 +428,9 @@
     }
 
     /* Przy dolnej krawędzi okna dymek nie ma dokąd opaść — staje nad
-       wyzwalaczem. Wysokość dymka to jeden wiersz pisma z wyściółką. */
-    var wysokosc = r.height ? 26 : 26;
+       wyzwalaczem. Wysokość bierze się z `::after`, bo stopień pisma dymka
+       zmienia się razem z żetonem. */
+    var wysokosc = m.wysokosc;
     var y = r.bottom + ODSTEP;
     if (y + wysokosc > window.innerHeight - MARGINES) {
       y = r.top - ODSTEP - wysokosc;

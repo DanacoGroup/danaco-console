@@ -6645,3 +6645,20 @@ nastawa, więc jeden odczyt.
 
 ## budowa/klient-poprzedni/src/moduly/apps/przybornik-apps.ts
 Każde narzędzie jest przyciskiem, a przy narzędziach, które czegoś od Operatora potrzebują, obok przycisku stoją pola wejściowe; naciśnięcie woła rdzeń i pokazuje pod przyciskiem zdanie o skutku — nazwę bytu, liczbę pozycji, kod odpowiedzi, odwołanie do pliku — składane przez samo narzędzie, bo tylko ono wie, co w jego odpowiedzi jest skutkiem. Przybornik jest czymś innym niż wykaz braków: tamten wymienia czynności, których kontrakt nie niesie, a naciśnięcie mówi, czego brakuje; ten wymienia czynności, które kontrakt niesie i rdzeń obsługuje, więc naciśnięcie robi robotę — dwa wykazy obok siebie mówią Operatorowi wprost, co w tym oknie działa, a co jest jeszcze zapowiedzią. Zasada zero blokad: ani jedna kontrolka nie dostaje atrybutu wyłączenia; narzędzie, któremu brakuje okna modułu albo wypełnionego pola, pozostaje klikalne i po naciśnięciu nazywa brak, zamiast milczeć pod wyszarzonym przyciskiem. Odmowa rdzenia nie jest wyjątkiem widoku: wraca zwykłym wynikiem z polem błędu, a przybornik pokazuje ją tym samym zdaniem, którym opisuje odmowy reszta platformy. Wartość startowa pola wejściowego jest przykładem z domeny produktu, nie wartością wymuszoną.
+
+## budowa/klient-poprzedni/src/moduly/library/okno-metadata-archive.ts
+Zakładki obiecywałyby trzy równorzędne widoki jednego bytu, a tu Metadane
+mówią o pliku wskazanym, a Archiwum i Higiena o całym repozytorium, dlatego
+przełącza je selektor obszaru. Zależność wejściowa różni się obszarem:
+Metadane bez wskazania pliku nie mają o czym mówić i okno stoi wtedy
+w stanie pustym, a Archiwum i Higiena pracują na odczytanym wykazie
+i wskazania nie potrzebują. Okno nie ma własnego odczytu poza przeliczeniem
+wskaźnika znaczenia, bo kontrakt nie ma komendy metadanych zasobu, więc
+wszystko, co panel pokazuje, pochodzi z wykazu przyniesionego przez
+przeglądarkę plików i z odpowiedzi o treści odłożonej przez podgląd pliku;
+jedno zdanie dla wszystkich trzech obszarów orzekałoby o wskazaniu pliku
+także tam, gdzie wskazanie nie jest do niczego potrzebne. Cztery puste stany
+przycisku pierwszej akcji prowadzą do czterech różnych czynności: odśwież
+wykaz, dodaj plik, wskaż plik, przełącz obszar, a jeden przycisk o stałym
+napisie kierowałby w trzech z nich w złą stronę, więc każdy stan mówi to
+własnym zdaniem.

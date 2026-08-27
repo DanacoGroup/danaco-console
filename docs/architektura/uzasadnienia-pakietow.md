@@ -3596,3 +3596,6 @@ identyfikatora większego niż jeden pilnuje tego samego, co przy ubiciu: sygna�
 do minus jeden byłby rozgłoszeniem do wszystkich procesów systemu, a do jeden,
 sygnałem do procesu init. Brak procesu o danym identyfikatorze znaczy, że nie
 ma już czego wstrzymywać, i nie jest błędem.
+
+## budowa/server/internal/dane/diagnostics.go
+Repozytorium nie wytwarza faktów diagnostycznych: nie liczy stanu systemu, nie ocenia błędów i nie wymyśla rekomendacji, wyłącznie przenosi to, co rdzeń mu przekazał. Wzorzec dopasowania w filtrze dziennika dotyczy treści wpisu, a samo dopasowanie regularne wykonuje rdzeń, ponieważ SQLite bez rozszerzenia nie zna operatora dopasowania wyrażeń regularnych. Zapis błędu diagnostycznego rozstrzyga po odcisku: wystąpienie o odcisku już znanym podnosi licznik i przesuwa chwilę ostatniego wystąpienia, a wystąpienie o odcisku nowym zakłada nowy wiersz od zera.

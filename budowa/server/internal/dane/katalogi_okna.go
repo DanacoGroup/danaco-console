@@ -57,7 +57,7 @@ func zapiszKatalogiOkna(ctx context.Context, z *zapytania, transakcja *sql.Tx,
 	return nil
 }
 
-// katalogiOkna zwraca listę katalogów jednego okna w zapisanej kolejności.
+// katalogiOkna zwraca listę katalogów roboczych jednego okna w kolejności, w jakiej zostały one zapisane.
 func katalogiOkna(ctx context.Context, z *zapytania, oknoID int64) ([]string, error) {
 	polecenie, err := z.przygotuj(ctx, listaKatalogowOkna)
 	if err != nil {

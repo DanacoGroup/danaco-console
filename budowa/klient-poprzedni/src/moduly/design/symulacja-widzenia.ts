@@ -1,6 +1,11 @@
+/**
+ * Symulacja wad widzenia barw na próbkach żetonów modułu Design. Plik
+ * przekształca barwę macierzą jednej z trzech dichromazji, podaje jej zapis
+ * w składni arkusza stylów i orzeka, czy dwie barwy zlewają się ze sobą po
+ * przekształceniu.
+ */
 import type { Barwa } from './kontrast-wcag';
 
-/** Symulacja wad widzenia barw na próbkach żetonów modułu Design. */
 
 /**
  * Trzy dichromazje objęte symulacją. Wartość jest jednocześnie kluczem macierzy

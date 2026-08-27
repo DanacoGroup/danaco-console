@@ -3203,3 +3203,38 @@ promptu: brak wartości znaczy prompt globalny, `DOLACZ` prompt dopisywany,
 Kontrakt daje modułowi Agents wyłącznie zdarzenie `agent.changed`, więc
 przywrócenie wersji, archiwizacja i powrót z archiwum rozgłaszają się
 rodzajem `updated` wraz z ekspertem po zmianie.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go
+
+Wspólne zaplecze (źródło, pracownia, wołanie binarium, odmowy) stoi
+w adapter_narzedzia_obraz_model.go, metody stoją na tym samym adapterze. Oba
+silniki liczą na procesorze: Real-ESRGAN w wydaniu ncnn-vulkan jest jednym
+plikiem wykonywalnym bez Pythona i bez Torcha, a Vulkana dostaje od sterownika
+programowego lavapipe z Mesy — wydanie pythonowe dałoby ten sam wynik za cenę
+kilku gigabajtów zależności. Rembg jest Pythonem, ale jego runtime ONNX
+Runtime ma tryb procesorowy jako podstawowy, nie awaryjny.
+
+Celowo brak gałęzi "gdy silnika nie ma, przeskaluj ImageMagickiem", bo
+rozciągnięcie oddane jako powiększenie jest atrapą, której nie widać do
+przybliżenia. Celowo brak poprawiania twarzy w tym samym przebiegu: pole
+faces niesie kontrakt, ale przebieg twarzowy robi osobna sieć GFPGAN, której
+wydanie ncnn tego silnika nie zawiera — idzie ona drugim przebiegiem nad
+wynikiem powiększenia. Bez niej żądanie z faces true kończy się odmową
+nazywającą brak, zamiast oddać obraz bez poprawki twarzy jako poprawiony.
+
+Nazwa silnika powiększenia dobiera rdzeń, nie model językowy: kontrakt
+image.upscale nie ma pola na jej nazwę, ta sama reguła co przy formatach
+image.convert.
+
+Wybór modelu wycinania tła jest wyborem ze zbioru, a nie dowolnym tekstem:
+u2net jest domyślną siecią ogólną, isnet-general-use bywa dokładniejsza na
+cienkim szczególe (włosy, gałęzie), u2net_human_seg jest uczona na ludziach
+i na portrecie bije obie, u2netp jest wersją lekką dla maszyn bez zapasu
+pamięci.
+
+Pomocnik wycinania tła puszczony na plik pusty odmówiłby dopiero po starcie
+interpretera i wczytaniu wag, czyli o minutę później i mniej zrozumiale,
+dlatego odczyt idzie wcześniej.
+
+Mapa w Go chodzi losowo, dlatego znaneModeleWycinania wypisuje zbiór w
+kolejności stałej, żeby odmowa czytana dwa razy brzmiała tak samo.

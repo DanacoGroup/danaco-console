@@ -2247,3 +2247,21 @@ prawdę, zamiast każdy swoją.
 ## budowa/klient-poprzedni/src/moduly/research/okno-research-workspace.ts
 Zakres badania zapisuje komenda ustawienia przestrzeni roboczej, niosąca zakres i etapy; zapis kończy się odpowiedzią rdzenia albo jego odmową, nigdy ciszą. Nawigacja do pozostałych okien modułu jest przeniesieniem ogniska wewnątrz przestrzeni modułu: okna stoją obok siebie, nie w osobnych trasach, więc nie woła rdzenia.
 Wskazanie etapu prowadzi wzrok do okna właściwego temu krokowi pracy. Przypisanie źródła do etapu ma już pole w żądaniu katalogowania, ale samo źródło oddawane przez rdzeń go nie niesie, więc okno nie ma po czym zawężać i mówi to wprost, zamiast udawać filtr.
+
+## budowa/klient-poprzedni/src/powloka/most-rdzenia.ts
+
+Most do wiedzy powłoki natywnej o rdzeniu jest konsumentem poleceń adres_rdzenia
+i stan_rdzenia. Powłoka stawia proces rdzenia, zna jego port ze zmiennej środowiska,
+jego identyfikator procesu i ścieżkę dziennika. Interfejs nie zna żadnej z tych
+rzeczy: adres gniazda wylicza z lokalizacji dokumentu, a powodu ciszy nie zna wcale.
+Stąd dwa polecenia: adres_rdzenia zwraca adres HTTP rdzenia lokalnego, potrzebny
+gdy okno dostało interfejs z pakietu osadzonego w powłoce, bo strona ma wtedy
+pochodzenie lokalne powłoki, a wyliczenie z lokalizacji dałoby adres gniazda, pod
+którym nie nasłuchuje nikt; stan_rdzenia zwraca opis rdzenia w tle wraz z
+przebiegiem uruchomienia, bez którego wskaźnik łączności umie powiedzieć wyłącznie
+że jest rozłączony, bez powodu i bez wskazania dziennika. Poza powłoką natywną
+oraz przy niepowodzeniu polecenia odpowiedzią jest wartość pusta. Żadna ścieżka
+nie rzuca wyjątkiem i nie odrzuca obietnicy — brak odpowiedzi powłoki niczego nie
+wstrzymuje, bo interfejs ma własną drogę ustalenia adresu i własny stan łączności.
+Polecenia zmieniającego stan rdzenia tu nie ma: zatrzymanie rdzenia jest czynnością
+z zasobnika powłoki, a most nie tworzy drugiej drogi sterowania platformą.

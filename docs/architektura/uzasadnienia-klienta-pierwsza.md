@@ -1764,3 +1764,16 @@ Wywołanie z innym kanałem, właściwe dla ponownego połączenia z rdzeniem, b
 okno od nowa, aby komendy nie szły przez transport, którego już nie ma. Sekcję
 można też osadzić bez ramy okna: `utworzSekcjeModeli` oddaje ten sam byt bez
 elementu `dialog` wokół niego, czyli jedna implementacja w dwóch oprawach.
+
+## budowa/klient-poprzedni/src/moduly/automations/stany-okna.ts
+
+Nośnik stanu treści okien modułu Automations różni się od nośnika wspólnego
+zachowaniem metod `blad()` i `pusto()`: obie zdejmują wcześniejsze potwierdzenie,
+zanim postawią własny komunikat. Nośnik wspólny (`komponenty/stan-tresci.ts`)
+przestawia wyłącznie pas komunikatu, więc bez tego zdjęcia odmowa rdzenia stoi
+obok potwierdzenia czynności poprzedniej, a zielone zdanie nad odmową potwierdza
+czynność, która się nie odbyła.
+
+Różnica siedzi w module, a nie w nośniku wspólnym, ponieważ ten sam nośnik
+obsługuje okna pozostałych modułów. Przedrostek klas `da` należy do arkusza
+modułu, dlatego wiązanie nośnika z przedrostkiem stoi po stronie modułu.

@@ -1499,3 +1499,32 @@ dołożeń, jedna wada jednego adaptera zabierała całą pracę. Osłona nie je
 usterki i niczego nie ucisza: powód idzie do dziennika ze śladem stosu, żeby wada została
 zgłoszona jako wada, a nie zniknęła w ciszy; miarą jest to, że Operator traci jedną
 odpowiedź zamiast całej sesji.
+
+## budowa/server/internal/core/przegladarka_silnik.go
+
+Silnik przeglądarki uzupełnia pobranie realizowane w
+`przegladarka_pobieranie.go` o wszystko, co jest własnością strony
+URUCHOMIONEJ, nie jej źródła: zrzut ekranu, drzewo DOM po zbudowaniu przez
+skrypty, komunikaty konsoli, rejestr żądań sieciowych, emulację urządzenia
+i przewinięcie. Rozmowa z uruchomioną stroną idzie protokołem Chrome
+DevTools.
+
+Zasada produktu mówi, że żadna funkcja nie zależy od programu, którego
+instalka nie niesie. Cała aplikacja z arsenałem stoi na serwerze, u Operatora
+jest samo okno — Chromium jest więc programem serwerowym, tak samo jak
+ffmpeg czy Tesseract, i jak one stoi w sondzie zależności zewnętrznych.
+Silnika przeglądarki nie da się wkompilować w binarium Go; wyjątek na
+biblioteki wkompilowane obejmuje PDF i kryptografię, nie renderowanie stron.
+
+`zewnetrzne.Wolaj` prowadzi uruchomienie do końca i oddaje bajty po
+zakończeniu programu. Przeglądarka ma żyć, dopóki trwa rozmowa: startuje,
+przyjmuje polecenia protokołem i dopiero potem gaśnie, więc proces startuje
+w tym pliku, a nie przez `Wolaj`. Sekwencja jest jednak ta sama co przy
+innych programach zewnętrznych: port `session.Uruchamiacz`, brama izolacji
+`session.SprawdzPolecenie`, objęcie drzewa procesów
+`session.PrzejmijDrzewo` — Chromium rozgałęzia procesy renderowania i sieci,
+a przerwana sesja bez objęcia drzewa zostawiłaby je na maszynie Operatora.
+
+Strona, która nie kończy wczytywania, jest zjawiskiem codziennym. Każde
+otwarcie ma granicę czasu; po jej przekroczeniu sesja oddaje to, co zdążyła
+zebrać, albo odmawia — nigdy nie czeka bez końca.

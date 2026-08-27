@@ -1,3 +1,8 @@
+/**
+ * Wiersze wykazu obszarów i trzy pasy poboczne panelu konfiguracji
+ * obowiązującej. Plik składa wiersz obszaru z pól kontraktu, buduje treść
+ * wykazu wraz ze zdaniem o jego pustce oraz ubiera wiersze, katalog i braki.
+ */
 import type { SessionConfigArea } from '../../../shared/contract';
 import { przelacznik } from '../modele/kontrolki-formularza-braki';
 import {
@@ -8,8 +13,6 @@ import {
 } from './obszary-sesji';
 import { stanPusty } from './panel-kategorii';
 import type { StanObszarowSesji } from './stan-obszarow-sesji';
-
-/** Wiersze wykazu obszarów i trzy pasy poboczne panelu konfiguracji obowiązującej. */
 
 /**
  * Wiersz jednego obszaru: nazwa, plakietka pochodzenia oraz pole wyboru do zapisu.

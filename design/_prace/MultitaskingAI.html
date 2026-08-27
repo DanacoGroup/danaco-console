@@ -2884,7 +2884,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 
     <div class="dn-pasek-prawa">
 
-      <!-- WSKAŹNIK STANU PRZEBIEGU PROCESU (rozdz. 12.1) -->
+      <!-- WSKAŹNIK STANU PRZEBIEGU PROCESU -->
       <div style="position:relative">
         <button class="dn-plakietka dn-plakietka--sukces" type="button"
                 id="wskaznik-przebiegu" data-menu="menu-stan-przebiegu"
@@ -2966,7 +2966,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   <!-- ══ CIAŁO: PANEL ORKIESTRACJI + OBSZAR ROBOCZY ════════════════════ -->
   <div class="pt-cialo" id="cialo" data-panel="rozwiniety">
 
-    <!-- ── PANEL ORKIESTRACJI — sześć sekcji (rozdz. 6.2) ──────────────── -->
+    <!-- ── PANEL ORKIESTRACJI — sześć sekcji ──────────────── -->
     <nav class="dn-boczna mt-panel" id="panel-orkiestracji" data-uklad="podglad" aria-label="Panel orkiestracji">
       <div class="mt-panel-naglowek">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
@@ -3236,7 +3236,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
               </span>
             </div>
 
-            <!-- legenda stanów roli (rozdz. 12.2) -->
+            <!-- legenda stanów roli -->
             <div class="mt-legenda" style="margin-bottom:var(--dn-od-3)" aria-label="Stany roli">
               <span class="dn-plakietka"><span class="dn-kropka dn-kropka--neutralna"></span> Bezczynna</span>
               <span class="dn-plakietka dn-plakietka--sukces"><span class="dn-kropka dn-kropka--sukces"></span> Pracuje</span>
@@ -3664,7 +3664,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 
           <div class="pt-okno-tresc pt-okno-tresc--gniazdo">
 
-            <!-- pasek filtrów (makieta 4.6) -->
+            <!-- pasek filtrów -->
             <div class="pt-przybornik-lokalny" style="border:1px solid var(--dn-obrys); border-radius:var(--dn-r-sm); margin-bottom:var(--dn-od-3)">
               <label class="mt-rzad" style="gap:var(--dn-od-1)">
                 <span class="mt-opis--drobny">zasięg</span>
@@ -3752,7 +3752,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
                   </table>
                 </div>
 
-                <!-- PANEL ROZWINIĘTY (makieta 4.6) -->
+                <!-- PANEL ROZWINIĘTY -->
                 <div class="mt-tresc">
                   <div class="mt-blok">
                     <div class="mt-blok-glowa">
@@ -4333,7 +4333,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
 
       </div><!-- /mt-widoki -->
 
-      <!-- ══ PASEK STANU PROCESU (makieta 9.3) ═══════════════════════════ -->
+      <!-- ══ PASEK STANU PROCESU ═══════════════════════════ -->
       <div class="mt-pasek-stanu" role="status" aria-live="polite">
         <span>Proces: <b data-pasek-proces>Zespół „Budowa aplikacji”</b></span>
         <span class="dn-separator dn-separator--pionowy" aria-hidden="true"></span>
@@ -4352,7 +4352,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </div><!-- /pt-cialo -->
 </div><!-- /pt-powloka -->
 
-<!-- ══ ALWAYS ON DISPLAY — warstwa centralna (z-index 1200) ═══════════════ -->
+<!-- Warstwa centralna Always On Display nakłada się na powłokę okna z najwyższym priorytetem wyświetlania, dzięki czemu pozostaje widoczna niezależnie od aktywnej sekcji panelu orkiestracji. -->
 <button class="dn-aod" type="button" data-otworz-aod aria-label="Always On Display — otwórz warstwę centralną" style="border:1px solid var(--dn-obrys); cursor:pointer">
   <span class="dn-aod-rdzen" aria-hidden="true">
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><circle cx="12" cy="4.6" r="1.9"/><circle cx="4.9" cy="16.4" r="1.9"/><circle cx="19.1" cy="16.4" r="1.9"/><path d="M12 9.4V6.5"/><path d="M9.8 13.4l-3.3 1.9"/><path d="M14.2 13.4l3.3 1.9"/></svg>
@@ -4440,7 +4440,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </section>
 
-<!-- ══ MODAL · KONFIGURACJA PANELU ORKIESTRACJI (rozdz. 6.4, 6.5) ════════ -->
+<!-- Okno modalne pozwala ustawić kolejność i widoczność sześciu sekcji panelu orkiestracji oraz przywrócić zestaw domyślny bez utraty możliwości ponownego włączenia ukrytej sekcji. -->
 <dialog class="dn-modal" id="modal-panel" data-zamknij-podlozem>
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul">Konfiguracja panelu orkiestracji</h2>
@@ -4466,7 +4466,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </dialog>
 
-<!-- ══ MODAL · PUNKTY IZOLACJI, ZASIĘG „ROLA” (makieta 9.7) ═════════════ -->
+<!-- Okno modalne prezentuje konfigurację punktów izolacji ograniczoną do zasięgu roli, określającą, które zależności i zasoby pozostają współdzielone między wykonawcami. -->
 <dialog class="dn-modal" id="modal-izolacja" data-zamknij-podlozem style="width:min(880px, calc(100vw - var(--dn-od-8)))">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul">Okno konfiguracji punktów izolacji — zasięg „Rola”</h2>
@@ -4538,7 +4538,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </dialog>
 
-<!-- ══ MODAL · SZCZEGÓŁY PRZEBIEGU ══════════════════════════════════════ -->
+<!-- Okno modalne pokazuje pełny, chronologiczny dziennik zdarzeń wybranego przebiegu, obejmujący każdą akcję silnika kolejek zarejestrowaną w toku jego wykonania. -->
 <dialog class="dn-modal" id="modal-przebieg" data-zamknij-podlozem>
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul">Szczegóły przebiegu #131</h2>
@@ -4566,7 +4566,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </dialog>
 
-<!-- ══ MODAL · KATALOG JEDENASTU AKCJI ══════════════════════════════════ -->
+<!-- Okno modalne zestawia jedenaście akcji silnika kolejek wraz z grupą funkcjonalną, działaniem, typowym inicjatorem oraz reprezentacją w interfejsie użytkownika. -->
 <dialog class="dn-modal" id="modal-akcje" data-zamknij-podlozem style="width:min(880px, calc(100vw - var(--dn-od-8)))">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul">Jedenaście akcji silnika kolejek</h2>
@@ -4600,7 +4600,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </dialog>
 
-<!-- ══ MODAL · FORMULARZ KONFIGURACJI ZESPOŁU (rozdz. 14.4) ═════════════ -->
+<!-- Okno modalne udostępnia formularz konfiguracji zespołu, pozwalający dobrać skład wykonawców oraz zapisać ustawienie jako gotowy do ponownego użycia szablon. -->
 <dialog class="dn-modal" id="modal-formularz" data-zamknij-podlozem style="width:min(720px, calc(100vw - var(--dn-od-8)))">
   <header class="dn-modal-naglowek">
     <h2 class="dn-modal-tytul">Formularz konfiguracji zespołu</h2>
@@ -4637,7 +4637,7 @@ input[type="range"].sta-suwak { width:100%; accent-color:var(--dn-sygnal-wypelni
   </footer>
 </dialog>
 
-<!-- ══ PANEL „O TYM OPRACOWANIU" ═════════════════════════════════════════ -->
+<!-- Rozwijany panel opisuje zakres prototypu środowiska MultitaskingAI, jego źródła w dokumentacji oraz zestaw odwzorowanych interakcji, dostępny z poziomu stopki okna. -->
 <details class="pt-o-opracowaniu">
   <summary>O tym opracowaniu</summary>
   <div class="pt-o-opracowaniu-tresc">

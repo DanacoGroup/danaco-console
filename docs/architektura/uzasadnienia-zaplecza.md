@@ -2421,3 +2421,20 @@ Wiersza domyślnego migracja nie zakłada. Brak wiersza znaczy „granice
 domyślne rdzenia" i tak też odpowiada `browser.executor.limits.get` — wartość
 domyślna należy do kodu, który ją stosuje, a nie do schematu; wiersz
 zaszczepiony w migracji rozjechałby się z nią przy pierwszej zmianie.
+## budowa/server/internal/store/migracja_179_zestawy_zrodel_i_watki.sql
+Migracja 179 — zestawy tematyczne źródeł, wątki notatek oraz brakujące
+własności źródła i notatki (`browser.source.group.*`, `browser.note.thread.*`,
+`browser.note.update`).
+
+Kontrakt niesie w `BrowserSource` pole `groupId`, a w `BrowserNote` —
+`classification`, `threadId` i `pinned`. Migracja 047 zakładała te tabele,
+zanim rodzina komend obejmowała grupowanie i klasyfikację, więc kolumn tych
+w nich nie ma. Dopisanie ich tutaj jest jedynym sposobem, żeby okno mogło
+oddać notatkę tak oznaczoną, jak ją Operator oznaczył — oznaczenie żyjące
+wyłącznie w kliencie ginie przy przeładowaniu karty.
+
+Przynależność stoi po stronie źródła i notatki, nie w kolumnie zestawu:
+źródło należy do jednego zestawu, a notatka do jednego wątku, więc skład
+zestawu jest zapytaniem po kolumnie, a nie drugą listą do utrzymania.
+Kontrakt oddaje `sourceIds` i `noteIds` — rdzeń wylicza je z tej samej
+kolumny, którą zapisuje.

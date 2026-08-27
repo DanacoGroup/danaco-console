@@ -1,4 +1,4 @@
-/* Złożenie okna Centrum dowodzenia: kafle, strefy, nawigacja startowa. */
+/* Moduł składa okno Centrum dowodzenia z kafli, stref oraz nawigacji startowej, tworząc główny widok programu. */
 /* ══════════════════════════════════════════════════════════════════════════
    SKRYPT LOKALNY — Centrum dowodzenia v2. Rozszerza zachowania powłoki
    (menu, motyw, TRYBY) obsługiwane przez wspolne.js / prototyp.js / stanowisko.js.

@@ -6077,3 +6077,41 @@ ZrodloTozsamosciAgenta jest osobnym portem, a nie sięgnięciem do
 repozytoriów wprost, żeby składacz wywołania miał jednego dostawcę
 tożsamości eksperta i nie musiał wiedzieć, że siedzi ona w czterech
 tabelach.
+
+## budowa/server/internal/core/montaz_moduly.go
+Pole mowa uruchamia pomocnika transkrypcji, powstaje razem z dwoma pozostałymi modułami startującymi
+procesy, z tego samego uruchamiacza. Pole doradcy powstaje tu, bo stoi na rejestrze kanałów
+i dzienniku bazy — tak samo jak mowa. Terminal i Developer stoją na tym samym uruchamiaczu procesów
+co okna rozmowy i na tym samym rozstrzygaczu, z którego biorą zasady izolacji egzekwowane przy
+każdym poleceniu.
+
+Jeden adapter kolejek istnieje dla domeny kolejek i dla modułu Automations — drugiego wykonawcy
+zleceń nie ma nigdzie. Most do wykonania wpięty jest w silnik: pozycja wchodząca w stan wykonywana
+jedzie turą kanału modelu tym samym rejestrem i nadajnikiem, co tura okna.
+
+Automatyki stoją na tym samym adapterze kolejek. Instancja powstaje tu, bo dzieli ją port modułu
+i budzik harmonogramu: jedna mapa obserwatorów przebiegów dla Execution Monitora. Sejf poświadczeń
+idzie tym samym katalogiem danych, nad którym stoi sejf kont i punktów dostępu. Wartość
+poświadczenia kroku leży poza bazą — bez tego wpięcia zapis sekretu automatyki odmawia wprost,
+zamiast zapisywać referencję wskazującą na nic.
+
+Diagnostics pisze dziennik rdzenia do bazy i przyjmuje odmowy wykonania komend, więc powstaje przed
+rdzeniem i zostaje mu podpięty. Bez tego wpięcia okno dziennika diagnostyki nie dostałoby ani
+jednej linii dziennika rdzenia; metoda podpięcia znosi dziennik pusty sama.
+
+Silnik mowy stoi na tym samym uruchamiaczu i tych samych dwóch źródłach izolacji co Terminal
+i Developer: pomocnik Pythona jest procesem drzewa jak każdy inny i przechodzi przez tę samą bramę.
+Dziennik transkrypcji stoi nad bazą montażu i znosi bazę pustą sam, a silnik bez dziennika
+rozpoznaje mowę tak samo — traci wyłącznie ślad.
+
+Magazyn nagrań, katalog danych i konfiguracja domykają cztery komendy dobudowane obok transkrypcji:
+przyjęcie i oddanie bajtów nagrania oraz nastawę wybudzania. Nadajnik domyka nasłuch ciągły.
+
+Doradca stoi na tym samym rejestrze kanałów, którym jedzie okno rozmowy, Roundtable i Research —
+drugiego silnika modelu w rdzeniu nie ma. Dziennik konsultacji bierze uchwyt bazy z montażu, tak
+samo jak dziennik transkrypcji; baza pusta znosi się sama: rada zostaje wtedy jawna w strumieniu
+i traci wyłącznie ślad w bazie. Rejestr okien jest tu częścią sufitu bezpieczeństwa, nie wygodą:
+z okna bierze się kanał pytającego, więc bez tego wpięcia komenda konsultacji musiałaby wierzyć
+modelowi, kim jest — a wtedy sufit siły dałby się obejść jednym polem żądania. Szyna zdarzeń jest
+z kolei częścią jawności: nią jadą do okna fragmenty rady, bez niej Operator widziałby wyłącznie
+skrót w zdarzeniu zakończenia konsultacji.

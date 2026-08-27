@@ -2596,3 +2596,6 @@ odczytywaną w chwili nadejścia fragmentu, nie w chwili subskrypcji, żeby prze
 inną debatę nie skutkowało przepuszczaniem fragmentów debaty poprzedniej przez zapamiętany
 filtr. Okno puste odrzuca cały ruch fragmentów, bo gospodarz bez okna nadanego przez rdzeń
 inaczej otrzymywałby fragmenty okna rozmowy i podglądu w tle podpisane uczestnikami tej debaty.
+
+## budowa/klient/src/polaczenie/warstwa-polaczenia.test.ts
+Obietnica warstwy połączenia wobec warstw wyższych jest jedna: ramka wpisana przy rozłączeniu nie ginie, ponawianie nie ustaje, a subskrypcje przeżywają wymianę gniazda. Sprawdziany w tym pliku mierzą dokładnie to.

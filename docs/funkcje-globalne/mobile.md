@@ -1,3 +1,5 @@
+*Dokument specyfikuje funkcję globalną Mobile Danaco Console: powiadomienia wypychane, zdalny dostęp oraz punkty sterowania.*
+
 # Danaco Console — Funkcja globalna Mobile: dokumentacja projektowa
 
 | | |
@@ -945,12 +947,14 @@ Utrata urządzenia nie wymaga zmiany hasła konta, jeżeli materiał uwierzyteln
 
 ```json
 // Urządzenie przenośne → Serwer, krok 4
+
 { "type": "device.pair.confirm", "id": "p-3", "payload": {
     "pairingCode": "••••-••••", "deviceId": "dev-9127",
     "deviceType": "telefon", "deviceName": "Telefon Operatora" },
   "timestamp": "2026-08-06T10:14:00Z" }
 
 // Serwer → Urządzenie przenośne, krok 7
+
 { "type": "device.pair.completed", "id": "e-4410", "payload": {
     "deviceId": "dev-9127", "credentialRef": "•••",
     "credentialExpiresAt": "2026-11-04T10:14:00Z",
@@ -1276,4 +1280,5 @@ Ikony pochodzą z zestawu opisanego w `interfejs-uzytkownika/system-wizualny.md`
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

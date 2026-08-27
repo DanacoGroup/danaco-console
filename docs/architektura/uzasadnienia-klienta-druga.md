@@ -1216,3 +1216,35 @@ Format uboższy niż dokument jest normalną sytuacją; przemilczenie straty nie
 jest. Wydanie do tekstu czystego, które zgubiło tabelę i przypisy, mówi to
 wprost, a wydanie wsadowe wypisuje bilans dokument po dokumencie — odmowa
 jednego nie ukrywa się za liczbą wydanych.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-model-panels.ts
+
+Skład uczestników idzie ze stanu debaty, nie z własnej listy okna: stan subskrybuje zmianę
+debaty i dokłada uczestników z przyrostu tury oraz z czynności moderatora, a to okno tylko
+czyta i rysuje. Odpowiedzi rosną na żywo z fragmentów strumienia wypowiedzi, a rysowanie
+składu wraz z odpowiedziami leży w module składu modeli; subskrypcji na zmianę stanu okno nie
+zakłada samo, bo jedna na całe złożenie modułu wystarcza.
+
+Dwie tożsamości jednego kanału dają dwa panele. Kluczem panelu jest identyfikator uczestnika,
+nigdy identyfikator kanału, bo tak stanowi kontrakt dodania modelu. Liczba dotychczasowych
+wystąpień kanału mówi, ile razy kanał już wystąpił — od drugiego wystąpienia wzwyż panel niesie
+oznaczenie powtórzenia, żeby dwa identyczne z pozoru panele nie wyglądały na usterkę.
+
+Świeżo otwarte okno nie zna jeszcze składu debaty. Odczyt składu i odczyt całej debaty są
+w kontrakcie, ale to okno żadnego z nich jeszcze nie wywołuje, bo obsługi nie zbudowano; do
+tego czasu skład narasta z przyrostu zdarzenia i z uczestników zwracanych przez polecenie
+moderatora wprost. Stan pusty na starcie jest stanem poprawnym, opisanym wprost, nie udawaną
+pustką.
+
+Kontrakt nie niesie górnego limitu instancji tego okna i okno nie narzuca własnego — skład
+rośnie tak, jak rośnie w rdzeniu. Ile uczestników mieści debata, mówi nota nad formularzem,
+a nie bramka odmowy: uczestnik ponad zwyczajowy skład przechodzi przez rdzeń bez odmowy, więc
+przycisk dodania uczestnika nie zna żadnego progu. Nota podaje, ilu uczestników debata ma, czego
+nie liczy ani rdzeń, ani kontrakt, i gdzie leży sufit gniazd sceny okien równoległych.
+
+Dwie pozycje paska akcji mają komendę w kontrakcie i nie mają jeszcze obsługi: usunięcie
+uczestnika oraz oznaczenie uczestnika jako kluczowego. Wyciszenia w pasku nie ma wcale, bo jest
+czynnością moderatora i należy do panelu moderatora, nie do tego okna. Pozostałe czynności
+uczestnika bez obsługi siedzą w zestawie akcji warstwy trzeciej: siedem pozycji ma dziś komendę
+w kontrakcie, a ósma — liczba wariantów jednej persony — ma pole w uczestniku i nie ma komendy,
+która by je zapisała.

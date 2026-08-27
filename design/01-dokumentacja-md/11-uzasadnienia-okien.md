@@ -13,7 +13,8 @@ Powiązane: [05 — style CSS](05-styles-css.md), [03 — widok](03-design-view.
 ## Centrum dowodzenia
 
 Teren `centrum-poprawki`. Pliki: `05-okna/przeplyw/centrum-dowodzenia.html`,
-`zasoby/okna/centrum-dowodzenia.css`, `zasoby/okna/centrum-dowodzenia.js`.
+arkusze `zasoby/okna/centrum-{dowodzenia,kafle,obszar,dymki}.css` i `danaco-anim-3d.css`,
+mechanizmy `zasoby/okna/centrum-{dowodzenia,obszar,dymki,wejscie}.js`.
 
 Punkty łamania układu mierzą **szerokość płótna** (`@container plotno`), nie
 szerokość ekranu. Płótno przełącza siatki stref na dwie kolumny poniżej 820 px
@@ -48,15 +49,15 @@ Wejście stref w kolejności ważności. `backwards`, nie `both`: animacja wype�
 
 **`.cd-start`**
 
-Belka samouczka i listwa ustawień domykają się na siatce środowisk, nie na krawędzi płótna: kończą się równo z drugą kartą przy czterech kolumnach i z pierwszą przy dwóch. Obie miary daje jedno wyrażenie — dwie kolumny wraz z przerwą między nimi mierzą dokładnie tyle, co jedna kolumna z układu dwukolumnowego, czyli połowę siatki pomniejszoną o pół odstępu. `min-width` chroni listwę: jej pięć pozycji potrzebuje więcej miejsca, niż zostaje przy dwóch kolumnach, a treść nie ma prawa wyjść poza obrys.
+Belka samouczka i listwa ustawień domykają się na siatce środowisk, nie na krawędzi płótna: kończą się równo z drugą kartą przy czterech kolumnach i z pierwszą przy dwóch. Obie miary daje jedno wyrażenie — dwie kolumny wraz z przerwą między nimi mierzą dokładnie tyle, co jedna kolumna z układu dwukolumnowego, czyli połowę siatki pomniejszoną o pół odstępu. Poniżej 500 px płótna belka i listwa biorą pełną szerokość.
 
 **`.cd-listwa`**
 
-Rząd kontrolek czyta się jako jeden zestaw, więc pole listwy nie zwęża się poniżej połowy siatki z własnej woli. Gdy jednak okno zejdzie tak nisko, że pięć kontrolek nie mieści się w tej połowie, rząd łamie się na dwa wiersze. Podłoga na szerokości treści byłaby tu błędem: `min-width` bije `max-width`, więc poniżej 480 px listwa wychodziła poza pole treści o ponad 140 px.
+Rząd pięciu kontrolek czyta się jako jeden zestaw. Pole listwy ma `min-width: 0` i `flex-wrap: wrap`: gdy pięć kontrolek nie mieści się w rzędzie, rząd łamie się na dwa wiersze, zamiast wypychać treść poza obrys. Poniżej 500 px płótna (`@container plotno`) listwa bierze pełną szerokość.
 
-**`@media (max-width: 860px)`**
+**`@container plotno (max-width: 500px)`**
 
-Jedna kolumna — karta zajmuje całą szerokość, więc belka też. Próg 860 px nie należy do skali `--dn-bp-*`; belka musi łamać się dokładnie tam, gdzie łamie się siatka środowisk, a ta stoi na progach 1180 i 860 px sprzed tej pracy. Przeniesienie siatki na skalę systemową rozstrzyga się osobno — do tego czasu belka idzie za siatką, nie za skalą.
+Jedna kolumna — karta zajmuje całą szerokość płótna, więc belka i listwa też. Próg mierzy szerokość płótna (`@container plotno`), nie ekranu, więc otwarcie panelu samouczka — który zwęża płótno o 320 px — przełącza układ samo, bez osobnego warunku ekranowego.
 
 **`.cd-sekcja-tytul::before`**
 
@@ -78,9 +79,9 @@ Wyśrodkowanie rozciągnięciem, nie przesunięciem — `transform` zabierał et
 
 Pierścień fokusu rysuje się do wewnątrz, na czterech krawędziach. Poprzednio stan fokusu niósł sam `--dn-cien-sygnal` (krycie 0,18–0,22) — obrys o kontraście 1,2 : 1 wobec listwy, praktycznie niewidoczny, a przy krawędzi listwy jeszcze przycinany.
 
-**`@media (max-width: 1180px)`**
+**`@container plotno (max-width: 820px)`**
 
-Cztery kolumny to komplet wyboru, więc trzymają się do progu, poniżej którego karta przestaje mieścić nazwę środowiska. Panel samouczka zwęża płótno o 320 px, więc jego otwarcie przesuwa progi o tę samą wartość.
+Cztery kolumny to komplet wyboru, więc trzymają się aż płótno zejdzie poniżej 820 px — wtedy siatka środowisk schodzi na dwie kolumny. Próg mierzy szerokość płótna, nie ekranu: panel samouczka zwęża płótno o 320 px, więc jego otwarcie przełącza układ samo.
 
 **`—`**
 
@@ -92,7 +93,7 @@ Karty pełne zdejmują „klapki" łączące zaokrągloną zakładkę z panelem 
 
 **`.cd-strona .dn-karty-pasmo`**
 
-Jeden rozmiar ikon w pasie kart. Kontrolki (zamknij, „+", powłoki, narzędzia) szły na 20 px (--kart-ikona-sterowania), a zakładki i grot na 16 px — stąd rozjazd. Nadpisanie zmiennej sprowadza wszystkie do 16 px. Zakres: centrum.
+Jeden rozmiar ikon w pasie kart. Kontrolki (zamknij, „+", powłoki, narzędzia) szły na 20 px (--kart-ikona-sterowania), a zakładki i grot na inny stopień — stąd rozjazd. Nadpisanie zmiennej wartością `--dn-wym-ikona` (18 px) sprowadza wszystkie do jednego stopnia. Zakres: centrum.
 
 **`overflow-x: auto;`**
 

@@ -1,12 +1,5 @@
-// Odpowiedzialność pliku: historia wersji definicji automatyki (tabela
-// `wersja_automatyki`, migracja 260) wraz z rozdziałem wersji roboczej od
-// opublikowanej, udostępnieniem automatyki i budżetami czasu przebiegu
-// (kolumny tabeli `automatyka`, migracja 267).
-//
-// Wersja jest migawką martwą. Nikt jej po zapisie nie edytuje, nikt nie pyta
-// o pojedynczy krok wersji siódmej — porównanie i przywrócenie czytają migawkę
-// w całości. Dlatego kroki leżą tu jako zapis strukturalny, a nie jako drugi
-// komplet wierszy obok `krok_automatyki`.
+// Plik prowadzi historię wersji definicji automatyki wraz z rozdziałem wersji roboczej od opublikowanej i budżetami
+// czasu przebiegu; wersja jest migawką martwą, więc kroki leżą tu jako zapis strukturalny, nie jako drugi komplet wierszy kroków.
 package dane
 
 import (
@@ -16,8 +9,7 @@ import (
 	"fmt"
 )
 
-// WersjaAutomatyki to wiersz tabeli `wersja_automatyki` — migawka definicji
-// z chwili zapisu.
+// WersjaAutomatyki to wiersz tabeli `wersja_automatyki` — migawka definicji automatyki z chwili jej zapisu.
 type WersjaAutomatyki struct {
 	AutomatykaID int64
 	Wersja       int
@@ -70,7 +62,7 @@ const (
 	                          WHERE id = ?`
 )
 
-// ZapiszWersjeAutomatyki dopisuje migawkę definicji.
+// ZapiszWersjeAutomatyki dopisuje migawkę definicji automatyki wraz z jej pełnym kompletem kroków wykonania.
 func (r *repozytoriumAutomatyk) ZapiszWersjeAutomatyki(ctx context.Context,
 	wersja WersjaAutomatyki) error {
 
@@ -87,7 +79,7 @@ func (r *repozytoriumAutomatyk) ZapiszWersjeAutomatyki(ctx context.Context,
 	return nil
 }
 
-// WersjeAutomatyki zwraca migawki od najnowszej.
+// WersjeAutomatyki zwraca migawki definicji automatyki od najnowszej wprost z bazy danych repozytorium.
 func (r *repozytoriumAutomatyk) WersjeAutomatyki(ctx context.Context,
 	automatykaID int64, limit int) ([]WersjaAutomatyki, error) {
 
@@ -164,7 +156,7 @@ func (r *repozytoriumAutomatyk) OpublikujWersjeAutomatyki(ctx context.Context,
 	})
 }
 
-// UstawUdostepnienieAutomatyki przełącza udostępnienie automatyki w organizacji.
+// UstawUdostepnienieAutomatyki przełącza udostępnienie automatyki w organizacji i zwraca stan po zmianie.
 func (r *repozytoriumAutomatyk) UstawUdostepnienieAutomatyki(ctx context.Context,
 	automatykaID int64, udostepniona bool) error {
 
@@ -195,7 +187,7 @@ func (r *repozytoriumAutomatyk) UstawBudzetyAutomatyki(ctx context.Context, auto
 	return nil
 }
 
-// odczytajWersjeAutomatyki składa migawkę z jednego wiersza wyniku.
+// odczytajWersjeAutomatyki składa migawkę wprost z jednego wiersza wyniku zapytania do bazy danych repozytorium.
 func odczytajWersjeAutomatyki(wiersz skaner) (WersjaAutomatyki, error) {
 	var wersja WersjaAutomatyki
 	var autor sql.NullString

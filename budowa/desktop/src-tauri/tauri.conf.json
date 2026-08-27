@@ -4,17 +4,7 @@
   "version": "1.0.0",
   "identifier": "pl.danaco.console",
   "build": {
-    "beforeDevCommand": {
-      "script": "npm run dev",
-      "cwd": "../../client",
-      "wait": false
-    },
-    "devUrl": "http://localhost:5173",
-    "beforeBuildCommand": {
-      "script": "npm run build",
-      "cwd": "../../client"
-    },
-    "frontendDist": "../../client/dist"
+    "frontendDist": "../../klient/dist"
   },
   "app": {
     "windows": [],
@@ -26,24 +16,24 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
-    "resources": {
-      "zasoby/rdzen/danaco-console.exe": "rdzen/danaco-console.exe",
-      "zasoby/rdzen/danaco-narzedzia.exe": "rdzen/danaco-narzedzia.exe",
-      "zasoby/rdzen/dist/": "rdzen/dist/",
-      "zasoby/pomocniki/": "pomocniki/",
-      "zasoby/dokumentacja/": "dokumentacja/"
-    },
     "publisher": "Danaco Holding Group Sp. z o.o.",
     "copyright": "© 2026 Danaco Holding Group Sp. z o.o.",
     "category": "DeveloperTool",
-    "shortDescription": "Danaco Console — AI Operating Environment",
-    "longDescription": "Powłoka natywna Danaco Console: okno interfejsu, rdzeń w tle, ikona w zasobniku.",
+    "shortDescription": "Danaco Console — okno do rdzenia na serwerze wdrożenia",
+    "longDescription": "Powłoka Danaco Console dla Windows 11: okno wraz z wkompilowanym interfejsem. Rdzeń, serwer narzędzi i arsenał stoją na serwerze wdrożenia — instalka ich nie niesie i nie stawia niczego na urządzeniu Operatora poza samą powłoką.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "skip"
+      },
+      "nsis": {
+        "installerHooks": "nsis/skroty.nsh"
+      }
+    }
   }
 }

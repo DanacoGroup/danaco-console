@@ -1,12 +1,11 @@
-//! Rdzeń w tle — odnalezienie binarki, uruchomienie, rozpoznanie nasłuchu
-//! i uchwyt stanu. Każda z tych odpowiedzialności ma własny plik.
+//! Rdzeń, z którym rozmawia powłoka — stojący na serwerze wdrożenia.
+//!
+//! Powłoka rdzenia nie stawia i nie wygasza: nie ma go w instalce i nie ma go na
+//! urządzeniu Operatora. Zostaje jej wobec rdzenia dwoje: rozpoznać, czy pod
+//! wskazanym adresem ktoś odpowiada (`nasluch`), i złożyć z tego opis stanu dla
+//! okna oraz zasobnika (`stan`).
 
-pub mod dziennik;
-pub mod lokalizacja;
 pub mod nasluch;
-pub mod pakiet_klienta;
-pub mod uchwyt;
-pub mod uruchomienie;
+pub mod stan;
 
-pub use uchwyt::{OpisRdzenia, UchwytRdzenia};
-pub use uruchomienie::uruchom_w_tle;
+pub use stan::{opisz, OpisRdzenia};

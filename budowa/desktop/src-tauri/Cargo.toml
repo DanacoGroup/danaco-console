@@ -1,7 +1,7 @@
 [package]
 name = "danaco-console-powloka"
 version = "1.0.0"
-description = "Danaco Console — powłoka natywna okna"
+description = "Danaco Console — powłoka okna dla Windows 11"
 authors = ["Danaco Holding Group Sp. z o.o."]
 edition = "2021"
 rust-version = "1.77"

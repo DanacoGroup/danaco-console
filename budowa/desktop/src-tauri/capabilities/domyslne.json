@@ -1,10 +1,8 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
+  "$schema": "../gen/schemas/windows-schema.json",
   "identifier": "domyslne",
-  "description": "Uprawnienia okna głównego powłoki: zdarzenia, sterowanie oknem, natywne okna dialogowe.",
+  "description": "Uprawnienia okna głównego powłoki. Zbiór jest wyliczony, nie zbiorczy: wchodzi na niego wyłącznie to, czego strona interfejsu naprawdę potrzebuje, a każda pozycja ma powód. `core:event:allow-listen` i `core:event:allow-unlisten` — strona nasłuchuje zdarzenia `powloka:katalog-roboczy`, którym powłoka rozgłasza katalog wskazany z zasobnika (`dialog_katalogu::wybierz_i_rozglos`); bez nasłuchu wybór z zasobnika nie ma jak dojść do interfejsu. Zbiór `core:default` tu NIE stoi: niesie dodatkowo `core:window`, `core:webview`, `core:path`, `core:app`, `core:image`, `core:resources`, `core:menu` i `core:tray`, czyli tworzenie widoków i sterowanie oknem z wnętrza strony — czynności, których powłoka stronie nie powierza, bo okno i zasobnik składa sama (`okno.rs`, `zasobnik.rs`). Uprawnień wtyczki `dialog` nie ma, bo natywne okna dialogowe woła wyłącznie kod Rust (`dialog_katalogu.rs`, `menu_zasobnika.rs`), a wykaz uprawnień rozstrzyga o wywołaniach ze strony, nie z Rusta. Klucza `remote` nie ma: strona pochodzi z pakietu wkompilowanego w powłokę, więc żadne źródło zdalne nie ma tu czego dostawać.",
+  "platforms": ["windows"],
   "windows": ["glowne"],
-  "remote": {
-    "urls": ["http://127.0.0.1:*", "http://localhost:*"]
-  },
-  "permissions": ["core:default", "dialog:default"]
+  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten"]
 }

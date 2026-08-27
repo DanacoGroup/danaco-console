@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Treść umowy licencyjnej jest fragmentem wstawianym do pola przewijanego w kroku instalacji i nie jest samodzielnym dokumentem do edycji.
    TREŚĆ UMOWY LICENCYJNEJ — wynik `zbuduj-licencje.py` ze źródła
    `zasoby/tresci/licencja-2.1.md`. Fragment, nie dokument: wstawia go
    składnik `dokument` do pola przewijanego w kroku 2.

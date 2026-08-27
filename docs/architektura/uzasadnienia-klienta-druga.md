@@ -2569,3 +2569,14 @@ instrukcji, po czym znika on z odczytu pamięci projektu. Odczyt pamięci w
 zasięgu karty sesji nie jest drugim źródłem prawdy dla pamięci projektu —
 pyta o to, co widzi karta sesji przy włączonych poziomach, a poziomy
 przestawia osobna komenda przełączania pamięci.
+
+## budowa/klient-poprzedni/src/moduly/translate/magazyn-translate.ts
+Zbiór jest oddzielony od odczytu: stan-translate.ts wie, jak zapytać rdzeń, ten plik wie wyłącznie,
+co moduł już wie, dzięki czemu okna można sprawdzić na samym zbiorze, a odczyt nie miesza się
+z pamięcią. Trzy fazy kontekstu są rozróżnialne: faza spoczynku znaczy brak zapytania, faza odczytu
+znaczy zapytanie w toku, a faza gotowa z pustym oknem znaczy, że rdzeń nie zna ani jednego okna tej
+sesji — zlanie tych faz w jedną kazałoby zgadywać, czy czekać, czy działać.
+Ogłoszenie zmiany ma jeden wspólny nasłuch, bo rejestr kanałów modelu leży poza magazynem i jego
+danych nie dotyka, ale jego powrót ma przerysować stery, a wszystkie widoki modułu przerysowuje
+jedno ogłoszenie stanu — drugi, równoległy nasłuch w oknach trzeba by odpinać w każdej instancji
+panelu, a pierwszy przeoczony byłby wyciekiem.

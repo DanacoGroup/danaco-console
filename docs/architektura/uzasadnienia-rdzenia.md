@@ -5345,3 +5345,24 @@ sesji odpowiedzą wtedy kodem nieznanej pozycji, a pozostałe domeny pracują da
 Rejestracja historii sesji stoi osobno od rejestracji domeny sesji, bo to inny rodzaj czynności:
 tamta prowadzi sesję w pracy bieżącej, ta porządkuje historię. Każda rozgłasza zmianę, żeby wykaz
 na pozostałych urządzeniach konta przestawił się bez odpytywania.
+
+## budowa/server/internal/core/rejestrator_blokow.go
+
+Jedynym miejscem, które widzi każdy fragment strumienia przed spakowaniem
+w kopertę, jest ujście tury w adapterze rozmowy (funkcja prowadzTure
+w pliku adapter_rozmowa.go). Dziennik rozmowy i utrwalacz widzą dopiero
+domkniętą wiadomość, czyli sam sklejony tekst; wpięcie rejestracji bloków
+w tym miejscu wymagałoby przenoszenia bloków przez typ Message, którego
+kontrakt nie modeluje. Rejestrator jest więc portem adaptera, wzorem
+odbiornika zdarzeń wykonawczych: adapter woła jedną metodę, montaż podaje
+całość.
+
+Rejestrator zapisuje wszystkie rodzaje fragmentów poza tekstem: rozumowanie,
+wywołania narzędzi z wynikami, obraz, dźwięk, błąd, prowenancję i metadane
+konta. Tekst pomija świadomie, bo treść tekstową domyka dziennik rozmowy
+w polu wiadomosc.tresc, a druga kopia byłaby drugą prawdą.
+
+Zapis bloków korzysta z tabeli blok_wiadomosci wprowadzonej migracją
+store/migracja_096_tresc_rozmowy.sql. Okno, którego zapis bloków zawiódł,
+schodzi z rejestracji do końca życia procesu — wzorem degradacji dziennika
+rozmowy: jedno zgłoszenie do dziennika rdzenia, zero powtórek.

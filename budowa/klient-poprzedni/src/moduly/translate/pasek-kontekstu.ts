@@ -3,17 +3,8 @@ import { BRAK_OKNA } from './etykiety-translate';
 import type { StanTranslate } from './stan-translate';
 
 /**
- * Pas kontekstu modułu — okno wykonania odczytane komendą `window.state.get`.
- *
- * Trzy pustki są trzema różnymi zdaniami: „jeszcze nie pytałem", „pytam"
- * i „rdzeń nie zna ani jednego okna tej sesji". Pierwsze każe czekać na wejście
- * do modułu, drugie na odpowiedź, trzecie mówi, że komendy Source Panel nie
- * mają czym zaadresować żądania.
- *
- * „Spróbuj ponownie" stoi tylko tutaj, bo kontekst okna jest jedynym odczytem
- * modułu; resztę wyzwala zapis, którego przycisk zostaje klikalny także po
- * odmowie. Ponowienie wyzwala odczyt i nie zdejmuje komunikatu — ten znika
- * dopiero, gdy odczyt się powiedzie.
+ * Pas kontekstu modułu pokazujący okno wykonania odczytane z rdzenia, wraz
+ * z przyciskiem ponowienia odczytu po niepowodzeniu.
  */
 export interface PasekKontekstu {
   element: HTMLElement;
@@ -42,8 +33,7 @@ export function utworzPasekKontekstu(
   function odswiez(): void {
     const faza = stan.fazaKontekstu();
     element.dataset['faza'] = faza;
-    // Klasa steruje widocznością zamiast atrybutu `hidden`: przycisk
-    // biblioteki niesie własny `display`, który `[hidden]` przegrywa.
+    // Widocznością steruje klasa, bo przycisk biblioteki narzuca własny styl wyświetlania.
     ponow.classList.toggle('mt-kontekst__ponow--widoczny', faza === 'blad');
     if (faza === 'spoczynek') {
       pokazZdanie('Kontekst okna nieodczytany — moduł pyta o niego przy wejściu.');
@@ -62,9 +52,7 @@ export function utworzPasekKontekstu(
       pokazZdanie(BRAK_OKNA);
       return;
     }
-    // Pas mówi, w imieniu którego okna moduł działa, i nic ponadto. Tryb
-    // uprawnień, zasięg wykonania, rola okna i katalogi robocze stoją w panelu
-    // „Sterowanie okna" na tym samym ekranie.
+    // Pas mówi wyłącznie, w imieniu którego okna moduł działa.
     zdanie.textContent = `Okno ${okno.title ?? okno.id}`;
     dane.replaceChildren();
   }

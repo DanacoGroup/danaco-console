@@ -1,20 +1,5 @@
 /**
- * Układ okien równoległych — interfejs katalogu.
- *
- * Od jednego do czterech okien komunikacji obok siebie (`LICZBA_MIN`,
- * `LICZBA_MAX`), przełącznik liczby, nagłówki ról i widoczna więź
- * koordynator–wykonawca.
- *
- * Montaż na scenie powłoki:
- *
- *   const uklad = zamontujUkladOkien(korzen, rdzen, opis);
- *   uklad.ustawLiczbe(2);
- *   uklad.nadajRole('okno-1', WindowRole.Coordinator);
- *   uklad.nadajRole('okno-2', WindowRole.Executor);
- *   uklad.pokazPrzekazanie('okno-1', 'okno-2');
- *
- * Sam układ powstaje przez `utworzUkladOkien()` i nie wymaga rdzenia —
- * montaż dokłada wyłącznie podpięcie pierwszego gniazda do łączności.
+ * Układ okien równoległych to interfejs katalogu obsługujący od jednego do czterech okien komunikacji obok siebie, przełącznik liczby, nagłówki ról oraz widoczną więź koordynator-wykonawca.
  */
 export { utworzUkladOkien, type OpcjeUkladu, type UkladOkien } from './uklad-okien';
 

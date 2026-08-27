@@ -2022,3 +2022,8 @@ Tabela podagent nosiła pełny cykl stanów, lecz wiersz nie wiedział, które u
 Jedyny nagłówek rozpoznawany w pliku — poprzedzający funkcję łagodzenia
 ruchu — rozwinięto do pełnego zdania o rozkładzie narastania animacji, bo
 skrócony zapis nie mieścił się w wymaganej długości nagłówka.
+
+## design/zbuduj-licencje.py
+Za znacznikiem interpretera dopisano zdanie streszczające zadanie skryptu,
+ponieważ sam znacznik stanowi osobny, zbyt krótki nagłówek. Komentarz o polu
+przewijanym zestawień rozwinięto o przyczynę i miejsce zastosowania.

@@ -6,19 +6,9 @@ import type { StanPrzegladania } from './stan-przegladania';
 import type { RozszerzenieModulu } from './warstwy-widocznosci';
 
 /**
- * Pasek kontekstu modułu Browser — warstwa pierwsza, widoczna bez interakcji.
- *
- * Pasek jest widokiem stanu warstw widoczności: niczego nie trzyma, a każdy
- * jego wyzwalacz przestawia jedną pozycję tamtego bytu. Kolejność w pasku jest
- * kolejnością rejestracji rozszerzeń w module.
- *
- * Wyzwalacze warstwy czwartej nie stoją w pasku, dopóki Operator nie włączy
- * trybu administracyjnego — tak, jak mówi opracowanie modułu. Nie jest to
- * blokada: rozszerzenie ze skrótem otwiera się skrótem niezależnie od trybu,
- * a przycisk nie zostaje wygaszony, tylko zdjęty ze sceny.
- *
- * Stan wyzwalacza niesie `aria-pressed`, nie barwa: pasek czyta się także bez
- * rozróżniania barw i z czytnika ekranu.
+ * Pasek kontekstu modułu Browser, będący warstwą pierwszą, widoczną bez
+ * interakcji. Pasek jest widokiem stanu warstw widoczności: niczego nie trzyma,
+ * a każdy jego wyzwalacz przestawia jedną pozycję tamtego bytu.
  */
 export interface PasekKontekstu {
   element: HTMLElement;
@@ -90,17 +80,20 @@ export function utworzPasekKontekstu(stan: StanPrzegladania): PasekKontekstu {
 }
 
 /**
- * Napis wyzwalacza wraz z liczbą pozycji rozszerzenia.
- *
- * Znak `▾` mówi, że pozycja rozwija kolumnę boczną — tak samo jak w opracowaniu
- * modułu, gdzie znaczniki kontekstowe noszą go w nazwie.
+ * Napis wyzwalacza wraz z liczbą pozycji rozszerzenia. Znak strzałki mówi, że
+ * pozycja rozwija kolumnę boczną, tak samo jak w znacznikach kontekstowych,
+ * które noszą go w nazwie.
  */
 function napisWyzwalacza(rozszerzenie: RozszerzenieModulu): string {
   const licznik = rozszerzenie.licznik?.();
   return `${rozszerzenie.nazwa} ▾${licznik === undefined ? '' : ` ${licznik}`}`;
 }
 
-/** Znacznik okna przeglądarki: jego identyfikator albo powód, dla którego go nie ma. */
+/**
+ * Znacznik okna przeglądarki: jego identyfikator albo powód, dla którego go nie
+ * ma. Okno nieustalone nazywa się wprost, ponieważ pusty napis w pasku wyglądałby
+ * na usterkę widoku, a nie na brak wiązania.
+ */
 function opisOkna(stan: StanPrzegladania): string {
   const identyfikator = stan.idOkna();
   return identyfikator === '' ? 'okno nieustalone' : `okno ${identyfikator}`;

@@ -58,10 +58,13 @@ var formatyDokumentu = map[string]opisFormatuDokumentu{
 	// (`adapter_narzedzia_dokument_tekst.go`), a Pandoc dostaje ten format
 	// wyłącznie jako cel zamiany.
 	"txt": {pandoc: "plain", rozszerzenie: "txt", czytaPandoc: true, piszePandoc: true, strawnyDlaLibre: true},
-	// PDF stoi osobno: Pandoc go nie czyta (nie ma z czego złożyć struktury)
-	// i na tej maszynie nie zapisze (brak silnika składu — pdflatex, weasyprint
-	// ani wkhtmltopdf nie stoją). Czytaniem PDF-u zajmuje się
-	// `document.text.extract`, a zapisem — LibreOffice.
+	// PDF stoi osobno: Pandoc go nie czyta (nie ma z czego złożyć struktury),
+	// więc `czytaPandoc` zostaje fałszem, a `piszePandoc` — także, bo zapis
+	// PDF-u Pandokiem wymaga silnika składu wołanego przez niego samego, czyli
+	// procesu poza bramą rdzenia. Czytaniem PDF-u zajmuje się
+	// `document.text.extract`, a zapisem dwie drogi rdzenia opisane
+	// w `adapter_narzedzia_dokument_konwersja.go`: skład typstem albo
+	// LibreOffice.
 	"pdf": {rozszerzenie: "pdf", strawnyDlaLibre: true},
 }
 

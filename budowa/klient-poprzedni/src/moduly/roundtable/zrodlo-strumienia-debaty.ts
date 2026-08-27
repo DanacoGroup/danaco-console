@@ -2,37 +2,9 @@ import { EventType, type ChunkKind, type Envelope, type StreamChunkEvent } from 
 import type { Odsubskrybuj } from '../../polaczenie/magistrala-zdarzen';
 import type { Kanal } from '../../protokol/kanal';
 
-/**
- * Źródło fragmentów wypowiedzi debaty — jedna subskrypcja `stream.chunk`
- * zawężona do okna debaty.
- *
- * Rdzeń nadaje wypowiedź uczestnika na żywo, fragment po fragmencie, zanim
- * utrwali ją i rozgłosi po raz drugi jako `roundtable.debate.changed` rodzaju
- * `updated`. Ten plik odbiera tamtą nadawaną treść i nic ponadto.
- *
- * Filtr idzie po oknie, bo tylko okno jest w zdarzeniu pewne: `stream.chunk`
- * niesie `windowId` i `messageId` (kontrakt, `StreamChunkEvent`), a rdzeń wpisuje
- * w `windowId` okno debaty. Okno oddziela więc głosy tej debaty od strumieni okna
- * rozmowy, podglądu w tle i każdego innego nadawcy wspólnej drogi.
- *
- * `messageId` zostaje surowy. Jeden strumień niesie pod tym polem dwie różne
- * wartości: fragmenty treści dostają identyfikator uczestnika, a fragment
- * domykający i fragment błędu — identyfikator wypowiedzi. Źródło nie rozstrzyga
- * tej dwoistości i nie zgaduje po przedrostku identyfikatora; przypisanie do
- * uczestnika robi `strumien-wypowiedzi.ts`, pytając o ten identyfikator stan
- * debaty, czyli jedyny byt znający i skład, i wykaz wypowiedzi tury.
- *
- * Źródło nie woła ani jednej komendy — komendy obszaru `roundtable.*` niesie
- * `zrodlo-roundtable.ts`. Nie gromadzi też treści: gromadzenie wymaga wiedzy
- * o składzie, a subskrypcja nie.
- */
-
-/** Fragment wypowiedzi przyjęty z okna debaty. */
+/** Fragment wypowiedzi debaty przyjęty z okna, niosący identyfikator koperty, rodzaj, treść tekstową i znacznik ostatniego fragmentu strumienia. */
 export interface FragmentDebaty {
-  /**
-   * `messageId` koperty, surowy. Bywa identyfikatorem uczestnika (fragmenty
-   * treści) albo identyfikatorem wypowiedzi (fragment domykający i błąd).
-   */
+  /** Pole messageId koperty, surowe: identyfikator uczestnika albo wypowiedzi wedle rodzaju. */
   identyfikator: string;
   /** Rodzaj fragmentu z kontraktu — tekst, tok rozumowania, błąd. */
   rodzaj: ChunkKind;
@@ -43,21 +15,11 @@ export interface FragmentDebaty {
 }
 
 export interface ZrodloStrumieniaDebaty {
-  /**
-   * Subskrypcja `stream.chunk` zawężona do okna debaty.
-   *
-   * Zwracana funkcja zdejmuje subskrypcję. Panel, który jej nie wywoła, zostawia
-   * nasłuch żywy po zejściu ze sceny — dlatego `PanelPomocniczy` wymaga `zamknij()`.
-   */
+  /** Subskrypcja fragmentów okna debaty; zwrócona funkcja zdejmuje subskrypcję po zamknięciu panelu. */
   naFragmentWypowiedzi(sluchacz: (fragment: FragmentDebaty) => void): Odsubskrybuj;
 }
 
-/**
- * @param okno odczyt okna debaty w chwili nadejścia fragmentu, nie w chwili
- *   subskrypcji: `StanDebaty.ustawOkno` przestawia moduł na inną debatę bez
- *   zakładania panelu od nowa, a filtr zapamiętany przy subskrypcji
- *   przepuszczałby wtedy fragmenty debaty poprzedniej.
- */
+/** Tworzy źródło fragmentów wypowiedzi debaty, filtrując zdarzenia strumienia rdzenia do okna odczytywanego w chwili nadejścia każdego fragmentu. */
 export function utworzZrodloStrumieniaDebaty(
   kanal: Kanal,
   okno: () => string,
@@ -73,14 +35,7 @@ export function utworzZrodloStrumieniaDebaty(
   };
 }
 
-/**
- * Fragment przeznaczony dla okna debaty albo `null`.
- *
- * Okno puste odrzuca wszystko. Gospodarz, który nie dostał okna od rdzenia,
- * podaje `okno: ''`; przepuszczenie wtedy całego ruchu `stream.chunk` wsypałoby
- * do panelu debaty fragmenty okna rozmowy i podglądu w tle, czyli cudze zdania
- * podpisane uczestnikami tej debaty.
- */
+/** Zwraca fragment przeznaczony dla okna debaty albo null, gdy okno jest puste lub fragment należy do innej debaty niż wskazana. */
 function fragmentDlaOkna(
   tresc: StreamChunkEvent,
   koperta: Envelope,

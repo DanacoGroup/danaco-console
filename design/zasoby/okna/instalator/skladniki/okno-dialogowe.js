@@ -1,21 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — OKNO DIALOGOWE
-   ----------------------------------------------------------------------------
-   Pytanie zadane w toku pracy: potwierdzenie zamknięcia, ostrzeżenie o wyborze,
-   objaśnienie. Wyjście domyślne prowadzi do dalszej pracy, nie do jej przerwania
-   — dlatego to ono, a nie czynność niszcząca, bierze fokus przy otwarciu.
-
-   Rola `alertdialog` należy się pytaniu o skutek, `dialog` — objaśnieniu.
-
-   Właściwości:
-     nazwa      identyfikator okna (`data-modal`)
-     dane       dodatkowe atrybuty `data-*` na tle okna
-     rola       'alertdialog' | 'dialog'
-     tytul      klucz katalogu
-     tresc      klucz katalogu (pomijany, gdy podano `cialo`)
-     cialo      gotowy węzeł treści (dla objaśnień dłuższych niż zdanie)
-     czynnosci  tablica { klucz, klasa, dane } — od domyślnej do ostatecznej
-   ============================================================================ */
+/* Okno dialogowe zadaje pytanie w toku pracy, takie jak potwierdzenie zamknięcia, ostrzeżenie o wyborze albo objaśnienie, a przy otwarciu fokus bierze wyjście domyślne prowadzące do dalszej pracy, nie czynność niszcząca. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

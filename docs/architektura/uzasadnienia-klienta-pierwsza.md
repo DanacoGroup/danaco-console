@@ -1584,3 +1584,18 @@ Zatrzymanie idzie komendą `subagent.stop` wprost, a nie obejściem przez
 kolejki nie miałby wtedy czego zatrzymać. Odpowiedź rozróżnia `stopped` od
 `notRunning`, ponieważ podagent już zakończony nie jest błędem, tylko innym
 stanem, o którym panel mówi osobno.
+
+## budowa/klient-poprzedni/src/aplikacja/ustawienia-okna-sledzone.ts
+
+Migawka ustawień wraz z wykazem różnic mówi, co się zmieniło. Bez nich pas
+meldunkowy podawałby samo zdanie o zmianie okna przy każdym dotknięciu, zamiast
+nazwać dobrany model, rolę albo zasięg wykonania.
+
+Odcisk okna mówi, czy zmiana jest własna: zdarzenie przynoszące dokładnie ten
+stan okna, co świeża odpowiedź na własną komendę, jest skutkiem tej komendy.
+Do odcisku nie wchodzi czas zmiany zapisany w polu `updatedAt`, ponieważ rdzeń
+nadaje go osobno w zdarzeniu i osobno w odpowiedzi; doklejenie czasu sprawiłoby,
+że własna czynność nigdy nie zrównałaby się sama ze sobą.
+
+Plik nie zna ani widoku, ani kanału. Niesie sam przekład pól okna na wartości
+porównywalne oraz na zdania przeznaczone dla czytającego.

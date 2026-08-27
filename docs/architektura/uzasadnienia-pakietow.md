@@ -3731,3 +3731,30 @@ Nadanie wiąże okno komunikacji z punktem dostępu. Żyje per okno rozmowy, nie
 per sesja i nie per platforma. Okno ma zbiór nadań — kolejność i oznaczenie
 głównego niosą znaczenie. Okno bez nadań pracuje dalej, tylko niczego nie
 widzi.
+
+## budowa/server/internal/dane/agenci.go
+
+TrybNakladki przyjmuje dwie wartości kontraktu: dołączenie do promptu systemowego jako
+opcję domyślną albo zastąpienie go jako odstępstwo świadomie wybrane przez Operatora.
+
+PoziomyPamieci: wycinek pusty jest jedynym zapisem wyłączenia pamięci w całości, nie ma
+własnej piątej wartości poziomu, bo taka wartość dopuszczałaby stan sprzeczny z pozostałymi
+czterema poziomami, którego nie dałoby się rozstrzygnąć.
+
+LimitPodagentow: wartość wyjściowa piętnastu jest maksimum technicznym platformy.
+
+ModulyZastosowania: wycinek pusty oznacza brak ograniczenia zastosowania, nie brak
+odpowiedzi.
+
+KodProjektu: pole puste zwraca bibliotekę w całości, ponieważ okno budowania eksperta musi
+widzieć również ekspertów przypisanych do projektów, inaczej nie dałoby się ich poprawić.
+
+Granica: liczba wszystkich wierszy spełniających warunki wraca osobno od granicy, żeby okno
+wiedziało, ile pozycji zostało ucięte.
+
+UstawPoziomyPamieci: rozróżnienie między pominięciem pola żądania a podaniem listy pustej
+należy do warstwy wyższej, nie do repozytorium.
+
+Wykaz zwracany przez zapytanie listaAgentow pomija archiwum, żeby ekspert odłożony nie
+wisiał nadal na liście, co czyniłoby archiwizację znacznikiem bez skutku; archiwum ma własną
+komendę odczytu.

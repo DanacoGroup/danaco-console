@@ -4592,3 +4592,159 @@ rdzeń.
 Biblioteka wykłada wagi modelu stojącego wprost w katalogu wskazanym, więc
 dwa modele w jednym katalogu byłyby dwoma plikami model.safetensors
 w tym samym miejscu — czyli jednym z nich nadpisanym przez drugi.
+
+## budowa/server/internal/mowa/zamiar.go
+
+Rozstrzygnięcie nie jest zgadywaniem po treści. Rdzeń nie ma prawa domyślać się
+z wolnego tekstu, że Operator chciał wykonać komendę platformy. Plik tego nie
+łamie, bo rozstrzyga wyłącznie na deklaracjach, nigdy na podobieństwie:
+
+1. Wskazanie Operatora — pole żądania kontraktu (`intent`). Deklaracja wprost;
+   nie ma czego zgadywać.
+2. Leksykon akcji — zamknięty wykaz fraz, z których każda jest przypisana
+   jednej komendzie kontraktu. Dopasowanie idzie po całej wypowiedzi, znak
+   w znak po normalizacji, a nie po fragmencie, tak jak robi to funkcja
+   dopasujAkcje.
+3. Domyślnie — model. Wolny tekst bez deklaracji jedzie do modelu, więc to
+   rozstrzygnięcie niczego nie zmienia za plecami Operatora.
+
+Gdzie deklaracji brak, a domyślnej drogi wziąć nie wolno (Operator zadeklarował
+akcję platformy, lecz nie nazwał żadnej), wynikiem jest zamiar nierozstrzygnięty
+z nazwanym powodem. Nierozstrzygnięcie jest tu wynikiem pełnoprawnym: lepsze od
+wybrania komendy za Operatora.
+
+Plik nie woła komend, nie zna rdzenia i — tak jak reszta pakietu — nie zna
+kontraktu: mówi własnymi typami, żeby dało się go wpiąć niezależnie od tego,
+kiedy pole `intent` wejdzie do `shared/contract.json`.
+
+### Zamiar, Trzy wartości pola wskazania, AkcjaPlatformy
+
+Wartość zerowa typu Zamiar jest nierozstrzygnięciem i to jest wybór rozmyślny:
+struktura wynikowa, która powstała przez pomyłkę zamiast przez rozstrzygnięcie,
+ma znaczyć „nikt niczego nie zlecił", a nie „jedź do modelu" ani tym bardziej
+„wykonaj komendę". Najbezpieczniejszy wynik ma być najtańszy do przypadkowego
+wytworzenia.
+
+Dzięki dosłownym, niewyliczanym nastawom leksykon akcji platformy da się
+przeczytać jak umowę i wskazać palcem, co która wypowiedź robi.
+
+### Rozstrzygnij
+
+Kolejność reguł nie jest dowolna:
+
+    tekst pusty                      -> nierozstrzygniety (nie ma czego rozstrzygac)
+    wskazanie nieznane               -> nierozstrzygniety (napis spoza slownika)
+    wskazanie = model                -> MODEL, chocby fraza pasowala do akcji
+    wskazanie = platform + fraza     -> PLATFORMA (komenda z leksykonu)
+    wskazanie = platform, brak frazy -> nierozstrzygniety (ktorej komendy?)
+    brak wskazania + fraza           -> PLATFORMA
+    brak wskazania, brak frazy       -> MODEL (droga dotychczasowa)
+
+Odwrotne pierwszeństwo deklaracji Operatora i leksykonu znaczyłoby, że pole
+kontraktu można przegłosować leksykonem, czyli że deklaracja nie jest
+deklaracją.
+
+Leksykon pusty (`akcje == nil`) jest poprawnym wejściem, nie brakiem: rdzeń bez
+wpiętego leksykonu rozstrzyga wtedy wszystko na model, dokładnie tak, jak
+zachowuje się bez leksykonu w ogóle. Podstawienie tu leksykonu domyślnego
+z własnej inicjatywy dałoby zachowanie, którego wołający nie zamówił; kto chce
+domyślnego leksykonu, woła funkcję AkcjeDomyslne u siebie i widzi to w swoim
+kodzie.
+
+### BrakDanychAkcji, NieAkcjaPlatformy, ZlozWywolanie, dopasujAkcje, znormalizuj
+
+BrakDanychAkcji jest osobnym typem z tego samego powodu, dla którego pakiet ma
+trzy odmowy w bledy.go: komunikat jest trójczęściowy jak każdy w tym pakiecie.
+
+Puste `Wywolanie{}` bez błędu byłoby atrapą wyglądającą na wynik — stąd
+NieAkcjaPlatformy jako osobna odmowa.
+
+ZlozWywolanie niesie trzy odmowy, każda inna: rozstrzygnięcie, które nie jest
+akcją platformy, kończy się odmową, bo wołający, który mimo tego złożyłby
+wywołanie, wykonałby czynność niezleconą; brak pola z wykazu Wymaga kończy się
+odmową BrakDanychAkcji z nazwą pola; pole puste liczy się jak brak, bo puste
+„windowId" pojechałoby do rdzenia jako żądanie bez okna i wróciło odmową gorzej
+opisaną niż odmowa tutaj. Gdyby kontekst mógł podmienić `control`, akcja
+„wstrzymaj" dałaby się w locie zamienić w „anuluj" i leksykon przestałby być
+umową.
+
+dopasujAkcje szuka wypowiedzi równej frazie, nie zawierającej frazy: dopasowanie
+po fragmencie zamieniłoby wzmiankę w wykonanie — „przypomnij mi, co robi anuluj
+zlecenie" anulowałoby zlecenie, choć Operator prosił o wyjaśnienie. Wypowiedź
+równa frazie jest natomiast deklaracją samą w sobie — nie da się jej powiedzieć
+przypadkiem. Rozstrzyganie sprzeczności między dopasowaniami należy do funkcji
+Rozstrzygnij, a nie do wyszukiwania.
+
+znormalizuj zdejmuje wyłącznie to, czego mowa nie niesie — wielkość liter
+i interpunkcję, które dokłada pomocnik transkrypcji — i nie skraca treści.
+
+### AkcjeDomyslne
+
+Wszystkie pięć fraz prowadzi do jednej komendy assistant.action.status i nie
+jest to niedoróbka, tylko granica postawiona z dwóch własności kontraktu:
+
+1. Komenda ta ma wszystkie pola żądania nieobowiązkowe poza jednym: wystarcza
+   identyfikator okna, jedyny identyfikator, który komenda głosowa naprawdę
+   niesie. Akcje w rodzaju window.create (wymaga identyfikatora sesji, modułu,
+   kanału modelu, katalogów roboczych, środowiska wykonania, trybu uprawnień,
+   roli okna) albo session.stop (wymaga identyfikatora sesji) musiałyby te
+   pola skądś wziąć, a „skądś" znaczyłoby „z głowy rdzenia".
+2. Sterowanie własnym zleceniem jest tą czynnością, której droga przez model
+   jest wprost szkodliwa: „anuluj zlecenie" powiedziane do modelu ląduje jako
+   treść tury tego właśnie zlecenia, więc zamiast je przerwać — przedłuża.
+
+Wykaz jest startowy i wołający ma prawo podać własny. To, które frazy platforma
+rozumie, nie należy do tego pliku; wnosi on mechanizm i pięć fraz, przy których
+mechanizm daje się sprawdzić na żywym rdzeniu. Wspólna kopia wyniku
+pozwoliłaby wołającemu zmienić leksykon wszystkim naraz, nie chcąc tego.
+
+### Wywolanie
+
+Pola typu Wywolanie są napisami, bo napisami przychodzą i z leksykonu akcji,
+i z żądania głosowego; przełożenie ich na typ kontraktu należy do wołającego,
+który kontrakt zna.
+
+## budowa/server/internal/wiedza/obraz.go
+
+Osadzarka tekstu tu nie wystarczy i nie chodzi o jakość, tylko o przestrzeń.
+Wektor zdania z modelu tekstowego leży w przestrzeni, w której obrazu nie ma;
+model osi obrazu ma dwie wieże, jedną dla pikseli, drugą dla słów, uczone tak,
+żeby kończyły w jednej przestrzeni. Dopiero tam iloczyn skalarny znaczy „to
+zdanie opisuje ten obraz".
+
+Wektorów obrazów nie ma we wskaźniku i to jest rozstrzygnięcie, nie brak.
+Tabela fragment_wiedzy trzyma przy każdym wektorze fragment tekstu, z którego
+go policzono (migracja store/migracja_115_wskaznik_znaczenia.sql), a obraz
+takiego fragmentu nie ma; wpisanie tam nazwy pliku dałoby kolumnę, która dla
+jednych wierszy jest cytatem, a dla innych etykietą. Kolumna zakres ma ponadto
+warunek dopuszczający trzy wartości kontraktu i czwartej nie przyjmie bez
+migracji, a migracje nastaw prowadzi inny teren. Dlatego oś obrazu liczy
+wektory na każde zapytanie: koszt to jedno wczytanie wag i jeden przebieg
+wieży obrazu na plik, sekundy przy bibliotece rzędu setek obrazów. Trwałość
+tych wektorów jest pracą do zrobienia, nie założeniem tego pliku.
+
+Silnik nie zna kontraktu ani biblioteki: dostaje zdanie i ścieżki plików,
+oddaje po jednej ocenie na ścieżkę. Wybór obrazów i przekład na trafienia
+należą do adaptera rdzenia, tak samo jak przy osadzarce.
+
+### PominietyObraz
+
+Bez wykazu obrazów pominiętych Operator patrzący na wynik bez swojego zdjęcia
+nie ma jak odróżnić przypadku, w którym model obrazu go nie wybrał, od
+przypadku, w którym plik jest uszkodzony.
+
+### Dopasuj
+
+Obraz pominięty ma ocenę zerową i zajmuje swoje miejsce w wykazie, żeby
+pozycje wyników się nie przesunęły.
+
+### NajblizszeObrazy
+
+Sortowanie jest stabilne: powtarzalność odpowiedzi jest warunkiem, nie
+wygodą.
+
+### Sciezka (pole Obraz)
+
+Ścieżka do bajtów obrazu nie wychodzi z rdzenia poza jego granicę: odpowiedź
+komendy niesie tylko nazwę i identyfikator obrazu, nigdy układ dysku
+Operatora.

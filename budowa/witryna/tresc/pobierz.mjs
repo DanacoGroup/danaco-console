@@ -204,8 +204,8 @@ function rozmiarPozycji(w) {
 }
 
 /** Nagłówek karty. `nazwa` mówi system, architekturę i postać naraz; `system`
- *  sam z siebie nie odróżnia pięciu pozycji, z których cztery są „Windows"
- *  albo „Linux". Brak `nazwy` cofa się do `system`, więc starszy wykaz nadal działa. */
+ *  sam z siebie nie odróżnia pozycji, bo wszystkie klienckie są „Windows".
+ *  Brak `nazwy` cofa się do `system`, więc starszy wykaz nadal działa. */
 function naglowekPozycji(w) {
   return w.nazwa ? String(w.nazwa) : String(w.system ?? 'System nieokreślony');
 }
@@ -258,11 +258,10 @@ const SKRYPT_ROZPOZNANIA = `
   var opis = ((navigator.userAgent || '') + ' ' + (navigator.platform || '')).toLowerCase();
   var system = '';
   if (opis.indexOf('windows') >= 0 || opis.indexOf('win32') >= 0 || opis.indexOf('win64') >= 0) system = 'windows';
-  else if (opis.indexOf('linux') >= 0 || opis.indexOf('x11') >= 0) system = 'linux';
   if (!system) return;
   var pasujace = document.querySelectorAll('.dc-pakiet[data-system="' + system + '"]');
   if (pasujace.length === 0) return;
-  var nazwa = system === 'windows' ? 'Windows' : 'Linux';
+  var nazwa = 'Windows';
   for (var i = 0; i < pasujace.length; i += 1) {
     pasujace[i].classList.add('dc-pakiet--twoj');
     var znacznik = document.createElement('p');
@@ -328,8 +327,8 @@ ${pozycje.map((p) => kartaPakietu(p, stan)).join('\n')}
  * w kluczu `wydania` byłaby widziana przez baner aktualizacji w aplikacji, który
  * czyta ten sam plik — a baner nie ma prawa proponować czegoś, czego nie ma.
  * Milczenie o pakiecie, który się buduje, byłoby jednak drugą nieprawdą: ktoś
- * szukający wersji natywnej na Windows zobaczyłby cztery pozycje i wyszedł
- * z przekonaniem, że piątej nie będzie. Dlatego jest tu miejsce nazwane wprost
+ * szukający zapowiedzianego pakietu zobaczyłby sam wykaz i wyszedł z przekonaniem,
+ * że nic więcej nie powstaje. Dlatego jest tu miejsce nazwane wprost
  * „w przygotowaniu" — bez rozmiaru i BEZ SUMY, bo suma zmyślona jest najgorszą
  * możliwą nieprawdą na tej stronie: unieważnia jedyny sprawdzian, jaki tu stoi.
  */
@@ -356,7 +355,7 @@ ${karty}
 }
 
 /**
- * Pakiet serwera — ODDZIELONY OD PIĘCIU POZYCJI KLIENCKICH, i to celowo.
+ * Pakiet serwera — ODDZIELONY OD POZYCJI KLIENCKICH, i to celowo.
  *
  * Leży w osobnym kluczu wykazu, nie w tablicy `wydania`: nie jest wydaniem dla
  * klienta i nie ma się nigdy pokazać w banerze aktualizacji aplikacji. Na stronie
@@ -373,11 +372,10 @@ function sekcjaSerwera(wykaz, stan) {
   </div>
   <div class="dc-pakiety">
 ${
-  // `system: 'serwer'` podmienia się świadomie. Pakiet serwerowy JEST na Linuksa,
-  // ale gdyby niósł tu „Linux", skrypt rozpoznający system wyróżniłby go
-  // czytającemu z Linuksa jako „pasuje do twojego systemu" — czyli podpowiedział
-  // klientowi plik administratora. Nagłówek karty bierze się z `nazwa`, więc
-  // informacja o architekturze nie ginie.
+  // `system: 'serwer'` podmienia się świadomie: pakiet administratora nie ma
+  // nigdy trafić pod wzorzec skryptu rozpoznającego maszynę czytającego, choćby
+  // wzorzec kiedyś rozszerzono. Nagłówek karty bierze się z `nazwa`, więc
+  // informacja o systemie i architekturze nie ginie.
   kartaPakietu({ ...s, system: 'serwer' }, stan)
 }
   </div>`;
@@ -424,28 +422,20 @@ ${wPrzygotowaniu(wykaz)}
 
 ${sekcjaSerwera(wykaz, stan)}
 
-  <h2>Hybryda czy natywna pełna — którą wziąć</h2>
-  <p><strong>Hybryda</strong> to samo okno aplikacji. Rdzeń — czyli to, co naprawdę pracuje —
-  stoi na serwerze wdrożenia, a okno się z nim łączy. Pakiet jest przez to mały, a komponenty przetwarzania
-  multimediów i dokumentów pracują na serwerze, nie na stanowisku. To postać dla firmy, która ma już postawiony serwer:
-  administrator zakłada pakiet serwerowy raz, a stanowiska dostają samo okno.</p>
-  <p><strong>Natywna pełna</strong> niesie wszystko na jednym urządzeniu: okno, powłokę i rdzeń.
-  Nie potrzebuje żadnego serwera i dlatego waży kilka razy więcej. To postać dla kogoś, kto
-  pracuje sam na własnym komputerze.</p>
-  <p>Jeśli nie wiesz, którą wziąć: <strong>bez postawionego serwera bierz natywną pełną</strong> —
-  hybryda bez serwera nie będzie miała z czym rozmawiać i pokaże to od pierwszego uruchomienia.</p>
+  <h2>Co dostajesz w instalce</h2>
+  <p>Produkt występuje w <strong>jednej postaci — hybrydzie</strong>. Instalka niesie samo okno
+  wraz z powłoką; rdzeń — czyli to, co naprawdę pracuje — <strong>nie jest w niej w ogóle</strong>.
+  Rdzeń stoi na serwerze wdrożenia, a okno się z nim łączy. Pakiet jest przez to mały,
+  a przetwarzanie multimediów i dokumentów odbywa się na serwerze, nie na stanowisku.</p>
+  <p><strong>Bez działającego serwera wdrożenia okno nie ma z czym rozmawiać</strong> i pokaże to
+  od pierwszego uruchomienia. Serwer zakłada administrator raz, z pakietu stojącego wyżej na tej
+  stronie; stanowiska dostają samo okno.</p>
 
   <h2>Numer wersji nie rośnie, rośnie data</h2>
   <p>Wszystkie pozycje niosą <strong>1.0.0</strong> i nie jest to przeoczenie. Wydania różni
   <strong>data</strong>, nie numer: żadna wersja nie stanęła jeszcze u klienta, więc nie ma czego
   podnosić. Pliki z różnych dni leżą w osobnych katalogach z datą w nazwie i nie nadpisują się
   wzajemnie. Numer ruszy w dniu, w którym ruszy pierwsze wdrożenie u klienta.</p>
-
-  <h2>Który plik na Linuksie</h2>
-  <p><strong>AppImage</strong> to jeden plik, który wystarczy oznaczyć jako wykonywalny i uruchomić —
-  i tylko tę postać potrafi podmienić baner aktualizacji w aplikacji. <strong>Pakiet .deb</strong>
-  zakłada się menedżerem pakietów i aktualizuje przez <code>apt</code>; baner go nie podmieni,
-  bo powłoka odmawia zakładania czegokolwiek, co nie jest programem Linuksa w postaci ELF.</p>
 
   <h2>Windows: x64 czy ARM64</h2>
   <p>Zwykły komputer i laptop z procesorem Intel albo AMD to <strong>x64</strong> — ta pozycja
@@ -471,9 +461,9 @@ ${sekcjaSerwera(wykaz, stan)}
   <p>Każde wydanie niesie sumę SHA-256. Aplikacja aktualizująca się banerem liczy ją
   z pobieranego strumienia i <strong>odmawia założenia pliku, którego suma się nie zgadza</strong> —
   plik jest wtedy kasowany, zanim cokolwiek zostanie podmienione. Wydanie bez podanej sumy
-  nie zostanie założone w ogóle. Pobierając ręcznie, porównaj sumę samodzielnie:
-  <code>sha256sum &quot;Danaco Console_1.0.0_hybryda_amd64.AppImage&quot;</code> na Linuksie,
-  <code>certutil -hashfile &quot;Danaco Console_1.0.0_hybryda_x64-setup.exe&quot; SHA256</code> na Windows.</p>
+  nie zostanie założone w ogóle. Pobierając ręcznie, porównaj sumę samodzielnie — na Windows
+  robi to narzędzie systemowe, bez zakładania czegokolwiek:<br>
+  <code>certutil -hashfile &quot;Danaco Console_1.0.0_hybryda_x64-setup.exe&quot; SHA256</code></p>
   <p>Certyfikat kanału potwierdza, z kim rozmawia przeglądarka. Suma kontrolna potwierdza coś
   innego i dlatego jedno nie zastępuje drugiego: że <strong>ten konkretny plik</strong> jest tym,
   który producent zbudował — niezależnie od tego, jaką drogą przyszedł i ile razy był kopiowany.</p>`,

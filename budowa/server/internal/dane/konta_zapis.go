@@ -1,10 +1,5 @@
 // Odpowiedzialność pliku: zapis katalogu kont — założenie konta, zmiana wiersza,
 // odwołanie do poświadczenia i utrwalenie stanu rotacji.
-//
-// Odwołanie do poświadczenia ma w tym pakiecie dokładnie dwie drogi —
-// `UstawPoswiadczenie` (wejście) i `OdwolaniePoswiadczenia` (wyjście dla warstwy,
-// która musi je rozwiązać w magazynie sekretów). Żaden odczyt wykazu ani żadna
-// odpowiedź kontraktu tą kolumną nie jedzie.
 package dane
 
 import (
@@ -16,7 +11,7 @@ import (
 )
 
 const (
-	// znacznikZmiany podnosi datę ostatniej zmiany przy każdym zapisie wiersza.
+	// znacznikZmiany podnosi datę ostatniej zmiany kolumny przy każdym zapisie wiersza konta do bazy danych.
 	znacznikZmiany = `zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
 	nastepnaKolejnoscKonta = `SELECT COALESCE(MAX(kolejnosc), 0) + 1 FROM konto WHERE rodzaj = ?`
@@ -48,10 +43,8 @@ const (
 	usunKonto = `DELETE FROM konto WHERE id = ?`
 )
 
-// Dodaj zakłada konto. Poświadczenie wchodzi osobnym argumentem, żeby nie dało
-// się go zapisać przypadkiem razem z resztą wiersza. Kolejność niepodana (zero
-// albo mniej) zostaje nadana jako następna w obrębie rodzaju — pula rotacji
-// dostaje porządek bez pytania Operatora o liczbę.
+// Dodaj zakłada konto; poświadczenie wchodzi osobnym argumentem, żeby nie dało się go zapisać przypadkiem
+// razem z resztą wiersza.
 func (r *repozytoriumKont) Dodaj(ctx context.Context, konto Konto,
 	odwolaniePoswiadczenia *string) (int64, error) {
 	rodzaj, stan, err := wartosciKonta(konto)
@@ -81,7 +74,7 @@ func (r *repozytoriumKont) Dodaj(ctx context.Context, konto Konto,
 	return id, err
 }
 
-// Aktualizuj zapisuje zmieniony wiersz katalogu.
+// Aktualizuj zapisuje zmieniony wiersz katalogu kont, nadpisując poprzednie wartości pól danego konta.
 func (r *repozytoriumKont) Aktualizuj(ctx context.Context, konto Konto) error {
 	rodzaj, _, err := wartosciKonta(konto)
 	if err != nil {
@@ -160,7 +153,7 @@ func (r *repozytoriumKont) OznaczStan(ctx context.Context, id int64, stan StanKo
 	return sprawdzTrafienie(wynik, "konto", id)
 }
 
-// wartosciKonta przekłada pola wyliczeniowe wiersza na wartości kolumn.
+// wartosciKonta przekłada pola wyliczeniowe wiersza konta na wartości odpowiadających im kolumn bazy danych.
 func wartosciKonta(konto Konto) (rodzaj string, stan string, err error) {
 	if rodzaj, err = rodzajKontaNaBaze(konto.Rodzaj); err != nil {
 		return "", "", err
@@ -171,8 +164,7 @@ func wartosciKonta(konto Konto) (rodzaj string, stan string, err error) {
 	return rodzaj, stan, nil
 }
 
-// kolejnoscKonta zwraca kolejność wskazaną przez Operatora albo następną wolną
-// w obrębie rodzaju.
+// kolejnoscKonta zwraca kolejność wskazaną przez operatora albo następną wolną w obrębie danego rodzaju kont.
 func kolejnoscKonta(ctx context.Context, r *repozytoriumKont, transakcja *sql.Tx,
 	konto Konto, rodzaj string) (int, error) {
 	if konto.Kolejnosc > 0 {

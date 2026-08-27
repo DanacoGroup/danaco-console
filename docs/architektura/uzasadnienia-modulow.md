@@ -1400,3 +1400,18 @@ bywa zapisany na innym poziomie, więc poziom wraca tylko wtedy, gdy
 wszystkie zapisane punkty pochodzą z tego samego poziomu — przy polityce
 złożonej z kilku poziomów pole zostaje puste, bo jedna nazwa byłaby
 wskazaniem nieprawdziwym dla pozostałych punktów.
+
+## budowa/server/internal/core/adapter_modul_agents_zakres.go
+
+Zawężenie zapisane jest zawężeniem egzekwowanym: zapis, którego rdzeń nie
+czyta przy wykonaniu, byłby gorszy niż jego brak, bo dawałby wrażenie
+ograniczenia, którego nikt nie pilnuje. Wyliczenie polityki efektywnej
+niczego nie rozstrzyga i niczego nie zapisuje, jest wyłącznie
+przezroczystością stanu. Dziedziczenie z poziomów zasięgu bierze ten sam
+rozstrzygacz, którym jedzie okno konfiguracji punktów izolacji technicznej —
+drugiej macierzy izolacji nie ma.
+
+Zero w kolumnie granicy podagentów znaczy wyłączony i jest jedynym zapisem
+wyłączenia: włączenie bez podanej granicy przywraca piętnaście, maksimum
+techniczne platformy tego samego rzędu wielkości, jakie zna uruchomienie
+podagenta.

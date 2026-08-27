@@ -1,15 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — WIERSZ MIARY
-   ----------------------------------------------------------------------------
-   Rachunek w jednym wierszu: ile potrzeba, ile jest, gdzie. Liczby idą pismem
-   maszynowym, bo są danymi, a nie tekstem interfejsu — i to jedyny powód, dla
-   którego wolno tu mieszać kroje.
-
-   Właściwości:
-     wzor       klucz katalogu — łańcuch z miejscami {nazwa}
-     dane       klucz katalogu — wartości do podstawienia
-     wytluszcz  tablica nazw miejsc, które mają być wyróżnione
-   ============================================================================ */
+/* Wiersz miary przedstawia rachunek w jednym wierszu, gdzie liczby idą pismem maszynowym jako dane, a nie tekst interfejsu, co jest jedynym uzasadnieniem mieszania krojów. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

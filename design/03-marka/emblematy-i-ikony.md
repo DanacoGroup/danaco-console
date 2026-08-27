@@ -455,7 +455,7 @@ nadawców").
 
 | Wariant | Żeton | Wartość | Kiedy |
 |---|---|---|---|
-| na tle jasnym | `--dn-tekst` (motyw jasny) | `#181818` | karta środowiska, nawigacja, nagłówek |
+| na tle jasnym | `--dn-tekst` (motyw jasny) | `#16181D` | karta środowiska, nawigacja, nagłówek |
 | na tle ciemnym | `--dn-tekst` (motyw ciemny) | `#ECECEC` | jw. w motywie ciemnym |
 | środowisko aktywne, motyw jasny | `--dn-sygnal` (motyw jasny) | `#2457C9` | wyłącznie gdy wdrożenie przebarwia **cały** emblemat |
 | środowisko aktywne, motyw ciemny | `--dn-sygnal` (motyw ciemny) | `#8FB2F5` | jw. |
@@ -469,12 +469,12 @@ prezentacjom, poczcie.
 
 | Para | Kontrast | Próg (grafika nietekstowa, WCAG 1.4.11) | Wynik |
 |---|---:|---:|---|
-| `#181818` na `#F4F4F4` (tło jasne) | 16,14 : 1 | 3,0 : 1 | ✓ |
-| `#181818` na `#FFFFFF` (powierzchnia) | 17,76 : 1 | 3,0 : 1 | ✓ |
+| `#16181D` na `#F3F4F6` (tło jasne) | 16,14 : 1 | 3,0 : 1 | ✓ |
+| `#16181D` na `#FFFFFF` (powierzchnia) | 17,76 : 1 | 3,0 : 1 | ✓ |
 | `#ECECEC` na `#0F0F0F` (tło ciemne) | 16,74 : 1 | 3,0 : 1 | ✓ |
-| `#ECECEC` na `#181818` (powierzchnia) | 15,03 : 1 | 3,0 : 1 | ✓ |
+| `#ECECEC` na `#16181D` (powierzchnia) | 15,03 : 1 | 3,0 : 1 | ✓ |
 | `#2457C9` na `#FFFFFF` | 6,42 : 1 | 3,0 : 1 | ✓ |
-| `#8FB2F5` na `#181818` | 8,04 : 1 | 3,0 : 1 | ✓ |
+| `#8FB2F5` na `#16181D` | 8,04 : 1 | 3,0 : 1 | ✓ |
 
 Wartości zgodne z `zasoby/zetony/kontrasty.json`.
 
@@ -584,7 +584,7 @@ Każdy wariant 16 i 20 px zrasteryzowano i obejrzano w powiększeniu 14 ×
 
 | Wariant | Barwa | Przeznaczenie |
 |---|---|---|
-| `…-jasny.png` | `#181818` | osadzenia na tle jasnym: dokumenty, prezentacje, e-mail |
+| `…-jasny.png` | `#16181D` | osadzenia na tle jasnym: dokumenty, prezentacje, e-mail |
 | `…-ciemny.png` | `#ECECEC` | osadzenia na tle ciemnym |
 
 Wszystkie z **kanałem alfa** (tło przezroczyste) i wszystkie z geometrii
@@ -639,7 +639,7 @@ Katalog `zasoby/marka/ikona-aplikacji/` zawierał:
 |---|---:|---|
 | Płótno | 1024 × 1024 px | — |
 | Promień naroża | 224 px = **21,875 %** | ta sama proporcja co kafel faviconu (21/96) |
-| Grunt | `#131313` = `--dn-rama` = `szary-925` | jedyna powierzchnia marki niezmienna w obu motywach |
+| Grunt | `#111317` = `--dn-rama` = `szary-925` | jedyna powierzchnia marki niezmienna w obu motywach |
 | Skala sygnetu | 6,6133 | 96 j. → 634,9 px |
 | Odsunięcie | `translate(194,6 · 194,6)` | — |
 | Pole zadruku (x) | 274,0 – 786,5 px, szer. 512,5 px = **50,1 %** | — |
@@ -754,7 +754,7 @@ Vista+ i wszystkie przeglądarki). Plik: 14 308 B.
 | Nośnik | Plik | Kiedy działa | Tło |
 |---|---|---|---|
 | **podstawowy** | `favicon.svg` | wszystkie współczesne przeglądarki | przezroczyste; barwy przełącza `prefers-color-scheme` |
-| **zapasowy** | `favicon.ico` | starsze przeglądarki, żądanie `/favicon.ico` bez `<link>` | grunt kryjący `#131313` |
+| **zapasowy** | `favicon.ico` | starsze przeglądarki, żądanie `/favicon.ico` bez `<link>` | grunt kryjący `#111317` |
 | **systemowy** | `apple-touch-icon.png` | iOS / iPadOS „Dodaj do ekranu początkowego" | grunt kryjący, **bez alfy, bez zaokrąglenia** |
 
 ### 9.2 SVG adaptacyjny
@@ -765,7 +765,7 @@ Vista+ i wszystkie przeglądarki). Plik: 14 308 B.
      grot   M18 18 H35 L64 48 L35 78 H18 L45 48 Z
      kropka cx 79 · cy 69 · r 9
 
-   .znak   { fill: #181818 }   .kropka { fill: #3B6FE0 }
+   .znak   { fill: #16181D }   .kropka { fill: #3B6FE0 }
    @media (prefers-color-scheme: dark) {
      .znak { fill: #ECECEC }   .kropka { fill: #5C8CEC }
    }
@@ -777,19 +777,19 @@ dlatego wariant uproszczony jest tu wariantem podstawowym, nie awaryjnym.
 ### 9.3 Kafel rastrowy — dlaczego grunt kryjący
 
 Raster nie umie przełączyć barwy z motywem systemu. Pomiar dla znaku
-atramentowego (`#181818`) na pasku kart w motywie ciemnym (typowo `#35363A`)
+atramentowego (`#16181D`) na pasku kart w motywie ciemnym (typowo `#35363A`)
 daje kontrast **1,6 : 1** — znak znika.
 
-Rozstrzygnięcie: rastry faviconu stoją na **kryjącym gruncie `#131313`**
+Rozstrzygnięcie: rastry faviconu stoją na **kryjącym gruncie `#111317`**
 (`--dn-rama`) w kwadracie o promieniu naroża 21 j. na 96 — proporcja **21/96 =
 0,21875**, identyczna z `224/1024` ikony aplikacji. Kafel faviconu i ikona
 aplikacji to ta sama bryła w dwóch skalach.
 
 | Para | Kontrast | Wynik |
 |---|---:|---|
-| `#ECECEC` na `#131313` (znak w kaflu) | 16,32 : 1 | ✓ |
-| `#131313` na `#F4F4F4` (kafel na jasnym pasku kart) | 15,42 : 1 | ✓ |
-| `#131313` na `#35363A` (kafel na ciemnym pasku kart) | 1,84 : 1 | kafel ledwie odcina się od tła — **odcina go znak w środku**, nie krawędź |
+| `#ECECEC` na `#111317` (znak w kaflu) | 16,32 : 1 | ✓ |
+| `#111317` na `#F3F4F6` (kafel na jasnym pasku kart) | 15,42 : 1 | ✓ |
+| `#111317` na `#35363A` (kafel na ciemnym pasku kart) | 1,84 : 1 | kafel ledwie odcina się od tła — **odcina go znak w środku**, nie krawędź |
 
 ### 9.4 ICO wielorozmiarowy
 
@@ -823,7 +823,7 @@ sygnet pełny, więc kompensacja optyczna nie jest potrzebna.
 | Rozmiar | 180 × 180 px | wymóg iOS dla ekranów @3x |
 | Promień naroża | **0 (kwadrat)** | maskę nakłada system; własne zaokrąglenie daje podwójny łuk |
 | Kanał alfa | **usunięty** (`RGB`) | iOS nie obsługuje przezroczystości w tej ikonie — kompozytuje ją na czarno |
-| Grunt | `#131313` | jak ikona aplikacji |
+| Grunt | `#111317` | jak ikona aplikacji |
 | Znak | sygnet pełny, kompozycja jak w ikonie aplikacji | — |
 
 ### 9.6 Wady plików zastanych — wykryte i naprawione
@@ -832,9 +832,9 @@ Trzy defekty wykryte pomiarowo w plikach `zasoby/marka/favicon/`:
 
 | # | Plik zastany | Defekt | Pomiar | Naprawa |
 |---|---|---|---|---|
-| **1** | `favicon-16.png` | **kropka sygnału nie istnieje** — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera | histogram: **0 pikseli błękitu**; barwy w pliku wyłącznie `#181818` + alfa | kafel uproszczony ze skalą 0,72 → **2 piksele błękitu** przy 16 px |
-| **2** | `favicon-16/32/48.png` | tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart | kontrast `#181818` / `#35363A` = **1,6 : 1** | grunt kryjący `#131313`, znak `#ECECEC` — 16,32 : 1 |
-| **3** | `apple-touch-icon.png` | identyczny z `ikona-180.png`, czyli z wypalonym `rx 224`; dodatkowo **białe naroża** po spłaszczeniu alfy | piksel (0,0) = `#FFFFFF` | kwadrat `rx 0`, tryb `RGB`, piksel (0,0) = `#131313` |
+| **1** | `favicon-16.png` | **kropka sygnału nie istnieje** — przy 16 px promień 9 j. na 96 daje 1,5 px i rasteryzator gasi ją do zera | histogram: **0 pikseli błękitu**; barwy w pliku wyłącznie `#16181D` + alfa | kafel uproszczony ze skalą 0,72 → **2 piksele błękitu** przy 16 px |
+| **2** | `favicon-16/32/48.png` | tło przezroczyste + znak atramentowy — znak niewidoczny na ciemnym pasku kart | kontrast `#16181D` / `#35363A` = **1,6 : 1** | grunt kryjący `#111317`, znak `#ECECEC` — 16,32 : 1 |
+| **3** | `apple-touch-icon.png` | identyczny z `ikona-180.png`, czyli z wypalonym `rx 224`; dodatkowo **białe naroża** po spłaszczeniu alfy | piksel (0,0) = `#FFFFFF` | kwadrat `rx 0`, tryb `RGB`, piksel (0,0) = `#111317` |
 
 > Naprawy dotyczą **wyłącznie plików wytworzonych w `03-marka/emblematy/`**.
 > Pliki w `zasoby/marka/` pozostawiono nietknięte — ich podmiana jest decyzją
@@ -862,11 +862,11 @@ Plik: `emblematy/favicon/naglowek-snippet.html`
 <link rel="manifest" href="/site.webmanifest">
 
 <!-- 5. Barwa paska systemowego -->
-<meta name="theme-color" content="#F4F4F4" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#131313" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F4F6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
 
 <!-- 6. Kafel Windows -->
-<meta name="msapplication-TileColor" content="#131313">
+<meta name="msapplication-TileColor" content="#111317">
 <meta name="msapplication-TileImage" content="/icon-192.png">
 
 <!-- 7. Nazwa aplikacji w trybie samodzielnym -->
@@ -881,7 +881,7 @@ i ignoruje ICO. Starsza pomija SVG i pobiera ICO. Odwrócenie kolejności sprawi
 że część przeglądarek utknie na rastrze.
 
 **Dlaczego dwa `theme-color`.** W motywie jasnym pasek systemowy przyjmuje
-`#F4F4F4` (papier roboczy `--dn-tlo`), w ciemnym `#131313` (rama kokpitu
+`#F3F4F6` (papier roboczy `--dn-tlo`), w ciemnym `#111317` (rama kokpitu
 `--dn-rama`). Rama jest w systemie zawsze atramentowa, więc w motywie ciemnym
 pasek systemowy przedłuża pasek górny aplikacji bez szwu.
 
@@ -895,7 +895,7 @@ Plik: `emblematy/favicon/site.webmanifest`
 | `short_name` | `Danaco Console` | — |
 | `lang` | `pl` | kontrakt systemu projektowego |
 | `background_color` | `#0F0F0F` | `--dn-tlo` (motyw ciemny) = `szary-950` |
-| `theme_color` | `#131313` | `--dn-rama` = `szary-925` |
+| `theme_color` | `#111317` | `--dn-rama` = `szary-925` |
 | `display` | `standalone` | — |
 | `display_override` | `["window-controls-overlay", "standalone"]` | pasek górny aplikacji przejmuje pas tytułowy okna |
 | `icons` | 192, 512, 512 maskowalna, SVG `any` | rozdz. 8.6 |
@@ -946,10 +946,10 @@ gdyby wszystkie cztery skróty miały ikonę aplikacji, byłyby nierozróżnialn
 | Pas kart sesji | **emblemat** | 16 px | `--dn-tekst-2` |
 | Panel orkiestracji (MultitaskingAI) | **emblemat** MultitaskingAI | 20 px | `--dn-tekst` |
 | Modal, toast, tooltip | ikona z zestawu | 16 px | wg klasy semantycznej |
-| Karta przeglądarki | **favicon** | 16–20 px | kafel `#131313` |
-| Pasek zadań / dok | **ikona aplikacji** | 32–64 px | kafel `#131313` |
-| Ekran domowy telefonu | **ikona aplikacji** (maskowalna) | 192 px | kafel `#131313` |
-| Lista aplikacji systemu | **ikona aplikacji** | 48–128 px | kafel `#131313` |
+| Karta przeglądarki | **favicon** | 16–20 px | kafel `#111317` |
+| Pasek zadań / dok | **ikona aplikacji** | 32–64 px | kafel `#111317` |
+| Ekran domowy telefonu | **ikona aplikacji** (maskowalna) | 192 px | kafel `#111317` |
+| Lista aplikacji systemu | **ikona aplikacji** | 48–128 px | kafel `#111317` |
 | Skrót do środowiska (manifest) | **emblemat** | 192 px | `#ECECEC` |
 | Papier firmowy, faktura, wizytówka | logotyp / sygnet | wg makiety | barwy własne |
 
@@ -960,7 +960,7 @@ gdyby wszystkie cztery skróty miały ikonę aplikacji, byłyby nierozróżnialn
 2. **Sygnet nie jest ikoną interfejsu** — nie stanie w bocznej nawigacji jako
    pozycja modułu ani w przycisku.
 3. **Ikona aplikacji nie jest godłem wewnątrz aplikacji** — kafel z gruntem
-   `#131313` nie pojawia się w treści okna; wewnątrz stoi sam sygnet.
+   `#111317` nie pojawia się w treści okna; wewnątrz stoi sam sygnet.
 4. **Nie miesza się pięter** — cztery karty środowisk mają cztery emblematy,
    nie cztery sygnety i nie cztery ikony aplikacji.
 5. **Nie dorabia się piątego emblematu** — środowiska są cztery
@@ -981,7 +981,7 @@ gdyby wszystkie cztery skróty miały ikonę aplikacji, byłyby nierozróżnialn
    │ ←  →  ⟳   console.danaco-group.pl/                           │
    └──────────────────────────────────────────────────────────────┘
 
-   ▣ = kafel #131313 · jeden grot #ECECEC · kropka #5C8CEC (2 px błękitu)
+   ▣ = kafel #111317 · jeden grot #ECECEC · kropka #5C8CEC (2 px błękitu)
 ```
 
 Kontrola: przy 16 px w kaflu widoczne są **trzy formy** — grunt, grot, kropka.
@@ -1067,7 +1067,7 @@ Wariant interfejsowy: `fill="none"`, `stroke="currentColor"`, kropka
 ### 13.2 `emblematy/svg/warianty/` — 16 plików
 
 ```
-srodowisko-{talkin,workspace,codestudio,multitaskingai}-jasny.svg          #181818
+srodowisko-{talkin,workspace,codestudio,multitaskingai}-jasny.svg          #16181D
 srodowisko-{talkin,workspace,codestudio,multitaskingai}-ciemny.svg         #ECECEC
 srodowisko-{talkin,workspace,codestudio,multitaskingai}-sygnal-jasny.svg   #2457C9
 srodowisko-{talkin,workspace,codestudio,multitaskingai}-sygnal-ciemny.svg  #8FB2F5
@@ -1138,7 +1138,7 @@ i przerywa, jeżeli kropka sygnału zniknęła (regresja pierwszego defektu).
 | 6 | kropka nie odrywa się barwą od obrysu | ✓ — 16 wariantów barwnych, każdy jednobarwny |
 | 7 | kropka sygnału widoczna w faviconie 16 px | ✓ — 2 px błękitu (przed: 0) |
 | 8 | zadruk ikony maskowalnej w strefie 80 % | ✓ — 248,4 z 409,6 px |
-| 9 | `apple-touch-icon` bez alfy i bez zaokrąglenia | ✓ — RGB, piksel (0,0) = `#131313` |
+| 9 | `apple-touch-icon` bez alfy i bez zaokrąglenia | ✓ — RGB, piksel (0,0) = `#111317` |
 | 10 | ICO wielorozmiarowe czytelne przez PIL i przeglądarki | ✓ — 3 i 7 wpisów odczytanych |
 | 11 | manifest poprawny składniowo (JSON) | ✓ |
 | 12 | nazwy własne środowisk zgodne z dokumentacją | ✓ — TalkIn, WorkSpace, CodeStudio, MultitaskingAI |
@@ -1223,7 +1223,7 @@ się na cztery szare kreski. To ta sama reguła, nie odstępstwo od niej.
 
 ### Rastry faviconu stoją na kryjącym gruncie
 
-**Rozstrzygnięcie.** `favicon-16/32/48.png` i `favicon.ico` to kafle `#131313`
+**Rozstrzygnięcie.** `favicon-16/32/48.png` i `favicon.ico` to kafle `#111317`
 ze znakiem `#ECECEC` i kropką `#5C8CEC`. `favicon.svg` pozostaje przezroczysty
 i adaptacyjny.
 

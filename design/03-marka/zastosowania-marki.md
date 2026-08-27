@@ -122,10 +122,10 @@ reguła 1 px w `#E3E3E3` (jasne tło) albo `#2A2A2A` (ciemne tło).
 
 | Rola | Nośnik ciemny | Nośnik jasny | Żeton systemu |
 |---|---|---|---|
-| Tło nośnika | `#0F0F0F` | `#F4F4F4` | `--dn-tlo` |
-| Pole medalionu (awatar, ikona) | `#131313` | `#131313` | `--dn-rama` |
+| Tło nośnika | `#0F0F0F` | `#F3F4F6` | `--dn-tlo` |
+| Pole medalionu (awatar, ikona) | `#111317` | `#111317` | `--dn-rama` |
 | Papier (druk) | — | `#FFFFFF` | `--dn-powierzchnia` |
-| Farba znaku i tekst główny | `#ECECEC` | `#181818` | `--dn-tekst` |
+| Farba znaku i tekst główny | `#ECECEC` | `#16181D` | `--dn-tekst` |
 | Tekst pomocniczy | `#9E9E9E` | `#616161` | `--dn-tekst-2` |
 | Metadane, deskryptor | `#7C7C7C` | `#7C7C7C` | `--dn-tekst-3` |
 | Reguła, obrys | `#2A2A2A` | `#E3E3E3` | `--dn-obrys` |
@@ -223,9 +223,9 @@ Najmniejsze wystąpienia: **wizytówka awers 28 mm** (lockup kompaktowy, minimum
 
 | Tło nośnika | Wariant znaku | Uzasadnienie |
 |---|---|---|
-| `#0F0F0F` … `#212121` | **na ciemnym** (biel `#F4F4F4` / `#ECECEC` + kropka `#5C8CEC`) | kontrast farby do tła ≥ 12 : 1 |
-| `#F4F4F4` … `#FFFFFF` | **podstawowy** (atrament `#181818` + kropka `#3B6FE0`) | kontrast farby do tła ≥ 14 : 1 |
-| `#131313` (medalion) | **na ciemnym** — zawsze, niezależnie od motywu strony | medalion jest własnym tłem znaku |
+| `#0F0F0F` … `#212121` | **na ciemnym** (biel `#F3F4F6` / `#ECECEC` + kropka `#5C8CEC`) | kontrast farby do tła ≥ 12 : 1 |
+| `#F3F4F6` … `#FFFFFF` | **podstawowy** (atrament `#16181D` + kropka `#3B6FE0`) | kontrast farby do tła ≥ 14 : 1 |
+| `#111317` (medalion) | **na ciemnym** — zawsze, niezależnie od motywu strony | medalion jest własnym tłem znaku |
 | druk jednokolorowy | **mono czarny** / **mono biały** — kropka przyjmuje barwę grotów | brak drugiego koloru w maszynie |
 | zdjęcie, tło mieszane | **niedozwolone bez podkładu** — patrz `ksiega-znaku.md` 9.2 | — |
 
@@ -612,11 +612,11 @@ gęstości). Odstępy pionowe: 16 / 12 / 12 / 10 px.
 | Znak | PNG 2 × w `data:` URI | SVG blokowany przez Outlooka; plik zewnętrzny wymaga zgody odbiorcy |
 | Wysokość reguły | komórka `height="1"` z `font-size: 0` | Outlook wymusza minimalną wysokość wiersza |
 | Odnośnik | `mailto:` z jawnym `color` | klienty nadpisują barwę odnośników |
-| Wersja ciemna | osobny plik, tło `#131313` | automatyczna inwersja psuje kontrast znaku |
+| Wersja ciemna | osobny plik, tło `#111317` | automatyczna inwersja psuje kontrast znaku |
 
 **Dobór wariantu znaku.** Konfiguracja **E** (lockup kompaktowy).
 Wersja jasna — wariant **podstawowy** (atrament + kropka `#3B6FE0`) na bieli.
-Wersja ciemna — wariant **na ciemnym** (biel + kropka `#5C8CEC`) na `#131313`.
+Wersja ciemna — wariant **na ciemnym** (biel + kropka `#5C8CEC`) na `#111317`.
 
 **Pole ochronne.** ½X = 2,5 px przy znaku 168 px. Faktyczne wcięcie
 komórki 20 px — z dużym zapasem. Znak stoi we własnym wierszu tabeli,
@@ -717,7 +717,7 @@ rynku poligraficznego.
 z każdej strony). Margines wewnętrzny **7 mm** od krawędzi netto.
 Pasery narożne 2 mm.
 
-**Układ — awers (atrament `#131313`).**
+**Układ — awers (atrament `#111317`).**
 
 ```
    ┌── 96 mm (ze spadem) ─────────────────────┐
@@ -732,7 +732,7 @@ Pasery narożne 2 mm.
       ⌐ pasery narożne 2 mm w każdym rogu
 ```
 
-**Układ — rewers (papier `#F4F4F4`).**
+**Układ — rewers (papier `#F3F4F6`).**
 
 ```
    ┌── 90 mm netto ───────────────────────────┐
@@ -845,7 +845,7 @@ krawędzi 280 px — z wielokrotnym zapasem.
 medalion systemu w oknie komunikacji, miniatura w katalogu aplikacji.
 
 **Wymiary.** 400 × 400 px, dwa kadrowania: **kwadrat** (pełny kwadrat) i
-**koło** (maska okrągła r = 200). Pole medalionu `#131313` — barwa ramy
+**koło** (maska okrągła r = 200). Pole medalionu `#111317` — barwa ramy
 kokpitu, ta sama w obu motywach.
 
 **Układ.**
@@ -888,7 +888,7 @@ bo awatar bywa oglądany w skali 24 px i znak musi wypełnić kadr.
 
 **Zakazy.**
 - ✗ znak dotykający krawędzi kadru,
-- ✗ pole medalionu w barwie innej niż `#131313`,
+- ✗ pole medalionu w barwie innej niż `#111317`,
 - ✗ pełny sygnet w rozmiarze poniżej 24 px (obowiązuje wariant uproszczony),
 - ✗ logotyp tekstowy w kadrze awatara,
 - ✗ obramowanie, poświata, cień rzucony pod znakiem.
@@ -922,7 +922,7 @@ w interfejsie: „tu jest pozycja, która pracuje".
 
 | Kontrolka | Działanie |
 |---|---|
-| **Wariant jasny** | przełącza oba slajdy na tło `#F4F4F4` i podmienia wariant barwny znaku |
+| **Wariant jasny** | przełącza oba slajdy na tło `#F3F4F6` i podmienia wariant barwny znaku |
 | **Siatka konstrukcyjna** | nakłada podziałkę marginesu 120 u |
 | **Drukuj** | `@media print` → A4 poziomo, po jednym slajdzie na stronę |
 
@@ -1100,7 +1100,7 @@ Dodatkowo w `png/`: `znak-poczty-jasny@2x.png` i `znak-poczty-ciemny@2x.png`
 | Plik | Rola |
 |---|---|
 | `html/sygnatura-poczty-jasna.html` | gotowa do wklejenia sygnatura, tło białe |
-| `html/sygnatura-poczty-ciemna.html` | jw., tło `#131313` |
+| `html/sygnatura-poczty-ciemna.html` | jw., tło `#111317` |
 | `html/papier-firmowy-a4.html` | dwa arkusze A4 z `@media print` |
 | `html/szablon-slajdow.html` | slajd tytułowy i treściowy, przełączalne |
 
@@ -1214,11 +1214,11 @@ nie przez ręczną edycję pliku wynikowego.
 | `#ECECEC` na `#0F0F0F` | tekst główny, ciemny | **15,0 : 1** | AAA (7,0) ✓ |
 | `#9E9E9E` na `#0F0F0F` | tekst pomocniczy, ciemny | **6,8 : 1** | AA (4,5) ✓ |
 | `#7C7C7C` na `#0F0F0F` | metadane ≥ 18,66 px półgrube | **4,1 : 1** | AA duży (3,0) ✓ |
-| `#181818` na `#F4F4F4` | tekst główny, jasny | **16,1 : 1** | AAA ✓ |
-| `#616161` na `#F4F4F4` | tekst pomocniczy, jasny | **6,4 : 1** | AA ✓ |
-| `#ECECEC` na `#131313` | znak w medalionie | **14,5 : 1** | — (grafika) ✓ |
+| `#16181D` na `#F3F4F6` | tekst główny, jasny | **16,1 : 1** | AAA ✓ |
+| `#616161` na `#F3F4F6` | tekst pomocniczy, jasny | **6,4 : 1** | AA ✓ |
+| `#ECECEC` na `#111317` | znak w medalionie | **14,5 : 1** | — (grafika) ✓ |
 | `#5C8CEC` na `#0F0F0F` | kropka sygnału, ciemny | **6,2 : 1** | AA grafika (3,0) ✓ |
-| `#3B6FE0` na `#F4F4F4` | kropka sygnału, jasny | **4,9 : 1** | AA grafika ✓ |
+| `#3B6FE0` na `#F3F4F6` | kropka sygnału, jasny | **4,9 : 1** | AA grafika ✓ |
 
 **`#7C7C7C` obowiązuje wyłącznie w metadanych** — na każdym nośniku stoi
 w stopniu ≥ 13 px w kroju monospace o dużym świetle międzyliterowym, co

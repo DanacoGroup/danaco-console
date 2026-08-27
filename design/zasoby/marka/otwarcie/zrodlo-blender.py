@@ -80,7 +80,7 @@ sc.render.use_motion_blur=True
 sc.render.motion_blur_shutter=0.85
 sc.render.fps=30
 sc.render.film_transparent=False
-TLO = (0.0075,0.0075,0.0075,1) if motyw=='ciemny' else (1.0,1.0,1.0,1)   # #181818 / #FFFFFF w przestrzeni liniowej
+TLO = (0.0075,0.0075,0.0075,1) if motyw=='ciemny' else (1.0,1.0,1.0,1)   # #16181D / #FFFFFF w przestrzeni liniowej
 sw=bpy.data.worlds.new('tlo'); sc.world=sw; sw.use_nodes=True
 sw.node_tree.nodes['Background'].inputs['Color'].default_value=TLO
 sw.node_tree.nodes['Background'].inputs['Strength'].default_value=1.0

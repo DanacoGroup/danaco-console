@@ -11,7 +11,7 @@
   "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "any",
   "background_color": "#0F0F0F",
-  "theme_color": "#131313",
+  "theme_color": "#111317",
   "categories": ["productivity", "developer", "business"],
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

@@ -2001,3 +2001,17 @@ Warunek wskazujący klucz, którego katalog nie zna, nie chowa pola. Ukrycie pol
 z powodu braku metadanej byłoby cichym odebraniem Operatorowi ustawienia,
 dlatego brak klucza warunkującego zostaje odnotowany w dzienniku klienta, a pole
 pozostaje widoczne.
+
+## budowa/klient-poprzedni/src/mission-control/zdarzenia-pulpitu.ts
+
+Pulpit nie wysyła komend samodzielnie: nadaje zamiar, a kopertę składa z niego
+powłoka. Dzięki temu nazwa komendy pojawia się w jednym miejscu i pochodzi
+z importu ze wspólnego kontraktu, zamiast być przepisana z pamięci do każdego
+wywołania.
+
+Pole roli niesie nazwę kolejki widoczną dla Operatora. Kontrakt roli kolejki
+nie niesie, więc zamiar jej nie podstawia i nie udaje, że pochodzi z rdzenia.
+
+Podniesienie priorytetu nie ma odpowiednika ani w wyliczeniu `QueueAction`, ani
+wśród komend kontraktu. Zamiar niesie wtedy rodzaj priorytetowy z komendą pustą,
+zamiast napisu wymyślonego po stronie klienta, którego rdzeń nie rozpozna.

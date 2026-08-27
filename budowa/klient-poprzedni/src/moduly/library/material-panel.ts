@@ -14,25 +14,9 @@ import {
 } from './material-narzedzia';
 
 /**
- * Materiał dźwiękowy i filmowy — rozpoznanie (`media.inspect`) i przetworzenie
- * (`media.transcode`).
- *
- * Powierzchnia stoi w obszarze Archiwum panelu Metadata & Archive Panel, przy
- * pozostałych czynnościach wykonywanych nad treścią, a nie nad opisem. Miejsca
- * dla rodziny `media.*` nie nazywa żadne opracowanie — ani `moduly/library.md`,
- * ani `moduly/design.md` nie wymieniają ani jednej komendy tej rodziny —
- * i to jest zgłoszone Właścicielowi. Do rozstrzygnięcia stoi tutaj, bo tutaj
- * Operator pracuje nad zasobem i tutaj czynności arsenału mają sąsiadów
- * o tej samej naturze.
- *
- * Rozpoznanie jest osobnym krokiem, nie ozdobą przetworzenia: wycięcie
- * fragmentu bez znajomości czasu trwania daje pusty plik, a zmiana
- * rozdzielczości bez znajomości proporcji — rozciągnięty obraz. Dlatego
- * rozpoznanie stoi nad przetworzeniem i jego odpowiedź zostaje na widoku.
- *
- * Czynność, która trwa, mówi to zanim skończy, i mówi to samo pole, które
- * potem poniesie wynik — dwa miejsca na jedną wiadomość dałyby Operatorowi
- * wybór, w które patrzeć.
+ * Materiał dźwiękowy i filmowy: rozpoznanie stoi nad przetworzeniem, bo wycięcie
+ * bez znajomości czasu trwania i zmiana rozdzielczości bez znajomości proporcji
+ * dają wynik zepsuty.
  */
 export interface PanelMaterialu {
   element: HTMLElement;
@@ -117,9 +101,7 @@ export function utworzPanelMaterialu(narzedzia: NarzedziaMaterialu): PanelMateri
       return;
     }
     const tresc = wynik.wynik;
-    // Czas trwania zerowy jest odpowiedzią, nie brakiem odpowiedzi: tak wraca
-    // strumień żywy i kontener bez nagłówka czasu. Zdanie nazywa to wprost,
-    // bo „0 ms" samo w sobie wyglądałoby na pomiar nieudany.
+    // Czas trwania zerowy jest odpowiedzią, nie brakiem odpowiedzi: tak wraca strumień żywy.
     const czas =
       tresc.durationMs === 0
         ? 'czasu trwania materiał nie ma zapisanego (strumień żywy albo kontener bez nagłówka czasu)'
@@ -218,7 +200,7 @@ export function utworzPanelMaterialu(narzedzia: NarzedziaMaterialu): PanelMateri
   return { element };
 }
 
-/** Przekład wartości selektora na rodzaj przetworzenia; spoza wykazu bierze zmianę formatu. */
+/** Przekład wartości selektora na rodzaj przetworzenia; wartość spoza wykazu bierze rodzaj zmiany formatu jako domyślny. */
 function odczytajRodzaj(wartosc: string): MediaOperationKind {
   const pozycja = RODZAJE_PRZETWORZENIA.find((wpis) => wpis.kod === wartosc);
   return pozycja === undefined ? MediaOperationKind.Convert : pozycja.kod;

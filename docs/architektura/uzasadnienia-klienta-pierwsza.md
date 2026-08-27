@@ -6480,3 +6480,19 @@ odpowiedzią i niczym więcej.
 
 ## budowa/klient-poprzedni/src/moduly/agents/podsumowanie-definicji.ts
 Definicja eksperta powstaje w pięciu oknach naraz i żadne z nich nie widzi całości: okno konfiguracji modelu nie wie, ile ekspert ma umiejętności, a menedżer umiejętności nie wie, jakim kanałem ekspert mówi. Panel jest jedynym miejscem, w którym widać komplet, więc stoi przy edytorze niezależnie od tego, które okno ma ognisko. Panel niczego nie zapisuje i nie woła ani jednej komendy — czyta eksperta czynnego ze stanu modułu. Wiersz jest za to przenośnikiem: kliknięcie przenosi ognisko do okna, które daną rzeczą zarządza, więc wartość pusta jest drogą do okna konfiguracji, a nie samym stwierdzeniem braku. Wartości nie są tu liczone po raz drugi: każdy wiersz czyta pole bytu eksperta, a przy pamięci i zakresie możliwości regułę stanu wyjściowego zapisaną w kontrakcie — cztery poziomy pamięci i pełny dostęp operacyjny; zdanie o braku ustawienia jako wartości domyślnej obowiązuje tu tak samo jak w Permissions Center. Stanu zarchiwizowanego w plakietce nie ma i nie jest to przeoczenie: wykaz biblioteki ekspertów zarchiwizowanych nie oddaje, więc ekspert czynny w edytorze nigdy nim nie jest — archiwum ma własny panel i własny wykaz.
+
+## budowa/klient-poprzedni/src/moduly/browser/formularz-nawigacji.ts
+Plik ma jedną odpowiedzialność: formularz przejścia i dwie komendy, które z niego wychodzą. Podgląd, pasek zaznaczenia i pasek dolny są osobno. Przewijanie przewija migawkę, nie stronę w rdzeniu: przewinięcie po stronie rdzenia ma własną komendę, której formularz jeszcze nie wywołuje. Zdanie pod przyciskami bierze powód z odczytu wykazu komend rdzenia, więc zmieni się samo w dniu dobudowy obsługi. Adres w zdaniu końcowym pochodzi z migawki, nie z pola formularza: funkcja przycinania białych znaków w przeglądarce nie jest tą samą funkcją co odpowiednik rdzenia, więc zdanie zbudowane z pola byłoby prawdziwe przypadkiem. Polecenie nawigacji oddaje migawkę z adresem, pod którym strona została faktycznie pobrana.
+
+## budowa/klient-poprzedni/src/moduly/library/material-panel.ts
+Powierzchnia stoi w obszarze archiwum panelu metadanych, przy pozostałych
+czynnościach wykonywanych nad treścią, a nie nad opisem, i miejsce dla tej
+rodziny komend w dokumentacji modułów pozostaje do rozstrzygnięcia; stanęła
+tutaj, bo tutaj użytkownik pracuje nad zasobem i tutaj czynności arsenału
+mają sąsiadów o tej samej naturze. Rozpoznanie jest osobnym krokiem, nie
+ozdobą przetworzenia, dlatego jego odpowiedź zostaje na widoku. Czynność,
+która trwa, mówi to zanim skończy, i mówi to samo pole, które potem poniesie
+wynik, bo dwa miejsca na jedną wiadomość dałyby wybór, w które patrzeć.
+Zdanie o czasie trwania zerowym nazywa to wprost, ponieważ sam zapis
+zerowego czasu wyglądałby na pomiar nieudany, a dotyczy też kontenera bez
+nagłówka czasu.

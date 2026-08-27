@@ -4464,3 +4464,16 @@ nieobowiązkowe, bo zakładki działają też bez niego, zakładając zakładkę
 źródło jest podane, przycisk nowego dokumentu zakłada pustą stronę gotową do pisania z domyślnym
 arkuszem stylów i nastawami strony — to była jedyna droga zakładania dokumentu, której rdzeń
 wcześniej nie miał czym obsłużyć.
+
+## budowa/klient-poprzedni/src/moduly/translate/wymiana-glosariusza.ts
+Czynności wydzielono z okna, bo formularz terminu opisuje jeden termin, a to są czynności zbiorcze
+o jednej odpowiedzialności na plik. Ścieżka pliku jest ścieżką po stronie rdzenia: klient plików
+nie czyta i nie zapisuje, więc kontrolką jest pole tekstowe, a nie okno wyboru pliku przeglądarki,
+które sugerowałoby przesył nieprzewidziany kontraktem. Trzy czynności stoją poza wytwórnią
+elementów: wytwórnia składa pole i pasek przycisków, a każda czynność jest osobną funkcją modułu,
+mówi o czym innym i daje się sprawdzić bez klikania w przycisk.
+Odpowiedź eksportu niesie wyłącznie liczbę wyeksportowanych terminów: ani ścieżki wyniku, ani
+znaku, że plik powstał — odpowiedź wygląda tak samo także przy ścieżce do nieistniejącego
+katalogu i przy napisie, który ścieżką nie jest. Liczba mówi o zawartości glosariusza w chwili
+zlecenia, bo rdzeń liczy zastane terminy, a nie o zapisie, dlatego wiersz odpowiedzi ma wydźwięk
+odmowy.

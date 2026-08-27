@@ -41,24 +41,8 @@ import {
 } from './zaleznosci-zewnetrzne';
 
 /**
- * Session Manager — okno zarządcy modułu Terminal: książka hostów, karty powłok
- * okna i wymiana z plikiem konfiguracyjnym OpenSSH.
- *
- * Do rdzenia idzie jedna komenda: `terminal.session.open` z powłoką `ssh`
- * i adresem celu podanym zmienną środowiska `SSH_TARGET` — tak i tylko tak
- * rdzeń przekazuje adres programowi ssh. Karta powstaje w tym samym stanie
- * modułu, w którym stoją karty otwarte w Terminal Tabs, więc połączenie z tego
- * okna jest od razu widoczne w oknie wiodącym i w Output Console.
- *
- * Książka hostów, klucze SSH, tunele portowe i wykaz kart są bytami RDZENIA,
- * a okno jest ich widokiem. Wpis hosta zapisuje `terminal.host.save` i czyta
- * `terminal.host.list`, klucze prowadzi rodzina `terminal.key.*`, tunele —
- * `terminal.tunnel.*`, a karty pokazuje `terminal.session.list`, więc wykaz
- * sięga dalej niż pamięć tego połączenia: rdzeń odtwarza karty przy starcie
- * i okno je widzi po ponownym podłączeniu gniazda.
- *
- * Czytanie i pisanie pliku konfiguracyjnego OpenSSH zostaje, bo służy czemu
- * innemu niż trwałość: wnosi wpisy z maszyny OPERATORA i wynosi je z powrotem.
+ * Session Manager to okno modułu Terminal spinające książkę hostów, karty powłok oraz wymianę
+ * z plikiem konfiguracyjnym OpenSSH z bytami rdzenia aplikacji.
  */
 export interface OknoZarzadcySesji {
   element: HTMLElement;
@@ -67,11 +51,8 @@ export interface OknoZarzadcySesji {
 }
 
 /**
- * Nazwa zmiennej środowiska, którą rdzeń czytał jako adres powłoki zdalnej,
- * zanim kontrakt dostał pole `remoteTarget`. Zostaje wyłącznie jako droga
- * zastępcza dla rdzenia sprzed tej zmiany — okno wysyła dziś oba wskazania,
- * żeby karta ruszyła niezależnie od tego, którą wersję rdzenia ma po drugiej
- * stronie łącza.
+ * Nazwa zmiennej środowiska, którą rdzeń czytał jako adres powłoki zdalnej przed wprowadzeniem
+ * pola remoteTarget kontraktu; okno wysyła dziś oba wskazania dla zgodności ze starszym rdzeniem.
  */
 const ZMIENNA_CELU = 'SSH_TARGET';
 
@@ -91,8 +72,7 @@ export function utworzOknoZarzadcySesji(
   });
   const tresc = utworzStanTresci();
   const ksiazka = utworzKsiazkeHostow();
-  // Klucze, tunele i karty rdzenia trzymamy w polach okna, a nie w książce:
-  // książka jest widokiem na jeden byt rdzenia, a to są trzy inne.
+  // Klucze, tunele i karty rdzenia trzymamy w polach okna, a nie w książce, bo to trzy różne byty.
   let klucze: readonly TerminalSshKey[] = [];
   let tunele: readonly TerminalTunnel[] = [];
   let kartyRdzeniaWykaz: readonly TerminalSession[] = [];
@@ -126,8 +106,7 @@ export function utworzOknoZarzadcySesji(
     void zrodlo.klucze().then((wynik) => {
       if (!wynik.udany || wynik.wynik === undefined) return;
       klucze = wynik.wynik;
-      // Wykaz kluczy zasila zarazem listę wyboru przy wpisie hosta: klucz da się
-      // wskazać nazwą, a nie identyfikatorem przepisywanym ręcznie.
+      // Wykaz kluczy zasila zarazem listę wyboru przy wpisie hosta: klucz da się wskazać nazwą.
       const wybrany = kontrolki.klucz.value;
       kontrolki.klucz.replaceChildren();
       for (const [wartosc, opis] of [
@@ -157,8 +136,7 @@ export function utworzOknoZarzadcySesji(
   /** Zdejmuje wpis z książki RDZENIA, a nie tylko z wykazu na ekranie. */
   function usunHosta(wpis: WpisHosta): void {
     if (wpis.id === undefined || wpis.id === '') {
-      // Wpis bez identyfikatora nigdy nie doszedł do rdzenia — zwykle wszedł
-      // z pliku konfiguracyjnego i nie został zapisany. Znika z samego widoku.
+      // Wpis bez identyfikatora nigdy nie doszedł do rdzenia; znika z samego widoku, bo nie był zapisany.
       ksiazka.usun(wpis.nazwa);
       pokaz();
       tresc.potwierdzenie(
@@ -367,8 +345,7 @@ export function utworzOknoZarzadcySesji(
     if (wybrany === undefined) return;
     void wybrany.text().then((zawartosc) => {
       const wczytane = czytajKonfiguracjeSsh(zawartosc);
-      // Nazwa pliku wraca do pustej, żeby dało się wczytać ten sam plik drugi
-      // raz — bez tego zdarzenie `change` nie powtórzy się przy tym samym wyborze.
+      // Nazwa pliku wraca do pustej, żeby dało się wczytać ten sam plik drugi raz z rzędu.
       kontrolki.plik.value = '';
       if (wczytane.length === 0) {
         tresc.potwierdzenie(
@@ -400,9 +377,7 @@ export function utworzOknoZarzadcySesji(
     tresc.potwierdzenie(`Zapisano ${nazwa} — ${wpisy.length} wpisów książki widoku.`, true);
   });
 
-  // Okno budzi się wyłącznie na zmianę wykazu kart, a nie na każdy fragment
-  // wyjścia: strumień poleceń nie zmienia ani książki hostów, ani wykazu kart,
-  // a przerysowywanie ich przy każdym fragmencie byłoby pracą bez skutku.
+  // Okno budzi się wyłącznie na zmianę wykazu kart, nie na każdy fragment wyjścia poleceń.
   let podpisKart = '';
   stan.naZmiane(() => {
     const podpis = stan
@@ -483,14 +458,20 @@ export function utworzOknoZarzadcySesji(
   return { element: rama.element, odswiez: odczytaj, czynnosci };
 }
 
-/** Czynności wiersza hosta — okno oddaje je wykazowi, bo wykaz nie zna ani rdzenia, ani stanu. */
+/**
+ * Czynności wiersza hosta: połączenie, wczytanie do formularza i usunięcie; okno oddaje je
+ * wykazowi, bo wykaz nie zna ani rdzenia, ani stanu okna.
+ */
 interface CzynnosciHosta {
   polacz(wpis: WpisHosta): void;
   wczytaj(wpis: WpisHosta): void;
   usun(wpis: WpisHosta): void;
 }
 
-/** Wykaz hostów pogrupowany po folderze; pustka ma własne zdanie, bo jest stanem poprawnym. */
+/**
+ * Wykaz hostów pogrupowany po folderze książki; pustka wykazu ma własne zdanie ekranu, bo jest
+ * stanem tak samo poprawnym jak wykaz niepusty.
+ */
 function wykazHostow(ksiazka: KsiazkaHostow, czynnosci: CzynnosciHosta): HTMLElement {
   const blok = document.createElement('section');
   blok.className = 'dt-hosty';
@@ -540,7 +521,7 @@ function wykazHostow(ksiazka: KsiazkaHostow, czynnosci: CzynnosciHosta): HTMLEle
   return blok;
 }
 
-/** Przekłada wpis książki rdzenia na wpis wykazu okna. */
+/** Przekłada wpis książki hostów zwrócony przez rdzeń na odpowiadający mu wpis wykazu prowadzonego przez to okno. */
 function wpisZKontraktu(host: TerminalHost): WpisHosta {
   const wpis: WpisHosta = {
     id: host.id,
@@ -611,7 +592,10 @@ function wykazKluczy(
   return blok;
 }
 
-/** Wykaz przekierowań portów wraz z ich stanem i powodem niepowodzenia. */
+/**
+ * Wykaz przekierowań portów tunelu SSH wraz z ich bieżącym stanem oraz powodem niepowodzenia,
+ * gdy założenie się nie udało.
+ */
 function wykazTuneli(
   tunele: readonly TerminalTunnel[],
   zamknij: (tunel: TerminalTunnel) => void,
@@ -641,8 +625,7 @@ function wykazTuneli(
     if (tunel.remoteHost !== undefined && tunel.remoteHost !== '') {
       czesci.push(`cel po drugiej stronie: ${tunel.remoteHost}:${tunel.remotePort ?? '?'}`);
     }
-    // Powód niepowodzenia wchodzi do opisu, bo bez niego stan `failed` mówi
-    // wyłącznie, że coś nie wyszło, i nie mówi Operatorowi, co poprawić.
+    // Powód niepowodzenia wchodzi do opisu, bo sam stan failed nie mówi Operatorowi, co poprawić.
     if (tunel.errorMessage !== undefined && tunel.errorMessage !== '') {
       czesci.push(`powód: ${tunel.errorMessage}`);
     }
@@ -658,7 +641,10 @@ function wykazTuneli(
   return blok;
 }
 
-/** Opis wiersza hosta: adres, katalog i notatka pochodzenia. */
+/**
+ * Opis wiersza hosta w wykazie: adres celu połączenia, katalog roboczy karty i notatka
+ * pochodzenia wpisu.
+ */
 function opisHosta(wpis: WpisHosta): string {
   const czesci = [`cel: ${wpis.cel}`];
   czesci.push(`katalog: ${wpis.katalog === '' ? 'własny katalog okna' : wpis.katalog}`);
@@ -667,12 +653,8 @@ function opisHosta(wpis: WpisHosta): string {
 }
 
 /**
- * Karty powłok znane RDZENIOWI, uzupełnione o karty otwarte w tym połączeniu.
- *
- * Dwa źródła, bo dwa są stany: wykaz z `terminal.session.list` niesie karty,
- * które rdzeń pamięta — także sprzed rozłączenia klienta — a stan modułu niesie
- * kartę otwartą przed chwilą, zanim wykaz zdąży się odczytać ponownie.
- * Pierwszeństwo ma rdzeń: to on wie, czy karta wciąż istnieje.
+ * Karty powłok znane rdzeniowi, uzupełnione o kartę otwartą w tym połączeniu, zanim zdąży wejść
+ * do wykazu rdzenia; pierwszeństwo ma rdzeń, bo on rozstrzyga, czy karta wciąż istnieje.
  */
 function wykazKart(zRdzenia: readonly TerminalSession[], stan: StanTerminala): HTMLElement {
   const blok = document.createElement('section');
@@ -722,7 +704,10 @@ function opisKartyOkna(karta: TerminalSession): string {
   return czesci.join(' · ');
 }
 
-/** Otwarcie karty powłoki zdalnej; źródło i stan treści wchodzą parametrem. */
+/**
+ * Otwarcie karty powłoki zdalnej dla wskazanego wpisu książki hostów; źródło danych i stan
+ * treści wchodzą parametrem wywołania.
+ */
 function polaczZHostem(
   zrodlo: ZrodloTerminala,
   stan: StanTerminala,
@@ -734,10 +719,7 @@ function polaczZHostem(
     tresc.blad('Moduł nie zna okna komunikacji — karty zdalnej nie ma gdzie otworzyć.');
     return;
   }
-  // Adres jedzie POLEM kontraktu, a zmienna środowiska zostaje jako droga
-  // zastępcza dla rdzenia sprzed jej wprowadzenia. Wpis mający wiersz w rdzeniu
-  // idzie samym identyfikatorem — wtedy adres, port, katalog i klucz bierze
-  // rdzeń wprost z książki i nie ma dwóch prawd o jednym połączeniu.
+  // Adres jedzie polem kontraktu, zmienna środowiska zostaje jako droga zastępcza dla starszego rdzenia.
   const zadanie: TerminalSessionOpenRequest =
     wpis.id !== undefined && wpis.id !== ''
       ? {
@@ -788,7 +770,10 @@ function zaleznosciPowlokiZdalnej(): ProgramZewnetrzny[] {
   return zaleznosc === null ? [] : [zaleznosc];
 }
 
-/** Kontrolki okna Session Manager. */
+/**
+ * Kontrolki formularza i przycisków okna Session Manager: wpis hosta, klucze SSH, tunele
+ * portowe oraz plik konfiguracyjny OpenSSH.
+ */
 interface PowierzchniaHostow {
   nazwa: HTMLInputElement;
   cel: HTMLInputElement;
@@ -814,7 +799,10 @@ interface PowierzchniaHostow {
   otworzTunel: HTMLButtonElement;
 }
 
-/** Wpis złożony z pól formularza; pusty adres celu daje brak wpisu. */
+/**
+ * Wpis hosta złożony z pól formularza wpisu; pusty adres celu połączenia oznacza brak wpisu
+ * do zapisania.
+ */
 function wpisZFormularza(kontrolki: PowierzchniaHostow): WpisHosta | null {
   const cel = kontrolki.cel.value.trim();
   if (cel === '') return null;
@@ -827,13 +815,15 @@ function wpisZFormularza(kontrolki: PowierzchniaHostow): WpisHosta | null {
     notatka: kontrolki.notatka.value.trim(),
   };
   const port = Number.parseInt(kontrolki.port.value, 10);
-  // Port niepoprawny nie wchodzi wcale: rdzeń bierze wtedy port domyślny
-  // protokołu, a wpisanie liczby spoza zakresu skończyłoby się odmową zapisu.
+  // Port niepoprawny nie wchodzi wcale: rdzeń bierze wtedy port domyślny protokołu połączenia.
   if (Number.isFinite(port) && port > 0 && port <= 65535) wpis.port = port;
   return wpis;
 }
 
-/** Przepisuje wpis do pól formularza — droga do poprawienia wpisu bez wpisywania go od nowa. */
+/**
+ * Przepisuje wpis książki do pól formularza — droga do poprawienia istniejącego wpisu bez
+ * wpisywania go od nowa.
+ */
 function wpiszDoFormularza(kontrolki: PowierzchniaHostow, wpis: WpisHosta): void {
   kontrolki.nazwa.value = wpis.nazwa;
   kontrolki.cel.value = wpis.cel;
@@ -845,15 +835,8 @@ function wpiszDoFormularza(kontrolki: PowierzchniaHostow, wpis: WpisHosta): void
 }
 
 /**
- * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna.
- *
- * Nie domyka się na stanie okna ani na rdzeniu. Pozycje, których okno nie
- * wykonuje, stoją w panelu akcji jawnie nieczynne wraz z powodem liczonym
- * z odczytu wykazu komend rdzenia — trwałość książki hostów, wykaz kart rdzenia,
- * tunele portowe i klucze SSH mają komendy kontraktu i czekają na uchwyt
- * Jedyną pozycją bez komendy w kontrakcie jest polityka znanych hostów; stoi
- * jawnie nieczynna wraz z powodem liczonym z odczytu wykazu komend rdzenia
- * (`moduly/pokrycie-komend.ts`).
+ * Składa kontrolki, pasek akcji, pasek narzędzi i ciało okna; pozycje niewykonywane stoją
+ * nieczynne z powodem liczonym z wykazu komend rdzenia.
  */
 function zlozPowierzchnieHostow(
   rama: { akcje: HTMLElement; narzedzia: HTMLElement; cialo: HTMLElement },
@@ -863,8 +846,7 @@ function zlozPowierzchnieHostow(
   const nazwa = pole('Nazwa wpisu hosta', 'np. web-01');
   const cel = pole('Adres celu połączenia', 'użytkownik@host albo alias konfiguracji serwera');
   const port = poleLiczbowe('Port połączenia', 'puste = port domyślny protokołu');
-  // Wykaz kluczy wypełnia się po odczycie z rdzenia; pozycja pusta znaczy
-  // „klucz domyślny konfiguracji maszyny rdzenia”, a nie „bez klucza”.
+  // Wykaz kluczy wypełnia się po odczycie z rdzenia; pozycja pusta znaczy klucz domyślny maszyny.
   const klucz = wybor('Klucz SSH wpisu', [['', 'klucz domyślny konfiguracji maszyny rdzenia']]);
   const grupa = pole('Folder książki', 'np. Produkcja');
   const katalog = pole('Katalog roboczy karty zdalnej', 'puste = własny katalog okna');
@@ -874,8 +856,7 @@ function zlozPowierzchnieHostow(
   const polacz = przyciskAkcji('Połącz — nowa karta SSH', 'dn-btn dn-btn--atrament');
   const eksport = przyciskAkcji('Eksportuj książkę hostów');
 
-  // Pole wyboru pliku jest jedyną drogą, którą treść z maszyny Operatora wchodzi
-  // do przeglądarki; okno nie czyta dysku samo i czytać nie może.
+  // Pole wyboru pliku jest jedyną drogą, którą treść z maszyny Operatora wchodzi do przeglądarki.
   const plik = document.createElement('input');
   plik.type = 'file';
   plik.className = 'dn-pole-kontrolka dt-plik';
@@ -917,10 +898,7 @@ function zlozPowierzchnieHostow(
     'Zakłada przekierowanie programem ssh na maszynie rdzenia. Stan tunelu bierze się z tego procesu: ' +
     'przekierowanie, którego nie udało się założyć, wraca jako niepowodzenie wraz z powodem.';
 
-  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu. Podglądu
-  // odcisków świadomie nie zgłoszono do scalenia: zaufanie do hosta zapisuje
-  // program ssh na maszynie rdzenia, więc sam odczyt dawałby wgląd bez
-  // możliwości działania.
+  // Nazwa spoza kontraktu jest tu wskazaniem, nie zapisem stanu; odcisk nie wchodzi do scalenia.
   const znaneHosty = pokrycie.przycisk(
     'Polityka known_hosts',
     'terminal.knownhosts.get',

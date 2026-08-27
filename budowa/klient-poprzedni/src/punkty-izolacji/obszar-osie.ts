@@ -2,33 +2,7 @@ import { przyciskBezKomendy } from '../modele/kontrolki-formularza-braki';
 import { utworzStanTresci } from '../komponenty/stan-tresci';
 import type { ObszarIzolacji, ZaleznosciObszaru } from './obszary';
 
-/**
- * Obszar „Oś rozstrzygania" — trzy osie zapisu punktu izolacji: konto → model
- * → platforma (`konfig.Os`, `server/internal/konfig/osie.go`, zmienna
- * `osieOdNajwezszej`). Nazwy i kolejność biorą się ze źródła: stałe
- * `OsKonta`/`OsModelu`/`OsPlatformy` nad `shared.ConfigAxis{Account,Model,
- * Platform}` (`shared/contract.ts`).
- *
- * Oś jest prostopadła do poziomu, nie jego przedłużeniem — i to jest sedno tego
- * obszaru. Poziom zasięgu (obszar „Poziom zasięgu", `konfig/poziomy.go`)
- * rozstrzyga pierwszy: cały łańcuch okno→…→globalny do końca, zanim oś w ogóle
- * wejdzie w grę. Dopiero wewnątrz już wybranego poziomu oś wskazuje adresata
- * wartości — dla kogo ona obowiązuje (konto, model czy tło platformy). Klucz
- * rozstrzygania jest złożony: klucz + poziom + byt poziomu + oś + byt osi, czyli
- * jedna komórka na przecięciu dwóch współrzędnych, a nie jeden dłuższy szczebel
- * drabiny. Widok poniżej pokazuje obie współrzędne osobno właśnie po to, żeby
- * nie czytało się ich jako jednej listy do przewinięcia.
- *
- * Zaślepka jest wyłącznie na działanie, nie na treść. Trzy osie i ich relacja do
- * poziomu to treść stała — wynika z `osie.go`, nie z odpowiedzi rdzenia, więc
- * pokazuje się zawsze w pełni. Jedyna czynność tego obszaru, zapis wartości na
- * wskazanej osi, nie ma pokrycia w kontrakcie: żądania `isolation.context.set`
- * i `isolation.technical.set` niosą poziom zasięgu, byt poziomu i warstwę, ale
- * pola osi w nich nie ma. To jedyne miejsce tego okna, gdzie brak jest po
- * stronie kontraktu, a nie podłączenia — stoi tu więc jawny, w pełni klikalny
- * stan braku wzorem `modele/kontrolki-formularza-braki.ts`
- * (`przyciskBezKomendy`), nie cichy brak i nie martwy przycisk.
- */
+/** Obszar Oś rozstrzygania — trzy osie zapisu punktu izolacji w kolejności: konto, model, platforma domyślna. */
 export function utworzObszar(_zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   const tresc = utworzStanTresci('pi');
 
@@ -41,7 +15,7 @@ export function utworzObszar(_zaleznosci: ZaleznosciObszaru): ObszarIzolacji {
   return { element: tresc.element, odswiez };
 }
 
-/** Jedna z trzech osi: nazwa po polsku i zdanie, co znaczy zapis na tej osi. */
+/** Jedna z trzech osi rozstrzygania: nazwa po polsku oraz zdanie, co znaczy zapis wartości na danej osi. */
 interface DefinicjaOsi {
   nazwa: string;
   zdanie: string;
@@ -91,7 +65,7 @@ function zbudujWprowadzenie(): HTMLElement {
   return wstep;
 }
 
-/** Karta pokazująca, że poziom i oś to dwie prostopadłe współrzędne, nie jedna drabina. */
+/** Karta pokazująca, że poziom i oś to dwie prostopadłe współrzędne izolacji, a nie jedna wspólna drabina. */
 function zbudujRelacjeDoPoziomu(): HTMLElement {
   const karta = document.createElement('div');
   karta.className = 'dn-karta';
@@ -144,7 +118,7 @@ function zbudujOpisWspolrzednej(zdanie: string): HTMLElement {
   return opis;
 }
 
-/** Trzy osie w kolejności rozstrzygania — lista uporządkowana, bo kolejność jest treścią, nie ozdobą. */
+/** Trzy osie w kolejności rozstrzygania — lista uporządkowana, bo ta kolejność jest treścią, nie ozdobą. */
 function zbudujListeOsi(): HTMLElement {
   const lista = document.createElement('ol');
   lista.setAttribute('aria-label', 'Trzy osie rozstrzygania w kolejności, w jakiej rozstrzygają się w ramach poziomu');
@@ -185,12 +159,7 @@ function zbudujKarteOsi(os: DefinicjaOsi, kolejnosc: number): HTMLElement {
   return karta;
 }
 
-/**
- * Jedyna czynność tego obszaru: wybór bytu wskazanej osi i zapis wartości.
- * Wymaga komend `isolation.*`, których nie ma dziś wpiętych do tego okna —
- * miejsce stoi w pełnym układzie, przycisk jest klikalny i nazywa powód wprost
- * (brak pokrycia jest informacją, nie bramą).
- */
+/** Jedyna czynność tego obszaru: wybór bytu wskazanej osi i zapis wartości na tej osi rozstrzygania izolacji. */
 function zbudujMiejsceZapisu(): HTMLElement {
   const karta = document.createElement('div');
   karta.className = 'dn-karta';

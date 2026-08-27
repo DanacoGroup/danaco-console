@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: nazwane wersje kompozycji Design Board —
 // `design.board.version.save`, `design.board.version.list`,
-// `design.board.version.restore`. Metody stoją na `*adapterDesignu`
-// (`adapter_modul_design.go`).
-//
-// `design.board.update` zapisuje układ BIEŻĄCY i zastępuje poprzedni, więc
-// ciągu postaci tablicy nie było dotąd skąd wziąć — praca sprzed godziny
-// znikała przy pierwszym przesunięciu warstwy.
-//
-// Przywrócenie ZAKŁADA wersję z układu sprzed przywrócenia. Bez tego cofnięcie
-// się samo kasowałoby stan, który Operator właśnie porzucił: wracał do wersji
-// z rana, a to, co zrobił po południu, przestawało istnieć w chwili, w której
-// się rozmyślił. Wersja odłożona wraca w odpowiedzi (`supersededVersion`), więc
-// okno pokazuje drogę powrotną od razu, a nie po odświeżeniu wykazu.
+// `design.board.version.restore`.
 package core
 
 import (
@@ -22,16 +11,13 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekWersjiKompozycjiDesign znakuje identyfikatory zewnętrzne wersji.
+// przedrostekWersjiKompozycjiDesign znakuje identyfikatory zewnętrzne wersji
+// kompozycji Design Board Panel.
 const przedrostekWersjiKompozycjiDesign = "wersja-planszy-"
 
 // ZapiszWersjeKompozycji utrwala bieżący układ kompozycji jako nazwaną wersję —
-// obsługuje `design.board.version.save`.
-//
-// Migawkę zdejmujemy z BAZY, nie z żądania: żądanie niesie sam identyfikator
-// kompozycji, a wersja ma opisywać stan zapisany, nie stan, który wołający
-// zadeklarował. Wersja kompozycji bez warstw jest stanem poprawnym — płótno
-// wyczyszczone też bywa stanem, do którego się wraca.
+// obsługuje `design.board.version.save`. Migawka schodzi z bazy, nie z
+// żądania.
 func (a *adapterDesignu) ZapiszWersjeKompozycji(ctx context.Context,
 	z shared.DesignBoardVersionSaveRequest) (shared.DesignBoardVersionSaveResponse, error) {
 
@@ -52,11 +38,8 @@ func (a *adapterDesignu) ZapiszWersjeKompozycji(ctx context.Context,
 }
 
 // WersjeKompozycji zwraca wersje kompozycji od najświeższej — obsługuje
-// `design.board.version.list`.
-//
-// Warstw wykaz nie niesie (kontrakt), stąd `LayerCount` z wiersza wersji:
-// wykaz dwudziestu wersji po sto warstw ważyłby tyle, co dwadzieścia zapisów
-// całej tablicy, a panel pokazuje z tego samą nazwę i liczbę.
+// `design.board.version.list`. Warstw wykaz nie niesie, stąd `LayerCount`
+// z wiersza wersji.
 func (a *adapterDesignu) WersjeKompozycji(ctx context.Context,
 	z shared.DesignBoardVersionListRequest) (shared.DesignBoardVersionListResponse, error) {
 
@@ -81,12 +64,8 @@ func (a *adapterDesignu) WersjeKompozycji(ctx context.Context,
 }
 
 // PrzywrocWersjeKompozycji przywraca układ kompozycji z wersji — obsługuje
-// `design.board.version.restore`.
-//
-// Kolejność ma znaczenie i jest zamierzona: najpierw odkładamy wersję z układu
-// sprzed przywrócenia, dopiero potem nadpisujemy warstwy. Odwrotna kolejność
-// dawałaby okno, w którym stan porzucony już zniknął, a jego migawka jeszcze
-// nie powstała — awaria w tym oknie kasowałaby pracę bezpowrotnie.
+// `design.board.version.restore`. Kolejność ma znaczenie: najpierw wersja
+// z układu sprzed przywrócenia, dopiero potem nadpisanie warstw.
 func (a *adapterDesignu) PrzywrocWersjeKompozycji(ctx context.Context,
 	z shared.DesignBoardVersionRestoreRequest) (shared.DesignBoardVersionRestoreResponse, error) {
 
@@ -131,14 +110,8 @@ func (a *adapterDesignu) PrzywrocWersjeKompozycji(ctx context.Context,
 }
 
 // odlozWersjeKompozycjiDesignu zdejmuje migawkę bieżącego układu kompozycji
-// i utrwala ją jako wersję. Wspólna droga zapisu i przywrócenia — obie odkładają
-// dokładnie to samo, więc druga ścieżka byłaby drugą prawdą o tym, co jest
-// wersją.
-//
-// Nazwa pusta bierze znacznik czasu (kontrakt: „brak bierze znacznik czasu").
-// Znacznik składa baza przy zapisie, więc nazwy nie zgadujemy tutaj — wersja
-// bez nazwy wraca z nazwą pustą i to okno pokazuje przy niej jej czas
-// utworzenia, ten sam, który niesie `createdAt`.
+// i utrwala ją jako wersję. Wspólna droga zapisu i przywrócenia. Nazwa pusta
+// bierze znacznik czasu.
 func (a *adapterDesignu) odlozWersjeKompozycjiDesignu(ctx context.Context,
 	kompozycja dane.KompozycjaDesignu, nazwa, uzasadnienie *string) (shared.DesignBoardVersion, error) {
 
@@ -174,7 +147,8 @@ func wersjaKompozycjiKontraktuDesignu(w dane.WersjaKompozycjiDesignu, kodKompozy
 	}
 }
 
-// bladNieznanejKompozycjiDesignu nazywa kompozycję, której rdzeń nie zna.
+// bladNieznanejKompozycjiDesignu nazywa kompozycję, której rdzeń nie zna —
+// zapis wskazujący ją byłby odmową.
 func bladNieznanejKompozycjiDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("kompozycji " + kod + " nie ma w module Design")

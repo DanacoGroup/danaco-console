@@ -221,7 +221,7 @@ func (a *adapterKontekstowPamieci) ZapiszZasadeRetencji(ctx context.Context,
 		return shared.MemoryRetentionSetResponse{}, bladMagazynuKontekstow(err)
 	}
 
-	// Wpisy zastane liczymy po zapisie: to dokładnie te, których zasada dotknie przy wygaszaniu.
+	// Wpisy zastane liczy się po zapisie: to dokładnie te, których zasada dotknie przy wygaszaniu.
 	dotkniete, err := a.repozytorium.LiczbaWpisowPamieciProfilu(ctx,
 		teraz.UTC().Format("2006-01-02T15:04:05.000Z"))
 	if err != nil {

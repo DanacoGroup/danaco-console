@@ -361,7 +361,7 @@ func (s *ooxmlStanOdczytu) czytajCialo(cialo *ooxmlWezel) {
 		case "tbl":
 			s.czytajTabele(wezel)
 		case "sdt":
-			// Kontrolka treści (`w:sdt`) opakowuje zwykłą treść — schodzimy
+			// Kontrolka treści (`w:sdt`) opakowuje zwykłą treść — schodzi się
 			// do jej wnętrza, zamiast ją pomijać.
 			if wnetrze := wezel.dziecko("sdtContent"); wnetrze != nil {
 				s.czytajCialo(wnetrze)

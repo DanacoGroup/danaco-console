@@ -40,7 +40,7 @@ func (a *adapterNakladkiAod) WyslijZNakladki(ctx context.Context,
 	if err != nil {
 		return shared.AodChatSendResponse{}, shared.Message{}, err
 	}
-	// Okno oddajemy to, które wiadomość naprawdę przyjęła.
+	// Oddawane jest okno, które wiadomość naprawdę przyjęła.
 	idOkna := odpowiedz.Message.WindowId
 	if idOkna == "" {
 		idOkna = okno.Id

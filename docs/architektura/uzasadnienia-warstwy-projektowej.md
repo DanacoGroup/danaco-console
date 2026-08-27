@@ -178,3 +178,38 @@ kontrolki.
 Wykaz jest rozdzielony rodzajem punktu dostępu. Ramę sekcji prowadzi plik
 dostepy.css, który ten arkusz wciąga; barwy pochodzą wyłącznie z żetonów
 warstwy motyw/.
+
+## budowa/klient-poprzedni/src/motyw/gradienty.css
+Zakres użycia gradientów jest wyłącznie ilustracyjny: awatary bez zdjęcia,
+rdzeń oznaczenia AOD, grafiki brandowe.
+
+## budowa/klient-poprzedni/src/motyw/przestrzen.css
+Odstępy i promienie zaokrągleń są niezależne od motywu. Cienie przełączają
+się wraz z motywem, ponieważ tonuje je barwa podłoża — stąd komplet wartości
+dla obu motywów wraz z zapasem na zapytanie prefers-color-scheme.
+
+## budowa/klient-poprzedni/src/motyw/rama.css
+Żetony ramy żyją poza blokami motywów i nie przełączają się wraz z nimi:
+pasek górny pozostaje atramentowy również w motywie jasnym.
+
+## budowa/klient-poprzedni/src/motyw/typografia.css
+Trzy role dostają trzy kroje pisma: krój nagłówkowy obsługuje nagłówki,
+tytuły środowisk i logotyp, krój interfejsu obsługuje treść roboczą, a krój
+o stałej szerokości znaku obsługuje dane techniczne, identyfikatory
+i terminal. Pliki krojów wczytuje osobny arkusz fontów na licencji OFL 1.1,
+w podzbiorach znaków łacińskich i rozszerzonych łacińskich. Wzorce tekstowe
+etykiety wersalikowej, etykiety w kroju maszynowym i danych liczbowych
+należą do arkusza fundamentu — ta warstwa deklaruje wyłącznie wartości.
+
+## budowa/klient-poprzedni/src/motyw/warstwy.css
+Komponent nie wymyśla własnego z-index: sięga po żeton z tej skali albo nie
+ustawia warstwy wcale. Skala jest pełna — wymienia wszystkie poziomy systemu
+wizualnego, także te, po które kod jeszcze nie sięga, żeby poziom bez użycia
+trzymał swoje miejsce w porządku nakładania.
+
+## budowa/klient-poprzedni/src/motyw/wymiary.css
+Gęstość zwarta jest domyślna: kontrolki mają wysokość 32 pikseli, wiersze
+tabel 36 pikseli, pasek górny 48 pikseli. Progi punktów łamania stoją jako
+wartości nazwane, ponieważ warunek zapytania medialnego nie przyjmuje
+zmiennej — żeton daje liczbie jedno miejsce do sprawdzenia, a warstwa
+skryptów czyta ten sam próg co arkusze, nie własną kopię.

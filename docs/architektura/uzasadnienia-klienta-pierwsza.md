@@ -1750,3 +1750,17 @@ a warstwa składająca rozstrzyga, gdzie go postawić.
 
 Rozłączenie zostaje wewnątrz modułu, ponieważ typ `WidokModulu` powłoki nie ma
 czynności odpięcia. Subskrypcje kanału odpina `rozlacz()` widoku modułu.
+
+## budowa/klient-poprzedni/src/modele/indeks.ts
+
+Okno modeli jest jedno na klienta i trwa między otwarciami z tego samego powodu,
+dla którego router nie porzuca widoku opuszczonej trasy: powtórne otwarcie wraca
+do zakładki i kategorii, na której poprzednie się zakończyło. Trwałość okna
+utrzymuje subskrypcję zdarzeń `account.changed` oraz `identity.changed`, dzięki
+czemu zmiana dokonana na innym urządzeniu konta dociera również wtedy, gdy okno
+pozostaje zamknięte.
+
+Wywołanie z innym kanałem, właściwe dla ponownego połączenia z rdzeniem, buduje
+okno od nowa, aby komendy nie szły przez transport, którego już nie ma. Sekcję
+można też osadzić bez ramy okna: `utworzSekcjeModeli` oddaje ten sam byt bez
+elementu `dialog` wokół niego, czyli jedna implementacja w dwóch oprawach.

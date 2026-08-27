@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: materiał wizualny i wytwory sesji przeglądania —
-// `browser.screenshot.capture`, `browser.snapshot.screenshot.get`,
-// `browser.artifact.add`.
-//
-// Za każdym zrzutem leżą bajty. Komenda wykonuje zrzut silnikiem przeglądarki,
-// odkłada obraz w magazynie modułu pod sumą sha256 i dopiero wtedy zapisuje
-// wiersz z odwołaniem. Odpowiedź udana z pustym `ref` — albo z odwołaniem
-// wskazującym nic — jest dokładnie tą szkodą, którą ten produkt już raz
-// popełnił w module Design, i której pilnują sprawdziany skutku.
-//
-// Migawka dostaje odsyłacz do zrzutu. Po `browser.screenshot.capture` wiersz
-// migawki okna niesie `zrzut_odwolanie`, więc `browser.snapshot.get`
-// z `includeScreenshot` przestaje oddawać pustkę: to jest ta sama treść widziana
-// dwiema drogami, a nie dwa niezależne byty.
+// Odpowiedzialność pliku: materiał wizualny i wytwory sesji przeglądania:
+// zrzuty, archiwa i adnotacje. Zrzut odkłada bajty w magazynie modułu pod sumą
+// sha256 i dopiero wtedy zapisuje wiersz.
 package core
 
 import (
@@ -23,7 +12,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// WykonajZrzut obsługuje `browser.screenshot.capture`.
+// WykonajZrzut obsługuje `browser.screenshot.capture`: wykonuje zrzut
+// silnikiem przeglądarki i odkłada go w magazynie pod odwołaniem, zanim
+// zapisze wiersz.
 func (a *adapterPrzegladarki) WykonajZrzut(ctx context.Context,
 	z shared.BrowserScreenshotCaptureRequest) (shared.BrowserScreenshotCaptureResponse, error) {
 
@@ -74,9 +65,8 @@ func (a *adapterPrzegladarki) WykonajZrzut(ctx context.Context,
 		return shared.BrowserScreenshotCaptureResponse{}, bladPrzegladarki(err)
 	}
 
-	// Migawka okna dostaje odsyłacz do zrzutu: bez tego `browser.snapshot.get`
-	// z `includeScreenshot` oddawałby pustkę tuż po wykonaniu zrzutu tej samej
-	// strony — i Operator miałby dwa sprzeczne zdania o jednym stanie okna.
+	// Migawka okna dostaje odsyłacz do zrzutu, żeby odczyt migawki z żądaniem
+	// zrzutu nie oddawał pustki.
 	migawka.ZrzutOdwolanie = &odwolanie
 	if _, err := a.repozytorium.ZapiszMigawke(ctx, dane.MigawkaStrony{
 		Kod: nowyIdentyfikator(przedrostekMigawki), Okno: migawka.Okno, Url: migawka.Url,
@@ -86,8 +76,7 @@ func (a *adapterPrzegladarki) WykonajZrzut(ctx context.Context,
 		return shared.BrowserScreenshotCaptureResponse{}, bladPrzegladarki(err)
 	}
 
-	// Zrzut jest też wytworem sesji — Capture & Monitor Panel pokazuje jedną
-	// listę materiału, a nie osobną listę na każdy rodzaj.
+	// Zrzut jest też wytworem sesji — panel pokazuje jedną listę materiału.
 	tytul := "Zrzut — " + migawka.Url
 	mime := "image/" + string(format)
 	if _, err := a.repozytorium.ZapiszWytwor(ctx, dane.WytworPrzegladania{
@@ -140,12 +129,9 @@ func (a *adapterPrzegladarki) OdczytajZrzut(ctx context.Context,
 	return shared.BrowserSnapshotScreenshotGetResponse{Screenshot: zrzutKontraktu(wiersz, tresc)}, nil
 }
 
-// DodajWytwor obsługuje `browser.artifact.add` — zapisanie wytworu sesji:
-// zrzutu, archiwum, wyodrębnionych danych albo adnotacji.
-//
-// Treść przychodzi wprost (`contentBase64`) albo odwołaniem do materiału już
-// leżącego w magazynie (`contentRef`). Żądanie bez jednego i drugiego jest
-// odmową: wytwór bez bajtów byłby wpisem wskazującym nic.
+// DodajWytwor obsługuje `browser.artifact.add`, zapisując wytwór sesji: zrzut,
+// archiwum, wyodrębnione dane albo adnotację. Treść przychodzi wprost albo
+// odwołaniem do materiału już leżącego w magazynie.
 func (a *adapterPrzegladarki) DodajWytwor(ctx context.Context,
 	z shared.BrowserArtifactAddRequest) (shared.BrowserArtifactAddResponse, error) {
 
@@ -169,9 +155,7 @@ func (a *adapterPrzegladarki) DodajWytwor(ctx context.Context,
 		}
 		rozmiar = int64(len(bajty))
 	case odwolanie != "":
-		// Odwołanie wskazane w żądaniu jest sprawdzane, a nie przyjmowane na
-		// słowo: wiersz wskazujący plik, którego nie ma, przeszedłby każdy
-		// sprawdzian istnienia wiersza i nie miałby czego pokazać.
+		// Odwołanie wskazane w żądaniu jest sprawdzane, a nie przyjmowane na słowo.
 		bajty, err := a.odczytajTresc(odwolanie)
 		if err != nil {
 			return shared.BrowserArtifactAddResponse{}, err
@@ -199,7 +183,8 @@ func (a *adapterPrzegladarki) DodajWytwor(ctx context.Context,
 	return shared.BrowserArtifactAddResponse{Artifact: wytworKontraktu(wytwor)}, nil
 }
 
-// zrzutKontraktu przekłada wiersz zrzutu na byt kontraktu.
+// zrzutKontraktu przekłada wiersz zrzutu z bazy na byt kontraktu, oddawany
+// komendami odczytu i zapisu zrzutu.
 func zrzutKontraktu(w dane.ZrzutPrzegladania, tresc *string) shared.BrowserScreenshot {
 	zrzut := shared.BrowserScreenshot{
 		Ref:           w.TrescOdwolanie,
@@ -215,7 +200,8 @@ func zrzutKontraktu(w dane.ZrzutPrzegladania, tresc *string) shared.BrowserScree
 	return zrzut
 }
 
-// wytworKontraktu przekłada wiersz wytworu na byt kontraktu.
+// wytworKontraktu przekłada wiersz wytworu sesji z bazy na byt kontraktu,
+// zwracany komendą wykazu wytworów.
 func wytworKontraktu(w dane.WytworPrzegladania) shared.BrowserArtifact {
 	return shared.BrowserArtifact{
 		Id:         w.Kod,

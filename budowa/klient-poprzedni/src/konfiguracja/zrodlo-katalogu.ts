@@ -10,16 +10,9 @@ import { czyLiczba, czyTablica, sprawdzKsztalt } from '../protokol/ksztalt-odpow
 import { wywolaj } from '../protokol/wywolanie';
 
 /**
- * Katalog okna konfiguracji pobierany z rdzenia.
- *
- * Formularz jest budowany z danych: klient nie zna żadnego klucza, kategorii
- * ani etykiety pola — bierze je komendami `settings.category.list`
- * i `settings.definition.list`, których nazwy pochodzą ze stałych `Command.*`.
- * Dodanie ustawienia to nowy wiersz katalogu, nie zmiana kodu interfejsu.
- *
- * Odczyt jest odporny na brak katalogu: odpowiedź nieudana lub o innym
- * kształcie daje wykaz pusty i wywołanie `NaNiepowodzenie`, a nie odrzucenie
- * obietnicy.
+ * Katalog okna konfiguracji pobierany z rdzenia. Formularz jest budowany z danych:
+ * klient nie zna żadnego klucza, kategorii ani etykiety pola, więc dodanie ustawienia
+ * jest nowym wierszem katalogu, a nie zmianą kodu interfejsu.
  */
 export interface ZrodloKatalogu {
   /** `settings.category.list` — kategorie w kolejności wyświetlania. */
@@ -69,7 +62,11 @@ export function utworzZrodloKatalogu(
   };
 }
 
-/** Pozycja katalogu niosąca własną kolejność wyświetlania. */
+/**
+ * Pozycja katalogu niosąca własną kolejność wyświetlania. Kolejność jest polem
+ * odpowiedzi rdzenia, więc porządek pól formularza rozstrzyga się w katalogu,
+ * a nie w kodzie okna.
+ */
 interface Uporzadkowana {
   order: number;
 }
@@ -86,7 +83,11 @@ function kolejnosc(pozycja: Uporzadkowana): number {
   return Number.isFinite(pozycja.order) ? pozycja.order : Number.MAX_SAFE_INTEGER;
 }
 
-/** Niepowodzenie odczytu katalogu zostaje w dzienniku — z nazwą komendy. */
+/**
+ * Niepowodzenie odczytu katalogu zostaje w dzienniku — wraz z nazwą komendy i powodem
+ * podanym przez rdzeń. Wpis dziennika jest jedynym śladem odczytu, który nie doszedł,
+ * bo okno pokazuje wtedy pusty katalog wraz z osobnym zdaniem.
+ */
 function ostrzez(komenda: string, powod: string | undefined): void {
   console.warn('[konfiguracja] katalog nie dotarł', komenda, powod ?? '');
 }

@@ -5283,3 +5283,14 @@ nie prowadzi donikąd.
 
 Zapis dokonany gdzie indziej nie przerywa pracy przy polu, ponieważ zmiana stanu nanosi
 wartości na pola już zbudowane i składu katalogu nie rusza.
+
+## budowa/klient-poprzedni/src/konfiguracja/zrodlo-katalogu.ts
+
+Klient nie zna żadnego klucza, kategorii ani etykiety pola — bierze je komendami
+`settings.category.list` i `settings.definition.list`, których nazwy pochodzą ze stałych
+`Command.*`. Dodanie ustawienia jest wtedy nowym wierszem katalogu, a nie zmianą kodu
+interfejsu.
+
+Odczyt jest odporny na brak katalogu: odpowiedź nieudana albo o innym kształcie daje wykaz
+pusty i wywołanie `NaNiepowodzenie`, a nie odrzucenie obietnicy. Okno rozróżnia dzięki temu
+katalog pusty po odmowie rdzenia od katalogu pustego na świeżo otwartym oknie.

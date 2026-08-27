@@ -4436,3 +4436,9 @@ Uzasadnienie jest w kontrakcie nieobowiązkowe (pole `note`) i takie zostaje
 w oknie: wymuszenie go byłoby zaporą, której rdzeń nie stawia, a ocena bez słowa
 nadal jest oceną. Zdanie po zapisie nazywa stan oddany przez rdzeń, ponieważ samo
 potwierdzenie zapisu nie mówiłoby, co w rdzeniu ostatecznie stoi.
+
+## budowa/klient-poprzedni/src/moduly/browser/limity-przebiegu.ts
+
+Utrwalenie granic ma w kontrakcie własne komendy `browser.executor.limits.set` oraz `browser.executor.limits.get`, których panel jeszcze nie wywołuje. Powód stoi pod polami i bierze się z odczytu wykazu komend rdzenia, więc panel nie udaje zapisu w rdzeniu. Robi natomiast to, co zrobić może i co ma znaczenie: sprawdza scenariusz przed wysłaniem.
+
+Stan wyjściowy jest zgodny z zasadą braku blokad domyślnych: pusta granica i pusty wykaz domen znaczą brak ograniczenia. Limit powstaje wtedy, gdy Operator go postawi, a nie wcześniej i nie domyślnie.

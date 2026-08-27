@@ -1,23 +1,4 @@
-// Odpowiedzialność pliku: dwie komendy zakresu narzędzi profilu asystenta —
-// `tools.scope.list` i `tools.scope.set` — oraz straż, która ich zapis czyta
-// przy wykonaniu.
-//
-// ZAKRES JEST NASTAWĄ ZASIĘGU, NIE BRAMKĄ WBUDOWANĄ. Stanem wyjściowym jest
-// pełny dostęp bez limitu: pozycja bez wiersza zakresu jest dostępna i nie ma
-// granicy wywołań. Zgodnie z zasadą zero blokad platforma niczego nie zawęża
-// z góry.
-//
-// ALE ZAWĘŻENIE ZAPISANE PRZEZ OPERATORA JEST ZAWĘŻENIEM EGZEKWOWANYM. Wiersz
-// z `dostepne = 0` albo z wyczerpanym limitem kończy wywołanie odmową
-// w `StrazZakresowNarzedzi` niżej — tej samej, którą pyta rdzeń przed
-// skierowaniem komendy do obsługiwacza (`rdzen.go`). Zapis, którego nikt nie
-// czyta przy wykonaniu, byłby gorszy niż jego brak: Operator widziałby
-// ograniczenie, którego nikt nie pilnuje.
-//
-// Straż pyta wyłącznie o wywołania RĘKI MODELU. Klawiatura Operatora nie
-// podlega zakresowi profilu asystenta: zakres opisuje, jak szeroko działa
-// asystent w imieniu Operatora, a nie co wolno samemu Operatorowi
-// (`sprawca.go`).
+// Plik obsługuje komendy tools.scope.list i tools.scope.set oraz straż, która zapis zakresu czyta przy wykonaniu narzędzia rdzenia.
 package core
 
 import (
@@ -33,7 +14,7 @@ import (
 // przyjmuje własną.
 const oknoLimituWyjsciowe = 3600
 
-// adapterZakresowNarzedzi wypełnia port ZakresyNarzedzi.
+// adapterZakresowNarzedzi wypełnia port ZakresyNarzedzi repozytorium zakresów wraz z katalogiem profili asystenta.
 type adapterZakresowNarzedzi struct {
 	zakresy dane.RepozytoriumZakresowNarzedzi
 	profile dane.RepozytoriumAsystenta
@@ -41,15 +22,14 @@ type adapterZakresowNarzedzi struct {
 
 var _ ZakresyNarzedzi = (*adapterZakresowNarzedzi)(nil)
 
-// NowyPortZakresowNarzedzi wiąże port z repozytorium zakresów i katalogiem
-// profili asystenta.
+// NowyPortZakresowNarzedzi wiąże port zakresów narzędzi z repozytorium zakresów i katalogiem profili asystenta.
 func NowyPortZakresowNarzedzi(zakresy dane.RepozytoriumZakresowNarzedzi,
 	profile dane.RepozytoriumAsystenta) *adapterZakresowNarzedzi {
 
 	return &adapterZakresowNarzedzi{zakresy: zakresy, profile: profile}
 }
 
-// WykazZakresow oddaje zakresy zapisane dla profilu wraz z zużyciem limitu.
+// WykazZakresow oddaje zakresy zapisane dla profilu wraz z zużyciem limitu wywołań w bieżącej sesji rozmowy.
 func (a *adapterZakresowNarzedzi) WykazZakresow(ctx context.Context,
 	z shared.ToolsScopeListRequest) (shared.ToolsScopeListResponse, error) {
 
@@ -76,11 +56,7 @@ func (a *adapterZakresowNarzedzi) WykazZakresow(ctx context.Context,
 	return shared.ToolsScopeListResponse{Scopes: zakresy, Total: len(zakresy)}, nil
 }
 
-// ZapiszZakres ustala zakres uprawnień i limit wywołań pozycji katalogu.
-//
-// Pole pominięte zostaje bez zmiany, a przy pierwszym zapisie bierze wartość
-// wyjściową: dostępna, bez potwierdzenia, bez granicy. Inaczej zapis samego
-// limitu odbierałby pozycję profilowi.
+// ZapiszZakres ustala zakres uprawnień i limit wywołań pozycji katalogu; pole pominięte zostaje bez zmiany.
 func (a *adapterZakresowNarzedzi) ZapiszZakres(ctx context.Context,
 	z shared.ToolsScopeSetRequest) (shared.ToolsScopeSetResponse, error) {
 
@@ -164,7 +140,7 @@ func (a *adapterZakresowNarzedzi) kodProfilu(ctx context.Context, wskazanie *str
 	return profil.Kod, nil
 }
 
-// zakresNarzedziaKontraktu przekłada wiersz zakresu na kształt kontraktu.
+// zakresNarzedziaKontraktu przekłada wiersz zakresu narzędzia na kształt pola zwracanego przez kontrakt rdzenia.
 func zakresNarzedziaKontraktu(w dane.ZakresNarzedzia) shared.ToolScope {
 	zakres := shared.ToolScope{
 		ProfileId:         w.ProfilKod,

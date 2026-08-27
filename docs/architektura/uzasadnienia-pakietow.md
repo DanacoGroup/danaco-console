@@ -2680,3 +2680,25 @@ nie przeładuje. Z nią dzieje się dokładnie tyle, ile trzeba: zapis na poziom
 szerszym nie budzi nikogo, kto ma wartość z węższego. Ta druga połowa jest
 ważniejsza od pierwszej, bo doręczenie nadmiarowe nie wygląda na błąd —
 wygląda na odświeżenie.
+
+## budowa/server/internal/dane/tlumaczenie_kontrola.go
+
+Wykaz terminów zawężony, profile kontroli jakości, obieg zatwierdzeń panelu
+i ustalenia korekty językowej mieszkają w jednym pliku, bo wszystkie trzy
+odpowiadają na jedno pytanie: czy ten przekład wolno wypuścić. Rozbicie ich
+na osobne pliki dałoby trzy nagłówki mówiące to samo.
+
+ZapiszProfilQa zakłada profil albo nadpisuje zastany i wymienia jego kontrole
+w całości, bo kontrakt nadsyła wykaz kontroli kompletem.
+
+ZapiszZatwierdzenie dokłada krok obiegu i przestawia migawkę panelu w jednej
+transakcji; inaczej wiersz obiegu i stan panelu rozjechałyby się przy awarii
+między dwoma zapisami.
+
+ZapiszUstaleniaKorekty wymienia otwarte ustalenia panelu na nadesłane.
+Ustalenia rozstrzygnięte, zastosowane albo odrzucone, zostają, bo kolejny
+przebieg nie ma prawa skasować odpowiedzi Operatora.
+
+RozstrzygnijUstalenieKorekty znakuje ustalenie jako zastosowane albo
+odrzucone, zapisując chwilę, nie wartość logiczną: kiedy niesie więcej niż
+czy, a czy da się z kiedy odczytać.

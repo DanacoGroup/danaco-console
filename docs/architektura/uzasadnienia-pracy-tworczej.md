@@ -163,3 +163,47 @@ i tabelę; obrazy osadzone i aparat odświeżalny wychodzą w wykazie pominięty
 Profil wydania PDF niesie nastawy paginacji i stopki; profil niewskazany nie
 jest odmową — dokument wychodzi z paginacją i stopką domyślną, a bilans mówi
 wprost, że profilu nie było.
+
+## adapter_modul_studio_wejscie_czynnosci.go
+
+Każda czynność tego pliku wnosi treść wprost do edytora, gotową do pracy,
+z zachowaną postacią — nie jako załącznik, nie jako pozycja kolejki do
+przyjęcia. Dlatego każda czynność kończy się zapisaną postacią dokumentu,
+zapisem przez ten sam obszar postaci (`wejscieUtrwalPostac`), a dziennik
+czynności dostaje wpis rodzaju `importChange`, którym operator cofa
+„wniesienie pliku", odróżnione od zwykłej zmiany treści. Jedyny wyjątek jest
+PDF ze samych skanów: nie ma czego wnieść do edytora, więc idzie na
+rozpoznanie pisma, a odpowiedź to mówi wprost, zamiast oddać pustą kartkę.
+Każde wniesienie oddaje bilans tego, co odzyskano, a czego nie — plik wnoszony
+niesie rzeczy, których rdzeń nie odczytuje, i przemilczenie tego zamieniłoby
+dokument okaleczony w dokument wczytany bez uwag.
+
+Format pliku wnoszonego rozpoznaje się po zawartości, nie po rozszerzeniu,
+a zapis znaków ustala się przed rozbiorem treści: pismo w kodowaniu innym niż
+utf-8, wczytane jakby nim było, daje ciąg znaków bez sensu, gorszy niż odmowa,
+bo model przeczyta go jako słowa i zacznie na nich pracować.
+
+Wniesienie pliku w miejsce kursora do dokumentu istniejącego wnosi treść wraz
+z jej postacią znaku fragmentów, nie całą postać wnoszonego pliku — wstawienie
+całej postaci w środek dokumentu zastanego podmieniłoby jego arkusz stylów
+i nastawy strony, o co nikt nie prosił; strata jest nazwana w bilansie.
+
+Kopia dokumentu i dokument założony z szablonu dostają nowe identyfikatory dla
+wszystkich bytów postaci (`wejsciePrzepiszIdentyfikatory`): identyfikator
+wspólny z oryginałem byłby jednym wierszem bazy widzianym z dwóch dokumentów,
+a zapis pod takim kluczem przeniósłby wiersz oryginału do kopii zamiast założyć
+wiersz nowy — kopia zabrałaby wtedy oryginałowi jego własną postać. Blokady
+fragmentów w tym przepisaniu nie uczestniczą: przenosi je droga osobna, razem
+z nowym kodem blokady, a przy kopii dokumentu przechodzą domyślnie (fragment
+wzorcowy pisma ma zostać wzorcowy też w kopii), podczas gdy znakowanie
+i komentarze — domyślnie nie, bo są rozmową o dokumencie, nie jego treścią.
+
+Wniesienie z modułu Design przyjmuje kod węzła do zapisu pochodzenia, a bajty
+bierze z zasobu magazynu wskazanego obok, bo węzeł wektorowy nie jest obrazem
+rastrowym, dopóki `design.vector.export` go nie wyrysuje do zasobu.
+
+Wniesienie ze strony sieci daje pierwszeństwo fragmentowi wskazanemu w oknie
+przeglądarki nad pobraniem całej strony — to fragment, który operator widział
+dokładnie. Bez niego rdzeń pobiera stronę przez `net/http`, bez silnika
+przeglądarki, więc strona zbudowana wyłącznie skryptem oddaje mało treści;
+to jest cena znana i nazwana w bilansie, nie przeoczenie rachunku.

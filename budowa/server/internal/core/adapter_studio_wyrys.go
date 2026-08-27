@@ -1,19 +1,7 @@
-// Odpowiedzialność pliku: wyrys strony dokumentu Studia — silnik, na którym
-// stoją `studio.preview.render` i `studio.diff.visual`.
-//
-// ── Biblioteka wkompilowana, nigdy przeglądarka bezgłowa ────────────────────
-// Podgląd układu bywa robiony tak, że rdzeń startuje przeglądarkę, otwiera
-// w niej HTML i robi zrzut. Ta droga jest tu zamknięta z tego samego powodu, co
-// w warsztacie PDF: przeglądarka bezgłowa nie jest częścią instalki, a funkcja
-// zależna od programu, którego instalka nie niesie, jest u Operatora odmową,
-// a nie funkcją. Wyrys idzie więc `image`, `image/png` i `x/image/draw`, a PDF
-// składa `pdfcpu` — wszystko wkompilowane w binarium rdzenia.
-//
-// ── Dlaczego krój pisma jest z `gofont`, a nie z systemu ────────────────────
-// Krój wczytany z katalogu systemowego byłby zależnością spoza instalki:
-// u jednego Operatora podgląd wyszedłby, u drugiego rozsypał się na prostokąty.
-// `gofont/goregular` jedzie wkompilowany i niesie łacinkę rozszerzoną, więc
-// polskie znaki diakrytyczne wychodzą literami, a nie zastępnikami.
+// Wyrys strony dokumentu Studia — silnik `studio.preview.render`
+// i `studio.diff.visual`. Rysuje bibliotekami wkompilowanymi, nigdy
+// przeglądarką bezgłową ani krojem systemowym, bo obie zależności
+// wykraczają poza instalkę.
 package core
 
 import (
@@ -37,10 +25,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Wymiary strony A4 w pikselach przy 96 punktach na cal — ta sama
-// rozdzielczość, w której przeglądarka mierzy stronę A4. Liczby stoją nazwane,
-// bo są NASTAWĄ DOMYŚLNĄ wyrysu: bierze je wyrys dokumentu, który własnych
-// nastaw strony nie ma. Dokument, który je ma, jedzie geometrią z nich liczoną.
+// Wymiary strony A4 w pikselach przy 96 punktach na cal — rozdzielczość,
+// w której przeglądarka mierzy stronę A4. To nastawa domyślna wyrysu, brana
+// dla dokumentu, który własnych nastaw strony nie ma.
 const (
 	szerokoscStronyStudia = 794
 	wysokoscStronyStudia  = 1123
@@ -57,16 +44,9 @@ const (
 	punktowNaCalWyrysu = 96.0
 )
 
-// geometriaStronyStudia to wymiary kartki i marginesów wyrysu w pikselach.
-//
-// ── Dlaczego geometria jest bytem, a nie stałymi ────────────────────────────
-// Numer strony w spisie treści, w indeksie i w polu `pageNumber` liczy się
-// łamaniem wiersza, a łamanie zależy od szerokości kolumny i od wysokości
-// kartki. Dopóki oba wymiary były stałymi A4, spis treści dokumentu ustawionego
-// na A5 albo na marginesach szerokich wskazywał strony PODGLĄDU, a nie strony
-// dokumentu — i był tym wierniejszy, im mniej Operator zmienił. Geometria
-// wyliczona z nastaw sekcji zamyka tę rozbieżność w jednym miejscu: liczy ją
-// `geometriaZNastawStrony`, a czytają ją wyrys i rachunek stron.
+// geometriaStronyStudia to wymiary kartki i marginesów wyrysu w pikselach,
+// wyliczone z nastaw sekcji zamiast stałych A4, bo od nich zależy łamanie
+// wiersza i przez nie numeracja stron w spisie treści i w indeksie.
 type geometriaStronyStudia struct {
 	szerokosc     int
 	wysokosc      int
@@ -86,7 +66,8 @@ func geometriaDomyslnaStudia() geometriaStronyStudia {
 	}
 }
 
-// pikseleZMilimetrowWyrysu przelicza wymiar materiału na piksele wyrysu.
+// pikseleZMilimetrowWyrysu przelicza wymiar materiału na piksele wyrysu,
+// rozdzielczością `punktowNaCalWyrysu`. Wymiar niedodatni oddaje zero.
 func pikseleZMilimetrowWyrysu(milimetry float64) int {
 	if milimetry <= 0 {
 		return 0
@@ -94,23 +75,9 @@ func pikseleZMilimetrowWyrysu(milimetry float64) int {
 	return int(milimetry*punktowNaCalWyrysu/milimetryNaCal + 0.5)
 }
 
-// geometriaZNastawStrony liczy geometrię wyrysu z nastaw strony.
-//
-// Nastawy niepodane biorą wartość domyślną — pole po polu, nie całością:
-// dokument z ustawionym samym nośnikiem ma dostać ten nośnik z marginesami
-// domyślnymi, a nie A4 z powodu braku marginesu. Nośnik nazwany bierze wymiary
-// ze wspólnego wykazu rdzenia; wymiar własny (`widthMm`, `heightMm`) ma przed nim
-// pierwszeństwo, bo jest wskazaniem Operatora, a nie pozycją katalogu.
-//
-// Margines na oprawę (`gutterMm`) dokłada się do marginesu wewnętrznego, więc
-// zwęża kolumnę tekstu — inaczej oprawa zjadałaby litery, a nie miejsce na nią.
-// Marginesy odbicia obrotu stron w wyrysie nie zmieniają: kolumna tekstu ma
-// wtedy tę samą SZEROKOŚĆ na obu stronach kartki, a numer strony zależy od
-// szerokości, nie od tego, przy której krawędzi ona stoi.
-//
-// Kolumn ta geometria nie liczy z zamysłu: wyrys rysuje jedną kolumnę, więc
-// zwężenie łamania do kolumny bez rysowania kolumn dałoby numer strony
-// niezgodny z obrazem — brak nazwany jest tu lepszy od rachunku pozornego.
+// geometriaZNastawStrony liczy geometrię wyrysu z nastaw strony. Nastawy
+// niepodane biorą wartość domyślną pole po polu, a wymiar własny ma
+// pierwszeństwo przed nośnikiem nazwanym.
 func geometriaZNastawStrony(nastawy *shared.StudioPageSetup) geometriaStronyStudia {
 	geometria := geometriaDomyslnaStudia()
 	if nastawy == nil {
@@ -156,11 +123,9 @@ func geometriaZNastawStrony(nastawy *shared.StudioPageSetup) geometriaStronyStud
 	return geometria.uzdrowiona()
 }
 
-// uzdrowiona pilnuje, żeby geometria nie zamieniła się w kartkę bez miejsca na
-// litery. Nastawa, która zjada całą kartkę marginesami, jest wskazaniem
-// Operatora do poprawienia, a nie powodem, żeby rdzeń dzielił przez zero:
-// kolumna schodzi wtedy do najmniejszej sensownej szerokości, a wyrys wychodzi
-// widocznie za wąski i Operator sam to zobaczy.
+// uzdrowiona pilnuje, żeby geometria nie zamieniła się w kartkę bez miejsca
+// na litery: marginesy zjadające całą kartkę zwęża zamiast dzielić przez
+// zero, a wyrys wychodzi widocznie za wąski.
 func (g geometriaStronyStudia) uzdrowiona() geometriaStronyStudia {
 	const najmniejszaKolumna = 32
 	if g.szerokosc < najmniejszaKolumna {
@@ -186,7 +151,8 @@ func (g geometriaStronyStudia) uzdrowiona() geometriaStronyStudia {
 	return g
 }
 
-// szerokoscKolumny oddaje szerokość kolumny tekstu w pikselach.
+// szerokoscKolumny oddaje szerokość kolumny tekstu w pikselach — kartkę
+// pomniejszoną o oba marginesy poziome.
 func (g geometriaStronyStudia) szerokoscKolumny() int {
 	szerokosc := g.szerokosc - g.marginesLewy - g.marginesPrawy
 	if szerokosc < 1 {
@@ -196,11 +162,8 @@ func (g geometriaStronyStudia) szerokoscKolumny() int {
 }
 
 // wierszyNaStrone oddaje liczbę wierszy mieszczących się na jednej kartce.
-//
-// Odjęcie dwóch interlinii jest miejscem nagłówka i stopki: oba stoją w wyrysie
-// poza kolumną tekstu, ale kartkę zajmują. Rachunek jest ten sam, którym
-// wyrys układa wiersze — drugi rachunek dałby spis treści wskazujący inne
-// strony, niż pokazuje podgląd.
+// Odjęcie dwóch interlinii jest miejscem nagłówka i stopki, które stoją poza
+// kolumną tekstu, ale kartkę zajmują.
 func (g geometriaStronyStudia) wierszyNaStrone() int {
 	naStrone := (g.wysokosc - g.marginesGorny - g.marginesDolny - 2*interliniaStudia) /
 		interliniaStudia
@@ -210,21 +173,20 @@ func (g geometriaStronyStudia) wierszyNaStrone() int {
 	return naStrone
 }
 
-// nastawyWyrysuStudia opisuje jedną stronę wyrysu.
+// nastawyWyrysuStudia opisuje jedną stronę wyrysu wraz z jej wycinkiem
+// i geometrią kartki, nagłówkiem, stopką i znakiem wodnym.
 type nastawyWyrysuStudia struct {
 	naglowek  string
 	stopka    string
 	znakWodny string
-	// stronaOd i stronaDo zawężają wyrys do wycinka. Zero znaczy „bez
-	// zawężenia" — inaczej żądanie bez wskazania stron dałoby zero stron.
+	// stronaOd i stronaDo zawężają wyrys do wycinka; zero znaczy bez zawężenia.
 	stronaOd, stronaDo int
-	// geometria niesie wymiary kartki i marginesów. Wartość zerowa znaczy
-	// nastawę domyślną, więc wołający, którego nastawy strony nie dotyczą,
-	// nie musi jej podawać.
+	// geometria niesie wymiary kartki; wartość zerowa znaczy nastawę domyślną.
 	geometria geometriaStronyStudia
 }
 
-// kartka oddaje geometrię nastaw albo — gdy jej nie podano — domyślną.
+// kartka oddaje geometrię nastaw albo, gdy jej nie podano, geometrię
+// domyślną strony A4 o marginesach wyrysu.
 func (n nastawyWyrysuStudia) kartka() geometriaStronyStudia {
 	if n.geometria.szerokosc <= 0 || n.geometria.wysokosc <= 0 {
 		return geometriaDomyslnaStudia()
@@ -232,19 +194,22 @@ func (n nastawyWyrysuStudia) kartka() geometriaStronyStudia {
 	return n.geometria
 }
 
-// kartaWyrysuStudia to jedna wyrysowana strona wraz z jej numerem.
+// kartaWyrysuStudia to jedna wyrysowana strona wraz z jej numerem w wykazie
+// stron, jaki oddaje `wyrysujStronyStudia`.
 type kartaWyrysuStudia struct {
 	numer int
 	obraz *image.RGBA
 }
 
-// bladWyrysuStudia nazywa usterkę wyrysu kodem kontraktu.
+// bladWyrysuStudia nazywa usterkę wyrysu kodem kontraktu ErrorCodeInternalError
+// wraz z opisem powodu, jednolitym dla całego pliku.
 func bladWyrysuStudia(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
 		"moduł Studio: wyrys strony — "+powod))
 }
 
-// krojWyrysuStudia składa krój pisma o zadanym stopniu.
+// krojWyrysuStudia składa krój pisma `gofont/goregular` o zadanym stopniu,
+// przy rozdzielczości 96 punktów na cal.
 func krojWyrysuStudia(stopien float64) (font.Face, error) {
 	krojka, err := opentype.Parse(goregular.TTF)
 	if err != nil {
@@ -259,12 +224,9 @@ func krojWyrysuStudia(stopien float64) (font.Face, error) {
 	return oblicze, nil
 }
 
-// wyrysujStronyStudia rozkłada treść na strony i rysuje każdą z nich.
-//
-// Łamanie wiersza idzie po SŁOWACH i po zmierzonej szerokości, nie po stałej
-// liczbie znaków: dokument polski ma słowa różnej długości, a łamanie po
-// znakach rozcinałoby je w połowie i podgląd pokazywałby układ, którego żaden
-// eksport by nie powtórzył.
+// wyrysujStronyStudia rozkłada treść na strony i rysuje każdą z nich. Łamanie
+// wiersza idzie po słowach i po zmierzonej szerokości, nie po stałej liczbie
+// znaków.
 func wyrysujStronyStudia(tresc string, n nastawyWyrysuStudia) ([]kartaWyrysuStudia, error) {
 	oblicze, err := krojWyrysuStudia(rozmiarPismaStudia)
 	if err != nil {
@@ -315,7 +277,8 @@ func wyrysujStronyStudia(tresc string, n nastawyWyrysuStudia) ([]kartaWyrysuStud
 	return karty, nil
 }
 
-// zlamWierszStudia rozkłada jeden akapit na wiersze mieszczące się w kolumnie.
+// zlamWierszStudia rozkłada jeden akapit na wiersze mieszczące się w kolumnie
+// o podanej szerokości, mierzonej krojem `oblicze`.
 func zlamWierszStudia(akapit string, oblicze font.Face, szerokosc int) []string {
 	akapit = strings.ReplaceAll(akapit, "\t", "    ")
 	if strings.TrimSpace(akapit) == "" {
@@ -335,8 +298,8 @@ func zlamWierszStudia(akapit string, oblicze font.Face, szerokosc int) []string 
 		if biezacy != "" {
 			wiersze = append(wiersze, biezacy)
 		}
-		// Słowo dłuższe od kolumny (odnośnik, suma kontrolna) łamie się po
-		// znakach — inaczej wyszłoby poza margines i przepadło przy wydruku.
+		// Słowo dłuższe od kolumny łamie się po znakach, inaczej wyszłoby
+		// poza margines.
 		for font.MeasureString(oblicze, slowo).Ceil() > szerokosc {
 			ciecie := len([]rune(slowo))
 			for ciecie > 1 && font.MeasureString(oblicze, string([]rune(slowo)[:ciecie])).Ceil() > szerokosc {
@@ -362,8 +325,7 @@ func narysujStroneStudia(wiersze []string, numer, stron int, oblicze font.Face,
 	strona := image.NewRGBA(image.Rect(0, 0, kartka.szerokosc, kartka.wysokosc))
 	draw.Draw(strona, strona.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
 
-	// Znak wodny idzie POD treść, nie na nią: podgląd ma zostać czytelny,
-	// a znak wodny ma być widoczny, nie zasłaniający.
+	// Znak wodny idzie pod treść, żeby zostać widoczny, a nie zasłaniający.
 	if znak := strings.TrimSpace(n.znakWodny); znak != "" {
 		rysujTekstStudia(strona, oblicze, znak, kartka.marginesLewy,
 			kartka.wysokosc/2, color.RGBA{R: 226, G: 226, B: 226, A: 255})
@@ -392,7 +354,8 @@ func narysujStroneStudia(wiersze []string, numer, stron int, oblicze font.Face,
 	return strona
 }
 
-// rysujTekstStudia kładzie jeden wiersz tekstu w podanym miejscu.
+// rysujTekstStudia kładzie jeden wiersz tekstu w podanym miejscu na płótnie,
+// zadanym krojem i barwą, bez łamania.
 func rysujTekstStudia(plotno *image.RGBA, oblicze font.Face, tekst string,
 	x, y int, barwa color.Color) {
 
@@ -404,18 +367,16 @@ func rysujTekstStudia(plotno *image.RGBA, oblicze font.Face, tekst string,
 }
 
 // pustaStronaStudia oddaje białą kartę o wymiarach podanej kartki. Wchodzi za
-// stronę, której druga porównywana wersja nie ma: bez niej strona dopisana na
-// końcu dokumentu nie miałaby z czym się porównać i przepadłaby z wykazu
-// obszarów, choć jest zmianą największą z możliwych. Wymiary idą z geometrii
-// wyrysu, nie ze stałej A4 — inaczej porównanie dokumentu na A5 skalowałoby
-// stronę pustą, zamiast ją nałożyć.
+// stronę, której druga porównywana wersja nie ma, żeby miała z czym się
+// porównać.
 func pustaStronaStudia(kartka geometriaStronyStudia) *image.RGBA {
 	strona := image.NewRGBA(image.Rect(0, 0, kartka.szerokosc, kartka.wysokosc))
 	draw.Draw(strona, strona.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
 	return strona
 }
 
-// pngZeStronyStudia koduje stronę do PNG.
+// pngZeStronyStudia koduje stronę do PNG — formatu, który `pdfZeStronStudia`
+// składa dalej w dokument PDF.
 func pngZeStronyStudia(obraz image.Image) ([]byte, error) {
 	var bufor bytes.Buffer
 	if err := png.Encode(&bufor, obraz); err != nil {
@@ -424,11 +385,9 @@ func pngZeStronyStudia(obraz image.Image) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// pdfZeStronStudia składa strony wyrysu w jeden dokument PDF.
-//
-// Droga przez obrazy, a nie przez generator tekstu w PDF, jest wyborem
-// świadomym: PDF ma pokazywać DOKŁADNIE to, co Operator widział w podglądzie.
-// Drugi silnik składu dałby drugi układ i podgląd przestałby być podglądem.
+// pdfZeStronStudia składa strony wyrysu w jeden dokument PDF drogą przez
+// obrazy, a nie przez generator tekstu w PDF, żeby PDF pokazywał dokładnie
+// to, co Operator widział w podglądzie.
 func pdfZeStronStudia(strony [][]byte) ([]byte, error) {
 	if len(strony) == 0 {
 		return nil, bladWyrysuStudia("złożenie dokumentu bez ani jednej strony")
@@ -452,12 +411,8 @@ func pdfZeStronStudia(strony [][]byte) ([]byte, error) {
 // go nie przejrzał; większa scaliłaby zmianę akapitu ze zmianą marginesu.
 const bokKratkiRoznicyStudia = 24
 
-// obszaryRoznicyStudia porównuje dwie strony komórka po komórce.
-//
-// Porównanie idzie po jasności, nie po składowych barwy: podgląd jest czarny na
-// białym, a różnica jasności mówi wprost, czy w komórce coś przybyło albo
-// ubyło. Współrzędne wychodzą w punktach strony — tych samych, w których
-// mierzone są wymiary wyrysu.
+// obszaryRoznicyStudia porównuje dwie strony komórka po komórce, po jasności
+// pikseli, a nie po składowych barwy, bo podgląd jest czarny na białym.
 func obszaryRoznicyStudia(bazowa, docelowa image.Image, numer int) []shared.StudioVisualDiffRegion {
 	prostokat := bazowa.Bounds().Intersect(docelowa.Bounds())
 	obszary := []shared.StudioVisualDiffRegion{}
@@ -492,14 +447,8 @@ func obszaryRoznicyStudia(bazowa, docelowa image.Image, numer int) []shared.Stud
 	return obszary
 }
 
-// dopasujStroneStudia sprowadza stronę do wymiarów strony porównywanej.
-//
-// Przy tych samych nastawach wyrysu strony mają te same wymiary i skalowanie
-// nie robi nic. Nastawy potrafią się jednak różnić — profil wydania jednej
-// wersji bywa inny niż drugiej — a porównanie pikselowe stron o różnych
-// wymiarach pokazywałoby jako zmianę samo przesunięcie, którego Operator nie
-// wprowadził. Skalowanie idzie filtrem CatmullRom, bo najbliższy sąsiad na
-// tekście daje szum na krawędziach liter, czyli różnicę tam, gdzie jej nie ma.
+// dopasujStroneStudia sprowadza stronę do wymiarów strony porównywanej,
+// filtrem CatmullRom — najbliższy sąsiad dałby na tekście szum krawędzi liter.
 func dopasujStroneStudia(zrodlo image.Image, prostokat image.Rectangle) image.Image {
 	if zrodlo.Bounds() == prostokat {
 		return zrodlo
@@ -509,7 +458,8 @@ func dopasujStroneStudia(zrodlo image.Image, prostokat image.Rectangle) image.Im
 	return dopasowana
 }
 
-// jasnoscStudia sprowadza piksel do jednej liczby w skali 0–255.
+// jasnoscStudia sprowadza piksel do jednej liczby w skali 0–255, ważoną sumą
+// jego składowych barwy czerwonej, zielonej i niebieskiej.
 func jasnoscStudia(obraz image.Image, x, y int) uint8 {
 	r, g, b, _ := obraz.At(x, y).RGBA()
 	return uint8((r*299 + g*587 + b*114) / 1000 >> 8)

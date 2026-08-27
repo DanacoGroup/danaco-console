@@ -562,3 +562,99 @@ wartości niż kod. Karta takiego rodzaju powstawała wtedy w pamięci
 i działała, ale jej zapis odbijał się od warunku bazy po cichu, bez wywrócenia
 czynności — karta znikała po restarcie rdzenia, nic tego nie zapowiadając.
 Dlatego sprawdzian mierzy wiersz w bazie, nie samą odpowiedź komendy.
+
+## budowa/server/internal/core/adapter_studio_wyrys.go
+
+Podgląd układu bywa robiony tak, że rdzeń startuje przeglądarkę, otwiera w niej
+HTML i robi zrzut. Ta droga jest tu zamknięta z tego samego powodu, co
+w warsztacie PDF: przeglądarka bezgłowa nie jest częścią instalki, a funkcja
+zależna od programu, którego instalka nie niesie, jest u Operatora odmową,
+a nie funkcją. Wyrys idzie więc `image`, `image/png` i `x/image/draw`, a PDF
+składa `pdfcpu` — wszystko wkompilowane w binarium rdzenia. Krój wczytany
+z katalogu systemowego byłby zależnością tego samego rodzaju: u jednego
+Operatora podgląd wyszedłby, u drugiego rozsypałby się na prostokąty.
+`gofont/goregular` jedzie wkompilowany i niesie łacinkę rozszerzoną, więc
+polskie znaki diakrytyczne wychodzą literami, a nie zastępnikami.
+
+Geometria strony jest bytem liczonym z nastaw sekcji, a nie stałymi A4,
+ponieważ numer strony w spisie treści, w indeksie i w polu `pageNumber` liczy
+się łamaniem wiersza, a łamanie zależy od szerokości kolumny i od wysokości
+kartki. Dopóki oba wymiary były stałymi A4, spis treści dokumentu ustawionego
+na A5 albo na marginesach szerokich wskazywał strony podglądu, a nie strony
+dokumentu.
+
+W `geometriaZNastawStrony` nastawy niepodane biorą wartość domyślną pole po
+polu, nie całością: dokument z ustawionym samym nośnikiem ma dostać ten
+nośnik z marginesami domyślnymi, a nie A4 z powodu braku marginesu. Nośnik
+nazwany bierze wymiary ze wspólnego wykazu rdzenia; wymiar własny (`widthMm`,
+`heightMm`) ma przed nim pierwszeństwo, bo jest wskazaniem wprost, a nie
+pozycją katalogu. Margines na oprawę (`gutterMm`) dokłada się do marginesu
+wewnętrznego, więc zwęża kolumnę tekstu, inaczej oprawa zjadałaby litery,
+a nie miejsce na nią. Marginesy odbicia obrotu stron w wyrysie nie zmieniają:
+kolumna tekstu ma wtedy tę samą szerokość na obu stronach kartki. Kolumn ta
+geometria nie liczy z zamysłu: wyrys rysuje jedną kolumnę, więc zwężenie
+łamania do kolumny bez rysowania kolumn dałoby numer strony niezgodny
+z obrazem.
+
+`uzdrowiona` traktuje nastawę, która zjada całą kartkę marginesami, jako
+wskazanie do poprawienia, a nie powód, żeby rdzeń dzielił przez zero: kolumna
+schodzi wtedy do najmniejszej sensownej szerokości, a wyrys wychodzi widocznie
+za wąski.
+
+`wierszyNaStrone` odejmuje dwie interlinie na miejsce nagłówka i stopki, bo
+oba stoją w wyrysie poza kolumną tekstu, ale kartkę zajmują; rachunek jest ten
+sam, którym wyrys układa wiersze, inaczej spis treści wskazywałby inne strony,
+niż pokazuje podgląd.
+
+`wyrysujStronyStudia` łamie wiersz po słowach i po zmierzonej szerokości, nie
+po stałej liczbie znaków, bo dokument polski ma słowa różnej długości,
+a łamanie po znakach rozcinałoby je w połowie i podgląd pokazywałby układ,
+którego żaden eksport by nie powtórzył.
+
+`pustaStronaStudia` liczy wymiary z geometrii wyrysu, nie ze stałej A4,
+ponieważ porównanie dokumentu na A5 skalowałoby stronę pustą, zamiast ją
+nałożyć.
+
+`pdfZeStronStudia` porównuje dwie strony komórka po komórce po jasności, nie
+po składowych barwy, bo podgląd jest czarny na białym, a różnica jasności
+mówi wprost, czy w komórce coś przybyło albo ubyło. Współrzędne wychodzą
+w punktach strony — tych samych, w których mierzone są wymiary wyrysu.
+Komórka mniejsza niż `bokKratkiRoznicyStudia` dałaby wykaz obszarów tak długi,
+że nikt by go nie przejrzał; większa scaliłaby zmianę akapitu ze zmianą
+marginesu.
+
+`dopasujStroneStudia` skaluje stronę tylko wtedy, gdy nastawy wyrysu dwóch
+porównywanych wersji się różnią — inaczej porównanie pikselowe stron
+o różnych wymiarach pokazywałoby jako zmianę samo przesunięcie.
+
+## budowa/server/internal/core/kompozycja.go
+
+Porty modułowe rozdzielają się od siebie według zależności i rodziny danych,
+nie według nazwy modułu w interfejsie. Prowenancja i Zuzycie, Kondycja
+i Alerty stoją portami przekrojowymi, bo ich odczyt sięga do kilku okien
+naraz, a nie do jednego modułu; Schowek, SkrotyTekstowe i KontekstyPamieci
+obsługują tekst poza jednym oknem z tego samego powodu.
+
+WarsztatPdf i BezpieczenstwoDokumentu stoją obok portu Studio, ale osobno,
+bo mają inny komplet zależności albo inną rodzinę awarii: warsztat pracuje
+biblioteką wkompilowaną w rdzeń, a otwarcie i zamknięcie dokumentu
+w bezpieczeństwie nie mają wspólnego powodu do odmowy. Podobny podział
+rządzi portami wywoływanymi jako narzędzia modelu z rozmowy — obraz, media,
+dokumenty, archiwum, poczta — które stoją osobno od okien Operatora
+(Design, Asystent), mimo że część z nich ląduje we wspólnym magazynie
+zasobów Designu.
+
+Rzutowanie opcjonalnych rozszerzeń portu (pamięć i planowanie Workspace,
+wyposażenie Terminala) idzie dwuwartościowo z rozmysłem: rdzeń złożony
+z portem niepełnym ma pracować dalej w pozostałych czynnościach, a brak
+rozszerzenia widać w wykazie komend powitania, tak samo jak przy porcie
+całkiem pustym.
+
+Pętla wykonawcza Studia wchodzi osobnym wpięciem, bo niesie stan własny —
+magazyn rozkładów — i czyta nastawy tym samym obsługiwaczem konfiguracji,
+którym czyta je moduł Agents, więc drugiego magazynu nastaw nie zakłada.
+Zapora blokad fragmentu owija to, co w rejestrze już stoi, więc jedzie po
+obu wpięciach Studia, nie przed nimi — owinięcia nie da się założyć na
+komendę, której w rejestrze jeszcze nie ma. Siatka śladu autora owija
+zaporę z zewnątrz, żeby czynność zatrzymana blokadą nie zostawiła śladu
+w dzienniku.

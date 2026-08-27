@@ -950,12 +950,19 @@ pierwszego Operatora przed platformą na zawsze.
 i nikt tego nie zmienia. Znacznik zdejmuje jeden warunek i tylko jeden: bramki
 nie zamyka potwierdzenie, którego platforma nie miała czym wysłać.
 
-**Skutek dla okna.** Przepływ wejścia ma dwie gałęzie, nie jedną.
+**Skutek dla okna.** Przepływ wejścia ma dwie gałęzie, nie jedną — i różnią się
+**bramką, nie tylko komunikatem**. Ten akapit prostuje pierwotny zapis pozycji,
+który różnicę zaniżał; poprawka pochodzi z pomiaru wykonawcy terenu
+`droga-wejscia`.
 
-| Nadajnik | Odpowiedź rejestracji | Co okno mówi |
-|---|---|---|
-| ustawiony | `PendingVerification: true` | list wysłany, przepisz drogę potwierdzenia |
-| brak | `PendingVerification: false` | konto założone, adres niepotwierdzony — wejście działa hasłem, **odzyskanie konta listem nie zadziała do chwili potwierdzenia** |
+| Nadajnik | Odpowiedź rejestracji | Czym wchodzi Operator | Co okno mówi |
+|---|---|---|---|
+| ustawiony | `PendingVerification: true` | **wyłącznie `auth.verify`** — `auth.login` odmawia `not_authenticated`, bo konto czeka na potwierdzenie | list wysłany, przepisz drogę potwierdzenia |
+| brak | `PendingVerification: false` | `auth.login` hasłem | konto założone, adres niepotwierdzony — wejście działa hasłem, **odzyskanie konta listem nie zadziała do chwili potwierdzenia** |
+
+Wiersz pierwszy rozstrzyga przepływ okna: po rejestracji z nadajnikiem **nie ma
+przejścia do logowania**. Wykonawca czytający samą pierwotną treść pozycji
+zbudowałby przejście, które rdzeń odrzuca.
 
 Ostrzeżenie z drugiego wiersza jest wymagane, nie zalecane. Adres jest jedyną
 drogą odzyskania konta; Operator, który nie wie, że jego adres nie został

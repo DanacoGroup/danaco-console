@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: wyjście procesu terminala jako strumień fragmentów
-// kontraktu — nośnik okna Output Console.
-//
-// Wyjście jedzie wspólnym strumieniem `stream.chunk`, który kontrakt opisuje
-// jako jedną drogę dla wszystkich kanałów: `windowId` wskazuje okno terminala,
-// `messageId` — identyfikator procesu z rejestru, a numer fragmentu i znacznik
-// końca żyją w kopercie. Dzięki temu Output Console rozdziela wyjście po
-// procesach i po kartach, nie zakładając drugiego protokołu.
-//
-// Odczyt jest blokowy: surowe bajty trafiają do bufora 32 KiB i wysyłane jest
-// tyle, ile przyszło. Odczyt po liniach zawiesiłby się na wyjściu bez znaku
-// końca linii (pasek postępu), a fragment na linię zamieniłby jedno `find /`
-// w setki tysięcy kopert. Odczyt blokowy sam skleja napływ: im szybciej proces
-// pisze, tym większe porcje wracają z jednego odczytu.
+// kontraktu — nośnik okna Output Console. Wyjście jedzie wspólnym strumieniem
+// `stream.chunk`, opisanym kontraktem jako jedna droga dla wszystkich kanałów.
 package core
 
 import (
@@ -22,15 +11,18 @@ import (
 	"danacoconsole/shared"
 )
 
-// rozmiarBuforaWyjscia jest porcją odczytu z potoku procesu.
+// rozmiarBuforaWyjscia jest porcją odczytu z potoku wyjścia procesu terminala
+// uruchomionego przez kartę.
 const rozmiarBuforaWyjscia = 32 * 1024
 
-// nadawcaWyjscia rozsyła fragmenty wyjścia procesów terminala.
+// nadawcaWyjscia rozsyła fragmenty wyjścia procesów terminala zdarzeniami
+// transportu okna komunikacji.
 type nadawcaWyjscia struct {
 	nadajnik Nadajnik
 }
 
-// nowyNadawcaWyjscia opakowuje nadajnik zdarzeń transportu.
+// nowyNadawcaWyjscia opakowuje nadajnik zdarzeń transportu nadawcą wyjścia
+// procesów terminala montowanym przy starcie.
 func nowyNadawcaWyjscia(nadajnik Nadajnik) *nadawcaWyjscia {
 	return &nadawcaWyjscia{nadajnik: nadajnik}
 }
@@ -49,9 +41,8 @@ func (n *nadawcaWyjscia) Pompuj(proces *procesTerminala, zrodlo io.Reader, rodza
 			n.Fragment(proces, rodzaj, string(bufor[:odczytane]), false)
 		}
 		if err != nil {
-			// Koniec potoku jest normalnym końcem odczytu, a błąd odczytu
-			// dotyczy tego jednego potoku — proces i tak domknie go czekający
-			// na jego zakończenie.
+			// Koniec potoku jest normalnym końcem odczytu; proces i tak domknie go
+			// czekający na zakończenie.
 			return
 		}
 	}
@@ -88,7 +79,8 @@ func (n *nadawcaWyjscia) Domknij(proces *procesTerminala, stan shared.TerminalPr
 	n.Fragment(proces, rodzaj, podsumowanieZakonczenia(stan, kodWyjscia, powod), true)
 }
 
-// podsumowanieZakonczenia składa ostatni wiersz przebiegu.
+// podsumowanieZakonczenia składa ostatni wiersz przebiegu procesu, widoczny
+// jako podsumowanie w oknie.
 func podsumowanieZakonczenia(stan shared.TerminalProcessStatus, kodWyjscia *int, powod string) string {
 	tresc := "\n[proces " + string(stan)
 	if kodWyjscia != nil {

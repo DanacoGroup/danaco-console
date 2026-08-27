@@ -4106,3 +4106,14 @@ Zakres globalny bytu nie wskazuje i jest zawsze prawdziwy — tnie wszystkie
 okna. Fałsz nie jest błędem odczytu: to stan, który woła o odmowę po stronie
 komendy, bo zasada zapisana dla nieistniejącego okna albo sesji nigdy
 niczego nie przytnie.
+
+## budowa/server/internal/dane/agent_wersje.go
+
+Migawki historii zakłada baza, nie repozytorium: wiersz historii powstaje wyzwalaczem, bo
+tożsamość eksperta zapisują trzy różne drogi kodu — założenie, zmiana i przywrócenie.
+Repozytorium historii wyłącznie czyta i przywraca; nie ma osobnej czynności zapisu wersji,
+bo taka czynność pozwalałaby historię ominąć.
+
+Różnicę względem poprzedniej wersji wyliczamy przy odczycie zamiast trzymać ją w bazie: pola
+zmienione wychodzą z porównania migawki z jej poprzedniczką, więc odpowiedź nie rozjedzie się
+z treścią, którą przywraca operacja przywrócenia.

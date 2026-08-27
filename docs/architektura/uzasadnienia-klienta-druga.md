@@ -1789,3 +1789,6 @@ jest zamknięciem panelu: treść wraca do stosu, a panel żyje dalej ze swoją
 subskrypcją, natomiast właściwe zamknięcie panelu należy do jego obudowy
 w stosie. Widok nie buduje treści i nie rozstrzyga zachowania kolumn sceny —
 to należy do układu, który go osadził.
+
+## budowa/klient-poprzedni/src/moduly/research/modul-research.ts
+Układ wynika z roli okna i z porządku pracy badawczej: wyszukaj, skataloguj, przeczytaj, odnotuj, złóż, wydaj. Research Workspace jest wiodące i jest punktem wejścia, więc stoi w pasie pierwszym na całą szerokość. Dalej idą pary, w których biegnie wiązanie: Discovery Panel obok Sources Manager, bo pozycja wyniku staje się źródłem; Reading View obok Findings Panel, bo wypis z lektury staje się ustaleniem; Report Builder obok Export Panel, bo dokument staje się plikiem. Badanie jest jedno na cały moduł: wybór źródeł, zaznaczenie ustaleń i wskazanie materiału do lektury przestawiają wszystkie siedem okien naraz, bo stan badania jest jeden. Nawigacja wewnątrzmodułowa jest przeniesieniem ogniska, nie zmianą trasy: okna stoją obok siebie, więc odnośnik do innego okna prowadzi wzrok i ognisko, zamiast wymieniać zawartość obszaru.

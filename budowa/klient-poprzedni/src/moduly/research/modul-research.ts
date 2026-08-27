@@ -11,25 +11,7 @@ import { utworzOknoSourcesManager } from './okno-sources-manager';
 import { utworzStanBadania, type StanBadania } from './stan-badania';
 
 /**
- * Moduł Research — siedem okien operacyjnych w jednym układzie.
- *
- * Układ wynika z roli okna i z porządku pracy badawczej opisanego
- * w opracowaniu modułu (rozdz. 4.1): wyszukaj → skataloguj → przeczytaj →
- * odnotuj → złóż → wydaj. Research Workspace jest wiodące i jest punktem
- * wejścia, więc stoi w pasie pierwszym na całą szerokość. Dalej idą pary,
- * w których biegnie wiązanie:
- *
- * - Discovery Panel obok Sources Manager, bo pozycja wyniku staje się źródłem;
- * - Reading View obok Findings Panel, bo wypis z lektury staje się ustaleniem;
- * - Report Builder obok Export Panel, bo dokument staje się plikiem.
- *
- * Badanie jest jedno na cały moduł: wybór źródeł, zaznaczenie ustaleń
- * i wskazanie materiału do lektury przestawiają wszystkie siedem okien naraz,
- * bo `stan-badania` jest jeden.
- *
- * Nawigacja wewnątrzmodułowa jest przeniesieniem ogniska, nie zmianą trasy:
- * okna stoją obok siebie, więc „→ Report Builder" prowadzi wzrok i ognisko,
- * zamiast wymieniać zawartość obszaru.
+ * Moduł Research łączy siedem okien operacyjnych w jednym układzie zgodnym z porządkiem pracy badawczej, dzieląc jeden wspólny stan badania.
  */
 export interface ModulResearch {
   /** Element osadzany w obszarze roboczym powłoki. */
@@ -101,7 +83,7 @@ export function utworzModulResearch(kanal: Kanal): ModulResearch {
   };
 }
 
-/** Pas układu — dwa okna obok siebie, zwijane do jednej kolumny na wąskim ekranie. */
+/** Funkcja tworzy pas układu z dwóch okien ułożonych obok siebie, zwijany do jednej kolumny na wąskim ekranie. */
 function pas(okna: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mr-modul__pas';

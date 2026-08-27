@@ -5647,3 +5647,27 @@ pakietu, zamiast rozjeżdżać się z nim po cichu.
 
 LadunekDo jest funkcją, nie metodą: Koperta jest typem kontraktu, więc
 zachowanie dokłada się obok niego, a nie w jego definicji.
+
+## budowa/server/internal/dane/pamiec_konteksty.go
+Kontekst jest zestawem wskazań: usunięcie kontekstu nie kasuje ani jednego
+wpisu pamięci, bo kontekst nie jest właścicielem treści. Dlatego wpisy idą
+zapisem strukturalnym w kolumnie, a nie kluczem obcym z kaskadą.
+
+Kontrakt ustawiania retencji oddaje liczbę wpisów wprost i nie ma prawa
+jej zgadywać: pochodzi z policzenia wierszy, nie z oszacowania.
+
+Granica jest znacznikiem czasu w zapisie kolumny daty utworzenia wpisu
+pamięci projektu — czyli zapisem w formacie ISO 8601 w strefie uniwersalnej.
+Porównanie napisów jest tu poprawne, bo ten zapis rośnie leksykalnie razem
+z czasem.
+
+## budowa/server/internal/transport/bramka_test.go
+
+Sprawdziany straży bramki mierzą ją tablicą, bo reguła ma dokładnie trzy wejścia — wymóg, rodzaj
+komendy i więź gniazda — i każdy ich układ ma jedno rozstrzygnięcie; pominięcie któregokolwiek pola
+tablicy zostawia w straży dziurę wielkości jednej komendy. Dopisanie komendy spoza wykazu komend wejścia
+otwiera ją na oścież przed logowaniem, więc zmiana ma się o sprawdzian potknąć. Wykaz liczy siedem
+pozycji, nie trzy: rejestracja jest dwukrokowa, bo to weryfikacja wydaje token, nie rejestracja sama,
+odzyskanie konta jest dwukrokowe, a przedłużenie sesji dotyczy tokenu, który gniazda nie związał — każda
+z nich pada z gniazda jeszcze nieprzedstawionego, i bez każdej z nich któraś droga wejścia jest zamknięta
+na głucho.

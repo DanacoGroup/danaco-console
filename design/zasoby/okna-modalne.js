@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Plik nadaje oknu nakładkowemu przeciąganie, zmianę rozmiaru, zwinięcie do doku i rozłożenie na cały obszar przeglądarki. ============================================================================
    DANACO CONSOLE — OKNA NAKŁADKOWE (zachowanie)
    ----------------------------------------------------------------------------
    Nadaje każdemu `<dialog class="dn-modal">` zachowanie okna: przeciąganie za

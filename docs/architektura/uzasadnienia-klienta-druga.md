@@ -2456,3 +2456,12 @@ odpowiedź. Odpowiedź mówi, co jest nieczynne i dlaczego, i niczego nie udaje.
 sprawdzalny w `shared/contract.json`: jeżeli komendy nie ma, tekst mówi wprost, że jej nie ma, i nie
 zmyśla nazwy. Zdanie zaprzeczające funkcji, która istnieje, jest tak samo szkodliwe jak przycisk
 udający funkcję, której nie ma — prowadzi Operatora od okna, które by mu pomogło.
+
+## budowa/klient-poprzedni/src/moduly/translate/macierz-izolacji.ts
+Element trzyma się podziału odczytu i zapisu: platforma ma własne okno punktów izolacji z pełną
+obsługą zapisu, a druga kontrolka nad tym samym kluczem dawałaby dwa miejsca zmiany jednej
+wartości i dwa różne obrazy stanu przy odmowie jednego z nich. Zakres odczytu to karta sesji i jej
+warstwa — moduł pyta o politykę obowiązującą tę pracę, nie o domyślną politykę platformy, a sesji
+nieustalonej nie podmienia na globalną, tylko zgłasza brak przedmiotu zapytania. Stan wyjściowy
+platformy to zero blokad: żaden zakres nie jest domyślnie odcięty, a macierz nazywa ten skutek przy
+każdym kluczu z osobna, ponieważ wykaz zakresów się przewija.

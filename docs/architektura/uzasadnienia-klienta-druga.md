@@ -3261,3 +3261,12 @@ Dziesięć odsłon leży razem, bo dzielą oprawę — belkę, kolumnę tożsamo
 Odsłona konta założonego bez potwierdzenia nie stoi w prototypie. Wymusza ją reguła dziedzinowa: rejestracja bez konta nadawczego kończy się wejściem hasłem, a okno ma wtedy nazwać adres, którego nikt nie potwierdział.
 Prototyp stawia w miejscu długości i ważności drogi potwierdzenia wartości przykładowe; okno bierze wartości prawdziwe z pomiaru na rdzeniu.
 Cały tor odzyskiwania dostępu stał tak w prototypie od pierwszego kroku.
+
+## budowa/klient-poprzedni/src/moduly/research/wskazanie-lektury.ts
+Wydzielone jako osobny byt, bo dotyczy dwóch okien naraz — Sources Manager naciska przycisk
+czytania, a Reading View wczytuje wskazany materiał — a zbiorcze zaznaczenie pozycji niesie zbiór
+i tu byłoby narzędziem o jeden wymiar za dużym: czytać można jedno źródło. Wskazanie nie warunkuje
+klikalności ani jednej kontrolki: Reading View bez wskazanego źródła pokazuje zdanie „nie wskazano
+czego czytać", a nie wygaszony przycisk. Ogłoszenie idzie wyłącznie po faktycznej zmianie — odbiorcą
+jest przerysowanie okien, a przerysowanie woła ograniczenie wskazania; ogłoszenie bezwarunkowe
+zamknęłoby pętlę bez końca. Ten sam wzorzec niesie plik `zaznaczenie-pozycji.ts`.

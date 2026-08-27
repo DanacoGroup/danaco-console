@@ -1,14 +1,5 @@
-// Odpowiedzialność pliku: sesje bramki (tabela `sesja_bramki`) — druga połowa
-// repozytorium bramki. Katalog metod wejścia leży w `auth.go`.
-//
-// Sesja bramki nie jest kartą sesji. Tabela `sesja` opisuje pracę: rozmowę,
-// okna, kolejki, projekt. Wiersz poniżej opisuje wejście: kto przeszedł bramkę,
-// kiedy i jaką metodą. Karta pracy istnieje niezależnie od tego, czy ktokolwiek
-// się zalogował, a wygaśnięcie wejścia rozmowy nie zabiera.
-//
-// Struktura niesie wyłącznie skrót tokenu; token surowy zna rdzeń w chwili
-// założenia sesji oraz klient, któremu go oddano. Repozytorium nie ma jak go
-// odtworzyć — taki jest zamiar.
+// Plik prowadzi sesje bramki: druga połowa repozytorium bramki, opisującą wejście — kto przeszedł bramkę, kiedy
+// i jaką metodą; struktura niesie wyłącznie skrót tokenu, bo token surowy repozytorium nie ma jak odtworzyć.
 package dane
 
 import (
@@ -28,11 +19,7 @@ type SesjaBramki struct {
 	Wygasa        int64
 	Utworzono     int64
 	Uniewazniono  *int64
-	// Trwanie to długość życia sesji w milisekundach — ta sama, którą wybiera
-	// przełącznik „nie wyloguj mnie" przy zakładaniu. Jest zapisana, bo wygasanie
-	// jest przesuwne: odnowienie musi wiedzieć, o ile przesunąć koniec, a sama
-	// chwila `Wygasa` tego nie mówi. Zero znaczy wiersz bez zapisanego trwania —
-	// wołający bierze wtedy trwanie podstawowe.
+	// Trwanie to długość życia sesji w milisekundach; zero znaczy wiersz bez zapisanego trwania.
 	Trwanie int64
 }
 
@@ -56,12 +43,7 @@ const (
 	uniewaznijSesjeBramki = `UPDATE sesja_bramki SET uniewazniono = ?
 	                         WHERE uniewazniono IS NULL AND (? = '' OR token_skrot <> ?)`
 
-	// Wykaz urządzeń powstaje z sesji, nie z osobnej tabeli: urządzeniem konta
-	// jest to, które kiedykolwiek weszło. Grupowanie po kodzie daje jeden wiersz
-	// na urządzenie, a nie jeden na każde logowanie.
-	//
-	// `MAX(uniewazniono IS NULL AND wygasa > ?)` mówi, czy urządzenie ma DZIŚ
-	// ważny token — czyli czy unieważnienie ma co odbierać.
+	// Wykaz urządzeń powstaje z sesji, nie z osobnej tabeli, grupowany po kodzie do jednego wiersza na urządzenie.
 	urzadzeniaSesjiBramki = `SELECT urzadzenie_kod,
 	                                MAX(utworzono) AS ostatnio,
 	                                MAX(CASE WHEN uniewazniono IS NULL AND wygasa > ?
@@ -75,7 +57,7 @@ const (
 	                             WHERE uniewazniono IS NULL AND urzadzenie_kod = ?`
 )
 
-// ZalozSesjeBramki zakłada sesję wejścia i oddaje ją odczytaną z bazy.
+// ZalozSesjeBramki zakłada sesję wejścia i oddaje ją odczytaną z bazy danych z nadanym numerem wiersza.
 func (r *repozytoriumUwierzytelnienia) ZalozSesjeBramki(ctx context.Context,
 	sesja SesjaBramki) (SesjaBramki, error) {
 
@@ -156,7 +138,7 @@ func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeBramkiPoza(ctx context.Con
 	return int(zmienione), nil
 }
 
-// UrzadzeniaKonta zwraca urządzenia, które kiedykolwiek weszły przez bramkę.
+// UrzadzeniaKonta zwraca urządzenia, które kiedykolwiek weszły przez bramkę, wraz z ostatnią chwilą wejścia.
 func (r *repozytoriumUwierzytelnienia) UrzadzeniaKonta(ctx context.Context,
 	teraz int64) ([]UrzadzenieKonta, error) {
 
@@ -186,7 +168,7 @@ func (r *repozytoriumUwierzytelnienia) UrzadzeniaKonta(ctx context.Context,
 	return lista, nil
 }
 
-// UniewaznijSesjeUrzadzenia zamyka sesje czynne wskazanego urządzenia.
+// UniewaznijSesjeUrzadzenia zamyka sesje czynne wskazanego urządzenia i zwraca liczbę zamkniętych sesji.
 func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeUrzadzenia(ctx context.Context,
 	urzadzenie string, teraz int64) (int, error) {
 
@@ -205,7 +187,7 @@ func (r *repozytoriumUwierzytelnienia) UniewaznijSesjeUrzadzenia(ctx context.Con
 	return int(zmienione), nil
 }
 
-// odczytajSesjeBramki składa strukturę z jednego wiersza wyniku.
+// odczytajSesjeBramki składa strukturę sesji wprost z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajSesjeBramki(wiersz skaner) (SesjaBramki, error) {
 	var sesja SesjaBramki
 	var rodzaj, urzadzenie sql.NullString

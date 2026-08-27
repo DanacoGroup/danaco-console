@@ -94,7 +94,7 @@
     idz(el.getAttribute('data-idz'), el.getAttribute('data-idz-grupa') || null);
   });
 
-  /* Zakładki przełącza prototyp.js; tutaj domykamy skutki uboczne. Nasłuch
+  /* Zakładki przełącza prototyp.js; tutaj domyka się skutki uboczne. Nasłuch
      prototypu wpina się dopiero na DOMContentLoaded, a ten skrypt wykonuje się
      wcześniej — bez odłożenia czytalibyśmy `aria-selected` sprzed przełączenia. */
   D.addEventListener('click', function (e) {
@@ -178,7 +178,7 @@
   var plakietka  = D.getElementById('plakietka-stanu');
   var fazy       = wszystkie('.pt-faza');
 
-  /* kolejność pól zgodna z rozdz. 3.1: wersja protokołu · identyfikator urządzenia · token */
+  /* kolejność pól: wersja protokołu · identyfikator urządzenia · token */
   var HELLO = [
     { typ: 'zachęta', tekst: '» connection.hello' },
     { typ: 'para', klucz: 'wersja protokołu',    wartosc: 'dnp/1.0' },

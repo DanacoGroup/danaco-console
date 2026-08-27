@@ -2801,3 +2801,21 @@ pikseli, a odpowiedź mówi, która droga zaszła, i okno tego nie zaciera.
 Czynność zdejmowania poprzedniej odmowy jest miejscowa i nie pyta rdzenia, więc nie stawia okna
 w ładowaniu, tylko zdejmuje komunikat poprzedniej odmowy, bo od tej chwili okno pokazuje wynik,
 a nie powód niewykonania.
+
+## budowa/klient-poprzedni/src/rozmowa/nadawca.ts
+Rodzaje nadawcy rozróżniają się trzema nośnikami naraz i żaden z nich nie jest
+barwą tła: ikona w medalionie pierwszej kolumny wpisu, barwa medalionu i kreski
+krawędzi ustalana wyłącznie w rozdzielczości klasy semantycznej, nie rodzaju,
+oraz etykieta słowna wersalikami. Barwa sama nie może być jedynym nośnikiem
+znaczenia, więc tło wpisu pozostaje jedno dla wszystkich dziewięciu rodzajów.
+
+Arkusz stylu wpisu zna dokładnie trzy modyfikatory klasy semantycznej i wiąże
+z nimi barwę kreski oraz barwę medalionu: człowiek dostaje barwę atramentu
+(Operator), inteligencja barwę sygnału (model, agent, koordynator, wykonawca,
+walidator), system barwę neutralną (automatyzacja, Always On Display, wynik
+narzędzia). Rodzaj wewnątrz klasy różnicuje ikona i etykieta, nigdy kolor.
+
+Rozpoznawanie nadawcy łączy rolę wiadomości z kontraktu, która zna cztery
+wartości, z rolą okna rozdzielającą wypowiedź modelu na koordynatora
+i wykonawcę pętli. Rola systemowa oznacza wypowiedź warstwy automatycznej
+platformy, a nie żadnego z ośmiu pozostałych nadawców.

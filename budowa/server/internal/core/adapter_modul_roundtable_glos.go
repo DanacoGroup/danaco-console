@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: głos jednego uczestnika debaty — wywołanie jego
-// kanału modelu, strumień odpowiedzi i zapis wypowiedzi w turze.
-//
-// Strumień jedzie wspólną drogą. Kontrakt nie ma zdarzenia niosącego fragment
-// wypowiedzi uczestnika, a `roundtable.debate.changed` niesie wypowiedź
-// w całości. Fragmenty idą więc zdarzeniem `stream.chunk`, opisanym
-// w kontrakcie jako jedna droga dla wszystkich kanałów: `windowId` wskazuje
-// okno debaty, `messageId` — identyfikator wypowiedzi. Obie drogi (fragmenty
-// treści i fragment domykający) niosą ten sam kod wypowiedzi; uzasadnienie
-// wyboru stoi przy `zapytanieUczestnika`.
-//
-// Kolejność jest rozmyślna: wypowiedź pusta powstaje i rozgłasza się przed
-// wywołaniem kanału. Bez tego klient dostawałby fragmenty opatrzone
-// identyfikatorem, którego jeszcze nie zna, i nie miałby ich do czego przypiąć.
+// Plik obsługuje głos jednego uczestnika debaty: wywołanie jego kanału modelu, strumień odpowiedzi i zapis wypowiedzi w turze. Fragmenty idą zdarzeniem `stream.chunk`, wspólną drogą dla wszystkich kanałów.
 package core
 
 import (
@@ -23,12 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// wypowiedz prowadzi jeden głos w turze i zwraca jego treść.
-//
-// Niepowodzenie kanału nie wpisuje się w treść wypowiedzi: przypisanie
-// uczestnikowi słów, których nie powiedział, byłoby wytworzeniem zapisu.
-// Przyczyna jedzie fragmentem błędu w strumieniu, a wypowiedź zostaje pusta —
-// Model Panel pokazuje wtedy stan błędu tego jednego panelu.
+// wypowiedz prowadzi jeden głos w turze i zwraca jego treść. Niepowodzenie kanału nie wpisuje się w treść wypowiedzi; przyczyna jedzie fragmentem błędu w strumieniu, a wypowiedź zostaje pusta.
 func (a *adapterDebaty) wypowiedz(kontekst context.Context, tura dane.TuraDebaty,
 	uczestnik dane.UczestnikDebaty, pytanie, tlo string) string {
 
@@ -58,9 +40,7 @@ func (a *adapterDebaty) wypowiedz(kontekst context.Context, tura dane.TuraDebaty
 
 	wypowiedz.Tresc = tresc.String()
 	if wypowiedz.Tresc != "" {
-		// Utrwalenie idzie po strumieniu i niezależnie od jego powodzenia: tekst,
-		// który zdążył przyjść przed zerwaniem, jest zapisem tury tak samo jak
-		// odpowiedź pełna.
+		// Utrwalenie idzie po strumieniu niezależnie od powodzenia: tekst przed zerwaniem to zapis tury.
 		_ = a.repozytorium.UzupelnijWypowiedz(kontekst, wypowiedz.Kod, wypowiedz.Tresc)
 	}
 	po := wypowiedzKontraktu(wypowiedz)
@@ -68,38 +48,7 @@ func (a *adapterDebaty) wypowiedz(kontekst context.Context, tura dane.TuraDebaty
 	return wypowiedz.Tresc
 }
 
-// zapytanieUczestnika składa wywołanie kanału dla jednego uczestnika.
-//
-// `Wiadomosc` niesie kod wypowiedzi, nie kod uczestnika. Pole
-// `models.Zapytanie.Wiadomosc` jest wprost polem `messageId` kontraktu
-// (`zapytanie.go`, znacznik `json:"messageId"`) i zasila wszystkie cztery
-// wytwórnie fragmentów (`models/fragment.go`: tekst, prowenancja, konto, błąd).
-// Kod uczestnika w tym polu rozjechałby strumień: fragmenty treści szłyby
-// z kodem uczestnika, a fragment domykający i błąd z kodem wypowiedzi, bo te
-// buduje `nadawcaStrumienia.Zakoncz` z własnego identyfikatora.
-//
-// Wypowiedź wygrywa z uczestnikiem z trzech powodów, każdy sam wystarczający:
-//
-//  1. Uczestnik nie jest jednoznaczny w czasie — zabiera głos w każdej turze
-//     debaty, więc jego kod wskazuje dowolną z wielu wypowiedzi. Strumień
-//     opisuje jedno wywołanie kanału, więc klucz ma być jednorazowy.
-//  2. `messageId` znaczy wiadomość. Wypowiedź jest wiadomością tury; uczestnik
-//     jest jej autorem, a autor w polu identyfikatora wiadomości to inny byt.
-//  3. Fragmentu domykającego nie da się przypisać uczestnikowi: błąd kanału
-//     dotyczy tej jednej próby, nie osoby, a próba jest wypowiedzią.
-//
-// Drugiego pola nie dokładamy. Klient potrzebuje mówcy, ale ma go już bez
-// pytania: rdzeń rozgłasza wypowiedź zdarzeniem `roundtable.debate.changed`
-// jako `created` przed wywołaniem kanału, a `RoundtableStatement` niesie
-// `participantId`. Dopisanie go do `stream.chunk` byłoby drugą drogą do wiedzy,
-// którą klient już posiada.
-//
-// Tożsamość idzie warstwą nakładki, nie kodem kanału.
-// `models.Nakladka.ProfilRoli` niesie prompt systemowy uczestnika wprost, bez
-// ani jednego słowa dopisanego przez rdzeń. Uczestnik dodany bez promptu
-// systemowego dostaje nakładkę pustą — dwaj tacy uczestnicy na jednym kanale
-// odpowiedzą podobnie i jest to stan poprawny, bo Operator nie dał im różnych
-// instrukcji.
+// zapytanieUczestnika składa wywołanie kanału dla jednego uczestnika. `Wiadomosc` niesie kod wypowiedzi, nie kod uczestnika, bo wypowiedź jest kluczem jednorazowym strumienia, a uczestnik może zabierać głos wielokrotnie.
 func zapytanieUczestnika(tura dane.TuraDebaty, uczestnik dane.UczestnikDebaty,
 	kodWypowiedzi, pytanie, tlo string) models.Zapytanie {
 
@@ -112,12 +61,7 @@ func zapytanieUczestnika(tura dane.TuraDebaty, uczestnik dane.UczestnikDebaty,
 	}
 }
 
-// trescPytania buduje treść skierowaną do uczestnika: zagadnienie tury,
-// wypowiedzi poprzedników i pytanie.
-//
-// Wiersz z nazwą tożsamości jest adresowaniem głosu, tak jak moderator udziela
-// głosu przy stole, a nie instrukcją wymyśloną za Operatora: nazwę podał on sam
-// przy dodaniu uczestnika, a wiersz widać w transkrypcie tury.
+// trescPytania buduje treść skierowaną do uczestnika: zagadnienie tury, wypowiedzi poprzedników i pytanie. Wiersz z nazwą tożsamości jest adresowaniem głosu, tak jak moderator udziela głosu przy stole.
 func trescPytania(tura dane.TuraDebaty, uczestnik dane.UczestnikDebaty,
 	pytanie, tlo string) string {
 

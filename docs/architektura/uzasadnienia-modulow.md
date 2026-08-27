@@ -5567,3 +5567,151 @@ Zasięg wpisu jest poziomem zasięgu, nie znacznikiem. Wpis zapisany na
 poziomie szerszym niż projekt (globalny, środowisko, moduł, para modułów)
 obowiązuje wspólnie i wchodzi do pamięci innych projektów na żądanie
 `includeShared`.
+## budowa/server/internal/core/adapter_modul_developer_wersje.go
+
+Wersja pliku nie jest commitem i go nie zastępuje. Historia repozytorium
+należy do Gita i jedzie osobną drogą; wersja jest zapisem roboczym
+edytora — powstaje przy zapisie, często wielokrotnie w obrębie jednej
+zmiany, i pozwala Operatorowi wrócić do stanu, który sam nadpisał, zanim
+cokolwiek zatwierdził.
+
+Przywrócenie zakłada własną migawkę stanu bieżącego, zanim nadpisze
+plik. Bez tego kroku powrót do wersji sprzed godziny kasowałby
+bezpowrotnie pracę tej godziny — a Operator sięga po historię właśnie
+dlatego, że nie jest pewien, który stan jest lepszy.
+
+Droga z zapisem samej treści migawki do bufora, bez ruszania pliku na
+dysku, jest drogą zobaczenia, jak było, odróżnioną od powrotu do tego
+stanu.
+
+Przywrócenie migawki założonej w cudzym oknie wyprowadziłoby zapis poza
+obszar tego okna — a obszar jest granicą, którą moduł sprawdza przy
+każdej ścieżce, nie tylko przy tych z żądania.
+## budowa/server/internal/core/adapter_modul_roundtable_przeklad.go
+
+Kody błędu rozróżniają trzy przypadki, bo każdy z nich okno pokazuje inaczej:
+braku danych w żądaniu (validation_failed), bytu, którego nie ma (not_found)
+i usterki rdzenia (internal_error). Okno debaty pokazujące na wszystko jedno
+nie udało się nie mówiłoby Operatorowi niczego.
+
+Odmowa odmowaTuryDebatyWBiegu jest trójczęściowa: co odmówiło — otwarcie
+kolejnej tury debaty w tym oknie; dlaczego — okno prowadzi turę, a jej
+przerwanie jest osobną decyzją moderatora, nie skutkiem ubocznym otwarcia
+następnej; czym zmienić — zamknięciem tury bieżącej w Moderator Panelu albo
+ukierunkowaniem dyskusji (roundtable.moderator.direct), które przerywa ją
+jawnie. Kod conflict: żądanie jest poprawne, odmawia mu stan okna.
+## budowa/server/internal/core/adapter_modul_terminal_karty.go
+
+Dlaczego zamkniecie karty jest czynnoscia rdzenia, a nie widoku: do tej
+pory zamkniecie karty zylo wylacznie w kliencie, znikala zakladka, a
+powloka i jej procesy biegly dalej, o czym rdzen nie wiedzial nic.
+Skutkiem bylo to, ze terminal.process.list pokazywal procesy karty, ktorej
+Operator juz nie widzi, a Przygotuj po restarcie odtwarzal karty zamkniete
+tygodnie wczesniej. Zamkniecie ma wiec wiersz i ma stan.
+
+Dlaczego wykaz kart sklada sie z dwoch zrodel: tak samo jak wykaz procesow
+(adapter_modul_terminal_monitor.go), karta czynna zyje w rejestrze
+pamieci, a karta zakonczona zostaje w dzienniku bazy. Bez rejestru
+zniknelyby karty wlasnie otwarte na rdzeniu bez bazy, bez dziennika -
+karty zamkniete, o ktore kontrakt pyta polem includeExited.
+
+## budowa/server/internal/core/adapter_modul_developer_dap.go
+
+DAP jest warstwą wspólną: delve dla Go, debugpy dla Pythona, js-debug dla
+Node, lldb dla C. Rozmowa z każdym z nich po jego własnym API oznaczałaby
+cztery różne implementacje tej samej rodziny czynności, a Run & Debug ma
+jedno okno i jeden zestaw przycisków, niezależnie od języka.
+
+DAP jedzie po strumieniu bajtów: komunikat ma nagłówek Content-Length: N,
+pustą linię i N bajtów treści JSON — to samo ramkowanie, którego używa LSP.
+Bez niego dwa komunikaty wysłane po sobie zlałyby się w jeden nieczytelny
+dokument.
+
+Adapter odpowiada w dowolnej kolejności i wtrąca między odpowiedzi zdarzenia
+(stopped, terminated, output), więc czekanie na następny komunikat byłoby
+czekaniem na cokolwiek. Każde żądanie dostaje numer kolejny, a odbiornik
+rozdziela przychodzące komunikaty: odpowiedź trafia do kanału czekającego
+na ten numer, zdarzenie do obserwatora sesji.
+
+Odpowiedź nieudana w Wolaj wraca błędem niosącym treść adaptera — to jest
+odpowiedź, a nie awaria rdzenia: "nie da się obliczyć tego wyrażenia" jest
+zdaniem, które Operator ma przeczytać.
+
+zamknijCzekajacych zwalnia wszystkich, którzy czekają na odpowiedź, gdy
+adapter przestał mówić. Bez tego kroku każdy z nich czekałby do granicy
+czasu osobno, a okno stałoby przez pół minuty na komunikacie, którego już
+nie będzie.
+
+## budowa/server/internal/core/adapter_modul_roundtable_glos.go
+
+Strumień jedzie wspólną drogą. Kontrakt nie ma zdarzenia niosącego fragment
+wypowiedzi uczestnika, a `roundtable.debate.changed` niesie wypowiedź
+w całości. Fragmenty idą więc zdarzeniem `stream.chunk`, opisanym
+w kontrakcie jako jedna droga dla wszystkich kanałów: `windowId` wskazuje
+okno debaty, `messageId` — identyfikator wypowiedzi. Obie drogi (fragmenty
+treści i fragment domykający) niosą ten sam kod wypowiedzi.
+
+Kolejność jest rozmyślna: wypowiedź pusta powstaje i rozgłasza się przed
+wywołaniem kanału. Bez tego klient dostawałby fragmenty opatrzone
+identyfikatorem, którego jeszcze nie zna, i nie miałby ich do czego
+przypiąć.
+
+### wypowiedz
+
+Model Panel pokazuje wtedy stan błędu tego jednego panelu.
+
+### zapytanieUczestnika
+
+`models.Zapytanie.Wiadomosc` jest wprost polem `messageId` kontraktu
+(`zapytanie.go`, znacznik `json:"messageId"`) i zasila wszystkie cztery
+wytwórnie fragmentów (`models/fragment.go`: tekst, prowenancja, konto,
+błąd). Kod uczestnika w tym polu rozjechałby strumień: fragmenty treści
+szłyby z kodem uczestnika, a fragment domykający i błąd z kodem
+wypowiedzi, bo te buduje `nadawcaStrumienia.Zakoncz` z własnego
+identyfikatora.
+
+Wypowiedź wygrywa z uczestnikiem z trzech powodów, każdy sam
+wystarczający: uczestnik nie jest jednoznaczny w czasie — zabiera głos
+w każdej turze debaty, więc jego kod wskazuje dowolną z wielu wypowiedzi,
+a strumień opisuje jedno wywołanie kanału, więc klucz ma być jednorazowy;
+`messageId` znaczy wiadomość — wypowiedź jest wiadomością tury, uczestnik
+jest jej autorem, a autor w polu identyfikatora wiadomości to inny byt;
+fragmentu domykającego nie da się przypisać uczestnikowi — błąd kanału
+dotyczy tej jednej próby, nie osoby, a próba jest wypowiedzią.
+
+Drugiego pola się nie dokłada. Klient potrzebuje mówcy, ale ma go już bez
+pytania: rdzeń rozgłasza wypowiedź zdarzeniem `roundtable.debate.changed`
+jako `created` przed wywołaniem kanału, a `RoundtableStatement` niesie
+`participantId`. Dopisanie go do `stream.chunk` byłoby drugą drogą do
+wiedzy, którą klient już posiada.
+
+Tożsamość idzie warstwą nakładki, nie kodem kanału. `models.Nakladka.ProfilRoli`
+niesie prompt systemowy uczestnika wprost, bez ani jednego słowa dopisanego
+przez rdzeń. Uczestnik dodany bez promptu systemowego dostaje nakładkę
+pustą — dwaj tacy uczestnicy na jednym kanale odpowiedzą podobnie i jest
+to stan poprawny, bo Operator nie dał im różnych instrukcji.
+
+### trescPytania
+
+Nazwę podał Operator sam przy dodaniu uczestnika, a wiersz widać
+w transkrypcie tury.
+
+## budowa/server/internal/core/adapter_modul_roundtable_podobienstwo.go
+
+Opracowanie modułu wskazuje przy tych funkcjach zanurzenia (embeddingi).
+Rdzeń ich nie ma i nie może udawać, że ma: zanurzenie liczy model, więc
+wskaźnik zgody liczony zanurzeniami kosztowałby wywołanie kanału przy
+każdym otwarciu panelu i dawałby liczbę zależną od tego, który model akurat
+odpowiedział. Miara na wspólnych słowach jest słabsza od zanurzeń w tym, co
+rozpoznaje — nie widzi synonimów — ale ma trzy własności, których panel
+wymaga bezwzględnie: jest natychmiastowa, jest ta sama przy każdym odczycie
+i nie kosztuje ani jednego wywołania.
+
+Miarą jest współczynnik Jaccarda na zbiorach słów znaczących: iloraz liczby
+słów wspólnych i liczby słów występujących w którejkolwiek z dwóch
+wypowiedzi. Wynik leży w zakresie od zera do jedności, tak jak żąda kontrakt
+(`agreement`, `convergence`, `distance`).
+
+Dwie wypowiedzi bez ani jednego słowa znaczącego oddają zero, a nie
+jedność: „nic wspólnego” jest tu prawdą, a „identyczne, bo obie puste”
+byłoby wnioskiem z braku danych.

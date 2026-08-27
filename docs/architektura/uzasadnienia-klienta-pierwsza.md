@@ -4261,3 +4261,22 @@ powłoka: żadna komenda obszaru środowiska nie niesie, a okno modułu w rdzeni
 wskazuje moduł i sesję. Znacznik mówi to wprost, zamiast wpisywać nazwę wziętą
 z niczego. Wartość znacznika nie zmienia się w cyklu życia modułu, więc stoi raz
 i nie idzie w odświeżanie.
+
+## budowa/klient-poprzedni/src/modele/stan-kont.ts
+
+Wykaz kont i wybór konta czynnego stoją w jednym stanie, ponieważ każda zmiana
+rejestru dotyka obu naraz. Usunięcie konta czynnego musi przestawić wybór,
+zamiast zostawiać formularz wskazujący byt, którego rejestr już nie zawiera.
+
+Zdarzenie zmiany konta przychodzi także wtedy, gdy konto założono albo zmieniono
+na innym urządzeniu. Stan przyjmuje takie zdarzenie tą samą drogą, którą przyjmuje
+własną odpowiedź rdzenia, więc wykaz nie rozjeżdża się między urządzeniami.
+
+Żadna ścieżka nie zatrzymuje widoku. Rdzeń, który nie odda wykazu, zostawia wykaz
+pusty wraz z powodem niepowodzenia, a zapis nieudany wraca jako wynik z błędem,
+bez wyjątku przerywającego pracę okna.
+
+Faza odczytu jest osobną wartością stanu, ponieważ bez niej pusty rejestr znaczy
+trzy rzeczy naraz: odczytu jeszcze nie było, odczyt trwa albo rdzeń nie zna ani
+jednego konta. Każdemu z tych przypadków należy się inny obraz: widok bez treści,
+wskaźnik odczytu oraz stan pusty ze zdaniem opisu.

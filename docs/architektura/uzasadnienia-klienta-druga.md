@@ -2399,3 +2399,6 @@ nie udostępnia, co dałoby dymek bez pozycjonowania. Dymek pokazuje się na naj
 skupieniu klawiaturowym, bez klikania i bez osobnego zamykania; znak jest przyciskiem, więc jego
 naciśnięcie przenosi ognisko i zwraca odpowiedź głosową, a treść dymku leży w opisie dostępności,
 więc dymek nie potrzebuje identyfikatora i nie koliduje między oknami.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/dyktowanie.ts
+Plik nie rysuje interfejsu — nie tworzy ikony, menu ani paska i nie zna klas CSS; ikona mikrofonu, wykaz urządzeń i przełącznik przytrzymania należą do obszaru paska poleceń, inaczej powstałyby dwa mikrofony w interfejsie. Dostępność jest pytaniem zadawanym przed narysowaniem ikony, nie odpowiedzią po naciśnięciu: mikrofon, którego nie ma czym obsłużyć, nie pojawia się wcale, a wyszarzony albo odmawiający po kliknięciu mikrofon byłby bramą zamiast krótszym paskiem.

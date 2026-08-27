@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: skład debaty poza samym dopisaniem uczestnika —
-// zmiana tożsamości, usunięcie ze składu, zespoły zapisane do ponownego użycia
-// i biblioteka ról (`store/migracja_190_roundtable_sklad.sql`).
-//
-// Zespół jest kopią składu, nie odwołaniem do niego. Skład okna zmienia się po
-// zapisaniu zespołu — uczestnicy dochodzą, wypadają, zmieniają rolę — a zespół
-// ma zostać taki, jaki był w chwili zapisu. Odwołanie do wierszy składu dałoby
-// „zespół", który wnosi do nowego okna stan cudzego okna z dzisiaj.
+// Odpowiedzialność pliku: skład debaty poza dopisaniem uczestnika: zmiana tożsamości, usunięcie ze składu, zespoły do ponownego użycia i role.
 package dane
 
 import (
@@ -29,7 +22,7 @@ type UczestnikZespoluDebaty struct {
 	Kolejnosc       int
 }
 
-// ZespolDebaty to nazwany skład wraz z formatem, jeśli zapisano go razem.
+// ZespolDebaty to nazwany skład wraz z formatem debaty, jeśli ten format zapisano razem z tym składem.
 type ZespolDebaty struct {
 	Kod        string
 	Nazwa      string
@@ -38,7 +31,7 @@ type ZespolDebaty struct {
 	Uczestnicy []UczestnikZespoluDebaty
 }
 
-// RolaDebaty to pozycja biblioteki ról.
+// RolaDebaty to pozycja biblioteki ról dostępnych do przypisania uczestnikom każdej prowadzonej debaty.
 type RolaDebaty struct {
 	Kod             string
 	Nazwa           string
@@ -86,8 +79,7 @@ const (
 	pobierzZespolDebaty = `SELECT identyfikator_zewnetrzny, nazwa, format, utworzono
 	                 FROM debata_zespol WHERE identyfikator_zewnetrzny = ?`
 
-	// Fraza pusta przepuszcza wszystko: warunek porównuje z wzorcem `%%`,
-	// któremu odpowiada każda nazwa.
+	// Fraza pusta przepuszcza wszystko: warunek porównuje z wzorcem procentowym, któremu odpowiada każda nazwa uczestnika.
 	pobierzZespolyDebaty = `SELECT identyfikator_zewnetrzny, nazwa, format, utworzono
 	                  FROM debata_zespol
 	                  WHERE nazwa LIKE '%' || ? || '%'
@@ -106,7 +98,7 @@ const (
 	               ORDER BY fabryczna DESC, nazwa ASC`
 )
 
-// ZmienUczestnika zapisuje tożsamość, rolę i wagę uczestnika.
+// ZmienUczestnika zapisuje tożsamość, rolę i wagę głosu wskazanego uczestnika tej samej prowadzonej debaty.
 func (r *repozytoriumRoundtable) ZmienUczestnika(ctx context.Context, uczestnik UczestnikDebaty) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, zmienUczestnikaDebaty)
 	if err != nil {
@@ -168,7 +160,7 @@ func (r *repozytoriumRoundtable) ZapiszZespol(ctx context.Context,
 	return r.Zespol(ctx, zespol.Kod)
 }
 
-// Zespol zwraca zespół wraz ze składem.
+// Zespol zwraca zespół wraz z jego zapamiętanym pełnym składem uczestników tej samej debaty operacyjnej.
 func (r *repozytoriumRoundtable) Zespol(ctx context.Context, kod string) (ZespolDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzZespolDebaty)
 	if err != nil {
@@ -190,7 +182,7 @@ func (r *repozytoriumRoundtable) Zespol(ctx context.Context, kod string) (Zespol
 	return zespol, nil
 }
 
-// Zespoly zwraca zespoły od najnowszego, wraz ze składem każdego.
+// Zespoly zwraca zespoły tego okna od najnowszego, wraz ze składem uczestników każdego z tych zespołów.
 func (r *repozytoriumRoundtable) Zespoly(ctx context.Context,
 	fraza string, limit int) ([]ZespolDebaty, error) {
 
@@ -226,7 +218,7 @@ func (r *repozytoriumRoundtable) Zespoly(ctx context.Context,
 	return zespoly, nil
 }
 
-// uczestnicyZespolu czyta zapamiętany skład jednego zespołu.
+// uczestnicyZespolu czyta zapamiętany skład jednego zespołu tej samej debaty, w kolejności jego zapisania.
 func (r *repozytoriumRoundtable) uczestnicyZespolu(ctx context.Context,
 	kod string) ([]UczestnikZespoluDebaty, error) {
 
@@ -253,7 +245,7 @@ func (r *repozytoriumRoundtable) uczestnicyZespolu(ctx context.Context,
 	return skladu, wiersze.Err()
 }
 
-// Role zwraca bibliotekę ról; role fabryczne idą przed własnymi.
+// Role zwraca całą bibliotekę ról tej debaty operacyjnej; role fabryczne idą przed rolami własnymi Operatora.
 func (r *repozytoriumRoundtable) Role(ctx context.Context, fraza string) ([]RolaDebaty, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzRoleDebaty)
 	if err != nil {

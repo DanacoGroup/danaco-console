@@ -6367,3 +6367,15 @@ Powód nie zmienia się między turami — albo binarium w produkcie jest, albo 
 kilkaset dziennie; powtarzany meldunek zasłoniłby resztę dziennika i sam przestałby być czytany.
 Okno bez identyfikatora meldunku nie daje: to stan zwykły przy oknie jeszcze niezałożonym, a nie
 usterka wydania.
+
+## budowa/server/internal/core/most_okna.go
+Punkt dostępu i nadanie bez tego pliku byłyby wpisami w oknie konfiguracji i niczym więcej: model
+nie dostawałby ani jednego mostu. Ścieżka jest jedna — nadania okna, punkty, generator wpisów, plik
+konfiguracji MCP procesu modelu. Słownictwo trybu jest danymi: argument, jakim dany most nazywa
+tryb nadania, pochodzi z wiersza argumentu trybu mostu tego punktu. Rdzeń nie zna ani jednego
+takiego słowa; brak wiersza znaczy uruchomienie bez argumentu, czyli tryb odczytu — wariant
+bezpieczniejszy. Błąd odczytu nie zerwie tury. Okno bez mostów rozmawia dalej, tyle że bez wglądu
+w maszyny. Odmowa rozmowy z powodu niedostępnego katalogu dostępów byłaby bramą, której
+dokumentacja nie stawia.
+
+Odmowa dołożenia wpisu serwera narzędzi ma być powiedziana, a nie przemilczana.

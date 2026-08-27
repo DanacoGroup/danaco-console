@@ -4984,3 +4984,17 @@ zmian, ile okien naprawdę zmieniło kanał. Asercja portu okien przy rejestracj
 jest celowo twarda, wzorem rodziny pamięci: cicha nieobecność uchwytu jest
 usterką widoczną dopiero na uruchomionym produkcie, więc rdzeń ma paść głośno
 przy montażu, zamiast po cichu zostawić komendę nieznaną.
+
+## budowa/server/internal/core/handlers_monitor.go
+Monitor procesów jest oknem warstwy wspólnej obsługiwanym przez port
+nawigacji, więc telemetria ma w rdzeniu jednego właściciela; wpięcie idzie
+osobno, bo rodzina monitor.* weszła do kontraktu osobno, tak samo jak
+rozszerzenie pamięci wpina się osobno od portu modułu przestrzeni roboczej.
+Pozostałe rodziny komend przy porcie niewypełnionym nie rejestrują niczego
+i rdzeń odpowiada komendą nieznaną; komendy monitora rejestrują się zawsze,
+a port bez telemetrii odpowiada błędem wewnętrznym z nazwą brakującego bytu,
+żeby odpowiedź brzmiała „monitor nie jest wpięty", a nie „nie znam takiej
+komendy" ani, najgorzej, pusty wykaz procesów. Rodzina nie rozgłasza zdarzeń,
+bo telemetria postępu ma w rdzeniu jednego producenta zdarzenia zmiany
+postępu; odczyt stanu niczego nie zmienia, a zapis obserwacji zmienia pamięć
+rdzenia, dla której kontrakt zdarzenia nie ma.

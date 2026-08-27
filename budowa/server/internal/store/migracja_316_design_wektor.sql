@@ -1,27 +1,5 @@
--- Migracja 316 — ścieżki wektorowe i symbole modułu Design (grupa C
--- opracowania: `design.vector.*`).
---
--- ── Dlaczego ścieżka jest bytem, a nie polem warstwy ─────────────────────────
--- Warstwa kompozycji (`warstwa_kompozycji_design`) opisuje prostokąt: położenie,
--- rozmiar, zasób. Krzywa Béziera nie mieści się w prostokącie, a operacja
--- logiczna na dwóch krzywych potrzebuje obu z osobna. Bez własnego bytu rysunek
--- piórem nie miałby gdzie zostać, a `design.vector.boolean` nie miałoby na czym
--- pracować.
---
--- ── Dlaczego węzły jadą jednym zapisem JSON, a nie wierszem na węzeł ─────────
--- Kontrakt (`DesignVectorPathSetRequest.Nodes`) nadsyła komplet węzłów przy
--- każdej zmianie: zmiana jednego węzła idzie tą samą drogą co narysowanie
--- ścieżki. Wiersz na węzeł dawałby drugi zapis tego samego kształtu, który
--- trzeba by kasować i wstawiać od nowa przy każdym drgnięciu myszy, a żadne
--- zapytanie nie pyta o pojedynczy węzeł. Zapis JSON jest więc tym samym
--- kompletem, którym jedzie kontrakt — jedną prawdą o kształcie.
---
--- ── Dlaczego warstwa wskazuje się kodem, a nie kluczem obcym ────────────────
--- `design.board.update` przepisuje komplet warstw kompozycji od nowa (usuń
--- i wstaw, `dane/design_kompozycje.go`), więc klucz wiersza warstwy zmienia się
--- przy każdym zapisie planszy. Klucz obcy do warstwy zrywałby się wtedy przy
--- zwykłym zapisie kompozycji. Identyfikator zewnętrzny warstwy przeżywa ten
--- zapis, bo klient nadsyła go z powrotem.
+-- Migracja 316 dodaje ścieżki wektorowe modułu Design wraz z symbolami
+-- wielokrotnego użycia i ich członkami.
 
 CREATE TABLE sciezka_wektorowa_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,12 +20,8 @@ CREATE INDEX idx_sciezka_wektorowa_design_kompozycja
 CREATE INDEX idx_sciezka_wektorowa_design_warstwa
     ON sciezka_wektorowa_design(warstwa_kod);
 
--- ── Symbol i jego członkowie ────────────────────────────────────────────────
--- Symbol jest definicją wielokrotnego użycia złożoną ze ścieżek i warstw.
--- Członkostwo leży w osobnej tabeli, bo `design.vector.symbol.set` podmienia
--- komplet członków przy każdym zapisie, a liczba miejsc, do których zmiana
--- doszła (`propagatedTo`), jest liczbą wierszy naprawdę zapisanych — nie
--- obietnicą.
+-- Symbol jest definicją wielokrotnego użycia złożoną ze ścieżek i warstw,
+-- a jego członkostwo leży w osobnej tabeli.
 CREATE TABLE symbol_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

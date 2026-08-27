@@ -1,16 +1,4 @@
-/**
- * Nagłówek strony głównej — nadtytuł produktu, nazwa widoku i zdanie roli.
- *
- * Trójka napisów pochodzi z makiety Centrum dowodzenia
- * (`design/05-okna/przeplyw/03-centrum-dowodzenia.html`) i ze schematu strony
- * w opracowaniu („DANACO CONSOLE — CENTRUM DOWODZENIA" nad strefami wyboru).
- * Znaku marki nagłówek nie powtarza: godło i nazwa produktu stoją już w pasku
- * górnym, a strona ma nad strefami tytuł czytany, nie drugi sygnet.
- *
- * Stopień tytułu jest niższy od stopnia tytułów kart środowisk (20 wobec 24 px)
- * z rozmysłu: środkiem ciężkości strony pozostaje strefa pierwsza, nie napis
- * nad nią.
- */
+/** Nagłówek strony głównej wyświetla nadtytuł produktu, nazwę bieżącego widoku i jedno zdanie opisujące rolę strony, w stopniu niższym niż tytuły kart środowisk. */
 
 const PRODUKT = 'Danaco Console';
 

@@ -36,8 +36,8 @@ export function utworzZrodloOknaModulu(kanal: Kanal): ZrodloOknaModulu {
 /**
  * Okno modułu Apps spośród okien sesji.
  *
- * Wybieramy pierwsze okno o module zgodnym z kodem modułu; gdy rdzeń nie
- * przypisał żadnego, oddajemy pusty łańcuch, a nie okno przypadkowe.
+ * Wybór pada na pierwsze okno o module zgodnym z kodem modułu; gdy rdzeń nie
+ * przypisał żadnego, wraca pusty łańcuch, a nie okno przypadkowe.
  */
 export function wybierzOknoModulu(okna: readonly Window[]): string {
   const nasze = okna.find((okno) => okno.moduleId === KOD_MODULU);

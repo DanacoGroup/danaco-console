@@ -1,4 +1,4 @@
-/* MENU ROZWIJANE — komponent: położenie i klawiatura
+/* Moduł menu rozwijanego oblicza położenie panelu względem wyzwalacza oraz obsługuje nawigację klawiaturą dla wszystkich menu pakietu.
    Panel menu jest przenoszony do warstwy okna i ustawiany względem swojego
    wyzwalacza. Jedno miejsce liczy położenie wszystkich menu w pakiecie, więc
    dodanie kolejnego menu nie wymaga własnych reguł: wystarczy wyzwalacz

@@ -1,17 +1,5 @@
-// Obszar gradientów wypełnienia modułu Design (tabele `gradient_design`
-// i `stopien_gradientu_design`, migracja 326) — część `RepozytoriumDesignu`
-// zadeklarowanego w `design.go`.
-//
-// Gradient jest jeden na cel. Celem jest kompozycja, a wskazanie ścieżki albo
-// warstwy zawęża go do jednego bytu na niej — stąd klucz jedyny na trójce
-// (kompozycja, ścieżka, warstwa). Wskazanie pominięte zapisuje się pustym
-// napisem, nie NULL-em: SQLite liczy dwa NULL-e za różne w indeksie UNIQUE,
-// więc gradient całej kompozycji zakładany dwa razy powstałby dwa razy zamiast
-// nadpisać się raz.
-//
-// Stopnie podmieniają się kompletem, tak jak warstwy kompozycji: kontrakt
-// (`DesignGradient.Stops`) nadsyła cały gradient, a stopień usunięty w oknie
-// musi zniknąć także w bazie.
+// Plik prowadzi obszar gradientów wypełnienia modułu Design, część RepozytoriumDesignu; gradient jest jeden na cel
+// — kompozycję, ścieżkę albo warstwę — a stopnie podmieniają się kompletem, tak jak warstwy kompozycji.
 package dane
 
 import (
@@ -21,7 +9,7 @@ import (
 	"fmt"
 )
 
-// GradientDesignu to wiersz tabeli `gradient_design` wraz z jego stopniami.
+// GradientDesignu to wiersz tabeli `gradient_design` wraz z jego pełnymi stopniami barw, w ich kolejności.
 type GradientDesignu struct {
 	ID             int64
 	Kod            string
@@ -68,13 +56,7 @@ const (
 	                               WHERE gradient_id = ? ORDER BY kolejnosc`
 )
 
-// ZapiszGradientDesignu zakłada gradient celu albo nadpisuje zastany
-// i podmienia komplet jego stopni w jednej transakcji.
-//
-// Identyfikator zewnętrzny nadaje wołający i służy wyłącznie temu, żeby
-// gradient nowy dostał własną nazwę; rozstrzyga CEL, nie identyfikator —
-// gradient wysłany drugi raz na tę samą warstwę nadpisuje ten, który tam stoi,
-// choćby przyszedł z nowym identyfikatorem.
+// ZapiszGradientDesignu zakłada gradient celu albo nadpisuje zastany i podmienia komplet jego stopni w jednej transakcji; rozstrzyga cel, nie identyfikator zewnętrzny.
 func (r *repozytoriumDesignu) ZapiszGradientDesignu(ctx context.Context,
 	gradient GradientDesignu) (GradientDesignu, error) {
 
@@ -166,7 +148,7 @@ func (r *repozytoriumDesignu) GradientDesignuPoCelu(ctx context.Context,
 	return gradient, nil
 }
 
-// stopnieGradientuDesignu czyta stopnie jednego gradientu w ich kolejności.
+// stopnieGradientuDesignu czyta stopnie jednego gradientu w ich kolejności wprost z bazy danych repozytorium.
 func (r *repozytoriumDesignu) stopnieGradientuDesignu(ctx context.Context,
 	gradientID int64) ([]StopienGradientuDesignu, error) {
 
@@ -196,7 +178,7 @@ func (r *repozytoriumDesignu) stopnieGradientuDesignu(ctx context.Context,
 	return stopnie, nil
 }
 
-// odczytajGradientDesignu składa wiersz gradientu ze skanera.
+// odczytajGradientDesignu składa wiersz gradientu ze skanera wprost z jednego wiersza wyniku zapytania.
 func odczytajGradientDesignu(wiersz skaner) (GradientDesignu, error) {
 	var gradient GradientDesignu
 	var kat sql.NullFloat64

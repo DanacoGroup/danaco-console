@@ -1332,3 +1332,44 @@ wierszu jest wiele.
 Panel pamięta wyłącznie, które konto jest już wypełnione w formularzu. Bez tej pamięci każde zdarzenie zmiany konta kasowałoby treść właśnie wpisywaną przez Operatora, dlatego wypełnienie formularza następuje przy zmianie konta czynnego, a nie przy każdym przeliczeniu stanu.
 
 Ograniczenie rodzaju kont jest częścią żądania wykazu kont kierowanego do rdzenia, a nie filtrem zakładanym w kliencie. Rejestr kont bywa długi, a kolejność rotacji zna rdzeń, więc wybór rodzaju musi trafić do żądania, żeby wykaz pozostał zgodny z rejestrem.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/okno-logs-viewer.ts
+
+Port Diagnostyka jest w rdzeniu odbiorcą odmów wykonania komend. Każda odmowa
+dostaje wpis dziennika, w którym pole źródła niesie nazwę odrzuconej komendy —
+także wtedy, gdy zapis wiersza błędu się nie powiedzie i wpis dziennika jest
+jedynym śladem tej odmowy. Dlatego filtr źródła i wzorzec wyszukiwania stoją
+na pierwszym miejscu paska narzędzi okna.
+
+Przy włączonym przełączniku wyrażenia regularnego okno próbuje zbudować wzorzec
+z wpisanego pola, zanim żądanie pójdzie do rdzenia: błąd składni zatrzymuje
+żądanie i mówi to wprost, zamiast wysyłać wzorzec, który rdzeń odrzuciłby po
+cichszej stronie swojej.
+
+Zakres czasu jest wspólny całemu modułowi. Okno nie prowadzi własnych pól
+zakresu: czyta zakres ze stanu modułu i nasłuchuje jego zmiany, żeby
+przestawienie zakresu w Diagnostics Center przeliczyło wykaz bez osobnej
+czynności okna.
+
+Pola informujące o obcięciu wyniku i o łącznej liczbie spełniających warunki
+trafiają do zdania potwierdzenia, ponieważ wykaz ucięty granicą bufora bez
+wiedzy czytelnika jest kłamstwem tej samej rodziny co pusty wykaz pokazany
+przy odmowie.
+
+Odświeżanie na żądanie znaczy tu odczyt wywołany czynnością, nie strumień na
+żywo. Kontrakt nie niesie zdarzenia nowego wpisu dziennika, więc okno nie
+odpytuje rdzenia w pętli — odczyt biegnie na żądanie Operatora i na zmianę
+zakresu wspólnego modułu.
+
+Rozwijana lista poziomu wpisu korzysta z biblioteki komponentu drzewa menu,
+osadzonego przez moduł wyboru z menu w warstwie okien aplikacji, zamiast
+z natywnego elementu wyboru.
+
+## budowa/klient-poprzedni/src/moduly/browser/wiersz-notatki.ts
+
+Powiązanie ze źródłem jest widoczne, a nie domyślne. Notatka bez identyfikatora źródła mówi o tym
+wprost, ponieważ powiązanie zakłada się z wykazu okna, a jego brak jest informacją, a nie pustką do
+przemilczenia.
+
+Klasyfikacja stoi przy wierszu jako lista wyboru, a nie jako ikona. Rodzaj notatki ma być czytelny
+bez najeżdżania na znak i bez rozróżniania barw, a zmiana klasyfikacji ma być jednym gestem.

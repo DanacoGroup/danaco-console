@@ -462,3 +462,8 @@ odbiera klikalności — ładowanie i błąd komunikuje atrybut ARIA oraz
 wskaźnik, nigdy blokada. Klatki nazwane dn-obrot dla wskaźnika ładowania
 definiuje plik drobne.css przy spinnerze; reguła @keyframes działa globalnie
 niezależnie od kolejności arkuszy.
+
+## budowa/klient-poprzedni/src/powiadomienia/powiadomienia.css
+Kolumna centrum powiadomień jest regulowana wyłącznie na szerokość. Plik nie
+zna ani jednej barwy zapisanej wprost: wszystko pochodzi z żetonów motywu,
+a każdy selektor zaczyna się od przedrostka po-.

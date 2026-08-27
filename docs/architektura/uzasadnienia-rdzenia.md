@@ -5337,3 +5337,11 @@ do konfiguracji i jedno miejsce rozgłaszania zdarzenia zmiany. Zapis rozgłasza
 Każdy dotknięty obszar wraca wpisem rezolwera i idzie zdarzeniem zmiany konfiguracji — obszar
 zapisany jako zmieniony, obszar wyczyszczony jako usunięty, bo skasowanie zapisu przywraca
 dziedziczenie. Klient nie musi odpytywać poziomu, żeby dowiedzieć się o zmianie.
+
+## budowa/server/internal/core/handlers_session.go
+Okna komunikacji sesji mają własną domenę. Brak podłączonej domeny nie wywraca rdzenia — komendy
+sesji odpowiedzą wtedy kodem nieznanej pozycji, a pozostałe domeny pracują dalej.
+
+Rejestracja historii sesji stoi osobno od rejestracji domeny sesji, bo to inny rodzaj czynności:
+tamta prowadzi sesję w pracy bieżącej, ta porządkuje historię. Każda rozgłasza zmianę, żeby wykaz
+na pozostałych urządzeniach konta przestawił się bez odpytywania.

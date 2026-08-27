@@ -3273,3 +3273,11 @@ zamknęłoby pętlę bez końca. Ten sam wzorzec niesie plik `zaznaczenie-pozycj
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/panel-akcji.ts
 Katalog pusty nie daje panelu pustego: gdy pozycji nie ma, panel pokazuje wyjaśnienie powodu zamiast milczącej pustej przestrzeni.
+
+## budowa/klient-poprzedni/src/strona-glowna/wykaz-srodowisk.ts
+Wykaz jest obiektem, a nie funkcją, bo nazwę trzeba odczytać w chwili rysowania wiersza, a nie w chwili
+importu modułu — odpowiedź rdzenia przychodzi później niż pierwsza klatka. Wpięcie strony głównej spina
+go ze strefą środowisk, więc zasilenie kart bez zasilenia wykazu jest niewykonalne. Do pierwszej odpowiedzi
+rdzenia wykaz niesie tę samą stałą, z której rysują się karty — jedna treść zastana, nie dwie. Kod spoza
+wykazu wraca dosłownie, bo rdzeń mógł oddać środowisko, o którym klient nie wie, a wiersz sesji ma wtedy
+pokazać kod zamiast przemilczeć środowisko; wykaz jest informacyjny, nie jest bramą.

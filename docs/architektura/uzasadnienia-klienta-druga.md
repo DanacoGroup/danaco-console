@@ -4648,3 +4648,14 @@ wraca do rozpoznania.
 Sprawdziany autozapisu i kopii mierzą uczciwość zapisu: wskaźnik „zapisano" pokazany po
 nieudanym zapisie byłby najgorszym możliwym błędem tego modułu, bo operator zamknąłby okno
 i stracił pracę, dlatego sprawdzian mierzy zachowanie na zapisie nieudanym, nie tylko na udanym.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/metryki-odpowiedzi.ts
+Cztery metryki mają miejsce przy Model Panels: długość, czas odpowiedzi, koszt tokenów i szacowaną
+pewność. Zmierzyć da się dwie pierwsze: długość liczy się z treści, którą okno ma przed sobą,
+a czas z dwóch znaczników kontraktu — otwarcia tury i zapisania wypowiedzi. Pewność ma dziś
+w kontrakcie pole, lecz rdzeń go jeszcze nie wypełnia; licznika tokenów nie niesie żadne pole
+obszaru roundtable. Okno mówi o obu wprost, zamiast wypełniać rubrykę kreską. Czas mierzy odstęp
+między otwarciem tury a zapisaniem wypowiedzi, a nie czas pracy modelu: chwili rozpoczęcia
+wypowiedzi kontrakt nie niesie — nazwa metryki mówi dokładnie to, co metryka liczy. Rubryka
+pokazująca dwie metryki z czterech wygląda na komplet, dopóki nie powie, że kompletem nie jest,
+dlatego ostatnie zdanie stoi zawsze.

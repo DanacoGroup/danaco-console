@@ -1,14 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — OKNO KONFIGURACJI · WNĘTRZE FORMULARZA
-   ----------------------------------------------------------------------------
-   Wiersz jednego ustawienia, kontrolki generowane z rodzaju wartości, wskaźnik
-   zasięgu i łańcuch dziedziczenia. Ramę okna i trzy obszary układu prowadzi
-   `konfiguracja.css`, który ten arkusz wciąga.
-
-   Barw własnych ani jednej — wyłącznie żetony warstwy `motyw/`.
-   Sygnał (błękit) występuje tu dokładnie dwa razy: plakietka pochodzenia
-   wartości nadpisanej oraz wiersz dziedziczenia, który obowiązuje.
-   ============================================================================ */
+/* Arkusz opisuje wnętrze formularza konfiguracji: wiersz ustawienia, kontrolki, wskaźnik zasięgu oraz łańcuch dziedziczenia wartości. */
 
 /* --- Wiersz jednego ustawienia ------------------------------------------- */
 

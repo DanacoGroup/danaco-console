@@ -6363,3 +6363,20 @@ Wartości napisowe idą w cudzysłowie zapisanym regułą JSON, bo napis JSON je
 
 ## budowa/klient-poprzedni/src/moduly/automations/panel-dopelnien-ukladu.ts
 Krawędź mówi tylko, że kroki się schodzą; panel odpowiada osobno na cztery pytania, których krawędź nie wyraża: kiedy tory scalają się w kroku wspólnym (bramka dołączenia), czy zbiór kroków biegnie razem czy jeden po drugim (grupa), co wycofuje skutki kroku, gdy przebieg pękł w pół (kompensacja), oraz czyim silnikiem jadą kolejki tej automatyki (spięcie z silnikiem kolejek). Panel stoi obok panelu zależności w narzędziach kontekstowych okna Orchestrator, gospodarując tym samym układem, tylko innym jego wymiarem. Ocena bramki nie blokuje zapisu, tak samo jak przy krawędzi: bramka na kroku, którego jeszcze nie ma, zapisuje się, a zastrzeżenie wraca w odpowiedzi, bo Workflow Builder buduje układ krok po kroku i odmowa kazałaby operatorowi układać go w jedynej dopuszczonej kolejności.
+
+## budowa/klient-poprzedni/src/moduly/library/eksporty-biblioteki.ts
+Żadna z tych czynności nie ma komendy kontraktu i mieć jej nie musi:
+materiałem jest odpowiedź rdzenia leżąca w oknie, a nie bajty, po które
+trzeba by wrócić do repozytorium. Granica jest ostra i przebiega przy treści
+plików: wywóz opisu składa się tutaj, wywóz zawartości nie, bo klient nie ma
+komendy pobierającej bajty pliku biblioteki. Każdy wytwór nazywa w nagłówku,
+czego nie zawiera, ponieważ manifest bez bajtów podpisany jako paczka
+migracyjna byłby obietnicą archiwum, którym nie jest. Kolekcja jest
+w kontrakcie samym identyfikatorem: pole kolekcji niesie kody, a założenie
+kolekcji oddaje kod i nazwę wyłącznie w chwili założenia, więc mapa wypisuje
+kody i przypisane im pliki i mówi to wprost zamiast podstawiać kod w miejsce
+nazwy. SKOS i RDF to standardy branżowe, a nie oznaczenia wymyślone na
+potrzeby modułu; brak relacji jest wypisany w komentarzu wytworu, bo tezaurus
+bez relacji wygląda jak tezaurus, w którym relacji nie ustalono. Manifest
+odpowiada części opisowej migawki repozytorium i paczki migracyjnej, a części
+z bajtami nie ma.

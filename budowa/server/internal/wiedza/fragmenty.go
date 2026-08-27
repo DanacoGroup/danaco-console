@@ -17,12 +17,17 @@
 // połowę kontekstu po każdej stronie granicy; koszt zakładki to około jednej
 // piątej więcej wektorów.
 //
-// Długość domyślna wynika z okna modelu: `paraphrase-multilingual-mpnet-base-v2`
-// obcina wejście na 384 tokenach podziału XLM-R, a polszczyzna kosztuje w nim
-// około trzech znaków na token, czyli około 1100 znaków. Docelowe 700 znaków
-// zostawia zapas na zakładkę i na słowa łamane na kilka tokenów. Fragment
-// dłuższy niż okno zostaje obcięty po cichu, a cytat byłby wtedy dłuższy niż to,
-// co model przeczytał.
+// Granica 1100 znaków wynika z okna modelu, przy którym te liczby powstały:
+// `paraphrase-multilingual-mpnet-base-v2` obcinał wejście na 384 tokenach
+// podziału XLM-R, a polszczyzna kosztuje w nim około trzech znaków na token.
+// Fragment dłuższy niż okno zostaje obcięty po cichu, a cytat byłby wtedy
+// dłuższy niż to, co model przeczytał. Model domyślny jest dziś inny — `bge-m3`
+// przyjmuje 8192 tokeny (`max_position_embeddings` w opisie jego wag) — więc
+// okno przestało być ciasne i granica przestała być jego odwzorowaniem.
+// Zostaje jednak nietknięta, bo jest zarazem granicą cytatu: fragment jest tym,
+// co wraca Operatorowi i modelowi jako przytoczenie, a przytoczenie na kilka
+// tysięcy znaków przestaje być przytoczeniem. Docelowe 700 znaków zostawia pod
+// tą granicą zapas na zakładkę i na słowa łamane na kilka tokenów.
 package wiedza
 
 import "strings"
@@ -31,7 +36,7 @@ const (
 	// minimalnaDlugoscFragmentu — poniżej tej granicy fragment przestaje nieść
 	// kontekst i wektory zaczynają się zlewać.
 	minimalnaDlugoscFragmentu = 200
-	// granicaFragmentu — twardy sufit wynikający z okna modelu (patrz nagłówek).
+	// granicaFragmentu — twardy sufit długości przytoczenia (patrz nagłówek).
 	granicaFragmentu = 1100
 )
 

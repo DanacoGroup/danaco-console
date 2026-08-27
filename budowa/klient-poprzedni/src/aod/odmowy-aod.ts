@@ -1,23 +1,14 @@
+/**
+ * Nakładka składa trzecią część odmowy: radę zależną od czynności, której wspólny
+ * komponent odmowy znać nie może. Dwie pierwsze części, czyli nazwę nieudanej czynności
+ * i powód podany przez rdzeń, składa komponent odmowy.
+ */
 import { opisOdmowyBledu, type PowodOdmowy } from '../komponenty/odmowa';
 
 /**
- * Trzecia część odmowy nakładki: czym Operator to zmieni.
- *
- * Dwie pierwsze części — co się nie udało i dlaczego — składa
- * `komponenty/odmowa.ts`. Tu dochodzi rada zależna od czynności nakładki,
- * której wspólny komponent znać nie może.
- *
- * Część odmów rdzenia w rodzinie `aod.*` jest zachowaniem poprawnym, nie
- * usterką: odpięcie procesu spoza wykazu przypiętych zwraca `not_found`,
- * a puste `processId` przy przypięciu albo odpięciu — `validation_failed`.
- * Bez zdania trzeciego Operator czyta je jak awarię.
- *
- * Nakładka nie stawia bramki przed wywołaniem: pustego pola nie blokuje,
- * przycisku nie wyszarza i nie pyta o potwierdzenie. Rozstrzyga rdzeń,
- * a nakładka nazywa jego odpowiedź po ludzku.
+ * Rada domyślna podawana wtedy, gdy kod odmowy zwrócony przez rdzeń nie ma osobnego
+ * zdania w wykazie rad dla danej czynności nakładki.
  */
-
-/** Rada domyślna, gdy kod odmowy nie ma osobnego zdania. */
 const RADA_OGOLNA = 'Odczytaj stan nakładki ponownie i powtórz czynność.';
 
 const RADY: Record<string, Record<string, string>> = {
@@ -58,9 +49,7 @@ const RADY: Record<string, Record<string, string>> = {
       'Rdzeń nie zna okna, o którego kontekst pytamy — ognisko mogło się zmienić; odczytaj stan ponownie.',
   },
 
-  // ── kolejka decyzji: odmowy komend spoza rodziny `aod.*` ──────────────────
-  // Rady mówią o czynności, której odmówiono, a nie o błędzie — część tych
-  // odmów jest zachowaniem poprawnym.
+  // Kolejka decyzji: odmowy komend spoza rodziny `aod.*`; rada mówi o czynności.
 
   procesy: {
     not_found:
@@ -89,13 +78,9 @@ const RADY: Record<string, Record<string, string>> = {
 };
 
 /**
- * Składa pełne zdanie odmowy: co się nie udało, dlaczego (wprost z rdzenia)
- * i czym Operator to zmieni.
- *
- * @param czynnosc nazwa czynności widziana przez Operatora, np. „Odpięcie procesu”.
- * @param obszar klucz rad — `przypiecie`, `odpiecie`, `rozmowa`, `glos`,
- *   `podpowiedzi`, `stan`, `kontekst`, `procesy`, `wstrzymanie`, `konfiguracja`,
- *   `przejecie`.
+ * Składa pełne zdanie odmowy z nazwy czynności widzianej przez Operatora, z powodu
+ * podanego wprost przez rdzeń oraz z rady wybranej z wykazu według obszaru czynności
+ * i kodu odmowy.
  */
 export function opisOdmowyAod(
   czynnosc: string,

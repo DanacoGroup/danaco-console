@@ -3646,3 +3646,24 @@ z opisu komendy w kontrakcie, a nie z domysłu.
 Archiwum o zerowej liczbie pozycji jest poprawną odpowiedzią, a nie awarią: tak
 wraca spakowany katalog pusty. Zdanie odpowiedzi nazywa to wprost, ponieważ plik
 powstał i jego pustka jest informacją należną operatorowi.
+
+## budowa/klient-poprzedni/src/aod/odmowy-aod.ts
+
+Zdanie odmowy nakładki składa się z trzech części. Nazwę nieudanej czynności
+i powód podany przez rdzeń składa wspólny komponent odmowy. Trzecia część, czyli
+rada dla Operatora, zależy od czynności nakładki i wspólny komponent nie ma jak
+jej znać, dlatego wykaz rad stoi w warstwie nakładki.
+
+Część odmów rdzenia w rodzinie komend nakładki jest zachowaniem poprawnym, a nie
+usterką. Odpięcie procesu spoza wykazu przypiętych zwraca odmowę „nie znaleziono",
+a puste wskazanie procesu przy przypięciu albo odpięciu zwraca odmowę
+walidacyjną. Bez zdania trzeciego Operator odczytuje obie odpowiedzi jak awarię.
+
+Nakładka nie stawia bramki przed wywołaniem: nie blokuje pustego pola, nie
+wygasza przycisku i nie pyta o potwierdzenie. Rozstrzygnięcie należy do rdzenia,
+a nakładka nazywa jego odpowiedź językiem zrozumiałym dla Operatora.
+
+Wykaz rad obejmuje obszary czynności nakładki — przypięcie, odpięcie, rozmowę,
+głos, podpowiedzi, stan i kontekst — oraz obszary kolejki decyzji: procesy,
+wstrzymanie, konfigurację i przejęcie. Dla kodu odmowy bez osobnego zdania
+podawana jest rada domyślna.

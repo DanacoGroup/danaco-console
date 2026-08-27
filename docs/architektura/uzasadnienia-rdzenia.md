@@ -5122,3 +5122,36 @@ zmienił jest prawdziwe w obu przypadkach.
 Puste wskazanie łuku po rozgłoszeniu zmiany układu jest stanem zamierzonym: pole zależności jest
 nieobowiązkowe, bo przepisanie całego układu nie dotyczy żadnego jednego łuku — okno czyta wtedy
 zdarzenie jako polecenie przeliczenia układu od nowa.
+
+## budowa/server/internal/core/nosniki_druku_wspolne_test.go
+
+Sprawdziany pilnują, żeby wykaz nośników druku Designu i wykaz nośników druku
+Studia nie rozjechały się z wykazem wspólnym. Wcześniej wykazy stały obok
+siebie osobno i rozjechały się już raz: koperta DL miała w wykazie Designu
+99 na 210 mm (wymiar wkładki), a w wykazie okna Studia 220 na 110 mm, podczas
+gdy koperta DL według normy ISO 269 ma 110 na 220 mm. Pilnowanie w tym pliku
+nie jest przewidywaniem ryzyka, tylko zapisem tego, co się już zdarzyło.
+
+TestWykazDesignuJestPrzekladem sprawdza zgodność liczby pozycji, wymiarów
+i rodziny między wykazem wspólnym a przekładem używanym przez obszar druku
+Designu. Poprzednik tego sprawdzianu porównywał dwa osobne wykazy stojące
+obok siebie i wykrył przy pierwszym przebiegu dwa rozjazdy: kopertę DL
+(99 na 210 mm zamiast 110 na 220 mm z normy ISO 269) oraz wizytówkę zapisaną
+poziomo wbrew założeniu pionowego zapisu. Wykaz własny Designu został potem
+usunięty na rzecz przekładu z wykazu wspólnego, więc test sprawdza teraz, że
+przekład oddaje każdą pozycję wykazu wspólnego z tymi samymi wymiarami
+i tą samą rodziną, a nie tylko podzbiór pozycji. Pomiar liczby pozycji ma
+znaczenie praktyczne: przekład, który gubi pozycję, odbiera ją korzystającemu
+z interfejsu po cichu, bo wykaz nadal wygląda na kompletny.
+
+Koperty C4, C5, C6, B4 i B5 zostały dodane do wykazu wspólnego i muszą dojść
+również do wykazu Designu — wcześniej ich tam nie było, co było powodem tego
+przestawienia na wspólne źródło.
+
+## budowa/server/internal/core/handlers_orkiestracja.go
+Rodzina ma port osobny, nie rozszerzenie portu Automatyk: podagent nie jest krokiem automatyki ani
+jej przebiegiem, wisi na oknie wykonawcy, a nie na zapisanej definicji, i powstaje w rozmowie, nie
+w konstruktorze przebiegów. Zdarzenie zmiany podagenta nie rozgłasza ten plik, tylko adapter
+rozgłoszenia: podagent zmienia stan głównie poza żądaniem — wejście w stan działania, zakończenie
+i niepowodzenie dzieją się w pracy puszczonej w tle, której uchwyt komendy nie widzi. Dlatego
+funkcja wpinająca nie bierze nadawcy.

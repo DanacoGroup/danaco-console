@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: wpięcie dziesięciu komend obszaru `mail.*` i
-// rozgłoszenie `mail.changed` po tych z nich, które skrzynkę zmieniają.
-//
-// Siedem komend kontrakt wystawia modelowi jako narzędzia: wykaz skrzynek,
-// wykaz folderów, odnalezienie listu, odczytanie go w całości, zapisanie szkicu,
-// wysłanie i oznaczenie. Podpięcie, rozpoznanie i odpięcie skrzynki narzędziami
-// nie są, bo rozstrzygają, do czego platforma ma dostęp. Wpinają się tak samo
-// jak reszta — różnica leży w tym, że nie ma ich w wykazie narzędzi kontraktu.
-//
-// `mail.changed` idzie po trzech komendach, nie po dziesięciu: opisuje zmianę
-// w skrzynce — zapisany szkic, wysłany list, zmianę oznaczenia. Wykazy niczego
-// nie zmieniają, a podpięcie i odpięcie skrzynki zmieniają katalog skrzynek,
-// dla którego kontrakt osobnego zdarzenia nie ma; rozgłaszanie ich zdarzeniem
-// o wiadomości donosiłoby oknu o zmianie bytu, który się nie zmienił.
+// Plik wpina dziesięć komend obszaru mail.* i rozgłasza mail.changed po tych, które skrzynkę
+// zmieniają: zapisany szkic, wysłany list, zmianę oznaczenia.
 package core
 
 import (
@@ -20,23 +8,15 @@ import (
 	"danacoconsole/shared"
 )
 
-// Poczta jest portem rodziny `mail.*`.
-//
-// Port stoi osobno, a nie jako rozszerzenie portu `Asystent`: Asystent prowadzi
-// zlecenie, a skrzynka jest zasobem urządzenia, po który model sięga w dowolnym
-// oknie — tak samo jak po narzędzia obrazu czy dokumentów. Wtopienie poczty
-// w Asystenta odebrałoby ją każdemu innemu oknu.
+// Poczta jest portem rodziny mail.*, stojącym osobno od portu Asystenta: skrzynka jest zasobem
+// urządzenia, po który model sięga w dowolnym oknie, tak samo jak po narzędzia obrazu czy dokumentów.
 type Poczta interface {
 	Skrzynki(ctx context.Context, z shared.MailAccountListRequest) (shared.MailAccountListResponse, error)
 	Foldery(ctx context.Context, z shared.MailFolderListRequest) (shared.MailFolderListResponse, error)
 	Wiadomosci(ctx context.Context, z shared.MailMessageListRequest) (shared.MailMessageListResponse, error)
 	Wiadomosc(ctx context.Context, z shared.MailMessageGetRequest) (shared.MailMessageGetResponse, error)
 	ZapiszSzkic(ctx context.Context, z shared.MailDraftSaveRequest) (shared.MailDraftSaveResponse, error)
-	// Wyslij oddaje trzy wartości, jako jedyna w tym porcie. Odpowiedź kontraktu
-	// niesie sam identyfikator i chwilę nadania, a zdarzenie `mail.changed` musi
-	// nieść wiadomość, żeby okno pokazało, co wyszło. Adapter podaje ją obok
-	// odpowiedzi, bo rozgłaszanie z wnętrza modułu byłoby drugą drogą do szyny
-	// zdarzeń.
+	// Wyslij oddaje trzy wartości, bo zdarzenie mail.changed niesie wiadomość, której odpowiedź nie ma.
 	Wyslij(ctx context.Context, z shared.MailSendRequest) (shared.MailSendResponse, shared.MailMessage, error)
 	Oznacz(ctx context.Context, z shared.MailMessageFlagRequest) (shared.MailMessageFlagResponse, error)
 	Podepnij(ctx context.Context, z shared.MailAccountAddRequest) (shared.MailAccountAddResponse, error)
@@ -44,7 +24,7 @@ type Poczta interface {
 	Odepnij(ctx context.Context, z shared.MailAccountRemoveRequest) (shared.MailAccountRemoveResponse, error)
 }
 
-// zarejestrujPoczte wpina dziesięć komend rodziny `mail.*`.
+// zarejestrujPoczte wpina dziesięć komend rodziny mail.* obsługujących skrzynki i wiadomości poczty użytkownika.
 func zarejestrujPoczte(r *Rejestr, m Poczta, e *emiter) {
 	if r == nil || m == nil {
 		return
@@ -56,16 +36,12 @@ func zarejestrujPoczte(r *Rejestr, m Poczta, e *emiter) {
 	r.Zarejestruj(shared.CommandMailMessageList, obsluz(m.Wiadomosci))
 	r.Zarejestruj(shared.CommandMailMessageGet, obsluz(m.Wiadomosc))
 
-	// Trzy czynności nad katalogiem skrzynek — patrz nagłówek pliku.
+	// Trzy czynności nad katalogiem skrzynek: podpięcie, rozpoznanie i odpięcie.
 	r.Zarejestruj(shared.CommandMailAccountAdd, obsluz(m.Podepnij))
 	r.Zarejestruj(shared.CommandMailAccountDiscover, obsluz(m.Rozpoznaj))
 	r.Zarejestruj(shared.CommandMailAccountRemove, obsluz(m.Odepnij))
 
-	// Szkic rozgłasza się zawsze jako `created`, także przy poprawianiu: IMAP nie
-	// zna poprawiania w miejscu, więc zmieniony szkic to nowa wiadomość w folderze
-	// szkiców, ze swoim nowym identyfikatorem (`poczta/imap_zapis.go`).
-	// Rozgłoszenie `updated` kazałoby oknu odświeżyć pozycję, której już
-	// w skrzynce nie ma.
+	// Szkic rozgłasza się zawsze jako created, bo IMAP nie zna poprawiania w miejscu.
 	r.Zarejestruj(shared.CommandMailDraftSave,
 		obsluz(func(ctx context.Context, z shared.MailDraftSaveRequest) (shared.MailDraftSaveResponse, error) {
 			odpowiedz, err := m.ZapiszSzkic(ctx, z)
@@ -75,10 +51,7 @@ func zarejestrujPoczte(r *Rejestr, m Poczta, e *emiter) {
 			return odpowiedz, err
 		}))
 
-	// Wysłanie rozgłasza `created`, bo powstał nowy byt — kopia w folderze
-	// wysłanych. Zdarzenie idzie wyłącznie po nadaniu udanym: rozgłoszenie po
-	// odmowie donosiłoby o liście, który nie wyszedł. Ślad w bazie zapisuje się
-	// w obu przypadkach i leży w adapterze.
+	// Wysłanie rozgłasza created wyłącznie po nadaniu udanym, nie po liście, który nie wyszedł.
 	r.Zarejestruj(shared.CommandMailSend,
 		obsluz(func(ctx context.Context, z shared.MailSendRequest) (shared.MailSendResponse, error) {
 			odpowiedz, wyslany, err := m.Wyslij(ctx, z)

@@ -5179,3 +5179,16 @@ koduje się do wartości `null`. Okno bez katalogów roboczych jest stanem
 poprawnym, więc kontrakt nie może wymagać od odbiorcy przygotowania się na
 brak pola — klient czytający to pole bez osłony wywróciłby wczytywanie modułu
 przy wartości `null`. Wysłanie pustej tablicy usuwa tę różnicę.
+
+## budowa/server/internal/core/handlers_poczta.go
+Siedem komend kontrakt wystawia modelowi jako narzędzia: wykaz skrzynek, wykaz folderów,
+odnalezienie listu, odczytanie go w całości, zapisanie szkicu, wysłanie i oznaczenie. Podpięcie,
+rozpoznanie i odpięcie skrzynki narzędziami nie są, bo rozstrzygają, do czego platforma ma dostęp —
+wpinają się tak samo jak reszta, różnica leży w tym, że nie ma ich w wykazie narzędzi kontraktu.
+Zdarzenie zmiany idzie po trzech komendach, nie po dziesięciu: wykazy niczego nie zmieniają,
+a podpięcie i odpięcie skrzynki zmieniają katalog skrzynek, dla którego kontrakt osobnego zdarzenia
+nie ma; rozgłaszanie ich zdarzeniem o wiadomości donosiłoby oknu o zmianie bytu, który się nie
+zmienił.
+
+Wtopienie poczty w Asystenta odebrałoby ją każdemu innemu oknu, bo Asystent prowadzi zlecenie,
+a skrzynka nie jest jego bytem.

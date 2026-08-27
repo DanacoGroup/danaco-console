@@ -897,7 +897,7 @@ type tabliceKrzywychFotografiiDesignu struct {
 type punktKrzywejDesignu struct {
 	Wejscie float64 `json:"wejscie"`
 	Wyjscie float64 `json:"wyjscie"`
-	// Nazwy angielskie przyjmujemy obok polskich: okno bywa złożone z nazw pól kontraktu, in/out.
+	// Nazwy angielskie przyjmuje się obok polskich: okno bywa złożone z nazw pól kontraktu, in/out.
 	In  *float64 `json:"in,omitempty"`
 	Out *float64 `json:"out,omitempty"`
 }

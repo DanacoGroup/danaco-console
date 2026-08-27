@@ -1,16 +1,4 @@
-/* ============================================================================
-   MODUŁ DESIGN — PREVIEW WINDOW: PŁYTA PODGLĄDU I PORÓWNANIE WARIANTÓW
-   ----------------------------------------------------------------------------
-   Arkusz podglądu; pozostałe arkusze modułu to `design.css` (rama i stany),
-   `kompozycja.css` (kanwa) i `zasoby.css` (wykaz i kreator).
-
-   Płyta sygnalizuje kreską brak treści obrazu: obrys ciągły należy się treści,
-   którą rdzeń oddał, obrys kreskowany — miejscu na treść, której nie ma. Ta sama
-   zasada obowiązuje w polu podglądu karty zasobu i w miniaturze paska postępu,
-   żeby brak wyglądał wszędzie w module tak samo.
-
-   Barwy wyłącznie z żetonów motywu.
-   ============================================================================ */
+/* Arkusz opisuje płytę podglądu modułu Design oraz porównanie wariantów, wraz z oznaczeniem obrysem braku treści obrazu lub formularza. */
 
 /* Okno pomocnicze jest niższe od zarządcy i kreatora: nie niesie ani wykazu,
    ani formularza — niesie jeden zasób. */

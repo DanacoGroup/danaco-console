@@ -1,7 +1,8 @@
 /* ============================================================================
    DANACO CONSOLE — BIBLIOTEKA KOMPONENTÓW · v2.0
    ----------------------------------------------------------------------------
-   Wyłącznie żetony semantyczne z 03-zetony/zetony.css. Zero wartości zaszytych.
+   Barwy, odstępy i pismo wyłącznie z żetonów semantycznych (zasoby/zetony/zetony.css).
+   Geometria jednorazowa komponentu (reguła nazewnicza 8) stoi lokalnie, nie w żetonie.
    Każdy komponent interaktywny ma stany: spoczynek · najechanie · naciśnięcie ·
    fokus · wybrany · ładowanie · błąd. Zasada zero blokad: żaden wariant nie odbiera
    klikalności — niegotowość komunikuje się opisem albo komunikatem.
@@ -180,7 +181,7 @@
 .dn-btn-ikona--na-ramie:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
 .dn-btn-ikona--na-ramie[aria-pressed='true'] {
   background: var(--dn-rama-hover);
-  color: var(--dn-sygnal-300, #8FB2F5);
+  color: var(--dn-sygnal-300);
 }
 
 /* ==========================================================================
@@ -872,7 +873,7 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   padding: 0 var(--dn-od-3);
   border: 1px solid var(--dn-rama-obrys);
   border-radius: var(--dn-r-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dn-rama-pole);
   color: var(--dn-rama-tekst);
   font-size: var(--dn-fs-sm);
 }
@@ -1835,7 +1836,7 @@ label.dn-pasek-szukaj:focus-within {
 /* Stan nieczynny. `aria-disabled` zamiast `disabled`: przycisk zostaje osiągalny
    klawiaturą i czytnikiem, więc operator dowie się, dlaczego nie działa, zamiast
    trafiać na kontrolkę, której nie da się dosięgnąć. */
-.dn-btn[disabled], .dn-btn[aria-disabled='true'] {
+.dn-btn[aria-disabled='true'] {
   transform: none;
   box-shadow: none;
   opacity: .45;

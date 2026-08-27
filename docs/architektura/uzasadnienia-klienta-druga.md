@@ -4048,3 +4048,14 @@ Bilans jest jedyną drogą, którą operator dowiaduje się o pominięciu, bo pr
 jest w tym module zakazane wprost. Wywołanie cofnięcia bywa udane, a mimo to nic nie cofa, gdy
 rdzeń oddaje wykaz cofniętych pusty i bilans z pominięciem nazywającym zależność — okno musi to
 odróżnić od powodzenia, inaczej pokazałoby cofnięcie po czynności, która nie zeszła.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/panele-otwieralne.ts
+Gdy stan zbudowane rejestru rozjeżdża się z istnieniem wytwórni, menu jest
+krótsze, bo pozycja bez wytwórni nie wchodzi w ogóle — pas pomocniczych
+zgłasza wtedy rozjazd osobno. Taka pozycja nie dostaje wiersza wygaszonego
+ani zapowiedzi, bo nieczynny wiersz byłby bramką; jej miejsce jest w wykazie
+pozycji nieotwieralnych, wraz z powodem wprost z rejestru. Plik nie buduje
+paneli i nie zna DOM, nie rozstrzyga też, ile paneli wolno otworzyć naraz —
+panel jest bytem otwieranym i zamykanym pojedynczo, bez limitu. Dla modułu
+spoza rejestru obie funkcje oddają wykaz pusty, a zdanie o braku spisu
+pokazuje gospodarz pasa pomocniczych.

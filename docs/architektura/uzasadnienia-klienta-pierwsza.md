@@ -1671,3 +1671,12 @@ frontendu.
 Kod okna nie pada tu wprost napisem. Ramę modułu Apps woła wspólne okno
 warsztatu, biorąc kod ze zmiennej opisu, dzięki czemu wykaz `KODY_OKIEN`
 pozostaje jedynym miejscem, w którym kody okien tego modułu są wypisane.
+
+## budowa/klient-poprzedni/src/ikony/zrodla/srodowiska.ts
+
+Nazwy i kolejność pozycji tego pliku odpowiadają grupie środowisk w wykazie
+`ikony/manifest.json`, dzięki czemu wykaz ikon i wykaz źródeł dają się porównać
+pozycja po pozycji.
+
+Emblematy środowisk są znakami własnymi budowy i nie pochodzą z zestawu Lucide,
+więc nie da się ich podmienić aktualizacją biblioteki ikon.

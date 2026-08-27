@@ -5,33 +5,7 @@ import type { StanBiblioteki } from './stan-biblioteki';
 
 /**
  * Zakładka Higiena panelu Metadata & Archive Panel — raporty stanu repozytorium
- * i przeliczenie wskaźnika znaczenia (warstwa czwarta modułu).
- *
- * Raporty liczą się z wykazu, który rdzeń już oddał, i z niczego więcej.
- * Duplikat dokładny poznaje się po sumie kontrolnej — tej samej, którą rdzeń
- * wyliczył przy wgraniu — więc raport nie jest domysłem okna, tylko odczytem
- * jego odpowiedzi. Plik osierocony to plik bez etykiety i bez kolekcji: oba
- * pola niesie `LibraryFile`, więc reguła audytu ma na czym stanąć.
- *
- * Cztery czynności, których okno zrobić nie może samo, prowadzą do rdzenia
- * i tam mają swój skutek:
- *   — rozpoznanie duplikatów, w tym niemal-duplikatów po treści i po obrazie
- *     (`library.duplicate.scan`) — porównanie całego zbioru z całym,
- *   — weryfikacja integralności (`library.fixity.check`) — przeliczenie sumy
- *     kontrolnej z bajtów leżących pod odwołaniem,
- *   — normalizacja nazw (`library.name.normalize`) wraz z przebiegiem próbnym,
- *   — dziennik audytu (`library.audit.list`) i pulpit stanu
- *     (`library.stats.get`) liczony po CAŁYM zbiorze, nie po odczytanej stronie
- *     wykazu.
- *
- * Raporty liczone z wykazu zostają obok nich, bo odpowiadają natychmiast i bez
- * ruchu do rdzenia — ale to pulpit z rdzenia jest miarą repozytorium, a wykaz
- * w pamięci okna jest próbką.
- *
- * Przeliczenie wskaźnika znaczenia idzie komendą `knowledge.index` w zakresie
- * biblioteki — jedyną czynnością konserwacyjną repozytorium, którą kontrakt
- * niesie. Wskaźnik nie odświeża się przy wgraniu pliku, więc bez tej czynności
- * wyszukiwanie po znaczeniu opisuje stan sprzed ostatniego napływu.
+ * i przeliczenie wskaźnika znaczenia, liczone z wykazu, który rdzeń już oddał.
  */
 export interface HigienaRepozytorium {
   element: HTMLElement;
@@ -78,9 +52,7 @@ export function utworzHigienaRepozytorium(stan: StanBiblioteki): HigienaRepozyto
       return;
     }
     const model = wynik.wynik.model === undefined ? '' : ` Model osadzeń: ${wynik.wynik.model}.`;
-    // Zero wprowadzonych pozycji przy niepustym wykazie to odpowiedź, nie
-    // awaria: wskaźnik pomija pliki bez treści i pliki, których treści nie da
-    // się odczytać jako tekstu. Zdanie nazywa to, zamiast milczeć o różnicy.
+    // Zero wprowadzonych pozycji przy niepustym wykazie to odpowiedź, nie awaria.
     const uwaga =
       wynik.wynik.indexed === 0 && stan.pliki().length > 0
         ? ' Wykaz nie jest pusty, a wskaźnik nie przyjął ani jednej pozycji — do wskaźnika ' +
@@ -325,7 +297,7 @@ export function utworzHigienaRepozytorium(stan: StanBiblioteki): HigienaRepozyto
   };
 }
 
-/** Wiersze pulpitu: rozmiar zbioru, rozkład rodzajów treści i modułów wytwórców. */
+/** Wiersze pulpitu: rozmiar zbioru, rozkład rodzajów treści i modułów wytwórców, liczba etykiet i kolekcji. */
 function wierszePulpitu(pliki: readonly LibraryFile[]): HTMLElement[] {
   const bajty = pliki.reduce((suma, plik) => suma + (plik.sizeBytes ?? 0), 0);
   const wpisy: Array<[string, string]> = [
@@ -348,7 +320,7 @@ function wierszePulpitu(pliki: readonly LibraryFile[]): HTMLElement[] {
   });
 }
 
-/** Rozkład liczebności po kluczu; uporządkowany malejąco, dalej po polsku. */
+/** Rozkład liczebności po kluczu; uporządkowany malejąco, a dalej po polsku, gdy liczby są sobie równe. */
 function rozklad(
   pliki: readonly LibraryFile[],
   klucz: (plik: LibraryFile) => string,
@@ -366,11 +338,8 @@ function rozklad(
 }
 
 /**
- * Duplikaty dokładne — pliki dzielące sumę kontrolną z co najmniej jednym innym.
- *
- * Plik bez sumy do raportu nie wchodzi i ma własną kartę: brak sumy znaczy „nie
- * wiadomo", a nie „bez duplikatu", i zliczenie takich plików w jedną grupę
- * zrobiłoby z nich duplikaty siebie nawzajem.
+ * Duplikaty dokładne — pliki dzielące sumę kontrolną z co najmniej jednym innym; plik
+ * bez sumy ma własną kartę, bo brak sumy znaczy nie wiadomo, nie bez duplikatu.
  */
 function duplikatyPoSumie(pliki: readonly LibraryFile[]): string[] {
   const poSumie = new Map<string, string[]>();
@@ -384,7 +353,7 @@ function duplikatyPoSumie(pliki: readonly LibraryFile[]): string[] {
   return [...poSumie.values()].filter((zbior) => zbior.length > 1).flat();
 }
 
-/** Pliki bez etykiety i bez kolekcji — poza porządkiem repozytorium. */
+/** Pliki bez etykiety i bez kolekcji — poza porządkiem repozytorium, nieodnalezione żadną istniejącą ścieżką. */
 function osierocone(pliki: readonly LibraryFile[]): string[] {
   return pliki
     .filter((plik) => (plik.tags ?? []).length === 0 && (plik.collectionIds ?? []).length === 0)
@@ -392,13 +361,8 @@ function osierocone(pliki: readonly LibraryFile[]): string[] {
 }
 
 /**
- * Karta raportu wraz z odsyłaczem do wykazu.
- *
- * Naciśnięcie zawęża Library Explorer do wskazanego zbioru — tak, jak opisuje
- * to dokumentacja modułu. Zawężenie jest odwracalne jednym przyciskiem
- * w pasku narzędzi Explorera i znika przy każdym nowym odczycie wykazu.
- * Karta zgodna zachowuje przycisk i po naciśnięciu mówi, że zawężać nie ma do
- * czego: wygaszenie robiłoby bramę tam, gdzie jest wynik pomiaru.
+ * Karta raportu wraz z odsyłaczem do wykazu: naciśnięcie zawęża Library Explorer do
+ * wskazanego zbioru, odwracalnie, aż do nowego odczytu wykazu.
  */
 function kartaRaportu(
   tytul: string,

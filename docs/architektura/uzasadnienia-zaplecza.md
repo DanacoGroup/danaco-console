@@ -2472,3 +2472,19 @@ odwołany świadczy, że odnośnik istniał.
 Nasłuch i jego zdarzenia stoją w dwóch tabelach, bo zdarzenie jest wartością
 z wykazu, a nie tekstem: warunek CHECK po stronie wiersza zdarzenia wychwytuje
 literówkę przy zapisie, czego lista sklejona w jednej kolumnie zrobić nie może.
+## budowa/server/internal/store/migracja_186_biblioteka_sugestie.sql
+Migracja 186 — moduł Library: sugestie porządkujące.
+
+Domyślnym zachowaniem modułu jest sugestia z akceptacją Operatora, nie zapis
+bez pytania: klasyfikacja wsadowa (`library.classify.run`) wytwarza wiersze
+tej tabeli, a dopiero `library.suggestion.apply` zamienia je w zmianę zasobu.
+Sugestia musi więc przeżyć między jednym żądaniem a drugim — stąd tabela,
+a nie wynik oddany i zapomniany.
+
+Uzasadnienie jest kolumną obowiązkową. Sugestia bez powodu jest poleceniem
+podanym bez podstawy, a Operator ma decydować, nie zgadywać, skąd wzięła się
+propozycja.
+
+Decyzja zostaje przy wierszu (`stan`), zamiast kasować go przy odrzuceniu:
+sugestia odrzucona ma nie wracać przy kolejnym przebiegu klasyfikacji, więc
+rdzeń musi wiedzieć, że raz już padła i została odsunięta.

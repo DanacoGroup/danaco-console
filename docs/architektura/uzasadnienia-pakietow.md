@@ -5678,3 +5678,17 @@ komunikat niepoprawny strukturalnie jest czymś innym niż komenda nieznana,
 a to, co poszło na drut, wraca z drutu bez zmiany.
 ## budowa/server/internal/dane/slownik.go
 Ślady importu i eksportu leżą w pliku sąsiednim, pamięć tłumaczeń w innym pliku sąsiednim: jedno repozytorium rozdzielone na pliki wedle odpowiedzialności, z typem, interfejsem i konstruktorem zadeklarowanymi wyłącznie w jednym z nich. Wystąpienia terminu nie mają tu tabeli: liczą się w locie z treści okna albo panelu przeszukanej względem źródła terminu, żeby nie unieważniać zapisu przy każdej korekcie panelu. Zapis ma jedną drogę: żądanie nadsyła zawsze komplet zmian naraz, a zapis terminów przyjmuje wykaz i zapisuje go w jednej transakcji przez wstawienie z aktualizacją po identyfikatorze zewnętrznym — termin ze wskazanym kodem aktualizuje się, termin bez zastanego wiersza o tym kodzie zakłada się, ten sam zapis obsługuje obie ścieżki, nie dwie osobne metody.
+
+## budowa/server/internal/dane/biblioteka_opis.go
+
+Brak opisu nie jest brakiem wiersza w rozumieniu odmowy: zasób bez ani jednego wypełnionego
+pola oddaje opis pusty, nie błąd braku wiersza. Odmowa należy się wyłącznie wskazaniu
+zasobu, którego nie ma, co rozstrzyga odczyt pliku, zanim opis w ogóle zostanie odczytany.
+
+Zawężenie definicji pól do rodzaju treści jest miękkie: pole bez wskazania rodzaju treści
+stosuje się do wszystkich, więc trafia do wyniku każdego zawężenia — twarde porównanie
+zdejmowałoby z formularza pola ogólne przy pierwszym zawężeniu.
+
+Wartość pola niestandardowego leży w zapisie JSON, więc zliczenie zasobów z danym polem
+idzie funkcją odczytu JSON silnika bazy, nie po tekście, żeby kod pola będący fragmentem
+innego kodu nie dawał fałszywego trafienia.

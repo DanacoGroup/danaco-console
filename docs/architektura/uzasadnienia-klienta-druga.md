@@ -2348,3 +2348,6 @@ widoczności, a ta rozstrzyga tylko o obecności modułu na liście, nie o prawi
 do jego otwarcia — kafel składa wtedy pozycję z katalogu modułów i wskazuje ją
 osobną drogą, a kolumna nie zapala żadnego wiersza, bo żaden jej wiersz nie
 odpowiada temu modułowi.
+
+## budowa/klient-poprzedni/src/moduly/research/pamiec-badania.ts
+Pamięć ma jedną odpowiedzialność: przechowanie i ogłoszenie zmiany. Pamięć nie zna kontraktu i nie woła rdzenia — dzięki temu odczyt badania i wykazy okien patrzą na ten sam zbiór, a nie na jego kopie. Fazy są trzy, nie dwie: stan przed pytaniem, stan pytania w toku i stan, w którym rdzeń nic nie ma, zostają rozróżnialne, bo zlanie ich w jedno kazałoby zgadywać, czy czekać, czy działać.

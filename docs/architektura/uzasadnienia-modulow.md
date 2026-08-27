@@ -1208,3 +1208,35 @@ kodem ją przywraca. Katalog jest rejestrem i nikt w rdzeniu go jeszcze nie
 czyta: włączenie pozycji rodzaju MCP nie dokłada mostu do procesu modelu, bo
 lista serwerów MCP składa się z punktów dostępu, a drugi pisarz tej listy
 byłby drugą prawdą.
+
+## budowa/server/internal/core/adapter_modul_badania_siec.go
+
+Wywołanie sieciowe nie jest programem zewnętrznym: idzie biblioteką
+standardową wkompilowaną w binarium, bez wywołania procesu i bez pomocnika
+na dysku, więc zasada zabraniająca opierania funkcji o program spoza
+instalki nie dotyczy sieci. Odmowa widoczna wtedy mówi o niedostępności
+usługi, nie o braku na maszynie — to prawda o stanie świata, nie o brakach
+instalacji.
+
+Crossref, OpenAlex, arXiv, OpenLibrary i PubMed odpowiadają bez klucza, więc
+wyszukiwanie naukowe działa od pierwszego uruchomienia, bez konfiguracji.
+Dostawca wymagający klucza może dojść obok, ale nie jest warunkiem, żeby
+moduł w ogóle wyszukiwał.
+
+Plik nie rozstrzyga, co zrobić z wynikiem: nie zapisuje źródeł, nie liczy
+przesiewu i nie zna kontraktu poza pozycją wyniku odkrycia. Oddaje pozycje
+i błąd; decyzje należą do rodzin, które go wołają.
+
+Limit czasu wywołania dostawcy wynosi dwadzieścia pięć sekund, bo dostawca
+milczący dłużej jest dostawcą niedostępnym — czekanie bez granicy zawiesiłoby
+okno na czas nieokreślony. Limit rozmiaru pobieranej treści chroni pamięć
+przed plikiem, którego rozmiaru nikt nie zapowiedział. Nagłówek zgłaszający
+moduł wchodzi w każde żądanie, bo Crossref prowadzi pulę grzecznościową dla
+wywołań, które się przedstawiają, a wywołanie anonimowe bywa dławione.
+Klient HTTP jest jeden na moduł, nie jeden na wywołanie, żeby korzystać
+z jednej puli połączeń zamiast otwierać nowe gniazdo do tego samego
+dostawcy przy każdej pozycji listy.
+
+Adres przekierowania wyniku webowego rozwija się do adresu docelowego, bo
+inaczej źródło zapisałoby adres pośrednika, który przestałby działać, gdy
+pośrednik zmieni postać odnośnika.

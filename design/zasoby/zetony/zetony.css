@@ -216,6 +216,8 @@
   --dn-wym-check: 16px;
   --dn-wym-kropka: 6px;            /* kropka sygnału */
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
+  --dn-wym-grot: var(--dn-od-12);  /* grot wejścia na karcie środowiska */
+  --dn-wym-grot-sm: calc(var(--dn-wym-grot) * 0.65); /* ten sam grot w kaflu modułu */
   --dn-wym-spinner: 14px;
   --dn-wym-fokus: 2px;             /* pierścień fokusu */
   --dn-wym-fokus-odsuniecie: 2px;

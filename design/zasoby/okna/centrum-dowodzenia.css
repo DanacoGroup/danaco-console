@@ -71,11 +71,6 @@
 
 .cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
 
-.cd-strefa[data-waga='2'] .cd-strefa[data-waga='3'] .cd-strona {
-  --cd-grot-srodowisko: var(--dn-od-12);
-  --cd-grot-modul: calc(var(--cd-grot-srodowisko) * 0.65);
-}
-
 @media (max-width: 640px) {
   .cd-tresc { padding: var(--dn-od-5) var(--dn-od-3) var(--dn-od-10); }
 }

@@ -4,18 +4,9 @@ import { poleTekstowe, przycisk, utworzWierszOdpowiedzi } from '../../modele/kon
 import type { StanBiblioteki } from './stan-biblioteki';
 
 /**
- * Zakładka Metadane panelu Metadata & Archive Panel — opis zasobu wskazanego
- * w Library Explorer.
- *
- * Blok techniczny czyta pola z `LibraryFile` oraz — na żądanie — metadane
- * osadzone w bajtach pliku (EXIF, IPTC, XMP, ID3, wymiary, liczba stron, czas
- * trwania nagrania), które oddaje `library.metadata.get` z `includeTechnical`.
- * Odczyt osadzonych idzie osobnym przyciskiem, bo otwiera bajty zasobu — koszt,
- * którego przegląd wykazu nie potrzebuje.
- *
- * Formularz Dublin Core zapisuje się komendą `library.metadata.set`. Zapis
- * SCALA domyślnie: pole zostawione puste zostaje bez zmiany, a pole wyczyszczone
- * jawnie kasuje wartość — dokładnie tak, jak mówi kontrakt.
+ * Zakładka Metadane panelu metadanych pokazuje blok techniczny z pól pliku i, na
+ * żądanie, metadane osadzone w bajtach, oraz formularz Dublin Core zapisywany
+ * komendą scalającą wartości bez nadpisywania pustką.
  */
 export interface MetadanePliku {
   element: HTMLElement;
@@ -23,7 +14,7 @@ export interface MetadanePliku {
   odswiez(): void;
 }
 
-/** Pola schematu Dublin Core wymienione w dokumentacji modułu. */
+/** Pola schematu Dublin Core wymienione w formularzu opisu zasobu, każde z własną etykietą i kodem zapisu. */
 const POLA_DUBLIN_CORE: ReadonlyArray<{ kod: string; etykieta: string }> = [
   { kod: 'title', etykieta: 'Tytuł (dc:title)' },
   { kod: 'creator', etykieta: 'Twórca (dc:creator)' },
@@ -68,13 +59,7 @@ export function utworzMetadanePliku(stan: StanBiblioteki): MetadanePliku {
   /** Ostatnio odczytane metadane osadzone — pokazywane w bloku technicznym. */
   let osadzone: string[] = [];
 
-  /**
-   * Odczytuje opis zasobu i wpisuje go w formularz.
-   *
-   * Formularz wypełnia się treścią z rdzenia, a nie zostaje pusty do pierwszego
-   * zapisu: opis zapisany wcześniej ma być widoczny, inaczej Operator nadpisałby
-   * go pustką, nie wiedząc, że coś tam stało.
-   */
+  /** Formularz wypełnia się treścią z rdzenia, żeby zapis wcześniejszy nie zniknął pod pustym polem. */
   async function wczytajOpis(zOsadzonymi: boolean): Promise<void> {
     const plik = stan.czynny();
     if (plik === null) {
@@ -153,7 +138,7 @@ export function utworzMetadanePliku(stan: StanBiblioteki): MetadanePliku {
   };
 }
 
-/** Wiersze bloku technicznego — jeden na pole, które rdzeń faktycznie oddał. */
+/** Wiersze bloku technicznego — jeden wiersz na pole, które rdzeń faktycznie oddał w odpowiedzi o zasobie. */
 function wierszeTechniczne(
   plik: LibraryFile,
   stan: StanBiblioteki,
@@ -194,7 +179,7 @@ function wierszeTechniczne(
   });
 }
 
-/** Zdanie o treści zasobu — jedno na werdykt odpowiedzi rdzenia. */
+/** Zdanie o treści zasobu — jedno zdanie na każdy możliwy werdykt odpowiedzi rdzenia o jej dostępności. */
 function zdanieOTresci(werdykt: string, powod: string): string {
   if (werdykt === 'osiagalna') return 'rdzeń oddaje treść pliku';
   if (werdykt === 'brak') return `rdzeń orzekł brak treści — ${powod}`;

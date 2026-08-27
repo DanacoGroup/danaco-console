@@ -3623,3 +3623,26 @@ transport, którego już nie ma.
 Nadanie dostępu żyje w obrębie okna, więc identyfikator okna podaje się przy
 otwarciu. Otwarcie bez niego jest poprawne: wykaz punktów i katalog roboczy nie
 zależą od okna, a w miejscu nadań sekcja mówi, na co czeka.
+
+## budowa/klient-poprzedni/src/moduly/library/archiwum-pakowanie.ts
+
+Spakowanie archiwum stoi w obszarze archiwum panelu metadanych obok utrwalenia
+i paczki migracyjnej, lecz jest od nich oddzielone osobnym zdaniem, ponieważ
+pracuje na innym zbiorze. Komendy `library.preservation.run`
+i `library.package.export` obejmują zasoby repozytorium biblioteki i oddają wynik
+jako zasób biblioteki, natomiast `archive.pack` pakuje katalog albo plik ze
+stanowiska operatora i oddaje wynik jako zasób magazynu Designu. Nazwanie jednej
+czynności drugą byłoby obietnicą, że spakowana została biblioteka.
+
+Wykaz zasobów nie jedzie tą drogą z tego samego powodu, dla którego nie jedzie
+komendami obszaru multimediów: identyfikator pliku biblioteki wraca z magazynu
+Designu odmową braku zasobu, a przycisk prowadzący do pewnej odmowy nie pełni
+żadnej funkcji.
+
+Postaci archiwum kontrakt nie zamyka wyliczeniem: pole jest napisem, a wartość
+pusta oznacza postać domyślną rdzenia. Wykaz trzech dostępnych postaci pochodzi
+z opisu komendy w kontrakcie, a nie z domysłu.
+
+Archiwum o zerowej liczbie pozycji jest poprawną odpowiedzią, a nie awarią: tak
+wraca spakowany katalog pusty. Zdanie odpowiedzi nazywa to wprost, ponieważ plik
+powstał i jego pustka jest informacją należną operatorowi.

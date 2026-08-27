@@ -4482,3 +4482,16 @@ Przekład schematu jest płytki z zamysłem: kontrakt niesie już gotowy typ
 schematu, typ elementu tablicy i komplet wartości wyliczenia, wyliczone raz
 przez generator przy budowie kontraktu; powtórzenie tamtego rozstrzygania
 tutaj byłoby drugim odwzorowaniem tych samych typów.
+
+## budowa/server/internal/dane/aplikacje_wdrozenia.go
+
+Tabela wdrożeń niesie wyłącznie środowisko, strategię, wersję, notatki, adres i odnośnik do
+logu zlecenia oraz jego stan — nie prowadzi prawdziwego przebiegu wdrożenia, ponieważ rdzeń
+niczego sam nie wdraża, tylko zapisuje to, co dostał od zlecenia.
+
+Zawężenie wykazu wdrożeń do środowiska idzie pustym łańcuchem jako brak zawężenia w jednym
+zapytaniu, zamiast dwóch wariantów tekstu SQL sklejanych warunkowo, które rozjeżdżałyby się
+przy pierwszej zmianie kolumn.
+
+Liczba pozycji spełniających te same warunki co strona wykazu, ale bez ograniczenia LIMIT,
+opisuje rozmiar całej historii wdrożeń, nie rozmiar zwróconej strony.

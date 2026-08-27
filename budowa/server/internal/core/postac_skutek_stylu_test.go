@@ -269,7 +269,7 @@ func TestPostacFragmentuZmieniaWylacznieFragment(t *testing.T) {
 			Bold: wskaznik(true), Color: wskaznik("#B00020"),
 		}, nil)
 
-	// Miara pierwsza: drzewo w bazie. Zbieramy znaki pogrubione i porównujemy
+	// Miara pierwsza: drzewo w bazie. Zbiera się znaki pogrubione, porównując
 	// ich zakres ze zamówionym.
 	forma := postacWierszDrzewa(t, oboczne, dokument)
 	polozenie := 0

@@ -1,23 +1,6 @@
-// Odpowiedzialność pliku: wydanie zasobu Operatorowi jako pliku
-// (`design.asset.export`) i wydanie partii zasobów w komplecie skal
-// (`design.asset.export.batch`). Warsztat obrazu — odczyt, skalowanie,
-// kodowanie — leży w `adapter_modul_design_obrazy.go`, bo dzieli go z wyrysem
-// kompozycji.
-//
-// Eksport różni się od `image.convert` celem: konwersja zakłada NOWY zasób
-// w magazynie i tam się kończy, eksport oddaje bajty gotowe do zapisania poza
-// produktem. Wydanie nie zostawia więc po sobie ani wiersza, ani bloba —
-// magazyn Designu nie ma sprzątania, a każde obejrzenie ikony w trzech skalach
-// zakładałoby trzy zasoby, których nikt nie zamawiał.
-//
-// Partia zlicza bilans, nie milczy. Odmowa jednego zasobu NIE wstrzymuje
-// pozostałych (kontrakt), a odrzucony trafia do wykazu wraz z powodem — panel
-// ma pokazać, czego nie wydał, a nie oddać krótszą listę bez słowa.
-//
-// Braki wspólne całej partii — format, którego rdzeń nie zapisuje, skala poza
-// granicą, pusty wykaz zasobów — są odmową CAŁEJ komendy, nie odrzuceniem
-// każdego zasobu z osobna: wynik z pięcioma odrzuceniami o tym samym powodzie
-// ukrywałby, że pomyłka leży w żądaniu, a nie w zasobach.
+// Odpowiedzialność pliku: wydanie zasobu Operatorowi jako pliku i wydanie
+// partii zasobów w komplecie skal. Warsztat obrazu leży w
+// `adapter_modul_design_obrazy.go`, bo dzieli go z wyrysem kompozycji.
 package core
 
 import (
@@ -32,7 +15,7 @@ import (
 )
 
 // WydajZasob wydaje zasób w formacie i skali wskazanych żądaniem — obsługuje
-// `design.asset.export`.
+// `design.asset.export`, oddając bajty gotowe do zapisania poza produktem.
 func (a *adapterDesignu) WydajZasob(ctx context.Context,
 	z shared.DesignAssetExportRequest) (shared.DesignAssetExportResponse, error) {
 
@@ -69,14 +52,8 @@ func (a *adapterDesignu) WydajZasob(ctx context.Context,
 }
 
 // WydajZasobyPartia wydaje wiele zasobów naraz, każdy w komplecie wskazanych
-// skal — obsługuje `design.asset.export.batch`.
-//
-// Pole `archive` żądania nie jest tu obsługiwane spakowaniem: wynik kontraktu
-// niesie WYKAZ wydań (`files []DesignExportFile`), z których każde ma własną
-// nazwę, typ treści i skalę, a archiwum byłoby jednym plikiem bez tych pól.
-// Spakowanie zbioru plików umie moduł Library (`archive.*`) i tam jest jego
-// miejsce — udawanie tutaj, że pliki są spakowane, dałoby wykaz wydań, których
-// treść nie jest tym, co zapowiada `mediaType`.
+// skal — obsługuje `design.asset.export.batch`. Pole `archive` żądania nie
+// jest tu obsługiwane spakowaniem, bo wynik niesie wykaz wydań osobnych.
 func (a *adapterDesignu) WydajZasobyPartia(ctx context.Context,
 	z shared.DesignAssetExportBatchRequest) (shared.DesignAssetExportBatchResponse, error) {
 
@@ -92,9 +69,7 @@ func (a *adapterDesignu) WydajZasobyPartia(ctx context.Context,
 	if err := sprawdzFormatWydaniaDesignu("design.asset.export.batch", z.Format); err != nil {
 		return shared.DesignAssetExportBatchResponse{}, err
 	}
-	// Skale sprawdzamy WSZYSTKIE przed pierwszym odczytem: skala poza granicą
-	// w trzeciej pozycji unieważnia całą partię, a wydanie dwóch pierwszych
-	// zasobów przed odmową zostawiłoby Operatora z połową zamówienia.
+	// Skale sprawdza się wszystkie przed pierwszym odczytem zasobu.
 	for _, skala := range z.Scales {
 		wartosc := skala
 		if err := sprawdzSkaleWydaniaDesignu("design.asset.export.batch", &wartosc); err != nil {
@@ -125,9 +100,7 @@ func (a *adapterDesignu) WydajZasobyPartia(ctx context.Context,
 			})
 			continue
 		}
-		// Zasób wydaje się we WSZYSTKICH skalach albo w żadnej: partia skal
-		// jednego zasobu jest jednym zamówieniem (zestaw gęstości), a wydanie
-		// @1x bez @2x wygląda na komplet i nim nie jest.
+		// Zasób wydaje się we wszystkich skalach albo w żadnej.
 		czesc := make([]shared.DesignExportFile, 0, len(skale))
 		powod := ""
 		for _, skala := range skale {
@@ -156,10 +129,8 @@ func (a *adapterDesignu) WydajZasobyPartia(ctx context.Context,
 }
 
 // wydanieZasobuDesignu składa jedno wydanie: czyta bajty zasobu z magazynu,
-// skaluje obraz i koduje go w żądanym formacie.
-//
-// SVG przechodzi bez rasteryzacji i bez skali — bajty wychodzą te, które leżą
-// w magazynie. Powód stoi w nagłówku `adapter_modul_design_obrazy.go`.
+// skaluje obraz i koduje go w żądanym formacie. SVG przechodzi bez
+// rasteryzacji i bez skali.
 func wydanieZasobuDesignu(zasob dane.ZasobDesignu, format string,
 	skala *float64, jakosc *int) (shared.DesignExportFile, error) {
 
@@ -210,9 +181,8 @@ func wydanieZasobuDesignu(zasob dane.ZasobDesignu, format string,
 	}, nil
 }
 
-// sprawdzFormatWydaniaDesignu odrzuca format, którego rdzeń nie zapisuje, PRZED
-// odczytem czegokolwiek z magazynu. Odmowa wymienia formaty obsługiwane —
-// szczegóły w `odmowaFormatuWydaniaDesignu`.
+// sprawdzFormatWydaniaDesignu odrzuca format, którego rdzeń nie zapisuje,
+// przed odczytem czegokolwiek z magazynu. Odmowa wymienia formaty obsługiwane.
 func sprawdzFormatWydaniaDesignu(komenda, format string) error {
 	switch normalizujFormatWydaniaDesignu(format) {
 	case "png", "jpeg", "svg", "pdf", "ico":
@@ -221,10 +191,8 @@ func sprawdzFormatWydaniaDesignu(komenda, format string) error {
 	return odmowaFormatuWydaniaDesignu(komenda, format)
 }
 
-// nazwaWydaniaDesignu składa proponowaną nazwę pliku. Nazwa zasobu, gdy jest,
-// bo Operator ją nadał; kod zasobu, gdy jej nie ma. Wariant gęstości dokleja
-// się z krotności skali (`@2x`) — tak nazywa się zestawy gęstości i tak je
-// czytają narzędzia po drugiej stronie.
+// nazwaWydaniaDesignu składa proponowaną nazwę pliku: nazwę zasobu, gdy jest,
+// albo kod zasobu. Wariant gęstości dokleja się z krotności skali (`@2x`).
 func nazwaWydaniaDesignu(zasob dane.ZasobDesignu, format string, skala *float64) string {
 	rdzen := zasob.Kod
 	if zasob.Nazwa != nil && strings.TrimSpace(*zasob.Nazwa) != "" {
@@ -238,9 +206,7 @@ func nazwaWydaniaDesignu(zasob dane.ZasobDesignu, format string, skala *float64)
 }
 
 // oczyscNazwePlikuDesignu zdejmuje z nazwy znaki, którymi dałoby się wyjść
-// z katalogu zapisu u Operatora. Nazwa jedzie do klienta jako PROPOZYCJA, ale
-// klient zapisuje pod nią plik, więc separator ścieżki i kropki wiodące
-// wychodzą tutaj, w jednym miejscu składania nazwy.
+// z katalogu zapisu u Operatora, bo klient zapisuje plik pod nazwą wprost.
 func oczyscNazwePlikuDesignu(nazwa string) string {
 	nazwa = strings.Map(func(znak rune) rune {
 		switch znak {
@@ -257,10 +223,8 @@ func oczyscNazwePlikuDesignu(nazwa string) string {
 	return nazwa
 }
 
-// czyZapisWektorowyDesignu rozstrzyga, czy bajty są zapisem SVG. Sprawdzenie
-// idzie po treści, nie po kolumnie `format`: kolumna niesie to, co zmierzył
-// nagłówek albo zadeklarował Operator, a wydanie svg przepuszcza BAJTY i to one
-// muszą być wektorem.
+// czyZapisWektorowyDesignu rozstrzyga, czy bajty są zapisem SVG, po treści,
+// nie po kolumnie `format`, sprawdzeniem pierwszych bajtów zasobu.
 func czyZapisWektorowyDesignu(bajty []byte) bool {
 	granica := len(bajty)
 	if granica > 512 {

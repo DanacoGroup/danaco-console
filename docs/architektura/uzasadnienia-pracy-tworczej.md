@@ -3565,3 +3565,117 @@ zlecenia dokumentowego jest z natury szeregowy — nie da sie poprawic
 jezyka pisma, ktorego jeszcze nie ma. Rozklad podany wprost przez
 Operatora albo przez model swoje zaleznosci niesie wlasne i nie sa
 nadpisywane.
+
+## budowa/server/internal/core/adapter_modul_design_eksport.go
+
+Eksport różni się od `image.convert` celem: konwersja zakłada nowy zasób
+w magazynie i tam się kończy, eksport oddaje bajty gotowe do zapisania poza
+produktem. Wydanie nie zostawia więc po sobie ani wiersza, ani bloba —
+magazyn Designu nie ma sprzątania, a każde obejrzenie ikony w trzech
+skalach zakładałoby trzy zasoby, których nikt nie zamawiał.
+
+Partia eksportu zlicza bilans, nie milczy. Odmowa jednego zasobu nie
+wstrzymuje pozostałych (kontrakt), a odrzucony trafia do wykazu wraz
+z powodem — panel ma pokazać, czego nie wydał, a nie oddać krótszą listę
+bez słowa.
+
+Braki wspólne całej partii — format, którego rdzeń nie zapisuje, skala poza
+granicą, pusty wykaz zasobów — są odmową całej komendy, nie odrzuceniem
+każdego zasobu z osobna: wynik z pięcioma odrzuceniami o tym samym
+powodzie ukrywałby, że pomyłka leży w żądaniu, a nie w zasobach.
+
+## budowa/server/internal/core/adapter_modul_design_szablony.go
+
+Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`).
+
+Wcześniej historia promptów i szablony żyły w oknie do zamknięcia karty
+przeglądarki i tyle o nich było wiadomo. Prompt Builder wypracowywał
+polecenie, a praca znikała po zamknięciu karty.
+
+Historia domyka też prowenancję. Zasób niesie pole `promptId`, którego rdzeń
+dotąd nie wypełniał, bo nie było przekładu klucza wiersza promptu na kod
+kontraktu. Odczyt zasobu bierze teraz kod promptu podzapytaniem
+(`dane/design_zasoby.go`), a komenda historii oddaje drugą stronę tego samego
+powiązania: prompt wraz z kodami zasobów, które z niego powstały.
+
+Nadpisanie w `ZapiszSzablonPromptu` idzie po `templateId` z żądania; brak
+zakłada szablon nowy. Operator, który nadpisuje szablon, oczekuje, że
+nadpisał ten jeden, a nie że dostał drugi obok — a wykaz z dwoma szablonami
+tej samej nazwy wygląda dokładnie tak, jak wygląda zgubiona praca.
+
+W `HistoriaPromptow` kanał bywa odmawiał i wtedy prompt jest zapisem próby —
+czyli dokładnie tego, po co Operator do historii sięga, żeby poprawić
+polecenie i wydać je jeszcze raz.
+
+Drugi warunek w `sprawdzSzablonPromptuDesignu` nie jest formalnością:
+nadpisanie cudzego szablonu przez podanie jego kodu byłoby zmianą stanu,
+którego wołający nawet nie widzi.
+
+Wynik kontraktu partii eksportu niesie wykaz wydań (files []DesignExportFile),
+z których każde ma własną nazwę, typ treści i skalę, a archiwum byłoby
+jednym plikiem bez tych pól. Spakowanie zbioru plików umie moduł Library
+(archive.*) i tam jest jego miejsce — udawanie tutaj, że pliki są
+spakowane, dałoby wykaz wydań, których treść nie jest tym, co zapowiada
+mediaType.
+
+Skala poza granicą w trzeciej pozycji unieważnia całą partię eksportu,
+a wydanie dwóch pierwszych zasobów przed odmową zostawiłoby Operatora
+z połową zamówienia.
+
+Partia skal jednego zasobu jest jednym zamówieniem (zestaw gęstości),
+a wydanie @1x bez @2x wygląda na komplet i nim nie jest.
+
+Wariant gęstości nazwy wydania dokleja się z krotności skali (@2x) — tak
+nazywa się zestawy gęstości i tak je czytają narzędzia po drugiej stronie.
+
+Nazwa wydania jedzie do klienta jako propozycja, ale klient zapisuje pod
+nią plik, więc separator ścieżki i kropki wiodące wychodzą w jednym
+miejscu składania nazwy, w `oczyscNazwePlikuDesignu`.
+
+Kolumna `format` niesie to, co zmierzył nagłówek albo zadeklarował
+Operator, a wydanie svg przepuszcza bajty i to one muszą być wektorem —
+stąd sprawdzenie `czyZapisWektorowyDesignu` idzie po treści.
+
+## budowa/server/internal/wiedza/fragmenty.go
+
+Akapit to myśl wydzielona przez autora tekstu, natomiast cięcie co N znaków
+rozłupuje zdanie w połowie słowa i daje cytat bezużyteczny. Tekst rozpada się
+najpierw na akapity (pusty wiersz); akapit krótszy niż docelowa długość
+doklejany jest do sąsiada, dopóki mieści się w granicy, bo akapit
+jednozdaniowy osadzony osobno niesie za mało kontekstu, żeby dać się
+odróżnić od innego jednozdaniowego. Akapit dłuższy od granicy rozpada się na
+zdania (kropka, wykrzyknik, pytajnik, koniec wiersza), a zdanie dłuższe od
+granicy cięte jest po ostatniej spacji przed granicą, nigdy w środku słowa.
+
+Każdy fragment poza pierwszym zaczyna się od ostatniego zdania fragmentu
+poprzedniego. Bez tej zakładki zdanie stojące na styku dwóch fragmentów traci
+połowę kontekstu po każdej stronie granicy; koszt zakładki to około jednej
+piątej więcej wektorów.
+
+Granica 1100 znaków wynika z okna modelu, przy którym te liczby powstały:
+`paraphrase-multilingual-mpnet-base-v2` obcinał wejście na 384 tokenach
+podziału XLM-R, a polszczyzna kosztuje w nim około trzech znaków na token.
+Fragment dłuższy niż okno zostaje obcięty po cichu, a cytat byłby wtedy
+dłuższy niż to, co model przeczytał. Model domyślny jest dziś inny — `bge-m3`
+przyjmuje 8192 tokeny (`max_position_embeddings` w opisie jego wag) — więc
+okno przestało być ciasne i granica przestała być jego odwzorowaniem. Zostaje
+jednak nietknięta, bo jest zarazem granicą cytatu: fragment jest tym, co
+wraca Operatorowi i modelowi jako przytoczenie, a przytoczenie na kilka
+tysięcy znaków przestaje być przytoczeniem. Docelowe 700 znaków zostawia pod
+tą granicą zapas na zakładkę i na słowa łamane na kilka tokenów.
+
+Pole `Kolejnosc` struktury `Fragment` wchodzi do tożsamości wiersza
+wskaźnika, żeby powtórne indeksowanie tego samego dokumentu nadpisywało
+fragmenty, a nie dokładało ich drugi komplet.
+
+Akapit dłuższy od granicy w `naCzesci` rozkłada się na zdania, a zdanie
+dłuższe od granicy — na kawałki cięte po ostatniej spacji.
+
+`zdania`: skróty pisane z kropką („ul.", „art.") rozdzielą tu zdanie
+w miejscu, które zdaniem nie jest; skutek jest kosmetyczny — fragment o jedno
+zdanie krótszy — a obroną byłby dopiero słownik skrótów polszczyzny
+utrzymywany w rdzeniu.
+
+`ostatnieZdanie`: cięcie pada na pierwszej spacji za granicą liczoną od
+końca, a gdy spacji tam nie ma — na najbliższym początku znaku UTF-8, więc
+zakładka nie zaczyna się od rozłupanej litery.

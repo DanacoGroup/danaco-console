@@ -3901,3 +3901,116 @@ adaptera.
 
 Klasa „wzmianka" nie ma kanału dodatkowego w katalogu, więc zdarzenie
 zostaje w samym centrum — sprawdzian odłożenia nie dotyka kolejki doręczeń.
+
+## budowa/server/internal/core/brama_kontraktu_test.go
+
+Straże bramy kontraktu: rdzeń wykonuje żądanie dopiero po sprawdzeniu go wobec
+kontraktu. Sprawdziany w tym pliku pilnują dwóch rzeczy naraz, bo obie znoszą
+się nawzajem: 1. żądanie niezgodne z kontraktem ma wrócić odmową, a nie
+powodzeniem z wartością dobraną przez rdzeń; 2. odmowa ma nazwać pole, o które
+idzie — odmowa mówiąca „coś jest nie tak" zostawia wołającego dokładnie tam,
+gdzie zostawiało go milczenie. Ładunki są tu wypisane mapą, nie strukturą
+kontraktu: struktura Go niesie pole wymagane zawsze (znacznik bez
+`omitempty`), więc żądania bez pola nie da się nią złożyć. Żądanie niepełne
+przychodzi z drutu i tylko mapą da się je odtworzyć.
+
+TestBrakPolaWymaganegoNazywaPoleNieUsterkeWewnetrzna: pilnuje czterech dróg, na
+których brak wartości wracał jako `internal_error`: wołający dostawał tekst
+zapytania SQL albo zdanie o kolumnie bazy zamiast nazwy pola, którego nie
+wypełnił, a kod błędu kazał mu ponowić żądanie, które nie ma prawa się udać.
+
+TestPustaWartoscPolaWymaganegoNazywaPole: pole obecne, lecz puste, przechodzi
+bramę kontraktu — kontrakt żąda obecności pola, nie jego niepustości — i
+rozstrzyga o nim dziedzina. Bez tego sprawdzenia pusty rodzaj kanału dojeżdżał
+do więzu schematu i wracał treścią zapytania SQL.
+
+TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu pilnuje jedynego
+wyjątku spod bramy (rejestr decyzji, pozycja 10). Czym się to łamie: brama
+objęła `connection.hello`, którego trzy pola kontrakt oznacza jako wymagane.
+Klient sprzed wprowadzenia pola `clientId` dostawał więc odmowę zamiast wersji
+protokołu — a powitanie jest jedynym miejscem, z którego klient tę wersję
+czyta, czyli jedynym, w którym rozpoznaje, że jest starszy niż rdzeń. Im
+starszy klient, tym pewniej nie dowiadywał się, dlaczego został odrzucony.
+Ładunek idzie mapą pustą, bo struktura kontraktu niesie pola wymagane zawsze
+i żądania bez nich nie da się nią złożyć — a niepełne powitanie przychodzi
+właśnie z drutu.
+
+TestBrakiPowitaniaIdaDoDziennikaRdzenia pilnuje drugiej połowy pozycji 10:
+braki pól są odnotowane, a nie przemilczane. Dziennik jest jedynym miejscem,
+do którego mogą dojść: `ConnectionHelloResponse` nie ma pola na wykaz braków,
+a dołożenie takiego pola jest zmianą kontraktu. Sprawdzian mierzy więc zapis,
+a nie treść odpowiedzi — i tym samym pilnuje, żeby wyjątek nie zamienił się
+w milczenie.
+
+TestWyjatekObejmujeWylaczniePowitanie pilnuje granicy wyjątku od drugiej
+strony: sąsiadka powitania w tej samej rodzinie kontraktu przechodzi bramę bez
+ustępstw i odmawia, nazywając brakujące pole. Bez tego sprawdzianu wyjątek
+dopisany dla powitania mógłby rozlać się na całą rodzinę `connection.*` albo
+na komendy wołane przed zalogowaniem, a nikt by tego nie zobaczył — odmowa
+zniknięta wygląda jak działanie.
+
+## budowa/server/internal/core/zapora_fotografii_test.go
+
+Obróbkę zdjęć i wydania drukarskie robi się zwykle programami zewnętrznymi.
+Sięgnięcie po nie jest tu jednym `exec.Command` i wygląda w kodzie
+niewinnie, a kosztuje całą funkcję u Operatora: arsenał produktu stoi
+wkompilowany w binarium serwera, a u Operatora leży cienka instalka — samo
+okno. Funkcja zależna od programu, którego instalka nie niesie, jest
+u niego odmową, nie funkcją. Na maszynie deweloperskiej, gdzie te programy
+bywają doinstalowane ręcznie, sprawdzian takiej funkcji świeciłby zielono
+i nikt by się nie dowiedział.
+
+Zapora pilnuje dwóch rzeczy: że pliki rodzin `design.photo.*`
+i `design.print.*` nie wołają procesu, ani przez `exec.Command`, ani przez
+pomocnika drzewa `zewnetrzne.Wolaj`; i że żaden plik obszaru Design nie
+wymienia nazw silników obrazu i obrysowywania konturów, po które sięga się
+przy takiej pracy — także w komentarzu, bo nazwa w komentarzu jest
+wskazówką dla następnego wykonawcy, a wskazówka w tę stronę jest wskazówką
+ku szkodzie.
+
+Zapory nie wolno osłabić ani przestawić. Gdy nowa funkcja potrzebuje czegoś,
+czego rdzeń nie ma, drogą jest biblioteka Go wkompilowana przez `go.mod`
+albo zgłoszenie braku — nigdy program w miejsce biblioteki, która istnieje.
+Ten sam warunek pilnuje warsztatu dokumentu Studio
+(`zapora_warsztatu_pdf_test.go`) i z tego samego powodu.
+
+Wyjątek wolno dopisać w jednym przypadku: gdy dla danej pracy nie istnieje
+żadna biblioteka czysto-Go, a program jest składnikiem pakietu serwera i stoi
+w wykazie zależności. Dziś taki wyjątek jest jeden — odczyt liter przy
+wniesieniu materiału źródłowego (`plikiDesignuZOdczytemPisma`) — i jest
+ograniczony do jednego pliku oraz jednego programu. Wyjątek bez tych dwóch
+ograniczeń nie jest wyjątkiem, tylko zdjęciem zapory.
+
+Wykaz w `silnikiSpozaInstalki` jest nazwami programów, nie bibliotek:
+`pdfcpu`, `tdewolff/canvas`, `disintegration/imaging` i `x/image` są
+bibliotekami Go wkompilowanymi w binarium i wolno ich używać wszędzie.
+Zakaz dotyczy tego, co trzeba by uruchomić jako proces.
+
+Reguła produktu ma dwie połowy: gdy jest biblioteka Go, bierze się
+bibliotekę, bo `exec` jest regresem — tego pilnuje cała ta zapora; gdy nie
+ma biblioteki Go, program jest składnikiem pakietu serwera. Rozpoznanie
+pisma jest właśnie drugim przypadkiem: czytnika liter w czystym Go nie ma,
+a Tesseract stoi w wykazie zależności pakietu serwera
+(`zaleznosci_zewnetrzne.go`) i jest wołany tą samą drogą, co w Studiu
+i Translate. `design.mockup.import` bez odczytu liter rozpoznaje układ
+obszarów i to, które z nich są liniami tekstu, ale treści napisów nie
+czyta. Zakaz procesu bez tego wyjątku nie chronił tu instalki — odbierał
+funkcję, której nie ma czym zastąpić. Wyjątek obowiązuje jeden plik
+i jeden program; własny `exec` zostaje zabroniony i tu, a silniki obrazu
+z `silnikiSpozaInstalki` zostają zabronione w całym obszarze Design, ten
+plik włącznie — bo dla nich biblioteka Go istnieje.
+
+Pliki w `TestWarsztatFotografiiNieWolaProcesu` rozpoznaje się po nazwie, bo
+tak leżą w drzewie: warsztat fotografii w
+`adapter_modul_design_fotografia*.go`, część drukarska w
+`adapter_modul_design_druk*.go`, a rachunek wektora, ikon i wykresów —
+w plikach, które te dwie rodziny wołają.
+
+Zakres `TestObszarDesignNieWymieniaSilnikowObrazuSpozaInstalki` jest
+obszarem Design (`adapter_modul_design*.go`), nie całym rdzeniem, i jest to
+pomiar granicy odpowiedzialności, nie ustępstwo: warsztat obrazu modułu
+Library i narzędzia obrazowe modelu mają własne nagłówki, w których te
+nazwy stoją jako zapis decyzji ich autorów. Poszerzenie tej zapory na cały
+rdzeń wymagałoby przepisania cudzych plików — a to jest osobna praca
+i osobna zgoda. Zapora obszaru Design jest warunkiem, który ten obszar
+spełnia w całości i który da się utrzymać.

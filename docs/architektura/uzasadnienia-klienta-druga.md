@@ -1991,3 +1991,48 @@ tutaj, bo kontekst okna jest jedynym odczytem modułu; resztę wyzwala zapis, kt
 klikalny także po odmowie. Ponowienie wyzwala odczyt i nie zdejmuje komunikatu — ten znika dopiero,
 gdy odczyt się powiedzie. Tryb uprawnień, zasięg wykonania, rola okna i katalogi robocze stoją
 w panelu sterowania okna na tym samym ekranie.
+
+## budowa/klient-poprzedni/src/widok-sterowania/nazwy-ustawien.ts
+
+Plik nie zna ani jednej nazwy prezentacyjnej z osobna — wszystkie bierze
+z istniejących słowników etykiet okna, etykiet sterowania oraz rejestru
+kanałów. Jedyne, co dokłada, to złożenie wartości w wiersz czytelny bez
+otwierania kontrolki. Host wykonania nie jest osobnym wierszem, lecz dopiskiem
+przy środowisku wykonania — uszczegóławia zasięg, a nie stanowi odrębnego
+ustawienia. Nazwa hosta zostaje przez to widoczna bez dziewiątej pozycji.
+
+Identyfikator kanału spoza wykazu nie znika i nie zostaje podmieniony — widok
+pokazuje prawdę o oknie, a nie pozycję pierwszą z brzegu. Dopóki wykaz jest
+pusty, bo odpowiedź rdzenia jest jeszcze w drodze, dopisek o pozycji spoza
+wykazu byłby przedwczesny — wiersz pokazuje sam identyfikator ze wskaźnikiem
+ładowania. Rejestr nie odróżnia braku odpowiedzi od pustego rejestru.
+
+## budowa/klient-poprzedni/src/powloka/menu-profilu.ts
+
+Menu profilu Operatora w pasku powłoki środowiska udostępnia siedem pozycji ustawień
+pogrupowanych w trzy grupy tematyczne — tożsamość i dostęp, widok, obecność globalna —
+oraz stopkę prowadzącą do pełnego rejestru ustawień. Pozycje nie są osobnym wykazem:
+powstają z rejestru pozycji ustawień, z którego żyje także listwa strony głównej i menu
+aplikacji. W tym module leży wyłącznie podział na grupy oraz umieszczenie pozycji
+konfiguracji w stopce, bo stopka jest drogą do rejestru, czyli miejscem rzeczy
+pełniejszej niż pozycje nad nią. Zmiana nazwy albo ikony w rejestrze zmienia to menu
+samoczynnie. Mechanizm budowy menu pochodzi w całości z biblioteki komponentów drzewa
+menu, która niesie grupowanie, nastawę dwustanową, stopkę, znacznik wyboru i wędrówkę
+klawiaturą. Uchwyt menu niesie inicjały Operatora zamiast napisu rodzajowego —
+pojedyncza litera zastępcza nie oznacza inicjału konkretnej osoby, tylko pierwszą literę
+jedynej nazwy roli, jaką produkt zna. Motyw ma jedną prawdę: przełącznik w menu i
+przycisk w pasku czytają ten sam stan obowiązującego motywu i nasłuchują tego samego
+zdarzenia zmiany, więc zmiana w jednym miejscu przerysowuje drugie. Menu nie zawiera
+konta, adresu ani polecenia wylogowania, bo platforma nie prowadzi kont ani profili
+osobowych — bramka dostępu jest jedna, a rola Operatora pozostaje bezimienna, więc po
+zalogowaniu nie ma bram do przekraczania. Zdanie graniczne tłumaczące ten brak stoi na
+ekranie w stopce, tym samym brzmieniem co w menu aplikacji.
+
+Pole szukania nad ośmioma pozycjami zabrałoby wiersz i nie skróciłoby ani jednego ruchu:
+próg biblioteki, od którego pole szukania pojawia się samoczynnie, i tak by go nie
+pokazał przy tej liczbie pozycji — zapis jawny mówi, że to świadomy wybór, a nie
+przypadek. Znacznik wyboru pozycji w drzewie menu zostaje zawsze pusty, bo żadna
+pozycja nie jest nastawą jednokrotną: wszystkie otwierają okno, więc menu nie ma czego
+zaznaczać jako „ostatnio otwarte". Grupa „Widok" stoi między tożsamością a obecnością
+i ma dokładnie jedną pozycję — nastawę motywu, a nie wejście do okna — dlatego składa
+się osobno od pozostałych grup budowanych z rejestru.

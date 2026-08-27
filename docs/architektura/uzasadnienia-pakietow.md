@@ -3883,3 +3883,24 @@ Konto wybrane dla wywołania: gdy zapytanie nie wskazuje konta wprost, obowiązu
 konto powiązane z wierszem kanału w rejestrze. Powiązanie kanału z kontem staje
 się dzięki temu widoczne w wywołaniu nawet bez konfiguracji sesji; brak obu
 źródeł oznacza, że tożsamość bierze się z otoczenia procesu.
+
+## budowa/server/internal/session/proces.go
+
+Proces nie powstaje w tym pakiecie ani nie jest stąd uruchamiany. Startuje go warstwa kanału własną
+drogą, a sesja obejmuje proces już biegnący przez metodę Przejmij rejestru procesów. Do sesji należy
+wyłącznie to, czego kanał nie umie: objęcie całego drzewa potomstwa jednym uchwytem systemowym, czyli
+Job Object na Windows albo grupa procesów na systemach uniksowych. Ubicie okna kończy zatem także
+wnuki, bez narzędzia taskkill i bez innej zależności od narzędzi systemu.
+
+Bez doglądu wykonywanego metodą dogladaj pole zakonczony miałoby jednego pisarza, metodę Ubij, a do
+Ubij prowadzą wyłącznie dwie drogi: zatrzymanie okna i przejęcie procesu następnej tury. Proces, który
+kończy się sam, nie wyzwala żadnej z nich, więc okno meldowałoby stan biegnący od samoistnego wyjścia
+aż do najbliższej tury albo zamknięcia okna, a przez ten czas wisiałby uchwyt zadania i uchwyt procesu
+systemowego.
+
+Metoda zwalniająca uchwyty ma teraz dwóch wołających, Ubij i dogląd, a zwolnienie drzewa procesów nie
+jest współbieżnie idempotentne: dwa zamknięcia tego samego uchwytu zamykają uchwyt, który system
+zdążył już nadać ponownie czemu innemu. Bezpieczeństwo stoi wyłącznie na odczycie i zapisie pola
+zakonczony pod tą samą blokadą, co w metodzie Ubij: kto zastanie wartość fałszywą, ten jeden przechodzi
+dalej. Tego nie wolno uprościć do sprawdzenia stanu przed działaniem, ponieważ byłoby to sprawdzenie
+i działanie rozdzielone w czasie, przy którym obaj wołający mogliby wejść równocześnie.

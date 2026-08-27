@@ -904,3 +904,32 @@ Narzędziownia nie jest stałą kolumną: wchodzi przyciskiem jako nakładka
 i schodzi. Kolejka z wieloma pozycjami potrzebuje miejsca na wykaz, więc
 dostaje nakładkę, a nie pasek, który zabierałby szerokość także wtedy, gdy
 nikt nic nie cyfryzuje.
+
+## budowa/klient/src/wejscie/montaz.ts
+
+Okno jest siatką o trzech wierszach: belka, korpus, pas działań. W wierszu
+pasa stoją dwie rzeczy — pas przez całą szerokość i nota w kolumnie
+tożsamości. Montaż tutaj zostaje wyłącznie przełożeniem stanu na węzły
+dokumentu i zdarzeń na wywołania przebiegu, dzięki czemu każda odsłona jest
+osiągalna w sprawdzianie bez przeglądarki — sprawdzian prowadzi przebieg, nie
+okno.
+
+Okno przygotowania nie ma belki systemowej, bo stoi już wewnątrz ramy
+aplikacji, a ta niesie własną; nie ma też odsłon do przełączania.
+
+Wpisanie stałej czasu zwłoki byłoby obietnicą odmierzania, którego nikt nie
+mierzył — dlatego licznik dostaje wyłącznie wartość zmierzoną przez przebieg.
+
+Pole, którego dotyczy usterka, niesie atrybut `aria-invalid`, żeby czytnik
+ekranu dowiedział się tego samego co oko. Przy kilku usterkach naraz wykaz
+niesie same rozpoznania, bez wskazówek co robić — wskazówkę niesie zaznaczone
+pole, a jej powtórzenie kilka razy wypchnęłoby formularz poza okno.
+
+Kontrolka niegotowa nie jest wyłączana atrybutem disabled, tylko oznaczona
+jako zajęta atrybutem aria-busy, ponieważ przycisk wygaszony nie mówi,
+dlaczego nie działa.
+
+Licznik wypisuje czas we wszystkich odsłonach, także ukrytych — inaczej byłby
+pusty przez sekundę po pokazaniu odsłony. Ubywa natomiast tylko licznik
+widoczny: czas schodzący za plecami doprowadziłby do tego, że użytkownik
+zastaje zero, choć odsłonę zobaczył przed chwilą.

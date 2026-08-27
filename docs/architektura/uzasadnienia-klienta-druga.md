@@ -3108,3 +3108,23 @@ funkcję operatora „edycja", która w kontrakcie jest polem findingId tej same
 
 ## budowa/klient/src/sprawdzian.ts
 Jego deklaracje typów mieszkają w pakiecie zewnętrznym, którego nowy klient nie zaciąga, więc sprawdzenie typów odmówiłoby każdemu plikowi sprawdzianu. Zbiór pusty jest tu niepowodzeniem, nie wynikiem: sprawdzian, który niczego nie zmierzył, milczałby dokładnie tak samo jak sprawdzian zdany.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-source-panel.ts
+Funkcja operatora z wykazu jest jedna: wprowadzenie albo wklejenie tekstu źródłowego, a zmiana
+źródła uruchamia jednoczesną aktualizację wszystkich Translation Panels, więc zapis nie kończy się
+na tym oknie — odpowiedź zapisu źródła niesie komplet paneli i wchodzi do stanu modułu. Import
+pliku nie ma komendy: panel akcji wymienia „Importuj plik", a obszar translate nie niesie
+w kontrakcie komendy przyjmującej plik źródłowy, więc przycisk zostaje klikalny i mówi, czego
+brakuje, zamiast być wygaszony bez wyjaśnienia. Drogą wpisania treści bez zapisu jest Format
+Studio: wydobyty tekst dokumentu ma trafić tam, gdzie operator go zobaczy i podda zapisowi, bo
+zapis źródła uruchamia aktualizację wszystkich paneli i wykonanie go automatycznie byłoby
+zleceniem przekładu, którego nikt nie zamówił.
+Pole języka źródłowego jest wejściem operatora i miejscem, w które wpisuje się jeszcze
+niezapisane rozpoznanie pisma, a osobne zdanie mówi, co rdzeń trzyma u siebie, bo nie wystarczy
+przeliczyć go przy ogłoszeniu stanu modułu — rozjazd powstaje także wtedy, gdy operator pisze
+w polu i gdy rozpoznanie wpisuje tam wynik, które zdarzeniem stanu nie jest. Odczyty liczą się
+z treści pola, a nie za ogłoszeniem stanu modułu, bo tekst przed zapisem jest tym, nad którym
+operator pracuje. Przerysowanie nie zdejmuje fazy trwającej ani fazy błędu, bo odświeżenie
+przychodzi z każdego ogłoszenia stanu modułu, także w środku zapisu i zaraz po odmowie — gdyby
+wtedy stawiało okno na gotowe albo na pustkę, skasowałoby nieprzeczytany komunikat albo zgasiłoby
+zapowiedź trwającego wywołania.

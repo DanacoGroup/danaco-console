@@ -5474,3 +5474,44 @@ obsady rusza na modelu wskazanym w oknie.
 
 Sygnatury dobudowy modułu stoją w badania_dobudowa.go; osadzenie ich przez wbudowany
 interfejs trzyma cały obszar w jednym kontrakcie, nie rozbija go na dwa niezależne porty.
+
+## budowa/server/internal/podagenci/zywotnosc.go
+Rejestr procesów sesji obejmuje proces tury uchwytem systemowy, grupa
+procesów na Uniksie, obiekt zadania na Windows, a dogląd okresowy utrzymuje
+odpowiedź o życiu zgodną z prawdą systemu, nie z polem w pamięci. To jest
+żywotność realna i ten plik z niej wyłącznie czyta.
+
+Droga dziś nie ma dwóch rzeczy. Tura pozycji kolejki, a praca podagenta jest
+pozycją kolejki, jedzie z pustymi zasięgami, więc proces wykonujący pozycję
+nigdy nie trafia do rejestru procesów. Rejestr kluczuje procesy
+identyfikatorem okna i trzyma jeden wpis na okno, a przejęcie ubija wpis
+poprzedni; podagentów bywa piętnastu pod jednym oknem i pracują równolegle
+z turą własnego okna wykonawcy, więc zarejestrowanie ich procesów pod oknem
+wykonawcy ubijałoby nawzajem turę orkiestratora i tury podagentów. Brakuje
+klucza drobniejszego niż okno, i tego pakiet nie obchodzi bokiem, bo drugi
+rejestr procesów byłby drugą prawdą o procesach.
+
+Żywy jest wobec tego mierzalnie proces orkiestratora, okna wykonawcy, które
+podagentów powołało: jego turę startuje wysłanie wiadomości, zasięg okna
+jest wtedy wypełniony i proces zostaje wpisany do rejestru. Ocena mówi więc
+prawdę o oknie prowadzącym podagentów, a o procesie samej pozycji mówi stan
+bez wpisu, i to zdanie jest prawdziwe, nie zastępcze.
+
+Żywotność po awarii i po restarcie stanowi drugą połowę tego pliku. Dogląd
+rejestru mówi o procesie rdzenia, który stoi; gdy rdzeń padnie, nie mówi nic
+i nie ma komu mówić, dlatego pytanie, co się dzieje z podagentem po awarii,
+ma odpowiedź w bazie, nie w rejestrze procesów.
+
+Znacznik uruchomienia składa się z dwóch rzeczy, bo żadna sama nie
+wystarcza: numer procesu jest w systemie powtarzalny, po restarcie maszyny
+ten sam numer wraca, a czas sam nie odróżnia dwóch rdzeni wstałych w tej
+samej milisekundzie. Razem są jednoznaczne w praktyce, a jednoznaczności
+absolutnej ten znacznik nie potrzebuje: rozstrzyga wyłącznie pytanie, czy to
+nadal ten sam rdzeń. Znacznik zakłada się raz na proces i podaje dalej
+wartością, losowania po drodze nie ma, więc nikt nie osieroci sam siebie.
+
+PosprzatajPoRestarcie woła się raz, przy starcie, przed pierwszym powołaniem:
+wywołanie późniejsze zamknęłoby pracę powołaną przez ten sam rdzeń, gdyby jej
+oznaczenie prowadzenia jeszcze nie doszło. Trwałość pusta znosi się sama:
+rdzeń bez repozytorium podagentów startuje, a nie odmawia startu, po prostu
+nie ma czego sprzątać.

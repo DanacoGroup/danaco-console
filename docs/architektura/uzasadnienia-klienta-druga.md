@@ -1645,3 +1645,8 @@ katalog zlepiłby dwa słowniki pojęć w jeden. Rejestr modułów wiąże widok
 a tabela modułów nie niesie osobnego kodu ani dla poczty, ani dla wiedzy — drugi wpis rejestru
 czekałby na kod, którego nawigacja nigdy nie poda. Okno wchodzi do sceny przez złożenie modułu
 poczty, które ma w rejestrze jeden wpis. Dlatego ten plik nie wystawia stałej modułu.
+
+## budowa/klient-poprzedni/src/moduly/translate/wiersz-terminu.ts
+Jeden wiersz przypada na plik, tak samo jak wiersz biblioteki ekspertów w module agentów. Ten sam
+wiersz nadaje się zarówno do wykazu terminów, jak i do zestawienia wystąpień, ponieważ nie wywołuje
+działań samodzielnie, tylko oddaje naciśnięcia oknu, które wie, co z nimi zrobić.

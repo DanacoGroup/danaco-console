@@ -4971,3 +4971,16 @@ Sprawdzenie rozmiaru wyniku wyprzedza pomiar wyniku, bo narzędzie zewnętrzne p
 Zrzut klatki jest obrazem: jego wymiary czyta nagłówek pliku, tą samą drogą, którą mierzy je wniesienie zasobu, a pole czasu trwania zostaje puste, bo obraz nie trwa. Każdy inny wynik jest materiałem czasowym: mierzy go program pomiaru, a wymiary są brane ze strumienia obrazu, którego wyodrębniony dźwięk nie ma.
 
 Rozstrzygnięcie kontenera wyniku przy braku wskazania wołającego: operacja konwersji bez formatu jest odmową, bo bez wskazania program przepisałby materiał do tego samego kontenera i oddał kopię pod nazwą przekształcenia; zrzut klatki spada na PNG; wyodrębnienie dźwięku spada na kontener wyprowadzony z kodeka zmierzonego w materiale, więc ścieżkę da się przepisać bez ponownego kodowania; przycięcie i zmiana rozmiaru zostają w kontenerze źródła, bo żadna z tych czynności nie jest zmianą formatu.
+
+## budowa/server/internal/core/handlers_model.go
+Rodzina model.* weszła do kontraktu osobno i osobno się wpina, dokładnie tak,
+jak rodzina komend pamięci wpina się osobno od rodziny komend przestrzeni
+roboczej, jadąc na tej samej maszynerii rejestracji. Zdarzenie rozgłaszane po
+zmianie kanału jest tym samym zdarzeniem, które rozgłasza aktualizacja okna:
+zmiana kanału jest zmianą okna, więc panel sterowania odświeża się z tej
+samej subskrypcji, a drugiego zdarzenia dla tego samego faktu kontrakt nie
+ma. Żądanie wskazujące kartę sesji dotyka wielu okien naraz i rozgłasza tyle
+zmian, ile okien naprawdę zmieniło kanał. Asercja portu okien przy rejestracji
+jest celowo twarda, wzorem rodziny pamięci: cicha nieobecność uchwytu jest
+usterką widoczną dopiero na uruchomionym produkcie, więc rdzeń ma paść głośno
+przy montażu, zamiast po cichu zostawić komendę nieznaną.

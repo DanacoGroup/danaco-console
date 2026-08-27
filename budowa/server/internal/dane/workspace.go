@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: obszar projektu przestrzeni roboczej (tabela
-// `projekt`) oraz odczyt kart sesji pracujących w projekcie. Pamięć projektu
-// leży w `workspace_pamiec.go`, przypisania ekspertów w `workspace_agenci.go` —
-// jedno repozytorium, trzy pliki wedle odpowiedzialności.
-//
-// Projekt zakłada się przy pierwszym wejściu do niego: kontrakt nie ma komendy
-// zakładającej projekt, a Project Dashboard ma odpowiedzieć, nie odmówić — brak
-// wiersza jest więc stanem początkowym, nie błędem.
+// Plik prowadzi obszar projektu przestrzeni roboczej w tabeli projekt oraz
+// odczyt kart sesji pracujących w projekcie; pamięć projektu i przypisania
+// ekspertów leżą w osobnych plikach tego repozytorium.
 package dane
 
 import (
@@ -29,7 +24,8 @@ type Projekt struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumPrzestrzeniRoboczej jest kontraktem obszaru Workspace.
+// RepozytoriumPrzestrzeniRoboczej jest kontraktem obszaru Workspace: projekty,
+// pamięć, zadania, notatki, materiały i ślad zdarzeń.
 type RepozytoriumPrzestrzeniRoboczej interface {
 	ZapewnijProjekt(ctx context.Context, kod, nazwa string) (Projekt, bool, error)
 	Projekt(ctx context.Context, kod string) (Projekt, error)
@@ -183,7 +179,7 @@ func (r *repozytoriumPrzestrzeniRoboczej) OdnotujCzynnosc(ctx context.Context, p
 }
 
 // SesjeProjektu zwraca identyfikatory kart sesji pracujących w projekcie,
-// od ostatnio zmienionej.
+// od ostatnio zmienionej karty.
 func (r *repozytoriumPrzestrzeniRoboczej) SesjeProjektu(ctx context.Context, kod string) ([]string, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, sesjeProjektu)
 	if err != nil {
@@ -209,7 +205,8 @@ func (r *repozytoriumPrzestrzeniRoboczej) SesjeProjektu(ctx context.Context, kod
 	return lista, nil
 }
 
-// odczytajProjekt składa strukturę z jednego wiersza wyniku.
+// odczytajProjekt składa strukturę projektu z jednego wiersza wyniku
+// zapytania, tłumacząc opis i stan.
 func odczytajProjekt(wiersz skaner) (Projekt, error) {
 	var projekt Projekt
 	var opis sql.NullString

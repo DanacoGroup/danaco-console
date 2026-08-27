@@ -1,25 +1,6 @@
-/* ============================================================================
-   DANACO CONSOLE — ŻETONY BARW STANU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: cztery stany semantyczne, każdy w trzech rolach.
+/* Żetony barw stanu obejmują cztery stany semantyczne, każdy w trzech rolach tekstu, tła i obrysu; stan nigdy nie jest sygnalizowany samym kolorem, zawsze towarzyszy mu ikona lub etykieta. */
 
-     -tekst   tekst i ikona stanu
-     -tlo     tło plakietki / alertu
-     -obrys   obrys plakietki / alertu
-
-   Informacja = rodzina sygnału. System ma jedną barwę akcentu, więc stan
-   informacyjny nie wprowadza kolejnej.
-
-   Stany przełączają się wraz z motywem — oba komplety są pełne (motyw ciemny
-   nie jest przyciemnionym jasnym). Zapas prefers-color-scheme jak w warstwie
-   semantycznej.
-
-   Dostępność: stan nigdy nie jest sygnalizowany samym kolorem — zawsze
-   towarzyszy mu ikona albo etykieta tekstowa. Żeton barwy nie zwalnia
-   komponentu z tego obowiązku.
-   ============================================================================ */
-
-/* --- MOTYW JASNY --------------------------------------------------------- */
+/* Motyw jasny niesie pełny komplet czterech stanów semantycznych, niezależny od pozostałych motywów i wariantów preferencji systemu. */
 :root[data-theme='light'] {
   --dn-sukces-tekst: var(--dn-zielen-700);
   --dn-sukces-tlo: var(--dn-zielen-100);
@@ -38,7 +19,7 @@
   --dn-informacja-obrys: var(--dn-sygnal-200);
 }
 
-/* --- MOTYW CIEMNY -------------------------------------------------------- */
+/* Motyw ciemny niesie pełny komplet czterech stanów semantycznych — nie jest przyciemnioną kopią motywu jasnego, każdy żeton ma własną wartość. */
 :root[data-theme='dark'] {
   --dn-sukces-tekst: var(--dn-zielen-400);
   --dn-sukces-tlo: rgba(79, 189, 133, 0.14);
@@ -57,7 +38,7 @@
   --dn-informacja-obrys: rgba(92, 140, 236, 0.40);
 }
 
-/* --- Brak jawnego wyboru — rozstrzyga preferencja systemu ---------------- */
+/* Brak jawnego wyboru motywu pozostawia rozstrzygnięcie preferencji systemu operacyjnego przez zapytanie prefers-color-scheme. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
     --dn-sukces-tekst: var(--dn-zielen-700);

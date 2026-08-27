@@ -423,3 +423,9 @@ Powielenie wartości cienia sygnału i pozostałych żetonów między blokiem `p
 ## budowa/klient-poprzedni/src/komponenty/drobne.css
 Klatki nazwane dn-obrot definiuje ten arkusz i wykorzystuje je również
 przycisk w stanie ładowania; klatki dn-tetno definiuje plakietka.css.
+
+## budowa/klient-poprzedni/src/motyw/stany.css
+Rola -tekst niesie tekst i ikonę stanu, rola -tlo tło plakietki lub alertu,
+rola -obrys obrys plakietki lub alertu. Stan informacyjny jest rodziną
+sygnału: system ma jedną barwę akcentu, więc stan informacyjny nie
+wprowadza kolejnej.

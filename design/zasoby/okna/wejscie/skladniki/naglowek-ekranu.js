@@ -1,9 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — GŁOWA EKRANU
-
-   Nadtytuł mówi, gdzie stoisz; tytuł — co się dzieje; zdanie wprowadzające —
-   czego się spodziewać. Nadtytuł bywa zbędny: w oknie dostępu jego rolę pełnią
-   zakładki, więc powtarzanie go byłoby szumem.
+/* Głowa ekranu składa się z nadtytułu wskazującego miejsce, tytułu opisującego bieżące zdarzenie oraz zdania wprowadzającego, które zapowiada dalszy przebieg.
+   Nadtytuł bywa zbędny: w oknie dostępu jego rolę pełnią zakładki, więc
+   powtarzanie go byłoby szumem.
 
    Właściwości:
      nadtytul  klucz katalogu (opcjonalny)

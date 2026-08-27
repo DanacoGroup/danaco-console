@@ -1,10 +1,6 @@
-/* ============================================================================
-   SKŁADNIK — WYKAZ ETAPÓW URUCHOMIENIA
-
-   Cztery etapy nawiązania połączenia. Znak etapu idzie za stanem: ptaszek dla
-   zrobionego, tętno dla trwającego, krzyżyk dla nieudanego, numer dla
-   czekającego. Znak zostawiony z poprzedniego stanu kłamie — ptaszek przy
-   „w toku" mówi, że rzecz jest skończona.
+/* Wykaz etapów uruchomienia pokazuje cztery etapy nawiązania połączenia, każdy ze znakiem podążającym za jego stanem, a nie pozostawionym z etapu poprzedniego.
+   Znak etapu idzie za stanem: ptaszek dla zrobionego, tętno dla trwającego,
+   krzyżyk dla nieudanego, numer dla czekającego.
 
    Właściwości:
      stany   wykaz stanów, po jednym na etap: 'gotowy' | 'pracuje' | 'blad' | 'oczekuje'

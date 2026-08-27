@@ -5988,3 +5988,21 @@ w czasie rzeczywistym. Fragment tekstu jest kolejnym etapem, fragment
 wywołania narzędzia etapem nazwanym, a fragment ostatni domyka proces.
 Rodzaj błąd w ostatnim fragmencie oznacza turę nieudaną, bo strumień ma
 jedną drogę dla powodzenia i niepowodzenia.
+
+## budowa/server/internal/core/kolejka_wykonawca.go
+Droga wysyłki modelu jest jedna. Wykonawca nie buduje drugiego silnika ani drugiej drogi do
+modelu: sięga po ten sam rejestr kanałów i tę samą metodę wysyłki, którą jedzie tura okna i głos
+debaty. Strumień odpowiedzi idzie wspólnym nadajnikiem, więc monitor procesów widzi pracę pozycji
+tak samo jak turę okna. Czego pozycja nie niesie: treść zlecenia ma, lecz kanału modelu nie — ani
+schemat pozycji kolejki, ani kontrakt nie mają pola wskazującego kanał, którym pozycję wykonać.
+Kanał dostarcza więc rozwiązywacz wpięty przy montażu: zna okno wykonawcy pozycji albo
+koordynatora kolejki i z niego bierze kanał. Pozycja bez treści albo bez kanału to nie cichy
+sukces — to realny błąd wykonania, który silnik zamienia na stan błędny.
+
+Treść wyniku wraca do wołającego, bo bez niej wynik podagenta zostawałby pusty, choć praca się
+odbyła i jej treść przepłynęła strumieniem. Silnik oddaje treść ujściu wyniku, a schemat pozycji
+zostaje nietknięty: pozycja kolejki nie ma kolumny wyniku i ten podpis jej nie dorabia — trwałość
+wyniku należy do wiersza, który go pokazuje.
+
+Powodzenie tury znaczy pracę wykonaną; błąd kanału albo brak drogi wykonania znaczy niepowodzenie,
+które silnik pokaże jako stan błędny.

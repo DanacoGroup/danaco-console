@@ -1,21 +1,5 @@
-// Odpowiedzialność pliku: most między pozycją kolejki a realnym wykonaniem.
-// Silnik kolejek (`kolejka_silnik.go`) prowadzi pozycje przez stany; wykonawca
-// robi to, czego stan sam nie robi — uruchamia pracę pozycji, która weszła
-// w stan `wykonywana`, i zwraca jej wynik.
-//
-// Droga wysyłki modelu jest jedna. Wykonawca nie buduje drugiego silnika ani
-// drugiej drogi do modelu: sięga po ten sam rejestr kanałów i tę samą metodę
-// `Wyslij`, którą jedzie tura okna (`adapter_rozmowa.go`) i głos debaty
-// (`adapter_modul_roundtable_glos.go`). Strumień odpowiedzi idzie wspólnym
-// nadajnikiem, więc Process Monitor widzi pracę pozycji tak samo jak turę okna.
-//
-// Czego pozycja nie niesie: treść zlecenia ma (`tresc_zlecenia`), lecz kanału
-// modelu nie — ani schemat `pozycja_kolejki`, ani kontrakt nie mają pola
-// wskazującego kanał, którym pozycję wykonać. Kanał
-// dostarcza więc rozwiązywacz wpięty przy montażu: zna okno wykonawcy pozycji
-// albo koordynatora kolejki i z niego bierze kanał. Pozycja bez treści albo bez
-// kanału to nie cichy sukces — to realny błąd wykonania, który silnik
-// zamienia na stan `bledna`.
+// Plik jest mostem między pozycją kolejki a realnym wykonaniem: wykonawca uruchamia pracę pozycji,
+// która weszła w stan wykonywana, i zwraca jej wynik, sięgając po ten sam rejestr kanałów co tura okna.
 package core
 
 import (
@@ -29,15 +13,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// wykonawcaKroku uruchamia realną pracę pozycji kolejki. Zwrócony błąd znaczy
-// niepowodzenie wykonania — silnik przekłada je na stan `bledna`; brak błędu
-// znaczy pracę zakończoną, którą silnik przesuwa do `do_weryfikacji`.
-//
-// Treść wyniku wraca do wołającego, bo bez niej `Subagent.result` zostawałby
-// pusty, choć praca się odbyła i jej treść przepłynęła strumieniem. Silnik
-// oddaje treść ujściu wyniku (`kolejka_silnik.go`), a schemat pozycji zostaje
-// nietknięty: `pozycja_kolejki` nie ma kolumny wyniku i ten podpis jej nie
-// dorabia — trwałość wyniku należy do wiersza, który go pokazuje (podagent).
+// wykonawcaKroku uruchamia realną pracę pozycji kolejki. Zwrócony błąd znaczy niepowodzenie
+// wykonania, brak błędu znaczy pracę zakończoną, którą silnik przesuwa do weryfikacji.
 type wykonawcaKroku interface {
 	Wykonaj(ctx context.Context, pozycja dane.Pozycja) (string, error)
 }
@@ -55,10 +32,8 @@ var (
 		"wykonawca kroku bez rejestru kanałów albo rozwiązywacza kanału")
 )
 
-// kanalPozycji rozwiązuje kanał modelu i zasięgi (sesja, okno) dla pozycji.
-// Zwraca `false`, gdy pozycji nie da się przypisać kanału — wykonanie jest
-// wtedy niemożliwe, a pozycja idzie w stan błędu. Rozwiązywacz wpina montaż,
-// bo mapowanie okna wykonawcy na kanał żyje w pakiecie sesji, nie tutaj.
+// kanalPozycji rozwiązuje kanał modelu i zasięgi (sesja, okno) dla pozycji, zwracając fałsz, gdy
+// pozycji nie da się przypisać kanału, bo mapowanie okna wykonawcy na kanał żyje w pakiecie sesji.
 type kanalPozycji func(ctx context.Context, pozycja dane.Pozycja) (kanal string, zasiegi models.Zasiegi, ok bool)
 
 // wykonawcaModelu wykonuje pozycję turą kanału modelu. Treść zlecenia pozycji
@@ -76,11 +51,8 @@ func nowyWykonawcaModelu(kanaly *models.Rejestr, nadajnik Nadajnik, kanal kanalP
 	return wykonawcaModelu{kanaly: kanaly, nadajnik: nadajnik, kanal: kanal}
 }
 
-// Wykonaj uruchamia turę kanału dla pozycji i zwraca zebraną treść odpowiedzi
-// oraz wynik. Powodzenie tury znaczy pracę wykonaną; błąd kanału albo brak
-// drogi wykonania znaczy niepowodzenie, które silnik pokaże jako stan `bledna`.
-// Treść wraca także przy błędzie — to, co model zdążył oddać, jest częścią
-// prawdy o nieudanej turze, nie odpadem.
+// Wykonaj uruchamia turę kanału dla pozycji i zwraca zebraną treść odpowiedzi oraz wynik. Treść
+// wraca także przy błędzie, bo to, co model zdążył oddać, jest częścią prawdy o nieudanej turze.
 func (w wykonawcaModelu) Wykonaj(ctx context.Context, pozycja dane.Pozycja) (string, error) {
 	tresc := strings.TrimSpace(wartoscTekstu(pozycja.TrescZlecenia))
 	if tresc == "" {

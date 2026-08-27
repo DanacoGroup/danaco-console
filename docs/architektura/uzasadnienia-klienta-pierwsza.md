@@ -3208,3 +3208,34 @@ odczytu ze złożenia nie dał dwóch żądań na jedno zmontowanie okna.
 
 Po odmowie odczytu wykaz poprzedni też odchodzi: skoro odczyt się nie udał,
 wykaz przestaje być bieżący, a eksport oddałby go, jakby wciąż nim był.
+
+## budowa/klient-poprzedni/src/aplikacja/rejestr-modulow.ts
+
+Nawigacja bierze wykaz modułów z rdzenia komendami `module.list`
+oraz `environment.enter`, więc powłoka poznaje kody modułów dopiero w czasie
+działania i nie może o nich nic zakładać. Bez rejestru każdy moduł musiałby
+wpinać się sam, a przestrzeń robocza trzymałaby własną kopię katalogu modułów.
+Moduł nieobecny w rejestrze nie jest błędem: rdzeń zna moduły, których klient
+jeszcze nie zbudował, a taki moduł dostaje stan pusty z paska uczciwości
+przestrzeni roboczej zamiast martwego kliknięcia.
+
+Element widoku i wczytanie są rozdzielone, ponieważ sesja bywa nieznana w chwili
+wyboru pozycji nawigacji: przestrzeń robocza odkłada wtedy wejście i ponawia je
+po otwarciu okna przez rdzeń. Gdyby wytwórnia oddawała sam element, każdy moduł
+obsługiwałby tę samą zwłokę u siebie.
+
+Metoda `zamknij` jest szwem rozbiórki widoku i pozostaje opcjonalna. Powłoka jej
+nie woła, ponieważ `przestrzen-modulu.ts` woła `utworzWidok` raz na kod modułu
+i oddaje ten sam widok przy każdym powrocie, a `obszar-roboczy.ts` nie zdejmuje
+elementu z drzewa, tylko przestawia atrybut `hidden`. Liczba żywych subskrypcji
+jest przez to ograniczona z góry liczbą modułów i nie rośnie wraz z liczbą
+przełączeń. Gdy w powłoce pojawi się pierwsza granica życia widoku, wołanie
+`zamknij` musi towarzyszyć zdejmowaniu elementu w `obszar-roboczy.ts`.
+
+Wpis MultitaskingAI niesie kod `multitaskingai`, który jest kodem środowiska,
+a nie modułu. Nawigacja tego środowiska podaje sekcje orkiestracji ze stałej
+`SEKCJE_ORKIESTRACJI` w `powloka/srodowiska.ts`, więc wyszukanie opisu modułu
+po kodzie środowiska nie daje wyniku.
+
+Moduł Diagnostics montuje się od razu, ponieważ większość jego komend nie
+wymaga identyfikatora okna.

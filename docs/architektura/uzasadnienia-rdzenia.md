@@ -6385,3 +6385,39 @@ Bez straży pierwsza wysłana wiadomość w takim montażu zabijała cały proce
 gorutynie tury, a Operator tracił sesję, kolejkę i połączenie naraz. Sprawdzian pilnuje zamiany
 paniki na odmowę, a nie samego montażu: montaż dziś wpina adapter poprawnie, ale to jest stan do
 popsucia jednym pominiętym ogniwem, i wtedy skutkiem ma być zdanie, nie zgaszony rdzeń.
+
+## budowa/server/internal/core/trwalosc_stanow.go
+
+Zamknięcie okna, zamknięcie sesji i jej usunięcie to czynności rejestru
+nadzorcy — pakiet sesji jest ich właścicielem i o bazie nie wie. Bez tego
+utrwalacza stan zamknięte/zakończona żyłby wyłącznie w pamięci procesu:
+historia wiadomości byłaby trwała, a sesja po restarcie wracałaby jako
+czynna. Utrwalacz domyka ten rozjazd w jednym miejscu, zamiast powtarzać
+zapis w każdym adapterze z osobna.
+
+Czynności kosza mieszkają w pliku trwalosc_kosza.go — ten plik zna
+wyłącznie pole kosza jako repozytorium.
+
+Fizyczny DELETE wiersza sesji wykonuje wyłącznie czyszczenie startowe po
+terminie, które sprząta również bloki wiadomości bez klucza obcego.
+Katalog roboczy sesji zostaje nietknięty w obu fazach: pliki, które model
+zostawił, nie należą do bazy i nie znikają razem z wierszem.
+
+## budowa/server/internal/core/nastawy_aplikacji.go
+Poza tą drogą wymóg logowania daje się ustawić wyłącznie przy starcie rdzenia: przełącznikiem
+wiersza poleceń albo zmienną środowiska. Poziom zasięgu, na którym wolno zapisać tę nastawę
+komendą ustawień, wnosi migracja bazy; drogę odczytu wnosi ten plik.
+
+Odczyt jest przy nawiązaniu połączenia: warstwa nasłuchu składa straż bramki raz na połączenie,
+a nie raz na bieg rdzenia. Chwilą, w której nastawa ma znaczenie, jest więc chwila nawiązania —
+i tam rdzeń ją czyta, przy powitaniu połączenia. Zmiana zapisana komendą ustawień obowiązuje od
+następnego połączenia, bez restartu.
+
+Drugiego mechanizmu nastaw tu nie ma: nie ma pamięci podręcznej, własnego pliku, własnej tabeli
+ani własnego stanu. Jest jedno wywołanie tego samego rozstrzygacza, którym idzie każde inne
+ustawienie platformy, po klucz z tego samego rejestru definicji. Wartość mieszka w tabeli ustawień
+i widzi ją odczyt konfiguracji tak samo jak każdą inną.
+
+I nie jest to bramka: odczyt niczego nie odmawia i nikogo nie zatrzymuje. Powitanie oddaje wynik
+w polu wymogu logowania, żeby klient wiedział, czy pokazać okno logowania, zamiast wyprowadzać to
+z odmowy.

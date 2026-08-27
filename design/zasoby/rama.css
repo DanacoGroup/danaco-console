@@ -594,6 +594,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Trzeci szczebel nagłówka profilu — rola i podstawa licencji. Znacznik używał
+   tej klasy bez definicji, więc wiersz brał krój z rodzica i nie odróżniał się
+   od loginu. Nota maszynowa: to zapis stanu konta, nie tekst czytany. */
+.dn-menu-profil-rola {
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+  /* Stopień 12 px na panelu nie przechodzi progu 4,5 : 1 na `--dn-tekst-3`
+     (3,85 : 1 ciemny, 3,99 : 1 jasny) — ten sam powód co w pasku stanu. */
+  color: var(--dn-tekst-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Treść rozwinięcia łamie wiersze normalnie. Wstążka niesie `white-space: nowrap`,
    bo jej pozycje mają stać w jednym pasie — ale menu są jej potomkami i bez tego
@@ -664,7 +676,6 @@
 }
 /* Strefa treści bierze resztę wysokości; pasy ramy zachowują własną. */
 .sta-powloka > .sta-cialo,
-.sta-powloka > .cd-plotno,
 .sta-powloka > main,
 .pd-powloka > .pd-cialo,
 .pt-powloka > .pt-cialo,
@@ -1148,13 +1159,11 @@
 .dn-rama-prawa > .sta-cialo,
 .dn-rama-prawa > .pd-cialo,
 .dn-rama-prawa > .pt-cialo,
-.dn-rama-prawa > .cd-plotno,
 .dn-rama-prawa > main,
 .dn-rama-prawa > .sta-karty { min-width: 0; }
 .dn-rama-prawa > .sta-cialo,
 .dn-rama-prawa > .pd-cialo,
 .dn-rama-prawa > .pt-cialo,
-.dn-rama-prawa > .cd-plotno,
 .dn-rama-prawa > main { flex: 1 1 auto; min-height: 0; }
 
 /* Rodziny prawej strony ustępują przed pasmem kart sesji: karty są pracą
@@ -1574,6 +1583,9 @@
   overflow-y: auto;
 }
 .dn-obszar-tresc[hidden] { display: none; }
+/* Płótno — treść panelu głównego stoi na gruncie okna, nie na powierzchni
+   panelu: strefy same niosą swoje powierzchnie i muszą się od tła odciąć. */
+.dn-obszar-tresc--plotno { background: var(--dn-tlo); }
 
 /* Nagłówek panelu samouczka — nazwa i zwinięcie. */
 .dn-obszar-glowa {
@@ -1599,14 +1611,6 @@
   margin: 0 0 var(--dn-od-2);
 }
 .dn-obszar-marka img { width: 64px; height: 64px; display: block; }
-
-/* Stan pusty panelu bocznego i samouczka. */
-.cd-boczny-pusty {
-  padding: var(--dn-od-3);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-bazowy);
-  color: var(--dn-tekst-3);
-}
 
 /* ── Sterowanie panelu: przyciski w paśmie zakładek ───────────────────────── */
 

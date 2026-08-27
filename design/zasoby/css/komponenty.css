@@ -1328,6 +1328,9 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-etyk-mono--mocna { color: var(--dn-tekst); }
 .dn-etyk-mono--na-ramie { color: var(--dn-rama-tekst-2); }
+/* Wiodąca — etykieta, która nazywa to, na co się patrzy, nie opisuje pod
+   spodem: stopień wyżej i pełna barwa pisma. Stąd nazwa modułu w głowie karty. */
+.dn-etyk-mono--wiodaca { font-size: var(--dn-fs-sm); color: var(--dn-tekst); }
 /* Etykieta w rzędzie z czynnością po prawej stronie. */
 .dn-etyk-mono--z-czynnoscia {
   display: flex;
@@ -1409,8 +1412,48 @@ label.dn-pasek-szukaj:focus-within {
   font-size: var(--dn-fs-sm);
   line-height: var(--dn-lh-luzny);
 }
+.dn-lid b,
+.dn-lid strong { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
 .dn-lid--bez-odstepu { margin-bottom: 0; }
 .dn-lid--na-ramie { color: var(--dn-rama-tekst-2); }
+
+/* ==========================================================================
+   TYTUŁ SEKCJI — nagłówek strefy w płótnie, ze znacznikiem wagi
+   --------------------------------------------------------------------------
+   Rola stała dotąd w arkuszu Centrum dowodzenia jako `.cd-sekcja-tytul`.
+   Waga strefy nie jest osobnym składnikiem — idzie atrybutem `data-waga`
+   na przodku, więc jedna sekcja może zmienić rangę bez zmiany klas.
+   Znacznik jest powtórzeniem kolejności, którą niesie układ, dlatego gaśnie
+   krycie, a nie barwę: przy pierwszym stopniu pozostaje pełny sygnał.
+   ========================================================================== */
+.dn-sekcja-tytul {
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+  color: var(--dn-tekst);
+}
+.dn-sekcja-tytul::before {
+  content: '';
+  display: inline-block;
+  width: var(--dn-wym-sila);
+  height: 0.9em;
+  margin-right: var(--dn-od-2);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-500);
+  vertical-align: -1px;
+}
+[data-waga='2'] .dn-sekcja-tytul::before { opacity: 0.62; }
+[data-waga='3'] .dn-sekcja-tytul::before { opacity: 0.38; }
+
+/* Kreska rozdzielająca w pasie narzędzi — pion na wysokość ikony. Rodzina
+   paska stanu ma własną (`.dn-stan-sep`) o stałej wysokości 14 px; ta idzie
+   żetonem ikony, bo stoi między przyciskami ikonowymi. */
+.dn-sep-pionowy {
+  width: 1px;
+  height: var(--dn-wym-ikona);
+  flex: none;
+  margin: 0 var(--dn-od-1);
+  background: var(--dn-obrys);
+}
 .dn-modal-stopka {
   display: flex;
   justify-content: flex-end;
@@ -1676,6 +1719,8 @@ label.dn-pasek-szukaj:focus-within {
 .dn-ik { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
 .dn-ik--sm { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); flex: none; }
 .dn-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; }
+/* Znak w barwie sygnalu — podpowiedz, wskazanie, znacznik pierwszego wejscia. */
+.dn-ik--sygnal { color: var(--dn-sygnal); }
 
 /* Wiersz menu z czynnością dodatkową: pozycja i jej zamknięcie stoją obok
    siebie jako rodzeństwo — przycisk w przycisku jest niepoprawnym dokumentem. */
@@ -1802,10 +1847,14 @@ label.dn-pasek-szukaj:focus-within {
    `prefers-reduced-motion` gasi ruch żetonem — informację przejmuje kształt.
    ============================================================================ */
 
-:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli, .dn-karty-sesji, .dn-przybornik) > * {
+/* Biblioteka nie zna nazw okien. Wcześniej ta reguła wyliczała `.cd-siatka-*`
+   z Centrum dowodzenia — biblioteka zależała wtedy od okna i przeniesienie okna
+   zabierało zachowanie razem z nim. Siatka, która ma przygaszać rodzeństwo,
+   deklaruje to sama, klasą `.dn-uwydatnij` w znaczniku. */
+:where(.dn-uwydatnij, .dn-karty-sesji, .dn-przybornik) > * {
   transition: opacity var(--dn-czas-uwyd) var(--dn-ease);
 }
-:where(.dn-uwydatnij, .cd-siatka-srodowisk, .cd-siatka-kafli):hover > *:not(:hover) {
+:where(.dn-uwydatnij):hover > *:not(:hover) {
   opacity: var(--dn-przygasz-rodzenstwa);
 }
 
@@ -2011,7 +2060,9 @@ label.dn-pasek-szukaj:focus-within {
 .dn-wejscie-kaskada > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
 .dn-wejscie-kaskada > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
 .dn-wejscie-kaskada > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
-.dn-wejscie-kaskada > *:nth-child(6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
+/* Ogon zamiast szostej pozycji: wykaz dluzszy niz szesc pozycji nie wchodzil
+   dotad z zadnym opoznieniem od siodmej w gore — kaskada gubila rytm. */
+.dn-wejscie-kaskada > *:nth-child(n + 6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
 .dn-wejscie-kaskada > *:nth-child(n + 7) { animation-delay: calc(6 * var(--dn-krok-kaskady)); }
 
 @media (prefers-reduced-motion: reduce) {

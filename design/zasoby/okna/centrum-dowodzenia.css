@@ -2,7 +2,7 @@
 
 :root { --cd-maks-tresc: 100%; }
 
-.cd-plotno { min-height: 0; overflow: auto; background: var(--dn-tlo); }
+.cd-plotno { min-height: 0; overflow: auto; }
 
 .cd-tresc:not([hidden]) {
   container-type: inline-size;
@@ -16,20 +16,6 @@
   padding: var(--dn-od-2) var(--dn-od-6) var(--dn-od-16);
 }
 
-.cd-tresc > * { animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards; }
-
-.cd-tresc > *:nth-child(1) { animation-delay: calc(0 * var(--dn-krok-kaskady)); }
-
-.cd-tresc > *:nth-child(2) { animation-delay: calc(1 * var(--dn-krok-kaskady)); }
-
-.cd-tresc > *:nth-child(3) { animation-delay: calc(2 * var(--dn-krok-kaskady)); }
-
-.cd-tresc > *:nth-child(4) { animation-delay: calc(3 * var(--dn-krok-kaskady)); }
-
-.cd-tresc > *:nth-child(5) { animation-delay: calc(4 * var(--dn-krok-kaskady)); }
-
-.cd-tresc > *:nth-child(n + 6) { animation-delay: calc(5 * var(--dn-krok-kaskady)); }
-
 .cd-naglowek {
   display: flex;
   align-items: flex-end;
@@ -38,47 +24,17 @@
   flex-wrap: wrap;
 }
 
-.cd-nadtytul {
-  margin: 0 0 var(--dn-od-1);
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  letter-spacing: var(--dn-ls-mono-wersaliki);
-  text-transform: uppercase;
-  color: var(--dn-tekst-3);
-}
+.cd-marka-lockup { width: min(var(--dn-wym-godlo-lockup), 100%); }
 
-.cd-tytul {
-  margin: 0;
-  font-family: var(--dn-ff-naglowek);
-  font-size: var(--dn-fs-display);
-  font-weight: var(--dn-fw-polgruba);
-  letter-spacing: var(--dn-ls-naglowek);
-  line-height: var(--dn-lh-ciasny);
-}
-
-.cd-podtytul {
-  margin: var(--dn-od-2) 0 0;
-  max-width: 78ch;
-  color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-base);
-  line-height: var(--dn-lh-luzny);
-}
-
-.cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
-
-.cd-marka-lockup { width: min(var(--dn-wym-godlo-lockup), 100%); height: auto; flex: none; color: var(--dn-tekst); }
-
+/* Pasek pierwszego wejścia — samo rozmieszczenie. Krój i barwa idą
+   z `.dn-lid --bez-odstepu` w znaczniku; trzy dawne deklaracje zerujące
+   (`border`, `border-radius`, `background`) nic nie zerowały: `aside`
+   nie ma żadnej z nich domyślnie. */
 .cd-start {
   display: flex;
   align-items: center;
   gap: var(--dn-od-3);
   padding: var(--dn-od-3) 0;
-  border: 0;
-  border-radius: 0;
-  background: none;
-  color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-luzny);
 }
 
 .cd-start[hidden] { display: none; }
@@ -103,7 +59,7 @@
   .dn-listwa { width: 100%; }
 }
 
-.cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
+.cd-start-znak { display: grid; place-content: center; flex: none; }
 
 .cd-start { gap: var(--dn-od-1); }
 
@@ -111,39 +67,11 @@
 
 .cd-start-tresc { flex: 0 1 auto; margin: 0; }
 
-.cd-start-tresc b { color: var(--dn-tekst); }
-
 .cd-strefa { position: relative; display: flex; flex-direction: column; gap: var(--dn-od-4); }
 
 .cd-sekcja-glowa { display: flex; align-items: baseline; gap: var(--dn-od-3); flex-wrap: wrap; }
 
-.cd-sekcja-tytul { font-size: var(--dn-fs-lg); font-weight: var(--dn-fw-polgruba); color: var(--dn-tekst); }
-
-.cd-sekcja-meta {
-  margin-left: auto;
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
-}
-
-.cd-sekcja-opis { max-width: 74ch; color: var(--dn-tekst-2); font-size: var(--dn-fs-sm); }
-
-.cd-sekcja-tytul::before {
-  content: '';
-  display: inline-block;
-  width: var(--dn-wym-sila);
-  height: 0.9em;
-  margin-right: var(--dn-od-2);
-  border-radius: var(--dn-r-pill);
-  background: var(--dn-sygnal-500);
-  vertical-align: -1px;
-}
-
-.cd-strefa[data-waga='2'] .cd-sekcja-tytul::before { opacity: 0.62; }
-
-.cd-strefa[data-waga='3'] .cd-sekcja-tytul::before { opacity: 0.38; }
-
-.cd-strona {
+.cd-strefa[data-waga='2'] .cd-strefa[data-waga='3'] .cd-strona {
   --cd-grot-srodowisko: var(--dn-od-12);
   --cd-grot-modul: calc(var(--cd-grot-srodowisko) * 0.65);
 }
@@ -162,28 +90,7 @@
   gap: var(--dn-od-2);
 }
 
-.cd-modul-nazwa {
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-sm);
-  letter-spacing: var(--dn-ls-mono-wersaliki);
-  text-transform: uppercase;
-  color: var(--dn-tekst);
-}
-
-.cd-modul-sesja {
-  font-family: var(--dn-ff-mono);
-  font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
-}
-
 .cd-modul-odnosnik { display: flex; align-items: center; gap: var(--dn-od-2); }
 
 .cd-strona .cd-wstazka-grupa { display: flex; align-items: center; gap: var(--dn-od-1); }
 
-.cd-strona .cd-wstazka-sep {
-  width: 1px;
-  height: var(--dn-wym-ikona);
-  flex: none;
-  margin: 0 var(--dn-od-1);
-  background: var(--dn-obrys);
-}

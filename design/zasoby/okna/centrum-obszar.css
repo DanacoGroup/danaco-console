@@ -73,34 +73,6 @@
   .dn-belka-marka .kropka { animation: none; }
 }
 
-.cd-archiwum { border: 1px dashed var(--dn-obrys); border-radius: var(--dn-r-lg); background: var(--dn-powierzchnia); }
-
-.cd-archiwum > summary {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-2);
-  padding: var(--dn-od-3) var(--dn-od-4);
-  color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-sm);
-  list-style: none;
-  cursor: pointer;
-  transition: background-color var(--dn-czas-1) var(--dn-ease), color var(--dn-czas-1) var(--dn-ease);
-}
-
-.cd-archiwum > summary::-webkit-details-marker { display: none; }
-
-.cd-archiwum > summary:hover { background: var(--dn-hover); color: var(--dn-tekst); }
-
-.cd-archiwum[open] > summary { border-bottom: 1px solid var(--dn-obrys-subtelny); }
-
-.cd-archiwum-tresc {
-  padding: var(--dn-od-3) var(--dn-od-4);
-  color: var(--dn-tekst-2);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-luzny);
-  animation: dn-wejscie-strefa var(--dn-czas-3) var(--dn-ease) backwards;
-}
-
 .cd-nauka {
   display: flex;
   flex-direction: column;
@@ -152,24 +124,8 @@
 
 .cd-nauka-nota > svg { flex: none; color: var(--dn-tekst-3); }
 
-.cd-zaslona { display: grid; place-content: center; padding: var(--dn-od-16) var(--dn-od-6); }
-
-.cd-zaslona[hidden] { display: none; }
-
-.cd-zaslona-tresc {
-  display: flex;
-  align-items: center;
-  gap: var(--dn-od-3);
-  max-width: 64ch;
-  margin: 0;
-  color: var(--dn-tekst-3);
-  font-size: var(--dn-fs-sm);
-  line-height: var(--dn-lh-luzny);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .cd-tresc > *,
-  .cd-archiwum-tresc { animation: none; }
 }
 
 .cd-strona .dn-karta-widoku { border-radius: 0; }

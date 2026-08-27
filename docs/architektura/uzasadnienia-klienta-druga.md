@@ -4194,3 +4194,22 @@ Powierzchnia tekstowa modułu Studio jest jedna: okno pracy z dokumentem niesie 
 
 ## budowa/klient/src/wejscie/skladniki/pole-hasla.ts
 Dwa znaki leżą w przycisku, a widoczność rozstrzyga arkusz stylu po stanie wciśnięcia — przełączanie znaków skryptem rozjeżdżałoby się ze stanem kontrolki. Etykieta po odsłonięciu hasła ma odpowiednik nakładany przez mechanikę okna.
+
+## budowa/klient-poprzedni/src/moduly/translate/ster-kanalu.ts
+To jest ster, nie wyświetlacz: etykieta uchwytu niesie wartość bieżącą nastawy, nazwę kanału,
+a nie słowo Kanał; kliknięcie rozwija wybór, wybór zmienia nastawę, a nazwa rodzajowa idzie do
+opisu dostępności mechanizmu, bo czytnik ekranu musi wiedzieć, czego dotyczy wartość, której nazwa
+sama tego nie mówi. Podpis jest blokiem, nie etykietą powiązaną atrybutem for: etykieta bez niego
+wiąże się z pierwszym potomkiem, który da się etykietować, a tym jest uchwyt menu — skutek byłby
+dwojaki i oba razy zły, więc podpis nie jest sterem. Pusty wybór jest wyborem, nie brakiem: pozycja
+kanału czynnego okna stoi w drzewie zawsze i jest domyślna, bo dokładnie to opisuje kontrakt —
+dzięki niej jest droga powrotna do zachowania sprzed wskazania. Rejestr, który nie dotarł, nie
+odbiera czynności: drzewo ma wtedy samą pozycję domyślną, a powód odmowy stoi przy niej jako opis,
+i ster nie wygasza się, nie znika i nie zatrzymuje przycisku obok.
+Menu rozwinięte wiesza nasłuch wskazania na dokumencie, żeby zamykać się po kliknięciu poza sobą;
+instancja panelu, która znika z wykazu rdzenia, jest z dokumentu usuwana, więc gdyby jej ster był
+wtedy rozwinięty, nasłuch zostałby na dokumencie na zawsze i wołałby do elementu, którego już nie
+ma — panele przychodzą i znikają z każdą zmianą wykazu, więc to nie jest przypadek teoretyczny.
+Kanał wyłączony w innym oknie znika z wykazu kanałów czynnych, a rdzeń odmówiłby przekładu
+wskazaniem na niego; cichy powrót byłby jednak zmianą nastawy bez wiedzy operatora, więc
+towarzyszy mu zdanie przy pozycji domyślnej.

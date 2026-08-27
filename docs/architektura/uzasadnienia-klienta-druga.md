@@ -647,3 +647,38 @@ kontrolkę i mówi, co zrobić zamiast tego: złożyć wykres w module Design
 i osadzić go w dokumencie jako obiekt wskazany węzłem. Kontrolka kończąca się
 odmową rdzenia byłaby obietnicą bez pokrycia, a jej ukrycie zabrałoby
 Operatorowi wiedzę, że taka droga istnieje.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-terminal-tabs.ts
+
+Do rdzenia idą dwie komendy: otwarcie karty, obejmujące nową kartę i duplikat,
+oraz wysłanie polecenia. Podział widoku, rozmiar pisma, schemat barw,
+przypięcie, nazwa karty i eksport transkryptu są czynnościami widoku — kontrakt
+nie ma dla nich komend, bo nie zmieniają niczego po stronie rdzenia. Zamknięcie
+karty jest wyjątkiem opisanym niżej.
+
+Zdanie potwierdzenia po otwarciu karty albo uruchomieniu polecenia składa się
+wyłącznie z pól odpowiedzi rdzenia — stan karty, katalog roboczy, stan procesu,
+polecenie — i rozstrzyga o powodzeniu tym, co rdzeń oddał, a nie tym, że
+żądanie poszło. Czynności czysto widokowe mówią wprost, że rdzeń o nich nie
+wie.
+
+Zamknięcie karty w rdzeniu ma dziś komendę kontraktu, ale okno jej jeszcze nie
+wywołuje. Pozycja mówi o tym zdaniem liczonym z odczytu wykazu komend rdzenia,
+a nie stałym napisem: napis orzekałby o stanie rdzenia z chwili pisania kodu
+i nie przestałby go orzekać w dniu, w którym rdzeń dostanie odpowiednią
+obsługę.
+
+Zamknięcie karty zachodzi najpierw w rdzeniu, potem w widoku. Kolejność jest
+rozstrzygnięciem: karta zdjęta z ekranu przed odpowiedzią rdzenia znikałaby
+Operatorowi także wtedy, gdy rdzeń zamknięcia odmówił, a wtedy powłoka
+biegłaby dalej bez żadnego widoku na siebie. Przypięcie jest bramą, nie
+ozdobą: pasek kart zapowiada, że karty przypiętej nie zamyka się jednym
+kliknięciem, więc panel akcji odmawia tak samo jak krzyżyk na pasku. Procesy
+karty zostają biegnące — zamknięcie zakładki nie ma prawa przerwać
+budowania, które trwa trzecią minutę; zakończenie procesów jest osobną
+czynnością.
+
+Rozmiar pisma i schemat barw stawiane są na węźle modułu, a nie na węźle
+okna: pismo konsoli ma być jedno w całym module, bo podgląd wyjścia
+w monitorze procesów niesie ten sam strumień co ogon karty. Węzeł modułu
+bierze się z drzewa, bo okno nie zna swojego gospodarza w chwili budowy.

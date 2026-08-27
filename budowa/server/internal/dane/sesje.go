@@ -1,6 +1,4 @@
-// Odpowiedzialność pliku: dostęp do obszaru sesji (tabela `sesja`).
-// Sesja pozostaje wspólna dla plików, pamięci, projektu i agentów; jednostką
-// wykonania jest okno komunikacji, nie sesja.
+// Odpowiedzialność pliku: dostęp do obszaru sesji; jednostką wykonania jest okno komunikacji, nie sama sesja, choć sesja pozostaje wspólna.
 package dane
 
 import (
@@ -12,24 +10,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sesja to wiersz tabeli `sesja`. Moduł nie jest tu kolumną — należy do okna
-// komunikacji.
+// Sesja to wiersz tabeli sesja; moduł nie jest tu kolumną, bo należy do okna komunikacji, nie do sesji.
 type Sesja struct {
 	ID           int64
 	KartaSesjiID int64
 	Tytul        string
 	Projekt      *string
 	Stan         shared.SessionStatus
-	// IdentyfikatorZewnetrzny wiąże wiersz z sesją rdzenia, która żyje pod
-	// identyfikatorem tekstowym i pod nim wychodzi kontraktem do klienta.
-	// Pusty oznacza wiersz założony wprost w bazie.
+	// IdentyfikatorZewnetrzny wiąże wiersz z sesją rdzenia; pusty oznacza wiersz założony wprost w bazie.
 	IdentyfikatorZewnetrzny *string
 	Utworzono               string
 	Zaktualizowano          string
 	Zakonczono              *string
 }
 
-// RepozytoriumSesji jest kontraktem obszaru sesji dla warstw wyższych.
+// RepozytoriumSesji jest kontraktem obszaru sesji dla warstw wyższych, wraz z odczytem, zapisem i zmianą stanu.
 type RepozytoriumSesji interface {
 	Utworz(ctx context.Context, sesja Sesja) (int64, error)
 	Pobierz(ctx context.Context, id int64) (Sesja, error)
@@ -53,11 +48,7 @@ const (
 	sesjaPoIdentyfikatorze = `SELECT ` + kolumnySesji + ` FROM sesja
 	                          WHERE identyfikator_zewnetrzny = ?`
 
-	// Sesje w koszu (kolumna `usunieto_o`) nie wchodzą do wykazu sesji żywych —
-	// przez ten jeden warunek znikają z session.list, z archiwum i z odtworzenia
-	// rejestru po restarcie. Widzi je wyłącznie repozytorium kosza
-	// (budowa/server/internal/dane/sesje_kosz.go); odczyt po identyfikatorze ich
-	// nie kryje, bo po nim odbywa się przywrócenie i czyszczenie.
+	// Sesje w koszu nie wchodzą do wykazu sesji żywych; ten jeden warunek zdejmuje je z wykazu, archiwum i odtworzenia rejestru.
 	listaSesji = `SELECT ` + kolumnySesji + ` FROM sesja
 	              WHERE (? = 0 OR karta_sesji_id = ?) AND usunieto_o IS NULL
 	              ORDER BY id`
@@ -81,7 +72,7 @@ func noweRepozytoriumSesji(z *zapytania) *repozytoriumSesji {
 	return &repozytoriumSesji{zapytania: z}
 }
 
-// Utworz zakłada sesję i zwraca jej identyfikator.
+// Utworz zakłada nową sesję w bazie danych rdzenia i zwraca jej nadany identyfikator wewnętrzny klucza.
 func (r *repozytoriumSesji) Utworz(ctx context.Context, sesja Sesja) (int64, error) {
 	stan, err := stanSesjiNaBaze(sesja.Stan)
 	if err != nil {
@@ -99,7 +90,7 @@ func (r *repozytoriumSesji) Utworz(ctx context.Context, sesja Sesja) (int64, err
 	return wynik.LastInsertId()
 }
 
-// Pobierz zwraca sesję o wskazanym identyfikatorze.
+// Pobierz zwraca sesję o wskazanym identyfikatorze wewnętrznym klucza, wraz z jej pełną zapisaną treścią.
 func (r *repozytoriumSesji) Pobierz(ctx context.Context, id int64) (Sesja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzSesje)
 	if err != nil {
@@ -127,7 +118,7 @@ func (r *repozytoriumSesji) PoIdentyfikatorze(ctx context.Context, identyfikator
 	return sesja, err
 }
 
-// Lista zwraca sesje karty. Wartość 0 oznacza wszystkie karty.
+// Lista zwraca sesje wskazanej karty sesji operacyjnej; wartość zero oznacza sesje wszystkich kart sesji.
 func (r *repozytoriumSesji) Lista(ctx context.Context, kartaSesjiID int64) ([]Sesja, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaSesji)
 	if err != nil {
@@ -153,7 +144,7 @@ func (r *repozytoriumSesji) Lista(ctx context.Context, kartaSesjiID int64) ([]Se
 	return lista, nil
 }
 
-// ZmienStan zapisuje nowy stan sesji; stan końcowy odnotowuje czas zakończenia.
+// ZmienStan zapisuje nowy stan wskazanej sesji; stan końcowy dodatkowo odnotowuje czas zakończenia tej sesji.
 func (r *repozytoriumSesji) ZmienStan(ctx context.Context, id int64, stan shared.SessionStatus) error {
 	kolumna, err := stanSesjiNaBaze(stan)
 	if err != nil {
@@ -170,11 +161,7 @@ func (r *repozytoriumSesji) ZmienStan(ctx context.Context, id int64, stan shared
 	return sprawdzTrafienie(wynik, "sesja", id)
 }
 
-// Usun kasuje sesję wraz z oknami i wiadomościami (kaskada schematu).
-// Prymityw warstwy danych — torem produktu jest kosz: session.delete stawia
-// znacznik, a fizyczny DELETE wykonuje czyszczenie po terminie
-// w budowa/server/internal/dane/sesje_kosz.go, bo tylko ono sprząta też bloki
-// wiadomości.
+// Usun kasuje sesję wraz z oknami i wiadomościami kaskadą schematu; torem produktu jest jednak kosz, nie usunięcie wprost.
 func (r *repozytoriumSesji) Usun(ctx context.Context, id int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunSesje)
 	if err != nil {
@@ -187,7 +174,7 @@ func (r *repozytoriumSesji) Usun(ctx context.Context, id int64) error {
 	return sprawdzTrafienie(wynik, "sesja", id)
 }
 
-// odczytajSesje składa strukturę z jednego wiersza wyniku.
+// odczytajSesje składa strukturę sesji operacyjnej z jednego wiersza wyniku tego zapytania, kolumna po kolumnie.
 func odczytajSesje(wiersz skaner) (Sesja, error) {
 	var sesja Sesja
 	var projekt, zakonczono, identyfikator sql.NullString
@@ -207,7 +194,7 @@ func odczytajSesje(wiersz skaner) (Sesja, error) {
 	return sesja, nil
 }
 
-// sprawdzTrafienie odróżnia zapis wykonany od zapisu, który nie trafił w wiersz.
+// sprawdzTrafienie odróżnia zapis rzeczywiście wykonany od zapisu, który nie trafił w żaden wiersz tej tabeli.
 func sprawdzTrafienie(wynik sql.Result, tabela string, id int64) error {
 	liczba, err := wynik.RowsAffected()
 	if err != nil {

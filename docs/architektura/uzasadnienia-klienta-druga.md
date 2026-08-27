@@ -3281,3 +3281,15 @@ go ze strefą środowisk, więc zasilenie kart bez zasilenia wykazu jest niewyko
 rdzenia wykaz niesie tę samą stałą, z której rysują się karty — jedna treść zastana, nie dwie. Kod spoza
 wykazu wraca dosłownie, bo rdzeń mógł oddać środowisko, o którym klient nie wie, a wiersz sesji ma wtedy
 pokazać kod zamiast przemilczeć środowisko; wykaz jest informacyjny, nie jest bramą.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-edytora.ts
+Widok Studio Editora odpowiada za układ, stany i podpięcie zdarzeń, a ten plik za to, co dzieje
+się po naciśnięciu: rozmowę z rdzeniem i skutek dla stanu modułu, więc zmiana kształtu żądania
+nie wymaga czytania układu okna. Odmowa zostaje w pasie stanu, powodzenie w wierszu odpowiedzi,
+bo komunikat błędu ma być trwały w układzie, a potwierdzenie czynności ustępuje następnemu
+naciśnięciu. Żądanie otwarcia dokumentu ze wskazaniem ścieżki oddaje dokument bez treści, bo
+rdzeń nie ma dostępu do systemu plików operatora; ze wskazaniem pliku repozytorium oddaje
+dokument z zapamiętanym odwołaniem, również bez treści, bo doczytanie jej zrobiłoby z adaptera
+klienta cudzego modułu — treść dostarcza dopiero pierwszy zapis. Wstawienie wyniku operacji nie
+jest przyjęciem propozycji: treść trafia do bufora edytora, a propozycja czeka dalej na decyzję,
+bo zrównanie obu czynności odebrałoby możliwość wstawienia fragmentu i odrzucenia reszty.

@@ -4,24 +4,14 @@ import type { WierszOdpowiedzi } from '../../modele/kontrolki-formularza';
 import type { StanOknaStudio } from './stan-okna-studio';
 import type { StanStudio } from './stan-studio';
 
-/**
- * Cztery czynności Studio Editora wyjęte z jego wytwórni.
- *
- * Widok odpowiada za układ, stany i podpięcie zdarzeń; ten plik za to, co dzieje
- * się po naciśnięciu — rozmowę z rdzeniem i skutek dla stanu modułu. Zmiana
- * kształtu żądania nie zmusza więc do czytania układu okna.
- *
- * Odmowa zostaje w pasie stanu, powodzenie w wierszu odpowiedzi: komunikat błędu
- * ma być trwały w układzie, a potwierdzenie czynności ustępuje następnemu
- * naciśnięciu.
- */
+/** Cztery czynności Studio Editora wyjęte z wytwórni widoku: rozmowa z rdzeniem po naciśnięciu i skutek dla stanu modułu, niezależnie od układu okna. */
 export interface ZapleczeEdytora {
   stan: StanStudio;
   pas: StanOknaStudio;
   odpowiedz: WierszOdpowiedzi;
 }
 
-/** Wczytuje dokument; `zadanie` puste znaczy formularz bez wskazania. */
+/** Wczytuje dokument wskazany żądaniem otwarcia; żądanie puste znaczy formularz bez wskazania i kończy się odmową. */
 export async function wczytajDokument(
   zaplecze: ZapleczeEdytora,
   zadanie: StudioDocumentOpenRequest | null,
@@ -44,15 +34,7 @@ export async function wczytajDokument(
   zaplecze.odpowiedz.pokaz(`Dokument ${dokument.id}: ${skutek}`, skutek === TRESC_PRZYSZLA);
 }
 
-/**
- * Zdanie o tym, co rdzeń oddał, a nie o tym, o co go poproszono.
- *
- * `studio.document.open` ze wskazaniem `path` oddaje dokument bez pola `content`,
- * bo rdzeń nie ma dostępu do systemu plików Operatora; ze wskazaniem
- * `libraryFileId` oddaje dokument z zapamiętanym odwołaniem i również bez treści,
- * bo doczytanie jej zrobiłoby z adaptera Studio klienta cudzego modułu. Dokument
- * zakłada się więc pusty, a treść dostarcza dopiero pierwszy `studio.document.save`.
- */
+/** Zdanie o treści oddanej przez rdzeń przy wczytaniu dokumentu, ustalone z osobna dla wskazania ścieżki i pliku repozytorium. */
 const TRESC_PRZYSZLA = 'treść przyszła z rdzenia.';
 
 function opiszSkutekWczytania(zadanie: StudioDocumentOpenRequest, tresc: string): string {
@@ -72,7 +54,7 @@ function opiszSkutekWczytania(zadanie: StudioDocumentOpenRequest, tresc: string)
   return 'rdzeń oddał dokument bez treści.';
 }
 
-/** Zapisuje treść roboczą i zakłada wersję w repozytorium sesji. */
+/** Zapisuje treść roboczą bieżącego dokumentu w rdzeniu i zakłada przy tym nową wersję w repozytorium sesji. */
 export async function zapiszDokument(zaplecze: ZapleczeEdytora): Promise<void> {
   const dokument = zaplecze.stan.dokument();
   if (dokument === null) {
@@ -97,13 +79,7 @@ export async function zapiszDokument(zaplecze: ZapleczeEdytora): Promise<void> {
   zaplecze.odpowiedz.pokaz('Dokument zapisany; wersja założona w repozytorium sesji.', true);
 }
 
-/**
- * „Wstaw do dokumentu" z paska narzędzi promptu — wynik operacji w miejsce kursora.
- *
- * Wstawienie nie jest przyjęciem propozycji: treść trafia do bufora edytora,
- * a propozycja czeka dalej na decyzję. Zrównanie obu czynności odebrałoby
- * Operatorowi możliwość wstawienia fragmentu i odrzucenia reszty.
- */
+/** Wstawia wynik operacji z paska narzędzi promptu w miejsce kursora edytora, zostawiając decyzję o propozycji na później. */
 export function wstawWMiejsceKursora(
   stan: StanStudio,
   kontrolka: HTMLTextAreaElement,
@@ -120,7 +96,7 @@ export function wstawWMiejsceKursora(
   odpowiedz.pokaz('Wynik operacji wstawiony w miejsce kursora; zapis zakłada wersję.', true);
 }
 
-/** Zapamiętuje zaznaczenie edytora; zakres pusty znaczy „cały dokument". */
+/** Zapamiętuje bieżące zaznaczenie w edytorze; zakres pusty oznacza cały dokument bez wskazanego fragmentu. */
 export function zapamietajZaznaczenie(stan: StanStudio, kontrolka: HTMLTextAreaElement): void {
   const poczatek = kontrolka.selectionStart;
   const koniec = kontrolka.selectionEnd;

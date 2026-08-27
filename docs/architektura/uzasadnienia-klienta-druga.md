@@ -1026,3 +1026,12 @@ Identyfikator urządzenia idzie tylko przy PIN-ie, bo metoda hasła kontraktu go
 hasło otwiera bramkę z każdej maszyny, a PIN jest właściwy maszynie i bez identyfikatora rdzeń
 odmawia wprost. Tożsamość klienta z powitania urządzeniem nie jest, bo nadaje się ją na czas
 uruchomienia, więc PIN chodzi po zapisie trwałym urządzenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-warsztatu.ts
+
+Okno buduje pola z tego wykazu i składa żądanie funkcją zloz czynności.
+Piętnaście osobnych formularzy dawałoby piętnaście miejsc, w których nazwa
+pola kontraktu bywa wpisana z pamięci; w tym pliku każde pole stoi raz.
+Nazwy pól są nazwami kontraktu, bo to one jadą do rdzenia. Etykiety są
+zdaniem Operatora i z nazwami się nie pokrywają — Operator czyta „zakres
+stron", a rdzeń dostaje pole `pages`.

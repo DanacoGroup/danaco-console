@@ -1960,3 +1960,53 @@ przechodzi z tego samego powodu: pole wymagane o typie tablicy wychodzi
 z niepustego wykazu pustego jako `null`, tak koduje pusty wycinek biblioteka
 standardowa Go, więc odmowa w tym miejscu odrzucałaby żądania składane
 przez sam rdzeń.
+
+## budowa/server/internal/core/adapter_narzedzia_archiwum.go
+
+Formaty, ścieżki i odmowy leżą w `adapter_narzedzia_archiwum_sciezki.go`,
+pakowanie w `adapter_narzedzia_archiwum_pakowanie.go`, rozpakowanie wraz
+z obroną przed ucieczką ze ścieżki w
+`adapter_narzedzia_archiwum_rozpakowanie.go`, czytanie spisu archiwum
+w `adapter_narzedzia_archiwum_spis.go`, port i wpięcie
+w `handlers_narzedzia_archiwum.go`.
+
+Wszystkie formaty obsługuje jedno binarium wołane przez `zewnetrzne.Wolaj` —
+przez port `session.Uruchamiacz`, bramę izolacji okna i objęcie drzewa
+procesów; własnego `exec.Command` w tych plikach nie ma. Spis archiwum
+czyta ten sam program, który potem rozpakowuje, więc wyrok o zawartości
+nie rozjeżdża się z rozpakowaniem — osobne `unzip` i `tar` dawałyby trzy
+postacie spisu i trzy okazje do obejścia tej kontroli.
+
+Archiwum wytworzone przez `archive.pack` ląduje w tym samym magazynie, co
+`design.asset.upload` (`magazynZasobowDesignu`, blob pod sumą sha256), a jego
+wiersz — w tabeli `zasob_design`. Drugi magazyn byłby drugą prawdą o tym,
+gdzie rdzeń trzyma bajty poza bazą.
+
+`granicaNarzedziArchiwum` istnieje, bo `zewnetrzne.Wolaj` granicy
+niedodatniej nie przyjmuje.
+
+Sto tysięcy pozycji graniczne w `granicaRozpakowaniaPozycji` leży
+kilkakrotnie powyżej liczby plików całego drzewa tego produktu wraz
+z zależnościami. Dwa gibibajty graniczne w `granicaRozpakowaniaBajty` leżą
+kilkanaście razy powyżej największego archiwum, jakie ten produkt ma do
+wydania, i wiele rzędów wielkości poniżej znanych bomb rozwijających się
+do terabajtów; rozpakowanie idzie przez kwarantannę, więc treść leży
+przez chwilę w dwóch egzemplarzach, a granica musi zmieścić się na
+nośniku dwukrotnie.
+
+`nowyAdapterNarzedziArchiwum` wiąże port z repozytorium modułu Design
+i magazynem jego zasobów. Uruchamiacz oraz izolacja wchodzą osobno, przez
+`ZArsenalem`, bo montaż zna je dopiero po złożeniu warstwy kanału. Brak tej
+zależności nie psuje montażu — obie komendy archiwum odmawiają wtedy,
+nazywając brak, zamiast udawać, że archiwum powstało.
+
+`katalogRoboczyOkna` stoi na straży obrony ścieżek: `targetPath` przyjęty
+jako ścieżka bezwzględna pozwalałby modelowi rozsypać zawartość archiwum
+w dowolnym miejscu maszyny — w `~/.ssh`, w katalogu autostartu, w cudzym
+projekcie.
+
+Wyliczenie `DesignAssetKind` kontraktu ma trzy wartości — `image`, `vector`,
+`composition` — i ani jednej na archiwum; rodzajem odłożonego zasobu jest
+`image`, tak samo jak w rodzinie mediów odkładającej nim dźwięk i film,
+bo wartość spoza wyliczenia postawiłaby przed klientem napis, którego jego
+typ nie zna. O tym, czym plik jest, mówi zmierzone pole `format`.

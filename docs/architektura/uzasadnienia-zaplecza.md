@@ -2243,3 +2243,20 @@ kopię sekretu w drugim miejscu, którego nikt nie rotuje.
 Połączenie oznaczone jako tylko do odczytu odrzuca zapytanie zmieniające dane
 w rdzeniu, zanim cokolwiek wyjdzie do silnika — konsola SQL nad produkcją bez
 takiej nastawy jest jednym nieuważnym poleceniem od szkody.
+## budowa/server/internal/store/migracja_144_developer_skany.sql
+Migracja 144 — przebiegi skanowania i ich znaleziska (Developer, zakładka
+Bezpieczeństwo w Dev Tools).
+
+Skan i znalezisko rozdzielono na dwie tabele, bo pytanie o nie zadaje się
+osobno: `developer.scan.run` zakłada przebieg i oddaje jego nagłówek,
+a `developer.scan.result.list` czyta znaleziska z filtrem po rodzaju i wadze,
+często dla kilku przebiegów naraz. Jedna tabela kazałaby powtarzać nagłówek
+przy każdym znalezisku.
+
+Rodzaje skanu przebiegu zapisujemy jako tekst rozdzielony przecinkiem.
+Rodzajów jest cztery i są zamkniętym słownikiem kontraktu (ScanKind); tabela
+pośrednia na cztery wartości byłaby złożonością bez odbiorcy.
+
+Znalezisko nie ma stanu „przyjęte/odrzucone”. Skan jest pomiarem stanu
+repozytorium w danej chwili, a nie listą zadań: kolejny przebieg zakłada nowe
+znaleziska, a poprzednie zostają śladem tamtego pomiaru.

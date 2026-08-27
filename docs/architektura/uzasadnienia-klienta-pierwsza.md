@@ -3555,3 +3555,26 @@ które dopuszcza katalog ustawienia.
 
 Pola bytu znikają tam, gdzie poziom albo oś bytu nie mają, czyli przy poziomie
 globalnym i przy osi platformy.
+
+## budowa/klient-poprzedni/src/moduly/design/karta-zasobu.ts
+
+Karta zasobu jest przyciskiem, a nie prostokątem, ponieważ wybór zasobu
+przestawia naraz panel metadanych, kanwę Design Board oraz pole obrazu
+referencyjnego Prompt Buildera. Element musi być z tego powodu osiągalny
+klawiaturą. Zasób niesie pole `uri` tylko wtedy, gdy rdzeń zna jego położenie;
+bez tego pola karta pokazuje pole zastępcze z rodzajem zasobu zamiast miniatury.
+
+Słownik nazw rodzajów pokrywa cały typ kontraktu, więc brak wartości zatrzymuje
+kompilację. Wynik pracy modelu wchodzi do wykazu zasobów tą samą drogą, co zasób
+wniesiony ręcznie, dlatego słownik obejmuje także rodzaje wytwarzane przez
+model — bez nich karta pokazałaby pustkę w miejscu nazwy.
+
+Zawężanie wykazu frazą jest miejscowe i nie jest polem żądania. Komenda
+`design.asset.list` zawęża polami identyfikatora okna, rodzaju, etykiet,
+znacznika ulubionego oraz ograniczenia liczby wyników, a frazy wśród nich nie
+ma. Predykat zawężania stoi w jednej kopii, ponieważ czytają go dwa widoki tego
+samego zbioru: okno Assets Panel oraz panel `zasoby-designu` stosu paneli
+pomocniczych. Dwie kopie dawałyby na tę samą frazę różne wyniki.
+
+Etykieta zasobu nie niesie stanu, więc wchodzi plakietką bazową. Barwna odmiana
+plakietki pozostaje zarezerwowana dla plakietek znaczących stan.

@@ -2,17 +2,10 @@ import { odmienAgentow, zapiszCzasOdcinka } from './format-zadan';
 import { ODZNAKA, type Przeplyw } from './zadania-w-tle';
 
 /**
- * Zwinięty licznik przepływów domkniętych — „Zakończone 48".
- *
- * Przepływów zakończonych bywa kilkadziesiąt i wypisane w całości spychałyby
- * poza krawędź panelu pracę trwającą. Zwinięcie nie jest ukryciem: licznik
- * podaje ich liczbę, a rozwinięcie oddaje każdy po nazwie i stanie.
- *
- * Element `details` otwiera się i zamyka bez potwierdzenia; brak przepływów
- * zakończonych daje krótszy panel, a nie kontrolkę nieczynną.
+ * Zwinięty wykaz przepływów domkniętych, zapowiedziany licznikiem ich liczby.
+ * Pusty wykaz nie tworzy elementu, a element `details` otwiera się i zamyka bez
+ * potwierdzenia, więc brak zakończeń daje krótszy panel, nie kontrolkę martwą.
  */
-
-/** Zwinięty wykaz przepływów domkniętych; pusty wykaz nie tworzy elementu. */
 export function zwinieteZakonczone(przeplywy: readonly Przeplyw[]): HTMLElement | null {
   if (przeplywy.length === 0) return null;
 
@@ -31,7 +24,11 @@ export function zwinieteZakonczone(przeplywy: readonly Przeplyw[]): HTMLElement 
   return element;
 }
 
-/** Pozycja zwiniętego wykazu: nazwa, stan i to samo podsumowanie co na karcie. */
+/**
+ * Pozycja zwiniętego wykazu: nazwa przepływu, jego stan oraz to samo
+ * podsumowanie czasu odcinka i liczby podagentów, które niesie karta przepływu
+ * w widoku rozwiniętym.
+ */
 function pozycja(przeplyw: Przeplyw): HTMLElement {
   const nazwa = document.createElement('strong');
   nazwa.className = 'dm-zwiniete__nazwa';

@@ -5574,3 +5574,22 @@ stan wpisu ani projektu, a zdarzenia dla tego bytu kontrakt nie ma. Rodzaj zmian
 się stało: zapis bez wskazania wpisu zakłada wpis, ze wskazaniem zmienia go; odpięcie zwęża zasięg
 wpisu, który żyje dalej; usunięcie kasuje. Odesłanie wszystkiego jako aktualizacji kazałoby
 klientowi zgadywać, czy wpis dopisać do wykazu, czy z niego zdjąć.
+
+## budowa/server/internal/core/skutek_odtwarzania_twarzy_test.go
+
+Sprawdzian mierzy odmowę zamiast skutku, bo skutek przebiegu twarzowego
+wymaga zdjęcia twarzy, sieci liczącej minutami i trzech zestawów wag
+ważących pół gigabajta. Sprawdzian tego rodzaju byłby na maszynie bez wag
+pominięty, czyli świeciłby na zielono, nie mierząc niczego. Odmowa natomiast
+jest zachowaniem, które ma działać wszędzie i daje się zmierzyć na pustym
+katalogu. Skutek sieci na zdjęciu wykazuje się osobno, uruchomieniem na
+maszynie z wagami: pole faces ustawione na false i na true nad tym samym
+źródłem dają obrazy różne, a różnicę podaje się liczbą.
+
+Odmowa mówiąca samo „brak wag" zostawiałaby korzystającego z interfejsu
+z pytaniem, na które kod zna odpowiedź — dlatego test wymaga w treści
+odmowy nazwy pliku, ścieżki i miejsca pochodzenia.
+
+Program wołany przez rdzeń, ale nieobecny w wykazie zależności zewnętrznych,
+jest brakiem, o którym dowiaduje się dopiero po naciśnięciu przycisku — wykaz
+istnieje właśnie po to, żeby się nie dowiadywał tą drogą.

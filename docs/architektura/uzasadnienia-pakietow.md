@@ -3944,3 +3944,18 @@ Warstwa o nazwie spoza katalogu ląduje na końcu porządku krytyczności.
 Tryb nałożenia instrukcji dotyczy eksperta jako całości, nie pojedynczej warstwy: prompt
 globalny albo obowiązuje w całości, albo nie — zastąpienie częściowe, samą warstwą profilu,
 nie ma znaczenia, więc kolumna trybu stoi przy ekspercie, nie przy każdej z warstw osobno.
+
+## budowa/server/internal/session/przejecie.go
+
+Kanał modelu startuje własny proces, ponieważ tylko on zna wiersz poleceń, rotację kont i kształt
+strumienia. Ubicie drzewa procesów pozostaje jednak w jednym miejscu — w tym pliku; bez przejęcia po
+ubiciu okna zostałyby wnuki procesu kanału, takie jak serwery narzędziowe czy powłoki uruchomione przez
+model. Warstwa kanału używa obu części naraz: nadaje atrybuty uruchomienia przed startem procesu,
+przejmuje drzewo zaraz po uruchomieniu, zwalnia je odroczonym wywołaniem i ubija przy zamknięciu okna.
+Pominięcie atrybutów uruchomienia nie wywraca kanału — na Windows przejęcie zadziała mimo to, a na
+systemach uniksowych ubicie obejmie sam proces zamiast całej grupy, ponieważ brak elementu opcjonalnego
+nie blokuje uruchomienia.
+
+Czekanie nie rusza uchwytów oddawanych przez zwolnienie, więc wolno je prowadzić równolegle z ubiciem:
+obserwator obudzi się wtedy, gdy ubicie zrobi swoje. Na Windows czekanie oznacza oczekiwanie na uchwyt
+procesu, a na systemach uniksowych odpytywanie sygnałem zerowym.

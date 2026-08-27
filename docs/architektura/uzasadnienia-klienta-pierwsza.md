@@ -1471,3 +1471,13 @@ kursora na wskazujący.
 Poza punktem wejścia katalog nie wystawia niczego. Arkusz stylu sceny i postać
 jej bryły pozostają sprawą wewnętrzną, więc zmiana układu ekranu wejścia nie
 sięga warstw, które scenę stawiają.
+
+## budowa/klient-poprzedni/src/modele/znak-wykazu.ts
+
+Klasa wyglądu pochodzi z biblioteki — jest to `dn-plakietka` wraz z jej
+odmianami — a klasa miejsca należy do wykazu, w którym plakietka stoi. Dlatego
+obie stoją w osobnych parametrach: wygląd znaku i jego położenie w wierszu są
+dwiema niezależnymi decyzjami wywołującego.
+
+Plik nie wymienia żadnej barwy. Barwa plakietki wynika wyłącznie z odmiany klasy
+bibliotecznej, więc zmiana palety nie sięga tego pliku.

@@ -4437,3 +4437,54 @@ niezależną od tego, czy model odpowiedział dobrze.
 
 Ocena zerowa trzyma pozycję w wykazie po to, żeby wiązanie po pozycji się
 nie przesunęło — a nie po to, żeby stanąć w wyniku.
+
+## budowa/server/internal/poczta/list.go
+
+Rozdzielenie rozbioru i złożenia MIME na dwa pliki dawałoby dwie prawdy
+o tym, co rdzeń uważa za treść listu.
+
+List składa się raz, wysyła dwiema drogami. Szkic zapisany w folderze
+Drafts i list nadany SMTP-em to dokładnie ten sam dokument — dlatego
+zlozWychodzacy ma dwóch wołających (imap_zapis.go i smtp.go), a nie dwie
+kopie. Gdyby szkic składał się inaczej niż wysyłka, Operator oglądałby
+przed wysłaniem list inny niż ten, który wyjdzie w świat.
+
+Treść bierze się z text/plain, a text/html dopiero przy jego braku. Model
+ma analizować treść, a nie znaczniki; list wyłącznie HTML-owy oddaje się
+takim, jaki jest — obcięcie go do treści wymagałoby renderowania HTML,
+czego rdzeń nie robi i o czym nie kłamie.
+
+Rejestracja dekoderów stron kodowych działa skutkiem ubocznym importu
+pustego: pakiet podstawia message.CharsetReader. Bez niego polski list
+w iso-8859-2 albo windows-1250 — a takich w skrzynce Operatora jest pełno
+— rozbiera się błędem "nieznana strona kodowa" zamiast oddać treść.
+
+Wątek wiąże się identyfikatorem listu, na który ten odpowiada, a przy jego
+braku — własnym. Dzięki temu list otwierający wątek i wszystkie odpowiedzi
+w nim mają tę samą wartość, bez pytania serwera o THREAD, którego część
+serwerów nie zna.
+
+Odkodowanie transportowe zostaje nietknięte w zapowiedzi świadomie: część
+pobrana częściowo bywa urwana w połowie czwórki base64 albo w połowie
+sekwencji =XX, więc dekoder i tak nie miałby czego domknąć. Zapowiedź
+listu w quoted-printable wygląda przez to nieco surowo (=C5=BC zamiast ż)
+— i tak jest uczciwiej niż zgadywać brakujące bajty.
+
+Załącznik bez nazwy istnieje i ma bajty — nazwa zastępcza jest tu etykietą,
+a nie zmyśloną własnością listu: bez niej magazyn rdzenia nie miałby czym
+opisać zasobu.
+
+Klient poczty Operatora układa rozmowę po nagłówku References — bez niego
+odpowiedź wyląduje w jego skrzynce obok wątku, a nie w nim.
+
+application/octet-stream znaczy nie wiem, co to jest, i tak jest uczciwie:
+zgadnięty application/pdf przy pliku, który PDF-em nie jest, wprowadzałby
+w błąd odbiorcę listu.
+
+Skutek podwójnych nawiasów w identyfikatorze wątku widać dopiero
+u odbiorcy: klient poczty nie dopasowuje takiej odpowiedzi do wątku, więc
+odpowiedź Operatora ląduje obok rozmowy zamiast w niej, a rdzeń melduje
+wysyłkę udaną. Obie postaci są w obiegu naraz: koperta IMAP oddaje
+identyfikator goły (Naglowek.Watek), a nagłówek listu i człowiek piszą go
+w nawiasach — bezNawiasowKatowych przyjmuje jedno i drugie, zamiast
+wymagać właściwej postaci od wołającego.

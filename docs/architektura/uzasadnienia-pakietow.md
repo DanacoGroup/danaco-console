@@ -2644,3 +2644,10 @@ Materiał nieczytelny w cialoWieloczesciowe jest odmową, nie wysyłką bez
 materiału: żądanie samego polecenia wróciłoby obrazem wygenerowanym od zera,
 a Operator prosił o obróbkę swojego zdjęcia i dostałby cudze bez ani jednego
 słowa o podmianie.
+
+## budowa/server/internal/dane/extension_cykl.go
+
+Interfejs RepozytoriumRozszerzen deklaruje plik extension.go; ten plik i trzy
+sąsiednie — extension_protokol.go, extension_integracje.go, extension_zaufanie.go
+— dokładają mu metody. Jedno repozytorium, cztery pliki wedle odpowiedzialności,
+tak jak w obszarze Apps.

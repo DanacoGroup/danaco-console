@@ -3358,3 +3358,21 @@ różnicy układ złożony przez operatora poznaje wynik zadania bez pytania.
 
 ## budowa/server/internal/dane/urzadzenia.go (uzupełnienie)
 ZapewnijBiezace zakłada albo odświeża wiersz maszyny, na której działa rdzeń, i przenosi na nią oznaczenie maszyny bieżącej. Wywołanie powtórzone tymi samymi znamionami nie tworzy drugiego wiersza.
+## budowa/server/internal/dane/terminal.go
+Repozytorium nie prowadzi procesów: uchwyt do procesu działającego i jego drzewa potomstwa ma wyłącznie rdzeń,
+ponieważ tylko on potrafi proces zakończyć. W repozytorium zapisuje się to, co po procesie zostaje: polecenie,
+inicjator, kod wyjścia i czasy. Dzięki temu podgląd procesów pokazuje także procesy zakończone, których żywy
+stan rdzenia już nie przechowuje.
+
+Pole CelZdalny niesie adres powłoki zdalnej w postaci użytkownik i host albo alias konfiguracji zdalnego dostępu
+maszyny rdzenia. Nie jest poświadczeniem — jest tą samą wartością, co widnieje w książce hostów — dlatego ma
+własną kolumnę, inaczej niż zmienne środowiska karty wprowadzone późniejszą migracją schematu.
+
+Procesy osierocone to procesy pozostawione w stanie działania przez poprzedni bieg rdzenia. Po ponownym
+uruchomieniu rdzeń nie ma już do nich uchwytu, więc wykazywanie ich jako czynnych byłoby niezgodne ze stanem
+faktycznym.
+
+## budowa/server/cmd/danaco-console/uruchomienie/tor_wykonawczy.go
+Tą drogą pracuje agent lokalny: wykonuje pracę na urządzeniu użytkownika, nie
+otwierając gniazda ani nie zajmując portu. Żądanie nieczytelne nie kończy
+toru — rdzeń odsyła na nie odpowiedź z kodem błędu kontraktu.

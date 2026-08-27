@@ -1,16 +1,4 @@
--- Migracja 216 — zadania projektu modułu Workspace.
---
--- Zadanie jest jednym bytem trzech widoków huba planowania: pozycją listy,
--- kartą tablicy i słupkiem osi czasu. Trzech tabel nie ma, bo trzy tabele
--- rozjechałyby się przy pierwszej zmianie stanu wykonanej z innego widoku.
---
--- Etykiety i lista kontrolna leżą w kolumnach tego samego wiersza: etykiety
--- rozdzielone znakiem nowego wiersza, lista kontrolna zapisem JSON. Osobne
--- tabele wiążące dawałyby tu wyłącznie koszt złączeń — żadne okno nie pyta
--- o etykietę bez zadania ani o krok bez zadania.
---
--- Klucz porządkowy karty jest NAPISEM, nie liczbą: wstawienie karty między dwie
--- sąsiednie ma dopisać klucz pośredni, a nie przepisać całą kolumnę.
+-- Migracja 216 zakłada tabelę zadań projektu modułu Workspace, wspólną dla listy, tablicy i osi czasu, z etykietami i listą kontrolną w kolumnach wiersza.
 
 CREATE TABLE zadanie_projektu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -1,9 +1,6 @@
-// Odpowiedzialność pliku: przekład wiersza rejestru kont na strukturę kontraktu
-// i nałożenie na wiersz pól żądania zmiany.
-//
-// Przekład dotyka wyłącznie pola `MaPoswiadczenie`, które jest znacznikiem
-// „jest / nie ma". Ani odwołania, ani tym bardziej sekretu nie ma po tej
-// stronie w ogóle — struktura Account kontraktu nie ma na nie pola.
+// Plik przekłada wiersz rejestru kont na strukturę kontraktu oraz nakłada na
+// wiersz pola żądania zmiany, dotykając poświadczenia wyłącznie znacznikiem
+// jego obecności.
 package core
 
 import (
@@ -13,7 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// kontoKontraktu przekłada wiersz rejestru na strukturę Account.
+// kontoKontraktu przekłada wiersz rejestru kont na strukturę Account
+// kontraktu, z polami identyfikatora, dostawcy i stanu aktywności.
 func kontoKontraktu(k dane.Konto) shared.Account {
 	return shared.Account{
 		Id:            strconv.FormatInt(k.ID, 10),
@@ -33,11 +31,9 @@ func kontoKontraktu(k dane.Konto) shared.Account {
 	}
 }
 
-// zastosujZmianeKonta nakłada na wiersz pola wskazane w żądaniu. Pole pominięte
-// zostaje bez zmiany — żądanie kontraktu opisuje różnicę, nie komplet wiersza.
-// Rodzaju konta żądanie nie zmienia: rodzaj rozstrzyga o puli rotacji i o tym,
-// które konto jest domyślne, więc jego zmiana byłaby przeniesieniem konta do
-// innego zbioru, a nie poprawką wiersza.
+// zastosujZmianeKonta nakłada na wiersz pola wskazane w żądaniu; pole
+// pominięte zostaje bez zmiany, a rodzaj konta pozostaje niezmienny, bo
+// rozstrzyga o puli rotacji.
 func zastosujZmianeKonta(konto *dane.Konto, z shared.AccountUpdateRequest) {
 	if z.Name != nil {
 		konto.Nazwa = *z.Name

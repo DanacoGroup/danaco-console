@@ -1,13 +1,4 @@
-/* Treść umowy licencyjnej jest fragmentem wstawianym do pola przewijanego w kroku instalacji i nie jest samodzielnym dokumentem do edycji.
-   TREŚĆ UMOWY LICENCYJNEJ — wynik `zbuduj-licencje.py` ze źródła
-   `zasoby/tresci/licencja-2.1.md`. Fragment, nie dokument: wstawia go
-   składnik `dokument` do pola przewijanego w kroku 2.
-
-   Nie edytuj tu niczego — zmiana wchodzi w źródle i przechodzi przez
-   generator. Treść stoi w skrypcie, a nie w osobnym pliku do pobrania, bo
-   okno bywa otwierane wprost z dysku, a przeglądarka blokuje wtedy
-   pobieranie plików towarzyszących.
-   ============================================================================ */
+/* Treść jest wynikiem działania generatora zbuduj-licencje.py uruchamianego na źródłowym tekście umowy licencyjnej i stanowi fragment wstawiany do pola przewijanego w kroku instalacji, a nie samodzielny dokument do edycji. */
 window.DanacoTresci = window.DanacoTresci || {};
 window.DanacoTresci.licencja = `
 <h2 id="1-postanowienia-wstępne">1. Postanowienia wstępne</h2>

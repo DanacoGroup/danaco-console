@@ -2110,3 +2110,17 @@ Brzmienie fragmentu ma pole wielowierszowe, ponieważ poprawa fragmentu bez
 przepisywania całości jest osią zamówienia, a fragment bywa akapitem, nie
 wyrazem; pole jednowierszowe wymuszałoby wklejanie akapitu w linijkę wysokości
 jednego wiersza.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-reading-view.ts
+Okno jest zbudowane, choć katalog okien rdzenia jeszcze go nie zna, bo dwie jego czynności mają dziś pokrycie: wczytanie treści dokumentu repozytorium i zamiana zaznaczonego fragmentu w ustalenie z powiązaniem do czytanego źródła. Podświetlenia trwałe, notatki na marginesie i wypisy zbiorcze mają już w kontrakcie własne komendy i własny byt wraz z kotwicą pozycji, ale rdzeń nie ma dla nich uchwytu — okno ich nie udaje, zaznaczenie jest zaznaczeniem przeglądarki, a trwałym staje się dopiero jako ustalenie. Pozostałe operacje na źródle stoją w panelu akcji pod nazwami swoich komend i wracają odmową rdzenia, zamiast znikać z okna. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności lektury.
+
+## budowa/klient-poprzedni/src/moduly/workspace/okno-rozmowy.ts
+Dwie kontrolki modułu wołają przeniesienie kontekstu i obie wymagają identyfikatora okna źródłowego:
+udostępnienie zaznaczonych zasobów w bibliotece projektu oraz przejście do budowniczego eksperta
+w zarządcy ekspertów. Rdzeń niesie kod modułu w opisie okna, więc okna karty sesji wystarczy zawęzić
+do modułu. Moduł montuje się od razu, a nie odracza montażu do chwili znalezienia okna, bo okno
+rozmowy jest mu potrzebne do dwóch czynności, nie do istnienia — jego brak nie wygasza pięciu okien
+operacyjnych. Kolejność względem wejścia do modułu jest treścią: okno rozmowy jest wtedy już
+przestawione na ten moduł, a pytanie zadane wcześniej oddałoby okno modułu poprzedniego. Funkcja nie
+zgaduje: gdy rdzeń odmówi albo nie odda okna tego modułu, wraca pusty identyfikator wraz z powodem,
+który staje potem w odmowie obu kontrolek. Rdzeń oddaje w wykazie oba stany okna, otwarty i zamknięty.

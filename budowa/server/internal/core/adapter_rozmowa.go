@@ -280,7 +280,7 @@ func (a *adapterRozmowy) prowadzTure(kontekst context.Context, okno session.Okno
 	}
 	strumien.Zakoncz(okno.Id, odpowiedz.Id, tresc.String(), err)
 	if a.petla != nil {
-		a.petla.ZakonczTure(okno.Id, powodTury(kontekst, err)) // koniec tury wybudza koordynatora
+		a.petla.ZakonczTure(okno.Id, powodTury(kontekst, err, zamkniecie)) // koniec tury wybudza koordynatora
 	}
 
 	odpowiedz.Content = tresc.String()

@@ -23,6 +23,25 @@ import (
 // wyliczenie literałów w źródle zaniża wynik i nie wiadomo o ile. Jedynym
 // pomiarem, który mówi prawdę, jest zmontowany rejestr.
 
+// granicaKomendySprawdzianu jest granicą czasu JEDNEGO wywołania komendy przez
+// uprząż sprawdzianu. Wypada wyłącznie wtedy, gdy rdzeń zwisł — nigdy wtedy,
+// gdy komenda po prostu długo pracuje.
+//
+// Wartość wychodzi z granicy warstwy, nie z czasu pomiaru. Najdłuższa czynność
+// mierzona uprzężą jest czynnością skanera i sama stoi pod granicą
+// `granicaWykazuUrzadzen` (45 s, `urzadzenia_skaner.go`): komenda, której
+// urządzenie nie odpowiada, wraca odmową dopiero po tym czasie. Uprząż ciaśniejsza
+// od tej granicy urywa komendę przed jej własną odmową i melduje usterkę rdzenia
+// tam, gdzie zwisło urządzenie — tak chwiał się sprawdzian przy granicy 15 s,
+// podczas gdy czynność skanera dochodzi na tej maszynie do ~14,8 s.
+//
+// Zapas ponad granicę warstwy to 15 s: tyle trwa montaż rdzenia i droga koperty
+// wokół samej czynności, a jest to zarazem czterokrotność najdłuższego zmierzonego
+// wywołania. Granica pozostaje o rząd wielkości niższa od granicy pojedynczego
+// przebiegu skanera (5 min), więc zwis rdzenia nadal wychodzi w minutach, nie
+// w godzinach.
+const granicaKomendySprawdzianu = granicaWykazuUrzadzen + 15*time.Second
+
 // komendyBezObslugiwacza wylicza komendy kontraktu, których rdzeń dziś nie
 // obsługuje. Wykaz jest zaporą, nie zgodą: sprawdzian wypada niepomyślnie
 // zarówno wtedy, gdy pojawi się brak spoza wykazu, jak i wtedy, gdy brak
@@ -212,7 +231,7 @@ func TestKazdaKomendaZnosiPustyLadunek(t *testing.T) {
 
 	for _, komenda := range zmontowany.Rdzen.rejestr.Nazwy() {
 		t.Run(komenda, func(t *testing.T) {
-			ctx, przerwij := context.WithTimeout(zycie, 15*time.Second)
+			ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
 			defer przerwij()
 
 			odpowiedz := zmontowany.Rdzen.Wykonaj(ctx, protocol.Koperta{
@@ -251,7 +270,7 @@ func wykonajKomende(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(zycie, 15*time.Second)
+	ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
 	defer przerwij()
 	return zmontowany.Rdzen.Wykonaj(ctx, koperta)
 }

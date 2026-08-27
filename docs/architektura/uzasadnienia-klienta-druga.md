@@ -4213,3 +4213,19 @@ ma — panele przychodzą i znikają z każdą zmianą wykazu, więc to nie jest
 Kanał wyłączony w innym oknie znika z wykazu kanałów czynnych, a rdzeń odmówiłby przekładu
 wskazaniem na niego; cichy powrót byłby jednak zmianą nastawy bez wiedzy operatora, więc
 towarzyszy mu zdanie przy pozycji domyślnej.
+
+## budowa/klient-poprzedni/src/strona-glowna/pozycje-modulow.ts
+Kafel modułu bez nawigacji jest jedyną drogą do modułu, którego rdzeń nie pokazuje w bocznej nawigacji
+żadnego środowiska: wykaz modułów oddaje takie moduły z pustym wykazem środowisk, a bez kafla ich okna
+operacyjne byłyby nieosiągalne. Kryterium pochodzi z kontraktu, nie z wykazu nazw: pusty wykaz środowisk
+modułu znaczy, że moduł jest dostępny wyłącznie ze strony głównej, więc plik pyta dokładnie o to i nie
+wpisuje ani jednego kodu modułu — gdy rdzeń przypnie moduł do środowiska, kafel znika sam. To nie jest
+druga macierz widoczności: macierz mówi, gdzie moduł stoi, a ten wykaz wyłącznie to, że nie stoi nigdzie.
+Moduł nastawiany na stronie głównej nie wraca w wykazie modułów poza nawigacją: moduł potrafi spełniać
+oba warunki naraz, a wtedy rysowałby się na jednym ekranie dwa razy, w dwóch sąsiednich strefach, choć oba
+kafle wołałyby ten sam kod — pierwszeństwo ma strefa kafli komponentów. Warunek pyta o dane rdzenia, nie
+o kod modułu, więc rozstrzygnięcie przenosi się samo wraz ze zmianą oznaczenia w bazie. Wezwanie kafla
+w strefie komponentów jest zdaniem, którym rdzeń sam opisuje moduł; pusty opis wraca do wezwania zastanego
+z tej samej klatki, co wykaz komponentów, tak samo jak w kaflu personalizowanym. Wezwanie opisuje moduł,
+a nie obiecuje czynności, której kafel nie wykonuje: jedynym jego skutkiem jest przejście do modułu — kafel
+zakładający komponent stoi osobno, w przyborniku listwy ustawień.

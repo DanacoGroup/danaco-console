@@ -5742,3 +5742,6 @@ przyjmują wprost identyfikator, bez pośrednictwa indeksu tablicy. Górna
 granica liczby okien wynosi cztery, bo tyle liczy obsada multitaskingu:
 koordynator, dwóch wykonawców i analityk — mniejszy sufit nie mieściłby
 pełnej pętli, bo analityk nie miałby gdzie stanąć obok pary, którą ocenia.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/zrodlo-srodowiska.ts
+Zasięg wykonania ma w kliencie dwa widoki — listę wyboru w szufladzie ustawień i ten przełącznik nad polem wypowiedzi — a reguła protokołu nie jest pisana po raz drugi: odczyt idzie tym samym stanem sterowania, zapis tą samą zmianą okna, tą samą komendą i tym samym identyfikatorem okna, więc oba widoki przyjmują wyłącznie stan potwierdzony przez rdzeń. Nazwa maszyny zdalnej jest ustawieniem poziomu okna, nie polem samej zmiany okna, dlatego port osobno wczytuje ustawienia zasięgu okna — bez tego przełącznik pokazywałby brak wskazania przy hoście już zapisanym w bazie.

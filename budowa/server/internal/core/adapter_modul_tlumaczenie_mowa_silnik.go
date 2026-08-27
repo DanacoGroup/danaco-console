@@ -62,7 +62,7 @@ func (a *adapterTlumaczenia) ZSynteza(uruchamiacz session.Uruchamiacz,
 
 // zsyntezujDoPliku zamienia tekst na plik WAV i oddaje jego ścieżkę.
 // Kolejność jest rozmyślna: najpierw pytanie, czym syntezować, dopiero potem
-// zakładamy cokolwiek na dysku.
+// zakłada się cokolwiek na dysku.
 func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	kodPanelu, jezyk, tekst string) (string, error) {
 
@@ -96,7 +96,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		wybor.narzedzie, wybor.argumenty(sciezkaTekstu, sciezka), katalogPracySyntezy(obszar), granicaSyntezy)
 	if err != nil {
-		// Naruszenie izolacji znakujemy osobno — punkt izolacji Operatora to
+		// Naruszenie izolacji jest znakowane osobno — punkt izolacji Operatora to
 		// nie jest usterka rdzenia.
 		if errors.Is(err, session.ErrIzolacja) {
 			return "", bladIzolacjiSyntezy(err)
@@ -104,7 +104,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 		return "", bladSyntezyMowy(err.Error() + ogonSyntezatora(wynik.Diagnostyka))
 	}
 
-	// Plik ma istnieć i mieć rozmiar — sprawdzamy skutek, nie kod wyjścia;
+	// Plik ma istnieć i mieć rozmiar — liczy się skutek, nie kod wyjścia;
 	// piper bywa zerem bez nagrania.
 	opis, err := os.Stat(sciezka)
 	if err != nil {
@@ -119,7 +119,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	return sciezka, nil
 }
 
-// wyborSyntezatora niesie rozstrzygnięcie „czym czytamy": nazwę silnika (idzie
+// wyborSyntezatora niesie rozstrzygnięcie „czym jest czytane": nazwę silnika (idzie
 // w nazwę pliku), narzędzie dla `zewnetrzne.Wolaj` i głos, gdy silnik go używa.
 type wyborSyntezatora struct {
 	silnik    string

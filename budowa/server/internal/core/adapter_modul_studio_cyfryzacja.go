@@ -16,13 +16,25 @@
 // dopowiada — pewność pozycji jest średnią pewności jej słów, a gdy Tesseract
 // nie oddał ani jednego słowa, pewności nie ma wcale i pole zostaje puste.
 // Pusta pewność i pewność zerowa to dwie różne rzeczy.
+//
+// ── Obraz przed rozpoznaniem ────────────────────────────────────────────────
+// Cztery nastawy kontraktu opisują obróbkę wstępną skanu — prostowanie skosu,
+// odszumianie, progowanie i przycinanie marginesów — i prowadzi je unpaper,
+// zanim materiał zobaczy Tesseract. Rozstrzygnięcia tej drogi stoją przy
+// `oczyscMaterial`.
 package core
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -437,7 +449,17 @@ func (a *adapterStudia) rozpoznajMaterial(ctx context.Context, sciezka string,
 		jezyk = strings.Join(nastawy.Jezyki, "+")
 	}
 
-	argumenty := []string{sciezka, "stdout", "-l", jezyk, "tsv"}
+	material := sciezka
+	if czyszczenieZadane(nastawy) {
+		oczyszczony, posprzataj, err := a.oczyscMaterial(ctx, sciezka, nastawy)
+		if err != nil {
+			return odczytMaterialu{}, err
+		}
+		defer posprzataj()
+		material = oczyszczony
+	}
+
+	argumenty := []string{material, "stdout", "-l", jezyk, "tsv"}
 	wyjscie, err := a.wolajNarzedzie(ctx, narzedzieRozpoznaniaStudia, argumenty)
 	if err != nil {
 		return odczytMaterialu{}, err
@@ -450,6 +472,189 @@ func (a *adapterStudia) rozpoznajMaterial(ctx context.Context, sciezka string,
 		pewnosc: sredniaPewnosc(slowa),
 		slowa:   slowa,
 	}, nil
+}
+
+// ── Przygotowanie obrazu przed rozpoznaniem ─────────────────────────────────
+//
+// Cztery nastawy kontraktu — `deskew`, `denoise`, `binarize`, `trimMargins` —
+// opisują obróbkę wstępną skanu i prowadzi je unpaper: program napisany
+// dokładnie do tego, do prostowania skosu, odsiewania szumu, progowania i
+// odcinania czarnych obrzeży po kopiarce. Rdzeń nie liczy tego sam, bo skos
+// wykrywa się przemiataniem obrazu pod kątem, a nie jedną pętlą po pikselach.
+//
+// ── Kiedy unpaper NIE rusza ─────────────────────────────────────────────────
+// Gdy żadna z czterech nastaw nie jest włączona. Przebieg „bez niczego" i tak
+// przepisałby obraz przez konwersję do PNM i z powrotem, płacąc uruchomieniem
+// procesu za wynik, o który nikt nie prosił.
+//
+// ── Nastawa wyłączona wyłącza filtr, a nie zostawia go domyślnie ────────────
+// unpaper ma wszystkie filtry włączone domyślnie, a kontrakt ma je domyślnie
+// wyłączone (`bool` bez wskazania znaczy „nie"). Rdzeń wyrównuje te dwie
+// domyślności: filtr, o który nikt nie prosił, jest wyłączany jawnie. Bez tego
+// jedno `deskew: true` włączyłoby po cichu także odszumianie i progowanie —
+// czyli obróbkę, której Operator nie zamówił i której nie zobaczy w nastawach
+// pozycji. Blackfilter, którego kontrakt nie ma wcale, jest wyłączony zawsze.
+
+// czyszczenieZadane odpowiada, czy którakolwiek z czterech nastaw obróbki
+// wstępnej jest włączona.
+func czyszczenieZadane(nastawy nastawyRozpoznania) bool {
+	return nastawy.Prostowanie || nastawy.Odszumianie ||
+		nastawy.Progowanie || nastawy.PrzycinanieMarginesow
+}
+
+// argumentyCzyszczenia składa wiersz wywołania unpapera z nastaw pozycji.
+func argumentyCzyszczenia(nastawy nastawyRozpoznania, wejscie, wyjscie string) []string {
+	argumenty := []string{"--layout", "single", "--no-blackfilter"}
+	if !nastawy.Prostowanie {
+		argumenty = append(argumenty, "--no-deskew")
+	}
+	if !nastawy.Odszumianie {
+		argumenty = append(argumenty, "--no-noisefilter", "--no-blurfilter", "--no-grayfilter")
+	}
+	if !nastawy.PrzycinanieMarginesow {
+		argumenty = append(argumenty, "--no-border-scan", "--no-border-align")
+	}
+	if nastawy.Progowanie {
+		argumenty = append(argumenty, "--type", "pbm")
+	}
+	return append(argumenty, wejscie, wyjscie)
+}
+
+// oczyscMaterial przepuszcza materiał przez unpapera i oddaje ścieżkę wyniku
+// wraz z posprzątaniem katalogu roboczego.
+//
+// unpaper czyta i pisze WYŁĄCZNIE PNM (`pbm`, `pgm`, `ppm`) — tak stanowi jego
+// opis i tak zachowuje się na maszynie budowy, gdzie PNG odrzuca zdaniem
+// „unsupported pixel format". Zamiana idzie biblioteką wkompilowaną, nie
+// programem: dekodery PNG, JPEG, GIF, TIFF, BMP i WEBP są w binarium rdzenia,
+// a zapis PNM to nagłówek i bajty pikseli. Wołanie tu ImageMagicka byłoby
+// procesem tam, gdzie biblioteka wystarcza.
+//
+// Materiał, który JEST już PNM-em, idzie do unpapera bez przepisywania.
+func (a *adapterStudia) oczyscMaterial(ctx context.Context, sciezka string,
+	nastawy nastawyRozpoznania) (string, func(), error) {
+
+	pusto := func() {}
+	if !zewnetrzne.Stoi(narzedzieCzyszczeniaSkanu) {
+		return "", pusto, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
+			"moduł Studio: nastawy pozycji żądają obróbki wstępnej obrazu, a programu "+
+				narzedzieCzyszczeniaSkanu.Nazwa+" ("+narzedzieCzyszczeniaSkanu.Program+
+				") nie ma na tej maszynie; naprawa: zainstalować pakiet "+
+				narzedzieCzyszczeniaSkanu.Pakiet+
+				". Droga, która działa bez niego: wyłączyć w nastawach prostowanie, "+
+				"odszumianie, progowanie i przycinanie marginesów — rozpoznanie pobiegnie "+
+				"na materiale bez obróbki"))
+	}
+
+	katalog, err := os.MkdirTemp("", "danaco-skan-")
+	if err != nil {
+		return "", pusto, bladStudio(err)
+	}
+	posprzataj := func() { _ = os.RemoveAll(katalog) }
+
+	wejscie, err := materialWPnm(sciezka, katalog)
+	if err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	// Rozszerzenie wyniku idzie za typem, który unpaper zapisze: przy progowaniu
+	// jest to mapa bitowa, poza nim — ten sam typ, co wejście.
+	wyjscie := filepath.Join(katalog, "oczyszczony.ppm")
+	if nastawy.Progowanie {
+		wyjscie = filepath.Join(katalog, "oczyszczony.pbm")
+	}
+
+	if _, err := a.wolajNarzedzie(ctx, narzedzieCzyszczeniaSkanu,
+		argumentyCzyszczenia(nastawy, wejscie, wyjscie)); err != nil {
+		posprzataj()
+		return "", pusto, err
+	}
+	// Program potrafi skończyć się powodzeniem i nie zostawić pliku — wtedy
+	// rozpoznanie pobiegłoby na ścieżce, pod którą nic nie leży, i odmówiłoby
+	// zdaniem o Tesseractcie zamiast o obróbce.
+	if opis, err := os.Stat(wyjscie); err != nil || opis.Size() == 0 {
+		posprzataj()
+		return "", pusto, protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+			"moduł Studio: unpaper zakończył pracę, ale obrazu po obróbce nie ma pod "+
+				wyjscie+" — materiał do rozpoznania nie powstał"))
+	}
+	return wyjscie, posprzataj, nil
+}
+
+// materialWPnm oddaje ścieżkę materiału w postaci, którą unpaper przyjmie.
+func materialWPnm(sciezka, katalog string) (string, error) {
+	bajty, err := os.ReadFile(sciezka)
+	if err != nil {
+		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
+			"moduł Studio: nie można odczytać materiału pozycji "+sciezka+": "+err.Error()))
+	}
+	if czyPnm(bajty) {
+		return sciezka, nil
+	}
+	obraz, _, err := image.Decode(bytes.NewReader(bajty))
+	if err != nil {
+		return "", protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
+			"moduł Studio: obróbka wstępna obrazu dotyczy skanu i zdjęcia kartki, a materiału "+
+				"pozycji rdzeń nie umie odczytać jako obrazu ("+err.Error()+
+				"); naprawa: wyłączyć w nastawach obróbkę wstępną albo podać materiał "+
+				"w formacie obrazu (PNG, JPEG, TIFF, BMP, WEBP, GIF, PNM)"))
+	}
+	wejscie := filepath.Join(katalog, "wejscie.ppm")
+	if err := zapiszPpm(wejscie, obraz); err != nil {
+		return "", err
+	}
+	return wejscie, nil
+}
+
+// czyPnm rozpoznaje mapę PNM po jej znaku rozpoznawczym: litera `P` i cyfra od
+// 1 do 6. To jest cały nagłówek tego rodzaju plików.
+func czyPnm(bajty []byte) bool {
+	return len(bajty) >= 2 && bajty[0] == 'P' && bajty[1] >= '1' && bajty[1] <= '6'
+}
+
+// zapiszPpm zapisuje obraz jako mapę PPM (P6): trzy bajty na piksel, bez
+// kompresji.
+//
+// Obraz idzie najpierw na BIAŁE TŁO. Materiał z przezroczystością (skan
+// zapisany jako PNG z kanałem alfa) rozłożyłby się inaczej: piksel
+// przezroczysty ma w Go składowe pomnożone przez alfę, więc wyszedłby czarny —
+// czyli kartka miałaby czarne pole tam, gdzie nie ma nic. Biel jest tu kolorem
+// papieru, nie wyborem estetycznym.
+func zapiszPpm(sciezka string, obraz image.Image) error {
+	granice := obraz.Bounds()
+	naPapierze := image.NewRGBA(granice)
+	draw.Draw(naPapierze, granice, image.NewUniform(color.White), image.Point{}, draw.Src)
+	draw.Draw(naPapierze, granice, obraz, granice.Min, draw.Over)
+
+	plik, err := os.Create(sciezka)
+	if err != nil {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+			"moduł Studio: nie można założyć pliku materiału do obróbki: "+err.Error()))
+	}
+	defer func() { _ = plik.Close() }()
+
+	bufor := bufio.NewWriter(plik)
+	if _, err := fmt.Fprintf(bufor, "P6\n%d %d\n255\n", granice.Dx(), granice.Dy()); err != nil {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+			"moduł Studio: nie można zapisać nagłówka materiału do obróbki: "+err.Error()))
+	}
+	wiersz := make([]byte, 0, granice.Dx()*3)
+	for y := granice.Min.Y; y < granice.Max.Y; y++ {
+		wiersz = wiersz[:0]
+		for x := granice.Min.X; x < granice.Max.X; x++ {
+			czerwony, zielony, niebieski, _ := naPapierze.At(x, y).RGBA()
+			wiersz = append(wiersz, byte(czerwony>>8), byte(zielony>>8), byte(niebieski>>8))
+		}
+		if _, err := bufor.Write(wiersz); err != nil {
+			return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+				"moduł Studio: nie można zapisać materiału do obróbki: "+err.Error()))
+		}
+	}
+	if err := bufor.Flush(); err != nil {
+		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeInternalError,
+			"moduł Studio: nie można domknąć materiału do obróbki: "+err.Error()))
+	}
+	return nil
 }
 
 // odczytajSlowaTsv czyta wyjście `tesseract … tsv`. Kolumny: level, page_num,
@@ -742,5 +947,8 @@ var (
 	}
 	narzedzieSkanera = zewnetrzne.Narzedzie{
 		Nazwa: "SANE (scanimage)", Program: "scanimage", Pakiet: "sane-utils",
+	}
+	narzedzieCzyszczeniaSkanu = zewnetrzne.Narzedzie{
+		Nazwa: "unpaper", Program: "unpaper", Pakiet: "unpaper",
 	}
 )

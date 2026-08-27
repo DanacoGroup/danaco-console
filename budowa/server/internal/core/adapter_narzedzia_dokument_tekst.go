@@ -29,6 +29,16 @@
 // rdzeń nie umie przeczytać. Wraca odmowa nazywająca brak — nie pusty tekst
 // z `usedOcr: false`, bo pusty tekst znaczy „dokument jest pusty", a to jest
 // zdanie o dokumencie, nie o rdzeniu.
+//
+// ── Format spoza słownika rdzenia ──────────────────────────────────────────
+// Słownik `formatyDokumentu` zna dziewięć formatów i jest wykazem tego, co
+// rdzeń umie ZAMIENIAĆ. Odczyt jest czymś innym niż zamiana: model dostaje od
+// Operatora arkusz, prezentację, wiadomość poczty albo plik biurowy spoza tej
+// dziewiątki i pytanie brzmi „co tam jest napisane", a nie „na co to zamienić".
+// Materiał, którego słownik nie zna, idzie więc do Apache Tiki — biblioteki,
+// której cała robota polega na rozpoznaniu rodzaju pliku i wydobyciu z niego
+// tekstu. Tika nie wypiera żadnej z istniejących dróg: format, który słownik
+// zna, jedzie jak jechał, bo Pandoc i poppler znają jego strukturę lepiej.
 package core
 
 import (
@@ -39,6 +49,7 @@ import (
 	"strconv"
 	"strings"
 
+	"danacoconsole/server/internal/zewnetrzne"
 	"danacoconsole/shared"
 )
 
@@ -47,6 +58,112 @@ import (
 // języka trafia do Tesseracta bez zmian po sprowadzeniu skrótów do jego
 // nazewnictwa trójliterowego.
 const jezykRozpoznaniaDomyslny = "pol"
+
+// ── Apache Tika ─────────────────────────────────────────────────────────────
+//
+// Tika nie jest plikiem wykonywalnym: jest zbiorem archiwów Javy, które ktoś
+// musi uruchomić maszyną wirtualną. Rdzeń rozdziela więc dwie rzeczy, tak samo
+// jak przy silniku mowy, gdzie osobno stoi binarium `piper`, a osobno plik
+// głosu:
+//
+//   - PROGRAM to `java` — i to jego dotyczy deklaracja narzędzia, sonda
+//     obecności oraz wykaz zależności. Ścieżka wyszukiwania systemu odpowiada
+//     na pytanie o niego wprost;
+//   - ARCHIWUM to `tika-app-*.jar` wraz z bibliotekami wydania. Nie jest
+//     programem, więc `zewnetrzne.Stoi` nie ma o co go zapytać — jego brak jest
+//     osobną odmową, z osobną naprawą („dołożyć wydanie Tiki"), bo naprawa
+//     „zainstalować Javę" niczego by tu nie załatwiła.
+const (
+	// zmiennaTiki jest wskazaniem Operatora, gdzie leży wydanie Tiki —
+	// pierwszeństwo przed miejscem typowym, tą samą zasadą co `DANACO_PIPER`
+	// przy syntezie mowy. Arsenał instaluje się poza produktem i bywa na każdej
+	// maszynie gdzie indziej.
+	zmiennaTiki = "DANACO_TIKA"
+	// katalogTikiTypowy jest miejscem sprawdzanym, gdy zmiennej nie ma.
+	katalogTikiTypowy = "/opt/tika"
+	// klasaTiki to punkt wejścia wiersza poleceń Tiki. Nazwa klasy, nie nazwa
+	// pliku — archiwum wskazujemy ścieżką, a klasę nazwą, bo archiwum jest
+	// wersjonowane, a klasa nie.
+	klasaTiki = "org.apache.tika.cli.TikaCLI"
+)
+
+// narzedzieTiki opisuje maszynę wirtualną, którą Tika się uruchamia.
+//
+// Nazwa czytelna mówi o Tice, nie o Javie, bo Operator, któremu odmówiono
+// odczytu pliku, ma przeczytać, czego brakuje do ODCZYTU. Pakiet wymienia obie
+// rzeczy, bo obie są warunkiem.
+var narzedzieTiki = zewnetrzne.Narzedzie{
+	Nazwa:   "Apache Tika (uruchamiana środowiskiem Javy)",
+	Program: "java",
+	Pakiet: "środowisko uruchomieniowe Javy (default-jre) wraz z wydaniem Apache Tika " +
+		"w " + katalogTikiTypowy + " albo w katalogu wskazanym zmienną " + zmiennaTiki,
+}
+
+// katalogTiki oddaje katalog, w którym rdzeń szuka wydania Tiki.
+func katalogTiki() string {
+	if wskazany := strings.TrimSpace(os.Getenv(zmiennaTiki)); wskazany != "" {
+		return wskazany
+	}
+	return katalogTikiTypowy
+}
+
+// sciezkaKlasTiki składa ścieżkę klas dla maszyny wirtualnej: archiwum wiersza
+// poleceń oraz każdy katalog bibliotek wydania.
+//
+// Wersja archiwum NIE jest wpisana — nazwa pliku niesie numer wydania, a numer
+// wpisany w kod rdzenia rozjechałby się z pierwszą aktualizacją Tiki i objawił
+// odmową u Operatora. Wzorzec `tika-app-*.jar` jest nazwą, którą to wydanie
+// nosi od lat.
+//
+// Katalogi bibliotek dokłada się dlatego, że wydania Tiki bywają dwojakie:
+// archiwum samowystarczalne (niesie zależności w sobie) albo archiwum cienkie
+// obok katalogu `lib`. Rdzeń nie zgaduje, które ma przed sobą — dokłada każdy
+// `lib`, jaki w katalogu wydania stoi, a gdy nie stoi żaden, ścieżka klas
+// zostaje samym archiwum i wydanie samowystarczalne rusza tak samo. Gwiazdka na
+// końcu katalogu jest wieloznacznikiem MASZYNY WIRTUALNEJ, nie powłoki —
+// rozwija ją Java i znaczy „wszystkie archiwa w tym katalogu".
+func sciezkaKlasTiki() (string, bool) {
+	katalog := katalogTiki()
+	archiwa, err := filepath.Glob(filepath.Join(katalog, "tika-app-*.jar"))
+	if err != nil || len(archiwa) == 0 {
+		return "", false
+	}
+	// Kolejność wydań jest kolejnością nazw, a nazwa niesie numer wersji —
+	// przy dwóch wydaniach obok siebie bierzemy późniejsze, zamiast pozwalać
+	// systemowi plików rozstrzygnąć to za rdzeń.
+	sort.Strings(archiwa)
+	czlony := []string{archiwa[len(archiwa)-1]}
+
+	katalogiBibliotek, _ := filepath.Glob(filepath.Join(katalog, "lib"))
+	zagniezdzone, _ := filepath.Glob(filepath.Join(katalog, "*", "lib"))
+	katalogiBibliotek = append(katalogiBibliotek, zagniezdzone...)
+	sort.Strings(katalogiBibliotek)
+	for _, biblioteki := range katalogiBibliotek {
+		if opis, err := os.Stat(biblioteki); err == nil && opis.IsDir() {
+			czlony = append(czlony, filepath.Join(biblioteki, "*"))
+		}
+	}
+	return strings.Join(czlony, string(os.PathListSeparator)), true
+}
+
+// odmowaBrakuTiki nazywa brak wydania Tiki. Osobna od odmowy braku programu,
+// bo naprawa jest inna: Java może stać, a archiwum i tak nie ma.
+func odmowaBrakuTiki(format string) error {
+	return odmowaDokumentu(shared.ErrorCodeChannelUnavailable,
+		"rdzeń nie ma czym odczytać materiału "+opisFormatuMaterialu(format)+
+			": wydania Apache Tiki nie ma w "+katalogTiki()+
+			" (szukane archiwum `tika-app-*.jar`); naprawa: rozpakować wydanie Tiki "+
+			"do tego katalogu albo wskazać jego położenie zmienną "+zmiennaTiki)
+}
+
+// opisFormatuMaterialu nazywa format materiału albo jego brak. Odmowa mówiąca
+// „materiału ” nie mówi nic.
+func opisFormatuMaterialu(format string) string {
+	if strings.TrimSpace(format) == "" {
+		return "o nierozpoznanym formacie"
+	}
+	return "w formacie " + format
+}
 
 // WyciagnijTekst obsługuje `document.text.extract`.
 func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
@@ -69,9 +186,17 @@ func (a *adapterNarzedziDokumentu) WyciagnijTekst(ctx context.Context,
 		return shared.DocumentTextExtractResponse{}, err
 	}
 	if zrodlo.format == "" {
+		// Format nierozpoznany nie znaczy jeszcze „nie do odczytania": słownik
+		// rdzenia zna dziewięć formatów, a Tika rozpoznaje rodzaj pliku sama,
+		// z jego zawartości. Odmowa zostaje na wypadek, gdy Tiki nie ma.
+		if zewnetrzne.Stoi(narzedzieTiki) {
+			return a.tekstTika(ctx, zrodlo)
+		}
 		return shared.DocumentTextExtractResponse{}, bladZadaniaDokumentu(
-			"formatu materiału nie da się rozpoznać po pliku — naprawa: wskazać plik " +
-				"z rozszerzeniem albo zasób niosący format")
+			"formatu materiału nie da się rozpoznać po pliku, a rdzeń nie ma czym " +
+				"rozpoznać go z zawartości — naprawa: wskazać plik z rozszerzeniem, " +
+				"zasób niosący format albo dołożyć środowisko Javy wraz z wydaniem " +
+				"Apache Tiki")
 	}
 
 	jezyk := jezykRozpoznaniaDokumentu(z.Language)
@@ -148,6 +273,45 @@ func (a *adapterNarzedziDokumentu) tekstZDokumentu(ctx context.Context,
 		return shared.DocumentTextExtractResponse{}, err
 	}
 	return shared.DocumentTextExtractResponse{Text: string(wyjscie), UsedOcr: false}, nil
+}
+
+// tekstTika czyta materiał, którego słownik rdzenia nie zna, wierszem poleceń
+// Apache Tiki.
+//
+// `usedOcr` jest tu fałszem i zasłużenie — Tika czyta ZNAKI zapisane w pliku,
+// nie piksele. Pole `pages` zostaje puste: wyjście `--text` jest strumieniem
+// treści bez znaków podziału stron, a jedynka wpisana z góry byłaby liczbą
+// zmyśloną.
+//
+// Diagnostyka Tiki idzie osobnym strumieniem (wiersze `INFO` o włączonych
+// rozszerzeniach) i nie miesza się z treścią — `zewnetrzne.Wolaj` trzyma oba
+// strumienie osobno właśnie po to.
+func (a *adapterNarzedziDokumentu) tekstTika(ctx context.Context,
+	zrodlo zrodloDokumentu) (shared.DocumentTextExtractResponse, error) {
+
+	sciezkaKlas, jest := sciezkaKlasTiki()
+	if !jest {
+		return shared.DocumentTextExtractResponse{}, odmowaBrakuTiki(zrodlo.format)
+	}
+	wyjscie, err := a.wolaj(ctx, narzedzieTiki, []string{
+		"-cp", sciezkaKlas, klasaTiki, "--text", "--encoding=UTF-8", zrodlo.sciezka,
+	}, granicaOdczytuDokumentu)
+	if err != nil {
+		return shared.DocumentTextExtractResponse{}, err
+	}
+	tekst := string(wyjscie)
+	if strings.TrimSpace(tekst) == "" {
+		// Pustka po programie, który skończył się powodzeniem, nie jest zdaniem
+		// o dokumencie: Tika oddaje ją tak samo wtedy, gdy plik jest pusty, jak
+		// wtedy, gdy nie ma czytnika dla jego rodzaju. Rdzeń nie ma czym tych
+		// dwóch rzeczy rozróżnić, więc nie orzeka o żadnej.
+		return shared.DocumentTextExtractResponse{}, odmowaDokumentu(shared.ErrorCodeInternalError,
+			"Apache Tika nie odczytała z tego materiału ani jednego znaku — plik może "+
+				"być pusty albo być rodzajem, dla którego Tika nie ma czytnika; "+
+				"naprawa: sprawdzić plik albo wskazać jego format polem fromFormat "+
+				"komendy document.convert")
+	}
+	return shared.DocumentTextExtractResponse{Text: tekst, UsedOcr: false}, nil
 }
 
 // tekstZPdf prowadzi rozstrzygnięcie opisane w nagłówku pliku: warstwa

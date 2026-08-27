@@ -2015,3 +2015,9 @@ nie niesie, więc zamiar jej nie podstawia i nie udaje, że pochodzi z rdzenia.
 Podniesienie priorytetu nie ma odpowiednika ani w wyliczeniu `QueueAction`, ani
 wśród komend kontraktu. Zamiar niesie wtedy rodzaj priorytetowy z komendą pustą,
 zamiast napisu wymyślonego po stronie klienta, którego rdzeń nie rozpozna.
+
+## budowa/klient-poprzedni/src/mission-control/kolumna-zespolu.ts
+
+Liczba podagentów nie ma źródła w kontrakcie. Wiersz mówi to wprost, zamiast pokazać
+wartość zastępczą, ponieważ liczba zmyślona wygląda tak samo jak odczytana i wprowadza
+w błąd przy ocenie obciążenia zespołu.

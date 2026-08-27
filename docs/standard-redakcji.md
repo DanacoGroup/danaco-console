@@ -4,6 +4,18 @@ Dokument określa wymagania stawiane komentarzom w plikach kodu oraz opisom
 w dokumentacji tej budowy. Wymagania obowiązują wszystkie pliki niosące treść
 pisaną, niezależnie od języka i warstwy.
 
+## Zasięg wymagań
+
+Wymagania budowy komentarza dotyczą plików kodu. Opracowanie tekstowe niesie
+treść ciągłą, w której znak wyliczenia wypada za znacznik komentarza, więc miara
+nagłówka i punktu zwraca dla niego wynik poza zasięgiem, a jakość opracowania
+rozstrzyga odczyt.
+
+Wymagania językowe obowiązują również opracowania, z jednym wyłączeniem:
+wskazanie dokumentu, z którego opracowanie czerpie, jest w nim treścią, a nie
+odesłaniem zamiast treści. Zakaz odsyłania dotyczy komentarza w pliku kodu,
+ponieważ komentarz ma być samodzielnym nośnikiem informacji.
+
 ## Budowa komentarza
 
 Każdy plik zawiera nagłówek. Nagłówek niesie co najmniej jedno pełne zdanie

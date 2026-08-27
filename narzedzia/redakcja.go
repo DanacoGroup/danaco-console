@@ -107,9 +107,13 @@ func wypiszBezKomentarzy(sciezka string, tresc []byte) {
 }
 
 // wypiszBudowe podaje liczbę nagłówków krótszych i dłuższych od wymaganych oraz
-// liczbę komentarzy w treści kodu przekraczających długość punktu. Pliki bez
-// żadnego nagłówka wykazuje osobno, ponieważ nagłówek jest wymagany zawsze.
+// liczbę komentarzy w treści kodu przekraczających długość punktu. Dokument
+// tekstowy zwraca poza zasięgiem, ponieważ miara dotyczy komentarza, nie prozy.
 func wypiszBudowe(sciezka string, tresc []byte) {
+	if dokument(sciezka) {
+		fmt.Printf("%s\tnaglowki=0\tkrotkie=0\tdlugie=0\tpunkty=0\tPOZA-ZASIEGIEM\n", sciezka)
+		return
+	}
 	komentarze := zbierz(sciezka, tresc)
 	var krotkie, dlugie, punkty, naglowki int
 	for _, k := range komentarze {
@@ -136,8 +140,8 @@ func wypiszBudowe(sciezka string, tresc []byte) {
 }
 
 // wypiszJezyk wykazuje wyrażenia zakazane w komentarzach plików kodu oraz w całej
-// treści dokumentów tekstowych. Każde trafienie podaje rodzaj naruszenia i wiersz,
-// aby redagujący trafił do miejsca bez przeszukiwania pliku.
+// treści dokumentów tekstowych. Dokumentowi nie liczy odesłań, ponieważ wskazanie
+// dokumentu źródłowego jest tam treścią, a nie odesłaniem zamiast treści.
 func wypiszJezyk(sciezka string, tresc []byte) {
 	var doZbadania []komentarz
 	if strings.EqualFold(filepath.Ext(sciezka), ".md") {
@@ -150,6 +154,9 @@ func wypiszJezyk(sciezka string, tresc []byte) {
 	naruszen := 0
 	for _, k := range doZbadania {
 		for _, z := range wyrazeniaZakazane {
+			if z.nazwa == "odeslanie" && dokument(sciezka) {
+				continue
+			}
 			if m := z.wzorem.FindString(k.tresc); m != "" {
 				naruszen++
 				fmt.Printf("%s\t%d\t%s\t%s\n", sciezka, k.wiersz, z.nazwa, strings.TrimSpace(m))
@@ -254,6 +261,13 @@ func zbierzOgolnie(sciezka string, tresc []byte) []komentarz {
 	}
 	domknij("")
 	return wynik
+}
+
+// dokument rozstrzyga, czy plik jest opracowaniem tekstowym. Miara nagłówka
+// i punktu dotyczy komentarza w kodzie, a w dokumencie znak wyliczenia wypadałby
+// za komentarz, więc opracowanie ocenia się odczytem i miarą języka.
+func dokument(sciezka string) bool {
+	return strings.EqualFold(filepath.Ext(sciezka), ".md")
 }
 
 func znacznikiJezyka(rozszerzenie string) []string {

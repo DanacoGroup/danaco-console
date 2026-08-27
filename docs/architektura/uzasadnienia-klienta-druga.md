@@ -5113,3 +5113,14 @@ jeszcze nie ma. Skróty klawiaturowe sekcji łapie nasłuch tej sekcji i
 działają tylko, dopóki menu jest rozwinięte — skrótu globalnego nie
 rejestrujemy, żeby te same litery wpisane w polu wypowiedzi mogły dalej
 pisać litery.
+
+## budowa/klient-poprzedni/src/ustawienia/wiersz-nastawy.ts
+Nazwa rodzajowa idzie do etykiety wiersza po lewej i do etykiety dostępności uchwytu, żeby czytnik ekranu
+wiedział, czego dotyczy wartość, której nazwa sama tego nie mówi. Wybór nie stoi rozwinięty: sekcja
+pokazuje po jednym wierszu na nastawę, a opcje rozwijają się dopiero pod kliknięciem — sześć sekcji
+rozwiniętych naraz byłoby sześcioma płachtami, a nie oknem ustawień. Uchwyt, wykaz, opisy pozycji, haczyk
+przy wybranej, zwijanie kliknięciem obok i obsługa klawiatury należą do mechanizmu menu drzewa; ten plik
+obsadza ten mechanizm danymi i nie odtwarza go u siebie. Klient nie zna ani jednej wartości dopuszczalnej
+z góry — gdy katalog dołoży czwarty motyw, wiersz pokaże go bez zmiany tego pliku. Katalog rdzenia ma
+opcję o wartości pustej — dla motywu jest nią preferencja systemu i to trzeci pełnoprawny stan nastawy,
+nie brak wyboru.

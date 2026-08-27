@@ -1,0 +1,500 @@
+/* ============================================================================
+   Danaco Console — animacje 3D kart środowisk pracy
+   4 komponenty: .d3-talkin / .d3-workspace / .d3-codestudio / .d3-multitasking
+   - pętla 3 s, bezszwowa (koniec = początek)
+   - brak tła (przezroczysty kontener) — działa w widoku ciemnym i jasnym
+   - czysty CSS 3D, bez JS i bez zależności
+   - rozmiar: --d3-size (domyślnie 88px), wszystko skaluje się proporcjonalnie
+   ========================================================================= */
+
+.d3-anim {
+  --d3-size: 88px;
+  --d3-dur: 3s;
+  --d3-accent: #5b8cff;
+  --d3-accent-2: #8ab4ff;
+  /* siła konturów/wypełnień liczona z koloru tekstu → automatyczna adaptacja
+     do widoku jasnego i ciemnego (currentColor dziedziczy z karty) */
+  --d3-line: 0.55;
+  --d3-fill: 0.06;
+
+  position: relative;
+  display: block;
+  width: var(--d3-size);
+  height: var(--d3-size);
+  font-size: var(--d3-size);          /* baza dla jednostek em */
+  line-height: 0;
+  background: none;
+  perspective: 6em;
+  perspective-origin: 50% 45%;
+  overflow: visible;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.d3-anim * {
+  position: absolute;
+  transform-style: preserve-3d;
+  box-sizing: border-box;
+}
+
+.d3-anim__stage {
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+/* ---------------------------------------------------------------- 1. TalkIn
+   Orbita trzech dymków rozmowy + wskaźnik pisania. Temat: rozmowa i wiedza. */
+
+.d3-talkin {
+  --d3-accent: #5b8cff;
+  --d3-accent-2: #7fd2ff;
+}
+
+.d3-talkin .d3-anim__stage {
+  transform: rotateX(-16deg);
+  animation: d3-spin-y var(--d3-dur) linear infinite;
+}
+
+.d3-talkin .d3-slot {
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: rotateY(var(--a)) translateZ(0.24em) translateY(var(--y, 0em));
+}
+
+.d3-talkin .d3-bubble {
+  left: 0;
+  top: 0;
+  width: 0.34em;
+  height: 0.22em;
+  margin: -0.11em 0 0 -0.17em;
+  border-radius: 0.075em;
+  border: 1px solid rgba(127, 127, 127, 0.001); /* nadpisane niżej */
+  border-color: color-mix(in srgb, currentColor 45%, transparent);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--d3-accent) 52%, transparent),
+      color-mix(in srgb, var(--d3-accent-2) 16%, transparent)
+    );
+  box-shadow:
+    inset 0 0.02em 0 color-mix(in srgb, #fff 35%, transparent),
+    0 0.035em 0.09em color-mix(in srgb, var(--d3-accent) 26%, transparent);
+  backdrop-filter: blur(2px);
+  animation: d3-counter var(--d3-dur) linear infinite;
+}
+
+/* ogonek dymka */
+.d3-talkin .d3-bubble::after {
+  content: "";
+  position: absolute;
+  left: 0.055em;
+  bottom: -0.035em;
+  width: 0.06em;
+  height: 0.06em;
+  background: inherit;
+  border-left: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  transform: rotate(-45deg) skewX(-8deg);
+  border-bottom-left-radius: 0.02em;
+}
+
+/* kropki „pisania” w dymku wiodącym */
+.d3-talkin .d3-bubble i {
+  top: 50%;
+  width: 0.034em;
+  height: 0.034em;
+  margin-top: -0.017em;
+  border-radius: 50%;
+  background: color-mix(in srgb, #fff 78%, var(--d3-accent));
+  animation: d3-dot 1s ease-in-out infinite;
+}
+.d3-talkin .d3-bubble i:nth-child(1) { left: 0.085em; animation-delay: 0s; }
+.d3-talkin .d3-bubble i:nth-child(2) { left: 0.152em; animation-delay: 0.16s; }
+.d3-talkin .d3-bubble i:nth-child(3) { left: 0.219em; animation-delay: 0.32s; }
+
+/* linie wiedzy — cztery paski w drugim dymku */
+.d3-talkin .d3-bubble--lines {
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--d3-accent-2) 34%, transparent),
+      color-mix(in srgb, currentColor 8%, transparent)
+    );
+}
+.d3-talkin .d3-bubble--lines::before {
+  content: "";
+  position: absolute;
+  inset: 0.05em 0.06em;
+  background:
+    linear-gradient(currentColor, currentColor) left 0 top 0em / 72% 0.014em no-repeat,
+    linear-gradient(currentColor, currentColor) left 0 top 0.05em / 92% 0.014em no-repeat,
+    linear-gradient(currentColor, currentColor) left 0 top 0.10em / 52% 0.014em no-repeat;
+  opacity: 0.55;
+}
+
+/* podstawa/orbita */
+.d3-talkin .d3-ring {
+  left: 50%;
+  top: 50%;
+  width: 0.56em;
+  height: 0.56em;
+  margin: -0.28em 0 0 -0.28em;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  transform: rotateX(74deg);
+  animation: d3-ring-pulse var(--d3-dur) ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------- 2. WorkSpace
+   Izometryczne kafelki zadań: fala unoszenia + znacznik ukończenia. */
+
+.d3-workspace {
+  --d3-accent: #17a97d;
+  --d3-accent-2: #4fd1a5;
+  perspective: 9em;
+}
+
+.d3-workspace .d3-anim__stage {
+  transform: rotateX(56deg) rotateZ(45deg);
+  animation: d3-sway var(--d3-dur) ease-in-out infinite;
+}
+
+.d3-workspace .d3-tile {
+  width: 0.3em;
+  height: 0.3em;
+  border-radius: 0.05em;
+  border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--d3-accent) 74%, transparent),
+      color-mix(in srgb, var(--d3-accent-2) 30%, transparent)
+    );
+  box-shadow:
+    inset 0 0 0.03em color-mix(in srgb, #fff 40%, transparent),
+    0 0.02em 0.1em color-mix(in srgb, #000 18%, transparent);
+  animation: d3-lift var(--d3-dur) cubic-bezier(0.4, 0, 0.4, 1) infinite;
+}
+
+.d3-workspace .d3-tile--1 { left: 0.15em; top: 0.15em; animation-delay: 0s; }
+.d3-workspace .d3-tile--2 { left: 0.55em; top: 0.15em; animation-delay: 0.2s; }
+.d3-workspace .d3-tile--3 { left: 0.15em; top: 0.55em; animation-delay: 0.6s; }
+.d3-workspace .d3-tile--4 { left: 0.55em; top: 0.55em; animation-delay: 0.4s; }
+
+/* pasek „treści” na kafelku */
+.d3-workspace .d3-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0.06em 0.06em auto 0.06em;
+  height: 0.02em;
+  background: color-mix(in srgb, #fff 70%, transparent);
+  box-shadow: 0 0.06em 0 color-mix(in srgb, #fff 45%, transparent);
+  opacity: 0.75;
+}
+
+/* znacznik ukończenia na ostatnim kafelku */
+.d3-workspace .d3-tile--done::after {
+  content: "";
+  position: absolute;
+  left: 0.09em;
+  top: 0.13em;
+  width: 0.12em;
+  height: 0.06em;
+  border-left: 0.028em solid #fff;
+  border-bottom: 0.028em solid #fff;
+  transform: rotate(-45deg);
+  opacity: 0;
+  animation: d3-check var(--d3-dur) ease-out infinite;
+  animation-delay: 0.4s;
+}
+
+/* cień rzucany na płaszczyznę roboczą */
+.d3-workspace .d3-shadow {
+  left: 0.12em;
+  top: 0.12em;
+  width: 0.76em;
+  height: 0.76em;
+  border-radius: 0.06em;
+  border: 1px dashed color-mix(in srgb, currentColor 20%, transparent);
+  transform: translateZ(-0.02em);
+}
+
+/* ----------------------------------------------------------- 3. CodeStudio
+   Sześcian kodu: obrót 360°, linie kodu na ściankach, mrugający kursor. */
+
+.d3-codestudio {
+  --d3-accent: #e8883c;
+  --d3-accent-2: #ffc078;
+  perspective: 7em;
+}
+
+.d3-codestudio .d3-anim__stage {
+  animation: d3-tumble var(--d3-dur) linear infinite;
+}
+
+.d3-codestudio .d3-cube {
+  left: 50%;
+  top: 50%;
+  width: 0.5em;
+  height: 0.5em;
+  margin: -0.25em 0 0 -0.25em;
+}
+
+.d3-codestudio .d3-face {
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--d3-accent) 72%, transparent);
+  border-radius: 0.03em;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background:
+    linear-gradient(
+      150deg,
+      color-mix(in srgb, var(--d3-accent) 40%, transparent),
+      color-mix(in srgb, currentColor 8%, transparent)
+    );
+  box-shadow: inset 0 0 0.1em color-mix(in srgb, var(--d3-accent) 26%, transparent);
+}
+
+/* linie kodu na każdej ściance */
+.d3-codestudio .d3-face::before {
+  content: "";
+  position: absolute;
+  inset: 0.075em 0.085em;
+  background:
+    linear-gradient(var(--d3-accent), var(--d3-accent))     left 0     top 0.00em / 46% 0.016em no-repeat,
+    linear-gradient(currentColor, currentColor)             left 0.09em top 0.075em / 40% 0.016em no-repeat,
+    linear-gradient(currentColor, currentColor)             left 0.09em top 0.15em / 52% 0.016em no-repeat,
+    linear-gradient(var(--d3-accent-2), var(--d3-accent-2)) left 0.045em top 0.225em / 30% 0.016em no-repeat;
+  opacity: 0.85;
+}
+
+.d3-codestudio .d3-face--f { transform: translateZ(0.25em); }
+.d3-codestudio .d3-face--b { transform: rotateY(180deg) translateZ(0.25em); }
+.d3-codestudio .d3-face--r { transform: rotateY(90deg) translateZ(0.25em); }
+.d3-codestudio .d3-face--l { transform: rotateY(-90deg) translateZ(0.25em); }
+.d3-codestudio .d3-face--t { transform: rotateX(90deg) translateZ(0.25em); }
+.d3-codestudio .d3-face--d { transform: rotateX(-90deg) translateZ(0.25em); }
+
+/* kursor terminala — mruga na ściance przedniej */
+.d3-codestudio .d3-face--f::after {
+  content: "";
+  position: absolute;
+  right: 0.09em;
+  bottom: 0.09em;
+  width: 0.045em;
+  height: 0.07em;
+  background: var(--d3-accent);
+  box-shadow: 0 0 0.06em var(--d3-accent);
+  animation: d3-blink 1s steps(1, end) infinite;
+}
+
+/* nawiasy klamrowe krążące wokół bryły */
+.d3-codestudio .d3-brace {
+  left: 50%;
+  top: 50%;
+  width: 0.9em;
+  height: 0.9em;
+  margin: -0.45em 0 0 -0.45em;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: color-mix(in srgb, var(--d3-accent) 70%, transparent);
+  border-bottom-color: color-mix(in srgb, currentColor 26%, transparent);
+  transform: rotateX(68deg);
+  animation: d3-spin-z var(--d3-dur) linear infinite;
+}
+
+/* --------------------------------------------------------- 4. MultitaskingAI
+   Rdzeń orkiestracji + dwie orbity węzłów pracujących równolegle. */
+
+.d3-multitasking {
+  --d3-accent: #7c6cf0;
+  --d3-accent-2: #4bc3ff;
+  perspective: 7em;
+}
+
+.d3-multitasking .d3-anim__stage {
+  transform: rotateX(-18deg);
+}
+
+.d3-multitasking .d3-core {
+  left: 50%;
+  top: 50%;
+  width: 0.24em;
+  height: 0.24em;
+  margin: -0.12em 0 0 -0.12em;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 34% 30%,
+      color-mix(in srgb, #fff 72%, var(--d3-accent-2)),
+      var(--d3-accent) 58%,
+      color-mix(in srgb, var(--d3-accent) 70%, #000) 100%
+    );
+  box-shadow:
+    0 0 0.1em color-mix(in srgb, var(--d3-accent) 60%, transparent),
+    inset -0.02em -0.03em 0.06em color-mix(in srgb, #000 35%, transparent);
+  animation: d3-core-pulse var(--d3-dur) ease-in-out infinite;
+}
+
+.d3-multitasking .d3-halo {
+  left: 50%;
+  top: 50%;
+  width: 0.24em;
+  height: 0.24em;
+  margin: -0.12em 0 0 -0.12em;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--d3-accent-2) 50%, transparent);
+  animation: d3-halo var(--d3-dur) ease-out infinite;
+}
+
+.d3-multitasking .d3-orbit {
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.d3-multitasking .d3-orbit--a {
+  transform: rotateX(72deg);
+  animation: d3-spin-z var(--d3-dur) linear infinite;
+}
+.d3-multitasking .d3-orbit--b {
+  transform: rotateX(72deg) rotateY(58deg);
+  animation: d3-spin-z-rev var(--d3-dur) linear infinite;
+}
+
+.d3-multitasking .d3-path {
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+.d3-multitasking .d3-orbit--a .d3-path {
+  width: 0.74em; height: 0.74em; margin: -0.37em 0 0 -0.37em;
+  border-top-color: color-mix(in srgb, var(--d3-accent) 55%, transparent);
+}
+.d3-multitasking .d3-orbit--b .d3-path {
+  width: 0.54em; height: 0.54em; margin: -0.27em 0 0 -0.27em;
+  border-top-color: color-mix(in srgb, var(--d3-accent-2) 50%, transparent);
+}
+
+.d3-multitasking .d3-node {
+  left: 0;
+  top: 0;
+  width: 0.1em;
+  height: 0.1em;
+  margin: -0.05em 0 0 -0.05em;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 35% 32%,
+      color-mix(in srgb, #fff 70%, var(--d3-accent-2)),
+      var(--d3-accent-2) 55%,
+      color-mix(in srgb, var(--d3-accent) 80%, #000) 100%
+    );
+  box-shadow: 0 0 0.05em color-mix(in srgb, var(--d3-accent-2) 55%, transparent);
+  animation: d3-node-work calc(var(--d3-dur) / 2) ease-in-out infinite;
+}
+.d3-multitasking .d3-orbit--a .d3-node { transform: rotate(var(--a)) translateX(0.37em); }
+.d3-multitasking .d3-orbit--b .d3-node { transform: rotate(var(--a)) translateX(0.27em); }
+
+/* ------------------------------------------------------------- keyframes */
+
+@keyframes d3-spin-y {
+  from { transform: rotateX(-16deg) rotateY(0deg); }
+  to   { transform: rotateX(-16deg) rotateY(360deg); }
+}
+
+@keyframes d3-counter {
+  from { transform: rotateY(calc(-1 * var(--a))); }
+  to   { transform: rotateY(calc(-1 * var(--a) - 360deg)); }
+}
+
+@keyframes d3-spin-z {
+  from { transform: rotateX(72deg) rotateZ(0deg); }
+  to   { transform: rotateX(72deg) rotateZ(360deg); }
+}
+
+@keyframes d3-spin-z-rev {
+  from { transform: rotateX(72deg) rotateY(58deg) rotateZ(360deg); }
+  to   { transform: rotateX(72deg) rotateY(58deg) rotateZ(0deg); }
+}
+
+@keyframes d3-dot {
+  0%, 100% { transform: translateZ(0) scale(0.7); opacity: 0.45; }
+  40%      { transform: translateZ(0.03em) scale(1.15); opacity: 1; }
+}
+
+@keyframes d3-ring-pulse {
+  0%, 100% { transform: rotateX(74deg) scale(0.94); opacity: 0.5; }
+  50%      { transform: rotateX(74deg) scale(1.06); opacity: 0.9; }
+}
+
+@keyframes d3-sway {
+  0%, 100% { transform: rotateX(56deg) rotateZ(41deg); }
+  50%      { transform: rotateX(56deg) rotateZ(49deg); }
+}
+
+@keyframes d3-lift {
+  0%, 62%, 100% { transform: translateZ(0.02em); }
+  20%           { transform: translateZ(0.16em); }
+  38%           { transform: translateZ(0.16em); }
+}
+
+@keyframes d3-check {
+  0%, 12%   { opacity: 0; clip-path: inset(0 100% 0 0); }
+  26%       { opacity: 1; clip-path: inset(0 0 0 0); }
+  62%       { opacity: 1; clip-path: inset(0 0 0 0); }
+  76%, 100% { opacity: 0; clip-path: inset(0 0 0 0); }
+}
+
+@keyframes d3-tumble {
+  from { transform: rotateX(-22deg) rotateY(0deg) rotateZ(0deg); }
+  50%  { transform: rotateX(-6deg) rotateY(180deg) rotateZ(4deg); }
+  to   { transform: rotateX(-22deg) rotateY(360deg) rotateZ(0deg); }
+}
+
+@keyframes d3-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0.05; }
+}
+
+@keyframes d3-core-pulse {
+  0%, 100% { transform: scale(0.94); }
+  50%      { transform: scale(1.08); }
+}
+
+@keyframes d3-halo {
+  0%   { transform: scale(1); opacity: 0.75; }
+  70%  { transform: scale(2.9); opacity: 0; }
+  100% { transform: scale(2.9); opacity: 0; }
+}
+
+@keyframes d3-node-work {
+  0%, 100% { box-shadow: 0 0 0.04em color-mix(in srgb, var(--d3-accent-2) 30%, transparent); }
+  50%      { box-shadow: 0 0 0.1em color-mix(in srgb, var(--d3-accent-2) 75%, transparent); }
+}
+
+/* ------------------------------------------- fallback bez color-mix() ---- */
+@supports not (color: color-mix(in srgb, red 50%, transparent)) {
+  .d3-anim .d3-bubble,
+  .d3-anim .d3-tile,
+  .d3-anim .d3-face,
+  .d3-anim .d3-node { border-color: rgba(128, 128, 128, 0.55); }
+  .d3-anim .d3-ring,
+  .d3-anim .d3-path,
+  .d3-anim .d3-shadow { border-color: rgba(128, 128, 128, 0.3); }
+}
+
+/* --------------------------------------------- ograniczenie ruchu (a11y) - */
+@media (prefers-reduced-motion: reduce) {
+  .d3-anim *,
+  .d3-anim {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+  }
+  .d3-talkin .d3-anim__stage { transform: rotateX(-16deg) rotateY(24deg); }
+  .d3-codestudio .d3-anim__stage { transform: rotateX(-22deg) rotateY(32deg); }
+}

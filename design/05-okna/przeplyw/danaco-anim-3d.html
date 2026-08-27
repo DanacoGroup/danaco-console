@@ -1,0 +1,67 @@
+<!-- ===========================================================================
+     Danaco Console — fragmenty HTML animacji 3D (wklej w miejsce ikony karty)
+     Wymaga arkusza: danaco-anim-3d.css
+     Rozmiar zmieniasz przez --d3-size, np. style="--d3-size:120px"
+     ======================================================================== -->
+
+<!-- 1. TalkIn — orbita dymków rozmowy -->
+<div class="d3-anim d3-talkin" role="presentation" aria-hidden="true">
+  <div class="d3-anim__stage">
+    <div class="d3-slot" style="--a: 0deg; --y: -0.02em">
+      <span class="d3-bubble" style="--a: 0deg"><i></i><i></i><i></i></span>
+    </div>
+    <div class="d3-slot" style="--a: 120deg; --y: 0.16em">
+      <span class="d3-bubble d3-bubble--lines" style="--a: 120deg"></span>
+    </div>
+    <div class="d3-slot" style="--a: 240deg; --y: -0.18em">
+      <span class="d3-bubble d3-bubble--lines" style="--a: 240deg"></span>
+    </div>
+    <span class="d3-ring"></span>
+  </div>
+</div>
+
+<!-- 2. WorkSpace — izometryczne kafelki zadań -->
+<div class="d3-anim d3-workspace" role="presentation" aria-hidden="true">
+  <div class="d3-anim__stage">
+    <span class="d3-shadow"></span>
+    <span class="d3-tile d3-tile--1"></span>
+    <span class="d3-tile d3-tile--2"></span>
+    <span class="d3-tile d3-tile--3"></span>
+    <span class="d3-tile d3-tile--4 d3-tile--done"></span>
+  </div>
+</div>
+
+<!-- 3. CodeStudio — obracający się sześcian kodu -->
+<div class="d3-anim d3-codestudio" role="presentation" aria-hidden="true">
+  <span class="d3-brace"></span>
+  <div class="d3-anim__stage">
+    <div class="d3-cube">
+      <span class="d3-face d3-face--f"></span>
+      <span class="d3-face d3-face--b"></span>
+      <span class="d3-face d3-face--r"></span>
+      <span class="d3-face d3-face--l"></span>
+      <span class="d3-face d3-face--t"></span>
+      <span class="d3-face d3-face--d"></span>
+    </div>
+  </div>
+</div>
+
+<!-- 4. MultitaskingAI — rdzeń orkiestracji i dwie orbity węzłów -->
+<div class="d3-anim d3-multitasking" role="presentation" aria-hidden="true">
+  <div class="d3-anim__stage">
+    <span class="d3-halo"></span>
+    <span class="d3-core"></span>
+    <div class="d3-orbit d3-orbit--a">
+      <span class="d3-path"></span>
+      <span class="d3-node" style="--a: 0deg"></span>
+      <span class="d3-node" style="--a: 120deg"></span>
+      <span class="d3-node" style="--a: 240deg"></span>
+    </div>
+    <div class="d3-orbit d3-orbit--b">
+      <span class="d3-path"></span>
+      <span class="d3-node" style="--a: 60deg"></span>
+      <span class="d3-node" style="--a: 180deg"></span>
+      <span class="d3-node" style="--a: 300deg"></span>
+    </div>
+  </div>
+</div>

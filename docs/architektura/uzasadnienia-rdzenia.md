@@ -6115,3 +6115,22 @@ z okna bierze się kanał pytającego, więc bez tego wpięcia komenda konsultac
 modelowi, kim jest — a wtedy sufit siły dałby się obejść jednym polem żądania. Szyna zdarzeń jest
 z kolei częścią jawności: nią jadą do okna fragmenty rady, bez niej Operator widziałby wyłącznie
 skrót w zdarzeniu zakończenia konsultacji.
+
+## budowa/server/internal/core/montaz_rozmowa.go
+Pole ustawienia korzysta z tego samego adaptera osi, który wypełnia port Ustawienia rdzenia —
+jeden czytelnik konfiguracji na całą platformę. Pole dolozenia wypełnia port narzędzi sesji
+rdzenia: dołożenie widziane przez model i dołożenie widziane przez Operatora to jeden byt. Wiązanie
+adaptera rozmowy z pętlą jest dwuetapowe, bo adapter i pętla znają się nawzajem: pętla potrzebuje
+portu rozpoczynania obiegu, którym jest ten adapter.
+
+Ekspert wskazany w oknie wchodzi do tego samego składacza co osie — drugiej drogi do promptu nie
+ma. Dziennik zapisuje brak binarium serwera narzędzi zamiast wpisywać do mostu ścieżkę, której nie
+ma. Rozstrzygacz podaje nakład rozumowania i kanał zapasowy, a rejestr kanałów tłumaczy kod kanału
+na identyfikator modelu, którego oczekuje przełącznik dostawcy. Zmiana konfiguracji sesji zmienia
+więc zbudowane wywołanie.
+
+Doraźne dołożenia sesji są drugim źródłem zestawu narzędzi tury — pierwszym jest ekspert okna, który
+jedzie polem ustawień agenta i portu nie potrzebuje. Wołanie bezwarunkowe zamieniało tu szczery
+brak wpięcia — który adapter rozmowy umie zameldować i przeżyć — w padnięcie całego rdzenia przy
+pierwszej wysłanej wiadomości. Ta jedna gwiazdka rozstrzyga o tym, czy brak portu jest zdaniem
+w dzienniku, czy zgaszonym procesem.

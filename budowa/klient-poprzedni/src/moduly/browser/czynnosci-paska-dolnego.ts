@@ -4,21 +4,9 @@ import { skutekPrzekazania, skutekZapisuNotatki, skutekZrzutu } from './skutek-z
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Trzy czynności paska dolnego, które idą do rdzenia: zrzut ekranu,
- * przekazanie treści do modułu Translate i adnotacja zaznaczonego fragmentu.
- *
- * Jedna odpowiedzialność: wywołania rdzenia paska dolnego. Pasek składa
- * kontrolki, a to jest rozmowa z rdzeniem — stąd osobny plik.
- *
- * Każda z trzech odpowiada tak samo: zapowiedź, a po odpowiedzi rdzenia albo
- * wynik, albo powód odmowy. Milczenie po naciśnięciu jest zakazane.
- *
- * Zdanie końcowe buduje się z treści odpowiedzi, nie z samego `udany`
- * (`skutek-zapisu.ts`). Rdzeń pobiera dziś stronę bez uruchamiania przeglądarki
- * (`przegladarka_pobieranie.go`), więc odpowiedź udana potrafi przyjść z pustym
- * `screenshotRef` — okno nie ma wtedy prawa twierdzić o obrazie strony. Zdanie
- * o skutku czyta pole odpowiedzi, więc pozostanie prawdziwe także wtedy, gdy
- * zrzuty zacznie oddawać uchwyt `browser.screenshot.capture`.
+ * Trzy czynności paska dolnego, które idą do rdzenia: zrzut ekranu, przekazanie
+ * treści do modułu Translate oraz adnotacja zaznaczonego fragmentu. Każda odpowiada
+ * tak samo: zapowiedź, a po odpowiedzi rdzenia wynik albo powód odmowy.
  */
 export interface CzynnosciPaskaDolnego {
   /** `browser.snapshot.get` ze zrzutem ekranu i źródłem strony. */
@@ -29,7 +17,11 @@ export interface CzynnosciPaskaDolnego {
   adnotujFragment(): Promise<void>;
 }
 
-/** Treść notatki zakładanej z podświetlenia — jedno brzmienie dla żądania i oceny. */
+/**
+ * Treść notatki zakładanej z podświetlenia. Jedno brzmienie służy i żądaniu, i ocenie
+ * odpowiedzi, więc zdanie o skutku porównuje się z tym samym napisem, który poszedł
+ * do rdzenia, a nie z napisem przepisanym drugi raz.
+ */
 const TRESC_ADNOTACJI = 'Podświetlony fragment strony';
 
 export function utworzCzynnosciPaskaDolnego(
@@ -89,9 +81,7 @@ export function utworzCzynnosciPaskaDolnego(
         return;
       }
       powiedz('Zapis adnotacji zaznaczonego fragmentu…', true);
-      // Zamówienie spisane raz i to samo idzie do rdzenia oraz do oceny jego
-      // odpowiedzi: zdanie o cytacie ma się opierać na wierszu, który wrócił,
-      // a nie na tym, że okno cytat wysłało.
+      // Zamówienie spisane raz idzie i do rdzenia, i do oceny jego odpowiedzi.
       const zapis: TrescNotatki = { tresc: TRESC_ADNOTACJI, idZrodla: '', cytat: fragment };
       const wynik = await stan.zrodlo.dodajNotatke({
         windowId: idOkna,

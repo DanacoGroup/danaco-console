@@ -4890,3 +4890,51 @@ Rodzaj nieznany nie gasi pola. Rdzeń nowszy od klienta może przysłać rodzaj
 wartości, którego ten klient nie zna; zamiast pustego miejsca staje wtedy pole
 tekstowe z ostrzeżeniem, wartość pozostaje odczytywalna i zapisywalna jako
 napis, a nazwa rodzaju idzie do dziennika przeglądarki.
+
+## budowa/klient-poprzedni/src/moduly/automations/zrodlo-automations.ts
+
+Każda czynność źródła oddaje wynik opakowany, nie samą treść: okna mają
+obowiązkowy stan błędu, więc źródło nie połyka odmowy ani nie podstawia
+pustego wykazu w jej miejsce — widok musi odróżnić brak danych od
+nieudanego zapytania. Po stronie klienta nie stoi drugi silnik kolejek:
+Queue Manager zakłada kolejkę jedną komendą i posuwa ją drugą, która po
+stronie rdzenia jedzie tym samym adapterem kolejek co pętla sesyjna.
+
+Odczyt zależności układu jest odrębny od zapisu definicji orkiestratora,
+choć obie komendy mówią o tym samym grafie: zapis definicji zapisuje układ
+w całości i oddaje go przy okazji, a odczyt zależności wyłącznie czyta. Sam
+odczyt jest potrzebny, bo okno musi pokazać układ, którego nikt wcześniej
+nie zapisywał z tego okna. Zapis pojedynczej zależności nie jest odmawiany:
+układ z cyklem zostaje zapisany, a zastrzeżenia wracają w wyniku — ocena
+układu nie jest więc oceną samej czynności zapisu, i okno rozdziela te dwa
+zdania.
+
+Cztery dopełnienia układu niosą to, czego krawędź nie wyraża. Krawędź mówi,
+że kroki się schodzą. Bramka mówi, kiedy tory scalają się w jednym kroku;
+grupa mówi, że zbiór kroków biegnie razem; kompensacja mówi, co zrobić, gdy
+przebieg pękł w pół; spięcie mówi, że kolejki automatyki prowadzi silnik
+środowiska MultitaskingAI.
+
+Odczyt okien komunikacji platformy służy jednej sprawie: przekazanie
+scenariusza z innego modułu zakłada okno modułu Automations, i to w jego
+konfiguracji sesji mieszka przeniesiony komplet. Bez wykazu okien nie ma
+jak dojść do tego, komu przekazano scenariusz.
+
+Zdarzenie zmiany powiązania automatyki przychodzi także wtedy, gdy
+scenariusz wpiął tu inny moduł, więc to ono jest sygnałem, że wykaz
+automatyk okna jest już nieaktualny.
+
+## budowa/klient-poprzedni/src/moduly/browser/czynnosci-paska-dolnego.ts
+
+Jedyną odpowiedzialnością pliku są wywołania rdzenia paska dolnego. Pasek składa
+kontrolki, a rozmowa z rdzeniem stoi osobno. Milczenie po naciśnięciu jest zakazane.
+
+Zdanie końcowe buduje się z treści odpowiedzi, a nie z samego znacznika powodzenia;
+składa je `skutek-zapisu.ts`. Rdzeń pobiera dziś stronę bez uruchamiania przeglądarki,
+wedle `przegladarka_pobieranie.go`, więc odpowiedź udana potrafi przyjść z pustym polem
+`screenshotRef` — okno nie ma wtedy prawa twierdzić o obrazie strony. Zdanie o skutku
+czyta pole odpowiedzi, więc pozostanie prawdziwe także wtedy, gdy zrzuty zacznie oddawać
+uchwyt `browser.screenshot.capture`.
+
+Zdanie o cytacie ma się opierać na wierszu, który wrócił z rdzenia, a nie na tym, że okno
+cytat wysłało; dlatego zamówienie spisane jest raz i to samo idzie w obie strony.

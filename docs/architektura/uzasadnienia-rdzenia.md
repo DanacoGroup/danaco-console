@@ -2024,3 +2024,16 @@ dokumentu kłamie do końca życia pisma. Trzecia to znacznik nieświeżości
 trzymany w drzewie postaci — drzewo zapisuje się bez aparatu, więc znacznik
 ginąłby przy pierwszym zapisie. Czwarta to odwołanie do elementu, którego
 dokument nie ma, przyjęte jako założone.
+
+## budowa/server/internal/core/tabele_skutek_test.go
+
+Sprawdziany tego pliku wykluczają cztery rodzaje szkody na tabelach dokumentu.
+Pierwsza to szerokości kolumn zerowe po scaleniu: tabela wygląda na złożoną,
+a w wydaniu ma kolumny niewidzialne, czego wprost zakazuje wymaganie
+zlecenia. Druga to sortowanie, które rozrywa wiersze albo przestawia wiersz
+nagłówkowy. Trzecia to zamiana tekstu na tabelę, która zostawia tekst
+w treści dokumentu i daje dokument niosący tę samą informację dwa razy.
+Czwarta to usunięcie ostatniego wiersza albo kolumny, po którym zostaje
+tabela o zerowej siatce. Miara jest brana osobnym wywołaniem wykazu tabel,
+a nie z odpowiedzi czynności, ponieważ Operator otworzy dokument ponownie,
+a nie przeczyta odpowiedź komendy.

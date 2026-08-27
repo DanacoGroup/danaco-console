@@ -5600,3 +5600,15 @@ z rdzeniem, buduje okno na nowo, żeby komendy nie szły przez transport, które
 motywu żył wyłącznie wewnątrz okna, zmiana motywu wykonana w drugim oknie albo na drugim urządzeniu
 dolatywałaby dopiero po otwarciu ustawień; dlatego podpięcie mostu woła się raz przy wiązaniu gniazda
 aplikacji, a sekcja wyglądu bierze ten sam, już podpięty most.
+
+## budowa/klient-poprzedni/src/moduly/workspace/braki-kontraktu.ts
+Powód bierze się z powitania: odpowiedź powitania oddaje wykaz komend zarejestrowanych przez
+rdzeń, a nie wykaz z kontraktu. Moduł pyta o niego raz przy montażu i z odpowiedzi układa zdanie
+każdej nieczynnej kontrolki, więc rozróżnia brak po stronie rdzenia od braku w kontrakcie, a gdy
+rdzeń komendę zarejestruje, zdanie zmienia się samo. Stanów jest więcej niż dwa: dopóki rdzeń nie
+odpowiedział, kontrolka nie orzeka o braku, tylko mówi, że pytanie jest w drodze, a odmowa
+powitania też nie staje się orzeczeniem o braku. Kontrolka bez pokrycia nie znika i nie udaje, że
+działa — zostaje widoczna, klikalna i niesie powód wprost.
+Parametr etykieta niesie napis na przycisku, czynność jest tym, czego kontrolka miała dokonać,
+i wchodzi do zdania powodu, a komendy to komendy, które by tego dokonały; brak nazw znaczy, że
+okno nie zna żadnej.

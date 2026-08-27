@@ -5070,3 +5070,19 @@ i port nie bierze nadajnika, mimo że przetworzenie zakłada zasób —
 rozgłoszenie własnego zdarzenia dałoby klientowi kopertę, której nie zna jego
 strona kontraktu. Port niewypełniony nie rejestruje niczego: obie komendy
 odpowiedzą wtedy komendą nieznaną, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/handlers_narzedzia_obraz.go
+Adapter wraz z rozstrzygnięciami, skąd bierze się źródło, jak woła się
+binarium i gdzie ląduje wynik, leży w pliku adaptera narzędzi obrazu, a
+składanie argumentów każdej operacji leży w osobnym pliku czynności. Piąta
+pozycja o przedrostku image, odpowiedź komendy nieznanej obszaru, nie jest
+komendą: nie ma pary żądanie-wynik i w rejestrze się nie zjawia. Rodzina nie
+ma zdarzeń, więc port nie bierze nadajnika: wytworzony zasób jest zasobem
+modułu projektowania i mówi o nim jego rodzina zdarzeń. Port niewypełniony
+nie rejestruje niczego — komendy odpowiedzą wtedy komendą nieznaną, a
+pozostałe domeny pracują bez zmian, rdzeń niczym nie warunkuje startu. Dwie
+ostatnie komendy rodziny, złożenie i wektoryzacja, nie wołają ani jednego
+programu zewnętrznego: pracują bibliotekami wkompilowanymi w binarium
+rdzenia, lecz stoją na tym samym porcie, co reszta rodziny, bo dzielą z nią
+wszystko poza sposobem liczenia — osobny port dałby drugą prawdę o tym, gdzie
+rdzeń odkłada bajty obrazu.

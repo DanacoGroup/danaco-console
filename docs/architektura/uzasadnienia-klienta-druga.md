@@ -1904,3 +1904,25 @@ jak się tam zmieścić. Widok powstaje osobno dla każdego okna i domyka się n
 jego identyfikatorze, więc dwa okna obok siebie dostają dwie niezależne kolumny
 bez ani jednej wspólnej zmiennej. Szuflada startuje rozwinięta, żeby komplet
 ustawień był widoczny bez szukania, co nacisnąć.
+
+## budowa/klient-poprzedni/src/strona-glowna/karta-sesji.ts
+Każdy napis karty pochodzi z rdzenia: tytuł to tytuł sesji, a gdy rdzeń go nie nadał — identyfikator sesji, nigdy nazwa wymyślona; środowisko, moduł i liczby okien niesie żywy odpis obecności, a przy odpisie nieobecnym cały fragment znika, zamiast pokazywać zero udające odczyt. Przycisk powrotu do sesji pojawia się wyłącznie wtedy, gdy montaż podał czynność powrotu; bez tej czynności wiersz jest czysto informacyjny, bez przycisku wyszarzonego ani martwego. Wykaz środowisk strony jest tym samym bytem, z którego rysuje się karta środowiska w strefie pierwszej — nazwa wzięta z klienckiej stałej rozjeżdżałaby się po cichu z nazwą zapisaną w bazie. Ponowne naciśnięcie przycisku powrotu w trakcie jego zajętości nie dubluje powiązania z sesją.
+
+## budowa/klient-poprzedni/src/widok-sterowania/naglowek-widoku.ts
+
+Tytuł jest jedynym miejscem kroju szeryfowego w tym widoku — krój ten należy
+wyłącznie do nagłówków. Rola okna stoi w nagłówku, a nie tylko w podsumowaniu,
+ponieważ to ona rozstrzyga, czym okno jest w pętli koordynator–wykonawca: przy
+dwóch oknach obok siebie rola musi być widoczna bez rozwijania czegokolwiek.
+Plakietka niesie ikonę słowną — nazwę roli — więc stan nie opiera się na samej
+barwie.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-dokumentu-translate.ts
+Obszar translate nie ma komendy przyjmującej plik: tekst źródłowy wchodzi napisem. Wydobycie tekstu
+z dokumentu i rozpoznanie pisma ze skanu leżą w obszarze document i są jedynym wejściem od strony
+pliku, więc moduł woła je wprost, tak jak woła wykaz okien i wykaz kanałów, zamiast je kopiować.
+Wywołanie idzie zwykłą drogą protokołu, nie ścieżką odmowy właściwą wyłącznie obszarowi modułu,
+bo odmowa obszaru dokumentów przychodzi kopertą ze statusem, którą korelacja rozpoznaje bez pomocy.
+Ścieżka pliku jest ścieżką po stronie rdzenia — klient dysku nie czyta ani nie zapisuje, tylko podaje
+wskazanie i oddaje Operatorowi odpowiedź rdzenia. Brak pola wymuszenia rozpoznania pisma znaczy, że
+rdzeń bierze warstwę tekstową dokumentu, gdy ją ma — to zachowanie domyślne kontraktu, nie wybór okna.

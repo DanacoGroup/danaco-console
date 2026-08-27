@@ -10,22 +10,8 @@ import { czyLogiczna, czyObiekt, czyTekst, sprawdzKsztalt } from '../../protokol
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Dwie komendy obszaru dokumentów, z których korzysta Format Studio — cudzy
- * obszar, którego moduł nie prowadzi.
- *
- * Obszar `translate` nie ma ani jednej komendy przyjmującej plik: tekst
- * źródłowy wchodzi do niego napisem. Wydobycie tekstu z dokumentu i rozpoznanie
- * pisma ze skanu są w kontrakcie, ale w obszarze `document`, i to one są
- * jedynym wejściem Format Studio od strony pliku. Moduł ich nie kopiuje i nie
- * przepisuje — woła je wprost, tak jak woła `window.list` i `channel.list`.
- *
- * Wywołanie idzie zwykłą drogą protokołu, nie ścieżką odmowy z
- * `wywolanie-translate.ts`: ta rozpoznaje kopertę `translate.unknown`, właściwą
- * wyłącznie obszarowi tego modułu. Odmowa obszaru dokumentów przychodzi
- * kopertą ze statusem i korelacja rozpoznaje ją bez pomocy.
- *
- * Ścieżka pliku jest ścieżką po stronie rdzenia. Klient dysku nie czyta i nie
- * zapisuje — podaje wskazanie i oddaje Operatorowi to, co rdzeń odpowiedział.
+ * Dwie komendy obszaru dokumentów wołane wprost przez moduł: wydobycie tekstu
+ * z dokumentu albo skanu i zamiana formatu dokumentu po stronie rdzenia.
  */
 export interface ZrodloDokumentuTranslate {
   /** Wydobywa tekst z dokumentu albo obrazu; `rozpoznajPismo` wymusza rozpoznanie ze skanu. */
@@ -44,9 +30,7 @@ export function utworzZrodloDokumentuTranslate(kanal: Kanal): ZrodloDokumentuTra
   return {
     async wydobadzTekst(sciezka, rozpoznajPismo) {
       const zadanie: DocumentTextExtractRequest = { sourcePath: sciezka };
-      // Pole wymuszenia wchodzi wyłącznie wtedy, gdy Operator je zaznaczył:
-      // brak pola znaczy „weź warstwę tekstową, gdy dokument ją ma", a to jest
-      // zachowanie domyślne kontraktu, nie wybór okna.
+      // Pole wymuszenia wchodzi wyłącznie wtedy, gdy Operator je zaznaczył w oknie.
       if (rozpoznajPismo) zadanie.forceOcr = true;
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DocumentTextExtract, zadanie),

@@ -42,7 +42,7 @@ export function utworzUstawieniaBytu(kanal: Kanal): UstawieniaBytu {
   element.className = 'dm-ustawienia';
   element.append(podpis, cialo);
 
-  /** Oś czynna; zaczynamy od platformy, bo tak zaczyna okno konfiguracji. */
+  /** Oś czynna; na początku platforma, bo tak zaczyna okno konfiguracji. */
   let wskazanie: WskazanieOsi = { os: ConfigAxis.Platform, bytOsi: '' };
 
   /** Przebudowa formularza — jedyna droga po zmianie osi albo katalogu. */

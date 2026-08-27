@@ -5226,3 +5226,16 @@ zwykłym odczytem konfiguracji na poziomie okna, bez drugiej komendy i bez
 drugiego magazynu. Pamięć procesu działa jako bufor: odpowiada bez odpytywania
 bazy i przejmuje magazyn, gdy zapis albo odczyt trwałości zawiedzie, ponieważ
 awaria trwałości nie ma prawa odmówić przeniesienia kontekstu.
+
+## budowa/server/internal/core/handlers_przejecie_sterowania.go
+Kształty stoją tutaj, a nie w warstwie kontraktu, bo generowany kontrakt nie zna jeszcze żadnej
+z tych trzech nazw. Po wniesieniu komend do kontraktu typy stają się aliasami kontraktowymi,
+a katalog wartości wraca do kontraktu. Nazwy komend są argumentem, a nie literałem: rejestr nie
+zawiera nazw własnych, wstrzykuje je montaż. Nazwa pusta niczego nie rejestruje, więc dopóki
+kontrakt nie niesie tych komend, rdzeń nie ogłasza zdolności, której kontrakt nie zna. Rodzina nie
+bierze nadajnika i nie rozgłasza własnego zdarzenia: stan biegu wychodzi już rodzinami zmiany stanu
+okna i postępu oraz komendą odczytu stanu okna, a przejęcie zmienia właśnie ten stan — funkcja
+przejęcia zatrzymuje pętlę, funkcja oddania ją wznawia, a każda z nich rozgłasza stan biegu
+obserwatorom pętli.
+
+Zamiast odpowiedzi nieznanej komendy albo cichej zgody na przejęcie, które się nie odbyło.

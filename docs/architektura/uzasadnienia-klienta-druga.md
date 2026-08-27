@@ -2482,3 +2482,6 @@ pole żądania nie ma tu wartości domyślnej. Debata z wieloma modelami odmawia
 zwyczajnych, takich jak nieczynny kanał uczestnika albo już zamknięta tura, dlatego każda
 czynność oddaje Wynik zamiast samej treści, żeby okno odróżniło brak wypowiedzi od nieudanego
 zapytania.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/przytrzymanie.ts
+Escape jest nasłuchiwany na dokumencie, a nie na elemencie przycisku, ponieważ podczas trzymania myszą ognisko klawiatury bywa gdzie indziej i przycisk wcale nie musi je mieć — nasłuch przy samym elemencie przepuściłby wtedy skrót i nie byłoby czym cofnąć nagrania w połowie wypowiedzi. Zdarzenie `pointercancel`, będące systemowym wyrwaniem gestu przez przewinięcie albo telefon, kończy nagranie zamiast je porzucać, bo użytkownik zdążył już coś powiedzieć, a odrzucenie słów następuje wyłącznie na wyraźne żądanie klawiszem Escape.

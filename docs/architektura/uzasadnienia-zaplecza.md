@@ -2701,3 +2701,25 @@ Polityka kolejki i dodanie rodzaju kolejki uruchamianej z zegara idą w jednym k
 
 ## budowa/desktop/src-tauri/src/dziennik.rs
 Powłoka pracuje bez konsoli w podsystemie okienkowym, więc brak możliwości otwarcia pliku dziennika nie wstrzymuje startu — zapis jest wtedy pomijany, bo dziennik nie jest bramą. Katalog danych jest własnością powłoki, nie rdzenia: zmienna wskazująca katalog danych rdzenia dotyczy maszyny serwera wdrożenia, a powłoka pisze dziennik u siebie, obok pliku nastaw, bo oba pliki są jej własne.
+## budowa/server/internal/store/migracja_127_okna_wspolne_platformy.sql
+Migracja 127 — okna wspólne platformy w katalogu rdzenia.
+
+Dwa okna towarzyszą każdemu modułowi: Chat Window (kanał Użytkownik ↔
+Wykonawca) i Execution Loop Window (kanał Koordynator ↔ Wykonawca). Wszystkie
+opracowania modułów wymieniają je razem, na czele wykazu okien, jako kolumny
+stałe układu.
+
+Katalog rdzenia znał do tej pory jedno z nich, i to nie dla wszystkich:
+
+  * `execution-loop-window` nie miał wiersza definicji w ogóle, więc żaden
+    moduł nie mógł go wskazać, a pas uczciwości modułów meldował ten kod jako
+    stojący poza katalogiem;
+  * `chat-window` przypina wszystkim modułom migracja 031, ale moduł Library
+    wszedł do rejestru po niej, więc przypięcia nie dostał. Jako jedyny
+    z piętnastu.
+
+Kolejność zero należy do obu okien wspólnych, nie do jednego. Odczyt sortuje
+`ORDER BY om.kolejnosc, o.kod` (`dane/okna_operacyjne.go`), więc remis przy
+zerze rozstrzyga kod: `chat-window` stoi przed `execution-loop-window`, czyli
+dokładnie tak, jak układa je każde opracowanie. Okna własne modułu zaczynają
+się od jedynki i nie są przestawiane.

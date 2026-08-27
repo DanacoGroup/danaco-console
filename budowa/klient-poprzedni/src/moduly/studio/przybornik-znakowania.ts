@@ -25,37 +25,8 @@ import {
 } from './przybornik-znaczniki';
 import type { ZrodloKontroliStudio } from './zrodlo-kontroli-studio';
 
-/**
- * Boczny przybornik znakowania — wszystko, czym się dokument znaczy, w jednym
- * miejscu przy krawędzi treści.
- *
- * ── Dlaczego przybornik, a nie menu ─────────────────────────────────────────
- * Rozstrzygnięcie Właściciela: „panel przy krawędzi treści, nie menu, nie okno
- * obok". Znaczenie fragmentu jest czynnością powtarzaną kilkadziesiąt razy na
- * dokument, a droga przez menu kosztuje przy każdym razie dwa ruchy więcej.
- *
- * ── Każda pozycja działa na ZAZNACZONYM fragmencie ──────────────────────────
- * Przybornik jest narzędziem do pracy na fragmentach, nie na dokumencie
- * w całości. Gdy zaznaczenia nie ma, pozycje nie milkną — mówią, że znakowanie
- * obejmie cały dokument, i to jest odpowiedź, nie odmowa.
- *
- * ── Model ma do niego dostęp W CAŁOŚCI ──────────────────────────────────────
- * Wszystko, czym Operator znaczy dokument, model musi umieć założyć
- * i przeczytać. Komentarz i adnotacja idą komendami rdzenia, które pole autora
- * niosą (`studio.comment.add`, `studio.annotation.add`), więc znakowanie modelu
- * jest podpisane jako `model`, a Operatora jako `uzytkownik`. Znacznik własny
- * pola autora w kontrakcie nie ma i przybornik trzyma go u siebie wraz
- * z autorem — to brak nazwany, nie zatajony.
- *
- * ── Czego przybornik NIE udaje ──────────────────────────────────────────────
- * Czynności bez zaplecza w rdzeniu stoją w osobnej części, wraz z nazwaniem, co
- * dokładnie brakuje: przypis, odsyłacz, odwołanie wzajemne, wstawienie tabeli
- * i pola należą do aparatu dokumentu i postaci dokumentu, których kontrakt
- * jeszcze nie niesie. Przycisk wychodzący do rdzenia po komendę, której nie ma,
- * byłby uprzejmą odmową udającą funkcję.
- */
 
-/** Czynności przybornika zlecane oknu. */
+/** Czynności przybornika zlecane oknu: znakowanie, propozycja, decyzja i wskazanie miejsca w treści dokumentu. */
 export interface CzynnosciPrzybornika {
   /** Zakłada komentarz przypięty do zaznaczenia. */
   naKomentarz(tresc: string): void;
@@ -77,7 +48,7 @@ export interface CzynnosciPrzybornika {
   naSkok(pozycja: PozycjaZnakowania): void;
 }
 
-/** Przybornik wraz z jego odświeżeniem. */
+/** Przybornik znakowania wraz z jego odświeżeniem, elementem osadzanym w oknie i zdaniem o zapleczu rdzenia. */
 export interface PrzybornikZnakowania {
   element: HTMLElement;
   /** Przerysowuje wykaz znakowań wraz z zawężeniem. */
@@ -90,27 +61,13 @@ export interface PrzybornikZnakowania {
   skocz(wPrzod: boolean): PozycjaZnakowania | null;
   /** Wypisuje odpowiedź rdzenia — powodzenie albo odmowę nazwaną. */
   pokazOdpowiedz(tresc: string, udana: boolean): void;
-  /**
-   * Odczytuje znakowania i rodzaje znaczników z rdzenia.
-   *
-   * Bez podanego zaplecza rdzenia nie robi nic i mówi to wprost — przybornik
-   * stawia się także tam, gdzie tej drogi jeszcze nie wpięto.
-   */
+  /** Bez podanego zaplecza rdzenia funkcja nic nie robi i mówi to wprost Operatorowi. */
   odswiezZnakowaniaRdzenia(): Promise<void>;
   przestawWidocznosc(): void;
   widoczny(): boolean;
 }
 
-/**
- * Zaplecze znakowania w rdzeniu — siedem komend rodziny `studio.markup.*`.
- *
- * ── Dlaczego zaplecze jest nieobowiązkowe ───────────────────────────────────
- * Przybornik stoi dziś w oknie pracy z dokumentem, którego montaż należy do
- * prowadzącego. Zaplecze podane znaczy „droga do rdzenia wpięta": znakowanie
- * jest wtedy TRWAŁE i widzi je model. Zaplecze `null` znaczy „tej drogi jeszcze
- * nie wpięto" i przybornik pisze to Operatorowi wprost, zamiast pokazywać
- * przyciski, które nic nie robią.
- */
+/** Zaplecze znakowania w rdzeniu, siedem komend rodziny studio.markup — null znaczy, że drogi do rdzenia jeszcze nie wpięto. */
 export interface RdzenZnakowania {
   zrodlo: ZrodloKontroliStudio;
   /** Dokument czynny; puste znaczy „nie ma na czym znakować". */
@@ -123,13 +80,7 @@ export interface RdzenZnakowania {
   naMiejsce(poczatek: number, koniec: number): void;
 }
 
-/**
- * Czynności, których rdzeń nie ma, wraz z nazwaniem braku.
- *
- * Wykaz jest jawny i widoczny w oknie, bo Właściciel odbiera robotę wykazem
- * „jest albo nie ma i dlaczego". Ukrycie tych pozycji sprawiłoby, że przybornik
- * wygląda na kompletny.
- */
+/** Czynności, których rdzeń nie ma, wraz z nazwaniem braku — wykaz jawny i widoczny w oknie, bo ukrycie tych pozycji sprawiłoby, że przybornik wygląda na kompletny. */
 export const BRAKI_PRZYBORNIKA: readonly { nazwa: string; czego: string }[] = [
   {
     nazwa: 'Przypis dolny i końcowy',
@@ -161,14 +112,7 @@ export const BRAKI_PRZYBORNIKA: readonly { nazwa: string; czego: string }[] = [
   },
 ];
 
-/**
- * Zakłada przybornik.
- *
- * `dyktafon` jest przyciskiem dyktowania do TREŚCI dokumentu — wzorem Dyktafonu
- * na wstążce pakietu biurowego. Przybornik go tylko osadza: nagrywanie
- * i przepisanie liczy `przybornik-mowa.ts`, jednym rachunkiem wspólnym
- * z mikrofonem wiersza polecenia. `null` znaczy „to stanowisko nie ma dyktafonu".
- */
+/** Zakłada przybornik; dyktafon osadza przycisk dyktowania do treści dokumentu, null znaczy, że stanowisko go nie ma. */
 export function utworzPrzybornikZnakowania(
   czynnosci: CzynnosciPrzybornika,
   dyktafon: HTMLElement | null,
@@ -609,9 +553,7 @@ export function utworzPrzybornikZnakowania(
       odpowiedzRdzenia(`Znakowania nie założono: ${wynik.blad?.message ?? ''}`, false);
       return;
     }
-    // Propozycja na fragmencie ZABLOKOWANYM przechodzi — jest to jedyna droga
-    // wykonawcy do fragmentu, którego nie wolno mu tknąć. Zdanie mówi to wprost,
-    // żeby Operator nie brał tego za obejście blokady.
+    // Propozycja na fragmencie zablokowanym przechodzi — droga do fragmentu, którego nie wolno tknąć.
     const oBlokadzie =
       rodzaj === StudioMarkupKind.Suggestion
         ? ' Propozycja przechodzi także na fragmencie zablokowanym — treści nie zmienia, więc ' +
@@ -772,8 +714,7 @@ export function utworzPrzybornikZnakowania(
       zaplecze.idDokumentu,
       [znakowanie.id],
       przyjmij,
-      // Brzmienie poprawione jedzie tylko wtedy, gdy Operator je wpisał: puste
-      // pole znaczy „przyjmij tak, jak model zaproponował".
+      // Brzmienie poprawione jedzie tylko, gdy Operator je wpisał — puste pole przyjmuje propozycję wprost.
       brzmienieRdzenia.kontrolka.value.trim(),
     );
     if (!wynik.udany || wynik.wynik === undefined) {
@@ -913,7 +854,7 @@ export function utworzPrzybornikZnakowania(
   };
 }
 
-/** Przycisk czynności przybornika wraz z jego zdaniem o zapleczu. */
+/** Przycisk czynności przybornika wraz z jego zdaniem o zapleczu rdzenia i stanem klikalności przycisku. */
 function przyciskCzynnosci(nazwa: string, kod: string, objasnienie: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -924,7 +865,7 @@ function przyciskCzynnosci(nazwa: string, kod: string, objasnienie: string): HTM
   return przycisk;
 }
 
-/** Jeden wiersz wykazu znakowań. */
+/** Jeden wiersz wykazu znakowań przybornika, z rodzajem znacznika, jego autorem i miejscem w dokumencie. */
 function wierszZnakowania(
   pozycja: PozycjaZnakowania,
   wskazana: boolean,
@@ -989,7 +930,7 @@ function wierszZnakowania(
   return wiersz;
 }
 
-/** Część przybornika wraz z jej tytułem. */
+/** Część przybornika wraz z jej tytułem i elementami czynności, które ta część przybornika w sobie zawiera. */
 function czescPrzybornika(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-przybornik__tytul';
@@ -1001,5 +942,5 @@ function czescPrzybornika(tytul: string, elementy: readonly HTMLElement[]): HTML
   return sekcja;
 }
 
-/** Żeton barwy do nadania wyróżnieniu w oknie; jedno miejsce przekładu. */
+/** Żeton barwy do nadania wyróżnieniu w oknie znakowania; jedno miejsce przekładu koloru na nazwę żetonu. */
 export { przybornikZetonBarwy };

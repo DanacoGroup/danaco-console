@@ -88,6 +88,10 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "pakowanie i wydobycie zawartości archiwum"},
 		{Narzedzie: narzedziePowiekszenia(),
 			Zakres: "powiększanie obrazu w module Design"},
+		{Narzedzie: narzedzieOdtwarzaniaTwarzy(),
+			Zakres: "osobny przebieg poprawiania twarzy przy powiększaniu obrazu " +
+				"(image.upscale z faces: true) — bez niego powiększanie pracuje dalej, " +
+				"a żądanie z tym polem odmawia zamiast oddać obraz bez poprawki twarzy"},
 		{Narzedzie: narzedzieImageMagick("magick"),
 			Zakres: "zapis obrazu w AVIF oraz w WEBP stratnym, a także pomiar pliku AVIF " +
 				"(image.convert, image.inspect) — pozostałe czynności rodziny image.* " +

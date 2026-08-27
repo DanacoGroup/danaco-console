@@ -2,30 +2,9 @@ import { elementIkony, type NazwaIkony } from '../ikony/ikony';
 import './czynnosci.css';
 
 /**
- * Jeden wiersz sekcji czynności sesji w menu `⋮`.
- *
- * Stoi osobno od `menu-paneli.ts`, bo wiersz paneli jest przełącznikiem: niesie
- * `aria-checked`, ptaszek i stałe miejsce na ten ptaszek, bo panel bywa otwarty
- * albo zamknięty. Czynność sesji nie ma stanu „włączona" — naciśnięcie ją
- * wykonuje, więc ptaszek, który nigdy się nie zapali, kłamałby o tym, czym
- * pozycja jest.
- *
- * Układ jest ten sam co w sekcji paneli: ikona · nazwa i przeznaczenie · `<kbd>`
- * skrótu wyrównany do prawej. Dwie sekcje jednego menu nie mają dwóch rytmów.
- *
- * Skrót jest prawdziwy, ale miejscowy. Sekcja paneli skrótów nie pokazuje, bo
- * nikt nie rejestruje klawiszy i napis byłby atrapą; tutaj napis zostaje, bo
- * klawisz działa — nasłuch stoi na sekcji i łapie literę, dopóki menu jest
- * rozwinięte (`czynnosci-sesji-menu.ts`). Skrótu globalnego nie rejestrujemy:
- * `R`, `A`, `D` wciśnięte w polu wypowiedzi mają pisać litery, a nie kasować
- * sesję.
- *
- * Wyróżnienie ostrzegawcze jest barwą wiersza, nie blokadą: „Usuń" idzie
- * czerwienią, bo kasuje zapis bez odwrotu, ale wiersz jest tak samo klikalny
- * jak każdy inny.
+ * Czynność gotowa do postawienia jako wiersz sekcji czynności sesji w menu, odrębny od
+ * przełącznika panelu, bo naciśnięcie wykonuje działanie, a nie włącza stan.
  */
-
-/** Czynność gotowa do postawienia w menu. */
 export interface PozycjaCzynnosciMenu {
   /** Klucz techniczny — po nim idzie wybór skrótu i porządek. */
   klucz: string;
@@ -34,14 +13,7 @@ export interface PozycjaCzynnosciMenu {
   /** Zdanie pod nazwą: co czynność naprawdę robi. */
   przeznaczenie: string;
   ikona: NazwaIkony;
-  /**
-   * Skrót — pojedyncza litera, na przykład `R`.
-   *
-   * Pominięty znaczy, że pozycja klawisza nie ma, a nie że go jeszcze nie
-   * podpięto: litery niosą cztery pozycje (`R`, `F`, `A`, `D`), a `Otwórz w ›`
-   * stoi bez klawisza. Wiersz bez skrótu nie dostaje pustego `<kbd>` — ramka
-   * bez litery obiecywałaby klawisz, którego nikt nie nasłuchuje.
-   */
+  /** Pominięty znaczy brak klawisza; wiersz bez skrótu nie dostaje pustego znacznika. */
   skrot?: string;
   /** Czy wiersz idzie kolorem ostrzegawczym (utrata danych bez odwrotu). */
   grozna?: boolean;
@@ -49,13 +21,8 @@ export interface PozycjaCzynnosciMenu {
 }
 
 /**
- * Buduje wiersz czynności.
- *
- * Naciśnięcie nie zwija menu — tak samo jak przy przełączaniu paneli nad
- * kreską. Menu `⋮` zwija naciśnięcie poza nim albo `Escape`
- * (`menu-rozwijane.ts`), a modal pytania o nazwę i modal potwierdzenia
- * usunięcia to natywne `<dialog>` z własną nakładką — stają nad menu, więc
- * nie ma czego chować. Jedno zachowanie w obu sekcjach jednego menu.
+ * Buduje wiersz czynności menu: ikonę, nazwę, przeznaczenie i opcjonalny skrót
+ * klawiszowy, z barwą ostrzegawczą dla czynności nieodwracalnych.
  */
 export function zbudujWierszCzynnosci(pozycja: PozycjaCzynnosciMenu): HTMLElement {
   const wiersz = document.createElement('button');

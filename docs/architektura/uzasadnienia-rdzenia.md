@@ -474,3 +474,68 @@ adapterów — albo na dysk — otwarciem pliku, który komenda miała wytworzy�
 i odczytaniem jego treści, nie samego istnienia. Żaden sprawdzian nie woła
 modelu ani programu zewnętrznego, więc wszystkie wypadają tak samo u odbiorcy,
 jak na maszynie budującej.
+
+## budowa/server/internal/core/adapter_narzedzia_dokument.go
+
+Same czynności leżą osobno wedle odpowiedzialności: zamiana formatu w
+`adapter_narzedzia_dokument_konwersja.go`, odczyt treści w
+`adapter_narzedzia_dokument_tekst.go`, wpięcie do rejestru w
+`handlers_narzedzia_dokument.go`. Obie komendy rodziny są narzędziami modelu,
+nie panelem operatora: `document.convert` oddaje operatorowi dokument, a nie
+tekst w oknie rozmowy, a `document.text.extract` czyta plik, który operator
+dostarczył — PDF, skan, zdjęcie kartki — bo bez tej komendy model nie ma
+żadnej drogi do treści pliku leżącego na dysku operatora.
+
+Jedna droga prowadzi do binarium: wszystkie uruchomienia idą przez
+`zewnetrzne.Wolaj` — port `session.Uruchamiacz`, brama izolacji okna, objęcie
+drzewa potomstwa, obowiązkowa granica czasu. Własnego `exec.Command` ten
+moduł nie ma; w całym drzewie stoi dokładnie jedno wywołanie, w
+`injection/rozruch.go`.
+
+Katalog uruchomienia zostaje pusty, a ścieżki argumentów są bezwzględne.
+Gdyby moduł podał bramie własny katalog tymczasowy, punkt izolacji katalogu
+roboczego odrzuciłby uruchomienie jako wyjście poza katalog okna
+(`session/izolacja_polecenie.go`). Pusty katalog pozwala bramie wstawić
+katalog własnego zasięgu, a bezwzględne ścieżki sprawiają, że wybór katalogu
+nie zmienia wyniku pracy.
+
+Zasięg jest zasięgiem platformy. Żądania obu komend nie niosą okna, tak samo
+jak w rodzinie `speech.*` (`adapter_modul_mowa.go`), bo narzędzie dokumentowe
+jest zdolnością platformy. Zasady i obszar składają się więc dla pustego
+`konfig.Kontekst{}`, adresu najszerszego poziomu; podstawienie
+`session.Zasady{}` z ręki znaczyłoby brak izolacji niezależnie od tego, co
+operator ustawił.
+
+Wynik jest widoczny dla operatora, gdy żądanie poda `windowId`: powstaje
+wtedy wiersz zasobu w wykazie okna (`oknoWynikuArsenalu`). Brak `windowId`
+nie wstrzymuje czynności — bajty i tak idą do magazynu pod sumą kontrolną,
+tylko zasób nie pojawia się w wykazie okna. Rodzaj zasobu rozstrzyga format
+wyniku, nie nazwa komendy: PDF jest dokumentem, a konwersja do PNG obrazem
+(`rodzajZasobuArsenalu`).
+
+Pole `magazyn` trzyma bajty wyników konwersji pod sumą sha256 i jest tym
+samym magazynem zasobów Designu, którym jedzie `design.asset.upload`. Wynik
+jest typu `DesignAsset`, więc panel zasobów znajduje go tam, gdzie szuka;
+skład zasobu poza bazą jest jeden. Pole `biblioteka` jest drugim magazynem, w
+którym `assetId` może wskazywać materiał: kontrakt obiecuje przy tym polu
+zasób z magazynu rdzenia, Design albo Library, a plik biblioteki trzyma
+bajty tą samą konwencją co zasób designu — bezwzględną ścieżką do bloku pod
+sumą sha256, różniącą się wyłącznie korzeniem katalogu.
+
+W `ustalZrodlo` kolejność wejścia kontraktu nie jest dowolna: zasób z
+magazynu jest treścią zamrożoną pod sumą kontrolną, ścieżka jest treścią
+żywą, którą operator może w międzyczasie nadpisać, a treść wprost jest tym,
+co model właśnie napisał. Gdy przyszło więcej niż jedno wskazanie, wygrywa
+to pewniejsze; brak każdego wskazania jest odmową, a nie pustym wynikiem, bo
+czynność bez materiału nie ma czego przetworzyć, a powodzenie bez treści
+byłoby powodzeniem czynności, której nikt nie wykonał.
+
+W `zrodloZZasobu` magazyny są dwa, i kontrakt mówi to wprost przy polu
+`assetId`: zasób z magazynu rdzenia, Design albo Library. Oba trzymają bajty
+tą samą konwencją i różnią się wyłącznie korzeniem katalogu oraz nazwą
+kolumny (`URI` zasobu, `TrescOdwolanie` pliku); szukanie idzie najpierw po
+zasobach designu, bo tam trafiają wyniki własnych konwersji, a dopiero potem
+po bibliotece. Blob nie ma rozszerzenia — jego nazwą jest suma sha256 — więc
+format bierze się z kolumny wiersza, a nie ze ścieżki; zasób bez formatu i
+bez wskazania w żądaniu jest odmową, bo zgadnięty format wygląda w wyniku
+identycznie jak rozpoznany i nie da się ich odróżnić.

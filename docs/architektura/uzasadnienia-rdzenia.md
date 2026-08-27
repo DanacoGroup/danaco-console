@@ -2431,3 +2431,13 @@ Przedrostek źródła pozycji rozszerzenia pochodzi z kodu, gdy kod go niesie
 w jednym napisie ze źródłem i nazwą skróconą; w pozostałych wypadkach
 przedrostek bierze się z pochodzenia pozycji, aby żadna pozycja wykazu nie
 została bez źródła.
+
+## szablony_pism_test.go
+
+Sprawdzian wyklucza cztery szkody warsztatu szablonów. Szablon zapisujący
+samą treść, bez papieru firmowego, nie jest wzorem pisma. Usunięcie szablonu
+fabrycznego, po którym wykazu nie da się odtworzyć bez ponownego wdrożenia,
+odbiera warsztatowi podstawę. Pole wymagane bez wartości usunięte z treści
+sprawia, że pismo wygląda na kompletne, choć nie jest. Wypełnienie pól
+zamianą w napisie treści gubi postać wzorcową pisma — kroje, wcięcia
+i granice akapitów.

@@ -225,3 +225,12 @@ Wybór pozycji wyróżnionej oddaje wartość fałsz, gdy nie ma czego wybrać �
 wykaz pusty albo przycięty do zera — i wtedy wołający wie, że klawisz Enter
 ma zrobić swoje zwykłe zadanie zamiast niczego. Wyróżniona gałąź nie jest
 wyborem — Enter na niej otwiera poziom.
+
+## budowa/klient-poprzedni/src/moduly/browser/sekcje-rodzin.ts
+
+Plik składa wyłącznie wywołania rdzenia w zdania o skutku — elementy stawia
+`panel-rodzin.ts`, a stan modułu trzyma `stan-przegladania.ts`. Zdanie
+zwracane po czynności niesie zawsze liczbę albo identyfikator wzięty wprost
+z odpowiedzi rdzenia, nigdy samo potwierdzenie w rodzaju „gotowe" — zdanie
+bez pokrycia w odpowiedzi byłoby meldunkiem bez skutku, którego Operator nie
+mógłby sprawdzić.

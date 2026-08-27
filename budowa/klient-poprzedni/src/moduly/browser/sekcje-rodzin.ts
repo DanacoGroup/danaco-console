@@ -17,27 +17,9 @@ import {
 } from './panel-rodzin';
 import type { StanPrzegladania } from './stan-przegladania';
 
-/**
- * Czynności rodzin `browser.*` rozpisane na sekcje panelu — po jednej grupie na
- * okno operacyjne, zgodnie z przypisaniem z opracowania modułu:
- *
- *   Browser Window          → karty, grupy kart, przestrzenie, zakładki,
- *                             przewinięcie, zrzut i narzędzia inspekcyjne
- *   Capture & Monitor Panel → monitory, kanały, kolejka czytania, pobrania,
- *                             wytwory sesji
- *   Notes / Sources Panel   → zestawy źródeł, wątki notatek, zmiana notatki
- *   Automation Studio       → nagrywarka makr i granice Wykonawcy
- *
- * Plik nie buduje elementów i nie trzyma stanu: składa wywołania rdzenia
- * i zdania o ich skutku. Elementy stawia `panel-rodzin.ts`, stan modułu stoi
- * w `stan-przegladania.ts`.
- *
- * Każde zdanie o skutku mówi liczbę albo identyfikator wzięty z odpowiedzi
- * rdzenia — nigdy samego „gotowe". Zdanie bez pokrycia w odpowiedzi byłoby
- * meldunkiem bez skutku.
- */
+// Czynności rodzin browser.* rozłożone na sekcje czterech okien operacyjnych aplikacji.
 
-/** Sekcje wpinane do Browser Window. */
+/** Sekcje wpinane do okna przeglądania: karty, grupy kart, przestrzenie robocze, zakładki oraz praca na stronie z narzędziami inspekcyjnymi. */
 export function sekcjePrzegladania(stan: StanPrzegladania): SekcjaRodzin[] {
   const zrodlo = stan.zrodlo;
   return [
@@ -296,7 +278,7 @@ export function sekcjePrzegladania(stan: StanPrzegladania): SekcjaRodzin[] {
   ];
 }
 
-/** Sekcje wpinane do Capture & Monitor Panel. */
+/** Sekcje wpinane do okna przechwytywania i monitorowania: monitory zmian treści, kanały wraz z kolejką czytania oraz pobrania i wytwory sesji. */
 export function sekcjeMaterialu(stan: StanPrzegladania): SekcjaRodzin[] {
   const zrodlo = stan.zrodlo;
   return [
@@ -520,7 +502,7 @@ export function sekcjeMaterialu(stan: StanPrzegladania): SekcjaRodzin[] {
   ];
 }
 
-/** Sekcje wpinane do Notes Panel i Sources Panel. */
+/** Sekcje wpinane do okna notatek i źródeł: zestawy tematyczne źródeł, wątki notatek oraz oznaczanie notatki wnioskiem. */
 export function sekcjePorzadku(stan: StanPrzegladania): SekcjaRodzin[] {
   const zrodlo = stan.zrodlo;
   return [
@@ -608,7 +590,7 @@ export function sekcjePorzadku(stan: StanPrzegladania): SekcjaRodzin[] {
   ];
 }
 
-/** Sekcje wpinane do Automation Studio. */
+/** Sekcje wpinane do okna automatyzacji: nagrywarka makr z krokami strony oraz granice liczby i czasu kroków Wykonawcy. */
 export function sekcjeAutomatyzacji(stan: StanPrzegladania): SekcjaRodzin[] {
   const zrodlo = stan.zrodlo;
   return [

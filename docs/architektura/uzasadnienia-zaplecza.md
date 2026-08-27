@@ -2668,3 +2668,6 @@ zmienia.
 
 ## budowa/server/internal/store/migracja_266_automations_parametry_szablonu.sql
 Parametr szablonu przepływu jest wierszem, a nie polem zapisu strukturalnego szablonu, ponieważ formularz wpięcia buduje się z niego pole po polu, a zastosowanie szablonu musi umieć nazwać parametr, dla którego nie podano wartości.
+
+## budowa/server/internal/store/migracja_267_automations_publikacja.sql
+Publikacja, udostępnienie i budżety czasu automatyki leżą jako cztery kolumny na tabeli automatyki, a nie cztery osobne tabele, ponieważ każda jest polem pojedynczym o krotności jeden do jednego z automatyką i nie ma własnego cyklu życia; osobna tabela na jedną liczbę byłaby złączeniem bez powodu. Pusta wersja opublikowana oznacza, że automatyki nigdy nie opublikowano, a nie że opublikowano wersję zerową — wykonywana produkcyjnie jest wtedy wersja bieżąca. Budżet równy zero oznacza brak granicy czasu, zgodnie z kontraktem pól budżetu.

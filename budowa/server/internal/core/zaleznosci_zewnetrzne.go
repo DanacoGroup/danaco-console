@@ -89,6 +89,32 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "formatowanie plików TypeScript, JavaScript, CSS, Markdown i YAML"},
 		{Narzedzie: narzedzieEslint,
 			Zakres: "analiza statyczna kodu TypeScript i JavaScript"},
+		{Narzedzie: narzedzieRuff,
+			Zakres: "analiza statyczna plików Pythona w module Developer oraz analiza " +
+				"i formatowanie treści skryptu karty python w module Terminal"},
+		{Narzedzie: narzedzieStylelint,
+			Zakres: "analiza statyczna arkuszy CSS w module Developer — wyłącznie " +
+				"w repozytorium niosącym własną konfigurację Stylelinta, bo program " +
+				"nie ma wbudowanego zestawu reguł"},
+		{Narzedzie: narzedzieTypos,
+			Zakres: "wykrywanie literówek w identyfikatorach i treści plików " +
+				"repozytorium w module Developer"},
+		{Narzedzie: narzedzieAstGrep,
+			Zakres: "wyszukanie i zamiana po składni w module Developer — wzorzec " +
+				"z metazmienną (`$NAZWA`) idzie tą drogą zamiast po napisie"},
+		{Narzedzie: narzedzieSemgrep,
+			Zakres: "poszerzenie skanu kodu w module Developer o reguły semantyczne — " +
+				"wyłącznie w repozytorium niosącym własny zestaw reguł, bo zestaw " +
+				"z rejestru wymagałby sieci"},
+		{Narzedzie: narzedzieJscpd,
+			Zakres: "wykrywanie powtórzonych fragmentów w plikach TypeScriptu " +
+				"i JavaScriptu podczas skanu kodu w module Developer"},
+		{Narzedzie: narzedzieDupl,
+			Zakres: "wykrywanie powtórzonych fragmentów w plikach Go podczas skanu " +
+				"kodu w module Developer"},
+		{Narzedzie: narzedzieSerweraTypeScript,
+			Zakres: "przejście do definicji, wystąpienia symbolu i refaktoryzacje " +
+				"semantyczne plików TypeScriptu w module Developer"},
 		{Narzedzie: narzedzieSilnikaKontenerow,
 			Zakres: "wykaz kontenerów i obrazów, budowanie obrazu i uruchomienie stosu " +
 				"w zakładce Containers"},

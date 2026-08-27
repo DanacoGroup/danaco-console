@@ -25,6 +25,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -1194,4 +1195,477 @@ func czekajNaZatrzymanieSesji(t *testing.T, adapter *adapterDevelopera,
 	}
 	t.Fatal("program nie zatrzymał się na punkcie przerwania w granicy czasu")
 	return shared.DebugSession{}
+}
+
+// ── Analiza statyczna wielu języków ─────────────────────────────────────────
+
+// TestSkutekAnalizyStatycznejPozaGo sprawdza, że `developer.lint.get` sięga po
+// programy właściwe językom plików, a nie po jeden program Go.
+//
+// Pomiar nie liczy zgłoszeń: liczy, KTÓRY program je wystawił. Wykaz niepusty
+// złożony wyłącznie ze zgłoszeń Go byłby odpowiedzią, która wygląda dobrze
+// i milczy o plikach, których nie sprawdzono.
+func TestSkutekAnalizyStatycznejPozaGo(t *testing.T) {
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	python := warsztat.zapiszPlikRoboczy(t, "narzedzie.py",
+		"import os, sys\n\n\ndef f(x):\n    return x\n")
+	arkusz := warsztat.zapiszPlikRoboczy(t, "okno.css",
+		".a {\n  color: #ffffff;\n  color: #000000;\n}\n")
+	warsztat.zapiszPlikRoboczy(t, ".stylelintrc.json",
+		`{ "rules": { "declaration-block-no-duplicate-properties": true } }`+"\n")
+
+	odpowiedz, err := warsztat.adapter.AnalizaStatyczna(context.Background(),
+		shared.DeveloperLintGetRequest{
+			WindowId: warsztat.okno.Id,
+			Paths:    []string{python, arkusz},
+		})
+	if err != nil {
+		t.Fatalf("analiza statyczna odmówiła: %v", err)
+	}
+	if !odpowiedz.LinterAvailable {
+		t.Skip("żaden program analizy nie stoi na tej maszynie — nie ma czym zmierzyć")
+	}
+
+	zrodla := map[string]int{}
+	for _, zgloszenie := range odpowiedz.Diagnostics {
+		if zgloszenie.Source == nil {
+			t.Errorf("zgłoszenie bez nazwy programu nie mówi, co je wystawiło: %#v", zgloszenie)
+			continue
+		}
+		if zgloszenie.Path == "" || zgloszenie.Line <= 0 {
+			t.Errorf("zgłoszenie bez miejsca nie prowadzi do niczego: %#v", zgloszenie)
+		}
+		zrodla[*zgloszenie.Source]++
+	}
+
+	if zewnetrzne.Stoi(narzedzieRuff) && zrodla[narzedzieRuff.Program] == 0 {
+		t.Errorf("Ruff stoi na maszynie, a plik Pythona z nieużywanymi importami "+
+			"nie dał ani jednego zgłoszenia; zastano źródła: %v", zrodla)
+	}
+	if zewnetrzne.Stoi(narzedzieStylelint) && zrodla[narzedzieStylelint.Program] == 0 {
+		t.Errorf("Stylelint stoi na maszynie, a arkusz z powtórzoną właściwością "+
+			"nie dał ani jednego zgłoszenia; zastano źródła: %v", zrodla)
+	}
+}
+
+// TestSkutekAnalizyLiterowek sprawdza drogę `typos` — jedyną, która nie zależy
+// od języka pliku.
+func TestSkutekAnalizyLiterowek(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieTypos) {
+		t.Skipf("serwer nie ma programu %s", narzedzieTypos.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	plik := warsztat.zapiszPlikRoboczy(t, "opis.txt",
+		"the neccessary step\nteh second line\n")
+
+	odpowiedz, err := warsztat.adapter.AnalizaStatyczna(context.Background(),
+		shared.DeveloperLintGetRequest{WindowId: warsztat.okno.Id, Paths: []string{plik}})
+	if err != nil {
+		t.Fatalf("analiza statyczna odmówiła: %v", err)
+	}
+
+	znaleziona := false
+	for _, zgloszenie := range odpowiedz.Diagnostics {
+		if zgloszenie.Source == nil || *zgloszenie.Source != narzedzieTypos.Program {
+			continue
+		}
+		znaleziona = true
+		if !strings.Contains(zgloszenie.Message, "neccessary") &&
+			!strings.Contains(zgloszenie.Message, "teh") {
+			t.Errorf("zgłoszenie literówki nie mówi, o które słowo chodzi: %s",
+				zgloszenie.Message)
+		}
+		if zgloszenie.Line <= 0 {
+			t.Errorf("zgłoszenie literówki bez wiersza: %#v", zgloszenie)
+		}
+	}
+	if !znaleziona {
+		t.Fatalf("program literówek stoi na maszynie, a dwie literówki w pliku "+
+			"nie dały ani jednego zgłoszenia; zastano: %#v", odpowiedz.Diagnostics)
+	}
+}
+
+// ── Droga składni ───────────────────────────────────────────────────────────
+
+// TestSkutekWyszukaniaPoSkladni sprawdza, że wzorzec z metazmienną naprawdę
+// szuka po SKŁADNI, a nie po napisie.
+//
+// Pomiar jest tak dobrany, żeby droga napisu nie mogła go zdać: wzorzec
+// `console.log($ARG)` jako napis nie stoi w żadnym pliku.
+func TestSkutekWyszukaniaPoSkladni(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieAstGrep) {
+		t.Skipf("serwer nie ma programu %s", narzedzieAstGrep.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	warsztat.zapiszPlikRoboczy(t, "widok.ts",
+		"console.log(\"jeden\");\nfunction f() {\n  console.log(\"dwa\");\n}\n")
+
+	odpowiedz, err := warsztat.adapter.SzukajWRepozytorium(context.Background(),
+		shared.DeveloperGrepSearchRequest{
+			WindowId: warsztat.okno.Id,
+			Pattern:  "console.log($ARG)",
+		})
+	if err != nil {
+		t.Fatalf("wyszukanie po składni odmówiło: %v", err)
+	}
+	if len(odpowiedz.Matches) != 2 {
+		t.Fatalf("wyszukanie po składni oddało %d trafień zamiast dwóch: %#v",
+			len(odpowiedz.Matches), odpowiedz.Matches)
+	}
+	for _, trafienie := range odpowiedz.Matches {
+		if trafienie.Line <= 0 {
+			t.Errorf("trafienie bez wiersza liczonego od jedynki: %#v", trafienie)
+		}
+		if trafienie.Column == nil || *trafienie.Column <= 0 {
+			t.Errorf("trafienie bez kolumny liczonej od jedynki: %#v", trafienie)
+		}
+		if !strings.Contains(trafienie.Text, "console.log") {
+			t.Errorf("trafienie nie niesie treści swojego wiersza: %#v", trafienie)
+		}
+	}
+
+	// Ten sam wzorzec drogą napisu ma nie znaleźć niczego — to jest dowód, że
+	// wyżej zadziałała droga składni, a nie zbieg okoliczności.
+	prawda := true
+	poNapisie, err := warsztat.adapter.SzukajWRepozytorium(context.Background(),
+		shared.DeveloperGrepSearchRequest{
+			WindowId: warsztat.okno.Id,
+			Pattern:  "console\\.log\\(\\$ARG\\)",
+			Regex:    &prawda,
+		})
+	if err != nil {
+		t.Fatalf("wyszukanie po napisie odmówiło: %v", err)
+	}
+	if len(poNapisie.Matches) != 0 {
+		t.Fatalf("wzorzec wzięty jako napis znalazł %d trafień — pomiar nie odróżnia "+
+			"drogi składni od drogi napisu", len(poNapisie.Matches))
+	}
+}
+
+// TestSkutekZamianyPoSkladni sprawdza, że zamiana po składni zmienia PLIK NA
+// DYSKU, a nie tylko oddaje wykaz zmian.
+func TestSkutekZamianyPoSkladni(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieAstGrep) {
+		t.Skipf("serwer nie ma programu %s", narzedzieAstGrep.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	sciezka := warsztat.zapiszPlikRoboczy(t, "widok.ts",
+		"console.log(\"jeden\");\n")
+
+	podglad := true
+	wynikPodgladu, err := warsztat.adapter.ZamienWRepozytorium(context.Background(),
+		shared.DeveloperGrepReplaceRequest{
+			WindowId:    warsztat.okno.Id,
+			Pattern:     "console.log($ARG)",
+			Replacement: "dziennik.zapisz($ARG)",
+			Preview:     &podglad,
+		})
+	if err != nil {
+		t.Fatalf("podgląd zamiany po składni odmówił: %v", err)
+	}
+	if wynikPodgladu.Applied {
+		t.Fatal("podgląd zameldował zapis zmian")
+	}
+	if len(wynikPodgladu.Edits) == 0 {
+		t.Fatal("podgląd nie oddał ani jednej zmiany")
+	}
+	if !strings.Contains(wynikPodgladu.Edits[0].NewText, "dziennik.zapisz") {
+		t.Fatalf("zmiana podglądu nie niesie treści po zamianie: %#v", wynikPodgladu.Edits[0])
+	}
+	// Pomiar: plik po podglądzie ma zostać NIETKNIĘTY.
+	poPodgladzie, err := os.ReadFile(sciezka)
+	if err != nil {
+		t.Fatalf("nie można odczytać pliku sprawdzianu: %v", err)
+	}
+	if !strings.Contains(string(poPodgladzie), "console.log") {
+		t.Fatal("podgląd zmienił plik na dysku")
+	}
+
+	zapis := false
+	wynikZapisu, err := warsztat.adapter.ZamienWRepozytorium(context.Background(),
+		shared.DeveloperGrepReplaceRequest{
+			WindowId:    warsztat.okno.Id,
+			Pattern:     "console.log($ARG)",
+			Replacement: "dziennik.zapisz($ARG)",
+			Preview:     &zapis,
+		})
+	if err != nil {
+		t.Fatalf("zamiana po składni odmówiła: %v", err)
+	}
+	if !wynikZapisu.Applied {
+		t.Fatal("zamiana zameldowała brak zapisu")
+	}
+
+	// Pomiar: PLIK NA DYSKU, odczytany niezależnie od odpowiedzi.
+	po, err := os.ReadFile(sciezka)
+	if err != nil {
+		t.Fatalf("nie można odczytać pliku po zamianie: %v", err)
+	}
+	if strings.Contains(string(po), "console.log") {
+		t.Fatalf("odpowiedź mówi o zapisie, a plik na dysku został nietknięty:\n%s", string(po))
+	}
+	if !strings.Contains(string(po), "dziennik.zapisz(\"jeden\")") {
+		t.Fatalf("plik na dysku nie niesie treści po zamianie:\n%s", string(po))
+	}
+}
+
+// TestOdmowaBrakuProgramuSkladni sprawdza kryterium odmowy: brak programu ma
+// wrócić zdaniem NAZYWAJĄCYM brak wraz z drogą naprawy, a nie usterką wewnętrzną
+// ani zerem trafień.
+//
+// Program podmienia się na nazwę, której na żadnej maszynie nie ma — brak jest
+// stanem maszyny, więc sprawdzian ten stan odtwarza, zamiast czekać, aż zastanie
+// go u kogoś.
+func TestOdmowaBrakuProgramuSkladni(t *testing.T) {
+	zastane := narzedzieAstGrep
+	narzedzieAstGrep = zewnetrzne.Narzedzie{
+		Nazwa:   zastane.Nazwa,
+		Program: "danaco-program-ktorego-nie-ma",
+		Pakiet:  zastane.Pakiet,
+	}
+	t.Cleanup(func() { narzedzieAstGrep = zastane })
+
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	warsztat.zapiszPlikRoboczy(t, "widok.ts", "console.log(\"jeden\");\n")
+
+	odpowiedz, err := warsztat.adapter.SzukajWRepozytorium(context.Background(),
+		shared.DeveloperGrepSearchRequest{
+			WindowId: warsztat.okno.Id,
+			Pattern:  "console.log($ARG)",
+		})
+	if err == nil {
+		t.Fatalf("wyszukanie bez programu składni oddało wynik zamiast odmowy: %#v", odpowiedz)
+	}
+	zdanie := err.Error()
+	if !strings.Contains(zdanie, zastane.Nazwa) {
+		t.Errorf("odmowa nie nazywa brakującego programu: %s", zdanie)
+	}
+	if !strings.Contains(zdanie, zastane.Pakiet) {
+		t.Errorf("odmowa nie podaje drogi naprawy: %s", zdanie)
+	}
+	if !strings.Contains(zdanie, "regex") {
+		t.Errorf("odmowa nie podaje drogi, która działa bez tego programu: %s", zdanie)
+	}
+	if strings.Contains(strings.ToLower(zdanie), "internal_error") {
+		t.Errorf("brak programu wrócił jako usterka wewnętrzna rdzenia: %s", zdanie)
+	}
+}
+
+// ── Warstwa językowa TypeScriptu ────────────────────────────────────────────
+
+// TestNawigacjaPoTypeScripcieNieUdajeOdpowiedzi sprawdza rzecz, która jest
+// rozstrzygnięciem, a nie drobiazgiem: pytanie o symbol w pliku TypeScriptu ma
+// wrócić z `serverAvailable: false`, bo rdzeń nie ma dziś czym o niego zapytać.
+//
+// Pusty wykaz przy `true` znaczyłby „sprawdziłem i nie ma" — zdanie nieprawdziwe,
+// którego okno nie miałoby jak odróżnić od prawdziwego.
+func TestNawigacjaPoTypeScripcieNieUdajeOdpowiedzi(t *testing.T) {
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	sciezka := warsztat.zapiszPlikRoboczy(t, "widok.ts",
+		"export function alfa(): number {\n  return 1;\n}\n")
+
+	odpowiedz, err := warsztat.adapter.NawigujDoSymbolu(context.Background(),
+		shared.DeveloperSymbolNavigateRequest{
+			WindowId: warsztat.okno.Id,
+			Path:     sciezka,
+			Line:     1,
+			Column:   17,
+			Kind:     shared.SymbolNavigationKindDefinition,
+		})
+	if err != nil {
+		t.Fatalf("nawigacja po symbolu odmówiła zamiast odpowiedzieć: %v", err)
+	}
+	if odpowiedz.ServerAvailable {
+		t.Fatal("rdzeń zameldował dostępny serwer języka dla pliku TypeScriptu, " +
+			"którego nie ma czym zapytać")
+	}
+	if len(odpowiedz.Symbols) != 0 {
+		t.Fatalf("odpowiedź bez serwera języka niesie symbole: %#v", odpowiedz.Symbols)
+	}
+}
+
+// TestRefaktoryzacjaTypeScriptuNazywaBrak sprawdza, że refaktoryzacja pliku
+// TypeScriptu odmawia zdaniem nazywającym brak wraz z drogą, która działa.
+func TestRefaktoryzacjaTypeScriptuNazywaBrak(t *testing.T) {
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+	sciezka := warsztat.zapiszPlikRoboczy(t, "widok.ts",
+		"export function alfa(): number {\n  return 1;\n}\n")
+
+	nowa := "beta"
+	podglad := true
+	_, err := warsztat.adapter.Refaktoryzuj(context.Background(),
+		shared.DeveloperRefactorApplyRequest{
+			WindowId: warsztat.okno.Id,
+			Path:     sciezka,
+			Line:     1,
+			Column:   17,
+			Kind:     shared.RefactorKindRename,
+			NewName:  &nowa,
+			Preview:  &podglad,
+		})
+	if err == nil {
+		t.Fatal("refaktoryzacja pliku TypeScriptu oddała wynik zamiast odmowy")
+	}
+	zdanie := err.Error()
+	if !strings.Contains(zdanie, narzedzieSerweraTypeScript.Program) {
+		t.Errorf("odmowa nie nazywa programu, którego brakuje: %s", zdanie)
+	}
+	if !strings.Contains(zdanie, "developer.grep.replace") {
+		t.Errorf("odmowa nie podaje drogi, która działa: %s", zdanie)
+	}
+}
+
+// ── Skan kodu programami warsztatu ──────────────────────────────────────────
+
+// TestSkutekSkanuPowtorzenGo sprawdza, że skan kodu widzi powtórzony fragment —
+// czego żadna reguła wierszowa zobaczyć nie może.
+//
+// Pomiar schodzi do bazy i szuka znaleziska wystawionego przez program
+// powtórzeń, a nie samej liczby znalezisk przebiegu.
+func TestSkutekSkanuPowtorzenGo(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieDupl) {
+		t.Skipf("serwer nie ma programu %s", narzedzieDupl.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	// Fragment jest długi z rozmysłem: próg powtórzenia narzuca sam program
+	// (dla plików Go — sto żetonów), a sprawdzian ma mierzyć drogę rdzenia,
+	// nie ocierać się o cudzy próg.
+	powtorzony := `package %s
+
+func %s(x int, y int) int {
+	a := x + 1
+	b := a * 2
+	c := b - 3
+	d := c / 4
+	e := d + 5
+	f := e * 6
+	g := f - 7
+	h := g + 8
+	i := h * 9
+	j := i - 10
+	k := j + y
+	if k > 100 {
+		return k * 2
+	}
+	if k < 0 {
+		return k - 2
+	}
+	for numer := 0; numer < 3; numer++ {
+		k = k + numer
+	}
+	return k
+}
+`
+	warsztat.zapiszPlikRoboczy(t, "alfa.go", fmt.Sprintf(powtorzony, "warstwa", "Alfa"))
+	warsztat.zapiszPlikRoboczy(t, "beta.go", fmt.Sprintf(powtorzony, "warstwa", "Beta"))
+
+	skan, err := warsztat.adapter.UruchomSkan(context.Background(),
+		shared.DeveloperScanRunRequest{
+			WindowId: warsztat.okno.Id,
+			Kinds:    []shared.ScanKind{shared.ScanKindCode},
+		})
+	if err != nil {
+		t.Fatalf("skan odmówił: %v", err)
+	}
+	if skan.Scan.Status != shared.BuildStatusSucceeded {
+		t.Fatalf("skan domknął się stanem %s", skan.Scan.Status)
+	}
+
+	// Pomiar w bazie, osobnym połączeniem: znalezisko ma nieść nazwę programu
+	// jako regułę, żeby widać było, co je wystawiło.
+	powtorzenia := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
+		`SELECT COUNT(*) FROM developer_znalezisko WHERE skan_kod = ? AND regula = ?`,
+		skan.Scan.Id, narzedzieDupl.Program)
+	if powtorzenia == 0 {
+		t.Fatalf("program powtórzeń stoi na maszynie, a dwa te same ciała funkcji "+
+			"nie dały ani jednego znaleziska w bazie (przebieg %s)", skan.Scan.Id)
+	}
+}
+
+// TestSkutekSkanuPowtorzenTypeScriptu sprawdza drugą stronę podziału pracy:
+// powtórzenia w TypeScripcie liczy program tej rodziny języków, nie program Go.
+func TestSkutekSkanuPowtorzenTypeScriptu(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieJscpd) {
+		t.Skipf("serwer nie ma programu %s", narzedzieJscpd.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	powtorzony := `export function %s(x: number, y: number): number {
+  const a = x + 1; const b = a * 2; const c = b - 3;
+  const d = c / 4; const e = d + 5; const f = e * 6;
+  const g = f - 7; const h = g + 8; const i = h * 9;
+  if (i > 100) { return i * 2; }
+  return i + y;
+}
+`
+	warsztat.zapiszPlikRoboczy(t, "alfa.ts", fmt.Sprintf(powtorzony, "alfa"))
+	warsztat.zapiszPlikRoboczy(t, "beta.ts", fmt.Sprintf(powtorzony, "beta"))
+
+	skan, err := warsztat.adapter.UruchomSkan(context.Background(),
+		shared.DeveloperScanRunRequest{
+			WindowId: warsztat.okno.Id,
+			Kinds:    []shared.ScanKind{shared.ScanKindCode},
+		})
+	if err != nil {
+		t.Fatalf("skan odmówił: %v", err)
+	}
+
+	powtorzenia := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
+		`SELECT COUNT(*) FROM developer_znalezisko WHERE skan_kod = ? AND regula = ?`,
+		skan.Scan.Id, narzedzieJscpd.Program)
+	if powtorzenia == 0 {
+		t.Fatalf("program powtórzeń TypeScriptu stoi na maszynie, a dwa te same ciała "+
+			"funkcji nie dały ani jednego znaleziska w bazie (przebieg %s)", skan.Scan.Id)
+	}
+}
+
+// TestSkutekSkanuSemgrepem sprawdza, że skan kodu poszerza się o reguły
+// repozytorium — i że repozytorium BEZ reguł nie dostaje ich znikąd.
+func TestSkutekSkanuSemgrepem(t *testing.T) {
+	if !zewnetrzne.Stoi(narzedzieSemgrep) {
+		t.Skipf("serwer nie ma programu %s", narzedzieSemgrep.Program)
+	}
+	warsztat := zlozWarsztatDevelopera(t)
+	warsztat.adapter.uruchamiacz = injection.UruchamiaczOkien()
+
+	warsztat.zapiszPlikRoboczy(t, "wolanie.py",
+		"import subprocess\n\n\ndef run(cmd):\n    subprocess.call(cmd, shell=True)\n")
+	warsztat.zapiszPlikRoboczy(t, ".semgrep.yml", `rules:
+  - id: powloka-w-podprocesie
+    patterns:
+      - pattern: subprocess.call(..., shell=True, ...)
+    message: uruchomienie przez powloke propaguje ustawienia srodowiska
+    languages: [python]
+    severity: ERROR
+`)
+
+	skan, err := warsztat.adapter.UruchomSkan(context.Background(),
+		shared.DeveloperScanRunRequest{
+			WindowId: warsztat.okno.Id,
+			Kinds:    []shared.ScanKind{shared.ScanKindCode},
+		})
+	if err != nil {
+		t.Fatalf("skan odmówił: %v", err)
+	}
+
+	znaleziska := liczbaWBazieDevelopera(t, warsztat.sciezkaBaz,
+		`SELECT COUNT(*) FROM developer_znalezisko
+		 WHERE skan_kod = ? AND regula LIKE '%powloka-w-podprocesie%'`,
+		skan.Scan.Id)
+	if znaleziska == 0 {
+		t.Fatalf("reguła repozytorium nie dała ani jednego znaleziska (przebieg %s)",
+			skan.Scan.Id)
+	}
 }

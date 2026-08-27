@@ -371,11 +371,11 @@
 .cd-strona .cd-wejdz--grot > .cd-grot-marki { height: var(--cd-grot-srodowisko); }
 .cd-strona .cd-wejdz--grot:hover .cd-grot-marki,
 .cd-strona .cd-wejdz--grot:focus-visible .cd-grot-marki { color: var(--dn-tekst); }
-/* Obwódka fokusu nie ma już obrysu przycisku, na którym mogłaby usiąść —
-   siada więc na samym grocie. */
+/* Grot nie ma obrysu przycisku, na którym obwódka fokusu mogłaby usiąść —
+   siada na samym znaku, parą żetonów fokusu z biblioteki. */
 .cd-strona .cd-wejdz--grot:focus-visible {
-  outline: var(--dn-obwodka) solid var(--dn-sygnal);
-  outline-offset: var(--dn-od-1);
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: var(--dn-wym-fokus-odsuniecie);
   border-radius: var(--dn-r-sm);
 }
 
@@ -1097,7 +1097,6 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 
 /* === koniec agent-5 === */
 
-
 /* ── Stopka lewego okna ────────────────────────────────────────────────────
    Dwie pozycje poza wykazem sesji i projektów: sprawdzenie wydania na serwerze
    oraz odsyłacz do strony wydań, otwierany w przeglądarce. Stopka stoi przy
@@ -1129,6 +1128,10 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-panel-stopka-poz > svg { flex: none; width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); }
 .cd-panel-stopka-poz:hover,
 .cd-panel-stopka-poz:focus-visible { background: var(--dn-hover); color: var(--dn-tekst); }
+.cd-panel-stopka-poz:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
+}
 .cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
 .cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); }
 .cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }

@@ -717,3 +717,13 @@ sam arkusz.
 
 Wysokość pól redakcyjnych jest wspólna dla trzech okien ról, ponieważ kreator
 promptu, polecenie wykonawcy i uzasadnienie oceny stoją obok siebie na scenie.
+
+## budowa/klient-poprzedni/src/aod/sekcja-kontekstu.ts
+
+Pole `executionParams` ma w kontrakcie typ `unknown`, więc sekcja go nie rozbiera i melduje jedynie
+obecność parametrów wykonania. Rozbiór wymagałby założenia o kształcie danych, którego kontrakt nie
+gwarantuje.
+
+Komplet pusty jest stanem poprawnym, a nie odmową odczytu, ponieważ wszystkie pola `ContextBundle`
+są w kontrakcie opcjonalne. Sekcja mówi to osobnym zdaniem zamiast wypisywać wykaz samych oznaczeń
+braku.

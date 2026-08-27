@@ -479,8 +479,8 @@ func przestawCzoloGalezi(t *testing.T, zmontowany *Zmontowany, zycie context.Con
 	}
 }
 
-// TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych pilnuje reguły
-// z rozdz. 4.5: odmowa jednego dokumentu nie przerywa wsadu.
+// TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych sprawdza, że
+// odmowa jednego dokumentu w wsadzie nie przerywa przetwarzania pozostałych.
 func TestWsadOdrzucaDokumentBezKanaluAleNieWstrzymujePozostalych(t *testing.T) {
 	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
 

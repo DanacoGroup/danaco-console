@@ -978,3 +978,28 @@ Opisy warsztatów stoją osobno od ramy warsztatu, ponieważ rama jest czynnośc
 budującą okno, a opisy są wykazem danych. Wykaz odwzorowuje warstwy wyliczenia
 `AppWorkspaceLayer` z kontraktu, więc trzeci warsztat może powstać dopiero po
 rozszerzeniu kontraktu, a nie po zmianie samego widoku.
+
+## budowa/klient-poprzedni/src/aplikacja/polaczenie-z-rdzeniem.ts
+
+Pole nawigacji platformy niesie komendy wejścia do środowiska oraz wykazu
+modułów osadzone na wspólnym kanale i służy wyłącznie powłoce: powłoka powstaje
+bez połączenia i nie ma jak sięgnąć po kanał sama, więc dostaje te dwie drogi
+gotowe. Widoki mające kanał wołają opakowania wprost, widok strony głównej
+komendę wejścia na stronę główną, a przestrzeń modułu komendę wejścia do
+przestrzeni pracy, bez obiektu pośredniego.
+
+Plik wyłącznie składa warstwy: nie zna ramki, nie buduje koperty i nie zna nazwy
+żadnej komendy. Nazwy pochodzą z pakietu wspólnego i żyją w warstwie protokołu.
+
+Złożenie nie otwiera połączenia. Rozpoczęcie łączności należy do cyklu życia,
+żeby moment jej nawiązania był jednym miejscem, a nie skutkiem ubocznym budowy
+obiektów.
+
+Token sesji bramki jest czytany domknięciem przy każdym powitaniu, a nie raz
+przy składaniu, ponieważ po ponownym nawiązaniu połączenia obowiązuje sesja
+bieżąca, nie ta sprzed zerwania.
+
+Nawigacja powłoki składa się w tym pliku, a nie w uzgodnieniu, ponieważ
+uzgodnienie odpowiada wyłącznie za powitanie, sesję i okno, i o nawigacji nic
+nie wie. Korzeń montażu klienta jest jedynym punktem znającym jednocześnie kanał
+i odbiorcę tych dróg.

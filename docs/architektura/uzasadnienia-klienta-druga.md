@@ -4511,3 +4511,20 @@ Sprawdzian przytacza odpowiedzi rdzenia i wymaga bazy świeżej: rejestracja wyk
 Milczenie rdzenia kończy się tu niepowodzeniem nazywającym przeszkodę, nie pominięciem: sprawdzian, który sam siebie odpuszcza przy braku rdzenia, wygląda potem tak samo jak sprawdzian zdany.
 Obie gałęzie mierzy ten sam bieg, uruchomiony dwa razy: raz wobec rdzenia bez konta nadawczego, raz wobec rdzenia z kontem nadawczym. Gałąź rozstrzyga odpowiedź rdzenia, nie nastawa sprawdzianu.
 Bez konta nadawczego bramka wpuszcza hasłem od razu. Z kontem nadawczym bramka jest zamknięta do chwili potwierdzenia adresu — i to jest właściwa droga tej gałęzi, nie usterka. Drogę potwierdzenia niesie list, więc sprawdzian bierze ją z zewnątrz; bez niej mierzy samą odmowę.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/rejestr-pomocniczych.ts
+Spis zawiera także pozycje niezbudowane: bez nich moduł wyglądałby na
+kompletny, a brak przestałby być widoczny, tak samo jak przycisk bez
+komendy w kontrakcie pozostaje widoczny i mówi, czego brakuje. Stan
+"nie zbudowano" nie jest tym samym co "nie da się zbudować", a "buduje to
+inna praca" nie jest tym samym co "nikt nie rozstrzygnął, czy ma powstać".
+
+Zasoby Designu mają być dostępne w Studio Editorze i w module Apps — panel
+obok rozmowy nie jest oknem operacyjnym Designu (tamten ma trzy pasy i
+czynność prowadzącą donikąd poza Designem), tylko gęstszym widokiem tych
+samych danych czytanym tą samą warstwą wywołań.
+
+Historia rozmowy w spisie Apps nie ma odpowiednika w Roundtable, bo tamten
+moduł prowadzi debatę wielu modeli w jednym oknie i pokazuje obok rozmowy
+jej przebieg, nie drugi komplet okien operacyjnych — historia dotyczy
+tego samego okna i niesie zapis trwały, którego przebieg debaty nie niesie.

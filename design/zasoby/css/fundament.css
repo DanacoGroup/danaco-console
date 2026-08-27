@@ -114,6 +114,15 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   white-space: pre-wrap;
   overflow-x: auto;
 }
+
+/* Rysunek znakowy — schemat złożony z kresek i strzałek. Różni się od bloku kodu
+   dwiema rzeczami: nie wolno go zawijać (zawinięty wiersz rozjeżdża rysunek,
+   bo pion strzałek przestaje się zgadzać z poziomem) i idzie o stopień drobniej,
+   żeby najszersza gałąź mieściła się w kolumnie bez przewijania w bok. */
+.dn-kod--schemat {
+  font-size: var(--dn-fs-xs);
+  white-space: pre;
+}
 .dn-kod--wiersz {
   display: inline;
   padding: 1px var(--dn-od-1);

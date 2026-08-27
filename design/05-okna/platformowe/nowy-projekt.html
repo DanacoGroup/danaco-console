@@ -52,18 +52,9 @@
 
   /* Wybór wielokrotny — agenci, automatyzacje */
   .np-wybory { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--dn-od-2); }
-  .np-wybor {
-    display: flex; align-items: flex-start; gap: var(--dn-od-3);
-    padding: var(--dn-od-3);
-    border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-md);
-    background: var(--dn-powierzchnia-2);
-    cursor: pointer;
-    transition: border-color var(--dn-czas-1) var(--dn-ease), background-color var(--dn-czas-1) var(--dn-ease);
-  }
-  .np-wybor:hover { border-color: var(--dn-obrys-mocny); }
-  .np-wybor input { margin-top: 2px; flex: none; }
-  .np-wybor b { display: block; font-size: var(--dn-fs-sm); font-weight: var(--dn-fw-srednia); color: var(--dn-tekst); }
-  .np-wybor small { display: block; font-size: var(--dn-fs-xs); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+  /* Kontrolka wyboru równa się do pierwszego wiersza nazwy, nie do środka
+     bloku — to rozmieszczenie wewnątrz składnika, nie jego wygląd. */
+  .dn-wybor--pole > input { margin-top: 2px; flex: none; }
 
   /* Materiały wejściowe */
   .np-zrzutnia {
@@ -483,10 +474,10 @@ Wnioski zapisuj osobnym akapitem, nigdy wewnątrz opisu danych.</textarea></labe
               </div>
               <p class="np-sekcja-opis">Agenci przypisani do projektu. Wybór nie jest ostateczny — zestaw zmienia się w trakcie pracy.</p>
               <div class="np-wybory">
-                <label class="np-wybor"><input class="dn-check" type="checkbox" checked><span><b>Redaktor</b><small>Redakcja tekstu w rejestrze formalnym; pilnuje instrukcji projektu.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox" checked><span><b>Analityk</b><small>Zestawienia liczbowe, kontrola zgodności danych ze źródłem.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox"><span><b>Weryfikator źródeł</b><small>Sprawdza, czy każde twierdzenie ma pozycję w Project Library.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox"><span><b>Korektor</b><small>Kontrola językowa i spójność terminologii w całym projekcie.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox" checked><span><b class="dn-wybor-nazwa">Redaktor</b><small class="dn-wybor-opis">Redakcja tekstu w rejestrze formalnym; pilnuje instrukcji projektu.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox" checked><span><b class="dn-wybor-nazwa">Analityk</b><small class="dn-wybor-opis">Zestawienia liczbowe, kontrola zgodności danych ze źródłem.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox"><span><b class="dn-wybor-nazwa">Weryfikator źródeł</b><small class="dn-wybor-opis">Sprawdza, czy każde twierdzenie ma pozycję w Project Library.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox"><span><b class="dn-wybor-nazwa">Korektor</b><small class="dn-wybor-opis">Kontrola językowa i spójność terminologii w całym projekcie.</small></span></label>
               </div>
               <span class="np-podpowiedz">Agenci pracują na tej samej instrukcji stałej. Zestaw zmienisz później
                 w module Agents — także w trakcie trwania projektu.</span>
@@ -498,10 +489,10 @@ Wnioski zapisuj osobnym akapitem, nigdy wewnątrz opisu danych.</textarea></labe
               </div>
               <p class="np-sekcja-opis">Czynności wykonywane bez polecenia. Każdą można wstrzymać w module Automations.</p>
               <div class="np-wybory">
-                <label class="np-wybor"><input class="dn-check" type="checkbox" checked><span><b>Zapis wersji po zaakceptowanej zmianie</b><small>Każda przyjęta korekta tworzy wersję w Session Repository.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox" checked><span><b>Kopia dobowa do Library</b><small>Codziennie o 23:00 projekt trafia do repozytorium środowiska.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox"><span><b>Powiadomienie o zakończeniu zadania</b><small>Wpis w pasku stanu oraz powiadomienie systemowe.</small></span></label>
-                <label class="np-wybor"><input class="dn-check" type="checkbox"><span><b>Zestawienie tygodniowe postępu</b><small>Skrót prac projektu wysyłany na adres konta w poniedziałki.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox" checked><span><b class="dn-wybor-nazwa">Zapis wersji po zaakceptowanej zmianie</b><small class="dn-wybor-opis">Każda przyjęta korekta tworzy wersję w Session Repository.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox" checked><span><b class="dn-wybor-nazwa">Kopia dobowa do Library</b><small class="dn-wybor-opis">Codziennie o 23:00 projekt trafia do repozytorium środowiska.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox"><span><b class="dn-wybor-nazwa">Powiadomienie o zakończeniu zadania</b><small class="dn-wybor-opis">Wpis w pasku stanu oraz powiadomienie systemowe.</small></span></label>
+                <label class="dn-wybor dn-wybor--blokowy dn-wybor--pole"><input class="dn-check" type="checkbox"><span><b class="dn-wybor-nazwa">Zestawienie tygodniowe postępu</b><small class="dn-wybor-opis">Skrót prac projektu wysyłany na adres konta w poniedziałki.</small></span></label>
               </div>
             </section>
             <section class="np-sekcja" aria-label="Materiały wejściowe">

@@ -48,15 +48,8 @@ import { przenies } from '../../protokol/wynik-czastkowy';
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Wiedza i współpraca projektu widziane przez klienta — notatki i wiki, graf
- * odnośników, tablica wizualna, materiały biblioteki projektu, wyszukiwanie,
- * oś czasu, komentarze oraz trzy czynności na samym projekcie: stan,
- * odłączenie eksperta i historia instrukcji.
- *
- * Graf tej rodziny rysuje sieć ODNOŚNIKÓW — kto na kogo wskazuje wprost.
- * Wyszukiwanie po znaczeniu prowadzi rodzina `knowledge.*` i nie ma go tutaj,
- * żeby okno nie obiecywało podobieństwa tam, gdzie dostaje dopasowanie po
- * słowach.
+ * Wiedza i współpraca projektu widziane przez klienta obejmują notatki i wiki, graf odnośników,
+ * tablicę wizualną, bibliotekę, wyszukiwanie, oś czasu, komentarze oraz stan i historię instrukcji projektu.
  */
 export interface CzynnosciWiedzy {
   /** `workspace.note.save` — zapis notatki wraz z przeliczeniem odnośników. */
@@ -260,12 +253,8 @@ export function glebokoscWezla(
 }
 
 /**
- * Nazwy odnośników `[[nazwa]]` wyjęte z treści notatki.
- *
- * Okno liczy je przed zapisem, żeby pokazać Operatorowi, do czego strona
- * linkuje, zanim rdzeń odpowie. Po zapisie prawdą jest odpowiedź rdzenia
- * (`linkedNames`, `missingNames`) — ta funkcja jest podglądem, nie drugim
- * źródłem prawdy.
+ * Nazwy odnośników wyjęte z treści notatki są podglądem, nie drugim źródłem prawdy; po zapisie
+ * prawdą jest odpowiedź rdzenia.
  */
 export function nazwyOdnosnikow(tresc: string): string[] {
   const nazwy: string[] = [];

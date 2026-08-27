@@ -4,35 +4,10 @@ import { KOD_MODULU } from './kody-okien';
 import { OBSZAR_KONTEKSTU_ROZMOWY, type ZrodloAutomations } from './zrodlo-automations';
 
 /**
- * Przyjęcie scenariusza przekazanego z innego modułu.
- *
- * Rodzina `automation.*` jest jedynym magazynem scenariuszy w platformie —
- * Browser, Assistant i Terminal nie mają własnego i oddają swoje tutaj. Dwie
- * drogi prowadzą do tego magazynu i obie są drogami kontraktu:
- *
- *  - zapis wprost (`automation.workflow.save`), którym idzie rutyna Assistanta
- *    i scenariusz Browsera zapisany z jego okna — trafia do wykazu automatyk
- *    i widać go bez żadnej pracy po tej stronie;
- *  - przeniesienie kompletu (`context.transfer`), którym Browser oddaje
- *    scenariusz do modułu docelowego. Rdzeń zakłada wtedy okno modułu
- *    Automations, a przeniesiony komplet mieszka w konfiguracji sesji tego
- *    okna, w obszarze kontekstu rozmowy, pod polem `transferredContext`.
- *
- * Druga droga wymaga odczytu i ten plik jest tym odczytem: wykaz okien
- * (`window.list`) zawężony do modułu, a dla każdego okna konfiguracja
- * obowiązująca (`config.effective.get`) zawężona do obszaru kontekstu rozmowy.
- *
- * Czego plik nie robi: nie zapisuje niczego i niczego nie przyjmuje sam.
- * Przeniesiony komplet jest propozycją — zapis do magazynu automatyk jest
- * osobną, jawną czynnością Operatora w oknie wykazu. Automatyka powstająca bez
- * jego wiedzy byłaby zapisem cudzej treści pod jego nazwiskiem.
- *
- * Pole `executionParams` kontrakt opisuje jako `json`, więc kształt sprawdzamy
- * jawnie zamiast rzutować: przekazanie z modułu, który ułoży komplet inaczej,
- * ma zostać pominięte, a nie wpisane do okna jako scenariusz bez kroków.
+ * Scenariusz przeniesiony z innego modułu za pomocą komendy context.transfer,
+ * odczytany z konfiguracji sesji okna modułu docelowego, gotowy do zapisu
+ * jako automatyka.
  */
-
-/** Scenariusz przeniesiony z innego modułu, gotowy do zapisu jako automatyka. */
 export interface PrzekazanyScenariusz {
   /** Okno modułu, do którego rdzeń przeniósł komplet. */
   idOkna: string;
@@ -48,7 +23,10 @@ export interface PrzekazanyScenariusz {
   polecenie: string;
 }
 
-/** Skutek odczytu przekazań: wykaz albo zdanie, dlaczego wykazu nie ma. */
+/**
+ * Skutek odczytu przekazań: powodzenie niesie wykaz scenariuszy i liczbę
+ * sprawdzonych okien, niepowodzenie niesie zdanie z przyczyną braku wykazu.
+ */
 export type SkutekOdczytuPrzekazan =
   | { odczytane: true; scenariusze: PrzekazanyScenariusz[]; oknaSprawdzone: number }
   | { odczytane: false; zdanie: string };
@@ -89,11 +67,9 @@ export async function odczytajPrzekazania(
 }
 
 /**
- * Wyjmuje scenariusz z parametrów wykonania przeniesionego kompletu.
- *
- * Komplet bez nazwy albo bez ani jednego kroku nie jest scenariuszem: nie ma
- * z czego zapisać automatyki, a pozycja w wykazie obiecywałaby czynność, której
- * zapis by nie wykonał. Taki komplet zwraca `null` i wykaz go pomija.
+ * Wyjmuje scenariusz z parametrów wykonania przeniesionego kompletu. Komplet
+ * bez nazwy albo bez ani jednego kroku zwraca `null`, ponieważ nie da się
+ * z niego zapisać automatyki.
  */
 export function scenariuszZKompletu(
   idOkna: string,
@@ -118,11 +94,9 @@ export function scenariuszZKompletu(
 }
 
 /**
- * Czy pozycja przeniesionego wykazu jest krokiem automatyki.
- *
- * Sprawdzamy pola obowiązkowe kontraktu (`id`, `kind`), bo po nich krok da się
- * zapisać i po nich Orchestrator ustala zależności. Pozostałe pola są
- * nieobowiązkowe i idą dalej takie, jakie przyszły.
+ * Czy pozycja przeniesionego wykazu jest krokiem automatyki. Sprawdza pola
+ * obowiązkowe kontraktu `id` i `kind`; pozostałe pola pozostają
+ * nieobowiązkowe.
  */
 function czyKrok(pozycja: unknown): pozycja is AutomationStep {
   return (
@@ -133,7 +107,11 @@ function czyKrok(pozycja: unknown): pozycja is AutomationStep {
   );
 }
 
-/** Zdanie o wyniku odczytu — nad wykazem przekazań w oknie. */
+/**
+ * Zdanie o wyniku odczytu przekazań, przeznaczone do wyświetlenia nad wykazem
+ * w oknie modułu: informuje o braku przekazań, liczbie sprawdzonych okien
+ * albo liczbie oczekujących decyzji.
+ */
 export function zdanieOPrzekazaniach(skutek: SkutekOdczytuPrzekazan): string {
   if (!skutek.odczytane) return skutek.zdanie;
   if (skutek.oknaSprawdzone === 0) {

@@ -603,3 +603,42 @@ Jeden kształt górnego pasa obowiązuje we wszystkich modułach, ponieważ Oper
 Plakietka roli stoi bezpośrednio przy nazwie, ponieważ nazwy okien powtarzają się między modułami: Process Monitor w module Terminal i Execution Monitor w module Automations to dwa odrębne okna. Podpis roli jest tym elementem, który je na ekranie rozróżnia, dlatego napis w plakietce bywa zarówno samym określeniem roli, jak i zdaniem doprecyzowującym przeznaczenie okna.
 
 Wygląd pasa pochodzi w całości z biblioteki: pas stoi na klasie dn-karta-naglowek, nazwa na klasie dn-karta-tytul, a plakietka roli na klasie dn-plakietka--rola, bez klas własnych i bez barw zapisanych w kodzie. Moduł, który potrzebuje odstępstwa, podaje własną klasę polem klasa i styluje nazwę selektorem potomka, zamiast powielać komponent. Wyrównanie kontrolek do prawej krawędzi należy do modułu wołającego, który opakowuje je klasą dn-pasek-prawa.
+
+## budowa/klient-poprzedni/src/moduly/design/okno-tokens-system-panel.ts
+
+Okno Tokens & System Panel stoi jako rozwinięcie warstwy trzeciej, bo opracowanie wywołuje
+je z menu kebab obszaru roboczego, a nie stawia go na widoku spoczynkowym. Wartości żetonów
+czyta z motywu obowiązującego w danej chwili (`zetony-systemu.ts`), pary i progi kontrastu
+z wykazu progów produktu (`kontrast-wcag.ts`), a powiązania żetonu z komponentami — z arkuszy
+wczytanych do dokumentu; nic z tego nie jest przepisane do modułu, więc poprawka w motywie
+jest widoczna od razu, a rozjazd nazw wychodzi na wierzch zamiast zniknąć.
+
+Okno nie zapisuje zestawu żetonów, bo kontrakt nie zna takiego bytu — wydanie wychodzi
+plikiem do przeglądarki Operatora. Nie nadpisuje motywu wczytanym zestawem, bo motyw jest
+własnością powłoki, a import kończy się zestawieniem różnicy. Nie wydaje przewodnika stylu
+do modułów Library i Studio, bo kontrakt nie zna przekazania tego bytu między modułami.
+
+Przełącznik motywu podglądu nie jest kopią przełącznika powłoki: woła tę samą czynność
+motywu produktu, więc drugiego stanu motywu nie ma. Okno nasłuchuje zmiany motywu i przelicza
+wszystkie pomiary, bo oba motywy są równoprawne i każdy wymaga własnego pomiaru.
+
+Panel zestawów trwałych czyta żetony motywu w chwili naciśnięcia, a nie z kopii zrobionej
+przy otwarciu okna, ponieważ między otwarciem a naciśnięciem Operator mógł przełączyć motyw,
+a zestaw ma opisywać stan obowiązujący w chwili działania.
+
+Porównanie wczytanego zestawu z żetonami motywu idzie po nazwach ról, nie po strukturze
+pliku: zestaw obcy bywa zagnieżdżony dowolnie, a jedyne, co da się z nim zrobić uczciwie, to
+powiedzieć, które role produktu w nim są, które mają inną wartość i których produkt nie zna.
+
+## budowa/klient-poprzedni/src/dostepy/zapisy-nadan.ts
+
+Odczyt i zapis nadań to dwie różne odpowiedzialności. Stan sekcji pilnuje tego, co widok wie
+o punktach dostępu i nadaniach, a ten plik pilnuje tego, co dzieje się po zapisie.
+
+Komplet zastępuje zbiór w całości. Wszystkie trzy komendy zwracają nie tylko zmienione nadanie,
+lecz komplet nadań okna po zmianie, ponieważ przestawienie kolejności albo oznaczenia głównego
+dotyka pozostałych wierszy. Widok bierze komplet zamiast składać go z domysłów.
+
+Nadanie bez okna rozmowy nie idzie do rdzenia, ponieważ nadanie żyje przy oknie i bez okna nie ma
+czego nadać. Odmowa przyjmuje kształt wyniku komendy, żeby widok nie potrzebował drugiej ścieżki
+obsługi.

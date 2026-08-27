@@ -3702,3 +3702,98 @@ odczytu.
 
 `anuluj` zamyka pozycje przerwaniem. Wiersz zostaje razem z dziennikiem —
 ślad przerwanego zlecenia jest częścią przejrzystości pętli.
+
+TestObrotIdzieZgodnieZeWskazowkamiZegara: kierunek odwrotny daje obraz
+o tych samych wymiarach, więc pomiar samych boków by go nie zauważył —
+mierzymy więc, gdzie wylądowała czerwona połowa. Obrót o dziewięćdziesiąt
+stopni zgodnie z ruchem wskazówek zegara przenosi lewą połowę na górę. Obrót
+przeciwny położyłby ją na dole.
+
+TestKonwersjaDoWebpBezstratnegoNieWymagaProgramu: sprawdzian dekoduje wynik
+bibliotecznym czytnikiem WEBP: gdyby zapis szedł programem, na maszynie bez
+niego czynność by odmówiła, a tu ma przejść zawsze.
+
+TestKonwersjaDoAvifBezProgramuOdmawiaNazywajacBrak: pustą ścieżką wyszukiwania
+sprawdzian czyni z tej maszyny maszynę bez programu, więc odmowę mierzy każdy
+bieg, nie tylko bieg na cienkiej instalce.
+
+## budowa/server/internal/core/skutek_migawki_przegladarki_test.go
+
+Migawka jest tym, co model i Operator widzą zamiast strony. Szkoda, którą ten
+plik ma wykluczyć, polegała na uciszeniu przekroczenia rozmiaru: rdzeń czytał
+tyle, ile mieściła granica, i podawał ucięty początek jako pełną treść strony.
+Odpowiedź była udana, migawka istniała, a model wnioskował z połowy dokumentu,
+nie wiedząc, że to połowa.
+
+Dlatego sprawdziany tego pliku nie pytają, czy migawka powstała. Pytają, czy
+niesie koniec strony, a przy stronie ponad granicą — czy rdzeń odmówił i nie
+zostawił po sobie migawki, którą `browser.snapshot.get` podałby dalej jako
+bieżący stan strony.
+
+Zrzut ekranu wymaga silnika przeglądarki spoza biblioteki standardowej, więc
+rdzeń go nie wypełnia. To nie jest brak do zmierzenia sprawdzianem skutku,
+tylko granica nazwana wprost: pole `screenshotRef` ma zostać puste, i to
+właśnie sprawdzian niżej stwierdza — pustka jest tu prawdą, a odsyłacz
+wskazujący nic byłby drugą postacią tej samej szkody.
+
+TestMigawkaNiesieKoniecPobranejStronyANieJejPoczatek: sprawdzenie długości nie
+wystarczyłoby — ucięcie zawsze daje jakąś długość — więc miarą jest znacznik
+stojący na samym końcu ciała.
+
+TestStronaPonadGranicaRozmiaruNieZostawiaMigawkiOgryzka: migawka ucięta, raz
+zapisana, jest odtąd podawana przez `browser.snapshot.get` jako bieżący stan
+strony i nic już nie mówi o tym, że jest połową.
+
+TestStronaDeklarujacaRozmiarPonadGranicaNieJestPobierana: gdy witryna sama
+zapowiada rozmiar większy niż granica, rdzeń nie ma po co ciągnąć ani bajta.
+
+TestMigawkaOddajeZrodloStronyDopieroNaZadanie: brak HTML-a przy `includeHtml`
+niewskazanym jest oszczędnością, nie brakiem treści — źródło ucięte byłoby tą
+samą szkodą co tekst ucięty, tylko w drugim polu.
+
+TestSnapshotGetOddajeMigawkeNajswiezszegoPrzejscia: wydanie migawki poprzedniej
+pokazywałoby modelowi stronę, z której Operator już wyszedł.
+
+## budowa/server/internal/core/handlers_automatyka_petla.go
+
+Wybudzenie to nie pauza. Pauza czeka na czas (krok `wait`) albo na Operatora
+(stan `paused`) — w obu razach wiadomo, kiedy bieg ruszy. Wybudzenie czeka na
+świat: na reakcję, która może przyjść za godzinę, za trzy dni albo nigdy.
+
+Bieg czekający wiecznie jest wyciekiem, dlatego oczekiwanie z terminem
+trafia pod zegar, a `po_terminie` mówi, co zrobić, gdy termin minie: `wznow`
+rusza dalej tak, jakby sygnał przyszedł — domyślne, bo produkt ma pracować
+dalej, a nie stawać; `ponow` wykonuje krok oczekiwania jeszcze raz, `proba`
+rośnie; `przerwij` kończy bieg stanem `stopped` z jawnym powodem.
+
+Oczekiwanie bez terminu pod zegar nie trafia: bywają reakcje, na które czeka
+się bez zegara, więc taki bieg czeka, aż przyjdzie sygnał albo aż Operator
+go zamknie.
+
+Sygnał doręczony biegowi, który nie czeka, nie ma adresata — to krótsza
+lista odbiorców, a nie odmowa.
+
+Interfejs `repozytoriumWybudzen` jest składany w tym pliku, a nie w `dane`,
+bo łączy dwa zakresy w jeden widok jednego odbiorcy — repozytorium
+automatyk spełnia go w całości.
+
+`nowySilnikWybudzen`: repozytorium, które nie niesie bytów pętli, daje
+silnik pusty zamiast awarii — rdzeń wstaje, automatyka pracuje, a wybudzeń
+po prostu nie ma.
+
+`Wybudz` doręcza sygnał wszystkim biegom, które na niego czekają, i zwraca
+liczbę wybudzonych. Sygnał bez adresata nie jest błędem: świat zewnętrzny
+nie wie, które biegi czekają, więc zero wybudzonych to poprawna odpowiedź.
+
+`ZamknijRecznie` wybudza bieg na żądanie operatora, bez czekania na sygnał
+ani na termin — trzecia, obok sygnału i terminu, droga wyjścia biegu ze
+stanu oczekiwania.
+
+`rozstrzygnijTermin` stosuje politykę zapisaną przy zakładaniu oczekiwania.
+Awaria jednego biegu nie zatrzymuje zegara — pętla idzie dalej.
+
+`wznowZProba` wznawia bieg, licząc próbę. `proba` nie ma górnej granicy:
+licznik rośnie i jest widoczny, ale sam nie zatrzymuje pracy.
+
+`przerwij` kończy bieg, zostawiając powód. Komunikat nazywa sygnał i krok —
+bez tego Operator zobaczyłby bieg przerwany bez przyczyny.

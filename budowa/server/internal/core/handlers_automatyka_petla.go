@@ -1,25 +1,4 @@
-// Plik niesie silnik wybudzeń automatyki: zawieszanie biegu na sygnał ze
-// świata, doręczanie sygnału i rozstrzyganie, co się dzieje, gdy reakcja nie
-// przyjdzie.
-//
-// Wybudzenie to nie pauza. Pauza czeka na czas (krok `wait`) albo na Operatora
-// (stan `paused`) — w obu razach wiadomo, kiedy bieg ruszy. Wybudzenie czeka na
-// świat: na reakcję, która może przyjść za godzinę, za trzy dni albo nigdy.
-//
-// Bieg czekający wiecznie jest wyciekiem, dlatego oczekiwanie z terminem trafia
-// pod zegar, a `po_terminie` mówi, co zrobić, gdy termin minie:
-//
-//	wznow      ruszaj dalej tak, jakby sygnał przyszedł — domyślne, bo produkt
-//	           ma pracować dalej, a nie stawać;
-//	ponow      wykonaj krok oczekiwania jeszcze raz, `proba` rośnie;
-//	przerwij   zakończ bieg stanem `stopped` z jawnym powodem.
-//
-// Oczekiwanie bez terminu pod zegar nie trafia: bywają reakcje, na które czeka
-// się bez zegara, więc taki bieg czeka, aż przyjdzie sygnał albo aż Operator go
-// zamknie.
-//
-// Sygnał doręczony biegowi, który nie czeka, nie ma adresata — to krótsza lista
-// odbiorców, a nie odmowa.
+// Plik niesie silnik wybudzeń automatyki: zawieszanie biegu na sygnał ze świata, doręczanie sygnału i rozstrzyganie, co się dzieje, gdy reakcja nie przyjdzie.
 package core
 
 import (
@@ -36,7 +15,7 @@ import (
 // należy teraz. Częstsze pytanie nie trafiłoby w żaden nowy termin.
 const interwalWybudzen = time.Minute
 
-// Powody wybudzenia — słownik zamknięty, zgodny z więzem CHECK kolumny `powod`.
+// Powody wybudzenia — słownik zamknięty, zgodny z więzem CHECK kolumny powod w tabeli oczekiwań pętli.
 const (
 	powodSygnal   = "sygnal"
 	powodTermin   = "termin"
@@ -51,19 +30,14 @@ const (
 	poTerminiePrzerwij = "przerwij"
 )
 
-// repozytoriumWybudzen to wszystko, czego silnik potrzebuje od warstwy danych:
-// byty pętli plus odczyt i zapis przebiegu.
-//
-// Interfejs składany tutaj, a nie w `dane`, bo łączy dwa zakresy w jeden widok
-// jednego odbiorcy — repozytorium automatyk spełnia go w całości.
+// repozytoriumWybudzen to wszystko, czego silnik potrzebuje od warstwy danych: byty pętli plus odczyt i zapis przebiegu; interfejs łączy dwa zakresy w jeden widok jednego odbiorcy.
 type repozytoriumWybudzen interface {
 	dane.RepozytoriumPetli
 	Przebieg(ctx context.Context, kod string) (dane.Przebieg, error)
 	ZapiszPrzebieg(ctx context.Context, przebieg dane.Przebieg) (dane.Przebieg, error)
 }
 
-// silnikWybudzen prowadzi oczekiwania biegów: zakłada je, doręcza sygnały
-// i pilnuje terminów.
+// silnikWybudzen prowadzi oczekiwania biegów: zakłada je, doręcza sygnały i pilnuje terminów zegara pętli.
 type silnikWybudzen struct {
 	repozytorium repozytoriumWybudzen
 	dziennik     *log.Logger
@@ -83,10 +57,7 @@ func nowySilnikWybudzen(automatyki *adapterAutomatyk, dziennik *log.Logger) *sil
 	return &silnikWybudzen{repozytorium: petla, dziennik: dziennik}
 }
 
-// Uruchom wpina silnik w cykl życia rdzenia. Pierwsze sprawdzenie idzie od razu
-// po starcie, żeby terminy, które minęły w czasie postoju rdzenia, zostały
-// rozstrzygnięte bez czekania na pełny takt — bieg zawieszony na dni musi
-// przeżyć restart i zostać obsłużony po nim.
+// Uruchom wpina silnik w cykl życia rdzenia; pierwsze sprawdzenie idzie od razu po starcie, żeby terminy minione w czasie postoju rdzenia zostały rozstrzygnięte bez czekania na pełny takt.
 func (s *silnikWybudzen) Uruchom(zycie context.Context) {
 	if s == nil {
 		return
@@ -108,13 +79,7 @@ func (s *silnikWybudzen) petla(zycie context.Context) {
 	}
 }
 
-// Zawies zatrzymuje bieg na sygnał ze świata i przestawia go w stan `oczekuje`.
-//
-// Kolejność ma znaczenie: najpierw wiersz oczekiwania, potem stan biegu.
-// Gdyby rdzeń padł pomiędzy jednym a drugim, zostaje oczekiwanie bez biegu
-// w stanie `oczekuje` — czyli wiersz nadmiarowy, który nikomu nie szkodzi.
-// Odwrotna kolejność zostawiałaby bieg w stanie `oczekuje` bez oczekiwania,
-// czyli zawieszony bez czegokolwiek, co mogłoby go wznowić.
+// Zawies zatrzymuje bieg na sygnał ze świata i przestawia go w stan oczekuje; kolejność ma znaczenie, najpierw wiersz oczekiwania, potem stan biegu, żeby awaria między nimi nie zostawiła biegu bez oczekiwania.
 func (s *silnikWybudzen) Zawies(ctx context.Context, przebiegKod, krok, sygnal string,
 	termin *string, poTerminie string) (dane.OczekiwanieBiegu, error) {
 
@@ -181,7 +146,7 @@ func (s *silnikWybudzen) ZamknijRecznie(ctx context.Context, przebiegID int64) e
 	return s.wznow(ctx, oczekiwanie, powodOperator, nil)
 }
 
-// sprawdzTerminy rozstrzyga oczekiwania, którym minął termin.
+// sprawdzTerminy rozstrzyga oczekiwania, którym minął już termin zegara pętli automatyki tego rdzenia.
 func (s *silnikWybudzen) sprawdzTerminy(ctx context.Context, teraz time.Time) {
 	spoznione, err := s.repozytorium.OczekiwaniaPoTerminie(ctx, teraz.Format(formatZnacznikaBazy))
 	if err != nil {
@@ -207,15 +172,14 @@ func (s *silnikWybudzen) rozstrzygnijTermin(ctx context.Context, o dane.Oczekiwa
 	case poTerminieWznow:
 		return s.wznow(ctx, o, powodTermin, nil)
 	default:
-		// Wartość spoza słownika nie może zawiesić biegu na zawsze. Schodzimy do
-		// zachowania domyślnego i zostawiamy ślad — produkt ma pracować dalej.
+		// Wartość spoza słownika nie zawiesza biegu na zawsze: silnik wraca do zachowania domyślnego i śladu.
 		s.zapisz("silnik wybudzeń: nieznane rozstrzygnięcie %q biegu %s — wznawiam",
 			o.PoTerminie, o.PrzebiegKod)
 		return s.wznow(ctx, o, powodTermin, nil)
 	}
 }
 
-// wznow zamyka oczekiwanie i przywraca bieg do pracy.
+// wznow zamyka oczekiwanie i przywraca bieg do pracy — tak, jak gdyby oczekiwany sygnał właśnie przyszedł.
 func (s *silnikWybudzen) wznow(ctx context.Context, o dane.OczekiwanieBiegu,
 	powod string, tresc *string) error {
 
@@ -245,10 +209,7 @@ func (s *silnikWybudzen) przerwij(ctx context.Context, o dane.OczekiwanieBiegu) 
 	})
 }
 
-// zamknijIZapisz domyka oczekiwanie i nanosi zmianę na przebieg. Zamknięcie
-// idzie pierwsze i jest idempotentne (warunek `wybudzono IS NULL` w poleceniu).
-// Dzięki temu sygnał doręczony dwa razy wybudza bieg raz, a awaria między
-// jednym a drugim zapisem nie zostawia biegu, który wybudza się w kółko.
+// zamknijIZapisz domyka oczekiwanie i nanosi zmianę na przebieg; zamknięcie idzie pierwsze i jest idempotentne, dzięki czemu sygnał doręczony dwa razy wybudza bieg raz.
 func (s *silnikWybudzen) zamknijIZapisz(ctx context.Context, o dane.OczekiwanieBiegu,
 	powod string, tresc *string, zmiana func(*dane.Przebieg)) error {
 
@@ -264,7 +225,7 @@ func (s *silnikWybudzen) zamknijIZapisz(ctx context.Context, o dane.OczekiwanieB
 	return err
 }
 
-// zapisz nanosi wiersz do dziennika rdzenia, znosząc dziennik pusty.
+// zapisz nanosi wiersz do dziennika rdzenia, znosząc dziennik pusty milczącym pominięciem samego zapisu.
 func (s *silnikWybudzen) zapisz(wzorzec string, argumenty ...any) {
 	if s == nil || s.dziennik == nil {
 		return

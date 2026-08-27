@@ -3288,3 +3288,17 @@ Jest to jedna tabela, ale drugie pytanie względem zapisu harmonogramu. Wiersze 
 harmonogramu automatyk; tutaj leży odczyt odwrotny — od skrzynki do automatyki — którego moduł planujący nigdy
 nie zadaje. Wyrażenie gwiazdki i wyrażenie puste znaczą obie „każda skrzynka", a droga kontraktu zapisuje gwiazdkę,
 ponieważ ustawienie harmonogramu pomija wyzwalacze z wyrażeniem pustym.
+
+## budowa/server/internal/dane/urzadzenia.go
+Urządzenie to maszyna z klientem albo z katalogiem udostępnionym modelowi. Punkt dostępu rodzaju localDirectory bez wskazania urządzenia nie przechodzi więzu schematu, bo ścieżka lokalna ma znaczenie tylko na jednej maszynie. Pole biezace nadaje wyłącznie ZapewnijBiezace, bo tylko ono potrafi najpierw zdjąć oznaczenie z pozostałych wierszy — baza dopuszcza jedno takie urządzenie.
+
+## budowa/server/cmd/danaco-narzedzia/stdio/metody.go
+Kształt pozycji wykazu narzędzi składa funkcja pomocnicza narzędzi, nie
+wykazNarzedzi: licznik wykazu mierzy wagę tej samej odpowiedzi w bajtach,
+a dwa miejsca składające ją osobno dałyby pomiar czegoś innego, niż dostaje
+model. Funkcja wykazNarzedzi zostaje więc wyłącznie zamówieniem wykazu.
+
+Model ma przeczytać odmowę narzędzia i błąd rdzenia oraz poprawić wywołanie,
+zamiast dostać usterkę połączenia — dlatego wracają wynikiem oznaczonym jako
+błędny. Błędem protokołu zostaje wyłącznie treść żądania, której nie da się
+odczytać.

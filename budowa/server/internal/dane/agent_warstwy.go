@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: warstwy promptu eksperta i jego tożsamość własna
-// (tabela `agent_warstwa` oraz kolumny `agent.imie_wlasne` i `agent.favikon`).
-// Wtyczki eksperta leżą w `agent_wtyczki.go` — to ta sama implementacja
-// repozytorium, rozdzielona wyłącznie na dwa pliki.
-//
-// Warstwa jest stanem, nie zdarzeniem: klucz główny `agent_warstwa` stoi na
-// parze (agent_id, warstwa), więc powtórzony zapis tej samej warstwy nadpisuje
-// treść zamiast dokładać drugi wiersz. `UstawWarstwe` ustala stan i wywołane
-// dwa razy z tą samą treścią zostawia bazę w tym samym stanie.
-//
-// Katalogu dopuszczonych wartości tu nie ma. Nazwy warstw i tryby podania stoją
-// w warunkach CHECK tabeli `agent_warstwa`, wprost wartościami kontraktu
-// (`shared.IdentityLayer`, `shared.IdentityMode`). Wartość spoza katalogu
-// odrzuca baza, a tutaj zostaje opakowana w błąd wskazujący warstwę.
+// Plik prowadzi warstwy promptu eksperta oraz jego tożsamość własną: imię widoczne i favikon; wtyczki eksperta leżą
+// w agent_wtyczki.go jako ta sama implementacja repozytorium, rozdzielona wyłącznie na dwa pliki.
 package dane
 
 import (
@@ -53,12 +41,7 @@ type RepozytoriumWarstwAgenta interface {
 	UstawWarstwe(ctx context.Context, kodAgenta, warstwa, tresc, tryb string, aktywna bool) error
 	UsunWarstwe(ctx context.Context, kodAgenta, warstwa string) (bool, error)
 	Warstwy(ctx context.Context, kodAgenta string) ([]WarstwaAgenta, error)
-	// WarstwyWszystkich oddaje warstwy wszystkich ekspertów, po kodzie eksperta.
-	//
-	// Wykaz ekspertów (`agent.list`) potrzebuje warstw każdej pozycji; pytanie
-	// o nie po jednym daje tyle zapytań, ilu ekspertów. Tą samą drogą idzie
-	// `dolaczPowiazania`: umiejętności, konektory i uprawnienia bierze trzema
-	// zapytaniami na całe wywołanie, nie trzema na eksperta.
+	// WarstwyWszystkich oddaje warstwy wszystkich ekspertów jednym zapytaniem, po kodzie eksperta.
 	WarstwyWszystkich(ctx context.Context) (map[string][]WarstwaAgenta, error)
 	DodajWtyczke(ctx context.Context, kodAgenta, nazwa string, zrodlo, wersja *string) (WtyczkaAgenta, error)
 	UsunWtyczke(ctx context.Context, kodAgenta, kodWtyczki string) (bool, error)
@@ -66,9 +49,7 @@ type RepozytoriumWarstwAgenta interface {
 	// WtyczkiWszystkich oddaje wtyczki wszystkich ekspertów — z tego samego powodu.
 	WtyczkiWszystkich(ctx context.Context) (map[string][]WtyczkaAgenta, error)
 	UstawTozsamosc(ctx context.Context, kodAgenta, imieWlasne, favikon string) error
-	// UstawTrybNakladki zapisuje tryb nałożenia instrukcji eksperta. Wartości
-	// kontraktu wprost: 'DOLACZ' albo 'ZASTAP'. Wartość spoza katalogu odrzuca
-	// baza warunkiem CHECK — repozytorium nie powtarza tu drugiej listy.
+	// UstawTrybNakladki zapisuje tryb nałożenia instrukcji; wartość spoza katalogu odrzuca warunek CHECK.
 	UstawTrybNakladki(ctx context.Context, kodAgenta, tryb string) error
 }
 
@@ -85,10 +66,7 @@ const (
 
 	usunWarstweAgenta = `DELETE FROM agent_warstwa WHERE agent_id = ? AND warstwa = ?`
 
-	// Porządek warstw idzie wg krytyczności, tak samo jak
-	// `kolejnoscWarstw` w `injection/nakladka.go`: konstytucja stoi najwyżej,
-	// ekspertyza zadaniowa najniżej. Warstwa o nazwie spoza katalogu ląduje na
-	// końcu — dokładnie jak w `pozycjaWarstwy`.
+	// Porządek warstw idzie wg krytyczności, tak samo jak w warstwie nakładki: konstytucja stoi najwyżej, ekspertyza zadaniowa najniżej.
 	warstwyWszystkich = `SELECT a.kod, w.warstwa, w.tresc, w.tryb, w.aktywna, w.zaktualizowano
 	                       FROM agent_warstwa w JOIN agent a ON a.id = w.agent_id
 	                      ORDER BY a.kod, CASE w.warstwa
@@ -214,10 +192,7 @@ func (r *repozytoriumWarstwAgenta) Warstwy(ctx context.Context, kodAgenta string
 	return zebrane, nil
 }
 
-// UstawTozsamosc zapisuje imię własne i favikon eksperta. Obie wartości są
-// napisami wolnymi; pusta znaczy „nie nadano", a wtedy okno pokazuje nazwę
-// techniczną i znak zastępczy. Kolumna `agent.nazwa` zostaje nietknięta — to po
-// niej biegnie porządek wykazu.
+// UstawTozsamosc zapisuje imię własne i favikon eksperta; obie wartości są napisami wolnymi, a pusta znaczy „nie nadano”.
 func (r *repozytoriumWarstwAgenta) UstawTozsamosc(ctx context.Context,
 	kodAgenta, imieWlasne, favikon string) error {
 
@@ -259,15 +234,7 @@ func (r *repozytoriumWarstwAgenta) numerAgenta(ctx context.Context, kodAgenta st
 	return numer, nil
 }
 
-// WarstwyWszystkich oddaje warstwy wszystkich ekspertów jednym zapytaniem.
-//
-// Jedno zapytanie na całe wywołanie, nie jedno na eksperta: wykaz `agent.list`
-// potrzebuje warstw każdej pozycji, więc pytanie po jednym dałoby tyle zapytań,
-// ilu ekspertów, na jedno otwarcie biblioteki.
-//
-// Ekspert bez ani jednej warstwy nie dostaje wpisu w mapie i to nie jest brak:
-// prompt bez warstw jest promptem, a pusty wpis kazałby wołającemu odróżniać
-// „nie ma warstw" od „nie pytałem".
+// WarstwyWszystkich oddaje warstwy wszystkich ekspertów jednym zapytaniem na całe wywołanie; ekspert bez ani jednej warstwy nie dostaje wpisu w mapie.
 func (r *repozytoriumWarstwAgenta) WarstwyWszystkich(
 	ctx context.Context,
 ) (map[string][]WarstwaAgenta, error) {
@@ -300,17 +267,7 @@ func (r *repozytoriumWarstwAgenta) WarstwyWszystkich(
 	return zebrane, nil
 }
 
-// UstawTrybNakladki zapisuje tryb nałożenia instrukcji eksperta.
-//
-// Tryb jest polem eksperta, nie warstwy: dotyczy instrukcji eksperta jako
-// całości — albo prompt globalny obowiązuje, albo nie. Zastąpienie „częściowo,
-// samą warstwą profilu" nie znaczy nic, więc kolumna stoi przy ekspercie, a nie
-// przy każdej z trzech warstw osobno.
-//
-// Katalogu dopuszczonych wartości tu nie ma. 'DOLACZ' i 'ZASTAP' pilnuje warunek
-// CHECK kolumny `agent.tryb_nakladki`, wartościami kontraktu wprost; wartość
-// spoza katalogu odrzuca baza, a tutaj zostaje opakowana w błąd wskazujący
-// eksperta.
+// UstawTrybNakladki zapisuje tryb nałożenia instrukcji eksperta jako pole eksperta, nie warstwy; wartość spoza katalogu odrzuca warunek CHECK bazy.
 func (r *repozytoriumWarstwAgenta) UstawTrybNakladki(ctx context.Context,
 	kodAgenta, tryb string) error {
 

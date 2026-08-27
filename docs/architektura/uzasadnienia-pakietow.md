@@ -3906,3 +3906,41 @@ dalej. Tego nie wolno uprościć do sprawdzenia stanu przed działaniem, poniewa
 i działanie rozdzielone w czasie, przy którym obaj wołający mogliby wejść równocześnie.
 ## budowa/server/internal/dane/poczta.go
 Repozytorium nie mówi żadnym protokołem: odbiór i wysyłka listów należą do warstwy poczty, tu leży wyłącznie trwałość. Hasła tu nie ma: kolumna z odwołaniem do poświadczeń niesie wskazanie na sejf poświadczeń, a repozytorium nigdy nie widzi sekretu w jawnej postaci.
+
+## budowa/server/internal/dane/dostep_punkty_zapis.go
+Punkt bez swoich korzeni byłby punktem, który obiecuje dostęp do całego
+systemu plików maszyny. Kolumna poświadczenia niesie wyłącznie nazwę wpisu
+w magazynie sekretów — repozytorium nie ma metody zapisującej treść klucza.
+
+Warstwa wyższa odróżnia brak urządzenia bieżącego od innych błędów i zamienia
+go na odmowę z powodem, nie na awarię.
+
+Schemat żąda urządzenia od katalogu lokalnego, a klucz obcy żąda, żeby
+wskazane urządzenie istniało. Oba więzy zgłaszają się dopiero jako awaria
+zapisu, więc wybór urządzenia zapada przed poleceniem — inaczej zamiast
+powodu odmowy wraca błąd wewnętrzny. Wskazanie podane sprawdzamy istnieniem
+wiersza. Katalog lokalny bez wskazania osadzamy na maszynie, na której działa
+rdzeń: katalog wybrany oknem powłoki leży z definicji tam, a kolumna
+oznaczająca maszynę bieżącą tę maszynę wskazuje. Punkt mostowy bez wskazania
+zostaje bez urządzenia — most jest wpisem platformy i urządzenia nie wymaga.
+
+## budowa/server/internal/dane/extension_integracje.go
+Poświadczenie jest w tym pliku wyłącznie odwołaniem — kluczem jawnym warstwy
+sekretów. Hasła, tokenu ani klucza API ta warstwa nie widzi i nie ma jak
+zobaczyć.
+
+## budowa/server/internal/dane/agent_warstwy.go
+
+Warstwa promptu jest stanem, nie zdarzeniem: klucz główny tabeli warstw stoi na parze
+identyfikatora eksperta i nazwy warstwy, więc powtórzony zapis tej samej warstwy nadpisuje
+treść zamiast dokładać drugi wiersz; UstawWarstwe wywołane dwa razy z tą samą treścią
+zostawia bazę w tym samym stanie.
+
+Nazwy warstw i tryby podania stoją wyłącznie w warunkach CHECK bazy, wartościami kontraktu
+wprost; drugiego katalogu dopuszczonych wartości repozytorium nie prowadzi.
+
+Warstwa o nazwie spoza katalogu ląduje na końcu porządku krytyczności.
+
+Tryb nałożenia instrukcji dotyczy eksperta jako całości, nie pojedynczej warstwy: prompt
+globalny albo obowiązuje w całości, albo nie — zastąpienie częściowe, samą warstwą profilu,
+nie ma znaczenia, więc kolumna trybu stoi przy ekspercie, nie przy każdej z warstw osobno.

@@ -15,7 +15,7 @@ skład jedenastu menu ogólnoaplikacyjnych.
 | | |
 |---|---|
 | **Gałąź** | `teren/centrum-poprawki` z `main` |
-| **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`, `design/zasoby/okna/centrum-dowodzenia.css`, `design/zasoby/okna/centrum-dowodzenia.js`, `design/zasoby/okna/danaco-anim-3d.css`, `design/01-dokumentacja-md/11-uzasadnienia-okien.md` |
+| **Wykaz plików** | `design/05-okna/przeplyw/centrum-dowodzenia.html`; arkusze `design/zasoby/okna/centrum-{dowodzenia,kafle,obszar,dymki}.css` i `danaco-anim-3d.css`; mechanizmy `design/zasoby/okna/centrum-{dowodzenia,obszar,wejscie,dymki}.js`; `design/01-dokumentacja-md/11-uzasadnienia-okien.md` |
 | **Poza terenem** | `design/zasoby/zetony/`, `design/zasoby/rama.css`, `karty-okna.css`, `panel-sesji.css` i pozostała warstwa wspólna; okna inne niż centrum dowodzenia; `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `shared/` |
 
 **Kryteria odbioru**
@@ -28,6 +28,7 @@ skład jedenastu menu ogólnoaplikacyjnych.
 - Wyłącznie żetony `--dn-*`; wartości wpisane wprost tylko tam, gdzie Właściciel
   rozstrzygnął inaczej (barwy animacji kafli środowisk).
 - Gęstość komentarzy w limicie 250 znaków na 1000 wierszy.
+- Pliki dzielone wg pojedynczej odpowiedzialności; nazwa pliku niesie zakres.
 - Kontrolę przeprowadza sesja inna niż wykonawcza.
 
 **Zgłoszenia poza terenem**

@@ -1,0 +1,38 @@
+.cd-strona [data-etykietka]::after {
+  position: fixed;
+  inset: auto;
+  left: -9999px;
+  top: -9999px;
+}
+
+.cd-strona [data-etykietka][data-dymek='tak']::after {
+  left: var(--cd-dymek-x);
+  right: auto;
+  top: var(--cd-dymek-y);
+  bottom: auto;
+  transform: translate(-50%, var(--dn-od-05));
+}
+
+.cd-strona [data-etykietka][data-dymek='tak']:hover::after,
+.cd-strona [data-etykietka][data-dymek='tak']:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']::after {
+  left: var(--cd-dymek-x);
+  right: auto;
+  transform: translate(-50%, var(--dn-od-05));
+}
+
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']:hover::after,
+.cd-strona .dn-narzedzia > .dn-narzedzia-grupa .dn-etykietka[data-dymek='tak']:focus-visible::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']:hover::after,
+.cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']:focus-visible::after {
+  transform: translate(-50%, 0);
+}
+
+.cd-strona [data-etykietka]:not([data-dymek='tak']):hover::after,
+.cd-strona [data-etykietka]:not([data-dymek='tak']):focus-visible::after {
+  opacity: 0;
+}

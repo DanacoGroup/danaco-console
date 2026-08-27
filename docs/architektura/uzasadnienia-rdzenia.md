@@ -5411,3 +5411,29 @@ dotyczą — wstrzymanie, zakończenie procesów zamykanej karty, wyzwolenie obs
 zdarzeniem z adaptera. Zmiany wpisu książki hostów czy pozycji biblioteki nie mają w kontrakcie
 zdarzenia, więc klient odświeża wykaz po własnym zapisie, zamiast dostawać rozgłoszenie nazwą,
 której kontrakt nie zna.
+
+## budowa/server/internal/core/sesja_konfiguracja_skladanie.go
+
+Kolejność adresów bierze pakiet konfig (Kontekst.Adresy) — najpierw poziom,
+w ramach poziomu oś. Wygrywa pierwszy adres, pod którym obszar jest zapisany,
+a obszary wychodzą w kolejności pól kontraktu. Ta sama zawartość rejestru
+daje więc zawsze ten sam wynik; rdzeń nie ma tu ani jednego rozstrzygnięcia
+zależnego od kolejności mapy. Pierwszeństwo w ustalaniu kolejności poziomów
+i osi należy do pakietu konfig — rdzeń tej kolejności nie zna i jej nie
+powtarza, tylko pyta o wykaz adresów i czyta po kolei.
+
+Rozejście między katalogiem ustawionym a faktycznie używanym składane jest
+z samej konfiguracji, bez dotykania dysku: odczyt konfiguracji obowiązującej
+ma być powtarzalny i nie ma prawa zakładać katalogów. Sprawdzenie dysku
+należy do funkcji KatalogRoboczy na drodze uruchomienia tury, dlatego pole
+checkedAt pozostaje zerowe — nic tu nie było sprawdzane.
+
+KonfiguracjaSesjiOkna służy drodze tury: adapter rozmowy odczytuje nią
+obowiązującą konfigurację i tłumaczy jej obszary na wejście procesu przez
+warstwę wstrzykiwania w pliku adapter_rozmowa_konfiguracja.go. Osie modelu
+i konta są pomijane w rozstrzyganiu, ponieważ obszary model i account
+tłumaczą się na wybór modelu i konta wywołania — inaczej powstałaby pętla,
+w której konto zależy od konfiguracji, która zależy od konta.
+
+W kontekstKonfiguracjiSesji pole puste znaczy, że poziom albo oś nie dotyczy
+tego wywołania i jest pomijana przy rozstrzyganiu.

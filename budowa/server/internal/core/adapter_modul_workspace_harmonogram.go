@@ -1,17 +1,7 @@
 // Odpowiedzialność pliku: oś czasu projektu i zależności między zadaniami —
 // `workspace.schedule.get`, `workspace.task.dependency.set`
-// i `workspace.task.dependency.remove`.
-//
-// ── Cykl jest odmową ───────────────────────────────────────────────────────
-// Zależność domykająca cykl nie zostaje zapisana. Powód nie jest formalny:
-// cyklu nie da się ułożyć w czasie, więc zapisany cykl unieruchomiłby
-// przesuwanie terminów przy każdej późniejszej zmianie zadania.
-//
-// ── Zadanie bez granic czasu nie znika ─────────────────────────────────────
-// Słupek wymaga początku i końca, więc zadanie bez obu granic do wykresu nie
-// wchodzi. Wchodzi jednak do pola `unscheduledTaskIds` — bez tego pola zadanie
-// znikałoby z widoku bez śladu, a Operator nie miałby skąd wiedzieć, że
-// harmonogram pokazuje mniej niż projekt.
+// i `workspace.task.dependency.remove`. Zależność domykająca cykl czasowy
+// nie zostaje zapisana.
 package core
 
 import (
@@ -24,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Harmonogram obsługuje `workspace.schedule.get`.
+// Harmonogram obsługuje `workspace.schedule.get` i buduje słupki osi czasu
+// z zależnościami między zadaniami projektu.
 func (a *adapterPrzestrzeniRoboczej) Harmonogram(ctx context.Context,
 	z shared.WorkspaceScheduleGetRequest) (shared.WorkspaceScheduleGetResponse, error) {
 
@@ -81,7 +72,8 @@ func (a *adapterPrzestrzeniRoboczej) Harmonogram(ctx context.Context,
 	}, nil
 }
 
-// ZalozZaleznosc obsługuje `workspace.task.dependency.set`.
+// ZalozZaleznosc obsługuje `workspace.task.dependency.set` i odmawia zapisu,
+// gdyby nowa krawędź domykała cykl.
 func (a *adapterPrzestrzeniRoboczej) ZalozZaleznosc(ctx context.Context,
 	z shared.WorkspaceTaskDependencySetRequest) (shared.WorkspaceTaskDependencySetResponse, error) {
 
@@ -153,7 +145,8 @@ func (a *adapterPrzestrzeniRoboczej) ZalozZaleznosc(ctx context.Context,
 	}, nil
 }
 
-// ZniesZaleznosc obsługuje `workspace.task.dependency.remove`.
+// ZniesZaleznosc obsługuje `workspace.task.dependency.remove` i usuwa
+// krawędź zależności między dwoma zadaniami.
 func (a *adapterPrzestrzeniRoboczej) ZniesZaleznosc(ctx context.Context,
 	z shared.WorkspaceTaskDependencyRemoveRequest) (shared.WorkspaceTaskDependencyRemoveResponse, error) {
 
@@ -191,7 +184,8 @@ func granicaSlupkaWorkspace(z dane.ZadanieWorkspace) (int64, int64) {
 	return poczatek, koniec
 }
 
-// pierwszaChwilaWorkspace wybiera pierwszą chwilę różną od zera.
+// pierwszaChwilaWorkspace wybiera pierwszą chwilę różną od zera spośród
+// podanych znaczników czasu początku i końca zadania.
 func pierwszaChwilaWorkspace(chwile ...int64) int64 {
 	for _, chwila := range chwile {
 		if chwila != 0 {
@@ -246,8 +240,7 @@ func sciezkaKrytycznaWorkspace(zadania []dane.ZadanieWorkspace,
 
 	najdluzsza := map[string]int64{}
 	rodzic := map[string]string{}
-	// Rachunek idzie zapamiętanym przejściem w głąb; licznik odwiedzin chroni
-	// przed zapętleniem, gdyby cykl powstał inną drogą niż komenda.
+	// Rachunek idzie zapamiętanym przejściem w głąb, chroniącym przed zapętleniem.
 	var policz func(kod string, glebokosc int) int64
 	policz = func(kod string, glebokosc int) int64 {
 		if wynik, jest := najdluzsza[kod]; jest {
@@ -289,7 +282,8 @@ func sciezkaKrytycznaWorkspace(zadania []dane.ZadanieWorkspace,
 	return sciezka
 }
 
-// zaleznoscKontraktuWorkspace przekłada wiersz zależności na byt kontraktu.
+// zaleznoscKontraktuWorkspace przekłada wiersz zależności warstwy danych
+// na byt kontraktu TaskDependency.
 func zaleznoscKontraktuWorkspace(idProjektu string, z dane.ZaleznoscWorkspace) shared.WorkspaceTaskDependency {
 	zaleznosc := shared.WorkspaceTaskDependency{
 		Id: z.Identyfikator, ProjectId: idProjektu,

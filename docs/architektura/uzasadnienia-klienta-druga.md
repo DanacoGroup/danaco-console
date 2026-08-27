@@ -270,3 +270,13 @@ nic nie robią. Przycisk dyktafonu, wzorem pakietu biurowego, jest przyciskiem
 dyktowania do treści dokumentu; przybornik go tylko osadza, a nagrywanie
 i przepisanie liczy zaplecze mowy, jednym rachunkiem wspólnym z mikrofonem
 wiersza polecenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/styl-panel-arkusza.test.ts
+
+Sprawdziany panelu arkusza stylów oraz panelu list i znaków mierzą treść zgłoszonego żądania,
+a nie samo naciśnięcie przycisku. Trzy zachowania są sprawdzane osobno jako miejsca dawnej szkody
+w tym produkcie. Cecha logiczna niesie trzy stany, nie dwa: naniesienie pogrubienia nie zdejmuje
+przy okazji kursywy, której operator nie wskazał. Czynność bez ani jednego wypełnionego pola jest
+odmawiana, a nie wysyłana jako żądanie, które niczego nie zmieni. Nastawa poziomu listy wymaga
+wskazania listy zastanej — bez niej okno nazywa brakujący element zamiast wysyłać żądanie z pustym
+identyfikatorem.

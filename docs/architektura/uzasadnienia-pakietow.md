@@ -4959,3 +4959,25 @@ miałoby co odebrać.
 Unieważnienie sesji bramki: pusty napis w argumencie zdejmuje wyłączenie sesji bieżącej,
 więc jedno zapytanie obsługuje oba warianty — poza sesją bieżącą i wszystkie — zamiast
 rozjeżdżać się na dwie osobne ścieżki kodu.
+
+## budowa/server/internal/narzedzia/zastrzezenia.go
+Komendy zastrzeżone Operatorowi obejmują zakładanie i zmianę punktów dostępu,
+nadań, kont oraz treści tożsamości; odczyt tych rejestrów model ma, zapisu
+nie. Granica jest strukturalna, nie wpisana: rozdzielnia zna wyłącznie
+odwzorowanie komend narzędzi, a w nim komend zastrzeżonych po prostu nie ma,
+więc żadne wywołanie nie ma jak do nich dojść, choćby model podał nazwę
+wprost. Ten plik dokłada do tego drugie: nazwie spoza wykazu odpowiada
+czytelna odmowa mówiąca, o którą komendę chodzi, zamiast milczącej odmowy,
+po której model próbowałby dalej.
+
+Własnego wykazu zastrzeżeń tu nie ma: zbiór powstaje z różnicy komend
+kontraktu i komend narzędzi, więc przesunięcie granicy w kontrakcie przesuwa
+ją tutaj w tej samej chwili.
+
+Odmowa w zbierzKomendyPozaWykazem schodzi na wariant ogólny, gdy wzorca nie
+da się odczytać, zamiast zgadywać nazwy własnym wykazem.
+
+Wzorzec nazw narzędzi mieszka w kontrakcie, lecz generator Go go nie
+wyprowadza. Zapisanie go literałem byłoby drugim źródłem prawdy, które
+rozjedzie się przy pierwszej zmianie notacji, dlatego wzorzec jest odczytany,
+a nie założony, i potwierdzony na każdej deklaracji wykazu.

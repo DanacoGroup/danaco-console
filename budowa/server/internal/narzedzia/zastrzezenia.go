@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: granica uprawnień modelu.
-//
-// Model nie rozszerza własnego dostępu. Poza wykazem narzędzi stoją dwie grupy
-// komend: warstwa połączenia klienta, która sterowaniem platformą nie jest,
-// oraz punkty zastrzeżone Operatorowi — zakładanie i zmiana punktów dostępu,
-// nadań, kont oraz treści tożsamości. Odczyt tych rejestrów model ma, zapisu
-// nie.
-//
-// Granica jest strukturalna, nie wpisana. Rozdzielnia zna wyłącznie odwzorowanie
-// `shared.KomendyNarzedzi`, a w nim komend zastrzeżonych po prostu nie ma:
-// żadne wywołanie nie ma jak do nich dojść, choćby model podał nazwę wprost.
-// Ten plik dokłada do tego drugie: nazwie spoza wykazu odpowiada czytelna
-// odmowa mówiąca, o którą komendę chodzi — zamiast milczącego „nie znam takiego
-// narzędzia", po którym model próbowałby dalej.
-//
-// Własnego wykazu zastrzeżeń tu nie ma: zbiór powstaje z różnicy
-// „komendy kontraktu minus komendy narzędzi", więc przesunięcie granicy
-// w kontrakcie przesuwa ją tutaj w tej samej chwili.
+// Ten plik utrzymuje granicę uprawnień modelu: poza wykazem narzędzi stoją
+// komendy warstwy połączenia klienta i komendy zastrzeżone Operatorowi,
+// których model nie rozszerza.
 package narzedzia
 
 import (
@@ -51,8 +36,7 @@ func zbierzKomendyPozaWykazem() map[string]shared.MessageType {
 	przedrostek, separator, rozpoznany := wzorzecNazwy()
 	if !rozpoznany {
 		// Wzorca nie da się odczytać wyłącznie wtedy, gdy kontrakt nie niesie ani
-		// jednego narzędzia. Odmowa schodzi wtedy na wariant ogólny — zgadywanie
-		// nazw byłoby wykazem własnym.
+		// jednego narzędzia.
 		return map[string]shared.MessageType{}
 	}
 	objete := map[shared.MessageType]bool{}
@@ -77,13 +61,7 @@ func nazwaNarzedzia(komenda shared.MessageType, przedrostek, separator string) s
 }
 
 // wzorzecNazwy odczytuje przedrostek i separator nazw narzędzi z samych
-// deklaracji kontraktu, zestawiając nazwę narzędzia z nazwą jego komendy.
-//
-// Wzorzec mieszka w `contract.json` (pola `narzedzia.przedrostek`
-// i `narzedzia.separatorNazwy`), lecz generator Go go nie wyprowadza. Zapisanie
-// go tutaj literałem byłoby drugim źródłem prawdy, które rozjedzie się przy
-// pierwszej zmianie notacji — dlatego wzorzec jest odczytany,
-// a nie założony, i potwierdzony na każdej deklaracji wykazu.
+// deklaracji kontraktu, nie z literału zapisanego tutaj.
 func wzorzecNazwy() (przedrostek, separator string, rozpoznany bool) {
 	deklaracje := shared.NarzedziaModelu()
 	if len(deklaracje) == 0 {

@@ -2010,3 +2010,24 @@ zamiast odpalać wszystkie przejścia naraz przy samym otwarciu przestrzeni.
 Karty zamknięte w chwili zapisu też wracają, ponieważ przestrzeń pamięta
 zestaw z chwili zapisu, nie to, co akurat było otwarte — przywrócenie tylko
 kart żywych byłoby przywróceniem zestawu okrojonego bez odnotowania ubytku.
+
+## adapter_modul_workspace_pamiec_wylaczenia.go
+
+Trzy czynnosci na wpisie pamieci nie sa zamiennikami jedna drugiej. Komenda
+memory.delete usuwa tresc: wpisu po niej nie ma. Komenda memory.detach zweza
+zasieg samego wpisu do jego projektu — wpis zostaje, ale obowiazuje wezej, bo
+zmienia sie wiersz pamieci. Komenda memory.disable.set wstrzymuje wpis albo
+caly poziom pamieci we wskazanym zasiegu: wiersz pamieci zostaje nietkniety,
+wpis nie wchodzi do kontekstu i wraca w calosci po zniesieniu wylaczenia.
+
+Wylaczony wpis jest nazwany w odpowiedzi, a nie przemilczany, poniewaz cisza,
+po ktorej Operator nie wie, ze wpis jest wylaczony, jest gorsza od braku
+wyciszenia. Komenda memory.list oddaje dlatego wykaz wpisow wstrzymanych obok
+wykazu czynnych i przy kazdym podaje zasieg, ktory go wylaczyl, razem
+z tozsamoscia wylaczenia, ktorym Operator znosi je jednym ruchem. Zniesienie
+wylaczenia idzie ta sama komenda memory.disable.set z polem disabled rownym
+falszowi: odwracalnosc jednym ruchem jest wymogiem produktu, nie wygoda okna.
+Odpowiedz komendy niesie zawsze wykaz po zmianie oraz pole changed, ktore
+mowi wprost, czy wykaz naprawde sie ruszyl; odmowa nazywa brak zamiast
+milczec — zadanie bez wskazania wpisu ani poziomu nie ma czego wylaczyc,
+a zniesienie wylaczenia, ktorego nie ma, konczy sie odmowa not_found.

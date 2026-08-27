@@ -1,43 +1,5 @@
-// Odpowiedzialność pliku: dostawcy baz zdjęciowych modułu Design — wyszukanie
-// (`design.stock.search`) i wciągnięcie zasobu (`design.stock.import`).
-// Czynności marketingowe leżą w `adapter_modul_design_marketing.go`.
-//
-// ── Ma działać ZARAZ PO INSTALACJI, bez zakładania konta ────────────────────
-// Dostawcy dzielą się na dwie grupy i kolejność jest zamierzona:
-//
-//   - BEZ KLUCZA — Openverse, Wikimedia Commons, Met Museum, NASA. Te pracują
-//     u każdego Operatora od pierwszej minuty, bez konta i bez konfiguracji.
-//     Dlatego wyszukanie bez wskazanego dostawcy pyta najpierw ich.
-//   - Z KLUCZEM DARMOWYM — Unsplash, Pexels, Pixabay, Smithsonian. Klucz czyta
-//     się z sejfu poświadczeń rdzenia pod bytem `design.stock.<dostawca>`. Brak
-//     klucza NIE jest odmową całej komendy: dostawca wraca w `providersFailed`,
-//     a pozostali oddają swoje wyniki.
-//
-// Smithsonian jest w tej drugiej grupie wbrew pierwotnemu założeniu: jego API
-// (`api.si.edu/openaccess`) wymaga klucza `api.data.gov`, choć klucz jest darmowy
-// i natychmiastowy. To pomiar, nie decyzja — bez klucza ten dostawca nie odpowie
-// i uczciwie wraca w bilansie.
-//
-// ── Kształty odpowiedzi: co jest zmierzone, a co wzięte z dokumentacji ───────
-// Drogi wszystkich ośmiu dostawców są zmierzone PRZELOTEM na serwerze próbnym
-// (`przelot_baz_zdjeciowych_designu_test.go`): adres, klucz, rozbiór odpowiedzi
-// i złożenie wspólnej postaci zasobu. Same KSZTAŁTY odpowiedzi pochodzą
-// z dokumentacji dostawców — z jednym wyjątkiem zmierzonym na żywym API:
-// odpowiedź Smithsoniana została odczytana wprost z `api.si.edu` i wykazała, że
-// rdzeń szukał mediów pod nazwą, której w niej nie ma (szczegół przy
-// `smithsonianWierszDesignu`).
-//
-// ── Cisza jest zakazana ─────────────────────────────────────────────────────
-// Odpowiedź niesie `providersQueried` (kogo zapytano) i `providersFailed` (kto
-// nie odpowiedział). Wykaz zasobów krótszy, niż Operator się spodziewał, ma mieć
-// obok siebie powód — inaczej Operator uzna, że fraza nie ma zdjęć, gdy w istocie
-// trzech dostawców z czterech nie odpowiedziało.
-//
-// ── Zasób bez zapisanej licencji jest USTERKĄ, nie zasobem ──────────────────
-// `design.stock.import` zapisuje licencję razem z zasobem
-// (`ZapiszLicencjeZasobuDesignu`, migracja 338) i odmawia, jeśli zapis licencji
-// się nie udał — materiał, o którym nikt później nie powie, czy wolno go było
-// użyć, jest gorszy niż brak materiału.
+// Plik obsługuje ośmiu dostawców baz zdjęciowych modułu Design: wyszukanie
+// i wciągnięcie zasobu, wraz z jego pochodzeniem i licencją.
 package core
 
 import (
@@ -66,7 +28,8 @@ const (
 	// Operator granicy nie podał.
 	domyslnyLimitWynikowDostawcyDesignu = 20
 
-	// granicaWynikowDostawcyDesignu chroni odpowiedź przed wykazem tysiącznym.
+	// granicaWynikowDostawcyDesignu chroni odpowiedź przed wykazem tysiącznym,
+	// nawet gdy żądanie poda granicę większą.
 	granicaWynikowDostawcyDesignu = 100
 
 	// przedrostekBytuSejfuZdjecDesignu znakuje wpisy sejfu z kluczami dostawców.
@@ -87,7 +50,8 @@ type zasobDostawcyZdjecDesignu struct {
 	Odsylacz      string
 }
 
-// dostawcaZdjecDesignu opisuje jedną bazę zdjęciową.
+// dostawcaZdjecDesignu opisuje jedną bazę zdjęciową: jej nazwę, wymaganie
+// klucza oraz drogi wyszukania i pobrania zasobu.
 type dostawcaZdjecDesignu struct {
 	Nazwa        string
 	WymagaKlucza bool
@@ -120,7 +84,8 @@ func dostawcyZdjecDesignu() []dostawcaZdjecDesignu {
 	}
 }
 
-// dostawcaZdjecPoNazwieDesignu odnajduje dostawcę po nazwie.
+// dostawcaZdjecPoNazwieDesignu odnajduje dostawcę po nazwie i mówi, czy
+// dostawca o takiej nazwie jest znany.
 func dostawcaZdjecPoNazwieDesignu(nazwa string) (dostawcaZdjecDesignu, bool) {
 	szukana := strings.ToLower(strings.TrimSpace(nazwa))
 	for _, dostawca := range dostawcyZdjecDesignu() {
@@ -131,7 +96,8 @@ func dostawcaZdjecPoNazwieDesignu(nazwa string) (dostawcaZdjecDesignu, bool) {
 	return dostawcaZdjecDesignu{}, false
 }
 
-// nazwyDostawcowZdjecDesignu oddaje nazwy dostawców — wchodzą w treść odmów.
+// nazwyDostawcowZdjecDesignu oddaje nazwy dostawców posortowane alfabetycznie
+// — wchodzą w treść odmów wskazujących dostawcę nieznanego.
 func nazwyDostawcowZdjecDesignu() []string {
 	nazwy := []string{}
 	for _, dostawca := range dostawcyZdjecDesignu() {
@@ -141,11 +107,8 @@ func nazwyDostawcowZdjecDesignu() []string {
 	return nazwy
 }
 
-// kluczDostawcyZdjecDesignu czyta klucz dostawcy z sejfu poświadczeń rdzenia.
-//
-// Brak sejfu i brak wpisu dają to samo: pusty klucz. Rozróżnienie nie zmieniłoby
-// niczego dla Operatora — w obu przypadkach dostawca nie odpowie i wraca
-// w bilansie razem z powodem.
+// kluczDostawcyZdjecDesignu czyta klucz dostawcy z sejfu poświadczeń rdzenia
+// i oddaje klucz pusty, gdy sejf albo wpis w nim nie istnieje.
 func (a *adapterDesignu) kluczDostawcyZdjecDesignu(ctx context.Context, dostawca string) string {
 	if a.sejf == nil {
 		return ""
@@ -157,12 +120,14 @@ func (a *adapterDesignu) kluczDostawcyZdjecDesignu(ctx context.Context, dostawca
 	return strings.TrimSpace(klucz)
 }
 
-// klientDostawcyZdjecDesignu składa klienta HTTP z granicą czasu.
+// klientDostawcyZdjecDesignu składa klienta HTTP z granicą czasu, aby dostawca
+// bez odpowiedzi nie trzymał wywołania bez końca.
 func klientDostawcyZdjecDesignu() *http.Client {
 	return &http.Client{Timeout: limitCzasuDostawcyZdjecDesignu}
 }
 
-// odczytajJsonDostawcyDesignu wykonuje żądanie i rozkłada odpowiedź JSON.
+// odczytajJsonDostawcyDesignu wykonuje żądanie do dostawcy i rozkłada jego
+// odpowiedź zapisaną w postaci JSON do wskazanego celu.
 func odczytajJsonDostawcyDesignu(ctx context.Context, klient *http.Client, adres string,
 	naglowki map[string]string, cel any) error {
 
@@ -170,9 +135,7 @@ func odczytajJsonDostawcyDesignu(ctx context.Context, klient *http.Client, adres
 	if err != nil {
 		return err
 	}
-	// Nagłówek `User-Agent` jest wymagany przez Wikimedia i przez api.data.gov;
-	// bez niego oba odpowiadają odmową, a Operator widziałby dostawcę jako
-	// niedostępnego bez powodu.
+	// Nagłówek User-Agent jest wymagany przez Wikimedia i przez api.data.gov.
 	zadanie.Header.Set("User-Agent", "DanacoConsole/1.0 (moduł Design, bazy zdjęciowe)")
 	zadanie.Header.Set("Accept", "application/json")
 	for nazwa, wartosc := range naglowki {
@@ -193,7 +156,8 @@ func odczytajJsonDostawcyDesignu(ctx context.Context, klient *http.Client, adres
 	return json.Unmarshal(bajty, cel)
 }
 
-// pobierzBajtyZdjeciaDesignu wciąga bajty zasobu spod adresu dostawcy.
+// pobierzBajtyZdjeciaDesignu wciąga bajty zasobu spod adresu dostawcy wraz
+// z zapisanym rodzajem treści i odmawia treści pustej.
 func pobierzBajtyZdjeciaDesignu(ctx context.Context, klient *http.Client,
 	adres string) ([]byte, string, error) {
 
@@ -220,9 +184,7 @@ func pobierzBajtyZdjeciaDesignu(ctx context.Context, klient *http.Client,
 	return bajty, odpowiedz.Header.Get("Content-Type"), nil
 }
 
-// ── Openverse ───────────────────────────────────────────────────────────────
-// Katalog materiałów na wolnych licencjach prowadzony przez Fundację Wikimedia.
-// Bez klucza; klucz podnosi wyłącznie granicę liczby zapytań.
+// Openverse — katalog materiałów na wolnych licencjach, dostawca bez klucza.
 
 func szukajOpenverseDesignu(ctx context.Context, klient *http.Client, _, fraza string,
 	limit int) ([]zasobDostawcyZdjecDesignu, error) {
@@ -275,9 +237,7 @@ func pobierzOpenverseDesignu(ctx context.Context, klient *http.Client, _,
 	}, nil
 }
 
-// ── Wikimedia Commons ───────────────────────────────────────────────────────
-// Identyfikatorem jest TYTUŁ pliku (`File:…`) — Commons nie ma innego trwałego
-// wskazania, którym da się plik odczytać z powrotem.
+// Wikimedia Commons — identyfikatorem zasobu jest tytuł pliku.
 
 func szukajWikimediaDesignu(ctx context.Context, klient *http.Client, _, fraza string,
 	limit int) ([]zasobDostawcyZdjecDesignu, error) {
@@ -321,9 +281,8 @@ func szukajWikimediaDesignu(ctx context.Context, klient *http.Client, _, fraza s
 		}
 		zasoby = append(zasoby, zasob)
 	}
-	// Kolejność wyników Commons jest kolejnością mapy JSON, czyli żadną. Porządek
-	// po tytule sprawia, że dwa te same wyszukania dają tę samą kolejność —
-	// inaczej Operator widziałby inny wykaz przy każdym kliknięciu.
+	// Kolejność wyników Commons jest kolejnością mapy JSON, czyli żadną;
+	// porządek po tytule ją naprawia.
 	sort.SliceStable(zasoby, func(i, j int) bool { return zasoby[i].Tytul < zasoby[j].Tytul })
 	return zasoby, nil
 }
@@ -402,9 +361,7 @@ func szukajMetDesignu(ctx context.Context, klient *http.Client, _, fraza string,
 	if err := odczytajJsonDostawcyDesignu(ctx, klient, adres, nil, &wyszukanie); err != nil {
 		return nil, err
 	}
-	// Met oddaje same identyfikatory, więc opis każdego trzeba dobrać osobno.
-	// Bierzemy tylko tyle, ile Operator zamówił — pełne wyszukanie zwraca
-	// dziesiątki tysięcy identyfikatorów.
+	// Met oddaje same identyfikatory; opis każdego trzeba dobrać osobno.
 	zasoby := []zasobDostawcyZdjecDesignu{}
 	for _, numer := range wyszukanie.ObjectIDs {
 		if len(zasoby) >= limit {
@@ -436,9 +393,7 @@ func pobierzMetDesignu(ctx context.Context, klient *http.Client, _,
 	if err := odczytajJsonDostawcyDesignu(ctx, klient, adres, nil, &obiekt); err != nil {
 		return zasobDostawcyZdjecDesignu{}, err
 	}
-	// Licencja jest tu POMIAREM pola `isPublicDomain`, nie założeniem: Met ma
-	// w zbiorach także dzieła pod prawem autorskim i ich obrazy nie są domeną
-	// publiczną.
+	// Met ma w zbiorach też dzieła pod prawem autorskim, nie domenę publiczną.
 	licencja := "Met — obraz udostępniony bez zgody na domenę publiczną"
 	if obiekt.IsPublicDomain {
 		licencja = "CC0 1.0 (domena publiczna, Met Open Access)"
@@ -483,9 +438,7 @@ func szukajNasaDesignu(ctx context.Context, klient *http.Client, _, fraza string
 		}
 		zasob := zasobDostawcyZdjecDesignu{
 			Identyfikator: wpis.Data[0].NasaID, Tytul: wpis.Data[0].Title,
-			// NASA udostępnia materiały bez ograniczeń praw autorskich, ale wyjątki
-			// istnieją (logo agencji, wizerunki astronautów) — treść licencji mówi
-			// o tym wprost, a nie „domena publiczna" bez zastrzeżenia.
+			// NASA ma wyjątki od braku ochrony (logo agencji, wizerunki astronautów).
 			Licencja: "NASA Media Usage Guidelines (bez ochrony prawem autorskim, " +
 				"z wyjątkami dla logo i wizerunków)",
 			Autor:    pierwszyNiepustyDesignu(wpis.Data[0].Photographer, wpis.Data[0].Center),
@@ -516,8 +469,7 @@ func pobierzNasaDesignu(ctx context.Context, klient *http.Client, _,
 	if err := odczytajJsonDostawcyDesignu(ctx, klient, adres, nil, &odpowiedz); err != nil {
 		return zasobDostawcyZdjecDesignu{}, err
 	}
-	// Wpisy są uszeregowane od największego; bierzemy pierwszy plik obrazu
-	// i pomijamy metadane oraz podglądy.
+	// Wpisy są uszeregowane od największego; bierzemy pierwszy plik obrazu.
 	pelny := ""
 	for _, wpis := range odpowiedz.Collection.Items {
 		maly := strings.ToLower(wpis.Href)
@@ -733,9 +685,8 @@ func pobierzPixabayDesignu(ctx context.Context, klient *http.Client, klucz,
 	}, nil
 }
 
-// ── Smithsonian Open Access ─────────────────────────────────────────────────
-// Wymaga klucza `api.data.gov` — darmowego i wydawanego natychmiast, ale
-// wymaganego (nagłówek pliku).
+// Smithsonian Open Access — wymaga klucza api.data.gov, darmowego i wydawanego
+// natychmiast.
 
 func szukajSmithsonianDesignu(ctx context.Context, klient *http.Client, klucz, fraza string,
 	limit int) ([]zasobDostawcyZdjecDesignu, error) {
@@ -758,11 +709,8 @@ func szukajSmithsonianDesignu(ctx context.Context, klient *http.Client, klucz, f
 			zasoby = append(zasoby, zasob)
 		}
 	}
-	// Wiersze przyszły, a nie dał się z nich złożyć ani jeden zasób — to NIE jest
-	// odpowiedź „fraza nie ma zdjęć", tylko rozjazd kształtu odpowiedzi z tym,
-	// czego rdzeń w niej szuka. Właśnie tak ten dostawca milczał: zero zasobów bez
-	// błędu, więc nie wracał ani w wykazie, ani w bilansie `providersFailed`.
-	// Zdanie odmowy jest tu jedyną drogą, którą Operator się o tym dowie.
+	// Wiersze przyszły, ale ani jeden nie dał się złożyć w zasób — odmowa
+	// nazwana zamiast wykazu pustego.
 	if len(zasoby) == 0 && len(odpowiedz.Response.Rows) > 0 {
 		return nil, fmt.Errorf(
 			"Smithsonian oddał %d wierszy, z których żaden nie niesie obrazu pod "+
@@ -772,16 +720,8 @@ func szukajSmithsonianDesignu(ctx context.Context, klient *http.Client, klucz, f
 	return zasoby, nil
 }
 
-// smithsonianWierszDesignu to jeden wiersz odpowiedzi Smithsonian.
-//
-// ── Media leżą w `online_media`, nie w samym `descriptiveNonRepeating` ──────
-// Ta struktura czytała wcześniej `content.descriptiveNonRepeating.media[]`
-// i klucza o tej nazwie w odpowiedzi NIE MA — pomiar na `api.si.edu`
-// (`descriptiveNonRepeating` niesie `guid`, `title`, `record_ID`, `unit_code`,
-// `title_sort`, `data_source`, `metadata_usage`, `record_link`) potwierdził, że
-// żaden wiersz nie dawał się złożyć w zasób. Dostawca oddawał więc wykaz PUSTY
-// i nie wracał w bilansie, bo błędu nie było. Prawidłowa droga to
-// `content.descriptiveNonRepeating.online_media.media[]` i tak jest tu czytana.
+// smithsonianWierszDesignu to jeden wiersz odpowiedzi Smithsonian; media leżą
+// w polu online_media, zagnieżdżonym pod polem descriptiveNonRepeating.
 type smithsonianWierszDesignu struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
@@ -813,8 +753,7 @@ func zasobZeSmithsonianDesignu(wiersz smithsonianWierszDesignu) (zasobDostawcyZd
 		if !strings.EqualFold(media.Type, "Images") || media.Content == "" {
 			continue
 		}
-		// Licencja jest POMIAREM pola `usage.access`: „CC0" znaczy domenę
-		// publiczną, a wszystko inne — materiał o ograniczonym użyciu.
+		// Wartość CC0 pola usage.access znaczy domenę publiczną.
 		licencja := "Smithsonian — użycie ograniczone (" + media.Usage.Access + ")"
 		if strings.EqualFold(media.Usage.Access, "CC0") {
 			licencja = "CC0 1.0 (domena publiczna, Smithsonian Open Access)"
@@ -852,7 +791,8 @@ func pobierzSmithsonianDesignu(ctx context.Context, klient *http.Client, klucz,
 	return zasob, nil
 }
 
-// pierwszyNiepustyDesignu oddaje pierwszą niepustą wartość z podanych.
+// pierwszyNiepustyDesignu oddaje pierwszą niepustą wartość z podanych, po
+// obcięciu białych znaków, albo pusty napis, gdy wszystkie są puste.
 func pierwszyNiepustyDesignu(wartosci ...string) string {
 	for _, wartosc := range wartosci {
 		if strings.TrimSpace(wartosc) != "" {

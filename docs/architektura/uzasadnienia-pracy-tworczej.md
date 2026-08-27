@@ -1182,3 +1182,34 @@ Schowek nie jest drugim malarzem formatów, mimo tego samego rachunku postaci
 skutecznej: malarz przenosi postać bez treści i ma na to własną tabelę z
 wygasaniem, schowek przenosi treść i postać razem, bo tego wymaga kontrakt
 sposobu `keepFormat`.
+
+## budowa/server/internal/core/adapter_modul_design_bazy_zdjeciowe.go
+
+Dostawcy dzielą się na dwie grupy, a kolejność zapytywania jest zamierzona.
+Grupa bez klucza — Openverse, Wikimedia Commons, Met Museum, NASA — pracuje
+u każdego użytkownika od pierwszej minuty, bez konta i bez konfiguracji,
+dlatego wyszukanie bez wskazanego dostawcy pyta najpierw ją. Grupa z kluczem
+darmowym — Unsplash, Pexels, Pixabay, Smithsonian — czyta klucz z sejfu
+poświadczeń rdzenia; brak klucza nie jest odmową całej komendy, dostawca
+wraca w polu odpowiedzi niosącym dostawców, którzy nie odpowiedzieli,
+a pozostali oddają swoje wyniki. Smithsonian trafił do tej drugiej grupy,
+choć jego klucz jest darmowy i wydawany natychmiast, ponieważ interfejs
+api.si.edu/openaccess mimo to klucza wymaga.
+
+Drogi wszystkich ośmiu dostawców są zmierzone próbą na serwerze próbnym: adres,
+klucz, rozbiór odpowiedzi i złożenie wspólnej postaci zasobu. Kształty
+odpowiedzi pochodzą w większości z dokumentacji dostawców, z jednym wyjątkiem
+zmierzonym na żywym interfejsie: odpowiedź Smithsoniana została odczytana
+wprost z api.si.edu i wykazała, że rdzeń pierwotnie szukał mediów pod kluczem
+nazwanym content.descriptiveNonRepeating.media, którego odpowiedź nie niesie
+— pole z mediami leży zagnieżdżone głębiej, pod kluczem online_media.
+
+Cisza jest zakazana: odpowiedź niesie wykaz dostawców zapytanych i wykaz
+dostawców, którzy nie odpowiedzieli. Wykaz zasobów krótszy, niż oczekiwano,
+ma mieć obok siebie powód, inaczej czytelnik odpowiedzi uzna, że fraza nie
+ma zdjęć, gdy w istocie część dostawców nie odpowiedziała.
+
+Zasób bez zapisanej licencji jest usterką, nie zasobem: wciągnięcie zasobu
+zapisuje licencję razem z nim i odmawia, jeśli zapis licencji się nie udał —
+materiał, o którym nikt później nie powie, czy wolno go było użyć, jest
+gorszy niż brak materiału.

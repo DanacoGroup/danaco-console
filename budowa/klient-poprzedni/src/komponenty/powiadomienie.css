@@ -1,9 +1,4 @@
-/* Powiadomienie (toast).
-
-   Stos powiadomień stoi na warstwie `--dn-z-powiadomienie`.
-   Stan nigdy samym kolorem: obok krawędzi stanu każdy wariant niesie ikonę
-   w tej samej barwie oraz tytuł.
-   Klatki `dn-wejscie` definiuje `nakladka.css`. */
+/* Arkusz opisuje powiadomienie w formie toastu, stojące na osobnej warstwie, gdzie każdy wariant niesie stan ikoną, barwą i tytułem. */
 
 .dn-toasty {
   position: fixed;

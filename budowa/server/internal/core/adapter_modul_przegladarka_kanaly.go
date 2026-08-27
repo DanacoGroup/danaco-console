@@ -15,7 +15,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// kanalRss jest kształtem dokumentu RSS 2.0 w zakresie, którego używamy:
+// kanalRss jest kształtem dokumentu RSS 2.0 w zakresie, który jest używany:
 // kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalRss struct {
 	Kanal struct {
@@ -30,7 +30,7 @@ type kanalRss struct {
 	} `xml:"channel"`
 }
 
-// kanalAtom jest kształtem dokumentu Atom w zakresie, którego używamy:
+// kanalAtom jest kształtem dokumentu Atom w zakresie, który jest używany:
 // kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalAtom struct {
 	Tytul string `xml:"title"`
@@ -47,7 +47,7 @@ type kanalAtom struct {
 	} `xml:"entry"`
 }
 
-// kanalJson jest kształtem dokumentu JSON Feed w zakresie, którego używamy:
+// kanalJson jest kształtem dokumentu JSON Feed w zakresie, który jest używany:
 // kanał, jego wpisy i pola potrzebne do listy oraz odczytu.
 type kanalJson struct {
 	Tytul string `json:"title"`

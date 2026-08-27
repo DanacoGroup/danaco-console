@@ -1,44 +1,6 @@
-// Odpowiedzialność pliku: sprzątanie magazynu treści modułu Library — usunięcie
-// z nośnika blobów, na które nie wskazuje już ani plik, ani żadna jego wersja,
-// oraz plików tymczasowych po zapisach przerwanych w połowie.
-//
-// Bez sprzątania magazyn treści (`adapter_modul_library_magazyn.go`) tylko
-// przyrasta: wiersz pliku znika kaskadą `ON DELETE CASCADE` albo czyszczeniem
-// stanu trwałego, wersja zostaje zastąpiona, zapis przerywa się na `os.Rename`
-// i zostawia `tresc-*.czesciowa` — a bajty leżą dalej. To magazyn, a nie baza,
-// wypełniałby wtedy dysk Operatora.
-//
-// Sprzątanie idzie przemiataniem przy starcie, a nie zliczaniem odwołań.
-// Zliczanie wymaga miejsca, w którym się kasuje, a moduł Library takiego miejsca
-// nie ma: wśród dziesięciu jego komend (`adapter_modul_library_uchwyty.go`) nie
-// ma ani jednej usuwającej plik czy wersję. Bloby osierocają się więc wyłącznie
-// drogami, których ten moduł nie kontroluje: kaskadą z wiersza usuniętego gdzie
-// indziej, awarią zapisu, zastąpieniem treści bieżącej. Licznik wpięty
-// w komendę, która nie istnieje, nie zliczyłby niczego.
-//
-// Do tego blob jest dzielony: jego nazwą jest suma sha256 treści, więc dwa
-// wgrania tej samej zawartości wskazują jeden plik na nośniku, a plik i jego
-// wersje wskazują go po wielekroć. Licznik musiałby być drugą, osobno
-// utrzymywaną prawdą o tym, co baza i tak wie z kolumn `tresc_odwolanie`,
-// i rozjechałby się przy pierwszym zapisie przerwanym w połowie.
-//
-// Przemiatanie startowe pyta o to samo wprost: żywe odwołania czyta z bazy
-// (`dane.OdwolaniaTresci`, jedno zapytanie po obu tabelach), po czym obchodzi
-// katalog magazynu i kasuje to, czego w tym wykazie nie ma. Nie potrzebuje
-// budzika ani wątku — start jest jedynym momentem, w którym rdzeń i tak czyta
-// stan trwały i w którym nikt równolegle nie wgrywa pliku; tak samo sprzątają
-// kosz sesji i retencja historii (`trwalosc_kosza.go`). Za bezczynności rdzenia
-// sprzątanie ma zero kosztu, a po awarii zapisu naprawia stan samo, bez komendy
-// naprawczej.
-//
-// Cena jest jedna: blob osierocony między dwoma startami przeżyje do
-// następnego. Miejsce na nośniku odzyskuje się z opóźnieniem, treść natomiast
-// nie ginie przedwcześnie, bo o życiu bloba rozstrzyga baza, a nie licznik.
-//
-// Nieudany odczyt wykazu wstrzymuje sprzątanie w całości. Wykaz niepełny
-// znaczyłby, że żywe bloby wyglądają na porzucone — sprzątanie skasowałoby
-// wtedy treść biblioteki nie do odzyskania. Brak wiedzy nie jest wiedzą
-// o braku.
+// Odpowiedzialność pliku: sprzątanie magazynu treści modułu Library —
+// usunięcie z nośnika blobów bez żywego odwołania oraz plików tymczasowych po
+// zapisach przerwanych w połowie.
 package core
 
 import (
@@ -53,10 +15,8 @@ import (
 )
 
 // karencjaPlikuCzesciowego chroni plik tymczasowy zapisu, który może trwać
-// w tej właśnie chwili. Sprzątanie idzie przy starcie, więc własnych zapisów
-// rdzeń jeszcze nie prowadzi — ale drugi rdzeń Operatora, wystartowany na tym
-// samym katalogu danych, może akurat wciągać wielki plik. Doba jest granicą
-// z ogromnym zapasem: zapis trwający dłużej niż dobę już się nie skończy.
+// w tej właśnie chwili — drugi rdzeń Operatora na tym samym katalogu danych
+// może akurat wciągać wielki plik. Doba jest granicą z ogromnym zapasem.
 const karencjaPlikuCzesciowego = 24 * time.Hour
 
 // przyrostekPlikuCzesciowego znakuje pliki tymczasowe magazynu
@@ -64,7 +24,7 @@ const karencjaPlikuCzesciowego = 24 * time.Hour
 const przyrostekPlikuCzesciowego = ".czesciowa"
 
 // posprzatajMagazynTresci kasuje bloby bez żywego odwołania oraz przeterminowane
-// pliki tymczasowe. Woła się raz, przy montażu portu — patrz `ZKatalogiemDanych`.
+// pliki tymczasowe. Woła się raz, przy montażu portu `ZKatalogiemDanych`.
 func posprzatajMagazynTresci(ctx context.Context, repozytorium dane.RepozytoriumBiblioteki,
 	magazyn *magazynTresciBiblioteki) {
 
@@ -85,9 +45,8 @@ func posprzatajMagazynTresci(ctx context.Context, repozytorium dane.Repozytorium
 
 	zywe := make(map[string]struct{}, len(odwolania))
 	for _, odwolanie := range odwolania {
-		// Klucz jest ścieżką oczyszczoną, nie surowym napisem z bazy: to samo
-		// miejsce na dysku bywa zapisane inaczej (ukośniki, `.`), a porównanie
-		// napisów uznałoby wtedy żywy blob za porzucony.
+		// Klucz jest ścieżką oczyszczoną, nie surowym napisem, inaczej porównanie
+		// zgubi żywy blob.
 		zywe[filepath.Clean(odwolanie)] = struct{}{}
 	}
 
@@ -105,9 +64,7 @@ func przemiecKatalogMagazynu(katalog string, zywe map[string]struct{}) (int, int
 	usuniete, odzyskane := 0, int64(0)
 	granicaCzesciowych := time.Now().Add(-karencjaPlikuCzesciowego)
 
-	// Błąd obejścia pojedynczego wpisu jest pominięciem, nie przerwaniem:
-	// jeden nieczytelny katalog nie ma prawa zostawić całego magazynu
-	// nieposprzątanego. Zwracamy `nil`, żeby obchód szedł dalej.
+	// Błąd obejścia pojedynczego wpisu jest pominięciem, obchód idzie dalej.
 	_ = filepath.WalkDir(katalog, func(sciezka string, wpis os.DirEntry, err error) error {
 		if err != nil || wpis == nil || wpis.IsDir() {
 			return nil
@@ -117,9 +74,7 @@ func przemiecKatalogMagazynu(katalog string, zywe map[string]struct{}) (int, int
 			return nil
 		}
 		if strings.HasSuffix(wpis.Name(), przyrostekPlikuCzesciowego) {
-			// Plik tymczasowy nigdy nie jest odwołaniem w bazie (odwołaniem
-			// staje się dopiero nazwa po przemianowaniu), więc rozstrzyga
-			// o nim sam wiek.
+			// Plik tymczasowy nigdy nie jest odwołaniem w bazie, rozstrzyga sam wiek.
 			if stan.ModTime().Before(granicaCzesciowych) && os.Remove(sciezka) == nil {
 				usuniete++
 				odzyskane += stan.Size()

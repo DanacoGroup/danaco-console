@@ -1,21 +1,5 @@
-// Odpowiedzialność pliku: historia wersji tożsamości eksperta — odczyt wykazu
-// migawek (tabela `agent_wersja`) i przywrócenie wcześniejszej wersji. Archiwum
-// eksperta leży w `agent_archiwum.go` — to ta sama implementacja repozytorium,
-// rozdzielona na dwa pliki wzdłuż dwóch odpowiedzialności.
-//
-// Migawki zakłada baza, nie to repozytorium: wiersz historii powstaje
-// wyzwalaczem, bo tożsamość eksperta zapisują trzy różne drogi kodu (`Dodaj`,
-// `Aktualizuj`, `ZapiszTozsamosc`). Repozytorium historii wyłącznie czyta
-// i przywraca — nie ma czynności „zapisz wersję”, bo taka czynność znaczyłaby,
-// że historię można ominąć.
-//
-// Przywrócenie jest nową wersją, nie cofnięciem historii: powrót do wersji N
-// zapisuje jej treść jako wersję kolejną, licznik `agent.wersja` idzie w górę,
-// a wyzwalacz zakłada kolejną migawkę. Wersji późniejszych nie kasuje.
-//
-// Różnicę wyliczamy przy odczycie: baza trzyma pełne migawki, a pola zmienione
-// wychodzą z porównania migawki z jej poprzedniczką, więc odpowiedź na pytanie
-// „co się zmieniło” nie rozjedzie się z treścią, którą przywróci `Przywroc`.
+// Plik prowadzi historię wersji tożsamości eksperta: odczyt wykazu migawek oraz przywrócenie wersji wcześniejszej;
+// archiwum eksperta leży w agent_archiwum.go jako ta sama implementacja repozytorium, rozdzielona wzdłuż dwóch odpowiedzialności.
 package dane
 
 import (
@@ -29,9 +13,7 @@ import (
 // WersjaAgenta to wiersz `agent_wersja` — pełna tożsamość eksperta w jednej
 // wersji wraz z wyliczoną listą pól zmienionych względem wersji poprzedniej.
 type WersjaAgenta struct {
-	// Identyfikator jest kluczem wiersza migawki — trzonem kształtu rodziny
-	// wersji (`StudioVersion`, `LibraryVersion`: pole `id`). Numer zostaje, bo
-	// niesie porządek wersji eksperta, ale tożsamością wersji jest ten klucz.
+	// Identyfikator jest kluczem wiersza migawki, trzonem rodziny wersji; numer niesie tylko porządek.
 	Identyfikator       int64
 	Numer               int
 	Nazwa               string
@@ -46,26 +28,20 @@ type WersjaAgenta struct {
 	UstawieniaJSON      string
 	TrybNakladki        string
 	Aktywny             bool
-	// Autor niesie napis, nie klucz konta: wyzwalacz bazy nie zna sesji, a
-	// produkt jest jednoosobowy. 'operator' albo 'restore'.
+	// Autor niesie napis, nie klucz konta: wartości to operator albo restore.
 	Autor string
 	// Powod jest pusty przy zwykłej zmianie; przywrócenie wpisuje tu numer
 	// wersji źródłowej.
 	Powod    string
 	Zapisano string
-	// Widocznosc i PoziomyPamieci są tym, co `Agent` ma jako pola WYMAGANE,
-	// więc migawka bez nich nie da się złożyć bez zgadywania (migracja 281).
-	// Warstw promptu migawka nie niesie i nieść nie może: `agent.layer.set` nie
-	// podnosi licznika wersji, więc warstwy wpisane do wersji starej byłyby
-	// warstwami bieżącymi udającymi historię.
+	// Widocznosc i PoziomyPamieci są polami wymaganymi migawki; warstw promptu migawka nie niesie.
 	Widocznosc     string
 	PoziomyPamieci []string
-	// ZmienionePola niesie nazwy kolumn różniące się od wersji poprzedniej.
-	// Wersja najstarsza ma tę listę pustą — nie ma się z czym różnić.
+	// ZmienionePola niesie nazwy kolumn różniące się od wersji poprzedniej; najstarsza ma listę pustą.
 	ZmienionePola []string
 }
 
-// RepozytoriumWersjiAgenta jest kontraktem historii tożsamości eksperta.
+// RepozytoriumWersjiAgenta jest kontraktem historii tożsamości eksperta: odczyt wykazu wersji i przywrócenie wersji wcześniejszej.
 type RepozytoriumWersjiAgenta interface {
 	// Wersje oddaje historię eksperta od najnowszej wersji do najstarszej.
 	Wersje(ctx context.Context, kodAgenta string) ([]WersjaAgenta, error)
@@ -86,9 +62,7 @@ const (
 	wersjaAgentaPoNumerze = `SELECT ` + kolumnyWersjiAgenta + ` FROM agent_wersja
 	                         WHERE agent_id = (SELECT id FROM agent WHERE kod = ?) AND numer = ?`
 
-	// Przywrócenie idzie JEDNYM poleceniem wraz z podniesieniem licznika, tak
-	// samo jak `aktualizujAgenta` — nie ma stanu, w którym treść jest nowa,
-	// a wersja stara.
+	// Przywrócenie idzie jednym poleceniem z podniesieniem licznika wersji, tak samo jak zapis tożsamości.
 	przywrocTrescWersji = `UPDATE agent
 	                       SET nazwa = ?, opis = ?, instrukcje_systemowe = ?, kanal_kod = ?,
 	                           model = ?, transport = ?, parametry_json = ?, imie_wlasne = ?,
@@ -98,8 +72,7 @@ const (
 	                           zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
 	                       WHERE kod = ?`
 
-	// Wyzwalacz zakłada migawkę bez autora i powodu — zna zmianę, nie zna jej
-	// pobudki. Ten zapis dokłada jedno i drugie do wiersza świeżo powstałego.
+	// Wyzwalacz zakłada migawkę bez autora i powodu; ten zapis dokłada oba pola do wiersza świeżo powstałego.
 	oznaczWersjePrzywrocona = `UPDATE agent_wersja
 	                           SET autor = 'restore', powod = ?
 	                           WHERE agent_id = (SELECT id FROM agent WHERE kod = ?)
@@ -177,9 +150,7 @@ func (r *repozytoriumWersjiAgenta) Przywroc(ctx context.Context, kodAgenta strin
 			return fmt.Errorf("dane: nie można przywrócić wersji %d eksperta %q: %w",
 				numer, kodAgenta, err)
 		}
-		// Poziomy pamięci wracają razem z tożsamością, a nie zostają z wersji
-		// bieżącej: migawka je niesie (migracja 281), więc przywrócenie, które
-		// ich nie rusza, oddawałoby wersję w połowie.
+		// Poziomy pamięci wracają razem z tożsamością, nie zostają z wersji bieżącej — migawka je niesie.
 		if err := przywrocPoziomyPamieciWersji(ctx, transakcja, kodAgenta, zrodlo.PoziomyPamieci); err != nil {
 			return err
 		}
@@ -248,7 +219,7 @@ func (r *repozytoriumWersjiAgenta) wersjaPoNumerze(ctx context.Context, kodAgent
 	return wersja, nil
 }
 
-// numerBiezacy odczytuje licznik wersji eksperta po zapisie.
+// numerBiezacy odczytuje licznik wersji eksperta po zapisie zmiany, na podstawie kodu trwałego eksperta.
 func (r *repozytoriumWersjiAgenta) numerBiezacy(ctx context.Context, kodAgenta string) (int, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, numerWersjiBiezacej)
 	if err != nil {
@@ -265,7 +236,7 @@ func (r *repozytoriumWersjiAgenta) numerBiezacy(ctx context.Context, kodAgenta s
 	return numer, nil
 }
 
-// odczytajWersjeAgenta składa migawkę z jednego wiersza wyniku.
+// odczytajWersjeAgenta składa migawkę wersji eksperta wprost z jednego wiersza wyniku zapytania do bazy.
 func odczytajWersjeAgenta(wiersz skaner) (WersjaAgenta, error) {
 	var wersja WersjaAgenta
 	var kanal, model, transport sql.NullString

@@ -3,21 +3,9 @@ import { pole, przyciskAkcji as przycisk, wiersz } from '../../modele/kontrolki-
 import type { StanMultitaskingu } from './stan-multitaskingu';
 import type { ZrodloOkien } from './zrodlo-okien';
 
-/**
- * Nadawanie ról oknom sceny MultitaskingAI. Panel obsady odpowiada za scenę —
- * zakłada okna, pokazuje skład i blokuje drugi egzemplarz roli; ten plik
- * odpowiada za samo nadanie roli i za zdanie o jego skutku.
- *
- * Rolę nadaje `role.assign`, nie `window.update`: ta druga komenda przy roli
- * spoza kontraktu odpowiada `status: ok`, a oddaje okno o roli `standalone` bez
- * `coordinatorWindowId`. Wcielenie niesie wyłącznie `role.update`; pasek niżej
- * jest jego jedynym wołaczem. `window.update` zostaje przy tytule i katalogach.
- *
- * Każde zdanie tego pliku powstaje z pól odpowiedzi, nigdy z treści żądania —
- * zgoda rdzenia nie jest dowodem skutku.
- */
+// Nadawanie ról oknom sceny odpowiada za samo nadanie i za zdanie o skutku z odpowiedzi rdzenia.
 
-/** Treść odmowy wraz z kodem kontraktu. */
+/** Treść odmowy wraz z kodem kontraktu, złożona w jedno pełne zdanie gotowe do pokazania w treści okna. */
 export function powod(blad?: ErrorInfo): string {
   if (blad === undefined) return 'Rdzeń nie podał przyczyny.';
   return `Powód: ${blad.message} (kod ${blad.code}).`;
@@ -39,7 +27,7 @@ export function czyRolaNadana(
   return koordynator !== null && okno.coordinatorWindowId === koordynator.id;
 }
 
-/** Zdanie o założeniu okna wzięte z odpowiedzi rdzenia, nie z żądania. */
+/** Zdanie o założeniu okna wzięte z odpowiedzi rdzenia, nie z żądania, bo zgoda nie jest dowodem skutku. */
 export function zdanieOZalozeniu(
   okno: Window,
   rola: WindowRole,
@@ -96,19 +84,9 @@ export async function przypnijPodKoordynatora(
 }
 
 /**
- * Dopięcie więzi wykonawcy z koordynatorem drugim żądaniem — jawne obejście
- * usterki rdzenia.
- *
- * `window.create` z polem `coordinatorWindowId` kończy się `ok`, ale więzi nie
- * utrwala: `dolozWiezi` w `budowa/server/internal/core/adapter_okna.go` nadpisuje
- * więź z pamięci wartością z bazy, a wiersz okna zakładany przez `utrwalZalozone`
- * jest w tym miejscu pusty. Obsada zostaje wtedy na „Wykonawcy 0 z 2", a okna
- * wykonawców nie mają adresata polecenia.
- *
- * Funkcja powtarza więc `role.assign` zaraz po założeniu okna i mówi w zdaniu
- * wprost, że więź poszła drugim żądaniem. Wołający sprawdza obsadę odczytaną
- * `window.list` już po założeniu okna, więc gdy rdzeń więź utrwali, drugie
- * żądanie nie idzie wcale.
+ * Funkcja dopina więź wykonawcy z koordynatorem drugim żądaniem, bo założenie
+ * okna z tą więzią kończy się powodzeniem, ale rdzeń jej nie utrwala, więc
+ * obsada zostaje niepełna.
  */
 export async function dopnijWiezWykonawcy(
   zrodlo: ZrodloOkien,
@@ -127,7 +105,7 @@ export async function dopnijWiezWykonawcy(
   };
 }
 
-/** Pasek wcielenia — jedyny wołacz `role.update` w kliencie. */
+/** Pasek wcielenia — jedyny wołacz komendy zmiany roli w kliencie, z blokadą, gdy obsada nie ma koordynatora. */
 export interface PasekWcielenia {
   element: HTMLElement;
   /** Przerysowuje blokadę po zmianie obsady. */
@@ -135,12 +113,9 @@ export interface PasekWcielenia {
 }
 
 /**
- * Pasek nadania wcielenia roli koordynatora (`role.update`).
- *
- * Wcielenie jest wolnym napisem, bo kontrakt nie definiuje katalogu wcieleń
- * (komentarz pola `persona`) — pasek nie buduje listy do wyboru, tylko przyjmuje
- * napis i powtarza to, co rdzeń oddał. Bez koordynatora przycisk jest zablokowany
- * i niesie powód blokady.
+ * Pasek nadania wcielenia roli koordynatora: wcielenie jest wolnym napisem, bo
+ * kontrakt nie definiuje katalogu wcieleń, a bez koordynatora przycisk jest
+ * zablokowany.
  */
 export function utworzPasekWcielenia(
   zrodlo: ZrodloOkien,
@@ -194,8 +169,7 @@ export function utworzPasekWcielenia(
           potwierdz(`Rdzeń odmówił zmiany wcielenia. ${powod(wynik.blad)}`, false);
           return;
         }
-        // Zdanie mówi, co oddał rdzeń: przyjęcie wywołania z innym wcieleniem
-        // (albo bez wcielenia) nie jest nadaniem tego, o które proszono.
+        // Zdanie mówi, co oddał rdzeń: przyjęcie innego wcielenia nie jest nadaniem tego, o które proszono.
         const oddane = wynik.wynik.persona ?? '';
         if (oddane !== wcielenie) {
           potwierdz(

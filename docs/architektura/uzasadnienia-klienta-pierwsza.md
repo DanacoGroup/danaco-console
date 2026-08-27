@@ -6853,3 +6853,24 @@ Bibliografia wklejana ze schowka i bibliografia wczytywana do menedżera to dwa 
 
 ## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-assistant.ts
 Plik odpowiada wyłącznie za warstwę wywołań kontraktu wraz ze sprawdzianem kształtu odpowiedzi; źródło nie ma własnego stanu i nie buduje ani jednego elementu — stan zleceń mieszka osobno, żeby trzy okna modułu patrzyły na jeden zbiór, a nie na trzy kopie. Żadne wywołanie nie rzuca wyjątkiem: niepowodzenie wraca polem błędu wyniku, a okno pokazuje je w swoim stanie błędu; tą samą drogą wraca odmowa merytoryczna rdzenia i koperta drogi bez uchwytu, więc okno nazywa je wprost zamiast udawać wykonanie. Wyróżnienie ma gdzie zamieszkać po stronie rdzenia, więc okno go nie udaje — powód bez znacznika byłby notatką do wpisu, którego nikt nie wyróżnił. Słuchacz zdarzenia dostaje kopertę, bo koperta niesie sesję okna zlecenia; bez niej zlecenie założone w innym oknie tej samej sesji byłoby nie do odróżnienia od zlecenia cudzej sesji.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-sources-panel.ts — uwaga o pochodzeniu wykazu
+Przy zawężonym wykazie wykaz krótszy od zebranego, bez zdania o liczbie pozycji ukrytych przez filtr, wyglądałby jak wykaz niepełny zamiast przefiltrowanego.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-sources-panel.ts — kolejność trzech stanów wykazu
+Odwrotna kolejność pokazywałaby pustkę w trakcie odczytu i po odmowie odczytu. Jedno nieudane odświeżenie nie unieważnia pozycji już wyświetlonych na ekranie.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/nadanie-rol.ts
+Panel obsady odpowiada za scenę: zakłada okna, pokazuje skład i blokuje
+drugi egzemplarz roli. Rolę nadaje komenda przypisania roli, nie zmiana
+okna: ta druga komenda przy roli spoza kontraktu odpowiada powodzeniem,
+a oddaje okno o roli samodzielnej bez przypięcia do koordynatora. Wcielenie
+niesie wyłącznie komenda zmiany roli, a pasek jest jej jedynym wołaczem;
+zmiana okna zostaje przy tytule i katalogach. Założenie okna z polem
+przypięcia do koordynatora kończy się powodzeniem, ale nie utrwala więzi
+w bazie, a wiersz okna zakładany przy tym zostaje w tym miejscu pusty, więc
+obsada zostaje na niepełnym składzie, a okna wykonawców nie mają adresata
+polecenia. Funkcja powtarza więc żądanie nadania roli zaraz po założeniu
+okna i mówi w zdaniu wprost, że więź poszła drugim żądaniem; wołający
+sprawdza obsadę odczytaną już po założeniu okna, więc gdy rdzeń więź
+utrwali, drugie żądanie nie idzie wcale.

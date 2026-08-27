@@ -3182,3 +3182,24 @@ przypadki dają `channel_unavailable`. Odmowa jedzie wołającemu z powodem od
 doboru, bo „nie skonsultowano" bez zdania dlaczego jest ciszą tam, gdzie
 stała decyzja; podmiana odciętego doradcy na innego byłaby tą samą ciszą,
 tylko z radą w tle.
+
+## budowa/server/internal/core/handlers_agent_wersje.go
+
+Historia i archiwum eksperta stoją w osobnym porcie, a nie w porcie Agenci:
+siedzą w innych tabelach, mają własne repozytoria i wchodzą do rdzenia jednym
+wywołaniem `zarejestrujWersjeEksperta`. Wtopienie ich w interfejs Agenci
+rozdęłoby port biblioteki o pięć czynności z biblioteką niezwiązanych.
+
+Nazwy komend i kształty pól pochodzą wyłącznie z pakietu `shared`; powielenie
+literału nazwy po którejkolwiek stronie jest błędem.
+
+Kształt `AgentVersion` jest ten sam co w `StudioVersion` i `LibraryVersion`:
+`id · agentId · label · suma kontrolna · createdAt`. Migawka tożsamości nie
+jedzie w wierszu wykazu — wykaz trzyma sumę kontrolną, a treść pobiera się
+osobno przy przywróceniu. `mode` jest polem niewymaganym i niesie trzeci stan
+promptu: brak wartości znaczy prompt globalny, `DOLACZ` prompt dopisywany,
+`ZASTAP` odstępstwo jawne.
+
+Kontrakt daje modułowi Agents wyłącznie zdarzenie `agent.changed`, więc
+przywrócenie wersji, archiwizacja i powrót z archiwum rozgłaszają się
+rodzajem `updated` wraz z ekspertem po zmianie.

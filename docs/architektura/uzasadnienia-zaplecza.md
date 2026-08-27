@@ -2167,3 +2167,23 @@ Odwołania do skarbca idą kolumną kroku, a nie adnotacją, celowo przeciwnie d
 
 ## budowa/desktop/src-tauri/src/awaria_startu.rs
 Powłoka Tauri panikuje samodzielnie, gdy funkcja składania okna i zasobnika zwróci błąd podczas startu, zanim jakiekolwiek okno zdąży powstać, ponieważ okna nie są deklarowane statycznie w konfiguracji. Profil wydania ma ustawioną strategię paniki przerywającą proces natychmiast, a podsystem okienkowy poza kompilacją debugową nie daje konsoli — bez własnego haka panika kończy proces bez konsoli, bez okna i bez wpisu w dzienniku, znikając bez śladu dla Operatora. Hak paniki uruchamia się zawsze przed przerwaniem procesu niezależnie od strategii paniki, dlatego jego instalacja jest pierwszą instrukcją funkcji main.
+## budowa/server/internal/store/migracja_131_szablony_studia.sql
+Migracja 131 — szablony fabryczne modułu Studio.
+
+Opracowanie modułu wymienia pięć układów predefiniowanych: pismo, umowa,
+raport, notatka, oferta. Bez nich `studio.template.list` oddaje pustkę,
+a `studio.template.apply` nie ma czego zastosować — komenda działałaby
+poprawnie i bezużytecznie.
+
+── Dlaczego treść stoi w migracji, a nie w kodzie ──────────────────────────
+Szablon jest DANĄ, nie zachowaniem: Operator go czyta, kopiuje i zmienia,
+a nowy szablon ma być wierszem tabeli, nie wydaniem produktu. Zaszycie go
+w kodzie kazałoby przebudować rdzeń, żeby dołożyć układ pisma.
+
+── Dlaczego pola są osobne od treści ───────────────────────────────────────
+Treść niesie znaczniki `{{nazwa}}`, a wykaz pól mówi, które z nich Operator
+ma wypełnić i jak się nazywają po ludzku. Bez wykazu okno musiałoby zgadywać
+pola, parsując treść — i pomyliłoby się przy pierwszym znaczniku w cytacie.
+
+Treści są układami pustymi, nie przykładami: żadnych zmyślonych stron umowy,
+kwot ani nazwisk. Miejsce na dane wskazuje znacznik pola.

@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: sejf poświadczeń — magazyn sekretów bytów rdzenia
-// (kont i punktów dostępu) trzymany poza bazą produktu.
-//
-// Baza zna wyłącznie odwołanie — nazwę wpisu w sejfie. Sam
-// sekret leży w osobnym pliku katalogu danych, z prawami tylko dla właściciela.
-// Dzięki temu odczyt katalogu kont nigdy nie może wynieść sekretu (kolumny na
-// niego nie ma), a mimo to poświadczenie jest trwałe i `hasCredential` mówi
-// prawdę: skoro odwołanie zapisano, sekret istnieje.
-//
-// Sejf jest celowo prosty: jeden plik JSON kluczowany bytem, pod zamkiem. To nie
-// jest magazyn klasy KMS — jest to trwały schowek na sekret, którego rdzeń nie
-// wpuszcza do bazy ani do odpowiedzi. Wymianę na zewnętrzny magazyn (Windows
-// Credential Manager, plik profilu) domyka ten sam interfejs Zapisz/Usun.
+// Odpowiedzialność pliku: sejf poświadczeń, magazyn sekretów bytów rdzenia trzymany poza bazą produktu, w osobnym pliku katalogu danych.
 package dane
 
 import (
@@ -23,7 +11,7 @@ import (
 	"sync"
 )
 
-// nazwaPlikuSejfu to plik sekretów w katalogu danych rdzenia.
+// nazwaPlikuSejfu to plik sekretów w katalogu danych rdzenia, zapisywany z prawami tylko dla właściciela.
 const nazwaPlikuSejfu = "poswiadczenia.sejf"
 
 // przedrostekOdwolania znakuje odwołanie oddawane bazie, żeby było widać, że
@@ -65,12 +53,7 @@ func (s *SejfPlikowy) Zapisz(_ context.Context, byt, poswiadczenie string) (stri
 	return przedrostekOdwolania + byt, nil
 }
 
-// Odczytaj zwraca poświadczenie bytu i znacznik, czy wpis w sejfie istnieje.
-// Byt jest tu surowym kluczem wpisu — bez przedrostka odwołania: rozbiera go
-// wołający (kanał API), a sejf kluczuje bytem dokładnie tak, jak zapisał
-// w Zapisz. Brak pliku, brak wpisu i nieczytelna treść dają ten sam wynik
-// „nie ma" bez błędu: warstwa wyżej odmawia wtedy wywołania tak samo
-// jak przy pustej zmiennej środowiskowej, zamiast wywracać się na braku sekretu.
+// Odczytaj zwraca poświadczenie bytu i znacznik, czy wpis w sejfie istnieje; brak pliku i brak wpisu dają ten sam wynik bez błędu.
 func (s *SejfPlikowy) Odczytaj(_ context.Context, byt string) (string, bool) {
 	byt = strings.TrimSpace(byt)
 	if byt == "" {
@@ -86,7 +69,7 @@ func (s *SejfPlikowy) Odczytaj(_ context.Context, byt string) (string, bool) {
 	return poswiadczenie, jest
 }
 
-// Usun kasuje poświadczenie bytu. Brak wpisu nie jest błędem.
+// Usun kasuje poświadczenie bytu z sejfu wraz z jego odwołaniem w bazie danych; brak wpisu nie jest błędem.
 func (s *SejfPlikowy) Usun(_ context.Context, byt string) error {
 	byt = strings.TrimSpace(byt)
 	if byt == "" {

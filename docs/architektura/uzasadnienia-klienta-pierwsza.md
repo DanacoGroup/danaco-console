@@ -344,3 +344,30 @@ zarządcze warstw trzeciej i czwartej modułu biblioteki (opis zasobu, słownik
 etykiet, tezaurus, reguły, higienę, cykl życia, utrwalenie, udostępnienia
 i sugestie). Kształt pozostaje jeden — `ZrodloBiblioteki` — więc okna nadal
 widzą jedno źródło.
+
+## budowa/klient-poprzedni/src/moduly/automations/okno-scheduler.ts
+
+Cykliczność w oknie Schedulera ustala się wzorcem, nie samą składnią: Operator wybiera
+opis w rodzaju „co tydzień, poniedziałek, 07:00”, a okno składa z tego zapis cron według
+kontraktu wzorców z `wzorce-cyklicznosci.ts`. Pole zapisu cron pozostaje przy tym widoczne
+i edytowalne — zapis wpisany wprost jest rozpoznawany z powrotem jako wzorzec, a zapis,
+którego żaden wzorzec nie obejmuje, jest wzorcem własnym i idzie do rdzenia w całości, bez
+udziału kreatora.
+
+Harmonogram obowiązuje dopiero po powiązaniu z automatyką, dlatego okno wprost nazywa ten
+warunek zamiast odmawiać zapisu bez wyjaśnienia przyczyny.
+
+Potwierdzenie po zapisie opiera się na polach `enabled` i `nextRunAt` odpowiedzi rdzenia,
+nie na treści żądania: gdyby zdania „wstrzymany” i „wznowiony” zależały od tego, o co okno
+prosiło, rdzeń, który zapisu nie przyjął zgodnie z żądaniem Operatora, dostawałby od okna
+potwierdzenie czynności, która się nie odbyła.
+
+Pola kreatora cykliczności stoją w rzędzie zawsze, niezależnie od wybranego wzorca, zamiast
+chować pola nieużywane przez dany wzorzec: pole schowane przy przełączeniu wzorca
+przeskakiwałoby układ pod ręką Operatora, a pole nieużywane jest nieszkodliwe, bo jego
+wartość po prostu nie wchodzi do zapisu.
+
+Kalendarz uruchomień czyta przebiegi bez wskazania okna, więc rdzeń nie zakłada na oknie
+Schedulera obserwacji telemetrii — kalendarz jest jednorazowym zdjęciem stanu, a stała
+obserwacja przebiegów należy do Execution Monitora i ma pozostać jej jedynym odbiorcą
+w module Automations.

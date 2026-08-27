@@ -5,22 +5,7 @@ import { idSesji } from './komenda';
 import { NAZWY_WARSTW, type StanWarstwy } from './stan-warstwy';
 import type { StanZasiegu } from './stan-zasiegu';
 
-/**
- * Punkt widzenia podglądu polityki — czego dotyczy „polityka efektywna".
- *
- * `isolation.policy.preview` bez podanego punktu widzenia schodzi w rdzeniu po
- * kolejce `scope > windowId > sessionId > global` aż do poziomu globalnego,
- * więc oddałby politykę całej platformy pod nazwą „efektywna". Panel podaje
- * punkt odniesienia jawnie: `sessionId` z kanału, `layer` z pasa narzędzi okna,
- * `scope` i `scopeId` z selektora zasięgu (panel lewy), a `windowId` z pola
- * wypełnianego przez Operatora — okno otwiera się z listwy Ustawień i nie jest
- * związane z żadnym oknem komunikacji, więc `Kanal` niesie wyłącznie sesję.
- *
- * Poziomu ten panel nie wybiera po raz drugi. Podgląd ma pokazywać wynik
- * dziedziczenia aż do poziomu wskazanego w selektorze zasięgu (rozdz. 6.4
- * Modelu konfiguracji); własna lista poziomów kazałaby czytać politykę innego
- * poziomu niż ten, na którym Operator właśnie przestawia macierz.
- */
+/** Punkt widzenia podglądu polityki — czego dotyczy nazwa „polityka efektywna" w oknie punktów izolacji. */
 export interface PunktWidzeniaPodgladu {
   /** Panel montowany nad tabelą podglądu. */
   element: HTMLElement;

@@ -5,18 +5,9 @@ import { skutekPobrania, skutekPrzechwycenia, skutekPrzekazania } from './skutek
 import type { StanPrzegladania } from './stan-przegladania';
 
 /**
- * Rozmowa Capture & Monitor Panel z rdzeniem: przechwycenie strony, założenie
+ * Rozmowa panelu Capture & Monitor z rdzeniem: przechwycenie strony, założenie
  * i sprawdzenie monitora zmian, otwarcie pozycji oraz przekazanie materiału
  * do modułów Library i Research.
- *
- * Jedna odpowiedzialność: wywołania rdzenia w imieniu panelu. Panel składa
- * kontrolki i wykaz, pamięć materiału stoi w `material-sesji.ts`, ocena
- * odpowiedzi w `skutek-zapisu.ts`.
- *
- * Sprawdzenie monitora przechodzi pod jego adres, bo `browser.snapshot.get`
- * oddaje treść strony bieżącej okna, a nie dowolnej. Znaczy to, że sprawdzenie
- * przestawia wspólny podgląd — Operator ma o tym wiedzieć przed naciśnięciem,
- * nie po nim, więc mówi mu to i dymek przy pozycji, i zdanie odpowiedzi.
  */
 export interface CzynnosciMaterialu {
   /** `browser.snapshot.get` ze zrzutem i źródłem strony; pozycja materiału sesji. */
@@ -127,9 +118,7 @@ export function utworzCzynnosciMaterialu(
         return;
       }
       powiedz(`Przekazanie materiału sesji do modułu ${kodModulu}…`, true);
-      // Komplet kontekstu nie ma pola na migawki strony, więc wykaz idzie
-      // poleceniem wyjściowym. Zdanie o skutku mówi to wprost — inaczej
-      // Operator sądziłby, że w module docelowym stanął obraz, a nie spis.
+      // Kontekst nie ma pola na migawki, więc wykaz idzie poleceniem wyjściowym, nie jako obraz strony.
       const wykaz = pozycje
         .map((pozycja) => `${pozycja.migawka.url} (migawka ${pozycja.migawka.id})`)
         .join('\n');
@@ -153,7 +142,7 @@ export function utworzCzynnosciMaterialu(
   };
 }
 
-/** Zdanie o wyniku sprawdzenia monitora wraz z miarą różnicy. */
+/** Zdanie o wyniku sprawdzenia monitora wraz z miarą różnicy zastanej na stronie od ostatniego przebiegu. */
 function zdanieOSprawdzeniu(monitor: MonitorZmian): string {
   if (monitor.wynik === 'bez-zmian') {
     return `Monitor ${monitor.adres}: treść bez zmian względem odniesienia.`;

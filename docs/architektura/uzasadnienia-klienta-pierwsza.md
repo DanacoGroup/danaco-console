@@ -5651,3 +5651,9 @@ Rodziny komend dołożone ponad migawkę, źródło i notatkę — otwieranie i 
 przestrzenie robocze, monitory, kanały, listy do przeczytania, zakładki i narzędzia
 deweloperskie przeglądarki — są każda jedną komendą kontraktu bez własnego stanu warstwy:
 sprawdzają wyłącznie kształt odpowiedzi rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/automations/panel-zlecen.ts
+
+Okno Queue Managera pokazywało dotąd kolejkę jako całość i mówiło wprost, że wykazu zleceń rdzeń nie oddaje. Ten panel jest odpowiedzią na to zdanie: odczyt wykazu zleceń oddaje zlecenia wraz z ładunkiem, próbami i terminem, odczyt głębokości kolejki oddaje obciążenie w czasie, a jedenaście pozostałych czynności posuwa pojedyncze zlecenie.
+
+Kolejka bierze się ze stanu modułu, a pole jej wskazania zostaje: Operator bywa w Queue Managerze przy kolejce innej niż bieżąca automatyka, na przykład kierując zlecenie do kolejki przeglądu ręcznego.

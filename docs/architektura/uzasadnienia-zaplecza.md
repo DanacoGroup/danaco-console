@@ -3191,3 +3191,32 @@ historia zostaje, bo z niej widać, kiedy integracja zaczęła się psuć.
 
 ## budowa/server/internal/store/migracja_017_urzadzenia.sql
 Tabela urzadzenie stała w schemacie bez ścieżki zapisu: żadne repozytorium jej nie obsługiwało, więc wiersz dało się wnieść wyłącznie poleceniem wprost w bazie. Blokowało to punkty dostępu rodzaju katalogu lokalnego, bo więz wcześniejszej migracji wymaga wskazania urządzenia, a żadnego urządzenia nie dało się założyć. Kolumna nazwy hosta niesie fakt maszyny, nie napis Operatora — kolumna nazwy do pokazania pozostaje osobna i rozpoznanie startowe jej nie nadpisuje, żeby nie kasować pracy Operatora przy każdym uruchomieniu rdzenia. Kolumna oznaczenia maszyny bieżącej odpowiada na pytanie, na czym stoi rdzeń, bez ponownego rozpoznania w każdej warstwie, która chce zaproponować urządzenie dla katalogu lokalnego. Migracja idzie poleceniem dołożenia kolumn, nie przebudową tabeli, bo do urządzenia odwołują się inne tabele kluczem obcym, a wyłączenie więzów kluczy obcych nie działa wewnątrz transakcji migracji. Wierszy zastanych migracja nie zgaduje: pustej nazwy hosta nie wolno wypełnić wartością kolumny nazwy do pokazania, bo ta nazwa nie jest dowodem nazwy hosta — puste znaczy nierozpoznane i wypełni je pierwsze rozpoznanie maszyny.
+## budowa/server/internal/store/migracja_209_rozszerzenia_integracje.sql
+Migracja 209 — rodzina `extension.*`, warstwa integracji zewnętrznych:
+transport i poświadczenie integracji, webhooki oraz odwzorowania danych.
+
+TRANSPORT JEST WŁASNOŚCIĄ INTEGRACJI, NIE PUNKTU DOSTĘPU.
+`extension.transport.set` przyjmuje transport wraz z adresem albo poleceniem
+procesu, a `punkt_dostepu` (migracja 013) opisuje most maszyny, nie sposób
+rozmowy z serwerem MCP tej pozycji. Wiersz niżej trzyma to, czym rdzeń woła
+serwer: wybrany transport, adres nasłuchu i polecenie procesu lokalnego.
+
+POŚWIADCZENIE TO ODWOŁANIE, NIGDY TREŚĆ. `extension.credential.bind` przyjmuje
+`credentialRef` — klucz jawny warstwy sekretów — i zakres uprawnień OAuth2.
+Hasła, tokenu ani klucza API w tej tabeli nie ma i nie będzie; wprowadzenie
+ich zostaje po stronie Operatora, a rdzeń trzyma wyłącznie nazwę, po której
+sejf je wydaje.
+
+WEBHOOK MA JEDNĄ TABELĘ NA OBA KIERUNKI. Przychodzący niesie adres nasłuchu
+i odwołanie do sekretu podpisu HMAC, wychodzący — adres docelowy i wykaz
+zdarzeń platformy. Kształt jest wspólny, więc dwie tabele byłyby dwiema
+prawdami; kolumna `kierunek` rozstrzyga, które pola mają znaczenie.
+
+ODWZOROWANIE TRZYMA REGUŁY JAKO SUROWY JSON. Kontrakt niesie je polem `rules`
+typu `json`, a kształt reguły należy do systemu zewnętrznego. Rozłożenie ich
+na kolumny byłoby wyborem cudzego kształtu zrobionym przez platformę.
+
+── Transport i poświadczenie integracji ─────────────────────────────────────
+Jeden wiersz na pozycję: `extension.transport.set` i `extension.credential.bind`
+zmieniają dwie strony tej samej rozmowy z jednym serwerem, więc zapis jest
+UPSERT-em po kodzie pozycji, nie dziennikiem kolejnych nastaw.

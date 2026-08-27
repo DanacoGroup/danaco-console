@@ -4913,3 +4913,12 @@ Czas trwania i rozmiar przychodzą z programu pomiaru jako tekst, sekundy z uła
 Odpowiedź nieczytelna programu pomiaru daje odmowę, nie pusty wynik: zakończenie powodzeniem bez poprawnego zapisu strukturalnego znaczy plik nie będący materiałem albo program w wydaniu, którego rdzeń nie rozumie.
 
 Brak wymiarów strumienia oddaje dwie pustki, bo zasób bez wymiarów ma nie nieść wartości liczbowej; zero znaczyłoby zmierzone zero pikseli.
+
+## budowa/server/internal/core/handlers_message.go
+Odpowiedź na komendę wysłania wiadomości potwierdza wyłącznie przyjęcie
+wiadomości; treść modelu wraca osobno strumieniem fragmentów przez nadajnik.
+Rozdzielenie jest celowe, bo strumień trwa dłużej niż wykonanie komendy,
+a klient musi dostać potwierdzenie od razu. Komenda zatrzymania odpowiada
+zawsze, niezależnie od stanu pętli — przycisk zatrzymania jest czynny bez
+względu na to, czy było co zatrzymywać; gdy nie było, wynik niesie znacznik
+zatrzymania równy fałsz, a nie błąd.

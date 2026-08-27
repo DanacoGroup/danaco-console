@@ -3366,3 +3366,130 @@ spodziewal.
 
 szerokoscTekstuDesignu: pomiar ma sie udac nawet dla tekstu z jednym
 znakiem spoza kroju, bo sluzy do ulozenia podgladu, nie do wydania.
+
+Identyfikator listu jest parą folder:UID, bo kontrakt daje
+`mail.message.get` i `mail.message.flag` samo messageId, bez folderu, a UID
+w IMAP-ie jest unikalny wyłącznie w obrębie folderu: bez folderu
+w identyfikatorze nie dałoby się odnaleźć listu, którego wykaz przed chwilą
+oddał, a szukanie po wszystkich folderach byłoby zgadywaniem, który z kilku
+listów o tym samym UID jest ten właściwy.
+
+Pole NazwyZalacznikow mówi, co jest w liście, a bajty ciągnie dopiero
+`Pobierz`.
+
+Folder szkiców i wysłanych bywa nazwany przez serwer inaczej (INBOX.Drafts,
+[Gmail]/Wersje robocze).
+
+Klient nie jest pulą połączeń: skrzynka należy do Operatora, więc trzymanie
+w niej stałego uchwytu i zajmowanie limitu połączeń jego dostawcy byłoby
+zabraniem sobie czegoś, czego nie dano.
+
+Odmowa Polacz nazywa swój brak osobnym zdaniem: brak hosta, brak
+poświadczenia, protokół nieobsługiwany, serwer nieosiągalny i odrzucone
+poświadczenie to pięć różnych braków; jedno wspólne zdanie zostawiłoby
+Operatora bez wskazówki, co ma naprawić.
+
+Adres w Polacz idzie przez net.JoinHostPort tym samym powodem, co przy
+wysyłce (`smtp.go`): adres IPv6 niesie własne dwukropki.
+
+Weryfikacja łańcucha TLS wyłącza się wyłącznie wtedy, gdy Operator tak
+zapisał przy skrzynce — nigdy sama, nigdy z powodu localhost.
+
+Port 143 ze STARTTLS jest u dostawców regułą, a `DialInsecure` puściłoby
+hasło Operatora łączem jawnym także tam, gdzie serwer oferuje szyfrowanie.
+Biblioteka nie wystawia wariantu podnieś-jeśli-ogłoszone — ma
+`DialStartTLS` (podnosi zawsze) albo `DialInsecure` (nie podnosi nigdy).
+Odpowiedź BAD/NO na komendę STARTTLS znaczy, że serwer jej nie zna, i wtedy
+gniazdo jawne jest jedyną drogą. Zerwany uścisk TLS albo niezaufany łańcuch
+znaczą co innego — szyfrowanie jest, tylko nie jest zaufane — a ciche
+zejście na jawne obniżyłoby ochronę dokładnie w chwili, w której pojawił
+się powód do czujności.
+
+Gniazdo jawne w polaczJawnymGniazdem jest jedyną drogą tak samo dla
+skrzynki na tej samej maszynie, jak dla przekaźnika w sieci Operatora.
+
+## budowa/server/internal/wiedza/wskaznik.go
+
+Ten plik zbiera drogę od dokumentu do trafienia w jeden byt.
+
+Wnoszenie idzie dokument po dokumencie: biblioteka Operatora bywa gigabajtem
+tekstu. Jedna transakcja na całość znaczyłaby komplet wektorów w pamięci
+rdzenia, a przerwanie w połowie — cofnięcie wszystkiego, co już policzono
+kwadransem procesora. Dlatego granica niepodzielności biegnie po dokumencie:
+każdy, który wszedł, wszedł w całości (`Skladnica.Zapisz`), przerwany
+przebieg zostawia wskaźnik niepełny, ale spójny, a powtórzenie dokańcza
+resztę.
+
+Kasowanie źródła poprzedza zapis: dokument skrócony od poprzedniego
+przebiegu zostawiłby inaczej fragmenty treści, której już w nim nie ma —
+a wracałyby jako cytat z dokumentu, w którym ich nie ma. Sam zapis jest
+wprawdzie nadpisujący (warunek jednoznaczności: zakres, kod źródła,
+kolejność, model), ale nadpisuje tylko te numery fragmentów, które przyszły;
+nadmiarowe zostają. Kasowanie jest w tej samej chwili co zapis i dla tego
+samego źródła, więc okno, w którym dokument jest niewidoczny, trwa tyle, ile
+jedna transakcja.
+
+Czytanie źródeł dokumentu (repozytorium biblioteki, historii rozmów, plików
+przestrzeni roboczej) należy do warstwy, która te repozytoria zna
+(`core/adapter_modul_wiedza_zrodla.go`). Druga droga do wierszy biblioteki
+założona w tym pliku byłaby drugą prawdą o tym, co Operator w niej ma.
+
+Pole `Zakres` struktury `Dokument`: napis przychodzi z adaptera, bo to on zna
+wyliczenie kontraktu.
+
+Pole `ZrodloKod`: pusty jest stanem poprawnym dla źródeł, które kodu nie mają.
+
+Pole `skladnica` struktury `Wskaznik`: trwałość przy bazie rdzenia
+(`store/migracja_115_wskaznik_znaczenia.sql`).
+
+Pole `dlugoscFragmentu`: wartość spoza przedziału sensownego sprowadza
+`Podziel` do domyślnej — jeden strażnik tej liczby, nie dwóch.
+
+`Wnies`: dokument bez treści dającej się podzielić jest pomijany, a nie
+odmawiany; plik pusty w bibliotece nie ma prawa odebrać Operatorowi wskaźnika
+pozostałych. Liczba wniesionych do tej chwili wraca razem z odmową: przebieg
+przerwany w połowie zostawia wskaźnik niepełny i wołający ma wiedzieć, ile
+weszło, zamiast zgadywać, czy weszło cokolwiek.
+
+`Szukaj`: wektor pytania z modelu innego niż wektory wskaźnika daje iloczyn
+skalarny, który jest liczbą i nie znaczy nic. Zawężenie odczytu po nazwie
+modelu jest jedyną obroną przed tym po zmianie ustawienia — a nazwa jest
+jedna, bo pyta się o nią tego, kto liczy. Wynik pusty jest odpowiedzią, nie
+odmową: wskaźnik pusty albo wiedza bez związku z pytaniem znaczą „nie mam na
+to nic". Inaczej niż brak silnika, który jest odmową, bo wtedy rdzeń nie wie,
+czy ma coś, czy nie ma.
+## server/internal/core/adapter_modul_design_wyrys.go
+
+Dotad kompozycja jezdzila do rdzenia i z powrotem jako uklad warstw i nie
+miala drogi wyjscia poza rdzen: Operator widzial tablice na ekranie i nie
+mogl jej nikomu wyslac. Warstwy schodza na jedno plotno przez image/draw
+(PNG), przez pdfcpu (PDF) i przez sklejenie XML-a (SVG). Przegladarki
+bezglowej tu nie ma i miec nie bedzie — instalka Operatora jej nie niesie,
+a funkcja zalezna od programu spoza instalki jest u niego odmowa, nie
+funkcja. Kompozycja bez ani jednej warstwy z bajtami nie ma czego
+wyrysowac. Rdzen odmawia zamiast oddac przezroczysty prostokat: plik,
+ktory po otwarciu jest pusty, wyglada identycznie jak plik uszkodzony
+i Operator nie ma z czego poznac, ze to jego tablica byla pusta. Warstwa
+wskazujaca zasob usuniety z Assets Panel (kolumna zasob_id jest TEXT, nie
+wiezem obcym) zostaje pominieta. Gdy przez to nie zostaje NIC, odmowa
+nazywa liczbe warstw pominietych, zeby Operator wiedzial, ze tablica nie
+byla pusta, tylko rozsypana.
+
+kafleWyrysuDesignu: warstwa bez zasobu i warstwa wskazujaca zasob bez
+bajtow sa pomijane, nie odmawiane — kompozycja bywa robocza i jedna
+zgubiona warstwa nie ma prawa odebrac Operatorowi wyrysu pozostalych.
+
+obszarWyrysuDesignu: Operator zaznaczyl ramka fragment kanwy i marginesu,
+ktorego zazadal, nie odbiera mu sie tego po cichu.
+
+zlozWyrysRastrowyDesignu: kolejnosc wykazu jest juz kolejnoscia warstw
+(ORDER BY kolejnosc, id), wiec warstwa pozniejsza klada sie na
+wczesniejszej, tak jak na kanwie. Skalowanie kazdej warstwy idzie filtrem
+CatmullRom, tym samym co przy wydaniu zasobu: dwa wyrysy tej samej grafiki
+nie maja prawa roznic sie ostroscia zaleznie od tego, ktora komenda
+powstaly.
+
+zlozWyrysSvgDesignu: tresc jest osadzona, nie dowiazana. Odsylacz do pliku
+w magazynie rdzenia nie otworzy sie nigdzie poza ta maszyna, a wyrys ma
+byc plikiem, ktory Operator wysyla dalej — dokument wskazujacy cudze
+sciezki bylby pusta ramka u kazdego odbiorcy.

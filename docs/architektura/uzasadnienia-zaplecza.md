@@ -2749,3 +2749,30 @@ wprost. Domyślną jest `card` — pamięć własna karcie sesji; pary szersze
 Polityka pamięci jest osobną tabelą, nie kolumnami okna: `memory.policy.get`
 odpowiada wtedy „polityki nie ustawiono” brakiem wiersza, zamiast czterema
 kolumnami NULL, których nie da się odróżnić od polityki wyzerowanej.
+
+## budowa/server/internal/store/migracja_270_automations_dziennik_przebiegu.sql
+Dziennik przebiegu automatyki musi przeżyć restart rdzenia, ponieważ przeglądarka logów pokazuje pełny zapis zdarzeń pojedynczego uruchomienia, także sprzed otwarcia okna, a strumień na żywo niesie wyłącznie zdarzenia zaistniałe przy otwartym oknie. Dziennik trzymany wyłącznie w pamięci procesu byłby dziennikiem, którego po restarcie nie ma, choć przebieg dalej widnieje w historii.
+## budowa/server/internal/store/migracja_161_segmentacja_tlumaczenia.sql
+Migracja 161 — segmentacja modułu Translate: zestawy reguł podziału
+(`translate.segmentation.rules.*`) i trwałe segmenty okna
+(`translate.segment.merge`, `translate.segment.split`).
+
+Migracja 053 stwierdzała, że segment nie jest bytem trwałym, bo jedyna
+komenda, która go dotykała (`source.segment`), dzieliła tekst w locie.
+Scalanie i podział segmentów zmieniają to wprost: po scaleniu dwóch zdań
+podział wynikający z tekstu źródłowego przestaje być prawdą o segmentach
+okna, a kolejne wywołanie musi zobaczyć wynik poprzedniego. Bez tabeli
+`segment_okna_tlumaczenia` obie komendy oddawałyby wykaz, który znika razem
+z odpowiedzią — czyli meldunek zamiast skutku.
+
+Wiersze zakładane są leniwie: dopóki nikt nie scalał ani nie dzielił,
+okno nie ma ani jednego wiersza i podział liczy się z tekstu źródłowego.
+Pierwsze scalenie albo pierwszy podział utrwala cały bieżący wykaz, a potem
+zmienia w nim jedną rzecz — inaczej numer segmentu w żądaniu wskazywałby na
+inny segment niż ten, który Operator widział.
+
+Zestaw reguł segmentacji jest odrębny od okna: to nastawa wielokrotnego
+użytku (kontrakt: `SegmentationRuleset` z własnym identyfikatorem i językiem).
+`srx` niesie treść pliku SRX podaną przez Operatora — standard branżowy,
+którego rdzeń nie rozkłada na własne reguły; przechowywany w całości, żeby
+eksport oddał to samo, co przyszło.

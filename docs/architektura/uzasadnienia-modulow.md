@@ -799,3 +799,26 @@ Nasłuch zakłada rdzeń, a adapter dzwoni do niego adresem klienta. Odwrotna
 kolejność wymagałaby odczytania portu z wyjścia adaptera, czyli rozbioru
 tekstu spoza protokołu. Port wybiera jądro systemu, więc dwie sesje naraz nie
 zderzą się o ten sam numer.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_architektura.go
+
+Walidacja architektury liczy zastrzeżenia, nie tylko je przechowuje: migracja
+opisana kontraktem zostawiła w architekturze kolumnę zastrzeżeń walidacji,
+a definicja układu przepisuje ją bez zmiany, bo nie ma z czego liczyć nowych
+wartości. Komenda walidacji przechodzi komponenty i graf zależności i wykrywa
+cztery rzeczy: komponent bez ani jednej krawędzi, krawędź wskazującą
+komponent spoza układu, cykl w grafie zależności oraz układ bez ani jednego
+komponentu. Policzone zastrzeżenia wracają do kolumny, więc kolejny odczyt
+architektury pokazuje je bez powtarzania rachunku, a definicja układu, która
+je przepisuje bez zmiany, nie kasuje pracy walidatora.
+
+Żadne zastrzeżenie niczego nie blokuje: kontrakt nazywa je ostrzeżeniem, nie
+bramą, więc walidacja jest komendą odczytu z zapisem wyniku, nie warunkiem
+zapisu układu.
+
+Eksport wytwarza plik, nie opis pliku. Cztery formaty kontraktu powstają
+bibliotekami wkompilowanymi w binarium — svg, mermaid i markdown są tekstem
+składanym w tym module, png rysuje obraz rastrowy biblioteką standardową
+wraz z czcionką rastrową wkompilowaną w binarium. Żaden format nie woła
+programu zewnętrznego, więc eksport działa na instalacji, która niesie sam
+rdzeń.

@@ -2264,3 +2264,54 @@ wejściowego jest tylko uchwytem, nie deklaracją formatu. Kopia zamiast
 dowiązania jest drogą zapasową na wypadek, gdy dowiązanie się nie uda —
 magazyn na innym nośniku niż katalog tymczasowy albo system plików bez
 dowiązań.
+
+## budowa/server/internal/core/adapter_narzedzia_archiwum_spis.go
+
+Ścieżki wychodzące poza katalog docelowy: spis sprawdza się przed
+rozpakowaniem, a nie ścieżki po nim, i to jest wybór, nie skrót.
+Sprawdzenie po rozpakowaniu przychodzi za późno z definicji: pozycja
+`../../.ssh/authorized_keys` jest już wtedy zapisana, a wykrycie
+nadpisania nie odkręca nadpisania — odmowa ma paść, zanim poleci pierwszy
+bajt. Spis czyta to samo binarium, które będzie rozpakowywać, i w tym
+samym przebiegu wywołań, więc oglądane jest dokładnie to, co `7z` z tego
+archiwum odczytuje, a nie własne wyobrażenie o formacie zip; własny
+czytnik nagłówków zip w Go byłby drugą prawdą o zawartości archiwum,
+a rozjazd między czytnikiem sprawdzającym a rozpakowującym jest
+klasycznym sposobem obejścia takiej kontroli.
+
+`7z x` przy rozpakowaniu sam obcina człon `..` i zapisuje pozycję
+wewnątrz katalogu docelowego. Ta obrona binarium jest prawdziwa, ale nie
+jest tą, na której stoi rdzeń, z dwóch powodów: jest cudzą własnością
+i cudzą wersją — archiwum wychodzące poza katalog ma zostać odmówione na
+każdej maszynie i przy każdym `7z`, a nie rozpakowane inaczej, niż
+zapowiada; a ciche obcięcie członu jest zmianą znaczenia bez powiedzenia
+o tym — Operator dostałby drzewo inne niż to, które archiwum opisuje,
+i nie dowiedziałby się o tym. Nazwanie braku jest uczciwsze niż
+naprawienie archiwum po cichu.
+
+Pewność bierze się więc z trzech warstw naraz: spis odmawia przed
+zapisem, rozpakowanie idzie do kwarantanny (pustego katalogu, w którym
+nie ma czego nadpisać), a przejście po wyniku sprawdza, co naprawdę
+powstało — dopiero potem treść wchodzi do katalogu Operatora.
+
+Dowiązania są odmawiane, nie rozpakowywane: pozycja będąca dowiązaniem
+symbolicznym wychodzi poza katalog docelowy inaczej niż członem `..` —
+sama w sobie jest niewinna, ale wskazuje na zewnątrz, a kolejna pozycja
+archiwum zapisuje przez nią, i zapis ląduje tam, gdzie wskazuje
+dowiązanie. `7z l -slt` pokazuje na warstwie `tar` pole `Symbolic Link`,
+więc dowiązanie widać w spisie bez zgadywania.
+
+Archiwum puste w odczycie jest odmową, a nie pustym wynikiem: `7z`, który
+nie umiał odczytać spisu (archiwum uszkodzone, zaszyfrowany nagłówek),
+zostawia rdzeń bez wiedzy o zawartości, a rozpakowanie czegoś
+nieobejrzanego omijałoby wszystkie sprawdzenia niżej.
+
+Postać zwykła `7z l` jest tabelą kolumnową z nazwą uciętą do szerokości
+kolumny — ścieżki nie da się z niej odczytać wiernie, a wyrok o ścieżce
+odczytanej niewiernie nie jest wart nic; stąd wybór formatu `-slt`.
+
+Członu `..` w `sprawdzSciezkePozycji` szuka się po rozbiciu ścieżki na
+człony, a nie napisem: `strings.Contains(sciezka, "..")` odmówiłby
+uczciwemu plikowi `wersja..txt`, a przepuściłby postacie nieprzewidziane
+jako napis. Człon jest jednostką, w której ścieżka naprawdę się
+rozstrzyga.

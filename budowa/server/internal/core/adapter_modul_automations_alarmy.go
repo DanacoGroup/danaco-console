@@ -1,16 +1,7 @@
-// Odpowiedzialność pliku: reguły alarmowania Execution Monitora, budżety czasu
-// przebiegu i kroku, skarbiec poświadczeń oraz odczyt dziennika audytu.
-//
-// Skarbiec ma jedną zasadę i cały ten plik jej pilnuje: WARTOŚĆ POŚWIADCZENIA
-// NIE WRACA NIGDY. Zapis oddaje samą referencję, wykaz oddaje same referencje,
-// a usunięcie oddaje sam skutek. Wartość idzie do sejfu plikowego katalogu
-// danych — tego samego, którym jadą sekrety kont i punktów dostępu — i baza
-// jej nie widzi, bo kolumny na nią nie ma.
-//
-// Usunięcie poświadczenia NIE jest wstrzymywane tym, że kroki je przywołują.
-// Kontrakt mówi to wprost: pole `referencingStepIds` nazywa kroki, które
-// straciły pokrycie, a usunięcie i tak następuje. Skarbiec, który odmawiałby
-// zdjęcia wykradzionego klucza, byłby skarbcem działającym przeciw właścicielowi.
+// Odpowiedzialność pliku: reguły alarmowania Execution Monitora, budżety
+// czasu przebiegu i kroku, skarbiec poświadczeń oraz odczyt dziennika
+// audytu. Skarbiec ma jedną zasadę: wartość poświadczenia nie wraca nigdy
+// w odpowiedzi.
 package core
 
 import (
@@ -28,7 +19,8 @@ type SejfPoswiadczenAutomatyki interface {
 	Usun(ctx context.Context, byt string) error
 }
 
-// UstawReguleAlarmowania zapisuje warunek i kanały powiadomień.
+// UstawReguleAlarmowania zapisuje warunek i kanały powiadomień reguły; brak
+// identyfikatora zakłada nową regułę, istniejący nadpisuje starą.
 func (a *adapterAutomatyk) UstawReguleAlarmowania(ctx context.Context,
 	z shared.AutomationAlertRuleSetRequest) (shared.AutomationAlertRuleSetResponse, error) {
 
@@ -57,7 +49,8 @@ func (a *adapterAutomatyk) UstawReguleAlarmowania(ctx context.Context,
 	return shared.AutomationAlertRuleSetResponse{Rule: regulaAlarmowaniaAutomatyki(zapisana)}, nil
 }
 
-// WykazRegulAlarmowania oddaje reguły automatyki albo komplet reguł Operatora.
+// WykazRegulAlarmowania oddaje reguły automatyki albo, bez wskazanej
+// automatyki, komplet reguł należących do Operatora.
 func (a *adapterAutomatyk) WykazRegulAlarmowania(ctx context.Context,
 	z shared.AutomationAlertRuleListRequest) (shared.AutomationAlertRuleListResponse, error) {
 
@@ -130,8 +123,7 @@ func (a *adapterAutomatyk) ZapiszPoswiadczenie(ctx context.Context,
 		poswiadczenie.Zasieg = &zasieg
 	}
 	if err := a.repozytorium.ZapiszPoswiadczenieAutomatyki(ctx, poswiadczenie); err != nil {
-		// Baza odmówiła, więc wpis sejfu zostaje osierocony — zdejmujemy go,
-		// żeby wartość nie leżała w sejfie bez niczyjej wiedzy.
+		// Baza odmówiła, więc osierocony wpis sejfu zostaje zdjęty od razu.
 		_ = a.sejf.Usun(ctx, byt)
 		return shared.AutomationSecretSetResponse{}, bladAutomatyki(err)
 	}
@@ -144,7 +136,8 @@ func (a *adapterAutomatyk) ZapiszPoswiadczenie(ctx context.Context,
 	return shared.AutomationSecretSetResponse{Secret: poswiadczenieKontraktu(zapisane)}, nil
 }
 
-// WykazPoswiadczen oddaje referencje dostępne krokom. Wartości nie wracają.
+// WykazPoswiadczen oddaje referencje poświadczeń dostępne krokom automatyki.
+// Wartości poświadczeń nie wracają nigdy w odpowiedzi.
 func (a *adapterAutomatyk) WykazPoswiadczen(ctx context.Context,
 	z shared.AutomationSecretListRequest) (shared.AutomationSecretListResponse, error) {
 
@@ -164,7 +157,8 @@ func (a *adapterAutomatyk) WykazPoswiadczen(ctx context.Context,
 }
 
 // UsunPoswiadczenie zdejmuje referencję i wartość, nazywając kroki, które
-// straciły pokrycie. Usunięcie nie jest wstrzymywane — patrz nagłówek pliku.
+// straciły pokrycie. Usunięcie nie jest wstrzymywane tym, że kroki
+// poświadczenie przywołują.
 func (a *adapterAutomatyk) UsunPoswiadczenie(ctx context.Context,
 	z shared.AutomationSecretRemoveRequest) (shared.AutomationSecretRemoveResponse, error) {
 
@@ -181,8 +175,8 @@ func (a *adapterAutomatyk) UsunPoswiadczenie(ctx context.Context,
 		return shared.AutomationSecretRemoveResponse{}, bladAutomatyki(err)
 	}
 	if usuniete && a.sejf != nil {
-		// Sejf kluczuje bytem, a referencja niesie przedrostek `sejf:` —
-		// rozbiera go wołający, bo sejf zapisał sam byt.
+		// Sejf kluczuje bytem, a referencja niesie przedrostek `sejf:`, który
+		// rozbiera wołający.
 		_ = a.sejf.Usun(ctx, bytSejfuZOdwolania(z.SecretRef))
 	}
 	a.zapisAudytu(ctx, nil, "usunięcie poświadczenia ze skarbca",
@@ -237,7 +231,8 @@ func nazwySekretowychZmiennych(ctx context.Context, a *adapterAutomatyk, automat
 	return nazwy
 }
 
-// krokPrzywolujeSekret rozstrzyga, czy krok stracił pokrycie po usunięciu.
+// krokPrzywolujeSekret rozstrzyga, czy dany krok stracił pokrycie sekretem
+// po usunięciu poświadczenia z magazynu.
 func krokPrzywolujeSekret(krok shared.AutomationStep, odwolanie string, nazwy []string) bool {
 	for _, referencja := range krok.SecretRefs {
 		if referencja == odwolanie {
@@ -252,7 +247,8 @@ func krokPrzywolujeSekret(krok shared.AutomationStep, odwolanie string, nazwy []
 	return false
 }
 
-// OdczytajAudyt oddaje dziennik audytu od najnowszego wpisu.
+// OdczytajAudyt oddaje dziennik audytu automatyki od najnowszego wpisu,
+// w porcjach ograniczonych żądaniem wołającego.
 func (a *adapterAutomatyk) OdczytajAudyt(ctx context.Context,
 	z shared.AutomationAuditListRequest) (shared.AutomationAuditListResponse, error) {
 
@@ -284,7 +280,8 @@ func (a *adapterAutomatyk) OdczytajAudyt(ctx context.Context,
 	return shared.AutomationAuditListResponse{Entries: wpisy}, nil
 }
 
-// regulaAlarmowaniaAutomatyki przekłada wiersz reguły na byt kontraktu.
+// regulaAlarmowaniaAutomatyki przekłada wiersz reguły z bazy danych na byt
+// kontraktu zwracany wołającemu.
 func regulaAlarmowaniaAutomatyki(wiersz dane.RegulaAlarmowania) shared.AutomationAlertRule {
 	return shared.AutomationAlertRule{
 		Id: wiersz.Kod, WorkflowId: wiersz.AutomatykaKod,

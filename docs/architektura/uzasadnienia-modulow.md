@@ -2432,3 +2432,72 @@ Brak głosu to inna odmowa niż brak binarium: program stoi, więc `Stoi` mówi
 „jest", a czynność i tak nie wyjdzie. Rozróżnienie widać w treści odmowy, bo
 naprawy są różne. Gdy zawiodą oba silniki, odmowa wymienia obie przyczyny
 osobno.
+
+## budowa/server/internal/core/adapter_modul_aod_rozmowa.go
+
+Nakładka niczego nie zakłada sama. Wiadomość idzie tym samym portem rozmowy,
+którym jedzie message.send, więc wchodzi do tej samej historii okna, uruchamia
+tę samą turę modelu i tę samą telemetrię. Polecenie głosowe idzie tym samym
+modułem Assistant, którym jedzie assistant.voice.command, więc zlecenie
+z nakładki widać w Actions Monitor. Druga droga do wiadomości albo do
+zlecenia byłaby drugą prawdą o tym samym bycie.
+
+Podpowiedzi pochodzą z katalogu akcji (tabela akcja) — jedynego zbioru w tym
+rdzeniu, który wiąże byt zasięgu z komendą kontraktu do wywołania, a taki
+właśnie kształt ma AodSuggestion z polem commandType. Podpowiedzi nie są
+układane w kodzie: dopisanie wiersza katalogu daje nową podpowiedź bez zmiany
+rdzenia. Komenda aod.suggestion jest odczytem, bo ma żądanie i wynik; zdarzeń
+aod.suggestion.* kontrakt nie zna, więc rdzeń podpowiedzi nie wypycha.
+
+Komenda WyslijZNakladki oddaje obok odpowiedzi kontraktu całą przyjętą
+wiadomość, ponieważ rozgłoszenie zdarzenia zmiany wiadomości należy do
+uchwytu i bez treści wiadomości nie miałoby czego rozgłosić. Okno oddane
+w odpowiedzi jest tym, które wiadomość naprawdę przyjął port rozmowy z
+założonego wiersza; wskazanie z żądania jest tu tylko punktem wyjścia.
+
+Komenda KontekstNakladki oddaje ten sam komplet kontekstu okna, który przenosi
+context.transfer i który zasila Context Panel. Magazyn kompletu jest jeden na
+cały rdzeń; nakładka czyta z niego, a nie z drugiego, własnego magazynu.
+Metoda KompletOkna mieszka przy adapterze przenoszenia, a nie przy nakładce,
+ponieważ przenoszenie kontekstu składa komplet po drodze do okna docelowego
+i nie miało dotąd czytelnika pytającego o komplet okna wprost.
+
+W metodzie ogonOdwolan historia rośnie w przód, więc obcięcie do granicy idzie
+od początku wykazu — nakładce potrzebne są wiadomości najświeższe, nie
+najstarsze.
+
+Żądanie oknoPodpowiedzi wskazujące byt nieistniejący jest odmawiane; żądanie
+niewskazujące niczego odmowy nie dostaje — zostają wtedy podpowiedzi całej
+platformy, bo są prawdziwe niezależnie od okna. Proces nieznany rejestrowi
+telemetrii jest bytem nieistniejącym, więc odpowiedź złożona z podpowiedzi
+globalnych byłaby wtedy ciszą udającą wynik i komenda odmawia zamiast jej
+oddać.
+
+Kolejność zasięgów w pozycjeZasiegow jest kolejnością ważności podpowiedzi:
+to, co dotyczy okna, stoi przed tym, co dotyczy platformy — od bytu
+najwęższego do najszerszego, bez powtórzeń.
+
+Kolumna akcja.warunek_dostepnosci nazywa byt, którego wymaga akcja (okno,
+sesja, kanał, środowisko, kolejka; puste znaczy: żadnego). Nakładka
+rozstrzyga dwa z nich — okno i jego kartę sesji — bo tyle wynika z żądania
+aod.suggestion. Podpowiedź wymagająca bytu, którego nakładka nie zna, byłaby
+przyciskiem bez celu, więc do wykazu nie wchodzi.
+
+Opisu i ikony akcji AodSuggestion nie niesie, więc zostają w katalogu akcji.
+Pole moduleId idzie wprost z okna, a nie okrężnie przez window.list po
+stronie nakładki, ponieważ bez tego pola wyciszenie bieżącego modułu nie
+miałoby po czym rozpoznać swojej sugestii, a cisza bez podstawy jest gorsza
+niż ujawnienie. Klasy zdarzenia podpowiedź z katalogu akcji nie niesie i nie
+ma nieść: pozycja katalogu jest czynnością osiągalną, a nie skutkiem
+zdarzenia wyzwalającego — klasę niosą sygnały aod.signal.*, tam gdzie
+zdarzenie naprawdę zaszło; zgadnięta klasa wpuszczałaby podpowiedź
+w wyciszenie, którego Operator na nią nie założył.
+
+Komenda PolecenieGlosoweNakladki nie rozpoznaje mowy sama: nagranie
+przepisuje moduł Assistant przez wpięty port Mowa. Drugi silnik po tej
+stronie byłby drugą prawdą o tym samym bycie. Nagranie przetworzone bez mowy
+odmawia po stronie Assistanta, a nakładka oddaje tę odmowę bez zmiany, więc
+wymagane pole transcript nie wraca puste. Pole speak nie jest spełniane:
+syntezy mowy rdzeń nie ma, więc speechRef zostaje pusty — pole jest
+opcjonalne, a brak jest odpowiedzią zgodną z kontraktem, tak samo jak
+w assistant.voice.command i speech.synthesize.

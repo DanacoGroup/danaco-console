@@ -4555,3 +4555,9 @@ po zapisie scenariusza jako automatyki.
 
 Wykaz pusty oddaje wartość `null`, ponieważ sekcja bez ani jednej pozycji nie ma
 po co stać na ekranie, a zdanie o pustce niesie stan treści okna.
+
+## budowa/klient-poprzedni/src/dostepy/stan-katalogu-roboczego.ts
+
+Rachunek dziedziczenia oddany jest modułowi `konfiguracja/rozstrzygniecie`, temu samemu, z którego korzysta okno konfiguracji. Druga implementacja tego rachunku byłaby drugą prawdą o tej samej wartości.
+
+Katalog roboczy jest własnością instalacji, więc ta sekcja zapisuje go na poziomie globalnym, na osi platformy. Zapis węższy — dla sesji, okna, modelu albo konta — należy do okna konfiguracji, które ma pasek punktu widzenia i pełny wybór poziomów. Zapis dokonany tam widać tutaj, ponieważ łańcuch rozstrzygnięcia mówi, skąd wartość pochodzi.

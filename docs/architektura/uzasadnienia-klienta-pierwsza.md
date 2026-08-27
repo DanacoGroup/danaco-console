@@ -1257,3 +1257,17 @@ wywołania. Klasa `.dn-btn-ikona` to kwadrat 32 px, na dotyku 40 px, o narożnik
 obwódki 14–16 px o narożniku `--dn-r-pill`, z widocznym obrysem i wskaźnikiem
 `help`. Powłoka niesie z kolei zachowanie w rzędzie — `flex: none`, odstęp
 i `vertical-align` — którego `.dn-tooltip` nie zna.
+
+## budowa/klient-poprzedni/src/moduly/library/filtr-wersji.ts
+
+Filtr działa w całości po stronie okna, ponieważ komenda wykazu wersji
+biblioteki nie przyjmuje pola zawężającego, a jej odpowiedź niesie komplet pól,
+po których dokumentacja każe zawężać, czyli sprawcę zmiany i etykietę wersji.
+Wysłanie w tym celu drugiego odczytu byłoby pytaniem o to, co okno już ma.
+
+Sprawca zmiany jest napisem, a nie wyliczeniem kontraktu: rdzeń zapisuje w polu
+sprawcy to, co poda wołający. Pozycje zawężające do zmian Operatora oraz do
+zmian modelu dopasowują więc po zawartości napisu, a wersja o sprawcy
+nienazwanym wchodzi wyłącznie do pozycji obejmującej wszystkie wersje.
+Zgadywanie po stronie okna kazałoby takiej wersji trafić do jednej z dwóch grup
+bez podstawy.

@@ -1,3 +1,6 @@
+// Straże drogi wejścia: trzy sprawdziany trzymają zachowania, których
+// zerwanie zamyka Operatorowi drogę do platformy albo otwiera ją komuś, kto
+// nie powinien wejść.
 package core
 
 import (
@@ -7,32 +10,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// STRAŻE DROGI WEJŚCIA.
-//
-// Trzy sprawdziany poniżej trzymają zachowania, których zerwanie zamyka
-// Operatorowi drogę do platformy albo otwiera ją komuś, kto nie powinien wejść.
-// Każdy niesie przy sobie zdanie „czym się to łamie" — bo straż bez opisu wagi
-// wygląda na przesadę i pierwszy, kto ją zobaczy, uzna ją za zbędną.
-//
-// Trzy razem, a nie osobno, bo trzymają się nawzajem: bramka zamknięta do
-// potwierdzenia adresu bez drogi wyjścia z nieudanego nadania zamieniałaby
-// zatrzymany serwer poczty w trwałą utratę produktu, a wykaz urządzeń bez
-// wejścia hasłem nie miałby czego pokazać w oknie odbierania dostępu.
-
-// ── STRAŻ PIERWSZA ───────────────────────────────────────────────────────────
-
 // TestBramkaZamknietaDoPotwierdzeniaAdresu pilnuje, że weryfikacja adresu nie
-// jest ozdobą.
-//
-// CZYM SIĘ TO ZŁAMAŁO. Rejestracja nie zakładała sesji — ale zakładała kotwicę,
-// a `auth.login` nie pytał o stan potwierdzenia w ogóle. Operator wołał więc
-// logowanie zaraz po rejestracji i dostawał pełny token, nie zaglądając do
-// skrzynki.
-//
-// DLACZEGO TO WAŻY. Adres jest JEDYNĄ drogą odzyskania konta. Adres
-// niesprawdzony — literówka, cudza skrzynka, domena bez rekordu — wychodziłby na
-// jaw dopiero w dniu, w którym trzeba nim odzyskać dostęp, czyli gdy jest już za
-// późno: rejestracji nie da się powtórzyć.
+// jest ozdobą: adres jest jedyną drogą odzyskania konta.
 func TestBramkaZamknietaDoPotwierdzeniaAdresu(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	zarejestrujWlasciciela(t, u)
@@ -54,8 +33,8 @@ func TestBramkaZamknietaDoPotwierdzeniaAdresu(t *testing.T) {
 			blad.Code, shared.ErrorCodeNotAuthenticated)
 	}
 	// Odmowa ma prowadzić do naprawy: mówić, czego brakuje i czym to zrobić.
-	// „Nie wolno" bez drogi dalszej zostawia Operatora przed zamkniętą bramką
-	// bez klucza.
+
+	// „Nie wolno" bez drogi dalszej zostawia Operatora przed zamkniętą bramką.
 	if !strings.Contains(blad.Message, "auth.verify") {
 		t.Errorf("odmowa nie wskazuje drogi potwierdzenia: %q", blad.Message)
 	}
@@ -67,29 +46,9 @@ func TestBramkaZamknietaDoPotwierdzeniaAdresu(t *testing.T) {
 	}
 }
 
-// ── STRAŻ DRUGA ──────────────────────────────────────────────────────────────
-
 // TestNieudaneNadanieListuSchodziNaDrogeBezPoczty pilnuje, że zatrzymany
-// przekaźnik poczty nie zamienia się w trwałą utratę platformy.
-//
-// CZYM SIĘ TO ŁAMIE. Sprawdzana bywała wyłącznie OBECNOŚĆ nastaw konta
-// nadawczego — i owszem, przed zapisem. Samo nadanie idzie ostatnie, już po
-// zapisaniu konta, kotwicy i drogi, a nastawa wskazana nie znaczy, że serwer
-// odpowiada: przekaźnik bywa zatrzymany, zapora zamknięta, a nazwa hosta
-// wpisana z literówką.
-//
-// CZEGO TU NIE MA I DLACZEGO. Cofnięcia rejestracji. Było ono ratunkiem przed
-// platformą NIE DO OTWARCIA — bramkę zamykał wtedy brak potwierdzenia adresu,
-// więc konto zostawione po nieudanym nadaniu nie miało czym wejść. Odkąd konto
-// bez potwierdzonego adresu wchodzi hasłem (rejestr decyzji, pozycja 11),
-// ratunek jest zbędny, a sam był pułapką: literówka w nazwie hosta zamykała
-// pierwsze uruchomienie równie szczelnie jak brak poczty w ogóle. Rejestracja
-// schodzi więc na drogę bez poczty i kończy się tym samym stanem, co instalka,
-// która nadajnika nie ma wcale.
-//
-// DLACZEGO TO WAŻY. Rejestracja wykonuje się raz. Gdyby nieudane nadanie
-// cofało ją bez otwarcia drogi powrotu albo zostawiało konto bez klucza,
-// pierwszy Operator tracił platformę na jedną niedostępność serwera poczty.
+// przekaźnik poczty nie zamienia się w trwałą utratę platformy: rejestracja
+// wykonuje się raz i nie ma prawa cofać się bez otwartej drogi powrotu.
 func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaNieosiagalna)
 
@@ -119,8 +78,9 @@ func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 			" bez kotwicy konto zostaje bez klucza, a drugiej rejestracji nie ma", kotwice)
 	}
 
-	// Znacznik jest tu jedyną rzeczą, która trzyma bramkę otwartą: adres został
-	// niepotwierdzony, bo list nie doszedł.
+	// Znacznik jest tu jedyną rzeczą, która trzyma bramkę otwartą.
+
+	// Adres został niepotwierdzony, bo list nie doszedł.
 	adres, jest := znacznikWSejfie(t, u)
 	if !jest {
 		t.Fatal("bramka nie zapamiętała nieudanego nadania — zamknie się przed" +
@@ -135,13 +95,9 @@ func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 			" adresu nikt nie sprawdził i nikt tego stanu nie ma prawa udawać", ile)
 	}
 
-	// Droga potwierdzenia ZOSTAJE i to nie jest usterka: leży jako sam skrót
-	// materiału, który do nikogo nie dojechał, i wygasa po godzinie. Kasowanie
-	// jej wymagałoby czwartej czynności repozytorium dla stanu, który sam się
-	// kończy.
+	// Droga potwierdzenia zostaje i to nie jest usterka, sama wygasa po godzinie.
 
-	// Dowód właściwy: platforma jest do otwarcia. Bez tego straż pilnowałaby
-	// wierszy w bazie, a nie tego, po co one tam są.
+	// Dowód właściwy: platforma jest do otwarcia, nie tylko wiersze w bazie.
 	var wejscie shared.AuthLoginResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthLogin, shared.AuthLoginRequest{
 		Method: shared.AuthMethodKindPassword,
@@ -152,9 +108,9 @@ func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 		t.Error("wejście hasłem po nieudanym nadaniu oddało sesję bez tokenu")
 	}
 
-	// Druga rejestracja odmawia konfliktem i tak ma być: konto stoi, hasło je
-	// otwiera, a powtórzone żądanie jest próbą podmiany hasła bez znajomości
-	// starego.
+	// Druga rejestracja odmawia konfliktem i tak ma być: konto stoi, hasło je otwiera.
+
+	// Powtórzone żądanie jest próbą podmiany hasła bez znajomości starego.
 	powtorka := wykonajOdmowna(t, u.rdzen, u.zycie, shared.CommandAuthRegister,
 		shared.AuthRegisterRequest{
 			Login:    loginSprawdzianu,
@@ -167,24 +123,15 @@ func TestNieudaneNadanieListuSchodziNaDrogeBezPoczty(t *testing.T) {
 	}
 }
 
-// ── STRAŻ TRZECIA ────────────────────────────────────────────────────────────
-
 // TestWykazUrzadzenWidziWejscieHaslem pilnuje, że okno odbierania dostępu ma co
-// pokazać.
-//
-// CZYM SIĘ TO ZŁAMAŁO. Sesja brała urządzenie z wiersza metody, nie z żądania.
-// Kotwica hasła urządzenia nie ma i mieć nie może — hasło nie jest materiałem
-// jednej maszyny — więc `deviceId` z `auth.login` był porzucany.
-//
-// DLACZEGO TO WAŻY. Maszyna nie pojawiała się w `device.list`, a `device.revoke`
-// z jej identyfikatorem wracał `revoked: false` i zostawiał token czynny —
-// w oknie, które istnieje po to, żeby Operator dostęp odbierał.
+// pokazać: sesja brała urządzenie z wiersza metody, nie z żądania logowania.
 func TestWykazUrzadzenWidziWejscieHaslem(t *testing.T) {
 	u := zmontujDrogeWejscia(t, pocztaDziala)
 	droga := zarejestrujWlasciciela(t, u)
 
-	// Adres potwierdzony, bo bez tego bramka jest zamknięta (straż pierwsza),
-	// a badane jest wejście hasłem, nie potwierdzenie.
+	// Adres potwierdzony, bo bez tego bramka jest zamknięta.
+
+	// Badane jest tu wejście hasłem, nie potwierdzenie.
 	var potwierdzenie shared.AuthVerifyResponse
 	wykonajUdana(t, u.rdzen, u.zycie, shared.CommandAuthVerify,
 		shared.AuthVerifyRequest{Token: droga}, &potwierdzenie)

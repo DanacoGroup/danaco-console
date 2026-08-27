@@ -1,26 +1,17 @@
-import { KOMENDY } from '../../../../shared/contract';
-
 /**
  * Powód nieczynnej kontrolki modułu Developer składany z kontraktu, nie wpisany
- * na stałe.
- *
- * `shared/contract.ts` niesie `KOMENDY` — wykaz komend kontraktu dostępny
- * w czasie działania, wytwarzany z `contract.json`. Zdanie powstaje z odczytu
- * tego wykazu przy składaniu okna, więc dopisanie komendy do kontraktu
- * przepisuje je samo; zdanie wpisane na stałe przestałoby być prawdziwe w dniu
- * takiej zmiany i nikt by tego nie zauważył.
- *
- * Zdanie nie orzeka, czy złożony rdzeń komendę rejestruje — to osobne pytanie
- * i odpowiada na nie `katalog-komend.ts`, który pyta rdzeń o jego rejestr.
- * Tutaj brak jest po stronie kontraktu i tylko o kontrakcie zdanie mówi.
- *
- * Bliźniaczy mechanizm stoi w module Diagnostics. Wspólnego bytu biblioteka
- * `komponenty/` dziś nie ma, a modułowi nie wolno sięgać do wnętrza sąsiada —
- * rozstrzygnięcie, czy taki byt ma powstać w bibliotece, należy do właściciela
- * projektu.
+ * na stałe. Wykaz `KOMENDY` z `shared/contract.ts` powstaje z `contract.json`,
+ * więc dopisanie komendy do kontraktu przepisuje zdanie powodu samo.
  */
+import { KOMENDY } from '../../../../shared/contract';
 
-/** Komendy obszaru odczytane z kontraktu w czasie działania. */
+
+
+/**
+ * Komendy obszaru odczytane z wykazu `KOMENDY` w czasie działania, zawężone
+ * przedrostkiem obszaru i uporządkowane rosnąco, gotowe do wypisania w zdaniu
+ * powodu.
+ */
 function komendyObszaru(obszar: string): readonly string[] {
   const przedrostek = `${obszar}.`;
   return [...(KOMENDY as readonly string[])]
@@ -29,11 +20,9 @@ function komendyObszaru(obszar: string): readonly string[] {
 }
 
 /**
- * Zdanie powodu dla kontrolki bez pokrycia w kontrakcie.
- *
- * @param czegoByTrzeba czynność, której kontrolka miała dokonać, wraz ze
- *   wskazaniem komendy, która musiałaby powstać — to okno wie, po co ta pozycja
- *   stoi w inwentarzu opracowania.
+ * Zdanie powodu dla kontrolki bez pokrycia w kontrakcie; obszar bez komend
+ * i obszar z komendami dają dwa różne zdania.
+ * @param czegoByTrzeba czynność, której kontrolka miała dokonać.
  * @param obszar przedrostek komend, w którym takiej komendy szukamy.
  */
 export function powodBezKomendy(czegoByTrzeba: string, obszar = 'developer'): string {

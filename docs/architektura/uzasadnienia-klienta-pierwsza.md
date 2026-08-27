@@ -812,3 +812,22 @@ nie poda.
 
 Zamiary Operatora idą do rdzenia tym samym kanałem, którym przyszły dane:
 `session.open` oraz `queue.action` przechodzą kanałem kontraktu.
+
+## budowa/klient-poprzedni/src/aplikacja/stan-pary-gniazda.ts
+
+Stan pary ma dwa człony. Skład pary mówi, kto jest koordynatorem, a kto
+wykonawcą; położenie pary mówi, czy wykonawca pracuje, czy kolejka stoi.
+Pierwszy człon niesie zdarzenie `window.changed`, drugi — `queue.changed`.
+
+Właścicielem pola `windowRole` jest rdzeń, nie scena. Po odtworzeniu okna
+z bazy, po `window.update` z innego urządzenia albo po `context.transfer` może
+wrócić rola inna niż domyślna nadana przy tworzeniu gniazda. Dlatego każde
+`window.changed` dotyczące tego okna przestawia nagłówek, a zmianę na tę samą
+rolę gniazdo pomija, żeby widok nie przebudowywał się bez powodu.
+
+Okno poza pętlą nie ma pary, więc jego nagłówek zostaje bez plakietki stanu
+zamiast pokazywać stan cudzej kolejki.
+
+Każde gniazdo słucha całej magistrali zdarzeń, więc zdarzenie dotyczące innego
+okna jest pomijane. Kolejka bez wykazu okien dotyczy całej sesji i wchodzi do
+każdego gniazda tej sceny.

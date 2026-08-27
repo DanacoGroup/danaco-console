@@ -3161,3 +3161,14 @@ wydobycie tekstu nie zakładało. Dokument wchodzi do stanu modułu, żeby okno 
 natychmiast. Odmowa jednej pozycji nie zatrzymuje pozostałych: zatrzymanie całej kolejki na
 pierwszym nieczytelnym skanie byłoby karą za materiał, a nie obsługą błędu, dlatego bilans na
 końcu mówi, ile pozycji przeszło, ile wróciło do ponowienia i ile odpadło.
+
+## budowa/klient-poprzedni/src/motyw/podglad-zetonow.ts
+Strona nie dowodzi, że produkt działa: nie ma tu rdzenia, kanału kontraktu,
+sesji ani okien — sam katalog wartości żetonów motywu. Poprawny wygląd żetonu
+tutaj nie znaczy, że jakikolwiek ekran produktu go używa, a plik nie wchodzi
+do pakietu produkcyjnego. Uruchamia się go osobno poleceniem npm run dev pod
+adresem lokalnym src/motyw/podglad-zetonow.html.
+
+Plakietka stanu bierze barwę z rodziny żetonów stanu, a ikonę i napis z
+katalogu znaczeń stanów. Rodzina neutralna nie ma własnych żetonów — to
+plakietka bazowa, a znaczenie niesie w niej wyłącznie znak.

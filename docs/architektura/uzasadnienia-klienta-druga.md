@@ -2640,3 +2640,30 @@ odsyła do niej po identyfikatorze, bo dwóch kopii tego samego brzmienia nie za
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/urzadzenia-dzwieku.ts
 Pusty wykaz nie tłumaczy się sam: lista bez pozycji oznacza brak mikrofonu albo odmowę przeglądarki, a to dwie różne sytuacje z dwoma różnymi wyjściami dla użytkownika, dlatego pole `powod` towarzyszy wykazowi i bywa niepuste również wtedy, gdy urządzenia istnieją, lecz noszą nazwy zastępcze — pusty `powod` oznacza wykaz kompletny, niewymagający dopowiedzenia. Nazw urządzeń nie zgaduje się: przed pierwszą zgodą etykieta każdego urządzenia jest pusta, a numer porządkowy w miejsce nazwy jest przyznaniem się do niewiedzy, nie nazwą sprzętu.
+
+## budowa/klient-poprzedni/src/moduly/translate/modul-translate.ts
+Układ wynika z warstw widoczności opracowania: warstwa pierwsza stoi na ekranie bez interakcji —
+Source Panel i Translation Panels obok siebie, bo zapis źródła aktualizuje wszystkie panele naraz
+i skutek musi być widoczny w tej samej chwili. Format Studio jest kolumną sąsiadującą warstwy
+drugiej, otwieraną przy pracy z dokumentem. Glossary Manager, Translation Memory Panel i QA
+Review Center są zarządcami warstwy trzeciej, stoją w kolumnie bocznej i są zwinięte, dopóki ich
+nie wywołać. Chat Window i Execution Loop Window są oknami wspólnymi platformy i moduł ich nie
+buduje: pierwsze montuje scena sesji, drugie należy do pętli wykonawczej; katalog okien podaje
+obok, ile okien modułu rdzeń zna, a ile moduł buduje, licząc tę liczbę z odpowiedzi rdzenia.
+Drogi warstwy czwartej są trzy i wszystkie prowadzą do tych samych rzeczy: skrót klawiszowy,
+wyszukiwarka funkcji z pełnym katalogiem opracowania oraz rozwinięcia przy oknach, których
+dotyczą — zasada jednego kliknięcia jest przez to spełniona także dla pozycji bez własnego
+przycisku w oknie.
+Sesja ostatniego wejścia jest potrzebna do ponowienia odczytu kontekstu, bo trzeba wiedzieć,
+o czyje okna pytać, a moduł nie sięga po sesję sam — dostaje ją z powłoki. Warsztat prowadzi
+czynności wsadowe i wymianę z otoczeniem, a nie bieżący przekład, dlatego stoi zwinięty tak jak
+trzy okna obok, dopóki operator go nie wywoła. Pasek uczciwości bierze zdanie z bytu wspólnego
+katalogu okien, tego samego dla wszystkich modułów, więc zdanie o rozjeździe nie rozjedzie się
+między modułami po cichu — byt wypowiada obie strony: okna katalogu rdzenia, których moduł nie
+buduje, oraz okna budowane spoza katalogu. Jeden odczyt katalogu okien starcza na cały kanał: gdy
+o katalog zapytał już inny moduł albo powłoka, wywołanie nie wysyła drugiego zapytania. Jedyny
+odczyt wykonywany bez czynności operatora w oknach warstwy pierwszej dotyczy macierzy izolacji —
+idzie obok, bo dotyczy procesu sesji, a jej odmowa nie zatrzymuje modułu, ponieważ powód zapisuje
+sama macierz. Bez odpięcia paska uczciwości od wspólnego katalogu przy zejściu modułu wpis kanału
+trzymałby przerysowanie elementu zdjętego już z drzewa. Stery kanału zwijają się przed zejściem
+modułu, ponieważ rozwinięte trzymają nasłuch na dokumencie, którego zniknięcie elementu nie zdejmuje.

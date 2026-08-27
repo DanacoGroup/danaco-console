@@ -282,3 +282,29 @@ przy przesłaniu, a nie dopiero przy instalacji.
 Przypięcie wersji dopuszcza wyłącznie wersję, która istnieje w dzienniku
 pozycji: przypięcie do numeru wymyślonego byłoby obietnicą, której nikt nie
 spełni.
+
+## budowa/server/internal/core/adapter_modul_badania_zrodla.go
+
+Skutkiem każdej czynności tej rodziny jest byt, nie odpowiedź: wiersz w
+bazie, wiązanie zdjęte albo bajty w magazynie — mierzalny stan po jej
+zakończeniu, niezależnie od treści odpowiedzi. Odpowiedź powodzenia z pustym
+wynikiem jest wzorcem szkody, dlatego przechwycenie strony zapisuje treść,
+nie sam wiersz o niej.
+
+Import bibliografii czyta formaty BibTeX, RIS, CSL-JSON, EndNote XML i CSV
+parserami napisanymi w tym module, bibliotecznymi środkami języka, bez
+wołania programu zewnętrznego — import ma działać niezależnie od tego, co
+jest doinstalowane.
+
+Całkowita liczba pozycji wykazu źródeł liczy się przed wycięciem strony:
+opisuje zbiór spełniający zawężenie żądania, nie długość oddanej strony,
+inaczej licznik zmieniałby się przy przewijaniu.
+
+Podstawa dopasowania duplikatów źródeł jest nazywana wprost w odpowiedzi:
+identyczny identyfikator jest pewnością, zbieżny adres prawie pewnością,
+podobny tytuł wyłącznie podpowiedzią. Scalenie zostaje decyzją zewnętrzną —
+rdzeń nie scala pozycji samodzielnie.
+
+Liczba odcinków transkrypcji liczy się z akapitów transkryptu, ponieważ
+kontrakt pyta o liczbę odcinków, nie o liczbę znaków, i wartość musi być
+policzona, nie wpisana na sztywno.

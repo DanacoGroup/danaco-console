@@ -1,19 +1,7 @@
-// Odpowiedzialność pliku: rodzina `research.source.*` poza samym dodaniem —
-// przegląd katalogu, zmiana, usunięcie, scalenie, deduplikacja, etykiety,
-// załączniki, import bibliografii, przechwycenie strony, transkrypcja nagrania
+// Plik obsługuje rodzinę `research.source.*` poza samym dodaniem: przegląd
+// katalogu, zmianę, usunięcie, scalenie, deduplikację, etykiety, załączniki,
+// import bibliografii, przechwycenie strony, transkrypcję nagrania
 // i rozstrzyganie identyfikatorów.
-//
-// ── Skutek jest bytem, nie odpowiedzią ─────────────────────────────────────
-// Każda czynność tej rodziny kończy się czymś, co da się zmierzyć po jej
-// zakończeniu, niezależnie od treści odpowiedzi: wierszem w bazie, wiązaniem
-// zdjętym albo bajtami w magazynie. `status: ok` z pustym wynikiem jest w tym
-// produkcie wzorcem szkody, który już raz wystąpił — dlatego przechwycenie
-// strony zapisuje treść, a nie sam wiersz o niej.
-//
-// ── Import czyta formaty sam ───────────────────────────────────────────────
-// BibTeX, RIS, CSL-JSON, EndNote XML i CSV wchodzą parserami napisanymi tutaj,
-// bibliotecznymi środkami Go. Żaden z nich nie woła programu z zewnątrz: import
-// bibliografii ma działać u Operatora, który nie doinstalował niczego.
 package core
 
 import (
@@ -32,7 +20,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// WypiszZrodla obsługuje `research.source.list`.
+// WypiszZrodla obsługuje komendę `research.source.list`: zwraca stronę
+// źródeł okna badania zawężoną zapytaniem, rodzajem i pozostałymi filtrami.
 func (a *adapterBadan) WypiszZrodla(ctx context.Context,
 	z shared.ResearchSourceListRequest) (shared.ResearchSourceListResponse, error) {
 
@@ -55,9 +44,7 @@ func (a *adapterBadan) WypiszZrodla(ctx context.Context,
 		}
 	}
 
-	// Całość policzona przed wycinkiem: `total` mówi, ile pozycji spełnia
-	// zawężenie, a nie ile zmieściło się na stronie. Bez tego licznik listy
-	// zmieniałby się przy przewijaniu.
+	// Całość policzona przed wycinkiem strony, nie po nim.
 	razem := len(dopasowane)
 	wycinek := wycinekListyBadania(razem, z.Offset, z.Limit)
 	przelozone := make([]shared.ResearchSource, 0, wycinek.doPozycji-wycinek.odPozycji)
@@ -67,7 +54,8 @@ func (a *adapterBadan) WypiszZrodla(ctx context.Context,
 	return shared.ResearchSourceListResponse{Sources: przelozone, Total: razem}, nil
 }
 
-// zakresListyBadania opisuje wycinek listy po zastosowaniu przesunięcia i limitu.
+// zakresListyBadania opisuje wycinek listy źródeł po zastosowaniu
+// przesunięcia i limitu żądania w postaci pary granic indeksu.
 type zakresListyBadania struct {
 	odPozycji int
 	doPozycji int
@@ -90,7 +78,8 @@ func wycinekListyBadania(razem int, przesuniecie, limit *int) zakresListyBadania
 	return zakresListyBadania{odPozycji: od, doPozycji: do}
 }
 
-// zrodloPasujeBadania rozstrzyga, czy źródło spełnia zawężenia żądania.
+// zrodloPasujeBadania rozstrzyga, czy źródło spełnia zawężenia żądania: frazę,
+// rodzaj, wiarygodność, stan lektury i wszystkie żądane etykiety.
 func (a *adapterBadan) zrodloPasujeBadania(ctx context.Context, zrodlo dane.ZrodloBadania,
 	z shared.ResearchSourceListRequest) (bool, error) {
 
@@ -214,7 +203,8 @@ func (a *adapterBadan) UsunZrodlo(ctx context.Context,
 	return shared.ResearchSourceRemoveResponse{SourceId: z.SourceId, DetachedFindings: odwiazane}, nil
 }
 
-// ScalZrodla obsługuje `research.source.merge`.
+// ScalZrodla obsługuje komendę `research.source.merge`: przenosi ustalenia ze
+// źródeł scalanych do źródła docelowego i oddaje odświeżone źródło docelowe.
 func (a *adapterBadan) ScalZrodla(ctx context.Context,
 	z shared.ResearchSourceMergeRequest) (shared.ResearchSourceMergeResponse, error) {
 
@@ -241,12 +231,8 @@ func (a *adapterBadan) ScalZrodla(ctx context.Context,
 	}, nil
 }
 
-// SzukajDuplikatowZrodel obsługuje `research.source.duplicates`.
-//
-// Podstawa dopasowania jest nazwana wprost (`basis`), bo Operator ma wiedzieć,
-// czemu dwie pozycje uznano za tę samą pracę: identyczny identyfikator jest
-// pewnością, zbieżny adres prawie pewnością, a podobny tytuł wyłącznie
-// podpowiedzią. Scalenie zostaje decyzją Operatora — rdzeń nie scala sam.
+// SzukajDuplikatowZrodel obsługuje komendę `research.source.duplicates`:
+// szuka par źródeł podobnych ponad próg i nazywa podstawę dopasowania.
 func (a *adapterBadan) SzukajDuplikatowZrodel(ctx context.Context,
 	z shared.ResearchSourceDuplicatesRequest) (shared.ResearchSourceDuplicatesResponse, error) {
 
@@ -279,7 +265,8 @@ func (a *adapterBadan) SzukajDuplikatowZrodel(ctx context.Context,
 	return shared.ResearchSourceDuplicatesResponse{Candidates: kandydaci}, nil
 }
 
-// podobienstwoZrodelBadania ocenia, na ile dwie pozycje są tą samą pracą.
+// podobienstwoZrodelBadania ocenia, na ile dwie pozycje są tą samą pracą,
+// i oddaje wynik podobieństwa wraz z nazwą podstawy dopasowania.
 func podobienstwoZrodelBadania(ctx context.Context, a *adapterBadan,
 	pierwsze, drugie dane.ZrodloBadania) (int, string) {
 
@@ -321,7 +308,8 @@ func podobienstwoTekstuBadania(pierwszy, drugi string) int {
 	return wspolne * 100 / suma
 }
 
-// zbiorSlowBadania rozkłada tekst na zbiór słów sprowadzonych do małych liter.
+// zbiorSlowBadania rozkłada tekst na zbiór słów sprowadzonych do małych
+// liter, pomijając słowa krótsze niż trzy znaki.
 func zbiorSlowBadania(tekst string) map[string]bool {
 	zbior := map[string]bool{}
 	for _, slowo := range strings.FieldsFunc(strings.ToLower(tekst), func(znak rune) bool {
@@ -334,7 +322,8 @@ func zbiorSlowBadania(tekst string) map[string]bool {
 	return zbior
 }
 
-// OznaczZrodlo obsługuje `research.source.tag`.
+// OznaczZrodlo obsługuje komendę `research.source.tag`: zapisuje etykiety
+// i przynależność do kolekcji wskazanego źródła.
 func (a *adapterBadan) OznaczZrodlo(ctx context.Context,
 	z shared.ResearchSourceTagRequest) (shared.ResearchSourceTagResponse, error) {
 
@@ -446,7 +435,8 @@ func (a *adapterBadan) WypiszZalacznikiZrodla(ctx context.Context,
 	}, nil
 }
 
-// zlozZalacznikBadania przekłada wiersz repozytorium na byt kontraktu.
+// zlozZalacznikBadania przekłada wiersz repozytorium na byt kontraktu wraz
+// z rozmiarem i chwilą utworzenia w postaci wymaganej kontraktem.
 func zlozZalacznikBadania(z dane.ZalacznikZrodlaBadania) shared.ResearchAttachment {
 	return shared.ResearchAttachment{
 		Id: z.Kod, SourceId: z.ZrodloKod, Kind: shared.ResearchAttachmentKind(z.Rodzaj),
@@ -455,7 +445,8 @@ func zlozZalacznikBadania(z dane.ZalacznikZrodlaBadania) shared.ResearchAttachme
 	}
 }
 
-// WczytajBibliografie obsługuje `research.source.import`.
+// WczytajBibliografie obsługuje komendę `research.source.import`: wczytuje
+// referencje z pliku wskazanego formatu i zapisuje je jako źródła okna.
 func (a *adapterBadan) WczytajBibliografie(ctx context.Context,
 	z shared.ResearchSourceImportRequest) (shared.ResearchSourceImportResponse, error) {
 
@@ -522,7 +513,8 @@ type pozycjaBibliografiiBadania struct {
 	Pochodzenie   *string
 }
 
-// pozycjeBibliografiiBadania rozkłada plik bibliografii na referencje.
+// pozycjeBibliografiiBadania rozkłada plik bibliografii na referencje,
+// dobierając parser po formacie wskazanym w żądaniu importu.
 func pozycjeBibliografiiBadania(format shared.ResearchImportFormat,
 	tresc string) ([]pozycjaBibliografiiBadania, []string, error) {
 
@@ -571,7 +563,8 @@ func pozycjeBibtexBadania(tresc string) []pozycjaBibliografiiBadania {
 	return pozycje
 }
 
-// pozycjeRisBadania czyta wpisy RIS. Rekord kończy znacznik `ER`.
+// pozycjeRisBadania czyta wpisy formatu RIS wiersz po wierszu; rekord kończy
+// znacznik `ER`, po którym pola zebrane dotąd składają się w referencję.
 func pozycjeRisBadania(tresc string) []pozycjaBibliografiiBadania {
 	pozycje := []pozycjaBibliografiiBadania{}
 	pola := map[string]string{}
@@ -595,7 +588,8 @@ func pozycjeRisBadania(tresc string) []pozycjaBibliografiiBadania {
 	return pozycje
 }
 
-// pozycjeCslBadania czyta listę CSL-JSON.
+// pozycjeCslBadania czyta listę dokumentów formatu CSL-JSON i przekłada
+// wskazane pola każdego wpisu na referencję bibliografii.
 func pozycjeCslBadania(tresc string) ([]pozycjaBibliografiiBadania, []string, error) {
 	var wpisy []struct {
 		Title         string `json:"title"`
@@ -613,7 +607,8 @@ func pozycjeCslBadania(tresc string) ([]pozycjaBibliografiiBadania, []string, er
 	return pozycje, nil, nil
 }
 
-// pozycjeEndnoteBadania czyta plik EndNote XML.
+// pozycjeEndnoteBadania czyta plik formatu EndNote XML i przekłada rekordy
+// jego drzewa znaczników na referencje bibliografii.
 func pozycjeEndnoteBadania(tresc string) ([]pozycjaBibliografiiBadania, []string, error) {
 	var zbior struct {
 		Rekordy []struct {
@@ -646,7 +641,8 @@ func pozycjeEndnoteBadania(tresc string) ([]pozycjaBibliografiiBadania, []string
 	return pozycje, nil, nil
 }
 
-// pozycjeCsvBadania czyta arkusz CSV z wierszem nagłówka.
+// pozycjeCsvBadania czyta arkusz CSV z wierszem nagłówka, dopasowując
+// kolumny referencji po nazwie nagłówka w kilku uznanych wariantach.
 func pozycjeCsvBadania(tresc string) ([]pozycjaBibliografiiBadania, []string, error) {
 	czytnik := csv.NewReader(strings.NewReader(tresc))
 	czytnik.FieldsPerRecord = -1
@@ -680,7 +676,8 @@ func pozycjeCsvBadania(tresc string) ([]pozycjaBibliografiiBadania, []string, er
 	return pozycje, nil, nil
 }
 
-// pozycjaZPolBadania składa referencję z czterech pól, pomijając puste.
+// pozycjaZPolBadania składa referencję z czterech pól wspólnych wszystkim
+// obsługiwanym formatom, pomijając pola puste zamiast zapisywać je jako takie.
 func pozycjaZPolBadania(tytul, adres, identyfikator, pochodzenie string) pozycjaBibliografiiBadania {
 	pozycja := pozycjaBibliografiiBadania{Tytul: strings.TrimSpace(tytul)}
 	if wartosc := strings.TrimSpace(adres); wartosc != "" {
@@ -824,8 +821,7 @@ func (a *adapterBadan) PrzepiszNagranie(ctx context.Context,
 	}); err != nil {
 		return shared.ResearchSourceTranscribeResponse{}, bladBadan(err)
 	}
-	// Odcinki liczone z akapitów transkryptu: kontrakt pyta o liczbę odcinków,
-	// a nie o liczbę znaków, i musi to być liczba policzona, nie wpisana.
+	// Odcinki liczone z akapitów transkryptu, nie ze znaków.
 	odcinki := len(strings.Split(strings.TrimSpace(tekst), "\n"))
 	if strings.TrimSpace(tekst) == "" {
 		odcinki = 0
@@ -835,7 +831,8 @@ func (a *adapterBadan) PrzepiszNagranie(ctx context.Context,
 	}, nil
 }
 
-// RozstrzygnijIdentyfikator obsługuje `research.source.resolve`.
+// RozstrzygnijIdentyfikator obsługuje komendę `research.source.resolve`:
+// pyta serwis właściwy rodzajowi identyfikatora i oddaje jego opis pracy.
 func (a *adapterBadan) RozstrzygnijIdentyfikator(ctx context.Context,
 	z shared.ResearchSourceResolveRequest) (shared.ResearchSourceResolveResponse, error) {
 
@@ -906,7 +903,8 @@ func rodzajIdentyfikatoraBadania(identyfikator string) shared.ResearchIdentifier
 	}
 }
 
-// cyfryBadania oddaje same cyfry napisu.
+// cyfryBadania oddaje same cyfry napisu, pomijając pozostałe znaki, co służy
+// do liczenia długości identyfikatora niezależnie od jego separatorów.
 func cyfryBadania(tekst string) string {
 	var zebrane strings.Builder
 	for _, znak := range tekst {
@@ -941,8 +939,8 @@ func trescZadaniaBadania(base64Tresc, sciezka *string) ([]byte, error) {
 	return nil, nil
 }
 
-// zawieraNapisBadania mówi, czy lista niesie wskazany napis (bez rozróżniania
-// wielkości liter).
+// zawieraNapisBadania mówi, czy lista niesie wskazany napis, porównując
+// wartości bez rozróżniania wielkości liter i otaczających odstępów.
 func zawieraNapisBadania(lista []string, szukany string) bool {
 	for _, wartosc := range lista {
 		if strings.EqualFold(strings.TrimSpace(wartosc), strings.TrimSpace(szukany)) {
@@ -960,7 +958,8 @@ func posortowaneNapisyBadania(lista []string) []string {
 	return kopia
 }
 
-// bladNieznanegoZrodlaBadania odróżnia „źródła nie ma" od usterki zapisu.
+// bladNieznanegoZrodlaBadania odróżnia odpowiedź „źródła nie ma" od usterki
+// zapisu, nazywając kod nieznanego źródła w treści odmowy.
 func bladNieznanegoZrodlaBadania(kod string) error {
 	return protokolBladBadania(shared.ErrorCodeNotFound, "źródło nie istnieje: "+kod)
 }

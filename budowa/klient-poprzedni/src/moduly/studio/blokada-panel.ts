@@ -19,28 +19,7 @@ import {
 } from './blokada-fragmentow';
 import type { ZrodloKontroliStudio } from './zrodlo-kontroli-studio';
 
-/**
- * Panel blokad fragmentów, zajęć wykonawców i nastaw pracy kilku agentów naraz.
- *
- * ── Trzy rzeczy w jednym miejscu, bo dotyczą jednego pytania ────────────────
- * „Czego modelowi nie wolno tknąć i kto teraz pisze po którym akapicie."
- *
- *   — **blokada** jest trwała i skierowana przeciw modelowi; zdejmuje ją
- *     wyłącznie Operator, a zasięg obejmujący także Operatora jest osobnym,
- *     jawnym ustawieniem, nie zachowaniem domyślnym;
- *   — **zajęcie fragmentu** jest czasowe i skierowane przeciw drugiemu
- *     wykonawcy; odmowa nazywa wykonawcę i czas, bo cicha odmowa kazałaby
- *     Operatorowi zgadywać, dlaczego fragment nie drgnął;
- *   — **nastawy** rozstrzygają, czy pętla wykonawcza i praca wielu agentów
- *     w ogóle stoją, ilu wykonawców pracuje naraz i co się dzieje przy spięciu.
- *     Oba narzędzia są domyślnie wyłączone i włącza je Operator, nie okno.
- *
- * Panel woła rdzeń sam, bo skutkiem każdej z tych czynności jest wykaz albo
- * odmowa nazwana — jedno i drugie jest treścią dla Operatora, nie wartością
- * pośrednią przekazywaną wyżej.
- */
-
-/** Czym panel pyta okno o dokument i zaznaczenie. */
+/** Kontekst blokad opisuje, czym panel pyta okno o dokument, którego blokady dotyczą, i o bieżące zaznaczenie w treści. */
 export interface KontekstBlokad {
   idDokumentu(): string;
   zaznaczenie(): { poczatek: number; koniec: number } | null;
@@ -364,8 +343,7 @@ export function utworzBlokadaPanel(
     }
     const tresc = wynik.wynik;
     if (!tresc.claimed) {
-      // Odmowa zajęcia jest odpowiedzią UDANĄ. Bez tego rozróżnienia okno
-      // pokazałoby powodzenie tam, gdzie fragmentu nie zajęto.
+      // Odmowa zajęcia jest odpowiedzią udaną, nie niepowodzeniem czynności.
       powiedz(blokadaOpiszOdmoweZajecia(tresc.heldBy, tresc.refusalReason), false);
       pokazZajecia(tresc.heldBy === undefined ? [] : [tresc.heldBy]);
       return;
@@ -465,7 +443,7 @@ export function utworzBlokadaPanel(
   };
 }
 
-/** Przycisk panelu wraz z kodem czynności do sprawdzianu. */
+/** Przycisk panelu tworzy się z nazwy widocznej oraz kodu czynności, który sprawdzian odnajduje po atrybucie danych. */
 function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   const przycisk = document.createElement('button');
   przycisk.type = 'button';
@@ -475,7 +453,7 @@ function przyciskPanelu(nazwa: string, kod: string): HTMLButtonElement {
   return przycisk;
 }
 
-/** Pas przycisków — jeden rząd czynności. */
+/** Pas przycisków składa jeden rząd czynności panelu w pojedynczy element sterujący widoku blokad fragmentów. */
 function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   const pas = document.createElement('div');
   pas.className = 'ms-kontrola__pas';
@@ -483,7 +461,7 @@ function pasPrzyciskow(przyciski: readonly HTMLElement[]): HTMLElement {
   return pas;
 }
 
-/** Część panelu wraz z jej tytułem. */
+/** Część panelu składa sekcję z widocznym tytułem oraz przekazanymi elementami sterującymi widoku blokad. */
 function czescPanelu(tytul: string, elementy: readonly HTMLElement[]): HTMLElement {
   const naglowek = document.createElement('p');
   naglowek.className = 'ms-kontrola__tytul';

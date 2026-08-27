@@ -5202,3 +5202,15 @@ warstw nakładanych w tej kolejności: to, co przyniosło żądanie, potem
 komplet zapisany przy oknie źródłowym, a na końcu realny stan okna i sesji
 źródłowej. Warstwa wcześniejsza wygrywa: składnik wskazany wprost w żądaniu
 nie zostaje nadpisany tym, co system odczytał sam.
+
+## budowa/server/internal/core/handlers_prowenancja.go
+Rodziny są dwie, magazyn jeden. Provenance Explorer pyta o pojedyncze wywołanie, rozliczenie liczy
+sumy po wymiarze, ale obie odpowiedzi powstają z tych samych wierszy — druga tabela z tymi samymi
+liczbami rozjechałaby się z pierwszą przy pierwszej korekcie cennika. Port jest osobny od portu
+modułu Diagnostics, mimo że to jego okna po niego sięgają: rdzeń nie ma prawa wiedzieć, że istnieje
+moduł Diagnostics. Ślad wywołania czyta też okno pętli wykonania, a alerty sięgają po niego z
+ekranu stałej obecności.
+
+Powtórzenie wywołania czekało na warstwę, która kanały prowadzi, i wchodzi razem z nią: adapter
+bierze ten sam rejestr kanałów, którym jedzie okno rozmowy. Rejestr niewpięty daje odmowę nazywającą
+brak, a nie pusty uchwyt udający zdolność.

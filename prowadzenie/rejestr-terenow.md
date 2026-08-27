@@ -56,62 +56,6 @@ do innego terenu.
 6. Kontrakt nietknięty — wykazane sumą kontrolną.
 7. Wykaz wszystkiego, co postawiłeś na maszynie, wraz z wagą — w raporcie.
 
-### dokumenty-i-tekst
-
-Siedem programów do treści pisanej. Wszystkie stoją na maszynie, komendy, które
-po nie sięgną, **już są w kontrakcie**. Rdzeń w jednym miejscu nazywa brak
-wprost: `adapter_narzedzia_dokument_formaty.go:62` — „brak silnika składu".
-
-| | |
-|---|---|
-| **Gałąź** | `teren/dokumenty-i-tekst` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/adapter_modul_tlumaczenie_*.go`, `adapter_narzedzia_dokument_*.go`, `adapter_modul_studio_cyfryzacja.go` (obsługa `studio.ingest.*` po przebudowie nazw), `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery obrazu i przeglądarki |
-
-| Narzędzie | Komenda | Uwaga |
-|---|---|---|
-| **Apache Tika** `/opt/tika` | `document.text.extract`, `library.metadata.get`, `studio.document.import.file` | Java 25 stoi |
-| **LanguageTool** `/opt/languagetool` | `translate.proofread.run`, `translate.quality.check` | dziś korekta idzie wyrażeniami regularnymi |
-| **hunspell / enchant-2** | to samo | pisownia; uzasadnij wybór jednego |
-| **xelatex** albo **typst** | `document.convert` → PDF | **wybierz jedno i uzasadnij**; TeX to ~1 GB, typst to jeden plik |
-| **vale** | `translate.qa.profile.set` | styl prozy wedle profilu |
-| **unpaper** | `studio.ingest.recognize`, `research.source.ocr` | czyszczenie skanu **przed** Tesseractem |
-
-**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
-Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
-(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
-`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
-rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
-
-### obraz-i-diagramy
-
-Sześć programów do obrazu. Komendy istnieją. Rdzeń **wypuszcza źródło Mermaid**
-(`AppExportFormatMermaid`), ale nie umie go narysować.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/obraz-i-diagramy` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/adapter_narzedzia_obraz_*.go`, `adapter_modul_biblioteka_*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, **cały obszar `design.*` rdzenia**, adaptery dokumentów i przeglądarki |
-
-| Narzędzie | Komenda |
-|---|---|
-| **mermaid-cli** (`mmdc`) | `design.diagram.render`, `apps.architecture.export` — **sprawdź zaporę fotografii, zanim tkniesz cokolwiek w `design.*`** |
-| **optipng, jpegoptim, pngquant, cwebp** | `image.convert` — kompresja, której biblioteka wkompilowana nie robi |
-| **exiftool** | `library.metadata.get`, `media.inspect` — **nie** `design.photo.metadata.get` ani `studio.security.metadata.strip`, te leżą za zaporami |
-
-**Zapora fotografii jest napisana grubo — na wystąpienie nazwy silnika w treści
-pliku.** `zapora_fotografii_test.go` zabrania w obszarze Design nazw `vips`,
-`imagemagick`, `potrace`, `inkscape`, `fontforge`, `fonttools`, `graphicsmagick`.
-Sprawdź uruchomieniem, czy przepuści `mmdc` i kompresory, **zanim** na tym
-oprzesz pracę. Jeśli nie przepuści — to zgłoszenie, nie powód do jej zmiany.
-
-**Wykaz zależności jest wspólny z dwoma innymi terenami biegnącymi teraz.**
-Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdzeń
-(Pandoc przy dokumentach, ffmpeg przy nagraniach), a do
-`zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
-rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
-
 ### pomiar-stron
 
 Cztery programy mierzące stronę i punkt końcowy. **Ten teren jako jedyny zmienia
@@ -214,6 +158,38 @@ Windows przekłada odmowę, gałąź Linux oddaje ją surową.
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
+
+### Trzy narzędzia treści pisanej bez legalnego miejsca wpięcia
+
+Ustalenia terenu `dokumenty-i-tekst`, każde zmierzone, żadne nienaprawialne
+w granicach tamtego terenu.
+
+| Rzecz | Zmierzone | Skutek |
+|---|---|---|
+| LanguageTool przy `translate.quality.check` | tryb `--bitext` (LT 6.6) na parze z jaskrawą rozbieżnością liczb (10:30→9:30, 250→500 EUR) oddaje **zero ustaleń**, a wyjścia maszynowego dla bitext program nie ma wcale | wpięcie dałoby instrument milczący przy realnej usterce; komenda mierzy wierność panelu wobec źródła i dziś nie ma czym |
+| unpaper przy `research.source.ocr` | uchwyt `adapter_modul_badania_lektura.go:589` upuszcza pola `preprocess` i `languages`, a `DocumentTextExtractRequest` kontraktu tych pól nie ma | obróbka wstępna nieosiągalna z drogi badań; pole `preprocess` pozostaje martwe |
+| Tika przy `library.metadata.get` | obsługa stoi w `adapter_modul_library_technika.go` — pliku terenu `obraz-i-diagramy`, gdzie exiftool wszedł w tę samą komendę | rozłączność terenów; do rozważenia, czy Tika ma tam co dołożyć wobec exiftoola |
+
+### mermaid-cli nie ma legalnego miejsca wpięcia
+
+Ustalenie terenu `obraz-i-diagramy`, zmierzone uruchomieniem. Obie komendy
+z tabeli narzędzi są zamknięte: `design.diagram.render`
+(`adapter_modul_design_wykresy.go:790`) leży za zaporą fotografii, która
+zabrania **każdego** wołania procesu w plikach `adapter_modul_design*.go` —
+plik próbny z samą wzmianką `zewnetrzne.Wolaj` wywrócił zaporę, choć zapora
+nazw przepuszcza `mmdc`; nadto kontrakt tej komendy przyjmuje węzły i krawędzie,
+nie ma pola na źródło Mermaid. `apps.architecture.export`
+(`adapter_modul_aplikacje_architektura.go:427`) niesie w nagłówku
+rozstrzygnięcie „żaden format nie woła programu z zewnątrz, więc eksport działa
+na instalce, która niesie sam rdzeń".
+
+Samo narzędzie działa: z przeglądarką stojącą w `/opt/ms-playwright` renderuje
+źródło w kształcie eksportu rdzenia (SVG 12 539 B, PNG 265×278). Bez wskazania
+przeglądarki `mmdc` odmawia — puppeteer żąda własnej kopii.
+
+Do rozstrzygnięcia: czy rysowanie diagramu ma powstać poza obszarem Design
+(nowa komenda i nowe miejsce), czy zostaje niezrobione. Rozstrzygnięcie dotyka
+zapory niosącej rozstrzygnięcie Właściciela, więc nie jest samą robotą.
 
 ### Komunikat rdzenia radzi budowę usuniętymi skryptami
 
@@ -408,6 +384,8 @@ po raz drugi.
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |
+| `obraz-i-diagramy` | `teren/obraz-i-diagramy` | `f7fab06` dogniecenie zapisu i metadane osadzone | kontrola osobnej sesji własnym biegiem: osiem zapór zdanych nietkniętych, 33 sprawdziany zdane w realnych czasach z przytoczonymi rozmiarami przed i po (PNG 3322→2456 B, JPEG 45399→39623 B, model barw paleta dowodzi wejścia pngquanta); sprawdziany maszyny bez programu wytwarzają ją naprawdę (`t.Setenv` na pusty katalog); kontrakt nietknięty; zero śladu mmdc w rdzeniu. Scalone `5b98585` |
+| `dokumenty-i-tekst` | `teren/dokumenty-i-tekst` | `ea05603` sześć programów treści pisanej · `aa695e6` poprawka nazwy po zwrocie | kontrola osobnej sesji: teren zwrócony za martwą nazwę `zasiegSyntezy` w komentarzu, po poprawce przyjęty; własny bieg kontrolera 14 zdanych, zero pominiętych; sprawdziany mierzą skutek — PDF czytany drugą komendą i innym programem, korekta aż po treść panelu w bazie, OCR dwoma przebiegami, brak programu wywołany `t.Setenv`; wybory hunspell i typst zweryfikowane uruchomieniem; kontrakt nietknięty. Scalone `43d05f6` |
 | `aktualizacja-powloki-i-skrypty` | `teren/aktualizacja-powloki-i-skrypty` | `d1b6207` probne.rs · `54cb287` kanał pobrań · `880b41f` skrypty natywne | kontrola osobnej sesji własnym biegiem: `cargo test` 23 zdane, zero niezdanych (stan zastany: nie kompilował się); sha256 sześciu kopii w materiale zamkniętym tożsame; `ADRES_KANALU` zgodny znak w znak z `kanal.adres` wykazu wydań; scalone `adb2a85`, drzewo scalone tożsame z kontrolowanym. Uwaga trwała: kompilacja powłoki wymaga `budowa/klient/dist` (w `.gitignore`) i zmiennych CARGO/RUSTUP ze środowiska maszyny |
 
 Teren `naprawy-rdzenia` scalony do `main`. Piąta usterka — wartość domyślna

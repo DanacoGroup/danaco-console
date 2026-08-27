@@ -5923,3 +5923,5 @@ razem z adnotacją nadrzędną.
 
 Autor adnotacji nie wchodzi w nadpisanie: adnotację zakłada jedna osoba, a zmiana treści
 przez drugą nie czyni jej autorką cudzej uwagi.
+## budowa/server/internal/dane/studio_adnotacje.go
+Komentarz i adnotacja dzielą jedną tabelę, bo dzielą wszystkie kolumny poza jedną: komentarz wisi przy zakresie znaków treści, adnotacja przy numerze fragmentu porównania. Rozdzielenie ich na dwie tabele dałoby sześć kolumn powtórzonych i zmusiłoby pytanie o to, co ktoś napisał przy tym dokumencie, do sumy dwóch zapytań; rodzaj wiersza rozstrzyga osobna kolumna rodzaju. Warunek na stan oczekujący w poleceniu rozstrzygnięcia zmiany śledzonej jest zamierzony: decyzja raz podjęta nie zmienia się drugim wywołaniem, więc powtórzone przyjęcie tej samej zmiany oddaje wynik ujemny zamiast cicho nadpisywać odrzucenie przyjęciem.

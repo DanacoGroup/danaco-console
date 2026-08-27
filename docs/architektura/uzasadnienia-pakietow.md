@@ -5971,3 +5971,5 @@ nadpisuje — ta sama czynność puszczona dwa razy na tym samym zasobie to dwa 
 Zapytanie o czynność źródłową zasobu oddaje wykaz, choć wiersz jest najwyżej jeden: ten sam
 zasób mógłby teoretycznie powstać dwiema drogami, a odczyt ma pokazać stan bazy, nie
 założenie o niej.
+## budowa/server/internal/dane/studio_cyfryzacja.go
+Pozycja kolejki istnieje, zanim jakikolwiek dokument z niej powstanie, i bywa odrzucona, zanim taki dokument powstanie; wiązanie jej z dokumentem wymagałoby zakładania dokumentu pustego przy każdym wskazaniu pliku, także tym, które skończy się odmową rozpoznania. Warstwa słów rozpoznanych i bloki układu stoją tekstem w formacie JSON, bo nie są bytem samodzielnym: nie mają własnego cyklu życia, nikt się do nich nie odwołuje z zewnątrz i giną razem z pozycją, więc tabela podrzędna dałaby wyłącznie złączenie przy każdym odczycie bez żadnej korzyści w zamian.

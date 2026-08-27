@@ -491,6 +491,12 @@
   opacity: 1;
   transform: translate(-50%, 0);
 }
+/* Tryb wybiórczy — w oknie oznaczonym tą klasą dymek pokazują wyłącznie
+   kontrolki z `data-dymek="tak"`. Pozostałe zachowują `data-etykietka` dla
+   czytnika ekranu, ale milczą wzrokowo: okno gęste od narzędzi nie może
+   rzucać dymkiem przy każdym przejechaniu wskaźnikiem. */
+.dn-dymki-wybiorcze [data-etykietka]:not([data-dymek='tak']):hover::after,
+.dn-dymki-wybiorcze [data-etykietka]:not([data-dymek='tak']):focus-visible::after { opacity: 0; }
 /* Etykieta przy krawędzi pasa nie wychodzi poza okno: przy lewej krawędzi
    kotwiczy się lewym bokiem, przy prawej — prawym. Wyśrodkowanie obowiązuje
    wyłącznie kontrolki, które mają miejsce po obu stronach. */
@@ -1907,4 +1913,98 @@
   .dn-szyna-moduly:not([hidden]),
   .dn-szyna-moduly:not([hidden]) .dn-szyna-poz { animation: none; }
   .dn-szyna-poz::after { display: none; }
+}
+
+/* ==========================================================================
+   PULPIT — złożenie powłoki dla okna, które jest pulpitem, nie widokiem
+   --------------------------------------------------------------------------
+   Centrum dowodzenia nie jest jednym z widoków w ramie: jest miejscem, z
+   którego wychodzą wszystkie pozostałe. Dlatego obrysowuje swój obszar barwą
+   znaku, wyróżnia kartę bieżącą wypełnieniem, a pas obszaru składa w pigułkę
+   zamiast pasma na całą szerokość.
+
+   Wszystkie te reguły stały w arkuszu okna pod selektorem `.cd-strona` —
+   biblioteka nie wiedziała o nich, więc następny pulpit musiałby je wymyślić
+   po raz drugi. Teraz włącza je JEDNA klasa `.dn-pulpit` na korpusie okna.
+   Reguły pozostają zawężone do tej klasy: żaden zwykły widok ich nie widzi.
+   ========================================================================== */
+
+@supports not (color: color-mix(in oklab, red, blue)) {
+  .dn-pulpit .dn-karta-widoku[aria-selected='true'],
+  .dn-pulpit .dn-karta-sesji[aria-selected='true'] {
+    box-shadow: inset 0 calc(-1 * var(--dn-wym-wstega)) 0 var(--dn-sygnal-500);
+  }
+}
+
+.dn-pulpit .dn-narzedzia { border: 1px solid var(--dn-obrys-marki); }
+
+.dn-pulpit .dn-obszar-panel { border-color: var(--dn-obrys-marki); }
+
+.dn-pulpit .dn-karta-widoku[aria-selected='true'],
+.dn-pulpit .dn-karta-sesji[aria-selected='true'] { background: var(--dn-tlo-wybrane); }
+
+.dn-pulpit .dn-karta-widoku { border-radius: 0; }
+
+.dn-pulpit .dn-karty-pasmo .dn-nrz-menu:hover,
+.dn-pulpit .dn-karty-wykaz:hover,
+.dn-pulpit .dn-karty-powloki:hover,
+.dn-pulpit .dn-karty-dodaj:hover,
+.dn-pulpit .dn-karty-narzedzia:hover { background: transparent; }
+
+.dn-pulpit .dn-karta-widoku[aria-selected='true']::before,
+.dn-pulpit .dn-karta-widoku[aria-selected='true']::after,
+.dn-pulpit .dn-karta-widoku:not([aria-selected='true']) + .dn-karta-widoku:not([aria-selected='true'])::before,
+.dn-pulpit .dn-karty-dodaj::after,
+.dn-pulpit .dn-karty-narzedzia::after { background: var(--dn-obrys-mocny); }
+
+.dn-pulpit .dn-karty-pasmo > .dn-karty-powloki::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: var(--kart-przegroda-wys);
+  background: var(--dn-obrys-mocny);
+  pointer-events: none;
+}
+
+.dn-pulpit .dn-karty-pasmo > .dn-karty-dodaj::after {
+  width: 1px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.dn-pulpit .sta-menu-wiersz > .dn-btn-ikona {
+  opacity: 1;
+  color: var(--dn-tekst-3);
+}
+
+.dn-pulpit .sta-menu-wiersz > .dn-btn-ikona:hover,
+.dn-pulpit .sta-menu-wiersz > .dn-btn-ikona:focus-visible {
+  background: var(--dn-hover);
+  color: var(--dn-tekst);
+}
+
+.dn-pulpit .dn-obszar-pasek {
+  border: 1px solid var(--dn-obrys-marki);
+  border-radius: var(--dn-r-lg);
+  background: transparent;
+}
+
+/* Zwijanie panelu bocznego jest ruchem szerokości — czas i krzywa idą
+   żetonami, nie liczbą w oknie. */
+.dn-pulpit .dn-obszar-panel--boczny {
+  transition: width var(--dn-czas-3) var(--dn-ease);
+}
+
+.dn-pulpit .dn-obszar-panel--boczny[data-zwiniety='tak'] { border-right-width: 0; }
+
+/* Pasek okna wpięty w pas obszaru nie jest już własnym pasmem — zdejmuje
+   swoją krawędź i wypełnienie, bo pas obszaru je już niesie. */
+.dn-pulpit .dn-obszar-pasek .dn-pasek-okna {
+  border-bottom: 0;
+  background: transparent;
 }

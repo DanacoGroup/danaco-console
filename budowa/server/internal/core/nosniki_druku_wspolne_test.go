@@ -7,13 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Sprawdziany wspólnego wykazu nośników druku.
-//
-// Szkoda, którą ten plik ma wykluczyć, jest jedna i nazwał ją Właściciel wprost:
-// dwa wykazy nośników rozjadą się przy pierwszej poprawce i Operator dostanie
-// A3 o wymiarach A4. Rozjechały się już raz — koperta DL miała w wykazie
-// Designu 99 na 210 mm, a w wykazie okna Studia 220 na 110 mm — więc pilnowanie
-// nie jest tu przewidywaniem, a zapisem tego, co się stało.
+// Plik pilnuje, żeby wykazy nośników druku Designu i Studia nie rozjechały się z wykazem wspólnym.
 
 // TestWykazNosnikowJestJedenIPionowy mierzy dwie rzeczy naraz: że nazwa nie
 // powtarza się w wykazie i że każdy wymiar jest zapisany pionowo. Nośnik
@@ -68,19 +62,7 @@ func TestWykazNosnikowNiesieKopertyWlasciciela(t *testing.T) {
 	}
 }
 
-// TestWykazDesignuJestPrzekladem wykazuje, że obszar druku Designu
-// PRZEKŁADA wykaz wspólny, a nie trzyma drugiej kopii liczb.
-//
-// Poprzednik tego sprawdzianu pilnował zgodności DWÓCH wykazów stojących obok
-// siebie i zapalił się przy pierwszym przebiegu, wskazując dwa realne rozjazdy:
-// kopertę DL (Design miał 99 na 210 mm — wymiar wkładki, nie koperty normy ISO
-// 269, czyli 110 na 220) oraz wizytówkę zapisaną położoną wbrew zdaniu nad
-// wykazem. Wykaz własny Designu został potem zdjęty i tę zgodność sprawdza się
-// teraz inaczej: przekład ma oddać KAŻDĄ pozycję wykazu wspólnego, z tymi samymi
-// wymiarami i z rodziną — a nie ich podzbiór.
-//
-// Pomiar liczby pozycji jest tu istotny, nie ozdobny: przekład gubiący pozycję
-// zabiera ją Operatorowi po cichu, bo wykaz nadal wygląda na pełny.
+// TestWykazDesignuJestPrzekladem wykazuje, że obszar druku Designu przekłada wykaz wspólny co do liczby pozycji, wymiarów i rodziny, a nie trzyma drugiej kopii liczb.
 func TestWykazDesignuJestPrzekladem(t *testing.T) {
 	przelozony := nosnikiDruku()
 	if len(przelozony) != len(wykazNosnikowDruku) {
@@ -105,8 +87,7 @@ func TestWykazDesignuJestPrzekladem(t *testing.T) {
 				nosnik.Family, wspolny.Rodzina)
 		}
 	}
-	// Koperty wskazane przez Właściciela muszą dojść do Designu, bo do tej pory
-	// ich tam nie było — to jest cały powód tego przestawienia.
+	// Koperty C4, C5, C6, B4 i B5 muszą dojść do wykazu Designu po tym przestawieniu.
 	for _, nazwa := range []string{"C4", "C5", "C6", "B4", "B5"} {
 		if _, jest := nosnikPoNazwie(nazwa); !jest {
 			t.Errorf("nośnik %s nie doszedł do wykazu Designu po przestawieniu", nazwa)

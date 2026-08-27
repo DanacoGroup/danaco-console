@@ -1,17 +1,4 @@
-// Odpowiedzialność pliku: trwałość skrzynek Operatora — wierszy tabeli
-// `skrzynka_pocztowa` wraz z protokołem, źródłem nastaw, trybem szyfrowania
-// i domyślnością. Ślad wysyłki leży w pliku obok (`poczta_skrzynki_slad.go`).
-//
-// Ta sama tabela, dwa różne pytania: `poczta.go` czyta ją pod kątem obserwatora
-// poczty (skrzynki czynne, takt odpytywania), a ten plik pod kątem rodziny
-// `mail.*` (podpięcie, wykaz, domyślna) — tak samo jak `macierz.go` czyta pod
-// swoim kątem tabelę `srodowisko_modul`. Drugiej tabeli na skrzynkę nie ma:
-// gdyby była, automatyka wyzwalana listem nie widziałaby skrzynki podpiętej
-// komendą.
-//
-// Hasła tu nie ma: kolumna `haslo_odwolanie` niesie odwołanie do wpisu sejfu
-// („sejf:poczta:<kod>”), a kolumny na sam sekret schemat nie zna, więc żaden
-// odczyt tego repozytorium nie ma jak go wynieść.
+// Odpowiedzialność pliku: trwałość skrzynek Operatora, czyli wierszy tabeli skrzynka_pocztowa, wraz z protokołem, źródłem nastaw, trybem szyfrowania i domyślnością.
 package dane
 
 import (
@@ -21,11 +8,7 @@ import (
 	"fmt"
 )
 
-// SkrzynkaOperatora to wiersz `skrzynka_pocztowa` widziany oczami rodziny
-// `mail.*`. Od `SkrzynkaPocztowa` z `poczta.go` różni się zestawem pól: tamta
-// niesie `TaktSekundy` i `Aktywna` (sprawy obserwatora), a ta `Protokol`,
-// `Zrodlo` i `Domyslna` (sprawy podpięcia). Jeden wiersz, dwa widoki, każdy
-// z polami swojego pytania.
+// SkrzynkaOperatora to wiersz tabeli skrzynka_pocztowa widziany oczami rodziny mail.*, z polami protokołu, źródła nastaw i domyślności.
 type SkrzynkaOperatora struct {
 	ID               int64
 	Kod              string
@@ -45,17 +28,15 @@ type SkrzynkaOperatora struct {
 	Domyslna         bool
 }
 
-// RepozytoriumSkrzynek jest kontraktem trwałości skrzynek Operatora.
+// RepozytoriumSkrzynek jest kontraktem trwałości skrzynek Operatora: podpięcia, wykazu, domyślności i śladu wysyłki.
 type RepozytoriumSkrzynek interface {
 	// Skrzynki oddaje wszystkie podpięte skrzynki, domyślną na początku.
 	Skrzynki(ctx context.Context) ([]SkrzynkaOperatora, error)
 	// Skrzynka odnajduje skrzynkę po kodzie (ErrBrakWiersza, gdy jej nie ma).
 	Skrzynka(ctx context.Context, kod string) (SkrzynkaOperatora, error)
-	// SkrzynkaDomyslna oddaje skrzynkę wskazaną jako domyślna, a przy jej braku
-	// — jedyną podpiętą. ErrBrakWiersza znaczy „Operator nie podpiął żadnej".
+	// SkrzynkaDomyslna oddaje skrzynkę domyślną, a przy jej braku jedyną podpiętą.
 	SkrzynkaDomyslna(ctx context.Context) (SkrzynkaOperatora, error)
-	// Zapisz zakłada skrzynkę albo nadpisuje zastaną po kodzie i oddaje wiersz
-	// po zapisie — z kluczem nadanym przez bazę.
+	// Zapisz zakłada skrzynkę albo nadpisuje zastaną po kodzie i oddaje wiersz po zapisie.
 	Zapisz(ctx context.Context, s SkrzynkaOperatora) (SkrzynkaOperatora, error)
 	// Usun odpina skrzynkę. Fałsz znaczy „nie było czego odpinać”, nie błąd.
 	Usun(ctx context.Context, kod string) (bool, error)
@@ -202,8 +183,7 @@ func (r *repozytoriumSkrzynek) Zapisz(ctx context.Context, s SkrzynkaOperatora) 
 	if err != nil {
 		return SkrzynkaOperatora{}, err
 	}
-	// Oddajemy wiersz odczytany, nie ten przysłany: klucz nadaje baza, a wartości
-	// domyślne kolumn mogły dopowiedzieć to, czego wołający nie wskazał.
+	// Oddajemy wiersz odczytany, nie przysłany: klucz nadaje baza, kolumny mogły dopowiedzieć wartości.
 	return r.Skrzynka(ctx, s.Kod)
 }
 

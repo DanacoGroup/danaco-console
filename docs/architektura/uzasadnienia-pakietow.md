@@ -3988,3 +3988,5 @@ Uwierzytelnienie w rozmowie SMTP jest warunkowe: serwer dostawcy zawsze go
 żąda, ale przekaźnik na tej samej maszynie często nie ogłasza go wcale —
 wpychanie mu wtedy poświadczenia kończy się odmową przy komendzie, która bez
 uwierzytelnienia by przeszła.
+## budowa/server/internal/dane/poczta_skrzynki.go
+Ta sama tabela skrzynka_pocztowa niesie dwa różne pytania: repozytorium poczty czyta ją pod kątem obserwatora poczty (skrzynki czynne, takt odpytywania), a to repozytorium pod kątem rodziny mail (podpięcie, wykaz, domyślna). Drugiej tabeli na skrzynkę nie ma: gdyby była, automatyka wyzwalana listem nie widziałaby skrzynki podpiętej komendą. Hasła tu nie ma: kolumna z odwołaniem do sejfu niesie wskazanie na wpis sejfu poświadczeń, a kolumny na sam sekret schemat nie zna, więc żaden odczyt tego repozytorium nie ma jak go wynieść. Zdjęcie domyślności z pozostałych skrzynek i nadanie jej nowej idą jedną transakcją, bo indeks częściowy schematu dopuszcza jedną domyślną skrzynkę naraz.

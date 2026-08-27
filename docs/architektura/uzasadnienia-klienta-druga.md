@@ -3473,3 +3473,14 @@ panele w innym porządku.
 
 ## budowa/klient/src/wejscie/ikony.ts
 Ten sam sygnet stoi w belce okna i w kolumnie tożsamości, w dwóch różnych wielkościach. Kropka sygnału w godle niesie klasę, nie wpisaną barwę: barwę rozstrzyga arkusz stylu, osobno dla belki i osobno dla kolumny tożsamości. Łańcuchy w tym pliku są rysunkami, nie tekstem — każdy zaczyna się od znacznika rysunku.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-podgladu.ts
+Eksport nie ma osobnej komendy w obszarze studio i mieć jej nie musi: zamiana formatu dokumentu
+jest czynnością obszaru dokumentów, ma tam uchwyt w rdzeniu i słownik ośmiu formatów, a przedmiotem
+zamiany jest treść zaakceptowana modułu, więc żądanie niesie ją wprost, nie ścieżkę pliku. Wynik
+zamiany zostaje zasobem magazynu rdzenia, a komendy wydającej jego bajty wprost do przeglądarki
+kontrakt nie niesie, więc okno mówi to wprost przy potwierdzeniu, zamiast pozwalać czytać
+„wyeksportowano" jako „pobrano". Przekazanie do modułu Library wykonuje się w całości: rdzeń
+zakłada okno modułu docelowego i oddaje potwierdzenie przeniesienia. Odmowa zostaje w pasie
+stanu, powodzenie w wierszu odpowiedzi, a wskaźnik odczytu zapala się wyłącznie na czas
+rzeczywistego wywołania, żeby warunek sprawdzany przed wysłaniem żądania nie udawał wywołania.

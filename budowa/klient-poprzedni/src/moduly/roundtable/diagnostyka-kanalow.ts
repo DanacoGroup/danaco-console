@@ -1,24 +1,7 @@
 import type { Channel } from '../../../../shared/contract';
 import type { StanDebaty } from './stan-debaty';
 
-/**
- * Diagnostyka kanałów modeli uczestniczących w debacie — warstwa czwarta
- * Model Panels.
- *
- * Diagnostyka mierzy to, co niesie rejestr kanałów rdzenia (`Channel`: nazwa,
- * rodzaj, model, konto poświadczeń, czynność kanału) zestawione ze składem
- * debaty. Nie sięga po telemetrię kanału, bo telemetrii kontrakt nie oddaje:
- * ani czasu odpowiedzi kanału, ani liczby błędów, ani stanu połączenia.
- *
- * Rozstrzygnięcie ważne dla Operatora jest jedno: kanał uczestnika nieznany
- * rejestrowi. Zachodzi ono naprawdę — uczestnika zakłada się z kanału wybranego
- * w chwili dodania, a rejestr bywa odczytany później i bywa węższy, gdy kanał
- * zniknął z rejestru rdzenia. Wtedy uczestnik zostaje w debacie, a jego kanał
- * nie ma nazwy, więc panel podpisuje go identyfikatorem. Diagnostyka mówi to
- * wprost, zamiast zostawiać identyfikator bez wyjaśnienia.
- */
-
-/** Stan jednego kanału niosącego uczestników tej debaty. */
+/** Stan jednego kanału niosącego uczestników tej debaty, zestawiony z rejestrem kanałów rdzenia jako warstwa czwarta Model Panels. */
 export interface StanKanaluDebaty {
   idKanalu: string;
   /** Wiersz rejestru; `null`, gdy rejestr tego kanału nie zna. */
@@ -51,7 +34,7 @@ export function kanalyDebaty(stan: StanDebaty): StanKanaluDebaty[] {
   return wykaz;
 }
 
-/** Zdania diagnostyki jednego kanału — po jednym na wiersz wykazu. */
+/** Zdania diagnostyki jednego kanału — po jednym na wiersz wykazu, nazywające wprost brak wpisu w rejestrze albo stan kanału czynnego. */
 export function zdaniaKanalu(kanal: StanKanaluDebaty, kanalyOdczytane: boolean): string[] {
   if (kanal.wpis === null) {
     return [

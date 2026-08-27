@@ -7,12 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek zakresów narzędzi: czy `tools.scope.set` zostawia wiersz w bazie —
-// i czy ten wiersz KOGOKOLWIEK POWSTRZYMUJE.
-//
-// Druga część jest sednem. Zakres zapisany, którego rdzeń nie czyta przy
-// wykonaniu, byłby suwakiem w oknie i niczym więcej: Operator wyłącza pozycję,
-// widzi ją wyłączoną, a model wywołuje ją dalej.
+// Skutek zakresów narzędzi: czy tools.scope.set zapisuje wiersz, który realnie powstrzymuje wywołanie.
 
 // profilZakresuSprawdzianu zakłada profil asystenta wprost w bazie i oddaje jego
 // kod. Komendy `assistant.profile.*` w kontrakcie nie ma, więc profil nie ma jak
@@ -56,14 +51,12 @@ func TestSkutekZakresuNarzedziaOdmawiaWywolania(t *testing.T) {
 		t.Fatal("zakres nie doszedł do bazy")
 	}
 
-	// ODMOWA. Straż jest tą samą, którą pyta rdzeń przed skierowaniem komendy
-	// ręki modelu do obsługiwacza (`rdzen.go`).
+	// Straż jest tą samą, którą pyta rdzeń przed skierowaniem komendy ręki modelu do obsługiwacza.
 	straz := NowyPortZakresowNarzedzi(zmontowany.dane.ZakresyNarzedzi, zmontowany.dane.Asystent)
 	if err := straz.SprawdzWywolanie(zycie, shared.CommandSessionList, ""); err == nil {
 		t.Fatal("straż przepuściła wywołanie pozycji wyłączonej — zakres jest napisem, nie regułą")
 	}
-	// Pozycja bez wiersza zakresu przechodzi: stanem wyjściowym jest pełny
-	// dostęp bez granicy i platforma niczego nie zawęża z góry.
+	// Pozycja bez wiersza zakresu przechodzi: stanem wyjściowym jest pełny dostęp bez granicy.
 	if err := straz.SprawdzWywolanie(zycie, shared.CommandAgentList, ""); err != nil {
 		t.Fatalf("straż odmówiła pozycji, dla której Operator niczego nie zapisał: %v", err)
 	}

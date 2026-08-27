@@ -3391,3 +3391,33 @@ wskazuje ścieżkę w systemie plików rdzenia, a droga po bajty obrazu, choć o
 w kontrakcie, nie ma jeszcze uchwytu w rdzeniu, więc przeglądarka nie ma czym
 wczytać żadnej ze stron porównania. Suwak przejścia między stroną „przed"
 a stroną „po" nabiera znaczenia dopiero po dobudowaniu tej obsługi.
+
+## budowa/klient-poprzedni/src/moduly/browser/ster-wyboru.ts
+
+Trzy nastawy modułu Browser — rodzaj wyodrębnienia w pasku dolnym oraz powiązane
+źródło i moduł docelowy w formularzu notatki — korzystają z jednego mechanizmu
+rozwijania z komponentu menu-drzewa. Rozwijanie, filtrowanie, haczyk przy pozycji
+i wędrówka klawiszami należą do tego mechanizmu, a ster wyłącznie go obsadza
+pozycjami i odbiera wybór.
+
+Wartość nastawy przechowuje jedno pole. Napis na uchwycie oraz haczyk przy
+pozycji biorą się z tego pola przy każdym przerysowaniu, a odczyt wartości oddaje
+to samo pole, więc uchwyt i wykaz nie mogą pokazać dwóch różnych nastaw.
+
+Podpis nad sterem jest blokiem tekstu, a nie etykietą formularza. Etykieta bez
+wskazania pola związałaby się z pierwszym potomkiem dającym się etykietować,
+czyli z uchwytem menu. Kliknięcie w podpis otwierałoby wtedy wykaz, a nazwa
+dostępna uchwytu konkurowałaby z opisem dostępnym, który mechanizm menu składa
+sam z nazwy nastawy i wartości bieżącej.
+
+Podpis pojawia się na ekranie tam, gdzie ster sąsiaduje z polami formularza,
+ponieważ sama wartość nie mówi, czego dotyczy. Przy pasku dolnym nazwa nastawy
+trafia wyłącznie do opisu dostępnego uchwytu.
+
+Ustawienie nastawy z pominięciem Operatora oddaje informację o przyjęciu.
+Wartość spoza wykazu nie zostaje na uchwycie: ster wraca do pozycji pierwszej
+i oddaje odpowiedź odmowną. Milczące przyjęcie wartości nieobecnej w wykazie
+dałoby uchwyt pokazujący nastawę, której nie da się wybrać, więc rozstrzygnięcie
+o powiadomieniu Operatora należy do wołającego. Z tego samego powodu wymiana
+wykazu utrzymuje wybór tylko wtedy, gdy jego pozycja nadal w wykazie stoi,
+a w przeciwnym razie nastawą staje się pierwsza pozycja nowego wykazu.

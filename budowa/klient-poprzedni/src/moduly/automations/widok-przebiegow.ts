@@ -1,31 +1,25 @@
+/**
+ * Rysunki okna Execution Monitor: panel metryk, oś czasu przebiegów, dziennik
+ * i szuflada szczegółów błędu. Wszystkie powstają z przebiegów oddanych przez
+ * rdzeń, więc plik nie zna źródła ani stanu okna i daje się sprawdzić bez kanału.
+ */
+
 import { AutomationExecutionStatus, type AutomationExecution } from '../../../../shared/contract';
 import { pozycjaWykazu, wykaz } from '../../modele/kontrolki-formularza';
 import { zapisWpisu, type WpisDziennika } from './dziennik-przebiegow';
 import { nazwaStanu } from './maszyna-stanow';
 import { czasTrwania, miaryPrzebiegow } from './przeglad-przebiegow';
 
-/**
- * Rysunki okna Execution Monitor: panel metryk, oś czasu przebiegów, dziennik
- * i szuflada szczegółów błędu.
- *
- * Wszystkie powstają z przebiegów, które rdzeń już oddał, więc żaden nie pyta
- * rdzenia o nic. Plik nie zna ani źródła, ani stanu okna — dostaje dane
- * i oddaje elementy, więc daje się sprawdzić bez kanału.
- */
-
-/** Wysokość paska osi czasu w jednostkach rysunku. */
+/** Wysokość paska osi czasu w jednostkach rysunku SVG, wspólna dla wszystkich pasków wykazu przebiegów. */
 const WYSOKOSC_PASKA = 12;
 const ODSTEP_PASKA = 4;
 const SZEROKOSC_OSI = 480;
 const PRZESTRZEN_SVG = 'http://www.w3.org/2000/svg';
 
 /**
- * Panel metryk niezawodności.
- *
- * Koszt liczy się z pól przebiegu, a nie z domysłu: sumujemy liczbę tokenów
- * i liczbę wywołań modelu tam, gdzie rdzeń je podał. Pola są nieobowiązkowe,
- * więc przebieg bez nich nie wchodzi do sumy — i panel mówi, ilu przebiegów
- * suma dotyczy, zamiast podawać liczbę wyglądającą na komplet.
+ * Panel metryk niezawodności. Koszt liczy się z pól przebiegu: sumuje liczbę
+ * tokenów i wywołań modelu tam, gdzie rdzeń je podał. Pola są nieobowiązkowe,
+ * więc panel podaje też liczbę przebiegów, których suma dotyczy.
  */
 export function panelMetryk(przebiegi: readonly AutomationExecution[]): HTMLElement {
   const miary = miaryPrzebiegow(przebiegi);
@@ -60,12 +54,7 @@ export function panelMetryk(przebiegi: readonly AutomationExecution[]): HTMLElem
   return lista;
 }
 
-/**
- * Suma pola kosztu wraz z liczbą przebiegów, które je podały.
- *
- * Pole jest nieobowiązkowe, więc suma bez tej liczby wyglądałaby na komplet
- * także wtedy, gdy pochodzi z jednego przebiegu na dziesięć.
- */
+/** Suma pola kosztu wraz z liczbą przebiegów, które faktycznie je podały, ponieważ pole bywa nieobowiązkowe i puste. */
 function opisKosztu(
   przebiegi: readonly AutomationExecution[],
   wartosc: (przebieg: AutomationExecution) => number | undefined,
@@ -79,11 +68,8 @@ function opisKosztu(
 
 /**
  * Oś czasu przebiegów: jeden pasek na przebieg, długość według czasu trwania.
- *
  * Przebieg trwający nie ma czasu zakończenia, więc jego pasek sięga chwili
- * bieżącej — inaczej byłby niewidoczny akurat wtedy, gdy patrzy się na niego
- * najczęściej. Skala jest wspólna dla całego wykazu, żeby paski dało się
- * porównać wzrokiem.
+ * bieżącej. Skala jest wspólna dla wykazu, żeby paski dało się porównać wzrokiem.
  */
 export function osCzasuPrzebiegow(
   przebiegi: readonly AutomationExecution[],
@@ -129,12 +115,9 @@ export function osCzasuPrzebiegow(
 }
 
 /**
- * Szuflada szczegółów błędu — przebiegi zakończone błędem wraz z powodem.
- *
- * `null` znaczy „żaden przebieg wykazu nie zakończył się błędem". Szuflada
- * podaje powód, krok, w którym przebieg się załamał, i numer obiegu. Śladu
- * stosu przebieg nie niesie — ten stoi przy kroku i sięga po niego osobna
- * komenda stanu krokowego, której pozycja w pasku akcji nazywa.
+ * Szuflada szczegółów błędu — przebiegi zakończone błędem wraz z powodem,
+ * krokiem załamania i numerem obiegu; wykaz pusty oddaje wartość pustą
+ * zamiast elementu szuflady.
  */
 export function szufladaBledow(przebiegi: readonly AutomationExecution[]): HTMLElement | null {
   const nieudane = przebiegi.filter(
@@ -147,8 +130,7 @@ export function szufladaBledow(przebiegi: readonly AutomationExecution[]): HTMLE
   naglowek.textContent = `Szczegóły błędów (${nieudane.length})`;
   const lista = wykaz('Przebiegi zakończone błędem', 'da-wykaz');
   for (const przebieg of nieudane) {
-    // Krok załamania stoi w osobnym polu i jest wskazaniem dokładniejszym niż
-    // numer etapu bieżącego, więc idzie przed nim.
+    // Krok załamania jest dokładniejszy niż etap bieżący, więc ma pierwszeństwo w opisie.
     const etap =
       przebieg.failedStepId !== undefined && przebieg.failedStepId !== ''
         ? `krok ${przebieg.failedStepId}`
@@ -167,7 +149,7 @@ export function szufladaBledow(przebiegi: readonly AutomationExecution[]): HTMLE
   return szuflada;
 }
 
-/** Wykaz wierszy dziennika; wykaz pusty oddaje `null`, a zdanie niesie okno. */
+/** Wykaz wierszy dziennika przebiegów w postaci elementu strony; wykaz pusty oddaje wartość pustą zamiast elementu. */
 export function wykazDziennika(wpisy: readonly WpisDziennika[]): HTMLElement | null {
   if (wpisy.length === 0) return null;
   const lista = wykaz('Dziennik przebiegów', 'da-wykaz');
@@ -183,7 +165,7 @@ export function wykazDziennika(wpisy: readonly WpisDziennika[]): HTMLElement | n
   return lista;
 }
 
-/** Treść pliku dziennika — jeden wiersz na wpis, w kolejności przyjęcia. */
+/** Treść pliku dziennika przebiegów — jeden wiersz tekstu na każdy wpis, w kolejności jego przyjęcia do dziennika. */
 export function zapisDziennika(wpisy: readonly WpisDziennika[]): string {
   return `${wpisy.map(zapisWpisu).join('\n')}\n`;
 }

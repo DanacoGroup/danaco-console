@@ -6020,3 +6020,20 @@ powodu braku kontraktu, nie z powodu błędu Operatora: zlecenie z tytułem i tr
 obiektów, sama treść zlecenia w tablicy napisów, albo wykaz w opakowaniu z polem elementów. Brak
 pola, pole puste i wartość null dają kolejkę bez zleceń — kolejka pusta jest stanem poprawnym.
 Ładunek nieczytelny jako JSON jest błędem żądania: to nie brak danych, tylko dane uszkodzone.
+
+## budowa/server/internal/core/tozsamosc.go
+
+Silnik nakładki z pakietu internal/injection niesie trzy warstwy według
+krytyczności oraz dwa tryby podania: TrybZastap (parametr --system-prompt)
+i TrybDopisz (parametr --append-system-prompt). Ten plik nie powtarza
+silnika — daje mu sterowanie z danych. Rdzeń nie zna ani jednego zdania
+promptu, zna wyłącznie porządek składania i regułę wyboru osi.
+
+Porządek składania nakładki jest w całości wyznaczony danymi, nigdy
+kolejnością odczytu z mapy, bo bez tej własności pamięć podręczna promptu
+po stronie kanału byłaby bezużyteczna — ta sama konfiguracja musi dać
+bajtowo ten sam prompt.
+
+Brak katalogu, treści albo kategorii obowiązkowej nie wstrzymuje niczego:
+kanał rusza wtedy z samą powłoką, a wykaz braków jest informacją dla
+korzystającego z interfejsu, nie bramą wstrzymującą działanie.

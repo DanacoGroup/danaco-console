@@ -4737,3 +4737,5 @@ Sprawdzian zapisuje ten rozjazd tak, żeby nie zniknął po cichu ani nie pogł�
 niepomyślnie, dopóki Terminal jest ukryty w CodeStudio, a gdy zostanie odsłonięty zgodnie z macierzą,
 każe się odwrócić w straż. Naprawa należy do warstwy modułów, do macierzy widoczności środowisko-moduł,
 nie do tego pliku — sprawdzian pomiar utrwala, nie rozstrzyga.
+## budowa/server/internal/dane/roundtable_glosowanie.go
+Wyniku agregacji tu nie ma i być nie może: liczy go rdzeń z głosów przy każdym odczycie, bo głos może dojść po pierwszym wyliczeniu. Repozytorium oddaje materiał, czyli głosowanie, warianty i głosy, a nie wnioski wyciągnięte z niego. Powtórne oddanie głosu zastępuje poprzedni: zmiana zdania w otwartym głosowaniu jest czynnością dozwoloną, a dwa głosy tej samej osoby nie są. Otwarcie głosowania zakłada je wraz z wariantami w jednej transakcji, bo głosowanie bez wariantów byłoby pytaniem bez odpowiedzi do wyboru.

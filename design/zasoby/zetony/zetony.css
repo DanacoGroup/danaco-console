@@ -299,18 +299,58 @@
 
   color-scheme: light;
 
-  --dn-tlo: var(--dn-szary-50);              /* #F4F4F4 — papier roboczy */
-  --dn-powierzchnia: var(--dn-szary-0);      /* #FFFFFF — karty, okna */
-  --dn-powierzchnia-2: var(--dn-szary-100);  /* #ECECEC — wgłębienia, tory */
-  --dn-panel: var(--dn-szary-25);            /* #FAFAFA — panele boczne */
-  --dn-wstazka: var(--dn-szary-0);           /* #FFFFFF — belka nakładana paska edycji */
-  --dn-wstazka-taca: var(--dn-szary-150);    /* #E3E3E3 — taca pod belką nakładaną */
+  /* DRABINA POWIERZCHNI MOTYWU JASNEGO — przebudowana 27.08.2026.
+     Dwie usterki, obie policzone.
+
+     PIERWSZA — drabina była płaska: 2,0 L* między tłem a panelem i 1,8 L*
+     między panelem a kartą, przy 8,3 i 4,4 L* w motywie ciemnym. Hierarchię
+     niosła wyłącznie kreska włosowa, więc okno czytało się jako jedno białe
+     pole.
+
+     DRUGA, głębsza — drabina była ODWRÓCONA wobec ciemnego. Karta środowiska
+     bierze `--dn-panel`, a pojemnik pod nią `--dn-powierzchnia`. W ciemnym
+     dawało to kartę NAD pojemnikiem (12,6 wobec 8,2 L*), w jasnym POD nim
+     (96,2 wobec 100) — karta czytała się jako wgłębienie, nie jako uniesienie.
+     Żadne pogłębienie samych wartości tego nie naprawia: naprawia to dopiero
+     ta sama KOLEJNOŚĆ ról w obu motywach.
+
+     Kolejność jest teraz wspólna — od gruntu w górę:
+       tło  ≤  powierzchnia-2  <  powierzchnia  <  panel  <  wstążka
+     jasny:   90,2   90,2   93,4   96,2   100
+     ciemny:   4,3    5,8    8,2   12,6   17,0
+
+     Para, która ma znaczenie dla oka: KARTA (`--dn-panel`) wobec TACY, na
+     której leży (`--dn-wstazka`, bo tak maluje się `.dn-obszar-panel`).
+     Karta jest o stopień CIEMNIEJSZA od tacy w obu motywach — to zamierzone,
+     tak samo jak w ciemnym (12,6 wobec 17,0 = 4,4 L*). W jasnym było 1,8 L*;
+     teraz jest 3,8 L*.
+
+     Dlaczego cztery szczeble, a nie pięć: pełna piątka o skokach ciemnego
+     wymaga gruntu na 86 L*, a na nim `--dn-tekst-2` daje 4,32 : 1 — pod
+     progiem 4,5 : 1. Motyw jasny ma mniej zapasu niż ciemny, więc grunt
+     zostaje na 90,2, a wgłębienie dzieli z nim szczebel: wgłębienie w jasnym
+     rozpoznaje się kreską wpuszczoną, nie wypełnieniem. Rozpiętość drabiny
+     jasnego wynosi 9,8 L* przy 12,7 L* ciemnego — bez łamania AA więcej nie
+     ma. Wartości wyłącznie ze szczebli palety; żaden nowy szczebel nie powstał.
+
+     Kontrasty po zmianie (tekst 12 px i większy, wszystkie ≥ 4,5 : 1):
+       tekst    13,8 : 1 na gruncie  ·  17,8 : 1 na tacy
+       tekst-2   4,84 : 1 na gruncie  ·  6,21 : 1 na tacy
+       tekst-3   4,84 : 1 na gruncie  ·  6,21 : 1 na tacy  */
+  --dn-tlo: var(--dn-szary-150);             /* #E1E3E7 · L* 90,2 — grunt */
+  --dn-powierzchnia-2: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 — wgłębienia, tory */
+  --dn-powierzchnia: var(--dn-szary-100);    /* #EBECEF · L* 93,4 — okna, pojemniki */
+  --dn-panel: var(--dn-szary-50);            /* #F3F4F6 · L* 96,2 — karty i panele */
+  --dn-wstazka: var(--dn-szary-0);           /* #FFFFFF · L* 100  — taca pod kartą */
+  --dn-wstazka-taca: var(--dn-szary-100);    /* #EBECEF · L* 93,4 */
   --dn-hover: rgba(10, 10, 10, 0.05);
   --dn-wcisniecie: rgba(10, 10, 10, 0.09);
   --dn-nakladka: rgba(10, 10, 10, 0.45);
 
-  --dn-obrys: var(--dn-szary-150);           /* #E3E3E3 */
-  --dn-obrys-subtelny: var(--dn-szary-100);  /* #ECECEC */
+  /* Kreski schodzą pod grunt: obrys na szczeblu tła byłby na nim niewidoczny,
+     a rozdzielenie ma nieść powierzchnia I kreska, nie jedno z dwojga. */
+  --dn-obrys: var(--dn-szary-200);           /* #D5D7DC · L*  86 */
+  --dn-obrys-subtelny: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 */
   --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
 
   --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
@@ -318,9 +358,17 @@
      pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
      przez co po nagłówku wszystko czytało się jednym głosem. */
   --dn-tekst-wiodacy: var(--dn-szary-700);
-  --dn-tekst-2: var(--dn-szary-600);         /* #616161 · 6,4:1 na tle */
-  --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane
-                                                i tekst ≥ 18,66 px półgruby */
+  --dn-tekst-2: var(--dn-szary-600);         /* #5D6169 · 6,21:1 na karcie */
+  /* Trzeci stopień zszedł na szczebel drugiego. Powód policzalny: na szczeblu
+     500 dawał 3,80:1 na dawnym gruncie i 3,26:1 na pogłębionym — pod progiem
+     4,5:1 dla tekstu poniżej 18,66 px, a niosą go metadane pisane na 12 px.
+     Między szczeblem 500 a 600 nie ma szczebla, który by próg przeszedł
+     (550 dałby 3,92:1), więc w motywie jasnym trzeci stopień NIE JEST rangą
+     barwy — rozróżnienie niesie pismo: krój maszynowy i stopień 12 px
+     (`.dn-meta`, `.dn-etyk-mono`). W motywie ciemnym ranga barwy zostaje.
+     Ta zmiana zdejmuje powód pięciu obejść rozsianych po bibliotece, które
+     miejscowo podnosiły metadane o stopień wyżej. */
+  --dn-tekst-3: var(--dn-szary-600);         /* #5D6169 · 4,84:1 na gruncie */
   --dn-tekst-inv: var(--dn-szary-0);
 
   /* działanie główne — inwersja atramentu */

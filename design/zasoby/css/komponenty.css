@@ -3345,3 +3345,123 @@ button.dn-link {
    też jej pismo i przestawały wyglądać jak plakietki. Rozmieszczenie i wygląd
    to dwie różne decyzje, więc są dwiema różnymi klasami. */
 .dn-na-koniec { margin-left: auto; }
+
+/* ==========================================================================
+   WNĘTRZA KART OKNA ROBOCZEGO — kanwa, różnice, wersje, podgląd wydruku
+   --------------------------------------------------------------------------
+   Role wyniesione z arkusza okna Studia. Żadna nie jest własnością Studia:
+   kanwę dokumentu ma także Developer i Translate, wykaz różnic — Developer
+   i Design, repozytorium wersji — każdy moduł z historią, podgląd wydruku —
+   każdy moduł, który cokolwiek drukuje.
+   ========================================================================== */
+
+/* Nota pomocnicza — drobny tekst pod wierszem wykazu. Pismo bezszeryfowe:
+   to zdanie do czytania, nie miara (miarę niesie `.dn-meta`). */
+.dn-nota { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); }
+
+/* ── Pasek narzędzi edytora ──────────────────────────────────────────────── */
+
+.dn-edytor-pasek {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-1);
+  flex-wrap: wrap;
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-edytor-grupa {
+  display: inline-flex;
+  gap: var(--dn-od-05);
+  padding-right: var(--dn-od-2);
+  border-right: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* ── Kanwa dokumentu ─────────────────────────────────────────────────────── */
+
+/* Powierzchnia redakcji. Różna od `.dn-tekst-ciagly`: tam tekst się CZYTA,
+   tutaj się go PISZE, więc miara wiersza jest szersza, a barwa pełna. */
+.dn-kanwa {
+  max-width: 78ch;
+  margin: 0 auto;
+  padding: var(--dn-od-4) var(--dn-od-6);
+  min-height: 0;
+  overflow: auto;
+  line-height: var(--dn-lh-luzny);
+  color: var(--dn-tekst);
+}
+.dn-kanwa h1 { font-size: var(--dn-fs-xl); margin: 0 0 var(--dn-od-3); }
+.dn-kanwa h2 { font-size: var(--dn-fs-lg); margin: var(--dn-od-4) 0 var(--dn-od-2); }
+.dn-kanwa p { margin: 0 0 var(--dn-od-3); }
+
+/* Zaznaczenie w kanwie jest kontenerem odniesienia dla przybornika
+   pływającego — bez tego przybornik ląduje na akapicie, nie nad nim. */
+.dn-zazn {
+  position: relative;
+  padding: 1px var(--dn-od-1);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-sygnal-tlo);
+  box-shadow: 0 0 0 1px var(--dn-sygnal);
+}
+.dn-plyw {
+  position: absolute;
+  bottom: calc(100% + var(--dn-od-1));
+  left: 0;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dn-od-05);
+  padding: var(--dn-od-05);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-md);
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-3);
+  white-space: nowrap;
+}
+
+/* ── Wykaz różnic ────────────────────────────────────────────────────────── */
+
+/* Trzy rodzaje zmiany, trzy rozpoznania: dodanie tłem zieleni, usunięcie
+   przekreśleniem NA TLE czerwieni, zmiana formatu samym konturem. Stan nigdy
+   samym kolorem — usunięcie niesie przekreślenie, format niesie kontur. */
+.dn-diff-dod,
+.dn-diff-usu,
+.dn-diff-fmt { padding: 1px var(--dn-od-1); border-radius: var(--dn-r-md); }
+.dn-diff-dod { background: var(--dn-sukces-tlo); color: var(--dn-tekst); }
+.dn-diff-usu { background: var(--dn-blad-tlo); text-decoration: line-through; }
+.dn-diff-fmt { box-shadow: inset 0 0 0 1px var(--dn-ostrzezenie-tekst); }
+
+/* ── Repozytorium wersji ─────────────────────────────────────────────────── */
+
+.dn-wersja {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-05);
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+.dn-wersja-akcje { display: flex; gap: var(--dn-od-1); margin-top: var(--dn-od-05); }
+
+/* ── Podgląd wydruku ─────────────────────────────────────────────────────── */
+
+/* Kartka — arkusz papieru na gruncie panelu. Jedyne miejsce, gdzie `--dn-tlo`
+   jest wypełnieniem elementu, a nie gruntem: kartka MA być tłem, tylko
+   uniesionym i obrysowanym. */
+.dn-kartka {
+  max-width: 60ch;
+  margin: 0 auto;
+  padding: var(--dn-od-4);
+  border: 1px solid var(--dn-obrys);
+  border-radius: var(--dn-r-lg);
+  /* Papier bierze POWIERZCHNIĘ, nie grunt: w motywie jasnym grunt jest szary,
+     a kartka ma być białą stroną leżącą na nim. */
+  background: var(--dn-powierzchnia);
+  box-shadow: var(--dn-cien-1);
+  color: var(--dn-tekst);
+}
+.dn-kartka-tytul {
+  margin-bottom: var(--dn-od-3);
+  font-size: var(--dn-fs-lg);
+  font-weight: var(--dn-fw-polgruba);
+}
+.dn-kartka p { font-size: var(--dn-fs-sm); }
+.dn-kartka-numer { color: var(--dn-tekst-2); }

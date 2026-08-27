@@ -2008,3 +2008,9 @@
   border-bottom: 0;
   background: transparent;
 }
+
+/* Płótno pulpitu stoi na GRUNCIE, nie na tacy panelu. Reguła `.dn-obszar-panel
+   .dn-obszar-tresc { background: transparent }` (wyżej w tym arkuszu) zerowała
+   wariant `--plotno` swoistością, więc płótno brało barwę tacy i strefy nie
+   miały od czego się odciąć. Tu swoistość jest równa, a kolejność późniejsza. */
+.dn-pulpit .dn-obszar-tresc--plotno { background: var(--dn-tlo); }

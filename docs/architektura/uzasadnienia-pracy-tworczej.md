@@ -4219,3 +4219,49 @@ Zgadywania typu treści po nazwie pliku nie ma: nazwa jest wolnym tekstem
 Operatora i mówi o pliku dokładnie tyle, ile Operator w nią wpisał.
 
 DetectContentType dokleja parametr zestawu znaków do typów tekstowych.
+
+## budowa/server/internal/core/adapter_modul_design_zasoby.go
+
+Wniesienie zasobu leży w adapter_modul_design_wgranie.go, etykiety
+w adapter_modul_design_etykiety.go — podział wedle odpowiedzialności.
+
+Blob leży pod sumą swojej zawartości, więc dwa zasoby o identycznej treści
+(to samo tło wniesione w dwóch oknach) dzielą jeden plik; skasowanie go
+przy usunięciu jednego zasobu odebrałoby treść drugiemu, który o niczym
+nie wie. Zliczania odwołań rdzeń nie prowadzi i ten moduł go nie zakłada,
+więc bajty usuniętego zasobu zostają w katalogu danych do czasu, aż
+magazyn dostanie sprzątanie.
+
+Zasób odczytuje się przed zapisem oznaczenia ulubionego, bo komenda niesie
+identyfikator kontraktu, a oznaczenie wisi na kluczu wiersza; przy okazji
+ten sam odczyt odróżnia zasób nieznany (odmowa not_found, panel ma po czym
+poznać, że jego wykaz jest nieaktualny) od usterki bazy.
+
+Odpowiedź niesie stan z bazy, nie echo żądania — wzorem
+UstawEtykietyZasobu. Podstawienie z.Favorite do zasobu odczytanego przed
+zapisem opisywałoby stan, którego w bazie może nie być; stąd drugi odczyt.
+
+Ustawienie stanu ulubionego, który już obowiązuje, jest drogą udaną.
+Kontrakt nie pyta, czy się zmieniło, tylko żąda stanu docelowego — odmowa
+za powtórzenie zabrałaby oknu prawo do wysłania tego, co Operator widzi na
+przełączniku.
+
+Zasób czyta się przed usunięciem, żeby było co rozgłosić: design.asset.changed
+niesie cały zasób obok rodzaju zmiany (DesignAssetChangedEvent.Asset), więc
+po usunięciu wiersza nie ma już z czego złożyć zdarzenia — a zdarzenie
+deleted z pustym zasobem powiedziałoby panelowi "coś zniknęło" bez
+wskazania czego. Odczytany zasób wraca wołającemu osobnym wyjściem, bo
+odpowiedź kontraktu niesie samo removed (patrz zarejestrujDesign).
+
+Zasób nieznany przy usunięciu nie jest odmową. Kontrakt pyta wprost, czy
+zasób istniał i został usunięty — removed: false odpowiada na to pytanie
+prawdziwie, a odmowa kazałaby oknu obsługiwać błąd tam, gdzie stan
+docelowy (zasobu nie ma) już obowiązuje. Powtórzone usunięcie tego samego
+kodu też oddaje false.
+
+Rozpoznanie zasobu nieznanego przy usunięciu idzie po błędzie braku,
+a nie odesłaniem go dalej.
+
+Etykiety czyta się jeszcze przed usunięciem zasobu: etykieta_zasobu_design
+znika kaskadą razem z wierszem, więc po UsunZasob zdarzenie niosłoby zasób
+bez etykiet, których w chwili usunięcia miał pełny zestaw.

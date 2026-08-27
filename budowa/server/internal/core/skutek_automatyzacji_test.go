@@ -75,7 +75,7 @@ func TestSkutekWersjiDefinicjiWBazie(t *testing.T) {
 		t.Fatalf("po dwóch zapisach w bazie stoi %d migawek, oczekiwano 2", migawek)
 	}
 
-	// Porównanie ma zobaczyć dwa kroki usunięte — mierzymy skutek zapisu, a nie
+	// Porównanie ma zobaczyć dwa kroki usunięte — mierzy się skutek zapisu, a nie
 	// samo istnienie wierszy.
 	var roznica shared.AutomationWorkflowVersionDiffResponse
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAutomationWorkflowVersionDiff,

@@ -3104,3 +3104,14 @@ choć formularz o skasowanie nie prosił.
 Zdanie o zespole podaje liczebność składu, ponieważ jest ona jedyną rzeczą, po
 której Operator poznaje na wykazie różnicę między zespołem a jego kopią świeżo
 powieloną.
+
+## budowa/klient-poprzedni/src/dostepy/przelacznik-trybu.ts
+
+Ostrzeżenie o zapisie jest częścią przełącznika, ponieważ dotyczy skutku wyboru,
+a nie sąsiedztwa na ekranie. Zapis na maszynie chronionej pokazuje pełne zdanie pod
+przełącznikiem, a nie w podpowiedzi pod kursorem: skutek zapisu na produkcyjnej
+platformie LEX jest nieodwracalny, więc zdanie musi być widoczne bez najeżdżania
+wskaźnikiem.
+
+Treść ostrzeżenia liczy się z nazwy maszyny podanej w punkcie dostępu, dlatego
+nanoszenie nowego punktu przelicza je od nowa.

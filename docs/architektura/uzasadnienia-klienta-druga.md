@@ -4787,3 +4787,18 @@ ma ani jednego wiersza, więc okno komunikacji nie miałoby czym rozmawiać —
 warstwa dokłada wiersz komendą `channel.add`, tak samo jak zrobiłby to
 Operator w panelu sterowania okna. Niepowodzenie nie przerywa niczego poza
 tym wywołaniem: wynik niesie opis przeszkody, a okno pozostaje czynne.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-osie.ts
+Nazwy i kolejność biorą się ze źródła rdzenia. Oś jest prostopadła do poziomu, nie jego
+przedłużeniem — i to jest sedno tego obszaru. Poziom zasięgu rozstrzyga pierwszy: cały łańcuch od
+okna do poziomu globalnego, zanim oś w ogóle wejdzie w grę. Dopiero wewnątrz już wybranego poziomu
+oś wskazuje adresata wartości — dla kogo ona obowiązuje: konto, model czy tło platformy. Klucz
+rozstrzygania jest złożony: klucz, poziom, byt poziomu, oś, byt osi, czyli jedna komórka na
+przecięciu dwóch współrzędnych, a nie jeden dłuższy szczebel drabiny. Widok pokazuje obie
+współrzędne osobno właśnie po to, żeby nie czytało się ich jako jednej listy do przewinięcia.
+Zaślepka jest wyłącznie na działanie, nie na treść. Trzy osie i ich relacja do poziomu to treść
+stała — wynika ze źródła rdzenia, nie z odpowiedzi rdzenia, więc pokazuje się zawsze w pełni.
+Jedyna czynność tego obszaru, zapis wartości na wskazanej osi, nie ma pokrycia w kontrakcie: żądania
+zapisu kontekstu i zapisu zakresu technicznego niosą poziom zasięgu, byt poziomu i warstwę, ale pola
+osi w nich nie ma. To jedyne miejsce tego okna, gdzie brak jest po stronie kontraktu, a nie
+podłączenia — stoi tu więc jawny, w pełni klikalny stan braku, nie cichy brak i nie martwy przycisk.

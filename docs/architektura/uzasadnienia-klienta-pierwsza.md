@@ -384,8 +384,8 @@ składaniu okna.
 
 Nazwy komend proponowanych w tym pliku nie są nazwami kontraktu i nie idą na drut do
 rdzenia: pozycja z takim wskazaniem stoi w wykazie braków, a wpisanie komendy do kontraktu
-zdejmuje pozycję z wykazu samo. Nazwy stoją w jednym miejscu, żeby definicja oddana
-właścicielowi produktu i zdanie widoczne Operatorowi mówiły o tej samej komendzie. Obszar
+zdejmuje pozycję z wykazu samo. Nazwy stoją w jednym miejscu, żeby definicja wpisana
+do kontraktu i zdanie widoczne Operatorowi mówiły o tej samej komendzie. Obszar
 nazwy idzie za bytem, którego dotyczy: czynności na katalogu rozszerzeń należą do obszaru
 `extension`, bo katalog stoi poziom wyżej niż moduł, a czynności na produkcie budowanym
 w module — do obszaru `apps`.
@@ -3317,3 +3317,22 @@ które rdzeń zna, bo proces czekający na decyzję nie musi należeć do sesji 
 Konfiguracja okna otwierana jest na zasięgu `window`, czyli poziomie najwęższym,
 który wygrywa z każdym szerszym. Konfiguracja koordynatora dotyczy tego jednego okna
 i nie ma sięgać ustawień sesji ani konta.
+
+## budowa/klient-poprzedni/src/moduly/agents/panel-zakresu-eksperta.ts
+
+Grupy dostępu do rozszerzeń i dostępu do modułów są wartościami wyliczenia
+uprawnień i stoją wyżej jako zwykłe wiersze Permissions Center. W tym panelu
+mieszkają trzy rzeczy, które wartością logiczną nie są: moduły zastosowania
+jako wykaz kodów, gdzie wykaz pusty znaczy brak ograniczenia i jest stanem
+wyjściowym; izolacja techniczna jako macierz ośmiu suwaków, identyczna
+z macierzą okna konfiguracji punktów izolacji, bo macierz jest jedna;
+oraz para ustawień sieci podagentów — czynność i górna liczba podagentów.
+
+Podgląd polityki efektywnej pokazuje wynikowy zestaw ustawień po uwzględnieniu
+wszystkich trzech grup. Jest to podgląd, nie bramka — komenda niczego nie
+zapisuje i niczego nie rozstrzyga.
+
+Każde zawężenie ustawione w tym panelu jest zawężeniem egzekwowanym: rdzeń
+czyta te zapisy przy nakładaniu eksperta na okno i przy powołaniu podagentów,
+i na ich podstawie odmawia. Panel mówi o tym Operatorowi wprost, żeby żaden
+suwak nie został wzięty za ozdobę.

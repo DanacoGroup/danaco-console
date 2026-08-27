@@ -105,3 +105,20 @@ warstwa wspólna nie nazywa.
 
 ## design/03-marka/zastosowania/html/sygnatura-poczty-jasna.html
 Odbiorca kopiuje cały blok tabeli wzorca i wkleja go w ustawieniach klienta poczty elektronicznej. Pola ujęte w nawiasach kwadratowych wymagają uzupełnienia własnymi danymi. Szerokość wzorca wynosi sto procent szerokości dostępnej do pięciuset dwudziestu pikseli, znak zajmuje sto sześćdziesiąt osiem na siedemdziesiąt dwa piksele w podwójnej rozdzielczości pliku, linia reguły ma grubość jednego piksela, a kropka sygnału pozostaje jedynym akcentem barwnym całej sygnatury.
+
+## budowa/klient-poprzedni/src/moduly/studio/przybornik-znakowania.css
+Arkusz wchodzi z pliku klienckiego przybornik-znakowania, a nie z arkusza
+studia modułu: dopisanie importu do cudzego arkusza byłoby zmianą poza tym
+odcinkiem prac, więc wciągnięcie odbywa się przez moduł kliencki. Panel
+operacji zwinięty nie zajmuje kolumny pasa wiodącego, ponieważ kolumnę
+rezerwuje układ siatki pasa wiodącego z arkusza modułu należącego do innego
+odcinka; rozstrzyga to wyłącznie selektor stanu, bez zmiany tamtego arkusza.
+Trzy byty marginesu mają różne obramowania, żeby rodzaj wpisu dało się
+rozpoznać bez czytania treści dymka. Pływak narzędzi ukrytych mieści szybkie
+działania oraz suwaki. Stały panel operacji zajmuje osobną kolumnę pasa
+wiodącego modułu studia. Przybornik znakowania mieści również brakujące
+pozycje w jednej kolumnie panelu bocznego. Schowek udostępnia zawężenie
+wyników i podgląd treści. Osadzenie przeglądarki i biblioteki ma część
+nagłówkową, przewijany podgląd treści źródła i listę pochodzeń. Mikrofon
+w trakcie nagrywania dodatkowo pulsuje animacją tętna, sygnalizując aktywne
+nagrywanie dźwięku.

@@ -6306,3 +6306,19 @@ a dopiero drugie go wykonuje; potwierdzenie w tym samym kliknięciu byłoby
 zgodą pozorną. Plik buduje wyłącznie kontrolki i pokazuje odpowiedź,
 a rozmowę z rdzeniem prowadzi moduł zapisów zbiorczych, zachowując jedną
 odpowiedzialność na plik.
+
+## budowa/klient-poprzedni/src/moduly/library/dolozenie-wersji.ts
+Dołożenie wersji jest jedynym wejściem, którym rośnie historia dokumentu,
+ponieważ wgranie pliku zawsze zakłada nowy dokument, więc drugie wgranie
+dałoby drugi dokument, a nie drugą wersję pierwszego. Kamień milowy stawia
+rdzeń na treści bieżącej pliku, przepisując ją do wersji, więc powrót do
+znacznika niczego nie wymazuje. Wersja zapisana nie jest jeszcze wersją
+z treścią: zapis z treścią wraca powodzeniem i zakłada wersję z własną sumą
+kontrolną także wtedy, gdy podgląd dokumentu odmawia, więc do takiej wersji
+przywrócenie nie ma po co wracać, dopóki okno nie zapyta rdzeń o treść po
+dołożeniu. Zdanie powodzenia bierze osobno wskazanie wersji przez dokument
+i osobno zgodność sum kontrolnych, każde z odpowiedzi rdzenia, nie z żądania
+okna. Rozbieżność pola wskazania wersji znaczy, że wiersz historii powstał,
+ale dokument został przy innej wersji, więc okno ogłasza to odmową.
+Rozbieżność sum kontrolnych znaczy, że dokument niesie wersję, ale nie jej
+bajty; wtedy zdanie mówi o wersji tyle, ile rdzeń podał, i ani słowa więcej.

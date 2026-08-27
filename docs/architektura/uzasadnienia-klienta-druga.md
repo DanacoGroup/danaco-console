@@ -2314,3 +2314,7 @@ sposób działania komponentu `.dn-tooltip` przy najechaniu i ognisku oraz podzi
 odpowiedzialności między biblioterkę chmurki a widok rysujący znak zapytania.
 Redakcja scaliła te wątki w jedno zdanie nazywające działanie modułu, a podział
 odpowiedzialności między warstwami pozostał czytelny w strukturze kodu.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-sources-manager.ts
+Pole zawężania działa po stronie klienta i nie woła rdzenia. Komenda odczytu wykazu wraz z polami zawężającymi jest już w kontrakcie, ale rdzeń nie ma dla niej uchwytu, więc wykaz mieszka w pamięci modułu i tam też się zawęża; po dobudowie zawężanie ma przenieść się do żądania. Zawężenie nie zdejmuje zaznaczenia — źródło niewidoczne w wykazie pozostaje zaznaczone i idzie do ustalenia, a okno mówi o tym liczbą przy polu. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności źródeł.
+Stan okna liczy się z wykazu pełnego, nie z zawężonego: zawężenie bez trafień nie znaczy, że katalog jest pusty, a zaproszenie do skatalogowania pierwszego źródła postawione nad katalogiem pełnym byłoby nieprawdą.

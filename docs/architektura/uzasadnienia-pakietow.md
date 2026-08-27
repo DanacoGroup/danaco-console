@@ -4860,3 +4860,16 @@ UrzadzeniaKonta niesie też informację, czy urządzenie ma dziś ważny token.
 Urządzenie konta nie ma bytu trwałego w osobnej tabeli i nie musi go mieć: urządzeniem konta
 jest to, które kiedykolwiek weszło, a to wiedzą sesje bramki; osobna tabela urządzeń
 wymagałaby sprzątania wierszy, których nic już nie dotyczy.
+
+## budowa/server/internal/store/migracje_test.go
+
+Krok migracji wykonany błędnie zostaje w bazie na zawsze, bo kroku nie da się cofnąć. Dlatego mierzone
+jest tu nie to, czy przejazd przechodzi, lecz cztery obietnice, na których stoi cała reszta: pełny
+przejazd od zera, powtarzalność, niezmienność treści kroku już zastosowanego oraz atomowość kroku
+nieudanego. Sterownik jest czystym kodem języka Go, więc każdy sprawdzian zakłada własny plik bazy
+w katalogu tymczasowym i przejeżdża komplet migracji od nowa; koszt tego przejazdu jest na tyle mały,
+że nie opłaca się dzielić bazy między sprawdzianami, bo baza dzielona zamieniłaby je w jeden sprawdzian
+zależny od kolejności.
+
+Ciągłość numeracji kroków migracji nie jest wymagana i nie jest sprawdzana w teście numeracji — luki
+powstają przy pracy równoległej i są z zamysłu.

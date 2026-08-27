@@ -754,3 +754,15 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 .cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
 .cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); font-size: var(--dn-fs-xs); }
 .cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
+
+.cd-strona {
+  --cd-tekst-opisu: color-mix(in oklab, var(--dn-tekst-3) 60%, var(--dn-tekst-2));
+}
+@supports not (color: color-mix(in oklab, red, blue)) {
+  .cd-strona { --cd-tekst-opisu: var(--dn-tekst-2); }
+}
+.cd-strona .cd-kafel-tresc .dn-kafel-opis,
+.cd-strona .cd-wlasny-rodzaj { color: var(--cd-tekst-opisu); }
+.cd-strona .cd-listwa-poz { color: var(--dn-tekst-2); }
+.cd-strona .cd-listwa-poz:hover,
+.cd-strona .cd-listwa-poz:focus-visible { color: var(--dn-tekst); }

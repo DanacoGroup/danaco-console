@@ -153,7 +153,7 @@ type trescStrony struct {
 // pobierzStrone pobiera stronę spod adresu przez HTTP GET i wydobywa z niej
 // tytuł oraz tekst renderowany, w granicach czasu i rozmiaru pobrania.
 func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
-	// Adres obcinamy raz, na wejściu, i to jest cała prawda o nim dalej.
+	// Adres obcina się raz, na wejściu, i to jest cała prawda o nim dalej.
 	adres = strings.TrimSpace(adres)
 	if err := sprawdzProtokol(adres); err != nil {
 		return trescStrony{}, err
@@ -173,7 +173,7 @@ func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
 	klient := &http.Client{Timeout: czasPobrania, CheckRedirect: pilnujPrzekierowan}
 	odpowiedz, err := klient.Do(zadanie)
 	if err != nil {
-		// Rozwijamy `*url.Error`, żeby zdanie odmowy niosło samą przyczynę.
+		// Rozwija się `*url.Error`, żeby zdanie odmowy niosło samą przyczynę.
 		var bladOtoczki *url.Error
 		if errors.As(err, &bladOtoczki) && bladOtoczki.Err != nil {
 			err = bladOtoczki.Err
@@ -193,13 +193,13 @@ func pobierzStrone(ctx context.Context, adres string) (trescStrony, error) {
 	if typ := odpowiedz.Header.Get("Content-Type"); !typTekstowy(typ) {
 		return trescStrony{}, fmt.Errorf("%w, tylko treścią typu %q", errZasobNieJestStrona, typ)
 	}
-	// Deklarowany rozmiar sprawdzamy przed czytaniem odpowiedzi.
+	// Deklarowany rozmiar sprawdza się przed czytaniem odpowiedzi.
 	if odpowiedz.ContentLength > limitTresci {
 		return trescStrony{}, fmt.Errorf("%w (%d B przy granicy %d B)",
 			errZaDuzaStrona, odpowiedz.ContentLength, int64(limitTresci))
 	}
 
-	// Czytamy o bajt więcej niż granica: nadmiarowy bajt jest dowodem, że
+	// Czyta się o bajt więcej niż granica: nadmiarowy bajt jest dowodem, że
 	// strona się nie zmieściła.
 	surowe, err := io.ReadAll(io.LimitReader(odpowiedz.Body, limitTresci+1))
 	if err != nil {
@@ -273,7 +273,7 @@ func pilnujPrzekierowan(zadanie *http.Request, przebyte []*http.Request) error {
 
 // typTekstowy rozstrzyga, czy nagłówek Content-Type opisuje treść do odczytu.
 // Pusty nagłówek dopuszczamy — część serwerów go nie wysyła, a domyślnie
-// oczekujemy strony. XHTML i zwykły tekst też przechodzą.
+// oczekuje się strony. XHTML i zwykły tekst też przechodzą.
 func typTekstowy(typ string) bool {
 	t := strings.ToLower(strings.TrimSpace(typ))
 	if t == "" {
@@ -335,7 +335,7 @@ func wydobadzTekst(html string) string {
 }
 
 // usunBloki wycina z HTML-a pary `<znacznik ...>...</znacznik>` wraz z treścią.
-// Blok bez zamknięcia znaczy resztę strony jako swoją treść — pomijamy ją,
+// Blok bez zamknięcia znaczy resztę strony jako swoją treść — pomija się ją,
 // zamiast wypuszczać surowy skrypt do tekstu.
 func usunBloki(html, znacznik string) string {
 	dolne := strings.ToLower(html)

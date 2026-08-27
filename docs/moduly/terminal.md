@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Terminal Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
+
 # Moduł Terminal — dokumentacja projektowa
 
 | | |
@@ -341,6 +343,7 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 **Zawartość i pełny arsenał funkcji.**
 
 *Powłoki i sesje.*
+
 - Otwarcie nowej karty z menu wyboru powłoki: PowerShell, CMD, Bash, Zsh, Fish, Git Bash, Node.js (REPL), Python (REPL), Deno, `dotnet script`, SQL, sesja SSH do hosta zdalnego, powłoka kontenera (`docker exec`), powłoka poda (`kubectl exec`), konsola szeregowa, sesja Telnet.
 - Profile powłok — zapisane konfiguracje: typ powłoki, katalog startowy, zmienne środowiskowe, polecenie startowe, motyw, ikona, nazwa profilu.
 - Multipleksacja paneli: podział karty na siatkę sąsiadujących paneli z zagnieżdżaniem, powiększeniem pojedynczego panelu i zapisywanymi układami.
@@ -349,6 +352,7 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Trwałe sesje nazwane — sesja żyje po stronie serwera po rozłączeniu klienta, ponowne podpięcie przywraca bufor ekranu i stan.
 
 *Zarządzanie kartami.*
+
 - Zmiana nazwy karty, przypinanie karty, zmiana kolejności przez przeciąganie.
 - Zamknięcie karty; ostrzeżenie wizualne (plakietka i modal potwierdzenia), gdy w karcie działa proces — sygnalizacja wagi decyzji, nie blokada zamknięcia.
 - Zamknięcie pozostałych kart, przeniesienie karty do nowej kolumny obszaru roboczego.
@@ -356,6 +360,7 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Wskaźnik typu połączenia karty: lokalne, SSH, kontener, pod, port szeregowy, Telnet.
 
 *Praca w powłoce.*
+
 - Emulacja terminala VT100/xterm: sekwencje ANSI, kolor 24‑bitowy, tryb aplikacyjny myszy.
 - Integracja powłoki: znaczniki OSC 7 (katalog roboczy) i OSC 133 (granice poleceń, kod wyjścia) przekazywane automatycznie z powłoki.
 - Bloki poleceń — każde polecenie i jego wynik jako osobny, składany blok z akcjami: kopiuj, ponów, udostępnij, oznacz.
@@ -368,11 +373,13 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Paleta poleceń (`Ctrl/Cmd + K`) — szybkie akcje, wyszukiwanie profili, snippetów, hostów i zadań.
 
 *Personalizacja.*
+
 - Zmiana rozmiaru czcionki, gęstości wierszy, ligatur i interlinii.
 - Schemat kolorystyczny terminala, zsynchronizowany z motywem jasnym/ciemnym platformy lub ustawiony niezależnie.
 - Zapis układu kart i paneli jako migawki karty sesji, przywracany przy wznowieniu sesji.
 
 *Eksport i integracja.*
+
 - Eksport transkryptu karty do pliku tekstowego.
 - Przekazanie zawartości karty do Output Console w widoku pojedynczej karty.
 - Ponowne uruchomienie bieżącego polecenia z modyfikacją parametrów.
@@ -971,24 +978,31 @@ Współobecność Terminala, Developera i Diagnostics w jednym środowisku CodeS
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — uruchomienie budowania z obserwacją wyniku.**
+
 Deweloper otwiera kartę PowerShell w Terminal Tabs, przechodzi do katalogu repozytorium przez breadcrumb i wpisuje polecenie budowania. Output Console gromadzi wynik na żywo; Process Monitor pokazuje proces jako aktywny z rosnącym czasem trwania. Po zakończeniu status zmienia się na „zakończony sukcesem”, a deweloper przechodzi do modułu Developer, aby zobaczyć wynik w Build Output.
 
 **Scenariusz 2 — polecenie wydane przez Wykonawcę w toku pracy nienadzorowanej.**
+
 W ramach roli Executor środowiska MultitaskingAI Wykonawca korzystający z modułu Terminal uruchamia zestaw testów po każdej zmianie kodu. Każde uruchomienie pojawia się w Process Monitor z plakietką „inicjator: Wykonawca”, a Użytkownik — poprzez funkcję globalną Mobile lub wracając do sesji — zachowuje pełny wgląd w to, co dokładnie zostało wykonane, oraz możliwość natychmiastowego przerwania działania z Chat Window.
 
 **Scenariusz 3 — zlecenie wielozadaniowe prowadzone przez pętlę wykonawczą.**
+
 Użytkownik zleca w Chat Window zbudowanie aplikacji i wdrożenie jej na dwóch hostach. Koordynator rozkłada zlecenie na pięć zadań powłokowych i prezentuje kolejkę w Execution Loop Window. Wykonawca podejmuje zadania kolejno, raportując postęp; kontrola jakości po zadaniu trzecim wykrywa niezerowy kod wyjścia, Koordynator ponawia zadanie z poprawionym parametrem ścieżki, a Użytkownik obserwuje przebieg i wskaźnik ponowień, zachowując możliwość wstrzymania pętli.
 
 **Scenariusz 4 — diagnoza błędu i przekazanie do Diagnostics.**
+
 Skrypt Pythona kończy się nieobsłużonym wyjątkiem widocznym w Output Console. Operator klika „Przekaż do Diagnostics” przy oznaczonej linii błędu — nowy wpis pojawia się w Errors Panel modułu Diagnostics z pełnym kontekstem: treścią błędu, katalogiem roboczym i znacznikiem czasu, gotowy do dalszej analizy bez ręcznego kopiowania.
 
 **Scenariusz 5 — praca równoległa na wielu hostach.**
+
 Inżynier DevOps otwiera z Session Managera cztery karty: PowerShell lokalnie, Bash lokalnie oraz dwie sesje SSH do odrębnych hostów wdrożeniowych. Dla sesji SSH włącza w oknie konfiguracji punktów izolacji zakres „serwer wykonania” i „konto i token per sesja”, aby żadna z sesji nie współdzieliła danych dostępowych z pozostałymi. Pasek broadcast kieruje to samo polecenie do obu hostów, a Output Console w widoku zagregowanym pozwala obserwować wdrożenie jednocześnie.
 
 **Scenariusz 6 — zawieszony proces wymagający interwencji.**
+
 Proces uruchomiony przez wcześniejsze polecenie przestaje odpowiadać. Operator odnajduje go w Process Monitor po długim czasie trwania, rozwija szczegóły procesu, aby potwierdzić polecenie i katalog roboczy, po czym wybiera „Zakończ”. Modal potwierdzenia sygnalizuje wagę decyzji ze względu na niezapisany stan procesu; po potwierdzeniu proces kończy się natychmiast, a karta powłoki wraca do stanu gotowości.
 
 **Scenariusz 7 — zadanie cykliczne i skrypt z parametrami.**
+
 Administrator zapisuje w Script Library skrypt kopii zapasowej z zadeklarowanymi parametrami środowiska i wersji, uruchamia go raz z formularza dla weryfikacji, po czym w oknie Task & Schedule tworzy zadanie cykliczne z wyrażeniem cron. Sekrety dostępu wstrzykiwane są z magazynu sekretów sesji i maskowane w Output Console oraz w nagraniu sesji. Historia przebiegów gromadzi status każdego uruchomienia, a przekroczenie progu czasu wywołuje powiadomienie.
 
 ---
@@ -1156,4 +1170,5 @@ Wszystkie punkty są jawne, warstwowe (globalny → środowisko → projekt → 
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

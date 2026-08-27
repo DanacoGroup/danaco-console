@@ -3749,3 +3749,33 @@ pozwolić sądzić, że coś zapisano.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/pasek-zlecenia.ts
 Na pasku ustawia się całe otoczenie zadania, zanim treść pójdzie do modelu: gdzie się wykona, na czym, jakim modelem, z jakim wysiłkiem i w jakim trybie zatwierdzania — to jedna decyzja rozłożona na kilka nastaw, więc stoi w jednym rzędzie, bo dwa rzędy byłyby dwiema kopertami. W rzędzie stoją: urządzenie wchodzące z zewnątrz jako gotowy element, katalog roboczy, model, wysiłek, tryb zatwierdzania i rozszerzenia. Mikrofon jest zbudowany, ale nie staje, dopóki kontrakt nie ma komendy przenoszącej nagranie z pamięci karty na maszynę silnika — pasek jest wtedy krótszy, bo wyszarzona ikona byłaby bramą, a ikona odmawiająca po naciśnięciu atrapą. Nie mają portu w ogóle: projekt, bo rdzeń nie zna komendy dającej wykaz projektów; izolacja i drzewo równoległe, które są poziomami zasięgu, nie sterami; wersjonowanie i zatwierdzanie zmian, należące do koperty budowniczego agenta, nie okna czatu; załączniki, bo komenda wysyłki przyjmuje odwołania, a nie plik wprost; oraz sposób podania, wobec braku komendy dokładającej pozycję do kolejki — pustych uchwytów na te sprawy tu nie ma. Dwa ostatnie stery, rozszerzenia i mikrofon, wchodzą inaczej niż pozostałe: stery koperty czytają migawkę okna i nic więcej nie potrzebują, a rozszerzenia i mikrofon trzymają własne subskrypcje, których pasek pozbywa się przy zejściu okna. Mikrofon staje dopiero po zapytaniu o dostępność silnika, więc wchodzi do rzędu z opóźnieniem jednej odpowiedzi rdzenia, a miejsce ma przygotowane z góry, żeby kolejność rzędu nie zależała od czasu odpowiedzi. Pasek nie buduje menu i nie zna komend: menu buduje osobny komponent, wysyłkę prowadzi osobne źródło zlecenia, a ten plik jedynie ustawia stery w rzędzie i podaje każdemu wycinek migawki, który do niego należy.
+
+## budowa/klient-poprzedni/src/protokol/archiwum-sesji.ts
+Jedna odpowiedzialność: trzy komendy jednego przejścia — sesja wychodzi z historii bieżącej i wraca
+do niej. Zapis zostaje w całości, więc archiwizacja nie jest usunięciem i widok nie nazywa jej tak.
+Wszystkie trzy działają na wielu sesjach: żądania niosą wykaz identyfikatorów, a odpowiedzi oddają
+wykaz faktycznie przeniesionych. Rdzeń może przenieść część zbioru, więc zwrócony wykaz idzie do
+widoku nietknięty. Wgląd jest stronicowany: wykaz archiwum przyjmuje przesunięcie i limit i oddaje
+łączną liczbę wszystkich sesji archiwum, nie długość strony.
+
+## budowa/klient-poprzedni/src/protokol/bieg-sesji.ts
+Obie komendy nie są swoimi odwrotnościami. Zatrzymanie przerywa tury biegnące w oknach sesji, a sesja
+zostaje otwarta i gotowa na kolejną turę; wznowienie otwiera sesję zamkniętą wraz z jej oknami. Widok,
+który postawiłby je jako parę start-stop, obiecałby coś, czego rdzeń nie robi, więc każda z nich
+pojawia się osobno i pod własnym warunkiem. Obie oddają zakres skutku. Wykaz zatrzymanych okien mówi,
+w ilu oknach turę naprawdę zatrzymano — zero znaczy, że nic nie biegło, i to jest wynik poprawny, nie
+odmowa. Wykaz okien po wznowieniu niesie okna otwarte razem z sesją, więc powrót do niej nie musi ich
+odpytywać drugi raz.
+
+## budowa/klient-poprzedni/src/protokol/nazwa-sesji.ts
+Bieg sesji niesie osobny plik biegu sesji, przynależność plik projektu sesji, a odłożenie plik
+archiwum sesji. Kopia jest osobnym bytem: kopiowanie oddaje nową sesję wraz z liczbą przeniesionych
+wiadomości — kopiowanie nie jest odnośnikiem do źródła, więc widok mówi wprost, ile zapisu naprawdę
+poszło. Pusta nazwa kopii nie jest błędem. Kontrakt pozwala pominąć tytuł i wtedy rdzeń bierze nazwę
+źródła z dopiskiem. Klient nie składa tego dopisku sam — nazwę nadaje ta strona, która ją zna.
+
+## budowa/klient-poprzedni/src/protokol/projekt-sesji.ts
+Żądanie przypisania niesie albo identyfikator projektu, albo jego nazwę; przy pustym identyfikatorze
+rdzeń zakłada projekt o podanej nazwie i oddaje jego identyfikator, więc klient nie zakłada projektu
+osobną komendą. Wykaz przeniesionych może być krótszy od żądania — rdzeń oddaje sesje faktycznie
+przeniesione, więc widok melduje z wyniku, nie z treści żądania.

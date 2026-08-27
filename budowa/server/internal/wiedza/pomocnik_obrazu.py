@@ -1,33 +1,11 @@
-# Pomocnik osi obrazu — jedyny kod tego pakietu porównujący zdanie z obrazem.
-#
-# Model tej osi jest DWUWEJŚCIOWY: ma osobną wieżę dla obrazu i osobną dla
-# tekstu, a obie kończą w jednej przestrzeni, w której iloczyn skalarny znaczy
-# „to zdanie opisuje ten obraz". Dlatego nie da się tu użyć osadzarki tekstu:
-# jej wektor leży w przestrzeni, w której obrazu nie ma i nigdy nie było, a
-# porównanie dałoby liczbę bez związku z czymkolwiek.
-#
-# Obrazy przychodzą ścieżkami plików, nie bajtami. Bajty biblioteki leżą
-# w magazynie treści rdzenia i tamtą ścieżką czyta je podgląd modułu Library;
-# przepisanie ich do zlecenia oznaczałoby drugi komplet obrazów w pliku JSON,
-# rosnący w megabajtach na każde zapytanie.
-#
-# Droga rozmowy jest ta sama co u osadzarki i u przesiewu: zlecenie ścieżką
-# pliku JSON w argumencie, odpowiedź jednym obiektem JSON na standardowym
-# wyjściu, diagnostyka biblioteki na strumieniu diagnostycznym.
-#
-# Katalog modeli bywa dwiema rzeczami i pomocnik je rozróżnia tak samo jak
-# osadzarka: pusty jest MIEJSCEM na wagi, a katalog z wagami jest samym MODELEM
-# i wtedy pobieranie jest wyłączone. Rozstrzyga obecność `model.safetensors`.
-#
-# Obraz nieczytelny nie przerywa zapytania. Jeden plik uszkodzony albo w postaci,
-# której biblioteka obrazu nie otwiera, nie ma prawa odebrać Operatorowi
-# odpowiedzi o pozostałych — dostaje ocenę zerową i wraca w wykazie `pominiete`,
-# żeby rdzeń wiedział, że nie porównał wszystkiego, o co prosił.
+# Pomocnik osi obrazu porównuje zdanie z obrazem modelem dwuwieżowym; osadzarka
+# tekstu tu nie działa, bo jej wektor leży w przestrzeni, w której obrazu nigdy nie było.
 import json
 import os
 import sys
 
-# Nazwa pliku wag modelu stojącego — patrz nagłówek.
+# Nazwa pliku wag modelu stojącego: jej obecność w katalogu odróżnia model już
+# pobrany od pustego miejsca na wagi.
 PLIK_WAG = "model.safetensors"
 
 
@@ -72,9 +50,7 @@ def zbudujModel(model, katalog):
     else:
         skad, miejscowe = model, False
 
-    # Katalog pobrania podawany jest jawnie — powód ten sam co w pomocniku
-    # osadzeń: bez `HOME` biblioteka nie zna swojego katalogu pamięci podręcznej,
-    # a Operator wskazał ustawieniem miejsce, w którym wagi mają leżeć.
+    # Katalog pobrania jest jawny, bo bez HOME biblioteka nie zna domyślnej pamięci podręcznej.
     pobranie = None if miejscowe else katalog
     try:
         przygotowywacz = AutoProcessor.from_pretrained(skad, local_files_only=miejscowe,
@@ -99,8 +75,7 @@ def wczytajObrazy(sciezki):
     for numer, sciezka in enumerate(sciezki):
         try:
             with Image.open(sciezka) as obraz:
-                # Kopia w RGB powstaje wewnątrz `with`, bo biblioteka czyta plik
-                # leniwie i po zamknięciu uchwytu nie miałaby skąd wziąć pikseli.
+                # Kopia w RGB powstaje wewnątrz with, bo po zamknięciu uchwytu nie ma skąd wziąć pikseli.
                 otwarte.append(obraz.convert("RGB"))
             pozycje.append(numer)
         except Exception as blad:  # noqa: BLE001 — jeden plik nie psuje zapytania

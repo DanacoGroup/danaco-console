@@ -1267,6 +1267,21 @@ pozostaje dopuszczalne wyjatkowo, gdy miejsce jest nieoczywiste (inny plik,
 norma, decyzja) — nadal poza granica. Odsylacze postawione przed tym
 dopowiedzeniem zdejmuje sie w toku tych samych prac.
 
+**Dopowiedzenie szoste Wlasciciela (27.08, po poludniu).** Komentarz jest
+KOMPLETNYM NOSNIKIEM INFORMACJI — bez plikow innych. Zakaz powolywania sie
+w komentarzach na jakiekolwiek pliki: zadnych sciezek, nazw plikow,
+odsylaczy do opracowan, niezaleznie od tego, jaki by to plik nie byl.
+Komentarz stoi sam; czego nie uniesie pelnymi zdaniami, to idzie do docs,
+a znajdywalnosc niesie konwencja, nie nawigacja w kodzie. Wcielone
+instrumentem: tryb -gestosc liczy POWOLANIA i plik z powolaniem nie
+przechodzi niezaleznie od gestosci. Dyrektywy `//go:` nie sa powolaniem.
+Dopowiedzenie znosi wyjatek "wskazan nieoczywistych" z dopowiedzenia piatego.
+Zakaz obowiazuje KAZDY komentarz, nie tylko naglowek: komentarz jednowierszowy
+w srodku ciala funkcji, komentarz na koncu wiersza i komentarz blokowy w srodku
+kodu podlegaja mu tak samo — powolanie na plik `.md`, `.go` czy dowolny inny
+jest uchybieniem niezaleznie od polozenia. Sciezka w literale lancuchowym to
+kod, nie komentarz, i zakazu nie narusza.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

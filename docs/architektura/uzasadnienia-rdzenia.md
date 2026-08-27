@@ -3051,3 +3051,19 @@ Program w `zmierzProgram` idzie tą samą drogą co każde inne wołanie arsena�
 (`zewnetrzne.Wolaj`): przez port uruchamiacza, bramę izolacji i objęcie
 drzewa procesów. Własnego `exec.Command` tu nie ma — proces uruchomiony obok
 tej drogi wypada spod nadzoru i zostaje po nim uchwyt.
+
+## budowa/server/internal/core/autozapis_skutek_test.go
+
+Niepowodzenie zapisu jest wywoływane zabraniem rdzeniowi tabeli, w którą
+zapisuje postać dokumentu — to niepowodzenie tej samej klasy, co awaria dysku
+albo uszkodzony plik bazy, bo zapis wchodzi tą samą drogą i pada w tym samym
+miejscu; atrapa repozytorium mierzyłaby wtedy tylko atrapę.
+
+Zabranie całej tabeli w sprawdzianie awarii zapisu mierzyłoby co innego niż
+zamierzone: tam pada już odczyt i nie ma nawet czego zapisać, dlatego
+wyzwalacz odrzuca tylko zapis postaci, a odczyt zostawia nietknięty.
+
+Odróżnialność wersji szeregu autozapisu od szeregu Operatora wychodzi dziś
+zawężeniem wykazu i dwoma licznikami, bo pole szeregu w kontrakcie pozycji
+jeszcze nie istnieje — odcinek kontraktu ma je dołożyć, a sprawdzian mierzy
+stan prawdziwy, taki, jaki jest dziś zgłoszony.

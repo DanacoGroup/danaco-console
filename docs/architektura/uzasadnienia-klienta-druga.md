@@ -3293,3 +3293,8 @@ dokument z zapamiętanym odwołaniem, również bez treści, bo doczytanie jej z
 klienta cudzego modułu — treść dostarcza dopiero pierwszy zapis. Wstawienie wyniku operacji nie
 jest przyjęciem propozycji: treść trafia do bufora edytora, a propozycja czeka dalej na decyzję,
 bo zrównanie obu czynności odebrałoby możliwość wstawienia fragmentu i odrzucenia reszty.
+
+## budowa/klient/src/wejscie/ekrany/przygotowanie.ts
+Kolumna tożsamości niesie tu animację powłok zamiast wykazu zdań: na tym etapie użytkownik nie wybiera już programu, tylko czeka, aż się złoży.
+Wykaz niesie wyłącznie etapy, dla których droga wejścia ma komendę, więc postęp dobiega stu procent — pasek stojący w połowie na zawsze czytałoby się jak zawieszenie programu.
+Pas działań daje dwie czynności. Ponowienie stoi wyłącznie przy etapie nieudanym: przy przebiegu udanym nie ma czego ponawiać, a kontrolka bez skutku jest gorsza od jej braku. Widoczność nastawia montaż, bo tylko on widzi stan. Czynności pomijającej przywracanie tu nie ma — przywracanie dzieje się w rdzeniu jednym wywołaniem, a kontrakt nie zna komendy, która by je odwołała.

@@ -4374,3 +4374,48 @@ czego kontrakt nie niesie; rozstrzyga o tym `widoki-wykazu.ts`.
 Liczba widocznych pozycji bierze się z wykazu, a nie z długości zbioru wskazanego, ponieważ
 raport potrafi wskazać plik, którego świeży odczyt już nie zawiera, a katalog struktury
 zawęża wynik dodatkowo.
+
+## budowa/klient-poprzedni/src/moduly/developer/okno-project-tree.ts
+
+Otwarcie pliku w tym oknie idzie wyłącznie przez `stan.wskazPlik`: Code Editor sam nasłuchuje
+tego wskazania i sam woła komendę `developer.file.open`, więc wywołanie jej też stąd
+czytałoby ten sam plik dwa razy.
+
+Komenda `developer.tree.get` oddaje listę płaską, a hierarchię składa funkcja `zbudujDrzewo`
+na podstawie pola `parentPath` każdego węzła. Żaden węzeł nie znika po cichu: samowskazanie
+rodzica, cykl wzajemny, zduplikowana ścieżka i rodzic nieobecny w wykazie trafiają do
+korzenia z jawną adnotacją, złożoną funkcją `wykryjCykle`. Gdyby po złożeniu drzewa nie
+zostało nic, funkcja `rysujDrzewoProjektu` nazywa to stanem błędu, nie stanem pustej treści.
+
+Pole „Katalog” niesie żądanie wypełnione przez Operatora, a pole `root` odpowiedzi rdzenia
+niesie miejsce, od którego rdzeń naprawdę czytał drzewo — okno pokazuje jedno i drugie
+funkcją `opiszKorzen`, bo bez tego rozróżnienia pusty katalog roboczy i katalog niewłaściwy
+wyglądają identycznie.
+
+Menu kontekstowe pod prawym przyciskiem myszy jest w tym oknie jedynym takim przypadkiem
+w całej platformie — gdzie indziej „menu kontekstowe” znaczy lewy klik ikony trzech kropek.
+Stąd osobny nasłuch zdarzenia `contextmenu` z wywołaniem `preventDefault`. Jedenaście
+z trzynastu pozycji tego menu nie ma pokrycia w kontrakcie i stoi jako `przyciskBezKomendy`
+z podanym powodem; pozycje „Skopiuj ścieżkę” (schowek) i „Odśwież” (odczyt) są zrobione
+naprawdę.
+
+Zawężenie listy węzłów po fragmencie nazwy jest czynnością wyłącznie kliencką nad węzłami
+już odczytanymi — nie jedzie do rdzenia i nie jest tym samym co pole „Katalog”, które zmienia
+zakres samego odczytu z rdzenia.
+
+## budowa/klient-poprzedni/src/modele/zrodlo-kont.ts
+
+Moduł obsługuje pięć komend obszaru `account.*` oraz zdarzenie
+`account.changed`. Poświadczenie idzie w jedną stronę: kontrakt przyjmuje pole
+`credential` w treści żądania i nie zwraca go nigdy, a odpowiedź niesie wyłącznie
+znacznik `hasCredential`. Moduł nie ma ścieżki odczytu poświadczenia, ponieważ
+nie istnieje komenda, którą mógłby o nie spytać.
+
+Odczyt wykazu kont nie zatrzymuje widoku: wykaz, który nie dotarł, wraca pusty
+i zostawia wpis w dzienniku, a widok podaje, że rdzeń nie odpowiedział,
+i pozostaje czynny. Rejestr pusty po odmowie rdzenia oraz rejestr pusty na
+świeżej instalacji są dwoma różnymi stanami, dlatego powód niepowodzenia dociera
+do widoku osobnym powiadomieniem.
+
+Zapisy oddają pełny wynik wywołania, ponieważ ich niepowodzenie musi stanąć przy
+formularzu, a nie zniknąć w konsoli.

@@ -1,4 +1,4 @@
-/* Zakładki paneli obszaru roboczego oraz zwijanie panelu samouczka.
+/* Zakładki paneli obszaru roboczego przełączają widoczny panel po kliknięciu, a osobna obsługa zwija i rozwija panel samouczka niezależnie od kart okna.
    Karty okna głównego należą do `karty-okna.js` — ten plik ich nie dotyka:
    kilka kart może wskazywać ten sam panel, a wtedy kolejność pętli decydowałaby
    o tym, czy panel karty bieżącej zostaje odsłonięty. */

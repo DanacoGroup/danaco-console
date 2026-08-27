@@ -3,22 +3,15 @@ import type { StanBiblioteki } from './stan-biblioteki';
 import { zbudujWidok } from './widoki-wykazu';
 
 /**
- * Nawigacja po strukturze plików i zasobów wiedzy w oknie Library Explorer.
- *
- * Struktura pochodzi z danych: kontrakt nie ma komendy katalogu folderów,
- * niesie za to pole `path` każdego pliku. Wykaz katalogów składa się więc
- * z pierwszych członów ścieżek zwróconych przez rdzeń, a zbiór pusty daje
- * jedną pozycję „cały zbiór".
- *
- * Formę prezentacji rozstrzyga widok wybrany w oknie (`widoki-wykazu.ts`).
- * Wykaz nie zna żadnej z pięciu form — składa katalogi, oddaje zbiór widoczny
- * i osadza to, co widok zbudował.
+ * Nawigacja po strukturze plików i zasobów wiedzy w oknie Library Explorer:
+ * składa wykaz katalogów z pierwszych członów ścieżek zwróconych przez rdzeń,
+ * oddaje zbiór widoczny i osadza ciało zbudowane przez wybrany widok.
  */
 export interface WykazPlikow {
   element: HTMLElement;
   /**
-   * Przerysowuje katalogi i ciało wykazu ze stanu modułu; oddaje zdanie
-   * widoku, który nie ma czego pokazać mimo niepustego wykazu.
+   * Przerysowuje katalogi i ciało wykazu ze stanu modułu; oddaje zdanie widoku
+   * o braku treści.
    */
   odswiez(): string;
 }
@@ -62,7 +55,11 @@ export function utworzWykazPlikow(stan: StanBiblioteki): WykazPlikow {
   };
 }
 
-/** Pierwsze człony ścieżek zbioru, uporządkowane po polsku. */
+/**
+ * Pierwsze człony ścieżek zbioru, bez powtórzeń i bez ścieżek pustych,
+ * uporządkowane porównaniem językowym polskim, żeby kolejność katalogów była
+ * stała niezależnie od kolejności plików zwróconych przez rdzeń.
+ */
 function katalogiZbioru(pliki: readonly LibraryFile[]): readonly string[] {
   const znane = new Set<string>();
   for (const plik of pliki) {
@@ -74,7 +71,11 @@ function katalogiZbioru(pliki: readonly LibraryFile[]): readonly string[] {
   return [...znane].sort((pierwszy, drugi) => pierwszy.localeCompare(drugi, 'pl'));
 }
 
-/** Pozycja nawigacji po katalogach; zaznaczona odpowiada zawężeniu wykazu. */
+/**
+ * Pozycja nawigacji po katalogach: przycisk zaznaczony, gdy wskazana ścieżka
+ * równa się katalogowi bieżącemu stanu, a wskazanie ustawia katalog stanu,
+ * co zawęża wykaz do plików tego członu ścieżki.
+ */
 function przyciskKatalogu(etykieta: string, sciezka: string, stan: StanBiblioteki): HTMLElement {
   const element = document.createElement('button');
   element.type = 'button';

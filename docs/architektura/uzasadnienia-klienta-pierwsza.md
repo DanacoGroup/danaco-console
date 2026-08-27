@@ -6049,3 +6049,16 @@ Atrybut aria-selected ustawione raz przy budowie byłoby fałszywym stanem: pase
 meldowałby wybór tożsamości nawet po kliknięciu innej zakładki, a czytnik ekranu
 dostawałby zapewnienie o wyborze, którego operator nie dokonał. Ognisko przenosi moduł,
 ale to pasek wie, którą zakładkę przycisnięto, więc znakowanie należy do niego.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-katalog-rozszerzen.ts
+Skills Manager i Connectors Manager pracują na przypisaniach do jednego eksperta;
+katalog jest bytem szerszym — wykazem pozycji platformy, z których dopiero się wybiera.
+Dlatego stoi w module agents, w pasie zarządców. Kontrakt nie rozstrzyga, co znaczy
+instalacja pozycji, więc okno nazywa tę granicę wprost pod formularzem, zamiast
+obiecywać pobranie paczki. Filtr rodzaju idzie do rdzenia jako pole kind komendy
+extension.list, a nie ukrywa wierszy w przeglądarce — inaczej licznik pozycji mówiłby
+o czymś innym niż wykaz pod nim.
+
+Wykaz przerysowany z odpowiedzi pojedynczej pozycji potrafiłby pokazać stan, którego
+rdzeń nie ma, dlatego wywołanie zmieniające katalog zawsze kończy się ponownym
+odczytem wykazu.

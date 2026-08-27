@@ -5395,3 +5395,9 @@ kolejnością pól kontraktu, więc to samo wejście daje ten sam wynik przy
 każdym wywołaniu. Rozbiór i złożenie konfiguracji idą przez kodowanie JSON
 kontraktu, a nie przez ręczne przypisania pól, więc drugiego opisu obszarów
 w rdzeniu nie ma.
+
+## budowa/server/internal/core/handlers_terminal_wyjscie.go
+Żadna z tych komend nie rozgłasza zdarzenia. Kontrakt daje modułowi jedno zdarzenie zmiany
+procesu, i dotyczy ono procesu, nie zapisu na strumień. Wiersze wyjścia jadą zdarzeniem fragmentu
+strumienia prosto z dziennika zbiorczego, a nie z obsługiwacza żądania: proces pisze długo po tym,
+jak odpowiedź na komendę już wróciła.

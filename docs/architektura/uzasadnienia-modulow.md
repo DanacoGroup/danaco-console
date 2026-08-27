@@ -2344,3 +2344,25 @@ ma ostrzegać.
 daty z progiem świeżości. Próg wchodzi do odpowiedzi razem z sugestią, żeby
 operator wiedział, wobec czego rdzeń mierzy, a nie dostawał samego ostrzeżenia
 bez podstawy.
+
+## adapter_modul_asystent_wykonawca.go
+
+Typ `adapterAsystenta` i przyjęcie polecenia deklaruje moduł asystenta
+podstawowy; stan i dziennik prowadzi moduł czynności asystenta. Ten plik
+dokłada metody na tym samym typie oraz zależności wykonawcy wpinane
+w montażu: rejestr kanałów, nadzorca sesji, nadajnik zdarzeń i kontekst życia
+rdzenia. Rdzeń nie ma drugiego silnika modelu — parametry tury bierze
+z okna asystenta, najwęższego poziomu zasięgu.
+
+Kontrakt komendy głosowej niesie samą transkrypcję, wolny tekst, bez pola
+mówiącego, że to komenda platformy. Zgadywanie po treści, czy padło polecenie
+dla modelu czy dla rdzenia, byłoby wykonaniem czynności, której nikt
+jednoznacznie nie zlecił — dlatego wykonawca prowadzi wyłącznie drogę modelu
+i nie udaje akcji platformy rozpoznaniem wolnego tekstu.
+
+Zlecenie w stanie innym niż stan wejściowy — podjęte inną drogą, wstrzymane,
+anulowane — wykonawca zostawia bez ruchu: to jedyne ciche wyjście, bo nikt
+niczego nie zlecił drugi raz. Każdy pozostały brak kończy zlecenie głośno
+stanem `failed` z nazwanym powodem, zamiast zostawiać wiersz stojący
+w `queued` bez wyjaśnienia — Operator ma wtedy z czego zdecydować: dosłać
+tekst, wskazać kanał, ponowić zlecenie.

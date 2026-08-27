@@ -73,7 +73,7 @@ func (a *adapterNarzedziObrazu) Zbadaj(ctx context.Context,
 		Height:    opis.wysokosc,
 		SizeBytes: zrodlo.rozmiar,
 	}
-	// Pola opcjonalne obsadzamy tylko wtedy, gdy pomiar coś dał — pusty tekst
+	// Pola opcjonalne obsadza się tylko wtedy, gdy pomiar coś dał — pusty tekst
 	// udawałby metadane.
 	if opis.przestrzen != "" {
 		przestrzen := opis.przestrzen

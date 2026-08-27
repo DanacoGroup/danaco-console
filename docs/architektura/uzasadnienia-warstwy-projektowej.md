@@ -22,3 +22,14 @@ bezpośredniej edycji — zmiana wchodzi w źródle i przechodzi przez generator
 ponownie. Treść stoi w skrypcie, a nie w osobnym pliku do pobrania, ponieważ
 okno bywa otwierane wprost z dysku, a przeglądarka blokuje wówczas pobieranie
 plików towarzyszących.
+
+## budowa/klient-poprzedni/src/moduly/research/research.css
+
+Plik nie zna ani jednej barwy zapisanej wprost — wszystkie wartości pochodzą
+z żetonów motywu. Klasy `dn-*` (pole, przycisk, plakietka, modal, pusty stan,
+spinner, dymek) wnosi biblioteka komponentów; tutaj leży wyłącznie rozkład
+okien modułu i to, czego biblioteka nie ma: pasy układu, wykazy źródeł
+i ustaleń oraz znakowanie faz stanu.
+
+Kontrolki formularza pochodzą z `modele/kontrolki-formularza`, więc moduł
+wciąga arkusz `modele.css` — inaczej pola `dm-*` byłyby bez oprawy.

@@ -959,3 +959,14 @@ Połączenie oznaczone jako tylko do odczytu odrzuca polecenie zmieniające dane
 zanim cokolwiek wyjdzie do silnika. Poleganie na uprawnieniach po stronie bazy
 byłoby poleganiem na nastawie, której z tego okna nie widać; konsola SQL nad
 produkcją bez tej bramy jest jedną nieuwagą od szkody.
+
+## budowa/server/internal/core/adapter_modul_badania_raport_dobudowa.go
+
+Wersja zapisywana wyłącznie na żądanie oznaczałaby, że osoba, która o nią nie
+poprosiła, nie ma do czego wrócić, a to jest dokładnie ta chwila, w której
+wersje są potrzebne. Dlatego migawkę zakłada każda operacja zmieniająca treść
+raportu, nie tylko jawne żądanie zapisu.
+
+Porównanie wersji liczy się z migawek odczytanych z bazy, nie ze stanu
+w pamięci procesu: porównanie po restarcie rdzenia daje ten sam wynik co przed
+restartem.

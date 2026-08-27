@@ -1,17 +1,6 @@
-// Odpowiedzialność pliku: Report Builder poza samą budową raportu — odczyt
-// raportu, szablony struktury, streszczenie zarządcze, bibliografia końcowa,
-// menedżer przypisów, wstawki (macierz, oś czasu, wykres, tabela dowodów),
-// wersje i różnice oraz tryb recenzji.
-//
-// ── Wersja powstaje przy każdej zmianie treści ─────────────────────────────
-// Panel wersji ma pokazywać kolejne kompletacje dokumentu. Wersja zapisywana
-// wyłącznie na żądanie oznaczałaby, że Operator, który o nią nie poprosił, nie
-// ma do czego wrócić — a to jest dokładnie ta chwila, w której wersje są
-// potrzebne. Dlatego migawkę zakłada każda operacja zmieniająca treść raportu.
-//
-// ── Różnica liczy się z migawek, nie z pamięci ─────────────────────────────
-// `research.report.diff` porównuje dwie migawki sekcji odczytane z bazy. Nie ma
-// tu stanu w pamięci procesu: porównanie po restarcie rdzenia daje ten sam wynik.
+// Report Builder poza samą budową raportu: odczyt, szablony struktury,
+// streszczenie zarządcze, bibliografia, przypisy, wstawki, wersje i różnice
+// oraz tryb recenzji. Migawkę zakłada każda operacja zmieniająca treść raportu.
 package core
 
 import (
@@ -26,14 +15,16 @@ import (
 	"danacoconsole/shared"
 )
 
-// szablonWbudowanyBadania opisuje jeden wzorzec struktury raportu.
+// szablonWbudowanyBadania opisuje jeden wzorzec struktury raportu wraz
+// z kolejnością jego tytułów sekcji.
 type szablonWbudowanyBadania struct {
 	kod    string
 	nazwa  string
 	sekcje []string
 }
 
-// szablonyWbudowaneBadania wymieniają wzorce struktury z opracowania modułu.
+// szablonyWbudowaneBadania wymieniają wzorce struktury raportu zaczerpnięte
+// z opracowania modułu badań.
 var szablonyWbudowaneBadania = []szablonWbudowanyBadania{
 	{kod: "streszczenie-zarzadcze", nazwa: "Streszczenie zarządcze",
 		sekcje: []string{"Streszczenie", "Kluczowe ustalenia", "Rekomendacje"}},
@@ -79,7 +70,7 @@ func (a *adapterBadan) PobierzRaport(ctx context.Context,
 	}
 	if len(raporty) == 0 {
 		// Brak raportu jest stanem badania, nie usterką: Report Builder pokazuje
-		// wtedy pusty konspekt, a nie komunikat o błędzie.
+		// pusty konspekt.
 		return shared.ResearchReportGetResponse{}, nil
 	}
 	przelozony, err := a.przelozRaport(ctx, raporty[0])
@@ -89,7 +80,8 @@ func (a *adapterBadan) PobierzRaport(ctx context.Context,
 	return shared.ResearchReportGetResponse{Report: &przelozony}, nil
 }
 
-// WypiszSzablonyRaportu obsługuje `research.report.template.list`.
+// WypiszSzablonyRaportu obsługuje `research.report.template.list`, łącząc
+// wzorce wbudowane z własnymi.
 func (a *adapterBadan) WypiszSzablonyRaportu(ctx context.Context,
 	_ shared.ResearchReportTemplateListRequest) (shared.ResearchReportTemplateListResponse, error) {
 
@@ -182,7 +174,8 @@ func (a *adapterBadan) StreszczRaport(ctx context.Context,
 	}, nil
 }
 
-// ZlozBibliografie obsługuje `research.report.bibliography`.
+// ZlozBibliografie obsługuje `research.report.bibliography`, składając
+// pozycje w stylu cytowania raportu.
 func (a *adapterBadan) ZlozBibliografie(ctx context.Context,
 	z shared.ResearchReportBibliographyRequest) (shared.ResearchReportBibliographyResponse, error) {
 
@@ -269,7 +262,8 @@ func (a *adapterBadan) UstawPrzypisyRaportu(ctx context.Context,
 	return shared.ResearchReportFootnoteSetResponse{FootnoteCount: przypisy}, nil
 }
 
-// WstawBlokRaportu obsługuje `research.report.insert`.
+// WstawBlokRaportu obsługuje `research.report.insert`, dokładając wstawkę
+// z danymi badania do wskazanej sekcji.
 func (a *adapterBadan) WstawBlokRaportu(ctx context.Context,
 	z shared.ResearchReportInsertRequest) (shared.ResearchReportInsertResponse, error) {
 
@@ -415,7 +409,8 @@ func (a *adapterBadan) zawartoscBlokuBadania(ctx context.Context, okno string,
 
 // ── Wersje i różnice ───────────────────────────────────────────────────────
 
-// zapiszWersjeRaportuBadania zakłada migawkę sekcji raportu.
+// zapiszWersjeRaportuBadania zakłada migawkę sekcji raportu pod etykietą
+// operacji, która ją wywołała teraz.
 func (a *adapterBadan) zapiszWersjeRaportuBadania(ctx context.Context, kodRaportu, etykieta string) error {
 	raport, err := a.repozytorium.Raport(ctx, kodRaportu)
 	if err != nil {
@@ -450,7 +445,8 @@ func (a *adapterBadan) zapiszWersjeRaportuBadania(ctx context.Context, kodRaport
 	return nil
 }
 
-// WypiszWersjeRaportu obsługuje `research.report.version.list`.
+// WypiszWersjeRaportu obsługuje `research.report.version.list`, oddając
+// wersje raportu od najnowszej do najstarszej.
 func (a *adapterBadan) WypiszWersjeRaportu(ctx context.Context,
 	z shared.ResearchReportVersionListRequest) (shared.ResearchReportVersionListResponse, error) {
 
@@ -476,7 +472,8 @@ func (a *adapterBadan) WypiszWersjeRaportu(ctx context.Context,
 	return shared.ResearchReportVersionListResponse{Versions: przelozone}, nil
 }
 
-// PorownajWersjeRaportu obsługuje `research.report.diff`.
+// PorownajWersjeRaportu obsługuje `research.report.diff`, składając
+// fragmenty różnicy z dwóch migawek.
 func (a *adapterBadan) PorownajWersjeRaportu(ctx context.Context,
 	z shared.ResearchReportDiffRequest) (shared.ResearchReportDiffResponse, error) {
 
@@ -543,7 +540,8 @@ func (a *adapterBadan) PorownajWersjeRaportu(ctx context.Context,
 	return shared.ResearchReportDiffResponse{Hunks: fragmenty}, nil
 }
 
-// sekcjeMigawkiBadania rozkłada migawkę wersji na mapę sekcji po identyfikatorze.
+// sekcjeMigawkiBadania rozkłada migawkę wersji na mapę sekcji po
+// identyfikatorze każdej sekcji raportu.
 func sekcjeMigawkiBadania(migawka string) map[string]map[string]string {
 	var lista []map[string]string
 	rozlozone := map[string]map[string]string{}
@@ -558,7 +556,8 @@ func sekcjeMigawkiBadania(migawka string) map[string]map[string]string {
 
 // ── Tryb recenzji ──────────────────────────────────────────────────────────
 
-// DodajKomentarzRaportu obsługuje `research.report.comment.add`.
+// DodajKomentarzRaportu obsługuje `research.report.comment.add`, zapisując
+// komentarz wątku recenzji raportu.
 func (a *adapterBadan) DodajKomentarzRaportu(ctx context.Context,
 	z shared.ResearchReportCommentAddRequest) (shared.ResearchReportCommentAddResponse, error) {
 
@@ -585,7 +584,8 @@ func (a *adapterBadan) DodajKomentarzRaportu(ctx context.Context,
 	return shared.ResearchReportCommentAddResponse{Comment: zlozKomentarzBadania(zapisany)}, nil
 }
 
-// WypiszKomentarzeRaportu obsługuje `research.report.comment.list`.
+// WypiszKomentarzeRaportu obsługuje `research.report.comment.list`, oddając
+// komentarze wybranego raportu.
 func (a *adapterBadan) WypiszKomentarzeRaportu(ctx context.Context,
 	z shared.ResearchReportCommentListRequest) (shared.ResearchReportCommentListResponse, error) {
 
@@ -605,7 +605,8 @@ func (a *adapterBadan) WypiszKomentarzeRaportu(ctx context.Context,
 	return shared.ResearchReportCommentListResponse{Comments: przelozone}, nil
 }
 
-// zlozKomentarzBadania przekłada wiersz komentarza na byt kontraktu.
+// zlozKomentarzBadania przekłada wiersz komentarza bazy danych na byt
+// kontraktu okna recenzji raportu.
 func zlozKomentarzBadania(k dane.KomentarzRaportuBadania) shared.ResearchReportComment {
 	return shared.ResearchReportComment{
 		Id: k.Kod, ReportId: k.RaportKod, SectionId: k.SekcjaKod, ThreadId: k.WatekKod,
@@ -614,10 +615,9 @@ func zlozKomentarzBadania(k dane.KomentarzRaportuBadania) shared.ResearchReportC
 	}
 }
 
-// OperacjaKontekstowaRaportu obsługuje `research.report.contextual.op` — korektę,
-// streszczenie, rozwinięcie i zmianę stylu zaznaczonego fragmentu sekcji.
-// Skutkiem jest treść sekcji zmieniona w bazie oraz nowa wersja raportu; sam
-// zwrócony tekst byłby propozycją, której Operator nigdzie nie ma.
+// OperacjaKontekstowaRaportu obsługuje `research.report.contextual.op`:
+// korektę, streszczenie, rozwinięcie i zmianę stylu zaznaczonego fragmentu.
+// Skutkiem jest treść sekcji zmieniona w bazie oraz nowa wersja raportu.
 func (a *adapterBadan) OperacjaKontekstowaRaportu(ctx context.Context,
 	z shared.ResearchReportContextualOpRequest) (shared.ResearchReportContextualOpResponse, error) {
 

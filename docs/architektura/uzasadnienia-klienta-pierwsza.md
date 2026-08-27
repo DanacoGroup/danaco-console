@@ -4442,3 +4442,30 @@ potwierdzenie zapisu nie mówiłoby, co w rdzeniu ostatecznie stoi.
 Utrwalenie granic ma w kontrakcie własne komendy `browser.executor.limits.set` oraz `browser.executor.limits.get`, których panel jeszcze nie wywołuje. Powód stoi pod polami i bierze się z odczytu wykazu komend rdzenia, więc panel nie udaje zapisu w rdzeniu. Robi natomiast to, co zrobić może i co ma znaczenie: sprawdza scenariusz przed wysłaniem.
 
 Stan wyjściowy jest zgodny z zasadą braku blokad domyślnych: pusta granica i pusty wykaz domen znaczą brak ograniczenia. Limit powstaje wtedy, gdy Operator go postawi, a nie wcześniej i nie domyślnie.
+
+## budowa/klient-poprzedni/src/moduly/library/wgranie-pliku.ts
+
+Treść pliku jedzie w zapisie base64, ponieważ takie pole niesie kontrakt, a plik
+wskazany z urządzenia nie ma ścieżki widocznej dla rdzenia: przeglądarka podaje
+wyłącznie nazwę. Pole ścieżki źródłowej zostaje puste, gdyż wypełnienie go nazwą
+pliku byłoby wprowadzeniem danych zmyślonych.
+
+Odczyt pliku wyprzedza wywołanie komendy i może się nie powieść, kiedy plik
+zniknął albo odczyt został odrzucony. Niepowodzenie odczytu wraca tą samą drogą
+co odmowa rdzenia, czyli jednym zdaniem w wierszu odpowiedzi, bez wyjątku
+wywracającego widok.
+
+Powodzenie komendy nie jest powodzeniem wgrania: rdzeń pozbawiony magazynu treści
+zakłada wpis o pliku i odmawia jego podglądu. Okno pyta więc rdzeń o dostępność
+treści zaraz po wgraniu i podaje to, co rdzeń odpowiedział, kosztem jednej
+dodatkowej komendy, ponieważ kontrakt nie ma tańszego świadka.
+
+Odpowiedź ze wskazaniem miejsca treści nie jest odmową: taki podgląd wraca
+zarówno dla treści leżącej w magazynie, jak i dla wskazania prowadzącego donikąd.
+Zdanie odpowiedzi mówi więc, co przyszło, i nie orzeka ani wgrania, ani jego
+braku. Podobnie werdykt odmowy oznacza, że rdzeń treści nie oddał i o niej nie
+orzekł, więc okno nie orzeka wtedy ani obecności treści, ani jej braku.
+
+Kontrolka wyboru pliku zgłasza zmianę wyłącznie przy zmianie wartości, dlatego
+wyczyszczenie jej po przejęciu uchwytu pozwala wskazać ten sam plik ponownie po
+wgraniu nieudanym.

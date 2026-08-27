@@ -3256,3 +3256,6 @@ etykietę, sposób uwierzytelnienia i termin ważności — a nie treść
 poświadczenia, która żyje w sejfie rdzenia. Zakres współdzielenia ma tabelę
 złącznikową, bo `extension.secret.share` nadsyła oba wykazy (rozszerzenia
 i role) w komplecie.
+
+## budowa/server/internal/store/migracja_006_identyfikatory_zewnetrzne.sql
+Rdzeń posługuje się identyfikatorem tekstowym nadanym w pamięci, który wychodzi kontraktem do klienta, a wiersz bazy ma własny klucz główny liczbowy — bez trwałego odwzorowania jednego na drugie po restarcie rdzenia nie da się połączyć okna wskazanego przez klienta z jego historią. Kolumna jest dodatkiem: brak wartości oznacza wiersz założony wprost w bazie, bez odpowiednika w pamięci rdzenia, a indeks częściowy sprawia, że wiersze bez identyfikatora zewnętrznego nie kolidują ze sobą.

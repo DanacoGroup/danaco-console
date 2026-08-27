@@ -6,6 +6,12 @@ import "time"
 // wchodzi przejrzystość: licznik obiegów, wykrywanie braku postępu i jawny,
 // nazwany warunek zatrzymania. Zatrzymanie nigdy nie jest ciche — zawsze niesie
 // rozpoznany powód, który idzie do obserwatorów pętli.
+//
+// Powody dzielą się na dwie klasy i różnica jest maszynowa, nie opisowa. Trzy
+// zastają pracę PRZERWANĄ i bieg podejmuje z nich wyłącznie Operator
+// (`wznow`); czwarty — ukończenie z wynikiem — zastaje ją ZROBIONĄ i bieg
+// podejmuje się z niego sam, gdy praca dostanie ciąg dalszy. Po tej różnicy
+// układ złożony przez Operatora poznaje wynik zadania, nie pytając nikogo.
 
 // PowodZatrzymania nazywa przyczynę wstrzymania biegu naprawczego.
 type PowodZatrzymania string
@@ -19,6 +25,10 @@ const (
 	ZatrzymanieRecznie PowodZatrzymania = "zatrzymanie przez Operatora"
 	// ZatrzymanieUsterka — obiegu nie udało się rozpocząć.
 	ZatrzymanieUsterka PowodZatrzymania = "usterka rozpoczęcia obiegu"
+	// ZatrzymanieUkonczenie — koordynator zamknął turę wynikiem, a żadne okno
+	// wykonawcze tego koordynatora nie prowadziło wtedy tury. Jedyny powód
+	// mówiący „skończone z wynikiem"; trzy powyższe mówią „przerwane".
+	ZatrzymanieUkonczenie PowodZatrzymania = "ukończenie z wynikiem"
 )
 
 // ProgBrakuPostepuDomyslny — ile obiegów bez zmiany stanu z rzędu kończy bieg.
@@ -34,7 +44,8 @@ type StanObiegu struct {
 	ObiegowBezPostepu int
 	// Prog — próg braku postępu obowiązujący ten bieg.
 	Prog int
-	// Zatrzymany mówi, czy bieg został wstrzymany.
+	// Zatrzymany mówi, czy bieg stanął. Powód niżej rozstrzyga, czy stanął na
+	// pracy przerwanej, czy na skończonej.
 	Zatrzymany bool
 	// Powod zatrzymania; pusty, dopóki bieg trwa.
 	Powod PowodZatrzymania
@@ -67,7 +78,18 @@ func nowyLicznikObiegow(idKoordynatora string, prog int) *licznikObiegow {
 
 // zanotuj zapisuje kolejny obieg i rozstrzyga, czy bieg trwa dalej.
 // Zwraca stan po zapisie oraz zgodę na rozpoczęcie obiegu.
+//
+// Bieg UKOŃCZONY podejmuje się tutaj sam, bez niczyjego potwierdzenia:
+// ukończenie jest spoczynkiem po wyniku, a nie bramą akceptacji, więc koniec
+// kolejnej tury wykonawcy — czyli praca, która dostała ciąg dalszy — rusza bieg
+// dalej. Historia obiegów i licznik braku postępu zostają nietknięte, bo to
+// wciąż ten sam bieg. Trzy pozostałe zatrzymania trzymają i podejmuje je
+// wyłącznie Operator przez `wznow`.
 func (l *licznikObiegow) zanotuj(idWykonawcy, powodTury, odcisk string) (StanObiegu, bool) {
+	if l.stan.Zatrzymany && l.stan.Powod == ZatrzymanieUkonczenie {
+		l.stan.Zatrzymany = false
+		l.stan.Powod = ""
+	}
 	if l.stan.Zatrzymany {
 		return l.stan, false
 	}

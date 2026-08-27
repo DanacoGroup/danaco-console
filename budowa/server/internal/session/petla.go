@@ -14,10 +14,12 @@ import (
 // powiela silnika uruchamiania tury — samą turę koordynatora rozpoczyna warstwa
 // rozmowy przez port UruchomienieObiegu.
 //
-// Trzy obowiązki w jednym miejscu:
+// Cztery obowiązki w jednym miejscu:
 //   - koniec tury → wybudzenie → kolejny obieg koordynatora;
 //   - licznik obiegów, brak postępu, nazwany warunek zatrzymania;
-//   - strumień wykonawcy widziany przez koordynatora.
+//   - strumień wykonawcy widziany przez koordynatora;
+//   - warunek ukończenia zadania — koniec tury koordynatora zamkniętej wynikiem
+//     przy żadnym oknie wykonawczym w turze.
 
 // ErrBrakUruchomieniaObiegu — pętla nie dostała portu rozpoczynania obiegu.
 // Wybudzenie zostaje wtedy policzone i rozgłoszone, ale bieg staje z powodem
@@ -41,8 +43,14 @@ type Petla struct {
 	uruchomienie UruchomienieObiegu
 	prog         int
 
-	mu           sync.Mutex
-	liczniki     map[string]*licznikObiegow
+	mu       sync.Mutex
+	liczniki map[string]*licznikObiegow
+	// tury notują okna wykonawcze prowadzące turę, w torach koordynatorów.
+	//
+	// Wpis zakłada pierwszy fragment wykonawcy, zdejmuje go koniec jego tury —
+	// bo tymi dwoma zgłoszeniami, i żadnym innym, warstwa rozmowy mówi pętli
+	// o turze wykonawcy. Wykaz pusty jest drugim członem warunku ukończenia.
+	tury         map[string]map[string]struct{}
 	obserwatorzy []ObserwatorObiegu
 }
 
@@ -56,6 +64,7 @@ func NowaPetla(n *Nadzorca, u UruchomienieObiegu, ust UstawieniaPetli) *Petla {
 		uruchomienie: u,
 		prog:         ust.ProgBrakuPostepu,
 		liczniki:     map[string]*licznikObiegow{},
+		tury:         map[string]map[string]struct{}{},
 	}
 	n.Wybudzacz().Zarejestruj(p)
 	return p
@@ -74,20 +83,39 @@ func (p *Petla) Obserwuj(o ObserwatorObiegu) {
 	p.obserwatorzy = append(p.obserwatorzy, o)
 }
 
-// ObserwujFragment zapisuje fragment okna w strumieniu jego koordynatora.
-// Fragment okna spoza pętli nie ma dokąd trafić i nie jest to usterka.
+// ObserwujFragment zapisuje fragment okna w strumieniu jego koordynatora
+// i notuje turę wykonawcy, z której fragment przyszedł. Fragment okna spoza
+// pętli nie ma dokąd trafić i nie jest to usterka.
 func (p *Petla) ObserwujFragment(f protocol.Chunk) {
 	okno, err := p.rejestr.Okno(f.WindowId)
 	if err != nil || !okno.CzyWykonawca() || okno.OknoKoordynatora == "" {
 		return
 	}
+	p.otworzTure(okno.OknoKoordynatora, okno.Id)
 	p.strumien.DopiszFragment(okno.OknoKoordynatora, f)
 }
 
 // ZakonczTure zgłasza koniec tury okna. Jest to jedyne wejście warstwy rozmowy
-// do pętli: stąd idzie wybudzenie koordynatora, a z niego kolejny obieg.
-// Zwraca prawdę, gdy zgłoszenie znalazło koordynatora.
+// do pętli i przychodzi nim koniec tury KAŻDEGO okna, nie tylko wykonawczego.
+//
+// Koniec tury wykonawcy zdejmuje jego turę i wybudza koordynatora, a z tego
+// idzie kolejny obieg. Koniec tury koordynatora zamyka bieg ukończeniem, gdy
+// warunek z `ukonczBieg` jest spełniony. Okno samodzielne nie porusza niczego
+// i nie jest to usterka.
+//
+// Zwraca prawdę, gdy zgłoszenie poruszyło bieg: wybudziło koordynatora albo
+// zamknęło bieg ukończeniem.
 func (p *Petla) ZakonczTure(idOkna, powod string) bool {
+	okno, err := p.rejestr.Okno(idOkna)
+	if err != nil {
+		return false
+	}
+	if okno.CzyKoordynator() {
+		return p.ukonczBieg(okno.Id, powod)
+	}
+	if okno.CzyWykonawca() && okno.OknoKoordynatora != "" {
+		p.zamknijTure(okno.OknoKoordynatora, okno.Id)
+	}
 	return p.wybudzacz.KoniecTury(idOkna, powod)
 }
 
@@ -148,12 +176,74 @@ func (p *Petla) Wznow(idKoordynatora string) StanObiegu {
 	return stan
 }
 
-// Zapomnij usuwa ślad zamkniętego koordynatora — licznik i jego strumień.
+// Zapomnij usuwa ślad zamkniętego koordynatora — licznik, wykaz tur jego
+// wykonawców i jego strumień.
 func (p *Petla) Zapomnij(idKoordynatora string) {
 	p.mu.Lock()
 	delete(p.liczniki, idKoordynatora)
+	delete(p.tury, idKoordynatora)
 	p.mu.Unlock()
 	p.strumien.Zapomnij(idKoordynatora)
+}
+
+// ukonczBieg zamyka bieg koordynatora ukończeniem z wynikiem. Warunek jest
+// podwójny i oba jego człony pętla MIERZY, a nie zakłada:
+//
+//   - tura koordynatora zamknęła się WYNIKIEM kanału — warstwa rozmowy podaje
+//     wtedy powód `PowodWynik`; wychodzi on z tej samej trójcy warunków, z której
+//     wychodzi stan wiadomości `complete`, więc jest tym samym rozstrzygnięciem
+//     widzianym od strony pętli;
+//   - żadne okno wykonawcze tego koordynatora NIE PROWADZI tury — wykaz `tury`
+//     jego toru jest pusty.
+//
+// Bieg przed pierwszym obiegiem się nie kończy: nie ma czego kończyć, a
+// zatrzymanie postawione oknu, które pętli jeszcze nie prowadziło, zapaliłoby
+// Operatorowi kontrolkę biegu nieistniejącego. Bieg już zatrzymany zostaje przy
+// swoim powodzie — ukończenie nie przykrywa przerwania.
+func (p *Petla) ukonczBieg(idKoordynatora, powod string) bool {
+	if powod != PowodWynik {
+		return false
+	}
+	p.mu.Lock()
+	licznik, prowadzony := p.liczniki[idKoordynatora]
+	if !prowadzony || licznik.stan.Obiegow == 0 || licznik.stan.Zatrzymany ||
+		len(p.tury[idKoordynatora]) > 0 {
+
+		p.mu.Unlock()
+		return false
+	}
+	stan := licznik.zatrzymaj(ZatrzymanieUkonczenie)
+	p.mu.Unlock()
+
+	p.rozglos(ZdarzenieObiegu{Stan: stan,
+		Obieg: Obieg{IdKoordynatora: idKoordynatora, Numer: stan.Obiegow}})
+	return true
+}
+
+// otworzTure notuje turę okna wykonawczego w torze jego koordynatora.
+func (p *Petla) otworzTure(idKoordynatora, idWykonawcy string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	okna, jest := p.tury[idKoordynatora]
+	if !jest {
+		okna = map[string]struct{}{}
+		p.tury[idKoordynatora] = okna
+	}
+	okna[idWykonawcy] = struct{}{}
+}
+
+// zamknijTure zdejmuje turę okna wykonawczego z toru jego koordynatora.
+func (p *Petla) zamknijTure(idKoordynatora, idWykonawcy string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	okna, jest := p.tury[idKoordynatora]
+	if !jest {
+		return
+	}
+	delete(okna, idWykonawcy)
+	if len(okna) == 0 {
+		delete(p.tury, idKoordynatora)
+	}
 }
 
 // rozpocznij oddaje obieg portowi warstwy rozmowy.

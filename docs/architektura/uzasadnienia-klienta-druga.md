@@ -3316,3 +3316,11 @@ Klasa wariantu kropki: praca trwająca bierze tętno, nie barwę rodziny, bo
 tętno jest jedynym ruchem ciągłym interfejsu i jest zastrzeżone dla pracy w
 tle. Przy preferencji ograniczonego ruchu tętno zamiera, a jego znaczenie
 przejmuje pierścień statyczny, również zapisany w arkuszu stylów.
+
+## budowa/klient-poprzedni/src/strona-glowna/wykonanie-czynnosci.ts
+Składa komplet czynności i przeprowadza te, które idą do rdzenia bez pytania operatora o cokolwiek.
+Czynności pytające o nazwę stoją osobno; dzieli je nie temat, tylko kształt — tam każda ma etap zbierania
+danych, tu żadna go nie ma. Komendy zbiorowe oddają wykaz sesji faktycznie przeniesionych, a ten bywa
+krótszy od żądania, stąd meldunek składany jest z wyniku. Po każdej udanej zmianie woła się odświeżenie
+podane przez wpięcie: rdzeń rozsyła zdarzenie zmiany sesji, ale archiwum jest odpytywane osobno i tego
+zdarzenia nie widzi.

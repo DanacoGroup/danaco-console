@@ -2558,3 +2558,23 @@ jest typem komendy, nie zdarzeniem *.unknown: komenda kontraktowa została
 rozpoznana przez rejestr transportu, więc odmowa wraca pod jej własną nazwą.
 Zdarzenie obszaru dostaje wyłącznie typ spoza kontraktu. Dla klienta rozstrzyga
 i tak stan wraz z kodem, po których wie, że rdzeń uchwytu nie ma.
+
+## automatyka_petla.go
+
+Definicja, harmonogram i przebieg opisują automatykę; trzy byty tego pliku opisują
+jej obieg: kto bierze udział w pętli, który agent prowadzi krok i na co bieg czeka.
+
+Rozszerzenie idzie osobnym interfejsem RepozytoriumPetli, po który rdzeń sięga
+asercją typu na porcie automatyk — tak jak po Harmonogramy i Orkiestracja
+w pliku kompozycja.go.
+
+Bieg oczekujący czeka na sygnał z zewnątrz, nie na zegar ani na operatora, więc jego
+stan musi przeżyć restart rdzenia — stąd wiersz w bazie, a nie wpis w mapie adaptera.
+
+Tabela obsada_biegu niesie ten sam byt dla biegu automatyki i biegu orkiestracji,
+którego wiersza w tabeli automatyka nie ma.
+
+ZapiszObsade zastępuje obsadę w całości zamiast dopisywać wiersze, ponieważ obsada
+jest wykazem zamkniętym i scalanie zostawiałoby uczestników, których operator z niej
+usunął. Obsada pusta jest stanem poprawnym — automatyka bez obsady biegnie na modelu
+wskazanym w kroku.

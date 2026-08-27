@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: pętla wykonawcza automatyki — obsada uczestników,
-// wiązanie kroku z agentem portfolio i oczekiwanie biegu na sygnał z zewnątrz.
-// Definicja, harmonogram i przebieg opisują automatykę; te trzy byty opisują
-// jej obieg: kto bierze udział w pętli, który agent prowadzi krok i na co bieg
-// czeka.
-//
-// Rozszerzenie idzie osobnym interfejsem `RepozytoriumPetli`, po który rdzeń
-// sięga asercją typu na porcie automatyk — tak jak po `Harmonogramy`
-// i `Orkiestracja` w `kompozycja.go`.
-//
-// Bieg oczekujący czeka na sygnał z zewnątrz, nie na zegar ani na Operatora,
-// więc jego stan musi przeżyć restart rdzenia — stąd wiersz w bazie, a nie wpis
-// w mapie adaptera.
+// Plik obsługuje pętlę wykonawczą automatyki: obsadę uczestników, wiązanie kroku
+// z agentem portfolio i oczekiwanie biegu na sygnał. Uzasadnienie podziału i trwałości
+// oczekiwania niesie rozdział automatyka_petla.go dokumentacji architektury.
 package dane
 
 import (
@@ -20,12 +10,9 @@ import (
 	"fmt"
 )
 
-// UczestnikPetli to wiersz tabeli `obsada_biegu` — jedno miejsce obsady.
-//
-// Tabela `obsada_biegu` niesie ten sam byt dla biegu automatyki i biegu
-// orkiestracji, który wiersza w `automatyka` nie ma. Zapytania tego pliku niosą
-// `automatyka_id`, więc widzą wyłącznie obsadę automatyk; obsadę orkiestracji
-// czyta osobny plik.
+// UczestnikPetli odwzorowuje wiersz tabeli obsada_biegu: jedno miejsce obsady biegu
+// automatyki. Tabela niesie też obsadę orkiestracji — zapytania tego pliku widzą
+// wyłącznie wiersze z ustawionym polem automatyka_id.
 type UczestnikPetli struct {
 	ID           int64
 	AutomatykaID int64
@@ -128,12 +115,9 @@ const (
 	                       WHERE id = ? AND wybudzono IS NULL`
 )
 
-// ZapiszObsade podmienia komplet obsady automatyki. Podmiana, a nie dopisywanie:
-// obsada jest wykazem zamkniętym, a scalanie wierszy zostawiałoby uczestników,
-// których Operator z niej usunął.
-//
-// Obsada pusta jest poprawna — automatyka bez obsady biegnie tak jak
-// dotąd, na modelu wskazanym w kroku.
+// ZapiszObsade podmienia komplet obsady automatyki, ponieważ obsada jest wykazem
+// zamkniętym, a scalanie wierszy zostawiałoby uczestników już usuniętych. Obsada pusta
+// jest poprawna — automatyka bez niej biegnie na modelu wskazanym w kroku.
 func (r *repozytoriumAutomatyk) ZapiszObsade(ctx context.Context,
 	automatykaID int64, obsada []UczestnikPetli) error {
 
@@ -169,7 +153,8 @@ func (r *repozytoriumAutomatyk) ZapiszObsade(ctx context.Context,
 	})
 }
 
-// Obsada zwraca uczestników pętli w kolejności miejsc.
+// Obsada zwraca uczestników pętli automatyki wskazanej identyfikatorem, uporządkowanych
+// rosnąco według przypisanego miejsca.
 func (r *repozytoriumAutomatyk) Obsada(ctx context.Context, automatykaID int64) ([]UczestnikPetli, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaObsady)
 	if err != nil {
@@ -305,7 +290,8 @@ func (r *repozytoriumAutomatyk) OczekiwanieCzynne(ctx context.Context,
 		fmt.Sprintf("czynne oczekiwanie biegu %d", przebiegID))
 }
 
-// OczekiwaniaNaSygnal zwraca biegi czekające na wskazany sygnał.
+// OczekiwaniaNaSygnal zwraca biegi czekające na wskazany sygnał, uporządkowane według
+// identyfikatora oczekiwania.
 func (r *repozytoriumAutomatyk) OczekiwaniaNaSygnal(ctx context.Context,
 	sygnal string) ([]OczekiwanieBiegu, error) {
 
@@ -340,7 +326,8 @@ func (r *repozytoriumAutomatyk) ZamknijOczekiwanie(ctx context.Context,
 	return nil
 }
 
-// jednoOczekiwanie wykonuje odczyt pojedynczego wiersza wspólny wszystkim doborom.
+// jednoOczekiwanie wykonuje odczyt pojedynczego wiersza wspólny wszystkim doborom,
+// zamieniając brak wiersza na błąd ErrBrakWiersza.
 func (r *repozytoriumAutomatyk) jednoOczekiwanie(ctx context.Context, zapytanie string,
 	klucz any, opis string) (OczekiwanieBiegu, error) {
 
@@ -358,7 +345,8 @@ func (r *repozytoriumAutomatyk) jednoOczekiwanie(ctx context.Context, zapytanie 
 	return oczekiwanie, nil
 }
 
-// wykazOczekiwan wykonuje odczyt wykazu wspólny obu doborom.
+// wykazOczekiwan wykonuje odczyt wykazu oczekiwań wspólny obu doborom, uporządkowany
+// zgodnie z zapytaniem wywołującego.
 func (r *repozytoriumAutomatyk) wykazOczekiwan(ctx context.Context, zapytanie string,
 	klucz any, opis string) ([]OczekiwanieBiegu, error) {
 
@@ -386,7 +374,8 @@ func (r *repozytoriumAutomatyk) wykazOczekiwan(ctx context.Context, zapytanie st
 	return lista, nil
 }
 
-// odczytajOczekiwanie składa strukturę z jednego wiersza wyniku.
+// odczytajOczekiwanie składa strukturę OczekiwanieBiegu z jednego wiersza wyniku
+// zapytania, niezależnie od źródła wiersza.
 func odczytajOczekiwanie(wiersz skaner) (OczekiwanieBiegu, error) {
 	var o OczekiwanieBiegu
 	var termin, wybudzono, powod, tresc sql.NullString

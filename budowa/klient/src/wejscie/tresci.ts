@@ -1,0 +1,396 @@
+/**
+ * DROGA WEJŚCIA — katalog treści.
+ *
+ * Jedyne miejsce z tekstem widocznym dla użytkownika. Klucze idą hierarchicznie:
+ * obszar → element; klucz odczytuje się jak ścieżkę. Plik przekazuje się
+ * tłumaczowi bez dostępu do kodu — nie ma tu ani znacznika, ani rozgałęzienia.
+ *
+ * Wartości w {nawiasach} to miejsca na dane podstawiane w czasie działania;
+ * ich nazw nie tłumaczy się.
+ *
+ * Poza tym plikiem żaden plik drogi wejścia nie niesie łańcucha widocznego dla
+ * użytkownika — ani składnik, ani ekran, ani przebieg. Właściwość jest
+ * sprawdzalna: `sprawdzian-katalogu.ts` odrzuca każdy łańcuch spoza tego pliku,
+ * który niesie spację albo polski znak diakrytyczny.
+ */
+
+/** Węzeł katalogu: łańcuch, liczba, wykaz albo poddrzewo. */
+export type WezelTresci = string | number | WezelTresci[] | { [klucz: string]: WezelTresci };
+
+export const tresci = {
+  jezyk: 'pl-PL',
+
+  okno: {
+    uruchamianie: 'Danaco Console — uruchamianie',
+    dostep: 'Danaco Console — dostęp do konta',
+    zwin: 'Zwiń okno',
+    rozwin: 'Rozwiń okno',
+    zamknij: 'Zamknij okno',
+  },
+
+  marka: {
+    nazwa: 'Danaco Console',
+    uruchamianie: {
+      motto: 'AI Operating Environment',
+      zalety: [
+        {
+          glowa: 'Cztery środowiska pracy',
+          tresc: 'Rozmowa i wiedza, projekty, wytwarzanie oprogramowania oraz praca zespołu modeli.',
+        },
+        {
+          glowa: 'Praca wraca w tym samym stanie',
+          tresc: 'Zamknięcie aplikacji nie przerywa zadań — wracają wraz z kartami i kontekstem.',
+        },
+        {
+          glowa: 'Jedno konto na wszystkie urządzenia',
+          tresc: 'Ten sam dostęp na komputerze, tablecie i telefonie.',
+        },
+      ],
+    },
+    dostep: {
+      motto: 'Platforma AI Workspace OS',
+      zalety: [
+        {
+          glowa: 'Cztery środowiska pracy',
+          tresc: 'Osobna przestrzeń robocza dla każdego rodzaju pracy: TalkIn, WorkSpace, CodeStudio, MultitaskingAI.',
+        },
+        {
+          glowa: 'Wiele modeli nad jednym zleceniem',
+          tresc: 'Koordynator rozdziela zlecenie między wykonawców; przebieg śledzisz w Execution Loop Window.',
+        },
+        {
+          glowa: 'Izolacja kontekstu pod kontrolą',
+          tresc: 'Punkty izolacji kontekstu ustala Operator, nie sztywna reguła systemu.',
+        },
+      ],
+    },
+    przygotowanie: { motto: 'AI Operating Environment' },
+    wydawca: 'Danaco Holding Group Sp. z o.o.',
+    wydanie: 'wydanie {wersja}',
+    wsparcie: 'support@danaco-core.pl',
+  },
+
+  uruchomienie: {
+    nadtytul: 'Uruchomienie',
+    etapy: [
+      'Połączenie z serwerem',
+      'Uzgodnienie wersji',
+      'Rozpoznanie urządzenia',
+      'Przygotowanie okna',
+    ],
+    stany: {
+      oczekuje: '—',
+      wToku: 'w toku',
+      gotowe: 'gotowe',
+      nawiazane: 'nawiązane',
+      zgodna: 'zgodna',
+      zaufane: 'zaufane',
+      nieudane: 'nieudane',
+    },
+    laczenie: {
+      tytul: 'Nawiązywanie połączenia',
+      lid: 'Danaco Console łączy się z serwerem. Poczekaj.',
+    },
+    token: {
+      tytul: 'Przywracanie sesji',
+      lid: 'Danaco Console przywraca sesje otwarte na tym koncie.',
+      baner: {
+        glowa: 'Rozpoznano zaufane urządzenie',
+        tresc: 'Uruchomienie bez logowania.',
+      },
+      fraza: 'Rejestracja i logowanie zostają pominięte, bo urządzenie jest zaufane.',
+    },
+    blad: {
+      tytul: 'Błąd połączenia',
+      lid: 'Sprawdź połączenie sieciowe i spróbuj ponownie.',
+      baner: {
+        glowa: 'Serwer nie odpowiada',
+        tresc: 'Ponowna próba za {odliczanie} s.',
+      },
+      fraza: 'Praca zapisana na serwerze jest bezpieczna.',
+    },
+    /* Rozjazd wersji protokołu jest stanem, którego okno musi umieć nazwać:
+       powitanie jest jedynym miejscem, w którym klient odczytuje wersję rdzenia,
+       a wersja niezgodna znaczy, że dalsza rozmowa pójdzie po omacku. */
+    wersja: {
+      glowa: 'Wersja protokołu rdzenia jest inna niż wersja tego klienta.',
+      tresc: 'Rdzeń mówi wersją {rdzen}, klient wersją {klient}. Zaktualizuj program.',
+    },
+  },
+
+  dostep: {
+    zakladki: ['Zaloguj się', 'Zarejestruj się'],
+
+    logowanie: {
+      tytul: 'Zaloguj się',
+      lid: 'Podaj dane konta Operatora.',
+      login: 'Login albo adres e-mail',
+      haslo: 'Hasło',
+      reset: { pytanie: 'Nie pamiętasz hasła?', czynnosc: 'Resetuj hasło' },
+      metody: {
+        naglowek: 'Inne metody logowania',
+        pin: 'Kod PIN',
+        klucz: 'Klucz systemowy',
+        email: 'Kod na adres e-mail',
+        aktywna: 'aktywna',
+        nieaktywna: 'nieaktywna',
+      },
+      fraza: { pytanie: 'Nie masz konta?', czynnosc: 'Utwórz konto Operatora' },
+    },
+
+    logowanieBlad: {
+      baner: {
+        glowa: 'Nie rozpoznano danych logowania.',
+        tresc: 'Sprawdź login i hasło. Kolejna próba nie jest odmawiana — czeka tylko chwilę dłużej.',
+      },
+      capsLock: 'Sprawdź, czy nie jest włączony Caps Lock.',
+      fraza:
+        'Nieudana próba nie zamyka bramki. Dostęp możesz też odzyskać przez adres e-mail konta.',
+    },
+
+    /* Odsłona zwłoki, nie zapory. Rdzeń nie odmawia kolejnej próby — nakłada na
+       nią rosnącą zwłokę, którą okno odmierza i po której samo wraca do
+       logowania. Zapisu o pięciu próbach i o godzinie tu nie ma, bo takiej
+       reguły nie ma w rdzeniu. */
+    logowanieWstrzymane: {
+      tytul: 'Kolejna próba za chwilę',
+      lid: 'Po nieudanej próbie kolejna czeka chwilę dłużej. Bramka nie została zamknięta.',
+      baner: {
+        glowa: 'Kolejna próba będzie możliwa za {czas}.',
+        tresc: 'Dostęp możesz też odzyskać przez adres e-mail konta.',
+      },
+      odzyskaj: 'Odzyskaj dostęp',
+    },
+
+    odzyskiwanieWstrzymane: {
+      tytul: 'Kolejne wysłanie za chwilę',
+      lid: 'Poprzednie wysłanie jeszcze się kończy. Wysyłanie nie zostało wstrzymane.',
+      baner: {
+        glowa: 'Kolejne wysłanie będzie możliwe za {czas}.',
+        tresc:
+          'Jeśli któraś z wysłanych dróg potwierdzenia dotarła, przepisz ją — każda zachowuje ważność przez {minuty} minut od wysłania.',
+      },
+    },
+
+    rejestracja: {
+      tytul: 'Utwórz konto Operatora',
+      lid: 'Adres e-mail posłuży do potwierdzenia konta i odzyskania dostępu.',
+      login: 'Login',
+      email: 'Adres e-mail',
+      haslo: 'Hasło',
+      hasloPowtorz: 'Powtórz hasło',
+      fraza: { pytanie: 'Masz już konto?', czynnosc: 'Zaloguj się' },
+    },
+
+    /* Druga gałąź rejestracji — pozycja 11 rejestru decyzji. Platforma bez
+       konta nadawczego zakłada konto i wpuszcza hasłem, ale adresu nikt nie
+       sprawdził. Ostrzeżenie jest WYMAGANE: adres jest jedyną drogą odzyskania
+       konta, a Operator, który tego nie przeczyta przy rejestracji, dowie się
+       w dniu, w którym będzie tego potrzebował. */
+    kontoBezPotwierdzenia: {
+      tytul: 'Konto Operatora zostało założone',
+      lid: 'Wejście do platformy działa hasłem, które przed chwilą ustawiłeś.',
+      baner: {
+        glowa: 'Adres {adres} pozostaje niepotwierdzony.',
+        tresc:
+          'Platforma nie ma konta nadawczego, więc listu z drogą potwierdzenia nie wysłała. Odzyskanie konta listem nie zadziała do chwili potwierdzenia adresu.',
+      },
+      nota:
+        'Konto nadawcze ustawia się w oknie Konfiguracji, w kategorii „Konto nadawcze platformy”.',
+      wejdz: 'Wejdź do platformy',
+    },
+
+    sila: {
+      puste: 'Siła hasła zostanie oceniona podczas wpisywania',
+      stopnie: [
+        'Hasło nie spełnia żadnego z warunków',
+        'Hasło słabe — spełnia jeden warunek',
+        'Hasło dostateczne — spełnia dwa warunki',
+        'Hasło dobre — spełnia trzy warunki',
+        'Hasło mocne — spełnia wszystkie cztery warunki',
+      ],
+      warunki: {
+        dlugosc: 'co najmniej {znaki} znaków',
+        wielkosc: 'wielka i mała litera',
+        cyfra: 'cyfra',
+        znak: 'znak specjalny',
+      },
+    },
+
+    haslo: {
+      pokaz: 'Pokaż hasło',
+      ukryj: 'Ukryj hasło',
+    },
+
+    sesja: {
+      etykieta: 'Nie wylogowuj mnie na tym urządzeniu',
+      opis: 'Sesja pozostanie aktywna do czasu wylogowania. Nie zaznaczaj na urządzeniu współdzielonym.',
+    },
+
+    kod: {
+      tytul: 'Potwierdź adres e-mail',
+      lid: 'Na adres {adres} została wysłana droga potwierdzenia. Zachowuje ważność przez {minuty} minut.',
+      obszar: 'Droga potwierdzenia z listu',
+      znak: 'Znak {numer} z {ile}',
+      odliczanie: 'Droga potwierdzenia traci ważność za',
+      wklej: 'Wklej ze schowka',
+      ponow: 'Wyślij ponownie',
+      pomoc: {
+        glowa: 'Nie ma wiadomości?',
+        tresc:
+          'Sprawdź folder wiadomości niechcianych. List przychodzi z adresu {nadawca} i dociera zwykle w ciągu minuty. Jeśli nie dotarł, wyślij go ponownie.',
+      },
+      pomocDane: { nadawca: 'noreply@danaco-core.pl' },
+      ostrzezenie: {
+        glowa: 'Drogę potwierdzenia wprowadza się wyłącznie w tym oknie.',
+        tresc: 'Danaco Console nigdy nie prosi o nią przez telefon ani w wiadomości zwrotnej.',
+      },
+      zmienAdres: 'Zmień adres e-mail',
+    },
+
+    odzyskiwanie: {
+      kroki: ['Adres e-mail', 'Potwierdzenie', 'Nowe hasło'],
+      adres: {
+        tytul: 'Odzyskaj dostęp do konta',
+        lid: 'Podaj adres e-mail konta. Zostanie na niego wysłana droga potwierdzenia.',
+        pole: 'Adres e-mail',
+        ostrzezenie: {
+          glowa: 'Zmiana hasła kończy wszystkie sesje.',
+          tresc: 'Na pozostałych urządzeniach trzeba zalogować się ponownie.',
+        },
+      },
+      haslo: {
+        tytul: 'Ustaw nowe hasło',
+        lid: 'Nowe hasło zacznie obowiązywać od razu. Pozostałe urządzenia zostaną wylogowane.',
+        nowe: 'Nowe hasło',
+        powtorz: 'Powtórz nowe hasło',
+      },
+      powrot: 'Wróć do logowania',
+    },
+  },
+
+  przygotowanie: {
+    motto: 'AI Operating Environment',
+    obszarPowlok:
+      'Cztery powłoki platformy Danaco Console: rdzeń, środowiska pracy, moduły, interfejs',
+    nadtytul: 'Uruchomienie',
+    tytul: 'Przygotowanie środowiska pracy',
+    lid: 'Danaco Console odtwarza stan pracy z ostatniego zamknięcia: karty sesji, kontekst projektów i kanały modeli.',
+    obszarEtapow: 'Postęp przygotowania środowiska pracy',
+    etapy: [
+      'Uwierzytelnienie',
+      'Profil Operatora i uprawnienia',
+      'Przywracanie sesji z poprzedniej pracy',
+      'Kanały modeli i konektory',
+      'Magistrala kontekstu i pamięć projektów',
+    ],
+    miary: {
+      rozpoznane: 'urządzenie rozpoznane',
+      uprawnienia: '{ile} uprawnień',
+      karty: '{odtworzone} z {wszystkie} kart',
+      oczekuje: 'oczekuje',
+      moduly: '{ile} modułów',
+      srodowisko: '{nazwa}',
+    },
+    postep: {
+      etykieta: 'Przywracanie sesji',
+      opisPaska: 'Postęp przywracania sesji',
+    },
+    nota: 'Przywracanie trwa po stronie serwera. Zamknięcie okna nie przerywa przywracania.',
+  },
+
+  dzialania: {
+    zamknijAplikacje: 'Zamknij aplikację',
+    ustawieniaPolaczenia: 'Ustawienia połączenia',
+    sprobujPonownie: 'Spróbuj ponownie',
+    zaloguj: 'Zaloguj się',
+    zalogujPonownie: 'Zaloguj się ponownie',
+    utworzKonto: 'Utwórz konto',
+    potwierdzKonto: 'Potwierdź konto',
+    wyslijKod: 'Wyślij drogę potwierdzenia',
+    potwierdzHaslo: 'Potwierdź nowe hasło',
+    potwierdzDroge: 'Potwierdź drogę',
+    wrocDoLogowania: 'Wróć do logowania',
+    pominPrzywracanie: 'Pomiń przywracanie sesji',
+    przerwijIWyloguj: 'Przerwij i wyloguj',
+  },
+
+  usterki: {
+    wiele: 'Popraw zaznaczone dane.',
+    naglowekKonto: 'Nie można utworzyć konta.',
+    naglowekHaslo: 'Nie można ustawić hasła.',
+    naglowekLogowanie: 'Nie można się zalogować.',
+    naglowekKod: 'Nie można wysłać drogi potwierdzenia.',
+    naglowekPotwierdzenie: 'Nie można potwierdzić adresu.',
+    brakLoginu: {
+      glowa: 'Podaj login albo adres e-mail.',
+      tresc: 'Pole logowania jest puste.',
+    },
+    brakHasla: {
+      glowa: 'Podaj hasło.',
+      tresc: 'Pole hasła jest puste.',
+    },
+    brakDanych: {
+      glowa: 'Podaj dane logowania.',
+      tresc: 'Wpisz login albo adres e-mail oraz hasło do konta Operatora.',
+    },
+    brakAdresu: {
+      glowa: 'Podaj adres e-mail konta.',
+      tresc: 'Na ten adres zostanie wysłana droga potwierdzenia.',
+    },
+    brakDrogi: {
+      glowa: 'Podaj drogę potwierdzenia z listu.',
+      tresc: 'Pole drogi potwierdzenia jest puste.',
+    },
+    loginZajety: {
+      glowa: 'Ten login jest już zajęty.',
+      tresc: 'Wybierz inny login. Adres e-mail może pozostać bez zmian.',
+    },
+    emailBledny: {
+      glowa: 'Nieprawidłowy adres e-mail.',
+      tresc: 'Sprawdź, czy adres zawiera znak @ oraz nazwę domeny, na przykład nazwa@firma.pl.',
+    },
+    hasloSlabe: {
+      glowa: 'Hasło nie spełnia wymagań.',
+      tresc: 'Spełnij wszystkie cztery warunki podane pod polem hasła.',
+    },
+    haslaRozne: {
+      glowa: 'Hasła nie są zgodne.',
+      tresc: 'Wpisz to samo hasło w obu polach.',
+    },
+    /* Odmowa rdzenia niesie własny opis — rdzeń wie o powodzie więcej niż okno.
+       Katalog daje jej wyłącznie głowę; treścią jest to, co powiedział rdzeń. */
+    odmowaRdzenia: {
+      glowa: 'Rdzeń odmówił wykonania.',
+    },
+    brakOdpowiedzi: {
+      glowa: 'Rdzeń nie odpowiedział.',
+      tresc: 'Połączenie zostało zerwane w trakcie wykonywania. Spróbuj ponownie.',
+    },
+  },
+
+  komunikaty: {
+    zamkniecie: {
+      tytul: 'Zamknięcie aplikacji',
+      tresc: 'Okno aplikacji zostanie zamknięte. Sesje pracujące w tle trwają dalej i wrócą przy kolejnym uruchomieniu.',
+    },
+    ustawienia: {
+      tytul: 'Ustawienia połączenia',
+      tresc: 'Ustawienia połączenia otwierają się w oknie konfiguracji, w sekcji „Sieć i serwer”.',
+    },
+    kodPonowiony: {
+      tytul: 'Droga potwierdzenia wysłana ponownie',
+      tresc: 'Nowa droga wysłana na adres konta. Poprzednia przestała obowiązywać.',
+    },
+    pominiecie: {
+      tytul: 'Pominięcie przywracania',
+      tresc: 'Przywracanie sesji zostanie pominięte. Karty z poprzedniej pracy pozostaną w historii sesji.',
+    },
+    schowek: {
+      tytul: 'Schowek niedostępny',
+      tresc: 'Wpisz drogę potwierdzenia ręcznie.',
+    },
+  },
+} as const;
+
+export type KatalogTresci = typeof tresci;

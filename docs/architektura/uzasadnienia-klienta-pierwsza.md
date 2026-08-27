@@ -654,3 +654,14 @@ Kod okna nie pada tu literałem: ramę woła `utworzRameApps(opis.kodOkna, …)`
 zmiennej, dzięki czemu `KODY_OKIEN` pozostaje jedynym miejscem, w którym kody
 okien modułu Apps są zapisane. Okna Studio rozdziela ta sama zasada —
 `okno-studio.ts` jest wspólną ramą, a poszczególne okna mają własne pliki.
+
+## budowa/klient-poprzedni/src/moduly/library/tresc-podgladu.ts
+
+Podgląd graficzny oraz podgląd stron dokumentu PDF przychodzą z rdzenia
+wyłącznie jako odnośnik w polu `imageRef`. Klient nie ma komendy pobierającej
+bajty spod tego odnośnika, więc ciało podglądu pokazuje sam odnośnik i nazywa
+brak treści, zamiast udawać obraz, którego nie otrzymał.
+
+Pole `truncated` odpowiedzi mówi o skróceniu podglądu po stronie rdzenia.
+Wypisane pod treścią zdanie odróżnia fragment pliku od jego całości, dzięki
+czemu odczyt niepełny nie jest brany za odczyt kompletny.

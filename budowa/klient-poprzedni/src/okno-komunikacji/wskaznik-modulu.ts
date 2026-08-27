@@ -1,6 +1,6 @@
 import type { ProfilModulu } from './profil-modulu';
 
-/** Wskaźnik modułu, w którym pracuje okno komunikacji. */
+/** Wskaźnik modułu, w którym aktualnie pracuje okno komunikacji, pokazywany operatorowi w nagłówku tego okna. */
 export interface WskaznikModulu {
   /** Element montowany w nagłówku okna. */
   element: HTMLElement;
@@ -9,12 +9,7 @@ export interface WskaznikModulu {
 }
 
 /**
- * Wskaźnik bieżącego modułu.
- *
- * Operator ma w każdej chwili widzieć, w którym z piętnastu modułów pracuje
- * okno — bo od modułu zależy pasek promptu, panel akcji i kontekst. Wskaźnik
- * niesie słowo, nie samą barwę, a zmiana idzie przez `aria-live`, żeby czytnik
- * ekranu ogłosił przestawienie okna.
+ * Wskaźnik bieżącego modułu — operator ma widzieć, w którym z piętnastu modułów pracuje okno, bo od modułu zależy pasek promptu, panel akcji i kontekst; zmiana ogłasza się czytnikowi ekranu.
  */
 export function utworzWskaznikModulu(): WskaznikModulu {
   const element = document.createElement('div');

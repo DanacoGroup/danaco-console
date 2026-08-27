@@ -5488,3 +5488,12 @@ identyfikator pozostaje pusty.
 Pole unsupported deklaracji zdolności nie jest wypełniane w tym miejscu, bo
 znaczyłoby „dostawca nie ma odpowiednika", a nie „nie zbadano" — te dwa stany
 nie mogą być mylone.
+
+## budowa/server/internal/core/handlers_urzadzenia.go
+Operator odbierający dostęp maszynie stojącej obok ma zobaczyć skutek na obu ekranach naraz —
+inaczej drugi ekran pokazywałby dostęp, którego już nie ma, aż do następnej komendy.
+
+Port, który więzi nie przyjmie, po prostu nie oznaczy bieżącego urządzenia; wykaz działa dalej.
+
+Wykaz do zdarzenia bierze się z tego samego źródła co odpowiedź wykazu urządzeń — pozostałe ekrany
+dostają stan po zmianie, a nie polecenie odpytania jeszcze raz.

@@ -4350,3 +4350,13 @@ kanału się nie gubi — powrót nie zakłada drugiego okna komunikacji.
 Trasa widnieje w adresie dokumentu, więc odświeżenie strony wraca tam, gdzie
 Operator był, a przycisk powrotu przeglądarki działa bez kodu dodatkowego. Adres
 nieznany nie zatrzymuje uruchomienia: router otwiera wtedy trasę początkową.
+
+## budowa/klient-poprzedni/src/moduly/agents/wiersz-rozszerzenia.ts
+
+Zestaw akcji wiersza wynika ze stanu pozycji katalogu. Pozycja niezainstalowana ma
+jedną drogę — instalację; przełączenia i odinstalowania rdzeń by odmówił. Pozycja
+zainstalowana dostaje przełącznik `extension.toggle`, który włącza i wyłącza bez
+odinstalowania, oraz odinstalowanie.
+
+Nazwy rodzajów rozszerzeń stoją po polsku, ponieważ kontrakt niesie kody angielskie
+wyliczenia `ExtensionKind`, a wiersz czyta człowiek.

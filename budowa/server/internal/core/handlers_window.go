@@ -6,13 +6,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// zarejestrujOkna wpina domenę okna komunikacji — bytu pośredniego między sesją
-// a wiadomością.
-//
-// Okno niesie moduł, kanał modelu, listę katalogów roboczych, zasięg wykonania,
-// tryb uprawnień i rolę w pętli koordynator–wykonawca. Wiele okien jednej sesji
-// biegnie równolegle, każde z własnym modelem i własnym katalogiem, dlatego
-// każda komenda wskazuje okno wprost, a nie przez sesję.
+// zarejestrujOkna wpina domenę okna komunikacji — bytu pośredniego między sesją a wiadomością,
+// niosącego moduł, kanał modelu, katalogi robocze, zasięg wykonania, tryb uprawnień i rolę w pętli.
 func zarejestrujOkna(r *Rejestr, okna Okna, e *emiter) {
 	if r == nil || okna == nil {
 		return

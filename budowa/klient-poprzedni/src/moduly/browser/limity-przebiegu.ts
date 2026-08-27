@@ -6,18 +6,9 @@ import { KLASY_DYMKA, OBJASNIENIA, POZYCJE_BEZ_OBSLUGI } from './etykiety-browse
 
 /**
  * Limity przebiegu Wykonawcy operującego na stronie — warstwa czwarta
- * Automation Studio.
- *
- * Utrwalenie granic ma w kontrakcie własne komendy (`browser.executor.limits.set`
- * i `.get`), których panel jeszcze nie wywołuje — powód stoi pod polami i bierze
- * się z odczytu wykazu komend rdzenia, więc panel nie udaje zapisu w rdzeniu.
- * Robi natomiast to, co zrobić może i co ma znaczenie: sprawdza scenariusz
- * przed wysłaniem. Scenariusz przekraczający limit nie wychodzi z okna, a jego
- * kroki prowadzące poza dozwolone domeny są nazwane po adresie.
- *
- * Stan wyjściowy jest zgodny z zasadą zero blokad: granica pusta i wykaz domen
- * pusty znaczą „bez ograniczenia". Limit powstaje wtedy, gdy Operator go
- * postawi — nie wcześniej i nie domyślnie.
+ * Automation Studio. Panel sprawdza scenariusz przed wysłaniem: przekraczający
+ * granicę nie wychodzi z okna, a kroki prowadzące poza dozwolone domeny są
+ * nazwane po adresie.
  */
 export interface LimityPrzebiegu {
   element: HTMLElement;
@@ -84,7 +75,10 @@ export function utworzLimityPrzebiegu(pokrycie: PokrycieKomend): LimityPrzebiegu
   };
 }
 
-/** Domeny wpisane przez Operatora, bez pustych członów i bez wielkości liter. */
+/**
+ * Domeny wpisane przez Operatora, bez pustych członów i bez wielkości liter,
+ * ponieważ porównanie adresu prowadzi się na postaci znormalizowanej.
+ */
 function rozbierzDomeny(tresc: string): string[] {
   return tresc
     .split(',')
@@ -96,7 +90,7 @@ function rozbierzDomeny(tresc: string): string[] {
  * Adres, pod który krok prowadzi; pusty napis znaczy „krok nie nawiguje".
  *
  * Treść żądania kroku jest dowolnym obiektem JSON, więc pole adresu sprawdza
- * się po typie, a nie zakłada. Krok bez adresu nie jest naruszeniem wykazu
+ * się po typie. Krok bez adresu nie jest naruszeniem wykazu
  * domen — jest krokiem innego rodzaju.
  */
 function adresKroku(krok: AutomationStep): string {
@@ -106,14 +100,20 @@ function adresKroku(krok: AutomationStep): string {
   return typeof adres === 'string' ? adres.trim() : '';
 }
 
-/** Czy adres należy do którejś z dozwolonych domen albo jej poddomeny. */
+/**
+ * Czy adres należy do którejś z dozwolonych domen albo jej poddomeny; pusty
+ * wykaz domen niczego nie ogranicza.
+ */
 function czyDozwolony(adres: string, dozwolone: readonly string[]): boolean {
   const nazwa = nazwaHosta(adres);
   if (nazwa === '') return false;
   return dozwolone.some((domena) => nazwa === domena || nazwa.endsWith(`.${domena}`));
 }
 
-/** Nazwa hosta adresu; pusta, gdy treść adresem nie jest. */
+/**
+ * Nazwa hosta adresu; pusta, gdy treść adresem nie jest, ponieważ krok bez
+ * adresu nie podlega sprawdzeniu wykazu domen.
+ */
 function nazwaHosta(adres: string): string {
   try {
     return new URL(adres).hostname.toLowerCase();

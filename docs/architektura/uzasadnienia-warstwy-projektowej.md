@@ -435,3 +435,10 @@ Klatki nazwane dn-tetno definiuje ten arkusz; korzystają z nich także wpis
 pracujący w pliku wpis.css oraz plik drobne.css. Plakietkę roli koordynatora
 niesie dziś klasa dn-plakietka--sygnal, budowana przez
 okna-rownolegle/plakietka-roli.ts.
+
+## budowa/klient-poprzedni/src/komponenty/wpis.css
+Mapowanie ról kontraktu na klasy wpisu: rola user na klasę dn-wpis--czlowiek,
+rola assistant na klasę dn-wpis--inteligencja, rola system na klasę
+dn-wpis--system, rola tool na klasę dn-wpis--system wraz z plakietką roli
+niosącą nazwę narzędzia. Wpis w trakcie pracy dokłada klasę
+dn-wpis--pracuje; klatki nazwane dn-tetno definiuje plakietka.css.

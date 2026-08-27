@@ -6184,3 +6184,19 @@ rdzeń przyjmuje, byłoby brakiem funkcji zrobionym w oknie. Pole nieoddane
 przez rdzeń nie staje się zerem: koszt zerowy i kanał bez cennika to dwa różne
 zdania o instalacji, a wywołanie w biegu nie ma jeszcze opóźnienia ani liczby
 tokenów, co nie jest usterką.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja-wiersz.ts
+Odczyt śladu, ocena odpowiedzi i wskazanie wywołania do wydania mieszkają
+w jednym wierszu, ponieważ wszystkie trzy dotyczą tego samego wywołania i
+nigdzie indziej nie miałyby czego dotyczyć. Rozwinięcie wiersza nie pyta
+jednocześnie rdzeń o treść promptu, bo byłoby to odczytem materiału
+wrażliwego zrobionym przez pomyłkę w celowaniu, dlatego odczyt śladu ma
+własny przycisk. Ocena zjawia się dopiero po naciśnięciu przycisku oceny:
+sąd nad każdym wierszem wykazu z góry byłby formularzem zawsze, a przy
+pięćdziesięciu wywołaniach ścianą pól, w której nie widać samych wywołań.
+Drzewo odcinków śladu wychodzi z kontraktu w kolejności od korzenia, więc
+głębokość liczy się z pola wskazującego odcinek nadrzędny, a nie z kolejności
+w wykazie, ponieważ wywołanie z podagentem ma odcinki zagnieżdżone i płaska
+lista zgubiłaby to, kto kogo wywołał. Wspólny zapis braku zlałby wyłączony
+zapis treści z pustą odpowiedzią modelu, dlatego okno rozróżnia te dwa stany
+osobnym zdaniem.

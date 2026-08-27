@@ -5563,3 +5563,14 @@ obszar i żadna nie jest już linią tekstu.
 Adnotacja „linia tekstu 1: " sama w sobie, bez słowa ze zrzutu, byłaby
 odczytem pustym udającym odczyt — dlatego sprawdzian szuka w adnotacji
 konkretnego słowa, nie samej obecności dwukropka.
+
+## budowa/server/internal/core/handlers_workspace_pamiec.go
+Jedna zmiana wpisu rozgłasza dwa zdarzenia i nie jest to powtórzenie: zdarzenie zmiany projektu
+niesie projekt i mówi oknu Workspace, że coś się w nim ruszyło, a zdarzenie zmiany pamięci niesie
+sam wpis wraz z rodzajem zmiany i zasila okno pamięci kontekstu bez odpytywania wykazu. To dwa
+różne byty tej samej czynności — tym samym wzorem, co zdarzenie kolejki obok stanu wykonania
+automatyki. Przestawienie pamięci nie rozgłasza niczego: przestawia konfigurację karty sesji, nie
+stan wpisu ani projektu, a zdarzenia dla tego bytu kontrakt nie ma. Rodzaj zmiany idzie za tym, co
+się stało: zapis bez wskazania wpisu zakłada wpis, ze wskazaniem zmienia go; odpięcie zwęża zasięg
+wpisu, który żyje dalej; usunięcie kasuje. Odesłanie wszystkiego jako aktualizacji kazałoby
+klientowi zgadywać, czy wpis dopisać do wykazu, czy z niego zdjąć.

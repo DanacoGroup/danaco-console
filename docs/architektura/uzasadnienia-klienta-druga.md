@@ -3779,3 +3779,18 @@ poszło. Pusta nazwa kopii nie jest błędem. Kontrakt pozwala pominąć tytuł 
 rdzeń zakłada projekt o podanej nazwie i oddaje jego identyfikator, więc klient nie zakłada projektu
 osobną komendą. Wykaz przeniesionych może być krótszy od żądania — rdzeń oddaje sesje faktycznie
 przeniesione, więc widok melduje z wyniku, nie z treści żądania.
+
+## budowa/klient-poprzedni/src/strona-glowna/wpiecie-komponentow.ts
+Docelowe środowisko kafla wynika z macierzy widoczności, którą rdzeń podaje w odpowiedzi o środowiskach;
+kopia tej macierzy po stronie klienta mogłaby rozjechać się z bazą po cichu, więc jej tutaj nie ma.
+Zapytanie o środowiska pada tu osobno, z dołączeniem modułów, bo wpięcie środowisk pyta bez tego pola —
+kartom strefy pierwszej moduły nie są potrzebne. Podobnie wykaz modułów wołają dwa wpięcia: to po kafle
+strefy drugiej, a wpięcie modułów po kafle modułów poza nawigacją; scalenie wołań wymaga zmiany w warstwie
+montażu strony głównej, poza tym plikiem — strona wstaje raz na wejście, nie w pętli, więc dwa wołania są
+ceną za niezależność obu wpięć. Kafel jest zawsze klikalny i zawsze prowadzi do pracy: gdy macierz jeszcze
+nie przyszła albo moduł nie stoi w żadnej bocznej nawigacji, przejście idzie do środowiska początkowego,
+nadal ze wskazaniem modułu, zamiast pokazać odmowę lub kafel wyszarzony. Wykaz personalizowanych przychodzi
+bez znacznika włączania wyłączonych, więc komponent wyłączony skraca listę zamiast dawać kafel wyszarzony;
+odmowa rdzenia zostawia same kafle rodzajów, bo te wynikają z kontraktu, nie z tej odpowiedzi. Powłoka
+otwiera moduł bez pozycji na liście drogą bezpośrednią, z pominięciem wykazu; zgubienie wskazania odbierałoby
+kaflowi jedyne wejście do tych okien.

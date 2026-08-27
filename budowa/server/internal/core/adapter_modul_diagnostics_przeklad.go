@@ -1,8 +1,4 @@
-// Odpowiedzialność pliku: przekład między wierszami obszaru Diagnostics
-// a bytami kontraktu oraz zdejmowanie wskaźników z pól opcjonalnych żądań.
-//
-// Pole, którego wiersz nie niesie, wychodzi puste i nie dostaje wartości
-// zastępczej: w oknie diagnostycznym zero znaczy co innego niż brak danych.
+// Odpowiedzialność pliku: przekład między wierszami obszaru Diagnostics a bytami kontraktu oraz zdejmowanie wskaźników z pól opcjonalnych żądań, bez wartości zastępczych.
 package core
 
 import (
@@ -12,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// wpisyDziennikaKontraktu przekłada wiersze dziennika na wpisy Logs Viewer.
+// wpisyDziennikaKontraktu przekłada wiersze dziennika na wpisy Logs Viewer, zachowując kolejność zapisu.
 func wpisyDziennikaKontraktu(wiersze []dane.WpisDiagnostyki) []shared.LogEntry {
 	wpisy := make([]shared.LogEntry, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -21,8 +17,7 @@ func wpisyDziennikaKontraktu(wiersze []dane.WpisDiagnostyki) []shared.LogEntry {
 			Source: wiersz.Zrodlo, Message: wiersz.Tresc,
 			SessionId: wiersz.SesjaKod, WindowId: wiersz.OknoKod, ProcessId: wiersz.ProcesKod,
 		}
-		// Licznik wychodzi tylko wtedy, gdy naprawdę doszło do scalenia —
-		// „1" przy każdym wpisie sugerowałoby deduplikację, której nie było.
+		// Licznik wychodzi tylko przy scaleniu; jedynka przy każdym wpisie sugerowałaby błąd.
 		if wiersz.Powtorzenia > 1 {
 			wpis.RepeatCount = wskaznikLiczby(wiersz.Powtorzenia)
 		}
@@ -31,7 +26,7 @@ func wpisyDziennikaKontraktu(wiersze []dane.WpisDiagnostyki) []shared.LogEntry {
 	return wpisy
 }
 
-// bledyKontraktu przekłada wiersze błędów na byty Errors Panel.
+// bledyKontraktu przekłada wiersze błędów na byty kontraktu Errors Panel, po jednym błędzie na wiersz danych.
 func bledyKontraktu(wiersze []dane.BladDiagnostyczny) []shared.DiagnosticError {
 	bledy := make([]shared.DiagnosticError, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -40,7 +35,7 @@ func bledyKontraktu(wiersze []dane.BladDiagnostyczny) []shared.DiagnosticError {
 	return bledy
 }
 
-// bladKontraktu przekłada jeden wiersz błędu.
+// bladKontraktu przekłada jeden wiersz błędu na byt kontraktu Errors Panel modułu Diagnostics rdzenia.
 func bladKontraktu(wiersz dane.BladDiagnostyczny) shared.DiagnosticError {
 	blad := shared.DiagnosticError{
 		Id: wiersz.Kod, Fingerprint: wiersz.Odcisk, Message: wiersz.Tresc,
@@ -52,12 +47,11 @@ func bladKontraktu(wiersz dane.BladDiagnostyczny) shared.DiagnosticError {
 	if wiersz.Kontekst != nil && *wiersz.Kontekst != "" {
 		blad.Context = json.RawMessage(*wiersz.Kontekst)
 	}
-	// CommitId i DeploymentId zostają puste: rdzeń nie wiąże odmowy komendy
-	// z zatwierdzeniem repozytorium ani z wdrożeniem.
+	// CommitId i DeploymentId zostają puste: odmowa nie wiąże się z zatwierdzeniem ani wdrożeniem.
 	return blad
 }
 
-// analizaKontraktu przekłada migawkę wraz z kodami rekomendacji z niej powstałych.
+// analizaKontraktu przekłada migawkę wraz z kodami rekomendacji z niej powstałych na byt kontraktu diagnostyki.
 func analizaKontraktu(wiersz dane.AnalizaDiagnostyczna, rekomendacje []string) shared.DiagnosticAnalysis {
 	return shared.DiagnosticAnalysis{
 		Id: wiersz.Kod, WindowId: wiersz.OknoKod,
@@ -68,7 +62,7 @@ func analizaKontraktu(wiersz dane.AnalizaDiagnostyczna, rekomendacje []string) s
 	}
 }
 
-// rekomendacjeKontraktu przekłada wiersze rekomendacji.
+// rekomendacjeKontraktu przekłada wiersze rekomendacji na byty kontraktu wymiany z klientem Diagnostics.
 func rekomendacjeKontraktu(wiersze []dane.RekomendacjaDiagnostyczna) []shared.DiagnosticRecommendation {
 	rekomendacje := make([]shared.DiagnosticRecommendation, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -95,7 +89,7 @@ func kodyBledowAnalizy(zapis *string) []string {
 	return kody
 }
 
-// wartoscChwili zdejmuje wskaźnik z granicy czasu; brak znaczy „bez granicy”.
+// wartoscChwili zdejmuje wskaźnik z granicy czasu żądania; brak znaczy bez granicy czasowej filtru danych.
 func wartoscChwili(wskazanie *int64) int64 {
 	if wskazanie == nil {
 		return 0
@@ -103,12 +97,12 @@ func wartoscChwili(wskazanie *int64) int64 {
 	return *wskazanie
 }
 
-// wartoscPrawdy zdejmuje wskaźnik z przełącznika; brak znaczy „wyłączony”.
+// wartoscPrawdy zdejmuje wskaźnik z przełącznika żądania; brak znaczy wyłączony stan filtru diagnostyki.
 func wartoscPrawdy(wskazanie *bool) bool {
 	return wskazanie != nil && *wskazanie
 }
 
-// wartoscPoziomu zdejmuje wskaźnik z poziomu wpisu; brak nie zawęża wyniku.
+// wartoscPoziomu zdejmuje wskaźnik z poziomu wpisu dziennika żądania; brak nie zawęża wyniku żądania filtru.
 func wartoscPoziomu(wskazanie *shared.LogLevel) shared.LogLevel {
 	if wskazanie == nil {
 		return ""
@@ -116,7 +110,7 @@ func wartoscPoziomu(wskazanie *shared.LogLevel) shared.LogLevel {
 	return *wskazanie
 }
 
-// wartoscStanuBledu zdejmuje wskaźnik ze stanu błędu; brak nie zawęża wyniku.
+// wartoscStanuBledu zdejmuje wskaźnik ze stanu błędu żądania; brak nie zawęża wyniku Errors Panel filtru.
 func wartoscStanuBledu(wskazanie *shared.DiagnosticErrorStatus) shared.DiagnosticErrorStatus {
 	if wskazanie == nil {
 		return ""
@@ -124,7 +118,7 @@ func wartoscStanuBledu(wskazanie *shared.DiagnosticErrorStatus) shared.Diagnosti
 	return *wskazanie
 }
 
-// wartoscPriorytetu zdejmuje wskaźnik z priorytetu; brak nie zawęża wyniku.
+// wartoscPriorytetu zdejmuje wskaźnik z priorytetu rekomendacji żądania; brak nie zawęża wyniku filtru.
 func wartoscPriorytetu(wskazanie *shared.DiagnosticPriority) shared.DiagnosticPriority {
 	if wskazanie == nil {
 		return ""
@@ -132,7 +126,7 @@ func wartoscPriorytetu(wskazanie *shared.DiagnosticPriority) shared.DiagnosticPr
 	return *wskazanie
 }
 
-// wartoscStanuRekomendacji zdejmuje wskaźnik ze stanu rekomendacji.
+// wartoscStanuRekomendacji zdejmuje wskaźnik ze stanu rekomendacji; brak nie zawęża wyniku żądania filtru.
 func wartoscStanuRekomendacji(wskazanie *shared.RecommendationStatus) shared.RecommendationStatus {
 	if wskazanie == nil {
 		return ""
@@ -147,7 +141,7 @@ func wskaznikLiczby(wartosc int) *int {
 	return &kopia
 }
 
-// wskaznikPrawdy zakłada wskaźnik na rozstrzygnięcie logiczne.
+// wskaznikPrawdy zakłada wskaźnik na rozstrzygnięcie logiczne pola opcjonalnego kontraktu Diagnostics.
 func wskaznikPrawdy(wartosc bool) *bool {
 	kopia := wartosc
 	return &kopia

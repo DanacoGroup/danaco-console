@@ -761,3 +761,9 @@ Nazwa pliku ma znaczenie poza samym rozpoznaniem formatu: plik
 umowa najmu.docx ma zostać dokumentem o nazwie „umowa najmu", nie
 dokumentem bez nazwy, dlatego nazwa dokumentu wyjmuje się z nazwy pliku bez
 rozszerzenia.
+
+## budowa/server/internal/core/adapter_modul_design_fotografia_wsad.go
+
+Wsad puszcza ten sam zestaw czynności na każdym zasobie osobno, przez te same uchwyty, którymi jadą czynności pojedyncze; nie ma tu drugiej drogi rachunku, bo gdyby wsad liczył po swojemu, wynik wsadowy różniłby się od pojedynczego. Zasób, którego nie udało się przetworzyć, wraca w bilansie polem failedAssetIds razem z powodem — wsad na stu zdjęciach, z których trzy padły, wyglądałby bez tego pola jak wsad kompletny, a brak wyszedłby na jaw dopiero przy przeglądaniu wyników.
+
+Metadane zasobu są pomiarem z pliku, nie echem wiersza bazy: odczyt czyta nagłówek pliku leżącego w magazynie, biorąc wymiary, format, model barwny, obecność kanału krycia, rozdzielczość i pola EXIF. Wiersz bazy niesie tylko to, co zmierzono przy wniesieniu, a plik może być jedyną prawdą o tym, co użytkownik naprawdę ma.

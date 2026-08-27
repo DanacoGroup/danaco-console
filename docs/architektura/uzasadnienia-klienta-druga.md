@@ -1095,3 +1095,34 @@ czasu o harmonogram, kalendarz o wpisy kalendarza. Zadanie zmienione w jednym wi
 samym zadaniem w pozostałych trzech, bo drugiego zapisu zadania w module nie ma. Zadanie
 wskazane w wykazie staje się przedmiotem czynności paska akcji; wskazanie idzie polem, a nie
 stanem ukrytym, żeby było widać, czego dotyczy usunięcie, zanim się je naciśnie.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-efektywna.ts
+
+Wartość zapisana świadomie i wartość domyślna muszą wyglądać inaczej, ponieważ
+stan wyjściowy platformy to pełna swoboda operacyjna — egzekutor odrzuca
+naruszenie tylko przy punkcie włączonym, a wartość wyłączona niczego nie
+ogranicza. Pokazanie domyślnej tak samo jak zapisu Operatora sugerowałoby
+ochronę, której nikt nie włączył.
+
+Pochodzenie czytamy z odpowiedzi rdzenia na isolation.policy.preview: obecne
+pole origin znaczy zapis na wskazanym poziomie, brak origin znaczy wartość
+z rejestru definicji. Stan „nieznane" wchodzi wtedy, gdy odpowiedź w ogóle nie
+niesie przełącznika danego punktu.
+
+Żądanie podglądu musi nieść punkt widzenia — sesję, warstwę, zasięg i okno.
+Przy pustym żądaniu rdzeń schodzi kolejką do poziomu globalnego, więc okno
+pokazałoby politykę całej platformy pod nazwą „efektywna".
+
+Czwarty stan „brak-odczytu" jest wyłącznie kliencki i nie wolno go zlewać
+z wartością domyślną: oba prowadzą do przeciwnych wniosków o bezpieczeństwie.
+
+Jedenaście punktów izolacji odpowiada definicjom rdzenia w module konfiguracji
+izolacji. Objaśnienie każdego punktu jest opisem klucza — co znaczy i jaki
+jest stan wyjściowy platformy — a nie wynikiem odczytu, dlatego stoi w pliku
+klienta: odpowiedź policy.preview niesie wartości, nie objaśnienia.
+
+Miejscem styku granicy asystenta jest komenda zapisu konfiguracji sesji z roli
+klawiatury: pisze przedmioty tych samych punktów — katalog roboczy, katalogi
+dodatkowe, środowisko, uruchomienie, narzędzia, uprawnienia i konto —
+przełączników izolacji jednak nie rusza, więc egzekutor zostaje na miejscu
+i granicy nie przekracza.

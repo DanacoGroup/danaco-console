@@ -1,43 +1,7 @@
-// Wypełnienie portu Mowa dwiema komendami obszaru `speech.*`: przełożenie żądań
-// kontraktu na zlecenia silnika `mowa` i przełożenie jego typowanych odmów na
-// kody kontraktu.
-//
-// ── Skąd biorą się okno, zasady i obszar ────────────────────────────────────
-// `mowa.Silnik` wymaga `session.Okno`, `session.Zasady` i `session.Obszar`, bo
-// pomocnik transkrypcji startuje tym samym uruchamiaczem i przez tę samą bramę
-// izolacji, co każdy inny proces drzewa. Terminal i Developer biorą tę trójkę
-// z okna żądania: rejestr okien daje `session.Okno`, `ZasadyIzolacji` nad
-// rozstrzygaczem daje zasady dla `konfig.Kontekst{Okno: …}`, a `ObszarOkna` nad
-// ustalaczem katalogu roboczego daje obszar.
-//
-// Żądania `speech.*` okna nie niosą: `SpeechAvailabilityGetRequest` nie ma pól,
-// a `SpeechTranscribeRequest` niesie wyłącznie `audioRef`, `language` i `model`.
-// Rodzina `speech.*` jest zdolnością platformy, nie okna — pyta o to, czy dana
-// maszyna umie rozpoznać mowę. Trójka składa się więc w zasięgu platformy, czyli
-// dla pustego `konfig.Kontekst{}`, tą samą drogą co dla okna:
-//
-//	zasady := ZasadyIzolacji(rozstrzygacz, konfig.Kontekst{})
-//	obszar := ObszarOkna(katalog.Ustal(konfig.Kontekst{}, ""), "")
-//
-// Pusty kontekst zasięgu jest poprawnym adresem najszerszego poziomu:
-// rozstrzygacz oddaje wtedy politykę platformy, a ustalacz — katalog roboczy
-// platformy. Wpisane z ręki `session.Zasady{}` i `session.Obszar{}` znaczyłyby
-// „izolacja wyłączona" niezależnie od ustawień.
-//
-// Okno jest jedyną wartością, którą adapter wypełnia sam:
-// `session.Okno{SrodowiskoWykonania: shared.ExecutionEnvCore}`. `audioRef`
-// wskazuje ścieżkę na maszynie silnika, więc pomocnik musi ruszyć na hoście
-// rdzenia; puste pole środowiska dałoby ten sam rozruch gałęzią `case ""`
-// w `injection/uruchamiacz_okna.go`, ale bez zapisanego wskazania.
-// Identyfikatora okna nie ma skąd wziąć, więc wpis dziennika transkrypcji nie
-// dostaje odnośnika okna.
-//
-// ── Silnik powstaje na każde wywołanie ──────────────────────────────────────
-// `mowa.Silnik.ZUstawieniami` mutuje byt, więc jedna instancja współdzielona
-// przez równoległe żądania oznaczałaby wyścig o nastawy: jedno żądanie ustawia
-// model, drugie go podmienia, pierwsze rozpoznaje cudzym. Przy okazji nastawy są
-// świeże — zmiana `mowa_model` komendą `config.set` obowiązuje od następnej
-// transkrypcji, bez restartu rdzenia.
+// Wypełnienie portu Mowa dwiema komendami obszaru speech: przełożenie żądań
+// kontraktu na zlecenia silnika mowy oraz przełożenie jego typowanych odmów na
+// kody kontraktu, ze złożeniem trójki okno, zasady i obszar zasięgu platformy
+// dla każdego wywołania.
 package core
 
 import (
@@ -53,22 +17,22 @@ import (
 	"danacoconsole/shared"
 )
 
-// adapterMowy wypełnia port Mowa.
+// adapterMowy wypełnia port Mowa: łączy uruchamiacz procesu pomocnika, trwały
+// dziennik transkrypcji, źródła zasad izolacji i obszaru roboczego oraz
+// zależności czterech komend dobudowanych obok rozpoznawania mowy.
 type adapterMowy struct {
-	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu
-	// w drzewie. Bez niego moduł nie ruszy pomocnika.
+	// uruchamiacz jest portem warstwy kanału, jedyną drogą startu procesu
+	// pomocnika w drzewie.
 	uruchamiacz session.Uruchamiacz
-	// dziennik daje trwały ślad transkrypcji. Zależność opcjonalna: silnik bez
-	// dziennika rozpoznaje mowę tak samo, traci wyłącznie ślad.
+	// dziennik daje trwały ślad transkrypcji; brak zależności nie zatrzymuje
+	// rozpoznawania mowy.
 	dziennik mowa.Dziennik
-	// rozstrzygacz i katalog składają zasady izolacji i obszar zasięgu platformy
-	// — te same dwa źródła, z których korzystają Terminal i Developer.
+	// rozstrzygacz i katalog składają zasady izolacji i obszar zasięgu
+	// platformy dla uruchomienia.
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// nagrania, katalogDanych i konfiguracja obsługują cztery komendy dobudowane
-	// obok transkrypcji: przyjęcie i oddanie bajtów nagrania oraz nastawę
-	// wybudzania. Zależności są opcjonalne — bez nich te komendy odmawiają,
-	// nazywając brak, a rozpoznawanie mowy pracuje bez zmian.
+	// nagrania, katalogDanych i konfiguracja obsługują cztery komendy
+	// dobudowane obok transkrypcji.
 	nagrania      dane.RepozytoriumNagranMowy
 	katalogDanych string
 	konfiguracja  dane.RepozytoriumKonfiguracji
@@ -78,7 +42,9 @@ type adapterMowy struct {
 	nadajnik *emiter
 }
 
-// nowyAdapterMowy wiąże port z uruchamiaczem procesów.
+// nowyAdapterMowy wiąże port z uruchamiaczem procesów i zakłada pusty rejestr
+// nasłuchów ciągłych okien, gotowy do wpięcia pozostałych zależności metodami
+// budującymi.
 func nowyAdapterMowy(uruchamiacz session.Uruchamiacz) *adapterMowy {
 	return &adapterMowy{uruchamiacz: uruchamiacz, nasluchy: nowyRejestrNasluchow()}
 }
@@ -95,13 +61,15 @@ func (a *adapterMowy) ZMagazynemNagran(nagrania dane.RepozytoriumNagranMowy,
 	return a
 }
 
-// ZWyjsciem wpina nadajnik zdarzeń nasłuchu ciągłego.
+// ZWyjsciem wpina nadajnik zdarzeń, przez który nasłuch ciągły okna ogłasza to,
+// co rdzeń usłyszał, kiedy proces mowy działa w tle.
 func (a *adapterMowy) ZWyjsciem(e *emiter) *adapterMowy {
 	a.nadajnik = e
 	return a
 }
 
-// ZDziennikiem podpina trwały ślad transkrypcji nad bazą rdzenia.
+// ZDziennikiem podpina trwały ślad transkrypcji nad bazą rdzenia, z którego
+// korzysta silnik rozpoznawania mowy przy każdym wywołaniu komendy.
 func (a *adapterMowy) ZDziennikiem(d mowa.Dziennik) *adapterMowy {
 	a.dziennik = d
 	return a
@@ -114,28 +82,17 @@ func (a *adapterMowy) ZIzolacja(rozstrzygacz *konfig.Rozstrzygacz, katalog *Kata
 	return a
 }
 
-// Gotowosc obsługuje `speech.availability.get`.
-//
-// Brak silnika jest odpowiedzią, nie odmową — tak stanowi kontrakt tej komendy.
-// Silnik rozstrzyga to po swojej stronie: brak interpretera i brak biblioteki
-// wracają jako `Gotowy` fałszywe z powodem.
-//
-// Błędem zostaje u niego wyłącznie nieczytelna odpowiedź pomocnika i tę jedną
-// adapter również sprowadza do `available=false` z powodem, zamiast oddać
-// odmowę: komenda zadaje jedno pytanie — czy rysować mikrofon — a odmowa
-// zostawiłaby klienta bez odpowiedzi na nie. Powód niesie trójczęściowy
-// komunikat pakietu wraz ze wskazaniem naprawy.
+// Gotowosc obsługuje speech.availability.get. Brak silnika jest odpowiedzią,
+// nie odmową, bo komenda zadaje jedno pytanie: czy rysować mikrofon. Powód
+// niesie trójczęściowy komunikat pakietu wraz ze wskazaniem naprawy.
 func (a *adapterMowy) Gotowosc(ctx context.Context,
 	_ shared.SpeechAvailabilityGetRequest) (shared.SpeechAvailabilityGetResponse, error) {
 
 	ustawienia := a.ustawienia(ctx)
 	okno, zasady, obszar := a.zasiegPlatformy()
 
-	// Odsłuch liczony jest RAZ i osobno od dyktowania, bo jedzie innym łańcuchem:
-	// piper z głosem .onnx albo espeak-ng, nie python z faster-whisper. Nawet gdy
-	// dyktowanie odmawia (brak Pythona), odsłuch bywa gotowy — dlatego wynik idzie
-	// do obu gałęzi, a nie tylko do udanej. Bez tego komenda meldowałaby o odsłuchu
-	// wyłącznie wtedy, gdy działa dyktowanie, choć to dwie niezależne zdolności.
+	// Odsłuch mierzy się osobno od dyktowania, bo jedzie innym łańcuchem
+	// silnika mowy.
 	odsluchGotowy, odsluchPowod := gotowoscOdsluchu()
 
 	dostepnosc, err := a.silnik(ustawienia).Dostepnosc(ctx, okno, zasady, obszar)
@@ -148,11 +105,8 @@ func (a *adapterMowy) Gotowosc(ctx context.Context,
 			SynthesisReason:    wskaznikTekstu(odsluchPowod),
 		}, nil
 	}
-	// Trzy dobudowane zdolności rodziny meldują się osobno, bo osobno znikają.
-	// Przyjęcie nagrania (`speech.audio.upload`) zależy WYŁĄCZNIE od magazynu
-	// rdzenia i działa nawet bez silnika mowy — bajty da się odłożyć i odsłuchać
-	// bez rozpoznawania czegokolwiek. Wybudzenie i nasłuch ciągły rozpoznają
-	// każdy odcinek, więc znikają razem z silnikiem.
+	// Przyjęcie nagrania zależy wyłącznie od magazynu rdzenia i działa nawet
+	// bez silnika mowy.
 	przyjmowanie := a.nagrania != nil && strings.TrimSpace(a.katalogDanych) != ""
 	return shared.SpeechAvailabilityGetResponse{
 		Available:         dostepnosc.Gotowy,
@@ -161,9 +115,8 @@ func (a *adapterMowy) Gotowosc(ctx context.Context,
 		ListenAvailable:   wskaznikPrawdy(dostepnosc.Gotowy && przyjmowanie),
 		Python:            wskaznikTekstu(dostepnosc.Python),
 		Engine:            wskaznikTekstu(dostepnosc.Silnik),
-		// Model zastany na dysku, a przy jego braku — model ustawiony. Kontrakt
-		// pyta o ten drugi, pomocnik odpowiada tym pierwszym; oddanie pustki, gdy
-		// wag jeszcze nie pobrano, gubiłoby nastawę widoczną w oknie konfiguracji.
+		// Model zastany na dysku, a przy jego braku model ustawiony w
+		// konfiguracji rdzenia.
 		Model:              wskaznikTekstu(pierwszyNiepustyTekst(dostepnosc.Model, ustawienia.Model)),
 		Reason:             wskaznikTekstu(dostepnosc.Powod),
 		SynthesisAvailable: wskaznikPrawdy(odsluchGotowy),
@@ -171,17 +124,9 @@ func (a *adapterMowy) Gotowosc(ctx context.Context,
 	}, nil
 }
 
-// gotowoscOdsluchu mierzy, czy synteza mowy ruszy tu i teraz.
-//
-// Używa `dobierzSyntezator` — tej samej drogi, którą idzie faktyczny odsłuch —
-// więc pomiar nie może rozejść się z wykonaniem: jeżeli dobór silnika kończy się
-// odmową, odsłuch odmówi tak samo, a jego powód jest tym, co Operator zobaczy.
-// Zgodność mierzonego z wykonywanym jest tu warunkiem sensu: komenda, która
-// mówi „gotowy" o rzeczy, która za chwilę odmówi, jest gorsza niż jej brak.
-//
-// Język jest polski, bo produkt jest polskojęzyczny, a odsłuch czyta panele
-// właśnie po polsku; głos innego języka i tak nie przeczytałby polskiego panelu
-// naturalnie. Pusty powód znaczy: odsłuch gotowy.
+// gotowoscOdsluchu mierzy, czy synteza mowy ruszy tu i teraz, drogą
+// dobierzSyntezator, żeby pomiar nie rozjechał się z wykonaniem. Język jest
+// polski, bo produkt jest polskojęzyczny. Pusty powód znaczy: odsłuch gotowy.
 func gotowoscOdsluchu() (bool, string) {
 	if _, err := dobierzSyntezator("pl"); err != nil {
 		return false, err.Error()
@@ -189,12 +134,9 @@ func gotowoscOdsluchu() (bool, string) {
 	return true, ""
 }
 
-// Przepisz obsługuje `speech.transcribe`.
-//
-// Cisza jest wynikiem pomiaru, nie błędem. Pole `processed` rozdziela trzy stany
-// i tylko trzeci jest odmową: przetworzono z tekstem, przetworzono bez mowy
-// (`mowa.StanBezMowy` → `processed=true`, `transcript` pusty) oraz nie
-// przetworzono.
+// Przepisz obsługuje speech.transcribe. Cisza jest wynikiem pomiaru, nie
+// błędem: pole processed rozdziela przetworzenie z tekstem, przetworzenie bez
+// mowy i nieudane przetworzenie.
 func (a *adapterMowy) Przepisz(ctx context.Context,
 	z shared.SpeechTranscribeRequest) (shared.SpeechTranscribeResponse, error) {
 
@@ -219,8 +161,8 @@ func (a *adapterMowy) Przepisz(ctx context.Context,
 	}
 
 	return shared.SpeechTranscribeResponse{
-		// Przetworzono, bo silnik nie oddał odmowy. Wartość nie wynika z długości
-		// tekstu: nagranie bez mowy też jest przetworzone.
+		// Przetworzono, bo silnik nie oddał odmowy, niezależnie od długości
+		// tekstu.
 		Processed:  true,
 		Transcript: transkrypcja.Tekst,
 		Characters: transkrypcja.Znakow,
@@ -273,34 +215,9 @@ func (a *adapterMowy) zasiegPlatformy() (session.Okno, session.Zasady, session.O
 	return okno, zasady, obszar
 }
 
-// bladSilnikaMowy przekłada typowane odmowy pakietu `mowa` na kody kontraktu —
-// cztery przypadki, trzy kody:
-//
-//   - `mowa.BrakNagrania` → `validation_failed`. Jedyna z odmów wywołana daną
-//     przysłaną przez klienta: `audioRef` nie wskazuje pliku, który da się
-//     przepisać (nie ma go, jest pusty albo ma format spoza wykazu). Kod
-//     nieponawialny — to samo żądanie powtórzone da to samo.
-//
-//   - `mowa.BrakPomocnika` → `channel_unavailable`. Nie ma interpretera albo nie
-//     ma skryptu pomocnika. Żądanie było poprawne, więc nie `validation_failed`;
-//     `not_found` mówiłby o nagraniu, nie o instalacji; `internal_error`
-//     znaczyłby wadę produktu, a produkt mówi wprost, czego dołożyć. Kod
-//     ponawialny: po naprawie z komunikatu to samo żądanie się powiedzie.
-//
-//   - `mowa.BrakInterpretera` i `mowa.BrakSilnika` → `channel_unavailable`, ten
-//     sam kod. Katalog `ErrorCode` nie ma pozycji odróżniającej „nie ma
-//     interpretera" od „interpreter jest, brakuje w nim biblioteki".
-//     Rozróżnienie, którego wymaga naprawa, niesie TREŚĆ odmowy — i musi je
-//     nieść, bo trzy ogniwa łańcucha naprawia się trzema różnymi czynnościami:
-//     dołożeniem katalogu pomocników, instalacją Pythona 3 i instalacją
-//     `faster-whisper`. Odmowa przypisująca brak niewłaściwemu ogniwu prowadzi
-//     Operatora do naprawy bezskutecznej.
-//
-//   - naruszenie izolacji (`session.ErrIzolacja`) → `permission_denied`. Punkt
-//     izolacji zatrzymał uruchomienie; tak samo znakuje je Terminal.
-//
-// Odmowa nierozpoznana schodzi na `internal_error`: to przypadek, którego rdzeń
-// nie przewidział, i ma się zgłosić jako taki, a nie udawać znany.
+// bladSilnikaMowy przekłada typowane odmowy pakietu mowa na trzy kody
+// kontraktu, dobierane osobno dla braku danych, braku pomocnika i naruszenia
+// izolacji.
 func bladSilnikaMowy(err error) error {
 	var brakNagrania *mowa.BrakNagrania
 	if errors.As(err, &brakNagrania) {
@@ -322,7 +239,8 @@ func bladSilnikaMowy(err error) error {
 	return odmowaMowy(shared.ErrorCodeInternalError, err.Error())
 }
 
-// bladZadaniaMowy znakuje wadę żądania kodem kontraktu.
+// bladZadaniaMowy znakuje wadę żądania kodem kontraktu validation_failed, gdy
+// przysłane dane nie pozwalają wykonać transkrypcji.
 func bladZadaniaMowy(powod string) error {
 	return odmowaMowy(shared.ErrorCodeValidationFailed, powod)
 }
@@ -334,7 +252,8 @@ func odmowaMowy(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "silnik mowy: "+powod))
 }
 
-// pierwszyNiepustyTekst oddaje pierwszą wartość, która coś niesie.
+// pierwszyNiepustyTekst oddaje pierwszą wartość spośród podanych, która niesie
+// niepusty tekst po przycięciu białych znaków.
 func pierwszyNiepustyTekst(wartosci ...string) string {
 	for _, wartosc := range wartosci {
 		if strings.TrimSpace(wartosc) != "" {

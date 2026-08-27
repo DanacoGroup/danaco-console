@@ -5385,3 +5385,14 @@ Komenda oddająca treść zasobu jest już w kontrakcie i obejmuje cały magazyn
 Designu — zasób Design, plik Library i dokument Studia leżą w jednym repozytorium. Brakuje jej
 uchwytu w rdzeniu, więc okno nadal nie ma skąd wziąć bajtów; jest to brak obsługi, a nie brak
 drogi.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/wiez-automations.ts
+
+Sekcje Kolejki, Orkiestracja, Harmonogram i Monitor pracują na oknach modułu Automations —
+kolejno Queue Manager, Orchestrator, Scheduler i Execution Monitor. Panel orkiestracji buduje
+samo sterowanie i nazywa okno, na którym ono pracuje.
+
+Powiązanie nie jest domyślne, więc sekcja bez wskazanej automatyki opisuje jego brak i sposób
+założenia. Brak powiązania nie wyłącza kontrolek pracujących na samej sesji, czyli kolejek
+i monitora; zawęża wyłącznie to, co adresuje pole `workflowId` — zależności i harmonogram —
+ponieważ bez niego żądanie nie ma adresu.

@@ -1313,3 +1313,38 @@ Krawędź kolumny tabeli nie może przejść przez sąsiednią, bo kolumna
 o szerokości ujemnej nie jest kolumną. Granicą jest sąsiad odsunięty
 o najmniejsze pole, a nie sam sąsiad — dwie krawędzie w jednym miejscu dałyby
 kolumnę zerową.
+
+## budowa/klient/src/wejscie/przebieg.ts
+
+Przebieg nie zna żadnego składnika okna: rozstrzyga wyłącznie, który etap
+i która odsłona obowiązuje oraz co wysłać do rdzenia. Dzięki temu każda
+odsłona, także odsłona błędu i wstrzymania, jest osiągalna w sprawdzianie bez
+przeglądarki. Nazwy komend i kształty ich treści pochodzą wyłącznie
+z kontraktu; przebieg nie powtarza ani jednego literału nazwy komendy.
+
+Odsłona `konto-bez-potwierdzenia` obsługuje rejestrację bez konta nadawczego:
+w tym wariancie wejście działa hasłem, a okno musi nazwać adres, którego
+nikt nie potwierdził, bo adres jest jedyną drogą odzyskania konta. Z kontem
+nadawczym list poszedł i okno prowadzi do jego przepisania zamiast do tej
+odsłony.
+
+Progu prób logowania nie ma. Kontrakt stanowi wprost, że po stronie rdzenia
+nie ma i nie będzie odmowy „za dużo prób" — nieudana próba nakłada na
+następną rosnącą zwłokę, nic więcej. Pomiar to potwierdza: osiem kolejnych
+nieudanych prób oddaje osiem razy odmowę uwierzytelnienia, a po nich hasło
+poprawne wpuszcza. Odsłona z prototypu zostaje i obsługuje zwłokę, nie
+zaporę. Ten sam pomiar zwłoki — czas trwania ostatniego wywołania, bo rdzeń
+nakłada zwłokę przed odpowiedzią — nazywa też zwłokę żądań odzyskania konta:
+progu wysyłek też nie ma, zmierzone siedmioma kolejnymi wysłaniami przyjętymi
+bez odmowy.
+
+Miejsce przechowania tokenu bramki nie jest rozstrzygnięte przez ten teren —
+należy do powłoki wołającej. Magazyn działający wyłącznie w pamięci procesu
+jest więc wartością domyślną: token ginie wraz z procesem, co jest
+zachowaniem uczciwym, bo magazyn udający trwałość obiecywałby rozpoznanie
+urządzenia, którego nie ma.
+
+Liczba etapów przygotowania środowiska równa się liczbie komend, jakie droga
+wejścia potrafi zmierzyć — uwierzytelnienie i przywrócenie kart sesji. Etap
+bez komendy w kontrakcie nie jest etapem czekającym, tylko obietnicą, której
+nikt nie wykona, a postęp liczony razem z nim nie dobiegłby końca nigdy.

@@ -3668,3 +3668,11 @@ Zliczenie bez ograniczenia liczby wyników istnieje po to, żeby wykaz błędów
 mógł podać liczbę całkowitą niezależną od długości zwróconej listy — inaczej
 liczba całkowita zawsze równałaby się liczbie oddanych wierszy i panel błędów
 nigdy nie dowiedziałby się, że wykaz ucięto na granicy pięciuset pozycji.
+
+## budowa/server/internal/models/rodzaj_fragmentu.go
+Rodzaje diagnostyczne prowenancji i konta są w kontrakcie wartościami przelotowymi:
+nie mają odpowiednika w kolumnie wiadomosc.rodzaj_tresci, więc nie wchodzą do
+WartosciBazyChunkKind i nie trafiają do bazy, której ograniczenie CHECK dopuszcza
+wyłącznie rodzaje treści rozmowy. Rodzaje treści rozmowy nie mają tu drugiej
+nazwy: bierze się je wprost ze współdzielonego kontraktu, a odwzorowanie na
+kolumnę bazy wykonuje pakiet dane.

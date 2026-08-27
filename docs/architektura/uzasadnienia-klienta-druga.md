@@ -194,3 +194,36 @@ nie da się złożyć bez tekstu od Operatora — zapytania wyszukiwania, treśc
 notatki, uzasadnienia odrzucenia — bo takie pozycje mają mówić wprost, czego
 brakuje, zamiast wysyłać żądanie z polem pustym i wracać odmową walidacji,
 z której nic nie wynika.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-task-schedule.ts
+
+Plan zadania powłoki jest drugą powierzchnią jednej rodziny komend automatyki,
+nie drugą rodziną komend: cykliczność wiąże się z automatyką, zapisuje ją
+`automation.schedule.set`, czyta `schedule.get`, a rodziny `terminal.schedule.*`
+nie ma i nie będzie, bo dwie rodziny na jeden harmonogram byłyby dwiema
+prawdami o jednym bycie. Zaplanowanie zadania idzie dwoma krokami tej rodziny:
+`automation.workflow.save` zapisuje automatykę o jednym kroku rodzaju
+`command` wołającym `terminal.command.exec`, a `automation.schedule.set`
+dokłada jej wyrażenie cron; edytora automatyk to okno nie stawia, bo pełna
+praca na krokach, wersjach i zmiennych zostaje w module Automations.
+
+Plan nie jest budzikiem: rdzeń wylicza chwilę najbliższego uruchomienia, ale
+nie ma czym odpalić automatyki samodzielnie, bo kontrakt nie zna komendy ani
+zdarzenia, którym harmonogram zgłaszałby wyzwolenie — zapisany plan jest
+zapisem obowiązującym wraz z terminem, a uruchomienie prowadzi Operator
+z okien modułu Automations, i potwierdzenie zapisu mówi to wprost. Kolejki
+okno nie zakłada, bo `queue.create` żąda identyfikatora karty sesji, którego
+rdzeń jeszcze nie wypełnia. Potok jest sekwencjonowaniem po stronie klienta,
+nie silnikiem w rdzeniu: okno wysyła krok, czeka na jego domknięcie odczytem
+wyjścia i dopiero wtedy decyduje o kroku następnym; zamknięcie okna w trakcie
+przerywa sekwencjonowanie, ale nie krok już uruchomiony — ten kończy się
+w rdzeniu i widać go w Process Monitorze.
+
+Granica czekania na domknięcie kroku jest dłuższa niż w podglądzie wyjścia
+Process Monitora, bo tu czekanie jest warunkiem decyzji: bez kodu wyjścia
+kroku nie ma jak rozstrzygnąć, czy wolno ruszyć z krokiem następnym. Krok
+automatyki wołający polecenie powłoki niesie nazwę komendy kontraktu i treść
+jej żądania, nie polecenie powłoki wprost, dzięki czemu plan przechodzi tę
+samą bramę uprawnień i ten sam egzekutor izolacji, co polecenie wydane ręcznie
+z karty; krok omijający komendę byłby drugą drogą do powłoki, bez żadnego
+z tych sprawdzeń.

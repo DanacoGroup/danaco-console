@@ -2728,3 +2728,11 @@ Trójka napisów pochodzi z makiety Centrum dowodzenia i ze schematu strony w wa
 nagłówek nie powtarza: godło i nazwa produktu stoją już w pasku górnym, a strona ma nad strefami tytuł czytany,
 nie drugi sygnet. Stopień tytułu jest niższy od stopnia tytułów kart środowisk z rozmysłu: środkiem ciężkości
 strony pozostaje strefa pierwsza, nie napis nad nią.
+
+## budowa/klient-poprzedni/src/moduly/studio/aparat-zrodlo.ts
+Aparat dokumentu niesie trzynaście rodzajów elementów — spis treści, spis ilustracji i tabel,
+przypis dolny i końcowy, podpis, zakładkę, odwołanie wzajemne, odsyłacz, powołanie, bibliografię,
+hasło indeksu i indeks — a pola dokumentu niosą numer strony, liczbę stron, datę, godzinę,
+tytuł i autora dokumentu, właściwość oraz pole obliczane. Obie rodziny dzielą tę samą oś:
+element wyliczany z dokumentu, który po zmianie treści staje się nieświeży i wymaga odświeżenia,
+dlatego panel prowadzi dla obu jeden wspólny wykaz do odświeżenia zamiast dwóch osobnych.

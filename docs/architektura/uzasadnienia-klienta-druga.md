@@ -5387,3 +5387,33 @@ stanu nie zależy od rozróżnienia barw.
 Strona podglądu układu nie łączy się z rdzeniem, więc historia okien byłaby
 pusta, a rozkład sceny nieczytelny bez treści przykładowej; treść jest
 jawnie oznaczona jako przykładowa, żeby nie została pomylona z prawdziwą.
+
+## budowa/klient-poprzedni/src/ustawienia/wiersz-wymogu-logowania.ts
+Wiersz nie odsyła wprost do okna konfiguracji, bo odesłanie byłoby mylące: klucz dopuszcza wyłącznie
+poziom zasięgu aplikacji, a warstwa zasięgów nie niesie go w kolejności od najwęższego, więc przecięcie
+w warstwie wyboru adresu wychodzi puste i gałąź zapasowa proponuje same poziomy niewłaściwe. Skutek nie
+kończy się na niewygodzie: zapis nastawy sprawdza klucz wobec katalogu, ale nie sprawdza poziomu, a poziom
+aplikacji jest poziomem najszerszym, więc każdy poziom węższy go przesłania — zapis na poziomie
+niedozwolonym przechodzi i potrafi wyłączyć wymóg logowania mimo zapisu przeciwnego na poziomie właściwym.
+Dlatego nasłuch łapie każdy poziom, nie tylko właściwy: zapis pod niedozwolonym adresem jest tym, co
+wiersz ma nazwać wprost, zamiast pominąć jako nie mój poziom.
+
+## budowa/klient-poprzedni/src/rozmowa/widok-wpisu.ts
+Wpis jest siatką dwukolumnową: w pierwszej kolumnie medalion nadawcy,
+w drugiej tożsamość i wszystko, co pod nią idzie. Bez medalionu pasek
+tożsamości wpadłby w kolumnę awatara i został zgnieciony. Kolejność warstw
+odpowiada kolejności strumienia: prowenancja stoi przed treścią, bo rdzeń
+nadaje ją przed jakimkolwiek tekstem i przed startem procesu, dalej idzie
+podgląd pracy modelu, potem odpowiedź, potem narzędzia, błędy i podsumowanie
+tury. Rozróżnienie nadawcy niesie ikona medalionu, klasa semantyczna i
+etykieta słowna — nigdy sama barwa tła.
+
+Widok transkryptu jest filtrem nad tym wpisem, nie drugim widokiem. Cztery
+tryby sterują wyłącznie tym, które warstwy są rysowane; wpis zostaje tym samym
+obiektem na tej samej pozycji listy. Przełączenie nie kasuje niczego, nie
+woła rdzenia i nie blokuje — schowana warstwa wraca w całości po powrocie do
+trybu, który ją pokazuje.
+
+Komplet klas wpisu łączy budowę z biblioteki, klasę semantyczną nadawcy,
+stan pracy i dwie nazwy własne jako uchwyty rozpoznania. Klasa oznaczająca,
+że tura jeszcze biegnie, niesie kropkę tętna przy nadawcy.

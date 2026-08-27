@@ -2220,3 +2220,44 @@ rozstrzygająca, które wyciszenie obejmuje sugestię, nie zna wyjątku wagi
 krytycznej — wyjątek nie znosi wyciszenia, tylko przepuszcza sugestię
 plakietką mimo niego, a rozstrzyga to reguła ujawniania w
 `tryb-obecnosci.ts`, w jednym miejscu dla wszystkich trzech rodzajów.
+
+## budowa/klient-poprzedni/src/moduly/assistant/braki-kontraktu.ts
+
+Okno nie stawia w miejscach bez drogi kontraktu przycisku wygaszonego ani
+milczącego. Kontrolka zostaje klikalna i odpowiada zdaniem mówiącym, czego
+w kontrakcie nie ma; tak samo postępuje `aplikacja/zamiary-pulpitu.ts`.
+
+Każde zdanie wymienia komendę albo pole, którego brakuje, żeby zgłoszenie braku
+dało się napisać wprost z ekranu, bez sięgania do innego opracowania.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/strumien-wykonawcy.ts
+
+Bieg naprawczy prowadzi rdzeń w typie `session.StrumienWykonawcy`. Po stronie
+klienta leży wyłącznie odkładanie fragmentów; klient niczego nie wybudza ani nie
+rozpoczyna.
+
+Odkładane są wszystkie rodzaje fragmentów, nie sama odpowiedź: tok rozumowania,
+wywołania narzędzi, ich wyniki oraz pliki. Bez wywołań narzędzi koordynator nie
+odróżnia wykonawcy pracującego od zatrzymanego.
+
+Tekst narasta w obrębie jednej tury. Nowa wiadomość zaczyna wynik od nowa,
+inaczej przekazanie wyniku niosłoby sklejkę dwóch odpowiedzi wykonawcy.
+
+## budowa/klient-poprzedni/src/moduly/browser/wypis-zrodel.ts
+
+Wykaz źródeł przychodzi do okna komendą `browser.source.list`, a notacja jest
+wyłącznie sposobem jego zapisania, dlatego komendy eksportu bibliografii kontrakt
+nie niesie i nie musi.
+
+Rodzajem wpisu jest zasób elektroniczny — moduł zbiera strony internetowe i tylko
+o nich może tak zaświadczyć. Datą jest czas dodania źródła do wykazu okna,
+ponieważ daty publikacji strony rdzeń nie oddaje.
+
+## budowa/klient-poprzedni/src/aod/sekcja-glosu.ts
+
+Pola `audioRef` i `transcript` kontraktu są opcjonalne, a nakładka nagrań nie
+tworzy, więc polecenie wydaje się samą transkrypcją.
+
+Sekcja rozmowy jest osobną drogą. Komenda `aod.chat.send` niesie zdanie do okna
+rozmowy, natomiast `aod.voice.command` kieruje polecenie do asystenta i ma własne
+pole `speak` na odpowiedź syntezą mowy.

@@ -4313,3 +4313,23 @@ usunięcia konta, więc repozytorium musi odczytać wykaz kanałów przed
 skasowaniem wiersza — po skasowaniu wiązania już nie ma.
 ## budowa/server/internal/dane/przekazanie_okna_akcje.go
 Katalog akcji mówi, jakie akcje istnieją; ten dziennik mówi, kiedy i z jakim skutkiem konkretne okno je wykonało, na wzór dziennika akcji kolejki: przejrzystość zamiast bramy. Typ repozytorium i konstruktor deklaruje plik sąsiedni tego samego obszaru; ten plik dokłada wyłącznie metody dziennika akcji. Parametry i wynik są surowym zapisem, nierozbieranym, bo kształt obu pól zależy od konkretnej akcji z katalogu, którego warstwa danych akcji nie zna, podobnie jak komplet kontekstu przekazania niesie treść bez rozbioru w zapytaniu. Pole niesie identyfikator zewnętrzny okna, ten sam, którym okno wychodzi kontraktem na warstwę wyższą, bo warstwa wyższa nie zna wewnętrznych kluczy liczbowych.
+
+## budowa/server/internal/session/ubicie_unix.go
+
+Proces okna zakłada własną grupę procesów, a potomstwo tę grupę dziedziczy, więc sygnał wysłany do
+ujemnego identyfikatora grupy kończy całe drzewo naraz. Pole pid to zapamiętany identyfikator grupy
+procesów, równy identyfikatorowi procesu okna przez wywołanie Setpgid, utrwalony w chwili przejęcia,
+gdy jest znany i dodatni. Ubicie posługuje się tym polem, a nie identyfikatorem z os.Process, ponieważ
+zwolnienie zeruje go na wartość minus jeden, co dałoby zarazem wyścig danych i policzenie sygnału do
+procesu init albo rozgłoszenie do wszystkich procesów systemu. Pole zapisuje się raz, przed jakąkolwiek
+współbieżnością, i tylko czyta się je później, więc zwolnienie go nie dotyka.
+
+Metoda ubij, gdy grupa procesu już nie istnieje, bo proces zdążył ją zmienić albo grupy nigdy nie było,
+kieruje sygnał wprost do samego procesu, żeby nie zostawić go przy życiu; kod błędu oznaczający brak
+procesu mówi, że nie ma już czego ubijać. Metoda posługuje się zapamiętanym identyfikatorem grupy, nie
+identyfikatorem z os.Process, z tego samego powodu co przy przejęciu. Wartość identyfikatora nie większa
+niż jeden oznacza brak prawidłowego procesu do ubicia i wtedy nie idzie żaden sygnał; straż na wartości
+większej niż jeden pilnuje zarazem sygnału do grupy i sygnału bezpośredniego, żeby żaden nie wyrodził
+się w sygnał do procesu init albo w rozgłoszenie do wszystkich procesów systemu.
+## budowa/server/internal/dane/przekazanie_okna_wiez.go
+Więź koordynator-wykonawca nie ma własnej tabeli: mieszka w kolumnie tabeli okien wskazującej okno koordynatora, do której kontrakt odwołuje się wprost. Ten plik dokłada do repozytorium przekazań drogę zapisu i odczytu tej kolumny z poziomu identyfikatora zewnętrznego okna, podczas gdy repozytorium okien czyta i pisze tę kolumnę wyłącznie jako część pełnego wiersza okna po identyfikatorze wewnętrznym, a widok zarządzania oknami operuje na identyfikatorach zewnętrznych pojedynczej więzi, nie całego okna. Cicha zgoda na więź z oknem, którego nie ma, dałaby potwierdzenie relacji, która w rzeczywistości nie powstała, dlatego obie strony więzi są rozwiązywane na identyfikatory wewnętrzne przed zapisem, a nie podzapytaniem w poleceniu aktualizacji, które ciche niedopasowanie zamieniłoby w wartość pustą.

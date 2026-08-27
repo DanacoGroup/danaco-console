@@ -3767,3 +3767,34 @@ Operator, który odznaczy wszystko, ma wiedzieć, że właśnie nadał wszystko.
 Nadanie nie sięga poza korzenie punktu, więc kontrolka nie przyjmuje ścieżki wpisanej
 z ręki: pokazuje korzenie punktu i pozwala je zaznaczyć. Poszerzenie obszaru wymaga
 zmiany punktu, nie nadania.
+
+## budowa/klient-poprzedni/src/moduly/library/straz-odmow.ts
+
+Rdzeń odpowiada na komendę pozbawioną uchwytu kopertą zdarzenia `<obszar>.unknown`, która niesie identyfikator żądania, ale nie ma pola `status` (`server/internal/protocol/zadanie.go`). Korelacja po stronie klienta rozstrzyga wyłącznie koperty ze statusem (`protokol/koperta.ts`), więc obietnica zwykłego wywołania po takiej odmowie nigdy się nie rozstrzyga, a okno zostaje w stanie ładowania. Straż wiąże odmowę z żądaniem po identyfikatorze i zamienia ją w zwykły wynik z polem błędu, dzięki czemu okno obsługuje odmowę tą samą drogą co każde inne niepowodzenie i mówi wprost, której komendy rdzeń nie zna.
+
+Sześć obszarów własnych odpowiada temu, co moduł woła: własny obszar `library`, okno komunikacji (`window.action`, `window.state.get`), przenoszenie kontekstu (`context`), katalog akcji (`action`), katalog modułów (`module.list`, który obsadza ster modułu docelowego) oraz komplet kontekstu okna (`aod.context.get`, jedyna komenda kontraktu czytająca to, co przyniosło przekazanie).
+
+Siódma subskrypcja idzie na obszar zapasowy `connection`, ponieważ rodzina `knowledge.*` — wyszukiwanie po znaczeniu oraz wskaźnik znaczenia biblioteki — nie ma własnego zdarzenia odmowy. Wykaz `zdarzeniaNieznanej` (`shared/contract.go`) nie zna klucza `knowledge`, więc rdzeń bez wpiętego portu Wiedzy odpowie kopertą `connection.unknown`. Bez tej subskrypcji obietnica takiego wywołania nigdy by się nie rozstrzygnęła, a okno zostałoby w ładowaniu. Wiązanie idzie po identyfikatorze żądania, więc cudza odmowa obszaru zapasowego niczego tu nie rozstrzyga.
+
+Subskrypcje są wypisane po jednej, a nie złożone pętlą, ponieważ kształt treści zdarzenia bierze się z jego nazwy: pętla po wykazie zgubiłaby typ ładunku i kazałaby go rzutować na ślepo.
+
+## budowa/klient-poprzedni/src/moduly/browser/zebrane-w-sesji.ts
+
+Zbiór jest odbiciem rdzenia, a nie drugą prawdą. Wykaz przychodzi komendami
+`browser.source.list` oraz `browser.note.list` i podmienia zawartość w całości, a nie doszywa
+się do zastanej: rdzeń wie, co w oknie jest, i to jego odpowiedź rozstrzyga. Dopisanie po
+udanym dodaniu zostaje obok — nowa pozycja ma być widoczna od razu, bez czekania na ponowny
+odczyt, ale jest tym samym wierszem, który przyjdzie w wykazie.
+
+Przypięcie i klasyfikacja są własnością widoku, nie rdzenia. Kontrakt nie niesie ani pola
+przypięcia, ani pola rodzaju notatki, więc jedno i drugie zapamiętane w zbiorze nie udaje
+zapisu, a panel notatek mówi o tym w swoim opisie. Dlatego podmiana wykazu notatek zostawia
+przypięcia nietknięte, a przypięcie pozycji, której rdzeń już nie oddaje, po prostu niczego
+nie porządkuje.
+
+Fragment pusty oraz fragment taki sam jak zastany nie wchodzą do wyodrębnionych, a czynność
+dopisania mówi o tym wprost, żeby okno nie meldowało dopisania, którego nie było.
+
+Każda zmiana zbioru jest ogłaszana. Źródło dodane w panelu źródeł ma się pojawić w wyborze
+powiązania notatki w tej samej chwili; bez ogłoszenia drugie okno zobaczyłoby je dopiero przy
+własnym odświeżeniu, a Operator dostałby wybór bez pozycji, którą właśnie zapisał.

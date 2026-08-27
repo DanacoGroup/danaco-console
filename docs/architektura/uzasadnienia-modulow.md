@@ -2070,3 +2070,27 @@ nazywającym brak, a reszta modułu pracuje dalej.
 `PodepnijPrzyrostWarsztatu` i `PodepnijPrzyrostWdrozenia` niosą osobne drogi
 rozgłoszenia, bo zdarzenie warsztatu i zdarzenie wdrożenia niosą różne byty —
 jedna funkcja o dwóch znaczeniach byłaby dwiema prawdami.
+
+## budowa/server/internal/core/adapter_modul_roundtable_sklad.go
+
+Odczyt stanu debaty istnieje po to, żeby okno otwarte w trakcie debaty
+wiedziało więcej niż to, co usłyszało zdarzeniem od swojego otwarcia — bez
+niego operator, który odświeżył okno, widziałby debatę pustą aż do następnej
+wypowiedzi.
+
+Granica i przesunięcie komendy StanDebaty tną wypowiedzi, nie tury: tura bez
+wypowiedzi jest nadal turą i musi zostać pokazana, a wypowiedzi w długiej
+debacie idą w tysiącach, więc tylko one wymagają stronicowania.
+
+Stanowisko wchodzi do migawki stanu debaty tylko wtedy, gdy naprawdę leży
+w bazie. Składanie stanowiska przy okazji każdego odczytu stanu podbijałoby
+licznik wersji przy każdym otwarciu okna, a wersja liczy redakcje, nie odczyty.
+
+Format zapisywanego zespołu bierze się z ostatniej tury debaty, ponieważ to
+w niej dany skład właśnie debatował; debata bez ani jednej tury nie ma
+formatu do zapisania i zapisany zespół zostaje bez niego.
+
+Przy wniesieniu zapisanego zespołu do okna rola, waga i opis uczestnika idą
+osobnym zapisem po samym dopisaniu uczestnika, ponieważ dopisanie opisuje go
+wyłącznie parą kanał modelu i nazwa tożsamości, a reszta profilu uczestnika
+należy już do osobnej zmiany.

@@ -1021,3 +1021,49 @@ którego dotyczy — tytuł okna albo nazwa kolejki, a bez nazwy własnej opis
 wskazujący byt jednoznacznie. Pola chwili uruchomienia nie ma i nie jest to
 przeoczenie: rejestr telemetrii nie znakuje procesów chwilą startu, zna
 wyłącznie stan i etap, a pole jest opcjonalne kontraktem.
+
+## budowa/server/internal/core/adapter_modul_isolation.go
+
+Jedenaście punktów izolacji to jedenaście kluczy tabeli `ustawienie` — tych
+samych, które rozstrzyga rejestr definicji i egzekwuje warstwa sesji.
+Rodzina jest drugim wejściem do tego samego magazynu, nie drugim magazynem:
+wartość zapisana tutaj wraca też przez odczyt konfiguracji ogólnej,
+i odwrotnie. Wykaz punktów stoi w rejestrze definicji izolacji i tylko tam;
+ten plik odwzorowuje wyliczenia kontraktu na klucze i nie zna nazwy
+pojedynczego punktu.
+
+Wartość zapisu musi nieść dokładnie tę wartość, którą czyta egzekutor przy
+rozstrzyganiu polityki; wyprowadzenie jej z wartości domyślnej rejestru
+odwracałoby znaczenie zapisu przy zmianie stanu wyjściowego platformy.
+
+Pusty wykaz poziomów zasięgu znaczy bazę bez słownika poziomów — awarię
+podłoża, nie brak poziomów jako stan normalny — więc odpowiedzią jest
+odmowa, nie pusty wynik. Pola żądania wskazujące sesję i okno nie mają
+odpowiednika w wyniku, bo struktura poziomu zasięgu nie niesie pola na byt
+poziomu, więc rdzeń niczym ich nie zawęża.
+
+Wykaz przełączników kontekstu zwracany przy odczycie jest zawsze pełny:
+macierz okna ma trzy wiersze niezależnie od tego, ile z nich naprawdę
+zapisano, a punkt bez zapisu na tym poziomie niesie wartość domyślną
+z rejestru definicji. Żądanie zapisu bez ani jednego przełącznika jest
+odmawiane, bo pusta tablica zamieniłaby zapis w potwierdzenie bez zmiany.
+
+Adresem zapisu ustawienia jest czwórka: poziom zasięgu, byt poziomu, oś
+i byt osi — warstwy w niej nie ma, ani w schemacie, ani w rozstrzyganiu, ani
+w egzekutorze. Karta sesji jest natomiast jednym z poziomów zasięgu, więc
+warstwa domyślna kieruje zapis pod wskazany poziom, a warstwa sesyjna
+kieruje zapis na poziom karty sesji; warstwa sesyjna wskazana razem z innym
+poziomem jest sprzecznością i wraca odmową, zamiast po cichu wybrać jedno ze
+wskazań. Warstwa sesyjna nie ma osobnej przestrzeni kluczy ani kolumny:
+wartość zapisana poza adresem rozstrzygania nie doszłaby do egzekutora,
+a zapis zostałby potwierdzony mimo braku skutku.
+
+Byt poziomu jest wymagany poza poziomem globalnym: wiersz zapisany z pustym
+bytem na poziomie węższym nie należy do żadnej karty, roli ani okna, więc
+rozstrzygacz nigdy po niego nie sięgnie — zapis wyglądałby na udany, nie
+robiąc nic.
+
+Reguła odcięcia punktu jest przepisana z egzekutora co do znaku: wymiar
+kontekstu zostaje odrębny, dopóki nie zapisano wprost współdzielenia,
+a zakres techniczny jest włączony wyłącznie wtedy, gdy zapisano wprost
+włączenie.

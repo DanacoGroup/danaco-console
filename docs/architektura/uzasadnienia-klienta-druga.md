@@ -521,3 +521,25 @@ Plik nie podstawia wartości domyślnych za Operatora. Tam, gdzie komenda
 potrzebuje treści — stanowisko, zdanie odrębne, warianty głosowania — treść
 przychodzi z pola okna, a przycisk bez wypełnionego pola melduje, czego
 brakuje.
+
+## budowa/klient-poprzedni/src/moduly/studio/styl-panel-arkusza.ts
+
+Panel prowadzi trzynaście czynności na fragmencie dokumentu: style nazwane
+(wykaz, założenie, zmiana, stosowanie, usunięcie), styl znaku, styl akapitu,
+czyszczenie formatowania, wielkość liter, malarz formatów, zaznaczenie wedle
+podobnego formatowania, zamianę wraz z postacią oraz tabulator zakładany
+liczbą. Praca na fragmentach jest osią całego zamówienia.
+
+Zapis stylu nazwanego przestawia wszystkie miejsca dokumentu, które danego
+stylu używają. Panel mówi to wprost przy przycisku i oddaje liczbę
+przestawionych miejsc z bilansu odpowiedzi, żeby Operator widział skutek
+zapisu, a nie samo potwierdzenie wykonania.
+
+Malarz formatów prowadzi dwie czynności rdzenia: pobranie postaci oddaje
+uchwyt, naniesienie stosuje go gdzie indziej. Uchwyt pamięta warstwa wyżej;
+panel pokazuje wyłącznie, czy coś jest pobrane.
+
+Panel nie woła rdzenia i nie zna dokumentu ani zaznaczenia. Składa treść
+żądania z pól bez identyfikatora dokumentu i bez zakresu — zakres dokłada
+warstwa wyżej z bieżącego zaznaczenia, bo ona jedna wie, co Operator
+zaznaczył.

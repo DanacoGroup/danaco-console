@@ -1813,3 +1813,14 @@ podaje wtedy wartość pustą, pas mówi o braku źródła i chowa wezwanie, pon
 przycisk wzywający do rozstrzygnięcia nieodczytanego wykazu byłby atrapą. Gdy
 źródło jest, a nic nie czeka, pas zmienia treść na zdanie o braku oczekujących
 przepływów, a wezwanie pozostaje czynne.
+
+## budowa/klient-poprzedni/src/aod/sterowanie-obecnoscia.ts
+
+Menu kebab nie jest tu budowane po swojemu: to ten sam komponent
+`wyciszenie-menu.ts`, który stoi przy awatarze. Dwie kopie jednego menu czytają
+jeden stan, więc wyciszenie założone przy awatarze widać w nagłówku bez żadnego
+zszywania.
+
+Stan nie jest tu przechowywany: obie kontrolki czytają i przestawiają
+`StanObecnosci` z pliku `tryb-obecnosci.ts`, a rysują się z powrotem jego
+powiadomieniem. Dzięki temu skrót klawiszowy i menu nigdy się nie rozjeżdżają.

@@ -1,3 +1,8 @@
+/**
+ * Sterowanie obecnością w nagłówku powierzchni interakcji: trzystanowy
+ * przełącznik trybu pełnego, cichego i ukrytego oraz menu kebab z wyciszaniem.
+ * Zmiana trybu obowiązuje natychmiast, bez osobnego zapisu.
+ */
 import {
   NAZWY_TRYBOW,
   OPISY_TRYBOW,
@@ -6,25 +11,6 @@ import {
 } from './tryb-obecnosci';
 import type { KontekstWyciszenia } from './wyciszenie-kontekst';
 import { utworzMenuWyciszenia, type MenuWyciszenia } from './wyciszenie-menu';
-
-/**
- * Sterowanie obecnością w nagłówku powierzchni interakcji: przełącznik trybu
- * `[ tryb ▼ ]` i menu kebab `⋮` z wyciszaniem
- * (`docs/funkcje-globalne/always-on-display.md`, rozdz. 2.6, 3.5, 8.3, 9.2).
- *
- * Przełącznik trybu jest kontrolką trzystanową — pełny, cichy, ukryty — i
- * zmiana obowiązuje natychmiast, bez przycisku „zapisz" i bez pytania „czy na
- * pewno".
- *
- * Menu kebab nie jest tu budowane po swojemu: to ten sam komponent
- * (`wyciszenie-menu.ts`), który stoi przy awatarze. Dwie kopie jednego menu
- * czytają jeden stan, więc wyciszenie założone przy awatarze widać w nagłówku
- * bez żadnego zszywania.
- *
- * Stan nie jest tu przechowywany: obie kontrolki czytają i przestawiają
- * `StanObecnosci` (`tryb-obecnosci.ts`), a rysują się z powrotem jego
- * powiadomieniem. Dzięki temu skrót klawiszowy i menu nigdy się nie rozjeżdżają.
- */
 
 export interface SterowanieObecnoscia {
   /** Przełącznik trybu obecności do wstawienia w nagłówek. */
@@ -36,7 +22,11 @@ export interface SterowanieObecnoscia {
   rozlacz(): void;
 }
 
-/** Nastawy sterowania wykraczające poza stan obecności. */
+/**
+ * Nastawy sterowania wykraczające poza stan obecności: kontekst nakładki dla
+ * wyciszenia kontekstowego, zameldowanie czynności na pasku okna oraz wywołanie
+ * poprzedzające otwarcie menu.
+ */
 export interface OpisSterowaniaObecnoscia {
   /** Kontekst nakładki dla wyciszenia kontekstowego; pominięty nazywa brak wprost. */
   kontekst?: KontekstWyciszenia;

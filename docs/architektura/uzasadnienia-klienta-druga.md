@@ -3177,3 +3177,48 @@ plakietka bazowa, a znaczenie niesie w niej wyłącznie znak.
 Strona główna nie otwiera środowiska i nie wysyła komendy — skutek wyboru należy do odbiorcy sygnału.
 Własny sygnał zamiast zdarzenia niestandardowego na elemencie DOM utrzymuje wybór w pełni typowany aż
 do słuchacza: zdarzenie DOM niesie ładunek nietypowany i gubi typ wyboru na granicy ładunku zdarzenia.
+
+## budowa/klient-poprzedni/src/rozmowa/ostatnio-uzyte.ts
+Rejestr jest podstawą szeregowania, które trzyma świeżo użyte pozycje wykazu
+po ukośniku bliżej wierzchu. Żyje w pamięci okna, przeżywa otwarcie i zamknięcie
+wykazu, nie przeżywa odświeżenia strony. Kontrakt takiego pojęcia nie niesie —
+`tools.catalog.list` oddaje wykaz, nie historię sięgania po niego — więc
+rejestr nie idzie do rdzenia żadną komendą i nie udaje jego stanu.
+
+## budowa/klient-poprzedni/src/rozmowa/podglad-rozmowy.ts
+Podgląd pokazuje warstwę rozmowy samą: bez powłoki, bez nawigacji modułów, bez
+pasa kart sesji — na gołej scenie i z przełącznikiem motywu. Dzięki temu
+usterkę rozmowy widać bez zgadywania, czy winna jest rozmowa, czy warstwa,
+która ją osadza. Osobno wykonuje zapewnienie kanału głównego, czyli założenie
+wiersza rejestru na świeżej bazie — drogę, którą produkt przechodzi tylko ręką
+Operatora w panelu sterowania. Podgląd nie dowodzi, że rozmowa działa
+w produkcie: produkt osadza ją w module, w powłoce i w oknie sesji, a tutaj
+powłoki w ogóle nie ma.
+
+Uruchomienie: `cd budowa/client && npm run dev`, a następnie adres
+`http://localhost:5173/src/rozmowa/podglad-rozmowy.html` (opcjonalnie
+z parametrem `?pytanie=…`, żeby zobaczyć pełną turę). Sam plik to wyłącznie
+kompozycja: arkusze, odszukanie miejsc w dokumencie, przełącznik motywu,
+uruchomienie. Logika mieszka w `polaczenie-podgladu.ts`.
+
+## budowa/klient-poprzedni/src/rozmowa/podsumowanie-tury.ts
+Rdzeń dokłada podsumowanie do ostatniego fragmentu strumienia — tego, który
+koperta znakuje polem `done`. To ono wybudza koordynatora w pętli koordynatora
+i wykonawcy, dlatego jedzie osobnym ładunkiem, a nie tekstem. Kształt odpowiada
+`injection.ZakonczenieTury` po stronie rdzenia. Ostatni fragment bywa
+domknięciem pustej tury, dlatego ładunek bez ani jednego pola własnego
+podsumowania nie jest uznawany za podsumowanie.
+
+## budowa/klient-poprzedni/src/rozmowa/polaczenie-podgladu.ts
+Droga uruchomienia podglądu jest ta sama, którą pójdzie powłoka: transport,
+kanał kontraktu, zapewnienie kanału głównego w rejestrze, uzgodnienie
+(powitanie, sesja, okno), rozmowa okna. Podgląd nie stawia atrapy — rozmawia
+z rdzeniem tak samo jak aplikacja. Kanał główny jest zapewniany przed
+uzgodnieniem, ponieważ `window.create` wskazuje kanał modelu, a świeża baza
+rdzenia nie ma jeszcze ani jednego wiersza rejestru.
+
+## budowa/klient-poprzedni/src/moduly/research/wiersz-zrodla.ts
+Pole wyboru niesie zaznaczenie wielokrotne, bo źródła wybiera się grupami do eksportu. Przycisk
+„Czytaj" jest akcją podstawową pozycji i otwiera materiał w Reading View — jest czynny przy każdym
+źródle, także przy takim, które nie wskazuje dokumentu repozytorium: wtedy odpowiedzią jest zdanie
+czytnika o braku drogi do treści, a nie wygaszona kontrolka.

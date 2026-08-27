@@ -29,23 +29,18 @@
     padding: var(--dn-od-6);
 }
 
-.cd-kafel .dn-kafel-ikona {
-  width: var(--dn-od-8);
-  height: var(--dn-od-8);
-}
-
-.cd-kafel .dn-kafel-ikona svg { width: var(--dn-od-8); height: var(--dn-od-8); }
-
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
 
 .cd-kafel-blok { display: flex; }
 
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
 
+/* Grot kafla stoi w prawym dolnym narożniku — kafel jest kolumną, więc
+   czynność dosuwa się do dna i do prawej krawędzi. */
 .cd-kafel-grot {
   display: flex;
   align-items: center;
-  margin-left: auto;
+  margin: auto 0 0 auto;
   flex: none;
 }
 
@@ -54,6 +49,19 @@
 .cd-dodaj-pas > .dn-btn { gap: var(--dn-od-1); }
 
 .cd-dodaj-pas > .dn-btn > svg { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); }
+
+/* Rząd czynności strefy trzeciej. Wcześniej stał na składniku `.dn-listwa`,
+   który niesie obrys, promień i wypełnienie — pas czytał się jako ciemny baner
+   pod przyciskami. Rozstrzygnięcie Właściciela z 27.08.2026: same przyciski.
+   Tutaj zostaje wyłącznie rozmieszczenie rzędu; wygląd niosą same przyciski
+   (`.dn-listwa-pozycja--pulpit`), a składnik `.dn-listwa` zostaje w bibliotece
+   dla okien, które go używają. */
+.cd-rzad-czynnosci {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  flex-wrap: wrap;
+}
 
 .cd-sekcja-menu { align-self: center; }
 

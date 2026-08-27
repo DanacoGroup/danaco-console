@@ -2110,3 +2110,15 @@ zbudowała.
 Okno komunikacji wybierane jest po oznaczeniu modułu, a nie z brzegu wykazu, ponieważ komenda wykazu okien oddaje okna wszystkich modułów sesji. Sięgnięcie po pierwsze okno z wykazu wysyłałoby kontekst cudzego okna, dlatego pasek szuka okna należącego do modułu Library.
 
 Okno komunikacji jest zarazem oknem źródłowym przeniesienia kontekstu, więc jego brak pasek opisuje wprost, zamiast podstawiać okno innego modułu. Tytuł okna pasek pokazuje razem z liczbą wiadomości, natomiast moduł okna i tryb uprawnień zostają w panelu sterowania okna, a tytuł powtórzony jest już w karcie sesji.
+
+## budowa/klient-poprzedni/src/moduly/design/brak-drogi.ts
+
+Przycisk czynności bez komendy w kontrakcie zachowuje się według wzoru
+z `aplikacja/zamiary-pulpitu.ts`: pozostaje aktywny i podpisany, a powód braku
+podaje dopiero po naciśnięciu. Kontrolka wyłączona albo pusta nie niesie tej
+informacji, więc Operator nie odróżniłby czynności niedostępnej chwilowo od
+czynności, której kontrakt w ogóle nie zna.
+
+Znak `aria-description` niesie tę samą wiedzę technologiom wspomagającym, zanim
+przycisk zostanie naciśnięty: zapowiedź płynie z etykiety, a powód z dymka
+otwieranego naciśnięciem.

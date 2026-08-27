@@ -3449,3 +3449,24 @@ Niepowodzenie wraca jako wynik z polem błędu, więc wywołujący nie musi zak�
 a brak odpowiedzi nie wywraca widoku. Gdy rdzeń nie odpowie w ogóle, bo połączenie padło w trakcie,
 obietnica po prostu pozostaje nierozstrzygnięta: kontrakt nie przewiduje limitu czasu, a rozłączenie
 klienta nie kończy pracy rdzenia nad poleceniem.
+
+## budowa/klient-poprzedni/src/moduly/translate/okno-translation-panels.ts
+Formularz niesie ster kanału, bo pole kanału żądania dodania celu wskazuje model wykonujący
+przekład, a decyzja o nim zapada właśnie tutaj; nota sufitu paneli mówi obok, ile paneli okno zna
+(każdy kosztuje jedno wywołanie modelu), nie odbierając dodania kolejnego. Okno nie prowadzi
+własnego wykazu paneli — prawdą jest wykaz w stanie modułu, bo napełniają go trzy drogi naraz:
+odpowiedź dodania celu, odpowiedź zapisu źródła (komplet paneli po zmianie źródła) i zdarzenie
+zmiany tłumaczenia; druga kopia rozjechałaby się przy pierwszej z nich.
+Opracowanie mówi o segmencie wymagającym rewizji, ale kontrakt stanu segmentu nie zna — stan
+niesie cały panel — więc przejście prowadzi między panelami, których stan nie jest gotowy, a
+zdanie o tej różnicy stoi w wykazie skrótów. Panele odrysowują się także wtedy, gdy okno stoi
+w ładowaniu, bo panel przeliczony przez rdzeń przychodzi zdarzeniem zmiany tłumaczenia w środku
+innego wywołania i ma być widoczny od razu — komunikatu skasować natomiast nie wolno, bo zapowiedź
+trwającego dodania języka i powód odmowy zdejmuje czynność, która je postawiła. Wykaz pusty przy
+przejściu do uwagi nie jest ciszą — wiersz odpowiedzi mówi, że wszystkie panele są gotowe.
+Komenda dodania języka docelowego idzie modelem: rdzeń przekłada tekst źródłowy okna na język
+panelu czynnym kanałem modelu, a bez takiego kanału odmawia kodem niedostępności kanału; brzmienie
+tej odmowy nie mówi operatorowi, czego brakuje, więc zdanie dokłada funkcja odmowy modelu. Sprawdzenie
+rozbieżności odpowiedzi milczy z konstrukcji, a nie przez zaufanie do rdzenia. Kolejność instancji
+paneli bierzemy z rdzenia, nie z chwili dodania, inaczej dwa klienty tego samego konta pokazałyby
+panele w innym porządku.

@@ -2231,3 +2231,6 @@ pokazywać. Pamięć projektu otwiera się na poziomie projektu, bo taki jest je
 zmienia się wyłącznie kolejność prezentacji, nazwy zostają te same, więc oba okna pokazują tę samą
 nastawę pod tą samą nazwą. Miejsce puste w kolejności znaczy poza wyborem i wtedy powód pominięcia
 mówi, dlaczego.
+
+## budowa/klient-poprzedni/src/strona-glowna/meldunki-sesji.ts
+Wspólne miejsce dwóch zdań meldunku trzyma jedną odpowiedź na oba pytania. Odmowa mówi treścią odmowy z rdzenia; zdanie zastępcze wchodzi tylko wtedy, gdy odmowa przyszła bez treści, i nazywa wówczas czynność, której dotyczyła.

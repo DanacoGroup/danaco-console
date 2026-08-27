@@ -2485,3 +2485,17 @@ zapytania.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/przytrzymanie.ts
 Escape jest nasłuchiwany na dokumencie, a nie na elemencie przycisku, ponieważ podczas trzymania myszą ognisko klawiatury bywa gdzie indziej i przycisk wcale nie musi je mieć — nasłuch przy samym elemencie przepuściłby wtedy skrót i nie byłoby czym cofnąć nagrania w połowie wypowiedzi. Zdarzenie `pointercancel`, będące systemowym wyrwaniem gestu przez przewinięcie albo telefon, kończy nagranie zamiast je porzucać, bo użytkownik zdążył już coś powiedzieć, a odrzucenie słów następuje wyłącznie na wyraźne żądanie klawiszem Escape.
+
+## budowa/klient-poprzedni/src/powloka/obszar-roboczy.ts
+Jedna odpowiedzialność: kontener na treść wybranej pozycji nawigacji wraz z uczciwym stanem pustym
+dla pozycji, która zbudowanego widoku nie ma. Obszar nie zna żadnego widoku i żadnego rdzenia —
+przyjmuje gotowy element od warstwy, która go składa. Plansza obszaru niesie dwie warstwy naraz:
+widok modułu w wierszu górnym i scenę okien komunikacji pod nim. Okno rozmowy jest oknem wiodącym
+każdego modułu, więc obszar pokazujący jedną warstwę naraz odbierałby rozmowę każdemu modułowi,
+który doczekał się własnego widoku. Widok raz osadzony nie jest niszczony: `pokaz` dokłada go przy
+pierwszym użyciu i dalej wyłącznie przestawia widoczność atrybutem `hidden`. W obszarze stoi scena
+z żywym oknem rozmowy — gniazdem WebSocket, strumieniem odpowiedzi modelu, historią wpisów
+i obserwatorami układu okien równoległych. Odmontowanie sceny przy każdym przełączeniu modułu
+zrywałoby rozmowę w połowie zdania; ukrycie zostawia ją nietkniętą. Stan pusty nie zapowiada modułu,
+którego nie ma — nazywa go i pisze wprost, że jego okna operacyjne nie zostały zbudowane, wymieniając
+katalog kodów wzięty z rdzenia.

@@ -537,3 +537,8 @@ komponentów, tak jak karty rozciągnięte na całą wysokość pasa, żeby
 podkreślenie legło dokładnie na jego kresce. Biblioteka niesie pasek ramy
 o wysokości 48 pikseli na atramencie marki; pas kart stoi na powierzchni
 pracy i jest od niego niższy.
+
+## budowa/klient-poprzedni/src/mission-control/kolumny.css
+Arkusz nie ma reguły disabled ani wygaszającej: przyciski transportu
+wyglądają tak samo w każdym stanie kolejki, a stan niesie osobna plakietka
+ze słowem opisującym stan.

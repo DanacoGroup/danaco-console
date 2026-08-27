@@ -2913,3 +2913,13 @@ się nimi tą samą drogą: oba są przypięte do miejsca w treści, oba bywają
 nieświeże i oba odświeża się wykazem, nie po jednym wierszu. Rozdział na
 osobne pliki byłby rozdziałem na papierze — kod odczytu i zapisu byłby ten
 sam dwa razy. Nazwy pomocnicze tego pliku niosą przedrostek postac.
+
+## budowa/server/internal/dane/extension_protokol.go
+
+Metryka użycia liczy się z wierszy, nie z licznika: liczba wywołań, liczba
+niepowodzeń i średni czas w oknie czasu wymagają trzech różnych agregatów nad
+tym samym zbiorem.
+
+ZapiszNarzedziaRozszerzenia wymienia komplet wpisów odkrytych u integracji
+zamiast dokładać nowe: serwer, który przestał udostępniać narzędzie, ma
+przestać je pokazywać, a wpis pozostawiony byłby obietnicą bez pokrycia.

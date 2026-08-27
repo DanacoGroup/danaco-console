@@ -1,22 +1,15 @@
 /**
- * SKŁADNIK — INNE METODY LOGOWANIA.
- *
- * Trzy drogi poboczne, każda ze stanem dostępności. Metoda nieaktywna zostaje
- * w oknie zamiast znikać: pusta lista dróg pobocznych nie mówi, że są jakieś,
- * a lista z wygaszonymi pozycjami mówi, co można włączyć w ustawieniach.
- *
- * Składnik zwraca WYKAZ węzłów, nie jeden węzeł: etykieta i siatka metod są
- * rodzeństwem w kolumnie panelu. Opakowanie ich w pudełko wprowadziłoby
- * dodatkowy poziom, przez który odstęp kolumny liczyłby się raz zamiast dwa.
+ * Składnik — inne metody logowania. Trzy drogi poboczne, każda ze stanem
+ * dostępności; metoda nieaktywna zostaje w oknie zamiast znikać.
  */
 
 import { ikony, type NazwaZnaku } from '../ikony.ts';
 import { el, tekst, zeZnacznika } from '../narzedzia.ts';
 
-/** Klucz metody w katalogu treści. */
+/** Klucz metody w katalogu treści, wskazujący jedną z trzech dróg pobocznych logowania wobec głównej drogi. */
 export type KluczMetody = 'pin' | 'klucz' | 'email';
 
-/** Trzy metody poboczne wraz ze znakiem każdej z nich. */
+/** Trzy metody poboczne wraz ze znakiem każdej z nich, ułożone w kolejności, w jakiej stają w siatce metod. */
 const METODY: { klucz: KluczMetody; ikona: NazwaZnaku }[] = [
   { klucz: 'pin', ikona: 'klawiatura' },
   { klucz: 'klucz', ikona: 'tarcza' },

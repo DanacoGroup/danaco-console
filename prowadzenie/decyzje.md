@@ -1237,6 +1237,13 @@ dyrektywy `//go:` oraz komentarze jednowierszowe niosace sciezke pliku
 „Uzasadnienie:", „Patrz", „Zob.". Komentarz blokowy i kazda tresc opisowa
 wliczaja sie zawsze.
 
+**Dopowiedzenie drugie Wlasciciela (27.08, po poludniu).** Zakaz skrotow
+sluzacych upchaniu tresci w granicy: komentarz i dokumentacja pisza sie
+wylacznie pelnymi zdaniami i pelnymi slowami. Zadnego telegrafowania,
+zadnych uciec w skrotowce zamiast tresci — takze „na przyklad" i „to jest"
+pisze sie pelnymi slowami. Tresc, ktora nie miesci sie w granicy pelnymi
+zdaniami, idzie do docs, nie w skrot.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

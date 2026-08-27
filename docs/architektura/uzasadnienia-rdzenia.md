@@ -5007,3 +5007,25 @@ Ta para komend nie ma zdarzeń, więc port nie bierze nadajnika: wytworzony zas�
 Port niewypełniony nie rejestruje niczego: obie komendy odpowiedzą wtedy odmową nieznanej komendy, a pozostałe domeny pracują bez zmian.
 
 Adapter wypełnia port w całości; gdyby port i adapter się rozjechały, kompilacja stanie w tym miejscu, a nie dopiero na martwej komendzie.
+
+## budowa/server/internal/core/handlers_mowa.go
+Adapter wraz z rozstrzygnięciami, skąd bierze się okno, zasady i obszar oraz
+jak typowane odmowy pakietu mowy przekładają się na kody kontraktu, leży
+w adapterze modułu mowy; sam silnik leży w pakiecie mowy rdzenia. Dziewiąta
+pozycja o przedrostku speech, odpowiedź komendy nieznanej obszaru, nie jest
+komendą: nie ma pary żądanie-wynik i w rejestrze się nie zjawia. Wszystkie
+osiem komend stoi na jednym porcie, bo stoją na jednym adapterze i na tym
+samym silniku; rozdzielenie ich na dwa porty rozdzieliłoby też stan, którego
+rozdzielić nie wolno, bo nasłuch ciągły rozpoznaje odcinki przysłane komendą
+przyjęcia nagrania, więc obie muszą widzieć ten sam rejestr nasłuchów.
+Synteza mowy tu nie należy: komenda syntezy tłumaczenia idzie w drugą
+stronę, z tekstu na dźwięk, i obsługuje ją port tłumaczenia — wspólny
+przedrostek w nazwie komend jest zbieżnością słowa, nie jednej maszynerii,
+bo rdzeń rozpoznaje mowę i nadal jej nie syntezuje. Rodzina ma zdarzenia
+wyłącznie w nasłuchu ciągłym: zdarzenie niesie rozpoznany odcinek albo
+wykrycie frazy wybudzającej, rozgłaszane przez adapter przy przyjęciu
+odcinka nadajnikiem wpiętym osobną metodą, a nie przez obsługę komend, bo
+odpowiedź komendy przyjęcia nagrania mówi wyłącznie o przyjęciu bajtów, a nie
+o tym, co w nich usłyszano. Port niewypełniony nie rejestruje niczego: obie
+komendy sprawdzenia gotowości i transkrypcji odpowiedzą wtedy komendą
+nieznaną, a pozostałe domeny pracują bez zmian.

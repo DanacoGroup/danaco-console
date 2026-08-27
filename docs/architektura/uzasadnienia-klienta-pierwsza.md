@@ -1397,3 +1397,27 @@ w innym porządku niż złożony. Wybór trzyma zatem własną listę i dopisuje
 Zespół wczytany może wskazywać eksperta spoza bieżącego wykazu: zarchiwizowanego albo
 odciętego frazą zawężającą. Taki wpis zostaje w składzie i pokazuje się wierszem
 nazywającym brak, żeby ponowny zapis nie okroił zespołu po cichu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-zaplecza.ts
+
+Odczyt `window.list` podaje okna komunikacji sesji. Komenda `assistant.voice.command`
+wymaga pola `windowId`, a moduł okien sam nie zakłada: bierze to, które rdzeń
+przypisał modułowi.
+
+Odczyt `action.list` podaje katalog akcji zasięgu modułu. Siatka szybkich akcji Voice
+Console jest widokiem tego katalogu, a nie listą zaszytą w kliencie: nowa akcja jest
+nowym wierszem rdzenia, nie zmianą kodu.
+
+Odczyt `component.list` podaje komponenty własne rodzaju `assistant`, czyli profile
+asystenta ze strefy drugiej strony głównej. Jest to jedyny odczyt kontraktu, którym da
+się wypełnić selektor profilu Voice Console. Komponenty wyłączone wchodzą do wykazu:
+profil wyłączony w strefie drugiej wciąż istnieje w rdzeniu i wskazanie go należy do
+Operatora, a nie jest pomyłką okna.
+
+Odczyt `speech.availability.get` mówi, czy silnik mowy stoi na tej maszynie. Brak
+silnika jest odpowiedzią, a nie awarią, więc okno mówi o nim wprost.
+
+Wywołanie `speech.transcribe` rozpoznaje nagranie wskazane ścieżką na maszynie silnika.
+Pusta transkrypcja jest wynikiem prawidłowym, gdy pole `processed` niesie prawdę, ponieważ
+nagranie mogło zawierać ciszę albo szum; sprawdzian kształtu pyta zatem o obecność pól,
+a nie o niepustą treść.

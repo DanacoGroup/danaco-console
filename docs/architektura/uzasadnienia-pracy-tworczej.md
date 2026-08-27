@@ -1147,3 +1147,38 @@ Rdzeń nie trzyma imienia i nazwiska autora dokumentu, tylko rodzaj autora
 ostatniej wersji: Operator albo model. Pole autora oddaje więc to, co rdzeń
 wie na pewno, i nazywa wprost to, czego nie wie, zamiast wpisywać nazwę
 Operatora, której rdzeń nie ma.
+
+## budowa/server/internal/core/adapter_modul_studio_schowek.go
+
+Schowek jest jeden, wspólny z rodziną `clipboard.*`, a nie osobny dla modułu
+Studio: wpis odłożony w jednym miejscu daje się wkleić w drugim — model
+odkłada fragment, operator go wkleja, i odwrotnie. Osobny schowek Studia
+rozdzieliłby jedną historię na dwie i wklejenie wpisu sprzed kilku ruchów
+przestałoby działać między oknem pracy z dokumentem a resztą platformy.
+Wiersze idą tą samą tabelą i tym samym rachunkiem odcisku, więc powtórzenie
+identycznej treści nie mnoży wpisów.
+
+Pole `formatOnly` w żądaniu kopiowania znaczy „kopiuj postać, nie treść” —
+dokładnie to, co robi malarz formatów z rodziny `studio.format.painter.*`.
+Kopiowanie schowka woła tę drogę i oddaje jej uchwyt, zamiast zakładać drugi
+magazyn zabranej postaci; dwa magazyny rozjechałyby się przy pierwszym
+naniesieniu.
+
+Wklejenie zapisuje pochodzenie, ponieważ fragment wklejony ze schowka bywa
+jedynym śladem, na czym pismo się opiera. Zapis pochodzenia rodzaju
+`clipboard` jest podstawą pod wykaz podobieństw w panelu redaktora i pod
+bibliografię — bez niego nie dałoby się odtworzyć, skąd wziął się akapit.
+
+Postać przenoszona przy odłożeniu do schowka jest postacią początku zakresu,
+nie postacią każdego znaku z osobna: zakres odłożony bywa niejednolity, a
+zapisanie postaci znak po znaku dałoby wpis schowka rosnący razem z
+długością treści i wklejenie wymagające dopasowania znak w znak przy każdej
+różnicy długości. Kontrakt mówi o zachowaniu postaci źródła, nie o
+przeniesieniu całego drzewa postaci, więc postacią zachowywaną jest postać
+początku zakresu — dokładnie tak, jak działa malarz formatów. Różnica postaci
+wewnątrz zakresu jest pominięciem świadomym, a bilans wklejenia o niej mówi.
+
+Schowek nie jest drugim malarzem formatów, mimo tego samego rachunku postaci
+skutecznej: malarz przenosi postać bez treści i ma na to własną tabelę z
+wygasaniem, schowek przenosi treść i postać razem, bo tego wymaga kontrakt
+sposobu `keepFormat`.

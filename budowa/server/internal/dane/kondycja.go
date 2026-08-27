@@ -231,7 +231,7 @@ func (r *repozytoriumKondycji) Sondy(ctx context.Context, rodzaj, komponent stri
 }
 
 // UsunSonde wykreśla definicję wraz z serią jej wyników i oddaje liczbę
-// usuniętych pomiarów. Serię liczymy przed skasowaniem, bo po kaskadzie nie ma
+// usuniętych pomiarów. Serię liczy się przed skasowaniem, bo po kaskadzie nie ma
 // już czego policzyć, a kontrakt tę liczbę oddaje.
 func (r *repozytoriumKondycji) UsunSonde(ctx context.Context, kod string) (int, error) {
 	usunietych := 0

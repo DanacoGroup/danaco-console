@@ -1182,3 +1182,37 @@ Trafność bez miary widocznej sprawiałaby, że wykaz posortowany malejąco wyg
 przy trafieniu bliskim i przy przypadkowym, a to rozstrzygnięcie należy do czytającego, nie do
 samego wykazu; rdzeń ma prawo trafności nie podać, a wtedy plakietka mówi o braku miary, zamiast
 zmyślać zero.
+
+## budowa/klient-poprzedni/src/moduly/studio/konwersja-dokumentu.ts
+
+Wydania żąda i pasek narzędzi Studio Editora, i Preview Window; czynność jest
+jedna i stoi w jednym miejscu, bo dwie kopie rozjechałyby się przy pierwszej
+poprawce zdania o wyniku.
+
+Przedmiotem zamiany jest treść zaakceptowana modułu, nie plik na dysku.
+Dokument Studia mieszka w rdzeniu, a nie w systemie plików Operatora, więc
+komenda zamiany formatu dostaje treść wprost polem. Wynik jest zasobem
+magazynu rdzenia — komenda oddaje jego identyfikator i rozmiar, a nie bajty do
+pobrania.
+
+Format dokumentu ma cztery wartości, a zamiana formatu przyjmuje nazwy
+własnego słownika. Trzy z czterech mają w nim odpowiednik wprost; PDF
+odpowiednika użytecznego nie ma, bo treść jedzie napisem, a nie plikiem —
+napis nie jest PDF-em, choćby rdzeń tak nazywał dokument, z którego powstał.
+Zwraca się wtedy tekst czysty i mówi się o tym Operatorowi osobnym zdaniem.
+Bez tego zdania Operator widziałby format dokumentu z rdzenia i zamawiałby
+wydanie z formatu, którego rdzeń w tej drodze nie czyta.
+
+Komenda zamiany treści napisem stoi obok czterech komend wydania dokumentu po
+stronie rdzenia, nie zamiast nich: pierwsza nie ma czym przenieść postaci
+dokumentu prowadzonego jako PDF albo DOCX, bo treścią jest tam sam tekst.
+Cztery komendy niżej pracują na dokumencie po stronie rdzenia i przenoszą
+arkusz stylów, sekcje, tabele, obrazy i aparat — zapisują pod nową nazwą,
+wydają do formatu, wydają wiele dokumentów naraz albo przestawiają format
+dokumentu Studia. Starsza droga zostaje dla treści, która nie jest dokumentem
+rdzenia.
+
+Format uboższy niż dokument jest normalną sytuacją; przemilczenie straty nie
+jest. Wydanie do tekstu czystego, które zgubiło tabelę i przypisy, mówi to
+wprost, a wydanie wsadowe wypisuje bilans dokument po dokumencie — odmowa
+jednego nie ukrywa się za liczbą wydanych.

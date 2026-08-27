@@ -5348,3 +5348,108 @@ zmienił się zapis debaty.
 Stanowisko powstaje przy pierwszym odczycie, tak jak pulpit projektu modułu
 Workspace: bez utrwalenia nie byłoby ani stabilnego identyfikatora, ani
 licznika wersji, którego żąda panel akcji okna.
+
+## budowa/server/internal/core/adapter_modul_developer_git.go
+
+Słownik czynności jest mapą, nie drabiną warunków: nowa wartość GitActionKind
+w kontrakcie to nowa pozycja mapy, a czynność spoza mapy zostaje odrzucona.
+Każdy wynik niesie w polu output dokładny wiersz polecenia, który został
+uruchomiony, oraz stan repozytorium po czynności. DeveloperGitActionRequest
+nie niesie osobnego pola z odwołaniem do wersji, więc revert i tag biorą
+swoje wskazanie z pola branch.
+
+granicaCzynnosciLokalnej i granicaCzynnosciSieciowej pilnują, żeby zawieszony
+git nie trzymał obsługiwacza komendy w nieskończoność.
+
+## budowa/server/internal/core/adapter_modul_terminal_powloki.go
+
+Nie ma powłoki interaktywnej czekającej na wiersze: każde
+`terminal.command.exec` startuje własny proces tej powłoki w katalogu
+i środowisku karty. Dzięki temu Process Monitor może zakończyć pojedynczy
+proces sygnałem łagodnym albo wymuszonym; polecenia podanego na wejście
+wspólnej powłoki nie da się zakończyć inaczej niż razem z całą kartą.
+Proces polecenia ma więc własny PID, własny kod wyjścia i własne drzewo
+potomstwa. Skutkiem tej decyzji jest to, że stan powłoki nie przechodzi
+między poleceniami (`cd` nie przesuwa katalogu karty).
+
+### zmiennaCeluSSH
+
+Zostaje drogą zastępczą dla kart założonych wcześniej i dla klienta, który
+jeszcze nie przestawił się na nowe pola.
+
+### powloki
+
+Dołożenie powłoki to dołożenie pozycji wykazu i wartości do wyliczenia
+kontraktu, nie zmiana przepływu sterowania. Argumenty dobrane tak, żeby
+proces nie czytał profilu użytkownika systemu i nie pytał o nic
+interaktywnie — inaczej wynik polecenia zależałby także od zawartości
+tego profilu.
+
+### CzyPowlokaZnana
+
+Wykazy są dwa, bo dwa są rodzaje powłok: te uruchamiane wprost na maszynie
+rdzenia (tutaj) i te sięgające do bytu poza nią — kontenera, poda,
+urządzenia, maszyny sieciowej (`adapter_modul_terminal_powloki_urzadzen.go`).
+Razem pokrywają komplet słownika kontraktu.
+
+### polecenieKarty — dziedziczenie środowiska
+
+Gdy punkt „środowisko procesu" jest włączony, egzekutor odrzuci polecenie
+dziedziczące. Karta prosi o dziedziczenie, bo powłoka bez PATH nie znajdzie
+ani jednego narzędzia.
+
+### argumentyPowlokiZdalnej
+
+Adres bierze się z pola karty, nie ze zmiennej środowiska — pole jest
+źródłem głównym od chwili, gdy kontrakt dostał `remoteTarget`
+(`adapter_modul_terminal_cel.go`). Karta bez adresu kończy się odmową
+nazywającą oba sposoby jego podania, bo `ssh` bez celu nie ruszy i tak.
+Adres wchodzi jako pojedynczy argument, nie jako fragment wiersza powłoki:
+nie ma tu składania napisu, więc nie ma czego wstrzyknąć spacją ani
+średnikiem.
+
+### zmienneKarty
+
+Zmienna wskazująca sejf, a nie wartość, kończy się odmową zamiast cichym
+pominięciem: karta terminala nie ma czytnika sejfu, więc proces ruszyłby
+bez oczekiwanego poświadczenia i nic by tego nie sygnalizowało.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_segmenty.go
+
+Scalanie i podział zmieniają trwały podział okna (tabela
+`segment_okna_tlumaczenia`, migracja 161), a nie sam wynik odpowiedzi.
+Pierwsze wywołanie utrwala bieżący podział w całości, dopiero potem zmienia
+w nim jedną rzecz — inaczej numer segmentu z żądania wskazywałby po chwili na
+inny segment, niż widział Operator.
+
+Scalony segment wchodzi w miejsce pierwszego ze scalanych — tam, gdzie
+Operator go widzi, a nie na końcu wykazu.
+
+Kolejność scalania idzie po numerach, nie po kolejności wskazania — scalenie
+"3, 1" ma dać ten sam tekst, co "1, 3".
+## budowa/server/internal/core/adapter_modul_diagnostics_przeklad.go
+
+Pole, ktorego wiersz nie niesie, wychodzi puste i nie dostaje wartosci
+zastepczej: w oknie diagnostycznym zero znaczy co innego niz brak danych.
+
+wskaznikLiczby zaklada wskaznik na liczbe - pole opcjonalne kontraktu
+niesie wtedy wartosc wprost, a nie brak wartosci. wskaznikNiepusty
+zaklada wskaznik wylacznie dla napisu niepustego; pusty zostaje brakiem
+wartosci, a nie napisem zerowej dlugosci.
+
+kodyBledowAnalizy: kolumna nieczytelna daje wykaz pusty - migawka ma sie
+pokazac, a nie zniknac z powodu jednej kolumny.
+
+## budowa/server/internal/core/adapter_modul_diagnostics_analiza.go
+
+Każda rekomendacja wskazuje błąd, z którego powstała (kolumna `blad_kod`),
+bo Recommendations Panel pozwala przejść z zalecenia do faktu źródłowego.
+Analiza z zerem błędów mówi to w podsumowaniu — odmowa zlałaby brak
+znalezisk z niepowodzeniem sprawdzenia.
+
+Kody błędów idą do kolumny tablicą JSON, bo migawka ma przetrwać zmianę
+stanu samych błędów: analiza sprzed tygodnia ma pokazywać to, co widziała
+wtedy, a nie to, co widać dziś.
+
+Rekomendacja niesie wskazanie kodu błędu i jego priorytetu. Rdzeń podaje sam
+fakt i jego wagę, bez treści poprawki: rozpoznanie przyczyny odbywa się
+w oknie Diagnostics.

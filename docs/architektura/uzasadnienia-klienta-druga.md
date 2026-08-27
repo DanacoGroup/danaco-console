@@ -5568,3 +5568,25 @@ wyłącznie to, co jest składnią treści, takie jak styl nazwany bloku, pogrub
 podkreślenie, przekreślenie, lista, tabela i podział strony, oraz nastawy strony, bo te mają
 w kontrakcie osobne pole i profil wydania. Plik nie zna elementów strony: oddaje wartości
 i zdania, a przypięcie ich do elementu należy do powierzchni dokumentu.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-moderator-panel.ts
+Wyliczenie akcji moderatora niesie dziś dziewięć wartości; okno wysyła pięć starszych —
+bezpośrednia interwencja, zamknięcie tury, następne zagadnienie, wyciszenie i zdjęcie wyciszenia.
+Czterech nowszych — ustawienie kolejności głosu, wstrzyknięcie głosu przeciwnego, otwarcie wątku
+pobocznego, scalenie wątku pobocznego — jeszcze nie wysyła: obsługi nie zbudowano. Kolejność głosu
+jedzie zatem nadal razem z akcją bezpośrednią, samodzielnie albo obok wiadomości, choć wartość
+dedykowana kolejności jest już w wyliczeniu i przeniesienie na nią kolejności usunęłoby niepewność
+opisaną przy przesunięciu kolejności. Skład uczestników w odpowiedzi jest polem nieobowiązkowym,
+więc okno musi umieć jego brak i wtedy nie potwierdza zmiany składu; kiedy skład przyjdzie, okno
+wpisuje go do stanu debaty — to jedyna droga, którą Model Panels i Consensus Panel dowiadują się
+o składzie. Skład i kanały idą wyłącznie ze stanu, tego samego rejestru, którym jedzie okno
+rozmowy — okno nie woła wykazu kanałów na własną rękę.
+
+Pas czynności trzyma treść do następnego zapisu, więc bez rozpoznania tury odmowa dotycząca
+jednej tury wisiałaby nad następną; ten sam wzór niesie czyszczenie odpowiedzi przy zmianie
+eksperta w oknie zarządzania umiejętnościami. Odmowa czynności nie idzie stanem błędu okna, bo ten
+czyści miejsce treści i zabrałby z ekranu turę i cały skład — okno pokazywałoby pustą debatę tam,
+gdzie debata jest; stan błędu zostaje zarezerwowany dla nieudanego odczytu, po którym treści
+naprawdę nie ma. Powód odmowy stoi obok przerysowanej treści, oznaczony atrybutem, który arkusz
+maluje barwą błędu. Przyciski skrajnych wierszy przesunięcia kolejności są klikalne zawsze,
+a wygaszenie ich milczałoby o powodzie, gdy ruch jest niewykonalny.

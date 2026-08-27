@@ -189,7 +189,7 @@
 .st-wstazka-grupa {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--dn-od-05);
   flex: none;
 }
 /* Kreska rozdziela rodziny narzędzi, nie pojedyncze przyciski. */
@@ -318,7 +318,7 @@
 }
 .st-edytor-grupa {
   display: inline-flex;
-  gap: 2px;
+  gap: var(--dn-od-05);
   padding-right: var(--dn-od-2);
   border-right: 1px solid var(--dn-obrys-subtelny);
 }
@@ -353,8 +353,8 @@
   z-index: 3;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 2px;
+  gap: var(--dn-od-05);
+  padding: var(--dn-od-05);
   border: 1px solid var(--dn-obrys);
   border-radius: var(--dn-r-md);
   background: var(--dn-powierzchnia);
@@ -399,14 +399,14 @@
 .st-wersja {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--dn-od-05);
   padding: var(--dn-od-2);
   border-bottom: 1px solid var(--dn-obrys-subtelny);
 }
 .st-wersja-akcje {
   display: flex;
   gap: var(--dn-od-1);
-  margin-top: 2px;
+  margin-top: var(--dn-od-05);
 }
 .st-wersja-stopka { padding: var(--dn-od-2); }
 
@@ -441,3 +441,16 @@
 @media (max-width: 1400px) {
   .st-wstazka-grupa--drugorzedna { display: none; }
 }
+
+/* ==========================================================================
+   ODSTĘPY ZAKRESOWE — zdjęte z wstawek stylu okna
+   Reguły miejscowe Studia: to, co wcześniej stało inline na komponentach
+   współdzielonych, tu ma nazwę i mieszka w arkuszu. Barwa, odstęp i krój
+   pochodzą z żetonów.
+   ========================================================================== */
+.st-odsun-sekcja { margin-top: var(--dn-od-2); }
+.st-ptaszek-akt { color: var(--dn-sygnal); }
+.st-nota { font-size: var(--dn-fs-xs); color: var(--dn-tekst-2); margin-top: var(--dn-od-2); }
+.st-szukaj-odsun { margin-bottom: var(--dn-od-1); }
+.st-panel-lista--bez-dolu { padding-bottom: 0; }
+.st-panel-lista--bez-gory { padding-top: 0; }

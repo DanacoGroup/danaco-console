@@ -77,6 +77,32 @@ Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zak
 Każde zgłoszenie ma wskazany plik i wiersz. Zgłoszenie staje się terenem, gdy
 Prowadzący je otworzy; do tego czasu jest wykazem, nie pracą.
 
+### Kontrast metadanych w przedsionkach — naprawione
+
+`design/zasoby/przedsionek.css` używał `--dn-tekst-3` (#787C85, szary-500) dla
+metadanych 12 px w ośmiu klasach (`pd-kafel-opis`, `pd-sesja-meta`, `pd-kafel-meta`,
+`pd-nadtytul`, `pd-motto`, `pd-strefa-opis`, `pd-listwa-meta`, `pd-filtr`) — łamiąc
+regułę żetonu „wyłącznie ≥18,66 px" i dając ~28 węzłów poniżej progu WCAG na okno.
+Wszystkie osiem przeniesiono na `--dn-tekst-2` (dark szary-400, light szary-600).
+Zweryfikowane: 4 przedsionki × 2 motywy = 0 naruszeń axe. Przy okazji zdjęto
+zastany `aria-selected="true"` z przycisku `.pd-sesja` (nieprawidłowy ARIA na
+`<button>`) na `aria-current="true"` we wszystkich czterech oknach, z hakiem CSS
+`.pd-sesja[aria-current='true']`. Decyzja Właściciela: naprawić teraz.
+
+Pozostałe pliki z wpisu „Kontrast warstwy wspólnej" (`rama.css`, `stanowisko.css`,
+`css/komponenty.css`, `panel-sesji.css`) nie były tu ruszane — to osobny zakres.
+
+### Żeton mikro-odstępu `--dn-od-05` — wprowadzony przy domknięciu centrum
+
+`zetony.css` dodaje `--dn-od-05: 2px` — półstopień siatki 4 px, między `--dn-od-0`
+i `--dn-od-1`. Powód: kryterium maszynowe etapu 1 wymaga, by odstępy pochodziły
+z żetonów, a najciaśniejszy realny odstęp (etykieta↔opis w kaflu) wynosił 2 px
+bez pokrycia w skali. Zdjęto surowe `gap: 2px` z `okna/centrum-dowodzenia.css`
+(2×) i `okna/studio.css` (4×). Decyzja delegowana przez Właściciela: „wariant
+zgodny z profesjonalnym standardem" — skala odstępów zawiera używane wartości
+jako żetony (wzór: Tailwind `0.5`, Material). Zmiana warstwy wspólnej odnotowana
+tutaj zgodnie z ograniczeniem warstwy wspólnej z planu etapów.
+
 ### Kontrast warstwy wspólnej — gotowe do otwarcia
 
 Żeton `--dn-tekst-3` (`design/zasoby/zetony/zetony.css` w. 222) niesie własną

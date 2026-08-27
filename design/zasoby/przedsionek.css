@@ -48,7 +48,7 @@
   border: 1px solid transparent;
   border-radius: var(--dn-r-sm);
   background: transparent;
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-xs);
   cursor: pointer;
@@ -65,7 +65,7 @@
 .pd-szyna-lista {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--dn-od-05);
   padding: var(--dn-od-2);
 }
 
@@ -86,7 +86,7 @@
   transition: background-color var(--dn-czas-2) var(--dn-ease), border-color var(--dn-czas-2) var(--dn-ease);
 }
 .pd-sesja:hover { background: var(--dn-hover); color: var(--dn-tekst); }
-.pd-sesja[aria-selected='true'] {
+.pd-sesja[aria-current='true'] {
   background: var(--dn-powierzchnia-2);
   border-color: var(--dn-obrys-subtelny);
   color: var(--dn-tekst);
@@ -102,10 +102,10 @@
 }
 .pd-sesja-meta {
   grid-column: 2;
-  margin-top: 2px;
+  margin-top: var(--dn-od-05);
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 
 .pd-szyna-stopka {
@@ -149,7 +149,7 @@
   font-size: var(--dn-fs-xs);
   letter-spacing: var(--dn-ls-mono-wersaliki);
   text-transform: uppercase;
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 .pd-tytul {
   margin: 0;
@@ -164,7 +164,7 @@
   margin: var(--dn-od-1) 0 0;
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-sm);
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 .pd-opis {
   margin: var(--dn-od-3) 0 0;
@@ -185,7 +185,7 @@
   font-size: var(--dn-fs-md);
   color: var(--dn-tekst);
 }
-.pd-strefa-opis { margin: 0; max-width: 78ch; font-size: var(--dn-fs-sm); color: var(--dn-tekst-3); }
+.pd-strefa-opis { margin: 0; max-width: 78ch; font-size: var(--dn-fs-sm); color: var(--dn-tekst-2); }
 
 /* ── 6 · KAFLE MODUŁÓW — waga pośrednia ─────────────────────────────────── */
 
@@ -234,12 +234,12 @@
 .pd-kafel:hover .pd-kafel-ikona { color: var(--dn-sygnal); border-color: var(--dn-sygnal-obrys); }
 .pd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-1); min-width: 0; }
 .pd-kafel-nazwa { font-weight: var(--dn-fw-polgruba); font-size: var(--dn-fs-base); }
-.pd-kafel-opis { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-3); }
+.pd-kafel-opis { font-size: var(--dn-fs-sm); line-height: var(--dn-lh-bazowy); color: var(--dn-tekst-2); }
 .pd-kafel-meta {
   grid-column: 2;
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 
 /* ── 7 · LISTWA DZIAŁAŃ ŚRODOWISKA — waga najniższa ─────────────────────── */
@@ -287,7 +287,7 @@
   margin-left: auto;
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
-  color: var(--dn-tekst-3);
+  color: var(--dn-tekst-2);
 }
 
 /* ── 8 · PROGI ──────────────────────────────────────────────────────────── */
@@ -373,7 +373,7 @@
   transition: transform var(--dn-czas-2) var(--dn-ease);
 }
 .pd-sesja:hover::before { transform: scaleY(0.6); }
-.pd-sesja[aria-selected='true']::before { transform: scaleY(1); }
+.pd-sesja[aria-current='true']::before { transform: scaleY(1); }
 
 /* Listwa dolna — reakcja najkrótsza, jak w strefie trzeciej Centrum. */
 .pd-listwa-poz { transition: background-color var(--dn-czas-1) var(--dn-ease), border-color var(--dn-czas-1) var(--dn-ease), transform var(--dn-czas-1) var(--dn-ease); }
@@ -397,5 +397,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .pd-tresc > * { animation: none; }
-  .pd-kafel:hover::before, .pd-sesja[aria-selected='true']::before { transition: none; }
+  .pd-kafel:hover::before, .pd-sesja[aria-current='true']::before { transition: none; }
 }

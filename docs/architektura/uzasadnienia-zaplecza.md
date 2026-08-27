@@ -296,3 +296,26 @@ w postaci, której biblioteka obrazu nie otwiera, nie ma prawa odebrać
 odpowiedzi o pozostałych obrazach. Taka pozycja dostaje ocenę zerową i
 wraca w wykazie pominiętych, żeby rdzeń wiedział, że nie porównał
 wszystkiego, o co prosił.
+
+## budowa/server/internal/store/migracja_045_biblioteka.sql
+
+Treść pliku trzyma dysk, nie baza: kolumna `tresc_odwolanie` niesie odwołanie do
+pliku na dysku, baza nie dostaje kolumny BLOB. Ten sam wzorzec powtarza się na
+dwóch poziomach — plik biblioteki i każda jego wersja — bo
+`library.version.restore` musi umieć przywrócić treść sprzed zmiany, więc treść
+poprzednich wersji musi przeżyć nadpisanie bieżącej.
+
+Wersja jest własnym bytem, nie polem licznika. `library.version.list` zwraca
+listę `LibraryVersion` z własnym `id`, autorem i sumą kontrolną — to nie jest
+rosnący numer przy pliku, tylko osobny wiersz historii, bo każda wersja niesie
+własną treść i własnego autora (kontrakt: `LibraryVersion.author`).
+
+Etykiety i kolekcje mają rozłączne tabele — to dwie różne prawdy o pliku:
+etykieta jest wolnym tekstem bez własnej tożsamości, kolekcja jest bytem z nazwą
+i opisem tworzonym osobną komendą `library.collection.create`. Stąd etykieta
+żyje jako wiersz w tabeli złącznikowej z gołym tekstem, a przypisanie do
+kolekcji odwołuje się do wiersza `kolekcja_biblioteki`.
+
+Podgląd (`LibraryPreview`) nie ma własnej tabeli. To widok obliczany w locie
+z bieżącej wersji pliku (rodzaj podglądu wynika z `mime_type`, treść
+z `tresc_odwolanie` wersji) — trwały byt tu jest jeden: wersja pliku.

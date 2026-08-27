@@ -1,29 +1,9 @@
--- Migracja 045 — trwałość modułu Library: repozytorium wiedzy, jego wersje,
--- etykiety oraz kolekcje zasobów (Library Explorer, Versioning Panel,
--- Tags & Collections).
---
--- Treść pliku trzyma dysk, nie baza: kolumna `tresc_odwolanie` niesie odwołanie
--- do pliku na dysku, baza nie dostaje kolumny BLOB. Ten sam wzorzec powtarza się
--- na dwóch poziomach — plik biblioteki i każda jego wersja — bo
--- `library.version.restore` musi umieć przywrócić treść sprzed zmiany, więc
--- treść poprzednich wersji musi przeżyć nadpisanie bieżącej.
---
--- Wersja jest własnym bytem, nie polem licznika. `library.version.list` zwraca
--- listę `LibraryVersion` z własnym `id`, autorem i sumą kontrolną — to nie jest
--- rosnący numer przy pliku, tylko osobny wiersz historii, bo każda wersja niesie
--- własną treść i własnego autora (kontrakt: `LibraryVersion.author`).
---
--- Etykiety i kolekcje mają rozłączne tabele — to dwie różne prawdy o pliku:
--- etykieta jest wolnym tekstem bez własnej tożsamości, kolekcja jest bytem
--- z nazwą i opisem tworzonym osobną komendą `library.collection.create`. Stąd
--- etykieta żyje jako wiersz w tabeli złącznikowej z gołym tekstem, a przypisanie
--- do kolekcji odwołuje się do wiersza `kolekcja_biblioteki`.
---
--- Podgląd (`LibraryPreview`) nie ma własnej tabeli. To widok obliczany w locie
--- z bieżącej wersji pliku (rodzaj podglądu wynika z `mime_type`, treść
--- z `tresc_odwolanie` wersji) — trwały byt tu jest jeden: wersja pliku.
+-- Migracja 045 tworzy trwałość modułu biblioteki: plik repozytorium wiedzy, jego
+-- wersje, etykiety i kolekcje zasobów, z treścią przechowywaną na dysku, nie
+-- w bazie.
 
--- ── Plik repozytorium wiedzy ───────────────────────────────────────────────
+-- Tabela plik_biblioteki przechowuje plik repozytorium wiedzy wraz z metadanymi,
+-- ścieżką na dysku i odwołaniem do treści bieżącej wersji.
 CREATE TABLE plik_biblioteki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -33,10 +13,7 @@ CREATE TABLE plik_biblioteki (
     rozmiar_bajtow           INTEGER,
     projekt_id               TEXT,
     modul_zrodlowy_id        TEXT,
-    -- Suma kontrolna i odwołanie do treści opisują bieżącą wersję. Trzymamy je
-    -- też tutaj (obok wiersza w `wersja_pliku_biblioteki`), bo `library.file.list`
-    -- i `library.file.search` czytają listę plików bez dołączania wersji —
-    -- powtórzenie kolumn oszczędza złączenie na ścieżce najczęstszej.
+    -- Suma kontrolna i treść powtarzają się tu z bieżącej wersji, by uniknąć złączenia przy liście plików.
     wersja_biezaca_id        INTEGER,
     suma_kontrolna           TEXT,
     tresc_odwolanie          TEXT,
@@ -48,7 +25,8 @@ CREATE TABLE plik_biblioteki (
 CREATE INDEX idx_plik_biblioteki_projekt ON plik_biblioteki(projekt_id, zaktualizowano DESC);
 CREATE INDEX idx_plik_biblioteki_nazwa ON plik_biblioteki(nazwa);
 
--- ── Wersja pliku — Versioning Panel ────────────────────────────────────────
+-- Tabela wersja_pliku_biblioteki przechowuje każdą wersję pliku jako osobny
+-- wiersz historii z własnym autorem i sumą kontrolną, nie jako licznik.
 CREATE TABLE wersja_pliku_biblioteki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -60,7 +38,8 @@ CREATE TABLE wersja_pliku_biblioteki (
     tresc_odwolanie          TEXT,
     utworzono                TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
--- library.version.list zwraca wersje pliku od najnowszej.
+-- Indeks porządkuje wersje pliku od najnowszej, ponieważ komenda
+-- library.version.list zwraca historię wersji w tej kolejności.
 CREATE INDEX idx_wersja_pliku_biblioteki_plik ON wersja_pliku_biblioteki(plik_id, utworzono DESC, id DESC);
 
 -- ── Etykieta pliku — Tags & Collections ────────────────────────────────────
@@ -72,10 +51,12 @@ CREATE TABLE etykieta_pliku_biblioteki (
     utworzono  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
     PRIMARY KEY (plik_id, etykieta)
 );
--- library.file.list filtruje po etykiecie (Tags []string w żądaniu).
+-- Indeks wspiera filtrowanie plików po etykiecie, ponieważ komenda
+-- library.file.list przyjmuje etykiety jako warunek żądania.
 CREATE INDEX idx_etykieta_pliku_biblioteki_etykieta ON etykieta_pliku_biblioteki(etykieta, plik_id);
 
--- ── Kolekcja zasobów — Tags & Collections ──────────────────────────────────
+-- Tabela kolekcja_biblioteki przechowuje kolekcję zasobów jako byt z własną
+-- nazwą i opisem, tworzony osobną komendą library.collection.create.
 CREATE TABLE kolekcja_biblioteki (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,
@@ -86,10 +67,9 @@ CREATE TABLE kolekcja_biblioteki (
 );
 CREATE INDEX idx_kolekcja_biblioteki_nazwa ON kolekcja_biblioteki(nazwa);
 
--- ── Przypisanie pliku do kolekcji ──────────────────────────────────────────
--- library.collection.assign przypisuje wiele plików naraz do jednej kolekcji;
--- library.file.list filtruje po CollectionId — stąd indeks w obu kierunkach
--- (klucz główny okrywa kolekcja→plik, drugi indeks plik→kolekcja).
+-- Tabela przypisanie_kolekcji_biblioteki wiąże plik z kolekcją; library.collection.assign
+-- przypisuje wiele plików naraz, a indeks w obu kierunkach wspiera też
+-- filtrowanie plików po kolekcji.
 CREATE TABLE przypisanie_kolekcji_biblioteki (
     kolekcja_id  INTEGER NOT NULL REFERENCES kolekcja_biblioteki(id) ON DELETE CASCADE,
     plik_id      INTEGER NOT NULL REFERENCES plik_biblioteki(id) ON DELETE CASCADE,

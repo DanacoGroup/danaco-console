@@ -1,14 +1,8 @@
 /**
- * Wiersz opisu MultitaskingAI — jedyna kontrolka własna modułu.
- *
- * Rama okna stoi w `komponenty/rama-okna.ts`, a przycisk, pole, wybór, wykaz
- * i pozycja wykazu w `modele/kontrolki-formularza.ts` — moduł bierze je stamtąd
- * zamiast trzymać własne kopie. Wiersz klucz–wartość odpowiednika tam nie ma:
- * niosą go wyłącznie okna ról, gdzie zastępuje tabelę stanu (więź wykonawcy
- * z koordynatorem, licznik obiegów, powód zatrzymania biegu).
- *
- * Wygląd w całości z arkusza rodziny `dm-` — plik nie zna ani jednej barwy i ani
- * jednego odstępu.
+ * Wiersz opisu MultitaskingAI jest jedyną kontrolką własną modułu: ramę okna
+ * niesie `komponenty/rama-okna.ts`, a kontrolki formularza
+ * `modele/kontrolki-formularza.ts`. Wygląd pochodzi w całości z arkusza
+ * rodziny `dm-`.
  */
 
 /**
@@ -19,15 +13,17 @@
 export const PRZEDROSTEK = 'dm';
 
 /**
- * Wysokość pól redakcyjnych okien ról w wierszach.
- *
- * Stoi tu jedną liczbą, bo trzy okna ról mają być jednakowo wysokie: kreator
- * promptu, polecenie wykonawcy i uzasadnienie oceny stoją obok siebie na scenie
- * i różnica wysokości czytałaby się jako różnica wagi tych pól.
+ * Wysokość pól redakcyjnych okien ról w wierszach. Stoi tu jedną liczbą, bo
+ * trzy okna ról mają być jednakowo wysokie, a różnica wysokości czytałaby się
+ * jako różnica wagi tych pól.
  */
 export const WIERSZE_POLA = 3;
 
-/** Wiersz opisu: etykieta i wartość — licznik obiegów, próg, powód zatrzymania. */
+/**
+ * Wiersz opisu złożony z etykiety i wartości, na przykład licznika obiegów,
+ * progu albo powodu zatrzymania. Oddaje element klasy `dm-wiersz`, w którym
+ * etykieta trafia zarówno do treści, jak i do atrybutu danych.
+ */
 export function wierszOpisu(etykieta: string, wartosc: string): HTMLElement {
   const element = document.createElement('div');
   element.className = 'dm-wiersz';

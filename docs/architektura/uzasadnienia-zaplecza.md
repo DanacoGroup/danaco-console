@@ -886,3 +886,31 @@ Restart obrazu przenośnego sięga po zmienną środowiskową wskazującą bież
 obraz, a nie po ścieżkę bieżącego pliku wykonywalnego, która wskazywałaby
 chwilowo podmontowany obraz starego wydania; dzięki temu po podmianie wstaje
 wydanie nowe.
+
+## budowa/server/internal/store/migracja_044_roundtable.sql
+
+Debata jest bytem okna, nie sesji. Kontrakt kieruje wszystkie cztery komendy
+obszaru `roundtable.*` przez `windowId`, więc identyfikator okna jest tu
+kluczem grupującym. Kolumna nie ma więzu obcego do `okno`, bo okno debaty bywa
+oknem operacyjnym rejestru 030 (`roundtable.debate-panel`), a nie oknem
+komunikacji z migracji 002 — dwa różne byty pod jedną nazwą.
+
+Ten sam kanał może wystąpić dwukrotnie, więc więzu jednoznaczności na parze
+(okno, kanał) nie ma: dwaj uczestnicy stoją na tym samym kanale modelu i różnią
+się wyłącznie tożsamością — nazwą persony i promptem systemowym. Jednoznaczny
+jest identyfikator uczestnika, nic więcej.
+
+Wypowiedź wskazuje uczestnika kodem, nie kluczem. Moderator debaty nie jest
+uczestnikiem (nie ma kanału ani persony), a jego interwencja jest wypowiedzią
+tury — więz obcy do `debata_uczestnik` odciąłby ją od zapisu. Kod moderatora
+jest wartością danych, tak jak kod uczestnika.
+
+Kolumny „kluczowy” w tabeli `debata_uczestnik` nie ma, choć kontrakt ma pole
+`RoundtableParticipant.key`. Żadna z czterech komend obszaru nie potrafi go
+ustawić (`model.add` pola nie przyjmuje, `ModeratorAction` nie ma wartości
+oznaczającej), więc kolumna byłaby miejscem, do którego nic nie pisze.
+
+Pusty kod tury w tabeli `debata_stanowisko` znaczy „stanowisko całej debaty”.
+Wartość pusta zamiast NULL jest tu wyborem świadomym: w SQLite dwa NULL-e są
+różne, więc więz UNIQUE(okno, tura) na kolumnie dopuszczającej NULL nie
+powstrzymałby powielenia stanowiska całej debaty.

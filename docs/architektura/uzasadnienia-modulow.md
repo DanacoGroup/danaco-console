@@ -885,3 +885,22 @@ nie brakiem odpowiedzi.
 Nazwa poziomu komunikatu konsoli nierozpoznana przez rdzeń spada na poziom
 `log`: komunikat ma się pokazać Operatorowi, a nie zniknąć przez nieznane
 słowo w polu poziomu zdarzenia protokołu.
+
+## budowa/server/internal/core/adapter_modul_library_sugestie.go
+
+Domyślnym zachowaniem modułu jest sugestia z akceptacją operatora, nie zapis
+bez pytania: klasyfikacja wytwarza wiersze sugestii, a dopiero zatwierdzenie
+zamienia je w zmianę zasobu. Żądanie z polem zatwierdzenia od razu wykonuje
+obie czynności naraz, co pozostaje jawnym wyborem wołającego, nie domyślnym
+zachowaniem rdzenia.
+
+Sugestie mają dwa źródła i oba są rzeczywiste. Model proponuje etykiety, gdy
+żądanie wskazuje kanał, a rdzeń ma wpięty rejestr kanałów; jego odpowiedź jest
+propozycją, więc trafia do tabeli sugestii, nie wprost na zasób. Pomiar rdzenia
+działa zawsze: zasób bez etykiety i bez kolekcji jest osierocony, zasób
+dzielący sumę kontrolną z innym jest duplikatem, a zasób niosący numer PESEL,
+NIP albo numer rachunku jest treścią wrażliwą do przeglądu. Te trzy reguły są
+policzone, nie zgadnięte, i działają także wtedy, gdy modelu nie ma wcale.
+
+Uzasadnienie towarzyszy każdej sugestii obowiązkowo: przyjęcie propozycji bez
+podanego powodu byłoby zaufaniem bez podstawy.

@@ -3063,3 +3063,56 @@ Osadzenie obrazu w dokumencie PDF idzie tą samą biblioteką `pdfcpu`, którą
 pracuje warsztat dokumentu modułu Studio. Droga wiedzie przez PNG
 w pamięci, nie przez plik pośredni: `pdfcpu` przyjmuje strumień, a plik
 pośredni byłby trzecim miejscem, w którym ta sama treść żyje.
+
+## budowa/server/internal/poczta/rozpoznanie.go
+
+Haseł rozpoznanie skrzynek stąd nie pobiera. Thunderbird trzyma je
+w `logins.json` zaszyfrowane kluczem z `key4.db`, Evolution w pęku kluczy
+GNOME, mutt bywa, że jawnie w `.muttrc`. Rdzeń nie sięga do żadnego z tych
+miejsc i nie próbuje ich odszyfrować: odczytanie pęku kluczy jest czynnością
+innego rodzaju niż odczytanie pliku nastaw. Poświadczenie podaje Operator
+komendą `mail.account.add` i idzie ono wyłącznie do sejfu rdzenia.
+
+Outlook (Windows) trzyma nastawy w rejestrze pod
+HKCU\Software\Microsoft\Office\*\Outlook\Profiles, w postaci binarnej
+i innej w każdym wydaniu pakietu. Apple Mail w ~/Library/Mail/V*/MailData,
+w plistach binarnych. Obu tu nie ma: rdzeń nie czyta formatów, których nie
+umie przeczytać wiarygodnie, i nie zgaduje ich zawartości. Mówi wtedy, że
+nic nie znalazł, a nie że nic nie ma.
+## server/internal/core/adapter_modul_design_ikony_katalog.go
+
+design.icon.library.search szuka wsrod tych wzorow, design.icon.set uzywa
+ich jako punktu wyjscia, a design.icon.generate bierze, gdy pojecie trafia
+w ktorys z nich. Ikony WLASNE Operatora leza w bazie (dane/design_ikony.go);
+tutaj lezy to, co produkt ma bez ani jednego zapisu w bazie i bez ani
+jednego pobrania z sieci. Instalka Operatora jest cienka, a arsenal stoi na
+serwerze wkompilowany w binarium. Katalog ikon w bazie musialby byc zasiany
+migracja i dalby sie skasowac; katalog w plikach obok binarium wymagalby,
+zeby wdrozenie kopiowalo katalog danych. Katalog w kodzie jest zawsze i
+jest jeden. Wszystkie wzory sa na siatce 24 i rysowane KONTUREM (obrys, nie
+wypelnienie), o grubosci dwoch jednostek. Zestaw mieszajacy obrys
+z wypelnieniem wyglada w oknie jak zestaw zebrany z dwoch zrodel — a to
+jest dokladnie to, czemu zestaw ikon ma zapobiegac. Grubosc obrysu jest
+cecha ikony (strokeWidth), wiec Operator zmienia ja i dostaje te sama ikone
+cienszą, a nie inna ikone. Wzor niesie sama tresc d sciezek. Dokument SVG
+sklada sie z niej na wyjsciu (svgIkonyKataloguDesignu) razem z gruboscia
+obrysu, ktora Operator wskazal — gdyby wzory byly gotowymi dokumentami,
+zmiana grubosci wymagalaby przepisania czterdziestu napisow.
+
+katalogIkonDesignu: wykaz obejmuje pojecia, ktore w narzedziu pracy
+naprawde wystepuja: nawigacja, praca z plikami, stany, komunikacja, media,
+dane. Wciagniecie kilku tysiecy ikon dałoby nazwy, ktorych nikt nie wpisze,
+a kazda musialaby byc tu utrzymywana.
+
+wzorDlaPojeciaDesignu: Operator pisze "strzalka w prawo" i "prawo", majac
+na mysli to samo.
+
+svgIkonyKataloguDesignu: skalowanie idzie polem viewBox, nie przeliczaniem
+wspolrzednych — wzor ma jedna prawde o ksztalcie, a rozmiar dokumentu jest
+jego oprawa. Dzieki temu ikona na siatce 16 i na siatce 48 to ten sam
+rysunek, a nie dwa zaokraglone inaczej.
+
+sciezkiZDokumentuSvgDesignu: rdzen czyta SCIEZKI, bo tylko z nich sklada
+sie kontur ikony w pakiecie i w kroju. Dokument z prostokatami i okregami
+zamiast sciezek oddaje wykaz pusty, a wolajacy nazywa to wprost — cichy
+pakiet z pustymi glifami bylby plikiem, w ktorym nie widac nic.

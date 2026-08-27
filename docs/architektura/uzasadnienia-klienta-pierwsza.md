@@ -110,3 +110,24 @@ się dopiero przy rysowaniu. Pustka nie jest tu uszkodzonym kształtem: wykaz
 pusty i pole opcjonalne bez wartości są odpowiedziami prawdziwymi i znaczą,
 że w tym oknie danej rzeczy jeszcze nie ma — dlatego przy nich sprawdzian
 pyta o tablicę albo przepuszcza wszystko, zamiast żądać obiektu.
+
+## budowa/klient-poprzedni/src/moduly/apps/narzedzia-rozszerzen.ts
+
+Narzędzia są pogrupowane wedle okna strony rozszerzeń: App Catalog prowadzi
+wyszukiwarkę, kartę szczegółów, kolekcje i rejestr organizacji; Installed
+Apps Manager — aktualizacje, przesyłkę paczki, wersjonowanie, instalację
+zestawu, dziennik cyklu życia i tryb administracyjny; Integrations Hub i MCP
+and Connector Console — transport, poświadczenie, odkrywanie narzędzi, próbne
+wywołanie, log protokołu, piaskownicę, import definicji, webhooki,
+odwzorowania, metryki i kondycję; Permissions and Trust Center — uprawnienia,
+podpis, skaner i sekrety.
+
+Żadne pole nie niesie treści poświadczenia. Pola sekretów przyjmują wyłącznie
+klucz jawny warstwy sekretów — nazwę, po której rdzeń wydaje wartość.
+Wprowadzenie hasła, tokenu czy klucza API zostaje po stronie Operatora, poza
+tą drogą i poza kontraktem.
+
+Pozycja, na której narzędzie ma pracować, bierze się ze wskazania w oknie
+funkcją stan.wybrane(), a nie z pola wpisywanego przy każdym przycisku. Brak
+wskazania kończy się odmową z powodem — Operator ma najpierw wybrać pozycję
+z listy.

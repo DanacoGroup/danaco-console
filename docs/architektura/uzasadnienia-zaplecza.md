@@ -2404,3 +2404,20 @@ Kolumna `automatyka_zewnetrzna_id` niesie odwołanie do przebiegu modułu
 Automations, gdy scenariusz zostanie tam przekazany (opracowanie, rozdz.
 2.13). Nie jest więzem obcym: przekazanie jest konfigurowalne i makro ma
 prawo istnieć bez niego.
+## budowa/server/internal/store/migracja_178_granice_wykonawcy.sql
+Migracja 178 — granice działania Wykonawcy na stronie
+(`browser.executor.limits.set`, `browser.executor.limits.get`).
+
+Granice są konfiguracją zasięgu, nie bytem okna: kontrakt niesie je z polem
+`scope` (`ConfigScope`) i `scopeId`, a żądanie wskazuje okno ALBO kartę
+sesji. Dlatego kluczem jest para (zasięg, wskazanie zasięgu), a nie samo
+okno — dwa wiersze o tym samym zasięgu byłyby dwiema odpowiedziami na jedno
+pytanie „ile kroków wolno Wykonawcy tutaj".
+
+Domeny dozwolone i zablokowane idą kolumnami JSON, bo są wykazem wewnątrz
+jednego ustawienia, a nie bytem wyszukiwanym osobno.
+
+Wiersza domyślnego migracja nie zakłada. Brak wiersza znaczy „granice
+domyślne rdzenia" i tak też odpowiada `browser.executor.limits.get` — wartość
+domyślna należy do kodu, który ją stosuje, a nie do schematu; wiersz
+zaszczepiony w migracji rozjechałby się z nią przy pierwszej zmianie.

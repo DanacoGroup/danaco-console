@@ -6438,3 +6438,21 @@ Czynność „Dodaj do rozmowy" daje dwie rzeczy naraz: załącznik rozmowy oraz
 
 ## budowa/klient-poprzedni/src/moduly/agents/zrodlo-agentow.ts
 Źródło nie ma własnego stanu i niczego nie pamięta — jest wyłącznie warstwą wywołań i sprawdzianu kształtu odpowiedzi; stan biblioteki ekspertów mieszka osobno, żeby pięć okien modułu patrzyło na jeden zbiór, a nie na pięć osobnych kopii. Żadne wywołanie nie rzuca wyjątkiem ani nie odrzuca obietnicy: niepowodzenie wraca polem błędu wyniku, a okno pokazuje je w swoim stanie błędu; dotyczy to także treści JSON wpisanej przez Operatora, gdzie niepoprawny zapis jest odmową wywołania, nie wyjątkiem wywracającym widok. Trybu podania zapis warstwy nie niesie, bo kontrakt go nie ma: warstwa eksperta dopisuje się do promptu systemowego jako zakres użytkownika i nigdy go nie zastępuje.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — stany puste okien
+Stan pusty opisuje sytuację oczekiwaną, czyli pierwsze użycie, a nie awarię odczytu; napis „Brak danych" nie mówi ani czym okno jest, ani co operator ma zrobić. Dlatego opisu żąda już fabryka budująca stan okna — okna bez zdania o sobie nie da się zbudować.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — pochodzenie wykazów
+Panel pokazujący pozycje bez słowa o pochodzeniu wygląda tak samo, gdy czyta rdzeń, i wtedy, gdy pokazuje własną pamięć — a to dwie różne obietnice wobec operatora.
+
+## budowa/klient-poprzedni/src/moduly/browser/etykiety-browser.ts — warstwy wyzwalaczy
+Znaczniki źródeł i notatek należą do warstwy drugiej interfejsu, menu operacji do warstwy trzeciej, a narzędzia warstwy czwartej nie mają w pasku nazwy, dopóki operator nie włączy trybu administracyjnego.
+
+## budowa/klient-poprzedni/src/moduly/library/material-archiwum.test.ts
+Sprawdzian pilnuje tego, co stanowi o odbiorze: że każda z trzech komend
+arsenału ma drogę z okna, że żądanie idzie ścieżką z dysku, bo identyfikator
+zasobu biblioteki wróciłby odmową, że czynność trwająca mówi o sobie przed
+końcem, i że wynik jest nazwany, a nie potwierdzony ciszą.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-zakresu-eksperta.ts
+Źródło jest osobne od źródła agentów: tamto opisuje bibliotekę — założenie, wykaz, zmianę tożsamości — a to opisuje zakres, czyli co ekspertowi wolno zrobić w systemie; rozdział jest ten sam, który przebiega w rdzeniu między portem agentów a portem zakresu eksperta. Zakres narzędzi profilu asystenta mieszka tutaj, choć dotyczy profilu, a nie eksperta, bo Permissions Center jest jedynym oknem, w którym operator ustala, jak szeroko działa wykonawca w jego imieniu, więc rozstrzygnięcie o wywoływaniu narzędzi stoi tam, gdzie operator go szuka, a nie w oknie, którego moduł Agents nie ma. Żadne wywołanie nie rzuca wyjątkiem: niepowodzenie wraca polem błędu wyniku, a okno pokazuje je w swoim stanie odmowy.

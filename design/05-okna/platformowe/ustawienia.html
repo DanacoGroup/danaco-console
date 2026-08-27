@@ -35,7 +35,7 @@
     display: grid; grid-template-columns: minmax(220px, 264px) minmax(0, 1fr);
   }
 
-  /* ── PASMO ROZGRANICZENIA „Ustawienia ↔ Konfiguracja" (rozdz. 1.1) ───────── */
+  /* ── PASMO ROZGRANICZENIA „Ustawienia ↔ Konfiguracja" ──────────────────────── */
   .us-rozgraniczenie {
     grid-column: 1 / -1;
     border-bottom: 1px solid var(--dn-obrys-subtelny);
@@ -131,7 +131,7 @@
   .us-pole-szer { width: 100%; max-width: 420px; }
   .us-wiersz { display: flex; align-items: center; gap: var(--dn-od-3); flex-wrap: wrap; }
 
-  /* ── objaśnienie kontekstowe [?] (rozdz. 2.3) ───────────────────────────── */
+  /* ── objaśnienie kontekstowe [?] ─────────────────────────────────────────── */
   .us-pomoc {
     display: inline-grid; place-content: center; width: 20px; height: 20px; flex: none;
     padding: 0; border: 1px solid var(--dn-obrys); border-radius: var(--dn-r-pill);
@@ -579,7 +579,7 @@
   <!-- ══ PŁÓTNO USTAWIEŃ (bez .sta-obszar — okno globalne, nie warsztat) ════ -->
   <main class="us-plotno" id="us-plotno">
 
-    <!-- PASMO ROZGRANICZENIA: Ustawienia ↔ Konfiguracja (rozdz. 1.1) -->
+    <!-- Pasmo rozgraniczenia: Ustawienia ↔ Konfiguracja -->
     <details class="us-rozgraniczenie" id="us-rozgraniczenie">
       <summary>
         <svg class="us-ik us-ik--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
@@ -1048,7 +1048,7 @@
     </div><!-- /us-zawartosc -->
   </main>
 
-  <!-- MODAL: Zmień hasło (rozdz. 3.4) -->
+  <!-- Modal: Zmień hasło -->
   <div class="dn-modal-tlo" id="us-modal-haslo" data-otwarte="nie" hidden>
     <div class="dn-modal" role="dialog" aria-modal="true" aria-labelledby="us-modal-haslo-tytul">
       <header class="dn-modal-naglowek">

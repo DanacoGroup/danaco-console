@@ -4629,3 +4629,17 @@ paneli. Reeksport jest dla czytającego, nie dla wytwórni: wytwórnia sięga wp
 debaty, bo import tego pliku wciągnąłby do gospodarza całe złożenie okien operacyjnych
 i rejestrację modułu, których gospodarz nie stawia. Wpis tutaj mówi tyle, że panel należy do tego
 modułu.
+
+## budowa/klient-poprzedni/src/moduly/studio/kolejka-cyfryzacji.ts
+Kolejka wczytywania była wcześniej prowadzona w oknie i ginęła z jego odświeżeniem, bo panel stał
+na starszej komendzie jednorazowego wydobycia tekstu, bez pojęcia pozycji. Rodzina komend
+cyfryzacji niesie dziś kolejkę po stronie rdzenia — dołożenie materiału i odczyt wykazu pozycji
+ze stanem i wynikiem — więc ten plik przestał być kolejką, a stał się jej odbiciem: pamięcią
+tego, co rdzeń ostatnio oddał. Rdzeń nie prowadzi wskazania pozycji, na której pracuje operator,
+bo to jest nastawa widoku; nie prowadzi też słów rozpoznanych i bloków układu odebranych przy
+rozpoznaniu, bo odczyt wykazu ich nie powtarza, więc bez odłożenia tutaj poprawianie słów nie
+miałoby na czym pracować; i nie prowadzi znacznika wywołania w toku, żeby dwa naciśnięcia nie
+poszły naraz. Stan pozycji nie jest już liczony w oknie: przychodzi z rdzenia jako wartość
+pięciostanowa — oczekuje, przetwarzanie, gotowa, ponowienie z powodu pewności poniżej progu,
+odmowa — a ponowienie jest stanem osobnym, bo pozycja nie jest ani gotowa, ani odmówiona, tylko
+wraca do rozpoznania.

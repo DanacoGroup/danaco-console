@@ -2578,3 +2578,20 @@ ZapiszObsade zastępuje obsadę w całości zamiast dopisywać wiersze, poniewa�
 jest wykazem zamkniętym i scalanie zostawiałoby uczestników, których operator z niej
 usunął. Obsada pusta jest stanem poprawnym — automatyka bez obsady biegnie na modelu
 wskazanym w kroku.
+
+## design_makiety.go
+
+Warstwa wchodzi do kompozycji pojedynczo, a nie kompletem, w odróżnieniu od
+obszaru kompozycji, który zna wyłącznie zapis pełny (usunięcie całości i
+wstawienie kompletu, bo zapis planszy nadsyła zawsze komplet). Makieta
+pracuje inaczej: układ automatyczny przestawia położenia warstw już
+leżących, a instancja komponentu dokłada jedną warstwę do planszy, na której
+stoją inne. Przepisywanie całej planszy przy każdym takim ruchu kasowałoby
+warstwy, o których wołający w danym żądaniu nic nie mówił. Stąd dwie osobne
+czynności: PrzestawWarstweKompozycjiDesignu i DolozWarstweKompozycjiDesignu.
+
+Przynależność warstwy do ramki oraz jej więzy responsywne wiszą na
+identyfikatorze zewnętrznym warstwy, nie na kluczu wiersza. Powód: zapis
+planszy przepisuje wiersze warstw od nowa, więc klucz wiersza warstwy nie
+przeżywa zwykłego zapisu kompozycji, a identyfikator zewnętrzny przeżywa,
+ponieważ klient nadsyła go z powrotem przy każdym żądaniu.

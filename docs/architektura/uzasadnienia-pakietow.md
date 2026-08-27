@@ -3238,3 +3238,6 @@ w słowo dokończone, więc trafienia widać przed dokończeniem wpisywanej fraz
 
 ## budowa/server/internal/models/adapter_obrazy_test.go
 Sprawdziany mierzą to, czego nie da się zobaczyć po stronie wołającego: kształt żądania, które naprawdę wyszło na sieć. Kanał, który przyjmie materiał operatora i wyśle samo polecenie, oddaje obraz wygenerowany od zera — wygląda to na powodzenie, a jest podmianą materiału bez ani jednego słowa. Dlatego sprawdziany stawiają zaślepkę punktu końcowego i czytają ciało żądania.
+
+## budowa/server/internal/dane/tozsamosc_wyliczenia.go
+Kontrakt daje słownik przekładu bazy wyłącznie dla rodzaju konta. Dla warstwy, trybu i osi tożsamości takiego słownika nie ma, bo kolumny trzymają wartości kontraktu wprost — drugie nazewnictwo byłoby drugim źródłem prawdy. Plik nie tłumaczy więc nazw: sprawdza, czy wartość kolumny należy do zbioru kontraktu, i uzupełnia wartość domyślną tam, gdzie wartości nie podano.

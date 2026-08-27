@@ -1,17 +1,7 @@
-// Indeks treści modułu Library (tabela wirtualna `indeks_tresci_biblioteki`,
-// FTS5): zapis wyciągu tekstowego pliku oraz zawężenie wyszukiwania do plików,
-// których treść niesie szukaną frazę. Wiersz pliku, jego filtr i odczyt leżą
-// w `library.go`; ten plik dokłada tam jedną klauzulę i jedno polecenie zapisu.
-//
-// Indeks jest bytem wtórnym wobec wiersza pliku: powstaje z treści leżącej
-// w magazynie na dysku, a nie z kolumny tabeli, i rządzi się własnymi regułami
-// (co się indeksuje, jak fraza Operatora staje się zapytaniem FTS5).
-//
-// Indeks nie jest drugą prawdą o treści. Bajty pliku leżą wyłącznie
-// w magazynie treści rdzenia (`tresc_odwolanie`); tutaj leży wyciąg tekstowy
-// treści bieżącej, obcięty granicą po stronie rdzenia, służący wyłącznie
-// odnajdywaniu. Brak wiersza indeksu obniża trafność wyszukiwania i nic poza
-// tym, dlatego zapis indeksu nie wywraca wgrania pliku.
+// Plik dokłada do modułu biblioteki indeks treści FTS5: zapisuje wyciąg
+// tekstowy pliku i zawęża wyszukiwanie do plików, których treść niesie szukaną
+// frazę. Indeks jest bytem wtórnym wobec wiersza pliku i nie stanowi drugiej
+// prawdy o treści.
 package dane
 
 import (
@@ -65,18 +55,9 @@ func (r *repozytoriumBiblioteki) ZapiszIndeksTresci(ctx context.Context, plikID 
 	return nil
 }
 
-// zapytanieTresci przekłada frazę Operatora na zapytanie FTS5.
-//
-// Fraza jest daną, nie składnią: w Library Explorer wpisuje się słowa, nie
-// wyrażenie FTS5, a znaki `"`, `*`, `-`, `(`, `:` mają w tej składni znaczenie
-// i surowa fraza z nawiasem wywracałaby wyszukiwanie błędem składni zamiast
-// oddać zero trafień. Całość idzie więc jako cytowana fraza (cudzysłów
-// wewnątrz podwojony), czyli wyszukiwanie sekwencji słów, nie wyrażenia
-// logicznego.
-//
-// Gwiazdka na końcu zostawia dopasowanie przedrostkowe ostatniego słowa:
-// „konfigur" trafia w „konfiguracja", więc trafienia widać przed dokończeniem
-// frazy.
+// zapytanieTresci przekłada frazę na zapytanie FTS5: całość idzie jako
+// cytowana fraza z gwiazdką na końcu, co daje dopasowanie sekwencji słów oraz
+// dopasowanie przedrostkowe ostatniego słowa.
 func zapytanieTresci(fraza string) string {
 	oczyszczona := strings.TrimSpace(fraza)
 	if oczyszczona == "" {

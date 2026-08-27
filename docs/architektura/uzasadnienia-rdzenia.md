@@ -5461,3 +5461,30 @@ Okno wskazuje kanał modelu, a kanał identyfikator modelu i konto preferowane. 
 więc identyfikator modelu kanału, a oś konta — konto kanału. Okno bez kanału, kanał bez konta
 i okno nieznane dają osie puste: nakładka schodzi wtedy na samą oś platformy zamiast nie powstać
 wcale.
+
+## budowa/server/internal/core/sesja_konfiguracja_zdolnosci.go
+
+Deklaracja zdolności może pochodzić wyłącznie od adaptera, który tłumaczy
+model konfiguracji na powierzchnię dostawcy. Żaden adapter takiego wykazu
+jeszcze nie wystawia — nie ma ani funkcji wejściowej, ani tablicy odwzorowań
+pole-powierzchnia. Rdzeń oddaje więc deklarację pustą: wykaz obszarów i wykaz
+pól są puste, bo rdzeń nie zna ani jednego rozstrzygnięcia adaptera; pole
+probedAt pozostaje zerowe, bo nic nie zostało sprawdzone, a czas sprawdzenia,
+którego nie było, byłby zapisem czynności niewykonanej; pola channelId
+i accountId pozostają puste, bo nie sprawdzono żadnego kanału ani konta.
+
+Wypełnienie tych wykazów zgadywanką byłoby gorsze od pustki: okno
+konfiguracji pokazałoby korzystającemu z interfejsu, że pole jedzie do
+dostawcy albo że nie jedzie, na podstawie niczego. Pusta prawda jest tu
+jedyną dopuszczalną odpowiedzią, a brak deklaracji niczego nie wstrzymuje —
+zapis konfiguracji idzie dalej.
+
+Identyfikator adaptera jest stałą tego pakietu, bo powierzchnia CLI nie ma
+w drzewie osobnego pakietu — przekład konfiguracji sesji na wejście procesu
+jedzie warstwą wstrzykiwania na drodze tury, w plikach adapter_rozmowa_*.go.
+Transport spoza kanału CLI nie ma w drzewie odpowiednika, więc jego
+identyfikator pozostaje pusty.
+
+Pole unsupported deklaracji zdolności nie jest wypełniane w tym miejscu, bo
+znaczyłoby „dostawca nie ma odpowiednika", a nie „nie zbadano" — te dwa stany
+nie mogą być mylone.

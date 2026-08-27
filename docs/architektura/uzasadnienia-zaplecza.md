@@ -2594,3 +2594,17 @@ po czym filtrować.
 `rozszerzenie_kod` wskazuje pozycję katalogu kodem, nie więzem obcym: pozycja
 żyje w tabeli `rozszerzenie` (migracja 070) własnym cyklem życia i jej
 odinstalowanie nie ma prawa skasować pakietu, z którego powstała.
+## budowa/server/internal/store/migracja_216_workspace_zadania.sql
+Migracja 216 — zadania projektu modułu Workspace.
+
+Zadanie jest jednym bytem trzech widoków huba planowania: pozycją listy,
+kartą tablicy i słupkiem osi czasu. Trzech tabel nie ma, bo trzy tabele
+rozjechałyby się przy pierwszej zmianie stanu wykonanej z innego widoku.
+
+Etykiety i lista kontrolna leżą w kolumnach tego samego wiersza: etykiety
+rozdzielone znakiem nowego wiersza, lista kontrolna zapisem JSON. Osobne
+tabele wiążące dawałyby tu wyłącznie koszt złączeń — żadne okno nie pyta
+o etykietę bez zadania ani o krok bez zadania.
+
+Klucz porządkowy karty jest NAPISEM, nie liczbą: wstawienie karty między dwie
+sąsiednie ma dopisać klucz pośredni, a nie przepisać całą kolumnę.

@@ -1,45 +1,6 @@
--- Migracja 402 — cztery nastawy przesiewu i osi obrazu dostają wiersz
--- w katalogu ustawień, więc Operator ustawi je z okna konfiguracji.
---
--- Klucze `wiedza_model_przesiewu`, `wiedza_katalog_przesiewu`,
--- `wiedza_model_obrazu` i `wiedza_katalog_obrazu` stoją w kodzie od czasu
--- dołożenia przesiewu i osi obrazu (`wiedza/ustawienia.go`), ale wiersza
--- `definicja_ustawienia` nie miały. Zdolność mimo to działa: rozstrzyganie
--- nastawy czyta zapis niezależnie od katalogu definicji
--- (`konfig/rozstrzyganie.go`), więc wartość zapisana wprost w tabeli
--- `ustawienie` dochodzi do silnika. Czego bez wiersza katalogu nie ma, to drogi
--- Operatora: `config.set` odmawia klucza spoza katalogu, a okno konfiguracji
--- wystawia wyłącznie pozycje katalogu. Cztery nastawy były więc ustawialne
--- ręcznym zapisem do bazy i tylko nim.
---
--- Migracji 115 się nie zmienia — jej suma kontrolna stoi w rejestrze `migracja`
--- u każdego, kto rdzeń postawił, a niezgodność sumy wywraca start rdzenia
--- (`store/migracje.go`). Cztery wiersze dokłada więc osobny krok, wzorem tego,
--- jak migracja 401 zmieniła wartości domyślne dwóch nastaw z migracji 115.
---
--- Kategoria, zasięg i oś są te same, co u czterech nastaw migracji 115, i to
--- z tych samych powodów. Kategoria `wiedza`, bo to ten sam silnik. Zasięg
--- wyłącznie globalny, bo wskaźnik znaczenia jest jeden na maszynę: przesiew
--- układający kolejność dwoma różnymi koderami w dwóch oknach dawałby dwie
--- nieporównywalne kolejności tego samego wyniku. Oś wyłącznie `platform`, bo
--- katalog wag i nazwa modelu liczącego lokalnie są własnością maszyny, a nie
--- konta ani kanału modelu.
---
--- Wartości domyślne są kopią stałych `wiedza/ustawienia.go` co do znaku —
--- `ModelPrzesiewuDomyslny`, `ModelObrazuDomyslny` i `katalogNiewskazany`.
--- Rozjazd znaczyłby dwie prawdy o tym, czym rdzeń liczy, zależne od drogi
--- wywołania: rozstrzygacz zasięgu oddaje wartość z tej kolumny, a stała pakietu
--- wchodzi tam, gdzie rozstrzygacza nie ma (`core/adapter_modul_wiedza.go`).
---
--- Oba katalogi wag zostają PUSTE, choć wagi obu modeli leżą na maszynie
--- (`/opt/danaco-modele/reranker`, `/opt/danaco-modele/clip`). Wartość niepusta
--- byłaby tutaj drugą prawdą wobec stałej `katalogNiewskazany`, a
--- `internal/wiedza/` leży poza terenem tej zmiany. Wskazanie wag stojących jest
--- osobnym krokiem, obejmującym zarazem stałą i ten wiersz — dokładnie tak, jak
--- migracja 401 zrobiła to dla osadzarki.
---
--- `ON CONFLICT DO NOTHING` czyni krok idempotentnym i nieszkodliwym na bazie,
--- gdzie te wiersze z jakiegoś powodu już stoją.
+-- Migracja 402 dokłada do katalogu ustawień cztery nastawy przesiewu i osi
+-- obrazu, które kod już obsługiwał, lecz były ustawialne wyłącznie ręcznym
+-- zapisem do bazy.
 
 WITH katalog(klucz, kategoria, nazwa, opis, rodzaj, domyslna, podpowiedz,
              wymaga_restartu, kolejnosc) AS (
@@ -66,7 +27,8 @@ SELECT k.klucz, kat.id, k.nazwa, k.opis, k.rodzaj, k.domyslna, k.podpowiedz,
  WHERE true
 ON CONFLICT(klucz) DO NOTHING;
 
--- ── Dopuszczalne poziomy zasięgu ─────────────────────────────────────────────
+-- Cztery nastawy przesiewu i osi obrazu mają zasięg wyłącznie globalny, ponieważ
+-- wskaźnik znaczenia jest jeden na maszynę, a nie na konto czy kanał modelu.
 INSERT INTO definicja_ustawienia_zasieg (definicja_id, poziom_zasiegu_id)
 SELECT d.id, p.id
   FROM definicja_ustawienia d
@@ -76,7 +38,8 @@ SELECT d.id, p.id
    AND p.kod = 'globalny'
 ON CONFLICT DO NOTHING;
 
--- ── Dopuszczalne osie ────────────────────────────────────────────────────────
+-- Cztery nastawy przesiewu i osi obrazu obowiązują wyłącznie oś platform,
+-- ponieważ katalog wag i nazwa modelu są własnością maszyny, a nie konta.
 INSERT INTO definicja_ustawienia_os (definicja_id, os)
 SELECT d.id, 'platform'
   FROM definicja_ustawienia d

@@ -4358,3 +4358,38 @@ nic, jest kosztem bez skutku.
 
 Sygnał wyciszony nadal się odkłada: wyciszenie wstrzymuje wyłącznie ujawnienie, nie zapis.
 Sito wyciszeń stoi po stronie rdzenia, nie w tym zapytaniu — tu leży wyłącznie zapis i odczyt.
+
+## budowa/server/internal/narzedzia/rozdzielnia.go
+Rozdzielnia nie zna ani protokołu MCP, ani gniazda rdzenia: zna wykaz
+kontraktu, odwzorowanie komend narzędzi i port do rdzenia, więc daje się
+sprawdzić bez procesu po drugiej stronie. Odmowa, komenda nieznana rdzeniowi,
+zerwane gniazdo — każda z tych rzeczy wraca do modelu jako czytelny opis
+błędu narzędzia, model czyta, poprawia i próbuje dalej.
+
+Rola przekazana do NowaRozdzielnia jest parametrem wymaganym, nie doklejką
+z wartością domyślną: zasięg rozstrzyga o tym, co model może zrobić, więc
+każdy, kto rozdzielnię składa, ma powiedzieć wprost, w czyim imieniu ona
+pracuje. Zasięgiem zwykłym jest zasięg okna.
+
+ZEkspertem stoi osobno od konstruktora, a nie jako kolejny jego parametr:
+zasięg eksperta jest jedynym, który potrzebuje wartości, a dokładanie jej
+wszystkim pozostałym kazałoby im podawać pustkę bez znaczenia. Dziennik jest
+tam wymagany, a nie opcjonalny, bo cena zestawu i każdy brak zawężenia mają
+dokądś dojechać; dziennik pusty ucisza je, więc dobór bez dziennika byłby
+dokładnie tą cichą degradacją, przeciw której powstał.
+
+Bez zawężenia dołożenia sesji nie mają czego dołożyć: okno bez eksperta ma
+pełny wykaz, więc każde dołożenie już w nim stoi. Rozstrzygnięcie, czy
+argument dołożeń w ogóle wysłać, należy do strony rdzenia, która wie o oknie
+więcej.
+
+Kontekst w Narzedzia wchodzi parametrem, bo w zasięgu eksperta ta droga pyta
+rdzeń, a pytanie bez kontekstu nie dałoby się przerwać razem z resztą
+procesu; zasięgi pozostałe kontekstu nie tykają.
+
+Narzędzie dołożone przez rolę nie dostaje uzupełnienia okna, i to jest jego
+istota, nie przeoczenie: rozszerzenie okna asystenta służy nastawianiu okna
+docelowego, a podstawienie okna serwera w brakujące pole okna kazałoby
+asystentowi przestawić kanał modelu samemu sobie — dokładnie to, czego zakaz
+trzyma te komendy poza wykazem kontraktu. Okno docelowe model wskazuje
+jawnie, albo rdzeń odmawia.

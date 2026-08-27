@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: droga jednego wywołania — narzędzie → komenda →
-// koperta → rdzeń → wynik.
-//
-// Rozdzielnia nie zna ani protokołu MCP, ani gniazda rdzenia. Zna wykaz
-// kontraktu, odwzorowanie `shared.KomendyNarzedzi` i port `Rdzen`, więc daje
-// się sprawdzić bez procesu po drugiej stronie.
-//
-// Błąd rdzenia wraca treścią. Odmowa, komenda nieznana rdzeniowi,
-// zerwane gniazdo — każda z tych rzeczy wraca do modelu jako czytelny opis
-// błędu narzędzia. Model czyta, poprawia i próbuje dalej; połączenie MCP nie
-// pada ani razu.
+// Plik prowadzi drogę jednego wywołania narzędzia: narzędzie, komenda,
+// koperta, rdzeń, wynik; błąd rdzenia wraca modelowi treścią, nie zrywa
+// połączenia MCP.
 package narzedzia
 
 import (
@@ -27,9 +19,8 @@ import (
 // w drugą. Interfejs stoi po stronie odbiorcy, więc rozdzielnia nie wie, czy po
 // drugiej stronie jest gniazdo, próba, czy cokolwiek innego.
 type Rdzen interface {
-	// Wykonaj oddaje żądanie rdzeniowi i czeka na odpowiedź o tym samym
-	// identyfikatorze. Błąd oznacza brak odpowiedzi, nie odmowę rdzenia —
-	// odmowa przychodzi kopertą z wypełnionym polem błędu.
+	// Wykonaj oddaje żądanie rdzeniowi i czeka na odpowiedź; błąd oznacza brak
+	// odpowiedzi, nie odmowę.
 	Wykonaj(kontekst context.Context, zadanie protocol.Koperta) (protocol.Koperta, error)
 }
 
@@ -37,48 +28,32 @@ type Rdzen interface {
 // żeby rozjazd sygnatur zatrzymał budowanie, a nie proces modelu.
 var _ Rdzen = (*Polaczenie)(nil)
 
-// Rozdzielnia kieruje wywołania narzędzi do rdzenia w zasięgu jednego okna.
+// Rozdzielnia kieruje wywołania narzędzi modelu do rdzenia, w zasięgu jednego
+// okna rozmowy tej platformy.
 type Rozdzielnia struct {
 	rdzen Rdzen
-	// okno jest oknem rozmowy, do którego należy ten serwer narzędzi. Puste
-	// znaczy: uzupełniania nie ma — model podaje okno sam albo rdzeń odmawia.
+	// okno jest oknem rozmowy, do którego należy ten serwer; puste znaczy brak
+	// uzupełniania okna.
 	okno string
-	// zasieg jest rolą okna, w którego imieniu serwer pracuje (`zasieg_roli.go`).
-	// Przychodzi z wpisu MCP ułożonego przez rdzeń i nie zmienia się w czasie
-	// życia procesu — model nie ma czym go przestawić.
+	// zasieg jest rolą okna, w którego imieniu serwer pracuje; nie zmienia się
+	// w czasie życia procesu.
 	zasieg Zasieg
-	// licznik nadaje identyfikatory żądań. Odpowiedzi wiąże się z żądaniami po
-	// identyfikatorze, a ten wystarczy, by był jednoznaczny w obrębie jednego
-	// połączenia — innych połączeń rozdzielnia nie prowadzi.
+	// licznik nadaje identyfikatory żądań, jednoznaczne w obrębie jednego
+	// prowadzonego połączenia.
 	licznik atomic.Uint64
-	// dobor prowadzi zasięg eksperta (`rozdzielnia_ekspert.go`); nil znaczy
-	// zasięg bez eksperta i wtedy ta droga nie rusza ani razu.
+	// dobor prowadzi zasięg eksperta; nil znaczy zasięg bez eksperta, droga
+	// doboru wtedy nie rusza.
 	dobor *doborEksperta
 }
 
-// NowaRozdzielnia wiąże rozdzielnię z rdzeniem, oknem rozmowy i rolą tego okna.
-//
-// Rola jest parametrem wymaganym, nie doklejką z wartością domyślną: zasięg
-// rozstrzyga o tym, co model może zrobić, więc każdy, kto rozdzielnię składa,
-// ma powiedzieć wprost, w czyim imieniu ona pracuje. Zasięgiem zwykłym jest
-// `ZasiegOkna`.
+// NowaRozdzielnia wiąże rozdzielnię z rdzeniem, oknem rozmowy i rolą tego
+// okna; rola jest parametrem wymaganym, nie wartością domyślną.
 func NowaRozdzielnia(rdzen Rdzen, okno string, zasieg Zasieg) *Rozdzielnia {
 	return &Rozdzielnia{rdzen: rdzen, okno: okno, zasieg: zasieg}
 }
 
 // ZEkspertem wiąże rozdzielnię z kodem eksperta nałożonego na okno i włącza
-// dobór narzędzi (`rozdzielnia_ekspert.go`).
-//
-// Osobno od konstruktora, a nie kolejnym jego parametrem: zasięg eksperta jest
-// jedynym, który potrzebuje wartości, a dokładanie jej wszystkim pozostałym
-// kazałoby im podawać pustkę bez znaczenia. Kod pusty albo zasięg inny niż
-// `ZasiegEksperta` nie włącza niczego — rozdzielnia zostaje rozdzielnią, jaką
-// była, co do znaku.
-//
-// Dziennik jest tu wymagany, a nie opcjonalny, bo cena zestawu i każdy brak
-// zawężenia mają dokądś dojechać; dziennik nil ucisza je, więc dobór bez
-// dziennika byłby dokładnie tą cichą degradacją, przeciw której powstał —
-// wywołujący ma powiedzieć wprost, gdzie meldunki idą.
+// dobór narzędzi; kod pusty albo zasięg inny niż eksperta nie włącza niczego.
 func (r *Rozdzielnia) ZEkspertem(kod string, dziennik *log.Logger) *Rozdzielnia {
 	if r.zasieg != ZasiegEksperta || kod == "" {
 		return r
@@ -88,13 +63,8 @@ func (r *Rozdzielnia) ZEkspertem(kod string, dziennik *log.Logger) *Rozdzielnia 
 }
 
 // ZDolozeniamiSesji wnosi doraźne dołożenia sesji — narzędzia dorzucone przez
-// Operatora poza definicją eksperta (`--dolozenia`).
-//
-// Bez zawężenia dołożenia nie mają czego dołożyć: okno bez eksperta ma pełny
-// wykaz, więc każde dołożenie już w nim stoi. Wołanie tej metody poza zasięgiem
-// eksperta nie jest więc błędem, tylko czynnością pustą — rozstrzygnięcie, czy
-// argument w ogóle wysłać, należy do strony rdzenia, która wie o oknie więcej
-// (`core/adapter_rozmowa_zestaw.go` melduje ten przypadek osobno).
+// Operatora poza definicją eksperta; poza zasięgiem eksperta jest czynnością
+// pustą.
 func (r *Rozdzielnia) ZDolozeniamiSesji(nazwy []string) *Rozdzielnia {
 	if r.dobor == nil || len(nazwy) == 0 {
 		return r
@@ -103,14 +73,8 @@ func (r *Rozdzielnia) ZDolozeniamiSesji(nazwy []string) *Rozdzielnia {
 	return r
 }
 
-// Narzedzia zwraca wykaz narzędzi podawany modelowi: wykaz kontraktu wraz z tym,
-// co dokłada rola okna, a w zasięgu eksperta — podzbiór wskazany przez jego
-// definicję. Rozdzielnia niczego nie wymyśla: o rozszerzeniu rozstrzyga `zasieg`
-// ustalony przy uruchomieniu, o zawężeniu — rdzeń zapytany o eksperta.
-//
-// Kontekst wchodzi parametrem, bo w zasięgu eksperta ta droga pyta rdzeń, a
-// pytanie bez kontekstu nie dałoby się przerwać razem z resztą procesu. Zasięgi
-// pozostałe kontekstu nie tykają.
+// Narzedzia zwraca wykaz narzędzi podawany modelowi: wykaz kontraktu wraz
+// z rozszerzeniem roli okna, a w zasięgu eksperta zawężony do jego definicji.
 func (r *Rozdzielnia) Narzedzia(kontekst context.Context) []Narzedzie {
 	wykaz := WykazZasiegu(r.zasieg)
 	if r.dobor == nil {
@@ -130,8 +94,8 @@ func (r *Rozdzielnia) Wywolaj(kontekst context.Context, nazwa string,
 	if !dostepne {
 		return "", odmowaNarzedzia(nazwa)
 	}
-	// Zawężenie ma obowiązywać także przy wywołaniu — inaczej byłoby wyłącznie
-	// oszczędnością żetonów, a nie doborem narzędzi eksperta.
+	// Zawężenie ma obowiązywać także przy wywołaniu, nie tylko przy doborze
+	// wykazu.
 	if r.dobor != nil {
 		if wolno, _ := r.dobor.wolno(nazwa); !wolno {
 			return "", r.dobor.odmowaPozaDoborem(nazwa)
@@ -149,14 +113,7 @@ func (r *Rozdzielnia) Wywolaj(kontekst context.Context, nazwa string,
 }
 
 // rozpoznaj rozstrzyga, czy nazwa jest w zasięgu tego okna, i oddaje komendę
-// wraz z nazwami pól, które wolno uzupełnić oknem serwera.
-//
-// Narzędzie dołożone przez rolę nie dostaje uzupełnienia okna — i to jest jego
-// istota, nie przeoczenie. Rozszerzenie okna asystenta służy nastawianiu okna
-// docelowego; podstawienie okna serwera w brakujące `windowId` kazałoby
-// asystentowi przestawić kanał modelu samemu sobie, czyli zrobić dokładnie to,
-// czego zakaz trzyma te komendy poza wykazem kontraktu. Okno docelowe model
-// wskazuje jawnie albo rdzeń odmawia — i tak ma być.
+// wraz z nazwami pól uzupełnianych oknem serwera.
 func (r *Rozdzielnia) rozpoznaj(nazwa string) (shared.MessageType, []string, bool) {
 	pozycja, wWykazie := deklaracja(nazwa)
 	if komenda, objeta := shared.KomendyNarzedzi[nazwa]; wWykazie && objeta {
@@ -168,7 +125,8 @@ func (r *Rozdzielnia) rozpoznaj(nazwa string) (shared.MessageType, []string, boo
 	return "", nil, false
 }
 
-// koperta pakuje argumenty w kopertę kontraktu {type, id, payload}.
+// koperta pakuje argumenty wywołania w kopertę kontraktu, gotową do wysłania
+// do rdzenia jako żądanie tury.
 func (r *Rozdzielnia) koperta(komenda shared.MessageType, argumenty map[string]any) (protocol.Koperta, error) {
 	identyfikator := "narzedzia-" + strconv.FormatUint(r.licznik.Add(1), 10)
 	zadanie, err := protocol.NowaKoperta(komenda, identyfikator, "", argumenty)
@@ -178,7 +136,8 @@ func (r *Rozdzielnia) koperta(komenda shared.MessageType, argumenty map[string]a
 	return zadanie, nil
 }
 
-// wynikKoperty wyjmuje z odpowiedzi treść dla modelu albo opis odmowy rdzenia.
+// wynikKoperty wyjmuje z odpowiedzi rdzenia treść wyniku gotową dla modelu
+// albo opis odmowy tego rdzenia.
 func wynikKoperty(nazwa string, odpowiedz protocol.Koperta) (string, error) {
 	if odpowiedz.Error != nil {
 		return "", fmt.Errorf("narzędzie %s: %s", nazwa, protocol.Opis(*odpowiedz.Error))
@@ -187,8 +146,8 @@ func wynikKoperty(nazwa string, odpowiedz protocol.Koperta) (string, error) {
 		return "", fmt.Errorf("narzędzie %s: rdzeń odpowiedział stanem %s bez opisu błędu", nazwa, *odpowiedz.Status)
 	}
 	if len(odpowiedz.Payload) == 0 {
-		// Komenda potwierdzona bez treści właściwej. Napis pusty byłby dla modelu
-		// nieodróżnialny od usterki, więc wraca poprawny, pusty obiekt JSON.
+		// Komenda potwierdzona bez treści właściwej; napis pusty byłby
+		// nieodróżnialny od usterki.
 		return "{}", nil
 	}
 	czytelny, err := json.MarshalIndent(json.RawMessage(odpowiedz.Payload), "", "  ")
@@ -198,7 +157,8 @@ func wynikKoperty(nazwa string, odpowiedz protocol.Koperta) (string, error) {
 	return string(czytelny), nil
 }
 
-// nazwyParametrow zwraca nazwy pól treści żądania deklaracji.
+// nazwyParametrow zwraca nazwy pól treści żądania zadeklarowanych w deklaracji
+// narzędzia tego kontraktu.
 func nazwyParametrow(pozycja shared.ToolDeclaration) []string {
 	nazwy := make([]string, 0, len(pozycja.Parameters))
 	for _, parametr := range pozycja.Parameters {

@@ -5171,3 +5171,8 @@ niezależnie od tego, czy polecenie czegokolwiek dokonało. Dlatego sprawdzian n
 tylko o tabele, kolumny i wiersz katalogu okien, czyli o to, po co ta migracja powstała. Sama definicja
 wiersza katalogu okien bez przypięcia do modułu zostawiłaby okno poza zakresem modułu, czyli dokładnie
 tam, gdzie było przed migracją.
+
+## budowa/server/internal/dane/automations_kanwa.go
+
+Notatka i położenie węzła kroku zapisują się osobno, więc każdy zapis dotyka wyłącznie
+swoich kolumn: ustawienie notatki nie przesuwa węzła, a przesunięcie węzła nie kasuje notatki.

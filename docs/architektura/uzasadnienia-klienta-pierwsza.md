@@ -2347,3 +2347,26 @@ z tych warstw nie zna drugiej.
 Moduł nieobjęty tą funkcją również przechodzi przez `politykaModulu` i dostaje
 politykę wprost z własnego profilu, bez kontekstu roboczego. Odjęcie pamięci
 sesyjnej kolejnemu modułowi czyni jego okno ulotnym bez zmiany w tym pliku.
+
+## budowa/klient-poprzedni/src/aod/indeks.ts
+
+Reszta aplikacji zna stąd dwie czynności. `zaczepAod(kanal, opis?)` buduje
+warstwę do osadzenia w powłoce i to ona wnosi pływający awatar widoczny bez
+interakcji. `otworzPowierzchnieAod(kanal, opis?)` otwiera powierzchnię interakcji
+jako rozszerzenie boczne i jest wołana z listwy ustawień.
+
+Warstwa jest jedna na klienta i żyje między otwarciami powierzchni: kolejka
+decyzji dosypuje się ze zdarzeń `progress.changed` oraz `window.state.changed`
+także wtedy, gdy kolumna stoi zwinięta, więc plakietka awatara jest prawdziwa
+jeszcze przed otwarciem powierzchni.
+
+Kanał podaje się przy pierwszym zaczepieniu. Wywołanie z innym kanałem, po
+ponownym połączeniu z rdzeniem, buduje warstwę na nowo, żeby przyszłe komendy
+`aod.*` nie szły przez transport, którego już nie ma.
+
+Powierzchnia nie czeka na rdzeń: odczyty `aod.status.get`, `aod.context.get`
+i `aod.suggestion` dojeżdżają do otwartej kolumny odpowiedzią, a czynności
+`aod.observe.attach`, `aod.observe.detach`, `aod.chat.send` oraz
+`aod.voice.command` jadą z sekcji na żądanie. Warstwa niezaczepiona w powłoce
+osadza się w korzeniu dokumentu, ponieważ pozycja „Always On Display" listwy
+ustawień ma otwierać powierzchnię, a nie odmawiać z powodu kolejności montażu.

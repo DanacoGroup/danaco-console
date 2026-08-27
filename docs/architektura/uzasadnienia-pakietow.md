@@ -3628,3 +3628,20 @@ odpowiedzi na nieznaną komendę kodem błędu walidacji.
 Analiza i jej rekomendacje zapisują się razem albo wcale. Rekomendacja bez
 analizy nie ma faktu, z którego wynika, a analiza z połową rekomendacji
 kłamie o tym, co z niej wypadło. Jedna transakcja zamyka obie możliwości.
+
+## budowa/server/internal/session/okno.go
+
+Normalizacja w funkcji uzupelnijUstawienia obejmuje wszystkie trzy wyliczenia okna, nie tylko rolę.
+Wartość spoza słownika kontraktu, na przykład tryb uprawnień nierozpoznany przez rejestr, trafiłaby
+do rejestru pamięciowego bez przeszkód, ponieważ rejestr taką wartość znosi. Wiersz okna komunikacji
+w bazie już nie: przekład na kolumnę wyliczeniową odmawia zapisu, bo wartość nie należy do słownika
+kontraktu, zapis okna pada, a dziennik rozmowy schodzi całym oknem na bufor pamięci. W takim stanie
+odczyt listy wiadomości pokazuje rozmowę z bufora, natomiast wczytanie i usunięcie historii widzą
+pustkę w bazie, ponieważ okno bez wiersza nie ma historii ani danych do przycięcia retencją. Wartość
+nieznaną normalizacja doprowadza więc do wartości domyślnej, tak samo jak czyni to normalizacja roli
+okna: bez odmowy zapisu, za to z oknem, które da się utrwalić. Słowniki wartości pochodzą z kontraktu,
+nie z literałów wpisanych lokalnie w kodzie.
+## budowa/server/internal/dane/panele.go
+Zapis układu sekcji panelu jest całościowy, nie różnicowy: podane sekcje wyznaczają układ panelu, a czego w żądaniu nie ma, tego po zapisie nie ma w bazie. Wynika to z kontraktu — polecenie zapisu niesie samo pole listy sekcji, bez znacznika czynności, więc jedynym czytelnym znaczeniem listy jest układ docelowy. Zapis różnicowy wymagałby, żeby klient wiedział, co w bazie leży teraz; wtedy dwa okna przestawiające ten sam panel rozjechałyby układ, bo każde dopisywałoby swoje do cudzego stanu. Skasowanie starego układu i wpisanie nowego idzie jedną transakcją, bo przerwane w połowie zostawiłyby panel bez sekcji, nieodróżnialny od panelu nigdy nieustawianego. Kolejność nadaje ten plik, nie wołający: baza pilnuje wyłącznie dolnej granicy numeru, a numery 1..N nanosi zapis sekcji, żeby wykaz czytany po numerze porządkowym był tym samym, co wykaz czytany po miejscu na liście.
+
+Odczyt po zapisie idzie po zamknięciu transakcji i po opadnięciu zapisów zbiegłych w czasie: układ obowiązujący to stan, który zastanie następny czytelnik. Dwa okna przestawiające ten sam panel dostają dzięki temu tę samą treść, więc odpowiedź niepodobna do żądania znaczy, że cudzy zapis wszedł po naszym. Licznik zapisów w toku pozwala odczytać układ dopiero wtedy, gdy zapisy zbiegłe w czasie opadły; czekanie ma kres, bo panel przestawiany bez ustanku nie może wstrzymać odpowiedzi w nieskończoność, a odczyt po upływie kresu jest nadal odczytem z nośnika.

@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: jeden proces terminala widziany od strony jego cyklu
-// życia — migawka stanu, domknięcie wynikiem, zakończenie sygnałem i zwolnienie
-// uchwytów systemowych.
-//
-// Stan procesu czytają trzy wątki naraz: obsługiwacz komendy, pompa wyjścia
-// i obserwator zakończenia. Dlatego każdy odczyt idzie migawką pod zamkiem,
-// a nie wprost po polach — inaczej Process Monitor pokazywałby stan wpisany
-// w połowie.
+// Odpowiedzialność pliku: jeden proces terminala widziany od strony jego cyklu życia — migawka stanu, domknięcie wynikiem, zakończenie sygnałem, zwolnienie uchwytów.
 package core
 
 import (
@@ -14,7 +7,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Migawka oddaje stan procesu w postaci odpornej na równoległą zmianę.
+// Migawka oddaje stan procesu w postaci odpornej na równoległą zmianę, czytaną trzema wątkami naraz pod zamkiem.
 func (p *procesTerminala) Migawka() (shared.TerminalProcessStatus, *int, time.Time) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -38,12 +31,7 @@ func (p *procesTerminala) Domknij(stan shared.TerminalProcessStatus, kodWyjscia 
 	return true
 }
 
-// Zakoncz kończy proces. Sygnał wymuszony obejmuje całe drzewo potomstwa
-// jednym uchwytem systemowym; sygnał łagodny kończy sam proces polecenia
-// i zostawia jego potomstwo przy życiu.
-//
-// Rozróżnienie nie odwzorowuje pary SIGTERM/SIGKILL, ponieważ program pracuje
-// także na Windows, gdzie sygnału łagodnego dla obcego procesu nie ma.
+// Zakoncz kończy proces: sygnał wymuszony obejmuje całe drzewo potomstwa jednym uchwytem, sygnał łagodny kończy sam proces polecenia.
 func (p *procesTerminala) Zakoncz(wymuszony bool) error {
 	if wymuszony {
 		return p.drzewo.Ubij()
@@ -54,7 +42,7 @@ func (p *procesTerminala) Zakoncz(wymuszony bool) error {
 	return p.uchwyt.Ubij()
 }
 
-// Zwolnij oddaje uchwyty systemowe po zakończeniu procesu.
+// Zwolnij oddaje uchwyty systemowe po zakończeniu procesu, zamykając zasoby powiązane z jego cyklem życia.
 func (p *procesTerminala) Zwolnij() {
 	p.drzewo.Zwolnij()
 }

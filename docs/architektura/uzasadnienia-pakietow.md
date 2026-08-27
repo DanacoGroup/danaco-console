@@ -3414,3 +3414,6 @@ rozmawia, a adapter mówi, co oddaje.
 
 ## budowa/server/internal/dane/ustawienia_osi.go
 Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość, oś mówi, dla czego — dla platformy, dla modelu albo dla konta. Wersje metod bez osi opisują oś platformy i wywołują dokładnie ten sam kod, więc rozstrzyganie ma jedną implementację, nie dwie. Kolejność osi i ich pierwszeństwo trzyma pakiet konfiguracji rdzenia. Tabela os_zasiegu jest wyłącznie więzem klucza obcego dla kolumny ustawienie.os.
+
+## budowa/server/internal/dane/developer_odczyt.go
+Limit wykazu wchodzi zapytaniem jako parametr przygotowanego polecenia, nie sklejaniem tekstu SQL. Wartość niedodatnia oznacza wykaz pełny dzięki wyrażeniu warunkowemu w zapytaniu, więc jedno przygotowane polecenie obsługuje oba przypadki bez rozgałęzienia w kodzie, a liczba z zewnątrz nigdy nie trafia do treści zapytania.

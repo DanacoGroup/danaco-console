@@ -1,30 +1,6 @@
-// Odpowiedzialność pliku: JEDEN PRZEŁĄCZNIK „pokaż wszystko, co zrobił model" —
-// wykaz wszystkich zmian wykonawcy wraz z licznikiem (`studio.model.changes.list`),
-// skakanie po nich (`.navigate`) oraz cofnięcie wszystkich albo wybranych
-// Z ZACHOWANIEM zmian Operatora (`.revert`).
-//
-// Właściciel oznaczył to wymaganie jako WAŻNE i nazwał je swoim głównym
-// narzędziem kontroli nad pracą modelu w dokumencie.
-//
-// ── Dlaczego zmiany postaci liczą się tak samo jak zmiany treści ─────────────
-// Model, który przestawił krój albo wcięcie, ma być widoczny tak samo jak ten,
-// który dopisał akapit. Zmiana postaci bez zmiany liter NIE MOŻE być
-// niewidzialna — dlatego rachunek bierze zmiany śledzone rodzaju
-// `formatowanie` na równi z `wstawienie` i `usuniecie`, a wykaz oddaje też
-// czynności dziennika autora `model`, bo tam stoi całe drzewo postaci.
-//
-// ── Dlaczego rozbicie idzie na KONKRETNEGO wykonawcę, nie na „model" ─────────
-// Agentów Operator zakłada w module Agents dowolnie wielu i dwóch może pracować
-// nad jednym dokumentem naraz. Przełącznik pokazujący ich jako jednego byłby
-// bezużyteczny właśnie wtedy, kiedy jest najbardziej potrzebny. Dlatego
-// odpowiedź niesie `byAgent` — rozbicie wedle kodu agenta i podagenta.
-//
-// ── Dlaczego cofnięcie NIE jest przywróceniem wersji sprzed pracy modelu ─────
-// Wymaganie mówi wprost: dokument ma wrócić do stanu sprzed pracy modelu
-// Z ZACHOWANIEM zmian Operatora naniesionych w tym czasie. Przywrócenie wersji
-// skasowałoby pracę Operatora. Dlatego cofa się POJEDYNCZE zmiany śledzone
-// autora `model` — od końca dokumentu, bo zakresy liczone są w treści sprzed
-// decyzji — i pojedyncze czynności dziennika autora `model`.
+// Odpowiedzialność pliku: JEDEN PRZEŁĄCZNIK pokaż wszystko, co zrobił
+// model — wykaz zmian wykonawcy, skakanie po nich i cofnięcie
+// Z ZACHOWANIEM zmian Operatora.
 package core
 
 import (
@@ -38,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// ZmianyModelu obsługuje `studio.model.changes.list`.
+// ZmianyModelu obsługuje studio.model.changes.list, oddając wykaz
+// wszystkich zmian wykonawcy wraz z licznikiem otwartych.
 func (a *adapterStudia) ZmianyModelu(ctx context.Context,
 	z shared.StudioModelChangesListRequest) (shared.StudioModelChangesListResponse, error) {
 
@@ -104,8 +81,8 @@ func (a *adapterStudia) ZmianyModelu(ctx context.Context,
 		zestawienie.ByAgent = append(zestawienie.ByAgent, *liczniki[klucz])
 	}
 
-	// Czynności dziennika autora `model` — po nich widać zmiany POSTACI, które
-	// nie zostawiły śladu w literach, i po nich cofa się je pojedynczo.
+	// Czynności dziennika autora model — po nich widać zmiany POSTACI bez
+	// śladu w literach.
 	czynnosci, err := skladnica.CzynnosciDokumentu(ctx, dokument.ID)
 	if err != nil {
 		return shared.StudioModelChangesListResponse{}, bladStudio(err)
@@ -130,8 +107,8 @@ func (a *adapterStudia) ZmianyModelu(ctx context.Context,
 		zestawienie.Actions = append(zestawienie.Actions, dziennikZlozCzynnosc(czynnosc))
 	}
 
-	// Spięcia wykonawców o ten sam fragment należą do tego samego obrazu: Operator
-	// patrzący na pracę modelu ma widzieć także to, czyja zmiana została odłożona.
+	// Spięcia wykonawców o ten sam fragment: Operator ma widzieć, czyja
+	// zmiana została odłożona.
 	spiecia, err := skladnica.SpieciaWykonawcow(ctx, dokument.ID)
 	if err != nil {
 		return shared.StudioModelChangesListResponse{}, bladStudio(err)
@@ -142,10 +119,8 @@ func (a *adapterStudia) ZmianyModelu(ctx context.Context,
 	return shared.StudioModelChangesListResponse{Summary: zestawienie}, nil
 }
 
-// PrzeskocDoZmianyModelu obsługuje `studio.model.changes.navigate`.
-//
-// Kolejność jest kolejnością W TREŚCI, nie w czasie: „następna zmiana modelu"
-// znaczy następna, do której okno ma przewinąć, a nie następna zapisana.
+// PrzeskocDoZmianyModelu obsługuje studio.model.changes.navigate; kolejność
+// jest kolejnością W TREŚCI, nie w czasie.
 func (a *adapterStudia) PrzeskocDoZmianyModelu(ctx context.Context,
 	z shared.StudioModelChangesNavigateRequest) (shared.StudioModelChangesNavigateResponse, error) {
 
@@ -170,10 +145,8 @@ func (a *adapterStudia) PrzeskocDoZmianyModelu(ctx context.Context,
 	}
 	odpowiedz := shared.StudioModelChangesNavigateResponse{Total: len(wybrane)}
 	if len(wybrane) == 0 {
-		// Wykaz pusty NIE jest brakiem funkcji: to prawdziwa odpowiedź na pytanie
-		// „gdzie następna zmiana modelu" w dokumencie, w którym model nie pracował.
-		// Licznik zero mówi to wprost, a `change` pozostaje pusty z zamysłem
-		// kontraktu („brak znaczy koniec wykazu").
+		// Wykaz pusty NIE jest brakiem funkcji: to prawdziwa odpowiedź, gdy
+		// model nie pracował w dokumencie.
 		return odpowiedz, nil
 	}
 	od := 0
@@ -202,7 +175,8 @@ func (a *adapterStudia) PrzeskocDoZmianyModelu(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// CofnijZmianyModelu obsługuje `studio.model.changes.revert`.
+// CofnijZmianyModelu obsługuje studio.model.changes.revert, cofając
+// zmiany wykonawcy Z ZACHOWANIEM zmian Operatora.
 func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 	z shared.StudioModelChangesRevertRequest) (shared.StudioModelChangesRevertResponse, error) {
 
@@ -254,8 +228,8 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 				" nie stoi ani jedna nierozstrzygnięta zmiana modelu — nie ma czego cofnąć"))
 	}
 
-	// Kopia przed czynnością nieodwracalną. Wymóg wymienia ją wprost dla
-	// przyjęcia i cofnięcia wszystkich zmian modelu.
+	// Kopia przed czynnością nieodwracalną, wymagana dla przyjęcia
+	// i cofnięcia wszystkich zmian modelu.
 	odpowiedz := shared.StudioModelChangesRevertResponse{}
 	if z.CreateBackup == nil || *z.CreateBackup {
 		kopia, err := a.kopiaPrzedCzynnoscia(ctx, stan.dokument,
@@ -274,7 +248,7 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 	for _, zmiana := range wybrane {
 		if zmiana.Rodzaj == shared.StudioChangeKindFormatowanie {
 			// Zmiana POSTACI nie ma czego zdjąć z liter — cofa się ją wpisem
-			// dziennika, w którym stoi całe drzewo sprzed czynności.
+			// dziennika sprzed czynności.
 			if zmiana.CzynnoscKod != nil && *zmiana.CzynnoscKod != "" {
 				czynnosciDoCofniecia[*zmiana.CzynnoscKod] = true
 			} else {
@@ -302,8 +276,8 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 		return shared.StudioModelChangesRevertResponse{}, err
 	}
 
-	// Czynności postaci cofa dziennik — tą samą drogą, którą cofa je Operator
-	// pojedynczo. Drugi rachunek cofania postaci rozjechałby się z tamtym.
+	// Czynności postaci cofa dziennik — tą samą drogą, którą cofa je
+	// Operator pojedynczo.
 	if len(czynnosciDoCofniecia) > 0 {
 		kody := make([]string, 0, len(czynnosciDoCofniecia))
 		for kod := range czynnosciDoCofniecia {
@@ -314,10 +288,8 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 			DocumentId: stan.dokument.Kod, ActionIds: kody, CreateVersion: &nieprawda,
 		})
 		if err != nil {
-			// Odmowa dziennika NIE przewraca całego cofnięcia: zmiany treści już
-			// weszły i przemilczenie tego byłoby nieprawdą o dokumencie. Powód
-			// odmowy wchodzi bilansem, bo to jest jedyne miejsce, w którym
-			// Operator go zobaczy.
+			// Odmowa dziennika NIE przewraca cofnięcia: zmiany treści już
+			// weszły, milczenie byłoby nieprawdą.
 			bilans.Skipped = append(bilans.Skipped, shared.StudioSkippedItem{
 				Reason: "czynności postaci nie dały się cofnąć",
 				Detail: kontrolaWskaznikTekstu(err.Error()),
@@ -331,8 +303,8 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 		}
 	}
 
-	// Ile zmian OPERATORA zachowano — to jest miara tego, że cofnięcie nie było
-	// przywróceniem wersji. Liczy się je PO cofnięciu, z bazy.
+	// Ile zmian OPERATORA zachowano — miara, że cofnięcie nie było
+	// przywróceniem wersji.
 	zachowane := 0
 	wszystkieZmiany, err := skladnica.ZmianyWykonawcow(ctx, stan.dokument.ID)
 	if err != nil {
@@ -368,11 +340,8 @@ func (a *adapterStudia) CofnijZmianyModelu(ctx context.Context,
 
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
-// zmianyModeluWybierz przesiewa zmiany śledzone dokumentu do zmian WYKONAWCY.
-//
-// Jedna droga wyboru dla wykazu, skakania i cofania: trzy kopie tego przesiewu
-// rozjechałyby się przy pierwszej poprawce i licznik przy przełączniku
-// przestałby zgadzać się z tym, po czym Operator skacze.
+// zmianyModeluWybierz przesiewa zmiany śledzone dokumentu do zmian
+// WYKONAWCY; jedna droga wyboru dla wykazu, skakania i cofania.
 func (a *adapterStudia) zmianyModeluWybierz(ctx context.Context, skladnica KontrolaPracyStudia,
 	dokumentID int64, zRozstrzygnietymi, tylkoPostac bool,
 	agentKod, podagentKod *string) ([]dane.ZmianaWykonawcyStudia, error) {
@@ -406,7 +375,7 @@ func (a *adapterStudia) zmianyModeluWybierz(ctx context.Context, skladnica Kontr
 }
 
 // zmianyModeluZloz składa zmianę śledzoną kontraktu z wiersza niosącego
-// tożsamość wykonawcy.
+// tożsamość wykonawcy, gotową do odpowiedzi.
 func zmianyModeluZloz(wiersz dane.ZmianaWykonawcyStudia) shared.StudioTrackedChange {
 	return shared.StudioTrackedChange{
 		Id:                 wiersz.Kod,
@@ -426,7 +395,8 @@ func zmianyModeluZloz(wiersz dane.ZmianaWykonawcyStudia) shared.StudioTrackedCha
 	}
 }
 
-// zmianyModeluAktor składa tożsamość wykonawcy z wiersza zmiany.
+// zmianyModeluAktor składa tożsamość wykonawcy z wiersza zmiany, rozbijając
+// ją na kod agenta i podagenta.
 func zmianyModeluAktor(wiersz dane.ZmianaWykonawcyStudia) shared.StudioActor {
 	return shared.StudioActor{
 		Kind:         shared.StudioAuthor(wiersz.Autor),
@@ -437,12 +407,8 @@ func zmianyModeluAktor(wiersz dane.ZmianaWykonawcyStudia) shared.StudioActor {
 	}
 }
 
-// zmianyModeluStempluj dopisuje do zmiany śledzonej tożsamość wykonawcy i wpis
-// dziennika, którym da się ją cofnąć pojedynczo.
-//
-// Wołane przez czynności TEGO odcinka, które odkładają zmianę śledzoną. Bez
-// stempla przełącznik pokazywałby dwóch agentów jako jednego, a cofnięcie zmiany
-// postaci nie miałoby wskazania na drzewo sprzed czynności.
+// zmianyModeluStempluj dopisuje do zmiany śledzonej tożsamość wykonawcy
+// i wpis dziennika, którym da się ją cofnąć pojedynczo.
 func (a *adapterStudia) zmianyModeluStempluj(ctx context.Context,
 	zmiana *shared.StudioTrackedChange, wykonawca kontrolaWykonawca, czynnoscKod *string) error {
 

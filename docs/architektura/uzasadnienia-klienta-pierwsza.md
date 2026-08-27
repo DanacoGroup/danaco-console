@@ -1599,3 +1599,13 @@ nadaje go osobno w zdarzeniu i osobno w odpowiedzi; doklejenie czasu sprawiłoby
 
 Plik nie zna ani widoku, ani kanału. Niesie sam przekład pól okna na wartości
 porównywalne oraz na zdania przeznaczone dla czytającego.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/niepowodzenie-odczytu.ts
+
+Wynik oznaczony jako nieudany powstaje w warstwie protokołu na więcej niż jeden sposób, a tylko jeden z nich jest odmową rdzenia. Pierwsza droga to odmowa rdzenia, czyli koperta ze statusem błędu i opisem błędu z kontraktu. Druga droga to odpowiedź nieczytelna: rdzeń odpowiedział powodzeniem, lecz treść nie ma kształtu przewidzianego kontraktem, więc sprawdzanie kształtu odpowiedzi zamienia ją na niepowodzenie z kodem nieudanej walidacji.
+
+Nazwanie odpowiedzi nieczytelnej odmową byłoby oskarżeniem rdzenia o czyn, którego nie popełnił, ponieważ rdzeń odpowiedział i odpowiedział powodzeniem, a nie zrozumiał go klient. Okno nie ma prawa twierdzić o braku, którego rdzeń nie orzekł, tak samo jak nie ma prawa zamienić odmowy w pustkę.
+
+Stan odpowiedzi udanej bez treści pełni rolę straży, a nie drogi osiągalnej w obecnym układzie. Wynik cząstkowy oddaje niepowodzenie bez pola błędu, gdy odpowiedź jest udana, lecz pusta, jednak do przeniesienia taka odpowiedź nie dochodzi, bo sprawdzanie kształtu przechwytuje ją wcześniej i okno mówi wówczas zdanie o odpowiedzi nieczytelnej. Stan zostaje w słowniku na wypadek zmiany warstwy protokołu.
+
+Zdania stoją w słowniku, a nie w oknach, z tego samego powodu, dla którego stan treści stoi w osobnym komponencie: cztery okna mówiące o tej samej ciszy czterema różnymi zdaniami rozjeżdżają się przy pierwszej poprawce.

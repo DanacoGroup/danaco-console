@@ -3959,3 +3959,32 @@ nie blokuje uruchomienia.
 Czekanie nie rusza uchwytów oddawanych przez zwolnienie, więc wolno je prowadzić równolegle z ubiciem:
 obserwator obudzi się wtedy, gdy ubicie zrobi swoje. Na Windows czekanie oznacza oczekiwanie na uchwyt
 procesu, a na systemach uniksowych odpytywanie sygnałem zerowym.
+
+## budowa/server/internal/nadajnik/nadajnik.go
+Pakiet wysyła dokładnie dwa listy: potwierdzenie adresu przy rejestracji
+i drogę odzyskania konta, żadnych innych. Różni się od modułu poczty, który
+jest klientem skrzynki Operatora: czyta jego listy, wysyła w jego imieniu
+i odkłada kopię w jego folderze wysłanych. Nadajnik nadaje w imieniu platformy,
+do Operatora, i kopii nigdzie nie odkłada — list systemowy w folderze wysłane
+Operatora byłby śladem czynności, której on nie wykonał. Stąd osobne
+poświadczenie i osobny host: konto nadawcze platformy nie jest skrzynką
+Operatora i nie wolno ich mieszać. Gdyby aplikacja pisała jego kontem, utrata
+dostępu do skrzynki odcinałaby drogę odzyskania konta, dokładnie wtedy, gdy
+jest potrzebna.
+
+List niesie drogę potwierdzenia, nie hasło: platforma nie zna hasła w postaci
+jawnej i nigdy go nie odsyła. Wysyłka SMTP jedzie biblioteką standardową, bez
+dodatkowej zależności.
+
+Sekret konta nadawczego przychodzi z sejfu poświadczeń, a pakiet traktuje go
+jako nieprzezroczysty napis: nie zapisuje go, nie loguje i nie umieszcza
+w treści listu.
+
+Brak konta nadawczego nie jest usterką do zgłoszenia w połowie rejestracji —
+to stan, o którym warstwa wyżej musi wiedzieć, zanim założy konto i obieca
+list.
+
+Uwierzytelnienie w rozmowie SMTP jest warunkowe: serwer dostawcy zawsze go
+żąda, ale przekaźnik na tej samej maszynie często nie ogłasza go wcale —
+wpychanie mu wtedy poświadczenia kończy się odmową przy komendzie, która bez
+uwierzytelnienia by przeszła.

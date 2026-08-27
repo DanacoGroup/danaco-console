@@ -2003,3 +2003,5 @@ uruchamiania — w jedno zdanie mieszczące się w wymaganej długości nagłów
 Nagłówek skryptu połączono w jedno zdanie mieszczące cel i sposób działania;
 przykłady wywołania usunięto z nagłówka, ponieważ powtarzają treść widoczną
 w komunikacie końcowym skryptu i w opisie flagi zatrzymania.
+## budowa/server/internal/store/migracja_099_wyzwalacz_poczty.sql
+Odbiór listu uruchamia automatyki dwiema drogami jednocześnie: startuje bieg każdej czynnej automatyki z wyzwalaczem rodzaju mail od początku oraz doręcza sygnał mail z kodem skrzynki silnikowi wybudzeń, wznawiając bieg zawieszony krokiem oczekiwania. Wyrażenie wyzwalacza mail wskazuje skrzynkę: kod skrzynki pocztowej albo gwiazdkę oznaczającą każdą skrzynkę. Ponieważ zapis harmonogramu pomija wyzwalacze z pustym wyrażeniem, kontrakt „każda skrzynka" zapisuje się jako gwiazdka, nie jako pole puste. Na tabelę wyzwalacz_automatyki nie wskazuje żaden klucz obcy, więc przebudowa obejmuje wyłącznie tę jedną tabelę.

@@ -1,5 +1,5 @@
-/* ============================================================================
-   KREATOR INSTALACJI — montaż okna
+/* Moduł montażu składa okno kreatora instalacji z belki, korpusu z szyną kroków i płótnem ekranów, pasa działań oraz okien dialogowych.
+
 
    Składa okno z bryły rodziny `.dn-kreator-*` i ze składników atomowych:
    belka, korpus (szyna kroków + płótno z sześcioma ekranami), pas działań
@@ -9,8 +9,7 @@
    Kolejność jest wiążąca: katalog treści musi być wczytany, zanim cokolwiek
    powstanie, bo składnik pyta o łańcuch w chwili budowania.
 
-       DanacoKreator.zamontuj(korzen) → Promise
-   ============================================================================ */
+       DanacoKreator.zamontuj(korzen) → Promise */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

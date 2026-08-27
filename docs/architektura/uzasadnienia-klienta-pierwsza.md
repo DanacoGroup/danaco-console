@@ -3115,3 +3115,16 @@ wskaźnikiem.
 
 Treść ostrzeżenia liczy się z nazwy maszyny podanej w punkcie dostępu, dlatego
 nanoszenie nowego punktu przelicza je od nowa.
+
+## budowa/klient-poprzedni/src/modele/rodzaje-kont.ts
+
+Plik nie wymienia żadnego dostawcy. Dostawca jest w kontrakcie wartością danych,
+a nie typem kodu, i wpisuje się go w polu tekstowym formularza konta. Rodzaj
+konta pozostaje natomiast wyliczeniem kontraktu, więc jego wartości pochodzą
+wyłącznie ze stałych `AccountKind`.
+
+Rodzaj spoza kontraktu nie gaśnie — nazwa gotowa do wydruku pokazuje wtedy
+własny kod wartości, żeby było widać, co przyszło z rdzenia. Ta sama zasada
+obowiązuje kontrolkę wyboru: napis pusty znaczy brak ograniczenia, a napis
+spoza kontraktu również, ponieważ zawężenie wykazu do wartości, której rdzeń nie
+zna, dałoby wykaz pusty bez powodu.

@@ -440,6 +440,6 @@ Odnośnik potwierdzenia z listu wprowadza krok drugi rejestracji i pozwala
 z niego wyjść. Bez tego odnośnika krok potwierdzenia prowadziłby wyłącznie
 z udanej rejestracji w tym samym oknie; odświeżenie strony między listem
 a przepisaniem drogi zostawiałoby Operatora przed formularzem wejścia bez
-żadnej drogi dalej, ponieważ rejestracja odmawia wtedy kodem `conflict",
+żadnej drogi dalej, ponieważ rejestracja odmawia wtedy kodem `conflict`,
 a logowanie oczekiwaniem na potwierdzenie adresu. To samo dotyczy listu
 odczytanego na innej maszynie.

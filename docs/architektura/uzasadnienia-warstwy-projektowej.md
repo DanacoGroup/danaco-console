@@ -467,3 +467,18 @@ niezależnie od kolejności arkuszy.
 Kolumna centrum powiadomień jest regulowana wyłącznie na szerokość. Plik nie
 zna ani jednej barwy zapisanej wprost: wszystko pochodzi z żetonów motywu,
 a każdy selektor zaczyna się od przedrostka po-.
+
+## budowa/klient-poprzedni/src/powloka/powloka.css
+Wygląd każdego z czterech pasów powłoki niesie własny arkusz obok modułu,
+który go buduje: pasek górny, karty sesji, nawigacja modułów i obszar
+roboczy mają osobne arkusze. Ten arkusz wciąga sam moduł powłoki, więc
+trafia do pakietu razem z nim; wszystkie barwy, stopnie pisma, odstępy,
+promienie i czasy pochodzą z żetonów motywu, a wymiary układu są
+wielokrotnością czterech pikseli. Szerokość pełnej kolumny nawigacji niesie
+system wizualny; zwężony wariant jest właściwością samej powłoki — system
+nazywa zachowanie (nawigacja schodzi do ikon), ale szerokości szyny ikon nie
+ustala. Próg zawężenia jest punktem łamania w2 systemu wizualnego, tym
+samym, przy którym system nazywa zwinięcie bocznej nawigacji do ikon.
+Wartość stoi tu liczbą, ponieważ zapytanie medialne nie czyta zmiennych
+własnych; żeton progu w arkuszu wymiarów pozostaje jej jedynym źródłem
+i musi się z nią zgadzać.

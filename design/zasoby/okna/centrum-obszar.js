@@ -9,7 +9,7 @@
   function zbudujUchwyt(panel, strona, zmienna, minSzer, maxSzer) {
     if (!panel) { return; }
     var u = D.createElement('span');
-    u.className = 'cd-uchwyt';
+    u.className = 'dn-uchwyt';
     u.setAttribute('role', 'separator');
     u.setAttribute('aria-orientation', 'vertical');
     u.setAttribute('tabindex', '0');

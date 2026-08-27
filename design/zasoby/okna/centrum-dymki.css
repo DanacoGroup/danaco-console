@@ -31,8 +31,3 @@
 .cd-strona .dn-obszar-pasek .dn-obszar-sterowanie .dn-etykietka[data-dymek='tak']:focus-visible::after {
   transform: translate(-50%, 0);
 }
-
-.cd-strona [data-etykietka]:not([data-dymek='tak']):hover::after,
-.cd-strona [data-etykietka]:not([data-dymek='tak']):focus-visible::after {
-  opacity: 0;
-}

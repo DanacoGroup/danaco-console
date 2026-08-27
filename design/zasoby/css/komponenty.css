@@ -1248,6 +1248,20 @@ label.dn-pasek-szukaj:focus-within {
   background: var(--dn-kropka);
 }
 .dn-boczna-pozycja > svg { width: var(--dn-wym-ikona); height: var(--dn-wym-ikona); flex: none; }
+/* Zwarta — ta sama pozycja w stopce panelu, gdzie wiersz nie jest nawigacją
+   główną: niższa, o stopień mniejsze pismo, bez znacznika bieżącości. */
+.dn-boczna-pozycja--zwarta {
+  min-height: 0;
+  padding: var(--dn-od-2) var(--dn-od-3);
+  font-size: var(--dn-fs-sm);
+  font-weight: var(--dn-fw-normalna);
+  text-decoration: none;
+}
+.dn-boczna-pozycja--zwarta::before { content: none; }
+.dn-boczna-pozycja--zwarta:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
+}
 
 /* ==========================================================================
    WPIS OKNA KOMUNIKACJI — dziewięciu nadawców (rozstrzygnięcie projektowe)
@@ -1441,6 +1455,87 @@ label.dn-pasek-szukaj:focus-within {
   font-size: var(--dn-fs-xs);
 }
 .dn-krok-znak > svg { width: 12px; height: 12px; }
+
+/* ==========================================================================
+   SAMOUCZEK — numerowany wykaz kroków w panelu
+   --------------------------------------------------------------------------
+   Różny od `.dn-kolejka` z `.dn-krok`: kolejka pokazuje, co maszyna ROBI teraz,
+   samouczek mówi, co ma zrobić człowiek. Stąd numer w medalionie sygnału
+   zamiast znaku stanu i dwa wiersze treści zamiast jednego z miarą.
+   Rodzina stała w arkuszu Centrum dowodzenia jako `.cd-nauka-*`.
+   ========================================================================== */
+
+.dn-nauka {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-4);
+  padding: var(--dn-od-4);
+  font-size: var(--dn-fs-sm);
+  line-height: var(--dn-lh-luzny);
+}
+.dn-nauka-wstep { margin: 0; color: var(--dn-tekst-2); }
+.dn-nauka-kroki {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dn-nauka-kroki > li {
+  display: grid;
+  grid-template-columns: var(--dn-wym-awatar-sm) minmax(0, 1fr);
+  gap: var(--dn-od-1) var(--dn-od-3);
+  align-items: start;
+}
+.dn-nauka-kroki > li > b { color: var(--dn-tekst); }
+.dn-nauka-kroki > li > span:last-child { grid-column: 2; color: var(--dn-tekst-2); }
+.dn-nauka-numer {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-content: center;
+  width: var(--dn-wym-awatar-sm);
+  height: var(--dn-wym-awatar-sm);
+  border: 1px solid var(--dn-sygnal-obrys);
+  border-radius: var(--dn-r-pill);
+  background: var(--dn-sygnal-tlo);
+  color: var(--dn-sygnal);
+  font-family: var(--dn-ff-mono);
+  font-size: var(--dn-fs-xs);
+}
+.dn-nauka-nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--dn-od-2);
+  margin: 0;
+  padding-top: var(--dn-od-3);
+  border-top: 1px solid var(--dn-obrys-subtelny);
+  /* Stopień 12 px nie przechodzi progu na `--dn-tekst-3`. */
+  color: var(--dn-tekst-2);
+  font-size: var(--dn-fs-xs);
+}
+.dn-nauka-nota > svg { flex: none; }
+
+/* Uchwyt zmiany szerokości panelu — pasek chwytu między panelami. Barwę
+   przyjmuje dopiero pod wskaźnikiem i w trakcie ciągnięcia; w spoczynku jest
+   niewidoczny, bo obszar chwytu ma być większy od tego, co widać. */
+.dn-uchwyt {
+  flex: none;
+  position: relative;
+  z-index: 3;
+  width: 6px;
+  margin: 0 calc(var(--dn-od-1) * -1);
+  border-radius: var(--dn-r-pill);
+  background: transparent;
+  cursor: col-resize;
+  transition: background-color var(--dn-czas-1) var(--dn-ease);
+}
+.dn-uchwyt:hover,
+.dn-uchwyt[data-ciagniety='tak'] { background: var(--dn-sygnal-500); }
+.dn-uchwyt:focus-visible {
+  outline: var(--dn-wym-fokus) solid var(--dn-fokus);
+  outline-offset: 1px;
+}
 /* Opis pod pozycją kolejki — mówi, co dzieje się z komputerem na tym etapie.
    Wchodzi w drugi wiersz pozycji, pod nazwą; znak i stan zostają w pierwszym,
    więc kolumna znaków i kolumna stanów biegną nieprzerwanie przez cały wykaz. */
@@ -1892,6 +1987,8 @@ label.dn-pasek-szukaj:focus-within {
 .dn-ik--lg { width: var(--dn-wym-ikona-lg); height: var(--dn-wym-ikona-lg); flex: none; }
 /* Znak w barwie sygnalu — podpowiedz, wskazanie, znacznik pierwszego wejscia. */
 .dn-ik--sygnal { color: var(--dn-sygnal); }
+/* Przygaszona — znak towarzyszący, nie nazywający: odsyłacz zewnętrzny, strzałka. */
+.dn-ik--przygaszona { color: var(--dn-tekst-2); }
 /* Cichy — przycisk ikonowy, który czeka: widoczny, ale ustępujący, dopóki
    nie najedzie się na jego kartę albo na niego samego. Okna malowały to
    własnymi regułami po jednej na każde miejsce użycia. */
@@ -2453,6 +2550,12 @@ label.dn-pasek-szukaj:focus-within {
 .dn-godlo--na-plotnie { color: var(--dn-tekst); }
 .dn-godlo--sygnal { color: var(--dn-sygnal); }
 .dn-godlo .kropka { fill: var(--dn-sygnal-500); }
+/* Tętno kropki godła — jeden wspólny puls sygnału platformy. Reguła stała
+   w arkuszach okien; gaśnie żetonem czasu przy ograniczonym ruchu. */
+.dn-godlo--tetno .kropka:not(.kropka--konsola),
+.dn-belka-marka .kropka {
+  animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
 
 /* Kropka godła pulsuje jednym, ciągłym tętnem — wspólnym pulsem sygnału
    całej platformy. W oknie wejściowym jest jedynym ruchem. */

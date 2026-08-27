@@ -4799,3 +4799,7 @@ osobnym polem, tak jak port pamięci osadza port przestrzeni roboczej. Żadna
 z dwóch komend tego pliku nie zapisuje wartości i żadna nie rozgłasza zdarzenia
 zmiany konfiguracji — pierwsza liczy prowenancję na świeżo, druga rozstrzyga
 wyłącznie zakres.
+## budowa/server/internal/core/nieznana.go
+Ścieżka obsługi nieznanej komendy jest fail-open: nieznana nazwa nie stanowi błędu protokołu i nie zamyka niczego. Połączenie pozostaje otwarte, sesja pracuje dalej, kolejne żądania są przyjmowane, a klient otrzymuje zdarzenie obszaru żądanego typu z nazwą, której nie rozpoznano, więc widzi przyczynę zamiast ciszy. Nazwę zdarzenia wyznacza kontrakt na podstawie obszaru żądanego typu — rdzeń nie dobiera jej sam i nie zawiera żadnego literału nazwy zdarzenia.
+
+Komunikat niepoprawny strukturalnie nie ma typu ani identyfikatora, więc nie da się zbudować dla niego żądania ani skorelować odpowiedzi z żądaniem. Mimo to odpowiedź zostaje wysłana — zerwanie połączenia byłoby nieproporcjonalną karą za jeden zepsuty bajt. Typ odpowiedzi wyznacza kontrakt: nierozpoznany komunikat bez obszaru należy do obszaru połączenia, więc wraca jego zdarzeniem `*.unknown`, a kod błędu informuje klienta, że przyczyną jest niepoprawna treść, a nie nieznana nazwa.

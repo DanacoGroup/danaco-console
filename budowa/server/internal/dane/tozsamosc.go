@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: katalog kategorii zasad i tożsamości modelu (tabela
-// `kategoria_tozsamosci`). Katalog jest sterowany danymi — kilkanaście kategorii
-// to kilkanaście wierszy, nie kilkanaście gałęzi w kodzie. Wzorcem jest katalog
-// akcji z `akcje.go`.
-//
-// Repozytorium wyłącznie czyta katalog: wiersze wnosi zaczyn migracji 015,
-// a kolejność składania warstw rozstrzyga warstwa wyższa. Treść
-// kategorii mieszka w tabeli `dokument_tozsamosci` — zob. `tozsamosc_tresc.go`.
+// Plik prowadzi katalog kategorii zasad i tożsamości modelu w tabeli
+// kategoria_tozsamosci, wyłącznie do odczytu, sterowany danymi migracji
+// zamiast rozgałęzieniami kodu.
 package dane
 
 import (
@@ -56,10 +51,9 @@ type FiltrTozsamosci struct {
 	TylkoAktywne bool
 }
 
-// RepozytoriumTozsamosci jest kontraktem obszaru tożsamości modelu.
-// Katalog kategorii jest wyłącznie do odczytu — zmiana katalogu jest zmianą
-// danych migracji, nie czynnością kontraktu. Treść kategorii zapisuje Operator
-// oknem konfiguracji, więc dla niej repozytorium ma zapis i usunięcie.
+// RepozytoriumTozsamosci jest kontraktem obszaru tożsamości modelu: katalog
+// kategorii jest wyłącznie do odczytu, a treść kategorii repozytorium
+// zapisuje i usuwa.
 type RepozytoriumTozsamosci interface {
 	Kategorie(ctx context.Context, tylkoAktywne bool) ([]KategoriaTozsamosci, error)
 	KategoriaPoKodzie(ctx context.Context, kod string) (KategoriaTozsamosci, error)
@@ -91,10 +85,8 @@ func noweRepozytoriumTozsamosci(z *zapytania) *repozytoriumTozsamosci {
 	return &repozytoriumTozsamosci{zapytania: z}
 }
 
-// Kategorie zwraca katalog kategorii. Porządek jest jednoznaczny, bo składacz
-// promptu ma dawać bajtowo ten sam wynik przy tej samej konfiguracji; kolejność
-// warstw wg krytyczności nakłada warstwa wyższa, bo to ona zna silnik
-// nakładki. Katalog pusty nie jest błędem.
+// Kategorie zwraca katalog kategorii w porządku jednoznacznym według warstwy,
+// kolejności i kodu. Katalog pusty nie jest błędem.
 func (r *repozytoriumTozsamosci) Kategorie(ctx context.Context, tylkoAktywne bool) ([]KategoriaTozsamosci, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKategoriiTozsamosci)
 	if err != nil {
@@ -135,7 +127,8 @@ func (r *repozytoriumTozsamosci) KategoriaPoKodzie(ctx context.Context, kod stri
 	return kategoria, err
 }
 
-// odczytajKategorieTozsamosci składa strukturę z jednego wiersza wyniku.
+// odczytajKategorieTozsamosci składa strukturę kategorii tożsamości z jednego
+// wiersza wyniku zapytania, tłumacząc kolumny słownikowe na wartości kontraktu.
 func odczytajKategorieTozsamosci(wiersz skaner) (KategoriaTozsamosci, error) {
 	var kategoria KategoriaTozsamosci
 	var warstwa, tryb string

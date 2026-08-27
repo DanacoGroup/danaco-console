@@ -3190,3 +3190,6 @@ Ton jest kolumną panelu, nie osobnym bytem: żądanie ustawienia tonu pisze prz
 Gdy pole Wejscie pozostaje nieustawione, tor wykonawczy kończy pracę od razu,
 nie zrywając przy tym toru interfejsu — proces roli łączącej oba tory ma dalej
 obsługiwać interfejs mimo braku podłączonego wejścia.
+
+## budowa/server/internal/dane/tozsamosc.go
+Katalog jest sterowany danymi: kilkanaście kategorii to kilkanaście wierszy, nie kilkanaście gałęzi w kodzie, wzorem katalogu akcji. Repozytorium wyłącznie czyta katalog: wiersze wnosi zaczyn migracji 015, a kolejność składania warstw rozstrzyga warstwa wyższa. Treść kategorii mieszka w osobnej tabeli dokument_tozsamosci. Zmiana katalogu jest zmianą danych migracji, nie czynnością kontraktu; treść kategorii zapisuje operator oknem konfiguracji. Porządek zwracanych kategorii jest jednoznaczny, bo składacz promptu ma dawać bajtowo ten sam wynik przy tej samej konfiguracji; kolejność warstw według krytyczności nakłada warstwa wyższa, bo to ona zna silnik nakładki.

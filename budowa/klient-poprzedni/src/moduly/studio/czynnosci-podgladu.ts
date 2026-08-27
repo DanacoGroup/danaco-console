@@ -6,26 +6,7 @@ import type { StanStudio } from './stan-studio';
 import type { ZrodloDokumentuStudio } from './zrodlo-dokumentu-studio';
 import type { ZrodloPrzekazania } from './zrodlo-przekazania';
 
-/**
- * Eksport i przekazanie do Library — dwie czynności Preview Window wyjęte
- * z wytwórni okna. Obie wychodzą do rdzenia i obie się wykonują.
- *
- * Eksport nie ma komendy w obszarze `studio` i mieć jej nie musi: zamiana
- * formatu dokumentu jest czynnością obszaru `document`, ma tam uchwyt w rdzeniu
- * i słownik ośmiu formatów. Przedmiotem zamiany jest treść zaakceptowana
- * modułu, więc żądanie niesie ją wprost, a nie ścieżkę pliku.
- *
- * Wynik zamiany zostaje zasobem magazynu rdzenia. Komendy wydającej jego bajty
- * do przeglądarki kontrakt nie niesie — okno mówi to wprost przy potwierdzeniu,
- * zamiast pozwalać czytać „wyeksportowano" jako „pobrano".
- *
- * Przekazanie idzie `context.transfer` i wykonuje się w całości: rdzeń zakłada
- * okno modułu Library i oddaje `transferred: true`.
- *
- * Odmowa zostaje w pasie stanu, powodzenie w wierszu odpowiedzi. Wskaźnik
- * odczytu zapala się wyłącznie na czas rzeczywistego wywołania — warunek
- * merytoryczny sprawdzany przed wysłaniem żadnego nie udaje.
- */
+/** Eksport i przekazanie do Library, dwie czynności Preview Window wyjęte z wytwórni okna: obie wychodzą do rdzenia i obie wykonują się w całości. */
 export interface ZapleczePodgladu {
   stan: StanStudio;
   /** Źródło komend obszaru dokumentów — nośnik zamiany formatu. */
@@ -45,8 +26,7 @@ export async function eksportujDokument(
   pas.ladowanie(`Wydanie dokumentu w formacie ${format} w toku…`);
   const udane = await wydajDokument({ stan, dokumenty, odpowiedz }, format);
   if (!udane) {
-    // Powód stoi już w wierszu odpowiedzi — pas wraca do stanu wynikającego
-    // z danych, żeby jeden powód nie był pokazywany dwa razy w dwóch miejscach.
+    // Powód stoi już w wierszu odpowiedzi, więc pas wraca do stanu wynikającego z danych bez powtórzenia.
     pas.gotowe();
     zaplecze.odswiez();
     return;

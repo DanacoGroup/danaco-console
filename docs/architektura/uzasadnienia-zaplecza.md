@@ -2648,3 +2648,10 @@ Scena leży jednym zapisem JSON i rdzeń jej nie rozbiera. Kształt sceny —
 kartki, strzałki, grupy, osadzenia — należy do widoku, który ją rysuje;
 rozbiór na wiersze związałby schemat bazy z rysunkiem interfejsu i każda
 zmiana kształtu kartki byłaby migracją.
+## budowa/server/internal/store/migracja_222_workspace_os_czasu.sql
+Migracja 222 — oś czasu aktywności projektu.
+
+Zdarzenie zapisuje się w chwili czynności, a nie wylicza z bytów przy
+odczycie. Wyliczanie z bytów pokazałoby wyłącznie to, co jeszcze istnieje:
+usunięte zadanie znikałoby również z historii, a wtedy oś czasu przestaje być
+zapisem zdarzeń i staje się drugim widokiem stanu bieżącego.

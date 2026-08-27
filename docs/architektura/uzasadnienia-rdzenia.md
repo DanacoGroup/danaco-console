@@ -5802,3 +5802,11 @@ Identyfikator, z którego nie zostaje ani jeden znak po oczyszczeniu, dostaje na
 W metodzie Odnotuj kolejny etap tej samej tury przesuwa wyłącznie znacznik
 czasu, a nie stan, bo inaczej każdy fragment odpowiedzi modelu rozgłaszałby
 zdarzenie o sesji, w której nic się nie zmieniło.
+
+## budowa/server/internal/core/katalog_roboczy_definicje.go
+Definicje powstają tutaj, nie w pakiecie konfiguracji, z powodu kierunku zależności: konfiguracja
+nie zna pakietu rdzenia. Dołożenie ich do rejestru jest jednym wywołaniem przy montażu — rejestr
+jest zbiorem otwartym, więc nowa pozycja okna konfiguracji nie zmienia rozstrzygania. Wartość
+domyślna podstawy jest pusta z zamysłem: miejsce instalacji aplikacji głównej ustala się w chwili
+startu procesu i nie da się go zapisać stałą tekstową. Pustkę czyta funkcja podstawy albo miejsca
+instalacji i zamienia na miejsce instalacji.

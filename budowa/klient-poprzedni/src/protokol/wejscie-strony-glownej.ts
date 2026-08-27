@@ -7,18 +7,7 @@ import type { Kanal, Wynik } from './kanal';
 import { czyTablica, sprawdzKsztalt } from './ksztalt-odpowiedzi';
 import { wywolaj } from './wywolanie';
 
-/**
- * `home.enter` — wejście na jedyną, platformową stronę główną.
- *
- * Pierwsze ogniwo łańcucha nawigacji: `home.enter` → `environment.list` →
- * `environment.enter` → `module.list` → `workspace.enter`. Wejście mówi
- * rdzeniowi, który klient stanął na stronie głównej; rdzeń wiąże ognisko
- * z klientem, więc bez tego wywołania nie ma komu oddać `focusedSessionId`.
- *
- * Ponad `environment.list` odpowiedź niesie środowiska wraz z kodami modułów,
- * sesje czynne konta, sesję ostatnio ogniskowaną oraz stan sesji trwających
- * w tle. `environment.list` bez `includeModules` nie daje żadnej z tych rzeczy.
- */
+/** `home.enter` — wejście na jedyną, platformową stronę główną, pierwsze ogniwo łańcucha nawigacji klienta. */
 export function zadajWejscieNaStroneGlowna(
   kanal: Kanal,
   zadanie: HomeEnterRequest,

@@ -2049,3 +2049,15 @@ Ikona ustawień jest skrótem, a nie drugą drogą: otwiera dokładnie tę pozyc
 którą listwa strony głównej niesie pod kodem `konfiguracja`, przez ten sam wykaz
 skutków. Stoi w pasku, ponieważ ustawienia platformy wykonuje się z każdego
 miejsca, a listwa widoczna jest wyłącznie na stronie głównej.
+
+## budowa/klient-poprzedni/src/moduly/browser/zrodlo-izolacji.ts
+
+Panel modułu jest wyłącznie odczytem, dlatego źródło wystawia same komendy
+odczytu. Zapis przełączników oraz przypisanie profilu należą do okna
+konfiguracji punktów izolacji, ponieważ dwa miejsca zapisujące tę samą politykę
+dawałyby dwa różne zdania o tym, co obowiązuje.
+
+Rozdzielenie odpowiada podziałowi punktów izolacji: moduł przeglądania wskazuje
+punkty właściwe przeglądaniu, czyli dostęp sieciowy procesu sesji, kontenery
+tożsamości oraz zakres pętli, a personalizacja tych punktów odbywa się w oknie
+konfiguracji.

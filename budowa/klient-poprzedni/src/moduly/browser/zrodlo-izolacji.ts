@@ -10,17 +10,10 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Dwa odczyty izolacji, których żąda macierz izolacji sesji modułu Browser.
- *
- * Panel modułu jest wyłącznie odczytem, więc źródło niesie wyłącznie komendy
- * odczytu. Zapis przełączników i przypisanie profilu należą do okna
- * konfiguracji punktów izolacji — dwa miejsca zapisujące tę samą politykę
- * dawałyby dwa różne zdania o tym, co obowiązuje.
- *
- * Rozdzielenie odpowiada temu, co o izolacji mówi opracowanie modułu
- * (rozdz. 6.3): moduł Browser wskazuje punkty izolacji właściwe przeglądaniu —
- * dostęp sieciowy procesu sesji, kontenery tożsamości, zakres pętli — a Operator
- * personalizuje je w oknie konfiguracji.
+ * Dwa odczyty izolacji, których żąda macierz izolacji sesji modułu Browser:
+ * polityka obowiązująca oraz poziomy zasięgu. Źródło niesie wyłącznie komendy
+ * odczytu, ponieważ zapis przełączników i przypisanie profilu należą do okna
+ * punktów izolacji.
  */
 export interface ZrodloIzolacji {
   /** `isolation.policy.preview` — polityka obowiązująca, bez zapisu. */

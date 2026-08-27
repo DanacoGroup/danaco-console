@@ -188,8 +188,8 @@ func (a *adapterPdfStudia) ScalPdf(ctx context.Context,
 
 // PodzielPdf rozdziela dokument na części wskazane zakresami stron.
 //
-// Brak zakresów znaczy „każda strona osobno" — to jest znaczenie przyjęte
-// w narzędziach tej klasy i opracowanie modułu nie wskazuje innego.
+// Brak zakresów znaczy „każda strona osobno" — to przyjęte znaczenie
+// w narzędziach tej klasy.
 func (a *adapterPdfStudia) PodzielPdf(ctx context.Context,
 	z shared.StudioPdfSplitRequest) (shared.StudioPdfSplitResponse, error) {
 

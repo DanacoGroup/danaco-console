@@ -4770,3 +4770,60 @@ sytuacja nie ustanie; sekcja pozostaje przez cały ten czas czynna.
 
 Biblioteka `komponenty/` nie ma jeszcze reguł komunikatu blokowego, więc
 komunikat stoi na klasie komunikatu tej sekcji.
+
+## budowa/klient-poprzedni/src/aod/zrodlo-komend.ts
+
+Sekcje okna dostają ze źródła czynności, a nie stałe komend, więc żadna sekcja
+nie powtarza opakowania kanału. Komenda `aod.voice.command` idzie bez mikrofonu:
+pola odwołania do nagrania i transkrypcji są w kontrakcie opcjonalne, więc
+polecenie wydane samą treścią jest wywołaniem pełnoprawnym. Granicę nazywa plik
+`sekcja-glosu.ts`.
+
+Żadne żądanie nie niesie identyfikatora urządzenia. Rdzeń rozumie przez ten
+identyfikator numer wiersza katalogu maszyn — adapter nakładki czyta go jako
+liczbę całkowitą, tym samym prawem co rodzina komend punktów dostępu.
+Identyfikator sesji dostaje odmowę niepowodzenia sprawdzianu, a kolumna nakładki
+przerywa wczytywanie na pierwszym błędzie stanu, więc jedna zła wartość zabiera
+całą treść nakładki. Pole puste rdzeń przyjmuje, a żadna komenda kontraktu nie
+mówi klientowi, którym numerem katalogu maszyn jest ta maszyna, więc podstawienie
+zgadniętej jedynki byłoby wartością zmyśloną.
+
+## budowa/klient-poprzedni/src/modele/wykaz-kategorii.ts
+
+Kategoria spoza warstw kontraktu nie znika: dostaje własną grupę na końcu, żeby
+było widać, co przyszło z rdzenia.
+
+Wiersz mówi dwie rzeczy: czy kategoria jest obowiązkowa i czy ma treść zapisaną
+na osi czynnej. Brak treści na osi nie znaczy braku treści w ogóle — obowiązuje
+wtedy zapis z osi szerszej i wiersz nazywa to wprost.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zuzycie-zrodlo.ts
+
+Zestawienie idzie po jednym wymiarze naraz i tak stanowi kontrakt wprost:
+zestawienie po dwóch wymiarach naraz jest dwoma żądaniami, nie jednym. Zakładka
+nie składa więc dwóch odpowiedzi w jedną tabelę — pokazuje wymiar wybrany i mówi,
+który to. Raport bierze wymiary wykazem, ponieważ jest jednym wytworem za okres,
+a nie widokiem; wykaz pusty znaczy wszystkie wymiary.
+
+Koszt niepełny jest tu osobnym pojęciem, a nie zaokrągleniem. Kontrakt niesie
+udział wywołań objętych cennikiem oraz wywołania pominięte w koszcie, a pole
+kosztu opisuje jako puste, gdy cennika kanału nie ma: puste znaczy brak cennika
+kanału, nie koszt zerowy. Zakładka przenosi to rozróżnienie na ekran, ponieważ
+złożenie kosztu z zer dałoby liczbę wyglądającą na pomiar.
+
+Rodzina zdarzeń nie ma, więc nic tu nie nasłuchuje: zużycie odczytuje się na
+żądanie. Pusty wykaz zestawienia jest poprawną odpowiedzią i sprawdzian kształtu
+tego nie myli z odpowiedzią bez kształtu — wymagana jest sama tablica oraz
+granice okresu, bo bez nich zakładka nie wie, o czym mówi.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-kontekstu.ts
+
+Kolejność w pasku jest kolejnością rejestracji rozszerzeń w module.
+
+Wyzwalacze warstwy czwartej nie stoją w pasku, dopóki Operator nie włączy trybu
+administracyjnego. Nie jest to blokada: rozszerzenie ze skrótem otwiera się
+skrótem niezależnie od trybu, a przycisk nie zostaje wygaszony, tylko zdjęty ze
+sceny.
+
+Stan wyzwalacza niesie atrybut wciśnięcia, a nie barwa: pasek czyta się także bez
+rozróżniania barw i z czytnika ekranu.

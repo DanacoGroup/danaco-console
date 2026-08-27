@@ -2968,3 +2968,22 @@ ma przeżyć usunięcie.
 Czynności obejmujące całość repozytorium (wywóz paczki, skanowanie
 duplikatów) wchodzą bez wskazania zasobu — kolumna jest pusta i to jest
 stan opisany kontraktem (`LibraryAuditEntry.fileId` opcjonalne).
+## budowa/server/internal/store/migracja_184_biblioteka_retencja_utrwalenie.sql
+Migracja 184 — moduł Library: polityki przechowywania i utrwalenie archiwalne.
+
+Polityka retencji nie usuwa niczego sama. Przechowuje trzy rzeczy: poziom
+zasięgu, na którym obowiązuje, liczbę dni przechowywania liczoną od ostatniej
+zmiany zasobu oraz czynność po upływie okresu. Czynność `usuniecie` znaczy
+„zgłoś do usunięcia", nie „usuń": trwałe usunięcie ma własną komendę
+i własne potwierdzenie (`library.file.delete`). Bez tego rozdziału polityka
+zapisana pomyłkowo zabierałaby zasoby bez śladu decyzji człowieka.
+
+Poziom zasięgu zapisuje się kodem z katalogu `poziom_zasiegu` (kontrakt:
+`ConfigScope`), więc warunku CHECK tu nie ma — wykaz poziomów należy do
+tabeli katalogu, a jego powielenie w warunku byłoby drugą prawdą o zasięgu.
+
+Zadanie utrwalenia jest zapisem SKUTKU, nie zleceniem do wykonania. Wiersz
+powstaje po pracy: niesie wynik walidacji i jej zapis, żeby Operator mógł
+wrócić do pytania „czy ten dokument naprawdę przeszedł normalizację" bez
+powtarzania utrwalenia. Zasób wytworzony wskazywany jest kodem, bo bywa go
+brak — profil PREMIS/METS opisuje zasób, nie wytwarza nowego pliku.

@@ -1,18 +1,5 @@
-// Odpowiedzialność pliku: port i wpięcie dwóch komend rodziny `launcher.*` —
-// skrótu globalnego otwierającego wywoływacz poleceń.
-//
-// Rodzina jest przekrojowa: wywoływacz otwiera się z DOWOLNEGO miejsca
-// platformy, a nie z jednego okna. Nastawa jest więc własnością rdzenia, choć
-// samo przechwycenie klawiszy należy do powłoki programu okiennego — adapter
-// (`adapter_wywolywacz.go`) rozstrzyga ten podział i mówi o nim wprost
-// w odpowiedzi.
-//
-// Zdarzeń rodzina nie ma: zmiana skrótu jest zmianą nastawy, a o zmianach
-// nastaw mówi rodzina `config.*`. Osobne zdarzenie byłoby drugą drogą tej samej
-// wiadomości.
-//
-// Port niewypełniony nie rejestruje niczego: obie komendy odpowiedzą wtedy
-// `launcher.unknown`, a pozostałe domeny pracują bez zmian.
+// Plik wpina port i dwie komendy rodziny launcher.*: odczyt i zapis skrótu globalnego
+// otwierającego wywoływacz poleceń z dowolnego miejsca platformy.
 package core
 
 import (
@@ -21,7 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Wywolywacz jest portem rodziny `launcher.*`.
+// Wywolywacz jest portem rodziny launcher.* obsługującym odczyt i zapis skrótu globalnego tej platformy.
 type Wywolywacz interface {
 	// SkrotWywolywacza obsługuje `launcher.hotkey.get`.
 	SkrotWywolywacza(ctx context.Context, z shared.LauncherHotkeyGetRequest) (shared.LauncherHotkeyGetResponse, error)
@@ -29,10 +16,10 @@ type Wywolywacz interface {
 	ZapiszSkrotWywolywacza(ctx context.Context, z shared.LauncherHotkeySetRequest) (shared.LauncherHotkeySetResponse, error)
 }
 
-// Adapter wypełnia port w całości.
+// Adapter wypełnia port w całości, bez pozostawionej metody niezaimplementowanej w rdzeniu tej platformy.
 var _ Wywolywacz = (*adapterWywolywacza)(nil)
 
-// zarejestrujWywolywacz wpina dwie komendy rodziny `launcher.*`.
+// zarejestrujWywolywacz wpina dwie komendy rodziny launcher.* w rejestrze rdzenia tej platformy konta.
 func zarejestrujWywolywacz(r *Rejestr, w Wywolywacz) {
 	if r == nil || w == nil {
 		return

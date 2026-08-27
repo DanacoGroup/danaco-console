@@ -704,3 +704,25 @@ Usunięcie kamienia milowego, którego nie ma, kończy się odmową `not_found`,
 nie polem `deleted: false`: klient odróżnia „usunięto" od „nie było czego
 usunąć" po odmowie, bo pole logiczne oddane jako powodzenie kazałoby mu
 zgadywać, czy operacja się odbyła.
+
+## budowa/server/internal/core/adapter_modul_aod_wyciszenie.go
+
+Wyciszenie nakładki Always On Display jest bytem rdzenia, nie wyłącznie
+ustawieniem okna: zapis miejscowy w przeglądarce (`client/src/aod/wyciszenie-aod.ts`)
+pozwalał wyciszyć sugestie w jednej powłoce, podczas gdy druga powłoka nadal je
+ujawniała. Rdzeń trzyma jeden stan wyciszenia współdzielony między powłokami.
+
+Rodzaje wyciszenia są trzy: czasowe, kontekstowe (moduł albo karta sesji)
+i klasy zdarzeń. Tryb cichy nakładki nie jest wyciszeniem, lecz ustawieniem
+trybu obecności, a wyjątek wagi krytycznej przebija każde z trzech wyciszeń
+niezależnie od ich zakresu.
+
+Założenie i zniesienie wyciszenia idą jedną komendą `aod.mute.set`,
+rozróżnianą polem `muted`. Osobna komenda znoszenia zmuszałaby okno do
+pamiętania dwóch dróg do jednej czynności zamiast jednej.
+
+Sygnał odkłada się w rdzeniu nawet wtedy, gdy wpada w wyciszenie czynne:
+wyciszenie wstrzymuje wyłącznie ujawnienie sygnału operatorowi, nie jego
+zapis. Odpowiedź `aod.signal.report` i odpowiedź `aod.signal.list` nazywają
+wprost, które wyciszenie wstrzymało dany sygnał, żeby brak sygnału w oknie
+nie wyglądał na jego brak w rzeczywistości.

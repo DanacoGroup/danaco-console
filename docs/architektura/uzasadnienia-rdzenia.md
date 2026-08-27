@@ -1911,3 +1911,52 @@ już znany z żądania i drugi odczyt sesji byłby zapytaniem po to samo.
 
 Wykaz kanałów w `kodSlownika` czyta się bez filtra aktywności, bo okno mogło
 zostać założone na kanale, który od tamtej pory wyłączono.
+
+## brama_kontraktu.go
+
+Brama stoi w jednym miejscu, a nie w każdym obsługiwaczu z osobna, ponieważ
+kontrakt niesie dla każdej komendy wykaz pól wraz z oznaczeniem „wymagane”,
+a dla pól o typie wyliczenia — komplet dopuszczalnych wartości. Rdzeń bez
+bramy przyjmował żądanie niepełne i wartość spoza wyliczenia, po czym
+uzupełniał brak wartością domyślną i meldował powodzenie; odpowiedź
+wyglądająca dobrze jest w tym miejscu groźniejsza od odmowy, bo nie wzywa
+wołającego do sprawdzenia — okno dostawało punkt dostępu rodzaju, o który
+nie prosiło, i tryb uprawnień, którego nie ustawiło. Brama nie ma własnego
+wykazu pól ani własnego wykazu wartości: oba czyta z artefaktu kontraktu,
+więc pole dołożone do kontraktu jest pilnowane od razu, bez zmiany w tym
+pliku.
+
+Powitanie kanału jest jedyną komendą spod bramy wyjętą i odpowiada zawsze,
+także na żądanie niepełne. Powitanie jest jedynym miejscem, w którym klient
+odczytuje wersję protokołu rdzenia, czyli jedynym, w którym rozpoznaje, że
+jest starszy; brama sprawdzająca powitanie wobec kontraktu zakładałaby, że
+obie strony znają już ten sam kontrakt — zakładałaby więc to, co powitanie
+ma dopiero ustalić, i klientowi sprzed wprowadzenia pola oddawałaby odmowę
+zamiast wersji, po której ten rozpoznałby rozjazd. Braki pól powitania idą
+do dziennika rdzenia, nie do treści odpowiedzi: odpowiedź powitania nie ma
+pola, w którym mogłyby wrócić wołającemu, a dołożenie takiego pola jest
+zmianą kontraktu. Wyjątek jest jeden i pozostaje jeden: wynika z roli
+powitania w uzgodnieniu, nie z wygody, więc każda inna komenda przechodzi
+bramę bez ustępstw.
+
+Obecność pól wymaganych sprawdzana jest dla każdej komendy, bo oznaczenie
+„wymagane” niesie znacznik struktury żądania, a struktury ma każda komenda.
+Wartości wyliczeń sprawdzane są węziej: komplet dopuszczalnych wartości
+stoi w artefakcie Go wyłącznie przy polach komend wystawionych jako
+narzędzia modelu. Wyliczenie samo w sobie ma w artefakcie funkcję
+odczytującą jego wartości, ale nie ma odwzorowania typu pola na tę funkcję,
+więc pole wyliczeniowe komendy spoza tego zbioru przechodzi bez sprawdzenia
+wartości. Pełne pokrycie wymaga tabeli wyprowadzonej z kontraktu przy
+generowaniu artefaktu, a nie przepisanej tutaj — drugi wykaz wartości
+rozjechałby się z kontraktem przy pierwszej dołożonej wartości.
+
+Sprawdzenie pól wymaganych bada obecność klucza w treści, nie jego
+zawartość: kontrakt mówi „pole ma być”, nie „pole ma być niepuste”. Treść
+pusta bywa treścią prawdziwą — zapis dokumentu z pustą treścią zapisuje
+dokument opróżniony i jest żądaniem poprawnym; wartość pustą, tam gdzie
+dziedzina jej nie zniesie, odrzuca obsługiwacz komendy, bo tylko on wie,
+czy pustka coś znaczy. Wartość `null` przy polu wymaganym o typie tablicy
+przechodzi z tego samego powodu: pole wymagane o typie tablicy wychodzi
+z niepustego wykazu pustego jako `null`, tak koduje pusty wycinek biblioteka
+standardowa Go, więc odmowa w tym miejscu odrzucałaby żądania składane
+przez sam rdzeń.

@@ -2318,3 +2318,33 @@ odpowiedzialności między warstwami pozostał czytelny w strukturze kodu.
 ## budowa/klient-poprzedni/src/moduly/research/okno-sources-manager.ts
 Pole zawężania działa po stronie klienta i nie woła rdzenia. Komenda odczytu wykazu wraz z polami zawężającymi jest już w kontrakcie, ale rdzeń nie ma dla niej uchwytu, więc wykaz mieszka w pamięci modułu i tam też się zawęża; po dobudowie zawężanie ma przenieść się do żądania. Zawężenie nie zdejmuje zaznaczenia — źródło niewidoczne w wykazie pozostaje zaznaczone i idzie do ustalenia, a okno mówi o tym liczbą przy polu. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności źródeł.
 Stan okna liczy się z wykazu pełnego, nie z zawężonego: zawężenie bez trafień nie znaczy, że katalog jest pusty, a zaproszenie do skatalogowania pierwszego źródła postawione nad katalogiem pełnym byłoby nieprawdą.
+
+## budowa/klient-poprzedni/vitest.config.ts
+
+Plik jest osobny, a nie sekcją test dopisaną do konfiguracji budowania: budowanie
+pakietu i sprawdzanie kodu to dwa różne byty. Vitest czyta ten plik z pierwszeństwem
+przed konfiguracją budowania, więc konfiguracja budowania zostaje nietknięta.
+Środowisko domyślne node, ponieważ warstwy protokołu i łączności nie dotykają
+dokumentu. Widoki dotykają go wprost — tworzą elementy, czytają arkusze,
+przełączają motyw — więc ich sprawdziany dostają jsdom przez dopasowanie ścieżek.
+Zgoda na katalog nadrzędny obejmuje import wspólnego kontraktu, jedynego źródła
+prawdy nazw, tak samo jak w konfiguracji budowania.
+
+## budowa/klient-poprzedni/src/powloka/nawigacja-modulow.ts
+
+Trzeci pas powłoki jest pionową, stałą nawigacją modułów środowiska o jednej
+odpowiedzialności: wykaz pozycji bieżącego środowiska i wskazanie pozycji
+wybranej. Nagłówek kolumny niesie nazwę środowiska krojem szeryfowym, pod nią
+motto i liczbę pozycji; pozycja wybrana dostaje złoty pasek przy lewej krawędzi.
+Nawigacja nie zna ani jednej nazwy modułu — pyta o wykaz podłączone źródło
+nawigacji korzystające z komend wejścia do środowiska i wykazu modułów. Do
+czasu odpowiedzi kolumna pokazuje stan wczytywania, a po odmowie treść odmowy;
+kopii katalogu modułów nie ma tu żadnej. Źródło dokłada się po złożeniu:
+powłoka powstaje bez połączenia z rdzeniem i dopiero warstwa składająca
+aplikację ma czym ją zasilić — stąd osobne podłączenie źródła, a nie parametr
+wytwórni. Żadna pozycja nie traci klikalności: wykaz wynika ze środowiska,
+a nie z gotowości modułu. Wykaz modułu spoza środowiska bierze się z macierzy
+widoczności, a ta rozstrzyga tylko o obecności modułu na liście, nie o prawie
+do jego otwarcia — kafel składa wtedy pozycję z katalogu modułów i wskazuje ją
+osobną drogą, a kolumna nie zapala żadnego wiersza, bo żaden jej wiersz nie
+odpowiada temu modułowi.

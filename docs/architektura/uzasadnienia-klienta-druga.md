@@ -3858,3 +3858,20 @@ zmian, a zbieżność jest realna i pierwszeństwo ma okno, w którym operator p
 pętli wykonawczej stoją w wykazie, ale moduł ich nie wiąże, bo Execution Loop Window jest oknem
 wspólnym platformy i leży poza katalogiem tego modułu — wykaz mówi to wprost, zamiast pomijać
 pozycje i sugerować, że skrótów nie ma.
+
+## budowa/klient-poprzedni/src/moduly/research/zrodlo-odkrywania.ts
+Cztery tryby zapytania istnieją w zamierzeniu modułu: webowy, naukowy, własny semantyczny
+i pełnotekstowy. Kontrakt niesie dziś dwa ostatnie i oba są tu wywołane naprawdę — własny
+semantyczny szuka po znaczeniu w bibliotece wiedzy Operatora i w przestrzeni roboczej okna
+badania, pełnotekstowy szuka po treści zasobów repozytorium. Tryb webowy i naukowy mają
+w kontrakcie własną komendę modułu, gdzie o trybie rozstrzyga pole żądania, ale rdzeń nie ma dla
+niej jeszcze uchwytu. Panel ich nie udaje i nie gasi: zapytanie wychodzi pod nazwą tej komendy,
+a odmowa rdzenia jest tym, co Operator zobaczy — ta sama droga, jaką opisuje plik akcji okien. Gdy
+uchwyt dojdzie, oba tryby przeniosą się tutaj, obok dwóch już działających. Źródło nie ma stanu:
+wyniki mieszkają w oknie, bo są zapytaniem, nie treścią badania — do badania wchodzą dopiero przez
+komendę dodania źródła.
+
+## budowa/klient-poprzedni/src/strona-glowna/podglad-strony-glownej.ts
+Wzorzec jest ten sam co w podglądzie zetonów motywu: widok daje się obejrzeć bez montażu w powłoce
+aplikacji, nie wchodzi do pakietu głównego i niczego z niego nie importuje. Bez parametrów w adresie
+obowiązuje preferencja systemu i brak środowiska czynnego.

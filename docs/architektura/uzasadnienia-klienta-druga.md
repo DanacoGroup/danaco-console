@@ -5424,3 +5424,6 @@ przebieg trzech czynności wraz z ich obsługą niepowodzenia. Wgranie pliku pot
 z identyfikatorem projektu, którego wykaz biblioteki dla tego projektu nie pokaże — sam zapis
 pliku nie dowodzi więc wgrania do projektu, dlatego każde zdanie sukcesu bierze wartości
 z odpowiedzi i sprawdza skutek w wykazie zasobów.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-uprawnien.ts
+Wartości trybu odpowiadają dosłownie przełącznikowi trybu uprawnień kanału głównego i pochodzą z wyliczenia kontraktu — pasek nie prowadzi własnego katalogu trybów, tak samo jak nie prowadzi go kolumna sterowania. Żadna pozycja nie jest ukryta ani wyszarzona, w tym pominięcie kontroli uprawnień: jedyną kontrolą dostępu jest uwierzytelnianie, a interfejs nie stawia blokad — skutek wyboru mówi opis pozycji, bo to jest właściwe miejsce na ostrzeżenie, nie odebranie kliknięcia.

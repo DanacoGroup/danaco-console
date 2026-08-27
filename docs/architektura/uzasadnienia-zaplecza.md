@@ -523,3 +523,54 @@ Gdy biblioteki nie ma albo wagi są nie do wczytania, pomocnik oddaje
 odpowiedź z polem ok ustawionym na false i polem powod, po czym kończy
 pracę kodem zerowym; rdzeń zamienia to na odmowę nazywającą brak. Ślad
 stosu Pythona sam z siebie nie powiedziałby Operatorowi, czego brakuje.
+
+## budowa/scripts/instalka-hybryda-win-arm.sh
+
+Produkt ma jedną postać: hybrydę. Ta instalka wiezie samą powłokę; rdzeń,
+serwer narzędzi i arsenał stoją na serwerze wdrożenia, a operator dostaje
+okno, nie drugą kopię serca platformy. Instalka jest cienka i nie sprawdza
+obecności rdzenia, bo jego brak nie jest tu usterką, jest założeniem.
+
+Celem budowy jest architektura aarch64-pc-windows-msvc, składana przez
+cargo xwin, które pobiera i trzyma zestaw nagłówków oraz bibliotek importu
+Microsoftu. Kompilatorem krzyżowym jest clang, a bibliotekarzem llvm-lib
+z wydania llvm-mingw, dlatego katalog binarny tego wydania musi być na
+ścieżce tej budowy. Cel x64 ma wymaganie odwrotne: idzie przez systemowe
+mingw-w64, a llvm-mingw na ścieżce mu przeszkadza — oba skrypty ustawiają
+ścieżkę same, żeby jedna budowa nie psuła drugiej.
+
+Skrypt woła złożenie pakietu, nie pełną budowę: pełna budowa uruchomiłaby
+przebudowę klienta, a ta do budowy powłoki nie należy; złożenie pakietu
+niczego nie kompiluje i bierze gotową binarkę z katalogu docelowego. Nakładki
+konfiguracyjnej nie ma i nie jest potrzebna, bo konfiguracja opisuje wprost
+produkt hybrydowy, ponieważ innego produktu nie ma. Skrypt nie podpisuje
+instalatora — podpis Authenticode wymaga certyfikatu i hosta Windows — i nie
+sprawdza, czy instalator się uruchamia, bo tego nie da się sprawdzić bez
+maszyny z Windows na architekturze ARM64.
+
+Cecha budowy tauri/custom-protocol nie jest ozdobna: bez niej produkt jest
+zepsuty w sposób niewidoczny, bo rozstrzygnięcie źródła interfejsu
+zatrzymuje się na sprawdzeniu budowy deweloperskiej, nigdy nie sprawdzając
+warunku „rdzeń nasłuchujący" — jedynej drogi do interfejsu dla hybrydy;
+okno pokazałoby wtedy pustą stronę.
+
+Sprawdzenie architektury binarki dopuszcza zarówno pisownię „ARM64", jak
+i „Aarch64", bo nazwa architektury zależy od wersji narzędzia odczytu typu
+pliku, a nie od produktu; sprawdzenie stoi przed złożeniem instalatora, bo
+instalka z binarką dla innej architektury w środku byłaby bezużyteczna.
+
+Zapora rozstrzyga o osadzonych zasobach, a nie o obecności adresu serwera
+rozwojowego w binarce: konfiguracja produktu wchodzi do binarki zawsze,
+niezależnie od tego, która droga do interfejsu jest czynna, więc taka zapora
+milczałaby przy pliku zepsutym. Sondą jest nazwa pliku interfejsu z sumą
+treści w nazwie — taki napis nie ma jak trafić do binarki inaczej niż przez
+osadzenie pakietu klienta, i zmienia się z każdą przebudową klienta, dlatego
+skrypt czyta go z katalogu, a nie wpisuje na sztywno. Sondy oparte na
+rozszerzeniu czcionki albo na pliku indeksu są mylące, bo obie zapalają się
+w binarce także bez osadzonych zasobów.
+
+Cel złożenia zawiera 7z, ponieważ tylko wykaz zawartości gotowego pliku
+dowodzi, że rdzeń nie wrócił do produktu hybrydowego przy zmianie
+konfiguracji. Ostatnia zapora bada binarkę wypakowaną z instalatora, a nie
+tę z katalogu docelowego, bo tylko wypakowana binarka jest tym, co dostanie
+operator.

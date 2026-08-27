@@ -5419,3 +5419,12 @@ zamknęłoby powołanie u wszystkich, gdy jedno okno zapełni swoją sieć.
 Bez repozytorium albo bez kodu okna granica w PrzydzialOkna nie ma czego
 liczyć i oddaje przydział samego wywołania; przydział wyliczony z nieudanego
 odczytu byłby granicą zmyśloną.
+
+## budowa/server/internal/dane/automations_wersje.go
+
+Zapis wersji jest idempotentny po parze automatyki i numeru: ten sam zapis definicji
+powtórzony nie zakłada drugiej migawki tego samego numeru.
+
+Publikacja jest jedna na automatykę: zdjęcie znacznika publikacji ze wszystkich wersji
+i nadanie go jednej idzie w tej samej transakcji, żeby historia nie pokazała przez chwilę
+dwóch wersji opublikowanych naraz.

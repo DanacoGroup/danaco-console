@@ -2,33 +2,12 @@ import type { HistoryEntry } from '../../../shared/contract';
 import { utworzMagistrale, type Odsubskrybuj } from '../polaczenie/magistrala-zdarzen';
 
 /**
- * Wykaz pozycji historii rozmowy okna wraz z ich zaznaczaniem.
- *
- * Osobno od panelu (`okno-historii-rozmowy.ts`), bo panel prowadzi rozmowy
- * z rdzeniem, stan wczytywania i nastawę zasady, a wykaz odpowiada wyłącznie
- * za zamianę pozycji na wiersze i za wskazanie, które z nich Operator zaznaczył.
- *
- * Zaznaczenie wskazuje zakres, nie potwierdza czynności: panel ma osobną
- * czynność na wyczyszczenie całej historii okna i osobną na usunięcie pozycji
- * wskazanych. Wiersz bez zaznaczenia niczego nie blokuje.
- *
- * Pozycje, których nastawiona zasada nie utrzyma, są oznaczone, a nie ukryte
- * ani wygaszone — nastawa retencji ma pokazać skutek zasady przed jej zapisem,
- * więc wiersz oznaczony nadal da się przeczytać i zaznaczyć.
- *
- * Wykaz nie zna żadnej komendy i nie wie, skąd pozycje przyszły: dostaje
- * tablicę, oddaje identyfikatory.
+ * Wykaz pozycji historii rozmowy okna wraz z ich zaznaczaniem stoi osobno od panelu, bo panel prowadzi rozmowę z rdzeniem i nastawę zasady, a wykaz odpowiada wyłącznie za zamianę pozycji na wiersze.
  */
 export interface WykazHistorii {
   /** Element wstawiany w miejsce treści panelu. */
   element: HTMLElement;
-  /**
-   * Przerysowuje wykaz.
-   *
-   * @param pozycje pozycje od najnowszej, wprost z `history.load`.
-   * @param pozaZasada identyfikatory pozycji, których nastawiona zasada nie
-   *   utrzyma. Zbiór pusty znaczy, że zasada niczego nie usuwa.
-   */
+  /** Przerysowuje wykaz; pozycje idą od najnowszej, a zbiór poza zasadą pusty znaczy brak usunięć. */
   rysuj(pozycje: readonly HistoryEntry[], pozaZasada: ReadonlySet<string>): void;
   /** Identyfikatory pozycji wskazanych przez Operatora. */
   zaznaczone(): string[];
@@ -36,7 +15,7 @@ export interface WykazHistorii {
   naZmianeZaznaczenia(sluchacz: () => void): Odsubskrybuj;
 }
 
-/** Ile znaków skrótu treści pokazuje wiersz, gdy rdzeń przysłał go dłuższy. */
+/** Ile znaków skrótu treści pokazuje wiersz wykazu, gdy rdzeń przysłał treść dłuższą niż ten limit widoku. */
 const DLUGOSC_SKROTU_WIDOKU = 240;
 
 export function utworzWykazHistorii(): WykazHistorii {
@@ -48,9 +27,7 @@ export function utworzWykazHistorii(): WykazHistorii {
   element.className = 'dnp-historia';
 
   function rysuj(pozycje: readonly HistoryEntry[], pozaZasada: ReadonlySet<string>): void {
-    // Zaznaczenie pozycji, której w świeżym wykazie już nie ma, przestaje
-    // istnieć razem z nią. Bez tego panel wysłałby do rdzenia identyfikator
-    // skasowany i dostał w odpowiedzi „usunięto 0".
+    // Zaznaczenie pozycji, której w wykazie już nie ma, znika razem z nią, by uniknąć zbędnego wysłania.
     const zywe = new Set(pozycje.map((pozycja) => pozycja.id));
     for (const kod of [...wskazane]) if (!zywe.has(kod)) wskazane.delete(kod);
 
@@ -78,7 +55,7 @@ export function utworzWykazHistorii(): WykazHistorii {
   };
 }
 
-/** Jeden wiersz wykazu: wskazanie, nadawca, czas, skrót treści. */
+/** Jeden wiersz wykazu historii: pole wskazania, nadawca, czas zapisu i skrót treści całej wiadomości Operatora. */
 function wiersz(
   pozycja: HistoryEntry,
   pozaZasada: boolean,
@@ -92,8 +69,7 @@ function wiersz(
   const wskazanie = document.createElement('input');
   wskazanie.type = 'checkbox';
   wskazanie.className = 'dn-przelacznik';
-  // Wiersz powstaje na nowo przy każdym przerysowaniu, więc pole wskazania
-  // trzeba nastawić z zaznaczenia trzymanego przez wykaz.
+  // Wiersz powstaje na nowo przy przerysowaniu, więc pole wskazania nastawia się z zaznaczenia wykazu.
   wskazanie.checked = wskazany;
   wskazanie.setAttribute('aria-label', `Wskaż pozycję ${opisNadawcy(pozycja.role)} z ${czas(pozycja.createdAt)}`);
   wskazanie.addEventListener('change', () => przelacz(pozycja.id, wskazanie.checked));
@@ -116,11 +92,7 @@ function wiersz(
 }
 
 /**
- * Napis przy pozycji, której nastawiona zasada nie utrzyma.
- *
- * Zapowiedź, nie orzeczenie: dopóki Operator nie zapisze zasady, pozycja stoi
- * w bazie nietknięta. Zdanie mówi to wprost, bo napis „poza zasadą" bez tego
- * czytałby się jak informacja o kasowaniu, które już nastąpiło.
+ * Napis przy pozycji, której nastawiona zasada nie utrzyma, jest zapowiedzią, nie orzeczeniem: dopóki Operator nie zapisze zasady, pozycja stoi w bazie nietknięta.
  */
 function znacznikPozaZasada(): HTMLElement {
   const element = document.createElement('p');
@@ -152,7 +124,7 @@ function opisNadawcy(rola: string): string {
   return rola === '' ? 'nadawca nieznany' : rola;
 }
 
-/** Czas zapisu w postaci lokalnej; wartość nieczytelna zostaje nazwana. */
+/** Czas zapisu pozycji przepisany na postać lokalną dla Operatora; wartość nieczytelna zostaje nazwana wprost. */
 function czas(znacznik: number): string {
   if (!Number.isFinite(znacznik) || znacznik <= 0) return 'czas nieznany';
   return new Date(znacznik).toLocaleString('pl-PL');

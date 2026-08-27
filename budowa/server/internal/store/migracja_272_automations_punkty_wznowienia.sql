@@ -1,10 +1,5 @@
--- Migracja 272 — punkty wznowienia przebiegu
--- (`automation.execution.checkpoint.list`, `.resume`).
---
--- Punkt wznowienia bez trwałości jest sprzecznością sam w sobie: służy
--- wznowieniu po awarii, a awaria zabiera pamięć procesu. Wykaz kroków
--- ukończonych leży zapisem strukturalnym, bo czyta się go w całości i tylko
--- w całości — wznowienie pyta „czego już nie powtarzać”, nie „czy krok siódmy”.
+-- Migracja 272 wprowadza trwały punkt wznowienia przebiegu z wykazem kroków ukończonych jako
+-- zapis strukturalny, czytany zawsze w całości przy wznowieniu po awarii.
 CREATE TABLE punkt_wznowienia_przebiegu (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,
     identyfikator_zewnetrzny TEXT    NOT NULL UNIQUE,

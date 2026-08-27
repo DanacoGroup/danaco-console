@@ -36,7 +36,7 @@ for k in (KAT_SVG, KAT_PNG):
     os.makedirs(k, exist_ok=True)
 
 # ── barwy marki ─────────────────────────────────────────────────────────────
-# W plikach SVG barwy podajemy dosłownie (to barwy własne znaku), obok podany
+# W plikach SVG barwy podawane są dosłownie (to barwy własne znaku), obok podany
 # jest odpowiadający żeton systemu — w HTML obowiązuje wyłącznie var(--dn-*).
 TLO_CIEMNE = "#0F0F0F"   # --dn-tlo (ciemny)        = szary-950
 TLO_JASNE = "#F4F4F4"    # --dn-tlo (jasny)         = szary-50
@@ -222,7 +222,7 @@ def lockup_pionowy(x, y, skala, ink, dot):
     srodek = (sygnet(31.7, 0, 96, ink, dot)
               + logotyp(12.0, 136 - LOGO_WYS_WERSALIKA, 1.0, ink, dot)
               .replace('translate(12.0000,', 'translate(12.0000,'))
-    # CONSOLE jest wyśrodkowany pod DANACO, więc składamy go osobno.
+    # CONSOLE jest wyśrodkowany pod DANACO, więc jest skladany osobno.
     srodek = (sygnet(31.7, 0, 96, ink, dot)
               + tekst("DANACO", "sg700", LOGO_DANACO_ROZM, 12.0, 136.0, ink,
                       tracking=LOGO_DANACO_TRACK)

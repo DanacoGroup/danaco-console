@@ -1,10 +1,4 @@
-// Odpowiedzialność pliku: moduł Workspace — projekt jako byt i zestawienie
-// Project Dashboard. Instrukcje, pamięć, biblioteka i eksperci mają własne
-// pliki adaptera.
-//
-// Kontrakt nie ma komendy zakładającej projekt, dlatego
-// `workspace.dashboard.get` zakłada wskazany projekt, gdy tego jeszcze nie ma,
-// i rozgłasza `workspace.project.changed` rodzajem `created`.
+// Odpowiedzialność pliku: moduł Workspace — projekt jako byt i zestawienie Project Dashboard, zakładany przez workspace.dashboard.get, gdy jeszcze go nie ma.
 package core
 
 import (
@@ -25,13 +19,11 @@ type adapterPrzestrzeniRoboczej struct {
 	konfiguracja dane.RepozytoriumKonfiguracji
 	rozstrzygacz *konfig.Rozstrzygacz
 	katalog      *KatalogRoboczy
-	// dokumenty jest warsztatem odczytu treści plików — tym samym, którym
-	// jedzie `document.text.extract`. Bez niego wydobycie tekstu w bibliotece
-	// projektu odmawia, a reszta modułu pracuje dalej.
+	// dokumenty jest warsztatem odczytu treści plików, tym samym, którym jedzie document.text.extract.
 	dokumenty WydobycieTekstuDokumentu
 }
 
-// nowyAdapterPrzestrzeniRoboczej wiąże port z repozytorium modułu.
+// nowyAdapterPrzestrzeniRoboczej wiąże nowo utworzony port z repozytorium modułu przestrzeni roboczej.
 func nowyAdapterPrzestrzeniRoboczej(repozytorium dane.RepozytoriumPrzestrzeniRoboczej) *adapterPrzestrzeniRoboczej {
 	return &adapterPrzestrzeniRoboczej{repozytorium: repozytorium}
 }
@@ -45,18 +37,13 @@ func (a *adapterPrzestrzeniRoboczej) ZInstrukcjami(konfiguracja dane.Repozytoriu
 	return a
 }
 
-// ZKatalogiem podpina ustalacz katalogu roboczego — źródło biblioteki projektu.
+// ZKatalogiem podpina ustalacz katalogu roboczego, źródło biblioteki projektu w drzewie plików rdzenia.
 func (a *adapterPrzestrzeniRoboczej) ZKatalogiem(katalog *KatalogRoboczy) *adapterPrzestrzeniRoboczej {
 	a.katalog = katalog
 	return a
 }
 
-// Pulpit zwraca zestawienie stanu projektu: karty sesji pracujące w projekcie,
-// przypisanych ekspertów, liczbę plików biblioteki, liczbę wpisów pamięci
-// i czas ostatniej czynności.
-//
-// Liczby są opcjonalne w kontrakcie, lecz wypełniamy je zawsze: pulpit ma
-// pokazać zero jako zero, a nie jako brak wiedzy.
+// Pulpit zwraca zestawienie stanu projektu: karty sesji pracujące w projekcie, przypisanych ekspertów, liczbę plików biblioteki, wpisów pamięci i czas ostatniej czynności, z liczbami wypełnianymi zawsze.
 func (a *adapterPrzestrzeniRoboczej) Pulpit(ctx context.Context,
 	z shared.WorkspaceDashboardGetRequest) (shared.WorkspaceDashboardGetResponse, error) {
 
@@ -127,7 +114,7 @@ func kodyEkspertow(przypisania []dane.PrzypisanieAgenta) []string {
 	return kody
 }
 
-// projektKontraktu przekłada wiersz projektu na byt kontraktu.
+// projektKontraktu przekłada wiersz projektu na byt kontraktu wymiany z klientem panelu Project Dashboard.
 func projektKontraktu(p dane.Projekt) shared.WorkspaceProject {
 	stan := p.Stan
 	if stan == "" {

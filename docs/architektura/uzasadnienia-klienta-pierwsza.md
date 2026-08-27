@@ -779,3 +779,13 @@ przycięta nazwa albo nieprzyjęte okna wykonawców mają być dla Operatora wid
 
 Wiersz etapu bieżącego niesie plakietkę zamiast wygaszonego przycisku, a kontrolka wyboru
 pojawia się wyłącznie w wierszach, w których jest co wybrać.
+
+## budowa/klient-poprzedni/src/moduly/library/tresc-base64.ts
+
+Odczyt jest wspólny dla wgrania pliku komendą `library.file.upload` oraz dla
+dołożenia wersji komendą `library.version.add`, ponieważ obie komendy niosą to
+samo pole `contentBase64`.
+
+Nieudany odczyt, czyli zniknięcie pliku albo odrzucenie dostępu przez
+urządzenie, wraca jako `null`, a nie wyjątkiem wywracającym widok. Wołający ma
+wtedy powiedzieć Operatorowi, że nic nie zostało wysłane.

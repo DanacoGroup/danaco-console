@@ -71,7 +71,7 @@ func wejscieRozpoznajZapisZnakow(bajty []byte, wskazanie *string) (string, strin
 		return tekst, wejscieZapisUtf16BE, err
 	}
 
-	// Wynik deklaracji w treści bierzemy tylko wtedy, gdy nazwał coś innego
+	// Wynik deklaracji w treści bierze się tylko wtedy, gdy nazwał coś innego
 	// niż UTF-8.
 	if _, nazwa, pewne := charset.DetermineEncoding(bajty, ""); pewne &&
 		!strings.EqualFold(nazwa, "utf-8") && !strings.EqualFold(nazwa, "windows-1252") {
@@ -1127,7 +1127,7 @@ func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, [
 			}
 			switch rozkaz {
 			case "'":
-				// Znak zapisany szesnastkowo czytamy stroną windows-1250,
+				// Znak zapisany szesnastkowo czyta się stroną windows-1250,
 				// typową dla RTF pisma polskiego.
 				if pomijanaGrupa == 0 && maParametr {
 					przelozone, err := wejscieZastosujZapis([]byte{byte(parametr)}, charmap.Windows1250)
@@ -1162,7 +1162,7 @@ func wejsciePostacZRtf(kodDokumentu, tresc string) (shared.StudioDocumentForm, [
 					stan.stopien = wejscieWskaznikRzeczywisty(float64(parametr) / 2)
 				}
 			case "cf":
-				// Barwa idzie numerem tabeli barw, której nie czytamy, więc
+				// Barwa idzie numerem tabeli barw, której nie czyta się, więc
 				// pole zostaje puste, nie zmyślone.
 			case "ql":
 				wyrownanie = wejscieWskaznikWyrownania(shared.StudioTextAlignLeft)

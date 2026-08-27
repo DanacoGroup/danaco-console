@@ -5590,3 +5590,13 @@ gdzie debata jest; stan błędu zostaje zarezerwowany dla nieudanego odczytu, po
 naprawdę nie ma. Powód odmowy stoi obok przerysowanej treści, oznaczony atrybutem, który arkusz
 maluje barwą błędu. Przyciski skrajnych wierszy przesunięcia kolejności są klikalne zawsze,
 a wygaszenie ich milczałoby o powodzie, gdy ruch jest niewykonalny.
+
+## budowa/klient-poprzedni/src/ustawienia/indeks.ts
+Okno jest jedno na klienta i żyje między otwarciami — z tego samego powodu, dla którego router nie
+porzuca widoku opuszczonej trasy: powtórne otwarcie ma wrócić do sekcji, na której operator skończył,
+a nie zaczynać od początku, i nie gubić stanu niezapisanego formularza sekcji, których operator akurat
+nie ogląda. Kanał podajemy przy pierwszym otwarciu; wywołanie z innym kanałem, po ponownym połączeniu
+z rdzeniem, buduje okno na nowo, żeby komendy nie szły przez transport, którego już nie ma. Gdyby most
+motywu żył wyłącznie wewnątrz okna, zmiana motywu wykonana w drugim oknie albo na drugim urządzeniu
+dolatywałaby dopiero po otwarciu ustawień; dlatego podpięcie mostu woła się raz przy wiązaniu gniazda
+aplikacji, a sekcja wyglądu bierze ten sam, już podpięty most.

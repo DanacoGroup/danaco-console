@@ -1815,3 +1815,99 @@ jedyne wywołanie. Zdarzenie klasy dopuszczonej do kanału mobilnego wchodzi do
 rejestru centrum i zaraz potem do kolejki doręczeń. Niepowodzenie kolejki nie
 cofa zapisu w rejestrze — zdarzenie zaszło niezależnie od tego, czy telefon
 je odebrał, a rejestr centrum jest kanałem podstawowym.
+
+## budowa/server/internal/core/adapter_narzedzia_archiwum_rozpakowanie.go
+
+Warstwy obrony są trzy, bo żadna pojedyncza nie daje pewności. Pierwsza to
+spis przed zapisem: zawartość archiwum jest oglądana spisem `7z l -slt`,
+zanim poleci pierwszy bajt, a pozycjom bezwzględnym, pozycjom z członem `..`
+i dowiązaniom komenda odmawia już na tym etapie. Druga to kwarantanna:
+rozpakowanie idzie do katalogu świeżo założonego i pustego, a nie wprost do
+katalogu Operatora, bo w katalogu bez ani jednego pliku nie ma czego
+nadpisać; kwarantanna stoi na tym samym nośniku co cel, więc przeniesienie
+gotowej treści jest przemianowaniem, a nie drugim kopiowaniem. Trzecia to
+przejście po wyniku: po rozpakowaniu komenda obchodzi kwarantannę i sprawdza,
+co powstało — przejście po drzewie nie idzie za dowiązaniami i rozpoznaje je
+po typie wpisu, więc dowiązanie, które przeszłoby przez spis, zatrzymuje się
+tutaj; ta warstwa mierzy też prawdziwy rozmiar wyniku, bo deklaracja
+w nagłówku archiwum jest obietnicą jego twórcy. Dopiero po trzeciej warstwie
+treść wchodzi do katalogu Operatora — odmowa na każdej z nich zostawia jego
+drzewo nietknięte, bo do tej chwili nic w nim nie powstało.
+
+Miejsca docelowe są dwa, bo zamiary są dwa. Kontrakt opisuje pole docelowej
+ścieżki jako katalog docelowy w katalogu roboczym okna, którego brak kładzie
+zawartość w magazynie: ze ścieżką model rozpakowuje po to, żeby na tych
+plikach pracować, bez ścieżki — żeby zawartość przechować pod sumami
+kontrolnymi, nie zaśmiecając katalogu Operatora. Plik istniejący nie jest
+nadpisywany: przy przenoszeniu z kwarantanny nazwa zajęta w celu jest
+odmową, bo nadpisanie cudzej pracy zawartością archiwum jest tą samą szkodą,
+przed którą stoi reszta tego pliku.
+
+Pole ścieżek wydanych Operatorowi zostaje puste, gdy zawartość ląduje
+w magazynie: tam nie ma ścieżek, są zasoby pod identyfikatorami, a wypisanie
+nazw z wnętrza archiwum dałoby napisy wyglądające jak ścieżki na dysku
+Operatora, pod którymi nic nie leży. Pole jest w kontrakcie nieobowiązkowe
+właśnie dlatego, że jedna z dwóch dróg tej komendy ścieżek nie wytwarza.
+
+## budowa/server/internal/core/adapter_okno_przekazanie.go
+
+Port `PrzekazanieOkna` i komenda `window.action` leżą w `adapter_okno_akcja.go`
+i `adapter_okno_przekazanie_uchwyty.go`; ten plik deklaruje wyłącznie typ
+adaptera, jego konstruktor i wiązania zależności.
+
+Więź koordynator–wykonawca (kolumna `okno_komunikacji.okno_koordynatora_id`)
+bez utrwalenia tutaj żyłaby wyłącznie w pamięci przeglądarki i ginęła z jej
+zamknięciem, a Mission Control nie miałby czego pokazać po ponownym
+uruchomieniu rdzenia. Komenda `window.handoff` robi trzy zapisy naraz —
+wszystkie albo żadną: utrwala więź koordynator–wykonawca, zapisuje zlecenie
+wraz z kompletem kontekstu i zakłada pozycję kolejki, której identyfikator
+wraca w `QueueItemId`.
+
+Warstwa danych (`dane/przekazanie_okna*.go`) przyjmuje `PozycjaKolejkiID` jako
+identyfikator gotowy i sama pozycji nie zakłada. Zakładanie należy więc do
+tego adaptera i idzie przez jedyny silnik kolejek — ten sam `adapterKolejek`,
+którym pracuje pętla sesyjna i moduł Automations. Wzorem
+`adapterAutomatyk.ZKolejkami` (`adapter_modul_automations.go`) konstruktor
+bierze wyłącznie repozytorium obszaru, a silnik kolejek dochodzi osobnym
+wiązaniem po złożeniu grafu zależności w `montaz_moduly.go`. Bez podpiętego
+adaptera kolejek `Przekaz` odmawia wprost, zamiast meldować wykonanie.
+
+Repozytoria okien, sesji, modułów i kanałów stoją tu, bo `window.handoff`
+przyjmuje identyfikatory zewnętrzne (tekstowe) okien i sesji, a warstwa danych
+obszaru window.* oraz silnik kolejek pracują na kluczach wewnętrznych
+(`int64`) tabel `okno_komunikacji` i `sesja`. Rozwiązanie identyfikatora na
+wiersz — i odmowa `not_found`, gdy okna nie ma — jest obowiązkiem tego
+adaptera, bo warstwa danych przyjmuje klucze już rozwiązane. Moduły i kanały
+modelu służą wyłącznie złożeniu odpowiedzi: kontrakt `Window` niesie kody
+modułu i kanału, a wiersz okna niesie klucze obce do nich. Wszystkie te
+zależności powstają w `montaz_moduly.go`, dlatego adapter przyjmuje je gotowe
+przez wiązania tego pliku.
+
+Schemat dopuszcza dokładnie dwa rodzaje kolejki — `sesyjna` i `multitasking` —
+bo jeden silnik kolejek obsługuje pętlę sesyjną i MultitaskingAI. Przekazanie
+zlecenia z okna koordynatora do okna wykonawcy jest pętlą MultitaskingAI,
+więc mieści się w rodzaju już istniejącym; własny rodzaj byłby trzecim
+znaczeniem tego samego pojęcia i padłby na warunku CHECK kolumny.
+
+Kolejność trzech zapisów w `Przekaz` jest celowa: pozycja kolejki idzie
+pierwsza, bo jest jedynym z trzech zapisów, który silnik kolejek umie cofnąć
+samodzielnie — kolejka porzucona bez zlecenia jest stanem nieszkodliwym; więź
+i zlecenie idą po niej, gdy wiadomo już, że jest czym wykonać. Wspólnej
+transakcji SQL między repozytoriami nie ma, bo warstwa danych obszaru
+window.* i silnik kolejek to dwa oddzielne repozytoria. Odmowa wczesna, przed
+pierwszym zapisem, pokrywa najczęstszy przypadek: okno albo sesja, których
+nie ma. Usterka po pierwszym zapisie zostawia założoną pozycję kolejki bez
+zlecenia, co Queue Manager pokazuje jako pozycję do ręcznego domknięcia,
+a nie jako ciche zaginięcie zlecenia.
+
+Kolejka w `zalozPozycjeKolejki` idzie przez `a.kolejki.repozytorium` — ten sam
+obiekt, którym jedzie `adapter_modul_automations_kolejka.go`; wzorzec
+`queue.create` w `adapter_kolejki.go` też zakłada kolejkę za każdym
+wywołaniem.
+
+`oknoWynikuKontraktu` korzysta z tego samego przekładu co odczyt utrwalony —
+`oknoWierszaKontraktu` w `przeklad_nawigacja.go` — bo identyfikator sesji jest
+już znany z żądania i drugi odczyt sesji byłby zapytaniem po to samo.
+
+Wykaz kanałów w `kodSlownika` czyta się bez filtra aktywności, bo okno mogło
+zostać założone na kanale, który od tamtej pory wyłączono.

@@ -1,13 +1,6 @@
 // Odpowiedzialność pliku: biblioteka projektu — okno Project Library modułu
-// Workspace.
-//
-// Źródłem wykazu jest katalog roboczy projektu, nie osobna tabela: pliki
-// powstają tam, gdzie pracuje model, a komenda wgrania pliku należy do modułu
-// Library (`library.file.upload`), więc tabela plików w module Workspace nie
-// miałaby pisarza.
-//
-// Project Library jest odpowiednikiem okna Library Explorer zawężonym do
-// zakresu projektu, którym jest katalog roboczy projektu.
+// Workspace. Źródłem wykazu jest katalog roboczy projektu, nie osobna tabela:
+// pliki powstają tam, gdzie pracuje model.
 package core
 
 import (
@@ -60,7 +53,7 @@ func (a *adapterPrzestrzeniRoboczej) plikiProjektu(idProjektu, fraza string) []s
 	przejrzane := 0
 	_ = filepath.WalkDir(korzen, func(sciezka string, wpis fs.DirEntry, err error) error {
 		if err != nil {
-			// Wpis nieczytelny pomijamy; jeden plik bez uprawnień nie przerywa
+			// Wpis nieczytelny zostaje pominięty; jeden plik bez uprawnień nie przerywa
 			// wykazu pozostałych.
 			return nil
 		}

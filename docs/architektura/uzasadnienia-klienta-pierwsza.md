@@ -2085,3 +2085,15 @@ stronie klienta.
 Wskaźnik osadzeń nie odświeża się przy wgraniu pliku. Rdzeń buduje go wyłącznie na żądanie
 `knowledge.index`, ponieważ osadzanie potrafi trwać minutę i sięga po wagi modelu. Przeliczenie
 wskaźnika jest więc osobną czynnością w zakładce higieny, a nie skutkiem ubocznym wgrania pliku.
+
+## budowa/klient-poprzedni/src/aplikacja/przelacznik-motywu.ts
+
+Oba motywy są równoprawne i kontrolka nie wskazuje żadnego z nich jako
+domyślnego. Dopóki nie zapadł wybór własny, obowiązuje preferencja systemu,
+a kontrolka powrotu stoi w stanie wciśniętym: pokazuje, że rozstrzygnięcie należy
+do systemu.
+
+Wartości motywu ani żadnej barwy ten plik nie zna — całą pracę wykonuje warstwa
+`motyw/`, a tutaj zostaje wyłącznie obsługa kontrolek. Zmiana preferencji systemu
+przy braku wyboru własnego dochodzi tą samą drogą zdarzenia co przełączenie
+ręczne, więc kontrolka nadąża bez przeładowania okna.

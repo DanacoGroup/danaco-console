@@ -207,3 +207,37 @@ przeglądarki nad pobraniem całej strony — to fragment, który operator widzi
 dokładnie. Bez niego rdzeń pobiera stronę przez `net/http`, bez silnika
 przeglądarki, więc strona zbudowana wyłącznie skryptem oddaje mało treści;
 to jest cena znana i nazwana w bilansie, nie przeoczenie rachunku.
+
+## adapter_modul_studio_wydanie.go
+
+Archiwum eksportu składa biblioteka standardowa Go (`archive/zip`,
+`archive/tar`), wkompilowana w binarium rdzenia. Wywołanie zewnętrznego
+programu pakującego byłoby zależnością spoza instalki: u Operatora
+„Eksportuj historię" kończyłoby się odmową, choć rdzeń meldowałby komendę
+jako obsłużoną.
+
+Manifest jest częścią archiwum, nie dodatkiem. Archiwum bez manifestu to
+katalog plików, o których nie wiadomo, w jakiej kolejności powstały, kto je
+zapisał ani do czego należą, dlatego każde wydanie niesie `manifest.json`,
+nawet gdy wersja jest jedna.
+
+Paczka redakcyjna wyłącza niezależnie historię, raport zmian i adnotacje, bo
+nie każde przekazanie jest przekazaniem redakcyjnym; dokument finalny
+wyłączyć się nie da, ponieważ bez niego paczka nie jest paczką.
+
+Wersja wskazana do wydania repozytorium, ale nie należąca do danego
+dokumentu, kończy się odmową, a nie cichym pominięciem: Operator dostałby
+archiwum krótsze, niż prosił, i nie dowiedziałby się dlaczego.
+
+Format raportu różnicy bierze się ze słownika zamiany formatu dokumentu, więc
+ten sam raport da się oddać do wglądu (PDF), do dalszej redakcji (DOCX,
+Markdown) albo do odczytu maszynowego (TXT). Format nieznany kończy się
+odmową, nie zejściem na zapis tekstowy: Operator, który poprosił o DOCX,
+a dostałby plik tekstowy z rozszerzeniem `.docx`, dowiedziałby się o tym
+dopiero przy otwieraniu dokumentu u odbiorcy.
+
+DOCX jest archiwum ZIP z trzema częściami obowiązkowymi, więc składa się go
+`archive/zip` bez biblioteki biurowej i bez klucza komercyjnego, których
+instalka nie niesie. Dokument nie ma stylów ani tabel i mieć nie udaje: niesie
+akapity tekstu, otwiera się w każdym edytorze i daje się dalej redagować,
+a to jest dokładnie to, po co paczka redakcyjna powstaje.

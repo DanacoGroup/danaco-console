@@ -3065,3 +3065,42 @@ stanów panel nie buduje sam.
 Zapis wybranych obszarów zawsze kończy się zdaniem odpowiedzi. Wybór pusty nie
 idzie do rdzenia, ponieważ komenda z pustym wykazem obszarów nie zapisałaby
 niczego, a milczący przycisk wyglądałby jak awaria.
+
+## budowa/klient-poprzedni/src/moduly/library/administracja-repozytorium.ts
+
+Siedem rodzin zdolności eksperckich stoi w jednym panelu, bo wszystkie są
+sterowaniem repozytorium jako całością, a nie pracą nad wskazanym plikiem.
+Rozbicie ich na siedem osobnych paneli dałoby siedem miejsc, w których
+Operator szukałby tego samego: gdzie ustawia się zachowanie biblioteki.
+
+Każda czynność panelu mówi wynikiem, co zaszło. Wykazy odczytują się po
+wykonaniu czynności, a nie w pętli — repozytorium nie odpytuje się samo.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-zespolow.ts
+
+Źródło jest osobne od `zrodlo-agentow.ts`, ponieważ zespół nie jest polem
+eksperta ani jego wersją: jest własnym bytem kontraktu `Team`, z własnym
+zdarzeniem `team.changed` i własnym cyklem życia. Włączenie tych czterech
+komend do źródła obszaru `agent.*` dałoby jeden plik o dwóch
+odpowiedzialnościach.
+
+Nazwy `Command.*` kończą się w tym pliku. Panel oraz widok składu wołają
+czynności interfejsu nazwane po polsku, bytami dziedziny, i kontraktu nie
+dotykają. Przemianowanie komendy w `contract.json` przerywa wtedy kompilację
+w jednym pliku, a nie w trzech widokach.
+
+Żadna czynność źródła nie rzuca wyjątku. Odmowa wraca polem `blad` wyniku
+i pokazuje się w wierszu odpowiedzi tego panelu, w którym czynność wywołano.
+
+Rozróżnienie między założeniem nowego zespołu a zmianą istniejącego opiera się
+wyłącznie na obecności identyfikatora, więc pole idzie do żądania tylko wtedy,
+gdy naprawdę jest. Wysłanie pustego napisu byłoby dla rdzenia wskazaniem
+zespołu o nazwie pustej, a nie brakiem wskazania.
+
+Opis jest w kontrakcie polem opcjonalnym, więc pusty nie trafia do żądania:
+przy zmianie zespołu wysłanie pustego napisu skasowałoby opis już zapisany,
+choć formularz o skasowanie nie prosił.
+
+Zdanie o zespole podaje liczebność składu, ponieważ jest ona jedyną rzeczą, po
+której Operator poznaje na wykazie różnicę między zespołem a jego kopią świeżo
+powieloną.

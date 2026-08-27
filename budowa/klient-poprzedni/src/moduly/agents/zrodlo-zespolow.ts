@@ -13,32 +13,14 @@ import { czyObiekt, czyTablica, sprawdzKsztalt } from '../../protokol/ksztalt-od
 import { wywolaj } from '../../protokol/wywolanie';
 
 /**
- * Cztery komendy obszaru `team.*` widziane przez panel „Zespoły ekspertów”.
- *
- * Źródło jest osobne od `zrodlo-agentow.ts`, bo zespół nie jest polem eksperta
- * ani jego wersją — jest własnym bytem kontraktu (`Team`) z własnym zdarzeniem
- * `team.changed` i własnym cyklem życia. Wsadzenie tych czterech komend do
- * źródła obszaru `agent.*` dałoby jeden plik o dwóch odpowiedzialnościach.
- *
- * Nazwy `Command.*` kończą się tutaj. Panel i widok składu wołają czynności
- * tego interfejsu — po polsku, o bytach dziedziny — i nigdy nie dotykają
- * kontraktu. Dzięki temu przemianowanie komendy w `contract.json` przerywa
- * kompilację w jednym pliku, nie w trzech widokach.
- *
- * Żadna czynność nie rzuca. Odmowa wraca polem `blad` wyniku i pokazuje się
- * w wierszu odpowiedzi panelu, w którym ją wywołano.
+ * Cztery komendy obszaru `team.*` wraz ze zdarzeniem `team.changed` widziane
+ * przez panel zespołów ekspertów. Nazwy `Command.*` kończą się w tym pliku,
+ * a żadna czynność nie rzuca: odmowa wraca polem `blad` wyniku.
  */
 export interface ZrodloZespolow {
   /** Zespoły zapisane przez Operatora; pusta fraza znaczy wykaz pełny. */
   wykaz(fraza: string): Promise<Wynik<{ teams: Team[]; total: number }>>;
-  /**
-   * Zapisuje zespół; pusty identyfikator zakłada nowy, podany zmienia istniejący.
-   *
-   * Rozróżnienie „nowy czy zmiana” robi wyłącznie obecność identyfikatora, więc
-   * pole idzie do żądania tylko wtedy, gdy naprawdę jest. Wysłanie pustego
-   * napisu byłoby dla rdzenia wskazaniem zespołu o nazwie pustej, nie brakiem
-   * wskazania.
-   */
+  /** Zapisuje zespół; pusty identyfikator zakłada nowy, podany zmienia stary. */
   zapisz(zapis: ZapisZespolu): Promise<Wynik<{ team: Team }>>;
   /** Czyta jeden zespół wraz ze składem — wykaz nie musi go nieść w całości. */
   wczytaj(idZespolu: string): Promise<Wynik<{ team: Team }>>;
@@ -48,7 +30,11 @@ export interface ZrodloZespolow {
   naZmiane(sluchacz: (tresc: TeamChangedEvent) => void): Odsubskrybuj;
 }
 
-/** Treść zapisu zespołu w postaci, w jakiej trzyma ją formularz panelu. */
+/**
+ * Treść zapisu zespołu w postaci, w jakiej trzyma ją formularz panelu: zespół
+ * zmieniany, nazwa, opis oraz skład w kolejności nadanej przez Operatora.
+ * Źródło przekłada tę postać na żądanie kontraktu przy każdym zapisie.
+ */
 export interface ZapisZespolu {
   /** Zespół zmieniany; pusty zakłada nowy. */
   idZespolu: string;
@@ -76,9 +62,7 @@ export function utworzZrodloZespolow(kanal: Kanal): ZrodloZespolow {
         agentIds: [...zapis.idEkspertow],
       };
       if (zapis.idZespolu !== '') zadanie.teamId = zapis.idZespolu;
-      // Opis jest w kontrakcie polem opcjonalnym, więc pusty nie jedzie: przy
-      // zmianie zespołu wysłanie pustego napisu skasowałoby opis już zapisany,
-      // choć formularz o skasowanie nie prosił.
+      // Opis jest w kontrakcie opcjonalny, więc pusty nie idzie do żądania.
       if (zapis.opis.trim() !== '') zadanie.description = zapis.opis.trim();
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.TeamSave, zadanie),
@@ -112,11 +96,9 @@ export function utworzZrodloZespolow(kanal: Kanal): ZrodloZespolow {
 }
 
 /**
- * Zdanie o zespole na wykazie — nazwa, liczebność składu i opis, gdy jest.
- *
- * Stoi tutaj, a nie w widoku, bo mówi o kształcie bytu `Team`, nie o układzie
- * kontrolek: liczebność składu jest jedyną rzeczą, po której Operator poznaje
- * na wykazie różnicę między zespołem a jego kopią świeżo powieloną.
+ * Zdanie o zespole na wykazie podaje nazwę, liczebność składu oraz opis, gdy
+ * zespół go ma. Stoi w źródle, a nie w widoku, ponieważ mówi o kształcie bytu
+ * `Team`, a nie o układzie kontrolek panelu.
  */
 export function zdanieOZespole(zespol: Team): string {
   const liczba = zespol.agentIds.length;

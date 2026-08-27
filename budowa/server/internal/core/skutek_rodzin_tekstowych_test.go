@@ -9,15 +9,6 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek rodzin obsługi tekstu i mowy poza jednym oknem: historii schowka,
-// słownika skrótów, kontekstów pamięci, nagrań mowy, wywoływacza poleceń,
-// wyróżnienia wpisu dziennika i pomiaru zajętości okna kontekstu.
-//
-// Wzorzec sprawdzianu jest ten sam co przy warsztacie PDF: żaden nie kończy się
-// na odczytaniu odpowiedzi. Każdy schodzi własnym zapytaniem SQL do tabeli albo
-// otwiera plik na dysku i mierzy go niezależnie od tego, co komenda
-// zameldowała.
-
 // TestHistoriaSchowkaZostajeWTabeli wykazuje, że treść oddana rdzeniowi
 // naprawdę przeżywa kartę: leży w tabeli `wpis_schowka` wraz z odciskiem.
 func TestHistoriaSchowkaZostajeWTabeli(t *testing.T) {
@@ -115,8 +106,8 @@ func TestSkrotTekstowyLezyWSlownikuRdzenia(t *testing.T) {
 		t.Fatalf("pola szablonu nie doszły do wiersza: %q", pola)
 	}
 
-	// Drugi skrót o tej samej frazie w tym samym profilu ma zostać odrzucony:
-	// dwa rozwinięcia jednego skrótu rozstrzygałaby kolejność odczytu.
+	// Drugi skrót tej samej frazy w profilu ma zostać odrzucony, nie
+	// rozstrzygnięty kolejnością.
 	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandSnippetSet,
 		shared.SnippetSetRequest{Shortcut: ";odmowa", Content: "coś innego"})
 	if odmowa.Code != shared.ErrorCodeConflict {
@@ -226,8 +217,8 @@ func TestNagranieWraca(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianu(t, katalog)
 
-	// Materiał: nagłówek WAV wraz z krótką próbką. Treść jest dowolna — mierzymy
-	// drogę bajtów, a nie rozpoznawanie mowy.
+	// Materiał to nagłówek WAV z krótką próbką; mierzymy drogę bajtów, nie
+	// rozpoznawanie mowy.
 	bajty := nagranieWavProbne()
 
 	var przyjecie shared.SpeechAudioUploadResponse
@@ -410,8 +401,8 @@ func TestWyroznienieWpisuDziennikaPrzezywaOdczyt(t *testing.T) {
 		t.Fatalf("wiersz niesie wazny=%d i notatkę %q", wazny, notatka)
 	}
 
-	// Zdjęcie wyróżnienia kasuje też powód — powód bez znacznika byłby notatką
-	// do wpisu, którego nikt nie wyróżnił.
+	// Zdjęcie wyróżnienia kasuje też powód, bo powód bez znacznika byłby
+	// osieroconą notatką.
 	wykonajUdana(t, zmontowany, zycie, shared.CommandAssistantActivityFlag,
 		shared.AssistantActivityFlagRequest{EntryId: "wpis-sprawdzianu", Important: false}, nil)
 	if err := baza.QueryRow(
@@ -425,9 +416,8 @@ func TestWyroznienieWpisuDziennikaPrzezywaOdczyt(t *testing.T) {
 }
 
 // nagranieWavProbne składa najkrótszy poprawny plik WAV: nagłówek RIFF wraz
-// z jedną ramką ciszy. Format jest tu istotny — magazyn nagrań przyjmuje
-// wyłącznie rozszerzenia, które silnik mowy potrafi otworzyć, więc materiał
-// musi być nagraniem naprawdę, a nie napisem udającym nagranie.
+// z jedną ramką ciszy, format zgodny z rozszerzeniami, które przyjmuje
+// magazyn nagrań.
 func nagranieWavProbne() []byte {
 	naglowek := []byte("RIFF")
 	naglowek = append(naglowek, 0x2c, 0x00, 0x00, 0x00) // rozmiar pliku - 8

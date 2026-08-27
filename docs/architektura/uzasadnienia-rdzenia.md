@@ -658,3 +658,13 @@ obu wpięciach Studia, nie przed nimi — owinięcia nie da się założyć na
 komendę, której w rejestrze jeszcze nie ma. Siatka śladu autora owija
 zaporę z zewnątrz, żeby czynność zatrzymana blokadą nie zostawiła śladu
 w dzienniku.
+
+## budowa/server/internal/core/skutek_rodzin_tekstowych_test.go
+
+Plik mierzy skutek rodzin obsługi tekstu i mowy poza jednym oknem: historii
+schowka, słownika skrótów, kontekstów pamięci, nagrań mowy, wywoływacza
+poleceń, wyróżnienia wpisu dziennika i pomiaru zajętości okna kontekstu.
+Wzorzec sprawdzianu jest ten sam co przy warsztacie PDF: żaden sprawdzian nie
+kończy się na odczytaniu odpowiedzi komendy. Każdy schodzi własnym zapytaniem
+SQL do tabeli albo otwiera plik na dysku i mierzy go niezależnie od tego, co
+komenda zameldowała.

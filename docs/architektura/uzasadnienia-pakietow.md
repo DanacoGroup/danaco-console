@@ -3758,3 +3758,16 @@ należy do warstwy wyższej, nie do repozytorium.
 Wykaz zwracany przez zapytanie listaAgentow pomija archiwum, żeby ekspert odłożony nie
 wisiał nadal na liście, co czyniłoby archiwizację znacznikiem bez skutku; archiwum ma własną
 komendę odczytu.
+
+## budowa/server/internal/dane/dostep_nadania_zapis.go
+Reguły zbioru nadań: kolejność liczona jest od 1, brak wskazania dokłada
+nadanie na koniec. Głównych nadań okna jest najwyżej jedno — pilnuje tego
+indeks częściowy bazy, a repozytorium zdejmuje oznaczenie z poprzedniego,
+zamiast zderzać się z więzem. Pierwsze nadanie okna zostaje główne z urzędu;
+okno z nadaniami, ale bez głównego, nie miałoby punktu domyślnego.
+
+## budowa/server/internal/dane/dostep_nadania_zbior.go
+Reguły trzymane są osobno od poleceń zapisu, bo dotyczą całego zbioru nadań
+okna, nie pojedynczego wiersza. Kolejność liczona jest od 1; brak wskazania
+dokłada nadanie na koniec zbioru. Pierwsze nadanie okna zostaje główne
+z urzędu — okno z nadaniami, ale bez głównego, nie miałoby punktu domyślnego.

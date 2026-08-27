@@ -6,6 +6,74 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### okno-przygotowania
+
+Ostatni ekran drogi wejscia ma **slepy zaulek** i pasek, ktory nigdy nie dobiegnie
+konca. Zmierzone przez sesje pomiarowa w przegladarce wobec zywego rdzenia.
+
+| | |
+|---|---|
+| **Galaz** | `teren/okno-przygotowania` z `main` |
+| **Wykaz plikow** | `budowa/klient/src/wejscie/ekrany/przygotowanie.ts`, `budowa/klient/src/wejscie/tresci.ts`, `budowa/klient/src/wejscie/przebieg.ts`, sprawdziany w `budowa/klient/src/wejscie/` |
+| **Poza terenem** | `budowa/server/`, `budowa/shared/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/klient/src/polaczenie`, `budowa/klient/src/protokol` |
+
+**Pierwsza — przycisk prowadzi donikad.** „Pomin przywracanie sesji"
+(`przygotowanie.ts:64`) ma `komunikat: 'pominiecie'` i **nie ma przypisanej
+czynnosci**. Po klikniecu wystawia zdanie i nic wiecej sie nie dzieje; wykaz
+etapow i pasek zostaja bez zmiany. To **jedyne wyjscie** z ostatniego ekranu poza
+wylogowaniem.
+
+**Druga — pasek staje na 40% na zawsze.** Trzy z pieciu etapow przygotowania nie
+maja komendy w kontrakcie i zostaja w stanie oczekiwania. Zachowanie jest
+udokumentowane w kodzie jako zamierzone, ale odbior jest taki, jakby aplikacja
+sie zawiesila.
+
+**Czego NIE robisz.** Nie dokladasz komend do kontraktu — kontrakt nalezy w tej
+turze do innego terenu. Okno ma stac sie **uczciwe wobec tego, co potrafi**, a nie
+udawac postep, ktorego nie ma.
+
+**Kryteria odbioru.**
+
+1. Przycisk pominiecia **prowadzi dalej** albo znika. Jesli prowadzi - wykazane
+   przejsciem w przegladarce, z przytoczona odslona przed i po.
+2. Ostatni ekran **nie zostawia Operatora bez wyjscia**: z kazdej odslony jest
+   droga naprzod albo nazwany powod, dla ktorego jej nie ma.
+3. Postep nie udaje. Albo dobiega konca, albo mowi wprost, na co czeka - decyzja
+   Twoja, uzasadniona w raporcie.
+4. Tekst widoczny dla uzytkownika **wylacznie** w katalogu tresci - sprawdzian
+   `katalog-tresci.test.ts` przechodzi.
+5. `tsc --noEmit` bez bledu; sprawdziany klienta zdane (26 przebiegu, 7 katalogu).
+6. Wykazane **przejsciem w przegladarce** wobec zywego rdzenia, ze droga wejscia
+   dalej przechodzi od konca do konca. Zrzuty ekranu w katalogu tymczasowym.
+
+### witryna-pobierania
+
+Wykaz wydan sprowadzono do dwoch postaci hybrydowych, tresc strony wokol niego
+dalej obiecuje szesc.
+
+| | |
+|---|---|
+| **Galaz** | `teren/witryna-pobierania` z `main` |
+| **Wykaz plikow** | `budowa/witryna/tresc/` |
+| **Poza terenem** | `budowa/witryna/wydania.json`, `budowa/server/`, `budowa/klient/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/` |
+
+`strony.mjs:114,116,292,295,339` i `pobierz.mjs:331,427,435,445,475` niosa
+rozdzial o wyborze miedzy hybryda a postacia natywna, pakiety Linuksa, instrukcje
+sumy kontrolnej dla AppImage oraz zdanie o braku instalki natywnej dla Windows.
+Wszystkie te postaci **zniosla pozycja 8** rejestru decyzji - przeczytaj ja.
+
+**Kryteria odbioru.**
+
+1. Zero wzmianek o postaci natywnej, pakietach Linuksa i AppImage - wykazane
+   przeszukaniem **z sonda dodatnia** dowodzaca, ze wzorzec cokolwiek lapie.
+2. Tresc strony zgadza sie z `wydania.json` co do liczby i nazw postaci -
+   wykazane zestawieniem obu.
+3. Instrukcja sumy kontrolnej dotyczy postaci, ktore naprawde sa wystawione.
+4. Zdanie o tym, czego jeszcze nie ma, mowi prawde wobec pozycji 8 albo znika.
+5. Jesli witryna daje sie zbudowac albo obejrzec - wykazane uruchomieniem.
+   Jesli nie daje - napisane wprost, czego brakuje.
+
+
 ### zdolnosc-wyszukiwania
 
 **Buduje dwie nowe zdolności produktu** na modelach, które stoją odłogiem.

@@ -2923,3 +2923,26 @@ tym samym zbiorem.
 ZapiszNarzedziaRozszerzenia wymienia komplet wpisów odkrytych u integracji
 zamiast dokładać nowe: serwer, który przestał udostępniać narzędzie, ma
 przestać je pokazywać, a wpis pozostawiony byłby obietnicą bez pokrycia.
+
+## orkiestracja_podagenci.go
+
+Podagent to zadanie w tle, którego trwałą tożsamością jest pozycja kolejki, a proces
+modelu jest wyłącznie sposobem jej wykonania. Stąd kształt tego repozytorium: wiersz
+zna swoją pozycję kolejki (pole pozycja_kolejki_id), a cyklu życia zlecenia nie
+prowadzi — prowadzi go silnik kolejek.
+
+Nie ma tu odczytu tabeli pozycja_kolejki: jej czytelnikiem jest repozytorium kolejek.
+Wiersz podagenta niesie wyłącznie to, czego pozycja nie wie — pod kim biegnie, jak się
+nazywa i ile kosztował.
+
+Repozytorium wchodzi metodą zestawu, nie polem — ten sam wzorzec co
+Zestaw.Rozszerzenia() i Zestaw.RoleOkien(): rejestr nie trzyma stanu poza wskaźnikiem
+na wspólną pamięć zapytań, więc złożenie go na żądanie kosztuje tyle, co odczyt pola.
+
+Znaczniki czasu w poleceniu ustawStanPodagenta stawia baza, nie rdzeń: chwila
+rozpoczęcia zapisuje się raz, przy pierwszym wejściu w bieg, a chwila zakończenia raz,
+przy pierwszym stanie końcowym. Dzięki temu powtórzony zapis stanu nie przesuwa
+historii podagenta. Powód zakończenia i oznaka życia dokładają się tym samym
+poleceniem: stan mówi co, powód mówi dlaczego, a oznaka — kiedy rdzeń ostatni raz tego
+wiersza dotknął. Powód dla stanu niekońcowego zostaje zastany, bo przejście ze stanu
+oczekującego do biegnącego niczego nie kończy.

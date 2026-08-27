@@ -6325,3 +6325,27 @@ decyzją, nie pomyłką.
 Brak konta i brak portu schodzą na wartości domyślne mostu, nie na odmowę złożenia wpisu. Nazwa
 mostu bywa podana w całości, razem z prefiksem; prefiks jest wtedy obcinany, żeby klucz nie urósł
 do postaci powtórzonej. Klucz trafia do konfiguracji MCP i do nazw narzędzi widocznych dla modelu.
+
+## budowa/server/internal/core/trwalosc_retencji.go
+
+Pozostałe drogi egzekwowania retencji działają przy okazji innej pracy: po
+komendzie retention.set na oknach zakresu oraz przed oddaniem wykazu
+w komendzie history.load, obsługiwanej w pliku core/handlers_historia.go.
+Okno, którego nikt nie otwiera i na którym nikt nie przestawia zasady,
+żadnej z tych dróg nie napotyka — przemiatanie startowe jest jedynym
+miejscem, w którym sięga tam zasada globalna.
+
+Nie potrzeba budzika ani osobnego wątku dla retencji, bo start jest
+jedynym momentem, w którym rdzeń i tak przechodzi po stanie trwałym; tą
+samą drogą sprząta kosz sesji, opisany w pliku trwalosc_kosza.go. Osobny
+zegar tylko dla retencji byłby drugim mechanizmem sprzątania obok już
+istniejącego.
+
+Każde przemiatanie, które coś zabrało, zostawia zdanie w dzienniku rdzenia,
+wzorem czyszczenia kosza, bo ubytek bez śladu jest nie do odróżnienia od
+utraty danych.
+
+Zakres global wylicza wszystkie okna z identyfikatorem kontraktowym;
+zasadę obowiązującą każde z nich rozstrzyga potem funkcja Egzekwuj osobno,
+kolejnością window, session, global — przemiatanie tej kolejności nie zna
+i nie powiela.

@@ -3675,3 +3675,9 @@ jego brakiem; pole trójstanowe „domyślnie" nie wysyła wartości fałszywej,
 taka wartość wyłącza człon, o którego wyłączenie nikt nie prosił; czynność wymagająca dokumentu
 odmawia zdaniem, a nie wysłaniem żądania bez identyfikatora dokumentu i czekaniem na odmowę
 walidacji rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/studio/czynnosci-warsztatu.test.ts
+Sprawdzian składania żądań warsztatu dokumentu pilnuje miejsca, w którym formularz zamienia się
+w treść kontraktu: pole puste nie trafia do żądania, a nie trafia jako pusty napis, bo pusty
+napis w polu nieobowiązkowym jest dla rdzenia wskazaniem, a nie jego brakiem, i zmienia znaczenie
+czynności — w szyfrowaniu decyduje to, czy hasło jest nakładane, czy zdejmowane.

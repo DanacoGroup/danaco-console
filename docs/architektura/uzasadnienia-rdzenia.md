@@ -3431,3 +3431,31 @@ a ten liczy się na pozycji, nie na kolejce.
 `Kolejka` oddaje kolejkę kontraktu po jej identyfikatorze. Służy czynnościom
 rodziny `queue.item.*`, których wynikiem jest kolejka po zmianie, a nie samo
 zlecenie — drugiego składania kolejki w rdzeniu nie ma.
+
+## budowa/server/internal/core/adapter_zespolow.go
+
+Zespół jest składem, a nie drugą biblioteką ekspertów: adapter przenosi
+wyłącznie kody, którymi posługuje się kontrakt (`Agent.id` = `agent.kod`),
+i nie sprawdza tożsamości eksperta. Dostępność eksperta ustala warstwa
+`dane` jednym złączeniem.
+
+Brak eksperta nie przerywa wczytania: ekspert usunięty albo zarchiwizowany
+wypada ze składu oddawanego klientowi, a zespół wraca kompletny w pozostałej
+części. Fakt pominięcia trafia do dziennika rdzenia, ponieważ struktura
+`Team` kontraktu nie ma pola na taką wiadomość, a milczenie ukryłoby zmianę
+składu.
+
+Kopia nie zmienia źródła: `team.duplicate` czyta zespół źródłowy i zakłada
+obok nowy wiersz z tym samym składem; źródło nie przechodzi ani przez
+`Zapisz`, ani przez żadne inne polecenie zmieniające.
+
+`dolozStanZastany` uzupełnia zapis zespołu o to, czego żądanie nieść nie
+mogło. Opis: `description` jest w kontrakcie polem nieobowiązkowym, a brak
+pola znaczy „nie zmieniaj opisu" — tak zapowiada panel składu zespołu i tak
+zachowuje się klient, który pustego napisu nie wysyła; opis zmienia się
+wtedy i tylko wtedy, gdy pole przyszło, także wypełnione pustką. Skład:
+odczyt zespołu okrawa skład z ekspertów zarchiwizowanych i usuniętych, więc
+żądanie złożone z tego, co widać w oknie, ich nie niesie; adapter dokleja
+ich z powrotem — tak samo jak kopia zespołu (`Skopiuj`) — dzięki czemu
+wracają do składu po przywróceniu do biblioteki, a ekspert widoczny
+i wypisany ze składu wypada normalnie.

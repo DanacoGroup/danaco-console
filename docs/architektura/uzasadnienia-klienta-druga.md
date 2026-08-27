@@ -3823,3 +3823,6 @@ podkładu, a stos okien, pułapkę ogniska i zamknięcie klawiszem Escape zapewn
 oznacza odmowę, nie nazwę pustą: Escape i przycisk odmowy dają brak wartości, więc wywołujący odróżnia
 odmowę od świadomie pustego napisu. Modal jest doklejany na czas pytania i usuwany po odpowiedzi, żeby
 pytania nie nawarstwiały się w drzewie przy każdym wierszu wykazu.
+
+## budowa/klient/src/wejscie/skladniki/naglowek-ekranu.ts
+Głowa ekranu ma własny rytm odstępów; wyjęcie toru kroków poza nią rozstraja ten rytm.

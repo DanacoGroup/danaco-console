@@ -1,13 +1,6 @@
 // Odpowiedzialność pliku: układanie wiersza wywołania `ffmpeg` dla pięciu
-// czynności wyliczenia `MediaOperationKind` oraz dobór kontenera. Rozdział
-// z `adapter_narzedzia_media_przetworzenie.go` idzie po odpowiedzialności:
-// tamten plik prowadzi przebieg komendy (źródło, pomiar, binarium, zasób),
-// a ten mówi wyłącznie językiem `ffmpeg`.
-//
-// Każda odmowa wychodzi stąd przed uruchomieniem programu. Nazwany brak
-// parametru („brakuje pól startMs i endMs") jest dla wołającego czymś zupełnie
-// innym niż diagnostyka binarium, które dostało wiersz bez sensu i odmówiło
-// po swojemu.
+// czynności wyliczenia `MediaOperationKind` oraz dobór kontenera. Każda
+// odmowa wychodzi stąd przed uruchomieniem programu, nazywając brak.
 package core
 
 import (
@@ -18,13 +11,8 @@ import (
 )
 
 // argumentyPrzetworzeniaMediow układa wiersz wywołania `ffmpeg` dla wskazanej
-// czynności. Odmowa wychodzi stąd przed uruchomieniem programu — nazwany brak
-// parametru jest dla wołającego czymś zupełnie innym niż diagnostyka binarium.
-//
-// `-y` stoi przy każdej czynności, bo plik wynikowy leży w świeżym katalogu
-// tymczasowym i nadpisać może wyłącznie samego siebie; bez tego przełącznika
-// `ffmpeg` czeka na odpowiedź człowieka, którego przy nim nie ma, i kończy się
-// dopiero granicą czasu.
+// czynności, nazywając brak parametru przed uruchomieniem programu. `-y`
+// stoi przy każdej czynności, bo wynik leży w świeżym katalogu tymczasowym.
 func argumentyPrzetworzeniaMediow(z shared.MediaTranscodeRequest, zrodlo,
 	wynik string, strumienie []strumienMediow) ([]string, error) {
 
@@ -48,17 +36,9 @@ func argumentyPrzetworzeniaMediow(z shared.MediaTranscodeRequest, zrodlo,
 	return nil, odmowaNieznanejCzynnosciMediow(z.Operation)
 }
 
-// argumentyWycieciaMediow składa wycięcie fragmentu.
-//
-// Brak obu granic jest odmową nazywającą brak — powód w nagłówku pliku. Jedna
-// granica wystarczy i znaczy dokładnie tyle, ile mówi: sam `startMs` to
-// „od tego miejsca do końca", sam `endMs` to „od początku do tego miejsca".
-// To nie jest domyślanie się całości, tylko odczytanie tego, co wskazano.
-//
-// `-ss` i `-to` stoją po wejściu z zamysłem: przed wejściem `ffmpeg` przeskakuje
-// do najbliższej klatki kluczowej i granica przesuwa się o ułamek sekundy, po
-// wejściu jest dokładna. `-c copy` przepisuje strumienie bez ponownego
-// kodowania — fragment ma być tym samym materiałem, tylko krótszym.
+// argumentyWycieciaMediow składa wycięcie fragmentu. Jedna granica wystarczy:
+// sam `startMs` to „od tego miejsca do końca", sam `endMs` odwrotnie. `-ss`
+// i `-to` stoją po wejściu, dla granicy dokładnej co do klatki.
 func argumentyWycieciaMediow(z shared.MediaTranscodeRequest, zrodlo,
 	wynik string) ([]string, error) {
 
@@ -91,16 +71,8 @@ func argumentyWycieciaMediow(z shared.MediaTranscodeRequest, zrodlo,
 	return append(argumenty, "-c", "copy", wynik), nil
 }
 
-// argumentyDzwiekuMediow składa wyodrębnienie ścieżki dźwiękowej.
-//
-// `-vn` odrzuca obraz — to jest cała treść tej czynności. Wynik nie ma wymiarów
-// i mieć ich nie będzie; kontrakt przewiduje to wprost polami opcjonalnymi.
-//
-// Strumień kopiujemy wtedy, gdy kontener wyprowadziliśmy z kodeka (brak
-// `format`): dźwięk trafia do nośnika, który zna ten kodek, więc ponowne
-// kodowanie pogorszyłoby materiał bez powodu. Przy formacie wskazanym zostawiamy
-// wybór kodeka `ffmpeg`owi — kopia mogłaby do wskazanego kontenera nie pasować,
-// a odmowa binarium byłaby wtedy karą za spełnienie prośby wołającego.
+// argumentyDzwiekuMediow składa wyodrębnienie ścieżki dźwiękowej: `-vn`
+// odrzuca obraz, a strumień idzie kopią, gdy kontener wynika z kodeka.
 func argumentyDzwiekuMediow(z shared.MediaTranscodeRequest, zrodlo, wynik string,
 	strumienie []strumienMediow) []string {
 
@@ -111,19 +83,9 @@ func argumentyDzwiekuMediow(z shared.MediaTranscodeRequest, zrodlo, wynik string
 	return append(argumenty, wynik)
 }
 
-// argumentyRozmiaruMediow składa zmianę rozdzielczości.
-//
-// Brak obu wymiarów jest odmową: „zmień rozmiar" bez podania rozmiaru nie
-// niesie żadnego polecenia.
-//
-// Wymiar niepodany dajemy jako `-2`, a nie jako liczbę wyliczoną samodzielnie.
-// `-2` znaczy dla filtra „dobierz z proporcji źródła, zaokrąglając do liczby
-// parzystej" — proporcje zostają nietknięte, a parzystość jest wymogiem
-// kodeków obrazu, które próbkują chrominancję co dwa piksele i wysokości
-// nieparzystej wprost odmawiają.
-//
-// Dźwięk przepisujemy bez kodowania (`-c:a copy`): zmiana rozdzielczości
-// dotyczy obrazu i nie ma prawa dotknąć ścieżki dźwiękowej.
+// argumentyRozmiaruMediow składa zmianę rozdzielczości. Wymiar niepodany idzie
+// jako `-2`, co dobiera proporcję z zachowaniem parzystości wymaganej przez
+// kodeki obrazu. Dźwięk idzie bez kodowania (`-c:a copy`).
 func argumentyRozmiaruMediow(z shared.MediaTranscodeRequest, zrodlo,
 	wynik string) ([]string, error) {
 
@@ -142,19 +104,9 @@ func argumentyRozmiaruMediow(z shared.MediaTranscodeRequest, zrodlo,
 		"-c:a", "copy", wynik}, nil
 }
 
-// argumentyKlatkiMediow składa zrzut pojedynczej klatki.
-//
-// `-ss` stoi przed wejściem, odwrotnie niż przy wycięciu, i to jest wybór:
-// przeskok do klatki kluczowej jest tu tani i szybki, a różnica ułamka sekundy
-// nie ma znaczenia dla zrzutu poglądowego — przy wycięciu miałaby, bo przesuwa
-// granice fragmentu.
-//
-// Brak `startMs` znaczy początek materiału. To nie jest domyślanie się
-// parametru, którego zabrakło: zrzut klatki ma sens od pierwszej klatki, a
-// „pierwsza" jest wskazaniem tak samo jednoznacznym jak każde inne.
-//
-// `-frames:v 1` ogranicza wynik do jednej klatki, `-an` odrzuca dźwięk, którego
-// obraz nie uniesie.
+// argumentyKlatkiMediow składa zrzut pojedynczej klatki: `-ss` stoi przed
+// wejściem dla szybkiego przeskoku, brak `startMs` znaczy pierwszą klatkę,
+// `-frames:v 1` ogranicza wynik, `-an` odrzuca dźwięk.
 func argumentyKlatkiMediow(z shared.MediaTranscodeRequest, zrodlo,
 	wynik string) []string {
 
@@ -196,10 +148,9 @@ func wymiarSkaliMediow(wymiar *int) string {
 	return strconv.Itoa(*wymiar)
 }
 
-// kontenerDzwiekuMediow dobiera nośnik do zmierzonego kodeka dźwięku, tak żeby
-// ścieżkę dało się przepisać bez ponownego kodowania. Kodek spoza wykazu oddaje
-// pustkę, a wołający robi z niej odmowę proszącą o wskazanie formatu — bo
-// nośnik dobrany na chybił trafił kończy się odmową samego binarium.
+// kontenerDzwiekuMediow dobiera nośnik do zmierzonego kodeka dźwięku, żeby
+// ścieżkę dało się przepisać bez ponownego kodowania. Kodek spoza wykazu
+// oddaje pustkę zamiast nośnika dobranego na chybił trafił.
 func kontenerDzwiekuMediow(kodek string) string {
 	if strings.HasPrefix(kodek, "pcm_") {
 		return "wav"
@@ -224,14 +175,7 @@ func kontenerDzwiekuMediow(kodek string) string {
 }
 
 // kontenerZrodlaMediow wybiera rozszerzenie z nazwy formatu oddanej przez
-// `ffprobe`.
-//
-// Nazwa bywa wykazem, nie pojedynczym słowem: jeden zestaw procedur czyta całą
-// rodzinę kontenerów i `ffprobe` oddaje wtedy wszystkie naraz
-// („mov,mp4,m4a,3gp,3g2,mj2"). Wybór idzie po naszej kolejności pierwszeństwa,
-// a nie po kolejności w wykazie programu: dla materiału MP4 wykaz zaczyna się
-// od „mov" i wynik nosiłby rozszerzenie, którego nikt nie zamawiał, choć
-// „mp4" stoi w tym samym wykazie o jedną pozycję dalej.
+// `ffprobe`, po własnej kolejności pierwszeństwa, nie po kolejności programu.
 func kontenerZrodlaMediow(nazwa string) string {
 	czlony := strings.Split(strings.ToLower(strings.TrimSpace(nazwa)), ",")
 	nalezy := func(szukany string) bool {
@@ -242,8 +186,9 @@ func kontenerZrodlaMediow(nazwa string) string {
 		}
 		return false
 	}
-	// Kolejność jest treścią: kontenery powszechne przed niszowymi, żeby wynik
-	// otwierał się u Operatora bez dokładania odtwarzacza.
+	// Kolejność jest treścią: kontenery powszechne przed niszowymi.
+
+	// Wynik ma się otworzyć u Operatora bez dokładania odtwarzacza.
 	for _, kandydat := range []string{"mp4", "webm", "mp3", "wav", "flac", "ogg",
 		"avi", "mov", "mpegts"} {
 

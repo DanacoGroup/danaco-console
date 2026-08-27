@@ -18,28 +18,14 @@ import { utworzWyborNastawy, wierszNastawy } from './wybor-nastawy';
 import type { WynikOdkrycia } from './wynik-odkrycia';
 
 /**
- * Discovery Panel — wyszukiwanie i odkrywanie źródeł badania.
- *
- * Okno czwarte opracowania (rozdz. 3.4), którego katalog okien rdzenia jeszcze
- * nie zna — patrz `kody-okien.ts`. Zbudowane, bo trzon jego pracy ma dziś
- * pokrycie w kontrakcie: dwa z czterech trybów zapytania idą własną komendą,
- * a przeniesienie pozycji do katalogu idzie `research.source.add`, czyli tą samą
- * drogą co formularz Sources Manager.
- *
- * Ster trybu niesie wszystkie cztery pozycje, także te dwie, których rdzeń
- * jeszcze nie obsługuje. Wybór takiego trybu niczego nie gasi — zapytanie
- * wychodzi pod nazwą swojej komendy, a rdzeń odmawia własnymi słowami. Ukrycie
- * tych pozycji zataiłoby zakres modułu; ich wygaszenie łamałoby zasadę zero
- * blokad.
- *
- * Plik składa widok; zachowanie po naciśnięciu leży w `czynnosci-odkrywania`.
+ * Discovery Panel wyszukuje i odkrywa źródła badania, kierując zapytanie do komendy wyszukiwania semantycznego, pełnotekstowego, webowego albo naukowego według wybranego trybu.
  */
 export interface OknoDiscoveryPanel {
   element: HTMLElement;
   odswiez(): void;
 }
 
-/** Cztery tryby zapytania z opracowania modułu wraz z ich dzisiejszą drogą. */
+/** Stała wylicza cztery tryby zapytania Discovery Panel wraz z komendą kontraktu, którą dziś obsługuje każdy z nich. */
 const TRYBY: readonly { wartosc: TrybOdkrywania; etykieta: string; opis: string }[] = [
   {
     wartosc: 'znaczenie',
@@ -94,8 +80,7 @@ export function utworzOknoDiscoveryPanel(
 
   const szukaj = przycisk('Szukaj', 'dn-btn dn-btn--sm dn-btn--atrament');
   szukaj.addEventListener('click', () => void wyszukaj(kontekst));
-  // Enter w polu zapytania uruchamia wyszukiwanie — tak, jak opisuje
-  // opracowanie modułu (rozdz. 3.4, „Enter uruchamia wyszukiwanie").
+  // Enter w polu zapytania uruchamia wyszukiwanie tak samo jak przycisk Szukaj.
   polePytania.kontrolka.addEventListener('keydown', (zdarzenie) => {
     if (zdarzenie.key === 'Enter') void wyszukaj(kontekst);
   });

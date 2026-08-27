@@ -5155,3 +5155,27 @@ w konstruktorze przebiegów. Zdarzenie zmiany podagenta nie rozgłasza ten plik,
 rozgłoszenia: podagent zmienia stan głównie poza żądaniem — wejście w stan działania, zakończenie
 i niepowodzenie dzieją się w pracy puszczonej w tle, której uchwyt komendy nie widzi. Dlatego
 funkcja wpinająca nie bierze nadawcy.
+
+## budowa/server/internal/core/przeklad.go
+
+Pakiet session jest właścicielem pojęcia okna komunikacji i jego cyklu życia,
+więc trzyma własne struktury opisujące sesję i okno. Kontrakt trzyma własne,
+niezależne struktury o tym samym znaczeniu. Ten plik jest jedynym miejscem,
+w którym jedna postać przechodzi w drugą — przekład nie jest rozproszony po
+obsługiwaczach żądań.
+
+Pole eksperta w ustawieniach okna wraca do klienta wyłącznie wtedy, gdy jest
+ustawione: pole puste oznacza model surowy, a wskaźnik na pusty napis
+wyrażałby to samo znaczenie drugim sposobem, co wprowadzałoby dwie
+reprezentacje tego samego stanu.
+
+Pole eksperta w zmianie okna przechodzi do struktury zmiany wybiórczej
+pakietu sesji, więc wybór eksperta zapisuje się tak samo jak każde inne
+ustawienie okna, zamiast być tracone po drodze przy przekładzie.
+
+Funkcja listaKatalogow zamienia wycinek pusty (nil) na tablicę pustą, ponieważ
+kontrakt zapowiada pole `workingDirs` bezwarunkowo, a wycinek pusty w Go
+koduje się do wartości `null`. Okno bez katalogów roboczych jest stanem
+poprawnym, więc kontrakt nie może wymagać od odbiorcy przygotowania się na
+brak pola — klient czytający to pole bez osłony wywróciłby wczytywanie modułu
+przy wartości `null`. Wysłanie pustej tablicy usuwa tę różnicę.

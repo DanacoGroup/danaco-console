@@ -900,3 +900,9 @@ opisuje wygląd, a druga położenie w układzie karty.
 Plik odpowiada wyłącznie za nośnik komunikatu stanu wraz z miejscem na treść okna. Nazwę fazy oraz znakowanie drzewa dokumentu wnosi komponent fazy okna z katalogu komponenty, więc tutaj zostaje jedynie to, czym moduł Assistant różni się od reszty drzewa: wskaźnik odczytu stoi obok treści, a treść pozostaje widoczna również w fazie ładowania, dzięki czemu kontrolki są klikalne przez cały czas trwania wywołania.
 
 Brak zapytania do rdzenia nie jest fazą okna, lecz fazą źródła danych, którą niesie zapis modułu w polach opisujących zadane pytania. Okno pokazuje ten przypadek jako fazę pustą z własnym zdaniem wyjaśniającym. Stan nie zastępuje treści, tylko ją przesłania, więc po powrocie do fazy gotowej wcześniejsza treść pozostaje nietknięta, a nieudane odświeżenie nie kasuje tego, co było już na ekranie.
+
+## budowa/klient-poprzedni/src/dostepy/ostrzezenie-zapisu.ts
+
+Specyfikacja mostu mcp-danaco-pulpit-console zabrania nadawania trybu zapisu na maszynie danaco-data bez wyraźnej potrzeby. Maszyna ta jest hostem produkcyjnej platformy LEX, a zapis modelu sięga tam zbiorów, z których korzysta cała kancelaria. Zakazu nie egzekwuje jednak kod klienta: nadanie zapisu pozostaje możliwe, ponieważ rozstrzyga o nim Operator. Egzekwuje go jawne, widoczne zdanie postawione przy przełączniku trybu, a nie podpowiedź ukryta pod kursorem.
+
+Wykaz maszyn chronionych stoi w kodzie, a nie w katalogu konfiguracji, ponieważ jest to ostrzeżenie bezpieczeństwa i nie może dać się wyłączyć zapisem w bazie. Rozszerzenie wykazu sprowadza się do jednego wiersza w stałej MASZYNY_CHRONIONE.

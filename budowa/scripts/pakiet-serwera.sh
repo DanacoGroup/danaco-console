@@ -13,7 +13,7 @@
 #                         (server/internal/narzedzia/wpiecie.go: os.Executable
 #                         → filepath.Dir → nazwa), stąd oba pliki w jednym
 #                         katalogu i stąd katalog roboczy jednostki systemd,
-#   client/dist         — pakiet interfejsu, który rdzeń serwuje klientom,
+#   klient/dist         — pakiet interfejsu, który rdzeń serwuje klientom,
 #   cztery dokumenty    — README, instalacja i konfiguracja, instrukcja, licencja,
 #   jednostkę systemd   — konto usługi, katalog danych, restart, port 17870,
 #   scripts/arsenal-serwera.sh — skrypt prowizjonowania arsenału na serwerze.
@@ -73,7 +73,7 @@ if [ "$BEZ_BUDOWY" = "nie" ]; then
 		padnij "serwer narzędzi się nie zbudował"
 
 	zglos "budowa pakietu interfejsu"
-	(cd "$KORZEN" && npm --prefix budowa/client run build) ||
+	(cd "$KORZEN" && npm --prefix budowa/klient run budowanie) ||
 		padnij "pakiet interfejsu się nie zbudował"
 else
 	zglos "budowa pominięta (--bez-budowy)"
@@ -81,7 +81,7 @@ fi
 
 [ -x "$PAKOWANIE/danaco-console" ] || padnij "nie ma binarium rdzenia: $PAKOWANIE/danaco-console"
 [ -x "$PAKOWANIE/danaco-narzedzia" ] || padnij "nie ma serwera narzędzi: $PAKOWANIE/danaco-narzedzia"
-[ -d "$BUDOWA/client/dist" ] || padnij "nie ma pakietu interfejsu: $BUDOWA/client/dist"
+[ -d "$BUDOWA/klient/dist" ] || padnij "nie ma pakietu interfejsu: $BUDOWA/klient/dist"
 
 # ── Drzewo pakietu ───────────────────────────────────────────────────────────
 # Drzewo roboczne składamy od zera przy każdym przebiegu: pakiet ma nieść to, co
@@ -102,7 +102,7 @@ install -m 0755 "$PAKOWANIE/danaco-narzedzia" "$ROBOCZY/opt/danaco-console/danac
 
 # Pakiet interfejsu tam, gdzie jednostka wskazuje rdzeniowi (client/dist).
 mkdir -p "$ROBOCZY/opt/danaco-console/client"
-cp -a "$BUDOWA/client/dist" "$ROBOCZY/opt/danaco-console/client/dist"
+cp -a "$BUDOWA/klient/dist" "$ROBOCZY/opt/danaco-console/client/dist"
 find "$ROBOCZY/opt/danaco-console/client" -type d -exec chmod 0755 {} +
 find "$ROBOCZY/opt/danaco-console/client" -type f -exec chmod 0644 {} +
 

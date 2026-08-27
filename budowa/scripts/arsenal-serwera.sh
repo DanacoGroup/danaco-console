@@ -5,7 +5,8 @@
 # ── Po co ten skrypt ──────────────────────────────────────────────────────────
 # Model wdrożenia (rozstrzygnięcie Właściciela, zamknięte): wszystkie programy
 # jadą WRAZ Z APLIKACJĄ NA SERWER, a u Operatora stoi tylko cienka instalka
-# (okno aplikacji, scripts/instalka-windows.sh). Skutek: arsenał ma stać na
+# (okno aplikacji, scripts/instalka-hybryda-win-x64.sh dla x64 oraz
+# scripts/instalka-hybryda-win-arm.sh dla ARM64). Skutek: arsenał ma stać na
 # serwerze, a wdrożenie ma go stawiać. Instalka Operatora ma zostać cienka i tego
 # nie robi — od tego jest ten skrypt, uruchamiany na serwerze podczas wdrożenia.
 # Bez arsenału funkcje odmawiają Operatorowi z braku programu (zewnetrzne.Wolaj

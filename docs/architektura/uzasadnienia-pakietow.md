@@ -5469,3 +5469,8 @@ rozmowie — kolumna biegu podagenta dopuszcza pustkę.
 Podmiana obsady, a nie dopisywanie: scalanie zostawiałoby stanowiska
 usunięte z nadesłanego wykazu. Obsada pusta jest poprawna — bieg bez
 obsady rusza na modelu wskazanym w oknie.
+
+## budowa/server/internal/dane/badania.go
+
+Sygnatury dobudowy modułu stoją w badania_dobudowa.go; osadzenie ich przez wbudowany
+interfejs trzyma cały obszar w jednym kontrakcie, nie rozbija go na dwa niezależne porty.

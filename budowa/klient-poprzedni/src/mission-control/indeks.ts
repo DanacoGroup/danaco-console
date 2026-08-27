@@ -1,24 +1,7 @@
 /**
- * Mission Control — pulpit operacyjny. Interfejs katalogu.
- *
- * Powłoka montuje pulpit i wpina źródło danych rdzenia jednym ruchem:
- *
- *   import {
- *     pustyKomplet,
- *     utworzMissionControl,
- *     utworzZrodloPulpitu,
- *   } from './mission-control/indeks';
- *
- *   const pulpit = utworzMissionControl(pustyKomplet());
- *   const zrodlo = utworzZrodloPulpitu(kanal, (dane) => pulpit.odswiez(dane));
- *   zrodlo.uruchom();
- *
- * Komplet danych pochodzi wyłącznie z odczytów i zdarzeń rdzenia:
- * `session.list`, `window.list`, `channel.list` oraz `session.changed`,
- * `window.changed`, `queue.changed`, `progress.changed`. Do pierwszego odczytu
- * pulpit pokazuje stany puste zamiast wartości zastępczych.
- *
- * Plik nie zawiera logiki — jest wykazem tego, co katalog wystawia na zewnątrz.
+ * Katalog pulpitu operacyjnego Mission Control: wykaz tego, co warstwa wystawia
+ * na zewnątrz, bez własnej logiki. Komplet danych pochodzi wyłącznie z odczytów
+ * i zdarzeń rdzenia, a do pierwszego odczytu pulpit pokazuje stany puste.
  */
 export { utworzMissionControl, type MissionControl } from './mission-control';
 

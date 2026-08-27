@@ -1615,3 +1615,24 @@ Zdania stoją w słowniku, a nie w oknach, z tego samego powodu, dla którego st
 Panel akcji modułu powstaje wyłącznie z rejestru rdzenia. Nowa akcja modułu jest nowym wierszem rejestru, a nie zmianą kodu klienta, dlatego w tym pliku nie ma ani jednej pozycji katalogu zapisanej na stałe.
 
 Wiersz rejestru niesie nazwę komendy, którą akcja wywołuje, jednak generycznej drogi wywołania window.action nie woła żaden widok klienta. Naciśnięcie przycisku pozycji nazywa więc komendę wiersza i stwierdza, że droga generyczna czeka na konsumenta. Takie rozwiązanie przyjęto zamiast milczącego przycisku oraz zamiast pozorowania wykonania akcji.
+
+## budowa/klient-poprzedni/src/mission-control/indeks.ts
+
+Katalog pozwala powłoce zamontować pulpit i wpiąć źródło danych rdzenia jednym
+ruchem:
+
+    import {
+      pustyKomplet,
+      utworzMissionControl,
+      utworzZrodloPulpitu,
+    } from './mission-control/indeks';
+
+    const pulpit = utworzMissionControl(pustyKomplet());
+    const zrodlo = utworzZrodloPulpitu(kanal, (dane) => pulpit.odswiez(dane));
+    zrodlo.uruchom();
+
+Komplet danych pulpitu pochodzi wyłącznie z odczytów `session.list`,
+`window.list` i `channel.list` oraz ze zdarzeń `session.changed`,
+`window.changed`, `queue.changed` i `progress.changed`. Do pierwszego odczytu
+pulpit pokazuje stany puste zamiast wartości zastępczych. Sam katalog nie
+zawiera logiki: jest wykazem tego, co warstwa wystawia na zewnątrz.

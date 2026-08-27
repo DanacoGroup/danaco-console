@@ -4265,3 +4265,28 @@ a nie odesłaniem go dalej.
 Etykiety czyta się jeszcze przed usunięciem zasobu: etykieta_zasobu_design
 znika kaskadą razem z wierszem, więc po UsunZasob zdarzenie niosłoby zasób
 bez etykiet, których w chwili usunięcia miał pełny zestaw.
+
+## budowa/server/internal/wiedza/osadzarka.go
+
+Silnik osadzeń (silnik.go) startuje proces Pythona przez zewnetrzne.Wolaj
+i potrzebuje do tego trójki session.Okno + session.Zasady + session.Obszar.
+Trójka jest sprawą uruchamiania procesu, a nie sprawą wskaźnika, który
+pyta wyłącznie o zamianę tekstów na wektory. Port zdejmuje ze wskaźnika tę
+jedną zależność; podział na fragmenty, normalizacja, zapis do bazy,
+odczyt, iloczyn skalarny, ranking i przycięcie do limit zostają tym samym
+kodem, który pracuje na maszynie docelowej.
+
+Port ma w drzewie jedno wypełnienie produkcyjne — Silnik, co potwierdza
+var _ Osadzarka niżej; adapter rdzenia wiąże silnik i podaje go
+wskaźnikowi. Drugie wypełnienie żyje wyłącznie w pliku _test.go, więc nie
+da się go wkompilować w binarium.
+
+Model() należy do portu, bo nazwa modelu wchodzi do wiersza wskaźnika przy
+zapisie i zawęża odczyt przy szukaniu. Gdyby wskaźnik brał ją z ustawień,
+a wektory liczył kto inny, rozjazd zamieniłby wskaźnik w zbiór wektorów,
+o których nie wiadomo, z czym wolno je porównywać.
+
+Wskaźnik jest jeden na maszynę i wszystkie jego zlecenia jadą tym samym
+zasięgiem platformy; podawanie trójki przy każdym wołaniu sugerowałoby,
+że wolno ją zmieniać między fragmentami jednego dokumentu, a wtedy część
+wskaźnika powstawałaby pod inną izolacją niż reszta.

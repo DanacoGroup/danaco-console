@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"image/png"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -626,5 +627,138 @@ func TestNarzedziaInspekcyjneCzytajaStroneUruchomiona(t *testing.T) {
 		shared.BrowserNetworkHarRequest{WindowId: okno}, &siec)
 	if len(siec.Entries) == 0 || siec.HarRef == nil {
 		t.Fatalf("rejestr sieciowy jest pusty albo bez zapisu HAR: %+v", siec)
+	}
+}
+
+// TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom mierzy czwartą sondę
+// strony uruchomionej na stronie z naruszeniami włożonymi celowo. Miarą nie
+// jest stan `ok`, tylko treść wykazu: naruszenie obrazka bez tekstu
+// zastępczego ma wrócić wraz z selektorem wskazującym ten właśnie węzeł —
+// audyt bez wskazania węzła nie mówi Operatorowi, co poprawić.
+func TestAudytDostepnosciNazywaNaruszeniaWrazZWezlemDom(t *testing.T) {
+	if !chromiumStoi() {
+		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
+	}
+	if !zewnetrzne.Stoi(narzedziePa11y) {
+		t.Skip("na tej maszynie nie ma pa11y — audyt dostępności nie ma czym zbadać strony")
+	}
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	const okno = "okno-audytu-dostepnosci"
+
+	strona := `<html><head><title>Strona audytu</title></head><body>
+		<img src="obraz.png">
+		<input type="text" name="pole-bez-etykiety">
+	</body></html>`
+	serwer := serwerTresci(t, strona)
+
+	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserNavigate,
+		shared.BrowserNavigateRequest{WindowId: okno, Url: serwer.URL}, nil)
+
+	var audyt shared.BrowserAccessibilityAuditResponse
+	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserAccessibilityAudit,
+		shared.BrowserAccessibilityAuditRequest{WindowId: okno}, &audyt)
+
+	if audyt.ErrorCount == 0 || len(audyt.Issues) == 0 {
+		t.Fatalf("strona z naruszeniami włożonymi celowo wróciła bez naruszeń: %+v", audyt)
+	}
+	if audyt.Standard != shared.BrowserAccessibilityStandardWcag2aa {
+		t.Fatalf("audyt bez wskazania normy miał iść normą wcag2aa, poszedł %q", audyt.Standard)
+	}
+	if !strings.HasPrefix(audyt.Url, serwer.URL) {
+		t.Fatalf("audyt orzekł o adresie %q, a strona sprawdzianu stoi pod %q", audyt.Url, serwer.URL)
+	}
+	if audyt.ToolVersion == "" {
+		t.Fatal("wynik bez wersji programu nie daje się porównać z wynikiem sprzed miesiąca")
+	}
+	obrazWskazany := false
+	for _, zgloszenie := range audyt.Issues {
+		if zgloszenie.Code == "" || zgloszenie.Message == "" {
+			t.Fatalf("zgłoszenie bez kodu reguły albo bez treści: %+v", zgloszenie)
+		}
+		if zgloszenie.Selector != nil && strings.Contains(*zgloszenie.Selector, "img") {
+			obrazWskazany = true
+		}
+	}
+	if !obrazWskazany {
+		t.Fatalf("żadne zgłoszenie nie wskazuje węzła obrazka bez tekstu zastępczego: %+v",
+			audyt.Issues)
+	}
+
+	// Norma spoza wyliczenia kontraktu wraca odmową wskazania, a nie komunikatem
+	// programu o nieznanej normie.
+	normaSpoza := shared.BrowserAccessibilityStandard("wcag9zz")
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandBrowserAccessibilityAudit,
+		shared.BrowserAccessibilityAuditRequest{WindowId: okno, Standard: &normaSpoza})
+	if odmowa.Code != shared.ErrorCodeValidationFailed {
+		t.Fatalf("norma spoza kontraktu wróciła kodem %q", odmowa.Code)
+	}
+	if !strings.Contains(odmowa.Message, "nie należy do kontraktu") {
+		t.Fatalf("odmowa nie nazywa normy spoza kontraktu: %q", odmowa.Message)
+	}
+}
+
+// TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen jest wymierzony
+// we wzorzec szkody z ustroju budowy: zero naruszeń na stronie, której nie ma,
+// jest brakiem pomiaru podanym jako pomiar. Strona gaśnie PO przejściu, więc
+// okno ma migawkę — i właśnie wtedy pusty wykaz wyglądałby wiarygodnie.
+func TestAudytDostepnosciStronyZgaszonejOdmawiaZamiastZeraNaruszen(t *testing.T) {
+	if !chromiumStoi() {
+		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
+	}
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	const okno = "okno-audytu-strony-zgaszonej"
+
+	serwer := serwerTresci(t, stronaZTytulem("Strona gasnąca", "treść przed zgaśnięciem"))
+	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserNavigate,
+		shared.BrowserNavigateRequest{WindowId: okno, Url: serwer.URL}, nil)
+	serwer.Close()
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandBrowserAccessibilityAudit,
+		shared.BrowserAccessibilityAuditRequest{WindowId: okno})
+	if !strings.Contains(odmowa.Message, "nie dała się pobrać") {
+		t.Fatalf("odmowa nie mówi, że strony nie dało się pobrać: %q", odmowa.Message)
+	}
+}
+
+// TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy zdejmuje
+// z ścieżki wyszukiwania wszystko poza przeglądarką i mierzy odmowę: ma nazwać
+// brakujący program oraz pakiet, którego instalacja brak usuwa — a nie wyjść
+// usterką wewnętrzną rdzenia.
+func TestAudytDostepnosciBezProgramuOdmawiaNazywajacBrakIDrogeNaprawy(t *testing.T) {
+	if !chromiumStoi() {
+		t.Skip("na tej maszynie nie ma Chromium — strony nie ma czym uruchomić")
+	}
+	zmontowany, zycie, _ := zmontujDoPomiaruSkutku(t)
+	const okno = "okno-audytu-bez-programu"
+
+	serwer := serwerTresci(t, stronaZTytulem("Strona audytu bez programu", "treść"))
+	wykonajUdana(t, zmontowany, zycie, shared.CommandBrowserNavigate,
+		shared.BrowserNavigateRequest{WindowId: okno, Url: serwer.URL}, nil)
+
+	// Ścieżka wyszukiwania zostaje zwężona do katalogu z samą przeglądarką:
+	// audyt ma się zatrzymać na braku programu audytującego, nie na braku
+	// przeglądarki — odmowa o przeglądarce mówiłaby o innym braku.
+	przegladarka := narzedzieChromium()
+	sciezkaPrzegladarki, jest := zewnetrzne.Odnajdz(przegladarka)
+	if !jest {
+		t.Fatal("przeglądarka zniknęła między sprawdzeniem a pomiarem")
+	}
+	katalogSciezki := t.TempDir()
+	if err := os.Symlink(sciezkaPrzegladarki,
+		filepath.Join(katalogSciezki, przegladarka.Program)); err != nil {
+		t.Fatalf("nie można wskazać przeglądarki w zwężonej ścieżce: %v", err)
+	}
+	t.Setenv("PATH", katalogSciezki)
+
+	odmowa := wykonajOdmowna(t, zmontowany, zycie, shared.CommandBrowserAccessibilityAudit,
+		shared.BrowserAccessibilityAuditRequest{WindowId: okno})
+	if odmowa.Code != shared.ErrorCodeChannelUnavailable {
+		t.Fatalf("brak programu wrócił kodem %q", odmowa.Code)
+	}
+	if !strings.Contains(odmowa.Message, narzedziePa11y.Program) {
+		t.Fatalf("odmowa nie nazywa brakującego programu: %q", odmowa.Message)
+	}
+	if !strings.Contains(odmowa.Message, narzedziePa11y.Pakiet) {
+		t.Fatalf("odmowa nie podaje drogi naprawy: %q", odmowa.Message)
 	}
 }

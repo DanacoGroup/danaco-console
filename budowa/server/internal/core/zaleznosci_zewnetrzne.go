@@ -187,7 +187,22 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "karta sesji Telnet do urządzenia sieciowego w module Terminal"},
 		{Narzedzie: narzedzieChromium(),
 			Zakres: "zrzuty stron, drzewo DOM, konsola, rejestr sieciowy, " +
-				"emulacja urządzenia i przewijanie w module Browser"},
+				"emulacja urządzenia i przewijanie w module Browser, a także strona " +
+				"otwierana przez audyt dostępności i audyt wydajności — te dwa dostają " +
+				"tę samą przeglądarkę, zamiast pobierać własną"},
+		{Narzedzie: narzedziePa11y,
+			Zakres: "audyt dostępności bieżącej strony okna wobec normy WCAG " +
+				"(browser.accessibility.audit) — reguły normy są cudzą wiedzą i rdzeń " +
+				"ich nie przepisuje"},
+		{Narzedzie: narzedzieLighthouse,
+			Zakres: "audyt wydajności strony produktu wraz z Core Web Vitals " +
+				"(apps.performance.audit) — miary powstają w przeglądarce po wykonaniu " +
+				"skryptów, więc rdzeń nie policzy ich własnym pobraniem"},
+		{Narzedzie: narzedzieAutocannon,
+			Zakres: "przebieg obciążeniowy punktu końcowego wraz z percentylami czasu " +
+				"odpowiedzi i przepustowością (developer.api.load.run) — " +
+				"developer.api.request strzela jednym żądaniem i rozkładu nie ma z czego " +
+				"policzyć"},
 	}
 	for i := range wykaz {
 		wykaz[i].Stoi = zewnetrzne.Stoi(wykaz[i].Narzedzie)

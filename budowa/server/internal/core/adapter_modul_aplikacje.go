@@ -16,6 +16,7 @@ import (
 	"errors"
 
 	"danacoconsole/server/internal/dane"
+	"danacoconsole/server/internal/konfig"
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/session"
 	"danacoconsole/shared"
@@ -75,6 +76,16 @@ type adapterAplikacji struct {
 	// w pamięci: serwer nie przeżywa restartu rdzenia, więc wiersz w bazie
 	// mówiłby po restarcie o nasłuchu, którego nie ma.
 	podglady *rejestrPodgladowApp
+	// uruchamiacz jest portem warstwy kanału — jedyną drogą startu procesu.
+	// Moduł sięga po nią w jednym miejscu: audyt wydajności strony mierzy to,
+	// co dzieje się w przeglądarce, więc idzie programem pomiarowym
+	// (`adapter_modul_aplikacje_wydajnosc.go`). Zależność opcjonalna — bez niej
+	// audyt odmawia zdaniem nazywającym brak, a reszta modułu pracuje dalej.
+	uruchamiacz session.Uruchamiacz
+	// rozstrzygacz i katalog składają zasady izolacji obowiązujące w oknie oraz
+	// katalog, w którym wolno wystartować proces.
+	rozstrzygacz *konfig.Rozstrzygacz
+	katalog      *KatalogRoboczy
 }
 
 // sejfKluczaWydawcy jest wycinkiem sejfu poświadczeń, którego moduł potrzebuje.
@@ -107,6 +118,16 @@ func (a *adapterAplikacji) ZKatalogiemRozszerzen(rejestr dane.RepozytoriumRozsze
 // zmianie etapu budowy.
 func (a *adapterAplikacji) PodepnijPrzyrostEtapu(rozglos func(shared.ChangeKind, shared.AppStage)) {
 	a.przyrostEtapu = rozglos
+}
+
+// ZUruchamiaczem wpina port startu procesu wraz z zasadami izolacji okna. Bez
+// niego `apps.performance.audit` odmawia zdaniem nazywającym brak, zamiast
+// oddawać ocenę wyliczoną bez pomiaru.
+func (a *adapterAplikacji) ZUruchamiaczem(uruchamiacz session.Uruchamiacz,
+	rozstrzygacz *konfig.Rozstrzygacz, katalog *KatalogRoboczy) *adapterAplikacji {
+
+	a.uruchamiacz, a.rozstrzygacz, a.katalog = uruchamiacz, rozstrzygacz, katalog
+	return a
 }
 
 // ZOknami wpina rejestr okien sesji. Bez niego `apps.deployment.run` zakłada

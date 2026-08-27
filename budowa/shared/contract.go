@@ -9435,6 +9435,69 @@ func WartosciNotificationDelivery() []NotificationDelivery {
 	}
 }
 
+// BrowserAccessibilityLevel — Waga zgloszenia audytu dostepnosci strony
+type BrowserAccessibilityLevel string
+
+// Wartosci BrowserAccessibilityLevel.
+const (
+	// Naruszenie normy
+	BrowserAccessibilityLevelError = "error"
+	// Ostrzezenie wymagajace oceny czlowieka
+	BrowserAccessibilityLevelWarning = "warning"
+	// Uwaga do sprawdzenia recznego
+	BrowserAccessibilityLevelNotice = "notice"
+)
+
+// WartosciBrowserAccessibilityLevel zwraca komplet wartosci BrowserAccessibilityLevel w kolejnosci kontraktu.
+func WartosciBrowserAccessibilityLevel() []BrowserAccessibilityLevel {
+	return []BrowserAccessibilityLevel{
+		BrowserAccessibilityLevelError,
+		BrowserAccessibilityLevelWarning,
+		BrowserAccessibilityLevelNotice,
+	}
+}
+
+// BrowserAccessibilityStandard — Norma, wedlug ktorej badana jest dostepnosc strony
+type BrowserAccessibilityStandard string
+
+// Wartosci BrowserAccessibilityStandard.
+const (
+	// WCAG 2 poziom A
+	BrowserAccessibilityStandardWcag2a = "wcag2a"
+	// WCAG 2 poziom AA
+	BrowserAccessibilityStandardWcag2aa = "wcag2aa"
+	// WCAG 2 poziom AAA
+	BrowserAccessibilityStandardWcag2aaa = "wcag2aaa"
+)
+
+// WartosciBrowserAccessibilityStandard zwraca komplet wartosci BrowserAccessibilityStandard w kolejnosci kontraktu.
+func WartosciBrowserAccessibilityStandard() []BrowserAccessibilityStandard {
+	return []BrowserAccessibilityStandard{
+		BrowserAccessibilityStandardWcag2a,
+		BrowserAccessibilityStandardWcag2aa,
+		BrowserAccessibilityStandardWcag2aaa,
+	}
+}
+
+// AppPerformanceFormFactor — Postac urzadzenia, wedlug ktorej liczona jest ocena wydajnosci
+type AppPerformanceFormFactor string
+
+// Wartosci AppPerformanceFormFactor.
+const (
+	// Telefon
+	AppPerformanceFormFactorMobile = "mobile"
+	// Biurko
+	AppPerformanceFormFactorDesktop = "desktop"
+)
+
+// WartosciAppPerformanceFormFactor zwraca komplet wartosci AppPerformanceFormFactor w kolejnosci kontraktu.
+func WartosciAppPerformanceFormFactor() []AppPerformanceFormFactor {
+	return []AppPerformanceFormFactor{
+		AppPerformanceFormFactorMobile,
+		AppPerformanceFormFactorDesktop,
+	}
+}
+
 // WartosciBazySessionStatus — wartosc kontraktu SessionStatus -> wartosc kolumny sesja.stan
 var WartosciBazySessionStatus = map[SessionStatus]string{
 	SessionStatusActive:   "aktywna",
@@ -12189,6 +12252,12 @@ const (
 	CommandNotificationResolve MessageType = "notification.resolve"
 	// Odlozenie zdarzenia do wskazanej chwili. Po niej zdarzenie wraca do stanu nowe i znow liczy sie do plakietki — odlozenie nie jest zamknieciem
 	CommandNotificationSnooze MessageType = "notification.snooze"
+	// Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+	CommandBrowserAccessibilityAudit MessageType = "browser.accessibility.audit"
+	// Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+	CommandAppsPerformanceAudit MessageType = "apps.performance.audit"
+	// Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+	CommandDeveloperApiLoadRun MessageType = "developer.api.load.run"
 )
 
 // Nazwy zdarzen kontraktu.
@@ -22530,6 +22599,116 @@ type Notification struct {
 	SnoozedUntil *int `json:"snoozedUntil,omitempty"`
 	// Chwila wystapienia zdarzenia, znacznik milisekund
 	CreatedAt int `json:"createdAt"`
+}
+
+// BrowserAccessibilityIssue — Zgloszenie audytu dostepnosci wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityIssue struct {
+	// Kod reguly normy, ktora zgloszenie narusza
+	Code string `json:"code"`
+	// Waga zgloszenia
+	Level BrowserAccessibilityLevel `json:"level"`
+	// Tresc zgloszenia podana przez program audytujacy
+	Message string `json:"message"`
+	// Selektor CSS wskazujacy wezel DOM, ktorego zgloszenie dotyczy
+	Selector *string `json:"selector,omitempty"`
+	// Fragment zrodla wezla, na ktorym zgloszenie powstalo
+	Context *string `json:"context,omitempty"`
+	// Silnik regul, ktory zgloszenie wykryl
+	Runner *string `json:"runner,omitempty"`
+}
+
+// AppPerformanceAudit — Wynik audytu wydajnosci strony wraz z miarami Core Web Vitals
+type AppPerformanceAudit struct {
+	// Adres, pod ktory audyt naprawde wszedl
+	Url string `json:"url"`
+	// Postac urzadzenia, wedlug ktorej liczono ocene
+	FormFactor AppPerformanceFormFactor `json:"formFactor"`
+	// Ocena wydajnosci w skali 0-100
+	PerformanceScore int `json:"performanceScore"`
+	// Miary Core Web Vitals w kolejnosci ustalonej
+	Metrics []AppPerformanceMetric `json:"metrics"`
+	// Wersja programu, ktory pomiar wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas rozpoczecia audytu w milisekundach epoki
+	StartedAt int64 `json:"startedAt"`
+	// Czas zakonczenia audytu w milisekundach epoki
+	FinishedAt int64 `json:"finishedAt"`
+}
+
+// AppPerformanceMetric — Jedna miara wydajnosci strony wraz z wartoscia zmierzona
+type AppPerformanceMetric struct {
+	// Identyfikator miary nadany przez program pomiarowy
+	Id string `json:"id"`
+	// Nazwa miary
+	Title string `json:"title"`
+	// Wartosc zmierzona
+	Value float64 `json:"value"`
+	// Jednostka wartosci podana przez program pomiarowy
+	Unit string `json:"unit"`
+	// Ocena miary w skali 0-100; brak znaczy miare bez oceny
+	Score *int `json:"score,omitempty"`
+	// Wartosc w postaci pokazywanej Operatorowi
+	DisplayValue *string `json:"displayValue,omitempty"`
+}
+
+// ApiLoadRun — Przebieg obciazeniowy punktu koncowego wraz z ksztaltem wyniku
+type ApiLoadRun struct {
+	// Adres, ktory obciazono
+	Url string `json:"url"`
+	// Metoda zapytania
+	Method string `json:"method"`
+	// Liczba polaczen rownoleglych
+	Connections int `json:"connections"`
+	// Zmierzony czas trwania przebiegu w sekundach
+	DurationSeconds float64 `json:"durationSeconds"`
+	// Liczba zadan, na ktore przyszla odpowiedz
+	RequestsTotal int64 `json:"requestsTotal"`
+	// Przepustowosc w zadaniach na sekunde
+	RequestsPerSecond float64 `json:"requestsPerSecond"`
+	// Przepustowosc w bajtach na sekunde
+	BytesPerSecond float64 `json:"bytesPerSecond"`
+	// Rozklad czasu odpowiedzi
+	Latency ApiLoadLatency `json:"latency"`
+	// Liczba odpowiedzi wedlug kodu stanu, rosnaco po kodzie
+	StatusCounts []ApiLoadStatusCount `json:"statusCounts"`
+	// Liczba odpowiedzi spoza klasy 2xx
+	Non2xx int64 `json:"non2xx"`
+	// Liczba zadan, ktore nie doszly do skutku
+	Errors int64 `json:"errors"`
+	// Liczba zadan przerwanych granica czasu
+	Timeouts int64 `json:"timeouts"`
+	// Wersja programu, ktory przebieg wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas rozpoczecia przebiegu w milisekundach epoki
+	StartedAt int64 `json:"startedAt"`
+	// Czas zakonczenia przebiegu w milisekundach epoki
+	FinishedAt int64 `json:"finishedAt"`
+}
+
+// ApiLoadLatency — Rozklad czasu odpowiedzi przebiegu obciazeniowego w milisekundach
+type ApiLoadLatency struct {
+	// Czas sredni
+	AverageMs float64 `json:"averageMs"`
+	// Odchylenie standardowe czasu
+	StddevMs float64 `json:"stddevMs"`
+	// Czas najkrotszy
+	MinMs float64 `json:"minMs"`
+	// Czas najdluzszy
+	MaxMs float64 `json:"maxMs"`
+	// Mediana czasu
+	P50Ms float64 `json:"p50Ms"`
+	// Percentyl 90 czasu
+	P90Ms float64 `json:"p90Ms"`
+	// Percentyl 99 czasu
+	P99Ms float64 `json:"p99Ms"`
+}
+
+// ApiLoadStatusCount — Liczba odpowiedzi przebiegu obciazeniowego o jednym kodzie stanu
+type ApiLoadStatusCount struct {
+	// Kod stanu odpowiedzi
+	Status int `json:"status"`
+	// Liczba odpowiedzi o tym kodzie
+	Count int64 `json:"count"`
 }
 
 // ConnectionHelloRequest — Tresc zadania connection.hello — Powitanie klienta; ustala wersje protokolu
@@ -44166,6 +44345,86 @@ type NotificationSnoozeResponse struct {
 	Unread int `json:"unread"`
 }
 
+// BrowserAccessibilityAuditRequest — Tresc zadania browser.accessibility.audit — Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityAuditRequest struct {
+	// Okno przegladarki
+	WindowId string `json:"windowId"`
+	// Karta przegladania; pusta znaczy karte czynna
+	TabId *string `json:"tabId,omitempty"`
+	// Norma audytu; pusta znaczy wcag2aa
+	Standard *BrowserAccessibilityStandard `json:"standard,omitempty"`
+	// Czy dolaczyc ostrzezenia obok naruszen
+	IncludeWarnings *bool `json:"includeWarnings,omitempty"`
+	// Czy dolaczyc uwagi do sprawdzenia recznego
+	IncludeNotices *bool `json:"includeNotices,omitempty"`
+	// Gorna granica czasu audytu w milisekundach
+	TimeoutMs *int `json:"timeoutMs,omitempty"`
+}
+
+// BrowserAccessibilityAuditResponse — Tresc wyniku browser.accessibility.audit — Bada dostepnosc biezacej strony okna wobec normy WCAG i zwraca naruszenia wraz ze wskazaniem wezla DOM
+type BrowserAccessibilityAuditResponse struct {
+	// Zgloszenia w kolejnosci podanej przez program audytujacy
+	Issues []BrowserAccessibilityIssue `json:"issues"`
+	// Norma, wedlug ktorej strone zbadano
+	Standard BrowserAccessibilityStandard `json:"standard"`
+	// Adres strony, ktora zmierzono
+	Url string `json:"url"`
+	// Liczba naruszen
+	ErrorCount int `json:"errorCount"`
+	// Liczba ostrzezen; zero, gdy ostrzezen nie zamowiono
+	WarningCount int `json:"warningCount"`
+	// Liczba uwag; zero, gdy uwag nie zamowiono
+	NoticeCount int `json:"noticeCount"`
+	// Wersja programu, ktory audyt wykonal
+	ToolVersion string `json:"toolVersion"`
+	// Czas audytu w milisekundach epoki
+	AuditedAt int64 `json:"auditedAt"`
+}
+
+// AppsPerformanceAuditRequest — Tresc zadania apps.performance.audit — Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+type AppsPerformanceAuditRequest struct {
+	// Okno modulu Apps
+	WindowId string `json:"windowId"`
+	// Adres mierzonej strony
+	Url string `json:"url"`
+	// Postac urzadzenia; pusta znaczy desktop
+	FormFactor *AppPerformanceFormFactor `json:"formFactor,omitempty"`
+	// Gorna granica czasu audytu w milisekundach
+	TimeoutMs *int `json:"timeoutMs,omitempty"`
+}
+
+// AppsPerformanceAuditResponse — Tresc wyniku apps.performance.audit — Mierzy wydajnosc wskazanej strony produktu i zwraca ocene wraz z miarami Core Web Vitals
+type AppsPerformanceAuditResponse struct {
+	// Wynik audytu
+	Audit AppPerformanceAudit `json:"audit"`
+}
+
+// DeveloperApiLoadRunRequest — Tresc zadania developer.api.load.run — Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+type DeveloperApiLoadRunRequest struct {
+	// Okno modulu Developer
+	WindowId string `json:"windowId"`
+	// Adres punktu koncowego
+	Url string `json:"url"`
+	// Metoda zapytania; pusta znaczy GET
+	Method *string `json:"method,omitempty"`
+	// Naglowki zapytania
+	Headers json.RawMessage `json:"headers,omitempty"`
+	// Tresc zapytania
+	Body *string `json:"body,omitempty"`
+	// Liczba polaczen rownoleglych; brak bierze wartosc domyslna rdzenia
+	Connections *int `json:"connections,omitempty"`
+	// Czas trwania przebiegu w sekundach; brak bierze wartosc domyslna rdzenia
+	DurationSeconds *int `json:"durationSeconds,omitempty"`
+	// Srodowisko podstawiajace zmienne postaci placeholder
+	EnvironmentId *string `json:"environmentId,omitempty"`
+}
+
+// DeveloperApiLoadRunResponse — Tresc wyniku developer.api.load.run — Obciaza punkt koncowy powtarzanym zapytaniem HTTP i zwraca ksztalt wyniku: percentyle czasu odpowiedzi i przepustowosc
+type DeveloperApiLoadRunResponse struct {
+	// Przebieg obciazeniowy wraz z wynikiem pomiaru
+	Run ApiLoadRun `json:"run"`
+}
+
 // SessionChangedEvent — Tresc zdarzenia session.changed — Zmiana sesji
 type SessionChangedEvent struct {
 	// Rodzaj zmiany
@@ -46000,6 +46259,9 @@ func WszystkieKomendy() []MessageType {
 		CommandNotificationAcknowledge,
 		CommandNotificationResolve,
 		CommandNotificationSnooze,
+		CommandBrowserAccessibilityAudit,
+		CommandAppsPerformanceAudit,
+		CommandDeveloperApiLoadRun,
 	}
 }
 
@@ -47231,6 +47493,9 @@ var zbiorKomend = map[MessageType]struct{}{
 	CommandNotificationAcknowledge:             {},
 	CommandNotificationResolve:                 {},
 	CommandNotificationSnooze:                  {},
+	CommandBrowserAccessibilityAudit:           {},
+	CommandAppsPerformanceAudit:                {},
+	CommandDeveloperApiLoadRun:                 {},
 }
 
 // Zbior nazw zdarzen do rozpoznania typu.

@@ -60,3 +60,10 @@ Mapa przechowuje wyłącznie klucze katalogu treści, nigdy gotowy tekst, poniew
 
 ## budowa/klient-poprzedni/src/aplikacja/aplikacja.css
 Wygląd samych widoków opisują arkusze ich katalogów, więc ten plik ich reguł nie powtarza. Barwy, stopnie pisma, odstępy, promienie i czasy pochodzą z żetonów katalogu `motyw/`, bez wartości szesnastkowych zapisanych wprost, a wymiary są wielokrotnością 4 pikseli.
+
+## budowa/klient-poprzedni/src/aplikacja/pas-posuniec.css
+Pasek nie wprowadza wartości szesnastkowych ani odstępów spoza skali motywu —
+każda barwa i każdy odstęp pochodzi z żetonów. Ruch asystenta nie jest ani
+sukcesem, ani awarią, dlatego pasek nosi barwę informacyjną: para żetonów
+`--dn-informacja-tekst` i `--dn-informacja-tlo` przechodzi tę samą kontrolę
+kontrastu co pozostałe pary motywu, a pasek nie dokłada barwy własnej.

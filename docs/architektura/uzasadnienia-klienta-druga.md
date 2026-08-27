@@ -2966,3 +2966,28 @@ powrotu nadal daje się porządkować.
 
 ## budowa/klient/src/protokol/rozmowa-z-rdzeniem.test.ts
 Bez rdzenia nasłuchującego pod adresem lokalnym nie ma czego zmierzyć. Milczenie rdzenia kończy się tu niepowodzeniem nazywającym przeszkodę, nie pominięciem: sprawdzian, który sam siebie odpuszcza przy braku rdzenia, wygląda potem tak samo jak sprawdzian zdany.
+
+## budowa/klient-poprzedni/src/moduly/research/stan-badania.ts
+Gdyby każde z siedmiu okien modułu prowadziło swój zbiór, powiązanie źródło-ustalenie-sekcja
+raportu dotyczyłoby sześciu różnych bytów zamiast jednego. Wykazy narastają z odpowiedzi: komendy
+odczytu wykazu źródeł i ustaleń są już w kontrakcie, ale rdzeń nie ma dla nich uchwytów, więc stan
+trzyma to, co rdzeń potwierdził w tym połączeniu, i nie dopowiada reszty — po dobudowie uchwytów
+odczyt dołoży się tutaj, obok odświeżenia, bo kształt stanu tego nie wymaga. Plik jest złożeniem
+pamięci, odczytu i dwóch źródeł komend; sam nie trzyma ani jednej wartości.
+
+Zaznaczenie jest nastawą wspólną oknom, więc ogłasza się tą samą drogą co treść. Pamięć go nie zna —
+nie pochodzi z rdzenia i nie jest treścią badania — więc ogłoszenie ma własny rejestr słuchaczy,
+a funkcja obserwująca wpisuje słuchacza do obu. Wołający ma jedną subskrypcję na cały stan i nie
+musi wiedzieć, która zmiana skąd pochodzi.
+
+Zdarzenie rdzenia jest jedynym odświeżeniem poza własnym działaniem: raport zmieniony na innym
+urządzeniu konta dociera tą samą drogą. Rdzeń rozgłasza zdarzenie zmiany raportu bez wskazania
+sesji, więc dochodzi ono na każde połączenie — porównanie pola okna badania w raporcie z oknem
+badania odsiewa raporty cudzych okien; bez tego porównania Export Panel wydałby dokument, którego
+to okno nie składało.
+
+## budowa/klient-poprzedni/src/rozmowa/odczyt-fragmentu.ts
+Pole `data` kontraktu jest typu `unknown` — rdzeń pakuje w nie strukturę
+właściwą rodzajowi fragmentu. Odczyt jest w całości tolerancyjny: pole
+brakujące, pole innego typu ani ładunek nieznanego kształtu nie przerywają
+strumienia. Brak wartości znaczy „nie wiem", nie „błąd".

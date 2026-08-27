@@ -17,35 +17,9 @@ import type { ZrodloDiagnostics } from './zrodlo-diagnostics';
 import type { ZrodloObserwowalnosci } from './zrodlo-obserwowalnosci';
 
 /**
- * Observability Tools — kontener pięciu narzędzi obserwowalności.
- *
- * Opracowanie modułu umieszcza w warstwie funkcji eksperckich znaczną część
- * diagnostyki: prowenancję wywołań modeli, zużycie i koszt, metryki
- * i wydajność, kontrolę stanu oraz alerty. Kontrakt niesie z tego jedną
- * rodzinę: `monitor.*` wraz ze zdarzeniem `progress.changed`. Okno jest więc
- * podzielone dokładnie tak, jak opracowanie, i przy każdej zakładce mówi,
- * co pod nią stoi:
- *
- *   Provenance Explorer   — rodzina `provenance.*`: wykaz i odczyt wywołań
- *                           modeli, ocena wywołania przez Operatora i wydanie
- *                           śladu. Źródło wchodzi osobnym argumentem, bo nie
- *                           należy do portu Diagnostics; bez niego zakładka
- *                           nazywa ten brak po stronie złożenia modułu,
- *   Usage & Cost          — rodzina `usage.*`: zestawienie zużycia w jednym
- *                           wymiarze i raport rozliczeniowy wytwarzający plik,
- *   Metrics & Performance — telemetria procesów rdzenia, na żywo,
- *   Health & Uptime       — ta sama telemetria czytana jako kondycja,
- *   Alerts                — bez rodziny komend i bez ustawień progów.
- *
- * Zakładka bez pokrycia nie znika ze sceny i nie zostaje wygaszona: znika
- * dopiero funkcja, o której nikt nie wie, że jej nie ma. Powód każdej składa
- * się z wykazu komend kontraktu przy składaniu okna (`braki-kontraktu.ts`),
- * więc pojawienie się rodziny przepisze te zdania samo.
- *
- * Opracowanie wiąże widoczność zakładek z kluczami `diagnostics.narzedzia.*`.
- * Rdzeń nie zna dziś ani jednego ustawienia obszaru `diagnostics`, więc okno
- * nie udaje, że czyta nastawę — pokazuje pięć zakładek i mówi to wprost.
- * Ukrycie zakładki bez ustawienia byłoby ukryciem opartym o wartość zmyśloną.
+ * Interfejs Observability Tools łączy pięć narzędzi obserwowalności: prowenancję
+ * wywołań modeli, zużycie i koszt, metryki i wydajność, kontrolę stanu oraz
+ * alerty, każde jako osobna zakładka.
  */
 export interface OknoObservabilityTools {
   element: HTMLElement;
@@ -60,9 +34,7 @@ export function utworzOknoObservabilityTools(
   stan: StanDiagnostyki,
   idOkna: string,
   zuzycie: ZrodloZuzycia,
-  // Prowenancja wchodzi osobnym źródłem, bo rodzina `provenance.*` nie należy
-  // do portu Diagnostics — zakładka bez niej nie ma czym wołać rdzenia i mówi
-  // to wprost, jako brak po stronie złożenia modułu.
+  // Prowenancja wchodzi osobnym źródłem, bo rodzina komend nie należy do portu diagnostyki.
   prowenancjaZrodlo?: ZrodloProwenancji,
 ): OknoObservabilityTools {
   const rama = utworzRameOkna({
@@ -96,21 +68,13 @@ export function utworzOknoObservabilityTools(
   rama.akcje.append(...czynnosciKontenera(telemetria.odswiez));
   rama.cialo.append(zakladki.element);
 
-  // Prowenancja pyta rdzeń dopiero po otwarciu zakładki: to drugie
-  // przeszukanie dziennika obok Logs Viewera i nie ma powodu robić go, zanim
-  // Operator na tę zakładkę spojrzy.
-  // Zużycie pyta rdzeń tą samą regułą i z tego samego powodu: zestawienie za
-  // okres jest osobnym przeliczeniem po stronie rdzenia, więc idzie dopiero,
-  // gdy Operator na tę zakładkę spojrzy.
+  // Prowenancja i zużycie pytają rdzeń dopiero po otwarciu zakładki, jako osobne przeliczenie.
   zakladki.naZmiane((kod) => {
     if (kod === 'provenance' && !prowenancja.czytano()) prowenancja.odswiez();
     if (kod === 'usage-cost' && !zakladkaZuzycia.czytano()) zakladkaZuzycia.odswiez();
   });
 
-  // Zakres czasu wspólny modułowi dotyczy prowenancji i zużycia — telemetria
-  // procesów nie ma w kontrakcie pól zakresu. Odczyt tylko wtedy, gdy zakładka
-  // już czytała: przeliczanie zakładki nigdy nie otwartej byłoby zapytaniem
-  // o materiał, którego nikt nie ogląda.
+  // Wspólny zakres czasu ma odczyt tylko dla zakładki już otwartej, nigdy dla nieoglądanej.
   const odsubskrybujZakres = stan.naZmiane(() => {
     if (prowenancja.czytano()) prowenancja.odswiez();
     if (zakladkaZuzycia.czytano()) zakladkaZuzycia.odswiez();
@@ -156,13 +120,9 @@ function czynnosciKontenera(odswiezTelemetrie: () => void): readonly HTMLElement
 }
 
 /**
- * Alerts — zakładka bez pokrycia w kontrakcie.
- *
- * Reguła alertu wymaga dwóch rzeczy naraz: miejsca na jej zapis i ewaluatora,
- * który ją sprawdzi. Kontrakt nie ma ani rodziny komend alertów, ani ustawień
- * obszaru diagnostics, w których próg mógłby zamieszkać. Reguła zbudowana
- * wyłącznie w oknie żyłaby do zamknięcia karty i nie zadziałałaby ani razu,
- * gdy Operator nie patrzy — czyli dokładnie wtedy, gdy alert ma sens.
+ * Zakładka alertów pozostaje bez pokrycia w kontrakcie: reguła progu wymaga
+ * miejsca zapisu i ewaluatora działającego poza otwartą kartą, a rdzeń dziś
+ * nie zapewnia żadnego z tych dwóch elementów.
  */
 function zakladkaAlertow(): HTMLElement {
   return cialoNarzedzia(

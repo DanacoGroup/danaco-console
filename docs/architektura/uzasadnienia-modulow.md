@@ -4435,3 +4435,128 @@ dołożony do pakietu produktu leży poza ścieżką wyszukiwania systemu i po
 samej nazwie by nie wystartował. Brak programu kończy się odmową nazywającą
 go wraz z pakietem — tą samą, którą oddaje cały arsenał
 (`zewnetrzne.BrakNarzedzia`).
+## budowa/server/internal/core/adapter_modul_badania_raport.go
+
+Sekcje redagowane wprost (z.Sections) przechodzą bez zmiany — to redakcja
+Operatora, bez modelu. FindingIds bez sekcji własnych uruchamia redakcję
+modelem: most zapytajModel streszcza zebrane ustalenia w jedną sekcję
+nadrzędną (Streszczenie ustaleń), po której idą sekcje szczegółowe, po jednej
+na ustalenie, z treścią ustalenia skopiowaną dosłownie dla śladu — tytuł to
+kod ustalenia, bo kontrakt nie daje ustaleniu własnego tytułu. Streszczenie
+bierze domyślny czynny kanał rejestru (domyslnyKanalBadania), a brak czynnego
+kanału to odmowa wprost.
+
+WyeksportujRaport zapisuje ślad eksportu w bycie trwałym
+eksport_raportu_badania, bo LibraryFileId/Path/SizeBytes muszą przeżyć
+wywołanie. Pliku na dysk rdzeń nie zapisuje — nie ma magazynu blobów, ten sam
+brak co w module Library. Odpowiedź zostawia LibraryFileId, Path i SizeBytes
+puste, zamiast udawać wytworzony plik.
+
+UstawPrzestrzen operuje na przestrzeni jednowierszowej — kontrakt
+research.workspace.set nie niesie identyfikatora okna ani sesji (sprawdzone
+w dane/badania_raport.go), więc jedna przestrzeń na instalację jest jedynym
+uczciwym odczytaniem.
+
+sekcjaStreszczenia wymaga modelu: składa z treści ustaleń polecenie redakcji
+i zwraca sekcję z odpowiedzią modelu; błąd kanału to odmowa wprost, nie
+streszczenie zmyślone bez modelu.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_wdrozenie_bieg.go
+
+Silnik pracuje poza żądaniem. Komenda `apps.deployment.run` kończy się, gdy
+przebieg ruszy, a nie gdy się skończy — rozłączenie klienta w połowie nie
+przerywa wdrożenia. Dlatego bieg idzie własną gorutyną i własnym kontekstem
+(`context.Background`), a nie kontekstem komendy.
+
+Stan końcowy wynika z wykonanej pracy. Krokiem wdrożenia jest sprawdzenie,
+czy jest co wdrożyć: wdrożenie w przód udaje się, gdy przestrzeń robocza
+okna niesie choć jeden plik; pusta przestrzeń kończy się `failed`;
+cofnięcie udaje się, gdy wdrożenie docelowe kiedykolwiek weszło w
+`succeeded`; cofnięcie do przebiegu, który nigdy się nie powiódł, kończy
+się `failed`.
+
+Rdzeń nie hostuje produktu, więc wdrożenie w przód zostawia pole `Url`
+puste — postawienie serwera produktu wymagałoby uruchamiacza procesu
+wpiętego w adapter. Cofnięcie dziedziczy `Url` wprost z wdrożenia
+docelowego.
+
+Przebieg zostawia po sobie artefakt i dziennik. Udane wdrożenie w przód
+pakuje przestrzeń roboczą okna w archiwum `zip` i kładzie je w magazynie
+treści rdzenia, a wiersz `artefakt_apps` wskazuje ten plik wraz z
+rozmiarem i sumą kontrolną — to on jest wejściem `apps.package.build`
+i pozycją `apps.artifact.list`. Każdy krok przebiegu dopisuje wiersz do
+`wiersz_dziennika_apps`, skąd czyta go `apps.deployment.log.read`. Bez tych
+dwóch rzeczy trzy komendy rodziny meldowałyby pustkę przy przebiegu, który
+naprawdę się odbył.
+
+### wykonajWdrozenie
+
+Kontekst jest własny, nie komendy — wdrożenie przeżywa rozłączenie
+klienta, tak jak opisano dla całego silnika.
+
+### zapiszIRozglosWdrozenie — powód
+
+Żądanie cofnięcia do przebiegu bez werdyktu odrzuca już obsługiwacz komendy
+(`adapter_modul_aplikacje_wdrozenie.go`); tutaj zostaje przypadek, w którym
+cel zmienił stan między odczytem komendy a odczytem silnika.
+## budowa/server/internal/core/adapter_modul_tlumaczenie_profile_qa.go
+
+Zatwierdzenie zostawia dwa slady naraz i to jest zamierzone: wiersz obiegu
+(kto, kiedy, na jakim etapie, z jaka uwaga) oraz migawke na panelu, ktora
+widzi kazdy odczyt panelu bez dociagania historii. Oba zapisy ida jedna
+transakcja (dane/tlumaczenie_kontrola.go).
+
+Autor zatwierdzenia bierze sie z sesji wywolujacego, nie z zadania. Gdyby
+przychodzil zadaniem, obieg zatwierdzen bylby polem tekstowym, w ktore
+mozna wpisac dowolne nazwisko - a wtedy nie jest obiegiem, tylko notatka.
+
+## budowa/server/internal/core/adapter_modul_library_podglad.go
+
+Metoda `Podglad` (`adapter_modul_library.go`) rozstrzyga rodzaj podglądu
+i składa odpowiedź kontraktu; tutaj leży sam odczyt treści spod odwołania
+pliku, wydzielony, bo to osobna odpowiedzialność — dostęp do nośnika.
+
+Odwołanie jest ścieżką na dysku i tylko tyle ten plik o nim zakłada. Wgranie
+przez `sourcePath` czyni ścieżkę odwołaniem do treści; wgranie przez
+`contentBase64` odkłada bajty w magazynie treści rdzenia i odwołaniem czyni
+ścieżkę bloba (`Wgraj`, `adapter_modul_library_magazyn.go`). Obie drogi
+kończą się ścieżką, więc czytelnik jest jeden i czyta ją z dysku tak, jak
+moduł Developer czyta pliki repozytorium do Code Editor
+(`adapter_modul_developer_plik.go`). Plik bez odwołania — wiersz sprzed
+wpięcia magazynu albo wersja będąca samym znacznikiem — jest odmawiany
+wcześniej (`bladBrakuTresciBiblioteki`), więc tu trafia wyłącznie plik
+z realnym odwołaniem.
+
+Granica podglądu na znaki ma pokazać początek dokumentu w oknie modułu,
+a nie przesłać cały plik przez gniazdo zdarzeń. Próg rozpoznania tekstu to
+głowa dokumentu — dość, by trafić na bajt zerowy albo na niepoprawny UTF-8
+formatu binarnego, i mało, by nie czytać całości.
+
+`trescPodgladuBiblioteki`: odwołanie to ścieżka pliku na dysku (`Wgraj`,
+`sourcePath`), więc rdzeń czyta ją tak, jak moduł Developer czyta pliki
+repozytorium. Czyta o jeden bajt więcej niż górna granica w bajtach — nadmiar
+mówi, że treść jest dłuższa niż podgląd, więc podgląd jest skrócony.
+Odwołanie, którego nie da się odczytać, jest odmową wprost, a nie pustą
+treścią udającą podgląd.
+
+`odwolanieObrazuPodgladu`: pierwsze zawężenie — tylko obraz. Kontrakt nazywa
+to pole odwołaniem do obrazu, więc wypełnia je wyłącznie podgląd obrazowy.
+Przy `binary` czy `pdf` klient dostałby wskazanie, którego nie umie
+otworzyć, a przy okazji wyszedłby na zewnątrz układ katalogu danych
+Operatora. Drugie zawężenie — tylko postać względna. Wychodzi ścieżka
+względna magazynu, ta sama postać, co `asset.uri` modułu Design — ścieżka
+bezwzględna nazywałaby katalog danych rdzenia, a odbiorca bywa na innej
+maszynie i tak by jej nie otworzył. Pustka znaczy „nie mam czego podać”,
+a nie „obraz bez treści”.
+
+`rodzajPodgladuTresci`: plik tekstowy bez `mimeType` uznany z góry za
+`binary` nie pokazałby ani jednego znaku treści, choć rdzeń ma i bajty,
+i czytnik tekstu. Bajt zerowy albo ciąg niebędący poprawnym UTF-8 znaczy
+treść nietekstową i wtedy `binary` jest prawdą. Sekwencja ma najwyżej cztery
+bajty, więc urwany ogon to najwyżej trzy: dalsze skracanie zjadałoby treść
+binarną aż do pustej, a pusta przechodzi jako poprawny UTF-8 i cały plik
+wyszedłby tekstem.
+
+`rodzajPodgladu` stoi tutaj, przy odczycie treści podglądu, a nie przy
+składaniu odpowiedzi (`adapter_modul_library.go`), bo to jedna decyzja tego
+samego obszaru.

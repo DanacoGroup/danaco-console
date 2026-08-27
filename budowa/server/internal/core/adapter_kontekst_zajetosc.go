@@ -1,29 +1,4 @@
-// Odpowiedzialność pliku: `context.usage.get` — zajętość okna kontekstu
-// rozmowy: ile żetonów zużyto, gdzie jest granica i jak rozkłada się to na
-// warstwy.
-//
-// ── Tokenizator jest podsystemem rdzenia, nie oszacowaniem ──────────────────
-// Kontrakt tej komendy stawia sprawę wprost: bez tokenizatora liczba żetonów
-// byłaby wartością wziętą znikąd. Rdzeń ma więc tokenizator wkompilowany
-// (`server/internal/tokenizator`) i liczy nim NAPRAWDĘ — słownikiem BPE, tym
-// samym podziałem, którym liczy model. Odpowiedź niesie nazwę słownika
-// (`ContextUsage.tokenizer`), więc czytelnik wie, czym zmierzono.
-//
-// Przybliżenie „znaki podzielone przez cztery" byłoby tu gorsze niż brak
-// odpowiedzi: myli się na polszczyźnie o kilkadziesiąt procent, a Operator
-// czytający „w normie" traci turę na przepełnieniu okna.
-//
-// ── Granica okna jest odczytana, nie zmyślona ───────────────────────────────
-// Granicę bierzemy z parametru kanału (`contextWindow` w konfiguracji wiersza
-// rejestru kanałów). Kanał, który jej nie podaje, daje odpowiedź
-// `available: false` wraz z powodem i wskazaniem naprawy — bo pasek zajętości
-// wobec granicy wziętej z głowy pokazywałby „w normie" albo „prawie pełne"
-// zależnie od tego, co rdzeń akurat zgadł.
-//
-// ── Trzy warstwy, trzy osobne pomiary ───────────────────────────────────────
-// Prompt systemowy, historia rozmowy i pamięć są liczone osobno, każda swoim
-// tekstem. Suma jest sumą tych trzech, a nie osobnym pomiarem — inaczej części
-// nie sumowałyby się do całości i okno pokazywałoby dwie prawdy naraz.
+// Plik obsługuje context.usage.get: zajętość okna kontekstu rozmowy — ile żetonów zużyto, gdzie jest granica i jak rozkłada się to na warstwy, liczone rzeczywistym tokenizatorem rdzenia.
 package core
 
 import (
@@ -44,21 +19,17 @@ import (
 // na tę liczbę, więc jedzie ona parametrem — tą samą drogą co `credentialRef`.
 const parametrGranicyOkna = "contextWindow"
 
-// adapterZajetosciKontekstu wypełnia port `ZajetoscKontekstu`.
+// adapterZajetosciKontekstu wypełnia port ZajetoscKontekstu, liczący zajętość okna rzeczywistym tokenizatorem.
 type adapterZajetosciKontekstu struct {
 	okna       dane.RepozytoriumOkien
 	wiadomosci dane.RepozytoriumWiadomosci
 	pamiec     dane.RepozytoriumPamieci
 	kanaly     *models.Rejestr
-	// tozsamosc oddaje prompt systemowy obowiązujący w oknie — ten sam, który
-	// pojedzie do modelu. Drugi składacz promptu dałby drugą liczbę żetonów
-	// warstwy systemowej i rozjechał się z pierwszym przy pierwszej zmianie
-	// warstw.
+	// tozsamosc oddaje prompt systemowy obowiązujący w oknie — ten sam, który pojedzie do modelu.
 	tozsamosc Tozsamosc
 }
 
-// nowyAdapterZajetosciKontekstu wiąże port z magazynami, z których składa się
-// treść okna kontekstu.
+// nowyAdapterZajetosciKontekstu wiąże port z magazynami, z których składa się treść okna kontekstu rozmowy.
 func nowyAdapterZajetosciKontekstu(okna dane.RepozytoriumOkien,
 	wiadomosci dane.RepozytoriumWiadomosci, pamiec dane.RepozytoriumPamieci,
 	kanaly *models.Rejestr, tozsamosc Tozsamosc) *adapterZajetosciKontekstu {
@@ -69,7 +40,7 @@ func nowyAdapterZajetosciKontekstu(okna dane.RepozytoriumOkien,
 	}
 }
 
-// ZajetoscKontekstu obsługuje `context.usage.get`.
+// ZajetoscKontekstu obsługuje context.usage.get, liczący zajętość okna trzema osobnymi pomiarami warstw.
 func (a *adapterZajetosciKontekstu) ZajetoscKontekstu(ctx context.Context,
 	z shared.ContextUsageGetRequest) (shared.ContextUsageGetResponse, error) {
 
@@ -133,15 +104,12 @@ func (a *adapterZajetosciKontekstu) ZajetoscKontekstu(ctx context.Context,
 	}, nil
 }
 
-// modelIGranicaOkna odczytuje model kanału okna i wielkość jego okna kontekstu.
+// modelIGranicaOkna odczytuje model kanału okna i wielkość jego okna kontekstu z parametru konfiguracji.
 func (a *adapterZajetosciKontekstu) modelIGranicaOkna(okno dane.Okno) (string, int) {
 	if a.kanaly == nil {
 		return "", 0
 	}
-	// Rejestr kanałów jest kluczowany kodem wiersza, a okno trzyma jego numer,
-	// więc wiersz odnajdujemy po numerze. Przejście po wykazie jest tu tańsze
-	// niż drugie odpytanie bazy: rejestr stoi w pamięci i liczy pozycje
-	// w dziesiątkach.
+	// Rejestr kanałów jest kluczowany kodem wiersza, okno trzyma numer; wiersz odnajduje się po numerze.
 	var definicja models.Definicja
 	znaleziona := false
 	for _, wpis := range a.kanaly.Wykaz() {
@@ -160,12 +128,7 @@ func (a *adapterZajetosciKontekstu) modelIGranicaOkna(okno dane.Okno) (string, i
 	return definicja.Model, granica
 }
 
-// promptSystemowyOkna składa treść, którą okno wkłada przed rozmową.
-//
-// Warstwy bierzemy z tego samego portu tożsamości, którym składa je tura
-// (`adapter_rozmowa_tozsamosc.go`). Własne sklejanie warstw byłoby drugim
-// składaczem promptu — i pierwszą różnicą między tym, co zmierzono, a tym, co
-// pojechało do modelu.
+// promptSystemowyOkna składa treść, którą okno wkłada przed rozmową, tym samym portem tożsamości, którym składa ją tura, żeby zmierzony prompt był tym, co pojechało do modelu.
 func (a *adapterZajetosciKontekstu) promptSystemowyOkna(ctx context.Context, kodOkna string) string {
 	if a.tozsamosc == nil {
 		return ""
@@ -185,12 +148,7 @@ func (a *adapterZajetosciKontekstu) promptSystemowyOkna(ctx context.Context, kod
 	return strings.Join(warstwy, "\n\n")
 }
 
-// zetonyHistorii mierzy całą historię rozmowy okna.
-//
-// Historia idzie bez granicy liczby wiadomości: pytanie brzmi „ile zajmuje
-// kontekst", a kontekst obejmuje wszystko, co wejdzie do wywołania. Ucięcie
-// wykazu dałoby liczbę mniejszą od prawdy przy każdej dłuższej rozmowie —
-// czyli dokładnie tam, gdzie odpowiedź jest potrzebna.
+// zetonyHistorii mierzy całą historię rozmowy okna bez granicy liczby wiadomości, bo pytanie brzmi ile zajmuje kontekst, a kontekst obejmuje wszystko, co wejdzie do wywołania.
 func (a *adapterZajetosciKontekstu) zetonyHistorii(ctx context.Context,
 	licznik tokenizator.Licznik, okno dane.Okno) int {
 
@@ -208,7 +166,7 @@ func (a *adapterZajetosciKontekstu) zetonyHistorii(ctx context.Context,
 	return razem
 }
 
-// zetonyPamieci mierzy wpisy pamięci wchodzące do wywołania.
+// zetonyPamieci mierzy wpisy pamięci wchodzące do wywołania modelu w bieżącej turze danej rozmowy okna.
 func (a *adapterZajetosciKontekstu) zetonyPamieci(ctx context.Context,
 	licznik tokenizator.Licznik, okno dane.Okno) int {
 
@@ -236,11 +194,7 @@ func (a *adapterZajetosciKontekstu) zetonyPamieci(ctx context.Context,
 	return razem
 }
 
-// niezmierzonaZajetosc oddaje uczciwe „nie zmierzyłem" wraz z powodem.
-//
-// To NIE jest odmowa: kontrakt tej komendy przewiduje `available: false` wprost
-// i chce, żeby okno pokazało wtedy brak miernika, a nie błąd. Pomiar zerowy
-// podany jako zmierzony byłby paskiem „pusto" przy oknie pełnym po brzegi.
+// niezmierzonaZajetosc oddaje uczciwe nie zmierzyłem wraz z powodem; to nie jest odmowa, bo kontrakt tej komendy przewiduje available: false wprost, zamiast pomiaru zerowego podanego jako zmierzony.
 func niezmierzonaZajetosc(powod string) shared.ContextUsageGetResponse {
 	return shared.ContextUsageGetResponse{Available: false, Reason: &powod}
 }

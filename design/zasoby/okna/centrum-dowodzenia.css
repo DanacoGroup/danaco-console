@@ -117,6 +117,38 @@
   line-height: var(--dn-lh-luzny);
 }
 .cd-start[hidden] { display: none; }
+
+/* Belka samouczka i listwa ustawień domykają się na siatce środowisk, nie na
+   krawędzi płótna: kończą się równo z drugą kartą przy czterech kolumnach
+   i z pierwszą przy dwóch. Obie miary daje jedno wyrażenie — dwie kolumny wraz
+   z przerwą między nimi mierzą dokładnie tyle, co jedna kolumna z układu
+   dwukolumnowego, czyli połowę siatki pomniejszoną o pół odstępu.
+   `min-width` chroni listwę: jej pięć pozycji potrzebuje więcej miejsca, niż
+   zostaje przy dwóch kolumnach, a treść nie ma prawa wyjść poza obrys. */
+.cd-start,
+.cd-listwa {
+  width: calc(50% - var(--dn-od-3) / 2);
+  max-width: 100%;
+}
+/* Zdanie belki łamie się, gdy pole zwęża się poniżej jego długości. */
+.cd-start { flex-wrap: wrap; }
+/* Listwa złamać się nie może — pięć kontrolek w rzędzie czyta się jako jeden
+   zestaw. Gdy połowa siatki nie starcza, listwa zostaje przy szerokości
+   własnej treści; to jedyne miejsce, w którym nie domyka się na karcie. */
+.cd-listwa { min-width: fit-content; }
+/* Jedna kolumna — karta zajmuje całą szerokość, więc belka też. */
+@media (max-width: 860px) {
+  .cd-start,
+  .cd-listwa { width: 100%; }
+}
+body:has(#panel-samouczek:not([hidden])) .cd-start,
+body:has(#panel-samouczek:not([hidden])) .cd-listwa {
+  width: calc(50% - var(--dn-od-3) / 2);
+}
+@media (max-width: 1180px) {
+  body:has(#panel-samouczek:not([hidden])) .cd-start,
+  body:has(#panel-samouczek:not([hidden])) .cd-listwa { width: 100%; }
+}
 .cd-start-znak { display: grid; place-content: center; flex: none; color: var(--dn-sygnal); }
 .cd-start-tresc { flex: 1 1 auto; margin: 0; }
 .cd-start-tresc b { color: var(--dn-tekst); }

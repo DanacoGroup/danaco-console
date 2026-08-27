@@ -2298,3 +2298,17 @@ goły tekst zamiast dokumentu.
 `uzyto_ocr` jest własnością wczytania, nie dokumentu na dysku: ten sam plik
 wczytany dwa razy — raz z warstwy tekstowej, raz z rozpoznania pisma — daje
 dwa różne materiały i model ma prawo wiedzieć, na którym pracuje.
+## budowa/server/internal/store/migracja_171_zakladki_przegladania.sql
+Migracja 171 — zakładki okna przeglądarki (`browser.bookmark.*`).
+
+Zakładka nie jest źródłem przeglądania. Źródło (`zrodlo_przegladania`,
+migracja 047) narasta samo w miarę odwiedzania stron i opisuje przebieg
+sesji; zakładkę Operator zakłada świadomie i ma ona trwać dłużej niż sesja,
+razem z folderem, etykietami i własną notatką. Wspólna tabela kazałaby
+odsiewać jedno od drugiego kolumną rodzaju przy każdym odczycie obu wykazów.
+
+Etykiety idą kolumną JSON, bo kontrakt niesie je jako `tags: string[]`
+wewnątrz `BrowserBookmark` — nie jest to byt samodzielny, który ktokolwiek
+wyszukuje niezależnie od zakładki. Osobna tabela wiązań dawałaby złączenie
+przy każdym odczycie i ani jednego nowego pytania, na które umiałaby
+odpowiedzieć.

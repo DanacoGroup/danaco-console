@@ -1,17 +1,5 @@
-// Odpowiedzialność pliku: trwałość zespołów ekspertów — nazwanych składów
-// biblioteki modułu Agents (tabele `zespol` i `zespol_sklad`).
-//
-// Zespół trzyma wyłącznie kody ekspertów i ich kolejność; tożsamość, model
-// i uprawnienia zostają w tabeli `agent` i w `RepozytoriumAgentow`. Skopiowanie
-// tożsamości do składu dałoby dwie prawdy o jednym ekspercie.
-//
-// Ekspert usunięty albo zarchiwizowany (`agent.zarchiwizowano_o`) nie
-// unieważnia zespołu: odczyt oddaje skład dostępny w polu `Sklad`, a kody bez
-// czynnego eksperta osobno w `Pominieci`. Wiersz składu zostaje w bazie, więc
-// ekspert wrócony z archiwum wraca do zespołu bez dodatkowego zapisu.
-//
-// Skład wszystkich zespołów czytamy jednym zapytaniem i grupujemy po numerze
-// zespołu, zamiast odpytywać bazę osobno dla każdego wiersza wykazu.
+// Odpowiedzialność pliku: trwałość zespołów ekspertów — nazwanych składów biblioteki modułu
+// Agents, tabele `zespol` i `zespol_sklad`, wraz z odczytem i zapisem pełnego składu.
 package dane
 
 import (
@@ -32,19 +20,16 @@ type Zespol struct {
 	Opis  string
 	// Sklad niesie kody ekspertów czynnych, w kolejności nadanej w oknie.
 	Sklad []string
-	// Pominieci niesie kody, które w składzie są, ale czynnego eksperta nie
-	// mają — usuniętego albo zarchiwizowanego. Puste znaczy „skład kompletny".
+	// Pominieci niesie kody bez czynnego eksperta; puste znaczy „skład kompletny”.
 	Pominieci      []string
 	Utworzono      int64
 	Zaktualizowano *int64
 }
 
-// FiltrZespolow zawęża wykaz zespołów. Pole puste znaczy „bez zawężenia”.
+// FiltrZespolow zawęża wykaz zespołów zwracany zapytaniem `Lista` modułu Agents; pole puste znaczy „bez zawężenia”.
 type FiltrZespolow struct {
 	Fraza string
-	// Granica ogranicza liczbę zwróconych wierszy; zero i wartości ujemne
-	// znaczą „bez granicy”. Liczba wszystkich spełniających warunki wraca
-	// osobno, żeby okno wiedziało, ile pozycji ucięto.
+	// Granica ogranicza liczbę zwróconych wierszy; zero i wartości ujemne znaczą „bez granicy”.
 	Granica      int
 	Przesuniecie int
 }
@@ -180,7 +165,7 @@ func (r *repozytoriumZespolow) PoKodzie(ctx context.Context, kod string) (Zespol
 	return jeden[0], nil
 }
 
-// Dodaj zakłada zespół wraz ze składem i oddaje go odczytanego z bazy.
+// Dodaj zakłada nowy zespół wraz ze składem w jednej transakcji i oddaje go odczytanego z bazy po zapisie.
 func (r *repozytoriumZespolow) Dodaj(ctx context.Context, zespol Zespol) (Zespol, error) {
 	if strings.TrimSpace(zespol.Nazwa) == "" {
 		return Zespol{}, fmt.Errorf("dane: zespół %q wymaga nazwy", zespol.Kod)
@@ -243,7 +228,7 @@ func (r *repozytoriumZespolow) Zapisz(ctx context.Context, zespol Zespol) (Zespo
 	return r.PoKodzie(ctx, zespol.Kod)
 }
 
-// numer odnajduje numer wiersza zespołu po jego kodzie.
+// numer odnajduje numer wiersza zespołu w tabeli `zespol` po jego kodzie trwałym, potrzebny do zapisu składu.
 func (r *repozytoriumZespolow) numer(ctx context.Context, kod string) (int64, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, numerZespolu)
 	if err != nil {
@@ -291,7 +276,7 @@ func (r *repozytoriumZespolow) zapiszSklad(ctx context.Context, transakcja *sql.
 	return nil
 }
 
-// dolaczSklad dokłada skład wszystkim zespołom wykazu jednym zapytaniem.
+// dolaczSklad dokłada skład wszystkim zespołom wykazu jednym zapytaniem zamiast osobno dla każdego wiersza.
 func (r *repozytoriumZespolow) dolaczSklad(ctx context.Context, zespoly []Zespol) error {
 	if len(zespoly) == 0 {
 		return nil
@@ -331,7 +316,7 @@ func (r *repozytoriumZespolow) dolaczSklad(ctx context.Context, zespoly []Zespol
 	return nil
 }
 
-// odczytajZespol składa strukturę z jednego wiersza wyniku.
+// odczytajZespol składa strukturę zespołu z jednego wiersza wyniku zapytania SQL, bez składu ekspertów.
 func odczytajZespol(wiersz skaner) (Zespol, error) {
 	var zespol Zespol
 	var zaktualizowano sql.NullInt64

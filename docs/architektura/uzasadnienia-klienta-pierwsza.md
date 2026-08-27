@@ -4280,3 +4280,73 @@ Faza odczytu jest osobną wartością stanu, ponieważ bez niej pusty rejestr zn
 trzy rzeczy naraz: odczytu jeszcze nie było, odczyt trwa albo rdzeń nie zna ani
 jednego konta. Każdemu z tych przypadków należy się inny obraz: widok bez treści,
 wskaźnik odczytu oraz stan pusty ze zdaniem opisu.
+
+## budowa/klient-poprzedni/src/moduly/automations/uruchomienie-petli.ts
+
+Przebiegi są dwa, ponieważ komenda `automation.queue.action` wymaga
+identyfikatora kolejki, a wykaz automatyk go nie niesie: struktura
+`AutomationWorkflow` pola kolejki nie ma. Kolejka powstaje więc tą samą drogą,
+którą zakłada ją okno Queue Manager — komendą `queue.create` z sesją modułu
+automatyk — a zaraz po niej idzie działanie rozpoczęcia ze wskazaniem automatyki.
+Rdzeń zasila kolejkę krokami wyłącznie wtedy, gdy nie ma ona ani jednej pozycji;
+kolejka świeżo założona jest pusta, więc uruchomienie startuje z pełnym wykazem
+kroków.
+
+Sesja kolejki jest ta sama, co w oknie Queue Manager, ponieważ pętla uruchamiana
+z wykazu nie ma karty sesji: moduł jest komponentem własnym drugiej strefy strony
+głównej, a nie przestrzeni roboczej sesji.
+
+Odpowiedź niesie stan kolejki po działaniu, licznik obiegów i liczbę zleceń
+oczekujących, lecz nie mówi, które kroki się wykonały. Twierdzenie o wykonanych
+krokach byłoby potwierdzeniem czynności, której okno nie zmierzyło.
+
+## budowa/klient-poprzedni/src/komponenty/stan-tresci.ts
+
+Stan treści nie jest tym samym, co `faza-okna.ts`. Tamten byt niesie fazy ramy,
+czyli atrybut fazy na powłoce i rolę dostępności pasa; ten niesie miejsce treści
+wraz z pasem komunikatu i potwierdzeniem czynności, a stan trzyma w atrybucie
+danych na akapicie komunikatu — po tym atrybucie sięgają arkusze modułów.
+
+Stan błędu niesie treść błędu z kontraktu, czyli kod i komunikat, ponieważ okno
+pokazujące po odmowie pusty wykaz mówiłoby o braku pozycji zamiast o nieudanym
+zapytaniu. Stan pusty ma własne zdanie, ponieważ pustka bywa poprawna: instalacja
+bez automatyk czy repozytorium bez zmian do zatwierdzenia nie są usterkami.
+
+Wygląd zostaje w module: klasy noszą przedrostek modułu i pokrywa je arkusz
+modułu, dlatego przedrostek jest wartością wejściową, a nie stałą. Z przedrostka
+powstają cztery klasy: stanów, stanu, potwierdzenia i treści.
+
+Plik `komponenty/odmowa.ts` składa zdanie odmowy w innym porządku i wymaga nazwy
+czynności, której te okna nie podają, dlatego opis błędu powstaje tutaj osobno.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/stan-diagnostyki.ts
+
+Okno Recommendations Panel wyświetla rekomendacje tej analizy, którą uruchomiło
+Diagnostics Center: kontrakt wiąże je polem identyfikatora analizy. Gdyby panel
+trzymał własne wskazanie, pokazywałby rekomendacje analizy poprzedniej obok
+wyniku nowej, a Operator nie miałby z czego rozpoznać, że patrzy na dwie różne
+migawki.
+
+Zakres czasu stoi obok analizy, ponieważ trzy komendy przyjmują czas początkowy
+i końcowy niezależnie: dziennik, wykaz błędów i sama analiza. Rozjechany zakres
+dałby Errors Panel z błędami jednej doby, dziennik z innej i analizę z trzeciej,
+czyli zestawienie wewnętrznie sprzeczne, po którym nie da się orzec przyczyny.
+Zakres pusty, z obydwoma końcami nieustawionymi, znaczy brak zawężenia i jest
+stanem poprawnym, a nie brakiem.
+
+Analiza zmienia się także pracą innego okna albo innego urządzenia tego konta,
+ponieważ rdzeń dopisuje do niej rekomendacje po zakończeniu przebiegu. Dotyczy to
+analizy bieżącej, więc migawka w oknach jest nieaktualna i okna mają się odczytać
+ponownie. Migawkę podmienia się od razu, ponieważ zdarzenie niesie ją w całości
+i drugie pytanie rdzenia byłoby zbędne.
+
+## budowa/klient-poprzedni/src/aplikacja/router.ts
+
+Widok opuszczony nie znika: element zostaje w dokumencie z atrybutem ukrycia,
+zamiast być usuwanym i budowanym na nowo. Dzięki temu karty opuszczonego
+środowiska trwają w tle i odtwarzają pełny stan po powrocie, a żadna subskrypcja
+kanału się nie gubi — powrót nie zakłada drugiego okna komunikacji.
+
+Trasa widnieje w adresie dokumentu, więc odświeżenie strony wraca tam, gdzie
+Operator był, a przycisk powrotu przeglądarki działa bez kodu dodatkowego. Adres
+nieznany nie zatrzymuje uruchomienia: router otwiera wtedy trasę początkową.

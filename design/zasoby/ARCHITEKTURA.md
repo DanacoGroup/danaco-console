@@ -65,8 +65,11 @@ i `prototyp.css`, a całą jego mechanikę niesie `okna/instalator.js`.
    zmiennych komponentu w arkuszu właściciela.
 4. **Wygląd w arkuszu, mechanizm w skrypcie.** Plik okna nie zawiera `<style>`,
    `<script>` bez `src` ani wstawek `style="…"`.
-5. **`[hidden]` wymaga warunku.** `display` zadeklarowany przez autora wygrywa
-   z `[hidden]`; reguły układu piszemy z `:not([hidden])`.
+5. **`[hidden]` rozstrzyga fundament.** `fundament.css` niesie
+   `[hidden] { display: none !important }`, więc atrybut `hidden` wygrywa z każdym
+   `display` autora — ukrycie deklarujemy tym atrybutem, a reguły układu ustawiają
+   `display` tylko dla stanu widocznego. Odsłonięcie wbrew `[hidden]` wymaga
+   własnego atrybutu lub klasy wariantu, nie samego `display`.
 6. **Animacja wejścia z `backwards`.** `both` pozostawia animację czynną, a taki
    element jest kontekstem nakładania i blokiem odniesienia dla potomków
    `position: fixed`.
@@ -83,7 +86,7 @@ i `prototyp.css`, a całą jego mechanikę niesie `okna/instalator.js`.
 | `data-karta`, `data-karta-rodzaj`, `data-modul`, `data-grupa` | `karty-okna.*` | tożsamość karty pasma |
 | `data-grupowanie`, `data-gestosc` | `karty-okna.*` | ustawienia widoku pasma |
 | `data-okno`, `data-okno-max`, `data-izolacja` | `okno-robocze.*` | stan okna roboczego |
-| `data-projekt`, `data-data`, `data-srodowisko` | `panel-sesji.*` | wymiary grupowania wykazu |
+| `data-projekt`, `data-srodowisko` | `panel-sesji.*` | wymiary grupowania wykazu |
 | `data-narzedzie`, `data-nadmiar`, `data-lustro` | `pasek-okna.*` | narzędzia modułu i ich zwijanie |
 | `data-udzial` | `pasek-stanu.js` | udział miary paska stanu |
 
@@ -94,6 +97,6 @@ i `prototyp.css`, a całą jego mechanikę niesie `okna/instalator.js`.
 | `css/komponenty.css` wpina `menu.css` | menu jest komponentem biblioteki; 33 prototypy wpinają samą bibliotekę i bez tego zostałyby bez panelu menu |
 | `rama.css` trzyma zapasowe położenie menu ramy | widoki bez `menu.js` muszą mieć poprawne położenie menu szyny, stopki, grupy funkcji globalnych i sterowania panelu |
 | karty okna głównego obsługuje wyłącznie `karty-okna.js` | dwa właściciele przełączania kart gasiły płótno karty bieżącej, gdy dwie karty wskazywały ten sam panel |
-| `.cd-tresc` i karty panelu deklarują `display` wyłącznie z warunkiem `:not([hidden])` | `display` autora wygrywa z `[hidden]` przeglądarki i karta odłożona zostawałaby na ekranie |
+| `.cd-tresc` i karty panelu deklarują `display` wyłącznie z warunkiem `:not([hidden])` | `[hidden]` z `fundament.css` niesie `!important`, więc `display` autora go nie przebije; regułę układu pisze się z `:not([hidden])`, żeby nie stosowała się do karty odłożonej |
 | wymiar znaku deklaruje przycisk (`.dn-btn`, `.dn-btn-ikona`) i pozycja listwy (`.cd-ik`) | `svg` bez zadeklarowanego wymiaru rośnie do wysokości pojemnika |
 | zwijanie nadmiaru paska modułu prowadzi pomiar, nie suma szerokości | odstępy i rozdzielacze zmieniają się razem ze składem paska |

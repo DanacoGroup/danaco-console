@@ -1,12 +1,6 @@
-// Odpowiedzialność pliku: rodzina `extension.*` — cykl życia pozycji katalogu.
-// Kolekcje kuratorskie, dziennik cyklu życia, wersje pozycji wraz z przypięciem
-// oraz paczki przesłane instalacją Personal
-// (`store/migracja_207_rozszerzenia_cykl_zycia.sql`).
-//
-// Interfejs `RepozytoriumRozszerzen` deklaruje `extension.go`; ten plik
-// i trzy sąsiednie (`extension_protokol.go`, `extension_integracje.go`,
-// `extension_zaufanie.go`) dokładają mu metody — jedno repozytorium, cztery
-// pliki wedle odpowiedzialności, tak jak w obszarze Apps.
+// Plik utrzymuje rodzinę extension.*: kolekcje kuratorskie, dziennik cyklu
+// życia, wersje pozycji wraz z przypięciem oraz paczki przesłane instalacją
+// Personal, jako jeden z czterech plików repozytorium rozszerzeń.
 package dane
 
 import (
@@ -27,7 +21,7 @@ type KolekcjaRozszerzen struct {
 	Zaktualizowano   int64
 }
 
-// WpisHistoriiRozszerzenia to wiersz tabeli `historia_rozszerzenia`.
+// WpisHistoriiRozszerzenia to wiersz tabeli historia_rozszerzenia, jednego zdarzenia cyklu życia pozycji katalogu.
 type WpisHistoriiRozszerzenia struct {
 	ID              int64
 	Kod             string
@@ -39,7 +33,7 @@ type WpisHistoriiRozszerzenia struct {
 	Zaszlo          int64
 }
 
-// WersjaRozszerzenia to wiersz tabeli `wersja_rozszerzenia`.
+// WersjaRozszerzenia to wiersz tabeli wersja_rozszerzenia, jednego wydania pozycji katalogu wraz z dziennikiem zmian.
 type WersjaRozszerzenia struct {
 	ID              int64
 	RozszerzenieKod string
@@ -191,7 +185,7 @@ func (r *repozytoriumRozszerzen) ZapiszKolekcjeRozszerzen(ctx context.Context,
 	return r.KolekcjaRozszerzen(ctx, kolekcja.Kod)
 }
 
-// KolekcjaRozszerzen zwraca jedną kolekcję wraz z kodami jej pozycji.
+// KolekcjaRozszerzen zwraca jedną kolekcję kuratorską wraz z kodami pozycji, które ją tworzą, w kolejności kontraktu.
 func (r *repozytoriumRozszerzen) KolekcjaRozszerzen(ctx context.Context, kod string) (KolekcjaRozszerzen, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKolekcjeRozszerzen)
 	if err != nil {
@@ -212,7 +206,7 @@ func (r *repozytoriumRozszerzen) KolekcjaRozszerzen(ctx context.Context, kod str
 	return kolekcja, nil
 }
 
-// KolekcjeRozszerzen zwraca wszystkie kolekcje wraz z ich pozycjami.
+// KolekcjeRozszerzen zwraca wszystkie kolekcje kuratorskie katalogu wraz z kodami pozycji, które je tworzą.
 func (r *repozytoriumRozszerzen) KolekcjeRozszerzen(ctx context.Context) ([]KolekcjaRozszerzen, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKolekcjiRozszerzen)
 	if err != nil {
@@ -273,7 +267,7 @@ func (r *repozytoriumRozszerzen) pozycjeKolekcjiRozszerzen(ctx context.Context) 
 	return mapa, nil
 }
 
-// DopiszHistorieRozszerzenia odnotowuje jedno zdarzenie cyklu życia pozycji.
+// DopiszHistorieRozszerzenia odnotowuje jedno zdarzenie cyklu życia pozycji katalogu w dzienniku historii.
 func (r *repozytoriumRozszerzen) DopiszHistorieRozszerzenia(ctx context.Context,
 	wpis WpisHistoriiRozszerzenia) error {
 
@@ -340,7 +334,7 @@ func (r *repozytoriumRozszerzen) HistoriaRozszerzenia(ctx context.Context, rozsz
 	return lista, razem, nil
 }
 
-// ZapiszWersjeRozszerzenia odnotowuje wersję pozycji katalogu.
+// ZapiszWersjeRozszerzenia odnotowuje wersję pozycji katalogu wraz z dziennikiem zmian i odwołaniem do paczki.
 func (r *repozytoriumRozszerzen) ZapiszWersjeRozszerzenia(ctx context.Context,
 	wersja WersjaRozszerzenia) error {
 
@@ -361,7 +355,7 @@ func (r *repozytoriumRozszerzen) ZapiszWersjeRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// WersjeRozszerzenia zwraca wersje pozycji, od najnowszej.
+// WersjeRozszerzenia zwraca pełny wykaz wersji pozycji katalogu w kolejności od najnowszej do najstarszej.
 func (r *repozytoriumRozszerzen) WersjeRozszerzenia(ctx context.Context,
 	rozszerzenie string) ([]WersjaRozszerzenia, error) {
 
@@ -414,8 +408,7 @@ func (r *repozytoriumRozszerzen) PrzypnijWersjeRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// PrzypieciaWersjiRozszerzenia zwraca numer wersji przypiętej; pusty znaczy
-// „bez przypięcia".
+// PrzypieciaWersjiRozszerzenia zwraca numer wersji przypiętej pozycji; pusty numer znaczy brak przypięcia.
 func (r *repozytoriumRozszerzen) PrzypiecieWersjiRozszerzenia(ctx context.Context,
 	rozszerzenie string) (string, error) {
 
@@ -434,7 +427,7 @@ func (r *repozytoriumRozszerzen) PrzypiecieWersjiRozszerzenia(ctx context.Contex
 	return wersja, nil
 }
 
-// ZalozPaczkeRozszerzenia zapisuje wiersz paczki przesłanej instalacją.
+// ZalozPaczkeRozszerzenia zapisuje wiersz paczki przesłanej instalacją Personal wraz z sumą kontrolną.
 func (r *repozytoriumRozszerzen) ZalozPaczkeRozszerzenia(ctx context.Context,
 	paczka PaczkaRozszerzenia) error {
 
@@ -453,7 +446,7 @@ func (r *repozytoriumRozszerzen) ZalozPaczkeRozszerzenia(ctx context.Context,
 	return nil
 }
 
-// PaczkaRozszerzenia zwraca wiersz paczki po jej odwołaniu.
+// PaczkaRozszerzenia zwraca wiersz paczki po jej odwołaniu, wskazanym w zapisie wersji tej pozycji katalogu.
 func (r *repozytoriumRozszerzen) PaczkaRozszerzenia(ctx context.Context, kod string) (PaczkaRozszerzenia, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzPaczkeRozszerzenia)
 	if err != nil {

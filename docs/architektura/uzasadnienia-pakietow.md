@@ -3389,3 +3389,25 @@ należy do warstwy kanału. Rozdzielenie idzie przez interfejs, nie przez wywoł
 w głąb cudzego pakietu. Polecenie jest wspólnym kształtem, nie punktem uruchomienia:
 wypełnia je rdzeń poprzez moduły Terminal i Developer, a wykonuje warstwa kanału
 przez port Uruchamiacz. Sesja nie buduje polecenia i sama go nie wykonuje.
+## budowa/server/internal/dane/schedule.go
+Zapis harmonogramów, odczyt po automatyce, wyzwalacze i budzik stoją w osobnym pliku warstwy danych automatyk
+i nie powtarzają się tutaj. Drogi odczytu są dwie, bo pytający bywa różny: ustawienie harmonogramu zna automatykę
+i pyta o jej harmonogram kolumną klucza obcego automatyki, natomiast odczyt harmonogramu zna albo identyfikator
+zewnętrzny samego harmonogramu, albo nie zna żadnego wskazania i pyta o komplet. Żadnej z tych dróg nie da się
+przejechać jednym zapytaniem po kluczu obcym automatyki, więc dochodzą tu dwa osobne zapytania.
+
+Schemat niesie oba potrzebne więzy jednoznaczności: jeden na identyfikator zewnętrzny, dzięki czemu odczyt po
+kodzie oddaje co najwyżej jeden wiersz, i drugi na klucz obcy automatyki, dzięki czemu automatyka ma najwyżej
+jeden harmonogram.
+
+## budowa/server/internal/models/kanal.go
+Rdzeń nie zna żadnego adaptera kanału z osobna — sięga po adaptery wyłącznie przez rejestr. Adapter
+kanału głównego (Claude Code CLI) realizuje interfejs Kanal w pakiecie internal/injection; tam mieszka
+budowa argumentów wywołania, pula kont i parser strumienia odpowiedzi.
+
+Metoda Wyslij interfejsu Kanal nadaje jako pierwszy fragment strumienia prowenancję wywołania. Zwrócony
+błąd dotyczy wyłącznie tego wywołania; adapter błędu nie zamienia sam na fragment — robi to
+Rejestr.Wyslij, dzięki czemu strumień nie niesie dwóch fragmentów błędu o tej samej przyczynie.
+
+Stała AdapterObrazy stoi obok AdapterAPI, a nie zamiast niego: rodzaj kanału (`api`) mówi, jak kanał
+rozmawia, a adapter mówi, co oddaje.

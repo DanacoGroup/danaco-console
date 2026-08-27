@@ -4,17 +4,10 @@ import { przycisk } from './kontrolki-formularza';
 import { utworzSekcjeModeli, type SekcjaModeli } from './sekcja-modeli';
 
 /**
- * Okno sekcji modeli — rama dla czterech obszarów: kont, ustawień osi, zasad
- * i tożsamości oraz podglądu złożonego promptu.
- *
- * Okno stoi na natywnym `<dialog>`: warstwę tła, stos okien i zamknięcie
- * klawiszem Esc daje przeglądarka, a nie własna nakładka. Wygląd bierze
- * z biblioteki `komponenty/` (`dn-modal`), więc plik nie ustala barw.
- *
- * Rama wyłącznie osadza sekcję — treść i stan mieszkają w `sekcja-modeli`,
- * żeby tę samą sekcję dało się wstawić także w widok osadzony bez powielania.
- *
- * Okno otwiera się natychmiast, przed odpowiedzią rdzenia.
+ * Okno sekcji modeli: rama na natywnym elemencie `dialog` dla czterech
+ * obszarów, czyli kont, ustawień osi, zasad i tożsamości oraz podglądu
+ * złożonego promptu. Rama wyłącznie osadza sekcję, otwiera się przed
+ * odpowiedzią rdzenia.
  */
 export interface OknoModeli {
   /** Element `<dialog>` osadzany w dokumencie. */
@@ -68,7 +61,11 @@ export function utworzOknoModeli(kanal: Kanal): OknoModeli {
   };
 }
 
-/** Nagłówek okna: ikona, tytuł, przycisk zamknięcia. */
+/**
+ * Nagłówek okna składa ikonę, tytuł, rozpychacz i przycisk zamknięcia; przycisk
+ * niesie opis dostępnościowy oraz podpowiedź, a wskazanie go wywołuje przekazane
+ * domknięcie zamykające okno.
+ */
 function naglowek(naZamkniecie: () => void): HTMLElement {
   const element = document.createElement('header');
   element.className = 'dn-modal-naglowek dm-okno__naglowek';

@@ -419,3 +419,7 @@ od motywu.
 
 ## design/zasoby/zetony/zetony.css
 Powielenie wartości cienia sygnału i pozostałych żetonów między blokiem `prefers-color-scheme` i blokami motywów jest świadome: stanowi mechanizm kaskady na wypadek braku jawnego wyboru motywu, a nie drugie źródło prawdy dla tych wartości. Sekcja czternasta, dotycząca ograniczonego ruchu bez konfiguracji per komponent, nie ma jeszcze treści — zachowanie `prefers-reduced-motion` obsługuje w całości plik `zetony/ruch.css`.
+
+## budowa/klient-poprzedni/src/komponenty/drobne.css
+Klatki nazwane dn-obrot definiuje ten arkusz i wykorzystuje je również
+przycisk w stanie ładowania; klatki dn-tetno definiuje plakietka.css.

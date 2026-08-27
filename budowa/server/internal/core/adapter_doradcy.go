@@ -1,37 +1,4 @@
-// Odpowiedzialność pliku: adapter doradcy — wykonanie konsultacji po tej samej
-// drodze, którą rdzeń woła każdy inny model.
-//
-// O tym, który model radzi, rozstrzyga sufit siły, a nie ten plik: model
-// z własnej inicjatywy konsultuje wyłącznie model równy sobie albo słabszy.
-// Reguła i jej powód stoją w `podagenci/doradca_wybor.go` — adapter jej nie
-// powtarza, żeby nie było dwóch miejsc, w których wolno ją poluzować. Komenda
-// `advisor.consult`, jedyny wołacz konsultacji, stoi
-// w `adapter_doradcy_konsultacja.go`.
-//
-// Adapter nie zna SQL-a ani protokołu dostawcy. Bierze rejestr kanałów modelu
-// i dziennik konsultacji pakietu `podagenci`, a pojęcie doradcy — kto nim może
-// być, jak brzmi pytanie, czym jest rada — zostaje po stronie pakietu
-// pojęciowego.
-//
-// Trzy własności pojęcia widać tu jako trzy czynności:
-//
-//	Jawność. Wszystkie fragmenty strumienia doradcy idą do ujścia wołającego
-//	bez zmiany, a na koniec dokładany jest blok `Rada.Jawnie` — Operator widzi
-//	pytanie, doradcę i radę w tym samym oknie, w którym pracuje agent.
-//	Adapter nie oddaje samej treści rady bez wskazania doradcy.
-//
-//	Prowenancja. Opis wywołania składa kanał, tak jak przy każdym innym
-//	zapytaniu (`models.NadajProwenancje`). Adapter go nie wytwarza — przejmuje
-//	fragment `provenance` przelatujący strumieniem i zapisuje ten sam napis
-//	w dzienniku. Drugiej prowenancji nie ma.
-//
-//	Konsultacja, nie delegacja. Zwrócona `Rada` nie zmienia niczego w stanie
-//	rdzenia: nie zakłada pozycji kolejki, nie startuje tury, nie zapisuje
-//	wiadomości agenta. Wołający dostaje radę i sam rozstrzyga, co z nią zrobi.
-//
-// Odmowa też trafia do dziennika. Konsultacja, która się nie odbyła, jest
-// zdarzeniem, o które Operator zapyta jako pierwsze — wpis o stanie `odmowa`
-// niesie powód.
+// Plik niesie adapter doradcy: wykonanie konsultacji tą samą drogą, którą rdzeń woła każdy inny model. O tym, który model radzi, rozstrzyga sufit siły, a nie ten plik.
 package core
 
 import (
@@ -47,10 +14,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// Adapter wypełnia port rodziny `advisor.*` w całości (handlers_doradcy.go).
+// Adapter wypełnia port rodziny advisor.* w całości, wraz z komendą advisor.consult obsługiwaną w handlers_doradcy.go.
 var _ Doradcy = (*adapterDoradcow)(nil)
 
-// przedrostekKonsultacji znakuje tożsamość zewnętrzną wpisu konsultacji.
+// przedrostekKonsultacji znakuje tożsamość zewnętrzną każdego wpisu konsultacji w dzienniku doradców rdzenia.
 const przedrostekKonsultacji = "kons-"
 
 // adapterDoradcow wykonuje konsultacje. Dziennik bywa pusty — konsultacja
@@ -59,18 +26,13 @@ const przedrostekKonsultacji = "kons-"
 type adapterDoradcow struct {
 	kanaly   *models.Rejestr
 	dziennik podagenci.Dziennik
-	// okna jest rejestrem okien sesji i stoi tu po jedno: kanał pytającego
-	// bierze się z okna, nigdy z żądania. Bez tego rejestru komenda musiałaby
-	// wierzyć modelowi na słowo, kim jest — a wtedy sufit siły dałoby się
-	// obejść jednym polem żądania.
+	// okna jest rejestrem okien sesji: kanał pytającego bierze się z okna, nigdy z żądania.
 	okna *session.Rejestr
-	// nadajnik jest drogą, którą rada trafia do okna, a nie tylko do modelu.
-	// Bez niego jawność konsultacji kończy się na buforze, którego nikt nie
-	// czyta — patrz `adapter_doradcy_konsultacja.go`.
+	// nadajnik niesie radę do okna, nie tylko do modelu; bez niego jawność ginie w niewidzianym buforze.
 	nadajnik Nadajnik
 }
 
-// nowyAdapterDoradcow wiąże adapter z rejestrem kanałów modelu.
+// nowyAdapterDoradcow wiąże adapter z rejestrem kanałów modelu, gotowym do wykonania pierwszej konsultacji.
 func nowyAdapterDoradcow(kanaly *models.Rejestr) *adapterDoradcow {
 	return &adapterDoradcow{kanaly: kanaly}
 }
@@ -82,9 +44,7 @@ func (a *adapterDoradcow) ZDziennikiem(d podagenci.Dziennik) *adapterDoradcow {
 	return a
 }
 
-// ZOknami wpina rejestr okien sesji — źródło kanału pytającego. Rejestr niewpięty nie gasi adaptera: `Skonsultuj` woła się nadal
-// tą samą drogą, natomiast komenda `advisor.consult` odmawia, bo okna nie ma
-// z czego odczytać.
+// ZOknami wpina rejestr okien sesji — źródło kanału pytającego. Rejestr niewpięty nie gasi adaptera: `Skonsultuj` woła się nadal tą samą drogą, natomiast komenda `advisor.consult` odmawia.
 func (a *adapterDoradcow) ZOknami(r *session.Rejestr) *adapterDoradcow {
 	a.okna = r
 	return a
@@ -107,13 +67,7 @@ func (a *adapterDoradcow) Doradcy() []podagenci.Kandydat {
 	return podagenci.Kandydaci(a.kanaly.Wykaz())
 }
 
-// Skonsultuj wykonuje jedną konsultację: wybiera doradcę, wysyła pytanie jego
-// kanałem, przepuszcza cały strumień doradcy do ujścia wołającego, dokłada blok
-// jawności i zapisuje ślad razem z prowenancją wywołania.
-//
-// Ujście pochodzi od wołającego i jest zwykle tym samym ujściem, którym płynie
-// odpowiedź agenta — dlatego rada widoczna jest tam, gdzie pracuje agent, a nie
-// w osobnym, cichym kanale.
+// Skonsultuj wykonuje jedną konsultację: wybiera doradcę, wysyła pytanie jego kanałem, przepuszcza strumień doradcy do ujścia wołającego, dokłada blok jawności i zapisuje ślad z prowenancją.
 func (a *adapterDoradcow) Skonsultuj(ctx context.Context, pytanie podagenci.Pytanie,
 	ujscie models.Ujscie) (podagenci.Rada, error) {
 
@@ -123,11 +77,7 @@ func (a *adapterDoradcow) Skonsultuj(ctx context.Context, pytanie podagenci.Pyta
 	if a.kanaly == nil {
 		return podagenci.Rada{}, bladBrakuKanalowDoradcy()
 	}
-	// Sufit siły stoi w pakiecie pojęciowym (`podagenci/doradca_wybor.go`),
-	// a nie tutaj — adapter go wykonuje, nie ma własnej wersji. Odmowa
-	// wraca wołającemu nazwana i jednocześnie idzie do dziennika jako wpis
-	// `odmowa`, bo pytanie „dlaczego rdzeń nie zapytał mocniejszego modelu"
-	// pada po fakcie i musi mieć odpowiedź w bazie.
+	// Sufit siły stoi w pakiecie pojęciowym; adapter go wykonuje, odmowa idzie wołającemu i do dziennika.
 	doradca, err := pytanie.Doradca(a.kanaly.Wykaz())
 	if err != nil {
 		a.zapiszOdmowe(ctx, pytanie, podagenci.Kandydat{Kanal: "-", Model: "-"}, err.Error())
@@ -147,14 +97,12 @@ func (a *adapterDoradcow) Skonsultuj(ctx context.Context, pytanie podagenci.Pyta
 	}
 
 	rada := podagenci.ZlozRade(doradca, pytanie, zbierak.tekst.String())
-	// Blok jawności idzie strumieniem po odpowiedzi doradcy: Operator widzi
-	// najpierw to, co doradca powiedział, a potem podpis mówiący, że to była
-	// rada cudza i niewiążąca.
+	// Blok jawności idzie po odpowiedzi doradcy: widać radę, a potem podpis o cudzej, niewiążącej treści.
 	_ = models.NadajTekst(ctx, ujscie, zapytanie, rada.Jawnie(pytanie))
 	return rada, a.zapiszRade(ctx, pytanie, rada, zbierak.prowenancja)
 }
 
-// zapiszRade utrwala odbytą konsultację razem z prowenancją wywołania.
+// zapiszRade utrwala odbytą konsultację razem z jej prowenancją wywołania w dzienniku doradców rdzenia.
 func (a *adapterDoradcow) zapiszRade(ctx context.Context, pytanie podagenci.Pytanie,
 	rada podagenci.Rada, prowenancja string) error {
 
@@ -222,20 +170,14 @@ func radaDoZapisu(tresc string) string {
 	return tresc
 }
 
-// zbierakRadyDoradcy przepuszcza strumień doradcy do ujścia wołającego
-// i po drodze zapamiętuje dwie rzeczy: tekst rady oraz opis wywołania.
-//
-// Przepuszcza wszystkie fragmenty, nie tylko tekst. Gdyby zatrzymywał je
-// u siebie, konsultacja byłaby niewidoczna do chwili jej zakończenia, a rada
-// pokazana dopiero jako gotowy napis — czyli tak samo jak odpowiedź własna
-// agenta, wbrew jawności konsultacji.
+// zbierakRadyDoradcy przepuszcza strumień doradcy do ujścia wołającego i po drodze zapamiętuje tekst rady oraz opis wywołania, nie zatrzymując fragmentów u siebie.
 type zbierakRadyDoradcy struct {
 	dalej       models.Ujscie
 	tekst       strings.Builder
 	prowenancja string
 }
 
-// Fragment odbiera jeden fragment strumienia doradcy.
+// Fragment odbiera jeden fragment strumienia doradcy i przepuszcza go dalej, wprost ku ujściu wywołania.
 func (z *zbierakRadyDoradcy) Fragment(ctx context.Context, f models.Fragment) error {
 	switch f.Kind {
 	case shared.ChunkKindText:
@@ -258,28 +200,13 @@ func bladOknaDoradcy(kod shared.ErrorCode, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "doradca: "+powod))
 }
 
-// bladBrakuKanalowDoradcy — konsultacja ma iść modelem, a rejestru kanałów nie
-// wpięto.
+// bladBrakuKanalowDoradcy — konsultacja ma iść modelem, a rejestru kanałów nie wpięto do tego adaptera.
 func bladBrakuKanalowDoradcy() error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeChannelUnavailable,
 		"doradca: rejestr kanałów modelu nie jest wpięty — konsultacja nie ma czym wołać doradcy"))
 }
 
-// bladDoboruDoradcy — rejestr jest wpięty, lecz doboru nie da się wykonać.
-// Odmowa jedzie wołającemu z powodem od doboru, bo „nie skonsultowano" bez
-// zdania dlaczego jest ciszą tam, gdzie stała decyzja; podmiana
-// odciętego doradcy na innego byłaby tą samą ciszą, tylko z radą w tle.
-//
-// Kod odmowy mówi, czy ponawiać. `channel_unavailable` jest w kontrakcie
-// kodem ponawialnym (`shared.KodyPonawialne`), więc odmowa trwała nie może nim
-// jechać — model dostałby polecenie ponowienia rozstrzygnięcia, które się nie
-// zmieni. Stąd podział:
-//
-//	kanału nie ma / wygaszony       → not_found (jak nieistniejące okno)
-//	sufit, dopuszczenie, brak siły  → validation_failed — odmowa trwała;
-//	                                  zmienia ją Operator wpisem do rejestru,
-//	                                  nie ponowienie tego samego żądania
-//	pozostałe                       → channel_unavailable
+// bladDoboruDoradcy — rejestr jest wpięty, lecz doboru nie da się wykonać; kod odmowy mówi, czy ponawiać, więc trwała przyczyna idzie jako validation_failed, nie channel_unavailable.
 func bladDoboruDoradcy(powod error) error {
 	var kod protocol.KodBledu = shared.ErrorCodeChannelUnavailable
 	switch {
@@ -293,7 +220,7 @@ func bladDoboruDoradcy(powod error) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "doradca: "+powod.Error()))
 }
 
-// bladPytaniaDoradcy — pytania nie da się zadać.
+// bladPytaniaDoradcy — pytania nie da się zadać, bo treść albo kanał doradcy są tu bezużyteczne dla wywołania.
 func bladPytaniaDoradcy(powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeValidationFailed,
 		"doradca: "+powod))

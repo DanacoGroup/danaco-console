@@ -5351,3 +5351,30 @@ tożsamość z powitania jest nadawana na czas uruchomienia — PIN założony w
 samej maszyny, więc wartość musi przeżyć zamknięcie okna. Pusty wynik oddania tożsamości znaczy, że
 pamięć trwała jest niedostępna — wywołanie idzie wtedy bez wymyślonego identyfikatora i to rdzeń orzeka
 odmowę, zamiast klienta zgadującego za niego.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/okno-debate-panel.ts
+Okno uruchamia kolejną turę debaty i pokazuje narastające argumenty; debatę inicjuje ono samo albo
+Moderator Panel. Okno wysyła jedno pytanie, a rdzeń oddaje skład uczestników, który faktycznie
+odpowiada — bywa on węższy od całego składu debaty, gdy uczestnik był wyciszony w poprzedniej
+turze, więc panel liczy różnicę i mówi ją wprost. Na żywo znaczy z dwóch dróg, nie z jednej: rdzeń
+rozgłasza wypowiedź stworzoną z treścią pustą w chwili otwarcia głosu, nadaje słowa fragmentami
+strumienia i dopiero po domknięciu strumienia rozgłasza zaktualizowaną z całością — samo zdarzenie
+zmiany debaty pokazywałoby więc pustą wypowiedź przez cały czas mówienia modelu. Okno bierze
+strumień wypowiedzi parametrem; subskrypcji nie zakłada, jedna na całe złożenie stoi w indeksie
+modułu, bo cztery subskrypcje tego samego zdarzenia byłyby czterokrotnym odbiorem jednej treści.
+Ucięcie historii wypowiedzi jest powiedziane wprost: okno bierze wypowiedzi wyłącznie ze zdarzenia,
+więc otwarte w trakcie debaty widzi sam ogon, nie transkrypt od pierwszej wypowiedzi. Nie jest to
+już brak kontraktu — komenda odczytu debaty oddaje skład, tury i wypowiedzi jednym wywołaniem —
+lecz brak obsługi tego odczytu. Nagłówek przebiegu i eksport transkryptu to zapowiadają, żeby pusty
+początek listy nie czytał się jako „debata zaczęła się teraz".
+
+Numer i stan tury biorą się z odpowiedzi, nie z żądania okna — okno nie zna numeru tury, dopóki
+rdzeń go nie nada. Wykaz pusty jest przypadkiem osobnym: „tura uruchomiona" bez ani jednego
+adresata byłoby potwierdzeniem czynności, która nikogo nie dotyczy.
+
+Przyciski rozszerzeń przychodzą gotowe z pasa rozszerzeń modułu, bo to z Debate Panelu zamierzenie
+każe otwierać Argument Map & Analysis i Voting & Evaluation Center. Okno nie zna ich wnętrza —
+dostaje przycisk i stawia go w pasku.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-rozszerzen.ts
+Podział na cztery gałęzie pierwszego poziomu drzewa — serwery MCP, wtyczki, integracje API, skille — pochodzi z wyliczenia kontraktu. Katalog jest czytany przez gotowe źródło komend rozszerzeń, a ster nie wie, jak wygląda koperta; to źródło z kolei nie importuje ani jednego pliku z okna komunikacji i zna wyłącznie kontrakt oraz protokół, więc zależność nie zamyka pętli. Liść jest przełącznikiem, nie wyborem: rozszerzenia nie wykluczają się nawzajem, więc zgaszenie jednego nie jest wybraniem innego. Opis pozycji pochodzi z rdzenia i idzie do menu dosłownie, a rozszerzenie bez opisu zostaje w menu bez zdania. Wykaz jest zawężony do zainstalowanych: menu obsługuje podłączenie, czyli to, czego operator używa teraz, a rejestrację, czyli to, co ma w ogóle, prowadzi katalog rozszerzeń w module Agents — pozycja niezainstalowana nie ma czego włączać.

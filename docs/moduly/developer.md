@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Developer Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
+
 # Moduł Developer — dokumentacja projektowa
 
 | | |
@@ -319,6 +321,7 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 **Zawartość i pełny arsenał funkcji.**
 
 *Podstawa edycyjna.*
+
 - Podświetlanie składni tree-sitter dla wielu języków programowania i formatów konfiguracyjnych, inkrementalne i składniowo poprawne.
 - Numeracja linii, zwijanie i rozwijanie bloków kodu (code folding).
 - Autouzupełnianie z podpowiedziami sygnatur funkcji i typów, dostarczane przez serwer języka (LSP), wraz z podglądem typu przy najechaniu i diagnostyką na żywo.
@@ -327,12 +330,14 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Minimapa pliku dla szybkiej orientacji w długich plikach.
 
 *Formatowanie i jakość kodu.*
+
 - Automatyczne formatowanie całego dokumentu lub zaznaczenia, według reguł stylu przypisanych repozytorium, także przy zapisie pliku.
 - Wybór stylu wcięć (spacje/tabulacje) i szerokości wcięcia, z odczytem z `.editorconfig`.
 - Linter i analiza statyczna — podkreślenia błędów składniowych i ostrzeżeń na żywo, z szybką poprawką i regułami przypisanymi repozytorium.
 - Adnotacja autora linii (blame) — kto i kiedy ostatnio zmienił daną linię, z przejściem do commitu.
 
 *Nawigacja i wyszukiwanie.*
+
 - Przejdź do definicji i implementacji, znajdź wszystkie wystąpienia symbolu, przejdź do symbolu w pliku, ścieżka symbolu w pasku okruchów.
 - Znajdź i zamień w bieżącym pliku, z obsługą wyrażeń regularnych.
 - Grep — znajdź w plikach (wyszukiwanie globalne w całym repozytorium) z podglądem wyników, zamianą masową i poszanowaniem reguł ignorowania repozytorium.
@@ -341,6 +346,7 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Zakładki w kodzie (bookmarks) do szybkiego powrotu.
 
 *Operacje kontekstowe AI.*
+
 - Generuj — wygenerowanie nowego fragmentu kodu na podstawie opisu lub sąsiedniego kontekstu.
 - Refaktoryzuj — przekształcenie zaznaczonego kodu bez zmiany zachowania.
 - Wyjaśnij — opis działania zaznaczonego fragmentu w języku naturalnym.
@@ -352,11 +358,13 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Refaktoryzacje semantyczne oparte na LSP: zmiana nazwy symbolu globalnie, wyodrębnienie funkcji lub zmiennej, wstawienie w miejscu, przeniesienie symbolu, organizacja importów — z podglądem różnicy wielo-plikowej.
 
 *Wersjonowanie i porównanie z poziomu edytora.*
+
 - Podgląd historii bieżącego pliku, przywrócenie wcześniejszej wersji fragmentu.
 - Porównanie dwóch dowolnych plików niezależnie od Git Panel (Diff Panel wewnętrzny edytora), w trybie inline i dwukolumnowym.
 - Wskaźniki zmian na marginesie linii (dodano/zmieniono/usunięto względem ostatniego commitu), z cofnięciem zmiany linii.
 
 *Personalizacja i pomocnicze.*
+
 - Snippet manager — własne, parametryzowane fragmenty kodu wielokrotnego użytku, wyzwalane prefiksem.
 - Zmiana motywu kolorystycznego kodu, rozmiaru czcionki, zawijania wierszy.
 - Podgląd na żywo (live preview) dla plików renderowalnych: Markdown, HTML, Mermaid, SVG — w kolumnie obok źródła.
@@ -463,17 +471,20 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 **Zawartość i pełny arsenał funkcji.**
 
 *Status i przygotowanie zmian.*
+
 - Lista zmian: niezatwierdzone (unstaged), przygotowane do commitu (staged), nieśledzone (untracked) — z ikonami statusu.
 - Dodanie do przygotowania (stage) pojedynczego pliku, zaznaczonych plików albo wszystkich naraz; cofnięcie przygotowania (unstage).
 - Widok różnicowy per plik — inline albo dwukolumnowy, z podświetlaniem składni i porównaniem słowo po słowie, z zaznaczaniem pojedynczych fragmentów (hunków) do przygotowania częściowego.
 
 *Commit.*
+
 - Pole treści commitu z licznikiem znaków pierwszej linii.
 - Generowanie opisu commitu na podstawie rzeczywistego różnicowania przygotowanych zmian.
 - Zatwierdzenie zmian (commit), poprawienie ostatniego commitu (amend), cofnięcie ostatniego commitu (revert) z zachowaniem historii.
 - Podpisywanie commitów (GPG/SSH) oraz konfiguracja tożsamości commitującej dla repozytorium.
 
 *Historia i gałęzie.*
+
 - Log commitów — lista z autorem, datą, skrótem, treścią, filtrami po autorze i zakresie dat, z przejściem do plików commitu.
 - Wykres gałęzi (branch graph) — wizualizacja rozgałęzień i scaleń w czasie.
 - Utworzenie nowej gałęzi, przełączenie (checkout), scalenie (merge), zmiana bazy (rebase), przeniesienie commitu (cherry-pick), usunięcie gałęzi.
@@ -481,12 +492,14 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Tagowanie wersji, przegląd i usuwanie tagów.
 
 *Zdalne repozytorium.*
+
 - Pobranie (fetch), aktualizacja (pull), wysłanie (push); zarządzanie zdalnymi repozytoriami (remotes).
 - Wysłanie wymuszone (force push) — operacja jawna, sygnalizowana wizualnie jako nieodwracalna.
 - Odłożenie zmian roboczych (stash) i przywrócenie stasha; lista odłożonych zestawów zmian.
 - Integracja z hostingiem repozytoriów: żądania scalenia (PR/MR), przypisania, statusy potoków CI i komentarze — obsługiwane bez opuszczania okna, przez integrację z API GitHub, GitLab lub Bitbucket.
 
 *Konflikty i integracja z AI.*
+
 - Rozwiązywanie konfliktów scalania — widok trójstronny (wersja bieżąca / wersja przychodząca / wynik) z wyborem fragmentu lub ręczną edycją.
 - Podsumowanie zmian (changelog) i nota wydania generowane na podstawie zakresu commitów, zgodnie z konwencją Conventional Commits.
 - Przegląd zmian przed zatwierdzeniem (przegląd kodu na różnicy) wykonywany przez Wykonawcę, z uwagami przypisanymi do konkretnych linii.
@@ -926,27 +939,35 @@ Historia i pamięć Chat Window pozostają domyślnie odrębne per karta sesji (
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — refaktoryzacja z przeglądem różnicy przed zatwierdzeniem.**
+
 Deweloper zaznacza funkcję w Code Editor budzącą wątpliwości co do czytelności, z paska pływającego wybiera „Refaktoryzuj”. Wynik pojawia się w Chat Window wraz z blokiem kodu; deweloper wstawia go do pliku, weryfikuje margines zmian, po czym w Git Panel przegląda pełny widok różnicowy przed przygotowaniem commitu.
 
 **Scenariusz 2 — niepowodzenie testu i poprawka prowadzona przez Wykonawcę.**
+
 Uruchomione w Build Output budowanie kończy się niepowodzeniem jednego testu. Deweloper klika „Otwórz w edytorze”, następnie „Wyjaśnij niepowodzenie” — Chat Window otrzymuje pełny kontekst błędu i wskazuje poprawkę. Po wstawieniu poprawki deweloper uruchamia budowanie ponownie bezpośrednio z Build Output.
 
 **Scenariusz 3 — generowanie opisu commitu i zatwierdzenie zmian.**
+
 Po serii drobnych poprawek w kilku plikach deweloper przygotowuje zmiany w Git Panel, zaznaczając wybrane pliki. Zamiast ręcznie formułować opis, wybiera „generuj AI” — model analizuje rzeczywistą różnicę i zwraca zwięzły opis zmian, który deweloper koryguje i zatwierdza.
 
 **Scenariusz 4 — rozwiązywanie konfliktu scalania.**
+
 Po próbie scalenia gałęzi funkcyjnej z gałęzią główną Git Panel sygnalizuje konflikt w dwóch plikach. Deweloper otwiera widok trójstronny, dla jednego pliku przyjmuje wersję przychodzącą, dla drugiego edytuje ręcznie łącząc oba fragmenty, po czym oznacza konflikt jako rozwiązany i kończy scalenie.
 
 **Scenariusz 5 — zadanie wielokrokowe prowadzone w pętli wykonawczej.**
+
 Deweloper zleca w Chat Window wydzielenie warstwy walidacji opłat. Koordynator dekomponuje zlecenie na siedem zadań widocznych w Execution Loop Window. Po edycjach plików pętla uruchamia testy; jedno zadanie kończy się niepowodzeniem i zostaje ponowione z uwzględnieniem komunikatu lintera. Deweloper śledzi liczniki przebiegu, akceptuje zbiorczą różnicę wielo-plikową, po czym pętla przygotowuje commit w Git Panel.
 
 **Scenariusz 6 — diagnoza błędu w debuggerze.**
+
 Deweloper ustawia warunkowy punkt przerwania na marginesie Code Editor i uruchamia konfigurację debugowania. Po zatrzymaniu przegląda zmienne i stos wywołań, wykonuje wyrażenie kontrolne w konsoli debugowania, a przyciskiem „Wyjaśnij stan” otrzymuje w Chat Window opis przyczyny zatrzymania wraz z poprawką wstawianą jako różnica.
 
 **Scenariusz 7 — weryfikacja kontraktu API i danych.**
+
 Deweloper importuje kontrakt OpenAPI do API Client, wykonuje zapytanie testowe i otrzymuje odpowiedź niezgodną z oczekiwaniem. W Data Console sprawdza zawartość tabeli powiązanej z żądaniem, koryguje migrację schematu, po czym ponawia zapytanie i generuje z niego test integracyjny zapisywany w repozytorium.
 
 **Scenariusz 8 — praca nad wydzielonym modułem repozytorium jako częścią większego produktu.**
+
 Zespół budujący aplikację w module Apps deleguje pracę nad usługą backendową do karty sesji modułu Developer. Po zatwierdzeniu zmian w gałęzi funkcyjnej rezultat trafia — zgodnie z powiązaniem skonfigurowanym w oknie konfiguracji — do Backend Workspace modułu Apps jako gotowy komponent integrowanego produktu.
 
 ---
@@ -1191,4 +1212,5 @@ Zgodnie z rozdz. 5.3 oraz oknem konfiguracji punktów izolacji Operator steruje 
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

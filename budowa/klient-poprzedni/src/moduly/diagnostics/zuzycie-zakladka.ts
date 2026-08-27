@@ -28,37 +28,7 @@ import {
   type ZrodloZuzycia,
 } from './zuzycie-zrodlo';
 
-/**
- * Usage & Cost — zużycie tokenów, żądań i kosztu wraz z raportem
- * rozliczeniowym.
- *
- * Zakładka nazywa się tak, jak nazywa ją opracowanie modułu (rozdz. 2.5,
- * „Zużycie kont, kosztów i budżetów (Usage & Cost)"), i stoi tam, gdzie
- * opracowanie ją stawia: w kontenerze Observability Tools, nie w Diagnostics
- * Center.
- *
- * Do dziś zakładka mówiła, że zużycia nie ma z czego policzyć, bo kontrakt nie
- * niesie rodziny komend rozliczenia. To zdanie przestało być prawdziwe:
- * kontrakt niesie `usage.summary.get` i `usage.report.build`, a rdzeń ma dla
- * nich uchwyty. Zdanie zostało więc zastąpione czynnością, a nie przepisane.
- *
- * Trzy rozstrzygnięcia zakładki:
- *
- *  1. Jeden wymiar naraz — tak stanowi kontrakt. Wykaz mówi, po którym wymiarze
- *     jest zebrany; tabela z dwoma wymiarami pod jednym nagłówkiem byłaby
- *     wykazem, którego rdzeń nigdy nie oddał.
- *  2. Puste zestawienie nie jest brakiem. Okres bez ani jednego wywołania jest
- *     poprawną odpowiedzią i zakładka nazywa to zdaniem, osobno od odmowy
- *     rdzenia i osobno od „jeszcze nie pytałem".
- *  3. Koszt niepełny mówi o sobie. Wywołanie kanału bez cennika nie wchodzi do
- *     kosztu i kontrakt niesie na to dwa pola (`priceCoverage`,
- *     `costWithoutPrice`). Suma podana bez tego zastrzeżenia wyglądałaby na
- *     rachunek, a jest częścią rachunku.
- *
- * Raport wytwarza plik. `usage.report.build` oddaje treść, nie zasób
- * w magazynie, więc wytworem jest plik pobrany na dysk Operatora — nazwany
- * okresem i postacią, żeby dwa raporty nie nadpisały się wzajemnie.
- */
+/** Interfejs opisuje zakładkę Usage & Cost: zużycie tokenów, żądań i kosztu w jednym wymiarze naraz wraz z raportem rozliczeniowym pobieranym na dysk. */
 export interface ZakladkaZuzycia {
   /** Kod obszaru i nazwa zakładki wraz z jej ciałem — gotowa pozycja kontenera. */
   pozycja: PozycjaZakladkiNarzedzi;
@@ -149,9 +119,7 @@ export function utworzZakladkeZuzycia(
 
     const odpowiedz = wynik.wynik;
     if (odpowiedz.aggregates.length === 0) {
-      // Pusty wykaz jest odpowiedzią, nie brakiem funkcji, i zdanie musi to
-      // rozstrzygnąć: „nie było ani jednego wywołania" znaczy co innego niż
-      // „zużycia nie ma z czego policzyć".
+      // Pusty wykaz jest odpowiedzią, nie brakiem funkcji: brak wywołań różni się od braku sposobu liczenia.
       tresc.pusto(
         `Zużycia w tym okresie nie było: rdzeń nie zapisał ani jednego wywołania kanału ` +
           `modelu po wymiarze „${nazwaWymiaru(kod)}" między ${czas(odpowiedz.fromTime)} ` +
@@ -183,9 +151,7 @@ export function utworzZakladkeZuzycia(
     }
 
     const odpowiedz = wynik.wynik;
-    // Raport pusty też jest raportem i też schodzi na dysk: plik z nagłówkiem
-    // bez wierszy jest dowodem, że w okresie nic nie było. Zdanie mówi to
-    // wprost, żeby nikt nie wziął pustego pliku za nieudane wywołanie.
+    // Raport pusty też jest raportem i schodzi na dysk: nagłówek bez wierszy dowodzi, że nic nie było.
     const nazwa = `zuzycie-raport-${odpowiedz.generatedAt}.${rozszerzenieRaportu(odpowiedz.format)}`;
     pobierzPlik(nazwa, odpowiedz.content, rodzajTresci(odpowiedz.format));
     tresc.potwierdzenie(
@@ -241,7 +207,7 @@ export function utworzZakladkeZuzycia(
   };
 }
 
-/** Nagłówek zestawienia: okres, wymiar i pokrycie cennikiem. */
+/** Funkcja składa nagłówek zestawienia: okres, wymiar zbierania i zdanie o pokryciu kosztu cennikiem kanału. */
 function naglowekZestawienia(
   od: number,
   doo: number,
@@ -250,9 +216,7 @@ function naglowekZestawienia(
 ): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
-  // Pokrycie nieoddane znaczy „rdzeń o nim nie powiedział", a nie „pełne".
-  // Dopisanie stu procent z własnej głowy byłoby zapewnieniem, którego nikt
-  // nie wydał.
+  // Pokrycie nieoddane znaczy, że rdzeń o nim nie powiedział, a nie że jest pełne.
   const zdanie =
     pokrycie === undefined
       ? 'Udziału wywołań objętych cennikiem rdzeń nie podał — o pełności kosztu ta odpowiedź nie orzeka.'
@@ -264,7 +228,7 @@ function naglowekZestawienia(
   return element;
 }
 
-/** Zdanie zestawienia łącznego dla całego zakresu. */
+/** Funkcja składa zdanie zestawienia łącznego, podsumowujące zużycie i koszt dla całego wskazanego zakresu. */
 function zdanieLaczne(laczne: UsageAggregate, waluta: string | undefined): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dn-pole-opis';
@@ -272,7 +236,7 @@ function zdanieLaczne(laczne: UsageAggregate, waluta: string | undefined): HTMLE
   return element;
 }
 
-/** Wykaz pozycji zestawienia — jedna pozycja na byt wymiaru. */
+/** Funkcja składa wykaz pozycji zestawienia: po jednej pozycji na każdy byt wymiaru zebrany przez rdzeń. */
 function wykazPozycji(
   pozycje: readonly UsageAggregate[],
   waluta: string | undefined,
@@ -285,8 +249,7 @@ function wykazPozycji(
     wpis.className = 'dg-pozycja';
     const tytul = document.createElement('strong');
     tytul.className = 'dg-pozycja__tytul';
-    // Nazwa bytu bywa nieoddana; identyfikator niesie tożsamość zawsze, więc
-    // wtedy mówi się identyfikatorem, a nie zwrotem „bez nazwy".
+    // Nazwa bytu bywa nieoddana; identyfikator niesie tożsamość zawsze, mówi się więc nim.
     tytul.textContent =
       (pozycja.dimensionLabel ?? '').trim() === ''
         ? pozycja.dimensionId
@@ -334,7 +297,7 @@ function opisPozycji(pozycja: UsageAggregate, waluta: string | undefined): strin
   );
 }
 
-/** Rodzaj treści pliku raportu — postać rozstrzyga, nie nazwa komendy. */
+/** Funkcja rozstrzyga rodzaj treści pliku raportu na podstawie wskazanej postaci, nie nazwy wywołanej komendy. */
 function rodzajTresci(postac: TelemetryFormat): string {
   return postac === TelemetryFormat.Csv ? 'text/csv' : 'application/json';
 }

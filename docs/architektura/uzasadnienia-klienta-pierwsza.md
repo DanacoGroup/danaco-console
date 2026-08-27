@@ -5356,3 +5356,11 @@ po literach pod nazwę wyszukiwania semantycznego.
 
 Porównanie idzie po zwinięciu wielkości liter właściwym dla polszczyzny,
 przez `toLocaleLowerCase('pl')`, więc „Ł” znajduje „ł”.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/zuzycie-zakladka.ts
+
+Zakładka Usage & Cost stoi w kontenerze Observability Tools, nie w Diagnostics Center. Zestawia zużycie tokenów, żądań i kosztu wraz z raportem rozliczeniowym, opierając się na komendach odczytu podsumowania zużycia i budowy raportu, dla których rdzeń ma uchwyty.
+
+Zakładka trzyma się trzech rozstrzygnięć. Pierwsze: jeden wymiar naraz, tak jak stanowi kontrakt — wykaz mówi, po którym wymiarze jest zebrany, ponieważ tabela z dwoma wymiarami pod jednym nagłówkiem byłaby wykazem, którego rdzeń nigdy nie oddał. Drugie: puste zestawienie nie jest brakiem — okres bez ani jednego wywołania jest poprawną odpowiedzią i zakładka nazywa to zdaniem, osobno od odmowy rdzenia i osobno od stanu, w którym o zestawienie jeszcze nie zapytano. Trzecie: koszt niepełny mówi o sobie — wywołanie kanału bez cennika nie wchodzi do kosztu, a kontrakt niesie na to osobne pole pokrycia cennikiem i pole kosztu poza cennikiem; suma podana bez tego zastrzeżenia wyglądałaby na pełny rachunek, będąc tylko jego częścią.
+
+Raport wytwarza plik: komenda budowy raportu oddaje treść, nie zasób w magazynie, więc wytworem jest plik pobrany na dysk Operatora, nazwany okresem i postacią, żeby dwa raporty nie nadpisały się wzajemnie.

@@ -4159,3 +4159,16 @@ makro przeżywa sesję.
 Komenda `schedule.get` stoi po stronie odczytu do pary z
 `automation.schedule.set`. Bez niej okno pokazywałoby harmonogram, który samo
 wysłało, zamiast tego, który rdzeń trzyma.
+
+## budowa/klient-poprzedni/src/mission-control/kolumna-kolejek.ts
+
+Kolumna ma jedną odpowiedzialność: pokazać kolejki znane ze zdarzeń
+`queue.changed`, każdą z własnym paskiem transportu opartym o komendę
+`queue.action`. Kontrakt nie niesie roli kolejki, liczby zadań czekających ani
+odczytu zbiorczego `queue.list`, więc wykaz kolejek buduje się wyłącznie ze
+zdarzeń, a miary bez źródła kolumna wypisuje wprost jako brak źródła.
+
+Bieg naprawczy nie ma limitu, dlatego licznik obiegów stoi przy każdej kolejce:
+przejrzystość zastępuje w tym miejscu bramę zatrzymującą bieg. Sterowanie jest
+ręczne i żaden przycisk transportu nie jest wyszarzony; stan kolejki poznaje się
+po plakietce ze słowem, a nie po dostępności przycisku.

@@ -1,10 +1,5 @@
 // Sprawdziany drugiego przebiegu i osi obrazu — tego, co da się zmierzyć bez
 // wag na dysku: układania kolejności, granic żądania i treści odmów.
-//
-// Samo liczenie ocen sprawdza się tam, gdzie stoją wagi: `internal/core`,
-// sprawdziany skutku rodziny `knowledge.*`. Tutaj mierzone jest to, co ma
-// działać na każdej maszynie — bo kolejność ułożona źle jest usterką niezależną
-// od tego, czy model odpowiedział dobrze.
 package wiedza
 
 import "testing"
@@ -91,9 +86,8 @@ func TestGranicaKandydatowTrzymaSieWidelek(t *testing.T) {
 }
 
 // TestObrazBezOcenyDodatniejNieWracaJakoTrafienie pilnuje, że plik, którego
-// pomocnik nie otworzył, nie wraca jako odpowiedź. Ocena zerowa trzyma pozycję
-// w wykazie po to, żeby wiązanie po pozycji się nie przesunęło — a nie po to,
-// żeby stanąć w wyniku.
+// pomocnik nie otworzył, nie wraca jako odpowiedź. Ocena zerowa trzyma
+// pozycję w wykazie, a nie stawia w wyniku.
 func TestObrazBezOcenyDodatniejNieWracaJakoTrafienie(t *testing.T) {
 	obrazy := []Obraz{
 		{Zrodlo: "uszkodzony.png"},

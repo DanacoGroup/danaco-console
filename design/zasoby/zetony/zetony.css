@@ -122,6 +122,11 @@
   --dn-fs-xl: 21px;        /* nagłówki okien i modali */
   --dn-fs-2xl: 24px;       /* tytuły sekcji strony głównej */
   --dn-fs-3xl: 30px;       /* tytuły kart środowisk */
+  /* Szczebel dołożony 27.08.2026: nazwa środowiska na karcie i nazwa modułu
+     w kaflu strefy 2 stoją na jednym stopniu. Ani `3xl` (30 px), ani
+     `display` (40 px) nie pasowały — pierwszy za mały wobec żądanego
+     powiększenia, drugi zrównałby tytuł karty z tytułem strony. */
+  --dn-fs-4xl: 36px;       /* nazwy środowisk i modułów na kaflach */
   --dn-fs-display: 40px;   /* największy stopień ekspozycyjny */
 
   --dn-fw-normalna: 400;
@@ -216,8 +221,18 @@
   --dn-wym-check: 16px;
   --dn-wym-kropka: 6px;            /* kropka sygnału */
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
-  --dn-wym-grot: var(--dn-od-12);  /* grot wejścia na karcie środowiska */
-  --dn-wym-grot-sm: calc(var(--dn-wym-grot) * 0.65); /* ten sam grot w kaflu modułu */
+  /* Cel kliknięcia grotu wejścia. Znak w środku jest niższy (--dn-wym-grot-znak):
+     przycisk ma być duży pod palcem, znak marki — spokojny. */
+  --dn-wym-grot: 72px;             /* cel przycisku grotu na karcie środowiska */
+  --dn-wym-grot-znak: 36px;        /* wysokość podwójnego szewronu w przycisku */
+  /* Grot kafla modułu stoi na wartości niezależnej, nie na udziale celu: inaczej
+     powiększenie przycisku na karcie środowiska pociągałoby za sobą kafle. */
+  --dn-wym-grot-sm: 31px;          /* pojedynczy grot w kaflu modułu */
+  /* Emblemat środowiska i znak modułu mają jeden wymiar — rozstrzygnięcie
+     Właściciela z 27.08.2026: kafel strefy 2 czyta się na równi z kartą
+     strefy 1, więc znak nie może być od niej mniejszy. */
+  --dn-wym-godlo-karty: 54px;      /* emblemat karty środowiska i znak kafla modułu */
+  --dn-wym-kafel-modulu: 122px;    /* najmniejsza wysokość kafla modułu */
   --dn-wym-spinner: 14px;
   --dn-wym-fokus: 2px;             /* pierścień fokusu */
   --dn-wym-fokus-odsuniecie: 2px;

@@ -1452,3 +1452,16 @@ przechwycić kombinację przed stroną — wtedy pozostaje wyzwalacz w pasku.
 
 Licznik pozycji rozszerzenia jest polem pominiętym, gdy rozszerzenie niczego nie zlicza.
 Wartość zero jest nieodróżnialna od braku licznika, więc pominięcie niesie własne znaczenie.
+
+## budowa/klient-poprzedni/src/aplikacja/godlo-aplikacji.ts
+
+Znak marki ma barwy własne, więc nie dziedziczy barwy tekstu i nie zmienia się
+wraz z motywem; odmianę znaku dobiera podłoże, a pasek aplikacji jest atramentowy
+w obu motywach, stąd podłoże ciemne. Droga przez `elementGodla` niesie ponadto
+próg odmiany uproszczonej: przy rozmiarze szesnastu pikseli i mniejszym znak
+przechodzi na jeden grot.
+
+Nazwa produktu jest stała, a nazwa projektu przychodzi z opisu okna, czyli
+z konfiguracji budowania utrwalonej w `okno-komunikacji/opis-okna.ts`. Blok
+godła nie jest kontrolką i nią nie udaje: nie prowadzi nigdzie i nie zmienia
+kursora na wskazujący.

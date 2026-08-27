@@ -2328,3 +2328,39 @@ Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy części drugi
 Uzasadnienia i zastrzeżenia projektowe przeniesione z komentarzy dobudowy obszaru Research po stronie danych.
 
 **Plik** — Ustalenia i ich otoczenie leżą w `badania_dobudowa_ustalenia.go`, odkrywanie i przestrzeń w `badania_dobudowa_odkrycia.go`, raport i eksport w `badania_dobudowa_raport.go`. Wszystkie cztery pliki niosą metody tego samego `*repozytoriumBadan`, tak jak trzy pliki zastane. Kontrakt dobudowy jest jednym interfejsem wpiętym do `RepozytoriumBadan` przez osadzenie: jedna deklaracja, jedno miejsce do przeczytania, a plik `badania.go` nie rośnie o siedemdziesiąt sygnatur, których nie implementuje.
+
+## budowa/server/internal/dane/urzadzenia_powiadomien.go
+
+Rozbicie tabel `urzadzenie_powiadomien`, `powiadomienie` i `powiadomienie_dostarczenie`
+na trzy repozytoria zmusiłoby silnik do składania transakcji z kawałków trzech
+właścicieli, a najważniejsza droga tego pliku (Takt) jest transakcją obejmującą
+wszystkie trzy tabele naraz.
+
+Konstruktor `NowePowiadomienia` jest eksportowany i bierze uchwyt puli, żeby
+pakiet silnika powiadomień mógł złożyć repozytorium z uchwytu, który już dostał
+w kompozycji, bez dodawania pola w `dane/zestaw.go`. Pula połączeń jest jedna na
+proces; to repozytorium jej nie otwiera i nie zamyka.
+
+`KluczKanalu` w `RejestracjaPowiadomien` dla kanału `polaczenie` niesie ten sam
+napis, który transport przekazuje jako `Tozsamosc.IdKlienta` — adres gniazda,
+nie odrębną tożsamość urządzenia.
+
+`Wyslij` w `PlanTaktu` jest domknięciem, a nie zwracaną wartością, żeby sprawdzenie
+stanu wiersza i sama wysyłka zmieściły się w jednej transakcji zapisu: sprawdzenie
+przy pobraniu należnych nie wystarcza, bo między pobraniem a wysłaniem decyzja
+może zapaść i urządzenie dostałoby powiadomienie po fakcie. Pusta lista przyjętych
+odbiorców znaczy „nie było komu" i jest powodem ponowienia, nie błędem.
+
+Kolejność kroków w `Takt` nie może zostać przestawiona: `zajmijPowiadomienie`
+bierze zamek zapisu i w tym samym poleceniu sprawdza, że wiersz nadal jest
+`oczekuje` — zero zmienionych wierszy znaczy, że decyzja już zapadła, termin minął
+albo doręczenie już było. Dopiero pod tym zamkiem czytany jest wiersz i sprawdzany
+termin ważności. Wysyłka idzie wewnątrz transakcji, więc koperta wychodzi przy
+trzymanym zamku zapisu — cena możliwa do przyjęcia, bo doręczenie kanałem
+`polaczenie` jest zapisem do gniazda w pamięci procesu. Odwrotna kolejność —
+zwolnić zamek, potem wysłać — przywraca szczelinę, w której powiadomienie
+o zapadłej już decyzji zdąży wyjść. Wołający, który nie odda `Wyslij` albo
+`NastepnaProba`, dostaje błąd zamiast cichego pominięcia.
+
+Zapytanie `Nalezne` porządkuje wynik tak, że bez tego kolejka pilna stałaby za
+zwykłą, która akurat weszła pierwsza, i priorytet nie znaczyłby nic.

@@ -6421,3 +6421,20 @@ i widzi ją odczyt konfiguracji tak samo jak każdą inną.
 I nie jest to bramka: odczyt niczego nie odmawia i nikogo nie zatrzymuje. Powitanie oddaje wynik
 w polu wymogu logowania, żeby klient wiedział, czy pokazać okno logowania, zamiast wyprowadzać to
 z odmowy.
+
+## budowa/server/internal/core/nastawy_nadajnika.go
+Do tej pory konto nadawcze wchodziło wyłącznie przy starcie rdzenia. Skutek: pomyłka w adresie
+serwera poczty zamykała rejestrację, a naprawa wymagała zatrzymania rdzenia i wiedzy spoza
+produktu. Nastawy z katalogu dają drogę wewnątrz okna Konfiguracji i nie odbierają tamtej: start
+nadal zasila wartości, a zapis w tabeli ustawień je przesłania.
+
+Nastawa pusta niczego nie kasuje — pusta znaczy „nie wskazałem", więc zostaje wartość ze startu.
+Inaczej pierwsze wejście do okna Konfiguracji kasowałoby konto nadawcze podane środowiskiem samym
+faktem, że pola stoją puste. Wyjątkiem jest szyfrowanie: tam nastawa ma trzy stany tak samo jak
+wymóg logowania — brak wskazania oddaje głos startowi, a wskazanie wygrywa w obie strony, bo
+zejście do rozmowy otwartym tekstem ma być zapisem jawnym.
+
+Drugiego mechanizmu nastaw tu nie ma: jedno wywołanie tego samego rozstrzygacza, którym idzie
+każde inne ustawienie platformy, po klucze z tego samego rejestru definicji. Bez pamięci
+podręcznej: list idzie rzadko, a nastawa poprawiona po nieudanej próbie ma obowiązywać przy próbie
+następnej, nie po restarcie.

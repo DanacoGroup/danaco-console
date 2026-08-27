@@ -1259,3 +1259,33 @@ gdzie akurat stoi rdzeń, a nie w miejscu wskazanym ustawieniem.
 Wykaz tekstów pusty znaczy pytanie, czy koder stoi, a nie polecenie
 przesiania niczego: rdzeń pyta o to, zanim przeczyta wskaźnik, żeby odmówić
 wcześnie i nazwać brak. Ta sama umowa obowiązuje w pomocniku osadzeń.
+
+## budowa/server/internal/store/migracja_207_rozszerzenia_cykl_zycia.sql
+
+Migracja 070 dała katalogowi jeden wiersz na pozycję i nic poza nim. Wszystko,
+co rodzina `extension.*` robi z pozycją w czasie — kolekcjonuje ją, odnotowuje
+zmiany, przypina wersję, cofa do wcześniejszej, przyjmuje przesłaną paczkę —
+nie miało dotąd gdzie usiąść. Cztery tabele tej migracji są tymi miejscami.
+
+Kolekcja jest nazwanym zestawem, nie etykietą pozycji. `extension.collection.save`
+nadsyła `extensionIds` w komplecie przy każdym zapisie, a
+`extension.collection.apply` włącza albo wyłącza cały zestaw jednym wywołaniem
+— więc związek ma tabelę złącznikową wymienianą „usuń, wstaw od nowa", a nie
+kolumnę listy w wierszu kolekcji.
+
+Dziennik cyklu życia jest dziennikiem, nie stanem. `ExtensionHistoryEntry`
+niesie czynność, wersję przed i po oraz czas — wiersz na zdarzenie, nigdy
+nadpisywany. Wartości kolumny `czynnosc` są wartościami kontraktu
+(ExtensionLifecycleAction).
+
+Wersja pozycji ma wiersz, bo inaczej cofnięcie nie ma dokąd wrócić.
+`extension.version.rollback` przyjmuje `targetVersion` i ma przywrócić stan
+tamtej wersji; pozycja z jedną kolumną `wersja` pamięta wyłącznie tę bieżącą.
+
+Przypięcie jest kolumną pozycji, nie wierszem wersji. `extension.version.pin`
+przypina jedną wersję pozycji, a wersja przypięta w dwóch wierszach naraz
+byłaby sprzecznością, której nikt by nie wykrył.
+
+Paczka przesłana leży na dysku. `extension.package.upload` przyjmuje bajty
+i oddaje `uploadRef`, którym woła się potem instalację; wiersz bez pliku byłby
+meldunkiem o przesyłce, której nie ma.

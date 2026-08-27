@@ -6,6 +6,135 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### komentarz-studio-design
+
+Przepisanie komentarzy do standardu zawodowego wraz z domknieciem granicy
+z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
+
+| | |
+|---|---|
+| **Galaz** | `teren/komentarz-studio-design` z `main` |
+| **Wykaz plikow** | `internal/core/adapter_modul_studio_*.go` oraz `adapter_modul_design_*.go` |
+| **Skala** | 92 plikow, 641 tys. znakow komentarza |
+| **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-moduly`, `komentarz-rdzen`, `komentarz-pakiety` |
+
+**Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
+zwraca sie do czytelnika, nie prowadzi wykladu i nie relacjonuje przebiegu prac.
+Uzasadnienie dluzsze niz zdanie idzie do `docs/`, a plik niesie zdanie i odsylacz.
+Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakresie.
+
+**Kryteria odbioru.**
+
+1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
+   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
+   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
+   pomiarem calego zakresu, z podaniem liczby plikow przed i po.
+3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
+   kodu odsyla do niego. Tresc, ktora byla narracja albo powtorzeniem
+   oczywistosci, znika i **mowisz o tym wprost** w raporcie.
+4. `gofmt -l` na zakresie zwraca pusto; `go vet` czysto.
+5. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
+   — zero niepowodzen wobec stanu zastanego.
+6. Kontrakt nietkniety — wykazane suma kontrolna.
+
+### komentarz-moduly
+
+Przepisanie komentarzy do standardu zawodowego wraz z domknieciem granicy
+z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
+
+| | |
+|---|---|
+| **Galaz** | `teren/komentarz-moduly` z `main` |
+| **Wykaz plikow** | `internal/core/adapter_modul_*.go` **poza** `studio` i `design` |
+| **Skala** | 260 plikow, 990 tys. znakow komentarza |
+| **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-rdzen`, `komentarz-pakiety` |
+
+**Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
+zwraca sie do czytelnika, nie prowadzi wykladu i nie relacjonuje przebiegu prac.
+Uzasadnienie dluzsze niz zdanie idzie do `docs/`, a plik niesie zdanie i odsylacz.
+Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakresie.
+
+**Kryteria odbioru.**
+
+1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
+   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
+   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
+   pomiarem calego zakresu, z podaniem liczby plikow przed i po.
+3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
+   kodu odsyla do niego. Tresc, ktora byla narracja albo powtorzeniem
+   oczywistosci, znika i **mowisz o tym wprost** w raporcie.
+4. `gofmt -l` na zakresie zwraca pusto; `go vet` czysto.
+5. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
+   — zero niepowodzen wobec stanu zastanego.
+6. Kontrakt nietkniety — wykazane suma kontrolna.
+
+### komentarz-rdzen
+
+Przepisanie komentarzy do standardu zawodowego wraz z domknieciem granicy
+z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
+
+| | |
+|---|---|
+| **Galaz** | `teren/komentarz-rdzen` z `main` |
+| **Wykaz plikow** | `internal/core/*.go` **niezaczynajace sie** od `adapter_modul_` |
+| **Skala** | 364 plikow, 1160 tys. znakow komentarza |
+| **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-pakiety` |
+
+**Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
+zwraca sie do czytelnika, nie prowadzi wykladu i nie relacjonuje przebiegu prac.
+Uzasadnienie dluzsze niz zdanie idzie do `docs/`, a plik niesie zdanie i odsylacz.
+Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakresie.
+
+**Kryteria odbioru.**
+
+1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
+   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
+   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
+   pomiarem calego zakresu, z podaniem liczby plikow przed i po.
+3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
+   kodu odsyla do niego. Tresc, ktora byla narracja albo powtorzeniem
+   oczywistosci, znika i **mowisz o tym wprost** w raporcie.
+4. `gofmt -l` na zakresie zwraca pusto; `go vet` czysto.
+5. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
+   — zero niepowodzen wobec stanu zastanego.
+6. Kontrakt nietkniety — wykazane suma kontrolna.
+
+### komentarz-pakiety
+
+Przepisanie komentarzy do standardu zawodowego wraz z domknieciem granicy
+z pozycji 18 rejestru decyzji. **Kodu nie zmieniamy.**
+
+| | |
+|---|---|
+| **Galaz** | `teren/komentarz-pakiety` z `main` |
+| **Wykaz plikow** | `budowa/server/internal/` **poza** pakietem `core` |
+| **Skala** | 457 plikow, 1114 tys. znakow komentarza |
+| **Poza terenem** | wszystko inne, w tym `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` oraz pliki terenow `komentarz-studio-design`, `komentarz-moduly`, `komentarz-rdzen` |
+
+**Przedmiot.** Komentarz stwierdza regule obowiazujaca — nie waży wariantow, nie
+zwraca sie do czytelnika, nie prowadzi wykladu i nie relacjonuje przebiegu prac.
+Uzasadnienie dluzsze niz zdanie idzie do `docs/`, a plik niesie zdanie i odsylacz.
+Jezyk, terminologia i forma wedle standardu zawodowego, jednolite w calym zakresie.
+
+**Kryteria odbioru.**
+
+1. **Binarium bajtowo identyczne** przed i po — `go build -trimpath -o … ./cmd/danaco-console`,
+   suma sha256 przytoczona z obu przebiegow. To jest dowod, ze **kod nie zostal
+   tkniety**; sprawdzone: binarium tego rdzenia jest powtarzalne.
+2. **Kazdy plik zakresu w granicy 250 znakow na 1000 wierszy** — wykazane
+   pomiarem calego zakresu, z podaniem liczby plikow przed i po.
+3. **Uzasadnienie niosace tresc nie zniklo** — przeniesione do `docs/`, a plik
+   kodu odsyla do niego. Tresc, ktora byla narracja albo powtorzeniem
+   oczywistosci, znika i **mowisz o tym wprost** w raporcie.
+4. `gofmt -l` na zakresie zwraca pusto; `go vet` czysto.
+5. `DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...`
+   — zero niepowodzen wobec stanu zastanego.
+6. Kontrakt nietkniety — wykazane suma kontrolna.
+
+
 ### uprzaz-komend-neuronowych
 
 Generyczna uprzaz sprawdzianow urywa kazda komende liczaca modelem, wiec zadnej

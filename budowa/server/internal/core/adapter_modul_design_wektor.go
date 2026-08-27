@@ -1,34 +1,6 @@
-// Odpowiedzialność pliku: dziesięć czynności warsztatu wektorowego modułu
-// Design — `design.vector.*`. Metody stoją na `*adapterDesignu`
-// (`adapter_modul_design.go`); rachunek na ścieżkach leży
-// w `adapter_modul_design_wektor_sciezki.go`, katalog krojów
-// w `adapter_modul_design_kroje.go`, wpięcie w `adapter_modul_design_uchwyty.go`.
-//
-// ── Kształt powstaje OD RAZU jako węzły ścieżki ─────────────────────────────
-// `design.vector.shape.add` nie zakłada „prostokąta" jako osobnego bytu do
-// późniejszej zamiany w ścieżkę. Prostokąt, elipsa, wielokąt i gwiazda wchodzą
-// do bazy jako komplet węzłów z uchwytami, więc Operator ciągnie je piórem od
-// pierwszej chwili. Byt pośredni wymagałby komendy „zamień w ścieżkę", której
-// kontrakt nie ma, i dawał na planszy dwa rodzaje kształtu różniące się tym,
-// czego z nimi wolno zrobić.
-//
-// ── Zamiana tekstu w kontury jest nieodwracalna dla WYNIKU ──────────────────
-// Kontury nie wiedzą, że były literami: po zamianie nie da się poprawić
-// literówki. Dlatego tekst źródłowy ZOSTAJE — w nazwie ścieżki
-// (`sciezka_wektorowa_design.nazwa`), skąd okno go odczytuje i pokazuje obok
-// konturów. Odpowiedź mówi wprost polem `outlined`, co Operator dostał.
-//
-// ── Operacja logiczna oddaje węzły, nie obrazek ─────────────────────────────
-// Suma, różnica, część wspólna i wykluczenie idą przez `tdewolff/canvas`, a
-// wynik wraca do bazy znowu jako WĘZŁY — nie jako gotowy napis SVG. Ścieżka po
-// operacji ma dać się ciągnąć piórem dalej, inaczej pierwsza suma dwóch kół
-// kończyłaby edycję kształtu.
-//
-// ── Ścieżki źródłowe usunięte wracają w bilansie ────────────────────────────
-// `keepSources` bez wskazania znaczy „usuń źródła" — tak działa operacja
-// logiczna w każdym programie wektorowym. Usunięte wracają w `removedPathIds`:
-// pole puste tam, gdzie ścieżki zniknęły, byłoby ciszą, a okno pokazywałoby
-// kształty, których w bazie już nie ma.
+// Plik obsługuje dziesięć czynności warsztatu wektorowego modułu design
+// (`design.vector.*`): ścieżki, kształty, operacje logiczne, tekst na ścieżce,
+// symbole i wydanie. Metody stoją na `*adapterDesignu` z `adapter_modul_design.go`.
 package core
 
 import (
@@ -58,7 +30,8 @@ const (
 	najmniejWezlowSciezkiDesignu = 2
 )
 
-// UstawSciezke zakłada ścieżkę albo nadpisuje zastaną — obsługuje
+// UstawSciezke zakłada nową ścieżkę wektorową na wskazanej kompozycji albo
+// nadpisuje zastaną pod tym samym identyfikatorem — obsługuje komendę
 // `design.vector.path.set`.
 func (a *adapterDesignu) UstawSciezke(ctx context.Context,
 	z shared.DesignVectorPathSetRequest) (shared.DesignVectorPathSetResponse, error) {
@@ -80,9 +53,7 @@ func (a *adapterDesignu) UstawSciezke(ctx context.Context,
 	kolejnosc := 0
 	if z.PathId != nil && strings.TrimSpace(*z.PathId) != "" {
 		kod = strings.TrimSpace(*z.PathId)
-		// Ścieżka wskazana a nieznana jest ODMOWĄ, nie cichym założeniem nowej:
-		// Operator poprawiający kształt oczekuje, że poprawił ten jeden, a nie
-		// że dostał drugi obok.
+		// Ścieżka wskazana a nieznana jest odmową, nie cichym założeniem nowej ścieżki.
 		zastana, err := a.repozytorium.SciezkaWektorowaDesignuPoKodzie(ctx, kod)
 		if err != nil {
 			return shared.DesignVectorPathSetResponse{}, bladNieznanejSciezkiDesignu(kod, err)
@@ -143,8 +114,8 @@ func (a *adapterDesignu) zapiszSciezkeDesignu(ctx context.Context, kompozycjaID 
 	return wiersz, nil
 }
 
-// SciezkiWektorowe zwraca ścieżki kompozycji — obsługuje
-// `design.vector.path.list`.
+// SciezkiWektorowe zwraca wykaz ścieżek wektorowych wskazanej kompozycji,
+// opcjonalnie zawężony do jednej warstwy — obsługuje `design.vector.path.list`.
 func (a *adapterDesignu) SciezkiWektorowe(ctx context.Context,
 	z shared.DesignVectorPathListRequest) (shared.DesignVectorPathListResponse, error) {
 
@@ -172,11 +143,9 @@ func (a *adapterDesignu) SciezkiWektorowe(ctx context.Context,
 	return shared.DesignVectorPathListResponse{Paths: sciezki, Total: len(sciezki)}, nil
 }
 
-// UsunSciezke usuwa ścieżkę — obsługuje `design.vector.path.remove`.
-//
-// Ścieżki, której nie ma, nie odmawiamy: kontrakt pyta polem `removed`, czy
-// wiersz istniał, a nie czy polecenie SQL się udało — usunięcie czegoś, czego
-// nie było, jest odpowiedzią, nie usterką.
+// UsunSciezke usuwa ścieżkę — obsługuje `design.vector.path.remove`. Ścieżki,
+// której nie ma, nie odmawiamy: kontrakt pyta polem `removed`, czy wiersz
+// istniał — usunięcie czegoś, czego nie było, jest odpowiedzią, nie usterką.
 func (a *adapterDesignu) UsunSciezke(ctx context.Context,
 	z shared.DesignVectorPathRemoveRequest) (shared.DesignVectorPathRemoveResponse, error) {
 
@@ -204,9 +173,7 @@ func (a *adapterDesignu) DolozKsztalt(ctx context.Context,
 		shared.WartosciDesignShapeKind()); err != nil {
 		return shared.DesignVectorShapeAddResponse{}, err
 	}
-	// Odcinek jest jedynym kształtem, którego bok wolno mieć zerowy: linia
-	// pionowa ma zerową szerokość i nadal jest linią. Pozostałe kształty o boku
-	// niedodatnim nie istnieją.
+	// Odcinek jest jedynym kształtem, którego bok wolno mieć zerowy — linia pionowa ma szerokość zero.
 	if z.Kind == shared.DesignShapeKindLine {
 		if z.Width == 0 && z.Height == 0 {
 			return shared.DesignVectorShapeAddResponse{}, bladWskazaniaDesignu(
@@ -243,8 +210,8 @@ func (a *adapterDesignu) DolozKsztalt(ctx context.Context,
 	return shared.DesignVectorShapeAddResponse{Path: sciezka}, nil
 }
 
-// ZlozSciezkiLogicznie liczy operację logiczną na ścieżkach — obsługuje
-// `design.vector.boolean`.
+// ZlozSciezkiLogicznie liczy operację logiczną sumy, różnicy, części wspólnej
+// albo wykluczenia na wskazanych ścieżkach — obsługuje `design.vector.boolean`.
 func (a *adapterDesignu) ZlozSciezkiLogicznie(ctx context.Context,
 	z shared.DesignVectorBooleanRequest) (shared.DesignVectorBooleanResponse, error) {
 
@@ -294,17 +261,13 @@ func (a *adapterDesignu) ZlozSciezkiLogicznie(ctx context.Context,
 	}
 	wezlyWyniku, zamknieta := wezlyZeSciezkiBibliotekiDesignu(wynik)
 	if len(wezlyWyniku) < najmniejWezlowSciezkiDesignu {
-		// Wynik pusty jest PRAWDĄ o kształtach, nie usterką rachunku: część
-		// wspólna dwóch rozłącznych kół jest pusta. Odmowa nazywa to wprost,
-		// zamiast zakładać ścieżkę bez węzłów, której nic nie pokaże.
+		// Wynik pusty jest prawdą o kształtach, nie usterką: część wspólna rozłącznych kół jest pusta.
 		return shared.DesignVectorBooleanResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"operacja %s na wskazanych ścieżkach dała kształt pusty — rdzeń nie zakłada ścieżki "+
 				"bez węzłów; sprawdź, czy kształty się w ogóle nakładają", string(z.Operation)))
 	}
 
-	// Wynik dziedziczy wypełnienie i obrys pierwszej ścieżki: to ona jest
-	// kształtem wiodącym (kolejność rozstrzyga przy różnicy), więc jej wygląd
-	// jest tym, którego Operator się spodziewa.
+	// Wynik dziedziczy wypełnienie i obrys pierwszej ścieżki — kształtu wiodącego operacji.
 	nazwa := string(z.Operation)
 	nowa, err := a.zapiszSciezkeDesignu(ctx, wiersze[0].KompozycjaID,
 		nowyIdentyfikator(przedrostekSciezkiDesign), 0, wiersze[0].WarstwaKod, &nazwa,
@@ -343,11 +306,8 @@ func (a *adapterDesignu) ZlozSciezkiLogicznie(ctx context.Context,
 }
 
 // TekstNaSciezce układa tekst wzdłuż ścieżki albo zamienia go w kontury —
-// obsługuje `design.vector.text.path`.
-//
-// Tekst źródłowy zostaje w nazwie ścieżki także po zamianie w kontury (nagłówek
-// pliku): kontury nie wiedzą, że były literami, a Operator ma po czym poznać, co
-// tam napisał.
+// obsługuje `design.vector.text.path`. Tekst źródłowy zostaje w nazwie ścieżki
+// nawet po zamianie w kontury, żeby dało się poznać, co tam napisano.
 func (a *adapterDesignu) TekstNaSciezce(ctx context.Context,
 	z shared.DesignVectorTextPathRequest) (shared.DesignVectorTextPathResponse, error) {
 
@@ -376,7 +336,6 @@ func (a *adapterDesignu) TekstNaSciezce(ctx context.Context,
 	}
 
 	// Ścieżka nośna: wskazana przez Operatora albo linia pisma od punktu (x, y).
-	// Wskazana ścieżka rozstrzyga też o początku tekstu — pierwszy jej węzeł.
 	poczatekX, poczatekY := 0.0, z.FontSize
 	if z.X != nil {
 		poczatekX = *z.X
@@ -411,11 +370,7 @@ func (a *adapterDesignu) TekstNaSciezce(ctx context.Context,
 	nazwa := strings.TrimSpace(z.Text)
 
 	if !konturowac {
-		// Bez konturowania ścieżka niesie LINIĘ PISMA: albo wskazaną ścieżkę
-		// nośną (wtedy zapisujemy nową ścieżkę o tych samych węzłach, żeby tekst
-		// dostał własny byt i nie nadpisał kształtu nośnego), albo odcinek
-		// o zmierzonej długości tekstu. Odpowiedź mówi `outlined: false` — tekst
-		// nadal jest tekstem i literówkę da się poprawić.
+		// Bez konturowania ścieżka niesie linię pisma: ścieżkę nośną albo odcinek zmierzonej długości.
 		wezly := []shared.DesignVectorNode{}
 		zamknieta := false
 		if maNosna {
@@ -472,12 +427,9 @@ func (a *adapterDesignu) TekstNaSciezce(ctx context.Context,
 	return shared.DesignVectorTextPathResponse{Path: sciezka, Outlined: true}, nil
 }
 
-// OczyscSciezki skraca zapis współrzędnych i oddaje ZMIERZONY ubytek bajtów —
-// obsługuje `design.vector.optimize`.
-//
-// Ubytek jest pomiarem, nie oszacowaniem: rdzeń mierzy długość zapisu przed
-// i po, więc `savedBytes` ujemne (zapis dłuższy, bo precyzja wyższa niż zastana)
-// jest tu prawdą, a nie usterką rachunku. Kontrakt pole opisuje właśnie tak.
+// OczyscSciezki skraca zapis współrzędnych ścieżek i oddaje zmierzony ubytek
+// bajtów — obsługuje komendę `design.vector.optimize`. Wartość `savedBytes`
+// może wyjść ujemna, gdy zapis po oczyszczeniu jest dłuższy niż zastany.
 func (a *adapterDesignu) OczyscSciezki(ctx context.Context,
 	z shared.DesignVectorOptimizeRequest) (shared.DesignVectorOptimizeResponse, error) {
 
@@ -592,8 +544,7 @@ func (a *adapterDesignu) UstawSymbol(ctx context.Context,
 		}
 	}
 
-	// Ścieżki wchodzące w skład symbolu sprawdzamy PRZED zapisem: symbol
-	// wskazujący ścieżkę, której nie ma, byłby definicją bez kształtu.
+	// Ścieżki wchodzące w skład symbolu sprawdzamy przed zapisem symbolu.
 	czlonkowie := make([]dane.CzlonekSymbolyDesignu, 0, len(z.PathIds)+len(z.LayerIds))
 	for numer, kodSciezki := range z.PathIds {
 		wiersz, err := a.repozytorium.SciezkaWektorowaDesignuPoKodzie(ctx, strings.TrimSpace(kodSciezki))
@@ -629,7 +580,8 @@ func (a *adapterDesignu) UstawSymbol(ctx context.Context,
 	return shared.DesignVectorSymbolSetResponse{Symbol: symbol, PropagatedTo: zapisany.Liczba}, nil
 }
 
-// Symbole zwraca symbole kompozycji — obsługuje `design.vector.symbol.list`.
+// Symbole zwraca wykaz symboli zdefiniowanych na wskazanej kompozycji —
+// obsługuje komendę `design.vector.symbol.list`.
 func (a *adapterDesignu) Symbole(ctx context.Context,
 	z shared.DesignVectorSymbolListRequest) (shared.DesignVectorSymbolListResponse, error) {
 
@@ -680,13 +632,9 @@ func (a *adapterDesignu) zlozSymbolDesignu(ctx context.Context, kompozycja strin
 	return wynik, nil
 }
 
-// WydajWektor wydaje ścieżki kompozycji jako SVG, PDF albo EPS — obsługuje
-// `design.vector.export`.
-//
-// Wydanie wektorowe zostaje wektorem: rasteryzacja odebrałaby mu jedyną
-// własność, dla której jest wektorem. PDF i EPS składa `tdewolff/canvas`
-// wkompilowany w binarium, SVG — sklejenie dokumentu tutaj, tą samą drogą, co
-// wyrys kompozycji (`adapter_modul_design_wyrys.go`).
+// WydajWektor wydaje ścieżki wskazanej kompozycji jako dokument SVG, PDF albo
+// EPS — obsługuje komendę `design.vector.export`. Wydanie SVG składa dokument
+// w tym pliku, PDF i EPS przez bibliotekę `tdewolff/canvas`.
 func (a *adapterDesignu) WydajWektor(ctx context.Context,
 	z shared.DesignVectorExportRequest) (shared.DesignVectorExportResponse, error) {
 
@@ -713,8 +661,7 @@ func (a *adapterDesignu) WydajWektor(ctx context.Context,
 				"pusty dokument, bo plik pusty wygląda tak samo jak plik uszkodzony", kompozycja.Kod))
 	}
 
-	// Ramka zawężająca wydanie: jej prostokąt jest kadrem. Brak ramki bierze
-	// prostokąt obejmujący wszystkie ścieżki.
+	// Ramka zawężająca wydanie daje kadr; bez ramki kadr obejmuje wszystkie ścieżki.
 	kadr, err := a.kadrWydaniaWektoraDesignu(ctx, kompozycja.ID, z.FrameId, wiersze)
 	if err != nil {
 		return shared.DesignVectorExportResponse{}, err
@@ -761,7 +708,8 @@ func (a *adapterDesignu) sciezkiDoWydaniaDesignu(ctx context.Context, kompozycja
 	return wiersze, nil
 }
 
-// kadrWydaniaWektoraDesignu rozstrzyga prostokąt wydania.
+// kadrWydaniaWektoraDesignu rozstrzyga prostokąt wydania: bierze ramkę wskazaną
+// przez Operatora, a bez wskazania — prostokąt obejmujący wszystkie ścieżki.
 func (a *adapterDesignu) kadrWydaniaWektoraDesignu(ctx context.Context, kompozycjaID int64,
 	ramka *string, wiersze []dane.SciezkaWektorowaDesignu) (shared.DesignBoardRegion, error) {
 
@@ -815,7 +763,8 @@ func (a *adapterDesignu) kadrWydaniaWektoraDesignu(ctx context.Context, kompozyc
 	return shared.DesignBoardRegion{X: lewa, Y: gora, Width: szerokosc, Height: wysokosc}, nil
 }
 
-// zlozWydanieWektoraDesignu składa bajty wydania w żądanej postaci.
+// zlozWydanieWektoraDesignu składa bajty wydania wektorowego w żądanej postaci:
+// SVG dokumentem tekstowym, PDF i EPS przez bibliotekę `tdewolff/canvas`.
 func zlozWydanieWektoraDesignu(postac shared.DesignVectorExportTarget,
 	wiersze []dane.SciezkaWektorowaDesignu,
 	kadr shared.DesignBoardRegion) ([]byte, string, error) {
@@ -828,10 +777,7 @@ func zlozWydanieWektoraDesignu(postac shared.DesignVectorExportTarget,
 		return []byte(tresc), typTresciWydaniaDesignu("svg"), nil
 	}
 
-	// PDF i EPS mierzą stronę w punktach typograficznych i liczą oś Y od dołu.
-	// Kompozycja liczy Y od góry, więc kształty jadą przez odbicie względem
-	// wysokości kadru — bez tego wydanie byłoby lustrzanym odbiciem tego, co
-	// Operator widzi na ekranie.
+	// PDF i EPS liczą oś Y od dołu strony, kompozycja od góry — kształty jadą przez odbicie.
 	plotno := canvas.New(kadr.Width, kadr.Height)
 	kontekst := canvas.NewContext(plotno)
 	odbicie := canvas.Identity.Translate(-kadr.X, kadr.Height+kadr.Y).Scale(1, -1)
@@ -865,11 +811,8 @@ func zlozWydanieWektoraDesignu(postac shared.DesignVectorExportTarget,
 }
 
 // stylWydaniaWektoraDesignu przekłada wypełnienie i obrys kontraktu na styl
-// biblioteki.
-//
-// Ścieżka bez wypełnienia i bez obrysu dostaje obrys włoskowy: kształt bez
-// żadnego z dwóch byłby w wydaniu niewidoczny, a plik, w którym nie widać
-// niczego, wygląda identycznie jak plik uszkodzony.
+// biblioteki `tdewolff/canvas`. Ścieżka bez wypełnienia i bez obrysu dostaje
+// obrys włoskowy, żeby nie zniknąć z wydania.
 func stylWydaniaWektoraDesignu(wypelnienie *shared.DesignFill,
 	obrys *shared.DesignStroke) canvas.Style {
 
@@ -926,7 +869,8 @@ func zlozDokumentSvgWektoraDesignu(wiersze []dane.SciezkaWektorowaDesignu,
 	return dokument.String(), nil
 }
 
-// atrybutyWygladuSvgDesignu składa atrybuty wypełnienia i obrysu elementu SVG.
+// atrybutyWygladuSvgDesignu składa atrybuty wypełnienia i obrysu elementu SVG
+// z wypełnienia i obrysu kontraktu, z wartością zastępczą dla ścieżki bez obu.
 func atrybutyWygladuSvgDesignu(wypelnienie *shared.DesignFill, obrys *shared.DesignStroke) string {
 	czesci := []string{}
 	if wypelnienie != nil && wypelnienie.Color != nil {
@@ -961,7 +905,8 @@ func atrybutyWygladuSvgDesignu(wypelnienie *shared.DesignFill, obrys *shared.Des
 	return strings.Join(czesci, " ")
 }
 
-// sciezkaKontraktuDesignu składa `DesignVectorPath` kontraktu z wiersza.
+// sciezkaKontraktuDesignu składa `DesignVectorPath` kontraktu z wiersza bazy
+// danych, przekładając zapis węzłów, wypełnienia i obrysu na postać żądania.
 func sciezkaKontraktuDesignu(kompozycja string,
 	wiersz dane.SciezkaWektorowaDesignu) (shared.DesignVectorPath, error) {
 
@@ -1019,10 +964,9 @@ func nazwaKompozycjiDoPlikuDesignu(kompozycja dane.KompozycjaDesignu) string {
 	return kompozycja.Kod
 }
 
-// uporzadkujBilansDesignu porządkuje wykaz bilansu i oddaje nil dla pustego —
-// pole niewymagane kontraktu ma wtedy nie wejść do odpowiedzi wcale, a wykaz
-// niepusty ma stałą kolejność, żeby dwa wywołania tej samej komendy nie
-// różniły się porządkiem zastrzeżeń.
+// uporzadkujBilansDesignu porządkuje wykaz bilansu i oddaje nil dla pustego,
+// żeby pole niewymagane kontraktu nie weszło do odpowiedzi — wykaz niepusty
+// dostaje stałą kolejność.
 func uporzadkujBilansDesignu(wykaz []string) []string {
 	if len(wykaz) == 0 {
 		return nil

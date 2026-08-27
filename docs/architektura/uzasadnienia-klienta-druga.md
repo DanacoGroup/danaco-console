@@ -3148,3 +3148,6 @@ Każdy z dwóch wykazów rdzenia idzie osobnym zdaniem, bo sesja bez odpowiednik
 sesja skasowana. Odpowiedź udana z pustym wykazem usuniętych znaczy „nic nie zginęło" i tak brzmi
 jej zdanie. Sesję nazywamy tytułem karty z pasa; gdy tytułu nie ma, zdanie pokazuje sam identyfikator.
 Funkcje są czyste i nie znają DOM.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/okno.ts
+Moduł jest właściwością okna, nie wdrożenia: przestawienie modułu zmienia wskaźnik modułu, pasek narzędzi promptu i panel kontekstu, a historii wątku nie dotyka. Panelu akcji w tym złożeniu nie ma, bo pozycje panelu pochodzą z rejestru rdzenia, a złożenie bez kanału nie ma jak ich pobrać — panel bez katalogu byłby atrapą; okno z kanałem składa osobna warstwa rozmowy, w której panel akcji jest pełny. Okno przechowuje warstwę dyktowania i podaje ją elementowi rysującemu mikrofon, ponieważ zna oba końce — kanał i pasek poleceń — a warstwa sama ich nie widzi.

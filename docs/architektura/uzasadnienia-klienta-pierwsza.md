@@ -4655,3 +4655,17 @@ Kontrakt nie zna trybu nakładki. Struktura `AodStatus` niesie urządzenie, sesj
 procesy przypięte i licznik procesów w biegu, a komendy `aod.mode.set` nie ma wcale.
 Tryb utrwala się więc ustawieniem na poziomie sesji komendą `config.set`, a sekcja
 wypisuje tę lukę kontraktu w meldunku braków.
+
+## budowa/klient-poprzedni/src/moduly/automations/przeglad-przebiegow.ts
+
+Zawężenie wykazu i miary niezawodności idą po stronie klienta z tego samego
+powodu: komenda `automation.execution.subscribe` przyjmuje wyłącznie automatykę,
+pojedynczy przebieg, okno oraz górną granicę, a oddaje przebiegi w całości. Nie
+ma w niej pola zapytania, zakresu dat ani zestawienia miar, a wykaz jest już
+w oknie, więc pytanie rdzenia o to samo drugi raz nic by nie wniosło.
+
+Miary liczą się z pól, które kontrakt naprawdę niesie: stanu przebiegu oraz
+znaczników czasu rozpoczęcia i zakończenia. Miary kosztu — tokeny i wywołania
+modelu — składa widok (`widok-przebiegow.ts`), ponieważ ich pola są
+nieobowiązkowe, a suma wymaga podania obok siebie liczby przebiegów, które je
+wypełniły.

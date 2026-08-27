@@ -2467,3 +2467,20 @@ core/adapter_modul_automations_kolejka.go i innej drogi nie ma.
 Skutek spięcia leży w tabeli kolejka, nie w samym znaczniku spięcia: znacznik
 bez przestawienia rodzaju kolejek i wiązania z oknem roli byłby zapisem,
 którego nikt nie czyta.
+
+## budowa/server/internal/dane/extension.go
+
+Katalog rozszerzeń stoi poziom wyżej niż ekspert i nie należy do niego. Nie jest
+mostem MCP: ten mieszka w tabeli punkt_dostepu, a pozycja katalogu rodzaju mcp
+tylko go wskazuje. Nie jest też konektorem eksperta, bo agent_konektor ma
+agent_id NOT NULL i należy zawsze do jednego eksperta.
+
+Repozytorium niczego nie pobiera i niczego nie uruchamia. Napis podany w polu
+source komendy install ląduje w kolumnie zrodlo_deklarowane jako deklaracja —
+zapis faktu, że taki adres podano. Rdzeń pod ten adres nie sięga.
+
+Pole ZmianaRozszerzenia.PunktDostepuID nie ma odpowiednika „odepnij punkt":
+kontrakt oznacza accessPointId jako niewymagane w install i configure, ale nie
+daje sposobu na jawne odpięcie. Pominięcie pola znaczy więc brak zmiany,
+a nie wyczyszczenie — zgadywanie drugiego znaczenia kasowałoby wskazanie mostu
+bez żądania.

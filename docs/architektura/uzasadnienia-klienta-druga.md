@@ -561,3 +561,25 @@ naciśnięcia oknu przez czynności wstążki, a złożone kawałki — formular
 wczytania, panel znajdź/zamień, pola różnicy — przyjmuje gotowe jako gniazda.
 Dzięki temu jedno miejsce trzyma układ wstążki, a inne prowadzi rozmowę
 z rdzeniem.
+
+## budowa/klient-poprzedni/src/moduly/studio/kopie-panel.ts
+
+Panel łączy cztery wymagania trwałości dokumentu w jednym miejscu. Autozapis:
+odstęp i zapis przy zdarzeniach okna jako jawne, odwracalne ustawienie;
+obejmuje treść i postać dokumentu i idzie osobnym szeregiem wersji, żeby nie
+zaśmiecał historii Operatora. Kopia zapasowa: zakładana przed zapisem
+i niezależnie od historii wersji, żeby przetrwała awarię procesu i awarię
+zapisu. Przywrócenie po nagłym zamknięciu: Studio zgłasza je samo, zdaniem
+o niezapisanym dokumencie z podaniem godziny, zamiast czekać, aż Operator się
+domyśli; przywrócenie do nowego dokumentu stoi obok przywrócenia na miejsce,
+żeby przywracanie nie kasowało tego, co już jest. Powrót do stanu pierwotnego:
+jedno polecenie, bez szukania wersji założycielskiej w wykazie; wersje nowsze
+zostają, więc powrót jest odwracalny.
+
+Wskaźnik stanu zapisu ma cztery wartości i „nieudany" jest jedną z nich.
+Nieudany zapis samoczynny wraca odpowiedzią udaną z polem `saved: false` —
+panel pokazuje go jako niepowodzenie wraz z powodem, bo pokazanie „zapisano"
+po nieudanym zapisie kosztowałoby Operatora pracę.
+
+Panel woła rdzeń sam; treść i postać do odłożenia bierze z kontekstu, bo
+powierzchnia dokumentu jest po stronie okna.

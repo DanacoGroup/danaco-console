@@ -1669,3 +1669,17 @@ zasady: koordynator pusty i wcielenie puste są brakiem pola.
 Więź z oknem, którego nie ma, byłaby potwierdzeniem relacji, która nie
 powstała. Rejestr pamięciowy sprawdza to sam, a na drodze wiersza sprawdza to
 `nadajRoleWWierszu`, bo tam nikt inny tego nie robi.
+
+## budowa/server/internal/core/adapter_modul_badania_eksport.go
+
+Eksport wytwarza plik, a nie tylko wiersz o nim: zapisuje bajty pod sumą
+kontrolną we wspólnym magazynie rdzenia i oddaje rzeczywistą ścieżkę pliku,
+żeby odpowiedź o powodzeniu nigdy nie wracała z pustą ścieżką.
+
+Formaty tekstowe składa rdzeń sam. Markdown, HTML, tekst i LaTeX powstają
+w Go, bez ani jednego procesu zewnętrznego, więc działają zawsze. Pliki PDF,
+DOCX i PPTX idą przez port arsenału dokumentowego, ponieważ składu tych
+formatów nie da się napisać od nowa uczciwiej niż dojrzałym programem, który
+stoi na serwerze razem z rdzeniem. Plik XLSX powstaje w tym module wprost,
+biblioteką archiwizującą wkompilowaną w rdzeń: arkusz jest spakowanym
+dokumentem XML, a nie składem, więc osobny program go nie wymaga.

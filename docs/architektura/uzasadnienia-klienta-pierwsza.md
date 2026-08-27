@@ -1481,3 +1481,14 @@ dwiema niezależnymi decyzjami wywołującego.
 
 Plik nie wymienia żadnej barwy. Barwa plakietki wynika wyłącznie z odmiany klasy
 bibliotecznej, więc zmiana palety nie sięga tego pliku.
+
+## budowa/klient-poprzedni/src/modele/pola-konta.ts
+
+Zestaw pól jest oddzielony od formularza, ponieważ formularz odpowiada za rozgałęzienie
+zapisu na dwie komendy kontraktu i za to, co wolno nadpisać w polu już wypełnionym.
+Trzymanie obu odpowiedzialności w jednym miejscu wiązałoby kształt danych z przebiegiem
+zapisu.
+
+Opis poświadczenia należy do pola, a nie do widoku: kontrakt nie zwraca poświadczenia
+żadną komendą, więc pole konta, które poświadczenie ma, i tak wygląda na puste. Opis
+jest jedynym miejscem, w którym ten stan zostaje nazwany.

@@ -4966,3 +4966,6 @@ na kartce zostało, co przy pisaniu pisma na jedną stronę jest informacją, po
 sięga co chwilę. Linijka pionowa nie chwyta wierszy tabeli: wysokość wiersza tabeli bierze się
 z jego treści i z nastaw akapitu, a nie z chwytu na linijce, tak samo jak w pakietach biurowych —
 udawanie takiego chwytu dawałoby nastawę, której nic nie pilnuje.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/ster-modelu.ts
+Model rozdziela wybór na dwie grupy w jednym poziomie menu, nie w gałęzi, bo modele surowe i eksperci mieszczą się razem, a gałąź schowałaby wykaz o jeden ruch dalej. Znaczenie wyboru jest pisane raz — przedrostek eksperta, wartość zaznaczona i przekład wyboru na treść wysyłaną do rdzenia pochodzą z jednego miejsca, bo gdyby pasek składał to zlecenie po swojemu, wybór eksperta w pasku i w kolumnie sterowania znaczyłby dwie różne rzeczy. Etykieta uchwytu jest krótka: w kolumnie sterowania wiersz niesie pełny opis, a w pasku stoi sama nazwa własna, bo pasek ma zostać jednym rzędem — oba napisy składane są jednak z tych samych pól źródłowych. Kanał nieczynny zostaje na wykazie i pozostaje wybieralny, bo wyszarzenie byłoby blokadą, a o stanie kanału mówi opis pozycji.

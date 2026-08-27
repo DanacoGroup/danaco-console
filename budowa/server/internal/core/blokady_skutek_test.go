@@ -90,7 +90,7 @@ func (u *blokadaUprzazSprawdzianu) blokadaZalozBlokade(t *testing.T, od, do int,
 }
 
 // blokadaWykonajJakoModel wywołuje komendę z tożsamością gniazda serwera
-// narzędzi modelu. Pola `author` NIE dokłada z zamysłem: mierzymy drogę, której
+// narzędzi modelu. Pola `author` NIE dokłada z zamysłem: mierzy się drogę, której
 // model nie może o sobie zataić.
 func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	komenda shared.MessageType, ladunek any) protocol.Koperta {

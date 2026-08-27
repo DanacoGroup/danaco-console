@@ -9,7 +9,7 @@ import type { RachunekRamek } from './zbior-budowy';
 export interface Zamowienie {
   srodowisko: string;
   strategia: string;
-  /** Wdrożenie, do którego cofamy; pusty łańcuch znaczy „wdrożenie w przód". */
+  /** Wdrożenie, do którego sięga cofnięcie; pusty łańcuch znaczy „wdrożenie w przód". */
   cofnijDo: string;
 }
 

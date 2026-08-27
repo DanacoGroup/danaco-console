@@ -5,16 +5,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Składanie kompletu kontekstu przenoszonego jedną komendą.
-//
-// Komplet ma siedem składników: polecenie wyjściowe, dokumenty, projekt,
-// agenci, historia rozmowy, źródła wiedzy i parametry wykonania. Żaden z nich
-// nie może zginąć po drodze, więc komplet powstaje z trzech warstw, w tej
-// kolejności: to, co przyniosło żądanie, potem komplet zapisany przy oknie
-// źródłowym, a na końcu realny stan okna i sesji źródłowej.
-//
-// Warstwa wcześniejsza wygrywa: Operator, który wskazał składnik wprost,
-// nie zostaje nadpisany tym, co system odczytał sam.
+// Plik składa komplet kontekstu przenoszonego jedną komendą z trzech warstw; wcześniejsza wygrywa.
 
 // zrodloHistorii jest tą częścią dziennika rozmowy, której przenoszenie
 // naprawdę używa: wykazem wiadomości okna. Dziennik rozmowy wypełnia
@@ -87,7 +78,7 @@ func identyfikatoryWiadomosci(wiadomosci []shared.Message) []string {
 	return identyfikatory
 }
 
-// pustyNapis mówi, czy pole opcjonalne kontraktu nie niesie wartości.
+// pustyNapis mówi, czy pole opcjonalne kontraktu nie niesie wartości, czyli wskaźnik jest pusty albo wskazuje na napis pusty.
 func pustyNapis(p *string) bool {
 	return p == nil || *p == ""
 }

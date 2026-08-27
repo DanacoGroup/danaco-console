@@ -17,25 +17,8 @@ import { utworzStanOkna, type StanOkna } from './stan-okna';
 import type { ZrodloNarzedzi } from './zrodlo-narzedzi';
 
 /**
- * Zakładka rutyn Command & Tools Hub — automatyki asystenta wraz z ich
- * cyklicznością.
- *
- * Rutyna („poranny brief o 8:00 w dni robocze") jest w kontrakcie automatyką
- * z harmonogramem: `automation.workflow.list` mówi, jakie automatyki są,
- * `schedule.get` — kiedy biegną, a `automation.schedule.set` nadaje im
- * cykliczność. Osobnego bytu rutyny asystenta kontrakt nie ma i okno go nie
- * zakłada.
- *
- * Wykaz i harmonogramy czytane są jednym ruchem, bo bez pary tych odczytów
- * automatyka bez harmonogramu byłaby nie do odróżnienia od automatyki, której
- * harmonogramu okno jeszcze nie zna.
- *
- * Wyzwalaczy zdarzeniowych okno nie ustawia. `AutomationTrigger` niesie ich
- * cztery rodzaje, ale każdy wymaga wyrażenia właściwego dla swojego rodzaju
- * (adres wywołania zdalnego, ścieżka pliku, warunek na wyniku modelu) —
- * ich redakcja należy do modułu Automations, którego Workflow Builder jest
- * miejscem budowy procesów. Assistant, zgodnie z granicą tematyczną modułu,
- * inicjuje i nadzoruje pojedyncze zlecenia, a nie projektuje pełnych procesów.
+ * Zakładka rutyn w Command & Tools Hub pokazuje automatyki asystenta wraz z ich cyklicznością,
+ * czytaną jednym ruchem z odczytu harmonogramów.
  */
 export interface PanelRutyn {
   element: HTMLElement;
@@ -128,8 +111,7 @@ export function utworzPanelRutyn(zrodlo: ZrodloNarzedzi): PanelRutyn {
 
   async function wczytaj(): Promise<void> {
     okno.ladowanie(ODCZYTY.rutyny);
-    // Oba odczyty idą równolegle: automatyki i harmonogramy to dwie różne
-    // komendy, a żadna nie warunkuje drugiej.
+    // Oba odczyty idą równolegle: automatyki i harmonogramy to dwie różne komendy.
     const [wykazAutomatyk, wykazHarmonogramow] = await Promise.all([
       zrodlo.automatyki(),
       zrodlo.harmonogramy(),
@@ -140,8 +122,7 @@ export function utworzPanelRutyn(zrodlo: ZrodloNarzedzi): PanelRutyn {
       );
       return;
     }
-    // Odmowa odczytu harmonogramów nie zabiera wykazu automatyk: bez nich
-    // wiersze mówią „rdzeń nie oddał harmonogramu", zamiast znikać.
+    // Odmowa odczytu harmonogramów nie zabiera wykazu automatyk; wiersze mówią o braku, zamiast znikać.
     const harmonogramy = wykazHarmonogramow.wynik?.schedules ?? [];
     if (!wykazHarmonogramow.udany) {
       odpowiedz.pokaz(
@@ -200,7 +181,7 @@ export function utworzPanelRutyn(zrodlo: ZrodloNarzedzi): PanelRutyn {
   return { element, wczytaj };
 }
 
-/** Jeden wiersz wykazu rutyn: automatyka wraz z jej harmonogramami. */
+/** Jeden wiersz wykazu rutyn niesie automatykę wraz z jej harmonogramami, złożonymi w jedno zdanie o cykliczności. */
 function wierszRutyny(
   pozycja: AutomationWorkflow,
   harmonogramy: readonly AutomationSchedule[],
@@ -228,7 +209,7 @@ function wierszRutyny(
   return element;
 }
 
-/** Harmonogram słowami: cykliczność, obowiązywanie i najbliższy przebieg. */
+/** Harmonogram słowami nazywa cykliczność, obowiązywanie i najbliższy przebieg tej automatyki asystenta. */
 function opisHarmonogramu(harmonogram: AutomationSchedule): string {
   const czesci = [
     harmonogram.cron !== undefined && harmonogram.cron !== ''

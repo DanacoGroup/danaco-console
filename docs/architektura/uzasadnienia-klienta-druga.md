@@ -3963,3 +3963,9 @@ oznaczone, nie zamaskowane.
 
 ## budowa/klient/src/wejscie/skladniki/kroki-odzyskiwania.ts
 Numer ustępuje ptaszkowi po zrobieniu kroku, więc stan nie stoi na samej barwie — wymaganie kontrastu spełnione jest przez kształt, nie tylko przez kolor. Wstawianie tu osobnego rysunku dublowałoby ten sam znak. Strzałki między krokami są rysunkiem, nie treścią — czytnik ekranu je pomija.
+
+## budowa/klient-poprzedni/src/strona-glowna/pozycje-srodowisk.ts
+Kody pochodzą z kontraktu i odpowiadają kolumnie kodu środowiska; opisy trzymane są w rekordzie
+kluczowanym tym typem, więc zmiana kodu w kontrakcie przerywa kompilację klienta zamiast dawać cichą lukę.
+Środowisko o kodzie spoza kontraktu zostaje na ekranie z godłem zastępczym — wykaz kontraktu jest
+informacyjny, nie bramą.

@@ -3544,3 +3544,14 @@ Rola `alert` należy się wyłącznie odmowie, ponieważ przerywa czytnikowi ekr
 bieżącą wypowiedź; pozostałe fazy idą jako `status`. Pas komunikatu znika tylko
 w fazie `gotowe` — stan przesłania treść, a nie kasuje jej, więc po powrocie do
 fazy `gotowe` widać to, co stało na ekranie przed nieudanym odświeżeniem.
+
+## budowa/klient-poprzedni/src/konfiguracja/wybor-adresu.ts
+
+Ta sama kontrolka obsługuje dwie role okna konfiguracji. Pasek u góry ustawia
+punkt widzenia, względem którego liczone jest dziedziczenie pól, a panel przy
+polu ustawia adres zapisu wartości nadpisującej. Różni je wyłącznie wykaz
+dopuszczalnych poziomów i osi: pasek podaje wszystkie, panel pola tylko te,
+które dopuszcza katalog ustawienia.
+
+Pola bytu znikają tam, gdzie poziom albo oś bytu nie mają, czyli przy poziomie
+globalnym i przy osi platformy.

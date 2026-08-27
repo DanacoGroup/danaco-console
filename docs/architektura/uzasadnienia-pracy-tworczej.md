@@ -4362,3 +4362,68 @@ da się go cofnąć.
 PLAIN posyła hasło wprost i biblioteka standardowa dopuszcza go wyłącznie
 po TLS-ie (albo na pętli zwrotnej). Dzięki kolejności CRAM-MD5 przed
 PLAIN hasło Operatora nie wyjdzie nieszyfrowanym łączem.
+
+## budowa/server/internal/mowa/ustawienia.go
+
+Prawdą o nazwie ustawienia jest wiersz definicja_ustawienia.klucz
+z server/internal/store/migracja_075_mowa.sql; stałe pliku są jego kopią
+co do znaku. Katalog nie odmawia nieznanego klucza — zapis pod zmyśloną
+nazwą przechodzi bez błędu, a kontrolka nie ma wtedy żadnego skutku, więc
+jedynym zabezpieczeniem jest to, że napisy stoją po tej stronie w jednym
+miejscu i pochodzą z migracji.
+
+Odczyt konfiguracji robi warstwa wyżej (rezolwer ustawień rdzenia, komendy
+config.get); tutaj przychodzą już gotowe pary klucz-wartość i jedynym
+zadaniem jest złożyć z nich komplet. Dzięki temu silnik mowy nie zna ani
+bazy, ani zasięgów, ani osi.
+
+Wartość spoza wykazu nie jest odmową. Klucz nieznany jest pomijany bez
+błędu, bo konfiguracja poziomu, z którego przychodzi, niesie także
+ustawienia zupełnie innych warstw produktu. Rozmiar modelu spoza wykazu
+wraca na wartość domyślną, bo silnik musi dostać nazwę modelu, którą
+biblioteka zna.
+
+Trzy pierwsze wartości domyślne odpowiadają migracja_075_mowa.sql, katalog
+wag odpowiada migracja_403_nastawa_wag_mowy.sql, która nadpisuje wartość
+założoną migracją 075. Rozjazd między tymi stałymi a migracją oznaczałby
+dwie różne prawdy o tym, co zobaczy Operator, który niczego nie ustawił.
+
+Katalog modeli domyślny jest w układzie pamięci podręcznej Huba
+(models--Systran--faster-whisper-*), bo pomocnik przekazuje tę ścieżkę
+bibliotece jako download_root i takiego układu w niej szuka
+(pomocniki/transkrypcja/silnik.py). Wagi stoją: 464 MB
+w /opt/danaco-modele/mowa, obok wag pozostałych zdolności liczących
+lokalnie.
+
+Katalog, w którym wag nie ma, pomocnik traktuje jak miejsce pobrania,
+czyli zachowuje się dokładnie tak jak przy wartości pustej — wskazanie
+ścieżki nieistniejącej nie jest odmową.
+
+Ustawienia jest strukturą, nie mapą: pola nazwane rozstrzygają się przy
+kompilacji, mapa napisów rozstrzygałaby się dopiero przy uruchomieniu —
+a literówka w kluczu jest tu dokładnie tym błędem, przed którym plik ma
+chronić.
+
+Rozmiary modelu mowy stoją w kolejności rosnącej wierności — tej samej,
+w której stoją wiersze opcja_ustawienia w migracja_075_mowa.sql (kolumna
+kolejnosc). Inaczej niż przy naklad_rozumowania, gdzie pusty napis znaczy
+rozstrzyga kanał modelu, tu wartości pustej nie ma.
+
+Konfiguracja zasięgu, z którego przychodzą wpisy Nanies, niesie ustawienia
+całego produktu — kanał modelu, izolację, motyw. Odmowa na każdy nieswój
+klucz zamieniłaby zwykły odczyt konfiguracji w awarię silnika mowy.
+
+Komplet wraca przez wartość w Nanies, nie przez wskaźnik: wołający składa
+go pętlą po wpisach i nie ma powodu, by dwie takie pętle biegnące obok
+siebie pisały po tej samej strukturze.
+
+Sprowadzenie rozmiaru modelu do wartości domyślnej, a nie odmowa: rozmiar
+nieznany bibliotece kończyłby się błędem procesu Pythona — komunikatem
+cudzego narzędzia, z którego Operator nie wyczyta, że winna jest jedna
+literówka w ustawieniu. Sprowadzenie do wartości domyślnej daje
+transkrypcję zamiast odmowy, a wykaz dopuszczalnych wartości Operator
+i tak widzi w oknie konfiguracji.
+
+Pustka w polu Jezyk znaczyłaby co innego niż brak wpisu (rozpoznanie
+automatyczne zamiast polskiego), więc każdy kształt wartości konfiguracji
+niesie w tekstUstawienia własną wartość zastępczą.

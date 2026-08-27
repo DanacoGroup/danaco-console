@@ -5566,3 +5566,51 @@ ChunkBledu niesie błąd techniczny wywołania, a przyczyna jedzie i jako treś�
 nietekstowa, i jako tekst dla użytkownika; fragment kończy strumień, więc
 wywołujący pakuje go kopertą z ostatnim równym prawda, choć sesja i konto
 pozostają przy tym czynne.
+
+## budowa/server/internal/transport/bramka.go
+
+Bez straży wejścia klient bez tokenu wykonuje dowolną komendę, w tym polecenie zdalne, które przez tor
+zdalny potrafi sięgnąć po połączenie SSH na maszynę Operatora. Zgoda na hosta zdalnego jest wydana
+hostowi, nie wołającemu, więc wystawiony rdzeń oddawałby cudzemu połączeniu zarówno zdalny serwer, jak
+i komputer w biurze. To nie jest bramkowanie uprawnień, lecz wskazanie miejsca, w którym logowanie do
+aplikacji ma skutek dla rdzenia: straż nie zna pojęcia uprawnienia, roli, zakresu ani modułu, pyta tylko,
+czy dane gniazdo przeszło przez bramkę; nie pyta o to ani razu na pętli zwrotnej, bo tam jest wyłączona
+w całości; po przejściu bramki milczy do końca życia połączenia. Odmowa opisuje brak, nie zakaz — to
+połączenie nie przeszło przez bramkę, a droga naprawy w postaci zalogowania się stoi w tym samym zdaniu.
+
+Wykaz komend wejścia jest wyczerpujący i wynika z jednego pytania: czego nie da się pominąć, żeby móc
+się zalogować. Powitanie połączenia jest tędy, którędy token wchodzi do rdzenia, ponieważ transportem
+jest jedno gniazdo bez nagłówka na każdym żądaniu. Logowanie jest tędy, którędy token powstaje.
+Rejestracja jest potrzebna, bo bez niej rdzeń bez założonej bramki byłby zamknięty na klucz, którego
+nikt jeszcze nie wykuł. Weryfikacja jest krokiem wydającym token w rejestracji dwukrokowej — bez niego
+rejestracja zakłada konto niepotwierdzone, którego już nic nie potwierdzi, ponieważ rejestracja drugi
+raz oddaje konflikt, a logowanie odmawia zdaniem o oczekiwaniu na potwierdzenie adresu. Odzyskanie
+i zresetowanie konta to dwa kroki naciskane przez tego, kto hasła nie pamięta, czyli z definicji przez
+bramkę nie przejdzie, a odbite kroki zamieniają zapomniane hasło w koniec instalacji. Odświeżenie tokenu
+przedłuża sesję zapisaną na maszynie: token przedstawiony w powitaniu wiąże gniazdo i wtedy przedłużenie
+przechodzi samo, ale token wygasły gniazda nie wiąże, więc Operator ma wtedy zobaczyć odmowę rdzenia
+o wygaśnięciu sesji, a nie odmowę straży, która o sesji nic nie mówi. Wykaz nie jest furtką: żadna z tych
+komend nie wykonuje pracy Operatora ani nie sięga po pliki, sieć czy powłokę — wszystkie dotykają
+wyłącznie bramki, a zgadywanie po nich jest ograniczone dławikiem prób wejścia i tym, że droga
+potwierdzenia jest losowa, jednorazowa i wygasa po godzinie. Nazwy komend biorą się ze stałych kontraktu,
+nie z literałów, żeby zmiana nazwy komendy w kontrakcie wywróciła kompilację, a nie po cichu zamknęła
+wejście.
+
+Wymóg logowania bierze się z dwóch rzeczy: adresu nasłuchu, który poza pętlą zwrotną obowiązuje sam
+z siebie jako fakt, a nie nastawa, więc wystawienia nie da się zrobić przez zapomnienie; oraz jawnego
+wskazania Operatora, będącego dźwignią włączającą wymóg także na pętli zwrotnej albo znoszącą go przy
+nasłuchu szerszym — zniesienie jest dozwolone, ale nigdy ciche, bo dziennik mówi wtedy wprost, co stoi
+otworem. Metoda przepusc ma trzy wyjścia na tak i jedno na nie: straż wyłączona przepuszcza wszystko,
+komenda wejścia przechodzi zawsze, związane gniazdo przechodzi zawsze, a jedynym przypadkiem odmowy
+jest obowiązujący wymóg przy komendzie spoza wejścia i gnieździe nieprzedstawionym. Pytanie dotyczy
+gniazda, nie tożsamości wołającego, dlatego przeżyje zmianę modelu bramki: dziś sesja bramki nie ma
+właściciela, a gdy dostanie konto i wiele urządzeń z osobnymi tokenami, straż nie będzie wymagać ani
+jednej zmiany. Rdzeń nieznający rozszerzenia stanu bramki nie przepuszcza żądania — jedyne miejsce w tym
+pakiecie, gdzie brak czegoś zamyka drogę zamiast ją otwierać, ponieważ rdzeń, który nie umie odpowiedzieć,
+kto woła, przy obowiązującym wymogu oddawałby komendy komukolwiek.
+
+Kod odmowy bez bramki jest jeden, oznaczający brak uwierzytelnienia z kontraktu, a nie brak uprawnienia
+ani błąd pola żądania, ponieważ brakuje właśnie przejścia przez bramkę; klient rozpoznaje ten kod i otwiera
+okno logowania zamiast pokazywać błąd komendy.
+## budowa/server/internal/dane/sesje_kosz.go
+Repozytorium kosza jest osobne od repozytorium sesji, bo tamto obsługuje sesje żywe i jego wykaz sesji z kosza nie widzi; kosz jest odwrotną stroną tej samej tabeli, widzi wyłącznie wiersze ze znacznikiem usunięcia — jedna tabela, dwa pytania. Czyszczenie zabiera też bloki wiadomości: kaskada schematu od sesji sprząta okna i wiadomości, ale bloki wiadomości wiszą na identyfikatorach kontraktowych bez klucza obcego, więc czyszczenie usuwa je wprost, w tej samej transakcji.

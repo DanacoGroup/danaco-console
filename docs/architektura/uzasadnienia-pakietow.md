@@ -5119,3 +5119,55 @@ w zdarzeniu nie wskazywałaby niczego jednoznacznie.
 
 Pole odwołania podpisu niesie wyłącznie referencję klucza HMAC w sejfie poświadczeń, nigdy
 jego wartość.
+
+## budowa/server/internal/dane/narzedzia_sesji.go
+Narzędzie dołożone komendą po ukośniku trwa do końca sesji: nie wchodzi na
+stałe do definicji eksperta i nie znika po jednej turze. Czas życia niesie
+klucz obcy z kasowaniem kaskadowym, nie kod — dlatego nie ma tu metody
+sprzątającej wygasłe wiersze; koniec życia dołożenia to koniec życia wiersza
+sesji.
+
+Plik prowadzi dołożenia jednej sesji, a nie katalog, z którego się je
+wybiera. Wykaz pozycji po ukośniku nie jest tabelą: składa go rdzeń na
+bieżąco z komend kontraktu, katalogu akcji i katalogu rozszerzeń. Odpisanie
+go do trzeciej tabeli byłoby drugą prawdą o tym, co platforma umie,
+i rozjechałoby się z pierwszą przy pierwszej instalacji rozszerzenia.
+
+Wiersz niesie odpis, nie odwołanie: trzy pola nazewnicze i grupę, a nie
+klucz obcy do pozycji wykazu — wykaz nie jest tabelą i nie ma czego
+wskazać. Dzięki temu odinstalowanie rozszerzenia nie zamienia dołożenia
+w nazwę bez opisu i do końca sesji widać, co model dostał.
+
+Identyfikator sesji jest tu kluczem wiersza sesji, nie identyfikatorem
+kontraktowym: przekład jednego na drugi należy do adaptera rdzenia, tak
+samo jak przy każdym innym repozytorium tego pakietu.
+
+Sesja bez dołożeń oddaje wykaz pusty i jest to stan poprawny, nie brak
+wiersza — zestaw narzędzi tury jest wtedy samą definicją eksperta.
+
+Powtórzenie dołożenia nie jest błędem i nie mnoży wierszy.
+
+Usunięcie sesji zdejmuje dołożenia kaskadą klucza obcego; zdjęcie
+wszystkich dołożeń obsługuje przypadek, w którym sesja zostaje, a zestaw ma
+wrócić do podstawy.
+
+Metoda dostępu do repozytorium, a nie pole struktury — z tego samego
+powodu, co pozostałe repozytoria pakietu: repozytorium nie trzyma stanu
+poza wskaźnikiem na wspólną pamięć zapytań.
+
+Odczyt i zapis dołożenia idą jedną transakcją, bo razem odpowiadają na
+jedno pytanie: czy dołożenie już istnieje, a jeśli nie — wpisz je. Bez
+wspólnej transakcji dwie komendy po ukośniku wydane w tej samej chwili obie
+zastałyby pustą tabelę i obie próbowałyby wpisać wiersz; druga odbiłaby się
+o warunek unikalności i dostałaby odmowę za czynność, która była poprawna.
+
+Czas dołożenia ma mówić, kiedy model dostał narzędzie — odświeżony przy
+każdym powtórzeniu kłamałby o chwili, od której je ma.
+
+## budowa/server/internal/store/skutek_dobudowy_studia_test.go
+
+Migracja, która przeszła, nie jest dowodem: krok wykonany bez błędu zostawia wersję w dzienniku migracji
+niezależnie od tego, czy polecenie czegokolwiek dokonało. Dlatego sprawdzian nie pyta o wersję schematu,
+tylko o tabele, kolumny i wiersz katalogu okien, czyli o to, po co ta migracja powstała. Sama definicja
+wiersza katalogu okien bez przypięcia do modułu zostawiłaby okno poza zakresem modułu, czyli dokładnie
+tam, gdzie było przed migracją.

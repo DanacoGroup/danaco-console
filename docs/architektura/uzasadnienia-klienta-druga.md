@@ -5378,3 +5378,12 @@ dostaje przycisk i stawia go w pasku.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-rozszerzen.ts
 Podział na cztery gałęzie pierwszego poziomu drzewa — serwery MCP, wtyczki, integracje API, skille — pochodzi z wyliczenia kontraktu. Katalog jest czytany przez gotowe źródło komend rozszerzeń, a ster nie wie, jak wygląda koperta; to źródło z kolei nie importuje ani jednego pliku z okna komunikacji i zna wyłącznie kontrakt oraz protokół, więc zależność nie zamyka pętli. Liść jest przełącznikiem, nie wyborem: rozszerzenia nie wykluczają się nawzajem, więc zgaszenie jednego nie jest wybraniem innego. Opis pozycji pochodzi z rdzenia i idzie do menu dosłownie, a rozszerzenie bez opisu zostaje w menu bez zdania. Wykaz jest zawężony do zainstalowanych: menu obsługuje podłączenie, czyli to, czego operator używa teraz, a rejestrację, czyli to, co ma w ogóle, prowadzi katalog rozszerzeń w module Agents — pozycja niezainstalowana nie ma czego włączać.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/plakietka-stanu.ts
+Każdy stan ma odrębną ikonę, odrębną etykietę i odrębną kropkę, więc odczyt
+stanu nie zależy od rozróżnienia barw.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/tresc-probna.ts
+Strona podglądu układu nie łączy się z rdzeniem, więc historia okien byłaby
+pusta, a rozkład sceny nieczytelny bez treści przykładowej; treść jest
+jawnie oznaczona jako przykładowa, żeby nie została pomylona z prawdziwą.

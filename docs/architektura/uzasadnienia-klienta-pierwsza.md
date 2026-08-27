@@ -6151,3 +6151,6 @@ pomiaru nie jest dowodem sprawności. Powtórzenie wywołania modelu nie jest
 odczytem, tylko nowym wywołaniem kanału z własnym kosztem i własnym wierszem
 śladu, dlatego okno woła je wyłącznie na jawne żądanie użytkownika, nigdy przy
 odświeżeniu wykazu.
+
+## budowa/klient-poprzedni/src/moduly/agents/panel-zakresow-narzedzi.ts
+Panel stoi w oknie Permissions Center mimo że dotyczy profilu asystenta, a nie eksperta, ponieważ to jedyne miejsce, w którym Operator ustala zakres działania wykonawcy w jego imieniu. Zakres jest nastawą, nie bramką wbudowaną: pozycja bez wiersza pozostaje dostępna bez granicy wywołań, a platforma niczego nie zawęża z góry — zawężenie zapisane w panelu rdzeń odczytuje przed każdym wywołaniem narzędzia i na jego podstawie odmawia, a kolumna zużycia pokazuje, ile z granicy zostało.

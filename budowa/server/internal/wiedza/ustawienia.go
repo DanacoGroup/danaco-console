@@ -52,6 +52,14 @@ const (
 const (
 	podkatalogPrzesiewu = "przesiew"
 	podkatalogObrazu    = "obraz"
+
+	// katalogNiewskazany jest wartością domyślną katalogu wag przesiewu i osi
+	// obrazu. Pusto znaczy „Operator nie wskazał" — pomocnik sięga wtedy po własną
+	// pamięć podręczną, zamiast szukać wag pod ścieżką, której nikt nie podał.
+	// Wartości tej NIE wolno zrównać z `KatalogModeliDomyslny`: tamta wskazuje
+	// katalog osadzarki (`embedder`), a przesiew i oś obrazu mają własne
+	// podkatalogi — `przesiew` i `obraz`.
+	katalogNiewskazany = ""
 )
 
 // Wartości domyślne. Odpowiadają DOKŁADNIE kolumnie
@@ -163,9 +171,9 @@ func UstawieniaDomyslne() Ustawienia {
 		KatalogModeli:    KatalogModeliDomyslny,
 		DlugoscFragmentu: dlugoscFragmentuDomyslna,
 		ModelPrzesiewu:   ModelPrzesiewuDomyslny,
-		KatalogPrzesiewu: katalogModeliDomyslny,
+		KatalogPrzesiewu: katalogNiewskazany,
 		ModelObrazu:      ModelObrazuDomyslny,
-		KatalogObrazu:    katalogModeliDomyslny,
+		KatalogObrazu:    katalogNiewskazany,
 	}
 }
 

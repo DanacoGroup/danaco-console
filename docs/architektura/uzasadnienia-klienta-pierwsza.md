@@ -5339,3 +5339,20 @@ nieobsłużone.
 
 Wszystkie czynności pliku są czyste: biorą stan i element, nie domykają się na niczym.
 Dzięki temu wytwórnia panelu zawiera samo złożenie.
+
+## budowa/klient-poprzedni/src/moduly/assistant/filtr-dziennika.ts
+
+Zawężenie dziennika liczy się w oknie. Komenda `assistant.activity.list`
+przyjmuje wyłącznie `windowId`, `actionId` i `limit` — tak czyta ją
+`adapter_modul_asystent_czynnosci.go` — więc rdzeń nie ma czym zawęzić wykazu
+po treści ani po rodzaju wpisu, a odczyt na każde naciśnięcie klawisza byłby
+wywołaniem zwracającym za każdym razem to samo.
+
+Wyszukiwanie jest pełnotekstowe i tylko takie. Wyszukiwania po znaczeniu
+w dzienniku asystenta kontrakt nie ma: `knowledge.search` sięga biblioteki,
+historii rozmów i plików przestrzeni roboczej, a dziennik asystenta nie jest
+żadnym z tych zakresów. Brak nazywa okno wprost, zamiast podstawiać dopasowanie
+po literach pod nazwę wyszukiwania semantycznego.
+
+Porównanie idzie po zwinięciu wielkości liter właściwym dla polszczyzny,
+przez `toLocaleLowerCase('pl')`, więc „Ł” znajduje „ł”.

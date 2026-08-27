@@ -3229,3 +3229,30 @@ Kolumna limit_podagentow siedzi na ekspercie, a nie w osobnej tabeli, ponieważ 
 
 ## budowa/server/internal/store/migracja_005_okna_operacyjne.sql
 Okno operacyjne to pozycja katalogu funkcji modułu, a nie okno komunikacji: okno komunikacji jest bytem wykonania jednej sesji, okno operacyjne jest wpisem słownikowym mówiącym, jakie okna robocze niesie moduł. Identyfikator modułu dopuszcza brak wartości, bo trzy okna aplikacji, okno konfiguracji punktów izolacji i okna ról nie należą do żadnego modułu. Role okna: wiodące, pomocnicze, monitor, kreator, zarządca.
+## budowa/server/internal/store/migracja_210_rozszerzenia_zaufanie.sql
+Migracja 210 — rodzina `extension.*`, warstwa zaufania: uprawnienia
+deklarowane i nadane, podpis pozycji oraz rejestr referencji sekretów wraz
+z zakresem współdzielenia.
+
+UPRAWNIENIE DEKLAROWANE I NADANE TO DWA RÓŻNE FAKTY W JEDNEJ TABELI.
+`extension.permission.list` oddaje osobno `declared` (co manifest deklaruje)
+i `granted` (co Operator naprawdę nadał), a różnicę między nimi nazywa polem
+`excessive`. Kolumna `nadane` rozstrzyga, którym z dwóch faktów wiersz jest;
+dwie tabele byłyby dwiema prawdami o jednym uprawnieniu i rozjechałyby się
+przy pierwszej zmianie manifestu.
+
+ŻADNE UPRAWNIENIE NICZEGO NIE BLOKUJE. Warstwa rozszerzeń mówi wprost, że
+kontrola idzie przez stan wyjściowy i zakres, nie przez bramę; ta tabela jest
+zapisem tego, co Operator wie i co nadał, a nie strażnikiem wywołania.
+
+PODPIS MA WIERSZ, BO WERYFIKACJA MA WYNIK. `extension.signature.verify` oddaje
+`ExtensionSignature` — rozstrzygnięcia, nie bajty. Bajty podpisu i klucz
+publiczny leżą w kolumnach obok, bo bez nich nie da się zweryfikować niczego
+po raz drugi, a weryfikacja przepisująca zapamiętane „tak" nie byłaby
+weryfikacją.
+
+REFERENCJA SEKRETU TO KLUCZ JAWNY. Wiersz trzyma nazwę odwołania, jego
+etykietę, sposób uwierzytelnienia i termin ważności — a nie treść
+poświadczenia, która żyje w sejfie rdzenia. Zakres współdzielenia ma tabelę
+złącznikową, bo `extension.secret.share` nadsyła oba wykazy (rozszerzenia
+i role) w komplecie.

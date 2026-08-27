@@ -3980,3 +3980,17 @@ polami żądania `design.asset.list` i zawężają odczyt po stronie rdzenia. Fr
 wyszukiwania nie jest polem tego żądania, więc zawęża wyłącznie wynik już
 otrzymany; pole mówi o tym wprost, zamiast pozorować wyszukiwanie po stronie
 rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/design/warstwy-designu.ts
+
+Warstwa pierwsza jest rozwinięta i pozostaje taka: kanwa, wykaz zasobów i kreator stoją
+od wejścia do modułu. Warstwy druga, trzecia i czwarta stoją zwinięte, a zapowiedź nad
+nimi mówi, co jest pod spodem — zwinięte nie znaczy ukryte.
+
+Nośnikiem rozwinięcia jest znacznik `details`. Postać trzyma przeglądarka, więc element
+działa klawiaturą i ma poprawną semantykę bez ani jednego nasłuchu. Druga kopia stanu
+w nazwie klasy arkusza stylów mogłaby się z atrybutem `open` wyłącznie rozminąć.
+
+Znacznik wywołania stoi przy nazwie, żeby droga do elementu była widoczna, zanim się go
+otworzy. Sam znacznik jest ozdobą uchwytu, a nie jego nazwą, więc idzie z atrybutem
+`aria-hidden`: czytnik ekranu odczyta nazwę elementu, a nie znak graficzny.

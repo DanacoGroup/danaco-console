@@ -1,37 +1,6 @@
-// Odpowiedzialność pliku: komenda `archive.unpack` — rozpakowanie archiwum do
-// katalogu roboczego okna albo do magazynu zasobów, wraz z całą obroną przed
-// wyjściem poza katalog docelowy. Wyrok o zawartości archiwum wydaje
-// `adapter_narzedzia_archiwum_spis.go`, zaplecze rodziny leży
-// w `adapter_narzedzia_archiwum.go`.
-//
-// Warstwy obrony są trzy, bo żadna pojedyncza nie daje pewności:
-//  1. Spis przed zapisem. Zawartość archiwum oglądamy `7z l -slt`, zanim poleci
-//     pierwszy bajt, i odmawiamy pozycjom bezwzględnym, pozycjom z członem `..`
-//     i dowiązaniom (uzasadnienie: plik spisu).
-//  2. Kwarantanna. Rozpakowujemy do katalogu świeżo założonego i pustego, a nie
-//     wprost do katalogu Operatora: w katalogu, w którym nie ma ani jednego
-//     pliku, nie ma czego nadpisać. Kwarantanna stoi na tym samym nośniku co
-//     cel, więc przeniesienie gotowej treści jest przemianowaniem, a nie drugim
-//     kopiowaniem.
-//  3. Przejście po wyniku. Po rozpakowaniu obchodzimy kwarantannę i patrzymy,
-//     co powstało: `filepath.WalkDir` nie idzie za dowiązaniami i rozpoznaje je
-//     po typie wpisu, więc dowiązanie, które przeszłoby przez spis, zatrzymuje
-//     się tutaj. Ta warstwa mierzy też prawdziwy rozmiar wyniku — deklaracja
-//     w nagłówku archiwum jest cudzą obietnicą.
-//
-// Dopiero po trzeciej warstwie treść wchodzi do katalogu Operatora. Odmowa na
-// każdej z nich zostawia jego drzewo nietknięte, bo do tej chwili nic w nim nie
-// powstało.
-//
-// Miejsca docelowe są dwa, bo zamiary są dwa. Kontrakt opisuje `targetPath`
-// słowami „katalog docelowy w katalogu roboczym okna; brak kładzie zawartość
-// w magazynie": ze ścieżką model rozpakowuje po to, żeby na tych plikach
-// pracować, bez ścieżki — żeby zawartość przechować pod sumami kontrolnymi, nie
-// zaśmiecając katalogu Operatora.
-//
-// Plik istniejący nie jest nadpisywany: przy przenoszeniu z kwarantanny nazwa
-// zajęta w celu jest odmową. Nadpisanie cudzej pracy zawartością archiwum jest
-// tą samą szkodą, przed którą stoi reszta tego pliku.
+// Adapter obsługuje `archive.unpack`: rozpakowuje archiwum do katalogu roboczego okna albo
+// do magazynu zasobów, trzema warstwami obrony przed wyjściem poza katalog docelowy — spisem
+// przed zapisem, kwarantanną i przejściem po wyniku.
 package core
 
 import (
@@ -45,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Rozpakuj obsługuje `archive.unpack`.
+// Rozpakuj obsługuje komendę `archive.unpack`: rozstrzyga cel, prowadzi treść przez
+// kwarantannę i wydaje ją do katalogu docelowego albo do magazynu zasobów.
 func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 	z shared.ArchiveUnpackRequest) (shared.ArchiveUnpackResponse, error) {
 
@@ -58,9 +28,7 @@ func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 		return shared.ArchiveUnpackResponse{}, err
 	}
 
-	// Cel rozstrzygamy przed rozpakowaniem, bo od niego zależy, na którym
-	// nośniku ma stanąć kwarantanna — a przeniesienie między nośnikami nie jest
-	// przemianowaniem.
+	// Cel rozstrzygamy przed rozpakowaniem, bo od niego zależy nośnik kwarantanny.
 	var cel string
 	doMagazynu := bezWartosci(z.TargetPath)
 	podstawaKwarantanny := a.katalogDanych
@@ -92,12 +60,7 @@ func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 		if err != nil {
 			return shared.ArchiveUnpackResponse{}, err
 		}
-		// Pole `paths` zostaje puste. Zawartość wylądowała w magazynie
-		// rdzenia, a tam nie ma ścieżek — są zasoby pod identyfikatorami.
-		// Wypisanie tu nazw z wnętrza archiwum dałoby napisy wyglądające jak
-		// ścieżki na dysku Operatora, pod którymi nie ma nic.
-		// Pole jest w kontrakcie nieobowiązkowe właśnie dlatego, że jedna
-		// z dwóch dróg tej komendy ścieżek nie wytwarza.
+		// Pole paths zostaje puste: zawartość leży w magazynie pod identyfikatorami, nie pod ścieżkami.
 		return shared.ArchiveUnpackResponse{Entries: liczba}, nil
 	}
 
@@ -108,12 +71,9 @@ func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 	return shared.ArchiveUnpackResponse{Entries: len(wydane), Paths: wydane}, nil
 }
 
-// zrodloRozpakowania przekłada parę `assetId?|sourcePath?` na plik archiwum.
-//
-// Zasób ma pierwszeństwo przed ścieżką — treść zasobu leży pod sumą kontrolną
-// i nie zmieni się między wskazaniem a odczytem. Podmiana pliku między
-// obejrzeniem spisu a rozpakowaniem byłaby zresztą sposobem obejścia wyroku,
-// więc droga przez magazyn jest tu nie tylko wygodniejsza, ale i pewniejsza.
+// zrodloRozpakowania przekłada parę `assetId?|sourcePath?` na plik archiwum. Zasób ma
+// pierwszeństwo przed ścieżką, bo jego treść leży pod sumą kontrolną i nie zmieni się między
+// wskazaniem a odczytem.
 func (a *adapterNarzedziArchiwum) zrodloRozpakowania(ctx context.Context,
 	z shared.ArchiveUnpackRequest, katalogOkna string) (string, error) {
 
@@ -142,14 +102,8 @@ func (a *adapterNarzedziArchiwum) zrodloRozpakowania(ctx context.Context,
 			"narzędzie archiwum nie zgaduje, co ma otworzyć")
 }
 
-// rozpakujDoKwarantanny odwija archiwum i oddaje katalog z jego zawartością.
-//
-// `tar.gz` wymaga dwóch przebiegów: `7z l` na `.tar.gz` widzi jedną pozycję —
-// zawinięty `.tar` — więc wyrok wydany na tym spisie nie oglądałby zawartości
-// w ogóle. Najpierw
-// zdejmujemy warstwę `gzip`, potem oglądamy i rozpakowujemy warstwę `tar`.
-// Zdjęcie pierwszej warstwy jest bezpieczne bez wyroku, bo `gzip` nie niesie
-// ścieżek: to jeden strumień, który ląduje jednym plikiem w kwarantannie.
+// rozpakujDoKwarantanny odwija archiwum i oddaje katalog z jego zawartością; archiwum tar.gz
+// przechodzi dwa przebiegi, bo spis ogląda jedną zawiniętą pozycję zamiast treści warstwy tar.
 func (a *adapterNarzedziArchiwum) rozpakujDoKwarantanny(ctx context.Context,
 	zrodlo, kwarantanna string) (string, error) {
 
@@ -185,13 +139,9 @@ func (a *adapterNarzedziArchiwum) rozpakujDoKwarantanny(ctx context.Context,
 	return tresc, nil
 }
 
-// wolajRozpakowanie składa jedno wywołanie `7z x`.
-//
-// Tryb `x`, a nie `e`: `x` zachowuje strukturę katalogów, `e` spłaszcza
-// wszystko do jednego poziomu. Spłaszczenie wyglądałoby na obronę przed
-// ucieczką ze ścieżki, ale jest gorsze niż odmowa: dwa pliki o tej samej nazwie
-// z różnych katalogów nadpisałyby się nawzajem, a Operator dostałby drzewo inne
-// niż to, które przysłał, i nie dowiedziałby się o tym.
+// wolajRozpakowanie składa jedno wywołanie 7z w trybie x, który zachowuje strukturę
+// katalogów; tryb e spłaszczałby wynik i nadpisywał pliki o tej samej nazwie z różnych
+// katalogów.
 func (a *adapterNarzedziArchiwum) wolajRozpakowanie(ctx context.Context, archiwum, cel string) error {
 	if err := os.MkdirAll(cel, 0o755); err != nil {
 		return bladZapleczaArchiwum("nie można założyć katalogu kwarantanny: " + err.Error())
@@ -222,14 +172,9 @@ func jedynyPlik(katalog string) (string, error) {
 	return znalezione[0], nil
 }
 
-// zweryfikujKwarantanne obchodzi rozpakowaną treść i oddaje ścieżki plików
-// względem korzenia kwarantanny.
-//
-// Rozmiar liczymy z tego, co legło na nośniku, a nie z nagłówka archiwum:
-// nagłówek jest obietnicą jego twórcy, a bomba dekompresyjna obiecuje, co
-// zechce. Dowiązania i pliki nie-zwykłe (gniazda, urządzenia, potoki nazwane)
-// odmawiamy tutaj po typie wpisu, bo `WalkDir` czyta go bez wchodzenia w to, na
-// co wpis wskazuje.
+// zweryfikujKwarantanne obchodzi rozpakowaną treść i oddaje ścieżki plików względem korzenia
+// kwarantanny; rozmiar liczy z tego, co legło na nośniku, a dowiązania i pliki nie-zwykłe
+// odmawia po typie wpisu.
 func zweryfikujKwarantanne(korzen string) ([]string, error) {
 	var sciezki []string
 	var suma int64
@@ -278,16 +223,9 @@ func zweryfikujKwarantanne(korzen string) ([]string, error) {
 	return sciezki, nil
 }
 
-// przeniesDoCelu przenosi zawartość kwarantanny do katalogu docelowego i oddaje
-// ścieżki wydane Operatorowi — liczone względem KATALOGU ROBOCZEGO OKNA, bo to
-// jest układ odniesienia, w którym model i Operator się umawiają. Ścieżka
-// bezwzględna wypisywałaby w odpowiedzi układ katalogów maszyny, o który nikt
-// nie pytał.
-//
-// KOLEJNOŚĆ JEST ZAMIERZONA: najpierw sprawdzamy WSZYSTKIE kolizje, potem
-// przenosimy. Przenoszenie z jednoczesnym sprawdzaniem zostawiłoby przy
-// kolizji połowę treści w celu i połowę w kwarantannie — czyli rozpakowanie
-// częściowe podane jako odmowa.
+// przeniesDoCelu przenosi zawartość kwarantanny do katalogu docelowego i oddaje ścieżki
+// wydane Operatorowi względem katalogu roboczego okna; najpierw sprawdza wszystkie kolizje,
+// potem przenosi, aby uniknąć rozpakowania częściowego.
 func przeniesDoCelu(tresc, cel string, sciezki []string, katalogOkna string) ([]string, error) {
 	if err := os.MkdirAll(cel, 0o755); err != nil {
 		return nil, bladZapleczaArchiwum("nie można założyć katalogu docelowego: " + err.Error())
@@ -322,13 +260,9 @@ func przeniesDoCelu(tresc, cel string, sciezki []string, katalogOkna string) ([]
 	return wydane, nil
 }
 
-// wniesDoMagazynu odkłada każdy rozpakowany plik jako osobny zasób — droga dla
-// żądania BEZ `targetPath`.
-//
-// PO CO TA DROGA W OGÓLE ISTNIEJE: model, który dostał archiwum i chce się
-// dowiedzieć, co w nim jest, nie musi zaśmiecać katalogu roboczego Operatora.
-// Zasoby ma pod identyfikatorami i sięga po nie pozostałymi narzędziami —
-// obrazu, dokumentu, mediów.
+// wniesDoMagazynu odkłada każdy rozpakowany plik jako osobny zasób pod identyfikatorem —
+// droga dla żądania bez pola targetPath, żeby model mógł obejrzeć zawartość archiwum bez
+// zaśmiecania katalogu roboczego Operatora.
 func (a *adapterNarzedziArchiwum) wniesDoMagazynu(ctx context.Context,
 	tresc string, sciezki []string) (int, error) {
 
@@ -342,9 +276,7 @@ func (a *adapterNarzedziArchiwum) wniesDoMagazynu(ctx context.Context,
 		if err != nil {
 			return 0, bladZapleczaArchiwum("nie można utrwalić " + wzgledna + ": " + err.Error())
 		}
-		// Nazwą zasobu jest ścieżka WEWNĄTRZ archiwum, a nie sama nazwa pliku:
-		// archiwum z dziesięcioma plikami `index.html` w różnych katalogach
-		// dałoby inaczej dziesięć kafelków nie do odróżnienia.
+		// Nazwą zasobu jest ścieżka wewnątrz archiwum, nie nazwa pliku, by uniknąć nierozróżnialnych kafelków.
 		zasob := dane.ZasobDesignu{
 			Kod:    nowyIdentyfikator(przedrostekZasobuDesign),
 			Okno:   oknoZasobowNarzedziArchiwum,

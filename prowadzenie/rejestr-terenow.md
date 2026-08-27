@@ -87,77 +87,32 @@ go w raporcie**.
    niepowodzeń. Kontrakt nietknięty — wykazane sumą.
 6. Wykaz wszystkiego, co postawione na maszynie, wraz z wagą.
 
-### usterki-rdzenia
-
-Trzy usterki wykryte pomiarem w poprzedniej turze, wszystkie poza zakresem terenów,
-które je znalazły. Każda jest wąska i jednoznaczna.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/usterki-rdzenia` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/adapter_rozmowa_petla.go`, `adapter_przejecie_sterowania.go`, `zgodnosc_kontraktu_test.go`, `blokady_skutek_test.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
-
-**Pierwsza — ukończenie biegu kłamie przy błędzie kanału.** `powodTury`
-(`adapter_rozmowa_petla.go:46`) nie widzi `zamkniecie.Blad`, więc tura zamknięta
-zdarzeniem `result` z `is_error: true` przy **sprawnym** kanale idzie do pętli jako
-`PowodWynik`, a pętla ogłasza `completed` — choć wiadomość dostaje stan `error`.
-To wprost przeczy pozycji, którą teren `warunek-ukonczenia-zadania` właśnie wniósł.
-Domknięcie wskazane przez znalazcę: przekazanie `zamkniecie` do `powodTury`.
-
-**Druga — martwa funkcja z komentarzem w nieistniejące miejsce.**
-`adapter_przejecie_sterowania.go:146`, funkcja `sterZlecenia`: doc mówi „Woła ją
-przekład licznika obiegów w `core/stan_obiegu.go`", a `stan_obiegu.go` jej nie
-woła i nikt inny też nie.
-
-**Trzecia — granica 15 s uprzęży jest ciaśniejsza niż czynność, którą mierzy.**
-Uprząż zgodności kontraktu woła każdą komendę z twardym limitem 15 s
-(`zgodnosc_kontraktu_test.go:215` i `:254`, `blokady_skutek_test.go:127`).
-Czynność skanera dochodzi na tej maszynie do ~14,8 s, a własne limity warstwy są
-znacznie wyższe: `granicaWykazuUrzadzen` 45 s, `granicaSkanowaniaUrzadzenia` 5 min.
-Sprawdzian chwieje się z powodu uprzęży, nie rdzenia.
-
-**Kryteria odbioru.**
-
-1. Tura zamknięta błędem przy sprawnym kanale **nie ogłasza ukończenia** —
-   wykazane sprawdzianem, który **zawodzi na kodzie sprzed naprawy**.
-2. Martwa funkcja usunięta albo podłączona; jeśli usunięta, wykazane
-   przeszukaniem, że nikt jej nie woła — z sondą dodatnią dowodzącą, że wzorzec łapie.
-3. Granica uprzęży ustalona tak, żeby najwolniejsza mierzona czynność mieściła się
-   z zapasem; wartość **wyprowadzona z pomiaru**, nie wzięta z sufitu, i uzasadniona.
-4. `gotestsum -- -count=1 ./...` — **zero niepowodzeń** wobec stanu zastanego
-   2106 zdanych, 17 pominiętych, zero niezdanych.
-5. Kontrakt nietknięty — wykazane sumą kontrolną.
-
-### nastawy-wdrozenia
-
-Silnik wiedzy działa na stojących wagach, **ale dopiero po nastawach**. Bez nich
-wdrożenie pobierze drugi model zamiast użyć 4,3 GB, które już leżą na dysku.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/nastawy-wdrozenia` z `main` |
-| **Wykaz plików** | `budowa/server/internal/wiedza/`, migracje nastaw w `budowa/server/internal/store/`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `budowa/server/internal/core/` |
-
-**Przedmiot.** Doprowadzić do tego, żeby **świeże wdrożenie użyło wag, które stoją**,
-bez ręcznego ustawiania czegokolwiek po instalacji. Wykaz nastaw i ich wartości
-niesie zgłoszenie „Wdrożenie musi założyć trzy nastawy" w tym rejestrze —
-przeczytaj je, zanim cokolwiek zmienisz.
-
-**Kryteria odbioru.**
-
-1. Rdzeń postawiony na **świeżej bazie** indeksuje i wyszukuje wagami
-   z `/opt/danaco-modele`, **bez ani jednego pobrania z sieci** — wykazane
-   uruchomieniem `knowledge.index` i `knowledge.search`, z przytoczonym trafieniem.
-2. Wykazane, że rdzeń **nie sięgnął** po model z migracji 115 — przeszukaniem
-   dziennika albo katalogu pamięci podręcznej, z sondą dodatnią.
-3. Nastawa niesie wartość domyślną, nie wymaga czynności wdrożeniowca; jeżeli
-   wymaga — powód stoi w opisie nastawy.
-4. `gotestsum -- -count=1 ./...` — zero niepowodzeń.
-5. Kontrakt nietknięty.
-
 ## Zgłoszenia oczekujące na teren
+
+### Cala rodzina komend `control.*` nie jest zmontowana
+
+`nowyAdapterPrzejeciaSterowania` (`internal/core/adapter_przejecie_sterowania.go`)
+nie ma w drzewie **ani jednego wywolania** - przeszukanie po nazwie dalo sama
+definicje, przy sondzie dodatniej na `nowyAdapterRozmowy`, ktory trafia
+w `montaz_rozmowa.go:53`.
+
+**Skutek:** `control.takeover`, `control.release` i stan sterujacego wchodza do
+rejestru komend droga `zarejestrujPrzejecieSterowaniaNiewpiete`, czyli **jako
+odmowa**. Rejestr steru nigdy nie dostaje wpisu. To wyjasnia, dlaczego funkcja
+`sterZlecenia` byla martwa, i dlaczego jej dokumentacja opisywala uklad, ktorego
+kontrakt nie zna.
+
+**Montaz wymaga pol, ktorych kontrakt nie ma.** `shared.LoopState` nie niesie
+`controller`, `takenOverAt` ani `takenOverBy` - zmierzone odczytem
+`shared/contract.go:13104-13123`. Wpiecie rodziny jest wiec rozstrzygnieciem
+o zakresie produktu, nie praca inzynierska: wymaga pozycji rejestru decyzji
+i dolozenia pol do kontraktu.
+
+**Druga martwa funkcja w tym samym pliku:** `zachowajStery` wraz z metoda
+`rejestrSteru.zachowaj`. Zostawiona swiadomie - to mechanizm sprzatania po
+zamknietych oknach, wzorowany na czynnym `rejestrBiegow.Zachowaj`; usuniecie
+zabraloby zabezpieczenie w chwili, gdy adapter zostanie wpiety.
+
 
 ### Wagi mowy stoja poza katalogiem modeli
 
@@ -610,6 +565,8 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `usterki-rdzenia` | `teren/usterki-rdzenia` | trzy rewizje | weryfikacja Prowadzacego pomiarem: sprawdzian `TestTuraZamknietaBledemNieOglaszaUkonczenia` **padl na kodzie sprzed naprawy** z wlasciwym zdaniem i przeszedl po przywroceniu; zakres wylacznie `internal/core`; kontrakt nietkniety |
+| `nastawy-wdrozenia` | `teren/nastawy-wdrozenia` | `678ff3e` | weryfikacja Prowadzacego pomiarem: 4 pliki w zakresie, migracja 115 nietknieta, nowa migracja 401; sonda dodatnia wykonawcy pokazala **206 polaczen i 1,1 GB pobrania przed naprawa wobec zera po niej** |
 | `powloka-i-wydanie` | `teren/powloka-i-wydanie` | `13b947b`, `8d99ae4` | weryfikacja Prowadzacego pomiarem: wykaz wydan sprowadzony do dwoch postaci hybrydowych (0 trafien wzorca natywna/AppImage przy 10 kontrolnych); sprawdzian wiazacy adres padl po wprowadzonym rozjezdzie i przeszedl po cofnieciu; 25 sprawdzianow powloki zdanych |
 | `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` wyjątek powitania · `e41dd78` straże drogi bez poczty · `9a8ec0c` brak skanera | weryfikacja Prowadzącego pomiarem: bieg wymuszony `-count=1` 537 s — 2029 sprawdzianów, 1 niezdany wobec 4 zastanych; powitanie niepełne odpowiada wersją protokołu na żywym rdzeniu, `channel.add` z brakiem pola dalej odmawia; kontrakt nietknięty |
 | `prototypy` | `teren/prototypy` | paczki instalatora i drogi wejścia | przyjęte przez Właściciela; weryfikacja Prowadzącego pomiarem: oba okna wczytują się bez błędu konsoli, zero łańcuchów widocznych poza katalogiem treści |

@@ -2940,3 +2940,53 @@ odnośnik.
 
 Usunięcie strony bez znacznika usunięcia stron podrzędnych przenosi je pod
 stronę nadrzędną usuwanej — wiki nie gubi wtedy gałęzi razem z jej korzeniem.
+
+## adapter_modul_design.go
+
+Generowanie oddaje bajty obrazu, nie samą kopertę: komenda albo zapisuje
+zasób o prawdziwej treści, albo odmawia zdaniem nazywającym brak rzeczywisty,
+składany przy każdym wywołaniu osobno. Obrazu zastępczego, zasobu bez bajtów
+ani powodzenia bez treści tu nie ma — każda droga bez bajtów kończy się
+błędem.
+
+Sejf poświadczeń jest magazynem sekretów rdzenia. Klucz dostawcy wchodzi do
+sejfu drogą kont i punktów dostępu, a moduł Design ma go tylko odczytać. Brak
+sejfu nie odbiera modułowi funkcji — dostawcy bez klucza pracują dalej,
+a dostawcy z kluczem wracają jako pominięci wśród nieudanych.
+
+Uruchamiacz procesów, rozstrzygacz konfiguracji i katalog roboczy służą
+jednej czynności: czytnika liter w czystym Go nie ma, więc rozpoznanie pisma
+idzie zewnętrznym programem, jedyną drogą w drzewie, która sprawdza obecność
+programu i nakłada bramę izolacji. Uruchomienie stoi w jednym pliku obszaru
+Design objętym nazwanym wyjątkiem zapory; nazwa wywołania programu nie ma
+prawa być nawet w komentarzu, bo zapora czyta treść pliku, nie składnię. Brak
+tych zależności nie odbiera modułowi układu makiety: rozpoznanie odmawia
+wtedy zdaniem nazywającym brak, a obszary wychodzą jak dotąd.
+
+Konstruktor adaptera wiąże (część) portu z repozytorium modułu wzorem
+konstruktora modułu biblioteki. Sejf poświadczeń i magazyn biblioteki jadą
+tą samą zmienną katalogu danych, żeby o katalogu była jedna prawda.
+
+Pole PromptId zasobu kontraktu niesie identyfikator zewnętrzny promptu.
+Repozytorium czyta go podzapytaniem obok wiersza zasobu, więc pole jest
+prawdziwe albo puste — nigdy odgadnięte. Puste znaczy, że zasób nie powstał
+z promptu: zasób wniesiony przez operatora promptu nie ma i mieć nie może.
+Drugą stronę tego powiązania oddaje polecenie historii promptów.
+
+Pole Uri wychodzi jako ścieżka względna magazynu, nie jako ścieżka na dysku.
+Wiersz trzyma ścieżkę bezwzględną bloba, bo tą ścieżką rdzeń otwiera plik, ale
+wypuszczenie jej odsłania układ katalogów maszyny. Przełożenie stoi
+w jedynym miejscu składania zasobu kontraktu z wiersza, więc obejmuje
+wszystkich wołających naraz i nie da się go ominąć nową drogą. Puste
+odwołanie znaczy, że nie ma czego podać: wiersz, którego uri nie leży
+w magazynie zasobów, nie dostaje pola zastępczego, bo kontrakt czyni je
+niewymaganym właśnie po to.
+
+Sprawdzenie rodzaju zasobu odrzuca wartość ósmą przed wejściem do kolumny.
+Bez tego sprawdzenia wartość spoza wykazu odbijała się od warunku bazy
+i wracała jako awaria rdzenia, którą wolno ponawiać, a żądanie z rodzajem
+spoza wykazu nie uda się przy żadnym ponowieniu — klient z pętlą ponowień
+powtarzałby je bez końca. To jest pomyłka wołającego i ma wracać jako pomyłka
+wołającego; rdzeń stosuje to samo rozróżnienie w module Library. Odmowa
+wymienia dopuszczalne rodzaje, zamiast cytować warunek schematu bazy wraz
+z nazwą kolumny.

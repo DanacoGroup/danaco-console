@@ -102,7 +102,7 @@ export function utworzPanelZakresuEksperta(
     odpowiedz.element,
   );
 
-  /** Ekspert, którego zakres stoi w panelu — po nim poznajemy zmianę wyboru. */
+  /** Ekspert, którego zakres stoi w panelu — po nim poznaje się zmianę wyboru. */
   let pokazany = '';
   let przelaczniki: IsolationTechnicalSwitch[] = [];
 

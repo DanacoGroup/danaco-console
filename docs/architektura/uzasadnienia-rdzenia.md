@@ -3925,7 +3925,7 @@ rozstrzyga o nim dziedzina. Bez tego sprawdzenia pusty rodzaj kanału dojeżdża
 do więzu schematu i wracał treścią zapytania SQL.
 
 TestPowitanieNiepelnePrzechodziBrameIOddajeWersjeProtokolu pilnuje jedynego
-wyjątku spod bramy (rejestr decyzji, pozycja 10). Czym się to łamie: brama
+wyjątku spod bramy (wpis rejestru decyzji o wyjatku spod bramy). Czym się to łamie: brama
 objęła `connection.hello`, którego trzy pola kontrakt oznacza jako wymagane.
 Klient sprzed wprowadzenia pola `clientId` dostawał więc odmowę zamiast wersji
 protokołu — a powitanie jest jedynym miejscem, z którego klient tę wersję
@@ -4577,3 +4577,175 @@ Sprawdzian nie pomija się przy braku żadnego programu, bo warsztat PDF nie
 uruchamia ani jednego procesu: pracuje biblioteką wkompilowaną w rdzeń.
 Materiał powstaje tą samą biblioteką i to jest świadome — mierzone jest
 działanie warsztatu, nie zgodność dwóch bibliotek między sobą.
+
+## budowa/server/internal/core/adapter_kanaly.go
+
+adapterKanalow: zapis idzie do tabeli rejestru, odczyt do rejestru kanałów
+zbudowanego z tej samej tabeli. Po każdej zmianie rejestr jest odświeżany, więc
+dopisanie wiersza natychmiast daje działający kanał — bez zmiany w kodzie
+i bez restartu. Identyfikatorem kanału w kontrakcie jest kod wiersza, nie
+numer wiersza: kod przeżywa przeniesienie bazy i jest tym, co widzi okno
+komunikacji. Pole `sejf` obsługuje wyłącznie `channel.credential.status`
+(`adapter_kanaly_sprawdzenie.go`) i widzi z sejfu tylko odczyt. Zależność
+opcjonalna: bez niej stan poświadczenia mówi „nieustawione" wraz
+z odwołaniem, pod którym rdzeń szukał.
+
+kluczOdwolaniaKanalu: nazwa parametru konfiguracji kanału niosącego odwołanie
+do danych dostępowych — nazwę zmiennej środowiskowej, pod którą Operator
+trzyma klucz kanału API. Sama nazwa nie jest sekretem, więc jedzie
+w parametrach; wartość mieszka poza bazą, a kanał API czyta ją przy wysyłce.
+
+odwolaniePoswiadczeniaKanalu: bez tej drogi kolumna poswiadczenie_odwolanie
+zostaje pusta i kanał API nie ma skąd wziąć nazwy zmiennej z kluczem. Brak
+parametru albo pusta wartość znaczy kanał bez uwierzytelnienia. Kontrakt nie
+ma osobnego pola na to odwołanie, więc jedzie ono parametrem konfiguracji.
+
+kluczKontaKanalu: nazwa parametru konfiguracji kanału niosącego powiązanie
+z kontem — identyfikator wiersza rejestru kont (kanal_modelu.konto_id).
+Kontrakt ChannelAdd/Update nie ma pola accountId, więc powiązanie jedzie
+parametrem konfiguracji, tą samą drogą co credentialRef.
+
+kontoKanalu: wartość jest identyfikatorem wiersza rejestru kont, przyjmuje
+postać liczby albo napisu liczbowego (JSON koduje liczby jako float64). Brak
+parametru, wartość pusta albo nieliczbowa znaczy kanał bez powiązania — dana
+pomocnicza nie może wywrócić zapisu.
+
+brakiWierszaKanalu: wiersz bez rodzaju kanału nie przechodził dotąd więzu
+schematu i wracał jako usterka wewnętrzna z treścią zapytania SQL — Operator
+dostawał nazwę kolumny bazy zamiast nazwy pola, którego nie wypełnił. Brak
+samego pola w treści żądania odsiewa brama kontraktu; tutaj rozstrzyga się
+wartość pusta.
+
+## budowa/server/internal/core/handlers_panel_sekcje.go
+
+Odpowiedzialność pliku: układ sekcji panelu okna, `panel.sections.get`
+i `panel.sections.set`. Nośnikiem układu jest tabela z migracji
+`migracja_105_sekcje_paneli.sql`.
+
+UstawUklad: pole `sections` jest wymagane. Brak pola to brak, nie polecenie:
+wraca odmowa, żeby żądanie milczące o układzie nie skasowało układu
+zapisanego. Wykaz pusty (`"sections": []`) pozostaje czynnością poprawną —
+zdejmuje układ własny i przywraca układ domyślny widoku.
+
+Odmowy: każda odmowa mówi trzy rzeczy — co odmówiło (przedrostek), dlaczego
+(powód nazwany) i czym czytelnik to zmieni (czynność po średniku).
+
+UstawUklad: pole `order` rozstrzyga porządek, ale kolejne pozycje nadaje
+rdzeń jako 1..N — układ z dziurami („1, 7, 9") wracałby w kolejności
+zależnej od bazy.
+
+## budowa/server/internal/core/handlers_role_wykaz.go
+
+Odpowiedzialność pliku: wykaz i zdjęcie nadań ról (`role.list`,
+`role.remove`) wraz z rozgłoszeniem zdarzenia `role.changed`. Rodzina
+`role.*` ma jedno repozytorium i jeden port: `role.list` i `role.remove`
+stoją na tym samym adapterze `adapterRolOkien`, tym samym rejestrze okien
+i tych samych dwóch kolumnach `okno_komunikacji`, co `role.assign`
+i `role.update`. Port `RoleWykaz` osadza `RoleOkien` tak samo, jak tamten
+osadza `Okna`. Układ sekcji panelu okna prowadzi osobny plik
+`handlers_panel_sekcje.go`.
+
+WykazRol: wykaz jest widokiem na okna, nie na drugą tabelę: nadanie roli to
+para pól okna (`windowRole`, `coordinatorWindowId`), więc wykaz składa się
+z tego samego wykazu okien, co `window.list`, wraz z więzią doczytaną
+z bazy. Własne zapytanie po rolach dałoby drugą odpowiedź na pytanie o rolę
+okna. Rolę ma każde okno, także samodzielne — stąd komplet.
+
+Wcielenie leży tam, gdzie zapisuje je `role.update`. Odczyt nieudany nie
+kończy wykazu: wykaz bez wcieleń bije odmowę.
+
+ZdejmijRole: zdjęcie roli to powrót do roli samodzielnej, a nie skasowanie
+pola — katalog kontraktu nie ma wartości „brak", a okno poza pętlą jest
+stanem wyjściowym pakietu sesji (`session.RolaDomyslna`). Więź znika razem
+z rolą, w tej samej czynności: koordynatora niesie wyłącznie okno wykonawcy.
+Okno bez roli nie jest odmową — wraca `removed=false`, bo stan docelowy już
+obowiązuje.
+
+Wcielenie odchodzi razem z rolą: `persona` opisuje rolę, a nie okno, więc
+zostawione przy oknie samodzielnym wychodziłoby w `role.list` i w wykazie
+nadań (`client/src/moduly/multitasking/wykaz-nadan-rol.ts`) jako wcielenie
+roli, której już nie ma. Niepowodzenie zapisu kończy komendę: pół zdjęcia
+roli zostawiłoby ten sam rozjazd, tyle że po odmowie.
+
+rozwiazWiezWykonawcow: więź ma dwa końce. Zdjęcie roli samemu koordynatorowi
+zostawiłoby wykonawców z więzią do okna, które koordynatorem już nie jest.
+Zamiast odmawiać zdjęcia roli, drugi koniec doprowadza się do stanu
+zgodnego: wykonawca zostaje wykonawcą, ale bez koordynatora — stan
+dopuszczalny. Niepowodzenie nie cofa zdjęcia roli: rola została zdjęta,
+a więź jest następstwem, nie warunkiem.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_kompresja.go
+
+Dogniatanie zapisu obrazu po rachunku wkompilowanym: `image.convert` oddaje
+plik mniejszy o tyle, ile potrafią zdjąć optipng, jpegoptim, pngquant
+i cwebp.
+
+Dlaczego to jest osobny krok, a nie inny koder: kodery Go zapisują obraz
+poprawnie, ale nie szukają najlepszego zapisu — `image/png` bierze jeden
+filtr na wiersz i jeden przebieg deflate, `image/jpeg` zapisuje domyślne
+tablice Huffmana, `nativewebp` nie stroi predyktorów. Wymienione programy
+robią dokładnie jedną rzecz — przeliczają ten sam obraz na krótszy strumień
+bajtów — i robią to lepiej, bo na to je napisano.
+
+Ulepszenie, nie warunek: rodzina `image.*` liczy się biblioteką wkompilowaną
+i ma się liczyć dalej na maszynie, na której żaden z tych czterech programów
+nie stoi. Dlatego ten plik nie odmawia nigdy: brak programu, niezerowy kod
+wyjścia, wynik pusty albo wynik większy od źródła — każdy z tych przypadków
+oddaje bajty wejściowe bez zmiany. Obraz ma się zapisać także wtedy, gdy nie
+ma czym go dogniatać, a odmowa w tym miejscu zamieniłaby ulepszenie w wymóg
+wobec wdrożenia. Z tego samego powodu nie ma tu odmowy nazywającej brak,
+jaką niesie `zewnetrzne.BrakNarzedzia`: brak programu dogniatającego nie
+jest czymś, o czym Operator ma się dowiedzieć w chwili zapisu obrazu —
+dowiaduje się przy starcie, z sondy wykazu zależności.
+
+Bezstratnie znaczy bezstratnie: trzy z czterech programów przeliczają zapis
+bez ruszania pikseli — optipng szuka filtrów i dłuższego deflate, jpegoptim
+przelicza tablice Huffmana, cwebp w trybie `-lossless` stroi predyktory
+WebP. `pngquant` jest inny — sprowadza obraz do palety, więc piksele
+zmienia. Wchodzi wyłącznie wtedy, gdy żądanie wprost prosi o zapis stratny
+(`lossless: false`); przy braku pola i przy `lossless: true` nie jest
+w ogóle wołany. Pomylenie tych dwóch rzeczy oddałoby model prosząc o zapis
+bezstratny obraz o zmienionych barwach. Z tej samej strony patrzy druga
+reguła: dogniatanie nie dokłada pokolenia kompresji stratnej. WEBP stratny
+powstaje już programem, bo kodera stratnego w Go nie ma, więc przy
+`lossless: false` ten plik zostawia go nietkniętym — drugi przebieg kodera
+stratnego odjąłby jakość, nie bajty.
+
+narzedziePngquant: zapis jest stratny, sprowadza obraz do palety zamiast
+przeliczać zapis bez ruszania pikseli, jak pozostałe trzy programy.
+
+dogniecZapisObrazu: nie zwraca błędu żadną drogą — to jest istota tego kroku.
+Wołający nie ma tu czego obsłużyć: zapis obrazu już się udał, a ten krok może
+go wyłącznie skrócić.
+
+Paleta idzie po optipng: pngquant oddaje plik palety, który optipng jeszcze
+skraca, a odwrotna kolejność marnuje pierwszy przebieg.
+
+`--dest` żąda katalogu, nie pliku, i zachowuje nazwę źródła — dlatego nazwa
+wejścia i wyjścia jest ta sama, a różni je katalog.
+
+WEBP stratny powstaje już programem (`policzProgramem`), bo kodera stratnego
+w Go nie ma. Ponowne przepuszczenie gotowego pliku przez koder stratny byłoby
+drugą stratą na tych samych pikselach — dogniecenie ma skracać zapis, a nie
+dokładać pokolenie kompresji.
+
+Formaty bez programu dogniatającego (avif, tiff, gif) wychodzą takie, jakie
+przyszły. Milczenie jest tu właściwe: nie ma czego zgłaszać.
+
+przezPlik: pliki pośrednie są konieczne z tego samego powodu, co przy
+silnikach neuronowych (`pracowniaObrazu`) — optipng, pngquant i cwebp żądają
+ścieżki wyniku i nie umieją pisać na standardowe wyjście. jpegoptim by umiał,
+ale idzie tą samą drogą — jedna droga zamiast dwóch jest tu warta jednego
+zapisu na dysk.
+
+Wejście i wyjście mają tę samą nazwę w dwóch katalogach, bo jpegoptim
+wskazuje wynik katalogiem, a nie nazwą pliku; pozostałym trzem programom
+jest to obojętne.
+
+Kod niezerowy znaczy tu najczęściej „nie umiem tego skrócić" (pngquant
+kończy tak zapis, którego nie da się sprowadzić do palety w zadanej
+jakości). Zapis pierwotny jest wtedy właściwą odpowiedzią.
+
+Program, który zakończył się powodzeniem i nie zostawił pliku krótszego, nie
+miał czego skrócić. Oddanie jego wyniku mimo to powiększyłoby zasób w imię
+jego zmniejszenia.

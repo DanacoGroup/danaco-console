@@ -1,20 +1,4 @@
-// Odpowiedzialność pliku: wyłączenia pamięci w zasięgu (tabela
-// `wylaczenie_pamieci`, migracja 373).
-//
-// Wyłączenie NIE JEST usunięciem: ten plik nie ma ani jednego zapytania
-// dotykającego `wpis_pamieci_projektu`. Wpis wyłączony zostaje na miejscu
-// z nietkniętą treścią i wraca do kontekstu po usunięciu wiersza wyłączenia.
-// Tym różni się `memory.disable.set` od `memory.delete` i tym różni się ten plik
-// od `workspace_pamiec.go`.
-//
-// Wyłączenie NIE JEST też odpięciem. Odpięcie (`memory.detach`) zwęża zasięg
-// samego wpisu, więc zmienia wiersz pamięci; wyłączenie zostawia wpis nietknięty
-// i wstrzymuje go wyłącznie w zasięgu, w którym Operator go nie chce.
-//
-// Dwa byty wyłączane: pojedynczy wpis albo cały poziom pamięci. Schemat pilnuje,
-// żeby wiersz wskazywał dokładnie jeden z nich (CHECK migracji); tutaj pilnuje
-// tego `sprawdzBytWylaczenia`, żeby odmowa doszła do Operatora z nazwą braku,
-// a nie jako naruszenie warunku bazy.
+// Odpowiedzialność pliku: wyłączenia pamięci w danym zasięgu (tabela `wylaczenie_pamieci`, migracja 373).
 package dane
 
 import (
@@ -27,14 +11,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// WylaczeniePamieci to wiersz tabeli `wylaczenie_pamieci`.
+// WylaczeniePamieci to wiersz tabeli `wylaczenie_pamieci`, niosący jedno wyłączenie pamięci w zasięgu.
 type WylaczeniePamieci struct {
 	ID int64
-	// Identyfikator jest identyfikatorem kontraktu, nie numerem wiersza:
-	// zniesienie wyłączenia idzie nim z okna.
+	// Identyfikator jest identyfikatorem kontraktu, nie numerem wiersza; zniesienie idzie nim z okna.
 	Identyfikator string
-	// WpisIdentyfikator jest identyfikatorem kontraktu wyłączonego wpisu; pusty
-	// znaczy wyłączenie całego poziomu pamięci.
+	// WpisIdentyfikator jest identyfikatorem kontraktu wyłączonego wpisu; pusty znaczy cały poziom.
 	WpisIdentyfikator string
 	// PoziomPamieci jest wartością kontraktu (`MemoryLevel`); pusty znaczy
 	// wyłączenie pojedynczego wpisu.
@@ -45,22 +27,16 @@ type WylaczeniePamieci struct {
 	Zaktualizowano string
 }
 
-// RepozytoriumWylaczenPamieci jest kontraktem wyłączeń pamięci.
+// RepozytoriumWylaczenPamieci jest kontraktem wyłączeń pamięci dla warstw wyższych całej tej platformy.
 type RepozytoriumWylaczenPamieci interface {
-	// ZapiszWylaczeniePamieci zakłada wyłączenie albo oddaje zastane. Drugi wynik
-	// mówi, czy wiersz naprawdę powstał — wyłączenie powtórzone nie jest zmianą
-	// i nie ma czego rozgłaszać.
+	// ZapiszWylaczeniePamieci zakłada wyłączenie albo oddaje zastane; drugi wynik mówi, czy powstało.
 	ZapiszWylaczeniePamieci(ctx context.Context,
 		wylaczenie WylaczeniePamieci) (WylaczeniePamieci, bool, error)
-	// ZniesWylaczeniePamieci usuwa wyłączenie wskazane identyfikatorem kontraktu.
-	// Drugi wynik mówi, czy było co znosić.
+	// ZniesWylaczeniePamieci usuwa wyłączenie po identyfikatorze; drugi wynik mówi, czy było co znosić.
 	ZniesWylaczeniePamieci(ctx context.Context, identyfikator string) (bool, error)
-	// WylaczeniePamieciPoBycie odnajduje wyłączenie złożone z bytu i zasięgu —
-	// drogę zniesienia bez znajomości identyfikatora, którą idzie okno wyciszające
-	// to samo, co wcześniej wyciszyło.
+	// WylaczeniePamieciPoBycie odnajduje wyłączenie złożone z bytu i zasięgu, bez identyfikatora.
 	WylaczeniePamieciPoBycie(ctx context.Context, wzor WylaczeniePamieci) (WylaczeniePamieci, bool, error)
-	// WylaczeniaPamieci zwraca wyłączenia zawężone niepustymi polami wzoru.
-	// Wzór pusty znaczy wszystkie wyłączenia, nie żadne.
+	// WylaczeniaPamieci zwraca wyłączenia zawężone niepustymi polami wzoru; wzór pusty zwraca wszystkie.
 	WylaczeniaPamieci(ctx context.Context, wzor WylaczeniePamieci) ([]WylaczeniePamieci, error)
 }
 
@@ -109,15 +85,13 @@ type repozytoriumWylaczenPamieci struct {
 	zapytania *zapytania
 }
 
-// noweRepozytoriumWylaczenPamieci zakłada magazyn wyłączeń nad zapytaniami zestawu.
+// noweRepozytoriumWylaczenPamieci zakłada magazyn wyłączeń pamięci nad zapytaniami tego całego zestawu.
 func noweRepozytoriumWylaczenPamieci(z *zapytania) *repozytoriumWylaczenPamieci {
 	return &repozytoriumWylaczenPamieci{zapytania: z}
 }
 
-// ZapiszWylaczeniePamieci zakłada wyłączenie. Wyłączenie tego samego bytu w tym
-// samym zasięgu jest już zapisane, więc drugie żądanie oddaje wiersz zastany
-// i mówi, że zmiany nie było — „wyłączone dwa razy" nie jest stanem, który da
-// się znieść jednym ruchem.
+// ZapiszWylaczeniePamieci zakłada wyłączenie; wyłączenie tego samego bytu w tym samym zasięgu jest już
+// zapisane, więc drugie żądanie oddaje wiersz zastany.
 func (r *repozytoriumWylaczenPamieci) ZapiszWylaczeniePamieci(ctx context.Context,
 	wylaczenie WylaczeniePamieci) (WylaczeniePamieci, bool, error) {
 
@@ -155,9 +129,7 @@ func (r *repozytoriumWylaczenPamieci) ZapiszWylaczeniePamieci(ctx context.Contex
 		return WylaczeniePamieci{}, false, err
 	}
 	if !jest {
-		// Wiersz wstawiony i nieodnaleziony znaczy, że wskazanego wpisu pamięci
-		// nie ma — podzapytanie oddało wtedy NULL, a warunek schematu przestawił
-		// wiersz na wyłączenie poziomu. Milczenie byłoby tu ciszą udającą zapis.
+		// Wiersz wstawiony i nieodnaleziony znaczy, że wskazanego wpisu pamięci nie ma w bazie danych.
 		return WylaczeniePamieci{}, false,
 			fmt.Errorf("dane: wyłączenie pamięci %q zapisane i nieodczytane",
 				wylaczenie.Identyfikator)
@@ -165,7 +137,7 @@ func (r *repozytoriumWylaczenPamieci) ZapiszWylaczeniePamieci(ctx context.Contex
 	return zapisane, true, nil
 }
 
-// ZniesWylaczeniePamieci usuwa wiersz wyłączenia. Treści wpisu nie dotyka.
+// ZniesWylaczeniePamieci usuwa wiersz wyłączenia z bazy danych rdzenia; treści wpisu nie dotyka wcale.
 func (r *repozytoriumWylaczenPamieci) ZniesWylaczeniePamieci(ctx context.Context,
 	identyfikator string) (bool, error) {
 
@@ -189,7 +161,7 @@ func (r *repozytoriumWylaczenPamieci) ZniesWylaczeniePamieci(ctx context.Context
 	return zmienione > 0, nil
 }
 
-// WylaczeniePamieciPoBycie odnajduje wyłączenie po bycie i zasięgu.
+// WylaczeniePamieciPoBycie odnajduje wyłączenie zapisane po bycie i jego zasięgu w bazie danych rdzenia.
 func (r *repozytoriumWylaczenPamieci) WylaczeniePamieciPoBycie(ctx context.Context,
 	wzor WylaczeniePamieci) (WylaczeniePamieci, bool, error) {
 
@@ -206,7 +178,7 @@ func (r *repozytoriumWylaczenPamieci) WylaczeniePamieciPoBycie(ctx context.Conte
 	return odczytajJednoWylaczenie(wiersz)
 }
 
-// WylaczeniaPamieci zwraca wyłączenia zawężone niepustymi polami wzoru.
+// WylaczeniaPamieci zwraca wyłączenia zawężone niepustymi polami przekazanego wzoru tego wyszukiwania.
 func (r *repozytoriumWylaczenPamieci) WylaczeniaPamieci(ctx context.Context,
 	wzor WylaczeniePamieci) ([]WylaczeniePamieci, error) {
 
@@ -245,7 +217,7 @@ func (r *repozytoriumWylaczenPamieci) WylaczeniaPamieci(ctx context.Context,
 	return wykaz, nil
 }
 
-// wylaczeniePoIdentyfikatorze zwraca jedno wyłączenie po identyfikatorze kontraktu.
+// wylaczeniePoIdentyfikatorze zwraca jedno wyłączenie wskazane identyfikatorem kontraktu w bazie danych.
 func (r *repozytoriumWylaczenPamieci) wylaczeniePoIdentyfikatorze(ctx context.Context,
 	identyfikator string) (WylaczeniePamieci, bool, error) {
 
@@ -287,7 +259,7 @@ func odczytajJednoWylaczenie(wiersz skaner) (WylaczeniePamieci, bool, error) {
 	return wylaczenie, true, nil
 }
 
-// odczytajWylaczeniePamieci składa strukturę z jednego wiersza wyniku.
+// odczytajWylaczeniePamieci składa pełną strukturę wyłączenia z jednego wiersza wyniku tego zapytania.
 func odczytajWylaczeniePamieci(wiersz skaner) (WylaczeniePamieci, error) {
 	var wylaczenie WylaczeniePamieci
 	var poziomPamieci, zasieg string

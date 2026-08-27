@@ -5726,3 +5726,28 @@ obie nazwy naraz złamałby klucz główny pary pliku i etykiety: wiersz stary u
 nowemu zamiast wywracać całą zmianę.
 ## budowa/server/internal/dane/slownik_pamiec.go
 Zapis pamięci dokłada wiersz bez czytania bieżącej treści panelu w edycji: to wywołujący rozstrzyga, kiedy para segmentów jest zatwierdzona i warta zapamiętania. Dopasowanie podpowiedzi jest przybliżone tylko na tyle, na ile pozwala baza: kontrakt chce dopasowania po podobieństwie, nie po równości, a silnik bazy bez rozszerzenia nie ma wbudowanej miary podobieństwa napisów, więc wyszukiwanie podpowiedzi wykonuje dopasowanie podciągu segmentu źródłowego, nie dopasowanie znaczeniowe ani odległość edycyjną. Czas jest liczbą milisekund epoki, tym samym wzorem co w pozostałych tabelach czasowych repozytorium.
+
+## budowa/server/internal/dane/pamiec_wylaczenia.go
+Wyłączenie nie jest usunięciem: ten plik nie ma ani jednego zapytania
+dotykającego wpisów pamięci projektu. Wpis wyłączony zostaje na miejscu
+z nietkniętą treścią i wraca do kontekstu po usunięciu wiersza wyłączenia.
+Tym różni się wyłączenie pamięci od jej usunięcia i tym różni się ten plik
+od pliku pamięci obszaru roboczego.
+
+Wyłączenie nie jest też odpięciem. Odpięcie zwęża zasięg samego wpisu,
+więc zmienia wiersz pamięci; wyłączenie zostawia wpis nietknięty
+i wstrzymuje go wyłącznie w zasięgu, w którym operator go nie chce.
+
+Dwa byty wyłączane: pojedynczy wpis albo cały poziom pamięci. Schemat
+pilnuje, żeby wiersz wskazywał dokładnie jeden z nich więzem
+sprawdzającym; tutaj pilnuje tego osobna funkcja sprawdzająca byt
+wyłączenia, żeby odmowa doszła do operatora z nazwą braku, a nie jako
+naruszenie warunku bazy.
+
+Wyłączenie tego samego bytu w tym samym zasięgu, zapisane powtórnie, nie
+jest zmianą i nie ma czego rozgłaszać — wyłączenie dwa razy nie jest stanem,
+który da się znieść jednym ruchem.
+
+Podzapytanie wskazanego wpisu pamięci oddało wtedy pustą wartość, a warunek
+schematu przestawił wiersz na wyłączenie poziomu. Milczenie byłoby tu ciszą
+udającą zapis.

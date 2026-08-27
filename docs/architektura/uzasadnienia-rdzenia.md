@@ -5618,3 +5618,12 @@ modelowi wywołać jej dalej.
 
 Pozycja bez wiersza zakresu przechodzi, ponieważ platforma niczego nie
 zawęża z góry — zawężenie powstaje wyłącznie z zapisanego zakresu.
+
+## budowa/server/internal/core/handlers_wywolywacz.go
+Rodzina jest przekrojowa: wywoływacz otwiera się z dowolnego miejsca platformy, a nie z jednego
+okna. Nastawa jest więc własnością rdzenia, choć samo przechwycenie klawiszy należy do powłoki
+programu okiennego — adapter rozstrzyga ten podział i mówi o nim wprost w odpowiedzi. Zdarzeń
+rodzina nie ma: zmiana skrótu jest zmianą nastawy, a o zmianach nastaw mówi rodzina config.*.
+Osobne zdarzenie byłoby drugą drogą tej samej wiadomości. Port niewypełniony nie rejestruje
+niczego: obie komendy odpowiedzą wtedy kodem nieznanej pozycji, a pozostałe domeny pracują bez
+zmian.

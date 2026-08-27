@@ -28,7 +28,7 @@ func (a *adapterNarzedziArchiwum) Rozpakuj(ctx context.Context,
 		return shared.ArchiveUnpackResponse{}, err
 	}
 
-	// Cel rozstrzygamy przed rozpakowaniem, bo od niego zależy nośnik kwarantanny.
+	// Cel rozstrzyga się przed rozpakowaniem, bo od niego zależy nośnik kwarantanny.
 	var cel string
 	doMagazynu := bezWartosci(z.TargetPath)
 	podstawaKwarantanny := a.katalogDanych
@@ -153,7 +153,7 @@ func (a *adapterNarzedziArchiwum) wolajRozpakowanie(ctx context.Context, archiwu
 
 // jedynyPlik oddaje jedyny plik katalogu. Warstwa `gzip` niesie dokładnie jeden
 // strumień, więc cokolwiek innego niż jeden plik znaczy, że rozpakowanie poszło
-// inaczej, niż zakładamy — a wtedy lepiej odmówić niż zgadywać, który wziąć.
+// inaczej, niż zaklada się — a wtedy lepiej odmówić niż zgadywać, który wziąć.
 func jedynyPlik(katalog string) (string, error) {
 	wpisy, err := os.ReadDir(katalog)
 	if err != nil {

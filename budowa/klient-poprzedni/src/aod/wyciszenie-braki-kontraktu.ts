@@ -1,43 +1,20 @@
+/**
+ * Wykaz braków stojących przy wyciszeniu nakładki wraz ze zdaniami, którymi okno
+ * nazywa je w menu wyciszania. Nazwy komend pochodzą z wyliczenia `Command`, więc
+ * zmiana nazwy w kontrakcie przechodzi przez kompilację.
+ */
 import { Command, KOMENDY } from '../../../shared/contract';
 
 /**
- * Czego kontrakt nie niesie przy wyciszeniu nakładki — nazwane wprost, w oknie,
- * a nie zasłonięte uprzejmym milczeniem.
- *
- * Stan zmierzony po dobudowie wyciszenia w rdzeniu (17.08.2026): kontrakt niesie
- * już wyciszenie nakładki jako BYT RDZENIA — `AodMute` wraz z rodzajem, zakresem
- * i chwilą końca, komendy `aod.mute.get` i `aod.mute.set`, zdarzenie
- * `aod.mute.changed` rozgłaszane na pozostałe powłoki, nośnik sygnału klas
- * zdarzeń (`aod.signal.report`, `aod.signal.list`), moduł przy `AodStatus`
- * i `AodSuggestion` oraz kategorię ustawień „Always On Display" z pozycją
- * „reguły wyciszania".
- *
- * Zostaje JEDEN brak i jest po stronie nakładki, nie kontraktu: wołacze tego
- * okna nadal piszą do magazynu stanowiska, więc wyciszenie założone tutaj nie
- * dojdzie do drugiej powłoki, dopóki magazyn nie zostanie przełożony na rdzeń.
- * Magazyn jest podawany (`MagazynWyciszen`) właśnie po to, żeby to przełożenie
- * nie ruszyło ani jednego wołacza.
- *
- * Wzorem `moduly/apps/braki-kontraktu.ts` i `aod/odmowy-aod.ts` zdanie mówi,
- * CZEGO brakuje i PO CZYJEJ stronie. Nazwy komend biorą się z `Command`, nie
- * z literału, więc zmiana nazwy w kontrakcie przechodzi przez kompilację.
- *
- * Ten plik NICZEGO nie obchodzi: nie wysyła komendy zastępczej i nie udaje
- * zapisu w rdzeniu. Wyciszenie jest dziś stanem okna i tak jest nazwane.
+ * Jedna pozycja braku wyciszenia: czynność widziana w menu wyciszania, treść
+ * brakująca oraz komenda, której wejście do kontraktu ten brak znosi.
  */
-
-/** Jedna pozycja braku wyciszenia. */
 export interface BrakWyciszenia {
   /** Czynność tak, jak widzi ją Operator w menu wyciszania. */
   czynnosc: string;
   /** Czego by trzeba — zdanie o bytach kontraktu, nie o kodzie nakładki. */
   czego: string;
-  /**
-   * Nazwa komendy, której wejście do kontraktu znosi ten brak. Pozycja z komendą
-   * już obecną w `KOMENDY` nie trafia do wykazu wcale. Pominięta znaczy brak
-   * leżący po stronie nakładki — takiego nie zniesie żadna komenda, tylko robota
-   * w tym drzewie.
-   */
+  /** Nazwa komendy, której wejście do kontraktu znosi ten brak. */
   komendaZnoszaca?: string;
 }
 
@@ -59,12 +36,20 @@ export const BRAKI_WYCISZENIA: readonly BrakWyciszenia[] = [
   },
 ];
 
-/** Komendy rodziny `aod.*`, które kontrakt niesie dziś — odczytane w czasie działania. */
+/**
+ * Oddaje komendy rodziny `aod.*`, które kontrakt niesie w chwili wywołania.
+ * Wykaz powstaje z odczytu stałej `KOMENDY`, więc nadąża za kontraktem bez
+ * przepisywania nazw komend do kodu nakładki.
+ */
 export function komendyNakladki(): readonly string[] {
   return [...(KOMENDY as readonly string[])].filter((komenda) => komenda.startsWith('aod.')).sort();
 }
 
-/** Braki nadal stojące — pozycja z komendą już wniesioną do kontraktu wypada. */
+/**
+ * Oddaje braki nadal stojące. Pozycja, której komenda znosząca weszła już do
+ * wykazu komend kontraktu, wypada z wyniku, a pozycja bez komendy znoszącej
+ * pozostaje w nim zawsze.
+ */
 export function brakiCzynne(): readonly BrakWyciszenia[] {
   return BRAKI_WYCISZENIA.filter(
     (brak) =>
@@ -73,7 +58,11 @@ export function brakiCzynne(): readonly BrakWyciszenia[] {
   );
 }
 
-/** Pełne zdanie jednego braku: czynność, czego brakuje, po czyjej stronie. */
+/**
+ * Składa pełne zdanie jednego braku: czynność, treść brakującą oraz stronę, po
+ * której brak leży. Stronę rozstrzyga obecność komendy znoszącej w wykazie
+ * komend kontraktu.
+ */
 export function zdanieBraku(brak: BrakWyciszenia): string {
   const strona =
     brak.komendaZnoszaca === undefined
@@ -84,11 +73,9 @@ export function zdanieBraku(brak: BrakWyciszenia): string {
 }
 
 /**
- * Zdanie zamykające menu wyciszania — jedno, krótkie, prawdziwe.
- *
- * Mówi, dokąd wyciszenie sięga (to okno) i dokąd nie sięga (pozostałe powłoki),
- * oraz po czyjej stronie jest brak. Zdanie zmienia się samo w chwili, w której
- * wołacze przestaną pisać do magazynu stanowiska: wykaz braków jest wtedy pusty.
+ * Składa zdanie zamykające menu wyciszania: podaje, dokąd wyciszenie sięga
+ * i dokąd nie sięga, oraz po czyjej stronie leży brak. Treść zdania wynika
+ * z wykazu braków czynnych, a wykaz pusty daje zdanie o zapisie w rdzeniu.
  */
 export function zdanieGranicyWyciszenia(): string {
   const braki = brakiCzynne();

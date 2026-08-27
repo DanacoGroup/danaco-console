@@ -512,3 +512,11 @@ dwadzieścia wierszy arkusza, a WebGL wnosi zależność, warstwę sterowników
 i ryzyko ekranu, który u odbiorcy nie wstanie. Scena stoi pod żetonem
 warstwy bramki, a nad wszystkim innym: przesłona logowania schodzi dopiero
 wtedy, gdy scena już stoi, więc żaden ekran nie mignie pomiędzy nimi.
+
+## budowa/klient-poprzedni/src/powloka/usuniecie-sesji.css
+Ramę modalu, nagłówek, ciało i stopkę niesie arkusz nakładki, a pas stanu
+arkusz drobnych elementów; ten arkusz dokłada wyłącznie to, czego biblioteka
+nie ma. Barwy pochodzą z żetonów motywu, więc oba motywy są obsłużone bez
+osobnych reguł. Szerokość modalu usunięcia jest liczona tym samym wzorem co
+pozostałe modale, więc na wąskim oknie zachowuje się jak każdy modal
+produktu.

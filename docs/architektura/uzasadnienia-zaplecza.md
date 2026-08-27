@@ -1998,3 +1998,8 @@ długości nagłówka, mimo że treściowo było wystarczające.
 Nagłówek skryptu zwięźle łączy trzy fakty osobnego akapitu źródłowego —
 przyczynę dowiązania, sposób działania i bezpieczeństwo wielokrotnego
 uruchamiania — w jedno zdanie mieszczące się w wymaganej długości nagłówka.
+
+## budowa/scripts/pokaz.sh
+Nagłówek skryptu połączono w jedno zdanie mieszczące cel i sposób działania;
+przykłady wywołania usunięto z nagłówka, ponieważ powtarzają treść widoczną
+w komunikacie końcowym skryptu i w opisie flagi zatrzymania.

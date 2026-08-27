@@ -1319,6 +1319,67 @@ kryterium odbioru. Granica jest kryterium odbioru **kazdego** terenu od dzis.
 
 ---
 
+## 19. Warstwa wspolna zmieniona przy oknie centrum dowodzenia
+
+**Data:** 2026-08-27 · **Stan:** obowiazuje
+
+**Kontekst.** Teren `centrum-poprawki` mial w rejestrze wykaz czterech plikow:
+`centrum-dowodzenia.html`, `centrum-dowodzenia.css`, `centrum-dowodzenia.js`,
+`danaco-anim-3d.css`. Rejestr stanowil wprost: warstwa wspolna **poza terenem**,
+a plan etapow — „zmiana w niej jest decyzja, nie poprawka okna".
+
+Praca dnia ruszyla czternascie plikow, z czego **dziewiec poza wykazem terenu**:
+
+| plik | co sie zmienilo |
+|---|---|
+| `zetony/zetony.css` | drabina powierzchni motywu jasnego przebudowana; nowe zetony pisma, wymiarow i kreski wyraznej |
+| `css/komponenty.css` | okolo dwudziestu nowych skladnikow i wariantow; naprawa dwoch sprzecznych regul tetna kropki godla; zdjecie zaleznosci biblioteki od klas okna |
+| `css/fundament.css` | wariant `.dn-separator--na-plotnie` |
+| `rama.css` | rodzina `.dn-pulpit`; zdjecie martwych selektorow `.cd-plotno` i nieuzywanego `.cd-boczny-pusty` |
+| `okno-robocze.css` | rodzina okna roboczego — nieuzyta, powstala pod Studio |
+| `okna/centrum-{kafle,obszar,dymki}.css` | przeniesienie wygladu do biblioteki |
+| `okna/talkin.css`, `05-okna/srodowiska/talkin.html` | zlozenie okna TalkIn z biblioteki, zdjecie bloku `<style>` |
+
+Powod byl jeden i wspolny: **norma zera**. Wyglad zdjety z okna musi wyladowac
+w bibliotece, inaczej nie zostaje zdjety, tylko przepisany. Nie da sie doprowadzic
+arkusza okna do zera bez dopisania skladnika do warstwy wspolnej.
+
+Motyw jasny to osobny powod. Zmierzone: drabina byla plaska (2,0 L\* miedzy tlem
+a panelem przy 8,3 w ciemnym) i **odwrocona** wobec ciemnego — karta czytala sie
+jako wglebienie, nie uniesienie. Naprawa lezy w warstwie zetonow i dotyczy
+kazdego okna w produkcie, nie centrum dowodzenia.
+
+**Rozwazone warianty.**
+
+1. Scalic tylko dwa pliki terenu, warstwe wspolna zostawic na galezi. Odrzucone
+   przez Wlasciciela: okno nie zadzialaloby na `main`, bo polowa jego wygladu
+   stoi w bibliotece.
+2. Nie scalac, oddac teren do kontroli i scalic po niej. Odrzucone przez
+   Wlasciciela.
+3. Scalic calosc, naruszenie zakresu odnotowac tutaj. **Przyjete.**
+
+**Decyzja Wlasciciela.** Calosc pracy dnia wchodzi do `main` (rewizja `c3df4e7`,
+scalenie prostym przewinieciem, 82 rewizje). Zmiana warstwy wspolnej jest
+zaakceptowana wraz z nia.
+
+**Konsekwencje.**
+
+- Warstwa wspolna weszla **bez kontroli sesji innej niz wykonawcza**, ktorej
+  rejestr terenow wymaga. Kontrola nie zostala przeprowadzona.
+- Skutek obejmuje wszystkie okna. Zmierzone po scaleniu na drzewie `main`:
+  axe 0 krytycznych i 0 powaznych dla instalatora, wejscia, centrum i przedsionka;
+  TalkIn 2/13, Studio 0/7; zasada trzech stref dotrzymana w obu motywach; zero
+  odpowiedzi 4xx. Poza tymi szescioma oknami **nic nie bylo mierzone** — trzydzieści
+  okien warstwy projektowej stoi niesprawdzonych wobec nowej drabiny jasnego.
+- Trzeci stopien pisma w motywie jasnym przestal byc ranga barwy: `--dn-tekst-3`
+  zszedl na szczebel drugiego, bo na poprzednim dawal 3,80 : 1. Rozroznienie niesie
+  pismo maszynowe i stopien 12 px. Piec obejsc rozsianych po bibliotece stracilo
+  powod istnienia i czeka na zdjecie.
+- Straznik normy zera byl do dzis martwy w trzech miejscach; kazdy jego wynik
+  „czysto" sprzed 2026-08-27 jest bez wartosci.
+
+---
+
 ## Pozycje otwarte
 
 Pozycja otwarta czeka na rozstrzygnięcie Właściciela i blokuje wskazany etap.

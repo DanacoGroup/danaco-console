@@ -194,3 +194,34 @@ prostokąt, więc wynik nie zawiera już wyciętych znaków.
 Podpis dokumentu nazywa się wprost podpisem tego produktu, nie podpisem
 kwalifikowanym: podpis, o którym Operator sądziłby, że niesie skutek prawny
 podpisu kwalifikowanego, byłby gorszy niż brak podpisu.
+
+## skutek_przegladarki_test.go
+
+Sprawdziany tego pliku nie kończą się na odpowiedzi komendy modułu Browser
+oznaczonej jako udana. Każdy schodzi o poziom niżej niż ta odpowiedź: albo do
+bazy — drugim, niezależnym połączeniem do tego samego pliku, którym jedzie
+rdzeń — albo do magazynu treści, gdzie liczy bajty leżące pod odwołaniem.
+Powód jest znany z doświadczenia tego produktu: odpowiedź udana z pustym
+wykazem wygląda dokładnie tak samo jak odpowiedź udana z wykazem prawdziwym,
+a klient czyta samą odpowiedź.
+
+Sprawdziany zależne od zrzutu ekranu albo silnika przeglądarki wymagają
+programu Chromium wpisanego do sondy zależności zewnętrznych. Na maszynie bez
+tego programu pomijają się, nazywając powód pominięcia; pozostałe sprawdziany
+biegną zawsze, ponieważ stoją wyłącznie na bibliotece standardowej.
+
+Test monitora sprawdza różnicę treści miarą liczby wierszy dodanych
+i usuniętych, nie samym znacznikiem zmiany wziętym z odpowiedzi komendy bez
+pokrycia w treści.
+
+Test audytu dostępności na stronie z naruszeniem obrazka bez tekstu
+zastępczego sprawdza, że zgłoszenie niesie selektor węzła — audyt bez
+wskazania węzła nie mówi, co poprawić. Test audytu strony zgaszonej sprawdza,
+że zero naruszeń na stronie, która przestała odpowiadać po przejściu, wraca
+odmową, nie wynikiem zerowym: zero naruszeń na nieistniejącej stronie byłoby
+brakiem pomiaru podanym jako pomiar.
+
+Test odmowy bez programu audytującego zwęża ścieżkę wyszukiwania do katalogu
+z samą przeglądarką, aby odróżnić brak programu audytującego od braku
+przeglądarki — odmowa o przeglądarce mówiłaby o innym braku niż ten, który
+sprawdzian bada.

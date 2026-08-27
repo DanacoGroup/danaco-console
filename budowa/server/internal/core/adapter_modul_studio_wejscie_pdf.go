@@ -107,7 +107,7 @@ func wejscieCzytajPdf(kodDokumentu string, bajty []byte, zakresStron string,
 	wynik.Bilans.PagesWithoutText = wejscieWskaznikCalkowity(bezTekstu)
 
 	if zeTekstem == 0 {
-		// PDF ze samych skanów: konwersji nie udajemy, dokument idzie do rozpoznania pisma.
+		// PDF ze samych skanów: konwersji nie udaje się, dokument idzie do rozpoznania pisma.
 		wynik.SamSkan = true
 		wynik.Bilans.NeedsTextRecognition = wejscieWskaznikLogiczny(true)
 		wynik.Bilans.Note = wejscieWskaznikTekstu("dokument PDF nie ma warstwy tekstowej na " +
@@ -307,7 +307,7 @@ func wejscieWierszeStronyPdf(strumien string) []string {
 	}
 	domknijWiersz()
 
-	// Wiersze łączymy bez rozdzielania słów: `TJ` rozbija wyraz na kilka napisów, dosuwając odstępy liter.
+	// Wiersze łączy się bez rozdzielania: `TJ` rozbija wyraz na kilka napisów z odstępami.
 	sprzatniete := make([]string, 0, len(wiersze))
 	for _, wiersz := range wiersze {
 		sprzatniete = append(sprzatniete, strings.TrimRight(wiersz, " \t"))

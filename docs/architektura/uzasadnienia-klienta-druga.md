@@ -3248,3 +3248,16 @@ odmowy dotyczyłyby innego zapytania niż to, które właśnie zawiodło.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/opis-okna.ts
 Moduł i kanał modelu w opisie początkowym zostają puste, ponieważ pierwsza pozycja wykazu znanych modułów jest kodem środowiska, nie modułu, a pierwsza pozycja wykazu rodzajów kanału jest rodzajem kanału, nie kodem wiersza rejestru — podstawienie którejkolwiek wartości wskazywałoby moduł spoza katalogu i kanał, którego rejestr nie zna, więc pierwsza wypowiedź wracałaby odmową. Widok nie zna rejestru rdzenia w chwili zakładania okna, dlatego moduł i kanał podstawia dopiero pierwszy kanał czynny.
+
+## budowa/klient-poprzedni/src/powloka/sekcje-panelu.ts
+Moduł podaje własne sekcje oraz identyfikator panelu; pętlę odczytaj układ, zmień, zapisz, przerysuj
+niesie ten plik. Układ adresuje parę okno-panel, więc bez wskazanego okna zmiana zostaje miejscowa
+i mówi to wprost. Widok przerysowuje się układem oddanym przez rdzeń w polu odpowiedzi, nie układem
+wysłanym — rozjazd obu jest wtedy widoczny od razu. Zapis, który dałby układ tożsamy z bieżącym, nie
+idzie.
+
+## budowa/klient/src/wejscie/ekrany/dostep.ts
+Dziesięć odsłon leży razem, bo dzielą oprawę — belkę, kolumnę tożsamości i zakładki nad treścią. Zakładki niosą wyłącznie dwie drogi równorzędne: logowanie i rejestrację. Odzyskiwanie dostępu nie jest trzecią drogą — jest wyjściem z logowania, więc w zakładkach zostaje zaznaczone logowanie.
+Odsłona konta założonego bez potwierdzenia nie stoi w prototypie. Wymusza ją reguła dziedzinowa: rejestracja bez konta nadawczego kończy się wejściem hasłem, a okno ma wtedy nazwać adres, którego nikt nie potwierdział.
+Prototyp stawia w miejscu długości i ważności drogi potwierdzenia wartości przykładowe; okno bierze wartości prawdziwe z pomiaru na rdzeniu.
+Cały tor odzyskiwania dostępu stał tak w prototypie od pierwszego kroku.

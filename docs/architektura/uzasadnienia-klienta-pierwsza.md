@@ -1680,3 +1680,13 @@ pozycja po pozycji.
 
 Emblematy środowisk są znakami własnymi budowy i nie pochodzą z zestawu Lucide,
 więc nie da się ich podmienić aktualizacją biblioteki ikon.
+
+## budowa/klient-poprzedni/src/moduly/developer/stany-okna.ts
+
+Stan błędu jest rozłączny ze stanem pustki. Okno, które po odmowie odczytu
+pokazuje puste drzewo, mówi Operatorowi, że katalog jest pusty, zamiast
+powiedzieć, że drzewa nie udało się odczytać.
+
+Pustka bywa w tym module stanem poprawnym: repozytorium bez zmian do
+zatwierdzenia nie jest usterką, więc pusty wykaz nie może być pokazywany jako
+niepowodzenie.

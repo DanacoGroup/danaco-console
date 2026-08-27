@@ -1,16 +1,4 @@
-/* ============================================================================
-   SKŁADNIK — ODSYŁACZ POMOCY
-   ----------------------------------------------------------------------------
-   Czynność, nie adres — otwiera objaśnienie w oknie, nie prowadzi na zewnątrz.
-   Dlatego niesie go przycisk, a nie odnośnik: klawiatura i czytnik ekranu mają
-   dostać przycisk. Podkreślenia w spoczynku nie ma, bo odsyłacz stoi samodzielnie,
-   poza tokiem zdania.
-
-   Właściwości:
-     klucz      klucz katalogu — treść odsyłacza
-     dane       atrybuty `data-*`
-     naOtwarcie wywołanie zwrotne
-   ============================================================================ */
+/* Odsyłacz pomocy jest przyciskiem, nie odnośnikiem, ponieważ otwiera objaśnienie w oknie zamiast prowadzić na zewnątrz, a klawiatura i czytnik ekranu mają otrzymać rolę przycisku. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

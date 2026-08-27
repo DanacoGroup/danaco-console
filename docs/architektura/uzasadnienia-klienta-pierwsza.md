@@ -5690,3 +5690,11 @@ w pasku narzędzi Explorera i znika przy każdym nowym odczycie wykazu. Karta
 zgodna (bez pozycji do zgłoszenia) zachowuje przycisk i po naciśnięciu mówi,
 że zawężać nie ma do czego — wygaszenie przycisku robiłoby bramę tam, gdzie
 jest wynik pomiaru.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/okno-diagnostics-center.ts
+
+Diagnostics Center jest oknem wiodącym modułu Diagnostics: przegląd zagregowanego stanu systemu i uruchomienie analizy, punkt wejścia agregujący Logs Viewer oraz Errors Panel. Uruchomienie analizy jest jedynym przyciskiem sprawczym widoku. Po udanym biegu okno zapisuje identyfikator analizy do stanu, a panel rekomendacji pyta o rekomendacje tej analizy po jej identyfikatorze. Zakres czasu idzie do stanu modułu, bo Logs Viewer i Errors Panel jadą tym samym zakresem. Druga subskrypcja zdarzenia zmiany analizy tu nie stoi: stan diagnostyki sam nasłuchuje zdarzenia i filtruje po analizie bieżącej, oknu wystarcza jego własny nasłuch zmiany stanu.
+
+Skróty zakresu czasu obejmują ostatnią godzinę, dzień, tydzień oraz zakres własny. Pozycja bez okna znosi zawężenie: zakres pusty jest stanem poprawnym modułu, nie brakiem. Skrót nie liczy niczego, czego nie widać: wyliczoną chwilę wpisuje w pola początku i końca, więc Operator czyta z okna dokładnie te liczby, które idą do rdzenia.
+
+Rdzeń nie honoruje dziś dwóch pól żądania analizy: uruchomienie analizy dobiera błędy wyłącznie zakresem czasu, a pole porównania migawki nie ustawia się nigdy, więc identyfikator analizy porównywanej nie pojawi się w odpowiedzi nawet wtedy, gdy porównywana analiza istnieje. Potwierdzenie zawsze udane robiłoby z tych dwóch pól bez skutku pola pozornie działające. Zdanie potwierdzenia mówi więc liczbami z odpowiedzi, a każde pominięte pole żądania wychodzi na wierzch tonem nieudanym. Gdy rdzeń zacznie te pola honorować, zastrzeżenia znikną same, bo nic o zachowaniu rdzenia nie jest tu wpisane na sztywno.

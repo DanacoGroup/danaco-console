@@ -2544,3 +2544,17 @@ każdej nowej wersji. Plik niezaindeksowany albo o treści nietekstowej nie
 znika z wyszukiwania, ponieważ dopasowanie nazwy jest osobnym członem
 alternatywy, nie warunkiem dodatkowym zależnym od obecności wiersza w
 indeksie.
+
+## budowa/server/internal/transport/serwer_test.go
+
+Sprawdziany warstwy nasłuchu idą przez prawdziwe gniazdo, nie przez atrapę
+biblioteki, ponieważ wszystko, co w tej warstwie potrafi zawieść, zawodzi na
+styku dwóch pętli, gniazda i rejestru połączeń — dokładnie tam, gdzie atrapa
+niczego by nie odwzorowała. Serwer wstaje na porcie wskazanym przez system,
+więc sprawdziany idą równolegle i nie biją się o port.
+
+W sprawdzianie TestRdzenNiepodlaczonyOddajeOdmoweZamiastCiszy typ odpowiedzi
+jest typem komendy, nie zdarzeniem *.unknown: komenda kontraktowa została
+rozpoznana przez rejestr transportu, więc odmowa wraca pod jej własną nazwą.
+Zdarzenie obszaru dostaje wyłącznie typ spoza kontraktu. Dla klienta rozstrzyga
+i tak stan wraz z kodem, po których wie, że rdzeń uchwytu nie ma.

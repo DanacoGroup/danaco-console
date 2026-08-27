@@ -1,6 +1,5 @@
-/* ============================================================================
-   SKŁADNIK — LISTA ETAPÓW POSTĘPU
-   ----------------------------------------------------------------------------
+/* Składnik listy etapów postępu przedstawia przebieg zapisu instalacji rozbity na kolejne etapy wraz z ich stanem i bieżącą czynnością.
+
    Przebieg zapisu rozbity na etapy. Stan etapu niesie znak I słowo naraz:
    ✓ gotowe, wskaźnik pracy w toku, pusty pierścień oczekuje — stan nigdy nie
    stoi na samej barwie. Opis pod nazwą mówi, co dzieje się z komputerem.
@@ -12,8 +11,7 @@
      naglowek   klucz katalogu — nagłówek bloku (opcjonalny)
      etapy      klucz katalogu — tablica { nazwa, opis, licznik, pozostalo }
      stany      klucz katalogu — słowa stanów { gotowe, wToku, oczekuje }
-     poczatkowe tablica stanów ('gotowe' | 'w-toku' | 'oczekuje') na start
-   ============================================================================ */
+     poczatkowe tablica stanów ('gotowe' | 'w-toku' | 'oczekuje') na start */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst;

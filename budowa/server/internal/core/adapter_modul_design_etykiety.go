@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: nadawanie etykiet zasobom Assets Panel —
-// `design.asset.tag.set` na typie `*adapterDesignu` zadeklarowanym w
-// `adapter_modul_design.go`. Jedno wypełnienie portu, plik osobny wedle
-// odpowiedzialności, tak jak `adapter_modul_design_kompozycje.go`.
-//
-// Komenda domyka drogę zapisu etykiet: `design.asset.list` zawęża wykaz polem
-// `tags`, a warstwa danych niesie `UstawEtykietyZasobu`, więc brakowało
-// wyłącznie przejścia komenda → uchwyt → baza. Własnej migracji ta komenda nie
-// potrzebuje.
-//
-// Pusty zestaw etykiet jest wartością, nie brakiem żądania: `tags: []` znaczy
-// „zdejmij wszystkie etykiety” i jest drogą udaną. Odmowa należy się wyłącznie
-// zasobowi, którego rdzeń nie zna — pomylenie tych przypadków odebrałoby
-// Operatorowi jedyny sposób odetykietowania zasobu, więc pustka nie jest tu
-// sprawdzana ani odrzucana.
+// Odpowiedzialność pliku: nadawanie etykiet zasobom panelu zasobów —
+// `design.asset.tag.set` na typie `*adapterDesignu`. Pusty zestaw etykiet
+// jest wartością, nie brakiem żądania: `tags: []` znaczy zdejmij wszystkie.
 package core
 
 import (
@@ -25,18 +13,7 @@ import (
 )
 
 // UstawEtykietyZasobu podmienia komplet etykiet zasobu na nadesłany —
-// obsługuje `design.asset.tag.set`. Semantyka wymiany (nie dokładania) jest
-// zapisana w kontrakcie i wykonana w jednej transakcji warstwy danych, więc
-// zasób nie zostaje przejściowo bez etykiet, gdy zapis padnie w połowie.
-//
-// Odpowiedź niesie etykiety odczytane z bazy, nie echo żądania: warstwa danych
-// pomija wartości puste i zwraca zestaw uporządkowany, więc odesłanie `z.Tags`
-// wprost mówiłoby o stanie, którego w bazie nie ma. Drugi odczyt jest ceną
-// prawdy o skutku.
-//
-// PromptId zostaje pusty z tego samego powodu, co przy `Zasoby`: repozytorium
-// nie ma przekładu klucza wiersza promptu na kod kontraktu — pole nie jest
-// zgadywane.
+// obsługuje `design.asset.tag.set`, jedną transakcją warstwy danych.
 func (a *adapterDesignu) UstawEtykietyZasobu(ctx context.Context,
 	z shared.DesignAssetTagSetRequest) (shared.DesignAssetTagSetResponse, error) {
 
@@ -58,9 +35,7 @@ func (a *adapterDesignu) UstawEtykietyZasobu(ctx context.Context,
 }
 
 // czyBrakZasobuDesignu odróżnia „zasobu nie ma” od usterki odczytu bez
-// zamieniania tego w błąd. Woła to `design.asset.remove`, dla którego brak
-// zasobu jest odpowiedzią (`removed: false`), a nie odmową — reguła należy do
-// warstwy danych (`ErrBrakWiersza`) i ma jedno miejsce w module.
+// zamieniania tego w błąd, regułą warstwy danych (`ErrBrakWiersza`).
 func czyBrakZasobuDesignu(err error) bool {
 	return errors.Is(err, dane.ErrBrakWiersza)
 }

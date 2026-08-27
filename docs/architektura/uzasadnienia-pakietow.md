@@ -4946,3 +4946,16 @@ Fakt konfigurowalności na stronie głównej jest niezależny od rodzaju
 modułu: modułów, które go niosą, nie łączy jeden rodzaj i nie dałoby się
 ich z rodzaju wyprowadzić. Na zewnątrz wychodzi jako pole kontraktu
 przekładane warstwą nawigacji.
+
+## budowa/server/internal/dane/auth_sesje_bramki.go
+
+Sesja bramki nie jest kartą sesji: karta sesji opisuje pracę — rozmowę, okna, kolejki,
+projekt — i istnieje niezależnie od tego, czy ktokolwiek się zalogował, a wygaśnięcie
+wejścia karty pracy nie zabiera.
+
+Wykaz urządzeń liczy, czy urządzenie ma dziś ważny token, czyli czy unieważnienie sesji
+miałoby co odebrać.
+
+Unieważnienie sesji bramki: pusty napis w argumencie zdejmuje wyłączenie sesji bieżącej,
+więc jedno zapytanie obsługuje oba warianty — poza sesją bieżącą i wszystkie — zamiast
+rozjeżdżać się na dwie osobne ścieżki kodu.

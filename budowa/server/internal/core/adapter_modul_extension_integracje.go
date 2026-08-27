@@ -295,7 +295,7 @@ func (a *adapterRozszerzen) wynikWywolaniaRozszerzenia(ctx context.Context, wier
 
 // tekstWynikuNarzedzia wyciąga treść czytelną dla człowieka z odpowiedzi
 // `tools/call`. Protokół niesie ją w wykazie `content` — pozycje rodzaju `text`
-// składamy w jeden napis; brak takich pozycji daje pustkę, nie zmyśloną treść.
+// są składane w jeden napis; brak takich pozycji daje pustkę, nie zmyśloną treść.
 func tekstWynikuNarzedzia(wynik json.RawMessage) string {
 	var odpowiedz struct {
 		Content []struct {
@@ -1103,7 +1103,7 @@ func (a *adapterRozszerzen) WypiszAudyt(ctx context.Context,
 		return shared.ExtensionAuditListResponse{}, bladRozszerzenia(err)
 	}
 
-	// Uprawnienia czytamy raz na pozycję rozszerzenia, nie raz na wpis audytu.
+	// Uprawnienia są czytane raz na pozycję rozszerzenia, nie raz na wpis audytu.
 	uprawnieniaPozycji := map[string][]shared.ExtensionPermission{}
 	wpisy := make([]shared.ExtensionAuditEntry, 0, len(wiersze))
 	for _, wiersz := range wiersze {

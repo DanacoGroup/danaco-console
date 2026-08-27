@@ -4412,3 +4412,37 @@ Metoda czekaj otwiera własny uchwyt synchronizujący, żeby nie ruszać uchwytu
 os.Process, który oddaje metoda zwolnij; nieudane otwarcie oznacza, że proces już zniknął. Metoda
 posługuje się zapamiętanym identyfikatorem procesu, a nie identyfikatorem z os.Process, z tego samego
 powodu co dogląd: zwolnienie zeruje go na wartość minus jeden.
+
+## budowa/server/internal/dane/konta_rotacja.go
+Ten plik daje katalogowi dwie rzeczy: uporządkowaną listę kont, które w ogóle
+wolno wziąć, oraz trwały ślad tego, co pula już rozpoznała, wraz z miejscem
+na decyzję operatora o zawieszeniu konta. Repozytorium nie wygasza
+wyczerpania po czasie i nie wybiera konta bieżącego — robi to pula, która
+jedyna zna chwilę wywołania.
+
+Konta wyczerpane zostają na liście — o ich pominięciu rozstrzyga pula, która
+zna chwilę wywołania i chwilę odnowienia limitu.
+
+## budowa/server/internal/dane/konta_zapis.go
+Odwołanie do poświadczenia ma w tym pliku dokładnie dwie drogi — ustawienie
+poświadczenia jako wejście i jego odwołanie jako wyjście dla warstwy, która
+musi je rozwiązać w magazynie sekretów. Żaden odczyt wykazu ani żadna
+odpowiedź kontraktu tą kolumną nie jedzie.
+
+Kolejność niepodana przy zakładaniu konta zostaje nadana jako następna
+w obrębie rodzaju — pula rotacji dostaje porządek bez pytania operatora
+o liczbę.
+
+## budowa/server/internal/dane/konfiguracja.go
+Rozstrzyganie dziewięciu poziomów zasięgu należy do warstwy konfiguracji,
+właściciela pojęcia poziomu zasięgu. Brak wiersza oznacza wartość domyślną,
+nie odmowę działania, dlatego odczyt zwraca informację „nie ustawiono",
+a nie błąd.
+
+Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość,
+oś mówi, dla czego — dla platformy, dla modelu albo dla konta. Oś pusta
+znaczy oś platformy, tak samo jak domyślna wartość kolumny.
+
+Metody kontraktu opisują oś platformy. Oś modelu i konta obsługuje osobne
+rozszerzenie kontraktu; obie postaci wypełnia jedna implementacja, więc
+drugiego rozstrzygania nie ma.

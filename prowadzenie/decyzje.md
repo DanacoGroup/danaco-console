@@ -1244,6 +1244,13 @@ zadnych uciec w skrotowce zamiast tresci — takze „na przyklad" i „to jest"
 pisze sie pelnymi slowami. Tresc, ktora nie miesci sie w granicy pelnymi
 zdaniami, idzie do docs, nie w skrot.
 
+**Dopowiedzenie trzecie Wlasciciela (27.08, po poludniu).** Granica nie jest
+przeliczana proporcja — jest schodkowa: **kazdy plik ma 250 znakow**, a plik
+od pelnych dwoch tysiecy wierszy — 250 znakow za kazdy pelny tysiac
+(300 wierszy → 250; 1500 wierszy → 250; 2000 wierszy → 500). Kolumna
+„granica" w tabeli wzorca powyzej byla liczona proporcja i w tej czesci
+jest zniesiona; instrument wciela schodki.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

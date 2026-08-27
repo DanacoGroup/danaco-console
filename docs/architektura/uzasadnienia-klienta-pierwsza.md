@@ -5023,3 +5023,11 @@ i przekraczało próg objętości pliku.
 Wersję wskazuje identyfikator, a nie numer, bo tak przyjmuje ją komenda
 `agent.version.restore`. Numer jest porządkiem historii, nie tożsamością wersji: po
 przywróceniu numery rosną i ten sam numer znaczyłby co innego.
+
+## budowa/klient-poprzedni/src/moduly/browser/formularz-notatki.ts
+
+Błąd pola nie kasuje formularza: alert liniowy staje pod polem, pole pozostaje edytowalne, a wpisana treść zostaje na miejscu. Alert znika razem ze znacznikiem niepoprawności, ponieważ pole zdjęte z alertu, a wciąż oznaczone atrybutem `aria-invalid`, czytałoby się jako błędne bez powodu.
+
+Wypełnienie formularza treścią istniejącej notatki oddaje fałsz, gdy źródła notatki nie ma już w wykazie okna. Ster wraca wtedy do pozycji bez powiązania, a okno ma o czym powiedzieć. Ciche przełknięcie tej różnicy zamieniłoby zapis w notatkę o innym powiązaniu niż pierwowzór.
+
+Wybór źródła i modułu docelowego prowadzą dwa stery zamiast dwóch natywnych list wyboru: nastawa stoi na uchwycie, a mechanizm rozwijania jest jeden dla całego produktu (`komponenty/menu-drzewo.ts`). Podpis pozostaje przy każdym sterze, ponieważ oba stoją w rzędzie pól formularza, gdzie sama wartość nie mówi, czego dotyczy.

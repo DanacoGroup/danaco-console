@@ -6,6 +6,58 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
+### okno-do-uruchomienia
+
+Klient ma dziś 6382 wiersze TypeScriptu i **nie da się ich ani obejrzeć, ani
+spakować**: nie ma dokumentu, nie ma budowania, nie ma `dist/`. Powłoka Tauri
+czeka na `budowa/klient/dist`, którego nikt nie wytwarza. Teren zamyka tę lukę
+i daje pierwszą rzecz, którą Właściciel może kliknąć.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/okno-do-uruchomienia` z `main` |
+| **Wykaz plików** | `budowa/klient/` — dokument, nastawa budowania, `package.json`, `tsconfig.json` |
+| **Do czytania, bez zapisu** | `design/zasoby/` (arkusze i żetony), `design/05-okna/przeplyw/przeplyw-wejscia.html`, `budowa/desktop/src-tauri/tauri.conf.json` |
+| **Poza terenem** | `budowa/server/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/` |
+
+**Przedmiot.** Doprowadzić okno drogi wejścia do postaci, która **uruchamia się
+i daje się przeklikać** — a wynik budowania trafia tam, gdzie powłoka go szuka.
+
+Arkusze, których okno potrzebuje, wymienia prototyp w swoim nagłówku:
+`zetony/fonty.css`, `zetony/zetony.css`, `css/fundament.css`,
+`css/komponenty.css`, `wejscie.css`. **Kolejność wpięcia jest wiążąca** —
+`prototyp.css` nie wchodzi, bo należy do warstwy podglądu, nie produktu.
+
+**Arkuszy nie powielasz.** Warstwa projektowa ma jedno źródło w `design/zasoby/`
+i pozostaje poza tym terenem. Sposób ich wciągnięcia do pakietu jest pracą
+inżynierską — kopia przy budowaniu, dowiązanie albo import — ale skutkiem ma być
+**jedno źródło, nie dwa**. Powielony arkusz rozjedzie się przy pierwszej zmianie
+żetonu i jest uchybieniem odbioru.
+
+**Klient nie ma dziś ani jednej zależności produkcyjnej.** Jeśli budowanie ich
+wymaga, wchodzą wyłącznie jako narzędzie budowania, nie do pakietu — a wybór
+uzasadniasz w raporcie. Na maszynie stoją `vite`, `bun`, `pnpm` i `tsc`.
+
+**Kryteria odbioru.**
+
+1. Polecenie budowania wytwarza `budowa/klient/dist` — z przytoczonym wynikiem
+   uruchomienia i wykazem wytworzonych plików wraz z rozmiarami.
+2. Dwa przebiegi budowania dają ten sam wynik — wykazane sumą kontrolną.
+3. Okno **wyświetla się w przeglądarce**: zrzut ekranu odsłony łączenia,
+   rejestracji i logowania. Zrzuty odkładasz poza repozytorium.
+4. **Pełne przejście wobec żywego rdzenia**: połączenie, założenie konta,
+   logowanie, wejście do środowiska — z przytoczonym przebiegiem, wykonane
+   w przeglądarce, nie w sprawdzianie warstwy.
+5. Zero błędów konsoli i zero nieudanych żądań przy tym przejściu — wykazane
+   odczytem konsoli, przy sondzie dodatniej dowodzącej, że odczyt działa.
+6. Arkusze pochodzą z `design/zasoby/` i **nie są powielone** — wykazane
+   porównaniem sum kontrolnych źródła i tego, co w pakiecie.
+7. `tsc --noEmit` bez błędu; sprawdziany zastane (`26 z 26`, `7 z 7`, warstwy
+   fundamentu) dalej przechodzą.
+8. Zmiany wyłącznie w `budowa/klient/` — wykazane `git show --name-only`.
+9. Rzecz wymagająca rozstrzygnięcia wraca zgłoszeniem wraz z przyjętym
+   rozstrzygnięciem — nie wstrzymuje reszty.
+
 ### warsztat-kodu
 
 Osiem narzędzi stoi na maszynie i jest z rdzenia nieosiągalnych, choć **komendy,

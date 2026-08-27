@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: rzeczy, których używa cała dobudowa modułu
 // Automations — przekład chwili kontraktu na znacznik bazy, przedrostki
-// identyfikatorów nowych bytów, wpis do dziennika audytu i dobór przebiegu po
-// jego identyfikatorze.
-//
-// Dziennik audytu nie jest komendą, którą Operator woła. Jest skutkiem
-// UBOCZNYM czynności zmieniających: zapis definicji, publikacja, zmiana
-// harmonogramu, uruchomienie i przerwanie przebiegu zostawiają po sobie wpis.
-// Dlatego nanosi go rdzeń przy okazji czynności, a nie osobne żądanie klienta —
-// audyt, który trzeba jawnie zawołać, jest audytem, o którym się zapomina.
-//
-// Nieudany zapis audytu nie wywraca czynności, która się powiodła. Wpis audytu
-// opisuje fakt, a fakt już zaszedł: odmowa komendy z powodu dziennika mówiłaby
-// Operatorowi, że czynność się nie odbyła, choć się odbyła.
+// identyfikatorów, wpis do dziennika audytu i dobór przebiegu.
 package core
 
 import (
@@ -38,9 +27,8 @@ const (
 )
 
 // wykonawcaAudytu nazywa sprawcę czynności. Rdzeń pracuje na jednym koncie
-// Operatora i kontrakt nie niesie tożsamości w żądaniach modułu, więc wpisujemy
-// to, co jest prawdą: czynność wykonał Operator tej instalacji. Wartość
-// zmyślona (nazwisko, adres) byłaby zapisem audytu, któremu nie wolno wierzyć.
+// Operatora i kontrakt nie niesie tożsamości w żądaniach modułu, więc zapis
+// niesie prawdę: czynność wykonał Operator tej instalacji.
 const wykonawcaAudytu = "operator"
 
 // znacznikChwiliAutomatyzacji przekłada milisekundy epoki kontraktu na znacznik bazy.
@@ -53,7 +41,8 @@ func znacznikChwiliAutomatyzacji(milisekundy int64) string {
 	return time.UnixMilli(milisekundy).UTC().Format(formatZnacznikaBazy)
 }
 
-// znacznikChwiliWskazanejAutomatyzacji zdejmuje wskaźnik z pola opcjonalnego chwili.
+// znacznikChwiliWskazanejAutomatyzacji zdejmuje wskaźnik z pola opcjonalnego
+// chwili i przekłada na znacznik bazy, albo oddaje pustkę dla pola nieustawionego.
 func znacznikChwiliWskazanejAutomatyzacji(milisekundy *int64) string {
 	if milisekundy == nil {
 		return ""
@@ -76,7 +65,7 @@ func (a *adapterAutomatyk) zapisAudytu(ctx context.Context, automatykaID *int64,
 			wpis.Szczegoly = &zapis
 		}
 	}
-	// Skutek zapisu celowo pominięty: patrz nagłówek pliku.
+	// Skutek zapisu celowo pominięty: audyt nie wywraca czynności, która się powiodła.
 	_ = a.repozytorium.DopiszAudytAutomatyki(ctx, wpis)
 }
 
@@ -95,9 +84,7 @@ func (a *adapterAutomatyk) wierszPrzebiegu(ctx context.Context, kod string) (dan
 }
 
 // bladNieznanegoBytuAutomatyki odróżnia „bytu nie ma” od „odczyt się nie
-// powiódł”. Okno pokazuje wtedy inny komunikat i inaczej podpowiada Operatorowi.
-// Jedna funkcja na całą dobudowę, bo powód jest w niej zawsze ten sam:
-// Operator wskazał byt, którego w bazie nie ma.
+// powiódł”. Jedna funkcja na całą dobudowę, bo powód jest zawsze ten sam.
 func bladNieznanegoBytuAutomatyki(err error, powod string, wskazanie any) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

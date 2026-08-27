@@ -1,26 +1,4 @@
-/* ============================================================================
-   DANACO CONSOLE — STRONA GŁÓWNA · KARTA ŚRODOWISKA I KAFEL KOMPONENTU
-   ----------------------------------------------------------------------------
-   Jedna odpowiedzialność: wygląd dwóch bytów klikalnych strony głównej.
-
-   Oba powstają z jednej karty biblioteki `../komponenty/karta.css`. Ten arkusz
-   nie powtarza jej reguł — dokłada wyłącznie to, czego wymaga strona główna,
-   a czego biblioteka nie mogła przesądzić, bo nie zna ekranu.
-
-   Różnica krojów niesie znaczenie:
-     nagłówkowy 24/30 px = wejście do środowiska,
-     bazowy półgruby     = zbudowanie komponentu.
-   Dlatego kafel nie dostaje wariantu `--akcent`, a karta środowiska nie
-   dostaje wariantu `--komponent`. Wymiana klas zamieniłaby znaczenia.
-
-   Selektory są dwuklasowe (`.dn-karta-tytul.dn-strona__karta-tytul`), bo
-   nadpisują regułę biblioteki o tej samej wadze. Przy równej szczegółowości
-   rozstrzygałaby kolejność wczytania arkuszy, a ta nie jest własnością tego
-   katalogu.
-
-   Wartości pochodzą z żetonów `motyw/`. Barwą wyróżnienia jest sygnał —
-   jedyny akcent systemu; poświatę niesie `--dn-cien-sygnal`.
-   ============================================================================ */
+/* Arkusz niesie wygląd karty środowiska i kafla komponentu strony głównej, dokładając do karty biblioteki wyłącznie to, czego biblioteka nie mogła przesądzić bez znajomości ekranu. */
 
 /* ===========================================================================
    KARTA ŚRODOWISKA
@@ -152,6 +130,7 @@
 }
 
 /* Motto — trzy czasowniki trybu pracy, krojem bazowym */
+
 .dn-strona__karta-motto {
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-md);
@@ -221,6 +200,7 @@
 }
 
 /* Najechanie kafla pozostaje neutralne — żadnego sygnału */
+
 .dn-strona__kafel:hover .dn-strona__ikona-kafla,
 .dn-strona__kafel:focus-visible .dn-strona__ikona-kafla {
   background: var(--dn-obrys-subtelny);
@@ -244,6 +224,7 @@
 }
 
 /* Wezwanie pod etykietą kafla — najlżejszy wiersz tej linii */
+
 .dn-strona__kafel-wezwanie {
   font-family: var(--dn-ff-bazowa);
   font-size: var(--dn-fs-sm);

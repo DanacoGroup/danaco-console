@@ -2157,3 +2157,6 @@ Krok jest wskazywany w mapowaniu własnym kodem, a nie kluczem wiersza tabeli kr
 
 ## budowa/server/internal/store/migracja_248_terminal_klucze_ssh.sql
 Wykaz kluczy SSH nie jest sejfem: w wierszu stoi ścieżka klucza prywatnego na maszynie rdzenia, treść klucza publicznego i odcisk, nigdy materiał tajny. Klucz prywatny nie opuszcza dysku maszyny rdzenia ani przy wytworzeniu, ani przy wciągnięciu do wykazu przez wskazanie ścieżką. Kolumna hasła niesie jedną wartość logiczną informującą, że klucz jest chroniony hasłem, a samo hasło leży poza tą tabelą, w osobnym sejfie poświadczeń. Warunek jedności na kolumnie ścieżki zapobiega dwóm wpisom wskazującym ten sam plik, co byłoby nierozróżnialne w chwili usuwania pliku z dysku.
+
+## budowa/desktop/src-tauri/src/aktualizacja/probne.rs
+Testy sprawdzianu aktualizacji pracują na prawdziwych plikach: tworzą je, podmieniają przez zmianę nazwy i sprawdzają stan dysku, więc katalog próbny musi być prawdziwym katalogiem systemowym, nie atrapą w pamięci. Sprzątanie biegnie w implementacji `Drop`, więc uruchamia się również przy odwijaniu paniki, gdy test padnie w trakcie sprawdzenia. Katalogi dwóch testów nie mogą na siebie wpadać: testy biegną równolegle w jednym procesie i te same testy potrafią biec jednocześnie w dwóch drzewach roboczych, dlatego ścieżka niesie zarówno nazwę podaną przez test, jak i numer procesu.

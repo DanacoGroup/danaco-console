@@ -1946,3 +1946,25 @@ i o tym, czego kontrakt nie przewiduje wcale.
 Zdanie o torze nie orzeka o powodzie odmowy. Powód niesie opis odmowy wyjęty
 z odpowiedzi rdzenia, a słownik dokłada wyłącznie to, czego rdzeń o sobie nie
 mówi.
+
+## budowa/klient-poprzedni/src/moduly/research/badanie-ksiazka-kodow.ts
+
+Komenda zapisu książki kodów zapisuje ją w całości: pole kodów niesie stan po
+zmianie, więc żądanie złożone z samych kodów wpisanych teraz wymazałoby wszystkie
+dotychczasowe. Dlatego zapis idzie po odczycie i jest złączeniem, a nie
+podmianą. Zdanie odpowiedzi mówi osobno, ile kodów zostało zachowanych i ile
+dołożonych, ponieważ to jedyny sposób, żeby Operator rozpoznał wymazanie, gdyby
+rdzeń zapisał co innego.
+
+Kod istniejący rozpoznaje się po nazwie, bez względu na wielkość liter, ponieważ
+nazwa jest tym, co Operator wpisuje; identyfikator kodu nadaje rdzeń i Operator
+go nie zna. Kod dopisany jedzie z pustym identyfikatorem, tak samo jak nowe
+pytanie badawcze w komendzie zapisu pytania warsztatu.
+
+Definicja stoi w wierszu za znakiem rozdzielającym. Znak jest wyborem okna
+i okno mówi o nim wprost przy chwycie pola. Nazwa kodu bez definicji jest
+poprawna, ponieważ kontrakt ma pole opisu nieobowiązkowe.
+
+Zdjęcie kodu z książki jest osobną czynnością i okno mówi Operatorowi, że dziś
+jej nie ma. Kod zastany, którego Operator teraz nie wpisał, zostaje: wymazanie
+reszty byłoby skutkiem, którego nikt nie zamówił.

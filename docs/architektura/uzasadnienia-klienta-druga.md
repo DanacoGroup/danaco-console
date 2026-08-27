@@ -4370,3 +4370,6 @@ asystenta; przycisk zakładający taki profil byłby przyciskiem pewnej odmowy. 
 rdzeń dostanie magazyn. Zakładanie z formularza jest drogą drugą, obok kafla rodzaju: naciśnięcie kafla
 nadal otwiera moduł, w którym komponent się buduje. Formularz służy operatorowi, który wie, czego chce,
 i nie potrzebuje wchodzić do modułu po nazwę.
+
+## budowa/klient/src/wejscie/tresci.ts
+Plik przekazuje się tłumaczowi bez dostępu do kodu — nie ma tu ani znacznika, ani rozgałęzienia. Wartości w nawiasach klamrowych to miejsca na dane podstawiane w czasie działania; ich nazw nie tłumaczy się. Poza tym plikiem żaden plik drogi wejścia nie niesie łańcucha widocznego dla użytkownika — ani składnik, ani ekran, ani przebieg. Właściwość jest sprawdzalna: sprawdzian katalogu odrzuca każdy łańcuch spoza tego pliku, który niesie spację albo polski znak diakrytyczny.

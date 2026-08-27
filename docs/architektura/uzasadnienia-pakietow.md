@@ -3411,3 +3411,6 @@ Rejestr.Wyslij, dzięki czemu strumień nie niesie dwóch fragmentów błędu o 
 
 Stała AdapterObrazy stoi obok AdapterAPI, a nie zamiast niego: rodzaj kanału (`api`) mówi, jak kanał
 rozmawia, a adapter mówi, co oddaje.
+
+## budowa/server/internal/dane/ustawienia_osi.go
+Oś jest prostopadła do poziomu: poziom mówi, jak wąsko obowiązuje wartość, oś mówi, dla czego — dla platformy, dla modelu albo dla konta. Wersje metod bez osi opisują oś platformy i wywołują dokładnie ten sam kod, więc rozstrzyganie ma jedną implementację, nie dwie. Kolejność osi i ich pierwszeństwo trzyma pakiet konfiguracji rdzenia. Tabela os_zasiegu jest wyłącznie więzem klucza obcego dla kolumny ustawienie.os.

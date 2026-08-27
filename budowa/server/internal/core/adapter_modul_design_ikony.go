@@ -1,27 +1,6 @@
-// Odpowiedzialność pliku: osiem czynności ikon i krojów modułu Design —
-// `design.icon.*`, `design.favicon.build` i `design.font.*`. Katalog wzorów leży
-// w `adapter_modul_design_ikony_katalog.go`, złożenie kroju ikonowego
-// w `adapter_modul_design_ikony_kroj.go`, katalog krojów pisma
-// w `adapter_modul_design_kroje.go`.
-//
-// ── Ikona własna i wzór rdzenia to dwa byty, nie jeden ──────────────────────
-// Wzory rdzenia są wkompilowane i niezmienne; ikony własne leżą w bazie i mają
-// okno. Identyfikator rozstrzyga, o który byt chodzi: wzór niesie przedrostek
-// zestawu (`rdzen-24/dom`), ikona własna — identyfikator zewnętrzny wiersza.
-// Zmiana wzoru rdzenia jest niemożliwa i tak ma być: gdyby dała się zapisać,
-// dwie instalacje produktu miałyby dwa różne katalogi pod tą samą nazwą.
-//
-// ── Bilans zamiast ciszy ────────────────────────────────────────────────────
-// `design.icon.set` niesie `gridWarnings` — miejsca, w których ikona nie trzyma
-// siatki (współrzędne poza polem, grubość obrysu inna niż zadeklarowana, brak
-// pola widoku). `design.icon.generate` niesie `failedConcepts` — pojęcia, dla
-// których ikona NIE powstała. Zestaw, w którym połowa ikon nie weszła, wygląda
-// bez tych pól jak zestaw kompletny.
-//
-// ── Krój, którego nie ma, nie jest podstawiany innym ────────────────────────
-// `design.font.preview` mówi polem `available`, czy rdzeń krój ma. Podgląd
-// złożony krojem zastępczym wygląda identycznie jak prawdziwy i Operator wybrałby
-// typografię, której u siebie nie zobaczy.
+// Plik obsługuje osiem czynności ikon i krojów modułu design — `design.icon.*`,
+// `design.favicon.build` i `design.font.*`. Katalog wzorów leży
+// w `adapter_modul_design_ikony_katalog.go`, kroje w `adapter_modul_design_kroje.go`.
 package core
 
 import (
@@ -41,11 +20,12 @@ import (
 )
 
 const (
-	// przedrostekIkonyDesign znakuje identyfikatory zewnętrzne ikon własnych.
+	// przedrostekIkonyDesign znakuje identyfikatory zewnętrzne ikon własnych, obok
+	// przedrostków innych bytów warsztatu.
 	przedrostekIkonyDesign = "ikona-"
 
-	// domyslnyLimitWykazuIkonDesignu jest górną granicą wykazu ikon, gdy Operator
-	// jej nie podał.
+	// domyslnyLimitWykazuIkonDesignu jest górną granicą wykazu ikon, gdy żądanie
+	// granicy nie podało jej wprost.
 	domyslnyLimitWykazuIkonDesignu = 50
 
 	// granicaOsadzeniaKrojuDesignu jest wielkością kroju, powyżej której podgląd
@@ -61,12 +41,9 @@ const (
 var rozmiaryFaviconyDesignu = []int{16, 32, 48, 64, 128, 180, 192, 256, 512}
 
 // SzukajIkon zwraca wzory katalogu wkompilowanego spełniające warunki —
-// obsługuje `design.icon.library.search`.
-//
-// Wykaz obejmuje WYŁĄCZNIE wzory rdzenia. Żądanie nie niesie okna
-// (`DesignIconLibrarySearchRequest`), więc ikon własnych nie da się nawet
-// zawęzić do właściwego okna — a wykaz mieszający ikony z różnych okien
-// pokazywałby Operatorowi cudzą pracę.
+// obsługuje `design.icon.library.search`. Wykaz obejmuje wyłącznie wzory
+// rdzenia; żądanie nie niesie okna, więc ikon własnych nie da się zawęzić
+// do właściwego okna.
 func (a *adapterDesignu) SzukajIkon(_ context.Context,
 	z shared.DesignIconLibrarySearchRequest) (shared.DesignIconLibrarySearchResponse, error) {
 
@@ -99,8 +76,7 @@ func (a *adapterDesignu) SzukajIkon(_ context.Context,
 		spelniajace = append(spelniajace, ikonaKataloguKontraktuDesignu(wzor,
 			siatkaIkonyKataloguDesignu, gruboscObrysuIkonyDomyslna))
 	}
-	// `total` niesie liczbę SPEŁNIAJĄCYCH warunki, nie długość zwróconej strony:
-	// Operator ma poznać, że wykaz jest przycięty, i podnieść granicę.
+	// total niesie liczbę spełniających warunki, nie długość strony — po to, żeby podnieść granicę.
 	razem := len(spelniajace)
 	if len(spelniajace) > limit {
 		spelniajace = spelniajace[:limit]
@@ -124,7 +100,8 @@ func pasujeWzorDoFrazyDesignu(wzor wzorIkonyDesignu, fraza string) bool {
 	return false
 }
 
-// UstawIkone zapisuje ikonę własną — obsługuje `design.icon.set`.
+// UstawIkone zapisuje ikonę własną na wskazanym oknie, wraz z zastrzeżeniami
+// siatki — obsługuje `design.icon.set`.
 func (a *adapterDesignu) UstawIkone(ctx context.Context,
 	z shared.DesignIconSetRequest) (shared.DesignIconSetResponse, error) {
 
@@ -200,12 +177,9 @@ func (a *adapterDesignu) UstawIkone(ctx context.Context,
 }
 
 // zastrzezeniaSiatkiIkonyDesignu wylicza miejsca, w których ikona nie trzyma
-// siatki.
-//
-// To NIE jest odmowa: ikona spoza siatki nadal jest ikoną i Operator ma prawo ją
-// zapisać. Jest bilansem — zestaw ikon poznaje się po tym, że wszystkie leżą na
-// tej samej siatce i mają tę samą grubość obrysu, a rozjazd widać dopiero
-// wtedy, gdy się go wypisze.
+// siatki. To nie jest odmowa: ikona spoza siatki nadal jest ikoną, którą wolno
+// zapisać. Jest bilansem — rozjazd siatki i grubości widać dopiero wtedy,
+// gdy się go wypisze.
 func zastrzezeniaSiatkiIkonyDesignu(dokument string, siatka int, grubosc float64) []string {
 	zastrzezenia := []string{}
 	if !strings.Contains(dokument, "viewBox") {
@@ -243,12 +217,14 @@ func zastrzezeniaSiatkiIkonyDesignu(dokument string, siatka int, grubosc float64
 	return zastrzezenia
 }
 
-// polePoWidokuDesignu wyciąga treść atrybutu `viewBox`.
+// polePoWidokuDesignu wyciąga treść atrybutu viewBox dokumentu SVG ikony, bez
+// przetwarzania jej wartości.
 func polePoWidokuDesignu(dokument string) string {
 	return atrybutDokumentuDesignu(dokument, "viewBox")
 }
 
-// atrybutDokumentuDesignu wyciąga treść pierwszego wystąpienia atrybutu.
+// atrybutDokumentuDesignu wyciąga treść pierwszego wystąpienia atrybutu
+// o wskazanej nazwie w dokumencie.
 func atrybutDokumentuDesignu(dokument, nazwa string) string {
 	znacznik := nazwa + `="`
 	poczatek := strings.Index(dokument, znacznik)
@@ -263,17 +239,14 @@ func atrybutDokumentuDesignu(dokument, nazwa string) string {
 	return strings.TrimSpace(reszta[:koniec])
 }
 
-// wspolrzednePozaSiatkaDesignu liczy współrzędne wychodzące poza siatkę.
-//
-// Rachunek idzie przez bibliotekę ścieżek, nie przez szukanie liczb w napisie:
-// zapis SVG ma współrzędne względne, skróty i łuki, więc liczba wyjęta z napisu
-// nie musi być położeniem na płótnie. Prostokąt otaczający jest jedyną miarą,
-// która mówi prawdę o każdej postaci zapisu.
+// wspolrzednePozaSiatkaDesignu liczy współrzędne wychodzące poza siatkę,
+// rachunkiem przez bibliotekę ścieżek, nie szukaniem liczb w napisie: zapis SVG
+// ma współrzędne względne, skróty i łuki, a prostokąt otaczający mówi prawdę
+// o każdej postaci zapisu.
 func wspolrzednePozaSiatkaDesignu(zapis string, siatka int) int {
 	sciezka, err := canvas.ParseSVGPath(zapis)
 	if err != nil {
-		// Ścieżki nieczytelnej nie liczymy jako wychodzącej poza siatkę — to inne
-		// zastrzeżenie i pada w innym miejscu (pusty wykaz ścieżek).
+		// Ścieżki nieczytelnej nie liczymy jako wychodzącej poza siatkę — to inne zastrzeżenie.
 		return 0
 	}
 	granice := sciezka.Bounds()
@@ -294,19 +267,8 @@ func wspolrzednePozaSiatkaDesignu(zapis string, siatka int) int {
 }
 
 // GenerujIkony zakłada ikony dla wskazanych pojęć — obsługuje
-// `design.icon.generate`.
-//
-// Droga jest dwustopniowa i obie jej gałęzie dają prawdziwą ikonę:
-//
-//  1. pojęcie trafiające w katalog wkompilowany zakłada ikonę WŁASNĄ z tego
-//     wzoru — na siatce i grubości żądania, więc Operator dostaje ją w swoim
-//     stylu i może ją dalej zmieniać;
-//  2. pojęcie nietrafiające idzie do wskazanego kanału modelu, który ma oddać
-//     treść SVG.
-//
-// Pojęcie, którego nie dała żadna z dróg, wraca w `failedConcepts` — nie
-// w ciszy. Wykaz ikon pusty przy niepustym wykazie pojęć jest odmową: zestaw,
-// z którego nie powstała ani jedna ikona, nie jest zestawem.
+// `design.icon.generate`. Pojęcie trafiające w katalog wkompilowany zakłada
+// ikonę własną z tego wzoru, pojęcie nietrafiające idzie do kanału modelu.
 func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 	z shared.DesignIconGenerateRequest) (shared.DesignIconGenerateResponse, error) {
 
@@ -327,8 +289,7 @@ func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 	if z.StrokeWidth != nil && *z.StrokeWidth > 0 {
 		grubosc = *z.StrokeWidth
 	}
-	// Ikona wzorcowa narzuca styl: jej siatka i grubość biją nastawy żądania, bo
-	// po to jest wskazana — zestaw ma wyjść jednolity z tym, co Operator już ma.
+	// Ikona wzorcowa narzuca styl: jej siatka i grubość biją nastawy żądania, po to jest wskazana.
 	if z.StyleReferenceIconId != nil && strings.TrimSpace(*z.StyleReferenceIconId) != "" {
 		wzorcowa, err := a.ikonaPoKodzieDesignu(ctx, strings.TrimSpace(*z.StyleReferenceIconId))
 		if err != nil {
@@ -394,11 +355,9 @@ func (a *adapterDesignu) GenerujIkony(ctx context.Context,
 	}, nil
 }
 
-// wyciagnijDokumentSvgDesignu wyjmuje dokument SVG z odpowiedzi modelu.
-//
-// Model bywa rozmowny: odpowiedź niesie zdanie wstępne, blok kodu i podsumowanie.
-// Bierzemy zakres od `<svg` do `</svg>` i tylko go — dokument z dopisanym
-// zdaniem po polsku nie otworzy się w przeglądarce.
+// wyciagnijDokumentSvgDesignu wyjmuje dokument SVG z odpowiedzi modelu. Model
+// bywa rozmowny: odpowiedź niesie zdanie wstępne, blok kodu i podsumowanie.
+// Bierzemy zakres od `<svg` do `</svg>` i tylko go.
 func wyciagnijDokumentSvgDesignu(odpowiedz string) string {
 	poczatek := strings.Index(odpowiedz, "<svg")
 	if poczatek < 0 {
@@ -411,7 +370,8 @@ func wyciagnijDokumentSvgDesignu(odpowiedz string) string {
 	return strings.TrimSpace(odpowiedz[poczatek : koniec+len("</svg>")])
 }
 
-// ZbudujPakietIkon składa pakiet ikon — obsługuje `design.icon.sprite.build`.
+// ZbudujPakietIkon składa pakiet ikon jako dokument SVG albo krój webfont —
+// obsługuje `design.icon.sprite.build`.
 func (a *adapterDesignu) ZbudujPakietIkon(ctx context.Context,
 	z shared.DesignIconSpriteBuildRequest) (shared.DesignIconSpriteBuildResponse, error) {
 
@@ -544,12 +504,9 @@ func zlozPakietSvgIkonDesignu(ikony []shared.DesignIcon) (string, int) {
 }
 
 // ZbudujFavicone wydaje komplet ikon witryny z zasobu — obsługuje
-// `design.favicon.build`.
-//
-// Rozmiar powyżej 256 wychodzi jako PNG, nie jako ICO: pole boku w katalogu
-// ikony ma JEDEN bajt, więc ikona o boku 512 zapisałaby się jako ikona o boku
-// wziętym z reszty z dzielenia (powód stoi przy `zakodujIkoneDesignu`). Wykaz
-// `sizes` odpowiedzi niesie rozmiary, które NAPRAWDĘ powstały.
+// `design.favicon.build`. Rozmiar powyżej 256 wychodzi jako PNG, nie jako ICO:
+// pole boku w katalogu ikony ma jeden bajt. Wykaz `sizes` odpowiedzi niesie
+// rozmiary, które naprawdę powstały.
 func (a *adapterDesignu) ZbudujFavicone(ctx context.Context,
 	z shared.DesignFaviconBuildRequest) (shared.DesignFaviconBuildResponse, error) {
 
@@ -614,11 +571,10 @@ func (a *adapterDesignu) ZbudujFavicone(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// manifestAplikacjiDesignu składa treść manifestu aplikacji sieciowej.
-//
-// Odsyłacze wskazują IDENTYFIKATORY zasobów rdzenia, nie ścieżki na dysku:
-// Operator podstawia je pod adresy swojej witryny, a ścieżka magazynu rdzenia
-// nie otworzy się nigdzie poza tą maszyną.
+// manifestAplikacjiDesignu składa treść manifestu aplikacji sieciowej. Odsyłacze
+// wskazują identyfikatory zasobów rdzenia, nie ścieżki na dysku: podstawia się
+// je pod adresy witryny, a ścieżka magazynu rdzenia nie otworzy się nigdzie
+// poza tą maszyną.
 func manifestAplikacjiDesignu(nazwa string, kody []string, rozmiary []int) (string, error) {
 	type ikonaManifestu struct {
 		Src   string `json:"src"`
@@ -650,12 +606,9 @@ func manifestAplikacjiDesignu(nazwa string, kody []string, rozmiary []int) (stri
 }
 
 // ZaproponujZestawieniaKrojow oddaje propozycje par krojów — obsługuje
-// `design.font.pair.suggest`.
-//
-// Pole `source` mówi, KTÓRĄ drogą propozycje powstały: kanałem modelu albo
-// regułą rdzenia. Reguła rdzenia zestawia kroje, którymi rdzeń NAPRAWDĘ
-// dysponuje — para wskazująca krój, którego na tej maszynie nie ma, byłaby
-// propozycją nie do zobaczenia.
+// `design.font.pair.suggest`. Pole `source` mówi, którą drogą propozycje
+// powstały: kanałem modelu albo regułą rdzenia, zestawiającą wyłącznie kroje,
+// którymi rdzeń naprawdę dysponuje.
 func (a *adapterDesignu) ZaproponujZestawieniaKrojow(ctx context.Context,
 	z shared.DesignFontPairSuggestRequest) (shared.DesignFontPairSuggestResponse, error) {
 
@@ -752,12 +705,10 @@ func paryZOdpowiedziModeluDesignu(odpowiedz string, ile int) []shared.DesignFont
 	return pary
 }
 
-// zestawieniaKrojowRdzeniaDesignu składa zestawienia regułą rdzenia.
-//
-// Reguła jest typograficzna, nie losowa: nagłówek dostaje krój o WIĘKSZEJ masie
-// albo szeryfowy, tekst — o mniejszej masie albo bezszeryfowy, i oba mają być
-// krojami różnymi. Zestawienie kroju z samym sobą nie jest zestawieniem, a para
-// dwóch krojów o tej samej masie nie daje hierarchii.
+// zestawieniaKrojowRdzeniaDesignu składa zestawienia regułą rdzenia. Reguła
+// jest typograficzna, nie losowa: nagłówek dostaje krój o większej masie albo
+// szeryfowy, tekst — o mniejszej masie albo bezszeryfowy, i oba mają być
+// krojami różnymi.
 func zestawieniaKrojowRdzeniaDesignu(z shared.DesignFontPairSuggestRequest,
 	ile int) []shared.DesignFontPair {
 
@@ -774,8 +725,7 @@ func zestawieniaKrojowRdzeniaDesignu(z shared.DesignFontPairSuggestRequest,
 			strings.Contains(maly, "medium") || strings.Contains(maly, "black"):
 			naglowkowe = append(naglowkowe, nazwa)
 		case strings.Contains(maly, "italic") || strings.Contains(maly, "oblique"):
-			// Odmiana pochyła nie jest krojem tekstu ciągłego ani nagłówka —
-			// pomijamy ją, zamiast proponować kursywę na cały akapit.
+			// Odmiana pochyła nie jest krojem tekstu ciągłego ani nagłówka — pomijamy ją.
 		default:
 			tekstowe = append(tekstowe, nazwa)
 		}
@@ -787,8 +737,7 @@ func zestawieniaKrojowRdzeniaDesignu(z shared.DesignFontPairSuggestRequest,
 		tekstowe = naglowkowe
 	}
 
-	// Krój wskazany przez Operatora wchodzi jako tekstowy i jest w każdej parze:
-	// pytanie „do czego to pasuje" ma dostać odpowiedź o TYM kroju.
+	// Krój wskazany w żądaniu wchodzi jako tekstowy i jest w każdej parze zestawienia.
 	podstawowy := ""
 	if z.BaseFont != nil && strings.TrimSpace(*z.BaseFont) != "" {
 		if _, nazwa, _, err := krojDesignu(*z.BaseFont); err == nil {
@@ -835,7 +784,8 @@ func zlozPowodZestawieniaDesignu(naglowek, tekst string, charakter *string) stri
 	return powod
 }
 
-// PodgladKroju składa podgląd kroju — obsługuje `design.font.preview`.
+// PodgladKroju składa podgląd kroju jako dokument SVG w kilku rozmiarach —
+// obsługuje `design.font.preview`.
 func (a *adapterDesignu) PodgladKroju(_ context.Context,
 	z shared.DesignFontPreviewRequest) (shared.DesignFontPreviewResponse, error) {
 
@@ -860,9 +810,7 @@ func (a *adapterDesignu) PodgladKroju(_ context.Context,
 
 	krojWczytany, nazwaKroju, wkompilowany, err := krojDesignu(z.FontFamily)
 	if err != nil {
-		// Krój, którego rdzeń nie ma, NIE jest odmową całej komendy: kontrakt ma
-		// pole `available` właśnie po to, żeby dało się powiedzieć „nie mam go".
-		// Podgląd jest wtedy pusty, a nie złożony krojem zastępczym.
+		// Krój, którego rdzeń nie ma, nie jest odmową komendy — pole available mówi wprost, że go nie ma.
 		return shared.DesignFontPreviewResponse{
 			PreviewSvg: podgladBrakuKrojuDesignu(z.FontFamily, err.Error()),
 			Available:  false,
@@ -883,12 +831,9 @@ func (a *adapterDesignu) PodgladKroju(_ context.Context,
 	return odpowiedz, nil
 }
 
-// podgladKrojuSvgDesignu składa podgląd jako dokument SVG z PRAWDZIWYMI
-// konturami glifów.
-//
-// Kontury, nie element `<text>`: dokument z `<text>` pokazałby krój wyłącznie
-// tam, gdzie ten krój jest zainstalowany — czyli nie u Operatora, który właśnie
-// pyta, jak ten krój wygląda.
+// podgladKrojuSvgDesignu składa podgląd jako dokument SVG z prawdziwymi
+// konturami glifów. Kontury, nie element `<text>`: dokument z `<text>`
+// pokazałby krój wyłącznie tam, gdzie ten krój jest zainstalowany.
 func podgladKrojuSvgDesignu(krojWczytany *sfnt.Font, nazwa, tekst string,
 	rozmiary []float64) (string, error) {
 
@@ -932,13 +877,10 @@ func podgladBrakuKrojuDesignu(nazwa, powod string) string {
 		nazwa, powod)
 }
 
-// regulaOsadzeniaKrojuDesignu składa gotową regułę `@font-face`.
-//
-// Krój wkompilowany albo leżący na tej maszynie osadza się WPROST, jako dane
-// w regule: reguła wskazująca `local()` działałaby wyłącznie u kogoś, kto ten
-// krój już ma, a Operator pyta właśnie dlatego, że go nie ma. Krój większy niż
-// granica osadzenia dostaje regułę z `local()` i mówi to wprost — kilkanaście
-// megabajtów w odpowiedzi komendy nie jest odpowiedzią.
+// regulaOsadzeniaKrojuDesignu składa gotową regułę `@font-face`. Krój
+// wkompilowany albo leżący na tej maszynie osadza się wprost, jako dane
+// w regule; krój większy niż granica osadzenia dostaje regułę z `local()`
+// i mówi to wprost.
 func regulaOsadzeniaKrojuDesignu(nazwa string, wkompilowany bool) string {
 	bajty := bajtyKrojuDesignu(nazwa, wkompilowany)
 	if len(bajty) == 0 {
@@ -957,7 +899,8 @@ func regulaOsadzeniaKrojuDesignu(nazwa string, wkompilowany bool) string {
 		nazwa, base64.StdEncoding.EncodeToString(bajty))
 }
 
-// bajtyKrojuDesignu oddaje bajty kroju — z binarium albo z pliku na tej maszynie.
+// bajtyKrojuDesignu oddaje bajty kroju — z binarium wkompilowanego albo
+// z pliku znalezionego na tej maszynie.
 func bajtyKrojuDesignu(nazwa string, wkompilowany bool) []byte {
 	if wkompilowany {
 		for nazwaKroju, bajty := range krojeWkompilowaneDesignu {
@@ -980,8 +923,8 @@ func bajtyKrojuDesignu(nazwa string, wkompilowany bool) []byte {
 	return nil
 }
 
-// GlifyKroju oddaje glify kroju z zakresu punktów kodowych — obsługuje
-// `design.font.glyphs.get`.
+// GlifyKroju oddaje glify kroju z zakresu punktów kodowych, wraz z ich
+// konturami — obsługuje `design.font.glyphs.get`.
 func (a *adapterDesignu) GlifyKroju(_ context.Context,
 	z shared.DesignFontGlyphsGetRequest) (shared.DesignFontGlyphsGetResponse, error) {
 
@@ -995,8 +938,7 @@ func (a *adapterDesignu) GlifyKroju(_ context.Context,
 			"komenda design.font.glyphs.get: " + err.Error())
 	}
 
-	// Zakres domyślny to łacina podstawowa i rozszerzona A — tam leżą litery
-	// polskie, o które Operator pyta najczęściej.
+	// Zakres domyślny to łacina podstawowa i rozszerzona A — tam leżą najczęściej pytane litery polskie.
 	od, do := 0x20, 0x17F
 	if z.From != nil {
 		od = *z.From
@@ -1024,8 +966,7 @@ func (a *adapterDesignu) GlifyKroju(_ context.Context,
 		return shared.DesignFontGlyphsGetResponse{}, bladWskazaniaDesignu(fmt.Sprintf(
 			"krój %s nie ma ani jednego glifu w zakresie od %d do %d", nazwaKroju, od, do))
 	}
-	// `total` niesie liczbę glifów CAŁEGO kroju: Operator ma poznać, że wykaz
-	// z zakresu jest wycinkiem, a nie kompletem.
+	// total niesie liczbę glifów całego kroju — wykaz z zakresu jest wycinkiem, nie kompletem.
 	return shared.DesignFontGlyphsGetResponse{
 		Glyphs: glify, Total: liczbaGlifowKrojuDesignu(krojWczytany),
 	}, nil
@@ -1053,7 +994,8 @@ func (a *adapterDesignu) ikonaPoKodzieDesignu(ctx context.Context,
 	return ikonaWlasnaKontraktuDesignu(wiersz), nil
 }
 
-// ikonaWlasnaKontraktuDesignu składa `DesignIcon` kontraktu z wiersza ikony.
+// ikonaWlasnaKontraktuDesignu składa `DesignIcon` kontraktu z wiersza ikony
+// własnej, odczytanego z bazy.
 func ikonaWlasnaKontraktuDesignu(wiersz dane.IkonaDesignu) shared.DesignIcon {
 	svg := wiersz.SVG
 	ikona := shared.DesignIcon{
@@ -1067,7 +1009,8 @@ func ikonaWlasnaKontraktuDesignu(wiersz dane.IkonaDesignu) shared.DesignIcon {
 	return ikona
 }
 
-// bladNieznanejIkonyDesignu nazywa ikonę, której rdzeń nie zna.
+// bladNieznanejIkonyDesignu nazywa ikonę własną, której rdzeń nie zna, kodem
+// błędu not_found, nie awarią.
 func bladNieznanejIkonyDesignu(kod string, err error) error {
 	if czyBrakZasobuDesignu(err) {
 		return bladNieznanegoBytuDesignu("ikony " + kod + " nie ma w tym rdzeniu")

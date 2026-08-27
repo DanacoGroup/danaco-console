@@ -34,6 +34,12 @@
     --cd-obrys-marki: var(--dn-sygnal-800);
     --cd-tlo-karty-biezacej: var(--dn-wstazka);
   }
+  /* Bez mieszania barw tło karty bieżącej równa się tłu wstążki i wyróżnienie
+     przepada. Nośnikiem zostaje wtedy kreska sygnałowa u dołu karty. */
+  .cd-strona .dn-karta-widoku[aria-selected='true'],
+  .cd-strona .dn-karta-sesji[aria-selected='true'] {
+    box-shadow: inset 0 calc(-1 * var(--dn-wym-sila)) 0 var(--dn-sygnal-500);
+  }
 }
 
 /* Wstążka główna nie miała obrysu — dostaje włos marki, wewnątrz obecnej bryły,
@@ -117,8 +123,9 @@
   line-height: var(--dn-lh-luzny);
 }
 .cd-naglowek-akcje { display: flex; align-items: center; gap: var(--dn-od-2); }
-/* Lockup poziomy z zasobów marki; 280 px wobec minimum 120 px z księgi znaku. */
-.cd-marka-lockup { width: 280px; height: auto; flex: none; color: var(--dn-tekst); }
+/* Lockup poziomy 280 px wobec minimum 120 px z księgi znaku; poniżej tej
+   szerokości pola schodzi razem z płótnem, zamiast wypychać treść poza okno. */
+.cd-marka-lockup { width: min(280px, 100%); height: auto; flex: none; color: var(--dn-tekst); }
 
 /* Kropka sygnału tętni nieprzerwanie — wspólnym pulsem platformy, 2,4 s. Oba
    znaki okna, lockup płótna i godło belki, biją tym samym rytmem. */
@@ -162,18 +169,19 @@
 }
 /* Zdanie belki łamie się, gdy pole zwęża się poniżej jego długości. */
 .cd-start { flex-wrap: wrap; }
-/* Listwa złamać się nie może — pięć kontrolek w rzędzie czyta się jako jeden
-   zestaw. Gdy połowa siatki nie starcza, listwa zostaje przy szerokości
-   własnej treści; to jedyne miejsce, w którym nie domyka się na karcie. */
-.cd-listwa { min-width: fit-content; }
+/* Rząd kontrolek czyta się jako jeden zestaw, więc pole listwy nie zwęża się
+   poniżej połowy siatki z własnej woli. Gdy jednak okno zejdzie tak nisko, że
+   pięć kontrolek nie mieści się w tej połowie, rząd łamie się na dwa wiersze.
+   Podłoga na szerokości treści byłaby tu błędem: `min-width` bije `max-width`,
+   więc poniżej 480 px listwa wychodziła poza pole treści o ponad 140 px. */
+.cd-listwa { min-width: 0; flex-wrap: wrap; }
+/* Pozycja i przegroda zachowują swoją miarę — bez tego rząd nie łamie się,
+   tylko ściska kontrolki do nieczytelnych kikutów. */
+.cd-listwa-poz, .cd-listwa-sep, .cd-listwa-menu { flex: none; }
 /* Jedna kolumna — karta zajmuje całą szerokość, więc belka też. */
 @media (max-width: 860px) {
   .cd-start,
   .cd-listwa { width: 100%; }
-}
-body:has(#panel-samouczek:not([hidden])) .cd-start,
-body:has(#panel-samouczek:not([hidden])) .cd-listwa {
-  width: calc(50% - var(--dn-od-3) / 2);
 }
 @media (max-width: 1180px) {
   body:has(#panel-samouczek:not([hidden])) .cd-start,

@@ -223,15 +223,16 @@
   --dn-wym-wstega: 2px;            /* wstęga aktywności karty */
   /* Cel kliknięcia grotu wejścia. Znak w środku jest niższy (--dn-wym-grot-znak):
      przycisk ma być duży pod palcem, znak marki — spokojny. */
-  --dn-wym-grot: 72px;             /* cel przycisku grotu na karcie środowiska */
-  --dn-wym-grot-znak: 36px;        /* wysokość podwójnego szewronu w przycisku */
+  --dn-wym-grot: 108px;            /* cel przycisku grotu na karcie środowiska */
+  --dn-wym-grot-znak: 54px;        /* wysokość podwójnego szewronu w przycisku */
   /* Grot kafla modułu stoi na wartości niezależnej, nie na udziale celu: inaczej
      powiększenie przycisku na karcie środowiska pociągałoby za sobą kafle. */
-  --dn-wym-grot-sm: 31px;          /* pojedynczy grot w kaflu modułu */
+  --dn-wym-grot-sm: 36px;          /* pojedynczy grot w kaflu modułu */
   /* Emblemat środowiska i znak modułu mają jeden wymiar — rozstrzygnięcie
      Właściciela z 27.08.2026: kafel strefy 2 czyta się na równi z kartą
      strefy 1, więc znak nie może być od niej mniejszy. */
-  --dn-wym-godlo-karty: 54px;      /* emblemat karty środowiska i znak kafla modułu */
+  --dn-wym-godlo-karty: 54px;      /* emblemat karty środowiska */
+  --dn-wym-znak-modulu: 40px;      /* znak kafla modułu — o stopień mniejszy od emblematu */
   --dn-wym-kafel-modulu: 122px;    /* najmniejsza wysokość kafla modułu */
   --dn-wym-spinner: 14px;
   --dn-wym-fokus: 2px;             /* pierścień fokusu */

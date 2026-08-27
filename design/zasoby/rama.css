@@ -1589,9 +1589,6 @@
   overflow-y: auto;
 }
 .dn-obszar-tresc[hidden] { display: none; }
-/* Płótno — treść panelu głównego stoi na gruncie okna, nie na powierzchni
-   panelu: strefy same niosą swoje powierzchnie i muszą się od tła odciąć. */
-.dn-obszar-tresc--plotno { background: var(--dn-tlo); }
 
 /* Nagłówek panelu samouczka — nazwa i zwinięcie. */
 .dn-obszar-glowa {
@@ -2008,9 +2005,3 @@
   border-bottom: 0;
   background: transparent;
 }
-
-/* Płótno pulpitu stoi na GRUNCIE, nie na tacy panelu. Reguła `.dn-obszar-panel
-   .dn-obszar-tresc { background: transparent }` (wyżej w tym arkuszu) zerowała
-   wariant `--plotno` swoistością, więc płótno brało barwę tacy i strefy nie
-   miały od czego się odciąć. Tu swoistość jest równa, a kolejność późniejsza. */
-.dn-pulpit .dn-obszar-tresc--plotno { background: var(--dn-tlo); }

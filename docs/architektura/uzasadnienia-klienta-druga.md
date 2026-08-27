@@ -2675,3 +2675,11 @@ wejścia. Podgląd niczego nie udaje: karty sesji i ich stany są tu materiałem
 danymi z rdzenia — dlatego mieszkają na tej stronie, a nie w module powłoki. Uruchomienie: npm run
 dev, adres /src/powloka/podglad.html. Motyw wybiera się parametrem ?motyw=jasny albo
 ?motyw=ciemny; bez parametru rozstrzyga zapisany wybór, a w jego braku preferencja systemu.
+
+## budowa/klient-poprzedni/src/powloka/postac-pasa-kart.ts
+Nazywa przyczynę braku karty w pasie oraz treść odpowiedzi rdzenia na czynność Operatora.
+
+## budowa/klient-poprzedni/src/moduly/research/pustka-okien.ts
+Stan przed pierwszym odczytem rozróżnia „jeszcze nie pytałem" od „rdzeń nic nie ma": twierdzenie
+o zawartości rdzenia postawione bez jego odpowiedzi byłoby zgadywaniem, więc moduł nazywa wprost,
+że jeszcze nie zapytał, zamiast domniemywać pustkę.

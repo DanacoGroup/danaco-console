@@ -1,5 +1,3 @@
-*Dokument specyfikuje okno Ustawień Danaco Console na poziomie aplikacji: sekcje, pola i ich domyślne wartości konfiguracyjne.*
-
 # Danaco Console — Okno Ustawień (poziom aplikacji)
 
 | | |
@@ -1282,5 +1280,4 @@ kategoria_powiadomien:
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

@@ -1,5 +1,3 @@
-*Dokument specyfikuje interfejs modułu Library Danaco Console: okna, makiety, elementy, warstwy widoczności i stany.*
-
 # Moduł Library — dokumentacja projektowa
 
 | | |
@@ -159,7 +157,6 @@ na postrzeganą prostotę interfejsu.
 | 4 — funkcje eksperckie | Zakładki Archiwum i Higiena panelu Metadata & Archive Panel (PDF/A, BagIt, PREMIS/METS, polityki retencji, migawka repozytorium, weryfikacja integralności), dziennik audytu, definicje pól niestandardowych i schematu metadanych, reguły kolekcji inteligentnych i reguły napływu, wsadowa klasyfikacja i operacje wsadowe, eksport SKOS/RDF tezaurusa, eksport paczki migracyjnej, API repozytorium i webhooki, macierz izolacji dostępu do plików | Polecenie języka naturalnego w Chat Window, pasek `/operacje`, skrót klawiszowy, wyszukiwarka funkcji, tryb administracyjny albo konfiguracja roli. Użytkownik podstawowy nie widzi tych elementów |
 
 **Zasada jednego kliknięcia.** Każda ukryta funkcja modułu Library jest osiągalna jednym
-
 kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego
 w Chat Window. Tags & Collections, File Preview, Versioning Panel oraz Metadata &
 Archive Panel otwierają się z poziomu karty pliku bez przechodzenia przez ekrany
@@ -329,19 +326,16 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 **Zawartość i pełny arsenał funkcji.**
 
 *Nawigacja i widoki.*
-
 - Struktura folderów i przestrzeni oraz widok płaski z filtrowaniem.
 - Widok siatki miniatur, widok listy szczegółowej, widok galerii (dla materiałów graficznych), widok osi czasu (chronologia dodania) oraz widok mapy oparty na współrzędnych geolokalizacji z metadanych EXIF.
 - Okruszkowa nawigacja (breadcrumb) i szybki powrót do korzenia repozytorium.
 
 *Odbiór artefaktów.*
-
 - Automatyczny odbiór artefaktów generowanych przez AI w innych modułach (Studio, Research, Browser, Design) zgodnie z ustanowionymi powiązaniami.
 - Ręczne przeciągnięcie i upuszczenie plików z urządzenia lokalnego.
 - Import zbiorczy (wiele plików lub archiwum ZIP rozpakowywane automatycznie), import przez adres URL oraz import z folderu obserwowanego.
 
 *Wyszukiwanie i filtrowanie.*
-
 - Wyszukiwanie pełnotekstowe wewnątrz dokumentów (w tym OCR dla skanów i obrazów z tekstem).
 - Filtry fasetowe łączone koniunkcyjnie: typ pliku, moduł pochodzenia, data, autor (użytkownik/model), etykieta, kolekcja, rozmiar.
 - Wyszukiwanie semantyczne i hybrydowe — odnalezienie plików o zbliżonej treści, nie tylko dopasowaniu słów kluczowych.
@@ -349,7 +343,6 @@ Execution Loop Window prezentuje komunikację między Koordynatorem a Wykonawcą
 - Wyszukiwanie po podobieństwie obrazu.
 
 *Operacje na plikach.*
-
 - Otwarcie pliku we właściwym module źródłowym (np. dokument tekstowy otwiera się w Studio Editor).
 - Zbiorcze operacje: przeniesienie, tagowanie, dodanie do kolekcji, eksport, archiwizacja, deduplikacja, normalizacja nazw, usunięcie (odwracalne przez kosz).
 - Wykrywanie duplikatów i niemal-duplikatów (podobna treść, różne nazwy).
@@ -571,7 +564,6 @@ Metadata & Archive Panel skupia trzy obszary pracy z zasobem, które w innym uk�
 **Zawartość i pełny arsenał funkcji.**
 
 *Metadane.*
-
 - Edycja pól schematu Dublin Core oraz pól niestandardowych zdefiniowanych przez Operatora per typ i kolekcja.
 - Podgląd metadanych technicznych: EXIF, IPTC, XMP dla obrazów, właściwości dokumentów, ID3 dla audio.
 - Auto-metadane AI: opis, słowa kluczowe, streszczenie, klasyfikacja typu treści, wykryty język.
@@ -579,7 +571,6 @@ Metadata & Archive Panel skupia trzy obszary pracy z zasobem, które w innym uk�
 - Rekordy bibliograficzne: autor, tytuł, rok, DOI, ISBN, adnotacje i wypisy do źródła.
 
 *Archiwizacja.*
-
 - Konwersja do formatu archiwalnego PDF/A wraz z walidacją wyniku.
 - Pakiet archiwalny BagIt z manifestem sum kontrolnych.
 - Metadane utrwalenia w profilu PREMIS/METS.
@@ -587,7 +578,6 @@ Metadata & Archive Panel skupia trzy obszary pracy z zasobem, które w innym uk�
 - Migawka repozytorium i eksport paczki migracyjnej kolekcji.
 
 *Higiena i audyt.*
-
 - Raport duplikatów i niemal-duplikatów wraz z operacją scalenia.
 - Raport plików osieroconych — bez etykiety, kolekcji lub powiązania.
 - Weryfikacja integralności (fixity check) na podstawie sum kontrolnych.
@@ -812,35 +802,27 @@ Eksport paczki migracyjnej ──► archiwum z manifestem i metadanymi JSON
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — centralne repozytorium wielomodułowe.**
-
 Zespół pracuje równolegle w Studio, Research i Browser nad tym samym klientem. Każdy wygenerowany artefakt — dokument, raport, notatka źródłowa — trafia automatycznie do Library Explorer, gdzie jednym poleceniem w Chat Window użytkownik odnajduje wszystkie materiały dotyczące tego klienta niezależnie od modułu pochodzenia.
 
 **Scenariusz 2 — porządkowanie z pomocą AI.**
-
 Administrator wiedzy poleca w Chat Window odnalezienie duplikatów w kolekcji „Klienci”. Library Explorer prezentuje kandydatów, Tags & Collections sugeruje brakujące etykiety dla plików niekatalogowanych, a pasek zbiorczych operacji pozwala jednym kliknięciem zarchiwizować duplikaty.
 
 **Scenariusz 3 — podgląd bez opuszczania modułu.**
-
 Użytkownik przegląda listę plików klienta i otwiera File Preview dla pliku PDF, sprawdza metadane pochodzenia (moduł Studio, trzy wersje), a następnie otwiera dokument w Studio Editor do dalszej redakcji — bez pobierania pliku na dysk lokalny.
 
 **Scenariusz 4 — śledzenie wersji generowanych automatycznie.**
-
 Raport powstały w module Research trafia do Library jako wersja pierwsza. Po redakcji w Studio powstaje wersja druga, odnotowana automatycznie w Versioning Panel z adnotacją modułu pochodzenia „Studio”. Użytkownik oznacza finalną wersję etykietą „wysłana do klienta”.
 
 **Scenariusz 5 — masowy import pod nadzorem pętli wykonawczej.**
-
 Do repozytorium trafia archiwum z kilkuset skanami. Użytkownik zleca katalogowanie w Chat Window, a Execution Loop Window prezentuje dekompozycję zlecenia na zadania, kolejkę ich realizacji i wynik kontroli jakości: pliki bez warstwy tekstu wracają do OCR i zostają ponownie zindeksowane, po czym całość jest przeszukiwalna pełnotekstowo.
 
 **Scenariusz 6 — utrwalenie archiwalne kolekcji.**
-
 Kolekcja dokumentów zamkniętego przedsięwzięcia zostaje przekonwertowana do PDF/A i spakowana w BagIt z manifestem sum kontrolnych oraz metadanymi PREMIS/METS. Weryfikacja integralności potwierdza zgodność, a paczka migracyjna trafia do archiwum zewnętrznego.
 
 **Scenariusz 7 — praca ze źródłami bibliograficznymi.**
-
 Badacz importuje bazę źródeł w formacie BibTeX, uzupełnia rekordy metadanymi pobranymi po DOI, wiąże źródła z raportem powstałym w module Research i generuje bibliografię w wybranym stylu cytowania.
 
 **Scenariusz 8 — repozytorium projektowe ograniczone do zespołu.**
-
 Kierownik projektu w module Workspace korzysta z Project Library do przechowywania materiałów wyłącznie tego przedsięwzięcia, utrzymując rozdzielenie od repozytorium centralnego Library — zgodnie z domyślnym brakiem współdzielenia kontekstu między projektami.
 
 ---
@@ -1088,5 +1070,4 @@ Zgodnie z zasadą pełnej konfigurowalności każda zdolność modułu jest ster
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

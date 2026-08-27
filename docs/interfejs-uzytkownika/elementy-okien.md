@@ -1,5 +1,3 @@
-*Dokument specyfikuje elementy okien przepływu głównego Danaco Console: makiety, komponenty, warstwy widoczności i stany.*
-
 # Danaco Console — Elementy okien przepływu głównego
 
 | | |
@@ -24,7 +22,7 @@
 
 Dokument wyszczególnia **wszystkie elementy** znajdujące się w każdym oknie przepływu głównego platformy Danaco Console, które **nie ma własnego agenta projektowego**: okno startowe/logowania, strona główna (trzy strefy) oraz powłoki czterech środowisk — TalkIn, WorkSpace, CodeStudio, MultitaskingAI (pasek górny, karty sesji, boczna nawigacja, obszar roboczy) wraz z obydwoma kanałami komunikacji operacyjnej — Chat Window (Użytkownik ↔ Wykonawca) i Execution Loop Window (Koordynator ↔ Wykonawca). Wszystkie okna rozmieszczone są w układzie pionowym, w kolumnach sąsiadujących poziomo. Dla każdego elementu podano: co to jest, do czego służy, formę i wagę wizualną, stany, zachowanie po interakcji, miejsce występowania, warstwę widoczności (1–4, rozdz. 7) oraz sposób wywołania — tak aby żaden element nie został zamieniony w projekcie na niewłaściwą formę (duży panel tam, gdzie miała być mała ikonka, i odwrotnie).
 
-**Poza zakresem tego dokumentu** (mają własny dokument projektowy — rozdział 0.2): okno konfiguracji (pełny zakres trzynastu obszarów ustawień oraz okno punktów izolacji), moduł Agents wraz z jego sześcioma oknami operacyjnymi, piętnaście modułów platformy wraz z ich oknami operacyjnymi (Studio Editor, Code Editor, Workflow Builder i pozostałe), wnętrze czterech okien roboczych ról środowiska MultitaskingAI, pełne widoki funkcji globalnych Mobile i Always On Display.
+**Poza zakresem tego dokumentu** (mają własnego agenta projektowego albo są opisane w dokumentach modułów — rozdział 0.2): okno konfiguracji (pełny zakres trzynastu obszarów ustawień oraz okno punktów izolacji), moduł Agents wraz z jego sześcioma oknami operacyjnymi, piętnaście modułów platformy wraz z ich oknami operacyjnymi (Studio Editor, Code Editor, Workflow Builder itd.), wnętrze czterech okien roboczych ról środowiska MultitaskingAI, pełne widoki funkcji globalnych Mobile i Always On Display.
 
 ---
 
@@ -252,7 +250,7 @@ Stan błędu (dane niepoprawne):
                 [          Zaloguj          ]
 ```
 
-**Makieta 3 — Logowanie z wyłączonym wymogiem logowania, przycisk Pomiń obecny**
+**Makieta 3 — Logowanie z wyłączonym wymogiem logowania (przycisk Pomiń obecny — domyślnie w fazie budowy, konfigurowalne przez Operatora w każdej fazie)**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -333,7 +331,7 @@ Krok 2 — po potwierdzeniu tożsamości drogą mailową:
 
 ### 1.6. Metody dodatkowe uwierzytelniania — tabela odniesienia
 
-**Tabela 2 — Metody logowania dostępne w przełączniku (rozdz. 6, Załącznik B)**
+**Tabela 2 — Metody logowania dostępne w przełączniku (Bezpieczeństwo i uwierzytelnianie, rozdz. 6, Załącznik B)**
 
 | Metoda | Aktywna domyślnie | Pola w formularzu | Pełni funkcję odzyskiwania |
 |---|---|---|---|
@@ -1275,5 +1273,4 @@ Pełna galeria z podglądem SVG (47 ikon): `ikony/indeks.html`.
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

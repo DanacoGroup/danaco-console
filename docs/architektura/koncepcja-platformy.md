@@ -1,5 +1,3 @@
-*Dokument opisuje koncepcję platformy Danaco Console: architekturę ogólną, moduły, środowiska, role oraz kluczowe decyzje projektowe.*
-
 # Danaco Console — Koncepcja platformy
 
 | | |
@@ -626,14 +624,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | edycja dokumentów, obsługa PDF, DOCX, TXT, Markdown, tłumaczenia, korekta, analiza treści, przepisywanie, zmiana stylu, streszczenia, rozwijanie treści, Diff, Grep, operacje kontekstowe AI |
 
 **Typowy scenariusz:**
-
 1. Wczytanie dokumentu do Studio Editor.
 2. Zlecenie AI korekty lub zmiany stylu wybranego fragmentu przez Chat Window.
 3. Porównanie wersji przed i po zmianie w Diff/Grep Panel.
 4. Akceptacja wyniku; powrót do wcześniejszych wersji przez Session Repository bez utraty historii zmian.
 
 **Powiązania:**
-
 - Operacje kontekstowe AI są mechanizmem właściwym modułowi Studio; ich wspólne wykorzystanie z modułem Translate (11.7) przy pracy dwujęzycznej jest konfigurowalne przez użytkownika, nie jest zaś współdzielone domyślnie.
 - Studio korzysta z Library (11.6) jako repozytorium źródłowego dla dokumentów wejściowych i miejsca docelowego dla wygenerowanych artefaktów.
 - Wyniki pracy w Studio mogą, decyzją użytkownika, być dalej przetwarzane w module Research (11.5) przy budowie raportów końcowych.
@@ -647,14 +643,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | separacja projektów, własne instrukcje, własna pamięć, własna biblioteka, własna konfiguracja modeli, zarządzanie agentami |
 
 **Typowy scenariusz:**
-
 1. Założenie nowego projektu w module Workspace.
 2. Zdefiniowanie odrębnego zestawu instrukcji systemowych w Instructions Panel.
 3. Zbudowanie dedykowanej pamięci kontekstowej w Context Memory.
 4. Przypisanie do projektu konkretnych agentów przez Agent Manager (domyślnie w zakresie tego projektu; wpływ na inne, równolegle prowadzone projekty użytkownik określa w oknie konfiguracji).
 
 **Powiązania:**
-
 - Moduł może korzystać z agentów skonfigurowanych w module Agents (11.15), udostępniając ich — decyzją użytkownika — jako wykonawców zadań w ramach danego projektu.
 - Project Library pełni funkcję analogiczną do modułu Library (11.6), w zakresie ograniczonym do jednego projektu.
 - Projekty prowadzone w Workspace mogą zostać powiązane, decyzją użytkownika, z procesami automatycznymi tworzonymi w module Automations (11.3).
@@ -668,13 +662,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | harmonogramy, zadania cykliczne, workflow, kolejki, automatyczne wywołania modeli, pętle wielomodelowe, orkiestracja |
 
 **Typowy scenariusz:**
-
 1. Zaprojektowanie procesu w Workflow Builder.
 2. Ustalenie jego cykliczności w Scheduler.
 3. Obserwacja kolejnych uruchomień w Execution Monitor, gdzie widoczny jest status każdego przebiegu oraz ewentualne błędy wymagające interwencji.
 
 **Powiązania:**
-
 - Po skonfigurowaniu integracji opisanej w rozdziale 13.6, Automations może stanowić operacyjne zaplecze harmonogramów i kolejek dla środowiska MultitaskingAI (rozdz. 9.4, 13) — połączenie nie jest domyślne i wymaga decyzji użytkownika podjętej w oknie konfiguracji oraz w ustawieniach okna modułu Automations.
 - Silnik kolejek modułu Automations może zostać w ten sposób powiązany z silnikiem kolejek opisanym w punkcie 13.4.
 - Procesy zdefiniowane w Automations mogą obejmować zadania z dowolnego innego modułu platformy, zgodnie z zakresem powiązań ustanowionym przez użytkownika.
@@ -688,14 +680,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | analiza stron, wyszukiwanie informacji, wspólny podgląd użytkownika i AI, analiza dokumentów online |
 
 **Typowy scenariusz:**
-
 1. Otwarcie strony w Browser Window.
 2. AI — mając ten sam podgląd — odpowiada na pytania dotyczące treści i wyszukuje powiązane informacje.
 3. Odnotowanie istotnych fragmentów w Notes Panel.
 4. Budowa listy źródeł wykorzystanych w toku pracy w Sources Panel.
 
 **Powiązania:**
-
 - Źródła zebrane w module Browser mogą, decyzją użytkownika, zasilać dalszą pracę badawczą w module Research (11.5).
 - Odnotowane materiały mogą trafiać do Library (11.6) w celu trwałego przechowania.
 
@@ -708,14 +698,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | raporty, analizy rynku, benchmarki, analiza konkurencji, wieloźródłowe badania |
 
 **Typowy scenariusz:**
-
 1. Zgromadzenie źródeł w Sources Manager.
 2. Odnotowywanie ustaleń cząstkowych w Findings Panel w miarę postępu analizy.
 3. Skompletowanie raportu końcowego w Report Builder.
 4. Eksport przez Export Panel do formatu wymaganego przez odbiorcę.
 
 **Powiązania:**
-
 - Research może korzystać ze źródeł zebranych w module Browser (11.4) oraz z dokumentów przechowywanych w Library (11.6), zgodnie z powiązaniami skonfigurowanymi przez użytkownika.
 - Wyniki pracy badawczej mogą być dalej redagowane w module Studio (11.1) lub prezentowane wielomodelowo w module Roundtable (11.8) przed opracowaniem ostatecznych wniosków.
 
@@ -728,13 +716,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | przechowywanie plików, katalogowanie wiedzy, odbiór artefaktów generowanych przez AI, zarządzanie dokumentami |
 
 **Typowy scenariusz:**
-
 1. Porządkowanie zgromadzonych materiałów za pomocą Tags & Collections.
 2. Przegląd zawartości bez opuszczania modułu dzięki File Preview.
 3. Śledzenie kolejnych wersji tego samego dokumentu w Versioning Panel, w tym wersji wygenerowanych automatycznie przez AI w innych modułach.
 
 **Powiązania:**
-
 - Library może pełnić rolę centralnego repozytorium dla materiałów wykorzystywanych w Studio (11.1), Research (11.5) i Browser (11.4), zgodnie z powiązaniami ustanowionymi przez użytkownika.
 - Project Library w module Workspace (11.2) stanowi jej odpowiednik ograniczony do zakresu pojedynczego projektu.
 
@@ -747,13 +733,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | równoległe tłumaczenia, obsługa wielu języków, zarządzanie terminologią, lokalizacja treści |
 
 **Typowy scenariusz:**
-
 1. Umieszczenie tekstu źródłowego w Source Panel.
 2. Równoczesne tłumaczenie na wiele języków widocznych w osobnych Translation Panels.
 3. Zapewnienie spójności terminologii przez Glossary Manager, w którym użytkownik definiuje preferowane odpowiedniki kluczowych pojęć.
 
 **Powiązania:**
-
 - Translate może zostać skonfigurowany do korzystania z operacji kontekstowych AI właściwych modułowi Studio (11.1) przy pracy dwujęzycznej oraz może pełnić rolę etapu pośredniego w pracy prowadzonej w tym module, gdy dokument wymaga wersji wielojęzycznej.
 - Mechanizm operacji kontekstowych AI pozostaje natywnie mechanizmem modułu Studio; jego wspólne wykorzystanie ustanawia użytkownik w oknie konfiguracji.
 
@@ -766,14 +750,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | współpraca modeli, debaty, wymiana argumentów, porównywanie odpowiedzi, wypracowywanie konsensusu |
 
 **Typowy scenariusz:**
-
 1. Kilka modeli widocznych równolegle w Model Panels odpowiada na to samo zagadnienie.
 2. Debate Panel rejestruje wymianę argumentów między nimi.
 3. Moderator Panel pozwala użytkownikowi ukierunkować dyskusję.
 4. Consensus Panel gromadzi finalne, uzgodnione stanowisko.
 
 **Powiązania:**
-
 - Roundtable stanowi funkcjonalne rozwinięcie idei wielomodelowości realizowanej w pełniejszej, zorientowanej na role formie przez środowisko MultitaskingAI (rozdz. 9.4, 13) — różnica polega na tym, że Roundtable koncentruje się na debacie i konsensusie, a nie na podziale ról wykonawczych i orkiestracji procesu.
 
 ### 11.9. Design
@@ -785,13 +767,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | generowanie grafiki, edycja obrazów, ilustracje, branding, UI/UX, materiały marketingowe |
 
 **Typowy scenariusz:**
-
 1. Precyzyjne formułowanie poleceń generujących grafikę w Prompt Builder.
 2. Gromadzenie wygenerowanych zasobów w Assets Panel.
 3. Zestawianie zasobów i dalsza praca koncepcyjna nad spójną kompozycją wizualną w Design Board.
 
 **Powiązania:**
-
 - Zasoby wygenerowane w module Design mogą, w ramach powiązań ustanowionych przez użytkownika, być wykorzystywane w module Studio (11.1) przy redagowaniu dokumentów oraz w module Apps (11.14) przy budowie interfejsu produktu.
 
 ### 11.10. Assistant
@@ -803,13 +783,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | komunikacja głosowa, wykonywanie poleceń, sterowanie zadaniami, obsługa aplikacji, realizacja działań wieloetapowych |
 
 **Typowy scenariusz:**
-
 1. Wydawanie poleceń głosowych przez Voice Console.
 2. Podgląd bieżącego statusu ich realizacji w Actions Monitor.
 3. Chronologiczny zapis wykonanych działań w Activity Feed, pozwalający odtworzyć przebieg wieloetapowego zlecenia zrealizowanego głosowo.
 
 **Powiązania:**
-
 - Assistant współdzieli charakter komunikacji głosowej z funkcją globalną Always On Display (12.2), różniąc się od niej tym, że działa jako pełnoprawny moduł osadzony w konkretnym środowisku, a nie jako warstwa obecna ponad całą platformą.
 
 ### 11.11. Terminal
@@ -821,13 +799,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | PowerShell, CMD, Bash, Node.js, Python, narzędzia CLI |
 
 **Typowy scenariusz:**
-
 1. Prowadzenie równolegle wielu sesji w różnych powłokach w Terminal Tabs.
 2. Gromadzenie ich wyniku w Output Console.
 3. Obserwacja i kontrola uruchomionych procesów w Process Monitor, w tym tych zainicjowanych poleceniem wydanym przez AI.
 
 **Powiązania:**
-
 - Terminal dostarcza warstwy wykonawczej dla poleceń wydawanych z poziomu modułu Developer (11.12) oraz Diagnostics (11.13), z którymi jest najściślej powiązany funkcjonalnie w ramach środowiska CodeStudio.
 
 ### 11.12. Developer
@@ -839,14 +815,12 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | generowanie kodu, refaktoryzacja, analiza architektury, dokumentacja, testowanie |
 
 **Typowy scenariusz:**
-
 1. Nawigacja po strukturze projektu w Project Tree.
 2. Edycja kodu w Code Editor przy wsparciu AI udzielanym przez Chat Window.
 3. Zarządzanie zmianami przez Git Panel.
 4. Obserwacja wyniku kompilacji lub budowania w Build Output.
 
 **Powiązania:**
-
 - Developer korzysta z Terminala (11.11) jako warstwy wykonawczej oraz z modułu Diagnostics (11.13) przy analizie błędów wykrytych w toku pracy.
 - Stanowi jeden z komponentów wykorzystywanych przy budowie kompletnych produktów w module Apps (11.14).
 
@@ -859,13 +833,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | debugowanie, analiza logów, analiza błędów, diagnostyka wydajności |
 
 **Typowy scenariusz:**
-
 1. Zebranie materiału źródłowego w Logs Viewer i Errors Panel.
 2. Agregacja go w spójny obraz stanu systemu w Diagnostics Center.
 3. Przedstawienie sugerowanych kroków naprawczych w Recommendations Panel, wypracowanych przez AI na podstawie zebranych danych.
 
 **Powiązania:**
-
 - Diagnostics współpracuje z modułem Developer (11.12) przy wdrażaniu poprawek wynikających z analizy oraz z Terminalem (11.11) przy odtwarzaniu i weryfikacji objawów błędu w rzeczywistym środowisku wykonawczym.
 
 ### 11.14. Apps
@@ -877,13 +849,11 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | aplikacje webowe, mobilne, desktopowe, API, backend, frontend, repozytoria, dokumentacja techniczna |
 
 **Typowy scenariusz:**
-
 1. Zaprojektowanie architektury rozwiązania w Architecture Designer.
 2. Równoległa praca nad Frontend Workspace i Backend Workspace.
 3. Zarządzanie końcowym etapem udostępnienia gotowego produktu przez Deployment Panel.
 
 **Powiązania:**
-
 - Apps integruje funkcjonalności modułów Developer (11.12) i Terminal (11.11) w ramach jednego, ustrukturyzowanego procesu budowy produktu.
 - Zasoby wizualne dla warstwy frontendowej mogą pochodzić z modułu Design (11.9).
 - Realizacja rozbudowanych projektów w module Apps jest naturalnym zastosowaniem środowiska MultitaskingAI (rozdz. 9.4, 13), w szczególności podziału na Executor 1 i Executor 2 przy równoległej pracy nad backendem i frontendem.
@@ -897,7 +867,6 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 | Funkcjonalności | wybór modelu bazowego, definiowanie tożsamości, konfiguracja instrukcji systemowych, dodawanie skilli, pluginów, konektorów, zarządzanie pamięcią, konfiguracja uprawnień |
 
 **Typowy scenariusz:**
-
 1. Utworzenie agenta w Agent Builder.
 2. Wybór modelu bazowego w Model Configuration.
 3. Dobór umiejętności w Skills Manager.
@@ -907,7 +876,6 @@ Poniżej katalog piętnastu modułów platformy. Każdy moduł opisano w formie 
 **Charakterystyka:** Agenci są komponentem platformowym działającym ponad wszystkimi środowiskami. Po utworzeniu mogą być wykorzystywani jako wykonawcy zadań w TalkIn, WorkSpace i CodeStudio, a po przypisaniu do roli — także w środowisku MultitaskingAI (rozdz. 9.4, 13).
 
 **Powiązania:**
-
 - Agenci skonfigurowani w tym module mogą być przypisywani do projektów w module Workspace (11.2) przez Agent Manager.
 - Mogą pełnić role wykonawcze (Executor, Coordinator, Validator i inne) w środowisku MultitaskingAI (rozdz. 9.4, 13).
 
@@ -967,7 +935,7 @@ W odróżnieniu od piętnastu modułów z rozdziału 11, które organizują prac
 
 ### 13.2. Warstwa centralna
 
-**Always On Display** — globalny agent użytkownika, nadrzędna warstwa nad całym systemem. Posiada dostęp do wszystkich środowisk, projektów, agentów, sesji, historii i procesów. Może współpracować z MultitaskingAI jako obserwator lub operator procesu.
+**Always On Display** (`funkcje-globalne/always-on-display.md`) — globalny agent użytkownika, nadrzędna warstwa nad całym systemem. Posiada dostęp do wszystkich środowisk, projektów, agentów, sesji, historii i procesów. Może współpracować z MultitaskingAI jako obserwator lub operator procesu.
 
 Obecność Always On Display jako warstwy centralnej wynika bezpośrednio z jego charakterystyki (rozdz. 12.2): ponieważ ma dostęp do pełnego kontekstu działania użytkownika i nie jest przypisany do pojedynczego modułu, jest naturalnym kandydatem do roli nadzorczej nad procesem angażującym wiele modeli i ról jednocześnie.
 
@@ -1384,5 +1352,4 @@ Powiązanie jest jawne i odwracalne (rozdz. 14, zasada 3).
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

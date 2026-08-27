@@ -1,5 +1,3 @@
-*Dokument specyfikuje model danych Danaco Console: encje, relacje, pola oraz reguły spójności bazy leżącej pod wszystkimi modułami platformy.*
-
 # Danaco Console — Model danych
 
 | | |
@@ -225,7 +223,7 @@ Jedyne konto właściciela platformy (Operator), zgodnie z modelem wdrożenia je
 | data_utworzenia | TEXT | Data rejestracji. | NOT NULL |
 | data_ostatniego_logowania | TEXT | Data ostatniego udanego logowania. | — |
 
-*Uwaga projektowa.* Konto posiada wszystkie encje `urzadzenie` oraz pośrednio wszystkie `karta_sesji` (przez urządzenie tworzące kartę). Tryb działania bez kontroli dostępu (architektura, rozdział 15) nie zmienia struktury tabeli — przełącznik trybu działa na poziomie aplikacji, nie schematu danych.
+*Uwaga projektowa.* Konto jest właścicielem wszystkich `urzadzenie` oraz pośrednio wszystkich `karta_sesji` (przez urządzenie tworzące kartę). Tryb działania bez kontroli dostępu (architektura, rozdział 15) nie zmienia struktury tabeli — przełącznik trybu działa na poziomie aplikacji, nie schematu danych.
 
 ### 3.2. Urządzenie (`urzadzenie`)
 
@@ -1616,7 +1614,7 @@ Odwzorowanie pary `zrodlo_typ` / `zrodlo_id`:
 | przebieg_petli | `przebieg_petli.id` |
 | automatyka | `automatyka.id` |
 
-*Uwaga projektowa.* Zakres klas zdarzeń zgłaszanych przez centrum powiadomień oraz kanał dostarczenia są ustawieniami konfiguracyjnymi warstwy globalnej i warstwy środowiska (rozdz. 17.1), zgodnie z sekcją powiadomień okna Ustawień (rozdz. 7). Powiadomienie o wadze `wymagajaca_decyzji` pozostaje w stanie `nowe` do chwili podjęcia decyzji w Chat Window albo w Execution Loop Window. Sugestie Always On Display (18.2) są odrębną encją — doradztwo proaktywne nie jest zdarzeniem powiadomienia.
+*Uwaga projektowa.* Zakres klas zdarzeń zgłaszanych przez centrum powiadomień oraz kanał dostarczenia są ustawieniami konfiguracyjnymi warstwy globalnej i warstwy środowiska (rozdz. 17.1), zgodnie z sekcją powiadomień okna Ustawień (`interfejs-uzytkownika/ustawienia.md`, rozdz. 7). Powiadomienie o wadze `wymagajaca_decyzji` pozostaje w stanie `nowe` do chwili podjęcia decyzji w Chat Window albo w Execution Loop Window. Sugestie Always On Display (18.2) są odrębną encją — doradztwo proaktywne nie jest zdarzeniem powiadomienia.
 
 ---
 
@@ -2485,5 +2483,4 @@ Scenariusz obejmuje współdzielenie operacji kontekstowych AI między Studio a 
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-
-*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

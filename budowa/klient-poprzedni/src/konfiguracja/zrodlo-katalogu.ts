@@ -72,7 +72,7 @@ interface Uporzadkowana {
 }
 
 /**
- * Porządek wyświetlania bierzemy z katalogu, nie z kolejności odpowiedzi.
+ * Porządek wyświetlania pochodzi z katalogu, nie z kolejności odpowiedzi.
  * Wiersz bez kolejności trafia na koniec, zamiast zniknąć.
  */
 function uporzadkuj<T extends Uporzadkowana>(pozycje: readonly T[]): T[] {

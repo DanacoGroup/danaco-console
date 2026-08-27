@@ -1762,3 +1762,36 @@ końcowy podniesiony na czas sprawdzianu w tym samym procesie, a nie zaślepką
 portu. Program spoza maszyny nie jest do tego potrzebny; potrzebny jest
 natomiast do syntezy mowy, którą woła zewnętrzny silnik, więc tej komendy
 sprawdziany tego pliku nie dotykają.
+
+## budowa/server/internal/core/handlers_narzedzia_sesji.go
+
+Ekspert dostaje dobrany podzbiór narzędzi; komenda po ukośniku wstrzykuje
+jedno narzędzie na żądanie, nie ruszając definicji eksperta ani biegu
+rozmowy. Jest to jedyne miejsce, w którym zestaw narzędzi rośnie w trakcie
+pracy, więc `session.tool.attach` i `session.tool.detach` nie są narzędziami
+modelu: narzędzie, którym model dokłada sobie narzędzia, byłoby drugą
+prawdą o tym, czym model dysponuje. Odczyt model ma — `session.tool.list`
+i `tools.catalog.list`.
+
+`rozglosDolozenieNarzedzia` niesie w zdarzeniu całą pozycję — nazwę pełną
+ze źródłem, skróconą i opis — bo sama nazwa skrócona nic Operatorowi nie
+mówi. Sprawcę bierze z kontekstu, tak samo jak pozostałe zdarzenia rdzenia:
+bez niego dołożenie zrobione ręką asystenta wyglądałoby jak własne.
+
+`rozglosZdjecieNarzedzia` niesie całą pozycję z tego samego powodu:
+rozgłoszenie samego dołożenia zostawiłoby sąsiednie okno z wierszem
+narzędzia, którego model już nie ma, a zestaw pokazany szerszym, niż jest,
+kłamie tak samo jak poszerzony po cichu. Okno usuwa wiersz po nazwie
+pełnej, a gdy dołożenia jeszcze nie widziało, ma z czego złożyć wpis
+dziennika mówiący Operatorowi, co dokładnie zeszło.
+
+`bladNosnikaNarzedziSesji` rozróżnia dwie przyczyny: brak wpiętej
+trwałości (dołożenie nie doszłoby do bazy i zniknęłoby przy pierwszym
+rozłączeniu klienta, choć ma przetrwać) oraz usterkę zapisu, po której
+Operator powtórzy czynność i sprawdzi dziennik rdzenia.
+
+`trafnoscPozycji` dopasowuje środkiem nazwy, nie od początku: przy
+przedrostkach źródła każda pozycja zaczyna się tak samo, więc szukanie od
+początku nazwy pełnej byłoby bezużyteczne. Stopnie są cztery, bo `ski` ma
+trafić w `skill-creator` wyżej niż w `template-skill`, a oba wyżej niż
+pozycję, która ma `ski` wyłącznie w opisie.

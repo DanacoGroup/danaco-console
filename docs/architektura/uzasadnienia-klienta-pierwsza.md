@@ -1533,3 +1533,14 @@ przedrostka modułu. Przynależność do modułu niesie osobna macierz, w które
 czterech okien nie ma — liczą się tam jako okna pozamodułowe. Kod zapisany
 z przedrostkiem nie trafiłby w żaden wiersz rejestru, a nawigacja po kodzie okna
 nie miałaby dokąd skoczyć.
+
+## budowa/klient-poprzedni/src/aplikacja/trasy.ts
+
+Aplikacja ma trzy widoki najwyższego rzędu. Trasa `strona-glowna` prowadzi do
+Centrum dowodzenia i stanowi wejście do produktu. Trasa `srodowisko` otwiera
+powłokę środowiska wraz z kartami sesji i modułami. Trasa `pulpit` otwiera
+Mission Control jako widok stojący obok strony głównej, a nie zagnieżdżony w niej.
+
+Nazwa trasy pełni dwie role naraz: jest kluczem katalogu i wartością zapisywaną
+w adresie dokumentu. Dzięki temu odświeżenie strony wraca do tego samego widoku,
+a nie na początek przepływu.

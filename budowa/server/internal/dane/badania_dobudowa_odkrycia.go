@@ -1,7 +1,6 @@
-// Odpowiedzialność pliku: dobudowa obszaru Research po stronie danych —
-// odkrywanie źródeł (wyniki wyszukiwania i ich przesiew), monitory tematów,
-// przestrzeń badania (pytania badawcze, odbiorca, protokół, notatka robocza)
-// oraz style cytowania. Kontrakt obszaru deklaruje `badania_dobudowa.go`.
+// Plik dobudowuje obszar badań po stronie danych: odkrywanie źródeł, monitory tematów,
+// przestrzeń badania oraz style cytowania. Kontrakt obszaru deklaruje plik
+// badania_dobudowa.go.
 package dane
 
 import (
@@ -12,9 +11,9 @@ import (
 	"strings"
 )
 
-// WynikOdkryciaBadania to wiersz `wynik_odkrycia_badania` — pozycja zwrócona przez
-// dostawcę wyszukiwania, zapamiętana po to, żeby dało się ją odrzucić i policzyć
-// w przesiewie PRISMA (patrz nagłówek migracji 150).
+// WynikOdkryciaBadania odwzorowuje wiersz tabeli wynik_odkrycia_badania — pozycja zwrócona
+// przez dostawcę wyszukiwania, zapamiętana po to, żeby dało się ją odrzucić i policzyć
+// w przesiewie PRISMA.
 type WynikOdkryciaBadania struct {
 	Klucz           string
 	Okno            string
@@ -32,7 +31,8 @@ type WynikOdkryciaBadania struct {
 	ZrodloKod       *string
 }
 
-// MonitorBadania to wiersz `monitor_badania`.
+// MonitorBadania odwzorowuje wiersz tabeli monitor_badania: subskrypcję zapytania albo
+// adresu, którą instalacja odświeża w ustalonym interwale i zgłasza jako nowe pozycje.
 type MonitorBadania struct {
 	Kod           string
 	Okno          string
@@ -45,14 +45,16 @@ type MonitorBadania struct {
 	OdswiezonoO   *string
 }
 
-// PytanieBadania to wiersz `pytanie_badania`.
+// PytanieBadania odwzorowuje wiersz tabeli pytanie_badania: jedno pytanie badawcze
+// przestrzeni badania wraz z jego kolejnością w wykazie.
 type PytanieBadania struct {
 	Kod       string
 	Tekst     string
 	Kolejnosc int
 }
 
-// SzczegolyPrzestrzeniBadania to pola przestrzeni badania dobudowane migracją 150.
+// SzczegolyPrzestrzeniBadania niesie odbiorcę, protokół, granice oraz notatkę roboczą
+// jedynej przestrzeni badania instalacji.
 type SzczegolyPrzestrzeniBadania struct {
 	Odbiorca *string
 	Protokol *string
@@ -60,7 +62,8 @@ type SzczegolyPrzestrzeniBadania struct {
 	Notatka  *string
 }
 
-// StylCytowaniaBadania to wiersz `styl_cytowania_badania`.
+// StylCytowaniaBadania odwzorowuje wiersz tabeli styl_cytowania_badania: styl cytowania
+// dodany własnoręcznie przez operatora, poza zestawem stylów wbudowanych.
 type StylCytowaniaBadania struct {
 	Kod    string
 	Nazwa  string
@@ -99,7 +102,8 @@ func (r *repozytoriumBadan) ZapiszWynikiOdkrycia(ctx context.Context, wyniki []W
 	return nil
 }
 
-// WynikiOdkrycia oddaje pozycje zapamiętane dla okna badania.
+// WynikiOdkrycia oddaje pozycje zapamiętane dla okna badania, od najświeższej zapisanej,
+// wraz ze stanem ich przesiewu.
 func (r *repozytoriumBadan) WynikiOdkrycia(ctx context.Context, okno string) ([]WynikOdkryciaBadania, error) {
 	wiersze, err := r.pytajBadania(ctx, `SELECT klucz, okno, tytul, adres, autorzy, rok, dostawca,
 	        identyfikator, fragment, otwarty_dostep, duplikat, odrzucony, powod_odrzucenia, zrodlo_kod
@@ -162,7 +166,8 @@ func (r *repozytoriumBadan) OdrzucWynikiOdkrycia(ctx context.Context, okno strin
 
 // ── Monitory tematów ───────────────────────────────────────────────────────
 
-// ZapiszMonitor zakłada monitor albo nadpisuje zastany.
+// ZapiszMonitor zakłada monitor tematu albo nadpisuje zastany wiersz o tym samym
+// identyfikatorze zewnętrznym, nie naruszając jego stanu odświeżenia.
 func (r *repozytoriumBadan) ZapiszMonitor(ctx context.Context, m MonitorBadania) (MonitorBadania, error) {
 	err := r.wykonajBadania(ctx, `INSERT INTO monitor_badania
 	    (identyfikator_zewnetrzny, okno, rodzaj, zapytanie, adres, interwal_minut, wlaczony,
@@ -181,9 +186,8 @@ func (r *repozytoriumBadan) ZapiszMonitor(ctx context.Context, m MonitorBadania)
 }
 
 // ZapiszMonitorZeStanem zapisuje monitor razem ze stanem odświeżenia: licznikiem
-// oczekujących i chwilą ostatniego przebiegu. Osobno od `ZapiszMonitor`, bo tam
-// stan jest świadomie pomijany — ustawienie monitora przez Operatora nie ma
-// prawa skasować licznika nowych pozycji, którego Operator nie dotykał.
+// oczekujących i chwilą ostatniego przebiegu. Osobno od ZapiszMonitor, bo tam stan jest
+// świadomie pomijany — ustawienie monitora przez operatora nie ma skasować licznika.
 func (r *repozytoriumBadan) ZapiszMonitorZeStanem(ctx context.Context,
 	m MonitorBadania) (MonitorBadania, error) {
 
@@ -196,11 +200,13 @@ func (r *repozytoriumBadan) ZapiszMonitorZeStanem(ctx context.Context,
 	return r.Monitor(ctx, m.Kod)
 }
 
-// zapytanieMonitoraBadania jest wspólnym odczytem monitorów.
+// zapytanieMonitoraBadania jest wspólnym tekstem zapytania SQL, z którego korzystają
+// funkcje odczytujące pojedynczy monitor oraz listy monitorów.
 const zapytanieMonitoraBadania = `SELECT identyfikator_zewnetrzny, okno, rodzaj, zapytanie, adres,
 	        interwal_minut, wlaczony, oczekujace, odswiezono_o FROM monitor_badania `
 
-// Monitor oddaje jeden monitor po kodzie.
+// Monitor oddaje jeden monitor tematu wskazany kodem zewnętrznym albo błąd
+// ErrBrakWiersza, gdy taki monitor nie istnieje w bazie.
 func (r *repozytoriumBadan) Monitor(ctx context.Context, kod string) (MonitorBadania, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, zapytanieMonitoraBadania+`WHERE identyfikator_zewnetrzny = ?`)
 	if err != nil {
@@ -216,7 +222,8 @@ func (r *repozytoriumBadan) Monitor(ctx context.Context, kod string) (MonitorBad
 	return m, nil
 }
 
-// Monitory oddaje monitory okna badania.
+// Monitory oddaje monitory okna badania, opcjonalnie zawężone wyłącznie do włączonych,
+// uporządkowane według identyfikatora zewnętrznego.
 func (r *repozytoriumBadan) Monitory(ctx context.Context, okno string,
 	tylkoWlaczone bool) ([]MonitorBadania, error) {
 
@@ -242,7 +249,8 @@ func (r *repozytoriumBadan) Monitory(ctx context.Context, okno string,
 	return lista, wiersze.Err()
 }
 
-// odczytajMonitorBadania składa strukturę z jednego wiersza wyniku.
+// odczytajMonitorBadania składa strukturę MonitorBadania z jednego wiersza wyniku zapytania,
+// niezależnie od tego, czy pochodzi z pojedynczego odczytu, czy z iteracji po wielu wierszach.
 func odczytajMonitorBadania(wiersz skaner) (MonitorBadania, error) {
 	var m MonitorBadania
 	var zapytanie, adres, odswiezono sql.NullString
@@ -263,7 +271,8 @@ func odczytajMonitorBadania(wiersz skaner) (MonitorBadania, error) {
 
 // ── Przestrzeń badania ─────────────────────────────────────────────────────
 
-// UstawPytaniaBadania wymienia w całości pytania badawcze przestrzeni.
+// UstawPytaniaBadania wymienia w całości pytania badawcze przestrzeni: usuwa zastany
+// zestaw i zapisuje podany w jednej transakcji, zachowując kolejność wejściową.
 func (r *repozytoriumBadan) UstawPytaniaBadania(ctx context.Context,
 	pytania []PytanieBadania) ([]PytanieBadania, error) {
 
@@ -293,7 +302,8 @@ func (r *repozytoriumBadan) UstawPytaniaBadania(ctx context.Context,
 	return r.PytaniaBadania(ctx)
 }
 
-// PytaniaBadania oddaje pytania badawcze w kolejności zapisu.
+// PytaniaBadania oddaje pytania badawcze przestrzeni badania w kolejności ustalonej
+// polem kolejnosc każdego wiersza.
 func (r *repozytoriumBadan) PytaniaBadania(ctx context.Context) ([]PytanieBadania, error) {
 	wiersze, err := r.pytajBadania(ctx,
 		`SELECT identyfikator_zewnetrzny, tekst, kolejnosc FROM pytanie_badania ORDER BY kolejnosc, id`)
@@ -328,7 +338,8 @@ func (r *repozytoriumBadan) UstawSzczegolyPrzestrzeni(ctx context.Context, s Szc
 		tekstDoKolumny(s.Odbiorca), tekstDoKolumny(s.Protokol), tekstDoKolumny(s.Granice))
 }
 
-// SzczegolyPrzestrzeniBadania oddaje odbiorcę, protokół, granice i notatkę roboczą.
+// SzczegolyPrzestrzeniBadania oddaje odbiorcę, protokół, granice i notatkę roboczą jedynej
+// przestrzeni badania instalacji.
 func (r *repozytoriumBadan) SzczegolyPrzestrzeniBadania(ctx context.Context) (SzczegolyPrzestrzeniBadania, error) {
 	if err := r.zapewnijPrzestrzen(ctx); err != nil {
 		return SzczegolyPrzestrzeniBadania{}, err
@@ -348,7 +359,8 @@ func (r *repozytoriumBadan) SzczegolyPrzestrzeniBadania(ctx context.Context) (Sz
 	}, nil
 }
 
-// UstawNotatkePrzestrzeni nadpisuje notatkę roboczą i oddaje chwilę zapisu.
+// UstawNotatkePrzestrzeni nadpisuje notatkę roboczą przestrzeni badania i oddaje chwilę,
+// w której zapis rzeczywiście nastąpił.
 func (r *repozytoriumBadan) UstawNotatkePrzestrzeni(ctx context.Context, tresc string) (string, error) {
 	if err := r.zapewnijPrzestrzen(ctx); err != nil {
 		return "", err
@@ -370,16 +382,16 @@ func (r *repozytoriumBadan) UstawNotatkePrzestrzeni(ctx context.Context, tresc s
 	return chwila, nil
 }
 
-// zapewnijPrzestrzen zakłada jedyny wiersz przestrzeni, gdy jeszcze nie stoi.
-// Przestrzeń jest bytem jednowierszowym instalacji (patrz `badania_raport.go`),
-// więc jej brak jest stanem początkowym, a nie usterką.
+// zapewnijPrzestrzen zakłada jedyny wiersz przestrzeni, gdy jeszcze nie stoi. Przestrzeń
+// jest bytem jednowierszowym instalacji, więc jej brak jest stanem początkowym, a nie usterką.
 func (r *repozytoriumBadan) zapewnijPrzestrzen(ctx context.Context) error {
 	return r.wykonajBadania(ctx, `INSERT OR IGNORE INTO przestrzen_badania (id, zakres) VALUES (1, '')`)
 }
 
 // ── Style cytowania ────────────────────────────────────────────────────────
 
-// ZapiszStylCytowania utrwala styl własny Operatora.
+// ZapiszStylCytowania utrwala styl cytowania własny operatora albo nadpisuje nazwę
+// zastanego stylu o tym samym identyfikatorze zewnętrznym.
 func (r *repozytoriumBadan) ZapiszStylCytowania(ctx context.Context, kod, nazwa string) error {
 	return r.wykonajBadania(ctx, `INSERT INTO styl_cytowania_badania
 	    (identyfikator_zewnetrzny, nazwa, wlasny) VALUES (?, ?, 1)

@@ -1,14 +1,9 @@
 import { Command } from '../../../../shared/contract';
 
 /**
- * Co moduł wie o torze swoich komend ponad to, co rdzeń mówi sam.
- *
- * Słownik zdań doklejanych do powodu odmowy. Stoi osobno od
- * `etykiety-designu.ts`, bo tamten plik jest słownikiem nazw i braków, a to
- * jest wiedza o drodze żądania.
- *
- * Zdanie nie orzeka o powodzie odmowy — powód niesie `opisOdmowyBledu`
- * z odpowiedzi rdzenia. Tu stoi wyłącznie to, czego rdzeń o sobie nie mówi.
+ * Słownik zdań o torze komend modułu Design, doklejanych do powodu odmowy
+ * podanego przez rdzeń. Zdanie nie orzeka o powodzie odmowy, niesie wyłącznie
+ * to, czego rdzeń o przebiegu żądania sam nie mówi.
  */
 const TORY_KOMEND: Readonly<Record<string, string>> = {
   [Command.DesignAssetGenerate]:
@@ -43,7 +38,11 @@ const TORY_KOMEND: Readonly<Record<string, string>> = {
     'warstwami. Rdzeń nie obiecuje porządku wykazu — o świeżości rozstrzyga pole updatedAt.',
 };
 
-/** Zdanie o torze komendy; komenda spoza obszaru nie dostaje dopisku. */
+/**
+ * Zdanie o torze komendy wyjęte ze słownika po nazwie komendy; komenda spoza
+ * obszaru modułu Design oddaje napis pusty, więc powód odmowy zostaje wtedy
+ * bez dopisku.
+ */
 export function zdanieOTorzeKomendy(komenda: string): string {
   return TORY_KOMEND[komenda] ?? '';
 }

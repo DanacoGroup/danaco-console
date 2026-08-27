@@ -4560,3 +4560,82 @@ wyszedłby tekstem.
 `rodzajPodgladu` stoi tutaj, przy odczycie treści podglądu, a nie przy
 składaniu odpowiedzi (`adapter_modul_library.go`), bo to jedna decyzja tego
 samego obszaru.
+## budowa/server/internal/core/adapter_modul_workspace_kalendarz.go
+
+Kalendarz projektu ma dwa źródła i oba wchodzą do jednego wykazu: zadania
+z terminem, będące bytem planowania, oraz wydarzenia wciągnięte z pliku
+iCal bez zakładania zadań, będące bytem kalendarza. Drugie źródło
+istnieje, bo wciągnięcie bez zakładania zadań musi mieć gdzie osiąść —
+inaczej udane wciągnięcie oddawałoby pusty kalendarz.
+## budowa/server/internal/core/adapter_modul_poczta_wysylka.go
+
+`mail.send` jest jedyną nieodwracalną komendą rdzenia. Wszystko inne, co robi
+platforma, zostaje na maszynie Operatora i da się odkręcić; list wysłany jest
+u kogoś innego i nie ma komendy, która by go stamtąd zabrała.
+
+Bramki potwierdzenia nie ma — jest ślad, i to podwójny: wiersz `list_wyslany`
+w bazie rdzenia, zapisywany zawsze, także po nieudanym nadaniu, z treścią
+błędu; oraz kopia listu w folderze "wysłane" skrzynki Operatora, odkładana
+po udanym nadaniu, żeby Operator zobaczył ją tam, gdzie zawsze ogląda to,
+co od niego wyszło. Ślad nieudanej wysyłki nie zastępuje odmowy: wiersz
+w bazie powstaje, a komenda i tak odmawia, bo nie wysłała.
+
+Szkic jest krokiem pośrednim, nie połowiczną wysyłką. `mail.draft.save`
+odkłada odpowiedź w folderze szkiców skrzynki Operatora, nie w bazie rdzenia.
+Operator otwiera swojego klienta poczty i widzi ją tam, gdzie widziałby
+własną niedokończoną odpowiedź.
+
+Kopia w folderze "wysłane" powstaje osobno od wpisu w bazie, więc po
+wysłaniu szkic zostaje jako ślad, a nie jako duplikat — usunięcia szkicu
+kontrakt nie obiecuje.
+
+Zasób wskazany w załączniku, a nieznany magazynowi, jest odmową całej
+komendy: wysłanie listu bez załącznika, o który proszono, byłoby wysłaniem
+innego listu niż zamówiony, a tego nie da się cofnąć.
+
+## budowa/server/internal/core/adapter_modul_roundtable.go
+
+To jedyny moduł, w którym jedno okno rozmawia z wieloma kanałami naraz. Rdzeń
+to wspiera bez zmian: models.Rejestr.Wyslij jest bezpieczny do równoległego
+wywołania (rejestr trzyma kanały pod RWMutex, a każdy adapter dostaje własne
+zapytanie i własne ujście), więc N uczestników to N gorutyn nad jednym
+rejestrem. Drugiego rejestru kanałów moduł nie zakłada.
+
+Ten sam kanał może wystąpić dwukrotnie pod odrębnymi tożsamościami. Tożsamość
+uczestnika jedzie do kanału warstwą models.Nakladka.ProfilRoli — tą samą,
+którą okno rozmowy niesie profil roli. Dzięki temu dwaj uczestnicy na kanale
+claude-cli różnią się promptem systemowym, a nie kodem kanału.
+
+Rozstrzygacz w adapterDebaty składa zasady izolacji egzekwowane przy
+uruchomieniu programu zewnętrznego, ten sam, którym jadą Terminal, Developer
+i rodzina narzędzi mediów.
+
+Przerwanie tury nie idzie przy okazji otwarcia następnej — należy do
+moderatora i idzie jego komendą PrzerwijBieg (zamknięcie tury), bo ciche
+odwołanie tury biegnącej kasowałoby wypowiedzi uczestników w połowie zdania,
+bez odmowy i bez śladu w panelu.
+
+zwolnijBieg istnieje, bo zajęcie okna idzie przed założeniem tury
+(adapter_modul_roundtable_tura.go). Zdjęcie wpisu jest bezwarunkowe: między
+zajęciem a zwolnieniem nie startuje żadna gorutyna, więc odwołanie zdejmowane
+tu jest zawsze tym samym, które zajęło okno. Drogą tą wolno wołać wyłącznie
+przed startem tury; po starcie okno zwalnia zapomnijBieg z defer w
+prowadzTure.
+## budowa/server/internal/core/adapter_modul_roundtable_moderator.go
+
+Kontrakt zamyka sterowanie debata w jednym wyliczeniu ModeratorAction:
+ukierunkowanie, zamkniecie tury, zmiana zagadnienia, wyciszenie i zdjecie
+wyciszenia. Rdzen nie doklada szostej wartosci i nie tlumaczy ich na
+wlasne nazwy. Pole speakingOrder przychodzi obok kazdej z pieciu wartosci,
+zapisywane zawsze, gdy przyszlo - moderator ustawia porzadek przy
+zamknieciu tury rownie dobrze jak przy interwencji.
+
+Interwencja skierowana do jednego uczestnika jest pytaniem
+doprecyzowujacym z panelu akcji Model Panels; interwencja bez wskazania
+idzie do calego skladu.
+
+## budowa/server/internal/core/adapter_modul_automations_orkiestracja.go
+
+Odmowa zapisu przy wykrytym cyklu kasowałaby pracę wykonaną do chwili
+wykrycia usterki, zamiast pokazać, co wymaga poprawki. Odpowiedź niesie
+`valid=false` wraz z zastrzeżeniami zamiast odmowy.

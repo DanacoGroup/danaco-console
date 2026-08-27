@@ -361,3 +361,33 @@ czynności.
 Cztery czynności tego pliku mają wariant neuronowy lepszy od rachunku: powiększenie, odcięcie tła, domalowanie i rozszerzenie kadru. Gdy kanał modelu obrazowego działa, liczy kanał; gdy nie działa, liczy rachunek zawarty w tym pliku, a odpowiedź podaje, którą drogą policzyła, w polu `computedBy`. Obie drogi oddają piksele, różni je jedynie jakość wyniku.
 
 Odcięcie tła rachunkiem opiera się na barwie tła odczytanej z obwodu obrazu i na rozroście obszaru od brzegów, dzięki czemu jasny przedmiot na jasnym tle nie znika w środku kadru, choć tło ma tam tę samą barwę. Metoda działa poprawnie na zdjęciach produktowych i na grafice na jednolitym tle; na portrecie w tłumie wynik jest gorszy niż wynik kanału modelu, dlatego pole `transparentShare` jest pomiarem — pozwala rozpoznać, jaki udział obrazu zniknął.
+
+## adapter_modul_studio_agenci.go
+
+Zajęcie fragmentu nie jest blokadą. Blokada Operatora jest trwała, skierowana
+przeciw wykonawcom i zdejmuje ją wyłącznie Operator; zajęcie fragmentu jest
+chwilowe, wygasa samo i chroni przed drugim wykonawcą. Zlanie ich dałoby albo
+blokadę, która wygasa, czyli żadną, albo zajęcie, którego nikt nie zdejmie po
+agencie ubitym w pół pracy. Zajęcie ma dlatego własną tabelę i własny czas
+wygaśnięcia, liczony zegarem bazy — zegar rdzenia rozjechałby się z kolumną
+wygaśnięcia przy pierwszej różnicy strefy.
+
+Odmowa zajęcia nazywa wykonawcę, a nie mówi „zajęte". Wykonawca, który dostał
+„zajęte", nie wie, czy czekać, czy odstąpić; odmowa nazywa więc, kto trzyma
+fragment i do kiedy, i to samo zdanie widzi Operator w wykazie zajęć.
+
+Nastawy pętli wykonawczej i pracy wielu agentów są domyślnie wyłączone,
+włącza je jawne, odwracalne ustawienie Operatora. Wartości jadą tą samą
+tabelą ustawień, którą jedzie cała platforma, tym samym rozstrzyganiem
+dziewięciu poziomów — osobny magazyn nastaw Studia byłby drugim miejscem,
+w którym trzeba by szukać wartości obowiązującej. Pierwszeństwo poziomów
+należy do pakietu konfiguracji, rdzeń o nie nie pyta; gdy rozstrzygacz nie
+został podany przy montażu, nastawy czyta się wprost z zasięgu okna, a potem
+globalnego, węższy przed szerszym, tą samą zasadą.
+
+Domyślna ważność zajęcia wynosi dziewięćdziesiąt sekund, bo tyle mieści się
+jedna czynność modelu na fragmencie, a wykonawca ubity w pół pracy nie trzyma
+akapitu dłużej niż półtorej minuty.
+
+Brak zapisu nastawy liczbowej zostaje brakiem, nie zerem: zero znaczyłoby
+„ani jeden wykonawca", a brak znaczy „bez granicy ustawionej przez Operatora".

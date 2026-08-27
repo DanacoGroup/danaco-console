@@ -1741,3 +1741,24 @@ kończyłby się odmową i sprawdzian pomijałby się zawsze — sprawdzian, kt�
 zawsze się pomija, niczego nie pilnuje. Autor wersji założonej z cyfryzacji
 niesie wartość modelu, nie Operatora, ponieważ historia dokumentu ma
 rozróżniać, kto wniósł którą wersję treści.
+
+## budowa/server/internal/core/skutek_kontroli_wiernosci_test.go
+
+Kontrola wierności polega na porównaniu dwóch tekstów, które muszą się różnić:
+przekładu w języku docelowym i jego tłumaczenia zwrotnego na język źródłowy.
+Szkoda, którą sprawdziany tego pliku wykluczają, odbierała kontroli właśnie
+tę różnicę — wywołanie tłumaczenia zwrotnego przepisywało panel w to samo
+miejsce, więc po przebiegu obie strony porównania stawały się jednym tekstem
+i kontrola udawała się zawsze. Odpowiedź wyglądała na udaną, a wynik był
+bezwartościowy.
+
+Dlatego sprawdziany tego pliku po każdym przebiegu pytają o obie strony
+osobno: co niesie tłumaczenie zwrotne i co dalej niesie panel. Drugi przebieg
+z inną odpowiedzią modelu ma dać inny wynik niż pierwszy — wynik, który się
+nie zmienia mimo zmiany wejścia, nie jest wynikiem pomiaru.
+
+Model jest w tych sprawdzianach prawdziwym kanałem rdzenia wskazującym punkt
+końcowy podniesiony na czas sprawdzianu w tym samym procesie, a nie zaślepką
+portu. Program spoza maszyny nie jest do tego potrzebny; potrzebny jest
+natomiast do syntezy mowy, którą woła zewnętrzny silnik, więc tej komendy
+sprawdziany tego pliku nie dotykają.

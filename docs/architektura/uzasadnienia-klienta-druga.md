@@ -1431,3 +1431,23 @@ Przestawienie sceny na moduł nie zdejmuje okien, nawet gdy jest ich więcej, ni
 bo zdjęcie okna ze sceny zamyka je również w rdzeniu, a zrobione samoczynnie przy przestawieniu
 modułu byłoby zamknięciem okna, o które nikt nie prosił. Scena mówi o nadmiarze wprost
 i zostawia zdjęcie operatorowi.
+
+## budowa/klient-poprzedni/src/moduly/studio/okno-petli-wykonawczej.ts
+
+Powierzchnia należy do dokumentu: panele nie zajmują stałych kolumn, wchodzą
+na żądanie i schodzą, gdy nie są używane. Okno pętli wchodzi więc znacznikiem
+przebiegu i schodzi po zamknięciu, a stała kolumna jest trybem do wyboru,
+jawnym, odwracalnym i pamiętanym — nigdy postacią domyślną. Samoczynne
+otwarcie zostaje przy zleceniu wielozadaniowym, bo okno wchodzi wtedy, gdy
+naprawdę jest używane, i to jest dokładnie ta sama reguła zastosowana wprost.
+
+Kolejka zadań, obsada wykonawców, warsztat łańcucha i tryb wsadowy działają
+na tym samym stanie. Krok łańcucha i dokument wsadu są zadaniami tej samej
+kolejki, bo kontrakt mówi wprost: przebieg łańcucha i wsadu prowadzi pętla
+wykonawcza okna. Druga maszyneria obok byłaby drugą prawdą o tym samym
+przebiegu.
+
+Okno nie przestawia nastaw pętli. Nastawy — czy pętla jest czynna, ilu
+wykonawców naraz, co przy spięciu — idą osobną rodziną komend. Okno je czyta
+i pokazuje wprost, a gdy pętla jest wyłączona, mówi to zdaniem, zamiast
+pozwalać naciskać przycisk, który i tak odmówi.

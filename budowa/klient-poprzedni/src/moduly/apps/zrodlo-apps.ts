@@ -437,7 +437,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsDeploymentList, zadanie),
         Command.AppsDeploymentList,
-        // Sprawdzamy tablicę, nie jej długość: wykaz pusty to odpowiedź poprawna, nie kształt uszkodzony.
+        // Sprawdza się tablicę, nie jej długość: wykaz pusty to odpowiedź poprawna, nie kształt uszkodzony.
         (tresc) => czyTablica(tresc.deployments),
       );
     },
@@ -509,7 +509,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       if (z.nazwa !== '') zadanie.name = z.nazwa;
       if (z.kolejnosc > 0) zadanie.order = z.kolejnosc;
       if (z.stan !== '') zadanie.status = z.stan;
-      // Pusty łańcuch jest wartością: zdejmuje wykonawcę; wysyłamy pole zawsze, gdy nie jest null.
+      // Pusty łańcuch jest wartością: zdejmuje wykonawcę; wysyła się pole zawsze, gdy nie jest null.
       if (z.wykonawca !== null) zadanie.ownerAgentId = z.wykonawca;
       return sprawdzKsztalt(
         await wywolaj(Command.AppsStageSave, zadanie),
@@ -568,7 +568,7 @@ export function utworzZrodloApps(kanal: Kanal): ZrodloApps {
       return sprawdzKsztalt(
         await wywolaj(Command.AppsArchitectureValidate, { windowId: idOkna }),
         Command.AppsArchitectureValidate,
-        // Układ bez zastrzeżeń oddaje pustą tablicę — wynik najlepszy; sprawdzamy tablicę, nie jej długość.
+        // Układ bez zastrzeżeń oddaje pustą tablicę — wynik najlepszy; sprawdza się tablicę, nie jej długość.
         (tresc) => czyTablica(tresc.issues),
       );
     },

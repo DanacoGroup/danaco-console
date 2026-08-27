@@ -3383,3 +3383,11 @@ sterowania przerwie kompilację w tym miejscu, zamiast po cichu wpaść w gałą
 braku zamówienia. Zatwierdzenie bramy potwierdzeń puszcza zlecenie w bieg, bo
 czekało na rękę operatora, a nie na zasób; odmowa zdejmuje je z kolejki i jest
 anulowaniem z powodem, nie osobnym stanem.
+
+## budowa/klient-poprzedni/src/moduly/design/porownanie-wariantow.ts
+
+Porównanie zestawia pola opisowe zasobów, a nie ich obrazy. Pole `uri` zasobu
+wskazuje ścieżkę w systemie plików rdzenia, a droga po bajty obrazu, choć opisana
+w kontrakcie, nie ma jeszcze uchwytu w rdzeniu, więc przeglądarka nie ma czym
+wczytać żadnej ze stron porównania. Suwak przejścia między stroną „przed"
+a stroną „po" nabiera znaczenia dopiero po dobudowaniu tej obsługi.

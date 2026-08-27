@@ -60,3 +60,28 @@ Sprawdzian przebiegu obciążeniowego punktu milczącego zamyka serwer przed
 uruchomieniem przebiegu, więc odmowa ma nazwać liczbę błędów, a nie oddać
 wynik złożony z samych zer, który czytałby się jak usługa skrajnie wolna
 zamiast jak usługa nieobecna.
+
+## budowa/server/internal/core/skutek_budowy_produktu_test.go
+
+Sprawdziany modułu Apps sprawdzają, czy za odpowiedzią rdzenia stoi zapis,
+plik albo stojący serwer, a nie samą kopertę: moduł Design w tym produkcie
+już meldował `status: ok` z wykazem zasobów, za którymi nie było ani jednego
+bajtu. Dlatego każdy sprawdzian tego pliku, po udanej odpowiedzi, schodzi
+niżej i mierzy niezależnie — do bazy drugim połączeniem otwartym niezależnie
+od rdzenia, do pliku w magazynie treści sprawdzając, czy to naprawdę jest
+archiwum, obraz albo dokument, za który się podaje, albo do sieci, wołając
+adres, który rdzeń wypuścił jako `previewUrl`. Sprawdziany nie pomijają się
+przy braku żadnego programu, bo cały moduł pracuje bibliotekami
+wkompilowanymi w rdzeń — `archive/zip`, `image/png`, `crypto/ed25519`,
+`net/http` — więc mierzą to, co ma stać u Operatora na cienkiej instalce.
+
+Funkcja pomocnicza `oknoModuluSprawdzianu` zakłada prawdziwe okno tam, gdzie
+`apps.deployment.run` bierze treść z przestrzeni roboczej okna i odmawia
+oknu, którego rdzeń nie zna; pozostałe komendy obszaru okna w rejestrze nie
+wymagają, więc reszta sprawdzianów posługuje się nazwą stałą i mierzy to
+samo taniej.
+
+Sprawdzian audytu wydajności Core Web Vitals jest wyjątkiem od zasady tego
+pliku: pomija się bez programu pomiarowego, bo audyt wydajności z założenia
+idzie programem, a nie biblioteką wkompilowaną w rdzeń; odmowę przy jego
+braku mierzy sprawdzian osobny.

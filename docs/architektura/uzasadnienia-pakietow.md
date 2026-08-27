@@ -3376,3 +3376,6 @@ faktycznym.
 Tą drogą pracuje agent lokalny: wykonuje pracę na urządzeniu użytkownika, nie
 otwierając gniazda ani nie zajmując portu. Żądanie nieczytelne nie kończy
 toru — rdzeń odsyła na nie odpowiedź z kodem błędu kontraktu.
+
+## budowa/server/internal/dane/urzadzenia_zapis.go
+Oznaczenie maszyny bieżącej ma jednego pisarza: ZapewnijBiezace. Unikatowy indeks częściowy idx_urzadzenie_biezace dopuszcza najwyżej jedno urządzenie z biezace ustawionym, więc nadanie oznaczenia wymaga wcześniejszego zdjęcia go z pozostałych wierszy. Dodaj i Aktualizuj kolumny biezace nie ruszają. Powtórzone rozpoznanie tej samej maszyny ma zaktualizować wiersz, a nie założyć drugi — kolumny nazwa i zaufane zostają nietknięte, bo pierwsza bywa zmieniona przez operatora, a druga bywa świadomie odebrana.

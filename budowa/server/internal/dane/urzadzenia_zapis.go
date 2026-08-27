@@ -1,10 +1,5 @@
-// Odpowiedzialność pliku: zapis katalogu urządzeń — założenie, aktualizacja
-// i rozpoznanie maszyny bieżącej.
-//
-// Oznaczenie maszyny bieżącej ma jednego pisarza: ZapewnijBiezace. Unikatowy
-// indeks częściowy `idx_urzadzenie_biezace` dopuszcza najwyżej jedno urządzenie
-// z `biezace = 1`, więc nadanie oznaczenia wymaga wcześniejszego zdjęcia go
-// z pozostałych wierszy. Dodaj i Aktualizuj kolumny `biezace` nie ruszają.
+// Plik zapisuje katalog urządzeń: założenie, aktualizację i rozpoznanie
+// maszyny bieżącej w tabeli urzadzenie.
 package dane
 
 import (
@@ -27,10 +22,9 @@ const (
 	zdejmijOznaczenieBiezacego = `UPDATE urzadzenie SET biezace = 0
 	                              WHERE biezace = 1 AND identyfikator_sprzetowy <> ?`
 
-	// Wstawienie i odświeżenie w jednym poleceniu: powtórzone rozpoznanie tej
-	// samej maszyny ma zaktualizować wiersz, a nie założyć drugi. Kolumny `nazwa`
-	// i `zaufane` zostają nietknięte — pierwsza bywa zmieniona przez Operatora,
-	// druga bywa świadomie odebrana.
+	// zapiszUrzadzenieBiezace wstawia albo odświeża wiersz maszyny bieżącej
+	// jednym poleceniem, zostawiając kolumny nazwa i zaufane nietknięte przy
+	// odświeżeniu.
 	zapiszUrzadzenieBiezace = `INSERT INTO urzadzenie
 	                           (nazwa, identyfikator_sprzetowy, nazwa_hosta, system_operacyjny,
 	                            wersja_klienta, zaufane, biezace, ostatnio_widziane)

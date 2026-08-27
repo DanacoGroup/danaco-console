@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: dziennik modułu Diagnostics — przyjęcie linii
-// z dziennika rdzenia, zapis partią i obsługa komendy `diagnostics.log.query`
-// zasilającej okno Logs Viewer.
-//
-// Adapter jest odbiorcą dziennika rdzenia, a nie drugim dziennikiem: rdzeń pisze
-// o sobie jednym `*log.Logger`, a moduł wpina się w jego wyjście. Drugi,
-// równoległy dziennik rozjechałby się z pierwszym co do treści i chwili.
-//
-// Nagłówek linii zostaje obcięty, bo `log.Logger` wkłada na jej początek
-// przedrostek i znacznik czasu. Gdyby wchodziły do treści wpisu, każda linia
-// byłaby niepowtarzalna i deduplikacja z licznikiem nie zgrupowałaby ani jednej
-// pary. Obcięcie liczy się z flag i przedrostka tego samego dziennika, więc jest
-// dokładne, a nie zgadywane.
+// Plik obsługuje dziennik modułu Diagnostics: przyjęcie linii z dziennika rdzenia, zapis partią i obsługę komendy `diagnostics.log.query` zasilającej okno Logs Viewer.
 package core
 
 import (
@@ -27,10 +15,10 @@ import (
 	"danacoconsole/shared"
 )
 
-// zrodloRdzenia znakuje wpisy pochodzące z dziennika technicznego rdzenia.
+// zrodloRdzenia znakuje wpisy pochodzące z dziennika technicznego rdzenia, odróżniając je od wpisów modułów.
 const zrodloRdzenia = "rdzeń"
 
-// wielkoscPartii ogranicza jedną transakcję zapisu dziennika.
+// wielkoscPartii ogranicza jedną transakcję zapisu dziennika modułu Diagnostics do bazy danych rdzenia.
 const wielkoscPartii = 64
 
 // odstepZapisu wyznacza, jak długo pisarz czeka na dopełnienie partii, zanim
@@ -38,11 +26,7 @@ const wielkoscPartii = 64
 // partii, a Logs Viewer pokazywałby dziennik z opóźnieniem.
 const odstepZapisu = 250 * time.Millisecond
 
-// PodepnijDziennik wpina moduł w wyjście dziennika rdzenia jako drugiego
-// odbiorcę linii; przekazany `*log.Logger` pozostaje tym samym dziennikiem.
-//
-// Dziennik pusty zostawia moduł bez tego źródła; źródło drugie, czyli odmowy
-// wykonania komend, działa bez zmian.
+// PodepnijDziennik wpina moduł w wyjście dziennika rdzenia jako drugiego odbiorcę linii; przekazany `*log.Logger` pozostaje tym samym dziennikiem.
 func (a *adapterDiagnostyki) PodepnijDziennik(dziennik *log.Logger) {
 	if a == nil || dziennik == nil {
 		return
@@ -96,7 +80,7 @@ func (a *adapterDiagnostyki) zakolejkuj(wpis dane.WpisDiagnostyki) {
 	}
 }
 
-// pisz zapisuje wpisy partiami do zamknięcia kolejki albo końca życia rdzenia.
+// pisz zapisuje wpisy partiami do zamknięcia kolejki albo końca życia rdzenia, dbając o odstęp między zapisami.
 func (a *adapterDiagnostyki) pisz(ctx context.Context) {
 	defer close(a.koniec)
 	zegar := time.NewTicker(odstepZapisu)
@@ -139,12 +123,7 @@ func (a *adapterDiagnostyki) zapiszPartie(ctx context.Context, partia []dane.Wpi
 	}
 }
 
-// PrzeszukajDziennik obsługuje `diagnostics.log.query` — okno Logs Viewer.
-//
-// Wzorzec zwykły zawęża w bazie, regularny w rdzeniu: SQLite bez rozszerzenia
-// nie zna operatora REGEXP. Wzorzec regularny przechodzi więc przez okno wpisów
-// odczytane pozostałymi zawężeniami, a wynik przycięty tą drogą wraca oznaczony
-// polem `truncated`.
+// PrzeszukajDziennik obsługuje `diagnostics.log.query` dla okna Logs Viewer. Wzorzec zwykły zawęża w bazie, regularny w rdzeniu, bo SQLite bez rozszerzenia nie zna operatora REGEXP.
 func (a *adapterDiagnostyki) PrzeszukajDziennik(ctx context.Context,
 	z shared.DiagnosticsLogQueryRequest) (shared.DiagnosticsLogQueryResponse, error) {
 
@@ -200,7 +179,7 @@ func (a *adapterDiagnostyki) PrzeszukajDziennik(ctx context.Context,
 	}, nil
 }
 
-// odciskWpisu grupuje wpisy identyczne co do poziomu, źródła i treści.
+// odciskWpisu grupuje wpisy identyczne co do poziomu, źródła i treści, służąc deduplikacji z licznikiem.
 func odciskWpisu(poziom shared.LogLevel, zrodlo, tresc string) string {
 	suma := sha256.Sum256([]byte(string(poziom) + "\x00" + zrodlo + "\x00" + tresc))
 	return hex.EncodeToString(suma[:16])
@@ -236,7 +215,7 @@ func obetnijNaglowekDziennika(linia, przedrostek string, flagi int) string {
 	return strings.TrimSpace(linia)
 }
 
-// obetnijPole zdejmuje pole stałej długości wraz z odstępem po nim.
+// obetnijPole zdejmuje pole stałej długości wraz z odstępem po nim, przesuwając wskazanie w linii dziennika.
 func obetnijPole(linia string, dlugosc int) string {
 	if len(linia) < dlugosc {
 		return linia

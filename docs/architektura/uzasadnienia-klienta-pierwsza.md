@@ -841,3 +841,17 @@ barw.
 
 Rama wyłącznie osadza sekcję. Treść i stan mieszkają w module sekcji modeli, aby
 tę samą sekcję dało się wstawić także w widok osadzony bez powielania kodu.
+
+## budowa/klient-poprzedni/src/modele/zrodlo-tozsamosci.ts
+
+Kategorie zasad są danymi, nie kodem: konstytucja, profil roli, ekspertyza,
+zasady bezpieczeństwa i zasady harnessu przychodzą komendą
+`identity.category.list` wraz z warstwą, porządkiem, obowiązkowością i trybem
+proponowanym. Dopisanie kategorii jest wtedy nowym wierszem katalogu, a nie
+zmianą kodu klienta.
+
+Nakładka obowiązująca jest odczytem rdzenia, nie sklejeniem w kliencie: klient
+nie składa promptu z treści kategorii własnym porządkiem, tylko pyta
+`identity.effective.get` i pokazuje to, co trafi do modelu. Drugie składanie po
+stronie widoku dałoby podgląd rozjeżdżający się z rdzeniem przy pierwszej
+zmianie reguł.

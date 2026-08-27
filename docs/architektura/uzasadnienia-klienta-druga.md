@@ -4659,3 +4659,12 @@ między otwarciem tury a zapisaniem wypowiedzi, a nie czas pracy modelu: chwili 
 wypowiedzi kontrakt nie niesie — nazwa metryki mówi dokładnie to, co metryka liczy. Rubryka
 pokazująca dwie metryki z czterech wygląda na komplet, dopóki nie powie, że kompletem nie jest,
 dlatego ostatnie zdanie stoi zawsze.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/wykaz-historii.ts
+Zaznaczenie wskazuje zakres, nie potwierdza czynności: panel ma osobną
+czynność na wyczyszczenie całej historii okna i osobną na usunięcie pozycji
+wskazanych, a wiersz bez zaznaczenia niczego nie blokuje. Pozycje, których
+nastawiona zasada nie utrzyma, są oznaczone, a nie ukryte ani wygaszone —
+nastawa retencji ma pokazać skutek zasady przed jej zapisem, więc wiersz
+oznaczony nadal da się przeczytać i zaznaczyć. Wykaz nie zna żadnej komendy
+i nie wie, skąd pozycje przyszły: dostaje tablicę, oddaje identyfikatory.

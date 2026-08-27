@@ -23,37 +23,8 @@ import { utworzStylPanelArkusza, type StylPanelArkusza } from './styl-panel-arku
 import { utworzStylPanelList, type StylPanelList } from './styl-panel-list';
 import type { ZrodloPostaciStudio } from './zrodlo-postaci-studio';
 
-/**
- * Postać dokumentu w oknie pracy — jedna warstwa spajająca trzy panele
- * z czterdziestoma trzema komendami rdzenia.
- *
- * ── Co ta warstwa robi ──────────────────────────────────────────────────────
- * Panele składają treść żądania z pól i nic więcej nie wiedzą. Ta warstwa dokłada
- * do każdego żądania trzy rzeczy, których panel znać nie może i nie powinien:
- * identyfikator dokumentu, zakres z bieżącego zaznaczenia oraz autora czynności.
- * Potem woła rdzeń, czyta BILANS i mówi Operatorowi, co się stało — łącznie z tym,
- * czego czynność nie zrobiła i przez którą blokadę.
- *
- * ── Dlaczego zakres dokłada się tutaj ───────────────────────────────────────
- * Bo zaznaczenie jest jedno na moduł i mieszka w stanie. Gdyby panel je czytał,
- * byłoby drugie miejsce wiedzące, nad czym Operator pracuje — a te dwa rozjechałyby
- * się przy pierwszym przełączeniu zakładki dokumentu.
- *
- * ── Dlaczego autor jedzie jawnie ────────────────────────────────────────────
- * Czynność Operatora ma odłożyć się jako zmiana autora `uzytkownik`, a czynność
- * modelu jako zmiana autora `model` — inaczej przełącznik „pokaż wszystko, co
- * zrobił model" nie miałby czego podświetlić. Tu autorem jest zawsze Operator,
- * bo to jego panel; droga modelu do tych samych komend idzie narzędziami modelu
- * i pola autora nie zapomina.
- *
- * ── Dlaczego brak dokumentu jest odmową nazwaną, nie ciszą ──────────────────
- * Każda z tych komend przyjmuje `documentId` jako pole obowiązkowe. Bez wczytanego
- * dokumentu żądanie nie ma czego dotyczyć, a wysłanie go z pustym polem wróciłoby
- * błędem walidacji, którego Operator by nie zrozumiał. Panel mówi więc wprost:
- * czego brakuje i po czyjej stronie.
- */
 
-/** Zaplecze warstwy postaci — to, co wie okno, a czego nie wiedzą panele. */
+/** Zaplecze warstwy postaci: źródło rdzenia, zaznaczenie bieżące, autor czynności i sposób ogłoszenia zdania — wszystko, czego panel sam nie zna. */
 export interface ZapleczePostaci {
   zrodlo: ZrodloPostaciStudio;
   /** Dokument czynny; pusty znaczy „żadnego nie wczytano". */
@@ -64,19 +35,13 @@ export interface ZapleczePostaci {
   zaznaczenie(): Zaznaczenie | null;
   /** Miejsce kursora w znakach — podział i znak wstawiają się tam. */
   miejsceKursora(): number;
-  /**
-   * Postać dojechała do rdzenia i wróciła zmieniona.
-   *
-   * Woła to okno, żeby przerysować kartkę: nastawy strony, wcięcia i tabulatory
-   * zmienione w rdzeniu mają być widoczne w treści, a nie dopiero po ponownym
-   * wczytaniu dokumentu.
-   */
+  /** Postać zmieniona przez rdzeń — okno przerysowuje nią kartkę bez ponownego wczytania dokumentu. */
   naPostac(postac: StudioDocumentForm): void;
   /** Zdanie o skutku czynności — pasek odpowiedzi okna. */
   naZdanie(tresc: string, powodzenie: boolean): void;
 }
 
-/** Warstwa postaci dokumentu wraz z panelami i drogami dla linijki. */
+/** Warstwa postaci dokumentu wraz z panelami i drogami zgłaszania zmian z linijki do rdzenia oraz zapisu i odczytu postaci dla dokumentu. */
 export interface PostacDokumentu {
   /** Pas przycisków otwierających trzy panele wraz z panelami. */
   element: HTMLElement;
@@ -87,21 +52,9 @@ export interface PostacDokumentu {
 
   /* ── Drogi dla linijek i wstążki ─────────────────────────────────────────── */
 
-  /**
-   * Margines przestawiony chwytem na linijce — teraz z drogą do rdzenia.
-   *
-   * To jest domknięcie braku nazwanego w `nastawy-strony.ts`: chwyty były,
-   * trwałości nie miały. Chwyt jedzie tą samą komendą co pole panelu.
-   */
+  /** Margines przestawiony chwytem na linijce jedzie tą samą komendą do rdzenia co pole panelu. */
   zglosMargines(ktory: 'gora' | 'dol' | 'lewy' | 'prawy', milimetry: number): void;
-  /**
-   * Całe nastawy strony przestawione wewnątrz powierzchni.
-   *
-   * Powierzchnia oddaje `StronaPracy` w całości (`naStrone`), a nie nazwę
-   * zmienionego pola. Jedna komenda z pełnym zestawem jest tu drogą właściwą:
-   * chwyt oprawy przestawia i oprawę, i marginesy odbicia, a dwa żądania po sobie
-   * dałyby dwie wersje w historii tam, gdzie Operator zrobił jeden ruch.
-   */
+  /** Powierzchnia oddaje całą StronaPracy jedną komendą, nie nazwę zmienionego pola. */
   zglosStrone(strona: StronaPracy): void;
   /** Wcięcia akapitu przestawione chwytem — idą stylem akapitu fragmentu. */
   zglosWciecia(wciecia: {
@@ -111,26 +64,14 @@ export interface PostacDokumentu {
   }): void;
   /** Tabulator założony, przestawiony albo zdjęty chwytem na linijce. */
   zglosTabulator(polozenieMm: number, zdejmij: boolean): void;
-  /**
-   * Wykaz tabulatorów akapitu po zmianie na linijce.
-   *
-   * Linijka oddaje CAŁY wykaz, a `studio.ruler.tabstop.set` przyjmuje JEDEN
-   * tabulator. Warstwa liczy więc różnicę wobec wykazu zapamiętanego i wysyła
-   * tylko to, co się zmieniło — inaczej każde przesunięcie jednego znacznika
-   * przepisywałoby wszystkie.
-   */
+  /** Linijka oddaje cały wykaz tabulatorów, warstwa wysyła rdzeniowi tylko różnicę. */
   zglosTabulatory(tabulatory: readonly TabulatorAkapitu[]): void;
 
   /* ── Trwałość postaci i treści ───────────────────────────────────────────── */
 
   /** Odczyt pełnej postaci dokumentu — arkusz stylów, sekcje, bloki, pola. */
   odczytajPostac(): Promise<StudioDocumentForm | null>;
-  /**
-   * Zapis postaci wraz z treścią — jedyna droga, którą postać NIE ginie.
-   *
-   * `studio.document.save` przyjmuje sam napis i tytuł; ta komenda przenosi
-   * arkusz stylów, nastawy strony, sekcje, tabele, obiekty i aparat dokumentu.
-   */
+  /** Ta komenda, inaczej niż zapis napisu i tytułu, przenosi arkusz stylów, strony, sekcje i tabele. */
   zapiszPostac(postac: StudioDocumentForm, tresc: string, tytul: string): Promise<boolean>;
   /** Treść fragmentu wraz z jego postacią i blokadami, które go obejmują. */
   odczytajTekst(): Promise<string | null>;
@@ -144,14 +85,7 @@ export interface PostacDokumentu {
   /** Magazyn nastaw widoku oparty na `studio.view.get` i `.set`. */
   magazynWidoku: MagazynWidokuRdzenia;
 
-  /**
-   * Postać odczytana ostatnio albo `null`.
-   *
-   * Czyta to okno przy zapisie dokumentu: `studio.document.form.save` ma przenieść
-   * arkusz stylów i sekcje wraz z treścią, a okno samo postaci nie prowadzi.
-   * `null` znaczy „nie odczytano jeszcze" — zapis ma wtedy odczytać ją sam,
-   * a nie wysłać postać pustą, bo to skasowałoby arkusz stylów dokumentu.
-   */
+  /** Null znaczy nieodczytaną jeszcze postać — zapis ma wtedy odczytać ją sam, nie wysłać postać pustą. */
   postacZapamietana(): StudioDocumentForm | null;
 }
 
@@ -193,12 +127,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
   /** Autor czynności — panel należy do Operatora i nie udaje modelu. */
   const autorOperatora = { author: StudioAuthor.Uzytkownik } as const;
 
-  /**
-   * Zdanie o skutku czynności zmieniającej postać.
-   *
-   * Bilans idzie do Operatora zawsze, także gdy `applied` jest zerem: „rdzeń
-   * odpowiedział pomyślnie i nie zmienił niczego" jest informacją, nie ciszą.
-   */
+  /** Bilans idzie do Operatora zawsze, także gdy applied jest zerem — to informacja, nie cisza. */
   function ogloszSkutek(
     czynnosc: string,
     bilans: StudioActionBalance,
@@ -400,9 +329,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
             return;
           }
           if (!wynik.wynik.deleted) {
-            // `deleted: false` z bilansem jest odpowiedzią POPRAWNĄ, nie usterką:
-            // rdzeń odmówił usunięcia i powiedział, dlaczego. Milczenie w tym
-            // miejscu wyglądałoby jak usunięcie, które się udało.
+            // Deleted: false z bilansem jest odpowiedzią poprawną — rdzeń odmówił i powiedział, dlaczego.
             panelStrony.pokazOdpowiedz(
               `Rdzeń NIE usunął sekcji ${idSekcji}. ${opiszBilans(wynik.wynik.balance)}`,
               false,
@@ -792,8 +719,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
         const wynik = await zaplecze.zrodlo.wznowNumeracje({
           documentId: identyfikator,
           ...zadanie,
-          // Miejsce wznowienia bierze się z kursora, a nie z pola: wznawia się
-          // tam, gdzie Operator stoi w treści.
+          // Miejsce wznowienia bierze się z kursora, nie z pola — wznawia się tam, gdzie stoi Operator.
           offset: zaplecze.miejsceKursora(),
           ...autorOperatora,
         });
@@ -853,9 +779,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
           wynik.wynik.form,
           panelList.pokazOdpowiedz,
         );
-        // Wstawienie znaku przestawia wykaz ostatnio użytych — odczyt po czynności
-        // jest jedyną drogą, żeby znak trafił pod rękę od razu, a nie po wejściu
-        // ponownym.
+        // Wykaz ostatnio użytych znaków odczytuje się po wstawieniu, żeby znak trafił pod rękę od razu.
         void odczytajZnaki('', false);
       })();
     },
@@ -975,9 +899,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
       const identyfikator = dokument(panelTresci.pokazOdpowiedz);
       if (identyfikator === null) return;
       void (async () => {
-        // Zapisuje się postać ODCZYTANĄ teraz, a nie zapamiętaną wcześniej: między
-        // odczytem a naciśnięciem mogła wejść zmiana z innego okna, a zapis postaci
-        // sprzed niej cofnąłby cudzą pracę bez słowa.
+        // Zapisuje się postać odczytaną teraz, nie zapamiętaną wcześniej — inne okno mogło ją zmienić.
         const odczyt = await zaplecze.zrodlo.postac({ documentId: identyfikator });
         if (!odczyt.udany || odczyt.wynik === undefined) {
           ogloszOdmowe('Odczyt postaci przed zapisem', odczyt.blad, panelTresci.pokazOdpowiedz);
@@ -986,8 +908,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
         const wynik = await zaplecze.zrodlo.zapiszPostac({
           documentId: identyfikator,
           form: odczyt.wynik.form,
-          // Treści nie ma w żądaniu: brak pola znaczy „bez zmiany treści". Wysłanie
-          // treści pustej skasowałoby dokument.
+          // Treści nie ma w żądaniu: brak pola znaczy bez zmiany treści, treść pusta skasowałaby dokument.
           createVersion: true,
           ...autorOperatora,
         });
@@ -1062,10 +983,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
     const wynik = await zaplecze.zrodlo.nosniki({});
     if (!wynik.udany || wynik.wynik === undefined) return;
     panelStrony.pokazNosniki(wynik.wynik.papers);
-    // Wykaz rdzenia przestawia też WYMIARY, którymi rysuje się kartka. Bez tego
-    // wykaz do wyboru pochodził z rdzenia, a rozmiar rysowanej kartki z wykazu
-    // wbudowanego okna — czyli Operator wybierał nośnik rdzenia, a widział
-    // kartkę okna. Wchłonięcie zamyka drugi wykaz.
+    // Wykaz rdzenia przestawia też wymiary kartki, nie tylko nazwy nośników do wyboru.
     wchlonNosnikiKontraktu(wynik.wynik.papers);
   }
 
@@ -1107,8 +1025,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
   async function odczytajListy(identyfikator: string): Promise<void> {
     const wynik = await zaplecze.zrodlo.postac({
       documentId: identyfikator,
-      // Bloki treści nie są tu potrzebne: wykaz list stoi osobnym polem postaci,
-      // a bloki długiego dokumentu to setki pozycji przesyłanych bez powodu.
+      // Bloki treści nie są tu potrzebne — wykaz list ma osobne pole, bloki byłyby setkami pozycji.
       includeBlocks: false,
     });
     if (!wynik.udany || wynik.wynik === undefined) {
@@ -1138,13 +1055,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
 
   /* ── Styl akapitu wołany z dwóch stron ───────────────────────────────────── */
 
-  /**
-   * Naniesienie stylu akapitu — jedna droga dla panelu i dla chwytów linijki.
-   *
-   * Chwyt wcięcia na linijce i pole panelu ustawiają tę samą cechę tą samą
-   * komendą. Druga kopia tej drogi rozjechałaby się przy pierwszej poprawce
-   * zdania o skutku.
-   */
+  /** Chwyt wcięcia na linijce i pole panelu ustawiają tę samą cechę akapitu tą samą komendą rdzenia. */
   async function nanieStylAkapitu(
     zadanie: Record<string, unknown>,
     gdzie: (tresc: string, powodzenie: boolean) => void,
@@ -1166,13 +1077,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
 
   /* ── Tabulatory: różnica wobec wykazu zapamiętanego ──────────────────────── */
 
-  /**
-   * Tabulatory akapitu, o których warstwa wie.
-   *
-   * Linijka oddaje wykaz w całości, a rdzeń przyjmuje po jednym. Bez pamięci
-   * wykazu każde przesunięcie znacznika wyglądałoby jak założenie wszystkich od
-   * nowa — a to nadpisałoby tabulatory, których Operator nie tknął.
-   */
+  /** Linijka oddaje wykaz tabulatorów w całości, rdzeń przyjmuje po jednym — pamięć wykazu chroni resztę. */
   let tabulatoryAkapitu: TabulatorAkapitu[] = [];
 
   /** Rodzaj tabulatora linijki przełożony na kontrakt. */
@@ -1338,8 +1243,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
           marginRightMm: strona.marginesPrawyMm,
           gutterMm: strona.marginesOprawyMm,
           mirrorMargins: strona.marginesyOdbicia,
-          // Nośnik własny jedzie także wymiarami: jego oznaczenie jest opisem
-          // („własny 250×350 mm"), a nie nazwą, którą rdzeń zna z wykazu.
+          // Nośnik własny niesie też wymiary — jego oznaczenie jest opisem, nie nazwą z wykazu rdzenia.
           ...(strona.nosnik.rodzaj === 'wlasny'
             ? { widthMm: strona.nosnik.szerokoscMm, heightMm: strona.nosnik.wysokoscMm }
             : {}),
@@ -1447,9 +1351,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
         ...autorOperatora,
       });
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Uczciwość zapisu: nieudany zapis MUSI być widoczny i nazwany. Wskaźnik
-        // „zapisano" pokazany po niepowodzeniu jest najgorszym możliwym błędem
-        // tego modułu — Operator zamknąłby okno i stracił pracę.
+        // Nieudany zapis musi być widoczny i nazwany — cichy wskaźnik zapisano byłby błędem najgorszym.
         ogloszOdmowe('Zapis postaci dokumentu', wynik.blad, zaplecze.naZdanie);
         return false;
       }
@@ -1534,13 +1436,7 @@ export function utworzPostacDokumentu(zaplecze: ZapleczePostaci): PostacDokument
   };
 }
 
-/**
- * Zestawienie postaci dokumentu — czego ma ile.
- *
- * Liczby, nie zawartość: Operator ma zobaczyć, że arkusz stylów i sekcje
- * naprawdę w dokumencie stoją, a nie czytać ich w oknie nastaw. Numer porządkowy
- * postaci mówi mu przy tym, czy patrzy na to samo, co przed chwilą zapisał.
- */
+/** Zestawienie postaci dokumentu podaje liczby, nie zawartość: arkusz stylów, sekcje i numer porządkowy postaci potwierdzają, że dokument niesie to, co Operator zapisał. */
 function opiszPostac(postac: StudioDocumentForm): string {
   return (
     `stylów ${postac.styles?.length ?? 0} · sekcji ${postac.sections?.length ?? 0} · bloków ` +

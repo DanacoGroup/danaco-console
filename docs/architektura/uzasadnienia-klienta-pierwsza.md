@@ -1065,3 +1065,9 @@ którym instrukcja eksperta staje się promptem systemowym. Przekład na pole
 Wiersz pamięci nie prowadzi żadnego wywołania samodzielnie: zamiar oddaje oknu, które prowadzi wywołania rodziny memory. Ta sama granica obowiązuje wiersz zlecenia w pliku wiersz-zlecenia.ts, dzięki czemu oba wiersze pozostają wymiennymi elementami wykazu, a odpowiedzialność za wywołania skupia się w oknie.
 
 Wpis o pochodzeniu model jest propozycją czekającą na decyzję Operatora. Przyjęcie zapisuje tę samą treść z pochodzeniem operator, a odrzucenie usuwa wpis. Rozróżnienie pochodzenia należy do kontraktu przez typ MemoryEntryOrigin, a nie do okna: bez niego pamięć zapisana przez model byłaby nie do odróżnienia od ustalenia wprowadzonego przez Operatora.
+
+## budowa/klient-poprzedni/src/moduly/agents/prowenancja-rady.ts
+
+Rada doradcy jest jawna i nie wolno pokazywać jej jako własnej odpowiedzi eksperta. Gdyby zdanie o pochodzeniu rady składał widok, pierwszy widok, który by tego zaniechał, pokazałby radę bez źródła. Dlatego zdanie o pochodzeniu powstaje jeden raz w zapisie prowenancji, a widok pobiera treść rady razem z tym zdaniem z jednego miejsca.
+
+Kontrakt nie zawiera pola prowenancji ani komendy zapisującej ją w bazie, więc prowenancja żyje dokładnie tyle, co widok, a wykaz konsultacji mówi o tym wprost. Przeniesienie rady do instrukcji eksperta zabiera ze sobą etykietę oraz oba zdania prowenancji, dzięki czemu po wklejeniu nadal widać, skąd akapit pochodzi.

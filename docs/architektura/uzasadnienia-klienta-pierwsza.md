@@ -5633,3 +5633,21 @@ Plik trzyma tryb obecności funkcji Always On Display, sięga po wykaz wyciszeń
 Wyjątek wagi krytycznej jest zaszyty w regule, a nie zostawiony wołającemu, i przechodzi przez wszystkie rodzaje wyciszenia: czasowe, kontekstowe, klasy zdarzeń oraz tryb cichy. Punkt decyzyjny pętli wykonawczej wstrzymujący proces ujawnia się mimo wyciszenia plakietką, bez dymka, a tryb cichy zachowuje ten wyjątek bez syntezy mowy. Osłabienie tego wyjątku byłoby jedyną ciszą, po której Operator nie dowiaduje się, że praca stoi, więc reguła sprawdza go pierwsza, przed wszystkim innym.
 
 Stan obecności i wyciszeń stoi na stanowisku Operatora, a magazyn zapisu jest podawany parametrem: kontrakt nie ma jeszcze kategorii ustawień ani komendy zapisującej tryb obecności czy wyciszenie nakładki jako byt rdzenia. Gdy taka komenda powstanie, magazyn zmieni się w jednym miejscu, bez zmiany ani jednego wołacza.
+
+## budowa/klient-poprzedni/src/moduly/browser/zrodlo-browser.ts
+
+Zebrane źródła i notatki mieszkają w `stan-przegladania.ts`, żeby trzy okna modułu Browser
+patrzyły na jeden wspólny zbiór, a nie na trzy osobne kopie. Komendy `source.list`
+i `note.list` czytają dokładnie to, co moduł zapisał komendami `browser.source.add`
+i `browser.note.add`, i nic ponad to.
+
+Odmowa wykazu ma dwa znaczenia, które okno rozróżnia: kod `not_found` znaczy, że rdzeń nie
+zna tego okna przeglądania, a nie że nic nie zebrano — wykaz pusty przychodzi ze statusem
+udanym i pustą tablicą. Żadne wywołanie tego źródła nie rzuca wyjątkiem i nie odrzuca
+obietnicy: niepowodzenie wraca w polu `blad` wyniku, a nazwy komend biorą się wyłącznie ze
+stałych kontraktu.
+
+Rodziny komend dołożone ponad migawkę, źródło i notatkę — otwieranie i zarządzanie kartami,
+przestrzenie robocze, monitory, kanały, listy do przeczytania, zakładki i narzędzia
+deweloperskie przeglądarki — są każda jedną komendą kontraktu bez własnego stanu warstwy:
+sprawdzają wyłącznie kształt odpowiedzi rdzenia.

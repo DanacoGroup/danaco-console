@@ -1502,3 +1502,37 @@ jak usterka platformy.
 Wykaz jest przepisem rozdziału „Katalog funkcji i narzędzi" dokumentacji
 modułu, nie zbiorem pomysłów; liczba jego pozycji jest zmierzona z długości
 wykazu, nie wpisana osobno.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/katalog-funkcji.ts
+
+Katalog istnieje po to, żeby okno nie wyglądało na kompletne tam, gdzie nie
+jest. Opracowanie modułu wymienia siedemdziesiąt cztery narzędzia — bez wykazu
+Operator poznawałby rozjazd między nimi a stanem modułu dopiero po naciśnięciu
+każdego przycisku z osobna.
+
+Po scaleniu kontraktu rozjazd zmienił naturę. Obszar komend modułu niósł
+cztery komendy i niesie ich dziś czterdzieści sześć, więc zdanie „tego nie
+wykona żadna komenda obszaru" przestało być prawdziwe co do czterdziestu
+dwóch narzędzi naraz. Brakuje ich obsługi, nie kontraktu — i to rozróżnienie
+niesie stan pozycji.
+
+Nazwy narzędzi stoją w brzmieniu opracowania modułu, bez numeracji
+rozdziałów — numer rozdziału nie jest identyfikatorem niczego w produkcie.
+Warstwa pozycji jest warstwą widoczności z opracowania, przypisaną po
+elemencie interfejsu, którym narzędzie się otwiera: pierwsza to widoczność
+bez interakcji, druga to znacznik kontekstowy, przycisk albo przełącznik,
+trzecia to menu zestawu akcji okna, a czwarta to nastawa dostępna poleceniem,
+wyszukiwarką funkcji albo trybem administracyjnym — w oknie nie ma jej
+w stanie spoczynku.
+
+Stan wykonania narzędzia niesie pięć wartości. „Częściowa" nie jest stanem
+pośrednim między porażką a sukcesem: znaczy, że narzędzie działa w części
+zakresu, a nie działa w reszcie, i zdanie pozycji mówi, gdzie przebiega
+granica. „Bez obsługi" znaczy, że komenda jest w kontrakcie, a moduł jej nie
+wywołuje — to najliczniejszy stan modułu i najważniejszy do odróżnienia: nie
+brakuje uzgodnienia, brakuje pracy, a zdanie pozycji nazywa komendę, którą
+narzędzie wejdzie. „Bez pokrycia" znaczy, że kontrakt nie ma czym narzędzia
+wykonać — nie ma komendy albo ma komendę, lecz brakuje pola w jej żądaniu; po
+scaleniu kontraktu stan ten zszedł do pojedynczych pozycji i każda nazywa
+brakujące pole. „Poza modułem" znaczy, że narzędzie należy do okna wspólnego
+platformy.

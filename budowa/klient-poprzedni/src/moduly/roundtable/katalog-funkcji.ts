@@ -1,33 +1,10 @@
 /**
  * Katalog funkcji modułu Roundtable — pełny wykaz narzędzi opracowania wraz ze
- * stanem, w jakim moduł je dziś wykonuje.
- *
- * Katalog istnieje po to, żeby okno nie wyglądało na kompletne tam, gdzie nie
- * jest. Opracowanie modułu wymienia siedemdziesiąt cztery narzędzia — bez wykazu
- * Operator poznawałby rozjazd między nimi a stanem modułu dopiero po naciśnięciu
- * każdego przycisku z osobna.
- *
- * Po scaleniu kontraktu rozjazd zmienił naturę. Obszar `roundtable.*` niósł
- * cztery komendy i niesie ich dziś czterdzieści sześć, więc zdanie „tego nie
- * wykona żadna komenda obszaru” przestało być prawdziwe co do czterdziestu
- * dwóch narzędzi naraz. Brakuje ich obsługi, nie kontraktu — i to rozróżnienie
- * niesie stan pozycji.
- *
- * Wykaz jest danymi, nie wyglądem: rysuje go `warstwy-modulu.ts`, a każde okno
- * bierze z niego wyłącznie swoje pozycje. Nazwy narzędzi stoją w brzmieniu
- * opracowania modułu, bez numeracji rozdziałów — numer rozdziału nie jest
- * identyfikatorem niczego w produkcie.
- *
- * Warstwa pozycji jest warstwą widoczności z opracowania (rozdz. 3.1), przypisaną
- * po elemencie interfejsu, którym narzędzie się otwiera:
- *   1 — widoczne bez interakcji,
- *   2 — znacznik kontekstowy, przycisk, przełącznik,
- *   3 — menu zestawu akcji okna,
- *   4 — nastawa dostępna poleceniem, wyszukiwarką funkcji albo trybem
- *       administracyjnym; w oknie nie ma jej w stanie spoczynku.
+ * stanem, w jakim moduł je dziś wykonuje. Wykaz jest danymi, nie wyglądem:
+ * każde okno bierze z niego wyłącznie swoje pozycje.
  */
 
-/** Okno, w którym narzędzie jest osiągalne. */
+/** Okno, w którym narzędzie jest osiągalne — jedno z ośmiu okien złożonych razem w cały moduł Roundtable. */
 export type OknoModulu =
   | 'model-panels'
   | 'debate-panel'
@@ -38,28 +15,12 @@ export type OknoModulu =
   | 'chat-window'
   | 'execution-loop-window';
 
-/** Warstwa widoczności z opracowania modułu. */
+/** Warstwa widoczności z opracowania modułu — przypisana po elemencie interfejsu, którym narzędzie się otwiera. */
 export type WarstwaWidocznosci = 1 | 2 | 3 | 4;
 
 /**
- * Stan wykonania narzędzia — cztery stany, z których każdy znaczy co innego.
- *
- * `wykonana` — moduł wykonuje narzędzie w zakresie opracowania.
- *
- * `czesciowa` — nie jest stanem pośrednim między porażką a sukcesem: znaczy, że
- * narzędzie działa w części zakresu, a nie działa w reszcie. Zdanie pozycji
- * mówi, gdzie przebiega granica.
- *
- * `bez-obslugi` — komenda JEST w kontrakcie, a moduł jej nie wywołuje.
- * To najliczniejszy stan modułu i najważniejszy do odróżnienia: nie brakuje
- * uzgodnienia, brakuje pracy. Zdanie pozycji nazywa komendę, którą narzędzie
- * wejdzie.
- *
- * `bez-pokrycia` — kontrakt nie ma czym narzędzia wykonać: nie ma komendy albo
- * ma komendę, lecz brakuje pola w jej żądaniu. Po scaleniu kontraktu stan ten
- * zszedł do pojedynczych pozycji i każda nazywa brakujące pole.
- *
- * `poza-modulem` — narzędzie należy do okna wspólnego platformy.
+ * Stan wykonania narzędzia — pięć stanów: wykonana, częściowa, bez obsługi
+ * mimo komendy w kontrakcie, bez pokrycia w kontrakcie oraz poza modułem.
  */
 export type StanFunkcji =
   | 'wykonana'
@@ -700,7 +661,7 @@ const WYDANIE_I_INTEGRACJE: readonly FunkcjaKatalogu[] = [
   },
 ];
 
-/** Pełny katalog narzędzi opracowania modułu. */
+/** Pełny katalog narzędzi opracowania modułu, złożony ze wszystkich jego rozdziałów po kolei od pierwszego. */
 export const KATALOG_FUNKCJI: readonly FunkcjaKatalogu[] = [
   ...SKLAD_I_PERSONY,
   ...ODPOWIEDZ_ROWNOLEGLA,
@@ -714,17 +675,17 @@ export const KATALOG_FUNKCJI: readonly FunkcjaKatalogu[] = [
   ...WYDANIE_I_INTEGRACJE,
 ];
 
-/** Narzędzia przypisane jednemu oknu, w kolejności katalogu. */
+/** Narzędzia przypisane jednemu oknu, w kolejności katalogu, do złożenia jego pełnego paska narzędzi tego okna. */
 export function funkcjeOkna(okno: OknoModulu): FunkcjaKatalogu[] {
   return KATALOG_FUNKCJI.filter((funkcja) => funkcja.okno === okno);
 }
 
-/** Narzędzia okna należące do jednej warstwy widoczności. */
+/** Narzędzia okna należące do jednej warstwy widoczności, do złożenia jednego elementu interfejsu okna. */
 export function funkcjeWarstwy(okno: OknoModulu, warstwa: WarstwaWidocznosci): FunkcjaKatalogu[] {
   return funkcjeOkna(okno).filter((funkcja) => funkcja.warstwa === warstwa);
 }
 
-/** Bilans stanów wykonania — dla zdania nad wykazem. */
+/** Bilans stanów wykonania — liczba pozycji każdego stanu, do zdania pokazanego nad wykazem narzędzi okna. */
 export interface BilansFunkcji {
   wszystkich: number;
   wykonanych: number;
@@ -747,7 +708,7 @@ export function bilansFunkcji(funkcje: readonly FunkcjaKatalogu[]): BilansFunkcj
   };
 }
 
-/** Nazwa stanu w brzmieniu, w jakim czyta ją Operator. */
+/** Nazwa stanu w brzmieniu, w jakim czyta ją Operator, zamiast surowego kodu wewnętrznego tego samego stanu. */
 export function opisStanuFunkcji(stan: StanFunkcji): string {
   switch (stan) {
     case 'wykonana':

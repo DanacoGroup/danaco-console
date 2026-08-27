@@ -22,15 +22,19 @@
 | **Odbiorcy** | Designer (co, gdzie, w jakiej formie, do czego) · Deweloper (co zbudować) |
 | **Zakres** | Środowisko w całości: warstwa centralna, kanały komunikacji, role, silnik kolejek, orkiestracja, integracja z Automations oraz powłoka środowiska — nawigacja, przestrzeń robocza okien ról, karty sesji, panel stanu procesu, skróty i paleta poleceń, współdzielenie kontekstu, funkcje wspólne i punkty sterowania z okna konfiguracji |
 | **Środowisko** | MultitaskingAI — czwarte, najbardziej zaawansowane konfiguracyjnie środowisko platformy (Koncepcja platformy, rozdz. 9.4 i 13) |
-| **Autorytatywne źródło** | architektura/koncepcja-platformy.md |
-| **Źródła pomocnicze** | specyfikacje/specyfikacja-modulow.md, specyfikacje/specyfikacja-okien-operacyjnych.md, interfejs-uzytkownika/strona-glowna-i-nawigacja.md, interfejs-uzytkownika/system-wizualny.md, architektura/model-konfiguracji.md, architektura/model-danych.md, architektura/architektura.md, architektura/integracja-modeli.md, specyfikacje/specyfikacja-agentow.md, architektura/izolacja-i-zaleznosci.md, architektura/rozszerzenia.md, `interfejs-uzytkownika/przeplyw-okien.md`, `interfejs-uzytkownika/elementy-okien.md`, `funkcje-globalne/always-on-display.md` |
+| **Autorytatywne źródło** | Koncepcja platformy |
+| **Źródła pomocnicze** | Specyfikacja modułów, Specyfikacja okien operacyjnych, Strona główna i nawigacja, System wizualny, Model konfiguracji, Model danych, Architektura, Integracja modeli, Specyfikacja agentów, Izolacja i zależności, Rozszerzenia, Przepływ okien, Elementy okien, Always On Display |
 | **Opracowanie** | Danaco Console — dokumentacja projektu UI |
 
 Dokument zestawia w jednym miejscu, w formie gęstej wizualnie (tabele, schematy, diagramy przepływu, makiety tekstowe), wszystko, co potrzebne do zaprojektowania i zbudowania interfejsu środowiska MultitaskingAI: warstwę centralną Always On Display, dwa kanały komunikacji operacyjnej (Chat Window oraz Execution Loop Window), pięć pozycji zespołu (Executor 1, Subagent Network, Coordinator, Executor 2, Executor 3 / Validator) z pełnym oprzyrządowaniem każdej z nich, silnik kolejek z jedenastoma akcjami, panel orkiestracji jako boczną nawigację środowiska, integrację z modułem Automations dającą pracę ciągłą 24 godziny na dobę, 7 dni w tygodniu, 365 dni w roku, powłokę środowiska wraz z jej funkcjami i punktami sterowania, makiety tekstowe wszystkich okien środowiska, zbiorczy katalog elementów interfejsu oraz katalog stanów. Dokument jest jedynym opracowaniem środowiska MultitaskingAI w zbiorze: łączy warstwę systemową (definicje mechanizmów, role, silnik kolejek, orkiestracja, hierarchia decyzji, zgodność ze źródłami) z warstwą projektową interfejsu (makiety, katalogi elementów, stany, powłoka środowiska).
 
-**Zasada nadrzędna obowiązująca cały dokument.** Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód. Domyślne zachowanie systemu to wykonanie polecenia. Izolacja techniczna, izolacja kontekstu i wszelkie ograniczenia uprawnień są ustawieniami konfiguracyjnymi sterowanymi przez Operatora z okna konfiguracji — nigdy wymogiem stawianym przez platformę. Wszędzie tam, gdzie w dokumencie pojawia się słowo „ograniczenie”, „profil izolacji” lub „uprawnienia”, czyta się je jako ustawienie do świadomego włączenia, ze stanem wyjściowym „wyłączone / pełny dostęp”.
+**Zasada nadrzędna obowiązująca cały dokument.**
 
-**Zasada układu.** Wszystkie okna środowiska rozmieszczone są w układzie pionowym, w kolumnach sąsiadujących poziomo. Chat Window zajmuje lewą kolumnę o pełnej wysokości obszaru roboczego, Execution Loop Window otwiera się jako kolumna sąsiadująca, obszar roboczy ról zajmuje kolumnę dominującą po prawej, a okna pomocnicze i panele otwierają się jako kolejne rozszerzenia boczne. Regulacji podlega wyłącznie szerokość kolumn.
+Danaco Console nie narzuca twardych blokad, bram bezpieczeństwa ani wymuszonych zgód. Domyślne zachowanie systemu to wykonanie polecenia. Izolacja techniczna, izolacja kontekstu i wszelkie ograniczenia uprawnień są ustawieniami konfiguracyjnymi sterowanymi przez Operatora z okna konfiguracji — nigdy wymogiem stawianym przez platformę. Wszędzie tam, gdzie w dokumencie pojawia się słowo „ograniczenie”, „profil izolacji” lub „uprawnienia”, czyta się je jako ustawienie do świadomego włączenia, ze stanem wyjściowym „wyłączone / pełny dostęp”.
+
+**Zasada układu.**
+
+Wszystkie okna środowiska rozmieszczone są w układzie pionowym, w kolumnach sąsiadujących poziomo. Chat Window zajmuje lewą kolumnę o pełnej wysokości obszaru roboczego, Execution Loop Window otwiera się jako kolumna sąsiadująca, obszar roboczy ról zajmuje kolumnę dominującą po prawej, a okna pomocnicze i panele otwierają się jako kolejne rozszerzenia boczne. Regulacji podlega wyłącznie szerokość kolumn.
 
 ---
 
@@ -193,7 +197,9 @@ Mechanizmy ukrywania funkcjonalności stosowane w środowisku:
 - **Grupowanie logiczne akcji.** Jedenaście akcji silnika kolejek prezentowanych jest jako jeden element zbiorczy (`Operacje ▼`), którego rozwinięcie zawiera pełną listę akcji; sterowanie procesem prezentowane jest jako `Sterowanie ▼`.
 - **Znaczniki kontekstowe.** Środowisko, proces, zespół, rola, model i wykonawca występują jako lekkie znaczniki w pasku kontekstu, na przykład `[Danaco Console] [MultitaskingAI] [Zespół „Budowa aplikacji"] [Executor 1] [Ultra]`; kliknięcie znacznika otwiera odpowiedni selektor.
 
-**Zasada jednego kliknięcia.** Każda ukryta funkcja środowiska jest osiągalna jednym kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego wydanym w Chat Window. Zagnieżdżanie funkcji głęboko w hierarchii menu jest zabronione — ukrycie zmniejsza chaos wizualny, nie utrudnia dostępu.
+**Zasada jednego kliknięcia.**
+
+Każda ukryta funkcja środowiska jest osiągalna jednym kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego wydanym w Chat Window. Zagnieżdżanie funkcji głęboko w hierarchii menu jest zabronione — ukrycie zmniejsza chaos wizualny, nie utrudnia dostępu.
 
 Makiety w niniejszym dokumencie przedstawiają interfejs w stanie spoczynku: widoczne są wyłącznie elementy warstwy 1 oraz zwinięte wyzwalacze warstw 2–3 (znaczniki kontekstowe, `▼`, `⋮`, `☰`). Elementy warstw 2–4 opisane są w tabelach elementów okien z podaniem warstwy i sposobu wywołania.
 
@@ -206,13 +212,19 @@ Makiety w niniejszym dokumencie przedstawiają interfejs w stanie spoczynku: wid
 | Kanał pierwszy | **Chat Window** | Użytkownik ↔ Wykonawca | Główne okno komunikacji: przyjmuje polecenia w języku naturalnym, prezentuje strumień odpowiedzi i wyników, umożliwia zatwierdzanie i przerywanie działań oraz wyjaśnianie wyniku i kontekstu. Stanowi centralny punkt pracy użytkownika i podstawowy mechanizm sterowania wszystkimi procesami środowiska | Lewa kolumna, stała, pełna wysokość obszaru roboczego | 1 |
 | Kanał drugi | **Execution Loop Window** | Koordynator ↔ Wykonawca | Okno pętli wykonawczej: prowadzenie pętli, koordynacja zadań, nadzór nad realizacją, orkiestracja działań i kontrola realizacji procesów przy pracy wielowątkowej. Zawiera bieżące zlecenie i jego dekompozycję na zadania, kolejkę i stan zadań, wymianę komunikatów sterujących, wyniki kontroli jakości i decyzje o ponowieniu, wskaźniki przebiegu pętli oraz sterowanie przebiegiem | Kolumna sąsiadująca z Chat Window | 1 |
 
-**Chat Window w środowisku MultitaskingAI.** Okno jest obecne w każdej przestrzeni roboczej środowiska — w każdej karcie sesji, przy każdym układzie okien ról i w każdej sekcji panelu orkiestracji — zawsze w tym samym miejscu układu, w lewej kolumnie obszaru roboczego. Polecenie wydane w Chat Window steruje całym procesem: uruchamia i zatrzymuje pętlę, przypisuje role, dodaje zadania do kolejki, wywołuje dowolną z jedenastu akcji silnika kolejek i otwiera dowolne okno środowiska.
+**Chat Window w środowisku MultitaskingAI.**
 
-**Execution Loop Window w środowisku MultitaskingAI.** Okno jest pierwszoplanowym elementem tego środowiska, ponieważ MultitaskingAI z definicji prowadzi pracę wielowątkową. Execution Loop Window prezentuje pętlę wykonawczą prowadzoną przez Koordynatora wobec wykonawców: dekompozycję zlecenia na zadania, przydział zadań rolom, stan kolejek pięciu zasięgów, komunikaty sterujące (`route`, `retry`, `pause`, `resume`, `branch`, `condition`), wyniki kontroli jakości Executora 3 / Validatora, wskaźniki przebiegu pętli oraz sterowanie przebiegiem — wstrzymanie, wznowienie, przerwanie i korektę zlecenia. Rola Koordynatora w kanale drugim odpowiada roli Coordinatora w składzie zespołu (rozdz. 3.3); Wykonawcą są Executor 1, Executor 2 oraz — pośrednio, przez wykonawcę macierzystego — podagenci Subagent Network.
+Okno jest obecne w każdej przestrzeni roboczej środowiska — w każdej karcie sesji, przy każdym układzie okien ról i w każdej sekcji panelu orkiestracji — zawsze w tym samym miejscu układu, w lewej kolumnie obszaru roboczego. Polecenie wydane w Chat Window steruje całym procesem: uruchamia i zatrzymuje pętlę, przypisuje role, dodaje zadania do kolejki, wywołuje dowolną z jedenastu akcji silnika kolejek i otwiera dowolne okno środowiska.
+
+**Execution Loop Window w środowisku MultitaskingAI.**
+
+Okno jest pierwszoplanowym elementem tego środowiska, ponieważ MultitaskingAI z definicji prowadzi pracę wielowątkową. Execution Loop Window prezentuje pętlę wykonawczą prowadzoną przez Koordynatora wobec wykonawców: dekompozycję zlecenia na zadania, przydział zadań rolom, stan kolejek pięciu zasięgów, komunikaty sterujące (`route`, `retry`, `pause`, `resume`, `branch`, `condition`), wyniki kontroli jakości Executora 3 / Validatora, wskaźniki przebiegu pętli oraz sterowanie przebiegiem — wstrzymanie, wznowienie, przerwanie i korektę zlecenia. Rola Koordynatora w kanale drugim odpowiada roli Coordinatora w składzie zespołu (rozdz. 3.3); Wykonawcą są Executor 1, Executor 2 oraz — pośrednio, przez wykonawcę macierzystego — podagenci Subagent Network.
 
 Role: **Użytkownik** — zleca i zatwierdza; **Koordynator** — komponent orkiestrujący platformy, dekomponuje zlecenie, przydziela i nadzoruje zadania; **Wykonawca** — AI, agent lub system wykonawczy realizujący zadania.
 
-**Odpowiedniki ról kanonicznych w środowisku.** Nazwy ról kanonicznych platformy odpowiadają rolom operacyjnym środowiska MultitaskingAI w następujący sposób.
+**Odpowiedniki ról kanonicznych w środowisku.**
+
+Nazwy ról kanonicznych platformy odpowiadają rolom operacyjnym środowiska MultitaskingAI w następujący sposób.
 
 | Rola kanoniczna | Odpowiednik w środowisku MultitaskingAI |
 |---|---|
@@ -220,7 +232,9 @@ Role: **Użytkownik** — zleca i zatwierdza; **Koordynator** — komponent orki
 | Koordynator | Coordinator — komponent orkiestrujący, dekomponuje zlecenie, przydziela i nadzoruje zadania (rozdz. 3.3) |
 | Wykonawca | Executor 1, Executor 2, Executor 3 / Validator oraz podagenci Subagent Network (rozdz. 3.1, 3.2, 3.4, 3.5) |
 
-**Prowadzenie pętli wykonawczej.** Pętla wykonawcza jest podstawowym cyklem pracy środowiska. Koordynator prowadzi ją w powtarzalnym porządku, a Execution Loop Window przedstawia każdy krok tego porządku w czasie rzeczywistym.
+**Prowadzenie pętli wykonawczej.**
+
+Pętla wykonawcza jest podstawowym cyklem pracy środowiska. Koordynator prowadzi ją w powtarzalnym porządku, a Execution Loop Window przedstawia każdy krok tego porządku w czasie rzeczywistym.
 
 | Krok pętli | Działanie Koordynatora | Widok w Execution Loop Window |
 |---|---|---|
@@ -232,7 +246,9 @@ Role: **Użytkownik** — zleca i zatwierdza; **Koordynator** — komponent orki
 | 6. Decyzja | Kontynuacja, `retry`, `branch` na inną ścieżkę albo eskalacja do Użytkownika | Decyzja zapisana w przebiegu |
 | 7. Zamknięcie przebiegu | Scalenie wyników (`merge`), przekazanie rezultatu i uruchomienie kolejnego przebiegu | Podsumowanie przebiegu i licznik kolejnego |
 
-**Koordynacja wielu równoległych wątków.** Środowisko prowadzi jednocześnie dwa tory wykonawcze, z których każdy uruchamia do 15 podagentów, co daje do 30 jednostek wykonawczych w jednym procesie; kart sesji, a więc i procesów, działa wiele równolegle (rozdz. 1.4, 18). Execution Loop Window utrzymuje czytelność tego obrazu przez następujące mechanizmy.
+**Koordynacja wielu równoległych wątków.**
+
+Środowisko prowadzi jednocześnie dwa tory wykonawcze, z których każdy uruchamia do 15 podagentów, co daje do 30 jednostek wykonawczych w jednym procesie; kart sesji, a więc i procesów, działa wiele równolegle (rozdz. 1.4, 18). Execution Loop Window utrzymuje czytelność tego obrazu przez następujące mechanizmy.
 
 | Mechanizm | Działanie |
 |---|---|
@@ -250,7 +266,7 @@ Nadzór nad całością procesu z perspektywy Użytkownika sprawuje Always On Di
 
 ### 2.1. Charakterystyka i umiejscowienie w środowisku
 
-Always On Display jest funkcją globalną platformy — globalnym agentem towarzyszącym, nieposiadającym własnego środowiska ani modułu, obecnym jednocześnie we wszystkich częściach platformy. Pełną dokumentację funkcji — postać wizualną, reguły wyzwalania proaktywnych sugestii, katalog rodzajów sugestii, tor głosowy i jego granicę wobec modułu Assistant, warstwy widoczności oraz punkty sterowania — zawiera `funkcje-globalne/always-on-display.md`. Niniejszy rozdział opisuje wyłącznie specyfikę środowiska MultitaskingAI: rolę warstwy centralnej wobec zespołu ról, kolejek i przebiegu procesu.
+Always On Display jest funkcją globalną platformy — globalnym agentem towarzyszącym, nieposiadającym własnego środowiska ani modułu, obecnym jednocześnie we wszystkich częściach platformy. Pełną dokumentację funkcji — postać wizualną, reguły wyzwalania proaktywnych sugestii, katalog rodzajów sugestii, tor głosowy i jego granicę wobec modułu Assistant, warstwy widoczności oraz punkty sterowania — zawiera Always On Display. Niniejszy rozdział opisuje wyłącznie specyfikę środowiska MultitaskingAI: rolę warstwy centralnej wobec zespołu ról, kolejek i przebiegu procesu.
 
 W środowisku MultitaskingAI funkcja pełni rolę warstwy centralnej — nadrzędnej wobec wszystkich pięciu pozycji zespołu, z dostępem do wszystkich środowisk, projektów, agentów, sesji, historii i procesów. Ponieważ nie jest przypisana do żadnego pojedynczego modułu i ma dostęp do pełnego kontekstu działania użytkownika, jest naturalnym kandydatem do pełnienia roli nadzorczej nad procesem angażującym wiele modeli i wiele ról jednocześnie.
 
@@ -265,7 +281,7 @@ Wybór trybu, jak wszystkie pozostałe zależności platformy, należy do użytk
 
 ### 2.3. Zdolności właściwe nadzorowi nad procesem środowiska
 
-Poniższa tabela obejmuje zdolności swoiste dla nadzoru nad zespołem ról, kolejkami i przebiegiem pętli. Zdolności wspólne całej platformie — proaktywne doradztwo, pomoc kontekstowa, komunikacja tekstowa i głosowa, pełny dostęp do środowisk, projektów, sesji i historii — opisuje `funkcje-globalne/always-on-display.md` (rozdz. 1.3, 3–5).
+Poniższa tabela obejmuje zdolności swoiste dla nadzoru nad zespołem ról, kolejkami i przebiegiem pętli. Zdolności wspólne całej platformie — proaktywne doradztwo, pomoc kontekstowa, komunikacja tekstowa i głosowa, pełny dostęp do środowisk, projektów, sesji i historii — opisuje Always On Display (rozdz. 1.3, 3–5).
 
 | Zdolność | Opis | Dostępna w trybie |
 |---|---|---|
@@ -304,7 +320,7 @@ Poniższa tabela obejmuje zdolności swoiste dla nadzoru nad zespołem ról, kol
 
 ### 2.6. Elementy interfejsu swoiste dla środowiska
 
-Awatar funkcji, dymek kontekstowy sugestii, powierzchnia interakcji, plakietka powiadomień i przycisk mikrofonu są elementami wspólnymi całej platformy — ich formę, stany, warstwy widoczności i sposób wywołania podaje `funkcje-globalne/always-on-display.md` (rozdz. 2.6, 8). Poniższa tabela obejmuje elementy występujące wyłącznie w środowisku MultitaskingAI.
+Awatar funkcji, dymek kontekstowy sugestii, powierzchnia interakcji, plakietka powiadomień i przycisk mikrofonu są elementami wspólnymi całej platformy — ich formę, stany, warstwy widoczności i sposób wywołania podaje Always On Display (rozdz. 2.6, 8). Poniższa tabela obejmuje elementy występujące wyłącznie w środowisku MultitaskingAI.
 
 | Element | Co to jest | Do czego służy | Forma i waga | Stany | Zachowanie po interakcji | Gdzie występuje | Warstwa | Sposób wywołania |
 |---|---|---|---|---|---|---|---|---|
@@ -330,7 +346,9 @@ MultitaskingAI udostępnia cztery okna robocze odpowiadające czterem rolom oraz
 
 ### 3.1. Executor 1 — główny wykonawca
 
-**Pełne oprzyrządowanie.** Poniższa tabela zestawia wszystkie zdolności i narzędzia dostępne roli — od kanału połączenia z modelem po mechanizmy uruchamiane w toku pracy.
+**Pełne oprzyrządowanie.**
+
+Poniższa tabela zestawia wszystkie zdolności i narzędzia dostępne roli — od kanału połączenia z modelem po mechanizmy uruchamiane w toku pracy.
 
 | Grupa narzędzi | Zawartość |
 |---|---|
@@ -343,7 +361,9 @@ MultitaskingAI udostępnia cztery okna robocze odpowiadające czterem rolom oraz
 | Profil izolacji | Poziom zasięgu „Rola” — najwyższe pierwszeństwo spośród siedmiu poziomów; konfigurowalny, domyślnie brak aktywnej izolacji technicznej |
 | Okno robocze | Executor Chat (rozdz. 9) |
 
-**Charakterystyka.** Rola podstawowa — punkt wyjścia dla każdej konfiguracji zespołu; odpowiada za faktyczne wytwarzanie rezultatu pracy niezależnie od tego, czy w danym procesie uczestniczą pozostałe role.
+**Charakterystyka.**
+
+Rola podstawowa — punkt wyjścia dla każdej konfiguracji zespołu; odpowiada za faktyczne wytwarzanie rezultatu pracy niezależnie od tego, czy w danym procesie uczestniczą pozostałe role.
 
 ### 3.2. Subagent Network
 
@@ -1136,7 +1156,7 @@ Katalog elementów integracji z modułem Automations przedstawia rozdział 7.6. 
 | Zestaw operacji na zadaniu pętli | Akcje `route`, `branch`, `condition`, `delay`, `split`, `merge`, zmiana priorytetu, przypisanie do innej roli | Sterowanie pojedynczym zadaniem bez przechodzenia do sekcji Kolejki | Zestaw zwinięty (`Operacje ▼`) w wierszu zadania | Domyślny · rozwinięty · ładowanie | Wywołuje odpowiednią akcję `queue.action`; przy niepasującym stanie zadania pokazuje komunikat kontekstowy | Panel dekompozycji zlecenia, Execution Loop Window | 3 | Menu kebab (⋮) przy zadaniu |
 | Edycja reguł orkiestracji i dziennik komunikatów pętli | Definicja zależności oraz dziennik surowych komunikatów sterujących pętli | Diagnostyka wykonania i zmiana reguł przepływu bez opuszczania okna pętli | Panel edycji reguł i log chronologiczny | Domyślny · w edycji · zapisany · ostrzeżenie walidacji reguły | Zapis reguły dodaje ją do listy zależności orkiestracji (rozdz. 5); dziennik prezentuje pełny, nieograniczony zapis komunikatów | Execution Loop Window | 4 | Polecenie języka naturalnego, skrót klawiszowy, tryb administracyjny |
 | Okno Execution Loop Window | Okno pętli wykonawczej Koordynator ↔ Wykonawca | Prowadzenie pętli wykonawczej, koordynacja zadań, nadzór, orkiestracja i kontrola realizacji procesów przy pracy wielowątkowej | Kolumna sąsiadująca z Chat Window | Domyślny · pętla uruchomiona · pętla wstrzymana · oczekiwanie na kontrolę jakości · błąd przebiegu | Sterowanie przebiegiem działa na całym procesie, niezależnie od aktywnego okna roli | Każda karta sesji | 1 | Widoczne bez interakcji |
-| Panel dekompozycji zlecenia | Lista zadań, na które Koordynator rozłożył bieżące zlecenie, z przypisaną rolą i stanem | Zrozumienie, z czego składa się bieżące zlecenie i kto je realizuje | Lista pozycji (`.dn-karta--pozycja`) | Domyślna · pusty stan · z zadaniem zaznaczonym | Kliknięcie zadania otwiera jego szczegóły w sekcji Kolejki | Execution Loop Window | 1 | Widoczny bez interakcji |
+| Panel dekompozycji zlecenia | Lista zadań, na które Koordynator rozłożył bieżące zlecenie, z przypisaną rolą i stanem | Zrozumienie, z czego składa się bieżące zlecenie i kto je realizuje | Lista pozycji (`.dn-karta--pozycja`) | Domyślna · pusty stan · z zadaniem zaznaczonym | Kliknięcie zadania otwiera zadanie w sekcji Kolejki | Execution Loop Window | 1 | Widoczny bez interakcji |
 | Strumień komunikatów sterujących | Zapis wymiany między Koordynatorem a Wykonawcami: prompty etapów, wyniki cząstkowe, skierowania, ponowienia | Nadzór nad przebiegiem koordynacji zadań | Obszar zawartości kolumny | Domyślny · strumień aktywny · przewijalny | Nowe komunikaty dopisywane na żywo kanałem WebSocket | Execution Loop Window | 1 | Widoczny bez interakcji |
 | Wskaźniki przebiegu pętli | Numer cyklu, liczba zadań w toku, stan kontroli jakości | Bieżąca orientacja w stanie pętli wykonawczej | Zestaw plakietek (`.dn-plakietka--stan`) | Uruchomiona · wstrzymana · oczekuje na decyzję · błąd | Kliknięcie plakietki otwiera szczegóły odpowiadającego elementu pętli | Execution Loop Window, panel stanu procesu | 1 | Widoczne bez interakcji |
 | Sterowanie przebiegiem pętli | Zestaw operacji: wstrzymanie, wznowienie, przerwanie, korekta zlecenia, ponowienie zadania | Bezpośrednia kontrola realizacji procesu | Zestaw przycisków ikonowych (`.dn-btn-ikona`) oraz element zbiorczy | Domyślny · ładowanie · wykonano | Każda operacja pozostaje klikalna; przy niepasującym stanie pokazuje komunikat kontekstowy | Execution Loop Window | 1 | Widoczne bez interakcji |
@@ -1330,7 +1350,7 @@ Rozdział zbiera stany domenowe (procesu, zadania, roli, Always On Display) oraz
    │                pauza kolejki                                 ▼
    │                      ▼                              [ SCALONE ]
    │                [ WSTRZYMANE ] ── resume ──► z powrotem do „W REALIZACJI”
-   │                      
+   │
    │              wynik gotowy
    │                      ▼
    │                 [ SKIEROWANE ] ── route ──► rola / kolejka docelowa
@@ -1358,7 +1378,7 @@ Rozdział zbiera stany domenowe (procesu, zadania, roli, Always On Display) oraz
 | Operator | Doradza | Jak w trybie obserwatora, rozszerzone o przyciski akcji w dymku |
 | Operator | Interweniuje | Aktywnie wykonuje zatwierdzenie, wstrzymanie lub modyfikację procesu, w tym przez Mobile |
 
-Powyższe stany opisują funkcję wyłącznie w odniesieniu do procesu środowiska. Stany ogólnoplatformowe funkcji — spoczynek, sugestia oczekująca, rozmowa, nasłuch, mowa, wyciszenie, tryby obecności — podaje `funkcje-globalne/always-on-display.md`, rozdz. 9.1–9.2.
+Powyższe stany opisują funkcję wyłącznie w odniesieniu do procesu środowiska. Stany ogólnoplatformowe funkcji — spoczynek, sugestia oczekująca, rozmowa, nasłuch, mowa, wyciszenie, tryby obecności — podaje Always On Display, rozdz. 9.1–9.2.
 
 ### 12.6. Konwencja stanów elementów interfejsu
 
@@ -1554,7 +1574,7 @@ Nawigację środowiska tworzą: panel orkiestracji jako kolumna boczna (rozdz. 6
 | Kolejność i widoczność sekcji | Przeciąganie pozycji oraz przełączniki widoczności sekcji; „Przywróć domyślne" pozostaje dostępne zawsze | Dopasowanie panelu do charakteru procesu bez utraty funkcji | Uchwyt przeciągania, przełącznik widoczności (rozdz. 6.4, 6.5) | 4 | Okno konfiguracji panelu orkiestracji |
 | Szybki skok między procesami | Nakładka z miniaturami wszystkich otwartych kart sesji, wybór klawiaturą lub myszą | Nawigacja między wieloma równoległymi zespołami bez sięgania do paska kart | Karta sesji (rozdz. 10.1); rozdz. 19.2 | 3 | Skrót klawiszowy `Ctrl+Tab` |
 | Ścieżka nawigacyjna | Ciąg znaczników kontekstowych: Środowisko ▸ Proces ▸ Sekcja ▸ Rola / okno; każdy segment klikalny | Świadomość położenia w gęstym środowisku orkiestracji | Pasek kontekstu procesu (rozdz. 10.1) | 1 | Widoczna bez interakcji |
-| Przełącznik środowisk | Wyjście z MultitaskingAI do TalkIn, WorkSpace, CodeStudio lub strony głównej; procesy MultitaskingAI działają dalej w tle | Płynne przechodzenie między środowiskami bez utraty stanu procesów | interfejs-uzytkownika/strona-glowna-i-nawigacja.md (rozdz. 8.2–8.3); trwałość sesji | 2 | Znacznik kontekstowy `[MultitaskingAI]` w pasku kontekstu |
+| Przełącznik środowisk | Wyjście z MultitaskingAI do TalkIn, WorkSpace, CodeStudio lub strony głównej; procesy MultitaskingAI działają dalej w tle | Płynne przechodzenie między środowiskami bez utraty stanu procesów | Strona główna i nawigacja (rozdz. 8.2–8.3); trwałość sesji | 2 | Znacznik kontekstowy `[MultitaskingAI]` w pasku kontekstu |
 | Nawigacja klawiaturą po sekcjach | Klawisze 1–6 przełączają wprost do sekcji panelu; strzałki poruszają się po pozycjach list | Praca bez myszy przy sterowaniu procesem | Rozdz. 19.2 | 4 | Skrót klawiszowy |
 | Kotwice do ról w Monitorze procesu | Kliknięcie statusu roli w sekcji Monitor procesu przenosi wprost do jej okna roboczego z podświetleniem | Szybkie dojście od diagnozy do miejsca interwencji | Widok hierarchii decyzji, plakietka statusu roli (rozdz. 10.4, 10.9) | 1 | Kliknięcie plakietki statusu |
 | Menu kontekstowe pozycji nawigacyjnej | Zestaw akcji sekcji: otwarcie w oknie oderwanym, przypięcie, ukrycie, konfiguracja | Skrócenie częstych operacji na sekcjach | Pozycja nawigacyjna (rozdz. 6.4); rozdz. 17.2 | 3 | Menu kebab (⋮) pozycji, prawy przycisk myszy |
@@ -1566,16 +1586,16 @@ Przestrzeń robocza środowiska rozmieszcza okna w kolumnach sąsiadujących poz
 | Funkcja | Działanie | Wartość dla użytkownika | Powiązania | Warstwa | Sposób wywołania |
 |---|---|---|---|---|---|
 | Menedżer układu kolumn | Przełącza rozmieszczenie okien ról między układami kolumnowymi: jedna kolumna (skupienie), dwie kolumny, trzy kolumny, cztery kolumny (cztery role), trzy kolumny wykonawcze z kolumną koordynacji | Dopasowanie szerokości kolumn do składu zespołu i etapu pracy | Makieta główna (rozdz. 9.3); karty ról (rozdz. 10.4) | 2 | Element zbiorczy `Układ ▼` w pasku kontekstu procesu |
-| Zapisywane układy kolumn | Zapis bieżącego rozmieszczenia, szerokości i zwinięć kolumn jako nazwany preset; wczytanie jednym kliknięciem; presety wspólne z presetami zespołu | Powrót do sprawdzonego układu pracy dla danego typu procesu | Sekcja Zespoły (rozdz. 6.2, 14); architektura/model-konfiguracji.md | 3 | Rozwinięcie `Układ ▼ ▸ Presety` |
+| Zapisywane układy kolumn | Zapis bieżącego rozmieszczenia, szerokości i zwinięć kolumn jako nazwany preset; wczytanie jednym kliknięciem; presety wspólne z presetami zespołu | Powrót do sprawdzonego układu pracy dla danego typu procesu | Sekcja Zespoły (rozdz. 6.2, 14); Model konfiguracji | 3 | Rozwinięcie `Układ ▼ ▸ Presety` |
 | Zmiana szerokości kolumn | Przeciąganie granicy między kolumnami zmienia ich szerokość; podwójne kliknięcie granicy wyrównuje szerokości | Ręczne doważenie uwagi między wykonawcami a koordynacją | Makieta główna (rozdz. 9.3) | 1 | Przeciągnięcie granicy kolumn |
 | Tryb skupienia na roli | Wybrana kolumna roli rozszerza się na całą szerokość obszaru roboczego, pozostałe zwijają się do wąskich kolumn ze wskaźnikami statusu; Chat Window i Execution Loop Window pozostają widoczne | Głęboka praca nad jednym torem bez utraty podglądu pozostałych | Karta roli, plakietka statusu roli (rozdz. 10.4) | 2 | Ikona skupienia w nagłówku kolumny, skrót klawiszowy |
 | Zwijanie kolumny roli | Kolumna roli zwija się do wąskiej listwy z nazwą roli i statusem; kliknięcie rozwija ją ponownie | Chwilowe uproszczenie widoku przy pracy nad wybranymi rolami | Nagłówek okna roli (rozdz. 9.1) | 1 | Kliknięcie nagłówka kolumny |
 | Panel Subagent Network jako rozszerzenie boczne | Panel do 15 podagentów otwiera się jako osobna kolumna boczna obok okna wykonawcy, z listą kart podagentów | Czytelny podgląd wielu podagentów przy pełnej sieci (15/15) | Panel Subagent Network (rozdz. 10.5, makieta 9.7) | 3 | Rozwinięcie `Subagent Network ▼` |
-| Okna oderwane | Okno roli lub sekcja wypinane są do osobnego okna systemowego — praca na wielu monitorach; okno oderwane zachowuje układ kolumnowy | Wykorzystanie drugiego ekranu do rozdzielenia wykonania od nadzoru | Klient Tauri (architektura/architektura.md); trwałość stanu sesji | 3 | Menu kebab (⋮) nagłówka okna |
+| Okna oderwane | Okno roli lub sekcja wypinane są do osobnego okna systemowego — praca na wielu monitorach; okno oderwane zachowuje układ kolumnowy | Wykorzystanie drugiego ekranu do rozdzielenia wykonania od nadzoru | Klient Tauri; trwałość stanu sesji | 3 | Menu kebab (⋮) nagłówka okna |
 | Dokowanie i przeciąganie kolumn | Przeciągnięcie nagłówka okna roli w inne miejsce układu kolumnowego, ze strefami zrzutu i podglądem pozycji docelowej | Swobodna aranżacja przestrzeni bez sztywnego porządku kolumn | Menedżer układu kolumn; makieta główna (rozdz. 9.3) | 2 | Przeciągnięcie nagłówka kolumny |
 | Sprzężenie przewijania porównania | W Results Analyzer przewijanie dwóch kolumn wyników (Executor 1 i Executor 2) jest sprzężone | Rzetelne porównanie rozbieżnych wyników linia po linii | Panel porównania wyników (rozdz. 10.7) | 3 | Przełącznik w nagłówku panelu porównania |
 | Zakładki wewnątrz okna roli | W jednej kolumnie roli działają zakładki: historia, plan, pamięć, log — bez mnożenia kolumn | Więcej treści roli w tej samej szerokości | Komponent `.dn-zakladki` (Załącznik A.2) | 1 | Kliknięcie zakładki |
-| Migawka układu | Bieżące rozmieszczenie kolumn i statusów eksportowane jest jako obraz lub schemat tekstowy | Dokumentowanie konfiguracji zespołu i dzielenie się układem | Rozdz. 21; interfejs-uzytkownika/system-wizualny.md | 3 | Menu kebab (⋮) paska kontekstu procesu |
+| Migawka układu | Bieżące rozmieszczenie kolumn i statusów eksportowane jest jako obraz lub schemat tekstowy | Dokumentowanie konfiguracji zespołu i dzielenie się układem | Rozdz. 21; System wizualny | 3 | Menu kebab (⋮) paska kontekstu procesu |
 
 ---
 
@@ -1588,7 +1608,7 @@ Karta sesji reprezentuje jeden proces orkiestracji z własnym zespołem ról, ko
 | Nazywanie i kolorowanie kart sesji | Karcie procesu nadawana jest nazwa zespołu, kolor i ikona; kolor przenosi się na panel stanu procesu | Rozróżnienie wielu równoległych procesów na pierwszy rzut oka | Karta sesji (rozdz. 10.1) | 3 | Menu kebab (⋮) karty |
 | Przypinanie kart | Istotny proces przypinany jest na początku paska kart; karta przypięta nie zamyka się przypadkowo | Ochrona długotrwałych procesów ciągłych przed zamknięciem | Karta sesji (rozdz. 10.1) | 3 | Menu kebab (⋮) karty |
 | Grupowanie kart sesji | Powiązane procesy łączone są w nazwaną grupę (na przykład „Projekt X — backend, frontend, QA") ze wspólnym zwijaniem | Porządek przy dziesiątkach równoległych zespołów | Pasek kontekstu procesu (rozdz. 10.1) | 3 | Menu kebab (⋮) karty, przeciągnięcie karty na kartę |
-| Migawka procesu | Pełny stan procesu — role, kolejki, zależności, historia — zapisywany jest jako punkt przywracania; powrót następuje jednym kliknięciem | Bezpieczne eksperymentowanie z konfiguracją zespołu i powrót do znanego stanu | Trwałość stanu po stronie serwera (rozdz. 9.1); architektura/model-danych.md | 3 | Menu kebab (⋮) karty, paleta poleceń |
+| Migawka procesu | Pełny stan procesu — role, kolejki, zależności, historia — zapisywany jest jako punkt przywracania; powrót następuje jednym kliknięciem | Bezpieczne eksperymentowanie z konfiguracją zespołu i powrót do znanego stanu | Trwałość stanu po stronie serwera (rozdz. 9.1); Model danych | 3 | Menu kebab (⋮) karty, paleta poleceń |
 | Wznawianie procesu po rozłączeniu | Karta sesji odtwarza pełny stan po zamknięciu klienta lub utracie połączenia, ponieważ stan procesu żyje po stronie serwera | Praca ciągła 24/7/365 bez zależności od otwartego okna | Trwałość sesji (rozdz. 9.1); integracja z Automations (rozdz. 7) | 1 | Automatyczne przy otwarciu karty |
 | Duplikowanie procesu | Karta sesji klonowana jest z konfiguracją zespołu, bez historii przebiegów — jako punkt startu wariantu | Szybki start kolejnego procesu z tego samego wzorca | Sekcja Zespoły (rozdz. 14) | 3 | Menu kebab (⋮) karty |
 | Porównywanie dwóch przebiegów | Dwa przebiegi tego samego procesu zestawiane są w dwóch kolumnach: czas, koszt, wynik, log decyzji | Ocena, która konfiguracja zespołu działa lepiej | Tabela przebiegów, Monitor procesu (rozdz. 10.9) | 3 | Zaznaczenie dwóch wierszy tabeli przebiegów, akcja „Porównaj" |
@@ -1629,13 +1649,13 @@ Panel stanu procesu jest wąską kolumną boczną po prawej stronie obszaru robo
 | Segment integracji Automations | Plakietka „spięte / niespięte / błąd" oraz czas najbliższego cyklu; kliknięcie otwiera sekcję Harmonogram i automatyki | Natychmiastowa wiedza, czy proces działa w trybie ciągłym | Plakietka statusu połączenia (rozdz. 7.6) | 1 | Widoczny bez interakcji |
 | Segment stanu przebiegu | Plakietka stanu pętli: nieuruchomiony, uruchomiony, wstrzymany, oczekuje na decyzję, błąd — wraz z kropką stanu | Jeden punkt prawdy o stanie procesu | Stany przebiegu procesu (rozdz. 12.1) | 1 | Widoczny bez interakcji |
 | Sterowanie skrócone | Zestaw Start, Pauza, Wznów, Stop dostępny bez przechodzenia do Coordinator Chat i Execution Loop Window | Sterowanie procesem z każdego miejsca środowiska | Zestaw przycisków sterowania procesem (rozdz. 10.6, 3.3) | 3 | Element zbiorczy `Sterowanie ▼` |
-| Licznik kosztu i zużycia | Bieżący koszt i zużycie tokenów przebiegu oraz sumarycznie, z rozbiciem per rola po najechaniu | Kontrola budżetu procesu wieloagentowego (do 30 jednostek wykonawczych) | architektura/integracja-modeli.md; kanały modeli (rozdz. 3.1) | 2 | Najechanie na segment, rozwinięcie szczegółów |
+| Licznik kosztu i zużycia | Bieżący koszt i zużycie tokenów przebiegu oraz sumarycznie, z rozbiciem per rola po najechaniu | Kontrola budżetu procesu wieloagentowego (do 30 jednostek wykonawczych) | Integracja modeli; kanały modeli (rozdz. 3.1) | 2 | Najechanie na segment, rozwinięcie szczegółów |
 | Licznik jednostek wykonawczych | Liczba aktywnych ról i podagentów, na przykład „4 role · 6/30 podagentów" | Świadomość skali równoległości i obciążenia | Subagent Network (rozdz. 3.2) | 1 | Widoczny bez interakcji |
 | Wskaźnik zgodności zależności | Plakietka „zgodny / oczekujący / naruszony"; kliknięcie przy naruszeniu otwiera szczegóły konfliktu | Wczesne wykrycie złamania reguły orkiestracji | Plakietka statusu zgodności (rozdz. 5.4) | 1 | Widoczny bez interakcji |
 | Wskaźnik trybu Always On Display | Tryb obserwatora lub operatora; kliknięcie przełącza tryb | Jawność, kto może interweniować w proces | Przełącznik trybu AOD (rozdz. 2.6, 10.9) | 2 | Znacznik `AOD ▼` |
 | Wskaźnik przebiegu pętli wykonawczej | Numer bieżącego cyklu pętli, liczba zadań w dekompozycji zlecenia i stan kontroli jakości | Bieżąca orientacja w przebiegu pętli prowadzonej w Execution Loop Window | Execution Loop Window (rozdz. 1.7, 9.5) | 1 | Widoczny bez interakcji |
-| Konfiguracja segmentów panelu | Włączenie, wyłączenie i kolejność segmentów panelu stanu procesu | Dopasowanie panelu do tego, co w danym procesie istotne | Rozdz. 22; architektura/model-konfiguracji.md | 4 | Okno konfiguracji |
-| Wskaźnik połączenia na żywo | Stan kanału WebSocket: na żywo, ponawianie, rozłączony — bez blokowania pracy | Zaufanie do aktualności statusów ról i kolejek | architektura/architektura.md (WebSocket/JSON) | 1 | Widoczny bez interakcji |
+| Konfiguracja segmentów panelu | Włączenie, wyłączenie i kolejność segmentów panelu stanu procesu | Dopasowanie panelu do tego, co w danym procesie istotne | Rozdz. 22; Model konfiguracji | 4 | Okno konfiguracji |
+| Wskaźnik połączenia na żywo | Stan kanału WebSocket: na żywo, ponawianie, rozłączony — bez blokowania pracy | Zaufanie do aktualności statusów ról i kolejek | Architektura (WebSocket/JSON) | 1 | Widoczny bez interakcji |
 
 ### 19.2. Skróty klawiszowe i paleta poleceń
 
@@ -1646,7 +1666,7 @@ Panel stanu procesu jest wąską kolumną boczną po prawej stronie obszaru robo
 | Skróty akcji kolejek | Przypisania klawiszowe do jedenastu akcji silnika kolejek na zaznaczonym zadaniu | Sprawna praca w gęstej sekcji Kolejki | Zestaw przycisków akcji (rozdz. 4.5) | 4 | Skrót klawiszowy |
 | Skróty przełączania okien | Klawisze do skoku między Chat Window, Execution Loop Window, Executor 1, Executor 2, Coordinator i Validatorem oraz do trybu skupienia | Płynne przechodzenie między torami pracy | Karty ról (rozdz. 10.4); rozdz. 17.2 | 4 | Skrót klawiszowy |
 | Skróty warstwy centralnej | Wywołanie dymka Always On Display, mikrofonu i przełącznika trybu AOD | Natychmiastowy dostęp do nadzoru i komunikacji głosowej | Elementy AOD (rozdz. 2.6) | 4 | Skrót klawiszowy |
-| Edytor skrótów | Okno konfiguracji, w którym każdy skrót powłoki jest podglądalny i przypisywalny na nowo; „Przywróć domyślne" pozostaje dostępne | Dopasowanie skrótów do nawyków Operatora | Rozdz. 22; architektura/model-konfiguracji.md | 4 | Okno konfiguracji |
+| Edytor skrótów | Okno konfiguracji, w którym każdy skrót powłoki jest podglądalny i przypisywalny na nowo; „Przywróć domyślne" pozostaje dostępne | Dopasowanie skrótów do nawyków Operatora | Rozdz. 22; Model konfiguracji | 4 | Okno konfiguracji |
 | Ściągawka skrótów | Nakładka z listą wszystkich aktywnych skrótów, pogrupowaną tematycznie | Przypomnienie skrótów bez opuszczania środowiska | Edytor skrótów | 4 | Skrót klawiszowy |
 
 ---
@@ -1658,9 +1678,9 @@ Mostki kontekstu są jawne i sterowane ustawieniami konfiguracyjnymi, spójnymi 
 | Funkcja | Działanie | Wartość dla użytkownika | Powiązania | Warstwa | Sposób wywołania |
 |---|---|---|---|---|---|
 | Współdzielenie kontekstu między rolami procesu | Historia, pamięć lub kontekst udostępniane są jawnie wybranym rolom tego samego procesu, na przykład Executorowi 1 i Executorowi 2 w trybie iteracyjnym | Wspólna baza wiedzy wykonawców bez ręcznego kopiowania | Okno konfiguracji izolacji, poziom „Rola" (rozdz. 13); tryby współpracy (rozdz. 3.4) | 4 | Okno konfiguracji punktów izolacji |
-| Most kontekstu między procesami | Jednorazowe przekazanie wyniku lub pamięci z jednego procesu orkiestracji do drugiego, na przykład wyniku badania do procesu redakcji | Łańcuchowanie procesów bez eksportu ręcznego | Poziom zasięgu „karta sesji" (rozdz. 13.1); architektura/model-danych.md | 3 | Menu kebab (⋮) karty sesji, polecenie w Chat Window |
+| Most kontekstu między procesami | Jednorazowe przekazanie wyniku lub pamięci z jednego procesu orkiestracji do drugiego, na przykład wyniku badania do procesu redakcji | Łańcuchowanie procesów bez eksportu ręcznego | Poziom zasięgu „karta sesji" (rozdz. 13.1); Model danych | 3 | Menu kebab (⋮) karty sesji, polecenie w Chat Window |
 | Wciągnięcie kontekstu projektu z modułu Workspace | Pamięć kontekstowa i pliki projektu z modułu Workspace podpinane są jako wejście dla ról procesu | Role pracują na wiedzy projektu bez powielania materiałów | Moduł Workspace; pamięć poziomu „projekt" (rozdz. 3.1) | 3 | Rozwinięcie `Kontekst ▼` w nagłówku okna roli |
-| Przekazanie wyniku do modułu docelowego | Rezultat procesu kierowany jest do modułu tematycznego (Apps, Studio, Library) jako artefakt, jednym poleceniem z okna roli lub z Chat Window | Domknięcie drogi „proces → produkt" bez wychodzenia ze środowiska | Powiązania modułów (architektura/koncepcja-platformy.md); akcja `route` (rozdz. 4.2) | 3 | Menu kebab (⋮) wyniku, polecenie w Chat Window |
+| Przekazanie wyniku do modułu docelowego | Rezultat procesu kierowany jest do modułu tematycznego (Apps, Studio, Library) jako artefakt, jednym poleceniem z okna roli lub z Chat Window | Domknięcie drogi „proces → produkt" bez wychodzenia ze środowiska | Powiązania modułów; akcja `route` (rozdz. 4.2) | 3 | Menu kebab (⋮) wyniku, polecenie w Chat Window |
 | Pasek widoczności kontekstu | Przy każdej roli pokazywane są źródła kontekstu, z których rola korzysta: pamięć projektu, historia współdzielona, wynik innej roli — jawnie i klikalnie | Pełna przejrzystość tego, co widzi dana rola | Wskaźnik dostępu do pamięci (rozdz. 10.4); zasada kluczy jawnych | 1 | Widoczny bez interakcji |
 | Odpięcie kontekstu jednym ruchem | Dowolne współdzielenie cofane jest natychmiast, z powrotem do stanu odrębnego; toast zawiera „Cofnij" | Odwracalność każdej decyzji o współdzieleniu | Komponent `.dn-toast` | 2 | Kliknięcie źródła w pasku widoczności kontekstu |
 | Współdzielona tablica ustaleń procesu | Wspólny, lekki notatnik procesu widoczny dla wszystkich ról oraz dla Always On Display — ustalenia, blokady, decyzje | Jedno miejsce prawdy dla całego zespołu w toku pętli | Obszar historii (rozdz. 10.4); Monitor procesu (rozdz. 6.2); Execution Loop Window (rozdz. 9.5) | 3 | Rozwinięcie `Tablica ustaleń ▼` w Execution Loop Window |
@@ -1672,14 +1692,14 @@ Mostki kontekstu są jawne i sterowane ustawieniami konfiguracyjnymi, spójnymi 
 | Funkcja | Działanie | Wartość dla użytkownika | Powiązania | Warstwa | Sposób wywołania |
 |---|---|---|---|---|---|
 | Wyszukiwanie globalne środowiska | Jedno pole odnajduje role, zadania, kolejki, zależności, przebiegi i procesy w bieżącym oraz w pozostałych procesach; wyniki pogrupowane | Szybkie dotarcie do dowolnego elementu w gęstym środowisku | Pole wyszukiwania (rozdz. 10.1); indeks po stronie rdzenia | 2 | Ikona `szukaj`, skrót klawiszowy |
-| Centrum powiadomień | Mechanizm w postaci jednolitej dla całej platformy — `interfejs-uzytkownika/katalog-komponentow.md`, rozdz. 11.6. Specyfika MultitaskingAI: zakres źródeł obejmuje wszystkie procesy orkiestracji równocześnie, a filtr źródła zawęża listę do wskazanego procesu, roli albo kolejki | Nic istotnego nie umyka przy wielu równoległych procesach | Plakietka powiadomień AOD (rozdz. 2.6); powiadomienia wypychane Mobile (rozdz. 7.6); encja `powiadomienie` — `architektura/model-danych.md`, rozdz. 18.4 | 3 | Plakietka powiadomień z licznikiem w pasku kontekstu |
+| Centrum powiadomień | Mechanizm w postaci jednolitej dla całej platformy — Katalog komponentów, rozdz. 11.6. Specyfika MultitaskingAI: zakres źródeł obejmuje wszystkie procesy orkiestracji równocześnie, a filtr źródła zawęża listę do wskazanego procesu, roli albo kolejki | Nic istotnego nie umyka przy wielu równoległych procesach | Plakietka powiadomień AOD (rozdz. 2.6); powiadomienia wypychane Mobile (rozdz. 7.6); encja `powiadomienie` — Model danych, rozdz. 18.4 | 3 | Plakietka powiadomień z licznikiem w pasku kontekstu |
 | Dziennik zdarzeń środowiska | Pełny, chronologiczny, nieograniczony log każdej akcji powłoki i silnika kolejek per przebieg, z eksportem | Rozliczalność i diagnoza procesu wieloagentowego | Przycisk „Szczegóły przebiegu" (rozdz. 10.9); zasada pełnej widoczności | 4 | Paleta poleceń, sekcja Monitor procesu |
-| Motyw i gęstość interfejsu | Motyw jasny lub ciemny oraz gęstość interfejsu: komfortowa albo kompaktowa — dla widoku wielokolumnowego | Czytelność przy wielu kolumnach naraz i oszczędność szerokości | Przełącznik motywu (rozdz. 10.1); interfejs-uzytkownika/system-wizualny.md | 3 | Menu kebab (⋮) paska kontekstu, okno konfiguracji |
+| Motyw i gęstość interfejsu | Motyw jasny lub ciemny oraz gęstość interfejsu: komfortowa albo kompaktowa — dla widoku wielokolumnowego | Czytelność przy wielu kolumnach naraz i oszczędność szerokości | Przełącznik motywu (rozdz. 10.1); System wizualny | 3 | Menu kebab (⋮) paska kontekstu, okno konfiguracji |
 | Tryb skupienia środowiska | Wycisza powiadomienia i zwija kolumny pomocnicze, pozostawiając Chat Window, Execution Loop Window, kolumny ról i panel stanu procesu | Głęboka praca nad procesem bez rozproszeń | Centrum powiadomień; tryb skupienia na roli (rozdz. 17.2) | 2 | Znacznik `Skupienie ▼`, skrót klawiszowy |
-| Eksport i import konfiguracji środowiska | Cała konfiguracja powłoki — układy kolumn, skróty, segmenty panelu stanu, sekcje — zapisywana jest i wczytywana jako plik przenośny | Przeniesienie ustawień między stanowiskami i kopia zapasowa | architektura/model-konfiguracji.md; rozdz. 17.2, 19, 22 | 4 | Okno konfiguracji |
+| Eksport i import konfiguracji środowiska | Cała konfiguracja powłoki — układy kolumn, skróty, segmenty panelu stanu, sekcje — zapisywana jest i wczytywana jako plik przenośny | Przeniesienie ustawień między stanowiskami i kopia zapasowa | Model konfiguracji; rozdz. 17.2, 19, 22 | 4 | Okno konfiguracji |
 | Tryb prezentacji | Widok tylko do oglądania pełnej pętli — makieta główna wraz z Monitorem procesu — do pokazania procesu na żywo bez ryzyka przypadkowej akcji | Demonstracja i nadzór z ekranu współdzielonego | Makieta główna (rozdz. 9.3); Monitor procesu | 3 | Paleta poleceń, menu kebab (⋮) paska kontekstu |
 | Widok Mobile procesu | Zwarty układ powłoki dla urządzenia mobilnego: stan procesu, skrócone sterowanie, zatwierdzanie zdalne; kolumny układają się jedna pod drugą wyłącznie w tym widoku, zachowując porządek Chat Window → Execution Loop Window → okno roli | Interwencja i nadzór spoza stanowiska roboczego w trybie ciągłym | Przycisk zatwierdzenia zdalnego (rozdz. 7.6); funkcja Mobile (rozdz. 2.4) | 1 | Otwarcie procesu na urządzeniu mobilnym |
-| Objaśnienia kontekstowe | Przy każdym elemencie konfiguracji powłoki ikona `info` z wyjaśnieniem działania i wpływu ustawienia | Obniżenie progu wejścia do najbardziej złożonego środowiska platformy | Ikona objaśnienia (rozdz. 13.5); interfejs-uzytkownika/system-wizualny.md | 2 | Najechanie lub kliknięcie ikony `[?]` |
+| Objaśnienia kontekstowe | Przy każdym elemencie konfiguracji powłoki ikona `info` z wyjaśnieniem działania i wpływu ustawienia | Obniżenie progu wejścia do najbardziej złożonego środowiska platformy | Ikona objaśnienia (rozdz. 13.5); System wizualny | 2 | Najechanie lub kliknięcie ikony `[?]` |
 | Pusty stan z podpowiedzią startu | Nowy proces bez zespołu pokazuje kroki startowe — wczytanie zespołu, przypisanie ról, dodanie kolejki — zamiast pustej przestrzeni | Prowadzenie użytkownika od zera bez ograniczania swobody | Komponent `.dn-pusty-stan` (Załącznik A.2); sekcja Zespoły | 1 | Widoczny bez interakcji |
 
 ---
@@ -1701,7 +1721,7 @@ Wszystkie poniższe zakresy konfiguruje się z okna konfiguracji platformy; brak
 | Skróty klawiszowe | Przypisania klawiszy powłoki (rozdz. 19.2) | globalny / środowisko | zestaw domyślny |
 | Współdzielenie kontekstu | Zakres i kierunek mostków kontekstu (rozdz. 20) | rola / karta sesji | odrębny kontekst per proces i per rola |
 | Tryb Always On Display | Obserwator albo operator (rozdz. 2.2) | proces / środowisko | obserwator |
-| Powiadomienia i ich waga | Które klasy zdarzeń zgłasza centrum powiadomień (rozdz. 21; `interfejs-uzytkownika/katalog-komponentow.md`, rozdz. 11.6) | środowisko / proces | wszystkie klasy, waga normalna |
+| Powiadomienia i ich waga | Które klasy zdarzeń zgłasza centrum powiadomień | środowisko / proces | wszystkie klasy, waga normalna |
 | Motyw i gęstość | Motyw jasny lub ciemny, gęstość komfortowa lub kompaktowa (rozdz. 21) | globalny | motyw platformy, gęstość komfortowa |
 | Potwierdzenia akcji nieodwracalnych | Modal przed usunięciem zespołu, kolejki albo procesu | globalny / środowisko | wyłączone (akcja od razu + „Cofnij") |
 | Profil izolacji roli | Osiem zakresów izolacji technicznej oraz izolacja kontekstu (rozdz. 13.2) | rola (pierwszeństwo najwyższe) | wyłączone / pełny dostęp |
@@ -1740,31 +1760,57 @@ srodowisko_multitaskingai:
 
 ## 23. Słownik pojęć
 
-**Always On Display** — globalny agent towarzyszący, nieposiadający własnego środowiska ani modułu, obecny jednocześnie we wszystkich częściach platformy; w kontekście MultitaskingAI pełni funkcję warstwy centralnej jako obserwator lub operator procesu (rozdz. 2).
+**Always On Display** —
 
-**Executor** — rola odpowiedzialna za faktyczne wykonanie pracy, bez odpowiedzialności za zarządzanie procesem (rozdz. 3.1, 3.4).
+globalny agent towarzyszący, nieposiadający własnego środowiska ani modułu, obecny jednocześnie we wszystkich częściach platformy; w kontekście MultitaskingAI pełni funkcję warstwy centralnej jako obserwator lub operator procesu (rozdz. 2).
 
-**Subagent Network** — mechanizm pozwalający wykonawcy uruchomić jednocześnie do 15 wyspecjalizowanych podagentów, których wyniki są następnie agregowane przez wykonawcę macierzystego (rozdz. 3.2).
+**Executor** —
 
-**Coordinator** — rola odpowiedzialna za planowanie, podział pracy, budowę promptów, sterowanie procesem oraz zarządzanie kolejką (rozdz. 3.3).
+rola odpowiedzialna za faktyczne wykonanie pracy, bez odpowiedzialności za zarządzanie procesem (rozdz. 3.1, 3.4).
 
-**Validator** — jedno z przykładowych wcieleń roli Executor 3, odpowiedzialne za kontrolę jakości pracy pozostałych modeli (rozdz. 3.5).
+**Subagent Network** —
 
-**Silnik kolejek** — mechanizm pozwalający definiować kolejki na pięciu poziomach zasięgu i obsługujący jedenaście akcji (rozdz. 4).
+mechanizm pozwalający wykonawcy uruchomić jednocześnie do 15 wyspecjalizowanych podagentów, których wyniki są następnie agregowane przez wykonawcę macierzystego (rozdz. 3.2).
 
-**Orkiestracja** — mechanizm definiujący zależności pomiędzy modelami, agentami, zadaniami, kolejkami, automatyzacjami i projektami oraz zapewniający ich respektowanie w toku wykonania (rozdz. 5).
+**Coordinator** —
 
-**Panel orkiestracji** — boczna nawigacja środowiska MultitaskingAI, złożona z sześciu sekcji: Zespoły, Role, Kolejki, Orkiestracja, Harmonogram i automatyki, Monitor procesu (rozdz. 6).
+rola odpowiedzialna za planowanie, podział pracy, budowę promptów, sterowanie procesem oraz zarządzanie kolejką (rozdz. 3.3).
 
-**Hierarchia decyzji** — porządek pierwszeństwa decyzyjnego między użytkownikiem, Always On Display, Coordinatorem, Executorem 3 / Validatorem, wykonawcami i Subagent Network, konfigurowalny i możliwy do pominięcia przez użytkownika w każdej chwili (rozdz. 8).
+**Validator** —
 
-**Executor Chat** — okno robocze Executora 1 lub Executora 2 (rozdz. 9.6).
+jedno z przykładowych wcieleń roli Executor 3, odpowiedzialne za kontrolę jakości pracy pozostałych modeli (rozdz. 3.5).
 
-**Coordinator Chat** — okno robocze Coordinatora (rozdz. 9.8).
+**Silnik kolejek** —
 
-**Results Analyzer** — okno robocze Executora 3 / Validatora (rozdz. 9.9).
+mechanizm pozwalający definiować kolejki na pięciu poziomach zasięgu i obsługujący jedenaście akcji (rozdz. 4).
 
-**Izolacja kontekstu** i **izolacja techniczna** — dwa rodzaje izolacji, przypisywalne na poziomie roli z pierwszeństwem najwyższym w hierarchii zasięgów (rozdz. 13).
+**Orkiestracja** —
+
+mechanizm definiujący zależności pomiędzy modelami, agentami, zadaniami, kolejkami, automatyzacjami i projektami oraz zapewniający ich respektowanie w toku wykonania (rozdz. 5).
+
+**Panel orkiestracji** —
+
+boczna nawigacja środowiska MultitaskingAI, złożona z sześciu sekcji: Zespoły, Role, Kolejki, Orkiestracja, Harmonogram i automatyki, Monitor procesu (rozdz. 6).
+
+**Hierarchia decyzji** —
+
+porządek pierwszeństwa decyzyjnego między użytkownikiem, Always On Display, Coordinatorem, Executorem 3 / Validatorem, wykonawcami i Subagent Network, konfigurowalny i możliwy do pominięcia przez użytkownika w każdej chwili (rozdz. 8).
+
+**Executor Chat** —
+
+okno robocze Executora 1 lub Executora 2 (rozdz. 9.6).
+
+**Coordinator Chat** —
+
+okno robocze Coordinatora (rozdz. 9.8).
+
+**Results Analyzer** —
+
+okno robocze Executora 3 / Validatora (rozdz. 9.9).
+
+**Izolacja kontekstu i izolacja techniczna** —
+
+dwa rodzaje izolacji, przypisywalne na poziomie roli z pierwszeństwem najwyższym w hierarchii zasięgów (rozdz. 13).
 
 Pozostałe pojęcia platformowe (Środowisko, Moduł, Komponent własny, Czat, Sesja, Projekt, Centrum dowodzenia, Agent, Mobile) zachowują brzmienie ustalone w słowniczku Koncepcji platformy i nie są w niniejszym dokumencie powtarzane.
 
@@ -1828,7 +1874,7 @@ Pełna galeria wszystkich 47 ikon z podglądem SVG: `ikony/indeks.html`.
 
 ## Załącznik B. Macierz zgodności ze źródłami
 
-| Rozdział niniejszego dokumentu | architektura/koncepcja-platformy.md | architektura/architektura.md | architektura/model-danych.md | architektura/kontrakty-komunikacji.md | specyfikacje/specyfikacja-okien-operacyjnych.md | specyfikacje/specyfikacja-agentow.md | interfejs-uzytkownika/system-wizualny.md | architektura/izolacja-i-zaleznosci.md |
+| Rozdział niniejszego dokumentu | Koncepcja platformy | Architektura | Model danych | Kontrakty komunikacji | Specyfikacja okien operacyjnych | Specyfikacja agentów | System wizualny | Izolacja i zależności |
 |---|---|---|---|---|---|---|---|---|
 | 1. Miejsce w platformie, warstwy widoczności i dwa kanały komunikacji | rozdz. 3.4, 5, 6, 7.4, 8, 9.8, 9.14, 11.1, 11.3–11.5, 12 | rozdz. 7, 8 | rozdz. 7.2, 7.4 | rozdz. 9.1, 9.2 | rozdz. 2.4 | rozdz. 2 | — | — |
 | 2. Warstwa centralna | rozdz. 10.1, 10.2, 11.2 | — | — | — | — | — | rozdz. 8 | — |
@@ -1859,4 +1905,5 @@ Pełna galeria wszystkich 47 ikon z podglądem SVG: `ikony/indeks.html`.
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

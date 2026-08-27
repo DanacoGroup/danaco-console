@@ -1792,3 +1792,12 @@ prowadzi ustalenia, czyli zdania, które Operator kazał zapamiętać. Rodzina
 `knowledge.*` prowadzi wskaźnik znaczenia zbudowany z treści już istniejących:
 biblioteki, historii rozmów i plików przestrzeni roboczej. Zlanie ich w jedno
 źródło zatarłoby, co jest ustaleniem, a co odnalezionym fragmentem.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/sprawca-zdarzenia.ts
+
+Napis nie bywa pewniejszy niż dowód, na którym stoi, dlatego brak pola `actor`
+w kopercie zdarzenia daje rozstrzygnięcie „nieznany", a nie domysł.
+
+Plik jest osobny od `aplikacja/rozstrzyganie-sprawcy.ts`, który rozwiązuje inne
+zadanie: odpowiada na pytanie, czy czynność wykonało bieżące połączenie, i robi
+to dla zdarzeń, które pola `actor` w ogóle nie niosą.

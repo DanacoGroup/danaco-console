@@ -1,17 +1,15 @@
+/**
+ * Odczyt sprawcy z pól `actor` oraz `actorClientId` koperty zdarzenia. Odczyt,
+ * nie domysł: gdy rdzeń nazwał sprawcę, warstwa mówi jego nazwą, a gdy pola nie
+ * ma, mówi wprost, że nie wiadomo.
+ */
 import { ActorKind } from '../../../shared/contract';
 
 /**
- * Odczyt sprawcy z pól `actor` / `actorClientId` koperty zdarzenia.
- *
- * Odczyt, nie domysł: gdy rdzeń nazwał sprawcę, warstwa mówi jego nazwą; gdy
- * pola nie ma, mówi „nie wiadomo". Napis nie bywa pewniejszy niż dowód, na
- * którym stoi.
- *
- * Osobne od `aplikacja/rozstrzyganie-sprawcy.ts`, który rozwiązuje inne
- * zadanie — „czy zrobiło to bieżące połączenie" dla zdarzeń bez pola `actor`.
+ * Co warstwa asystenta wie o ręce, która wykonała czynność. Wykaz rozdziela
+ * przypadki nazwane przez rdzeń od przypadku, w którym koperta zdarzenia pola
+ * sprawcy nie niosła.
  */
-
-/** Co warstwa asystenta wie o ręce, która wykonała czynność. */
 export type ZnanySprawca =
   /** Rdzeń nazwał: asystent działający za Operatora. */
   | { rodzaj: 'asystent' }
@@ -28,18 +26,22 @@ export type ZnanySprawca =
   /** Koperta pola nie niosła — rdzeń nie potrafił rozstrzygnąć. */
   | { rodzaj: 'nieznany' };
 
-/** Kształt wspólny siedmiu zdarzeniom, które sprawcę już niosą. */
+/**
+ * Kształt wspólny siedmiu zdarzeniom kontraktu, które sprawcę już niosą: pole
+ * rodzaju sprawcy oraz identyfikator klienta, z którego czynność wyszła. Oba
+ * pola są opcjonalne.
+ */
 export interface KopertaZeSprawca {
   actor?: ActorKind;
   actorClientId?: string;
 }
 
 /**
- * Rozstrzyga sprawcę WYŁĄCZNIE z treści zdarzenia.
+ * Rozstrzyga sprawcę wyłącznie z treści zdarzenia.
  *
- * @param idKlienta identyfikator TEGO połączenia (`uzgodnienie.klient.id`).
- *   Pusty napis znaczy „nie znamy własnego" — wtedy Operatora nie przypisujemy
- *   ani temu urządzeniu, ani innemu, bo nie ma czym porównać.
+ * @param idKlienta identyfikator tego połączenia. Pusty napis znaczy, że własny
+ *   identyfikator nie jest znany, więc Operatora nie przypisuje się ani temu
+ *   urządzeniu, ani innemu.
  */
 export function rozpoznajSprawce(
   tresc: KopertaZeSprawca | undefined,
@@ -63,13 +65,17 @@ export function rozpoznajSprawce(
         : { rodzaj: 'operator-gdzie-indziej' };
     }
     default:
-      // Wartość spoza wykazu `ActorKind` nie jest błędem klienta. Warstwa nie
-      // ma dla niej nazwy, więc traktuje ją jak brak rozstrzygnięcia.
+      // Wartość spoza wykazu `ActorKind` nie jest błędem klienta, lecz brakiem
+      // rozstrzygnięcia.
       return { rodzaj: 'nieznany' };
   }
 }
 
-/** Krótka nazwa ręki — do etykiety wiersza i do czytnika ekranu. */
+/**
+ * Krótka nazwa ręki, która wykonała czynność, przeznaczona do etykiety wiersza
+ * oraz do czytnika ekranu; każdemu rozpoznanemu rodzajowi sprawcy odpowiada
+ * dokładnie jedno zdanie.
+ */
 export function nazwijSprawce(sprawca: ZnanySprawca): string {
   switch (sprawca.rodzaj) {
     case 'asystent':
@@ -90,11 +96,9 @@ export function nazwijSprawce(sprawca: ZnanySprawca): string {
 }
 
 /**
- * Zdanie dopisywane do opisu posunięcia.
- *
- * Dla `nieznany` mówi wprost, że pola nie było — inaczej czytelnik wziąłby
- * „nie wiadomo" za niepewność interfejsu, podczas gdy jest to brak w kopercie
- * zdarzenia.
+ * Zdanie dopisywane do opisu posunięcia. Dla sprawcy nieznanego mówi wprost, że
+ * koperta pola nie niosła, żeby czytelnik nie wziął tego za niepewność
+ * interfejsu.
  */
 export function zdanieOSprawcy(sprawca: ZnanySprawca): string {
   if (sprawca.rodzaj === 'nieznany') {
@@ -103,7 +107,11 @@ export function zdanieOSprawcy(sprawca: ZnanySprawca): string {
   return nazwijSprawce(sprawca);
 }
 
-/** Czy czynność wykonał asystent. */
+/**
+ * Rozstrzyga, czy czynność wykonał asystent działający za Operatora; pytanie
+ * pada osobno, ponieważ dymek asystenta znakuje własne posunięcia inaczej niż
+ * posunięcia cudze.
+ */
 export function czyAsystent(sprawca: ZnanySprawca): boolean {
   return sprawca.rodzaj === 'asystent';
 }

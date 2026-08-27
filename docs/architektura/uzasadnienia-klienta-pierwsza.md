@@ -6831,3 +6831,6 @@ z odpowiedzi rdzenia, nie z tego, o ilu prosił formularz. Odmowa jest
 nazwana: wiersz odpowiedzi niesie treść i kod wprost z rdzenia oraz zdanie
 o tym, co można z tym zrobić. Formularz stawia wyłącznie pola, które
 kontrakt zna.
+
+## budowa/klient-poprzedni/src/moduly/assistant/zrodla-przekrojowe.test.ts
+Sprawdzian pyta o jedno: czy każda komenda rodzin mowy, pamięci kontekstowej, retencji, zużycia kontekstu, schowka, skrótów, wywoływacza i asystenta ma drogę z okna do rdzenia. Wykaz oczekiwany nie jest tu przepisany — bierze się ze stałych kontraktu, a wykaz rzeczywisty z komend, które źródła naprawdę wysłały; komenda dołożona do kontraktu i pominięta w oknie wypadnie tu jako brak, bez dopisywania czegokolwiek w tym pliku. Sprawdzian mierzy warstwę kliencką, nie rdzeń: kanał jest próbny i tylko zapamiętuje nazwy — to wystarcza, bo pytanie brzmi, czy okno ma czym zawołać, a nie czy rdzeń odpowie, na to drugie odpowiadają sprawdziany skutku po stronie rdzenia.

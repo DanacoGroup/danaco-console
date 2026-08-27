@@ -1770,3 +1770,22 @@ Skład pola — etykieta, podpowiedź, dymek, wykaz podpowiadanych wartości —
 niż to, co dzieje się po naciśnięciu przycisku, dlatego pola są wydzielone z okna, które składa
 całość i wiąże zdarzenia. Dymek objaśnienia dostaje każde pole zmieniające treść żądania: język
 źródłowy oraz ponowna segmentacja.
+
+## budowa/klient-poprzedni/src/strona-glowna/formularz-komponentu.ts
+Formularz stoi zwinięty, ponieważ środkiem ciężkości strony głównej są karty środowisk, a formularz stale rozłożony odbierałby im pas ekranu przy czynności wykonywanej rzadko; rozwija go segment „Dodaj nowy” belki strefy trzeciej. Wykaz rodzajów komponentu odmawia rodzaju bez magazynu profili, a powód stoi na ekranie, nie tylko w komentarzu, inaczej zostałaby sama krótsza lista bez wyjaśnienia. Zakładanie i zmiana komponentu idą jedną szufladą, ponieważ są jedną pracą w dwóch krokach, a osobny uchwyt do drugiego kroku kazałby szukać go po założeniu komponentu; drugi uchwyt do jednej szuflady byłby drugą drogą do jednego bytu. Doklejenie kafla z odpowiedzi zakładania pokazałoby stan, którego rdzeń nie potwierdził drugim odczytem, dlatego wykaz dociąga strefa osobnym zapytaniem.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/widok-pelnoekranowy.ts
+Scena dzieli szerokość między trzy obszary: kolumnę rozmowy, kolumnę paneli
+i widok pełnoekranowy. Ten trzeci jako jedyny nie ma sąsiada — bierze całą
+scenę, bo panel w kolumnie trzyma minimum szerokości, a treść, która się
+w nim nie mieści, potrzebuje sceny, nie kolumny. Treść jest przenoszona, nie
+kopiowana, żeby uniknąć drugiej subskrypcji rdzenia dla tego samego panelu
+i subskrypcji osieroconej po zamknięciu jednego z egzemplarzy; funkcja
+pokazująca zapamiętuje rodzica i następnik, a funkcja chowająca odkłada treść
+dokładnie tam. Klawisz Escape wychodzi z widoku dzięki nasłuchowi osadzonemu
+na elemencie widoku, nie na dokumencie, dzięki czemu sprzątanie nasłuchu jest
+zbędne i klawisz nie zabiera działania niczemu innemu na scenie. Wyjście nie
+jest zamknięciem panelu: treść wraca do stosu, a panel żyje dalej ze swoją
+subskrypcją, natomiast właściwe zamknięcie panelu należy do jego obudowy
+w stosie. Widok nie buduje treści i nie rozstrzyga zachowania kolumn sceny —
+to należy do układu, który go osadził.

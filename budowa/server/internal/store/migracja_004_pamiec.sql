@@ -1,10 +1,5 @@
--- Migracja 004 — obszar pamięci wielopoziomowej.
---
--- Schemat obszaru pamięci należy wyłącznie do tego pliku. IF NOT EXISTS jest tu
--- potrzebne: migracja musi przejść także na bazie, w której obie tabele już stoją.
---
--- Poziomy pamięci: pięć wartości, najwęższą jest sesja — okno komunikacji nie
--- jest poziomem pamięci. Treść obszerna trafia do pliku (`tresc_odwolanie`).
+-- Migracja zakłada tabele obszaru pamięci wielopoziomowej, obejmujące pięć poziomów
+-- zasięgu od sesji po zasięg globalny.
 
 CREATE TABLE IF NOT EXISTS zasob_pamieci (
     id                     INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -4385,3 +4385,53 @@ Niepowodzenie zapisu zdarzenia osi czasu nie przerywa czynności, która je
 wywołała: zadanie już powstało, a brak wiersza w dzienniku jest ubytkiem
 zapisu, nie unieważnieniem skutku. Dlatego funkcja `odnotujZdarzenieWorkspace`
 nie oddaje błędu.
+## budowa/server/internal/core/adapter_modul_poczta_wiadomosci.go
+
+Załącznik wchodzi do magazynu tą samą drogą, co wniesienie zasobu w
+module Design: bajty lądują w magazynie rdzenia pod sumą sha256, a obok
+powstaje wiersz zasobu w tabeli zasobów Designu — taki sam, jaki zakłada
+wniesienie pliku do Assets Panelu. Dzięki temu model dostaje w odpowiedzi
+identyfikator zasobu, którym woła narzędzia treści. Rdzeń nie ma drugiego
+magazynu bajtów, więc załącznik odłożony osobno byłby plikiem, którego
+żadne narzędzie nie widzi.
+
+Kolumna okna zasobu Designu niesie tu odwołanie do skrzynki, nie do okna.
+Jest wymagana, bo zasób Designu należy do okna modułu, a załącznik listu
+do żadnego okna nie należy — należy do skrzynki. Wpisywana jest więc
+wartość złożona z przedrostka poczty i kodu skrzynki: to prawda o
+pochodzeniu zasobu, daje się odfiltrować i nie miesza się z zasobami
+okien. Zmyślenie identyfikatora istniejącego okna byłoby wstawieniem
+cudzych plików do cudzego panelu.
+
+Wciągnięcie załączników jest warunkowe, bo kosztuje: list z wielomegabajtowym
+skanem odczytany po to, żeby sprawdzić datę, nie ma powodu zostawiać po sobie
+tych megabajtów w katalogu danych.
+
+Wciąganie załączników odkłada bajty w magazynie i zakłada wiersze zasobów w
+kolejności zamierzonej: najpierw bajty, potem wiersz, tak jak przy wniesieniu
+zasobu w module Design. Wiersz wskazujący blob, którego nie ma, byłby
+zasobem, po który model sięgnie i niczego nie znajdzie.
+
+Bład odczytu listu odróżnia brak wiadomości od braku skrzynki i od braku
+łączności. List przeniesiony albo skasowany w kliencie poczty Operatora
+między wykazem a odczytem jest normalnym stanem cudzej skrzynki, więc kod
+jest brakiem znalezienia, a nie awarią rdzenia.
+
+## budowa/server/internal/core/adapter_modul_terminal_powloki_urzadzen.go
+
+Powłoki z `adapter_modul_terminal_powloki.go` są jednym wierszem wykazu:
+program i argumenty poprzedzające treść. Odmowa idzie przy SKŁADANIU
+polecenia, a nie przy otwarciu karty. Karta jest profilem powłoki i wolno ją
+otworzyć z pustym wskazaniem, tak samo jak kartę zdalną bez adresu; dopiero
+polecenie musi wiedzieć, gdzie się wykonać.
+
+Powłoki te nie zarządzają kontenerem, podem ani urządzeniem: nie zakładają,
+nie usuwają i nie zmieniają ich stanu. Wykonują polecenie w bycie, który już
+istnieje. Kontenerami zarządza moduł Developer własną drogą (biblioteka
+Dockera), a nie karta terminala.
+
+W `polecenieUrzadzenia`: `session.Polecenie` niesie ścieżkę, a program
+dołożony do pakietu produktu leży poza ścieżką wyszukiwania systemu i po
+samej nazwie by nie wystartował. Brak programu kończy się odmową nazywającą
+go wraz z pakietem — tą samą, którą oddaje cały arsenał
+(`zewnetrzne.BrakNarzedzia`).

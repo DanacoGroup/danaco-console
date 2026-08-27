@@ -1714,3 +1714,16 @@ plik mówiła tę samą przynależność, niezależnie od drogi, którą przysz�
 osobnym od ścieżki źródłowej z maszyny Operatora: ta druga z rdzenia nie
 wychodzi, bo wyniosłaby na zewnątrz układ cudzego dysku wraz z nazwami
 katalogów.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_lokalizacja.go
+
+Formaty zasobów — JSON, YAML, properties, Android XML, iOS strings
+i stringsdict, RESX, gettext PO — czyta i pisze ten rdzeń sam, bibliotekami
+wkompilowanymi, bez wywołania programu zewnętrznego.
+
+Formy mnogie idą regułami CLDR. Reguła mnogości jest własnością języka, nie
+tłumaczenia: polski ma trzy formy, angielski dwie, czeski trzy, rosyjski
+trzy, arabski sześć. Zastosowanie form zakłada klucze wariantów, których
+język docelowy wymaga, i zdejmuje te, których nie zna, bo inaczej plik
+wyniku miałby formę, której język nie ma, i program lokalizowany nigdy by
+jej nie użył.

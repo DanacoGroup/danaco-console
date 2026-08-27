@@ -1,16 +1,4 @@
-// Odpowiedzialność pliku: agregacja głosów pięcioma metodami kontraktu —
-// aprobata, głosowanie rankingowe z eliminacją (IRV), metoda Schulzego, skala
-// punktowa i metoda kwadratowa.
-//
-// Wynik liczy się przy odczycie, nie zapisuje w kolumnie. Głos może dojść po
-// pierwszym wyliczeniu, a kolumna z wynikiem rozjechałaby się z głosami przy
-// pierwszym pominiętym przeliczeniu.
-//
-// ── Remis jest wynikiem, nie usterką ─────────────────────────────────────────
-// Każda z pięciu metod potrafi nie wyłonić zwycięzcy. Kontrakt przewiduje to
-// wprost: `winnerOptionId` jest polem niewymaganym, a stan głosowania ma
-// wartość `tied`. Zwycięzca dopisany „bo trzeba" — pierwszy z brzegu przy
-// równej liczbie głosów — byłby rozstrzygnięciem wymyślonym przez rdzeń.
+// Odpowiedzialność pliku: agregacja głosów pięcioma metodami kontraktu — aprobata, IRV, metoda Schulzego, skala punktowa i metoda kwadratowa, liczona przy odczycie.
 package core
 
 import (
@@ -22,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// policzGlosowanie agreguje głosy metodą zapisaną w głosowaniu.
+// policzGlosowanie agreguje głosy metodą zapisaną w głosowaniu, wybierając funkcję punktacji zgodną z tą metodą.
 func policzGlosowanie(glosowanie dane.GlosowanieDebaty, warianty []dane.WariantDebaty,
 	glosy []dane.GlosDebaty) shared.RoundtableVoteResult {
 
@@ -62,7 +50,7 @@ func policzGlosowanie(glosowanie dane.GlosowanieDebaty, warianty []dane.WariantD
 	return wynik
 }
 
-// punktacjaAprobat liczy, ilu wyborców zaaprobowało każdy wariant.
+// punktacjaAprobat liczy, ilu wyborców zaaprobowało każdy wariant, oddając wynik jako zwykłą sumę aprobat.
 func punktacjaAprobat(kody []string, glosy []dane.GlosDebaty) map[string]float64 {
 	punktacja := pustaPunktacja(kody)
 	for _, glos := range glosy {
@@ -75,12 +63,7 @@ func punktacjaAprobat(kody []string, glosy []dane.GlosDebaty) map[string]float64
 	return punktacja
 }
 
-// punktacjaPunktowa sumuje punkty przypisane wariantom.
-//
-// Metoda kwadratowa różni się kosztem głosu, nie kształtem: wyborca kupuje siłę
-// głosu, płacąc jej kwadrat, więc dziesięć punktów na jeden wariant znaczy siłę
-// pierwiastka z dziesięciu, a nie dziesięciu. Bez tego przeliczenia „kwadratowa"
-// byłaby drugą nazwą skali punktowej.
+// punktacjaPunktowa sumuje punkty przypisane wariantom; metoda kwadratowa liczy siłę głosu jako pierwiastek z sumy punktów, nie samą sumę.
 func punktacjaPunktowa(kody []string, glosy []dane.GlosDebaty, kwadratowa bool) map[string]float64 {
 	punktacja := pustaPunktacja(kody)
 	for _, glos := range glosy {
@@ -98,12 +81,7 @@ func punktacjaPunktowa(kody []string, glosy []dane.GlosDebaty, kwadratowa bool) 
 	return punktacja
 }
 
-// punktacjaEliminacyjna przeprowadza głosowanie rankingowe z eliminacją.
-//
-// W każdej rundzie liczą się pierwsze wskazania spośród wariantów jeszcze
-// w grze. Wariant z najmniejszym poparciem odpada, a jego głosy przechodzą na
-// kolejne wskazanie tych, którzy go wskazali. Wynikiem jest poparcie z rundy
-// ostatniej — to ono rozstrzyga, a nie liczba pierwszych wskazań na starcie.
+// punktacjaEliminacyjna przeprowadza głosowanie rankingowe z eliminacją (IRV): w każdej rundzie odpada wariant z najmniejszym poparciem, a jego głosy przechodzą dalej.
 func punktacjaEliminacyjna(kody []string, glosy []dane.GlosDebaty) map[string]float64 {
 	wGrze := make(map[string]bool, len(kody))
 	for _, kod := range kody {

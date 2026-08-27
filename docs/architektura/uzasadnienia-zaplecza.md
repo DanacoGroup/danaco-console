@@ -820,3 +820,33 @@ niezmienne, ponieważ rdzeń rozróżnia po treści powodu, który z dwóch
 rodzajów niegotowości zaszedł, a Operator po tym samym zdaniu trafia do
 właściwego akapitu dokumentacji instalacji; przeredagowanie zepsułoby oba
 mechanizmy naraz.
+
+## budowa/server/internal/store/migracja_366_studio_kopie_i_nastawy_pracy.sql
+
+Kopia zapasowa jest osobna od historii wersji, bo ma przetrwać awarię
+procesu i awarię zapisu jednocześnie. Wersja leży w repozytorium sesji i
+zakłada się ją zapisem, który właśnie mógł się nie udać, więc wersja sama
+nie ochroni pracy przed nieudanym zapisem; kopia jest zakładana niezależnie
+i dlatego ma własny wiersz. Kolumna udalo_sie jest obowiązkowa, bo wskaźnik
+zapisania pokazany mimo nieudanego zapisu jest najgorszym możliwym błędem
+tego modułu — operator zamknąłby wtedy okno i stracił pracę. Nieudany
+zapis musi być widoczny i nazwany, stąd kolumny udalo_sie i
+powod_niepowodzenia przy każdej kopii, nie tylko przy kopiach udanych.
+Kolumna zmiany_niezapisane znaczy kopię niosącą pracę, której w dokumencie
+jeszcze nie ma; po niej Studio samo zgłasza istnienie niezapisanego
+dokumentu z ofertą przywrócenia, zamiast czekać, aż operator się domyśli.
+
+Autozapis odkłada wersje w osobnym szeregu, bo wersje nazwane i kluczowe
+zakłada operator ręcznie, a zapisy samoczynne mają być odróżnialne w
+wykazie i mieć własną zasadę wygasania — inaczej po godzinie pracy
+historia wersji przestaje być historią decyzji i staje się dziennikiem
+naciśnięć klawisza. Rozróżnienie niesie kolumna szereg; pojęcie wersji
+kluczowej Studio ma już przez odrębne wywołanie oznaczenia wersji i
+drugiego nie zakłada.
+
+Nastawy pracy są jedną tabelą na parę okno-dokument, bo skala widoku jest
+pamiętana przy dokumencie, a tryb powierzchni przy oknie. Jedna tabela z
+nieobowiązkowym dokumentem obsługuje oba przypadki: wiersz bez dokumentu
+jest nastawą okna, wiersz z dokumentem nastawą tego dokumentu. Dwie tabele
+znaczyłyby dwa odczyty przy każdym otwarciu okna i pytanie, która z nich
+wygrywa.

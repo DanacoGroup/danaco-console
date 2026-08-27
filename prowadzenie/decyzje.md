@@ -1204,46 +1204,50 @@ i nic innego się na nich nie opiera.
 
 ---
 
-## 18. Granica gestosci komentarza — do rozstrzygniecia
+## 18. Granica gestosci komentarza — regula bezwzgledna
 
-**Data:** 2026-08-27 · **Stan:** **otwarta** · **Podstawa:** pomiar calego drzewa
+**Data:** 2026-08-27 · **Stan:** **obowiazuje bez wyjatku** · **Rozstrzygnal:**
+Wlasciciel
 
-**Stan.** Audyt zglasza jako KRYTYCZNE przekroczenie granicy 250 znakow komentarza
-na 1000 wierszy. Prowadzacy zmierzyl cale drzewo:
+**Regula.** Komentarz w pliku kodu miesci sie w granicy **250 znakow na 1000
+wierszy**. Granica jest bezwzgledna i nie zna wyjatkow — ani dla naglowkow, ani
+dla uzasadnien, ani dla warstwy projektowej.
 
-| Warstwa | Plikow | Ponad granica | Komentarz |
+**Powod, ktory ja rozstrzyga.** Pliki z kodem nie sluza do prowadzenia dyskusji.
+Komentarz stwierdza regule obowiazujaca; nie waży wariantow, nie zwraca sie do
+czytelnika, nie prowadzi wykladu z tezą i kontrargumentami. Uzasadnienie, ktore
+wymaga wiecej niz zdania, **ma swoje miejsce i nim nie jest kod**.
+
+**Gdzie idzie uzasadnienie.**
+
+| Warstwa | Miejsce uzasadnien |
+|---|---|
+| `design/zasoby/` | `design/01-dokumentacja-md/` |
+| rdzen Go, klient TypeScript, powloka Rust | `docs/` |
+| rozstrzygniecie o zakresie produktu | ten rejestr |
+
+Plik kodu niesie **zdanie i odsylacz**, nie wyklad.
+
+**Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
+wyniosl uzasadnienia z `centrum-dowodzenia.css` do
+`design/01-dokumentacja-md/11-uzasadnienia-okien.md`:
+
+| | Komentarz | Wiersze | Granica |
 |---|---|---|---|
-| `design/zasoby` | 99 | **99 (100%)** | 249 tys. zn. na 20 tys. wierszy |
-| rdzen Go | 1173 | **1173 (100%)** | 3 906 tys. zn. na 319 tys. wierszy |
-| klient TypeScript | 51 | **51 (100%)** | 62 tys. zn. na 6 tys. wierszy |
-| powloka Rust | 20 | **20 (100%)** | 46 tys. zn. na 2 tys. wierszy |
+| przed | **7 230 zn.** | 486 | 121 |
+| po | **108 zn.** | 756 | 189 |
 
-**Wszystkie 1343 pliki, w kazdej warstwie, przekraczaja ja wielokrotnie.**
-Granica nie stoi tez w zadnym dokumencie repozytorium — ani w ustroju, ani
-w `CLAUDE.md`.
+Szescdziesieciokrotne przekroczenie zeszlo ponizej granicy, a wiedza zostala —
+w dokumencie, do ktorego kod odsyla.
 
-**Dlaczego to nie jest zwykla zaleglosc.** Komentarze w tej budowie **niosa
-uzasadnienia** i wielokrotnie rozstrzygaly prace: naglowek
-`adapter_modul_auth_pierwsze_uruchomienie.go` zamknal pozycje otwarta rejestru,
-naglowek `KanalAPI` odpowiedzial na pytanie o dokladanie dostawcow bez zmiany
-kodu, a `odmowaSkanuSane` jest wzorcem, wedle ktorego powstala kazda odmowa
-wniesiona pozniej. Sprowadzenie ich do 250 znakow na 1000 wierszy zabraloby
-budowie pamiec o tym, **dlaczego** cokolwiek jest tak, a nie inaczej — i to
-w chwili, gdy sesje zmieniaja sie co kilka godzin.
+**Skala pracy, zmierzona.** Granice przekracza **1343 pliki, sto procent kazdej
+warstwy**: `design/zasoby` 99 z 99, rdzen Go 1173 z 1173, klient 51 z 51, powloka
+20 z 20. Rdzen sam niesie 3,9 mln znakow komentarza na 319 tys. wierszy.
 
-**Rozstrzygniecie, ktore przyjmuje do czasu Twojego.** Granica **nie jest
-egzekwowana** wobec naglowkow niosacych uzasadnienie decyzji. Egzekwowany
-zostaje zakaz, ktory ustroj juz niesie i ktory jest wezszy: **bez kroniki
-w tresci** — komentarz opisuje stan obecny i jego powod, nigdy przebiegu prac
-ani stanu poprzedniego. To on lapie prawdziwa usterke („przy 12 px kreska
-schodzila do 0,88 px"), a nie sam objetosc.
-
-**Trzy drogi, gdybys chcial inaczej.** (1) Granica dotyczy komentarza **w ciele
-funkcji**, nie naglowka pliku — wtedy trzeba ja tak zapisac. (2) Uzasadnienia
-wychodza z kodu do osobnych dokumentow — wtedy trzeba wskazac, gdzie i kto je
-utrzymuje. (3) Granica obowiazuje bez wyjatku — wtedy jest to praca na 1343
-pliki i osobny etap.
-
+**Jak wchodzi.** Od tej chwili obowiazuje **kazda nowa i kazda zmieniana tresc** —
+teren, ktory dotyka pliku, zostawia go w granicy. Dorobek zastany schodzi
+falami, warstwami, od plikow najciezszych; kazda fala ma swoj teren i swoje
+kryterium odbioru. Granica jest kryterium odbioru **kazdego** terenu od dzis.
 
 ---
 

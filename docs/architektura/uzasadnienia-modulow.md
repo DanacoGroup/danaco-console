@@ -1291,3 +1291,17 @@ bo nie wzywa do sprawdzenia.
 Wykaz pusty przy przejściu po składni jest wynikiem prawidłowym; wykaz
 nieczytelny przy niepowodzeniu programu nie jest, bo wtedy nie zmierzono
 niczego i odpowiedź ma to powiedzieć odmową, nie pustym wykazem.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_pamiec_wykaz.go
+
+Para wniesiona ręcznie i para z pliku wymiany nie mają panelu, a usunięcie
+panelu nie zabiera ze sobą par, które z niego kiedyś zdjęto: klucz obcy do
+panelu jest opcjonalny i wraca do wartości pustej, nie kasuje wiersza pamięci.
+
+Plik CSV o kolumnach segmentu źródłowego, segmentu docelowego i języka jest
+drugą drogą wymiany, bo tyle właśnie eksportuje większość arkuszy, w których
+prowadzi się terminologię poza rdzeniem.
+
+Pełny standard TMX niesie nadto nagłówek z metrykami narzędzia i notami;
+rdzeń przy zapisie wypisuje nagłówek minimalny, a przy odczycie nie wymaga
+niczego ponad jednostkę tłumaczeniową, bo tyle właśnie niesie para pamięci.

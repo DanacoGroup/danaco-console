@@ -4898,3 +4898,18 @@ sięgać po repozytorium wprost; odwzorowanie modułu na środowiska, w których
 jest widoczny, ma dzięki temu jedno miejsce, a gdy komendy macierzy powstaną
 w kontrakcie, będzie już co zarejestrować. Moduł nieobecny w wyniku metody
 odwzorowania nie ma okna modułowego w żadnym środowisku.
+
+## budowa/server/internal/core/adapter_narzedzia_media_pomiar.go
+Pomiar jest komendą osobną od przetworzenia, bo wycięcie fragmentu bez znajomości czasu trwania daje pusty plik, a zmiana rozdzielczości bez znajomości proporcji daje rozciągnięty obraz.
+
+Odpowiedź programu pomiaru jest pytana w zapisie strukturalnym, bo kształt tej odpowiedzi jest zobowiązaniem programu, a wydruk domyślny bywa zmieniany między wydaniami; ucisza się też banner i ostrzeżenia, żeby na wyjściu stał sam zapis strukturalny.
+
+Materiał bez zapisanego czasu trwania, strumień żywy albo kontener bez nagłówka czasu, daje pole czasu trwania zerowe: zero rozpoznawalnie znaczy brak wartości.
+
+Reszty odpowiedzi programu pomiaru plik nie odczytuje: pola, którego nikt nie czyta, nie trzeba utrzymywać przy zmianie wydania programu. Typowany rozbiór strumieni idzie osobno, na tych samych bajtach co zapis surowy.
+
+Czas trwania i rozmiar przychodzą z programu pomiaru jako tekst, sekundy z ułamkiem i bajty, i tak są brane, zamiast wymuszać typ, którego program nie obiecuje.
+
+Odpowiedź nieczytelna programu pomiaru daje odmowę, nie pusty wynik: zakończenie powodzeniem bez poprawnego zapisu strukturalnego znaczy plik nie będący materiałem albo program w wydaniu, którego rdzeń nie rozumie.
+
+Brak wymiarów strumienia oddaje dwie pustki, bo zasób bez wymiarów ma nie nieść wartości liczbowej; zero znaczyłoby zmierzone zero pikseli.

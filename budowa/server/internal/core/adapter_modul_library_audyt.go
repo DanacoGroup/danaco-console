@@ -1,16 +1,4 @@
-// Moduł Library — dziennik audytu (`library.audit.list`) oraz dwa mechanizmy
-// towarzyszące każdej czynności modułu: odnotowanie zdarzenia w dzienniku
-// i zgłoszenie go nasłuchom zewnętrznym.
-//
-// Odnotowanie nie może wywrócić czynności. Zasób został przeniesiony do archiwum
-// naprawdę — nieudany zapis do dziennika nie cofa tego przeniesienia, a odmowa
-// oddana Operatorowi po wykonanej czynności byłaby odmową nieprawdziwą. Dziennik
-// jest świadkiem czynności, nie jej warunkiem.
-//
-// Zgłoszenie nasłuchowi idzie w osobnym wątku z własną granicą czasu: odbiorca
-// zewnętrzny bywa wolny albo martwy, a komenda repozytorium nie ma czekać na
-// cudzy serwer. Adres jest w konfiguracji Operatora, więc rdzeń go nie
-// weryfikuje poza wymogiem, że jest adresem HTTP.
+// Moduł Library obsługuje dziennik audytu (`library.audit.list`) oraz dwa elementy towarzyszące każdej czynności modułu: odnotowanie zdarzenia w dzienniku i zgłoszenie go nasłuchom zewnętrznym.
 package core
 
 import (
@@ -28,20 +16,14 @@ import (
 	"danacoconsole/shared"
 )
 
-// sprawcaBiblioteki nazywa sprawcę czynności w dzienniku.
-//
-// Rdzeń nie zna dziś tożsamości wołającego na poziomie komendy — bramka wiąże
-// połączenie z sesją, ale adapter widzi samo żądanie. Sprawcą jest więc Operator
-// i to jest prawda: komendę wywołało okno, nie moduł ani model. Gdy komenda
-// przyjdzie z pętli wykonawczej modułu, sprawca zmieni się razem z drogą, którą
-// przyjdzie — i wtedy będzie to zmiana jednego miejsca.
+// sprawcaBiblioteki nazywa sprawcę czynności w dzienniku. Rdzeń nie zna dziś tożsamości wołającego na poziomie komendy, więc sprawca jest Operator: komendę wywołało okno, nie moduł ani model.
 const sprawcaBiblioteki = "Operator"
 
 // granicaZgloszeniaNasluchu jest krótka z zamysłu: zgłoszenie ma dolecieć albo
 // odpaść, a nie trzymać wątku rdzenia.
 const granicaZgloszeniaNasluchu = 10 * time.Second
 
-// odnotuj dopisuje zdarzenie do dziennika audytu repozytorium.
+// odnotuj dopisuje zdarzenie do dziennika audytu repozytorium wraz ze sprawcą i czasem wykonania czynności.
 func (a *adapterBiblioteki) odnotuj(ctx context.Context, czynnosc shared.LibraryAuditAction,
 	kodPliku *string, opis string) {
 
@@ -58,7 +40,7 @@ func (a *adapterBiblioteki) odnotuj(ctx context.Context, czynnosc shared.Library
 	})
 }
 
-// DziennikAudytu obsługuje `library.audit.list`.
+// DziennikAudytu obsługuje `library.audit.list`, zwracając wykaz zdarzeń zapisanych w dzienniku audytu.
 func (a *adapterBiblioteki) DziennikAudytu(ctx context.Context,
 	z shared.LibraryAuditListRequest) (shared.LibraryAuditListResponse, error) {
 
@@ -104,8 +86,7 @@ func (a *adapterBiblioteki) zglosNasluchom(zdarzenie shared.LibraryWebhookEvent,
 	if a.repozytorium == nil {
 		return
 	}
-	// Odczyt idzie w tle razem z wysyłką: wykaz nasłuchów jest zwykle pusty,
-	// a gdy nie jest — komenda nie ma czekać ani na bazę, ani na cudzy serwer.
+	// Odczyt idzie w tle razem z wysyłką: komenda nie ma czekać ani na bazę, ani na cudzy serwer.
 	go func() {
 		ctx, przerwij := context.WithTimeout(context.Background(), granicaZgloszeniaNasluchu)
 		defer przerwij()
@@ -123,7 +104,7 @@ func (a *adapterBiblioteki) zglosNasluchom(zdarzenie shared.LibraryWebhookEvent,
 	}()
 }
 
-// nasluchObejmuje mówi, czy nasłuch prosił o to zdarzenie.
+// nasluchObejmuje mówi, czy nasłuch prosił o to zdarzenie, po zapisanym wykazie zdarzeń w jego rejestracji.
 func nasluchObejmuje(zdarzenia []string, zdarzenie shared.LibraryWebhookEvent) bool {
 	szukane := zdarzenieWebhookaBazy(zdarzenie)
 	for _, zapisane := range zdarzenia {
@@ -134,12 +115,7 @@ func nasluchObejmuje(zdarzenia []string, zdarzenie shared.LibraryWebhookEvent) b
 	return false
 }
 
-// wyslijZgloszenie wysyła jedno zgłoszenie i odnotowuje jego czas przy nasłuchu.
-//
-// Podpis idzie nagłówkiem HMAC-SHA256 po treści zgłoszenia, gdy nasłuch ma
-// sekret: odbiorca ma móc rozstrzygnąć, że zgłoszenie pochodzi z tego rdzenia,
-// a nie od kogokolwiek, kto zna adres. Kryptografia jest ze standardowej
-// biblioteki Go — żadnego programu z zewnątrz.
+// wyslijZgloszenie wysyła jedno zgłoszenie i odnotowuje jego czas przy nasłuchu. Podpis idzie nagłówkiem HMAC-SHA256 po treści zgłoszenia, gdy nasłuch ma sekret, kryptografia ze standardowej biblioteki Go.
 func (a *adapterBiblioteki) wyslijZgloszenie(ctx context.Context, nasluch dane.WebhookBiblioteki,
 	zdarzenie shared.LibraryWebhookEvent, kodPliku string) {
 
@@ -168,8 +144,7 @@ func (a *adapterBiblioteki) wyslijZgloszenie(ctx context.Context, nasluch dane.W
 	}
 	_ = odpowiedz.Body.Close()
 
-	// Czas ostatniego zgłoszenia zapisuje się po locie udanym: kolumna ma mówić
-	// „dolatuje", a nie „próbowaliśmy".
+	// Czas ostatniego zgłoszenia zapisuje się po locie udanym: kolumna ma mówić o dolocie, nie o próbie.
 	chwila := time.Now().UTC().Format(formatZnacznikaBazy)
 	nasluch.OstatnieZgloszenie = &chwila
 	_, _ = a.repozytorium.ZapiszWebhook(ctx, nasluch)

@@ -2122,3 +2122,19 @@ czynności, której kontrakt w ogóle nie zna.
 Znak `aria-description` niesie tę samą wiedzę technologiom wspomagającym, zanim
 przycisk zostanie naciśnięty: zapowiedź płynie z etykiety, a powód z dymka
 otwieranego naciśnięciem.
+
+## budowa/klient-poprzedni/src/moduly/automations/kody-okien.ts
+
+Rejestr okien operacyjnych rdzenia zna kody `workflow-builder`, `scheduler`,
+`queue-manager`, `orchestrator` i `execution-monitor`, zakładane migracją
+`migracja_030_rejestr_okien_operacyjnych.sql`; powiązanie tych kodów z modułem
+`automations` niesie `migracja_031_okna_modulow.sql`. Kody stoją w jednym
+miejscu, ponieważ rdzeń nie sprawdza identyfikatora okna podawanego
+w `automation.execution.subscribe`, tylko zapamiętuje go jako klucz obserwacji.
+Kod z przedrostkiem modułu nie wywołałby więc odmowy: trafiłby do
+`Queue.windowIds` i do telemetrii postępu jako okno nieistniejące.
+
+Znacznik wykazu gotowych pętli stoi poza wykazem kodów okien, bo służy wyłącznie
+znacznikowi `data-okno` w układzie modułu, czyli skokom nawigacji i sprawdzianom
+widoku. Okno wykazu nie zakłada obserwacji telemetrii i nie podaje `windowIds`
+przy zakładaniu kolejki, więc jego znacznik nigdy nie opuszcza klienta.

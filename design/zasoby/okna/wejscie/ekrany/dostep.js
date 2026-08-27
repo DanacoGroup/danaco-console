@@ -1,8 +1,4 @@
-/* ============================================================================
-   EKRANY OKNA DOSTĘPU DO KONTA
-
-   Siedem odsłon jednego okna: logowanie i jego odsłona z niepowodzeniem,
-   zakładanie konta, potwierdzenie adresu, oraz trzy kroki odzyskiwania dostępu.
+/* Ekrany okna dostępu do konta obejmują siedem odsłon jednego okna: logowanie z odsłoną niepowodzenia, zakładanie konta, potwierdzenie adresu oraz trzy kroki odzyskiwania dostępu.
    Leżą razem, bo dzielą oprawę — belkę, kolumnę tożsamości i zakładki nad
    treścią.
 

@@ -130,3 +130,8 @@ więc arkusz nie zawiera ani jednej reguły szerokości kolumny. Żetony barw
 i odstępów pochodzą z warstwy wspólnej produktu — arkusz nie zakłada własnej
 palety, żeby panel nastaw strony wyglądał jak reszta modułu studia, a nie jak
 osobna wyspa wizualna.
+
+## budowa/klient-poprzedni/src/moduly/studio/studio-okna.css
+Rama i stany wspólne wszystkim pięciu oknom operacyjnym stoją w arkuszu
+wspólnym studia; ten arkusz nie zapisuje żadnej barwy wprost i korzysta
+wyłącznie ze zmiennych motywu.

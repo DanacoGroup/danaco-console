@@ -314,7 +314,7 @@ func medianaJednymPrzebiegiemArsenalu(zrodlo *image.NRGBA) *image.NRGBA {
 	return wynik
 }
 
-// medianaSkladowejArsenalu wybiera wartość środkową z sąsiedztwa. Sortujemy
+// medianaSkladowejArsenalu wybiera wartość środkową z sąsiedztwa. Sortuje się
 // kopię krótką (najwyżej dziewięć bajtów) — porządek w tablicy wołającego nie ma
 // znaczenia, bo następny punkt nadpisuje ją w całości.
 func medianaSkladowejArsenalu(wartosci []uint8) uint8 {

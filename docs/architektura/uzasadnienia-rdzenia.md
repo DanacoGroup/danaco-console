@@ -6188,3 +6188,38 @@ Krok jest osobną funkcją, nie wierszem montażu, bo ma własną regułę niepo
 przygotowanie nie zatrzymuje startu rdzenia. Moduł rusza wtedy z pustym stanem żywym, a Operator
 dostaje wiadomość w dzienniku — terminal bez historii jest gorszy od terminala z historią, lecz
 nieuruchomiony serwer jest gorszy od obu.
+
+## budowa/server/internal/core/tozsamosc_agenta_nastawy.go
+
+Plik injection/argumenty.go produkuje dziewięć rodzajów przełącznika
+procesu. Ekspert nakłada część z nich, a część celowo pomija:
+
+- --model nakłada wartości pól agent.model i agent.kanal_kod;
+- --mcp-config nakłada, bo konektory eksperta rodzaju mcp dokładają się
+  obok mostów okna i sesji — droga jest wieloelementowa z założenia;
+- --settings nakłada treść kolumny ustawienia_json, czyli zaczepy i reguły
+  narzędzi;
+- --effort nie nakłada, bo nie ma nośnika w bazie;
+- --permission-mode nie nakłada: tryb uprawnień per ekspert zamieniłby się
+  w bramkę przy pierwszym nieuważnym użyciu, a jedyną bramką platformy jest
+  logowanie — gdyby kiedyś wszedł, to wyłącznie jako nastawa procesu CLI,
+  nigdy jako sprawdzenie w rdzeniu;
+- --add-dir nie nakłada, bo katalogi robocze są własnością okna i sesji,
+  a ekspert nie jest miejscem pracy;
+- --resume nie nakłada, bo wznowienie jest tożsamością rozmowy;
+- --fallback-model nie nakłada, bo nie ma nośnika w bazie.
+
+Podmiana modelu przez eksperta zamiast dopisania wynika z tego, że model
+jest jeden: pusta wartość w polu modelu eksperta znaczy „ekspert nie ma
+zdania", a nie „ekspert każe wrócić do domyślnego". Rozdzielenie kanału od
+modelu dałoby model jednego dostawcy na drodze drugiego, dlatego jadą razem.
+
+Podmiana ustawień CLI przez eksperta, a nie ich scalenie z ustawieniami
+sesji, wynika stąd, że scalanie dwóch takich plików po stronie rdzenia
+znaczyłoby, że rdzeń zna ich schemat i rozstrzyga konflikty zaczepów, czyli
+wersjonuje cudzy format. Ekspert, który wnosi własny harness, wnosi go
+w całości. Pusty napis w ustawieniach eksperta znaczy „nie mam zdania",
+więc nie kasuje ustawień sesji.
+
+Droga --mcp-config jest wieloelementowa z założenia: okno wnosi swoje
+mosty, sesja swoje, a każdy jedzie osobnym przełącznikiem.

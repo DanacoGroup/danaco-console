@@ -873,3 +873,15 @@ ponieważ różnica między podglądem a badaniem jest tutaj istotna.
 Granica zlania jest odległością w składowych sRGB — miarą zgrubną, dobraną tak,
 żeby wskazywała pary wymagające obejrzenia przez człowieka, a nie żeby
 rozstrzygała za niego.
+
+## budowa/klient-poprzedni/src/moduly/apps/dymek-objasnienia.ts
+
+Wiersz `mp-pole-z-dymkiem` jest wstawką układu właściwą modułowi: pole rośnie na
+całą dostępną szerokość, a znak zapytania stoi przy jego prawej krawędzi.
+
+Klasy własne idą do wspólnej fabryki parametrem, ponieważ znak modułu nie jest
+bibliotecznym przyciskiem ikonowym. Klasa `mp-dymek__znak` opisuje obwódkę
+o wymiarze `--dn-wym-ikona-sm` i narożniku `--dn-r-pill` ze wskaźnikiem myszy
+`help`, natomiast biblioteczna klasa `dn-btn-ikona` opisuje kwadrat o boku
+trzydziestu dwóch pikseli. Przekazanie klas parametrem pozwala zachować obie
+postacie bez rozgałęziania fabryki.

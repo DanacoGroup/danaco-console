@@ -1512,3 +1512,24 @@ Powód jest czytany z atrybutu `title` dopiero przy naciśnięciu, tak samo jak
 robi to dymek kontrolki. Byt przerysowuje ten atrybut po każdej zmianie wykazu,
 więc domknięcie na treści z chwili budowy podawałoby stan odczytu w toku długo
 po odpowiedzi rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/obsada-rol.ts
+
+Rola okna pochodzi z pola roli w kontrakcie, nie z domysłu. Koordynatorem jest
+okno roli koordynatora, a wykonawcą okno roli wykonawcy, którego wskazanie okna
+zarządzającego trafia w tego koordynatora — to jest cała definicja pętli.
+Znakowanie ról po tytule albo po kolejności rozjechałoby rdzeń z widokiem przy
+pierwszym przepięciu wykonawcy pod innego koordynatora.
+
+Analityk stoi poza pętlą. Okno analizy wyników nie jest wykonawcą: nie kończy
+tury, która miałaby wybudzić koordynatora, więc jego rolą kontraktową jest rola
+samodzielna. Odróżnia go wskazanie zapisane na poziomie sesji, ponieważ kontrakt
+nie ma czwartej wartości roli okna, a wymyślenie jej po stronie klienta
+rozjechałoby wykaz ról z bazą.
+
+Kody okien są bezmodułowe: rejestr okien operacyjnych niesie kod rozmowy
+koordynatora, dwa kody rozmowy wykonawcy oraz kod analizy wyników, każdy bez
+przedrostka modułu. Przynależność do modułu niesie osobna macierz, w której tych
+czterech okien nie ma — liczą się tam jako okna pozamodułowe. Kod zapisany
+z przedrostkiem nie trafiłby w żaden wiersz rejestru, a nawigacja po kodzie okna
+nie miałaby dokąd skoczyć.

@@ -11,7 +11,7 @@ PAKOWANIE="$BUDOWA/packaging"
 SZKIELET="$PAKOWANIE/drzewo"
 ROBOCZY="$PAKOWANIE/roboczy"
 
-# Wersji nie podnosimy, bo żadne wydanie nie było jeszcze w użytku; numer
+# Wersji nie jest podnoszona, bo żadne wydanie nie było jeszcze w użytku; numer
 # wersji zostaje pod kontrolą operatora wydania.
 WERSJA="${DANACO_WERSJA:-1.0.0}"
 DATA="$(date +%Y-%m-%d)"
@@ -54,7 +54,7 @@ fi
 [ -d "$BUDOWA/klient/dist" ] || padnij "nie ma pakietu interfejsu: $BUDOWA/klient/dist"
 
 # ── Drzewo pakietu ───────────────────────────────────────────────────────────
-# Drzewo roboczne składamy od zera przy każdym przebiegu: pakiet ma nieść to, co
+# Drzewo roboczne jest skladane od zera przy każdym przebiegu: pakiet ma nieść to, co
 # zbudowane teraz, a nie resztki poprzedniego przebiegu.
 zglos "składanie drzewa pakietu"
 rm -rf "$ROBOCZY"
@@ -82,7 +82,7 @@ find "$ROBOCZY/opt/danaco-console/client" -type f -exec chmod 0644 {} +
 ln -sf /opt/danaco-console/danaco-console "$ROBOCZY/usr/bin/danaco-console"
 
 # Skrypt arsenału jedzie z pakietem, bo stawia go się na SERWERZE, a nie w drzewie
-# budowy. Treści nie powtarzamy — bierzemy plik taki, jaki jest.
+# budowy. Treści się nie powtarza — brany jest plik taki, jaki jest.
 if [ -r "$SKRYPTY/arsenal-serwera.sh" ]; then
 	install -m 0755 "$SKRYPTY/arsenal-serwera.sh" \
 		"$ROBOCZY/opt/danaco-console/scripts/arsenal-serwera.sh"

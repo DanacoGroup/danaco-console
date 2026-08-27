@@ -370,12 +370,12 @@
      a rozdzielenie ma nieść powierzchnia I kreska, nie jedno z dwojga. */
   --dn-obrys: var(--dn-szary-200);           /* #D5D7DC · L*  86 */
   --dn-obrys-subtelny: var(--dn-szary-150);  /* #E1E3E7 · L* 90,2 */
-  --dn-obrys-mocny: var(--dn-szary-300);     /* #C0C0C0 — obrysy kontrolek */
+  --dn-obrys-mocny: var(--dn-szary-300);     /* #BDC0C6 — obrysy kontrolek */
   /* Kreska wyrazna — kontrolka stojaca na plotnie, bez wlasnego wypelnienia.
      Obrys mocny daje na powierzchni panelu 8 stopni L* i ginie; ten daje 30. */
   --dn-obrys-wyrazny: var(--dn-szary-400);   /* #9A9EA6 · L* 63 */
 
-  --dn-tekst: var(--dn-szary-900);           /* #181818 · 16,1:1 na tle */
+  --dn-tekst: var(--dn-szary-900);           /* #16181D · 16,1:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
      pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
      przez co po nagłówku wszystko czytało się jednym głosem. */
@@ -454,28 +454,28 @@
 
   color-scheme: dark;
 
-  --dn-tlo: var(--dn-szary-950);             /* #0F0F0F */
-  --dn-powierzchnia: var(--dn-szary-900);    /* #181818 — karty, okna */
-  --dn-powierzchnia-2: var(--dn-szary-925);  /* #131313 — wgłębienia */
-  --dn-panel: var(--dn-szary-850);           /* #212121 — panele uniesione */
-  --dn-wstazka: var(--dn-szary-800);         /* #2A2A2A — belka nakładana paska edycji */
-  --dn-wstazka-taca: var(--dn-szary-950);    /* #0F0F0F — taca pod belką nakładaną */
+  --dn-tlo: var(--dn-szary-950);             /* #0D0F13 */
+  --dn-powierzchnia: var(--dn-szary-900);    /* #16181D — karty, okna */
+  --dn-powierzchnia-2: var(--dn-szary-925);  /* #111317 — wgłębienia */
+  --dn-panel: var(--dn-szary-850);           /* #1E2126 — panele uniesione */
+  --dn-wstazka: var(--dn-szary-800);         /* #272A30 — belka nakładana paska edycji */
+  --dn-wstazka-taca: var(--dn-szary-950);    /* #0D0F13 — taca pod belką nakładaną */
   --dn-hover: rgba(255, 255, 255, 0.06);
   --dn-wcisniecie: rgba(255, 255, 255, 0.10);
   --dn-nakladka: rgba(0, 0, 0, 0.62);
 
-  --dn-obrys: var(--dn-szary-800);           /* #2A2A2A */
-  --dn-obrys-subtelny: var(--dn-szary-850);  /* #212121 */
-  --dn-obrys-mocny: var(--dn-szary-750);     /* #3A3A3A */
+  --dn-obrys: var(--dn-szary-800);           /* #272A30 */
+  --dn-obrys-subtelny: var(--dn-szary-850);  /* #1E2126 */
+  --dn-obrys-mocny: var(--dn-szary-750);     /* #373A41 */
   --dn-obrys-wyrazny: var(--dn-szary-700);   /* #464A52 · L* 31,4 */
 
-  --dn-tekst: var(--dn-szary-100);           /* #ECECEC · 15,0:1 na tle */
+  --dn-tekst: var(--dn-szary-100);           /* #EBECEF · 15,0:1 na tle */
   /* Stopień między pierwszym a drugim — dla podtytułów. Bez niego podtytuł
      pożyczał barwę tytułu i różnił się od niego wyłącznie stopniem pisma,
      przez co po nagłówku wszystko czytało się jednym głosem. */
   --dn-tekst-wiodacy: var(--dn-szary-300);
-  --dn-tekst-2: var(--dn-szary-400);         /* #9E9E9E · 6,8:1 na tle */
-  --dn-tekst-3: var(--dn-szary-500);         /* #7C7C7C · wyłącznie metadane */
+  --dn-tekst-2: var(--dn-szary-400);         /* #9A9EA6 · 6,8:1 na tle */
+  --dn-tekst-3: var(--dn-szary-500);         /* #787C85 · wyłącznie metadane */
   --dn-tekst-inv: var(--dn-szary-950);
 
   /* działanie główne — inwersja atramentu (tu: biel) */

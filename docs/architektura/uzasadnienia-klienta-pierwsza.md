@@ -4827,3 +4827,15 @@ sceny.
 
 Stan wyzwalacza niesie atrybut wciśnięcia, a nie barwa: pasek czyta się także bez
 rozróżniania barw i z czytnika ekranu.
+
+## budowa/klient-poprzedni/src/moduly/browser/pasek-adnotacji.ts
+
+Pasek leży na rysunku i nie zabiera wysokości podglądowi, więc pozycjonowanie należy do warstwy płótna (`adnotacja.css`), a nie do układu okna.
+
+Wybór narzędzia i barwy niesie atrybut `aria-pressed`, a nie klasa arkusza. Stan wypowiedziany atrybutem czyta czytnik ekranu, widzi go sprawdzian i sięga po niego arkusz.
+
+Nazwa próbki barwy pada w atrybucie, ponieważ bez niej wybór byłby sygnalizowany samym kolorem, czego zabrania zasada dostępności żetonów stanu (`motyw/stany.css`).
+
+Pole napisu pozostaje widoczne i edytowalne zawsze, a znaczenie ma wyłącznie przy narzędziu stawiającym tekst; różnicę niesie znacznik odczytywany przez arkusz.
+
+Żaden przycisk nie gaśnie. Przycisk dodania do rozmowy przy pustym płótnie pozostaje naciskalny i odpowiada zdaniem o tym, że nie ma czego wysłać.

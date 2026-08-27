@@ -10,17 +10,8 @@ import type { NarzedzieAdnotacji } from './slady-adnotacji';
 
 /**
  * Pasek narzędzi adnotacji — pływa na warstwie płótna, przy dolnej krawędzi.
- *
- * Kontrolki trybu adnotacji. Rysowanie jest w `plotno-adnotacji.ts`, a rozmowa
- * z rdzeniem w `warstwa-adnotacji.ts`. Pasek leży na rysunku i nie zabiera
- * wysokości podglądowi, więc pozycjonowanie należy do warstwy płótna
- * (`adnotacja.css`), a nie do układu okna.
- *
- * Wybór narzędzia i barwy niesie `aria-pressed`, nie klasa: stan wypowiedziany
- * atrybutem czyta czytnik ekranu, widzi sprawdzian i sięga po niego arkusz.
- *
- * Żaden przycisk nie gaśnie. „Dodaj do rozmowy" przy pustym płótnie pozostaje
- * naciskalny i odpowiada zdaniem o tym, że nie ma czego wysłać.
+ * Niesie wyłącznie kontrolki trybu adnotacji: rysowanie jest w
+ * `plotno-adnotacji.ts`, a rozmowa z rdzeniem w `warstwa-adnotacji.ts`.
  */
 export interface PasekAdnotacji {
   element: HTMLElement;
@@ -28,7 +19,10 @@ export interface PasekAdnotacji {
   odswiez(): void;
 }
 
-/** Czego pasek potrzebuje od warstwy: stan płótna i cztery czynności. */
+/**
+ * Czego pasek potrzebuje od warstwy: stan płótna i cztery czynności, którymi
+ * warstwa odpowiada na naciśnięcie przycisku paska.
+ */
 export interface UjsciaAdnotacji {
   narzedzie(): NarzedzieAdnotacji;
   ustawNarzedzie(kod: NarzedzieAdnotacji): void;
@@ -53,9 +47,8 @@ export function utworzPasekAdnotacji(ujscia: UjsciaAdnotacji): PasekAdnotacji {
 
   const barwy = BARWY_ADNOTACJI.map((pozycja) => {
     const kontrolka = przycisk('', `dn-btn-ikona mb-adnotacja__barwa ${pozycja.klasa}`);
-    // Próbka jest plamą barwy, więc jej nazwa musi paść w atrybucie: bez tego
-    // wybór byłby sygnalizowany samym kolorem, czego zabrania zasada
-    // dostępności żetonów stanu (`motyw/stany.css`).
+    // Nazwa próbki musi paść w atrybucie: sam kolor nie może być jedynym
+    // nośnikiem wyboru.
     kontrolka.setAttribute('aria-label', `Barwa adnotacji: ${pozycja.nazwa}`);
     kontrolka.addEventListener('click', () => {
       ujscia.ustawZeton(pozycja.zeton);
@@ -103,8 +96,8 @@ export function utworzPasekAdnotacji(ujscia: UjsciaAdnotacji): PasekAdnotacji {
     for (const pozycja of barwy) {
       pozycja.kontrolka.setAttribute('aria-pressed', String(pozycja.zeton === zeton));
     }
-    // Pole napisu ma znaczenie wyłącznie przy narzędziu „tekst" — pozostaje
-    // widoczne i edytowalne zawsze, a różnicę niesie znacznik dla arkusza.
+    // Pole napisu ma znaczenie wyłącznie przy narzędziu „tekst"; różnicę
+    // niesie znacznik dla arkusza.
     element.dataset['narzedzie'] = wybrane;
   }
 
@@ -112,7 +105,10 @@ export function utworzPasekAdnotacji(ujscia: UjsciaAdnotacji): PasekAdnotacji {
   return { element, odswiez };
 }
 
-/** Grupa przycisków paska wraz z nazwą czytaną przez technologie wspomagające. */
+/**
+ * Grupa przycisków paska wraz z nazwą czytaną przez technologie wspomagające,
+ * ponieważ sam układ graficzny nie mówi, co grupa obejmuje.
+ */
 function grupa(nazwa: string, kontrolki: readonly HTMLElement[]): HTMLElement {
   const element = document.createElement('div');
   element.className = 'mb-adnotacja__grupa';

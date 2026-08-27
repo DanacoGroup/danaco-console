@@ -1,4 +1,4 @@
-/* ============================================================================
+/* Powłoki platformy nadlatują, układają się w wachlarz i scalają w jeden podświetlony blok ze znakiem marki, sygnalizując zakończenie montażu platformy. ================
    POWŁOKI PLATFORMY — składnik biblioteki
 
    Cztery powłoki programu — rdzeń, środowiska pracy, moduły, stanowisko —
@@ -329,7 +329,7 @@ function zaloz(host) {
   return api;
 }
 
-/* Zakładanie na wszystkich polach — wspólny mechanizm z warstwy narzędzi. */
+/* Zakładanie na wszystkich polach oznaczonych atrybutem danych korzysta ze wspólnego mechanizmu biblioteki narzędzi, dzielonego przez wszystkie składniki platformy. */
 var zalozWszystkie = window.DanacoNarzedzia.polaSkladnika('data-powloki', zaloz);
 
 window.DanacoPowloki = { zaloz: zaloz, zalozWszystkie: zalozWszystkie };

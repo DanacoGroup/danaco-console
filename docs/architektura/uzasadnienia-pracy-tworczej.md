@@ -4185,3 +4185,37 @@ choć plik w jego środku nosi.
 Na Windowsie plik wykonywalny nosi rozszerzenie .exe, a nazwa programu
 w deklaracji narzędzia go nie niesie — pakowanie nie zmienia nazw, więc
 rozszerzenie dokłada się w miejscaPakietu.
+
+## budowa/server/internal/core/adapter_modul_design_tresc.go
+
+Komenda oddania treści zasobu domyka lukę, przez którą moduł miał
+precedens szkody. Pole uri zasobu jest ścieżką w systemie plików rdzenia —
+przeglądarka nie wczyta spod niego niczego, także wtedy, gdy zasób powstał
+bez zarzutu. Bez tej drogi panel zasobów pokazywał kafelek z odwołaniem,
+którego nie da się otworzyć, i wyglądało to identycznie jak zasób bez
+bajtów.
+
+Zasób nieznany to odmowa not_found. Zasób bez odwołania — odmowa nazywająca
+brak treści. Odwołanie prowadzące donikąd — odmowa nazywająca odwołanie.
+Treść większa niż granica wołającego — odmowa podająca zmierzoną wielkość,
+nigdy treść ucięta: klient, który dostałby połowę pliku ze stanem ok,
+zapisałby ją jako plik cały.
+
+Suma kontrolna liczy się z bajtów odczytanych, nie z nazwy bloba. Nazwą
+bloba jest wprawdzie suma jego zawartości, więc obie wartości powinny być
+równe — i właśnie dlatego liczy się je osobno: rozjazd znaczy, że plik pod
+odwołaniem przestał być tym, za który się podaje, a przemilczenie tego
+byłoby oddaniem cudzej treści pod nazwą zasobu.
+
+Granica wołającego sprawdza się przed złożeniem odpowiedzi, ale po
+zmierzeniu treści: odmowa ma podać wielkość rzeczywistą, a nie samą
+wiadomość o przekroczeniu.
+
+Kontrakt czyni contentBase64 niewymaganym właśnie po to, żeby postać
+odsyłania mogła oddać miarę i sumę bez bajtów.
+
+Format zapisany w wierszu jest zmierzony przy wniesieniu z nagłówka pliku.
+Zgadywania typu treści po nazwie pliku nie ma: nazwa jest wolnym tekstem
+Operatora i mówi o pliku dokładnie tyle, ile Operator w nią wpisał.
+
+DetectContentType dokleja parametr zestawu znaków do typów tekstowych.

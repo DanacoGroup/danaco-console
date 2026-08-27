@@ -5191,3 +5191,52 @@ kolejnego — tabela nie rośnie w nieskończoność, a sprzątanie nie potrzebu
 budzika.
 
 Kod sesji pusty przy odczycie zużycia liczy wywołania wszystkich kart.
+
+## budowa/server/internal/podagenci/doradca_wybor.go
+Doradca zostaje, konsultacja zostaje, znika wyłącznie ruch modelu w górę; ruch
+w górę robi Operator albo nikt. Dwie reguły doboru w ustalonej kolejności:
+prośba modelu podlega sufitowi — kanał, o który prosi sam wołający, przechodzi
+tylko wtedy, gdy jest dopuszczony do radzenia i gdy da się wykazać, że nie
+jest silniejszy od kanału pytającego, a prośba, której nie da się wykazać,
+kończy się odmową opisującą brak, nie cichym podstawieniem słabszego; bez
+prośby rdzeń bierze najsilniejszego kandydata o sile nie wyższej niż
+pytający, a gdy takiego nie ma, kanał samego pytającego — sufit zwężony do
+równości jest zawsze wykonalny, więc druga reguła nie potrzebuje odmowy.
+
+Reguły „wskazanie Operatora znosi sufit” tu nie ma: produkt nie ma ani pola
+doradcy okna, ani komendy, którą Operator by doradcę wskazał; kanał modelu
+okna mówi, którym modelem pracuje okno, a nie kto jest doradcą, więc sufitu
+nie znosi.
+
+Porządek modeli pochodzi z danych, nie z kodu: jedyną miarą siły, jaką
+produkt ma, jest parametr siły wiersza rejestru kanałów. Nie ma w produkcie
+ani katalogu modeli z rangami, ani pola rangi w kontrakcie, ani zestawu
+początkowego, który by siłę wypełniał, więc siła niewpisana jest nieznana,
+nie zerowa.
+
+Siła nieznana znaczy: nie ma czym zmierzyć, więc w górę się nie idzie
+i kandydatem taki kanał nie jest. Zero wpuszczałoby kanał bez siły, a także
+literówkę czy wartość ułamkową w parametrze, wszędzie, otwierając sufit
+w obie strony; stan produkcyjny, dopóki nikt nie wpisał siły, daje wtedy
+kanał pytającego, czyli ten sam model — dokładnie tyle, ile porządek z danych
+pozwala orzec.
+
+Kanał samego pytającego w podSufit przechodzi bez mierzenia jako jedyne
+odstępstwo: równość z samym sobą zachodzi z definicji, więc nie ma czego
+wykazywać nawet wtedy, gdy siła nie jest wpisana; model, który prosi wprost
+o swój własny kanał, dostaje w ten sposób to samo, co dostałby bez prośby.
+
+Kanał pytającego w podSufitem jest zapasem, nie wykluczeniem: model o takich
+samych parametrach jest dozwolonym rozmówcą, a przy braku innych kandydatów
+jedynym możliwym; konsultacja u modelu równego nadal ma sens, bo doradca
+dostaje ramę konsultacji i czyste pytanie zamiast całej historii tury. Próg
+nieznany nie wpuszcza nikogo obcego, bo wtedy o żadnym kandydacie nie da się
+orzec, że nie jest silniejszy.
+
+Sprawdzenie parametru doradca w dopuszczonyZWykazu pilnuje, żeby prośba
+modelu nie omijała wykazu kandydatów i nie sięgała po dowolny czynny kanał
+rejestru, także taki, którego Operator do radzenia nie dopuścił. Wiersz
+wyłączony jest tu tym samym co nieistniejący: kanał, który Operator zgasił,
+nie odpowie. Kanał samego pytającego przechodzi bez tego parametru, bo pyta
+wtedy sam siebie, a na to nie potrzeba dopuszczenia, którego druga reguła też
+nie wymaga.

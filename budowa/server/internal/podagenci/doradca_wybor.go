@@ -1,40 +1,6 @@
-// Odpowiedzialność pliku: dobór doradcy pod sufitem siły — kto może zostać
-// zapytany, gdy o radę prosi model w trakcie tury, a nie Operator.
-//
-// Model proszący o radę z własnej inicjatywy nie sięga po model silniejszy od
-// siebie. Doradca zostaje, konsultacja zostaje, znika wyłącznie ruch modelu
-// w górę. Ruch w górę robi Operator albo nikt.
-//
-// Dwie reguły doboru i ich kolejność:
-//
-//  1. Prośba modelu podlega sufitowi. Kanał, o który prosi sam wołający,
-//     przechodzi tylko wtedy, gdy jest dopuszczony do radzenia (czynny wiersz
-//     z parametrem `doradca`, albo kanał samego pytającego) i gdy da się
-//     wykazać, że nie jest silniejszy od kanału pytającego. Prośba, której nie
-//     da się wykazać, kończy się odmową opisującą brak, a nie cichym
-//     podstawieniem słabszego.
-//  2. Bez prośby rdzeń bierze najsilniejszego kandydata o sile nie wyższej niż
-//     pytający, a gdy takiego nie ma — kanał samego pytającego, czyli dokładnie
-//     ten sam model. Sufit zwężony do równości jest zawsze wykonalny, więc
-//     reguła 2 nie potrzebuje odmowy.
-//
-// Reguły „wskazanie Operatora znosi sufit" tu nie ma: produkt nie ma ani pola
-// „doradca okna", ani komendy, którą Operator by doradcę wskazał. `modelChannelId`
-// okna mówi, którym modelem pracuje okno, a nie kto jest doradcą, więc sufitu nie
-// znosi.
-//
-// Skąd porządek modeli — z danych, nie z kodu. Jedyną miarą siły, jaką produkt
-// ma, jest parametr `sila` wiersza rejestru kanałów (`kanal_modelu.parametry`).
-// Nie ma w produkcie ani katalogu modeli z rangami, ani pola rangi
-// w `shared/contract.json`, ani zestawu początkowego, który by `sila` wypełniał.
-// Siła niewpisana jest więc nieznana, a nie zerowa.
-//
-// Siła nieznana znaczy: nie ma czym zmierzyć, więc w górę się nie idzie
-// i kandydatem taki kanał nie jest. Zero wpuszczałoby kanał bez `sila` (a także
-// literówkę czy wartość ułamkową w parametrze) wszędzie, otwierając sufit
-// w obie strony. Stan produkcyjny (nikt nie wpisał `sila`) daje wtedy kanał
-// pytającego, czyli ten sam model — dokładnie tyle, ile porządek z danych
-// pozwala orzec.
+// Dobór doradcy pod sufitem siły: kto może zostać zapytany, gdy o radę prosi
+// model w trakcie tury, a nie Operator; model z własnej inicjatywy nie sięga
+// po model silniejszy od siebie.
 package podagenci
 
 import (
@@ -46,10 +12,8 @@ import (
 	"danacoconsole/server/internal/models"
 )
 
-// Parametry wiersza rejestru kanałów, którymi Operator opisuje doradcę.
-// Wartości są danymi (kolumna `kanal_modelu.parametry`), nie nazwami typów:
-// `doradca` czytany jest jako prawda logiczna, `sila` jako liczba całkowita
-// (brak albo zapis nieczytelny znaczy: siła nieznana — patrz nagłówek).
+// Parametry wiersza rejestru kanałów, którymi Operator opisuje doradcę;
+// doradca jest prawdą logiczną, sila liczbą całkowitą.
 const (
 	parametrDoradcy = "doradca"
 	parametrSily    = "sila"
@@ -68,10 +32,8 @@ func Kandydaci(wykaz []models.Definicja) []Kandydat {
 	return kandydaci
 }
 
-// Odmowy doboru. Każda opisuje brak — czego zabrakło, żeby konsultacja mogła
-// się odbyć — i każda jest osobna, bo wołający przekłada je na różne kody
-// kontraktu: brak wiersza to `not_found`, brak podstawy do sięgnięcia w górę to
-// odmowa trwała, której ponawiać nie ma po co (`adapter_doradcy.go`).
+// Odmowy doboru. Każda opisuje brak, czego zabrakło, żeby konsultacja mogła
+// się odbyć, i każda jest osobna dla wołającego.
 var (
 	// ErrEskalacjaBezWskazania: żądany kanał jest silniejszy od pytającego.
 	// Nazwany brak, nie zastępczy wybór — dlatego wołający dostaje odmowę,
@@ -108,11 +70,7 @@ var (
 )
 
 // WybierzDoradce rozstrzyga, kogo wolno zapytać o radę, i jest jedynym
-// miejscem, w którym stoi sufit siły. Dwie reguły z nagłówka pliku widać tu
-// jako dwa kolejne rozgałęzienia; kolejność jest zamierzona, nie przypadkowa.
-//
-// `zadanyPrzezModel` to prośba samego wołającego — wolno jej zawęzić wybór,
-// nie wolno jej podnieść sufitu.
+// miejscem, w którym stoi sufit siły, dwiema regułami w ustalonej kolejności.
 func WybierzDoradce(wykaz []models.Definicja, kanalPytajacego, zadanyPrzezModel string) (Kandydat, error) {
 	pytajacy := strings.TrimSpace(kanalPytajacego)
 	if pytajacy == "" {
@@ -136,12 +94,8 @@ func WybierzDoradce(wykaz []models.Definicja, kanalPytajacego, zadanyPrzezModel 
 	return podSufitem(wykaz, pytajacy, prog, progZnany), nil
 }
 
-// podSufit przykłada sufit do jednego kandydata i nazywa powód odmowy.
-//
-// Kanał samego pytającego przechodzi bez mierzenia i jest to jedyne odstępstwo:
-// równość z samym sobą zachodzi z definicji, więc nie ma czego wykazywać nawet
-// wtedy, gdy `sila` nie jest wpisana. Dzięki temu model, który prosi wprost
-// o swój własny kanał, dostaje to samo, co dostałby bez prośby.
+// podSufit przykłada sufit do jednego kandydata i nazywa powód odmowy; kanał
+// samego pytającego przechodzi bez mierzenia.
 func podSufit(kandydat Kandydat, pytajacy string, prog int, progZnany bool) error {
 	if kandydat.Kanal == pytajacy {
 		return nil
@@ -157,16 +111,8 @@ func podSufit(kandydat Kandydat, pytajacy string, prog int, progZnany bool) erro
 	return nil
 }
 
-// podSufitem wybiera najsilniejszego kandydata o sile nie wyższej od progu.
-//
-// Kanał pytającego jest tu zapasem, a nie wykluczeniem: model o takich samych
-// parametrach jest dozwolonym rozmówcą, a przy braku innych kandydatów jedynym
-// możliwym. Konsultacja u modelu równego nadal ma sens, bo doradca dostaje ramę
-// konsultacji i czyste pytanie zamiast całej historii tury.
-//
-// Próg nieznany nie wpuszcza nikogo obcego: wtedy o żadnym kandydacie nie da
-// się orzec, że nie jest silniejszy, więc zostaje kanał pytającego. Tak wygląda
-// stan produkcyjny, dopóki Operator nie wpisze `sila` — i tak ma wyglądać.
+// podSufitem wybiera najsilniejszego kandydata o sile nie wyższej od progu,
+// a przy braku innych kandydatów kanał pytającego.
 func podSufitem(wykaz []models.Definicja, pytajacy string, prog int, progZnany bool) Kandydat {
 	var wybrany Kandydat
 	if progZnany {
@@ -185,10 +131,8 @@ func podSufitem(wykaz []models.Definicja, pytajacy string, prog int, progZnany b
 	return kandydatPytajacego(wykaz, pytajacy)
 }
 
-// kandydatPytajacego opisuje kanał pytającego jako doradcę samego dla siebie.
-// Wiersza spoza rejestru nie zmyślamy bogaciej, niż wiemy: zostaje kod, który
-// podał wołający, a nazwa i model puste — ślad powie wtedy prawdę
-// o tym, że kanał nie stał w wykazie.
+// kandydatPytajacego opisuje kanał pytającego jako doradcę samego dla siebie,
+// bez zmyślania danych wiersza spoza rejestru.
 func kandydatPytajacego(wykaz []models.Definicja, pytajacy string) Kandydat {
 	for _, wiersz := range wykaz {
 		if wiersz.Kod == pytajacy {
@@ -200,15 +144,6 @@ func kandydatPytajacego(wykaz []models.Definicja, pytajacy string) Kandydat {
 
 // dopuszczonyZWykazu odnajduje czynny wiersz o podanym kodzie i sprawdza, czy
 // Operator dopuścił go do radzenia.
-//
-// Sprawdzenie parametru `doradca` pilnuje, żeby prośba modelu nie omijała
-// wykazu kandydatów i nie sięgała po dowolny czynny kanał rejestru — także
-// taki, którego Operator do radzenia nie dopuścił.
-//
-// Wiersz wyłączony jest tu tym samym co nieistniejący: kanał, który Operator
-// zgasił, nie odpowie. Kanał samego pytającego przechodzi bez parametru
-// `doradca` — pyta wtedy sam siebie, a na to nie potrzeba dopuszczenia, którego
-// reguła 2 też nie wymaga.
 func dopuszczonyZWykazu(wykaz []models.Definicja, kod, pytajacy string) (Kandydat, error) {
 	for _, wiersz := range wykaz {
 		if wiersz.Kod != kod || !wiersz.Aktywny {
@@ -238,10 +173,8 @@ func silaKanalu(wykaz []models.Definicja, kod string) (int, bool) {
 	return 0, false
 }
 
-// sila czyta parametr siły wiersza. Drugi wynik mówi, czy wiemy: parametr
-// pusty, nieliczbowy, ułamkowy albo przepełniający zakres `int` daje „nie
-// wiem", nigdy zero. Zero jest wartością siły najsłabszej i orzekanie go
-// z zapisu, którego nie umiemy przeczytać, wpuszczałoby taki kanał wszędzie.
+// sila czyta parametr siły wiersza; drugi wynik mówi, czy wiemy, nigdy nie
+// orzeka zero z zapisu nieczytelnego.
 func sila(d models.Definicja) (int, bool) {
 	zapis := strings.TrimSpace(d.Parametr(parametrSily))
 	if zapis == "" {

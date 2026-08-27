@@ -1,13 +1,5 @@
-// Odpowiedzialność pliku: trwałość konsultacji — dziennik tabeli
-// `konsultacja_doradcy`.
-//
-// Stoi osobno od pojęcia doradcy (`doradca.go`) i od doboru doradcy
-// (`doradca_wybor.go`): pojęcie rady nie zmienia się, gdy zmienia się tabela,
-// a tabela nie zmienia się, gdy przestawia się zasady doboru doradcy. Trzy
-// odpowiedzialności, trzy pliki.
-//
-// Trwałość stoi tutaj, nie w `dane`, tak jak dziennik transkrypcji
-// (`mowa/dziennik.go`).
+// Trwałość konsultacji, dziennik tabeli konsultacja_doradcy, stoi osobno od
+// pojęcia doradcy i od doboru doradcy: trzy odpowiedzialności, trzy pliki.
 package podagenci
 
 import (
@@ -36,24 +28,23 @@ type Konsultacja struct {
 	Pytajacy                   string
 	DoradcaKanal, DoradcaModel string
 	Pytanie, Rada, Skrot       string
-	// Prowenancja to fragment `provenance` strumienia przepisany co
-	// do znaku, a nie złożony tu drugi raz — inaczej ślad w bazie i ślad w oknie
-	// rozjechałyby się co do treści.
+	// Prowenancja to fragment strumienia przepisany co do znaku, żeby ślad
+	// w bazie się nie rozjechał.
 	Prowenancja string
 	Stan        string
 	Powod       string
 	Utworzono   int64
 }
 
-// FiltrKonsultacji zawęża wykaz dziennika. Limit niedodatni znaczy
-// limitWykazuKonsultacji.
+// FiltrKonsultacji zawęża wykaz dziennika konsultacji doradcy; limit
+// niedodatni znaczy limit domyślny wykazu.
 type FiltrKonsultacji struct {
 	OknoId string
 	Limit  int
 }
 
-// Dziennik jest kontraktem trwałości konsultacji — wołający zna
-// interfejs, nie SQL.
+// Dziennik jest kontraktem trwałości konsultacji doradcy: wołający zna
+// interfejs zapisu i wykazu, nie zapytania SQL.
 type Dziennik interface {
 	Zapisz(ctx context.Context, wpis Konsultacja) (Konsultacja, error)
 	Wykaz(ctx context.Context, filtr FiltrKonsultacji) ([]Konsultacja, error)
@@ -94,7 +85,8 @@ func NowyDziennik(db *sql.DB) Dziennik {
 	return &dziennikKonsultacji{db: db}
 }
 
-// Zapisz wstawia wpis i oddaje go odczytany z bazy.
+// Zapisz wstawia dany wpis konsultacji do dziennika tej bazy i oddaje go
+// odczytany z powrotem po zapisie.
 func (d *dziennikKonsultacji) Zapisz(ctx context.Context, wpis Konsultacja) (Konsultacja, error) {
 	if err := sprawdzKonsultacje(wpis); err != nil {
 		return Konsultacja{}, err
@@ -111,7 +103,8 @@ func (d *dziennikKonsultacji) Zapisz(ctx context.Context, wpis Konsultacja) (Kon
 	return d.wpisPoIdentyfikatorze(ctx, wpis.Identyfikator)
 }
 
-// Wykaz oddaje wpisy od najnowszego.
+// Wykaz oddaje wpisy dziennika konsultacji doradcy od najnowszego, zawężone
+// filtrem okna i limitem wykazu.
 func (d *dziennikKonsultacji) Wykaz(ctx context.Context, filtr FiltrKonsultacji) ([]Konsultacja, error) {
 	limit := filtr.Limit
 	if limit <= 0 {
@@ -137,7 +130,8 @@ func (d *dziennikKonsultacji) Wykaz(ctx context.Context, filtr FiltrKonsultacji)
 	return dziennik, nil
 }
 
-// wpisPoIdentyfikatorze odczytuje jeden wpis po tożsamości zewnętrznej.
+// wpisPoIdentyfikatorze odczytuje jeden wpis dziennika konsultacji po jego
+// tożsamości zewnętrznej wpisu.
 func (d *dziennikKonsultacji) wpisPoIdentyfikatorze(ctx context.Context, identyfikator string) (Konsultacja, error) {
 	wiersz := d.db.QueryRowContext(ctx, pobierzKonsultacje, identyfikator)
 	wpis, err := odczytajKonsultacje(wiersz)

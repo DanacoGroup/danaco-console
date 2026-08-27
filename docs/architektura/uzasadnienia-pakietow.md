@@ -5251,3 +5251,8 @@ obcych — inaczej się nie da, ponieważ pula rdzenia trzyma pragmę włączon�
 drogą zostałby odrzucony przy wstawianiu, czyli sprawdzian mierzyłby pragmę, a nie samą kontrolę.
 ## budowa/server/internal/dane/rozmowa.go
 Utrwalany łańcuch przechodzi przez środowisko, moduł, kartę sesji, sesję i okno komunikacji aż do wiadomości. Warstwa danych nie zna pakietu sesji ani rdzenia: jedynym stykiem jest opis okna wraz z funkcją, która go podaje, a rdzeń wypełnia ją swoim rejestrem okien przy montażu. Pole niosące identyfikator okna źródłowego jest identyfikatorem rdzenia w postaci napisu, nie kluczem wiersza, bo warstwa wyższa kluczy wierszy okien nie zna, a przekład na klucz obcy wykonuje utrwalacz przez ten sam łańcuch, co dla okna samej wiadomości. Warstwa wyższa wypełnia metadane przy nadaniu wiadomości, utrwalacz przenosi wartości do kolumn tabeli, a przy odczycie odtwarza je z tych samych kolumn, tak że zapis i odczyt dają tę samą treść. Załączniki jadą w osobnej kolumnie tego samego wiersza: bez nich model wracający do rozmowy nie wiedziałby, że w niej były pliki.
+
+## budowa/server/internal/podagenci/dziennik_doradcy.go
+Trwałość konsultacji stoi w tym pakiecie, nie w pakiecie dane, tak jak
+dziennik transkrypcji mowy: pojęcie rady nie zmienia się, gdy zmienia się
+tabela, a tabela nie zmienia się, gdy przestawia się zasady doboru doradcy.

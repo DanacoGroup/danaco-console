@@ -16,6 +16,13 @@
 // `channelId` żądania zostaje w kontrakcie nietknięte — komenda nie udaje, że
 // z niego korzysta.
 //
+// Regułą napisową nie da się jednak orzec o odmianie słowa ani o tym, czy słowo
+// w ogóle istnieje — do tego trzeba słownika. Trzy programy, które go mają,
+// stoją w `adapter_modul_tlumaczenie_korekta_silniki.go` i wchodzą tą samą
+// drogą co reguły wbudowane: ustalenie z propozycją, którą `proofread.apply`
+// wstawi w treść. Warunek powtarzalności obowiązuje je tak samo — słownik
+// odpowiada dwa razy tak samo, model nie.
+//
 // ── Spójność mierzy się na tym, co realnie zapisano ─────────────────────────
 // `consistency.check` porównuje panele okna między sobą i pary pamięci: to samo
 // zdanie źródłowe przełożone dwoma różnymi zdaniami i ten sam termin oddany
@@ -117,6 +124,20 @@ func (a *adapterTlumaczenia) SprawdzKorekte(ctx context.Context,
 			dolóz(shared.ProofreadCheckKindGrammar, shared.ProofreadSeverityWarning, zdanie,
 				"słowo „"+slowoPowtorzone(zdanie)+"” powtórzone bezpośrednio po sobie", "")
 		}
+	}
+
+	// Silniki zewnętrzne idą PO regułach wbudowanych i nie zastępują żadnej
+	// z nich: reguły rdzenia mierzą typografię i odstępy, których słownik nie
+	// widzi, a silniki mierzą gramatykę i pisownię, których reguła napisowa nie
+	// dosięgnie. Rodzaj kontroli spoza żądania odsiewa `dolóz`, tak samo jak
+	// przy regułach wbudowanych.
+	zewnetrzneUstalenia, err := a.ustaleniaSilnikow(ctx, panel.Jezyk, tresc)
+	if err != nil {
+		return shared.TranslateProofreadRunResponse{}, err
+	}
+	for _, ustalenie := range zewnetrzneUstalenia {
+		dolóz(ustalenie.rodzaj, ustalenie.waga, ustalenie.segment,
+			ustalenie.szczegol, ustalenie.propozycja)
 	}
 
 	if err := a.repozytorium.ZapiszUstaleniaKorekty(ctx, panel.ID, ustalenia); err != nil {

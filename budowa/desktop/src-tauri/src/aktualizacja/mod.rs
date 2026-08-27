@@ -1,6 +1,10 @@
 //! Aktualizacja zdalna powłoki — pobranie wydania, sprawdzenie sumy, założenie,
 //! ponowny start. To strona powłoki dla banera „aktualizuj".
 //!
+//! Przedmiotem aktualizacji jest wyłącznie plik powłoki na urządzeniu
+//! Operatora. Rdzeń stoi na serwerze wdrożenia i jest utrzymywany tam, więc ten
+//! przebieg go nie dotyka: niczego mu nie podmienia i niczego nie wygasza.
+//!
 //! Droga nie idzie przez wtyczkę `updater` Tauri: wtyczka nie występuje ani
 //! w `Cargo.toml`, ani w `tauri.conf.json`, ani w `capabilities/domyslne.json`.
 //! Wymaga własnego podpisu minisign, czyli pary kluczy wydawcy, i narzuca
@@ -193,10 +197,6 @@ fn przebieg_pod_straza(
         ));
     })?;
     dziennik::dopisz(&format!("aktualizacja: {}", zalozenie.zdanie));
-
-    // Rdzenia ten przebieg nie dotyka. Stoi on na serwerze wdrożenia i jest
-    // utrzymywany tam; aktualizacja wymienia wyłącznie plik powłoki na
-    // urządzeniu Operatora.
 
     // Ponowny start — po zwłoce, żeby odpowiedź zdążyła dojść do banera.
     zaplanuj_ponowny_start(aplikacja, zalozenie.restartuje_powloka);

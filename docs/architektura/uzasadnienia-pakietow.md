@@ -5628,3 +5628,5 @@ klient odróżnia stan jeszcze nie koniec od stanu koniec równy fałsz.
 
 Sprawdzian ciągłości identyfikatora przechodzi całą turę — żądanie, trzy
 fragmenty, domknięcie — i porównuje identyfikatory oraz kolejność numerów.
+## budowa/server/internal/dane/skroty_tekstowe.go
+Skrót rozwija się we wszystkich polach tekstowych platformy, więc słownik skrótów należy do rdzenia, nie do jednego modułu. Profil pusty znaczy skrót wspólny; zapisuje się pustym napisem, nie wartością pustą bazy, bo warunek jednoznaczności nad kolumną dopuszczającą taką wartość nie pilnowałby niczego.

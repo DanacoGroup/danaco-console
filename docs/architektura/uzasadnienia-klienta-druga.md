@@ -3128,3 +3128,17 @@ operator pracuje. Przerysowanie nie zdejmuje fazy trwającej ani fazy błędu, b
 przychodzi z każdego ogłoszenia stanu modułu, także w środku zapisu i zaraz po odmowie — gdyby
 wtedy stawiało okno na gotowe albo na pustkę, skasowałoby nieprzeczytany komunikat albo zgasiłoby
 zapowiedź trwającego wywołania.
+
+## budowa/klient-poprzedni/src/moduly/research/wiersz-wyniku.ts
+Przycisk dodania do źródeł jest czynny zawsze, także dla pozycji już przeniesionej: powtórzenie
+kończy się odpowiedzią rdzenia, nie odebraniem klikalności. Wiersz nie niesie pola wyboru, bo
+zaznaczenie wielokrotne w module dotyczy źródeł i ustaleń jako bytów badania, a pozycja wyniku
+badaniem jeszcze nie jest — staje się nim dopiero po skatalogowaniu.
+
+## budowa/klient-poprzedni/src/strona-glowna/pamiec-zwiniecia.ts
+Strefy rozwijają się na żądanie, a raz wykonane rozwinięcie ma się utrzymać między wejściami na ekran.
+Nastawa siedzi w pamięci przeglądarki, nie w rdzeniu: dotyczy powierzchni na tym urządzeniu i nie ma
+swojego bytu w kontrakcie; ten sam wzorzec nosi pamięć motywu i pamięć kolejności okien równoległych.
+Pamięć przeglądarki bywa niedostępna w trybie prywatnym albo w osadzeniu w ramce: awaria odczytu albo
+zapisu zostaje przy wartości domyślnej i nie jest zgłaszana jako błąd, bo nastawa widoku nie jest powodem,
+żeby ekran nie wstał.

@@ -2981,3 +2981,64 @@ wag na dysku usuwa pobranie, wagi leżące a nieczytelne — wskazanie innego
 katalogu albo innego wydania modelu, a brak bibliotek — jedna instalacja
 w interpreterze, który już wskazano ustawieniem osadzarki (interpreter jest
 w pakiecie jeden, więc i ustawienie jest jedno).
+
+## budowa/server/internal/core/adapter_modul_design_obrazy.go
+
+Biblioteka wkompilowana, nigdy program zewnętrzny: nie ma tu ani jednego
+uruchomienia procesu i mieć nie będzie. Skalowanie robi
+`golang.org/x/image/draw` filtrem `CatmullRom`, zapis PNG i JPEG —
+biblioteka standardowa, dokument — `pdfcpu`, ikonę — koder w tym pliku.
+Funkcja zależna od programu, którego instalka nie niesie, jest u Operatora
+odmową, nie funkcją, a sprawdzian na maszynie deweloperskiej świeciłby przy
+niej zielono.
+
+Formaty, których biblioteka nie umie, są odmawiane. WEBP wchodzi (dekoder
+`golang.org/x/image/webp`), ale nie wychodzi: enkodera WEBP w Go bez
+zależności zewnętrznej nie ma. AVIF nie wchodzi i nie wychodzi. Wydanie
+takiego formatu kończy się odmową wymieniającą formaty obsługiwane — cichy
+PNG pod nazwą .avif byłby plikiem, który Operator wyśle dalej jako AVIF
+i który odbiorcy nie otworzy się tam, gdzie miał się otworzyć.
+
+SVG przechodzi bez rasteryzacji. Zasób wektorowy wydany jako SVG to te same
+bajty, które leżą w magazynie: rasteryzacja odebrałaby mu jedyną własność,
+dla której jest wektorem. Skala nie ma wtedy zastosowania i nie jest po
+cichu stosowana.
+
+Import pusty dekoderów wejścia niesie wyłącznie skutek rejestracji, tak
+przewiduje pakiet `image`.
+
+Wykaz formatów wydania wchodzi wprost w treść każdej odmowy formatu, żeby
+Operator dostał drogę wyjścia, a nie samo zaprzeczenie.
+
+Granica skali wydania nie jest polityką jakości, tylko granicą rachunku:
+skala tysiąckrotna z obrazu 4000x4000 to bilion pikseli.
+
+Skala pusta albo równa jedności w przeskalowaniu obrazu oddaje obraz bez
+dotknięcia — przepuszczenie go przez filtr dla porządku kosztowałoby jakość
+bez żadnego zysku. Miniatura ikony wydana filtrem najbliższego sąsiada
+wygląda na uszkodzoną, a to jest najczęstsze wydanie tego modułu.
+## server/internal/poczta/imap_odczyt.go
+
+Zapis (szkic, oznaczenie) lezy w imap_zapis.go, wysylka w smtp.go — plik
+wedle odpowiedzialnosci. Zawezanie robi serwer, nie rdzen: mail.message.list
+niesie nadawce, fraze, date i "tylko nieprzeczytane"; wszystkie cztery jada
+do IMAP SEARCH, wiec serwer oddaje same pasujace UID-y. Odsianie tego po
+stronie rdzenia oznaczaloby sciagniecie calej skrzynki po to, zeby wyrzucic
+z niej 99% — przy skrzynce Operatora z dziesiecioma tysiacami listow to nie
+jest szczegol wykonania, tylko roznica miedzy odpowiedzia a zawieszeniem.
+Zapowiedz idzie czesciowym odczytem (Partial), nie cala trescia. IMAP
+pozwala poprosic o pierwsze N bajtow wskazanej czesci, wiec wykaz
+dwudziestu listow kosztuje dwadziescia razy pol kilobajta zamiast
+dwudziestu razy "ile wazyl zalacznik".
+
+sekcjaZapowiedzi: czesc 1 jest natomiast pierwsza czescia listu, czyli ta,
+ktora klienty poczty pokazuja jako tresc; dla listu jednoczesciowego RFC
+3501 kaze rozumiec ja jako cale cialo, wiec jedna droga obsluguje oba
+przypadki. Peek: podglad wykazu nie ma prawa oznaczyc listu jako
+przeczytanego — bez tego samo wyszukanie listu zmienialoby stan skrzynki
+Operatora, czynnosc uboczna, ktorej nikt nie zlecil.
+
+Wykaz: liczba calkowita jest inna liczba niz dlugosc wykazu i to jest
+zamierzone — kontrakt niesie total obok messages przycietych granica, zeby
+okno moglo powiedziec "pokazuje 20 z 137" bez drugiego pytania. Mylenie
+tych dwoch liczb jest usterka, nie szczegolem (wzor z design.asset.list).

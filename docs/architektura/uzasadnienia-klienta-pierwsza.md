@@ -1742,3 +1742,11 @@ zostaje miejscowy. Brak zapisanego układu znaczy układ domyślny, więc odmowa
 Identyfikatorem panelu jest klucz sekcji, ten sam, którym boczna nawigacja wskazuje
 sekcję. Napis składany z tytułu rozjechałby się przy pierwszej zmianie tytułu, a układ
 zapisany w rdzeniu przestałby mieć odpowiednik na ekranie.
+
+## budowa/klient-poprzedni/src/moduly/design/indeks.ts
+
+Moduł nie osadza się sam w dokumencie i nie zna powłoki: oddaje element,
+a warstwa składająca rozstrzyga, gdzie go postawić.
+
+Rozłączenie zostaje wewnątrz modułu, ponieważ typ `WidokModulu` powłoki nie ma
+czynności odpięcia. Subskrypcje kanału odpina `rozlacz()` widoku modułu.

@@ -5992,3 +5992,5 @@ Identyfikator zewnętrzny gradientu nadaje wołający i służy wyłącznie temu
 nowy dostał własną nazwę; rozstrzyga cel zapisu, nie identyfikator — gradient wysłany drugi
 raz na tę samą warstwę nadpisuje ten, który tam stoi, choćby przyszedł z nowym
 identyfikatorem.
+## budowa/server/internal/dane/studio_praca_widok.go
+Repozytorium sąsiednie zna ten sam wiersz od strony autozapisu: odstęp, zdarzenia okna, wygasanie kopii, skutek ostatniego zapisu. Kolumny widoku, czyli tryb powierzchni, skala, linijki, układ stron, przewijanie, podświetlenie zmian wykonawcy i przybornik, pytane są przez zupełnie inną parę komend, nigdy razem z nastawami autozapisu. Osobny odczyt tych samych wierszy nie zakłada drugiego pojęcia nastawy: tabela jest jedna, wiersz zakłada się jedną drogą, a każda z dwóch grup kolumn ma własne polecenie zapisu, bo jedno polecenie na obie grupy kazałoby widokowi przepisywać nastawy autozapisu, których nie zmieniał. Wołający sięga najpierw po zapis pełnej nastawy pracy, potem po ten odczyt widoku, bo dwie drogi zakładania tego samego wiersza rozjechałyby się przy pierwszej zmianie wartości domyślnej.

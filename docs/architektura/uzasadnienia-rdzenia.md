@@ -5927,3 +5927,17 @@ strumień do końca sesji, bez odpowiedzi i bez wyjaśnienia. Domknięcie
 zwykłe należy do metody Zakoncz, która zna przyczynę i potrafi ją nazwać;
 domknięcie awaryjne niesie fragment rodzaju błąd, którego treść mówi, co
 odmówiło, dlaczego i co z tym zrobić.
+
+## budowa/server/internal/core/symbole_tablica_test.go
+
+Sprawdziany tablicy znaków mają wykluczyć trzy rodzaje szkody: tablicę bez
+znaków wymaganych wprost (paragraf, akapit, znak praw autorskich, znak
+zastrzeżonego znaku towarowego, znak towarowy, półpauza, pauza, cudzysłowy
+drukarskie, twarda spacja, twardy dywiz, znak podziału wyrazu); punkt
+kodowy odczytywany tylko w jednym zapisie, mimo że kod bywa wklejany
+w różnej postaci; oraz nazwę niepełną, która wstawia pierwszy napotkany
+znak zamiast nazwać dwuznaczność.
+
+Wykazu zasad autozamiany ten plik celowo nie mierzy: wykaz stoi w bazie,
+wprowadzony migracjami 368 i 371, nie w kodzie rdzenia, więc sprawdzianem
+na niego jest sprawdzian migracji, a nie sprawdzian pakietu rdzenia.

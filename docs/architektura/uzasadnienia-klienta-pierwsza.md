@@ -3905,7 +3905,7 @@ wykazu, ponieważ wykaz jest jeden na cały moduł.
 
 Zdanie przy nazwie pustej mówi o oknie, a nie o rdzeniu. Rdzeń odmawia wyłącznie
 nazwy pustej; nazwę złożoną z samego znacznika kolejności bajtów, z samej spacji
-nierozdzielającej albo z samych spaczy zwykłych przyjmuje i oddaje co do znaku.
+nierozdzielającej albo z samych spacji zwykłych przyjmuje i oddaje co do znaku.
 Każdą z nich przycięcie po stronie przeglądarki zamienia w pustkę, więc okno jej
 nie wyśle i może powiedzieć tylko tyle, że samo nic nie wysłało.
 
@@ -3947,3 +3947,16 @@ rdzenia, co innego po odmowie rdzenia, a co innego wtedy, gdy rdzeń odpowiedzia
 i rejestr rzeczywiście nie zawiera konta spełniającego warunek wykazu. Jedno
 zdanie na wszystkie trzy przypadki nie rozstrzygałoby, czy czekać, czy działać.
 Widok pozostaje przy tym czynny.
+
+## budowa/klient-poprzedni/src/moduly/design/stan-kompozycji.ts
+
+Kompozycja powstaje w kliencie, zanim pojedzie do rdzenia: komenda `design.board.update`
+przyjmuje gotowy układ w polu `layers`, więc wywołanie idzie przy zapisie, a nie przy każdym
+ruchu warstwy.
+
+Wczytanie kompozycji jest drogą powrotną tej samej komendy — dzięki niej odświeżenie okna
+pokazuje kompozycję zapisaną po stronie rdzenia, a nie pustą kanwę.
+
+Położenie i rozmiar warstwy ustawia się jedną zmianą, ponieważ cztery liczby opisują jeden
+prostokąt. Cztery osobne wywołania rozgłosiłyby cztery stany pośrednie, w których warstwa ma
+już nowe położenie przy jeszcze starym rozmiarze.

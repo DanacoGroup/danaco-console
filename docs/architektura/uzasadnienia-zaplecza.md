@@ -2005,3 +2005,13 @@ przykłady wywołania usunięto z nagłówka, ponieważ powtarzają treść wido
 w komunikacie końcowym skryptu i w opisie flagi zatrzymania.
 ## budowa/server/internal/store/migracja_099_wyzwalacz_poczty.sql
 Odbiór listu uruchamia automatyki dwiema drogami jednocześnie: startuje bieg każdej czynnej automatyki z wyzwalaczem rodzaju mail od początku oraz doręcza sygnał mail z kodem skrzynki silnikowi wybudzeń, wznawiając bieg zawieszony krokiem oczekiwania. Wyrażenie wyzwalacza mail wskazuje skrzynkę: kod skrzynki pocztowej albo gwiazdkę oznaczającą każdą skrzynkę. Ponieważ zapis harmonogramu pomija wyzwalacze z pustym wyrażeniem, kontrakt „każda skrzynka" zapisuje się jako gwiazdka, nie jako pole puste. Na tabelę wyzwalacz_automatyki nie wskazuje żaden klucz obcy, więc przebudowa obejmuje wyłącznie tę jedną tabelę.
+
+## budowa/server/internal/zewnetrzne/.dowod-wpiecia/uruchom.sh
+Nagłówek połączono w jedno zdanie opisujące cel dowodu i sposób weryfikacji
+nietkniętych oryginałów; wskazanie katalogu uruchomienia usunięto z nagłówka,
+ponieważ jest wywołaniem, nie opisem stanu.
+
+## budowa/server/internal/zewnetrzne/.dowod-wpiecia/zastosuj.py
+Dodano nagłówek w postaci komentarza, ponieważ narzędzie redakcji nie
+rozpoznaje ciągu dokumentacyjnego modułu jako nagłówka; ciąg dokumentacyjny
+pozostał nietknięty jako treść kodu.

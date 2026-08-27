@@ -158,6 +158,11 @@ a:hover { color: var(--dn-sygnal-mocny); text-decoration: underline; text-underl
   align-self: stretch;
   margin: 0 var(--dn-od-2);
 }
+/* Na płótnie — kreska na powierzchni panelu, nie w zagłębionej tacy. Zmierzone:
+   `--dn-obrys-subtelny` daje w motywie ciemnym 12,6 L* na tle 17,0 L*, czyli
+   kreskę CIEMNIEJSZĄ od tła o 4,4 stopnia — praktycznie niewidoczną. Obrys
+   mocny daje 24,4 na 17,0 w ciemnym i 77,6 na 100 w jasnym: widać w obu. */
+.dn-separator--na-plotnie { background: var(--dn-obrys-mocny); }
 
 /* --- Ukrycie dostępne ----------------------------------------------------- */
 .dn-sr-only {

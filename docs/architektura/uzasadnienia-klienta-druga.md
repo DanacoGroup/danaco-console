@@ -5443,3 +5443,13 @@ cyfryzacji, ani zamiany formatu, ani przygotowania obrazu — kontrakt dzieli si
 czynności, nie po modułach. Stan studia jest jeden na cały moduł, więc przywrócenie wersji
 w repozytorium przestawia treść edytora i podgląd naraz, a odczyty idą równolegle i nie gaszą
 się nawzajem.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/figura-modulu.ts
+Liczba pochodzi z profilu modułu, role z reguł domyślnych, a sufit z pliku
+identyfikatorów — plik nie ma własnego zdania o żadnym module. Liczbę okien
+bierze funkcja licząca okna rozmowy, nie samo pole granicy: funkcja oddaje
+zero dla modułu bez rozmowy, a pole niesie dla niego jedynkę. Wykaz par
+koordynator-wykonawca nie nadaje ról — reguła domyślna i tak daje przy
+dwóch oknach koordynatora i wykonawcę; mówi wyłącznie, że dla wymienionego
+modułu para jest jego właściwością. Moduł, dla którego role okien nie są
+ustalone, w tym wykazie nie stoi.

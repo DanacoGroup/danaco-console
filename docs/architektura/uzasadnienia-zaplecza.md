@@ -3107,3 +3107,32 @@ adnotacja niosła jedno przypięcie albo żadne (notatka wolna kanwy), a nie dwa
 sprzeczne. Wskazania są kodami zewnętrznymi komponentów, nie więzami obcymi:
 notatka ma prawo przeżyć komponent zdjęty z układu — to samo rozstrzygnięcie,
 co przy `plik_warsztatu_apps.komponent_id` (migracja 051).
+## budowa/server/internal/store/migracja_202_apps_srodowiska.sql
+Migracja 202 — moduł Apps, Deployment Panel: środowiska wdrożeniowe produktu,
+ich zmienne, nastawy skalowania i wyniki sprawdzeń kondycji.
+
+Środowisko ma wiersz, choć kontrakt zna trzy wartości wbudowane. `AppEnvironment`
+niesie `code`, `name`, `order` i `domain` — cztery pola, których wyliczenie
+`AppDeployEnvironment` nie ma i mieć nie może, bo `apps.deployment.domain.set`
+zapisuje domenę osobno dla każdego środowiska. Kontrakt mówi wprost, że kod
+środowiska „dla trzech wartości wbudowanych równy AppDeployEnvironment", więc
+wiersz jest miejscem na te cztery pola, a nie drugim słownikiem środowisk.
+
+Wpisy DNS leżą w jednej kolumnie tekstowej z surowym JSON-em żądania
+(`dnsRecords` kontraktu jest polem `json`). Rdzeń ich nie rozkłada: nie ma po
+czym filtrować ani sortować, a kształt wpisu należy do dostawcy domeny, nie
+do platformy.
+
+Zmienna środowiskowa niesie wartość jawną ALBO odwołanie do sekretu, nigdy
+oba naraz — kontrakt mówi „wyklucza się z secretRef" i warunek CHECK niżej
+to egzekwuje. Treści sekretu w tej tabeli nie ma i nie będzie: kolumna trzyma
+klucz jawny, po którym warstwa sekretów wydaje wartość.
+
+Skalowanie ma jeden wiersz na (okno, środowisko) — `apps.deployment.scale.set`
+nadsyła nastawę w komplecie, więc zapis jest UPSERT-em po tej parze, a nie
+dziennikiem kolejnych nastaw.
+
+Sprawdzenie kondycji jest dziennikiem, nie stanem. `AppDeploymentHealth`
+niesie `availabilityPercent` — udział w oknie pomiaru — którego z jednego
+wiersza „stan bieżący" policzyć się nie da. Każde `apps.deployment.health.get`
+dopisuje więc wynik swojego sprawdzenia, a udział liczy się z wierszy.

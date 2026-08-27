@@ -2667,3 +2667,11 @@ idzie obok, bo dotyczy procesu sesji, a jej odmowa nie zatrzymuje modułu, ponie
 sama macierz. Bez odpięcia paska uczciwości od wspólnego katalogu przy zejściu modułu wpis kanału
 trzymałby przerysowanie elementu zdjętego już z drzewa. Stery kanału zwijają się przed zejściem
 modułu, ponieważ rozwinięte trzymają nasłuch na dokumencie, którego zniknięcie elementu nie zdejmuje.
+
+## budowa/klient-poprzedni/src/powloka/podglad.ts
+Strona wzorowana jest na podglądzie zetonów motywu. Jedna odpowiedzialność: uruchomienie powłoki
+poza aplikacją, żeby cztery pasy dało się obejrzeć i przeklikać przed ich osadzeniem w punkcie
+wejścia. Podgląd niczego nie udaje: karty sesji i ich stany są tu materiałem pokazowym, a nie
+danymi z rdzenia — dlatego mieszkają na tej stronie, a nie w module powłoki. Uruchomienie: npm run
+dev, adres /src/powloka/podglad.html. Motyw wybiera się parametrem ?motyw=jasny albo
+?motyw=ciemny; bez parametru rozstrzyga zapisany wybór, a w jego braku preferencja systemu.

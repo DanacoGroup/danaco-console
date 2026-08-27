@@ -1,14 +1,6 @@
-// Punkt wejścia rdzenia Danaco Console.
-//
-// Wyłącznie kompozycja: wczytanie konfiguracji, przygotowanie katalogu danych,
-// otwarcie trwałości, złożenie rdzenia, praca torów właściwych dla roli procesu
-// aż do sygnału zatrzymania. Zero logiki, zero typów, zero obsługiwaczy
-// komend — wszystko, co robi rdzeń, mieszka w internal/core, a wybór torów
-// w cmd/danaco-console/uruchomienie.
-//
-// Żadna zmienna środowiska nie jest czytana tutaj po nazwie: całość odczytu
-// prowadzi pakiet konfiguracja, którego wykaz nazw pokrywa się ze wzorcem
-// `.env.example`.
+// Punkt wejścia rdzenia Danaco Console: wyłącznie kompozycja — wczytanie
+// konfiguracji, przygotowanie katalogu danych, otwarcie trwałości, złożenie
+// rdzenia i praca torów aż do sygnału zatrzymania.
 package main
 
 import (
@@ -28,15 +20,10 @@ import (
 )
 
 func main() {
-	// Dziennik idzie na wyjście diagnostyczne, bo wyjście standardowe należy do
-	// toru wykonawczego roli `agent` — miesza się tam wyłącznie kontrakt.
+	// Dziennik idzie na wyjście diagnostyczne, bo wyjście standardowe niesie kontrakt roli agent.
 	dziennik := log.New(os.Stderr, "danaco-console ", log.LstdFlags)
 
-	// Tryb wypisania wykazu zależności zewnętrznych stoi przed odczytem
-	// konfiguracji, bo wykaz nie potrzebuje ani bazy, ani katalogu danych, a
-	// zestaw flag konfiguracji odrzuciłby ten argument jako nierozpoznany.
-	// Wykaz idzie na wyjście standardowe — konsumuje go prowizjonowanie serwera
-	// (scripts/arsenal-serwera.sh), żeby nazwy pakietów miały jedno źródło.
+	// Tryb wypisania wykazu zależności stoi przed odczytem konfiguracji, bo wykaz nie potrzebuje bazy.
 	if core.ZadanoWykazZaleznosci(os.Args[1:]) {
 		if err := core.WypiszWykazZaleznosci(os.Stdout); err != nil {
 			dziennik.Fatalf("wykaz zależności: %v", err)
@@ -67,19 +54,12 @@ func main() {
 	}
 	defer baza.Zamknij()
 
-	// Kontrola spójności zaraz po otwarciu i migracjach: integrity_check wykrywa
-	// uszkodzony plik, foreign_key_check — osierocone wiersze. Uszkodzona baza
-	// nie może nieść rdzenia, więc naruszenie zatrzymuje start.
+	// Kontrola spójności zaraz po otwarciu: uszkodzona baza nie może nieść rdzenia, więc zatrzymuje start.
 	if err := baza.SprawdzSpojnosc(); err != nil {
 		dziennik.Fatalf("spójność bazy: %v", err)
 	}
 
-	// Wpięcie toru do hosta zdalnego: pakiet zdalne czyta tabelę `host_zdalny`
-	// i ustawienie `host_wykonania` przez uchwyt podany tutaj — bazy nie otwiera
-	// sam, bo plik SQLite ma jedną pulę połączeń w procesie, a jej właścicielem
-	// jest kompozycja. Bez tej linii każda droga toru odmawia, nazywając brak
-	// wpięcia; z nią odmowy zostają tylko tam, gdzie brakuje wskazania hosta
-	// albo zgody Operatora na maszynę.
+	// Wpięcie toru do hosta zdalnego następuje tutaj, bo plik SQLite ma jedną pulę połączeń w procesie.
 	zdalne.Zasil(baza.DB)
 
 	kontekst, zatrzymaj := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

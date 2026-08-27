@@ -3324,3 +3324,24 @@ pozycji, więc ślad zostaje w jednym miejscu.
 
 ## budowa/server/internal/dane/design_zetony.go
 Zapis zestawu żetonów jest zawsze pełny, ponieważ kontrakt zapisu nie zna trybu częściowej zmiany, a panel projektowy nadsyła stan docelowy całego drzewa. Zapis usuwa zastane żetony i wstawia nadesłane w jednej transakcji tym samym wzorcem co przy etykietach zasobu — inaczej żeton skasowany w panelu zostawałby w bazie i wracał przy następnym odczycie. Klucz zestawu odczytuje się przed podmianą żetonów, bo zestaw mógł dopiero powstać w tej samej transakcji, a tabela żetonów wymaga gotowego klucza wiersza.
+
+## budowa/server/cmd/danaco-console/main.go
+Cały odczyt zmiennych środowiska prowadzi pakiet konfiguracja, którego wykaz
+nazw pokrywa się ze wzorcem pliku przykładowego środowiska — żadna zmienna
+środowiska nie jest czytana po nazwie w punkcie wejścia. Poza kompozycją nie
+ma tu logiki, typów ani obsługiwaczy komend: to, co robi rdzeń, mieszka
+w warstwie rdzenia, a wybór torów w warstwie uruchomienia.
+
+Tryb wypisania wykazu zależności zewnętrznych stoi przed odczytem
+konfiguracji, ponieważ zestaw flag konfiguracji odrzuciłby ten argument jako
+nierozpoznany. Wykaz idzie na wyjście standardowe, skąd konsumuje go
+prowizjonowanie serwera, żeby nazwy pakietów miały jedno źródło.
+
+Kontrola integralności pliku bazy i kontrola kluczy obcych wykrywają osobno
+uszkodzenie pliku i wiersze osierocone, oba tuż po otwarciu i migracjach.
+
+Wpięcie toru do hosta zdalnego czyta tabelę hosta zdalnego i ustawienie hosta
+wykonania przez uchwyt podany w punkcie wejścia; sam nie otwiera bazy, bo
+właścicielem jedynej puli połączeń procesu jest kompozycja. Bez tego wpięcia
+każda droga toru odmawia z powodu jego braku; z nim odmowy zostają tylko tam,
+gdzie brakuje wskazania hosta albo zgody na maszynę.

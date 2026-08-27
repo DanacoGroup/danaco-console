@@ -1,23 +1,18 @@
+/**
+ * Wiersz etapu przepływu: nazwa etapu i wskaźnik kropkowy postępu. Etap nie
+ * pochodzi z podagenta — niesie go telemetria `monitor.status`, którą panel wiąże
+ * z przepływem po polu `windowId`.
+ */
+
 import type { MonitorStatus } from '../../../../shared/contract';
 import { kropkiEtapu } from './format-zadan';
 
-/**
- * Wiersz etapu przepływu: nazwa etapu i wskaźnik kropkowy postępu.
- *
- * Etap nie pochodzi z podagenta — struktura `Subagent` nie niesie ani nazwy
- * etapu, ani skali postępu. Niesie je telemetria `monitor.status` w strukturze
- * `MonitorStatus`: `stage` (nazwa etapu bieżącego), `stageIndex` (jego numer),
- * `stageCount` (liczba etapów) i `completion` (stopień ukończenia w procentach).
- * Panel wiąże je z przepływem po `windowId` — po tym samym polu, którym
- * `Subagent` wskazuje okno wykonawcy.
- *
- * Telemetria milcząca nie jest telemetrią zerową. Gdy monitor nie ma procesu dla
- * okna albo odmówił odpowiedzi, wiersz nie rysuje pustego wskaźnika `○○○○○`, bo
- * to znaczyłoby „zero etapów za sobą" — stan, którego nikt nie odczytał. Zamiast
- * tego mówi wprost, że etapu nie oddano i skąd ta cisza pochodzi.
- */
 
-/** Telemetria okien odczytana jednym `monitor.status` dla całej karty sesji. */
+/**
+ * Telemetria okien odczytana jednym `monitor.status` dla całej karty sesji. Jeden
+ * odczyt na kartę, a nie na przepływ, bo monitor oddaje stan wszystkich procesów
+ * naraz, a pytanie osobno dla każdego okna mnożyłoby wywołania bez nowej treści.
+ */
 export interface TelemetriaOkien {
   /** Stan procesu okna; pusty, gdy monitor takiego procesu nie oddał. */
   stan(idOkna: string): MonitorStatus | null;
@@ -50,7 +45,11 @@ export function zlozTelemetrie(
   };
 }
 
-/** Wiersz etapu dla jednego przepływu. */
+/**
+ * Wiersz etapu dla jednego przepływu. Wiersz powstaje także wtedy, gdy telemetria
+ * milczy: wypisuje wówczas przyczynę ciszy, zamiast rysować wskaźnik, którego nikt
+ * nie odczytał.
+ */
 export function wierszEtapu(idOkna: string, telemetria: TelemetriaOkien): HTMLElement {
   const element = document.createElement('p');
   element.className = 'dm-etap';

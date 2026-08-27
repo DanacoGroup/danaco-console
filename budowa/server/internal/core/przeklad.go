@@ -6,14 +6,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przekład między bytami pakietu sesji a kształtem kontraktu.
-//
-// Pakiet session jest właścicielem pojęcia okna komunikacji i jego cyklu życia,
-// więc trzyma własne struktury. Kontrakt trzyma własne. Ten plik jest jedynym
-// miejscem, w którym jedno przechodzi w drugie — nie ma drugiego przekładu
-// rozsianego po obsługiwaczach.
+// Plik przekłada byty pakietu sesji na kształt kontraktu w jednym miejscu, bez rozproszenia.
 
-// sesjaKontraktu przekłada sesję pakietu sesji na sesję kontraktu.
+// sesjaKontraktu przekłada sesję pakietu sesji na sesję kontraktu, przenosząc identyfikator, stan, wykaz okien oraz znaczniki czasu utworzenia i aktualizacji.
 func sesjaKontraktu(s session.Sesja) shared.Session {
 	sesja := shared.Session{
 		Id:        s.Id,
@@ -31,7 +26,7 @@ func sesjaKontraktu(s session.Sesja) shared.Session {
 	return sesja
 }
 
-// oknoKontraktu przekłada okno komunikacji na okno kontraktu.
+// oknoKontraktu przekłada okno komunikacji na okno kontraktu, zachowując powiązania z sesją, modułem i kanałem modelu oraz pozostałe pola opisujące jego miejsce w interfejsie.
 func oknoKontraktu(o session.Okno) shared.Window {
 	okno := shared.Window{
 		Id:             o.Id,
@@ -52,15 +47,14 @@ func oknoKontraktu(o session.Okno) shared.Window {
 	if o.Tytul != "" {
 		okno.Title = &o.Tytul
 	}
-	// Ekspert wraca do klienta wyłącznie wtedy, gdy jest — pole puste znaczy
-	// model surowy, a wskaźnik na pusty napis mówiłby to samo drugim sposobem.
+	// Ekspert wraca do klienta tylko, gdy jest ustawiony — pole puste oznacza model surowy.
 	if o.Agent != "" {
 		okno.AgentId = &o.Agent
 	}
 	return okno
 }
 
-// oknaKontraktu przekłada wykaz okien.
+// oknaKontraktu przekłada wykaz okien pakietu sesji na wykaz okien kontraktu, wywołując przekład pojedynczego okna dla każdej pozycji z osobna.
 func oknaKontraktu(okna []session.Okno) []shared.Window {
 	wykaz := make([]shared.Window, 0, len(okna))
 	for _, okno := range okna {
@@ -103,15 +97,12 @@ func zmianaOkna(z shared.WindowUpdateRequest) session.Zmiana {
 		RolaOkna:            z.WindowRole,
 		OknoKoordynatora:    z.CoordinatorWindowId,
 		Tytul:               z.Title,
-		// Ekspert okna. Pole przechodzi do `session.Zmiana`, więc wybór eksperta
-		// zapisuje się tak samo jak każde inne ustawienie okna, a nie ginie po
-		// drodze.
+		// Ekspert okna zapisuje się jak każde inne ustawienie okna, a nie ginie po drodze.
 		Agent: z.AgentId,
 	}
 }
 
-// bladSesji nadaje błędowi pakietu sesji kod kontraktu. Kod rozstrzyga właściciel
-// pojęcia — rdzeń go wyłącznie przenosi (patrz wynik.go).
+// bladSesji nadaje błędowi pakietu sesji kod kontraktu. Kod rozstrzyga właściciel pojęcia, rdzeń go wyłącznie przenosi.
 func bladSesji(err error) error {
 	if err == nil {
 		return nil
@@ -119,13 +110,7 @@ func bladSesji(err error) error {
 	return protocol.JakoError(protocol.NowyBlad(session.Kod(err), err.Error()))
 }
 
-// listaKatalogow pilnuje, żeby katalogi robocze wyszły jako tablica, nigdy jako
-// brak wartości.
-//
-// Kontrakt zapowiada `workingDirs` bezwarunkowo, a wycinek pusty w Go koduje się
-// do `null`. Okno bez katalogów jest stanem poprawnym, więc kontrakt nie każe
-// odbiorcy przygotowywać się na brak — klient czytający to pole bez osłony
-// wywróciłby na `null` wczytanie modułu. Wysyłamy pustą tablicę i różnica znika.
+// listaKatalogow pilnuje, żeby katalogi robocze wyszły jako tablica, nigdy jako brak wartości, ponieważ kontrakt zapowiada to pole bezwarunkowo, a wycinek pusty w Go koduje się do wartości null.
 func listaKatalogow(katalogi []string) []string {
 	if katalogi == nil {
 		return []string{}

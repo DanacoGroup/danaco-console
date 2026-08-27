@@ -3913,3 +3913,18 @@ Nazwa pokazana po założeniu pochodzi z odpowiedzi, a rozbieżność wobec wpis
 jest wypowiedziana: rdzeń zapisuje nazwę dosłownie, więc różnica może wziąć się
 wyłącznie z przycięcia po stronie okna, a Operator ma o niej wiedzieć, zanim
 zacznie tej kolekcji szukać po tym, co napisał.
+
+## budowa/klient-poprzedni/src/modele/wybor-osi.ts
+
+Sekcja modeli posługuje się dwiema osiami z trzech, lecz oś platformy musi być
+w pasku obecna: tożsamość zapisana dla platformy stanowi tło, na którym leży
+zapis modelu oraz konta, a pasek jest jedynym miejscem jej podglądu i zmiany.
+
+Byt osi pozostaje polem otwartym. Podpowiedzi pochodzą z rejestru kanałów
+i z rejestru kont, lecz identyfikator modelu dotychczas nieużywanego nie jest
+błędem, ponieważ wykaz podpowiedzi nie jest zbiorem zamkniętym. Oś platformy bytu
+nie posiada, więc pole bytu znika w całości, zamiast stać wygaszone.
+
+Słownik nazw osi pochodzi z warstwy konfiguracji, ponieważ oś rozstrzygania jest
+jedna dla całego systemu i nie może być nazywana odmiennie w poszczególnych
+oknach.

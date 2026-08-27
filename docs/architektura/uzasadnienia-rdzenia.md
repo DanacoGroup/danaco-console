@@ -957,3 +957,43 @@ usiąść, oraz katalog rozszerzeń, z którego bierze się druga połowa wykazu
 ukośniku. Doradca powstaje w złożeniu modułów (montaz_moduly.go) razem z mową:
 stoi na tym samym rejestrze kanałów, którym jedzie okno rozmowy, i na
 dzienniku bazy.
+
+## urzadzenia_skaner.go
+
+Rozdzielenie warstwy skanera warunkiem budowy per system, zamiast rozstrzygania
+po runtime.GOOS w jednym pliku, wygląda porządniej, ale ma jedną wadę
+rozstrzygającą: budowa na maszynie budującej pod Linuksem nie skompilowałaby
+ani razu drogi WIA. Droga Windows przestałaby się kompilować przy pierwszej
+zmianie sąsiedniego pliku i nikt by tego nie zobaczył aż do wydania instalki
+natywnej — dokładnie w chwili, w której nie ma już czasu na naprawę.
+Rozstrzygnięcie po runtime.GOOS trzyma oba warianty pod jednym sprawdzianem
+kompilacji kosztem kilku bajtów martwego kodu w wydaniu; to ta sama droga,
+którą rdzeń rozróżnia system już w innych miejscach, nie druga jej odmiana.
+Warunek budowy będzie właściwy dopiero wtedy, gdy droga Windows sięgnie po
+bibliotekę wołającą COM z Go — dziś woła PowerShell, więc nie ma czego
+chronić warunkiem budowy: kod jest zwykłym napisem i kompiluje się wszędzie.
+
+WIA idzie przez PowerShell, nie TWAIN, ponieważ TWAIN wymaga okna i pętli
+komunikatów, a z procesu serwera bez pulpitu nie wystartuje. WIA jest warstwą
+systemową Windows dostępną przez COM, a jedyną drogą do COM, którą rdzeń ma
+bez wkompilowanej biblioteki, jest PowerShell — już wpisany do wykazu
+zależności rdzenia, więc sonda startowa mówi o jego braku sama. Zasada
+bezwzględna: program zewnętrzny idzie wyłącznie przez warstwę wołania
+procesów rdzenia, nigdy wywołaniem bezpośrednim.
+
+Funkcja odmowaSkanuSane rozstrzyga, czy skan nie doszedł do skutku z braku
+urządzenia czy z innej przyczyny, i dopiero wtedy nazywa brak. Bez tego
+rozstrzygnięcia obie sytuacje wychodziły jednym zdaniem: program scanimage
+kończy się tym samym kodem przy każdej przyczynie, a odmowa arsenału
+przekładała kod niezerowy na usterkę wewnętrzną wraz ze zrzutem procesu —
+odbiorca bez podłączonego skanera dostawał więc kod mówiący o usterce
+rdzenia zamiast zdania o tym, czego brakuje. Droga WIA rozróżnia te dwie
+rzeczy od początku, i to samo należy się drodze SANE, bo stan maszyny jest
+ten sam. Rozstrzygnięcie idzie pytaniem o wykaz, nie czytaniem diagnostyki
+programu: zdanie, które program mówi o sobie, jest napisem obcego programu,
+a rdzeń nie ma prawa opierać kodu odmowy na tym, że napis nie zmieni się przy
+następnym wydaniu. Wykaz pusty znaczy brak urządzenia; wykaz niepusty albo
+niedostępny zostawia odmowę pierwotną, bo rdzeń nie wie wtedy nic ponad to,
+co powiedział program, a odmowa zgadnięta byłaby gorsza od surowej. Pytanie
+idzie wyłącznie po nieudanym skanie, więc droga udana nie płaci za nie ani
+jednym wywołaniem.

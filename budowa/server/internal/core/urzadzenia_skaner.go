@@ -1,33 +1,6 @@
-// Odpowiedzialność pliku: warstwa urządzeń wejściowych (skanera) rozdzielona po
-// systemie operacyjnym — wykaz urządzeń i pobranie obrazu drogą właściwą dla
-// maszyny, na której stoi rdzeń.
-//
-// ── Dlaczego JEDEN plik z rozstrzygnięciem po `runtime.GOOS`, a nie `_windows.go` ──
-// Rozdzielenie warunkiem budowy (`urzadzenia_skaner_windows.go` /
-// `_linux.go`) wygląda porządniej, ale ma tu jedną wadę rozstrzygającą:
-// `go build ./...` na maszynie budowy (Linux) NIE SKOMPILOWAŁBY drogi WIA ani
-// razu. Droga Windows przestałaby się kompilować przy pierwszej zmianie
-// sąsiedniego pliku i nikt by tego nie zobaczył aż do wydania instalki
-// natywnej — czyli dokładnie w chwili, w której nie ma już czasu na naprawę.
-// Rozstrzygnięcie po `runtime.GOOS` trzyma oba warianty pod jednym sprawdzianem
-// kompilacji, a kosztem jest kilka bajtów martwego kodu w wydaniu. To ta sama
-// droga, którą rdzeń rozróżnia system już dziś (`urzadzenia.go` linia 51,
-// `adapter_modul_developer_okno.go` linia 141) — nie druga jej odmiana.
-//
-// Warunek budowy będzie właściwy dopiero wtedy, gdy droga Windows sięgnie po
-// bibliotekę wołającą COM z Go. Dziś woła `pwsh`, więc nie ma czego chronić
-// warunkiem budowy: kod jest zwykłym napisem i kompiluje się wszędzie.
-//
-// ── Dlaczego WIA przez `pwsh`, a nie TWAIN ─────────────────────────────────
-// TWAIN wymaga okna i pętli komunikatów — z procesu serwera bez pulpitu nie
-// wystartuje. WIA jest warstwą systemową Windows dostępną przez COM, a jedyną
-// drogą do COM, którą rdzeń ma bez wkompilowanej biblioteki, jest PowerShell.
-// `pwsh` stoi już w wykazie zależności rdzenia (`zaleznosci_zewnetrzne.go`,
-// pozycja `narzedziePowerShell`), więc sonda startowa mówi o jego braku sama.
-//
-// Zasada bezwzględna: program zewnętrzny idzie WYŁĄCZNIE przez
-// `zewnetrzne.Wolaj` — nigdy `exec.Command`. Pilnuje tego
-// `zapora_procesow_rdzenia_test.go`.
+// Warstwa urządzeń wejściowych skanera rozdzielona po systemie operacyjnym pod
+// runtime.GOOS w jednym pliku: wykaz urządzeń i pobranie obrazu drogą SANE na
+// Linuksie i WIA przez PowerShell na Windowsie.
 package core
 
 import (
@@ -56,10 +29,9 @@ const (
 	systemLinux   = "linux"
 )
 
-// granicaSkanowaniaUrzadzenia jest granicą czasu JEDNEGO przebiegu skanera.
-// Osobna od granicy arsenału (2 minuty), bo skan strony A4 przy 600 punktach na
-// cal na wolnym urządzeniu USB trwa dłużej niż rozpakowanie archiwum, a granica
-// urwana w połowie zostawia plik obrazu bez końca.
+// granicaSkanowaniaUrzadzenia jest granicą czasu jednego przebiegu skanera,
+// osobną od granicy arsenału, bo skan strony A4 na wolnym urządzeniu USB trwa
+// dłużej niż rozpakowanie archiwum.
 const granicaSkanowaniaUrzadzenia = 5 * time.Minute
 
 // granicaWykazuUrzadzen jest granicą czasu samego wykazu. Krótka celowo:
@@ -72,11 +44,9 @@ const granicaWykazuUrzadzen = 45 * time.Second
 // gubi litery, wyżej rośnie czas skanu bez zysku dla tekstu.
 const rozdzielczoscSkanowaniaDomyslna = 300
 
-// narzedzieSkaneraWia jest tym samym programem, co `narzedziePowerShell`
-// (`pwsh`), ale pod nazwą mówiącą o TEJ czynności. Operator, któremu odmówiono
-// skanowania, ma przeczytać, czego brakuje do skanowania — nie do analizy
-// skryptów. Wykaz zależności pilnuje programu, nie nazwy czytelnej, więc ta
-// deklaracja nie jest drugim wpisem obok tamtego.
+// narzedzieSkaneraWia jest tym samym programem co narzedziePowerShell (pwsh),
+// ale pod nazwą mówiącą o tej czynności, żeby odmowa nazywała brak do
+// skanowania, nie do analizy skryptów.
 var narzedzieSkaneraWia = zewnetrzne.Narzedzie{
 	Nazwa:   "PowerShell 7 (droga WIA do skanera Windows)",
 	Program: "pwsh",
@@ -175,8 +145,8 @@ type zamowienieSkanu struct {
 	Urzadzenie string
 	// Rozdzielczosc w punktach na cal.
 	Rozdzielczosc int
-	// TrybBarwny jest słowem Operatora („color", „gray", „bw"). Puste zostawia
-	// nastawę urządzenia nietkniętą.
+	// TrybBarwny nazywa tryb koloru słowem produktowym; puste zostawia nastawę
+	// urządzenia nietkniętą.
 	TrybBarwny string
 	// Stron mówi, ile kartek pobrać z podajnika. Mniej niż 1 znaczy jedną.
 	Stron int
@@ -212,10 +182,9 @@ func (a *adapterStudia) skanujUrzadzenie(ctx context.Context,
 	}
 }
 
-// skanujSane pobiera obrazy przez SANE. Obraz przychodzi WYJŚCIEM programu, nie
-// plikiem: `scanimage --format=png` pisze PNG na wyjście standardowe, a rdzeń
-// zapisuje bajty sam. Przekierowanie do pliku wymagałoby powłoki, a powłoka jest
-// drugą drogą uruchomienia procesu obok `zewnetrzne.Wolaj`.
+// skanujSane pobiera obrazy przez SANE: obraz przychodzi wyjściem programu,
+// nie plikiem, bo scanimage pisze PNG na wyjście standardowe, a rdzeń zapisuje
+// bajty sam.
 func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 	zamowienie zamowienieSkanu, rozdzielczosc, stron int) ([]string, error) {
 
@@ -233,8 +202,8 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 			granicaSkanowaniaUrzadzenia)
 		if err != nil {
 			if numer > 1 {
-				// Podajnik pustego arkusza nie poda i SANE odmawia — strony
-				// pobrane przed tym momentem są prawdziwe i wracają do kolejki.
+				// Podajnik pustego arkusza nie poda i SANE odmawia — strony pobrane
+				// wcześniej są prawdziwe.
 				return sciezki, nil
 			}
 			return nil, a.odmowaSkanuSane(ctx, err)
@@ -254,34 +223,12 @@ func (a *adapterStudia) skanujSane(ctx context.Context, katalog string,
 	return sciezki, nil
 }
 
-// odmowaSkanuSane rozstrzyga, czy skan nie doszedł do skutku z BRAKU URZĄDZENIA,
-// czy z innej przyczyny — i dopiero wtedy nazywa brak.
-//
-// Bez tego rozstrzygnięcia obie sytuacje wychodziły jednym zdaniem: `scanimage`
-// kończy się kodem 1 przy każdej przyczynie, a odmowa arsenału przekłada kod
-// niezerowy na usterkę wewnętrzną wraz ze zrzutem procesu. Operator, który po
-// prostu nie ma podłączonego skanera, dostawał więc `internal_error` — kod
-// mówiący „usterka rdzenia, zgłoś ją" — zamiast zdania o tym, czego brakuje
-// i co z tym zrobić. Droga WIA rozróżnia te dwie rzeczy od początku
-// (`odmowaWia`, przypadek `BRAK-URZADZENIA`) i to samo należy się drodze SANE:
-// stan maszyny jest ten sam, więc i odpowiedź ma być ta sama.
-//
-// Rozstrzyga PYTANIEM O WYKAZ, nie czytaniem diagnostyki programu. Zdanie, które
-// `scanimage` mówi o sobie, jest napisem obcego programu — rdzeń nie ma prawa
-// opierać kodu odmowy na tym, że napis nie zmieni się przy następnym wydaniu.
-// Wykaz jest drogą własną rdzenia i odpowiada wprost na pytanie, które tu padło.
-//
-// Wykaz pusty znaczy „nie ma czego skanować": to nie awaria drogi, tylko brak
-// urządzenia, więc kod jest `not_found`. Wykaz niepusty albo niedostępny
-// zostawia odmowę pierwotną — rdzeń nie wie wtedy nic ponad to, co powiedział
-// program, a odmowa zgadnięta byłaby gorsza od surowej.
-//
-// Pytanie idzie WYŁĄCZNIE po nieudanym skanie, więc droga udana nie płaci za nie
-// ani jednym wywołaniem.
+// odmowaSkanuSane rozstrzyga, czy skan nie doszedł do skutku z braku urządzenia
+// czy z innej przyczyny, pytaniem o wykaz, nie czytaniem diagnostyki programu —
+// scanimage kończy się tym samym kodem przy każdej przyczynie.
 func (a *adapterStudia) odmowaSkanuSane(ctx context.Context, pierwotna error) error {
 	// Brak samego programu rozstrzyga się bez pytania o wykaz: wykaz idzie tym
-	// samym programem, więc pytanie nie ma prawa się powieść — a odmowa ma być
-	// ta sama, którą droga WIA daje przy braku `pwsh` (`bladWarstwyWia`).
+	// samym programem.
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(pierwotna, &brak) {
 		return bladWarstwySane(pierwotna)
@@ -318,11 +265,9 @@ func trybBarwnySane(tryb string) string {
 	}
 }
 
-// skanujWia pobiera obrazy przez WIA. Tu obraz NIE wraca wyjściem procesu:
-// PowerShell oddaje bajty obrazu jako tekst i po drodze psuje je znakowaniem, a
-// obraz zapisany przez WIA metodą `SaveFile` jest tym samym obrazem bez ryzyka.
-// Skrypt zapisuje więc pliki do katalogu wskazanego przez rdzeń i oddaje na
-// wyjściu ich ścieżki jako JSON.
+// skanujWia pobiera obrazy przez WIA: obraz nie wraca wyjściem procesu, bo
+// PowerShell psułby bajty znakowaniem, więc skrypt zapisuje pliki metodą
+// SaveFile i oddaje ich ścieżki jako JSON.
 func (a *adapterStudia) skanujWia(ctx context.Context, katalog string,
 	zamowienie zamowienieSkanu, rozdzielczosc, stron int) ([]string, error) {
 
@@ -381,10 +326,8 @@ func trybBarwnyWia(tryb string) int {
 
 // ── Skrypty warstwy WIA ─────────────────────────────────────────────────────
 
-// skryptPowerShell składa wywołanie `pwsh` z jednym skryptem. Te same przełączniki,
-// którymi woła PowerShell moduł Terminal (`adapter_modul_terminal_analiza.go`):
-// bez logo, bez profilu Operatora i bez interakcji — profil maszyny nie ma prawa
-// zmienić wyniku czynności rdzenia.
+// skryptPowerShell składa wywołanie pwsh z jednym skryptem, tymi samymi
+// przełącznikami co moduł Terminal: bez logo, bez profilu i bez interakcji.
 func skryptPowerShell(skrypt string) []string {
 	return []string{"-NoLogo", "-NoProfile", "-NonInteractive", "-Command", skrypt}
 }
@@ -401,10 +344,9 @@ const skryptWykazuWia = `$ErrorActionPreference='Stop';` +
 	`[void]$w.Add([pscustomobject]@{id=$d.DeviceID;name=$n})};` +
 	`ConvertTo-Json -InputObject @($w) -Compress`
 
-// skryptSkanuWia składa skrypt pobrania stron. Nastawy wchodzą liczbami i
-// ścieżką katalogu, nigdy tekstem od Operatora — identyfikator urządzenia jest
-// jedyną wartością zmienną i idzie w apostrofach z podwojonym apostrofem, bo tak
-// PowerShell odczytuje napis dosłowny.
+// skryptSkanuWia składa skrypt pobrania stron. Nastawy wchodzą liczbami
+// i ścieżką katalogu, nigdy tekstem od zewnątrz — identyfikator urządzenia
+// idzie w apostrofach z podwojonym apostrofem.
 func skryptSkanuWia(katalog, urzadzenie string, rozdzielczosc, intencja, stron int) string {
 	var skrypt strings.Builder
 	skrypt.WriteString(`$ErrorActionPreference='Stop';`)
@@ -424,8 +366,8 @@ func skryptSkanuWia(katalog, urzadzenie string, rozdzielczosc, intencja, stron i
 		`ConvertTo-Json -InputObject $wynik -Compress;exit 0};`)
 	skrypt.WriteString(`$item=$dev.Items.Item(1);`)
 	skrypt.WriteString(fmt.Sprintf(`$dpi=%d;`, rozdzielczosc))
-	// Nastawy idą pojedynczo i każda w swoim `try`: backend, który jednej z nich
-	// nie zna, ma oddać obraz w nastawie własnej, a nie odmówić całego skanu.
+	// Nastawy idą pojedynczo, każda w swoim try: nastawa nieznana ma oddać
+	// obraz, nie odmówić skanu.
 	skrypt.WriteString(`foreach($p in 6147,6148){try{$item.Properties.Item($p).Value=$dpi}catch{}};`)
 	if intencja != 0 {
 		skrypt.WriteString(fmt.Sprintf(`try{$item.Properties.Item(6146).Value=%d}catch{};`, intencja))
@@ -483,11 +425,9 @@ func odmowaWia(rozpoznanie string) error {
 	}
 }
 
-// bladWarstwySane dokłada do odmowy arsenału zdanie o tym, CZEGO ta droga
-// wymaga — to samo, co `bladWarstwyWia` robi dla drogi Windows, bo stan maszyny
-// jest ten sam: nie ma czym skanować. Sam brak `scanimage` opisuje
-// `zewnetrzne.BrakNarzedzia` poprawnie, ale nie mówi, że bez niego nie ma na
-// Linuksie skanera wcale — ani że materiał da się wnieść do kolejki inną drogą.
+// bladWarstwySane dokłada do odmowy arsenału zdanie o tym, czego ta droga
+// wymaga, bo sam brak scanimage nie mówi, że bez niego nie ma na Linuksie
+// skanera wcale.
 func bladWarstwySane(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -502,10 +442,9 @@ func bladWarstwySane(err error) error {
 	return err
 }
 
-// bladWarstwyWia dokłada do odmowy arsenału zdanie o tym, CZEGO ta droga
-// wymaga. Sam brak `pwsh` opisuje `zewnetrzne.BrakNarzedzia` poprawnie, ale nie
-// mówi, że bez niego nie ma na Windowsie skanera wcale — a to jest wiadomość,
-// po której Operator wie, co zainstalować.
+// bladWarstwyWia dokłada do odmowy arsenału zdanie o tym, czego ta droga
+// wymaga, bo sam brak pwsh nie mówi, że bez niego nie ma na Windowsie skanera
+// wcale.
 func bladWarstwyWia(err error) error {
 	var brak *zewnetrzne.BrakNarzedzia
 	if errors.As(err, &brak) {
@@ -522,11 +461,9 @@ func bladWarstwyWia(err error) error {
 
 // ── Wspólne dla obu dróg ────────────────────────────────────────────────────
 
-// wolajUrzadzenie jest jedyną drogą warstwy urządzeń do programu zewnętrznego.
-// Osobna od `wolajNarzedzie`, bo granicę czasu dobiera wołający: wykaz ma być
-// szybki, a skan wolno może trwać minuty. Odmowy przekłada ta sama funkcja, co
-// w arsenale modułu — dwa różne przekłady tych samych braków dałyby dwa różne
-// zdania o jednej usterce.
+// wolajUrzadzenie jest jedyną drogą warstwy urządzeń do programu zewnętrznego,
+// osobną od wolajNarzedzie, bo granicę czasu dobiera wołający: wykaz ma być
+// szybki, a skan wolno może trwać minuty.
 func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzedzie,
 	argumenty []string, granica time.Duration) ([]byte, error) {
 
@@ -540,11 +477,8 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar, n,
 		argumenty, "", granica)
 	if err != nil {
-		// Brak programu wychodzi stąd surowy, bo przekład arsenału buduje błąd
-		// protokołu bez łańcucha i gałąź drogi (`bladWarstwySane`,
-		// `bladWarstwyWia`) nie rozpoznałaby już, że to brak — a to gałąź zna
-		// zdanie o skanowaniu wraz z drogą obejścia. Każde miejsce wołania
-		// warstwy przekłada brak u siebie, więc surowy typ nie wychodzi wyżej.
+		// Brak programu wychodzi stąd surowy — tylko gałąź drogi wołającej zna
+		// zdanie o obejściu.
 		var brak *zewnetrzne.BrakNarzedzia
 		if errors.As(err, &brak) {
 			return wynik.Wyjscie, err
@@ -554,10 +488,9 @@ func (a *adapterStudia) wolajUrzadzenie(ctx context.Context, n zewnetrzne.Narzed
 	return wynik.Wyjscie, nil
 }
 
-// katalogSkanow wskazuje katalog, w którym wolno położyć pobrany obraz. Miejsce
-// jest obszarem roboczym okna, bo tam sięga izolacja i tam kolejka wczytywania
-// ma prawo czytać. Rdzeń bez ustalonego obszaru schodzi na katalog tymczasowy
-// systemu — skan ma powstać, a nie zniknąć na braku nastawy.
+// katalogSkanow wskazuje katalog, w którym wolno położyć pobrany obraz —
+// obszar roboczy okna, bo tam sięga izolacja i tam kolejka wczytywania ma
+// prawo czytać.
 func (a *adapterStudia) katalogSkanow() (string, error) {
 	korzen := ""
 	if a.katalog != nil {

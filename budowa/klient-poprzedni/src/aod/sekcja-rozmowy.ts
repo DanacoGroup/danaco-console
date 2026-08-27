@@ -3,16 +3,10 @@ import { utworzAkapit, utworzPodtytul } from './pola-wykazu';
 import type { ZrodloAod } from './zrodlo-komend';
 
 /**
- * Sekcja wysyłki wiadomości z nakładki do okna rozmowy (`aod.chat.send`).
- *
- * Pole okna zostaje puste z zamysłem: puste `windowId` kieruje wiadomość do
- * okna ogniskowanego, a ognisko zna rdzeń — mogło się zmienić między odczytem
- * stanu a wysyłką, więc sekcja nie podstawia tu okna odczytanego wcześniej.
- * Odpowiedź niesie `messageId` oraz `windowId` okna, które wiadomość przyjęło,
- * i meldunek pokazuje oba.
- *
- * Przycisk wysyłki pozostaje czynny także przy pustym polu treści — pustą treść
- * ocenia rdzeń i to on zwraca odmowę (`validation_failed`).
+ * Sekcja wysyłki wiadomości z nakładki do okna rozmowy (`aod.chat.send`). Pole
+ * okna zostaje puste celowo: puste `windowId` kieruje wiadomość do okna
+ * ogniskowanego, a ognisko zna rdzeń. Meldunek pokazuje `messageId` i okno,
+ * które wiadomość przyjęło.
  */
 export interface SekcjaRozmowy {
   element: HTMLElement;

@@ -5430,3 +5430,42 @@ i nadanie go jednej idzie w tej samej transakcji, żeby historia nie pokazała p
 dwóch wersji opublikowanych naraz.
 ## budowa/server/internal/dane/sejf_poswiadczen.go
 Baza zna wyłącznie odwołanie, czyli nazwę wpisu w sejfie; sam sekret leży w osobnym pliku katalogu danych. Dzięki temu odczyt katalogu kont nigdy nie może wynieść sekretu, bo kolumny na niego nie ma, a mimo to poświadczenie jest trwałe, więc znacznik posiadania poświadczenia mówi prawdę: skoro odwołanie zapisano, sekret istnieje. Sejf jest celowo prosty: jeden plik JSON kluczowany bytem, pod zamkiem. To nie jest magazyn klasy zarządzania kluczami, tylko trwały schowek na sekret, którego rdzeń nie wpuszcza do bazy ani do odpowiedzi; wymianę na zewnętrzny magazyn domyka ten sam interfejs zapisu i usuwania. Byt w odczycie jest surowym kluczem wpisu, bez przedrostka odwołania: rozbiera go wołający, a sejf kluczuje bytem dokładnie tak, jak zapisał przy zapisie poświadczenia.
+
+## budowa/server/internal/tokenizator/tokenizator.go
+
+Przybliżenie liczby żetonów po długości tekstu myli się o kilkadziesiąt procent na języku polskim,
+ponieważ znaki diakrytyczne rozpadają się na osobne żetony, a jeszcze bardziej na kodzie źródłowym i na
+zapisie strukturalnym. Licznik, który myli się o kilkadziesiąt procent, jest gorszy niż jego brak: pasek
+zajętości pokazuje stan w normie, a tura kończy się przepełnieniem okna kontekstu. Słownik BPE jest
+wkompilowany w binarium rdzenia razem z pakietem — nie ma tu ani jednego procesu potomnego, ani jednego
+pobrania z sieci w trakcie żądania, ponieważ tokenizator ma działać na maszynie odciętej od świata tak
+samo, jak na maszynie deweloperskiej.
+
+Pakiet nie udaje, że zna podział na żetony każdego istniejącego modelu. Zna rodziny słowników, które
+naprawdę ma; model spoza nich dostaje słownik najbliższy wraz z jawnym powiedzeniem, którym słownikiem
+policzono. Nazwa słownika wchodzi do odpowiedzi kontraktu, więc czytelnik wie, czym zmierzono, zamiast
+dostać liczbę bez świadka. Wybór słownika domyślnego dla modeli spoza wykazu jest świadomy, a nie
+zaniedbaniem: jest najbliższym dostępnym podziałem dla tej klasy modeli, a odpowiedź mówi, że policzono
+właśnie nim, więc czytelnik wie, na ile liczba jest wiążąca.
+
+## budowa/server/internal/dane/orkiestracja_biegi.go
+Obsada jest jednym bytem o dwóch nośnikach: wisi albo na automatyce, albo na
+biegu orkiestracji, pilnowane więzem sprawdzającym schematu. Zapytania
+pętli automatyki niosą identyfikator automatyki i widzą wyłącznie obsadę
+automatyk; zapytania tego pliku niosą identyfikator biegu i widzą wyłącznie
+obsadę biegów — stąd dwa pliki nad jedną tabelą.
+
+Bieg nie jest przebiegiem automatyki: przebieg automatyki wisi na zapisanej
+definicji, a bieg orkiestracji zakłada się w oknie i bywa jednorazowy —
+zestawienie dwóch modeli nie wymaga zapisanej automatyki.
+
+Kolumna wskazująca kolejkę jest wskazaniem, nie drugim silnikiem — pracę
+biegu wykonuje silnik kolejek.
+
+Okno bez biegu wraca jako błąd braku wiersza i jest to stan zwykły, nie
+usterka: podagent bywa powołany poza biegiem orkiestracji, w zwykłej
+rozmowie — kolumna biegu podagenta dopuszcza pustkę.
+
+Podmiana obsady, a nie dopisywanie: scalanie zostawiałoby stanowiska
+usunięte z nadesłanego wykazu. Obsada pusta jest poprawna — bieg bez
+obsady rusza na modelu wskazanym w oknie.

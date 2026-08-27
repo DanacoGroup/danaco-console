@@ -1,38 +1,9 @@
 import { Command } from '../../../../shared/contract';
 import type { WarstwaWidocznosci } from './warstwy-designu';
 
-/**
- * Katalog funkcji modułu Design — pełny wykaz z opracowania modułu wraz z tym,
- * czym każda pozycja jest wykonywana w tej budowie.
- *
- * Wykaz istnieje po to, żeby stan modułu dało się przeczytać, a nie zgadnąć.
- * Okno pokazuje czynności, które wykonuje; katalog pokazuje komplet zamierzony
- * w opracowaniu i przy każdej pozycji mówi jedno z trojga: którą komendą
- * kontraktu jest wykonywana, że wykonuje ją samo okno bez udziału rdzenia,
- * albo czego brakuje, żeby była. Pozycja bez drogi nie znika z wykazu —
- * zniknięcie byłoby ukryciem braku.
- *
- * Trzeci stan jest tu konieczny, bo dwa nie oddają prawdy o tym module. Kanwa,
- * wyrównanie warstw, siatka pomocnicza, drzewo żetonów i rachunek kontrastu
- * dzieją się w całości w przeglądarce i komendy nie potrzebują; nazwanie ich
- * „brakiem kontraktu" byłoby zmyśleniem długu, a nazwanie „komendą" —
- * zmyśleniem drogi.
- *
- * Nazwy pozycji i podział na grupy pochodzą z opracowania modułu i nie są
- * tłumaczone ani parafrazowane. Numeracji opracowania katalog nie przenosi:
- * pozycję odnajduje się po pełnej nazwie, nie po oznaczeniu, które poza
- * dokumentem nic nie znaczy.
- *
- * Liczby pozycji katalog nie zapisuje nigdzie na stałe — podaje ją `length`.
- * Opracowanie podsumowuje grupy zdaniem o siedemdziesięciu trzech funkcjach,
- * a wylicza ich więcej; wpisanie tamtej liczby dałoby napis rozjeżdżający się
- * z wykazem, który stoi obok.
- *
- * Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji
- * (`wyszukiwarka-funkcji-designu.ts`) buduje z niego listę.
- */
+// Katalog funkcji modułu Design: pełny wykaz pozycji ze sposobem wykonania każdej w tej budowie.
 
-/** Nazwy okien modułu — jedno brzmienie na cały moduł. */
+/** Nazwy okien modułu Design, każde w jednym ustalonym brzmieniu, stosowanym w całym module bez odmian. */
 export const OKNA = {
   chat: 'Chat Window',
   petla: 'Execution Loop Window',
@@ -52,11 +23,11 @@ export const OKNA = {
  */
 export type WykonanieFunkcji = 'komenda' | 'okno' | 'bez-drogi';
 
-/** Jedna pozycja katalogu funkcji. */
+/** Jedna pozycja katalogu funkcji modułu Design wraz z grupą, opisem, oknem, warstwą widoczności i sposobem wykonania. */
 export interface PozycjaKatalogu {
-  /** Nazwa własna pozycji, dokładnie jak w opracowaniu modułu. */
+  /** Nazwa własna pozycji, zapisana dosłownie i niepodlegająca tłumaczeniu ani parafrazie. */
   readonly nazwa: string;
-  /** Grupa tematyczna opracowania. */
+  /** Grupa tematyczna pozycji katalogu. */
   readonly grupa: string;
   /** Co pozycja robi. */
   readonly opis: string;
@@ -68,10 +39,7 @@ export interface PozycjaKatalogu {
   readonly wykonanie: WykonanieFunkcji;
   /** Komendy kontraktu wykonujące pozycję; wypełnione wyłącznie przy `komenda`. */
   readonly komendy: readonly string[];
-  /**
-   * Czego brakuje albo co okno robi zamiast tego — obowiązkowe przy
-   * `bez-drogi`, dopuszczalne przy pokryciu częściowym.
-   */
+  /** Czego brakuje albo co robi okno zamiast tego; obowiązkowe przy `bez-drogi`. */
   readonly uwaga?: string;
 }
 
@@ -1163,12 +1131,12 @@ export const KATALOG_FUNKCJI: readonly PozycjaKatalogu[] = [
   },
 ];
 
-/** Grupy katalogu w kolejności opracowania, bez powtórzeń. */
+/** Grupy katalogu funkcji w kolejności pierwszego wystąpienia pozycji, bez powtórzeń jednej grupy dwukrotnie. */
 export function grupyKatalogu(): readonly string[] {
   return [...new Set(KATALOG_FUNKCJI.map((pozycja) => pozycja.grupa))];
 }
 
-/** Liczba pozycji o danym sposobie wykonania — miara, nie napis. */
+/** Liczba pozycji katalogu o danym sposobie wykonania, liczona z wykazu, nie zapisana nigdzie na stałe jako osobna wartość. */
 export function liczbaWedlugWykonania(wykonanie: WykonanieFunkcji): number {
   return KATALOG_FUNKCJI.filter((pozycja) => pozycja.wykonanie === wykonanie).length;
 }

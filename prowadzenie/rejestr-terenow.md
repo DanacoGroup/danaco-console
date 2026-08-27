@@ -144,6 +144,69 @@ Deklarację narzędzia zakładasz **przy miejscu użycia**, tak jak robi to rdze
 `zaleznosci_zewnetrzne.go` dopisujesz wyłącznie odwołanie. Przy scaleniu
 rozjazd w tym jednym pliku rozstrzyga Prowadzący — nie jest to Twoja usterka.
 
+### aktualizacja-powloki-i-skrypty
+
+Usterki zastane powłoki, zmierzone przy przejęciu. `droga.rs:293` importuje
+`KatalogProbny` z nieistniejącego `aktualizacja/probne.rs` w siedmiu
+sprawdzianach — `cargo test` powłoki nie kompiluje się od chwili przejęcia.
+`pobranie.rs` przy `wykonaj_aktualizacje` sprawdza wyłącznie sumę SHA-256
+podaną przez tę samą stronę, bez przywiązania do kanału z `wydania.json`.
+Część skryptów w `budowa/scripts/` wskazuje usunięte profile nastaw,
+nieistniejący `budowa/client/` i wariant natywny zniesiony pozycją 8;
+pozycja 8 pkt 4 stanowi, że materiał instalek natywnych leży poza
+repozytorium, w `~/robocze/material/repo-2.0/budowa/scripts/`.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/aktualizacja-powloki-i-skrypty` z `main` |
+| **Wykaz plików** | `budowa/desktop/src-tauri/src/aktualizacja/` (w tym nowy `probne.rs`), `budowa/scripts/` |
+| **Poza terenem** | reszta powłoki (uprawnienia, capabilities, polityka CSP — czeka na klienta), polecenia IPC bez odbiorców (odbiorcy przyjdą z falami 3–5), `budowa/server/`, `budowa/shared/`, `budowa/klient/`, `design/`, `prowadzenie/` |
+| **Wykonawca** | sesja wysłana przez Prowadzącego 27.08.2026 |
+
+**Kryteria odbioru.**
+
+1. `cargo test` w `budowa/desktop/src-tauri` kompiluje się i biegnie — zero
+   niepowodzeń, z przytoczonym wynikiem uruchomienia.
+2. `probne.rs` odtworzony wyłącznie z użyć w `droga.rs` — żadnego zachowania
+   bez pokrycia w miejscach użycia; niejasność jest zgłoszeniem.
+3. Pobranie aktualizacji przywiązane do kanału z `wydania.json` — adres spoza
+   kanału odrzucany, wykazane sprawdzianem. Gdzie kanał stoi w źródłach,
+   ustala wykonawca; brak w źródłach jest zgłoszeniem z przyjętym
+   rozstrzygnięciem.
+4. Skrypty wskazujące usunięte profile, nieistniejący `budowa/client/` albo
+   wariant natywny — usunięte z repozytorium po potwierdzeniu, że kopia
+   w materiale zamkniętym istnieje i jest tożsama (albo po jej złożeniu).
+   Skrypty żywe nietknięte; ich usterki idą zgłoszeniem, nie poprawką.
+5. Rewizje obejmują wyłącznie pliki terenu.
+
+### odmowy-skanera
+
+Brak urządzenia jest już nazwany, ale brak programu `scanimage` na Linuksie
+wychodzi odmową arsenału bez wskazania drogi obejścia, podczas gdy
+`bladWarstwyWia` (`urzadzenia_skaner.go`) dla tej samej sytuacji na Windowsie
+podaje `studio.ingest.queue.add`. Ta sama asymetria w `wykazSkanerow`: gałąź
+Windows przekłada odmowę, gałąź Linux oddaje ją surową.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/odmowy-skanera` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/urzadzenia_skaner.go` oraz sprawdzian skanera (istniejący albo nowy plik sprawdzianu tego zakresu) |
+| **Poza terenem** | kontrakt, pozostałe pliki `internal/core/` — w szczególności adaptery czterech terenów biegnących równolegle — `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
+| **Wykonawca** | sesja wysłana przez Prowadzącego 27.08.2026 |
+
+**Kryteria odbioru.**
+
+1. Brak `scanimage` na Linuksie daje odmowę wskazującą
+   `studio.ingest.queue.add` — parytet z `bladWarstwyWia` — wykazane
+   sprawdzianem.
+2. `wykazSkanerow`: gałąź Linux przekłada odmowę tak samo jak gałąź Windows —
+   wykazane sprawdzianem.
+3. Komunikaty wzorowane na istniejącej gałęzi Windows — zero nowych nazw,
+   kodów i oznaczeń.
+4. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec stanu zastanego
+   2041 zdanych, 17 pominiętych, zero niezdanych.
+5. Kontrakt nietknięty.
+
 ## Zgłoszenia oczekujące na teren
 
 Ustalenia z zamkniętych i biegnących terenów, które wykraczają poza ich zakres.
@@ -318,13 +381,12 @@ odmową arsenału bez wskazania drogi obejścia, podczas gdy `bladWarstwyWia`
 Windows przekłada odmowę, gałąź Linux oddaje ją surową. Operator na Linuksie bez
 `sane-utils` nie dowie się, że materiał da się wnieść inną drogą.
 
-### Sprawdzian katalogu akcji szuka nieistniejącego katalogu — gotowe do otwarcia
+### Sprawdzian katalogu akcji szuka nieistniejącego katalogu — naprawione
 
-`budowa/server/internal/store/katalog_akcji_test.go:177` szuka
-`../../../client/src/ikony/zrodla`. Katalog klienta nazywa się `budowa/klient`,
-a `budowa/client` nie istnieje w żadnej gałęzi. To jedyne niepowodzenie
-pozostałe w całym module. Do rozstrzygnięcia wraz z pierwszym terenem widoku,
-bo dotyczy źródeł ikon nowego klienta.
+`katalog_akcji_test.go` szukał `../../../client/src/ikony/zrodla`, którego nie
+ma w żadnej gałęzi. Rewizja `9ba1f90` wiąże sprawdzian ze źródłami ikon nowego
+klienta — `sciezkaZrodelIkon` wskazuje `../../../klient/src/ikony/zrodla`.
+Przechodzi w biegu odniesienia 2041 zdanych, zero niezdanych.
 
 ### Reguła odbioru wyprowadzona z pomiarów
 
@@ -343,7 +405,6 @@ po raz drugi.
 |---|---|---|---|
 | `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` wyjątek powitania · `e41dd78` straże drogi bez poczty · `9a8ec0c` brak skanera | weryfikacja Prowadzącego pomiarem: bieg wymuszony `-count=1` 537 s — 2029 sprawdzianów, 1 niezdany wobec 4 zastanych; powitanie niepełne odpowiada wersją protokołu na żywym rdzeniu, `channel.add` z brakiem pola dalej odmawia; kontrakt nietknięty |
 | `prototypy` | `teren/prototypy` | paczki instalatora i drogi wejścia | przyjęte przez Właściciela; weryfikacja Prowadzącego pomiarem: oba okna wczytują się bez błędu konsoli, zero łańcuchów widocznych poza katalogiem treści |
-| `brama-i-droga-wejscia` | `teren/brama-i-droga-wejscia` | `23a6b84` · `e41dd78` · `9a8ec0c` | weryfikacja Prowadzącego pomiarem: 2029 sprawdzianów, 1 niepowodzenie zastane spoza terenu wobec 4 zastanych; wyjątek bramy w jednym miejscu; kontrakt nietknięty |
 | `fundament-klienta` | `teren/fundament-klienta` | `d19bfeb` warstwa połączenia i protokołu | weryfikacja Prowadzącego pomiarem: kompilacja bez błędu, 17 sprawdzianów zdanych, rozmowa z żywym rdzeniem, generat bajtowo powtarzalny, zero dotknięć DOM, kontrakt nietknięty |
 | `naprawy-rdzenia` | `teren/naprawy-rdzenia` | `060d5b7` naprawy i brama kontraktu | weryfikacja Prowadzącego pomiarem: 2022 zdane wobec 2003 zastanych, te same 4 niezdane, kontrakt nietknięty |
 | `proba-prototypow` | `teren/prototypy` | `66e5ee0` przepływ wejścia · `61a5867` moduł Studio · `53bc3d5` odsyłacze | kontrola sesji nadzorującej wykonanie, weryfikacja Prowadzącego pomiarem |

@@ -1,18 +1,6 @@
-// Odpowiedzialność pliku: stanowisko końcowe redagowane przez Operatora —
-// `roundtable.consensus.set`, `roundtable.consensus.minority.set`,
-// `roundtable.consensus.version.list` i `roundtable.consensus.handoff`
-// (okno Consensus Panel).
-//
-// ── Od redakcji stanowisko należy do Operatora ───────────────────────────────
-// Dotąd treść stanowiska rdzeń składał z zapisu tur przy każdym odczycie
-// (`Stanowisko` w `adapter_modul_roundtable_stanowisko.go`). Od chwili, w której
-// Operator nada mu własną treść, złożenie z tur go nie dotyka: pilnuje tego
-// kolumna `redagowane` i warunek w zapytaniu zapisującym (migracja 198). Bez
-// tego pierwsze otwarcie panelu po redakcji kasowałoby jego pracę.
-//
-// ── Wersje są wpisami, nie licznikiem ────────────────────────────────────────
-// Każda redakcja odkłada osobny wiersz wersji. Licznik w kolumnie `wersja` mówi,
-// ile ich było; porównać dwie redakcje da się dopiero wtedy, gdy każda została.
+// Modul Roundtable — stanowisko koncowe redagowane przez Operatora: zapis
+// stanowiska, zdanie odrebne, wykaz wersji redakcji oraz przekazanie
+// stanowiska do modulu docelowego.
 package core
 
 import (
@@ -23,7 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przedrostki bytów stanowiska.
+// Przedrostki bytow stanowiska nadawane przez rdzen przy zapisie kazdego
+// nowego wpisu w tym repozytorium.
 const (
 	przedrostekWersjiStanowiska = "wersja-"
 	przedrostekZdaniaOdrebnego  = "odreb-"
@@ -46,8 +35,7 @@ func (a *adapterDebaty) ZapiszStanowisko(ctx context.Context,
 			bladWskazaniaDebaty("stanowisko bez treści — pusta redakcja skasowałaby zapis debaty")
 	}
 
-	// Tury wskazane w żądaniu sprawdza się przed zapisem: stanowisko obejmujące
-	// turę z cudzego okna byłoby zapisem decyzji o debacie, której nie było.
+	// Tury wskazane w zadaniu sprawdza sie przed zapisem, zeby stanowisko nie objelo tury z cudzego okna.
 	kody := make([]string, 0, len(z.TurnIds))
 	for _, kod := range z.TurnIds {
 		przyciety := strings.TrimSpace(kod)
@@ -65,9 +53,7 @@ func (a *adapterDebaty) ZapiszStanowisko(ctx context.Context,
 		kody = append(kody, przyciety)
 	}
 
-	// Redakcja stanowiska już istniejącego zachowuje jego identyfikator: zdania
-	// odrębne i przekazania wskazują stanowisko kodem, a nowy kod przy każdej
-	// redakcji odciąłby je od stanowiska, wobec którego je podpisano.
+	// Redakcja stanowiska juz istniejacego zachowuje jego identyfikator: zdania odrebne wskazuja je kodem.
 	kod := nowyIdentyfikator(przedrostekStanowiska)
 	if poprzednie, err := a.repozytorium.Stanowisko(ctx, okno, ""); err == nil {
 		kod = poprzednie.Kod
@@ -82,8 +68,7 @@ func (a *adapterDebaty) ZapiszStanowisko(ctx context.Context,
 	if err != nil {
 		return shared.RoundtableConsensusSetResponse{}, bladDebaty(err)
 	}
-	// Wersja odkłada się po zapisie, z numerem nadanym przez bazę: numer nadany
-	// przez rdzeń rozjechałby się przy dwóch redakcjach z dwóch urządzeń.
+	// Wersja odklada sie po zapisie, z numerem nadanym przez baze, a nie przez rdzen.
 	if err := a.repozytorium.ZapiszWersjeStanowiskaDebaty(ctx, dane.WersjaStanowiskaDebaty{
 		Kod: nowyIdentyfikator(przedrostekWersjiStanowiska), Stanowisko: stanowisko.Kod,
 		Wersja: stanowisko.Wersja, Tresc: tresc,
@@ -98,8 +83,8 @@ func (a *adapterDebaty) ZapiszStanowisko(ctx context.Context,
 	return shared.RoundtableConsensusSetResponse{Consensus: wynik}, nil
 }
 
-// ZapiszZdanieOdrebne utrwala i podpisuje zdanie uczestnika, który nie dołączył
-// do konsensusu.
+// ZapiszZdanieOdrebne utrwala i podpisuje zdanie odrebne uczestnika, ktory nie
+// dolaczyl do konsensusu debaty.
 func (a *adapterDebaty) ZapiszZdanieOdrebne(ctx context.Context,
 	z shared.RoundtableConsensusMinoritySetRequest) (shared.RoundtableConsensusMinoritySetResponse, error) {
 
@@ -155,7 +140,8 @@ func (a *adapterDebaty) ZapiszZdanieOdrebne(ctx context.Context,
 	}, nil
 }
 
-// WersjeStanowiska oddaje kolejne redakcje stanowiska od najstarszej.
+// WersjeStanowiska oddaje kolejne redakcje wskazanego stanowiska tej debaty
+// od najstarszej do najnowszej.
 func (a *adapterDebaty) WersjeStanowiska(ctx context.Context,
 	z shared.RoundtableConsensusVersionListRequest) (shared.RoundtableConsensusVersionListResponse, error) {
 
@@ -188,12 +174,9 @@ func (a *adapterDebaty) WersjeStanowiska(ctx context.Context,
 	return shared.RoundtableConsensusVersionListResponse{Versions: wykaz}, nil
 }
 
-// PrzekazStanowisko wydaje stanowisko jako artefakt dla modułu docelowego.
-//
-// Przekazanie jest wydaniem treści, nie odwołaniem do niej: moduł docelowy
-// dostaje artefakt, który da się otworzyć niezależnie od tego, czy debata
-// jeszcze istnieje. Transkrypt dołącza się na żądanie — stanowisko bywa
-// przekazywane do redakcji, a przebieg debaty jest wtedy zbędnym ciężarem.
+// PrzekazStanowisko wydaje stanowisko jako artefakt dla modulu docelowego.
+// Artefakt da sie otworzyc niezaleznie od tego, czy debata jeszcze istnieje;
+// transkrypt dolacza sie na zadanie.
 func (a *adapterDebaty) PrzekazStanowisko(ctx context.Context,
 	z shared.RoundtableConsensusHandoffRequest) (shared.RoundtableConsensusHandoffResponse, error) {
 
@@ -284,9 +267,7 @@ func (a *adapterDebaty) stanowiskoZDodatkami(ctx context.Context,
 		wynik.DisputePoints = append(wynik.DisputePoints, punkt)
 	}
 
-	// Poparcie ważone liczy się z wag uczestników, którzy NIE podpisali zdania
-	// odrębnego. Uczestnik, który zgłosił zdanie odrębne, stanowiska nie poparł
-	// i tak wchodzi do rachunku.
+	// Poparcie wazone liczy sie z wag uczestnikow, ktorzy nie podpisali zdania odrebnego.
 	uczestnicy, err := a.repozytorium.Uczestnicy(ctx, stanowisko.Okno)
 	if err != nil {
 		return shared.RoundtableConsensus{}, bladDebaty(err)
@@ -309,7 +290,8 @@ func (a *adapterDebaty) stanowiskoZDodatkami(ctx context.Context,
 	return wynik, nil
 }
 
-// zdanieOdrebneKontraktu przekłada zdanie odrębne na byt kontraktu.
+// zdanieOdrebneKontraktu przeklada zdanie odrebne zapisane w repozytorium na
+// byt oddawany w kontrakcie.
 func zdanieOdrebneKontraktu(z dane.ZdanieOdrebneDebaty) shared.RoundtableMinorityReport {
 	return shared.RoundtableMinorityReport{
 		Id: z.Kod, WindowId: z.Okno, ConsensusId: z.Stanowisko, ParticipantId: z.Uczestnik,

@@ -2664,3 +2664,20 @@ Brak programu jest brakiem, który operator serwera usuwa jedną instalacją,
 a przekroczenie granicy czasu jest przekroczeniem, nie awarią. Obie sytuacje
 bez tego rozróżnienia wychodziłyby jako internal_error, mówiące czytającemu
 coś nieprawdziwego o tym, co się stało.
+
+## adapter_modul_roundtable_konsensus.go
+
+Do chwili redakcji rdzen skladal tresc stanowiska z zapisu tur przy kazdym
+odczycie. Od chwili, w ktorej Operator nada stanowisku wlasna tresc, zlozenie
+z tur go nie dotyka — pilnuje tego osobna kolumna oznaczajaca redakcje oraz
+warunek w zapytaniu zapisujacym; bez tego pierwsze otwarcie panelu po redakcji
+kasowaloby prace Operatora. Kazda redakcja odklada osobny wiersz wersji,
+a nie nadpisuje jeden licznik: licznik w kolumnie wersji mowi jedynie, ile
+redakcji bylo, a porownac dwie redakcje da sie dopiero wtedy, gdy kazda
+zostala zapisana osobnym wpisem.
+
+Poparcie wazone stanowiska liczy sie z wag wszystkich uczestnikow debaty
+w mianowniku, a w liczniku wylacznie z wag tych, ktorzy nie podpisali zdania
+odrebnego. Uczestnik, ktory zglosil zdanie odrebne, nie poparl stanowiska,
+lecz jego waga i tak wchodzi do mianownika rachunku, bo poparcie mierzy udzial
+w calej debacie, nie tylko wsrod uczestnikow bez zastrzezen.

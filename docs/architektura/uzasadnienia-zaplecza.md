@@ -2671,3 +2671,6 @@ Parametr szablonu przepływu jest wierszem, a nie polem zapisu strukturalnego sz
 
 ## budowa/server/internal/store/migracja_267_automations_publikacja.sql
 Publikacja, udostępnienie i budżety czasu automatyki leżą jako cztery kolumny na tabeli automatyki, a nie cztery osobne tabele, ponieważ każda jest polem pojedynczym o krotności jeden do jednego z automatyką i nie ma własnego cyklu życia; osobna tabela na jedną liczbę byłaby złączeniem bez powodu. Pusta wersja opublikowana oznacza, że automatyki nigdy nie opublikowano, a nie że opublikowano wersję zerową — wykonywana produkcyjnie jest wtedy wersja bieżąca. Budżet równy zero oznacza brak granicy czasu, zgodnie z kontraktem pól budżetu.
+
+## budowa/desktop/src-tauri/src/dialog_katalogu.rs
+Katalogi robocze są listą na oknie komunikacji, a ich wskazanie musi być czynnością systemu operacyjnego, nie polem tekstowym. Interfejs wskazuje katalog w dwóch sprawach o odmiennym znaczeniu: wskazanie katalogu roboczego, gdzie moduł zostawia swoje pliki, oraz dodanie katalogu jako punktu dostępu, do którego model sięga po treść. Czynność systemu operacyjnego jest w obu przypadkach ta sama, więc okno jest jedno, a zastosowania różni wyłącznie napis w belce podany przez wywołującego. Konsumentem zdarzenia po stronie interfejsu jest most katalogów w kliencie.

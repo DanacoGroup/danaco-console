@@ -5793,3 +5793,15 @@ TozsamoscStrumienia istnieje po to, żeby to rozstrzygnięcie stało w jednym
 miejscu: gdyby każdy nadawca strumienia wybierał sam, obietnica jednego
 identyfikatora przez cały strumień byłaby powtarzana w kilku plikach,
 a obietnica powtórzona to obietnica, którą któryś z nich kiedyś złamie.
+
+## budowa/server/internal/dane/bloki_wiadomosci.go
+
+Tekstu tutaj nie ma: fragment rodzaju text domyka dziennik rozmowy w kolumnie treści
+wiadomości; zapisanie go drugi raz tutaj byłoby drugą prawdą o tej samej wypowiedzi, więc
+warunek CHECK schematu odbija taki zapis, a rejestrator bloków nawet go nie próbuje.
+
+OknoKod i WiadomoscKod są identyfikatorami kontraktowymi, nie kluczami obcymi, bo rejestrator
+strumienia innych repozytoriów nie zna.
+
+Kolejność bloku w obrębie wiadomości wyliczana jest w tym samym poleceniu zapisu, wzorem
+numeracji historii okna, bez osobnego odczytu i transakcji.

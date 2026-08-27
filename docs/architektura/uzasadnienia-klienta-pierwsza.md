@@ -5438,3 +5438,14 @@ obszaru. Rozstrzyga o tym `server/internal/narzedzia/ekspert_wykaz.go`.
 Narzędzia wskazane kodami idą w kolejności katalogu, a nie kodów: dwa kody wskazujące tę
 samą pozycję, czyli nazwa narzędzia i jego grupa naraz, dają ją raz. Tak samo przesiewa
 `przesiej` w `ekspert_wykaz.go`.
+
+## budowa/klient-poprzedni/src/mobile/port-kolejki-decyzji.ts
+
+Implementacja domyślna nie udaje kolejki pustej. Pusty wykaz znaczy „nic nie czeka"
+i jest zdaniem uspokajającym; bez źródła byłoby ono nieprawdziwe dokładnie w tej sytuacji,
+dla której ekran powstał. Dlatego `BRAK_ZRODLA_KOLEJKI` oddaje `dostepna: false` wraz
+z powodem, a ekran pisze ten powód wprost — tak samo jak pulpit w `mission-control/pas-decyzji.ts`.
+
+Wpięcie źródła to jedno wywołanie `zainstalujKolejkeDecyzji` przy montażu warstwy mobilnej.
+Ekran się przez nie nie zmienia: pozycje portu mają ten sam kształt co pozycje własne,
+opisany typem `PozycjaDecyzji`, więc wchodzą do tego samego wykazu i tego samego arkusza dróg.

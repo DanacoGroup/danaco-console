@@ -12,13 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Serwer jest nasłuchem rdzenia: przyjmuje połączenia WebSocket, serwuje pliki
-// klienta i realizuje interfejs Rozglosnik.
-//
-// Rdzeń podłącza się po utworzeniu serwera (PodlaczRdzen), a nie przy budowie.
-// Tak zerwana jest zależność cykliczna: rdzeń potrzebuje rozgłośni transportu,
-// transport potrzebuje rdzenia do obsługi komend, a żaden nie importuje
-// pakietu drugiego.
+// Serwer jest nasłuchem rdzenia: przyjmuje połączenia WebSocket, serwuje pliki klienta i realizuje interfejs Rozglosnik.
 type Serwer struct {
 	ustawienia    Ustawienia
 	rejestrKomend *protocol.RejestrKomend
@@ -56,7 +50,7 @@ func (s *Serwer) PodlaczRdzen(rdzen Rdzen) {
 	s.zamekRdzenia.Unlock()
 }
 
-// rdzenPodlaczony odczytuje bieżącą realizację obsługi komend.
+// Metoda rdzenPodlaczony odczytuje bieżącą realizację obsługi komend podłączoną obecnie do tego serwera.
 func (s *Serwer) rdzenPodlaczony() Rdzen {
 	s.zamekRdzenia.RLock()
 	defer s.zamekRdzenia.RUnlock()
@@ -68,11 +62,7 @@ func (s *Serwer) rdzenPodlaczony() Rdzen {
 func (s *Serwer) Uruchom(kontekst context.Context) error {
 	s.kontekst, s.zakoncz = context.WithCancel(kontekst)
 
-	// Niekompletna para TLS zatrzymuje start celowo i jest jedynym miejscem
-	// w tym pakiecie, gdzie coś się nie uruchamia. Reguła fail-open
-	// mówi, że brak nastawy nie wstrzymuje pracy — tu nastawa nie jest brakiem,
-	// tylko połową wskazania. Praca otwartym tekstem przy wskazanym certyfikacie
-	// byłaby cichym zejściem poniżej tego, o co poprosił Operator.
+	// Niekompletna para TLS zatrzymuje start celowo, jako jedyne miejsce, gdzie start się tu nie udaje.
 	if err := s.ustawienia.sprawdzTLS(); err != nil {
 		s.zakoncz()
 		return err
@@ -121,7 +111,7 @@ func (s *Serwer) Sluchaj(kontekst context.Context) error {
 	return s.Zamknij()
 }
 
-// trasy składa mapę ścieżek: kanał WebSocket oraz pliki klienta pod resztą.
+// Metoda trasy składa mapę ścieżek serwera: kanał WebSocket oraz pliki klienta pod pozostałymi ścieżkami.
 func (s *Serwer) trasy() http.Handler {
 	trasy := http.NewServeMux()
 	trasy.HandleFunc(s.ustawienia.SciezkaGniazda, s.nawiaz)

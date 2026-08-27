@@ -6050,3 +6050,11 @@ cudzej ikony: dwie ikony o jednej nazwie w jednym oknie dałyby sprite z dwoma s
 o tym samym identyfikatorze, czyli plik, którego przeglądarka nie złoży.
 
 Etykiety ikon idą po zamknięciu kursora zapytania, tak samo jak przy kolekcjach.
+
+## budowa/server/internal/transport/serwer.go
+
+Rdzeń podłącza się po utworzeniu serwera, a nie przy jego budowie, żeby zerwać zależność cykliczną:
+rdzeń potrzebuje rozgłośni transportu, transport potrzebuje rdzenia do obsługi komend, a żaden pakiet
+nie importuje pakietu drugiego. Reguła bez blokad domyślnych mówi, że brak nastawy nie wstrzymuje
+pracy, ale niekompletna para plików TLS nastawą nie jest, tylko połową wskazania — praca otwartym
+tekstem przy wskazanym certyfikacie byłaby cichym zejściem poniżej tego, o co poprosił operator maszyny.

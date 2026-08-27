@@ -22,23 +22,26 @@ import (
 	"strings"
 )
 
-// odsylacz rozpoznaje komentarze wyłączone z granicy gęstości rozstrzygnięciem
-// Właściciela (pozycja 18): dyrektywy, odsyłacze i wskazania miejsc — komentarz
-// jednowierszowy niosący ścieżkę pliku (docs/…, *.go, *.md, *.sql) albo
-// zaczynający się od „Uzasadnienie:", „Patrz" lub „Zob.". Komentarz główny
-// (treść opisowa) wlicza się zawsze.
-var wzorSciezki = regexp.MustCompile(`\S+\.(go|md|sql)\b|(^|\s)docs/`)
-var wzorWskazania = regexp.MustCompile(`^(Uzasadnienie:|Patrz\b|Zob\.)`)
+// Z granicy wyłączone są wyłącznie dyrektywy (`//go:`). Powołania na pliki
+// w komentarzach są zakazane w całości (dopowiedzenie szóste pozycji 18) —
+// wzorzec powołania wykrywa ścieżki i nazwy plików, a tryb -gestosc liczy je
+// osobno jako POWOLANIA; plik z powołaniem nie przechodzi niezależnie od
+// gęstości.
+var wzorPowolania = regexp.MustCompile(`\S+\.(go|md|sql|json|js|ts|css|html|py|rs|sh|yml|yaml|toml|txt|csv|xml|svg)\b|(^|\s)(docs|design|prowadzenie|narzedzia|budowa)/`)
 
-func odsylacz(lit string) bool {
-	if !strings.HasPrefix(lit, "//") {
-		return false // komentarz blokowy zawsze wliczony
+func dyrektywa(lit string) bool {
+	return strings.HasPrefix(lit, "//go:")
+}
+
+func powolanie(lit string) bool {
+	if dyrektywa(lit) {
+		return false
 	}
-	t := strings.TrimSpace(strings.TrimPrefix(lit, "//"))
-	if strings.HasPrefix(lit, "//go:") {
-		return true
+	t := lit
+	if strings.HasPrefix(t, "//") {
+		t = strings.TrimPrefix(t, "//")
 	}
-	return wzorSciezki.MatchString(t) || wzorWskazania.MatchString(t)
+	return wzorPowolania.MatchString(t)
 }
 
 func main() {
@@ -65,13 +68,17 @@ func main() {
 	if gestosc {
 		s.Init(plik, tresc, blad, scanner.ScanComments)
 		znaki := 0
+		powolania := 0
 		for {
 			_, tok, lit := s.Scan()
 			if tok == token.EOF {
 				break
 			}
-			if tok == token.COMMENT && !odsylacz(lit) {
+			if tok == token.COMMENT && !dyrektywa(lit) {
 				znaki += len(lit)
+				if powolanie(lit) {
+					powolania++
+				}
 			}
 		}
 		wiersze := bytes.Count(tresc, []byte("\n")) + 1
@@ -85,7 +92,10 @@ func main() {
 		if znaki > granica {
 			stan = "PONAD"
 		}
-		fmt.Printf("%s\twiersze=%d\tznaki=%d\tgranica=%d\t%s\n", os.Args[1], wiersze, znaki, granica, stan)
+		if powolania > 0 {
+			stan = "POWOLANIE"
+		}
+		fmt.Printf("%s\twiersze=%d\tznaki=%d\tgranica=%d\tpowolania=%d\t%s\n", os.Args[1], wiersze, znaki, granica, powolania, stan)
 		return
 	}
 	s.Init(plik, tresc, blad, 0) // bez scanner.ScanComments — komentarze pominięte

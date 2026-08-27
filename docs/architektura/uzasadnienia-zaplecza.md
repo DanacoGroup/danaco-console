@@ -3220,3 +3220,6 @@ na kolumny byłoby wyborem cudzego kształtu zrobionym przez platformę.
 Jeden wiersz na pozycję: `extension.transport.set` i `extension.credential.bind`
 zmieniają dwie strony tej samej rozmowy z jednym serwerem, więc zapis jest
 UPSERT-em po kodzie pozycji, nie dziennikiem kolejnych nastaw.
+
+## budowa/server/internal/store/migracja_004_pamiec.sql
+Schemat obszaru pamięci należy wyłącznie do tego pliku; założenie warunkowe jest tu potrzebne, bo migracja musi przejść także na bazie, w której obie tabele już stoją. Najwęższym poziomem pamięci jest sesja — okno komunikacji nie jest poziomem pamięci. Treść obszerna trafia do osobnego pliku wskazanego kolumną odwołania do treści.

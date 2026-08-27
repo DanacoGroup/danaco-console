@@ -1,26 +1,6 @@
-// Rodzina `orchestration.*` — cztery komendy układu zależności, wniesione do
-// kontraktu osobno od okna Orchestrator. Okno stoi na
-// `automation.orchestrator.define`; rodzina `orchestration.*` jedzie na tej
-// samej maszynerii (tabele `krok_automatyki` i `zaleznosc_kroku_automatyki`
-// ze `store/migracja_039_automatyki.sql`), a nie na własnej.
-//
-// Różnicą wobec okna jest ziarno. `automation.orchestrator.define` przyjmuje
-// komplet łuków — Workflow Builder wysyła cały układ po zmianie. Rodzina
-// `orchestration.*` pracuje pojedynczym łukiem: `dependency.set` dokłada jeden,
-// `dependency.remove` zdejmuje jeden. Dlatego zapis idzie metodami
-// `ZapiszZaleznosc`/`UsunZaleznosc` (`dane/orchestration.go`), a nie podmianą
-// kompletu — inaczej dołożenie jednego łuku przepisywałoby wszystkie pozostałe.
-//
-// Metody poniżej stoją na adapterze modułu Automations, więc układ zależności ma
-// w rdzeniu jednego właściciela. Sprawdzenie układu, wykrycie cyklu i ścieżka
-// krytyczna pochodzą z `adapter_modul_automations_orkiestracja.go`.
-//
-// Ocena układu nie blokuje zapisu. Kontrakt `orchestration.dependency.set` mówi
-// to wprost: łuk domykający cykl albo prowadzący do kroku, którego jeszcze nie
-// ma, zapisuje się, a zastrzeżenia wracają w odpowiedzi z `valid=false`.
-// Odmawiane są wyłącznie żądania, których schemat nie zna: łuk bez wskazania
-// kroku, pętla własna (CHECK krok_z <> krok_do) i rodzaj spoza trzech wartości
-// kontraktu (CHECK rodzaj IN (...)). To błędy żądania, nie stan układu.
+// Rodzina orchestration.* — cztery komendy ukladu zaleznosci, wniesione do
+// kontraktu osobno od okna Orchestrator; jedzie na tej samej maszynerii, ale
+// pracuje pojedynczym lukiem zamiast kompletem.
 package core
 
 import (
@@ -38,10 +18,8 @@ import (
 var _ Orkiestracja = (*adapterAutomatyk)(nil)
 
 // repozytoriumZaleznosciKrokow to rozszerzenie repozytorium automatyk o zapis
-// i usunięcie pojedynczego łuku układu.
-//
-// Interfejs stoi po stronie czytelnika: deklaracja mieszka tutaj, a nie
-// w `dane.RepozytoriumAutomatyk`, bo wymaga jej wyłącznie ta rodzina komend.
+// i usuniecie pojedynczego luku ukladu; deklaracja stoi po stronie czytelnika,
+// bo wymaga jej wylacznie ta rodzina komend.
 type repozytoriumZaleznosciKrokow interface {
 	ZapiszZaleznosc(ctx context.Context, automatykaID int64, zaleznosc dane.ZaleznoscKroku) error
 	UsunZaleznosc(ctx context.Context, automatykaID int64, krokZ, krokDo string) (bool, error)
@@ -83,13 +61,9 @@ func (a *adapterAutomatyk) UstawZaleznosc(ctx context.Context,
 
 // ── orchestration.dependency.list ────────────────────────────────────────────
 
-// WykazZaleznosci zwraca układ zależności automatyki, w razie wskazania kroku
-// zawężony do łuków, które go dotykają.
-//
-// Krok wskazany musi istnieć. Zawężenie po kroku, którego w automatyce nie ma,
-// oddałoby wykaz pusty, a pusty wykaz czyta się jako „ten krok nie ma
-// zależności”, nie jako „takiego kroku nie ma”. Dlatego brak kroku jest odmową
-// `not_found` z jego nazwą.
+// WykazZaleznosci zwraca uklad zaleznosci automatyki, w razie wskazania kroku
+// zawezony do lukow, ktore go dotykaja; krok wskazany musi istniec, inaczej
+// odmowa niesie kod not_found z jego nazwa.
 func (a *adapterAutomatyk) WykazZaleznosci(ctx context.Context,
 	z shared.OrchestrationDependencyListRequest) (shared.OrchestrationDependencyListResponse, error) {
 
@@ -178,25 +152,18 @@ func (a *adapterAutomatyk) SprawdzUkladZaleznosci(ctx context.Context,
 
 // ── wspólne ustalenia rodziny ────────────────────────────────────────────────
 
-// zastrzezeniaUkladu składa komplet zastrzeżeń rodziny `orchestration.*`:
-// zastrzeżenia okna Orchestrator (łuk do kroku nieistniejącego, łuk warunkowy
-// bez warunku, cykl) oraz kroki osierocone, których wprost wymaga kontrakt
-// `orchestration.validate`.
-//
-// `dependency.set` i `validate` niosą to samo pole `valid` i liczą je jedną
-// miarą; osobne miary dałyby przy zapisie „układ poprawny”, a przy sprawdzeniu
-// tego samego układu — „niepoprawny”.
+// zastrzezeniaUkladu skada komplet zastrzezen rodziny orchestration.*:
+// zastrzezenia okna Orchestrator oraz kroki osierocone, ktorych wprost wymaga
+// kontrakt orchestration.validate; dependency.set i validate licza pole valid
+// jedna miara.
 func zastrzezeniaUkladu(kroki []dane.KrokAutomatyki, zaleznosci []dane.ZaleznoscKroku) []string {
 	zastrzezenia := sprawdzUklad(kroki, zaleznosci)
 	return append(zastrzezenia, krokiOsierocone(kroki, zaleznosci)...)
 }
 
-// krokiOsierocone wskazuje kroki, których nie dotyka żaden łuk układu.
-//
-// Układ bez łuków sierot nie ma: automatyka z samymi krokami, jeszcze
-// niepowiązanymi, jest stanem poprawnym — kroki wykonują się w zapisanej
-// kolejności. Pojedynczy krok też nie jest sierotą. Dopiero gdy układ ma łuki
-// i więcej niż jeden krok, krok poza łukami jest krokiem pominiętym.
+// krokiOsierocone wskazuje kroki, ktorych nie dotyka zaden luk ukladu.
+// Automatyka z samymi krokami, jeszcze niepowiazanymi, jest stanem poprawnym;
+// sierota istnieje dopiero, gdy uklad ma luki i wiecej niz jeden krok.
 func krokiOsierocone(kroki []dane.KrokAutomatyki, zaleznosci []dane.ZaleznoscKroku) []string {
 	if len(zaleznosci) == 0 || len(kroki) < 2 {
 		return nil
@@ -270,7 +237,8 @@ func lukiKroku(zaleznosci []dane.ZaleznoscKroku, kod string) []dane.ZaleznoscKro
 	return zawezone
 }
 
-// czyKrokUkladu mówi, czy automatyka niesie krok o wskazanym kodzie.
+// czyKrokUkladu mowi, czy dana automatyka niesie krok o wskazanym kodzie
+// w wykazie swoich krokow ukladu.
 func czyKrokUkladu(kroki []dane.KrokAutomatyki, kod string) bool {
 	for _, krok := range kroki {
 		if krok.Kod == kod {
@@ -308,14 +276,16 @@ func (a *adapterAutomatyk) lukiUkladu() (repozytoriumZaleznosciKrokow, error) {
 	return luki, nil
 }
 
-// bladBrakuZaleznosci nazywa łuk, którego w układzie nie ma.
+// bladBrakuZaleznosci nazywa luk miedzy dwoma wskazanymi krokami, ktorego
+// w ukladzie automatyki nie ma.
 func bladBrakuZaleznosci(automatyka, krokZ, krokDo string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Automations: zależność "+krokZ+" → "+krokDo+
 			" nie istnieje w układzie automatyki "+automatyka))
 }
 
-// bladBrakuKrokuUkladu nazywa krok, którego automatyka nie niesie.
+// bladBrakuKrokuUkladu nazywa krok, ktorego wskazana automatyka nie niesie
+// w swoim ukladzie zaleznosci.
 func bladBrakuKrokuUkladu(automatyka, krok string) error {
 	return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,
 		"moduł Automations: krok "+krok+" nie istnieje w automatyce "+automatyka))

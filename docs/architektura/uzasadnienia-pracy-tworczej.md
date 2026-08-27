@@ -3493,3 +3493,75 @@ zlozWyrysSvgDesignu: tresc jest osadzona, nie dowiazana. Odsylacz do pliku
 w magazynie rdzenia nie otworzy sie nigdzie poza ta maszyna, a wyrys ma
 byc plikiem, ktory Operator wysyla dalej — dokument wskazujacy cudze
 sciezki bylby pusta ramka u kazdego odbiorcy.
+
+## budowa/server/internal/poczta/list.go
+
+Rozdzielenie rozbioru i złożenia MIME na dwa pliki dawałoby dwie prawdy
+o tym, co rdzeń uważa za treść listu.
+
+List składa się raz, wysyła dwiema drogami. Szkic zapisany w folderze
+Drafts i list nadany SMTP-em to dokładnie ten sam dokument — dlatego
+`zlozWychodzacy` ma dwóch wołających (`imap_zapis.go` i `smtp.go`), a nie
+dwie kopie. Gdyby szkic składał się inaczej niż wysyłka, Operator
+oglądałby przed wysłaniem list inny niż ten, który wyjdzie w świat.
+
+Treść bierze się z `text/plain`, a `text/html` dopiero przy jego braku.
+Model ma analizować treść, a nie znaczniki; list wyłącznie HTML-owy
+oddaje się takim, jaki jest — obcięcie go do treści wymagałoby
+renderowania HTML, czego rdzeń nie robi i o czym nie kłamie.
+
+Rejestracja dekoderów stron kodowych działa skutkiem ubocznym importu
+pustego: pakiet podstawia `message.CharsetReader`. Bez niego polski list
+w iso-8859-2 albo windows-1250 — a takich w skrzynce Operatora jest pełno —
+rozbiera się błędem "nieznana strona kodowa" zamiast oddać treść.
+
+Wątek wiąże się identyfikatorem listu, na który ten odpowiada, a przy jego
+braku — własnym. Dzięki temu list otwierający wątek i wszystkie odpowiedzi
+w nim mają tę samą wartość, bez pytania serwera o THREAD, którego część
+serwerów nie zna.
+
+Odkodowanie transportowe pozostaje nietknięte w zapowiedzi: część pobrana
+częściowo bywa urwana w połowie czwórki base64 albo w połowie sekwencji
+=XX, więc dekoder i tak nie miałby czego domknąć. Zapowiedź listu
+w quoted-printable wygląda przez to nieco surowo (=C5=BC zamiast ż) —
+i tak jest uczciwiej niż zgadywać brakujące bajty.
+
+Załącznik bez nazwy istnieje i ma bajty — nazwa zastępcza jest tu etykietą,
+a nie zmyśloną własnością listu: bez niej magazyn rdzenia nie miałby czym
+opisać zasobu.
+
+Klient poczty Operatora układa rozmowę po nagłówku References — bez niego
+odpowiedź wyląduje w jego skrzynce obok wątku, a nie w nim.
+## server/internal/core/adapter_modul_studio_zadania.go
+
+Petla, ktora te zadania prowadzi, stoi w adapter_modul_studio_petla.go.
+Podzial jest taki: tutaj mieszka to, CZYM petla pracuje, tam to, JAK
+pracuje. Operator mowi "napisz pismo w tej sprawie na podstawie tych
+materialow, sprawdz terminologie i przygotuj wersje do druku" i ma dostac
+cztery zadania, nie jedno. Rozklad idzie dwiema drogami po kolei: najpierw
+modelem (kontrakt mowi wprost "brak znaczy rozklad ulozony przez model"),
+a gdy modelu nie ma albo jego odpowiedz nie sklada sie w zadania —
+rozkladem wlasnym, po czynnosci nazwanych w zleceniu. Druga droga nie jest
+atrapa: rozpoznaje czynnosci z wykazu StudioTaskKind po slowach, ktorymi
+Operator o nich mowi, i zachowuje ich kolejnosc ze zdania. Zlecenie,
+w ktorym nie da sie rozpoznac ani jednej czynnosci, daje jedno zadanie
+rodzaju custom niosace cale zlecenie — bo "nie rozpoznalem" nie moze
+znaczyc "rozklad pusty". Rozklady leza w magazynie pamieciowym tego
+procesu. Warstwa danych nie ma dzis tabeli rozkladu ani zadania,
+a zakladanie jej nalezy do odcinka fundamentu, nie tutaj. Skutek jest
+nazwany, nie przemilczany: rozklad nie przezywa ponownego uruchomienia
+rdzenia. Tabela plan_studio i zadanie_studio sa wypisane w sprawozdaniu
+jako brak do domkniecia.
+
+petlaZnacznikCzynnosci: dopisanie wariantu jest dopisaniem wiersza, nie
+zmiana rozkladu; kolejnosc zadan bierze sie z miejsca, w ktorym slowo
+stoi w zleceniu, bo Operator wymienia czynnosci w tej kolejnosci, w jakiej
+maja sie wykonac.
+
+petlaRozlozZlecenie: "sprawdz terminologie i napisz pismo" ma dac korekte
+po napisaniu tylko wtedy, gdy Operator tak powiedzial — dwa zadania tej
+samej czynnosci z jednego zdania byłyby zdublowana robota. Rozklad
+zlecenia dokumentowego jest z natury szeregowy — nie da sie poprawic
+jezyka pisma, ktorego jeszcze nie ma. Rozklad podany wprost przez
+Operatora albo przez model swoje zaleznosci niesie wlasne i nie sa
+nadpisywane.

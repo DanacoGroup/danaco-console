@@ -1,21 +1,5 @@
 // Odpowiedzialność pliku: obecność Operatorów na kompozycji Design Board
 // (`design.presence.report`) — kursory współpracy z opracowania modułu.
-// Metody stoją na `*adapterDesignu` (`adapter_modul_design.go`).
-//
-// ── Obecność jest ULOTNA i nie ma wiersza w bazie ───────────────────────────
-// Kontrakt mówi to wprost, a powód jest prosty: położenie kursora sprzed
-// godziny nie jest wiedzą o niczym. Rejestr żyje w pamięci rdzenia i ginie
-// razem z procesem — tak samo, jak ginie sesja, w której ten kursor był.
-// Tabeli dla obecności nie ma i nie ma być: wiersze zapisywane dziesięć razy na
-// sekundę na klienta byłyby zapisem do dysku, którego nikt nigdy nie odczyta.
-//
-// ── Zgłoszenie stare przestaje być obecnością ───────────────────────────────
-// Klient, który zamknął kartę bez zgłoszenia odejścia, zostawia po sobie wpis.
-// Bez terminu ważności jego kursor wisiałby na cudzej kanwie do restartu
-// rdzenia — czyli kłamał o obecności kogoś, kogo nie ma. Wpis starszy niż
-// `terminObecnosciDesignu` wypada przy najbliższym zgłoszeniu; sprzątanie
-// dzieje się przy odczycie, bez własnego budzika, bo bez ruchu na kompozycji
-// nie ma też komu tego kursora pokazywać.
 package core
 
 import (
@@ -44,7 +28,8 @@ type rejestrObecnosciDesignu struct {
 	terazTestem func() time.Time
 }
 
-// nowyRejestrObecnosciDesignu zakłada pusty rejestr.
+// nowyRejestrObecnosciDesignu zakłada pusty rejestr obecności, trwający
+// wyłącznie w pamięci procesu rdzenia.
 func nowyRejestrObecnosciDesignu() *rejestrObecnosciDesignu {
 	return &rejestrObecnosciDesignu{kompozycje: map[string]map[string]shared.DesignPresence{}}
 }
@@ -88,9 +73,7 @@ func (r *rejestrObecnosciDesignu) zglos(kompozycja string, obecnosc shared.Desig
 		obecni = append(obecni, wpis)
 	}
 	if len(wpisy) == 0 {
-		// Kompozycja bez obecnych nie ma po co zajmować miejsca w rejestrze:
-		// mapa rosnąca o wpis na każdą kiedykolwiek otwartą tablicę byłaby
-		// wyciekiem pamięci rozłożonym na tygodnie.
+		// Kompozycja bez obecnych nie ma po co zajmować miejsca w rejestrze.
 		delete(r.kompozycje, kompozycja)
 	}
 	sort.Slice(obecni, func(i, j int) bool { return obecni[i].ClientId < obecni[j].ClientId })
@@ -98,11 +81,8 @@ func (r *rejestrObecnosciDesignu) zglos(kompozycja string, obecnosc shared.Desig
 }
 
 // ZglosObecnosc odnotowuje obecność i położenie kursora Operatora na
-// kompozycji — obsługuje `design.presence.report`.
-//
-// Kompozycję sprawdzamy w bazie mimo ulotności zgłoszenia: obecność na tablicy,
-// której nie ma, rozgłaszałaby kursory na kompozycji, do której nikt nigdy nie
-// zajrzy, a literówka w identyfikatorze wyglądałaby jak cisza współpracowników.
+// kompozycji — obsługuje `design.presence.report`. Kompozycję sprawdza się
+// w bazie mimo ulotności zgłoszenia.
 func (a *adapterDesignu) ZglosObecnosc(ctx context.Context,
 	z shared.DesignPresenceReportRequest) (shared.DesignPresenceReportResponse, error) {
 

@@ -1,9 +1,6 @@
 // Odpowiedzialność pliku: reguły zbioru nadań jednego okna — miejsce nowego
 // nadania w kolejności, oznaczenie głównego oraz sprawdzenie, czy zawężenie
 // korzeni mieści się w obszarze punktu.
-//
-// Reguły trzymane są osobno od poleceń zapisu, bo dotyczą całego zbioru nadań
-// okna, nie pojedynczego wiersza.
 package dane
 
 import (
@@ -12,10 +9,7 @@ import (
 	"fmt"
 )
 
-// miejsceWZbiorze ustala kolejność nowego nadania i to, czy zostaje główne.
-// Kolejność liczona jest od 1; brak wskazania dokłada nadanie na koniec zbioru.
-// Pierwsze nadanie okna zostaje główne z urzędu — okno z nadaniami, ale bez
-// głównego, nie miałoby punktu domyślnego.
+// miejsceWZbiorze ustala kolejność nowego nadania w zbiorze oraz rozstrzyga, czy zostaje ono nadaniem głównym okna.
 func (r *repozytoriumNadan) miejsceWZbiorze(ctx context.Context, transakcja *sql.Tx,
 	nadanie Nadanie) (int, bool, error) {
 

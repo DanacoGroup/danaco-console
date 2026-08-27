@@ -2946,3 +2946,17 @@ historii podagenta. Powód zakończenia i oznaka życia dokładają się tym sam
 poleceniem: stan mówi co, powód mówi dlaczego, a oznaka — kiedy rdzeń ostatni raz tego
 wiersza dotknął. Powód dla stanu niekońcowego zostaje zastany, bo przejście ze stanu
 oczekującego do biegnącego niczego nie kończy.
+
+## alerty.go
+
+Repozytorium nie ewaluuje reguł i nie zna ani jednej miary. Trzyma
+definicję oraz zapis wyzwolenia wraz z wartością zmierzoną w chwili
+wyzwolenia. Ewaluacja należy do adaptera, ponieważ miary pochodzą z
+magazynów, o których warstwa danych alertu nie ma prawa wiedzieć: ślad
+wywołań, dziennik błędów, seria pomiarów sond.
+
+Metody LiczbaNieudanychPomiarowSond i LiczbaNieudanychPozycjiKolejki niosą
+dwie miary, których nie da się wziąć z magazynu śladu wywołań ani z
+dziennika błędów — a bez nich reguły miar probeFailure i processFailure
+nigdy by się nie wyzwoliły. Zapytania stoją w tym repozytorium, ponieważ to
+ewaluacja reguły ich potrzebuje; żadne inne repozytorium ich nie woła.

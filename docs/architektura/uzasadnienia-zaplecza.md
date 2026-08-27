@@ -59,3 +59,38 @@ INSERT ... SELECT z upsertem.
 w postaci właściwej dla rodzaju. Brak wiersza w tabeli `ustawienie` znaczy
 właśnie tę wartość, a brak wiersza w katalogu nie jest awarią — rezolwer
 schodzi wtedy na rejestr wbudowany rdzenia.
+
+## budowa/server/internal/store/migracja_016_stan_kolejki_wyczerpana.sql
+
+Kontrakt zna pięć stanów kolejki: QueueStatus.idle, running, paused, stopped,
+done. Mapa przekładu `WartosciBazyQueueStatus` wiąże je kolejno z kolumnami
+'bezczynna', 'pracuje', 'wstrzymana', 'zatrzymana', 'wyczerpana'. Więz CHECK
+wprowadzony w `migracja_003_kolejki.sql` dopuszczał tylko cztery pierwsze, więc
+zapis stanu 'wyczerpana' kończył się odmową schematu, mimo że kontrakt ten
+stan zna. Kolejka, w której nie została ani jedna pozycja czynna, musi mieć
+jak się nazwać, inaczej silnik wykonania nie ma stanu końcowego dla kolejki
+i po ostatniej pozycji błędnie zgłasza dalszą pracę.
+
+SQLite nie udostępnia polecenia zdejmującego więz CHECK z istniejącej kolumny,
+więc tabela `kolejka` przechodzi przebudowę: nowa tabela z poprawionym więzem,
+przepisanie wierszy, podmiana nazwy — tak samo jak `ustawienie` w
+`migracja_012_katalog_ustawien.sql`. Odmienność wynika z tego, że `kolejka`
+jest wskazywana kluczem obcym przez `pozycja_kolejki` i przez
+`log_akcji_kolejki`, w obu przypadkach z ON DELETE CASCADE. Przy włączonym
+więzie kluczy obcych (`store/baza.go`, pragma `foreign_keys(1)` w DSN
+każdego połączenia) polecenie DROP TABLE na tabeli rodzica wykonuje niejawne
+DELETE wszystkich jej wierszy, co uruchamia kaskadę i kasuje wszystkie
+pozycje kolejek oraz cały dziennik akcji. Pragmy nie da się wyłączyć na czas
+kroku, ponieważ migracja biegnie w transakcji (`store/migracje.go`), a
+`PRAGMA foreign_keys` w transakcji jest bez skutku. Z tego powodu przebudowa
+obejmuje wszystkie trzy tabele obszaru w porządku bezpiecznym dla danych:
+kopie z poprawionym więzem i przepisaniem wierszy co do kolumny; skasowanie
+tabel starych od dziecka do rodzica, tak że w chwili kasowania `kolejka`
+żaden wiersz jej już nie wskazuje i kaskada nie ma czego zabrać; podmiana
+nazw poleceniem ALTER TABLE ... RENAME, które przepisuje odwołania kluczy
+obcych w tabelach pozostałych; odtworzenie indeksów pod nazwami z
+`migracja_003_kolejki.sql`, wolnymi po skasowaniu tabeli, do której należały.
+
+Słownik stanów pozycji kolejki pozostaje bez zmiany: siedem wartości z
+`migracja_003_kolejki.sql` wystarcza silnikowi wykonania na pełny cykl życia
+zlecenia. Migracja naprawia więz stanu kolejki, nie rozszerza model danych.

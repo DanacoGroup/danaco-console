@@ -1060,3 +1060,29 @@ Operator nie wie, co ma cofnąć.
 Panel nie liczy sam ani szerokości kolumn, ani wyniku sortowania, ani zamiany
 tekstu na tabelę. Wszystko to robi rdzeń; panel składa żądanie, czyta tabelę
 z odpowiedzi i pokazuje szerokości policzone, a nie założone.
+
+## budowa/klient-poprzedni/src/moduly/studio/wczytanie-dokumentu.ts
+
+Otwarcie dokumentu przyjmuje trzy wzajemnie wykluczające się pola:
+identyfikator dokumentu otwartego wcześniej w sesji, identyfikator pliku
+repozytorium albo ścieżkę na urządzeniu. Formularz pyta o źródło wprost,
+zamiast zgadywać, bo pomyłka kończyłaby się odmową rdzenia o powodzie
+trudnym do odczytania. Wybierak źródła nie jest wykazem plików: wykaz
+zasobów Library należy do okna Library Explorer, a to pole przyjmuje sam
+identyfikator. Wykaz formatów pochodzi z kontraktu, nie z listy zapisanej
+w widoku; format wybiera rdzeń przy wczytaniu, okno go tylko pokazuje.
+
+Wniesienie pliku różni się od otwarcia dokumentu tym, że wnosi postać pliku
+Operatora — arkusz stylów, sekcje, tabele i obrazy — zamiast otwierać
+pozycję, którą rdzeń już prowadzi. Trzy komendy to robią i dlatego stoją
+osobno: wniesienie pliku wnosi dokumenty i szablony biurowe wraz
+z rozpoznaniem zapisu znaków, wniesienie PDF-u odzyskuje z niego tekst,
+akapity, tabele i obrazy na tyle, na ile PDF je niesie, a wniesienie obrazu
+wnosi obraz wprost w miejsce kursora.
+
+Odzyskanie z PDF-u jest odtworzeniem, nie odczytem: PDF nie niesie
+struktury akapitu ani tabeli wprost. Panel wypisuje więc bilans za każdym
+razem — strony z warstwą tekstową i bez niej, tabele rozpoznane
+i nierozpoznane, obrazy osadzone i pominięte. PDF ze samych skanów kieruje
+na rozpoznanie tekstu, a panel mówi to wprost, zamiast oddać pustą kartkę
+jako gotowy dokument.

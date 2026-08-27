@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"danacoconsole/server/internal/protocol"
 	"danacoconsole/server/internal/transport"
@@ -124,7 +123,7 @@ func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(u.zycie, 15*time.Second)
+	ctx, przerwij := context.WithTimeout(u.zycie, granicaKomendySprawdzianu)
 	defer przerwij()
 	// Tak wygląda gniazdo serwera narzędzi modelu i nic innego tak nie wygląda
 	// (`core/sprawca.go`): rodzaj `narzedzia` przedstawia się przy nawiązaniu.

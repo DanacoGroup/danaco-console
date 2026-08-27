@@ -129,23 +129,13 @@ func (r *rejestrSteru) zachowaj(okna map[string]struct{}) int {
 
 // sterBiegow jest jedynym rejestrem steru w procesie rdzenia.
 //
-// Byt pakietowy, a nie pole struktury: odpis licznika obiegów staje się
-// `LoopState` kontraktu w wolnej funkcji `biegKontraktu(s session.StanObiegu)`
-// z `core/stan_obiegu.go`, której jedynym argumentem jest ten odpis. Żeby pola
-// `controller`, `takenOverAt` i `takenOverBy` mogły wyjść obiema rodzinami
-// zdarzeń niosącymi `LoopState`, funkcja musi sięgnąć po ster bez zmiany swojej
-// sygnatury. Klucz rejestru jest niepowtarzalny w procesie (identyfikator
-// zewnętrzny okna), więc jeden rejestr na proces jest poprawny.
+// Byt pakietowy, a nie pole struktury: klucz rejestru jest niepowtarzalny
+// w procesie (identyfikator zewnętrzny okna), a odpowiedź „kto prowadzi to
+// zlecenie" jest jedna dla całego procesu — dwa rejestry dałyby dwie odpowiedzi
+// o tym samym oknie. Odpis biegu kontraktu (`biegKontraktu` w
+// `core/stan_obiegu.go`) po ster nie sięga: `LoopState` nie ma pola
+// o sterującym, więc rejestr obsługuje wyłącznie rodzinę `control.*`.
 var sterBiegow = nowyRejestrSteru()
-
-// sterZlecenia odpowiada, kto prowadzi zlecenie wskazanego koordynatora.
-//
-// Woła ją przekład licznika obiegów na `LoopState` w `core/stan_obiegu.go`.
-// Fałsz znaczy „nikt nie przejmował" i po stronie przekładu schodzi na
-// `coordinator`, nigdy na pustkę.
-func sterZlecenia(idKoordynatora string) (SterZlecenia, bool) {
-	return sterBiegow.stan(idKoordynatora)
-}
 
 // zachowajStery wykreśla stery okien już zamkniętych. Sprzątanie idzie od strony
 // okien żywych, bo pętla o zamknięciu okna nie mówi.

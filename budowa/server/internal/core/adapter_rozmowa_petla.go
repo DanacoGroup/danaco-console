@@ -43,11 +43,21 @@ func zlecenieObiegu(o session.Obieg) string {
 }
 
 // powodTury nazywa przyczynę zamknięcia tury przekazywaną koordynatorowi.
-func powodTury(kontekst context.Context, err error) string {
+//
+// Warunki i ich kolejność są te same, co w `stanOdpowiedziZeZdarzen`
+// (adapter_zdarzenia_zaczepow.go), i tak ma być: pętla poznaje wynik pracy po
+// powodzie tury, Operator po stanie wiadomości, a oba wychodzą z jednego
+// zamknięcia. Zdarzenie `result` z `is_error` liczy się także wtedy, gdy kanał
+// dowiózł turę bez błędu — inaczej tura zamknięta błędem przy sprawnym kanale
+// szłaby do pętli jako wynik i bieg ogłaszałby ukończenie, choć wiadomość ma
+// stan `error`.
+func powodTury(kontekst context.Context, err error, zamkniecie *zamkniecieTury) string {
 	switch {
 	case kontekst.Err() != nil:
 		return "zatrzymanie tury"
 	case err != nil:
+		return "błąd tury"
+	case zamkniecie != nil && zamkniecie.Blad:
 		return "błąd tury"
 	default:
 		return session.PowodWynik

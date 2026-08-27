@@ -3342,3 +3342,29 @@ zasłania: po czynności tekst nie leży już w treści strony.
 Sam „podpis poprawny" niczego by nie dowiódł w teście przeżycia podpisu przez
 odczyt i unieważnienia go zmianą treści — podpis, który zawsze mówi „tak",
 nie jest podpisem.
+
+## budowa/server/internal/core/dziennik_cofanie_test.go
+
+Ten plik sprawdzianów wyklucza trzy szkody rachunku cofania z dziennika
+czynności: cofnięcie czynności ze środka dziennika, które wgrywa stan sprzed
+niej w miejsce dokumentu i zabiera ze sobą wszystko, co po niej weszło —
+czyli jest przywróceniem wersji podanym jako cofnięcie pojedyncze; cofnięcie
+czynności, na której stoi późniejsza, wykonane po cichu — dokument zostaje
+wtedy w stanie niespójnym, a Operator o tym nie wie; i cofnięcie postaci,
+które nie działa — pomyłkowa zmiana kroju nie rusza ani jednej litery, więc
+treść sprzed jej nie odtworzy.
+
+`TestDziennikCofnieciePostaciNieRuszaLiter` jest sednem wymagania
+Właściciela: pomyłkowa zmiana kroju cofa się tak samo jak skasowany akapit,
+choć nie ruszyła ani jednej litery.
+
+Stan wpisu dziennika to wyłącznie `active` albo `reverted`, a rodzaj
+czynności to `StudioActionKind`, nie `StudioChangeKind`. Podanie jednego
+w miejsce drugiego wywraca się dopiero na ograniczeniu tabeli — po zapisaniu
+zmiany, czyli w najgorszym możliwym miejscu. Rodzaj „zmiana pola"
+(`fieldChange`) doszedł do słownika przy dobudowie, bo bez niego pola
+odkładały się jako `objectChange` i nie dawały się cofnąć osobno.
+
+`dziennikZawieraNapis` mówi, czy napis niesie podnapis. Własny pomocnik
+z przedrostkiem odcinka, bo sprawdziany tego odcinka pytają o treść odmowy,
+a nie o sam fakt odmowy.

@@ -4848,3 +4848,16 @@ adres, pod którym można to zmienić.
 
 Punkt widzenia nanosi się na wybór celu tylko raz, ponieważ poziom zapisu przestawiony
 ręcznie przy jednym polu nie ma wracać do punktu widzenia przy kolejnym odświeżeniu stanu.
+
+## budowa/klient-poprzedni/src/moduly/agents/zrodlo-rozszerzen.ts
+
+Katalog stoi osobno od `zrodlo-zaplecza`, ponieważ obie warstwy odpowiadają za co innego.
+Zaplecze niesie rejestry, z których moduł Agents tylko korzysta — kanały modelu, mosty MCP,
+okna sesji — a katalogiem rozszerzeń moduł zarządza: instaluje i odinstalowuje pozycje.
+
+Katalog obejmuje rodzaje wymienione w wyliczeniu `ExtensionKind`: serwer MCP, wtyczkę,
+integrację API i umiejętność.
+
+O tym, czym jest instalacja pozycji, rozstrzyga rdzeń, a nie ta warstwa. Źródło przekazuje
+pola kontraktu i oddaje odpowiedź bez dopowiedzenia, żeby znaczenie czynności zostało
+w jednym miejscu.

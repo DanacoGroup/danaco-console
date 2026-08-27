@@ -751,3 +751,47 @@ urządzenia, jest odpowiedzią nie do sprawdzenia — operator ma pulpit i telef
 naraz. Kolumna dostarczono w tabeli powiadomień mówi, że dotarło gdziekolwiek,
 i to wystarcza kolejce do zamknięcia sprawy; tabela doręczeń mówi gdzie
 i kiedy, i to jest odpowiedź, którą można pokazać operatorowi bez zmyślania.
+
+## budowa/server/internal/store/migracja_078_komunikacja_biegu.sql
+
+Model kończy turę, a następny dostaje jego wynik jako wejście. Zakres tego, co
+widzi następny, wybiera się osobno dla każdego wiązania; domyślnie `artefakt`
+niesie wyłącznie wytwór poprzednika — plik, poprawkę, odpowiedź — najmniejszy
+i najtańszy w żetonach, bo walidator ocenia wynik, nie tok myślenia. Zakres
+`streszczenie` niesie skrót wypowiedzi i wymaga osobnej tury modelu, więc ma
+własne miejsce, w którym może zawieść. Zakres `wypowiedz` niesie całą wypowiedź
+poprzednika — najbogatszy i najdroższy; przy czterech stanowiskach i długiej
+pętli zalewa okno kontekstu. Jeden sztywny zakres byłby albo zbyt ubogi dla
+koordynatora przekazującego zlecenie, albo zbyt drogi dla walidatora
+oceniającego wynik.
+
+Ślad narzędzi poprzednika jest polem osobnym (`ze_sladem_narzedzi`), domyślnie
+wyłączonym: bywa większy od samej wypowiedzi i najczęściej jest szumem, ale
+walidator sprawdzający, czy wykonawca uruchomił testy, bez niego nie ma czego
+sprawdzić. Pole jest prostopadłe do `zakres` — wolno chcieć samego artefaktu ze
+śladem i całej wypowiedzi bez śladu.
+
+Pola wyłączającego podgląd tej rozmowy nie ma: ruch idzie tą samą drogą co
+każda tura — fragmentami strumienia do okien — a wiersz w `wiadomosc_biegu`
+zostaje jako ślad.
+
+Ta migracja nie buduje drugiego mechanizmu widoczności kontekstu. Rodzina
+`isolation.*` rozstrzyga warstwowo, co okno widzi z historii, pamięci
+i kontekstu sąsiada. Podział jest ostry: ta migracja niesie to, co poprzednik
+jawnie przekazuje następnemu, a profil izolacji niesie to, co następny może
+zobaczyć z kontekstu poprzednika poza tym, co mu przekazano. Stanowisko obsady
+wskazuje swój profil izolacji kolumną `profil_izolacji_id`.
+
+Wiązanie tabeli `przekazanie_biegu` jest projektem, nie ruchem: „gdy skończy
+stanowisko 2, jego artefakt ze śladem narzędzi idzie do stanowiska 3". Operator
+układa te wiązania, projektując bieg, a silnik je czyta, gdy stanowisko kończy
+pracę. Wiązanie wskazuje `od_miejsca` i `do_miejsca` — numery 1-4 z obsady, nie
+identyfikator stanowiska — tak samo jak `zaleznosc_kroku_automatyki` wiąże
+kroki po identyfikatorze zewnętrznym, a nie po kluczu wiersza. Powód ten sam:
+obsadę wolno podmienić w całości, a plan rozmowy ma to przeżyć.
+
+Tabela `wiadomosc_biegu` ma dwa pola treści, nie jedno. `tresc` niesie to, co
+objął `zakres`; `slad_narzedzi` niesie ślad, jeśli wiązanie go żądało. Sklejenie
+ich w jedno uniemożliwiłoby późniejsze pokazanie samej treści bez szumu.
+Wiadomość wie też, która pozycja kolejki ją wytworzyła — dzięki temu panel
+zadań w tle umie pokazać, że wynik podagenta wszedł do rozmowy, a nie zginął.

@@ -20,50 +20,8 @@ import { utworzZrodloRoundtable } from './zrodlo-roundtable';
 import { utworzZrodloStrumieniaDebaty } from './zrodlo-strumienia-debaty';
 
 /**
- * Moduł Roundtable — złożenie sześciu okien wokół jednej debaty wielu modeli.
- *
- * Jedno okno rozmawia tu z wieloma kanałami naraz (`core/kompozycja.go`, pole
- * `Debata`), po tym samym rejestrze kanałów, którym jedzie okno rozmowy. Moduł
- * nie prowadzi więc własnej listy modeli: uczestnika zakłada się na kanale
- * wziętym z rejestru, a nazwę kanału składa `nazwaKanalu` z biblioteki.
- *
- * Moduł pracuje w oknie, nie w sesji. Każda komenda obszaru, którą moduł wywołuje, wymaga
- * `windowId`, więc złożenie jedzie przez `widokZOknaSesji` wraz z kodem modułu:
- * przejście pyta rdzeń o okna sesji i odracza montaż do chwili, gdy okno tego
- * modułu jest znane. Bez kodu przejście wzięłoby okno pierwsze w wykazie
- * i komendy debaty jechałyby z `windowId` okna cudzego modułu; szczegóły przy
- * `widokZOknaSesji` w `moduly/rejestracja.ts`.
- *
- * Rejestr kanałów zakładany jest tutaj. Wspólny egzemplarz powstaje
- * w `aplikacja/scena-sesji.ts` i schodzi do okna rozmowy przez
- * `wiazanie-gniazda.ts`, ale umowa rejestru modułów daje modułowi wyłącznie
- * `Kanal` (`OpisModulu.utworzWidok(kanal)`), więc egzemplarza rejestru nie da
- * się tą drogą podać. Drugi egzemplarz jest dopuszczalny, bo rejestr to czytająca
- * pamięć podręczna nad `channel.list` — katalog wyboru wspólny dla całego
- * klienta, w którym żadne okno nie zapisuje swojego stanu. Od egzemplarza
- * wspólnego różni się jedynie chwilą odświeżenia.
- *
- * Układ idzie za warstwami widoczności opracowania (rozdz. 3, 3.1). Warstwa
- * pierwsza stoi w pasie górnym: Model Panels (skład debaty, osobny panel na
- * każdy model) obok monitora przebiegu (Debate Panel) — pytanie idzie
- * jednocześnie do wszystkich uczestników i odpowiedzi narastają obok składu.
- * Warstwa druga to cztery rozszerzenia boczne — Argument Map & Analysis,
- * Voting & Evaluation Center, Moderator Panel i Consensus Panel — zwinięte do
- * chwili otwarcia przyciskiem z Debate Panelu. Zwinięcie nie jest blokadą:
- * okno jest zbudowane, zasubskrybowane i o jedno naciśnięcie dalej. Okno
- * rozmowy modułu nie należy do złożenia: jest bytem sesji i składa je warstwa
- * rozmowy.
- *
- * Strumień głosów jest jeden na złożenie, nie jeden na okno. Rdzeń nadaje
- * wypowiedź uczestnika fragment po fragmencie (`stream.chunk`,
- * `adapter_modul_roundtable_glos.go`) i rozgłasza `roundtable.debate.changed`
- * rodzaju `created` z treścią pustą, a `updated` z pełną dopiero po domknięciu
- * strumienia; okno słuchające samego zdarzenia pokazuje pustą wypowiedź przez
- * cały czas mówienia modelu. Gdyby każde z sześciu okien założyło własną
- * subskrypcję i własne gromadzenie, ten sam fragment byłby przyjęty
- * sześciokrotnie, a sześć okien miałoby sześć osobnych obrazów jednego głosu.
- * Subskrypcja stoi zatem tutaj, obok `StanDebaty`, i schodzi do okien gotowym
- * gromadzeniem.
+ * Moduł Roundtable składa sześć okien wokół jednej debaty wielu modeli, po wspólnym rejestrze
+ * kanałów, którym jedzie okno rozmowy.
  */
 export interface ZamontowanyRoundtable {
   /** Element osadzony w dokumencie. */
@@ -82,30 +40,17 @@ export function zamontujRoundtable(
   okno: string,
   rejestrPodany?: RejestrKanalow,
 ): ZamontowanyRoundtable {
-  // Rejestr przyjmowany z zewnątrz, gdy wywołujący go ma — inaczej zakładany
-  // tutaj (patrz opis modułu). Parametr istnieje po to, żeby poszerzenie umowy
-  // `OpisModulu` nie wymagało przepisywania złożenia.
+  // Rejestr przyjmowany z zewnątrz, gdy wywołujący go ma — inaczej zakładany tutaj.
   const rejestr = rejestrPodany ?? utworzRejestrKanalow(kanal);
   const zrodlo = utworzZrodloRoundtable(kanal);
-  // Arsenał obszaru — czterdzieści dwie komendy poza czwórką prowadzącą debatę.
-  // Jedno źródło na całe złożenie, bo wszystkie okna pytają o tę samą debatę
-  // tego samego okna; drugi egzemplarz nie dałby niczego poza drugim miejscem
-  // do zmiany przy zmianie kontraktu.
+  // Arsenał obszaru: czterdzieści dwie komendy poza czwórką prowadzącą debatę, jedno źródło na złożenie.
   const arsenal = utworzZrodloArsenaluRoundtable(kanal);
   const stan = utworzStanDebaty(zrodlo, rejestr, { okno });
   const strumien = utworzStrumienWypowiedzi(stan);
-  // Okno czytane w chwili nadejścia fragmentu, nie w chwili subskrypcji:
-  // `StanDebaty.ustawOkno` przestawia moduł na inną debatę bez składania okien
-  // od nowa, a filtr zapamiętany przy subskrypcji przepuszczałby wtedy
-  // fragmenty debaty poprzedniej.
+  // Okno czytane w chwili nadejścia fragmentu, nie w chwili subskrypcji filtra strumienia.
   const zrodloStrumienia = utworzZrodloStrumieniaDebaty(kanal, () => stan.okno());
 
-  // Zmiana tury czyści gromadzenie, i robi to przed oknami. Fragmenty należą do
-  // wypowiedzi jednej tury, a `StanDebaty` porzuca wtedy wykaz wypowiedzi;
-  // zostawione dokleiłyby zdania tury poprzedniej do mówców tury nowej. Nasłuch
-  // stoi przed oknami, bo słuchacze stanu są wołani w kolejności zapisania:
-  // gdyby stał po nich, okna zdążyłyby raz narysować głosy tury poprzedniej pod
-  // nagłówkiem tury nowej.
+  // Zmiana tury czyści gromadzenie przed oknami, żeby nie dokleić zdań tury poprzedniej do mówców nowej.
   let turaWidziana = stan.tura();
   const odsubskrybujTure = stan.naZmiane(() => {
     if (stan.tura() === turaWidziana) return;
@@ -123,8 +68,7 @@ export function zamontujRoundtable(
   const analiza = utworzOknoArgumentMap(arsenal, stan, strumien);
   const ocena = utworzOknoVotingEvaluation(arsenal, stan, strumien);
 
-  // Pas rozszerzeń powstaje przed Debate Panelem, bo to on wytwarza przyciski
-  // otwarcia, które Debate Panel stawia w swoim pasku akcji.
+  // Pas rozszerzeń powstaje przed Debate Panelem, który stawia jego przyciski w swoim pasku akcji.
   const rozszerzenia = utworzPasRozszerzen([
     {
       kod: 'argument-map-analysis',
@@ -176,23 +120,13 @@ export function zamontujRoundtable(
     ocena.odswiez();
   }
 
-  // Katalog kanałów zamawia złożenie, nie okno: okna modułu czytają ten sam
-  // wykaz, więc cztery zapytania o to samo byłyby czynnością bez odbiorcy.
-  // Zamówienie idzie przed odczytem okien — inaczej Model Panels, sprawdzając
-  // `kanalyOdczytane()` jeszcze przed odpowiedzią, zamawia wykaz drugi raz
-  // i na jeden montaż idą dwie koperty `channel.list`.
+  // Katalog kanałów zamawia złożenie, nie okno, przed odczytem okien, żeby uniknąć podwójnego zapytania.
   rejestr.odswiez();
   odswiez();
-  // Katalog okien rdzenia czyta się raz na montaż — pasek uczciwości liczy z niego
-  // rozjazd między oknami przypisanymi modułowi a oknami, które moduł buduje.
+  // Katalog okien rdzenia czyta się raz na montaż — pasek uczciwości liczy z niego rozjazd okien.
   void uczciwosc.katalog.odczytaj();
 
-  // Fragment budzi wyłącznie okna, które treść wypowiedzi rysują albo liczą:
-  // skład z odpowiedziami, przebieg debaty, analizę struktury i zestawienie
-  // udziału. Moderator Panel i Consensus Panel treści wypowiedzi nie pokazują,
-  // więc przerysowanie ich kilkanaście razy na sekundę byłoby pracą bez
-  // odbiorcy — a że oba trzymają wpisane nastawy tury i zakresu, kasowałoby też
-  // wpisywaną treść.
+  // Fragment budzi wyłącznie okna rysujące treść wypowiedzi, nie Moderator Panel ani Consensus Panel.
   const odsubskrybujStrumien = zrodloStrumienia.naFragmentWypowiedzi((fragment) => {
     strumien.przyjmij(fragment);
     sklad.odswiezGlosy();
@@ -220,7 +154,7 @@ export function zamontujRoundtable(
   };
 }
 
-/** Znakuje okno kodem rejestru okien operacyjnych — po nim skacze nawigacja. */
+/** Znakuje okno kodem rejestru okien operacyjnych, po którym skacze nawigacja, znacząc też jego indeks skupienia. */
 function oznacz(element: HTMLElement, kod: string): HTMLElement {
   element.dataset['okno'] = kod;
   element.tabIndex = -1;
@@ -236,17 +170,8 @@ function oznacz(element: HTMLElement, kod: string): HTMLElement {
 const KOD_MODULU = 'roundtable';
 
 /**
- * Panel debaty dla stosu paneli pomocniczych — wyłącznie reeksport.
- *
- * Panel nie należy do złożenia okien powyżej i nie jest przez nie
- * stawiany: gospodarzem jest pas okien pomocniczych modułu albo kolumna paneli
- * sceny okien równoległych, a wpina go wytwórnia paneli
- * (`okna-pomocnicze/wytwornia-paneli.ts`).
- *
- * Reeksport jest dla czytającego, nie dla wytwórni: wytwórnia sięga wprost po
- * `moduly/roundtable/panel-debaty`, bo import tego pliku wciągnąłby do gospodarza
- * całe złożenie okien operacyjnych i rejestrację modułu, których
- * gospodarz nie stawia. Wpis tutaj mówi tyle, że panel należy do tego modułu.
+ * Panel debaty dla stosu paneli pomocniczych — wyłącznie reeksport dla czytającego, bo panelu
+ * tu się nie stawia.
  */
 export { utworzPanelDebaty, KOD_PANELU_DEBATY } from './panel-debaty';
 

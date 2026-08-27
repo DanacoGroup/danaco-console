@@ -411,3 +411,38 @@ i drugi z nich jest niespójnością rejestru.
 Transport protokołu MCP da się dziś wpisać wyłącznie do nieprzezroczystej
 konfiguracji w postaci zapisu JSON. Kontrakt nie nazywa tego pola osobno, więc
 rdzeń i okno mogą rozumieć wpisaną wartość odmiennie.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/stan-dymka.ts
+
+Dymek nie ma własnej warstwy wywołań — bierze `zrodlo-assistant.ts`
+i `zrodlo-zaplecza.ts` modułu Assistant, żeby własna warstwa nie rozjechała się
+z modułem przy zmianie kształtu odpowiedzi. Żadna ścieżka nie kończy się
+milczeniem: ustalenie okna (`window.list`), wydanie polecenia
+(`assistant.voice.command`), odczyt dziennika (`assistant.activity.list`)
+oraz zamknięcie zlecenia błędem albo anulowaniem zawsze kończy się wypowiedzią
+w historii, nigdy cichym `return` — pusta historia czytałaby się jak brak
+głosu asystenta, co byłoby nieprawdą. Stan okna rozróżnia sześć wartości,
+nie dwie, bo odmowa rdzenia i brak okna asystenta prowadzą do różnych
+wniosków Operatora.
+
+Odpowiedź asystenta przychodzi później niż odpowiedź komendy: rdzeń potwierdza
+samo przyjęcie zlecenia, a wpis rodzaju `result` dopisuje przy domykaniu
+(`adapter_modul_asystent_wykonawca.go` → `domknijZlecenie`), więc zejście
+zlecenia z toru, ogłaszane zdarzeniem `assistant.action.changed`, pociąga
+odczyt dziennika.
+
+Źródło posunięć jest jedno i wspólne z pasem dolnym (`aplikacja/
+pas-posuniec.ts`); druga subskrypcja byłaby drugim rozstrzyganiem sprawcy,
+a `utworzRozstrzyganieSprawcy` zużywa odcisk okna przy weryfikacji, więc dwa
+egzemplarze wydałyby dwa różne werdykty o jednym zdarzeniu.
+
+Sprawca idzie z koperty zdarzenia: `AssistantActionChangedEvent` niesie
+`actor` i `actorClientId` wypełniane przez rdzeń (`core/sprawca.go`).
+Rozgłoszenie idzie do całego konta (`transport/rozgloszenie.go`), więc
+zlecenie założone poza tym dymkiem wchodzi jako posunięcie (kto, co, w jakim
+stanie), ale bez treści dziennika — treść odpowiedzi należy do okna,
+w którym padło polecenie.
+
+Odmowa `odnotujOdmowe` trafia do historii oprócz dymka powiadomienia, bo
+powiadomienie znika po sekundach, a Operator wraca po przebieg rozmowy do
+historii i ma tam znaleźć ślad każdej odmowy.

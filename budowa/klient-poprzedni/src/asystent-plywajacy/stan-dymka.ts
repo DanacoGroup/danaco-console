@@ -13,44 +13,9 @@ import { ZAPOWIEDZ_BRAKU_GLOSU } from './dostepnosc-mowy';
 import { rozpoznajSprawce, zdanieOSprawcy, type ZnanySprawca } from './sprawca-zdarzenia';
 
 /**
- * Stan pływającego dymka Asystenta — jedna rozmowa, jedno okno rdzenia.
- *
- * Droga do rdzenia jest cudza: dymek nie ma własnej warstwy wywołań, tylko
- * bierze `zrodlo-assistant.ts` i `zrodlo-zaplecza.ts` modułu Assistant. Własna
- * warstwa rozjechałaby się z modułem przy pierwszej zmianie kształtu odpowiedzi.
- *
- * Żadna ścieżka nie kończy się milczeniem. Każde miejsce, w którym rdzeń może
- * odmówić — ustalenie okna (`window.list`), wydanie polecenia
- * (`assistant.voice.command`), odczyt dziennika (`assistant.activity.list`)
- * oraz zlecenie zamknięte błędem lub anulowane — kończy się wypowiedzią
- * w historii, nie cichym `return`. Pusta historia czyta się jak „asystent nie
- * ma nic do powiedzenia", co jest nieprawdą.
- *
- * Okno rozróżnia sześć stanów, nie dwa: odmowa rdzenia i brak okna asystenta
- * prowadzą do różnych wniosków, więc nie mogą wyglądać tak samo.
- *
- * Odpowiedź asystenta przychodzi później niż odpowiedź komendy. Rdzeń
- * potwierdza samo przyjęcie zlecenia, a wpis rodzaju `result` dopisuje przy
- * domykaniu (`adapter_modul_asystent_wykonawca.go` → `domknijZlecenie`).
- * Dlatego zejście zlecenia z toru, ogłaszane zdarzeniem
- * `assistant.action.changed`, pociąga odczyt dziennika.
- *
- * Źródło posunięć jest jedno i wspólne z pasem dolnym (`aplikacja/
- * pas-posuniec.ts`). Druga subskrypcja byłaby drugim rozstrzyganiem sprawcy,
- * a `utworzRozstrzyganieSprawcy` zużywa odcisk okna przy weryfikacji: dwa
- * egzemplarze wydałyby dwa różne werdykty o jednym zdarzeniu. Gdy miejsce
- * montażu (`aplikacja/widok-srodowiska.ts`) źródła nie poda, dymek mówi
- * wprost, że posunięć nie dostaje.
- *
- * Sprawca idzie z koperty: `AssistantActionChangedEvent` niesie `actor`
- * i `actorClientId` wypełniane przez rdzeń (`core/sprawca.go`). Rozgłoszenie
- * idzie do całego konta (`transport/rozgloszenie.go`), więc zlecenie założone
- * poza tym dymkiem nie jest cudzą rozmową — wchodzi jako posunięcie (kto, co,
- * w jakim stanie), ale bez treści dziennika, bo treść odpowiedzi należy do
- * okna, w którym padło polecenie.
+ * Stan pływającego dymka Asystenta: jedna rozmowa w jednym oknie rdzenia, obsługiwana
+ * przez moduł Assistant; kod modułu wskazuje jego wpis w rejestrze okien.
  */
-
-/** Kod modułu, którego okna szukamy w rejestrze rdzenia. */
 const KOD_MODULU = 'assistant';
 
 /**
@@ -62,7 +27,10 @@ const KOD_MODULU = 'assistant';
  */
 export type RodzajWypowiedzi = 'operator' | 'asystent' | 'rdzen' | 'odmowa' | 'posuniecie';
 
-/** Jeden wiersz rozmowy dymka. */
+/**
+ * Jeden wiersz rozmowy dymka: niesie rodzaj wypowiedzi, treść, chwilę wystąpienia oraz
+ * identyfikator wykluczający ponowne wyrenderowanie tego samego wiersza.
+ */
 export interface Wypowiedz {
   id: string;
   rodzaj: RodzajWypowiedzi;
@@ -85,7 +53,10 @@ export type StanOkna =
   | { rodzaj: 'brak-okna' }
   | { rodzaj: 'odmowa'; zdanie: string };
 
-/** Zdanie o stanie okna. Nigdy puste — pustka czyta się jak „nic tu nie ma". */
+/**
+ * Zdanie o stanie okna dla czytnika ekranu: nigdy puste, bo pusty komunikat
+ * czytałby się jak brak odpowiedzi rdzenia.
+ */
 export function zdanieOStanieOkna(stan: StanOkna): string {
   switch (stan.rodzaj) {
     case 'niepytane':
@@ -107,21 +78,17 @@ export function zdanieOStanieOkna(stan: StanOkna): string {
   }
 }
 
-/** Czy stan okna pozwala dziś wysłać polecenie. */
+/**
+ * Czy stan okna pozwala dziś wysłać polecenie: prawda wyłącznie dla stanu
+ * `gotowe`, niosącego identyfikator okna modułu Assistant.
+ */
 export function oknoGotowe(stan: StanOkna): stan is { rodzaj: 'gotowe'; id: string } {
   return stan.rodzaj === 'gotowe';
 }
 
 /**
- * Zdanie o posunięciu — składane tak samo, jak składa je pas dolny
- * (`aplikacja/pas-posuniec.ts`, funkcja `dopisz`).
- *
- * Oba widoki biorą posunięcie z jednego `ZrodloPosuniec`, więc muszą je też
- * jednakowo nazwać: ta sama rzecz w dwóch miejscach ma czytać się identycznie.
- *
- * Zdanie nie mówi „Asystent", bo `Posuniecie` niesie wyłącznie `pewnosc` —
- * `zrodlo-posuniec.ts` rozstrzyga sprawcę odciskiem okna zamiast czytać
- * `actor` z koperty.
+ * Zdanie o posunięciu — składane tak samo, jak w pasie dolnym, bo oba widoki biorą
+ * je z jednego `ZrodloPosuniec` i muszą nazwać tę samą rzecz identycznie.
  */
 export function zdaniePosuniecia(posuniecie: Posuniecie): string {
   const zrodloRuchu =
@@ -129,18 +96,14 @@ export function zdaniePosuniecia(posuniecie: Posuniecie): string {
   return `${posuniecie.opis} — ${zrodloRuchu}`;
 }
 
-/** Opcje warstwy asystenta — obie wymagają wpięcia w miejscu montażu. */
+/**
+ * Opcje warstwy asystenta: obie wymagają wpięcia w miejscu montażu widoku środowiska,
+ * inaczej dymek działa bez posunięć i bez tożsamości połączenia.
+ */
 export interface OpcjeStanuDymka {
-  /**
-   * Wspólne źródło posunięć — TEN SAM egzemplarz, którym karmi się pas dolny.
-   * Pominięte znaczy, że źródła nie podano, i dymek mówi to wprost.
-   */
+  /** Wspólne źródło posunięć — ten sam egzemplarz, którym karmi się pas dolny. */
   posuniecia?: ZrodloPosuniec;
-  /**
-   * Identyfikator bieżącego połączenia (`uzgodnienie.klient.id`) — potrzebny,
-   * by odróżnić Operatora przy tym ekranie od Operatora z innego urządzenia.
-   * Pusty znaczy „nie znamy własnego" i wtedy tak też jest napisane.
-   */
+  /** Identyfikator bieżącego połączenia — odróżnia Operatora przy tym ekranie od innych urządzeń. */
   idKlienta?: string;
 }
 
@@ -159,18 +122,16 @@ export interface StanDymka {
   ustalOkno(): Promise<void>;
   /** Wydaje polecenie. Każde zakończenie kończy się wypowiedzią w historii. */
   wyslij(tresc: string): Promise<void>;
-  /**
-   * Wnosi do historii odmowę, która nie przyszła z rdzenia — dziś jedyną taką
-   * jest naciśnięcie mikrofonu. Dymek pokazuje ją także tutaj, nie tylko
-   * dymkiem powiadomienia: powiadomienie znika po sekundach, a Operator wraca
-   * po przebieg rozmowy do historii i ma tam znaleźć ślad każdej odmowy.
-   */
+  /** Wnosi do historii odmowę, która nie przyszła z rdzenia — dziś jedyną taką jest mikrofon. */
   odnotujOdmowe(tresc: string): void;
   obserwuj(sluchacz: () => void): () => void;
   rozlacz(): void;
 }
 
-/** Nadaje wypowiedzi identyfikator — widok nie przerysowuje wierszy bez zmiany. */
+/**
+ * Nadaje wypowiedzi identyfikator: widok nie przerysowuje wierszy rozmowy bez zmiany
+ * tego identyfikatora.
+ */
 let licznik = 0;
 
 export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): StanDymka {
@@ -201,19 +162,15 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
   function powiedz(rodzaj: RodzajWypowiedzi, tresc: string): void {
     licznik += 1;
     wypowiedzi.push({ id: `w-${licznik}`, rodzaj, tresc, chwila: Date.now() });
-    // Licznik rośnie wyłącznie od ruchów asystenta. Własne zdanie Operatora
-    // i odpowiedź na nie nie są zaległością — Operator właśnie na nie patrzył.
+    // Licznik rośnie tylko od ruchów asystenta — zdanie Operatora nie jest zaległością do przeczytania.
     if (rodzaj === 'posuniecie') nieprzeczytanych += 1;
     oglos();
   }
 
-  // Zdanie otwierające. Stoi w historii, a nie tylko w nagłówku, bo czytnik
-  // ekranu czyta historię — a brak głosu jest tu rzeczą pierwszą do usłyszenia.
+  // Zdanie otwierające stoi w historii, bo czytnik ekranu czyta historię, nie nagłówek.
   powiedz('rdzen', ZAPOWIEDZ_BRAKU_GLOSU);
 
-  // Drugie zdanie otwierające pada tylko wtedy, gdy miejsce montażu nie podało
-  // źródła posunięć. Dymek bez tego źródła pokazuje samą rozmowę i ani jednego
-  // ruchu asystenta — cisza wzięta za bezczynność byłaby myląca.
+  // Drugie zdanie pada, gdy miejsce montażu nie podało źródła posunięć — cisza myli się z bezczynnością.
   if (zrodloPosuniec === undefined) {
     powiedz(
       'rdzen',
@@ -229,9 +186,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
     if (!oknoGotowe(stanOkna)) return;
     const wynik = await zrodlo.dziennik(stanOkna.id, idZlecenia);
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Zlecenie zeszło z toru, więc odpowiedź istnieje po stronie rdzenia.
-      // Cichy powrót zostawiłby w historii samo zdanie Operatora i czytałby
-      // się jak brak odpowiedzi asystenta.
+      // Zlecenie zeszło z toru — cichy powrót zostawiłby w historii samo zdanie Operatora, bez odpowiedzi.
       powiedz(
         'odmowa',
         `${opisOdmowyBledu('Odczyt odpowiedzi asystenta', wynik.blad)}. ` +
@@ -248,8 +203,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
       .sort((a, b) => a.createdAt - b.createdAt);
 
     if (odpowiedzi.length === 0) {
-      // Dziennik przyszedł, wpisu wyniku w nim nie ma. To też jest odpowiedź —
-      // i też nie może wyglądać jak cisza.
+      // Dziennik przyszedł bez wpisu wyniku — to też jest odpowiedź, nie cisza.
       powiedz(
         'rdzen',
         `Rdzeń domknął zlecenie ${idZlecenia}, ale dziennik nie niesie dla niego ` +
@@ -300,14 +254,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
     oglos();
   }
 
-  /**
-   * Nanosi zlecenie założone poza tym dymkiem — z okna modułu Assistant,
-   * z AOD, z telefonu albo ręką samego asystenta.
-   *
-   * Wnosi sam ruch: kto, jakie zlecenie i w jakim jest stanie. Treści dziennika
-   * tu nie ma, bo odpowiedź asystenta na tamto polecenie należy do tamtego
-   * okna — tutaj czytałaby się jako część tej rozmowy, którą nie jest.
-   */
+  /** Nanosi zlecenie założone poza tym dymkiem — wnosi sam ruch, bez treści dziennika tamtego okna. */
   function naniesObce(zlecenie: AssistantAction, sprawca: ZnanySprawca): void {
     if (obce.get(zlecenie.id) === zlecenie.status) return;
     obce.set(zlecenie.id, zlecenie.status);
@@ -351,14 +298,10 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
       const zlecenie = tresc.action;
       if (zlecenie === undefined) return;
 
-      // Sprawca wprost z koperty. Rdzeń wypełnia `actor` w tym zdarzeniu
-      // (`core/sprawca.go`), więc nie ma tu czego wyprowadzać ze zwłoki
-      // i odcisków — a gdy pola brak, mówimy „nie wiadomo", nie „Asystent".
+      // Sprawca wprost z koperty — rdzeń wypełnia actor w tym zdarzeniu, brak pola znaczy nie wiadomo.
       const sprawca = rozpoznajSprawce(tresc, idKlienta);
 
-      // Wskaźnik pracy bierze się stąd tylko wtedy, gdy wspólnego źródła
-      // posunięć nie podano. Podane źródło jest jedyną prawdą o pracy — pas
-      // i favikon czytają wtedy ten sam stan.
+      // Wskaźnik pracy bierze się stąd tylko, gdy wspólnego źródła posunięć nie podano.
       if (zrodloPosuniec === undefined) naniesPrace(zlecenie);
 
       if (sledzone.has(zlecenie.id)) {
@@ -406,9 +349,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
 
       const wynik = await zaplecze.okna(idSesji);
       if (!wynik.udany || wynik.wynik === undefined) {
-        // Odmowa `window.list` NIE jest brakiem okna. Gdyby oba stany zlały się
-        // w jeden, Operator dostałby zdanie „otwórz moduł Assistant" w chwili,
-        // gdy problemem jest zerwane połączenie z rdzeniem.
+        // Odmowa window.list nie jest brakiem okna — zlanie stanów myliłoby zerwane połączenie z brakiem.
         stanOkna = {
           rodzaj: 'odmowa',
           zdanie:
@@ -437,8 +378,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
       }
 
       if (!oknoGotowe(stanOkna)) {
-        // Najpierw jedna próba ustalenia okna — Operator nie ma powodu wiedzieć,
-        // że okno ustala się osobnym wywołaniem.
+        // Najpierw jedna próba ustalenia okna — Operator nie musi wiedzieć, że to osobne wywołanie.
         await this.ustalOkno();
       }
       const cel = stanOkna;
@@ -459,9 +399,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
         idOkna: cel.id,
         transkrypcja: polecenie,
         profil: '',
-        // `speak` zostaje fałszem: rdzeń pola nie odkłada (brak kolumny
-        // w `migracja_050_asystent.sql`), a syntezy mowy nie ma. Prośba
-        // o odczytanie odpowiedzi nic by nie zdziałała.
+        // speak zostaje fałszem: rdzeń pola nie odkłada, a syntezy mowy w tej wersji nie ma.
         czytaj: false,
       });
 
@@ -480,8 +418,7 @@ export function utworzStanDymka(kanal: Kanal, opcje: OpcjeStanuDymka = {}): Stan
           'Odpowiedź dojdzie tu, gdy zlecenie zejdzie z toru.',
       );
 
-      // Zlecenie domknięte już w chwili odpowiedzi nie doczeka się zdarzenia —
-      // zdarzenie poszło, zanim wpisaliśmy je do śledzonych.
+      // Zlecenie domknięte już przy odpowiedzi nie doczeka się zdarzenia — ono poszło wcześniej.
       if (
         zlecenie.status === AssistantActionStatus.Done ||
         zlecenie.status === AssistantActionStatus.Failed

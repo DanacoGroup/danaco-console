@@ -3897,3 +3897,25 @@ decyzji.
 
 ## budowa/klient/src/wejscie/skladniki/pole-tekstowe.ts
 Wygląd obwódki i ogłoszenie czytnika ekranu biorą się z jednego stanu błędu, nie z osobnej klasy — inaczej rozjeżdżają się.
+
+## budowa/klient-poprzedni/src/protokol/ksztalt-odpowiedzi.ts
+Kanał nie waliduje ładunku: rzutuje go na typ zapowiedziany przez kontrakt i oddaje wywołującemu.
+Rzutowanie jest obietnicą kompilatora, nie rdzenia — rdzeń starszej wersji albo pośrednik może
+przysłać treść bez pola obowiązkowego, a widok dostałby wartość pustą w miejscu, w którym typ obiecuje
+tablicę. Sprawdzian zamienia taką odpowiedź w zwykłe niepowodzenie wywołania: wpis do dziennika
+i wynik z błędem walidacji.
+
+## budowa/klient-poprzedni/src/moduly/research/zrodlo-okna-badania.ts
+Moduł pyta o okna, bo każda komenda obszaru research wymaga pola windowId, czyli okna badania.
+Klient nie wymyśla tego identyfikatora: bierze go z rdzenia komendą wykazu okien zawężoną do sesji
+i do modułu research. Zaszyty identyfikator byłby daną zmyśloną, a okno bez wskazania rdzenia
+pokazuje stan pusty, zamiast udawać, że wie. Wszystkie trzy komendy mają uchwyt w rdzeniu; akcja
+panelu jest drogą wykonania dla akcji, których kontrakt nie rozróżnia osobną komendą, na przykład
+cytowania, grupowania automatycznego czy porównania źródeł.
+
+## budowa/klient-poprzedni/src/strona-glowna/pozycje-ustawien.ts
+Strefa ma najniższą wagę wizualną i jest stale dostępna. Wykaz kodów strefy trzeciej liczy trzy pozycje:
+okno konfiguracji, mobile i wyświetlanie stałe. Pozostałe pozycje — uwierzytelnianie operatora, punkty
+izolacji, dostępy oraz modele i tożsamość — są zakresami okna konfiguracji; własne wejście na listwie
+dawałoby dwie drogi do tej samej rzeczy. Pełny wykaz niesie dalej menu aplikacji w pasku, gdzie hierarchii
+stref nie ma.

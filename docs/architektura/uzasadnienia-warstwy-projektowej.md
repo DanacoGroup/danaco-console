@@ -447,3 +447,10 @@ dn-wpis--pracuje; klatki nazwane dn-tetno definiuje plakietka.css.
 Strona działa bez rdzenia, kanału kontraktu i sesji, więc nie mówi nic
 o działaniu produktu ani o tym, czy dany żeton jest przez aplikację
 rzeczywiście używany.
+
+## budowa/klient-poprzedni/src/motyw/fundament.css
+Fundament wymaga wcześniejszego wczytania krojów i żetonów motywu; kolejność
+wczytania ustala arkusz motywu. Domyślny styl przeglądarki dla atrybutu
+hidden ma tę samą wagę co reguła klasy, więc komponent z własnym display
+(na przykład pole w układzie flex) przesłania go w kaskadzie i element
+z atrybutem hidden zostaje widoczny — ważność przywraca ukrycie.

@@ -472,3 +472,21 @@ ma rację — zapisuje wiersz spięcia z prawdą o tym, co się stało: czyja zm
 weszła, czyja została odłożona i dlaczego. Odłożone brzmienie zostaje w
 wierszu, więc nie przepada: Operator może je wnieść sam albo znaleźć jako
 propozycję na marginesie.
+
+## budowa/server/internal/store/migracja_129_prowenancja_wywolan.sql
+
+Podsystem prowenancji: rdzeń zapisuje, co poszło do modelu i co wróciło. Bez
+tego zapisu Provenance Explorer modułu Diagnostics nie ma czego pokazać,
+a rozliczenie zużycia nie ma po czym liczyć — dlatego obie rodziny komend stoją
+na tej jednej tabeli, a nie na dwóch osobnych. Dwie tabele o tych samych liczbach
+rozjechałyby się przy pierwszej korekcie cennika.
+
+Prompt i odpowiedź to kolumny osobne, ale wiersza tego samego. Wyłączenie zapisu
+treści ustawieniem zostawia wiersz z liczbami i przebiegiem, a kolumny treści
+puste — ślad wywołania zostaje mierzalny nawet wtedy, gdy jego treść świadomie
+nie jest przechowywana. Kolumna `tresc_zapisana` odróżnia treść pustą od treści
+niezapisanej: bez niej wiersz bez promptu znaczyłby dwie różne rzeczy naraz.
+
+Odcinek wywołania (wejście modelu, użycie narzędzia, tura podagenta) niesie
+wskazanie rodzica. Dzięki temu zapytanie o jeden odcinek czyta jeden wiersz,
+zamiast rozbierać cały dokument JSON, żeby dojść do gałęzi drzewa.

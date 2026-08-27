@@ -2858,3 +2858,100 @@ reguły skanowania, bez zależności od programu spoza instalki.
 Przebieg obciążeniowy stoi przy zapytaniu pojedynczym, bo jest tym samym
 zapytaniem powtórzonym pod obciążeniem, z tym samym podstawianiem zmiennych
 środowiska kolekcji.
+
+## budowa/server/internal/core/adapter_przejecie_sterowania.go
+
+Plik nie prowadzi biegu: nie liczy obiegów, nie wykrywa braku postępu, nie
+rozpoczyna tur — robi to wyłącznie pętla koordynator-wykonawca. Nie zapisuje
+też do pozycji kolejki: wznowienie drogą queue.action resume woła krok, a ten
+przesuwa pozycję po mapie kroku naprzód, czyli pracę przerwaną w stanie
+wykonywana traktuje jak skończoną.
+
+Rejestr steru zna swój stan w chwili obiegu i wydaje go jednorazowo, tak jak
+rejestr biegów, z tą różnicą, że pytanie „kto steruje tym zleceniem” pada
+z zewnątrz w dowolnej chwili, a rejestr nie prowadzi biegu i nie zatrzymuje go.
+
+Wykaz pusty przy sprzątaniu rejestru steru niczego nie kasuje — brak wiedzy
+o oknach nie jest wiedzą o ich zamknięciu.
+
+Rejestr steru jest bytem pakietowym, nie polem struktury, bo klucz rejestru
+(identyfikator zewnętrzny okna) jest niepowtarzalny w procesie i dwa rejestry
+dałyby dwie odpowiedzi o tym samym oknie. Odpis biegu kontraktu w
+core/stan_obiegu.go po ster nie sięga: stan pętli nie ma pola o sterującym,
+więc rejestr obsługuje wyłącznie rodzinę control.*.
+
+Repozytorium przekazań pisze i czyta ślad w dzienniku akcji okna. Kolejność
+czynności w Przejmij jest treścią, nie stylem: ślad idzie do dziennika
+pierwszy, bo tylko on może się nie udać, a przejęcie bez zapisu zostałoby bez
+świadka; ster wchodzi do rejestru przed zatrzymaniem, żeby rozgłoszenie stanu
+biegu wywołane zatrzymaniem niosło już nowego sterującego; zatrzymanie pętli
+staje na końcu i nie kasuje niczego z dorobku Koordynatora — Operator wchodzi
+tam, gdzie proces stoi.
+
+Wznowienie w Oddaj kasuje wyłącznie licznik braku postępu i ostatni odcisk
+strumienia: historia obiegów zostaje, więc Koordynator podejmuje bieg, a nie
+zaczyna go od nowa. Cicha zgoda na oddanie nieprzejętego zlecenia wznowiłaby
+bieg, którego Operator nie zatrzymywał — zmianę stanu, o którą nikt nie
+prosił.
+
+Szeroki kontrakt obszaru window.* deklaruje w całości inny plik, dlatego
+historia sięga repozytorium wąskim interfejsem. Port, który tej zdolności nie
+niesie, dostaje odmowę nazywającą brak, nigdy pusty wykaz udający, że nikt nie
+przejmował.
+
+## budowa/server/internal/core/adapter_rozmowa_powierzchnia.go
+
+Plik przekłada obszary tools, permissions, hooks, skills, environment,
+provider i mcp konfiguracji sesji na trzy powierzchnie procesu kanału, które
+warstwa injection już potrafi złożyć: napis `--settings` (plik ustawień
+sesji) z regułami uprawnień i narzędzi, sekcją hooks oraz odmową narzędzia
+Skill, gdy obszar skills jest wyłączony; zmienne środowiskowe procesu, czyli
+obszar environment oraz adres dostawcy; i osobny `--mcp-config` z wiązaniami
+serwerów MCP opisanymi wprost. Ten plik jest jedynym miejscem w drzewie,
+które zna kształt pliku ustawień dostawcy i nazwy zmiennych środowiskowych —
+model konfiguracji pozostaje dziedzinowy, dopiero tutaj staje się
+„permissions.allow” czy „ANTHROPIC_BASE_URL”.
+
+`uprawnieniaCLI` odwzorowuje obszar permissions oraz tools na sekcję
+permissions pliku ustawień dostawcy. Trybu domyślnego tu nie ma: tryb
+uprawnień jedzie przełącznikiem `--permission-mode` (`z.TrybUprawnien`,
+`przelozUprawnienia`), którego słownik kontrakt potwierdza dosłownie —
+powtórzenie go w pliku groziłoby rozejściem słownictwa i dwoma źródłami tej
+samej decyzji.
+
+`plikUstawienZKonfiguracji` buduje napis `--settings` z obszarów permissions,
+tools, skills oraz hooks. Reguły narzędzi i wyłączenie obszaru skills
+dokładają się do reguł uprawnień; zaczepy jadą osobną sekcją hooks.
+
+`dodajRegulyUmiejetnosci` przekłada obszar skills na regułę uprawnień. Jedyny
+przekład, który powierzchnia pliku ustawień unosi bez atrapy: wyłączenie
+obszaru wprost (`Enabled == false`) odmawia narzędzia Skill w sekcji deny —
+tą samą drogą, którą obszar tools odmawia narzędzi imiennych. Obszar włączony
+albo nieokreślony nie dokłada reguły: umiejętności pozostają wtedy dostępne,
+jak przed wpięciem. Dopuszczanie imienne (`AllowedSkillIds`), katalogi
+wyszukiwania (`Directories`) i samowykrywanie (`AutoDiscovery`) nie mają pola
+na tej powierzchni i jadą do ryzyk — nie ma tu dla nich cichej atrapy.
+
+`hooksZKonfiguracji` buduje sekcję hooks pliku ustawień z obszaru hooks.
+Obszar wyłączony wprost (`Enabled == false`) nie daje żadnego zaczepu; obszar
+włączony albo nieokreślony przenosi zaczepy czynne. Zaczep bez zdarzenia albo
+bez polecenia jest niekompletny i nie jedzie. Zaczepy o tym samym zdarzeniu
+i zawężeniu zbierają się w jednej grupie. Brak zaczepów daje nil, więc sekcja
+znika z JSON.
+
+`granicaSekund` przelicza granicę czasu zaczepu z milisekund kontraktu na
+sekundy pliku ustawień. Wartość niedodatnia nie daje granicy (nil); wartość
+dodatnia poniżej sekundy zaokrągla w górę do jednej sekundy — pole timeout
+nie wyraża ułamka, a granica poniżej pełnej sekundy nie może zejść do zera
+i zamienić się w brak granicy.
+
+`srodowiskoZKonfiguracji` składa zmienne środowiskowe procesu z obszaru
+environment oraz z adresu i granicy odpowiedzi obszarów provider i model.
+Zmienna tajna (`SecretRef`) nie wchodzi: jej treść zna wyłącznie sejf,
+którego ta droga nie ma wpiętego — wpisanie nazwy bez wartości byłoby atrapą.
+
+`mcpZKonfiguracji` buduje napis `--mcp-config` z wiązań obszaru mcp opisanych
+wprost (transport stdio z programem albo sse/http z adresem). Wiązania
+wskazujące punkt dostępu (`AccessPointId`) pomija: ich adres i poświadczenie
+żyją w rejestrze punktów dostępu, którego ta droga nie rozstrzyga — jadą one
+drogą nadań okna (mosty).

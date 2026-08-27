@@ -6279,3 +6279,16 @@ przeglądarki, którego środowisko sprawdzianu nie ma w całości.
 
 ## budowa/klient-poprzedni/src/moduly/agents/wykaz-wtyczek.ts
 Wykaz wtyczek jest bytem odrębnym od konektora: konektor to droga do usługi, serwer MCP wskazany punktem dostępu podawanym powłoce przełącznikiem --mcp-config, a wtyczka to katalog rozszerzeń powłoki — zbiór poleceń, zaczepów i umiejętności wgrywany przez --plugin-dir. Kontrakt rozdziela oba byty osobnymi polami i komendami, więc rozdziela je i okno. Pole eksperta niesie same identyfikatory wtyczek, dlatego nazwę, wersję i źródło wiersz bierze z osobnego odczytu definicji; identyfikator zostaje w podpowiedzi wiersza, bo nim posługuje się czynność odłączenia. Gdy odczyt definicji odmówi albo jeszcze nie wrócił, wiersze pokazują same identyfikatory — uboższa treść nie jest awarią i nie odbiera przycisku odłączenia. Odczyt definicji odrzuca odpowiedź przedawnioną: między wysłaniem żądania a powrotem odpowiedzi operator może wybrać innego eksperta, a wtedy wykaz pokazywałby cudze wtyczki pod właściwymi kodami.
+
+## budowa/klient-poprzedni/src/moduly/library/archiwum-repozytorium.ts
+Rozdział zdolności wynika z kontraktu, nie z wygody: migawka repozytorium
+i paczka migracyjna powstają w części opisowej, a nie jako archiwum, więc
+nazwanie manifestu paczką migracyjną byłoby obietnicą archiwum, którego
+w pliku nie ma. Utrwalenie archiwalne idzie do rdzenia własną komendą modułu:
+zapis w formacie PDF/A, pakiet BagIt i profil PREMIS/METS pracują na zasobie
+biblioteki, a nie na magazynie zasobów projektowych, więc identyfikator się
+zgadza i wynik wraca wraz z zapisem walidacji. Paczka migracyjna i migawka
+repozytorium niosą bajty: archiwum powstaje w rdzeniu i ląduje w repozytorium
+jako nowy zasób, a wywóz opisowy zostaje obok jako dwie różne rzeczy, których
+okno nie myli. Wskaźnik retencji czyta politykę z rdzenia wraz z raportem
+zasobów zbliżających się do końca okresu.

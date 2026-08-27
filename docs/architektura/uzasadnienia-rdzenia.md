@@ -5963,3 +5963,12 @@ wyliczenia do kontraktu ten plik ustępuje stałym współdzielonym.
 
 Stan „przydzielona" ma wpis w tabeli przejść, choć rdzeń go nie wystawia: pozycja przydzielona
 oknu wykonawcy powstaje poza tą drogą, a silnik ma umieć ją podjąć zamiast się na niej zatrzymać.
+
+## budowa/server/internal/core/telemetria_kolejki.go
+
+Dzięki temu, że kolejka jest procesem o policzalnych etapach jak tura okna,
+Process Monitor warstwy wspólnej dostaje z kolejki to samo zdarzenie, co
+z tury okna.
+
+Telemetria liczy etapy zakończone tą samą listą stanów końcowych, którą
+silnik wykonania zamyka pozycje kolejki.

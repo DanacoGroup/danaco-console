@@ -9,26 +9,9 @@ import { czyObiekt, czyTekst, sprawdzKsztalt } from '../protokol/ksztalt-odpowie
 import { przenies } from '../protokol/wynik-czastkowy';
 import { wywolaj } from '../protokol/wywolanie';
 
-/**
- * Strona zapisująca rejestru kanałów modelu wraz z dwiema czynnościami
- * pytającymi: `channel.add`, `channel.update`, `channel.remove`,
- * `channel.check`, `channel.credential.status`.
- *
- * Zakładanie stoi tu razem z usuwaniem, bo świeża baza ma dokładnie jeden
- * kanał, a okno komunikacji kanału wymaga. Panel z samym usuwaniem pozwoliłby
- * nieodwracalnie skasować jedyny kanał produktu i nie zostawiłby drogi powrotu.
- *
- * Wykazu kanałów to źródło nie pobiera. Rejestr kanałów
- * (`sterowanie/rejestr-kanalow.ts`) jest czytającą pamięcią podręczną nad
- * `channel.list`, wspólną całemu klientowi, i drugiej listy kanałów nie ma.
- * Po udanym zapisie panel woła `rejestr.odswiez()`.
- *
- * Każda czynność oddaje `Wynik<T>`, nigdy samej treści: odmowa musi dojechać
- * do widoku z kodem i wiadomością rdzenia — usunięcie odrzucone przez rdzeń nie
- * może wyglądać jak usunięcie wykonane.
- */
+/** Źródło zapisuje rejestr kanałów modelu: zakładanie, zmianę, usunięcie, sprawdzenie i poświadczenie. */
 
-/** Opis kanału zakładanego w rejestrze; `kind` jest wymagany tylko tutaj. */
+/** Opis kanału zakładanego w rejestrze zawiera nazwę, rodzaj, model, stan włączenia oraz ustawienia konfiguracyjne kanału. */
 export interface OpisZalozeniaKanalu {
   name: string;
   kind: string;
@@ -37,14 +20,7 @@ export interface OpisZalozeniaKanalu {
   config?: unknown;
 }
 
-/**
- * Opis zmiany wiersza rejestru.
- *
- * Pola `kind` tu nie ma z rozmysłu: `ChannelUpdateRequest` kontraktu
- * nie niesie rodzaju, więc rodzaju kanału po założeniu zmienić się nie da.
- * Formularz mówi to Operatorowi wprost, zamiast przyjmować wpis, który rdzeń
- * cicho zignoruje.
- */
+/** Opis zmiany wiersza rejestru pomija rodzaj kanału, ponieważ kontrakt zmiany rodzaju kanału po założeniu nie przewiduje. */
 export interface OpisZmianyKanalu {
   channelId: string;
   name?: string;
@@ -53,7 +29,7 @@ export interface OpisZmianyKanalu {
   config?: unknown;
 }
 
-/** Trzy czynności zapisujące rejestru kanałów. */
+/** Interfejs udostępnia trzy czynności zapisujące rejestru kanałów: zakładanie, zmianę oraz usunięcie wiersza rejestru. */
 export interface ZrodloKanalow {
   /** `channel.add` — dopisuje wiersz rejestru. */
   zaloz(opis: OpisZalozeniaKanalu): Promise<Wynik<Channel>>;
@@ -61,20 +37,9 @@ export interface ZrodloKanalow {
   zmien(opis: OpisZmianyKanalu): Promise<Wynik<Channel>>;
   /** `channel.remove` — wykreśla wiersz rejestru. Nieodwracalne. */
   usun(idKanalu: string): Promise<Wynik<string>>;
-  /**
-   * `channel.check` — sprawdzenie, czy kanał odpowiada.
-   *
-   * To narzędzie pomocnicze, nie bramka: wynik NICZEGO nie warunkuje — nie
-   * wstrzymuje zapisu, nie wyłącza wiersza, nie blokuje wysłania tury. Kanał,
-   * który nie odpowiedział minutę temu, bywa sprawny teraz.
-   */
+  /** `channel.check` — sprawdzenie łączności kanału; wynik niczego w zapisie nie warunkuje. */
   sprawdz(idKanalu: string): Promise<Wynik<ChannelCheckResponse>>;
-  /**
-   * `channel.credential.status` — STAN poświadczenia, nigdy jego treść.
-   *
-   * Odpowiedź mówi, czy poświadczenie jest ustawione, jakiego jest rodzaju
-   * i gdzie mieszka. Sekretu nie niesie i nieść nie może.
-   */
+  /** `channel.credential.status` — stan poświadczenia kanału, nigdy jego treść. */
   stanPoswiadczenia(idKanalu: string): Promise<Wynik<ChannelCredentialStatusResponse>>;
 }
 
@@ -122,14 +87,7 @@ export function utworzZrodloKanalow(kanal: Kanal): ZrodloKanalow {
   };
 }
 
-/**
- * Czy odpowiedź niesie wiersz rejestru o kształcie z kontraktu.
- *
- * Sprawdzamy pola, na które widok patrzy bez osłony: identyfikator (klucz
- * wiersza w wykazie), nazwę i rodzaj (`nazwaKanalu` czyta oba) oraz `enabled`.
- * Rdzeń starszej wersji, który przyśle wiersz bez `enabled`, dałby w widoku
- * kanał „nieczynny" — czyli zdanie nieprawdziwe zamiast odmowy.
- */
+/** Sprawdzenie waliduje pola wiersza rejestru wymagane przez widok: identyfikator, nazwę, rodzaj kanału oraz stan włączenia. */
 function czyKanal(kanal: Channel): boolean {
   if (!czyObiekt(kanal)) return false;
   return (

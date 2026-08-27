@@ -5799,3 +5799,29 @@ skrót nie jest potrzebny.
 Kontekst nakładki (bieżący moduł i bieżąca karta sesji) bywa pominięty —
 wtedy pozycje kontekstowe zostają widoczne i mówią wprost, że menu nie zna
 bieżącego bytu, zamiast zniknąć.
+
+## budowa/klient-poprzedni/src/moduly/research/akcje-okien.ts
+
+Droga wykonania akcji stoi w tym katalogu, a nie w oknie, bo rozstrzyga o odbiorze: akcja
+bez wykonawcy idzie generycznym `window.action`, zamiast znikać z paska albo udawać
+wykonanie. Nazwa komendy nigdy nie jest tu napisem wpisanym wprost: kod akcji, która ma
+w kontrakcie własną komendę, bierze się ze stałej `Command.*` — inaczej zmiana nazwy
+w `contract.json` zostawiłaby w panelu martwe wywołanie, którego kompilator nie wychwyci.
+Zaporę na to niesie plik `src/kontrakt.test.ts`.
+
+Wykaz tego katalogu nie jest kopią rejestru akcji rdzenia. Rejestr, czytany komendą
+`action.list`, opisuje akcje modułu zapisane w bazie, a zaczyn katalogu akcji (migracja
+`migracja_009_zaczyn_akcji.sql`) zakłada dla modułu Research wyłącznie trzy pozycje paska
+promptu — pozycje wiadomości — bo powstają złączeniem z tabelą `modul`. Pozostałe kody
+z tego pliku wiersza w katalogu rdzenia nie mają, więc panel zbudowany wyłącznie z rejestru
+byłby pusty; wykaz w tym pliku znika dopiero wtedy, gdy rejestr odda te same pozycje.
+
+Zdolność drogi `komenda` niesie kod akcji wzięty ze stałej `Command.*`, a wywołanie składa
+`wywolania-komend.ts`. Zdolność drogi `akcja` jest nastawą pola komendy istniejącej albo
+należy do okna konfiguracji; rdzeń tę komendę zna, więc odmowa jest merytoryczna — kod
+`not_found` z katalogu akcji albo `conflict` braku wykonawcy z adaptera okna akcji rdzenia.
+
+Dla Discovery Panel i Reading View odmowa dotycząca okna spoza katalogu przychodzi o krok
+wcześniej niż przy akcji bez wiersza w katalogu akcji: Discovery Panel i Reading View mają
+wiersz w opracowaniu modułu, a nie mają go jeszcze w migracjach katalogu okien rdzenia, więc
+akcja ma to zapowiadać, zamiast obiecywać drogę, której dziś nie ma nawet do połowy.

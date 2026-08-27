@@ -5772,3 +5772,20 @@ i odbiłyby sobie nawzajem każde zdarzenie, więc podpięcie mostu oddaje most 
 zgadza. Klucz nastawy motywu jest jedyną rzeczą z katalogu zaszytą w tym pliku — etykiet, opcji, poziomów
 i rodzaju kontrolki most nie zna, czyta je z definicji katalogu; nazwę klucza znać musi, bo most z
 definicji dotyczy jednej nastawy.
+
+## budowa/klient-poprzedni/src/moduly/studio/ocena-redaktora.ts
+Każda liczba, którą panel pokazuje, jest policzona wprost z napisu, bo produkt nie ma słownika
+języka, korpusu ani reguł gramatyki, którymi liczyłby ocenę pisowni tak jak pakiety biurowe.
+Zamiast oceny wymyślonej panel pokazuje ocenę policzoną z miar czytelności i nazywa, z czego
+ona jest, a pozycje bez pomiaru mówią wprost, że pomiaru nie ma, i wskazują, co byłoby potrzebne,
+żeby był. Wskaźnik czytelności liczy się ze średniej długości zdania i średniej długości słowa,
+dwóch wielkości liczonych z samego tekstu bez słownika, z rodziny wskaźników mglistości: im
+dłuższe zdania i wyrazy, tym wyżej wykształcenia potrzeba, żeby tekst przeczytać bez potykania
+się, a wartość nie jest oceną jakości i panel tego nie udaje. Ocena wyrażona punktami czytelności
+jest odwrotnością mglistości: mglistość odpowiadająca tekstowi prasowemu daje wynik wysoki,
+a mglistość zdań wielokrotnie złożonych z terminami — niski, i panel zawsze podaje przy liczbie
+jej podstawę, bo liczba bez podstawy jest kopertą. Pisowni i gramatyki panel nie mierzy, bo jedno
+wymaga słownika języka, drugie analizy składniowej, a rdzeń nie ma ani jednego, ani drugiego —
+te wiersze zostają więc w panelu z wartością niepodaną i z powodem, żeby usunięcie ich nie
+kazało panelowi wyglądać na kompletny; interpunkcję mierzy się częściowo, tylko tam, gdzie
+wzorzec jest pewny.

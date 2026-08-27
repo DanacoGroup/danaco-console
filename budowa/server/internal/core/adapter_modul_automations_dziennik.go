@@ -1,16 +1,6 @@
-// Odpowiedzialność pliku: sześć czynności Execution Monitora sięgających do
-// trwałego zapisu przebiegu — log przebiegu, drążenie do poziomu kroku, wykaz
-// punktów wznowienia, wznowienie od punktu, podgląd ładunku kroku i odtworzenie
-// przebiegu z ładunkiem.
-//
-// Wszystkie czytają bazę, nie pamięć procesu. Telemetria WebSocket niesie
-// wyłącznie to, co padło przy otwartym oknie; kontrakt żąda „pełnego zapisu
-// zdarzeń pojedynczego uruchomienia, także sprzed otwarcia okna”, a tego nie da
-// się oddać z bufora, który znika razem z procesem.
-//
-// Redakcja sekretów idzie przy ODCZYCIE, nie przy zapisie. Reguła redakcji bywa
-// zmieniana, a zapis raz zredagowany nie da się odredagować — zapis surowy
-// z redakcją przy wydaniu zachowuje obie możliwości.
+// Odpowiedzialność pliku: sześć czynności Execution Monitora sięgających
+// trwałego zapisu przebiegu — log, kroki, punkty wznowienia, wznowienie,
+// podgląd ładunku i odtworzenie. Wszystkie czytają bazę, nie pamięć procesu.
 package core
 
 import (
@@ -31,7 +21,8 @@ var nazwyPolWrazliwych = []string{
 	"authorization", "credential", "poswiadczenie", "privatekey",
 }
 
-// DziennikPrzebiegu oddaje pełny zapis zdarzeń jednego uruchomienia.
+// DziennikPrzebiegu oddaje pełny zapis zdarzeń jednego uruchomienia, czytany
+// z bazy, nie z telemetrii WebSocket ograniczonej do otwartego okna.
 func (a *adapterAutomatyk) DziennikPrzebiegu(ctx context.Context,
 	z shared.AutomationExecutionLogRequest) (shared.AutomationExecutionLogResponse, error) {
 
@@ -41,8 +32,7 @@ func (a *adapterAutomatyk) DziennikPrzebiegu(ctx context.Context,
 	}
 	poziom := poziomBazy(z.Level)
 	granica := wartoscLiczby(z.Limit)
-	// Granicę podnosimy o jeden, żeby dało się odróżnić „tyle właśnie jest” od
-	// „przycięto”. Bez tego pole `truncated` byłoby zgadywaniem.
+	// Granicę podnosimy o jeden, żeby odróżnić „tyle jest” od „przycięto”.
 	granicaOdczytu := granica
 	if granicaOdczytu > 0 {
 		granicaOdczytu++
@@ -67,7 +57,8 @@ func (a *adapterAutomatyk) DziennikPrzebiegu(ctx context.Context,
 	return shared.AutomationExecutionLogResponse{Entries: wpisy, Truncated: przyciety}, nil
 }
 
-// KrokiPrzebiegu oddaje stan każdego kroku przebiegu osobno.
+// KrokiPrzebiegu oddaje stan każdego kroku przebiegu osobno: rozpoczęcie,
+// zakończenie, błąd i ślad stosu, gdy krok zawiódł.
 func (a *adapterAutomatyk) KrokiPrzebiegu(ctx context.Context,
 	z shared.AutomationExecutionStepsRequest) (shared.AutomationExecutionStepsResponse, error) {
 
@@ -97,7 +88,8 @@ func (a *adapterAutomatyk) KrokiPrzebiegu(ctx context.Context,
 	return shared.AutomationExecutionStepsResponse{Steps: kroki}, nil
 }
 
-// WykazPunktowWznowienia oddaje punkty wznowienia przebiegu.
+// WykazPunktowWznowienia oddaje punkty wznowienia przebiegu wraz z kodami
+// kroków, które każdy punkt uznaje za już ukończone.
 func (a *adapterAutomatyk) WykazPunktowWznowienia(ctx context.Context,
 	z shared.AutomationExecutionCheckpointListRequest) (shared.AutomationExecutionCheckpointListResponse, error) {
 
@@ -133,9 +125,8 @@ func (a *adapterAutomatyk) WznowPrzebieg(ctx context.Context,
 	if err != nil {
 		return shared.AutomationExecutionResumeResponse{}, err
 	}
-	// Kroki ukończone przed punktem nie idą po raz drugi: ich zlecenia w kolejce
-	// przechodzą w stan zakończony, zanim kolejka ruszy. Bez tego wznowienie
-	// byłoby powtórzeniem całości pod nazwą wznowienia.
+	// Kroki ukończone przed punktem nie idą po raz drugi: ich zlecenia
+	// zamykamy, zanim kolejka ruszy.
 	if err := a.domknijKrokiSprzedPunktu(ctx, przebieg, punkt); err != nil {
 		return shared.AutomationExecutionResumeResponse{}, bladAutomatyki(err)
 	}
@@ -155,7 +146,8 @@ func (a *adapterAutomatyk) WznowPrzebieg(ctx context.Context,
 	return shared.AutomationExecutionResumeResponse{Execution: przebiegKontraktu(odswiezony)}, nil
 }
 
-// punktWznowienia dobiera wskazany punkt albo najnowszy zapisany.
+// punktWznowienia dobiera wskazany punkt albo, gdy wskazania brak, najnowszy
+// zapisany punkt przebiegu.
 func (a *adapterAutomatyk) punktWznowienia(ctx context.Context, przebieg dane.Przebieg,
 	kod string) (dane.PunktWznowienia, error) {
 
@@ -179,7 +171,7 @@ func (a *adapterAutomatyk) punktWznowienia(ctx context.Context, przebieg dane.Pr
 }
 
 // domknijKrokiSprzedPunktu zamyka zlecenia kroków, które punkt wznowienia
-// wymienia jako ukończone.
+// wymienia jako ukończone, zanim kolejka ruszy dalej.
 func (a *adapterAutomatyk) domknijKrokiSprzedPunktu(ctx context.Context, przebieg dane.Przebieg,
 	punkt dane.PunktWznowienia) error {
 
@@ -249,9 +241,8 @@ func (a *adapterAutomatyk) OdtworzPrzebieg(ctx context.Context,
 	if err != nil {
 		return shared.AutomationExecutionReplayResponse{}, bladAutomatyki(err)
 	}
-	// Odtworzenie idzie tą samą drogą, którą automatykę rusza Operator
-	// i budzik harmonogramu: nowa kolejka, zasilenie krokami, start. Drugiej
-	// drogi uruchomienia nie ma i mieć nie będzie.
+	// Odtworzenie rusza tą samą drogą co Operator i budzik harmonogramu:
+	// nowa kolejka, kroki, start.
 	if _, err := a.UruchomAutomatyke(ctx, automatyka); err != nil {
 		return shared.AutomationExecutionReplayResponse{}, err
 	}
@@ -269,9 +260,9 @@ func (a *adapterAutomatyk) OdtworzPrzebieg(ctx context.Context,
 	return shared.AutomationExecutionReplayResponse{Execution: przebiegKontraktu(odtworzony)}, nil
 }
 
-// przeniesLadunki kopiuje ładunki kroków przebiegu źródłowego do odtworzonego,
-// podstawiając ładunek wskazany na kroku startowym. Nieudane przeniesienie nie
-// wywraca odtworzenia: przebieg już ruszył, a ładunek jest nośnikiem podglądu,
+// przeniesLadunki kopiuje ładunki kroków przebiegu źródłowego do
+// odtworzonego, podstawiając ładunek na kroku startowym. Nieudane
+// przeniesienie nie wywraca odtworzenia: ładunek jest nośnikiem podglądu,
 // nie warunkiem wykonania.
 func (a *adapterAutomatyk) przeniesLadunki(ctx context.Context, zrodlowy, odtworzony dane.Przebieg,
 	odKroku string, podstawienie json.RawMessage) {
@@ -300,7 +291,8 @@ func (a *adapterAutomatyk) przeniesLadunki(ctx context.Context, zrodlowy, odtwor
 	}
 }
 
-// ruszKolejkePrzebiegu wykonuje działanie silnika na kolejce przebiegu.
+// ruszKolejkePrzebiegu wykonuje działanie silnika kolejek na kolejce
+// przebiegu i odnotowuje wynikowy stan przebiegu.
 func (a *adapterAutomatyk) ruszKolejkePrzebiegu(ctx context.Context, przebieg dane.Przebieg,
 	dzialanie shared.QueueAction) (shared.Queue, error) {
 
@@ -359,7 +351,8 @@ func zredagowanyLadunek(zapis *string) (json.RawMessage, []string) {
 	return json.RawMessage(tresc), zamaskowane
 }
 
-// czyPoleWrazliwe rozstrzyga, czy nazwa pola wskazuje wartość wrażliwą.
+// czyPoleWrazliwe rozstrzyga, czy nazwa pola wskazuje wartość wrażliwą,
+// dopasowaniem fragmentu bez względu na wielkość liter.
 func czyPoleWrazliwe(nazwa string) bool {
 	male := strings.ToLower(nazwa)
 	for _, wzorzec := range nazwyPolWrazliwych {
@@ -370,7 +363,8 @@ func czyPoleWrazliwe(nazwa string) bool {
 	return false
 }
 
-// kodyKrokowZZapisu odczytuje wykaz kodów kroków z zapisu strukturalnego.
+// kodyKrokowZZapisu odczytuje wykaz kodów kroków ukończonych z zapisu
+// strukturalnego punktu wznowienia w bazie.
 func kodyKrokowZZapisu(zapis string) []string {
 	kody := []string{}
 	if zapis == "" {
@@ -400,7 +394,8 @@ func poziomBazy(poziom *shared.AutomationLogLevel) string {
 	}
 }
 
-// poziomKontraktu przekłada słownik bazy na poziom kontraktu.
+// poziomKontraktu przekłada słownik bazy na poziom kontraktu; wartość
+// nierozpoznana daje poziom informacyjny.
 func poziomKontraktu(poziom string) shared.AutomationLogLevel {
 	switch poziom {
 	case "ostrzezenie":

@@ -1,3 +1,5 @@
+// Sprawdzian obejmuje trzy drogi kasujące dane Operatora bez jego wskazania:
+// kaskadę schematu, kosz sesji i egzekucję retencji historii.
 package dane
 
 import (
@@ -10,15 +12,6 @@ import (
 	"danacoconsole/server/internal/store"
 	"danacoconsole/shared"
 )
-
-// Trzy drogi, które kasują dane Operatora bez jego wskazania.
-//
-// Rdzeń wykonuje je przy każdym starcie: kaskada schematu zabiera okna
-// i wiadomości razem z sesją, kosz kasuje trwale po terminie, a retencja
-// przycina historię sama. Każda z nich jest nieodwracalna i żadna nie pyta.
-// Sprawdzian mierzy więc dwie rzeczy naraz — że kasują to, co mają, i że nie
-// tykają niczego poza tym. Druga połowa jest tu ważniejsza: nadmiarowe
-// skasowanie nie zgłasza się błędem, tylko brakiem.
 
 // drzewoSprawdzianu zakłada bazę wraz z jednym łańcuchem karta → sesja → okno
 // i zwraca repozytoria oraz identyfikatory.
@@ -101,7 +94,8 @@ func zalozDrzewo(t *testing.T, przyrostek string) *drzewoSprawdzianu {
 	}
 }
 
-// dopiszWiadomosci dokłada oknu wskazaną liczbę wypowiedzi.
+// dopiszWiadomosci dokłada oknu wskazaną liczbę wypowiedzi testowych,
+// zwracając identyfikatory zapisanych wierszy w kolejności dopisania.
 func (d *drzewoSprawdzianu) dopiszWiadomosci(t *testing.T, ile int) []int64 {
 	t.Helper()
 	ctx := context.Background()
@@ -126,7 +120,8 @@ func (d *drzewoSprawdzianu) dopiszWiadomosci(t *testing.T, ile int) []int64 {
 	return identyfikatory
 }
 
-// policz zwraca liczbę wierszy tabeli spełniających warunek.
+// policz zwraca liczbę wierszy tabeli spełniających warunek podanego
+// zapytania SQL, przerywając sprawdzian przy błędzie odczytu.
 func (d *drzewoSprawdzianu) policz(t *testing.T, zapytanie string, argumenty ...any) int {
 	t.Helper()
 	var liczba int
@@ -272,10 +267,8 @@ func TestPowtorneWrzuceniePrzywrocenieNieUdajeSkutku(t *testing.T) {
 	}
 }
 
-// TestCzyszczenieKoszaTykaWylacznieWiersziPoTerminie jest sprawdzianem, dla
-// którego ten plik powstał. Czyszczenie idzie samo, przy każdym starcie rdzenia,
-// i jest nieodwracalne — więc granica terminu musi ciąć dokładnie tam, gdzie
-// wskazano, a sesja świeżo wrzucona ma przeżyć.
+// TestCzyszczenieKoszaTykaWylacznieWiersziPoTerminie sprawdza, że czyszczenie
+// kosza usuwa wyłącznie wiersze po terminie, a sesja świeżo wrzucona przeżywa.
 func TestCzyszczenieKoszaTykaWylacznieWiersziPoTerminie(t *testing.T) {
 	drzewo := zalozDrzewo(t, "termin")
 	drzewo.dopiszWiadomosci(t, 2)
@@ -299,8 +292,7 @@ func TestCzyszczenieKoszaTykaWylacznieWiersziPoTerminie(t *testing.T) {
 		}
 	}
 
-	// Pierwszej sesji cofamy znacznik o trzydzieści dni — tak wygląda wiersz
-	// leżący w koszu dłużej niż termin.
+	// Pierwszej sesji cofamy znacznik: wiersz leży w koszu dłużej niż termin.
 	dawno := time.Now().UTC().AddDate(0, 0, -30).Format("2006-01-02T15:04:05.000Z")
 	if _, err := drzewo.baza.DB.Exec("UPDATE sesja SET usunieto_o = ? WHERE id = ?",
 		dawno, drzewo.sesjaID); err != nil {
@@ -386,8 +378,7 @@ func TestRetencjaLiczbaPozycjiZostawiaNajnowsze(t *testing.T) {
 		t.Errorf("po przycięciu zostało %d pozycji, oczekiwane %d", zostalo, trzymane)
 	}
 
-	// Zostać mają najnowsze — przycięcie od złej strony zabrałoby Operatorowi
-	// to, nad czym właśnie pracuje.
+	// Zostać mają najnowsze; przycięcie od złej strony zabrałoby bieżącą pracę.
 	pozycje, err := drzewo.zestaw.Historia.Pozycje(ctx, drzewo.oknoKod, 0, 0)
 	if err != nil {
 		t.Fatalf("nie można odczytać historii: %v", err)

@@ -3,7 +3,7 @@ import { utworzMagistrale, type Magistrala, type Odsubskrybuj } from './magistra
 import { wykladniczePonawianie, type PolitykaPonawiania } from './ponawianie.ts';
 import type { StanPolaczenia } from './stan-polaczenia.ts';
 
-/** Transport ramek tekstowych do rdzenia. */
+/** Transport ramek tekstowych do rdzenia, ukrywający przed wołającym stan gniazda i kolejkę wychodzącą. */
 export interface Transport {
   /** Rozpoczyna łączenie i utrzymuje je przez ponawianie. */
   polacz(): void;
@@ -21,7 +21,7 @@ export interface Transport {
   rozlacz(): void;
 }
 
-/** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek. */
+/** Połączenie WebSocket z ponawianiem i kolejkowaniem ramek, utrzymujące łączność z rdzeniem bez udziału wołającego. */
 class Gniazdo implements Transport {
   private readonly ramki: Magistrala<string> = utworzMagistrale<string>();
   private readonly stany: Magistrala<StanPolaczenia> = utworzMagistrale<StanPolaczenia>();
@@ -50,10 +50,7 @@ class Gniazdo implements Transport {
     gniazdo.addEventListener('open', () => this.obsluzOtwarcie());
     gniazdo.addEventListener('message', (zdarzenie) => this.obsluzRamke(zdarzenie));
     gniazdo.addEventListener('close', () => this.obsluzZamkniecie());
-    // Zamknięcie na błędzie dotyczy wyłącznie gniazda już otwartego. Gniazdo,
-    // które błędem kończy samo nawiązywanie, zamyka się bez niczyjej pomocy
-    // i ogłasza to zdarzeniem `close`; wywołanie `close` na takim gnieździe
-    // wywołuje kolejny błąd i wpada w nawrót bez końca.
+    // Zamknięcie na błędzie dotyczy gniazda już otwartego; ponowne close wywołuje nawrót bez końca.
     gniazdo.addEventListener('error', () => {
       if (gniazdo.readyState === WebSocket.OPEN) gniazdo.close();
     });
@@ -84,14 +81,7 @@ class Gniazdo implements Transport {
     return this.kolejka.rozmiar();
   }
 
-  /**
-   * Zaniechanie połączenia na żądanie wołającego.
-   *
-   * Ponawianie jest bezterminowe, więc bez tej drogi proces klienta nie miałby
-   * jak dojść do końca: zaplanowana próba trzymałaby go przy życiu, a każde
-   * zamknięcie gniazda planowałoby następną. Ramki odłożone zostają w kolejce
-   * — zaniechanie dotyczy połączenia, nie treści, która czeka na wysłanie.
-   */
+  /** Zaniechanie kończy ponawianie bezterminowe; ramki odłożone zostają w kolejce, gotowe do wysłania. */
   rozlacz(): void {
     this.zaniechane = true;
     this.anulujPlan();

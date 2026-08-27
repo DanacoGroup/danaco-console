@@ -6,7 +6,6 @@
  */
 import type { Barwa } from './kontrast-wcag';
 
-
 /**
  * Trzy dichromazje objęte symulacją. Wartość jest jednocześnie kluczem macierzy
  * przekształcenia i kluczem wykazu nazw pokazywanych Operatorowi, więc dodanie

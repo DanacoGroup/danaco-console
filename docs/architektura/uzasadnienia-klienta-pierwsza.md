@@ -1003,3 +1003,30 @@ Nawigacja powłoki składa się w tym pliku, a nie w uzgodnieniu, ponieważ
 uzgodnienie odpowiada wyłącznie za powitanie, sesję i okno, i o nawigacji nic
 nie wie. Korzeń montażu klienta jest jedynym punktem znającym jednocześnie kanał
 i odbiorcę tych dróg.
+
+## budowa/klient-poprzedni/src/moduly/apps/okno-architecture-designer.ts
+
+Okno kreatora modułu Apps jest punktem wyjścia procesu tworzenia architektury. Definiowanie komponentów rozwiązania i ustalenie zależności stoją na jednej komendzie kontraktu, która przyjmuje szablon i komplet komponentów wraz z ich zależnościami. Przycisk walidacji uruchamia tę samą komendę, nie osobną drogę: kontrakt nie ma osobnej komendy walidacji, zwraca za to zastrzeżenia w architekturze po zapisie. Przycisk pozostaje klikalny przy pustej kanwie, ponieważ odpowiedź jest opisowa, nie blokadą. Zdanie potwierdzające bierze treść z odpowiedzi rdzenia, nie z zamówienia: wymienia identyfikator, wersję, szablon i komponenty tak, jak oddał je rdzeń, a każdą rozbieżność z zamówieniem i każde zastrzeżenie walidacji ogłasza odmową.
+
+Odczyt architektury zapisanej w rdzeniu nadpisuje kanwę i mówi o tym wprost: architektura oddana przez rdzeń wchodzi wraz ze swoim kompletem komponentów, więc komponenty zestawione na kanwie, a jeszcze niezapisane, po tym kroku znikają. Zdanie wymienia liczbę komponentów, która przyszła. Brak architektury jest odpowiedzią, nie odmową — rdzeń oddaje wtedy wynik udany bez pola, a kanwa zostaje nietknięta.
+
+Funkcja porównująca oddany układ z zamówionym zestawia zbiory identyfikatorów, nie listy. Rdzeń trzyma komponenty i krawędzie zależności w osobnych tabelach i oddaje je w porządku własnym, a powtórzoną krawędź zdejmuje kluczem pierwotnym. Porządek i powtórzenie nie są więc rozbieżnością, tylko odmiennym sposobem przechowywania danych; rozbieżnością jest komponent, który zniknął, albo taki, którego nikt nie zamawiał. Zależność jest wskazaniem identyfikatora innego komponentu, więc jej zgubienie zmienia układ tak samo jak zgubienie komponentu, a kanwa zaciągnięta z odpowiedzi sama z siebie nie pokazuje, że zamówiono więcej.
+
+Zdanie o pustym polu zastrzeżeń walidacji orzeka o odebranej ramce, nie o zachowaniu rdzenia. Rdzeń tego pola nie wylicza: adapter czyta zastrzeżenia z bazy, zapisuje je z powrotem tym samym zapisem scalającym i oddaje w odpowiedzi, więc jedynym pisarzem kolumny jest ten, kto ją przed chwilą przeczytał. Zdanie o braku zastrzeżeń byłoby zapewnieniem o sprawdzeniu, którego nikt nie wykonał. Własny walidator w oknie byłby drugą prawdą o tym samym układzie i zacierał granicę odpowiedzialności: zastrzeżenia widoczne w oknie sugerowałyby, że zna je rdzeń. Rozróżnienie pola nieobecnego od pola obecnego i pustego sprawia, że w chwili, w której rdzeń zacznie zastrzeżenia liczyć, zdanie zmieni treść bez tknięcia tego pliku.
+
+## budowa/klient-poprzedni/src/aplikacja/korzen-dokumentu.ts
+
+Całym dokumentem zajmuje się `gospodarz-dokumentu.ts`, a kształt
+`KorzenAplikacji` jest wejściem funkcji `zamontujUkladOkien` z katalogu
+`okna-rownolegle/`. Korzeń pozostaje przez to warstwą montażową bez wiedzy
+o rdzeniu i bez wiedzy o układzie okien.
+
+Miejsce akcji nie powstaje w korzeniu — przychodzi z paska górnego powłoki
+środowiska, żeby uchwyt szuflady sterowania stał w pasku wspólnym z resztą
+akcji, a nie w osobnym pasku założonym dla jednego przycisku.
+
+Klasa `dn-sesja` należy do karty sesji w pasie powłoki
+(`powloka/karta-sesji.ts`), a jej arkusz zawęża szerokość do pasa nawigacji bez
+zawężenia selektora rodzicem. Korzeń sceny nosi własną nazwę `dn-scena-sesji`,
+ponieważ w przeciwnym razie wpadłby pod tamtą regułę i zszedł do szerokości
+słupka nawigacji.

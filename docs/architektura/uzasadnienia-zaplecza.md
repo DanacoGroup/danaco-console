@@ -1604,3 +1604,25 @@ jest. Obowiązkowa jest wyłącznie konstytucja — to jej odcisk niesie panel
 prowenancji jako osobny blok. Obowiązkowość jest oznaczeniem dla okna
 konfiguracji, nie bramą: brak treści nie wstrzymuje uruchomienia, wraca
 wykazem brakujących kategorii obowiązkowych.
+
+## budowa/server/internal/store/migracja_281_agent_wersja_tozsamosc.sql
+
+`AgentVersion` niesie etykietę, opis zmiany, sprawcę i sumę kontrolną, ale nie
+niesie treści. Podglądu wersji nie ma z czego złożyć, a przywrócenie było
+dotąd jedynym sposobem zobaczenia, co w wersji stało — czyli obejrzenie
+historii wymagało jej zmiany. Te dwie kolumny domykają migawkę do kształtu,
+którego wymaga kontrakt: widoczność i poziomy pamięci są w `Agent` polami
+wymaganymi, więc migawka bez nich nie da się złożyć bez zgadywania.
+
+Czego tu celowo nie ma: warstw promptu. Warstwy zmienia `agent.layer.set`,
+która nie podnosi licznika `agent.wersja` i nie zakłada migawki. Kolumna
+z warstwami wypełniana wyzwalaczem niosłaby więc warstwy bieżące wpisane do
+wersji starej — czyli odpowiedź nieprawdziwą o tym, co w tej wersji stało.
+Pole `layers` snapshotu zostaje puste dopóty, dopóki warstwy nie wersjonują
+się razem z tożsamością.
+
+Poziomy pamięci wchodzą napisem rozdzielonym przecinkiem, a nie tabelą
+podrzędną migawki: migawkę zakłada wyzwalacz, a wyzwalacz nie umie wstawić
+wielu wierszy z podzapytania w jednym kroku bez pętli, której SQLite nie ma.
+Napis jest tu zapisem migawkowym — nikt go nie zapytuje po wartości, tylko
+odczytuje w całości razem z wersją.

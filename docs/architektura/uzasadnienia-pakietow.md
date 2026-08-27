@@ -5676,3 +5676,5 @@ na głucho.
 Sprawdziany koperty mierzą dokładnie to, co kontrakt obiecuje klientowi:
 komunikat niepoprawny strukturalnie jest czymś innym niż komenda nieznana,
 a to, co poszło na drut, wraca z drutu bez zmiany.
+## budowa/server/internal/dane/slownik.go
+Ślady importu i eksportu leżą w pliku sąsiednim, pamięć tłumaczeń w innym pliku sąsiednim: jedno repozytorium rozdzielone na pliki wedle odpowiedzialności, z typem, interfejsem i konstruktorem zadeklarowanymi wyłącznie w jednym z nich. Wystąpienia terminu nie mają tu tabeli: liczą się w locie z treści okna albo panelu przeszukanej względem źródła terminu, żeby nie unieważniać zapisu przy każdej korekcie panelu. Zapis ma jedną drogę: żądanie nadsyła zawsze komplet zmian naraz, a zapis terminów przyjmuje wykaz i zapisuje go w jednej transakcji przez wstawienie z aktualizacją po identyfikatorze zewnętrznym — termin ze wskazanym kodem aktualizuje się, termin bez zastanego wiersza o tym kodzie zakłada się, ten sam zapis obsługuje obie ścieżki, nie dwie osobne metody.

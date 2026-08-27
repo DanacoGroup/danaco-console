@@ -503,3 +503,21 @@ odpowiedzi. Powód jest ten sam co w źródle debaty: obszar odmawia z powodów
 zwyczajnych — kanał uczestnika bywa nieczynny, głosowanie bywa zamknięte —
 a okno musi odróżnić brak treści od nieudanego zapytania, więc żaden
 odczyt nie zastępuje braku odpowiedzi pustą wartością domyślną.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/czynnosci-arsenalu.ts
+
+Plik istnieje po to, żeby żadna komenda obszaru nie została bez drogi z okna.
+Wcześniej pozycje bez obsługi stały jako przyciski nazywające brak; obecnie
+każda z nich naprawdę woła swoją komendę, a wynik melduje w oknie, z którego
+padła.
+
+Dane żądania pochodzą ze stanu debaty wspólnego oknom modułu: okno, tura
+bieżąca, skład, wypowiedzi. Czynność, dla której stan nie ma jeszcze wskazania
+— nie ma tury, nie ma uczestników, nie ma wypowiedzi — nie idzie do rdzenia po
+to, żeby dostać odmowę: melduje brak wskazania od razu i nazywa, czego
+brakuje. Rdzeń odmówiłby tak samo, tylko po podróży tam i z powrotem.
+
+Plik nie podstawia wartości domyślnych za Operatora. Tam, gdzie komenda
+potrzebuje treści — stanowisko, zdanie odrębne, warianty głosowania — treść
+przychodzi z pola okna, a przycisk bez wypełnionego pola melduje, czego
+brakuje.

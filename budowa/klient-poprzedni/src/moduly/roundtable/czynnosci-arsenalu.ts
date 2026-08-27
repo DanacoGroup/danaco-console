@@ -12,30 +12,14 @@ import type { StanDebaty } from './stan-debaty';
 import type { ZrodloArsenaluRoundtable } from './zrodlo-arsenalu';
 
 /**
- * Czynności arsenału modułu wpięte w przyciski okien.
- *
- * Plik istnieje po to, żeby żadna komenda obszaru nie została bez drogi z okna.
- * Wcześniej pozycje bez obsługi stały jako przyciski nazywające brak; teraz
- * każda z nich naprawdę woła swoją komendę, a wynik melduje w oknie, z którego
- * padła.
- *
- * ── Skąd biorą się dane żądania ──────────────────────────────────────────────
- * Ze stanu debaty wspólnego oknom modułu: okno, tura bieżąca, skład, wypowiedzi.
- * Czynność, dla której stan nie ma jeszcze wskazania — nie ma tury, nie ma
- * uczestników, nie ma wypowiedzi — nie idzie do rdzenia po to, żeby dostać
- * odmowę: melduje brak wskazania od razu i nazywa, czego brakuje. Rdzeń odmówiłby
- * tak samo, tylko po podróży tam i z powrotem.
- *
- * ── Czego tu nie ma ──────────────────────────────────────────────────────────
- * Wartości domyślnych podstawianych za Operatora. Tam, gdzie komenda potrzebuje
- * treści (stanowisko, zdanie odrębne, warianty głosowania), treść przychodzi
- * z pola okna. Przycisk bez wypełnionego pola melduje, czego brakuje.
+ * Czynności arsenału modułu wpięte w przyciski okien; każda komenda ma drogę,
+ * wynik melduje w oknie.
  */
 
-/** Meldunek okna: zdanie i to, czy czynność się powiodła. */
+/** Meldunek okna: zdanie do pokazania Operatorowi wraz z tym, czy wywołana czynność w oknie się powiodła. */
 export type Meldunek = (zdanie: string, powodzenie: boolean) => void;
 
-/** Wynik czynności rozpoznany po `Wynik` warstwy protokołu. */
+/** Wynik czynności rozpoznany po kształcie typu `Wynik` warstwy protokołu: powodzenie oraz treść odmowy rdzenia. */
 type WynikCzynnosci = { udany: boolean; blad?: { message?: string } };
 
 /**
@@ -51,7 +35,7 @@ function zamelduj(meldunek: Meldunek, wynik: WynikCzynnosci, powodzenie: string)
   meldunek(wynik.blad?.message ?? 'Rdzeń odmówił bez podania powodu.', false);
 }
 
-/** Buduje przycisk wołający czynność; blokada podwójnego naciśnięcia w środku. */
+/** Buduje przycisk wołający czynność; blokada podwójnego naciśnięcia w środku chroni przed dwoma równoległymi wywołaniami tej samej pracy. */
 function czynnosc(etykieta: string, praca: () => Promise<void>): HTMLButtonElement {
   const kontrolka = przycisk(etykieta);
   kontrolka.addEventListener('click', () => {
@@ -64,20 +48,21 @@ function czynnosc(etykieta: string, praca: () => Promise<void>): HTMLButtonEleme
   return kontrolka;
 }
 
-/** Pierwsza wypowiedź tury bieżącej; pusta znaczy „okno nic nie widziało". */
+/** Pierwsza wypowiedź tury bieżącej ze stanu debaty; pusta wartość znaczy „okno nic jeszcze nie widziało". */
 function pierwszaWypowiedz(stan: StanDebaty): string {
   const wykaz = stan.wypowiedzi();
   return wykaz.length > 0 ? wykaz[0]!.id : '';
 }
 
-/** Pierwszy uczestnik składu; pusty znaczy „debata bez składu". */
+/** Pierwszy uczestnik składu ze stanu debaty; pusta wartość znaczy „debata toczy się bez ustalonego składu". */
 function pierwszyUczestnik(stan: StanDebaty): string {
   const wykaz = stan.uczestnicy();
   return wykaz.length > 0 ? wykaz[0]!.id : '';
 }
 
 /**
- * Czynności Model Panels: skład, zespoły i biblioteka ról.
+ * Czynności Model Panels: skład debaty, zespoły uczestników i biblioteka ról
+ * dostępnych do przypisania.
  */
 export function czynnosciSkladu(
   zrodlo: ZrodloArsenaluRoundtable,
@@ -191,7 +176,8 @@ export function czynnosciSkladu(
 }
 
 /**
- * Czynności Argument Map & Analysis: graf, analiza, dowody i katalog błędów.
+ * Czynności Argument Map & Analysis: graf argumentów, analiza wypowiedzi,
+ * dowody i katalog błędów rozumowania.
  */
 export function czynnosciAnalizy(
   zrodlo: ZrodloArsenaluRoundtable,
@@ -338,7 +324,8 @@ export function czynnosciAnalizy(
 }
 
 /**
- * Czynności Voting & Evaluation Center: głosowanie, oceny, rubryki i ranking.
+ * Czynności Voting & Evaluation Center: głosowanie, oceny punktowe, rubryki
+ * oceny i ranking uczestników.
  */
 export function czynnosciOceny(
   zrodlo: ZrodloArsenaluRoundtable,
@@ -509,7 +496,8 @@ export function czynnosciOceny(
 }
 
 /**
- * Czynności Moderator Panelu: szablony moderacji i wydanie zapisu debaty.
+ * Czynności Moderator Panelu: szablony moderacji tury debaty oraz wydanie
+ * zapisu jej przebiegu do pliku.
  */
 export function czynnosciModeracji(
   zrodlo: ZrodloArsenaluRoundtable,

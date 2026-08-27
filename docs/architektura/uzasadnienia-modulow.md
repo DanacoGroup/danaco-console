@@ -2522,3 +2522,25 @@ zapisuje sie, a zastrzezenia wracaja w odpowiedzi osobnym polem oznaczajacym
 uklad niepoprawny. Odmawiane sa wylacznie zadania, ktorych schemat nie zna:
 luk bez wskazania kroku, petla wlasna oraz rodzaj zaleznosci spoza trzech
 wartosci kontraktu — sa to bledy zadania, nie stan ukladu.
+
+## adapter_modul_roundtable_zgoda.go
+
+Wszystkie sześć komend liczy rdzeń bez wywołania modelu, bo panel odczytuje
+wskaźniki przy każdym otwarciu okna i po każdej turze — muszą być
+natychmiastowe, powtarzalne i darmowe. Miara jest słabsza od zanurzeń
+semantycznych i nie rozpoznaje synonimów, ale liczba, którą oddaje, jest ta
+sama przy każdym odczycie i nie zależy od tego, który model akurat
+odpowiedział. Stanowiskiem uczestnika w turze jest złożenie wszystkiego, co
+w niej powiedział; uczestnik, który w turze milczał, nie ma w niej stanowiska
+i nie wchodzi do żadnego z tych rachunków — cisza nie jest zgodą ani sporem.
+
+Między progiem zgody a progiem sporu leży pas, w którym para stanowisk nie
+jest ani zgodna, ani sporna: wymuszenie rozstrzygnięcia w tym pasie dawałoby
+punkt zgody tam, gdzie uczestnicy powiedzieli po prostu co innego o czym
+innym.
+
+Trafność w kalibracji liczy się z tego, co naprawdę rozstrzygnięto: wypowiedź
+jest trafiona, gdy Operator wskazał ją jako bardziej przekonującą, dał jej
+wysoką ocenę, albo gdy wygrała głosowanie. Uczestnik bez ani jednej ocenionej
+wypowiedzi nie ma trafności do zmierzenia i nie wchodzi do wyniku — liczba
+wzięta z zera pomiarów byłaby wymysłem.

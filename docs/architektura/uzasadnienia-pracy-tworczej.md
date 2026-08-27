@@ -839,3 +839,48 @@ odtworzeniem układu, nie odczytem struktury.
 Znak RTF zapisany szesnastkowo czytamy zawsze stroną windows-1250, typową
 dla RTF pisma polskiego, bo nagłówek `\ansicpgN` bywa nieprawdziwy częściej
 niż strona kodowa, którą naprawdę użyto do zapisu pliku.
+
+## budowa/server/internal/core/adapter_modul_studio_listy.go
+
+Definicja listy — jej rodzaj, poziomy, znaki wypunktowania, formaty numeracji
+i wcięcia — stoi w drzewie postaci dokumentu. Akapit należący do listy trzyma
+sam kod listy i numer poziomu, a nie kopię jej nastaw: zmiana znaku
+wypunktowania poziomu ma przestawić od razu wszystkie punkty tego poziomu, bez
+przechodzenia po akapitach. Przy kopii w akapicie lista czterdziestu punktów
+wymagałaby czterdziestu poprawek.
+
+Poziom listy niesie wcięcie wzorcowe, lecz wcięcie skuteczne akapitu musi być
+widoczne w jego własnej postaci, aby narzędzie do przestawiania wcięć miało
+czym operować. Zastosowanie listy ustawia wcięcie akapitu według poziomu,
+a późniejsza zmiana wcięcia narzędziem jest zmianą samego akapitu i poziomu
+listy nie rusza — tak samo działa pakiet biurowy, z którym format jest zgodny.
+
+Kontrakt niesie punkt startu na liście i na poziomie, ale nie w akapicie, bo
+akapit nie jest miejscem na nastawę listy. Wznowienie numeracji od wskazanego
+miejsca jest rozdzieleniem listy: punkty od tego miejsca w dół przechodzą do
+listy nowej o tych samych poziomach i własnym punkcie startu. Skutek —
+numeracja zaczynająca się od nowa od wskazanego miejsca — jest sprawdzalny
+w bazie, a nie udawany polem, którego kontrakt nie ma.
+
+Rodzaj none w czynności zastosowania listy zdejmuje listę i jest czynnością
+prawdziwą, nie brakiem: zdjęcie listy z fragmentu, który do żadnej listy nie
+należy, wraca odmową nazwaną, aby cisza nie sugerowała zdjęcia listy, której
+tam nigdy nie było.
+
+Lista wskazana kodem musi istnieć w dokumencie; wskazanie kodu nieznanego jest
+odmową nazwaną, ponieważ cicha zamiana na listę nową dałaby dwie listy tam,
+gdzie oczekiwano jednej.
+
+Format prawniczy wielopoziomowy bierze się z pola wzoru numeru, a nie
+z domysłu, aby pismo z podstawami prawnymi dało się ponumerować dokładnie
+według wzoru urzędowego.
+
+Znak wypunktowania bierze się ze znaku gotowego, dowolnego symbolu, ikony albo
+obrazu własnego — wszystkie cztery źródła stoją w kontrakcie. Ikona i obraz
+idą zasobem, a nie wklejonym rysunkiem: ikony wystawia moduł Design, a zasoby
+przechowuje magazyn rdzenia, więc Studio nie zakłada drugiego rachunku ikon.
+
+Wcięcie i odstęp poziomu idą za poziomem listy: przestawienie wcięcia
+w pakiecie biurowym zmienia poziom punktu, a nie samo wcięcie akapitu.
+Zmniejszenie poniżej pierwszego poziomu nie zdejmuje listy samo z siebie —
+zdjęcie listy jest osobną czynnością zastosowania listy z rodzajem none.

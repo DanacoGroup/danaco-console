@@ -2534,3 +2534,44 @@ pikseli jest trzymana osobno od prostokąta.
 Przejście po planie pierwszym przy szukaniu obszarów spójnych jest iteracyjne,
 z własnym stosem, nie rekurencyjne: obszar megapikselowy przy rekurencji
 przepełniłby stos wywołań i przewrócił proces rdzenia, a nie jedno żądanie.
+
+## budowa/server/internal/core/adapter_mowa_wybudzenie.go
+
+Nastawa wybudzania mieszka w konfiguracji, nie w osobnej tabeli: fraza
+wybudzająca, tryb nasłuchu, próg detekcji mowy i odszumianie mają poziom
+zasięgu i wartość domyślną, zmienianą przez Operatora w oknie konfiguracji.
+Osobna tabela dałaby drugie miejsce, w którym mieszka ustawienie, i drugą
+drogę jego rozstrzygania, podczas gdy rozstrzyganie po poziomach zasięgu jest
+już zbudowane i jest jedno.
+
+Wykonalność jest odpowiedzią, nie awarią: `speech.wake.get` oddaje
+`available: false` wraz z powodem, gdy wybudzenia nie da się wykonać, tak
+samo jak `speech.availability.get` przy braku silnika. Odmowa kazałaby Voice
+Console pokazać błąd tam, gdzie Operator po prostu nie ma jeszcze silnika mowy.
+
+Rdzeń nie ma dostępu do mikrofonu maszyny Operatora i mieć go nie będzie:
+mikrofon jest urządzeniem tamtej maszyny, a rdzeń stoi na serwerze. Nasłuch
+ciągły jest umową między oknem a rdzeniem, a nie otwarciem urządzenia:
+`speech.listen.start` zakłada nasłuch okna i oddaje jego identyfikator, okno
+nagrywa u siebie i wysyła kolejne odcinki `speech.audio.upload` wraz
+z `windowId`, rdzeń rozpoznaje każdy odcinek silnikiem mowy i ogłasza wynik —
+`speech.listen.partial` z tekstem, a gdy w tekście padła fraza wybudzająca,
+`speech.wake.detected` — a `speech.listen.stop` nasłuch zamyka. Dzięki temu
+podziałowi nasłuch ciągły znaczy dokładnie tyle, ile robi: rdzeń słucha
+strumienia, który mu podano, i ogłasza, co usłyszał, bez udawania dostępu do
+cudzego mikrofonu. Nasłuch nie jest bramką: rdzeń go sam nie zatrzymuje,
+zatrzymuje go Operator.
+
+Metoda `ogloszOdcinekNasluchu` nie zwraca błędu: przyjęcie nagrania powiodło
+się niezależnie od tego, czy rozpoznanie odcinka się udało, a odmowa
+odebrałaby oknu odnośnik, który już istnieje.
+
+Fraza wybudzająca jest rozpoznawana na rozpoznanym tekście, a nie osobnym
+modelem słowa kluczowego: model frazy jest osobną siecią i osobnym plikiem
+wag, których instalka nie niesie. Dopasowanie na tekście jest wykonalne
+wszędzie tam, gdzie działa rozpoznawanie mowy, i mówi dokładnie to, co robi.
+
+Pole `final` odpowiedzi `speech.listen.partial` jest prawdą, bo odcinek
+został rozpoznany w całości: rdzeń dostaje gotowy kawałek nagrania, a nie
+strumień w locie. Fałsz obiecywałby oknu poprawkę tego tekstu, która nigdy
+nie przyjdzie.

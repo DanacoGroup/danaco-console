@@ -4854,3 +4854,14 @@ jest odrzucane w tym samym wywołaniu — nie trafia do bazy, do dziennika ani
 do odpowiedzi, a byt powstaje bez odwołania i pracuje dalej; cicha utrata
 sekretu byłaby gorsza od jawnego braku sejfu, więc warstwa wyżej widzi to po
 pustym odwołaniu i po fałszywym znaczniku obecności poświadczenia.
+
+## budowa/server/internal/core/adapter_narzedzia_archiwum_sciezki.go
+Blob magazynu nazywa się swoją sumą kontrolną i nie ma rozszerzenia. Gdyby format brać z nazwy, rozpakowanie własnego wytworu pakowania musiałoby albo odmówić, albo zaufać polu format wiersza, czyli etykiecie wpisanej kiedyś ręcznie, a nie zawartości pliku. Narzędzie zewnętrzne rozpoznaje zip i 7z po sygnaturze bez względu na nazwę, więc etykieta jest zbędna: format czytany jest z sygnatury, bo to wiedza o pliku, nie o jego opisie.
+
+Sygnatury są krótkie i jednoznaczne: każdy z trzech formatów otwiera własna sekwencja bajtów na początku pliku. Plik krótszy niż sygnatura albo o sygnaturze nieznanej jest odmową, a nie domysłem, że to pewnie zip: rozpakowywanie czegoś nierozpoznanego kończyłoby się komunikatem narzędzia zewnętrznego w obcym języku zamiast zdaniem o tym, co jest nie tak.
+
+Format domyślny to zip, ponieważ otwiera się dwukrotnym kliknięciem w każdym systemie, więc Operator dostający archiwum nie potrzebuje niczego doinstalowywać.
+
+Sprawdzenia ścieżki są dwa, bo są dwa sposoby ucieczki z katalogu roboczego okna. Ścieżka bezwzględna omija katalog wprost. Ścieżka względna wychodzi z niego członem wskazującym katalog nadrzędny, i tego nie widać po samym napisie, dlatego liczona jest ścieżka oczyszczona i sprawdzane, czy nadal leży wewnątrz katalogu.
+
+Brak binarium zewnętrznego dostaje inny kod niż niepowodzenie programu: brak narzędzia Operator usuwa jedną instalacją, a wywrócenie się programu jest usterką przetwarzania.

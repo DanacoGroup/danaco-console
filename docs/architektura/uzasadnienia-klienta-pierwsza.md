@@ -2629,3 +2629,26 @@ a nie o przebiegu odczytu.
 ## budowa/klient-poprzedni/src/moduly/browser/wykaz-automatyk.ts
 
 Podział odpowiedzialności jest tu taki sam jak w panelach pomocniczych modułu przeglądarki, czyli w plikach wiersz-zrodla.ts oraz wiersz-notatki.ts. Okno składa formularz i prowadzi rozmowę z rdzeniem, a moduł wykazu zamienia wynik tej rozmowy w wiersze widoczne na ekranie. Dzięki temu postać wykazu można zmienić bez dotykania obsługi komend.
+
+## budowa/klient-poprzedni/src/aod/warstwa-aod.ts
+
+Warstwa Always On Display osadza się w powłoce na wysokiej warstwie graficznej, poza obszarem podmienianym przez moduł, więc przełączenie środowiska ani modułu nie zabiera awatara i nie przeładowuje kolumny. Jest jedynym miejscem, które zna naraz cztery rzeczy i wiąże je jedną regułą: kolejkę decyzji, czyli ile sugestii czeka i o jakiej wadze; stan obecności, czyli tryb pełny, cichy albo ukryty i trwające wyciszenie; progi ujawniania, czyli wagę, limit godzinowy i odstęp między dymkami; oraz układ, czyli szerokość otwartej kolumny, o którą odsuwa się awatar i dymek. Skróty klawiszowe są zaczepione w tym samym module, ponieważ tylko tutaj widać wszystkie trzy elementy naraz.
+
+Kolumnę zwężoną poniżej progu czytelności powierzchnia interakcji zwija do dymka kontekstowego, a dymek skraca treść do jednego zdania z działaniem rozwinięcia.
+
+Menu kebab na powierzchni interakcji awatara daje dodatkową akcję wyciszenia bezpośrednio z pozycji awatara. Menu jest tym samym komponentem, który stoi w nagłówku kolumny, a nie nowym wzorem, i pozostaje osobnym wyzwalaczem: kliknięcie pojedyncze awatara nadal otwiera dymek, podwójne nadal otwiera powierzchnię interakcji, a wyciszenie nie wymaga przejścia do kolumny.
+
+Reguła samoczynnego ujawnienia otwiera dymek wyłącznie przy wadze wysokiej, przy nienaruszonym limicie godzinowym i odstępie, poza trybem cichym i poza wyciszeniem. Sugestia krytyczna wyciszona ujawnia się plakietką, bez dymka, a robi to funkcja odświeżająca wygląd, nie reguła ujawnienia.
+
+Decyzja przekazywana regule wyciszenia niesie klasę zdarzenia wynikającą z powodu rozpoznania, kartę sesji z telemetrii oraz moduł z odczytu bieżącego okna w kontekście wyciszenia. Modułu, którego nakładka nie rozpoznaje, funkcja nie podstawia: sugestia bez modułu nie wpada w wyciszenie modułu.
+
+Plakietka liczy sugestie ujawniane, a nie wszystkie: liczba obejmująca sugestie wstrzymane wyciszeniem wybiórczym obiecywałaby coś, czego wyciszenie nie pokaże. Że coś milczy, mówi stan awatara i menu wyciszania. Wyciszenie czasowe chowa plakietkę, z wyjątkiem sugestii krytycznej, która ujawnia się mimo każdego wyciszenia; wtedy plakietka liczy same sugestie krytyczne z tego samego powodu.
+
+Zwężenie obszaru roboczego o szerokość otwartej kolumny idzie wyściółką rodzica warstwy, w której warstwa siedzi, a nie zmianą w katalogu powłoki: funkcja globalna dokłada się do układu, a nie przepisuje go. Klasa zwężenia i szerokość jadą razem, więc powłoka bez otwartej kolumny nie nosi po niej śladu.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/zwiniete-zakonczone.ts
+
+Przepływów zakończonych bywa kilkadziesiąt i wypisane w całości spychałyby poza
+krawędź panelu pracę trwającą. Zwinięcie nie jest ukryciem: licznik podaje ich
+liczbę, a rozwinięcie oddaje każdy przepływ po nazwie i stanie wraz
+z podsumowaniem czasu odcinka oraz liczby podagentów.

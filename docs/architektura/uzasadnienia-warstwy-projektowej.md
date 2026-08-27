@@ -454,3 +454,11 @@ wczytania ustala arkusz motywu. Domyślny styl przeglądarki dla atrybutu
 hidden ma tę samą wagę co reguła klasy, więc komponent z własnym display
 (na przykład pole w układzie flex) przesłania go w kaskadzie i element
 z atrybutem hidden zostaje widoczny — ważność przywraca ukrycie.
+
+## budowa/klient-poprzedni/src/komponenty/przycisk.css
+Wariant sygnałowy jest zarezerwowany dla jednego działania systemowego na
+widok i nie zastępuje atramentu jako działania domyślnego. Żaden wariant nie
+odbiera klikalności — ładowanie i błąd komunikuje atrybut ARIA oraz
+wskaźnik, nigdy blokada. Klatki nazwane dn-obrot dla wskaźnika ładowania
+definiuje plik drobne.css przy spinnerze; reguła @keyframes działa globalnie
+niezależnie od kolejności arkuszy.

@@ -1,14 +1,4 @@
-/* Przycisk i przycisk ikonowy.
-
-   Działanie główne to inwersja atramentu (`--atrament`): czerń na jasnym,
-   biel na ciemnym. Wariant `--sygnal` jest zarezerwowany dla jednego działania
-   systemowego na widok i nie zastępuje atramentu jako działania domyślnego.
-
-   Żaden wariant nie odbiera klikalności. Ładowanie i błąd komunikuje atrybut
-   ARIA oraz wskaźnik, nigdy blokada.
-
-   Klatki `dn-obrot` (wskaźnik ładowania) definiuje `drobne.css` przy spinnerze —
-   reguła @keyframes działa globalnie, niezależnie od kolejności arkuszy. */
+/* Arkusz opisuje przycisk i przycisk ikonowy, których działanie główne to inwersja atramentu, nigdy blokowane ładowaniem ani błędem. */
 
 .dn-btn {
   display: inline-flex;
@@ -48,7 +38,7 @@
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 
-/* Wybrany trwale — sygnał wskazuje (obrys + tło, zmiana kształtu przez obrys) */
+/* Przycisk wybrany trwale wskazuje sygnałem przez obrys i tło, zmieniając kształt kontrolki obrysem, a nie samym kolorem tła. */
 .dn-btn[aria-pressed='true'],
 .dn-btn.dn-btn--wybrany {
   background: var(--dn-sygnal-tlo);
@@ -56,7 +46,7 @@
   color: var(--dn-sygnal);
 }
 
-/* Ładowanie — wskaźnik obok treści; przycisk pozostaje klikalny (zero blokad) */
+/* Wskaźnik ładowania stoi obok treści przycisku, który pozostaje w pełni klikalny przez cały czas trwania operacji, bez blokady. */
 .dn-btn[aria-busy='true'] { cursor: progress; }
 
 /* Bez pokrycia w kontrakcie — czynność, której rdzeń jeszcze nie wykona.
@@ -85,13 +75,13 @@
   animation: dn-obrot 0.8s linear infinite;
 }
 
-/* Błąd — obrys + barwa; treść przycisku niesie ikonę albo etykietę błędu */
+/* Błąd przycisku niesie obrys i barwę błędu, a treść przycisku niesie wtedy ikonę albo etykietę opisującą charakter błędu. */
 .dn-btn[aria-invalid='true'] {
   border-color: var(--dn-blad-obrys);
   color: var(--dn-blad-tekst);
 }
 
-/* GŁÓWNY — inwersja atramentu: czerń na jasnym, biel na ciemnym */
+/* Wariant główny przycisku odwraca atrament: czerń pojawia się na jasnym tle, a biel na ciemnym, jako działanie domyślne widoku. */
 .dn-btn--atrament {
   background: var(--dn-atrament);
   border-color: var(--dn-atrament);
@@ -114,10 +104,10 @@
   border-color: var(--dn-sygnal-wypelnienie-hover);
 }
 
-/* ZARYS — akcje drugorzędne równorzędne */
+/* Wariant zarys niesie akcje drugorzędne, równorzędne wobec siebie nawzajem, bez wyróżnionego tła kontrolki. */
 .dn-btn--zarys { background: transparent; }
 
-/* DUCH — akcje trzeciorzędne, paski narzędzi */
+/* Wariant duch niesie akcje trzeciorzędne, typowe dla pasków narzędzi, z przezroczystym tłem i obrysem w spoczynku. */
 .dn-btn--duch {
   background: transparent;
   border-color: transparent;
@@ -125,7 +115,7 @@
 }
 .dn-btn--duch:hover { background: var(--dn-hover); color: var(--dn-tekst); }
 
-/* NIEBEZPIECZNY — czynności nieodwracalne; sygnalizuje wagę, nie blokuje */
+/* Wariant niebezpieczny oznacza czynności nieodwracalne: sygnalizuje wagę decyzji barwą błędu, ale nie blokuje naciśnięcia. */
 .dn-btn--niebezpieczny {
   background: transparent;
   border-color: var(--dn-blad-obrys);
@@ -133,20 +123,20 @@
 }
 .dn-btn--niebezpieczny:hover { background: var(--dn-blad-tlo); }
 
-/* Rozmiary — pochodne kontrolki, bez wartości spoza skali */
+/* Rozmiary przycisku są pochodną wysokości kontrolki bazowej, bez żadnej wartości odstępu czy czcionki spoza skali żetonów. */
 .dn-btn--sm {
   min-height: calc(var(--dn-wym-kontrolka) - var(--dn-od-1));
   padding: 0 var(--dn-od-3);
   font-size: var(--dn-fs-sm);
 }
-/* Wariant powiększony; produkt sięga dziś wyłącznie po `--sm`. */
+/* Wariant powiększony przycisku podnosi wysokość i odstępy ponad rozmiar mały, choć produkt sięga dziś wyłącznie po wariant mały. */
 .dn-btn--lg {
   min-height: calc(var(--dn-wym-kontrolka) + var(--dn-od-2));
   padding: 0 var(--dn-od-5);
   font-size: var(--dn-fs-md);
 }
 
-/* Przycisk ikonowy */
+/* Przycisk ikonowy niesie wyłącznie znak graficzny bez etykiety tekstowej, zachowując ten sam rytm wysokości co przycisk zwykły. */
 .dn-btn-ikona {
   display: inline-flex;
   align-items: center;
@@ -176,7 +166,7 @@
   outline-offset: var(--dn-wym-fokus-odsuniecie);
 }
 
-/* Wariant na ramie (pasek górny — zawsze atramentowy) */
+/* Wariant na ramie przycisku ikonowego pozostaje zawsze atramentowy, niezależnie od motywu, ponieważ stoi na pasku górnym, nie na treści. */
 .dn-btn-ikona--na-ramie { color: var(--dn-rama-tekst-2); }
 .dn-btn-ikona--na-ramie:hover { background: var(--dn-rama-hover); color: var(--dn-rama-tekst); }
 .dn-btn-ikona--na-ramie[aria-pressed='true'] {

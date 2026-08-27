@@ -43,10 +43,18 @@ motywach: **różnica 1 piksela przy progu szumu 10**.
 
 ---
 
-## 0b · Rodzina okna wejściowego — ZROBIONE
+## 0b · Rodzina okna wejściowego — NIEZROBIONE
 
 Bryła, z której składają się instalator, okno startowe, logowanie i przygotowanie
 środowiska. Dotąd każde z tych okien miało własną kopię.
+
+**Stan: rodzina dodana do biblioteki, migracja okien niewykonana.** Składniki
+`.dn-*` z tabeli stoją w bibliotece, ale klasy z kolumny „zastępuje" **nie
+zostały skreślone** — `.we-scena`, `.we-okno`, `.we-belka`, `.we-panel`,
+`.we-akcje`, `.au-akcje`, `.we-marka` (z `-poz`, `-stopka`, `-godlo`), `.pg-znak`,
+`.pd-tytul` i `.au-link` nadal mają definicje w `wejscie.css` i `przedsionek.css`,
+obok swoich zamienników. Zamiana wejdzie przy pracy nad tymi oknami; do tego czasu
+pozycje pozostają otwarte (por. §1).
 
 | składnik | warianty | zastępuje |
 |---|---|---|

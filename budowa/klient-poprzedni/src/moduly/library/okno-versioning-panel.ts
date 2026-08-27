@@ -15,25 +15,9 @@ import { utworzWierszWersji } from './wiersz-wersji';
 import type { ZrodloOtoczenia } from './zrodlo-otoczenia';
 
 /**
- * Versioning Panel — okno zarządcy modułu (`library.versioning-panel`).
- *
- * Trzy funkcje Operatora mają tu drogę do rdzenia: przegląd wersji
- * (`library.version.list`), dołożenie kolejnej (`library.version.add`,
- * `dolozenie-wersji.ts`) i przywrócenie wcześniejszej
- * (`library.version.restore`). Odmowa rdzenia zostaje pokazana wprost, zamiast
- * pustej tabeli. Dołożenie wersji jest tu potrzebne, bo wgranie pliku zakłada
- * nowy dokument — bez niego historia nie rośnie ponad jeden wpis, a „Przywróć"
- * nie ma dokąd wracać.
- *
- * Filtr historii i raport zmian nie wysyłają komendy: `library.version.list`
- * nie przyjmuje pola zawężającego, a raport składa się z odpowiedzi, którą okno
- * już ma. Wywóz historii wraz z treścią każdej wersji nie powstaje — treści
- * wersji niebieżącej nie oddaje żadna komenda kontraktu.
- *
- * To nie jest Session Repository ze Studia: tam wersje żyją w toku sesji, tu —
- * w repozytorium biblioteki, i narastają przy zmianie dokumentu w dowolnym
- * module, także przy zmianie wykonanej przez model. Dlatego panel odświeża się
- * także zdarzeniem `library.file.changed`, a nie wyłącznie własnym działaniem.
+ * Panel Versioning Panel łączy trzy czynności: przegląd wersji, dołożenie
+ * kolejnej i przywrócenie wcześniejszej, z odmową rdzenia pokazaną wprost
+ * zamiast pustej tabeli, a filtr historii i raport zmian nie wysyłają komend.
  */
 export interface OknoWersji {
   element: HTMLElement;
@@ -72,12 +56,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
   raport.dataset['czynnosc'] = 'raport-zmian';
   raport.addEventListener('click', () => wywiezRaport());
 
-  /**
-   * Raport zmian składa się z historii pokazanej w oknie, nie z osobnego
-   * odczytu: wywóz tego, co Operator widzi, jest jedynym wywozem, którego
-   * treść da się potwierdzić przed zapisaniem pliku. Zawężenie filtrem wchodzi
-   * do raportu i jest w nim nazwane.
-   */
+  // Raport zmian składa się z historii pokazanej w oknie, bo tę treść da się potwierdzić przed zapisem.
   function wywiezRaport(): void {
     const plik = stan.czynny();
     if (plik === null) {
@@ -98,10 +77,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
   }
 
   let ostatni = '';
-  // Wykaz wersji i werdykt o treści, z którymi jest narysowany. Trzymane, bo
-  // odpowiedź rdzenia o treści przychodzi później niż sama historia (osobnym
-  // wywołaniem, także z okna File Preview) — bez tego wiersze pokazywałyby
-  // nieaktualny stan aż do następnego odczytu historii.
+  // Wykaz wersji i werdykt o treści są trzymane osobno, bo odpowiedź o treści przychodzi po historii.
   let wersjeWykazu: readonly LibraryVersion[] = [];
   let werdyktWykazu: WerdyktTresci = 'nieznana';
 
@@ -144,8 +120,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
       );
       return;
     }
-    // Historia zawężona filtrem i historia pusta to dwa różne stany: pierwszy
-    // orzeka o zawężeniu okna, drugi o odpowiedzi rdzenia.
+    // Historia zawężona filtrem i pusta to dwa różne stany: zawężenie okna, a nie odpowiedź rdzenia.
     if (filtr.zastosuj(wersje).length === 0) {
       okno.puste(
         'Zawężenie filtru nie zostawiło ani jednej wersji',
@@ -175,10 +150,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
     stan.wchlon(poPrzywroceniu);
     void wczytaj();
 
-    // Która wersja jest teraz bieżąca, mówi odpowiedź, nie kliknięcie. Rdzeń
-    // oddaje plik po przywróceniu, a w nim `versionId` — jedyne miejsce, w
-    // którym stoi wersja naprawdę wskazana. Rozbieżność z klikniętym wierszem
-    // jest tu ogłaszana odmową.
+    // Którą wersję rdzeń uznał za bieżącą, mówi odpowiedź po przywróceniu, nie kliknięty wiersz.
     if (poPrzywroceniu.versionId !== wersja.id) {
       odpowiedz.pokaz(
         `Przywrócenie wersji ${nazwa} (${wersja.id}) wróciło powodzeniem, ale dokument ` +
@@ -188,10 +160,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
       );
       return;
     }
-    // Przywrócenie przestawia wersję bieżącą dokumentu, więc poprzednia
-    // odpowiedź rdzenia o jego treści przestała o nim mówić. Zdanie „wersja
-    // przywrócona" bez tego pytania potwierdzałoby powrót do treści, której
-    // repozytorium może nie mieć.
+    // Przywrócenie przestawia wersję bieżącą, więc poprzednia odpowiedź o treści przestała o niej mówić.
     odpowiedz.pokaz(`Wersja ${nazwa} wskazana jako bieżąca — pytam rdzeń o treść…`, true);
     const stanTresci = await stan.zbadajTresc(plik.id);
     if (stanTresci.werdykt === 'brak') {
@@ -210,9 +179,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
       );
       return;
     }
-    // Zdanie „rdzeń oddaje treść dokumentu" jest potwierdzeniem i należy się
-    // wyłącznie werdyktowi `osiagalna`. Po odmowie odczytu okno nie potwierdza
-    // powrotu do treści, ale też nie orzeka jej braku.
+    // Zdanie o oddaniu treści dokumentu należy się wyłącznie werdyktowi osiągalna, nie każdej odpowiedzi.
     if (stanTresci.werdykt !== 'osiagalna') {
       odpowiedz.pokaz(
         `Wersja ${nazwa} wskazana jako bieżąca, ale rdzeń nie odpowiedział o treści ` +
@@ -242,8 +209,7 @@ export function utworzOknoWersji(stan: StanBiblioteki, otoczenie: ZrodloOtoczeni
         return;
       }
       if (plik.id === ostatni) {
-        // Historia się nie zmieniła, ale werdykt o treści mógł dojść później —
-        // wtedy wystarczy przerysować wiersze, bez powtórnego odczytu wersji.
+        // Historia się nie zmieniła, ale werdykt o treści mógł dojść później — wystarczy przerysować wiersze.
         if (stan.tresc(plik.id).werdykt !== werdyktWykazu) rysuj();
         return;
       }

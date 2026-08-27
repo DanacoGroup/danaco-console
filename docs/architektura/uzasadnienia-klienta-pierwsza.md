@@ -6674,3 +6674,15 @@ Krok z nazwą przepisaną ręcznie przeżyłby zmianę nazwy w kontrakcie i wrac
 
 ## budowa/klient-poprzedni/src/moduly/apps/stan-produktu.ts
 Dwa równoległe stany dałyby dwie prawdy o tym samym produkcie: Architecture Designer definiuje komponenty, oba warsztaty przypisują do nich pliki, Product Builder rysuje z nich oś etapów, a Deployment Panel wdraża, wszystkie czytając z jednego stanu. Trzy komendy odczytu obszaru wypełniają stan tym, co rdzeń trzyma w bazie, zamiast tym, co przeleciało gniazdem w bieżącej sesji — bez nich odświeżenie okna przeglądarki zerowałoby moduł, choć historia wdrożeń, architektura i pliki warsztatu leżą w rdzeniu. Etapy budowy zostają wyłącznie przy zdarzeniu, bo komendy ich odczytu kontrakt nie niesie, więc pusty wykaz etapów na starcie jest stanem prawdziwym, a nie brakiem odczytu, i okno mówi o nim inaczej niż o wdrożeniach. Odczyt nie gasi stanu, który już jest: każdy z trzech odczytów jest niezależny, odmowa jednego zostawia dwa pozostałe nietknięte i nie kasuje tego, co moduł już wie; powód odmowy trafia do osobnego pola dla każdego odczytu, bo okna czytają je w różnych miejscach ekranu. Który z trzech odczytów obszaru rozstrzyga klucz powodu odmowy: nazwy są własne modułu, nie nazwami komend, bo warstwa widoku nazw komend nie zna.
+
+## budowa/klient-poprzedni/src/moduly/library/okno-versioning-panel.ts
+Dołożenie wersji jest tu potrzebne, bo wgranie pliku zakłada nowy dokument,
+więc bez niego historia nie rośnie ponad jeden wpis, a przywrócenie nie ma
+dokąd wracać. Filtr historii nie przyjmuje pola zawężającego w kontrakcie,
+a raport składa się z odpowiedzi, którą okno już ma; wywóz historii wraz
+z treścią każdej wersji nie powstaje, bo treści wersji niebieżącej nie
+oddaje żadna komenda kontraktu. To nie jest repozytorium sesji ze Studia:
+tam wersje żyją w toku sesji, tu w repozytorium biblioteki, i narastają przy
+zmianie dokumentu w dowolnym module, także przy zmianie wykonanej przez
+model, dlatego panel odświeża się także zdarzeniem zmiany pliku, a nie
+wyłącznie własnym działaniem.

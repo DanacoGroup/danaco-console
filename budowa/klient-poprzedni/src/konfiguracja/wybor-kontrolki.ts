@@ -16,16 +16,9 @@ import {
 } from './kontrolki-wyboru';
 
 /**
- * Jedyne miejsce, w którym rodzaj wartości zamienia się w kontrolkę.
- *
- * Formularz okna konfiguracji jest generowany z katalogu, więc rozdzielenie ma
- * dokładnie jeden punkt: nowy rodzaj wartości w kontrakcie to nowy przypadek
- * tutaj i nowy budowniczy obok — nie nowy ekran i nie zmiana w formularzu ani
- * w panelu kategorii.
- *
- * Rodzaj nieznany nie gasi pola. Rdzeń nowszy od klienta może przysłać rodzaj,
- * którego ten klient nie zna; zamiast pustego miejsca staje wtedy pole tekstowe
- * z ostrzeżeniem, a wartość pozostaje odczytywalna i zapisywalna jako napis.
+ * Jedyne miejsce, w którym rodzaj wartości z kontraktu zamienia się w kontrolkę
+ * formularza konfiguracji. Nowy rodzaj wartości to nowy przypadek tutaj i nowy
+ * budowniczy obok, bez zmiany formularza i panelu kategorii.
  */
 export function utworzKontrolke(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   switch (zaleznosci.definicja.valueType) {
@@ -61,7 +54,11 @@ export function utworzKontrolke(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   }
 }
 
-/** Pole tekstowe z ostrzeżeniem — odpowiedź na rodzaj wartości spoza kontraktu. */
+/**
+ * Pole tekstowe z ostrzeżeniem, stawiane w odpowiedzi na rodzaj wartości spoza
+ * kontraktu znanego tej wersji interfejsu; wartość pozostaje odczytywalna
+ * i zapisywalna jako napis, a rodzaj trafia do dziennika przeglądarki.
+ */
 function kontrolkaZastepcza(zaleznosci: ZaleznosciKontrolki): Kontrolka {
   const rodzaj = String(zaleznosci.definicja.valueType);
   console.warn('[konfiguracja] rodzaj wartości nieznany klientowi', rodzaj);

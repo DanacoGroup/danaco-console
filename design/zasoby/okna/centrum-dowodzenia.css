@@ -90,6 +90,17 @@
 /* Lockup poziomy z zasobów marki; 280 px wobec minimum 120 px z księgi znaku. */
 .cd-marka-lockup { width: 280px; height: auto; flex: none; color: var(--dn-tekst); }
 
+/* Kropka sygnału tętni nieprzerwanie — wspólnym pulsem platformy, 2,4 s. Oba
+   znaki okna, lockup płótna i godło belki, biją tym samym rytmem. */
+.cd-marka-lockup .kropka,
+.dn-belka-marka .kropka {
+  animation: dn-tetno-kropki var(--dn-czas-tetno) var(--dn-ease) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cd-marka-lockup .kropka,
+  .dn-belka-marka .kropka { animation: none; }
+}
+
 /* ── Wiersz pierwszego wejścia ────────────────────────────────────────────── */
 
 .cd-start {
@@ -210,15 +221,18 @@
      wzrostu jest wyściółka, bo treść ma zostać wyśrodkowana w polu. */
   padding: var(--dn-od-6);
 }
+/* Znak komponentu ma wielkość emblematu środowiska — 32 px, rozstrzygnięcie
+   Właściciela z 2026-08-27. Obie strefy strony głównej niosą znaki tej samej
+   miary; różnicę stref oddaje karta, nie rozmiar znaku. */
 .cd-kafel .dn-kafel-ikona {
-  width: var(--dn-wym-awatar-lg);
-  height: var(--dn-wym-awatar-lg);
+  width: var(--dn-od-8);
+  height: var(--dn-od-8);
 }
-.cd-kafel .dn-kafel-ikona svg { width: var(--dn-wym-awatar-lg); height: var(--dn-wym-awatar-lg); }
+.cd-kafel .dn-kafel-ikona svg { width: var(--dn-od-8); height: var(--dn-od-8); }
 .cd-kafel-tresc { display: flex; flex-direction: column; gap: var(--dn-od-05); min-width: 0; }
-/* Tytuł rośnie razem z kaflem; skala nie ma stopnia 19–20 px, więc 13 px
-   przechodzi na najbliższy stopień w górę. Opis zostaje na 13 px. */
-.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-xl); }
+/* Nazwa komponentu stoi w stopniu tytułu karty środowiska — obie strefy czyta
+   się jednym stopniem. Opis zostaje na 13 px. */
+.cd-kafel-tresc .dn-kafel-etykieta { font-size: var(--dn-fs-2xl); }
 .cd-kafel-tresc .dn-kafel-opis { color: var(--dn-tekst-2); }
 .cd-kafel-blok { display: flex; }
 .cd-kafel-blok > .cd-kafel { flex: 1 1 auto; }
@@ -649,18 +663,17 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
 
 /* Znak komponentu stoi bez płytki i bez ramki — samo godło.
    `.dn-kafel-ikona` z warstwy wspólnej niesie tło `--dn-powierzchnia` i obrys
-   `--dn-obrys`; oba są tu zdejmowane. Pojemnik zachowuje swoją szerokość 24 px
-   z `.cd-kafel .dn-kafel-ikona` wyżej, żeby odstęp od brzegu kafla i od tekstu
-   pozostał nietknięty, a znak wypełnia go w całości — po zdjęciu płytki znak
-   18 px czytałby się jako pomniejszony. */
+   `--dn-obrys`; oba są tu zdejmowane. Pojemnik zachowuje 32 px z `.cd-kafel
+   .dn-kafel-ikona` wyżej, żeby odstęp od brzegu kafla i od tekstu pozostał
+   nietknięty, a znak wypełnia go w całości. */
 .cd-strona .cd-kafel .dn-kafel-ikona {
   border: 0;
   background: none;
   color: var(--dn-tekst-2);
 }
 .cd-strona .cd-kafel .dn-kafel-ikona svg {
-  width: var(--dn-wym-awatar-lg);
-  height: var(--dn-wym-awatar-lg);
+  width: var(--dn-od-8);
+  height: var(--dn-od-8);
 }
 
 /* Kreska przy „+” równo z krawędzią ostatniej karty.
@@ -794,9 +807,15 @@ body:has(#panel-samouczek:not([hidden])) .cd-siatka-wlasnych { grid-template-col
   left: -9999px;
   top: -9999px;
 }
+/* `right` musi zostać zdjęte razem z `left`. Warstwa wspólna przypina dymki
+   pasa sterowania i ostatniej grupy narzędzi prawą krawędzią; przy umocowaniu
+   do widoku taki dymek dostawał obie krawędzie naraz i rozciągał się od ikony
+   po brzeg okna — 1726 px zamiast własnej szerokości. */
 .cd-strona [data-etykietka][data-dymek='tak']::after {
   left: var(--cd-dymek-x);
+  right: auto;
   top: var(--cd-dymek-y);
+  bottom: auto;
   transform: translate(-50%, var(--dn-od-05));
 }
 .cd-strona [data-etykietka][data-dymek='tak']:hover::after,

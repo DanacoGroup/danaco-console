@@ -1,7 +1,5 @@
 // Odpowiedzialność pliku: dostęp do kolejek (tabela `kolejka`). Jeden silnik
 // obsługuje pętlę sesyjną i MultitaskingAI — bez drugiego kompletu tabel.
-// Zmiana stanu dotyka stanu i dziennika akcji, więc idzie w transakcji.
-// Zlecenia kolejki obsługuje `pozycje_kolejki.go`.
 package dane
 
 import (
@@ -13,7 +11,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Kolejka to wiersz tabeli `kolejka`.
+// Kolejka to wiersz tabeli `kolejka`, niosący jej stan, rodzaj kolejki oraz parametry działania systemu.
 type Kolejka struct {
 	ID                 int64
 	Nazwa              string
@@ -25,7 +23,7 @@ type Kolejka struct {
 	Zaktualizowano     string
 }
 
-// RepozytoriumKolejek jest kontraktem obszaru kolejek.
+// RepozytoriumKolejek jest kontraktem obszaru kolejek, określającym operacje dostępne na wykazie kolejek.
 type RepozytoriumKolejek interface {
 	UtworzKolejke(ctx context.Context, kolejka Kolejka) (int64, error)
 	PobierzKolejke(ctx context.Context, id int64) (Kolejka, error)
@@ -35,15 +33,10 @@ type RepozytoriumKolejek interface {
 	ZwiekszObieg(ctx context.Context, pozycjaID int64) (int, error)
 	ListaPozycji(ctx context.Context, kolejkaID int64) ([]Pozycja, error)
 	Dziennik(ctx context.Context, kolejkaID int64, limit int) ([]WpisDziennika, error)
-	// LiczbaCzynnych liczy kolejki poza stanem końcowym — miara stanu platformy
-	// dla mobilnego centrum dowodzenia. Rachunek stoi tutaj, bo tabelę `kolejka`
-	// prowadzi to repozytorium i drugiego czytelnika mieć nie będzie;
-	// ciało metody leży w `mobile.go`.
+	// LiczbaCzynnych liczy kolejki poza stanem końcowym, miarę stanu platformy dla centrum dowodzenia.
 	LiczbaCzynnych(ctx context.Context) (int, error)
 
-	// Zlecenia kolejki i polityka kolejki (`zlecenia_kolejki.go`, migracje
-	// 268-269) — byty rodziny `queue.item.*`, `queue.policy.set`,
-	// `queue.dead.list` i `queue.depth.get`.
+	// Zlecenia i polityka kolejki są bytami rodziny komunikatów `queue.item.*` i `queue.policy.set`.
 	DodajZlecenie(ctx context.Context, zlecenie Zlecenie) (Zlecenie, error)
 	Zlecenie(ctx context.Context, kod string) (Zlecenie, error)
 	ZlecenieKluczem(ctx context.Context, kolejkaID int64, klucz string) (Zlecenie, error)
@@ -59,7 +52,7 @@ type RepozytoriumKolejek interface {
 	ZapiszPolitykeKolejki(ctx context.Context, kolejkaID int64, polityka PolitykaKolejki) error
 }
 
-// domyslnyRodzajKolejki odpowiada wartości domyślnej kolumny w schemacie.
+// domyslnyRodzajKolejki odpowiada wartości domyślnej kolumny rodzaju kolejki ustawionej w schemacie bazy.
 const domyslnyRodzajKolejki = "sesyjna"
 
 const (
@@ -87,7 +80,7 @@ func noweRepozytoriumKolejek(z *zapytania, db *sql.DB) *repozytoriumKolejek {
 	return &repozytoriumKolejek{zapytania: z, db: db}
 }
 
-// UtworzKolejke zakłada kolejkę i odnotowuje założenie w dzienniku.
+// UtworzKolejke zakłada nową kolejkę i odnotowuje jej założenie osobnym wpisem w dzienniku akcji kolejki.
 func (r *repozytoriumKolejek) UtworzKolejke(ctx context.Context, kolejka Kolejka) (int64, error) {
 	stan, err := stanKolejkiNaBaze(kolejka.Stan)
 	if err != nil {
@@ -121,7 +114,7 @@ func (r *repozytoriumKolejek) UtworzKolejke(ctx context.Context, kolejka Kolejka
 	return id, nil
 }
 
-// PobierzKolejke zwraca kolejkę o wskazanym identyfikatorze.
+// PobierzKolejke zwraca kolejkę wskazaną jej identyfikatorem klucza głównego wiersza w tabeli kolejek.
 func (r *repozytoriumKolejek) PobierzKolejke(ctx context.Context, id int64) (Kolejka, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKolejke)
 	if err != nil {

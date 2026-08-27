@@ -1,35 +1,6 @@
-// Odpowiedzialność pliku: rachunek postaci dokumentu — wczytanie drzewa,
-// przeliczenie zakresów, rozcięcie fragmentów na granicach zaznaczenia,
-// przesunięcie zakotwiczeń po zmianie treści, bilans blokad i odłożenie zmiany
-// śledzonej. Do tego cztery czynności podstawowe: odczyt i zapis postaci,
-// odczyt i zmiana treści fragmentu.
-//
-// Pozostałe obszary postaci stoją w plikach sąsiednich (`_format`, `_style`,
-// `_strona`, `_sekcje`, `_listy`, `_tabele`, `_wstawienia`, `_aparat`,
-// `_widok`) i wołają rachunek z tego pliku, zamiast liczyć drugi raz.
-//
-// ── Znak, nie bajt ───────────────────────────────────────────────────────────
-// Kontrakt mówi o zakresie „w znakach". Pismo polskie ma znaki dwubajtowe,
-// więc cały ten plik liczy w RUNACH, nie w bajtach. Zakres liczony bajtami
-// rozjechałby się na pierwszym „ż" i Operator dostałby wytłuszczoną połowę
-// litery.
-//
-// ── Gdzie stoi prawda o treści ───────────────────────────────────────────────
-// Treść dokumentu jest w `dokument_studio.tresc` — tam ją zapisuje
-// `document.save` i tam jej szuka podgląd. Drzewo postaci niesie tę samą treść
-// rozłożoną na bloki i fragmenty. Dwie prawdy o tym samym bycie są usterką,
-// więc wczytanie postaci UZGADNIA drzewo z treścią: gdy treść zmieniła się
-// drogą, która postaci nie zna, bloki idą za treścią, a postać akapitów
-// i fragmentów zostaje przypisana po kolejności. Zapis postaci przepisuje
-// treść z drzewa, więc od tej chwili obie strony mówią to samo.
-//
-// ── Dlaczego zmiana treści idzie po elementach, a nie po napisie ─────────────
-// Zamiana napisu w napisie gubi wszystko poza literami: kroje, wcięcia, granice
-// akapitów. Dlatego treść rozkłada się na ELEMENTY — jeden element to jedno
-// miejsce w zakresie: albo znak wraz ze swoją postacią, albo granica akapitu
-// wraz z postacią akapitu, który za nią się zaczyna. Zamiana jest wtedy
-// wycięciem odcinka elementów i wstawieniem odcinka nowego, a usunięcie granicy
-// akapitu zlewa dwa akapity w jeden, dokładnie tak jak w pakiecie biurowym.
+// Rachunek postaci dokumentu Studio: wczytanie drzewa, przeliczenie zakresów
+// w runach, rozcięcie fragmentów, przesunięcie zakotwiczeń, bilans blokad
+// i zmiana śledzona, wraz z odczytem i zapisem postaci i treści fragmentu.
 package core
 
 import (
@@ -72,16 +43,11 @@ const (
 type stanPostaci struct {
 	dokument dane.DokumentStudia
 	forma    shared.StudioDocumentForm
-	// tekstPrzed służy zmianie śledzonej: bez zapamiętanej treści sprzed
-	// czynności zmiana nie miałaby czego nieść w polu `before`, a zmiana bez
-	// „przed" jest nieodwracalna.
+	// tekstPrzed niesie treść sprzed czynności dla pola `before` zmiany śledzonej.
 	tekstPrzed string
-	// drzewoPrzed niesie postać sprzed czynności dla dziennika czynności:
-	// cofnięcie zmiany POSTACI nie ma czego przywrócić z samej treści, bo
-	// pomyłkowa zmiana kroju w całym dokumencie nie rusza ani jednej litery.
+	// drzewoPrzed niesie postać sprzed czynności dla cofnięcia zmiany POSTACI, nie treści, w dzienniku.
 	drzewoPrzed string
-	// czynnosc to wpis dziennika, którym czynność da się cofnąć pojedynczo.
-	// Wypełnia go `postacZakoncz`; odpowiedź komendy oddaje go jako `actionId`.
+	// czynnosc to wpis dziennika: czynność cofa się nim pojedynczo, a odpowiedź niesie go jako `actionId`.
 	czynnosc *string
 	// opisCzynnosci trafia do dziennika jako zdanie dla Operatora.
 	opisCzynnosci string
@@ -155,20 +121,7 @@ func (a *adapterStudia) postacWczytaj(ctx context.Context, kod string) (*stanPos
 	postacPrzeliczZakresy(&stan.forma)
 	postacPrzeliczUzycieStylow(&stan.forma)
 
-	// Drzewo sprzed czynności zapisuje się TUTAJ, przy wczytaniu, i to jest
-	// jedyne miejsce, w którym da się je jeszcze zapisać: po czynności drzewo
-	// jest już zmienione, więc dziennik nie miałby czego odłożyć jako „przed".
-	//
-	// Do 17.08.2026 pole zostawało puste we WSZYSTKICH trzydziestu ośmiu
-	// czynnościach postaci — nikt go nie wypełniał. Skutek był cichy i szeroki:
-	// wpis dziennika szedł bez stanu sprzed, a cofnięcie takiej czynności
-	// oddawało pominięcie „wpis dziennika nie niesie stanu postaci". Cofanie
-	// zmian postaci nie działało więc wcale, a nie tylko dla aparatu — sprawozdanie
-	// nazywało wąską część szerokiego braku.
-	//
-	// Odczyt płaci za to jednym zapisem drzewa do napisu. To ta sama cena, którą
-	// dziennik płaci już za stan PO czynności; liczenie jej dopiero przy odkładaniu
-	// czynności byłoby liczeniem za późno.
+	// Drzewo sprzed czynności zapisuje się tutaj, zanim je zmieni czynność, dla stanu przed w dzienniku.
 	if zapis, err := dziennikZapisDrzewa(stan.forma); err == nil && zapis != nil {
 		stan.drzewoPrzed = *zapis
 	}
@@ -182,9 +135,7 @@ func (a *adapterStudia) postacZapisz(ctx context.Context, stan *stanPostaci) err
 	postacPrzeliczZakresy(&stan.forma)
 	postacPrzeliczUzycieStylow(&stan.forma)
 
-	// Styl nazwany i sekcja mają swoje wiersze i to one są prawdą. Z drzewa
-	// idą wycięte, żeby dwa zapisy tego samego bytu nie rozjechały się przy
-	// pierwszej poprawce.
+	// Styl nazwany i sekcja mają własne wiersze będące prawdą; z drzewa idą wycięte przy zapisie.
 	doZapisu := stan.forma
 	doZapisu.Styles = nil
 	doZapisu.Sections = nil
@@ -267,9 +218,7 @@ func (a *adapterStudia) postacWczytajWiersze(ctx context.Context, stan *stanPost
 	}
 	stan.forma.Fields = postacZlozPola(pola)
 
-	// Blokady fragmentów stoją w tabeli obszaru kontroli pracy, nie postaci —
-	// dlatego idą jego składnicą. Postać ich nie zakłada ani nie zdejmuje, tylko
-	// pokazuje, co jest zajęte.
+	// Blokady fragmentów stoją w tabeli obszaru kontroli pracy; postać ich nie zakłada, tylko pokazuje.
 	kontrola, err := a.kontrolaSkladnica()
 	if err != nil {
 		return err
@@ -284,11 +233,9 @@ func (a *adapterStudia) postacWczytajWiersze(ctx context.Context, stan *stanPost
 
 // ── Uzgodnienie drzewa z treścią ────────────────────────────────────────────
 
-// postacUzgodnijZTrescia prowadzi bloki tekstowe za treścią dokumentu.
-//
-// Bloki nietekstowe — tabela, obiekt, podział — nie zajmują ani jednego znaku
-// treści: ich miejsce niesie kolejność bloków i własne zakotwiczenie. Dzięki
-// temu wstawienie tabeli nie przesuwa ani jednego zakresu zaznaczenia.
+// postacUzgodnijZTrescia prowadzi bloki tekstowe za treścią dokumentu. Bloki
+// nietekstowe — tabela, obiekt, podział — nie zajmują ani jednego znaku treści:
+// ich miejsce niesie kolejność bloków, nie zakres.
 func postacUzgodnijZTrescia(forma *shared.StudioDocumentForm, tresc string) {
 	if postacMaBlokiTekstowe(forma) && postacTekstFormy(forma) == tresc {
 		return
@@ -303,9 +250,7 @@ func postacUzgodnijZTrescia(forma *shared.StudioDocumentForm, tresc string) {
 			continue
 		}
 		if nastepna >= len(linie) {
-			// Treść skróciła się drogą, która postaci nie zna. Blok bez
-			// wiersza treści przestaje istnieć — trzymanie go dawałoby
-			// akapit widmo, którego Operator nie widzi, a wydanie tak.
+			// Blok bez wiersza treści przestaje istnieć, inaczej dałby akapit widmo, którego Operator nie widzi.
 			continue
 		}
 		blok.Runs = postacRunyZWiersza(linie[nastepna], blok.Runs)
@@ -337,7 +282,8 @@ func postacRunyZWiersza(wiersz string,
 	return []shared.StudioDocumentRun{{Text: wiersz, Format: postac, AuthoredBy: autor}}
 }
 
-// postacBlokNiesieTekst mówi, czy blok wchodzi do liniowego strumienia treści.
+// postacBlokNiesieTekst mówi, czy blok wchodzi do liniowego strumienia treści:
+// tabela, obiekt i podział nie niosą w nim ani jednego znaku.
 func postacBlokNiesieTekst(blok shared.StudioDocumentBlock) bool {
 	switch blok.Kind {
 	case blokPostaciTabela, blokPostaciObiekt, blokPostaciPodzial:
@@ -356,7 +302,8 @@ func postacMaBlokiTekstowe(forma *shared.StudioDocumentForm) bool {
 	return false
 }
 
-// postacTekstFormy składa treść dokumentu z bloków tekstowych.
+// postacTekstFormy składa treść dokumentu z bloków tekstowych, pomijając
+// tabele, obiekty i podziały, które strumienia treści nie niosą.
 func postacTekstFormy(forma *shared.StudioDocumentForm) string {
 	czesci := make([]string, 0, len(forma.Blocks))
 	for _, blok := range forma.Blocks {
@@ -409,7 +356,8 @@ func postacPrzeliczZakresy(forma *shared.StudioDocumentForm) {
 	}
 }
 
-// postacDlugosc oddaje długość treści dokumentu w znakach.
+// postacDlugosc oddaje długość treści dokumentu w znakach — miarę, którą
+// posługuje się każdy zakres czynności na postaci.
 func postacDlugosc(forma *shared.StudioDocumentForm) int {
 	return len([]rune(postacTekstFormy(forma)))
 }
@@ -445,8 +393,7 @@ func postacZakres(od, do *int, dlugosc int) (int, int) {
 
 // postacRozetnij rozcina fragmenty na granicach zakresu, żeby postać dała się
 // nałożyć DOKŁADNIE na zaznaczenie, a nie na cały fragment, który zaznaczenie
-// przecina. To jest warunek wymagania „zastosowanie postaci do fragmentu
-// zmienia wyłącznie ten fragment".
+// przecina.
 func postacRozetnij(forma *shared.StudioDocumentForm, granice ...int) {
 	postacPrzeliczZakresy(forma)
 	for i := range forma.Blocks {
@@ -475,9 +422,7 @@ func postacRozetnij(forma *shared.StudioDocumentForm, granice ...int) {
 				}
 				czesc := run
 				czesc.Text = string(znaki[ciecia[j]-start : ciecia[j+1]-start])
-				// Postać znaku idzie KOPIĄ, nie tym samym wskaźnikiem:
-				// dwa fragmenty na jednej strukturze postaci znaczyłyby, że
-				// pogrubienie połowy zaznaczenia pogrubia całe.
+				// Postać znaku idzie kopią, nie wskaźnikiem dzielonym — inaczej pogrubienie połowy pogrubiłoby całość.
 				czesc.Format = postacKopiaZnaku(run.Format)
 				nowe = append(nowe, czesc)
 			}
@@ -686,8 +631,7 @@ func postacWstawBlokiTekstowe(forma *shared.StudioDocumentForm,
 	tekstowe []shared.StudioDocumentBlock) {
 
 	nietekstowe := make([]shared.StudioDocumentBlock, 0, len(forma.Blocks))
-	// Blok nietekstowy zapamiętuje, po ilu blokach tekstowych stał — po zmianie
-	// treści wraca na to samo miejsce w kolejności, a nie na koniec dokumentu.
+	// Blok nietekstowy zapamiętuje, po ilu blokach tekstowych stał, i wraca na to samo miejsce.
 	miejsca := make([]int, 0, len(forma.Blocks))
 	ile := 0
 	for _, blok := range forma.Blocks {
@@ -717,13 +661,8 @@ func postacWstawBlokiTekstowe(forma *shared.StudioDocumentForm,
 // ── Blokady fragmentów ──────────────────────────────────────────────────────
 
 // postacOdcinkiDozwolone dzieli zakres czynności na odcinki wolne od blokad
-// i oddaje bilans pominięć.
-//
-// Blokada jest skierowana przeciw modelowi, nie przeciw właścicielowi
-// dokumentu: zasięg `model` zatrzymuje wyłącznie czynność autora `model`,
-// zasięg `everyone` — każdą. Zmiana obejmująca blokadę CZĘŚCIOWO wykonuje się
-// poza blokadą i oddaje bilans; odmowa całości byłaby tu nieproporcjonalna,
-// a przemilczenie pominięcia — zakazane.
+// i oddaje bilans pominięć. Zasięg `model` zatrzymuje wyłącznie czynność
+// autora `model`, zasięg `everyone` — każdą.
 func postacOdcinkiDozwolone(forma *shared.StudioDocumentForm, od, do int,
 	autor shared.StudioAuthor) ([][2]int, []shared.StudioSkippedItem) {
 
@@ -818,13 +757,9 @@ func postacAutor(wskazanie *shared.StudioAuthor) shared.StudioAuthor {
 	return shared.StudioAuthorUzytkownik
 }
 
-// postacOdlozZmiane rejestruje zmianę śledzoną czynności na postaci.
-//
-// Czynność MODELU odkłada się zawsze — na tym stoi przełącznik „pokaż wszystko,
-// co zrobił model" i wymaganie, żeby zmiana postaci bez zmiany liter nie była
-// niewidzialna. Czynność Operatora odkłada się wtedy, gdy śledzenie zmian
-// w dokumencie jest włączone; inaczej Operator dostawałby wykaz zmian do
-// przyjęcia po każdym własnym kliknięciu pogrubienia.
+// postacOdlozZmiane rejestruje zmianę śledzoną czynności na postaci. Czynność
+// modelu odkłada się zawsze; czynność operatora — wyłącznie gdy śledzenie
+// zmian dokumentu jest włączone.
 func (a *adapterStudia) postacOdlozZmiane(ctx context.Context, stan *stanPostaci,
 	autor shared.StudioAuthor, rodzaj shared.StudioChangeKind, od, do int,
 	przed, po *string) (*shared.StudioTrackedChange, error) {
@@ -857,14 +792,9 @@ func (a *adapterStudia) postacOdlozZmiane(ctx context.Context, stan *stanPostaci
 }
 
 // postacZakoncz domyka czynność zmieniającą postać: zapisuje drzewo, odkłada
-// zmianę śledzoną i domyka bilans. Jedna droga wyjścia dla wszystkich czynności
-// postaci — dwie dawałyby dwie prawdy o tym, czy zmiana została odłożona.
-// Rodzaj zmiany śledzonej i rodzaj czynności dziennika są DWOMA słownikami
-// i idą osobnymi polami. Zmiana śledzona zna trzy wartości (wstawienie,
-// usunięcie, formatowanie), bo tyle rozróżnia adiustacja. Dziennik zna
-// jedenaście (`StudioActionKind`), bo Operator cofa „zmianę stylu", nie
-// „formatowanie". Podanie jednego w miejsce drugiego przechodzi kompilację
-// i wywraca się dopiero na ograniczeniu tabeli — dlatego są rozdzielone.
+// zmianę śledzoną i domyka bilans — jedna droga wyjścia dla wszystkich
+// czynności postaci. Rodzaj zmiany śledzonej i rodzaj czynności dziennika są
+// dwoma osobnymi słownikami.
 func (a *adapterStudia) postacZakoncz(ctx context.Context, stan *stanPostaci,
 	autor shared.StudioAuthor, rodzaj shared.StudioChangeKind,
 	czynnosc shared.StudioActionKind, od, do int,
@@ -893,15 +823,7 @@ func (a *adapterStudia) postacZakoncz(ctx context.Context, stan *stanPostaci,
 
 			return shared.StudioDocumentForm{}, shared.StudioActionBalance{}, nil, err
 		}
-		// Tożsamość wykonawcy stempluje się na zmianie śledzonej JUŻ ISTNIEJĄCEJ
-		// — tak samo jak w obszarze schowka i różnicy wersji. Drugiej drogi
-		// zakładania wiersza zmiany Studio nie ma i mieć nie ma.
-		//
-		// Stempel idzie po odłożeniu czynności, bo niesie także jej kod: bez
-		// wiązania cofnięcie czynności zostawiłoby zmianę śledzoną wiszącą
-		// w powietrzu, a Operator widziałby do rozstrzygnięcia zmianę, której już
-		// nie ma. Brak tabel kontroli pracy nie unieważnia czynności — postać jest
-		// już zapisana i odmowa tutaj byłaby nieprawdą o tym, co się stało.
+		// Stempel wykonawcy idzie po odłożeniu czynności, bo niesie także jej kod dla wiązania.
 		if zmiana != nil && wykonawca.czyWykonawca() {
 			if err := a.zmianyModeluStempluj(ctx, zmiana, wykonawca, stan.czynnosc); err != nil {
 				return shared.StudioDocumentForm{}, shared.StudioActionBalance{}, nil, err
@@ -911,19 +833,9 @@ func (a *adapterStudia) postacZakoncz(ctx context.Context, stan *stanPostaci,
 	return stan.forma, bilans, zmiana, nil
 }
 
-// postacWykonawca rozstrzyga, kto wykonuje czynność na postaci — wraz
-// z tożsamością agenta, o ile żądanie ją podało.
-//
-// Podpis wchodzi z KONTEKSTU, jednym czytaniem: wkłada go tam wpięcie rejestru
-// (`podpisWykonawcyStudia`), które czyta z ładunku pola `agentId`, `agentName`
-// i `subagentId` — te same, które kontrakt niesie przy każdej komendzie Studia
-// z polem `author`. Bez tego rozbicie zmian po wykonawcy pokazywało wszystkie
-// czynności postaci jako czynności nienazwanego: rodzaj autora zapisywał się,
-// a kod agenta nie, choć żądanie go niosło.
-//
-// Rodzaj autora rozstrzyga się zasadą „szerszy wygrywa" — tą samą, którą stosuje
-// `kontrolaRozpoznajWykonawce`. Wołanie spoza rejestru podpisu nie ma i wtedy
-// wykonawcą jest sam rodzaj podany czynności.
+// postacWykonawca rozstrzyga, kto wykonuje czynność na postaci, wraz
+// z tożsamością agenta, o ile żądanie ją podało. Podpis wchodzi z kontekstu;
+// rodzaj autora rozstrzyga się zasadą „szerszy wygrywa".
 func postacWykonawca(ctx context.Context, autor shared.StudioAuthor) kontrolaWykonawca {
 	wykonawca, jest := kontrolaWykonawcaZKontekstu(ctx)
 	if !jest {
@@ -935,14 +847,9 @@ func postacWykonawca(ctx context.Context, autor shared.StudioAuthor) kontrolaWyk
 	return wykonawca
 }
 
-// postacOdlozCzynnosc dopisuje czynność do odwracalnego dziennika dokumentu.
-//
-// Dziennik jest wspólny dla całego modułu: wykaz i cofanie wystawia inny odcinek,
-// a każda czynność zmieniająca dokument ma tam swój wpis odłożyć — inaczej
-// cofnięcie pojedynczej zmiany postaci nie miałoby czego cofnąć. Stan sprzed
-// czynności idzie CAŁYM drzewem postaci, nie samą treścią: pomyłkowa zmiana
-// kroju w całym dokumencie nie rusza ani jednej litery, więc treść sprzed jej
-// nie odtworzy.
+// postacOdlozCzynnosc dopisuje czynność do odwracalnego dziennika dokumentu,
+// wspólnego dla całego modułu. Stan sprzed czynności idzie całym drzewem
+// postaci, nie samą treścią.
 func (a *adapterStudia) postacOdlozCzynnosc(ctx context.Context, stan *stanPostaci,
 	wykonawca kontrolaWykonawca, rodzaj shared.StudioActionKind, od, do int,
 	zmiana *shared.StudioTrackedChange, bilans shared.StudioActionBalance) error {
@@ -958,18 +865,13 @@ func (a *adapterStudia) postacOdlozCzynnosc(ctx context.Context, stan *stanPosta
 	if err != nil {
 		return postacBladZaplecza("stanu po czynności nie da się zapisać w dzienniku: " + err.Error())
 	}
-	// Dziennik jest jeden dla całego modułu, więc i przedrostek kodu czynności
-	// jest jeden — ten z obszaru kontroli pracy. Własny przedrostek postaci
-	// rozdzieliłby jeden dziennik na dwa nieporównywalne szeregi.
+	// Przedrostek kodu czynności jest jeden dla całego dziennika modułu, wspólny z kontrolą pracy.
 	wpis := dane.CzynnoscDokumentuStudia{
 		Kod:         nowyIdentyfikator(przedrostekCzynnosciStudia),
 		DokumentKod: stan.dokument.Kod,
 		Rodzaj:      string(rodzaj),
 		AutorRodzaj: string(wykonawca.Rodzaj),
-		// Tożsamość wykonawcy idzie kolumnami z migracji 369: rodzaj autora jest
-		// grubym rozróżnieniem człowiek-wykonawca i nie rozdziela dwóch agentów
-		// pracujących naraz nad jednym pismem. Bez kodu agenta wykaz „pokaż, co
-		// zrobił który wykonawca" pokazywał obu jako jednego.
+		// Kod agenta rozróżnia dwóch wykonawców pracujących naraz nad jednym pismem, rodzaj autora nie.
 		AutorAgentKod:    wykonawca.AgentKod,
 		AutorAgentNazwa:  wykonawca.AgentNazwa,
 		AutorAgentWersja: wykonawca.AgentWersja,
@@ -1003,10 +905,6 @@ func (a *adapterStudia) postacOdlozCzynnosc(ctx context.Context, stan *stanPosta
 
 // postacPrzesunZakotwiczenia przesuwa wszystko, co wisi na miejscu w treści,
 // po zmianie długości tej treści: obiekty, pola, aparat, sekcje i blokady.
-//
-// Bez tego przypis wstawiony na stronie pierwszej wskazywałby po dopisaniu
-// akapitu na zdanie ze strony drugiej — a to jest właśnie ten rodzaj cichej
-// szkody, po której nikt nie wie, kiedy dokument się rozjechał.
 func postacPrzesunZakotwiczenia(forma *shared.StudioDocumentForm, od, do, roznica int) {
 	if roznica == 0 {
 		return
@@ -1051,7 +949,8 @@ func postacPrzesunZakotwiczenia(forma *shared.StudioDocumentForm, od, do, roznic
 
 // ── Czynności podstawowe ────────────────────────────────────────────────────
 
-// PostacDokumentu oddaje pełną postać dokumentu (`studio.document.form.get`).
+// PostacDokumentu oddaje pełną postać dokumentu (`studio.document.form.get`),
+// z możliwością ograniczenia odpowiedzi do samego zakresu zaznaczenia.
 func (a *adapterStudia) PostacDokumentu(ctx context.Context,
 	z shared.StudioDocumentFormGetRequest) (shared.StudioDocumentFormGetResponse, error) {
 
@@ -1190,7 +1089,8 @@ func (a *adapterStudia) ZapiszPostacDokumentu(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// TrescFragmentu oddaje treść zakresu wraz z jego postacią (`studio.text.get`).
+// TrescFragmentu oddaje treść zakresu wraz z jego postacią (`studio.text.get`),
+// rozcinając fragmenty na granicach zakresu, by postać była dokładna.
 func (a *adapterStudia) TrescFragmentu(ctx context.Context,
 	z shared.StudioTextGetRequest) (shared.StudioTextGetResponse, error) {
 
@@ -1229,11 +1129,9 @@ func (a *adapterStudia) TrescFragmentu(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// ZmienTresc zamienia treść wskazanego fragmentu (`studio.text.edit`).
-//
-// Zamiana idzie po elementach, nie po napisie: postać wokół zmiany zostaje,
-// a wszystko, co wisi na miejscu w treści — obiekty, pola, przypisy, blokady —
-// przesuwa się o różnicę długości.
+// ZmienTresc zamienia treść wskazanego fragmentu (`studio.text.edit`). Zamiana
+// idzie po elementach, nie po napisie: postać wokół zmiany zostaje, a zakotwiczenia
+// przesuwają się o różnicę długości.
 func (a *adapterStudia) ZmienTresc(ctx context.Context,
 	z shared.StudioTextEditRequest) (shared.StudioTextEditResponse, error) {
 
@@ -1250,9 +1148,7 @@ func (a *adapterStudia) ZmienTresc(ctx context.Context,
 			"zmiana treści zatrzymana w całości przez blokadę fragmentu: " +
 				postacNazwaBlokad(pominiete))
 	}
-	// Zamiana na zakresie poszatkowanym blokadami nie ma jednego sensownego
-	// skutku — gdzie wtedy wchodzi nowe brzmienie? — więc zmiana idzie na
-	// odcinku pierwszym wolnym od blokady, a bilans nazywa resztę.
+	// Zamiana idzie na odcinku pierwszym wolnym od blokady; zakres poszatkowany nie ma jednego skutku.
 	roboczyOd, roboczyDo := odcinki[0][0], odcinki[0][1]
 
 	var przejeta *shared.StudioCharacterFormat

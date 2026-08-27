@@ -594,7 +594,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
      większy od ikony kafla strefy 2 (36 px), co utrzymuje hierarchię stref.
      Księga znaku rozdz. 15.1 podaje w tym miejscu 24 px — do zaktualizowania. */
   width: 48px; height: 48px;
-  margin-bottom: var(--dn-od-4);
+  /* Emblemat odsuwa się od nazwy podwójnym stopniem siatki (48 px). Znak
+     i nazwa są dwoma głosami karty, nie jednym blokiem — oględziny
+     Właściciela z 27.08.2026: 16 px, potem 24 px były za ciasne. */
+  margin-bottom: var(--dn-od-12);
   color: var(--dn-tekst);
 }
 .dn-karta-srodowiska-tytul {
@@ -659,15 +662,16 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-opis,
 .dn-karta-srodowiska:focus-within .dn-karta-srodowiska-motto { color: var(--dn-tekst); }
 
-/* Stopka karty — nota maszynowa nad dolną krawędzią, odcięta kreską. Rola
-   powtarzała się w oknach jako `.cd-karta-meta`; czynność dosuwa okno siatką. */
+/* Stopka karty — nota maszynowa nad dolną krawędzią. Rozdziela ją ODSTĘP,
+   nie kreska: rozstrzygnięcie Właściciela z 27.08.2026. Kreska nad stopką
+   przecinała kartę w poprzek i czytała się jak koniec treści, a nie jak
+   zmiana rejestru z opisu na miarę. */
 .dn-karta-stopka {
   display: flex;
   align-items: center;
   gap: var(--dn-od-2);
   margin-top: var(--dn-od-4);
   padding-top: var(--dn-od-3);
-  border-top: 1px solid var(--dn-obrys-subtelny);
   font-family: var(--dn-ff-mono);
   font-size: var(--dn-fs-xs);
   /* Stopień 12 px na panelu nie przechodzi 4,5 : 1 na `--dn-tekst-3`. */
@@ -716,23 +720,27 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
   background: none;
   color: var(--dn-tekst);
 }
-/* Wymiar wspólny z emblematem karty środowiska: kafel strefy 2 czyta się
-   na równi z kartą strefy 1. Skala `svg` idzie za pojemnikiem, bo znak modułu
-   jest emblematem, nie ikoną interfejsu ze skali 14/16/20/24. */
+/* Znak kafla modułu jest emblematem, nie ikoną interfejsu ze skali
+   14/16/20/24, więc ma własny żeton. O stopień mniejszy od emblematu karty
+   środowiska (40 wobec 54 px) — po oględzinach Właściciela z 27.08.2026
+   równy wymiar rozpychał kafel. Skala `svg` idzie za pojemnikiem. */
 .dn-kafel-ikona--godlowa,
 .dn-kafel-ikona--godlowa > svg {
-  width: var(--dn-wym-godlo-karty);
-  height: var(--dn-wym-godlo-karty);
+  width: var(--dn-wym-znak-modulu);
+  height: var(--dn-wym-znak-modulu);
 }
 
 /* Kafel modułu — nazwa czytana jak nagłówek, nie jak etykieta: stopień wyżej
    i grubość normalna. Opis o stopień jaśniejszy od pisma, ale nad progiem. */
-/* Nazwa modułu stoi na jednym stopniu z nazwą środowiska — ten sam krój
-   nagłówkowy, stopień, grubość i barwa. Strefy różnią się masą kafla, nie
-   stopniem pisma nazwy (rozstrzygnięcie Właściciela z 27.08.2026). */
+/* Nazwa modułu bierze krój, grubość i barwę nazwy środowiska, ale nie jej
+   stopień — stopień wiąże szerokość kafla. Kafel 289 px w układzie poziomym
+   oddaje nazwie 121 px po odjęciu wyściółki 48, znaku 40, grotu 38 i luk 42.
+   „Automations" zajmuje 103 px na stopniu 17, 128 px na 21 i 218 px na 36:
+   mieści się dopiero na 17, z zapasem 18 px. Powiększenie znaku i grotu
+   (oględziny Właściciela z 27.08.2026) odebrało nazwie te 23 px. */
 .dn-kafel--modul .dn-kafel-etykieta {
   font-family: var(--dn-ff-naglowek);
-  font-size: var(--dn-fs-4xl);
+  font-size: var(--dn-fs-lg);
   font-weight: var(--dn-fw-polgruba);
   letter-spacing: var(--dn-ls-naglowek);
   line-height: var(--dn-lh-ciasny);
@@ -741,17 +749,10 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-kafel--modul .dn-kafel-opis { color: var(--dn-tekst-2); }
 /* Wysokość najmniejsza żetonem, nie z sumy treści: opisy czterech kafli mają
    różną liczbę wierszy, a rząd ma stać równo niezależnie od redakcji.
-
-   Układ kolumnowy jest następstwem stopnia nazwy, nie osobnym pomysłem: przy
-   36 px nazwa modułu potrzebuje 217 px, a rząd „znak | treść | grot" zostawia
-   jej w kaflu 289 px tylko 130 px — jednowyrazowa nazwa nie ma gdzie się złamać
-   i wychodziła pod grot. W kolumnie nazwa dostaje pełne 241 px wnętrza kafla.
-   Ta sama kompozycja co karta środowiska: znak, nazwa, opis, czynność w dole. */
-.dn-kafel--modul {
-  flex-direction: column;
-  align-items: flex-start;
-  min-height: var(--dn-wym-kafel-modulu);
-}
+   Kompozycja zostaje pozioma — znak, treść, czynność w jednym rzędzie
+   (rozstrzygnięcie Właściciela z 27.08.2026). Szerokość, jakiej wymaga nazwa
+   na stopniu 36 px, zapewnia siatka okna, nie zmiana układu kafla. */
+.dn-kafel--modul { min-height: var(--dn-wym-kafel-modulu); }
 
 /* Wiersz — kafel zwarty do wykazu: jedna linia nazwy, druga rodzaju. Ta sama
    bryła i te same stany co kafel, mniejsza wyściółka i promień. */
@@ -797,17 +798,28 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
    ========================================================================== */
 
 .dn-wejdz-grot {
+  position: relative;
   display: grid;
   place-items: center;
-  /* Cel kliknięcia jest większy od znaku: przycisk ma być pewny pod palcem,
-     a znak marki spokojny. Znak bierze wysokość z `--dn-wym-grot-znak`. */
-  min-width: var(--dn-wym-grot);
-  min-height: var(--dn-wym-grot);
   padding: 0;
   border: 0;
   background: none;
   color: var(--dn-tekst-2);
   cursor: pointer;
+}
+/* Cel kliknięcia rośnie NA ZEWNĄTRZ znaku, nie razem z nim. Gdy przycisk sam
+   miał wymiar celu (72 px), znak 59 × 36 px siedział w nim wyśrodkowany, więc
+   do krawędzi karty zostawało 31,6 px z prawej i 43 px z dołu — odstępy
+   nierówne, choć margines przycisku był równy. Pole przycisku równa się teraz
+   znakowi, a cel powiększa nakładka: odstęp znaku JEST odstępem, który widać. */
+.dn-wejdz-grot::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: var(--dn-wym-grot);
+  height: var(--dn-wym-grot);
 }
 .dn-wejdz-grot:focus-visible {
   outline: var(--dn-wym-fokus) solid var(--dn-fokus);
@@ -841,7 +853,9 @@ select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }
 .dn-kafel:hover .dn-grot-marki,
 .dn-kafel:focus-visible .dn-grot-marki {
   color: var(--dn-tekst);
-  transform: translateX(var(--dn-od-1));
+  /* Grot wychodzi w stronę, w którą prowadzi — o trzy stopnie siatki.
+     Jeden stopień (4 px) był ruchem niewidocznym. */
+  transform: translateX(var(--dn-od-3));
 }
 .dn-kafel:hover .dn-grot-marki--sm .kropka,
 .dn-kafel:focus-visible .dn-grot-marki--sm .kropka { fill: var(--dn-sygnal); }
@@ -1706,6 +1720,9 @@ label.dn-pasek-szukaj:focus-within {
 }
 .dn-lid b,
 .dn-lid strong { color: var(--dn-tekst); font-weight: var(--dn-fw-srednia); }
+/* Zdanie wprowadzające pod tytułem okna odsuwa się od niego: tytuł ma
+   `margin: 0`, więc bez tej reguły zdanie przylegało do linii pisma. */
+.dn-tytul-okna + .dn-lid { margin-top: var(--dn-od-4); }
 .dn-lid--bez-odstepu { margin-bottom: 0; }
 .dn-lid--na-ramie { color: var(--dn-rama-tekst-2); }
 

@@ -3771,3 +3771,13 @@ Reguły trzymane są osobno od poleceń zapisu, bo dotyczą całego zbioru nada�
 okna, nie pojedynczego wiersza. Kolejność liczona jest od 1; brak wskazania
 dokłada nadanie na koniec zbioru. Pierwsze nadanie okna zostaje główne
 z urzędu — okno z nadaniami, ale bez głównego, nie miałoby punktu domyślnego.
+
+## budowa/server/internal/models/zadanie_api.go
+Pusty sekret pod istniejącym odwołaniem jest błędem tak samo jak referencja
+sejfu bez wpiętego sejfu: kanał nie wysyła żądania, które i tak odbiłoby się
+uwierzytelnieniem, a ciche zejście na zmienną środowiskową wzięłoby zmienną
+o nazwie sejf:<byt>, której nikt nie ustawia. Sejf poświadczeń jest jedną
+instancją nad jednym plikiem; montaż ustawia go raz na starcie, zanim serwer
+zacznie obsługiwać żądania, więc odczyty idą już po zapisie. Klucz zapisany
+komendą account.* jest tym samym, który kanał API odczytuje przy wysyłce,
+ponieważ obie strony sięgają po ten sam sejf wpięty przy montażu.

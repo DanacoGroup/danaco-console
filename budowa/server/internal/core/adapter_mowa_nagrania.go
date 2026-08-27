@@ -275,7 +275,7 @@ var typyTresciNagran = map[string]string{
 
 // rozszerzenieNagrania przekłada typ treści na rozszerzenie pliku.
 //
-// Parametry typu (`;codecs=opus`) odcinamy przed dopasowaniem: przeglądarka
+// Parametry typu (`;codecs=opus`) odcina się przed dopasowaniem: przeglądarka
 // dokłada je sama, a rodzaj kontenera rozstrzyga człon przed średnikiem.
 func rozszerzenieNagrania(typTresci string) (string, error) {
 	klucz := strings.ToLower(strings.TrimSpace(typTresci))

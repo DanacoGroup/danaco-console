@@ -12,7 +12,9 @@ dziennik trwaly stoi w `~/robocze/prowadzenie/komentarze/` (pomiar bazowy,
 manifest porcji, dzienniki torow `<sektor>.jsonl` z liniami START/DONE).
 Granica liczy komentarz glowny: odsylacze, wskazania i dyrektywy sa
 z niej wylaczone (dopowiedzenie Wlasciciela w pozycji 18; wciela je
-instrument). Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
+instrument). Zakaz skrotow upychajacych tresc — wylacznie pelne zdania
+i pelne slowa, w kodzie i w docs (dopowiedzenie drugie pozycji 18).
+Stan jest odtwarzalny bez kontekstu zadnej sesji: plik ZROBIONY =
 zacommitowany, W-GRANICY i tokeny tozsame z baza `285f4bf`; DO ZROBIENIA =
 PONAD granica (pomiar `narzedzia/zrodlo-bez-komentarzy.go -gestosc`);
 podejrzany po urwaniu = ostatni START bez DONE w dzienniku toru →

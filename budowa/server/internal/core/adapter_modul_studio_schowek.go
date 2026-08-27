@@ -1,27 +1,7 @@
-// Odpowiedzialność pliku: SCHOWEK dostępny modelowi tak samo jak Operatorowi —
-// odłożenie fragmentu (`studio.clipboard.copy`), wklejenie (`.paste`) — oraz
-// wykaz POCHODZENIA fragmentów dokumentu (`studio.provenance.list`).
-//
-// ── Dlaczego schowek jest JEDEN, wspólny z rodziną `clipboard.*` ─────────────
-// Zlecenie stanowi wprost: rodzina `clipboard.*` istnieje i drugiej się nie
-// zakłada. Cały sens historii schowka polega na tym, że wpis odłożony w jednym
-// miejscu daje się wkleić w drugim — model odkłada fragment, Operator go
-// wkleja, i odwrotnie. Osobny schowek Studia rozdzieliłby jedną historię na dwie
-// i „wklej wpis sprzed kilku ruchów" przestałoby działać między oknem pracy
-// z dokumentem a resztą platformy. Wiersze idą tą samą tabelą i tym samym
-// rachunkiem odcisku, więc powtórzenie identycznej treści nie mnoży wpisów.
-//
-// ── Dlaczego „malarz formatów" nie jest tu drugi raz ────────────────────────
-// `formatOnly` w żądaniu znaczy „kopiuj postać, nie treść" — a to jest dokładnie
-// malarz formatów, który stoi już w rodzinie `studio.format.painter.*`. Ta droga
-// go WOŁA i oddaje jego uchwyt, zamiast zakładać drugi magazyn zabranej postaci;
-// dwa magazyny rozjechałyby się przy pierwszym naniesieniu.
-//
-// ── Dlaczego wklejenie zapisuje pochodzenie ─────────────────────────────────
-// Fragment wklejony ze schowka bywa jedynym śladem, na czym pismo się opiera.
-// Zapis pochodzenia (rodzaj `clipboard`) jest podstawą pod „podobieństwa"
-// w panelu redaktora i pod bibliografię — bez niego za tydzień nikt nie odtworzy,
-// skąd wziął się akapit.
+// Odpowiedzialność pliku: schowek dostępny modelowi tak samo jak operatorowi —
+// odłożenie fragmentu (`studio.clipboard.copy`), wklejenie
+// (`studio.clipboard.paste`) oraz wykaz pochodzenia fragmentów dokumentu
+// (`studio.provenance.list`).
 package core
 
 import (
@@ -36,7 +16,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// SkopiujDoSchowka obsługuje `studio.clipboard.copy`.
+// SkopiujDoSchowka obsługuje `studio.clipboard.copy`: odkłada fragment treści
+// do wspólnej historii schowka platformy, wraz z postacią źródła, i wycina go
+// z dokumentu, gdy żądanie o to poprosi.
 func (a *adapterStudia) SkopiujDoSchowka(ctx context.Context,
 	z shared.StudioClipboardCopyRequest) (shared.StudioClipboardCopyResponse, error) {
 
@@ -83,9 +65,8 @@ func (a *adapterStudia) SkopiujDoSchowka(ctx context.Context,
 	}
 
 	okno := stan.dokument.Okno
-	// Postać źródła jedzie RAZEM z treścią (migracja 390). Bez niej wklejenie
-	// sposobem „zachowaj postać źródła" nie miało czego zachować i przejmowało
-	// postać miejsca — czyli robiło to samo, co `mergeFormat`.
+	// Postać źródła jedzie z treścią, migracja 390 — inaczej „zachowaj postać
+	// źródła” nie ma co zachować.
 	postacZrodla, err := schowekPostacZakresu(&stan.forma, od, do)
 	if err != nil {
 		return shared.StudioClipboardCopyResponse{}, err
@@ -107,13 +88,11 @@ func (a *adapterStudia) SkopiujDoSchowka(ctx context.Context,
 		Text:             tekst,
 	}
 
-	// Wycięcie zmienia treść, więc odkłada zmianę śledzoną i wpis dziennika —
-	// inaczej nie dałoby się go cofnąć pojedynczo.
-	//
-	// Blokada sprawdza się TUTAJ, przed dotknięciem treści: zapora rejestru tej
-	// komendy nie pilnuje z zamysłem, bo samo SKOPIOWANIE fragmentu
-	// zablokowanego jest odczytem i odmowa przy nim byłaby odmową bez powodu.
-	// Wycięcie jest zmianą i podlega blokadzie tak samo jak każda inna.
+	// Wycięcie zmienia treść, więc odkłada zmianę śledzoną i wpis dziennika, by
+	// dało się je cofnąć.
+
+	// Blokada sprawdza się tu: zapora rejestru tej komendy nie pilnuje, bo samo
+	// skopiowanie jest odczytem.
 	if z.Cut != nil && *z.Cut {
 		blokady, err := skladnica.BlokadyFragmentow(ctx, stan.dokument.ID)
 		if err != nil {
@@ -160,12 +139,9 @@ func (a *adapterStudia) SkopiujDoSchowka(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// WklejZeSchowka obsługuje `studio.clipboard.paste`.
-//
-// Sposób wklejenia jest JAWNYM wyborem Operatora i oba są równorzędne:
-// `keepFormat` zachowuje postać źródła, `plainText` wnosi czysty tekst,
-// `mergeFormat` przejmuje postać miejsca wklejenia. Brak wskazania znaczy
-// zachowanie postaci — tak stanowi kontrakt.
+// WklejZeSchowka obsługuje `studio.clipboard.paste`: wnosi treść do dokumentu
+// sposobem `keepFormat`, `plainText` albo `mergeFormat`, wybieranym w żądaniu;
+// brak wskazania znaczy zachowanie postaci źródła.
 func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 	z shared.StudioClipboardPasteRequest) (shared.StudioClipboardPasteResponse, error) {
 
@@ -189,12 +165,12 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 		}
 	}
 
-	// Treść wklejana: wprost z żądania, ze wskazanego wpisu albo z wpisu
-	// najświeższego. Wykaz pusty jest ODMOWĄ, nie wklejeniem pustki.
+	// Treść wklejana: wprost z żądania, ze wpisu wskazanego albo najświeższego;
+	// schowek pusty jest odmową.
 	tekst := ""
 	zeSchowka := ""
-	// postacZrodla jest postacią fragmentu ODŁOŻONEGO. Treść podana wprost
-	// w żądaniu postaci nie ma i mieć nie może — nie przeszła przez schowek.
+	// postacZrodla jest postacią fragmentu odłożonego; treść podana wprost
+	// w żądaniu postaci nie ma.
 	var postacZrodla *schowekPostacFragmentu
 	switch {
 	case z.Text != nil:
@@ -246,9 +222,8 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 		od, do = postacZakres(z.ReplaceRangeStart, z.ReplaceRangeEnd, dlugosc)
 	}
 
-	// Blokada: zapora rejestru sprawdza `rangeStart`/`rangeEnd`, a to żądanie
-	// niesie miejsce wklejenia pod inną nazwą — dlatego sprawdzenie stoi TUTAJ
-	// i stoi PRZED dotknięciem treści.
+	// Blokada sprawdza się tu, przed dotknięciem treści: żądanie niesie miejsce
+	// wklejenia pod inną nazwą.
 	odcinki, pominiete := postacOdcinkiDozwolone(&stan.forma, od, do, wykonawca.Rodzaj)
 	if len(odcinki) == 0 || len(pominiete) > 0 && od == do {
 		return shared.StudioClipboardPasteResponse{}, protocol.JakoError(protocol.NowyBlad(
@@ -261,10 +236,9 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 	zastane := znakowanieTekstZakresu(&stan.forma, od, do)
 
 	// Sposób wklejenia rozstrzyga, jaką postać dostaje treść wniesiona.
-	//
-	// postacZeZrodla mówi, czy postać naprawdę przyszła ze ŹRÓDŁA — bo od tego
-	// zależy treść bilansu. Wpis odłożony przed migracją 390 postaci nie ma i wtedy
-	// „zachowaj postać źródła" wraca do dawnego zachowania, mówiąc to wprost.
+
+	// postacZeZrodla mówi, czy postać naprawdę przyszła ze źródła, od czego
+	// zależy treść bilansu.
 	var postacDocelowa *shared.StudioCharacterFormat
 	var akapitZrodla *shared.StudioParagraphFormat
 	postacZeZrodla := false
@@ -281,14 +255,15 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 	case shared.StudioPasteModeMergeFormat:
 		postacDocelowa = postacMiejsca()
 	case shared.StudioPasteModePlainText:
-		// Czysty tekst wchodzi BEZ postaci własnej: run bez formatu bierze postać
-		// z arkusza stylów akapitu i to jest właśnie „bez formatowania źródła".
+		// Czysty tekst wchodzi bez postaci własnej: run bez formatu bierze postać
+		// z arkusza stylów akapitu.
 		postacDocelowa = nil
 	default:
 		// Zachowanie postaci źródła: postać jedzie razem z wpisem schowka
-		// (kolumna `postac_json`, migracja 390), więc jest czym zachować.
+		// (migracja 390).
+
 		// Wpis bez postaci — odłożony przed dobudową albo innym oknem platformy —
-		// wraca do postaci miejsca wklejenia i bilans mówi o tym wprost.
+		// wraca do postaci miejsca.
 		if postacZrodla != nil && postacZrodla.Znak != nil {
 			postacRozetnij(&stan.forma, od, do)
 			postacDocelowa = postacZrodla.Znak
@@ -303,10 +278,11 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 	postacZamienTresc(&stan.forma, od, do, tekst, postacDocelowa, nil)
 	koniec := od + len([]rune(tekst))
 
-	// Postać AKAPITU źródła nakłada się osobno, bo `postacZamienTresc` niesie
-	// postać znaku, a nie akapitu. Nakłada się wyłącznie przy „zachowaj postać
-	// źródła" i wyłącznie na bloki objęte wklejeniem — inaczej wklejenie zdania
-	// w środek akapitu przestawiałoby wyrównanie całego akapitu miejsca.
+	// Postać akapitu źródła nakłada się osobno, bo `postacZamienTresc` niesie
+	// postać znaku, nie akapitu.
+
+	// Nakłada się wyłącznie przy „zachowaj postać źródła” i wyłącznie na bloki
+	// objęte wklejeniem.
 	if akapitZrodla != nil {
 		for _, wskazanie := range postacBlokiZakresu(&stan.forma, od, koniec) {
 			stan.forma.Blocks[wskazanie].Paragraph = postacKopiaAkapitu(akapitZrodla)
@@ -392,7 +368,9 @@ func (a *adapterStudia) WklejZeSchowka(ctx context.Context,
 	}, nil
 }
 
-// PochodzenieFragmentow obsługuje `studio.provenance.list`.
+// PochodzenieFragmentow obsługuje `studio.provenance.list`: zwraca wykaz
+// zapisanych pochodzeń fragmentów dokumentu, przefiltrowany opcjonalnie
+// rodzajem pochodzenia i zakresem znaków.
 func (a *adapterStudia) PochodzenieFragmentow(ctx context.Context,
 	z shared.StudioProvenanceListRequest) (shared.StudioProvenanceListResponse, error) {
 
@@ -428,23 +406,8 @@ func (a *adapterStudia) PochodzenieFragmentow(ctx context.Context,
 // ── Postać fragmentu w schowku ──────────────────────────────────────────────
 
 // schowekPostacFragmentu to postać fragmentu odłożonego do schowka — postać
-// znaku i postać akapitu, w którym stał.
-//
-// ── Dlaczego postać PIERWSZEGO fragmentu, a nie wszystkich ──────────────────
-// Zakres odłożony bywa niejednolity: pół zdania wytłuszczone, pół nie. Zapisanie
-// postaci każdego znaku z osobna dałoby wpis schowka rosnący razem z długością
-// treści i wklejenie, które trzeba by dopasowywać znak w znak przy każdej
-// różnicy długości. Kontrakt mówi o „zachowaniu postaci źródła", a nie o
-// przeniesieniu drzewa postaci — postacią zachowywaną jest więc postać
-// początku zakresu, dokładnie tak, jak działa malarz formatów. Różnica
-// wewnątrz zakresu jest pominięciem świadomym i mówi o tym bilans wklejenia.
-//
-// ── Dlaczego to nie jest drugi malarz formatów ──────────────────────────────
-// Malarz przenosi postać BEZ treści i ma na to własną tabelę z wygasaniem.
-// Schowek przenosi treść i postać RAZEM, bo tego wymaga kontrakt sposobu
-// `keepFormat`. Dwa byty, dwie drogi — ale jeden rachunek postaci skutecznej
-// (`postacZnakSkuteczny`, `postacAkapitSkuteczny`), więc obie mówią o postaci
-// to samo.
+// znaku i postać akapitu początku zakresu, ta sama, jaką przenosi malarz
+// formatów.
 type schowekPostacFragmentu struct {
 	Znak   *shared.StudioCharacterFormat `json:"znak,omitempty"`
 	Akapit *shared.StudioParagraphFormat `json:"akapit,omitempty"`
@@ -494,7 +457,9 @@ func schowekPostacZWpisu(wpis dane.WpisSchowka) (*schowekPostacFragmentu, error)
 
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
-// schowekSprawdzSposob odbija sposób wklejenia spoza wyliczenia kontraktu.
+// schowekSprawdzSposob odbija sposób wklejenia spoza wyliczenia kontraktu,
+// oddając odmowę z wykazem sposobów dozwolonych zamiast przepuszczać
+// nieznaną wartość dalej.
 func schowekSprawdzSposob(sposob shared.StudioPasteMode) error {
 	for _, dozwolony := range shared.WartosciStudioPasteMode() {
 		if sposob == dozwolony {
@@ -509,7 +474,8 @@ func schowekSprawdzSposob(sposob shared.StudioPasteMode) error {
 		"” nie jest znany — wolno: " + strings.Join(nazwy, ", "))
 }
 
-// schowekZlozPochodzenie składa zapis pochodzenia kontraktu z wiersza.
+// schowekZlozPochodzenie składa zapis pochodzenia kontraktu z wiersza bazy,
+// dodając do niego kod dokumentu, którego wiersz nie niesie sam.
 func schowekZlozPochodzenie(kodDokumentu string,
 	wiersz dane.PochodzenieFragmentuStudia) shared.StudioProvenance {
 

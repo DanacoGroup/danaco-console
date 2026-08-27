@@ -5751,3 +5751,10 @@ który da się znieść jednym ruchem.
 Podzapytanie wskazanego wpisu pamięci oddało wtedy pustą wartość, a warunek
 schematu przestawił wiersz na wyłączenie poziomu. Milczenie byłoby tu ciszą
 udającą zapis.
+
+## budowa/server/internal/protocol/rozpoznanie.go
+Nazwy komend i zdarzeń wstrzykuje punkt wejścia, biorąc je wyłącznie ze
+stałych wytworzonych do pakietu shared, wywołaniem budującym rejestr z pełnym
+wykazem komend kontraktu. Dzięki temu warstwa protokołu pozostaje wolna od
+powielonych literałów, a zbiór nazw znanych rdzeniowi zmienia się wyłącznie
+razem z kontraktem.

@@ -1921,3 +1921,9 @@ re-eksportowany, żeby okno konfiguracji miało jedno wejście.
 Zdania objaśnienia są dopisywane, a nie zastępowane. Pozycja bez opisu nadal ma
 czym objaśnić swój klucz, a pozycja z opisem zyskuje to, czego opis nie mówi:
 jednostkę, poziom domyślny i wymóg ponownego uruchomienia.
+
+## budowa/klient-poprzedni/src/dostepy/dialog-katalogu.ts
+
+Most do powłoki natywnej mieszka w katalogu `powloka/`, ponieważ dotyczy powłoki
+natywnej, a nie dostępów. Tutaj zostaje wyłącznie zapis wyniku przyjęty
+w widokach dostępów: napis pusty znaczy, że katalogu nie wskazano.

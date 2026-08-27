@@ -5,14 +5,9 @@ import type { PunktWidzenia, Rozstrzygniecie } from './rozstrzygniecie';
 import { dopuszczalneOsie, dopuszczalneZasiegi, utworzWyborAdresu } from './wybor-adresu';
 
 /**
- * Wskaźnik zasięgu przy jednym ustawieniu.
- *
- * Plakietka mówi, skąd pochodzi wartość; rozwinięcie pokazuje pełne
- * dziedziczenie oraz wybór poziomu, na którym wartość ma zostać nadpisana.
- *
- * Plakietka jest naciskalna zawsze — także wtedy, gdy klucz nie ma ani jednego
- * zapisu: rozwinięcie mówi wprost, że obowiązuje wartość domyślna katalogu,
- * i od razu daje adres, pod którym można to zmienić.
+ * Wskaźnik zasięgu przy jednym ustawieniu. Plakietka mówi, skąd pochodzi wartość,
+ * a rozwinięcie pokazuje pełne dziedziczenie oraz wybór poziomu, na którym wartość
+ * ma zostać nadpisana.
  */
 export interface WskaznikZasiegu {
   /** Plakietka pochodzenia wraz z rozwijanym panelem. */
@@ -25,7 +20,11 @@ export interface WskaznikZasiegu {
   naZmianeCelu(sluchacz: () => void): void;
 }
 
-/** Zależności wskaźnika: pozycja katalogu i sposób zdjęcia zapisu. */
+/**
+ * Zależności wskaźnika: pozycja katalogu ustawień oraz sposób zdjęcia zapisu. Zdjęcie
+ * idzie komendą `config.reset`, a wskaźnik sam do rdzenia nie sięga, więc czynność
+ * przychodzi z zewnątrz jako wywołanie zwrotne.
+ */
 export interface ZaleznosciWskaznika {
   definicja: SettingDefinition;
   /** Zdejmuje wskazany zapis komendą `config.reset`. */
@@ -58,11 +57,7 @@ export function utworzWskaznikZasiegu(zaleznosci: ZaleznosciWskaznika): Wskaznik
   element.className = 'dk-wskaznik';
   element.append(plakietka, panel);
 
-  /**
-   * Punkt widzenia nanosimy na wybór celu tylko raz: poziom zapisu przestawiony
-   * ręcznie przy jednym polu nie ma wracać do punktu widzenia przy kolejnym
-   * odświeżeniu stanu.
-   */
+  /** Punkt widzenia nanosi się na wybór celu tylko raz, przy pierwszym odświeżeniu. */
   let punktNaniesiony = false;
 
   return {
@@ -83,7 +78,11 @@ export function utworzWskaznikZasiegu(zaleznosci: ZaleznosciWskaznika): Wskaznik
   };
 }
 
-/** Plakietka mówi pochodzenie wartości jednym zwrotem, bez rozwijania panelu. */
+/**
+ * Plakietka mówi pochodzenie wartości jednym zwrotem, bez rozwijania panelu. Wartość
+ * domyślna katalogu jest tu nazwana wprost, więc klucz bez ani jednego zapisu nie
+ * wygląda na klucz bez odpowiedzi.
+ */
 function ubierzPlakietke(
   plakietka: HTMLButtonElement,
   rozstrzygniecie: Rozstrzygniecie,

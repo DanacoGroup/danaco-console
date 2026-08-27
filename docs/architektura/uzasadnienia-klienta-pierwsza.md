@@ -4839,3 +4839,12 @@ Nazwa próbki barwy pada w atrybucie, ponieważ bez niej wybór byłby sygnalizo
 Pole napisu pozostaje widoczne i edytowalne zawsze, a znaczenie ma wyłącznie przy narzędziu stawiającym tekst; różnicę niesie znacznik odczytywany przez arkusz.
 
 Żaden przycisk nie gaśnie. Przycisk dodania do rozmowy przy pustym płótnie pozostaje naciskalny i odpowiada zdaniem o tym, że nie ma czego wysłać.
+
+## budowa/klient-poprzedni/src/konfiguracja/wskaznik-zasiegu.ts
+
+Plakietka jest naciskalna zawsze, także wtedy, gdy klucz nie ma ani jednego zapisu.
+Rozwinięcie mówi wtedy wprost, że obowiązuje wartość domyślna katalogu, i od razu daje
+adres, pod którym można to zmienić.
+
+Punkt widzenia nanosi się na wybór celu tylko raz, ponieważ poziom zapisu przestawiony
+ręcznie przy jednym polu nie ma wracać do punktu widzenia przy kolejnym odświeżeniu stanu.

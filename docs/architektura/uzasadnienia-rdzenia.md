@@ -1318,3 +1318,32 @@ w sobie, albo archiwum cienkie obok katalogu `lib`. Rdzeń nie zgaduje, które
 ma przed sobą — dokłada każdy katalog `lib`, jaki stoi w katalogu wydania,
 a gdy nie stoi żaden, ścieżka klas zostaje samym archiwum i wydanie
 samowystarczalne rusza tak samo.
+
+## budowa/server/internal/core/przelot_baz_zdjeciowych_designu_test.go
+
+Sprawdzian dowodzi, że dla każdego z ośmiu dostawców droga idzie do końca:
+rdzeń składa adres, wysyła żądanie po HTTP, nosi klucz tam, gdzie dostawca go
+żąda, rozkłada odpowiedź i wypełnia z niej wspólną postać zasobu. Serwer
+próbny stoi w uprzęży i odpowiada kształtami, które rdzeń zakłada.
+
+Sprawdzian nie dowodzi, że kształt odpowiedzi zgadza się z tym, co dostawca
+naprawdę wysyła. Kształty pochodzą z dokumentacji, nie z pomiaru na jego API.
+Ta połowa braku zostaje otwarta i jest tak nazwana — inaczej zielony wynik
+tego pliku czytałoby się jako „dostawcy zmierzeni", a zmierzona jest droga.
+
+Rdzeń nie zmienia się na potrzeby sprawdzianu: każda droga dostawcy
+przyjmuje klienta HTTP jako argument, więc sprawdzian podstawia własnego —
+z przekładnią, która przepisuje gospodarza adresu na serwer próbny
+i zapisuje, o co rdzeń naprawdę poprosił. Rdzeń nie dostaje ani jednego pola
+„adres na potrzeby sprawdzianu", bo pole takie żyłoby w produkcie i dałoby
+się nim wskazać serwer obcy.
+
+Defekt Smithsonian Open Access, na który jeden ze sprawdzianów odpowiada:
+rdzeń szukał mediów pod ścieżką `content.descriptiveNonRepeating.media`,
+a odpowiedź `api.si.edu` niesie je pod
+`…descriptiveNonRepeating.online_media.media`. Wiersze przychodziły, żaden
+nie dawał się złożyć w zasób, komenda oddawała wykaz pusty bez błędu — więc
+dostawca nie wracał ani w wykazie, ani w bilansie dostawców nieudanych,
+a odczyt sugerował, że fraza nie ma zdjęć. Sprawdzian mierzy obie strony:
+kształt właściwy daje zasób, a wiersze bez mediów dają odmowę nazwaną wraz
+z liczbą wierszy.

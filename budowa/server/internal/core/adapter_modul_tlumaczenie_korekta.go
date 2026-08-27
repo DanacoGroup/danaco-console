@@ -298,7 +298,7 @@ func (a *adapterTlumaczenia) SprawdzSpojnosc(ctx context.Context,
 
 	ustalenia := []shared.ConsistencyFinding{}
 
-	// Pary bierzemy z pamięci tłumaczeń, bo tam leży treść zatwierdzona,
+	// Pary są brane z pamięci tłumaczeń, bo tam leży treść zatwierdzona,
 	// nie bieżący szkic panelu.
 	for _, panel := range panele {
 		if wskazany != "" && panel.Kod != wskazany {

@@ -1,10 +1,5 @@
 // Odpowiedzialność pliku: nadania dostępu (tabela `nadanie_dostepu`) —
 // struktura, kontrakt repozytorium i odczyt. Zapis leży w `dostep_nadania_zapis.go`.
-//
-// Nadanie wiąże okno komunikacji z punktem dostępu. Żyje per okno rozmowy, nie
-// per sesja i nie per platforma. Okno ma zbiór nadań — kolejność i oznaczenie
-// głównego niosą znaczenie. Okno bez nadań pracuje dalej, tylko niczego nie
-// widzi.
 package dane
 
 import (
@@ -28,14 +23,12 @@ type Nadanie struct {
 	Kolejnosc         int
 	Glowne            bool
 	Aktywne           bool
-	// IdentyfikatorZewnetrzny wiąże wiersz z nadaniem rdzenia, które żyje pod
-	// identyfikatorem tekstowym. NULL oznacza wiersz założony wprost w bazie, bez
-	// odpowiednika w pamięci rdzenia.
+	// IdentyfikatorZewnetrzny wiąże wiersz z nadaniem rdzenia; NULL oznacza wiersz założony w bazie.
 	IdentyfikatorZewnetrzny *string
 	Utworzono               string
 }
 
-// RepozytoriumNadan jest kontraktem obszaru nadań dostępu.
+// RepozytoriumNadan jest kontraktem obszaru nadań dostępu, określającym operacje dostępne na tabeli nadań.
 type RepozytoriumNadan interface {
 	ListaOkna(ctx context.Context, oknoID int64, tylkoAktywne bool) ([]Nadanie, error)
 	Pobierz(ctx context.Context, id int64) (Nadanie, error)
@@ -69,7 +62,7 @@ type repozytoriumNadan struct {
 // dopiero przy złożeniu zestawu repozytoriów.
 var _ RepozytoriumNadan = (*repozytoriumNadan)(nil)
 
-// noweRepozytoriumNadan zakłada repozytorium nadań dostępu.
+// noweRepozytoriumNadan zakłada repozytorium nadań dostępu na przekazanym połączeniu z bazą danych SQL.
 func noweRepozytoriumNadan(z *zapytania, db *sql.DB) *repozytoriumNadan {
 	return &repozytoriumNadan{zapytania: z, db: db}
 }
@@ -108,17 +101,17 @@ func (r *repozytoriumNadan) ListaOkna(ctx context.Context, oknoID int64,
 	return lista, nil
 }
 
-// Pobierz zwraca nadanie wskazane kluczem wiersza.
+// Pobierz zwraca nadanie dostępu wskazane kluczem głównym wiersza tabeli nadania dostępu w bazie danych.
 func (r *repozytoriumNadan) Pobierz(ctx context.Context, id int64) (Nadanie, error) {
 	return r.jedno(ctx, pobierzNadanie, fmt.Sprintf("%d", id), id)
 }
 
-// PoIdentyfikatorze zwraca nadanie wskazane identyfikatorem rdzenia.
+// PoIdentyfikatorze zwraca nadanie dostępu wskazane identyfikatorem tekstowym nadania po stronie rdzenia.
 func (r *repozytoriumNadan) PoIdentyfikatorze(ctx context.Context, identyfikator string) (Nadanie, error) {
 	return r.jedno(ctx, nadaniePoIdentyfikatorze, fmt.Sprintf("%q", identyfikator), identyfikator)
 }
 
-// jedno odczytuje pojedyncze nadanie wraz z jego korzeniami.
+// jedno odczytuje pojedyncze nadanie dostępu wraz z przypisanymi mu korzeniami zapisanego punktu dostępu.
 func (r *repozytoriumNadan) jedno(ctx context.Context, zapytanie, opis string,
 	argument any) (Nadanie, error) {
 
@@ -139,7 +132,7 @@ func (r *repozytoriumNadan) jedno(ctx context.Context, zapytanie, opis string,
 	return nadanie, nil
 }
 
-// korzenieNadania zwraca zawężenie korzeni punktu zapisane przy nadaniu.
+// korzenieNadania zwraca zawężenie korzeni punktu dostępu, jakie zostało zapisane przy konkretnym nadaniu.
 func (r *repozytoriumNadan) korzenieNadania(ctx context.Context, nadanieID int64) ([]string, error) {
 	return wczytajKorzenie(ctx, r.zapytania, listaKorzeniNadania, nadanieID, "nadania")
 }

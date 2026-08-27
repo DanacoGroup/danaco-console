@@ -1,34 +1,5 @@
--- Migracja 377 — sekcja „Powiadomienia" okna Ustawień wchodzi do katalogu.
---
--- Podstawa: `interfejs-uzytkownika/ustawienia.md` rozdz. 7 (przełącznik główny,
--- siedem klas zdarzeń, kanały dostarczenia) oraz `architektura/model-danych.md`
--- rozdz. 18.4, gdzie uwaga projektowa mówi wprost: „Zakres klas zdarzeń
--- zgłaszanych przez centrum powiadomień oraz kanał dostarczenia są USTAWIENIAMI
--- KONFIGURACYJNYMI warstwy globalnej i warstwy środowiska".
---
--- To zdanie rozstrzyga o kształcie tej roboty. Sekcja Powiadomień nie potrzebuje
--- nowej rodziny kontraktu: jest macierzą nastaw i idzie tą samą drogą, co każde
--- inne ustawienie platformy — `config.get`, `config.set`, `settings.definition.list`,
--- zdarzenie `config.changed`. Nowej komendy nie wnosimy, bo nie ma czego wnosić.
---
--- Kody klas są kodami z modelu danych (`powiadomienie.klasa`: zakonczenie,
--- decyzja, blad, wzmianka, termin, automatyka, system) — jeden zapis na całą
--- platformę. Drugi zestaw nazw, choćby ładniejszy, rozjechałby ustawienie
--- z wierszem, którego dotyczy.
---
--- Kanał „centrum" nie jest tu wyborem i nie ma dla niego kolumny. Rozdz. 7.3
--- mówi, że centrum powiadomień jest kanałem PODSTAWOWYM każdej klasy: „każde
--- zdarzenie objęte ustawieniem trafia do rejestru centrum niezależnie od
--- pozostałych kanałów". Nastawa wybiera więc kanały DODATKOWE; centrum stoi
--- zawsze, dopóki klasa jest czynna.
---
--- Zasięgi: `globalny`, `srodowisko` i `karta_sesji`. Rozdz. 7.1 wymienia warstwę
--- globalną i sesji, rozdz. 18.4 — globalną i środowiska. Dopuszczenie trzech
--- poziomów spełnia oba zapisy; zawężenie do dwóch wybierałoby, który z dwóch
--- dokumentów dostawy jest ważniejszy, a to nie jest rozstrzygnięcie wykonawcy.
---
--- Wymaga restartu: nie. Nastawy czyta się drogą `config.get` przy otwarciu
--- sekcji, a zmiany dolatują zdarzeniem `config.changed`.
+-- Migracja 377 wprowadza sekcję Powiadomienia okna Ustawień do katalogu jako
+-- macierz nastaw, tą samą drogą co każde inne ustawienie platformy.
 
 INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
     ('powiadomienia', 'Powiadomienia',
@@ -37,10 +8,8 @@ INSERT INTO kategoria_ustawien (kod, nazwa, opis, ikona, kolejnosc) VALUES
 ON CONFLICT(kod) DO NOTHING;
 
 -- ── przełącznik główny ──────────────────────────────────────────────────────
--- Wyłączenie wygasza wszystkie klasy naraz, ZACHOWUJĄC ich ustawienia (rozdz.
--- 7.5). Dlatego jest osobnym kluczem, a nie zapisem „false" do siedmiu kluczy
--- klas: tamto skasowałoby wybór Operatora i ponowne włączenie przywróciłoby
--- stan domyślny zamiast poprzedniego.
+-- Wyłączenie wygasza wszystkie klasy naraz, zachowując ich ustawienia, więc
+-- jest osobnym kluczem, a nie zapisem do siedmiu kluczy klas.
 INSERT INTO definicja_ustawienia (klucz, kategoria_id, nazwa, opis, rodzaj_wartosci,
                                   wartosc_domyslna, podpowiedz, wymaga_restartu, kolejnosc)
 SELECT 'powiadomienia.wlaczone', kat.id, 'Powiadomienia aktywne',
@@ -101,7 +70,8 @@ SELECT kanaly.klucz, kat.id, kanaly.nazwa,
   JOIN kategoria_ustawien kat ON kat.kod = 'powiadomienia'
 ON CONFLICT(klucz) DO NOTHING;
 
--- Dwa kanały dodatkowe, wspólne wszystkim klasom (rozdz. 7.3).
+-- Dwa kanały dodatkowe wspólne wszystkim klasom zdarzeń, obok kanału centrum
+-- powiadomień podstawowego dla każdej z nich z osobna.
 INSERT INTO opcja_ustawienia (definicja_id, wartosc, etykieta, opis, kolejnosc)
 SELECT d.id, o.wartosc, o.etykieta, o.opis, o.kolejnosc
   FROM definicja_ustawienia d

@@ -1902,3 +1902,89 @@ testów i mieć ich nie będzie, bo sprawdzenie jej wymaga uruchomienia
 instalatora NSIS na Windowsie, a test to udający byłby atrapą. `rozpoznaj()`
 czyta zmienną środowiska, wspólną dla całego procesu testowego, więc dostęp do
 niej zamyka zamek, bez którego testy mrugałyby przy równoległym biegu.
+
+## budowa/desktop/src-tauri/src/aktualizacja/pobranie.rs
+
+To jest jedyne miejsce w powłoce, w którym dane z sieci stają się plikiem
+uruchamianym na maszynie użytkownika. Suma kontrolna jest tu warunkiem, nie
+diagnostyką: plik o niezgodnej sumie zostaje skasowany, zanim funkcja wróci.
+Kolejność kroków jest wiążąca: pobierz do pliku roboczego obok celu (nie pod
+nazwą celu), policz SHA-256 z tego, co leży na dysku, porównaj z sumą żądaną,
+dopiero potem wolno zakładać plik (robi to `droga.rs`). Suma liczona jest
+w locie z tego samego strumienia, który trafia na dysk — liczona z osobnego
+bufora w pamięci sprawdzałaby co innego niż zapisany plik.
+
+Łańcuch zaufania ma trzy ogniwa: kanał pobrań wkompilowany w powłokę
+(`ADRES_KANALU`) ogranicza, skąd plik w ogóle może przyjść; HTTPS chroni
+wykaz wydań, z którego pochodzi suma; a suma chroni pobrany plik. Adres inny
+niż `https://` jest odmawiany, bo po zwykłym HTTP pośrednik podmienia plik
+i sumę naraz; adres spoza kanału jest odmawiany, bo adres i sumę podaje
+powłoce ta sama strona `budowa/witryna/wydania.json`, więc bez kanału nic nie
+wiąże ich z wydawcą — strona podstawiona wskazałaby własny plik wraz z jego
+poprawną sumą. Kanał jest częścią powłoki z tego samego powodu, z którego
+suma jest częścią wykazu: ogniwo zaufania nie może pochodzić od strony, którą
+wiąże. Porównanie przedrostka jest dosłowne i kończy się ukośnikiem, żeby host
+`pobierz.danaco-group.pl.obcy-serwer` nie przeszedł jako pasujący przedrostek.
+Wartość `ADRES_KANALU` musi pozostać kopią `kanal.adres` z wykazu wydań —
+pilnuje tego sprawdzian `kanal_powloki_zgadza_sie_z_wykazem_wydan`, który
+czyta wykaz przy kompilacji, żeby przeniesienie kanału w jednym miejscu bez
+drugiego nie rozjechało obu wartości po cichu.
+
+Pułap wielkości pliku wydania (512 MiB) zabezpiecza przed zapełnieniem dysku
+przez odpowiedź bez końca z serwera zepsutego albo podstawionego; dobrany
+z zapasem względem wielkości pakietu powłoki, która idzie w dziesiątki
+megabajtów.
+
+`sprawdz_zadanie` sprawdza samo żądanie, zanim cokolwiek poleci przez sieć
+i zanim powstanie plik roboczy — dlatego jest wydzielone z
+`pobierz_i_sprawdz`: to jedyne odmowy padające przed pierwszym bajtem
+z gniazda, więc test może je wywołać bez dostępu do sieci. Zwraca sumę
+sprowadzoną do małych liter, bo `format!("{:x}")` daje małe litery, a wykaz
+wydań pisany ręcznie potrafi mieć wielkie.
+
+`ocen_pobrane` sprawdza kolejność pytań jako warunek poprawności: najpierw
+dolna granica wielkości, dopiero potem suma. Plik pusty ma poprawną,
+64-znakową sumę SHA-256, więc wykaz podający właśnie ją — albo serwer
+oddający 200 z pustym ciałem — przeszedłby przez sam warunek sumy,
+a `droga.rs` podstawiłoby zero bajtów w miejsce aplikacji i zaplanowało
+restart, po którym nie ma z czego wrócić. Kasowanie pliku roboczego zostaje po
+stronie wołającego (`posprzataj`), bo to on wie, jaki plik utworzył; każde
+wyjście błędem po utworzeniu pliku przechodzi przez `posprzataj`, żeby plik
+pobrany, ale niesprawdzony albo wprost niezgodny, nie został na dysku obok
+właściwej aplikacji, wyglądając na jej część.
+
+Testy modułu biegną bez sieci, bo `sprawdz_zadanie` pada przed pierwszym
+bajtem z gniazda; osią jest przywiązanie do kanału pobrań — adres spoza
+`ADRES_KANALU` ma zostać odrzucony, zanim cokolwiek poleci przez sieć.
+Wykaz wydań nie jest w testach przepisany, tylko wczytany przy kompilacji
+przez `include_str!`, żeby nie stał się drugą kopią tych samych wartości,
+rozjeżdżającą się cicho z wykazem tak samo jak sam `ADRES_KANALU` mógłby się
+rozjechać bez sprawdzianu wiążącego.
+
+## budowa/server/internal/store/migracja_377_katalog_powiadomien.sql
+
+Sekcja Powiadomień nie wymaga nowej rodziny kontraktu, ponieważ jest macierzą
+nastaw i idzie tą samą drogą co każde inne ustawienie platformy: `config.get`,
+`config.set`, `settings.definition.list` oraz zdarzenie `config.changed`.
+Kody klas są kodami z modelu danych (`powiadomienie.klasa`: zakonczenie,
+decyzja, blad, wzmianka, termin, automatyka, system) — jeden zapis na całą
+platformę, bo drugi zestaw nazw rozjechałby ustawienie z wierszem, którego
+dotyczy.
+
+Kanał centrum nie jest tu wyborem i nie ma dla niego kolumny: centrum
+powiadomień jest kanałem podstawowym każdej klasy, a każde zdarzenie objęte
+ustawieniem trafia do rejestru centrum niezależnie od pozostałych kanałów.
+Nastawa wybiera więc kanały dodatkowe; centrum stoi zawsze, dopóki klasa jest
+czynna.
+
+Zasięgi zapisu obejmują warstwę globalną, środowisko i kartę sesji, spełniając
+jednocześnie każdy z zapisów źródłowych, które nazywają część tych warstw dla
+tej sekcji — zawężenie do mniejszego zbioru wybierałoby, który z zapisów jest
+ważniejszy, a to nie jest rozstrzygnięcie tej migracji. Żadna pozycja nie
+wymaga restartu: nastawy czyta się drogą `config.get` przy otwarciu sekcji,
+a zmiany dolatują zdarzeniem `config.changed`.
+
+Wyłączenie przełącznika głównego wygasza wszystkie klasy naraz, zachowując
+ich ustawienia: jest osobnym kluczem, a nie zapisem wartości fałszywej do
+siedmiu kluczy klas, bo to skasowałoby wybór Operatora, a ponowne włączenie
+przywróciłoby stan domyślny zamiast poprzedniego.

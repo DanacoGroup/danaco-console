@@ -997,3 +997,20 @@ niedostępny zostawia odmowę pierwotną, bo rdzeń nie wie wtedy nic ponad to,
 co powiedział program, a odmowa zgadnięta byłaby gorsza od surowej. Pytanie
 idzie wyłącznie po nieudanym skanie, więc droga udana nie płaci za nie ani
 jednym wywołaniem.
+
+## budowa/server/internal/core/adapter_kolejki_zlecenia.go
+
+Ten plik nie jest drugim silnikiem kolejek: cykl życia kolejki jako całości
+prowadzi `kolejka_silnik.go` przez `queue.action`, i tylko on. Tutaj żyje
+zlecenie — byt, którego kolejka jako całość nie zna: ładunek strukturalny,
+priorytet, termin wykonania, klucz idempotencji, warunek przetworzenia.
+
+Idempotencja jest sprawdzana przed założeniem zlecenia i pole `duplicate`
+mówi o tym wprost. Zlecenie o kluczu już użytym nie zakłada drugiego
+wiersza i nie jest odmową: wywołanie przychodzące powtórzone przez nadawcę
+dostaje odpowiedź „to już jest”, a nie błąd, na który nadawca odpowie
+kolejnym powtórzeniem.
+
+Zlecenie zdjęte, scalone i podzielone nie znika z bazy — dostaje stan
+końcowy. Historia kolejki ma pokazywać, co się z ładunkiem stało, a wiersz
+skasowany nie pokazuje niczego.

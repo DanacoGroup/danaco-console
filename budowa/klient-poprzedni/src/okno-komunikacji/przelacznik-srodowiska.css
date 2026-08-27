@@ -1,11 +1,4 @@
-/* Przełącznik środowiska pracy okna — osadzenie steru maszyny jako jednej
-   pozycji rzędu sterów. Wygląd uchwytu i wykazu niesie
-   `src/komponenty/menu-drzewo.css`, wygląd zdania odmowy — plakietka
-   `.dn-plakietka--blad`, a kreskę, tło i odstępy rzędu — `pasek-zlecenia.css`.
-   Tutaj zostaje wyłącznie ustawienie uchwytu i odmowy w kolumnie; wyściółka
-   i tło panelu dałyby w tym miejscu pasek w pasku.
-
-   Wartości pochodzą wyłącznie z żetonów `motyw/`. */
+/* Przełącznik środowiska pracy okna osadza ster maszyny jako jedną pozycję rzędu sterów, korzystając wyłącznie z żetonów motywu i biblioteki komponentów. */
 
 .dc-przelacznik-srodowiska {
   display: inline-flex;

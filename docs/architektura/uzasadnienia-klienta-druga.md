@@ -4869,3 +4869,15 @@ jednej komendy obszaru: wszystko, co pokazuje, pochodzi ze stanu debaty wspólne
 Pozycje bez obsługi stoją widoczne, bo okno bez nich wyglądałoby na analizę kompletną. Każda
 nazywa po naciśnięciu komendę, która ją wykona, gdy powstanie jej obsługa — nie mówi już, że
 kontrakt jej nie przewiduje, bo przewiduje.
+
+## budowa/klient-poprzedni/src/moduly/studio/liczniki-dokumentu.ts
+Liczniki dokumentu stają w pasku statusu, a rdzeń żadnej komendy liczącej nie niesie i nie musi:
+treść stoi w buforze edytora, więc liczenie jej po stronie klienta nie jest obejściem braku,
+tylko właściwym miejscem tej czynności — wywołanie rdzenia po liczbę słów byłoby przesyłaniem
+dokumentu po odpowiedź, którą klient ma natychmiast. Plik nie zna elementów strony, dzięki czemu
+rachunek sprawdza się bez stawiania widoku. Czas czytania liczony jest tempem dwustu słów na
+minutę, wartością przyjętą w typografii użytkowej dla tekstu ciągłego, nazwaną stałą, żeby przy
+zmianie wymagania nie trzeba było szukać liczby magicznej w kodzie. Kropka rozdzielająca skrót
+kończy zdanie tylko wtedy, gdy po niej idzie odstęp i wielka litera albo koniec treści — rachunek
+jest przybliżony i takim ma pozostać, bo pełna segmentacja zdań wymaga słownika skrótów, którego
+moduł nie ma i którego dla licznika w pasku statusu nie warto zakładać.

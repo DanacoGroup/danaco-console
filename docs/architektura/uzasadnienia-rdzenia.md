@@ -3368,3 +3368,66 @@ odkładały się jako `objectChange` i nie dawały się cofnąć osobno.
 `dziennikZawieraNapis` mówi, czy napis niesie podnapis. Własny pomocnik
 z przedrostkiem odcinka, bo sprawdziany tego odcinka pytają o treść odmowy,
 a nie o sam fakt odmowy.
+
+## budowa/server/internal/core/adapter_kolejki.go
+
+Kolumnę `kolejka.sesja_id` wypełnia dowiązanie wpięte przez `ZSesjami`:
+tabela `sesja` ma kolumnę `identyfikator_zewnetrzny`
+(`migracja_006_identyfikatory_zewnetrzne.sql`), repozytorium sesji ma
+`PoIdentyfikatorze`, a wiersz sesji powstaje wraz z pierwszą utrwaloną
+wiadomością okna. Gdy wiersz sesji istnieje, kolejka zapisuje się z kluczem
+obcym, a odczyt kolejki spoza pamięci odtwarza identyfikator sesji z wiersza.
+Kolejka założona wcześniej niż pierwsza wiadomość sesji zapisuje się bez
+dowiązania, bo wiersza sesji jeszcze nie ma — brak konfiguracji ani brak
+wiersza nie mogą odmówić założenia kolejki. Pamięć powiązań zostaje jako
+źródło identyfikatora sesji dla takich kolejek.
+
+`nowyAdapterKolejek` wiąże port z repozytorium kolejek i z silnikiem
+wykonania pozycji (`kolejka_silnik.go`). Adapter przekłada kontrakt; cykl
+życia zlecenia prowadzi silnik i nikt poza nim.
+
+`ZSesjami` dokłada repozytorium sesji, którym adapter dowiązuje kolejkę do
+wiersza sesji. Bez niego adapter pracuje jak dotąd — dowiązanie jest
+dodatkiem, nie warunkiem.
+
+`ZWykonawcaModelu`: pozycję posuwa wtedy wyłącznie działanie Operatora,
+pętli albo MultitaskingAI. Rejestr kanałów i nadajnik strumienia idą tą samą
+drogą co tura okna.
+
+`UstawUjscieWyniku` woła adapter podagentów przy własnym montażu
+(`zWykonaniem`), więc zapis biegnie przed obsługą pierwszego żądania — pole
+silnika jest wartościowe i podmienia się w miejscu, dokładnie jak przy
+`ZWykonawcaModelu`.
+
+`rozwiazKanalPozycji`: ani schemat `pozycja_kolejki`, ani kontrakt nie mają
+pola kanału. Brak kanału czynnego znaczy „nie ma czym wykonać kroku" —
+wykonawca odda błąd, a silnik pokaże pozycję jako `bledna`, zamiast udawać
+wykonanie.
+
+`ZTelemetria` dokłada producenta telemetrii postępu. Kolejka jest procesem:
+ma etapy równe pozycjom, stan i bieg naprawczy bez limitu obiegów, więc
+zasila Process Monitor tym samym zdarzeniem, co tura okna.
+
+`Utworz` czyta wykaz zleceń przed założeniem kolejki: ładunek uszkodzony ma
+zakończyć się odmową, a nie kolejką założoną w połowie.
+
+`wierszSesji`: brak repozytorium, brak wiersza i błąd odczytu dają kolejkę
+bez dowiązania — założenie kolejki nie może zależeć od tego, czy sesja
+zdążyła się utrwalić.
+
+`sesjaZWiersza` odtwarza identyfikator sesji rdzenia z dowiązanego wiersza —
+tą drogą kolejka zapisana przed ponownym uruchomieniem rdzenia wraca
+z sesją, choć pamięć powiązań jest już pusta.
+
+`Wykonaj`: powtórzenie kroku nie ma limitu obiegów — adapter niczego nie
+zlicza i niczego nie odmawia.
+
+`etapDzialania` nazywa etap telemetrii odpowiadający działaniu na kolejce.
+Powtórzenie kroku jest biegiem naprawczym i tak też się nazywa.
+
+`kolejkaKontraktu`: pole `Queue.Cycle` opisuje bieg naprawczy zlecenia,
+a ten liczy się na pozycji, nie na kolejce.
+
+`Kolejka` oddaje kolejkę kontraktu po jej identyfikatorze. Służy czynnościom
+rodziny `queue.item.*`, których wynikiem jest kolejka po zmianie, a nie samo
+zlecenie — drugiego składania kolejki w rdzeniu nie ma.

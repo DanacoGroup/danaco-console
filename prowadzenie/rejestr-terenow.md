@@ -150,43 +150,33 @@ Suma zastana: `b7d0436880d878e78576`.
 7. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec 2106 zdanych,
    17 pominiętych, zero niezdanych.
 
-### odtwarzanie-twarzy
-
-**Buduje zdolność, na którą kontrakt już czeka.** `image.upscale` ma pole
-`faces: bool`; rdzeń odmawia dziś, bo silnika nie ma. Zmiana kontraktu
-**niepotrzebna**.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/odtwarzanie-twarzy` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/adapter_narzedzia_obraz_model_silniki.go` oraz pozostałe `adapter_narzedzia_obraz_*.go`, `zaleznosci_zewnetrzne.go`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `internal/wiedza/`, **cały obszar `design.*`** (zapora fotografii) |
-
-**Stan zmierzony.** `/opt/danaco-modele/twarze` niesie `GFPGANv1.4.pth`
-i `codeformer.pth`. Rdzeń szuka programu `gfpgan-ncnn-vulkan`, którego **na
-maszynie nie ma**; stoi `realesrgan-ncnn-vulkan`, ale jego wydanie sieci
-twarzowej nie niesie. Wagi `.pth` żądają stosu, którego rdzeń nie woła.
-
-**Instalowanie dozwolone w tym terenie**, na tych samych zasadach co
-`zaplecze-modeli`: wyjątek nazwany, wygasa z terenem, wszystko postawione trafia
-do raportu wraz z wagą na dysku. Wybór drogi — wydanie `ncnn` niosące sieć
-twarzową albo pomocnik pythonowy na stojących wagach — jest Twój i **uzasadniasz
-go w raporcie**.
-
-**Kryteria odbioru.**
-
-1. `image.upscale` z `faces: true` oddaje obraz **różny** od tego samego
-   powiększenia z `faces: false` — z przytoczonymi obiema odpowiedziami i miarą
-   różnicy. Sam brak odmowy nie jest wykazaniem.
-2. Wynik jest **prawdziwym obrazem** — format i rozmiar przytoczone.
-3. Brak silnika dalej daje odmowę nazywającą brak i drogę naprawy.
-4. Wagi z `/opt/danaco-modele/twarze` użyte albo **wprost napisane, dlaczego
-   rdzeń sięga po inne**.
-5. Zapora fotografii przechodzi; `gotestsum -- -count=1 ./...` — zero
-   niepowodzeń. Kontrakt nietknięty — wykazane sumą.
-6. Wykaz wszystkiego, co postawione na maszynie, wraz z wagą.
-
 ## Zgłoszenia oczekujące na teren
+
+### Pakiet serwera nie stawia jeszcze pomocnika twarzy
+
+Rdzen wola `danaco-twarze`, a `scripts/arsenal-serwera.sh` stawia dzis wylacznie
+`realesrgan-ncnn-vulkan` i `rembg`. Na maszynie Operatora `image.upscale`
+z `faces: true` **odmowi mimo poprawnego kodu**.
+
+Wykaz zaleznosci niesie pelna podpowiedz instalacyjna — nazwe, program, skladniki
+srodowiska i katalog wag — wiec odmowa mowi, co dociagnac. Wpisanie tego do
+skryptu arsenalu jest osobnym terenem.
+
+### Kafelkowanie Real-ESRGAN zostawia szwy w powiekszonym obrazie
+
+Zauwazone przez Prowadzacego przy ogladzie dowodu terenu `odtwarzanie-twarzy`:
+w powiekszonym obrazie widac prostokatne granice kafelkow. Sa w **obu** wynikach,
+z `faces: false` i `faces: true`, wiec pochodza z powiekszenia, nie z przebiegu
+twarzowego. Nie zmierzone liczbowo, tylko dostrzezone okiem — do sprawdzenia,
+czy da sie je zniesc nakladaniem kafelkow.
+
+### CodeFormer stoi na dysku i nie jest wolany
+
+`/opt/danaco-modele/twarze/codeformer.pth` zostaje niewykorzystany. Powod podany
+przez wykonawce: CodeFormer stoi na wlasnej architekturze (VQGAN + transformer),
+ktorej wagi nie niosa, wiec wymagalby drugiego zestawu cudzego kodu obok tego,
+ktorym GFPGAN juz liczy. Do rozstrzygniecia, czy wart jest tej pracy.
+
 
 ### Os obrazu rozumie polszczyzne slabo
 
@@ -714,6 +704,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `odtwarzanie-twarzy` | `teren/odtwarzanie-twarzy` | `9cc5ccf` | weryfikacja Prowadzacego wlasnym pomiarem: **RMSE 1301,37** miedzy wynikiem `faces:false` a `faces:true`, roznica zlokalizowana na twarzy; wycinek obejrzany — zeby, wargi i faktura skory wyraznie odtworzone; zakres 5 plikow w `internal/core`; kontrakt nietkniety; wagi `GFPGANv1.4.pth` wczytane `strict=True`, 285 kluczy |
 | `witryna-pobierania` | `teren/witryna-pobierania` | `6ffe74f` | weryfikacja Prowadzacego wlasnym pomiarem: w tresci stron zostalo **jedno trafienie** wzorca zniesionych postaci i jest nim zdanie odmawiajace wprost z pozycji 8; sonda dodatnia tego samego wzorca daje 4 trafienia w `wydania.json` i 0 w `zloz.mjs`, wiec rozroznia; witryna sklada sie - 10 stron |
 | `usterki-rdzenia` | `teren/usterki-rdzenia` | trzy rewizje | weryfikacja Prowadzacego pomiarem: sprawdzian `TestTuraZamknietaBledemNieOglaszaUkonczenia` **padl na kodzie sprzed naprawy** z wlasciwym zdaniem i przeszedl po przywroceniu; zakres wylacznie `internal/core`; kontrakt nietkniety |
 | `nastawy-wdrozenia` | `teren/nastawy-wdrozenia` | `678ff3e` | weryfikacja Prowadzacego pomiarem: 4 pliki w zakresie, migracja 115 nietknieta, nowa migracja 401; sonda dodatnia wykonawcy pokazala **206 polaczen i 1,1 GB pobrania przed naprawa wobec zera po niej** |

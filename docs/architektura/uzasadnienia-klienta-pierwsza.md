@@ -6168,3 +6168,19 @@ diagnostyki, a bez tego źródła zakładka nazywa własny brak po stronie
 złożenia modułu. Reguła alertu zbudowana wyłącznie w oknie żyłaby do
 zamknięcia karty i nie zadziałałaby, gdy przeglądający nie patrzy — czyli
 dokładnie wtedy, gdy alert ma sens.
+
+## budowa/klient-poprzedni/src/moduly/diagnostics/prowenancja-slowa.ts
+Wartości kontraktu są angielskie i techniczne, a w oknie stoi pełna nazwa
+polska, ponieważ zakaz numeracji i kodów w produkcie znaczy również zakaz
+pokazywania wartości pola zamiast jej nazwy. Przekład jest jednostronny: do
+rdzenia jedzie wyłącznie wartość kontraktu, nigdy napis z tego pliku. Wykazy
+są pełne wobec kontraktu i kompilator tego pilnuje, ponieważ typ wykazu po
+typie wartości nie skompiluje się, gdy kontrakt dołoży stan albo format, więc
+nowa wartość nie przemknie do okna jako pusty napis. Format wydania śladu
+obejmuje wszystkie cztery formaty telemetrii, które kontrakt przyjmuje:
+OpenTelemetry Protocol i JSON dla śladu, JSON Lines dla dziennika oraz
+wartości rozdzielone przecinkiem dla kosztu i błędów; odjęcie formatu, który
+rdzeń przyjmuje, byłoby brakiem funkcji zrobionym w oknie. Pole nieoddane
+przez rdzeń nie staje się zerem: koszt zerowy i kanał bez cennika to dwa różne
+zdania o instalacji, a wywołanie w biegu nie ma jeszcze opóźnienia ani liczby
+tokenów, co nie jest usterką.

@@ -8,19 +8,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// rejestrObecnosci składa żywy stan sesji trwających na rdzeniu — to, co widzi
-// kontrolka powrotu do sesji na stronie głównej.
-//
-// Start zawsze prowadzi na stronę główną, a `session.bind` nie jest ruchem
-// otwierającym, tylko powrotem do sesji trwającej w tle. Powrót ma sens
-// wyłącznie wtedy, gdy strona główna wie, dokąd wracać i co tam się dzieje:
-// w którym środowisku sesja stoi, ile okien ma otwartych, w ilu trwa strumień
-// odpowiedzi, co widzą przez nadania dostępu i czy pracuje w nich bieg
-// naprawczy koordynatora.
-//
-// Rejestr niczego nie posiada. Sesje i okna zna nadzorca, bieg zna pętla,
-// nadania zna warstwa danych, punkt pracy zna telemetria — tutaj powstaje
-// wyłącznie odpis kontraktu złożony z tych czterech źródeł.
+// rejestrObecnosci składa żywy stan sesji trwających na rdzeniu dla kontrolki powrotu na stronie głównej. Rejestr niczego nie posiada — składa odpis kontraktu z czterech źródeł: nadzorcy, pętli, warstwy danych i telemetrii.
 type rejestrObecnosci struct {
 	kontekst  context.Context
 	nadzorca  *session.Nadzorca
@@ -52,7 +40,7 @@ func nowyRejestrObecnosci(kontekst context.Context, nadzorca *session.Nadzorca,
 	return rejestr
 }
 
-// ZeZrodlami dokłada osadzenie sesji w środowisku i nadania dostępu okien.
+// ZeZrodlami dokłada osadzenie sesji w środowisku i nadania dostępu okien, potrzebne do złożenia pełnego odpisu.
 func (r *rejestrObecnosci) ZeZrodlami(osadzenie zrodloOsadzenia, nadania zrodloNadan) *rejestrObecnosci {
 	r.osadzenie, r.nadania = osadzenie, nadania
 	return r
@@ -65,12 +53,7 @@ func (r *rejestrObecnosci) ZeStrumieniem(strumien zrodloStrumienia) *rejestrObec
 	return r
 }
 
-// Odpisy zwracają żywy stan wszystkich sesji czynnych, uporządkowany po
-// identyfikatorze — kontrolka ma wyglądać tak samo przy każdym wejściu.
-//
-// Przy okazji jednego pełnego przejścia rejestr wykreśla ślady okien już
-// zamkniętych: bieg koordynatora i punkt pracy okna, którego nie ma w rejestrze
-// nadzorcy, nie opisują niczego.
+// Odpisy zwracają żywy stan wszystkich sesji czynnych, uporządkowany po identyfikatorze. Przy okazji jednego pełnego przejścia rejestr wykreśla ślady okien już zamkniętych, których nie ma w rejestrze nadzorcy.
 func (r *rejestrObecnosci) Odpisy(ctx context.Context) []shared.SessionPresence {
 	if r == nil || r.nadzorca == nil {
 		return nil
@@ -107,7 +90,7 @@ func (r *rejestrObecnosci) Odpis(ctx context.Context, idSesji string) (shared.Se
 	return r.zloz(ctx, sesja), true
 }
 
-// zloz składa odpis jednej sesji ze wszystkich czterech źródeł.
+// zloz składa odpis jednej sesji ze wszystkich czterech źródeł: nadzorcy, pętli, warstwy danych i telemetrii.
 func (r *rejestrObecnosci) zloz(ctx context.Context, sesja session.Sesja) shared.SessionPresence {
 	odpis := shared.SessionPresence{
 		SessionId:      sesja.Id,
@@ -176,8 +159,7 @@ func (r *rejestrObecnosci) oknaOtwarte(idSesji string) []session.Okno {
 	return otwarte
 }
 
-// nadaniaOkna odczytuje nadania dostępu okna przez port. Brak portu daje wykaz
-// pusty, nie błąd.
+// nadaniaOkna odczytuje nadania dostępu okna przez port. Brak podłączonego portu daje wykaz pusty, nie odmowę.
 func (r *rejestrObecnosci) nadaniaOkna(ctx context.Context, idOkna string) []string {
 	if r.nadania == nil {
 		return nil
@@ -185,7 +167,7 @@ func (r *rejestrObecnosci) nadaniaOkna(ctx context.Context, idOkna string) []str
 	return r.nadania.NadaniaOkna(ctx, idOkna)
 }
 
-// kodSrodowiska odczytuje osadzenie sesji przez port.
+// kodSrodowiska odczytuje osadzenie sesji przez port, zwracając pusty napis, gdy port nie jest podłączony.
 func (r *rejestrObecnosci) kodSrodowiska(ctx context.Context, idSesji string) string {
 	if r.osadzenie == nil {
 		return ""

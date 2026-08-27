@@ -1,3 +1,5 @@
+*Dokument specyfikuje interfejs modułu Assistant Danaco Console: okna operacyjne, makiety, katalog elementów interfejsu, warstwy widoczności i stany komponentów głosowych.*
+
 # Moduł Assistant — dokumentacja projektowa
 
 | | |
@@ -71,7 +73,7 @@ Moduł pokrywa sześć obszarów, z których każdy poza platformą wymaga osobn
 | Debata i konsensus wielu modeli nad jednym problemem | Moduł **Roundtable** (Assistant rozmawia jednym głosem profilu) |
 | Trwałe katalogowanie repozytorium wiedzy i plików | Moduł **Library** (Assistant zapisuje tam artefakty, nie zastępuje repozytorium) |
 | Zaawansowana redakcja dokumentów, tłumaczenie jako usługa, badania wieloźródłowe | Moduły **Studio / Translate / Research** (Assistant wywołuje je jako kroki polecenia) |
-| Warstwa głosowa ponad całą platformą, poza obrębem sesji | Funkcja globalna **Always On Display** — krótkie polecenia ponadkontekstowe, nawigacja między środowiskami i modułami, sterowanie procesem poza sesją; rozgraniczenie obu torów głosowych podaje `funkcje-globalne/always-on-display.md`, rozdz. 5 |
+| Warstwa głosowa ponad całą platformą, poza obrębem sesji | Funkcja globalna **Always On Display** — krótkie polecenia ponadkontekstowe, nawigacja między środowiskami i modułami, sterowanie procesem poza sesją |
 
 Granica jest wykonawcza, nie licencyjna: powiązania są jawne i konfigurowalne, a nie zamknięte. Assistant jest dyrygentem i rozmówcą, a nie miejscem trwałego przechowywania ani budowania automatyk.
 
@@ -83,7 +85,7 @@ Granica jest wykonawcza, nie licencyjna: powiązania są jawne i konfigurowalne,
 | Operatorzy nadzorujący wiele procesów jednocześnie | Szybkie polecenia głosowe bez przerywania innej pracy wzrokowej |
 | Osoby preferujące komunikację głosową | Naturalna forma interakcji zamiast pisania |
 | Użytkownicy zlecający zadania wieloetapowe | Wydanie złożonego polecenia głosem i śledzenie jego realizacji bez ręcznego nadzoru każdego kroku |
-| Użytkownicy prowadzący długą współpracę z asystentem | Trwała pamięć ustaleń, przełączane konteksty pracy i własna baza wiedzy profilu |
+| Użytkownicy o długiej, ciągłej współpracy z asystentem | Trwała pamięć ustaleń, przełączane konteksty pracy i własna baza wiedzy profilu |
 
 ### 1.5. Po co — wartość modułu
 
@@ -139,7 +141,7 @@ MODUŁ: ASSISTANT (wykorzystanie operacyjne) ───────────�
 | 1 | Chat Window | Komunikacja (wspólne wszystkim modułom) | Lewa kolumna, stała, pełna wysokość obszaru roboczego | 1 | Widoczne bez interakcji przez cały czas pracy modułu | Główne okno komunikacji Użytkownik ↔ Wykonawca — centralny punkt pracy i podstawowy mechanizm sterowania procesami modułu |
 | 2 | Execution Loop Window | Komunikacja (wspólne wszystkim modułom) | Kolumna sąsiadująca z Chat Window, otwierana | 2 | Znacznik stanu pętli w Chat Window, przycisk „Pętla wykonawcza”; otwiera się samoczynnie z chwilą rozpoczęcia zlecenia wieloetapowego | Okno pętli wykonawczej Koordynator ↔ Wykonawca — dekompozycja zlecenia głosowego na zadania, nadzór i kontrola realizacji |
 | 3 | Voice Console | Okno główne (specjalne — interfejs głosowy) | Prawa kolumna, dominująca | 1 | Widoczne bez interakcji jako aktywne okno wiodące modułu | Wydawanie poleceń głosowych i odbiór odpowiedzi mową |
-| 4 | Actions Monitor | Okno monitorów i dashboardów | Kolumna boczna, otwierana jako rozszerzenie boczne | 2 | Wskaźnik postępu zlecenia w pasku kontekstu, przycisk „Szczegóły w Actions Monitor” w dymku odpowiedzi | Bieżący status realizacji poleceń |
+| 4 | Actions Monitor | Okno monitorów i dashboardów | Kolumna boczna, otwierana jako rozszerzenie boczne | 2 | Wskaźnik postępu zlecenia w pasku kontekstu, przycisk „Otwórz w Actions Monitor” w dymku odpowiedzi | Bieżący status realizacji poleceń |
 | 5 | Activity Feed | Okno monitorów i dashboardów | Kolumna boczna, otwierana jako rozszerzenie boczne | 3 | Menu kebab (⋮) okna modułu, polecenie języka naturalnego „pokaż historię działań” | Chronologiczny zapis wykonanych działań |
 | 6 | Memory & Context Manager | Okno zarządzania zasobem | Kolumna boczna szeroka lub obszar roboczy pełny | 3 | Znacznik kontekstu `[Kontekst ▼]` w pasku kontekstu, menu hamburger (☰) modułu | Jawna pamięć, konteksty przełączane i baza wiedzy profilu |
 | 7 | Command & Tools Hub | Okno zarządzania zasobem | Kolumna boczna szeroka lub obszar roboczy pełny | 3 | Menu hamburger (☰) modułu, wywoływacz poleceń, skrót klawiszowy | Szybkie akcje, makra, katalog narzędzi i MCP, rutyny |
@@ -178,7 +180,14 @@ Moduł Assistant realizuje zasadę nadrzędną interfejsu Danaco Console: **jeż
 | 3 — rozwinięcia kontekstowe | Akcje dymka odpowiedzi (Popraw polecenie, Wstaw jako zadanie, Zapisz do Library, Kopiuj), siatka szybkich akcji, sterowanie przebiegiem pętli, Activity Feed, Memory & Context Manager, Command & Tools Hub, zakładki obszarów pamięci, katalog narzędzi i MCP, rutyny | Menu kebab (⋮), menu hamburger (☰), menu kontekstowe dymka, panel popover, lista rozwijana `[ Szybkie akcje ▼ ]` |
 | 4 — funkcje eksperckie | Edytor makra w `JSON`/`YAML`, reguły retencji i wygaszania pamięci, znaczniki wrażliwości, zakres uprawnień narzędzia i serwera MCP, limity wywołań, audyt wywołań narzędzi, eksport dziennika aktywności, przekazanie rutyny do modułu Automations, tryb ciągłego nasłuchu i konfiguracja frazy wybudzającej | Polecenie języka naturalnego w Chat Window lub Voice Console, skrót klawiszowy, wywoływacz poleceń, tryb administracyjny, konfiguracja roli. Użytkownik podstawowy nie widzi tych elementów |
 
-**Zasada jednego kliknięcia.** Każda ukryta funkcja modułu jest osiągalna jednym kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego wypowiedzianym do asystenta. Zagnieżdżanie funkcji głęboko w hierarchii menu jest zabronione — ukrycie zmniejsza chaos wizualny, nie utrudnia dostępu. Głos stanowi w module Assistant równoprawną ścieżkę dostępu do warstw 2–4: polecenie „pokaż historię działań”, „otwórz pamięć”, „wstrzymaj zlecenie” osiąga funkcję bez odnajdywania jej w interfejsie.
+**Zasada jednego kliknięcia.** Każda ukryta funkcja modułu jest osiągalna jednym
+
+kliknięciem, jednym skrótem klawiszowym albo jednym poleceniem języka naturalnego
+wypowiedzianym do asystenta. Zagnieżdżanie funkcji głęboko w hierarchii menu jest
+zabronione — ukrycie zmniejsza chaos wizualny, nie utrudnia dostępu. Głos stanowi
+w module Assistant równoprawną ścieżkę dostępu do warstw 2–4: polecenie
+„pokaż historię działań”, „otwórz pamięć”, „wstrzymaj zlecenie” osiąga funkcję
+bez odnajdywania jej w interfejsie.
 
 ---
 
@@ -205,7 +214,7 @@ Chat Window jest centralnym punktem pracy użytkownika w module i podstawowym me
 - Regeneracja odpowiedzi i prezentacja wariantów obok siebie.
 - Wrzutnia załączników: plik, obraz, zrzut ekranu jako kontekst wypowiedzi.
 - Historia poleceń, zarówno głosowych, jak i tekstowych, w jednym ciągłym zapisie.
-- Akcje dymka odpowiedzi: Popraw polecenie, Szczegóły w Actions Monitor, Wstaw jako zadanie, Zapisz do Library, Kopiuj.
+- Akcje dymka odpowiedzi: Popraw polecenie, Otwórz w Actions Monitor, Wstaw jako zadanie, Zapisz do Library, Kopiuj.
 - Przełącznik trybu cichego (praca wyłącznie tekstowa, bez syntezy mowy).
 
 **Makieta tekstowa.**
@@ -236,7 +245,7 @@ Stan spoczynku — warstwa 1 oraz zwinięte wyzwalacze warstw 2–3
 | Selektor persony i trybu odpowiedzi | Rozwijana lista w nagłówku | Zmiana stylu odpowiedzi bez zmiany profilu głosu | Mały przycisk z etykietą | domyślny · rozwinięty | Podmienia warstwę promptu systemowego rozmowy | Nagłówek Chat Window | 2 | Znacznik kontekstowy `[Tryb ▼]` w nagłówku; po wyborze lista zwija się samoczynnie |
 | Transkrypcja polecenia głosowego | Dymek wiadomości z ikoną mikrofonu | Tekstowy zapis rozpoznanej mowy | Średni blok tekstu z ikoną mikrofonu | rozpoznano poprawnie · niska pewność rozpoznania (podświetlenie) | Kliknięcie „Popraw polecenie” pozwala edytować tekst i wysłać ponownie | Historia rozmowy | 1 | Widoczna bez interakcji w strumieniu rozmowy |
 | Ikona syntezy mowy | Mała ikona głośnika przy odpowiedzi | Sygnalizacja, że odpowiedź jest równolegle odczytywana na głos | Bardzo mała ikona (🔊) | odtwarzanie · wyciszone | Kliknięcie wycisza i wznawia odczyt danej odpowiedzi | Przy dymku odpowiedzi Wykonawcy | 1 | Widoczna bez interakcji przy dymku odpowiedzi |
-| Przycisk „Szczegóły w Actions Monitor” | Mały przycisk `--zarys` | Przejście do statusu realizacji zlecenia | Mały przycisk tekstowy | domyślny | Otwiera Actions Monitor na pozycji odpowiadającej poleceniu | Pasek akcji dymka odpowiedzi | 3 | Menu kontekstowe dymka odpowiedzi (⋮); otwiera Actions Monitor jednym kliknięciem |
+| Przycisk „Otwórz w Actions Monitor” | Mały przycisk `--zarys` | Przejście do statusu realizacji zlecenia | Mały przycisk tekstowy | domyślny | Otwiera Actions Monitor na pozycji odpowiadającej poleceniu | Pasek akcji dymka odpowiedzi | 3 | Menu kontekstowe dymka odpowiedzi (⋮); otwiera Actions Monitor jednym kliknięciem |
 | Przycisk „Wstaw jako zadanie” | Mały przycisk `--zarys` | Zamiana fragmentu odpowiedzi w zadanie zlecenia | Mały przycisk tekstowy | domyślny | Tworzy pozycję zadania w Execution Loop Window i Actions Monitor | Pasek akcji dymka odpowiedzi | 3 | Menu kontekstowe dymka odpowiedzi (⋮) |
 | Wrzutnia załączników | Ikona spinacza przy polu poleceń | Dodanie pliku, obrazu lub zrzutu jako kontekstu | Mała ikona `.dn-btn-ikona` | domyślny · przeciąganie pliku | Dołącza `artefakt` do wypowiedzi i przekazuje do ekstrakcji treści | Pole poleceń | 1 | Widoczna bez interakcji jako ikona spinacza przy polu poleceń |
 | Przycisk mikrofonu „przytrzymaj, by mówić” | Duży przycisk ikonowy | Szybki dostęp do nagrywania z poziomu pola poleceń | Średni przycisk okrągły | domyślny · nagrywanie (podświetlony, pulsujący) | Przytrzymanie aktywuje nasłuch, puszczenie kończy i wysyła polecenie | Lewa strona pola poleceń | 1 | Widoczny bez interakcji przy polu poleceń |
@@ -307,11 +316,12 @@ Stan spoczynku — warstwa 1 oraz zwinięte wyzwalacze warstw 2–3
 | Typologia | Okno główne — interfejs głosowy |
 | Waga wizualna | Prawa kolumna, dominująca |
 | Izolacja domyślna | Aktywna w trakcie interakcji głosowej; konfiguracja profilu trwała między sesjami |
-| Zakres toru głosowego | Tor sesyjny: rozmowa wieloturowa, dyktowanie, makra i polecenia szybkie, profil głosu, pamięć i historia modułu. Krótkie polecenia ponadkontekstowe — nawigacja, odczyt stanu platformy, sterowanie procesem poza sesją — obsługuje tor globalny funkcji Always On Display (`funkcje-globalne/always-on-display.md`, rozdz. 5) |
+| Zakres toru głosowego | Tor sesyjny: rozmowa wieloturowa, dyktowanie, makra i polecenia szybkie, profil głosu, pamięć i historia modułu. Krótkie polecenia ponadkontekstowe — nawigacja, odczyt stanu platformy, sterowanie procesem poza sesją — obsługuje tor globalny funkcji Always On Display |
 
 **Zawartość i pełny arsenał funkcji.**
 
 *Nagrywanie i rozpoznawanie.*
+
 - Aktywacja nasłuchu przez przytrzymanie przycisku, frazę wybudzającą (konfigurowalną) lub tryb ciągłego nasłuchu sterowany ustawieniem konfiguracyjnym.
 - Wizualizacja fali dźwiękowej na żywo podczas mówienia — potwierdzenie, że urządzenie odbiera głos.
 - Wskaźnik pewności rozpoznania mowy oraz automatyczne wykrycie języka wypowiedzi dla użytkowników wielojęzycznych.
@@ -319,26 +329,31 @@ Stan spoczynku — warstwa 1 oraz zwinięte wyzwalacze warstw 2–3
 - Redukcja szumów otoczenia — przełącznik trybu „głośne otoczenie”.
 
 *Odpowiedź głosowa.*
+
 - Synteza mowy z wyborem głosu, tempa wypowiedzi i tonu (formalny, swobodny).
 - Przerywanie odpowiedzi głosem („dość”, „zatrzymaj”) lub dotykiem w dowolnym momencie odtwarzania.
 - Odsłuch ponowny i przewijanie długiej odpowiedzi głosowej.
 
 *Polecenia i makra.*
+
 - Biblioteka poleceń szybkich (voice shortcuts) — zdefiniowane przez użytkownika frazy wyzwalające złożone działania.
 - Łańcuchowanie poleceń w jednej wypowiedzi („sprawdź pocztę i podsumuj najważniejsze wiadomości”).
 - Polecenia kontekstowe odwołujące się do poprzedniej wypowiedzi („zrób to samo dla przyszłego tygodnia”).
 - Siatka szybkich akcji — najczęściej używane polecenia uruchamiane dotykiem, bez mówienia.
 
 *Sterowanie zadaniami i aplikacjami.*
+
 - Wykonywanie poleceń wieloetapowych obejmujących inne moduły platformy (utworzenie dokumentu w Studio, wyszukanie informacji w Browser), inicjowanych głosem i prowadzonych w pętli wykonawczej.
 - Obsługa aplikacji zewnętrznych i systemowych w zakresie ustanowionym przez konfigurację profilu.
 - Potwierdzenie głosowe wykonania („zrobione”, „gotowe”) po zakończeniu działania.
 
 *Dyktowanie.*
+
 - Dyktowanie tekstu do aktywnego pola okna lub modułu platformy.
 - Komendy formatujące głosem: „nowy akapit”, „wypunktuj”, „usuń ostatnie zdanie”, „duża litera”.
 
 *Konfiguracja profilu dostępna z poziomu okna.*
+
 - Wybór i podgląd charakterystyki głosu asystenta, imienia profilu, języka domyślnego.
 - Skrót do pełnej konfiguracji Profilu asystenta na stronie głównej (strefa 2).
 
@@ -691,7 +706,7 @@ Memory & Context Manager — nowy fakt zapisany z regułą retencji, widoczny i 
 
 ### 4.6. Przepływ rozszerzony — rozgraniczenie toru głosowego wobec Always On Display
 
-Platforma prowadzi dwa rozłączne tory głosowe. Tor sesyjny modułu Assistant obsługuje rozmowę wieloturową, dyktowanie, makra, polecenia szybkie i profil głosu w obrębie karty sesji modułu. Tor globalny funkcji Always On Display obsługuje krótkie polecenia skierowane do platformy jako całości: nawigację między środowiskami i modułami, odczyt stanu procesów oraz sterowanie procesem poza sesją. Pełne rozgraniczenie, wraz z tabelą przypisania rodzajów poleceń i regułą pierwszeństwa, zawiera `funkcje-globalne/always-on-display.md`, rozdz. 5.
+Platforma prowadzi dwa rozłączne tory głosowe. Tor sesyjny modułu Assistant obsługuje rozmowę wieloturową, dyktowanie, makra, polecenia szybkie i profil głosu w obrębie karty sesji modułu. Tor globalny funkcji Always On Display obsługuje krótkie polecenia skierowane do platformy jako całości: nawigację między środowiskami i modułami, odczyt stanu procesów oraz sterowanie procesem poza sesją. Pełne rozgraniczenie, wraz z tabelą przypisania rodzajów poleceń i regułą pierwszeństwa, podaje funkcja globalna Always On Display.
 
 ```
    Always On Display — tor globalny        │   ASSISTANT › Voice Console — tor sesyjny
@@ -792,27 +807,35 @@ Pierwszeństwo w obrębie modułu Assistant ma tor sesyjny: polecenie wydane prz
 ## 6. Scenariusze użycia
 
 **Scenariusz 1 — polecenie w ruchu.**
+
 Użytkownik, nie mając dostępu do klawiatury, aktywuje Voice Console i wydaje polecenie „umów spotkanie z zespołem na jutro na 10:00”. Execution Loop Window pokazuje dekompozycję na dwa zadania — znalezienie terminu i wysłanie zaproszeń — Actions Monitor prezentuje postęp, a Wykonawca potwierdza wykonanie głosowo.
 
 **Scenariusz 2 — korekta błędnie zrozumianego polecenia.**
+
 System rozpoznaje polecenie z niską pewnością, co Voice Console sygnalizuje wizualnie. Użytkownik poprawia transkrypcję ręcznie w Chat Window i wysyła skorygowaną wersję polecenia bez powtarzania całej wypowiedzi głosem.
 
 **Scenariusz 3 — zlecenie obejmujące inny moduł.**
+
 Użytkownik prosi asystenta o przygotowanie notatki ze spotkania i zapisanie jej w bibliotece. Execution Loop Window prowadzi pętlę dwóch zadań: utworzenie dokumentu (moduł Studio) i zapis artefaktu (moduł Library) — całość zainicjowana wyłącznie głosem.
 
 **Scenariusz 4 — przegląd historii dłuższej współpracy.**
+
 Po tygodniu korzystania z asystenta użytkownik przeszukuje Activity Feed frazą „rezerwacja sali”, odnajduje nieudaną próbę sprzed kilku dni, odtwarza przebieg zlecenia krok po kroku i ustala przyczynę niepowodzenia.
 
 **Scenariusz 5 — wiele profili dla różnych kontekstów.**
+
 Użytkownik konfiguruje na stronie głównej dwa profile asystenta: „Asystent biurowy” o formalnym tonie głosu i szerokich uprawnieniach do modułów pracy oraz „Asystent osobisty” o swobodniejszym tonie i węższym zakresie uprawnień, przełączając się między nimi z poziomu Voice Console zależnie od kontekstu.
 
 **Scenariusz 6 — praca z własną bazą wiedzy.**
+
 Użytkownik wgrywa do Memory & Context Manager zestaw dokumentów projektowych i aktywuje kontekst „projekt Atlas”. Kolejne odpowiedzi asystenta cytują konkretne fragmenty tych dokumentów, a ustalenia zapadające w rozmowie zapisują się jako fakty z regułą wygaszania po zakończeniu projektu.
 
 **Scenariusz 7 — poranny brief jako rutyna.**
+
 W Command & Tools Hub użytkownik definiuje rutynę „poranny brief” uruchamianą o 8:00 w dni robocze: asystent zestawia kalendarz, zadania i najważniejsze wiadomości oraz odczytuje podsumowanie głosem. Po miesiącu użytkownik przekazuje rutynę do modułu Automations jako proces cykliczny.
 
 **Scenariusz 8 — zadanie nieodwracalne pod kontrolą.**
+
 Polecenie „wyślij zaproszenia do zespołu” trafia do pętli wykonawczej, gdzie Koordynator oznacza zadanie wysyłki jako nieodwracalne. Brama potwierdzeń zatrzymuje realizację do momentu jawnej decyzji użytkownika, a decyzja i wywołanie narzędzia zapisują się w Activity Feed.
 
 ---
@@ -1014,4 +1037,5 @@ Zgodnie z Modelem konfiguracji (warstwy: globalny → środowisko → projekt �
 
 ---
 *Danaco Console — AI Workspace OS · v2.0*
-*© 2026 Danaco Holding Group Sp. z o.o. Wszelkie prawa zastrzeżone — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*
+
+*© 2026 Danaco Holding Group Sp. z o.o. — [LICENSE](LICENSE). Kontakt: support@danaco-group.pl*

@@ -3504,3 +3504,41 @@ wykonywaną po obejrzeniu tego, co już stoi.
 Tak Findings Panel wiąże ustalenie ze źródłem, bez potrzeby osobnej komendy zapisu wiązania. Pusty
 katalog nie jest błędem ani blokadą: zdanie zastępcze mówi, skąd wziąć źródła, a formularz
 ustalenia zostaje w pełni czynny.
+
+## budowa/klient-poprzedni/src/rozmowa/pole-wysylki.ts
+Pasek zlecenia pod polem wypowiedzi jest opcjonalny, bo jego stery żądają
+kompletu sterowania okna (migawka, subskrypcja, `window.update`, `config.set`),
+a ten powstaje dopiero w powłoce — stanowisko podglądu rozmowy go nie ma i ma
+dalej działać. Pole przepuszcza element nietknięty: nie zna ani nastaw, ani
+kontraktu. Pasek stoi pod polem, w tym samym wierszu co przycisk zatrzymania,
+bo Operator ustawia na nim otoczenie zadania, zanim treść pójdzie do modelu.
+
+Wykaz po ukośniku nad polem wypowiedzi też jest opcjonalny z tego samego
+powodu: pole nie buduje go i nie wie, skąd biorą się pozycje — zna wyłącznie
+cztery ruchy klawiatury, które nim sterują. Wykaz potrzebuje kanału i wątku
+rozmowy, a tych pole nie ma; podaje go widok rozmowy.
+
+Odbitka cudzej wypowiedzi pojawia się w polu od razu w całości, na krótko,
+i sama znika: wypowiedź jest już wysłana — rdzeń rozgłosił ją zdarzeniem po
+przyjęciu komendy — więc literowanie jej znak po znaku pokazywałoby zdanie
+niepełne. Odbitka nie zabiera pracy Operatorowi: pole z ogniskiem albo choćby
+jednym znakiem treści nie jest ruszane, odbitka nie ma ogniska, nie da się jej
+wysłać Enterem i nie wchodzi do treści.
+
+Czas, przez jaki odbitka stoi w polu, ustala kompromis: Operator ma zdążyć
+zobaczyć, że tekst się pojawił, i przeczytać początek zdania, zanim zniknie.
+Krócej byłoby mrugnięciem nie do złapania wzrokiem, dłużej — zawadą stojącą
+w miejscu pracy. Odbitka niczego nie opóźnia, bo wypowiedź poszła do rdzenia,
+zanim to połączenie w ogóle się o niej dowiedziało.
+
+Pole wypowiedzi Operatora oraz przyciski wysyłki i zatrzymania nie tracą
+klikalności w żadnym stanie. Przycisk zatrzymania jest czynny także wtedy, gdy
+nic nie biegnie — rdzeń odpowiada wtedy `stopped` równym fałsz, a nie błędem.
+Niegotowość opisuje wskaźnik obok przycisków, nie odebranie możliwości
+działania.
+
+Wykaz po ukośniku wyzwala zdarzenie `input`, a nie `keydown`: znak jest już
+w polu, więc warunek „ukośnik stoi na początku treści" da się sprawdzić na
+treści, a nie zgadywać z klawisza (martwe klawisze, wklejenie, IME). Ukośnik
+w środku zdania nie otwiera niczego — ścieżka w rodzaju `/home/ubuntu` wpisana
+w wypowiedź jest tekstem, nie komendą.

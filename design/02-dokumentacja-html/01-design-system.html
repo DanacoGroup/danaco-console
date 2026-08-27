@@ -2935,7 +2935,7 @@
       pozycje.push({ nazwa: nazwijSygnal(el), pole: p });
     });
 
-    /* wstęgi liczymy jako pasek 2 px, nie jako całą kontrolkę */
+    /* wstęgi liczy się jako pasek 2 px, nie jako całą kontrolkę */
     qa('[data-sygnal-wstega]', podgladBudzetu).forEach(function (el) {
       var r = el.getBoundingClientRect();
       var p = (el.classList.contains('dn-boczna-pozycja')) ? 2 * 16 : r.width * 2;

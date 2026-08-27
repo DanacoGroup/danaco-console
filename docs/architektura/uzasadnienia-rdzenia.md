@@ -6320,3 +6320,8 @@ rdzeń i tak czyta całą tabelę sesji, w pliku odtworzenie_stanu.go — więc
 nie potrzeba budzika ani osobnego wątku. Trzydzieści dni daje okno dłuższe
 niż typowy urlop: sesja usunięta i nieprzywrócona przez miesiąc jest
 decyzją, nie pomyłką.
+
+## budowa/server/internal/core/most_mcp_adres.go
+Brak konta i brak portu schodzą na wartości domyślne mostu, nie na odmowę złożenia wpisu. Nazwa
+mostu bywa podana w całości, razem z prefiksem; prefiks jest wtedy obcinany, żeby klucz nie urósł
+do postaci powtórzonej. Klucz trafia do konfiguracji MCP i do nazw narzędzi widocznych dla modelu.

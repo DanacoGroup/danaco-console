@@ -1,11 +1,9 @@
-/* ============================================================================
-   EKRAN 4 — LOKALIZACJA I SKRÓTY
-   ----------------------------------------------------------------------------
+/* Ekran czwarty kreatora instalacji pozwala wskazać katalog docelowy programu oraz wybrać skróty tworzone na pulpicie i w menu startowym.
+
    Dwa katalogi i dwa skróty. Opisy pól mówią to, czego z etykiety nie widać —
    nie tłumaczą, czym jest skrót na pulpicie. Dane operatora idą do `Roaming`,
    nie do `Local`: projekty i ustawienia są pracą użytkownika, nie pamięcią
-   podręczną, więc mają wchodzić do kopii profilu.
-   ============================================================================ */
+   podręczną, więc mają wchodzić do kopii profilu. */
 (function () {
 'use strict';
 var K = window.DanacoKreator, N = K.narzedzia, el = N.el, tekst = N.tekst, S = K.skladniki;

@@ -2655,3 +2655,13 @@ Zdarzenie zapisuje się w chwili czynności, a nie wylicza z bytów przy
 odczycie. Wyliczanie z bytów pokazałoby wyłącznie to, co jeszcze istnieje:
 usunięte zadanie znikałoby również z historii, a wtedy oś czasu przestaje być
 zapisem zdarzeń i staje się drugim widokiem stanu bieżącego.
+## budowa/server/internal/store/migracja_223_workspace_komentarze.sql
+Migracja 223 — komentarze przy bytach projektu.
+
+Jedna tabela na komentarze wszystkich bytów: cel opisuje para rodzaj + byt,
+a nie osobna tabela per byt. Wątek składa wskazanie komentarza nadrzędnego —
+tak samo jak strona wiki składa hierarchię wskazaniem strony nadrzędnej.
+
+Przywołania znakiem małpy leżą kolumną obok treści: rozpoznaje się je raz,
+przy zapisie, bo panel powiadomień pyta o nie częściej, niż komentarz się
+zmienia.

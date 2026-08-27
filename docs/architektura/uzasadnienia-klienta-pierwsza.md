@@ -1143,3 +1143,17 @@ zamkniętą.
 Rejestr kanałów, który nie dotarł, daje podpowiedź pustą, a nie pusty formularz.
 Adresowanie osi modelu działa wtedy dalej, a nieudany odczyt zostaje odnotowany
 w dzienniku przeglądarki zamiast zatrzymywać pracę.
+
+## budowa/klient-poprzedni/src/moduly/apps/tabela-wdrozen.ts
+
+Pusty stan wchodzi w miejsce ciała tabeli, a nie zamiast całej tabeli. Nagłówek
+kolumn zostaje, ponieważ Operator ma widzieć, czego wykaz dotyczy, zanim
+cokolwiek się w nim znajdzie.
+
+Błąd wdrożenia znakuje plakietka w kolumnie stanu, bez zmiany struktury wiersza.
+Stan nigdy nie opiera się na samej barwie: plakietka niesie słowo.
+
+Gdy silnik wdrożeń wpisze do pola `logRef` zdanie o tym, dlaczego przebieg się nie
+powiódł, tabela pokazuje jego treść tak, jak przyszła, i nazywa pole, z którego
+pochodzi. Samo słowo `failed` zostawiałoby Operatora bez wyjaśnienia, które
+przyszło w tej samej ramce.

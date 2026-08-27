@@ -5600,3 +5600,28 @@ dymka. Powody będące punktem decyzyjnym wstrzymującym proces (bieg
 naprawczy, który stanął, i proces wstrzymany) zatrzymują pracę i czekają
 wprost na rozstrzygnięcie człowieka; zatrzymanie, usterka i brak ruchu
 przez wyciszenie przeczekają.
+
+## budowa/klient-poprzedni/src/moduly/automations/okno-workflow-builder.ts
+
+Cofnij i ponów działają miejscowo, na pracy sprzed zapisu. Po zapisie
+śladem jest numer wersji definicji, a powrót do wersji wcześniejszej
+należy do pozycji „Historia wersji" — ta nazywa swoją komendę i mówi, czy
+rdzeń ma dla niej uchwyt. Zdanie potwierdzenia powstaje z odpowiedzi
+rdzenia — z identyfikatora, numeru wersji i liczby kroków; przy
+duplikowaniu okno porównuje identyfikator sprzed czynności z tym, który
+wrócił, bo dopiero różnica dowodzi, że powstała nowa definicja.
+
+Walidacja definicji idzie przy każdej zmianie kroków, nie dopiero przy
+zapisie: zastrzeżenie postawione w chwili wpisywania jest poprawką, a to
+samo zastrzeżenie postawione po zapisie jest już tylko wiadomością
+o definicji wadliwej, która zdążyła trafić do magazynu automatyk.
+Sygnalizacja jest podwójna, bo służy dwóm czynnościom: znacznik przy kroku
+pokazuje, który krok poprawić, a wykaz w treści okna mówi, co dokładnie —
+funkcja oddaje zastrzeżenia, żeby zapis mógł dopowiedzieć o nich
+w potwierdzeniu.
+
+Zapis idzie mimo zastrzeżeń — walidacja nie jest bramą, tak samo jak
+walidacja układu po stronie rdzenia. Walidacja na żądanie sprawdza
+zastrzeżenia dotyczące kroków po stronie okna; cykle i ścieżkę krytyczną
+całego układu rozstrzyga rdzeń w Orchestratorze, więc zdanie potwierdzenia
+mówi wprost, gdzie szukać drugiej połowy oceny.

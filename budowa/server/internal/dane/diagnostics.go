@@ -1,11 +1,6 @@
-// Odpowiedzialność pliku: obszar modułu Diagnostics — byty czterech tabel
-// i kontrakt repozytorium. Odczyt i zapis dziennika leżą
-// w `diagnostics_dziennik.go`, błędy w `diagnostics_bledy.go`, analiza wraz
-// z rekomendacjami w `diagnostics_analiza.go`.
-//
-// Repozytorium nie wytwarza faktów. Nie liczy stanu systemu, nie ocenia
-// błędów i nie wymyśla rekomendacji — przenosi wyłącznie to, co rdzeń mu podał.
-// Diagnostyka, która sama zmyśla liczbę, jest gorsza niż jej brak.
+// Warstwa danych obsługuje obszar modułu Diagnostics: byty czterech tabel
+// diagnostycznych i kontrakt repozytorium, przenoszące wyłącznie fakty
+// otrzymane od rdzenia.
 package dane
 
 import (
@@ -36,9 +31,7 @@ type FiltrDziennika struct {
 	Zrodlo string
 	Od     int64
 	Do     int64
-	// Wzorzec dopasowuje się do treści wpisu. Dopasowanie regularne rdzeń
-	// wykonuje sam — SQLite bez rozszerzenia nie zna operatora REGEXP,
-	// a doładowywanie rozszerzenia dla jednego okna byłoby ceną bez pokrycia.
+	// Wzorzec dopasowuje się do treści wpisu; dopasowanie regularne wykonuje rdzeń, nie SQLite.
 	Wzorzec string
 	// Scal włącza grupowanie po odcisku wraz z licznikiem powtórzeń.
 	Scal bool
@@ -63,7 +56,8 @@ type BladDiagnostyczny struct {
 	Ostatnie    int64
 }
 
-// FiltrBledow zawęża wykaz błędów.
+// FiltrBledow zawęża wykaz błędów diagnostycznych po stanie, priorytecie,
+// zakresie czasu i granicy wyniku.
 type FiltrBledow struct {
 	Stan      shared.DiagnosticErrorStatus
 	Priorytet shared.DiagnosticPriority
@@ -102,7 +96,8 @@ type RekomendacjaDiagnostyczna struct {
 	Utworzono  int64
 }
 
-// FiltrRekomendacji zawęża wykaz rekomendacji.
+// FiltrRekomendacji zawęża wykaz rekomendacji po kodzie analizy, stanie,
+// priorytecie i granicy wyniku.
 type FiltrRekomendacji struct {
 	AnalizaKod string
 	Stan       shared.RecommendationStatus
@@ -114,20 +109,20 @@ type FiltrRekomendacji struct {
 // zagregowanego stanu pokazywanego w Diagnostics Center.
 type LicznikPoziomow map[shared.LogLevel]int
 
-// LicznikStanow zlicza błędy w rozbiciu na stany.
+// LicznikStanow zlicza błędy diagnostyczne w rozbiciu na stany, wedle stanu
+// każdego zgrupowanego błędu.
 type LicznikStanow map[shared.DiagnosticErrorStatus]int
 
-// RepozytoriumDiagnostyki jest kontraktem obszaru Diagnostics.
+// RepozytoriumDiagnostyki jest kontraktem obszaru Diagnostics: dziennik
+// zdarzeń, błędy zgrupowane po odcisku, analizy i rekomendacje.
 type RepozytoriumDiagnostyki interface {
 	DopiszWpisy(ctx context.Context, wpisy []WpisDiagnostyki) error
 	Wpisy(ctx context.Context, filtr FiltrDziennika) ([]WpisDiagnostyki, int, error)
-	// ZrodlaWpisow zwraca źródła obecne w dzienniku — Logs Viewer buduje z nich
-	// filtr źródła zamiast zgadywać nazwy.
+	// ZrodlaWpisow zwraca źródła obecne w dzienniku, do budowy filtra źródła w interfejsie.
 	ZrodlaWpisow(ctx context.Context) ([]string, error)
 	PoziomyWpisow(ctx context.Context, od, do int64) (LicznikPoziomow, error)
 
-	// ZapiszBlad dopisuje wystąpienie: wiersz o tym samym odcisku podnosi
-	// licznik i przesuwa chwilę ostatniego wystąpienia, nowy powstaje od zera.
+	// ZapiszBlad dopisuje wystąpienie: ten sam odcisk podnosi licznik, inny zakłada nowy wiersz.
 	ZapiszBlad(ctx context.Context, blad BladDiagnostyczny) (BladDiagnostyczny, error)
 	Bledy(ctx context.Context, filtr FiltrBledow) ([]BladDiagnostyczny, error)
 	LiczbaBledow(ctx context.Context, filtr FiltrBledow) (int, error)

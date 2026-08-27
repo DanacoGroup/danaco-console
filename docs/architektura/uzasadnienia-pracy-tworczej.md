@@ -355,3 +355,9 @@ w którym da się go jeszcze zapisać: po czynności drzewo jest już zmienione,
 więc dziennik nie miałby skąd go wziąć jako stan „przed". Odczyt płaci za to
 jednym zapisem drzewa do napisu — tą samą cenę dziennik płaci już za stan po
 czynności.
+
+## budowa/server/internal/core/adapter_modul_design_fotografia_maski.go
+
+Cztery czynności tego pliku mają wariant neuronowy lepszy od rachunku: powiększenie, odcięcie tła, domalowanie i rozszerzenie kadru. Gdy kanał modelu obrazowego działa, liczy kanał; gdy nie działa, liczy rachunek zawarty w tym pliku, a odpowiedź podaje, którą drogą policzyła, w polu `computedBy`. Obie drogi oddają piksele, różni je jedynie jakość wyniku.
+
+Odcięcie tła rachunkiem opiera się na barwie tła odczytanej z obwodu obrazu i na rozroście obszaru od brzegów, dzięki czemu jasny przedmiot na jasnym tle nie znika w środku kadru, choć tło ma tam tę samą barwę. Metoda działa poprawnie na zdjęciach produktowych i na grafice na jednolitym tle; na portrecie w tłumie wynik jest gorszy niż wynik kanału modelu, dlatego pole `transparentShare` jest pomiarem — pozwala rozpoznać, jaki udział obrazu zniknął.

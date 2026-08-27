@@ -2786,3 +2786,60 @@ podręcznej użytkownika, a rdzeń takiego pobrania nie robi. Wskazanie idzie
 plikiem nastaw, bo jedyna droga do procesu nie przekazuje zmiennych
 środowiska — i ma nie przekazywać, bo binarium arsenału nie ma powodu widzieć
 zmiennych rdzenia.
+
+## budowa/server/internal/core/adapter_modul_mowa.go
+
+Silnik mowy wymaga trójki okno, zasady i obszar, ponieważ pomocnik
+transkrypcji startuje tym samym uruchamiaczem i przez tę samą bramę izolacji,
+co każdy inny proces drzewa. Terminal i Developer biorą tę trójkę z okna
+żądania: rejestr okien daje okno, rozstrzygacz nad zasięgiem daje zasady dla
+kontekstu okna, a ustalacz katalogu roboczego daje obszar. Żądania rodziny
+speech okna nie niosą: rodzina jest zdolnością platformy, nie okna, więc trójka
+składa się dla pustego kontekstu zasięgu, tą samą drogą co dla okna. Pusty
+kontekst zasięgu jest poprawnym adresem najszerszego poziomu: rozstrzygacz
+oddaje wtedy politykę platformy, a ustalacz katalog roboczy platformy. Wpisane
+z ręki zasady i obszar puste znaczyłyby izolację wyłączoną niezależnie od
+ustawień. Okno jest jedyną wartością, którą adapter wypełnia sam, ze
+środowiskiem wykonania rdzenia, bo ścieżka nagrania wskazuje maszynę silnika
+i pomocnik musi ruszyć na hoście rdzenia. Identyfikatora okna nie ma skąd
+wziąć, więc wpis dziennika transkrypcji nie dostaje odnośnika okna.
+
+Silnik mowy powstaje na każde wywołanie, ponieważ ustawienie nastaw mutuje
+byt: jedna instancja współdzielona przez równoległe żądania oznaczałaby wyścig
+o nastawy. Przy okazji nastawy są świeże — zmiana modelu mowy komendą
+konfiguracji obowiązuje od następnej transkrypcji, bez restartu rdzenia.
+
+Trzy pola adaptera obsługujące komendy dobudowane obok transkrypcji —
+przyjęcie i oddanie bajtów nagrania oraz nastawę wybudzania — są zależnościami
+opcjonalnymi: bez nich te komendy odmawiają, nazywając brak, a rozpoznawanie
+mowy pracuje bez zmian.
+
+Odsłuch dla availability liczony jest osobno od dyktowania, bo jedzie innym
+łańcuchem: syntezator głosu, nie rozpoznawanie mowy. Nawet gdy dyktowanie
+odmawia, odsłuch bywa gotowy, dlatego wynik idzie do obu gałęzi odpowiedzi,
+a nie tylko do udanej. Trzy dobudowane zdolności rodziny meldują się osobno,
+bo osobno znikają: przyjęcie nagrania zależy wyłącznie od magazynu rdzenia
+i działa nawet bez silnika mowy, bo bajty da się odłożyć i odsłuchać bez
+rozpoznawania czegokolwiek; wybudzenie i nasłuch ciągły rozpoznają każdy
+odcinek, więc znikają razem z silnikiem. Pole modelu odpowiedzi niesie model
+zastany na dysku, a przy jego braku model ustawiony w konfiguracji: kontrakt
+pyta o ten drugi, a oddanie pustki, gdy wag jeszcze nie pobrano, gubiłoby
+nastawę widoczną w oknie konfiguracji.
+
+Pomiar gotowości odsłuchu używa tej samej drogi doboru syntezatora, którą idzie
+faktyczny odsłuch, więc pomiar nie może rozejść się z wykonaniem: jeżeli dobór
+silnika kończy się odmową, odsłuch odmówi tak samo, a jego powód jest tym, co
+Operator zobaczy.
+
+Przekład odmów silnika mowy na kody kontraktu rozróżnia cztery przypadki na
+trzy kody. Brak nagrania daje kod walidacji, bo jest jedyną odmową wywołaną
+daną przysłaną przez klienta, a kod jest nieponawialny. Brak pomocnika daje kod
+niedostępności kanału, bo żądanie było poprawne, a produkt mówi wprost, czego
+dołożyć; kod jest ponawialny. Brak interpretera i brak silnika dają ten sam kod
+niedostępności kanału, bo katalog kodów kontraktu nie ma pozycji odróżniającej
+brak interpretera od braku biblioteki w nim; rozróżnienie, którego wymaga
+naprawa, niesie treść odmowy, bo trzy ogniwa łańcucha naprawia się trzema
+różnymi czynnościami: dołożeniem katalogu pomocników, instalacją interpretera
+i instalacją biblioteki rozpoznawania. Naruszenie izolacji daje kod odmowy
+uprawnień, tak samo jak znakuje je Terminal. Odmowa nierozpoznana schodzi na
+kod błędu wewnętrznego, bo jest przypadkiem, którego rdzeń nie przewidział.

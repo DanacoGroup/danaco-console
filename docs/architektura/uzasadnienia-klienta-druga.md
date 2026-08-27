@@ -379,3 +379,26 @@ dokumentem nic nie znaczy.
 
 Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji buduje z niego
 listę, a okna sięgają po pozycje swojej grupy.
+
+## budowa/klient-poprzedni/src/moduly/terminal/okno-session-manager.ts
+
+Do rdzenia idzie jedna komenda otwarcia karty, z powłoką ssh i adresem celu
+podanym zmienną środowiska SSH_TARGET — tak i tylko tak rdzeń przekazuje adres
+programowi ssh. Karta powstaje w tym samym stanie modułu, w którym stoją karty
+otwarte w oknie Terminal Tabs, więc połączenie z tego okna jest od razu
+widoczne w oknie wiodącym i w konsoli wyjścia poleceń.
+
+Książka hostów, klucze SSH, tunele portowe i wykaz kart są bytami rdzenia,
+a okno jest ich widokiem. Wpis hosta zapisuje i czyta rodzina komend hosta,
+klucze prowadzi rodzina komend klucza, tunele — rodzina komend tunelu, a karty
+pokazuje wykaz sesji rdzenia, więc wykaz sięga dalej niż pamięć tego
+połączenia: rdzeń odtwarza karty przy starcie i okno je widzi po ponownym
+podłączeniu gniazda.
+
+Czytanie i pisanie pliku konfiguracyjnego OpenSSH zostaje, bo służy czemu
+innemu niż trwałość: wnosi wpisy z maszyny operatora i wynosi je z powrotem.
+
+Pozycja panelu akcji bez odpowiadającej jej komendy kontraktu — polityka
+znanych hostów — stoi jawnie nieczynna wraz z powodem liczonym z odczytu
+wykazu komend rdzenia, tak samo jak każda inna pozycja zależna od pokrycia
+komend.

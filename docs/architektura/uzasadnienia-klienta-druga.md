@@ -4686,3 +4686,8 @@ wprost, więc operator nie musi znać kodu, żeby zrozumieć odmowę.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/ster-katalogow.ts
 Katalogi robocze są listą, nie pojedynczą wartością, więc pozycje wykazu są przełącznikami, a nie wyborem jednokrotnym: okno pracuje na wszystkich naraz, a zdjęcie jednego z nich nie jest wyborem innego, i każda zmiana idzie komendą aktualizacji z pełną listą po zmianie. W menu nie ma dodawania, bo nowy katalog wskazuje się wpisaniem ścieżki, a rdzeń nie ma komendy dającej wykaz katalogów do wyboru, więc gałąź „dostępne katalogi” byłaby atrapą — zamiast niej stoi stopka otwierająca kolumnę sterowania, gdzie pole ścieżki działa naprawdę. Na uchwycie stoi nazwa ostatniego odcinka ścieżki, nie cała ścieżka, ponieważ pasek ma zostać jednym rzędem, a wielokropek ucinałby ścieżkę od jedynej części, która ją rozróżnia; cała ścieżka stoi w opisie pozycji.
+
+## budowa/klient/src/wejscie/narzedzia.ts
+Nic w tym pliku nie wie o żadnym oknie — to warstwa niżej niż składniki.
+Treści nie wstawia się znacznikiem: węzeł powstaje przez tworzenie elementu, a tekst przez tworzenie węzła tekstowego, więc dana z zewnątrz nie ma jak stać się znacznikiem.
+Pusty znacznik znaku jest usterką zestawu, a nie sytuacją, którą ma czytać wykonawca sprawdzianu.

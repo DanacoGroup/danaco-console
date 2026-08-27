@@ -54,6 +54,32 @@ func zaleznosciZewnetrzne() []ZaleznoscZewnetrzna {
 			Zakres: "rozpoznanie pisma ze skanu i zdjęcia kartki"},
 		{Narzedzie: narzedzieLibreOffice,
 			Zakres: "zamiana formatów biurowych, których nie czyta Pandoc"},
+		{Narzedzie: narzedzieTypst,
+			Zakres: "skład dokumentu do PDF-u w komendzie document.convert dla materiału, " +
+				"którego LibreOffice nie otwiera wprost (markdown, epub) — bez niego ta " +
+				"droga wraca do wersji zapasowej przez HTML i LibreOffice"},
+		// Tika i LanguageTool to programy Javy, więc obie pozycje wskazują ten sam
+		// plik wykonywalny (`java`) i stoją w wykazie OSOBNO. Nie jest to
+		// powtórzenie: pozycja wykazu odpowiada na pytanie „co przestaje działać
+		// i co z tym zrobić", a odpowiedzi są tu dwie różne — brak Javy zabiera
+		// naraz odczyt plików i korektę językową, czyli dwa zakresy w dwóch
+		// modułach. Wiersz na zakres jest tym, po co ten wykaz istnieje.
+		{Narzedzie: narzedzieTiki,
+			Zakres: "odczyt treści pliku w formacie spoza słownika rdzenia " +
+				"(document.text.extract) — arkusz, prezentacja, wiadomość poczty"},
+		{Narzedzie: narzedzieLanguageToola,
+			Zakres: "gramatyka, ortografia, interpunkcja, typografia i styl w korekcie " +
+				"językowej modułu Translate (translate.proofread.run)"},
+		{Narzedzie: narzedzieHunspella,
+			Zakres: "ortografia w korekcie językowej modułu Translate na maszynie bez " +
+				"LanguageToola — LanguageTool ma pierwszeństwo i obejmuje pisownię wraz " +
+				"z gramatyką, słownik zostaje drogą zapasową"},
+		{Narzedzie: narzedzieVale,
+			Zakres: "styl prozy w korekcie językowej modułu Translate — powtórzenia " +
+				"i terminy, zestawem reguł wbudowanym w program"},
+		{Narzedzie: narzedzieCzyszczeniaSkanu,
+			Zakres: "prostowanie skosu, odszumianie, progowanie i przycinanie marginesów " +
+				"skanu przed rozpoznaniem pisma (studio.ingest.recognize)"},
 		{Narzedzie: narzedzieFfprobe,
 			Zakres: "rozpoznanie zawartości nagrania dźwiękowego i filmowego"},
 		{Narzedzie: narzedzieFfmpeg,

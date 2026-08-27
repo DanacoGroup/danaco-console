@@ -161,7 +161,7 @@ func (a *adapterTlumaczenia) zsyntezujDoPliku(ctx context.Context,
 	// część wyniku.
 	defer func() { _ = os.Remove(sciezkaTekstu) }()
 
-	okno, zasady, obszar := a.zasiegSyntezy()
+	okno, zasady, obszar := a.zasiegProgramowTlumaczenia()
 	wynik, err := zewnetrzne.Wolaj(ctx, a.uruchamiacz, okno, zasady, obszar,
 		wybor.narzedzie, wybor.argumenty(sciezkaTekstu, sciezka), katalogPracySyntezy(obszar), granicaSyntezy)
 	if err != nil {
@@ -241,15 +241,19 @@ func nazwaNagrania(kodPanelu, silnik string) string {
 	return kodPanelu + "-" + silnik + "-" + strconv.FormatInt(time.Now().UTC().UnixMilli(), 10) + ".wav"
 }
 
-// zasiegSyntezy składa trójkę okno–zasady–obszar dla zasięgu platformy, tą samą
-// drogą i z tego samego powodu, co `adapterMowy.zasiegPlatformy`: żądanie
-// `speech.synthesize` niesie sam panel, a nie okno rozmowy, więc adresem jest
+// zasiegProgramowTlumaczenia składa trójkę okno–zasady–obszar dla zasięgu
+// platformy, tą samą drogą i z tego samego powodu, co `adapterMowy.zasiegPlatformy`:
+// żądanie modułu niesie sam panel, a nie okno rozmowy, więc adresem jest
 // najszerszy z ośmiu poziomów zasięgu, a nie podstawione po cichu
 // puste struktury znaczące „izolacja wyłączona”.
 //
-// Okno dostaje `ExecutionEnvCore` wprost: nagranie ma powstać na dysku rdzenia,
-// bo to rdzeń odda potem jego ścieżkę w odpowiedzi.
-func (a *adapterTlumaczenia) zasiegSyntezy() (session.Okno, session.Zasady, session.Obszar) {
+// Trójka jest jedna dla wszystkich programów modułu — syntezy mowy, rozpoznania
+// pisma w dokumencie i korekty językowej — bo zasięg zależy od kształtu żądania,
+// a nie od tego, który program po nim rusza.
+//
+// Okno dostaje `ExecutionEnvCore` wprost: wynik ma powstać na dysku rdzenia,
+// bo to rdzeń odda potem jego ścieżkę albo treść w odpowiedzi.
+func (a *adapterTlumaczenia) zasiegProgramowTlumaczenia() (session.Okno, session.Zasady, session.Obszar) {
 	okno := session.Okno{Ustawienia: session.Ustawienia{
 		SrodowiskoWykonania: shared.ExecutionEnvCore,
 	}}

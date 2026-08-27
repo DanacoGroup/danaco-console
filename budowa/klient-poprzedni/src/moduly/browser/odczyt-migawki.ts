@@ -3,21 +3,9 @@ import { opisOdmowy } from '../../komponenty/odmowa';
 import type { ZrodloBrowser } from './zrodlo-browser';
 
 /**
- * Migawka strony wraz z drogą, którą moduł po nią sięga.
- *
- * Jedna odpowiedzialność: treść strony widziana w oknie i przez model, oraz
- * jeden odczyt `browser.snapshot.get`, który ją przynosi. Bez ani jednego
- * elementu widoku — okna pytają o wynik, nie o sposób (wzór: `wykazy-zebranego`).
- * Treść pochodzi z tabeli `migawka_strony`, którą wypełnia `browser.navigate`,
- * więc przeżywa przeładowanie powłoki i wymianę karty.
- *
- * Odmowa `not_found` nie jest błędem okna: rdzeń odpowiada nią, dopóki w oknie
- * nie odbyło się ani jedno przejście, co jest normalnym stanem okna świeżo
- * otwartego. Wtedy zostaje stan `nietknieta` — podgląd pusty, zdanie o powodzie,
- * bez stanu błędu. Każda inna odmowa mówi swoim powodem.
- *
- * Odczyt w toku jest osobnym stanem, nie odmianą pustki: „nie ma czego pokazać"
- * i „pytam" to dwie różne rady — jedna każe działać, druga czekać.
+ * Migawka strony wraz z drogą, którą moduł po nią sięga: treść strony widziana
+ * w oknie i przez model oraz jeden odczyt `browser.snapshot.get`, który ją
+ * przynosi. Bez ani jednego elementu widoku — okna pytają o wynik, nie o sposób.
  */
 export type StanMigawki = 'nietknieta' | 'odczyt' | 'gotowa' | 'blad';
 
@@ -31,8 +19,7 @@ export interface OdczytMigawki {
   /** Wchłania migawkę z własnego wywołania albo ze zdarzenia `browser.page.changed`. */
   wchlon(migawka: BrowserSnapshot): void;
   /**
-   * Czyta migawkę okna z rdzenia. `zeZrodlem` steruje polem `includeHtml` —
-   * źródło strony bywa ciężkie, więc wychodzi tylko wtedy, gdy ktoś o nie prosi.
+   * Czyta migawkę okna z rdzenia. Źródło strony wychodzi na żądanie, bo bywa ciężkie.
    */
   zaciagnij(idOkna: string, zeZrodlem?: boolean): Promise<void>;
 }
@@ -56,8 +43,7 @@ export function utworzOdczytMigawki(zrodlo: ZrodloBrowser, oglos: () => void): O
 
     wchlon(nowa) {
       migawka = nowa;
-      // Migawka świeżo wchłonięta unieważnia zdanie o poprzednim odczycie:
-      // powód „okno nie ma jeszcze migawki" przestał być prawdą w tej chwili.
+      // Świeża migawka unieważnia zdanie o poprzednim odczycie.
       przyjmij('gotowa', '');
     },
 

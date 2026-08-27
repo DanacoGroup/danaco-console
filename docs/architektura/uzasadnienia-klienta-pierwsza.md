@@ -2876,3 +2876,13 @@ powodu.
 Odczyt sekcji nie rozsyła osi ponownie. Oś zmienia wyłącznie pasek u góry,
 a jego zmiana już ją rozesłała; powtórzenie rozesłania przy odczycie kazałoby
 rdzeniowi przeczytać te same zapisy i tę samą nakładkę drugi raz pod rząd.
+
+## budowa/klient-poprzedni/src/dostepy/nazwy-dostepow.ts
+
+Plik jest jedynym miejscem, w którym wartość wyliczenia kontraktu zamienia się w zdanie
+po polsku. Wartości pochodzą wyłącznie ze stałych `shared/contract`, a ten plik dokłada
+do nich warstwę językową i nic więcej. Rozsypanie tych zdań po widokach dałoby dwie nazwy
+tego samego stanu.
+
+Wartość spoza wyliczenia nie jest błędem i niczego nie wygasza: wraca jako własny napis,
+żeby widoczne było to, co przysłał rdzeń, zamiast pustego miejsca.

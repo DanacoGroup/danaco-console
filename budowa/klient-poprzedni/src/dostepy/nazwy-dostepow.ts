@@ -4,19 +4,13 @@ import {
   AccessPointStatus,
 } from '../../../shared/contract';
 
-/**
- * Nazwy własne sekcji dostępów — jedyne miejsce, w którym wartość wyliczenia
- * kontraktu zamienia się w zdanie po polsku.
- *
- * Wartości pochodzą wyłącznie ze stałych `shared/contract`; ten plik
- * dokłada do nich warstwę językową i nic więcej. Rozsypanie tych zdań po
- * widokach dałoby dwie nazwy tego samego stanu.
- *
- * Wartość spoza wyliczenia nie jest błędem i niczego nie wygasza: wraca jako
- * własny napis, żeby widoczne było, co przysłał rdzeń, zamiast pustego miejsca.
- */
+/** Nazwy własne sekcji dostępów: wartość wyliczenia kontraktu w zdaniu po polsku. */
 
-/** Rodzaj punktu dostępu w jednym słowie. */
+/**
+ * Rodzaj punktu dostępu w jednym słowie, gotowym do wstawienia w kartę punktu.
+ * Wartość spoza wyliczenia wraca jako własny napis, żeby widoczne było to, co
+ * przysłał rdzeń, zamiast pustego miejsca.
+ */
 export function nazwaRodzaju(rodzaj: AccessPointKind): string {
   switch (rodzaj) {
     case AccessPointKind.McpBridge:
@@ -28,7 +22,11 @@ export function nazwaRodzaju(rodzaj: AccessPointKind): string {
   }
 }
 
-/** Nagłówek grupy wykazu punktów. */
+/**
+ * Nagłówek grupy wykazu punktów — nazwa rodzaju w liczbie mnogiej, ponieważ
+ * grupa zbiera wszystkie punkty tego samego rodzaju. Rodzaj nieznany klientowi
+ * podaje własną wartość kontraktu.
+ */
 export function nazwaGrupy(rodzaj: AccessPointKind): string {
   switch (rodzaj) {
     case AccessPointKind.McpBridge:
@@ -40,12 +38,20 @@ export function nazwaGrupy(rodzaj: AccessPointKind): string {
   }
 }
 
-/** Ikona grupy; nazwy pochodzą z zestawu `ikony/`. */
+/**
+ * Ikona grupy dobrana do rodzaju punktu; nazwy pochodzą z zestawu `ikony/`.
+ * Most protokołu MCP dostaje znak sieci, katalog lokalny znak katalogu, więc
+ * rodzaj grupy czyta się z wykazu bez sięgania do treści wiersza.
+ */
 export function ikonaRodzaju(rodzaj: AccessPointKind): 'siec' | 'folder' {
   return rodzaj === AccessPointKind.McpBridge ? 'siec' : 'folder';
 }
 
-/** Wynik ostatniego sprawdzenia punktu. */
+/**
+ * Wynik ostatniego sprawdzenia punktu w jednym słowie: odpowiada, nie odpowiada
+ * albo niesprawdzony. Stan nierozpoznany wraca własną wartością kontraktu,
+ * ponieważ brak wiedzy o stanie nie jest tym samym co stan zły.
+ */
 export function nazwaStanu(stan: AccessPointStatus): string {
   switch (stan) {
     case AccessPointStatus.Reachable:
@@ -74,7 +80,11 @@ export function klasaStanu(stan: AccessPointStatus): string {
   }
 }
 
-/** Tryb nadania w jednym słowie. */
+/**
+ * Tryb nadania w jednym słowie: odczyt albo zapis. Tryb spoza wyliczenia wraca
+ * własną wartością, żeby nadanie nieznane klientowi było widoczne w karcie,
+ * a nie milcząco pominięte.
+ */
 export function nazwaTrybu(tryb: AccessMode): string {
   switch (tryb) {
     case AccessMode.Read:
@@ -86,10 +96,17 @@ export function nazwaTrybu(tryb: AccessMode): string {
   }
 }
 
-/** Tryby w kolejności rosnącego uprawnienia — porządek przełącznika. */
+/**
+ * Tryby w kolejności rosnącego uprawnienia; ta sama kolejność jest porządkiem
+ * przełącznika w karcie nadania, więc ruch w prawo zawsze znaczy uprawnienie
+ * szersze, a nie węższe.
+ */
 export const TRYBY: readonly AccessMode[] = [AccessMode.Read, AccessMode.Write];
 
-/** Rodzaje w kolejności grup wykazu. */
+/**
+ * Rodzaje punktów w kolejności grup wykazu. Wykaz idzie tą kolejnością zamiast
+ * kolejnością nadejścia z rdzenia, żeby grupy stały zawsze w tym samym miejscu.
+ */
 export const RODZAJE: readonly AccessPointKind[] = [
   AccessPointKind.McpBridge,
   AccessPointKind.LocalDirectory,
@@ -108,7 +125,11 @@ export function opisChwili(chwila: number | undefined): string {
   }
 }
 
-/** Adres punktu widoczny w karcie: most albo urządzenie. */
+/**
+ * Adres punktu widoczny w karcie: dla mostu jest nim punkt końcowy, host albo
+ * nazwa mostu, a dla katalogu lokalnego identyfikator urządzenia. Pierwsza
+ * wartość niepusta wygrywa, ponieważ kontrakt nie wypełnia wszystkich pól.
+ */
 export function adresPunktu(dane: {
   kind: AccessPointKind;
   host?: string;
@@ -133,7 +154,10 @@ export function nazwaZeSciezki(sciezka: string): string {
   return ostatni === undefined || ostatni === '' ? sciezka : ostatni;
 }
 
-/** Pierwsza wartość niepusta; komplet pusty daje zdanie zastępcze. */
+/**
+ * Pierwsza wartość niepusta z podanych; komplet pusty daje zdanie zastępcze
+ * zamiast napisu pustego, żeby karta punktu nie pokazywała pola bez treści.
+ */
 function pierwszyNiepusty(wartosci: readonly (string | undefined)[]): string {
   for (const wartosc of wartosci) {
     if (typeof wartosc === 'string' && wartosc !== '') return wartosc;

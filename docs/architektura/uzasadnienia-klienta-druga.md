@@ -3613,3 +3613,13 @@ wpisuje do dokumentu jako zmianę śledzoną autorstwa modelu i rozgłasza zmian
 więc okno nie podmienia treści samo. Decyzja o propozycji bez odwołania w rdzeniu zapada
 w tym oknie tak samo jak przed scaleniem okien Studio Editora, bo odmowa w tym miejscu
 odebrałaby operatorowi decyzję, którą wolno mu podjąć.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-modulow.ts
+Strefa nie pyta rdzenia i nie otwiera modułu — wykaz podaje jej warstwa wpięcia modułów, a skutek wyboru
+należy do warstwy, która stronę zamontowała. Wykaz pusty chowa całą strefę, zamiast zostawiać nagłówek nad
+pustym prostokątem: gdy rdzeń przypnie moduły do środowisk, kafle znikną razem ze swoim powodem. Waga
+wizualna jest jak w strefie drugiej — ta sama karta, ten sam krój bazowy półgruby, ta sama siatka. Kafel
+prowadzi do pracy w module, a nie do zbudowania rzeczy, więc tak jak kafel komponentu nie nosi akcentu
+zarezerwowanego dla kart środowisk. Zapowiedź z liczbą modułów stoi zawsze, więc zwinięcie niczego nie
+ukrywa przed operatorem, a zapowiedź nad pustką mówiłaby o wykazie, którego nikt jeszcze nie odczytał. Zero
+okien jest stanem możliwym i mówi się je wprost, zamiast chować wiersz.

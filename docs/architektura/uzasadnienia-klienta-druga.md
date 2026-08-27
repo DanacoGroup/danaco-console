@@ -599,3 +599,36 @@ i pochodzi z rdzenia, więc znaki ostatnio użyte przeżywają zamknięcie karty
 
 Panel nie woła rdzenia i nie zna dokumentu — składa treść żądania i oddaje ją
 warstwie wyżej, która dokłada dokument i zakres przed wywołaniem komendy.
+
+## budowa/klient-poprzedni/src/moduly/studio/zrodlo-wstawien-studio.ts
+
+Siedemnaście komend studio wnoszą treść do dokumentu i wydają go dalej, obejmując wejście,
+wydanie, wniesienie ze źródła i cyfryzację. Wszystkie prowadzą tę samą drogę: coś spoza
+dokumentu wchodzi do dokumentu albo dokument wychodzi na zewnątrz. Założenie dokumentu zakłada
+pustą stronę, wniesienie pliku i PDF wnosi materiał wprost do edytora, wniesienie obrazu stawia
+go w miejscu kursora, wniesienie z biblioteki i ze strony sieci niesie fragment wraz z zapisem
+pochodzenia, a cyfryzacja prowadzi kolejkę wczytywania po stronie rdzenia. Wydanie do formatu,
+wydanie wsadowe, zapis pod nazwą i kopia zamykają drogę w drugą stronę.
+
+Bilans nie jest ozdobą odpowiedzi. Rdzeń oddaje przy wniesieniu bilans odzyskania, przy
+czynności bilans zmiany, a przy wydaniu wykaz cech pominiętych przez format docelowy. Zdania
+składające te trzy bilanse stoją w jednym miejscu, bo czytają je wszystkie panele wstawień
+naraz. Milczące zgubienie tabeli przy wydaniu do tekstu czystego jest ciszą niedopuszczalną,
+więc okno nie ma drogi, którą mogłoby bilans pominąć.
+
+Wywołanie uczciwe osłania każdą komendę, ponieważ koperta nieznanej komendy studia nie niesie
+pola stanu i bez tej osłony okno stałoby w ładowaniu bez końca.
+
+Zdanie o bilansie czynności traktuje zero zmian jako wynik prawdziwy, nie jako powodzenie:
+czynność, która nie tknęła ani jednego miejsca, jest odpowiedzią „nic się nie stało" i tak ma
+być przeczytana. Pominięcie z powodu blokady nazywa tę blokadę, aby było wiadomo, która zapora
+zatrzymała czynność, zamiast pozostawiać wrażenie częściowego powodzenia.
+
+Zdanie o bilansie wniesienia odzwierciedla to, że odzyskanie z formatu PDF jest odtworzeniem,
+nie odczytem: liczby stron z warstwą tekstową i bez niej, tabel rozpoznanych i nierozpoznanych,
+obrazów osadzonych i pominiętych stoją obok siebie. Skierowanie na rozpoznanie pisma jest
+zdaniem osobnym, ponieważ to inna decyzja niż samo dalsze wniesienie materiału.
+
+Zdanie o wyniku wydania nazywa wprost stratę cech, gdy format docelowy jest uboższy niż
+dokument: format uboższy jest sytuacją normalną, ale przemilczenie straty nie jest, więc
+wydanie, które zgubiło tabelę albo przypisy, mówi to wprost zamiast pokazywać samo „zapisano".

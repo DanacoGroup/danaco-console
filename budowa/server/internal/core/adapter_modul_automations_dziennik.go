@@ -32,7 +32,7 @@ func (a *adapterAutomatyk) DziennikPrzebiegu(ctx context.Context,
 	}
 	poziom := poziomBazy(z.Level)
 	granica := wartoscLiczby(z.Limit)
-	// Granicę podnosimy o jeden, żeby odróżnić „tyle jest” od „przycięto”.
+	// Granica jest podnoszona o jeden, żeby odróżnić „tyle jest” od „przycięto”.
 	granicaOdczytu := granica
 	if granicaOdczytu > 0 {
 		granicaOdczytu++
@@ -126,7 +126,7 @@ func (a *adapterAutomatyk) WznowPrzebieg(ctx context.Context,
 		return shared.AutomationExecutionResumeResponse{}, err
 	}
 	// Kroki ukończone przed punktem nie idą po raz drugi: ich zlecenia
-	// zamykamy, zanim kolejka ruszy.
+	// zamykane są, zanim kolejka ruszy.
 	if err := a.domknijKrokiSprzedPunktu(ctx, przebieg, punkt); err != nil {
 		return shared.AutomationExecutionResumeResponse{}, bladAutomatyki(err)
 	}

@@ -2124,3 +2124,17 @@ operacyjnych. Kolejność względem wejścia do modułu jest treścią: okno roz
 przestawione na ten moduł, a pytanie zadane wcześniej oddałoby okno modułu poprzedniego. Funkcja nie
 zgaduje: gdy rdzeń odmówi albo nie odda okna tego modułu, wraca pusty identyfikator wraz z powodem,
 który staje potem w odmowie obu kontrolek. Rdzeń oddaje w wykazie oba stany okna, otwarty i zamknięty.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/dyktowanie/dostarczenie-nagrania.ts
+Kontrakt oczekuje w komendzie transkrypcji ścieżki do pliku na maszynie
+silnika, a nagranie z mikrofonu istnieje w przeglądarce wyłącznie jako bajty
+w pamięci karty; kontrakt nie ma dziś komendy przyjmującej dźwięk, a powłoka
+nie ma wtyczki systemu plików, więc pliku nie ma czym zapisać. Ogniwo odmawia
+zamiast obchodzić ten brak: nagranie nie jest nigdzie zapisywane, ścieżka nie
+jest zmyślana, a dźwięk nie opuszcza maszyny. Drogę otworzy dopiero komenda
+kontraktu przyjmująca nagranie zakodowane w base64; do tego czasu dyktowanie
+pozostaje wyłączone, a tekst wpisuje się z klawiatury. Pomocnik zamieniający
+bajty na base64 jest już gotowy, bo kodowanie bajtów jest jedyną częścią tej
+drogi możliwą do zbudowania bez zmiany kontraktu; kodowanie idzie porcjami,
+ponieważ przekazanie wszystkich bajtów naraz przekracza limit argumentów
+wywołania na nagraniu dłuższym niż kilka sekund.

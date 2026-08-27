@@ -4373,3 +4373,21 @@ i nie potrzebuje wchodzić do modułu po nazwę.
 
 ## budowa/klient/src/wejscie/tresci.ts
 Plik przekazuje się tłumaczowi bez dostępu do kodu — nie ma tu ani znacznika, ani rozgałęzienia. Wartości w nawiasach klamrowych to miejsca na dane podstawiane w czasie działania; ich nazw nie tłumaczy się. Poza tym plikiem żaden plik drogi wejścia nie niesie łańcucha widocznego dla użytkownika — ani składnik, ani ekran, ani przebieg. Właściwość jest sprawdzalna: sprawdzian katalogu odrzuca każdy łańcuch spoza tego pliku, który niesie spację albo polski znak diakrytyczny.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/potwierdzenie-czyszczenia.ts
+Czyszczenie całej historii okna dostaje ten sam wyjątek co kasowanie sesji —
+i tylko ono; usunięcie pozycji wskazanych ręcznie potwierdzenia nie ma, bo
+wskazanie jest zgodą. Potwierdzenie usunięcia sesji nie nadaje się tu wprost,
+bo jest związane kształtem z sesją: przyjmuje wykaz identyfikatorów i
+tytułów, buduje wykaz jedna-pozycja-na-sesję i rozlicza po identyfikatorach
+zdaniami odmieniającymi słowo sesja, a czyszczenie historii nie ma ani
+wykazu bytów, ani rozliczenia po identyfikatorach — rdzeń oddaje samą
+liczbę usuniętych. Wygląd jest za to powielony co do znaku: ten sam natywny
+dialog, ta sama rama biblioteki, ta sama rodzina klas z tego samego
+arkusza, ten sam pas stanów i ta sama zasada, że odmowa rdzenia nie zamyka
+modalu.
+
+Oddaje odpowiedź rdzenia po udanej komendzie, także odpowiedź "usunięto 0",
+bo to również jest odpowiedź, którą panel ma powtórzyć. Gdy odczytu jeszcze
+nie było, modal mówi to wprost i podaje liczbę widoczną jako dolną granicę
+— tę samą, którą niesie zapowiedź retencji.

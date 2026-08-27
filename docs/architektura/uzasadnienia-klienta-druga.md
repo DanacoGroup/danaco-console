@@ -3894,3 +3894,6 @@ osobną komendą dla propozycji, nie dla zmiany śledzonej — dwie różne kome
 bytów. Karta zmiany śledzonej stoi na marginesie obok oznaczenia w treści, bo oznaczenie mówi
 gdzie, a karta mówi, co było przed zmianą, i to drugie jest tym, czego operator potrzebuje do
 decyzji.
+
+## budowa/klient/src/wejscie/skladniki/pole-tekstowe.ts
+Wygląd obwódki i ogłoszenie czytnika ekranu biorą się z jednego stanu błędu, nie z osobnej klasy — inaczej rozjeżdżają się.

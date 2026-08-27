@@ -2990,3 +2990,32 @@ niczego, bo „wszystkie obecne" jest informacją, nie ciszą. Każdy brak
 dostaje własny wiersz z zakresem, który przestaje działać, i podpowiedzią
 instalacyjną: Operator ma po starcie wiedzieć, czego nie zrobi, zanim
 spróbuje.
+
+## budowa/server/internal/core/adapter_okna.go
+
+Klient zakładał okno z kodem kanału wziętym z wyliczenia rodzajów, którego
+pierwsza pozycja to "cli", a rejestr rdzenia niesie kanał o kodzie
+lokalny-claude rodzaju "cli". Każde okno świeżej instalacji wskazywało więc
+kanał, którego nie ma, i pierwsza wypowiedź Operatora wracała odmową, że kanał
+"cli" nie istnieje w rejestrze.
+
+Ta sama pomyłka powtarzała się przy module: klient zakładał okno z modułem
+wziętym z wyliczenia znanych identyfikatorów modułu, a pierwsza pozycja tam to
+"talkin" — kod środowiska, nie modułu. Okno wskazywało więc moduł, którego
+w katalogu nie ma, a panel sterowania pokazywał moduł spoza wykazu.
+
+Więź koordynator-wykonawca ustanawia komenda window.handoff, zapisując ją do
+SQLite. Dopóki wykaz czytał koordynatora wyłącznie z pamięci, zaraz po udanym
+przekazaniu pokazywał wykonawcę bez koordynatora, choć wiersz w bazie był
+poprawny: trwałość działała, a żywy widok jej nie widział.
+
+Wiersz okna powstaje leniwie, przy pierwszej wiadomości, więc okno świeżo
+otwarte nie ma go jeszcze wcale — czyszczenie więzi na tej podstawie
+gubiłoby informację prawdziwą. Bez repozytorium przekazań adapter pracuje jak
+dotąd, na samej pamięci: trwałość jest dodatkiem, nie warunkiem pracy rdzenia.
+
+Wybór eksperta w oknie idzie dalej niż pamięć: rejestr nadzorcy przyjmuje go
+od migracji 084, ale wiersz okna dostawał go wyłącznie przy zakładaniu, więc
+zmiana eksperta w oknie już utrwalonym ginęła przy restarcie rdzenia. Zapis
+stoi po zmianie w rejestrze, a nie przed nią: nie ma po co utrwalać wyboru,
+którego pakiet sesji nie przyjął.

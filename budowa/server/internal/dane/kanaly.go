@@ -1,11 +1,5 @@
 // Odpowiedzialność pliku: dostęp do rejestru kanałów modelu (tabela
-// `kanal_modelu`). Rejestr jest sterowany danymi — nowy kanał to nowy wiersz,
-// nie nowy typ w kodzie.
-//
-// Baza przechowuje wyłącznie odwołanie do danych dostępowych
-// (`poswiadczenie_odwolanie`) — nazwę wpisu w magazynie sekretów, nigdy klucza.
-// Repozytorium nie ma żadnej metody zapisującej treść sekretu, a `parametry_json`
-// jest sprawdzany jako poprawny JSON parametrów kanału.
+// `kanal_modelu`). Rejestr jest sterowany danymi — nowy kanał to nowy wiersz, nie nowy typ w kodzie.
 package dane
 
 import (
@@ -17,7 +11,7 @@ import (
 	"strings"
 )
 
-// Kanal to wiersz rejestru kanałów modelu.
+// Kanal to wiersz rejestru kanałów modelu, niosący jego konfigurację połączenia i parametry działania.
 type Kanal struct {
 	ID                     int64
 	Kod                    string
@@ -34,7 +28,7 @@ type Kanal struct {
 	Utworzono              string
 }
 
-// RepozytoriumKanalow jest kontraktem rejestru kanałów.
+// RepozytoriumKanalow jest kontraktem rejestru kanałów, określającym operacje dostępne na wykazie kanałów.
 type RepozytoriumKanalow interface {
 	Dodaj(ctx context.Context, kanal Kanal) (int64, error)
 	Aktualizuj(ctx context.Context, kanal Kanal) error
@@ -74,7 +68,7 @@ func noweRepozytoriumKanalow(z *zapytania) *repozytoriumKanalow {
 	return &repozytoriumKanalow{zapytania: z}
 }
 
-// Dodaj wpisuje nowy kanał do rejestru.
+// Dodaj wpisuje nowy kanał do rejestru wraz z jego parametrami połączenia zapisanymi jako dokument JSON.
 func (r *repozytoriumKanalow) Dodaj(ctx context.Context, kanal Kanal) (int64, error) {
 	parametry, err := parametryKanalu(kanal)
 	if err != nil {
@@ -115,7 +109,7 @@ func (r *repozytoriumKanalow) Aktualizuj(ctx context.Context, kanal Kanal) error
 	return sprawdzTrafienie(wynik, "kanal_modelu", kanal.ID)
 }
 
-// Usun kasuje wiersz rejestru kanałów.
+// Usun kasuje wiersz rejestru kanałów wskazany identyfikatorem, trwale usuwając kanał z konfiguracji modelu.
 func (r *repozytoriumKanalow) Usun(ctx context.Context, id int64) error {
 	polecenie, err := r.zapytania.przygotuj(ctx, usunKanal)
 	if err != nil {
@@ -128,7 +122,7 @@ func (r *repozytoriumKanalow) Usun(ctx context.Context, id int64) error {
 	return sprawdzTrafienie(wynik, "kanal_modelu", id)
 }
 
-// Lista zwraca rejestr kanałów — komplet albo same czynne.
+// Lista zwraca rejestr kanałów modelu — komplet wpisów albo wyłącznie kanały czynne, zależnie od parametru.
 func (r *repozytoriumKanalow) Lista(ctx context.Context, tylkoAktywne bool) ([]Kanal, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, listaKanalow)
 	if err != nil {
@@ -154,7 +148,7 @@ func (r *repozytoriumKanalow) Lista(ctx context.Context, tylkoAktywne bool) ([]K
 	return lista, nil
 }
 
-// PobierzPoKodzie zwraca kanał wskazany kodem z konfiguracji okna.
+// PobierzPoKodzie zwraca kanał modelu wskazany kodem, jaki jest użyty w konfiguracji danego okna komunikacji.
 func (r *repozytoriumKanalow) PobierzPoKodzie(ctx context.Context, kod string) (Kanal, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, pobierzKanalPoKodzie)
 	if err != nil {
@@ -180,7 +174,7 @@ func parametryKanalu(kanal Kanal) (string, error) {
 	return parametry, nil
 }
 
-// odczytajKanal składa strukturę z jednego wiersza wyniku.
+// odczytajKanal składa pełną strukturę kanału modelu z jednego wiersza wyniku zapytania do bazy danych.
 func odczytajKanal(wiersz skaner) (Kanal, error) {
 	var kanal Kanal
 	var kontoID sql.NullInt64

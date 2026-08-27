@@ -79,7 +79,7 @@ func (a *adapterNarzedziArchiwum) zrodloPakowania(ctx context.Context,
 			return "", nil, "", bladWskazaniaArchiwum("nie można odczytać " +
 				strings.TrimSpace(*z.SourcePath) + ": " + err.Error())
 		}
-		// Wołamy 7z z katalogu nadrzędnego i podajemy samą nazwę, więc archiwum niesie ścieżkę względną.
+		// Woła się 7z z katalogu nadrzędnego i podaje się samą nazwę, więc archiwum niesie ścieżkę względną.
 		return filepath.Dir(pelna), []string{filepath.Base(pelna)}, filepath.Base(pelna), nil
 	}
 	return "", nil, "", bladWskazaniaArchiwum(
@@ -87,7 +87,7 @@ func (a *adapterNarzedziArchiwum) zrodloPakowania(ctx context.Context,
 			"narzędzie archiwum nie zgaduje przedmiotu pakowania")
 }
 
-// rusztowanieZasobow stawia katalog tymczasowy, w którym każdy wskazany zasób leży pod swoją nazwą czytelną, i oddaje listę tych nazw. Kopiujemy, a nie dowiązujemy, bo 7z traktuje dowiązania niejednoznacznie.
+// rusztowanieZasobow stawia katalog tymczasowy, w którym każdy wskazany zasób leży pod swoją nazwą czytelną, i oddaje listę tych nazw. Kopiuje się, a nie dowiazuje się, bo 7z traktuje dowiązania niejednoznacznie.
 func (a *adapterNarzedziArchiwum) rusztowanieZasobow(ctx context.Context,
 	kody []string, praca string) (string, []string, error) {
 
@@ -156,7 +156,7 @@ func nazwaArchiwum(zadana *string, domyslna string) string {
 	if podstawa == "" || podstawa == "." {
 		return "archiwum"
 	}
-	// Rozszerzenie dokłada format, więc zdejmujemy to, które model dopisał sam w nazwie.
+	// Rozszerzenie dokłada format, więc zdejmuje się to, które model dopisał sam w nazwie.
 	for _, koncowka := range []string{".zip", ".7z", ".tar.gz", ".tgz", ".tar"} {
 		podstawa = strings.TrimSuffix(podstawa, koncowka)
 	}

@@ -5192,3 +5192,13 @@ zmienił.
 
 Wtopienie poczty w Asystenta odebrałoby ją każdemu innemu oknu, bo Asystent prowadzi zlecenie,
 a skrzynka nie jest jego bytem.
+
+## budowa/server/internal/core/przenoszenie_komplet.go
+
+Komplet kontekstu ma siedem składników: polecenie wyjściowe, dokumenty,
+projekt, agentów, historię rozmowy, źródła wiedzy i parametry wykonania.
+Żaden z nich nie może zginąć po drodze, więc komplet powstaje z trzech
+warstw nakładanych w tej kolejności: to, co przyniosło żądanie, potem
+komplet zapisany przy oknie źródłowym, a na końcu realny stan okna i sesji
+źródłowej. Warstwa wcześniejsza wygrywa: składnik wskazany wprost w żądaniu
+nie zostaje nadpisany tym, co system odczytał sam.

@@ -292,3 +292,27 @@ Szablonu fabrycznego nie da się usunąć: rdzeń odmawia i zwraca powód odmowy
 w polu `deleted`. Panel zostawia pozycję w wykazie, ponieważ szablon nadal
 istnieje — zdjęcie jej z widoku przy jednoczesnym powrocie po kolejnym odczycie
 byłoby pokazaniem skutku, który się nie wydarzył.
+
+## budowa/klient-poprzedni/src/moduly/studio/osadzenie-panel.ts
+
+Panel osadzony pokazuje dokument przez cały czas pracy: Operator nie opuszcza
+edytora, a wybór położenia panelu — obok treści albo na całej powierzchni —
+należy do Operatora. Wniesienie fragmentu z Biblioteki albo ze strony
+sieciowej trafia wprost w miejsce kursora w dokumencie, nie do kolejki ani do
+zasobów; komenda `studio.ingest.url` oddaje pole tekstowe, które panel
+prowadzi do dokumentu, a gdy tekst jeszcze nie istnieje, bo pozycja czeka na
+rozpoznanie pisma, panel nazywa ten stan zamiast wnosić pustkę.
+
+Komendy `studio.insert.from.library` i `studio.insert.from.web` wnoszą
+fragment do dokumentu i oddają zapis pochodzenia — adres albo plik, wersję,
+czas sięgnięcia i autora. Panel woła te komendy, gdy dostał źródło wstawień,
+i pokazuje pochodzenie oddane przez rdzeń wraz z bilansem czynności. Wiersz
+pochodzenia wnoszony do treści dokumentu pozostaje drogą zapasową, ponieważ
+przeżywa wydanie dokumentu do formatu, który zapisu pochodzenia nie niesie.
+
+Panel nie rysuje strony sieciowej. Migawka `browser.snapshot.get` oddaje
+adres, tytuł, treść renderowaną i źródło strony jako tekst, nie jako obraz;
+zrzut ekranu jest odnośnikiem zasobu, a komendy pobierającej jego bajty do
+przeglądarki kontrakt nie niesie. Panel pokazuje więc treść, którą rdzeń
+naprawdę oddaje, i nazywa wprost to, czego nie oddaje. Ramka z cudzą stroną
+wewnątrz okna byłaby drugą przeglądarką, a moduł Browser jest jeden.

@@ -4469,3 +4469,10 @@ orzekł, więc okno nie orzeka wtedy ani obecności treści, ani jej braku.
 Kontrolka wyboru pliku zgłasza zmianę wyłącznie przy zmianie wartości, dlatego
 wyczyszczenie jej po przejęciu uchwytu pozwala wskazać ten sam plik ponownie po
 wgraniu nieudanym.
+
+## budowa/klient-poprzedni/src/mission-control/sekcja-operacji.ts
+
+Wysycenia, kolejki, limitu ani kosztu narastającego kontrakt nie niesie, więc plakietka
+wypisuje przy nich etykietę braku źródła zamiast liczb wymyślonych po stronie klienta.
+Liczba zmyślona wygląda tak samo jak odczytana i wprowadzałaby w błąd przy ocenie
+obciążenia kanału.

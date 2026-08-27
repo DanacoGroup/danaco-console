@@ -1,17 +1,6 @@
 // Odpowiedzialność pliku: graf wiedzy projektu (`workspace.knowledge.graph.get`)
 // oraz tablica wizualna (`workspace.canvas.get`, `workspace.canvas.save`).
-//
-// ── Czym ten graf NIE jest ─────────────────────────────────────────────────
-// Rodzina `workspace.knowledge` nie miesza się z rodziną `knowledge.*`. Tamta
-// prowadzi wskaźnik ZNACZENIA i odpowiada na pytanie „co jest podobne".
-// Ta rysuje sieć ODNOŚNIKÓW: kto na kogo wskazuje wprost — strona na stronę,
-// komentarz na zadanie, podzadanie na zadanie nadrzędne. Krawędź istnieje
-// wtedy, gdy ktoś ją napisał, a nie wtedy, gdy dwa byty są sobie bliskie.
-//
-// ── Przycięcie mówi o sobie ────────────────────────────────────────────────
-// Graf przycięty granicą wielkości oddaje `truncated: true`. Bez tego pola
-// obraz częściowy wyglądałby na kompletny obraz projektu, a Operator
-// wnioskowałby o brakach powiązań z braku miejsca w odpowiedzi.
+// Rodzina `workspace.knowledge` nie miesza się z rodziną `knowledge.*`.
 package core
 
 import (
@@ -24,10 +13,12 @@ import (
 	"danacoconsole/shared"
 )
 
-// granicaWezlowGrafuWorkspace jest domyślną granicą wielkości grafu.
+// granicaWezlowGrafuWorkspace jest domyślną granicą wielkości grafu wiedzy
+// zwracanego bez jawnie podanego limitu w żądaniu.
 const granicaWezlowGrafuWorkspace = 500
 
-// GrafWiedzy obsługuje `workspace.knowledge.graph.get`.
+// GrafWiedzy obsługuje `workspace.knowledge.graph.get` i rysuje sieć wprost
+// napisanych odnośników między bytami projektu.
 func (a *adapterPrzestrzeniRoboczej) GrafWiedzy(ctx context.Context,
 	z shared.WorkspaceKnowledgeGraphGetRequest) (shared.WorkspaceKnowledgeGraphGetResponse, error) {
 
@@ -72,7 +63,8 @@ func (a *adapterPrzestrzeniRoboczej) GrafWiedzy(ctx context.Context,
 	}}, nil
 }
 
-// Kanwa obsługuje `workspace.canvas.get`.
+// Kanwa obsługuje `workspace.canvas.get` i oddaje treść tablicy wizualnej
+// wskazanego projektu wraz z wykazem jej identyfikatorów.
 func (a *adapterPrzestrzeniRoboczej) Kanwa(ctx context.Context,
 	z shared.WorkspaceCanvasGetRequest) (shared.WorkspaceCanvasGetResponse, error) {
 
@@ -90,8 +82,8 @@ func (a *adapterPrzestrzeniRoboczej) Kanwa(ctx context.Context,
 	}
 	odpowiedz := shared.WorkspaceCanvasGetResponse{CanvasIds: kody}
 	if len(tablice) == 0 {
-		// Projekt bez tablicy oddaje brak pola, nie odmowę: „jeszcze nie ma"
-		// jest stanem początkowym płótna, a nie niepowodzeniem odczytu.
+		// Projekt bez tablicy oddaje brak pola, nie odmowę: „jeszcze nie ma”
+		// jest stanem początkowym płótna.
 		return odpowiedz, nil
 	}
 	wybrana := tablice[0]
@@ -112,7 +104,8 @@ func (a *adapterPrzestrzeniRoboczej) Kanwa(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// ZapiszKanwe obsługuje `workspace.canvas.save`.
+// ZapiszKanwe obsługuje `workspace.canvas.save` i zapisuje treść tablicy
+// wizualnej pod jej identyfikatorem w projekcie.
 func (a *adapterPrzestrzeniRoboczej) ZapiszKanwe(ctx context.Context,
 	z shared.WorkspaceCanvasSaveRequest) (shared.WorkspaceCanvasSaveResponse, error) {
 
@@ -155,7 +148,8 @@ func (a *adapterPrzestrzeniRoboczej) ZapiszKanwe(ctx context.Context,
 	return shared.WorkspaceCanvasSaveResponse{Canvas: kanwaKontraktuWorkspace(zapisana)}, nil
 }
 
-// siecProjektuWorkspace składa węzły i krawędzie z bytów projektu.
+// siecProjektuWorkspace składa węzły i krawędzie z bytów projektu, tworząc
+// graf odnośników zwracany wołającemu.
 func (a *adapterPrzestrzeniRoboczej) siecProjektuWorkspace(ctx context.Context, projektID int64,
 	kodProjektu string) ([]shared.WorkspaceKnowledgeNode, []shared.WorkspaceKnowledgeEdge, error) {
 
@@ -309,7 +303,8 @@ func krawedzieWezlowWorkspace(wezly []shared.WorkspaceKnowledgeNode,
 	return zostawione
 }
 
-// kanwaKontraktuWorkspace przekłada wiersz tablicy na byt kontraktu.
+// kanwaKontraktuWorkspace przekłada wiersz tablicy wizualnej z bazy danych
+// na byt kontraktu zwracany wołającemu.
 func kanwaKontraktuWorkspace(t dane.TablicaWorkspace) shared.WorkspaceCanvas {
 	return shared.WorkspaceCanvas{
 		Id: t.Identyfikator, ProjectId: t.ProjektKod, Name: t.Nazwa,

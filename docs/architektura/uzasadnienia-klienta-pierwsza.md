@@ -3735,3 +3735,13 @@ Przyciski niosą sam znak, bez napisu, ponieważ trasy stoją w grupie akcji pas
 obok ustawień, motywu i menu konta, które również są ikonami, a nazwa widoku
 stoi tuż pod paskiem jako tytuł strony. Nazwę niesie atrybut `title` oraz
 etykieta dostępności przycisku.
+
+## budowa/klient-poprzedni/src/moduly/design/historia-promptow.ts
+
+Odczyt historii i zapis szablonu mają już komendy w kontrakcie, brakuje im
+natomiast uchwytów w rdzeniu. Okno tej drogi jeszcze nie wywołuje, więc
+kontrolka zapisu szablonu nazywa stan, zamiast wykonywać zapis.
+
+Porównanie wymienia pola kontraktu, którymi dwa prompty się różnią. Prompt jest
+zbiorem pól, więc różnica liczona na samym tekście nie niosłaby informacji
+o tym, co się zmieniło.

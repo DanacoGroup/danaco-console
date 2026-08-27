@@ -961,3 +961,13 @@ zatem fakt nadania zamiaru, a nie wynik jego wykonania.
 Stąd bierze się dobór słów w treści paska. Zdanie mówi „zamiar nadany", nigdy
 „wykonano", ponieważ w chwili wypisania powłoka mogła jeszcze nie wysłać komendy,
 a rdzeń mógł jej nie potwierdzić.
+
+## budowa/klient-poprzedni/src/ikony/marka.ts
+
+Znak czyta się jako podwójny grot z kropką sygnału ustawioną na linii bazowej. Godło uproszczone
+niesie jeden grot i obowiązuje od szesnastu pikseli boku w dół, ponieważ poniżej tej wartości drugi
+grot oraz prześwit między grotami przestają być czytelne.
+
+Odmianę znaku dobiera się do podłoża, a nie do motywu interfejsu, ponieważ barwy znaku są wpisane
+w plik źródłowy. Pasek kokpitu pozostaje atramentowy w obu motywach, więc leży na nim odmiana
+przeznaczona na podłoże ciemne, niezależnie od tego, który motyw jest czynny.

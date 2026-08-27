@@ -39,3 +39,18 @@ Barwy i odstępy formularza pochodzą wyłącznie z żetonów motywu, więc plik
 
 ## budowa/klient-poprzedni/src/aktualizacja/aktualizacja.css
 Barwy pasa pochodzą wyłącznie z żetonów motywu, bez żadnej wartości barwnej wpisanej wprost, dzięki czemu podmiana żetonu wystarcza i pas nie wypada z pomiaru kontrastu. Arkusz nie powtarza biblioteki: tor postępu korzysta z klasy `.dn-postep` z pliku `komponenty/postep.css`, chronologia z klasy `.dn-tabela` z pliku `komponenty/tabela.css`, a przycisk przywołania z klasy `.dn-btn` z pliku `komponenty/przycisk.css`. W tym pliku pozostaje wyłącznie układ pasa i miejsca styku.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/panel-orkiestracji.css
+Barwy i odstępy pochodzą wyłącznie z żetonów warstwy motywu, arkusz nie wprowadza własnych decyzji wyglądu ponad układ. Arkusz nie wygasza kontrolek: sekcja bez powiązania z modułem Automations sygnalizuje to zdaniem, a nie odcieniem szarości.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/analiza-debaty.css
+Oba okna dzielą jeden nośnik wykazu, bo pokazują to samo w kształcie: pozycję ze znacznikiem mówcy, nazwą i wierszami metryki. Dwa osobne nośniki o tym samym układzie rozjechałyby się przy pierwszej poprawce. Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu i z biblioteki komponentów.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/debata.css
+Rozkład modułu, stany obowiązkowe, wykaz pozycji i skład debaty stoją w pliku roundtable.css. Barwy i rozmiary czcionki pochodzą wyłącznie z żetonów motywu i z biblioteki komponentów.
+
+## budowa/klient-poprzedni/src/moduly/roundtable/panel-debaty.css
+Panel wciąga swoje arkusze sam, bo gospodarzem bywa moduł, którego arkusz o Roundtable nic nie wie; wydzielenie sprawia, że gospodarz dostaje wyłącznie reguły panelu. Obok tego pliku panel wciąga roundtable.css i wyłącznie z niego bierze cztery reguły stanu treści, bo nośnik stanu treści modułu ma jeden zapis. Wypowiedzi kilku modeli idą kolumną jedna pod drugą, a odróżnia je wstęga w wariancie motywu i tożsamość w nagłówku głosu. Plik nie zapisuje żadnej barwy ani odstępu wprost — wszystko pochodzi z żetonów motywu.
+
+## budowa/klient-poprzedni/src/moduly/studio/dziennik-kontrola.css
+Arkusz wchodzi z plików obsługi dziennika, kopii zapasowych i blokad, a nie z pliku studio.css, ponieważ ten należy do innego odcinka prac. Wciągnięcie arkusza przez moduł kliencki daje potrzebny skutek bez zmiany w cudzym pliku. Żadna barwa nie jest zapisana wprost — wszystkie wartości pochodzą z żetonów motywu, więc oba motywy obsługują się same.

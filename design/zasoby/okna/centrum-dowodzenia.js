@@ -419,7 +419,16 @@
     var m = miara(el);
     var polowa = szerokosc(m, tekst) / 2;
     var x = r.left + r.width / 2;
-    var lewaGranica = MARGINES + polowa;
+    /* Lewa strefa bezpieczna omija pionową szynę nawigacji: dymek pierwszego
+       przycisku wstążki dosuwał się do krawędzi okna i wchodził na szynę,
+       która stoi wyżej w układzie. Granicę odsuwamy za prawą krawędź szyny. */
+    var lewaStrefa = MARGINES;
+    var szyna = document.querySelector('.dn-szyna-nawigacji');
+    if (szyna) {
+      var rsz = szyna.getBoundingClientRect();
+      if (rsz.width) { lewaStrefa = Math.max(MARGINES, rsz.right + MARGINES); }
+    }
+    var lewaGranica = lewaStrefa + polowa;
     var prawaGranica = window.innerWidth - MARGINES - polowa;
     if (prawaGranica > lewaGranica) {
       x = Math.min(Math.max(x, lewaGranica), prawaGranica);

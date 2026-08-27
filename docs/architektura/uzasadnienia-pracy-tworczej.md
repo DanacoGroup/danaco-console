@@ -2486,3 +2486,152 @@ mowiace, na czym pomocnik utknal.
 czytajCalosc: przyrostowe zdarzenia bylyby tu kosztem bez odbiorcy. Przy
 bledzie odczytu zwracane jest to, co zdazylo przyjsc — niepelna
 transkrypcja niesie wiecej niz pusty wynik.
+
+## budowa/server/internal/core/adapter_modul_design_kolor_obraz.go
+
+Paleta z obrazu jest pomiarem, nie zgadywaniem. Barwy dominujące liczy
+skupianie metodą k-średnich w przestrzeni CIE Lab, z zasiewem rozłożonym po
+histogramie. Lab, nie sRGB: w sRGB odległość między dwiema barwami nie
+odpowiada temu, jak różne wydają się oku, więc skupianie łączyłoby zieleń
+z żółcią i rozdzielało dwa odcienie granatu. Udział barwy (`share`) jest
+ułamkiem punktów przypisanych do jej skupienia — liczbą zmierzoną, nie oceną.
+
+Symulacja wady widzenia idzie przez macierze LMS. Protanopia, deuteranopia
+i tritanopia to brak jednego z trzech rodzajów czopków. Rachunek przechodzi
+sRGB do LMS (macierz Hunt-Pointer-Estevez), tam zeruje brakujący kanał
+zastępując go kombinacją pozostałych (macierze Brettela-Vienota-Mollona),
+i wraca do sRGB. Achromatopsja jest luminancją wedle wag WCAG — tych samych,
+którymi liczy się kontrast.
+
+Wynik symulacji jest zasobem, nie base64 w odpowiedzi. Kontrakt oddaje
+`DesignAsset`, więc bajty idą do magazynu pod sumą kontrolną, a wiersz
+powstaje po nich — tą samą drogą, co przy wniesieniu i przy generowaniu.
+Zasób wskazuje źródło polem `variantOfAssetId`: symulacja jest wariantem
+obrazu, nie osobnym obrazem znikąd.
+
+Granica punktów pomiaru palety: obraz w 24 megapikselach nie potrzebuje
+wszystkich punktów, żeby oddać barwy dominujące, próbkowanie równomierne
+daje ten sam wynik za setną część rachunku.
+
+Liczba przebiegów skupiania palety: skupienia przestają się przesuwać po
+kilkunastu, dwadzieścia jest zapasem, a nie nadzieją.
+
+## budowa/server/internal/core/adapter_modul_studio_wczytanie.go
+
+Strona sieciowa idzie przez klienta HTTP standardowej biblioteki, nie
+przeglądarką: pobranie strony to żądanie HTTP i odczyt odpowiedzi. Silnik
+przeglądarki wykonałby jeszcze skrypty strony — i byłby zależnością spoza
+instalki, a więc odmową u Operatora. Strona zbudowana wyłącznie skryptem
+zwróci tu mało treści; to jest cena znana i wybrana, a nie przeoczenie.
+Migawkę strony wykonanej skryptem oddaje `browser.snapshot.get`, co kontrakt
+mówi wprost w opisie tej komendy.
+
+Skaner idzie warstwą urządzeń systemu: skanowanie prowadzi warstwa urządzeń
+rozdzielona po systemie (`urzadzenia_skaner.go`) — SANE na Linuksie, WIA przez
+PowerShell na Windowsie. Ta komenda nie ma własnej drogi do urządzenia i nie
+ma własnej odmowy — obie rzeczy należą do warstwy, bo inaczej rozjechałyby się
+z wykazem (`studio.ingest.device.list`), który pyta tę samą warstwę.
+
+Wersja natywna Windows jest tu rzeczą rozstrzygającą: instalka natywna nie
+niesie SANE i nigdy nie poniesie, więc odmowa „brak scanimage" byłaby na
+Windowsie odmową na zawsze. Dlatego rozstrzygnięcie po systemie stoi w
+warstwie, a nie w tej komendzie.
+
+Rdzeń nie oddaje tu pustej kolejki pozycji, gdy czegoś brakuje: pusta kolejka
+jest twierdzeniem „skanowałem i nic nie przyszło", którego rdzeń bez
+odpowiedzi urządzenia nie ma prawa postawić. Każdy brak — warstwy, programu,
+urządzenia, sterownika — jest odmową nazywającą, czego brakuje.
+
+Stan „oczekuje" w pozycji wczytywania kazałby Operatorowi puścić rozpoznanie
+pisma na tekście, który tekstem już jest — dlatego pozycja z adresu wchodzi
+od razu jako gotowa.
+
+Pobrane strony wchodzą do kolejki jako pozycje w stanie „oczekuje" — tak samo,
+jak materiał dołożony ścieżką. Skan jest obrazem, więc tekstu jeszcze nie ma;
+wpisanie stanu „gotowa" kazałoby Operatorowi przyjąć pustą treść jako wynik.
+
+Warstwa oddająca powodzenie bez ani jednego pliku to nie jest pusta kolejka
+do przekazania dalej, a usterka warstwy — i jako usterka ma zostać nazwana,
+zamiast wyglądać na „skaner nic nie podał".
+
+Czyszczenie treści strony w `tekstZeStronyStudia` jest własne i proste, bez
+biblioteki czytelności: te biblioteki rozstrzygają, która część strony jest
+treścią główną, a rozstrzygnięcie błędne wycina Operatorowi połowę artykułu
+bez ostrzeżenia. Tutaj nic nie znika poza nawigacją i reklamą, które i tak
+nie mają tekstu własnego — Operator dostaje więcej, niż prosił, a nie mniej.
+
+Wykaz obrazów w `wciagnijObrazyStronyStudia` wraca zapisem osadzenia. Dzięki
+temu obraz wciągnięty ze strony wstawia się do dokumentu tak samo jak grafika
+z Design, a nie drugim sposobem zapisu.
+
+Obraz niepobrany nie unieważnia strony: Operator prosił o tekst, a obrazy są
+dodatkiem. Odmowa całości z powodu jednego martwego odnośnika byłaby odmową
+wczytania artykułu.
+
+Barwy palety wychodzą w kolejności udziału: kontrakt tak opisuje pole,
+a Operator patrzy najpierw na to, czego w obrazie jest najwięcej.
+
+Punkty całkowicie przezroczyste nie wchodzą do próby palety: barwa piksela
+o zerowym kryciu nie jest barwą obrazu, a w plikach PNG z przezroczystością
+bywa czernią, która przeważyłaby całą paletę.
+
+Krok próbkowania punktów obrazu liczony jest z powierzchni: obraz mniejszy
+niż granica wchodzi w całości, większy — co n-ty punkt w obu osiach.
+
+Zasiew skupiania barw jest rozłożony po posortowanej próbie, nie losowy: dwa
+wywołania na tym samym obrazie mają dać tę samą paletę, inaczej odpowiedź
+zmieniałaby się przy każdym wywołaniu bez sposobu poznania, która jest
+prawdziwa.
+
+Porządek zasiewu skupiania po jasności percepcyjnej obejmuje zakres od
+najciemniejszych do najjaśniejszych barw obrazu.
+
+Nowe środki skupień liczone jako średnia w Lab — średnia w sRGB dałaby barwę
+jaśniejszą od wszystkich składowych, bo sRGB niesie gamma.
+
+Skupienie puste nie wchodzi do palety: barwa, do której nie należy ani jeden
+punkt obrazu, nie jest barwą tego obrazu.
+## server/internal/mowa/bledy.go
+
+Odmowa jest osobnym typem, a nie napisem, bo obslugiwacz komendy kontraktu
+rozroznia te trzy przypadki przez errors.As: kazdy dostaje inny kod bledu
+i inna podpowiedz naprawy. Brak Pythona to niedokonczona instalacja
+produktu, brak silnika to niedoinstalowana zaleznosc Pythona, a brak
+nagrania to zla dana przyslana przez klienta. ZADNA ODMOWA NIE NAZYWA
+BRAKU, KTOREGO NIE ZMIERZONO. Lancuch transkrypcji ma trzy ogniwa
+dokladane osobno i naprawiane osobno: interpreter Pythona, biblioteka
+faster-whisper w tym interpreterze, wagi modelu na dysku. Odmowa, ktora
+przypisuje brak niewlasciwemu ogniwu, prowadzi Operatora do naprawy
+bezskutecznej. Dlatego rozpoznanie ma tu wartosc "nie wiem" i przy niej
+odmowa oddaje sam zmierzony powod, zamiast zgadywac rozpoznanie i naprawe.
+
+BrakInterpretera: typ osobny od BrakSilnika, bo naprawa jest inna
+i pomylenie ich prowadzi Operatora donikad: instalowanie biblioteki do
+interpretera, ktorego nie ma, konczy sie drugim komunikatem o tym samym
+braku. Osobny tez od BrakPomocnika, bo tam brakuje CZESCI PRODUKTU
+(katalogu ze skryptem), a tu brakuje programu, ktory produkt zastaje na
+maszynie. Rozpoznanie idzie po bledzie zrodlowym uruchomienia
+(exec.ErrNotFound), nie po zgadywaniu z tresci wyjscia.
+
+odmowaUruchomienia: bez tego rozstrzygniecia kazde niepowodzenie
+uruchomienia szlo jako brak silnika — a wiec odmowa twierdzila
+"interpreter odnaleziony" takze wtedy, gdy w tym samym zdaniu, w nawiasie,
+stalo executable file not found. Operator czytal zdanie glowne i instalowal
+biblioteke do interpretera, ktorego nie ma. Dopasowanie po tekscie zostaje
+jako druga droga, bo blad bywa owiniety przez warstwe uruchamiania i wtedy
+nie niesie juz sygnalu typowanego.
+
+Error (BrakSilnika): zdanie NIE twierdzi, ze interpreter zostal
+odnaleziony — twierdzilo tak wczesniej i bylo to twierdzenie niezmierzone:
+pomocnik bywa nieuruchomiony z wielu powodow, a odmowa niosla wtedy
+w nawiasie prawde przeciwna do zdania glownego. Brak interpretera
+rozpoznany wprost ma wlasna odmowe (BrakInterpretera); tutaj zostaje
+przypadek, w ktorym uruchomienie nie powiodlo sie z powodu
+nierozstrzygnietego.
+
+Unwrap (BrakSilnika): metoda istnieje, zeby wszystkie trzy odmowy pakietu
+dały sie obsluzyc jednakowo, i zwraca nil zgodnie z umowa errors.Unwrap —
+nil znaczy "lancuch konczy sie tutaj", a nie usterke.
+
+BrakNagrania: kod bledu kontraktu jest wtedy "zly argument", nie "usterka
+rdzenia".

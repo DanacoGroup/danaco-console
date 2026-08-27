@@ -457,6 +457,16 @@
       if (el && el === ostatni) { zdejmij(el); ostatni = null; }
     }, true);
   });
+
+  /* Domknięcie szczeliny między najechaniem a zdarzeniem wskaźnika. Wyzwalacz,
+     który pojawia się pod nieruchomym wskaźnikiem albo wjeżdża pod niego
+     przewijaniem, dostaje stan najechania bez `pointerover`. Ruch wskaźnika
+     nadrabia współrzędne, a warunek na znaczniku sprawia, że pełny rachunek
+     wykonuje się raz na wyzwalacz, nie przy każdym ruchu. */
+  document.addEventListener('pointermove', function (e) {
+    var el = zWezla(e.target);
+    if (el && el.getAttribute('data-dymek') !== 'tak') { ustaw(el); }
+  }, true);
   window.addEventListener('scroll', function () {
     if (ostatni) { ustaw(ostatni); }
   }, true);

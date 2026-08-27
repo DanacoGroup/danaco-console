@@ -1,16 +1,18 @@
-// Punkt wejścia powłoki natywnej Danaco Console.
+// Punkt wejścia powłoki Danaco Console.
 //
-// Wyłącznie kompozycja: odczyt ustawień, uruchomienie rdzenia w tle — tylko gdy
-// wskazanie Operatora na to pozwala (trzy stany: wskazanie niezłożone, rdzeń na
-// tym urządzeniu, rdzeń na serwerze; zob. `ustawienia.rs` i `wskazanie.rs`) —
-// złożenie aplikacji Tauri i praca do jawnego zakończenia.
-// Zero logiki, zero typów, zero obsługi zdarzeń — każda odpowiedzialność
-// mieszka w osobnym module.
+// Wyłącznie kompozycja: odczyt ustawień, złożenie aplikacji Tauri i praca do
+// jawnego zakończenia. Zero logiki, zero typów, zero obsługi zdarzeń — każda
+// odpowiedzialność mieszka w osobnym module.
+//
+// Powłoka niesie okno wraz z wkompilowanym interfejsem i nie niesie rdzenia.
+// Rdzeń stoi na serwerze wdrożenia, więc przy starcie nie ma czego stawiać ani
+// na co czekać: powłoka czyta wskazanie, gdzie ten rdzeń szukać, i otwiera okno.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod aktualizacja;
 mod awaria_startu;
 mod dialog_katalogu;
+mod dziennik;
 mod menu_zasobnika;
 mod montaz;
 mod nastawy;
@@ -21,7 +23,6 @@ mod ustawienia;
 mod wskazanie;
 mod zamkniecie;
 mod zasobnik;
-mod zrodlo_interfejsu;
 
 use ustawienia::Ustawienia;
 
@@ -30,32 +31,12 @@ fn main() {
     // gdy `montaz::zloz` (okno, zasobnik) zawiedzie — zob. `awaria_startu.rs`.
     awaria_startu::zainstaluj();
 
-    let ustawienia = Ustawienia::ustal();
-    // Trzy stany wskazania, trzy zachowania startu:
-    //
-    //   niezłożone — pierwsze uruchomienie po instalacji. Powłoka NIE stawia
-    //     rdzenia: nie wie jeszcze, czy Operator pracuje z rdzeniem na tym
-    //     urządzeniu, czy z rdzeniem na serwerze. Pyta o to okno
-    //     (`wskazanie_rdzenia`, `wskaz_rdzen`), a proces staje po wskazaniu.
-    //   rdzeń lokalny — powłoka stawia proces w tle, jak dotąd.
-    //   rdzeń na serwerze — powłoka nie stawia niczego; drugi proces tworzyłby
-    //     drugi, zbędny stan.
-    let rdzen_w_tle = if !ustawienia.wskazanie_zlozone() {
-        rdzen::uruchomienie::oczekuj_na_wskazanie(&ustawienia)
-    } else if ustawienia.rdzen_lokalny() {
-        rdzen::uruchom_w_tle(&ustawienia)
-    } else {
-        rdzen::uruchomienie::nie_stawiaj_lokalnie(&ustawienia)
-    };
-
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(ustawienia)
-        .manage(rdzen_w_tle)
+        .manage(Ustawienia::ustal())
         // Lista poleceń jest zamknięta: wchodzi na nią wyłącznie czynność,
-        // której przeglądarka nie wykona sama — nie podmieni pliku aplikacji
-        // ani nie postawi procesu na nowo. Zatrzymanie rdzenia poleceniem nie
-        // jest i zostaje w zasobniku (powód w `polecenia.rs`).
+        // której przeglądarka nie wykona sama — natywne okno wyboru katalogu,
+        // wskazanie serwera rdzenia i podmiana pliku aplikacji.
         .invoke_handler(tauri::generate_handler![
             polecenia::wybierz_katalog_roboczy,
             polecenia::stan_rdzenia,

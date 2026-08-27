@@ -5,21 +5,18 @@
 
 use tauri::{App, Manager};
 
+use crate::dziennik;
 use crate::okno;
-use crate::rdzen::{dziennik, UchwytRdzenia};
+use crate::rdzen;
 use crate::ustawienia::Ustawienia;
 use crate::zasobnik;
-use crate::zrodlo_interfejsu;
 
-/// Składa powłokę: otwiera okno pod ustalonym adresem i stawia ikonę zasobnika.
+/// Składa powłokę: otwiera okno z pakietem interfejsu i stawia ikonę zasobnika.
 pub fn zloz(aplikacja: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let ustawienia = aplikacja.state::<Ustawienia>().inner().clone();
-    dziennik::dopisz(&aplikacja.state::<UchwytRdzenia>().opis().opis);
+    dziennik::dopisz(&rdzen::opisz(&ustawienia).opis);
 
-    let zrodlo = zrodlo_interfejsu::ustal(&ustawienia);
-    dziennik::dopisz(&zrodlo.opis);
-
-    okno::otworz(aplikacja.handle(), zrodlo.adres)?;
+    okno::otworz(aplikacja.handle())?;
     zasobnik::zbuduj(aplikacja.handle())?;
     dziennik::dopisz("okno otwarte, ikona w zasobniku ustawiona");
     Ok(())

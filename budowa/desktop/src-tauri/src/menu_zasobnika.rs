@@ -8,14 +8,14 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 use crate::dialog_katalogu;
 use crate::okno;
-use crate::rdzen::UchwytRdzenia;
+use crate::rdzen;
+use crate::ustawienia::Ustawienia;
 use crate::zamkniecie;
 
 /// Identyfikatory pozycji menu — jedyne miejsce, w którym te nazwy występują.
 pub const POKAZ: &str = "powloka.pokaz";
 pub const KATALOG: &str = "powloka.katalog";
 pub const STAN: &str = "powloka.stan";
-pub const ZATRZYMAJ: &str = "powloka.zatrzymaj-rdzen";
 pub const ZAKONCZ: &str = "powloka.zakoncz";
 
 /// Wykonuje czynność przypisaną pozycji menu.
@@ -26,33 +26,26 @@ pub fn obsluz(aplikacja: &AppHandle, identyfikator: &str) {
         // i rozgłasza wybór; adresat po stronie interfejsu decyduje, co z nim.
         KATALOG => dialog_katalogu::wybierz_i_rozglos(aplikacja),
         STAN => pokaz_stan(aplikacja),
-        ZATRZYMAJ => zatrzymaj_rdzen(aplikacja),
         ZAKONCZ => zamkniecie::zakoncz_powloke(aplikacja),
         _ => {}
     }
 }
 
 /// Pokazuje opis stanu rdzenia w natywnym oknie komunikatu.
+///
+/// Zatrzymania rdzenia w tym menu nie ma: rdzeń stoi na serwerze wdrożenia,
+/// powłoka go nie postawiła i nie ma czym go wygasić.
 fn pokaz_stan(aplikacja: &AppHandle) {
-    let uchwyt = aplikacja.state::<UchwytRdzenia>();
-    let stan = uchwyt.opis();
+    let ustawienia = aplikacja.state::<Ustawienia>();
+    let stan = rdzen::opisz(&ustawienia);
     let tresc = format!(
-        "{}\n\nAdres: {}\nNasłuch: {}\nDziennik: {}",
+        "{}\n\nAdres: {}\nOdpowiada: {}\nDziennik: {}",
         stan.opis,
-        stan.adres,
+        stan.adres.as_deref().unwrap_or("nie wskazano"),
         if stan.pracuje { "tak" } else { "nie" },
         stan.dziennik
     );
     komunikat(aplikacja, "Stan rdzenia", &tresc, MessageDialogKind::Info);
-}
-
-/// Zatrzymuje rdzeń na jawne polecenie i melduje wynik.
-fn zatrzymaj_rdzen(aplikacja: &AppHandle) {
-    let wynik = aplikacja.state::<UchwytRdzenia>().zatrzymaj();
-    match wynik {
-        Ok(tresc) => komunikat(aplikacja, "Rdzeń", &tresc, MessageDialogKind::Info),
-        Err(tresc) => komunikat(aplikacja, "Rdzeń", &tresc, MessageDialogKind::Warning),
-    }
 }
 
 /// Wyświetla komunikat bez wstrzymywania wątku okna.

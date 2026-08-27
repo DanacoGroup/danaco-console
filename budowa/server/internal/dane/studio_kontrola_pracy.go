@@ -512,7 +512,7 @@ func (r *repozytoriumStudia) ZapiszCzynnoscDokumentu(ctx context.Context, dokume
 		return CzynnoscDokumentuStudia{}, fmt.Errorf(
 			"dane: nie można zapisać czynności dokumentu %q: %w", czynnosc.Kod, err)
 	}
-	// Zależności zapisujemy po wierszu czynności — wiążą się po
+	// Zależności zapisuje się po wierszu czynności — wiążą się po
 	// identyfikatorze już zapisanym w tabeli.
 	for _, podstawa := range czynnosc.PodstawyKody {
 		if err := r.ZapiszZaleznoscCzynnosci(ctx, czynnosc.Kod, podstawa, nil); err != nil {

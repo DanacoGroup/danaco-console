@@ -1,14 +1,5 @@
--- Migracja 031 — macierz „okno operacyjne ↔ moduł”.
---
--- Uzupełnia `migracja_030_rejestr_okien_operacyjnych.sql`: definicja okna leży
--- w `okno_operacyjne`, a jego wystąpienie w module leży tutaj. Klucz główny na
--- parze (okno, moduł) nie pozwala przypiąć tego samego okna do modułu dwa razy,
--- więc powielanie wiersza definicji dla okien wspólnych nie ma jak wrócić.
---
--- KOLEJNOŚĆ NALEŻY DO PRZYPIĘCIA, NIE DO OKNA. Preview Window stoi w Studio na
--- pozycji trzeciej, a w Design na drugiej. Pozycja zero należy do okna rozmowy,
--- bo to ono jest punktem wejścia modułu; po nim idzie okno wiodące modułu,
--- a dalej okna w porządku pracy operatora.
+-- Migracja zakłada tabelę macierzy przypięcia okna operacyjnego do modułu, w której
+-- kolejność należy do przypięcia, a nie do samego okna.
 
 CREATE TABLE okno_operacyjne_modul (
     okno_operacyjne_id INTEGER NOT NULL REFERENCES okno_operacyjne(id) ON DELETE CASCADE,
@@ -18,10 +9,8 @@ CREATE TABLE okno_operacyjne_modul (
 );
 CREATE INDEX idx_okno_operacyjne_modul_kolejnosc ON okno_operacyjne_modul(modul_id, kolejnosc);
 
--- ── Chat Window — jedna definicja w piętnastu modułach ─────────────────────────
--- Zapisane regułą, nie listą: „okno rozmowy jest w każdym module” to zdanie
--- inwentarza, a lista piętnastu kodów byłaby jego przepisaniem, które rozjedzie
--- się przy szesnastym module.
+-- Okno rozmowy jest zapisane regułą obejmującą każdy moduł, nie listą kodów modułów,
+-- która rozjechałaby się przy kolejnym module.
 INSERT INTO okno_operacyjne_modul (okno_operacyjne_id, modul_id, kolejnosc)
 SELECT o.id, m.id, 0
   FROM okno_operacyjne o
@@ -29,7 +18,8 @@ SELECT o.id, m.id, 0
  WHERE o.kod = 'chat-window'
 ON CONFLICT(okno_operacyjne_id, modul_id) DO NOTHING;
 
--- ── Pozostałe przypięcia ─────────────────────────────────────────────────────
+-- Pozostałe przypięcia okien do modułów są wypisane jawnie parami, bo kolejność w każdym
+-- module jest inna.
 WITH macierz(okno_kod, modul_kod, kolejnosc) AS (
     VALUES
         ('studio-editor',         'studio',      1),

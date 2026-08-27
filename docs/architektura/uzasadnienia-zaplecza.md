@@ -3284,3 +3284,6 @@ Wartość wyliczenia zakresu nie jest powtórzona warunkiem CHECK, ponieważ kat
 
 ## budowa/server/internal/store/migracja_018_ciaglosc_rozmowy.sql
 Bez utrwalenia identyfikator rozmowy istniałby przez jedną turę i przepadał, a wznowienie rozmowy nie miałoby wartości. Identyfikator rozmowy należy do okna komunikacji, nie do sesji ani do wiadomości, bo dwa okna jednej sesji prowadzą dwie niezależne rozmowy z modelem i muszą mieć osobne wznowienia. Kolumna jest pusta do pierwszej tury: okno nowo założone nie ma jeszcze rozmowy, a wartość pusta znaczy zacznij nową rozmowę i jest stanem poprawnym, nie brakiem danych.
+
+## budowa/server/internal/store/migracja_031_okna_modulow.sql
+Definicja okna operacyjnego leży w tabeli rejestru okien, a jego wystąpienie w module leży w tej tabeli macierzy. Klucz główny na parze okna i modułu nie pozwala przypiąć tego samego okna do modułu dwa razy, więc powielanie wiersza definicji dla okien wspólnych nie ma jak wrócić. Okno tego samego kodu może stać na różnej pozycji w różnych modułach: pozycja zero należy do okna rozmowy jako punktu wejścia modułu, po nim idzie okno wiodące modułu, a dalej okna w porządku pracy operatora.

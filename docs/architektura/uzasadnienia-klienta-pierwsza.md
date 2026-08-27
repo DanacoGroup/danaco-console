@@ -6459,3 +6459,21 @@ końcem, i że wynik jest nazwany, a nie potwierdzony ciszą.
 
 ## budowa/klient-poprzedni/src/moduly/agents/warstwy-promptu.ts
 Nakładkę składa rdzeń, a kontrakt niesie warstwę tożsamości i cztery komendy obszaru layer. Warstwa nie ma własnego trybu, bo dopisanie do globalnego promptu systemowego albo jego zastąpienie dotyczy instrukcji eksperta jako całości: przełącznik stoi raz, przy tożsamości; dlatego zlecenie zapisu warstwy pola trybu nie ma, a sam ekspert ma. W miejscu przełącznika stoi przy każdej warstwie zdanie czytające tryb eksperta czynnego. Edytor nie dotyka pola instrukcji systemowej eksperta — to pole płaskie zapisuje formularz tożsamości osobną komendą aktualizacji.
+
+## budowa/klient-poprzedni/src/moduly/library/material-narzedzia.ts
+Wszystkie trzy komendy arsenału rozwiązują identyfikator zasobu przez
+repozytorium zasobów modułu projektowego, a plik biblioteki leży w innym
+rejestrze, więc jego identyfikator wraca stamtąd odmową. Kontrakt niesie
+jednak drugą drogę źródła, ścieżkę z dysku, i mówi o niej wprost: treść jest
+wciągana do magazynu, nie dowiązywana, więc tą drogą czynność wykonuje się
+naprawdę, a przycisk wysyłający identyfikator pliku biblioteki zawodziłby
+zawsze i byłby przyciskiem pewnej odmowy. Bajty wyniku idą do tego samego
+magazynu zasobów projektowych, którym jedzie wgranie zasobu. Pola okna
+źródło nie podaje i to jest rozstrzygnięcie, nie przeoczenie: kontrakt każe
+podać okno modułu projektowego, a moduł biblioteki zna wyłącznie okno
+komunikacji sesji, więc okno zmyślone nie zapisałoby się w ogóle, a okno
+cudze pokazałoby wynik w wykazie, do którego nie należy; bajty i tak
+trafiają do magazynu pod sumą kontrolną, ale zasób nie pojawi się w wykazie
+okna, i widok mówi to zdaniem. Rodzina komend materiału nie ma w kontrakcie
+ani jednego zdarzenia, więc nic tu nie nasłuchuje: czynność kończy się swoją
+odpowiedzią i niczym więcej.

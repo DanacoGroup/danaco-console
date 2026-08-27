@@ -4074,3 +4074,194 @@ z granicą czasu i objęciem drzewa potomstwa.
 Ścieżka bezwzględna jest w kontrakcie dopuszczona, ale punkt izolacji „pliki”
 obowiązuje ją tak samo jak względną: przy włączonym punkcie odczyt spoza
 obszaru okna kończy się odmową `permission_denied`, a nie treścią.
+## budowa/server/internal/core/adapter_modul_asystent.go
+
+Stan zleceń (assistant.action.status) i dziennik (assistant.activity.list)
+leżą w adapter_modul_asystent_czynnosci.go, a port Asystent i
+zarejestrujAsystenta — w adapter_modul_asystent_uchwyty.go; wszystkie te
+pliki piszą metody na jednym typie adapterAsystenta. Pakiet server/internal/mowa
+wnosi silnik rozpoznawania mowy, a port Mowa (handlers_mowa.go) wystawia go
+w kształcie kontraktu. Komenda assistant.voice.command ma pole Transcript
+osobno od AudioRef: tekst poprawiony ręcznie ma pierwszeństwo przed
+rozpoznaniem nagrania. Bez wpiętego silnika zlecenie powstaje ze śladem
+nagrania, a transkrypcja zostaje pusta — odmowy nie ma, moduł pracuje
+w zakresie, w którym może. Syntezy mowy to nie dotyczy: Speak i SpeechRef idą
+w drugą stronę i rdzeń ich nie spełnia.
+
+Przedrostki identyfikatorów bytów modułu są zadeklarowane w całości w tym
+pliku, łącznie z przedrostkiem wpisu dziennika, którego plik nie nadaje sam,
+żeby nie deklarować ich po raz drugi gdzie indziej.
+
+Zależności wykonawcy zleceń są opcjonalne i wpinane w montażu metodami
+budującymi, jak w module Roundtable: rejestr kanałów modelu, nadzorca sesji
+(źródło kanału i katalogów okna) oraz nadajnik zdarzeń. Bez nich moduł
+przyjmuje polecenia i prowadzi ich stan ręcznie, ale nie podejmuje zleceń
+z kolejki — zlecenie zostaje queued, zamiast udawać wykonanie, tak jak debata
+bez rejestru kanałów odmawia uruchomienia tury.
+
+Pole mowa jest zależnością opcjonalną widzianą portem kontraktu, nie typem
+pakietu mowa: moduł potrzebuje tu wyłącznie przekładu nagranie-tekst, a przez
+port dostaje tę samą instancję silnika, którą obsługuje rodzina speech.*.
+Pole mosty składa konfigurację MCP okna wraz z wpisem serwera narzędzi
+modelu (most_narzedzi.go); bez tej zależności tura zlecenia idzie samym
+tekstem, bez ani jednego narzędzia (adapter_modul_asystent_sterowanie.go).
+Pole zycie jest kontekstem rdzenia, nie połączenia. Pole biegi wiąże kod
+zlecenia z przerwaniem jego tury: bez tego wykazu sterowanie Operatora
+(cancel, pause) zmieniałoby sam wiersz, a tura pracowałaby dalej i domykała
+zlecenie mimo odwołania; zamki strzegą wykazu, bo tury biegną gorutynami,
+a sterowanie przychodzi z pętli komend. Pole odwolane niesie decyzje
+Operatora, które zapadły, zanim wykonawca zdążył przestawić zlecenie na
+running — bez tego znacznika cancel zapisuje cancelled, a wykonawca, który
+stan odczytał chwilę wcześniej, nadpisuje go z powrotem na running i dowozi
+zlecenie do done; odwołanie ma być mocniejsze od tury, nie odwrotnie.
+
+Trzy wyniki rozpoznania nagrania odpowiadają trzem zachowaniom, tym samym,
+które rozdziela pole processed kontraktu speech.transcribe: rozpoznano tekst
+— tekst wraca i staje się treścią polecenia; przetworzono, mowy brak —
+odmowa nazywająca ten fakt, bo assistant.voice.command ma wytworzyć
+polecenie, a puste polecenie nie jest poleceniem, zlecenie z pustą treścią
+zostawiłoby w dzienniku modułu wpis, po którym nic się nie dzieje; nie
+przetworzono — odmowa silnika wraca nietknięta, z jej własnym kodem
+kontraktu i pełnym komunikatem (adapter_modul_mowa.go).
+
+PolecenieGlosowe zakłada zlecenie i pierwszy wpis dziennika w jednej
+transakcji — woła PrzyjmijPolecenie warstwy danych, nie dwa osobne zapisy,
+żeby nigdy nie powstał wpis bez zlecenia ani zlecenie bez śladu w rozmowie.
+Profil ma byt trwały: ProfileId z żądania odkłada się w kolumnie
+zlecenie_asystenta.profil_kod, bo niesie warstwę promptu rozstrzygającą, czy
+model sięgnie po narzędzia platformy, czy odpisze samym tekstem; wejście tej
+warstwy do tury opisuje adapter_modul_asystent_profil.go. Kod profilu
+nieznany kończy się nazwaną odmową jeszcze przed zapisem, bo klucz obcy
+kolumny zamieniłby go w usterkę bez powodu. Bieg wykonawcy jest asynchroniczny
+— komenda potwierdza przyjęcie od razu, a tura modelu trwa dłużej niż
+wykonanie komendy; z wpiętym silnikiem mowy treść zlecenia jest złożona,
+zanim zlecenie powstanie, a bez silnika zlecenie z samym nagraniem zostaje
+w kolejce i czeka na tekst przysłany wprost.
+
+## budowa/server/internal/core/adapter_modul_automations.go
+
+Automations nie ma okna modułowego — jest komponentem własnym strony głównej
+i nie pojawia się jako moduł w żadnym środowisku. Dlatego adapter nie zna ani
+środowiska, ani karty sesji. Ten adapter buduje definicję i zapisuje
+przebieg; wykonania nie prowadzi.
+
+### adapterAutomatyk — pola
+
+uklad niesie trzy dopełnienia układu zależności i spięcie kolejek
+(`adapter_modul_orkiestracja_uklad.go`). Wpina je `ZUkladem`; nil znaczy
+„nie wpięto", a wtedy cztery komendy odmawiają, a reszta modułu pracuje.
+
+sejf jest magazynem WARTOŚCI poświadczeń, leżącym poza bazą. Wpina go
+`ZSejfem`; nil znaczy „nie wpięto", a wtedy `automation.secret.set` i wymiana
+klucza podpisu webhooka odmawiają wprost, zamiast zapisywać referencję
+wskazującą na nic.
+
+okna są rejestrem okien komunikacji. Służą wyłącznie przełożeniu roli
+środowiska MultitaskingAI na okno przy spięciu kolejek.
+
+### ZKolejkami, ZSejfem
+
+`automation.queue.action` odmawia wprost bez wpiętego adaptera kolejek —
+brak wykonawcy nie może udawać wykonania. Sejf: jedna instancja pod jednym
+zamkiem, ten sam sejf plikowy co sekrety kont i punktów dostępu — dwa sejfy
+nad tym samym plikiem ścigałyby się o zapis.
+
+### Zapisz
+
+Kroki podmieniają się w całości, gdy pole `steps` przyszło: Workflow Builder
+oddaje po zmianie całą definicję, więc pole obecne znaczy „tak ma wyglądać
+automatyka". Pole nieobecne zostawia kroki nietknięte, żeby zapis samej
+nazwy albo samego przełącznika „czynna" nie skasował pracy Operatora.
+Migawka wersji idzie PO złożeniu automatyki, bo zapisuje to, co naprawdę
+stoi w bazie po zapisie — a nie to, co przyszło żądaniem. Kroki zastane
+(żądanie bez pola `steps`) trafiają wtedy do wersji tak samo jak
+podmienione, więc historia nie ma dziur po zapisie samej nazwy.
+
+### odlozWersje
+
+Nieudany zapis migawki nie wywraca zapisu definicji: definicja już stoi
+w bazie, a odmowa komendy mówiłaby Operatorowi, że jego praca przepadła,
+choć nie przepadła.
+
+### Automatyka — etykiety i wersja
+
+Etykiety idą razem z definicją, bo wykaz Workflow Buildera filtruje po nich
+bez drugiej komendy. Nieudany odczyt etykiet daje wykaz pusty zamiast
+wywracać odczyt automatyki — brak etykiet jest stanem poprawnym.
+
+Wersja oddawana kontraktem jest wersją WYKONYWANĄ: opublikowana, gdy
+Operator rozdzielił roboczą od opublikowanej, a bieżąca, gdy rozdziału nie
+wprowadził. Inaczej okno pokazywałoby numer wersji roboczej przy
+automatyce, która produkcyjnie wykonuje wersję wcześniejszą.
+
+### bladAutomatyki
+
+Błąd, któremu kod już nadano — odmowa wskazania, brak bytu, brak wykonawcy —
+przechodzi tędy bez zmiany kodu; dopiero usterka bez kodu staje się usterką
+wewnętrzną rdzenia.
+
+## budowa/server/internal/core/adapter_modul_tlumaczenie_slownik.go
+
+Obszar dotyczy typu `*adapterTlumaczenia` zadeklarowanego w
+`core/adapter_modul_tlumaczenie.go` — ten plik nie deklaruje ani typu
+adaptera, ani konstruktora, ani przedrostków identyfikatorów. Flaga
+`NieTlumaczyc` jest zdefiniowana w `migracja_054_slownik_tlumaczenia.sql`.
+
+Słownik nie żyje wyłącznie tutaj. `glossary.apply` jest narzędziem
+naprawczym: ujednolica terminologię treści, która już powstała. Właściwym
+miejscem słownika jest sam przekład — terminy i zakazy Operatora wchodzą do
+polecenia dla modelu przy `target.add` (`adapter_modul_tlumaczenie_polecenia.go`),
+a `zastosujTerminySlownika` z tego pliku przechodzi jeszcze po wyniku modelu
+jako siatka bezpieczeństwa. Ta sama funkcja w dwóch zastosowaniach, nie dwie
+kopie zasady.
+
+Zakres obu komend bez wskazania panelu bierze się z `WszystkiePanele`
+repozytorium: `glossary.apply` z pustym `PanelId` przechodzi po komplecie
+paneli, a `glossary.occurrences` — które w kontrakcie niesie samo `Term` —
+przeszukuje ten sam komplet.
+
+Zapis `UstawTerminy` idzie przez `ZapiszTerminy` (jedna transakcja, choć
+niesiona jest tu zawsze lista jednoelementowa) — warstwa danych i tak nie ma
+osobnej drogi INSERT/UPDATE (`dane/slownik.go`), więc adapter nie dubluje
+tego rozróżnienia.
+
+Panel bez treści w bazie w `zastosujWPanelu` daje zero — treść żyjąca
+wyłącznie poza bazą (`TrescOdwolanie`) nie jest czytana, bo adapter nie sięga
+po pliki spoza repozytorium.
+
+`zastosujTerminySlownika` oddaje zmienioną treść i liczbę faktycznie
+podmienionych wystąpień, żeby `ChangedCount` mówił prawdę o skutku, nie
+o liczbie terminów w słowniku.
+
+Zakresem `WystapieniaTerminow` są wszystkie panele: kontrakt nie niesie
+wskazania okna ani panelu, a słownik jest jeden na instalację, więc jedynym
+uczciwym odczytaniem jest przeszukanie kompletu paneli. Otoczenie wystąpienia
+to wycinek treści wokół trafienia — kontrakt chce „wystąpień wraz
+z otoczeniem”, a nie samych pozycji.
+## budowa/server/internal/core/adapter_modul_terminal.go
+
+Powloki lezy w adapter_modul_terminal_powloki.go, tryb uprawnien w
+adapter_modul_terminal_uprawnienia.go, ewidencja procesow w
+adapter_modul_terminal_rejestr.go, strumien wyjscia w
+adapter_modul_terminal_strumien.go, a uruchomienie procesu
+w adapter_modul_terminal_wykonanie.go.
+
+Przed kazdym procesem stoja trzy sprawdzenia, w tej kolejnosci: tryb
+uprawnien okna - czy wolno w ogole uruchomic proces i czyim poleceniem
+(PermissionMode, adapter_modul_terminal_uprawnienia.go); egzekutor izolacji
+- czy polecenie miesci sie w obszarze okna (session.SprawdzPolecenie nad
+zasadami z izolacja.go); uruchamiacz warstwy kanalu - jedyna droga startu
+procesu w drzewie (port session.Uruchamiacz). Rdzen nie buduje wlasnego
+exec.Cmd ani drugiego egzekutora, korzysta wylacznie z tych dwoch warstw.
+
+przedrostekProcesuTerminala znakuje identyfikator procesu terminala,
+odrebny od proc- telemetrii: tamten opisuje bieg tury modelu, ten proces
+urzadzenia, i mylenie ich w Process Monitorze byloby kosztowne.
+
+uruchamiacz jest portem warstwy kanalu - jedyna droga startu procesu.
+rozstrzygacz i katalog skladaja zasady izolacji obowiazujace w oknie.
+wyjscie rozsyla fragmenty strumienia do okna Output Console. zmiana
+rozglasza terminal.process.changed, podpina ja obslugiwacz.
+
+OtworzKarte: karta bez okna nie ma ani trybu uprawnien, ani obszaru
+izolacji, a wiec nie da sie jej pozniej wykonac.

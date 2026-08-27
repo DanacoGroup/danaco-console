@@ -6300,3 +6300,9 @@ wyciszyć kategorię dla jednego konta, nie ruszając platformy. Jest to ta
 sama zasada, którą stosuje rezolwer konfiguracji: brak wiersza znaczy „nie
 ustawiono", wiersz z wartością pustą znaczy „ustawiono pustą". Zapis
 nieczynny jest jak brak wiersza — przepuszcza oś szerszą.
+
+## budowa/server/internal/core/most_mcp.go
+Słownictwo trybu (odczyt, zapis) tu nie ma z zamysłem: jest ono własnością konkretnego mostu,
+a nie typu kontraktu, więc mieszka w tabeli argumentu trybu mostu i dojeżdża tutaj polem
+ArgumentTrybu. Zapisanie go drugi raz w kodzie sprawiłoby, że most o innym słownictwie wymagałby
+zmiany rdzenia zamiast wiersza w tabeli.

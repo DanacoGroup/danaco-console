@@ -1968,3 +1968,9 @@ poprawna, ponieważ kontrakt ma pole opisu nieobowiązkowe.
 Zdjęcie kodu z książki jest osobną czynnością i okno mówi Operatorowi, że dziś
 jej nie ma. Kod zastany, którego Operator teraz nie wpisał, zostaje: wymazanie
 reszty byłoby skutkiem, którego nikt nie zamówił.
+
+## budowa/klient-poprzedni/src/mission-control/sekcja-utworz.ts
+
+Sekcja tworzenia stoi na pulpicie, ponieważ bez niej jedyną drogą do pracy jest kliknięcie sesji już biegnącej w matrycy. Rząd kafli otwiera wejście tam, gdzie nic jeszcze nie biegnie, dlatego każdy kafel jest czynny od razu, żaden nie czeka na spełnienie warunku, a podpis kafla nazywa byt, który powstanie po naciśnięciu.
+
+Etykiety kafli idą krojem bazowym półgrubym, a nie krojem szeryfowym, ponieważ różnica krojów niesie w tym miejscu znaczenie: krój szeryfowy oznacza wejście do środowiska, a krój bazowy oznacza zbudowanie komponentu.

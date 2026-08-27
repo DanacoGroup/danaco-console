@@ -4480,3 +4480,28 @@ odmowy.
 
 ## budowa/klient-poprzedni/src/okno-komunikacji/przelacznik-srodowiska.ts
 Komponent pokazuje maszynę, nie nazwę wartości kontraktu: wyliczenie niesie wartości techniczne, a w oknie stoi opisowa nazwa albo nazwa hosta z ustawienia wykonania. Wybór hosta zdalnego bez wskazanej maszyny zatrzymuje się na miejscu z pełnym zdaniem odmowy — co się nie stało, dlaczego i czym to zmienić — zamiast zapisywać wartość, za którą nie stoi żadna maszyna; wyróżnienie wybranej maszyny bierze się wyłącznie z migawki stanu, więc nieudane przełączenie nie zostawia mylącego podświetlenia. Drzewo menu ma jeden poziom, bo port zna wyłącznie polecenie zastosowania środowiska: nazwa hosta jest osobnym ustawieniem poziomu okna i zmienia się w komplecie sterowania — gałąź z nazwami hostów, z których żadnej nie dałoby się stąd wybrać, byłaby atrapą. Zależności są wąskie i wstrzykiwane: komplet sterowania okna podaje migawkę, subskrypcję i wysyłkę polecenia aktualizacji, a komponent nie zna kanału ani stanu globalnego — gotowy element montuje widok rozmowy tuż nad polem wypowiedzi, bo dopiero powłoka zna naraz okno i jego komplet sterowania.
+
+## budowa/klient-poprzedni/src/rozmowa/wiadomosc-z-rdzenia.ts
+Tu mieszka całe przełożenie wiadomości kontraktu na wpis wątku: dwie
+równorzędne gałęzie — wypowiedź roli `user` i domknięcie tury modelu — wraz
+z obroną przed podwojeniem wpisu. Rozdzielenie od rozmowy głównej biegnie
+wzdłuż odpowiedzialności, nie wzdłuż długości pliku. Plik nie wie, kto
+wypowiedź napisał, i nie zgaduje: kontrakt nie niesie sprawcy zmiany, więc
+jedyne, co da się udowodnić o wypowiedzi nieznanej wątkowi, to że nie powstała
+w tym połączeniu.
+
+Autorem wypowiedzi Operatora bywa nie tylko sam Operator: prompt wpisuje też
+asystent, innym połączeniem, przez MCP. Wypowiedź wchodzi więc do wątku
+zawsze — inaczej pytanie, na które model odpowiada, nie byłoby widoczne ani
+w polu wypowiedzi, ani w wątku. Przed podwojeniem broni jej wiązanie po
+treści: echo miejscowe dostaje identyfikator z rdzenia zamiast drugiej
+pozycji obok.
+
+Wpis składamy wprost, a nie przez odczyt historii dla wiadomości: tamta droga
+przejmuje wpis oczekujący, czyli ramkę przygotowaną na odpowiedź modelu,
+i wypowiedź wjechałaby wtedy w miejsce odpowiedzi.
+
+Rozstrzygnięcia stanu wpisu domkniętego zdarzeniem zmiany wiadomości są
+cztery, nie dwa: tura zamknięta błędem i tura, która nie przyniosła ani
+jednego znaku, mają własne stany. Bez nich obie wyglądałyby na ekranie tak
+samo jak udana — pustą ramką z napisem „zakończona".

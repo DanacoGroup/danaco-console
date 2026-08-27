@@ -5789,3 +5789,21 @@ wymaga słownika języka, drugie analizy składniowej, a rdzeń nie ma ani jedne
 te wiersze zostają więc w panelu z wartością niepodaną i z powodem, żeby usunięcie ich nie
 kazało panelowi wyglądać na kompletny; interpunkcję mierzy się częściowo, tylko tam, gdzie
 wzorzec jest pewny.
+
+## budowa/klient-poprzedni/src/moduly/workspace/indeks.ts
+Układ wynika z ról okien: pulpit projektu jest oknem wiodącym, więc stoi w obszarze głównym jako
+punkt wejścia; panel instrukcji jest pomocniczy i stoi w kolumnie obok; pamięć kontekstu,
+biblioteka projektu i zarządca agentów zarządzają repozytoriami i tworzą pas pod nimi. Okno
+rozmowy modułu nie należy do tego złożenia: jest bytem sesji i składa je warstwa rozmowy.
+Kolejność okien odpowiada macierzy modułu: pulpit, biblioteka, pamięć, eksperci, instrukcje.
+Rodzina komend workspace liczy czterdzieści komend, a jedno źródło byłoby wykazem wszystkiego, co
+moduł umie, zamiast wykazem jednego obszaru pracy.
+Kod okna nadaje rama, której każde z pięciu okien podaje swój kod; funkcja oznaczania tylko go
+potwierdza, gdy rama go nie ustawiła, i ustawia wartość skoku ogniska wymaganą przez klawiaturę.
+Kod modułu siedzi w module, nie w mapie po stronie powłoki: dodanie modułu to jeden wpis, a nie
+dwa, więc nie da się dodać modułu i zapomnieć o wytwórni.
+Bez pola karty panel poziomów pamięci nie miałby czego wysłać. Tą samą drogą wchodzi okno rozmowy:
+moduł pyta o okna karty i bierze to, które rdzeń przypisał jemu, bo bez niego obie kontrolki
+przeniesienia kontekstu odmawiają. Odczyt jest tu, a nie przy montażu, bo dopiero wczytanie widoku
+niesie kartę sesji, a powłoka woła go po odpowiedzi na wejście do przestrzeni roboczej, kiedy okno
+rozmowy jest już przestawione na ten moduł.

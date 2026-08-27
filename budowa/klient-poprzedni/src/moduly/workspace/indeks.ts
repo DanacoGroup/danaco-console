@@ -18,16 +18,8 @@ import { utworzStanProjektu, type StanProjektu } from './stan-projektu';
 import { utworzZrodloWorkspace } from './zrodlo-workspace';
 
 /**
- * Moduł Workspace — złożenie pięciu okien operacyjnych wokół jednego projektu.
- *
- * Układ wynika z ról okien. Project Dashboard jest oknem wiodącym, więc stoi
- * w obszarze głównym jako punkt wejścia; Instructions Panel jest pomocniczy
- * i stoi w kolumnie obok; Context Memory, Project Library i Agent Manager
- * zarządzają repozytoriami i tworzą pas pod nimi. Okno rozmowy modułu nie
- * należy do tego złożenia: jest bytem sesji i składa je warstwa rozmowy.
- *
- * Kolejność okien odpowiada macierzy `okno_operacyjne_modul`: pulpit,
- * biblioteka, pamięć, eksperci, instrukcje.
+ * Moduł Workspace jest złożeniem pięciu okien operacyjnych wokół jednego projektu, ułożonych
+ * według roli: pulpit wiodący, pozostałe pomocnicze wokół niego.
  */
 export interface ZamontowanyWorkspace {
   /** Element osadzony w dokumencie. */
@@ -40,7 +32,7 @@ export interface ZamontowanyWorkspace {
   zamknij(): void;
 }
 
-/** Zależności złożenia. */
+/** Zależności złożenia niesie projekt otwierany od razu oraz okno rozmowy jako nośnik przeniesienia kontekstu sesji. */
 export interface OpcjeWorkspace {
   /** Projekt otwierany od razu; pusty zostawia wskazanie Operatorowi. */
   projekt?: string;
@@ -55,17 +47,14 @@ export function zamontujWorkspace(
 ): ZamontowanyWorkspace {
   const zrodlo = utworzZrodloWorkspace(kanal);
   const stan = utworzStanProjektu(zrodlo, opcje);
-  // Jeden wykaz braków na pięć okien: rdzeń jest pytany o swoje komendy raz,
-  // a wszystkie nieczynne kontrolki modułu biorą z tej odpowiedzi swoje zdanie.
+  // Jeden wykaz braków na pięć okien: rdzeń pytany o komendy raz, kontrolki biorą z odpowiedzi zdanie.
   const braki = utworzWykazBrakow(kanal);
 
   const obszar = document.createElement('div');
   obszar.className = 'dw-modul';
   obszar.dataset['modul'] = 'workspace';
 
-  // Trzy okna obszaru planowania i wiedzy jadą własnymi czynnościami, nie
-  // źródłem pięciu okien pierwotnych: rodzina `workspace.*` liczy czterdzieści
-  // komend i jedno źródło byłoby wykazem wszystkiego, co moduł umie.
+  // Trzy okna planowania i wiedzy jadą własnymi czynnościami, nie źródłem pięciu okien pierwotnych.
   const planowanie = czynnosciPlanowania(kanal);
   const wiedza = czynnosciWiedzy(kanal);
 
@@ -102,8 +91,7 @@ export function zamontujWorkspace(
     oznacz(agenci.element, 'agent-manager'),
   );
 
-  // Pas trzeci: hub planowania, wiki projektu i czynności przekrojowe. Stoją
-  // pod pasem zarządców, bo pracują na materiale, który tamte okna gromadzą.
+  // Pas trzeci: hub planowania, wiki i czynności przekrojowe, stoją pod pasem zarządców materiału.
   const planowanieRzad = document.createElement('div');
   planowanieRzad.className = 'dw-modul__dol';
   planowanieRzad.append(
@@ -127,9 +115,7 @@ export function zamontujWorkspace(
   }
 
   odswiez();
-  // Pytanie o komendy rdzenia idzie równolegle z odczytem okien: dopóki nie
-  // wróci, kontrolki bez pokrycia mówią, że pytanie jest w drodze — i o żadnym
-  // braku jeszcze nie orzekają.
+  // Pytanie o komendy idzie równolegle z odczytem okien: kontrolki mówią, że pytanie jest w drodze.
   void braki.odczytaj();
 
   return {
@@ -166,17 +152,7 @@ export const MODUL: OpisModulu = {
     const zamontowane = zamontujWorkspace(gospodarz, kanal);
     return {
       element: gospodarz,
-      // Karta sesji wchodzi wyłącznie tędy: `WidokModulu.wczytaj` dostaje ją od
-      // powłoki, a moduł nie zgaduje jej z ogniska ani nie pyta o nią rdzenia
-      // drugą drogą. Bez tego pola panel poziomów pamięci (`memory.toggle`) nie
-      // miałby czego wysłać. Tą samą drogą wchodzi okno rozmowy: moduł pyta
-      // o okna karty i bierze to, które rdzeń przypisał jemu (`Window.moduleId`),
-      // bo bez niego obie kontrolki `context.transfer` odmawiają.
-      //
-      // Odczyt jest tu, a nie przy montażu, bo dopiero `wczytaj` niesie kartę
-      // sesji — i bo powłoka woła go po odpowiedzi na `workspace.enter`, kiedy
-      // okno rozmowy jest już przestawione na ten moduł
-      // (`aplikacja/przestrzen-modulu.ts`).
+      // Karta sesji wchodzi wyłącznie tędy, moduł nie zgaduje jej z ogniska ani nie pyta o nią drugą drogą.
       wczytaj: async (idSesji: string) => {
         zamontowane.stan.ustawSesje(idSesji);
         if (zamontowane.stan.oknoRozmowy() !== '') return;

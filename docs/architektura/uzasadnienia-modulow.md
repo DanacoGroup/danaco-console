@@ -1803,3 +1803,33 @@ nie ma czym uruchomić. Formatowanie nieudane nie unieważnia analizy z tego
 samego powodu, dla którego formatowanie jest osobnym krokiem: uwagi są tym,
 po co komenda powstała, a treść sformatowana jest dodatkiem — gdy się nie
 uda, pole treści sformatowanej zostaje nieobecne, zgodnie z kontraktem.
+
+## budowa/server/internal/core/adapter_modul_przegladarka_uchwyty.go
+
+Dodanie źródła (`browser.source.add`) i dodanie notatki (`browser.note.add`)
+nie rozgłaszają zdarzenia domenowego, w odróżnieniu od nawigacji. Kontrakt nie
+przewiduje dla nich zdarzenia zmiany (nie ma odpowiednika `browser.source.changed`
+ani podobnego dla notatek), więc port odkłada wynik wyłącznie do odpowiedzi
+komendy, zamiast wprowadzać zdarzenie, którego kontrakt nie niesie.
+
+Rozgłoszenie migawki strony po nawigacji jedzie tym samym emiterem rdzenia,
+co pozostałe zmiany obszarów aplikacji, zachowując jeden wspólny wzorzec
+rozgłaszania zdarzeń niezależnie od modułu źródłowego.
+
+Otwarcie i zmiana stanu karty rozgłaszają zdarzenie zmiany karty z rodzajem
+zmiany zapisanym w polu kontraktu `ChangeKind`, a nie w dowolnym napisie —
+klient odróżnia po tym polu założenie karty od zmiany jej stanu.
+
+Zdarzenie zmiany monitora idzie wyłącznie wtedy, gdy sprawdzenie rzeczywiście
+wykryło zmianę pilnowanej strony; rozgłoszenie przy każdym sprawdzeniu
+byłoby sygnałem bez treści.
+
+Emulacja urządzenia i przewinięcie strony rozgłaszają zmianę strony z powodem
+interakcji, w odróżnieniu od powodu nawigacji — to rozróżnienie niesie pole
+`reason` zdarzenia zmiany strony, ponieważ opisuje inne źródło zmiany niż
+przejście pod nowy adres. Odczyt drzewa dokumentu, audyt dostępności, odczyt
+konsoli i rejestru sieciowego niczego w stronie nie zmieniają, więc zdarzenia
+nie rozgłaszają.
+
+Zdarzenie zmiany strony nie niesie wskazania sesji, ponieważ okno przeglądarki
+nie jest bytem karty sesji — migawka jest przypisana do okna, nie do sesji.

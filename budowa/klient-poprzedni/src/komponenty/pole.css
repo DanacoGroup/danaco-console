@@ -1,8 +1,4 @@
-/* Pole formularza, wyszukiwanie i wybór rozwijany.
-
-   Fokus pola: obrys sygnałowy i cień sygnałowy — sygnał wskazuje miejsce pracy,
-   nie działanie. Stan „tylko odczyt” realizuje atrybut `readonly`. Błąd niesie
-   `aria-invalid` oraz opis w `.dn-pole-blad`. */
+/* Arkusz opisuje pole formularza, wyszukiwanie i wybór rozwijany, w których fokus niesie obrys i cień sygnałowe wskazujące miejsce pracy. */
 
 .dn-pole { display: flex; flex-direction: column; gap: var(--dn-od-1); }
 
@@ -60,7 +56,7 @@ textarea.dn-pole-kontrolka {
   color: var(--dn-blad-tekst);
 }
 
-/* Pole wyszukiwania z ikoną */
+/* Pole wyszukiwania z ikoną umieszcza znak szkła powiększającego po lewej stronie wnętrza pola, bez zmiany wysokości kontrolki. */
 .dn-szukaj { position: relative; display: flex; align-items: center; }
 .dn-szukaj > svg {
   position: absolute;
@@ -72,5 +68,5 @@ textarea.dn-pole-kontrolka {
 }
 .dn-szukaj > .dn-pole-kontrolka { width: 100%; padding-left: var(--dn-od-8); }
 
-/* Wybór rozwijany */
+/* Wybór rozwijany rozszerza pole formularza o strzałkę wskazującą rozwijaną listę wartości, otwieraną kliknięciem lub klawiaturą. */
 select.dn-pole-kontrolka { padding-right: var(--dn-od-6); cursor: pointer; }

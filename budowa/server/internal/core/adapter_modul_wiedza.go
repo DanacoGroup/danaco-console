@@ -1,6 +1,7 @@
-// Odpowiedzialność pliku: wypełnienie portu Wiedza dwiema komendami rodziny
-// `knowledge.*` — przełożenie żądań kontraktu na zlecenia pakietu `wiedza`
-// i, co ważniejsze, przełożenie jego typowanych odmów na kody kontraktu.
+// Odpowiedzialność pliku: wypełnienie portu Wiedza dwiema komendami tekstowymi
+// rodziny `knowledge.*` — przełożenie żądań kontraktu na zlecenia pakietu
+// `wiedza` i, co ważniejsze, przełożenie jego typowanych odmów na kody
+// kontraktu. Oś obrazu stoi obok, w `adapter_modul_wiedza_obraz.go`.
 //
 // Wyszukiwanie po słowach działa w module Library (indeks FTS5,
 // `migracja_111_indeks_tresci_biblioteki.sql`). Ta rodzina wnosi wyszukiwanie
@@ -232,6 +233,11 @@ func (a *adapterWiedzy) wniesDokumenty(ctx context.Context, silnik *wiedza.Silni
 // związku z pytaniem znaczą „nie mam na to nic" i model ma to usłyszeć wprost.
 // Inaczej brak silnika, który jest odmową — wtedy rdzeń nie wie, czy ma coś,
 // czy nie ma.
+//
+// Pole `rerank` dokłada drugi przebieg (`zPrzesiewem` niżej). Pierwszy zostaje
+// niezmieniony i wykonuje się zawsze: przesiew nie ZASTĘPUJE kosinusa, tylko
+// układa na nowo tych kandydatów, których kosinus wybrał — krzyżowym koderem nie
+// da się przejrzeć całego wskaźnika (uzasadnienie liczbami w `wiedza/przesiew.go`).
 func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	z shared.KnowledgeSearchRequest) (shared.KnowledgeSearchResponse, error) {
 
@@ -264,13 +270,76 @@ func (a *adapterWiedzy) Szukaj(ctx context.Context,
 	if err != nil {
 		return shared.KnowledgeSearchResponse{}, bladWiedzy(err)
 	}
-	trafienia := wiedza.Najblizsze(pozycje, wiedza.Znormalizuj(wektory[0]), granicaZadania(z.Limit))
+	granica := granicaZadania(z.Limit)
+	wektorPytania := wiedza.Znormalizuj(wektory[0])
+	if przesiewZadany(z.Rerank) {
+		return a.zPrzesiewem(ctx, okno, zasady, obszar, ustawienia, pytanie,
+			wektorPytania, pozycje, z, granica)
+	}
+	trafienia := wiedza.Najblizsze(pozycje, wektorPytania, granica)
+	return odpowiedzSzukania(trafienia, false), nil
+}
 
+// zPrzesiewem przeprowadza drugi przebieg: bierze kandydatów pierwszego
+// przebiegu i oddaje ich w kolejności ułożonej przez krzyżowy koder.
+//
+// Kandydatów jest więcej niż oddawanych fragmentów i to jest sens rzeczy —
+// przesiew może wynieść na czoło fragment, który po samych wektorach był
+// dwudziesty. Gdyby kandydatami było dokładnie tyle, ile fragmentów wraca,
+// przesiew przestawiałby wyłącznie kolejność wewnątrz zbioru już wybranego.
+//
+// Odmowa przesiewu jest odmową całego żądania, a nie zejściem na wynik
+// pierwszego przebiegu. Wołający prosił o kolejność ułożoną na nowo; oddanie mu
+// po cichu tej samej kolejności, którą miał bez pytania, byłoby odpowiedzią
+// nierozpoznawalnie gorszą — pole `reranked` istnieje właśnie po to, żeby
+// odróżnienie było możliwe, ale milcząca podmiana czyniłaby je kłamstwem.
+func (a *adapterWiedzy) zPrzesiewem(ctx context.Context, okno session.Okno,
+	zasady session.Zasady, obszar session.Obszar, ustawienia wiedza.Ustawienia,
+	pytanie string, wektorPytania []float32, pozycje []wiedza.Pozycja,
+	z shared.KnowledgeSearchRequest, granica int) (shared.KnowledgeSearchResponse, error) {
+
+	kandydaci := wiedza.Najblizsze(pozycje, wektorPytania,
+		wiedza.GranicaKandydatowZadania(z.RerankCandidates))
+	if len(kandydaci) == 0 {
+		return odpowiedzSzukania(nil, true), nil
+	}
+
+	teksty := make([]string, len(kandydaci))
+	for i, kandydat := range kandydaci {
+		teksty[i] = kandydat.Pozycja.Tresc
+	}
+	oceny, err := wiedza.NowySilnikPrzesiewu(a.uruchamiacz, a.katalogDanych).
+		ZUstawieniami(ustawienia).
+		Przesiej(ctx, okno, zasady, obszar, pytanie, teksty, wiedza.LimitPrzesiewu)
+	if err != nil {
+		return shared.KnowledgeSearchResponse{}, bladWiedzy(err)
+	}
+	return odpowiedzSzukania(wiedza.PoPrzesiewie(kandydaci, oceny, granica), true), nil
+}
+
+// odpowiedzSzukania składa odpowiedź kontraktu z wykazu trafień.
+//
+// Pole `reranked` wchodzi zawsze, gdy przesiew się odbył, także przy wykazie
+// pustym: „nie mam na to nic" po przesiewie i „nie mam na to nic" bez niego są
+// dwiema różnymi odpowiedziami i wołający ma prawo je rozróżnić.
+func odpowiedzSzukania(trafienia []wiedza.Trafienie, przesiane bool) shared.KnowledgeSearchResponse {
 	wyniki := make([]shared.KnowledgeHit, 0, len(trafienia))
 	for _, trafienie := range trafienia {
 		wyniki = append(wyniki, przelozTrafienie(trafienie))
 	}
-	return shared.KnowledgeSearchResponse{Results: wyniki, Total: len(wyniki)}, nil
+	odpowiedz := shared.KnowledgeSearchResponse{Results: wyniki, Total: len(wyniki)}
+	if przesiane {
+		tak := true
+		odpowiedz.Reranked = &tak
+	}
+	return odpowiedz
+}
+
+// przesiewZadany czyta wskazanie żądania. Brak pola znaczy pierwszy przebieg
+// sam — przesiew kosztuje wczytanie drugiego modelu, więc wchodzi wyłącznie na
+// wyraźne żądanie.
+func przesiewZadany(rerank *bool) bool {
+	return rerank != nil && *rerank
 }
 
 // przelozTrafienie składa pozycję kontraktu zawsze ze wskazaniem źródła.

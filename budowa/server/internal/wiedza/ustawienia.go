@@ -1,20 +1,27 @@
 // Odpowiedzialność pliku: nastawy wskaźnika znaczenia — klucze katalogu
 // ustawień, wartości domyślne i nanoszenie odczytanej konfiguracji na komplet.
 //
-// Klucze są przepisane z migracji 115, a nie wymyślone tutaj. Prawdą o nazwie
-// ustawienia jest wiersz `definicja_ustawienia.klucz` ze
-// `store/migracja_115_wskaznik_znaczenia.sql`; stałe poniżej są jego kopią co
-// do znaku. Prawdą o wartości domyślnej jest ta sama kolumna po nadpisaniu
-// migracją 401. Katalog nie odmawia nieznanego klucza, więc literówka przechodzi
-// bez błędu i ustawienie po prostu nic nie robi (ten sam warunek pilnuje
-// nagłówek `mowa/ustawienia.go`).
+// Klucze osadzarki są przepisane z migracji 115, a nie wymyślone tutaj. Prawdą
+// o nazwie ustawienia jest wiersz `definicja_ustawienia.klucz` ze
+// `store/migracja_115_wskaznik_znaczenia.sql`; cztery stałe osadzarki są jego
+// kopią co do znaku. Prawdą o wartości domyślnej jest ta sama kolumna po
+// nadpisaniu migracją 401.
+//
+// Klucze przesiewu i osi obrazu idą tym samym wzorem nazw i tą samą drogą
+// odczytu — rozstrzyganie nastawy czyta zapis niezależnie od katalogu definicji
+// (`konfig/rozstrzyganie.go`), a wiersz katalogu, który wystawia je oknu
+// konfiguracji, zakłada migracja nastaw.
+//
+// Katalog nie odmawia nieznanego klucza, więc literówka przechodzi bez błędu
+// i ustawienie po prostu nic nie robi (ten sam warunek pilnuje nagłówek
+// `mowa/ustawienia.go`).
 //
 // Ten plik niczego nie czyta z bazy. Odczyt robi warstwa wyżej (rozstrzygacz
 // zasięgu, `config.get`); tutaj przychodzą gotowe pary klucz–wartość.
 package wiedza
 
-// Klucze katalogu ustawień sterujące wskaźnikiem znaczenia. Źródło:
-// `server/internal/store/migracja_115_wskaznik_znaczenia.sql`.
+// Klucze katalogu ustawień sterujące wskaźnikiem znaczenia. Źródło czterech
+// pierwszych: `server/internal/store/migracja_115_wskaznik_znaczenia.sql`.
 const (
 	// KluczProgram — ścieżka interpretera Pythona liczącego osadzenia. Pusta
 	// znaczy „szukaj python3 na ścieżce wyszukiwania systemu".
@@ -26,6 +33,25 @@ const (
 	KluczKatalogModeli = "wiedza_katalog_modeli"
 	// KluczDlugoscFragmentu — docelowa długość fragmentu w znakach.
 	KluczDlugoscFragmentu = "wiedza_dlugosc_fragmentu"
+	// KluczModelPrzesiewu — nazwa krzyżowego kodera układającego kandydatów
+	// pierwszego przebiegu na nowo.
+	KluczModelPrzesiewu = "wiedza_model_przesiewu"
+	// KluczKatalogPrzesiewu — katalog wag krzyżowego kodera. Pusty znaczy
+	// podkatalog `wiedza/modele/przesiew` katalogu danych rdzenia.
+	KluczKatalogPrzesiewu = "wiedza_katalog_przesiewu"
+	// KluczModelObrazu — nazwa modelu dwuwieżowego osi obrazu.
+	KluczModelObrazu = "wiedza_model_obrazu"
+	// KluczKatalogObrazu — katalog wag modelu osi obrazu. Pusty znaczy
+	// podkatalog `wiedza/modele/obraz` katalogu danych rdzenia.
+	KluczKatalogObrazu = "wiedza_katalog_obrazu"
+)
+
+// Podkatalogi wag dwóch modeli dokładanych do osadzarki. Nazwy odpowiadają
+// zdolnościom, nie wydawcom modeli: zmiana modelu jest wtedy wartością
+// ustawienia, a nie przeprowadzką katalogu.
+const (
+	podkatalogPrzesiewu = "przesiew"
+	podkatalogObrazu    = "obraz"
 )
 
 // Wartości domyślne. Odpowiadają DOKŁADNIE kolumnie
@@ -79,6 +105,28 @@ const (
 	// dlugoscFragmentuDomyslna — patrz `fragmenty.go`, gdzie stoi uzasadnienie
 	// liczby: fragment jest przytoczeniem, a jego sufit to 1100 znaków.
 	dlugoscFragmentuDomyslna = 700
+
+	// ModelPrzesiewuDomyslny — krzyżowy koder wielojęzyczny, z tego samego
+	// powodu, dla którego wielojęzyczna jest osadzarka: wiedza Operatora jest po
+	// polsku. Koder jednojęzyczny oceniałby polskie fragmenty przez podobieństwo
+	// do angielskiego pytania, czyli układałby kolejność gorzej niż pierwszy
+	// przebieg, który już wtedy stoi.
+	ModelPrzesiewuDomyslny = "BAAI/bge-reranker-v2-m3"
+	// WagaPrzesiewuMb — ile waży do dociągnięcia krzyżowy koder domyślny.
+	// Wchodzi do treści odmowy przy braku silnika.
+	WagaPrzesiewuMb = 2200
+	// oknoPrzesiewuTokenow — ile tokenów pary pytanie–fragment wchodzi do
+	// kodera. Para dłuższa jest ucinana; fragment wskaźnika ma rząd 700 znaków,
+	// więc ucięcie zdarza się wyłącznie przy fragmentach z ustawienia podniesionego
+	// do granicy.
+	oknoPrzesiewuTokenow = 512
+
+	// ModelObrazuDomyslny — model dwuwieżowy, który wiąże obraz ze zdaniem
+	// w jednej przestrzeni. Wydanie duże, nie podstawowe: oś obrazu wchodzi na
+	// żądanie i liczy się raz na zapytanie, więc rozstrzyga trafność, a nie czas.
+	ModelObrazuDomyslny = "openai/clip-vit-large-patch14"
+	// WagaObrazuMb — ile waży do dociągnięcia model osi obrazu.
+	WagaObrazuMb = 1600
 )
 
 // Ustawienia to komplet nastaw wskaźnika znaczenia.
@@ -94,6 +142,16 @@ type Ustawienia struct {
 	KatalogModeli string
 	// DlugoscFragmentu — docelowa długość fragmentu w znakach.
 	DlugoscFragmentu int
+	// ModelPrzesiewu — nazwa krzyżowego kodera przesiewu.
+	ModelPrzesiewu string
+	// KatalogPrzesiewu — katalog wag kodera; pusty znaczy podkatalog katalogu
+	// danych.
+	KatalogPrzesiewu string
+	// ModelObrazu — nazwa modelu osi obrazu.
+	ModelObrazu string
+	// KatalogObrazu — katalog wag osi obrazu; pusty znaczy podkatalog katalogu
+	// danych.
+	KatalogObrazu string
 }
 
 // UstawieniaDomyslne oddaje komplet obowiązujący Operatora, który niczego nie
@@ -104,6 +162,10 @@ func UstawieniaDomyslne() Ustawienia {
 		Model:            ModelDomyslny,
 		KatalogModeli:    KatalogModeliDomyslny,
 		DlugoscFragmentu: dlugoscFragmentuDomyslna,
+		ModelPrzesiewu:   ModelPrzesiewuDomyslny,
+		KatalogPrzesiewu: katalogModeliDomyslny,
+		ModelObrazu:      ModelObrazuDomyslny,
+		KatalogObrazu:    katalogModeliDomyslny,
 	}
 }
 
@@ -126,6 +188,18 @@ func (u *Ustawienia) Nanies(klucz, wartosc string) {
 		u.KatalogModeli = wartosc
 	case KluczDlugoscFragmentu:
 		u.DlugoscFragmentu = liczbaLubDomyslna(wartosc, dlugoscFragmentuDomyslna)
+	case KluczModelPrzesiewu:
+		if wartosc != "" {
+			u.ModelPrzesiewu = wartosc
+		}
+	case KluczKatalogPrzesiewu:
+		u.KatalogPrzesiewu = wartosc
+	case KluczModelObrazu:
+		if wartosc != "" {
+			u.ModelObrazu = wartosc
+		}
+	case KluczKatalogObrazu:
+		u.KatalogObrazu = wartosc
 	}
 }
 

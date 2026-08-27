@@ -65,52 +65,30 @@ pory dziesiec rewizji. Konflikt w `prowadzenie/rejestr-terenow.md` rozstrzyga si
 **na rzecz `main`** — wersja z galezi cofnelaby dorobek calej tury.
 
 
-### zdolnosc-wyszukiwania
-
-**Buduje dwie nowe zdolności produktu** na modelach, które stoją odłogiem.
-Umocowanie: pozycja 17 rejestru decyzji. **Jedyny teren tej tury z prawem zmiany
-kontraktu.**
-
-| | |
-|---|---|
-| **Gałąź** | `teren/zdolnosc-wyszukiwania` z `main` |
-| **Wykaz plików** | `budowa/shared/contract.json`, `budowa/server/internal/wiedza/`, `budowa/server/internal/core/adapter_modul_wiedza*.go` oraz adaptery obszaru `knowledge`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, `internal/core/adapter_rozmowa_*`, `adapter_przejecie_sterowania.go`, `zgodnosc_kontraktu_test.go`, `blokady_skutek_test.go` (teren `usterki-rdzenia`), `internal/store/` migracje nastaw (teren `nastawy-wdrozenia`) |
-
-**Przedmiot pierwszy — przesiew wyników.** `knowledge.search` dostaje pole
-`rerank` wraz z liczbą kandydatów. Wyszukanie robi wtedy dwa przebiegi: kosinus
-wektorów zbiera kandydatów, krzyżowy koder układa je ponownie. Model:
-`/opt/danaco-modele/reranker` (bge-reranker-v2-m3, 2,2 GB, `safetensors`).
-
-**Przedmiot drugi — oś obrazu.** Nowa komenda wyszukania obrazu zdaniem. Model:
-`/opt/danaco-modele/clip` (CLIP ViT-L/14, 1,6 GB, `safetensors`).
-
-**Zmiana kontraktu obwarowana.** Wolno **dołożyć**; nie wolno zmienić ani usunąć
-niczego istniejącego — żadnej komendy, pola, wartości wyliczenia ani opisu.
-Suma zastana: `b7d0436880d878e78576`.
-
-**Kryteria odbioru.**
-
-1. `knowledge.search` z przesiewem oddaje wynik **inaczej uszeregowany** niż bez
-   przesiewu, na tej samej treści i tym samym zapytaniu — z przytoczonymi obiema
-   odpowiedziami. Sam fakt odpowiedzi nie jest wykazaniem; przesiew ma **coś
-   zmienić** i masz pokazać co.
-2. Wyszukanie obrazu zdaniem oddaje **trafienie**, nie pustkę — z przytoczonym
-   żądaniem, odpowiedzią i wskazaniem, który obraz wrócił i dlaczego.
-3. Wagi z `/opt/danaco-modele` są **użyte** — wykazane tak, żeby widać było brak
-   pobrania drugiej kopii; sonda dodatnia ma dowodzić, że twój instrument pobranie
-   w ogóle wykryje.
-4. Brak modelu albo biblioteki daje odmowę **nazywającą brak i drogę naprawy**,
-   nie błąd wewnętrzny — wykazane sprawdzianem.
-5. Kontrakt ruszony **wyłącznie dodaniami** — wykazane porównaniem z sumą zastaną,
-   z wykazem tego, co przybyło. Generator daje wynik bajtowo powtarzalny w dwóch
-   przebiegach; klient przechodzi `tsc --noEmit`.
-6. Nowe komendy przechodzą **bramę kontraktu**: treść niepełna dostaje odmowę
-   nazywającą brakujące pola, treść pełna przechodzi — obie przytoczone.
-7. `gotestsum -- -count=1 ./...` — zero niepowodzeń wobec 2106 zdanych,
-   17 pominiętych, zero niezdanych.
-
 ## Zgłoszenia oczekujące na teren
+
+### Sprawdziany zdolnosci modelowych pomijaja sie bez `DANACO_MODELE`
+
+Dwa sprawdziany, ktore **jako jedyne dowodza, ze przesiew i os obrazu dzialaja**,
+pomijaja sie, gdy zmienna `DANACO_MODELE` nie wskazuje katalogu wag. Powod jest
+uczciwy — bez 4 GB wag nie ma czym liczyc — a pominiecie nazywa wprost, co
+ustawic.
+
+**Skutek jest jednak dokladnie ta klasa bledu, przed ktora ostrzega ustroj:**
+domyslny bieg konczy sie zielono, nie mierzac zdolnosci, ktore ta tura wniosla.
+Zmierzone: bez zmiennej 2120 zdanych i **19 pominietych**; ze zmienna oba
+sprawdziany przechodza (32,2 s i 19,8 s).
+
+**Obowiazujaca postac polecenia** dla biegu, ktory ma cokolwiek orzec o tych
+zdolnosciach:
+
+```
+DANACO_MODELE=/opt/danaco-modele gotestsum -- -count=1 -timeout 40m ./...
+```
+
+Do rozstrzygniecia: czy bieg kontrolny ma te zmienna ustawiac z urzedu, czy
+pominiecie ma wywracac bieg na maszynie, ktora wagi ma.
+
 
 ### Droga wejscia nie ma dokad prowadzic
 
@@ -705,6 +683,7 @@ po raz drugi.
 
 | Nazwa | Gałąź | Rewizje | Kontrola |
 |---|---|---|---|
+| `zdolnosc-wyszukiwania` | `teren/zdolnosc-wyszukiwania` | `5d02014` | weryfikacja Prowadzacego wlasnym pomiarem: kontrakt ruszony **wylacznie dodaniami** — stare pola `knowledge.search` sa prefiksem nowych, opis bez zmiany, zero usuniec; generator powtarzalny w dwoch przebiegach; oba sprawdziany zdolnosci **uruchomione z `DANACO_MODELE` i zdane** — przesiew zmienil kolejnosc, os obrazu trafila w kolo |
 | `okno-przygotowania` | `teren/okno-przygotowania` | `fbb405d` | weryfikacja Prowadzacego wlasnym pomiarem: martwy przycisk **zniknal** (0 trafien przy 2 kontrolnych na nowa czynnosc), 27/27 sprawdzianow przebiegu, 7/7 katalogu tresci, `tsc` bez bledu; zrzuty obejrzane — postep dobiega 100%, odslona nieudana ma droge naprzod |
 | `odtwarzanie-twarzy` | `teren/odtwarzanie-twarzy` | `9cc5ccf` | weryfikacja Prowadzacego wlasnym pomiarem: **RMSE 1301,37** miedzy wynikiem `faces:false` a `faces:true`, roznica zlokalizowana na twarzy; wycinek obejrzany — zeby, wargi i faktura skory wyraznie odtworzone; zakres 5 plikow w `internal/core`; kontrakt nietkniety; wagi `GFPGANv1.4.pth` wczytane `strict=True`, 285 kluczy |
 | `witryna-pobierania` | `teren/witryna-pobierania` | `6ffe74f` | weryfikacja Prowadzacego wlasnym pomiarem: w tresci stron zostalo **jedno trafienie** wzorca zniesionych postaci i jest nim zdanie odmawiajace wprost z pozycji 8; sonda dodatnia tego samego wzorca daje 4 trafienia w `wydania.json` i 0 w `zloz.mjs`, wiec rozroznia; witryna sklada sie - 10 stron |

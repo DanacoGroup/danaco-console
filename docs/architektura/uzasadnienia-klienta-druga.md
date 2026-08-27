@@ -1472,3 +1472,19 @@ ogólną bez pola stanu, którego korelacja klienta nie rozstrzyga — okno sta�
 w ładowaniu bez końca. Osłona zamienia to w zwykłą odmowę nazywającą komendę;
 rodzina komend jest świeża, więc rdzeń starszy od klienta jest tu przypadkiem
 realnym, nie teoretycznym.
+
+## budowa/klient-poprzedni/src/moduly/studio/aparat-panel.ts
+
+Spis treści, spisy ilustracji i tabel, przypisy dolne i końcowe, podpisy,
+zakładki, odwołania wzajemne, odsyłacze, powołania, bibliografia, hasła
+indeksu i indeks — wszystkie są elementami wyliczanymi z dokumentu. Pola
+dokumentu (numer strony, liczba stron, data, właściwość, pole obliczane) mają
+tę samą naturę. Wspólne jest to, że po zmianie treści stają się nieświeże,
+a odświeżenie liczy je od nowa.
+
+Panel prowadzi jeden wykaz „do odświeżenia" dla obu rodzin i pisze liczbą, ile
+elementów rozjechało się z dokumentem. Spis treści pokazany bez znaku
+nieświeżości kłamałby o dokumencie, którego nagłówki się zmieniły.
+
+Numer przypisu i powołania nadaje rdzeń przy odświeżeniu, a panel go
+wyłącznie pokazuje: okno nie wymyśla żadnego kodu i nie numeruje niczego samo.

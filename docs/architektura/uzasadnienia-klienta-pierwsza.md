@@ -1214,3 +1214,20 @@ o zawartości katalogu, a nie o przebiegu odczytu.
 Zawężenie zależności pasa do fazy odczytu i powodu niepowodzenia czyni z niego jeden byt dla obu
 odczytów okna konfiguracji: katalogu ustawień oraz konfiguracji obowiązującej. Stan konfiguracji
 spełnia ten kształt bez żadnej zmiany.
+
+## budowa/klient-poprzedni/src/asystent-plywajacy/indeks.ts
+
+Warstwa wystawia na zewnątrz jedno wywołanie `zaczepAsystenta`, przyjmujące
+kanał oraz opcjonalne posunięcia i identyfikator klienta. Pozostałe części,
+czyli favikon, dymek, stan rozmowy i dostępność głosu, są wnętrzem warstwy
+i nie mają powodu być widoczne z aplikacji.
+
+Pierwszym wyjątkiem są `czyGlosDziala` oraz `brakujaceOgniwa`. Stan kanału
+głosowego mówi o produkcie, a nie o widoku, więc jest potrzebny każdej warstwie
+budującej obsługę głosu.
+
+Drugim wyjątkiem jest `sprawca-zdarzenia.ts`. Odczyt pól `actor`
+i `actorClientId` z koperty przydaje się poza tą warstwą, ponieważ
+`aplikacja/zrodlo-posuniec.ts` rozpoznaje sprawcę odciskiem okna, mając prawdę
+w kopercie. Wystawienie tego odczytu w punkcie zbiorczym zapobiega powstaniu
+drugiej, odmiennej realizacji tej samej reguły.

@@ -1599,3 +1599,37 @@ zainstalowany, a wykres ma być plikiem przenośnym.
 `design.diagram.render` niesie `unplacedNodeIds` — węzły, których układ nie
 umieścił. Schemat z połową węzłów wygląda bez tego pola jak schemat kompletny,
 dlatego bilans nazywa brak wprost zamiast milczeć o nim.
+
+## adapter_modul_design_fotografia_rachunek.go
+
+Podstawa każdej czynności liczy się w procesie, czystym Go:
+`disintegration/imaging` (Lanczos, kadr, obrót, rozmycie, wyostrzenie,
+korekcje barwne), `golang.org/x/image/draw` (przekształcenia afiniczne,
+kompozycja warstw), `golang.org/x/image` (WEBP, TIFF) oraz rachunek własny na
+maski, progowanie, filtr bilateralny odszumiania i obrysowanie konturów. Nie
+ma tu ani jednego uruchomienia zewnętrznego procesu i mieć nie będzie: silniki
+obrazu i narzędzia obrysowywania konturów, po które sięga się przy takiej
+pracy, leżą poza instalką docelową, więc funkcja od nich zależna byłaby
+odmową, nie funkcją. Zapora `zapora_fotografii_test.go` pilnuje tego
+maszynowo.
+
+Każda funkcja tego pliku oddaje obraz. Żadna nie oddaje „powodzenia” bez
+obrazu: droga bez pikseli jest błędem nazywającym brak, a nie odpowiedzią
+statusu poprawnego z pustym wynikiem.
+
+Odszumianie bilateralne (`odszumBilateralnieDesignu`) różni się od rozmycia
+tym, że waży sąsiada nie tylko odległością, ale i różnicą jasności: rozmycie
+waży wyłącznie odległością, więc na granicy dwóch obszarów miesza jeden
+z drugim i krawędź traci ostrość, a filtr bilateralny dokłada wagę zakresową
+— sąsiad po drugiej stronie krawędzi różni się jasnością i wchodzi do
+średniej z wagą znikomą, więc szum wewnątrz obszaru znika, a granica zostaje.
+Biblioteka wkompilowana filtru bilateralnego nie ma, więc rachunek jest
+własny, złożony z dwóch przejść — poziomego i pionowego — zamiast jednego
+jądra kwadratowego: jądro bilateralne nie jest rozdzielne dokładnie, to
+przybliżenie, ale krawędzie zachowuje w obu kierunkach przy koszcie rzędu
+rozmycia rozdzielnego, dwa razy 2r+1 odczytów na punkt zamiast (2r+1)².
+Rachunek pełny na obrazie stumilionowym byłby stu sześćdziesięcioma
+dziewięcioma odczytami na punkt, a odszumienie przestałoby być czynnością
+wykonywalną w rozsądnym czasie. Kanał krycia przechodzi nietknięty:
+odszumienie zmienia barwę, nie przezroczystość, a uśrednienie krycia rozmyłoby
+wycinek odcięty od tła.

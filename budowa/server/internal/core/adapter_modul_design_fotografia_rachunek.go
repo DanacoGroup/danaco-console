@@ -1,27 +1,6 @@
-// Odpowiedzialność pliku: rachunek na pikselach warsztatu fotografii modułu
-// Design — kadr, przekształcenia, przeliczenie rozdzielczości, korekcje barwne,
-// filtry, retusz, maski, kompozycja warstw i obrysowanie konturów. Czynności
-// kontraktu stoją w `adapter_modul_design_fotografia.go`
-// i `_fotografia_wsad.go`; tutaj leży sam rachunek, żeby miał jedno miejsce
-// i jedną prawdę.
-//
-// ── Rachunek jest WKOMPILOWANY i nigdy nie odmawia ──────────────────────────
-// Podstawa każdej czynności liczy się w procesie, czystym Go:
-// `disintegration/imaging` (Lanczos, kadr, obrót, rozmycie, wyostrzenie,
-// korekcje barwne), `golang.org/x/image/draw` (przekształcenia afiniczne,
-// kompozycja warstw), `golang.org/x/image` (WEBP, TIFF) oraz rachunek własny na
-// maski, progowanie, filtr bilateralny odszumiania i obrysowanie konturów.
-//
-// Nie ma tu ani jednego uruchomienia procesu i mieć nie będzie: silniki obrazu
-// i narzędzia obrysowywania konturów, po które sięga się przy takiej pracy, leżą
-// poza instalką Operatora, więc funkcja od nich zależna byłaby u niego odmową,
-// nie funkcją. Zapora `zapora_fotografii_test.go` pilnuje tego maszynowo — także
-// tego, żeby ich nazwy nie wróciły do tego obszaru w komentarzu.
-//
-// ── Wynik jest w PIKSELACH, nie w kopercie ──────────────────────────────────
-// Każda funkcja tego pliku oddaje obraz. Żadna nie oddaje „powodzenia" bez
-// obrazu: droga bez pikseli jest błędem nazywającym brak, a nie odpowiedzią
-// `status: ok` z pustym wynikiem.
+// Plik obsługuje rachunek na pikselach warsztatu fotografii modułu design: kadr,
+// przekształcenia, rozdzielczość, korekcje barwne, filtry, retusz, maski,
+// kompozycja warstw i obrysowanie konturów.
 package core
 
 import (
@@ -57,11 +36,8 @@ const (
 	promienOdszumianiaDesignu = 3.0
 
 	// zakresOdszumianiaDesignu jest odchyleniem ZAKRESOWYM filtru odszumiającego
-	// przy pełnej sile, w skali składowej 0–255. To ta liczba czyni filtr
-	// bilateralnym, a nie rozmyciem: sąsiad różniący się jasnością bardziej niż
-	// o nią wchodzi do średniej z wagą znikomą, więc krawędź zostaje krawędzią.
-	// Trzydzieści dwa stopnie to granica, poniżej której różnica jasności jest
-	// szumem, a powyżej — treścią obrazu.
+	// przy pełnej sile, w skali 0–255 — ta liczba czyni filtr bilateralnym, a nie
+	// rozmyciem. Trzydzieści dwa stopnie dzieli szum od treści obrazu.
 	zakresOdszumianiaDesignu = 32.0
 
 	// granicaPromieniaOdszumianiaDesignu ogranicza zasięg jądra. Bez niej siła 1
@@ -69,27 +45,22 @@ const (
 	// obrazu, a odszumienie ma być czynnością, nie czekaniem.
 	granicaPromieniaOdszumianiaDesignu = 8
 
-	// promienWyostrzeniaDesignu jest promieniem maski wyostrzającej.
+	// promienWyostrzeniaDesignu jest promieniem maski wyostrzającej w pikselach,
+	// mnożonym przez żądaną siłę wyostrzenia.
 	promienWyostrzeniaDesignu = 1.6
 )
 
 // przytnijObrazFotografiiDesignu wycina kadr, prostuje horyzont i sprowadza do
-// proporcji.
-//
-// Kolejność jest zamierzona: NAJPIERW prostowanie, potem kadr. Obrót po kadrze
-// wprowadziłby w naroża puste trójkąty, których kadr już nie usunie — a horyzont
-// prostuje się właśnie po to, żeby ich nie było.
+// proporcji. Kolejność jest zamierzona: najpierw prostowanie, potem kadr, żeby
+// puste naroża po obrocie zdążył usunąć kadr, a nie zostały w wyniku.
 func przytnijObrazFotografiiDesignu(obraz image.Image,
 	z shared.DesignPhotoCropRequest) (image.Image, error) {
 
 	wynik := obraz
 	if z.StraightenDeg != nil && *z.StraightenDeg != 0 {
-		// Obrót z wypełnieniem przezroczystością, a nie czernią: puste naroża mają
-		// być widocznym brakiem, nie czarną obwódką udającą treść.
+		// Obrót z wypełnieniem przezroczystością, a nie czernią — puste naroża mają być widocznym brakiem.
 		wynik = imaging.Rotate(wynik, -*z.StraightenDeg, color.NRGBA{})
-		// Kadr wpisany w obrót: prostokąt największy, który po obrocie nie zawiera
-		// pustych naroży. Bez tego kroku prostowanie zawsze dawałoby obraz
-		// z brzegami przezroczystymi, których Operator nie zamawiał.
+		// Kadr wpisany w obrót: prostokąt największy, który po obrocie nie zawiera pustych naroży.
 		wynik = wpiszKadrWObrotDesignu(wynik, obraz, math.Abs(*z.StraightenDeg))
 	}
 
@@ -128,11 +99,9 @@ func przytnijObrazFotografiiDesignu(obraz image.Image,
 }
 
 // wpiszKadrWObrotDesignu wycina z obrazu obróconego prostokąt bez pustych
-// naroży, zachowując proporcje źródła.
-//
-// Rachunek jest znany: prostokąt o proporcjach źródła wpisany w obrót o kąt fi
-// skaluje się współczynnikiem, w którym mianownik jest sumą rzutów boków. Dla
-// kąta zerowego współczynnik jest jedynką i nic się nie dzieje.
+// naroży, zachowując proporcje źródła: prostokąt o tych proporcjach wpisany
+// w obrót o kąt fi skaluje się współczynnikiem, którego mianownik jest sumą
+// rzutów boków.
 func wpiszKadrWObrotDesignu(obrocony, zrodlo image.Image, katStopni float64) image.Image {
 	if katStopni <= 0 {
 		return obrocony
@@ -175,7 +144,8 @@ func wpiszKadrWObrotDesignu(obrocony, zrodlo image.Image, katStopni float64) ima
 	return imaging.CropCenter(obrocony, int(szerokoscKadru), int(wysokoscKadru))
 }
 
-// proporcjeKadruDesignu rozkłada zapis proporcji („16:9") na iloraz.
+// proporcjeKadruDesignu rozkłada zapis proporcji („16:9") na iloraz szerokości
+// do wysokości, sprawdzając poprawność obu liczb.
 func proporcjeKadruDesignu(zapis string) (float64, error) {
 	czesci := strings.Split(strings.TrimSpace(zapis), ":")
 	if len(czesci) != 2 {
@@ -214,7 +184,7 @@ func wpiszProporcjeWKadrDesignu(kadr image.Rectangle, proporcje float64) image.R
 }
 
 // przeksztalcObrazFotografiiDesignu obraca, odbija i koryguje perspektywę oraz
-// dystorsję obiektywu.
+// dystorsję obiektywu żądania, w tej kolejności zapisanej przez wołającego.
 func przeksztalcObrazFotografiiDesignu(obraz image.Image,
 	z shared.DesignPhotoTransformRequest) (image.Image, error) {
 
@@ -247,11 +217,8 @@ func przeksztalcObrazFotografiiDesignu(obraz image.Image,
 }
 
 // skorygujDystorsjeDesignu prostuje dystorsję obiektywu przekształceniem
-// promieniowym.
-//
-// Rachunek jest odwrotnym odwzorowaniem: dla każdego punktu WYNIKU liczy się,
-// skąd w źródle go wziąć. Odwzorowanie wprost zostawiałoby w wyniku dziury,
-// bo punkty źródła nie trafiają w kratkę wyniku równomiernie.
+// promieniowym. Rachunek jest odwrotnym odwzorowaniem: dla każdego punktu
+// wyniku liczy się, skąd w źródle go wziąć, żeby wynik nie miał dziur.
 func skorygujDystorsjeDesignu(obraz image.Image, sila float64) image.Image {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()
@@ -266,8 +233,7 @@ func skorygujDystorsjeDesignu(obraz image.Image, sila float64) image.Image {
 			dx := (float64(x) - srodekX) / promienNormujacy
 			dy := (float64(y) - srodekY) / promienNormujacy
 			promien := math.Hypot(dx, dy)
-			// Wielomian promieniowy pierwszego stopnia: r' = r · (1 + k·r²).
-			// Wystarcza na dystorsję beczkową i poduszkową obiektywów użytkowych.
+			// Wielomian promieniowy pierwszego stopnia wystarcza na dystorsję beczkową i poduszkową obiektywów.
 			wspolczynnik := 1 + sila*promien*promien
 			zrodloweX := srodekX + dx*promienNormujacy*wspolczynnik
 			zrodloweY := srodekY + dy*promienNormujacy*wspolczynnik
@@ -307,8 +273,7 @@ func punktDwuliniowoDesignu(obraz image.Image, x, y float64) color.NRGBA {
 	if alfa <= 0 {
 		return color.NRGBA{}
 	}
-	// Składowe z `RGBA()` są przemnożone przez krycie, a `NRGBA` ich nie mnoży —
-	// stąd dzielenie przez kanał krycia.
+	// Składowe z RGBA() są przemnożone przez krycie, a NRGBA ich nie mnoży — stąd dzielenie przez krycie.
 	return color.NRGBA{
 		R: uint8(mieszaj(r00, r10, r01, r11) / alfa * 255),
 		G: uint8(mieszaj(g00, g10, g01, g11) / alfa * 255),
@@ -318,19 +283,15 @@ func punktDwuliniowoDesignu(obraz image.Image, x, y float64) color.NRGBA {
 }
 
 // skorygujPerspektyweDesignu wyprostowuje czworokąt wskazany narożami do
-// prostokąta.
-//
-// Rachunek jest HOMOGRAFIĄ liczoną z czterech par punktów układem ośmiu równań
-// metodą eliminacji Gaussa. Przekształcenie afiniczne (trzy pary) tu nie
-// wystarcza: perspektywa zmienia zbieżność linii, a przekształcenie afiniczne
-// zachowuje równoległość i nie potrafi tego naprawić.
+// prostokąta, homografią liczoną z czterech par punktów metodą eliminacji
+// Gaussa — przekształcenie afiniczne trzech par tu nie wystarcza, bo zachowuje
+// równoległość.
 func skorygujPerspektyweDesignu(obraz image.Image,
 	naroza []shared.DesignPhotoPoint) (image.Image, error) {
 
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := float64(granice.Dx()), float64(granice.Dy())
-	// Docelowy prostokąt to całe płótno; źródłem jest czworokąt Operatora.
-	// Rachunek idzie z DOCELOWEGO do ŹRÓDŁOWEGO, bo próbkujemy odwrotnie.
+	// Docelowy prostokąt to płótno, źródło to czworokąt — rachunek idzie od docelowego do źródłowego.
 	docelowe := [4][2]float64{{0, 0}, {szerokosc, 0}, {szerokosc, wysokosc}, {0, wysokosc}}
 	zrodlowe := [4][2]float64{}
 	for numer, naroze := range naroza {
@@ -369,8 +330,7 @@ func homografiaDesignu(od, do [4][2]float64) ([8]float64, error) {
 		uklad[2*numer] = [9]float64{x, y, 1, 0, 0, 0, -u * x, -u * y, u}
 		uklad[2*numer+1] = [9]float64{0, 0, 0, x, y, 1, -v * x, -v * y, v}
 	}
-	// Eliminacja Gaussa z wyborem elementu głównego: bez wyboru układ z zerem na
-	// przekątnej (naroża w jednej linii) dzieliłby przez zero.
+	// Eliminacja Gaussa z wyborem elementu głównego: bez wyboru zero na przekątnej dzieliłoby przez zero.
 	for kolumna := 0; kolumna < 8; kolumna++ {
 		glowny := kolumna
 		for wiersz := kolumna + 1; wiersz < 8; wiersz++ {
@@ -401,8 +361,8 @@ func homografiaDesignu(od, do [4][2]float64) ([8]float64, error) {
 	return wynik, nil
 }
 
-// przeliczRozdzielczoscFotografiiDesignu przelicza rozdzielczość wskazanym
-// filtrem.
+// przeliczRozdzielczoscFotografiiDesignu przelicza rozdzielczość obrazu
+// wskazanym filtrem, zachowując proporcje, gdy żądanie o to prosi.
 func przeliczRozdzielczoscFotografiiDesignu(obraz image.Image, szerokosc, wysokosc int,
 	filtr shared.DesignPhotoResampleFilter, zachowajProporcje bool) (image.Image, error) {
 
@@ -413,8 +373,7 @@ func przeliczRozdzielczoscFotografiiDesignu(obraz image.Image, szerokosc, wysoko
 				"na jaki rozmiar przeliczyć")
 	}
 	if zachowajProporcje {
-		// Zero w jednym z wymiarów znaczy dla biblioteki „dobierz z proporcji" —
-		// dokładnie to, o co prosi pole `keepAspectRatio`.
+		// Zero w jednym z wymiarów znaczy dla biblioteki „dobierz z proporcji" — o to prosi keepAspectRatio.
 		if szerokosc > 0 && wysokosc > 0 {
 			skalaX := float64(szerokosc) / float64(granice.Dx())
 			skalaY := float64(wysokosc) / float64(granice.Dy())
@@ -423,8 +382,7 @@ func przeliczRozdzielczoscFotografiiDesignu(obraz image.Image, szerokosc, wysoko
 			wysokosc = int(float64(granice.Dy())*skala + 0.5)
 		}
 	} else if szerokosc <= 0 || wysokosc <= 0 {
-		// Bez zachowania proporcji brakujący wymiar zostaje niezmieniony: to jedyna
-		// liczba, którą da się podać, nie zgadując.
+		// Bez zachowania proporcji brakujący wymiar zostaje niezmieniony — jedyna liczba pewna bez zgadywania.
 		if szerokosc <= 0 {
 			szerokosc = granice.Dx()
 		}
@@ -438,7 +396,8 @@ func przeliczRozdzielczoscFotografiiDesignu(obraz image.Image, szerokosc, wysoko
 	return imaging.Resize(obraz, szerokosc, wysokosc, filtrPrzeliczeniaDesignu(filtr)), nil
 }
 
-// filtrPrzeliczeniaDesignu przekłada filtr kontraktu na filtr biblioteki.
+// filtrPrzeliczeniaDesignu przekłada filtr kontraktu na filtr biblioteki,
+// biorąc Lanczosa jako wartość domyślną.
 func filtrPrzeliczeniaDesignu(filtr shared.DesignPhotoResampleFilter) imaging.ResampleFilter {
 	switch filtr {
 	case shared.DesignPhotoResampleFilterBilinear:
@@ -450,7 +409,7 @@ func filtrPrzeliczeniaDesignu(filtr shared.DesignPhotoResampleFilter) imaging.Re
 }
 
 // sprawdzRozmiarFotografiiDesignu odrzuca rozmiar nie do zmieszczenia w pamięci
-// PRZED rachunkiem.
+// przed rachunkiem, sprawdzając bok i powierzchnię wyniku.
 func sprawdzRozmiarFotografiiDesignu(szerokosc, wysokosc int) error {
 	if szerokosc < 1 || wysokosc < 1 {
 		return fmt.Errorf("rozmiar %d×%d: obraz o niedodatnim boku nie istnieje", szerokosc, wysokosc)
@@ -470,19 +429,14 @@ func sprawdzRozmiarFotografiiDesignu(szerokosc, wysokosc int) error {
 
 // popraweJakoscFotografiiDesignu wykonuje auto-poziomy, auto-kontrast,
 // odszumienie i wyostrzenie, oddając obraz wraz z wykazem kroków, które
-// NAPRAWDĘ weszły.
-//
-// Wykaz jest bilansem: żądanie z samymi wartościami zerowymi dostaje obraz
-// nietknięty i pusty wykaz, a nie „powodzenie" sugerujące poprawę, której nie
-// było.
+// naprawdę weszły. Żądanie z samymi wartościami zerowymi dostaje obraz
+// nietknięty i pusty wykaz.
 func popraweJakoscFotografiiDesignu(obraz image.Image,
 	z shared.DesignPhotoEnhanceRequest) (image.Image, []string) {
 
 	wynik := obraz
 	kroki := []string{}
-	// Brak wskazania czegokolwiek znaczy „popraw rozsądnie": auto-poziomy
-	// i delikatne wyostrzenie. Obraz oddany nietknięty przy żądaniu bez nastaw
-	// byłby odpowiedzią na pytanie, którego Operator nie zadał.
+	// Brak wskazania czegokolwiek znaczy „popraw rozsądnie": auto-poziomy i delikatne wyostrzenie.
 	bezNastaw := z.AutoLevels == nil && z.AutoContrast == nil && z.Denoise == nil && z.Sharpen == nil
 
 	if bezNastaw || (z.AutoLevels != nil && *z.AutoLevels) {
@@ -490,8 +444,7 @@ func popraweJakoscFotografiiDesignu(obraz image.Image,
 		kroki = append(kroki, "auto-poziomy")
 	}
 	if z.AutoContrast != nil && *z.AutoContrast {
-		// Krzywa sigmoidalna zamiast liniowego kontrastu: liniowy przycina tony
-		// skrajne, a sigmoidalna dociąga środek zostawiając światła i cienie.
+		// Krzywa sigmoidalna zamiast liniowego kontrastu dociąga środek, zostawiając światła i cienie.
 		wynik = imaging.AdjustSigmoid(wynik, 0.5, 3)
 		kroki = append(kroki, "auto-kontrast")
 	}
@@ -514,27 +467,9 @@ func popraweJakoscFotografiiDesignu(obraz image.Image,
 	return wynik, kroki
 }
 
-// odszumBilateralnieDesignu odszumia obraz FILTREM BILATERALNYM — średnią ważoną
-// dwa razy: odległością sąsiada i różnicą jego jasności.
-//
-// ── Dlaczego nie rozmycie ───────────────────────────────────────────────────
-// Rozmycie waży wyłącznie odległością, więc na granicy dwóch obszarów miesza
-// jeden z drugim i krawędź traci ostrość. Filtr bilateralny dokłada wagę
-// zakresową: sąsiad po drugiej stronie krawędzi różni się jasnością i wchodzi do
-// średniej z wagą znikomą, więc szum wewnątrz obszaru znika, a granica zostaje.
-// Biblioteka wkompilowana filtru bilateralnego nie ma, więc rachunek jest tutaj
-// i jest własny.
-//
-// ── Dwa przejścia zamiast jednego jądra kwadratowego ────────────────────────
-// Filtr idzie osobno w poziomie i w pionie. Jądro bilateralne nie jest
-// rozdzielne dokładnie — to jest PRZYBLIŻENIE i tak je trzeba czytać — ale
-// krawędzie zachowuje w obu kierunkach, a koszt jest rzędu rozmycia
-// rozdzielnego: dwa razy 2r+1 odczytów na punkt zamiast (2r+1)². Rachunek pełny
-// na obrazie stumilionowym byłby stu sześćdziesięcioma dziewięcioma odczytami na
-// punkt i odszumienie przestałoby być czynnością, którą Operator wykonuje.
-//
-// Kanał krycia przechodzi NIETKNIĘTY: odszumienie zmienia barwę, nie
-// przezroczystość, a uśrednienie krycia rozmyłoby wycinek odcięty od tła.
+// odszumBilateralnieDesignu odszumia obraz filtrem bilateralnym — średnią
+// ważoną odległością sąsiada i różnicą jego jasności, żeby szum znikał,
+// a krawędzie zostawały ostre. Filtr idzie osobno w poziomie i w pionie.
 func odszumBilateralnieDesignu(obraz image.Image, sila float64) *image.NRGBA {
 	odchyleniePrzestrzenne := promienOdszumianiaDesignu * sila
 	odchylenieZakresu := zakresOdszumianiaDesignu * sila
@@ -549,9 +484,7 @@ func odszumBilateralnieDesignu(obraz image.Image, sila float64) *image.NRGBA {
 		promien = granicaPromieniaOdszumianiaDesignu
 	}
 
-	// Wagi liczą się RAZ, do tablic: waga przestrzenna zależy tylko od odległości
-	// (promień wartości), a zakresowa tylko od różnicy jasności (256 wartości).
-	// Liczenie wykładnika w środku pętli byłoby setką milionów wywołań `math.Exp`.
+	// Wagi liczą się raz, do tablic — liczenie wykładnika w pętli byłoby setką milionów wywołań.
 	wagiOdleglosci := make([]float64, promien+1)
 	for odleglosc := 0; odleglosc <= promien; odleglosc++ {
 		wagiOdleglosci[odleglosc] = math.Exp(-float64(odleglosc*odleglosc) /
@@ -567,8 +500,8 @@ func odszumBilateralnieDesignu(obraz image.Image, sila float64) *image.NRGBA {
 	return przejscieBilateralneDesignu(poziome, wagiOdleglosci, &wagiJasnosci, false)
 }
 
-// przejscieBilateralneDesignu wykonuje jedno przejście filtru — w poziomie albo
-// w pionie.
+// przejscieBilateralneDesignu wykonuje jedno przejście filtru — w poziomie
+// albo w pionie, ważąc sąsiadów tablicami wag policzonymi wcześniej.
 func przejscieBilateralneDesignu(zrodlo *image.NRGBA, wagiOdleglosci []float64,
 	wagiJasnosci *[256]float64, poziomo bool) *image.NRGBA {
 
@@ -587,9 +520,7 @@ func przejscieBilateralneDesignu(zrodlo *image.NRGBA, wagiOdleglosci []float64,
 				} else {
 					sasiadY += krok
 				}
-				// Punkt spoza obrazu nie wchodzi do średniej i nie dopisuje wagi:
-				// wypełnienie brzegu czernią pociemniłoby obwód, a powtórzenie brzegu
-				// zawyżyłoby jego udział.
+				// Punkt spoza obrazu nie wchodzi do średniej: wypełnienie brzegu czernią zniekształciłoby wynik.
 				if sasiadX < granice.Min.X || sasiadY < granice.Min.Y ||
 					sasiadX >= granice.Max.X || sasiadY >= granice.Max.Y {
 					continue
@@ -670,8 +601,7 @@ func rozciagnijHistogramDesignu(obraz image.Image) image.Image {
 		}
 	}
 	if gorny-dolny < 8 {
-		// Obraz o histogramie węższym niż osiem poziomów jest niemal jednolity;
-		// rozciągnięcie takiego histogramu dałoby szum zamiast obrazu.
+		// Histogram węższy niż osiem poziomów jest niemal jednolity — rozciągnięcie dałoby szum.
 		return obraz
 	}
 	skala := 255.0 / float64(gorny-dolny)
@@ -691,15 +621,14 @@ func rozciagnijHistogramDesignu(obraz image.Image) image.Image {
 	})
 }
 
-// skorygujBarweFotografiiDesignu wykonuje korekcje barwne żądania.
+// skorygujBarweFotografiiDesignu wykonuje korekcje barwne żądania: ekspozycję,
+// jasność, kontrast, gammę, nasycenie, temperaturę, odcień i krzywe tonalne.
 func skorygujBarweFotografiiDesignu(obraz image.Image,
 	z shared.DesignPhotoColorCorrectRequest) (image.Image, error) {
 
 	wynik := obraz
 	if z.Exposure != nil && *z.Exposure != 0 {
-		// Ekspozycja liczy się w DZIAŁKACH: jedna działka to podwojenie ilości
-		// światła, więc mnożnik jest potęgą dwójki. Dodanie stałej do składowych
-		// byłoby jasnością, nie ekspozycją, i przepalałoby światła.
+		// Ekspozycja liczy się w działkach: jedna działka to podwojenie światła, mnożnik jest potęgą dwójki.
 		mnoznik := math.Pow(2, *z.Exposure)
 		wynik = imaging.AdjustFunc(wynik, func(punkt color.NRGBA) color.NRGBA {
 			return color.NRGBA{
@@ -741,11 +670,10 @@ func skorygujBarweFotografiiDesignu(obraz image.Image,
 	return wynik, nil
 }
 
-// zmienTemperatureBarwowaDesignu przesuwa barwę w stronę ciepłą albo chłodną.
-//
-// Rachunek jest przesunięciem kanałów czerwonego i niebieskiego w przeciwnych
-// kierunkach — tak działa suwak temperatury: cieplej znaczy więcej czerwieni
-// i mniej błękitu, a zieleń zostaje odniesieniem.
+// zmienTemperatureBarwowaDesignu przesuwa barwę w stronę ciepłą albo chłodną,
+// przesunięciem kanałów czerwonego i niebieskiego w przeciwnych kierunkach —
+// tak działa suwak temperatury: cieplej znaczy więcej czerwieni, zieleń
+// zostaje odniesieniem.
 func zmienTemperatureBarwowaDesignu(obraz image.Image, sila float64) image.Image {
 	przesuniecie := sila * 40
 	return imaging.AdjustFunc(obraz, func(punkt color.NRGBA) color.NRGBA {
@@ -758,7 +686,8 @@ func zmienTemperatureBarwowaDesignu(obraz image.Image, sila float64) image.Image
 	})
 }
 
-// przesunOdcienDesignu obraca odcień wszystkich punktów.
+// przesunOdcienDesignu obraca odcień wszystkich punktów obrazu o wskazaną
+// liczbę stopni w przestrzeni HSL.
 func przesunOdcienDesignu(obraz image.Image, stopnie float64) image.Image {
 	return imaging.AdjustFunc(obraz, func(punkt color.NRGBA) color.NRGBA {
 		barwa := kolorZNrgbaDesignu(punkt)
@@ -782,11 +711,9 @@ func zmienJasnoscPercepcyjnaDesignu(obraz image.Image, sila float64) image.Image
 	})
 }
 
-// zastosujKrzyweDesignu nakłada krzywe tonalne na kanały.
-//
-// Zapis krzywej jest wykazem punktów `{wejscie, wyjscie}` w skali 0–255 dla
-// kanałów `rgb`, `r`, `g`, `b`. Między punktami wartość idzie liniowo: krzywa
-// wygładzona wielomianem wprowadzałaby przegięcia, których Operator nie wskazał.
+// zastosujKrzyweDesignu nakłada krzywe tonalne na kanały. Zapis krzywej jest
+// wykazem punktów `{wejscie, wyjscie}` w skali 0–255 dla kanałów `rgb`, `r`,
+// `g`, `b`. Między punktami wartość idzie liniowo.
 func zastosujKrzyweDesignu(obraz image.Image, zapis []byte) (image.Image, error) {
 	tablice, err := tabliceKrzywychDesignu(zapis)
 	if err != nil {
@@ -802,7 +729,8 @@ func zastosujKrzyweDesignu(obraz image.Image, zapis []byte) (image.Image, error)
 	}), nil
 }
 
-// przytnijSkladowaDesignu wprowadza składową w zakres bajtu.
+// przytnijSkladowaDesignu wprowadza składową barwy w zakres bajtu, zaokrąglając
+// do najbliższej liczby całkowitej.
 func przytnijSkladowaDesignu(wartosc float64) uint8 {
 	if wartosc < 0 {
 		return 0
@@ -813,7 +741,8 @@ func przytnijSkladowaDesignu(wartosc float64) uint8 {
 	return uint8(wartosc + 0.5)
 }
 
-// przytnijZakresJednosciDesignu wprowadza wartość w zakres od -1 do 1.
+// przytnijZakresJednosciDesignu wprowadza wartość w zakres od -1 do 1, w którym
+// żądanie zapisuje siłę korekcji.
 func przytnijZakresJednosciDesignu(wartosc float64) float64 {
 	if wartosc < -1 {
 		return -1
@@ -824,7 +753,8 @@ func przytnijZakresJednosciDesignu(wartosc float64) float64 {
 	return wartosc
 }
 
-// zlozWarstwyFotografiiDesignu składa warstwy rastrowe trybami mieszania.
+// zlozWarstwyFotografiiDesignu składa warstwy rastrowe trybami mieszania,
+// skalując warstwę do obszaru docelowego, gdy wymiary się różnią.
 func zlozWarstwyFotografiiDesignu(plotno *image.NRGBA, warstwa image.Image,
 	obszar image.Rectangle, krycie float64, tryb shared.DesignPhotoBlendMode,
 	maska image.Image) {
@@ -858,7 +788,8 @@ func zlozWarstwyFotografiiDesignu(plotno *image.NRGBA, warstwa image.Image,
 	}
 }
 
-// zmieszajPunktyDesignu miesza punkt górny z dolnym wedle trybu i udziału.
+// zmieszajPunktyDesignu miesza punkt górny z dolnym wedle trybu mieszania
+// i udziału krycia warstwy górnej.
 func zmieszajPunktyDesignu(dol, gora color.NRGBA, udzial float64,
 	tryb shared.DesignPhotoBlendMode) color.NRGBA {
 
@@ -888,7 +819,8 @@ func zmieszajPunktyDesignu(dol, gora color.NRGBA, udzial float64,
 	}
 }
 
-// nrgbaPunktuDesignu odczytuje punkt obrazu w postaci bez wmnożonego krycia.
+// nrgbaPunktuDesignu odczytuje punkt obrazu w postaci bez wmnożonego krycia,
+// niezależnie od formatu wewnętrznego obrazu.
 func nrgbaPunktuDesignu(obraz image.Image, x, y int) color.NRGBA {
 	if wprost, jest := obraz.(*image.NRGBA); jest {
 		return wprost.NRGBAAt(x, y)
@@ -903,8 +835,8 @@ func nrgbaPunktuDesignu(obraz image.Image, x, y int) color.NRGBA {
 	}
 }
 
-// udzialMaskiDesignu odczytuje udział maski w punkcie, skalując maskę do obszaru
-// warstwy.
+// udzialMaskiDesignu odczytuje udział maski w punkcie, skalując maskę do
+// obszaru warstwy i biorąc jego jasność.
 func udzialMaskiDesignu(maska image.Image, x, y, szerokosc, wysokosc int) float64 {
 	granice := maska.Bounds()
 	if granice.Dx() == 0 || granice.Dy() == 0 || szerokosc == 0 || wysokosc == 0 {
@@ -913,9 +845,7 @@ func udzialMaskiDesignu(maska image.Image, x, y, szerokosc, wysokosc int) float6
 	maskaX := granice.Min.X + x*granice.Dx()/szerokosc
 	maskaY := granice.Min.Y + y*granice.Dy()/wysokosc
 	r, g, b, _ := maska.At(maskaX, maskaY).RGBA()
-	// Maska jest odczytywana jako JASNOŚĆ, nie jako kanał krycia: maska rysowana
-	// przez Operatora bywa czarno-biała bez przezroczystości, a wtedy kanał krycia
-	// jest wszędzie pełny i maska nie znaczyłaby nic.
+	// Maska jest odczytywana jako jasność, nie kanał krycia — bywa czarno-biała bez przezroczystości.
 	return float64(int(r>>8)*299+int(g>>8)*587+int(b>>8)*114) / 1000 / 255
 }
 
@@ -952,12 +882,9 @@ func kolorHclDesignu(odcien, nasycenie, jasnosc float64) colorful.Color {
 }
 
 // tabliceKrzywychFotografiiDesignu to cztery tablice przeglądowe krzywych
-// tonalnych: wspólna dla wszystkich kanałów i po jednej na kanał.
-//
-// Tablice, nie rachunek na punkt: obraz dwudziestomegapikselowy ma dwadzieścia
-// milionów punktów, a wartości wejściowych jest dwieście pięćdziesiąt sześć.
-// Policzenie ich raz i odczytanie z tablicy jest tym samym wynikiem za
-// osiemdziesięciotysięczną część rachunku.
+// tonalnych: wspólna dla wszystkich kanałów i po jednej na kanał. Tablice, nie
+// rachunek na punkt: obraz ma miliony punktów, a wartości wejściowych jest
+// dwieście pięćdziesiąt sześć.
 type tabliceKrzywychFotografiiDesignu struct {
 	wspolna   [256]uint8
 	czerwony  [256]uint8
@@ -965,19 +892,18 @@ type tabliceKrzywychFotografiiDesignu struct {
 	niebieski [256]uint8
 }
 
-// punktKrzywejDesignu to jeden punkt krzywej tonalnej w zapisie żądania.
+// punktKrzywejDesignu to jeden punkt krzywej tonalnej w zapisie żądania,
+// z nazwami pól polskimi i angielskimi.
 type punktKrzywejDesignu struct {
 	Wejscie float64 `json:"wejscie"`
 	Wyjscie float64 `json:"wyjscie"`
-	// Nazwy angielskie przyjmujemy obok polskich: kontrakt opisuje pole jako
-	// `{wejscie, wyjscie}`, ale okno składane przez kogoś, kto czytał wyłącznie
-	// nazwy pól kontraktu, wysyła `in`/`out`. Przyjęcie obu jest tańsze niż
-	// odmowa za nazwę klucza.
+	// Nazwy angielskie przyjmujemy obok polskich: okno bywa złożone z nazw pól kontraktu, in/out.
 	In  *float64 `json:"in,omitempty"`
 	Out *float64 `json:"out,omitempty"`
 }
 
-// tabliceKrzywychDesignu rozkłada zapis krzywych na tablice przeglądowe.
+// tabliceKrzywychDesignu rozkłada zapis krzywych na tablice przeglądowe, po
+// jednej wspólnej i po jednej na kanał barwy.
 func tabliceKrzywychDesignu(zapis []byte) (tabliceKrzywychFotografiiDesignu, error) {
 	var odczytane map[string][]punktKrzywejDesignu
 	if err := json.Unmarshal(zapis, &odczytane); err != nil {

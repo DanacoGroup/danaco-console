@@ -41,6 +41,18 @@
 }
 .sta-cialo[data-boczna="zwinieta"] { grid-template-columns: var(--dn-wym-pasek) minmax(0, 1fr); }
 
+/* Wariant trzech rejonów: nawigacja modułów, wykaz rozmów, stanowisko. Tak stoi
+   TalkIn, w którym wybór rozmowy jest osobnym rejonem, a nie zakładką w treści.
+   Rejon pierwszy jest węższy od bocznej — niesie same nazwy modułów środowiska,
+   bez metadanych, więc nie potrzebuje jej szerokości. Wariant klasą, z tego
+   samego powodu co przy powłoce bez pasma. */
+.sta-cialo--trzy-rejony {
+  grid-template-columns: var(--dn-wym-moduly) var(--dn-wym-boczna) minmax(0, 1fr);
+}
+.sta-cialo--trzy-rejony[data-boczna="zwinieta"] {
+  grid-template-columns: var(--dn-wym-moduly) var(--dn-wym-pasek) minmax(0, 1fr);
+}
+
 /* ── 2 · STANOWISKO = strefa czatów (pion) + strefa robocza (prawa) ─────── */
 
 .sta-obszar {

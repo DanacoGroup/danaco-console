@@ -249,10 +249,6 @@
     .us-rozgraniczenie-tresc, .us-nawiazania { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
-<style data-fix-powloka>
-/* Poprawka: okno bez pasma kart — treść wiodąca zajmuje wiersz 1fr powłoki */
-.sta-powloka { grid-template-rows: var(--dn-wym-pasek) minmax(0, 1fr) !important; }
-</style>
 </head>
 
 <body class="pt-pelny-ekran"
@@ -260,7 +256,7 @@
       data-prototyp-okno="Okno Ustawień — poziom aplikacji (warstwa stanowiska v2)"
       data-prototyp-zrodlo="okna/ustawienia.md · kontrakt systemu projektowego · WZORZEC-STANOWISKA.html">
 
-<div class="sta-powloka">
+<div class="sta-powloka sta-powloka--bez-pasma">
 
   <!-- ══ PASEK GÓRNY: hamburger · TRYBY Talk/Work/Code · konto ═══════════════
        Ustawienia to okno globalne, lecz noszą ten sam pasek powłoki, aby

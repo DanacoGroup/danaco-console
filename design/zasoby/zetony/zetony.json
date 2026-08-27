@@ -261,6 +261,7 @@
     "--dn-wym-pas-kart": "36px",
     "--dn-wym-wiersz": "36px",
     "--dn-wym-boczna": "224px",
+    "--dn-wym-moduly": "200px",
     "--dn-wym-pas-komunikacji": "320px",
     "--dn-wym-modal": "560px",
     "--dn-wym-toast-min": "280px",

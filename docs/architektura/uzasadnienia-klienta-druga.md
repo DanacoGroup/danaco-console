@@ -5453,3 +5453,24 @@ koordynator-wykonawca nie nadaje ról — reguła domyślna i tak daje przy
 dwóch oknach koordynatora i wykonawcę; mówi wyłącznie, że dla wymienionego
 modułu para jest jego właściwością. Moduł, dla którego role okien nie są
 ustalone, w tym wykazie nie stoi.
+
+## budowa/klient-poprzedni/src/rozmowa/widok-zapisu.ts
+Klucz techniczny trybu jest oddzielony od etykiety: kod trybu nie zmienia się
+z językiem interfejsu, a polska nazwa i zdanie o przeznaczeniu stoją obok
+niego w wykazie. Plik nie rysuje niczego i nie zna DOM-u — rozstrzyga
+wyłącznie, które warstwy wpisu mają się pokazać; rysowanie zostaje w widoku
+wpisu. Tryb nie sięga do rdzenia: wszystkie cztery stoją na polach, które
+wpis już niesie. Przełączenie jest filtrem nad pamięcią okna — nie woła
+komendy, nie dociąga historii i niczego nie gubi.
+
+Podsumowanie tury i konto kanału są widoczne bez przełącznika trybu, a tryb
+ma zapis poszerzać albo zawężać do streszczenia, nie odbierać informacji
+dostępnej wszędzie indziej. Błąd kanału nie jest szczegółem diagnostycznym,
+który wolno schować za trybem: wpis, w którym tura padła, ma o tym mówić
+niezależnie od ustawienia widoku.
+
+Tryb streszczenia filtruje wpis, z którego nie da się nic streścić — bez
+domkniętej tury, bez wywołań narzędzi i bez błędu — bo taki wpis zostawiłby na
+ekranie samą ramkę z godziną. Trzy pozostałe tryby nie chowają niczego.
+Funkcja nie usuwa wpisu z pamięci okna ani z listy; ukrycie jest odwracalne
+powrotem do innego trybu.

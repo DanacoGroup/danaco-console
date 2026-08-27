@@ -10,23 +10,13 @@ import (
 // równoległej struktury komunikatu.
 type Fragment = protocol.Chunk
 
-// FragmentTekstu niesie porcję tekstu odpowiedzi modelu.
+// FragmentTekstu niesie porcję tekstu odpowiedzi modelu, złożoną w fragment strumienia gotowy do wysłania oknu rozmowy.
 func FragmentTekstu(z Zapytanie, tekst string) Fragment {
 	return protocol.ChunkTekstu(z.Okno(), z.Wiadomosc, tekst)
 }
 
-// TrescObrazu jest ładunkiem fragmentu obrazu — treścią pola `data` fragmentu
-// rodzaju `image` (shared.ChunkKindImage). Kontrakt nie opisuje kształtu tego
-// ładunku (pole `data` jest surowym JSON-em), więc kształt mieszka tutaj.
-//
-// Nazwy pól są przepisane z miejsc, gdzie kontrakt już opisuje treść binarną
-// (`mimeType`, `contentBase64`, `uri` — LibraryFileUpload, DesignAsset), żeby
-// odbiorca składający zasób wizualny nie tłumaczył nazw po drodze.
-//
-// Bajty jadą albo wprost, albo adresem: Base64 niesie sam obraz, Adres niesie
-// odsyłacz wystawiony przez dostawcę (bywa krótkotrwały). Dostawcy zgodni
-// z OpenAI Images oddają jedno albo drugie, zależnie od `response_format` —
-// fragment powtarza to, co przyszło, i niczego nie dosypuje.
+// TrescObrazu jest ładunkiem fragmentu obrazu — treścią pola `data` fragmentu rodzaju `image`. Bajty
+// jadą albo wprost przez pole Base64, albo adresem przez pole Adres, zależnie od odpowiedzi dostawcy.
 type TrescObrazu struct {
 	// TypTresci nazywa rodzaj bajtów (np. „image/png").
 	TypTresci string `json:"mimeType,omitempty"`
@@ -34,8 +24,7 @@ type TrescObrazu struct {
 	Base64 string `json:"contentBase64,omitempty"`
 	// Adres niesie odsyłacz do obrazu, gdy dostawca oddał adres zamiast bajtów.
 	Adres string `json:"uri,omitempty"`
-	// Prompt niesie polecenie, z którego obraz powstał — bez niego odbiorca ma
-	// piksele bez opisu i nie ma czym opisać zasobu.
+	// Prompt niesie polecenie, z którego obraz powstał.
 	Prompt string `json:"prompt,omitempty"`
 }
 
@@ -71,7 +60,7 @@ func BladKanalu(err error) protocol.Blad {
 	return protocol.BladZeZrodla(shared.ErrorCodeChannelUnavailable, err)
 }
 
-// TrescFragmentu odczytuje treść tekstową fragmentu.
+// TrescFragmentu odczytuje treść tekstową fragmentu strumienia, niezależnie od rodzaju komunikatu, z którego fragment pochodzi.
 func TrescFragmentu(f Fragment) string {
 	return protocol.Tresc(f)
 }

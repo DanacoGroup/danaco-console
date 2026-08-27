@@ -3302,3 +3302,11 @@ Model ma przeczytać odmowę narzędzia i błąd rdzenia oraz poprawić wywołan
 zamiast dostać usterkę połączenia — dlatego wracają wynikiem oznaczonym jako
 błędny. Błędem protokołu zostaje wyłącznie treść żądania, której nie da się
 odczytać.
+
+## budowa/server/internal/models/fragment.go
+Kontrakt nie opisuje kształtu ładunku obrazu, ponieważ pole `data` fragmentu rodzaju `image` jest
+surowym JSON-em — kształt TrescObrazu mieszka więc w tym pakiecie. Nazwy pól są przepisane z miejsc,
+gdzie kontrakt już opisuje treść binarną (`mimeType`, `contentBase64`, `uri` — LibraryFileUpload,
+DesignAsset), żeby odbiorca składający zasób wizualny nie tłumaczył nazw po drodze. Dostawcy zgodni
+z OpenAI Images oddają albo bajty w Base64, albo odsyłacz w Adres, zależnie od `response_format` —
+fragment powtarza to, co przyszło, i niczego nie dosypuje.

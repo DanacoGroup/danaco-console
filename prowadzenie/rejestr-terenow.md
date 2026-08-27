@@ -6,112 +6,53 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-### okno-do-uruchomienia
+### nazwy-po-przebudowie-klienta
 
-Klient ma dziś 6382 wiersze TypeScriptu i **nie da się ich ani obejrzeć, ani
-spakować**: nie ma dokumentu, nie ma budowania, nie ma `dist/`. Powłoka Tauri
-czeka na `budowa/klient/dist`, którego nikt nie wytwarza. Teren zamyka tę lukę
-i daje pierwszą rzecz, którą Właściciel może kliknąć.
-
-| | |
-|---|---|
-| **Gałąź** | `teren/okno-do-uruchomienia` z `main` |
-| **Wykaz plików** | `budowa/klient/` — dokument, nastawa budowania, `package.json`, `tsconfig.json` |
-| **Do czytania, bez zapisu** | `design/zasoby/` (arkusze i żetony), `design/05-okna/przeplyw/przeplyw-wejscia.html`, `budowa/desktop/src-tauri/tauri.conf.json` |
-| **Poza terenem** | `budowa/server/`, `budowa/desktop/`, `budowa/shared/`, `design/`, `prowadzenie/` |
-
-**Przedmiot.** Doprowadzić okno drogi wejścia do postaci, która **uruchamia się
-i daje się przeklikać** — a wynik budowania trafia tam, gdzie powłoka go szuka.
-
-Arkusze, których okno potrzebuje, wymienia prototyp w swoim nagłówku:
-`zetony/fonty.css`, `zetony/zetony.css`, `css/fundament.css`,
-`css/komponenty.css`, `wejscie.css`. **Kolejność wpięcia jest wiążąca** —
-`prototyp.css` nie wchodzi, bo należy do warstwy podglądu, nie produktu.
-
-**Arkuszy nie powielasz.** Warstwa projektowa ma jedno źródło w `design/zasoby/`
-i pozostaje poza tym terenem. Sposób ich wciągnięcia do pakietu jest pracą
-inżynierską — kopia przy budowaniu, dowiązanie albo import — ale skutkiem ma być
-**jedno źródło, nie dwa**. Powielony arkusz rozjedzie się przy pierwszej zmianie
-żetonu i jest uchybieniem odbioru.
-
-**Klient nie ma dziś ani jednej zależności produkcyjnej.** Jeśli budowanie ich
-wymaga, wchodzą wyłącznie jako narzędzie budowania, nie do pakietu — a wybór
-uzasadniasz w raporcie. Na maszynie stoją `vite`, `bun`, `pnpm` i `tsc`.
-
-**Kryteria odbioru.**
-
-1. Polecenie budowania wytwarza `budowa/klient/dist` — z przytoczonym wynikiem
-   uruchomienia i wykazem wytworzonych plików wraz z rozmiarami.
-2. Dwa przebiegi budowania dają ten sam wynik — wykazane sumą kontrolną.
-3. Okno **wyświetla się w przeglądarce**: zrzut ekranu odsłony łączenia,
-   rejestracji i logowania. Zrzuty odkładasz poza repozytorium.
-4. **Pełne przejście wobec żywego rdzenia**: połączenie, założenie konta,
-   logowanie, wejście do środowiska — z przytoczonym przebiegiem, wykonane
-   w przeglądarce, nie w sprawdzianie warstwy.
-5. Zero błędów konsoli i zero nieudanych żądań przy tym przejściu — wykazane
-   odczytem konsoli, przy sondzie dodatniej dowodzącej, że odczyt działa.
-6. Arkusze pochodzą z `design/zasoby/` i **nie są powielone** — wykazane
-   porównaniem sum kontrolnych źródła i tego, co w pakiecie.
-7. `tsc --noEmit` bez błędu; sprawdziany zastane (`26 z 26`, `7 z 7`, warstwy
-   fundamentu) dalej przechodzą.
-8. Zmiany wyłącznie w `budowa/klient/` — wykazane `git show --name-only`.
-9. Rzecz wymagająca rozstrzygnięcia wraca zgłoszeniem wraz z przyjętym
-   rozstrzygnięciem — nie wstrzymuje reszty.
-
-### warsztat-kodu
-
-Osiem narzędzi stoi na maszynie i jest z rdzenia nieosiągalnych, choć **komendy,
-które po nie sięgną, już istnieją w kontrakcie**. Rdzeń w dwóch miejscach nazywa
-ten brak wprost we własnych komentarzach. Nic z tego nie jest oknem, więc teren
-nie zależy od prototypów.
+Trzy pozostałości po nazwie klienta sprzed przebudowy. Wszystkie mają jedną
+przyczynę: rdzeń zna katalog `client`, a klient nazywa się `klient`. Jedna z nich
+sprawia, że **rdzeń domyślnie nie oddaje okna** — to najcięższy skutek.
 
 | | |
 |---|---|
-| **Gałąź** | `teren/warsztat-kodu` z `main` |
-| **Wykaz plików** | `budowa/server/internal/core/zaleznosci_zewnetrzne.go`, adaptery modułów Developer i Terminal w `budowa/server/internal/core/`, sprawdziany tych pakietów |
-| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery pozostałych modułów |
+| **Gałąź** | `teren/nazwy-po-przebudowie-klienta` z `main` |
+| **Wykaz plików** | `budowa/server/internal/konfiguracja/katalog_klienta.go`, `budowa/server/internal/store/katalog_akcji_test.go` oraz pliki, które te dwa wskazują |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/` |
 
-**Przedmiot — osiem narzędzi pod istniejące komendy.**
+**Przedmiot pierwszy — rdzeń nie znajduje pakietu okna.**
+`konfiguracja/katalog_klienta.go` niesie `katalogKlientaZrodlo = "client"`, więc
+bez przełącznika `-klient` rdzeń szuka `client/dist`, a pakiet stoi
+w `budowa/klient/dist`. Skutek zmierzony w terenie `okno-do-uruchomienia`: rdzeń
+uruchomiony domyślnie odpowiada odmową pakietu zamiast oknem.
 
-| Narzędzie | Komenda, która po nie sięgnie | Co rdzeń mówi dziś |
-|---|---|---|
-| `ruff` | `terminal.script.lint`, `developer.lint.get` | mapa analizatorów zna bash i PowerShell, **Pythona nie ma** mimo zadeklarowanego `narzedziePython` |
-| `semgrep` | `developer.scan.run` | rdzeń pisze o własnym skanie: „To jest zakres węższy niż `semgrep`" |
-| `ast-grep` (`sg`) | `developer.grep.search`, `developer.refactor.apply` | wyszukanie po składni, nie po napisie |
-| `jscpd` | `developer.scan.run` | duplikaty w TS/JS |
-| `dupl` | `developer.scan.run` | duplikaty w Go |
-| `typos` | `developer.lint.get` | literówki w identyfikatorach |
-| `stylelint` | `developer.lint.get` | CSS — wzorzec zadeklarowanych Prettiera i ESLinta |
-| `typescript-language-server` | `developer.symbol.navigate`, `developer.refactor.apply` | wzorzec `gopls` przeniesiony na TypeScript |
+**Przedmiot drugi — jedyne czerwone w rdzeniu.**
+`TestKatalogAkcjiNieZmyslaIkon` czyta nazwy ikon z `client/src/ikony/zrodla`.
+Katalogu nie ma i **nie będzie**: nowy klient nie ma jeszcze zestawu ikon, bo ten
+wchodzi wraz z ramą aplikacji. Sprawdzian pilnuje rzeczy prawdziwej — pozycja
+katalogu wskazująca ikonę spoza zestawu daje w oknie kontrolkę bez znaku — więc
+**nie znika**. Ma pomijać się z nazwanym powodem i nazwanym warunkiem powrotu,
+albo mierzyć zestaw tam, gdzie ten naprawdę stanie.
 
-**Wzorzec jest gotowy i masz go powtórzyć, nie wymyślać.** Rdzeń ma jedno miejsce
-wołania procesów zewnętrznych (`internal/zewnetrzne/wolanie.go`) i jeden wykaz
-zależności zasilający sondę startową. Każde z ośmiu narzędzi wchodzi tak samo jak
-trzydzieści już zadeklarowanych.
-
-**Zapory, których nie wolno naruszyć.** Rdzeń niesie sprawdziany zabraniające
-powrotu pewnych programów: `zapora_warsztatu_pdf_test.go` (qpdf, Ghostscript)
-oraz `zapora_fotografii_test.go` (nazwy silników w obszarze Design). Żadne
-z ośmiu narzędzi tego terenu ich nie dotyczy — ale sprawdziany mają dalej
-przechodzić.
+**Przedmiot trzeci — sonda zapory nie widzi programów spoza wykazu.**
+`narzedziePython` i `narzedzieNode` są wołane przez `terminal.script.lint`, ale
+nie stoją w wykazie zależności, choć zapora głosi zasadę „program wołany bez
+wpisu w wykazie to cichy wymóg wobec wdrożenia". Osobno: zapora czyta wyłącznie
+`internal/core`, więc nie widzi `internal/zdalne/pliki.go:68` (SCP) ani żadnego
+następnego wywołania spoza tego katalogu.
 
 **Kryteria odbioru.**
 
-1. Każde z ośmiu narzędzi zadeklarowane w wykazie zależności wraz z zakresem
-   („co przestaje działać przy braku") — sonda startowa je widzi, wykazane
-   przytoczonym wynikiem uruchomienia rdzenia.
-2. Każde podłączone do **istniejącej** komendy kontraktu — bez nowych komend
-   i bez zmiany kontraktu. Suma `contract.json` nietknięta.
-3. Każda komenda wykazana uruchomieniem na prawdziwym pliku: przytoczone
-   wywołanie i przytoczona odpowiedź rdzenia.
-4. Brak narzędzia daje odmowę **nazywającą brak i drogę naprawy**, nie błąd
-   wewnętrzny — wykazane sprawdzianem przy narzędziu niedostępnym.
-5. Żaden proces zewnętrzny nie wołany poza `internal/zewnetrzne` — wykazane
-   przeszukaniem na `exec.Command`.
-6. `gotestsum -- -count=1 ./...` — niepowodzenia nie rosną wobec stanu zastanego;
-   obie zapory dalej przechodzą.
-7. Narzędzie, którego nie da się podłączyć bez rozstrzygnięcia, wraca
-   zgłoszeniem wraz z przyjętym rozstrzygnięciem — nie wstrzymuje reszty.
+1. Rdzeń uruchomiony **bez przełącznika** oddaje pakiet z `budowa/klient/dist` —
+   wykazane uruchomieniem i przytoczoną odpowiedzią na żądanie strony głównej.
+2. `gotestsum -- -count=1 ./...` kończy się **zerem niepowodzeń** wobec 1
+   zastanego (2041 zdanych, 16 pominiętych, 1 niezdany).
+3. Sprawdzian ikon **nie jest usunięty**. Jeżeli pomijany — powód i warunek
+   powrotu stoją w jego treści, a pominięcie widać w wyniku biegu.
+4. Wykaz zależności obejmuje Pythona i Node — sonda startowa je widzi.
+5. Zapora procesów obejmuje całe `internal/`, nie sam `internal/core` — wykazane
+   sprawdzianem, który zawodzi po dołożeniu wywołania poza `core`.
+6. Kontrakt nietknięty — wykazane sumą kontrolną.
+7. Rzecz wymagająca rozstrzygnięcia wraca zgłoszeniem wraz z przyjętym
+   rozstrzygnięciem.
 
 ## Zgłoszenia oczekujące na teren
 

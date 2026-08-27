@@ -1,12 +1,9 @@
 import { przycisk } from '../../modele/kontrolki-formularza';
 
 /**
- * Obrót i powiększenie podglądu — czynności widoku, nie rdzenia.
- *
- * Dotyczą sposobu pokazania treści już pobranej, więc odbywają się w całości
- * po stronie klienta, bez komendy. Stopień obrotu i krotność powiększenia idą
- * do `dataset`, a wygląd bierze się z arkusza modułu — plik widoku nie zna
- * żadnej wartości wizualnej.
+ * Obrót i powiększenie podglądu są czynnościami widoku, nie rdzenia: dotyczą
+ * sposobu pokazania treści już pobranej, więc odbywają się w całości po stronie
+ * klienta, bez komendy. Stopień obrotu i krotność powiększenia idą do `dataset`.
  */
 export interface SterowanieWidoku {
   element: HTMLElement;
@@ -14,7 +11,10 @@ export interface SterowanieWidoku {
   zeruj(): void;
 }
 
-/** Dopuszczalne krotności powiększenia; kolejne naciśnięcie bierze następną. */
+/**
+ * Dopuszczalne krotności powiększenia ułożone cyklicznie: kolejne naciśnięcie
+ * bierze następną, a po ostatniej wraca do pierwszej.
+ */
 const KROTNOSCI = ['1', '2', '3'] as const;
 
 export function utworzSterowanieWidoku(cel: HTMLElement): SterowanieWidoku {

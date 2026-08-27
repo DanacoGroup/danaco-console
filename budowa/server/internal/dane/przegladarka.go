@@ -1,21 +1,6 @@
-// Odpowiedzialność pliku: kontrakt całego obszaru Browser —
-// interfejs `RepozytoriumPrzegladania`, typ repozytorium i jego konstruktor —
-// oraz jedyna metoda implementowana tu w całości: migawka strony (tabela
-// `migawka_strony`, `migracja_047_przegladarka.sql`). Źródła
-// (`przegladarka_zrodla.go`) i notatki (`przegladarka_notatki.go`) dopisują
-// metody na tym samym typie w osobnych plikach — jedno repozytorium, trzy
-// odpowiedzialności.
-//
-// Migawka jest historią nawigacji, nie osobnym bytem: `browser.navigate`
-// i `browser.snapshot.get` oba wstawiają nowy wiersz `migawka_strony`, a kolejne
-// wiersze uporządkowane po `utworzono` są historią. Dlatego `Historia` czyta
-// właśnie tę tabelę, bez drugiej niosącej te same fakty.
-//
-// Treść obszerna trafia do pliku, a baza trzyma odwołanie — wzorem
-// `wiadomosc.tresc_odwolanie` (`wiadomosci.go`). Kolumny `tekst_odwolanie` i
-// `zrodlo_odwolanie` niosą odwołanie do pliku z renderowaną treścią i HTML-em
-// strony; `zrzut_odwolanie` zapisuje `ScreenshotRef` kontraktu bez
-// przekształcenia, bo to już odwołanie po stronie klienta.
+// Plik niesie kontrakt obszaru Browser oraz jedyną metodę implementowaną tu
+// w całości: migawkę strony. Migawka jest historią nawigacji, nie osobnym
+// bytem — kolejne wiersze uporządkowane po utworzeniu są tą historią.
 package dane
 
 import (
@@ -40,7 +25,8 @@ type MigawkaStrony struct {
 	Utworzono       string
 }
 
-// RepozytoriumPrzegladania jest kontraktem obszaru Browser.
+// RepozytoriumPrzegladania jest kontraktem obszaru Browser: migawki, źródła,
+// notatki, karty, monitory, kanały, zakładki, wytwory i zestawy przeglądania.
 type RepozytoriumPrzegladania interface {
 	// --- migawki ---
 	ZapiszMigawke(ctx context.Context, migawka MigawkaStrony) (MigawkaStrony, error)
@@ -227,9 +213,8 @@ func (r *repozytoriumPrzegladania) OstatniaMigawka(ctx context.Context, okno str
 	return migawka, nil
 }
 
-// Historia zwraca migawki okna od najświeższej — kolejne wiersze `migawka_strony`
-// uporządkowane po `utworzono` SĄ historią nawigacji (patrz nagłówek pliku).
-// Limit 0 lub ujemny znaczy wykaz pełny, nie wykaz pusty (patrz `granicaWykazu`).
+// Historia zwraca migawki okna od najświeższej — kolejne wiersze uporządkowane
+// po utworzeniu są historią nawigacji. Limit 0 lub ujemny znaczy wykaz pełny.
 func (r *repozytoriumPrzegladania) Historia(ctx context.Context, okno string, limit int) ([]MigawkaStrony, error) {
 	polecenie, err := r.zapytania.przygotuj(ctx, historiaMigawekOkna)
 	if err != nil {
@@ -255,7 +240,8 @@ func (r *repozytoriumPrzegladania) Historia(ctx context.Context, okno string, li
 	return lista, nil
 }
 
-// odczytajMigawke składa strukturę z jednego wiersza wyniku.
+// odczytajMigawke składa strukturę MigawkaStrony z jednego wiersza wyniku,
+// w kolejności kolumn kolumnyMigawki.
 func odczytajMigawke(wiersz skaner) (MigawkaStrony, error) {
 	var migawka MigawkaStrony
 	var tytul, tekstOdwolanie, zrodloOdwolanie, zrzutOdwolanie sql.NullString

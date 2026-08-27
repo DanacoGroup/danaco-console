@@ -45,11 +45,11 @@
 /* Wstążka główna nie miała obrysu — dostaje włos marki, wewnątrz obecnej bryły,
    więc jej wysokość nie drgnie. */
 .cd-strona .dn-narzedzia { border: 1px solid var(--cd-obrys-marki); }
-/* Trzy okna obszaru roboczego: boczne, robocze i samouczek. */
-.cd-strona .dn-obszar-panel { border: 1px solid var(--cd-obrys-marki); }
-/* Belka samouczka trzyma włos na trzech krawędziach; lewa zostaje sygnałowa,
-   bo niesie wagę wiersza pierwszego wejścia. */
-.cd-strona .cd-start { border-color: var(--cd-obrys-marki); border-left-color: var(--dn-sygnal-500); }
+/* Trzy okna obszaru roboczego: boczne, robocze i samouczek. Sama barwa —
+   skrót `border` przywracałby krawędzie, które warstwa wspólna zeruje celowo:
+   dół każdego panelu (wchodzi pod pasek stanu), lewą okna bocznego i prawą
+   samouczka (stykają się z ramą aplikacji). */
+.cd-strona .dn-obszar-panel { border-color: var(--cd-obrys-marki); }
 
 .cd-strona .dn-karta-widoku[aria-selected='true'],
 .cd-strona .dn-karta-sesji[aria-selected='true'] { background: var(--cd-tlo-karty-biezacej); }
@@ -140,15 +140,17 @@
 
 /* ── Wiersz pierwszego wejścia ────────────────────────────────────────────── */
 
+/* Belka pierwszego wejścia nie jest osobną powierzchnią — to zdanie na stronie,
+   nie blok do oddzielenia. Bez obrysu i tła wyściółka pozioma stawiałaby ją
+   z wcięciem wobec znaczników sekcji poniżej, więc schodzi do zera. */
 .cd-start {
   display: flex;
   align-items: center;
   gap: var(--dn-od-3);
-  padding: var(--dn-od-3) var(--dn-od-4);
-  border: 1px solid var(--dn-obrys);
-  border-left: var(--dn-wym-wstega) solid var(--dn-sygnal-500);
+  padding: var(--dn-od-3) 0;
+  border: 0;
   border-radius: 0;
-  background: var(--dn-panel);
+  background: none;
   color: var(--dn-tekst-2);
   font-size: var(--dn-fs-sm);
   line-height: var(--dn-lh-luzny);

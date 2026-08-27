@@ -11,7 +11,7 @@ use crate::rdzen;
 use crate::ustawienia::Ustawienia;
 use crate::zasobnik;
 
-/// Składa powłokę: otwiera okno z pakietem interfejsu i stawia ikonę zasobnika.
+/// Składa powłokę: otwiera okno z wkompilowanym pakietem interfejsu i stawia ikonę zasobnika systemowego.
 pub fn zloz(aplikacja: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let ustawienia = aplikacja.state::<Ustawienia>().inner().clone();
     dziennik::dopisz(&rdzen::opisz(&ustawienia).opis);

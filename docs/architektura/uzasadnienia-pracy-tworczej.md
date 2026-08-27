@@ -512,3 +512,27 @@ parzystości i nieparzystości rachunek na razie nie dopełnia pustą kartką, b
 wyrys jej nie rysuje i numer wskazywałby stronę, której w podglądzie nie ma.
 `continuous` i `newColumn` nie przerywają: pierwsze z zamysłu, drugie dlatego,
 że wyrys składa jedną kolumnę.
+
+## adapter_modul_studio_strona_pomocniki.go
+
+Wykaz formatów nośnika stoi raz w rdzeniu, w wykazie nośników druku wspólnym
+dla obszaru Design i obszaru Studio. Studio ten wykaz czyta, nie kopiuje:
+zmienna leży w tym samym pakiecie, więc odczyt nie wymaga wejścia w plik innego
+modułu ani drugiego wykazu wymiarów.
+
+Nagłówek dokumentu mieszka w sekcji, także dla dokumentu bez wyraźnego podziału
+na sekcje. Kontrakt trzyma nagłówki i stopki w sekcji, wedle zasięgu (strony
+zwykłe, pierwsza strona, strony parzyste), bo tak stawia je zlecenie i tak są
+w pakiecie biurowym. Dokument bez ani jednej sekcji nie miałby więc gdzie
+trzymać własnego nagłówka. Dlatego czynność na nagłówku, numeracji i znaku
+wodnym bez wskazania sekcji sięga do sekcji pierwszej, a gdy dokument nie ma
+żadnej, zakłada jedną, obejmującą całą treść — dokument jest wtedy jedną
+sekcją, dokładnie jak w pakiecie biurowym po założeniu nowego pisma. Drugie
+miejsce na nagłówek całego dokumentu byłoby drugą prawdą, którą pierwsza
+zmiana sekcji by rozjechała.
+
+Bilans przeliczenia układu po zmianie nośnika przelicza treść zamiast ją
+obcinać, ponieważ sama cisza byłaby najgorszą odpowiedzią: dokument
+zobaczyłby obcięty załącznik dopiero na wydruku. Samo zgłoszenie bez
+przeliczenia jest niewiele lepsze — zostawiałoby dokument w stanie, którego
+nie da się wydrukować, i kazałoby poprawiać każdą tabelę osobno.

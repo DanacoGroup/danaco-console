@@ -4651,3 +4651,5 @@ byłaby typem bez odbiorcy.
 Notatka pusta przy nadawaniu wyróżnienia zostawia powód zastany: wyróżnienie ponowione bez
 własnego słowa nie ma prawa skasować zdania zapisanego wcześniej, w odróżnieniu od zdjęcia
 wyróżnienia, które kasuje powód razem ze znacznikiem.
+## budowa/server/internal/dane/roundtable_decyzja.go
+Zmiana wagi jednego kryterium przestawia wynik każdego wariantu naraz, więc kolumna z wynikiem ważonym rozjechałaby się z ocenami przy pierwszym pominięciu przeliczenia; z tego powodu wynik ważony nie jest przechowywany, tylko liczony przez rdzeń przy odczycie.

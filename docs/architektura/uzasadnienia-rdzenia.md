@@ -3111,3 +3111,74 @@ zasobem prawdziwym: DesignAsset złożony z ręki niesie uri wskazujące blob po
 sumą sha256, a pusty windowId jest uczciwym oświadczeniem, że wynik do żadnego
 okna nie należy — model dostaje odwołanie, Operator nie dostaje w panelu nic,
 bo o nic nie prosił.
+
+## budowa/server/internal/core/adapter_doradcy.go
+
+Ten plik niesie adapter doradcy: wykonanie konsultacji tą samą drogą, którą
+rdzeń woła każdy inny model. O tym, który model radzi, rozstrzyga sufit
+siły, a nie ten plik — model z własnej inicjatywy konsultuje wyłącznie model
+równy sobie albo słabszy. Reguła i jej powód stoją w
+`podagenci/doradca_wybor.go`; adapter jej nie powtarza, żeby nie było dwóch
+miejsc, w których wolno ją poluzować. Komenda `advisor.consult`, jedyny
+wołacz konsultacji, stoi w `adapter_doradcy_konsultacja.go`.
+
+Adapter nie zna SQL-a ani protokołu dostawcy. Bierze rejestr kanałów modelu
+i dziennik konsultacji pakietu `podagenci`, a pojęcie doradcy — kto nim może
+być, jak brzmi pytanie, czym jest rada — zostaje po stronie pakietu
+pojęciowego.
+
+Trzy własności pojęcia widać tu jako trzy czynności. Jawność: wszystkie
+fragmenty strumienia doradcy idą do ujścia wołającego bez zmiany, a na
+koniec dokładany jest blok `Rada.Jawnie` — Operator widzi pytanie, doradcę
+i radę w tym samym oknie, w którym pracuje agent; adapter nie oddaje samej
+treści rady bez wskazania doradcy. Prowenancja: opis wywołania składa kanał,
+tak jak przy każdym innym zapytaniu (`models.NadajProwenancje`) — adapter go
+nie wytwarza, tylko przejmuje fragment `provenance` przelatujący strumieniem
+i zapisuje ten sam napis w dzienniku; drugiej prowenancji nie ma. Konsultacja,
+nie delegacja: zwrócona `Rada` nie zmienia niczego w stanie rdzenia — nie
+zakłada pozycji kolejki, nie startuje tury, nie zapisuje wiadomości agenta.
+Wołający dostaje radę i sam rozstrzyga, co z nią zrobi.
+
+Odmowa też trafia do dziennika. Konsultacja, która się nie odbyła, jest
+zdarzeniem, o które Operator zapyta jako pierwsze — wpis o stanie `odmowa`
+niesie powód.
+
+Rejestr okien sesji, przez który komenda `advisor.consult` odmawia gdy nie
+jest wpięty (bez gaszenia samej metody `Skonsultuj`), bez tego rejestru
+musiałby wierzyć modelowi na słowo, kim jest — a wtedy sufit siły dałoby się
+obejść jednym polem żądania.
+
+Nadajnik, gdy niewpięty, nie gasi konsultacji — gasi wyłącznie jej
+widoczność w oknie; bez niego jawność konsultacji kończy się na buforze,
+którego nikt nie czyta.
+
+Blok jawności idzie strumieniem po odpowiedzi doradcy: Operator widzi
+najpierw to, co doradca powiedział, a potem podpis mówiący, że to była rada
+cudza i niewiążąca.
+
+Ujście `Skonsultuj` pochodzi od wołającego i jest zwykle tym samym ujściem,
+którym płynie odpowiedź agenta — dlatego rada widoczna jest tam, gdzie
+pracuje agent, a nie w osobnym, cichym kanale.
+
+Sufit siły stoi w pakiecie pojęciowym (`podagenci/doradca_wybor.go`),
+a nie tutaj — adapter go wykonuje, nie ma własnej wersji. Odmowa wraca
+wołającemu nazwana i jednocześnie idzie do dziennika jako wpis `odmowa`, bo
+pytanie „dlaczego rdzeń nie zapytał mocniejszego modelu" pada po fakcie
+i musi mieć odpowiedź w bazie.
+
+`zbierakRadyDoradcy` przepuszcza wszystkie fragmenty, nie tylko tekst.
+Gdyby zatrzymywał je u siebie, konsultacja byłaby niewidoczna do chwili jej
+zakończenia, a rada pokazana dopiero jako gotowy napis — czyli tak samo jak
+odpowiedź własna agenta, wbrew jawności konsultacji.
+
+Kod odmowy `bladDoboruDoradcy` mówi, czy ponawiać. `channel_unavailable`
+jest w kontrakcie kodem ponawialnym (`shared.KodyPonawialne`), więc odmowa
+trwała nie może nim jechać — model dostałby polecenie ponowienia
+rozstrzygnięcia, które się nie zmieni. Stąd podział: kanału nie ma albo jest
+wygaszony daje `not_found` (jak nieistniejące okno); sufit, dopuszczenie
+albo brak siły daje `validation_failed` jako odmowę trwałą, zmienianą przez
+Operatora wpisem do rejestru, nie ponowieniem tego samego żądania; pozostałe
+przypadki dają `channel_unavailable`. Odmowa jedzie wołającemu z powodem od
+doboru, bo „nie skonsultowano" bez zdania dlaczego jest ciszą tam, gdzie
+stała decyzja; podmiana odciętego doradcy na innego byłaby tą samą ciszą,
+tylko z radą w tle.

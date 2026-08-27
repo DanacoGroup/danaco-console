@@ -1,25 +1,5 @@
-// Moduł Library — reguły repozytorium: `library.rule.set`, `library.rule.list`,
-// `library.rule.remove`.
-//
-// Reguła jest warunkiem wraz z tym, co ma się stać z zasobem, który go spełnia.
-// Trzy rodzaje różnią się chwilą zastosowania, nie kształtem: kolekcja
-// inteligentna przelicza zawartość na żądanie, reguła napływu stosuje się przy
-// wejściu zasobu do repozytorium, folder obserwowany wciąga pliki spod ścieżki.
-//
-// Przeliczenie jest tutaj, a nie w warstwie danych, bo to rdzeń zna znaczenie
-// członów warunku. Warunek ma postać:
-//
-//	{"sourceModuleId": "studio", "tags": ["poufne"], "mimeType": "application/pdf",
-//	 "from": "2026-01-01", "to": "2026-12-31", "query": "umowa"}
-//
-// Każdy człon jest opcjonalny, a człony łączą się koniunkcyjnie — tak samo jak
-// filtry fasetowe Library Explorera, bo to ten sam sposób zawężania widziany
-// z drugiej strony.
-//
-// Przeliczenie NIE opróżnia kolekcji: dokłada zasoby spełniające warunek ze
-// znacznikiem pochodzenia `regula`. Zdjęcie tych zasobów ma własne żądanie
-// (`library.rule.remove` z `detachFiles`) — regułą wolno dodać, a zabrać
-// wyłącznie na wyraźne polecenie.
+// Moduł Library obsługuje reguły repozytorium, warunki koniunkcyjne stosowane w trzech
+// chwilach: `library.rule.set`, `library.rule.list`, `library.rule.remove`.
 package core
 
 import (
@@ -31,10 +11,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// warunekRegulyBiblioteki jest kopertą warunku reguły — dokładnie tymi polami,
-// które rdzeń umie zastosować. Pole nieznane w żądaniu jest pomijane, a nie
-// odmawiane: warunek rośnie razem z modułem, a reguła zapisana wcześniej ma
-// dalej działać.
+// warunekRegulyBiblioteki jest kopertą warunku reguły — dokładnie tymi polami, które rdzeń
+// umie zastosować. Pole nieznane w żądaniu jest pomijane, a nie odmawiane.
 type warunekRegulyBiblioteki struct {
 	ModulZrodlowy string   `json:"sourceModuleId"`
 	Etykiety      []string `json:"tags"`
@@ -45,7 +23,7 @@ type warunekRegulyBiblioteki struct {
 	ProjektID     string   `json:"projectId"`
 }
 
-// UstawRegule obsługuje `library.rule.set`.
+// UstawRegule obsługuje `library.rule.set` i, gdy reguła każe przeliczyć, stosuje warunek od razu na zasobach repozytorium.
 func (a *adapterBiblioteki) UstawRegule(ctx context.Context,
 	z shared.LibraryRuleSetRequest) (shared.LibraryRuleSetResponse, error) {
 
@@ -87,8 +65,7 @@ func (a *adapterBiblioteki) UstawRegule(ctx context.Context,
 			return shared.LibraryRuleSetResponse{}, err
 		}
 		odpowiedz.MatchedFiles = &trafione
-		// Ponowny odczyt niesie czas przeliczenia zapisany przy regule — bez
-		// niego odpowiedź mówiłaby o regule sprzed własnego przebiegu.
+		// Ponowny odczyt niesie czas przeliczenia zapisany przy regule.
 		odswiezona, err := a.repozytorium.Regula(ctx, zapisana.Kod)
 		if err == nil {
 			odpowiedz.Rule = regulaKontraktuBiblioteki(odswiezona)
@@ -98,7 +75,7 @@ func (a *adapterBiblioteki) UstawRegule(ctx context.Context,
 	return odpowiedz, nil
 }
 
-// WykazRegul obsługuje `library.rule.list`.
+// WykazRegul obsługuje `library.rule.list` i zwraca reguły zapisane w repozytorium, wraz z ich rodzajem.
 func (a *adapterBiblioteki) WykazRegul(ctx context.Context,
 	z shared.LibraryRuleListRequest) (shared.LibraryRuleListResponse, error) {
 
@@ -119,11 +96,8 @@ func (a *adapterBiblioteki) WykazRegul(ctx context.Context,
 	return shared.LibraryRuleListResponse{Rules: reguly, Total: len(reguly)}, nil
 }
 
-// UsunRegule obsługuje `library.rule.remove`.
-//
-// Zasoby przypisane regułą zostają w kolekcji, dopóki żądanie nie powie inaczej:
-// usunięcie reguły opróżniające kolekcję po cichu zabrałoby Operatorowi
-// zawartość, o którą nie prosił.
+// UsunRegule obsługuje `library.rule.remove`. Zasoby przypisane regułą zostają w kolekcji,
+// dopóki żądanie nie powie inaczej wprost przez pole zdjęcia plików.
 func (a *adapterBiblioteki) UsunRegule(ctx context.Context,
 	z shared.LibraryRuleRemoveRequest) (shared.LibraryRuleRemoveResponse, error) {
 
@@ -152,13 +126,8 @@ func (a *adapterBiblioteki) UsunRegule(ctx context.Context,
 	return shared.LibraryRuleRemoveResponse{Removed: usunieta, DetachedFiles: zdjete}, nil
 }
 
-// przeliczRegule stosuje warunek reguły i przypisuje trafione zasoby do
-// kolekcji docelowej. Oddaje liczbę zasobów spełniających warunek.
-//
-// Folder obserwowany nie jest tu przeliczany: wciąganie plików spod ścieżki jest
-// napływem z zewnątrz, a nie przeglądem repozytorium. Reguła obserwacji zapisuje
-// się i czeka na napływ, więc jej przeliczenie oddaje zero i tak jest uczciwie —
-// zamiast udawać, że coś zrobiono.
+// przeliczRegule stosuje warunek reguły i przypisuje trafione zasoby do kolekcji docelowej,
+// oddając ich liczbę; folder obserwowany nie jest tu przeliczany.
 func (a *adapterBiblioteki) przeliczRegule(ctx context.Context, regula dane.RegulaBiblioteki) (int, error) {
 	if regula.Rodzaj == "obserwacja" || regula.KolekcjaDocelowaKod == nil {
 		return 0, nil
@@ -197,8 +166,7 @@ func (a *adapterBiblioteki) przeliczRegule(ctx context.Context, regula dane.Regu
 		}
 		a.zglosNasluchom(shared.LibraryWebhookEventRuleFired, trafione[0])
 	}
-	// Czas przeliczenia zapisuje się przy regule, żeby wykaz reguł mówił, kiedy
-	// reguła ostatnio pracowała — inaczej „czynna" znaczyłoby tylko „włączona".
+	// Czas przeliczenia zapisuje się przy regule, żeby wykaz mówił, kiedy pracowała.
 	regula.OstatniePrzeliczenie = wskazanieBiblioteki(terazZnacznikBiblioteki())
 	if _, err := a.repozytorium.ZapiszRegule(ctx, regula); err != nil {
 		return 0, bladBiblioteki(err)
@@ -206,8 +174,8 @@ func (a *adapterBiblioteki) przeliczRegule(ctx context.Context, regula dane.Regu
 	return len(trafione), nil
 }
 
-// zasobSpelniaWarunek sprawdza człony warunku, których nie umie zawęzić filtr
-// warstwy danych: rodzaj treści, moduł wytwórcy i zakres dat.
+// zasobSpelniaWarunek sprawdza człony warunku, których nie umie zawęzić filtr warstwy danych:
+// rodzaj treści, moduł wytwórcy i zakres dat zasobu.
 func zasobSpelniaWarunek(zasob dane.PlikBiblioteki, warunek warunekRegulyBiblioteki) bool {
 	if warunek.MimeType != "" {
 		if zasob.MimeType == nil || !strings.EqualFold(*zasob.MimeType, warunek.MimeType) {
@@ -219,16 +187,12 @@ func zasobSpelniaWarunek(zasob dane.PlikBiblioteki, warunek warunekRegulyBibliot
 			return false
 		}
 	}
-	// Zakres dat porównuje się po znaczniku bazy: zapis ISO 8601 jest
-	// porównywalny leksykograficznie, więc data podana samym dniem („2026-01-01")
-	// działa jako granica bez przekładu na czas.
+	// Zakres dat porównuje się po znaczniku bazy, porównywalnym leksykograficznie.
 	if warunek.Od != "" && zasob.Utworzono < warunek.Od {
 		return false
 	}
 	if warunek.Do != "" {
-		// Granica górna obejmuje cały wskazany dzień: znacznik zasobu przycina
-		// się do długości granicy, więc „2026-12-31" nie odcina zasobu
-		// powstałego tego dnia o dwunastej.
+		// Granica górna obejmuje cały wskazany dzień, nie odcina zasobu powstałego tego dnia.
 		granica := zasob.Utworzono
 		if len(granica) > len(warunek.Do) {
 			granica = granica[:len(warunek.Do)]
@@ -240,9 +204,8 @@ func zasobSpelniaWarunek(zasob dane.PlikBiblioteki, warunek warunekRegulyBibliot
 	return true
 }
 
-// trescWarunkuBiblioteki sprawdza czytelność warunku i oddaje go w postaci do
-// zapisu. Warunek pusty jest wartością poprawną — reguła bez zawężenia obejmuje
-// wszystko i to jest wybór Operatora, nie usterka.
+// trescWarunkuBiblioteki sprawdza czytelność warunku i oddaje go w postaci do zapisu; warunek
+// pusty jest wartością poprawną, wybraną przez Operatora celowo.
 func trescWarunkuBiblioteki(warunek json.RawMessage) (string, error) {
 	if len(warunek) == 0 || string(warunek) == "null" {
 		return "{}", nil
@@ -255,7 +218,7 @@ func trescWarunkuBiblioteki(warunek json.RawMessage) (string, error) {
 	return string(warunek), nil
 }
 
-// regulaKontraktuBiblioteki przenosi wiersz reguły na kontrakt.
+// regulaKontraktuBiblioteki przenosi wiersz reguły z bazy na strukturę odpowiedzi kontraktu, z warunkiem i rodzajem.
 func regulaKontraktuBiblioteki(wiersz dane.RegulaBiblioteki) shared.LibraryRule {
 	regula := shared.LibraryRule{
 		Id: wiersz.Kod, Kind: rodzajRegulyKontraktu(wiersz.Rodzaj), Name: wiersz.Nazwa,
@@ -270,8 +233,8 @@ func regulaKontraktuBiblioteki(wiersz dane.RegulaBiblioteki) shared.LibraryRule 
 	return regula
 }
 
-// rodzajRegulyBazy i rodzajRegulyKontraktu przekładają wyliczenie rodzaju reguły
-// (odwzorowanie: `regula_biblioteki.rodzaj`).
+// rodzajRegulyBazy i rodzajRegulyKontraktu przekładają wyliczenie rodzaju reguły kontraktu
+// na wartość kolumny bazy i z powrotem.
 func rodzajRegulyBazy(rodzaj shared.LibraryRuleKind) string {
 	switch rodzaj {
 	case shared.LibraryRuleKindIngest:

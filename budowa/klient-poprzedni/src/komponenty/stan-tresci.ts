@@ -1,25 +1,9 @@
 import type { ErrorInfo } from '../../../shared/contract';
 
 /**
- * Stan treści okna operacyjnego — jeden nośnik dla okien wszystkich modułów.
- *
- * Trzy stany obowiązkowe każdego okna: ładowanie, pustka, błąd — plus stan
- * czwarty, czyli treść.
- *
- * To nie jest to samo co `faza-okna.ts`. Tamten byt niesie fazy ramy
- * (`data-faza` na powłoce, rola dostępności pasa); ten niesie miejsce treści
- * wraz z pasem komunikatu i potwierdzeniem czynności, a stan trzyma
- * w `data-stan` na akapicie komunikatu — po tym atrybucie sięgają arkusze
- * modułów.
- *
- * Stan błędu niesie treść błędu z kontraktu (kod i komunikat), bo okno
- * pokazujące po odmowie pusty wykaz mówiłoby „nic nie ma” zamiast „nie udało
- * się zapytać”. Stan pusty ma własne zdanie, bo pustka bywa poprawna:
- * instalacja bez automatyk czy repozytorium bez zmian do zatwierdzenia nie są
- * usterkami.
- *
- * Wygląd zostaje w module: klasy noszą przedrostek modułu i pokrywa je arkusz
- * modułu, dlatego przedrostek jest wartością wejściową, a nie stałą.
+ * Stan treści okna operacyjnego, będący jednym nośnikiem dla okien wszystkich
+ * modułów. Niesie trzy stany obowiązkowe każdego okna — ładowanie, pustkę
+ * i błąd — oraz stan czwarty, którym jest treść.
  */
 export interface StanTresci {
   /** Element montowany w miejscu treści okna. */
@@ -39,12 +23,9 @@ export interface StanTresci {
 }
 
 /**
- * Buduje nośnik stanu treści dla okna modułu.
- *
- * @param przedrostek przedrostek klas modułu bez kreski — `da`, `mdev`, `dg`,
- *   `dm`, `dr`, `dt`, `dw`. Z niego powstają `…-stany`, `…-stan`,
- *   `…-potwierdzenie` i `…-tresc`, czyli dokładnie te cztery klasy, które
- *   pokrywa arkusz modułu.
+ * Buduje nośnik stanu treści dla okna modułu. Przedrostek klas modułu podawany
+ * jest bez kreski; powstają z niego cztery klasy stanów, komunikatu,
+ * potwierdzenia i treści, które pokrywa arkusz modułu.
  */
 export function utworzStanTresci(przedrostek: string): StanTresci {
   const komunikat = document.createElement('p');
@@ -102,13 +83,9 @@ export function utworzStanTresci(przedrostek: string): StanTresci {
 }
 
 /**
- * Treść odmowy pokazywana w oknie. Kod kontraktu zostaje w nawiasie, bo to po
- * nim rozpoznaje się komendę bez obsługiwacza (`*.unknown`), odróżnia odmowę
- * uprawnienia (`permission_denied`) od usterki rdzenia i jedną i drugą od
- * odmowy merytorycznej.
- *
- * `komponenty/odmowa.ts` składa zdanie w innym porządku (`czynność: powód
- * (kod)`) i wymaga nazwy czynności, której te okna nie podają.
+ * Treść odmowy pokazywana w oknie. Kod kontraktu zostaje w nawiasie, ponieważ
+ * to po nim rozpoznaje się komendę bez obsługiwacza i odróżnia odmowę
+ * uprawnienia od usterki rdzenia oraz od odmowy merytorycznej.
  */
 function opisBledu(powod?: ErrorInfo): string {
   if (powod === undefined) return '';

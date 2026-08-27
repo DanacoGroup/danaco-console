@@ -3321,3 +3321,6 @@ Tutaj leżą dwie operacje ułożenia pozycji, która jest wcześniej i w które
 kolejce stoi; żadna z nich nie zmienia stanu pozycji ani nie posuwa jej
 naprzód. Zapis idzie przez ten sam dziennik akcji kolejki co reszta ruchu
 pozycji, więc ślad zostaje w jednym miejscu.
+
+## budowa/server/internal/dane/design_zetony.go
+Zapis zestawu żetonów jest zawsze pełny, ponieważ kontrakt zapisu nie zna trybu częściowej zmiany, a panel projektowy nadsyła stan docelowy całego drzewa. Zapis usuwa zastane żetony i wstawia nadesłane w jednej transakcji tym samym wzorcem co przy etykietach zasobu — inaczej żeton skasowany w panelu zostawałby w bazie i wracał przy następnym odczycie. Klucz zestawu odczytuje się przed podmianą żetonów, bo zestaw mógł dopiero powstać w tej samej transakcji, a tabela żetonów wymaga gotowego klucza wiersza.

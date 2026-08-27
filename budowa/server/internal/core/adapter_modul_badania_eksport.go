@@ -1,20 +1,6 @@
-// Odpowiedzialność pliku: Export Panel — złożenie dokumentu raportu, wytworzenie
-// pliku w formacie docelowym, podgląd przed eksportem, historia eksportów,
-// szablony eksportu i udostępnienie odnośnika.
-//
-// ── Eksport wytwarza plik, a nie wiersz o pliku ────────────────────────────
-// Zastany zapis eksportu odkładał ślad zlecenia i zostawiał `path` pusty, bo
-// rdzeń nie miał wtedy magazynu bajtów. Magazyn jest — ten sam, którym jadą
-// Design i Library — więc eksport zapisuje bajty pod sumą kontrolną i oddaje
-// ścieżkę. `status: ok` z pustą ścieżką byłby tu dokładnie tym wzorcem szkody,
-// który w tym produkcie już raz wystąpił.
-//
-// ── Formaty tekstowe składa rdzeń, biurowe arsenał ────────────────────────
-// Markdown, HTML, tekst i LaTeX powstają w Go, bez ani jednego procesu — działają
-// u Operatora zawsze. PDF, DOCX i PPTX idą przez port arsenału dokumentowego
-// (Pandoc), bo składu tych formatów nie da się napisać od nowa uczciwiej niż
-// dojrzałym programem, który stoi na serwerze razem z rdzeniem. XLSX powstaje
-// tutaj, biblioteką `archive/zip`: arkusz to spakowany XML, a nie skład.
+// Odpowiedzialność pliku: Export Panel — złożenie dokumentu raportu,
+// wytworzenie pliku w formacie docelowym, podgląd przed eksportem, historia
+// eksportów, szablony eksportu i udostępnienie odnośnika.
 package core
 
 import (
@@ -33,16 +19,17 @@ import (
 	"danacoconsole/shared"
 )
 
-// dokumentRaportuBadania niesie złożony dokument wraz z jego postacią tekstową.
+// dokumentRaportuBadania niesie złożony dokument raportu wraz z jego postacią
+// tekstową, użyteczną przy formatach niosących sam tekst.
 type dokumentRaportuBadania struct {
 	tytul    string
 	markdown string
 	wiersze  [][]string
 }
 
-// WyeksportujRaport obsługuje `research.report.export`. Zastąpił zapis
-// samego śladu: wytwarza plik, odkłada go w magazynie i dopiero potem zapisuje
-// ślad — ślad wskazuje wtedy bajty, które naprawdę leżą.
+// WyeksportujRaport obsługuje komendę eksportu raportu badania: wytwarza
+// plik, odkłada go w magazynie i dopiero potem zapisuje ślad zlecenia, który
+// wskazuje bajty faktycznie zapisane na dysku.
 func (a *adapterBadan) WyeksportujRaport(ctx context.Context,
 	z shared.ResearchReportExportRequest) (shared.ResearchReportExportResponse, error) {
 
@@ -94,8 +81,8 @@ func (a *adapterBadan) WyeksportujRaport(ctx context.Context,
 	}, nil
 }
 
-// zawartoscEksportuBadania rozstrzyga skład dokumentu. Brak wskazania znaczy
-// pełny skład — tak stanowi opracowanie modułu („PDF, wszystko włączone").
+// zawartoscEksportuBadania rozstrzyga skład dokumentu. Brak wskazania w żądaniu
+// znaczy pełny skład, czyli dokument ze wszystkimi sekcjami włączonymi.
 func zawartoscEksportuBadania(wskazana *shared.ResearchExportContent) shared.ResearchExportContent {
 	wlaczone := true
 	pelna := shared.ResearchExportContent{
@@ -108,7 +95,8 @@ func zawartoscEksportuBadania(wskazana *shared.ResearchExportContent) shared.Res
 	return *wskazana
 }
 
-// wlaczoneBadania rozstrzyga pole wyboru składu; brak wskazania znaczy włączone.
+// wlaczoneBadania rozstrzyga pole wyboru składu dokumentu; brak wskazania
+// w żądaniu znaczy, że dana część jest włączona domyślnie.
 func wlaczoneBadania(pole *bool) bool {
 	return pole == nil || *pole
 }
@@ -211,7 +199,8 @@ func (a *adapterBadan) zlozDokumentRaportuBadania(ctx context.Context, kodRaport
 	return dokument, nil
 }
 
-// bajtyEksportuBadania wytwarza plik w formacie docelowym.
+// bajtyEksportuBadania wytwarza plik w formacie docelowym, kierując skład do
+// procedury właściwej dla tego formatu.
 func (a *adapterBadan) bajtyEksportuBadania(ctx context.Context, dokument dokumentRaportuBadania,
 	format shared.ExportFormat) ([]byte, error) {
 
@@ -234,7 +223,8 @@ func (a *adapterBadan) bajtyEksportuBadania(ctx context.Context, dokument dokume
 	}
 }
 
-// bajtyPrzezArsenalBadania oddaje skład formatu biurowego portowi arsenału.
+// bajtyPrzezArsenalBadania oddaje skład formatu biurowego portowi arsenału
+// dokumentowego, który wytwarza plik PDF, DOCX albo PPTX.
 func (a *adapterBadan) bajtyPrzezArsenalBadania(ctx context.Context,
 	dokument dokumentRaportuBadania, format shared.ExportFormat) ([]byte, error) {
 
@@ -258,7 +248,8 @@ func (a *adapterBadan) bajtyPrzezArsenalBadania(ctx context.Context,
 	return a.odczytajPlikBadania(*wynik.Asset.Uri)
 }
 
-// bezZnacznikowMarkdownBadania sprowadza Markdown do czystego tekstu.
+// bezZnacznikowMarkdownBadania sprowadza Markdown do czystego tekstu,
+// usuwając znaczniki formatowania z treści sekcji.
 func bezZnacznikowMarkdownBadania(tekst string) string {
 	wiersze := strings.Split(tekst, "\n")
 	czyste := make([]string, 0, len(wiersze))
@@ -270,7 +261,8 @@ func bezZnacznikowMarkdownBadania(tekst string) string {
 	return strings.Join(czyste, "\n")
 }
 
-// dokumentHtmlBadania składa samodzielny plik HTML.
+// dokumentHtmlBadania składa samodzielny plik HTML raportu, ze stylem
+// i treścią osadzonymi w jednym dokumencie.
 func dokumentHtmlBadania(dokument dokumentRaportuBadania) string {
 	var wynik strings.Builder
 	wynik.WriteString("<!doctype html>\n<html lang=\"pl\">\n<head>\n")
@@ -298,7 +290,8 @@ func dokumentHtmlBadania(dokument dokumentRaportuBadania) string {
 	return wynik.String()
 }
 
-// dokumentLatexBadania składa źródło LaTeX raportu.
+// dokumentLatexBadania składa źródło LaTeX raportu, gotowe do złożenia
+// w dokument przez program zewnętrzny.
 func dokumentLatexBadania(dokument dokumentRaportuBadania) string {
 	var wynik strings.Builder
 	wynik.WriteString("\\documentclass[11pt]{article}\n")
@@ -324,7 +317,8 @@ func dokumentLatexBadania(dokument dokumentRaportuBadania) string {
 	return wynik.String()
 }
 
-// oslonLatexBadania osłania znaki, które w LaTeX-u mają znaczenie sterujące.
+// oslonLatexBadania osłania znaki, które w LaTeX-u mają znaczenie sterujące,
+// żeby treść raportu nie złamała składu.
 func oslonLatexBadania(tekst string) string {
 	zamiennik := strings.NewReplacer(
 		"\\", "\\textbackslash{}", "&", "\\&", "%", "\\%", "$", "\\$",
@@ -336,8 +330,7 @@ func oslonLatexBadania(tekst string) string {
 // arkuszXlsxBadania składa arkusz OOXML z tabeli dowodów raportu.
 //
 // Arkusz powstaje tutaj, a nie programem zewnętrznym, bo XLSX jest spakowanym
-// XML-em, a nie składem: cztery pliki w archiwum wystarczą, żeby arkusz otworzył
-// się w każdym programie biurowym.
+// XML-em: cztery pliki w archiwum wystarczą do otwarcia w programie biurowym.
 func arkuszXlsxBadania(dokument dokumentRaportuBadania) ([]byte, error) {
 	wiersze := dokument.wiersze
 	if len(wiersze) == 0 {
@@ -397,7 +390,8 @@ func arkuszXlsxBadania(dokument dokumentRaportuBadania) ([]byte, error) {
 	return archiwum.Bytes(), nil
 }
 
-// oznaczenieKolumnyBadania przekłada numer kolumny na jej literowe oznaczenie.
+// oznaczenieKolumnyBadania przekłada numer kolumny arkusza na jej literowe
+// oznaczenie, zgodne z zapisem adresów OOXML.
 func oznaczenieKolumnyBadania(numer int) string {
 	oznaczenie := ""
 	for numer >= 0 {
@@ -409,7 +403,8 @@ func oznaczenieKolumnyBadania(numer int) string {
 
 // ── Podgląd, historia, szablony, udostępnienie ─────────────────────────────
 
-// PodejrzyjEksport obsługuje `research.export.preview`.
+// PodejrzyjEksport obsługuje komendę podglądu eksportu, oddając skład
+// dokumentu bez wytwarzania pliku.
 func (a *adapterBadan) PodejrzyjEksport(ctx context.Context,
 	z shared.ResearchExportPreviewRequest) (shared.ResearchExportPreviewResponse, error) {
 
@@ -432,7 +427,8 @@ func (a *adapterBadan) PodejrzyjEksport(ctx context.Context,
 	}}, nil
 }
 
-// WypiszEksporty obsługuje `research.export.list`.
+// WypiszEksporty obsługuje komendę odczytu historii eksportów raportu
+// badania, uporządkowanej od najnowszego.
 func (a *adapterBadan) WypiszEksporty(ctx context.Context,
 	z shared.ResearchExportListRequest) (shared.ResearchExportListResponse, error) {
 
@@ -462,7 +458,8 @@ func (a *adapterBadan) WypiszEksporty(ctx context.Context,
 	return shared.ResearchExportListResponse{Exports: przelozone}, nil
 }
 
-// ZapiszSzablonEksportu obsługuje `research.export.template.set`.
+// ZapiszSzablonEksportu obsługuje komendę zapisu szablonu eksportu, utrwalając
+// skład dokumentu pod nazwaną pozycją.
 func (a *adapterBadan) ZapiszSzablonEksportu(ctx context.Context,
 	z shared.ResearchExportTemplateSetRequest) (shared.ResearchExportTemplateSetResponse, error) {
 
@@ -498,7 +495,8 @@ func (a *adapterBadan) ZapiszSzablonEksportu(ctx context.Context,
 	}, nil
 }
 
-// WypiszSzablonyEksportu obsługuje `research.export.template.list`.
+// WypiszSzablonyEksportu obsługuje komendę odczytu szablonów eksportu
+// zapisanych dla badania, uporządkowanych po nazwie.
 func (a *adapterBadan) WypiszSzablonyEksportu(ctx context.Context,
 	_ shared.ResearchExportTemplateListRequest) (shared.ResearchExportTemplateListResponse, error) {
 
@@ -513,7 +511,8 @@ func (a *adapterBadan) WypiszSzablonyEksportu(ctx context.Context,
 	return shared.ResearchExportTemplateListResponse{Templates: przelozone}, nil
 }
 
-// zlozSzablonEksportuBadania przekłada wiersz szablonu na byt kontraktu.
+// zlozSzablonEksportuBadania przekłada wiersz szablonu eksportu na byt
+// kontraktu, niosący nazwę i skład dokumentu.
 func zlozSzablonEksportuBadania(s dane.SzablonEksportuBadania) shared.ResearchExportTemplate {
 	szablon := shared.ResearchExportTemplate{
 		Id: s.Kod, Name: s.Nazwa, Format: shared.ExportFormat(s.Format),
@@ -529,7 +528,8 @@ func zlozSzablonEksportuBadania(s dane.SzablonEksportuBadania) shared.ResearchEx
 	return szablon
 }
 
-// szablonEksportuBadania odczytuje skład dokumentu zapisany w szablonie.
+// szablonEksportuBadania odczytuje skład dokumentu zapisany w szablonie,
+// rozbierając zapis kolumn na pole wyboru.
 func (a *adapterBadan) szablonEksportuBadania(ctx context.Context,
 	kod string) (shared.ResearchExportContent, error) {
 
@@ -546,11 +546,9 @@ func (a *adapterBadan) szablonEksportuBadania(ctx context.Context,
 		"szablon eksportu nie istnieje: "+kod)
 }
 
-// UdostepnijRaport obsługuje `research.export.share`.
-//
-// Odnośnik wskazuje plik wytworzony w magazynie rdzenia. To jest odnośnik
-// prawdziwy — otwiera dokument, który leży na tej maszynie — a nie adres usługi
-// udostępniania, której produkt nie niesie i której obietnica byłaby pusta.
+// UdostepnijRaport obsługuje komendę udostępnienia raportu badania. Odnośnik
+// wskazuje plik wytworzony w magazynie rdzenia i otwiera dokument, który
+// realnie leży na tej maszynie, a nie adres usługi udostępniania.
 func (a *adapterBadan) UdostepnijRaport(ctx context.Context,
 	z shared.ResearchExportShareRequest) (shared.ResearchExportShareResponse, error) {
 

@@ -6449,3 +6449,11 @@ przed którą stoi.
 Tor tury jest wywoływany wprost w tym sprawdzianie, a nie drogą Wyslij,
 która wymaga kanału modelu i wpisu rozmowy, bo badana jest osłona, a nie
 droga dojścia do niej.
+
+## budowa/server/internal/core/tura_w_biegu.go
+
+Tura jest wpisem w wykazie biegów adaptera rozmowy, zakładanym przy
+komendzie message.send i usuwanym po domknięciu strumienia. CzyTuraWBiegu
+wystawia tę wiedzę stanowi okna, w polu streaming komendy
+window.state.get. Odczyt idzie pod tym samym zamkiem co zapis, bo pytanie
+o stan może przyjść w trakcie tury, z innego połączenia tego samego konta.

@@ -6883,3 +6883,18 @@ Panel niesie komendy kart i przestrzeni roboczych, monitorów, kanałów, kolejk
 
 ## budowa/klient-poprzedni/src/moduly/assistant/zrodlo-mowy.ts
 Do niedawna okno nie miało czym wysłać nagrania z mikrofonu: transkrypcja przyjmuje ścieżkę pliku na maszynie silnika, a nagranie z mikrofonu karty istnieje wyłącznie jako obiekt binarny w pamięci — przesył bajtów jest brakującym ogniwem, przyjmuje bajty i oddaje odnośnik, którym posługują się transkrypcja oraz polecenie asystenta; ta sama komenda otwiera dyktowanie w oknie komunikacji. Odsłuch jest drogą powrotną: bajty wracają do karty, która je wysłała, i wyłącznie dla odnośników, które rdzeń sam wystawił. Nasłuch ciągły nie jest otwarciem cudzego mikrofonu i nikt tu tego nie udaje: okno nagrywa u siebie, wysyła odcinki wraz z identyfikatorem okna, a rdzeń ogłasza, co w nich usłyszał, zdarzeniem częściowego rozpoznania oraz zdarzeniem wykrycia frazy wybudzającej. Żadne wywołanie nie rzuca wyjątkiem — niepowodzenie wraca polem błędu.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/okno-coordinator-chat.ts
+Okno nie tworzy produktu końcowego, więc nie ma ani pola redakcyjnego, ani
+zapisu wyniku. Koniec tury wykonawcy wybudza koordynatora po stronie
+rdzenia; tu widać wyłącznie licznik obiegów, próg braku postępu i powód
+zatrzymania odczytane ze stanu okna, a klient nie rozpoczyna obiegu i nikogo
+nie wybudza. Powód, którym stan relacji da się odwrócić i skąd rdzeń to wie,
+potrzebuje pełnego wiersza, bo plakietka nagłówka mieści tylko dwa słowa.
+Wartość potwierdzająca subskrypcję bierze się z odpowiedzi, nie z faktu
+wysłania żądania, bo rdzeń mógłby obserwacji nie założyć. Ocena treści
+wyniku walidacji należy do przeglądarki wyników, która czyta stan procesów
+osobną komendą monitorowania. Odczyt stanu wchodzi wywołaniem zwrotnym: sam
+raport jest złożeniem wierszy, a sięgnięcie po rdzeń zostaje po stronie
+wywołującego. Odczyt biegu koordynatora jest wyjęty poza źródło okien
+i stan wspólny, bo nie dotyka niczego z wnętrza okna.

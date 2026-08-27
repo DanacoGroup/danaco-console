@@ -2234,3 +2234,12 @@ mówi, dlaczego.
 
 ## budowa/klient-poprzedni/src/strona-glowna/meldunki-sesji.ts
 Wspólne miejsce dwóch zdań meldunku trzyma jedną odpowiedź na oba pytania. Odmowa mówi treścią odmowy z rdzenia; zdanie zastępcze wchodzi tylko wtedy, gdy odmowa przyszła bez treści, i nazywa wówczas czynność, której dotyczyła.
+
+## budowa/klient-poprzedni/src/widok-sterowania/szuflada.ts
+
+Zwinięta szuflada pokazuje podsumowanie ośmiu wartości, rozwinięta — komplet
+kontrolek katalogu sterowania. Zwijanie nie jest blokadą: żaden element nie
+traci klikalności, zmienia się wyłącznie to, która warstwa zajmuje miejsce.
+Uchwyt pozostaje czynny w każdym stanie. Stan szuflady jest ogłaszany
+magistralą, więc uchwyt paska górnego i uchwyt panelu pokazują tę samą
+prawdę, zamiast każdy swoją.

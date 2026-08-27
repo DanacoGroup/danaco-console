@@ -123,7 +123,7 @@ func (u *blokadaUprzazSprawdzianu) blokadaWykonajJakoModel(t *testing.T,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(u.zycie, granicaKomendySprawdzianu)
+	ctx, przerwij := context.WithTimeout(u.zycie, granicaSprawdzianuKomendy(komenda))
 	defer przerwij()
 	// Tak wygląda gniazdo serwera narzędzi modelu i nic innego tak nie wygląda
 	// (`core/sprawca.go`): rodzaj `narzedzia` przedstawia się przy nawiązaniu.

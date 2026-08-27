@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"danacoconsole/server/internal/protocol"
+	"danacoconsole/server/internal/wiedza"
 	"danacoconsole/shared"
 )
 
@@ -40,7 +41,110 @@ import (
 // wywołania. Granica pozostaje o rząd wielkości niższa od granicy pojedynczego
 // przebiegu skanera (5 min), więc zwis rdzenia nadal wychodzi w minutach, nie
 // w godzinach.
-const granicaKomendySprawdzianu = granicaWykazuUrzadzen + 15*time.Second
+//
+// Granica ta obowiązuje komendę, która liczy się sama. Komenda sięgająca po
+// model dostaje granicę własną — patrz `granicaKomendyNeuronowej` niżej.
+const granicaKomendySprawdzianu = granicaWykazuUrzadzen + zapasUprzezy
+
+// zapasUprzezy to nadwyżka uprzęży ponad granicę warstwy: tyle trwa montaż
+// rdzenia i droga koperty wokół samej czynności. Stała stoi osobno, bo tę samą
+// nadwyżkę dolicza się do każdej granicy warstwy, a nie tylko do skanera —
+// wartość podana w dwóch miejscach rozjechałaby się przy pierwszej zmianie.
+const zapasUprzezy = 15 * time.Second
+
+// granicaKomendyNeuronowej wiąże komendę liczącą modelem z granicą czasu jej
+// własnych warstw. Wykaz jest RĘCZNY i musi taki być: rdzeń nie zna dziś cechy
+// „komenda sięga po model". Rozpoznanie po `zewnetrzne.Wolaj` nie rozstrzyga —
+// tą samą drogą idą Pandoc i ffmpeg, które modelu nie ruszają. Wykaz zależności
+// (`zaleznosci_zewnetrzne.go`) wiąże program z ZAKRESEM podanym zdaniem, więc
+// wyjęcie z niego nazw komend byłoby czytaniem prozy. Ręczne jest tu wyłącznie
+// PAROWANIE komendy z warstwą — wartości granic pochodzą z warstw i zmieniają
+// się razem z nimi, więc uprząż nie niesie drugiej prawdy o czasie modelu.
+//
+// Granicą komendy jest suma granic RÓŻNYCH warstw modeli, przez które jedno
+// wywołanie przechodzi; wielokrotne przejście przez tę samą warstwę liczy się
+// raz, bo warstwa mierzy nią pojedynczy przebieg, nie ich ciąg.
+//
+// Wykaz ma jedno miejsce — sprawdziany skutku biorą granicę wyłącznie przez
+// `granicaSprawdzianuKomendy`.
+var granicaKomendyNeuronowej = map[shared.MessageType]time.Duration{
+	// Powiększenie liczy się siecią superrozdzielczości, a przy `faces: true`
+	// dokłada osobny przebieg sieci twarzowej — dwa modele w jednym wywołaniu.
+	shared.CommandImageUpscale: granicaPowiekszenia + granicaOdtwarzaniaTwarzy,
+	// Wycinanie tła i rozkład na warstwy stoją na tej samej sieci segmentującej
+	// i przechodzą przez nią raz.
+	shared.CommandImageBackgroundRemove: granicaWycinaniaTla,
+	shared.CommandImageLayersSplit:      granicaWycinaniaTla,
+	// Wskaźnik osadza treść partia po partii; warstwa mierzy tą granicą jeden
+	// przebieg osadzania.
+	shared.CommandKnowledgeIndex: wiedza.LimitBudowania,
+	// Wyszukanie osadza pytanie, a potem przesiewa trafienia drugim modelem.
+	shared.CommandKnowledgeSearch:      wiedza.LimitZapytania + wiedza.LimitPrzesiewu,
+	shared.CommandKnowledgeImageSearch: wiedza.LimitOsiObrazu,
+}
+
+// zmierzonyCzasKomendyNeuronowej niesie czasy zmierzone na maszynie budowy.
+// Nie są granicą — są dolną poprzeczką, którą granica uprzęży ma przekraczać.
+// Wartość niższa od zmierzonej znaczy, że uprząż urwie komendę w połowie pracy
+// modelu i zamelduje usterkę rdzenia tam, gdzie rdzeń po prostu liczył.
+var zmierzonyCzasKomendyNeuronowej = map[shared.MessageType]time.Duration{
+	// Powiększenie na procesorze: 90 s bez twarzy, 190 s z twarzami.
+	shared.CommandImageUpscale: 190 * time.Second,
+	// Przesiew wyszukiwania: około 30 s na samo wczytanie wag.
+	shared.CommandKnowledgeSearch: 30 * time.Second,
+}
+
+// granicaSprawdzianuKomendy oddaje granicę czasu jednego wywołania komendy
+// przez uprząż. Jest JEDYNĄ drogą, którą sprawdziany tego pakietu biorą tę
+// wartość — granica dobrana na miejscu wywołania byłaby wykazem rozsypanym.
+func granicaSprawdzianuKomendy(komenda shared.MessageType) time.Duration {
+	if granica, neuronowa := granicaKomendyNeuronowej[komenda]; neuronowa {
+		return granica + zapasUprzezy
+	}
+	return granicaKomendySprawdzianu
+}
+
+// TestUprzazDajeKomendzieNeuronowejCzasJejWarstwy pilnuje tego, po co osobna
+// granica powstała: komenda licząca modelem ma zmieścić się w uprzęży, zamiast
+// zostać urwana w połowie liczenia.
+//
+// Sprawdzian mierzy samą uprząż, nie model. Przebieg modelu jest tu niemożliwy
+// do dołożenia: powiększenie z twarzami zajmuje 190 s, a bieg pakietu ma się
+// nie wydłużyć.
+func TestUprzazDajeKomendzieNeuronowejCzasJejWarstwy(t *testing.T) {
+	for komenda, zmierzony := range zmierzonyCzasKomendyNeuronowej {
+		if granica := granicaSprawdzianuKomendy(komenda); granica < zmierzony {
+			t.Errorf("uprząż daje komendzie %s %s, a zmierzony czas jej pracy to %s — "+
+				"przebieg zostanie urwany i zamelduje usterkę rdzenia tam, gdzie liczył model",
+				komenda, granica, zmierzony)
+		}
+	}
+
+	// Druga strona: komenda, która modelu nie rusza, ma zostać przy granicy
+	// skanera. Rozluźnienie jej dla wszystkich to bieg liczony w godzinach.
+	if granica := granicaSprawdzianuKomendy(shared.CommandConnectionHello); granica != granicaKomendySprawdzianu {
+		t.Errorf("komenda bez modelu dostaje %s zamiast %s", granica, granicaKomendySprawdzianu)
+	}
+}
+
+// TestWykazKomendNeuronowychOpisujeKomendyKontraktu pilnuje ręcznego wykazu:
+// nazwa, która wypadła z kontraktu albo z rejestru rdzenia, zostawiłaby
+// w uprzęży granicę bez komendy — wiersz martwy, którego nikt nie zauważy.
+func TestWykazKomendNeuronowychOpisujeKomendyKontraktu(t *testing.T) {
+	zmontowany, _ := zmontujDoSprawdzenia(t)
+	obslugiwane := zbiorNazw(zmontowany.Rdzen.rejestr.Nazwy())
+
+	for komenda := range granicaKomendyNeuronowej {
+		if !obslugiwane[komenda] {
+			t.Errorf("wykaz komend neuronowych niesie %q, której rdzeń nie obsługuje", komenda)
+		}
+	}
+	for komenda := range zmierzonyCzasKomendyNeuronowej {
+		if _, jest := granicaKomendyNeuronowej[komenda]; !jest {
+			t.Errorf("zmierzono czas komendy %q, a wykaz komend neuronowych jej nie zna", komenda)
+		}
+	}
+}
 
 // komendyBezObslugiwacza wylicza komendy kontraktu, których rdzeń dziś nie
 // obsługuje. Wykaz jest zaporą, nie zgodą: sprawdzian wypada niepomyślnie
@@ -231,7 +335,7 @@ func TestKazdaKomendaZnosiPustyLadunek(t *testing.T) {
 
 	for _, komenda := range zmontowany.Rdzen.rejestr.Nazwy() {
 		t.Run(komenda, func(t *testing.T) {
-			ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
+			ctx, przerwij := context.WithTimeout(zycie, granicaSprawdzianuKomendy(komenda))
 			defer przerwij()
 
 			odpowiedz := zmontowany.Rdzen.Wykonaj(ctx, protocol.Koperta{
@@ -270,7 +374,7 @@ func wykonajKomende(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	if err != nil {
 		t.Fatalf("nie można złożyć koperty %s: %v", komenda, err)
 	}
-	ctx, przerwij := context.WithTimeout(zycie, granicaKomendySprawdzianu)
+	ctx, przerwij := context.WithTimeout(zycie, granicaSprawdzianuKomendy(komenda))
 	defer przerwij()
 	return zmontowany.Rdzen.Wykonaj(ctx, koperta)
 }

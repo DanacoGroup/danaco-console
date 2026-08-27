@@ -5528,3 +5528,38 @@ każda zmiana stanu projektu — instrukcje, wpis pamięci, przypisanie eksperta
 samym zdarzeniem. Okna modułu odświeżają się z jednej subskrypcji, a nie z czterech. Odczyty
 niczego nie rozgłaszają poza jednym przypadkiem: wejście na pulpit projektu, którego jeszcze nie
 było, zakłada go — a założenie bytu jest zmianą.
+
+## budowa/server/internal/core/skutek_odczytu_pisma_designu_test.go
+
+Do wprowadzenia tego sprawdzianu rdzeń rozpoznawał, które obszary zrzutu są
+liniami tekstu, ale treści napisów nie czytał. Sprawdzian kompilacji
+przechodził nad tym zielono, bo komenda oddawała ramkę i warstwy — brakowało
+jedynie odczytu treści napisanej na zrzucie.
+
+Odczyt idzie programem pakietu serwera, więc sprawdzian rozgałęzia się według
+tego, czy program na maszynie stoi, i żadna z gałęzi nie jest pominięciem:
+gdy program stoi, mierzony jest odczyt — adnotacja warstwy ma nieść treść
+napisu, który sprawdzian sam wpisał w zrzut; gdy programu nie ma, mierzone są
+dwie odmowy — żądanie z odczytem wskazanym wprost dostaje odmowę nazwaną
+wraz z naprawą, a żądanie bez wskazania dostaje układ obszarów, w którym
+każda linia tekstu mówi w adnotacji, że treści nie odczytano i dlaczego.
+Dzięki temu plik świeci zielono zarówno na serwerze z programem, jak i na
+maszynie bez niego, a w obu przypadkach mierzy zachowanie, nie samą
+kompilację.
+
+Sprawdzian wolno pytać wprost, czy program rozpoznający pismo jest na
+maszynie, bo zapora obszaru Design pilnuje plików rdzenia, nie sprawdzianów,
+a rozgałęzienie bez tego pomiaru musiałoby zgadywać, którą odpowiedź uznać
+za poprawną.
+
+Napis w zrzucie jest rysowany krojem wkompilowanym, tym samym, którym rdzeń
+podpisuje wykresy, więc sprawdzian nie zależy od krojów zainstalowanych na
+maszynie. Rozmiar pisma 20 jest zmierzony, nie dobrany na oko: przy nim
+wyraz schodzi na obszar o wysokości 32 punktów, wewnątrz granicy linii
+tekstu rdzenia (do sześciu kratek) i o szerokości grubo ponad trzykrotność
+wysokości. Pismo większe rozsypuje się na kratce po jednej literze na
+obszar i żadna nie jest już linią tekstu.
+
+Adnotacja „linia tekstu 1: " sama w sobie, bez słowa ze zrzutu, byłaby
+odczytem pustym udającym odczyt — dlatego sprawdzian szuka w adnotacji
+konkretnego słowa, nie samej obecności dwukropka.

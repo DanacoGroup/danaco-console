@@ -1,26 +1,5 @@
--- Migracja 339 — strony szablonu materiału modułu Design: publikacje
--- wielostronicowe (książka, broszura, katalog) na istniejącym druku.
---
--- ── Dlaczego NIE ma rodziny `design.publication.*` ──────────────────────────
--- Właściciel wybrał szablon materiału o wielu stronach, a nie nową rodzinę
--- komend i nie montaż arkusza. Publikacja jest więc szablonem, który ma strony,
--- i wychodzi tą samą drogą, co każdy inny materiał — przez `design.print.export`,
--- przez tę samą kontrolę przeddrukową i z tą samą odmową przy wadzie o wadze
--- błędu. Druga rodzina komend znaczyłaby drugą kontrolę przeddrukową i drugie
--- wydanie, a te dwa musiałyby się potem zgadzać.
---
--- ── Strona jest bytem, warstwa należy do strony ─────────────────────────────
--- Szablon jednostronicowy ma warstwy w `warstwa_szablonu_materialu_design`
--- (migracja 336) i tak zostaje — wsteczna zgodność nie jest tu ustępstwem, tylko
--- prawdą: baner nie ma stron. Publikacja dokłada wiersze STRON, a warstwa strony
--- wskazuje stronę kluczem obcym. Szablon bez ani jednej strony jest szablonem
--- jednostronicowym i jego warstwy leżą tam, gdzie leżały.
---
--- ── Numer strony jest jawny, nie wynika z klucza ────────────────────────────
--- Kolejność stron publikacji zmienia się (przestawienie rozkładówki), a klucz
--- wiersza nie. Numer jest więc kolumną z unikatem na parze (szablon, numer):
--- dwie strony o tym samym numerze dałyby przy wydaniu kolejność zależną od
--- porządku odczytu, czyli żadną.
+-- Migracja 339 dodaje strony szablonu materiału modułu Design wraz z ich
+-- warstwami dla publikacji wielostronicowych.
 
 CREATE TABLE strona_szablonu_materialu_design (
     id                       INTEGER PRIMARY KEY AUTOINCREMENT,

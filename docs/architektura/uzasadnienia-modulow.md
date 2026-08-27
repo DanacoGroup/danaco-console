@@ -672,3 +672,35 @@ nie należy do wykazu znanych wypowiedzi, a reszta wiersza zostaje w całości:
 model, który nawiasu użył do czegoś innego, nie ma prawa przypiąć ustalenia
 do wypowiedzi, której nie ma. Wykaz pusty przepuszcza każdy kod, bo woła się
 tak wtedy, gdy wołający nie ma wykazu, z którym by porównywał.
+
+## budowa/server/internal/core/adapter_modul_aplikacje_produkt.go
+
+Oś czasu projektu nie ma własnej tabeli zdarzeń i mieć jej nie może:
+`AppTimelineKind` niesie dokładnie pięć wartości — architektura, warsztat,
+etap, wdrożenie, pakiet — i każda z nich ma już w bazie swój wiersz ze
+znacznikiem czasu. Osobna tabela zdarzeń byłaby szóstą kopią tych samych
+faktów, rozjeżdżającą się przy pierwszym zapisie, który zapomni ją dopisać.
+Oś czasu składa się więc z odczytów tych pięciu źródeł i sortuje je po
+czasie, malejąco, a przy równym czasie po identyfikatorze zdarzenia, bo pięć
+źródeł zapisuje znaczniki z rozdzielczością milisekundy i dwa zdarzenia tej
+samej milisekundy bez drugiego klucza zamieniałyby się miejscami między
+wywołaniami.
+
+Powiązania modułów są mierzone, nie deklarowane: kontrakt nie daje komendy,
+którą dałoby się włączyć powiązanie ręcznie, więc gdyby rdzeń oddawał tu
+stałą listę ze stanem włączenia niezależnym od zawartości okna, meldowałby
+wykaz, za którym nic nie stoi. Każde powiązanie liczy więc w bazie danych to,
+czym naprawdę żyje w tym oknie, a pole `detail` mówi, co policzono. Powiązanie
+czynne znaczy „w tym oknie to powiązanie ma już treść", nie że ktoś zaznaczył
+przełącznik.
+
+Pole `ownerAgentId` przy zapisie etapu rozróżnia trzy stany wykonawcy: brak
+wskazania zostawia zastane przypisanie, pusty łańcuch zdejmuje przypisanie
+wykonawcy, a wartość przypisuje nowego. Zapis etapu rozgłasza też zdarzenie
+`apps.build.changed`, bo panel Product Buildera rysuje oś etapów z tego
+samego zdarzenia, którym dostaje przejścia wdrożenia.
+
+Usunięcie kamienia milowego, którego nie ma, kończy się odmową `not_found`,
+nie polem `deleted: false`: klient odróżnia „usunięto" od „nie było czego
+usunąć" po odmowie, bo pole logiczne oddane jako powodzenie kazałoby mu
+zgadywać, czy operacja się odbyła.

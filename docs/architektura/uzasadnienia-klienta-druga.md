@@ -1248,3 +1248,40 @@ czynnością moderatora i należy do panelu moderatora, nie do tego okna. Pozost
 uczestnika bez obsługi siedzą w zestawie akcji warstwy trzeciej: siedem pozycji ma dziś komendę
 w kontrakcie, a ósma — liczba wariantów jednej persony — ma pole w uczestniku i nie ma komendy,
 która by je zapisała.
+
+## budowa/klient-poprzedni/src/moduly/studio/zapis-formatowany.ts
+
+Okno pracy z dokumentem pokazuje pismo, a nie jego zapis: nagłówek jest
+większy, cytat wcięty, lista wypunktowana, tabela ma siatkę. Zapisem pod
+tym wyglądem zostaje markdown, bo to jego niesie pole treści dokumentu —
+kontrakt nie ma ani pola stylów, ani pola układu, więc drugi zapis, własny
+i bogatszy, nie miałby gdzie dojechać do rdzenia i ginąłby przy pierwszym
+zapisie dokumentu. Plik nie zna okna ani stanu modułu: wejściem jest napis,
+wyjściem bloki albo element, i odwrotnie — dzięki temu przekształcenia
+sprawdza się bez stawiania powierzchni.
+
+Trzy drogi i wszystkie trzy muszą się zgadzać: czytanie napisu na bloki
+przy czytaniu dokumentu, rysowanie bloku jako element widoczny przy
+pokazaniu dokumentu i odczyt elementu z powrotem na napis przy pisaniu
+w oknie. Droga trzecia jest odwrotnością drugiej i pierwszej razem: to, co
+Operator wpisze w widoku formatowanym, wraca do markdown tą samą składnią,
+którą widok odczytał.
+
+Rodzaj bloku przy jego wyrysowaniu idzie do atrybutu danych elementu, bo
+z niego czyta go zarówno arkusz stylów, jak i odczyt powierzchni z powrotem
+na napis. Wyprowadzanie rodzaju z samej nazwy elementu działałoby tylko
+dopóty, dopóki przeglądarka nie wstawi własnego elementu przy naciśnięciu
+klawisza Enter.
+
+Podkreślenia markdown nie ma, więc jedzie znacznikiem HTML — markdown
+przepuszcza go nietkniętym, a odczyt powierzchni odkłada go z powrotem tak
+samo. Odczyt powierzchni edycji jest odwrotnością wyrysu i musi znieść to,
+co dokłada przeglądarka samodzielnie: naciśnięcie klawisza Enter zakłada
+nowy blok, wklejenie treści dokłada element ze stylami, a pogrubienie
+z klawiatury bywa innym elementem niż ten, którym pisze wyrys.
+
+Długość zapisu markdown do wskazanego punktu jest potrzebna do przełożenia
+zaznaczenia w widoku formatowanym na zakres znaków w treści dokumentu —
+zakres, który jedzie do rdzenia jako granice zaznaczenia. Liczenie go po
+samym tekście widocznym dałoby wartość mniejszą od prawdziwej o długość
+znaczników składni.

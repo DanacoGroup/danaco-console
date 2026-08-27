@@ -2627,3 +2627,17 @@ kolumna `stan` ma ten sam warunek co zadanie, a nie własne słownictwo.
 
 Granica prac w toku jest sygnalizowana, nie egzekwowana: zero znaczy brak
 granicy, a przekroczenie wraca ostrzeżeniem odpowiedzi, nie odmową.
+## budowa/server/internal/store/migracja_219_workspace_notatki.sql
+Migracja 219 — notatki i strony wiki projektu wraz z odnośnikami treści.
+
+Strona jest notatką: hierarchię daje wskazanie strony nadrzędnej, a nie druga
+tabela. Nagłówki treści leżą w kolumnie obok treści, bo spis treści notatki
+czyta się przy każdym otwarciu strony, a parsowanie Markdowna przy każdym
+odczycie byłoby liczeniem tego samego po raz drugi.
+
+Odnośnik treści jest osobnym wierszem, bo panel „co linkuje tutaj" pyta
+ODWROTNIE niż zapisuje edytor: szuka stron wskazujących tę stronę. Bez
+osobnego wiersza trzeba by przeszukiwać treść wszystkich stron projektu.
+
+Odnośnik do strony jeszcze niezałożonej ma pustą kolumnę `notatka_docelowa`.
+To jest stan poprawny wiki, nie usterka: nazwa czeka na stronę.

@@ -2951,3 +2951,20 @@ powstaje krok dalej (182), a kolejność kroków jest jednokierunkowa.
 
 ## budowa/desktop/src-tauri/src/okno.rs
 Interfejs pochodzi wyłącznie z pakietu wkompilowanego w powłokę i z żadnego innego miejsca — to jest cały produkt na urządzeniu Operatora, okno wraz z interfejsem, bez rdzenia. Adresu strony nie ma czego rozstrzygać w czasie pracy: nastawa budowania rozstrzyga go raz, a powłoka nie niesie żadnego adresu zapasowego, w tym adresu serwera rozwojowego.
+## budowa/server/internal/store/migracja_183_biblioteka_audyt.sql
+Migracja 183 — moduł Library: dziennik audytu repozytorium.
+
+Dziennik jest przyrostowy: wiersz raz dopisany nie jest zmieniany ani
+kasowany żadną komendą rodziny `library.*`. Stąd brak kolumny zmiany i brak
+kolumny stanu — wpis opisuje zdarzenie, które już zaszło, a zdarzenie zajść
+nie przestaje.
+
+Wskazanie zasobu jest luźne z zamysłu: `plik_kod` niesie identyfikator
+zewnętrzny zasobu, a nie klucz obcy do `plik_biblioteki(id)`. Klucz obcy
+z kaskadą zabrałby wpisy razem z zasobem usuniętym trwale — czyli zdjąłby
+ślad dokładnie tej czynności, dla której dziennik istnieje. Wpis o usunięciu
+ma przeżyć usunięcie.
+
+Czynności obejmujące całość repozytorium (wywóz paczki, skanowanie
+duplikatów) wchodzą bez wskazania zasobu — kolumna jest pusta i to jest
+stan opisany kontraktem (`LibraryAuditEntry.fileId` opcjonalne).

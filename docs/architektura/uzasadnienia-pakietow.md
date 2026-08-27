@@ -4343,3 +4343,18 @@ zapisu kont, a sekretu nie ma w bazie w ogóle.
 Katalog rozstrzyga, które konta wolno wziąć do rotacji i w jakiej kolejności.
 Kiedy przejść na następne konto, rozstrzyga pula rotacji warstwy iniekcji —
 repozytorium nie powiela tamtej logiki.
+
+## budowa/server/internal/dane/aod_wyciszenie.go
+
+Wyciszenie ma własny wiersz, a przypięcia obserwacji nie mają: przypięcie wskazuje proces
+telemetrii, który ginie razem z rdzeniem, więc taki wiersz przeżyłby byt, na który wskazuje.
+Wyciszenie natomiast wskazuje moduł, kartę sesji albo klasę zdarzeń — byty, które restart
+rdzenia przeżywają — i ma sięgać wszystkich powłok Operatora; bez wiersza Operator wyciszałby
+w jednej powłoce, a w drugiej sugestie wchodziłyby dalej.
+
+Wyciszenie przeterminowane jest usuwane przy odczycie, nie zegarem w tle: wykaz czyta się
+przed każdym ujawnieniem sugestii, a proces budzony cyklicznie po to, żeby zwykle nie zrobić
+nic, jest kosztem bez skutku.
+
+Sygnał wyciszony nadal się odkłada: wyciszenie wstrzymuje wyłącznie ujawnienie, nie zapis.
+Sito wyciszeń stoi po stronie rdzenia, nie w tym zapytaniu — tu leży wyłącznie zapis i odczyt.

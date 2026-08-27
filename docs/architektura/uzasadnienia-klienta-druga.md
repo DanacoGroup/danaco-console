@@ -3172,3 +3172,8 @@ adresem lokalnym src/motyw/podglad-zetonow.html.
 Plakietka stanu bierze barwę z rodziny żetonów stanu, a ikonę i napis z
 katalogu znaczeń stanów. Rodzina neutralna nie ma własnych żetonów — to
 plakietka bazowa, a znaczenie niesie w niej wyłącznie znak.
+
+## budowa/klient-poprzedni/src/strona-glowna/sygnal-wyboru.ts
+Strona główna nie otwiera środowiska i nie wysyła komendy — skutek wyboru należy do odbiorcy sygnału.
+Własny sygnał zamiast zdarzenia niestandardowego na elemencie DOM utrzymuje wybór w pełni typowany aż
+do słuchacza: zdarzenie DOM niesie ładunek nietypowany i gubi typ wyboru na granicy ładunku zdarzenia.

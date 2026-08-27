@@ -1872,3 +1872,13 @@ czytnik ekranu pozostają zgodne.
 Funkcja zwraca ten sam element i ten sam typ, ponieważ modal potrzebuje typu
 `HTMLDialogElement` do wywołania metod `showModal` oraz `close`. Zwracanie typu
 `HTMLElement` odbierałoby te metody i zmuszało wywołujących do rzutowania.
+
+## budowa/klient-poprzedni/src/aktualizacja/indeks.ts
+
+Adres kanału wydań, porównanie wersji i most do powłoki są własnością tego
+katalogu i na zewnątrz nie wychodzą; punkt wejścia aplikacji zna wyłącznie to,
+co jest tu wymienione.
+
+Widok wykazu wydań wychodzi stąd osobno od banera. Baner przywołuje go
+przyciskiem, ale widok jest gotowy do osadzenia także w stałym miejscu, więc
+jedno użycie nie przesądza o drugim.

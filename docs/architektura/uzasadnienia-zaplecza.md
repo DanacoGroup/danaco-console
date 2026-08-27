@@ -612,3 +612,30 @@ i kolumn po polsku w zapisie snake_case, klucz główny jako
 `INTEGER PRIMARY KEY AUTOINCREMENT`, daty jako `TEXT` w formacie ISO 8601,
 wartości logiczne jako `INTEGER` z ograniczeniem `CHECK(... IN (0,1))`
 i wyliczenia jako `TEXT` z ograniczeniem `CHECK`.
+
+## budowa/server/internal/store/migracja_048_design.sql
+
+Prompt dostaje własną tabelę, nie kolumny powielone w wierszu zasobu.
+Kontrakt niesie identyfikator promptu jako pole opcjonalne w DesignPrompt, a
+DesignAsset odwołuje się do promptu osobnym polem — dwa sygnały, że prompt
+bywa bytem trwałym, nie tylko parametrem jednego wywołania generowania
+zasobu. Warianty i generowanie obraz-do-obrazu zakładają wprost, że wiele
+zasobów powstaje z tego samego promptu; gdyby prompt żył jako kolumny
+powielone w każdym wierszu zasobu, każdy wariant niósłby własną kopię tych
+samych pól. Tabela prompt_design jest jedną prawdą o promptcie, a kolumna
+prompt_id w tabeli zasobu jest jedynym miejscem odwołania do niej.
+
+Warstwa kompozycji dostaje własną tabelę, nie zapis strukturalny w
+kolumnie. DesignBoardLayer niesie własną pozycję, wymiary, kolejność i
+znacznik zablokowania — pola, po których trzeba by filtrować i sortować
+przy odczycie, gdyby leżały w jednym polu JSON. Zapis warstw kompozycji
+nadsyła zawsze całą listę na nowo, bez trybu częściowej zmiany, więc zapis
+jest zawsze usunięciem warstw istniejących i wstawieniem przysłanych od
+nowa.
+
+Treść zasobu trzyma dysk lub usługa zewnętrzna, nie baza: pole adresu
+zasobu w kontrakcie już jest odnośnikiem, nie surową treścią, więc kolumna
+uri przechowuje ten odnośnik wprost, bez pośredniej kolumny na dane
+binarne. Etykiety zasobu mają własną tabelę złącznikową, bo etykieta jest
+wolnym tekstem bez własnej tożsamości, więc para złożona z zasobu i
+etykiety jest kluczem bez sztucznego identyfikatora.

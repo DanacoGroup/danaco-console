@@ -2,24 +2,8 @@ import type { Agent } from '../../../../shared/contract';
 import { KOLEJNOSC_POZIOMOW } from './poziomy-pamieci';
 
 /**
- * Panel „Podsumowanie definicji” — siedem komponentów eksperta w jednym miejscu.
- *
- * Definicja eksperta powstaje w pięciu oknach naraz i żadne z nich nie widzi
- * całości: Model Configuration nie wie, ile ekspert ma umiejętności, a Skills
- * Manager nie wie, jakim kanałem ekspert mówi. Panel jest jedynym miejscem,
- * w którym widać komplet, więc stoi przy edytorze niezależnie od tego, które
- * okno ma ognisko.
- *
- * Panel niczego nie zapisuje i nie woła ani jednej komendy — czyta eksperta
- * czynnego ze stanu modułu. Wiersz jest za to przenośnikiem: kliknięcie
- * przenosi ognisko do okna, które daną rzeczą zarządza, więc „Model: —” jest
- * drogą do Model Configuration, a nie samym stwierdzeniem braku.
- *
- * Wartości nie są tu liczone po raz drugi. Każdy wiersz czyta pole bytu
- * `Agent`, a przy pamięci i zakresie możliwości — regułę stanu wyjściowego
- * zapisaną w kontrakcie: cztery poziomy pamięci i pełny dostęp operacyjny.
- * Zdanie „brak ustawienia = wartość domyślna” obowiązuje tu tak samo jak
- * w Permissions Center.
+ * Panel „Podsumowanie definicji” zbiera siedem komponentów eksperta w jednym miejscu, bo
+ * definicja powstaje w pięciu oknach naraz i żadne z nich nie widzi całości.
  */
 export interface PodsumowanieDefinicji {
   element: HTMLElement;
@@ -27,13 +11,19 @@ export interface PodsumowanieDefinicji {
   ustaw(ekspert: Agent | null): void;
 }
 
-/** Zależności panelu: wiersz przenosi ognisko do okna zarządzającego. */
+/**
+ * Zależności panelu opisują, że wiersz przenosi ognisko do okna zarządzającego daną częścią
+ * definicji eksperta.
+ */
 export interface OpcjePodsumowania {
   /** Przenosi ognisko do okna wskazanego kodem zakładki edytora. */
   naZakladke(kod: string): void;
 }
 
-/** Jeden wiersz podsumowania: co pokazuje i dokąd prowadzi. */
+/**
+ * Jeden wiersz podsumowania niesie nazwę komponentu, kod zakładki docelowej i wartość czytaną
+ * z eksperta czynnego.
+ */
 interface OpisWiersza {
   /** Nazwa komponentu definicji. */
   nazwa: string;
@@ -43,14 +33,20 @@ interface OpisWiersza {
   wartosc(ekspert: Agent | null): string;
 }
 
-/** Skrót instrukcji do pierwszej linii — panel jest podsumowaniem, nie edytorem. */
+/**
+ * Skrót instrukcji do pierwszej linii istnieje, bo panel jest podsumowaniem definicji, a nie
+ * edytorem jej treści.
+ */
 function pierwszaLinia(tresc: string, ile: number): string {
   const linia = tresc.split('\n', 1)[0] ?? '';
   if (linia.length <= ile) return linia;
   return `${linia.slice(0, ile)}…`;
 }
 
-/** Zdanie o zakresie możliwości — stanem wyjściowym jest pełny dostęp. */
+/**
+ * Zdanie o zakresie możliwości czyta wpisy uprawnień eksperta, a stanem wyjściowym bez wpisów
+ * jest pełny dostęp operacyjny.
+ */
 function zdanieOZakresie(ekspert: Agent): string {
   const wpisy = ekspert.permissions ?? [];
   if (wpisy.length === 0) return 'pełny dostęp operacyjny (stan wyjściowy)';
@@ -59,7 +55,10 @@ function zdanieOZakresie(ekspert: Agent): string {
   return `zawężony — ${odebrane} z ${wpisy.length} wpisów odebranych`;
 }
 
-/** Zdanie o pamięci — zbiór pusty jest wyłączeniem, nie brakiem odpowiedzi. */
+/**
+ * Zdanie o pamięci czyta poziomy zapisane u eksperta; zbiór pusty jest wyłączeniem pamięci, nie
+ * brakiem odpowiedzi rdzenia.
+ */
 function zdanieOPamieci(ekspert: Agent): string {
   const poziomy = ekspert.memoryLevels;
   if (poziomy.length === 0) return 'wyłączona w całości';
@@ -67,7 +66,10 @@ function zdanieOPamieci(ekspert: Agent): string {
   return poziomy.join(' · ');
 }
 
-/** Zdanie o modelu — kanał i droga wywołania czytane wprost z bytu eksperta. */
+/**
+ * Zdanie o modelu składa kanał i drogę wywołania czytane wprost z bytu eksperta, bez odrębnego
+ * zapytania do rdzenia.
+ */
 function zdanieOModelu(ekspert: Agent): string {
   const model = ekspert.model ?? '';
   const kanal = ekspert.channelId ?? '';
@@ -78,7 +80,7 @@ function zdanieOModelu(ekspert: Agent): string {
   return czesci.join(' · ');
 }
 
-/** Siedem komponentów definicji w kolejności, w jakiej ekspert powstaje. */
+/** Siedem komponentów definicji ułożonych w kolejności, w jakiej ekspert powstaje kolejno w oknach edytora. */
 const WIERSZE: readonly OpisWiersza[] = [
   {
     nazwa: 'Tożsamość',
@@ -158,9 +160,7 @@ export function utworzPodsumowanieDefinicji(
   naglowek.className = 'da-podsumowanie__naglowek';
   naglowek.append(tytul, plakietka);
 
-  // Wskaźnik zapisu mówi o bycie w rdzeniu, nie o formularzu: numer wersji
-  // i czas ostatniej zmiany pochodzą z odpowiedzi rdzenia. Zdanie „niezapisane
-  // zmiany” byłoby tu zgadywaniem — panel nie zna zawartości pól edytora.
+  // Wskaźnik zapisu mówi o bycie w rdzeniu, nie o formularzu, którego zawartości panel nie zna.
   const zapis = document.createElement('p');
   zapis.className = 'dn-pole-opis da-podsumowanie__zapis';
 

@@ -7,22 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Domknięcie łańcucha telemetrii: producent → szyna → odbiorca.
-//
-// Odbiorcą zdarzenia `progress.changed` jest kontrolka sesji trwającej w tle,
-// więc nasłuch stoi na szynie, a nie w adapterze rozmowy.
-//
-// Nasłuch robi dwie rzeczy naraz i obie w jednym przejściu koperty:
-//   - wzbogaca telemetrię okna koordynatora o stan biegu naprawczego,
-//     bo pole `loop` zdarzenia postępu nie ma innego producenta;
-//   - odnotowuje punkt pracy i — gdy zmienił się stan pracy okna — rozgłasza
-//     `session.changed` z żywym stanem sesji, żeby kontrolka nie musiała
-//     odpytywać rdzenia.
-//
-// Nie powstaje tu drugi producent telemetrii. Zdarzenie postępu przechodzi
-// dalej dokładnie jedno, tylko pełniejsze.
+// Domknięcie łańcucha telemetrii: nasłuch wzbogaca telemetrię i rozgłasza zmianę sesji.
 
-// nadajnikZObecnoscia jest szyną zdarzeń widzianą przez telemetrię postępu.
+// nadajnikZObecnoscia jest szyną zdarzeń widzianą przez telemetrię postępu, wzbogaconą o stan biegu i obecność sesji.
 type nadajnikZObecnoscia struct {
 	nadajnik Nadajnik
 	obecnosc *rejestrObecnosci
@@ -55,10 +42,7 @@ func (n nadajnikZObecnoscia) Rozglos(k protocol.Koperta) {
 	idSesji := n.obecnosc.sesjaOkna(protocol.IdSesji(k), idOkna)
 	n.nadajnik.Rozglos(n.obecnosc.zBiegiem(k, postep, idOkna))
 	n.obecnosc.przyjmijPostep(idSesji, idOkna, postep.Status)
-	// Zmiana etapu, tury albo postępu okna jest zmianą stanu okna operacyjnego
-	// wspólną każdemu oknu. Telemetria postępu jest jej jedynym
-	// producentem na rdzeniu, więc `window.state.changed` wychodzi tą samą drogą,
-	// obok wzbogaconej telemetrii — klient okna subskrybuje właśnie to zdarzenie.
+	// Zmiana etapu, tury albo postępu okna jest zmianą stanu okna operacyjnego wspólną każdemu oknu.
 	n.obecnosc.rozglosStanOkna(idOkna)
 }
 
@@ -109,19 +93,11 @@ func (r *rejestrObecnosci) przyjmijPostep(idSesji, idOkna string, stan shared.Pr
 // więc idzie tą samą drogą co zmiana stanu pracy okna.
 func (r *rejestrObecnosci) biegZmieniony(bieg shared.LoopState) {
 	r.rozglos(r.sesjaOkna("", bieg.CoordinatorWindowId))
-	// Bieg naprawczy jest częścią stanu okna koordynatora, więc jego
-	// zmiana rozgłasza także `window.state.changed` okna, którego dotyczy.
+	// Bieg naprawczy jest częścią stanu okna koordynatora, więc jego zmiana rozgłasza też stan okna.
 	r.rozglosStanOkna(bieg.CoordinatorWindowId)
 }
 
-// rozglosStanOkna rozgłasza `window.state.changed` — zmianę stanu okna
-// operacyjnego wspólną każdemu oknu. Zdarzenie niesie okno wraz
-// z żywym odpisem jego stanu wykonania: parametrami okna, stanem procesu, turą
-// strumienia i biegiem naprawczym. Nośnikiem jest ten sam emiter rdzenia, co dla
-// pozostałych zmian obszarów.
-//
-// Okno nieznane rejestrowi nadzorcy albo brak nadajnika kończy rozgłoszenie bez
-// błędu: telemetria stanu okna jest dodatkiem do pracy rdzenia.
+// rozglosStanOkna rozgłasza window.state.changed — zmianę stanu okna operacyjnego wspólną każdemu oknu, niosącą parametry okna, stan procesu, turę strumienia i bieg naprawczy. Okno nieznane rejestrowi albo brak nadajnika kończy rozgłoszenie bez błędu.
 func (r *rejestrObecnosci) rozglosStanOkna(idOkna string) {
 	if r == nil || r.nadawca == nil || r.nadzorca == nil || idOkna == "" {
 		return
@@ -181,10 +157,7 @@ func (r *rejestrObecnosci) rozglos(idSesji string) {
 	if !jest {
 		return
 	}
-	// Sprawcą zmiany jest rdzeń: obecność zmienia się od przemiatania stanu
-	// sesji, a nie od komendy — nie ma tu ani gniazda, ani żądania. Znak
-	// sprawcy stawiamy wprost, bo brak gniazda sam z siebie znaczy „nie
-	// wiadomo", a nie „rdzeń" (`sprawca.go`).
+	// Sprawcą zmiany jest rdzeń: obecność zmienia się od przemiatania stanu sesji, nie od komendy.
 	zdarzenie := shared.SessionChangedEvent{
 		Change:   shared.ChangeKindUpdated,
 		Session:  sesjaKontraktu(sesja),

@@ -5810,3 +5810,29 @@ jest zbiorem otwartym, więc nowa pozycja okna konfiguracji nie zmienia rozstrzy
 domyślna podstawy jest pusta z zamysłem: miejsce instalacji aplikacji głównej ustala się w chwili
 startu procesu i nie da się go zapisać stałą tekstową. Pustkę czyta funkcja podstawy albo miejsca
 instalacji i zamienia na miejsce instalacji.
+
+## budowa/server/internal/core/stan_sesji_nadzor.go
+
+Odbiorcą zdarzenia progress.changed jest kontrolka sesji trwającej w tle,
+więc nasłuch stoi na szynie zdarzeń, a nie w adapterze rozmowy. Nasłuch robi
+dwie rzeczy naraz w jednym przejściu koperty: wzbogaca telemetrię okna
+koordynatora o stan biegu naprawczego, bo pole loop zdarzenia postępu nie ma
+innego producenta, oraz odnotowuje punkt pracy i, gdy zmienił się stan
+pracy okna, rozgłasza session.changed z żywym stanem sesji, żeby kontrolka
+nie musiała odpytywać rdzenia. Nie powstaje przy tym drugi producent
+telemetrii — zdarzenie postępu przechodzi dalej dokładnie jedno, tylko
+pełniejsze.
+
+Telemetria postępu jest jedynym producentem zmiany etapu, tury albo postępu
+okna na rdzeniu, więc window.state.changed wychodzi tą samą drogą, obok
+wzbogaconej telemetrii, ponieważ klient okna subskrybuje właśnie to
+zdarzenie.
+
+Nośnikiem zdarzenia rozgłaszanego przez rozglosStanOkna jest ten sam emiter
+rdzenia, co dla pozostałych zmian obszarów. Okno nieznane rejestrowi
+nadzorcy albo brak nadajnika kończy rozgłoszenie bez błędu, ponieważ
+telemetria stanu okna jest dodatkiem do pracy rdzenia, nie jej warunkiem.
+
+Znak sprawcy przy rozgłoszeniu zmiany sesji stawia się wprost, bo w tym
+miejscu nie ma ani gniazda, ani żądania, a brak gniazda sam z siebie
+znaczy nie wiadomo, a nie rdzeń — zasada opisana w pliku sprawca.go.

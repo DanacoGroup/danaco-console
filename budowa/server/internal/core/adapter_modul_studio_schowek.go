@@ -41,8 +41,8 @@ func (a *adapterStudia) SkopiujDoSchowka(ctx context.Context,
 	od, do := postacZakres(&z.RangeStart, &z.RangeEnd, postacDlugosc(&stan.forma))
 	tekst := znakowanieTekstZakresu(&stan.forma, od, do)
 
-	// Sama postać, bez treści — to jest malarz formatów i wołamy go, a nie
-	// zakładamy drugiego.
+	// Sama postać, bez treści — to jest malarz formatów i woła się go, a nie
+	// zaklada się drugiego.
 	if z.FormatOnly != nil && *z.FormatOnly {
 		prawda := true
 		zabrana, err := a.ZabierzPostac(ctx, shared.StudioFormatPainterCopyRequest{

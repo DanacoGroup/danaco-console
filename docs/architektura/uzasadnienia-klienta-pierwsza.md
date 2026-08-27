@@ -2138,3 +2138,9 @@ Znacznik wykazu gotowych pętli stoi poza wykazem kodów okien, bo służy wył�
 znacznikowi `data-okno` w układzie modułu, czyli skokom nawigacji i sprawdzianom
 widoku. Okno wykazu nie zakłada obserwacji telemetrii i nie podaje `windowIds`
 przy zakładaniu kolejki, więc jego znacznik nigdy nie opuszcza klienta.
+
+## budowa/klient-poprzedni/src/modele/zapisy-kont.ts
+
+Odczyt i zapis rejestru kont są rozdzielone celowo. Stan rejestru pilnuje tego, co widok wie o kontach, a moduł zapisów pilnuje tego, co dzieje się po zapisie: które wiersze wolno nanieść wprost z odpowiedzi rdzenia, a kiedy trzeba przeczytać wykaz od nowa. Rozdział pozwala zmienić regułę uzgodnienia bez dotykania ścieżki odczytu.
+
+Komenda wskazująca konto domyślne przestawia dwa wiersze naraz, a odpowiedź rdzenia niesie tylko jeden z nich. Dlatego po jej powodzeniu wykaz zostaje przeczytany ponownie: bez tego konto tracące oznaczenie zostałoby w widoku jako drugie konto domyślne swojego rodzaju.

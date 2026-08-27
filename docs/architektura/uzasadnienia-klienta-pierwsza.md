@@ -6227,3 +6227,6 @@ prowadzi tutaj przez filtr procesu, a drugie przeszukanie dziennika w tej
 zakładce byłoby powtórzeniem tamtej pracy nad materiałem, który przychodzi
 wprost z rejestru wywołań. Odczyt jest leniwy: zakładka pyta rdzeń dopiero
 przy otwarciu i sama pamięta, że jeszcze nie pytała.
+
+## budowa/klient-poprzedni/src/moduly/automations/wzorce-cyklicznosci.ts
+Operator ustala cykliczność wzorcem („co tydzień, poniedziałek, 07:00”), a kontrakt niesie ją jednym polem `AutomationSchedule.cron`. Plik jest przekładem w obie strony: składa zapis z nastaw i rozpoznaje wzorzec w zapisie odczytanym z rdzenia, żeby okno otwarte na harmonogramie zastanym pokazywało wzorzec, a nie samą składnię cron. Przekład jest zawężony do wzorców, które da się zapisać pięcioma polami notacji: zapis odczytany z rdzenia i niepasujący do żadnego wzorca zostaje wzorcem własnym, a jego treść idzie do pola zapisu bez zmiany. Rachunek kolejnych terminów uruchomienia należy do pliku `nastepne-uruchomienia.ts`.

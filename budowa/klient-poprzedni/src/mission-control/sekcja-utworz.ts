@@ -5,21 +5,19 @@ import { utworzSekcje } from './naglowek-sekcji';
 import type { ZamiarUtworzenia } from './zdarzenia-pulpitu';
 
 /**
- * Sekcja „Utwórz" pulpitu — rząd przycisków szybkiego tworzenia.
- *
- * Stoi na pulpicie, bo bez niej jedyną drogą do pracy jest kliknięcie sesji już
- * biegnącej w matrycy; ten rząd otwiera wejście tam, gdzie nic jeszcze nie
- * biegnie. Każdy kafel jest czynny, żaden nie czeka na spełnienie warunku,
- * a podpis mówi, co powstanie po naciśnięciu.
- *
- * Etykiety idą krojem bazowym półgrubym, nie szeryfowym: różnica krojów niesie
- * znaczenie — szeryfowy to wejście do środowiska, bazowy to zbudowanie komponentu.
+ * Sekcja tworzenia na pulpicie, czyli rząd przycisków szybkiego utworzenia
+ * sesji, projektu, agenta, automatyki, kolejki oraz zespołu. Każdy kafel jest
+ * czynny bez warunku, a podpis nazywa byt, który powstanie po naciśnięciu.
  */
 export interface SekcjaUtworz {
   element: HTMLElement;
 }
 
-/** Ikona przypisana rodzajowi tworzonego bytu. */
+/**
+ * Ikona przypisana każdemu rodzajowi tworzonego bytu. Wykaz obejmuje wszystkie
+ * rodzaje utworzenia, więc kafel zawsze ma ikonę, a dodanie nowego rodzaju
+ * wymusza wskazanie ikony dla niego.
+ */
 const IKONA_RODZAJU: Readonly<Record<RodzajUtworzenia, NazwaIkony>> = {
   [RodzajUtworzenia.Sesja]: 'plus',
   [RodzajUtworzenia.Projekt]: 'folder',
@@ -29,7 +27,11 @@ const IKONA_RODZAJU: Readonly<Record<RodzajUtworzenia, NazwaIkony>> = {
   [RodzajUtworzenia.Zespol]: 'tarcza',
 };
 
-/** Kolejność kafli w rzędzie. */
+/**
+ * Kolejność kafli w rzędzie, od sesji do zespołu. Rząd jest stały i niezależny
+ * od stanu pulpitu, dzięki czemu położenie kafla nie zmienia się między
+ * kolejnymi odsłonami sekcji.
+ */
 const RZAD: readonly RodzajUtworzenia[] = [
   RodzajUtworzenia.Sesja,
   RodzajUtworzenia.Projekt,
@@ -39,7 +41,11 @@ const RZAD: readonly RodzajUtworzenia[] = [
   RodzajUtworzenia.Zespol,
 ];
 
-/** Buduje rząd przycisków szybkiego tworzenia. */
+/**
+ * Buduje sekcję szybkiego tworzenia: nagłówek sekcji wraz z dopiskiem oraz
+ * rząd kafli w ustalonej kolejności. Naciśnięcie kafla oddaje zamiar
+ * utworzenia procedurze podanej przez pulpit.
+ */
 export function utworzSekcjeUtworz(nadaj: (zamiar: ZamiarUtworzenia) => void): SekcjaUtworz {
   const { element, cialo } = utworzSekcje(
     'mc-sekcja--utworz',
@@ -59,7 +65,11 @@ export function utworzSekcjeUtworz(nadaj: (zamiar: ZamiarUtworzenia) => void): S
   return { element };
 }
 
-/** Jeden kafel tworzenia: ikona nad podpisem, cały kafel jest przyciskiem. */
+/**
+ * Buduje jeden kafel tworzenia jako przycisk z ikoną nad podpisem. Rodzaj bytu
+ * trafia do zbioru danych przycisku, a naciśnięcie nadaje zamiar utworzenia
+ * wraz z etykietą tego rodzaju.
+ */
 function kafel(
   rodzaj: RodzajUtworzenia,
   nadaj: (zamiar: ZamiarUtworzenia) => void,
@@ -78,7 +88,11 @@ function kafel(
   return element;
 }
 
-/** Podpis kafla — krój bazowy półgruby. */
+/**
+ * Buduje podpis kafla jako element pisany krojem bazowym półgrubym. Podpis
+ * niesie etykietę rodzaju, czyli nazwę bytu, który powstanie po naciśnięciu
+ * kafla stojącego nad nim.
+ */
 function napis(tekst: string): HTMLElement {
   const element = document.createElement('span');
   element.className = 'mc-utworz__napis';

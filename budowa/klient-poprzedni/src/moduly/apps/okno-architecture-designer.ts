@@ -154,7 +154,7 @@ export function utworzOknoArchitectureDesigner(stan: StanProduktu): OknoArchitec
       odpowiedz.pokaz(zdanie, false);
       return;
     }
-    // Przesłonę zamykamy tutaj, nie w odswiez, które przy fazie ladowanie kończy się wcześniej.
+    // Przesłonę zamykana jest tutaj, nie w odswiez, które przy fazie ladowanie kończy się wcześniej.
     rama.gotowe();
     odswiez();
     const zastrzezenia = oddana.validationIssues ?? [];

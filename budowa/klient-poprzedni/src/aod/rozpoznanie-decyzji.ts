@@ -9,42 +9,10 @@ import { PROGI_AOD } from './progi-aod';
 import { RodzajSugestii, WagaUjawnienia } from './rodzaje-sugestii';
 
 /**
- * Rozpoznanie zdarzenia wymagającego decyzji — czysta reguła nakładki.
- *
- * Plik nie dotyka dokumentu i nie zna kanału. Bierze trzy sygnały, które rdzeń
- * wypuszcza, i oddaje jedno rozstrzygnięcie: czy przy tym procesie Operator ma
- * być obudzony, czy nie.
- *
- * Pojęcia „zdarzenie wymagające decyzji" nie ma w kontrakcie ani w rdzeniu: nie
- * ma rodziny `decision.*`, nie ma pola `awaitingDecision`, a `ProgressStatus`
- * ma sześć wartości (pending, running, paused, stopped, done, failed) i żadna
- * z nich nie znaczy „czekam na Ciebie". Regułę wywodzi więc nakładka i tak też
- * jest nazwana Operatorowi w oknie (`sekcja-decyzji.ts`).
- *
- * Sedno reguły: budzi to, przy czym proces stoi — `running` i `done` nie budzą
- * nigdy. Powody dzielą się na pewne (stan rdzenia mówi wprost, że proces stoi)
- * i sporne (to ocena nakładki). Sporne nie są ukrywane, tylko oznaczone własną
- * wagą, żeby Operator wiedział, czyja to ocena.
- *
- *   • `bieg-stanal`  (pewna)  — `loop.stopped = true`: koordynator sam ogłosił,
- *     że bieg naprawczy stanął, i podał powód. Sprawdzany pierwszy, bo jest
- *     najbardziej szczegółowy: niesie okno koordynatora i przyczynę.
- *   • `wstrzymany`   (pewna)  — `status = paused`.
- *   • `zatrzymany`   (pewna)  — `status = stopped`.
- *   • `usterka`      (sporna) — `status = failed`; nakładka budzi, bo proces
- *     stoi, a nikt inny go nie ruszy.
- *   • `bez-ruchu`    (sporna) — `status = pending` dłużej niż próg. Pozycja,
- *     która nigdy nie ruszyła, jest nieodróżnialna od pozycji zapomnianej.
- *
- * Źródło sygnału jest częścią odpowiedzi: odczyt nadrabiający i zdarzenie na
- * żywo mają różną świeżość. Pole `loop` w `progress.changed` jest martwe —
- * kontrakt je obiecuje, `telemetria_proces.go` nigdy go nie wypełnia. Stan
- * biegu naprawczego dojeżdża wyłącznie zdarzeniem `window.state.changed`,
- * którego treść jest odpisem `WindowStateGetResponse`, i stamtąd ta reguła
- * bierze `loop`.
+ * Rozpoznanie zdarzenia wymagającego decyzji — czysta reguła nakładki, bez dotyku
+ * dokumentu i kanału; budzi to, przy czym proces stoi. Poniżej sygnał, z którego
+ * rozpoznanie wzięło obserwację.
  */
-
-/** Sygnał, z którego rozpoznanie wzięło obserwację. */
 export const ZrodloSygnalu = {
   /** `monitor.status` — odczyt nadrabiający; działa bez argumentów. */
   Monitor: 'monitor.status',
@@ -55,7 +23,7 @@ export const ZrodloSygnalu = {
 } as const;
 export type ZrodloSygnalu = (typeof ZrodloSygnalu)[keyof typeof ZrodloSygnalu];
 
-/** Powód, dla którego nakładka uznała, że proces czeka na Operatora. */
+/** Powód, dla którego nakładka uznała, że dany proces czeka teraz na decyzję Operatora, wraz z jego pewnością. */
 export const PowodDecyzji = {
   /** Bieg naprawczy koordynatora ogłosił zatrzymanie (`loop.stopped`). */
   BiegStanal: 'bieg-stanal',
@@ -70,7 +38,7 @@ export const PowodDecyzji = {
 } as const;
 export type PowodDecyzji = (typeof PowodDecyzji)[keyof typeof PowodDecyzji];
 
-/** Czyja to ocena: stanu rdzenia czy nakładki. */
+/** Czyja to ocena: stanu rdzenia mówiącego to wprost, czy nakładki wnioskującej o zastoju danego procesu. */
 export const WagaDecyzji = {
   /** Proces stoi — stan rdzenia mówi to wprost. */
   Pewna: 'pewna',
@@ -80,24 +48,15 @@ export const WagaDecyzji = {
 export type WagaDecyzji = (typeof WagaDecyzji)[keyof typeof WagaDecyzji];
 
 /**
- * Próg braku ruchu dla stanu `pending`.
- *
- * Wartość pochodzi z opracowania: „Próg czasu oczekiwania zadania w kolejce —
- * 15 minut. Przekroczenie tworzy sugestię klasy «stan kolejki zadań»"
- * (`docs/funkcje-globalne/always-on-display.md`, rozdz. 3.4). Pozycja `pending`
- * to właśnie zadanie oczekujące w kolejce, więc reguła nakładki bierze próg
- * stamtąd, zamiast stanowić własny.
- *
- * Kontrakt progu nie niesie; `LoopState` ma własny `threshold`, ale liczy
- * obiegi, nie czas, i dotyczy wyłącznie biegu naprawczego. Próg jest argumentem
- * reguły, więc jego zmiana dotyka jednej stałej, a nie kodu.
+ * Próg braku ruchu dla stanu `pending`: 15 minut z `PROGI_AOD` — kontrakt progu nie
+ * niesie, więc jest argumentem reguły, nie stałą wewnętrzną.
  */
 export const PROG_BEZ_RUCHU_MS = PROGI_AOD.oczekiwanieWKolejceMs;
 
-/** Przedrostek klucza wpisu, którego sygnał nie niósł identyfikatora procesu. */
+/** Przedrostek klucza wpisu, którego sygnał nie niósł identyfikatora procesu, tylko identyfikator okna. */
 export const PRZEDROSTEK_KLUCZA_OKNA = 'okno:';
 
-/** Jedna obserwacja procesu sprowadzona do wspólnego kształtu. */
+/** Jedna obserwacja procesu sprowadzona do wspólnego kształtu, niezależnie od sygnału, z którego przyszła. */
 export interface ObserwacjaProcesu {
   /** Tożsamość wpisu: identyfikator procesu albo `okno:<id>`, gdy procesu brak. */
   klucz: string;
@@ -127,7 +86,7 @@ export interface ObserwacjaProcesu {
   zrodlo: ZrodloSygnalu;
 }
 
-/** Zdarzenie rozpoznane jako wymagające decyzji Operatora. */
+/** Zdarzenie rozpoznane jako wymagające decyzji Operatora, wraz z powodem, wagą i zdaniem dla Operatora. */
 export interface DecyzjaCzekajaca {
   /** Tożsamość wpisu — ta sama, co w obserwacji. */
   klucz: string;
@@ -139,16 +98,11 @@ export interface DecyzjaCzekajaca {
   powod: PowodDecyzji;
   /** Czyja to ocena. */
   waga: WagaDecyzji;
-  /** Rodzaj sugestii wg katalogu opracowania (rozdz. 4). */
+  /** Rodzaj sugestii wg katalogu rodzajów sugestii AOD. */
   rodzaj: RodzajSugestii;
-  /** Waga ujawnienia wg rozdz. 4.5 — jak głośno sugestia ma wejść. */
+  /** Waga ujawnienia — jak głośno sugestia ma wejść do Operatora. */
   wagaUjawnienia: WagaUjawnienia;
-  /**
-   * Czy to punkt decyzyjny wstrzymujący proces.
-   *
-   * Wyjątek wagi krytycznej z rozdz. 3.5: taka sugestia ujawnia się mimo
-   * wyciszenia — plakietką, bez dymka.
-   */
+  /** Czy to punkt decyzyjny wstrzymujący proces; wyjątek krytyczny ujawnia się mimo wyciszenia. */
   krytyczna: boolean;
   /** Zdanie „co czeka" pisane dla Operatora, nie dla dziennika. */
   zdanie: string;
@@ -169,13 +123,9 @@ export interface DecyzjaCzekajaca {
 }
 
 /**
- * Rozstrzyga, czy obserwacja jest zdarzeniem wymagającym decyzji.
- *
- * Zwraca `null` dla procesu, który biegnie albo skończył — i to jest większość
- * ruchu. Nakładka, która budzi przy każdym zdarzeniu, nie budzi przy żadnym.
- *
- * @param teraz chwila odczytu w milisekundach epoki — podawana z zewnątrz,
- *   żeby reguła była sprawdzalna bez zegara.
+ * Rozstrzyga, czy obserwacja jest zdarzeniem wymagającym decyzji: `null` dla procesu,
+ * który biegnie albo skończył.
+ * @param teraz chwila odczytu w milisekundach epoki.
  * @param progBezRuchuMs próg powodu `bez-ruchu`; domyślnie {@link PROG_BEZ_RUCHU_MS}.
  */
 export function rozpoznajDecyzje(
@@ -210,7 +160,7 @@ export function rozpoznajDecyzje(
   };
 }
 
-/** Waga przypisana każdemu powodowi. */
+/** Waga przypisana każdemu powodowi: pewna, gdy stan rdzenia mówi to wprost, sporna, gdy to ocena nakładki. */
 const WAGI: Readonly<Record<PowodDecyzji, WagaDecyzji>> = {
   [PowodDecyzji.BiegStanal]: WagaDecyzji.Pewna,
   [PowodDecyzji.Wstrzymany]: WagaDecyzji.Pewna,
@@ -220,13 +170,9 @@ const WAGI: Readonly<Record<PowodDecyzji, WagaDecyzji>> = {
 };
 
 /**
- * Rodzaj sugestii przypisany każdemu powodowi — katalog rozdz. 4 opracowania.
- *
- * Cztery powody mówiące, że proces stoi, są wskazaniem problemu (rozdz. 4.3:
- * „zadanie w stanie błędu, kolejka zatrzymana, pętla przerwana"). Powód
- * `bez-ruchu` jest kolejnym krokiem (rozdz. 3.2, klasa „stan kolejki zadań":
- * zadanie oczekujące dłużej niż próg czasu) — nic się nie zepsuło, czeka na
- * ruszenie.
+ * Rodzaj sugestii przypisany każdemu powodowi: cztery powody, przy których proces
+ * stoi, są wskazaniem problemu, a `bez-ruchu` jest kolejnym krokiem — nic się nie
+ * zepsuło, czeka na ruszenie.
  */
 const RODZAJE: Readonly<Record<PowodDecyzji, RodzajSugestii>> = {
   [PowodDecyzji.BiegStanal]: RodzajSugestii.Problem,
@@ -237,10 +183,8 @@ const RODZAJE: Readonly<Record<PowodDecyzji, RodzajSugestii>> = {
 };
 
 /**
- * Waga ujawnienia każdego powodu — rozdz. 4.5 opracowania.
- *
- * Wysoka: „punkt decyzyjny wstrzymujący proces, kolejka zatrzymana". Średnia:
- * „przekroczony czas oczekiwania zadania" — i to jest dokładnie `bez-ruchu`.
+ * Waga ujawnienia każdego powodu: wysoka dla punktu decyzyjnego wstrzymującego
+ * proces, średnia dla `bez-ruchu`.
  */
 const WAGI_UJAWNIENIA: Readonly<Record<PowodDecyzji, WagaUjawnienia>> = {
   [PowodDecyzji.BiegStanal]: WagaUjawnienia.Wysoka,
@@ -251,19 +195,16 @@ const WAGI_UJAWNIENIA: Readonly<Record<PowodDecyzji, WagaUjawnienia>> = {
 };
 
 /**
- * Powody będące punktem decyzyjnym wstrzymującym proces — wyjątek wagi
- * krytycznej z rozdz. 3.5, ujawniany mimo wyciszenia.
- *
- * Bieg naprawczy, który stanął, i proces wstrzymany zatrzymują pracę i czekają
- * wprost na rozstrzygnięcie człowieka. Zatrzymanie, usterka i brak ruchu
- * przez wyciszenie przeczekają.
+ * Powody będące punktem decyzyjnym wstrzymującym proces, ujawniane mimo wyciszenia:
+ * bieg naprawczy, który stanął, i proces wstrzymany, bo czekają wprost na
+ * rozstrzygnięcie człowieka.
  */
 const KRYTYCZNE: ReadonlySet<PowodDecyzji> = new Set([
   PowodDecyzji.BiegStanal,
   PowodDecyzji.Wstrzymany,
 ]);
 
-/** Nazwa powodu widziana przez Operatora. */
+/** Nazwa powodu widziana przez Operatora w oknie decyzji, zamiast wewnętrznego identyfikatora technicznego. */
 export const NAZWY_POWODOW: Readonly<Record<PowodDecyzji, string>> = {
   [PowodDecyzji.BiegStanal]: 'bieg naprawczy stanął',
   [PowodDecyzji.Wstrzymany]: 'proces wstrzymany',
@@ -272,14 +213,14 @@ export const NAZWY_POWODOW: Readonly<Record<PowodDecyzji, string>> = {
   [PowodDecyzji.BezRuchu]: 'proces czeka bez ruchu',
 };
 
-/** Nazwa sygnału widziana przez Operatora — „skąd wiadomo". */
+/** Nazwa sygnału widziana przez Operatora, mówiąca skąd wiadomo, że proces wymaga jego uwagi w tej chwili. */
 export const NAZWY_ZRODEL: Readonly<Record<ZrodloSygnalu, string>> = {
   [ZrodloSygnalu.Monitor]: 'odczyt nadrabiający monitor.status',
   [ZrodloSygnalu.Postep]: 'zdarzenie progress.changed',
   [ZrodloSygnalu.StanOkna]: 'zdarzenie window.state.changed',
 };
 
-/** Pierwszy pasujący powód albo `null`, gdy proces nie stoi. */
+/** Pierwszy pasujący powód rozpoznania albo `null`, gdy proces nie stoi i żaden powód nakładki nie zachodzi. */
 function ustalPowod(
   obserwacja: ObserwacjaProcesu,
   teraz: number,
@@ -301,7 +242,7 @@ function ustalPowod(
   }
 }
 
-/** Składa zdanie „co czeka" — jedno zdanie, bez skrótów rodem z dziennika. */
+/** Składa zdanie „co czeka" dla Operatora — jedno pełne zdanie, bez skrótów rodem z dziennika technicznego rdzenia. */
 function zdanieDecyzji(
   obserwacja: ObserwacjaProcesu,
   powod: PowodDecyzji,
@@ -350,7 +291,7 @@ export function opiszOdstep(ms: number): string {
   return `${godziny} h ${minuty % 60} min`;
 }
 
-/** Sprowadza wiersz `monitor.status` do obserwacji. */
+/** Sprowadza wiersz `monitor.status` do obserwacji o wspólnym kształcie, niezależnym od źródła jej sygnału. */
 export function obserwacjaZMonitora(status: MonitorStatus): ObserwacjaProcesu {
   return {
     klucz: status.processId,
@@ -369,15 +310,9 @@ export function obserwacjaZMonitora(status: MonitorStatus): ObserwacjaProcesu {
 }
 
 /**
- * Sprowadza treść `progress.changed` do obserwacji.
- *
- * Zdarzenie NIE NIESIE chwili zmiany, więc chwilę podaje wywołujący — jest nią
- * moment odebrania zdarzenia. Nie niesie też sesji ani nazwy: telemetria zna
- * proces i okno, a resztę dokłada odczyt nadrabiający.
- *
- * Pola `loop` tu nie czytamy, choć kontrakt je obiecuje: `telemetria_proces.go`
- * nigdy go nie wypełnia. Czytanie martwego pola udawałoby drogę, której nie ma —
- * bieg naprawczy przychodzi zdarzeniem `window.state.changed`.
+ * Sprowadza treść `progress.changed` do obserwacji: zdarzenie nie niesie chwili
+ * zmiany, więc podaje ją wywołujący, a pola `loop` tu nie czytamy, bo jest martwe
+ * w kontrakcie.
  */
 export function obserwacjaZPostepu(
   tresc: ProgressChangedEvent,
@@ -398,15 +333,9 @@ export function obserwacjaZPostepu(
 }
 
 /**
- * Sprowadza treść `window.state.changed` do obserwacji.
- *
- * Treść pola `state` jest odpisem `WindowStateGetResponse` złożonym przez
- * `core/stan_sesji_nadzor.go` — stąd stan procesu okna i JEDYNY żywy nośnik
- * `LoopState`. Kontrakt opisuje `state` jako `unknown`, więc pole nieznanego
- * kształtu daje `null`, a nie wyjątek.
- *
- * Klucz wpisu jest tu oknem, nie procesem: `WindowStateGetResponse` nie niesie
- * identyfikatora procesu i nakładka nie ma go skąd wziąć.
+ * Sprowadza treść `window.state.changed` do obserwacji: pole `state` jest odpisem
+ * `WindowStateGetResponse`, jedynym żywym nośnikiem `LoopState`, więc klucz wpisu
+ * jest tu oknem, nie procesem.
  */
 export function obserwacjaZeStanuOkna(
   tresc: WindowStateChangedEvent,
@@ -430,7 +359,7 @@ export function obserwacjaZeStanuOkna(
   };
 }
 
-/** To, co nakładce potrzebne z odpisu stanu okna. */
+/** To, co nakładce potrzebne z odpisu stanu okna — bieg naprawczy koordynatora, jego powód oraz identyfikator okna. */
 interface StanOknaZeZdarzenia {
   stan: ProgressStatus;
   idSesji?: string;
@@ -438,7 +367,7 @@ interface StanOknaZeZdarzenia {
   bieg?: LoopState;
 }
 
-/** Czyta odpis stanu okna z treści nieznanego kształtu; `null` przy każdej niezgodności. */
+/** Czyta odpis stanu okna z treści nieznanego kształtu; `null` wraca przy każdej niezgodności pola albo typu. */
 function odczytajStanOkna(state: unknown): StanOknaZeZdarzenia | null {
   if (typeof state !== 'object' || state === null) return null;
   const zapis = state as Record<string, unknown>;
@@ -458,7 +387,7 @@ function odczytajStanOkna(state: unknown): StanOknaZeZdarzenia | null {
   };
 }
 
-/** Czy wartość jest jedną z sześciu wartości `ProgressStatus`. */
+/** Czy wartość jest jedną z sześciu wartości `ProgressStatus` — pending, running, paused, stopped, done, failed. */
 function czyStanProcesu(wartosc: unknown): wartosc is ProgressStatus {
   return (
     typeof wartosc === 'string' &&
@@ -467,11 +396,8 @@ function czyStanProcesu(wartosc: unknown): wartosc is ProgressStatus {
 }
 
 /**
- * Czy wartość jest stanem biegu naprawczego.
- *
- * Sprawdzamy pola, na których stoi reguła (`coordinatorWindowId`, `stopped`),
- * a nie komplet `LoopState` — odpis uboższy o pole nieużywane jest nadal
- * odpisem prawdziwym, a odrzucenie go zgubiłoby powód `bieg-stanal`.
+ * Czy wartość jest stanem biegu naprawczego: sprawdza pola, na których stoi reguła,
+ * nie komplet `LoopState`.
  */
 function czyStanBiegu(wartosc: unknown): wartosc is LoopState {
   if (typeof wartosc !== 'object' || wartosc === null) return false;

@@ -5550,3 +5550,53 @@ barwa należy do narzędzia rysującego, a nie do treści mapy.
 Sprawdziany pilnują, że przycisk, który niczego nie woła, nie wygląda tak samo jak przycisk działający — usterka tego rodzaju widać dopiero u Operatora. Sprawdziany naciskają kontrolki okien i pytają, czy z każdej rodziny komend naprawdę wyszło wywołanie, nie o to, czy okno się narysowało.
 
 Sprawdziany nie badają treści rdzenia — od tego są sprawdziany skutku po stronie serwera, które schodzą do bazy i na dysk. Tutaj mierzy się jedno: czy droga istnieje i czy okno mówi prawdę, gdy rdzeń odpowiada brakiem narzędzia.
+
+## budowa/klient-poprzedni/src/aod/rozpoznanie-decyzji.ts
+
+Pojęcia „zdarzenie wymagające decyzji" nie ma w kontrakcie ani w rdzeniu: nie
+ma rodziny `decision.*`, nie ma pola `awaitingDecision`, a `ProgressStatus`
+ma sześć wartości (pending, running, paused, stopped, done, failed) i żadna
+z nich nie znaczy „czekam na Ciebie". Regułę wywodzi więc nakładka i tak też
+jest nazwana Operatorowi w oknie (`sekcja-decyzji.ts`).
+
+Sedno reguły: budzi to, przy czym proces stoi — `running` i `done` nie budzą
+nigdy. Powody dzielą się na pewne (stan rdzenia mówi wprost, że proces stoi)
+i sporne (to ocena nakładki); sporne nie są ukrywane, tylko oznaczone własną
+wagą, żeby Operator wiedział, czyja to ocena. `bieg-stanal` (pewna) to
+`loop.stopped = true`: koordynator sam ogłosił, że bieg naprawczy stanął,
+i podał powód — sprawdzany pierwszy, bo jest najbardziej szczegółowy, niesie
+okno koordynatora i przyczynę. `wstrzymany` i `zatrzymany` (pewne) to `status
+= paused` i `status = stopped`. `usterka` (sporna) to `status = failed` —
+nakładka budzi, bo proces stoi, a nikt inny go nie ruszy. `bez-ruchu`
+(sporna) to `status = pending` dłużej niż próg — pozycja, która nigdy nie
+ruszyła, jest nieodróżnialna od pozycji zapomnianej.
+
+Źródło sygnału jest częścią odpowiedzi: odczyt nadrabiający i zdarzenie na
+żywo mają różną świeżość. Pole `loop` w `progress.changed` jest martwe —
+kontrakt je obiecuje, `telemetria_proces.go` nigdy go nie wypełnia. Stan
+biegu naprawczego dojeżdża wyłącznie zdarzeniem `window.state.changed`,
+którego treść jest odpisem `WindowStateGetResponse`, i stamtąd ta reguła
+bierze `loop`.
+
+Próg braku ruchu dla stanu `pending` wynosi 15 minut i pochodzi z progów AOD:
+przekroczenie tworzy sugestię klasy „stan kolejki zadań". Pozycja `pending`
+to właśnie zadanie oczekujące w kolejce, więc reguła nakładki bierze próg
+stamtąd, zamiast stanowić własny. Kontrakt progu nie niesie; `LoopState` ma
+własny `threshold`, ale liczy obiegi, nie czas, i dotyczy wyłącznie biegu
+naprawczego — próg jest argumentem reguły, więc jego zmiana dotyka jednej
+stałej, a nie kodu.
+
+Rodzaj sugestii przypisany każdemu powodowi: cztery powody mówiące, że
+proces stoi, są wskazaniem problemu („zadanie w stanie błędu, kolejka
+zatrzymana, pętla przerwana"); powód `bez-ruchu` jest kolejnym krokiem
+(klasa „stan kolejki zadań": zadanie oczekujące dłużej niż próg czasu) —
+nic się nie zepsuło, czeka na ruszenie.
+
+Waga ujawnienia każdego powodu: wysoka oznacza „punkt decyzyjny
+wstrzymujący proces, kolejka zatrzymana", średnia oznacza „przekroczony
+czas oczekiwania zadania" — i to jest dokładnie `bez-ruchu`. Wyjątek wagi
+krytycznej: taka sugestia ujawnia się mimo wyciszenia — plakietką, bez
+dymka. Powody będące punktem decyzyjnym wstrzymującym proces (bieg
+naprawczy, który stanął, i proces wstrzymany) zatrzymują pracę i czekają
+wprost na rozstrzygnięcie człowieka; zatrzymanie, usterka i brak ruchu
+przez wyciszenie przeczekają.

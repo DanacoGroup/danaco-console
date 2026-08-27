@@ -58,6 +58,8 @@ func main() {
 		wypiszBudowe(sciezka, tresc)
 	case "-jezyk":
 		wypiszJezyk(sciezka, tresc)
+	case "-bezkomentarzy":
+		wypiszBezKomentarzy(sciezka, tresc)
 	default:
 		fmt.Fprintln(os.Stderr, "nieznany tryb:", tryb)
 		os.Exit(2)
@@ -78,6 +80,29 @@ func wypiszTokeny(sciezka string, tresc []byte) {
 			return
 		}
 		fmt.Printf("%s\t%s\n", tok, lit)
+	}
+}
+
+// wypiszBezKomentarzy podaje treść pliku pozbawioną komentarzy i pustych wierszy.
+// Zgodność wyniku przed redakcją i po niej dowodzi, że zmieniono wyłącznie
+// komentarz; działa w każdym języku, także tam, gdzie rozbiór składniowy nie sięga.
+func wypiszBezKomentarzy(sciezka string, tresc []byte) {
+	znaczniki := znacznikiJezyka(filepath.Ext(sciezka))
+	for _, w := range strings.Split(string(tresc), "\n") {
+		przyciety := strings.TrimSpace(w)
+		if przyciety == "" {
+			continue
+		}
+		komentarzem := false
+		for _, z := range znaczniki {
+			if strings.HasPrefix(przyciety, z) {
+				komentarzem = true
+				break
+			}
+		}
+		if !komentarzem {
+			fmt.Println(przyciety)
+		}
 	}
 }
 

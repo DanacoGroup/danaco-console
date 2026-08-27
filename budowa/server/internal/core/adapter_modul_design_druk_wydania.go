@@ -1,28 +1,6 @@
 // Odpowiedzialność pliku: kodery wydań drukarskich, których biblioteka
 // standardowa nie ma — TIFF i EPS — oraz barwa znacznika sklejenia kafli.
 // Czynności części drukarskiej leżą w `adapter_modul_design_druk.go`.
-//
-// ── TIFF przez bibliotekę wkompilowaną ──────────────────────────────────────
-// Zapis TIFF idzie przez `golang.org/x/image/tiff` — tę samą bibliotekę, którą
-// rdzeń TIFF CZYTA. Kompresja jest bezstratna (Deflate): materiał drukarski
-// przepuszczony przez kompresję stratną wraca z drukarni z widocznymi artefaktami
-// na płaskich plamach, a to jest dokładnie ten materiał, dla którego istnieje
-// TIFF.
-//
-// ── EPS rdzeń pisze sam, i mówi dlaczego ────────────────────────────────────
-// Kodera EPS z obrazem rastrowym nie ma ani w bibliotece standardowej, ani
-// w `tdewolff/canvas` (jej wydanie PostScript rysuje ŚCIEŻKI, nie osadza
-// pikseli). Programy do rasteryzacji i przekształceń obrazu, którymi zwykle się
-// to robi, leżą poza instalką Operatora — nie wolno ich nazwać nawet
-// w komentarzu, żeby nikt nie wziął nazwy za wskazówkę, i nie wolno od nich
-// zależeć, bo u Operatora byłyby odmową. Zapis stoi więc tutaj i jest
-// wkompilowany.
-//
-// EPS niesie obraz operatorem `colorimage` z danymi szesnastkowymi. Zapis
-// szesnastkowy jest dwa razy dłuższy od binarnego, ale jest CZYSTYM tekstem —
-// przechodzi przez każdy strumień, każdą bramkę pocztową i każdy system
-// drukarski, także taki, który psuje bajty ósmego bitu. Dla materiału, który
-// jedzie do obcej drukarni, ta pewność jest warta dwukrotności rozmiaru.
 package core
 
 import (
@@ -35,15 +13,13 @@ import (
 )
 
 // barwaZnacznikaSklejeniaDesignu oddaje barwę linii zakładki na kaflu.
-//
-// Magenta, nie czerń: czerń zlewa się z treścią na większości materiałów, a
-// magenta w druku wielkoformatowym jest barwą, której na materiałach użytkowych
-// prawie nie ma — więc znacznik jest widoczny i nie da się go pomylić z rysunkiem.
+// Magenta, nie czerń: czerń zlewa się z treścią na większości materiałów.
 func barwaZnacznikaSklejeniaDesignu() color.RGBA {
 	return color.RGBA{R: 255, G: 0, B: 255, A: 255}
 }
 
-// zakodujTiffDesignu zapisuje obraz jako TIFF z kompresją bezstratną.
+// zakodujTiffDesignu zapisuje obraz jako TIFF z kompresją bezstratną
+// Deflate, bez utraty jakości druku.
 func zakodujTiffDesignu(obraz image.Image) ([]byte, error) {
 	var bufor bytes.Buffer
 	if err := tiff.Encode(&bufor, obraz, &tiff.Options{
@@ -55,11 +31,8 @@ func zakodujTiffDesignu(obraz image.Image) ([]byte, error) {
 }
 
 // zakodujEpsDesignu zapisuje obraz jako dokument EPS z osadzonym obrazem
-// rastrowym.
-//
-// Rozmiar strony liczy się w punktach typograficznych z wymiaru pikselowego przy
-// rozdzielczości drukarskiej: EPS nie ma pola na rozdzielczość, więc jedyną
-// drogą podania fizycznego rozmiaru jest pole `BoundingBox`.
+// rastrowym. Rozmiar strony liczy się w punktach typograficznych z wymiaru
+// pikselowego przy rozdzielczości drukarskiej.
 func zakodujEpsDesignu(obraz image.Image) ([]byte, error) {
 	granice := obraz.Bounds()
 	szerokosc, wysokosc := granice.Dx(), granice.Dy()
@@ -79,8 +52,7 @@ func zakodujEpsDesignu(obraz image.Image) ([]byte, error) {
 	dokument.WriteString("%%LanguageLevel: 2\n")
 	dokument.WriteString("%%EndComments\n")
 	dokument.WriteString("gsave\n")
-	// Układ PostScriptu liczy Y od dołu, a obraz od góry: skala ujemna w Y
-	// i przesunięcie na wysokość strony odwracają go raz, w jednym miejscu.
+	// Układ PostScriptu liczy Y od dołu, a obraz od góry.
 	fmt.Fprintf(&dokument, "0 %.4f translate\n", wysokoscPunktow)
 	fmt.Fprintf(&dokument, "%.4f %.4f scale\n", szerokoscPunktow, -wysokoscPunktow)
 	dokument.WriteString("/DeviceRGB setcolorspace\n")
@@ -89,17 +61,13 @@ func zakodujEpsDesignu(obraz image.Image) ([]byte, error) {
 	dokument.WriteString("{currentfile 3 string readhexstring pop} bind\n")
 	dokument.WriteString("false 3 colorimage\n")
 
-	// Dane obrazu: trzy składowe na piksel, zapis szesnastkowy, wiersze łamane
-	// co 32 bajty. Łamanie jest wymagane — PostScript nie gwarantuje obsługi
-	// wiersza dłuższego niż 255 znaków.
+	// Dane obrazu: wiersze łamane co 32 bajty, bo PostScript ma limit długości.
 	const bajtowWWierszu = 32
 	licznik := 0
 	for y := granice.Min.Y; y < granice.Max.Y; y++ {
 		for x := granice.Min.X; x < granice.Max.X; x++ {
 			r, g, b, alfa := obraz.At(x, y).RGBA()
-			// Przezroczystość w EPS nie istnieje: piksel częściowo przezroczysty
-			// zlewa się z BIELĄ, bo takie jest tło nośnika. Zostawienie samych
-			// składowych dałoby na wydruku ciemną obwódkę wokół każdej krawędzi.
+			// Przezroczystość w EPS nie istnieje: piksel zlewa się z bielą tła.
 			if alfa < 65535 {
 				r, g, b = zlejZBielaDesignu(r, alfa), zlejZBielaDesignu(g, alfa),
 					zlejZBielaDesignu(b, alfa)

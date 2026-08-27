@@ -1636,3 +1636,21 @@ Komplet danych pulpitu pochodzi wyłącznie z odczytów `session.list`,
 `window.changed`, `queue.changed` i `progress.changed`. Do pierwszego odczytu
 pulpit pokazuje stany puste zamiast wartości zastępczych. Sam katalog nie
 zawiera logiki: jest wykazem tego, co warstwa wystawia na zewnątrz.
+
+## budowa/klient-poprzedni/src/moduly/browser/wykazy-zebranego.ts
+
+Zaciągnięcie składa się z dwóch odczytów rdzenia: `browser.source.list`
+i `browser.note.list`. Wynik obu przekłada się na zbiór zebranego w sesji.
+
+Odmowa „okna nie ma" nie jest błędem okna. Rdzeń odpowiada kodem `not_found`,
+gdy moduł Browser nie widział jeszcze wskazanego okna, a to normalny stan okna
+świeżo otwartego, w którym nikt niczego nie zebrał. Rozpoznanie kończy się wtedy
+stanem `nietkniete`: wykaz zostaje pusty, powód jest podany, ale okno nie wchodzi
+w stan błędu. Każda inna odmowa jest błędem i mówi swoim powodem. Okno nieznane
+zgłasza się przy obu wykazach naraz, więc jest to jedno rozpoznanie, a nie dwa
+osobne niepowodzenia.
+
+Stanu `odczyt` nie wpisuje tu nikt: wynik oddawany jest dopiero po obu komendach,
+więc stan oczekiwania ustawia wołający w `stan-przegladania.ts` przed czekaniem.
+Wartość stoi mimo to w jednym typie z pozostałymi, ponieważ panele czytają jeden
+stan wykazu, a nie dwa niezależne.

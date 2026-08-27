@@ -4,22 +4,10 @@ import type { ZebraneWSesji } from './zebrane-w-sesji';
 import type { ZrodloBrowser } from './zrodlo-browser';
 
 /**
- * Zaciągnięcie wykazu źródeł i notatek okna z rdzenia.
- *
- * Dwa odczyty (`browser.source.list`, `browser.note.list`) i przełożenie ich
- * wyniku na zbiór zebranego. Bez elementów widoku — okna pytają o wynik, a nie
- * o sposób.
- *
- * Odmowa „okna nie ma" nie jest błędem okna. Rdzeń odpowiada `not_found`, gdy
- * moduł Browser nie widział jeszcze wskazanego okna, a to normalny stan okna
- * świeżo otwartego, w którym nikt niczego nie zebrał. Rozpoznanie kończy się
- * wtedy stanem `nietkniete`: wykaz zostaje pusty, powód jest podany, ale okno
- * nie wchodzi w stan błędu. Każda inna odmowa jest błędem i mówi swoim powodem.
- *
- * Stanu `odczyt` nie wpisuje tu nikt: wynik oddawany jest dopiero po obu
- * komendach, więc stan „pytam" ustawia wołający (`stan-przegladania.ts`) przed
- * czekaniem. Wartość stoi mimo to w jednym typie z pozostałymi, bo panele
- * czytają jeden stan wykazu, a nie dwa niezależne.
+ * Zaciągnięcie wykazu źródeł i notatek okna z rdzenia: dwa odczyty i przełożenie
+ * ich wyniku na zbiór zebranego. Bez elementów widoku, bo okna pytają o wynik,
+ * a nie o sposób. Odmowa „okna nie ma" kończy rozpoznanie stanem nietkniętym,
+ * nie błędem.
  */
 export type StanZaciagniecia = 'gotowe' | 'nietkniete' | 'odczyt' | 'blad';
 
@@ -49,8 +37,8 @@ export function utworzWykazyZebranego(
         zrodlo.wykazNotatek({ windowId: idOkna }),
       ]);
 
-      // Okno nieznane rdzeniowi zgłasza się przy obu wykazach naraz — to jedno
-      // rozpoznanie, nie dwa osobne niepowodzenia, więc mówi się o nim raz.
+      // Okno nieznane rdzeniowi zgłasza się przy obu wykazach naraz, więc mówi
+      // się o nim raz.
       if (czyOknoNieznane(wykazZrodel.blad?.code) && czyOknoNieznane(wykazNotatek.blad?.code)) {
         zebrane.zastapZrodla([]);
         zebrane.zastapNotatki([]);
@@ -86,7 +74,10 @@ export function utworzWykazyZebranego(
   };
 }
 
-/** Czy odmowa mówi „takiego okna przeglądania nie ma", a nie o usterce. */
+/**
+ * Czy odmowa mówi „takiego okna przeglądania nie ma", a nie o usterce. Rozstrzyga
+ * wyłącznie kod odmowy, więc treść komunikatu rdzenia nie wpływa na rozpoznanie.
+ */
 function czyOknoNieznane(kod: string | undefined): boolean {
   return kod === ErrorCode.NotFound;
 }

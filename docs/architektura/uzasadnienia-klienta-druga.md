@@ -2713,3 +2713,12 @@ z poziomów nagłówków wskazanych przez operatora, a numer nadaje rdzeń, wię
 niczego samo; element wymagający odświeżenia jest nazwany liczbą i znacznikiem w danych, więc
 spis treści rozjechany z dokumentem nie może wyglądać na zgodny; pole bez policzonej wartości
 mówi to wprost zamiast pokazywać pustkę; usunięcie odmówione nie zdejmuje elementu z wykazu.
+
+## budowa/klient-poprzedni/src/moduly/translate/odczyty-zrodla.ts
+Oba odczyty biorą się z tego samego napisu i z jednego przebiegu, więc stoją w jednym pliku, i oba
+są warstwą pierwszą Source Panel — mają być widoczne bez interakcji, ponieważ orientacja w
+rozmiarze materiału i wiedza o tym, czego nie wolno przetłumaczyć, poprzedzają każdą czynność w
+tym oknie. Liczby są liczbami okna, nie rdzenia: rdzeń oddaje liczbę pozycji podziału przy zapisie
+źródła i to jest jego prawda o segmentach, a słowa i znaki liczy okno z tekstu, który ma przed
+sobą, bo kontrakt takiej komendy nie ma. Analizy względem pamięci tłumaczeń ani wyceny nie ma tu
+wcale, ponieważ nie ma z czego ich złożyć, a okno tego nie zastępuje szacunkiem.

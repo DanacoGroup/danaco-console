@@ -5029,3 +5029,10 @@ odpowiedź komendy przyjęcia nagrania mówi wyłącznie o przyjęciu bajtów, a
 o tym, co w nich usłyszano. Port niewypełniony nie rejestruje niczego: obie
 komendy sprawdzenia gotowości i transkrypcji odpowiedzą wtedy komendą
 nieznaną, a pozostałe domeny pracują bez zmian.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_raster.go
+Dekodery są rejestrowane importem pobocznym: PNG, JPEG i GIF stoją w bibliotece standardowej, a WEBP dokłada bibliotekę rozszerzeń obrazu. To ten sam zestaw, którym rdzeń mierzy wymiary wnoszonego zasobu; dwa różne zestawy dekoderów oznaczałyby, że panel mierzy plik, którego złożenie odmawia.
+
+Zdjęcie przemnożenia jest konieczne, nie kosmetyczne: kolor w bibliotece standardowej oddaje składowe już przemnożone przez alfę, a tryby mieszania są zdefiniowane na barwie własnej piksela. Mnożenie barw przemnożonych dałoby wynik ciemniejszy przy każdej półprzezroczystości, błąd niewidoczny na krawędziach, a wyraźny na dużej płaszczyźnie znaku wodnego.
+
+Przycięcie składowej do zakresu jest konieczne, bo tryby mieszania screen i overlay potrafią wyjść nieznacznie poza jedynkę na zaokrągleniach.

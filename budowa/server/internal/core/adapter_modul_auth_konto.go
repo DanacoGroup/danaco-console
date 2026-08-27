@@ -1,21 +1,7 @@
 // Odpowiedzialność pliku: tożsamość właściciela i dwie drogi, które prowadzą
-// przez jego skrzynkę — potwierdzenie adresu po rejestracji (`auth.verify`)
-// oraz odzyskanie konta (`auth.recover`, `auth.reset`).
-//
-// ── DLACZEGO DROGA IDZIE LISTEM ─────────────────────────────────────────────
-// Adres e-mail jest jedynym elementem tożsamości niezależnym od urządzenia:
-// PIN i klucz Windows Hello zostają na maszynie, która mogła zginąć. Dlatego
-// odzyskanie konta prowadzi wyłącznie przez adres i innej drogi nie ma.
-//
-// ── W BAZIE LEŻY SKRÓT, NIGDY SAMA DROGA ────────────────────────────────────
-// Materiał wysłany listem jest jednorazowy i losowy, a baza zna wyłącznie jego
-// skrót — tą samą drogą, którą chodzą tokeny sesji. Kopia bazy nie pozwala więc
-// potwierdzić cudzej tożsamości.
-//
-// ── ODPOWIEDŹ NIE ZDRADZA, CZY ADRES PASUJE ─────────────────────────────────
-// `auth.recover` odpowiada tak samo dla adresu właściciela i dla obcego. Inaczej
-// komenda byłaby wyrocznią mówiącą pytającemu, jaki adres ma Operator — a jest
-// osiągalna przed zalogowaniem, więc pyta ją każdy.
+// przez jego skrzynkę — potwierdzenie adresu po rejestracji (auth.verify)
+// oraz odzyskanie konta (auth.recover, auth.reset). Droga zawsze idzie
+// listem na adres.
 package core
 
 import (
@@ -31,10 +17,9 @@ import (
 )
 
 // trwanieDrogiPotwierdzenia — jak długo ważny jest materiał wysłany listem.
-//
-// Godzina jest kompromisem między skrzynką sprawdzaną raz na jakiś czas
-// a materiałem, który leży w niej ważny bez końca. Droga wygasła nie zamyka
-// niczego trwale: Operator prosi o nową.
+// Godzina jest kompromisem między skrzynką sprawdzaną rzadko a materiałem
+// ważnym bez końca; droga wygasła nie zamyka niczego trwale, Operator prosi
+// o nową.
 const trwanieDrogiPotwierdzenia = time.Hour
 
 // kontoGotowe odmawia, gdy montaż nie wpiął trwałości tożsamości.
@@ -50,12 +35,8 @@ func (a *adapterUwierzytelnienia) kontoGotowe() error {
 }
 
 // kontoPotwierdzone zamyka bramkę przed kontem, którego adresu nikt nie
-// potwierdził.
-//
-// Brak trwałości konta i brak wiersza konta NIE zamykają bramki: pierwszy to
-// montaż bez tego ogniwa, drugi to platforma sprzed rejestracji — w obu
-// przypadkach o potwierdzeniu nie ma co rozstrzygać, a odmowa logowania byłaby
-// zamknięciem drogi, której nikt jeszcze nie otworzył.
+// potwierdził. Brak trwałości konta i brak wiersza konta nie zamykają bramki,
+// bo o potwierdzeniu nie ma wtedy co rozstrzygać.
 func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 	if a.konto == nil {
 		return nil
@@ -70,12 +51,7 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 	if konto.Potwierdzone {
 		return nil
 	}
-	// Bramki nie zamyka potwierdzenie, którego platforma nie miała czym wysłać.
-	// Konto założone bez poczty (znacznik w sejfie) wchodzi hasłem — inaczej
-	// pierwszy klient zostawałby przed platformą na zawsze: listu nie ma, bo
-	// nie było skąd go nadać, a drugiej rejestracji nie ma, bo wykonuje się raz.
-	// Adres pozostaje niepotwierdzony i nikt tego nie udaje: wiersz konta dalej
-	// stoi na „niepotwierdzone", a potwierdzenie czeka na pocztę.
+	// Bramki nie zamyka potwierdzenie, gdy konto założono bez poczty — wejście idzie wtedy hasłem.
 	if _, bezPoczty := a.znacznikBezPoczty(ctx); bezPoczty {
 		return nil
 	}
@@ -85,12 +61,9 @@ func (a *adapterUwierzytelnienia) kontoPotwierdzone(ctx context.Context) error {
 			"do tego czasu bramka jest zamknięta, bo adres jest jedyną drogą odzyskania konta")
 }
 
-// daneRejestracji sprawdza login i adres podane przy rejestracji.
-//
-// Sprawdzenie adresu jest celowo płytkie: jedna małpa i kropka po niej. Głębsza
-// kontrola postaci adresu odrzuca adresy poprawne, a i tak nie rozstrzyga tego,
-// co jedynie ważne — czy skrzynka istnieje i czy należy do piszącego. To
-// rozstrzyga dopiero list, który tam idzie.
+// daneRejestracji sprawdza login i adres podane przy rejestracji. Sprawdzenie
+// adresu jest celowo płytkie, bo głębsza kontrola postaci adresu odrzuca
+// adresy poprawne i tak nie rozstrzyga, czy skrzynka istnieje.
 func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 	login := strings.TrimSpace(z.Login)
 	if login == "" {
@@ -108,16 +81,12 @@ func daneRejestracji(z shared.AuthRegisterRequest) (string, string, error) {
 }
 
 // wyslijDrogePotwierdzenia losuje materiał, zapisuje jego skrót i nadaje list.
-//
-// Kolejność jest wiążąca: najpierw zapis skrótu, potem nadanie. Odwrotnie list
-// mógłby dojść do Operatora, zanim droga stałaby się ważna — a on kliknąłby
-// w nią i zobaczył odmowę.
+// Kolejność jest wiążąca: najpierw zapis skrótu, potem nadanie, inaczej list
+// mógłby dojść, zanim droga stałaby się ważna.
 func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 	cel, email, login string) error {
 
-	// Brak konta nadawczego nazywa się PRZED zapisaniem drogi. Inaczej w bazie
-	// zostawałby skrót drogi, która nigdy nie wyszła listem, a odmowa i tak
-	// mówiłaby o poczcie — tylko o jeden wiersz później.
+	// Brak konta nadawczego nazywa się przed zapisaniem drogi, żeby baza nie trzymała drogi bez listu.
 	if err := a.kontoNadawcze(ctx).Brak(); err != nil {
 		return bladBramki(shared.ErrorCodeInternalError,
 			err.Error()+"; "+dwieDrogiKontaNadawczego)
@@ -142,11 +111,9 @@ func (a *adapterUwierzytelnienia) wyslijDrogePotwierdzenia(ctx context.Context,
 	return nil
 }
 
-// listPotwierdzenia składa treść jednego z dwóch listów systemowych.
-//
-// Treść jest zwięzła i mówi wprost, co się stało i co zrobić. List systemowy
-// czyta się w pośpiechu, a rozwlekły nakłania do zignorowania go — co przy
-// odzyskiwaniu konta znaczy utratę dostępu.
+// listPotwierdzenia składa treść jednego z dwóch listów systemowych. Treść
+// jest zwięzła i mówi wprost, co się stało i co zrobić, bo rozwlekły list
+// systemowy nakłania do zignorowania go.
 func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
 	if cel == dane.CelOdzyskanie {
 		return nadajnik.List{
@@ -172,16 +139,9 @@ func listPotwierdzenia(cel, login, droga, email string) nadajnik.List {
 	}
 }
 
-// zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności.
-//
-// Sprawdzenie i zamknięcie muszą być niepodzielne, bo inaczej dwa żądania z tym
-// samym materiałem oba zastają drogę ważną. Niepodzielność stoi w bazie:
-// zamknięcie idzie warunkiem `uzyte = 0 AND wygasa > teraz`, więc drugie
-// żądanie zmienia zero wierszy.
-//
-// Nieznana droga i droga wygasła dają tę samą odmowę z osobnym zdaniem — pierwsza
-// nie mówi pytającemu, że zgadł skrót, druga mówi Operatorowi, że ma poprosić
-// o nową.
+// zuzyjDroge sprawdza drogę i zamyka ją w jednej czynności. Sprawdzenie
+// i zamknięcie są niepodzielne warunkiem w bazie, więc dwa żądania z tym
+// samym materiałem nie zastają obie drogi ważnej.
 func (a *adapterUwierzytelnienia) zuzyjDroge(ctx context.Context, cel, droga string) error {
 	if strings.TrimSpace(droga) == "" {
 		return bladBramki(shared.ErrorCodeValidationFailed, "droga potwierdzenia jest pusta")
@@ -244,8 +204,7 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 	if err := a.konto.PotwierdzKonto(ctx); err != nil {
 		return shared.AuthVerifyResponse{}, err
 	}
-	// Znacznik bramki bez poczty przestał być prawdą: adres jest potwierdzony,
-	// więc bramkę trzyma odtąd sam wiersz konta.
+	// Znacznik bramki bez poczty przestał być prawdą — bramkę trzyma odtąd sam wiersz konta.
 	a.zdejmijZnacznikBezPoczty(ctx)
 	sesja, err := a.zalozSesje(ctx, shared.AuthMethodKindPassword,
 		niepustyTekst(z.DeviceId), wartoscPrawdy(z.KeepSignedIn))
@@ -258,10 +217,8 @@ func (a *adapterUwierzytelnienia) PotwierdzAdres(ctx context.Context,
 // ── auth.recover ─────────────────────────────────────────────────────────────
 
 // RozpocznijOdzyskanie wysyła drogę potwierdzenia na adres uwierzytelniający.
-//
 // Odpowiedź jest zawsze taka sama, niezależnie od tego, czy adres pasuje do
-// konta — patrz nagłówek pliku. Nie jest to cicha odmowa: dla właściciela
-// czynność jest wykonana i list wychodzi.
+// konta, dla właściciela czynność jest wykonana i list wychodzi.
 func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 	z shared.AuthRecoverRequest) (shared.AuthRecoverResponse, error) {
 
@@ -292,14 +249,8 @@ func (a *adapterUwierzytelnienia) RozpocznijOdzyskanie(ctx context.Context,
 // ── auth.reset ───────────────────────────────────────────────────────────────
 
 // UstawNoweHaslo zamyka odzyskanie konta: podmienia hasło i unieważnia tokeny
-// wydane przed zmianą.
-//
-// Unieważnienie jest częścią czynności, nie dodatkiem. Odzyskanie konta zaczyna
-// się od podejrzenia, że dostęp ma ktoś jeszcze; zostawienie mu ważnego tokenu
-// czyniłoby zmianę hasła pozorną.
-//
-// Nowej encji Konto nie powstaje — zmienia się wyłącznie materiał
-// uwierzytelniający.
+// wydane przed zmianą. Unieważnienie jest częścią czynności, bo dostęp mógł
+// mieć ktoś jeszcze.
 func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	z shared.AuthResetRequest) (shared.AuthResetResponse, error) {
 
@@ -339,8 +290,7 @@ func (a *adapterUwierzytelnienia) UstawNoweHaslo(ctx context.Context,
 	if err := a.repozytorium.ZapiszOdwolanieSekretu(ctx, kotwica.Kod, odwolanie); err != nil {
 		return shared.AuthResetResponse{}, err
 	}
-	// Pusty skrót zachowany znaczy „unieważnij wszystkie": odzyskanie konta idzie
-	// z urządzenia, które sesji jeszcze nie ma, więc nie ma czego oszczędzać.
+	// Pusty skrót zachowany znaczy unieważnij wszystkie — odzyskanie idzie z urządzenia bez sesji.
 	uniewaznione, err := a.repozytorium.UniewaznijSesjeBramkiPoza(ctx, "", time.Now().UnixMilli())
 	if err != nil {
 		return shared.AuthResetResponse{}, err

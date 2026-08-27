@@ -2487,3 +2487,18 @@ przeglądarce, żeby nie zaokrąglała wierzchołków do siatki pikseli, bez cze
 uproszczona łamana wygląda w podglądzie na bardziej postrzępioną, niż jest.
 Zapis współrzędnej pomija zbędne zera, ponieważ dokument SVG z setkami
 tysięcy wierzchołków rośnie o megabajty na samych ogonach dziesiętnych.
+
+## budowa/server/internal/core/skutek_obrazu_wektor_test.go
+
+Sprawdzian złożenia obrazu nie kończy się na odpowiedzi i nie ufa polu paths.
+Wynik złożenia jest dekodowany z powrotem i mierzony pikselem: sprawdza się,
+czy nakładka naprawdę legła w miejscu, w które ją kazano położyć, i czy
+krycie naprawdę zadziałało. Wynik wektoryzacji jest czytany jako dokument
+SVG: sprawdza się, czy niesie ścieżki, a nie pusty korpus. Żadna z tych
+dwóch czynności nie startuje procesu potomnego, więc sprawdzian nie pomija
+się przy braku programu zewnętrznego.
+
+TestRozkladNaWarstwyDajeOsobneZasobyZPrzezroczystoscia pomija się bez
+silnika segmentacji, ponieważ bez niego komenda odmawia i to jest jej
+właściwe zachowanie, sprawdzane osobno w innym miejscu. Pominięcie dotyczy
+skutku, którego bez silnika nie ma prawa być.

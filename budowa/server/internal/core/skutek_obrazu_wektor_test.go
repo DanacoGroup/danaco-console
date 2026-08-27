@@ -14,18 +14,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Skutek dwóch czynności obrazu pracujących biblioteką wkompilowaną w rdzeń:
-// złożenia obrazu na obrazie (`image.compose`) i zamiany bitmapy na ścieżki
-// (`image.vectorize`).
-//
-// Sprawdzian nie kończy się na odpowiedzi i nie ufa polu `paths`. Wynik
-// złożenia jest DEKODOWANY Z POWROTEM i mierzony pikselem: sprawdzamy, czy
-// nakładka naprawdę legła w miejscu, w które ją kazano położyć, i czy krycie
-// naprawdę zadziałało. Wynik wektoryzacji jest czytany jako dokument SVG:
-// sprawdzamy, czy niesie ścieżki, a nie pusty korpus.
-//
-// Żadna z tych dwóch czynności nie startuje procesu potomnego, więc sprawdzian
-// nie pomija się przy braku programu — tak samo jak sprawdzian warsztatu PDF.
+// Sprawdziany złożenia obrazu i wektoryzacji dekodują wynik z powrotem i mierzą go pikselem.
 
 // obrazJednolity składa PNG wypełniony jedną barwą — materiał, w którym każda
 // zmiana piksela jest zmianą widoczną i policzalną.
@@ -45,7 +34,8 @@ func obrazJednolity(t *testing.T, szerokosc, wysokosc int, barwa color.NRGBA) []
 	return bufor.Bytes()
 }
 
-// wniesObraz wnosi obraz do magazynu zasobów i oddaje jego identyfikator.
+// wniesObraz wnosi obraz do magazynu zasobów komendą design.asset.upload i oddaje
+// identyfikator zasobu, gotowy do dalszego wskazania w komendach obrazu.
 func wniesObraz(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	bajty []byte, nazwa string) string {
 	t.Helper()
@@ -62,7 +52,8 @@ func wniesObraz(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	return wynik.Asset.Id
 }
 
-// obrazZMagazynu dekoduje wynik leżący pod odwołaniem zasobu.
+// obrazZMagazynu dekoduje wynik leżący pod odwołaniem zasobu, oddając obraz
+// gotowy do pomiaru pikselem zamiast surowych bajtów pliku.
 func obrazZMagazynu(t *testing.T, zmontowany *Zmontowany, zycie context.Context,
 	katalog, kod string) image.Image {
 	t.Helper()
@@ -139,9 +130,7 @@ func TestKrycieNakladkiDajeBarwePosrednia(t *testing.T) {
 
 	obraz := obrazZMagazynu(t, zmontowany, zycie, katalog, wynik.Asset.Id)
 	_, g, b, _ := obraz.At(10, 10).RGBA()
-	// Zielona i niebieska składowa mają wylądować mniej więcej w połowie drogi
-	// między bielą (255) a czerwienią (0). Przedział jest szeroki z zamysłem:
-	// mierzymy, czy krycie w ogóle zadziałało, a nie zaokrąglenia.
+	// Składowe mają wylądować pośrodku między bielą a czerwienią; przedział jest szeroki.
 	if g>>8 < 100 || g>>8 > 160 || b>>8 < 100 || b>>8 > 160 {
 		t.Fatalf("przy pięćdziesięcioprocentowym kryciu piksel ma składowe "+
 			"(g=%d, b=%d) — krycie nie zostało policzone", g>>8, b>>8)
@@ -267,20 +256,15 @@ func bajtyPlikuWektoryzacji(t *testing.T, sciezka string) []byte {
 	return bajty
 }
 
-// TestRozkladNaWarstwyDajeOsobneZasobyZPrzezroczystoscia wykazuje skutek
-// rozkładu: każdy obiekt wychodzi osobnym zasobem, a nie kopią całego obrazu.
-//
-// Sprawdzian pomija się bez silnika segmentacji, bo bez niego komenda ODMAWIA
-// — i to jest jej właściwe zachowanie, sprawdzane osobno niżej. Pominięcie
-// dotyczy skutku, którego bez silnika nie ma prawa być.
+// TestRozkladNaWarstwyDajeOsobneZasobyZPrzezroczystoscia wykazuje skutek rozkładu:
+// każdy obiekt wychodzi osobnym zasobem, a nie kopią całego obrazu.
 func TestRozkladNaWarstwyDajeOsobneZasobyZPrzezroczystoscia(t *testing.T) {
 	if !zewnetrzne.Stoi(narzedzieWycinaniaTla()) {
 		t.Skip("rozkład na warstwy stoi na sieci segmentującej (rembg), której nie ma na tej maszynie")
 	}
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 
-	// Materiał: dwa rozdzielone kwadraty na jednolitym tle. Sieć ma rozpoznać
-	// je jako plan pierwszy, a rdzeń rozdzielić na dwa obszary spójne.
+	// Materiał: dwa rozdzielone kwadraty na jednolitym tle, plan pierwszy sieci.
 	plotno := image.NewNRGBA(image.Rect(0, 0, 120, 60))
 	for y := 0; y < 60; y++ {
 		for x := 0; x < 120; x++ {

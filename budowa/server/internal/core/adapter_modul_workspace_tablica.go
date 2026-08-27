@@ -1,16 +1,6 @@
 // Odpowiedzialność pliku: tablica kanban projektu — kolumny, kolejność kart
-// i przeniesienie karty (`workspace.board.get`, `workspace.task.move`).
-//
-// ── Klucz porządkowy jest napisem ──────────────────────────────────────────
-// Karta ma klucz porządkowy z liter, a nie numer pozycji. Przeciągnięcie karty
-// między dwie sąsiednie dopisuje klucz leżący pomiędzy ich kluczami — jeden
-// zapis. Numer pozycji wymagałby przepisania całej kolumny przy każdym
-// przeciągnięciu, a tablica projektu bywa przeciągana kilkanaście razy pod rząd.
-//
-// ── Granica prac w toku ostrzega, nie odmawia ──────────────────────────────
-// Przekroczenie granicy WIP wraca polem `wipExceeded`, a karta i tak staje
-// w kolumnie. Platforma nie stawia twardych blokad w interfejsie: granica jest
-// sygnałem dla Operatora, nie bramką.
+// i przeniesienie karty (workspace.board.get, workspace.task.move). Karta ma
+// klucz porządkowy z liter, a nie numer pozycji.
 package core
 
 import (
@@ -38,7 +28,7 @@ var kolumnyWyjscioweWorkspace = []struct {
 	{shared.WorkspaceTaskStatusCancelled, "Odwołane"},
 }
 
-// Tablica obsługuje `workspace.board.get`.
+// Tablica obsługuje workspace.board.get — oddaje kolumny tablicy wraz z kartami projektu wskazanego żądaniem.
 func (a *adapterPrzestrzeniRoboczej) Tablica(ctx context.Context,
 	z shared.WorkspaceBoardGetRequest) (shared.WorkspaceBoardGetResponse, error) {
 
@@ -90,7 +80,7 @@ func (a *adapterPrzestrzeniRoboczej) Tablica(ctx context.Context,
 	}}, nil
 }
 
-// PrzeniesZadanie obsługuje `workspace.task.move`.
+// PrzeniesZadanie obsługuje workspace.task.move — zmienia kolumnę karty i jej klucz porządkowy w jednym zapisie.
 func (a *adapterPrzestrzeniRoboczej) PrzeniesZadanie(ctx context.Context,
 	z shared.WorkspaceTaskMoveRequest) (shared.WorkspaceTaskMoveResponse, error) {
 
@@ -130,9 +120,7 @@ func (a *adapterPrzestrzeniRoboczej) PrzeniesZadanie(ctx context.Context,
 	}
 	zadanie.KolumnaTablicy = docelowa
 
-	// „Przed którą kartą" wyznacza granicę prawą, „za którą" — lewą. Bez obu
-	// wskazań karta staje na końcu kolumny: przeniesienie samą zmianą kolumny
-	// nie ma powodu wchodzić między karty już ułożone.
+	// Przed kartą wyznacza granicę prawą, za kartą lewą; bez obu wskazań karta staje na końcu kolumny.
 	rangaKartyPrzed, rangaKartyZa, err := a.sasiedziKartyWorkspace(ctx, zadanie.ProjektID,
 		z.BeforeTaskId, z.AfterTaskId)
 	if err != nil {
@@ -194,7 +182,7 @@ func (a *adapterPrzestrzeniRoboczej) kolumnyTablicyWorkspace(ctx context.Context
 	return a.repozytorium.KolumnyTablicyWorkspace(ctx, projektID)
 }
 
-// kolumnaStanuWorkspace wskazuje kolumnę odwzorowującą stan zadania.
+// kolumnaStanuWorkspace wskazuje kolumnę odwzorowującą stan zadania w tablicy projektu wskazanego żądaniem.
 func (a *adapterPrzestrzeniRoboczej) kolumnaStanuWorkspace(ctx context.Context, projektID int64,
 	stan shared.WorkspaceTaskStatus) (string, error) {
 
@@ -231,7 +219,7 @@ func (a *adapterPrzestrzeniRoboczej) ostatniaRangaWorkspace(ctx context.Context,
 	return ostatnia, nil
 }
 
-// sasiedziKartyWorkspace odczytuje klucze porządkowe kart wskazanych żądaniem.
+// sasiedziKartyWorkspace odczytuje klucze porządkowe kart wskazanych żądaniem, sąsiadujących z przenoszoną kartą.
 func (a *adapterPrzestrzeniRoboczej) sasiedziKartyWorkspace(ctx context.Context, projektID int64,
 	przedKarta, zaKarta *string) (string, string, error) {
 
@@ -287,7 +275,7 @@ func (a *adapterPrzestrzeniRoboczej) granicaPrzekroczonaWorkspace(ctx context.Co
 	return stojace > granica, nil
 }
 
-// kolumnaKontraktuWorkspace przekłada wiersz kolumny na byt kontraktu.
+// kolumnaKontraktuWorkspace przekłada wiersz kolumny tablicy na byt kontraktu warstwy kontraktu WorkspaceBoardColumn.
 func kolumnaKontraktuWorkspace(k dane.KolumnaTablicyWorkspace) shared.WorkspaceBoardColumn {
 	kolumna := shared.WorkspaceBoardColumn{
 		Id: k.Identyfikator, Name: k.Nazwa, Status: k.Stan, Order: k.Kolejnosc,
@@ -300,17 +288,12 @@ func kolumnaKontraktuWorkspace(k dane.KolumnaTablicyWorkspace) shared.WorkspaceB
 }
 
 // rangaMiedzyWorkspace układa klucz porządkowy leżący ściśle między dwoma
-// kluczami sąsiadów. Pusty klucz z lewej znaczy początek kolumny, pusty
-// z prawej — jej koniec.
-//
-// Klucz składa się z liter `a`–`z`; wynik jest zawsze większy od lewego
-// i mniejszy od prawego, a przy sąsiadujących literach schodzi o znak niżej
-// zamiast oddawać klucz równy któremuś z sąsiadów.
+// kluczami sąsiadów. Pusty klucz z lewej znaczy początek kolumny, z prawej
+// — jej koniec.
 func rangaMiedzyWorkspace(lewy, prawy string) string {
 	const dolna, gorna = byte('a'), byte('z')
 	if prawy != "" && lewy >= prawy {
-		// Wskazania sprzeczne (karta „przed" leży za kartą „za") nie mogą
-		// zatrzymać przeniesienia: bierzemy stronę lewą i stawiamy kartę za nią.
+		// Wskazania sprzeczne nie zatrzymują przeniesienia — strona lewa rozstrzyga i karta staje za nią.
 		prawy = ""
 	}
 	wynik := make([]byte, 0, 8)
@@ -334,7 +317,7 @@ func rangaMiedzyWorkspace(lewy, prawy string) string {
 	}
 }
 
-// terazWMilisekundachWorkspace oddaje bieżącą chwilę w mierze kontraktu.
+// terazWMilisekundachWorkspace oddaje bieżącą chwilę w mierze kontraktu, milisekundach od początku epoki.
 func terazWMilisekundachWorkspace() int64 {
 	return time.Now().UnixMilli()
 }

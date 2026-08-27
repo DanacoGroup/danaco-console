@@ -6791,3 +6791,19 @@ Rodziny prowadzone przez rdzeń obejmują monitory, kanały, kolejkę czytania, 
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-zestawow.ts
 Kontekst jest zestawem wskazań: usunięcie kontekstu kasuje wskazanie, a nie wpisy pamięci, i okno mówi to wprost przy przycisku, żeby Operator nie bał się sprzątać zestawów roboczych, a zarazem nie sądził, że kasuje ustalenia. Zasada retencji obejmuje zapisy kolejne: zapis zasady nie rusza wstecz wpisów zastanych, odpowiedź niesie ich policzoną liczbę i okno ją pokazuje, żeby Operator wiedział, ilu ustaleń zasada dotknie przy najbliższym wygaszaniu, zanim to nastąpi. Miernik okna kontekstu liczy żetony tokenizatorem rdzenia, a odpowiedź niesie nazwę słownika, którym policzono; pomiar bywa niewykonalny, wtedy okno pokazuje powód zamiast paska wobec granicy, której nikt nie ustalił.
+
+## budowa/klient-poprzedni/src/moduly/library/zrodlo-otoczenia.ts
+Okno komunikacji sesji bierze się z rejestru, bo przenoszenie kontekstu żąda
+okna źródłowego, a moduł zna wyłącznie kody okien operacyjnych katalogu
+rdzenia — to dwa różne byty. Kontekst okna jest wymagany przez wiersz
+każdego z czterech okien wykazu, więc moduł pyta raz i dzieli odpowiedź.
+Panel akcji nie jest zaszytym wykazem po stronie klienta: pozycje
+przychodzą z rdzenia albo panel zostaje pusty i mówi to wprost, a wykonanie
+pozycji bez uchwytu w rdzeniu wraca odmową nieznanej komendy. Katalog
+modułów obsadza ster modułu docelowego: rdzeń przyjmuje każdy kod i zakłada
+okno z dokładnie tym kodem, więc kodu wpisanego z ręki nie miałby kto
+sprawdzić. Odczyt kompletu przeniesionego do okna jest jedyną komendą
+kontraktu, która czyta magazyn zapisany przy przeniesieniu kontekstu; bez
+niej przybycie przekazania jest dla modułu nieme. Zdarzenie przybycia nie
+rozgłasza zmiany pliku i nie zakłada pliku w repozytorium — rozgłasza
+wyłącznie zmianę okna z oknem docelowym.

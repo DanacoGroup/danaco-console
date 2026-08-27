@@ -1436,3 +1436,27 @@ domenę albo w oknie stoi podgląd, idzie tam zapytanie HTTP; gdy nie ma dokąd
 pójść, dostępność wynika ze stanu ostatniego przebiegu wdrożenia. Każde
 sprawdzenie dopisuje wiersz do dziennika kondycji, a udział dostępności liczy
 się z tych wierszy, zamiast być liczbą wziętą znikąd.
+
+## budowa/server/internal/core/adapter_modul_developer_wynik.go
+
+Wynik testów rozbiera się w chwili biegu przebiegu, nie w chwili pytania
+o niego, ponieważ dziennik przebiegu przechowuje wyłącznie ogon logu: rdzeń
+przycina go do kilkuset wierszy, bo budowanie dużego projektu daje ich
+dziesiątki tysięcy. Gdyby wynik testu powstawał z odczytu dziennika, przebieg
+z tysiącem testów oddałby ich tylko kilkadziesiąt, a odpowiedź wyglądałaby
+przy tym poprawnie. Dlatego wiersze niosące wynik testu zbiera się na
+bieżąco, podczas gdy log jeszcze płynie, a złożony wynik zapisuje się do
+bazy przy domknięciu przebiegu.
+
+Pokrycie kodu pochodzi z dwóch źródeł w ustalonej kolejności. Gdy zadanie
+budowania niosło parametr profilu pokrycia, rdzeń czyta ten plik i uzyskuje
+pomiar co do instrukcji i wiersza, który zasila nakładkę pokrycia
+w edytorze. Gdy profilu nie ma, zostaje wiersz podsumowania testu
+z procentem pokrycia pakietu, który daje wynik uboższy: zna procent, a nie
+wiersze niepokryte. Drugie źródło jest uboższe, lecz prawdziwe: przyjęcie,
+że bez profilu wiadomo, które wiersze są niepokryte, byłoby zmyśleniem.
+
+Zapis wyniku przebiegu bez testów nie zakłada ani jednego wiersza: zapisanie
+pustego pomiaru pokazywałoby w oknie Build Output podsumowanie zerowych
+testów tam, gdzie testów nikt nie uruchamiał, co nie jest tym samym, co
+informacja, że testy przeszły.

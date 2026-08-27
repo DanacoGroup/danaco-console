@@ -1,20 +1,7 @@
-// Odpowiedzialność pliku: wydawanie pracy Studia na zewnątrz —
-// `studio.repository.export` (archiwum historii), `studio.package.export`
-// (paczka redakcyjna przekazania) i `studio.diff.report.export` (raport zmian
-// jako osobny dokument redakcji). Metody dopisują się na `adapterStudia`
-// zadeklarowanym w `adapter_modul_studio.go`.
-//
-// ── Archiwum składa Go, nie program do pakowania ────────────────────────────
-// `archive/zip` i `archive/tar` są w bibliotece standardowej i jadą wkompilowane
-// w binarium rdzenia. Wywołanie programu pakującego byłoby zależnością spoza
-// instalki: u Operatora „Eksportuj historię" kończyłoby się odmową, choć rdzeń
-// meldowałby komendę jako obsłużoną.
-//
-// ── Manifest jest częścią archiwum, nie dodatkiem ───────────────────────────
-// Archiwum bez manifestu to katalog plików, o których nie wiadomo, w jakiej
-// kolejności powstały, kto je zapisał ani do czego należą. Opracowanie (F7)
-// żąda manifestu wprost i tak jest tutaj: każde wydanie niesie `manifest.json`,
-// nawet gdy wersja jest jedna.
+// Plik obsługuje wydawanie pracy Studia na zewnątrz: eksport repozytorium,
+// eksport paczki redakcyjnej i eksport raportu różnicy wersji. Metody
+// dopisują się na typie adapterStudia zadeklarowanym w pliku
+// adapter_modul_studio.go.
 package core
 
 import (
@@ -32,7 +19,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// wpisArchiwumStudia to jedna pozycja archiwum: nazwa wewnątrz paczki i bajty.
+// wpisArchiwumStudia to jedna pozycja archiwum: nazwa wewnątrz paczki, jej
+// bajty oraz chwila zapisu przenoszona do znacznika czasu wpisu archiwum.
 type wpisArchiwumStudia struct {
 	nazwa  string
 	bajty  []byte
@@ -52,7 +40,9 @@ type manifestWydaniaStudia struct {
 	Komentarze int                    `json:"komentarze,omitempty"`
 }
 
-// manifestWersjiStudia opisuje jedną wersję odłożoną w archiwum.
+// manifestWersjiStudia opisuje jedną wersję odłożoną w archiwum: jej kod,
+// plik, etykietę, autora, chwilę utworzenia, przynależność do kamienia
+// milowego i gałęzi.
 type manifestWersjiStudia struct {
 	Wersja       string `json:"wersja"`
 	Plik         string `json:"plik"`
@@ -63,12 +53,9 @@ type manifestWersjiStudia struct {
 	Galaz        string `json:"galaz,omitempty"`
 }
 
-// WydajRepozytorium obsługuje `studio.repository.export`.
-//
-// Wskazanie wersji zawęża wydanie, a brak wskazania bierze CAŁĄ historię —
-// tak, jak opisuje to przycisk „Eksportuj historię". Wersja wskazana, ale nie
-// należąca do tego dokumentu, jest odmową, a nie cichym pominięciem: Operator
-// dostałby archiwum krótsze, niż prosił, i nie dowiedziałby się dlaczego.
+// WydajRepozytorium obsługuje studio.repository.export. Wskazanie wersji
+// zawęża wydanie, a brak wskazania bierze całą historię, tak jak opisuje to
+// przycisk „Eksportuj historię".
 func (a *adapterStudia) WydajRepozytorium(ctx context.Context,
 	z shared.StudioRepositoryExportRequest) (shared.StudioRepositoryExportResponse, error) {
 
@@ -111,13 +98,9 @@ func (a *adapterStudia) WydajRepozytorium(ctx context.Context,
 	}, nil
 }
 
-// WydajPaczke obsługuje `studio.package.export`.
-//
-// Paczka jest przekazaniem, nie kopią zapasową: obok dokumentu finalnego idzie
-// to, co odbiorca musi mieć, żeby zrozumieć, jak dokument powstał — historia,
-// raport zmian i adnotacje. Każdy z trzech członów da się wyłączyć, bo nie
-// każde przekazanie jest przekazaniem redakcyjnym; dokument finalny wyłączyć
-// się nie da, bo bez niego paczka nie jest paczką.
+// WydajPaczke obsługuje studio.package.export. Paczka jest przekazaniem: obok
+// dokumentu finalnego niesie to, co odbiorca musi mieć, żeby zrozumieć, jak
+// dokument powstał — historię, raport zmian i adnotacje.
 func (a *adapterStudia) WydajPaczke(ctx context.Context,
 	z shared.StudioPackageExportRequest) (shared.StudioPackageExportResponse, error) {
 
@@ -138,9 +121,8 @@ func (a *adapterStudia) WydajPaczke(ctx context.Context,
 	if format == "" {
 		format = string(dokument.Format)
 	}
-	// Paczka niesie DOKUMENT, więc kartka jest kartką dokumentu: wydanie na A4
-	// dokumentu ustawionego na A5 byłoby wydaniem czegoś innego, niż Operator
-	// widzi w oknie.
+	// Kartka wynika z formatu dokumentu: A4 dla dokumentu A5 wydałoby co
+	// innego, niż widać w oknie.
 	finalny, err := a.postacDokumentuStudia(tresc, format, dokument,
 		a.geometriaDokumentuStudia(ctx, dokument.Kod))
 	if err != nil {
@@ -224,13 +206,9 @@ func (a *adapterStudia) WydajPaczke(ctx context.Context,
 	}, nil
 }
 
-// WydajRaportRoznicy obsługuje `studio.diff.report.export`.
-//
-// Raport jest DOKUMENTEM, nie zrzutem panelu: niesie fragmenty różnicy,
-// statystykę i — gdy Operator ich nie wyłączył — adnotacje przypisane do
-// fragmentów. Format bierze się ze słownika zamiany formatu dokumentu, więc ten
-// sam raport da się oddać do wglądu (PDF), do dalszej redakcji (DOCX, Markdown)
-// albo do odczytu maszynowego (TXT).
+// WydajRaportRoznicy obsługuje studio.diff.report.export. Raport jest
+// dokumentem: niesie fragmenty różnicy, statystykę i adnotacje przypisane do
+// fragmentów, gdy Operator ich nie wyłączył.
 func (a *adapterStudia) WydajRaportRoznicy(ctx context.Context,
 	z shared.StudioDiffReportExportRequest) (shared.StudioDiffReportExportResponse, error) {
 
@@ -272,9 +250,8 @@ func (a *adapterStudia) WydajRaportRoznicy(ctx context.Context,
 		policzFragmentyRoznicy(baza, cel), adnotacje)
 
 	format := strings.ToLower(strings.TrimSpace(z.Format))
-	// Raport zmian nie jest dokumentem — jest sprawozdaniem o nim, więc idzie
-	// kartką domyślną. Wydanie raportu na kopercie C6 dlatego, że dokument jest
-	// nadrukiem koperty, byłoby raportem nie do przeczytania.
+	// Raport zmian jest sprawozdaniem, nie kopią dokumentu, więc idzie
+	// kartką domyślną.
 	bajty, err := a.postacDokumentuStudia(tekst, format, dokument, geometriaDomyslnaStudia())
 	if err != nil {
 		return shared.StudioDiffReportExportResponse{}, err
@@ -289,7 +266,8 @@ func (a *adapterStudia) WydajRaportRoznicy(ctx context.Context,
 
 // ── Składanie zawartości ────────────────────────────────────────────────────
 
-// wersjeDoWydania zawęża historię do wersji wskazanych albo oddaje ją całą.
+// wersjeDoWydania zawęża historię do wersji jawnie wskazanych przez
+// wołającego albo oddaje ją całą, gdy wskazania brak.
 func (a *adapterStudia) wersjeDoWydania(ctx context.Context, dokument dane.DokumentStudia,
 	wskazane []string) ([]dane.WersjaDokumentu, error) {
 
@@ -316,7 +294,8 @@ func (a *adapterStudia) wersjeDoWydania(ctx context.Context, dokument dane.Dokum
 	return wybrane, nil
 }
 
-// wpisyHistoriiStudia składa pliki wersji wraz z opisem każdej z nich.
+// wpisyHistoriiStudia składa pliki wersji wraz z opisem każdej z nich do
+// wpisania w manifeście archiwum.
 func (a *adapterStudia) wpisyHistoriiStudia(ctx context.Context, dokument dane.DokumentStudia,
 	wersje []dane.WersjaDokumentu) ([]wpisArchiwumStudia, manifestWydaniaStudia, error) {
 
@@ -456,7 +435,8 @@ func trescRaportuRoznicyStudia(dokument dane.DokumentStudia, kodBazy, kodCelu st
 	return raport.String()
 }
 
-// adnotacjaWydaniaStudia to postać adnotacji odkładana w paczce.
+// adnotacjaWydaniaStudia to postać adnotacji odkładana w paczce, niezależna
+// od struktury warstwy danych.
 type adnotacjaWydaniaStudia struct {
 	Kod        string `json:"kod"`
 	Rodzaj     string `json:"rodzaj"`
@@ -469,7 +449,8 @@ type adnotacjaWydaniaStudia struct {
 	Utworzono  string `json:"utworzono"`
 }
 
-// zlozAdnotacjeWydaniaStudia przekłada wiersze na postać archiwum.
+// zlozAdnotacjeWydaniaStudia przekłada wiersze warstwy danych na postać
+// adnotacji zapisywaną w archiwum.
 func zlozAdnotacjeWydaniaStudia(wiersze []dane.KomentarzStudia) []adnotacjaWydaniaStudia {
 	lista := make([]adnotacjaWydaniaStudia, 0, len(wiersze))
 	for _, wiersz := range wiersze {
@@ -541,8 +522,8 @@ func (a *adapterStudia) postacDokumentuStudia(tresc, format string,
 
 // ── Archiwa i dokument biurowy ──────────────────────────────────────────────
 
-// formatArchiwumStudia rozstrzyga postać archiwum. Brak wskazania bierze zip,
-// tak jak mówi kontrakt.
+// formatArchiwumStudia rozstrzyga postać archiwum spośród wartości
+// dopuszczalnych. Brak wskazania bierze zip, tak jak mówi kontrakt.
 func formatArchiwumStudia(wskazanie *string) string {
 	format := strings.ToLower(strings.TrimSpace(wartoscTekstu(wskazanie)))
 	if format == "tar" {
@@ -551,7 +532,8 @@ func formatArchiwumStudia(wskazanie *string) string {
 	return "zip"
 }
 
-// spakujStudia składa archiwum wskazanej postaci.
+// spakujStudia składa archiwum wskazanej postaci, wybierając między zapisem
+// w formacie ZIP a zapisem w formacie TAR.
 func spakujStudia(wpisy []wpisArchiwumStudia, format string) ([]byte, error) {
 	if format == "tar" {
 		return tarStudia(wpisy)
@@ -559,7 +541,8 @@ func spakujStudia(wpisy []wpisArchiwumStudia, format string) ([]byte, error) {
 	return zipStudia(wpisy)
 }
 
-// zipStudia składa archiwum ZIP.
+// zipStudia składa archiwum w formacie ZIP ze wskazanych wpisów, zachowując
+// dla każdego znacznik czasu zapisu.
 func zipStudia(wpisy []wpisArchiwumStudia) ([]byte, error) {
 	var bufor bytes.Buffer
 	pakowacz := zip.NewWriter(&bufor)
@@ -582,7 +565,8 @@ func zipStudia(wpisy []wpisArchiwumStudia) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// tarStudia składa archiwum TAR.
+// tarStudia składa archiwum w formacie TAR ze wskazanych wpisów, zachowując
+// dla każdego znacznik czasu zapisu.
 func tarStudia(wpisy []wpisArchiwumStudia) ([]byte, error) {
 	var bufor bytes.Buffer
 	pakowacz := tar.NewWriter(&bufor)
@@ -607,7 +591,8 @@ func tarStudia(wpisy []wpisArchiwumStudia) ([]byte, error) {
 	return bufor.Bytes(), nil
 }
 
-// wpisManifestuStudia składa `manifest.json`.
+// wpisManifestuStudia składa plik manifest.json z opisu wydania i odkłada go
+// jako wpis gotowy do archiwum.
 func wpisManifestuStudia(manifest manifestWydaniaStudia) (wpisArchiwumStudia, error) {
 	bajty, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -616,7 +601,8 @@ func wpisManifestuStudia(manifest manifestWydaniaStudia) (wpisArchiwumStudia, er
 	return wpisArchiwumStudia{nazwa: "manifest.json", bajty: bajty, chwila: time.Now().UTC()}, nil
 }
 
-// nazwyWpisowStudia wymienia zawartość archiwum w manifeście.
+// nazwyWpisowStudia wymienia całą zawartość archiwum w manifeście, wypisując
+// nazwę każdego wpisu z osobna.
 func nazwyWpisowStudia(wpisy []wpisArchiwumStudia) []string {
 	nazwy := make([]string, 0, len(wpisy))
 	for _, wpis := range wpisy {
@@ -625,7 +611,8 @@ func nazwyWpisowStudia(wpisy []wpisArchiwumStudia) []string {
 	return nazwy
 }
 
-// chwilaWpisuStudia przekłada znacznik bazy na czas wpisu archiwum.
+// chwilaWpisuStudia przekłada znacznik czasu z warstwy bazy danych na czas
+// wpisu archiwum w strefie UTC.
 func chwilaWpisuStudia(znacznik string) time.Time {
 	milisekundy := chwilaBazy(znacznik)
 	if milisekundy == 0 {
@@ -640,13 +627,9 @@ func wlaczone(wskazanie *bool) bool {
 	return wskazanie == nil || *wskazanie
 }
 
-// docxZTekstuStudia składa najprostszy poprawny dokument DOCX.
-//
-// DOCX jest archiwum ZIP z trzema częściami obowiązkowymi, więc składa się go
-// `archive/zip` — bez biblioteki biurowej i bez klucza komercyjnego, których
-// instalka nie niesie. Dokument nie ma stylów ani tabel i mieć nie udaje:
-// niesie akapity tekstu, otwiera się w każdym edytorze i daje się dalej
-// redagować, a to jest dokładnie to, po co paczka redakcyjna powstaje.
+// docxZTekstuStudia składa najprostszy poprawny dokument DOCX z użyciem
+// archive/zip biblioteki standardowej, bez stylów i tabel, gotowy do dalszej
+// redakcji w dowolnym edytorze.
 func docxZTekstuStudia(tresc string, dokument dane.DokumentStudia) ([]byte, error) {
 	var akapity strings.Builder
 	tytul := dokument.Kod

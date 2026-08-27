@@ -1979,3 +1979,6 @@ innego wcześniej.
 Nieudany zapis nastawy widoku nie przerywa pracy, ale i nie milczy: idzie
 zdaniem zwrotnym do zaplecza, więc korzystający wie, że wybór nie przeżyje
 zamknięcia okna.
+
+## budowa/klient-poprzedni/src/strona-glowna/karta-srodowiska.ts
+Karta buduje treść w układzie: godło, tytuł krojem nagłówkowym, motto, jednozdaniowy opis trybu pracy krojem bazowym. W spoczynku powierzchnia jest neutralna, bez akcentu; przy najechaniu i w stanie czynnym pojawia się wstęga górna w błękicie sygnałowym, cień sygnału i uniesienie karty, z wariantu akcentu biblioteki komponentów, a arkusz strony wygasza wstęgę w spoczynku, bo biblioteka pokazuje ją stale. Sygnał jest jedyną barwą akcentu bieżącego systemu wizualnego. Nośnikiem karty jest przycisk, nie warstwa z rolą przycisku, ponieważ karta ma być celem nawigacji klawiaturą z pierwszeństwem natywnym, a pierścień fokusu wnosi wariant klikalny biblioteki komponentów.

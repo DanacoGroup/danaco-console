@@ -4,15 +4,8 @@ import { zglosBrak } from './braki-kontraktu';
 
 /**
  * Odpowiedź rdzenia na polecenie — transkrypcja, odnośnik syntezy i zamiana
- * fragmentu w zadanie.
- *
- * Panel pokazuje to, co wróciło z `assistant.voice.command`; rdzenia nie
- * wywołuje sam, zamiary oddaje oknu.
- *
- * Odsłuch prowadzi przez `speech.audio.fetch`: odnośnik odpowiedzi
- * syntezowanej (`speechRef`) idzie do rdzenia, a bajty wracają do karty
- * i odtwarza je przeglądarka. Odnośnik zostaje widoczny obok przycisku — po to,
- * żeby dało się go przekazać dalej, a nie tylko odsłuchać.
+ * fragmentu w zadanie. Panel pokazuje to, co wróciło z `assistant.voice.command`;
+ * rdzenia nie wywołuje sam, a zamiary oddaje oknu.
  */
 export interface PanelOdpowiedzi {
   element: HTMLElement;
@@ -22,10 +15,18 @@ export interface PanelOdpowiedzi {
   wyczysc(): void;
 }
 
-/** Zamiana zaznaczonego fragmentu odpowiedzi w zadanie Actions Monitora. */
+/**
+ * Zamiana zaznaczonego fragmentu odpowiedzi w zadanie Actions Monitora. Panel
+ * podaje wyłącznie treść fragmentu, więc założenie zadania i wybór komendy
+ * zostają po stronie okna.
+ */
 export type NaZadanie = (tresc: string) => void;
 
-/** Odsłuch odnośnika wykonywany przez okno — `speech.audio.fetch`. */
+/**
+ * Odsłuch odnośnika wykonywany przez okno komendą `speech.audio.fetch`. Panel
+ * nie sięga po bajty sam, bo kanał do rdzenia trzyma okno, a panel odpowiada
+ * wyłącznie za postać odpowiedzi.
+ */
 export type NaOdsluch = (odnosnik: string) => void;
 
 export function utworzPanelOdpowiedzi(

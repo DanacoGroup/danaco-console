@@ -4513,3 +4513,11 @@ przyniesionych przez Library Explorer. Stan tego okna jest więc stanem
 tamtego odczytu. Trzy pustki są tu rozłączne: nikt jeszcze nie pytał,
 odczyt trwa i rdzeń odpowiedział bez ani jednej etykiety. Wspólne zdanie
 dla wszystkich trzech orzekałoby o odpowiedzi rdzenia, zanim ta przyjdzie.
+
+## budowa/klient-poprzedni/src/moduly/assistant/panel-odpowiedzi.ts
+
+Odsłuch prowadzi przez komendę `speech.audio.fetch`: odnośnik odpowiedzi syntezowanej
+z pola `speechRef` idzie do rdzenia, bajty wracają do karty, a odtwarza je przeglądarka.
+
+Odnośnik zostaje widoczny obok przycisku po to, żeby dało się go przekazać dalej,
+a nie tylko odsłuchać na miejscu.

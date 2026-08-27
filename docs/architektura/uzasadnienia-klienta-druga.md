@@ -1151,3 +1151,34 @@ Kolejność grup wstążki jest kolejnością pracy nad plikiem: najpierw strony
 potem to, co się na nich kładzie, potem treść, na końcu bezpieczeństwo
 przed wysyłką. Narzędziownia cyfryzacji stoi grupą osobną, bo pracuje przed
 dokumentem — na materiale, z którego dokument powstaje.
+
+## budowa/klient-poprzedni/src/moduly/wiedza/okno-wyszukiwania-znaczenia.ts
+
+Wyszukiwanie po słowach ma osobną drogę; to okno prowadzi wyszukiwanie po znaczeniu oraz
+przebudowę wskaźnika. Źródło jest treścią wyniku, nie ozdobą przy nim, bo trafienie bez
+wskazania źródła jest bezwartościowe: każdy fragment niesie źródło w nagłówku pozycji, nie
+w dymku, źródło jest klikalne przyciskiem kopiującym wskazanie do schowka, bo to jedyne, czym
+da się po źródło sięgnąć w innym oknie, a fragment bez wskazania dostaje zdanie o braku
+wskazania zamiast martwego przycisku. Trafność też jest widoczna jako plakietka w setnych przy
+każdej pozycji, bo bez niej wykaz posortowany malejąco wygląda tak samo przy trafieniu bliskim
+i przypadkowym. Przebudowa wskaźnika stoi w tym samym oknie, bo pusty wynik szukania ma
+dokładnie dwie przyczyny: nie ma czego znaleźć albo wskaźnik nie został zbudowany, a przycisk
+przebudowy obok pustego wyniku pozwala rozstrzygnąć to jednym kliknięciem.
+
+Wiersz ze sterem zamiast pola różni się od wiersza biblioteki kontrolek tym, że tamten buduje
+etykietę wiążącą się z pierwszym potomkiem dającym się etykietować, czyli z uchwytem menu —
+kliknięcie w podpis otwierałoby wtedy menu, którym podpis nie jest, a nazwa dostępna uchwytu
+wchodziłaby w spór z opisem, który mechanizm ustawia sam i który niesie bieżącą wartość nastawy.
+
+Zdanie opisujące każdy zakres wiedzy jest tu potrzebne bardziej niż przy większości nastaw:
+wszystko i pliki przestrzeni brzmią podobnie, a przeszukują dwa różne zbiory, i to od nich
+zależy, czy pusty wynik znaczy, że nie ma czego znaleźć, czy że szuka się nie tam.
+
+Uchwyt do źródła kopiuje wskazanie zamiast skakać do niego, bo kontrakt nie ma komendy
+otwierającej źródło fragmentu — samo wskazanie jest jedynym sposobem sięgnięcia po nie w oknie
+biblioteki albo w rozmowie z modelem.
+
+Trafność bez miary widocznej sprawiałaby, że wykaz posortowany malejąco wyglądałby tak samo
+przy trafieniu bliskim i przy przypadkowym, a to rozstrzygnięcie należy do czytającego, nie do
+samego wykazu; rdzeń ma prawo trafności nie podać, a wtedy plakietka mówi o braku miary, zamiast
+zmyślać zero.

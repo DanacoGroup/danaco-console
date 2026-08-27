@@ -6770,3 +6770,15 @@ rdzeń.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/panel-wiedzy.ts
 Odczyt wyszukiwania odnajduje fragmenty po znaczeniu i oddaje je wraz ze źródłem, żeby dało się je zacytować zamiast streszczać; budowa wskaźnika buduje wskaźnik, z którego to wyszukiwanie korzysta — rozdzielenie ich na dwa pliki dałoby dwa miejsca mówiące o jednym wskaźniku. Zakładka rozstrzyga wyłącznie o tym, co jest w panelu widoczne: pamięć semantyczna pokazuje szukanie, baza wiedzy budowę wskaźnika; wspólny jest zakres, bo wskaźnik jest jeden i szuka się w tym, co się zindeksowało. Wgrywania dokumentów tu nie ma i nie powinno być: pliki wchodzą do platformy przez moduł Library, a budowa wskaźnika obejmuje nim to, co w bibliotece już leży — drugie wejście dla plików znaczyłoby dwa repozytoria.
+
+## budowa/klient-poprzedni/src/moduly/browser/okno-capture-monitor.ts
+Rozmowa z rdzeniem stoi w pliku `czynnosci-materialu.ts`, pamięć zgromadzonego materiału w pliku `material-sesji.ts`. Panel mówi o trwałości prawdę: migawki zostają w rdzeniu, ale komendy odczytu wykazu wytworów okna kontrakt nie niesie, więc po przeładowaniu karty lista zaczyna się od nowa. Pobrania, kanały RSS, kolejka czytania i cykliczne sprawdzanie monitora mają w kontrakcie własne komendy, których panel jeszcze nie wywołuje — pytają rdzeń o ich pokrycie i mówią jego odpowiedź, zamiast orzekać o braku z napisu w module.
+
+## budowa/klient-poprzedni/src/moduly/library/zrodlo-biblioteki.ts
+Zbiór plików mieszka w stanie biblioteki, żeby cztery okna patrzyły na jeden
+wykaz, a nie na cztery kopie. Odmowa rdzenia jest tu drogą równoprawną:
+komenda, dla której rdzeń nie ma uchwytu, wraca zdarzeniem nieznanej
+komendy, a straż zamienia je w wynik z błędem nazywającym żądany typ.
+Wartość nazwy nieobjęta sprawdzianem kształtu potrafi dojść jako brak
+wartości i wpisać się w zdanie potwierdzające jako nazwa kolekcji, dlatego
+nazwa wchodzi do samego sprawdzianu.

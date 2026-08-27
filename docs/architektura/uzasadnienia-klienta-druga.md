@@ -3996,3 +3996,14 @@ nie zna kodów paneli i niczego nie buduje: mapowanie kodu na wytwórnię stoi
 w pliku wytwórni paneli, a spis opisowy w rejestrze pomocniczych. Umowa nie
 wymaga ramy okna, choć panel wolno w nią ubrać — okno podglądu w tle tak
 robi — a umowa i tak oddaje wyłącznie sam element.
+
+## budowa/klient-poprzedni/src/moduly/research/zrodlo-research.ts
+Zbiór źródeł, ustaleń i raportu mieszka w stanie badania, żeby pięć okien patrzyło na jeden
+komplet, a nie na pięć kopii. Wszystkie pięć komend ma uchwyt w rdzeniu, wpięty przy rejestracji
+modułu badań i wypełniony w montażu portów; odmowa merytoryczna wraca zwykłym błędem i okno
+pokazuje ją wprost. Pięć komend głównych ma własne metody, bo ich żądanie składa się ze zlecenia
+okna, a nie z samych pól; pozostałe komendy obszaru idą metodą ogólną, której żądanie składa plik
+wywołań komend, znający zaznaczenie i wskazania okien — druga taka sama metoda per komenda byłaby
+wieloma przepisaniami tego samego wywołania. Sprawdzian kształtu warstwy protokołu zna wyłącznie
+ogólny wynik i o polu nieznanego typu nie wie; bez tego przełożenia odmowa nieznanej komendy
+dochodziłaby do okna jako zwykły błąd i okno nie miałoby czego wypisać.

@@ -341,3 +341,41 @@ i nazywa powód niedostępności zamiast milczeć.
 Tryb źródłowy ze znacznikami i podgląd wydruku wykluczają się: znaczniki nie
 mają paginacji, a podgląd jej wymaga. Wyłączony przełącznik mówi to wprost,
 zamiast oddawać widok, którego Operator nie zamawiał.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-panel-nastaw.ts
+
+Numeracja stron i marginesy stoją w tym panelu jako nastawy zapisywane osobnymi
+komendami rdzenia, nie jako pojedynczy przełącznik profilu wydania — numeracja
+niesie styl, umiejscowienie i numer startowy, a marginesy przeżywają zapis
+zamiast żyć wyłącznie przez czas trwania sesji.
+
+Panel jest nakładką otwieraną przyciskiem i domyślnie schowaną, ponieważ
+powierzchnia należy do dokumentu — stała kolumna nastaw zajmowałaby ją na
+stałe, choć Operator sięga po te nastawy rzadko.
+
+Każda nastawa strony da się ustawić osobno dla sekcji, dlatego wybór sekcji
+stoi raz, u góry panelu, i dotyczy wszystkich pól poniżej: pismo z załącznikiem
+w orientacji poziomej pozostaje wtedy jednym dokumentem, nie dwoma, a Operator
+nie wskazuje sekcji osobno przy każdej nastawie.
+
+Panel nie woła rdzenia i nie zna dokumentu, na którym pracuje Operator — składa
+treść żądania z wypełnionych pól i oddaje ją wywołującemu. Identyfikator
+dokumentu, autor czynności i odczyt odpowiedzi rdzenia należą do warstwy
+wyżej, żeby panel nie stał się drugim miejscem, które śledzi, nad czym
+Operator pracuje.
+
+## budowa/klient-poprzedni/src/moduly/translate/katalog-funkcji-translate.ts
+
+Wykaz istnieje po to, żeby stan modułu dało się przeczytać, a nie zgadnąć. Okno
+pokazuje czynności, które wykonuje; katalog pokazuje komplet zamierzony
+w opracowaniu modułu i przy każdej pozycji mówi jedno z dwojga: którą komendą
+kontraktu jest wykonywana albo czego brakuje, żeby była. Pozycja bez komendy
+nie znika z wykazu, bo zniknięcie byłoby ukryciem braku.
+
+Nazwy pozycji i podział na grupy pochodzą z opracowania modułu i nie są
+tłumaczone ani parafrazowane. Numeracji opracowania katalog nie przenosi:
+pozycję odnajduje się po pełnej nazwie, nie po oznaczeniu, które poza
+dokumentem nic nie znaczy.
+
+Katalog jest zbiorem danych, nie widokiem — wyszukiwarka funkcji buduje z niego
+listę, a okna sięgają po pozycje swojej grupy.

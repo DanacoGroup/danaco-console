@@ -1,25 +1,4 @@
-// Odpowiedzialność pliku: `provenance.call.replay` — powtórzenie wywołania
-// modelu i zestawienie odpowiedzi z pierwowzorem.
-//
-// ── Dlaczego ta jedna komenda stała osobno ──────────────────────────────────
-// Cztery pozostałe komendy rodziny są ODCZYTEM śladu: nie ruszają kanału,
-// nie kosztują ani grosza i nie zmieniają niczego. Powtórzenie jest czymś
-// innym — jest NOWYM wywołaniem kanału modelu, z własnym kosztem i własnym
-// wierszem w śladzie. Dlatego wchodzi razem z warstwą, która kanały prowadzi,
-// i dlatego port bierze rejestr kanałów, a nie samo repozytorium.
-//
-// ── Powtórzenie zostawia po sobie ślad, tak jak każde inne wywołanie ────────
-// Wiersz powtórzenia jest zwykłym wierszem prowenancji: wskazuje pierwowzór
-// jako rodzica, więc drzewo śladu pokazuje, że jedno wzięło się z drugiego.
-// Powtórzenie ukryte przed śladem byłoby wywołaniem, za które ktoś zapłacił,
-// a którego rozliczenie nie widzi.
-//
-// ── Czego rdzeń NIE zrobi ───────────────────────────────────────────────────
-// Nie powtórzy wywołania, którego treści nie zapisano. Ślad bywa prowadzony bez
-// treści (`TrescZapisana` fałszywe) albo zredagowany, i wtedy nie ma czego
-// wysłać po raz drugi. Odpowiedź mówi to wprost polem `contentAvailable`,
-// zamiast wysyłać pusty prompt i zestawiać jego odpowiedź z pierwowzorem jak
-// gdyby nigdy nic.
+// Plik obsługuje provenance.call.replay: powtórzenie wywołania modelu i zestawienie odpowiedzi z pierwowzorem; port bierze rejestr kanałów, bo powtórzenie jest nowym wywołaniem, nie odczytem.
 package core
 
 import (
@@ -33,7 +12,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// przedrostekPowtorzenia znakuje wiersz śladu wywołania powtórzonego.
+// przedrostekPowtorzenia znakuje wiersz śladu wywołania powtórzonego w tym dzienniku prowenancji rdzenia.
 const przedrostekPowtorzenia = "powtorzenie-"
 
 // ZKanalami wpina rejestr kanałów — jedyną drogę, którą rdzeń wykonuje
@@ -44,7 +23,7 @@ func (a *adapterProwenancji) ZKanalami(kanaly *models.Rejestr) *adapterProwenanc
 	return a
 }
 
-// PowtorzWywolanie obsługuje `provenance.call.replay`.
+// PowtorzWywolanie obsługuje provenance.call.replay, powtarzając wywołanie modelu i zestawiając wynik.
 func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	z shared.ProvenanceCallReplayRequest) (shared.ProvenanceCallReplayResponse, error) {
 
@@ -69,9 +48,7 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 
 	prompt := strings.TrimSpace(wartoscTekstu(pierwowzor.Prompt))
 	if !pierwowzor.TrescZapisana || prompt == "" {
-		// To NIE jest awaria: ślad bez treści jest śladem poprawnym, prowadzonym
-		// zgodnie z nastawą prywatności. Odpowiedź mówi o tym wprost, zamiast
-		// odmawiać albo wysyłać pustkę.
+		// To nie jest awaria: ślad bez treści jest śladem poprawnym, zgodnym z nastawą prywatności platformy.
 		return shared.ProvenanceCallReplayResponse{
 			Replay: shared.ModelCallReplay{
 				OriginalCallId: kod, ContentAvailable: false,
@@ -122,17 +99,13 @@ func (a *adapterProwenancji) PowtorzWywolanie(ctx context.Context,
 	opoznienie := int(time.Since(poczatek).Milliseconds())
 
 	tresc := odpowiedz.String()
-	// Stan zapisujemy w postaci bazy, przez odwzorowanie kontraktu — tak samo
-	// jak czyta go `stanKontraktuWywolania`. Wartość wpisana z ręki odbiłaby się
-	// od warunku kolumny i zamieniła udane powtórzenie w awarię zapisu.
+	// Stan zapisuje się jako baza, przez odwzorowanie kontraktu, jak czyta stanKontraktuWywolania.
 	stan := shared.WartosciBazyModelCallStatus[shared.ModelCallStatusOk]
 	if blad != nil {
 		stan = shared.WartosciBazyModelCallStatus[shared.ModelCallStatusFailed]
 	}
 
-	// Ślad powtórzenia zapisujemy zawsze — także nieudanego. Wywołanie, które
-	// poszło do kanału, zostało wykonane niezależnie od tego, jak się skończyło,
-	// a rozliczenie ma widzieć każde.
+	// Ślad powtórzenia zapisuje się zawsze, nawet nieudany: poszło do kanału bez względu na wynik.
 	powtorzenie := dane.WywolanieModelu{
 		Kod:           kodPowtorzenia,
 		RodzicKod:     &pierwowzor.Kod,
@@ -203,14 +176,7 @@ func modelPowtorzenia(zadany *string, pierwowzor dane.WywolanieModelu) *string {
 	return pierwowzor.Model
 }
 
-// roznicaOdpowiedzi opisuje, czym odpowiedź powtórzenia różni się od
-// pierwowzoru.
-//
-// Opis jest zestawieniem miar, a nie różnicą wierszową: odpowiedzi modelu bywają
-// jednym akapitem bez podziału na wiersze, więc różnica wierszowa pokazywałaby
-// „cały tekst zmieniony" przy zmianie jednego słowa. Zestawienie długości
-// i wspólnego przedrostka mówi czytelnikowi, czy odpowiedź jest inna
-// nieznacznie, czy zupełnie.
+// roznicaOdpowiedzi opisuje, czym odpowiedź powtórzenia różni się od pierwowzoru: zestawieniem długości i wspólnego przedrostka, nie różnicą wierszową, bo odpowiedzi bywają jednym akapitem.
 func roznicaOdpowiedzi(pierwotna, powtorzona string) string {
 	if pierwotna == powtorzona {
 		return ""

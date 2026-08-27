@@ -6,24 +6,7 @@ import (
 	"syscall"
 )
 
-// Przejęcie drzewa procesu uruchomionego poza rejestrem procesów okna.
-//
-// Kanał modelu startuje własny proces (internal/injection), bo tylko on zna
-// wiersz poleceń, rotację kont i kształt strumienia. Ubicie drzewa procesów
-// pozostaje jednak w jednym miejscu — tutaj.
-// Bez przejęcia po ubiciu okna zostałyby wnuki procesu kanału: serwery MCP,
-// powłoki narzędziowe i inne potomstwo uruchomione przez model.
-//
-// Warstwa kanału używa obu części naraz:
-//
-//	polecenie.SysProcAttr = session.AtrybutyDrzewa()   // przed uruchomieniem
-//	drzewo, err := session.PrzejmijDrzewo(proces.Pid()) // zaraz po uruchomieniu
-//	defer drzewo.Zwolnij()
-//	drzewo.Ubij()                                       // przy zamknięciu okna
-//
-// Pominięcie AtrybutyDrzewa nie wywraca kanału: na Windows przejęcie zadziała
-// mimo to, a na systemach uniksowych ubicie obejmie sam proces zamiast całej
-// grupy (brak elementu opcjonalnego nie blokuje uruchomienia).
+// DrzewoProcesu reprezentuje przejęcie drzewa procesu uruchomionego poza rejestrem procesów okna, przez kanał modelu poza tym pakietem.
 type DrzewoProcesu struct {
 	drzewo *drzewoProcesow
 	proces *os.Process
@@ -57,7 +40,7 @@ func PrzejmijDrzewo(pid int) (*DrzewoProcesu, error) {
 	return &DrzewoProcesu{drzewo: drzewo, proces: proces}, nil
 }
 
-// Ubij kończy przejęty proces wraz z całym jego potomstwem.
+// Metoda Ubij kończy przejęty proces wraz z całym jego potomstwem, korzystając z uchwytu systemowego drzewa.
 func (d *DrzewoProcesu) Ubij() error {
 	if d == nil {
 		return nil
@@ -65,12 +48,7 @@ func (d *DrzewoProcesu) Ubij() error {
 	return d.drzewo.ubij(d.proces)
 }
 
-// Czekaj blokuje wywołującego do faktycznego zakończenia przejętego procesu
-// (Windows: czekanie na uchwyt; systemy uniksowe: odpytywanie sygnałem zerowym).
-// Wraca natychmiast, gdy procesu już nie ma.
-//
-// Czekanie nie rusza uchwytów oddawanych przez Zwolnij, więc wolno je prowadzić
-// równolegle z Ubij: obserwator obudzi się wtedy, gdy ubicie zrobi swoje.
+// Metoda Czekaj blokuje wywołującego do faktycznego zakończenia przejętego procesu i wraca natychmiast, gdy procesu już nie ma.
 func (d *DrzewoProcesu) Czekaj() {
 	if d == nil {
 		return
@@ -78,7 +56,7 @@ func (d *DrzewoProcesu) Czekaj() {
 	d.drzewo.czekaj(d.proces)
 }
 
-// Zwolnij oddaje uchwyty systemowe po zakończeniu procesu.
+// Metoda Zwolnij oddaje uchwyty systemowe przejętego drzewa procesu po jego faktycznym zakończeniu pracy.
 func (d *DrzewoProcesu) Zwolnij() {
 	if d == nil {
 		return

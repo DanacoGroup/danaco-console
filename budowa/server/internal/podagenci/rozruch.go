@@ -1,30 +1,11 @@
-// Odpowiedzialność pliku: bramka rozruchu — kolejkowanie założenia pracy
-// podagentów, żeby wszyscy powołani naprawdę zaczęli pracować.
-//
-// Powołanie kilkunastu podagentów jednym `subagent.spawn` puszcza tyleż
-// goroutine naraz; każda zakłada kolejkę, dokłada pozycję, wiąże ją z wierszem
-// i przestawia stan. Baza stoi w WAL z `busy_timeout`; zwykły zapis równoległy
-// nie zawodzi, ale transakcja, która najpierw czyta, a potem pisze, zawodzi:
-// podniesienie blokady odczytu do zapisu nie jest objęte `busy_timeout` i wraca
-// natychmiast jako SQLITE_BUSY (5) albo BUSY_SNAPSHOT (517). Bramka szereguje
-// te transakcje, więc nie rywalizują o blokadę i nie zawodzą.
-//
-// Bramka obejmuje wyłącznie założenie pracy — kilka zapisów trwających
-// milisekundy. Samej pracy podagenta (tura modelu, sekundy albo minuty) nie
-// obejmuje i obejmować nie może: podagenci mają pracować równolegle, a bramka
-// rozciągnięta na turę zamieniłaby sieć kilkunastu w gęsiego idącą jedynkę.
-// Wołający wchodzi w bramkę przed pierwszym zapisem i wychodzi z niej przed
-// wywołaniem silnika.
+// Bramka rozruchu kolejkuje założenie pracy podagentów, żeby transakcje
+// SQLite szeregowane w kolejce nie rywalizowały o blokadę i nie zawodziły.
 package podagenci
 
 import "context"
 
-// MiejscRozruchu to liczba założeń pracy, które mogą iść jednocześnie.
-//
-// Jedno, nie więcej. Pisarz w SQLite jest jeden — drugie miejsce nie dokłada
-// przepustowości, dokłada rywalizację, czyli dokładnie to, co ta bramka usuwa.
-// Wartość jest stałą, a nie nastawą: nastawa bez pytania, które by ją
-// rozstrzygało, byłaby pokrętłem bez skali.
+// MiejscRozruchu to liczba założeń pracy, które mogą iść jednocześnie: jedno,
+// bo pisarz w SQLite jest jeden.
 const MiejscRozruchu = 1
 
 // Bramka wpuszcza do założenia pracy najwyżej MiejscRozruchu wołających naraz.
@@ -44,21 +25,12 @@ func NowaBramka(miejsc int) *Bramka {
 	return &Bramka{miejsca: make(chan struct{}, miejsc)}
 }
 
-// NowaBramkaRozruchu zakłada bramkę o liczbie miejsc rozruchu (MiejscRozruchu).
+// NowaBramkaRozruchu zakłada bramkę o liczbie miejsc rozruchu wskazanej stałą
+// MiejscRozruchu tego pakietu.
 func NowaBramkaRozruchu() *Bramka { return NowaBramka(MiejscRozruchu) }
 
-// Wpusc czeka na wolne miejsce i oddaje funkcję zwalniającą je z powrotem.
-//
-// Zwolnienie oddaje się zawsze — także po błędzie założenia pracy; wołający
-// stawia `defer zwolnij()` zaraz po wejściu. Miejsce niezwrócone zabrałoby
-// sieci przepustowość na stałe.
-//
-// Kontekst zerwany przerywa czekanie. Podagent odwołany w kolejce do bramki
-// nie ma po co dostać miejsca — `wpuszczony` jest wtedy fałszem, a zwolnienie
-// mimo to wolno wywołać (nic nie robi), żeby wołający nie musiał rozgałęziać
-// `defer`.
-//
-// Bramka pusta wpuszcza natychmiast.
+// Wpusc czeka na wolne miejsce i oddaje funkcję zwalniającą je z powrotem;
+// kontekst zerwany przerywa czekanie.
 func (b *Bramka) Wpusc(ctx context.Context) (zwolnij func(), wpuszczony bool) {
 	if b == nil || b.miejsca == nil {
 		return func() {}, true

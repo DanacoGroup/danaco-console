@@ -1938,3 +1938,15 @@ Złożenie warstwy rozmowy w punkcie wejścia sprowadza się do wywołania zamon
 
 ## budowa/klient-poprzedni/src/moduly/research/okno-export-panel.ts
 Export Panel niesie dwie funkcje Operatora: eksport raportu oraz wybór formatu wyjściowego i miejsca docelowego. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności eksportu. Format wyjściowy idzie sterem nastawy: uchwyt niesie wartość bieżącą, a nie nazwę rodzajową, bo natywna lista pokazuje ją dopiero po rozwinięciu. Historia eksportów bieżącej sesji rośnie wyłącznie z odpowiedzi rdzenia, nie z zamówienia, więc wykaz mówi, co rdzeń naprawdę oddał, razem z brakiem ścieżki tam, gdzie jej nie oddał.
+
+## budowa/klient-poprzedni/src/okna-rownolegle/wpis-sesji-okna.ts
+Sekcja czynności menu gniazda rozstrzyga o pozycjach na podstawie wpisu sesji
+— stanu, tytułu, projektu i liczby okien strumieniujących — a gniazdo zna
+wyłącznie identyfikator sesji, więc to źródło prowadzi od identyfikatora do
+pełnego wpisu. Źródło sesji w tle się tu nie nadaje, bo obsługuje sesje spoza
+bieżącego połączenia, a nie tę, o którą pyta menu, mimo że korzysta z tej
+samej komendy z żywym stanem. Źródło nie zna DOM-u, nie wykonuje żadnej
+czynności i nie rozstrzyga, co z sesją wolno zrobić — oddaje wpis albo pustą
+wartość, która oznacza brak wiedzy, nie zakaz: dopóki rdzeń nie oddał wykazu,
+sekcja czynności pozostaje krótsza, bo czynności bez znanego stanu sesji nie
+da się uczciwie nazwać.

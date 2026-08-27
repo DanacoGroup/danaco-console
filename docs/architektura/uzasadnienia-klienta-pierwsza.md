@@ -6591,3 +6591,25 @@ w trybie hybrydowym jest rozstrzygnięciem, nie wygodą: dopasowanie słów da
 się sprawdzić w treści pliku, dopasowanie znaczenia jest przybliżeniem
 wskaźnika, a kontrakt nie niesie skali wspólnej dla obu indeksów, więc
 liczba złożona z dwóch niewspółmiernych wyglądałaby na pomiar.
+
+## budowa/klient-poprzedni/src/moduly/browser/modul-browser.ts — jeden odczyt na kanał
+Tak samo działa wykaz komend rdzenia, z którego pozycje modułu biorą powód swojego bezruchu — odczyt idzie raz na kanał, nie raz na moduł.
+
+## budowa/klient-poprzedni/src/moduly/browser/modul-browser.ts — odpięcie od katalogu
+Warstwa adnotacji odpina obserwatora rozmiaru płótna z tego samego powodu, co pasek odpina się od wspólnego katalogu okien.
+
+## budowa/klient-poprzedni/src/moduly/library/okno-file-preview.ts
+Okno nie ma własnego wejścia i bez wskazania stoi w stanie pustym, nie
+pytając rdzenia o nic. Przycisk zamknięcia nie zamyka okna komunikacji
+sesji, tylko zdejmuje wskazanie pliku, a dymek okna mówi dlaczego. Odpowiedź
+podglądu jest jedynym świadkiem tego, czy repozytorium ma treść pliku, dzięki
+czemu wiersz w przeglądarce mówi o braku treści bez drugiego wywołania, a
+werdykt bierze sam podgląd, nie powodzenie komendy, ponieważ rdzeń odpowiada
+powodzeniem także wtedy, gdy zamiast treści oddaje odnośnik do niej. Bez
+rozróżnienia odmowy od pustki okno przechodziłoby w stan gotowy i pokazywało
+pusty prostokąt, po którym nie da się rozpoznać, czy plik jest pusty, czy
+podgląd się nie udał. Nastawę modułu docelowego zmienia także drugie okno
+z czynnościami zbiorczymi Explorera, a poniższe gałęzie kończą odświeżanie
+wcześnie przy braku wskazania i przy pliku niezmienionym; postawiony niżej,
+ster pokazywałby wartość sprzed tamtej zmiany i przeniesienie poszłoby gdzie
+indziej, niż mówi.

@@ -639,3 +639,38 @@ uri przechowuje ten odnośnik wprost, bez pośredniej kolumny na dane
 binarne. Etykiety zasobu mają własną tabelę złącznikową, bo etykieta jest
 wolnym tekstem bez własnej tożsamości, więc para złożona z zasobu i
 etykiety jest kluczem bez sztucznego identyfikatora.
+
+## budowa/server/internal/store/migracja_376_ustawienia_pamieci_i_wyciszenia.sql
+
+Rodzina `config.*` niesie odczyt i zapis ustawienia zasięgiem ogólnym
+(`config.get`, `config.set`, `config.reset`), a `settings.category.list`
+wraz z `settings.definition.list` budują z katalogu formularz okna
+Konfiguracji. Drugiej drogi komend zakres nie wymaga: brakowało wyłącznie
+wierszy katalogu, więc okno nie miało czym sterować, a migracja wnosi te
+wiersze bez dodania żadnej komendy.
+
+Zakres modelu konfiguracji nazywa cztery pozycje pamięci: poziom pamięci,
+stan włączenia pamięci na poziomie, odłączenie pamięci w sesji i zawartość
+zasobu pamięci. Zawartość zasobu nie jest ustawieniem katalogu — jest treścią
+wpisu, bytem tabeli `wpis_pamieci_projektu`, i idzie rodziną `memory.*`; do
+katalogu wchodzą więc trzy pierwsze pozycje, a czwarta pozostaje w pamięci.
+Wpisanie treści wpisu jako ustawienia dałoby dwa magazyny jednego bytu.
+
+Reguły wyciszania nakładki Always On Display są jedną pozycją warstwy
+globalnej — zakresy i czasy wyciszenia dostępne w menu nakładki. Wyciszenia
+czynne nie są ustawieniem: mają własną tabelę, ponieważ powstają i giną
+w toku pracy, a nie przy nastawianiu platformy.
+
+Model konfiguracji daje pamięci wszystkie cztery warstwy ogólne (globalna,
+środowisko, projekt, sesja), a odłączeniu pamięci w sesji wyłącznie warstwę
+sesji. Reguły wyciszania obejmują wyłącznie warstwę globalną. Zasięgi zapisu
+w migracji idą dokładnie za tym podziałem: poziomu szerszego niż wskazany nie
+dokłada się żadnej pozycji, bo zapis na poziomie, którego zakres nie obejmuje,
+byłby nastawą bez wskazanego pochodzenia.
+
+Objaśnienia kontekstowe w kolumnie `opis` odpowiadają na pytania, co
+ustawienie robi i jaki ma wpływ; przy wyłączeniu pamięci odpowiadają też na
+pytanie o los treści, bo bez tego nie da się odróżnić wyłączenia od
+usunięcia — treść zostaje. Żadna z pozycji nie wymaga restartu: pamięć czyta
+rozstrzygacz przy każdym złożeniu kontekstu, a reguły wyciszania — nakładka
+przy każdym otwarciu menu.

@@ -727,3 +727,15 @@ gwarantuje.
 Komplet pusty jest stanem poprawnym, a nie odmową odczytu, ponieważ wszystkie pola `ContextBundle`
 są w kontrakcie opcjonalne. Sekcja mówi to osobnym zdaniem zamiast wypisywać wykaz samych oznaczeń
 braku.
+
+## budowa/klient-poprzedni/src/mobile/pasek-kwitu.ts
+
+Pasek czyta kwity z pamięci trwałej urządzenia, a nie ze stanu okna.
+Potwierdzenie trzymane w stanie okna ginie razem z oknem, natomiast kwit zapisany
+w magazynie przeżywa zamknięcie ekranu i ponowne uruchomienie telefonu, dzięki
+czemu wykaz wysłanych decyzji pozostaje kompletny po powrocie do aplikacji.
+
+Wiersz paska powstaje ze zdania złożonego przez `zdanieKwitu` z odpowiedzi
+rdzenia, nie z zamiaru klienta. Kwit nieudany stoi na tym samym pasku wraz
+z treścią odmowy, ponieważ odmowa jest rozstrzygnięciem równie wiążącym jak
+przyjęcie i ma być widoczna w tym samym miejscu.

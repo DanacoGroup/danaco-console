@@ -59,7 +59,7 @@
   outline-offset: calc(var(--dn-wym-fokus-odsuniecie) * -1);
 }
 .cd-panel-stopka-nazwa { flex: 1 1 auto; min-width: 0; }
-.cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-3); font-family: var(--dn-ff-mono); }
+.cd-panel-stopka-meta { flex: none; color: var(--dn-tekst-2); font-family: var(--dn-ff-mono); }
 .cd-panel-stopka-zewn { width: var(--dn-wym-ikona-sm); height: var(--dn-wym-ikona-sm); color: var(--dn-tekst-3); }
 
 .cd-strona {

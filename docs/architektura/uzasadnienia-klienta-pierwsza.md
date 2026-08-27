@@ -5046,3 +5046,24 @@ zna — zlecenie poszłoby wtedy bez warstwy profilu i nikt by się o tym nie do
 Komponent bez bytu docelowego zostaje w wykazie i mówi o tym w swojej nazwie. Wybranie go
 nie wstawia niczego do pola, bo nie ma czego wstawić; ukrycie takiego wiersza zataiłoby fakt,
 że kafel profilu stoi w strefie 2 bez profilu pod spodem.
+
+## budowa/klient-poprzedni/src/moduly/library/stan-okna.ts
+
+Stany są rozdzielne, ponieważ brak zapytania, zapytanie w toku i repozytorium bez ani
+jednego pliku to trzy różne rzeczy; zlanie ich w jedno kazałoby Operatorowi zgadywać,
+czy czekać, czy działać. Stan pusty niesie dokładnie jeden przycisk pierwszej akcji.
+
+Forma stanu pustego jest jedna: ikona, tytuł i opis, treść wyśrodkowana, bez wariantów
+klasy — różnicuje ją sama treść. Stopnie pisma i szerokość łamania niesie wspólny arkusz
+`komponenty/drobne.css` klasami `.dn-pusty-stan-tytul` oraz `.dn-pusty-stan-opis`, a nie
+arkusz modułu; nadpisanie ich u siebie dałoby dwie formy tego samego stanu.
+
+Ikona należy wyłącznie do stanu pustego. Ładowanie ma własny nośnik `.dn-spinner`, a błąd
+kreskę po lewej stronie; trzeci rysunek nad nimi niczego by nie dopowiedział. Widoczność
+rozstrzyga arkusz po atrybucie `data-faza`, tak samo jak kreskę błędu.
+
+Nazwy faz i znakowanie powłoki pochodzą ze wspólnego `komponenty/faza-okna`, żeby ten sam
+stan nazywał się w całym drzewie tak samo.
+
+Okno stoi w stanie pustym przez chwilę między zbudowaniem układu a pierwszą odpowiedzią
+rdzenia i jest to wtedy jedyne zdanie, które Operator czyta.

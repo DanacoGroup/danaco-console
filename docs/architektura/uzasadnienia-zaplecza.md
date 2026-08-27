@@ -2231,3 +2231,15 @@ tej samej struktury po obu stronach bez jednego odbiorcy tej pracy.
 
 Import OpenAPI zapisuje się tą samą tabelą — kolekcja z importu nie różni się
 niczym od kolekcji ułożonej ręcznie poza tym, skąd wzięła zapytania.
+## budowa/server/internal/store/migracja_143_developer_polaczenia_danych.sql
+Migracja 143 — połączenia bazodanowe okna Data Console modułu Developer.
+
+Wiersz opisuje, DO CZEGO się łączyć, i nie niesie hasła. Hasło stoi w sejfie
+pod odwołaniem zapisanym w `poswiadczenie` — ta sama zasada, którą kanały
+modeli stosują do kluczy dostawców. Trzymanie hasła w tej tabeli oznaczałoby
+kopię sekretu w drugim miejscu, którego nikt nie rotuje.
+
+`tylko_odczyt` jest nastawą połączenia, nie podpowiedzią interfejsu.
+Połączenie oznaczone jako tylko do odczytu odrzuca zapytanie zmieniające dane
+w rdzeniu, zanim cokolwiek wyjdzie do silnika — konsola SQL nad produkcją bez
+takiej nastawy jest jednym nieuważnym poleceniem od szkody.

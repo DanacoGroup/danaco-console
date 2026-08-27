@@ -1348,3 +1348,31 @@ Liczba etapów przygotowania środowiska równa się liczbie komend, jakie droga
 wejścia potrafi zmierzyć — uwierzytelnienie i przywrócenie kart sesji. Etap
 bez komendy w kontrakcie nie jest etapem czekającym, tylko obietnicą, której
 nikt nie wykona, a postęp liczony razem z nim nie dobiegłby końca nigdy.
+
+## budowa/klient-poprzedni/src/moduly/terminal/zrodlo-terminala.ts
+
+Każda czynność oddaje typ Wynik, nie samą treść. W terminalu odmowa jest
+zjawiskiem zwykłym, nie wyjątkiem: tryb uprawnień okna albo punkt izolacji
+zatrzymuje polecenie kodem odmowy uprawnień, a źródło nie zamienia takiej
+odmowy w pustą listę.
+
+Wyjście procesu przychodzi zdarzeniem strumienia fragmentów, w którym
+identyfikator komunikatu niesie identyfikator procesu z rejestru rdzenia.
+Komenda odczytu strumienia zostaje niewpięta, choć rdzeń ją obsługuje: ogon
+historii, który ta komenda oddaje, to co do wiersza ta sama treść, która
+płynie do wspólnego bufora okna przez zdarzenie strumienia, a w buforze
+nie ma klucza, po którym dałoby się odsiać wiersz przyjęty drugi raz.
+Komenda odczytu wyjścia jednego procesu jest wpięta, bo zawęża się do
+jednego procesu, a jej odpowiedź trafia do własnego widoku pozycji, którego
+bufor nie widzi wcale.
+
+Odczyt sięga dalej niż strumień: bufor żyje jedno połączenie, a rejestr
+rdzenia jeden bieg rdzenia. Po ponownym podłączeniu gniazda bufor okna jest
+pusty, a wykaz procesów oraz odczyt wyjścia wciąż oddają proces wraz z jego
+pełnym wyjściem.
+
+Zaplanowanie zadania powłoki jest zapisem automatyki o jednym kroku
+rodzaju polecenia wołającym wykonanie w terminalu. Druga rodzina komend po
+tej stronie dałaby dwie prawdy o jednym harmonogramie — i to jest jedyny
+powód, dla którego okno składa plan z komend cudzego modułu, a nie ze
+swoich.

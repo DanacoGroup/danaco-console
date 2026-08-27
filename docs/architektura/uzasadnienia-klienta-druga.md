@@ -1982,3 +1982,12 @@ zamknięcia okna.
 
 ## budowa/klient-poprzedni/src/strona-glowna/karta-srodowiska.ts
 Karta buduje treść w układzie: godło, tytuł krojem nagłówkowym, motto, jednozdaniowy opis trybu pracy krojem bazowym. W spoczynku powierzchnia jest neutralna, bez akcentu; przy najechaniu i w stanie czynnym pojawia się wstęga górna w błękicie sygnałowym, cień sygnału i uniesienie karty, z wariantu akcentu biblioteki komponentów, a arkusz strony wygasza wstęgę w spoczynku, bo biblioteka pokazuje ją stale. Sygnał jest jedyną barwą akcentu bieżącego systemu wizualnego. Nośnikiem karty jest przycisk, nie warstwa z rolą przycisku, ponieważ karta ma być celem nawigacji klawiaturą z pierwszeństwem natywnym, a pierścień fokusu wnosi wariant klikalny biblioteki komponentów.
+
+## budowa/klient-poprzedni/src/moduly/translate/pasek-kontekstu.ts
+Trzy pustki kontekstu są trzema różnymi zdaniami: jeszcze nie pytano, pytanie w toku, rdzeń nie zna
+ani jednego okna tej sesji. Pierwsze każe czekać na wejście do modułu, drugie na odpowiedź, trzecie
+mówi, że komendy panelu źródła nie mają czym zaadresować żądania. Przycisk ponowienia stoi tylko
+tutaj, bo kontekst okna jest jedynym odczytem modułu; resztę wyzwala zapis, którego przycisk zostaje
+klikalny także po odmowie. Ponowienie wyzwala odczyt i nie zdejmuje komunikatu — ten znika dopiero,
+gdy odczyt się powiedzie. Tryb uprawnień, zasięg wykonania, rola okna i katalogi robocze stoją
+w panelu sterowania okna na tym samym ekranie.

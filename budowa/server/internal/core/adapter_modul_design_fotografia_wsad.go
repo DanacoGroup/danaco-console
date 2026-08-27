@@ -559,7 +559,7 @@ func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 	wielkosc := len(bajty)
 	metadane.SizeBytes = &wielkosc
 
-	// Wymiary, format i model barwny mierzymy z nagłówka pliku.
+	// Wymiary, format i model barwny mierzy się z nagłówka pliku.
 
 	// Dekodowanie konfiguracji nie rozpakowuje obrazu, więc pomiar jest tani.
 	if opis, format, err := image.DecodeConfig(bytes.NewReader(bajty)); err == nil {
@@ -574,8 +574,8 @@ func (a *adapterDesignu) MetadaneZasobu(ctx context.Context,
 	} else if zasob.Format != nil {
 		// Plik, którego rdzeń nie rozkłada, nadal ma format zmierzony przy wniesieniu.
 
-		// Pusto tam, gdzie czegoś nie wiemy, ale nie zapominamy tego, co już
-		// wiedzieliśmy.
+		// Pusto tam, gdzie czegoś nie wiadomo, ale nie zapomina się tego, co już
+		// wiedziano.
 		metadane.Format = zasob.Format
 	}
 
@@ -683,7 +683,7 @@ func (a *adapterDesignu) LancuchEdycji(ctx context.Context,
 
 	// Ogniwa idą od najstarszego, tak jak opisuje pole kontraktu.
 
-	// Przejście szło wstecz, więc wykaz przed zwróceniem odwracamy.
+	// Przejście szło wstecz, więc wykaz przed zwróceniem odwraca się.
 	for lewa, prawa := 0, len(ogniwa)-1; lewa < prawa; lewa, prawa = lewa+1, prawa-1 {
 		ogniwa[lewa], ogniwa[prawa] = ogniwa[prawa], ogniwa[lewa]
 	}
@@ -872,7 +872,7 @@ func rozdzielczoscZExifDesignu(zapis []byte) (int, bool) {
 	if !jest || liczba <= 0 {
 		return 0, false
 	}
-	// Jednostka 3 znaczy punkty na centymetr; przeliczamy na cale, bo reszta modułu liczy
+	// Jednostka 3 znaczy punkty na centymetr; przelicza się na cale, bo reszta modułu liczy
 	// w calach.
 	if jednostka, jest := odczytane["jednostkaRozdzielczosci"].(float64); jest && jednostka == 3 {
 		liczba *= 2.54

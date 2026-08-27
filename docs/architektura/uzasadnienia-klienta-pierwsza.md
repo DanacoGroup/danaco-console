@@ -6572,3 +6572,22 @@ Element przerysowuje się także po odczycie cudzym, na przykład powłoki buduj
 
 ## budowa/klient-poprzedni/src/moduly/apps/okno-publisher-panel.ts
 Jedna część okna stoi na kontrakcie i działa: dziennik wydań produktu składa się z wdrożeń oddanych przez odczyt wdrożeń — wersja i notatki wydania są polami wdrożenia, więc chronologia wydań produktu istnieje naprawdę; nie jest to jednak dziennik wydań rozszerzenia, i okno tę różnicę nazywa. Reszta okna czeka na komendy: formularz manifestu stoi i trzyma wpisane wartości, nie jest zaślepką, bo pola manifestu są znane z opracowania — tożsamość, wersja semantyczna, deklaracja narzędzi, wymagane uprawnienia, zależności — ale nie ma dokąd ich wysłać, i przycisk zapisu mówi to po naciśnięciu, zamiast milczeć albo udawać zapis. Powody kontrolek biorą się z bytu pokrycia, więc przerysują się same, gdy rdzeń dostanie uchwyty dla tych komend.
+
+## budowa/klient-poprzedni/src/moduly/library/odczyty-biblioteki.ts
+Wykaz plików zawężają pola takie jak etykieta, kolekcja i projekt, dopasowanie
+słów pracuje w indeksie pełnotekstowym repozytorium, a dopasowanie znaczenia
+w zakresie biblioteki pracuje we wskaźniku osadzeń; to trzy różne komendy
+kontraktu i okno ma dla każdej osobne wejście. Tryb hybrydowy nie jest
+czwartą komendą: okno wysyła obie i składa odpowiedzi, słowa przed
+znaczeniem, bo dopasowanie dosłowne jest sprawdzalne, a semantyczne jest
+przybliżeniem. Nieudany odczyt zostawia powód, nie pustkę, ponieważ pusty
+wykaz po odmowie i pusty wykaz na świeżej instalacji to dwa różne stany.
+Pusty wykaz w trybie semantycznym może znaczyć, że wskaźnika znaczenia nie
+zbudowano, a nie że nie ma takich plików, dlatego zdanie wyniku nazywa
+drogę, którą wynik powstał. Trafienie bez pliku w wykazie znaczy, że
+wskaźnik zna dokument, którego wykaz nie oddał, bo wypadł poza granicę
+odczytu albo zniknął z repozytorium po zbudowaniu wskaźnika. Kolejność dróg
+w trybie hybrydowym jest rozstrzygnięciem, nie wygodą: dopasowanie słów da
+się sprawdzić w treści pliku, dopasowanie znaczenia jest przybliżeniem
+wskaźnika, a kontrakt nie niesie skali wspólnej dla obu indeksów, więc
+liczba złożona z dwóch niewspółmiernych wyglądałaby na pomiar.

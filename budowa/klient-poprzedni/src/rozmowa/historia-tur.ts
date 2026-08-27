@@ -1,15 +1,7 @@
 import { RodzajNadawcy } from './nadawca';
 import { nowyWpis, type WpisRozmowy } from './wpis-rozmowy';
 
-/**
- * Historia tur okna — zbiór wpisów rozmowy wraz z ich tożsamością.
- *
- * Komenda `message.send` zwraca wiadomość użytkownika, a identyfikator
- * odpowiedzi znany jest dopiero z pierwszego fragmentu strumienia. Dlatego wpis
- * odpowiedzi powstaje od razu po wysłaniu — jako wpis oczekujący — a pierwszy
- * fragment go przejmuje zamiast zakładać drugi. Bez tego okno stałoby puste do
- * nadejścia pierwszego znaku, a potem pokazało dwa wpisy zamiast jednego.
- */
+/** Interfejs opisuje historię tur okna: zbiór wpisów rozmowy wraz z ich tożsamością i wpisem odpowiedzi zakładanym przed nadejściem identyfikatora wiadomości. */
 export interface HistoriaTur {
   /** Wpisy w kolejności powstania. */
   wpisy(): WpisRozmowy[];
@@ -25,35 +17,11 @@ export interface HistoriaTur {
   ): WpisRozmowy;
   /** Wpis o wskazanym identyfikatorze wiadomości albo `undefined`. */
   znajdz(idWiadomosci: string): WpisRozmowy | undefined;
-  /**
-   * Wiąże wypowiedź wpisaną miejscowo z wiadomością rdzenia.
-   *
-   * Wypowiedź trafia do historii natychmiast, przed komendą, więc nie ma
-   * jeszcze identyfikatora wiadomości: `message.send` oddaje go dopiero
-   * w odpowiedzi. Rdzeń rozgłasza tę samą wiadomość zdarzeniem
-   * `message.changed` do wszystkich połączeń konta — także do tego, które ją
-   * wysłało. Ponieważ okno pokazuje wypowiedzi roli `user`, to samo zdanie
-   * weszłoby do wątku dwa razy: raz jako echo miejscowe, raz ze zdarzenia.
-   *
-   * Wiązanie idzie po treści, nie po identyfikatorze, bo identyfikatora w tej
-   * chwili nie ma po żadnej stronie: dopasowuje pierwszą niezwiązaną wypowiedź
-   * o tej samej treści i nadaje jej identyfikator z rdzenia. Od tej chwili wpis
-   * jest w mapie, więc każde kolejne zdarzenie o tej wiadomości trafia w niego.
-   *
-   * @returns wpis związany albo `undefined`, gdy wypowiedzi o tej treści
-   *   w historii nie ma — czyli gdy wiadomość naprawdę przyszła skądinąd.
-   */
+  /** Wiąże wypowiedź wpisaną miejscowo z wiadomością nadaną przez rdzeń po ustaleniu identyfikatora. */
   zwiazWypowiedz(tresc: string, idWiadomosci: string): WpisRozmowy | undefined;
   /** Wpis odpowiedzi biegnącej w tej chwili albo `undefined`. */
   biezaca(): WpisRozmowy | undefined;
-  /**
-   * Zdejmuje wszystkie wpisy — rozmowa ulotna zaczyna nowy kontekst roboczy.
-   *
-   * Licznik kluczy nie wraca do zera. Klucz jest tożsamością pozycji w widoku;
-   * gdyby po wyczyszczeniu zaczął się od nowa, pierwszy wpis nowej rozmowy
-   * trafiłby w węzeł pozostały po wpisie rozmowy poprzedniej i zamiast nowej
-   * pozycji stanęłaby podmieniona stara.
-   */
+  /** Zdejmuje wszystkie wpisy z historii, rozpoczynając nowy kontekst roboczy rozmowy. */
   wyczysc(): void;
 }
 
@@ -116,9 +84,7 @@ export function utworzHistorieTur(): HistoriaTur {
     znajdz: (idWiadomosci) => poWiadomosci.get(idWiadomosci),
 
     zwiazWypowiedz(tresc, idWiadomosci) {
-      // Szukamy od końca: przy dwóch identycznych zdaniach wysłanych pod rząd
-      // wiąże się to, które jeszcze na identyfikator czeka, a nie to sprzed
-      // dziesięciu minut, które swój identyfikator dawno dostało.
+      // Szukamy od końca, aby związać najnowszą niezwiązaną wypowiedź o tej samej treści.
       const szukana = tresc.trim();
       for (let i = kolejnosc.length - 1; i >= 0; i -= 1) {
         const wpis = kolejnosc[i];
@@ -139,7 +105,7 @@ export function utworzHistorieTur(): HistoriaTur {
   };
 }
 
-/** Klucz wpisu miejscowego — komunikatu warstwy automatycznej albo Operatora. */
+/** Funkcja generuje klucz wpisu miejscowego dla komunikatu warstwy automatycznej albo wypowiedzi operatora, łącząc znacznik czasu z liczbą losową. */
 export function kluczMiejscowy(przedrostek: string): string {
   return `${przedrostek}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
 }

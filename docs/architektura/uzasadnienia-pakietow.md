@@ -3161,3 +3161,15 @@ następna pytana warunkiem ostro mniejszym przeskoczyłaby rodzeństwo bezpowrot
 dokładać kontraktowi pole rozstrzygające remis, strona domyka się po stronie repozytorium:
 po pobraniu limitu wierszy dobierane jest jeszcze całe rodzeństwo ostatniego z nich. Strona
 bywa więc odrobinę dłuższa od limitu, za to kursor zawsze pada między grupami.
+
+## budowa/server/internal/dane/biblioteka_odwolania.go
+Wykaz odwołań do treści służy sprzątaniu magazynu treści przy starcie rdzenia,
+które odczytuje z niego zbiór blobów wciąż powiązanych z bazą. Plik i wersja
+trzymają treść przy życiu niezależnie od siebie: blob porzucony przez plik
+bieżący może pozostawać treścią wersji historycznej, do której przywrócenie
+wersji ma prawo wrócić. Dwa osobne odczyty wymagałyby scalenia po stronie
+rdzenia, a pomyłka na scalaniu skasowałaby treść nie do odzyskania — stąd
+jedno zapytanie łączące obie tabele przez UNION.
+
+## budowa/server/internal/dane/tlumaczenie_segmentacja.go
+Segmenty okna zapisywane są zawsze kompletem: UstawSegmentyOkna wymienia cały wykaz okna w jednej transakcji. Scalenie dwóch segmentów przesuwa numery wszystkich następnych, więc zapis punktowy musiałby i tak dotknąć całego wykazu — tylko w kilku osobnych transakcjach, z oknem, w którym numeracja jest podwójna albo dziurawa.

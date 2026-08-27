@@ -5614,3 +5614,7 @@ ani błąd pola żądania, ponieważ brakuje właśnie przejścia przez bramkę;
 okno logowania zamiast pokazywać błąd komendy.
 ## budowa/server/internal/dane/sesje_kosz.go
 Repozytorium kosza jest osobne od repozytorium sesji, bo tamto obsługuje sesje żywe i jego wykaz sesji z kosza nie widzi; kosz jest odwrotną stroną tej samej tabeli, widzi wyłącznie wiersze ze znacznikiem usunięcia — jedna tabela, dwa pytania. Czyszczenie zabiera też bloki wiadomości: kaskada schematu od sesji sprząta okna i wiadomości, ale bloki wiadomości wiszą na identyfikatorach kontraktowych bez klucza obcego, więc czyszczenie usuwa je wprost, w tej samej transakcji.
+
+## budowa/server/internal/dane/pamiec.go
+Treść obszerna trafia do pliku, baza trzyma odwołanie. Konfigurację
+pamięci sesji obsługuje osobny plik repozytorium.

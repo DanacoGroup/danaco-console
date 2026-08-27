@@ -51,71 +51,11 @@
       "rozmiarBajty": 6309466,
       "suma": "4d244dd58de3a0931941c72a223c4dda8661977449b28f14cd935408604756f7",
       "zmiany": "Pierwsze wydanie postaci hybrydowej dla Windows ARM64."
-    },
-    {
-      "wersja": "1.0.0",
-      "data": "2026-08-18",
-      "system": "Windows",
-      "postac": "natywna",
-      "architektura": "x64",
-      "nazwa": "Windows x64 — natywna pełna",
-      "coBierzesz": "CAŁOŚĆ na komputerze z Windows: okno, powłoka i rdzeń w jednej instalce. Nie potrzebuje żadnego serwera — działa na maszynie, na której się ją założy. Stąd rozmiar: kilkadziesiąt razy większy od hybrydy, bo niesie w środku wszystko, co hybryda zostawia na serwerze. Postać dla kogoś, kto pracuje sam na własnym komputerze.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-18/Danaco%20Console_1.0.0_natywna_x64-setup.exe",
-      "nazwaPliku": "Danaco Console_1.0.0_natywna_x64-setup.exe",
-      "rozmiar": "989,8 MB",
-      "rozmiarBajty": 1037928193,
-      "suma": "e00aa7357efe62470576afa0acbdacd8589da4055a28de14d25b1ede12446462",
-      "zmiany": "Pierwsze wydanie postaci natywnej pełnej dla Windows x64: rdzeń wewnątrz instalki, bez serwera po drugiej stronie."
-    },
-    {
-      "wersja": "1.0.0",
-      "data": "2026-08-18",
-      "system": "Linux",
-      "postac": "hybryda",
-      "architektura": "amd64",
-      "nazwa": "Linux — hybryda (AppImage)",
-      "coBierzesz": "Jeden plik, który wystarczy oznaczyć jako wykonywalny i uruchomić — nic się nie zakłada w systemie. Rdzeń zostaje na serwerze wdrożenia. Tylko tę postać potrafi podmienić baner aktualizacji w aplikacji.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-18/Danaco%20Console_1.0.0_hybryda_amd64.AppImage",
-      "nazwaPliku": "Danaco Console_1.0.0_hybryda_amd64.AppImage",
-      "rozmiar": "81,7 MB",
-      "rozmiarBajty": 85711352,
-      "suma": "b55fa0d95c4e425b89b06ecdfb7f2af04814cf626ef415d418d3954e87f7a1ae",
-      "zmiany": "Pierwsze wydanie postaci hybrydowej dla Linux x86-64 jako samodzielny AppImage — jedyna postać, którą baner aktualizacji podmienia samodzielnie."
-    },
-    {
-      "wersja": "1.0.0",
-      "data": "2026-08-18",
-      "system": "Linux",
-      "postac": "hybryda",
-      "architektura": "amd64",
-      "nazwa": "Linux — hybryda (pakiet .deb)",
-      "coBierzesz": "Ta sama hybryda co AppImage, ale zakładana menedżerem pakietów Debiana/Ubuntu i aktualizowana przez apt. Baner w aplikacji jej NIE podmieni — powłoka odmawia zakładania czegokolwiek, co nie jest programem Linuksa w postaci ELF.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-18/Danaco%20Console_1.0.0_hybryda_amd64.deb",
-      "nazwaPliku": "Danaco Console_1.0.0_hybryda_amd64.deb",
-      "rozmiar": "6,1 MB",
-      "rozmiarBajty": 6430172,
-      "suma": "8db641eb685d5dbd24b85beefad8e6928f2d303d9ee2ba2de55f374dfa88ddbe",
-      "zmiany": "Pierwsze wydanie postaci hybrydowej dla Linuksa jako pakiet Debian/Ubuntu."
-    },
-    {
-      "wersja": "1.0.0",
-      "data": "2026-08-18",
-      "system": "Linux",
-      "postac": "natywna",
-      "architektura": "amd64",
-      "nazwa": "Linux — natywna pełna (pakiet .deb)",
-      "coBierzesz": "CAŁOŚĆ na urządzeniu klienta: okno, powłoka i rdzeń w jednym pakiecie. Nie potrzebuje żadnego serwera — działa na maszynie, na której się ją założy. Dlatego jest kilkakrotnie większa od hybrydy. Postać dla kogoś, kto pracuje sam na jednym komputerze.",
-      "plik": "https://pobierz.danaco-group.pl/wydania/1.0.0-2026-08-18/Danaco%20Console_1.0.0_natywna_amd64.deb",
-      "nazwaPliku": "Danaco Console_1.0.0_natywna_amd64.deb",
-      "rozmiar": "56,9 MB",
-      "rozmiarBajty": 59665804,
-      "suma": "974a56e9ec9baa6ef5fa295d395d40d13b4496c0fb1b06c657fa50e2a16726bf",
-      "zmiany": "Pierwsze wydanie postaci natywnej pełnej dla Linuksa: rdzeń wewnątrz pakietu, bez serwera po drugiej stronie."
     }
   ],
   "w_przygotowaniu": [],
   "serwer": {
-    "czym_to_jest": "Pakiet serwera wdrożenia — NIE JEST TO POZYCJA DLA KLIENTA. Zakłada go administrator na maszynie serwerowej; dopiero wtedy pozycje hybrydowe wyżej mają z czym rozmawiać. Klient pracujący sam nie potrzebuje tego pliku — bierze postać natywną pełną.",
+    "czym_to_jest": "Pakiet serwera wdrożenia — NIE JEST TO POZYCJA DLA KLIENTA. Zakłada go administrator na maszynie serwerowej; dopiero wtedy pozycje wyżej mają z czym rozmawiać. Produkt występuje wyłącznie jako hybryda, więc bez tego pakietu nie działa żadna z nich.",
     "wersja": "1.0.0",
     "data": "2026-08-18",
     "system": "Linux",
@@ -128,13 +68,13 @@
     "suma": "7cb532232cb93220001a707180ee42dd643389f0c26542d9a3d54b412cf0274c",
     "zmiany": "Pierwsze wydanie pakietu serwerowego: rdzeń wraz z całym arsenałem po stronie serwera, do założenia przez apt na maszynie wdrożenia."
   },
-  "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Aplikacja (client/src/aktualizacja/wykaz-wydan.ts) przy RÓWNYCH wersjach zatrzymuje PIERWSZĄ pozycję pasującą do systemu czytającego, a powłoka (desktop/src-tauri/src/aktualizacja/droga.rs) odrzuca na Linuksie plik bez nagłówka ELF — czyli odrzuca .deb. Skoro wszystkie pozycje niosą 1.0.0, o tym, co baner zaproponuje, rozstrzyga WYŁĄCZNIE kolejność. Dlatego: na Linuksie .AppImage stoi przed obydwoma .deb (inaczej baner proponowałby plik, którego powłoka zawsze odmówi założyć), a na Windows x64 stoi przed ARM64 (inaczej baner podałby maszynie Intel/AMD instalkę ARM). Postać hybrydowa stoi przed natywną, bo hybryda jest domyślną postacią wdrożenia. Zgłoszone do naprawy po stronie klienta w budowa/.wpiecia/D1.json — do czasu tej naprawy poprawność banera opiera się na tej kolejności.",
+  "kolejnosc": "KOLEJNOŚĆ POZYCJI JEST ZNACZĄCA I NIE WOLNO JEJ SORTOWAĆ ALFABETYCZNIE. Czytający wykaz zatrzymuje przy RÓWNYCH wersjach PIERWSZĄ pozycję pasującą do systemu, a wszystkie pozycje niosą 1.0.0 — o tym, co baner zaproponuje, rozstrzyga WYŁĄCZNIE kolejność. Dlatego x64 stoi przed ARM64: inaczej baner podałby maszynie Intel/AMD instalkę ARM.",
   "pola": {
     "wersja": "1.0.0",
     "data": "RRRR-MM-DD — to ona, a nie numer, różni wydania",
-    "system": "Windows albo Linux — po tej wartości aplikacja i skrypt na stronie rozpoznają maszynę czytającego; nie wpisywać tu architektury ani postaci",
-    "postac": "hybryda (rdzeń na serwerze) albo natywna (całość u klienta)",
-    "architektura": "x64, ARM64 albo amd64",
+    "system": "Windows — jedyna platforma produktu; pole zostaje, bo po nim aplikacja i skrypt na stronie rozpoznają maszynę czytającego. Nie wpisywać tu architektury ani postaci",
+    "postac": "hybryda — jedyna postać produktu: rdzeń stoi na serwerze wdrożenia, instalka go nie niesie",
+    "architektura": "x64 albo ARM64 — jedyny wybór, jaki produkt zostawia pobierającemu",
     "nazwa": "nagłówek karty na stronie — system, architektura i postać w jednym zdaniu",
     "coBierzesz": "jedno–trzy zdania dla pobierającego: co dostaje i czego ten plik potrzebuje, żeby zadziałał",
     "plik": "adres https:// do pliku wydania — inny protokół jest odmawiany (patrz klucz `protokol`); spacje zapisane jako %20",
@@ -144,5 +84,5 @@
     "suma": "SHA-256 pliku, zapis szesnastkowy — WYMAGANE, policzone `sha256sum` z tego właśnie pliku, nigdy przepisane z raportu",
     "zmiany": "co się zmieniło, jednym zdaniem"
   },
-  "w_przygotowaniu_uwaga": "Pusta tablica znaczy: nie ma dziś pakietu zapowiedzianego bez pliku. Pozycja natywna pełna dla Windows stała tu do 10:29 dnia 18.08.2026 i przeszła do `wydania` w chwili, w której plik pojawił się na dysku i dał się zmierzyć."
+  "w_przygotowaniu_uwaga": "Pusta tablica znaczy: nie ma dziś pakietu zapowiedzianego bez pliku. Pozycja trafia tu, gdy jest zapowiedziana, a przechodzi do `wydania` w chwili, w której plik leży na dysku i daje się zmierzyć."
 }

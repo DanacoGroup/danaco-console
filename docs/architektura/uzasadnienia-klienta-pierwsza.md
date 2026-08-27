@@ -2314,8 +2314,8 @@ ten plik wyłącznie je scala.
 Godło marki stoi poza zestawem 82 ikon, bo jest jedynym znakiem o barwach własnych.
 Pozostałe odmiany znaku niesie `ikony/marka.ts`.
 
-Nazwy wycofane pakietem design v2.0 wskazują na następców z zestawu — nie wnoszą
-żadnego nowego rysunku ani pliku spoza pakietu. Znikają wraz z ostatnim wywołaniem.
+Nazwy wycofane przy przebudowie zestawu ikon wskazują na następców z tego
+zestawu — nie wnoszą żadnego nowego rysunku ani pliku spoza niego. Znikają wraz z ostatnim wywołaniem.
 
 ## budowa/klient-poprzedni/src/moduly/developer/braki-kontraktu.ts
 
@@ -4467,7 +4467,8 @@ treści zaraz po wgraniu i podaje to, co rdzeń odpowiedział, kosztem jednej
 dodatkowej komendy, ponieważ kontrakt nie ma tańszego świadka.
 
 Odpowiedź ze wskazaniem miejsca treści nie jest odmową: taki podgląd wraca
-zarówno dla treści leżącej w magazynie, jak i dla wskazania prowadzącego donikąd.
+zarówno dla treści leżącej w magazynie, jak i dla wskazania, które nie sięga
+nigdzie.
 Zdanie odpowiedzi mówi więc, co przyszło, i nie orzeka ani wgrania, ani jego
 braku. Podobnie werdykt odmowy oznacza, że rdzeń treści nie oddał i o niej nie
 orzekł, więc okno nie orzeka wtedy ani obecności treści, ani jej braku.

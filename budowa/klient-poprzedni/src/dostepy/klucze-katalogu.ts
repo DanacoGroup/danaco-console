@@ -1,11 +1,14 @@
+/**
+ * Klucze katalogu roboczego modelu wraz z definicjami zastępczymi. Plik nazywa
+ * klucz podstawy i klucz wzorca sesji, podaje wzorzec domyślny oraz opis
+ * podstawy, składa definicję zastępczą klucza i wylicza zasięgi katalogu.
+ */
 import {
   ConfigAxis,
   ConfigScope,
   SettingValueType,
   type SettingDefinition,
 } from '../../../shared/contract';
-
-/** Klucze katalogu roboczego modelu wraz z definicjami zastępczymi. */
 
 /**
  * Klucz ustawienia wskazującego katalog, w którym powstają katalogi sesyjne

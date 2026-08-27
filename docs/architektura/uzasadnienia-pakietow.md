@@ -5053,3 +5053,14 @@ wykazu.
 Zapis stanu wynikowego używa reguły pierwszej wartości niepustej, a wartość
 niepusta nadpisałaby więc pracę, którą podagent zdążył oddać; skoro zapytanie
 warunku nie stawia, stawia go wołający.
+
+## budowa/server/internal/dane/nagrania_mowy.go
+Bajty leżą na dysku, w katalogu danych rdzenia; tutaj mieszka wyłącznie
+wiersz opisujący jedno nagranie. Rozdział jest zamierzony: odnośnikiem
+nagrania w całym produkcie jest ścieżka pliku, bo taką przyjmuje transkrypcja
+mowy i taką oddaje synteza mowy panelu tłumaczenia. Drugi rodzaj odnośnika
+oznaczałby przekład w każdym miejscu styku.
+
+Rejestr jest też wykazem tego, co rdzeń sam wystawił — a więc granicą
+odsłuchu: pobranie nagrania oddaje bajty z tego wykazu, a nie dowolnego
+pliku, którego ścieżkę ktoś przyśle.

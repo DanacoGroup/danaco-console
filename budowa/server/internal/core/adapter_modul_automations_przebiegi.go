@@ -1,14 +1,6 @@
-// Odpowiedzialność pliku: okno Execution Monitor — stan przebiegów automatyki,
-// zapis obserwacji i wyprowadzenie stanu przebiegu z kolejki, która go wykonuje.
-//
-// Stan przebiegu jest wyprowadzony, nie deklarowany. Etapem przebiegu jest
-// pozycja kolejki, więc etap bieżący, liczba etapów i numer próby biorą się
-// z pozycji — dokładnie tak, jak telemetria postępu liczy etapy kolejki. Rdzeń
-// nie prowadzi drugiego licznika i nie zmyśla stopnia ukończenia.
-//
-// Licznik obiegów nie ma granicy: numer próby to najwyższy licznik obiegów
-// wśród pozycji, a progu, po którym rdzeń odmawia powtórzenia, nie ma —
-// przerwanie należy do Operatora, a przycisk zatrzymania jest zawsze czynny.
+// Odpowiedzialność pliku: okno Execution Monitor — stan przebiegów
+// automatyki, zapis obserwacji i wyprowadzenie stanu przebiegu z kolejki,
+// która go wykonuje. Stan przebiegu jest wyprowadzony, nie deklarowany.
 package core
 
 import (
@@ -22,7 +14,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// Przebiegi zapisuje okno na telemetrię przebiegów i oddaje ich stan bieżący.
+// Przebiegi zapisuje okno na telemetrię przebiegów i oddaje ich stan
+// bieżący, wyprowadzony z pozycji kolejki.
 func (a *adapterAutomatyk) Przebiegi(ctx context.Context,
 	z shared.AutomationExecutionSubscribeRequest) (shared.AutomationExecutionSubscribeResponse, error) {
 
@@ -112,7 +105,8 @@ func (a *adapterAutomatyk) odnotujPrzebieg(ctx context.Context, kolejkaID int64,
 	return err
 }
 
-// naniesPostep wypełnia przebieg stanem wyprowadzonym z kolejki i jej pozycji.
+// naniesPostep wypełnia przebieg stanem wyprowadzonym z kolejki i jej
+// pozycji, ustalając etap bieżący i liczbę próby.
 func naniesPostep(przebieg *dane.Przebieg, stanKolejki shared.QueueStatus, pozycje []dane.Pozycja) {
 	zakonczone, bledne, proba := 0, 0, 0
 	for _, pozycja := range pozycje {
@@ -165,14 +159,16 @@ func stanPrzebiegu(stanKolejki shared.QueueStatus, bledne int) string {
 	}
 }
 
-// czyStanKoncowyPrzebiegu mówi, czy przebieg zamknął się na dobre.
+// czyStanKoncowyPrzebiegu mówi, czy przebieg zamknął się na dobre, bez
+// możliwości dalszej zmiany stanu.
 func czyStanKoncowyPrzebiegu(stan string) bool {
 	return stan == shared.AutomationExecutionStatusSucceeded ||
 		stan == shared.AutomationExecutionStatusFailed ||
 		stan == shared.AutomationExecutionStatusStopped
 }
 
-// przebiegKontraktu przekłada wiersz przebiegu na byt kontraktu.
+// przebiegKontraktu przekłada wiersz przebiegu z bazy danych na byt
+// kontraktu zwracany wołającemu oknu.
 func przebiegKontraktu(wiersz dane.Przebieg) shared.AutomationExecution {
 	etap, etapow, proba := wiersz.EtapBiezacy, wiersz.Etapow, wiersz.Proba
 	przebieg := shared.AutomationExecution{
@@ -191,7 +187,8 @@ func przebiegKontraktu(wiersz dane.Przebieg) shared.AutomationExecution {
 	return przebieg
 }
 
-// bladNieznanegoPrzebiegu odróżnia „przebiegu nie ma” od usterki odczytu.
+// bladNieznanegoPrzebiegu odróżnia „przebiegu nie ma” od usterki odczytu,
+// nazywając kod przebiegu w treści błędu.
 func bladNieznanegoPrzebiegu(kod string, err error) error {
 	if errors.Is(err, dane.ErrBrakWiersza) {
 		return protocol.JakoError(protocol.NowyBlad(shared.ErrorCodeNotFound,

@@ -12,30 +12,13 @@ import {
   zlozPodzialkeLinijki,
 } from './linijka-podzialka';
 
-/**
- * Linijka pionowa — margines górny i dolny chwytem, wraz z miejscem kursora.
- *
- * ── Po co pionowa, jeśli jest pozioma ──────────────────────────────────────
- * Bo margines górny i dolny są nastawami tej samej wagi co lewy i prawy, a bez
- * pionowej przestawia się je wyłącznie liczbą w oknie nastaw. Właściciel wymienia
- * obie linijki wprost. Do tego pionowa pokazuje, ile miejsca na kartce zostało —
- * przy pisaniu pisma na jedną stronę jest to informacja, po którą Operator sięga
- * co chwilę.
- *
- * ── Czego pionowa NIE robi ──────────────────────────────────────────────────
- * Nie chwyta wierszy tabeli. Wysokość wiersza tabeli bierze się z jego treści
- * i z nastaw akapitu, a nie z chwytu na linijce — pakiet biurowy też nie daje jej
- * chwytać na linijce pionowej. Udawanie takiego chwytu dawałoby nastawę, której
- * nic nie pilnuje.
- */
-
-/** Czynności linijki pionowej zlecane powierzchni. */
+/** Czynności linijki pionowej zlecane powierzchni dokumentu: margines przestawiony chwytem górnym albo dolnym. */
 export interface CzynnosciLinijkiPionowej {
   /** Margines przestawiony chwytem. */
   naMargines(strona: 'gora' | 'dol', milimetry: number): void;
 }
 
-/** Linijka pionowa wraz z jej sterowaniem. */
+/** Linijka pionowa wraz z jej pełnym sterowaniem: stroną, skalą, kursorem, widocznością i zdaniem opisowym. */
 export interface LinijkaPionowa {
   element: HTMLElement;
   ustawStrone(strona: StronaPracy): void;
@@ -47,7 +30,7 @@ export interface LinijkaPionowa {
   opis(): string;
 }
 
-/** Najmniejsze pole pisania, jakie chwyt marginesu wolno zostawić. */
+/** Najmniejsze pole pisania na stronie dokumentu, jakie chwyt marginesu na linijce pionowej wolno zostawić. */
 const NAJMNIEJSZE_POLE_MM = 10;
 
 export function utworzLinijkePionowa(

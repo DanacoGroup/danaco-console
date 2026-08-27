@@ -4923,3 +4923,46 @@ niewidoczne. Nazwy dołożeń zameldowanych przez odpowiedź komendy z tego okna
 stoją w małym zbiorze sesyjnym, bo tylko ten plik widzi obie drogi wejścia tej
 samej wiadomości: odpowiedź komendy i rozgłoszone zdarzenie. Bez niego
 Operator, który dołożył narzędzie sam, przeczytałby o tym w wątku dwa razy.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-poziomy.ts
+Drabina poziomów zapisu, w kolejności rozstrzygania od okna do globalnego — wygrywa pierwszy poziom
+mający własny zapis, zanim w grę wchodzi oś. Drabina nie jest wykazem do czytania: wskazanie poziomu
+ustawia zasięg czynny okna, a na nim czyta i pisze macierz izolacji, przypisanie profilu i podgląd
+polityki efektywnej. Ograniczenie konfiguracji do jednego, z góry narzuconego poziomu byłoby twardą
+regułą — a tych okno nie stawia. Drabina woła rdzeń i nie jest drugą kopią słownika. Nazwa, kolejność
+i flaga najwęższego poziomu przychodzą z odpowiedzi rdzenia, który czyta je z tabeli poziomów zasięgu
+— ten plik ich nie zgaduje ani nie trzyma jako stałej. Pole kolejności w kontrakcie liczy odwrotnie
+niż kolejność rozstrzygania: rośnie od poziomu najszerszego, a tabela pokazuje kolejność od
+najwęższego — stąd sortowanie malejąco. Czego rdzeń nie niesie: pola opisu, bo adapter pomija je tam,
+gdzie baza nie ma treści. Zdania objaśniające przy każdym poziomie zostają więc lokalnym słownikiem
+tego pliku — to nie jest druga kopia drabiny, tylko treść, której rdzeń nie ma i nie udaje, że ma.
+Obszar nie pokazuje, który poziom wygrywa dla bieżącego Operatora — pokazuje wyłącznie ten, który
+Operator wskazał do zapisu. Wykaz poziomów zwraca słownik poziomów, nazwę, kolejność, czy poziom jest
+najwęższy w ogóle, a nie zapis Operatora na którymkolwiek z nich. Takie rozstrzygnięcie wymaga innej
+rodziny komend oraz pełnej ścieżki bytów — identyfikatorów roli, sesji, projektu i pary modułów —
+których klient nie zna. Bliźniacze okno Konfiguracji ma tę samą drabinę i z tego samego powodu jego
+odczyt pobiera tylko dwa poziomy: globalny oraz ten wskazany punktem widzenia okna. Braku nie wolno
+zamalować milczącą pustką, która wyglądałaby jak nikt nic nie zapisał zamiast uczciwym tego nie
+odczytaliśmy.
+
+## budowa/klient-poprzedni/src/punkty-izolacji/obszar-profile.ts
+Pięć komend rdzenia: wykaz profili, zapis nowego albo zmiana istniejącego, wczytanie do podglądu,
+przypisanie do poziomu i warstwy, usunięcie. Wczytanie to nie przypisanie i na tym polega ten obszar.
+Wczytanie zwraca zawartość profilu do podglądu i do formularza; maszyneria po nim pracuje tak samo
+jak przedtem. Przypisanie dopiero wiąże profil z poziomem zasięgu i warstwą i zwraca politykę
+obowiązującą po przypisaniu. Dwie czynności, dwa skutki, dwa osobne zdania przy przyciskach. Cel
+przypisania jest widoczny wcześniej i nie jest wybierany drugi raz tutaj: poziom zasięgu
+i identyfikator bytu przychodzą z selektora zasięgu w lewym panelu, a warstwa z pasa narzędzi okna —
+oba dotyczą wszystkich paneli naraz. Drugi selektor poziomu w tym obszarze pokazywałby cel przypisania
+inny niż zasięg, na którym Operator właśnie przestawia macierz. Przycisk przy profilu mówi
+w podpowiedzi, dokąd trafi zapis. Usunięcie idzie od razu, bez potwierdzenia; żadna pozycja nie jest
+wygaszona ani zablokowana. Odmowa rdzenia wraca zdaniem trzyczęściowym: co się nie udało, dlaczego,
+treścią wprost z rdzenia, i czym Operator to zmieni.
+
+## budowa/klient-poprzedni/src/moduly/studio/linijka-pionowa.ts
+Margines górny i dolny są nastawami tej samej wagi co lewy i prawy, a bez linijki pionowej
+przestawia się je wyłącznie liczbą w oknie nastaw; do tego linijka pionowa pokazuje, ile miejsca
+na kartce zostało, co przy pisaniu pisma na jedną stronę jest informacją, po którą operator
+sięga co chwilę. Linijka pionowa nie chwyta wierszy tabeli: wysokość wiersza tabeli bierze się
+z jego treści i z nastaw akapitu, a nie z chwytu na linijce, tak samo jak w pakietach biurowych —
+udawanie takiego chwytu dawałoby nastawę, której nic nie pilnuje.

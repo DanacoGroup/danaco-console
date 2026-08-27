@@ -5318,3 +5318,13 @@ stan sam, drogą kolejki.
 Komenda spoza zbioru rzeczywiście obsługiwanych dostaje odpowiedź
 „*.unknown" zamiast błędu zrywającego — dotyczy to również komendy, która
 jest w kontrakcie, lecz nie ma jeszcze obsługiwacza.
+
+## budowa/server/internal/core/handlers_schowek_skroty.go
+Trzy porty, nie jeden: schowek, słownik skrótów i konteksty pamięci mają osobne magazyny i osobne
+powody do awarii. Wspólny port związałby ich dostępność w jedno „jest albo nie ma" — maszyna ze
+słownikiem i bez historii schowka straciłaby rozwijanie skrótów razem z historią.
+
+Zdarzeń żadna z tych rodzin nie ma. Kontrakt zna zdarzenie zmiany pamięci, ale dotyczy ono wpisów
+pamięci przestrzeni roboczej i rozgłasza je ta domena; kontekst jest zestawem wskazań, a nie
+wpisem, więc rozgłaszanie go pod tą samą nazwą kazałoby oknu odświeżyć wykaz faktów po zmianie,
+która żadnego faktu nie dotknęła.

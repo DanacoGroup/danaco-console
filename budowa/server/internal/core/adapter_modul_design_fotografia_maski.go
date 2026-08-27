@@ -93,7 +93,7 @@ func odetnijTloRachunkiemDesignu(obraz image.Image, tolerancja float64) (image.I
 			wynik.SetNRGBA(x, y, punkt)
 		}
 	}
-	// Krawędź obiektu wygładzamy jednym przebiegiem rozmycia samego kanału krycia.
+	// Krawędź obiektu wygladza się jednym przebiegiem rozmycia samego kanału krycia.
 
 	// Bez tego wycinek ma zębatą obwódkę, po której widać, że powstał progowaniem.
 	wygladzKrawedzMaskiDesignu(wynik)
@@ -304,7 +304,7 @@ func domalujObszarRachunkiemDesignu(obraz image.Image, doWypelnienia func(x, y i
 			break
 		}
 	}
-	// Domalowany obszar rozmywamy delikatnie: rozrost średnią zostawia w środku widoczne
+	// Domalowany obszar rozmywa się delikatnie: rozrost średnią zostawia w środku widoczne
 	// pasy.
 
 	// Jeden przebieg rozmycia znosi te pasy bez ruszania otoczenia poza obszarem.

@@ -3088,3 +3088,10 @@ odpowiedzi.
 
 ## budowa/klient/src/protokol/wywolanie.ts
 Wywołanie nie jest drugą drogą do rdzenia: każde idzie tym samym wysłaniem kanału, z nazwą komendy wziętą wyłącznie ze stałych kontraktu. Gdy rdzeń nie odpowie w ogóle, bo połączenie padło w trakcie, obietnica pozostaje nierozstrzygnięta: kontrakt nie przewiduje limitu czasu, a rozłączenie klienta nie kończy pracy rdzenia nad poleceniem.
+
+## budowa/klient-poprzedni/src/motyw/motyw.ts
+Brak zapisanego wyboru motywu nie ustawia atrybutu koloru na dokumencie:
+rozstrzyga wtedy zapytanie o preferencję systemu, a zmiana tej preferencji
+działa na żywo. Żaden błąd pamięci trwałej nie zatrzymuje uruchomienia —
+wybór degraduje się do preferencji systemu, nigdy do blokady. Oba motywy są
+równoprawne, żaden nie jest wartością domyślną produktu.

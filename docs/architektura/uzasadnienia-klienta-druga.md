@@ -5650,3 +5650,30 @@ Miejsce jest wspólne dla dwóch odbiorców: przepływ komunikatów prowadzi jed
 Tło gniazda zostaje neutralne niezależnie od roli — kolor sygnałowy nosi
 wyłącznie powierzchnia pigułki plakietki koordynatora, nigdy tło całego
 gniazda.
+
+## budowa/klient-poprzedni/src/ustawienia/okno-ustawien.ts
+Warstwę tła, stos okien i zamknięcie klawiszem Escape daje przeglądarka, a nie własna nakładka; wygląd
+bierze z biblioteki komponentów, plik nie zna ani jednej barwy. Rama nie niesie treści sekcji: zna
+wyłącznie rejestr sekcji (kod, nazwa, ikona, fabryka) i wspólny kontrakt sekcji — co sekcja niesie
+w środku, jest sprawą pliku sekcji, nie ramy. Sekcje budują się razem, przy otwarciu okna. Rejestr sekcji
+jest stały, nie przychodzi katalogiem rdzenia jak kategorie konfiguracji, więc nie ma powodu budować ich
+leniwie przy pierwszym kliknięciu — budowa od razu utrzymuje stan każdej sekcji, na przykład wpisany,
+jeszcze niezapisany formularz, przy przełączaniu zakładek, zamiast go gubić; kod działa dla jednej sekcji
+identycznie jak dla wielu, więc dołożenie drugiej pozycji do rejestru nie wymaga zmiany tego pliku. Okno
+otwiera się natychmiast; każda sekcja sama rozstrzyga swój odczyt i swój stan błędu — przycisk odczytu
+ponownego w stopce odświeża wyłącznie sekcję czynną, bo sekcje niewidoczne nie ciągną rdzenia w tle bez
+powodu. Nawigacja do jednego miejsca jest nawigacją donikąd: kolumna z pojedynczym, zawsze czynnym
+przyciskiem sugerowałaby operatorowi wybór, którego nie ma, i byłaby kłamstwem o kształcie okna. Próg
+jest samoczynny, a nie ręcznym przełącznikiem — warunek czyta długość rejestru przy każdej budowie okna,
+więc po dołożeniu drugiej sekcji kolumna wraca sama, bez zmiany w tym pliku.
+
+## budowa/klient-poprzedni/src/moduly/workspace/czynnosci-planowania.ts
+Czynności stoją osobno od źródła workspace z tego samego powodu, dla którego rdzeń ma osobny port
+planowania: rodzina komend workspace liczy czterdzieści komend, a jedno źródło byłoby wykazem
+wszystkiego, co moduł umie, zamiast wykazem jednego obszaru pracy. Okno huba ma obowiązkowy stan
+błędu, więc źródło nie połyka niepowodzenia i nie zwraca pustej listy w jego miejsce — widok musi
+odróżnić brak zadań projektu od nieudanego zapytania, stąd brak wartości domyślnej w postaci
+pustej listy w całym pliku.
+Karta bez klucza idzie na koniec kolumny, lepiej niż na jej początek, bo świeżo dołożona karta nie
+ma prawa przeskoczyć kart już ułożonych. Sformułowanie „nic do zrobienia" nie jest tym samym co
+„wszystko zrobione", a pasek pełny w pustym projekcie byłby meldunkiem o pracy, której nie było.

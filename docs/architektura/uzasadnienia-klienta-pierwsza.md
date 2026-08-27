@@ -6823,3 +6823,11 @@ powód wprost, żeby brak pozostał widoczny w oknie.
 
 ## budowa/klient-poprzedni/src/moduly/assistant/wysylka-polecenia.ts
 Plik stoi poza oknem, bo okno składa kontrolki, a to jest rozmowa z rdzeniem. Polecenie idzie jednym wywołaniem z polem transkrypcji, tą samą drogą co polecenie wpisane ręcznie — nie ma tu drugiej drogi do rdzenia ani własnego modelu. Przerwanie dotyczy zlecenia, nie nagrania: kontrakt nie niesie strumienia dźwięku, ale niesie sterowanie anulowania; bez zlecenia w toku przycisk mówi wprost, czego po stronie audio brakuje, zamiast milczeć. Fazę nazywa wysyłka, nie okno: niesie wartość ze wspólnego słownika fazy okna, tego samego, którym mówią Actions Monitor i Activity Feed — nie jest to drugi mechanizm stanu, tylko ta sama faza, wpuszczana wprost w ten sam stan okna, nazwana w miejscu, które jako jedyne wie, co się właśnie stało; przełącznik trwa/nie trwa nie wystarcza, bo nie umie powiedzieć o odmowie rdzenia.
+
+## budowa/klient-poprzedni/src/moduly/multitasking/formularz-powolania.ts
+Formularz nie zgaduje za rdzeń: górną granicę powołania niesie kontrakt, więc
+pole liczbowe ją pokazuje, ale zdanie potwierdzenia liczy podagentów
+z odpowiedzi rdzenia, nie z tego, o ilu prosił formularz. Odmowa jest
+nazwana: wiersz odpowiedzi niesie treść i kod wprost z rdzenia oraz zdanie
+o tym, co można z tym zrobić. Formularz stawia wyłącznie pola, które
+kontrakt zna.

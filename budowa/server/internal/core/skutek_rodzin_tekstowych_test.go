@@ -217,7 +217,7 @@ func TestNagranieWraca(t *testing.T) {
 	zmontowany, zycie, katalog := zmontujDoPomiaruSkutku(t)
 	baza := bazaSprawdzianu(t, katalog)
 
-	// Materiał to nagłówek WAV z krótką próbką; mierzymy drogę bajtów, nie
+	// Materiał to nagłówek WAV z krótką próbką; mierzy się drogę bajtów, nie
 	// rozpoznawanie mowy.
 	bajty := nagranieWavProbne()
 

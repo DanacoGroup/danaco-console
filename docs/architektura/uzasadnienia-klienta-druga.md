@@ -2899,3 +2899,11 @@ Rozpoznanie sekcji napisanej przez rdzeń bez udziału Operatora ma granicę: zd
 przy złożeniu, w którym sekcja przyszła z rdzenia po raz pierwszy. Kolejne złożenie wysyła ją już
 z redakcji kreatora, pod tym samym identyfikatorem, bo wczytanie przejmuje sekcje potwierdzone —
 więc kryterium przestaje ją wskazywać i słusznie: Operator miał ją wtedy przed sobą w polach edycji.
+
+## budowa/klient-poprzedni/src/powloka/powloka-natywna.ts
+Interfejs Danaco Console działa w dwóch miejscach naraz: w oknie powłoki natywnej i w zwykłej
+przeglądarce. Każdy most do powłoki musi najpierw ustalić, czy powłoka w ogóle jest — inaczej
+wywołanie IPC rzuca wyjątkiem tam, gdzie żadnego IPC nie ma. Pytanie stoi w osobnym pliku, żeby most
+rdzenia nie zależał od mostu katalogów tylko po to, by je zadać; oba pytają tak samo. Brak powłoki nie
+jest błędem: sprawdzenie wykonane poza powłoką ma prawo rzucić wyjątkiem, a wtedy odpowiedzią jest
+zwyczajne „nie ma powłoki".

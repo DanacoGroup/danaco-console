@@ -101,8 +101,13 @@ Fundament stylizuje **tylko to, czego komponent nie może przejąć**: podłoże
 <link rel="stylesheet" href="../zasoby/zetony/zetony.css">     <!-- 2 -->
 <link rel="stylesheet" href="../zasoby/css/fundament.css">     <!-- 3 -->
 <link rel="stylesheet" href="../zasoby/css/komponenty.css">    <!-- 4 -->
-<style>/* 5 — style lokalne okna, prefiks lokalny */</style>
+<link rel="stylesheet" href="../zasoby/okna/<okno>.css">      <!-- 5 — arkusz okna: wyłącznie układ -->
 ```
+
+Wygląd okna stoi w jego arkuszu (`okna/<okno>.css`), wpiętym łączem. Plik okna
+**nie zawiera** bloku `<style>`, `<script>` bez `src` ani wstawek `style="…"`
+(por. `zasoby/ARCHITEKTURA.md`, zasada 4). Okno, które nie ma nic własnego poza
+znacznikiem, nie zakłada nawet tego arkusza.
 
 Kolejność jest identyczna w kontrakcie systemu projektowego (standard techniczny prototypów) i w opracowaniu o przekazaniu, ruchu i dostępności („import po żetonach, przed komponentami”). Nie jest kwestią gustu — każdy krok ma twarde uzasadnienie.
 
@@ -116,7 +121,7 @@ Kolejność jest identyczna w kontrakcie systemu projektowego (standard technicz
 | 4 | `komponenty.css` | biblioteka `.dn-*` | Wygrywa z fundamentem przy równej specyficzności, bo jest później. To jest zamierzone. |
 | 5 | `rama.css` | belka tytułowa i pasek narzędzi okna | Rama jest wspólna wszystkim oknom platformy i musi móc nadpisać ustawienia powłoki (kierunek układu, rozdział wysokości), dlatego stoi po bibliotece komponentów. |
 | 6 | `stanowisko.css` · `przedsionek.css` | układ wielookienny przestrzeni roboczej · widok wejściowy środowiska | Arkusze widoku: jeden opisuje pracę w module, drugi wejście w środowisko. Rozłączne — okno wczytuje ten, który go dotyczy. |
-| 7 | styl lokalny okna | kompozycja, siatka, wyjątki jednego okna | Ostatni, bo wyjątek zawsze musi mieć możliwość zwycięstwa bez podnoszenia specyficzności. |
+| 7 | arkusz okna (`okna/<okno>.css`) | kompozycja i siatka jednego okna, bez definicji komponentów | Ostatni, bo ustawia komponenty w siatce okna. **Nie** nadpisuje wartości z biblioteki — wartość, która ma się zmienić, dostaje własny wariant (klasę, atrybut `data-*`), nie regułę w arkuszu okna (por. `ARCHITEKTURA.md`, zasada 1). |
 
 ### 2.3. Dowód konieczności kolejności 3 → 4
 

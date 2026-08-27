@@ -1357,3 +1357,42 @@ migracji ich nie dotyka. Nie ma też osobnego przełącznika włączenia
 syntezy: pusty głos syntezy już znaczy brak syntezy, a osobna flaga
 byłaby drugą prawdą o tym samym fakcie. Czas jest liczbą — milisekundami
 epoki, tak jak w krokach migracji wcześniejszych tego obszaru.
+
+## budowa/server/internal/store/migracja_102_wersje_i_archiwum_eksperta.sql
+
+Historia wersji dostaje trwały nośnik, bo dostają go też komendy, które ją
+czytają i zapisują (`agent.version.list`, `agent.version.restore`,
+`agent.archive`, `agent.restore`, `agent.archive.list`). Bez tej tabeli
+historia żyła tylko w zdarzeniach `agent.changed` widzianych w toku sesji,
+a `agent.delete` kasował eksperta wraz z całą przeszłością.
+
+Wiersz `agent_wersja` niesie pełną treść tożsamości eksperta w danej wersji,
+a nie zapis zmiany — jest migawką, nie różnicą. Różnicę („co się zmieniło")
+wylicza warstwa `dane` przy odczycie, porównując sąsiednie migawki. Zapis
+różnicowy wymagałby odtwarzania stanu przez złożenie całej historii: jedna
+luka w łańcuchu i przywrócenie oddaje eksperta, którego nigdy nie było.
+
+Migawkę zakłada wyzwalacz bazy, nie kod aplikacji, ponieważ tożsamość
+eksperta zapisują trzy różne drogi (`Dodaj` i `Aktualizuj`
+w `dane/agenci_zapis.go` oraz `ZapiszTozsamosc` i `UstawTrybNakladki`
+repozytorium warstw). Historia oparta o jedną z tych dróg byłaby dziurawa,
+a każda nowa droga zapisu cicho by ją omijała; wyzwalacz widzi każdą z nich
+i każdą przyszłą.
+
+Tabela trzyma jeden wiersz na numer wersji: klucz na parze (agent_id, numer)
+wraz z `ON CONFLICT DO UPDATE` sprawia, że zapisy niepodnoszące licznika
+(imię własne, favikon, tryb nakładki) uzupełniają migawkę wersji bieżącej
+zamiast mnożyć wiersze, więc historia ma tyle pozycji, ile wersji widział
+Operator.
+
+Kolumna `autor` niesie napis, nie klucz obcy do konta: wyzwalacz nie ma
+dostępu do sesji ani do konta wywołującego, a produkt jest jednoosobowy.
+Wartość domyślna to `operator`; przywrócenie wpisuje w to miejsce `restore`,
+bo wtedy powód powstania wersji jest znany warstwie `dane`.
+
+Archiwum jest znacznikiem, podobnie jak kosz sesji. Osobna kolumna
+`zarchiwizowano_o`, a nie wartość `aktywny`, istnieje dlatego, że ekspert ma
+wrócić z archiwum dokładnie w tym stanie czynności, w którym go
+archiwizowano, a `aktywny` niesie już inne znaczenie (`enabledOnly`
+kontraktu). Definicja i historia zostają nietknięte — archiwizacja nie usuwa
+ani jednego wiersza.

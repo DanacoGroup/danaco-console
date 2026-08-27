@@ -1795,3 +1795,23 @@ przedrostkach źródła każda pozycja zaczyna się tak samo, więc szukanie od
 początku nazwy pełnej byłoby bezużyteczne. Stopnie są cztery, bo `ski` ma
 trafić w `skill-creator` wyżej niż w `template-skill`, a oba wyżej niż
 pozycję, która ma `ski` wyłącznie w opisie.
+
+## budowa/server/internal/core/adapter_centrum_powiadomien.go
+
+Centrum powiadomień jest jedynym mechanizmem powiadamiania platformy.
+Zdarzenie wchodzi do rejestru wyłącznie od strony rdzenia, funkcją `Zglos` —
+tylko rdzeń wie, że coś zaszło. Kontrakt niesie sam odczyt i zmianę stanu;
+komendy zgłaszającej nie ma, inaczej klient wpisywałby do rejestru zdarzenia,
+które nigdy nie zaszły.
+
+O tym, czy klasa zdarzenia w ogóle wchodzi do rejestru i czy idzie dalej na
+telefon albo listem, rozstrzygają nastawy sekcji „Powiadomienia" okna
+Ustawień. Adapter ich nie powtarza i nie zna ani jednej wartości domyślnej —
+czyta je tym samym rozstrzygaczem, którym idzie każde inne ustawienie
+platformy.
+
+Silnik `zdalne.Zglos` stał zbudowany i nieużywany; ten plik niesie jego
+jedyne wywołanie. Zdarzenie klasy dopuszczonej do kanału mobilnego wchodzi do
+rejestru centrum i zaraz potem do kolejki doręczeń. Niepowodzenie kolejki nie
+cofa zapisu w rejestrze — zdarzenie zaszło niezależnie od tego, czy telefon
+je odebrał, a rejestr centrum jest kanałem podstawowym.

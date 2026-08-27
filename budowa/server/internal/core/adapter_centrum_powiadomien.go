@@ -1,25 +1,7 @@
-// Odpowiedzialność pliku: centrum powiadomień — jedyny mechanizm powiadamiania
-// platformy (karta komponentu, rozdz. 11.6; encja, rozdz. 18.4).
-//
-// ── dwa wejścia, jedno wyjście ─────────────────────────────────────────────
-// Zdarzenie wchodzi do rejestru WYŁĄCZNIE od strony rdzenia (`Zglos`), bo tylko
-// rdzeń wie, że coś zaszło. Kontrakt niesie sam odczyt i zmianę stanu — komendy
-// zgłaszającej nie ma i mieć nie powinien, inaczej klient wpisywałby do rejestru
-// zdarzenia, które nigdy nie zaszły.
-//
-// ── nastawy rozstrzygają, nie kod ──────────────────────────────────────────
-// O tym, czy klasa zdarzenia w ogóle wchodzi do rejestru i czy idzie dalej na
-// telefon albo listem, rozstrzygają nastawy sekcji „Powiadomienia" okna Ustawień
-// (migracja 377). Adapter ich nie powtarza i nie zna ani jednej wartości
-// domyślnej — czyta je tym samym rozstrzygaczem, którym idzie każde inne
-// ustawienie platformy.
-//
-// ── kolejka doręczeń dostaje wołacza ───────────────────────────────────────
-// Silnik `zdalne.Zglos` stał zbudowany i nieużywany. Tu jest jego jedyne
-// wywołanie: zdarzenie klasy dopuszczonej do kanału `mobile` wchodzi do rejestru
-// centrum i zaraz potem do kolejki doręczeń. Niepowodzenie kolejki NIE cofa
-// zapisu w rejestrze — zdarzenie zaszło niezależnie od tego, czy telefon je
-// odebrał, a rejestr centrum jest kanałem podstawowym.
+// Odpowiedzialność pliku: centrum powiadomień jest jedynym mechanizmem
+// powiadamiania platformy — zdarzenie wchodzi do rejestru wyłącznie od strony
+// rdzenia, a doręczenie na telefon idzie kolejką doręczeń dopiero po zapisie
+// w rejestrze.
 package core
 
 import (
@@ -36,15 +18,21 @@ import (
 	"danacoconsole/shared"
 )
 
-// Kształt centrum ma jedno źródło prawdy — `shared/contract.json`.
+// Kształt centrum powiadomień ma jedno źródło prawdy — plik
+// `shared/contract.json`, z którego pochodzą typy żądania i odpowiedzi
+// rejestru poniżej.
 type (
-	// ZadanieRejestruPowiadomien jest żądaniem odczytu rejestru.
+	// ZadanieRejestruPowiadomien jest żądaniem odczytu rejestru centrum
+	// powiadomień, niosącym filtry klasy, wagi, stanu, środowiska i sesji.
 	ZadanieRejestruPowiadomien = shared.NotificationListRequest
-	// WynikRejestruPowiadomien jest odpowiedzią odczytu rejestru.
+	// WynikRejestruPowiadomien jest odpowiedzią odczytu rejestru centrum
+	// powiadomień, niosącą wykaz pozycji oraz liczbę pozycji nieprzeczytanych.
 	WynikRejestruPowiadomien = shared.NotificationListResponse
 )
 
-// CentrumPowiadomien obsługuje rodzinę `notification.*`.
+// CentrumPowiadomien obsługuje rodzinę komend `notification.*`: odczyt
+// wykazu, potwierdzenie odczytania, zamknięcie oraz odłożenie zdarzenia
+// w czasie.
 type CentrumPowiadomien interface {
 	Wykaz(ctx context.Context, z shared.NotificationListRequest) (shared.NotificationListResponse, error)
 	Odczytaj(ctx context.Context, z shared.NotificationAcknowledgeRequest) (shared.NotificationAcknowledgeResponse, error)
@@ -52,12 +40,10 @@ type CentrumPowiadomien interface {
 	Odloz(ctx context.Context, z shared.NotificationSnoozeRequest) (shared.NotificationSnoozeResponse, error)
 }
 
-// ZgloszenieCentrum to zdarzenie wnoszone do rejestru przez rdzeń.
-//
-// Waga nie jest polem dowolnym: taksonomia rozdz. 11.6 wiąże ją z klasą i to
-// wiązanie stoi w `wagaKlasy`. Pole zostaje w kształcie zgłoszenia wyłącznie po
-// to, żeby wołający mógł podnieść wagę zdarzenia szczególnego, nigdy po to, by
-// ją obniżyć poniżej klasy.
+// ZgloszenieCentrum to zdarzenie wnoszone do rejestru przez rdzeń. Pole Waga
+// nie jest dowolne: wiąże je z klasą funkcja `wagaKlasy`, a nadanie własnej
+// wagi pozwala jedynie podnieść wagę zdarzenia szczególnego, nigdy obniżyć
+// jej poniżej wagi klasy.
 type ZgloszenieCentrum struct {
 	Klasa         shared.NotificationClass
 	Waga          shared.NotificationWeight
@@ -106,9 +92,7 @@ func (a *adapterCentrumPowiadomien) Wykaz(ctx context.Context,
 	if a.rejestr == nil {
 		return shared.NotificationListResponse{Notifications: []shared.Notification{}}, nil
 	}
-	// Zdarzenia odłożone wracają przy odczycie, a nie budzikiem. Centrum czyta
-	// się wtedy, gdy Operator na nie patrzy; osobny takt dla rejestru, który i tak
-	// pyta się przy każdym otwarciu kolumny, byłby drugim zegarem bez odbiorcy.
+	// Zdarzenia odłożone wracają przy odczycie, a nie osobnym zegarem.
 	if _, err := a.rejestr.Przywroc(ctx, time.Now()); err != nil {
 		return shared.NotificationListResponse{}, err
 	}
@@ -192,8 +176,7 @@ func (a *adapterCentrumPowiadomien) Odloz(ctx context.Context,
 	if err != nil {
 		return shared.NotificationSnoozeResponse{}, err
 	}
-	// Odłożenie w przeszłość jest odczytaniem przebranym za odłożenie: zdarzenie
-	// wróciłoby przy najbliższym odczycie, czyli natychmiast.
+	// Odłożenie w przeszłość wróciłoby przy najbliższym odczycie, czyli natychmiast.
 	if int64(z.Until) <= time.Now().UnixMilli() {
 		return shared.NotificationSnoozeResponse{}, bladCentrum(shared.ErrorCodeValidationFailed,
 			"chwila powrotu leży w przeszłości — zdarzenie wróciłoby natychmiast; "+
@@ -215,11 +198,9 @@ func (a *adapterCentrumPowiadomien) Odloz(ctx context.Context,
 
 // ── wejście od strony rdzenia ────────────────────────────────────────────────
 
-// Zglos wnosi zdarzenie do rejestru centrum i — gdy nastawy na to pozwalają —
-// do kolejki doręczeń funkcji Mobile.
-//
-// Zwraca `false`, gdy klasa jest wygaszona nastawą: to nie jest usterka, tylko
-// wola Operatora, więc wołający nie ma czego zgłaszać jako błąd.
+// Zglos wnosi zdarzenie do rejestru centrum i, gdy nastawy na to pozwalają,
+// do kolejki doręczeń funkcji Mobile. Zwraca `false`, gdy klasa jest wygaszona
+// nastawą — to wola Operatora, nie usterka do zgłoszenia.
 func (a *adapterCentrumPowiadomien) Zglos(ctx context.Context, z ZgloszenieCentrum) (bool, error) {
 	if a.rejestr == nil || strings.TrimSpace(z.Tresc) == "" {
 		return false, nil
@@ -267,9 +248,7 @@ func (a *adapterCentrumPowiadomien) Zglos(ctx context.Context, z ZgloszenieCentr
 	}
 
 	if naTelefon {
-		// Jedyne wywołanie silnika kolejki doręczeń w całym rdzeniu. Niepowodzenie
-		// nie cofa zapisu w rejestrze: zdarzenie zaszło niezależnie od tego, czy
-		// telefon je odebrał.
+		// Jedyne wywołanie silnika kolejki doręczeń; niepowodzenie nie cofa zapisu.
 		_, _ = zdalne.Zglos(ctx, zdalne.Zgloszenie{
 			Tytul:     tytulZgloszenia(z),
 			Tresc:     z.Tresc,
@@ -282,7 +261,8 @@ func (a *adapterCentrumPowiadomien) Zglos(ctx context.Context, z ZgloszenieCentr
 	return true, nil
 }
 
-// rozglosZmiane niesie zmianę stanu do wszystkich połączeń Operatora.
+// rozglosZmiane niesie zmianę stanu zdarzenia do wszystkich połączeń
+// Operatora, wraz z nowym stanem i liczbą pozycji nieprzeczytanych w rejestrze.
 func (a *adapterCentrumPowiadomien) rozglosZmiane(identyfikatory []string,
 	stan shared.NotificationState, nowe int) {
 
@@ -316,7 +296,8 @@ func (a *adapterCentrumPowiadomien) klasaCzynna(ctx context.Context,
 	return !wygaszone(a.nastawy.Nastawa(ctx, konfig.KluczKlasyPowiadomien(string(klasa))))
 }
 
-// kanalDopuszczony mówi, czy klasa ma iść kanałem dodatkowym.
+// kanalDopuszczony mówi, czy zdarzenie danej klasy ma iść, obok rejestru
+// centrum, także kanałem dodatkowym wskazanym w nastawach Operatora.
 func (a *adapterCentrumPowiadomien) kanalDopuszczony(ctx context.Context,
 	klasa shared.NotificationClass, kanal string) bool {
 
@@ -339,20 +320,24 @@ func (a *adapterCentrumPowiadomien) kanalDopuszczony(ctx context.Context,
 	return false
 }
 
-// wygaszone rozpoznaje wyłącznie jawne „nie"; zapis pusty zostawia domyślną.
+// wygaszone rozpoznaje wyłącznie jawne „nie" w zapisie nastawy; zapis pusty
+// albo nierozpoznany zostawia w mocy wartość domyślną katalogu.
 func wygaszone(zapis string) bool {
 	wartosc, wskazana := wartoscWymoguLogowania(zapis)
 	return wskazana && !wartosc
 }
 
-// bladCentrum składa odmowę rodziny `notification.*`.
+// bladCentrum składa odmowę rodziny komend `notification.*`, wiążąc
+// przekazany kod błędu z powodem opisującym centrum powiadomień.
 func bladCentrum(kod protocol.KodBledu, powod string) error {
 	return protocol.JakoError(protocol.NowyBlad(kod, "centrum powiadomień: "+powod))
 }
 
 // ── przekłady ────────────────────────────────────────────────────────────────
 
-// powiadomienieKontraktu przekłada wiersz rejestru na kształt kontraktu.
+// powiadomienieKontraktu przekłada wiersz rejestru centrum na kształt
+// `shared.Notification` zgodny z kontraktem, z polami opcjonalnymi
+// ustawionymi warunkowo.
 func powiadomienieKontraktu(w dane.ZdarzenieCentrum) shared.Notification {
 	pozycja := shared.Notification{
 		Id:        strconv.FormatInt(w.ID, 10),
@@ -381,7 +366,8 @@ func powiadomienieKontraktu(w dane.ZdarzenieCentrum) shared.Notification {
 	return pozycja
 }
 
-// wagaZdarzenia bierze wagę ze zgłoszenia, a przy jej braku z taksonomii klasy.
+// wagaZdarzenia bierze wagę wprost ze zgłoszenia, gdy ją niesie, a przy jej
+// braku wyprowadza wagę z taksonomii przypisanej klasie zdarzenia.
 func wagaZdarzenia(z ZgloszenieCentrum) shared.NotificationWeight {
 	if z.Waga != "" {
 		return z.Waga
@@ -389,7 +375,8 @@ func wagaZdarzenia(z ZgloszenieCentrum) shared.NotificationWeight {
 	return wagaKlasy(z.Klasa)
 }
 
-// wagaKlasy wiąże klasę z wagą wprost z taksonomii rozdz. 11.6.
+// wagaKlasy wiąże klasę zdarzenia z wagą domyślną: decyzja i błąd niosą wagę
+// wymagającą decyzji, zakończenie i wzmianka wagę normalną, reszta informacyjną.
 func wagaKlasy(klasa shared.NotificationClass) shared.NotificationWeight {
 	switch klasa {
 	case shared.NotificationClassDecyzja, shared.NotificationClassBlad:
@@ -401,7 +388,9 @@ func wagaKlasy(klasa shared.NotificationClass) shared.NotificationWeight {
 	}
 }
 
-// tytulZgloszenia składa tytuł listu kolejki doręczeń — pierwsze zdanie treści.
+// tytulZgloszenia składa tytuł listu kolejki doręczeń z pierwszego zdania
+// treści zgłoszenia, a gdy zdanie jest zbyt długie, ucina je do
+// osiemdziesięciu znaków.
 func tytulZgloszenia(z ZgloszenieCentrum) string {
 	tresc := strings.TrimSpace(z.Tresc)
 	if kropka := strings.IndexAny(tresc, ".!?"); kropka > 0 && kropka < 80 {
@@ -413,7 +402,8 @@ func tytulZgloszenia(z ZgloszenieCentrum) string {
 	return tresc
 }
 
-// priorytetZgloszenia przekłada wagę centrum na priorytet kolejki doręczeń.
+// priorytetZgloszenia przekłada wagę centrum powiadomień na priorytet kolejki
+// doręczeń: waga wymagająca decyzji niesie priorytet pilny, reszta zwykły.
 func priorytetZgloszenia(waga shared.NotificationWeight) string {
 	if waga == shared.NotificationWeightWymagajacaDecyzji {
 		return "pilny"
@@ -421,7 +411,8 @@ func priorytetZgloszenia(waga shared.NotificationWeight) string {
 	return "zwykly"
 }
 
-// akcjeAlbatPuste oddaje wykaz pusty zamiast `null` — kolumna trzyma JSON.
+// akcjeAlbatPuste oddaje wykaz akcji pusty zamiast wartości `null`, ponieważ
+// kolumna rejestru trzyma zapis JSON i nie przyjmuje wartości pustej.
 func akcjeAlbatPuste(akcje []shared.NotificationAction) []shared.NotificationAction {
 	if akcje == nil {
 		return []shared.NotificationAction{}
@@ -429,7 +420,8 @@ func akcjeAlbatPuste(akcje []shared.NotificationAction) []shared.NotificationAct
 	return akcje
 }
 
-// napisyWyliczenia przenosi wykaz wartości wyliczenia na wykaz napisów.
+// napisyWyliczenia przenosi wykaz wartości typu wyliczeniowego na wykaz
+// napisów, pomijając po drodze wartości puste, do filtrowania zapytania rejestru.
 func napisyWyliczenia[T ~string](wartosci []T) []string {
 	napisy := make([]string, 0, len(wartosci))
 	for _, wartosc := range wartosci {
@@ -440,7 +432,8 @@ func napisyWyliczenia[T ~string](wartosci []T) []string {
 	return napisy
 }
 
-// numeryZdarzen przekłada identyfikatory kontraktu na numery wierszy.
+// numeryZdarzen przekłada wykaz identyfikatorów kontraktu na wykaz numerów
+// wierszy rejestru, odmawiając przy pierwszym identyfikatorze nierozpoznanym.
 func numeryZdarzen(identyfikatory []string) ([]int64, error) {
 	numery := make([]int64, 0, len(identyfikatory))
 	for _, identyfikator := range identyfikatory {
@@ -453,7 +446,8 @@ func numeryZdarzen(identyfikatory []string) ([]int64, error) {
 	return numery, nil
 }
 
-// numerZdarzenia rozpoznaje identyfikator zdarzenia.
+// numerZdarzenia rozpoznaje identyfikator zdarzenia zapisany jako liczba
+// dodatnia; identyfikator pusty, ujemny albo nieliczbowy kończy się odmową.
 func numerZdarzenia(identyfikator string) (int64, error) {
 	numer, err := strconv.ParseInt(strings.TrimSpace(identyfikator), 10, 64)
 	if err != nil || numer <= 0 {

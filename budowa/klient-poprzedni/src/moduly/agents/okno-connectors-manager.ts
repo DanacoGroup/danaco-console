@@ -22,7 +22,7 @@ import type { StanAgentow } from './stan-agentow';
 import { utworzWykazWtyczek, type WykazWtyczek } from './wykaz-wtyczek';
 import type { ZrodloZaplecza } from './zrodlo-zaplecza';
 
-/** Pięć komend katalogu rozszerzeń wymienionych w kolumnie „Komendy” wykazu. */
+/** Pięć komend katalogu rozszerzeń wymienionych w kolumnie „Komendy” wykazu: odczyt, instalacja, konfiguracja, przełączenie i usunięcie pozycji. */
 const KOMENDY_ROZSZERZEN = [
   'extension.list',
   'extension.install',
@@ -32,27 +32,9 @@ const KOMENDY_ROZSZERZEN = [
 ] as const;
 
 /**
- * Connectors Manager — okno zarządca modułu Agents.
- *
- * Lista serwerów MCP pochodzi z `access.point.list` ograniczonej do rodzaju
- * `mcpBridge` — z tego samego katalogu punktów dostępu, z którego rdzeń składa
- * plik `mcpServers` procesu modelu. Okno nie zakłada drugiego rejestru mostów
- * i nie zna ani jednego adresu maszyny: podaje kod punktu, resztę wie rdzeń.
- *
- * Katalogiem rozszerzeń zarządza osobne okno modułu
- * (`okno-katalog-rozszerzen.ts`, komplet pięciu komend `extension.*`); tutaj
- * stan tych komend bierze się na żywo z bytu pokrycia (`../pokrycie-komend`),
- * a samo okno robi `agent.connector.add` i wtyczki.
- *
- * Licznik narzędzi stoi także tutaj, bo serwer narzędzi czyta `Agent.skillIds`
- * i `Agent.connectorIds` jako jeden zbiór kodów
- * (`server/internal/narzedzia/ekspert_definicja.go` → `DefinicjaEksperta.Kody`)
- * — podłączenie konektora zmienia tę samą liczbę, którą pokazuje Agent Builder.
- *
- * Wtyczki stoją osobno od konektorów: wykaz wtyczek (`wykaz-wtyczek.ts`) ma
- * własny panel i własne komendy `agent.plugin.add` oraz `agent.plugin.remove`.
- * Konektor jest drogą do usługi (`--mcp-config`), wtyczka katalogiem rozszerzeń
- * powłoki (`--plugin-dir`).
+ * Connectors Manager to okno zarządca modułu Agents: łączy wykaz mostów protokołu MCP
+ * podłączonych do eksperta z licznikiem narzędzi oraz osobnym wykazem wtyczek tego samego
+ * eksperta.
  */
 export interface OknoConnectorsManager {
   element: HTMLElement;
@@ -63,7 +45,7 @@ export interface OknoConnectorsManager {
   zamknij(): void;
 }
 
-/** Zależności okna: baner zakresu przenosi ognisko do Permissions Center. */
+/** Zależności okna: baner zakresu przenosi ognisko do okna modułu Permissions Center, wskazanego przekazanym kodem okna. */
 export interface OpcjeKonektorow {
   /** Przenosi ognisko do okna modułu wskazanego jego kodem. */
   naOkno(kod: string): void;
@@ -77,15 +59,11 @@ export function utworzOknoConnectorsManager(
 ): OknoConnectorsManager {
   const okno: StanOkna = utworzStanOkna();
   const pokrycie: PokrycieKomend = utworzPokrycieKomend(kanal);
-  // Trzy komendy dopełniające okno — odczyt definicji, odłączenie i konfiguracja
-  // instancji — jadą źródłem zakresu eksperta, tym samym, którym jedzie
-  // Permissions Center.
+  // Trzy komendy dopełniające okno jadą źródłem zakresu eksperta, tym samym co Permissions Center.
   const zakres: ZrodloZakresuEksperta = utworzZrodloZakresuEksperta(kanal);
   /** Definicje konektorów wczytane komendą `agent.connector.list`. */
   let definicje = new Map<string, AgentConnector>();
-  // Wtyczka nie jest odmianą konektora. Wykaz stoi w tym oknie, bo dotyczy tej
-  // samej rzeczy — tego, co ekspert dostaje ponad model — ale jest osobnym
-  // panelem z osobnymi komendami `agent.plugin.*`.
+  // Wykaz wtyczek stoi w tym oknie, bo dotyczy tego samego eksperta, ale ma osobne komendy.
   const wtyczki: WykazWtyczek = utworzWykazWtyczek(stan);
   const licznik: LicznikNarzedzi = utworzLicznikNarzedzi();
 
@@ -119,11 +97,7 @@ export function utworzOknoConnectorsManager(
     'agent.connector.list, bo sam byt eksperta niesie wyłącznie identyfikatory. ' +
     'Przy wierszu stoi odłączenie i przełącznik czynności instancji.';
 
-  // Baner rozdziela dwie decyzje, które opracowanie każe trzymać osobno: TUTAJ
-  // rozstrzyga się, czy rozszerzenie jest podłączone do definicji eksperta;
-  // W JAKIM ZAKRESIE ekspert może je wykorzystać — w Permissions Center.
-  // Bez tego zdania przełącznik podłączenia czytałoby się jako nadanie
-  // pełnego dostępu, a to dwie różne rzeczy.
+  // Baner rozdziela dwie decyzje: podłączenie rozszerzenia do eksperta i zakres jego wykorzystania.
   const doUprawnien = document.createElement('div');
   doUprawnien.className = 'da-baner da-baner--informacja';
   doUprawnien.setAttribute('role', 'note');
@@ -139,9 +113,7 @@ export function utworzOknoConnectorsManager(
   przejscie.addEventListener('click', () => opcje.naOkno('permissions-center'));
   doUprawnien.append(trescBaneru, przejscie);
 
-  // Pokrycie katalogu rozszerzeń bierze się z bytu pokrycia zamiast z napisu na
-  // sztywno — zdanie mówi to, co rdzeń orzekł powitaniem, i przerysuje się samo,
-  // gdy rdzeń te komendy doda.
+  // Pokrycie katalogu rozszerzeń bierze się z bytu pokrycia, nie z napisu na sztywno.
   const rozszerzenia = pokrycie.wykaz(KOMENDY_ROZSZERZEN, 'da-granica da-rozszerzenia');
 
   okno.tresc.append(
@@ -191,8 +163,7 @@ export function utworzOknoConnectorsManager(
       return;
     }
     const konektor = wynik.wynik.connector;
-    // Formularz czyścimy w całości: konfiguracja zostawiona w polu poszłaby do
-    // rdzenia przy następnym podłączeniu, także przy innym ekspercie.
+    // Formularz czyścimy w całości: zostawiona konfiguracja poszłaby do rdzenia przy podłączeniu.
     nazwa.kontrolka.value = '';
     konfiguracja.kontrolka.value = '';
     await stan.odswiez();
@@ -241,18 +212,7 @@ export function utworzOknoConnectorsManager(
     okno.gotowe();
   }
 
-  /**
-   * Dociąganie definicji konektorów (`agent.connector.list`).
-   *
-   * Byt eksperta niesie same identyfikatory, więc bez tego odczytu wykaz zna
-   * liczbę konektorów i ani jednej nazwy. Odczyt idzie po narysowaniu wierszy
-   * i przerysowuje je, gdy wróci — wiersz z kodem widać od razu, a nie po
-   * odpowiedzi rdzenia.
-   *
-   * Nieudany odczyt nie czyści wykazu: wiersze zostają z kodami, a odmowa
-   * wraca w wierszu odpowiedzi. Zniknięcie konektorów z ekranu byłoby
-   * nieprawdą o definicji eksperta.
-   */
+  /** Dociąganie definicji konektorów. Byt eksperta niesie same identyfikatory, bez nazw i rodzajów. */
   async function wczytajDefinicje(idEksperta: string): Promise<void> {
     const wynik = await zakres.konektory(idEksperta);
     if (!wynik.udany || wynik.wynik === undefined) {
@@ -264,8 +224,7 @@ export function utworzOknoConnectorsManager(
     }
     const zebrane = new Map<string, AgentConnector>();
     for (const konektor of wynik.wynik.connectors) zebrane.set(konektor.id, konektor);
-    // Porównanie po liczbie i kluczach chroni przed pętlą: przerysowanie
-    // wywołuje odczyt, więc bez tego warunku okno pytałoby rdzeń bez końca.
+    // Porównanie po liczbie i kluczach chroni przed pętlą: przerysowanie wywołuje kolejny odczyt.
     const bezZmiany =
       zebrane.size === definicje.size &&
       [...zebrane.keys()].every((kod) => definicje.has(kod));
@@ -306,8 +265,7 @@ export function utworzOknoConnectorsManager(
       czynny,
     });
     if (!wynik.udany || wynik.wynik === undefined) {
-      // Przełącznik wraca do stanu rdzenia — przestawiony przez przeglądarkę
-      // nie ma prawa zostać świadectwem zapisu, którego nie było.
+      // Przełącznik wraca do stanu rdzenia — przestawiony przez przeglądarkę nie świadczy o zapisie.
       void wczytajDefinicje(ekspert.id);
       odswiez();
       odpowiedz.pokaz(
@@ -332,8 +290,7 @@ export function utworzOknoConnectorsManager(
     zamknij: () => pokrycie.zamknij(),
 
     async wczytaj() {
-      // Powitanie idzie raz na połączenie (pamięć podręczna bytu pokrycia po
-      // kanale), więc odczyt wykazu komend można zlecić swobodnie.
+      // Powitanie idzie raz na połączenie, więc odczyt wykazu komend można zlecić swobodnie.
       void pokrycie.odczytaj();
       okno.ladowanie('Odczyt katalogu mostów MCP w toku…');
       const wynik = await zaplecze.mosty();
@@ -355,12 +312,9 @@ export function utworzOknoConnectorsManager(
 }
 
 /**
- * Wiersz podłączonego konektora wraz z dwiema kontrolkami bez pokrycia.
- *
- * Wiersz niesie sam identyfikator, bo tyle oddaje byt eksperta. Odczyt definicji
- * i odłączenie mają komendy w kontrakcie, ale nie mają jeszcze uchwytu
- * w rdzeniu — obie kontrolki zostają więc widoczne i klikalne, i po naciśnięciu
- * nazywają stan komendy. Wiersz z samym napisem wyglądałby na skończony.
+ * Wiersz podłączonego konektora wraz z dwiema kontrolkami bez pokrycia w kontrakcie:
+ * odłączeniem i przełącznikiem czynności instancji, widocznymi jeszcze przed odczytem
+ * definicji.
  */
 function wiersz(
   kod: string,
@@ -370,9 +324,7 @@ function wiersz(
 ): HTMLElement {
   const nazwa = document.createElement('span');
   nazwa.className = 'da-konektory__kod';
-  // Sam identyfikator nie mówi Operatorowi nic. Nazwa i rodzaj pochodzą
-  // z `agent.connector.list`; dopóki odczyt nie wrócił, wiersz niesie kod —
-  // i mówi wprost, że definicji jeszcze nie ma, zamiast udawać pustkę.
+  // Sam identyfikator nic nie mówi Operatorowi; nazwa i rodzaj dochodzą osobnym odczytem definicji.
   nazwa.textContent =
     definicja === undefined ? `${kod} — definicja w odczycie…` : `${definicja.name} (${definicja.kind})`;
 

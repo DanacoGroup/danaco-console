@@ -2946,3 +2946,23 @@ brak, zamiast zostawiać Operatora przy kontrolce wygaszonej albo milczącej.
 Powodzenie wywołania oznacza wynik akcji, a nie samo przyjęcie zgłoszenia:
 akcję, której rdzeń nie wykonuje, rdzeń odrzuca wprost kodem `conflict` wraz
 z kodem komendy do wywołania, a panel pokazuje tę odmowę.
+
+## budowa/klient-poprzedni/src/moduly/agents/okno-connectors-manager.ts
+
+Wykaz mostów protokołu MCP pochodzi z tego samego katalogu punktów dostępu,
+z którego rdzeń składa plik konfiguracji procesu modelu. Okno nie zakłada
+drugiego rejestru mostów i nie zna ani jednego adresu maszyny: podaje kod
+punktu dostępu, resztę wie rdzeń.
+
+Katalogiem rozszerzeń zarządza osobne okno modułu, obsługujące komplet pięciu
+komend tego katalogu; tutaj stan tych komend bierze się na żywo z bytu
+pokrycia, a samo okno wykonuje wyłącznie podłączenie konektora i wtyczki.
+
+Licznik narzędzi stoi także w tym oknie, ponieważ serwer narzędzi czyta
+identyfikatory umiejętności i konektorów eksperta jako jeden zbiór kodów —
+podłączenie konektora zmienia tę samą liczbę, którą pokazuje Agent Builder.
+
+Wtyczki stoją osobno od konektorów: wykaz wtyczek ma własny panel i własne
+komendy podłączenia oraz usunięcia. Konektor jest drogą do usługi zewnętrznej,
+wtyczka katalogiem rozszerzeń powłoki — to dwa różne mechanizmy rozszerzania
+eksperta.

@@ -1,22 +1,6 @@
 // Odpowiedzialność pliku: NASTAWY WIDOKU okna pracy z dokumentem —
-// `studio.view.get` i `studio.view.set`.
-//
-// ── Dlaczego widok jest nastawą rdzenia, a nie stanem okna ───────────────────
-// Zasada Właściciela: gdzie da się zrobić dwojako i obie drogi mają sens, wybór
-// należy do Operatora i jest JAWNYM, ODWRACALNYM ustawieniem — nie
-// rozstrzygnięciem wykonawcy zapisanym w kodzie. Ustawienie żyjące wyłącznie
-// w kliencie przepada przy zamknięciu okna, więc „przełączenie trybu niczego nie
-// gubi" nie byłoby prawdą po ponownym otwarciu Studia.
-//
-// ── Dlaczego jedna tabela na okno i na dokument ──────────────────────────────
-// Skala widoku jest pamiętana PRZY DOKUMENCIE (Właściciel wymienia to wprost),
-// a tryb powierzchni — przy oknie. Wiersz bez dokumentu jest nastawą okna,
-// wiersz z dokumentem nastawą tego dokumentu; dwie tabele znaczyłyby dwa odczyty
-// przy każdym otwarciu okna i pytanie, która wygrywa.
-//
-// Ten sam wiersz niesie nastawy autozapisu (`adapter_modul_studio_autozapis.go`)
-// — inne kolumny, inne polecenie zapisu. Jedno polecenie na obie grupy kazałoby
-// widokowi przepisywać nastawy autozapisu, których nie zmieniał.
+// studio.view.get i studio.view.set, jako jawne, odwracalne ustawienie
+// Operatora.
 package core
 
 import (
@@ -28,7 +12,8 @@ import (
 	"danacoconsole/shared"
 )
 
-// NastawyWidoku obsługuje `studio.view.get`.
+// NastawyWidoku obsługuje studio.view.get, oddając stan zapisany w bazie
+// dla pary okno-dokument, bez odczytu z klienta.
 func (a *adapterStudia) NastawyWidoku(ctx context.Context,
 	z shared.StudioViewGetRequest) (shared.StudioViewGetResponse, error) {
 
@@ -41,12 +26,8 @@ func (a *adapterStudia) NastawyWidoku(ctx context.Context,
 	}, nil
 }
 
-// UstawWidok obsługuje `studio.view.set`.
-//
-// Pola pominięte zostają w brzmieniu zastanym: żądanie przestawiające samą skalę
-// nie ma zwijać linijek. Wartości spoza wyliczeń kontraktu wracają odmową
-// nazywającą, co wolno — tabela i tak ich nie przyjmie, a odmowa nazwana mówi to
-// przed zapisem, nie po nim.
+// UstawWidok obsługuje studio.view.set; pola pominięte zostają w brzmieniu
+// zastanym, żądanie nie ma zwijać linijek niepytanych.
 func (a *adapterStudia) UstawWidok(ctx context.Context,
 	z shared.StudioViewSetRequest) (shared.StudioViewSetResponse, error) {
 
@@ -187,11 +168,8 @@ func (a *adapterStudia) UstawWidok(ctx context.Context,
 
 // ── Wspólne ─────────────────────────────────────────────────────────────────
 
-// widokNastawa odczytuje kolumny widoku wiersza nastaw dla pary okno-dokument
-// albo dla samego okna, zakładając wiersz, gdy Operator nigdy nastaw nie ruszał.
-//
-// Wiersz zakłada `NastawaPracy` — jedna droga zakładania dla obu grup kolumn.
-// Druga rozjechałaby się przy pierwszej zmianie wartości domyślnej.
+// widokNastawa odczytuje kolumny widoku wiersza nastaw dla pary
+// okno-dokument albo dla samego okna, zakładając wiersz, gdy trzeba.
 func (a *adapterStudia) widokNastawa(ctx context.Context, oknoZadania,
 	dokumentZadania *string) (dane.NastawaWidokuStudia, dane.DokumentStudia, error) {
 
@@ -228,7 +206,8 @@ func (a *adapterStudia) widokNastawa(ctx context.Context, oknoZadania,
 	return nastawa, dokument, nil
 }
 
-// widokNazwy przekłada wykaz wartości wyliczenia na napisy do treści odmowy.
+// widokNazwy przekłada wykaz wartości wyliczenia na napisy do treści
+// odmowy, czytelne dla Operatora czytającego komunikat.
 func widokNazwy[T ~string](wartosci []T) []string {
 	nazwy := make([]string, 0, len(wartosci))
 	for _, wartosc := range wartosci {
@@ -237,7 +216,8 @@ func widokNazwy[T ~string](wartosci []T) []string {
 	return nazwy
 }
 
-// widokSprawdzWartosc odbija wartość spoza wyliczenia kontraktu.
+// widokSprawdzWartosc odbija wartość spoza wyliczenia kontraktu, zanim
+// trafi do zapisu w tabeli nastaw widoku.
 func widokSprawdzWartosc(nazwaPola, wartosc string, dozwolone []string) error {
 	for _, dozwolona := range dozwolone {
 		if wartosc == dozwolona {
@@ -248,7 +228,8 @@ func widokSprawdzWartosc(nazwaPola, wartosc string, dozwolone []string) error {
 		strings.Join(dozwolone, ", "))
 }
 
-// widokZlozNastawy składa nastawy widoku kontraktu z wiersza warstwy danych.
+// widokZlozNastawy składa nastawy widoku kontraktu z wiersza warstwy
+// danych, w kształcie oczekiwanym przez odpowiedź.
 func widokZlozNastawy(wiersz dane.NastawaWidokuStudia,
 	dokument dane.DokumentStudia) shared.StudioViewSettings {
 

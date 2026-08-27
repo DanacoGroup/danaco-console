@@ -2144,3 +2144,9 @@ przy zakładaniu kolejki, więc jego znacznik nigdy nie opuszcza klienta.
 Odczyt i zapis rejestru kont są rozdzielone celowo. Stan rejestru pilnuje tego, co widok wie o kontach, a moduł zapisów pilnuje tego, co dzieje się po zapisie: które wiersze wolno nanieść wprost z odpowiedzi rdzenia, a kiedy trzeba przeczytać wykaz od nowa. Rozdział pozwala zmienić regułę uzgodnienia bez dotykania ścieżki odczytu.
 
 Komenda wskazująca konto domyślne przestawia dwa wiersze naraz, a odpowiedź rdzenia niesie tylko jeden z nich. Dlatego po jej powodzeniu wykaz zostaje przeczytany ponownie: bez tego konto tracące oznaczenie zostałoby w widoku jako drugie konto domyślne swojego rodzaju.
+
+## budowa/klient-poprzedni/src/aplikacja/menu-aplikacji.ts
+
+Menu nosi pasek Centrum dowodzenia oraz pasek Mission Control. Pozycje pochodzą z wykazu pozycji ustawień, czyli z tego samego wykazu, z którego powstaje listwa ustawień strony głównej, ponieważ drugi wykaz rozjechałby się z pierwszym przy dopisaniu pozycji. Skutek naciśnięcia również jest wspólny i rozstrzyga go wykaz skutków ustawień, więc samo menu nie wie, co stanie się po wyborze pozycji.
+
+Rozwijanie wnosi komponent menu rozwijanego z katalogu okien równoległych wraz z obsługą klawiatury, znacznikiem zapowiadającym menu podręczne, zamykaniem po wskazaniu poza obszarem oraz warstwą przybornika. Menu nie zastępuje listwy strony głównej, lecz daje te same pozycje tam, gdzie listwy nie ma: na Mission Control oraz po zwinięciu strony w dół.

@@ -304,3 +304,34 @@ a okno musi pokazać oba.
 Sprawdzian kształtu pilnuje pola obowiązkowego odpowiedzi: rdzeń, który oddał
 kopertę powodzenia bez treści, jest dla okna odmową, inaczej widok rysowałby
 pustkę i twierdził, że to wynik.
+
+## budowa/klient-poprzedni/src/moduly/automations/okno-queue-manager.ts
+
+Okno nie ma własnego silnika kolejek ani własnego cyklu życia zlecenia: jeden
+silnik obsługuje pętlę sesyjną i MultitaskingAI, a okno posuwa kolejkę
+komendami kontraktu i pokazuje to, co rdzeń o niej oddaje.
+
+Czego kontrakt nie oddaje, tego okno nie zmyśla. Byt `Queue` niesie stan,
+licznik obiegów, okna, politykę, liczbę zleceń oczekujących i powiązaną
+automatykę, lecz nie niesie samych zleceń — te oddaje osobna komenda wykazu
+zleceń. Dopóki rdzeń nie ma jej uchwytu, przegląd pokazuje kolejkę jako
+całość, a identyfikator zlecenia wpisuje Operator; okno mówi to wprost,
+zamiast pokazywać pustą listę udającą przegląd.
+
+O tym, czy rdzeń ma uchwyt danej komendy, okno samo nie orzeka i nie
+przepisuje stanu kontraktu do zdań: powód pozycji paska bierze się z wykazu
+komend oddanego przez rdzeń (`pokrycie-komend.ts`), a wykaz działań silnika
+z wyliczenia kontraktu. Oba przestają być prawdziwe same, bez edycji tego
+pliku.
+
+Zdanie potwierdzenia powstaje z oddanej kolejki, nie z etykiety przycisku:
+etykieta mówi o żądaniu, a rdzeń może oddać kolejkę w innym stanie, niż
+żądanie zapowiadało.
+
+Odpowiedź zasilenia kolejki krokami niesie stan kolejki i liczbę zleceń
+oczekujących, lecz nie mówi, które zlecenia w niej stoją — zdanie po zasileniu
+mówi więc to, co odpowiedź naprawdę niesie, i nie orzeka, że kroki weszły.
+
+Priorytet zlecenia jedzie przy działaniu „wstrzymaj”, bo jest polem żądania,
+nie osobnym działaniem silnika, a wstrzymanie jest działaniem odwracalnym
+jednym naciśnięciem „Wznów”.

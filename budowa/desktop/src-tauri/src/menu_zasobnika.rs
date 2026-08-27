@@ -2,6 +2,10 @@
 //!
 //! Pozycja nieznana nie przerywa pracy powłoki — zostaje pominięta
 //! (nieznana nazwa nie zrywa kanału).
+//!
+//! Czego w tym menu nie ma: zatrzymania rdzenia. Rdzeń stoi na serwerze
+//! wdrożenia, powłoka go nie postawiła i nie ma czym go wygasić — pozycja
+//! obiecywałaby władzę, której powłoka nie ma.
 
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
@@ -32,9 +36,6 @@ pub fn obsluz(aplikacja: &AppHandle, identyfikator: &str) {
 }
 
 /// Pokazuje opis stanu rdzenia w natywnym oknie komunikatu.
-///
-/// Zatrzymania rdzenia w tym menu nie ma: rdzeń stoi na serwerze wdrożenia,
-/// powłoka go nie postawiła i nie ma czym go wygasić.
 fn pokaz_stan(aplikacja: &AppHandle) {
     let ustawienia = aplikacja.state::<Ustawienia>();
     let stan = rdzen::opisz(&ustawienia);

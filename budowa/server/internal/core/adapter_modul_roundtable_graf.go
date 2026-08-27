@@ -1,11 +1,4 @@
-// Odpowiedzialność pliku: graf argumentów — `roundtable.argument.list`,
-// `roundtable.argument.pin` i `roundtable.argument.export` (okno Argument Map
-// & Analysis).
-//
-// Graf czyta się z bazy, a nie liczy przy odczycie. Powód stoi przy migracji
-// 192: oznaczenie węzła jako kluczowego stawia Operator, a oznaczenie na węźle
-// wyliczanym w locie znikałoby razem z jego identyfikatorem przy następnym
-// otwarciu panelu.
+// Plik obsługuje graf argumentów: `roundtable.argument.list`, `roundtable.argument.pin` i `roundtable.argument.export` dla okna Argument Map & Analysis. Graf czyta się z bazy, a nie liczy przy odczycie.
 package core
 
 import (
@@ -17,7 +10,7 @@ import (
 	"danacoconsole/shared"
 )
 
-// Graf oddaje graf argumentów okna albo wybranej tury.
+// Graf oddaje graf argumentów okna albo wybranej tury, wraz z rozpoznanym punktem spornym całej dyskusji.
 func (a *adapterDebaty) Graf(ctx context.Context,
 	z shared.RoundtableArgumentListRequest) (shared.RoundtableArgumentListResponse, error) {
 
@@ -109,7 +102,7 @@ func (a *adapterDebaty) zlozGraf(ctx context.Context, okno, turaKod string,
 	return graf, nil
 }
 
-// Przypnij oznacza węzeł jako argument kluczowy albo zdejmuje oznaczenie.
+// Przypnij oznacza węzeł jako argument kluczowy grafu na żądanie Operatora albo zdejmuje takie oznaczenie.
 func (a *adapterDebaty) Przypnij(ctx context.Context,
 	z shared.RoundtableArgumentPinRequest) (shared.RoundtableArgumentPinResponse, error) {
 
@@ -141,12 +134,7 @@ func (a *adapterDebaty) Przypnij(ctx context.Context,
 	return shared.RoundtableArgumentPinResponse{Node: wezelKontraktu(po, nil)}, nil
 }
 
-// punktSpornyGrafu wskazuje węzeł, którego rozstrzygnięcie zmienia najwięcej.
-//
-// Miarą jest liczba wymierzonych w węzeł podważeń wraz z poparciem, jakie sam
-// zebrał: węzeł, który wielu popiera i wielu atakuje, jest osią sporu. Węzeł
-// bez ani jednego podważenia punktem spornym nie jest — nikt się z nim nie
-// spiera — więc graf bez podważeń oddaje brak, a nie pierwszy węzeł z brzegu.
+// punktSpornyGrafu wskazuje węzeł, którego rozstrzygnięcie zmienia najwięcej. Miarą jest liczba wymierzonych w węzeł podważeń wraz z poparciem, jakie sam zebrał. Węzeł bez podważeń punktem spornym nie jest.
 func punktSpornyGrafu(okno string, wezly []dane.WezelDebaty,
 	krawedzie []dane.KrawedzDebaty) *shared.RoundtableCrux {
 
@@ -181,7 +169,7 @@ func punktSpornyGrafu(okno string, wezly []dane.WezelDebaty,
 	}
 }
 
-// wezelKontraktu przekłada węzeł grafu na byt kontraktu.
+// wezelKontraktu przekłada węzeł grafu odczytany z bazy danych na byt kontraktu odpowiedzi okna panelu.
 func wezelKontraktu(w dane.WezelDebaty,
 	bledy []shared.RoundtableFallacyMark) shared.RoundtableArgumentNode {
 

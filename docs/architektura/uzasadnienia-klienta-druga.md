@@ -3076,3 +3076,15 @@ czym Research różni się świadomie: wskaźnik odczytu i chowanie treści na c
 kasuje treści, tylko ją przesłania — nieudane odświeżenie zostawia to, co już było widoczne,
 a powrót do stanu gotowego odsłania treść nietkniętą. Ładowanie niesie wskaźnik obok opisu, nigdy
 samodzielnie na pełnym ekranie.
+
+## budowa/klient-poprzedni/src/strona-glowna/strefa-archiwum.ts
+Wykaz sesji archiwum idzie z odpytania listy archiwum, a przywrócenie z osobnej komendy; obie wykonuje
+wpięcie, ten plik zna wyłącznie ich wynik. Strefa startuje zwinięta i odpytuje rdzeń dopiero przy rozwinięciu,
+a potem przy każdym kolejnym — archiwum bywa długie, nie dotyczy pracy bieżącej, a sesja mogła w międzyczasie
+wrócić albo dojść. Liczba wszystkich sesji archiwum przychodzi obok strony wyników, więc nagłówek pokazuje
+obie liczby, gdy się różnią; sama długość strony nie jest liczbą sesji w archiwum. Odpytywanie, archiwum
+puste i odmowa rdzenia mają osobne napisy — wspólny zacierałby różnicę między brakiem danych a brakiem
+odpowiedzi.
+
+## budowa/klient/src/protokol/wywolanie.ts
+Wywołanie nie jest drugą drogą do rdzenia: każde idzie tym samym wysłaniem kanału, z nazwą komendy wziętą wyłącznie ze stałych kontraktu. Gdy rdzeń nie odpowie w ogóle, bo połączenie padło w trakcie, obietnica pozostaje nierozstrzygnięta: kontrakt nie przewiduje limitu czasu, a rozłączenie klienta nie kończy pracy rdzenia nad poleceniem.

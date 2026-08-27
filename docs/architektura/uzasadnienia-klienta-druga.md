@@ -4188,3 +4188,6 @@ operator — rozróżnienie stoi na osobnej komendzie nadania etykiety. Zapytani
 przepuszcza wszystko, a wersja bez zapisanego autora przechodzi wyłącznie przy zapytaniu pustym,
 bo przy szukaniu konkretnego autora nie wolno jej ani oddać, ani o niej zapomnieć, dlatego okno
 pokazuje liczbę zawężenia obok wykazu.
+
+## budowa/klient-poprzedni/src/okno-komunikacji/profile-tresc.ts
+Powierzchnia tekstowa modułu Studio jest jedna: okno pracy z dokumentem niesie treść, podgląd wydania i różnicę jako tryby jednego widoku, zamiast osobnego edytora, kanwy tekstowej, okna podglądu i panelu różnic — pozostałe trzy okna operacyjne modułu powierzchni tekstowej nie mają.

@@ -280,3 +280,15 @@ przy okazji kursywy, której operator nie wskazał. Czynność bez ani jednego w
 odmawiana, a nie wysyłana jako żądanie, które niczego nie zmieni. Nastawa poziomu listy wymaga
 wskazania listy zastanej — bez niej okno nazywa brakujący element zamiast wysyłać żądanie z pustym
 identyfikatorem.
+
+## budowa/klient-poprzedni/src/moduly/studio/szablon-panel.ts
+
+Zapis szablonu z bieżącego dokumentu przenosi domyślnie blokady fragmentów
+wzorcowych — pole `includeLocks` bez wartości znaczy „tak", ponieważ fragmenty
+wzorcowe pisma mają pozostać wzorcowe także w dokumentach założonych z tego
+szablonu.
+
+Szablonu fabrycznego nie da się usunąć: rdzeń odmawia i zwraca powód odmowy
+w polu `deleted`. Panel zostawia pozycję w wykazie, ponieważ szablon nadal
+istnieje — zdjęcie jej z widoku przy jednoczesnym powrocie po kolejnym odczycie
+byłoby pokazaniem skutku, który się nie wydarzył.

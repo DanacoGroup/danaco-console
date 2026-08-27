@@ -14,14 +14,7 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
   .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .dv-drzewo { padding:var(--dn-od-2); font-size:var(--dn-fs-sm); font-family:var(--dn-ff-mono); }
   .dv-drzewo .wpis { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) var(--dn-od-2); border-radius:var(--dn-r-sm); }
   .dv-drzewo .wpis[aria-current="true"] { background:var(--dn-powierzchnia-2); }
@@ -363,8 +356,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -384,15 +377,15 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">danaco-core-crs</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">danaco-core-crs</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Silnik wykonawczy — rozgałęzienie</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">API doręczeń — refaktoryzacja</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Pokrycie testami — moduł kolejek</span></button>
-        <div class="szyna-grupa">danaco-console-ui</div>
+        <div class="dn-etyk-mono">danaco-console-ui</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Komponent szyny — przegląd zmian</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Migracja tokenów motywu</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Repozytoria · Gałęzie · Worktree · Konteksty · Logi budowania</span></button>
       </div>
     </nav>
@@ -609,10 +602,10 @@ LIMIT_S = <span class="pt-skl-liczba">60</span>
         <section class="sta-okno" id="panel-git" data-nazwa="Git Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="9" r="3"/><path d="M18 12a6 6 0 0 1-6 6H6M6 9v6"/></svg><b>Git Panel</b></span><span class="sta-okno-znacznik">feature/kolejka-ponowien</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
           <div class="sta-okno-tresc" style="overflow:auto">
-            <div class="panel-lista">
+            <div class="dn-wykaz-modulu">
               <div class="pt-etykieta">Zmiany do zatwierdzenia (2)</div>
-              <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> silnik/kolejka.py <span class="meta">+34 −8</span></div>
-              <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> silnik/tests/test_kolejka.py <span class="meta">+21 −0</span></div>
+              <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> silnik/kolejka.py <span class="dn-meta">+34 −8</span></div>
+              <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> silnik/tests/test_kolejka.py <span class="dn-meta">+21 −0</span></div>
             </div>
             <div class="pt-edytor" style="max-height:220px;overflow:auto;border-top:1px solid var(--dn-obrys-subtelny)">
               <div class="pt-edytor-numery">7
@@ -626,10 +619,10 @@ LIMIT_S = <span class="pt-skl-liczba">60</span>
 <span class="pt-wiersz-dodany">+    return baza + jitter</span>
      <span class="pt-skl-komentarz"># koniec funkcji</span></div>
             </div>
-            <div class="panel-lista" style="border-top:1px solid var(--dn-obrys-subtelny)">
+            <div class="dn-wykaz-modulu" style="border-top:1px solid var(--dn-obrys-subtelny)">
               <label class="pt-etykieta">Opis commitu <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wygeneruj przez AI</button></label>
               <div class="sta-chip" style="white-space:normal">feat(kolejka): wykładniczy backoff z jitterem przy ponawianiu zadań</div>
-              <div class="panel-wiersz"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź (commit)</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wypchnij (push)</button></div>
+              <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź (commit)</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wypchnij (push)</button></div>
             </div>
           </div>
         </section>
@@ -649,23 +642,23 @@ LIMIT_S = <span class="pt-skl-liczba">60</span>
         <!-- Plan -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">3 / 4</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: backoff w kolejce ponowień</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Funkcja oblicz_opoznienie <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Podłączenie do ponow() <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Testy jednostkowe <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Commit + push <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Funkcja oblicz_opoznienie <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Podłączenie do ponow() <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Testy jednostkowe <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Commit + push <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Zadania w tle (ukryte) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>ponowna-analiza-pokrycia</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>ponowna-analiza-pokrycia</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">2 agentów · 214 tys. tok. · 3 m 41 s</div>
             <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> lint całego pakietu <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> lint całego pakietu <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
@@ -681,18 +674,18 @@ LIMIT_S = <span class="pt-skl-liczba">60</span>
         <!-- Kolejka (ukryta) -->
         <section class="sta-okno" id="panel-kolejka" data-nazwa="Kolejka" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><b>Kolejka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">Uruchom pełny zestaw testów <span class="dn-plakietka dn-plakietka--sygnal meta">AKTYWNE</span></div>
-            <div class="panel-wiersz">Wygeneruj opis commitu <span class="meta">po nr 1</span></div>
-            <div class="panel-wiersz">Aktualizacja README <span class="dn-plakietka dn-plakietka--ostrzezenie meta">retry 1/3</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">Uruchom pełny zestaw testów <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">AKTYWNE</span></div>
+            <div class="dn-wykaz-modulu-poz">Wygeneruj opis commitu <span class="dn-meta">po nr 1</span></div>
+            <div class="dn-wykaz-modulu-poz">Aktualizacja README <span class="dn-plakietka dn-plakietka--ostrzezenie dn-na-koniec">retry 1/3</span></div>
           </div>
         </section>
 
         <!-- Subagenci (ukryty) -->
         <section class="sta-okno" id="panel-subagenci" data-nazwa="Subagenci i aktywność" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> generator-testów — przypadki brzegowe <span class="meta">1 m 12 s</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> generator-testów — przypadki brzegowe <span class="dn-meta">1 m 12 s</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Edit · silnik/kolejka.py — 09:42<br>Bash · pytest silnik/tests — 09:41<br>Read · pyproject.toml — 09:39</div>
           </div>
         </section>
@@ -700,10 +693,10 @@ LIMIT_S = <span class="pt-skl-liczba">60</span>
         <!-- Artefakty (ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">raport_pokrycia.html <span class="meta">44 kB</span></div>
-            <div class="panel-wiersz">roznica_kolejki.diff <span class="meta">3,1 kB</span></div>
-            <div class="panel-wiersz">opis_commitu.txt <span class="meta">0,4 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">raport_pokrycia.html <span class="dn-meta">44 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">roznica_kolejki.diff <span class="dn-meta">3,1 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">opis_commitu.txt <span class="dn-meta">0,4 kB</span></div>
           </div>
         </section>
 

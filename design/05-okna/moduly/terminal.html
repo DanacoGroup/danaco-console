@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 
   /* Terminal Tabs — okno wiodące */
   .tt-korpus { display:grid; grid-template-rows:auto auto minmax(0,1fr) auto; min-height:0; }
@@ -391,8 +384,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa sesja</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -412,16 +405,16 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">danaco-console/api</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">danaco-console/api</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Powłoki — PowerShell · Bash · Python</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Budowanie usług</span></button>
-        <div class="szyna-grupa">Hosty zdalne</div>
+        <div class="dn-etyk-mono">Hosty zdalne</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie build-01 (SSH)</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie build-02 (SSH)</span></button>
-        <div class="szyna-grupa">Testy</div>
+        <div class="dn-etyk-mono">Testy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zestaw testów — regresja</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sesje · Profile powłok · Procesy · Punkty izolacji</span></button>
       </div>
     </nav>
@@ -693,17 +686,17 @@
               <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Grupuj: karta ▾</button>
             </div>
             <div class="pm-wiersz">
-              <div class="pm-glowny"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span><span class="pm-cmd">npm run dev</span><span class="dn-plakietka meta" style="margin-left:auto">Operator</span></div>
+              <div class="pm-glowny"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span><span class="pm-cmd">npm run dev</span><span class="dn-plakietka dn-na-koniec" style="margin-left:auto">Operator</span></div>
               <div class="pm-meta"><span>Bash</span><span>00:03:12</span><span class="spark">▂▃▅▂</span><span>RAM 210 MB</span></div>
               <div style="display:flex;gap:var(--dn-od-1);margin-top:4px"><button class="dn-btn dn-btn--niebezpieczny dn-btn--sm" type="button" data-komunikat="Modal potwierdzenia sygnalizuje wagę; po potwierdzeniu proces kończy się natychmiast." data-komunikat-tytul="Zakończ proces">Zakończ</button><button class="dn-btn-ikona" type="button" aria-label="Więcej"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></div>
             </div>
             <div class="pm-wiersz">
-              <div class="pm-glowny"><span class="pt-tetno" aria-hidden="true"></span><span class="pm-cmd">pytest -k test_api</span><span class="dn-plakietka dn-plakietka--rola meta" style="margin-left:auto">AI</span></div>
+              <div class="pm-glowny"><span class="pt-tetno" aria-hidden="true"></span><span class="pm-cmd">pytest -k test_api</span><span class="dn-plakietka dn-plakietka--rola dn-na-koniec" style="margin-left:auto">AI</span></div>
               <div class="pm-meta"><span>Python</span><span>00:00:41</span><span class="spark">▁▂▇▃</span><span>RAM 96 MB</span></div>
               <div style="display:flex;gap:var(--dn-od-1);margin-top:4px"><button class="dn-btn dn-btn--niebezpieczny dn-btn--sm" type="button" data-komunikat="Proces uruchomiony przez AI. Potwierdzenie sygnalizuje nieodwracalność, nie blokuje." data-komunikat-tytul="Zakończ proces">Zakończ</button></div>
             </div>
             <div class="pm-wiersz">
-              <div class="pm-glowny"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span><span class="pm-cmd">git fetch --all</span><span class="dn-plakietka meta" style="margin-left:auto">Operator</span></div>
+              <div class="pm-glowny"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span><span class="pm-cmd">git fetch --all</span><span class="dn-plakietka dn-na-koniec" style="margin-left:auto">Operator</span></div>
               <div class="pm-meta"><span>PowerShell</span><span>0,8 s</span><span>kod wyjścia: 0</span></div>
               <div style="display:flex;gap:var(--dn-od-1);margin-top:4px"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Uruchom ponownie</button></div>
             </div>
@@ -714,21 +707,21 @@
         <!-- Plan (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: regresja przed wdrożeniem</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Build usług <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Zestaw testów API <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Wdrożenie na build-01 <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Build usług <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Zestaw testów API <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Wdrożenie na build-01 <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Pliki (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">logs/api.log <span class="meta">3,4 MB</span></div>
-            <div class="panel-wiersz">package.json <span class="meta">2,1 kB</span></div>
-            <div class="panel-wiersz">tests/test_api.py <span class="meta">8,7 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">logs/api.log <span class="dn-meta">3,4 MB</span></div>
+            <div class="dn-wykaz-modulu-poz">package.json <span class="dn-meta">2,1 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">tests/test_api.py <span class="dn-meta">8,7 kB</span></div>
           </div>
         </section>
 

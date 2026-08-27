@@ -2822,3 +2822,74 @@ button.dn-link {
   outline-offset: 2px;
 }
 .dn-spis-tresci > ol > li > a { color: var(--dn-tekst); font-weight: var(--dn-fw-polgruba); }
+
+/* ==========================================================================
+   SZYNA MODUŁU — boczny wykaz wewnątrz płótna modułu
+   --------------------------------------------------------------------------
+   Nie mylić z `.dn-szyna-nawigacji` z `rama.css`: tamta jest pasem ikon ramy
+   aplikacji, szerokim na 40 px i atramentowym. Ta stoi wewnątrz modułu, niesie
+   nazwy i grupy, i odcina się od płótna barwą panelu z kreską po prawej.
+
+   Składnik powstał z wyniesienia: te same siedem reguł stało dosłownie
+   w blokach <style> czternastu okien modułów. Grupa w wykazie nie dostaje
+   własnego przepisu — bierze `.dn-etyk-mono`, bo to dokładnie ta rola:
+   zapowiedź grupy kontrolek. Nie `.dn-panel-grupa`: tamta stoi w `panel-sesji.css`,
+   którego okna modułów nie wczytują. Wcześniejsza kopia okienna miała 10 px poza
+   skalą pisma i krój szeryfowy; przepis biblioteki daje 12 px w mono.
+   ========================================================================== */
+
+.dn-szyna-modulu {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--dn-panel);
+  border-right: 1px solid var(--dn-obrys);
+}
+
+.dn-szyna-modulu-glowa {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  border-bottom: 1px solid var(--dn-obrys-subtelny);
+}
+
+/* Przewija się sam wykaz, nie cała szyna: głowa z wyszukiwaniem ma stać. */
+.dn-szyna-modulu-lista {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Etykieta grupy sama nie niesie wyściółki — w szynie równa się do jej wnętrza,
+   czyli do od-2, żeby nie wisieć w prawo względem pozycji pod sobą. */
+.dn-szyna-modulu-lista > .dn-etyk-mono { display: block; padding: var(--dn-od-2) var(--dn-od-2) 0; }
+
+/* --------------------------------------------------------------------------
+   WYKAZ MODUŁU — zwarta lista wierszy stanu w panelu modułu
+   Wiersz jest pasem: znacznik, treść, nota maszynowa dosunięta do prawej.
+   -------------------------------------------------------------------------- */
+
+.dn-wykaz-modulu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dn-od-2);
+  padding: var(--dn-od-2);
+  font-size: var(--dn-fs-sm);
+}
+
+.dn-wykaz-modulu-poz {
+  display: flex;
+  align-items: center;
+  gap: var(--dn-od-2);
+}
+
+/* Nota kończy wiersz i sama się do niego dosuwa — dosunięcie należy do wiersza,
+   przepis pisma do `.dn-meta`. */
+.dn-wykaz-modulu-poz > .dn-meta { margin-left: auto; }
+
+/* Dosunięcie do końca pasa dla wszystkiego, co notą nie jest — plakietki stanu,
+   żetonu, przycisku. Wcześniej te elementy nosiły klasę `meta`, przez co brały
+   też jej pismo i przestawały wyglądać jak plakietki. Rozmieszczenie i wygląd
+   to dwie różne decyzje, więc są dwiema różnymi klasami. */
+.dn-na-koniec { margin-left: auto; }

@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 
   /* Product Builder — kanwa wiodąca */
   .pb-kanwa { padding:var(--dn-od-3); display:flex; flex-direction:column; gap:var(--dn-od-3); }
@@ -44,7 +37,7 @@
   .pb-sekcja-tyt { font-size:var(--dn-fs-xs); text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-2); margin:0 0 var(--dn-od-1); }
   .pb-lista { display:flex; flex-direction:column; gap:var(--dn-od-1); }
   .pb-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-1) 0; border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-sm); color:var(--dn-tekst); }
-  .pb-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
+  .pb-wiersz .dn-meta { margin-left:auto; }
 
   /* Architecture Designer — diagram SVG */
   .ad-diagram { width:100%; height:100%; display:block; }
@@ -393,8 +386,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowy produkt</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -414,17 +407,17 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Portal klienta</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Portal klienta</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Budowa produktu</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kontrakt API zamówień</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Migracja schematu bazy</span></button>
-        <div class="szyna-grupa">Aplikacja mobilna — kurierzy</div>
+        <div class="dn-etyk-mono">Aplikacja mobilna — kurierzy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Warstwa frontendowa — mapa tras</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Usługi backendu — powiadomienia</span></button>
-        <div class="szyna-grupa">Panel administracyjny</div>
+        <div class="dn-etyk-mono">Panel administracyjny</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wdrożenie do produkcji</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Produkty · Środowiska · Repozytoria · Artefakty · Wydania</span></button>
       </div>
     </nav>
@@ -632,9 +625,9 @@
             <div>
               <p class="pb-sekcja-tyt">Kamienie milowe</p>
               <div class="pb-lista">
-                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Architektura i kontrakt API <span class="meta">✓ 30 lip</span></div>
-                <div class="pb-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Warstwa zamówień — frontend + backend <span class="meta">▶ 18 sie</span></div>
-                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Wdrożenie produkcyjne v1.3 <span class="meta">○ 28 sie</span></div>
+                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Architektura i kontrakt API <span class="dn-meta">✓ 30 lip</span></div>
+                <div class="pb-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Warstwa zamówień — frontend + backend <span class="dn-meta">▶ 18 sie</span></div>
+                <div class="pb-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Wdrożenie produkcyjne v1.3 <span class="dn-meta">○ 28 sie</span></div>
               </div>
             </div>
 
@@ -643,17 +636,17 @@
               <div>
                 <p class="pb-sekcja-tyt">Przypisanie wykonawców</p>
                 <div class="pb-lista">
-                  <div class="pb-wiersz">Frontend Workspace <span class="dn-plakietka dn-plakietka--rola meta">Executor 1</span></div>
-                  <div class="pb-wiersz">Backend Workspace <span class="dn-plakietka dn-plakietka--rola meta">Executor 2</span></div>
-                  <div class="pb-wiersz">Kontrola jakości <span class="dn-plakietka meta">Executor 3 / Validator</span></div>
+                  <div class="pb-wiersz">Frontend Workspace <span class="dn-plakietka dn-plakietka--rola dn-na-koniec">Executor 1</span></div>
+                  <div class="pb-wiersz">Backend Workspace <span class="dn-plakietka dn-plakietka--rola dn-na-koniec">Executor 2</span></div>
+                  <div class="pb-wiersz">Kontrola jakości <span class="dn-plakietka dn-na-koniec">Executor 3 / Validator</span></div>
                 </div>
               </div>
               <div>
                 <p class="pb-sekcja-tyt">Dziennik wydań</p>
                 <div class="pb-lista">
-                  <div class="pb-wiersz">v1.2.0 — endpointy zamówień <span class="meta">05 sie</span></div>
-                  <div class="pb-wiersz">v1.1.3 — poprawki logowania <span class="meta">29 lip</span></div>
-                  <div class="pb-wiersz">v1.1.2 — szkielet interfejsu <span class="meta">22 lip</span></div>
+                  <div class="pb-wiersz">v1.2.0 — endpointy zamówień <span class="dn-meta">05 sie</span></div>
+                  <div class="pb-wiersz">v1.1.3 — poprawki logowania <span class="dn-meta">29 lip</span></div>
+                  <div class="pb-wiersz">v1.1.2 — szkielet interfejsu <span class="dn-meta">22 lip</span></div>
                 </div>
               </div>
             </div>
@@ -711,11 +704,11 @@ return &lt;Tabela wiersze={dane} /&gt;;</div>
         <!-- Backend Workspace -->
         <section class="sta-okno" id="panel-backend" data-nazwa="Backend Workspace" data-stan="pracuje">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg><b>Backend Workspace</b></span><span class="dn-plakietka dn-plakietka--rola">Executor 2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <p class="pb-sekcja-tyt">Punkty końcowe API</p>
-            <div class="panel-wiersz"><span class="metoda metoda--get">GET</span> /zamowienia <span class="dn-plakietka dn-plakietka--sukces meta">200</span></div>
-            <div class="panel-wiersz"><span class="metoda metoda--post">POST</span> /klienci <span class="dn-plakietka dn-plakietka--sukces meta">201</span></div>
-            <div class="panel-wiersz"><span class="metoda metoda--get">GET</span> /zamowienia/:id <span class="pt-tetno meta" aria-hidden="true"></span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="metoda metoda--get">GET</span> /zamowienia <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">200</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="metoda metoda--post">POST</span> /klienci <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">201</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="metoda metoda--get">GET</span> /zamowienia/:id <span class="pt-tetno dn-na-koniec" aria-hidden="true"></span></div>
             <div class="kod-blok">$ curl /zamowienia?status=nowe
 &lt; 200 OK · 41 ms · 12 rekordów</div>
             <div style="display:flex;gap:var(--dn-od-1);flex-wrap:wrap">
@@ -751,21 +744,21 @@ return &lt;Tabela wiersze={dane} /&gt;;</div>
         <!-- Plan (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: warstwa zamówień</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Kontrakt API zamówień <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Endpoint GET /zamowienia <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Widok listy — frontend <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Kontrakt API zamówień <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Endpoint GET /zamowienia <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Widok listy — frontend <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Zadania w tle (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>build-frontendu</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>build-frontendu</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> testy backendu <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> testy backendu <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
@@ -781,10 +774,10 @@ return &lt;Tabela wiersze={dane} /&gt;;</div>
         <!-- Pliki (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">api/zamowienia.js <span class="meta">+142 −18</span></div>
-            <div class="panel-wiersz">ui/ListaZamowien.jsx <span class="meta">+96 −12</span></div>
-            <div class="panel-wiersz">db/migracje/006.sql <span class="meta">+34</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">api/zamowienia.js <span class="dn-meta">+142 −18</span></div>
+            <div class="dn-wykaz-modulu-poz">ui/ListaZamowien.jsx <span class="dn-meta">+96 −12</span></div>
+            <div class="dn-wykaz-modulu-poz">db/migracje/006.sql <span class="dn-meta">+34</span></div>
           </div>
         </section>
 

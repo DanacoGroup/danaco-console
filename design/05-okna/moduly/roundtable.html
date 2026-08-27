@@ -14,14 +14,7 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
   .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   /* siatka Model Panels w strefie czatów */
   .rt-modele { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--dn-od-2); min-height:0; flex:1; }
   .rt-modele .sta-okno { min-height:0; }
@@ -364,8 +357,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa debata</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -385,16 +378,16 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Decyzje strategiczne</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Decyzje strategiczne</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Wejście na rynek azjatycki</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Przejęcie konkurenta — za i przeciw</span></button>
-        <div class="szyna-grupa">Ocena ryzyka</div>
+        <div class="dn-etyk-mono">Ocena ryzyka</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Ryzyko regulacyjne — trzy perspektywy</span></button>
-        <div class="szyna-grupa">CodeStudio — decyzje techniczne</div>
+        <div class="dn-etyk-mono">CodeStudio — decyzje techniczne</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Ocena architektury — kolejka vs. strumień</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wybór bazy — Postgres vs. SQLite</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zagadnienia · Sesje · Szablony moderacji · Transkrypty</span></button>
       </div>
     </nav>
@@ -620,13 +613,13 @@
           <div class="sta-okno-tresc rt-mapa">
             <div class="rt-tura">
               <div class="pt-etykieta">Tura 1</div>
-              <div class="panel-wiersz"><span class="rt-awatar" aria-hidden="true">A</span> Ekspert rynku — <b>teza</b>: „wejście na rynek jest korzystne”</div>
-              <div class="panel-wiersz" style="padding-left:var(--dn-od-3)"><span class="rt-awatar" aria-hidden="true">B</span> Głos ostrożności — <b>kontrargument</b>: „ryzyko regulacyjne zbyt wysokie”</div>
-              <div class="panel-wiersz" style="padding-left:var(--dn-od-4)"><span class="rt-awatar" aria-hidden="true">Z</span> Zwolennik — <b>riposta</b> wobec B: „ryzyko ograniczone przez…”</div>
+              <div class="dn-wykaz-modulu-poz"><span class="rt-awatar" aria-hidden="true">A</span> Ekspert rynku — <b>teza</b>: „wejście na rynek jest korzystne”</div>
+              <div class="dn-wykaz-modulu-poz" style="padding-left:var(--dn-od-3)"><span class="rt-awatar" aria-hidden="true">B</span> Głos ostrożności — <b>kontrargument</b>: „ryzyko regulacyjne zbyt wysokie”</div>
+              <div class="dn-wykaz-modulu-poz" style="padding-left:var(--dn-od-4)"><span class="rt-awatar" aria-hidden="true">Z</span> Zwolennik — <b>riposta</b> wobec B: „ryzyko ograniczone przez…”</div>
             </div>
             <div class="rt-tura">
               <div class="pt-etykieta">Tura 2 <span class="pt-tetno" aria-hidden="true"></span> w toku</div>
-              <div class="panel-wiersz"><span class="rt-awatar" aria-hidden="true">B</span> Głos ostrożności — <b>ustępstwo częściowe</b>: „przy dodatkowych zabezpieczeniach”</div>
+              <div class="dn-wykaz-modulu-poz"><span class="rt-awatar" aria-hidden="true">B</span> Głos ostrożności — <b>ustępstwo częściowe</b>: „przy dodatkowych zabezpieczeniach”</div>
               <div class="dn-alert dn-alert--ostrzezenie" style="margin-top:var(--dn-od-2)">⚡ punkt sporny: skala inwestycji początkowej</div>
             </div>
             <div class="rt-mp-dol" style="border-top:1px solid var(--dn-obrys-subtelny)">
@@ -639,12 +632,12 @@
         <!-- Moderator Panel -->
         <section class="sta-okno" id="panel-moderator" data-nazwa="Moderator Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg><b>Moderator Panel</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">Format debaty <span class="sta-chip meta">Strukturalna ▾</span></div>
-            <div class="panel-wiersz">Liczba tur <span class="sta-chip meta">3 ▾</span></div>
-            <div class="panel-wiersz">Kolejność głosu <span class="meta">A → B → Zwolennik</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">Format debaty <span class="sta-chip dn-na-koniec">Strukturalna ▾</span></div>
+            <div class="dn-wykaz-modulu-poz">Liczba tur <span class="sta-chip dn-na-koniec">3 ▾</span></div>
+            <div class="dn-wykaz-modulu-poz">Kolejność głosu <span class="dn-meta">A → B → Zwolennik</span></div>
             <div class="pt-etykieta">Timer tury</div>
-            <div class="panel-wiersz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> 00:42 pozostało</div>
+            <div class="dn-wykaz-modulu-poz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> 00:42 pozostało</div>
             <div class="dn-postep" data-postep-do="58" data-postep-czas="1500"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zamknij turę teraz</button>
             <div class="pt-etykieta">Interwencja moderująca</div>
@@ -659,7 +652,7 @@
         <!-- Consensus Panel -->
         <section class="sta-okno" id="panel-consensus" data-nazwa="Consensus Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><b>Consensus Panel</b></span><span class="dn-plakietka">wywoływany</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Wygenerowano z: 3 tur · 4 argumenty kluczowe</div>
             <div class="pt-etykieta">Stanowisko uzgodnione</div>
             <div class="rt-kluczowy">„Wejście na rynek azjatycki jest zasadne pod warunkiem wdrożenia dodatkowych zabezpieczeń regulacyjnych i pilotażu regionalnego.”</div>
@@ -667,7 +660,7 @@
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Korekta</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Styl ▾</button>
             </div>
-            <div class="panel-wiersz"><span class="dn-plakietka dn-plakietka--sukces">Punkty zgody: 3</span><span class="dn-plakietka dn-plakietka--ostrzezenie">Punkty sporne: 1</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka dn-plakietka--sukces">Punkty zgody: 3</span><span class="dn-plakietka dn-plakietka--ostrzezenie">Punkty sporne: 1</span></div>
             <div class="dn-alert dn-alert--info">⚡ „skala inwestycji początkowej” — stanowisko mniejszościowe zachowane (Głos ostrożności)</div>
             <div class="rt-mp-dol" style="padding:0">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">→ Studio</button>
@@ -680,39 +673,39 @@
         <!-- Plan (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Plan debaty</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Skład uczestników <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tura 1 — otwarcie <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Tura 2 — kontrargumenty <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Generowanie konsensusu <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Skład uczestników <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tura 1 — otwarcie <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Tura 2 — kontrargumenty <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Generowanie konsensusu <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <!-- Zadania w tle (ukryty) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>wykrywanie-punktów-spornych</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> synteza z Research <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>wykrywanie-punktów-spornych</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> synteza z Research <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <!-- Artefakty (ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">transkrypt_debaty.md <span class="meta">14,7 kB</span></div>
-            <div class="panel-wiersz">stanowisko_uzgodnione.pdf <span class="meta">92 kB</span></div>
-            <div class="panel-wiersz">mapa_argumentow.json <span class="meta">8,1 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">transkrypt_debaty.md <span class="dn-meta">14,7 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">stanowisko_uzgodnione.pdf <span class="dn-meta">92 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">mapa_argumentow.json <span class="dn-meta">8,1 kB</span></div>
           </div>
         </section>
 
         <!-- Subagenci (ukryty) -->
         <section class="sta-okno" id="panel-subagenci" data-nazwa="Subagenci i aktywność" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><b>Subagenci i aktywność</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> klasyfikator wypowiedzi — teza/kontrargument <span class="meta">1 m 12 s</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> klasyfikator wypowiedzi — teza/kontrargument <span class="dn-meta">1 m 12 s</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Analiza · Głos ostrożności — 10:17<br>Analiza · Zwolennik — 10:16<br>Synteza · Consensus — 10:14</div>
           </div>
         </section>

@@ -14,10 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; padding:var(--dn-od-2); display:flex; flex-direction:column; gap:2px; }
   .dn-boczna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
   .ws-boczna-tytul { font-weight:var(--dn-fw-polgruba); font-size:var(--dn-fs-sm); margin-right:auto; }
   .dn-boczna-pozycja { display:flex; align-items:center; gap:var(--dn-od-2); width:100%; padding:var(--dn-od-2); border:1px solid transparent; border-radius:var(--dn-r-sm); background:transparent; color:var(--dn-tekst-2); font-size:var(--dn-fs-sm); text-align:left; cursor:pointer; }
@@ -28,9 +24,6 @@
   .ws-boczna-stopka { margin-top:auto; display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-top:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .ws-boczna-stopka svg { width:14px; height:14px; flex:none; }
   .kanwa { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   /* Project Dashboard — okno robocze wiodące */
   .wk-dash { padding:var(--dn-od-3); display:flex; flex-direction:column; gap:var(--dn-od-3); overflow:auto; min-height:0; }
   .wk-naglowek { display:flex; align-items:flex-start; gap:var(--dn-od-2); }
@@ -379,14 +372,14 @@
 
     <!-- BOCZNA NAWIGACJA MODUŁÓW ŚRODOWISKA WorkSpace (9) -->
     <nav class="dn-boczna" aria-label="Moduły środowiska WorkSpace">
-      <div class="szyna-naglowek">
+      <div class="dn-szyna-modulu-glowa">
         <span class="ws-boczna-tytul">WorkSpace</span>
         <button class="dn-btn-ikona" type="button" id="zwin-boczna" aria-label="Zwiń boczną nawigację" aria-pressed="false">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
         </button>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Moduły środowiska</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Moduły środowiska</div>
         <button class="dn-boczna-pozycja" type="button" data-modul="Studio" data-okno="Studio Editor">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.7.7l3.6 3.6A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M16 13H8M16 17H8"/></svg>
           <span>Studio</span>
@@ -617,19 +610,19 @@
               <button class="wk-kafel" type="button" data-panel-toggle="panel-agents"><b>Agent Manager</b><span>3 agentów</span></button>
             </div>
             <div>
-              <div class="panel-wiersz"><span class="pt-etykieta" style="margin:0">Zadania</span>
+              <div class="dn-wykaz-modulu-poz"><span class="pt-etykieta" style="margin:0">Zadania</span>
                 <span class="dn-zakladki" role="tablist" aria-label="Widok zadań" style="margin-left:var(--dn-od-2)">
                   <button class="dn-zakladka" role="tab" aria-selected="true" type="button">Lista</button>
                   <button class="dn-zakladka" role="tab" aria-selected="false" type="button">Tablica</button>
                 </span>
-                <span class="meta" style="margin-left:auto;font-family:var(--dn-ff-mono);font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Postęp 68%</span>
+                <span class="dn-meta" style="margin-left:auto;font-family:var(--dn-ff-mono);font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Postęp 68%</span>
               </div>
               <div class="dn-postep" data-postep-do="68" data-postep-czas="1400" style="margin:var(--dn-od-1) 0 var(--dn-od-2)"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
               <div class="wk-zadania">
-                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zebrać dane sprzedażowe <span class="meta" style="margin-left:auto">Agent „Analityk”</span></div>
-                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zredagować wstęp <span class="meta" style="margin-left:auto">użytkownik</span></div>
-                <div class="wk-zadanie"><span class="pt-tetno" aria-hidden="true"></span> Redakcja podsumowania <span class="meta" style="margin-left:auto">Agent „Redaktor”</span></div>
-                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Korekta językowa <span class="meta" style="margin-left:auto">Agent „Weryfikator”</span></div>
+                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zebrać dane sprzedażowe <span class="dn-meta" style="margin-left:auto">Agent „Analityk”</span></div>
+                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zredagować wstęp <span class="dn-meta" style="margin-left:auto">użytkownik</span></div>
+                <div class="wk-zadanie"><span class="pt-tetno" aria-hidden="true"></span> Redakcja podsumowania <span class="dn-meta" style="margin-left:auto">Agent „Redaktor”</span></div>
+                <div class="wk-zadanie"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Korekta językowa <span class="dn-meta" style="margin-left:auto">Agent „Weryfikator”</span></div>
               </div>
             </div>
             <div>
@@ -657,7 +650,7 @@
         <!-- Instructions Panel -->
         <section class="sta-okno" id="panel-instructions" data-nazwa="Instructions Panel">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><b>Instructions Panel</b></span><span class="dn-plakietka dn-plakietka--ostrzezenie">niezapisane ●</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="rt-mp-dol" style="padding:0;flex-wrap:wrap">
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Szablony ▾</button>
               <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wersje (4) ▾</button>
@@ -666,36 +659,36 @@
             <div class="pt-konsola" style="font-size:var(--dn-fs-xs)">1  Jesteś asystentem redakcyjnym projektu „Raport tygodniowy”.
 2  Zawsze stosuj ton formalny.
 3  Odwołuj się do {{nazwa_projektu}} w nagłówkach.</div>
-            <div class="panel-wiersz"><span class="meta" style="margin:0">1 284 znaki · ~320 tokenów</span></div>
-            <div class="panel-wiersz">Warstwa <span class="sta-chip meta">projekt ●</span><span class="sta-chip">sesja</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-meta" style="margin:0">1 284 znaki · ~320 tokenów</span></div>
+            <div class="dn-wykaz-modulu-poz">Warstwa <span class="sta-chip dn-na-koniec">projekt ●</span><span class="sta-chip">sesja</span></div>
           </div>
         </section>
 
         <!-- Context Memory -->
         <section class="sta-okno" id="panel-context" data-nazwa="Context Memory">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a4 4 0 0 0-4 4 4 4 0 0 0-1 7 3 3 0 0 0 3 4h4a3 3 0 0 0 3-4 4 4 0 0 0-1-7 4 4 0 0 0-4-4z"/></svg><b>Context Memory</b></span><span class="dn-plakietka">12 wpisów</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" aria-label="Dodaj wpis" title="Dodaj wpis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Szukaj wpisów…" aria-label="Szukaj"></label>
-            <div class="panel-wiersz">Zajętość <span class="meta">34%</span></div>
+            <div class="dn-wykaz-modulu-poz">Zajętość <span class="dn-meta">34%</span></div>
             <div class="dn-postep" data-postep-do="34" data-postep-czas="1200"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
             <div class="rt-kluczowy">📌 „Budżet projektu ustalony na 120 000 zł.”<br><small style="color:var(--dn-tekst-3)">#decyzja · 2026-07-02 · źródło: użytkownik</small></div>
             <div class="dn-alert dn-alert--info">🤖 „Klient preferuje kontakt mailowy.” — propozycja AI <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Akceptuj</button> <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Odrzuć</button></div>
             <div class="rt-kluczowy">📌 „Termin wydania raportu: piątek 12:00.”<br><small style="color:var(--dn-tekst-3)">#termin · 2026-08-15 · źródło: Inteligencja</small></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Ton formalny obowiązuje we wszystkich sekcjach.</div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Ton formalny obowiązuje we wszystkich sekcjach.</div>
           </div>
         </section>
 
         <!-- Project Library -->
         <section class="sta-okno" id="panel-library" data-nazwa="Project Library">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h5l2 2h9v12H4z"/></svg><b>Project Library</b></span><span class="dn-plakietka">34 pliki</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" aria-label="Wgraj plik" title="Wgraj plik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V7M6 11l6-6 6 6M5 21h14"/></svg></button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="rt-mp-dol" style="padding:0"><span class="sta-chip">Siatka</span><span class="sta-chip">Lista</span><span class="rozciag" style="margin-left:auto"></span><span class="dn-plakietka">umowa</span><span class="dn-plakietka">raport</span></div>
-            <div class="panel-wiersz">🗎 umowa_v3.docx <span class="meta">wersje: 3</span></div>
-            <div class="panel-wiersz">🖼 baner.png <span class="meta">tag: grafika</span></div>
-            <div class="panel-wiersz">🗎 raport_final.pdf <span class="meta">z Studio</span></div>
-            <div class="panel-wiersz">🗎 wstep_v1.docx <span class="meta">nowy · AI</span></div>
-            <div class="panel-wiersz">🗎 dane_sprzedaz_Q3.csv <span class="meta">1,4 MB</span></div>
-            <div class="panel-wiersz">🗎 slownik_metryk.md <span class="meta">tag: raport</span></div>
+            <div class="dn-wykaz-modulu-poz">🗎 umowa_v3.docx <span class="dn-meta">wersje: 3</span></div>
+            <div class="dn-wykaz-modulu-poz">🖼 baner.png <span class="dn-meta">tag: grafika</span></div>
+            <div class="dn-wykaz-modulu-poz">🗎 raport_final.pdf <span class="dn-meta">z Studio</span></div>
+            <div class="dn-wykaz-modulu-poz">🗎 wstep_v1.docx <span class="dn-meta">nowy · AI</span></div>
+            <div class="dn-wykaz-modulu-poz">🗎 dane_sprzedaz_Q3.csv <span class="dn-meta">1,4 MB</span></div>
+            <div class="dn-wykaz-modulu-poz">🗎 slownik_metryk.md <span class="dn-meta">tag: raport</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Pliki współdzielone z centralnym repozytorium Library środowiska.</div>
           </div>
         </section>
@@ -703,10 +696,10 @@
         <!-- Agent Manager (ukryty domyślnie) -->
         <section class="sta-okno" id="panel-agents" data-nazwa="Agent Manager" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><b>Agent Manager</b></span><span class="dn-plakietka">3 agentów</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" aria-label="Przypisz agenta" title="Przypisz agenta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="rt-awatar" aria-hidden="true">An</span> Agent „Analityk” <span class="dn-plakietka dn-plakietka--sukces meta">domyślny</span></div>
-            <div class="panel-wiersz"><span class="rt-awatar" aria-hidden="true">Re</span> Agent „Redaktor” <span class="meta">Uprawnienia · Odłącz</span></div>
-            <div class="panel-wiersz"><span class="rt-awatar" aria-hidden="true">We</span> Agent „Weryfikator” <span class="meta">Uprawnienia · Odłącz</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="rt-awatar" aria-hidden="true">An</span> Agent „Analityk” <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">domyślny</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="rt-awatar" aria-hidden="true">Re</span> Agent „Redaktor” <span class="dn-meta">Uprawnienia · Odłącz</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="rt-awatar" aria-hidden="true">We</span> Agent „Weryfikator” <span class="dn-meta">Uprawnienia · Odłącz</span></div>
             <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Nowy agent…</button>
           </div>
         </section>
@@ -714,25 +707,25 @@
         <!-- Zadania w tle (ukryty) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>redakcja-podsumowania</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>redakcja-podsumowania</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">1 agent · 88 tys. tok. · 2 m 06 s</div>
             <div class="dn-postep" data-postep-do="72" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> import danych sprzedażowych <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> agregacja regionów <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> import danych sprzedażowych <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> agregacja regionów <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <!-- Plan (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Plan wydania raportu</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zebranie danych źródłowych <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Redakcja wstępu <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Redakcja podsumowania <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Korekta językowa <span class="meta">○</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do PDF i zapis do Library <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zebranie danych źródłowych <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Redakcja wstępu <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Redakcja podsumowania <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Korekta językowa <span class="dn-meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do PDF i zapis do Library <span class="dn-meta">○</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Plan prowadzony w trybie „Z pominięciem zgód”.</div>
           </div>
         </section>
@@ -740,23 +733,23 @@
         <!-- Artefakty (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> wstep_v1.docx <span class="meta">28 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> podsumowanie.md <span class="meta">6,4 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> raport_tygodniowy.pdf <span class="meta">312 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> zestawienie_regionow.xlsx <span class="meta">w kolejce</span></div>
-            <div class="panel-wiersz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w podglądzie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zapisz do Library</button></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> wstep_v1.docx <span class="dn-meta">28 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> podsumowanie.md <span class="dn-meta">6,4 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> raport_tygodniowy.pdf <span class="dn-meta">312 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> zestawienie_regionow.xlsx <span class="dn-meta">w kolejce</span></div>
+            <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w podglądzie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zapisz do Library</button></div>
           </div>
         </section>
 
         <!-- Notatki projektu (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-notatki" data-nazwa="Notatki projektu" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><b>Notatki projektu</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Ustalenia stałe (zasięg: projekt)</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Regiony liczymy według kodu pocztowego dostawy.</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Waluta raportu: PLN, kurs z dnia zamknięcia tygodnia.</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Raport zamykamy w piątek o 12:00.</div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Regiony liczymy według kodu pocztowego dostawy.</div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Waluta raportu: PLN, kurs z dnia zamknięcia tygodnia.</div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Raport zamykamy w piątek o 12:00.</div>
           </div>
         </section>
 

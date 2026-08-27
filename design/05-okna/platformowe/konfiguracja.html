@@ -18,13 +18,6 @@
   :root { --kf-nav:250px; --kf-prow:340px; }
 
   /* Szyna (skrót do wzorca) */
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 
   /* ── NAKŁADKA MODALNA OKNA KONFIGURACJI na tle powłoki (rozdz. 6.1) ── */
   .kf-nakladka {
@@ -213,7 +206,7 @@
   }
   .kf-blok-belka .kf-strzalka { transition:transform var(--dn-czas-2) var(--dn-ease); color:var(--dn-tekst-3); }
   .kf-blok[data-otwarte="tak"] .kf-strzalka { transform:rotate(90deg); }
-  .kf-blok-belka .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); font-weight:var(--dn-fw-normalna); }
+  .kf-blok-belka .dn-meta { margin-left:auto; }
   .kf-blok-cialo { padding:var(--dn-od-3); border-top:1px solid var(--dn-obrys-subtelny); }
   .kf-blok[data-otwarte="nie"] .kf-blok-cialo { display:none; }
   .kf-kod {
@@ -570,8 +563,8 @@
   </div>
 
   <div class="sta-cialo">
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -591,14 +584,14 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">DanacoConsole</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">DanacoConsole</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Konfiguracja platformy</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Nakładka — Agent Redaktor</span></button>
-        <div class="szyna-grupa">Kancelaria — sprawy</div>
+        <div class="dn-etyk-mono">Kancelaria — sprawy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprawa X — redakcja pism</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprawa Y — analiza akt</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Projekty · Sesje · Środowiska · Kontekst · Pliki · Logi</span></button>
       </div>
     </nav>
@@ -704,10 +697,10 @@
       <div class="sta-robocza sta-panele-siatka" data-uklad="siatka" style="grid-template-columns:minmax(0,1fr); grid-auto-rows:minmax(0,1fr)">
         <section class="sta-okno" data-nazwa="Karty sesji">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg><b>Karty sesji</b></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Executor 1 <span class="dn-plakietka dn-plakietka--sygnal meta">nakładka: rola</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Coordinator <span class="meta">buduje ekspertyzę</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Reviewer <span class="meta">bezczynny</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Executor 1 <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">nakładka: rola</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Coordinator <span class="dn-meta">buduje ekspertyzę</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Reviewer <span class="dn-meta">bezczynny</span></div>
           </div>
         </section>
       </div>
@@ -1027,7 +1020,7 @@
           <div class="kf-blok" data-otwarte="tak">
             <button class="kf-blok-belka" type="button" data-blok-przelacz>
               <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              argv <span class="meta" data-argv-etyk>argumenty startowe</span>
+              argv <span class="dn-meta" data-argv-etyk>argumenty startowe</span>
             </button>
             <div class="kf-blok-cialo">
               <pre class="kf-kod" data-argv>narzędzie: danaco-code-cli
@@ -1040,7 +1033,7 @@
           <div class="kf-blok" data-otwarte="tak">
             <button class="kf-blok-belka" type="button" data-blok-przelacz>
               <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              system prompt <span class="meta">3 warstwy</span>
+              system prompt <span class="dn-meta">3 warstwy</span>
             </button>
             <div class="kf-blok-cialo">
               <pre class="kf-kod"><span class="war"># KONSTYTUCJA (poziom: globalna)</span>
@@ -1056,7 +1049,7 @@ Instrukcje sprawy X + skille + tekst Coordinatora…</pre>
           <div class="kf-blok" data-otwarte="tak">
             <button class="kf-blok-belka" type="button" data-blok-przelacz>
               <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              settings <span class="meta">7 pól</span>
+              settings <span class="dn-meta">7 pól</span>
             </button>
             <div class="kf-blok-cialo">
               <pre class="kf-kod" data-settings>harness            : wbudowany w Code CLI   (rola)
@@ -1073,7 +1066,7 @@ pula kont          : „Konto 2" (Sprawa X)    (rola)</pre>
           <div class="kf-blok" data-otwarte="tak">
             <button class="kf-blok-belka" type="button" data-blok-przelacz>
               <svg class="kf-strzalka" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              hash konstytucji <span class="meta">SHA-256</span>
+              hash konstytucji <span class="dn-meta">SHA-256</span>
             </button>
             <div class="kf-blok-cialo">
               <div class="kf-wiersz">

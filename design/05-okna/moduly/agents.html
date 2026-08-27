@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
 
   /* Agent Builder — kanwa */
   .ab { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,0.85fr); gap:var(--dn-od-2); padding:var(--dn-od-2); min-height:0; overflow:auto; }
@@ -450,8 +443,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1" data-nowy-ekspert>+ Nowy ekspert</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -472,17 +465,17 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Biblioteka ekspertów</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Biblioteka ekspertów</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Agent Redaktor</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Backend</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Security</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Analityk Danych</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Tłumacz</span></button>
-        <div class="szyna-grupa">Projekt: Danaco Core CRS</div>
+        <div class="dn-etyk-mono">Projekt: Danaco Core CRS</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Kontroler Wdrożeń</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Agent Recenzent Kodu</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Role · Przypisania · Historia wersji · Rejestr rozszerzeń</span></button>
       </div>
     </nav>
@@ -812,10 +805,10 @@
                   </div>
                   <div class="ab-sum ab-histria">
                     <div class="ab-sum-tytul">Historia wersji <span style="color:var(--dn-tekst-3)">— Agent Redaktor</span></div>
-                    <div class="panel-lista" style="padding:0">
-                      <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> <b>w.3</b> Aktywna <span class="meta">12:04</span></div>
-                      <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> <b>w.2</b> +konektor <span class="meta">wczoraj</span></div>
-                      <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> <b>w.1</b> Pierwsza wersja <span class="meta">3 dni</span></div>
+                    <div class="dn-wykaz-modulu" style="padding:0">
+                      <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> <b>w.3</b> Aktywna <span class="dn-meta">12:04</span></div>
+                      <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> <b>w.2</b> +konektor <span class="dn-meta">wczoraj</span></div>
+                      <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> <b>w.1</b> Pierwsza wersja <span class="dn-meta">3 dni</span></div>
                     </div>
                     <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Zobacz wszystkie · Duplikuj jako nowy…</button>
                   </div>
@@ -846,7 +839,7 @@
             <div class="pk-baner" id="kanal-opis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg><span>API — klucz dostępu, żądanie HTTP. Typowe dla modeli zewnętrznych jako wykonawca standardowy.</span></div>
             <div class="pk-etyk">Dane dostępowe kanału</div>
             <div class="pk-pole"><span class="rozc" id="klucz-pole">sk-ant-A1b2…klucz jawny</span><button class="dn-btn-ikona" type="button" data-maskuj aria-label="Ukryj / pokaż"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">zmień</button></div>
-            <div class="panel-wiersz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-testuj><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg> Testuj połączenie</button><span class="meta" id="test-wynik"></span></div>
+            <div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" data-testuj><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg> Testuj połączenie</button><span class="dn-meta" id="test-wynik"></span></div>
             <div class="ab-adnotacja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>Wartość domyślna — nadpisywalna per rola w MultitaskingAI.</div>
           </div>
         </section>
@@ -935,7 +928,7 @@
               </div>
               <div class="pk-grz" id="grupa-mtai" hidden>
                 <div class="pk-mrz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="7" r="3"/><circle cx="12" cy="17" r="3"/></svg><span class="rozc">Subagent Network</span><button class="dn-przelacznik" data-przelacznik data-etykieta="Subagent Network" aria-pressed="true" role="switch" aria-checked="true"></button></div>
-                <div class="panel-wiersz" style="margin-top:var(--dn-od-2)"><span>Liczba dozwolonych podagentów</span><input class="pk-num" type="number" min="1" max="15" value="15" aria-label="Liczba podagentów"></div>
+                <div class="dn-wykaz-modulu-poz" style="margin-top:var(--dn-od-2)"><span>Liczba dozwolonych podagentów</span><input class="pk-num" type="number" min="1" max="15" value="15" aria-label="Liczba podagentów"></div>
                 <p style="font-size:11px;color:var(--dn-tekst-3);margin-top:var(--dn-od-1)">Górny limit 15 to parametr techniczny platformy.</p>
               </div>
 
@@ -951,41 +944,41 @@ MultitaskingAI: Subagent Network — tak, do 15 podagentów</div>
         <!-- ══ PANELE UNIWERSALNE ══ -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">6 / 7</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Kompozycja: Agent Redaktor</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tożsamość i instrukcje <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Model bazowy + kanał <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Umiejętności (2) <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Rozszerzenia (2) <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Zakres możliwości <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zapis nowej wersji <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tożsamość i instrukcje <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Model bazowy + kanał <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Umiejętności (2) <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Rozszerzenia (2) <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Zakres możliwości <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Zapis nowej wersji <span class="dn-meta">○</span></div>
           </div>
         </section>
 
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">1</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>test-połączenia-kanału-API</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>test-połączenia-kanału-API</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">Agent Redaktor · 12 s</div>
             <div class="dn-postep" data-postep-do="64" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zapis wersji w.3 <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zapis wersji w.3 <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">agents/redaktor.json <span class="meta">4,1 kB</span></div>
-            <div class="panel-wiersz">agents/redaktor.instrukcje.md <span class="meta">2,3 kB</span></div>
-            <div class="panel-wiersz">rejestr/umiejetnosci.json <span class="meta">11 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">agents/redaktor.json <span class="dn-meta">4,1 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">agents/redaktor.instrukcje.md <span class="dn-meta">2,3 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">rejestr/umiejetnosci.json <span class="dn-meta">11 kB</span></div>
           </div>
         </section>
 
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/></svg><b>Artefakty</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">definicja_eksperta_w3.json <span class="meta">4,1 kB</span></div>
-            <div class="panel-wiersz">polityka_efektywna.txt <span class="meta">0,6 kB</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">definicja_eksperta_w3.json <span class="dn-meta">4,1 kB</span></div>
+            <div class="dn-wykaz-modulu-poz">polityka_efektywna.txt <span class="dn-meta">0,6 kB</span></div>
           </div>
         </section>
 

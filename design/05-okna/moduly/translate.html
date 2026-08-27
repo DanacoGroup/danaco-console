@@ -14,13 +14,6 @@
 <link rel="stylesheet" href="../../zasoby/rama.css">
 <link rel="stylesheet" href="../../zasoby/okna-modalne.css">
 <style>
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   /* ── Translate — segmenty ── */
   .tr-glowa { display:flex; align-items:center; gap:var(--dn-od-2); flex-wrap:wrap; padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .tr-seg { display:flex; gap:var(--dn-od-2); padding:var(--dn-od-2) var(--dn-od-3); border-bottom:1px solid var(--dn-obrys-subtelny); line-height:var(--dn-lh-luzny); }
@@ -367,8 +360,8 @@
   <div class="sta-cialo">
 
     <!-- SZYNA -->
-    <nav class="szyna" aria-label="Szyna">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Szyna">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowe tłumaczenie</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -388,16 +381,16 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Dokumentacja produktu</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Dokumentacja produktu</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Regulamin usługi — EN/DE/FR</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Polityka prywatności — EN/DE</span></button>
-        <div class="szyna-grupa">Marketing międzynarodowy</div>
+        <div class="dn-etyk-mono">Marketing międzynarodowy</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kampania rynkowa — lokalizacja</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Opis produktu — 5 rynków</span></button>
-        <div class="szyna-grupa">Szkolenia</div>
+        <div class="dn-etyk-mono">Szkolenia</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Napisy szkoleniowe — 4 języki</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Projekty · Sesje · Środowiska · Słowniki · Pliki · Logi</span></button>
       </div>
     </nav>
@@ -600,7 +593,7 @@
               </div>
             </div>
           </div>
-          <div class="panel-lista" style="border-top:1px solid var(--dn-obrys)"><div class="panel-wiersz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Tłumaczenie zwrotne</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Kontrola jakości</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Eksportuj panel ▾ (XLIFF/DOCX/TXT)</button></div></div>
+          <div class="dn-wykaz-modulu" style="border-top:1px solid var(--dn-obrys)"><div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Tłumaczenie zwrotne</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Kontrola jakości</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Eksportuj panel ▾ (XLIFF/DOCX/TXT)</button></div></div>
         </section>
 
         <!-- Glossary Manager -->
@@ -612,82 +605,82 @@
               <button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Dziedzina: wszystkie ▾</button>
             </div>
             <div class="tr-glos" style="box-shadow:inset 2px 0 0 var(--dn-ostrzezenie-tekst)">
-              <div class="panel-wiersz"><b>„klient”</b><span class="meta">prawnicze</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„klient”</b><span class="dn-meta">prawnicze</span></div>
               <div class="tr-glos-pary"><span>EN: <b>customer</b></span><span>DE: <b>Kunde</b></span><span>FR: <b>client</b></span></div>
               <div style="font-size:var(--dn-fs-xs);color:var(--dn-ostrzezenie-tekst)">⚠ niespójność w DE: znaleziono też „Klientel” (2×)</div>
-              <div class="panel-wiersz" style="margin-top:2px"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Ujednolić</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Pokaż wystąpienia</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Edytuj</button></div>
+              <div class="dn-wykaz-modulu-poz" style="margin-top:2px"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Ujednolić</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Pokaż wystąpienia</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Edytuj</button></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„Danaco Console”</b><span class="dn-plakietka">🔒 nie tłumacz</span><span class="meta">nazwa własna</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„Danaco Console”</b><span class="dn-plakietka">🔒 nie tłumacz</span><span class="dn-meta">nazwa własna</span></div>
               <div class="tr-glos-pary"><span>EN/DE/FR: <b>Danaco Console</b></span></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„regulamin”</b><span class="meta">prawnicze</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„regulamin”</b><span class="dn-meta">prawnicze</span></div>
               <div class="tr-glos-pary"><span>EN: <b>regulations</b></span><span>DE: <b>Ordnung</b></span><span>FR: <b>règlement</b></span></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„reklamacja”</b><span class="meta">prawnicze</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„reklamacja”</b><span class="dn-meta">prawnicze</span></div>
               <div class="tr-glos-pary"><span>EN: <b>complaint</b></span><span>DE: <b>Beschwerde</b></span><span>FR: <b>réclamation</b></span></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„dane osobowe”</b><span class="meta">prawnicze</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„dane osobowe”</b><span class="dn-meta">prawnicze</span></div>
               <div class="tr-glos-pary"><span>EN: <b>personal data</b></span><span>DE: <b>personenbezogene Daten</b></span><span>FR: <b>données personnelles</b></span></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„usługa abonamentowa”</b><span class="meta">marketingowe</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„usługa abonamentowa”</b><span class="dn-meta">marketingowe</span></div>
               <div class="tr-glos-pary"><span>EN: <b>subscription service</b></span><span>DE: <b>Abonnementdienst</b></span><span>FR: <b>service par abonnement</b></span></div>
             </div>
             <div class="tr-glos">
-              <div class="panel-wiersz"><b>„wdrożenie on-premise”</b><span class="meta">techniczne</span></div>
+              <div class="dn-wykaz-modulu-poz"><b>„wdrożenie on-premise”</b><span class="dn-meta">techniczne</span></div>
               <div class="tr-glos-pary"><span>EN: <b>on-premise deployment</b></span><span>DE: <b>On-Premise-Bereitstellung</b></span><span>FR: <b>déploiement sur site</b></span></div>
             </div>
-            <div class="panel-lista"><div class="panel-wiersz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Nowy termin</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Importuj/Eksportuj ▾ (TBX/CSV)</button></div></div>
+            <div class="dn-wykaz-modulu"><div class="dn-wykaz-modulu-poz"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">+ Nowy termin</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Importuj/Eksportuj ▾ (TBX/CSV)</button></div></div>
           </div>
         </section>
 
         <!-- Zadania w tle -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">3</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>tłumaczenie-wstepne-FR</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>tłumaczenie-wstepne-FR</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">segment 8/18 · TM 62% · 1 m 12 s</div>
             <div class="dn-postep" data-postep-do="44" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> kontrola-jakosci-placeholdery <span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> synchronizacja słownika TBX <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> kontrola-jakosci-placeholdery <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> synchronizacja słownika TBX <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
           </div>
         </section>
 
         <!-- Pliki -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <label class="dn-szukaj" style="margin-bottom:var(--dn-od-1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Filtruj pliki…" aria-label="Filtruj"></label>
-            <div class="panel-wiersz">regulamin-pl.txt <span class="meta">źródło</span></div>
-            <div class="panel-wiersz">regulamin-en.xliff <span class="meta">14/18</span></div>
-            <div class="panel-wiersz">regulamin-de.xliff <span class="meta">12/18</span></div>
-            <div class="panel-wiersz">slownik-korporacyjny.tbx <span class="meta">211 term.</span></div>
+            <div class="dn-wykaz-modulu-poz">regulamin-pl.txt <span class="dn-meta">źródło</span></div>
+            <div class="dn-wykaz-modulu-poz">regulamin-en.xliff <span class="dn-meta">14/18</span></div>
+            <div class="dn-wykaz-modulu-poz">regulamin-de.xliff <span class="dn-meta">12/18</span></div>
+            <div class="dn-wykaz-modulu-poz">slownik-korporacyjny.tbx <span class="dn-meta">211 term.</span></div>
           </div>
         </section>
 
         <!-- Kolejka (domyślnie ukryta) -->
         <section class="sta-okno" id="panel-kolejka" data-nazwa="Kolejka" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><b>Kolejka</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz">Ujednolić „klient” w DE <span class="dn-plakietka dn-plakietka--sygnal meta">AKTYWNE</span></div>
-            <div class="panel-wiersz">Skróć wszystkie wersje o 15% <span class="meta">po nr 1</span></div>
-            <div class="panel-wiersz">Odsłuch FR — synteza mowy <span class="dn-plakietka dn-plakietka--ostrzezenie meta">retry 1/3</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz">Ujednolić „klient” w DE <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">AKTYWNE</span></div>
+            <div class="dn-wykaz-modulu-poz">Skróć wszystkie wersje o 15% <span class="dn-meta">po nr 1</span></div>
+            <div class="dn-wykaz-modulu-poz">Odsłuch FR — synteza mowy <span class="dn-plakietka dn-plakietka--ostrzezenie dn-na-koniec">retry 1/3</span></div>
           </div>
         </section>
 
         <!-- Plan (domyślnie ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">2 / 4</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: lokalizacja regulaminu</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Segmentacja tekstu źródłowego <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tłumaczenie wstępne EN/DE/FR <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Ujednolicenie terminologii <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Kontrola jakości i eksport XLIFF <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Segmentacja tekstu źródłowego <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Tłumaczenie wstępne EN/DE/FR <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Ujednolicenie terminologii <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Kontrola jakości i eksport XLIFF <span class="dn-meta">○</span></div>
           </div>
         </section>
 

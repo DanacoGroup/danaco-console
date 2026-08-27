@@ -21,13 +21,6 @@
   .boczna-poz svg { width:20px; height:20px; flex:none; color:var(--dn-tekst-3); }
   .boczna-poz[aria-current="true"] { background:var(--dn-powierzchnia-2); color:var(--dn-tekst); border-color:var(--dn-obrys-subtelny); }
   .boczna-poz[aria-current="true"] svg { color:var(--dn-sygnal); }
-  .szyna { background:var(--dn-panel); border-right:1px solid var(--dn-obrys); display:flex; flex-direction:column; min-height:0; }
-  .szyna-naglowek { display:flex; align-items:center; gap:var(--dn-od-2); padding:var(--dn-od-2); border-bottom:1px solid var(--dn-obrys-subtelny); }
-  .szyna-grupa { padding:var(--dn-od-2) var(--dn-od-2) 0; font-size:10px; text-transform:uppercase; letter-spacing:var(--dn-ls-wersaliki); color:var(--dn-tekst-3); }
-  .szyna-lista { overflow:auto; min-height:0; }
-  .panel-lista { padding:var(--dn-od-2); display:flex; flex-direction:column; gap:var(--dn-od-2); font-size:var(--dn-fs-sm); }
-  .panel-wiersz { display:flex; align-items:center; gap:var(--dn-od-2); }
-  .panel-wiersz .meta { margin-left:auto; font-family:var(--dn-ff-mono); font-size:var(--dn-fs-xs); color:var(--dn-tekst-3); }
   .dok-dokument { padding:var(--dn-od-4); font-size:var(--dn-fs-md); line-height:var(--dn-lh-luzny); color:var(--dn-tekst); max-width:64ch; }
   .dok-dokument h2 { font-size:var(--dn-fs-lg); margin:0 0 var(--dn-od-3); }
   .dok-dokument h3 { font-size:var(--dn-fs-md); margin:var(--dn-od-4) 0 var(--dn-od-2); color:var(--dn-tekst-2); }
@@ -415,8 +408,8 @@
     </nav>
 
     <!-- SZYNA — rozmowy modułu -->
-    <nav class="szyna" aria-label="Rozmowy">
-      <div class="szyna-naglowek">
+    <nav class="dn-szyna-modulu" aria-label="Rozmowy">
+      <div class="dn-szyna-modulu-glowa">
         <button class="dn-btn dn-btn--zarys dn-btn--sm" type="button" style="flex:1">+ Nowa rozmowa</button>
         <div class="sta-menu">
           <button class="dn-btn-ikona" type="button" data-menu="menu-filtr" aria-expanded="false" aria-label="Filtr, sortowanie, grupowanie">
@@ -436,22 +429,22 @@
           </div>
         </div>
       </div>
-      <div class="szyna-lista">
-        <div class="szyna-grupa">Projekt „Raport kwartalny Q3”</div>
+      <div class="dn-szyna-modulu-lista">
+        <div class="dn-etyk-mono">Projekt „Raport kwartalny Q3”</div>
         <button class="pt-pozycja" type="button" aria-selected="true"><span class="pt-tetno" aria-hidden="true"></span><span class="pt-pozycja-tytul">Redakcja rozdziału 3 — przychody serwisowe</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Streszczenie zarządcze</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Zestawienie z notami rachunkowymi</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Weryfikacja tabeli przychodów</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Wersja do zarządu — korekta języka</span></button>
-        <div class="szyna-grupa">Rejestr umów</div>
+        <div class="dn-etyk-mono">Rejestr umów</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Rozpoznanie przychodu — analiza</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Klasyfikacja umów serwisowych</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Kary umowne — przegląd zdarzeń</span></button>
-        <div class="szyna-grupa">Zakres regulacyjny</div>
+        <div class="dn-etyk-mono">Zakres regulacyjny</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Stan na kwartał bieżący</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Struktura kosztów przyłączeniowych</span></button>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Sprzeczność między źródłem 3 i 7</span></button>
-        <div class="szyna-grupa">Więcej</div>
+        <div class="dn-etyk-mono">Więcej</div>
         <button class="pt-pozycja" type="button"><span class="pt-pozycja-tytul">Projekty · Kolekcje Library · Eksperci Agents · Historia</span></button>
       </div>
     </nav>
@@ -632,28 +625,28 @@
         <!-- Artefakty -->
         <section class="sta-okno" id="panel-artefakty" data-nazwa="Artefakty">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/></svg><b>Artefakty</b></span><span class="sta-okno-znacznik">5</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista" style="overflow:auto">
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> rozdzial-3-wersja-do-akceptacji.docx <span class="meta">62 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> streszczenie-zarzadcze.md <span class="meta">4,8 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> zestawienie-przychodow-q3.xlsx <span class="meta">18 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> struktura-portfela-umow.svg <span class="meta">9,2 kB</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> nota-do-audytora.md <span class="meta">3,1 kB</span></div>
-            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w Studio</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zapisz w Library</button></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu" style="overflow:auto">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> rozdzial-3-wersja-do-akceptacji.docx <span class="dn-meta">62 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> streszczenie-zarzadcze.md <span class="dn-meta">4,8 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> zestawienie-przychodow-q3.xlsx <span class="dn-meta">18 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> struktura-portfela-umow.svg <span class="dn-meta">9,2 kB</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> nota-do-audytora.md <span class="dn-meta">3,1 kB</span></div>
+            <div class="dn-wykaz-modulu-poz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Otwórz w Studio</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zapisz w Library</button></div>
           </div>
         </section>
 
         <!-- Pliki -->
         <section class="sta-okno" id="panel-pliki" data-nazwa="Pliki">
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><b>Pliki</b></span><span class="sta-okno-znacznik">sesja</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista" style="overflow:auto">
+          <div class="sta-okno-tresc dn-wykaz-modulu" style="overflow:auto">
             <div class="pt-etykieta">Wpięte do sesji</div>
-            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> raport-kwartalny-q3.docx <span class="meta">otwarty</span></div>
-            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> rozpoznanie-przychodu.md <span class="meta">Library</span></div>
-            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> umowy-serwisowe-rejestr.xlsx <span class="meta">Library</span></div>
+            <div class="dn-wykaz-modulu-poz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> raport-kwartalny-q3.docx <span class="dn-meta">otwarty</span></div>
+            <div class="dn-wykaz-modulu-poz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> rozpoznanie-przychodu.md <span class="dn-meta">Library</span></div>
+            <div class="dn-wykaz-modulu-poz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> umowy-serwisowe-rejestr.xlsx <span class="dn-meta">Library</span></div>
             <div class="pt-etykieta" style="margin-top:var(--dn-od-2)">Wygenerowane w sesji</div>
-            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> streszczenie-zarzadcze.md <span class="dn-plakietka dn-plakietka--sygnal meta">nowe</span></div>
-            <div class="panel-wiersz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> zestawienie-przychodow-q3.xlsx <span class="dn-plakietka dn-plakietka--sygnal meta">nowe</span></div>
-            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Dodaj plik</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wepnij z Library</button></div>
+            <div class="dn-wykaz-modulu-poz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> streszczenie-zarzadcze.md <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">nowe</span></div>
+            <div class="dn-wykaz-modulu-poz"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg> zestawienie-przychodow-q3.xlsx <span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">nowe</span></div>
+            <div class="dn-wykaz-modulu-poz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Dodaj plik</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Wepnij z Library</button></div>
           </div>
         </section>
 
@@ -704,7 +697,7 @@
                   </tr>
                 </tbody>
               </table>
-              <div class="panel-wiersz" style="margin-top:var(--dn-od-3)"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź wszystkie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Przejrzyj pojedynczo</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Odrzuć</button></div>
+              <div class="dn-wykaz-modulu-poz" style="margin-top:var(--dn-od-3)"><button class="dn-btn dn-btn--atrament dn-btn--sm" type="button">Zatwierdź wszystkie</button><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Przejrzyj pojedynczo</button><button class="dn-btn dn-btn--duch dn-btn--sm" type="button">Odrzuć</button></div>
             </div>
           </div>
         </section>
@@ -712,52 +705,52 @@
         <!-- Plan (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-plan" data-nazwa="Plan" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg><b>Plan</b></span><span class="sta-okno-znacznik">2 / 5</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
+          <div class="sta-okno-tresc dn-wykaz-modulu">
             <div class="pt-etykieta">Zlecenie: uspójnienie rozdziału 3</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wczytanie noty z Library <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zestawienie z rozdziałem 3 <span class="meta">✓</span></div>
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span> Poprawki redakcyjne <span class="meta">▶</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="meta">○</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Powrót do głównego pliku raportu <span class="meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wczytanie noty z Library <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Zestawienie z rozdziałem 3 <span class="dn-meta">✓</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span> Poprawki redakcyjne <span class="dn-meta">▶</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="dn-meta">○</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Powrót do głównego pliku raportu <span class="dn-meta">○</span></div>
             <div class="pt-etykieta" style="margin-top:var(--dn-od-2)">Następny etap</div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Redakcja rozdziału 4 <span class="meta">zaplanowane</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Redakcja rozdziału 4 <span class="dn-meta">zaplanowane</span></div>
           </div>
         </section>
 
         <!-- Zadania w tle (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-zadania" data-nazwa="Zadania w tle" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><b>Zadania w tle</b></span><span class="sta-okno-znacznik">2</span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="pt-tetno" aria-hidden="true"></span><b>generowanie-streszczenia</b><span class="dn-plakietka dn-plakietka--sygnal meta">W TOKU</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="pt-tetno" aria-hidden="true"></span><b>generowanie-streszczenia</b><span class="dn-plakietka dn-plakietka--sygnal dn-na-koniec">W TOKU</span></div>
             <div class="pt-mono" style="font-size:var(--dn-fs-xs);color:var(--dn-tekst-3)">1 agent · 86 tys. tok. · 1 m 12 s</div>
             <div class="dn-postep" data-postep-do="72" data-postep-czas="1600"><div class="dn-postep-tor"><div class="dn-postep-wartosc"></div></div></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zestawienie tabelaryczne Q3 <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> weryfikacja spójności not <span class="dn-plakietka dn-plakietka--sukces meta">ZAKOŃCZONE</span></div>
-            <div class="panel-wiersz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatrzymaj wszystkie</button></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> zestawienie tabelaryczne Q3 <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> weryfikacja spójności not <span class="dn-plakietka dn-plakietka--sukces dn-na-koniec">ZAKOŃCZONE</span></div>
+            <div class="dn-wykaz-modulu-poz" style="border-top:1px solid var(--dn-obrys-subtelny);padding-top:var(--dn-od-2)"><button class="dn-btn dn-btn--zarys dn-btn--sm" type="button">Zatrzymaj wszystkie</button></div>
           </div>
         </section>
 
         <!-- Źródła kontekstu (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-kontekst" data-nazwa="Źródła kontekstu" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6M12 19h8"/></svg><b>Źródła kontekstu</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="dn-plakietka">Studio Editor: raport-kwartalny-q3.docx</span></div>
-            <div class="panel-wiersz"><span class="dn-plakietka">Library: rozpoznanie-przychodu.md</span></div>
-            <div class="panel-wiersz"><span class="dn-plakietka">Workspace: projekt „Raport kwartalny Q3”</span></div>
-            <div class="panel-wiersz"><span class="dn-plakietka">Agents: ekspert „Redaktor”</span></div>
-            <div class="panel-wiersz"><span class="dn-plakietka">Library: umowy-serwisowe-rejestr.xlsx</span></div>
-            <div class="panel-wiersz"><span class="dn-plakietka">Research: zakres regulacyjny (kwartał bieżący)</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Studio Editor: raport-kwartalny-q3.docx</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Library: rozpoznanie-przychodu.md</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Workspace: projekt „Raport kwartalny Q3”</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Agents: ekspert „Redaktor”</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Library: umowy-serwisowe-rejestr.xlsx</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-plakietka">Research: zakres regulacyjny (kwartał bieżący)</span></div>
           </div>
         </section>
 
         <!-- Historia aktywności (uniwersalny, ukryty) -->
         <section class="sta-okno" id="panel-historia" data-nazwa="Historia aktywności" hidden>
           <header class="sta-okno-belka"><span class="sta-okno-tytul"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg><b>Historia aktywności</b></span><span class="sta-okno-akcje"><button class="dn-btn-ikona" type="button" data-okno-zamknij aria-label="Zamknij"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></span></header>
-          <div class="sta-okno-tresc panel-lista">
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wpięto rozpoznanie-przychodu.md <span class="meta">09:41</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Naniesiono 3 poprawki <span class="meta">09:42</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Uruchomiono streszczenie <span class="meta">09:44</span></div>
-            <div class="panel-wiersz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="meta">oczekuje</span></div>
+          <div class="sta-okno-tresc dn-wykaz-modulu">
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Wpięto rozpoznanie-przychodu.md <span class="dn-meta">09:41</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sukces" aria-hidden="true"></span> Naniesiono 3 poprawki <span class="dn-meta">09:42</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--sygnal" aria-hidden="true"></span> Uruchomiono streszczenie <span class="dn-meta">09:44</span></div>
+            <div class="dn-wykaz-modulu-poz"><span class="dn-kropka dn-kropka--neutralna" aria-hidden="true"></span> Eksport do Artefaktów <span class="dn-meta">oczekuje</span></div>
           </div>
         </section>
 

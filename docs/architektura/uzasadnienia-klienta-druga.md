@@ -1536,3 +1536,18 @@ wykonać — nie ma komendy albo ma komendę, lecz brakuje pola w jej żądaniu;
 scaleniu kontraktu stan ten zszedł do pojedynczych pozycji i każda nazywa
 brakujące pole. „Poza modułem" znaczy, że narzędzie należy do okna wspólnego
 platformy.
+
+## budowa/klient-poprzedni/src/moduly/studio/schowek-zrodlo.ts
+Schowek przeglądarki żyje tylko w obrębie karty i nie ma historii, ponieważ
+`navigator.clipboard` oddaje jedną, ostatnią treść. Wymaganie produktu
+obejmuje wykaz wpisów sprzed kilku ruchów oraz wpisy przypięte na stałe,
+więc historia leży w rdzeniu poprzez rodzinę komend `clipboard.*`: `push`
+dopisuje treść (powtórzenie identycznej treści nie mnoży wpisów, tylko
+podnosi zastany wpis na czoło i oddaje `alreadyPresent`), `list` oddaje
+historię wraz z przypiętymi, `pin` przypina wpis (przypięty nie wygasa wraz
+z retencją), `delete` usuwa wpis albo całą historię nieprzypiętą.
+
+Komendy schowka nie niosą pola autora, więc wpis odłożony przez model i wpis
+operatora są w rdzeniu nierozróżnialne. Odkładając fragment za modelem, okno
+zapisuje pole `sourceWindowId` — jedyne pole pochodzenia, które wpis niesie.
+Rozróżnienie autora wpisu schowka nie wchodzi w zakres kontraktu.

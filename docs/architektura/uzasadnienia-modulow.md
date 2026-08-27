@@ -2031,3 +2031,42 @@ Odpowiedz komendy niesie zawsze wykaz po zmianie oraz pole changed, ktore
 mowi wprost, czy wykaz naprawde sie ruszyl; odmowa nazywa brak zamiast
 milczec — zadanie bez wskazania wpisu ani poziomu nie ma czego wylaczyc,
 a zniesienie wylaczenia, ktorego nie ma, konczy sie odmowa not_found.
+
+## budowa/server/internal/core/adapter_modul_aplikacje.go
+
+Zależności adaptera opisane skrótowo przy polach struktury niosą dodatkowe
+uzasadnienie poniżej.
+
+`przyrostWdrozenia` rozgłasza `apps.build.changed`. Silnik wykonania wdrożenia
+przesuwa stan przebiegu poza wykonaniem komendy, więc rozgłoszenie nie może
+iść wyłącznie z obsługiwacza żądania — ten sam wzorzec co `przyrost` w module
+Developer.
+
+`okna` jest zależnością opcjonalną: bez niej moduł pracuje, ale montaż ją
+wpina, ponieważ wdrożenie bierze z okna przestrzeń roboczą, którą wysyła.
+
+`magazyn` to ten sam magazyn treści, którym jadą zasoby modułu Design i pliki
+biblioteki: wiersz w bazie wskazuje plik na dysku, a nie udaje, że go ma.
+
+`katalogDanych` chroni przed odwołaniem, które wypuszczone z rdzenia
+wynosiłoby układ katalogów maszyny.
+
+`sejf` dostaje w żądaniu `apps.package.sign` wyłącznie odwołanie
+(`signingKeyRef`), nigdy treść klucza — materiał nie przechodzi przez bazę
+modułu.
+
+`katalogRozszerzen` zakłada w rejestrze pozycję z manifestu pakietu przy
+`apps.package.publish` — prywatny rejestr organizacji nie jest drugim
+rejestrem obok `extension.*`, tylko tym samym.
+
+`podglady` żyje wyłącznie w pamięci: serwer podglądu nie przeżywa restartu
+rdzenia, więc wiersz w bazie mówiłby po restarcie o nasłuchu, którego nie ma.
+
+`uruchamiacz` jest zależnością opcjonalną: moduł sięga po port startu procesu
+w jednym miejscu, audycie wydajności strony w przeglądarce
+(`adapter_modul_aplikacje_wydajnosc.go`); bez niej audyt odmawia zdaniem
+nazywającym brak, a reszta modułu pracuje dalej.
+
+`PodepnijPrzyrostWarsztatu` i `PodepnijPrzyrostWdrozenia` niosą osobne drogi
+rozgłoszenia, bo zdarzenie warsztatu i zdarzenie wdrożenia niosą różne byty —
+jedna funkcja o dwóch znaczeniach byłaby dwiema prawdami.

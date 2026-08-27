@@ -83,7 +83,7 @@ func (k *kanalObrazow) Wyslij(ctx context.Context, z Zapytanie, u Ujscie) error 
 
 // sprawdzPoswiadczenie odmawia, nazywając brak, zanim poleci żądanie: punkt
 // końcowy generujący obrazy bez klucza nie istnieje, więc brak poświadczenia
-// rozstrzygamy tu, zamiast zwracać cudzy błąd 401.
+// rozstrzyga się tu, zamiast zwracać cudzy błąd 401.
 func (k *kanalObrazow) sprawdzPoswiadczenie(ctx context.Context) error {
 	odwolanie := strings.TrimSpace(k.def.PoswiadczenieOdwolanie)
 	if odwolanie == "" {

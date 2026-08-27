@@ -871,3 +871,15 @@ Zaplecze czynności obejmuje etykietowanie wersji, eksport historii i paczkę
 przekazania. Bez zaplecza trzy czynności stoją jako brak nazwany wraz
 z komendą, która czeka gotowa w rdzeniu, zamiast jako przycisk milczący po
 naciśnięciu.
+
+## budowa/klient-poprzedni/src/moduly/studio/strona-postac-dokumentu.test.ts
+
+Miarą odbioru tego odcinka jest numeracja stron konfigurowana przez Operatora
+— styl, umiejscowienie i numer początkowy — oraz marginesy zmienialne.
+Sprawdziany mierzą więc treść żądania, które wychodzi z okna do rdzenia, a nie
+samo to, że przycisk dał się nacisnąć: nastawa, która nie dojedzie do rdzenia,
+nie przeżyje zapisu i jest usterką, nie uproszczeniem.
+
+Druga rzecz mierzona wprost: pole puste znaczy „nie ruszaj tej cechy", a nie
+zero. Bez tego każde naciśnięcie przycisku zerowałoby nastawy, których Operator
+nie tknął.

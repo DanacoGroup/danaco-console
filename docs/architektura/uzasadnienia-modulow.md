@@ -2126,3 +2126,51 @@ przekierowania nie udało się założyć, zamiast biec z otwartym połączeniem
 i zamkniętym portem. Rdzeń czeka chwilę na taki koniec przed odpowiedzią,
 a potem dogląda procesu do końca jego życia: stan `active` znaczy, że proces
 biegnie z założonym przekierowaniem, nie że polecenie zostało tylko wysłane.
+
+## adapter_modul_library_magazyn.go
+
+Magazyn lezy w katalogu danych rdzenia, w podkatalogu biblioteka/tresc, obok
+bazy i sejfu poswiadczen, a nie w katalogu roboczym sesji, poniewaz przezywa
+restart rdzenia tak samo jak wiersz w bazie, ktory go wskazuje. Obie drogi
+zapisu tresci koncza sie blobem w magazynie, bo tresc, ktora ktos z zewnatrz
+moze nadpisac, nie jest tresci wersji; dzieki temu czytelnik podgladu nie musi
+wiedziec, ktora droga plik przyszedl, bo zawsze czyta sciezke z dysku.
+
+Nazwa pliku jest suma kontrolna tresci. Adapter i tak liczy sume kazdej
+przyslanej tresci, a nazwa zbudowana z tej sumy niesie trzy wlasnosci naraz:
+dwa wgrania tej samej tresci dziela jeden blob zamiast dwoch kopii, ponowny
+zapis tej samej tresci jest bezczynnoscia zamiast nadpisaniem, a nazwa nie
+zalezy od nazwy pliku z zadania, wiec nie da sie nia wyjsc z katalogu magazynu.
+Pierwsze dwa znaki sumy tworza podkatalog, zeby jeden katalog nie urosl do
+dziesiatek tysiecy wpisow.
+
+Zapis jest niepodzielny: plik tymczasowy powstaje na tym samym nosniku co plik
+docelowy, wiec przemianowanie nie jest kopiowaniem, i dopiero przemianowanie
+czyni tresc widoczna pod odwolaniem. Awaria w polowie zapisu zostawia plik
+tymczasowy, nigdy plik obciety, ktory podglad pokazalby jako pelna tresc.
+Niepowodzenie zapisu jest odmowa komendy u wolajacego, nie pustym odwolaniem
+podanym jako powodzenie.
+
+W komendzie ZapiszZePliku kopia powstaje mimo tego, ze plik zrodlowy gdzies juz
+lezy na dysku: odwolanie do cudzego pliku wskazywaloby tresc zywa, a historia
+wersji wymaga tresci zamrozonej. Bez kopii plik nadpisany na dysku po wgraniu
+zmienialby tresc swojej utrwalonej wersji, a przywrocenie wersji nie mialoby
+do czego wrocic. Suma kontrolna liczy sie w locie, w trakcie przepisywania,
+bez drugiego przebiegu po pliku i bez wciagania calej tresci do pamieci —
+kopiowanie idzie strumieniem, wiec plik o dowolnym rozmiarze przechodzi tak
+samo. Nazwa bloba jest suma, znana dopiero po przeczytaniu calosci, wiec plik
+tymczasowy powstaje w korzeniu magazynu i dopiero stamtad wedruje pod swoja
+sume.
+
+Postacia odwolania wypuszczanego z rdzenia jest sciezka wzgledna magazynu,
+liczona od jego korzenia w katalogu danych. Sciezka bezwzgledna wynosilaby do
+klienta uklad katalogow maszyny, na ktorej dziala rdzen, a klient stojacy na
+innej maszynie i tak pod nia nie siegnie. Klucz nieprzezroczysty odrzucono,
+poniewaz wymagalby osobnej komendy rozwiazujacej go do bajtow, a takiej
+kontrakt nie przewiduje. Sciezka wzgledna nie niesie zadnego czlonu ukladu
+maszyny, jest ta sama na kazdej maszynie i po przeniesieniu katalogu danych,
+a rdzen rozwiazuje ja z powrotem do bajtow jednym zlozeniem sciezki z
+katalogiem danych. Sciezka spoza magazynu oddaje pustke, poniewaz nie da sie
+jej wyrazic wzgledem magazynu; suma kontrolna tresci i tak jedzie w odpowiedzi
+jawnie osobnym polem, wiec odwolanie nie wynosi informacji, ktorej odbiorca
+by nie mial.

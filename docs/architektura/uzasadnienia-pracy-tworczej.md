@@ -1971,3 +1971,34 @@ rozwinSciezke: sciezka domowa rozwijana z tyldy, bo powloka rozwija ja sama,
 a rdzen polecenia od klienta nie dostaje przez powloke; sciezka wzgledna
 liczy sie od katalogu biezacego rdzenia jako droga zapasowa dla wywolan
 recznych, klient ma przesylac sciezke bezwzgledna.
+
+Para wersji zawęża wykaz adnotacji, bo adnotacja opisuje różnicę, a nie
+dokument: ta sama treść porównana z inną wersją daje inne fragmenty
+i adnotacja przypięta do fragmentu trzeciego znaczyłaby wtedy co innego.
+## server/internal/mowa/dostepnosc.go
+
+Sprawdzenie poprzedza mikrofon: klient pyta o gotowosc, zanim narysuje
+przycisk nagrywania, zamiast tlumaczyc jego milczenie po nieudanej probie.
+Bledem jest dopiero brak odpowiedzi pomocnika: nie dalo sie go uruchomic
+albo odpowiedzial czyms, co nie jest jego odpowiedzia. Pierwsze naprawia sie
+instalacja, drugie zgloszeniem usterki. Dwa braki sa rozrozniane osobno, bo
+maja dwie rozne naprawy: nie ma czym uruchomic skryptu (interpreter) kontra
+skrypt sie uruchomil, lecz nie zastal silnika rozpoznawania.
+
+Klucze pol Dostepnosc sa polskie, bo pomocnik jest czescia tego produktu,
+a produkt jest polskojezyczny — to nie jest nazewnictwo kontraktu, ktorego
+stale zostaja angielskie.
+
+Dostepnosc (metoda): brak interpretera to ten sam rodzaj wiadomosci dla
+Operatora, co brak biblioteki — jedno pytanie daje jedna odpowiedz,
+niezaleznie od tego, na ktorym ogniwie lancuch sie urwal. Bledem zostaje
+wylacznie odpowiedz nieczytelna: pomocnik odezwal sie czyms, co nie jest
+jego odpowiedzia.
+
+odczytajDostepnosc: wyjscie puste znaczy, ze pomocnik nie doszedl do
+wypisania odpowiedzi — wtedy jedyna wiadomoscia jest diagnostyka i to ona
+idzie w bledzie zamiast zdania o niepoprawnym JSON-ie, ktore niczego nie
+tlumaczy. Odmowa bez powodu zostawilaby Operatora z "nie da sie" bez
+zdania, co z tym zrobic.
+
+powodZUruchomienia: samo "nie mozna uruchomic" nie wskazuje naprawy.

@@ -1120,3 +1120,11 @@ odbyć mimo nieudanego pomiaru.
 Bajty odczytuje `readAsDataURL`, ponieważ oddaje zapis base64 bez ręcznego
 przepisywania bajtów przez `btoa`, które na treści binarnej wymaga przejścia
 przez ciąg znaków jednobajtowych i zawodzi na pierwszym bajcie powyżej 0xFF.
+
+## budowa/klient-poprzedni/src/aplikacja/akcje-tras.ts
+
+Powłoka środowiska ma własny pasek górny wraz z przełącznikiem motywu,
+powiadomieniami i awatarem. Grupa akcji tras nie zakłada więc drugiego paska,
+lecz dokłada się do grupy akcji paska istniejącego, przy jego prawej krawędzi,
+przed akcjami samej powłoki. Grupa niesie tylko to, czego pasek powłoki nie ma:
+oznaczenie trasy bieżącej i stan łączności z rdzeniem.

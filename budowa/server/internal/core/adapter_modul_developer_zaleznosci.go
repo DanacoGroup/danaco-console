@@ -1,31 +1,6 @@
-// Odpowiedzialność pliku: trzy komendy zakładki Zależności i bezpieczeństwo
-// w Dev Tools — `developer.dependency.list` (drzewo zależności z manifestów),
-// `developer.scan.run` (przebieg skanowania) i `developer.scan.result.list`
-// (znaleziska).
-//
-// ── Parsery własne, nie programy ────────────────────────────────────────────
-// Wykaz zależności powstaje z odczytu manifestów repozytorium: `go.mod`,
-// `package.json`, `requirements.txt` i `Cargo.toml`. To są pliki tekstowe
-// o ustalonym kształcie, a ich odczyt jest kilkudziesięcioma wierszami kodu —
-// wołanie `go list -m all` albo `npm ls` dałoby to samo, tyle że zależne od
-// tego, czy narzędzie języka stoi na serwerze i czy zależności są pobrane.
-// Przeglądarka zależności ma się otwierać także w repozytorium, którego nikt
-// jeszcze nie zbudował.
-//
-// ── Skan sekretów i kodu na wyrażeniach regularnych ─────────────────────────
-// Skan sekretów rozpoznaje kształty kluczy (token dostawcy, klucz prywatny,
-// hasło w adresie połączenia) regułami wyrażeń regularnych — tak samo, jak robi
-// to `gitleaks`, i tym samym środkiem, którym moduł wyszukuje w repozytorium.
-// Skan kodu szuka wzorców, które w Go i TypeScripcie są znanymi źródłami
-// podatności. To jest zakres węższy niż `semgrep` i mówimy o tym wprost: reguła
-// nazywa się w znalezisku, więc widać, co sprawdzono.
-//
-// ── Skan zależności bez sieci ───────────────────────────────────────────────
-// Podatności zależności rozpoznaje się dziś po ZAKRESIE wersji: rdzeń nie pyta
-// bazy CVE, bo serwer bywa odcięty od sieci, a skan, który przy braku sieci
-// milczy, byłby skanem mówiącym „nic nie znaleziono” tam, gdzie nie szukał.
-// Zamiast tego skan zależności zgłasza to, co da się orzec z samego manifestu:
-// zależność bez przypiętej wersji i zależność wskazującą gałąź zamiast wydania.
+// Plik obsługuje trzy komendy zakładki zależności i bezpieczeństwa w Dev
+// Tools: `developer.dependency.list`, `developer.scan.run`
+// i `developer.scan.result.list`.
 package core
 
 import (
@@ -47,15 +22,19 @@ import (
 )
 
 const (
-	// przedrostekSkanu znakuje identyfikator przebiegu skanowania.
+	// przedrostekSkanu znakuje identyfikator przebiegu skanowania w wykazie
+	// przebiegów i w odwołaniach do niego ze znalezisk.
 	przedrostekSkanu = "scan-"
-	// przedrostekZnaleziska znakuje identyfikator spostrzeżenia skanu.
+	// przedrostekZnaleziska znakuje identyfikator pojedynczego spostrzeżenia
+	// dowolnego rodzaju skanu w wykazie znalezisk.
 	przedrostekZnaleziska = "find-"
-	// najwiecejZnaleziskWykazu jest domyślną głębokością wykazu znalezisk.
+	// najwiecejZnaleziskWykazu jest domyślną głębokością wykazu znalezisk
+	// zwracaną, gdy żądanie nie ogranicza liczby wyników jawnie.
 	najwiecejZnaleziskWykazu = 500
 )
 
-// WykazZaleznosci obsługuje `developer.dependency.list`.
+// WykazZaleznosci obsługuje komendę `developer.dependency.list`: czyta drzewo
+// zależności z manifestu repozytorium wskazanego albo wykrytego automatycznie.
 func (a *adapterDevelopera) WykazZaleznosci(_ context.Context,
 	z shared.DeveloperDependencyListRequest) (shared.DeveloperDependencyListResponse, error) {
 
@@ -91,9 +70,7 @@ func (a *adapterDevelopera) WykazZaleznosci(_ context.Context,
 		return shared.DeveloperDependencyListResponse{}, err
 	}
 	if z.OutdatedOnly != nil && *z.OutdatedOnly {
-		// Rdzeń nie pyta rejestrów pakietów o najnowsze wydania, więc nie zna
-		// wersji nowszej i nie udaje, że ją zna: zawężenie „tylko przestarzałe”
-		// oddaje pozycje, o których wiadomo, że wersji nie mają przypiętej.
+		// Zawężenie „tylko przestarzałe" oddaje pozycje bez przypiętej wersji.
 		zawezone := make([]shared.DependencyNode, 0, len(zaleznosci))
 		for _, pozycja := range zaleznosci {
 			if wersjaNieprzypieta(pozycja.Version) {
@@ -117,11 +94,9 @@ func (a *adapterDevelopera) WykazZaleznosci(_ context.Context,
 	}, nil
 }
 
-// manifestRepozytorium odnajduje manifest w katalogu roboczym.
-//
-// Kolejność jest ustalona i celowa: `go.mod` przed `package.json`, bo
-// repozytorium Go z narzędziami frontendowymi ma oba, a jego zależnościami są
-// moduły Go. Wskazanie jawne w żądaniu zawsze wygrywa z tym rozpoznaniem.
+// manifestRepozytorium odnajduje manifest w katalogu roboczym, sprawdzając
+// nazwy w ustalonej kolejności: `go.mod`, `package.json`, `requirements.txt`,
+// `Cargo.toml`.
 func manifestRepozytorium(korzen string) (string, bool) {
 	for _, nazwa := range []string{"go.mod", "package.json", "requirements.txt", "Cargo.toml"} {
 		sciezka := filepath.Join(korzen, nazwa)
@@ -132,7 +107,8 @@ func manifestRepozytorium(korzen string) (string, bool) {
 	return "", false
 }
 
-// zaleznosciZManifestu czyta manifest wskazanego rodzaju.
+// zaleznosciZManifestu czyta manifest wskazanego rodzaju i oddaje jego
+// zależności w kształcie wspólnym dla wszystkich obsługiwanych manifestów.
 func zaleznosciZManifestu(sciezka string) ([]shared.DependencyNode, error) {
 	bajty, err := os.ReadFile(sciezka)
 	if err != nil {
@@ -198,7 +174,8 @@ func zaleznosciGo(tresc string) []shared.DependencyNode {
 	return uporzadkujZaleznosci(zaleznosci)
 }
 
-// zaleznosciNode czyta `package.json`.
+// zaleznosciNode czyta `package.json` i oddaje jego zależności produkcyjne,
+// deweloperskie i towarzyszące wraz z licencją pakietu.
 func zaleznosciNode(tresc string) ([]shared.DependencyNode, error) {
 	var manifest struct {
 		Dependencies    map[string]string `json:"dependencies"`
@@ -221,15 +198,14 @@ func zaleznosciNode(tresc string) ([]shared.DependencyNode, error) {
 		}
 	}
 	dopisz(manifest.Dependencies, "")
-	// Zależności deweloperskie i towarzyszące stoją pod własnym rodzicem: są
-	// zależnościami repozytorium, lecz nie wchodzą do wydania, a wykaz płaski
-	// zacierałby tę różnicę.
+	// Zależności deweloperskie i towarzyszące stoją pod własnym rodzicem.
 	dopisz(manifest.DevDependencies, "devDependencies")
 	dopisz(manifest.PeerZaleznosci, "peerDependencies")
 	return uporzadkujZaleznosci(zaleznosci), nil
 }
 
-// zaleznosciPythona czyta `requirements.txt`.
+// zaleznosciPythona czyta `requirements.txt` i oddaje wskazane w nim
+// zależności wraz z operatorem wersji, gdy manifest go niesie.
 func zaleznosciPythona(tresc string) []shared.DependencyNode {
 	zaleznosci := make([]shared.DependencyNode, 0, 32)
 	for _, wiersz := range strings.Split(tresc, "\n") {
@@ -258,7 +234,8 @@ func zaleznosciPythona(tresc string) []shared.DependencyNode {
 	return uporzadkujZaleznosci(zaleznosci)
 }
 
-// zaleznosciRusta czyta sekcję `[dependencies]` pliku `Cargo.toml`.
+// zaleznosciRusta czyta sekcje zależności pliku `Cargo.toml`, rozróżniając
+// zależności zwykłe od pozostałych po nazwie sekcji.
 func zaleznosciRusta(tresc string) []shared.DependencyNode {
 	zaleznosci := make([]shared.DependencyNode, 0, 32)
 	sekcja := ""
@@ -280,8 +257,7 @@ func zaleznosciRusta(tresc string) []shared.DependencyNode {
 		wartosc := strings.TrimSpace(pole[rowne+1:])
 		wersja := strings.Trim(wartosc, `"`)
 		if strings.HasPrefix(wartosc, "{") {
-			// Postać rozbudowana `{ version = "1.0", features = [...] }` —
-			// bierzemy z niej samą wersję, bo tylko ona jest zależnością.
+			// Z postaci rozbudowanej `{ version = "1.0", ... }` bierzemy wersję.
 			wersja = wersjaZTabeliCargo(wartosc)
 		}
 		if wersja == "" {
@@ -296,7 +272,8 @@ func zaleznosciRusta(tresc string) []shared.DependencyNode {
 	return uporzadkujZaleznosci(zaleznosci)
 }
 
-// wersjaZTabeliCargo wyjmuje `version = "…"` z zapisu rozbudowanego.
+// wersjaZTabeliCargo wyjmuje wartość pola `version` z zapisu rozbudowanego
+// zależności, ograniczoną parą cudzysłowów.
 func wersjaZTabeliCargo(wartosc string) string {
 	miejsce := strings.Index(wartosc, "version")
 	if miejsce < 0 {
@@ -327,7 +304,8 @@ func uporzadkujZaleznosci(zaleznosci []shared.DependencyNode) []shared.Dependenc
 	return zaleznosci
 }
 
-// wersjaNieprzypieta mówi, czy wersja dopuszcza podmianę bez zmiany manifestu.
+// wersjaNieprzypieta mówi, czy zapis wersji dopuszcza podmianę treści
+// zależności bez zmiany manifestu.
 func wersjaNieprzypieta(wersja string) bool {
 	tresc := strings.TrimSpace(wersja)
 	if tresc == "" || tresc == "dowolna" || tresc == "*" || tresc == "latest" {
@@ -339,12 +317,8 @@ func wersjaNieprzypieta(wersja string) bool {
 
 // ── Skanowanie ──────────────────────────────────────────────────────────────
 
-// regulySekretow rozpoznają kształty kluczy i haseł w treści plików.
-//
-// Reguła nazywa się tak, jak nazywa się to, co znajduje: znalezisko niosące
-// „klucz prywatny” mówi Operatorowi więcej niż numer reguły. Wzorce są celowo
-// wąskie — reguła łapiąca każde słowo `password` dałaby wykaz, w którym prawdziwe
-// znaleziska toną wśród nazw pól formularzy.
+// regulySekretow rozpoznają kształty kluczy i haseł w treści plików: token
+// dostawcy, klucz prywatny, klucz dostępowy chmury, hasło w adresie połączenia.
 var regulySekretow = []struct {
 	nazwa   string
 	wzorzec *regexp.Regexp
@@ -366,7 +340,8 @@ var regulySekretow = []struct {
 		shared.ProblemSeverityWarning},
 }
 
-// regulyKodu rozpoznają wzorce, które bywają źródłem podatności.
+// regulyKodu rozpoznają wzorce, które w Go i TypeScripcie bywają źródłem
+// podatności: sklejanie zapytań, wykonanie tekstu jako kodu i tym podobne.
 var regulyKodu = []struct {
 	nazwa   string
 	wzorzec *regexp.Regexp
@@ -397,13 +372,8 @@ var regulyKodu = []struct {
 		"wynik czynności jest odrzucany; niepowodzenie przejdzie niezauważone"},
 }
 
-// UruchomSkan obsługuje `developer.scan.run`.
-//
-// Skan biegnie w całości przed odpowiedzią, a nie w tle: przechodzi po plikach
-// repozytorium wyrażeniami regularnymi i po manifestach, więc kończy się
-// w sekundach, a nie w minutach. Bieg w tle wymagałby własnego rejestru
-// przebiegów i własnego zdarzenia przyrostu — trzeciego takiego mechanizmu
-// w module, bez odbiorcy, który by na to czekał.
+// UruchomSkan obsługuje komendę `developer.scan.run`: przeprowadza skan
+// wskazanych rodzajów w całości przed odpowiedzią i zapisuje jego wynik.
 func (a *adapterDevelopera) UruchomSkan(ctx context.Context,
 	z shared.DeveloperScanRunRequest) (shared.DeveloperScanRunResponse, error) {
 
@@ -477,7 +447,8 @@ func (a *adapterDevelopera) UruchomSkan(ctx context.Context,
 // opcjonalną, a przebieg domknięty zawsze ją ma.
 func wskaznikDuzejChwili(chwila int64) *int64 { return &chwila }
 
-// rodzajeSkanu odsiewa powtórzenia i rodzaje spoza słownika kontraktu.
+// rodzajeSkanu odsiewa z żądanych rodzajów skanu powtórzenia i wartości spoza
+// słownika kontraktu, zachowując kolejność pierwszego wystąpienia.
 func rodzajeSkanu(zadane []shared.ScanKind) []shared.ScanKind {
 	widziane := map[shared.ScanKind]bool{}
 	rodzaje := make([]shared.ScanKind, 0, len(zadane))
@@ -494,7 +465,8 @@ func rodzajeSkanu(zadane []shared.ScanKind) []shared.ScanKind {
 	return rodzaje
 }
 
-// przeprowadzSkan wykonuje wskazane rodzaje skanu w katalogu roboczym.
+// przeprowadzSkan wykonuje wskazane rodzaje skanu w katalogu roboczym i oddaje
+// zebrane znaleziska niezależnie od rodzaju, który je wystawił.
 func (a *adapterDevelopera) przeprowadzSkan(ctx context.Context, okno session.Okno,
 	korzen, skanKod string, rodzaje []shared.ScanKind,
 	sciezki []string) ([]daneZnaleziska, error) {
@@ -522,10 +494,7 @@ func (a *adapterDevelopera) przeprowadzSkan(ctx context.Context, okno session.Ok
 		return znaleziska, nil
 	}
 
-	// Przejście po plikach idzie tą samą drogą, co wyszukiwanie w repozytorium:
-	// z poszanowaniem `.gitignore` i z pominięciem plików binarnych. Skan
-	// zgłaszający sekret w katalogu `node_modules` byłby wykazem, którego nikt
-	// nie czyta.
+	// Przejście po plikach idzie tą samą drogą, co wyszukiwanie w repozytorium.
 	pliki, err := repozytorium.PlikiDoPrzejrzenia(korzen, sciezki)
 	if err != nil {
 		return znaleziska, bladWykonaniaDevelopera(
@@ -550,7 +519,8 @@ func (a *adapterDevelopera) przeprowadzSkan(ctx context.Context, okno session.Ok
 	return znaleziska, nil
 }
 
-// znaleziskaWTresci przepuszcza treść pliku przez reguły sekretów.
+// znaleziskaWTresci przepuszcza treść pliku wiersz po wierszu przez reguły
+// sekretów i zwraca znaleziska z numerem wiersza dopasowania.
 func znaleziskaWTresci(skanKod, sciezka, tresc string,
 	rodzaj shared.ScanKind) []daneZnaleziska {
 
@@ -572,9 +542,7 @@ func znaleziskaWTresci(skanKod, sciezka, tresc string,
 				rodzaj:  rodzaj,
 				waga:    regula.waga,
 				tytul:   regula.nazwa + " w pliku " + filepath.Base(sciezka),
-				// Treść dopasowania NIE wchodzi do znaleziska: wykaz znalezisk
-				// z wypisanymi sekretami byłby drugim miejscem, w którym te
-				// sekrety leżą — tym razem w bazie produktu.
+				// Treść dopasowania nie wchodzi do znaleziska.
 				opis:    "reguła rozpoznała kształt sekretu; wartości nie zapisano",
 				sciezka: sciezka,
 				wiersz:  &linia,
@@ -585,7 +553,8 @@ func znaleziskaWTresci(skanKod, sciezka, tresc string,
 	return znaleziska
 }
 
-// znaleziskaWKodzie przepuszcza treść pliku przez reguły wzorców podatności.
+// znaleziskaWKodzie przepuszcza treść pliku przez reguły wzorców podatności,
+// ograniczone do rozszerzeń języków, które te reguły rozpoznają.
 func znaleziskaWKodzie(skanKod, sciezka, tresc string) []daneZnaleziska {
 	rozszerzenie := strings.ToLower(filepath.Ext(sciezka))
 	switch rozszerzenie {
@@ -617,7 +586,8 @@ func znaleziskaWKodzie(skanKod, sciezka, tresc string) []daneZnaleziska {
 	return znaleziska
 }
 
-// znaleziskaZManifestu orzeka o zależnościach i licencjach z samego manifestu.
+// znaleziskaZManifestu orzeka o zależnościach bez przypiętej wersji albo
+// o brakujących licencjach wyłącznie z treści manifestu repozytorium.
 func znaleziskaZManifestu(korzen, skanKod string, rodzaj shared.ScanKind) []daneZnaleziska {
 	sciezka, jest := manifestRepozytorium(korzen)
 	if !jest {
@@ -669,7 +639,8 @@ func znaleziskaZManifestu(korzen, skanKod string, rodzaj shared.ScanKind) []dane
 	return znaleziska
 }
 
-// WykazZnalezisk obsługuje `developer.scan.result.list`.
+// WykazZnalezisk obsługuje komendę `developer.scan.result.list`: zwraca
+// znaleziska wskazanego przebiegu skanowania albo wszystkie znaleziska okna.
 func (a *adapterDevelopera) WykazZnalezisk(ctx context.Context,
 	z shared.DeveloperScanResultListRequest) (shared.DeveloperScanResultListResponse, error) {
 
@@ -713,11 +684,8 @@ func (a *adapterDevelopera) WykazZnalezisk(ctx context.Context,
 	return shared.DeveloperScanResultListResponse{Findings: znaleziska, Total: &razem}, nil
 }
 
-// daneZnaleziska jest spostrzeżeniem skanu w postaci wygodnej do składania.
-//
-// Typ pośredni istnieje po to, żeby reguły skanu wypełniały pola wartościami,
-// a nie wskaźnikami: wykaz kilkuset znalezisk składany bezpośrednio w kształt
-// bazy byłby ścianą `wskaznikTekstu(...)` przy każdym polu.
+// daneZnaleziska jest spostrzeżeniem skanu w postaci wygodnej do składania:
+// reguły skanu wypełniają pola wartościami wprost, a nie wskaźnikami.
 type daneZnaleziska struct {
 	kod           string
 	skanKod       string
@@ -766,7 +734,8 @@ func (z daneZnaleziska) wierszZnaleziska() dane.ZnaleziskoSkanu {
 	return wiersz
 }
 
-// wierszeZnalezisk przekłada cały zbiór spostrzeżeń na wiersze bazy.
+// wierszeZnalezisk przekłada cały zbiór spostrzeżeń skanu na wiersze bazy,
+// wywołując dla każdej pozycji jej metodę przekładu.
 func wierszeZnalezisk(znaleziska []daneZnaleziska) []dane.ZnaleziskoSkanu {
 	wiersze := make([]dane.ZnaleziskoSkanu, 0, len(znaleziska))
 	for _, znalezisko := range znaleziska {
@@ -775,7 +744,8 @@ func wierszeZnalezisk(znaleziska []daneZnaleziska) []dane.ZnaleziskoSkanu {
 	return wiersze
 }
 
-// danePrzebieguSkanu składa wiersz nagłówka przebiegu skanowania.
+// danePrzebieguSkanu składa wiersz nagłówka przebiegu skanowania z jego
+// stanem, rodzajami i, gdy przebieg jest domknięty, liczbą znalezisk.
 func danePrzebieguSkanu(kod, oknoKod, rodzaje string, stan shared.BuildStatus,
 	znalezisk *int64, zakonczono *string) dane.PrzebiegSkanu {
 
@@ -789,7 +759,8 @@ func danePrzebieguSkanu(kod, oknoKod, rodzaje string, stan shared.BuildStatus,
 	}
 }
 
-// filtrZnaleziskZadania składa zawężenie wykazu znalezisk z żądania.
+// filtrZnaleziskZadania składa zawężenie wykazu znalezisk z pól żądania:
+// przebiegu, okna, rodzaju, wagi i granicy liczby wyników.
 func filtrZnaleziskZadania(z shared.DeveloperScanResultListRequest) dane.FiltrZnalezisk {
 	filtr := dane.FiltrZnalezisk{Limit: najwiecejZnaleziskWykazu}
 	if z.ScanId != nil {
@@ -810,26 +781,13 @@ func filtrZnaleziskZadania(z shared.DeveloperScanResultListRequest) dane.FiltrZn
 	return filtr
 }
 
-// ── Skan kodu programami warsztatu ──────────────────────────────────────────
-//
-// Reguły wyrażeń regularnych wyżej pracują zawsze i bez niczego spoza rdzenia —
-// to jest droga podstawowa i ona rozstrzyga, że skan kodu w ogóle coś zmierzył.
-// Programy niżej ją POSZERZAJĄ: `semgrep` orzeka po składni tam, gdzie wyrażenie
-// regularne widzi tylko wiersz, a `jscpd` i `dupl` znajdują powtórzony fragment,
-// którego żadna reguła wierszowa nie zobaczy.
-//
-// Program nieobecny na maszynie nie psuje skanu i nie zmienia jego stanu: skan
-// oddaje wtedy to, co zmierzyła droga podstawowa. Każde znalezisko niesie nazwę
-// reguły, więc widać, co je wystawiło.
+// Programy zewnętrzne niżej poszerzają skan kodu wyrażeniami regularnymi.
 
-// czasProgramuSkanu jest granicą jednego przejścia programu po repozytorium.
+// czasProgramuSkanu jest granicą czasową jednego przejścia programu
+// analizującego po całym repozytorium podczas skanu kodu.
 const czasProgramuSkanu = 180 * time.Second
 
-// Progu powtórzenia rdzeń NIE narzuca: każdy z obu programów ma własny i to on
-// obowiązuje. Próg mówi, od ilu żetonów zbieżność jest powtórzeniem, a nie
-// przypadkiem — jest więc rozstrzygnięciem o tym, co w danym języku jest
-// powieleniem kodu. Wartość wpisana tutaj byłaby wartością wziętą znikąd
-// i cichym nadpisaniem tego, co program o swoim języku wie.
+// Próg powtórzenia rdzeń nie narzuca — obowiązuje próg własny programu.
 
 // konfiguracjeSemgrepa wylicza nazwy, pod którymi Semgrep szuka zestawu reguł
 // w korzeniu repozytorium.
@@ -837,7 +795,8 @@ var konfiguracjeSemgrepa = []string{
 	".semgrep.yml", ".semgrep.yaml", "semgrep.yml", "semgrep.yaml", ".semgrep",
 }
 
-// znaleziskaProgramow zbiera spostrzeżenia programów poszerzających skan kodu.
+// znaleziskaProgramow zbiera spostrzeżenia programów poszerzających skan
+// kodu: Semgrepa oraz wykrywaczy powtórzeń dla TypeScriptu, JavaScriptu i Go.
 func (a *adapterDevelopera) znaleziskaProgramow(ctx context.Context, okno session.Okno,
 	korzen, skanKod string, sciezki []string) []daneZnaleziska {
 
@@ -851,7 +810,8 @@ func (a *adapterDevelopera) znaleziskaProgramow(ctx context.Context, okno sessio
 	return znaleziska
 }
 
-// wyjscieSemgrepa jest kształtem odpowiedzi `semgrep --json`.
+// wyjscieSemgrepa jest kształtem odpowiedzi `semgrep --json` z wykazem
+// wyników wraz z ich położeniem i wagą.
 type wyjscieSemgrepa struct {
 	Results []struct {
 		CheckId string `json:"check_id"`
@@ -866,16 +826,8 @@ type wyjscieSemgrepa struct {
 	} `json:"results"`
 }
 
-// znaleziskaSemgrepa przeprowadza skan semantyczny zestawem reguł repozytorium.
-//
-// ── Dlaczego zestaw repozytorium, a nie zestaw z rejestru ───────────────────
-// Zestaw z rejestru (`--config=p/…`, `--config=auto`) pobiera się przez sieć przy
-// każdym przebiegu. Ten moduł ma na to rozstrzygnięcie zapisane wyżej przy skanie
-// zależności: serwer bywa odcięty od sieci, a skan, który przy braku sieci milczy,
-// mówiłby „nic nie znaleziono" tam, gdzie nie szukał. Reguły są przy tym
-// rozstrzygnięciem o tym, co w danym repozytorium jest podatnością — a tego rdzeń
-// za Operatora nie orzeka. Repozytorium bez własnego zestawu nie jest więc
-// skanowane semantycznie i żadne znalezisko nie twierdzi inaczej.
+// znaleziskaSemgrepa przeprowadza skan semantyczny zestawem reguł repozytorium
+// — nie zestawem z rejestru — i oddaje pustą listę bez własnego zestawu reguł.
 func (a *adapterDevelopera) znaleziskaSemgrepa(ctx context.Context, okno session.Okno,
 	korzen, skanKod string, sciezki []string) []daneZnaleziska {
 
@@ -931,7 +883,8 @@ func wagaSemgrepa(waga string) shared.ProblemSeverity {
 	}
 }
 
-// wyjsciePowtorzen jest kształtem raportu `jscpd --reporters json`.
+// wyjsciePowtorzen jest kształtem raportu `jscpd --reporters json` z wykazem
+// par plików niosących ten sam powtórzony fragment.
 type wyjsciePowtorzen struct {
 	Duplicates []struct {
 		Format    string `json:"format"`
@@ -949,11 +902,8 @@ type wyjsciePowtorzen struct {
 	} `json:"duplicates"`
 }
 
-// znaleziskaPowtorzenTypeScriptu szuka powtórzonych fragmentów w TS i JS.
-//
-// Raport idzie do katalogu tymczasowego maszyny rdzenia, bo program pisze go do
-// pliku, a nie na wyjście. Katalog znika po odczycie — repozytorium Operatora nie
-// ma prawa dostać pliku, o który nikt nie prosił.
+// znaleziskaPowtorzenTypeScriptu szuka powtórzonych fragmentów w plikach
+// TypeScriptu i JavaScriptu programem jscpd, z raportem w katalogu tymczasowym.
 func (a *adapterDevelopera) znaleziskaPowtorzenTypeScriptu(ctx context.Context,
 	okno session.Okno, korzen, skanKod string) []daneZnaleziska {
 
@@ -963,9 +913,7 @@ func (a *adapterDevelopera) znaleziskaPowtorzenTypeScriptu(ctx context.Context,
 	}
 	defer func() { _ = os.RemoveAll(katalog) }()
 
-	// Zawężenie do TypeScriptu i JavaScriptu jest podziałem pracy, nie
-	// oszczędnością: powtórzenia w plikach Go liczy `dupl` niżej, a oba programy
-	// puszczone na ten sam plik zgłosiłyby to samo powtórzenie dwa razy.
+	// Powtórzenia w plikach Go liczy program `dupl` osobno, niżej.
 	_, wolanie := a.wolajNarzedzieWarsztatu(ctx, okno, narzedzieJscpd, []string{
 		"--reporters", "json", "--output", katalog, "--silent",
 		"--format", "typescript,javascript,jsx,tsx", ".",
@@ -973,8 +921,7 @@ func (a *adapterDevelopera) znaleziskaPowtorzenTypeScriptu(ctx context.Context,
 
 	bajty, odczyt := os.ReadFile(filepath.Join(katalog, "jscpd-report.json"))
 	if odczyt != nil {
-		// Raportu nie ma — program albo go nie stworzył, albo go nie ma na
-		// maszynie. W obu razach droga podstawowa skanu zmierzyła swoje.
+		// Raportu nie ma — droga podstawowa skanu i tak już zmierzyła swoje.
 		_ = wolanie
 		return nil
 	}
@@ -1004,16 +951,13 @@ func (a *adapterDevelopera) znaleziskaPowtorzenTypeScriptu(ctx context.Context,
 	return znaleziska
 }
 
-// wzorzecPowtorzeniaGo rozbiera wiersz `dupl -plumbing`:
-// `plik:od-do: duplicate of plik:od-do`.
+// wzorzecPowtorzeniaGo rozbiera wiersz odpowiedzi `dupl -plumbing` postaci
+// `plik:od-do: duplicate of plik:od-do` na obie strony powtórzenia.
 var wzorzecPowtorzeniaGo = regexp.MustCompile(
 	`^(.+):(\d+)-(\d+): duplicate of (.+):(\d+)-(\d+)$`)
 
-// znaleziskaPowtorzenGo szuka powtórzonych fragmentów w plikach Go.
-//
-// Para powtórzeń wraca z programu dwukrotnie — raz z każdej strony — więc
-// zapisywana jest jedna strona pary: wykaz z tym samym fragmentem dwa razy
-// mówiłby o dwóch spostrzeżeniach tam, gdzie jest jedno.
+// znaleziskaPowtorzenGo szuka powtórzonych fragmentów w plikach Go programem
+// dupl, zapisując z każdej pary powtórzenia wyłącznie jedną stronę.
 func (a *adapterDevelopera) znaleziskaPowtorzenGo(ctx context.Context, okno session.Okno,
 	korzen, skanKod string) []daneZnaleziska {
 

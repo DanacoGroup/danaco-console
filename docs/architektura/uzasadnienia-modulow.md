@@ -147,3 +147,93 @@ zaakceptowania.
 Różnica zunifikowana jest jedynym kształtem, w którym serwer języka mówi
 o zmianie wielu plików naraz; kontrakt niesie ją jako wykaz zmian tekstu,
 więc rozbiór wyniku idzie po nagłówkach plików i fragmentach zmiany.
+
+## budowa/server/internal/core/adapter_modul_developer_zaleznosci.go
+
+Wykaz zależności powstaje z bezpośredniego odczytu manifestów repozytorium
+(go.mod, package.json, requirements.txt, Cargo.toml), nie z wywołania
+narzędzia języka: odczyt pliku tekstowego o ustalonym kształcie jest
+kilkudziesięcioma wierszami kodu i działa bez narzędzia zainstalowanego na
+serwerze oraz bez pobranych zależności — przeglądarka zależności otwiera się
+także w repozytorium, którego jeszcze nikt nie zbudował.
+
+Skan sekretów rozpoznaje kształty kluczy regułami wyrażeń regularnych, tym
+samym środkiem co wyszukiwanie w repozytorium i tą samą metodą co program
+gitleaks. Skan kodu szuka wzorców znanych źródeł podatności w Go
+i TypeScripcie — zakres węższy niż semgrep, nazwany wprost: reguła nazywa
+się w znalezisku, więc widać, co sprawdzono.
+
+Podatności zależności rozpoznaje się po zakresie wersji, nie po bazie CVE:
+serwer bywa odcięty od sieci, a skan milczący bez sieci byłby skanem
+twierdzącym „nic nie znaleziono" tam, gdzie nie szukał. Skan zależności
+zgłasza więc wyłącznie to, co da się orzec z samego manifestu: zależność
+bez przypiętej wersji i zależność wskazującą gałąź zamiast wydania.
+
+Zawężenie „tylko przestarzałe" oddaje pozycje bez przypiętej wersji, ponieważ
+rdzeń nie pyta rejestrów pakietów o najnowsze wydania i nie udaje, że zna
+wersję nowszą.
+
+Kolejność wykrywania manifestu jest ustalona i celowa: go.mod przed
+package.json, bo repozytorium Go z narzędziami frontendowymi ma oba pliki,
+a jego zależnościami są moduły Go. Wskazanie jawne w żądaniu zawsze wygrywa
+z tym rozpoznaniem.
+
+Zależności deweloperskie i towarzyszące manifestu Node stoją pod własnym
+rodzicem: są zależnościami repozytorium, lecz nie wchodzą do wydania,
+a wykaz płaski zacierałby tę różnicę.
+
+Reguły sekretów nazywają się tak, jak nazywa się to, co znajdują: znalezisko
+niosące „klucz prywatny" mówi więcej niż numer reguły. Wzorce są celowo
+wąskie — reguła łapiąca każde słowo `password` dałaby wykaz, w którym
+prawdziwe znaleziska toną wśród nazw pól formularzy.
+
+Skan biegnie w całości przed odpowiedzią, a nie w tle: przechodzi po plikach
+repozytorium wyrażeniami regularnymi i po manifestach, więc kończy się
+w sekundach. Bieg w tle wymagałby własnego rejestru przebiegów i własnego
+zdarzenia przyrostu — trzeciego takiego mechanizmu w module, bez odbiorcy,
+który by na to czekał.
+
+Przejście po plikach przy skanie treści idzie tą samą drogą, co wyszukiwanie
+w repozytorium: z poszanowaniem `.gitignore` i z pominięciem plików
+binarnych. Skan zgłaszający sekret w katalogu `node_modules` byłby wykazem,
+którego nikt nie czyta.
+
+Treść dopasowania sekretu nie wchodzi do znaleziska: wykaz znalezisk
+z wypisanymi sekretami byłby drugim miejscem, w którym te sekrety leżą —
+tym razem w bazie produktu.
+
+Reguły wyrażeń regularnych są drogą podstawową skanu kodu: pracują zawsze,
+bez niczego spoza rdzenia, i to one rozstrzygają, że skan kodu w ogóle coś
+zmierzył. Programy zewnętrzne tę drogę poszerzają: semgrep orzeka po
+składni tam, gdzie wyrażenie regularne widzi tylko wiersz, a jscpd i dupl
+znajdują powtórzony fragment, którego żadna reguła wierszowa nie zobaczy.
+Program nieobecny na maszynie nie psuje skanu i nie zmienia jego stanu —
+skan oddaje wtedy to, co zmierzyła droga podstawowa; każde znalezisko niesie
+nazwę reguły, więc widać, co je wystawiło.
+
+Próg powtórzenia kodu rdzeń nie narzuca: każdy z programów jscpd i dupl ma
+własny próg i to on obowiązuje. Próg mówi, od ilu żetonów zbieżność jest
+powtórzeniem, a nie przypadkiem — jest rozstrzygnięciem o tym, co w danym
+języku jest powieleniem kodu; wartość wpisana w rdzeniu byłaby wzięta
+znikąd i cichym nadpisaniem tego, co program o swoim języku wie.
+
+Skan semantyczny Semgrepa używa wyłącznie zestawu reguł repozytorium, nie
+zestawu z rejestru, ponieważ zestaw rejestru pobiera się przez sieć przy
+każdym przebiegu — ten sam powód, dla którego skan zależności nie pyta bazy
+CVE. Reguły są też rozstrzygnięciem o tym, co w danym repozytorium jest
+podatnością, a tego rdzeń nie orzeka samodzielnie. Repozytorium bez
+własnego zestawu reguł nie jest więc skanowane semantycznie, i żadne
+znalezisko nie twierdzi inaczej.
+
+Raport jscpd idzie do katalogu tymczasowego maszyny rdzenia, bo program
+pisze go do pliku, nie na wyjście; katalog znika po odczycie, ponieważ
+repozytorium nie ma prawa dostać pliku, o który nikt nie prosił. Zawężenie
+tego skanu do TypeScriptu i JavaScriptu jest podziałem pracy, nie
+oszczędnością: powtórzenia w plikach Go liczy program dupl osobno, a oba
+programy puszczone na ten sam plik zgłosiłyby to samo powtórzenie dwa razy.
+Brak raportu — czy to dlatego, że program go nie stworzył, czy dlatego, że
+nie ma go na maszynie — pozostawia wynik drogi podstawowej bez zmian.
+
+Para powtórzeń z programu dupl wraca dwukrotnie, raz z każdej strony, więc
+zapisywana jest jedna strona pary: wykaz z tym samym fragmentem dwa razy
+mówiłby o dwóch spostrzeżeniach tam, gdzie jest jedno.

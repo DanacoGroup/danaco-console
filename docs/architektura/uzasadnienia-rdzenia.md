@@ -2502,3 +2502,35 @@ TestRozkladNaWarstwyDajeOsobneZasobyZPrzezroczystoscia pomija się bez
 silnika segmentacji, ponieważ bez niego komenda odmawia i to jest jej
 właściwe zachowanie, sprawdzane osobno w innym miejscu. Pominięcie dotyczy
 skutku, którego bez silnika nie ma prawa być.
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_warstwy.go
+
+Segmentacji nie da się policzyć z samego rastra — „gdzie kończy się obiekt
+
+## budowa/server/internal/core/adapter_narzedzia_obraz_warstwy.go
+
+Segmentacji nie da się policzyć z samego rastra — „gdzie kończy się obiekt"
+jest pytaniem o znaczenie, nie o piksele. Rozkład idzie dwoma krokami: sieć
+segmentująca (rembg, U2-Net) rozdziela obraz na plan pierwszy i tło, zapisując
+przynależność w kanale alfa — to krok, którego nie zastąpi żadna arytmetyka,
+i jest zależnością tej komendy. Plan pierwszy rozpada się na obszary spójne,
+każdy obszar jest jednym obiektem — ten krok liczy rdzeń u siebie, to zwykłe
+przejście po tablicy pikseli, więc program zewnętrzny byłby tu zależnością bez
+powodu.
+
+Bez silnika segmentacji komenda odmawia, nazywając brak. Nie oddaje całego
+obrazu jako jednej warstwy: rozkład, który zwraca to samo, co dostał, jest
+atrapą nie do odróżnienia od rozkładu udanego, dopóki liczba warstw nie
+zostanie policzona. Kontrakt mówi o tym wprost i ta droga jest tu jedyną.
+
+Obraz, na którym sieć znalazła jeden spójny obiekt, daje jedną warstwę i to nie
+jest atrapa: ta warstwa niesie obiekt wycięty z tła, coś, czego w źródle nie
+było. Różnica jest sprawdzalna — tło zniknęło.
+
+Wycięcie warstwy samym prostokątem obejmującym wniosłoby do niej kawałek
+sąsiedniego obiektu, gdy prostokąty się nachodzą — dlatego przynależność
+pikseli jest trzymana osobno od prostokąta.
+
+Przejście po planie pierwszym przy szukaniu obszarów spójnych jest iteracyjne,
+z własnym stosem, nie rekurencyjne: obszar megapikselowy przy rekurencji
+przepełniłby stos wywołań i przewrócił proces rdzenia, a nie jedno żądanie.

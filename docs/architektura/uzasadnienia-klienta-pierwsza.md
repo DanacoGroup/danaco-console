@@ -1989,3 +1989,15 @@ nazywający brakujący warunek, zamiast wysyłać żądanie bez identyfikatora.
 
 Wybór okna bierze pierwsze okno o module zgodnym z kodem modułu. Gdy rdzeń nie
 przypisał żadnego, wynikiem jest pusty łańcuch, a nie okno przypadkowe.
+
+## budowa/klient-poprzedni/src/konfiguracja/widocznosc-pol.ts
+
+Pozycja katalogu może zależeć od innej: pole „host wykonania" ma sens dopiero
+przy zasięgu zdalnym, a pole „ścieżka klucza" dopiero przy moście SSH. Warunek
+żyje w katalogu, nie w kodzie interfejsu, więc zmiana zależności jest nowym
+wierszem katalogu, a nie nową gałęzią w kliencie.
+
+Warunek wskazujący klucz, którego katalog nie zna, nie chowa pola. Ukrycie pola
+z powodu braku metadanej byłoby cichym odebraniem Operatorowi ustawienia,
+dlatego brak klucza warunkującego zostaje odnotowany w dzienniku klienta, a pole
+pozostaje widoczne.

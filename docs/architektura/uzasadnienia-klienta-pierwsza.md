@@ -1845,3 +1845,12 @@ przy własnym szukaniu nie potwierdzi.
 Zdanie podsumowujące wykaz jest konieczne, ponieważ pusty wykaz przy czynnym filtrze czyta
 się jak pusty rejestr. Zdanie wymienia zakres szukania, bo tekst nieznaleziony w opisie bywa
 nazwą narzędzia, której pozycja katalogu nie niesie.
+
+## budowa/klient-poprzedni/src/mission-control/nadajnik.ts
+
+Pulpit operacyjny nie sięga po magistralę połączenia, ponieważ jego zdarzenia
+są zdarzeniami widoku, a nie kontraktu; to powłoka rozstrzyga, którą komendę
+kontraktu z takiego zdarzenia zbuduje. Rozesłanie ładunku biegnie po kopii
+zbioru odbiorców i w bloku ochronnym, więc odbiorca zgłaszający usterkę nie
+odbiera zdarzenia pozostałym, a odpięcie w trakcie rozgłoszenia nie narusza
+przebiegu pętli.

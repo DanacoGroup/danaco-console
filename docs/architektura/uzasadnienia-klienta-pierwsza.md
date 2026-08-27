@@ -5657,3 +5657,36 @@ sprawdzają wyłącznie kształt odpowiedzi rdzenia.
 Okno Queue Managera pokazywało dotąd kolejkę jako całość i mówiło wprost, że wykazu zleceń rdzeń nie oddaje. Ten panel jest odpowiedzią na to zdanie: odczyt wykazu zleceń oddaje zlecenia wraz z ładunkiem, próbami i terminem, odczyt głębokości kolejki oddaje obciążenie w czasie, a jedenaście pozostałych czynności posuwa pojedyncze zlecenie.
 
 Kolejka bierze się ze stanu modułu, a pole jej wskazania zostaje: Operator bywa w Queue Managerze przy kolejce innej niż bieżąca automatyka, na przykład kierując zlecenie do kolejki przeglądu ręcznego.
+
+## budowa/klient-poprzedni/src/moduly/library/higiena-repozytorium.ts
+
+Duplikat dokładny poznaje się po sumie kontrolnej — tej samej, którą rdzeń
+wyliczył przy wgraniu — więc raport nie jest domysłem okna, tylko odczytem
+jego odpowiedzi. Plik osierocony to plik bez etykiety i bez kolekcji: oba
+pola niesie `LibraryFile`, więc reguła audytu ma na czym stanąć. Cztery
+czynności, których okno zrobić nie może samo, prowadzą do rdzenia: rozpoznanie
+duplikatów wraz z niemal-duplikatami po treści i po obrazie
+(`library.duplicate.scan`, porównanie całego zbioru z całym), weryfikacja
+integralności (`library.fixity.check`, przeliczenie sumy kontrolnej z bajtów
+leżących pod odwołaniem), normalizacja nazw (`library.name.normalize`) wraz
+z przebiegiem próbnym, oraz dziennik audytu (`library.audit.list`) i pulpit
+stanu (`library.stats.get`) liczony po całym zbiorze, nie po odczytanej
+stronie wykazu.
+
+Raporty liczone z wykazu zostają obok tych z rdzenia, bo odpowiadają
+natychmiast i bez ruchu do rdzenia — ale to pulpit z rdzenia jest miarą
+repozytorium, a wykaz w pamięci okna jest próbką. Przeliczenie wskaźnika
+znaczenia idzie komendą `knowledge.index` w zakresie biblioteki — jedyną
+czynnością konserwacyjną repozytorium, którą kontrakt niesie. Wskaźnik nie
+odświeża się przy wgraniu pliku, więc bez tej czynności wyszukiwanie po
+znaczeniu opisuje stan sprzed ostatniego napływu.
+
+Wskaźnik pomija pliki bez treści i pliki, których treści nie da się odczytać
+jako tekstu; zero wprowadzonych pozycji przy niepustym wykazie zdanie nazywa
+wprost, zamiast milczeć o różnicy.
+
+Karta raportu: zawężenie Library Explorera jest odwracalne jednym przyciskiem
+w pasku narzędzi Explorera i znika przy każdym nowym odczycie wykazu. Karta
+zgodna (bez pozycji do zgłoszenia) zachowuje przycisk i po naciśnięciu mówi,
+że zawężać nie ma do czego — wygaszenie przycisku robiłoby bramę tam, gdzie
+jest wynik pomiaru.

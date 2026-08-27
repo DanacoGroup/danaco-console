@@ -1,32 +1,12 @@
--- Dziennik zdarzeń zaczepów.
---
--- Konfiguracja zaczepów idzie do CLI sekcją `hooks` pliku ustawień, a przy
--- przełączniku `--include-hook-events` strumień niesie na tym samym torze
--- koperty:
---   {"type":"system","subtype":"hook_started","hook_id","hook_name",
---    "hook_event","uuid","session_id"}
---   {"type":"system","subtype":"hook_response", … ,"output","stdout",
---    "stderr","exit_code","outcome"}
---
--- Kolumna `ladunek` niesie surową kopertę ze strumienia — zapis źródłowy,
--- nie przekład; bez niego nie da się odtworzyć, na jakiej podstawie rdzeń
--- uznał zaczep za wykonany.
---
--- Wiersz niczym nie steruje: zaczep jest narzędziem, dziennik śladem po nim.
--- Odmowy zaczepów idą osobno do diagnostyki — tam jako fakty, tu jako zapis
--- źródłowy tego samego zdarzenia.
---
--- `okno_kod` i `wiadomosc_kod` są identyfikatorami kontraktowymi, nie kluczami
--- obcymi: ślad ma przeżyć byt, którego dotyczy.
+-- Migracja zakłada dziennik zdarzeń zaczepów, zapisujący surową kopertę ze strumienia jako
+-- dowód pierwotny wykonania zaczepu.
 
 CREATE TABLE dziennik_zdarzen (
     id            INTEGER PRIMARY KEY,
     chwila        INTEGER NOT NULL,                -- epoka w milisekundach
     okno_kod      TEXT    NOT NULL DEFAULT '',
     wiadomosc_kod TEXT    NOT NULL DEFAULT '',
-    -- rodzaj po polsku, jak wartości `wiadomosc.rodzaj_tresci`; słownik
-    -- zamknięty na to, co rdzeń dziś naprawdę zapisuje — poszerzenie słownika
-    -- jest osobną migracją, nie cichym INSERT-em.
+    -- Rodzaj zdarzenia zamknięty na to, co rdzeń dziś zapisuje; poszerzenie jest osobną migracją.
     rodzaj        TEXT    NOT NULL
                   CHECK (rodzaj IN ('zaczep_start','zaczep_odpowiedz')),
     zaczep_id     TEXT    NOT NULL DEFAULT '',      -- `hook_id`: wiąże start z odpowiedzią

@@ -3019,3 +3019,35 @@ od migracji 084, ale wiersz okna dostawał go wyłącznie przy zakładaniu, wię
 zmiana eksperta w oknie już utrwalonym ginęła przy restarcie rdzenia. Zapis
 stoi po zmianie w rejestrze, a nie przed nią: nie ma po co utrwalać wyboru,
 którego pakiet sesji nie przyjął.
+
+## budowa/server/internal/core/adapter_kondycja_pomiar.go
+
+Ten plik niesie sam pomiar sondy kondycji, każdy z pięciu rodzajów mierzy coś
+naprawdę: `http` wysyła żądanie pod adres i patrzy na kod odpowiedzi; `tcp`
+otwiera połączenie z gniazdem i patrzy, czy się otworzyło; `internal` dotyka
+wnętrza rdzenia — bazy stanu albo jego własnej pamięci, co nie jest „zwróć
+w porządku": baza odpytana jest bazą, która odpowiedziała, a jej czas obiegu
+jest zmierzoną liczbą; `command` uruchamia program i patrzy na jego kod
+wyjścia; `modelCall` wysyła krótkie zapytanie kanałem modelu i czeka na
+odpowiedź. Definicje, seria i dostępność leżą w `adapter_kondycja.go`.
+
+Czego tu nie ma: gałęzi „nie umiem zmierzyć, więc `up`". Każdy powód, dla
+którego pomiar się nie odbył — brak uruchamiacza, brak rejestru kanałów,
+nieznany cel sondy wewnętrznej — kończy się stanem `unknown` wraz ze zdaniem
+mówiącym, czego brakuje. `unknown` znaczy „nie wiem" i tylko tak wygląda
+w wykazie; `up` znaczyłoby „sprawdziłem i jest dobrze", a nikt nie sprawdzał.
+
+Klient `zmierzHttp` jest budowany na jeden przebieg i nie chodzi za
+przekierowaniami dalej niż pięć razy: sonda ma zmierzyć adres, który podał
+Operator, a nie zwiedzić łańcuch przekierowań do cudzej strony błędu.
+
+`zmierzWnetrze` mierzy sam rdzeń dwoma celami, oba mierzalne: `database`
+odpytuje bazę stanu (prawdziwe zapytanie, nie sprawdzenie wskaźnika),
+`runtime` czyta liczniki procesu. Cel spoza tych dwóch kończy się stanem
+„nie wiem" wraz z wykazem znanych — zgadywanie, o co Operatorowi chodziło,
+dałoby pomiar czegoś innego niż prosił.
+
+Program w `zmierzProgram` idzie tą samą drogą co każde inne wołanie arsenału
+(`zewnetrzne.Wolaj`): przez port uruchamiacza, bramę izolacji i objęcie
+drzewa procesów. Własnego `exec.Command` tu nie ma — proces uruchomiony obok
+tej drogi wypada spod nadzoru i zostaje po nim uchwyt.

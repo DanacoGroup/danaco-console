@@ -4728,3 +4728,13 @@ tego rodzaju fragmentu: treść złożona z fragmentów jest przybliżeniem, kan
 może fragment powtórzyć po rotacji konta, a tura zapasowa nadaje własne.
 Wersja ostateczna jest tą samą treścią, którą rdzeń zapisuje jako wiadomość —
 po podmianie wpis na ekranie i wiersz w bazie mówią to samo.
+
+## budowa/klient-poprzedni/src/okna-pomocnicze/wytwornia-paneli.ts
+Wytwórnie wpisuje się strukturalnie, bez przejściówek: panelowi wystarczy,
+że niesie element, funkcję odświeżenia i zamknięcia — nadmiarowe pola nie
+przeszkadzają, a pole wymagane przechodzi w miejsce opcjonalnego, bo
+TypeScript wiąże typy strukturalnie. Gdy okno rozjedzie się z umową panelu,
+kompilator zatrzyma się na wpisie w mapie wytwórni. Plik nie czyta rejestru
+i nie zna stanów pozycji — posiadanie wytwórni i nazwanie pozycji zbudowaną
+w rejestrze to dwie różne prawdy, zestawiane osobno, a rozjazd między nimi
+zgłasza pas okien pomocniczych.

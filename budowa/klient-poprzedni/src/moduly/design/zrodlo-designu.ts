@@ -412,7 +412,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAssetContentGet, zadanie),
         Command.DesignAssetContentGet,
-        // Sprawdzamy sumę i miarę, nie treść — przy odsyłaniu `contentBase64` jest puste zgodnie z kontraktem.
+        // Sprawdza się sumę i miarę, nie treść: przy odsyłaniu `contentBase64` bywa puste z kontraktu.
         (tresc) => typeof tresc.checksum === 'string' && typeof tresc.sizeBytes === 'number',
       );
     },
@@ -427,7 +427,7 @@ export function utworzZrodloDesignu(kanal: Kanal): ZrodloDesignu {
       return sprawdzKsztalt(
         await wywolaj(kanal, Command.DesignAssetExport, zadanie),
         Command.DesignAssetExport,
-        // Wydanie bez treści jest kopertą udaną i pustą — sprawdzamy bajty, nie samo powodzenie.
+        // Wydanie bez treści jest kopertą udaną i pustą — sprawdza się bajty, nie samo powodzenie.
         (tresc) => typeof tresc.contentBase64 === 'string' && tresc.contentBase64.length > 0,
       );
     },

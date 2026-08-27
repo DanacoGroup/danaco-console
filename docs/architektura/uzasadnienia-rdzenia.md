@@ -4525,3 +4525,41 @@ osobno, po identyfikatorze z żądania.
 `rozglosKolejkeZlecenia` dobiera kolejkę po identyfikatorze i rozgłasza jej
 zmianę. Nieudany dobór kończy wyłącznie rozgłoszenie — komenda już się
 powiodła i odmawianie jej z powodu zdarzenia byłoby odwróceniem porządku.
+
+## budowa/server/internal/core/adapter_schowek.go
+
+Odpowiedzialność pliku: rodzina `clipboard.*` — trwała historia schowka
+Operatora.
+
+Czyj jest schowek i czego rdzeń nie robi: schowek należy do maszyny
+Operatora. Rdzeń stoi na serwerze i schowka tej maszyny nie widzi — ani go
+nie czyta, ani do niego nie pisze. Ta rodzina nie udaje inaczej: nie ma tu
+ani jednej ścieżki, która sięgałaby po cudzy schowek, i nie ma komendy
+„wklej", bo wklejenie jest czynnością okna. Podział ról jest taki: Operator
+kopiuje u siebie, okno oddaje skopiowaną treść rdzeniowi komendą
+`clipboard.push` — rdzeń dostaje treść, a nie dostęp. Rdzeń daje tej treści
+trwałość: historia przestaje ginąć razem z kartą i jest ta sama na każdej
+maszynie tego samego Operatora. Operator wybiera wpis z wykazu
+(`clipboard.list`), okno wstawia go u siebie — do pola, do schowka
+systemowego, gdziekolwiek. Dzięki temu podziałowi komenda robi dokładnie to,
+co obiecuje jej nazwa, i ani kroku więcej.
+
+Powtórzenie nie mnoży wpisów: ta sama treść skopiowana drugi raz podnosi
+wpis zastany na czoło wykazu. Rozstrzyga to warunek UNIQUE na odcisku
+treści, a nie odczyt-i-zapis w adapterze: dwa okna kopiujące naraz
+rozjechałyby się na odczycie.
+
+## budowa/server/internal/core/handlers_auth.go
+
+Zdarzenie `auth.changed` rozgłaszają trzy komendy, każda swoim powodem:
+założenie metody, jej zdjęcie i zmiana hasła. `auth.login` nie rozgłasza —
+wejście nie zmienia ani składu metod, ani hasła, a sekcja Uwierzytelnianie
+dostaje wykaz metod wprost w odpowiedzi. `auth.register` też nie: przy
+pierwszym uruchomieniu nie ma komu rozgłosić zmiany. `auth.token.refresh`
+nie zmienia stanu uwierzytelnienia w ogóle.
+
+Bez zdjęcia metody nie ma zmiany, więc nie ma czego rozgłaszać.
+
+`rozglosZmianeBramki` wysyła `auth.changed`. Zdarzenie idzie bez sesji
+komunikatu: bramka nie należy do żadnej karty sesji — to stan platformy,
+a nie stan pracy. Nadajnik niepodłączony nie jest błędem.

@@ -557,3 +557,7 @@ treści; na powierzchni pracy to jest właściwe, ale na atramencie ramy uchwyt
 był jedyną rzeczą w pasku przełączającą się z motywem, więc w motywie jasnym
 stawał się jasnym kafelkiem z ciemnym napisem — stąd żetony ramy tutaj, bez
 zmiany mechanizmu i bez ruszania biblioteki.
+
+## budowa/klient-poprzedni/src/mission-control/matryca.css
+Wartości pochodzą wyłącznie z żetonów warstwy motyw/: bez zapisów
+szesnastkowych i bez odstępów spoza skali czterech pikseli.

@@ -4561,3 +4561,14 @@ po co stać na ekranie, a zdanie o pustce niesie stan treści okna.
 Rachunek dziedziczenia oddany jest modułowi `konfiguracja/rozstrzygniecie`, temu samemu, z którego korzysta okno konfiguracji. Druga implementacja tego rachunku byłaby drugą prawdą o tej samej wartości.
 
 Katalog roboczy jest własnością instalacji, więc ta sekcja zapisuje go na poziomie globalnym, na osi platformy. Zapis węższy — dla sesji, okna, modelu albo konta — należy do okna konfiguracji, które ma pasek punktu widzenia i pełny wybór poziomów. Zapis dokonany tam widać tutaj, ponieważ łańcuch rozstrzygnięcia mówi, skąd wartość pochodzi.
+
+## budowa/klient-poprzedni/src/moduly/browser/czynnosci-notatek.ts
+
+Panel składa formularz i wykaz, a w tym pliku mieszka to, co dzieje się po naciśnięciu.
+
+Zdanie końcowe każdej czynności powstaje z odpowiedzi rdzenia, wedle `skutek-zapisu.ts`,
+a nie z treści żądania: zapis notatki opisuje jej postać po zapisie, a komenda
+`context.transfer` oddaje okno docelowe wraz z jego modułem i znacznikiem `transferred`.
+
+Wykaz dopisuje notatkę także wtedy, gdy postać zapisana rozjeżdża się z wysłaną. Notatka
+w rdzeniu wtedy jest, a widok ma pokazać jej prawdziwą postać obok zdania o rozjeździe.

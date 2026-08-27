@@ -37,7 +37,7 @@ export function dodajPole(lista: HTMLDListElement, etykieta: string, wartosc: st
  * Dokłada pole niosące wykaz identyfikatorów.
  *
  * Wykaz pusty ORAZ wykaz nieobecny znaczą dla Operatora to samo — rdzeń nic
- * nie przysłał — i oba wypisujemy jako `(brak)`, nigdy jako `0` czy `[]`.
+ * nie przysłał — i oba idą do wykazu jako `(brak)`, nigdy jako `0` czy `[]`.
  */
 export function dodajPoleWykazu(
   lista: HTMLDListElement,

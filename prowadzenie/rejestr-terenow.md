@@ -6,7 +6,60 @@ przyjęta. Zasady podziału opisuje [ustrój budowy](ustroj-budowy.md).
 
 ## Tereny otwarte
 
-Żaden teren nie jest otwarty.
+### warsztat-kodu
+
+Osiem narzędzi stoi na maszynie i jest z rdzenia nieosiągalnych, choć **komendy,
+które po nie sięgną, już istnieją w kontrakcie**. Rdzeń w dwóch miejscach nazywa
+ten brak wprost we własnych komentarzach. Nic z tego nie jest oknem, więc teren
+nie zależy od prototypów.
+
+| | |
+|---|---|
+| **Gałąź** | `teren/warsztat-kodu` z `main` |
+| **Wykaz plików** | `budowa/server/internal/core/zaleznosci_zewnetrzne.go`, adaptery modułów Developer i Terminal w `budowa/server/internal/core/`, sprawdziany tych pakietów |
+| **Poza terenem** | `budowa/shared/`, `budowa/klient/`, `budowa/desktop/`, `design/`, `prowadzenie/`, adaptery pozostałych modułów |
+
+**Przedmiot — osiem narzędzi pod istniejące komendy.**
+
+| Narzędzie | Komenda, która po nie sięgnie | Co rdzeń mówi dziś |
+|---|---|---|
+| `ruff` | `terminal.script.lint`, `developer.lint.get` | mapa analizatorów zna bash i PowerShell, **Pythona nie ma** mimo zadeklarowanego `narzedziePython` |
+| `semgrep` | `developer.scan.run` | rdzeń pisze o własnym skanie: „To jest zakres węższy niż `semgrep`" |
+| `ast-grep` (`sg`) | `developer.grep.search`, `developer.refactor.apply` | wyszukanie po składni, nie po napisie |
+| `jscpd` | `developer.scan.run` | duplikaty w TS/JS |
+| `dupl` | `developer.scan.run` | duplikaty w Go |
+| `typos` | `developer.lint.get` | literówki w identyfikatorach |
+| `stylelint` | `developer.lint.get` | CSS — wzorzec zadeklarowanych Prettiera i ESLinta |
+| `typescript-language-server` | `developer.symbol.navigate`, `developer.refactor.apply` | wzorzec `gopls` przeniesiony na TypeScript |
+
+**Wzorzec jest gotowy i masz go powtórzyć, nie wymyślać.** Rdzeń ma jedno miejsce
+wołania procesów zewnętrznych (`internal/zewnetrzne/wolanie.go`) i jeden wykaz
+zależności zasilający sondę startową. Każde z ośmiu narzędzi wchodzi tak samo jak
+trzydzieści już zadeklarowanych.
+
+**Zapory, których nie wolno naruszyć.** Rdzeń niesie sprawdziany zabraniające
+powrotu pewnych programów: `zapora_warsztatu_pdf_test.go` (qpdf, Ghostscript)
+oraz `zapora_fotografii_test.go` (nazwy silników w obszarze Design). Żadne
+z ośmiu narzędzi tego terenu ich nie dotyczy — ale sprawdziany mają dalej
+przechodzić.
+
+**Kryteria odbioru.**
+
+1. Każde z ośmiu narzędzi zadeklarowane w wykazie zależności wraz z zakresem
+   („co przestaje działać przy braku") — sonda startowa je widzi, wykazane
+   przytoczonym wynikiem uruchomienia rdzenia.
+2. Każde podłączone do **istniejącej** komendy kontraktu — bez nowych komend
+   i bez zmiany kontraktu. Suma `contract.json` nietknięta.
+3. Każda komenda wykazana uruchomieniem na prawdziwym pliku: przytoczone
+   wywołanie i przytoczona odpowiedź rdzenia.
+4. Brak narzędzia daje odmowę **nazywającą brak i drogę naprawy**, nie błąd
+   wewnętrzny — wykazane sprawdzianem przy narzędziu niedostępnym.
+5. Żaden proces zewnętrzny nie wołany poza `internal/zewnetrzne` — wykazane
+   przeszukaniem na `exec.Command`.
+6. `gotestsum -- -count=1 ./...` — niepowodzenia nie rosną wobec stanu zastanego;
+   obie zapory dalej przechodzą.
+7. Narzędzie, którego nie da się podłączyć bez rozstrzygnięcia, wraca
+   zgłoszeniem wraz z przyjętym rozstrzygnięciem — nie wstrzymuje reszty.
 
 ## Zgłoszenia oczekujące na teren
 

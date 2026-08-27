@@ -2036,3 +2036,13 @@ pozycja nie jest nastawą jednokrotną: wszystkie otwierają okno, więc menu ni
 zaznaczać jako „ostatnio otwarte". Grupa „Widok" stoi między tożsamością a obecnością
 i ma dokładnie jedną pozycję — nastawę motywu, a nie wejście do okna — dlatego składa
 się osobno od pozostałych grup budowanych z rejestru.
+
+## budowa/klient-poprzedni/src/moduly/research/okno-findings-panel.ts
+Zdarzenie zmiany ustalenia jest już w kontrakcie, ale rdzeń go nie rozgłasza, więc wykaz nie dostanie ustalenia zapisanego na innym urządzeniu konta. Okno mówi o tym w stanie pustym zamiast odpytywać rdzeń w pętli — subskrypcja dojdzie razem z rozgłaszaniem. Plik składa widok; zachowanie po naciśnięciu leży w module obsługującym czynności ustaleń.
+Trzecia reprezentacja wykazu, kodowanie jakościowe, nie jest tu zbudowana: kody są już w kontrakcie, ale ustalenie oddawane przez rdzeń ich nie niesie i rdzeń nie ma uchwytu książki kodów, więc widok, który nie miałby czego pokazać, tu nie stoi — pozycja jest w panelu akcji, pod nazwą swojej komendy.
+Kopia przed sortowaniem w funkcji porządkującej jest konieczna: wykaz pochodzi wprost z pamięci modułu, a sortowanie w miejscu wywróciłoby porządek narastania w pamięci, wspólnej wszystkim oknom.
+
+## budowa/klient-poprzedni/src/moduly/translate/zrodlo-glosariusza.ts
+Kontrakt nie ma komendy odczytu glosariusza jako wykazu, choć edycja glosariusza wymaga wczytania.
+Źródło nie zmyśla wykazu: okno pokazuje wyłącznie terminy zapisane w bieżącej sesji i mówi wprost,
+czego brakuje.

@@ -2405,3 +2405,28 @@ od stanu „jest i jest puste".
 wszystkie miejsca, które go używają, także te, które używają go pośrednio przez
 styl potomny. Bez tego zapytania rdzeń musiałby czytać cały arkusz i składać
 drzewo dziedziczenia przy każdej zmianie.
+
+## budowa/server/internal/dane/przegladarka_karty.go
+
+Trwałość obejmuje tabele `karta_przegladania`, `grupa_kart_przegladania`
+i `przestrzen_przegladania`. Skasowanie wiersza karty zamiast oznaczenia jej
+kolumną `zamknieta` zabrałoby przestrzeni roboczej to, co zapamiętała: przestrzeń
+wskazuje karty, więc karta usunięta z bazy zamieniłaby zapisany zestaw w zestaw
+dziurawy, o którym nikt by się nie dowiedział aż do jego otwarcia.
+
+Przynależność do grupy i do przestrzeni stoi po stronie karty. Karta należy do
+jednej grupy i jednej przestrzeni naraz, więc skład jednej i drugiej jest
+zapytaniem po kolumnie, a nie drugą listą, którą trzeba by prostować przy
+każdym zamknięciu karty.
+
+Pole `Przestrzen` w `FiltrKartPrzegladania`: pusta wartość znaczy „wszystkie
+karty okna", nie „karty bez przestrzeni". Pole `ZZawieszonymi` istnieje, mimo że
+karta zawieszona nadal jest otwarta i domyślnie wchodzi do wykazu, po to, żeby
+żądanie mogło wykaz zawęzić do kart żywych. Pole `ZZamknietymi` dopuszcza karty
+zamknięte, mimo że rząd kart ich nie pokazuje, bo przestrzeń robocza pamięta
+także te, które zostały zamknięte — bez tego przywrócenie zapisanego zestawu
+oddawałoby zestaw okrojony i nikt by się o tym nie dowiedział.
+
+Zapytanie wykazu kart zawęża do przestrzeni tym samym idiomem co reszta
+wykazów modułu — pusty tekst wyłącza warunek, więc plan zapytania jest jeden,
+niezależnie od tego, czy przestrzeń jest podana.

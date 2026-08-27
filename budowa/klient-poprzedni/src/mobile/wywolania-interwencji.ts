@@ -74,7 +74,7 @@ export function utworzWywolaniaInterwencji(kanal: Kanal): WywolaniaInterwencji {
   /** Okno robocze pozycji: to, w którym biegnie tura. */
   const oknoPracy = (pozycja: PozycjaDecyzji): string | undefined => pozycja.windowId;
 
-  /** Okno, na którym zapisujemy nastawę: koordynator, a gdy go nie ma — okno pracy. */
+  /** Okno, na którym zapisywana jest nastawę: koordynator, a gdy go nie ma — okno pracy. */
   const oknoNastawy = (pozycja: PozycjaDecyzji): string | undefined =>
     pozycja.koordynatorWindowId ?? pozycja.windowId;
 

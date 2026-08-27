@@ -7,11 +7,9 @@ import (
 	"danacoconsole/shared"
 )
 
-// Metody okien rejestru. Okno jest jednostką wykonania: jedna sesja
-// prowadzi wiele okien naraz, każde z własnym kanałem modelu, własnym modułem
-// i własną listą katalogów roboczych.
+// Rejestr okien zbiera metody okna jako jednostki wykonania; sesja prowadzi wiele okien naraz.
 
-// OtworzOkno zakłada okno komunikacji w sesji i zwraca jego odpis.
+// Metoda OtworzOkno zakłada okno komunikacji w sesji wskazanej identyfikatorem i zwraca odpis nowo otwartego okna.
 func (r *Rejestr) OtworzOkno(idSesji string, u Ustawienia) (Okno, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -28,7 +26,7 @@ func (r *Rejestr) OtworzOkno(idSesji string, u Ustawienia) (Okno, error) {
 	return o.Kopia(), nil
 }
 
-// Okno zwraca odpis okna o podanym identyfikatorze.
+// Metoda Okno zwraca odpis okna o podanym identyfikatorze, bez modyfikacji jego stanu bieżącego w rejestrze.
 func (r *Rejestr) Okno(id string) (Okno, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -39,7 +37,7 @@ func (r *Rejestr) Okno(id string) (Okno, error) {
 	return o.Kopia(), nil
 }
 
-// OknaSesji zwraca odpisy okien sesji w kolejności otwarcia.
+// Metoda OknaSesji zwraca odpisy wszystkich okien wskazanej sesji, ułożone w kolejności ich pierwotnego otwarcia.
 func (r *Rejestr) OknaSesji(idSesji string) ([]Okno, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -90,8 +88,7 @@ func (r *Rejestr) ZamknijOkno(id string) (Okno, error) {
 	return o.Kopia(), nil
 }
 
-// Wykonawcy zwraca odpisy okien wykonawczych podległych wskazanemu
-// koordynatorowi.
+// Metoda Wykonawcy zwraca odpisy okien wykonawczych podległych koordynatorowi wskazanemu identyfikatorem.
 func (r *Rejestr) Wykonawcy(idKoordynatora string) []Okno {
 	r.mu.RLock()
 	defer r.mu.RUnlock()

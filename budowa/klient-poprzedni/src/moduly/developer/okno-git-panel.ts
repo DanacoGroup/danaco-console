@@ -26,23 +26,9 @@ import { NAZWY_CZYNNOSCI, zdanieCzynnosciRepozytorium } from './zdania-odpowiedz
 import type { ZrodloDeveloper } from './zrodlo-developer';
 
 /**
- * Git Panel — okno zarządcy modułu Developer: zatwierdzanie zmian, przełączanie
- * gałęzi i praca ze zdalnym repozytorium sesji.
- *
- * Okno poznaje repozytorium dopiero z wyniku czynności. Czynności
- * `GitActionKind` idą przez `developer.git.action`; świeżo otwarty panel nie
- * wie o repozytorium nic i mówi to wprost stanem pustym, zamiast udawać czyste
- * repozytorium.
- *
- * Okno stoi we wspólnym stanie modułu: nasłuchuje `stan.naZmiane` i podstawia
- * wskazaną ścieżkę do pola „Ścieżki” (dopóki Operator nie wpisze własnej),
- * a ścieżki z własnego wyniku oddaje z powrotem przez `stan.wskazPlik` — czym
- * otwiera je w Code Editorze.
- *
- * Zdanie stanu pustego — o tym, czego kontrakt nie niesie — składa
- * `katalog-komend.ts` z rejestru komend wziętego z `connection.hello`, a nie
- * stała w tym pliku: napis na stałe zostałby na scenie jako nieprawda w dniu
- * dołożenia brakującej komendy.
+ * Git Panel jest oknem zarządcy modułu Developer: zatwierdzanie zmian,
+ * przełączanie gałęzi i praca ze zdalnym repozytorium sesji. Okno poznaje
+ * repozytorium dopiero z wyniku wykonanej czynności, nie zakłada go z góry.
  */
 export interface OknoGitPanelu {
   element: HTMLElement;
@@ -70,9 +56,7 @@ export function utworzOknoGitPanelu(zrodlo: ZrodloDeveloper, stan: StanDeveloper
     tresc.pusto(zdanieWiedzy);
   }
 
-  // Wykaz komend pochodzi z rdzenia, odczytany raz przy montażu okna. Odczyt odświeża stan
-  // pusty tylko wtedy, gdy okno nadal go pokazuje — wynik czynności, który
-  // zdążył wejść w międzyczasie, jest wiedzą świeższą i nie wolno go zetrzeć.
+  // Wykaz komend pochodzi z rdzenia; odczyt odświeża stan pusty tylko, gdy okno nadal go pokazuje.
   void odczytajKatalogKomend(zrodlo).then((katalog) => {
     zdanieWiedzy = zdanieWiedzyGitPanelu(katalog);
     if (tresc.rodzaj() === 'pusto') odswiez();
@@ -89,8 +73,7 @@ export function utworzOknoGitPanelu(zrodlo: ZrodloDeveloper, stan: StanDeveloper
       }
       przejmijGalaz(powierzchnia, wynik.wynik);
       rysujWynikCzynnosci(wynik.wynik, tresc, (sciezka) => stan.wskazPlik(sciezka));
-      // Nazwa w potwierdzeniu pochodzi z pola `action` WYNIKU, nie z etykiety
-      // naciśniętego przycisku — potwierdzenie mówi, co zrobił rdzeń.
+      // Nazwa w potwierdzeniu pochodzi z pola action wyniku, nie z etykiety przycisku.
       const potwierdzenie = zdanieCzynnosciRepozytorium(action, wynik.wynik);
       tresc.potwierdzenie(potwierdzenie.zdanie, potwierdzenie.udane);
     });
@@ -99,21 +82,14 @@ export function utworzOknoGitPanelu(zrodlo: ZrodloDeveloper, stan: StanDeveloper
   podepnijAkcjeGitPanelu(powierzchnia, tresc, wykonaj);
   const odsubskrybuj = podepnijWskazanie(powierzchnia, stan);
 
-  // Jeden punkt wejścia dla odczytu — złożenie modułu woła `odswiez()` samo,
-  // tak jak `moduly/automations/indeks.ts` woła je raz dla każdego okna po
-  // złożeniu. Wywołanie tutaj powielałoby je przy montażu.
+  // Jeden punkt wejścia dla odczytu: złożenie modułu woła odswiez() samo, dla każdego okna.
   return { element: rama.element, odswiez, zamknij: odsubskrybuj };
 }
 
 /**
- * Wiąże panel ze wspólnym wskazaniem pliku modułu (`stan-developer.ts`).
- *
- * Wskazanie i pole „Ścieżki” to dwa osobne byty. Wiersz „Plik wskazany” jest
- * lustrem wskazania i zmienia się zawsze, bez pytania. Pole „Ścieżki” jest
- * żądaniem Operatora: podpowiedź wchodzi tam tylko, dopóki Operator sam w nim
- * nie pisał — czynność repozytorium na ścieżce podstawionej pod ręką, po tym jak
- * Operator wpisał własną, byłaby czynnością na czymś innym, niż widział.
- * Wyczyszczenie pola do pustego wraca do podpowiadania.
+ * Wiąże panel ze wspólnym wskazaniem pliku modułu; wskazanie i pole Ścieżki
+ * to dwa osobne byty, a podpowiedź w polu wchodzi tam tylko, dopóki Operator
+ * sam w nim nie pisał.
  */
 function podepnijWskazanie(powierzchnia: PowierzchniaGitPanelu, stan: StanDevelopera): () => void {
   let tknietePrzezOperatora = false;
@@ -136,12 +112,9 @@ function podepnijWskazanie(powierzchnia: PowierzchniaGitPanelu, stan: StanDevelo
 }
 
 /**
- * Przejmuje gałąź z wyniku rdzenia — pole „Gałąź” dostaje ją tylko wtedy, gdy
- * jest puste, a wiersz obok pokazuje ją zawsze.
- *
- * Nadpisywanie wpisu Operatora byłoby gorsze niż brak przejęcia: następna
- * czynność pojechałaby do innej gałęzi niż ta, którą wpisał. Wiersz-lustro nie
- * ma tego problemu, bo niczego nie wysyła.
+ * Przejmuje gałąź z wyniku rdzenia; pole Gałąź dostaje ją tylko wtedy, gdy
+ * jest puste, a wiersz obok pokazuje ją zawsze, bez nadpisywania wpisu
+ * Operatora.
  */
 function przejmijGalaz(powierzchnia: PowierzchniaGitPanelu, wynik: GitActionResult): void {
   if (wynik.branch === undefined || wynik.branch === '') return;
@@ -150,7 +123,7 @@ function przejmijGalaz(powierzchnia: PowierzchniaGitPanelu, wynik: GitActionResu
   if (powierzchnia.galaz.value.trim() === '') powierzchnia.galaz.value = wynik.branch;
 }
 
-/** Pola wspólne wszystkich czynności: ścieżki, opis, gałąź, zdalne repozytorium. */
+/** Pola wspólne wszystkich czynności Git Panelu: ścieżki objęte czynnością, opis, gałąź oraz zdalne repozytorium. */
 interface PolaGitPanelu {
   sciezki: HTMLInputElement;
   opisZatwierdzenia: HTMLTextAreaElement;
@@ -158,7 +131,7 @@ interface PolaGitPanelu {
   zdalne: HTMLInputElement;
 }
 
-/** Przyciski panelu akcji, pogrupowane wedle inwentarza. */
+/** Przyciski panelu akcji Git Panelu, pogrupowane wedle inwentarza czynności GitActionKind dostępnych w kontrakcie. */
 interface AkcjeGitPanelu {
   stage: HTMLButtonElement;
   unstage: HTMLButtonElement;
@@ -178,10 +151,9 @@ interface AkcjeGitPanelu {
 }
 
 /**
- * Składa piętnaście przycisków — czternaście czynności `GitActionKind` plus
- * wariant wymuszony wysłania — oraz przyciski bez komendy dla czynności, których
- * kontrakt nie niesie. Wydzielone z wytwórni okna, bo panel akcji Git Panelu
- * jest największy w module.
+ * Składa piętnaście przycisków: czternaście czynności GitActionKind plus
+ * wariant wymuszony wysłania, oraz przyciski bez komendy dla czynności,
+ * których kontrakt nie niesie.
  */
 function zlozAkcjeGitPanelu(gospodarz: HTMLElement): AkcjeGitPanelu {
   const stage = przycisk('Dodaj do indeksu (stage)');
@@ -196,11 +168,7 @@ function zlozAkcjeGitPanelu(gospodarz: HTMLElement): AkcjeGitPanelu {
   const fetch = przycisk('Pobierz zmiany zdalne (fetch)');
   const pull = przycisk('Pobierz i scal (pull)');
   const push = przycisk('Wyślij zmiany (push)');
-  // Wymuszenie jest niebezpieczne, więc dostaje jedyny przycisk z `force: true`
-  // w oknie, widocznie odróżniony. Etykieta nie nazywa polecenia gita: pole
-  // kontraktu to `force`, a czym rdzeń je wykonuje, mówi `output` wyniku. Napis
-  // o poleceniu rozjechałby się przy zmianie rdzenia; wyjście polecenia jest
-  // zawsze świeże.
+  // Wymuszenie jest niebezpieczne, więc dostaje jedyny przycisk z force: true, widocznie odróżniony.
   const pushWymuszony = przycisk('Wyślij zmiany wymuszone', 'dn-btn dn-btn--niebezpieczny');
   const stash = przycisk('Odłóż zmiany (stash)');
   const stashPop = przycisk('Przywróć odłożone (stash pop)');
@@ -300,7 +268,7 @@ function zlozAkcjeGitPanelu(gospodarz: HTMLElement): AkcjeGitPanelu {
   };
 }
 
-/** Kontrolki okna: pola wspólne wraz z panelem akcji i ciałem ramy. */
+/** Kontrolki tego okna: pola wspólne czynności wraz z panelem akcji i ciałem ramy tego okna Git Panelu. */
 interface PowierzchniaGitPanelu extends AkcjeGitPanelu, PolaGitPanelu {
   /** Lustro wspólnego wskazania pliku — nigdy nie jedzie do rdzenia. */
   wskazanie: HTMLElement;
@@ -311,13 +279,9 @@ interface PowierzchniaGitPanelu extends AkcjeGitPanelu, PolaGitPanelu {
 }
 
 /**
- * Zalecana górna granica pierwszej linii opisu zatwierdzenia.
- *
- * Pięćdziesiąt znaków to granica, przy której `git log --oneline` i wykazy
- * hostingów repozytoriów przestają skracać podsumowanie. Licznik jest
- * WYŁĄCZNIE informacyjny: przekroczenie nie blokuje zatwierdzenia i nie zmienia
- * żądania — zgodnie z zasadą zero blokad opis dłuższy jedzie do rdzenia tak
- * samo jak krótki.
+ * Zalecana górna granica pierwszej linii opisu zatwierdzenia, przy której git
+ * log --oneline i wykazy hostingów przestają skracać podsumowanie; licznik
+ * jest wyłącznie informacyjny.
  */
 const ZALECANA_DLUGOSC_PIERWSZEJ_LINII = 50;
 
@@ -367,9 +331,7 @@ function zlozPowierzchnieGitPanelu(
     odswiezLicznikOpisu(licznikOpisu, opisZatwierdzenia.value),
   );
 
-  // Git jest programem spoza instalki, a stoi na nim KAŻDA czynność tego okna —
-  // wykaz zależności należy więc do paska narzędzi, nie do podpowiedzi jednego
-  // przycisku.
+  // Git jest programem spoza instalki, a stoi na nim każda czynność tego okna Git Panelu.
   rama.narzedzia.append(rysujZaleznosci(zaleznosci(['git'])));
 
   rama.cialo.append(
@@ -403,11 +365,9 @@ function zlozPowierzchnieGitPanelu(
 }
 
 /**
- * Podpina piętnaście przycisków do jednej czynności parametryzowanej kodem.
- *
- * Nazwy czynności nie stoją tutaj: mają jedno źródło w `zdania-odpowiedzi.ts`,
- * bo tym samym słownikiem odczytuje się `action` z wyniku rdzenia. Dwa wykazy
- * nazw rozjechałyby się, a potwierdzenie mówiłoby czym innym niż przycisk.
+ * Podpina piętnaście przycisków do jednej czynności parametryzowanej kodem;
+ * nazwy czynności mają jedno źródło w zdania-odpowiedzi.ts, żeby dwa wykazy
+ * nazw się nie rozjechały.
  */
 function podepnijAkcjeGitPanelu(
   powierzchnia: PowierzchniaGitPanelu,
@@ -445,18 +405,15 @@ function podepnijAkcjeGitPanelu(
 
 /**
  * Zatwierdzenie bez opisu nie jedzie do rdzenia jako puste, a Operator dostaje
- * o tym zdanie, nie samo ognisko w polu. `potwierdzenie(zdanie, false)`
- * pasuje lepiej niż `blad(...)`: to nie jest odmowa rdzenia ani nieudany
- * odczyt, tylko lokalna walidacja przed wysłaniem — treść okna (wynik
- * ostatniej czynności) ma zostać nietknięta, a `potwierdzenie` właśnie tego
- * nie kasuje.
+ * o tym zdanie zamiast samego ogniska w polu; to lokalna walidacja, nie
+ * odmowa rdzenia.
  */
 function wykonajOdmowaBrakuOpisu(powierzchnia: PowierzchniaGitPanelu, tresc: StanTresci): void {
   tresc.potwierdzenie('Zatwierdzenie wymaga opisu — pole jest puste, więc żądanie nie poszło.', false);
   powierzchnia.opisZatwierdzenia.focus();
 }
 
-/** Buduje żądanie z pól okna; puste pola nie trafiają do żądania wcale. */
+/** Buduje żądanie czynności repozytorium z pól okna; puste pola nie trafiają do żądania wysyłanego rdzeniowi. */
 function zlozZadanie(
   idOkna: string,
   action: GitActionKind,
@@ -480,13 +437,9 @@ function zlozZadanie(
 }
 
 /**
- * Rysuje `GitActionResult` — wyjście polecenia, gałąź po czynności, ścieżki
- * objęte czynnością i, wyróżnione osobno, ścieżki konfliktu. Konflikt nie jest
- * zwykłym wynikiem: `data-konflikt='tak'` niesie regułę wstęgi w arkuszu modułu.
- *
- * Ścieżki z `changedPaths` i `conflictPaths` są przejściem, nie napisem: każda
- * dostaje przycisk wołający `stan.wskazPlik`, więc Code Editor otwiera plik sam,
- * bez przepisywania ścieżki ręką i bez nowej komendy kontraktu.
+ * Rysuje GitActionResult: wyjście polecenia, gałąź po czynności, ścieżki
+ * objęte czynnością i, wyróżnione osobno, ścieżki konfliktu z regułą wstęgi
+ * w arkuszu modułu.
  */
 function rysujWynikCzynnosci(
   wynik: GitActionResult,
@@ -523,7 +476,7 @@ function rysujWynikCzynnosci(
   miejsce.append(lista);
 }
 
-/** Przycisk „Otwórz w edytorze” — wskazuje plik we wspólnym stanie modułu. */
+/** Przycisk „Otwórz w edytorze” — wskazuje plik we wspólnym stanie modułu Developer, by otworzył go Code Editor. */
 function przejscieDoEdytora(
   sciezka: string,
   naWskazanie: (sciezka: string) => void,
@@ -534,7 +487,7 @@ function przejscieDoEdytora(
   return otworz;
 }
 
-/** Zdanie ogólne wyniku: gałąź, zatwierdzenie i wyjście polecenia. */
+/** Zdanie ogólne wyniku czynności repozytorium: gałąź, zatwierdzenie oraz wyjście wykonanego polecenia gita. */
 function opisWynikuOgolnego(wynik: GitActionResult): string {
   const czesci: string[] = [wynik.succeeded ? 'powodzenie' : 'repozytorium odmówiło'];
   if (wynik.branch !== undefined) czesci.push(`gałąź: ${wynik.branch}`);

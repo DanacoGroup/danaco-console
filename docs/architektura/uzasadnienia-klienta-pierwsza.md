@@ -2991,3 +2991,20 @@ moduł nie wprowadza własnego nazewnictwa rodzajów ani własnych wartości.
 Wiersz licznika niesie powód zatrzymania biegu wprost z pola `LoopState.stopReason`.
 Bez tego wiersza bieg zatrzymany byłby nieodróżnialny od biegu bezczynnego,
 a koordynator nie miałby przesłanki do rozstrzygnięcia o wznowieniu.
+
+## budowa/klient-poprzedni/src/moduly/assistant/wiersz-zlecenia.ts
+
+Wszystkie sterowania wiersza zostają klikalne niezależnie od stanu zlecenia. Wstrzymania
+zlecenia już wykonanego widok nie blokuje — odpowiada na nie rdzeń, a odpowiedź trafia do
+wiersza odpowiedzi okna. Wygaszona kontrolka kazałaby zgadywać, czy przycisk nie działa, czy
+tylko nie odpowiada.
+
+Pole priorytetu wysyła sterowanie `none`, choć rdzeń zapisuje priorytet wyłącznie przy
+sterowaniu innym niż `none`. Zmiana kolejności obsługi nie jest zmianą stanu zlecenia,
+a kontrakt nie zna wartości `AssistantActionControl` znaczącej sam zapis priorytetu — są
+wyłącznie `none`, `pause`, `resume`, `cancel` oraz `retry`, a komenda
+`assistant.action.status` jest jedyną komendą obszaru niosącą pole `priority`.
+
+Podszycie się pod `pause` albo `retry` po to, żeby przemycić priorytet, przestawiłoby stan
+zlecenia, o który nikt nie prosił. Pole zostaje więc przy `none`, a rozbieżność nazywa wiersz
+odpowiedzi okna składany przez `skutek-sterowania.ts`.

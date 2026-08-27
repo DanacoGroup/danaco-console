@@ -1,10 +1,6 @@
 // Brak silnika osadzeń kończy się odmową nazywającą brak, a nie cichym zejściem
-// na wyszukiwanie po słowach (`library.file.search`). Odpowiedź trafień po
-// literach ma ten sam kształt co odpowiedź trafień po znaczeniu, więc pytający
-// nie rozpoznałby podmiany i uznałby, że szukanej treści w wiedzy nie ma.
-//
-// Treść odmowy niesie trzy człony — czego nie ma, ile waży to, czego nie ma,
-// i co zrobić, żeby było — tak samo jak odmowy w `zewnetrzne/wolanie.go`.
+// na wyszukiwanie po słowach (`library.file.search`). Treść odmowy niesie trzy
+// człony: czego nie ma, ile to waży, i co zrobić, żeby było.
 package wiedza
 
 import "strings"
@@ -13,16 +9,17 @@ import "strings"
 // `brak` w `pomocnik_osadzen.py` co do znaku — rozjazd zamieniłby nazwany brak
 // w brak nierozpoznany, czyli w gorszą odmowę.
 const (
-	// brakBiblioteki — interpreter stoi, ale nie ma w nim `fastembed`.
+	// brakBiblioteki — interpreter Pythona stoi, ale nie ma w nim zainstalowanej
+	// biblioteki o nazwie fastembed.
 	brakBiblioteki = "biblioteka"
-	// brakModelu — biblioteka stoi, ale wag modelu nie da się przygotować.
+	// brakModelu — biblioteka fastembed stoi gotowa, ale wag wskazanego modelu
+	// nie da się w niej przygotować.
 	brakModelu = "model"
-	// brakWagStojacych — w katalogu wskazanym nastawą model LEŻY, ale nie da się
-	// na nim postawić silnika. Osobny rodzaj od `brakModelu`, bo naprawa jest
-	// odwrotna: tam trzeba wagi ściągnąć, tu są już na dysku i odesłanie po nie
-	// kierowałoby Operatora po to, co ma.
+	// brakWagStojacych — w katalogu wskazanym nastawą model leży, ale nie da
+	// się na nim postawić silnika osadzeń.
 	brakWagStojacych = "wagi"
-	// BrakInterpretera — nie udało się uruchomić samego Pythona.
+	// BrakInterpretera — nie udało się w ogóle uruchomić samego interpretera
+	// Pythona na tej maszynie roboczej.
 	BrakInterpretera = "interpreter"
 )
 
@@ -30,38 +27,33 @@ const (
 // przez cały czas, gdy pakiet miał jeden model, więc odmowy składane bez tego
 // pola mówią dalej to samo, co mówiły.
 const (
-	// SilnikDlaPrzesiewu — krzyżowy koder drugiego przebiegu (`przesiew.go`).
+	// SilnikDlaPrzesiewu — krzyżowy koder drugiego przebiegu wyszukiwania,
+	// zdefiniowany w pliku przesiew.go.
 	SilnikDlaPrzesiewu = "przesiew"
-	// SilnikDlaObrazu — model dwuwieżowy osi obrazu (`obraz.go`).
+	// SilnikDlaObrazu — model dwuwieżowy osi obrazu, zdefiniowany w pliku
+	// obraz.go tego samego pakietu wiedzy.
 	SilnikDlaObrazu = "obraz"
 )
 
 // BrakSilnika mówi, że wskaźnika znaczenia nie ma czym zbudować ani przeszukać.
-//
-// Osobny typ, tak samo jak `zewnetrzne.BrakNarzedzia`: brak usuwa się jedną
-// instalacją, więc adapter rozpoznaje ten typ i znakuje go jako niedostępność
-// zaplecza (`adapter_modul_wiedza.go`), a nie jako usterkę wewnętrzną. Różnica
-// jest cała w treści, którą czytelnik dostaje: usterka wewnętrzna nie mówi ani
-// czego brak, ani ile to waży, ani co zainstalować.
+// Osobny typ, tak samo jak `zewnetrzne.BrakNarzedzia`: adapter rozpoznaje go
+// i znakuje jako niedostępność zaplecza, a nie jako usterkę wewnętrzną.
 type BrakSilnika struct {
 	// Silnik — który z trzech silników pakietu odmówił. Puste znaczy silnik
-	// osadzeń. Pole rozstrzyga o TREŚCI odmowy, nie o jej kodzie: brakuje trzech
-	// różnych bibliotek, trzech różnych kompletów wag i wskazuje się trzy różne
-	// ustawienia, a odmowa odsyłająca po `fastembed` w miejscu, w którym brakuje
-	// krzyżowego kodera, kierowałaby Operatora po rzecz, którą już ma.
+	// osadzeń.
 	Silnik string
 	// Rodzaj — jedna ze stałych wyżej.
 	Rodzaj string
 	// Model — nazwa modelu, którego dotyczy brak.
 	Model string
-	// WagaMb — ile waży do dociągnięcia; 0 znaczy „waga nieznana" i wtedy człon
-	// o wadze po prostu nie wchodzi do zdania.
+	// WagaMb — ile waży do dociągnięcia; 0 znaczy „waga nieznana".
 	WagaMb int
 	// Powod — to, co powiedział o sobie sam pomocnik albo system.
 	Powod string
 }
 
-// Error składa trzyczłonową odmowę: czego nie ma, ile to waży, co zrobić.
+// Error składa trzyczłonową odmowę: czego nie ma, ile to waży, i co dokładnie
+// zrobić, żeby to naprawić.
 func (b *BrakSilnika) Error() string {
 	zdanie := strings.Builder{}
 	zdanie.WriteString("wskaźnik znaczenia: ")
@@ -94,7 +86,8 @@ func (b *BrakSilnika) opisSkutku() string {
 	}
 }
 
-// opisBraku nazywa brak wraz z wagą tego, czego nie ma.
+// opisBraku nazywa brak wraz z wagą tego, czego brakuje, do dociągnięcia
+// z sieci albo z dysku lokalnego.
 func (b *BrakSilnika) opisBraku() string {
 	if b.Silnik != "" {
 		return b.opisBrakuDolozonego()
@@ -172,7 +165,8 @@ func (b *BrakSilnika) opisPakietow() string {
 	return "`torch` i `transformers`"
 }
 
-// kluczKatalogu oddaje nazwę ustawienia wskazującego katalog wag tego silnika.
+// kluczKatalogu oddaje nazwę ustawienia wskazującego katalog wag tego
+// silnika, w którym leżą pliki modeli.
 func (b *BrakSilnika) kluczKatalogu() string {
 	switch b.Silnik {
 	case SilnikDlaPrzesiewu:
@@ -184,7 +178,8 @@ func (b *BrakSilnika) kluczKatalogu() string {
 	}
 }
 
-// kluczModelu oddaje nazwę ustawienia wskazującego model tego silnika.
+// kluczModelu oddaje nazwę ustawienia wskazującego model tego silnika,
+// którego dotyczy zgłoszony brak wag.
 func (b *BrakSilnika) kluczModelu() string {
 	switch b.Silnik {
 	case SilnikDlaPrzesiewu:
@@ -196,7 +191,8 @@ func (b *BrakSilnika) kluczModelu() string {
 	}
 }
 
-// opisNaprawy mówi, co dokładnie zrobić — z nazwą pakietu i nazwą ustawienia.
+// opisNaprawy mówi, co dokładnie zrobić — z nazwą pakietu do zainstalowania
+// i nazwą ustawienia do poprawienia.
 func (b *BrakSilnika) opisNaprawy() string {
 	if b.Silnik != "" {
 		return b.opisNaprawyDolozonej()
@@ -219,13 +215,8 @@ func (b *BrakSilnika) opisNaprawy() string {
 	}
 }
 
-// opisNaprawyDolozonej mówi, co zrobić, żeby dołożony silnik ruszył.
-//
-// Trzy drogi, bo trzy różne przyczyny: brak wag na dysku usuwa pobranie, wagi
-// leżące a nieczytelne — wskazanie innego katalogu albo innego wydania modelu,
-// a brak bibliotek — jedna instalacja w interpreterze, który już wskazano
-// ustawieniem osadzarki (interpreter jest w pakiecie jeden, więc i ustawienie
-// jest jedno).
+// opisNaprawyDolozonej mówi, co zrobić, żeby dołożony silnik ruszył. Trzy
+// drogi, bo trzy różne przyczyny: brak wag, wagi nieczytelne, brak bibliotek.
 func (b *BrakSilnika) opisNaprawyDolozonej() string {
 	switch b.Rodzaj {
 	case brakModelu:

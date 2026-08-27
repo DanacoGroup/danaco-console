@@ -1,14 +1,5 @@
 // Odpowiedzialność pliku: zasada przechowywania historii (tabela
-// `zasada_przechowywania`) — jej zapis, rozstrzygnięcie dla okna i egzekucja na
-// wykazie pozycji.
-//
-// Osobny plik obok `historia.go` dzieli dwie odpowiedzialności: tam żyje pozycja
-// historii — wiersz `wiadomosc` czytany i kasowany na wskazanie Operatora; tu
-// żyje nastawa, która kasuje sama, bez wskazania.
-//
-// Zasady się nie sumują. Obowiązuje jedna — najbliższa oknu (okno, potem sesja,
-// potem globalna). Suma dawałaby wynik, którego Operator nie przewidziałby
-// z żadnego pojedynczego ekranu.
+// `zasada_przechowywania`) — jej zapis, rozstrzygnięcie dla okna i egzekucja na wykazie pozycji.
 package dane
 
 import (
@@ -22,8 +13,7 @@ import (
 // ZasadaPrzechowywania to wiersz tabeli `zasada_przechowywania`. Oba progi puste
 // znaczą zasadę wyłączoną, nie zasadę zerową.
 type ZasadaPrzechowywania struct {
-	// Zakres niesie wartość kontraktu: window, session albo global; ZakresKod
-	// jest pusty wyłącznie dla zakresu global.
+	// Zakres niesie wartość okna, sesji albo globalną; ZakresKod bywa pusty tylko przy zakresie globalnym.
 	Zakres          string
 	ZakresKod       string
 	DniTrzymania    *int
@@ -41,9 +31,8 @@ const (
 	                             ORDER BY w.utworzono DESC, w.id DESC
 	                             LIMIT ?)`
 
-	// Zasada bez progów nie jest wierszem, tylko jego brakiem — patrz komentarz
-	// przy `ZapiszZasade`. Kod pusty (zakres global) porównuje się przez
-	// COALESCE, bo kolumna trzyma wtedy NULL.
+	// Zasada bez progów nie jest wierszem, tylko jego brakiem: nastawa wyłączona usuwa wiersz zamiast zapisywać
+	// go pustym. Kod pusty (zakres global) porównuje się przez funkcję COALESCE, bo kolumna trzyma wtedy wartość NULL.
 	usunZasadePrzechowywania = `DELETE FROM zasada_przechowywania
 	                            WHERE zakres = ? AND COALESCE(zakres_kod, '') = ?`
 
@@ -55,7 +44,7 @@ const (
 	                                  pozycje_trzymane = excluded.pozycje_trzymane,
 	                                  zaktualizowano = strftime('%Y-%m-%dT%H:%M:%fZ','now')`
 
-	// Zakres rozstrzyga się od najwęższego — okno, sesja, globalna.
+	// Zakres rozstrzyga się od najwęższego do najszerszego: najpierw okno, potem sesja, na końcu zakres globalny.
 	zasadaOkna = `SELECT zakres, COALESCE(zakres_kod, ''), dni_trzymania, pozycje_trzymane
 	              FROM zasada_przechowywania
 	              WHERE (zakres = 'window' AND zakres_kod = ?)
@@ -72,24 +61,14 @@ const (
 	                      AND o.identyfikator_zewnetrzny IS NOT NULL`
 	oknaZakresuGlobalnego = `SELECT identyfikator_zewnetrzny FROM okno_komunikacji
 	                         WHERE identyfikator_zewnetrzny IS NOT NULL`
-	// Byt zakresu — okno albo sesja — sprawdzany przed zapisaniem zasady.
-	// Zasady dla bytu, którego nie ma, nie da się później przyciąć niczym
-	// (`OknaZakresu` dla zakresu okna oddaje samo wskazanie, a `Egzekwuj`
-	// na nieistniejącym oknie kasuje zero), więc zasada byłaby nastawą bez
-	// skutku.
+	// Byt zakresu — okno albo sesja — sprawdzany jest przed zapisaniem zasady, żeby nastawa nie odnosiła się
+	// do bytu, którego nie ma.
 	istnienieOkna  = `SELECT 1 FROM okno_komunikacji WHERE identyfikator_zewnetrzny = ? LIMIT 1`
 	istnienieSesji = `SELECT 1 FROM sesja WHERE identyfikator_zewnetrzny = ? LIMIT 1`
 )
 
-// ZapiszZasade zakłada zasadę zakresu albo nadpisuje istniejącą. Zasada bez
-// obu progów zdejmuje wiersz zakresu, zamiast zapisywać wiersz pusty.
-//
-// Rozstrzygnięcie zasady idzie po kolejności okno → sesja → globalna z `LIMIT 1`
-// (zapytanie `zasadaOkna`), więc wiersz pusty zakresu węższego przesłaniałby
-// zasadę szerszą, a jedyna komenda retencji (`retention.set`) nie ma czym takiego
-// wiersza skasować. Zdjęcie wiersza sprawia, że brak wiersza znaczy „ten zakres
-// nic nie postanawia", a nie „trzymaj zero" — pytanie o zasadę spada wtedy na
-// zakres szerszy, dokładnie jak przed pierwszym zapisem.
+// ZapiszZasade zakłada zasadę zakresu albo nadpisuje istniejącą; zasada bez obu progów zdejmuje wiersz zakresu,
+// zamiast zapisywać wiersz pusty.
 func (r *repozytoriumHistorii) ZapiszZasade(ctx context.Context,
 	zasada ZasadaPrzechowywania) (ZasadaPrzechowywania, error) {
 
@@ -126,7 +105,7 @@ func (r *repozytoriumHistorii) zdejmijZasade(ctx context.Context,
 	return zasada, nil
 }
 
-// ZasadaOkna rozstrzyga zasadę obowiązującą okno. Brak zasady nie jest błędem.
+// ZasadaOkna rozstrzyga zasadę przechowywania obowiązującą wskazane okno komunikacji. Brak zasady nie jest błędem.
 func (r *repozytoriumHistorii) ZasadaOkna(ctx context.Context,
 	oknoKod string) (ZasadaPrzechowywania, bool, error) {
 
@@ -150,11 +129,7 @@ func (r *repozytoriumHistorii) ZasadaOkna(ctx context.Context,
 	return zasada, true, nil
 }
 
-// IstniejeByt rozstrzyga, czy byt wskazany przez zasadę zakresu w ogóle jest
-// w bazie. Zakres globalny bytu nie wskazuje i jest zawsze prawdziwy — tnie
-// wszystkie okna. Fałsz nie jest błędem odczytu: to stan, który woła o odmowę
-// po stronie komendy, bo zasada zapisana dla nieistniejącego okna albo sesji
-// nigdy niczego nie przytnie.
+// IstniejeByt rozstrzyga, czy byt wskazany przez zasadę zakresu w ogóle istnieje w bazie danych rdzenia.
 func (r *repozytoriumHistorii) IstniejeByt(ctx context.Context, zakres, zakresKod string) (bool, error) {
 	zapytanie := istnienieOkna
 	switch zakres {
@@ -213,8 +188,7 @@ func (r *repozytoriumHistorii) OknaZakresu(ctx context.Context, zakres, zakresKo
 	return okna, nil
 }
 
-// Egzekwuj stosuje zasadę okna. Zasada bez progów niczego nie usuwa — jest
-// wyłączona, nie zerowa.
+// Egzekwuj stosuje zasadę przechowywania okna; zasada bez progów niczego nie usuwa — jest wyłączona, nie zerowa.
 func (r *repozytoriumHistorii) Egzekwuj(ctx context.Context, oknoKod string) (int, error) {
 	zasada, jest, err := r.ZasadaOkna(ctx, oknoKod)
 	if err != nil || !jest {
@@ -261,8 +235,7 @@ func kodZakresuDoKolumny(zasada ZasadaPrzechowywania) any {
 	return zasada.ZakresKod
 }
 
-// progDoKolumny znosi próg nieustawiony do NULL: brak znaczy „bez
-// ograniczenia", nie zero.
+// progDoKolumny znosi próg nieustawiony do wartości pustej kolumny: brak znaczy „bez ograniczenia", nie zero.
 func progDoKolumny(prog *int) any {
 	if prog == nil {
 		return nil
@@ -270,7 +243,7 @@ func progDoKolumny(prog *int) any {
 	return *prog
 }
 
-// progZKolumny podnosi kolumnę do progu kontraktu; NULL zostaje brakiem.
+// progZKolumny podnosi wartość kolumny bazy do progu kontraktu; wartość pusta kolumny zostaje brakiem progu.
 func progZKolumny(kolumna *int64) *int {
 	if kolumna == nil {
 		return nil

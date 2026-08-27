@@ -5144,3 +5144,57 @@ odczytu nie jest połykany, mówi go ster przy pozycji domyślnej. Faz są czter
 różne: faza spoczynku znaczy brak zapytania, faza odczytu znaczy zapytanie w toku, faza gotowa
 z pustym wykazem znaczy, że rdzeń nie zna ani jednego kanału czynnego, a faza błędu znaczy, że
 zapytanie się nie udało — zlanie ich kazałoby zgadywać, czy czekać, czy zakładać kanał.
+
+## budowa/klient-poprzedni/src/rozmowa/rozmowa.ts
+Pominięta polityka pamięci znaczy rozmowę z pamięcią, czyli stan
+dotychczasowy; podana z wyłączoną pamięcią sesyjną wstrzymuje odtworzenie
+historii z rdzenia, bo w module bez pamięci sesyjnej odczyt historii
+przywróciłby dokładnie ten wątek, który miał zniknąć razem z oknem.
+
+Wpis automatyzacji stawia w wątku zdanie warstwy automatycznej — zdanie,
+którego nikt wprost nie wypowiedział. Tą samą drogą idą powody wyczyszczenia
+rozmowy, odmowa odczytu historii i zatrzymanie tury bez tury. Wejście jest
+wystawione na zewnątrz, bo dołożenie modelowi narzędzia spoza okna też musi
+być widoczne, a jedynym miejscem, w którym Operator patrzy, jest wątek
+rozmowy. To nie jest druga droga wypowiedzi: zdanie nie idzie do rdzenia, nie
+otwiera tury i nie ma nadawcy.
+
+Wyczyszczenie rozmowy wymaga podanego powodu, bo wyczyszczenie bez słowa jest
+dla Operatora nieodróżnialne od awarii, w której aplikacja zgubiła jego
+pracę. Wejście w moduł bez pamięci sesyjnej czyści rozmowę i mówi o tym
+wprost: wątek modułu poprzedniego nie ma prawa zostać na oczach Operatora
+w oknie, które właśnie ogłosiło, że pamięci nie prowadzi.
+
+Subskrypcja wypowiedzi, która weszła do okna spoza tego połączenia, niesie
+tylko to, co przyszło i skąd — widok rozstrzyga, czy pokazać to w polu
+wypowiedzi i jak długo. Sygnał idzie osobno od wpisu, bo wypowiedź wpisana za
+Operatora jest zdarzeniem innego rodzaju niż nowa pozycja w wątku, i tylko
+pierwsze ma prawo ruszyć pole Operatora.
+
+Wysyłanie wiadomości Operatora tworzy wpisy od razu, przed jakąkolwiek
+komendą — interfejs nie ma blokad. Rdzeń nie przerywa biegnącej tury przy
+okazji wysłania, więc przerwanie jedzie osobną komendą warstwy nadania.
+Niepowodzenie komendy zamyka turę i nic ponadto: treść błędu idzie sama, bez
+doklejonego kodu, bo kod jedzie osobnym polem i dokleja go widok wpisu —
+sklejenie obu pokazałoby kod dwa razy.
+
+Wyczyszczenie rozmowy ulotnej stawia najpierw powód, potem stan, bo kolejność
+jest tu treścią: widok najpierw zdejmuje wszystkie pozycje, więc gdyby na tym
+poprzestać, Operator zostałby z pustą listą nieodróżnialną od okna dopiero co
+otwartego. Zmiana kontekstu roboczego, dla Agents zmiana testowanego eksperta,
+kończy rozmowę dokładnie tak samo, jak zamknięcie okna. Wejście w moduł
+ulotny czyści to, co zostało po module poprzednim, a wyjście z niego czyści
+tak samo, żeby wątek testowy nie pojechał za Operatorem do pracy na serio.
+
+Historia okna wraca z rdzenia, nie ze strumienia: wiadomości leżą w bazie
+i przeżywają restart rdzenia, więc odświeżenie okna albo powrót do sesji mają
+odtworzyć wątek. Odmowa odczytu historii nie może wyglądać jak pusta
+rozmowa — inaczej Operator widziałby ten sam pusty stan niezależnie od tego,
+czy rozmowa naprawdę jest pusta, czy rdzeń po prostu nie oddał wiadomości.
+Niepowodzenie idzie więc do historii jako wpis automatyzacji, i na ekranie
+zostaje ślad zamiast ciszy. Rozmowa ulotna historii nie odtwarza. Odpowiedź
+spóźniona o zmianę modułu — gdy odczyt historii poszedł jeszcze w module
+z pamięcią, a zanim wrócił, okno przestawiło się na moduł bez pamięci
+sesyjnej — nie wchodzi do wątku, bo przywróciłaby wątek dopiero co zdjęty na
+oczach Operatora, ale pominięcie zostaje nazwane, żeby nie wyglądało jak
+zgubienie odpowiedzi rdzenia.

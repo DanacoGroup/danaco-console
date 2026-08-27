@@ -2872,3 +2872,36 @@ i lista puste, nie jako błąd: to stan startowy.
 
 Kolumna Cel doszła migracją 150 — do niej eksport zawsze szedł do pobrania,
 bo innego celu kontrakt wtedy nie miał.
+
+## budowa/server/internal/dane/zestaw.go
+
+Zestaw składa pod jednym dachem repozytoria każdego obszaru danych aplikacji.
+Kilka pól opisuje dwa widoki tej samej tabeli albo implementacji, celowo
+oddzielone, bo odpowiadają na różne pytania: KonfiguracjaOsi jest Konfiguracją
+widzianą razem z osią rozstrzygania; Macierz czyta wiersz tabeli
+srodowisko_modul w całości, podczas gdy Moduly zna ją wyłącznie jako filtr
+wykazu; WersjeAgenta i ArchiwumAgentow to jedna implementacja widziana jako
+historia tożsamości eksperta i jako archiwum; Historia pyta o wiersz
+wiadomosc z drugiej strony niż Wiadomosci — po identyfikatorze kontraktowym
+okna, od najnowszej, kursorem czasu — i jako jedyne kasuje; KoszSesji jest
+odwrotną stroną tabeli sesja, widzi wyłącznie wiersze ze znacznikiem
+usunieto_o, których wykaz sesji żywych nie widzi wcale.
+
+ZakresAgenta odpowiada nie na pytanie, jaki jest ekspert, lecz co temu
+ekspertowi wolno zrobić w systemie: moduły zastosowania, zakresy izolacji
+technicznej, granica Subagent Network, wpisy uprawnień oraz konektory
+i przypisania od strony eksperta — dlatego jest osobnym repozytorium od
+biblioteki ekspertów.
+
+Przekazania nie powtarzają więzi koordynator-wykonawca: ta mieszka w kolumnie
+okno_komunikacji.okno_koordynatora_id.
+
+WylaczeniaPamieci stoi osobno od Pamiec i PrzestrzenRobocza, bo wyłączenie nie
+jest wpisem pamięci ani jego zmianą — nie dotyka treści i znosi się jednym
+ruchem. WyciszeniaNakladki jest bytem rdzenia, nie stanem jednego okna: bez
+wspólnego wiersza Operator wyciszałby w jednej powłoce, a w drugiej sugestie
+wchodziłyby dalej.
+
+Zestaw pól baza w strukturze Zestaw obsługuje repozytoria składane na żądanie
+poza konstruktorem Otworz (Rozszerzenia, NarzedziaSesji), które potrzebują
+bezpośredniego połączenia do własnych transakcji.

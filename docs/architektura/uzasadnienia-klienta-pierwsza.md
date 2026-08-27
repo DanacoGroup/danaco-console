@@ -1278,3 +1278,38 @@ Stopień obrotu i krotność powiększenia trafiają do zbioru danych elementu, 
 wygląd wynikający z tych wartości bierze się z arkusza stylów modułu. Plik widoku
 nie zna zatem żadnej wartości wizualnej: nie podaje wymiarów, odstępów ani barw,
 a zmiana wyglądu obrotu i powiększenia odbywa się wyłącznie w arkuszu.
+
+## budowa/klient-poprzedni/src/modele/warstwy-tozsamosci.ts
+
+Warstwa mówi, jak krytyczna jest treść nakładki: konstytucja stoi wyżej niż
+profil roli, a profil wyżej niż ekspertyza. Ta kolejność rządzi zarówno układem
+wykazu kategorii, jak i porządkiem złożonego promptu. Wartości pochodzą wyłącznie
+ze stałych kontraktu.
+
+Tryb rozstrzyga los ustawień fabrycznych: `ZASTAP` podmienia prompt fabryczny
+w całości, `DOLACZ` dokłada treść do niego. Wybór decyduje o tym, którym
+argumentem uruchomienia pojedzie nakładka, więc każdy przełącznik trybu w tej
+sekcji podaje skutek wprost.
+
+## budowa/klient-poprzedni/src/komponenty/odmowa.ts
+
+Kod błędu zostaje przy wiadomości z zamysłem. Kody `validation_failed`
+i `not_found` znaczą dla Operatora co innego, a treść wiadomości bywa dla obu
+tym samym zdaniem, więc zdanie bez kodu odbierałoby Operatorowi rozróżnienie.
+Brak wiadomości nie zostawia pustki: idzie wtedy sam kod, a gdy nie ma i kodu,
+zdanie nazywa milczenie rdzenia wprost, żeby Operator nie patrzył na pusty
+prostokąt.
+
+Kształt powodu odmowy jest luźniejszy od kształtu `ErrorInfo` z kontraktu,
+ponieważ moduły dostają powód z pola `blad` wyniku komendy, które bywa puste,
+a pojedyncze okna trzymają własne, częściowe zapisy odmowy.
+
+Nazwa nieznanej komendy obsługuje przypadek osobny, otwarty dla każdego modułu:
+rdzeń odpowiedział zdarzeniem mówiącym, że komendy nie zna. Nie jest to awaria
+wykonania, a Operator musi widzieć różnicę między usterką a czynnością, której
+rdzeń jeszcze nie umie, dlatego nazwa typu idzie na początek zdania.
+
+Zdanie składane z powodu wziętego w całości istnieje po to, żeby wywołanie
+po odmowie komendy nie powtarzało w każdym miejscu pary pól `code` i `message`.
+Para rozjeżdża się przy przepisywaniu, ponieważ łatwo podać kod z jednego
+wyniku, a wiadomość z drugiego.

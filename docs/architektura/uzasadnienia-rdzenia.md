@@ -4563,3 +4563,17 @@ Bez zdjęcia metody nie ma zmiany, więc nie ma czego rozgłaszać.
 `rozglosZmianeBramki` wysyła `auth.changed`. Zdarzenie idzie bez sesji
 komunikatu: bramka nie należy do żadnej karty sesji — to stan platformy,
 a nie stan pracy. Nadajnik niepodłączony nie jest błędem.
+
+## budowa/server/internal/core/skutek_warsztatu_pdf_test.go
+
+Wzorzec szkody, którego pilnuje ten plik, ma w tym produkcie precedens
+w module Design: komenda meldowała `status: ok` z wykazem zasobów, za
+którymi nie było ani jednego bajtu. Dlatego żaden sprawdzian tutaj nie
+kończy się na sprawdzeniu, że odpowiedź jest udana: każdy schodzi po
+odwołaniu do magazynu, otwiera plik i liczy jego strony z bajtów, a nie
+z odpowiedzi komendy.
+
+Sprawdzian nie pomija się przy braku żadnego programu, bo warsztat PDF nie
+uruchamia ani jednego procesu: pracuje biblioteką wkompilowaną w rdzeń.
+Materiał powstaje tą samą biblioteką i to jest świadome — mierzone jest
+działanie warsztatu, nie zgodność dwóch bibliotek między sobą.

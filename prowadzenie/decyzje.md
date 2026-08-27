@@ -1251,6 +1251,12 @@ od pelnych dwoch tysiecy wierszy — 250 znakow za kazdy pelny tysiac
 „granica" w tabeli wzorca powyzej byla liczona proporcja i w tej czesci
 jest zniesiona; instrument wciela schodki.
 
+**Dopowiedzenie czwarte Wlasciciela (27.08, po poludniu).** Zdanie w naglowku
+powinno byc: kazdy plik zakresu po pracy zaczyna sie naglowkiem — jednym
+pelnym zdaniem odpowiedzialnosci pliku i odsylaczem do uzasadnien w docs.
+Plik niemy (sam odsylacz bez zdania albo nic) jest uchybieniem zwracajacym
+porcje. Zdanie wlicza sie do granicy, odsylacz nie.
+
 **Wzorzec jest sprawdzony pomiarem, nie zalozony.** Teren `centrum-poprawki`
 wyniosl uzasadnienia z `centrum-dowodzenia.css` do
 `design/01-dokumentacja-md/11-uzasadnienia-okien.md`:

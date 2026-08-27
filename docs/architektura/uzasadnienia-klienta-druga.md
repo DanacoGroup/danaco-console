@@ -4819,3 +4819,17 @@ odpowiedzieć. Nazwa szeregu wersji jest szeregiem zapytania, nie cechą samego 
 pola szeregu nie niesie, więc pojedyncza wersja nie mówi, z którego szeregu pochodzi — wykaz
 zawężony do jednego szeregu nazwać się daje, wykaz zbiorczy nie, i okno mówi to wprost zamiast
 zgadywać po braku etykiety.
+
+## budowa/klient-poprzedni/src/moduly/translate/wzorce-placeholderow.ts
+Obie czynności liczy okno, nie rdzeń, i jest to rozstrzygnięcie wymuszone kontraktem: kontrola
+jakości rdzenia zgłasza niezgodność symbolu zastępczego dopiero w gotowym panelu, a komendy
+zamieniającej styl zmiennych nie ma w ogóle, więc okno liczy to, co da się policzyć z samego
+tekstu, i nie przypisuje wyniku rdzeniowi. Wykaz stylów jest zamknięty i wzięty z opracowania
+modułu — printf, indeks w nawiasach, pojedyncza i podwójna nazwa w nawiasach klamrowych oraz
+znacznik formatu — a styl spoza wykazu nie jest rozpoznawany i okno tego nie ukrywa: wynik mówi,
+ile wystąpień znalazło, a nie że znalazło wszystkie. Przekład stylu zachowuje kolejność wystąpień
+i nazwy, gdy styl źródłowy je niesie; gdy styl źródłowy nazwy nie ma, a docelowy jej wymaga,
+nazwą zostaje numer kolejny wystąpienia — reguła jest jedna, jawna i wypowiedziana w
+sprawozdaniu, bo nazwa zmiennej nie jest czymś, co wolno zgadnąć.
+Podwójne nawiasy pasują także do wzorca nazwy w pojedynczych nawiasach, więc bez pilnowania
+odcinków zajętych jedno wystąpienie policzyłoby się dwa razy pod dwiema nazwami stylu.

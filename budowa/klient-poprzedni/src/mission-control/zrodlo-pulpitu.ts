@@ -13,22 +13,9 @@ import { pustyStanZrodla } from './stan-zrodla';
 import { zlozDanePulpitu } from './zlozenie-danych';
 
 /**
- * Źródło danych pulpitu — jedyny dostawca kompletu `DanePulpitu`.
- *
- * Jedna odpowiedzialność: zebranie stanu z rdzenia i podawanie odbiorcy
- * świeżego kompletu po każdej zmianie. Odczyty i zdarzenia idą wyłącznie
- * kanałem kontraktu; przełożenie stanu na komplet należy do
- * `zlozenie-danych.ts`.
- *
- * ODCZYTY: `session.list` (z obecnością), `window.list`, `channel.list`,
- * `environment.list` (nazwy kolumn matrycy — z rdzenia, nie z kopii katalogu).
- * Transport kolejkuje ramki do chwili połączenia, więc odczyt wysłany przed
- * otwarciem gniazda dochodzi po nim — bez własnego nasłuchu stanu łącza.
- *
- * SUBSKRYPCJE: `session.changed`, `window.changed`, `queue.changed`,
- * `progress.changed`. Kolejki nie mają odczytu w kontrakcie (brak
- * `queue.list`) — ich stan buduje się wyłącznie ze zdarzeń, co pulpit
- * pokazuje uczciwym stanem pustym do pierwszego zdarzenia.
+ * Źródło danych pulpitu — jedyny dostawca kompletu `DanePulpitu`. Zbiera stan
+ * z rdzenia odczytami kontraktu i po każdym zdarzeniu zmiany podaje odbiorcy
+ * świeży komplet; przełożenie stanu na komplet należy do `zlozenie-danych.ts`.
  */
 export interface ZrodloPulpitu {
   /** Wysyła odczyty i podpina subskrypcje; wywołanie jednokrotne. */
@@ -37,7 +24,10 @@ export interface ZrodloPulpitu {
   zatrzymaj(): void;
 }
 
-/** Buduje źródło danych pulpitu na kanale kontraktu. */
+/**
+ * Buduje źródło danych pulpitu na kanale kontraktu, wiążąc odczyty stanu
+ * i subskrypcje zdarzeń zmiany w jednego dostawcę kompletu dla pulpitu.
+ */
 export function utworzZrodloPulpitu(
   kanal: Kanal,
   odbiorca: (dane: DanePulpitu) => void,
